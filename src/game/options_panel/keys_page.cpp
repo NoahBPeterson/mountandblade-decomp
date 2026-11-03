@@ -16,6 +16,8 @@
 // the implicit ones, swapped forget() arguments, a restore() two dwords off, a performance formula missing
 // four factors, a save() that never wrote the table, and no body for 0x4d7270.
 #include "../../include/image_addrs.h"
+#include "../../rgl/options.h"   // g_options
+#include "../config/config_block.h"   // g_cfg
 #include <windows.h>
 #include <shlobj.h>
 #include <stdio.h>
@@ -158,57 +160,57 @@ static inline KeysPageView* head(KeysPage* p) { return (KeysPageView*)p; }
 // @ 0x4d6b80
 void KeysPage::update_perf()
 {
-    float perf = orig::k_100f;
-    if (orig::g_shadows_on)
-        perf = orig::g_scale_z * orig::k_5f + orig::k_100f;
+    float perf = 100.0f;
+    if (g_options.i28)
+        perf = orig::g_scale_z * 5.0f + 100.0f;
     perf += orig::g_opt_blood * 5;
-    perf += orig::g_char_shadow * 6;
+    perf += g_options.i20 * 6;
     int limit = *(int*)&orig::g_max_dead;
     if (limit >= 100) limit = 100;
     perf += limit * 0.2f;
     limit = orig::g_tick_a;
     if (limit >= 5) limit = 5;
     perf += limit;
-    int d3d = orig::g_plant_shadow;
+    int d3d = g_options.i2c;
     char high = orig::g_use_hw_shadow;
-    perf += orig::g_ragdoll_lim * orig::k_0_1f;
+    perf += g_options.i34 * 0.1f;
     int shadows = orig::g_use_shaders;
-    perf += orig::g_scale_y * orig::g_ten;
+    perf += orig::g_scale_y * 10.0f;
 
     if (d3d) {
-        if (orig::g_shadow_quality_req >= 2)
-            perf += orig::g_three;
+        if (g_cfg.shadow_quality_req >= 2)
+            perf += 3.0f;
         if (shadows) {
-            if (high) perf *= orig::k_1_1f;
-            else                  perf *= orig::k_1_25f;
+            if (high) perf *= 1.1f;
+            else                  perf *= 1.25f;
         } else {
-            perf += orig::g_four;
+            perf += 4.0f;
         }
     }
-    if (orig::g_mesh_quality == 2) {
+    if (g_options.i7c == 2) {
         if (shadows) {
-            if (high) perf *= orig::k_1_1f;
-            else                  perf *= orig::k_1_2f;
+            if (high) perf *= 1.1f;
+            else                  perf *= 1.2f;
         }
     }
     if (shadows)
-        perf *= (1 - orig::g_simple_reflect) * orig::k_0_65f + orig::g_one;
-    perf *= orig::g_particle * orig::k_0_03f + orig::g_day_period;
-    perf *= orig::g_texture_detail + orig::k_400f;
-    perf *= orig::k_0_002f;
-    int w = orig::g_iWindowWidth;
-    int h = orig::g_iWindowHeight;
+        perf *= (1 - g_cfg.fake_reflections) * orig::k_0_65f + orig::g_one;
+    perf *= g_options.i38 * 0.03f + 1.0;
+    perf *= g_cfg.texture_detail + 400.0f;
+    perf *= 0.002f;
+    int w = g_cfg.display_width;
+    int h = g_cfg.display_height;
     if (w <= 0) { w = 0x500; h = 0x400; }
-    perf *= w + orig::k_300f;
-    perf *= orig::k_0_000909091f;
-    perf *= h + orig::k_250f;
-    perf *= orig::k_0_00117647f;
+    perf *= w + 300.0f;
+    perf *= 0.0009090909f;
+    perf *= h + 250.0f;
+    perf *= 0.0011764705f;
 
     char buf[0x104];
     {
         tstring key("ui_estimated_performance");
         tstring* e = g_strtable.lookup(key);
-        sprintf(buf, e->c_str(), (int)(orig::k_30000f / perf));
+        sprintf(buf, e->c_str(), (int)(30000.0f / perf));
     }
     {
         tstring text(buf);
@@ -381,7 +383,7 @@ void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, 
     row->set_size((const float*)&scale);
     vector2 pos;
     pos.x = 0;
-    pos.y = bx * orig::g_half - s * orig::k_0_3f;
+    pos.y = bx * 0.5f - s * orig::k_0_3f;
     row->set_offset((const float*)&pos);
     { char r[8]; row->set_text(r, *text); }
 }

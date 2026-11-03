@@ -1,11 +1,15 @@
 #include "./cs_update.h"
+#include "../game_globals.h"   // g_trial_mode (canonical)
+#include "../config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../window_mgr.h"      // g_windows (0xa73980): the menu / army screens are its slots 29 (0xa739f4) and 24 (0xa739e0)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
+#include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4eeb10 -------------------------------------------------------------------------------
 // The click handling of the rows is `selected |= press on either button` / `released |= release on either`;
@@ -25,10 +29,10 @@ void CharSheet::update(float dt)
         f_430->hide();
 
     if (f_4c8 != 0) {
-        if (g_world_time != 0) {
+        if (g_mission_clock != 0) {
             ScrollHost* host = (ScrollHost*)f_4bc;
             UiDsv* bar = host->bar;
-            ((UiD*)(void*)bar)->set_value(((float)g_world_time / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
+            ((UiD*)(void*)bar)->set_value(((float)g_mission_clock / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
                            (bar->stops[bar->f_178] - bar->f_17c) *
                                ((bar->f_168 - bar->f_16c) / (bar->f_170 - bar->f_16c)));
             ((UiVt*)((ScrollHost*)f_4bc)->bar)->set_key_flags(0x10000);
@@ -129,8 +133,8 @@ void CharSheet::update(float dt)
         step = -1;
 
     if (f_2dc == 0) {
-        if (window_slot<Profile>(1)->troop != -1) {
-            g_game->fb4 = window_slot<Profile>(1)->troop;
+        if (slot_as<Profile>(1)->troop != -1) {
+            g_game->fb4 = slot_as<Profile>(1)->troop;
             f_2dc++;
             menu_choose(0xf);
             return;
@@ -147,7 +151,7 @@ void CharSheet::update(float dt)
         if (f_42c->changed(0x10000)) {
             f_2dc = -1;
             ((TroopEq*)&g_game->chars[g_game->player])->auto_equip(-1, 0, 0, 0);
-            g_menu_state[5] = f_14;
+            slot_as<int>(29)[5] = f_14;
             menu_choose(0x1d);
             return;
         }
@@ -169,14 +173,14 @@ void CharSheet::update(float dt)
             return;
         }
         if (f_52c != 0 && f_4cc != 0 && f_4cc->changed(0x10000)) {
-            g_menu_state[5] = f_14;
-            g_menu_state[6] = 0xf;
+            slot_as<int>(29)[5] = f_14;
+            slot_as<int>(29)[6] = 0xf;
             menu_choose(0x1d);
             return;
         }
         if (f_440 != 0 && f_440->changed(0x10000)) {
-            g_army_state[5] = f_14;
-            g_army_state[6] = 0xf;
+            slot_as<int>(24)[5] = f_14;
+            slot_as<int>(24)[6] = 0xf;
             menu_choose(0x18);
             return;
         }
@@ -199,7 +203,7 @@ void CharSheet::update(float dt)
         } else {
             if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0)
                 return;
-            if (g_a17188 != 0 && g_a17588 == 0 && g_a5a9fbc != 0) {
+            if (g_a17188 != 0 && g_keyboard.prev[0x2d] == 0 && g_cfg.cheat_mode != 0) {
                 WL_MARKER(12)
                 if (g_trial_mode != 0) {
                     g_game->add_experience(f_14, 1000);
@@ -208,7 +212,7 @@ void CharSheet::update(float dt)
                 WL_MARKER(13)
                 return;
             }
-            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17118 != 0 && g_a17518 == 0 && g_a5a9fbc != 0) {
+            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17118 != 0 && g_a17518 == 0 && g_cfg.cheat_mode != 0) {
                 WL_MARKER(12)
                 for (int i = 0; i < 7; i++)
                     g_game->chars->adjust(i, 50.0f);

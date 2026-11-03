@@ -618,7 +618,7 @@ void __fastcall sound_engine::tick()
     vol = vol * 255.0f;
     float fl = (float)floor((double)vol);
     int n = (int)fl;
-    int iv = (vol - fl <= g_549d70) ? n : n + 1;
+    int iv = (vol - fl <= 0.5f) ? n : n + 1;
     int idx;
     int level = (iv < 0) ? 0 : ((iv >= 255) ? 254 : iv);
     if (w240c != 0) {
@@ -679,7 +679,7 @@ void music_set::load(stream_base* s, int load_samples, const tstring* dir)
             int ch = (recs[i].level >> 4) & 0xf;
             if (ch == 0)
                 ch = 5;
-            FSOUND_Sample_SetDefaults(smp, -1, -1, -1, (int)((float)ch * g_590b60 * g_54ab2c));
+            FSOUND_Sample_SetDefaults(smp, -1, -1, -1, (int)((float)ch * 250.0f * g_54ab2c));
             int len = FSOUND_Sample_GetLength(recs[i].sample);
             FSOUND_Sample_GetDefaults(recs[i].sample, &recs[i].freq, 0, 0, 0);
             recs[i].ratio = (float)len / recs[i].freq;

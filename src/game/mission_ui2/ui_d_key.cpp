@@ -11,6 +11,7 @@
 // object ends before it (high).
 //-----------------------------------------------------------------------------
 #include "../tstring.h"
+#include "../strat/gui_manager.h"             // g_gui (0x5d7080): ui_active / mouse position
 #include "../ui/ui_common.h"
 #include "../ui/item_ref.h"
 #include "../ui/mission_ui.h"
@@ -33,11 +34,11 @@ char UiD::key(unsigned p)
         b = 1;
         ::play_sound(&g_ui_sound);
         int i = f178;
-        float t = g_ui_target[i];
+        float t = g_gui.mouse[i];
         float v = value() + e[i];
         if (v - 0.01f < t && t < (f17c + 0.01f) + v) {
             f180 = 1;
-            g_ui_active = this;
+            g_gui.ui_active = this;
             f184 = t - v;
             goto tail;
         }
@@ -45,13 +46,13 @@ char UiD::key(unsigned p)
         set_value(t - e[i]);
     } else {
         if (p == 8) {
-            g_ui_active = 0;
+            g_gui.ui_active = 0;
             b = 1;
             f180 = 0;
             set_key_flags(0x10000);
             goto tail;
         }
-        set_value((g_ui_target[f178] - f184) - e[f178]);
+        set_value((g_gui.mouse[f178] - f184) - e[f178]);
     }
     set_key_flags(0x10000);
 tail:

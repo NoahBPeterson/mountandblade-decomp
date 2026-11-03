@@ -4,6 +4,7 @@
 // (s00401010: CD3DApplication = `Application`) and the engine's tstring (s0042a1f0) / widget vtables.
 // Names are provisional.
 #include "../../include/image_addrs.h"
+#include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <windows.h>
 #include <d3d9.h>
 #include <stdio.h>
@@ -40,10 +41,7 @@ static __forceinline const char* c_str(const tstring* s)
 // ---- the engine widget interface: only the slots this slice dispatches ---------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
-struct ScreenObj : Widget {
-};
 void __cdecl frame_hook(void);                               // 0x4ec460 (game/char_sheet/screen.cpp: the end-of-frame callback, a free function)
-extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 
 #include "../id_stack.h"               // IdStack g_id_stack (0xa739f8), current_screen_id
 
@@ -53,7 +51,6 @@ extern ScreenObj* g_windows[30];       // 0xa73980 (.. 0xa739f4)
 // ---- globals ------------------------------------------------------------------------------------------
 extern __int64 g_ticks;                 // 0x5e2948
 extern float g_5a9c20;                  // 0x5a9c20
-extern int   g_no_cam;                  // 0x5a9fb0
 extern int g_a17158;    // 0xa17158
 extern int g_a1717c;    // 0xa1717c
 // the Direct3D9 device (0xa17f28); __stdcall virtuals -> the COM-style call pattern
@@ -113,6 +110,7 @@ extern Output g_log;                 // 0x5a9f60
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 #include "../map_editor_obj.h"        // MapEditor (the object at 0x8ee3c48)
+#include "../ui_globals.h"      // UI / core globals
 
 // ---- free functions --------------------------------------------------------------------------------
 extern "C" void __stdcall _FSOUND_Update(void);              // 0x53433c
@@ -155,7 +153,7 @@ int GameApp::Update()
     g_music_situation.tick();
     _FSOUND_Update();
 
-    if (g_no_cam) {
+    if (g_dev_mode) {
         if (g_a17158 && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
             if (build_shader() < 0) {
                 mb_error("Unable to compile the effect file.");
@@ -165,7 +163,7 @@ int GameApp::Update()
             ((resource_manager*)&g_resmgr)->resolve_effect_sets(g_effect);
         }
     }
-    if (g_no_cam) {
+    if (g_dev_mode) {
         if (g_keyboard.down[0x32] && !g_keyboard.prev[0x32]) {
             if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_a1717c)) {
                 load_skyboxes();
@@ -179,7 +177,7 @@ int GameApp::Update()
     }
 
     frame_hook();
-    g_windows[current_screen_id()]->update(dt);
+    slot_as<Widget>(current_screen_id())->update(dt);
 
     if (g_game) {
         // (0x50f057, the "hide" path, is reached whenever f1a090 is 0, on screen 0xe or not)
@@ -216,8 +214,8 @@ int GameApp::Update()
                             }
                         }
                     }
-                    pick_entity((GuiCtx*)window_slot<EditorEntity>(14));
-                    window_slot<EditorEntity>(14)->f2f9 = 1;
+                    pick_entity((GuiCtx*)slot_as<EditorEntity>(14));
+                    slot_as<EditorEntity>(14)->f2f9 = 1;
                     SetFocus(m_hWnd);
                     g_game->f1a1c8 = 0;
                 }
@@ -340,8 +338,8 @@ void LoadingScreen::update(int unused)
     bool finished = advance(&step, &total, &text);
     const char* fmt = "%d";
     _snprintf(buf, 0x100, fmt, step);
-    ((ScreenObj*)hint)->set_text(tmp, text);
-    ((ScreenObj*)logo)->set_value((float)step * 0.14285715f);
+    ((Widget*)hint)->set_text(tmp, text);
+    ((Widget*)logo)->set_value((float)step * 0.14285715f);
     if (finished) {
         g_main_menu.set_state(4);
         ((Output*)&orig::g_log)->print("Finished All...\n");

@@ -24,7 +24,6 @@
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
-extern StrTable g_strtable;                 // 0x5e2a18
 extern ini_file g_game_vars;                      // 0xa44240 (the option table: key tstring +0, value tstring +0x1c, count +0x2c000)
 
 // ---- classes of other modules whose definitions own methods the game data view calls --------------------------------------
@@ -98,6 +97,9 @@ struct gui_view {
 // The UI root as these modules call it: every method forwards to the canonical class (gui_manager, gui_view, the click
 // sound), so the call sites keep their spelling and the linked symbol is the one the definition exports.
 struct GuiRoot {
+    char pad00[0x10];
+    void* ui_active;                                                                          // +0x10 gui_manager::ui_active (0x5d7090)
+    float mouse[2];                                                                           // +0x14 gui_manager::mouse (0x5d7094 / 0x5d7098)
     __forceinline void reset() { ((gui_manager*)this)->reset(); }                                // 0x42d1b0
     __forceinline void add_root(MissionUi** w) { ((NodeVec*)this)->push_back(*(NodeA* const*)w); }   // 0x49b120 (ret 4): NodeVec::push_back
     __forceinline void play_sound() { ::play_sound((UiSoundHost*)this); }                     // 0x48b2d0

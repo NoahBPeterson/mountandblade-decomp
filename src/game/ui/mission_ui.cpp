@@ -8,6 +8,7 @@
 //       provisional. Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../config/config_block.h"   // g_cfg
 #include <string.h>
 #include <stdlib.h>
 #include "../tstring.h"
@@ -37,6 +38,11 @@
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../shared_vars.h"
 #include "../key_names.h"
+
+// ---- data this module owns (.bss, no initialiser; sizes from the code) ----
+int g_origin_state[256];                            // 0xa174d4 0 = origin idle / free (one per origin id, g_origin_table 0xa170d4 is the 256 objects before it)
+SortVal g_sort_val[0x2a * 5 + 1];                   // 0xa75f90 weights per (modifier bit, 5): up to index 0x2a * 5 (mission_3.cpp), ends at g_anim_set 0xa76628
+
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)
@@ -965,12 +971,12 @@ void Named16::set(const tstring* s)
 // @ 0x489ad0
 void MissionView::quarter()
 {
-    if (g_day >= 0x3c) {
+    if (g_cfg.texture_detail >= 0x3c) {
         v18[2] = v18[0];
         v18[3] = v18[1];
         return;
     }
-    if (g_day >= 0x19) {
+    if (g_cfg.texture_detail >= 0x19) {
         v18[2] = v18[0] / 2;
         v18[3] = v18[1] / 2;
         return;
@@ -1204,7 +1210,7 @@ int GameData::sl_pick_chain(int leader, char lancer)
 // @ 0x48a150
 int GameData::template_count(int party, int cell, float)
 {
-    char* base = g_party_templates + party * 0xb0;
+    char* base = (char*)&g_party_templates[party];
     int roll = rand() % 0x3dc9;
     int lo = range_lo;
     int hi = range_hi;

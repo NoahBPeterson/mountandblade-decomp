@@ -25,6 +25,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
 #include "./quest_page.h"
+#include "../window_mgr.h"      // g_windows slots 19 (0xa739cc), 20 (0xa739d0)
 #include "../party/game.h"
 #include "../../include/game_recs.h"
 
@@ -51,12 +52,10 @@ struct GameData {
 
 // 0xa73980: the main menu.
 // 0xa739d0 / 0xa739cc: menu entries whose +0x18 index the video/options buttons set.
-extern int* g_menu_video_entry;                     // 0xa739d0 (index at +0x18)
-extern int* g_menu_options_entry;                   // 0xa739cc (index at +0x18)
+// the option / video menu entries are slots of g_windows (window_mgr.h): 19 (0xa739cc) and 20 (0xa739d0), the index at +0x18
 
 // 0x5e2950 and the per-day factors next to 0x596770.
 #include "../../include/fx.h"   // canonical: g_ticks (0x5e2950)
-extern float  g_tick_per_day;                       // 0x596770
 #include "../../rgl/resource_manager.h"   // canonical: g_options.f74 (0x5aa07c)
 
 // ---- control stub -----------------------------------------------------------------------------------
@@ -159,7 +158,7 @@ void QuestPage::fill()
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
         int given = (int)(QREC->f11c * (1.0f / 24));
-        int now = (int)(g_ticks[1] * g_tick_per_day);
+        int now = (int)(g_ticks[1] * 4.1666667e-07f);
         mb_snprintf(buf, 0x200, fmt, now - given);
     }
     {
@@ -202,7 +201,7 @@ void QuestPage::update_days()
 {
     Pos2 fr;                                 // x = the float spill slot; y is never written (it is passed on to the widget)
     float& v = fr.x;
-    v = g_options.f74 * orig::k_75f;
+    v = g_options.f74 * 75.0f;
     float f = (float)floor(v);
     int n = (int)f;
     int r;
@@ -224,7 +223,7 @@ void QuestPage::update_difficulty()
     char buf[0x80];
     {
         // the localized caption is the format; the rating is the argument
-        tstring key((const char*)orig::str_ui_difficulty_rating_percentage);
+        tstring key("ui_difficulty_rating_percentage");
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
         sprintf(buf, fmt, ((GameData*)g_game)->sl_value_factor());
@@ -312,12 +311,12 @@ void QuestPage::update_settings(int reason)
         return;
     }
     if (w38->changed(0x10000)) {
-        g_menu_video_entry[6] = 0x12;
+        slot_as<int>(20)[6] = 0x12;
         g_main_menu.set_state(0x14);
         return;
     }
     if (w3c->changed(0x10000)) {
-        g_menu_options_entry[6] = 0x12;
+        slot_as<int>(19)[6] = 0x12;
         g_main_menu.set_state(0x13);
     }
 }

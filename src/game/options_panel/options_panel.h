@@ -16,7 +16,6 @@ extern const float RENOWN_SCALE;                                    // 0x54ab28 
 
 // the game's localized-string table (0x5e2a18): lookup by a scratch tstring holding the text key
 #include "../str_table.h"
-extern StrTable g_strtable;                                         // 0x5e2a18
 
 // the keyboard object (0xa170c8); the key-name function only passes it through
 struct ctr {
@@ -60,7 +59,6 @@ struct text_store {
 // g_main_menu (0xa73980, `rec` at +0 is the dialog box record): main_menu, ../main_menu.h
 
 bool mb_file_exists(const char* path);                              // 0x415120
-extern int g_trial_mode;                                            // 0x5e29c4
 
 // the character file is read into the shared ini table (0x2c-byte entries: key +0, value +0x1c; ctor 0x4c1be0, load 0x4bd630, dtor 0x4be920)
 #include "../ini_file.h"

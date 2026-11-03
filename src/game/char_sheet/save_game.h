@@ -13,7 +13,6 @@
 // ---- tstring (see s00467bf0) ----------------------------------------------------------------------------
 #include "../tstring.h"
 #include "../str_table.h"
-extern StrTable g_strtable;                             // 0x5e2a18
 
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
@@ -62,7 +61,6 @@ struct SaveCtx;
 #pragma pack(push, 4)
 #pragma pack(pop)
 extern __int64 g_ticks[2];                              // 0x5e2948
-extern float g_54a6d0;                                  // 0x54a6d0
 extern int   g_59811c;                                  // 0x59811c ("WRDR")
 extern char  g_598120;                                  // 0x598120
 #include "../game_globals.h"
@@ -141,8 +139,7 @@ void log_save_path();                                   // 0x4e8df0
 extern int      g_use_shaders;                          // 0x5e28fc
 extern unsigned g_mask_w;                               // 0x5a8e78
 extern unsigned g_a76644;                               // 0xa76644
-extern int      g_a739c8;                               // 0xa739c8
-extern int      g_a739d4;                               // 0xa739d4
+#include "../window_mgr.h"                              // the save-game menu screens are slots of g_windows: 18 (0xa739c8), 21 (0xa739d4)
 extern float    g_chunk_scale;                          // 0x549d68
 
 #endif

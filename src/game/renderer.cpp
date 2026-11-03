@@ -17,8 +17,7 @@
 #include "../rgl/rgl_math.h"
 #include "./mat4.h"
 #include "./renderer.h"
-struct Config;
-extern Config g_cfg;                        // 0x5a9f98 (config/config.h: use_wbuffer = +0x44)
+#include "./config/config_block.h"           // Config g_cfg (0x5a9f98)
 struct options;
 extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h: i38 = +0x38, f80 = +0x80)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -59,7 +58,7 @@ void renderer::set_view(const mat4* p)
 void renderer::reset_state()
 {
     dev->SetRenderState(D3DRS_ZENABLE, 1);
-    if (*(int*)((char*)&g_cfg + 0x44)) dev->SetRenderState(D3DRS_ZENABLE, D3DZB_USEW);
+    if (g_cfg.use_wbuffer) dev->SetRenderState(D3DRS_ZENABLE, D3DZB_USEW);
     alpha_mode = 0;
     dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
     dev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);

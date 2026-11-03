@@ -85,4 +85,6 @@ struct TerrainPage : Paged {
     void path(float dt);                                    // 0x4f3cf0
 };
 
+extern const int g_region_types[8];                         // 0x59394c (terrain type ids in drop-down order; defined in char_sheet/terrain_page.cpp)
+
 #endif // MB_GAME_TERRAIN_PAGE_H

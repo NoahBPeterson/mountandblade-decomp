@@ -180,7 +180,7 @@ L5c6:
     if (g_a17184 != 0)
         goto L7dd;
     {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * 0.05f;
         vector4 c;
         c.x = dim;
         c.y = dim;
@@ -197,7 +197,7 @@ L666:
         goto L71b;
 L673:
     if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * 0.05f;
         vector4 c;
         c.x = dim;
         c.y = 1.0f;
@@ -214,7 +214,7 @@ L71b:
         goto L7d0;
 L728:
     if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * 0.05f;
         vector4 c;
         c.x = 1.0f;
         c.y = dim;
@@ -231,7 +231,7 @@ L7d0:
         goto L885;
 L7dd:
     if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * 0.05f;
         vector4 c;
         c.x = 1.0f;
         c.y = 1.0f;
@@ -245,7 +245,7 @@ L7dd:
 
 L885:
     // --- rebuild every per-mode table ----------------------------------------------------------
-    if (g_a17420 != 0 && g_a17820 == 0) {
+    if (g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0) {
         g_scene_s2cf60->mesh_s2cf60.remove_selected();
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
@@ -1092,7 +1092,7 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
 
     if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 &&
         g_a17188 == 0 && g_a17128 == 0 && g_a17184 == 0) {
-        float s = g_one - angle * g_k005b;
+        float s = g_one - angle * 0.05f;
         vec[0] = vec[0] * s;
         vec[1] = vec[1] * s;
         vec[2] = vec[2] * s;
@@ -1100,19 +1100,19 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f4 = 1;
     }
     if (g_a17188 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_k005b;
+        float s = g_one - angle * 0.05f;
         vec[0] = vec[0] * s;
         *f3 = 1;
         *f4 = 1;
     }
     if (g_a17128 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_k005b;
+        float s = g_one - angle * 0.05f;
         vec[1] = vec[1] * s;
         *f3 = 1;
         *f4 = 1;
     }
     if (g_a17184 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_k005b;
+        float s = g_one - angle * 0.05f;
         vec[2] = vec[2] * s;
         *f3 = 1;
         *f4 = 1;
@@ -1178,16 +1178,16 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
             pi = o->f18c;
         if (pi >= 0 && pi < g_propkind_count) {
             MapPoint_s2fe40* p = &g_map_points_s2fe40[pi];
-            if ((*(int*)((char*)&g_cfg + 0x18)) != 0 || (p->flags & 0x4000) == 0)
+            if (g_cfg.enable_edit_mode != 0 || (p->flags & 0x4000) == 0)
                 *out = p->meshes;
         }
     } else if (kind == 1) {
-        if ((*(int*)((char*)&g_cfg + 0x18)) != 0)
+        if (g_cfg.enable_edit_mode != 0)
             name.assign("entry_arrow");
         else
             name.assign("");
     } else if (kind == 5) {
-        if ((*(int*)((char*)&g_cfg + 0x18)) != 0)
+        if (g_cfg.enable_edit_mode != 0)
             name.assign("_mesh_passage");
         else
             name.assign("");

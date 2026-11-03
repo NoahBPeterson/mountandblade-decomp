@@ -1605,10 +1605,10 @@ char MWidget::on_event(unsigned ev)
         for (; ids != 0 && i < (unsigned)(list_e.last - ids); i++, off += 0x10) {
             vector4* a = (vector4*)((char*)rects_a.first + off);
             vector4* b = (vector4*)((char*)rects_b.first + off);
-            if (a->x + U()->fE0 <= g_cursor_x)
-                if (U()->fE0 + b->x > g_cursor_x)
-                    if (a->y + U()->fE4 <= g_cursor_y)
-                        if (b->y + U()->fE4 > g_cursor_y) {
+            if (a->x + U()->fE0 <= g_gui.mouse[0])
+                if (U()->fE0 + b->x > g_gui.mouse[0])
+                    if (a->y + U()->fE4 <= g_gui.mouse[1])
+                        if (b->y + U()->fE4 > g_gui.mouse[1]) {
                             cur = list_e.first[i];
                             break;
                         }
@@ -1622,10 +1622,10 @@ char MWidget::on_event(unsigned ev)
         for (; ids != 0 && i < (unsigned)(list_e.last - ids); i++, off += 0x10) {
             vector4* a = (vector4*)((char*)rects_a.first + off);
             vector4* b = (vector4*)((char*)rects_b.first + off);
-            if (U()->fE0 + a->x <= g_cursor_x)
-                if (b->x + U()->fE0 > g_cursor_x)
-                    if (a->y + U()->fE4 <= g_cursor_y)
-                        if (b->y + U()->fE4 > g_cursor_y) {
+            if (U()->fE0 + a->x <= g_gui.mouse[0])
+                if (b->x + U()->fE0 > g_gui.mouse[0])
+                    if (a->y + U()->fE4 <= g_gui.mouse[1])
+                        if (b->y + U()->fE4 > g_gui.mouse[1]) {
                             U()->set_key_flags(0x10000);
                             sel = i;
                             break;

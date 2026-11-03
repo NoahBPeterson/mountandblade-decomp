@@ -16,7 +16,7 @@
 #define GAME_PARTY_PARTY_WINDOW_H
 #include "../../include/image_addrs.h"
 #include "../tstring.h"
-#include "../game_globals.h"      // canonical g_disable_food_slot
+#include "../game_globals.h"      // canonical g_module_settings.disable_food_slot
 #include "../../rgl/rgl_math.h"
 #include "../ui/item_ref.h"
 #include "../ui/troop_inv.h"
@@ -63,6 +63,7 @@ struct StripIcon : UiA {                    // vtable 0x591ee8, size 0x188 (cons
     StripIcon() { *(void**)this = (void*)vtbl_XyzButton; }
 };
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 // the widget base's destructor body (0x487c00) and the scalar deleting destructor built on it (0x502300, the shared
 // slot 0 of vtable 0x591c80; mission_ui.h declares that slot as d00(int) without a body)
 // 0x487c00 is Buffer::~Buffer (mesh_slot/slot.cpp, virtual; called here as the base destructor, so qualified)

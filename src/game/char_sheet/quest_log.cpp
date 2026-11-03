@@ -3,6 +3,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4ee840
 void __fastcall quest_window::refresh()
@@ -51,11 +52,11 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
     size[0] = h;
     size[1] = w;
     vector4 col;
-    col.x = h * g_590b70;
-    col.y = w * g_592758;
+    col.x = h * 50.0f;
+    col.y = w * 1.5576323f;
     col.z = 1.0f;
     self->set_size(size);
-    *(float*)((char*)self + 0x17c) = col.y * g_592754;
+    *(float*)((char*)self + 0x17c) = col.y * 0.31f;
     // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix) into a temporary
     // tstring(const char*) (0x42bbe0), destroyed right after the clone
     mesh* m1 = g_resmgr.get_object((const rgl::string*)&tstring("scrollbar"))->clone();
@@ -114,7 +115,7 @@ void __fastcall quest_window::build()
         bgm = g_resmgr.get_object((const rgl::string*)&bg)->clone();
     }
     win->add_item(0, bgm);
-    g_frame_flag = 1;
+    g_gui_dirty = 1;
     ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)win);   // 0x49b120
 
     // the two panels behind the tabs
@@ -166,8 +167,8 @@ void __fastcall quest_window::build()
     refresh();
 
     // the quest list frame: 0x188 bytes, vtable 0x5924a0
-    float h = (float)count * g_54ab1c + g_591d54;
-    if (h < g_5987e4)     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
+    float h = (float)count * 0.04f + 0.09f;
+    if (h < 0.56f)     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
         h = 0.56f;
     widget* fr = (widget*)operator new(0x188);
     if (fr) {
@@ -188,7 +189,7 @@ void __fastcall quest_window::build()
     frame->add_item(0, make_background((float*)((char*)frame + 0xf0), (int)0xff000000));
 
     // one row per listed quest
-    h -= g_54b4d0;     // 0x4ee623: fsub [0x54b4d0] (0.05) before the loop
+    h -= 0.05f;     // 0x4ee623: fsub [0x54b4d0] (0.05) before the loop
     for (int i = 0; i < count; i++) {
         char* q = QUEST(indices[i]);
         tstring text(*(tstring*)(q + 0x40));
@@ -210,7 +211,7 @@ void __fastcall quest_window::build()
         rows[i] = row;
         float rp[2];
         rp[0] = 0.01f;
-        rp[1] = h - (float)i * g_54ab1c;
+        rp[1] = h - (float)i * 0.04f;
         row->set_pos(rp);
         float rs[2];
         rs[0] = 0.3f;

@@ -67,7 +67,6 @@ struct material_io : material {
 };
 
 // globals of the render configuration (g_rgl_config at 0x5a9f98 is the int array they live in)
-extern int g_texture_detail;                           // 0x5a9f9c "texture_detail" (rgl_config +4)
 extern int g_use_vertex_shaders;                       // 0x5a9fcc "use_vertex_shaders" (rgl_config +0x34)
 extern int g_use_pixel_shaders;                        // 0x5a9fd0 "use_pixel_shaders" (rgl_config +0x38)
 extern D3DCAPS9 g_caps;                                // 0xa17f2c

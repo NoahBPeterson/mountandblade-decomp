@@ -11,13 +11,12 @@
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 #include "../key_names.h"
 
-// the widgets the menu options write back into (each int* is a widget: +0x4 = option index, +0x18 = a second
-// index, +0x8c = value)
-extern int* g_menu_w1;                              // 0xa7398c
-extern int* g_menu_w3;                              // 0xa739ac
-extern int* g_menu_w4;                              // 0xa739c8
-extern int* g_menu_w5;                              // 0xa739d4
-extern int* g_menu_w6;                              // 0xa739f0
+// the widgets the menu options write back into are slots of the window manager (window_mgr.h): slot 3 (0xa7398c), 11 (0xa739ac),
+// 18 (0xa739c8), 21 (0xa739d4), 28 (0xa739f0); each is read as an int record: +0x4 = option index, +0x18 = a second index, +0x8c = value.
+#include "../window_mgr.h"
+#include "../../include/msg_log.h"
+extern MsgLog g_gui;                               // 0x5d7080 (the pointer position g_gui.mouse: 0x5d7094 / 0x5d7098)
+#include "../shared_vars.h"                      // g_saved (0x5e2a08)
 
 struct MenuScreen {
     virtual void v0();
@@ -30,22 +29,13 @@ struct MenuScreen {
 };
 
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
-extern int   g_u32;                                 // 0xa735c0
 extern float g_char_scale;                          // 0x590d7c
 
 // the strings the mission items write and the numbers their sounds depend on
 #include "../dialog_manager.h"   // canonical: g_script (0xa70440)
 extern __int64 g_spawn_lo;                          // 0xa70448
 extern __int64 g_spawn_hi;                          // 0xa70450
-extern float g_mouse_x;                             // 0x5d7094
-extern float g_mouse_y;                             // 0x5d7098
-extern float g_tick_scale;                          // 0x54a6d0 (1e-5f: fmul dword)
-extern float g_day_scale;                           // 0x591834 (fmul dword)
-extern double g_day_period;                         // 0x54a5d8
-extern float g_hour_scale;                          // 0x590c90
-extern float g_hour_base;                           // 0x54ab28
 extern int g_ticks_[2];                             // 0x5e2948 (the 64-bit tick clock)
-extern int g_mission_clock;                         // 0x5d8790 (mission time; 0 = no mission)
 
 extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 #include "../../include/crt.h"   // canonical: ftol2 (0x535a64)
@@ -60,20 +50,21 @@ struct MenuKind {                                   // 0x24 bytes (table at 0xa7
     TimerList sound;                                // +0x14
     char      pad1c[0x24 - 0x1c];
 };
-extern MenuKind* g_presentations;                      // 0xa75f2c (menu-kind table, element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14])
+#include "../game_globals.h"                        // g_presentations (0xa75f2c, canonical): its first dword points at the menu-kind table
 inline void play_family_sound(int family, int id)
 {
-    g_presentations[family].sound.update(id);
+    (*(MenuKind**)&g_presentations)[family].sound.update(id);   // element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14]
 }
 
 // ---- widgets -------------------------------------------------------------------------------------------
 // control widget: "activate" at vtable +0x2c, "value" at +0x30, "float" at +0x38, "used" at +0x44,
 // "key flags" at +0x48, "kind" at +0xc0 (slots cross-checked with s004cf7b0 / s004dd830).
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_globals.h"      // UI / core globals
 
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
 // +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.
-// UiD (ui/ui_widgets.h, whose g_tick_scale clashes with this header's): the progress bar (vtable 0x592140) that ValueSource views
+// UiD (ui/ui_widgets.h): the progress bar (vtable 0x592140) that ValueSource views
 // (+0x178 index, +0x17c step); the two members the sources call.
 struct UiD {
     float value();   // 0x48b930

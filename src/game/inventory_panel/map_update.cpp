@@ -25,10 +25,10 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 
 // ---------------------------------------------------------------------------------- small engine types --
 #include "../tstring.h"
+#include "../strat/gui_manager.h"            // g_gui.mouse (0x5d7094 / 0x5d7098)
 
 #include "../str_table.h"
 #include "../world.h"                          // world (= Level): the scene object g_level points to
-extern StrTable g_strtable;                  // 0x5e2a18
 
 // --------------------------------------------------------------------------------- collision shapes ----
 // shape_base: 0x20 bytes; slot 0 dtor, slot 1 shape_type (the picker's `v1() != 2` mask key).
@@ -122,13 +122,11 @@ static inline Party* party_at(GameData* g, int id)
 #include "../rgl_mesh.h"                                           // rgl::mesh (calc_bounds 0x438d80)
 
 #include "map_panel.h"                      // MapPanel / MapView (shared with map_info.cpp)
+#include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../ui_globals.h"      // UI / core globals
 
 // --------------------------------------------------------------------------------- globals -------------
-extern world*    g_level;                    // 0xa732b4
-extern float     g_mouse_x;                  // 0x5d7094 (float: ?g_mouse_x@@3MA)
-extern float     g_mouse_y;                  // 0x5d7098
-extern int       g_a17458;                   // 0xa17458
-extern int       g_5a9fbc;                   // 0x5a9fbc
+#include "../config/config_block.h"                // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 
 // ======================================================================================================
 // @ 0x5191e0
@@ -144,8 +142,8 @@ void MapPanel::update_target()
         float h  = (g_box_y + mx.y) - (g_box_y + mn.y);
         float x0 = g_box_x + mn.x;
         float y0 = g_box_y + mn.y;
-        float dx = g_mouse_x - x0;
-        float dy = g_mouse_y - y0;
+        float dx = g_gui.mouse[0] - x0;
+        float dy = g_gui.mouse[1] - y0;
         g_game->cur_label = -1;
 
         // The original tests the band with `test ah,1; jne` (C0 = less-than *or* unordered), so a NaN
@@ -200,9 +198,9 @@ void MapPanel::update_target()
     vector4 fp = farp;
 
     // ---- 0x519517: clip against the world's z range ------------------------------------------------
-    if (g_level->wmap) {
-        float zmin = g_level->wmap->zmin;
-        float zmax = g_level->wmap->zmax;
+    if (((::world*)g_level)->wmap) {
+        float zmin = ((::world*)g_level)->wmap->zmin;
+        float zmax = ((::world*)g_level)->wmap->zmax;
         if (np.z < zmin) {
             float t = fabsf((zmin - np.z) / dir.z);
             np.x += dir.x * t; np.y += dir.y * t; np.z += dir.z * t;
@@ -263,14 +261,14 @@ void MapPanel::update_target()
     int rec_mask  = -1;
     if (best >= 0) {
         rec_index = hits[best]->m4;
-        rec_mask  = (int)g_level->wmap->recs[rec_index].mask;
+        rec_mask  = (int)((::world*)g_level)->wmap->recs[rec_index].mask;
     }
 
     // ---- 0x519829: party agents under the cursor ---------------------------------------------------
     shape_base* bestobj = 0;
     shape_base* agents[0x2000];                // Picker::collect does not bound *count, so the size matters
     int       acount;
-    g_level->collect(9, agents, &acount);
+    ((::world*)g_level)->collect(9, agents, &acount);
     bestd += 1.0f;
 
     for (int i = 0; i < acount; i++) {
@@ -294,7 +292,7 @@ void MapPanel::update_target()
 
     // ---- 0x519997: commit the pick -----------------------------------------------------------------
     if (bestobj) {
-        if (g_a17458 == 0 && g_keyboard.prev[0xe1] != 0 && f2d4 == 0) {
+        if (g_keyboard.down[0xe1] == 0 && g_keyboard.prev[0xe1] != 0 && f2d4 == 0) {
             g_game->n_labels  = 0;
             g_game->cur_label = -1;
             f2d8 = ((MapSceneObj*)bestobj)->party;
@@ -369,9 +367,9 @@ void MapPanel::update_target()
             }
         } else if (best >= 0) {
             bool go = true;
-            if (g_keyboard.down[0x1d] && g_5a9fbc) {
+            if (g_keyboard.down[0x1d] && g_cfg.cheat_mode) {
                 *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-            } else if (!((RiderTable*)g_level->wmap)->shares(rec_index,
+            } else if (!((RiderTable*)((::world*)g_level)->wmap)->shares(rec_index,
                                                *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
                 go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
             }

@@ -2,6 +2,7 @@
 // wrapper, and the mission screen's button handler and mission-item callbacks (0x4d4b80..0x4d5ba0). Names
 // provisional.
 #include <windows.h>
+#include "../game_globals.h"   // g_scene_counter (canonical)
 #include <math.h>
 #include <new>
 #include "./mesh_edit.h"
@@ -13,6 +14,11 @@
 #include "quest_page.h"        // QuestPage: Hud is the quest page screen (QuestPage::sel is Hud::f250), fill() 0x4d5ba0
 #include "../shared_vars.h"
 #include "../key_names.h"
+#include "../ui_globals.h"      // UI / core globals
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_mission_clock;   // 0x5d8790 mission time; 0 = no mission
+
 
 // @ 0x4d4b80
 bool EditMesh::on_selection_changed()
@@ -154,37 +160,37 @@ void Hud::handle_buttons(int arg)
 {
     ((ItemSource*)((char*)(void*)this + 0x30))->pick(&arg);
     if (f60->changed(0x10000)) {
-        g_menu_w1[6] = 4;
-        g_menu_w1[1] = 3;
-        g_menu_w1[0x8c / 4] = 0;
+        slot_as<int>(3)[6] = 4;
+        slot_as<int>(3)[1] = 3;
+        slot_as<int>(3)[0x8c / 4] = 0;
         g_main_menu.set_state(3);
         return;
     }
     if (f64->changed(0x10000)) {
-        g_menu_w1[1] = 0;
-        g_menu_w1[0x8c / 4] = f88;
+        slot_as<int>(3)[1] = 0;
+        slot_as<int>(3)[0x8c / 4] = f88;
         g_main_menu.set_state(3);
         return;
     }
     if (f68->changed(0x10000)) {
-        g_menu_w5[6] = 4;
+        slot_as<int>(21)[6] = 4;
         g_main_menu.set_state(0x15);
         return;
     }
     if (f6c != 0 && f6c->changed(0x10000)) {
-        g_menu_w1[6] = 4;
-        g_menu_w1[1] = 2;
-        g_menu_w1[0x8c / 4] = 0;
+        slot_as<int>(3)[6] = 4;
+        slot_as<int>(3)[1] = 2;
+        slot_as<int>(3)[0x8c / 4] = 0;
         g_main_menu.set_state(3);
         return;
     }
     if (f70->changed(0x10000)) {
-        g_menu_w4[6] = 4;
+        slot_as<int>(18)[6] = 4;
         g_main_menu.set_state(0x12);
         return;
     }
     if (f74->changed(0x10000)) {
-        g_menu_w6[6] = 4;
+        slot_as<int>(28)[6] = 4;
         g_main_menu.set_state(0x1c);
         return;
     }
@@ -240,19 +246,19 @@ void Mission::destroy()
 // @ 0x4d5940
 __declspec(noinline) void ValueSource::on_value_changed(float arg)
 {
-    ((UiD*)(void*)this)->set_value((step / slot[idx] * arg) * g_char_scale + ((UiD*)(void*)this)->value());
+    ((UiD*)(void*)this)->set_value((step / slot[idx] * arg) * 0.0005f + ((UiD*)(void*)this)->value());
 }
 
 // @ 0x4d5980
 void Hud::on_mission_start(int arg)
 {
-    *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_u32;
-    g_u32 = g_u32 + 1;
+    *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_scene_counter;
+    g_scene_counter = g_scene_counter + 1;
     g_mission->start_setup();
-    window_slot<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)
-    window_slot<MenuScreen>(14)->f18 = f18;
-    g_menu_w3[1] = 0;
-    g_menu_w3[0x18 / 4] = f18;
+    slot_as<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)
+    slot_as<MenuScreen>(14)->f18 = f18;
+    slot_as<int>(11)[1] = 0;
+    slot_as<int>(11)[0x18 / 4] = f18;
     g_main_menu.set_state(0xe);
 }
 
@@ -269,7 +275,7 @@ void Hud::on_update(int arg)
     if (g_mission_clock) {
         ValueWidget* u = item_value(f3c);
         float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
-        u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * g_char_scale + v);
+        u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * 0.0005f + v);
         item_value(f3c)->set_key_flags(0x10000);
     }
     for (int i = 0; i < f24c; i++) {
@@ -306,10 +312,10 @@ void MissionSource::pick(int* arg)
     {
         __int64 now = *(__int64*)(g_ticks_ + slot * 2);
         __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
-        g_spawn_lo = (__int64)(int)((double)d * g_day_scale * g_tick_scale);
+        g_spawn_lo = (__int64)(int)((double)d * 1000.0f * 1e-5f);
         play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
-        t = (float)(fmod((double)*(__int64*)g_ticks_ * g_tick_scale, g_day_period) * g_hour_scale
-                    + g_hour_base);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
+        t = (float)(fmod((double)*(__int64*)g_ticks_ * 1e-5f, 1.0) * 40.0f
+                    + 100.0f);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
     }
     if (g_mission_clock) {
         float best_d = 1.0e5f;
@@ -320,20 +326,20 @@ void MissionSource::pick(int* arg)
                 continue;
             // inside [org + near, org + far) on an axis: 0, else the distance to the nearer edge (0x4d54f5..0x4d55f0)
             float dx;
-            if (it->ext[2] + it->org[0] <= g_mouse_x && g_mouse_x < it->ext[0] + it->org[0]) {
+            if (it->ext[2] + it->org[0] <= g_gui.mouse[0] && g_gui.mouse[0] < it->ext[0] + it->org[0]) {
                 dx = 0.0f;
             } else {
-                dx = ABS(g_mouse_x - (it->ext[0] + it->org[0]));
-                float alt = ABS(g_mouse_x - (it->ext[2] + it->org[0]));
+                dx = ABS(g_gui.mouse[0] - (it->ext[0] + it->org[0]));
+                float alt = ABS(g_gui.mouse[0] - (it->ext[2] + it->org[0]));
                 if (alt < dx)
                     dx = alt;
             }
             float dy;
-            if (it->ext[3] + it->org[1] <= g_mouse_y && g_mouse_y < it->ext[1] + it->org[1]) {
+            if (it->ext[3] + it->org[1] <= g_gui.mouse[1] && g_gui.mouse[1] < it->ext[1] + it->org[1]) {
                 dy = 0.0f;
             } else {
-                dy = ABS(g_mouse_y - (it->ext[1] + it->org[1]));
-                float alt = ABS(g_mouse_y - (it->org[1] + it->ext[3]));
+                dy = ABS(g_gui.mouse[1] - (it->ext[1] + it->org[1]));
+                float alt = ABS(g_gui.mouse[1] - (it->org[1] + it->ext[3]));
                 if (alt < dy)
                     dy = alt;
             }

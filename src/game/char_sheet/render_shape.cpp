@@ -1,5 +1,12 @@
 #include "./render_shape.h"
 #include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_globals.h"      // UI / core globals
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_screen_h;   // 0x5d75cc viewport height
+int g_screen_w;   // 0x5d75c8 viewport width
+float g_div;   // 0x5d7594 1/radius
+
 
 // @ 0x4ed6f0
 void GuiCtx::render_shape_frame(int a, vector4* v, int b, int c)
@@ -8,10 +15,10 @@ void GuiCtx::render_shape_frame(int a, vector4* v, int b, int c)
         f354 = 0;
         return;
     }
-    cell_x0 = grid_count((float)g_view_z * f0e0);
-    cell_y0 = grid_count((g_549cdc / g_div) * (g_div - (f0e4 + f0f4)) * (float)g_view_w);
-    cell_x1 = grid_count((float)g_view_z * f0f0);
-    cell_y1 = grid_count((g_549cdc / g_div) * (float)g_view_w * f0f4);
+    cell_x0 = grid_count((float)g_screen_w * f0e0);
+    cell_y0 = grid_count((g_549cdc / g_div) * (g_div - (f0e4 + f0f4)) * (float)g_screen_h);
+    cell_x1 = grid_count((float)g_screen_w * f0f0);
+    cell_y1 = grid_count((g_549cdc / g_div) * (float)g_screen_h * f0f4);
     f32c = (int)f178 + 0xd8;
     f18c = 0;
     f190 = 1.0f;

@@ -269,8 +269,9 @@ struct IDxDiagProvider : public IUnknown {
     virtual HRESULT __stdcall Initialize(void* params) = 0;
     virtual HRESULT __stdcall GetRootContainer(IDxDiagContainer** root) = 0;
 };
-extern const GUID CLSID_DxDiagProvider;     // 0x59c8f4
-extern const GUID IID_IDxDiagProvider;      // 0x59c8e4
+// ---- data this module owns (dxdiag.h's GUIDs; values read from the image once by tools/relink/gen_data.py) ----
+extern const GUID IID_IDxDiagProvider = { 0x9c6b4cb0, 0x23f8, 0x49cc, { 0xa3, 0xed, 0x45, 0xa5, 0x50, 0x00, 0xa6, 0xd2 } };       // 0x59c8e4
+extern const GUID CLSID_DxDiagProvider = { 0xa65b8071, 0x3bfe, 0x4213, { 0x9a, 0x5b, 0x49, 0x1d, 0xa4, 0x46, 0x1c, 0xa7 } };      // 0x59c8f4
 
 // 0x4b9a30: reads a DXDiag container property (as a wide string) into a char buffer. The callee itself passes the
 // property name (0x593a94, "szDisplayMemoryEnglish") to GetProp; the original also carries a fourth (unused)

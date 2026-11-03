@@ -14,7 +14,7 @@
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding them
 #include "./party_2.h"
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
-#include "../game_globals.h"      // canonical g_seeing_range
+#include "../game_globals.h"      // canonical g_module_settings.seeing_range
 #include "../terrain_b/terrain_b.h"
 #include "../terrain_b/cell_grid.h"
 #include "../../include/game_data.h"
@@ -24,6 +24,11 @@
 #include "../config/widget_mgr.h"
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/game_recs.h"
+
+// ---- data this module owns (docs/standalone_data.md) ----
+int g_5a75f60;                                       // 0xa75f60 (.bss) set by the tableau render callback, read by the tableau button
+rgl::vector4 g_event_pos;                            // 0xa708c0 (.bss) where the party's map event happened (emit_event 0x14 reads it)
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160
@@ -231,22 +236,11 @@ unsigned GameData::color_of(float t, int flag)
 }
 
 // constants of the original's .rdata (declared by address: the literal pool of the object is shared)
-extern float g_k6_9;                                // 0x5935d0
-extern float g_k0_04;                               // 0x54ab1c
-extern float g_k0_006;                              // 0x5935cc
-extern float g_k30;                                 // 0x54b658
 extern float g_k0_01;                               // 0x54a6f0
-extern float g_k15;                                 // 0x590da0
 extern float g_k0_7;                                // 0x54b3c8
 extern float g_k0_6;                                // 0x590d94
-extern float g_k1_2;                                // 0x590b94
-extern float g_k1_25;                               // 0x590c80
-extern float g_k1_05;                               // 0x590f24
 extern float g_k1;                                  // 0x549cdc
-extern float g_k0;                                  // 0x549ca8
-extern float g_k3;                                  // 0x54a710
 extern float g_k0_02;                               // 0x590cd0
-extern float g_k0_4;                                // 0x54b3b8
 
 // @ 0x4b1b20
 void copy_items_forward(E92* dst, E92* end, const E92* src)
@@ -376,11 +370,11 @@ void Party::add_xp_to_stack(int idx, int amount)
         return;
     }
     acc += (float)amount;
-    if (acc >= (float)(int)(g_level_exp[chr->level] * g_k0_006 + g_k30)) {
+    if (acc >= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f)) {
         while (slot.f14 < slot.count) {
             slot.f14++;
-            acc -= (float)(int)(g_level_exp[chr->level] * g_k0_006 + g_k30);
-            if ((float)(int)(g_level_exp[chr->level] * g_k0_006 + g_k30) >= acc) {
+            acc -= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f);
+            if ((float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f) >= acc) {
                 break;
             }
         }
@@ -437,9 +431,9 @@ float Party::strength()
             b += s.count;
         }
     }
-    float v = ((float)a * g_k3 + (float)b) * g_k0_02 + g_k0_4;
-    if (v < g_k0) {
-        return g_k0;
+    float v = ((float)a * 3.0f + (float)b) * g_k0_02 + 0.4f;
+    if (v < 0.0f) {
+        return 0.0f;
     }
     if (v >= g_k1) {
         return g_k1;
@@ -451,7 +445,7 @@ float Party::strength()
 float Party::speed_factor()
 {
     if (*(unsigned __int64*)&flags_lo & 0x200) {
-        return g_k15;
+        return 15.0f;
     }
     float v = f8b0 * f8ac;
     int type = map_mask;
@@ -469,7 +463,7 @@ void Party::set_speed_from_stat()
 {
     (*(__int64*)((char*)&g_script + 0x18)) = 100;
     g_game->emit_event(0x1a, id, 0);
-    f8b0 = (float)(*(__int64*)((char*)&g_script + 0x18)) * g_k0_01;
+    f8b0 = (float)(*(__int64*)((char*)&g_script + 0x18)) * 0.01f;
 }
 
 // @ 0x4b2180
@@ -498,14 +492,14 @@ float Troop::food_factor()
     unsigned __int64 f = flags30;
     if (f & 0x10) {
         if (f4e4 >= 0) {
-            return (nibble(0x18) * g_k0_04 + g_k1_25) * g_k6_9;
+            return (nibble(0x18) * 0.04f + 1.25f) * 6.9f;
         }
-        return (nibble(0x19) * g_k0_04 + g_k1_05) * g_k6_9;
+        return (nibble(0x19) * 0.04f + 1.05f) * 6.9f;
     }
     if (f & 0x400) {
-        return (nibble(0x18) * g_k0_04 + g_k1_2) * g_k6_9;
+        return (nibble(0x18) * 0.04f + 1.2f) * 6.9f;
     }
-    return (nibble(0x19) * g_k0_04 + g_k1) * g_k6_9;
+    return (nibble(0x19) * 0.04f + g_k1) * 6.9f;
 }
 
 // @ 0x4b22b0
@@ -522,7 +516,7 @@ int Party::max_members()
     }
     int item = stacks[0].troop;
     int bonus = g_game->troops[item].f64;
-    return g_game->skill_level(item, 1) * g_skill_leadership_bonus + g_base_companion_limit + bonus;
+    return g_game->skill_level(item, 1) * g_module_settings.skill_leadership_bonus + g_module_settings.base_companion_limit + bonus;
 }
 
 // @ 0x4b2330
@@ -531,7 +525,7 @@ int Party::max_prisoners()
     if (g_game->emit_event(0x12, id, 0)) {
         return (int)(*(__int64*)((char*)&g_script + 0x18));
     }
-    return g_game->skill_level(stacks[0].troop, 2) * g_skill_prisoner_management_bonus;
+    return g_game->skill_level(stacks[0].troop, 2) * g_module_settings.skill_prisoner_management_bonus;
 }
 
 // @ 0x4b2370
@@ -551,11 +545,11 @@ int Party::skill_level(int skill)
             continue;
         }
         if (item == g_game->player) {
-            if (!(g_game->troops[item].hp >= g_player_wounded_treshold)) {
+            if (!(g_game->troops[item].hp >= g_module_settings.player_wounded_treshold)) {
                 continue;
             }
         } else {
-            if (!(g_game->troops[item].hp >= g_hero_wounded_treshold)) {
+            if (!(g_game->troops[item].hp >= g_module_settings.hero_wounded_treshold)) {
                 continue;
             }
         }
@@ -656,9 +650,7 @@ int EventVec::size() const
 
 
 // ---- STL helper instances of the 0xc-byte open-list element and the 0x5c-byte event record --------------------------------
-extern float g_gk3;                                  // 0x54a710  3.0f
 extern float g_gk0_05a;                              // 0x549d74
-extern float g_gk0_05b;                              // 0x549d7c
 extern float g_gk0_03;                               // 0x549d70
 
 // @ 0x4b24b0
@@ -707,7 +699,7 @@ OpenItem* ElemCopier::fill_elems(OpenItem* first, OpenItem* last, OpenItem* dst)
 // @ 0x4b25c0
 float Party::map_speed()
 {
-    float v = (skill_level(0xd) * g_gk0_05b + 1.0f) * g_seeing_range;
+    float v = (skill_level(0xd) * 0.1f + 1.0f) * g_module_settings.seeing_range;
     if (g_game->is_night()) {
         return v * 0.5f;
     }
@@ -841,7 +833,7 @@ void Party::set_order_party(int* t)
         float dy = pp->y - pos.y;
         float dz = pp->z - pos.z;
         moving = 0;
-        if (sqrtf(dx * dx + dy * dy + dz * dz) > g_gk3) {
+        if (sqrtf(dx * dx + dy * dy + dz * dz) > 3.0f) {
             f5988 = 1;
         }
     }
@@ -862,9 +854,9 @@ void Party::set_order_agent(int* t)
     const PartyV4* qq = &party_of(mgr, id)->pos;
     float ex = qq->x - f5990;
     float ey = qq->y - f5994;
-    if (ex * ex + ey * ey > g_gk0_05a) {
+    if (ex * ex + ey * ey > 10.0f) {
         moving = 0;
-        if (d.z * d.z + d.y * d.y + d.x * d.x > g_gk0_05a) {
+        if (d.z * d.z + d.y * d.y + d.x * d.x > 10.0f) {
             f5988 = 1;
         }
         PartyV4& rp = party_of(&g_game->parties, tgt_id)->pos;
@@ -877,10 +869,8 @@ void Party::set_order_agent(int* t)
 // ---- the per-frame party stats --------------------------------------------------------------------------------------------
 extern float g_k0_1;                                 // 0x54b8b0  0.1f
 extern float g_rand_k;                               // 0x54a6bc  1/15817
-extern float g_k_item_weight;                        // 0x593640  per-item weight of the equipped grid item
 struct options;
 extern options g_options;                   // 0x5aa008
-extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp               // outside the annotation range, so a literal cast
 
 // @ 0x4b2c00
@@ -933,7 +923,7 @@ void Party::tick_stats()
     }
 
     // main party: zoom easing, the first record's item slot decay, morale
-    if (g_disable_food_slot == 0) {
+    if (g_module_settings.disable_food_slot == 0) {
         if (GDP(float, 0x13ad0) > 0.0f && GDP(int, 0x13ad4) != 0) {
             zoom = zoom - 0.03f;
             if (zoom < 0.0f) {
@@ -1008,7 +998,7 @@ void Party::tick_stats()
             if (item >= 0) {
                 value = g_items[item].f1fc;
             }
-            f7c = (float)value * g_k_item_weight + f7c;
+            f7c = (float)value * 7.999999e-06f + f7c;
         }
         if (zoom < 0.0f) {
             zoom = 0.0f;
@@ -1218,7 +1208,7 @@ static __forceinline PartyMgr* parties() { return &g_game->parties; }
 void Party::collect_targets(int* out, int* max, int* count)
 {
     *count = 0;
-    float radius = ((float)skill_level(0xd) * 0.1f + 1.0f) * g_seeing_range;
+    float radius = ((float)skill_level(0xd) * 0.1f + 1.0f) * g_module_settings.seeing_range;
     if (g_game->is_night())
         radius = radius * 0.5f;
     unsigned id = (unsigned)parties()->first_party_id();
@@ -1362,7 +1352,7 @@ void Party::plan_order()
                 give_up = true;
             }
             if (a) {
-                NavData* w = g_level->core;
+                NavData* w = ((CellGrid*)g_level)->core;
                 if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                     unsigned k2 = nav_recs()[a->m4].mask();
                     if (flags_lo & 0x200) {
@@ -1463,7 +1453,7 @@ chase:
             give_up = true;
         }
         if (a) {
-            NavData* w = g_level->core;
+            NavData* w = ((CellGrid*)g_level)->core;
             if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                 unsigned k2 = nav_recs()[a->m4].mask();
                 if (flags_lo & 0x200) {
@@ -1520,7 +1510,7 @@ void Party::step_route()
         float ndx = pos.x - d.x;
         float ndy = pos.y - d.y;
         float dist = ndx * ndx + ndy * ndy;
-        if (dist < lim && g_level->core->can_move(cur, pos.x, pos.y, goal, &d.x, 0, tries))
+        if (dist < lim && ((CellGrid*)g_level)->core->can_move(cur, pos.x, pos.y, goal, &d.x, 0, tries))
             cursor = i + 1;
     }
     if (cursor < n) {
@@ -2090,7 +2080,6 @@ struct ScriptState;
 extern ScriptState g_script;                // 0xa70440
 struct MissionCtx;
 extern MissionCtx g_mission_ctx;            // 0xa73300
-extern PartyTemplate* g_party_templates;             // 0x5e29f8 (0xb0-byte rows; +0x3c counts the player's kills)
 
 // @ 0x4b6180
 // Unwind a battle record: both sides leave their battle state (animation stamp, speed, attached parties), the losses are
@@ -2317,14 +2306,10 @@ void Party::leave_battle()
 
 
 // ---- the world-map path finder and the nav drivers ----------------------------------------------------------------------
-extern float g_half;        // 0x549d70 = 0.5f
 extern float g_one;         // 0x549cdc = 1.0f
-extern float g_105;         // 0x59364c = 10.5f
 extern float g_10;          // 0x549d74 = 10.0f
 extern float g_005;         // 0x54b4d0 = 0.05f
 extern float g_vis;         // 0x54a6f0 = 0.01f
-extern float g_scale;       // 0x54a6d0 = 1e-5f
-extern float g_nav_jitter_chance;                    // 0x54b3c4 (0.35)
 
 struct DetailVert { char pad0[0x14]; float x, y, z, w; };   // the 0x24-byte detail vertices of the map mesh (NavData +0x24)
 #define OPEN_BEGIN (*(OpenItem**)&v30.first)         // the open list: a vector<E12> at +0x30 (allocator word, first, last, end)
@@ -2523,19 +2508,19 @@ void BattleRec::update_nav_anim(int)
     }
 
     if (type == 1) {
-        if (opacity > g_half && GDP(char, 0x95) == 0) {
-            if (anim.elapsed() > g_105) {
-                sound = g_sound_mgr.play(g_sound_bank, 0, obj->pos, 1.0f, 0);
+        if (opacity > 0.5f && GDP(char, 0x95) == 0) {
+            if (anim.elapsed() > 10.5f) {
+                sound = g_sound_mgr.play(g_sound_mgr.slot[109], 0, obj->pos, 1.0f, 0);
                 anim.start = g_ticks[anim.clock];
             }
         }
-        if (opacity < g_005 && sound != -1) {
-            if (anim.elapsed() < g_10)
+        if (opacity < 0.05f && sound != -1) {
+            if (anim.elapsed() < 10.0f)
                 FSOUND_StopSound(sound);
         }
         {
             __int64 elapsed = g_ticks[born.clock] - born.start;
-            float secs = (float)elapsed * g_scale;
+            float secs = (float)elapsed * 1e-5f;
             if (next_simulation_time < secs) {
                 next_simulation_time = frand() + g_one;
                 born.start = g_ticks[born.clock];
@@ -2552,7 +2537,7 @@ void BattleRec::update_nav_anim(int)
         rgba[2] = 1.0f;
         rgba[3] = opacity;
         unsigned color = rgl::pack_color((const vector4*)rgba);
-        o->visible = (opacity > g_vis) ? 1 : 0;
+        o->visible = (opacity > 0.01f) ? 1 : 0;
         unsigned i = 0;
         for (;;) {
             int* b = obj->begin;
@@ -2572,7 +2557,7 @@ bool Party::start_path(int from, float tx, float ty)
     int mask_req = 0;
     int mask_ban = 0;
     char mine = (id == g_game->f78);
-    bool ok = g_level->core->find_path(mesh->m4, from, path, detail, &npath, &visited, &from,
+    bool ok = ((CellGrid*)g_level)->core->find_path(mesh->m4, from, path, detail, &npath, &visited, &from,
                                       (unsigned*)&mask_req, (unsigned*)&mask_ban, &mine);
     goal_x = tx;
     goal_y = ty;
@@ -2622,7 +2607,7 @@ void Party::update_nav()
             ly = p[1];
         }
     } else if (kind == 3) {
-        if (!(frand() < g_nav_jitter_chance)) {
+        if (!(frand() < 0.35f)) {
             // keep the destination of the previous frame
         } else {
             int d = tgt_id;
@@ -2683,7 +2668,7 @@ void Party::update_nav()
                 float p4[4];
                 p4[0] = detail[cur * 4 + 4];                 // 0x4b77ac: +0x197c + cur * 16
                 p4[1] = detail[cur * 4 + 5];                 // 0x4b77b3: +0x1980 + cur * 16
-                if (!g_level->core->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
+                if (!((CellGrid*)g_level)->core->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
                     break;
                 cursor = cur + 1;
                 progress++;
@@ -2839,7 +2824,7 @@ void Party::update_hud_text()
     GameData* g = g_game;
     v = *(float*)((char*)g->factions + f70 * 0x300 + 0x2c);
     unsigned color;
-    if (g_show_faction_color != 0) {
+    if (g_module_settings.show_faction_color != 0) {
         t.x = *(float*)((char*)g->factions + f70 * 0x300 + 0x28);
         if (f6c != 0) {
             vector4 tmp = rgl::unpack_color((unsigned*)&t.x);
@@ -2884,7 +2869,6 @@ void Party::update_hud_text()
 
 
 // ---- the party's per-tick update ---------------------------------------------------------------------------------------------
-extern vector4 g_emit_pos;                           // 0xa708c0
 
 // @ 0x4b80d0
 // The per-tick update of a map party: periodic re-planning, steering towards the destination, the nav-mesh probe at the
@@ -3006,15 +2990,15 @@ void Party::tick(float dt)
     face* node = g_game->find_at(&pq.x);
     if (node != 0) {
         unsigned animfield = nav_recs()[node->m4].mask();
-        bool adjacent = ((RiderTable*)g_level->core)->shares(node->m4, mesh->m4) != 0;
+        bool adjacent = ((RiderTable*)((CellGrid*)g_level)->core)->shares(node->m4, mesh->m4) != 0;
         bool commit = false;
         if (flags_lo & 0x200) {
             if ((char)terrain_is_road(animfield)) {
                 commit = true;
             } else if (animfield != 0xf && id == g_game->f78 && 0.05f < GDP(Timer, 0x13a90).elapsed()) {
-                g_emit_pos.x = pq.x;
-                g_emit_pos.y = pq.y;
-                g_emit_pos.z = 0.0f;
+                g_event_pos.x = pq.x;
+                g_event_pos.y = pq.y;
+                g_event_pos.z = 0.0f;
                 g_game->emit_event(0x14, 0, 0);
                 GDP(Timer, 0x13a90).start = g_ticks[GDP(Timer, 0x13a90).clock];
                 kind = 0;

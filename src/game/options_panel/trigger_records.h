@@ -177,15 +177,7 @@ struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
     // CamView::update_model), so this record only overrides slot 0 with its own vfunc.
 };
 
-extern RecCam* g_rec_9c;   // 0xa7399c
-#include "../world_data/world_data.h"   // canonical: g_windows (0xa73980)
-extern RecItem90* g_rec_90;   // 0xa73990
-extern Rec98b* g_rec_88;   // 0xa73988
-extern Rec38* g_rec_a4;   // 0xa739a4
-extern Rec3c* g_rec_c4;   // 0xa739c4
-extern Rec48* g_army_state;   // 0xa739e0
-extern Rec428* g_menu_state;   // 0xa739f4
-extern int g_trial_mode;   // 0x5e29c4
+#include "../window_mgr.h"   // canonical: g_windows (0xa73980); the records are its slots (see trigger_records.cpp)
 extern int g_5e29ac;   // 0x5e29ac
 
 // @ 0x4d0620

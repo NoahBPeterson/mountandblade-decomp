@@ -34,7 +34,7 @@ using rgl::mesh;
 
 #include "../str_table.h"
 #include "../key_names.h"
-extern StrTable g_strtable;                             // 0x5e2a18
+#include "../str_table.h"                          // StrTable g_strtable (0x5e2a18)
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 
@@ -98,6 +98,7 @@ void __fastcall RowModel::erase_all(int unused)   // 0x4d10f0
     }
 }
 #include "../../include/vec_table.h"     // vec_table (8 bytes: data, count; ctor 0x417cb0). It was a 0x260-byte stand-in here.
+#include "../ui_globals.h"      // UI / core globals
 
 // a matrix-array entry of the screen: 3 identity rows + a 4th scale vector (0x40 bytes).
 struct xform {
@@ -110,9 +111,6 @@ struct Timer {
     float elapsed() const;   // 0x432c10 (seconds since the record was touched; include/timer.h)
 };
 
-// ---- the module's string table heads (the 0x8ee3c3c slot read by 0x4ebc10) --------------------------
-extern char* g_save_prefix;             // 0x8ee3c3c (the capture-file prefix; null before init)
-extern int g_module_name;                   // 0x8ee3c38
 
 // 0x4babf0 is a file-local helper: cl's register convention for `static` functions hands it its out
 // pointer in ESI. Defining it here (body shape taken from 0x4babf0) makes the caller emit
@@ -222,15 +220,9 @@ extern GameMgr g_game;                  // 0x5e2930
 // ---- globals --------------------------------------------------------------------------------------------
 extern int g_screenshots_counter;       // 0xa70440
 
-extern int g_module_name;                   // 0x8ee3c38
-extern int g_5a9fb0;                    // 0x5a9fb0 (camera enabled)
-extern int g_a1741c;                    // 0xa1741c (screenshot requested)
-extern int g_a1781c;                    // 0xa1781c (screenshot already done)
 extern int g_a1717c;                    // 0xa1717c
 extern int g_a17190;                    // 0xa17190
 extern int g_a17590;                    // 0xa17590
-extern float g_a178d4;                  // 0xa178d4 mouse dx
-extern float g_a178d8;                  // 0xa178d8 mouse dy
 
 // the DirectInput device at 0xa170d0 is a C-style COM object: its vtable holds function pointers that
 // take the device as their first (stack) argument.  Only Acquire (+0x1c) and GetDeviceData (+0x28) are used.
@@ -242,7 +234,6 @@ struct DiVtbl {
                                     unsigned* count, unsigned flags);                // +0x28
 };
 struct DiDev { DiVtbl* vtbl; };
-extern DiDev* g_a170d0;                 // 0xa170d0 (input device, may be null)
 
 // input records handed back by GetDeviceData (DIDEVICEOBJECTDATA, 0x14 bytes each).
 struct DiObjectData {
@@ -254,13 +245,9 @@ struct DiObjectData {
 };
 
 extern float g_ticks[];                // 0x5e2948 (float pairs: x at [i*2], y at [i*2+1])
-extern float g_four_tenths;             // 0x54b3b8  0.4f
 
 extern float zero;                      // 0x549ca8  0.0f
 extern float g_one;                     // 0x549cdc  1.0f
-extern float g_eps;                     // 0x54a6f0  0.01f
-extern float g_ninety_nine;             // 0x54a5cc  0.99f
-extern float g_seventy_four;            // 0x5985f4  0.74f
 
 // (leave_module 0x4ebb80 is menu_variables_loaded: cs_common.h)
 

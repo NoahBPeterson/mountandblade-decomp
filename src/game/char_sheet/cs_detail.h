@@ -19,7 +19,6 @@ extern "C" void __cdecl mb_snprintf(char*, unsigned, const char*, ...);    // 0x
 #include "../tstring.h"
 
 #include "../str_table.h"
-extern StrTable g_strtable;                         // 0x5e2a18
 
 // translated text of a key (lookup, falling back to the empty string stored in place)
 static const char* str_text(const tstring& key)
@@ -50,11 +49,10 @@ extern ini_file g_config;                           // 0xa44240
 
 // the character texture's text anchors for the level values; the original loads the pointer stored
 // in each global and prints it as a "%s" argument
-extern const char* g_skill_leadership_bonus;                // 0xa18120
-extern const char* g_skill_prisoner_management_bonus;                // 0xa18124
 
 // the character sheet panel (full layout in s004eeb10)
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // 0x4f04f0: the proficiency group name of proficiency idx into buf (another slice)
 void weapon_class_caption(int idx, char* buf);           // 0x4f04f0

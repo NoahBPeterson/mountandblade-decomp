@@ -166,4 +166,7 @@ struct TroopRec : Troop {
 
 typedef char mb_troop_size_chk[sizeof(Troop) == 0x508 && sizeof(TroopRec) == 0x508 ? 1 : -1];
 
+// experience needed to reach level n (n = 1..63; [0] unused): defined in char_sheet/cs_panels.cpp
+extern const int g_level_xp[64];                            // 0x5937c8
+
 #endif // MB_TROOP_H

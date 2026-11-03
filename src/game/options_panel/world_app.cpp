@@ -35,13 +35,13 @@ inline void* operator new(size_t, void* p, raw_place) { return p; }
 inline void operator delete(void*, void*, raw_place) {}
 
 // ---- callees -------------------------------------------------------------------------------------------
-extern tstring g_module_name;                                      // 0x8ee3c38
 extern tstring g_module_path;                                        // 0x8ee3c28
 extern tstring g_module_path_copy;                                   // 0xa75e8c
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 // The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, E176 0xb0) and the std algorithms the original keeps out of line for them;
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
 #include "./elem_calls.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct scalar4 { int v; };                          // e68.h: the 4-byte element of the hash bucket vector
 namespace std {
 template<> E176* _Copy_opt<E176*, E176*>(E176*, E176*, E176*, _Nonscalar_ptr_iterator_tag);   // 0x4cd620
@@ -303,9 +303,9 @@ void restore_defaults()
             tstring s1("ui_no_discard_changes");
             tstring s2("ui_yes_save");
             tstring s3("ui_question_save_changes");
-            const tstring* r1 = ((StrTable*)&orig::g_strtable)->lookup(s1);
-            const tstring* r2 = ((StrTable*)&orig::g_strtable)->lookup(s2);
-            const tstring* r3 = ((StrTable*)&orig::g_strtable)->lookup(s3);
+            const tstring* r1 = g_strtable.lookup(s1);
+            const tstring* r2 = g_strtable.lookup(s2);
+            const tstring* r3 = g_strtable.lookup(s3);
             char* ui = g_windows;
             ((tstring*)(ui + 0x68))->clear();
             *(tstring*)(ui + 0x1c) = *r3;
@@ -478,7 +478,7 @@ void __stdcall FSOUND_3D_SetRolloffFactor(float factor);      // 0x5342ee
 
 // ---- globals -------------------------------------------------------------------------------------------
 extern int g_use_shaders;                                // 0x5e28fc
-extern int g_5e28c8;                                // 0x5e28c8
+#include "../ui_globals.h"      // UI / core globals (g_5e28c8)
 // g_cfg.disable_sound (config/config.h Config +0x40 of g_cfg 0x5a9f98; that header brings d3dapp.h, which would redefine
 // CD3DApplication here)
 #define CFG_DISABLE_SOUND (orig::g_sound_muted)
@@ -504,8 +504,8 @@ GameApp::GameApp()
 
     f350 = 0;
 
-    *(int*)((char*)this + 0x334) = (int)orig::str_m;
-    *(int*)((char*)this + 0x338) = (int)orig::str_mount_and_blade;
+    *(int*)((char*)this + 0x334) = (int)"m";
+    *(int*)((char*)this + 0x338) = (int)"Mount&Blade";
     *(char*)((char*)this + 0x30) = 1;
     *(int*)((char*)this + 0x33c) = 0x190;
     *(int*)((char*)this + 0x340) = 0x12c;
@@ -571,8 +571,12 @@ GameApp::GameApp()
     WL_MARKER(13)
 }
 
+// ---- data this module owns (.bss, no initialiser) ----
+int g_trial_mode;                                   // 0x5e29c4 (set when the game runs as the trial; 6 modules read it)
+
 // @ 0x4d4130
 #include "./config_dialog.h"                      // Dialog: proc 0x4d0240 (the dialog procedure of the application object)
+
 extern Dialog g_app_dialog;                                        // 0x8ee3c48 (the application object)
 int __stdcall wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -593,7 +597,7 @@ struct ini_file {
 };
 int __stdcall   SkinDialog(HWND h, const char* s);       // 0x535446 (SkinMagic SetSingleDialogSkin: stdcall, the callers do not pop)
 
-#define STRTAB ((StrTable*)&orig::g_strtable)
+#define STRTAB (&g_strtable)
 #define UI(s) STRTAB->lookup(tstring(s))
 
 // @ 0x4d4140
@@ -604,9 +608,9 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     switch (msg) {
     case 0xf: {                                             // WM_PAINT
         ((OptionsDlg*)(void*)this)->paint();
-        if (orig::g_trial_mode == 0 && f350 == 0) {
+        if (g_trial_mode == 0 && f350 == 0) {
             f350 = 1;
-            orig::g_trial_mode = 1;
+            g_trial_mode = 1;
         }
         return 1;
     }
@@ -726,10 +730,10 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
             tstring v1;
             tstring v2;
-            if (orig::g_works_with_version_min > 0x3f3) {
+            if (g_module_settings.works_with_version_min > 0x3f3) {
                 MessageBoxA(hwnd, UI("ui_module_newer_than_application")->c_str(), 0, 0x30);
             }
-            else if (orig::g_works_with_version_max < 0x3f3) {
+            else if (g_module_settings.works_with_version_max < 0x3f3) {
                 MessageBoxA(hwnd, UI("ui_module_older_than_application")->c_str(), 0, 0x40);
             }
 

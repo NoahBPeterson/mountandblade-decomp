@@ -81,8 +81,8 @@ void __cdecl build_appearance(AgentBody* b, int kind, int troop, int f94, ItemRe
 
 // ---- globals and engine objects the HUD code uses ---------------------------------------------------------------------
 #include "../gui_mgr.h"                                         // GuiManager: the gui manager at 0x5d7080
+#include "../ui_globals.h"      // UI / core globals
 extern GuiManager g_gui;                                              // 0x5d7080
-extern char g_gui_dirty;                                          // 0x5d8788 (set after a screen was built)
 extern char g_hud_flag;                                           // 0x5e212c (set to 1 by 0x4f7f00)
 extern char g_scene_dirty;                                          // 0x5e2938 (set with 5% probability by 0x4f7f00)
 extern int g_pending_action;                                            // 0x5a9f18 (set to -1)
@@ -187,8 +187,7 @@ extern matrix g_listener;                                         // 0x5aa138 (s
 
 extern int g_use_shaders;                                      // 0x5e28fc
 extern ShadowMap g_shadow_map;                                        // 0xa70248
-extern int g_screen_w;                                            // 0x5d75c8
-extern int g_screen_h;                                            // 0x5d75cc
+#include "../ui_globals.h"      // g_screen_w / g_screen_h (viewport size)
 extern float g_scale_a;                                           // 0x5aa08c
 extern float g_scale_b;                                           // 0x5aa090
 
@@ -461,8 +460,6 @@ struct MWidget {
     ~MWidget();                                                   // 0x4fd3d0
     MapText text_rect();                                          // 0x4fd4f0
 };
-extern const float g_cursor_x;                                    // 0x5d7094 (the pointer position the widgets hit-test against)
-extern const float g_cursor_y;                                    // 0x5d7098
 struct ParamEntry {                                               // 0x2c-byte record of the parameter table at 0xa44240 (the value text at +0x20)
     tstring name;
     char pad10[0x20 - 0x10];
@@ -474,7 +471,6 @@ extern int g_param_count;                                         // 0xa70240
 extern tstring* g_msg_begin;                                      // 0x5e23c4 (the recent-messages ring: 0x10-byte tstrings)
 extern tstring* g_msg_end;                                        // 0x5e23c8
 #include "../str_table.h"                                          // StrTable: lookup 0x43a1e0 (ret 4)
-extern StrTable g_strtable;                                       // 0x5e2a18
 struct UiAInline : MissionUi {};                                  // cls_map/progress_bar.cpp's name for the widget make_short_button returns
 UiAInline* __cdecl make_short_button(MissionUi* frame, const tstring* text, float x, float y, float h);   // 0x4e5570
 struct TStringArray {                                             // an array of tstrings allocated with new[] (the count sits in front of the first element)

@@ -22,6 +22,12 @@
 #include "../../rgl/mesh.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../key_names.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../ui_globals.h"      // UI / core globals
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_skill_clamp;   // 0x8ee3ac4 upper clamp of the skill offset
+
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr
@@ -29,7 +35,7 @@
 #undef g_dlg
 #define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
 #undef g_513710
-#define g_513710    (*(Mgr513710_s25160*)&orig::g_map_flags)
+#define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #undef g_big
 #define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
 // agent record i of the mission (pages of 16, 0x5928 bytes each)
@@ -39,7 +45,7 @@ void Game_s25160::handle_event(int code)
 {
     g_mgr.update();
 
-    if (orig::g_mission_clock != 0)
+    if (g_mission_clock != 0)
     {
         // camera/sky interpolation over the current site's passage table
         char* o = *(char**)(f188 + 0x484);
@@ -47,8 +53,8 @@ void Game_s25160::handle_event(int code)
         float v = (*(float*)(o + 0x168) - *(float*)(o + 0x16c))
                 / (*(float*)(o + 0x170) - *(float*)(o + 0x16c))
                 * (*pa - *(float*)(o + 0x17c))
-                + ((float)orig::g_mission_clock / *pa * *(float*)(o + 0x17c))
-                  * orig::k_0_0005f;
+                + ((float)g_mission_clock / *pa * *(float*)(o + 0x17c))
+                  * 0.0005f;
         ((UiD*)o)->set_value(v);   // 0x48baa0: UiD::set_value, this = the object o (ecx is still o at the call)
         ((VObj_s25160*)o)->v18(0x10000);
     }
@@ -56,9 +62,9 @@ void Game_s25160::handle_event(int code)
     char* b = *(char**)&g_game;
     if (f1204 == *(int*)(b + 0x8c) || *(int*)(b + 0x1a23c) == 0)
         goto hide;
-    if (!(orig::g_mouse_x < *(float*)(f30 + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
+    if (!(((gui_manager*)g_gui)->mouse[0] < *(float*)(f30 + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
         goto hide;
-    if (!(*(float*)(f30 + 0xe4) + orig::k_0_1f < orig::g_mouse_y))
+    if (!(*(float*)(f30 + 0xe4) + 0.1f < ((gui_manager*)g_gui)->mouse[1]))
         goto hide;
     {
         f11e0->v45();
@@ -131,7 +137,7 @@ done:
             refresh(i, &res);
         }
     }
-    else if (orig::g_a17454 == 0 && orig::g_a17854 != 0)
+    else if (g_keyboard.down[0xe0] == 0 && g_keyboard.prev[0xe0] != 0)
     {
         refresh(-2, &res);
     }
@@ -142,12 +148,12 @@ done:
 
     if (v == 1)
         goto case1;
-    if (orig::g_no_cam != 0 && *(int*)&orig::g_a17110 != 0 && *(int*)&orig::g_a17510 == 0)
+    if (g_dev_mode != 0 && *(int*)&orig::g_a17110 != 0 && *(int*)&orig::g_a17510 == 0)
         goto case1;
 
     if (v == 0x10)
     {
-        char* t = *(char**)&orig::g_wE8;
+        char* t = *(char**)(g_windows + 0x68);
         *(int*)(t + 0x18) = 0x10;
         g_dlg.open(0x1a);
         return;
@@ -190,7 +196,7 @@ done:
 
     if (v == 5 || v == 7 || v == 6 || v == 9 || v == 0xa)
     {
-        char* t = *(char**)&orig::g_wB0;
+        char* t = *(char**)(g_windows + 0x30);
         *(int*)(t + 0x18) = 0x10;
         if (v == 5 || v == 6 || v == 7)
         {
@@ -232,7 +238,7 @@ done:
 
     if (v == 0xb || v == 0xc)
     {
-        char* t = *(char**)&orig::g_wBC;
+        char* t = *(char**)(g_windows + 0x3c);
         *(int*)(t + 0x18) = 0x10;
         *(int*)(t + 0x14) = g_conversation_troop;
         *(int*)(t + 4) = (v != 0xb) + 1;
@@ -365,7 +371,7 @@ void ViewObj_s257f0::update()
               (m->o.z - G.z) * (m->o.z - G.z)) > 0.3f ||
         sqrtf((m->u.x - F.x) * (m->u.x - F.x) + (m->u.y - F.y) * (m->u.y - F.y) +
               (m->u.z - F.z) * (m->u.z - F.z)) > 0.1f) {
-        blend = blend - g_look_rate * g_step_tbl[2];
+        blend = blend - 4.0f * g_step_tbl[2];
     }
 
     float t = clamp01_s257f0(1.0f - blend);
@@ -420,7 +426,7 @@ int find_listener_agent()
 
 // ======================================================= slice s005261e0: functions
 #undef g_strtable_s261e0
-#define g_strtable_s261e0 (*(StrTable_s261e0*)g_strtable)
+#define g_strtable_s261e0 g_strtable
 #undef g_gui_s261e0
 #define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
 #undef g_keytable_s261e0
@@ -452,13 +458,12 @@ int find_listener_agent()
 #undef g_w_a739c0_s261e0
 #define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
 #undef g_flags_s261e0
-#define g_flags_s261e0 (*(Flags5e291c_s261e0*)g_map_flags)
+#define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
 #undef g_a73300_s261e0
 #define g_a73300_s261e0 (*(Obj73300_s261e0*)g_mission_ctx)
 #undef g_deque_s261e0
 #define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 #undef g_clamp_max
-extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
 // @ 0x5261e0
 void Screen_s261e0::tick(float dt)
@@ -474,10 +479,10 @@ void Screen_s261e0::tick(float dt)
         EnterCriticalSection(&g_mt_cs);
 
     // ---- key toggles (slow-motion / pause) ----------------------------------------------------------
-    if ((*(int*)((char*)&g_cfg + 0x24))) {
+    if (g_cfg.cheat_mode) {
         if ((((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[67] && !((int*)((char*)&g_keyboard + 0x40c))[67])
             f2e1 = (unsigned char)!f2e1;
-        if ((*(int*)((char*)&g_cfg + 0x24)) && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[87] && !((int*)((char*)&g_keyboard + 0x40c))[87])
+        if (g_cfg.cheat_mode && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[87] && !((int*)((char*)&g_keyboard + 0x40c))[87])
             f2e0 = (unsigned char)!f2e0;
     }
     if (f2e0)
@@ -486,11 +491,11 @@ void Screen_s261e0::tick(float dt)
         sdt = dt * 0.2f;
 
     // ---- scene time-scale blend --------------------------------------------------------------------
-    if ((*(int*)((char*)&g_cfg + 0x24))) {
+    if (g_cfg.cheat_mode) {
         Mission_s261e0* m = g_mission_s261e0;
         if (m->f6810 > 0.0f) {
             __int64 d = g_ticks[m->f6800] - *(__int64*)((char*)m + 0x6808);
-            float r = (float)d * g_f54a6d0;
+            float r = (float)d * 1e-5f;
             r = r / m->f6810;      // 0x52630b..0x526311: fmul then fdiv (the fused expression compiles to fdiv then fmul)
             if (r >= 1.0f) {
                 *(int*)&m->f67f4 = *(int*)&m->f67f8;
@@ -526,7 +531,7 @@ void Screen_s261e0::tick(float dt)
     g_gui_s261e0.flush();
 
     // ---- no-camera position save -------------------------------------------------------------------
-    if ((*(int*)((char*)&g_cfg + 0x18)) && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[18] && !((int*)((char*)&g_keyboard + 0x40c))[18]) {
+    if (g_cfg.enable_edit_mode && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[18] && !((int*)((char*)&g_keyboard + 0x40c))[18]) {
         if (g_game_s261e0->f1a090 != 0) {
             restore_defaults();
             if (g_mt_inited) {
@@ -715,11 +720,11 @@ void Screen_s261e0::tick(float dt)
                 ap = (int*)((char*)ap + 0x6c);
             }
             if (all) {
-                g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_everyone_hear_me")), 0xffddee88);
+                g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_everyone_hear_me")), 0xffddee88);
             } else {
                 char label[512];
                 ((LabelSub_s261e0*)base)->make_label(label);
-                const char* fmt = g_strtable_s261e0.lookup(&tstring("ui_str_hear_me"))->c_str();
+                const char* fmt = g_strtable.lookup(tstring("ui_str_hear_me"))->c_str();
                 char buf[512];
                 sprintf(buf, fmt, label, buf);
                 g_gui_s261e0.add(tstring(buf), 0xffddee88);
@@ -730,10 +735,10 @@ void Screen_s261e0::tick(float dt)
     // ---- region-change / texture timers ------------------------------------------------------------
     {
         __int64 d = g_ticks[f2a8] - f2b0;
-        if ((float)d * g_f54a6d0 > g_f590b38 && g_mission_s261e0->local_id >= 0) {
+        if ((float)d * 1e-5f > g_f590b38 && g_mission_s261e0->local_id >= 0) {
             f29c = 0;
             __int64 d2 = g_ticks[f2b8] - f2c0;
-            if ((float)d2 * g_f54a6d0 > g_f549d7c) {
+            if ((float)d2 * 1e-5f > 0.1f) {
                 f_529ec0();
                 f2c0 = g_ticks[f2b8];
             }
@@ -798,7 +803,7 @@ void Screen_s261e0::tick(float dt)
         }
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x18)) && ((int*)((char*)&g_keyboard + 0xc))[56] && ((int*)((char*)&g_keyboard + 0xc))[38] == 0 && ((int*)((char*)&g_keyboard + 0x40c))[38] != 0)
+    if (g_cfg.enable_edit_mode && ((int*)((char*)&g_keyboard + 0xc))[56] && ((int*)((char*)&g_keyboard + 0xc))[38] == 0 && ((int*)((char*)&g_keyboard + 0x40c))[38] != 0)
         ((TerrainX*)g_mission_s261e0)->light_entities((rgl::mesh**)((char*)g_mission_s261e0 + 0x6340), g_mission_s261e0->f633c);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
 
     if (f2d8 == 0) {
@@ -856,13 +861,13 @@ void Screen_s261e0::tick(float dt)
                     f2dc = -1;
                     // 0x527591: ecx = [0xa73980] (the dialog box the menu points to), unlike set_state/open (ecx = 0xa73980)
                     (*(MainMenu_s261e0**)g_windows)->setup2(
-                        g_strtable_s261e0.lookup(&tstring("ui_question_leave_area")),
-                        g_strtable_s261e0.lookup(&tstring("ui_yes")),
-                        g_strtable_s261e0.lookup(&tstring("ui_no")),
+                        g_strtable.lookup(tstring("ui_question_leave_area")),
+                        g_strtable.lookup(tstring("ui_yes")),
+                        g_strtable.lookup(tstring("ui_no")),
                         &f2dc);
                     g_main_menu_s261e0.open(0);
                 } else {
-                    g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_cant_retreat_there_are_enemies_nearby")),
+                    g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_cant_retreat_there_are_enemies_nearby")),
                               0xffff3344);
                 }
             }
@@ -888,7 +893,7 @@ void Screen_s261e0::tick(float dt)
     if (g_presentation != 0) {
         ((Src_s261e0*)((char*)this + 0x30))->pick((int*)&val14);
         __int64 d = g_ticks[f48] - f50;
-        if ((float)d * g_f54a6d0 > f58) {
+        if ((float)d * 1e-5f > f58) {
             g_presentation = 0;
             if (f34 != 0)
                 operator delete(f34);
@@ -955,7 +960,7 @@ void Screen_s261e0::tick(float dt)
         }
 
         if (any_pressed_s261e0(g_keys_73c0, 2) && g_game_s261e0->b18 == 0) {
-            if (g_show_quest_notes == 0) {
+            if (g_module_settings.show_quest_notes == 0) {
                 g_w_a739b4_s261e0->f18 = 0xe;
                 g_w_a739b4_s261e0->f4 = 0;
                 g_main_menu_s261e0.set_state(0xd);
@@ -991,7 +996,7 @@ void Screen_s261e0::tick(float dt)
             if (!g_mission_s261e0->mode_flag1() && g_game_s261e0->b18 == 0) {
                 quick_save_msg();
             } else {
-                g_gui_s261e0.add(*g_strtable_s261e0.lookup(&tstring("ui_cant_quick_save")), 0xffffffff);
+                g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_cant_quick_save")), 0xffffffff);
             }
             goto after;
         }
@@ -1015,7 +1020,7 @@ void Screen_s261e0::tick(float dt)
         if (g_game_s261e0->f13af4 < 0)
             goto after;
         g_a73300_s261e0.f_5295a0();
-        g_a7333c |= 8;
+        g_a73300_s261e0.f3c |= 8;
         g_flags_s261e0.commit((char*)&flag13);
         goto unlock;
     }
@@ -1489,13 +1494,13 @@ void ViewCtrl_s284a0::update(float dt)
         fov = limit;
 
     // ---- the "use / attack" keys walk the agent table and hit the agent under the crosshair ---------
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_a171d0 != 0 && g_a175d0 == 0) {
+    if (g_cfg.cheat_mode != 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) && g_a171d0 != 0 && g_a175d0 == 0) {
         Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
         int old = t->f7c;
         t->f7c = (old == 2) ? 1 : 2;
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_key_names_s284a0.is_ready(0x3e)) {
+    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_key_names_s284a0.is_ready(0x3e)) {
         AgentTable_s284a0* t = &g_mission_s284a0->agents;
         bool done = false;
         unsigned i = t->first_used();
@@ -1516,7 +1521,7 @@ void ViewCtrl_s284a0::update(float dt)
         }
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171d4 != 0 && g_a175d4 == 0) {
+    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171d4 != 0 && g_a175d4 == 0) {
         AgentTable_s284a0* t = &g_mission_s284a0->agents;
         bool done = false;
         unsigned i = t->first_used();
@@ -1538,7 +1543,7 @@ void ViewCtrl_s284a0::update(float dt)
         }
     }
 
-    if ((*(int*)((char*)&g_cfg + 0x24)) != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171c8 != 0 && g_a175c8 == 0) {
+    if (g_cfg.cheat_mode != 0 && (*(int*)((char*)&g_keyboard + 0x80)) != 0 && g_a171c8 != 0 && g_a175c8 == 0) {
         Blow_s284a0 b;
         b.f48 = 2;
         b.f38 = 0;
@@ -1549,7 +1554,7 @@ void ViewCtrl_s284a0::update(float dt)
     }
 
     if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) {
-        if (g_a17160 != 0 && g_a17560 == 0 && (*(int*)((char*)&g_cfg + 0x24)) != 0) {
+        if (g_a17160 != 0 && g_a17560 == 0 && g_cfg.cheat_mode != 0) {
             Agent_s284a0* t = AGENT(g_mission_s284a0->selected);
             t->f5724 = t->f5720;
         }
@@ -1568,7 +1573,7 @@ void MissionHud_s29130::update_marks()
 {
     Agent_s29130* a = &g_scene_s29130->agents.pages[g_scene_s29130->cur_agent_s29130 >> 4][g_scene_s29130->cur_agent_s29130 & 0xf];
 
-    float y = (g_half / tanf(f288 * g_deg2rad * g_half)) * tanf(a->aim_error);
+    float y = (0.5f / tanf(f288 * g_deg2rad * 0.5f)) * tanf(a->aim_error);
 
     float p[2];
     p[0] = 0.5f;
@@ -1582,7 +1587,7 @@ void MissionHud_s29130::update_marks()
     float s = (float)sin(2.268928f);
     float nx = p[0] * c - p[1] * s;
     float ny = p[0] * s + p[1] * c;
-    p[0] = nx + g_half;
+    p[0] = nx + 0.5f;
     p[1] = ny + g_0375;
     w[1]->set_pos(p);
 
@@ -1592,7 +1597,7 @@ void MissionHud_s29130::update_marks()
     s = (float)sin(-2.268928f);
     nx = p[0] * c - p[1] * s;
     ny = p[0] * s + p[1] * c;
-    p[0] = nx + g_half;
+    p[0] = nx + 0.5f;
     p[1] = ny + g_0375;
     w[2]->set_pos(p);
 
@@ -1652,7 +1657,7 @@ void MissionHud_s29130::update_marks()
     for (int i = 0; i < 7; i++) {
         float step = g_step_tbl[0] * (i < 3 ? 0.5f : 2.5f);
         if (target[i] > color[i]) {
-            color[i] += step * g_1p2;
+            color[i] += step * 1.2f;
             if (color[i] > target[i]) color[i] = target[i];
         } else if (target[i] < color[i]) {
             color[i] -= step;
@@ -1862,7 +1867,7 @@ void Mission_s29840::fn_529d80()
 #undef g_gui_s29ec0
 #define g_gui_s29ec0 (*(gui_manager_s29ec0*)g_gui)
 #undef g_strtable_s29ec0
-#define g_strtable_s29ec0 (*(StrTable_s29ec0*)g_strtable)
+#define g_strtable_s29ec0 g_strtable
 #undef g_items_s29ec0
 #define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
 #undef g_game_s29ec0
@@ -2238,7 +2243,7 @@ no_selection:
 #undef g_gui_s2ae70
 #define g_gui_s2ae70 (*(gui_manager_s2ae70*)g_gui)
 #undef g_strtable_s2ae70
-#define g_strtable_s2ae70 (*(StrTable_s2ae70*)g_strtable)
+#define g_strtable_s2ae70 g_strtable
 #undef g_mission_s2ae70
 #define g_mission_s2ae70 (*(Mission_s2ae70**)&g_mission)
 // @ 0x52ae70
@@ -2339,7 +2344,7 @@ void Screen_s2ae70::order_tick()
     int kind = a->kind;
     if (kind < 0 || kind >= 8)
         kind = 7;
-    if ((*(int*)((char*)&g_cfg + 0x24)) && g_a1717c && (*(int*)((char*)&g_keyboard + 0x80)))
+    if (g_cfg.cheat_mode && g_a1717c && (*(int*)((char*)&g_keyboard + 0x80)))
         kind = 1;
 
     m->order(kind, f2a0);
@@ -2364,7 +2369,7 @@ void Screen_s2ae70::draw_order_menu()
 
     {
         tstring s("ui_order_group");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.035f, 0xfff0e0d0, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.035f, 0xfff0e0d0, 1);
     }
 
     unsigned base = (f29c == 1) ? 0xffffffff : 0xff50ff60;
@@ -2373,37 +2378,37 @@ void Screen_s2ae70::draw_order_menu()
     c = (f2a0 == 0) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_hold");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 1) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_follow");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 2) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_charge");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 3) ? base : 0xffd0d0d0;
     {
         tstring s("ui_mount");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 4) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_dismount_toggle");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(((StrTable*)&g_strtable_s2ae70)->lookup(s), 0.03f, c, 1);
+        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 }
 
 // ======================================================= slice s0052b5c0: functions
 #undef g_strtable_s2b5c0
-#define g_strtable_s2b5c0 (*(StrTable_s2b5c0*)g_strtable)
+#define g_strtable_s2b5c0 g_strtable
 #undef g_gui_s2b5c0
 #define g_gui_s2b5c0 (*(Gui_s2b5c0*)g_gui)
 #undef g_items_s2b5c0

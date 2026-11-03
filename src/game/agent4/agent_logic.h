@@ -43,6 +43,7 @@ bool is_night();                                         // 0x435740 (agent/agen
 struct PlacedObj;
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (agent/agent.cpp)
 #include "../std_vec_out_of_line.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 // 0x43e7b0: the out-of-line std::vector<int>::_Insert_n shared by the pointer vectors
 
 // 0x1f8-byte voice records (table object at 0x8ed4f60: records at +0x1c, count at +0x28; 0x4459c0 reads snd[kind] at +0x1cc)
@@ -60,7 +61,8 @@ struct VoiceTable {
         return -1;
     }
 };
-extern VoiceTable g_anim_table;                             // 0x8ed4f60
+#include "../animator.h"                            // Animator g_anim (0x8ed4f60): the voice table is the same object
+#define g_anim_table (*(VoiceTable*)&g_anim)         // g_anim seen as the voice table (recs at +0x18, count at +0x28)
 
 // ---- free functions of earlier objects the module calls -------------------------------------------------------------
 float frand();                                                          // 0x40e400 (rand() % 15817) / 15817
@@ -201,9 +203,6 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                                   
 struct V4 { float x, y, z, w; };               // constructor-free storage for the local arrays of start_ragdoll
 struct M4 { V4 s, f, u, o; };
 
-extern float g_missile_damage_speed_power;                   // 0xa18194
-extern float g_melee_damage_speed_power;                   // 0xa18198
-extern float g_couched_lance_damage_multiplier;             // 0xa181a0
 extern int g_ui_enabled;                // 0x5aa060
 
 // ---- the blow record (0x58 bytes; agent/agent.h calls it RecZSubB with the fields m0..m54 and the initialiser 0x4353a0, which the
@@ -251,8 +250,6 @@ extern int g_sound_blood;                           // 0x5aa2e4
 extern int g_tick_a;                                // 0x5aa048
 extern int g_tick_b;                                // 0xa18234
 float __cdecl capsule_sphere_gap(capsule* c, sphere* s);   // 0x409d20
-extern float g_armor_soak_factor_against_cut[3];                          // 0xa1817c
-extern float g_armor_reduction_factor_against_cut[3];                          // 0xa18188
 
 
 #endif // AGENT4_LOGIC_H

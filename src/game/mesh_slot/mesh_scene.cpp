@@ -43,16 +43,12 @@ float frand();                                   // 0x40e400
 // constants of the projectile code
 extern float g_f54b3b4;        // 0x54b3b4 (0.8f: reach without an item)
 extern float g_f54b708;        // 0x54b708 (per-tick gravity coefficient)
-extern float g_f54a6f0;        // 0x54a6f0 (0.01f)
 extern float g_f590fa4;        // 0x590fa4 (1.7f: first-sample distance)
 extern float g_f590e68;        // 0x590e68 (0.23f)
 extern float g_f549cdc;        // 0x549cdc (1.0f)
 extern float g_f591334;        // 0x591334 (20.0f)
 extern float g_f590c74;        // 0x590c74 (0.08f)
 extern float g_f59190c;        // 0x59190c (0.92f)
-extern float g_f54a6d0;        // 0x54a6d0 (1e-5f)
-extern float g_f590c90;        // 0x590c90 (40.0f)
-extern float g_f590d94;        // 0x590d94 (0.6f)
 extern float g_f591908;        // 0x591908 (0.0027f)
 extern float g_f54b660;        // 0x54b660 (0.0001f)
 extern float g_f54b8b0;        // 0x54b8b0 (1.5f)
@@ -359,7 +355,7 @@ void MissileU::update(float dt)
     if (troop < 0)
         d.z = g_f54b3b4;
     else
-        d.z = (float)g_items[troop].weight * g_f54a6f0;
+        d.z = (float)g_items[troop].weight * 0.01f;
     pb.x = d.z * vel.x;
     d.y = d.z * vel.y;
     d.z = d.z * vel.z;
@@ -413,9 +409,9 @@ void MissileU::update(float dt)
                             else if (sub == 0x40000) snd = 0x31;
                             else if (sub == 0x20000) snd = 0x34;
                         }
-                        tmp = tmp * g_f54a6f0 + frand() * g_f590c74 + g_f59190c;
+                        tmp = tmp * 0.01f + frand() * g_f590c74 + g_f59190c;
                         sound = g_sound_mgr.play(g_sound_ids[snd], 0, &pa.x, tmp, 0);
-                        sound_t = (float)g_ticks[0] * g_f54a6d0;
+                        sound_t = (float)g_ticks[0] * 1e-5f;
                     }
                 }
             }
@@ -451,7 +447,7 @@ void MissileU::update(float dt)
         pb.x = ms_->view.o.x - pos.x;
         pb.y = ms_->view.o.y - pos.y;
         pb.z = ms_->view.o.z - pos.z;
-        if (pb.normalize() < g_f590c90) {
+        if (pb.normalize() < 40.0f) {
             int m = mode;
             int snd = -1;
             if (m == 1 || m == 3 || (m == 0 && shooter == (unsigned)ms_->player_id)) {
@@ -468,7 +464,7 @@ void MissileU::update(float dt)
                     else snd = (-(unsigned)(m != 1) & 7) + 0x3c;
                 }
             }
-            if (sound >= 0 && (float)g_ticks[0] * g_f54a6d0 - g_f590d94 < sound_t)
+            if (sound >= 0 && (float)g_ticks[0] * 1e-5f - 0.6f < sound_t)
                 FSOUND_StopSound(sound);
             if (snd >= 0)
                 g_sound_mgr.play(g_sound_ids[snd], 0, &pos.x, 1.0f, 0);

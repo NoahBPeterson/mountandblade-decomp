@@ -8,19 +8,15 @@
 #include "../game_globals.h"      // canonical g_script_error
 #include "../../include/game_data.h"
 
-extern unsigned g_reg_lo[];                         // 0xa70490 (register pair table: 8 bytes apart)
-extern int g_reg_hi[];                              // 0xa70494
+struct ScriptReg { unsigned lo; int hi; };          // one 64-bit script register (the interpreter reads / writes the halves separately)
+extern ScriptReg g_registers[0x80];                 // 0xa70490 the script registers (reg_0 .. reg_127; defined in camera.cpp)
 struct VarTable {
     int get(int id);                                // 0x48d690
     void set40(int id, int v);                        // 0x493db0
 };
 struct ScriptState;
 extern ScriptState g_script;                        // 0xa70440 (seen through VarTable below)
-extern int g_cur_opcode;                            // 0x5e25a0
-extern int g_cur_param;                             // 0x5e2590
-struct Config;
-extern Config g_cfg;                        // 0x5a9f98 (config.h cannot be included here)
-extern int g_lineno;                                // 0x5e2598  script line number
+#include "../config/config_block.h"           // Config g_cfg (0x5a9f98)
 // report(msg) (0x49cc60): a file-static of the original translation unit (msg in ecx); camera.cpp has a local copy of
 // src/game/script/script_interpreter.cpp's definition, as for check_party (0x49d160).
 int __fastcall size(void* p);             // 0x40f010 (count = (last-first)>>2)
@@ -51,7 +47,6 @@ struct ScriptEmitter {
     char pad34[0x34 - 0x18 - sizeof(DialogBlock)];
 };
 extern ScriptEmitter* g_scripts;               // 0xa75eb0
-extern int g_emitter_count;                     // 0xa75eb4
 
 // The goto/branch stack object (local_410 of emit): 0x400 bytes of entries, then the depth counter at +0x400
 // (read by 0x488e60 / 0x49d7f0 / 0x49f7c0; the emitter only tests it against 0) and one more dword. Both

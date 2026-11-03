@@ -7,7 +7,10 @@
 #include "../game/tstring.h"
 
 struct MsgLog {
-    char pad0[0x1714];
+    char pad0[0x10];
+    void* ui_active;                                    // +0x10 the widget being dragged (g_ui_active 0x5d7090; strat/gui_manager.h)
+    float mouse[2];                                     // +0x14 the pointer position (0x5d7094 / 0x5d7098)
+    char pad1c[0x1714 - 0x1c];
     char enabled;                                       // +0x1714
     char pad1715[0x171c - 0x1715];
     float total_h;                                      // +0x171c summed height of the visible lines (0x452c00)

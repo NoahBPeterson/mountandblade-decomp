@@ -5,6 +5,7 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
+#include "../window_mgr.h"      // g_windows slot 21 (0xa739d4)
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
 #include "../config/config.h"
 #include "../config/widget_mgr.h"
@@ -18,7 +19,6 @@
 
 // ---- 0x4e3eb0: the progress bar widget (vtable 0x597f20) -----------------------------------------------------------------------
 extern const float g_progressbar_scale;         // 0x590e0c-ish constant 0.01f (the ctor stores it as the initial value)
-extern const float g_min_ratio;                 // 0x54a6f0 = 0.01f
 extern const float g_max_ratio;                 // 0x549cdc = 1.0f
 
 // @ 0x4e3eb0
@@ -43,9 +43,9 @@ void progress_bar::draw_label(rgl::scene* sc, float* count, int c, int d)
 // @ 0x4e3f60
 void progress_bar::set_ratio(float r)
 {
-    if (r < g_min_ratio) {
+    if (r < 0.01f) {
         f184 = 1;
-        v168 = g_min_ratio;
+        v168 = 0.01f;
         return;
     }
     v168 = (r > g_max_ratio) ? g_max_ratio : r;
@@ -82,6 +82,8 @@ void progress_bar::update()
 // the whole-class instantiation below also emits vector(n) / resize(n), which default-construct one; they reach the record's
 // constructor (0x4d3640, the one definition: options_panel/ragdoll_models.cpp) through this forwarder.
 #include "../model_b.h"
+#include "../module_name.h"      // g_module_name (0x8ee3c38)
+#include "../ui_globals.h"      // UI / core globals
 inline loading_config::loading_config() { new ((void*)this) model_b; }
 template class std::vector<E50>;
 template class std::vector<E68>;
@@ -99,7 +101,6 @@ extern const float g_half_ratio;                // 0x549d78
 extern const float g_ratio_a;                   // 0x597fec
 extern const float g_ratio_b;                   // 0x597fe8
 extern const float g_pad_out;                   // 0x590cd0
-extern const float g_pad_in;                    // 0x54a6f0
 
 // @ 0x4e43e0
 void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
@@ -152,8 +153,8 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     float at[2];
     sz[0] = w + g_pad_out;
     sz[1] = h + g_pad_out;
-    at[0] = lo.x - g_pad_in;
-    at[1] = lo.y - g_pad_in;
+    at[0] = lo.x - 0.01f;
+    at[1] = lo.y - 0.01f;
     ((FrameGui*)self)->set_rect(at, sz);
     int v[2];
     v[0] = *(int*)((char*)self + 0x16e8);          // the view pair at +0x16e8 (0x4e45c0), not +0x16e0
@@ -208,10 +209,8 @@ void RagModel::load(TiXmlElement* e)
 }
 
 // ---- 0x4e4790: the save / load screen ----------------------------------------------------------------------------------------------
-extern tstring g_module_name;               // 0x8ee3c38 (the save-directory prefix string)
 extern int g_compatible_module_version;                          // 0x5e29b8
 extern float g_time_scale;                      // 0x590e28
-extern const float g_minus_one;                 // 0x549ca8 (-1.0f)
 extern "C" int __cdecl sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 // The screen searches the settings table by hand: it walks 0x2c bytes at a time from 0xa44240, calls tstring::equals (0x42bdd0) on each
@@ -245,7 +244,7 @@ static __forceinline float config_value(int i)
 // @ 0x4e4790
 void SaveWindow::init()
 {
-    is_load = (*(int*)(*(char**)&orig::g_a739d4 + 0x18) == 5);
+    is_load = (*(int*)(slot_as<char>(21) + 0x18) == 5);
     g_gui.reset();
 
     NEW_OVERLAY_WINDOW(w)
@@ -318,7 +317,7 @@ void SaveWindow::init()
 
     {
         void* root = window;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(root);
     }
 }
@@ -453,7 +452,7 @@ __declspec(noinline) float ini_file::get_float(int* idx)
 {
     int i = *idx;
     if (i < 0 || i >= count)
-        return g_minus_one;
+        return 0.0f;
     char* e = (char*)this + 0x1c + 0x2c * i;
     char* v = *(char**)(e + 4);
     return (float)atof(v ? v : e + 4);
@@ -749,7 +748,7 @@ void SaveWinCtl::create()
     vt(win)->d25(u.v);
     block.init(win, *(int*)((char*)g_game + 0x13b04));
     u.root = win;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(u.root);
 }
 
@@ -779,7 +778,7 @@ void SaveWinCtl::create2()
         vt(win)->d31(0, res_get(n)->clone());
     }
     void* root = win;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(root);
 }
 

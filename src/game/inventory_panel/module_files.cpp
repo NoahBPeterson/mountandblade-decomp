@@ -32,6 +32,8 @@ char g_path[0x100];                            // 0x8ee41f0
 int g_map_icon_count;   // 0x5e29f4
 int g_mission_template_count;   // 0x5e2a04
 
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/game_recs.h"
 struct stream_root {
     virtual void reset();                            // slot 0
     virtual void rewind();                           // 1
@@ -171,7 +173,7 @@ struct music_set {
     void load(stream_base* s, int count, const tstring* path);   // 0x4c4340 (rgl/mesh2/rec_tables.h: SoundTable::load)
 };
 #include "../emit.h"
-struct AnimTable { char pad; };                      // 0x8ed4f60
+#include "../animator.h"                          // Animator g_anim (0x8ed4f60): the skin table skins.txt is read into
 struct AccessStream;
 struct mesh_scene {
     void read(AccessStream* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
@@ -212,7 +214,6 @@ struct csv_row {
 
 extern SoundTable g_sound_mgr;                          // 0x5aa128
 extern EmitTable g_emit_defs;                        // 0x8ed5090
-extern AnimTable g_anim_table;                            // 0x8ed4f60
 extern TableauTable g_tableaus;                       // 0xa75f40
 extern PresentationTable g_presentations;            // 0xa75f2c
 extern ScriptTable g_scripts;                        // 0xa75eb0
@@ -236,7 +237,7 @@ extern MissionObj* g_propkinds;                       // 0x5e29dc
 extern int g_menu_count;                             // 0x5e29b4
 extern MenuRec* g_menus;                             // 0x5e29b0
 
-extern MapIcon* g_map_icons;                         // 0x5e29f0
+MapIcon* g_map_icons;                               // 0x5e29f0 (.bss) the map-icon table, built by the loader below
 
 extern int g_item_kind_count;                             // 0x5e29d4
 extern ItemKind* g_items;                            // 0x5e29d0
@@ -244,7 +245,9 @@ extern ItemKind* g_items;                            // 0x5e29d0
 extern ModeRec* g_mission_templates;                             // 0x5e2a00
 
 extern int g_party_template_count;                   // 0x5e29fc
-extern PartyTplRec* g_party_templates;                  // 0x5e29f8
+
+// ---- data this module owns (docs/standalone_data.md) ----
+PartyTemplate* g_party_templates;                    // 0x5e29f8 (.bss) the party-template table, built by the loader below
 
 // ---------------------------------------------------------------- loader
 
@@ -275,7 +278,7 @@ void load_module_files()
     in_sounds.r_tstr(&str1);
     in_sounds.r_tstr(&str2);
     in_sounds.r_int(&version);
-    ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_scan_module_sounds, &g_module_path);
+    ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_module_settings.scan_module_sounds, &g_module_path);
     g_loaded_sound_count = *g_sound_mgr.p4;
     s_sounds.failed = 1;
 
@@ -294,7 +297,7 @@ void load_module_files()
     in_skins.r_tstr(&str1);
     in_skins.r_tstr(&str2);
     in_skins.r_int(&version);
-    ((mesh_scene*)&g_anim_table)->read((AccessStream*)&s_skins);
+    ((mesh_scene*)&g_anim)->read((AccessStream*)&s_skins);
     s_skins.failed = 1;
 
     // scene_props.txt
@@ -440,7 +443,7 @@ void load_module_files()
         conv_item_array_dtor((conv_rec*)g_party_templates, 0, 3);
         g_party_templates = 0;
     }
-    g_party_templates = new PartyTplRec[g_party_template_count];
+    g_party_templates = (PartyTemplate*)new PartyTplRec[g_party_template_count];
     for (int i = 0; i < g_party_template_count; i++)
         ((sound_def*)&g_party_templates[i])->save(*(stream_base*)&s_party);
     s_party.failed = 1;

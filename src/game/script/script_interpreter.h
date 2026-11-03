@@ -21,6 +21,7 @@
 #include "../../include/vec.h"                  // Vec2
 #include "../../include/msg_log.h"             // MsgLog: the on-screen message log (add 0x452c00, push 0x4334b0)
 #include "../../include/sound_mgr.h"           // SoundMgr: play 0x442650
+#include "../ui_globals.h"      // UI / core globals
 
 
 // ---- callees declared under the class that defines them ---------------------------------------------------------------------
@@ -163,10 +164,7 @@ inline int fbits(float f) { return *(int*)&f; }
 #define SI_ASSERT(name, cond) typedef char si_assert_##name[(cond) ? 1 : -1]
 
 // ---- the interpreter's own globals ----------------------------------------------------------------------------
-extern int g_lineno;            // 0x5e2598  line of the statement being run (report)
-extern int g_script_error;      // 0x5e259c  set by report(); copied to *error at the end of execute
-extern int g_cur_opcode;        // 0x5e25a0  opcode word of the statement being run (validators print it)
-extern int g_or_latch;          // 0x5e25a4  this_or_next chain already satisfied: skip until the chain ends
+#include "./script_globals.h"   // g_cur_param, g_lineno, g_script_error, g_cur_opcode, g_or_latch (defined in script_interpreter.cpp)
 
 // ---- counters and small tables (bounds of the validators) -----------------------------------------------------
 extern int g_presentation_count;        // 0xa75f30 (check_presentation 0x49cd50)
@@ -225,8 +223,6 @@ extern tstring g_result_string;         // 0xa70464 (set_result_string 0x49fce6)
 #include "../game_keys.h"            // GameKeys g_game_keys (0xa73730)
 __forceinline char GameKeys::is_down(int key) { return ((OriginPairs*)this)->is_down(key); }   // 0x48ac50 (thiscall, ret 4)
 __forceinline char GameKeys::clicked(int key) { return ((OriginPairs*)this)->clicked(key); }   // 0x48ac90
-extern float g_mouse_x;                 // 0x5d7094 (mouse_get_position 0x49fe7f)
-extern float g_mouse_y;                 // 0x5d7098
 
 // the window/screen stack (a deque of screen ids; 0x10 = conversation)
 struct ScreenStack {
@@ -465,7 +461,6 @@ struct SceneRec {
 };
 SI_ASSERT(scene_size, sizeof(SceneRec) == 0x494);
 SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
-extern PartyTemplate* g_party_templates;     // 0x5e29f8 (0xb0-byte records; PartyTemplate in src/include/game_recs.h)
 // ItemKindX: view of the item kind record (ItemKind in src/game/agent/item_kind.h, array g_items 0x5e29d0)
 struct ItemKindX {
     char pad0[0x30];
@@ -487,7 +482,6 @@ __forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; 
 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
-extern int g_text_log_enabled;          // 0x5a9fb0 (display_message 0x4a305a)
 
 // ---- map battles (table at game +0xcc) ---------------------------------------------------------------------------
 #include "../battle_rec.h"            // BattleRec, BattleTable: the one definition (party2 and script)
@@ -666,11 +660,12 @@ extern int g_encountered_party;         // 0x8ed50d8 (g_dialogs +0x10; party_can
 extern int g_siege_attack;              // 0xa73438 (store_defender_count 0x4ae36e)
 extern int g_conversation_agent;        // 0x8ed50dc (g_dialogs +0x14; store_conversation_agent)
 struct MissionUiX {
+    char pad0[0x2c4];
+    int passage_menu;                    // +0x2c4 (set_passage_menu 0x4a55f3)
     __forceinline void select_side(int side) { ((BattleW*)this)->select_side(side); }        // 0x492750 (thiscall, ret 4)
 };
 extern MissionUiX g_mission_ctx;         // 0xa73300
 extern int g_battle_advantage;           // 0xa7331c (set_battle_advantage 0x4a87af)
-extern int g_passage_menu;              // 0xa735c4 (set_passage_menu 0x4a55f3)
 extern int g_menu_b;                    // 0x5e2924 (jump_to_menu 0x4ac3a0)
 struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)

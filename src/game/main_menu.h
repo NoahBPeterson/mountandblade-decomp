@@ -55,7 +55,6 @@ struct main_menu {
 };
 typedef main_menu MainMenu;
 extern main_menu g_main_menu;                                   // 0xa73980  // old name of g_windows, removed after the names merge
-// The object at 0xa73980 is the window manager: 30 screen-object pointers (slot k at +4k). A slot as the class the caller works with.
-template <class T> inline T*& window_slot(int k) { return ((T**)&g_main_menu)[k]; }
+// The object at 0xa73980 is the window manager (window_mgr.h: WindowMgrW g_windows); slot_as<T>(i) there names a screen slot.
 
 #endif // MB_GAME_MAIN_MENU_H

@@ -14,6 +14,7 @@
 #include <math.h>
 #include <string.h>
 #include "./game_2.h"
+#include "../../include/troop.h"          // g_level_xp
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../party/game.h"
@@ -30,6 +31,8 @@ void __fastcall tstring_ctor(tstring* p);                      // 0x42bbd0 (tstr
 #include "../../rgl/resource.h"
 #include "../../rgl/rgl_math.h"
 #include "../../include/iface.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../party/nav_graph.h"      // g_nav (0xa732b8)
 
 // ---- the map object (0xa732b8): vertex and group vectors of the ground geometry ---------------------------------------
 // The records and vectors are the ones world_grid.cpp (rgl/dynamic) defines: ground_v36 (0x24 bytes: position, normal, a flag) and ground_g136
@@ -56,7 +59,6 @@ struct MapStore {                                               // the global ma
     ground_v36* edge_first; ground_v36* edge_last; ground_v36* edge_end;   // +0x20 vector<GeomEdge> (0x24-byte edges; PolyGeom::edges in mesh_pass.cpp)
     char pad30[0x68 - 0x30];
 };
-extern MapStore* g_nav;                                         // 0xa732b8
 
 stream_base* read_map(stream_base* s, MapStore* map);           // 0x520c00
 
@@ -64,13 +66,13 @@ stream_base* read_map(stream_base* s, MapStore* map);           // 0x520c00
 void Game::build_map()
 {
     if (!g_new_game_done) {
-        g_nav = (MapStore*)new NavCore();
+        g_nav = (NavGraph*)new NavCore();
         file_text s;
         const char* path = MODULE_PATH("map.txt");
         if (!OPEN_READ_TEXT(s, path))
             mb_error("Unable to open %s", path);
         if (!s.failed) {
-            read_map(&s, g_nav);
+            read_map(&s, (MapStore*)g_nav);
             s.failed = 1;
         }
     }
@@ -118,7 +120,7 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
 void Game::build_scene()
 {
     GameMapView* self = (GameMapView*)this;
-    CellGrid* world = g_level;
+    CellGrid* world = (CellGrid*)g_level;
     if (g_new_game_done) {
         for (int i = 0; i < g_page_rows; i++) {
             char* row = g_map_pages + i * 4;
@@ -274,7 +276,7 @@ struct MapObjView {
 void Game::build_map_trees()
 {
     GameMapView* self = (GameMapView*)this;
-    MapNav* mgr = (MapNav*)g_level->core;
+    MapNav* mgr = (MapNav*)((CellGrid*)g_level)->core;
 
     // ---- A: reset the four per-material mesh vectors -----------------------
     for (int v = 0; v < 4; v++) {
@@ -286,8 +288,8 @@ void Game::build_map_trees()
 
     void* cam = self->wind;                                                   // +0x139dc
     // 0x521473..0x5214ba: the two map directions are floats (fld, not fild); ang_a [esp+0xe8], ang_b [esp+0x11c]
-    float ang_a = g_map_sea_direction * 3.1415927f * 0.0055555557f;                         // deg -> rad
-    float ang_b = g_map_river_direction * 3.1415927f * 0.0055555557f;
+    float ang_a = g_module_settings.map_sea_direction * 3.1415927f * 0.0055555557f;                         // deg -> rad
+    float ang_b = g_module_settings.map_river_direction * 3.1415927f * 0.0055555557f;
 
     rgl::vector4 dir;
     dir.x = -*(float*)((char*)cam + 0x44);
@@ -366,8 +368,8 @@ void Game::build_map_trees()
             MapEdge* ed = &mgr->edges[e];
             int a = ed->a, b = ed->b;
             // 0x5218d7: the edge endpoints are read from g_nav's vertex vector (map.txt's store, +4), not mgr->pts
-            const float* pa = (const float*)((char*)g_nav->first + a * 0x24);
-            const float* pb = (const float*)((char*)g_nav->first + b * 0x24);
+            const float* pa = (const float*)((char*)((MapStore*)g_nav)->first + a * 0x24);
+            const float* pb = (const float*)((char*)((MapStore*)g_nav)->first + b * 0x24);
             float dx = pa[0] - pb[0];
             float dy = pa[1] - pb[1];
             float dz = pa[2] - pb[2];
@@ -907,12 +909,12 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
 // @ 0x523630
 void __stdcall scan_arrays(void* p, int unused)
 {
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)g_level->core)->a_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_level)->core)->a_size(); i++)
         *(int*)((char*)p + 0xc3500) = (int)0xcb189680;
     volatile char buf[100000];
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)g_level->core)->b_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_level)->core)->b_size(); i++)
         buf[i] = 0;
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)g_level->core)->b_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_level)->core)->b_size(); i++)
         ;
 }
 
@@ -1149,8 +1151,8 @@ void TroopFile::read_file(stream_base& s)
     if (n < 1)
         n = 1;
     fb0 = n;
-    int base = g_level_lo[n];
-    float t = (float)(rand() % 0x3dc9) * (float)(g_level_hi[n] - base) * g_troop_rand_scale;
+    int base = g_level_xp[n];
+    float t = (float)(rand() % 0x3dc9) * (float)(g_level_xp[n + 1] - base) * g_troop_rand_scale;
     f9c = base + ftoi_floor(t);
 
     for (int i = 0; i < 7; ++i) {
@@ -1184,7 +1186,7 @@ void QuestFile::read_file(stream_base& s)
     f0.underscores_to_spaces();
     f10.underscores_to_spaces();
     f30 = *((QuestRec*)this)->raw_title();       // QuestRec (include/game_recs.h) is this record: raw_title 0x48d750
-    tstring* p = ((LangTables*)&g_strtable)->find(&f54);
+    tstring* p = g_strtable.find(&f54);
     f40 = p ? *p : f0;
 }
 

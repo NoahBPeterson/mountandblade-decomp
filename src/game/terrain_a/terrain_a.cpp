@@ -10,6 +10,7 @@
 //       view draw pass. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./common.h"
+#include "../../rgl/options.h"   // g_options
 #include "./terrain.h"
 #include "./game_state.h"
 #include "./misc.h"
@@ -602,7 +603,7 @@ void Terrain::scatter_all()
         k = 2;
         c = rand_below(&k) + 4;
     }
-    if (g_terrain_gate < 10)
+    if (g_options.i34 < 10)
         s2 = 0;
     WL_MARKER(13)
     scatter(&list_a, 1, c);
@@ -2104,7 +2105,7 @@ void terrain_obj::spawn_particles(particle_list* list, int unused)
     unsigned sel = (flags14 >> 2) & (((unsigned*)g_bit)[4] - 1);
     int maxn = (int)(scale * scale * 0.8f);
     float k1 = (float)pow(scale, 1.7f) * 0.3f;
-    float k2 = (float)g_terrain_gate * 0.02f;
+    float k2 = (float)g_options.i34 * 0.02f;
     for (int y = 0; y < this->h; y++) {
         for (int x = 0; x < this->w; x++) {
             if (!(at(x, y).pz > -0.3f && at(x + 1, y).pz > -0.3f && at(x, y + 1).pz > -0.3f && at(x + 1, y + 1).pz > -0.3f))

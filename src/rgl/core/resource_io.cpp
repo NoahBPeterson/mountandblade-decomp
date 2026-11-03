@@ -8,6 +8,7 @@
 // r_int (0x415930) -> mb_parse_int (0x4159a0), material::load -> stage_t::load (0x4169a0 -> 0x416ad0) and
 // material::save -> stage_t::save are callees emitted after their first caller (header-inline functions).
 #include <windows.h>
+#include "../../game/config/config_block.h"   // g_cfg
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <stdio.h>
@@ -31,6 +32,7 @@
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/renderer.h"   // g_render.dev: the Direct3D device (0xa17f28)
 
 // 0x54a85c "Unexpected End of File while reading file: %s"
 __int64 __cdecl file_length(FILE* f);             // 0x42cbc0 (src/game/strat/gui_manager.cpp; rgl_string.h still has the old name and a long result)
@@ -304,14 +306,14 @@ int texture::load(int check_exists, rgl::string* root)
     if (!loaded) {
         if (!kind) {
             int skip = 0;
-            if (g_texture_detail >= 25) {
+            if (g_cfg.texture_detail >= 25) {
                 int h = noise_hash(f1c);
-                if ((float)(h & 0xf) * 0.0625f < (100.0f - (float)g_texture_detail) * 0.013333334f)
+                if ((float)(h & 0xf) * 0.0625f < (100.0f - (float)g_cfg.texture_detail) * 0.013333334f)
                     skip = 1;
             } else {
                 skip = 1;
                 int h = noise_hash(f1c);
-                if ((float)(h & 0xf) * 0.0625f < (25.0f - (float)g_texture_detail) * 0.04f)
+                if ((float)(h & 0xf) * 0.0625f < (25.0f - (float)g_cfg.texture_detail) * 0.04f)
                     skip = 2;
             }
             if (fl & 2)
@@ -347,7 +349,7 @@ int texture::load(int check_exists, rgl::string* root)
                         } while (c != 0);
                     }
                 }
-                hr = D3DXCreateTextureFromFileExA(g_device, path, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_FROM_FILE,
+                hr = D3DXCreateTextureFromFileExA(g_render.dev, path, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_FROM_FILE,
                         0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER,
                         D3DX_SKIP_DDS_MIP_LEVELS(skip, D3DX_FILTER_BOX), 0, 0, 0, &d3d_tex[i]);
                 if (hr < 0)
@@ -489,7 +491,7 @@ void material_io::create_shaders()
             ID3DXBuffer* errors;
             if (D3DXAssembleShaderFromFileA(ps_file.c_str(), 0, 0, 0, &code, &errors) < 0)
                 mb_error("Failed to assemble shader %s from file", name.c_str());
-            if (g_device->CreatePixelShader((const DWORD*)code->GetBufferPointer(), &ps) < 0)
+            if (g_render.dev->CreatePixelShader((const DWORD*)code->GetBufferPointer(), &ps) < 0)
                 mb_error("Failed to create pixel shader %s", name.c_str());
         }
         ps_done = 1;

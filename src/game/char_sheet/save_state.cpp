@@ -8,6 +8,9 @@
 extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes)
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
 
+// ---- data this module owns (docs/standalone_data.md) ----
+__int64 g_time1;   // 0x5e2950 the 64-bit clock counter
+
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)
 {
@@ -27,7 +30,7 @@ int GameData::save_state(OutStream* out)
     write_vec5c(out);
     out->w_raw(&g_party_template_count);
     for (int i = 0; i < g_party_template_count; i++)
-        g_party_templates[i].write(out);
+        ((RecB0*)&g_party_templates[i])->write(out);
     ((OutRecList*)(void*)this)->write_missions(out);
     WL_MARKER(12)
     ((Table*)((char*)this + 0xcc))->write_table(out);
@@ -143,6 +146,8 @@ void Rec5c::write(OutStream* s)
 // @ 0x4e94b0    void List8::write8(OutStream* out)   (thiscall, ret 4)
 void List8::write8(OutStream* out)
 {
+    Elem8*& begin = (Elem8*&)_Myfirst;
+    Elem8*& end = (Elem8*&)_Mylast;
     int n;
     if (!begin)
         n = 0;

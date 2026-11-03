@@ -10,9 +10,11 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../game_globals.h"   // g_trial_mode (canonical)
 #include <stdlib.h>
 #include <math.h>
 #include "./exchange_screens.h"
+#include "../config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../options_panel/hud.h"
 #include "../../include/game_data.h"
@@ -30,6 +32,7 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../shared_vars.h"
 #include "../key_names.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
@@ -48,7 +51,7 @@ void StartMenu::select(int arg)
     {
         g_mission_ctx.setup_entry(&entries[idx]);
         char b;
-        ((MapFlags*)&g_map_flags)->commit((char*)&b);
+        g_map_flags.commit((char*)&b);
     }
 }
 
@@ -58,7 +61,7 @@ void MenuCtl::setup_entry(MenuEntry* e)
     f2c = e->id;
     f30 = e->value;
     f160 = -1;
-    TplRec* t = &g_templates[e->id];
+    mission_type* t = &g_mission_types[e->id];
     if (e->id <= 6)
     {
         ((MissionCtx*)(void*)this)->setup(t->f10, 0);   // 0x513f80
@@ -95,7 +98,7 @@ int MenuCtl::weight(unsigned flags)
         x = (float)(6 - f1c);
     else
         return (int)f;
-    float k = x * g_k59c48c - 0.4f;
+    float k = x * 0.04736842f - 0.4f;
     if (k < 0.0f)
         k = 0.0f;
     else if (k >= 1.0f)
@@ -111,14 +114,14 @@ void ContinueMenu::update(int arg)
     if (f4 == 0)
     {
         char b;
-        if (buttons[0]->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
-            ((MapFlags*)&g_map_flags)->commit((char*)&b);
+        if (buttons[0]->changed(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
+            g_map_flags.commit((char*)&b);
     }
     else
     {
         char b;
-        if (buttons[0]->changed(0x10000) || (g_a17144 == 0 && g_a17544 != 0))
-            ((MapFlags*)&g_map_flags)->commit((char*)&b);
+        if (buttons[0]->changed(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
+            g_map_flags.commit((char*)&b);
     }
 }
 
@@ -159,18 +162,18 @@ void XferWin::update(int)
     char commit_out[4];
 
     if (f94 != 0 && f94->f_f4 < f90->f_f4) {
-        if (g_mouse_x < g_half) {
+        if (g_gui.mouse[0] < 0.5f) {
             f94->src->on_value_changed((float)g_mission_clock);
             f94->src->set_key_flags(0x10000);
             goto after_scroll;
         }
     } else {
-        if (g_mouse_x < g_half && f8c8 == 2)
+        if (g_gui.mouse[0] < 0.5f && f8c8 == 2)
             extra = 1;
     }
 
     slot = 0x26 + extra * 2;
-    if (g_mouse_y < g_033)
+    if (g_gui.mouse[1] < 0.33f)
         slot += 1;
     if (g_mission_clock != 0) {
         TargetW** pt = &((TargetW**)this)[slot];
@@ -180,7 +183,7 @@ void XferWin::update(int)
         float fv = (*pe - s->step) * ratio;
         float t = (float)g_mission_clock / *pe;
         t = t * s->step;
-        t = t * g_char_scale;
+        t = t * 0.0005f;
         fv += t;
         s->set_value(fv);
         (*pt)->src->set_key_flags(0x10000);
@@ -188,7 +191,7 @@ void XferWin::update(int)
 
 after_scroll:
     if (f8e4 >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a17188 &&
-        !g_a17588 && g_a5a9fbc && g_trial_mode) {
+        !g_keyboard.prev[0x2d] && g_cfg.cheat_mode && g_trial_mode) {
         slot = slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
         pid = f8dc != 0 ? sel_party : g_game->f78;
         // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
@@ -413,16 +416,16 @@ tail:
         troop = party_index(a)->stacks[b].troop;
         ((MissionCtx*)&g_mission_ctx)->build_hero_table(troop, STACK_IDS[1 + b * 0x20],
                     g_game->f78, action);
-        g_menu_data[6] = 0xc;
+        slot_as<int>(16)[6] = 0xc;
         g_main_menu.set_state(0x10);
         return;
     }
 
 close_menu:
-    if (state == 4 && g_a735c4 < 1)
+    if (state == 4 && g_mission_ctx.f2c4 < 1)
         gx()->update_party_sprites();
     if (f18 == 100) {
-        ((MapFlags*)&g_map_flags)->commit((char*)commit_out + 3);
+        g_map_flags.commit((char*)commit_out + 3);
         return;
     }
     g_main_menu.set_state(f18);
@@ -660,7 +663,7 @@ static __forceinline float anim_value(ValueSource* vs)
     float a = F(vs, 0x168, float) - F(vs, 0x16c, float);
     float b = F(vs, 0x170, float) - F(vs, 0x16c, float);
     return (a / b) * (base[0] - F(vs, 0x17c, float))
-         + ((float)g_mission_clock / base[0]) * F(vs, 0x17c, float) * g_char_scale;
+         + ((float)g_mission_clock / base[0]) * F(vs, 0x17c, float) * 0.0005f;
 }
 
 // the first term of anim_value alone (0x533bda..0x533c09: no clock term)
@@ -707,7 +710,7 @@ void EventScreen::on_event(int code)
     int local = -1;
 
     if (g_mission_clock != 0) {
-        if (g_mouse_y < 0.3f) {
+        if (g_gui.mouse[1] < 0.3f) {
             ValueSource* vs = *(ValueSource**)((char*)F(this, 0xec, void*) + 0x484);
             vs->set_value(anim_value(vs));
             ValueSource* vs2 = *(ValueSource**)((char*)F(this, 0xec, void*) + 0x484);
@@ -725,36 +728,36 @@ void EventScreen::on_event(int code)
 
 #define CTRL ((k & 0x200) == 0 && (k & 0x100) != 0)
     if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x10)) {
-        g_a739a0->f18 = 0x17;
-        g_a739a0->f4 = 0;
+        slot_as<MenuItem>(8)->f18 = 0x17;
+        slot_as<MenuItem>(8)->f4 = 0;
         g_main_menu.set_state(8);
     }
     else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x11)) {
-        g_a739b0->f18 = 0x17;
-        g_a739b0->f4 = 0;
+        slot_as<MenuItem>(12)->f18 = 0x17;
+        slot_as<MenuItem>(12)->f4 = 0;
         g_main_menu.set_state(0xc);
     }
     else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0xf)) {
-        g_a739bc->f18 = 0x17;
-        g_a739bc->f4 = 0;
-        g_a739bc->f14 = g_game->player;
+        slot_as<MenuItem>(15)->f18 = 0x17;
+        slot_as<MenuItem>(15)->f4 = 0;
+        slot_as<MenuItem>(15)->f14 = g_game->player;
         g_main_menu.set_state(0xf);
     }
     else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x12)) {
-        if (g_show_quest_notes == 0) {
-            g_a739b4->f18 = 0x17;
-            g_a739b4->f4 = 0;
+        if (g_module_settings.show_quest_notes == 0) {
+            slot_as<MenuItem>(13)->f18 = 0x17;
+            slot_as<MenuItem>(13)->f4 = 0;
             g_main_menu.set_state(0xd);
         } else {
-            g_a739e8->f18 = 0x17;
+            slot_as<MenuItem>(26)->f18 = 0x17;
             GI(0x13b08) = 4;
             GI(0x13b0c) = 0;
             g_main_menu.set_state(0x1a);
         }
     }
     else if ((k & 0x200) == 0 && ((OriginPairs*)&g_game_keys)->clicked(0x13)) {
-        g_a739e4->f18 = 0x17;
-        g_a739e4->f4 = 0;
+        slot_as<MenuItem>(25)->f18 = 0x17;
+        slot_as<MenuItem>(25)->f4 = 0;
         g_main_menu.set_state(0x19);
     }
     else {
@@ -799,8 +802,8 @@ dispatch:
         if (st == 0) {
             if (F(this, 0x18, int) != 100)
                 return;
-            g_a7333c |= 0x400;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_mission_ctx.f3c |= 0x400;
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 1) {
@@ -812,7 +815,7 @@ dispatch:
                 g_main_menu.set_state(F(this, 0x18, int));
                 return;
             }
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0x11) {
@@ -823,42 +826,42 @@ dispatch:
         }
         if (st == 0xd) {
             g_game->fc8 = 0;
-            g_a7333c |= 8;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_mission_ctx.f3c |= 8;
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 2) {
             g_game->fc8 = 0;
-            g_a7333c |= 0x80;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_mission_ctx.f3c |= 0x80;
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0xe) {
             g_game->fc8 = 0;
-            g_a7333c |= 0x800;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_mission_ctx.f3c |= 0x800;
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0xf) {
             g_game->fc8 = 0;
             if (F(this, 0x18, int) != 100) {
-                g_a739ec->f18 = 0x17;
+                slot_as<MenuItem>(27)->f18 = 0x17;
                 g_main_menu.set_state(0x1b);
                 return;
             }
-            g_a7333c |= 0x1000;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_mission_ctx.f3c |= 0x1000;
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0x10) {
             g_game->fc8 = 0;
             if (F(this, 0x18, int) != 100) {
-                g_a739e8->f18 = 0x17;
+                slot_as<MenuItem>(26)->f18 = 0x17;
                 g_main_menu.set_state(0x1a);
                 return;
             }
-            g_a7333c |= 0x2000;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_mission_ctx.f3c |= 0x2000;
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0x12) {
@@ -868,26 +871,26 @@ dispatch:
                 g_main_menu.set_state(0x17);
                 return;
             }
-            g_a7333c |= 0x400;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_mission_ctx.f3c |= 0x400;
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 4) {
-            g_a739a0->f18 = 0x17;
-            g_a739a0->f14 = GI(0x13af0);
-            g_a739a0->f4 = 2;
+            slot_as<MenuItem>(8)->f18 = 0x17;
+            slot_as<MenuItem>(8)->f14 = GI(0x13af0);
+            slot_as<MenuItem>(8)->f4 = 2;
             g_main_menu.set_state(8);
             return;
         }
         if (st == 8) {
             g_game->fc8 = 0;
-            g_a7333c |= 0x100;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_mission_ctx.f3c |= 0x100;
+            g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 5 || st == 7 || st == 6) {
-            g_a739b0->f18 = 0x17;
-            g_a739b0->f10 = GI(0x13b00);
+            slot_as<MenuItem>(12)->f18 = 0x17;
+            slot_as<MenuItem>(12)->f10 = GI(0x13b00);
             int v = 0;
             if (st == 5)
                 v = 1;
@@ -899,7 +902,7 @@ dispatch:
                 v = 2;
             else if (st == 10)
                 v = 3;
-            g_a739b0->f4 = v;
+            slot_as<MenuItem>(12)->f4 = v;
             g_main_menu.set_state(0xc);
             g_game->fc8 = 0;
             return;
@@ -926,35 +929,35 @@ void TickScreen::on_tick(int code)
     if (W(this, 0x30)->changed(0x10000)) {
         int a, b, c;
         W(this, 0x30)->get3(&a, &b, &c);
-        g_a739e8->f18 = g_a739e4->f18;
+        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = a;
         GIF(0x13b0c, int) = b;
         g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x48)->changed(0x10000)) {
-        g_a739e8->f18 = g_a739e4->f18;
+        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 1;
         GIF(0x13b0c, int) = 0;
         g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x4c)->changed(0x10000)) {
-        g_a739e8->f18 = g_a739e4->f18;
+        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 3;
         GIF(0x13b0c, int) = 0;
         g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x50)->changed(0x10000)) {
-        g_a739e8->f18 = g_a739e4->f18;
+        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 2;
         GIF(0x13b0c, int) = 0;
         g_main_menu.set_state(0x1a);
         return;
     }
     if (W(this, 0x54)->changed(0x10000)) {
-        g_a739e8->f18 = g_a739e4->f18;
+        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 4;
         GIF(0x13b0c, int) = 0;
         g_main_menu.set_state(0x1a);
@@ -963,7 +966,7 @@ void TickScreen::on_tick(int code)
     if (W(this, 0x3c)->changed(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_map_flags.commit((char*)&slot);
             return;
         }
         g_main_menu.set_state(F(this, 0x18, int));
@@ -986,7 +989,7 @@ void ChoiceList::get3(int* a, int* b, int* c)
 void InputScreen::on_input(int code)
 {
     if (g_mission_clock != 0) {
-        if (g_mouse_x < 0.7f
+        if (g_gui.mouse[0] < 0.7f
             && F(W(this, 0x4c), 0xf4, float) < F(W(this, 0x44), 0xf4, float)) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x4c) + 0x484);
             vs->on_value_changed((float)g_mission_clock);
@@ -1089,8 +1092,8 @@ void InputScreen::on_input(int code)
         ((note_window*)(void*)this)->build(4, 0);
     }
     if (W(this, 0x50)->changed(0x10000)) {
-        g_a739e4->f18 = g_a739e8->f18;
-        g_a739e4->f4 = 1;
+        slot_as<MenuItem>(25)->f18 = slot_as<MenuItem>(26)->f18;
+        slot_as<MenuItem>(25)->f4 = 1;
         g_main_menu.set_state(0x19);
         return;
     }
@@ -1101,15 +1104,15 @@ void InputScreen::on_input(int code)
         return;
     }
     if (W(this, 0x54)->changed(0x10000)) {
-        g_a739e4->f18 = g_a739e8->f18;
-        g_a739e4->f4 = 0;
+        slot_as<MenuItem>(25)->f18 = slot_as<MenuItem>(26)->f18;
+        slot_as<MenuItem>(25)->f4 = 0;
         g_main_menu.set_state(0x19);
         return;
     }
     if (W(this, 0x68)->changed(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
-            ((MapFlags*)&g_map_flags)->commit((char*)&slot);
+            g_map_flags.commit((char*)&slot);
             return;
         }
         g_main_menu.set_state(F(this, 0x18, int));
@@ -1130,7 +1133,7 @@ void SourceScreen::hook_a(int arg)
     if ((float)(g_ticks[src.slot] - *(__int64*)&src.tick_lo) * 1e-5f > interval) {
         int id = f18;
         if (id == 100) {
-            ((MapFlags*)&g_map_flags)->commit((char*)&arg);
+            g_map_flags.commit((char*)&arg);
             return;
         }
         g_main_menu.set_state(id);
@@ -1149,7 +1152,7 @@ void SourceScreen::hook_b(int arg)
     if ((float)(g_ticks[src.slot] - *(__int64*)&src.tick_lo) * 1e-5f > interval) {
         int id = f18;
         if (id == 100) {
-            ((MapFlags*)&g_map_flags)->commit((char*)&arg);
+            g_map_flags.commit((char*)&arg);
             return;
         }
         g_main_menu.set_state(id);

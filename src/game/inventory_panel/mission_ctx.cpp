@@ -9,7 +9,9 @@
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
+#include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
@@ -34,7 +36,6 @@ float g_mouse_dy;                                // 0x5d70a8
 #define SCENE ((MissionV*)g_mission)
 
 extern MsgLog g_msglog;                                 // 0x5d7080
-extern int g_a735c0;                                    // 0xa735c0 (scene counter)
 extern int g_a73438;                                    // 0xa73438 (page index)
 
 void autosave_notice();                                 // 0x514830
@@ -82,6 +83,7 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 #include "../rec98.h"                                  // Rec98: the 0x98-byte scene node record (pages at game+0xe4)
 // ---- objects and constants of other translation units ----------------------------------------------------------------
 #include "../ui/named_rec.h"                            // NamedRec: setup 0x48a3a0 (ret 8)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct Slot {
     int is_ready(int index);   // 0x487900 (ret 4; game/mesh_slot: Slot::is_ready, the keyboard slot table)
 };
@@ -100,6 +102,13 @@ struct MetaMission {
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+
+// ---- data this module owns (.bss, no initialiser; sizes from the code) ----
+int g_scene_counter;                                // 0xa735c0
+
+#include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../window_mgr.h"      // slot_as<T>(i)
+#include "../ui_globals.h"      // UI / core globals
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -129,29 +138,15 @@ extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
 extern ShadowMapP* g_shadow_map;                                    // 0xa70248
 extern int g_psys_scene;            // 0xa170c0
-extern int g_show_quest_notes;            // 0xa181b4
+#include "../game_globals.h"      // g_module_settings.show_quest_notes (canonical)
 extern int g_a171b8;            // 0xa171b8
-extern int g_a17454;            // 0xa17454
-extern int g_a17854;            // 0xa17854
 extern int g_use_shaders;       // 0x5e28fc
-extern int g_no_cam;            // 0x5a9fb0
-extern int g_trial_mode;        // 0x5e29c4
 extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
 extern float g_view_b;          // 0x5d75dc
-extern int g_level;         // 0xa732b4
-extern const float g_zero;          // 0x549ca8  0.0f
 extern const float g_ten;           // 0x549d74  10.0f
-extern const float g_oneone;        // 0x54b888  1.1f
-extern const float g_three;         // 0x54a710  3.0f
 extern const float g_quarter;       // 0x54b868  0.25f
-extern const float g_four;          // 0x5935c8  4.0f
-extern const float g_003;           // 0x54b8b4  0.03f
-extern const float g_axis_x;        // 0xa178d4
 extern const float g_exp_arg;       // 0x5aa018
-extern int g_in_17204;              // 0xa17204
-extern int g_in_17214;              // 0xa17214
-extern int g_in_17458;              // 0xa17458
 extern const float g_half;          // 0x549d70  0.5f
 
 // the party record behind an id (the page table at +0x139c8)
@@ -161,6 +156,9 @@ static Party* party_by_id(int id)
     int idx = ((Map10007*)mgr)->lookup(id);
     return (Party*)((char*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8);
 }
+
+// ---- data this module owns (docs/standalone_data.md) ----
+MapFlags g_map_flags;                                    // 0x5e291c (.bss) the commit-state block
 
 // @ 0x513710
 void MapFlags::commit(char* out)
@@ -205,47 +203,47 @@ void MapFlags::commit(char* out)
         }
     }
     else if (key == 0x10) {
-        g_wAC->f4 = 0;
+        slot_as<MenuWidget>(11)->f4 = 0;
         if (g_mission_ctx.f20 != 0)
-            g_wAC->f4 = 2;
-        g_wAC->f18 = 0x64;
-        g_wAC->f4 = 0;
+            slot_as<MenuWidget>(11)->f4 = 2;
+        slot_as<MenuWidget>(11)->f18 = 0x64;
+        slot_as<MenuWidget>(11)->f4 = 0;
         return g_main_menu.reset(0xb);
     }
     else if (key == 0x80) {
-        g_wA0->f4 = 1;
-        g_wA0->f18 = 0x64;
+        slot_as<MenuWidget>(8)->f4 = 1;
+        slot_as<MenuWidget>(8)->f18 = 0x64;
         return g_main_menu.set_state(8);
     }
     else if (key == 0x100) {
-        g_wB0->f4 = 4;
-        g_wB0->f18 = 0x64;
+        slot_as<MenuWidget>(12)->f4 = 4;
+        slot_as<MenuWidget>(12)->f18 = 0x64;
         return g_main_menu.set_state(0xc);
     }
     else if (key == 4) {
         g_mission_ctx.pick_template();
-        window_slot<MenuWidget>(10)->f18 = 0x64;
+        slot_as<MenuWidget>(10)->f18 = 0x64;
         return g_main_menu.set_state(0xa);
     }
     else if (key == 0x800) {
         g_mission_ctx.start_battle(GD_I(0x13af0), GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
-        g_wC0->f18 = 0x64;
+        slot_as<MenuWidget>(16)->f18 = 0x64;
         return g_main_menu.set_state(0x10);
     }
     else if (key == 0x1000) {
-        g_wEC->f18 = 0x64;
+        slot_as<MenuWidget>(27)->f18 = 0x64;
         return g_main_menu.set_state(0x1b);
     }
     else if (key == 0x2000) {
-        g_wE8->f18 = 0x64;
+        slot_as<MenuWidget>(26)->f18 = 0x64;
         return g_main_menu.set_state(0x1a);
     }
     else if (key == 8) {
         g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
-        MI(g_mission, 0x5270) = g_a735c0++;
+        MI(g_mission, 0x5270) = g_scene_counter++;
         SCENE->start_setup();
-        window_slot<MenuWidget>(14)->v4();
-        window_slot<MenuWidget>(14)->f18 = 0x64;
+        slot_as<MenuWidget>(14)->v4();
+        slot_as<MenuWidget>(14)->f18 = 0x64;
         return g_main_menu.set_state(0xe);
     }
     else if (key == 0x200) {
@@ -254,7 +252,7 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(7);
     }
     else if (key == 0x400 && f8 <= 0) {
-        window_slot<MenuWidget>(6)->f18 = 0x64;
+        slot_as<MenuWidget>(6)->f18 = 0x64;
         return g_main_menu.set_state(6);
     }
     else if (g_game->fc8 == 1) {
@@ -264,17 +262,17 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(7);
     }
     else if (f8 <= 0) {
-        window_slot<MenuWidget>(6)->f18 = 0x64;
+        slot_as<MenuWidget>(6)->f18 = 0x64;
         return g_main_menu.set_state(6);
     }
     else {
         f2 = 1;
-        g_wDC->v4();
-        g_wDC->f18 = 0x64;
+        slot_as<MenuWidget>(23)->v4();
+        slot_as<MenuWidget>(23)->f18 = 0x64;
         return g_main_menu.set_state(0x17);
     }
 
-    g_wC0->f18 = 0x64;
+    slot_as<MenuWidget>(16)->f18 = 0x64;
     return g_main_menu.set_state(0x10);
 }
 
@@ -722,7 +720,7 @@ void Screen::frame_update(float dt)
     bool start;
 
     if (g_shadow_map != 0 && g_shadow_map->f48[0x50 / 4] != g_psys_scene
-        && g_a70438 == g_level && g_use_shaders != 0)
+        && g_a70438 == (int)g_level && g_use_shaders != 0)
         g_shadow_map->render();
 
     cam.perspective = 1;
@@ -777,44 +775,44 @@ void Screen::frame_update(float dt)
     int cmd = GD_I(0xc8);
     if (cmd == 0x12) {
         GD_I(0xc8) = 0;
-        g_wDC->f18 = 7;
+        slot_as<MenuWidget>(23)->f18 = 7;
         g_main_menu.set_state(0x17);
         return;
     }
     if (cmd == 0xf) {
         GD_I(0xc8) = 0;
-        g_wEC->f18 = 7;
+        slot_as<MenuWidget>(27)->f18 = 7;
         g_main_menu.set_state(0x1b);
         return;
     }
     if (cmd == 0x10) {
         GD_I(0xc8) = 0;
-        g_wE8->f18 = 7;
+        slot_as<MenuWidget>(26)->f18 = 7;
         g_main_menu.set_state(0x1a);
         return;
     }
     if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
-        window_slot<MenuWidget>(5)->f18 = 7;
+        slot_as<MenuWidget>(5)->f18 = 7;
         g_main_menu.set_state(5);
         return;
     }
     if (f48 != 0 && PSO(f48)->clicked_on(0x10000)) {
-        window_slot<MenuWidget>(22)->f18 = 7;
-        window_slot<MenuWidget>(22)->f4 = 0;
+        slot_as<MenuWidget>(22)->f18 = 7;
+        slot_as<MenuWidget>(22)->f4 = 0;
         g_main_menu.set_state(0x16);
         return;
     }
     if (flag) {
         if (PSO(f50)->clicked_on(0x10000) || g_keys.down(0x12)) {
-            if (g_show_quest_notes != 0) {
-                g_wE8->f18 = 7;
+            if (g_module_settings.show_quest_notes != 0) {
+                slot_as<MenuWidget>(26)->f18 = 7;
                 GD_I(0x13b08) = 4;
                 GD_I(0x13b0c) = 0;
                 g_main_menu.set_state(0x1a);
                 return;
             }
-            g_wB4->f18 = 7;
-            g_wB4->f4 = 0;
+            slot_as<MenuWidget>(13)->f18 = 7;
+            slot_as<MenuWidget>(13)->f4 = 0;
             g_main_menu.set_state(0xd);
             return;
         }
@@ -835,7 +833,7 @@ void Screen::frame_update(float dt)
     if (GD_C(0x13a3c) != 0) {
         GD_C(0x13a3c) = 0;
         g_mission_ctx.build_hero_table(GD_I(0x13a44), -1, -1, GD_I(0x13a40));
-        g_wC0->f18 = 7;
+        slot_as<MenuWidget>(16)->f18 = 7;
         g_main_menu.set_state(0x10);
         return;
     }
@@ -919,27 +917,27 @@ void Screen::frame_update(float dt)
 no_party:
     if (flag) {
         if (PSO(f40)->clicked_on(0x10000) || g_keys.down(0x10)) {
-            g_wA0->f18 = 7;
-            g_wA0->f4 = 0;
+            slot_as<MenuWidget>(8)->f18 = 7;
+            slot_as<MenuWidget>(8)->f4 = 0;
             g_main_menu.set_state(8);
             return;
         }
         if (PSO(f3c)->clicked_on(0x10000) || g_keys.down(0x11)) {
-            g_wB0->f18 = 7;
-            g_wB0->f4 = 0;
+            slot_as<MenuWidget>(12)->f18 = 7;
+            slot_as<MenuWidget>(12)->f4 = 0;
             g_main_menu.set_state(0xc);
             return;
         }
         if (PSO(f44)->clicked_on(0x10000) || g_keys.down(0xf)) {
-            g_wBC->f18 = 7;
-            g_wBC->f4 = 0;
-            g_wBC->f14 = GD_I(0x8c);
+            slot_as<MenuWidget>(15)->f18 = 7;
+            slot_as<MenuWidget>(15)->f4 = 0;
+            slot_as<MenuWidget>(15)->f14 = GD_I(0x8c);
             g_main_menu.set_state(0xf);
             return;
         }
         if (g_keys.down(0x13)) {
-            g_wE4->f18 = 7;
-            g_wE4->f4 = 0;
+            slot_as<MenuWidget>(25)->f18 = 7;
+            slot_as<MenuWidget>(25)->f4 = 0;
             g_main_menu.set_state(0x19);
             return;
         }
@@ -951,7 +949,7 @@ no_party:
     }
     if (f38 != 0 && PSO(f38)->clicked_on(0x10000)) {
         GD_I(0x13aec) = 4;
-        g_wDC->f18 = 7;
+        slot_as<MenuWidget>(23)->f18 = 7;
         g_main_menu.set_state(0x17);
         return;
     }
@@ -962,7 +960,7 @@ no_party:
     g_msglog.flush();
     if (GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) != 0) {
         PSO(f58)->act_b4();
-        if (g_a17454 == 0 && g_a17854 != 0)
+        if (g_keyboard.down[0xe0] == 0 && g_keyboard.prev[0xe0] != 0)
             GD_F(0x13ad0) = 0.0f;
     } else {
         PSO(f58)->clear();
@@ -1000,7 +998,7 @@ no_party:
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_no_cam != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
+    if (g_dev_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {
@@ -1024,7 +1022,7 @@ void Screen::camera_move(float dt)
 
     bool b = g_game_keys.bind[4] >= 0 && g_keyboard.down[g_game_keys.bind[4]] != 0;
     if ((g_game_keys.bind[5] >= 0 && g_keyboard.down[g_game_keys.bind[5]] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x -= m.m[0] * h * dt;
         z -= m.m[1] * h * dt;
         GD_C(0x88) = 0;
@@ -1032,7 +1030,7 @@ void Screen::camera_move(float dt)
     }
     b = g_game_keys.bind[6] >= 0 && g_keyboard.down[g_game_keys.bind[6]] != 0;
     if ((g_game_keys.bind[7] >= 0 && g_keyboard.down[g_game_keys.bind[7]] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x += m.m[0] * h * dt;
         z += m.m[1] * h * dt;
         GD_C(0x88) = 0;
@@ -1040,7 +1038,7 @@ void Screen::camera_move(float dt)
     }
     b = g_game_keys.bind[0] >= 0 && g_keyboard.down[g_game_keys.bind[0]] != 0;
     if ((g_game_keys.bind[1] >= 0 && g_keyboard.down[g_game_keys.bind[1]] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x += m.m[2] * h * dt;
         z += m.m[3] * h * dt;
         GD_C(0x88) = 0;
@@ -1048,19 +1046,19 @@ void Screen::camera_move(float dt)
     }
     b = g_game_keys.bind[2] >= 0 && g_keyboard.down[g_game_keys.bind[2]] != 0;
     if ((g_game_keys.bind[3] >= 0 && g_keyboard.down[g_game_keys.bind[3]] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x -= m.m[2] * h * dt;
         z -= m.m[3] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
 
-    if (g_in_17204) speed += dt * g_oneone;
-    if (g_in_17214) speed -= dt * g_oneone;
-    if (g_keyboard.down[0x4f]) vy += dt * g_oneone;
-    if (g_keyboard.down[0x51]) vy -= dt * g_oneone;
+    if (g_keyboard.down[0x4c]) speed += dt * 1.1f;
+    if (g_keyboard.down[0x50]) speed -= dt * 1.1f;
+    if (g_keyboard.down[0x4f]) vy += dt * 1.1f;
+    if (g_keyboard.down[0x51]) vy -= dt * 1.1f;
 
-    if (g_in_17458 && !g_keyboard.prev[0xe1])
+    if (g_keyboard.down[0xe1] && !g_keyboard.prev[0xe1])
         f2d4 = 0;
 
     float v = g_mouse_dx * 0.1f;
@@ -1071,12 +1069,12 @@ void Screen::camera_move(float dt)
     if (!(w > -2.0f)) w = -2.0f;
     else if (w > 2.0f) w = 2.0f;
 
-    if (g_axis_x != 0.0f)
+    if (g_keyboard.axis[0] != 0.0f)
         f2d4 = 1;
 
     vy = v * dt + vy;
-    if (g_in_17458) {
-        vy = expf(g_four * g_exp_arg) * g_003 * g_axis_x * dt + vy;
+    if (g_keyboard.down[0xe1]) {
+        vy = expf(4.0f * g_exp_arg) * 0.03f * g_keyboard.axis[0] * dt + vy;
     }
 
     if (w != 0.0f || g_keyboard.axis[2] != 0.0f) {
@@ -1190,7 +1188,7 @@ int PartyV::data_ready()
     __int64 start = *(__int64*)((char*)this + 0x59b8);
     if ((*(__int64*)&flags_lo & 0x1000000) == 0) {
         __int64 d = g_ticks[clk] - start;
-        if (!((float)d * g_tick_scale < g_quarter))
+        if (!((float)d * 1e-5f < g_quarter))
             return 0;
     }
     return 1;
@@ -1225,7 +1223,7 @@ void MissionCtx::update_anim()
                 else if (k > (*(int*)&g_skill_tbl[36].cap))
                     k = (*(int*)&g_skill_tbl[36].cap);
                 int n = t->f58[0] + k * 2 + 0x23;
-                float g = (float)(int)((float)n * g_half + g_three);
+                float g = (float)(int)((float)n * 0.5f + 3.0f);
                 if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips
                     t->hp = g;
             }

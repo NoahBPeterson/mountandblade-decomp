@@ -222,10 +222,7 @@ extern int g_skin_count;                // g_char_count 0x8ed4f88
 extern ItemKindT* g_skins_begin;         // 0x8ed4f7c
 #include "../skill_cap.h"
 extern char g_gui[]; // 0x5d7080
-struct StrTable {                       // game/str_table.h (the translation table; its lookup takes the key by reference)
-    tstring* lookup(const tstring& key);    // 0x43a1e0
-};
-extern StrTable g_strtable;             // 0x5e2a18
+#include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
 long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
 
 // the mission object as the spawner sees it

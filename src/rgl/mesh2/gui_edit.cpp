@@ -5,6 +5,7 @@
 // Migrated from slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
 // s004c8ca0 and s004ca550 (0x4ca550).
 #include "../../include/image_addrs.h"
+#include "../../game/trial_mode.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./gui_edit.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -29,6 +30,7 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/s
 #include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
 #include "../../game/shared_vars.h"
+#include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct OptionsDlg {
     void choose_dx_settings(struct Config* cfg, bool overwrite);   // 0x4b9b90 (game/config/options_dlg.h, which cannot be mixed with windows.h here)
 };
@@ -40,9 +42,6 @@ struct mnode {
 };
 struct PresentationRec {
     void read(stream_base& s);   // 0x4c23f0 (game/triggers/trigger_vec.h)
-};
-struct StrTable {
-    tstring* lookup(const tstring& key);   // 0x43a1e0 (game/agent2/agent_stats.h): the UI string table
 };
 struct clip_pair {
     clip_pair(void* a_, void* b_, const int* src);   // 0x4be9c0 (game/triggers/trigger_vec.h)
@@ -677,7 +676,7 @@ void graph_obj::find_triangle(const int* e, int* a, int* b)
 // @ 0x4c6010
 // Looks `key` up in the hash bucket of its hash (0x433bb0): the keys of the bucket are one 0x10-stride vector (+4),
 // the translations the vector of the same bucket in the second table (+0xdf34).
-tstring* LangTables::find(const tstring* key) throw()
+tstring* StrTable::find(const tstring* key)
 {
     unsigned h = hash_string(key);
     lang_bucket* b = &keys[h];
@@ -1095,7 +1094,7 @@ void MapDialog::refresh_list(char use_sel)
     for (int i = 0; i < count; ++i) {
         int kind;
         if (use_sel) {
-            kind = g_dlg_display_bits;
+            kind = g_launcher_cfg.display_bits;
             if (kind == 0) {
                 int m = this->mode;
                 if (m == 0x17 || m == 0x19 || m == 0x1a || m == 0x18 || m == 0x1e)
@@ -1152,9 +1151,9 @@ void MapDialog::refresh_list(char use_sel)
     }
     int cur = 0;
     if (use_sel) {
-        if (g_dlg_multisample == 2)
+        if (g_launcher_cfg.antialiasing == 2)
             cur = 1;
-        else if (g_dlg_multisample == 4)
+        else if (g_launcher_cfg.antialiasing == 4)
             cur = 2;
     }
     SendMessageA(hWnd, 0x14e, cur, 0);                  // 0x186
@@ -1582,7 +1581,7 @@ void __fastcall conv_map_codes(conv_rec* self)
         unsigned i = 0;
         do {
             if (begin == 0 || i >= (unsigned)((int)((char*)end - (char*)begin) / 0x68)) {
-                log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(nm).w_cstr(g_empty_b);
+                log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(nm).w_cstr("\n");
                 break;
             }
             if (((ConvItem16*)((char*)begin + i * 0x68))->name.equals(nm))
@@ -1860,7 +1859,7 @@ void GameData::save_language_files(bool translated)
                 } else {
                     Party* p = parties.get_party(i);
                     const tstring* v;
-                    if (g_show_party_ids_instead_of_names)
+                    if (g_module_settings.show_party_ids_instead_of_names)
                         v = &p->key;
                     else if (p->flag)
                         v = &p->name;
@@ -2082,7 +2081,7 @@ void ResultWindow::scale_3(const float*)
             goto on;
         return;
     } else {
-        if (!g_windowed_setting || g_windowed_other)
+        if (!g_keyboard.down[0x1c] || g_keyboard.prev[0x1c])
             return;
         goto off;   // 0x4ca573/0x4ca57d: windowed setting on and other off -> the 'off' tail at 0x4ca5c7
     }
@@ -2091,13 +2090,13 @@ on:
         *flag = 1;
     if (text && box38)
         text->assign("");
-    g_windows.apply();
+    windows_cfg().apply();
     return;
 off:
     if (flag)
         *flag = 0;
     if (text && box38)
         *text = *(tstring*)((char*)box38 + 0x128);
-    g_windows.apply();
+    windows_cfg().apply();
 }
 

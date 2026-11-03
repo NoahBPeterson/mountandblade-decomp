@@ -72,18 +72,13 @@ struct TerrainX {                                           // mesh_terrain
 float  clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 void   free_ptr(void* p);                                   // 0x535712
 
-extern int   g_size_modes[8];                               // 0x59394c terrain-type table (index 0..7)
-extern float g_clamp_lo;                                    // 0x593948
 extern float g_500;                                         // 0x590b40 (500.0f)
 extern float g_140;                                         // 0x598e6c (140.0f)
-extern float g_0_01;                                        // 0x54ab28 (0.01f)
 extern float g_one;                                         // 0x549d74 (1.0f)
-extern float g_half;                                        // 0x549d70 (0.5f)
 #include "../renderer.h"
 extern void* g_a17110;                                      // 0xa17110
 extern void* g_a17510;                                      // 0xa17510
 extern terrain_obj g_terrain_obj;                           // 0xa76630
-extern const char g_fmt_d[];                                // 0x54a0f4 "%d"
 
 // the page: src/game/terrain_page.h (Paged, TerrainPage)
 #include "../terrain_page.h"

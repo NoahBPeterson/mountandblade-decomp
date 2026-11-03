@@ -14,6 +14,7 @@
 #include <string.h>
 #include <string>
 #include "../last_scene.h"
+#include "../key_names.h"      // g_keyboard (0xa170c8)
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
@@ -31,7 +32,6 @@ extern unsigned g_8ee41ec;  // 0x8ee41ec
 extern unsigned g_8ee41e8;  // 0x8ee41e8
 extern float g_5a9f20;      // 0x5a9f20
 extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
-extern char g_5e2a18[];     // 0x5e2a18 the string tables
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
 extern char g_5fe898[];     // 0x5fe898
@@ -39,11 +39,9 @@ extern char g_5e2948[];     // 0x5e2948 the tick counter (64-bit)
 extern char g_a178f0[];     // 0xa178f0
 extern char g_a17900[];     // 0xa17900
 extern char g_a170d4[];     // 0xa170d4 the key state table (0x100 dwords)
-extern char g_a178d4[];     // 0xa178d4
 extern char g_a178e0[];     // 0xa178e0
 extern char g_a17910[];     // 0xa17910 the display state
 extern char g_a180e8[];     // 0xa180e8 the skeleton name vector (allocator, first, last, end)
-extern char g_a180f8[];     // 0xa180f8 module.ini settings (name, then the values)
 extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
 extern char g_a18238[];     // 0xa18238 module.ini (ini file: 0x1000 entries of 0x2c)
 extern char g_a44238[];     // 0xa44238 (end of its entries)
@@ -53,7 +51,6 @@ extern char g_a70248[];     // 0xa70248
 extern char g_a70260[];     // 0xa70260 the scene
 extern char g_a70440[];     // 0xa70440
 extern char g_a73300[];     // 0xa73300 the mission context
-extern char g_a735d0[];     // 0xa735d0 11 templates of 0x20
 extern char g_a73730[];     // 0xa73730 the game keys (0x4a dwords)
 extern char g_a7374c[];     // 0xa7374c (the key records' end)
 extern char g_a73980[];     // 0xa73980 the main menu
@@ -90,7 +87,6 @@ struct tstring { tstring(); ~tstring(); char rec[0x20]; };   // 0x42bbd0, 0x42bc
 struct tstring11 { tstring a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
-struct LangTables { LangTables(); void release_strings(); };   // 0x4cda20, 0x4ca720
 struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
 struct big_holder { void release(); };              // 0x4ca830
 struct DisplayState { DisplayState(); };            // 0x4bc2d0
@@ -138,16 +134,12 @@ void __cdecl static_dtor_548130() { ((resmgr*)g_5d6fa0)->~resmgr(); }
 void __cdecl static_dtor_548140() { ((gui_manager*)g_5d7080)->~gui_manager(); }
 // @ 0x548150
 void __cdecl static_dtor_548150() { ((tstring*)g_8ee3c28)->~tstring(); }
-// @ 0x548160
-void __cdecl static_dtor_548160() { ((tstring*)g_8ee3c38)->~tstring(); }
 // @ 0x548170
 void __cdecl static_dtor_548170()
 {
     ((tstring*)(g_5a9f30 + 0x20))->~tstring();
     ((tstring*)(g_5a9f30 + 0x4))->~tstring();
 }
-// @ 0x548190
-void __cdecl static_dtor_548190() { ((tstring*)g_a180f8)->~tstring(); }
 // @ 0x5481a0
 void __cdecl static_dtor_5481a0()
 {
@@ -232,23 +224,6 @@ void __cdecl static_dtor_548310()
 void __cdecl static_dtor_548340() { ((TriggerEntryVec*)g_a76628)->dtor(); }
 // @ 0x548350
 void __cdecl static_dtor_548350() { ((loaded_psys_table*)g_8ed5090)->clear(); }
-// @ 0x548360   11 key records of 0x20 below 0xa7374c: an owned NameHolder array (delete[]) and a string each
-void __cdecl static_dtor_548360()
-{
-    char* e = g_a7374c;
-    for (int n = 0xb; n; n--) {
-        int used = AT(int, e, -0x24);
-        e -= 0x20;
-        if (used) {
-            char* a = AT(char*, e, 0);
-            if (a) {
-                vector_destructor_iterator(a, 0x18, AT(int, a, -4), nameholder_dtor);
-                operator delete[](a - 4);
-            }
-        }
-        ((tstring*)(e - 0x1c))->~tstring();
-    }
-}
 // @ 0x5483b0
 void __cdecl static_dtor_5483b0() { destroy_tstring_pairs((tstring_pair**)g_a75ea0); }
 // @ 0x5483c0
@@ -274,8 +249,6 @@ void __cdecl static_dtor_548420() { ((world_obj*)g_a76630)->~world_obj(); }
 void __cdecl static_dtor_548430() { g_5aa380.~basic_string(); }
 // @ 0x548460
 void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
-// @ 0x548470
-void __cdecl static_dtor_548470() { ((LangTables*)g_5e2a18)->release_strings(); }
 // @ 0x548480
 void __cdecl static_dtor_548480() { ((big_holder*)g_5fe898)->release(); }
 // @ 0x548490
@@ -333,8 +306,6 @@ void __cdecl static_init_547a40() { g_8ee41ec = g_5a8e78; }
 void __cdecl static_init_547a50() { g_8ee41e8 = g_5a8e88; }
 // @ 0x547a60
 void __cdecl static_init_547a60() { g_5a9f28[0] = g_549cdc - g_5a9f20; }
-// @ 0x547a80
-void __cdecl static_init_547a80() { new (g_5e2a18) LangTables; atexit(static_dtor_548470); }
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable
 void __cdecl static_init_547aa0()
 {
@@ -372,46 +343,13 @@ void __cdecl static_init_547b50()
     memset(g_a170d4, 0, 0x400);
     AT(int, g_a178e0, 0) = 0;
     AT(int, g_a178e0, 4) = 0;
-    AT(int, g_a178d4, 0) = 0;
-    AT(int, g_a178d4, 4) = 0;
+    g_keyboard.axis[0] = 0;
+    g_keyboard.axis[1] = 0;
 }
 // @ 0x547ba0
 void __cdecl static_init_547ba0() { new (g_a17910) DisplayState; }
 // @ 0x547bb0
 void __cdecl static_init_547bb0() { atexit(static_dtor_548520); }
-// @ 0x547bc0   module.ini settings: the defaults before module.ini is read
-void __cdecl static_init_547bc0()
-{
-    char* s = g_a180f8;                          // settings block, 0xa180f8..0xa181f4
-    new (s) tstring;
-    AT(int, s, 0xd8) = 10000;  AT(int, s, 0xdc) = 10000;  AT(int, s, 0xe4) = 10000;  AT(int, s, 0xec) = 10000;
-    AT(int, s, 0xf0) = 10000;  AT(int, s, 0xf4) = 10000;  AT(int, s, 0xf8) = 10000;  AT(int, s, 0xfc) = 10000;
-    AT(int, s, 0xe0) = 200000;
-    AT(int, s, 0xe8) = 0x5399;
-    AT(int, s, 0xc4) = 0;  AT(int, s, 0xc8) = 0;  AT(int, s, 0xcc) = 0;   // main menu font colour
-    AT(int, s, 0xd0) = 0;                        // works_with_version_min
-    AT(int, s, 0xd4) = 1000000;                  // works_with_version_max
-    AT(int, s, 0x10) = 0;  AT(int, s, 0x14) = 0; // scan_module_textures / sounds
-    AT(float, s, 0x18) = 0.15f;                  // time_multiplier
-    AT(float, s, 0x1c) = 6.5f;                   // seeing_range
-    AT(float, s, 0x20) = 0.8f;                   // track_spotting
-    AT(float, s, 0x24) = 1.0f;                   // blood_multiplier
-    AT(int, s, 0x28) = 5;  AT(int, s, 0x2c) = 5;  AT(int, s, 0x30) = 5;   // leadership / prisoner bonus, companions
-    AT(float, s, 0x34) = 1.0f;  AT(float, s, 0x38) = 1.0f;  AT(float, s, 0x3c) = 1.0f;   // xp multipliers
-    AT(float, s, 0x40) = 15.0f;                  // hero_wounded_treshold
-    AT(float, s, 0x44) = 5.0f;                   // player_wounded_treshold
-    for (int o = 0x48; o <= 0x70; o += 4)        // hints, sea/river direction and speeds, tree types
-        AT(int, s, o) = 0;
-    AT(int, s, 0x74) = 1200;  AT(int, s, 0x78) = 2;  AT(int, s, 0x7c) = 12;   // starting date
-    AT(int, s, 0x80) = 0;                        // damage_interrupt_attack_treshold
-    AT(float, s, 0x84) = 1.0f;  AT(float, s, 0x88) = 0.5f;  AT(float, s, 0x8c) = 0.5f;   // armor soak
-    AT(int, s, 0x90) = 0;  AT(int, s, 0x94) = 0;  AT(int, s, 0x98) = 0;                  // armor reduction
-    AT(float, s, 0x9c) = 1.0f;  AT(float, s, 0xa0) = 1.0f;  AT(float, s, 0xa4) = 1.0f;  AT(float, s, 0xa8) = 1.0f;
-    for (int o = 0xac; o <= 0xbc; o += 4)        // quick battles, food slot, hair colours, faction colour, notes
-        AT(int, s, o) = 0;
-    s[0xc0] = 0;                                 // show_party_ids_instead_of_names
-    atexit(static_dtor_548190);
-}
 // @ 0x547d80
 void __cdecl static_init_547d80() { ((PhysSet*)g_a181f8)->reset(); atexit(static_dtor_5484b0); }
 // @ 0x547da0
@@ -430,12 +368,6 @@ void __cdecl static_init_547de0()
 void __cdecl static_init_547e20() { new (g_a70440) model_a; atexit(static_dtor_5484a0); }
 // @ 0x547e40
 void __cdecl static_init_547e40() { ((MetaMission*)g_a73300)->init(); atexit(static_dtor_548200); }
-// @ 0x547e60
-void __cdecl static_init_547e60()
-{
-    new (g_a735d0) tstring11;
-    atexit(static_dtor_548360);
-}
 // @ 0x547e90
 void __cdecl static_init_547e90()
 {
@@ -498,8 +430,6 @@ void __cdecl static_init_548070()
 }
 // @ 0x5480b0
 void __cdecl static_init_5480b0() { new (g_8ee3c28) tstring; atexit(static_dtor_548150); }
-// @ 0x5480d0
-void __cdecl static_init_5480d0() { new (g_8ee3c38) tstring; atexit(static_dtor_548160); }
 // @ 0x5480f0
 void __cdecl static_init_5480f0() { g_5aa380.assign(g_59c490, 0x40); atexit(static_dtor_548430); }
 // @ 0x548110
@@ -511,13 +441,13 @@ typedef void (__cdecl* init_fn)();
 init_fn g_static_init_table[] = {
     static_init_5479a0, static_init_5479c0, static_init_5479e0, static_init_5479f0, static_init_547a00,
     static_init_547a20, static_init_547a30, static_init_547a40, static_init_547a50, static_init_547a60,
-    static_init_547a80, static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
-    static_init_547ba0, static_init_547bb0, static_init_547bc0, static_init_547d80, static_init_547da0,
-    static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40, static_init_547e60,
+    static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
+    static_init_547ba0, static_init_547bb0, static_init_547d80, static_init_547da0,
+    static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547f60, static_init_547fa0, static_init_547fb0,
     static_init_547fc0, static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,
-    static_init_548050, static_init_548070, static_init_5480b0, static_init_5480d0, static_init_5480f0,
+    static_init_548050, static_init_548070, static_init_5480b0, static_init_5480f0,
     static_init_548110,
 };
 #pragma data_seg()

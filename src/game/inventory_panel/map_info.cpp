@@ -70,6 +70,7 @@ struct RecR {                                // 0x5ac8  party / roster record
 
 
 #include "../rec98.h"                       // Rec98 (this slice called it MapAgent): the 0x98-byte record, a = f54, b = f58
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 struct PageTable98 {                         // lives at GameData+0xcc (the page table slot_api.cpp defines slot() for)
     char      pad00[0x18];
@@ -138,7 +139,6 @@ typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     
 
 // ------------------------------------------------------------------------------------- globals ------
 extern gui_manager g_gui;                    // 0x5d7080
-extern StrTable   g_strtable;                // 0x5e2a18
 
 
 void mb_snprintf(char* buf, size_t n, const char* fmt, ...);   // 0x415100
@@ -162,7 +162,7 @@ static Rec98* agent_at(int idx)
 // a record's display string: the key's string-table entry when the key is a token (0x51afb6, 0x51b2cb)
 static tstring* record_name(RecR* r)
 {
-    if (g_show_party_ids_instead_of_names) return &r->key;
+    if (g_module_settings.show_party_ids_instead_of_names) return &r->key;
     if (r->f1c == 0) {
         tstring* s = g_strtable.find(&r->key);
         if (s) return s;
@@ -247,7 +247,7 @@ void MapPanel::update(int type, int id)
                 float    rel   = g_game->relation(agent, g_game->f78);
                 unsigned rel_color = g_game->color_of(rel, 1);
                 unsigned color = rel_color;
-                if (g_show_faction_color)
+                if (g_module_settings.show_faction_color)
                     color = g_game->factions[party_by_id(agent)->faction].color;
                 if (c == 0) {
                     g_panel_color = rel_color;          // 0x51af67: the relation colour (edi), not the faction override (esi)
@@ -268,7 +268,7 @@ void MapPanel::update(int type, int id)
                         int      m    = members[i];
                         float    mrel = g_game->relation(m, g_game->f78);
                         unsigned mcol = g_game->color_of(mrel, 1);
-                        if (g_show_faction_color)
+                        if (g_module_settings.show_faction_color)
                             mcol = g_game->factions[party_by_id(m)->faction].color;
                         if (party_by_id(m)->flags & 0x40000)
                             mcol = mrel < -0.01f ? 0xff22aaffu : 0xffaa22ddu;
@@ -310,7 +310,7 @@ void MapPanel::update(int type, int id)
                         }
                         char buf[0x200];
                         mb_snprintf(buf, 0x200, "(%s)", fn->c_str());        // 0x415100
-                        unsigned fcol = g_show_faction_color
+                        unsigned fcol = g_module_settings.show_faction_color
                                       ? f->color
                                       : f->rel[0] < -0.001f ? 0xffff4422u
                                       : f->rel[0] >  0.001f ? 0xff44ff22u : 0xffffffffu;

@@ -104,7 +104,7 @@ struct GameG : GameDataV {
 
 // the map scene object (global 0xa732b4): a colour at +0x68 (its w lane is the alpha at +0x74) and the per-frame step
 #include "../scene_world.h"                  // World: the scene world (colour +0x68, alpha +0x74; step 0x427f40)
-extern World* g_map_scene;           // 0xa732b4
+#include "../../include/level_global.h"      // g_level (0xa732b4)
 // a scene object with a colour (0x517350): the sun and the entities of the cell grid
 struct ColorEnt {
     char pad0[0x3c];

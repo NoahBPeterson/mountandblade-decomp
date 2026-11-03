@@ -12,8 +12,6 @@ struct UiSoundHost {                           // the sound object used by the U
 extern UiSoundHost g_ui_sound;                    // 0x5d7080
 void __fastcall play_sound(UiSoundHost* m);    // 0x48b2d0 (FSOUND_PlaySoundEx + volume from g_master_volume)
 extern float g_master_volume;               // 0x5aa014
-extern float g_ui_target[2];                // 0x5d7094 slider target positions   0x48b5a0
-extern void* g_ui_active;                   // 0x5d7090 widget being dragged       0x48b5a0
 
 struct UiA : MissionUi {                    // vtable 0x591d58
     int f178;                               // +0x178   0x48b1c0, 0x48b320

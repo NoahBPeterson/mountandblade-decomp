@@ -33,18 +33,55 @@
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_scan_module_textures;   // 0xa18108
-int g_scan_module_sounds;   // 0xa1810c
-float g_time_multiplier;   // 0xa18110
-float g_track_spotting;   // 0xa18118
-float g_map_sea_speed_x;   // 0xa18148
-float g_map_sea_speed_y;   // 0xa1814c
-float g_map_river_speed_x;   // 0xa18154
-float g_map_river_speed_y;   // 0xa18158
-int g_show_faction_color;   // 0xa181b0
-unsigned char g_show_party_ids_instead_of_names;   // 0xa181b8
 int g_display_wp[7];   // 0x5e2900
 ID3DXEffect* g_effect;   // 0x5e293c
+
+
+// ---- data this module owns (docs/standalone_data.md) ----
+// The module settings object (module_settings.h): module_info.txt / game_variables.txt are read into it below.
+ModuleSettings g_module_settings;                // 0xa180f8 (.bss, built by the dynamic initialiser below)
+tstring g_module_name;                           // 0x8ee3c38 (.bss) the selected module (dynamic initialiser: tstring ctor + atexit dtor)
+void* g_dlg_options;                             // 0x8ee3fc4 (.bss) the options dialog window (untyped so the call reloads it into eax), set by options_dlg_proc
+
+// @ 0x547bc0   the defaults before module_info.txt / game_variables.txt are read
+ModuleSettings::ModuleSettings()
+{
+    f0d8 = 10000;  f0dc = 10000;  f0e4 = 10000;  f0ec = 10000;
+    f0f0 = 10000;  f0f4 = 10000;  f0f8 = 10000;  f0fc = 10000;
+    f0e0 = 200000;
+    f0e8 = 0x5399;
+    main_menu_font_color_red = 0;  main_menu_font_color_green = 0;  main_menu_font_color_blue = 0;
+    works_with_version_min = 0;
+    works_with_version_max = 1000000;
+    scan_module_textures = 0;  scan_module_sounds = 0;
+    time_multiplier = 0.15f;
+    seeing_range = 6.5f;
+    track_spotting = 0.8f;
+    blood_multiplier = 1.0f;
+    skill_leadership_bonus = 5;  skill_prisoner_management_bonus = 5;  base_companion_limit = 5;
+    player_xp_multiplier = 1.0f;  hero_xp_multiplier = 1.0f;  regulars_xp_multiplier = 1.0f;
+    hero_wounded_treshold = 15.0f;
+    player_wounded_treshold = 5.0f;
+    num_hints = 0;
+    map_sea_direction = 0.0f;  map_sea_speed_x = 0.0f;  map_sea_speed_y = 0.0f;
+    map_river_direction = 0.0f;  map_river_speed_x = 0.0f;  map_river_speed_y = 0.0f;
+    map_tree_types = 0;  map_snow_tree_types = 0;  map_steppe_tree_types = 0;  map_desert_tree_types = 0;
+    starting_year = 1200;  starting_month = 2;  starting_day = 12;
+    damage_interrupt_attack_treshold = 0.0f;
+    armor_soak_factor[0] = 1.0f;  armor_soak_factor[1] = 0.5f;  armor_soak_factor[2] = 0.5f;
+    armor_reduction_factor[0] = 0.0f;  armor_reduction_factor[1] = 0.0f;  armor_reduction_factor[2] = 0.0f;
+    missile_damage_speed_power = 1.0f;  melee_damage_speed_power = 1.0f;
+    horse_charge_damage_multiplier = 1.0f;  couched_lance_damage_multiplier = 1.0f;
+    enable_quick_battles = 0;  disable_food_slot = 0;  limit_hair_colors = 0;  show_faction_color = 0;  show_quest_notes = 0;
+    show_party_ids_instead_of_names = 0;
+}
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_module_version;   // 0x5e29c0
+float g_map_min_y = -50.0f;   // 0x5aa124
+float g_map_min_x = -50.0f;   // 0x5aa120
+float g_map_max_y = 50.0f;   // 0x5aa11c
+float g_map_max_x = 50.0f;   // 0x5aa118
 
 
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
@@ -303,35 +340,35 @@ void Core::show_options()
 {
     char buf[0x200];
 
-    SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x405, 1, g_opt_5aa0ac);
-    sprintf(buf, "%d", g_opt_5aa0ac);
+    SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x405, 1, g_launcher_cfg.texture_detail);
+    sprintf(buf, "%d", g_launcher_cfg.texture_detail);
     SetWindowTextA(GetDlgItem(options_hwnd, 0x450), buf);
-    SendMessageA(GetDlgItem(options_hwnd, 0x441), BM_SETCHECK, g_opt_5aa0e0 != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x444), BM_SETCHECK, g_opt_5aa0b8 != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x445), BM_SETCHECK, g_opt_5aa0b0 != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x487), BM_SETCHECK, g_opt_5aa108 != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x452), BM_SETCHECK, g_opt_5aa0e8 != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x446), BM_SETCHECK, g_opt_5aa0e4 != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x44d), BM_SETCHECK, g_opt_5aa0d8 == 0, 0);
-    SetDlgItemInt(options_hwnd, 0x448, g_opt_5aa0b4, FALSE);
-    SendMessageA(GetDlgItem(options_hwnd, 0x442), BM_SETCHECK, g_opt_5aa0cc != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x443), BM_SETCHECK, g_opt_5aa0d0 == 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x44c), BM_SETCHECK, g_opt_5aa0c0 != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x44a), BM_SETCHECK, g_opt_5aa0c4 != 0, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x467), 0x14e, g_opt_5aa110, 0);
-    SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x14e, g_opt_5aa0dc, 0);
-    if (g_opt_5aa0f4 == 0) {
+    SendMessageA(GetDlgItem(options_hwnd, 0x441), BM_SETCHECK, g_launcher_cfg.use_pixel_shaders != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x444), BM_SETCHECK, g_launcher_cfg.start_windowed != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x445), BM_SETCHECK, g_launcher_cfg.show_framerate != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x487), BM_SETCHECK, g_launcher_cfg.force_vsync != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x452), BM_SETCHECK, g_launcher_cfg.disable_sound != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x446), BM_SETCHECK, g_launcher_cfg.disable_music != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x44d), BM_SETCHECK, g_launcher_cfg.disable_frequency_variation == 0, 0);
+    SetDlgItemInt(options_hwnd, 0x448, g_launcher_cfg.max_framerate, FALSE);
+    SendMessageA(GetDlgItem(options_hwnd, 0x442), BM_SETCHECK, g_launcher_cfg.cheat_mode != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x443), BM_SETCHECK, g_launcher_cfg.enable_blood == 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x44c), BM_SETCHECK, g_launcher_cfg.enable_edit_mode != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x44a), BM_SETCHECK, g_launcher_cfg.force_single_threading != 0, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x467), 0x14e, g_launcher_cfg.shadowmap_quality, 0);
+    SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x14e, g_launcher_cfg.use_vertex_shaders, 0);
+    if (g_launcher_cfg.display_width == 0) {
         SendMessageA(GetDlgItem(options_hwnd, 0x45f), 0x14e, 0, 0);
     } else {
         char num[0x80];
-        tstring s(_itoa(g_opt_5aa0f4, num, 10));
+        tstring s(_itoa(g_launcher_cfg.display_width, num, 10));
         s.push_back('x');
         {
-            tstring h(_itoa(g_opt_5aa0f8, num, 10));
+            tstring h(_itoa(g_launcher_cfg.display_height, num, 10));
             s.append(h);
         }
         {
-            tstring b(g_dlg_display_bits == 0x10 ? " 16 bits" : " 32 bits");
+            tstring b(g_launcher_cfg.display_bits == 0x10 ? " 16 bits" : " 32 bits");
             s.append(b);
         }
         SendMessageA(GetDlgItem(options_hwnd, 0x45f), 0x14d, 0,
@@ -342,40 +379,40 @@ void Core::show_options()
 // @ 0x4bf170
 void Core::read_options()
 {
-    g_opt_5aa0ac = SendMessageA(GetDlgItem(options_hwnd, 0x43e), WM_USER, 0, 0);
-    g_opt_5aa0e0 = SendMessageA(GetDlgItem(options_hwnd, 0x441), BM_GETCHECK, 0, 0) == 1;
-    g_opt_5aa0dc = SendMessageA(GetDlgItem(options_hwnd, 0x468), CB_GETCURSEL, 0, 0) == 1;
-    g_opt_5aa0cc = SendMessageA(GetDlgItem(options_hwnd, 0x442), BM_GETCHECK, 0, 0) == 1;
-    g_opt_5aa0d0 = SendMessageA(GetDlgItem(options_hwnd, 0x443), BM_GETCHECK, 0, 0) != 1;
-    g_opt_5aa0b8 = SendMessageA(GetDlgItem(options_hwnd, 0x444), BM_GETCHECK, 0, 0) == 1;
-    g_opt_5aa0b0 = SendMessageA(GetDlgItem(options_hwnd, 0x445), BM_GETCHECK, 0, 0) == 1;
-    g_opt_5aa108 = SendMessageA(GetDlgItem(options_hwnd, 0x487), BM_GETCHECK, 0, 0) == 1;
-    g_opt_5aa0e8 = SendMessageA(GetDlgItem(options_hwnd, 0x452), BM_GETCHECK, 0, 0) == 1;
-    g_opt_5aa0e4 = SendMessageA(GetDlgItem(options_hwnd, 0x446), BM_GETCHECK, 0, 0) == 1;
-    g_opt_5aa0d8 = SendMessageA(GetDlgItem(options_hwnd, 0x44d), BM_GETCHECK, 0, 0) != 1;
+    g_launcher_cfg.texture_detail = SendMessageA(GetDlgItem(options_hwnd, 0x43e), WM_USER, 0, 0);
+    g_launcher_cfg.use_pixel_shaders = SendMessageA(GetDlgItem(options_hwnd, 0x441), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.use_vertex_shaders = SendMessageA(GetDlgItem(options_hwnd, 0x468), CB_GETCURSEL, 0, 0) == 1;
+    g_launcher_cfg.cheat_mode = SendMessageA(GetDlgItem(options_hwnd, 0x442), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.enable_blood = SendMessageA(GetDlgItem(options_hwnd, 0x443), BM_GETCHECK, 0, 0) != 1;
+    g_launcher_cfg.start_windowed = SendMessageA(GetDlgItem(options_hwnd, 0x444), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.show_framerate = SendMessageA(GetDlgItem(options_hwnd, 0x445), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.force_vsync = SendMessageA(GetDlgItem(options_hwnd, 0x487), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.disable_sound = SendMessageA(GetDlgItem(options_hwnd, 0x452), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.disable_music = SendMessageA(GetDlgItem(options_hwnd, 0x446), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.disable_frequency_variation = SendMessageA(GetDlgItem(options_hwnd, 0x44d), BM_GETCHECK, 0, 0) != 1;
     {   // "fps limit" edit box, clamped to 10..999
         BOOL ok;
         UINT v = GetDlgItemInt(options_hwnd, 0x448, &ok, FALSE);
         if (ok != 0) {
             int iv = (int)v;
             if (iv < 10)
-                g_opt_5aa0b4 = 10;
+                g_launcher_cfg.max_framerate = 10;
             else if (iv >= 1000)
-                g_opt_5aa0b4 = 999;
+                g_launcher_cfg.max_framerate = 999;
             else
-                g_opt_5aa0b4 = iv;
+                g_launcher_cfg.max_framerate = iv;
         }
     }
-    g_opt_5aa0c0 = SendMessageA(GetDlgItem(options_hwnd, 0x44c), BM_GETCHECK, 0, 0) == 1;
-    g_opt_5aa0c4 = SendMessageA(GetDlgItem(options_hwnd, 0x44a), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.enable_edit_mode = SendMessageA(GetDlgItem(options_hwnd, 0x44c), BM_GETCHECK, 0, 0) == 1;
+    g_launcher_cfg.force_single_threading = SendMessageA(GetDlgItem(options_hwnd, 0x44a), BM_GETCHECK, 0, 0) == 1;
     if (SendMessageA(GetDlgItem(options_hwnd, 0x45f), CB_GETCURSEL, 0, 0) == 0) {
-        g_opt_5aa0f4 = 0;
-        g_opt_5aa0f8 = 0;
+        g_launcher_cfg.display_width = 0;
+        g_launcher_cfg.display_height = 0;
         int md = mode.Format;
         if (md == 0x17 || md == 0x19 || md == 0x1a || md == 0x18 || md == 0x1e)
-            g_dlg_display_bits = 0x10;
+            g_launcher_cfg.display_bits = 0x10;
         else
-            g_dlg_display_bits = 0x20;
+            g_launcher_cfg.display_bits = 0x20;
     } else {
         // the edit box holds "<width>x<height> <bits>"
         char buf[100];
@@ -385,30 +422,30 @@ void Core::read_options()
         int ix = s.find(cx, 0);
         char cs = ' ';
         int isp = s.find(cs, 0);
-        g_opt_5aa0f4 = atoi(s.substr(0, ix).c_str());
-        g_opt_5aa0f8 = atoi(s.substr(ix + 1, isp).c_str());
-        g_dlg_display_bits = atoi(s.substr(isp + 1, isp + 3).c_str());
+        g_launcher_cfg.display_width = atoi(s.substr(0, ix).c_str());
+        g_launcher_cfg.display_height = atoi(s.substr(ix + 1, isp).c_str());
+        g_launcher_cfg.display_bits = atoi(s.substr(isp + 1, isp + 3).c_str());
     }
-    g_dlg_multisample = SendMessageA(GetDlgItem(options_hwnd, 0x465), CB_GETITEMDATA,
+    g_launcher_cfg.antialiasing = SendMessageA(GetDlgItem(options_hwnd, 0x465), CB_GETITEMDATA,
                                      SendMessageA(GetDlgItem(options_hwnd, 0x465), CB_GETCURSEL, 0, 0), 0);   // (one store, 0x4bf53a)
-    g_opt_5aa110 = SendMessageA(GetDlgItem(options_hwnd, 0x467), CB_GETITEMDATA,
+    g_launcher_cfg.shadowmap_quality = SendMessageA(GetDlgItem(options_hwnd, 0x467), CB_GETITEMDATA,
                                SendMessageA(GetDlgItem(options_hwnd, 0x467), CB_GETCURSEL, 0, 0), 0);
     int m;
-    if (g_dlg_display_bits == 0x10)
+    if (g_launcher_cfg.display_bits == 0x10)
         m = 0x17;
-    else if (g_dlg_display_bits == 0x20)
+    else if (g_launcher_cfg.display_bits == 0x20)
         m = 0x16;
     else
         m = mode.Format;
-    if (g_dlg_multisample > 1) {
+    if (g_launcher_cfg.antialiasing > 1) {
         DWORD q;
         if (m_pD3D->CheckDeviceMultiSampleType(0, D3DDEVTYPE_HAL, (D3DFORMAT)m, FALSE,
-                                               g_dlg_multisample != 2 ? D3DMULTISAMPLE_4_SAMPLES : D3DMULTISAMPLE_2_SAMPLES, &q) >= 0) {
-            g_opt_5aa104 = q - 1;
+                                               g_launcher_cfg.antialiasing != 2 ? D3DMULTISAMPLE_4_SAMPLES : D3DMULTISAMPLE_2_SAMPLES, &q) >= 0) {
+            g_launcher_cfg.sample_quality = q - 1;
             return;
         }
     }
-    g_opt_5aa104 = 0;
+    g_launcher_cfg.sample_quality = 0;
 }
 
 // @ 0x4bf5f0
@@ -831,105 +868,105 @@ void parse_module_info()
             g_resmgr_full.load_pack((const rgl::string&)val, 1);
         }
         else if (msg.equals("time_multiplier")) {
-            g_time_multiplier = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting Time Multiplier = ").w_float(&g_time_multiplier).w_cstr("\n");
+            g_module_settings.time_multiplier = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting Time Multiplier = ").w_float(&g_module_settings.time_multiplier).w_cstr("\n");
         }
         else if (msg.equals("armor_soak_factor_against_cut")) {
-            g_armor_soak_factor_against_cut = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting armor_soak_factor_against_cut = ").w_float(&g_armor_soak_factor_against_cut).w_cstr("\n");
+            g_module_settings.armor_soak_factor[0] = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting armor_soak_factor_against_cut = ").w_float(&g_module_settings.armor_soak_factor[0]).w_cstr("\n");
         }
         else if (msg.equals("armor_soak_factor_against_pierce")) {
-            g_armor_soak_factor_against_pierce = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting armor_soak_factor_against_pierce = ").w_float(&g_armor_soak_factor_against_pierce).w_cstr("\n");
+            g_module_settings.armor_soak_factor[1] = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting armor_soak_factor_against_pierce = ").w_float(&g_module_settings.armor_soak_factor[1]).w_cstr("\n");
         }
         else if (msg.equals("armor_soak_factor_against_blunt")) {
-            g_armor_soak_factor_against_blunt = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting armor_soak_factor_against_blunt = ").w_float(&g_armor_soak_factor_against_blunt).w_cstr("\n");
+            g_module_settings.armor_soak_factor[2] = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting armor_soak_factor_against_blunt = ").w_float(&g_module_settings.armor_soak_factor[2]).w_cstr("\n");
         }
         else if (msg.equals("armor_reduction_factor_against_cut")) {
-            g_armor_reduction_factor_against_cut = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting armor_reduction_factor_against_cut = ").w_float(&g_armor_reduction_factor_against_cut).w_cstr("\n");
+            g_module_settings.armor_reduction_factor[0] = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting armor_reduction_factor_against_cut = ").w_float(&g_module_settings.armor_reduction_factor[0]).w_cstr("\n");
         }
         else if (msg.equals("armor_reduction_factor_against_pierce")) {
-            g_armor_reduction_factor_against_pierce = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting armor_reduction_factor_against_pierce = ").w_float(&g_armor_reduction_factor_against_pierce).w_cstr("\n");
+            g_module_settings.armor_reduction_factor[1] = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting armor_reduction_factor_against_pierce = ").w_float(&g_module_settings.armor_reduction_factor[1]).w_cstr("\n");
         }
         else if (msg.equals("armor_reduction_factor_against_blunt")) {
-            g_armor_reduction_factor_against_blunt = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting armor_reduction_factor_against_blunt = ").w_float(&g_armor_reduction_factor_against_blunt).w_cstr("\n");
+            g_module_settings.armor_reduction_factor[2] = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting armor_reduction_factor_against_blunt = ").w_float(&g_module_settings.armor_reduction_factor[2]).w_cstr("\n");
         }
         else if (msg.equals("missile_damage_speed_power")) {
             float x = (float)atof(val.c_str());
             float lo = 2.0f;
             float hi = 1.0f;
-            g_missile_damage_speed_power = clamp(&x, &hi, &lo);
-            ((stream_base&)g_log).w_cstr("Setting missile_damage_speed_power = ").w_float(&g_missile_damage_speed_power).w_cstr("\n");
+            g_module_settings.missile_damage_speed_power = clamp(&x, &hi, &lo);
+            ((stream_base&)g_log).w_cstr("Setting missile_damage_speed_power = ").w_float(&g_module_settings.missile_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("melee_damage_speed_power")) {
             float x = (float)atof(val.c_str());
             float lo = 2.0f;
             float hi = 1.0f;
-            g_melee_damage_speed_power = clamp(&x, &hi, &lo);
-            ((stream_base&)g_log).w_cstr("Setting melee_damage_speed_power = ").w_float(&g_melee_damage_speed_power).w_cstr("\n");
+            g_module_settings.melee_damage_speed_power = clamp(&x, &hi, &lo);
+            ((stream_base&)g_log).w_cstr("Setting melee_damage_speed_power = ").w_float(&g_module_settings.melee_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("damage_interrupt_attack_treshold") || msg.equals("damage_interrupt_attack_threshold")) {
-            g_damage_interrupt_attack_treshold = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting damage_interrupt_attack_treshold = ").w_float(&g_damage_interrupt_attack_treshold).w_cstr("\n");
+            g_module_settings.damage_interrupt_attack_treshold = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting damage_interrupt_attack_treshold = ").w_float(&g_module_settings.damage_interrupt_attack_treshold).w_cstr("\n");
         }
         else if (msg.equals("horse_charge_damage_multiplier")) {
-            g_horse_charge_damage_multiplier = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting horse_charge_damage_multiplier = ").w_float(&g_horse_charge_damage_multiplier).w_cstr("\n");
+            g_module_settings.horse_charge_damage_multiplier = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting horse_charge_damage_multiplier = ").w_float(&g_module_settings.horse_charge_damage_multiplier).w_cstr("\n");
         }
         else if (msg.equals("couched_lance_damage_multiplier")) {
-            g_couched_lance_damage_multiplier = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting couched_lance_damage_multiplier = ").w_float(&g_couched_lance_damage_multiplier).w_cstr("\n");
+            g_module_settings.couched_lance_damage_multiplier = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting couched_lance_damage_multiplier = ").w_float(&g_module_settings.couched_lance_damage_multiplier).w_cstr("\n");
         }
         else if (msg.equals("seeing_range")) {
-            g_seeing_range = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting Seeing Range Multiplier = ").w_float(&g_seeing_range).w_cstr("\n");
+            g_module_settings.seeing_range = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting Seeing Range Multiplier = ").w_float(&g_module_settings.seeing_range).w_cstr("\n");
         }
         else if (msg.equals("track_spotting_multiplier")) {
-            g_track_spotting = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting Track Spotting Multiplier = ").w_float(&g_track_spotting).w_cstr("\n");
+            g_module_settings.track_spotting = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting Track Spotting Multiplier = ").w_float(&g_module_settings.track_spotting).w_cstr("\n");
         }
         else if (msg.equals("blood_multiplier")) {
-            g_blood_multiplier = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting Blood Multiplier = ").w_float(&g_blood_multiplier).w_cstr("\n");
+            g_module_settings.blood_multiplier = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting Blood Multiplier = ").w_float(&g_module_settings.blood_multiplier).w_cstr("\n");
         }
         else if (msg.equals("skill_leadership_bonus")) {
-            g_skill_leadership_bonus = atoi(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting Skill Leadership Bonus = ").w_int(&g_skill_leadership_bonus).w_cstr("\n");
+            g_module_settings.skill_leadership_bonus = atoi(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting Skill Leadership Bonus = ").w_int(&g_module_settings.skill_leadership_bonus).w_cstr("\n");
         }
         else if (msg.equals("skill_prisoner_management_bonus")) {
-            g_skill_prisoner_management_bonus = atoi(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting Skill Prisoner Management Bonus = ").w_int(&g_skill_prisoner_management_bonus).w_cstr("\n");
+            g_module_settings.skill_prisoner_management_bonus = atoi(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting Skill Prisoner Management Bonus = ").w_int(&g_module_settings.skill_prisoner_management_bonus).w_cstr("\n");
         }
         else if (msg.equals("base_companion_limit")) {
-            g_base_companion_limit = atoi(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting Base Companion Limit = ").w_int(&g_base_companion_limit).w_cstr("\n");
+            g_module_settings.base_companion_limit = atoi(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting Base Companion Limit = ").w_int(&g_module_settings.base_companion_limit).w_cstr("\n");
         }
         else if (msg.equals("player_xp_multiplier")) {
             float x = (float)atof(val.c_str());
             float lo = 10.0f;
             float hi = 1.0f;
-            g_player_xp_multiplier = clamp(&x, &hi, &lo);
-            ((stream_base&)g_log).w_cstr("Setting player_xp_multiplier = ").w_float(&g_player_xp_multiplier).w_cstr("\n");
+            g_module_settings.player_xp_multiplier = clamp(&x, &hi, &lo);
+            ((stream_base&)g_log).w_cstr("Setting player_xp_multiplier = ").w_float(&g_module_settings.player_xp_multiplier).w_cstr("\n");
         }
         else if (msg.equals("hero_xp_multiplier")) {
-            g_hero_xp_multiplier = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting hero_xp_multiplier = ").w_float(&g_hero_xp_multiplier).w_cstr("\n");
+            g_module_settings.hero_xp_multiplier = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting hero_xp_multiplier = ").w_float(&g_module_settings.hero_xp_multiplier).w_cstr("\n");
         }
         else if (msg.equals("regulars_xp_multiplier")) {
-            g_regulars_xp_multiplier = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting regulars_xp_multiplier = ").w_float(&g_regulars_xp_multiplier).w_cstr("\n");
+            g_module_settings.regulars_xp_multiplier = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting regulars_xp_multiplier = ").w_float(&g_module_settings.regulars_xp_multiplier).w_cstr("\n");
         }
         else if (msg.equals("hero_wounded_treshold")) {
-            g_hero_wounded_treshold = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting hero_wounded_treshold = ").w_float(&g_hero_wounded_treshold).w_cstr("\n");
+            g_module_settings.hero_wounded_treshold = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting hero_wounded_treshold = ").w_float(&g_module_settings.hero_wounded_treshold).w_cstr("\n");
         }
         else if (msg.equals("player_wounded_treshold")) {
-            g_player_wounded_treshold = (float)atof(val.c_str());
-            ((stream_base&)g_log).w_cstr("Setting player_wounded_treshold = ").w_float(&g_player_wounded_treshold).w_cstr("\n");
+            g_module_settings.player_wounded_treshold = (float)atof(val.c_str());
+            ((stream_base&)g_log).w_cstr("Setting player_wounded_treshold = ").w_float(&g_module_settings.player_wounded_treshold).w_cstr("\n");
         }
         else if (msg.equals("map_min_x")) {
             g_map_min_x = (float)atof(val.c_str());
@@ -948,34 +985,34 @@ void parse_module_info()
             ((stream_base&)g_log).w_cstr("Setting Map Max Y = ").w_float(&g_map_max_y).w_cstr("\n");
         }
         else if (msg.equals("map_sea_direction")) {
-            g_map_sea_direction = (float)atof(val.c_str());
+            g_module_settings.map_sea_direction = (float)atof(val.c_str());
         }
         else if (msg.equals("map_sea_speed_x")) {
-            g_map_sea_speed_x = (float)atof(val.c_str());
+            g_module_settings.map_sea_speed_x = (float)atof(val.c_str());
         }
         else if (msg.equals("map_sea_speed_y")) {
-            g_map_sea_speed_y = (float)atof(val.c_str());
+            g_module_settings.map_sea_speed_y = (float)atof(val.c_str());
         }
         else if (msg.equals("map_river_direction")) {
-            g_map_river_direction = (float)atof(val.c_str());
+            g_module_settings.map_river_direction = (float)atof(val.c_str());
         }
         else if (msg.equals("map_river_speed_x")) {
-            g_map_river_speed_x = (float)atof(val.c_str());
+            g_module_settings.map_river_speed_x = (float)atof(val.c_str());
         }
         else if (msg.equals("map_river_speed_y")) {
-            g_map_river_speed_y = (float)atof(val.c_str());
+            g_module_settings.map_river_speed_y = (float)atof(val.c_str());
         }
         else if (msg.equals("map_tree_types")) {
-            g_map_tree_types = atoi(val.c_str());
+            g_module_settings.map_tree_types = atoi(val.c_str());
         }
         else if (msg.equals("map_snow_tree_types")) {
-            g_map_snow_tree_types = atoi(val.c_str());
+            g_module_settings.map_snow_tree_types = atoi(val.c_str());
         }
         else if (msg.equals("map_steppe_tree_types")) {
-            g_map_steppe_tree_types = atoi(val.c_str());
+            g_module_settings.map_steppe_tree_types = atoi(val.c_str());
         }
         else if (msg.equals("map_desert_tree_types")) {
-            g_map_desert_tree_types = atoi(val.c_str());
+            g_module_settings.map_desert_tree_types = atoi(val.c_str());
         }
         else if (msg.equals("display_wp_one_handed")) {
             g_display_wp[0] = atoi(val.c_str());
@@ -1005,62 +1042,62 @@ void parse_module_info()
             g_compatible_module_version = atoi(val.c_str());
         }
         else if (msg.equals("scan_module_textures")) {
-            g_scan_module_textures = atoi(val.c_str());
-            ((stream_base&)g_log).w_cstr("Scan Module Textures = ").w_int(&g_scan_module_textures).w_cstr("\n");
+            g_module_settings.scan_module_textures = atoi(val.c_str());
+            ((stream_base&)g_log).w_cstr("Scan Module Textures = ").w_int(&g_module_settings.scan_module_textures).w_cstr("\n");
         }
         else if (msg.equals("scan_module_sounds")) {
-            g_scan_module_sounds = atoi(val.c_str());
-            ((stream_base&)g_log).w_cstr("Scan Module Sounds = ").w_int(&g_scan_module_sounds).w_cstr("\n");
+            g_module_settings.scan_module_sounds = atoi(val.c_str());
+            ((stream_base&)g_log).w_cstr("Scan Module Sounds = ").w_int(&g_module_settings.scan_module_sounds).w_cstr("\n");
         }
         else if (msg.equals("module_name")) {
-            g_module_info_name = val;
-            ((stream_base&)g_log).w_cstr("Module_name = ").w_tstr((rgl::string*)&g_module_info_name).w_cstr("\n");
+            g_module_settings.module_name = val;
+            ((stream_base&)g_log).w_cstr("Module_name = ").w_tstr((rgl::string*)&g_module_settings.module_name).w_cstr("\n");
         }
         else if (msg.equals("num_hints")) {
-            g_num_hints = atoi(val.c_str());
-            ((stream_base&)g_log).w_cstr("Num Hints = ").w_int(&g_num_hints).w_cstr("\n");
+            g_module_settings.num_hints = atoi(val.c_str());
+            ((stream_base&)g_log).w_cstr("Num Hints = ").w_int(&g_module_settings.num_hints).w_cstr("\n");
         }
         else if (msg.equals("starting_year")) {
-            g_starting_year = atoi(val.c_str());
+            g_module_settings.starting_year = atoi(val.c_str());
         }
         else if (msg.equals("starting_month")) {
-            g_starting_month = atoi(val.c_str());
+            g_module_settings.starting_month = atoi(val.c_str());
         }
         else if (msg.equals("starting_day")) {
-            g_starting_day = atoi(val.c_str());
+            g_module_settings.starting_day = atoi(val.c_str());
         }
         else if (msg.equals("enable_quick_battles")) {
-            g_enable_quick_battles = atoi(val.c_str());
+            g_module_settings.enable_quick_battles = atoi(val.c_str());
         }
         else if (msg.equals("disable_food_slot")) {
-            g_disable_food_slot = atoi(val.c_str());
+            g_module_settings.disable_food_slot = atoi(val.c_str());
         }
         else if (msg.equals("limit_hair_colors")) {
-            g_limit_hair_colors = atoi(val.c_str());
+            g_module_settings.limit_hair_colors = atoi(val.c_str());
         }
         else if (msg.equals("show_faction_color")) {
-            g_show_faction_color = atoi(val.c_str());
+            g_module_settings.show_faction_color = atoi(val.c_str());
         }
         else if (msg.equals("show_quest_notes")) {
-            g_show_quest_notes = atoi(val.c_str());
+            g_module_settings.show_quest_notes = atoi(val.c_str());
         }
         else if (msg.equals("show_party_ids_instead_of_names")) {
-            g_show_party_ids_instead_of_names = atoi(val.c_str()) != 0;
+            g_module_settings.show_party_ids_instead_of_names = atoi(val.c_str()) != 0;
         }
         else if (msg.equals("main_menu_font_color_red")) {
-            g_main_menu_font_color_red = atoi(val.c_str());
+            g_module_settings.main_menu_font_color_red = atoi(val.c_str());
         }
         else if (msg.equals("main_menu_font_color_green")) {
-            g_main_menu_font_color_green = atoi(val.c_str());
+            g_module_settings.main_menu_font_color_green = atoi(val.c_str());
         }
         else if (msg.equals("main_menu_font_color_blue")) {
-            g_main_menu_font_color_blue = atoi(val.c_str());
+            g_module_settings.main_menu_font_color_blue = atoi(val.c_str());
         }
         else if (msg.equals("works_with_version_min")) {
-            g_works_with_version_min = atoi(val.c_str());
+            g_module_settings.works_with_version_min = atoi(val.c_str());
         }
         else if (msg.equals("works_with_version_max")) {
-            g_works_with_version_max = atoi(val.c_str());
+            g_module_settings.works_with_version_max = atoi(val.c_str());
         }
         else if (msg.len > 1)      // (0x4c16d4: cmp [msg.len], 1; not the entry count)
             ((stream_base&)g_log).w_cstr("Unrecognized Module_info directive = ").w_tstr((rgl::string*)&msg).w_cstr(". Skipping.\n");

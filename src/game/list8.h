@@ -4,14 +4,12 @@
 #ifndef MB_GAME_LIST8_H
 #define MB_GAME_LIST8_H
 #include "out_stream.h"
+#include "../include/i64_vec.h"                      // I64Vec: the same vector (std::vector<__int64>); read 0x51e0b0, resize 0x493090
 
 struct Elem8 { int a, b; };
-struct List8 {                                      // vector of 8-byte elements
-    int   pad0;                                     // +0x0 (allocator)
-    Elem8* begin;                                   // +0x4
-    Elem8* end;                                     // +0x8
-    Elem8* endcap;                                  // +0xc
+struct List8 : I64Vec {                             // vector of 8-byte elements: the saved form of the records (write8)
     __declspec(noinline) void write8(OutStream* out);   // 0x4e94b0 (ret 4)
 };
+extern List8 g_list_a70480;                         // 0xa70480 (read by Game::load_state 0x51dbd0, written by GameData::save_state 0x4e8f10; defined in party/game.cpp)
 
 #endif // MB_GAME_LIST8_H

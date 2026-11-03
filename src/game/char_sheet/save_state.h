@@ -90,10 +90,9 @@ struct OutRecList {
 #pragma pack(pop)
 
 
-extern List8 g_list_a70480;                         // 0xa70480
-extern RecB0* g_party_templates;                               // 0x5e29f8 (array of 0xb0-byte records)
 #include "../game_globals.h"
 #include "../../include/item_kind.h"
+#include "../../include/game_recs.h"
 extern ItemKind* g_items;                           // 0x5e29d0 (array of 0x238-byte item kinds)
 
 

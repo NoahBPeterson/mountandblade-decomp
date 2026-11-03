@@ -19,16 +19,6 @@ struct MenuWidget {
     int f14;                                            // +0x14 (0x514d40)
     int f18;                                            // +0x18
 };
-extern MenuWidget* g_wA0;                               // 0xa739a0
-extern MenuWidget* g_wAC;                               // 0xa739ac
-extern MenuWidget* g_wB0;                               // 0xa739b0
-extern MenuWidget* g_wB4;                               // 0xa739b4
-extern MenuWidget* g_wBC;                               // 0xa739bc
-extern MenuWidget* g_wC0;                               // 0xa739c0
-extern MenuWidget* g_wDC;                               // 0xa739dc
-extern MenuWidget* g_wE4;                               // 0xa739e4
-extern MenuWidget* g_wE8;                               // 0xa739e8
-extern MenuWidget* g_wEC;                               // 0xa739ec
 
 // the Mission object with the members of 0x5143f0 / 0x5144d0 (src/game/mission.h lacks them) and the offsets the start-up reads
 struct MissionG {
@@ -71,6 +61,7 @@ struct Team {                                           // the team record seen 
 
 // the map screen (`this` of 0x514d40 / 0x515d80)
 #include "../campaign_screen.h"            // Screen (the campaign map screen; its Cam is rgl::frustum)
+#include "../window_mgr.h"      // g_windows (0xa73980), slot_as<T>(i)
 
 // the mission start-up object (global g_mission_ctx, 0xa73300): the one definition is mission_ctx_rec.h (no includes), so that
 // modules whose local views clash with inv_common.h can use the same class

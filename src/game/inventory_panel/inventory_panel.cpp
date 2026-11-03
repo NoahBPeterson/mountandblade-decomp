@@ -7,6 +7,7 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./inventory_panel.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -40,12 +41,10 @@ DragMesh* g_drag;                                // 0x5d75e4
 extern MsgLog g_msglog;                                 // 0x5d7080
 
 extern int   g_a17188;                                  // 0xa17188
-extern int   g_a17588;                                  // 0xa17588
 
-extern int   g_trial_mode;                              // 0x5e29c4
-extern float g_ui_alpha;                                // 0x5d7094
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
-extern int   g_disable_food_slot;                               // 0xa181a8
+#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp (canonical, defined in triggers/trigger_vec.cpp)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 extern tstring g_num;                                   // 0xa70464
 extern char  g_skill_tbl[];                           // 0x8ee3100 (skill records of 0x44 bytes)
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
@@ -78,6 +77,8 @@ extern Modifier g_item_modifiers[];                          // 0xa75f70
 #include "../main_menu.h"
 #include "../ui/named_rec.h"      // NamedRec::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config/config.h"
+#include "../key_names.h"      // g_keyboard (0xa170c8)
+#include "../ui_globals.h"      // UI / core globals
 
 // @ 0x50fe20
 void InventoryPanel::refresh_transaction(int unused)
@@ -85,19 +86,19 @@ void InventoryPanel::refresh_transaction(int unused)
     g_msglog.flush();
 
     int page = 0;
-    if (g_ui_alpha < 0.5f && view_count == 2)
+    if (g_gui_root.mouse[0] < 0.5f && view_count == 2)
         page = 1;
 
-    if (g_ui_tick != 0) {
+    if (g_mission_clock != 0) {
         InvBar* bar = view[page]->bar;
         int stop = bar->stop;
-        bar->set_value((g_ui_tick / bar->stops[stop]) * bar->scale * 0.0005f +
+        bar->set_value((g_mission_clock / bar->stops[stop]) * bar->scale * 0.0005f +
                        (bar->stops[stop] - bar->scale) *
                        ((bar->thumb - bar->track_start) / (bar->track_end - bar->track_start)));
         PSO(bar)->set_key_flags(0x10000);
     }
 
-    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17188 != 0 && g_a17588 == 0 &&
+    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17188 != 0 && g_keyboard.prev[0x2d] == 0 &&
         g_cfg.cheat_mode != 0 && g_trial_mode != 0) {
         g_game->add_gold(1000, g_game->player);
         money_label(0);
@@ -631,7 +632,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
             tstring s(buf);
             g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
-    } else if (kind == 0xb && g_disable_food_slot == 0 && slot->item >= 0 && it->f1fc > 0) {
+    } else if (kind == 0xb && g_module_settings.disable_food_slot == 0 && slot->item >= 0 && it->f1fc > 0) {
         const tstring* p = g_strtable.lookup(tstring("ui_value_to_morale"));
         float v = slot->item < 0 ? 0.0f : (float)it->f1fc;
         sprintf(buf, p->c_str(), (double)(v * 0.02f));
