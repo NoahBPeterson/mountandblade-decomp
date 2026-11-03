@@ -5,7 +5,8 @@ usage: smoke.py --exe DIR/mb_standalone.exe [--out DIR] [--ref work/smoke/ref_me
 
 The byte, equivalence and data gates cannot see a build that runs wrong while every function is right (D2, 2026-11-02:
 two owners for one piece of data left every loading-screen message and the whole loading screen drawn under the menu).
-This is the check that can. Exit status: 0 menu matches the reference, 1 it does not (or the game died or never reached
+This is the check that can. The launcher is passed with crashrun --play (Return at the launcher: it brings the game
+window to the front for a moment). Exit status: 0 menu matches the reference, 1 it does not (or the game died or never reached
 the menu), 2 usage, 3 a game is already running (it is never killed: it may be the user's).
 
 Shots go to --out (default work/smoke/<exe dir name>): load_NNN.png every 20 s while loading, menu.png 8 s after the
@@ -70,7 +71,7 @@ def main():
     log = os.path.join(GAME, "rgl_log.txt")
     t0 = time.time()
     run = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "relink", "crashrun.py"), "--exe", exe,
-                            "--timeout", str(a.timeout + 60)], stdout=open(os.path.join(out, "crashrun.log"), "w"),
+                            "--timeout", str(a.timeout + 60), "--play"], stdout=open(os.path.join(out, "crashrun.log"), "w"),
                            stderr=subprocess.STDOUT, cwd=ROOT)
     menu, n, status = None, 0, "timeout"
     try:
