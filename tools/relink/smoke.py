@@ -92,7 +92,10 @@ def main():
     finally:
         for p in game_pids():            # the run's own game: it was not running before we launched it
             subprocess.run(["kill", str(p)], capture_output=True)
-        run.wait(timeout=60)
+        try:
+            run.wait(timeout=60)
+        except subprocess.TimeoutExpired:     # crashrun keeps waiting on the debugger of the game it no longer has
+            run.kill()
     print("%s after %d s; shots in %s" % (status, time.time() - t0, os.path.relpath(out, ROOT)))
     if status != "menu":
         return 1
