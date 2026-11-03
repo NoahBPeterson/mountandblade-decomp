@@ -2,7 +2,7 @@
 """data_coverage.py: how much of the original's static data (.rdata, .data, .bss) our source defines.
 
 usage: data_coverage.py [--record] [--map work/relink/resolve_map.json] [--json OUT] [--from-build DIR [--commit SHA] [--record-data]]
-       (run tools/relink/resolve_map.py first; --record appends a point to docs/data_history.json, which
+       (run tools/relink/resolve_map.py first; --record --from-build also writes work/relink/latest_build.json (the dir's absolute path); --record appends a point to docs/data_history.json, which
         tools/progress.py prints. --from-build DIR reads DIR/resolve_map.json and DIR/build.json (a tools/relink/build.py
         output); --record then appends the build's crutch counts to docs/standalone_history.json instead (which
         tools/progress.py --plot-standalone draws), and data_history.json only with --record-data)
@@ -61,10 +61,33 @@ def game_functions():
     return st["starts"], st["game"]
 
 
-def data_items(img, rmap, starts, game, first_user=None):
+def link_map_symbols(map_path):
+    """{mangled name: (size, module)} for the data symbols of a link map (tools/relink/build.py --out DIR/mb_standalone.map).
+    The module is the object file's stem without its content hash (mesh_start_2dbc0c289283.obj -> mesh_start), i.e. the
+    source module that defines the symbol; the size is the distance to the next symbol of the same segment (None for the
+    last one), so it includes alignment padding but never the next object."""
+    row = re.compile(r"\s*(\w{4}):(\w{8})\s+(\S+)\s+[0-9a-f]{8}\s+(?:f\s+)?(?:i\s+)?(\S+)\.obj")
+    ents = collections.defaultdict(list)
+    for line in open(map_path, errors="replace"):
+        m = row.match(line)
+        if m and m.group(1) != "0001":
+            ents[m.group(1)].append((int(m.group(2), 16), m.group(3), re.sub(r"_[0-9a-f]{12}$", "", m.group(4))))
+    out = {}
+    for seg, lst in ents.items():
+        offs = sorted({o for o, _n, _m in lst})
+        for o, n, mod in lst:
+            i = bisect.bisect_right(offs, o)
+            sz = max(offs[i] - o, out.get(n, (0, 0))[0] or 0) if i < len(offs) else out.get(n, (None, 0))[0]
+            out[n] = (sz, mod)
+    return out
+
+
+def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None):
     """[[start, end, class]] items of the static data (see the module docstring), plus the instruction uses
     {address: {'game'|'lib'}} and the names {address: [defined, [names]]}. gen_data.py reuses this.
-    first_user, when given, is filled with {address: the lowest-addressed game function that uses it}."""
+    first_user, when given, is filled with {address: the lowest-addressed game function that uses it}; users, with
+    {address: set of the game functions that use it}. syms ({name: (size, module)} from link_map_symbols): an item
+    that our source defines takes the defined symbol's whole extent, absorbing the items inside it."""
     import capstone
     from glue import RDATA, DATA, BSS, IAT_LO, IAT_HI, section_of
     lo_all, hi_all = RDATA[1], BSS[2]
@@ -91,6 +114,8 @@ def data_items(img, rmap, starts, game, first_user=None):
                         uses[v].add(owner)
                         if first_user is not None and owner == "game":
                             first_user.setdefault(v, s)
+                        if users is not None and owner == "game":
+                            users.setdefault(v, set()).add(s)
 
     # pointer tables: runs of 4+ consecutive dwords that all point into the data (a page table of a pool, a list of
     # strings); a lone dword that happens to hold such a value is more likely an integer
@@ -139,26 +164,115 @@ def data_items(img, rmap, starts, game, first_user=None):
             items[-1][1] = nxt       # a field of the item before
             continue
         items.append([v, nxt, cls])
+    if syms:
+        items = _absorb(items, named, syms, section_of)
     return items, uses, named
 
 
-def item_owners(items, first_user, named, rmap):
-    """[(function VA or None, module or None)] per item: the lowest-addressed game function that uses any address of
-    the item, and, for a named item, the module of the first row that references its name (the best the resolution
-    map says about where the source defines it)."""
+def _absorb(items, named, syms, section_of):
+    """An item our source defines spans its symbol's whole size (the link map's), not just up to the next use: the
+    items that start inside it are part of it (one that sticks out past the end keeps its tail). [start, end, class]."""
+    out, cover = [], 0
+    for s, e, c in items:
+        if s < cover:
+            if e <= cover:
+                continue
+            s = cover
+        if c == "defined in source":
+            ext = max([syms[n][0] or 0 for n in (named[s][1] if s in named else []) if n in syms] or [0])
+            if ext > e - s:
+                e = min(s + ext, section_of(s)[2])
+                cover = max(cover, e)
+        out.append([s, e, c])
+    return out
+
+
+def item_owners(items, first_user, named, rmap, syms=None, users=None):
+    """[(function VA or None, module or None, {functions})] per item: the lowest-addressed game function that uses any
+    address of the item; the module that defines the item (a named item: the object file the link map puts its symbol
+    in, syms from link_map_symbols; without one, the module of the first row that references its name); and, when
+    users is given, the set of game functions that use the item (progress.py picks the module of most of them for the
+    items our source does not define)."""
     addrs = sorted(first_user)
     out = []
     for s, e, _c in items:
-        i = bisect.bisect_left(addrs, s)
-        fn = min((first_user[a] for a in addrs[i:bisect.bisect_left(addrs, e)]), default=None)
+        i, j = bisect.bisect_left(addrs, s), bisect.bisect_left(addrs, e)
+        fn = min((first_user[a] for a in addrs[i:j]), default=None)
+        fns = set()
+        for a in addrs[i:j]:
+            fns |= (users or {}).get(a, set())
         mod = None
-        for n in named.get(s, [False, []])[1]:
+        names = named[s][1] if s in named else []
+        for n in names:
+            if syms and n in syms:
+                mod = syms[n][1]
+                break
+        for n in names if mod is None else ():
             rows = rmap["names"][n].get("%08x" % s, {}).get("rows")
             if rows:
                 mod = rows[0].split()[0]
                 break
-        out.append((fn, mod))
+        out.append((fn, mod, fns))
     return out
+
+
+_TYPE_OF = re.compile(r"^\?[^@]+@(?:[^@]+@)*@3[UV]([A-Za-z_]\w*)@@[A-Z]")
+_HDRS = None
+
+
+def type_of_symbol(name):
+    """The struct/class a mangled data symbol is an object of (?g_terrain@@3UTerrain@@A -> Terrain), else None."""
+    m = _TYPE_OF.match(name)
+    return m.group(1) if m else None
+
+
+def struct_members(typename, size):
+    """[(offset, size, name)] of a struct/class defined in src/ headers whose members carry `// +0x...` offset comments
+    (the member's size is the distance to the next annotated one, the last runs to `size`), or None when no definition has
+    any. Of several definitions of one name the one with most annotations wins; members inside a nested union or struct
+    are skipped except the first annotated one (a union's first member), and an offset seen twice keeps the first."""
+    global _HDRS
+    if _HDRS is None:
+        import glob
+        _HDRS = {}
+        for f in glob.glob(os.path.join(ROOT, "src", "**", "*.h"), recursive=True):
+            _HDRS[f] = open(f, errors="replace").read().split("\n")
+    best = None
+    head = re.compile(r"^\s*(?:struct|class)\s+%s\b[^;{]*\{" % re.escape(typename))
+    for f, lines in _HDRS.items():
+        for i, ln in enumerate(lines):
+            if not head.match(ln):
+                continue
+            stack, mem, done = [i], [], set()          # open blocks (by the line that opened them); done: blocks that gave a member
+            for j in range(i + 1, len(lines)):
+                code, _, cmt = lines[j].partition("//")
+                om = re.search(r"\+0x([0-9a-f]+)", cmt)
+                nm = re.search(r"(\w+)\s*(?:\[[^\]]*\]\s*)*[;,=]", code)
+                if om and nm and (len(stack) == 1 or stack[-1] not in done):
+                    done.add(stack[-1])
+                    mem.append((int(om.group(1), 16), nm.group(1)))
+                for ch in code:
+                    if ch == "{":
+                        stack.append(j)
+                    elif ch == "}" and stack:
+                        stack.pop()
+                if not stack:
+                    break
+            if best is None or len(mem) > len(best):
+                best = mem
+    if not best:
+        return None
+    out, seen = [], set()
+    for off, nm in best:
+        if off not in seen and off < size:
+            seen.add(off)
+            out.append((off, nm))
+    out.sort()
+    if not out:
+        return None
+    if out[0][0] > 0:
+        out.insert(0, (0, "(start)"))
+    return [(o, (out[k + 1][0] if k + 1 < len(out) else size) - o, n) for k, (o, n) in enumerate(out)]
 
 
 def crutch_counts(build_dir):
@@ -166,6 +280,14 @@ def crutch_counts(build_dir):
     steps = json.load(open(os.path.join(build_dir, "build.json")))
     found = {k: re.search(pat, str(steps.get(step, ""))) for k, step, pat in CRUTCHES}
     return {k: (int(m.group(1)) if m else None) for k, m in found.items()}
+
+
+def MAP_OF(resolve_map):
+    """The link map that sits beside a build's resolve_map.json."""
+    return os.path.join(os.path.dirname(os.path.abspath(resolve_map)), "mb_standalone.map")
+
+
+LATEST = os.path.join(ROOT, "work", "relink", "latest_build.json")
 
 
 def _record(path, rep):
@@ -183,6 +305,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--record", action="store_true")
     ap.add_argument("--map", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
+    ap.add_argument("--no-extents", action="store_true", help="do not widen defined items to their link-map size")
     ap.add_argument("--json")
     ap.add_argument("--from-build", metavar="DIR")
     ap.add_argument("--record-data", action="store_true", help="with --from-build: also append to docs/data_history.json")
@@ -197,7 +320,8 @@ def main():
     img = R.Image()
     starts, game = game_functions()
     rmap = json.load(open(a.map))
-    items, uses, named = data_items(img, rmap, starts, game)
+    syms = link_map_symbols(MAP_OF(a.map)) if not a.no_extents and os.path.exists(MAP_OF(a.map)) else None
+    items, uses, named = data_items(img, rmap, starts, game, syms=syms)
     by = {c: [0, 0] for c in CLASSES}
     per_sec = {s[0]: {c: 0 for c in CLASSES} for s in (RDATA, DATA, BSS)}
     for s, e, c in items:
@@ -228,6 +352,8 @@ def main():
         if not a.from_build or a.record_data:
             _record(HIST, rep)
         if a.from_build and a.record:
+            os.makedirs(os.path.dirname(LATEST), exist_ok=True)       # the history keeps only the basename; progress.py --treemap-data wants the dir
+            json.dump({"build": os.path.abspath(a.from_build), "when": rep["when"], "commit": commit}, open(LATEST, "w"), indent=1)
             _record(SA_HIST, dict(crutch_counts(a.from_build), when=rep["when"], commit=commit,
                                   build=os.path.basename(a.from_build.rstrip("/")), items=rep["items"], bytes=rep["bytes"]))
     return 0
