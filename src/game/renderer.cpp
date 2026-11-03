@@ -91,7 +91,7 @@ void renderer::reset_state()
     dev->SetPixelShader(0);
     for (int i = 0; i < 3; i++) {
         dev->SetTexture(i, 0);
-        f54c[i] = 0;
+        tex_bound[i] = 0;
         stage_color[i] = -1;
         stage_alpha[i] = -1;
         if (*(int*)((char*)&g_options + 0x38)) {
@@ -102,7 +102,7 @@ void renderer::reset_state()
             dev->SetSamplerState(i, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
         }
         dev->SetSamplerState(i, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-        int a = max_aniso;
+        int a = caps.MaxAnisotropy;
         if (a >= 5) a = 5;
         dev->SetSamplerState(i, D3DSAMP_MAXANISOTROPY, a);
         stage_xform[i] = 0;

@@ -107,13 +107,6 @@ struct PsScrollList : MissionUi {                   // 0x4a8 bytes (ctor 0x49deb
     MissionUi* list;                                // +0x490
     char pad494[0x4a8 - 0x494];
 };
-struct SkillRow {                                   // the 42 x 0x44-byte skill table seen from its name field (0x8ee3110 .. 0x8ee3c38)
-    tstring name;                                   // +0x00 (the skill's display name)
-    tstring key;                                    // +0x10 (translation key; 0x5059c0 translates it)
-    char pad20[0x30 - 0x20];
-    unsigned flags;                                 // +0x30 bit 4 = shown on the skills page (0x5059c0)
-    char pad34[0x44 - 0x34];
-};
 
 
 // ---- objects and functions of other translation units --------------------------------------------------------------

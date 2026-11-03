@@ -2,7 +2,6 @@
 // character import / export flow, the character file writer (0x4d86d0), the character import reader (0x4d8c20)
 // and the export path builder (0x4d9260). Names provisional; see options_panel.h.
 #include "./options_panel.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "../screen_records.h"       // Rec3c / Rec48: the "done" window and the character import / export window records (slot 3: 0x4d7d90 / 0x4d8000)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -21,7 +20,7 @@ struct WindowMgrW { void open(int n); };
 #define TROOP_I64(t, off)  (*(unsigned __int64*)((char*)(t) + (off)))
 
 // ---- the skill table: 42 records of 0x44 bytes, name (tstring) first (0x8ee3110 .. 0x8ee3c38) ----
-#include "../skill_entry.h"
+#include "../skill_cap.h"
 #include "../game_globals.h"                   // g_level_xp (0x5937c8)
 void mb_snprintf(char* buf, unsigned int n, const char* fmt, ...);  // 0x415100
 // 0x432510: clamp *v into [*lo, *hi) and return it.
@@ -447,7 +446,7 @@ void GameIo::export_character(outfile* stream)
 
     tstring skill;
     for (int i = 0; i < 42; i++) {
-        skill = g_skills[i].name;
+        skill = g_skill_tbl[i].name;
         skill.spaces_to_underscores();
         skill.to_lower();
         int level = troop->nibble(i);
@@ -573,7 +572,7 @@ void GameIo::import_apply(ini_file* imp)
         bool found = false;
         tstring tmp;
         for (int j = 0; j < 42 && !found; j++) {
-            tmp = g_skills[j].name;
+            tmp = g_skill_tbl[j].name;
             tmp.spaces_to_underscores();
             tmp.to_lower();
             if (tmp.equals(key)) {

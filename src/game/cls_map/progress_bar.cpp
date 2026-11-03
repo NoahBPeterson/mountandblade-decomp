@@ -2,11 +2,11 @@
 // s004e4c70, s004e55f0, s004e5f80, s004e65e0, s004e6a70, s004e75a0, s004e7b30 and s004e85d0 (head). T-regime region: helpers sit
 // right after their first caller; the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
+#include "../../include/data_views.h"
 #include "../window_mgr.h"      // g_windows slot 21 (0xa739d4)
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
 #include "../config/config.h"

@@ -12,7 +12,7 @@
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <new>
@@ -369,7 +369,7 @@ void PartyWindow::create()
     }
     init_window();
 
-    if ((g_game_G->f13ae8 & 1) == 0 && f4 == 2 && g_tutorial_off == 0) {
+    if ((g_game_G->f13ae8 & 1) == 0 && f4 == 2 && g_cfg.skip_tutorial == 0) {
         tstring t1("ui_tutorial_inventory");
         tstring t2("ui_tutorial");
         tstring* text = g_strtable.lookup(&t1);

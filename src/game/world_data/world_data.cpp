@@ -6,7 +6,6 @@
 //       (game_data_2) of the TU map. Names provisional. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./world_data.h"
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
@@ -1782,7 +1781,7 @@ void GameW::quest_done(int _idx)
                 tstring _txt(_buf);
                 g_msglog.push(_txt, 0xffd0f0c8);
             }
-            g_sound_mgr.play(g_quest_sounds[0], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+            g_sound_mgr.play(g_sound_mgr.slot[3], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
         }
         if ((*(unsigned*)(_e + 0x50) >> 1 & 1) == 0)
             *(unsigned*)(_e + 0x64) |= 0x200;
@@ -1812,7 +1811,7 @@ void GameW::quest_succeeded(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xff90ff28);
     }
-    g_sound_mgr.play(g_quest_sounds[1], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[4], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1836,7 +1835,7 @@ void GameW::quest_failed(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    g_sound_mgr.play(g_quest_sounds[3], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[6], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1872,7 +1871,7 @@ void GameW::set_quest_concluded(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    g_sound_mgr.play(g_quest_sounds[2], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[5], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1896,7 +1895,7 @@ void GameW::set_quest_cancelled(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    g_sound_mgr.play(g_quest_sounds[4], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[7], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 

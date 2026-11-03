@@ -12,7 +12,7 @@
 //       0x52f250 and 0x5305b0 in turn, so all three may belong to the caller's object).
 //-----------------------------------------------------------------------------
 #include "./mesh_3.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../strat/gui_manager.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
@@ -35,7 +35,7 @@
 #undef g_scene_s2cf60
 #define g_scene_s2cf60 (*(Scene_s2cf60**)&(*(void**)((char*)&g_mission + 0x0)))
 #undef g_editor_dialog_s2cf60
-#define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)g_app_obj)
+#define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)&g_app_obj)
 // @ 0x52cf60
 void MapEditor_s2cf60::update()
 {
@@ -832,7 +832,7 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
 #undef g_editor_view_s2f250
 #define g_editor_view_s2f250 (*(EditorView_s2f250**)&(*(void**)((char*)&g_windows + 0x38)))
 #undef g_editor_dialog_s2f250
-#define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)g_app_obj)
+#define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
 // @ 0x52f250
 void MapEditor_s2f250::update()
 {
@@ -979,7 +979,7 @@ place:
                 g_editor_dialog_s2f250.update_objects();
                 g_editor_view_s2f250->pick_entity();
                 g_editor_view_s2f250->f2f9 = 1;
-                SetFocus(g_editor_hwnd);
+                SetFocus(g_app_obj.m_hWnd);
 
                 if (g_game_s2f250->rand_scale != 0) {
                     float v2 = (float)(rand() % 15817) * 4.741733573609963e-05f + 0.75f;
@@ -1001,9 +1001,9 @@ place:
     goto refresh;
 
 set_cursor:
-    SetCursorPos(g_warp_x, g_warp_y);
-    g_saved_x = g_warp_x;
-    g_saved_y = g_warp_y;
+    SetCursorPos(g_gui.warp_x, g_gui.warp_y);
+    g_gui.saved_x = g_gui.warp_x;
+    g_gui.saved_y = g_gui.warp_y;
     g_map_s2f250->object->frame.o = this->f304;
     g_map_s2f250->object->frame.o.z += g_game_s2f250->f1a0ac;
     g_map_s2f250->object->f140 = 1;

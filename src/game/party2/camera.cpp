@@ -11,7 +11,6 @@
 //     renumber, link, pop_try, run_line, emit. The slices viewed these as `Interp`, `Mission` and `ScriptHolder`.
 #define MB_CAMERA_TU
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <new>
@@ -2818,22 +2817,22 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                     set_progress_range(pr_lo, pr_hi);
                     refresh_settings_list(&s0, 1);
                 }
-                if ((g_key_a[0x3b] && !g_key_b[0x3b]) || EMIT_AUDIO.id == 0) {
+                if ((g_keyboard.down[0x3b] && !g_keyboard.prev[0x3b]) || EMIT_AUDIO.id == 0) {
                     EMIT_AUDIO.id = 0;
                     set_debug_label();
                     tag = 0xffffffff;
                     done = 1;
-                } else if (g_key_a[0x3a] && !g_key_b[0x3a]) {
+                } else if (g_keyboard.down[0x3a] && !g_keyboard.prev[0x3a]) {
                     tag = 0xffffffff;
                     done = 1;
-                } else if (g_key_a[0x39] && !g_key_b[0x39]) {
+                } else if (g_keyboard.down[0x39] && !g_keyboard.prev[0x39]) {
                     int e = (int)tag >> 16;
                     if (g_scripts[e].name.equals(EMIT_AUDIO.name))
                         tag = ((unsigned)e << 16) | (unsigned)EMIT_AUDIO.tag;
                     done = 1;
-                } else if (g_key_a[0x38] && !g_key_b[0x38]) {
+                } else if (g_keyboard.down[0x38] && !g_keyboard.prev[0x38]) {
                     brk = 1;
-                } else if (!(g_key_a[0x37] && !g_key_b[0x37])) {
+                } else if (!(g_keyboard.down[0x37] && !g_keyboard.prev[0x37])) {
                     pump_messages();
                     continue;
                 }

@@ -6,6 +6,7 @@
 // Needs rgl::vector4 / rgl::matrix (rgl_base.h picks the module's own) and the D3D9 headers.
 #ifndef MB_RENDERER_H
 #define MB_RENDERER_H
+#include <stddef.h>
 #include <windows.h>
 #include <d3d9.h>
 #include "./rgl_base.h"
@@ -23,7 +24,7 @@ struct renderer {
     unsigned char b549;             // 0x549  z-write disabled                    0x4617b0, 0x461f80
     unsigned char b54a;
     unsigned char b54b;             // 0x54b  depth test (ZFUNC LESSEQUAL)        0x4617b0, 0x461f80
-    int f54c[3];                    // 0x54c  bound texture per stage             0x4617b0
+    IDirect3DBaseTexture9* tex_bound[3];   // 0x54c  bound texture per stage         0x4617b0, terrain_a SetTexture cache
     IDirect3DPixelShader9* cur_ps;  // 0x558                                      0x4617b0, 0x461f20
     int stage_color[3];             // 0x55c                                      0x461bd0
     int stage_alpha[3];             // 0x568                                      0x461c60
@@ -54,12 +55,10 @@ struct renderer {
     float time_var;                 // 0x600                                      0x46e590
     float spec[3];                  // 0x604  "vSpecularColor" cache              0x4617b0, 0x461eb0
     int f610;
-    unsigned char b614;             // 0x614                                      0x46e590
+    unsigned char use_hw_shadow;    // 0x614  hardware shadow maps in use         0x46e590
     char pad615[3];
     IDirect3DDevice9* dev;          // 0x618
-    char pad61c[0x688 - 0x61c];
-    int max_aniso;                  // 0x688                                      0x4617b0
-    char pad68c[0x74c - 0x68c];
+    D3DCAPS9 caps;                  // 0x61c  GetDeviceCaps (renderer_setup 0x4c3510, trigger_vec 0x4c...); MaxAnisotropy is read by 0x4617b0
     int width;                      // 0x74c window width (renderer_setup 0x4c3510 publishes it)
     int height;                     // 0x750 window height
     D3DMATRIX view;                 // 0x754                                      0x461630
@@ -89,6 +88,10 @@ struct renderer {
     void tessellate(float* pts, int* n, float a, float b, float r, int stacks, int slices, int mode);  // 0x40ab10
     void draw_polygon(const rgl::vector4* pts, int n);      // 0x408e60 outline of a <= 4 point polygon
 };
+typedef char renderer_caps_size_check[(sizeof(D3DCAPS9) == 0x130) ? 1 : -1];
+typedef char renderer_caps_at_check[(offsetof(renderer, caps) == 0x61c) ? 1 : -1];
+typedef char renderer_width_at_check[(offsetof(renderer, width) == 0x74c) ? 1 : -1];
+typedef char renderer_aniso_at_check[(offsetof(renderer, caps) + offsetof(D3DCAPS9, MaxAnisotropy) == 0x688) ? 1 : -1];
 extern renderer g_render;           // 0xa17910
 
 #endif // MB_RENDERER_H

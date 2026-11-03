@@ -20,7 +20,7 @@
 #define resmgr resmgr_agent_view
 #define g_resmgr g_resmgr_agent_view      // its `extern resmgr g_resmgr`: the defining declaration is `resource_manager g_resmgr` (rgl/resource.h), declared below
 #include <stdlib.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../dialog_mgr.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <math.h>
 #include <string.h>
@@ -791,7 +791,7 @@ void Agent::update_ai()
                     int hf = always_attack_in_melee;
                     float push = (((float)r * (1.0f / 15817.0f)) * diff * g_dt_scale) * 20.0f;
                     if (hf == 0)
-                        push = ((float)g_options.i44 * 0.5f + (40.0f - (float)g_game->troops[troop].fb0) * 0.012f) + push;
+                        push = ((float)g_options.difficulty * 0.5f + (40.0f - (float)g_game->troops[troop].fb0) * 0.012f) + push;
                     push = push + f314;
                     f314 = push;
                     if (push < 0.0f)
@@ -1321,7 +1321,7 @@ void Agent::update_ai()
     }
 
 done:
-    if (g_mission->terrain.f184 != 0 && id == g_player_agent) {
+    if (g_mission->terrain.f184 != 0 && id == g_dialogs.partner_agent) {
         f2c8 = 0;
         flag_a = false;
         target = g_mission->player_id;
@@ -2099,7 +2099,7 @@ set7:
 
 melee:
         // ---- melee / no ranged weapon -----------------------------------------------------------------------------------
-        reach0 = (frand() - 0.5f) * (float)(g_options.i44 + 1) * 0.15f + 0.9f;
+        reach0 = (frand() - 0.5f) * (float)(g_options.difficulty + 1) * 0.15f + 0.9f;
         facing = tv.y * vel.y + tv.x * vel.x;
         ofacing = -tv.x * o->vel.x + -tv.y * o->vel.y;
         {
@@ -2277,7 +2277,7 @@ b508:
                     if (b5a) {
                         int sv = p.stat_1f0a();
                         int sk = g_game->troops[troop].fb0 + 0x28;
-                        ((gui_timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.i44 * 0.25f + 0.6f) * (100.0f / (float)sv)));
+                        ((gui_timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
                         combat_state = 4;
                     } else if (ai_timer.elapsed() > 8.0f || reach0 * 4.0f < distL) {
                         f53bc = fl | 0x300;
@@ -2305,7 +2305,7 @@ b508:
                         if (can_hit(id, target, 0, 0, zero) == 0) {
                             if (wprof > 100.0f && frand() < 0.03f)
                                 combat_state = 0;
-                        } else if (frand() < ((4.0f - (float)g_options.i44) * wprof) * 0.0005f) {
+                        } else if (frand() < ((4.0f - (float)g_options.difficulty) * wprof) * 0.0005f) {
                             combat_state = 0;
                         }
                     }
@@ -3075,10 +3075,10 @@ void Agent::ai_idle_tick(const float* dt)
         E32 e;
         float r1 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         e.v[0] = f53bc;
-        float hi = (float)g_options.i44 * 0.02f + 0.2f / (float)(g_game->troops[troop].fb0 + 10);
+        float hi = (float)g_options.difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].fb0 + 10);
         f310_f() = (r1 * 0.03f + hi) + 0.05f;
         float r2 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
-        float ga = (float)g_options.i44 * 0.1f;
+        float ga = (float)g_options.difficulty * 0.1f;
         float rb = (r2 + 1.0f) * 0.1f;
         float t = ga + rb;
         if (troop >= 0)
@@ -3143,7 +3143,7 @@ void Agent::shoot()
         float cy = dn.z * q.x - q.z * dn.x;
         float cz = q.y * dn.x - dn.y * q.x;
         float err = cls + 20.0f;
-        float g5 = (float)g_options.i44 * 0.5f;
+        float g5 = (float)g_options.difficulty * 0.5f;
         float cm = (float)sqrt(cx * cx + cz * cz + cy * cy);
         float rm = (float)sqrt(rel.x * rel.x + rel.z * rel.z + rel.y * rel.y);
         float A2 = err;
@@ -4167,7 +4167,7 @@ void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
 // @ 0x4525a0
 void Mission::blood_burst(float x, float y, float z, int unused, float amount)
 {
-    if (g_opt_hit_fx) {
+    if (g_cfg.enable_blood) {
         unsigned i = agents.first_used();
         if (i < (unsigned)agents.count) {
             do {
@@ -4626,7 +4626,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             vector4 q = ((const ::pos&)body->m).rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
             q.normalize();
             *out_dmg = ((0.2f - (q.z * d.z + q.y * d.y + q.x * d.x)) * *out_dmg) * g_module_settings.couched_lance_damage_multiplier * 0.2f;
-            if (g_ui_enabled) {
+            if (g_options.damage_msgs) {
                 if (id == g_mission->player_id)
                     g_gui.add(*lk(tstring("ui_delivered_couched_lance_damage")), 0xffd03030);
                 else if (victim == (unsigned)g_mission->player_id)
@@ -4696,7 +4696,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                 *out_dmg = p * *out_dmg;
                 float bonus = (p - 1.0f) * 100.0f;
                 int n = round_float(&bonus);
-                if (n != 0 && g_options.i58 && id == g_mission->player_id) {
+                if (n != 0 && g_options.damage_msgs && id == g_mission->player_id) {
                     char msg[512];
                     if (n > 0)
                         sprintf(msg, lk(tstring("ui_speed_bonus_plus"))->c_str(), n);
@@ -4937,7 +4937,7 @@ void Agent::ragdoll_update()
             ((AgentBodyV*)mb)->f298 = ((AgentBodyV*)body)->f8;
     }
     fxp->visible = 0;
-    if (g_options.i54 != 0)
+    if (g_options.fx_on != 0)
         fxp->visible = 1;
 }
 
@@ -5143,7 +5143,7 @@ void Agent::tick_death()
                 g_mission->queue_dead(this);
             queued = 1;
         }
-        if (g_options.i40 > g_tick_b && TICKS_SINCE(tm) > 0.0f && t5918.elapsed() > 0.0f) {
+        if (g_options.i40 > g_phys.nworlds && TICKS_SINCE(tm) > 0.0f && t5918.elapsed() > 0.0f) {
             if (disabled == 0 && queued == 0)
                 start_ragdoll();
         }
@@ -5890,7 +5890,7 @@ void Agent::process_blow(int unused)
     if ((f10 == 0 && last_blow().bone == 9) || (f10 == 1 && last_blow().bone == 7)) {
         if (last_blow().item >= 0 && g_items[last_blow().item].is_ranged()) {
             dmg = dmg * 1.75f;
-            if (attacker == m->player_id && g_options.i58 != 0) {
+            if (attacker == m->player_id && g_options.damage_msgs != 0) {
                 tstring k("ui_head_shot");
                 g_gui.add(*g_strtable.lookup(&k), 0xffffdd11);
                 m = g_mission;
@@ -5898,12 +5898,12 @@ void Agent::process_blow(int unused)
         }
     }
     if (id == m->player_id || f30 == m->player_id) {
-        if (g_options.i4c == 1)
+        if (g_options.dmg_to_player == 1)
             dmg = dmg * 0.5f;
-        else if (g_options.i4c == 0)
+        else if (g_options.dmg_to_player == 0)
             dmg = dmg * 0.25f;
     } else {
-        int dd = g_options.i50;
+        int dd = g_options.dmg_to_friends;
         GameData* g = g_game;
         if (dd != 2 &&
             ((f10 == 0 && f1bc == g->f78) ||
@@ -5918,7 +5918,7 @@ void Agent::process_blow(int unused)
 
     // ---- the damage messages ----
     {
-        int shown = g_options.i58;
+        int shown = g_options.damage_msgs;
         if (last_blow().attacker == m->player_id && shown != 0) {
             char msgbuf[512];
             {
@@ -5946,7 +5946,7 @@ void Agent::process_blow(int unused)
                 }
             } else {
                 const char* key = 0;
-                shown = g_options.i58;
+                shown = g_options.damage_msgs;
                 m = g_mission;
                 if (id == m->player_id && shown != 0) {
                     key = "ui_received_number_damage";
@@ -6026,9 +6026,9 @@ void Agent::process_blow(int unused)
             blood = 0.2f;
         else if (last_blow().kind == 1)
             blood = 0.7f;
-        if (g_options.i18 > 0 && last_blow().kind != 2) {
+        if (g_options.blood > 0 && last_blow().kind != 2) {
             bool go = false;
-            if (g_options.i18 == 2) {
+            if (g_options.blood == 2) {
                 go = true;
             } else if (g_mission->player_id >= 0) {
                 if ((last_blow().pos - g_mission->agents.get(g_mission->player_id)->pos).out_length_squared() < 70.0f)
@@ -6350,7 +6350,7 @@ void Agent::process_blow(int unused)
                     tt = 1.0f;
                 else if (tt > 12.0f)
                     tt = 12.0f;
-                if (last_blow().attacker == g_mission->player_id && g_options.i5c != 0) {
+                if (last_blow().attacker == g_mission->player_id && g_options.shot_difficulty != 0) {
                     float sd = tt;
                     if (last_blow().bone == 9)
                         sd = tt * 1.2f;
@@ -6386,7 +6386,7 @@ void Agent::process_blow(int unused)
     }
 
     // ---- the impact particles ----
-    if (dmg > 1.0f && !(g_mission->terrain.f158 & 1) && g_opt_hit_fx != 0) {
+    if (dmg > 1.0f && !(g_mission->terrain.f158 & 1) && g_cfg.enable_blood != 0) {
         float hi = 50.0f;
         float lo = 1.0f;
         float k = ((dmg + 5.0f) * g_module_settings.blood_multiplier) * 0.1f + 1.0f;
@@ -6442,7 +6442,7 @@ void Agent::process_blow(int unused)
         }
         if ((int)last_blow().attacker >= 0)
             m->agents.get(last_blow().attacker)->kill_count++;
-        if (g_options.i60 != 0) {
+        if (g_options.kill_msgs != 0) {
             char msgbuf[512];
             tstring unused_s;
             if (atk_troop >= 0) {
@@ -6485,7 +6485,7 @@ void Agent::process_blow(int unused)
         }
         if ((int)last_blow().attacker >= 0)
             m->agents.get(last_blow().attacker)->wounded_count++;
-        if (g_options.i60 != 0) {
+        if (g_options.kill_msgs != 0) {
             char namebuf[256];
             if (atk_troop >= 0) {
                 tstring k("ui_value_knocked_unconscious_by_value");
@@ -7032,7 +7032,7 @@ void Agent::update_attack(float dt)
             if (ACT == snd_a && !(in_flags & 0x200)) {
                 if (id == g_mission->player_id) {
                     if (in_flags & 0x100) {
-                        if (PROG < 0.3f && g_options.i6c > 0) {
+                        if (PROG < 0.3f && g_options.ctl_mode > 0) {
                             if (pick_attack_dir(0) != mode1) {
                                 start_shoot(0);
                                 if (snd_a != -1) {
@@ -7394,7 +7394,7 @@ tail:
         }
         if (ACT == f5614 || ACT == f561c || ACT == f5618) {
             if (ACT == f5614 && PROG < 0.99f) {
-                if (PROG < 0.5f && g_options.i70 != 0) {
+                if (PROG < 0.5f && g_options.stick_mode != 0) {
                     int a, b, c;
                     pick_sound_ids(&a, &b, &c);
                     if (a != f5614) {

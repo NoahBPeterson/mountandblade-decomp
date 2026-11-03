@@ -5,7 +5,7 @@
 // (Core, ../config/core.h): their constructors / destructors are the only functions here, written against partial
 // views because mission.h / core.h declare neither (see MIGRATION.md).
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <windows.h>
 #include <shellapi.h>
@@ -489,7 +489,7 @@ extern int g_use_shaders;                                // 0x5e28fc
 #include "../ui_globals.h"      // UI / core globals (g_5e28c8)
 // g_cfg.disable_sound (config/config.h Config +0x40 of g_cfg 0x5a9f98; that header brings d3dapp.h, which would redefine
 // CD3DApplication here)
-#define CFG_DISABLE_SOUND (g_sound_muted)
+#define CFG_DISABLE_SOUND (g_cfg.disable_sound)
 #include "../game_globals.h"      // canonical g_key_states (listed directly: the audit reads only the source's own includes)
 #define g_key_states_i (*(int(*)[0x40])g_key_states)     // g_key_states (0x5e27c8, game_globals.h) as 0x40 ints
 

@@ -30,10 +30,15 @@ struct ModuleSettings {
     float map_river_direction;                  // +0x58 0xa18150
     float map_river_speed_x;                    // +0x5c 0xa18154
     float map_river_speed_y;                    // +0x60 0xa18158
-    int map_tree_types;                         // +0x64 0xa1815c
-    int map_snow_tree_types;                    // +0x68 0xa18160
-    int map_steppe_tree_types;                  // +0x6c 0xa18164
-    int map_desert_tree_types;                  // +0x70 0xa18168
+    union {
+        struct {
+            int map_tree_types;                 // +0x64 0xa1815c
+            int map_snow_tree_types;            // +0x68 0xa18160
+            int map_steppe_tree_types;          // +0x6c 0xa18164
+            int map_desert_tree_types;          // +0x70 0xa18168
+        };
+        int tree_types[4];                      // the same four counts by biome (map, snow, steppe, desert)
+    };
     int starting_year;                          // +0x74 0xa1816c
     int starting_month;                         // +0x78 0xa18170
     int starting_day;                           // +0x7c 0xa18174

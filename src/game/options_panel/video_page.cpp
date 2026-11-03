@@ -13,7 +13,6 @@
 // 0x42c080 find, 0x42c4a0 substr, 0x42c900 insert. 0x5e293c holds the game's ID3DXEffect*: the gamma values go to
 // its SetVector (COM, +0x88).
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg
 #include <windows.h>
@@ -140,7 +139,7 @@ struct VideoPage {
 void Recf0::scale_3(float)
 {
     if (W(blood)->changed(0x10000)) {
-        g_opt_blood = settings_value(W(blood));
+        g_options.blood = settings_value(W(blood));
         update_performance_caption((VideoPage*)this);
     }
 
@@ -161,7 +160,7 @@ void Recf0::scale_3(float)
     }
 
     if (W(quality[0])->changed(0x10000)) {
-        g_char_detail = settings_value(W(quality[0]));
+        g_options.char_detail = settings_value(W(quality[0]));
         set_enabled_text_local(W(quality[0]), this);
         update_performance_caption((VideoPage*)this);
     }
@@ -214,7 +213,7 @@ void Recf0::scale_3(float)
     if (W(ui_scale)->changed(0x10000)) {
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
         float gamma = W(ui_scale)->get_float();
-        g_scale_x = gamma;
+        g_options.scale_x = gamma;
         float inv = orig::g_one / gamma;
         vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
@@ -255,11 +254,11 @@ void Recf0::scale_3(float)
     }
 
     if (W(y_scale)->changed(0x10000)) {
-        g_scale_y = W(y_scale)->get_float();
+        g_options.scale_y = W(y_scale)->get_float();
         update_performance_caption((VideoPage*)this);
     }
     if (W(z_scale)->changed(0x10000)) {
-        g_scale_z = W(z_scale)->get_float();
+        g_options.scale_z = W(z_scale)->get_float();
         update_performance_caption((VideoPage*)this);
     }
     if (W(days)->changed(0x10000)) {

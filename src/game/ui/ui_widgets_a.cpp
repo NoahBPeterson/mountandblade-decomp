@@ -9,7 +9,6 @@
 // object; UiB::show (0x48b4f0) calls UiB::value (0x48b550) forward, so the object ends before 0x48b550.
 //-----------------------------------------------------------------------------
 #include "../tstring.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./ui_common.h"
 #include "./item_ref.h"
 #include "./mission_ui.h"
@@ -69,7 +68,7 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 void __fastcall play_sound(UiSoundHost* m)
 {
     int ch = FSOUND_PlaySoundEx(-1, (void*)m->handle, 0, 1);
-    float v = g_options.f0c * 155.0f;
+    float v = g_options.master_volume * 155.0f;
     if (!(v > 0.0f))
         v -= 0.99999988f;
     FSOUND_SetVolume(ch, (int)v);

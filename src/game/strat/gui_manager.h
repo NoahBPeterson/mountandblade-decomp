@@ -7,6 +7,7 @@
 // ALL NAMES PROVISIONAL.
 #ifndef GUI_MANAGER_H
 #define GUI_MANAGER_H
+#include <stddef.h>
 #include <stdio.h>
 #include <vector>
 #include "../../rgl/rgl_math.h"
@@ -105,7 +106,8 @@ struct gui_manager {
     char pad1c[0x24 - 0x1c];
     pair2 p24;                      // +0x24   ctor
     pair2 p2c;                      // +0x2c   ctor
-    char pad34[0x44 - 0x34];
+    int warp_x, warp_y;             // +0x34, +0x38 the cursor position the editor warps the pointer to (SetCursorPos, mission5/mesh_3.cpp)
+    char pad3c[0x44 - 0x3c];
     scene x44;                      // +0x44   ctor: scene::scene 0x429740 (0x1d8 bytes)
     scene x21c;                     // +0x21c  ctor: scene::scene
     frustum y3f4;                   // +0x3f4  ctor: frustum::frustum 0x41ef60 (0x120 bytes)
@@ -149,7 +151,8 @@ struct gui_manager {
     float fb028;                    // +0xb028  ctor
     char padb02c[0xb0ac - 0xb02c];
     char fb0ac;                     // +0xb0ac  reset / ctor
-    char padb0ad[0xb0b8 - 0xb0ad];
+    char padb0ad[0xb0b0 - 0xb0ad];
+    int saved_x, saved_y;           // +0xb0b0, +0xb0b4 the warp position last applied (mission5/mesh_3.cpp)
     struct name_table {             // +0xb0b8: two ints and 32 names; the inline ctor clears the ints after the names
         int fb0b8, fb0bc;
         tstring names[32];
@@ -168,5 +171,6 @@ struct gui_manager {
     void rebuild();                 // 0x4da900 (replays the stored lines into a fresh text mesh; src/game/cls_map)
     void add_root(void* const& window);            // 0x49b120 (ret 4: make `window` the active root window; src/game/cls_map)
 };
+typedef char gui_manager_warp_check[(offsetof(gui_manager, warp_x) == 0x34 && offsetof(gui_manager, saved_x) == 0xb0b0 && offsetof(gui_manager, nt) == 0xb0b8) ? 1 : -1];
 extern gui_manager g_gui; // 0x5d7080
 #endif // GUI_MANAGER_H

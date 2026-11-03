@@ -1,5 +1,4 @@
 #include "./cs_update.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "../config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -214,7 +213,7 @@ void CharSheet::update(float dt)
                 WL_MARKER(13)
                 return;
             }
-            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17118 != 0 && g_a17518 == 0 && g_cfg.cheat_mode != 0) {
+            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x11] != 0 && g_keyboard.prev[0x11] == 0 && g_cfg.cheat_mode != 0) {
                 WL_MARKER(12)
                 for (int i = 0; i < 7; i++)
                     g_game->chars->adjust(i, 50.0f);

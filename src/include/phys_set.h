@@ -5,6 +5,7 @@
 // create_world 0x44fad0 is only referenced. Needs rgl::matrix (rgl_base.h picks the module's own declaration).
 #ifndef MB_PHYS_SET_H
 #define MB_PHYS_SET_H
+#include <stddef.h>
 #include <vector>
 #include "./rgl_base.h"
 
@@ -24,11 +25,18 @@ struct PhysRec {                                  // 0x38 bytes
     PhysRec() { ragdoll = 0; collision = 0; body = 0; world = 0; }
 };
 
+// a force/torque the game wants applied to one body on the next physics step (apply_force_and_torque 0x432a50, rgl/xmlcfg/game_util.cpp)
+struct PendingForce {
+    const NewtonBody* body;
+    rgl::vector4 force;
+    rgl::vector4 torque;
+};
+
 struct PhysSet {
     std::vector<PhysRec> recs;                    // +0 (first at +4)
     int f10;                                      // +0x10 (0x47dc50 sets it to -1)
-    int f14, f18;                                 // +0x14, +0x18 (cleared by 0x47dc50)
-    char pad1c[0x3c - 0x1c];
+    int f14;                                      // +0x14 (cleared by 0x47dc50)
+    PendingForce pending;                         // +0x18 (body cleared by 0x47dc50; apply_force_and_torque 0x432a50 consumes it)
     int nworlds;                                  // +0x3c (0x441360; cleared by 0x47dc50)
     PhysSet() { reset(); }                        // the global's constructor (0x547d80 calls reset out of line)
     void reset();                                 // 0x47dc50 (game/mesh_slot/mesh_scene.cpp: destroys every world, resets the handle and the vector)
@@ -44,6 +52,7 @@ struct PhysSet {
     void clamp_rec(int i);                        // 0x472c50 (thiscall, ret 4; src/game/terrain_b/terrain_b.cpp)
     void update(float dt);                        // 0x472dc0
 };
+typedef char phys_set_nworlds_check[(offsetof(PhysSet, nworlds) == 0x3c) ? 1 : -1];
 extern PhysSet g_phys;                            // 0xa181f8
 
 #endif // MB_PHYS_SET_H

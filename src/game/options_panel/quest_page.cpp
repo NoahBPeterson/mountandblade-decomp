@@ -21,7 +21,6 @@
 // the prologue emitted right after the game test and no epilogue on the early-out) could not be reproduced
 // from any source shape tried here, so it is recorded in nonmatching.txt rather than manifest.txt.
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <windows.h>
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
@@ -242,70 +241,70 @@ void QuestPage::update_difficulty()
 void Recd8::scale_3(float)
 {
     if (W(s7c)->changed(0x10000))
-        g_music_volume = control_float(W(s7c));
+        g_options.music_volume = control_float(W(s7c));
     if (W(s80)->changed(0x10000))
-        g_master_volume = control_float(W(s80));
+        g_options.master_volume = control_float(W(s80));
     if (W(s84)->changed(0x10000))
-        g_exp_arg = control_float(W(s84));
+        g_options.exp_arg = control_float(W(s84));
     if (W(sl78)->changed(0x10000)) {
         g_options.f74 = control_float(W(sl78));
         update_difficulty();
         ((QuestPage*)(void*)this)->update_days();
     }
     if (W(dd44)->changed(0x10000)) {
-        g_opt_dmg_to_player = control_value(W(dd44));
+        g_options.dmg_to_player = control_value(W(dd44));
         update_difficulty();
     }
     if (W(dd48)->changed(0x10000)) {
-        g_opt_dmg_to_friends = control_value(W(dd48));
+        g_options.dmg_to_friends = control_value(W(dd48));
         update_difficulty();
     }
     if (W(dd4c)->changed(0x10000)) {
-        g_difficulty = control_value(W(dd4c));
+        g_options.difficulty = control_value(W(dd4c));
         update_difficulty();
     }
     if (W(dd50)->changed(0x10000)) {
-        g_agent_count = control_value(W(dd50));
+        g_options.agent_count = control_value(W(dd50));
         update_difficulty();
     }
     if (W(dd54)->changed(0x10000)) {
-        g_stick_mode = control_value(W(dd54));
+        g_options.stick_mode = control_value(W(dd54));
         update_difficulty();
     }
     if (W(dd58)->changed(0x10000)) {
-        g_ctl_mode = control_value(W(dd58));
+        g_options.ctl_mode = control_value(W(dd58));
         update_difficulty();
     }
     if (W(b5c)->changed(0x10000)) {
-        g_flag5aa06c = control_value(W(b5c));
+        g_options.i64 = control_value(W(b5c));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b5c));
     }
     if (W(b60)->changed(0x10000)) {
-        g_flag5aa070 = control_value(W(b60));
+        g_options.i68 = control_value(W(b60));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b60));
     }
     if (W(b64)->changed(0x10000)) {
-        g_fx_on = control_value(W(b64));
+        g_options.fx_on = control_value(W(b64));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b64));
     }
     if (W(b68)->changed(0x10000)) {
-        g_opt_damage_msgs = control_value(W(b68));
+        g_options.damage_msgs = control_value(W(b68));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b68));
     }
     if (W(b6c)->changed(0x10000)) {
-        g_opt_shot_difficulty = control_value(W(b6c));
+        g_options.shot_difficulty = control_value(W(b6c));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b6c));
     }
     if (W(b70)->changed(0x10000)) {
-        g_opt_kill_msgs = control_value(W(b70));
+        g_options.kill_msgs = control_value(W(b70));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b70));
     }
     if (W(b74)->changed(0x10000)) {
-        g_show_messages = control_value(W(b74));
+        g_options.show_messages = control_value(W(b74));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b74));
     }
     if (W(b88)->changed(0x10000)) {
-        g_invert = control_value(W(b88));
+        g_options.invert = control_value(W(b88));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b88));
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)

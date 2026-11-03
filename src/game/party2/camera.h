@@ -30,8 +30,7 @@ int __fastcall size(void* p);             // 0x40f010 (count = (last-first)>>2)
 #include "../log_stream.h"
 extern LogStream g_log;                        // 0x5a9f60
 
-// keyboard state: per-scan-code ints, held state at 0xa17000 and this frame's press at 0xa17400 (see s0052cf60)
-extern int g_key_a[256];                        // 0xa17000
+// keyboard state: g_keyboard.down (held) and g_keyboard.prev (the previous frame's snapshot)
 
 
 // the game data's "current emitter audio" state at +0x1a068..+0x1a07c (see s00435490.h SoundCtl)

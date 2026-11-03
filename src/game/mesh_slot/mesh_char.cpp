@@ -1,7 +1,6 @@
 // mesh_char.cpp: TU 63 "mesh", part 4 (0x47f650..0x47ff60): the character mesh collector and its animation-state wrapper,
 // the scene-object loader and the shadow-map passes. See MIGRATION.md.
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./mesh_slot.h"
 #include "../terrain_a/game_state.h"
 #include "../terrain_b/scene_file.h"
@@ -224,7 +223,7 @@ NOINL void ShadowMapP::build_hw()
     if ((*(int*)((char*)&g_options + 0x2c)) == 0)
         return;
     if (target2 == 0) {
-        if (g_use_hw_shadow) {
+        if (g_render.use_hw_shadow) {
             SC.f190 = 0xffffff;
             target2 = (ShSkin*)g_rm.get_render_target(w, h, 0x50, 1, 0);
         } else {
@@ -290,7 +289,7 @@ NOINL void ShadowMapP::render()
     if (g_use_shaders != 0) {
         if ((*(int*)((char*)&g_options + 0x7c)) != 1)
             return;
-        if (!g_use_hw_shadow)
+        if (!g_render.use_hw_shadow)
             return sync_readback();
     } else {
         if ((*(int*)((char*)&g_options + 0x7c)) != 1)

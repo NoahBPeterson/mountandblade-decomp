@@ -7,7 +7,6 @@
 // Names and layouts are provisional; every offset comes from this slice's disassembly and the
 // verified neighbours (ini_file: s004bd170, widget slots: s00502300 / s004dfd50).
 #include <windows.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/rgl_math.h"
 
 #define MB_NOTHROW throw()
@@ -123,14 +122,14 @@ void char_window::load_troop()
 
 // ---------------------------------------------------------------------------------------------------------
 // the skill attribute table at 0x8ee3140, 0x44-byte records.
-#include "../skill_entry.h"
+#include "../skill_cap.h"
 
 // @ 0x509730
 void char_window::fill_skills()
 {
     int n = 0;
     int i = 0;
-    unsigned* se = &g_skills[0].flags;           // 0x8ee3140: the flags word of record 0
+    unsigned* se = &g_skill_tbl[0].attr;           // 0x8ee3140: the attribute word of record 0
     int* out = skill_ids;
     do {
         unsigned char c = (unsigned char)(*se >> 8);
@@ -140,9 +139,9 @@ void char_window::fill_skills()
             n++;
             out++;
         }
-        se = (unsigned*)((char*)se + sizeof(skill_entry));
+        se = (unsigned*)((char*)se + sizeof(SkillRec));
         i++;
-    } while ((int)se < (int)&g_skills[42].flags);
+    } while ((int)se < (int)&g_skill_tbl[42].attr);
     skill_count = n;
 }
 

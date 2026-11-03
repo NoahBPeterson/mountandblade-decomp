@@ -9,7 +9,8 @@
 //       caller are __declspec(noinline). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"
+#include "../../include/msg_log.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"
@@ -414,7 +415,7 @@ void MissionHud::update_camera(float dt)
         *(matrix*)&k = *(matrix*)identity_pos((pos*)&home);
     }
     radius = 0.03f;
-    if (g_cam_sens != 0)
+    if (g_cfg.use_wbuffer != 0)
         radius = 0.01f;
     zoomL = zoom;
     if (GAME_AT(int, 0x1a090) != 0) {
@@ -726,7 +727,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     lis.o.x = lis.o.x - back.x;
     lis.o.y = lis.o.y - back.y;
     lis.o.z = lis.o.z - back.z;
-    if (g_sound_muted == 0) {
+    if (g_cfg.disable_sound == 0) {
         g_sound_mgr.frame = lis;
         // FMOD is y-up: y and z swap (0x4fa887..0x4fa8ae push f.x, f.z, f.y, u.x, u.z, u.y)
         FSOUND_3D_Listener_SetAttributes(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y, g_sound_mgr.frame.u.x,
@@ -846,12 +847,12 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
 {
     float px = (float)(g_screen_w + g_screen_h);
     float area = (px * 0.5f) * 0.00086956524f;
-    float size_v = ((g_options.f84 * 0.5f + 0.75f) * *scale) * area;
+    float size_v = ((g_options.scale_y * 0.5f + 0.75f) * *scale) * area;
     float& size = *(float*)&scale;       // the original stores the result back into the (dead) parameter slot
     size = size_v;
     if (g_keyboard.down[0x0d] && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]))
         size = 1000.0f;
-    float range = g_options.f88 * area;
+    float range = g_options.scale_z * area;
     ViewLight* vl = (ViewLight*)this;
     AgentTable* tbl = (AgentTable*)((char*)this + 4);
     int n = *(int*)tbl;
@@ -1474,11 +1475,9 @@ void Rec58::build(bool show)
         if (arr)
             ((TStringArray*)arr)->destroy(3);
     } else {
-        int n = 0;
-        if (g_msg_begin)
-            n = (int)(g_msg_end - g_msg_begin) * 3;     // (the byte span >> 4: g_msg_* are tstring pointers already)
+        int n = (int)g_msglog.lines.size() * 3;
         for (int i = 0; i < n; i += 3) {
-            text->append(g_msg_begin[i / 3]);
+            text->append(g_msglog.lines[i / 3]);
             text->push_back('\n');
         }
         if (text->len > 0)

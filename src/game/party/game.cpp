@@ -9,7 +9,7 @@
 //       Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../skill_cap.h"
 #include <stdio.h>
 #include "./game.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
@@ -889,11 +889,11 @@ void Game::load_troops(stream_base* s)
         mb_error("Load error: Invalid number of troops: %d", n);
     for (int i = 0; i < n; i++)
         ((TroopIO*)&troops[i])->read(s);
-    char* p = g_troop_extra;
+    int k = 0;
     do {
-        s->r_int((int*)p);
-        p += 0x44;
-    } while ((int)p < (int)(g_troop_extra + 42 * 0x44));         // 0x8ee3c60
+        s->r_int(&g_skill_tbl[k].cap);
+        k++;
+    } while (k < 42);
 }
 
 // @ 0x51e540

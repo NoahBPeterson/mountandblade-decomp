@@ -1,5 +1,4 @@
 #include "./screen.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)

@@ -521,7 +521,7 @@ void PhysSet::reset()
         destroy_world(i);
     f10 = -1;
     f14 = 0;
-    f18 = 0;
+    pending.body = 0;
     recs.resize(0, PhysRec());
     nworlds = 0;
 }

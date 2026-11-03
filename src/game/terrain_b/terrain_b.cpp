@@ -10,7 +10,6 @@
 //       Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./terrain_b.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg
 #include "./frustum.h"
@@ -482,7 +481,7 @@ void render_batch::render_scene(scene* sc)
                     v = 3;
                 } else if (sun_shadow) {
                     if (scene_sky(sc) && scene_sky(sc)->sun_shadows && g_options.i2c) {
-                        v = (g_render.b614 != 0) + 1;
+                        v = (g_render.use_hw_shadow != 0) + 1;
                     }
                 }
                 D3DXHANDLE tech = mat_techs(mat)->tech[v];
@@ -877,9 +876,9 @@ void ShadowMap::attach_camera(CellGrid* c)
     c->build_light_frame(&c->view.world, &c->shadow_amb);
     vector4 z(0.0f, 0.0f, 0.0f);
     c->view.world.o = z;
-    if (g_shadow_quality != g_cfg.shadow_quality_req) {
+    if (g_cfg.shadowmap_quality != g_cfg.shadow_quality_req) {
         release_all();
-        g_shadow_quality = g_cfg.shadow_quality_req;
+        g_cfg.shadowmap_quality = g_cfg.shadow_quality_req;
     }
     // marker "WL" 13 here in the original
     WL_MARKER(13)

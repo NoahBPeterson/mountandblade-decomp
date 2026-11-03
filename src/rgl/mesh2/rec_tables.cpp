@@ -5,7 +5,7 @@
 // 0x4c3050..0x4c48d0 is the "T regime" region (docs/tu_map.md): helpers sit right after their caller, so
 // the functions stay in binary order and the helpers defined after a caller are kept out of line.
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../../game/config/config_block.h"
 #include "./rec_tables.h"
 #include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -283,12 +283,12 @@ int __fastcall renderer_setup(GameAppView* self)
         g_render.height = self->height;
     else
         g_render.height = self->height;
-    g_render.dev->GetDeviceCaps(&g_caps);
+    g_render.dev->GetDeviceCaps(&g_render.caps);
     g_render.vsync = -1;
     g_render.pad504 = 0;
     g_use_shaders = 0;
-    if (((unsigned*)&g_caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_caps)[0xcc / 4] >= 0xffff0200 &&
-        ((unsigned*)&g_caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_caps)[0xd4 / 4] & 1) != 0 && g_cfg.use_vertex_shaders != 0)
+    if (((unsigned*)&g_render.caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_render.caps)[0xcc / 4] >= 0xffff0200 &&
+        ((unsigned*)&g_render.caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_render.caps)[0xd4 / 4] & 1) != 0 && g_cfg.use_vertex_shaders != 0)
         g_use_shaders = 1;
     apply_input_settings((InputSet*)&g_render);
     ((void (__fastcall*)(void*))load_game_variables)(self);
@@ -497,13 +497,13 @@ DialogMgr::~DialogMgr()
 // volume down), turns the level into a 0..254 channel volume and hands it to FMOD when it changed.
 void __fastcall sound_engine::tick()
 {
-    if (g_sound_paused != 0 || g_sound_muted != 0)
+    if (g_cfg.disable_music != 0 || g_cfg.disable_sound != 0)
         return;
     if ((float)(g_ticks[t2418.clock] - t2418.start) * 1e-5f > 0.5f) {
         ((music_player*)this)->advance_piece();   // the music player object; 0x4c25e0
         t2418.start = g_ticks[t2418.clock];
     }
-    float vol = g_options.f08;
+    float vol = g_options.music_volume;
     if (fading != 0) {
         if ((float)(g_ticks[t2450.clock] - t2450.start) * 1e-5f > 5.0f) {
             vol = 0.0f;
@@ -520,7 +520,7 @@ void __fastcall sound_engine::tick()
     int idx;
     int level = (iv < 0) ? 0 : ((iv >= 255) ? 254 : iv);
     if (w240c != 0) {
-        float f = g_options.f08 * 255.0f;
+        float f = g_options.music_volume * 255.0f;
         int v = round_float(&f);
         if (v < 0)
             v = 0;
@@ -563,11 +563,11 @@ void music_set::load(stream_base* s, int load_samples, const tstring* dir)
         int level;
         s->r_tstr((rgl::string*)&name).r_int(&level);
         recs[i].sample = 0;
-        if (load_samples != 0 && g_sound_muted == 0) {
+        if (load_samples != 0 && g_cfg.disable_sound == 0) {
             sprintf(buf, "%sSounds\\%s", dir->c_str(), name.c_str());
             recs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
         }
-        if (recs[i].sample == 0 && g_sound_muted == 0) {
+        if (recs[i].sample == 0 && g_cfg.disable_sound == 0) {
             sprintf(buf, "sounds\\%s", name.c_str());
             recs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
         }

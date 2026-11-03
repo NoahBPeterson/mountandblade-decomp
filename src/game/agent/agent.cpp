@@ -8,7 +8,6 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <string.h>
 #include <new>
 #include <algorithm>
@@ -1151,8 +1150,8 @@ float Troop::falloff(float dist, float k)
     int n = (nib[3] >> 12) & 0xf;
     if (n < 0)
         n = 0;
-    else if (n > g_clamp_level)
-        n = g_clamp_level;
+    else if (n > g_skill_tbl[27].max_rank)
+        n = g_skill_tbl[27].max_rank;
     int tier = n;
     if (tier >= 11)
         tier = 10;

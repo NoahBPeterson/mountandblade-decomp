@@ -7,7 +7,6 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./inventory_panel.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -31,8 +30,6 @@
 #include "../key_names.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_snd_id_a;                                  // 0x5aa350
-int g_snd_id_b;                                  // 0x5aa2fc
 int g_num_valid;                                 // 0xa70470
 DragMesh* g_drag;                                // 0x5d75e4
 
@@ -94,7 +91,7 @@ void InventoryPanel::refresh_transaction(int unused)
         PSO(bar)->set_key_flags(0x10000);
     }
 
-    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a17188 != 0 && g_keyboard.prev[0x2d] == 0 &&
+    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x2c] != 0 && g_keyboard.prev[0x2d] == 0 &&
         g_cfg.cheat_mode != 0 && g_trial_mode != 0) {
         g_game->add_gold(1000, g_game->player);
         money_label(0);
@@ -228,8 +225,8 @@ void InventoryPanel::refresh_transaction(int unused)
         rec->equip[9].m4 = 0;
         rec->equip[9].reduce(0);
         set_slot_flag(2, 9, 2, 1);
-        g_sound_mgr.play(g_snd_id_a, 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
-        g_sound_mgr.play(g_snd_id_b, 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[0x76], 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[0x61], 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
         init_window();
     }
 

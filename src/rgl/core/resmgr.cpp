@@ -7,7 +7,6 @@
 // `resource_manager` is the other half of this object) and ends where core/frustum_grid.cpp (0x41e470) begins;
 // the forward calls 0x41a2c0 -> 0x41ef30, 0x41ca60 -> 0x41f970 only put a boundary below world_items.cpp.
 #include <windows.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../game/config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <d3d9.h>
 #include <d3dx9.h>

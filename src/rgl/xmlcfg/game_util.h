@@ -70,12 +70,7 @@ struct rot3x : rgl::rot3 {
 // ---- Newton physics callback and tick timer ---------------------------------------------------------------------
 struct NewtonBody;
 void __cdecl apply_force_and_torque(const NewtonBody* body);        // 0x432a50
-// a force/torque the game wants applied to one body on the next physics step
-struct PendingForce {
-    const NewtonBody* body;                 // (member; the object is at g_phys+0x18)
-    vector4 force;                          // member
-    vector4 torque;                         // member
-};
+#include "../../include/phys_set.h"   // PendingForce (g_phys.pending)
 
 
 #include "../../include/timer.h"

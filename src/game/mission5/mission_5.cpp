@@ -14,7 +14,6 @@
 //       map editor starts (0x52cf60, class Mesh | Elem). The map's boundary 0x5249f0 is not kept (see game_2.cpp).
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./mission_5.h"
@@ -117,9 +116,9 @@ done:
     *(char*)(g_big + 0x6554) = 1;
 
     int res = -1;
-    if (g_conversation_agent >= 0)
+    if (g_dialogs.partner_agent >= 0)
     {
-        char* rec = REC_S25160(g_conversation_agent);
+        char* rec = REC_S25160(g_dialogs.partner_agent);
         *(int*)(rec + 0x31c) = *(int*)((char*)g_big + 0x5c);
         *(int*)(rec + 0x533c) = 2;
         *(int*)(rec + 0x5338) = 0;
@@ -1338,7 +1337,7 @@ void ViewCtrl_s284a0::update(float dt)
         if (g_game_s284a0->f1a090)
             dt = g_step_tbl[0];
     }
-    float k = expf(g_options.f10 * 4.0f) * 0.04f;
+    float k = expf(g_options.exp_arg * 4.0f) * 0.04f;
 
     // ---- aiming at an agent while a melee weapon (or the fists) is out is slower ---------------------
     if (!g_game_s284a0->f1a090) {
@@ -1354,8 +1353,8 @@ void ViewCtrl_s284a0::update(float dt)
                     int t = g_items_s284a0[w0.item].type_flags & 0xff;
                     hand0 = (t == 2 || t == 3 || t == 4);
                 }
-                if (((hand0 && a->f560c == 1 && g_options.i6c > 0 && a->f100 == a->f55ec) ||
-                     (w1.item < 0 && a->f5610 > 0 && g_options.i70 > 0 && a->f100 == a->f5614)) &&
+                if (((hand0 && a->f560c == 1 && g_options.ctl_mode > 0 && a->f100 == a->f55ec) ||
+                     (w1.item < 0 && a->f5610 > 0 && g_options.stick_mode > 0 && a->f100 == a->f5614)) &&
                     a->f118 < 0.6f)
                     k *= 0.1f;
             }
@@ -1388,7 +1387,7 @@ void ViewCtrl_s284a0::update(float dt)
         yaw_rate = yaw_rate * r;
         pitch_rate = pitch_rate * r;
         yaw_rate = yaw_rate + look_x * fov * 0.0018f;
-        if (g_options.i14)
+        if (g_options.invert)
             look_y = -look_y;
         pitch_rate = pitch_rate + look_y * fov * 0.0018f;
         yaw = yaw - yaw_rate * k * dt;
@@ -1646,7 +1645,7 @@ void MissionHud_s29130::update_marks()
                     }
                 }
             } else if (type == 2 || type == 3 || type == 4) {
-                if (g_options.i68 || !g_options.i6c) {
+                if (g_options.i68 || !g_options.ctl_mode) {
                     int t = a->pick_front();
                     if (t >= 0) {
                         int dir = a->pick_attack_dir(t);

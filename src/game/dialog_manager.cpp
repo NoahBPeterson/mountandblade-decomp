@@ -405,12 +405,12 @@ void DialogMgr::start(int a, int b, int c, int d, char f)
     WL_MARKER(12)
     fc = a;
     f10 = c;
-    fe024 = f;
+    in_meta_mission = f;
     g_game->fb0 = 0;
     g_game->fc8 = 0;
     g_game->f1a23c = 0;
     f8 = d;
-    f14 = b;
+    partner_agent = b;
     cur = -1;
     cur_idx = 0;
     advance();

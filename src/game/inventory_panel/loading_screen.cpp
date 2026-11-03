@@ -1,13 +1,12 @@
 // s0050f440 - loading screen: module table load, frame/quads meshes, record reader.
 // All six functions belong to the module-loading state machine object.
 #include <stdio.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"
 
 #include "../tstring.h"
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_sound_paused;   // 0x5a9fd4 (1 = sound paused; the script engine mutes warnings while it is set)
 
 
 // source record stream: the readers call three virtual slots
@@ -326,7 +325,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         { tstring key("ui_loading_music"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 3) {
-        if (!g_sound_paused && !g_sound_muted) {
+        if (!g_cfg.disable_music && !g_cfg.disable_sound) {
             g_log << "Loading Music...\n";
             text_stream ts;
             {

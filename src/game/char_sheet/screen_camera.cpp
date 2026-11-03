@@ -1,5 +1,4 @@
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./screen_camera.h"
 #include "../config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -25,7 +24,7 @@ void Screen::camera_update(float dt)
     f2b0 = dt * f2c4 * 10.0f + f2b0;        // a literal: with the 0x549d74 global cl evaluates (10 * f2c4) * dt
 
     float max_zoom = 105.0f;                  // 105
-    if (g_keyboard.down[0x1d] != 0 && g_a1717c != 0 && g_cfg.cheat_mode != 0) {
+    if (g_keyboard.down[0x1d] != 0 && g_keyboard.down[0x2a] != 0 && g_cfg.cheat_mode != 0) {
         f2b0 = 0.0f;
         f2c4 = 0.0f;
         max_zoom = 235.0f;                    // 235
@@ -165,7 +164,7 @@ void Screen::camera_update(float dt)
     WorldCam* sc = (WorldCam*)g_level;
     sc->f30c = vector4(-frame.u.x, -frame.u.y, -frame.u.z);   // w never written (3-component constructor)
     sc->f31c = frame.o;
-    if (!g_sound_muted) {
+    if (!g_cfg.disable_sound) {
         *(mat4*)&g_sound_mgr.frame = frame;
         // FMOD wants y/z swapped (the engine is z-up)
         listener_set(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y,

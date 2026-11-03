@@ -7,7 +7,6 @@
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "./party_screen.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -870,8 +869,8 @@ void PartyScreen::setup_skills()
             if (!shown(ms))
                 continue;
             y += t_y_a;
-            for (int k = 0; &g_skill_rows[k] < (SkillRow*)&g_module_name; k++) {
-                if (((g_skill_rows[k].flags >> 4) & 1) == 0)
+            for (int k = 0; &g_skill_tbl[k].name < (tstring*)&g_module_name; k++) {
+                if (((g_skill_tbl[k].attr >> 4) & 1) == 0)
                     continue;
                 int best = 0;
                 int best_i = -1;
@@ -925,9 +924,9 @@ void PartyScreen::setup_skills()
             }
             y -= t_y_a;
 
-            for (int k = 0; &g_skill_rows[k] < (SkillRow*)&g_module_name; k++) {
-                SkillRow* se = &g_skill_rows[k];
-                if (((se->flags >> 4) & 1) == 0)
+            for (int k = 0; &g_skill_tbl[k].name < (tstring*)&g_module_name; k++) {
+                SkillRec* se = &g_skill_tbl[k];
+                if (((se->attr >> 4) & 1) == 0)
                     continue;
                 int best = 0;
                 int best_i = -1;

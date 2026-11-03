@@ -24,13 +24,13 @@ struct DialogMgr {
     int f8;                                                // +8 current state
     int fc;                                                // +0xc partner troop
     int f10;                                               // +0x10 partner party
-    int f14;                                               // +0x14
+    int partner_agent;                                     // +0x14 the agent the player talks to (-1: none; also read as the player's)
     int cur;                                               // +0x18 current dialog
     int cur_idx;                                           // +0x1c
     int nres;                                              // +0x20
     DlgLine list[0x400];                                   // +0x24
     DlgLine sel[0x400];                                    // +0x7024
-    char fe024;                                            // +0xe024
+    char in_meta_mission;                                  // +0xe024 set while a meta mission (campaign scene) runs
     tstring cur_text;                                      // +0xe028
     int get_c8();                                          // 0x460620
     int speaker();                                         // 0x460640

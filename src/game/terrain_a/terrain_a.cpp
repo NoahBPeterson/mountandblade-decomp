@@ -10,7 +10,6 @@
 //       view draw pass. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./common.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../rgl/options.h"   // g_options
 #include "./terrain.h"
 #include "./game_state.h"
@@ -1543,9 +1542,9 @@ void texture_x::bind(int stage, float t)
         if (flags & 0x0f000000)
             idx = (int)(owns_texture * t) % owns_texture;
         IDirect3DBaseTexture9* tex = ((IDirect3DBaseTexture9**)d3d_tex)[idx];
-        if (g_tex_cache[stage] != tex) {
+        if (g_render.tex_bound[stage] != tex) {
             g_render.dev->SetTexture(stage, tex);
-            g_tex_cache[stage] = tex;
+            g_render.tex_bound[stage] = tex;
         }
         g_render.set_stage_sampler(stage, ((int)flags >> 20) & 3);
     }
@@ -2792,7 +2791,7 @@ void RenderScene::apply_state()
     }
     g_render.set_view((const rgl::mat4*)&c->m);
     if (cull_flip) {
-        if (g_use_hw_shadow)
+        if (g_render.use_hw_shadow)
             g_render.cull_setting = 1;
         else
             g_render.cull_setting = cam.left_handed ? 2 : 3;
@@ -2821,7 +2820,7 @@ void RenderScene::apply_state()
         }
     }
     if (g_use_shaders == 0) {
-        if (lights.size() > 0 && lights_active && g_options.i1c) {
+        if (lights.size() > 0 && lights_active && g_options.char_detail) {
             lights_active = 1;
             g_render.set_lighting(true);
             bool found_spot = false;
@@ -3118,9 +3117,9 @@ void drawer::draw(view_t* v)
             g_render.b506 = 0;
             g_render.dev->SetRenderState(D3DRS_LIGHTING, 0);
         }
-        if (g_alpha_test)
+        if (g_render.alpha_mode)
             g_render.dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
-        g_alpha_test = 0;
+        g_render.alpha_mode = 0;
         g_render.set_blend_mode(2);   // 0x40e940: render_cache (rgl/particles/render_cache.h) is the same object as renderer
         if (v->f164) {
             if (g_render.b54b) {
@@ -3225,8 +3224,8 @@ void drawer::draw(view_t* v)
                 while ((b = v->lights._Myfirst, b != 0) && i < (unsigned)(v->lights._Mylast - b) && (int)i < 0x40) {
                     light_t** pl = &b[i];
                     if ((*pl)->type == 2) {
-                        if (g_light_on[i] != 1) {
-                            g_light_on[i] = 1;
+                        if (g_render.light_on[i] != 1) {
+                            g_render.light_on[i] = 1;
                             g_render.dev->LightEnable(i, 1);
                         }
                         i = i + 1;
@@ -3234,14 +3233,14 @@ void drawer::draw(view_t* v)
                         light_t* l = *pl;
                         vector4 d = (l->pos - p->m->m194.o);
                         if (d.length() - p->m->f44 < (*pl)->range) {
-                            if (g_light_on[i] != 1) {
-                                g_light_on[i] = 1;
+                            if (g_render.light_on[i] != 1) {
+                                g_render.light_on[i] = 1;
                                 g_render.dev->LightEnable(i, 1);
                             }
                             i = i + 1;
                         } else {
-                            if (g_light_on[i]) {
-                                g_light_on[i] = 0;
+                            if (g_render.light_on[i]) {
+                                g_render.light_on[i] = 0;
                                 g_render.dev->LightEnable(i, 0);
                             }
                             i = i + 1;
@@ -3263,26 +3262,26 @@ void drawer::draw(view_t* v)
         } else {
             if (v->f164) {
 L_state:
-                if (g_tss_c != 0xa2) {
-                    g_tss_c = 0xa2;
+                if (g_render.stage_alpha[0] != 0xa2) {
+                    g_render.stage_alpha[0] = 0xa2;
                     g_render.dev->SetTextureStageState(0, D3DTSS_ALPHAOP, 2);
                     g_render.dev->SetTextureStageState(0, D3DTSS_ALPHAARG1, g_stage_arg[5]);
                     g_render.dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, g_stage_arg[0]);
                 }
-                if (g_tss_d != 1) {
-                    g_tss_d = 1;
+                if (g_render.stage_alpha[1] != 1) {
+                    g_render.stage_alpha[1] = 1;
                     g_render.dev->SetTextureStageState(1, D3DTSS_ALPHAOP, 1);
                     g_render.dev->SetTextureStageState(1, D3DTSS_ALPHAARG1, g_stage_arg[0]);
                     g_render.dev->SetTextureStageState(1, D3DTSS_ALPHAARG2, g_stage_arg[0]);
                 }
-                if (g_tss_a != 0xa2) {
-                    g_tss_a = 0xa2;
+                if (g_render.stage_color[0] != 0xa2) {
+                    g_render.stage_color[0] = 0xa2;
                     g_render.dev->SetTextureStageState(0, D3DTSS_COLOROP, 2);
                     g_render.dev->SetTextureStageState(0, D3DTSS_COLORARG1, g_stage_arg[5]);
                     g_render.dev->SetTextureStageState(0, D3DTSS_COLORARG2, g_stage_arg[0]);
                 }
-                if (g_tss_b != 1) {
-                    g_tss_b = 1;
+                if (g_render.stage_color[1] != 1) {
+                    g_render.stage_color[1] = 1;
                     g_render.dev->SetTextureStageState(1, D3DTSS_COLOROP, 1);
                     g_render.dev->SetTextureStageState(1, D3DTSS_COLORARG1, g_stage_arg[0]);
                     g_render.dev->SetTextureStageState(1, D3DTSS_COLORARG2, g_stage_arg[0]);
@@ -3314,13 +3313,13 @@ L_state:
                     g_render.set_stage_alpha(1, 2);
                 }
             }
-            if (g_e68) {
+            if (g_render.cur_ps) {
                 g_render.dev->SetPixelShader(0);
-                g_e68 = 0;
+                g_render.cur_ps = 0;
             }
             int col = p->m->color;
-            if (g_texfactor != col) {
-                g_texfactor = col;
+            if (g_render.tex_factor != col) {
+                g_render.tex_factor = col;
                 g_render.dev->SetRenderState(D3DRS_TEXTUREFACTOR, col);
             }
         }
@@ -3330,8 +3329,8 @@ L_state:
             if (cull == 3) cull = 2;
             else if (cull == 2) cull = 3;
         }
-        if (cull != g_cull_cur) {
-            g_cull_cur = cull;
+        if (cull != g_render.cull_cache) {
+            g_render.cull_cache = cull;
             g_render.dev->SetRenderState(D3DRS_CULLMODE, cull);
         }
 

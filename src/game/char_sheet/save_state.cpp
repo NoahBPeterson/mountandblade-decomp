@@ -1,6 +1,6 @@
 #include "./save_state.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../skill_cap.h"      // g_skill_tbl (0x8ee3100)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -247,10 +247,6 @@ void GameData::write_records(OutStream* out)
     out->w_raw(&nrecords);
     for (int i = 0; i < nrecords; i++)
         records[i].write_save(out);
-    char* q = g_troop_extra;                       // 0x8ee3138
-    int   qend = (int)(g_troop_extra + 42 * 0x44);  // 0x8ee3c60
-    while ((int)q < qend) {
-        out->w_raw(q);
-        q += 0x44;
-    }
+    for (int i = 0; i < 42; i++)
+        out->w_raw(&g_skill_tbl[i].cap);
 }

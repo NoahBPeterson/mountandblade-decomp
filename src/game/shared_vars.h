@@ -7,7 +7,6 @@
 
 namespace rgl { struct mesh; }
 
-extern int g_sound_paused; // 0x5a9fd4 (the script engine reads it as g_warnings_off_a)
 extern float g_mouse_dx; // 0x5d70a4 mouse movement of the frame (scaled by 0.1 into the look speed)
 extern float g_mouse_dy; // 0x5d70a8
 extern void* g_overlay; // 0x5d75e8 (== the UI root's object at +0x568)

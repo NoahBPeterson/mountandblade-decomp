@@ -7,7 +7,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/core.h"
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./map_editor.h"
 #include "../editor_entity.h"     // (listed directly: the resolution audit reads only the source's own includes)
@@ -146,7 +146,7 @@ refresh_list:
     }
 
     // 2. select-all modifier: select every record
-    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_a1714c != 0 && g_keyboard.prev[0x1e] == 0) {
+    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x1c] != 0 && g_keyboard.prev[0x1e] == 0) {
         ed_sel_list(g_game).resize(0, 0);
         ed_selected(g_game) = -1;
         for (unsigned i = 0; i < (unsigned)record_count(); i++)
@@ -209,7 +209,7 @@ refresh_list:
         g_editor_dialog.update_objects();
         pick_entity((GuiCtx*)(void*)slot_as<EditorEntity>(14));   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
         slot_as<EditorEntity>(14)->f2f9 = 1;
-        SetFocus(g_editor_hwnd);
+        SetFocus(g_app_obj.m_hWnd);
     }
 
     // 6. drag / rotate every selected record
@@ -268,7 +268,7 @@ refresh_list:
         }
 
         // 7. push the visual frames back into the scene objects
-        if (g_keyboard.down[0x1d] != 0 && g_a1712c != 0 && g_keyboard.prev[0x16] == 0)
+        if (g_keyboard.down[0x1d] != 0 && g_keyboard.down[0x14] != 0 && g_keyboard.prev[0x16] == 0)
             for (unsigned i = 0; i < (unsigned)record_count(); i++) {
                 PlacedObj* r = rec_at(i);
                 *(matrix*)((char*)ent_of(r) + 0x58) = r->m58;

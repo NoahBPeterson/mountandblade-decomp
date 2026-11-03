@@ -9,7 +9,6 @@
 #ifndef MISSION5_MISSION_5_H
 #define MISSION5_MISSION_5_H
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>

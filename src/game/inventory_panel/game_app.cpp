@@ -157,7 +157,7 @@ int GameApp::Update()
     _FSOUND_Update();
 
     if (g_cfg.enable_edit_mode) {
-        if (g_a17158 && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
+        if (g_keyboard.down[0x1f] && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
             if (build_shader() < 0) {
                 mb_error("Unable to compile the effect file.");
             } else {

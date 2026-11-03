@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Agent::update_alarm 0x443140 calls vector4::operator- 0x407ca0 instead of expanding it
 #include "./agent_fx_sound.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"
 #include "../tstring.h"
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -192,7 +192,7 @@ static __forceinline int round_i(float v) { return round_float(&v); }
 int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id)
 {
     int ret = -1;
-    if (g_sound_muted == 0 && idx >= 0 && idx < ngroups) {
+    if (g_cfg.disable_sound == 0 && idx >= 0 && idx < ngroups) {
         int* pn = &groups[idx].nvar;
         int n = *pn;
         if (n > 0) {
@@ -208,7 +208,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                 int looping = groups[idx].flags & 2;
                 int hi = 0x100;
                 int vol = 0;
-                int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_options.f0c * 255.0f);
+                int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_options.master_volume * 255.0f);
                 vol = clamp_index(&r, &vol, &hi);
                 int prio;
                 if (flags & 1) {
@@ -231,7 +231,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                     int t = ch;
                     channels.push_back(t);
                 }
-                if (freq != 1.0f && g_no_freq == 0)
+                if (freq != 1.0f && g_cfg.disable_frequency_variation == 0)
                     FSOUND_SetFrequency(ch, (int)((float)defs[dn].freq * freq));
                 FSOUND_SetPriority(ch, prio);
                 FSOUND_SetPaused(ch, 0);
@@ -267,7 +267,7 @@ void GameData::add_experience(int troop, int amount)
         amount = 0;
     else if (amount >= 30000)
         amount = 29999;
-    if (troop == player && amount > 0 && f13a34 != 0 && g_options.i78 != 0) {
+    if (troop == player && amount > 0 && f13a34 != 0 && g_options.show_messages != 0) {
         {
             tstring key("ui_you_got_number_experience");
             sprintf(buf1, g_strtable.lookup(key)->c_str(), amount);
@@ -353,7 +353,7 @@ Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
 void Mission::queue_dead(Agent* a)
 {
     dead.push_back(a);
-    while (dead.size() > g_options.i3c) {
+    while (dead.size() > g_options.max_dead) {
         dead[0]->f5830 = 4;
         Agent* o = dead[0];
         Timer* tm = &o->tm;

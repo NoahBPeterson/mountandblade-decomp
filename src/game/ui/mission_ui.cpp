@@ -9,7 +9,6 @@
 //-----------------------------------------------------------------------------
 #define UIA_CTOR_OUT_OF_LINE   // UiA::UiA is defined below (0x48b1c0)
 #include <math.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"   // g_cfg
 #include <string.h>
 #include <stdlib.h>
@@ -1161,12 +1160,12 @@ int GameData::sl_value_factor()
     float f = 1.0f;
     if (fb4)
         f = 0.75f;
-    f = (1.0f - (float)g_options.i44 * 0.09f) * (((g_options.f74 - 0.5f) * 0.15f + 1.0f) * f);
-    f = f * ((float)(g_options.i4c - 2) * 0.15f + 1.0f);
-    f = f * ((float)(g_options.i50 - 2) * 0.2f + 1.0f);
-    if (g_options.i70 == 1)
+    f = (1.0f - (float)g_options.difficulty * 0.09f) * (((g_options.f74 - 0.5f) * 0.15f + 1.0f) * f);
+    f = f * ((float)(g_options.dmg_to_player - 2) * 0.15f + 1.0f);
+    f = f * ((float)(g_options.dmg_to_friends - 2) * 0.2f + 1.0f);
+    if (g_options.stick_mode == 1)
         f = f * 1.2f;
-    return (int)(((float)(g_options.i48 - 2) * 0.05f + 1.05f) * f * 100.01f);
+    return (int)(((float)(g_options.agent_count - 2) * 0.05f + 1.05f) * f * 100.01f);
 }
 
 // @ 0x48a000

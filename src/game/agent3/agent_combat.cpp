@@ -8,7 +8,7 @@
 //       (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <stdlib.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../slot.h"
 #include <stdexcept>
 #include "./agent_combat.h"
 #include "../tstring.h"
@@ -239,12 +239,12 @@ int Agent::pick_attack_dir(unsigned tid)
 {
     int alt = 0;
     int dir;
-    if (g_options.i6c > 0) {
-        float dx = g_stick_x;
-        float dy = g_stick_y;
-        if (g_options.i14 != 0)
+    if (g_options.ctl_mode > 0) {
+        float dx = g_keyboard.f818;
+        float dy = g_keyboard.f81c;
+        if (g_options.invert != 0)
             dy = -dy;
-        if (g_options.i6c == 2) {
+        if (g_options.ctl_mode == 2) {
             dx = -dx;
             dy = -dy;
         }
@@ -381,7 +381,7 @@ void Agent::start_shoot(int slot)
             alt = 3 - dir;
     }
     int tgt = pick_front();
-    if (id == g_mission->player_id && (g_options.i6c != 0 || tgt != -1))
+    if (id == g_mission->player_id && (g_options.ctl_mode != 0 || tgt != -1))
         dir = pick_attack_dir(tgt);
     unsigned __int64 kind = flags & itcf_shoot_mask;
     if (kind == 0) {
@@ -460,7 +460,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
     *b = -1;
     *c = -1;
     int mode = 0;
-    if (id != g_mission->player_id || g_options.i70 == 0) {
+    if (id != g_mission->player_id || g_options.stick_mode == 0) {
         int t = pick_duel();
         if (t != -1) {
             Agent* o = agent_by_id(t);
@@ -469,10 +469,10 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
             else if (o->active == 1)
                 mode = o->mode1;
         }
-    } else if (g_options.i70 == 1) {
-        float dx = g_stick_x;
-        float dy = g_stick_y;
-        if (g_options.i14 != 0)
+    } else if (g_options.stick_mode == 1) {
+        float dx = g_keyboard.f818;
+        float dy = g_keyboard.f81c;
+        if (g_options.invert != 0)
             dy = -dy;
         if (dx > dy) {
             if (dx > -dy)

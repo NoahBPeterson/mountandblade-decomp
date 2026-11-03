@@ -7,7 +7,6 @@
 // PlaneTrace::intersect, Picker::collect), s0051abd0 (MapPanel / GameData / RecR), s00439100 (collision
 // shapes, level::query_segment) and s00483870 (the message ring).
 #include <windows.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <math.h>
 #include "../../rgl/rgl_math.h"
 #include "../../include/msg_log.h"

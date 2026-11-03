@@ -657,7 +657,6 @@ struct MissionUiX {
 };
 extern MissionUiX g_mission_ctx;         // 0xa73300
 
-extern int g_menu_b;                    // 0x5e2924 (jump_to_menu 0x4ac3a0)
 #include "../map_flags.h"   // g_map_flags.f8 = 0x5e2924 (jump_to_menu 0x4ac3a0)
 struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
@@ -715,10 +714,7 @@ struct SceneEntity {
 // the item mesh of the trigger's agent (contexts -50 / -51), -1 otherwise. The original passes the context in
 // EAX (a static of the s004902a0 object, agent_of); declared here as a plain call.
 int trigger_item_mesh(int context);     // 0x4904a0
-struct EmitTable {                   // terrain_b/mission.cpp: the particle-system table at 0x8ed5090
-    Emit* spawn(int* idx, const rgl::vector4* pos, const int* owner);    // 0x479d20 (ret 0xc)
-};
-extern EmitTable g_emit_defs;      // 0x8ed5090
+#include "../emit.h"                 // EmitTable, g_emit_defs (0x8ed5090): the particle-system table (terrain_b/mission.cpp)
 
 struct MTimer {                         // clock index + start (Timer in src/rgl/xmlcfg/game_util.h)
     int clock;

@@ -12,7 +12,6 @@
 // trigger_entry_vec, big_obj) are one module.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <string.h>
 #include <stdlib.h>
@@ -1159,7 +1158,7 @@ HRESULT Core::RestoreDeviceObjects()
     update_view_rect();
     IDirect3DDevice9* dev = m_pd3dDevice;
     g_render.dev = dev;
-    dev->GetDeviceCaps(&g_caps);
+    dev->GetDeviceCaps(&g_render.caps);
     g_render.vsync = -1;
     g_render.pad504 = 0;
     if (g_use_shaders) {
@@ -1600,7 +1599,7 @@ void music_player::advance_piece()
             w[0] = 0;
             w[12] = -1;
         }
-    } else if (g_options.f08 > 0.02f) {
+    } else if (g_options.music_volume > 0.02f) {
         bool forced = false;
         int sel = -1;
         int best = -1;
@@ -1677,7 +1676,7 @@ void music_player::advance_piece()
         w[1] = 0;
         w[13] = -1;
     } else if ((*(int*)((char*)&g_script + 0x3c)) >= 0) {
-        if (g_options.f08 > 0.02f) {
+        if (g_options.music_volume > 0.02f) {
             int slot = 1;
             play((*(int*)((char*)&g_script + 0x3c)), &slot);
         }

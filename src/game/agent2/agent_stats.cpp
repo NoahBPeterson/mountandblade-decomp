@@ -9,7 +9,6 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdlib.h>
 #include <string.h>
 #include <new>
@@ -401,15 +400,15 @@ float Agent::damage_factor(int idx)
             int lvl = g_game->skill_level(troop, 0x1a);
             r = ((float)lvl * 0.25f + 1.0f) * r;
             if (id == g_mission->f5c) {
-                if (g_options.i48 > 1)
-                    r = (((float)g_options.i48 * 0.7f + 9.3f) * r) * 0.07f;
+                if (g_options.agent_count > 1)
+                    r = (((float)g_options.agent_count * 0.7f + 9.3f) * r) * 0.07f;
             } else {
-                r = ((float)g_options.i48 * 0.07f + 0.93f) * r;
+                r = ((float)g_options.agent_count * 0.07f + 0.93f) * r;
             }
         }
         unsigned t2 = ik->type_flags & 0xff;
-        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != g_mission->f5c || g_options.i48 > 1))
-            r = ((float)g_options.i48 * 0.07f + 0.93f) * r;
+        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != g_mission->f5c || g_options.agent_count > 1))
+            r = ((float)g_options.agent_count * 0.07f + 0.93f) * r;
     }
     return r;
 }

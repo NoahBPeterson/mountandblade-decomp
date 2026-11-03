@@ -6,7 +6,6 @@
 // 0x42a090 is the TU map's (first byte of strategic_entity::render, whose class differs: low). No forward call or
 // shared literal ties 0x429740 / 0x429890 to the helpers before them, so the single object is kept.
 #include <vector>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../game/config/config_block.h"   // g_cfg
 #include <new>
 #include "../rgl_string.h"

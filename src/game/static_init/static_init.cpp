@@ -8,6 +8,8 @@
 // constructor the original inlined (vtable store, member constructors, field stores) is written out as the stores it
 // makes; the vtables it stores are the original's (their slots point at our functions after the glue relocates them).
 #include <new>
+#include "../slot.h"
+#include "../skill_cap.h"
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../../include/ptr_tag.h"
 #include <stdio.h>
@@ -85,8 +87,8 @@ extern void* g_vt_595618[]; // 0x595618 outfile_b's vtable (its base)
 extern FILE* g_5a9f90;      // 0x5a9f90 the log's FILE
 
 // ---- callees --------------------------------------------------------------------------------------------------
-struct tstring { tstring(); ~tstring(); char rec[0x20]; };   // 0x42bbd0, 0x42bc40; sized as the 0x20-byte table record the string heads
-struct tstring11 { tstring a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
+struct TStrRec { TStrRec(); ~TStrRec(); char rec[0x20]; };   // 0x42bbd0, 0x42bc40; sized as the 0x20-byte table record the string heads
+struct tstring11 { TStrRec a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
@@ -133,12 +135,12 @@ void __cdecl static_dtor_548130() { ((resmgr*)g_5d6fa0)->~resmgr(); }
 // @ 0x548140
 void __cdecl static_dtor_548140() { ((gui_manager*)g_5d7080)->~gui_manager(); }
 // @ 0x548150
-void __cdecl static_dtor_548150() { ((tstring*)g_8ee3c28)->~tstring(); }
+void __cdecl static_dtor_548150() { ((TStrRec*)g_8ee3c28)->~TStrRec(); }
 // @ 0x548170
 void __cdecl static_dtor_548170()
 {
-    ((tstring*)(g_5a9f30 + 0x20))->~tstring();
-    ((tstring*)(g_5a9f30 + 0x4))->~tstring();
+    ((TStrRec*)(g_5a9f30 + 0x20))->~TStrRec();
+    ((TStrRec*)(g_5a9f30 + 0x4))->~TStrRec();
 }
 // @ 0x5481a0
 void __cdecl static_dtor_5481a0()
@@ -146,8 +148,8 @@ void __cdecl static_dtor_5481a0()
     char* p = g_a44238;
     for (int n = 0x1000; n; n--) {
         p -= 0x2c;
-        ((tstring*)(p + 0x1c))->~tstring();
-        ((tstring*)p)->~tstring();
+        ((TStrRec*)(p + 0x1c))->~TStrRec();
+        ((TStrRec*)p)->~TStrRec();
     }
 }
 // @ 0x5481d0
@@ -156,8 +158,8 @@ void __cdecl static_dtor_5481d0()
     char* p = g_a70240;
     for (int n = 0x1000; n; n--) {
         p -= 0x2c;
-        ((tstring*)(p + 0x1c))->~tstring();
-        ((tstring*)p)->~tstring();
+        ((TStrRec*)(p + 0x1c))->~TStrRec();
+        ((TStrRec*)p)->~TStrRec();
     }
 }
 // @ 0x548200
@@ -170,8 +172,8 @@ void __cdecl static_dtor_548220()
     char* p = g_a76628;
     for (int n = 0x2b; n; n--) {
         p -= 0x28;
-        ((tstring*)(p + 0x10))->~tstring();
-        ((tstring*)p)->~tstring();
+        ((TStrRec*)(p + 0x10))->~TStrRec();
+        ((TStrRec*)p)->~TStrRec();
     }
 }
 // @ 0x548250
@@ -180,7 +182,7 @@ void __cdecl static_dtor_548250()
     char* p = g_8ed4f58;
     for (int n = 0xb; n; n--) {
         p -= 0x20;
-        ((tstring*)p)->~tstring();
+        ((TStrRec*)p)->~TStrRec();
     }
 }
 // @ 0x548270
@@ -189,9 +191,9 @@ void __cdecl static_dtor_548270()
     char* p = g_8ee3c38;
     for (int n = 0x2a; n; n--) {
         p -= 0x44;
-        ((tstring*)(p + 0x10))->~tstring();
-        ((tstring*)p)->~tstring();
-        ((tstring*)(p - 0x10))->~tstring();
+        ((TStrRec*)(p + 0x10))->~TStrRec();
+        ((TStrRec*)p)->~TStrRec();
+        ((TStrRec*)(p - 0x10))->~TStrRec();
     }
 }
 // @ 0x5482a0
@@ -207,17 +209,17 @@ void __cdecl static_dtor_5482b0()
         g_5a9f60[0x34] = 1;
         g_5a9f60[0x35] = 0;
     }
-    ((tstring*)(g_5a9f60 + 0x20))->~tstring();
-    ((tstring*)(g_5a9f60 + 0x4))->~tstring();
+    ((TStrRec*)(g_5a9f60 + 0x20))->~TStrRec();
+    ((TStrRec*)(g_5a9f60 + 0x4))->~TStrRec();
 }
 // @ 0x548310
 void __cdecl static_dtor_548310()
 {
-    ((tstring*)g_a75e8c)->~tstring();
+    ((TStrRec*)g_a75e8c)->~TStrRec();
     char* p = g_a75a28;
     for (int n = 0x100; n; n--) {
         p -= 0x20;
-        ((tstring*)p)->~tstring();
+        ((TStrRec*)p)->~TStrRec();
     }
 }
 // @ 0x548340
@@ -278,8 +280,8 @@ void __cdecl static_init_5479c0() { new (g_5d7080) gui_manager; atexit(static_dt
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable
 void __cdecl static_init_547aa0()
 {
-    new (g_5a9f30 + 0x4) tstring;
-    new (g_5a9f30 + 0x20) tstring;
+    new (g_5a9f30 + 0x4) TStrRec;
+    new (g_5a9f30 + 0x20) TStrRec;
     g_5a9f30[0x18] = 0;
     AT(int, g_5a9f30, 0x1c) = 0;
     AT(void*, g_5a9f30, 0) = g_vt_54a7d0;
@@ -289,8 +291,8 @@ void __cdecl static_init_547aa0()
 // @ 0x547ae0   the log file stream (outfile): two strings, flags, vtable
 void __cdecl static_init_547ae0()
 {
-    new (g_5a9f60 + 0x4) tstring;
-    new (g_5a9f60 + 0x20) tstring;
+    new (g_5a9f60 + 0x4) TStrRec;
+    new (g_5a9f60 + 0x20) TStrRec;
     g_5a9f60[0x18] = 0;
     AT(int, g_5a9f60, 0x1c) = 0;
     g_5a9f60[0x34] = 1;
@@ -304,16 +306,14 @@ void __cdecl static_init_547b30() { new (g_5fe898) GuiScreen; atexit(static_dtor
 // @ 0x547b50   input state: both tick snapshots, the key table, the axes
 void __cdecl static_init_547b50()
 {
-    int lo = ((int*)g_ticks)[0], hi = ((int*)g_ticks)[1];
-    AT(int, g_a178f0, 0) = lo;
-    AT(int, g_a178f0, 4) = hi;
-    AT(int, g_a17900, 0) = lo;
-    AT(int, g_a17900, 4) = hi;
-    memset(g_a170d4, 0, 0x400);
-    AT(int, g_a178e0, 0) = 0;
-    AT(int, g_a178e0, 4) = 0;
-    AT(int, (char*)&g_a178d4, 0) = 0;
-    AT(int, (char*)&g_a178d4, 4) = 0;
+    __int64 now = g_ticks[0];
+    g_keyboard.t828 = now;
+    g_keyboard.t838 = now;
+    memset(g_keyboard.down, 0, 0x400);
+    g_keyboard.f818 = 0;
+    g_keyboard.f81c = 0;
+    g_keyboard.axis[0] = 0;
+    g_keyboard.axis[1] = 0;
 }
 // @ 0x547ba0
 void __cdecl static_init_547ba0() { new (g_a17910) DisplayState; }
@@ -359,8 +359,8 @@ void __cdecl static_init_547f60()
 {
     char* p = g_a75f70;
     for (int n = 0x2b; n; n--, p += 0x28) {
-        new (p) tstring;
-        new (p + 0x10) tstring;
+        new (p) TStrRec;
+        new (p + 0x10) TStrRec;
     }
     atexit(static_dtor_548220);
 }
@@ -387,16 +387,15 @@ void __cdecl static_init_548050() { dialog_mgr_ctor(g_8ed50c8); atexit(static_dt
 // @ 0x548070
 void __cdecl static_init_548070()
 {
-    char* p = g_8ee3120;
-    for (int n = 0x2a; n; n--, p += 0x44) {
-        new (p - 0x20) tstring;
-        new (p - 0x10) tstring;
-        new (p) tstring;
+    for (int n = 0; n < 0x2a; n++) {
+        new (&g_skill_tbl[n].desc) tstring;
+        new (&g_skill_tbl[n].name) tstring;
+        new (&g_skill_tbl[n].key) tstring;
     }
     atexit(static_dtor_548270);
 }
 // @ 0x5480b0
-void __cdecl static_init_5480b0() { new (g_8ee3c28) tstring; atexit(static_dtor_548150); }
+void __cdecl static_init_5480b0() { new (g_8ee3c28) TStrRec; atexit(static_dtor_548150); }
 // @ 0x548110
 void __cdecl static_init_548110() { new (g_8ee3c48) GameApp; atexit(static_dtor_5482a0); }
 

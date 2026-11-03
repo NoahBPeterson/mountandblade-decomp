@@ -9,7 +9,6 @@
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
@@ -1078,7 +1077,7 @@ void Screen::camera_move(float dt)
 
     vy = v * dt + vy;
     if (g_keyboard.down[0xe1]) {
-        vy = expf(4.0f * g_exp_arg) * 0.03f * g_keyboard.axis[0] * dt + vy;
+        vy = expf(4.0f * g_options.exp_arg) * 0.03f * g_keyboard.axis[0] * dt + vy;
     }
 
     if (w != 0.0f || g_keyboard.axis[2] != 0.0f) {

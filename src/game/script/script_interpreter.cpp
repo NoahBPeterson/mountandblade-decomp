@@ -393,7 +393,7 @@ __declspec(noinline) char __fastcall warn_particle_system(const int& value)
     char buf[512];
     int v = value;
     char r = 1;
-    if (v < 0 || v >= g_particle_system_count) {
+    if (v < 0 || v >= g_emit_defs.count) {
         sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid particle_system ID: %d", g_cur_opcode, v);
         report(buf);
         r = 0;
@@ -436,7 +436,7 @@ __declspec(noinline) char __fastcall warn_sound(const int& value)
     int v = value;
     char r = 1;
     if (v < 0 || v >= g_sound_mgr.ngroups) {
-        if (g_sound_muted == 0) {
+        if (g_cfg.disable_sound == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Sound ID: %d", g_cur_opcode, v);
             report(buf);
         }
@@ -467,7 +467,7 @@ __declspec(noinline) char __fastcall warn_track(const int& value)
     int v = value;
     char r = 1;
     if (v < 0 || v >= g_track_count) {
-        if (g_sound_paused == 0 && g_sound_muted == 0) {
+        if (g_cfg.disable_music == 0 && g_cfg.disable_sound == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, v);
             report(buf);
         }
@@ -598,7 +598,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         result = g_screen_stack.back() == 0x10;
         break;
     case op::in_meta_mission:
-        result = g_in_meta_mission;
+        result = g_dialogs.in_meta_mission;
         break;
     case op::set_player_troop:
         if (check_troop((int)params[0]))
@@ -998,13 +998,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::play_track:
         if (warn_track((int)params[0]) && IN_RANGE(params[1], 0, 3)) {
-            g_next_track = (int)params[0];
-            g_next_track_options = (int)params[1];
+            g_script.next_track = (int)params[0];
+            g_script.next_track_options = (int)params[1];
         }
         break;
     case op::play_cue_track:
         if (warn_track((int)params[0]))
-            g_cue_track = (int)params[0];
+            g_script.cue_track = (int)params[0];
         break;
     case op::music_set_situation:
         g_music_situation = (int)params[0];
@@ -1113,44 +1113,44 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::position_get_x:
         if (check_register((int)params[1])) {
-            SET_LV(round_i64(g_fixed_point_multiplier * script_pos((int)params[1]).o.x));
+            SET_LV(round_i64(g_script.fixed_point_multiplier * script_pos((int)params[1]).o.x));
         }
         break;
     case op::position_get_y:
         if (check_register((int)params[1])) {
-            SET_LV(round_i64(g_fixed_point_multiplier * script_pos((int)params[1]).o.y));
+            SET_LV(round_i64(g_script.fixed_point_multiplier * script_pos((int)params[1]).o.y));
         }
         break;
     case op::position_get_z:
         if (check_register((int)params[1])) {
-            SET_LV(round_i64(g_fixed_point_multiplier * script_pos((int)params[1]).o.z));
+            SET_LV(round_i64(g_script.fixed_point_multiplier * script_pos((int)params[1]).o.z));
         }
         break;
     case op::position_set_x:
         if (check_register((int)params[0]))
-            script_pos((int)params[0]).o.x = (float)params[1] / g_fixed_point_multiplier;
+            script_pos((int)params[0]).o.x = (float)params[1] / g_script.fixed_point_multiplier;
         break;
     case op::position_set_y:
         if (check_register((int)params[0]))
-            script_pos((int)params[0]).o.y = (float)params[1] / g_fixed_point_multiplier;
+            script_pos((int)params[0]).o.y = (float)params[1] / g_script.fixed_point_multiplier;
         break;
     case op::position_set_z:
         if (check_register((int)params[0]))
-            script_pos((int)params[0]).o.z = (float)params[1] / g_fixed_point_multiplier;
+            script_pos((int)params[0]).o.z = (float)params[1] / g_script.fixed_point_multiplier;
         break;
     case op::position_get_scale_x:
         if (check_register((int)params[1])) {
-            SET_LV(round_i64(g_fixed_point_multiplier * script_pos((int)params[1]).s.x));
+            SET_LV(round_i64(g_script.fixed_point_multiplier * script_pos((int)params[1]).s.x));
         }
         break;
     case op::position_get_scale_y:
         if (check_register((int)params[1])) {
-            SET_LV(round_i64(g_fixed_point_multiplier * script_pos((int)params[1]).f.y));
+            SET_LV(round_i64(g_script.fixed_point_multiplier * script_pos((int)params[1]).f.y));
         }
         break;
     case op::position_get_scale_z:
         if (check_register((int)params[1])) {
-            SET_LV(round_i64(g_fixed_point_multiplier * script_pos((int)params[1]).u.z));
+            SET_LV(round_i64(g_script.fixed_point_multiplier * script_pos((int)params[1]).u.z));
         }
         break;
     case op::position_get_rotation_around_z:
@@ -1164,7 +1164,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // normalizes the origin; the destination gets its old length (fixed point)
         if (check_register((int)params[1])) {
             float len = script_pos((int)params[1]).o.normalize();
-            SET_LV(round_i64(g_fixed_point_multiplier * len));
+            SET_LV(round_i64(g_script.fixed_point_multiplier * len));
         }
         break;
     case op::position_set_z_to_ground_level:
@@ -3011,8 +3011,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_set_animation_progress:
         // the fraction part of the fixed-point value
         if (warn_agent((int)params[0])) {
-            __int64 frac = params[1] % (__int64)g_fixed_point_multiplier;
-            ((Agent_f8*)agent((int)params[0]))->set_slot(0, (float)frac / (float)g_fixed_point_multiplier);
+            __int64 frac = params[1] % (__int64)g_script.fixed_point_multiplier;
+            ((Agent_f8*)agent((int)params[0]))->set_slot(0, (float)frac / (float)g_script.fixed_point_multiplier);
         }
         break;
     case op::agent_play_sound:
@@ -3434,7 +3434,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 float z = 1.0f, y = 1.0f, x = 1.0f;
                 scale = &a.set(x, y, z);
             } else {
-                float s = 1.0f / g_fixed_point_multiplier;
+                float s = 1.0f / g_script.fixed_point_multiplier;
                 float x, y, z;
                 x = y = z = (float)params[3];
                 scale = &(b.set(z, y, x) * s);
@@ -3491,9 +3491,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // reciprocal and three multiplies (different rounding). Same in camera_parameters / point_light / sun_light
         // (cur_tableau_set_ambient_light, <red_fixed_point>, <green_fixed_point>, <blue_fixed_point>)
         if (g_tableaus.stack.size()) {
-            sf_0 = (float)params[2] / g_fixed_point_multiplier;
-            sf_1 = (float)params[1] / g_fixed_point_multiplier;
-            sf_2 = (float)params[0] / g_fixed_point_multiplier;
+            sf_0 = (float)params[2] / g_script.fixed_point_multiplier;
+            sf_1 = (float)params[1] / g_script.fixed_point_multiplier;
+            sf_2 = (float)params[0] / g_script.fixed_point_multiplier;
             sv_0;
             g_tableaus.set_ambient_light(sv_0.set(sf_2, sf_1, sf_0));
         }
@@ -3506,10 +3506,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (.., <is_perspective>, <camera_width_times_1000>, <camera_height_times_1000>, <camera_near_times_1000>,
         // <camera_far_times_1000>): fixed point in fact
         if (g_tableaus.stack.size()) {
-            sf_0 = (float)params[4] / g_fixed_point_multiplier;
-            sf_1 = (float)params[3] / g_fixed_point_multiplier;
-            sf_2 = (float)params[2] / g_fixed_point_multiplier;
-            sf_3 = (float)params[1] / g_fixed_point_multiplier;
+            sf_0 = (float)params[4] / g_script.fixed_point_multiplier;
+            sf_1 = (float)params[3] / g_script.fixed_point_multiplier;
+            sf_2 = (float)params[2] / g_script.fixed_point_multiplier;
+            sf_3 = (float)params[1] / g_script.fixed_point_multiplier;
             bool perspective = params[0] != 0;
             g_tableaus.set_camera_parameters(&perspective, &sf_3, &sf_2, &sf_1, &sf_0);
         }
@@ -3517,18 +3517,18 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::cur_tableau_add_point_light:
         // the position is operand 0 and the colour operands 1..3 (the header's <map_icon_id> is not read)
         if (check_register((int)params[0]) && g_tableaus.stack.size()) {
-            sf_0 = (float)params[3] / g_fixed_point_multiplier;
-            sf_1 = (float)params[2] / g_fixed_point_multiplier;
-            sf_2 = (float)params[1] / g_fixed_point_multiplier;
+            sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
+            sf_1 = (float)params[2] / g_script.fixed_point_multiplier;
+            sf_2 = (float)params[1] / g_script.fixed_point_multiplier;
             vec4 c;
             g_tableaus.add_point_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
         break;
     case op::cur_tableau_add_sun_light:
         if (check_register((int)params[0]) && g_tableaus.stack.size()) {
-            sf_0 = (float)params[3] / g_fixed_point_multiplier;
-            sf_1 = (float)params[2] / g_fixed_point_multiplier;
-            sf_2 = (float)params[1] / g_fixed_point_multiplier;
+            sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
+            sf_1 = (float)params[2] / g_script.fixed_point_multiplier;
+            sf_2 = (float)params[1] / g_script.fixed_point_multiplier;
             vec4 c;
             g_tableaus.add_sun_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
@@ -3541,7 +3541,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[3] == 0)
                 alpha = 1.0f;
             else
-                alpha = (float)params[3] / g_fixed_point_multiplier;
+                alpha = (float)params[3] / g_script.fixed_point_multiplier;
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
             // temporary itself (C4238), as the original: no copy into a third vector
             rgl::vector4 a, b;
@@ -3550,7 +3550,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 float z = 1.0f, y = 1.0f, x = 1.0f;
                 scale = &a.set(x, y, z);
             } else {
-                float s = 1.0f / g_fixed_point_multiplier;
+                float s = 1.0f / g_script.fixed_point_multiplier;
                 float x, y, z;
                 x = y = z = (float)params[2];
                 scale = &(b.set(z, y, x) * s);
@@ -3566,7 +3566,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[3] == 0)
                 alpha = 1.0f;
             else
-                alpha = (float)params[3] / g_fixed_point_multiplier;
+                alpha = (float)params[3] / g_script.fixed_point_multiplier;
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
             // temporary itself (C4238), as the original: no copy into a third vector
             rgl::vector4 a, b;
@@ -3575,7 +3575,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 float z = 1.0f, y = 1.0f, x = 1.0f;
                 scale = &a.set(x, y, z);
             } else {
-                float s = 1.0f / g_fixed_point_multiplier;
+                float s = 1.0f / g_script.fixed_point_multiplier;
                 float x, y, z;
                 x = y = z = (float)params[2];
                 scale = &(b.set(z, y, x) * s);
@@ -3590,7 +3590,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[2] == 0)
                 sf_0 = 1.0f;
             else
-                sf_0 = (float)params[2] / g_fixed_point_multiplier;
+                sf_0 = (float)params[2] / g_script.fixed_point_multiplier;
             g_tableaus.spawn_scaled2((int)params[0], &script_pos((int)params[1]), &sf_0);
         }
         break;
@@ -3642,8 +3642,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[3] == 0)
                 sf_0 = 1.0f;
             else
-                sf_0 = (float)params[3] / g_fixed_point_multiplier;
-            sf_1 = 1.0f / g_fixed_point_multiplier;
+                sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
+            sf_1 = 1.0f / g_script.fixed_point_multiplier;
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]),
                                 V(script_pos((int)params[2]).o) * sf_1, &sf_0, &si_0);
         }
@@ -3671,12 +3671,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::mission_get_time_speed:
         if (g_mission)
-            SET_LV((__int64)(mission()->blend2_param() * g_fixed_point_multiplier));
+            SET_LV((__int64)(mission()->blend2_param() * g_script.fixed_point_multiplier));
         break;
     case op::mission_set_time_speed:
         // (mission_set_time_speed, <value_fixed_point>) #this works only when cheat mode is enabled
         if (g_mission && params[0] > 0) {
-            mission()->time_speed = (float)params[0] / g_fixed_point_multiplier;
+            mission()->time_speed = (float)params[0] / g_script.fixed_point_multiplier;
             mission()->time_speed_anim_time = 0;
         }
         break;
@@ -3685,7 +3685,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (g_mission && params[0] > 0 && params[1] > 0) {
             MissionX* m = mission();
             m->time_speed = m->blend2_param();
-            mission()->target_time_speed = (float)params[0] / g_fixed_point_multiplier;
+            mission()->target_time_speed = (float)params[0] / g_script.fixed_point_multiplier;
             mission()->time_speed_anim_time = (float)params[1] * 0.001f;
             mission()->time_speed_timer.restart();
         }
@@ -3989,12 +3989,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_fixed_point_multiplier:
         if (params[0] > 0)
-            g_fixed_point_multiplier = (int)params[0];
+            g_script.fixed_point_multiplier = (int)params[0];
         break;
     case op::store_sqrt:
         // (store_sqrt, <destination_fixed_point>, <value_fixed_point>)
         if (params[1] > 0) {
-            float m = (float)g_fixed_point_multiplier;
+            float m = (float)g_script.fixed_point_multiplier;
             SET_LV(round_i64((float)(sqrt((float)params[1] / m) * m)));
         }
         break;
@@ -4002,35 +4002,35 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // pow(double, double): the original calls the CRT's _CIpow on the x87 stack (the float overload would call a
         // float pow). The multiplier is converted at each use: cl stores it once and divides by it, where a float
         // local divisor is rewritten as one reciprocal and multiplies (different rounding)
-        SET_LV(round_i64((float)(pow((double)((float)params[1] / (float)g_fixed_point_multiplier),
-                                     (double)((float)params[2] / (float)g_fixed_point_multiplier)) *
-                                 (float)g_fixed_point_multiplier)));
+        SET_LV(round_i64((float)(pow((double)((float)params[1] / (float)g_script.fixed_point_multiplier),
+                                     (double)((float)params[2] / (float)g_script.fixed_point_multiplier)) *
+                                 (float)g_script.fixed_point_multiplier)));
         break;
     case op::store_sin:
         // degrees in fixed point. The parentheses are the original's operation order (x * k, then / m): without
         // them cl 13.10 reassociates `x * k / m` into `x / m * k`, which can round differently (also cos/tan below)
         {
-            float m = (float)g_fixed_point_multiplier;
+            float m = (float)g_script.fixed_point_multiplier;
             SET_LV(round_i64((float)(sin(((float)params[1] * 0.017453292f) / m) * m)));
         }
         break;
     case op::store_cos:
         {
-            float m = (float)g_fixed_point_multiplier;
+            float m = (float)g_script.fixed_point_multiplier;
             SET_LV(round_i64((float)(cos(((float)params[1] * 0.017453292f) / m) * m)));
         }
         break;
     case op::store_tan:
         {
-            float m = (float)g_fixed_point_multiplier;
+            float m = (float)g_script.fixed_point_multiplier;
             SET_LV(round_i64((float)(tan(((float)params[1] * 0.017453292f) / m) * m)));
         }
         break;
     case op::convert_to_fixed_point:
-        SET_LV((__int64)g_fixed_point_multiplier * params[0]);
+        SET_LV((__int64)g_script.fixed_point_multiplier * params[0]);
         break;
     case op::convert_from_fixed_point:
-        SET_LV(params[0] / (__int64)g_fixed_point_multiplier);
+        SET_LV(params[0] / (__int64)g_script.fixed_point_multiplier);
         break;
     case op::assign:
         set_lvalue(locals, params[1]);
@@ -4205,8 +4205,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // the dialog's agent for non-heroes; else the last agent of the conversation troop
         {
             int v = -1;
-            if (!troop(g_dialogs.fc)->is_hero() && g_conversation_agent != -1) {
-                v = g_conversation_agent;
+            if (!troop(g_dialogs.fc)->is_hero() && g_dialogs.partner_agent != -1) {
+                v = g_dialogs.partner_agent;
                 SET_LV((__int64)v);
             } else {
                 AgentTable* t = &mission()->agents;

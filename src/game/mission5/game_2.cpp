@@ -12,7 +12,6 @@
 //       kept: 0x5236f0 calls 0x524360..0x524d60 in turn and they are its record helpers (see MIGRATION.md).
 //-----------------------------------------------------------------------------
 #include <math.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <string.h>
 #include "./game_2.h"
 #include "../../include/troop.h"          // g_level_xp
@@ -416,24 +415,24 @@ void Game::build_map_trees()
     void* snow_arr[0x40];   for (int i = 0; i < 0x40; i++) snow_arr[i] = 0;
     void* steppe_arr[0x40]; for (int i = 0; i < 0x40; i++) steppe_arr[i] = 0;
     void* desert_arr[0x40]; for (int i = 0; i < 0x40; i++) desert_arr[i] = 0;
-    for (int i = 0; i < 4; i++) if (g_map_tree_types[i] > 0x40) g_map_tree_types[i] = 0x40;
+    for (int i = 0; i < 4; i++) if (g_module_settings.tree_types[i] > 0x40) g_module_settings.tree_types[i] = 0x40;
 
-    for (int i = 0; i < g_map_tree_types[0]; i++) {
+    for (int i = 0; i < g_module_settings.tree_types[0]; i++) {
         tmp->assign("map_tree_");                                    // 0x59c0d8
         tmp->push_back((char)('a' + i));
         map_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
-    for (int i = 0; i < g_map_tree_types[1]; i++) {
+    for (int i = 0; i < g_module_settings.tree_types[1]; i++) {
         tmp->assign("snow_tree_");                                   // 0x59c0cc
         tmp->push_back((char)('a' + i));
         snow_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
-    for (int i = 0; i < g_map_tree_types[2]; i++) {
+    for (int i = 0; i < g_module_settings.tree_types[2]; i++) {
         tmp->assign("steppe_tree_");                                 // 0x59c0bc
         tmp->push_back((char)('a' + i));
         steppe_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
     }
-    for (int i = 0; i < g_map_tree_types[3]; i++) {
+    for (int i = 0; i < g_module_settings.tree_types[3]; i++) {
         tmp->assign("desert_tree_");                                 // 0x59c0ac
         tmp->push_back((char)('a' + i));
         desert_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
@@ -700,13 +699,13 @@ void Game::build_map_trees()
                             if (t == 0xc) goto lab_ce0;
                             if (t == 10) {
                                 chosen = steppe_arr[0];
-                                if (g_map_tree_types[2] > 1) chosen = steppe_arr[rand() % g_map_tree_types[2]];
+                                if (g_module_settings.tree_types[2] > 1) chosen = steppe_arr[rand() % g_module_settings.tree_types[2]];
                             } else if (t == 0xd) {
                                 chosen = desert_arr[0];
-                                if (g_map_tree_types[3] > 1) chosen = desert_arr[rand() % g_map_tree_types[3]];
+                                if (g_module_settings.tree_types[3] > 1) chosen = desert_arr[rand() % g_module_settings.tree_types[3]];
                             } else {
-                                chosen = (g_map_tree_types[0] < 2) ? map_arr[0]
-                                       : map_arr[rand() % g_map_tree_types[0]];
+                                chosen = (g_module_settings.tree_types[0] < 2) ? map_arr[0]
+                                       : map_arr[rand() % g_module_settings.tree_types[0]];
                             }
                         } else {
                             if (t != 0xc) {
@@ -715,7 +714,7 @@ void Game::build_map_trees()
                             }
                         lab_ce0:
                             chosen = snow_arr[0];
-                            if (g_map_tree_types[1] > 1) chosen = snow_arr[rand() % g_map_tree_types[1]];
+                            if (g_module_settings.tree_types[1] > 1) chosen = snow_arr[rand() % g_module_settings.tree_types[1]];
                         }
                         if (chosen != 0) {
                             float mat[16];

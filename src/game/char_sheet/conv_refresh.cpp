@@ -1,5 +1,4 @@
 #include "./conv_refresh.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -91,7 +90,7 @@ void Rec1208::refresh(int sel, int* out)
         label_speaker->set_text(&ret, name);
     }
     {
-        tstring text = g_empty_string;                   // original: copy ctor from 0x8ee30f0
+        tstring text = g_dialogs.cur_text;                   // original: copy ctor from 0x8ee30f0
         struct { int a, b; } ret;
         tstring stripped = text.strip_tags();
         label_text->set_text(&ret, stripped);

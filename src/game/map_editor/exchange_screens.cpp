@@ -10,7 +10,6 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include <stdlib.h>
 #include <math.h>
@@ -193,7 +192,7 @@ void C4c3160::scale_3(float)
     }
 
 after_scroll:
-    if (f8e4 >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a17188 &&
+    if (f8e4 >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x2c] &&
         !g_keyboard.prev[0x2d] && g_cfg.cheat_mode && g_trial_mode) {
         slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
         pid = f8dc != 0 ? w10 : g_game->f78;

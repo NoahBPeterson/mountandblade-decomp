@@ -10,7 +10,6 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdlib.h>
 #include <algorithm>
 #pragma intrinsic(sin, cos, fabs)
@@ -262,22 +261,22 @@ void __cdecl apply_force_and_torque(const NewtonBody* body)
 {
     float mass, ixx, iyy, izz;
     NewtonBodyGetMassMatrix(body, &mass, &ixx, &iyy, &izz);
-    if (g_pending_force.body == body) {
+    if (g_phys.pending.body == body) {
         float f[3];
-        f[0] = g_pending_force.force.x * mass;
-        f[1] = g_pending_force.force.y * mass;
-        f[2] = (g_pending_force.force.z - 9.8f) * mass;
+        f[0] = g_phys.pending.force.x * mass;
+        f[1] = g_phys.pending.force.y * mass;
+        f[2] = (g_phys.pending.force.z - 9.8f) * mass;
         NewtonBodyAddForce(body, f);
-        if (g_pending_force.torque.x * g_pending_force.torque.x + g_pending_force.torque.y * g_pending_force.torque.y +
-                g_pending_force.torque.z * g_pending_force.torque.z > 0.0f) {
-            f[0] = g_pending_force.torque.x * mass;
-            f[1] = g_pending_force.torque.y * mass;
-            f[2] = g_pending_force.torque.z * mass;
+        if (g_phys.pending.torque.x * g_phys.pending.torque.x + g_phys.pending.torque.y * g_phys.pending.torque.y +
+                g_phys.pending.torque.z * g_phys.pending.torque.z > 0.0f) {
+            f[0] = g_phys.pending.torque.x * mass;
+            f[1] = g_phys.pending.torque.y * mass;
+            f[2] = g_phys.pending.torque.z * mass;
             NewtonBodyAddTorque(body, f);
         }
-        g_pending_force.force = vector4(0.0f, 0.0f, 0.0f);
-        g_pending_force.body = 0;
-        g_pending_force.torque = vector4(0.0f, 0.0f, 0.0f);
+        g_phys.pending.force = vector4(0.0f, 0.0f, 0.0f);
+        g_phys.pending.body = 0;
+        g_phys.pending.torque = vector4(0.0f, 0.0f, 0.0f);
     } else {
         float f[3];
         f[0] = 0.0f;

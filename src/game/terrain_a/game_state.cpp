@@ -7,7 +7,6 @@
 //       ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <string.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <new>
 #include "./game_state.h"
 #include "../config/config_block.h"           // Config g_cfg (0x5a9f98): shadowmap_quality
@@ -183,9 +182,9 @@ void ShadowMap::pick_size()
         w = 0x1000;
         h = 0x1000;
     }
-    if (w > g_max_tex_w || h > g_max_tex_h) {
-        w = g_max_tex_w;
-        h = g_max_tex_h;
+    if (w > g_render.caps.MaxTextureWidth || h > g_render.caps.MaxTextureHeight) {
+        w = g_render.caps.MaxTextureWidth;
+        h = g_render.caps.MaxTextureHeight;
     }
 }
 
@@ -220,7 +219,7 @@ void ShadowMap::fit_bounds()
 void ShadowMap::create_target(ShSkin** slot)
 {
     if (*slot == 0) {
-        if (g_use_hw_shadow)
+        if (g_render.use_hw_shadow)
             *slot = (ShSkin*)((resmgr*)&g_shadow_resmgr)->get_shadow_skin(w, h, 0x6f, 0);
         else
             *slot = (ShSkin*)((resmgr*)&g_shadow_resmgr)->get_shadow_skin(w, h, 0x72, 0);
@@ -282,7 +281,7 @@ void ShadowMap::setup()
 void ShadowMap::bind_target()
 {
     if (g_use_shaders != 0 && target != 0) {
-        if (g_use_hw_shadow) {
+        if (g_render.use_hw_shadow) {
             cam->target = target2;
             cam->dirty = 1;
             return;
@@ -298,7 +297,7 @@ void ShadowMap::sync_readback()
 {
     if (surf == 0) {
         D3DFORMAT fmt = D3DFMT_R32F;
-        if (g_use_hw_shadow)
+        if (g_render.use_hw_shadow)
             fmt = D3DFMT_R16F;
         IDirect3DTexture9* tex = 0;
         HRESULT hr = g_render.dev->CreateTexture(w, h, 1, D3DUSAGE_DYNAMIC, fmt, D3DPOOL_SYSTEMMEM, &tex, 0);
