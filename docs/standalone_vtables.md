@@ -75,3 +75,23 @@ Base classes whose placeholder virtuals (`s00()`, `d10()`) the derived classes o
 families built from `STREAM_FWD_*` forwarding macros (each class should define its own real slot bodies, which the
 ICF trial link folds); records whose tables are shorter than the original's. Re-run the audit after each family: the
 `stub` / `placeholder` / `dtor` counts per module are the remaining work.
+
+## Entity tail and agent record (lane V4): what the compiler does with derived deleting destructors
+
+* A derived class with no destructor of its own still gets `??_GD` from cl 13.10. Its body is `call <nearest destructor function>; delete`
+  (one level only: `D : C : E` with an inline `~C` gives `??_GD = call ??1C`, while `??_GC` has `~C` expanded). The original's
+  `/OPT:ICF` then folds it with the base's deleting destructor when the bytes are equal, which is why `mesh_entity` (slot 0 =
+  `??_Gentity` 0x4214e0) is *equal* in the audit although we emit `??_Gmesh_entity`. Micro tests (`/Ob0 /Ob1 /Ob2`, `__forceinline`
+  on either dtor, an empty user `~D`) never make cl expand the base destructor into `??_GD`.
+* `dynamic_entity` (slot 0 = `??_Gcollision_entity` 0x427d20, which has `~collision_entity` expanded) therefore stays the one
+  `dtor` row of the entity tail: our `??_Gdynamic_entity` is `call ~rigid_base` (two implicit levels). Folding `rigid_base` into
+  `dynamic_entity` (one level) makes it `call ~collision_entity`, still not the expanded body, and loses the constructor row
+  0x425370 (11 bytes), so it was not kept. The gate already reports such slots separately (`dtor_slots`, not `slots_differing`).
+* A class that has no destructor in source but destroys members (the agent record 0x5928 bytes: `Tail2` at +0x53c0, the id
+  vector at +0x1c) gets its original code only when the members are real members: the implicit destructor stores no vptr of its
+  own, destroys the members in reverse order and ends with the base's vptr store. Writing `~MAgent() { ((Tail2*)...)->~Tail2(); ... }`
+  stores the class's own vptr first and is 144 bytes off.
+* `vtable_starts` (build.py, vtable_audit.py) took `call [0x54b4dc]` (the entity factory calling slot 1 directly) and a byte
+  coincidence inside another instruction (0x4444cc reads as 0x54b800) for table starts, so mesh_entity read as a 1-slot table and
+  static_entity as 18 slots. A start is now an operand that stores or loads the address (`mov r, imm`, `push imm`, `mov [m], imm`).
+  Not filtered: a `.data` byte table that contains 0x00590900 (0x5d1854) makes IfaceB (0x5908f8, 3 slots) read as 2.
