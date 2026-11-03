@@ -875,7 +875,8 @@ def treemap_data(path):
             byc = {}
             for c, b, _i in mods[m]:
                 byc[c] = byc.get(c, 0) + b
-            for c, (cx, cy, cw, ch) in squarify(list(byc.items()), mx, my, mw, mh):           # one block per class ...
+            top = 2.6 if mh > 10 and any(i for _c, _b, i in mods[m]) else 0.0   # a strip for the module name above labelled items
+            for c, (cx, cy, cw, ch) in squarify(list(byc.items()), mx, my, mw, mh - top):     # one block per class ...
                 for k, (x_, y_, w_, h_) in squarify([(k, b) for k, (c2, b, _i) in enumerate(mods[m]) if c2 == c], cx, cy, cw, ch):
                     ax.add_patch(Rectangle((x_, y_), w_, h_, fc=colour[c], ec=SURFACE, lw=0.15, zorder=2))   # ... one cell per item
                     info = mods[m][k][2]

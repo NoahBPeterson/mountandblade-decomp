@@ -19,8 +19,9 @@ struct IfaceB {
     virtual void slot2() {}
 };
 struct Quad {
-    int a, b, c, d;
-    Quad() : a(2), c((int)g_ticks[2]), d((int)(g_ticks[2] >> 32)) {}
+    int a, b;
+    __int64 t;                  // +8 the clock tick it was made at (g_ticks[2])
+    Quad() : a(2), t(g_ticks[2]) {}
 };
 
 #endif // MB_IFACE_H

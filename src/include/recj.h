@@ -11,7 +11,7 @@ struct RecJ : IfaceB {
     int pad10[(0x50 - 0x10) / 4];
     int m50;                                    // +0x50 (0x437810)
     int pad54[(0x70 - 0x54) / 4];
-    Quad q70;                                   // +0x70 (a = 2, c/d = clock tick copied from g_time[2]; ctor 0x4377d0)
+    Quad q70;                                   // +0x70 (a = 2, t = clock tick copied from g_ticks[2]; ctor 0x4377d0)
     int m80;                                    // +0x80 (0x437810)
     int pad84;
     int m88;                                    // +0x88 (0x437810)
