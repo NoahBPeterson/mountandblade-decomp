@@ -1,8 +1,5 @@
 # data_size_audit.py: overlapping labels (OVERLAP in its docstring) that predate the check; the build gate fails on any other.
 # OUTER_VA INNER_VA  # outer name holds inner name. Fix one, then drop its line (data_size_audit.py --update-known).
-005a9f98 005a9fd4  # g_cfg (0x70 bytes) holds ?g_sound_paused@@3HA, g_sound_paused
-005aa128 005aa2fc  # g_sound (0x258 bytes) holds ?g_snd_id_b@@3HA, g_snd_id_b
-005aa128 005aa350  # g_sound (0x258 bytes) holds ?g_snd_id_a@@3HA, g_snd_id_a
 005d7080 005d70a4  # g_5d7080 (0xb350 bytes) holds ?g_mouse_dx@@3MA, g_mouse_dx
 005d7080 005d70a8  # g_5d7080 (0xb350 bytes) holds ?g_mouse_dy@@3MA, g_mouse_dy
 005d7080 005d75e0  # g_5d7080 (0xb350 bytes) holds ?g_5d75e0@@3DA, g_5d75e0
@@ -22,9 +19,8 @@
 005d7080 005d878c  # g_5d7080 (0xb350 bytes) holds ?g_loaded_sound_count@@3HA, g_loaded_sound_count
 005d7080 005d8798  # g_5d7080 (0xb350 bytes) holds ?g_5d8798@@3HA, g_5d8798
 005e291c 005e2920  # ?g_map_flags@@3UMapFlags@@A (0xc bytes) holds f8
-005e291c 005e2924  # ?g_map_flags@@3UMapFlags@@A (0xc bytes) holds g_menu_b
-005e2970 005e2980  # ?g_ticks_dt@@3PA_JA (0x28 bytes) holds g_tick_cur
-00a70248 00a70438  # g_a70248 (0x1f4 bytes) holds ?g_a70438@@3HA, g_a70438
+005fe898 00a170c0  # g_5fe898 (0x41882c bytes) holds ?g_psys_scene@@3HA, g_psys_scene
+00a70248 00a70438  # ?g_shadow_map@@3UShadowMap@@A (0x1f4 bytes) holds ?g_a70438@@3HA, g_a70438
 00a70440 00a70458  # g_a70440 (0x2c50 bytes) holds ?g_trigger_result@@3TTriggerResult@@A, g_trigger_result
 00a70440 00a70470  # g_a70440 (0x2c50 bytes) holds ?g_num_valid@@3HA, g_num_valid
 00a70440 00a70480  # g_a70440 (0x2c50 bytes) holds ?g_list_a70480@@3UList8@@A, g_list_a70480
@@ -34,17 +30,11 @@
 00a70450 00a70470  # g_a70450 (0x40 bytes) holds ?g_num_valid@@3HA, g_num_valid
 00a70450 00a70480  # g_a70450 (0x40 bytes) holds ?g_list_a70480@@3UList8@@A, g_list_a70480
 00a70464 00a70470  # g_meeting_name (0x10 bytes) holds ?g_num_valid@@3HA, g_num_valid
-00a70480 00a70484  # ?g_list_a70480@@3UList8@@A (0x10 bytes) holds g_a70484
-00a70480 00a70488  # ?g_list_a70480@@3UList8@@A (0x10 bytes) holds g_a70488
-00a70480 00a7048c  # ?g_list_a70480@@3UList8@@A (0x10 bytes) holds g_a7048c
 00a73300 00a735c0  # g_a73300 (0x2cc bytes) holds ?g_scene_counter@@3HA, g_scene_counter
 00a75f40 00a75f54  # g_a75f40 (0x24 bytes) holds ?g_world_list@c49f060@@3UPtrVec@1@A, g_world_list
 00a75f40 00a75f60  # g_a75f40 (0x24 bytes) holds ?g_5a75f60@@3HA, g_5a75f60
 00a75f70 00a75f90  # g_a75f70 (0x6b8 bytes) holds ?g_sort_val@@3PAUSortVal@@A, g_sort_val
-08ed4df8 08ed4e14  # ?g_ttypes@@3PAUttype@@A (0x160 bytes) holds g_x8ed4e14
-08ee3c48 08ee3fc4  # g_app_dialog (0x5a0 bytes) holds ?g_dlg_options@@3PAXA, g_dlg_options
-005fe898 00a170c0  # g_5fe898 (0x41882c bytes: the render batch view runs one word past the real object) holds g_psys_scene
-00a17000 00a170c0  # g_key_a (0x400 bytes, annotated 0xa17000: the old camera key view, 0xd4 below the real tables) holds g_psys_scene
-00a17000 00a170c8  # g_key_a (as above) holds g_keyboard
-00a76630 08eb235c  # g_a76630 (the terrain view, 0x845e7c8 bytes) holds g_world_color (D3 data)
-00a76630 08ed4db4  # g_a76630 (as above) holds g_tstr (D3 data)
+00a76630 08eb235c  # g_a76630 (0x845e7c8 bytes) holds ?g_world_color@@3PAUvector4@rgl@@A, g_world_color
+00a76630 08ed4db4  # g_a76630 (0x845e7c8 bytes) holds ?g_tstr@@3Utstring@@A, g_tstr
+08ed4df8 08ed4e14  # ?g_ttypes@@3PAUttype@@A (0x160 bytes) holds ?g_x8ed4e14@@3PAEA, g_x8ed4e14
+08ee3c48 08ee3fc4  # g_8ee3c48 (0x5a0 bytes) holds ?g_dlg_options@@3PAXA, g_dlg_options
