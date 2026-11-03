@@ -55,6 +55,7 @@ extern int g_propkind_count;                                // 0x5e29e0
 extern int g_sound_muted;                                   // 0x5a9fd8
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+Presentation* g_presentation;                               // 0x5e299c the running presentation
 int g_fixed_point_multiplier;                               // 0xa70460 (g_script + 0x20; position_get_x 0x4a1d65)
 int g_cue_track;                                            // 0xa7047c (play_cue_track 0x4a173f)
 int g_next_track_options;                                   // 0xa70478

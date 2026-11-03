@@ -36,6 +36,8 @@
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
+struct Presentation;
+extern Presentation* g_presentation;                        // 0x5e299c
 
 
 // ==== 0x490030: a random position around a point ===========================================================

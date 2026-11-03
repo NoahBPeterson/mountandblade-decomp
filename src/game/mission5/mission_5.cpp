@@ -24,6 +24,8 @@
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../menu_rec.h"   // g_menus 0x5e29b0
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+struct Presentation;
+extern Presentation* g_presentation;                        // 0x5e299c
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr

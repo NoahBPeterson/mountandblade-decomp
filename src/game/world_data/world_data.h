@@ -406,7 +406,6 @@ struct GlobVec {                                                // the running p
     int f8;                                                     // +8
     int fc;                                                     // +0xc
 };
-extern GlobVec* g_presentation;                            // 0x5e299c
 
 // ---- the sound player (g_sound_mgr 0x5aa128): include/sound_mgr.h ----------------
 #include "../../include/sound_mgr.h"

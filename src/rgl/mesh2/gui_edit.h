@@ -748,7 +748,6 @@ extern char g_loading;                                       // 0x5a9c38 (loader
 extern HANDLE g_mt_event;                                  // 0x5e28d8
 extern CRITICAL_SECTION g_mt_cs;                           // 0x5e28dc
 extern float g_paused_time;                                      // 0x5e2a0c (pending physics step)
-extern void* g_presentation;                                 // 0x5e299c
 
 // the +0x2c-byte record of the +0x1c vector
 struct edit_vert {

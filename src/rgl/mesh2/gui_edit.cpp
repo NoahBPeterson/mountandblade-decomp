@@ -29,6 +29,8 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/s
 #include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
 #include "../../game/menu_rec.h"   // g_menus 0x5e29b0
+struct Presentation;
+extern Presentation* g_presentation;                        // 0x5e299c
 extern int g_propkind_count;                                // 0x5e29e0
 struct OptionsDlg {
     void choose_dx_settings(struct Config* cfg, bool overwrite);   // 0x4b9b90 (game/config/options_dlg.h, which cannot be mixed with windows.h here)

@@ -362,7 +362,6 @@ extern int g_main_menu_font_color_green;                   // 0xa181c0
 extern int g_main_menu_font_color_blue;                    // 0xa181c4
 extern int g_main_menu_kind;                    // 0xa75f34
 extern char* g_save_prefix;                     // 0x8ee3c3c (the c_str idiom falls back to its own address)
-extern BlockOwner* g_presentation;               // 0x5e299c
 
 // 0x4de3e0: builds a textured quad (four points, four vertices, two faces) in a mesh; a member of the mesh class
 struct PanelMesh : rgl::mesh {

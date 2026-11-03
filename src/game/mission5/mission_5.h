@@ -559,7 +559,6 @@ extern int  g_pending_action;                                  // 0x5a9f18
 extern int  g_vert_budget;                                  // 0x5a9c34
 extern char g_cfg[]; // 0x5a9f98
 extern unsigned char g_a17908;                          // 0xa17908
-extern int  g_presentation;                                  // 0x5e299c
 #include "../../include/renderer.h"
 extern char g_script[]; // 0xa70440
 extern int g_skill_clamp;                       // 0x8ee3ac4
@@ -1009,7 +1008,6 @@ extern int g_a17160;                                    // 0xa17160
 extern int g_a17560;                                    // 0xa17560
 extern int g_a73790;                                    // 0xa73790
 extern int g_a73794;                                    // 0xa73794
-extern int g_presentation;                                    // 0x5e299c
 #include "../../include/fx.h"
 #include "../../rgl/resource_manager.h"
 

@@ -672,7 +672,6 @@ extern int g_cursor_x;                          // 0x5d70b4
 extern int g_cursor_y;                          // 0x5d70b8
 extern int g_saved_x;                           // 0x5e2130
 extern int g_saved_y;                           // 0x5e2134
-extern HWND g_editor_hwnd;                      // 0x8ee3d30
 
 
 

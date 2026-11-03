@@ -30,8 +30,11 @@ struct OptionsDlg {
 #include <hash_map>
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+struct Presentation;
+extern Presentation* g_presentation;                        // 0x5e299c
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+HWND g_editor_hwnd;                                         // 0x8ee3d30 the editor window (m_hWnd)
 Font* g_font;                                               // 0x5e2934 the game font
 int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
 float g_5a9f24 = 0.65f;                          // 0x5a9f24 (the meeting window columns' top)
@@ -1401,7 +1404,7 @@ UiAInline* build_row(ContainerBase* parent, const tstring* key, float x, float y
 // @ 0x4dd9e0
 void BlockOwner::activate()
 {
-    g_presentation = this;
+    g_presentation = (Presentation*)this;
     if (index >= 0) {
         f14 = g_presentations[index].a;
         int clk = timer.clock;
