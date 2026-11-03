@@ -8,6 +8,7 @@
 #include <d3d9.h>
 #include "./module_load.h"
 #include "./elem_calls.h"      // E50 / E68 / E176: the copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170
+#include "../ptype.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 item_mod g_item_mods[43];                           // 0xa75f70 (constructed and destroyed by the compiler: two tstrings per record)
@@ -18,8 +19,8 @@ int find_string(const char* s);                  // 0x4230f0 (this = 0x8ed3c0)
 
 // ---- module-system record arrays -------------------------------------------------------------------------
 // flora kinds: count (0x5e29e8) + heap array of 0x20-byte records (+0 name, +0x18/+0x1c ints).
-flora_kind* g_flora_kinds;                       // 0x5e28f8
-int g_num_flora_kinds;                           // 0x5e29e8
+ptype* g_ptypes;                                 // 0x5e28f8 (flora_kinds.txt: the 0x20-byte ground / flora type records)
+int g_ptype_count;                               // 0x5e29e8
 
 // ground specs: count (0x5e29ec) + heap array of 0x4c-byte records.
 ground_spec* g_ground_specs;                     // 0x5e28f4
@@ -160,10 +161,10 @@ void load_data_files()
     text_reader_l ts2;
     if (!((text_stream*)&ts2)->open_read_text("Data\\flora_kinds.txt"))
         mb_error("Unable to open %s", "Data\\flora_kinds.txt");
-    ts2.r_int(&g_num_flora_kinds);
-    g_flora_kinds = new flora_kind[g_num_flora_kinds];
-    for (int i = 0; i < g_num_flora_kinds; i++)
-        ((ObjectList*)&g_flora_kinds[i])->read(&ts2);   // 0x4cdfd0
+    ts2.r_int(&g_ptype_count);
+    g_ptypes = (ptype*)new flora_kind[g_ptype_count];
+    for (int i = 0; i < g_ptype_count; i++)
+        ((ObjectList*)&g_ptypes[i])->read(&ts2);   // 0x4cdfd0
     text_reader_l ts3;
     if (!((text_stream*)&ts3)->open_read_text("data\\ground_specs.txt"))
         mb_error("Unable to open %s", "data\\ground_specs.txt");

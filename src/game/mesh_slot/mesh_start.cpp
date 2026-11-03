@@ -104,7 +104,6 @@ void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, con
 #include "../../include/rec1c8.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_snd_count;                                    // 0x5e29ec
 vector4 g_world_color[2];                           // 0x8eb235c (the scene colour and the first light colour, set by the mission start)
 tstring g_tstr;                                     // 0x8ed4db4
 unsigned g_rand_seed;                               // 0x5d7078
@@ -486,7 +485,7 @@ void Mission::start_setup()
     at<tstring>(0x6814) = *(tstring*)((char*)lrec + 0x484);
 
     // ---- ambient sound slot selection -------------------------------------------------------
-    for (int i = 0; i < g_snd_count; i++) {
+    for (int i = 0; i < g_num_ground_specs; i++) {
         SndRec* s = &g_env_rows[i];
         float r = RND() * 6.32231149e-07f;
         s->at<float>(0x48) = r;
@@ -497,7 +496,7 @@ void Mission::start_setup()
         s->at<float>(0x48) = s->at<float>(0x48) - abs(at<int>(0x65fc) - ((s->at<int>(0x10) >> 4) & 0xf)) * 0.100000001f;
     }
     at<int>(0x660c) = 0;
-    for (int i = 1; i < g_snd_count; i++)
+    for (int i = 1; i < g_num_ground_specs; i++)
         if (g_env_rows[i].at<float>(0x48) > g_env_rows[at<int>(0x660c)].at<float>(0x48))
             at<int>(0x660c) = i;
 

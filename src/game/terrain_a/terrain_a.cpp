@@ -20,8 +20,6 @@
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-ptype* g_ptypes;                                    // 0x5e28f8 (the ground spec table, 0x20-byte records)
-int g_ptype_count;                                  // 0x5e29e8
 char g_light_on[64];                                // 0xa17e17 per-light enable cache (.bss)
 IDirect3DBaseTexture9* g_tex_cache[3];              // 0xa17e5c texture bound per stage
 int g_e68;                                          // 0xa17e68 pixel shader bound
