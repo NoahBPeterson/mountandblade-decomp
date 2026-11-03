@@ -8,6 +8,7 @@
 #include "./inv_common.h"
 #include "../mission.h"
 #include "../meta_mission.h"                           // MetaMission: the object at 0xa73300 that g_mission_ctx views (init 0x4be742)
+#include "../main_menu.h"
 
 // a menu screen object: vtable (slot 4 = +0x10), state at +0x04, "highlight" counter at +0x18 (0x513710, 0x514d40)
 struct MenuWidget {
@@ -18,17 +19,12 @@ struct MenuWidget {
     int f14;                                            // +0x14 (0x514d40)
     int f18;                                            // +0x18
 };
-extern MenuWidget* g_w94;                               // 0xa73994
-extern MenuWidget* g_w98;                               // 0xa73998
 extern MenuWidget* g_wA0;                               // 0xa739a0
-extern MenuWidget* g_wA8;                               // 0xa739a8
 extern MenuWidget* g_wAC;                               // 0xa739ac
 extern MenuWidget* g_wB0;                               // 0xa739b0
 extern MenuWidget* g_wB4;                               // 0xa739b4
-extern MenuWidget* g_wB8;                               // 0xa739b8
 extern MenuWidget* g_wBC;                               // 0xa739bc
 extern MenuWidget* g_wC0;                               // 0xa739c0
-extern MenuWidget* g_wD8;                               // 0xa739d8
 extern MenuWidget* g_wDC;                               // 0xa739dc
 extern MenuWidget* g_wE4;                               // 0xa739e4
 extern MenuWidget* g_wE8;                               // 0xa739e8

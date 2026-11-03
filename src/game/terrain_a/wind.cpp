@@ -9,6 +9,11 @@
 #include "./common.h"
 #include "./wind.h"
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+__int64 g_ticks_dt[5];   // 0x5e2970
+
 
 using rgl::vector4;
 

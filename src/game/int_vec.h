@@ -56,6 +56,9 @@ struct RawVec {
     void** last;                            // +8
     void** end;                             // +0xc
     RawVec() : first(0), last(0), end(0) {}
+    int count() const { return first ? (int)(last - first) : 0; }
+    template <class T> T* at(unsigned i) const { return (T*)first[i]; }
 };
+extern RawVec g_mat_vec[4];             // 0xa732c0 / 0xa732d0 / 0xa732e0 / 0xa732f0 the map scene's material lists (sea, sea 2, river, ...)
 
 #endif // GAME_INT_VEC_H

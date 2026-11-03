@@ -606,7 +606,8 @@ class _Region:
         self.m = self           # _stub_only reads `self.m.handlers` / `self.m.trace_imports`
         self.orig, self.ours = "orig", "ours"   # _trim_stub_scratch compares `side is self.orig`
         # the real helpers, bound to this stub: the tests exercise the implementation, not a copy of it
-        self._stub_only = lambda addr: equiv.Runner._stub_only(self, addr)
+        self._stub_only = lambda addr, calls=None: equiv.Runner._stub_only(self, addr, calls)
+        self._stub_calls = lambda page: equiv.Runner._stub_calls(self, page)
         self._stub_fence = lambda addr: equiv.Runner._stub_fence(self, addr)
         self._stub_spans = lambda page: equiv.Runner._stub_spans(self, page)
 

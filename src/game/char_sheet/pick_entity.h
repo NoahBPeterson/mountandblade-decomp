@@ -28,17 +28,9 @@ const float g_3ac49ba6 = 1.5e-3f;       // 0x3ac49ba6 (capsule radius)
 extern int* g_ptypes;                 // 0x5e28f8 pointer to the map rows (0x20 bytes)
 extern int g_ptype_count;                 // 0x5e29e8
 extern int* g_propkinds;              // 0x5e29dc pointer to the point rows (0x78 bytes)
-extern void* g_overlay;                 // 0x5d75e8
-extern int g_cursor_id;                 // 0x5d8760
-extern int g_cursor_color;              // 0x5d8764
-extern int g_list0;                     // 0x5d8020
-extern int g_list1;                     // 0x5d8024
-extern float g_list2;                   // 0x5d8028
-extern int g_sel_ent;                   // 0x5d8780
 
 // ---- types --------------------------------------------------------------------------------------------------
 #include "../tstring.h"
-extern tstring g_strs[];                // 0x5d7850 .. 0x5d7d50
 
 #include "../../include/shape.h"
 

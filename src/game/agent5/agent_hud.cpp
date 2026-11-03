@@ -28,12 +28,11 @@
 extern int g_sound_muted;                                   // 0x5a9fd8
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_cam_roll;                                             // 0xa1718c
-int g_cam_out;                                              // 0xa17158
 tstring* g_msg_end;                                         // 0x5e23c8
 tstring* g_msg_begin;                                       // 0x5e23c4 (the recent-messages ring: 0x10-byte tstrings)
 int g_cam_sens;                                             // 0x5a9fdc
 
+#include "../key_names.h"
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
@@ -458,7 +457,7 @@ void MissionHud::update_camera(float dt)
         else if (f300 > 20.0f)
             f300 = 20.0f;
         t = f300;
-        if (g_cam_version == 0 && g_cam_down != 0) {
+        if (g_keyboard.down[0x11] == 0 && g_keyboard.prev[0x11] != 0) {
             int now = (int)g_ticks[0];
             if (now - GAME_AT(int, 0x1a0b4) < 35000) {
                 int step = GAME_AT(int, 0x1a0b0) * 2;
@@ -470,28 +469,28 @@ void MissionHud::update_camera(float dt)
             }
             GAME_AT(int, 0x1a0b4) = now;
         }
-        if (g_cam_version != 0) {
+        if (g_keyboard.down[0x11] != 0) {
             u = (float)GAME_AT(int, 0x1a0b0) * t;
             hv_sub_to(gcam, ((k.u * u) * dt));
             f300 = dt * 25.0f + f300;
         }
-        if (g_cam_left != 0) {
+        if (g_keyboard.down[0x1f] != 0) {
             hv_add_to(gcam, ((k.u * t) * dt));
             f300 = dt * 25.0f + f300;
         }
-        if (g_cam_right != 0) {
+        if (g_keyboard.down[0x1e] != 0) {
             hv_sub_to(gcam, ((k.s * t) * dt));
             f300 = dt * 17.5f + f300;
         }
-        if (g_cam_in != 0) {
+        if (g_keyboard.down[0x20] != 0) {
             hv_add_to(gcam, ((k.s * t) * dt));
             f300 = dt * 17.5f + f300;
         }
-        if (g_cam_out != 0) {
+        if (g_keyboard.down[0x21] != 0) {
             gcam.z = t * dt * 0.5f + gcam.z;
             f300 = dt * 17.5f + f300;
         }
-        if (g_cam_roll != 0 && g_cam_lock == 0 && g_cam_lock2 == 0) {
+        if (g_keyboard.down[0x2e] != 0 && g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0) {
             gcam.z = gcam.z - t * dt * 0.5f;
             f300 = dt * 17.5f + f300;
         }
@@ -848,7 +847,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
     float size_v = ((g_options.f84 * 0.5f + 0.75f) * *scale) * area;
     float& size = *(float*)&scale;       // the original stores the result back into the (dead) parameter slot
     size = size_v;
-    if (g_flag_a17108 && (g_flag_a17148 || g_flag_a17348))
+    if (g_keyboard.down[0x0d] && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]))
         size = 1000.0f;
     float range = g_options.f88 * area;
     ViewLight* vl = (ViewLight*)this;

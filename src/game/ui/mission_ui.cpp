@@ -36,6 +36,8 @@
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../shared_vars.h"
+#include "../key_names.h"
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)
@@ -1233,10 +1235,10 @@ void __stdcall sl_item_set_all(float v)
 int GameData::sl_party_value(int party)
 {
     if (party >= 0) {
-        g_store0 = 0;
-        g_store1 = 0;
+        g_trigger_result.store0 = 0;
+        g_trigger_result.store1 = 0;
         if (emit_event(7, party, cur_party) != 0)
-            return g_store0;
+            return g_trigger_result.store0;
         Troop* r = &troops[party];
         if (((__int64)r->flags30 & 0x10) != 0)
             return 0;
@@ -1250,10 +1252,10 @@ int GameData::sl_party_price(int party)
 {
     if (party < 0)
         return 0;
-    g_store0 = 0;
-    g_store1 = 0;
+    g_trigger_result.store0 = 0;
+    g_trigger_result.store1 = 0;
     if (emit_event(9, party, cur_party))
-        return g_store0;
+        return g_trigger_result.store0;
     int v = sl_party_value(party);
     return (int)((float)v * 5.0f + 2.0f);
 }
@@ -1531,10 +1533,10 @@ bool OriginPairs::is_down(int i)
 {
     bool r = false;
     int a = slots[i].a;
-    if (a >= 0 && g_origin_table[a] != 0)
+    if (a >= 0 && g_keyboard.down[a] != 0)
         r = true;
     int b = slots[i].b;
-    if (b >= 0 && g_origin_table[b] != 0)
+    if (b >= 0 && g_keyboard.down[b] != 0)
         r = true;
     return r;
 }
@@ -1544,10 +1546,10 @@ bool OriginPairs::clicked(int i)
 {
     bool r = false;
     int a = slots[i].a;
-    if (a >= 0 && g_origin_table[a] != 0 && g_origin_state[a] == 0)
+    if (a >= 0 && g_keyboard.down[a] != 0 && g_keyboard.prev[a] == 0)
         r = true;
     int b = slots[i].b;
-    if (b >= 0 && g_origin_table[b] != 0 && g_origin_state[b] == 0)
+    if (b >= 0 && g_keyboard.down[b] != 0 && g_keyboard.prev[b] == 0)
         r = true;
     return r;
 }

@@ -3,6 +3,18 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/rec1c8.h"      // Mission::props is a vector<Rec1c8>: complete here so the harness types the scene vector
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+void* g_overlay;   // 0x5d75e8 (== the UI root's object at +0x568)
+tstring g_strs[0x50];   // 0x5d7850 the HUD line cache (0x5d7850 .. 0x5d7d50)
+int g_list0;   // 0x5d8020
+int g_list1;   // 0x5d8024
+float g_list2;   // 0x5d8028
+int g_sel_ent;   // 0x5d8780
+unsigned g_panel_color;   // 0x5d8760 name colour of the HUD line (-1 = white)
+unsigned g_panel_bg;   // 0x5d8764 background tint of the HUD line
+
 
 // @ 0x4ed8d0
 // ------------------------------------------------------------------------------------------------------------
@@ -110,8 +122,8 @@ void __fastcall pick_entity(GuiCtx* self)
     if (g_overlay) {
         ((OverlayItf*)g_overlay)->release(1);
     }
-    g_cursor_id = -1;
-    g_cursor_color = 0xff101010;
+    g_panel_color = -1;
+    g_panel_bg = 0xff101010;
     g_overlay = 0;
     for (tstring* s = g_strs; s < g_strs + ((0x5d7d50 - 0x5d7850) / 0x10); s++)
         s->assign("");

@@ -44,7 +44,6 @@ extern char g_5d8788;                           // 0x5d8788
 extern int g_5a9fb0;                            // 0x5a9fb0 (no terrain camera)
 #include "../renderer.h"
 extern int g_level;                            // 0xa732b4 (current scene)
-extern int g_a70438;                            // 0xa70438 (last-loaded scene)
 extern float g_590bb8;                          // 0x590bb8
 extern float g_54b3b4;                          // 0x54b3b4
 

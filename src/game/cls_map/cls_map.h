@@ -245,7 +245,6 @@ UiAInline* __cdecl new_button(ContainerBase* o, const tstring& text, float px, f
 // globals of the campaign diary screens (addresses; names provisional)
 extern GameData* g_game;                        // 0x5e2930
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
-extern unsigned char g_show_party_ids_instead_of_names;                           // 0xa181b8 (hide-names flag)
 #include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): the one definition
 extern float g_5a9f24;                          // 0x5a9f24 0.65 (the meeting window columns' top)

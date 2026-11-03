@@ -57,7 +57,6 @@ extern int* g_menu_options_entry;                   // 0xa739cc (index at +0x18)
 // 0x5e2950 and the per-day factors next to 0x596770.
 #include "../../include/fx.h"   // canonical: g_ticks (0x5e2950)
 extern float  g_tick_per_day;                       // 0x596770
-extern float  g_ticks_per_time;                     // 0x596774
 #include "../../rgl/resource_manager.h"   // canonical: g_options.f74 (0x5aa07c)
 
 // ---- control stub -----------------------------------------------------------------------------------
@@ -104,7 +103,6 @@ struct localized {
     const char* c_str() const { return e->buf ? e->buf : (const char*)&e->buf; }
 };
 
-// g_empty_text (0x54a480, an empty C string): canonical declaration in include/image_addrs.h
 
 // 0xa70464: the caption the game object's text helper writes into before it is shown.
 extern tstring g_quest_text;                        // 0xa70464
@@ -138,7 +136,7 @@ void QuestPage::fill()
         tstring key("ui_given_on_date");
         Game* g = g_game_G;
         int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
-        g_quest_text.assign(orig::g_empty_text);
+        g_quest_text.assign("");
         ((SoundCtl*)g)->emit_event(0xf, days / 24, days);
         {
             tstring formatted(g_quest_text);
@@ -160,7 +158,7 @@ void QuestPage::fill()
         tstring key("ui_days_since_given");
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
-        int given = (int)(QREC->f11c * g_ticks_per_time);
+        int given = (int)(QREC->f11c * (1.0f / 24));
         int now = (int)(g_ticks[1] * g_tick_per_day);
         mb_snprintf(buf, 0x200, fmt, now - given);
     }

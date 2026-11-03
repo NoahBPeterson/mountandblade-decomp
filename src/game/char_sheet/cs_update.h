@@ -25,6 +25,7 @@
 
 // ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../key_names.h"
 typedef Widget UiVt;                    // the slice's name for it
 typedef UiVt UiWidget;                              // widget pointers point at the polymorphic object itself
 
@@ -82,16 +83,9 @@ struct ScrollHost { char pad[0x484]; UiDsv* bar; }; // +0x484
 struct Profile { char pad[0x50]; int troop; };      // +0x50
 
 extern "C" {
-extern Profile* g_profile;                          // 0xa73984
 extern int* g_menu_state;                           // 0xa739f4 (menu data, +0x14/+0x18 fields)
 extern int* g_army_state;                           // 0xa739e0
-extern int g_a170d8;                                // 0xa170d8
-extern int g_a17118;                                // 0xa17118
-extern int g_a17148;                                // 0xa17148
 extern int g_a17188;                                // 0xa17188
-extern int g_a17348;                                // 0xa17348
-extern int g_a174d8;                                // 0xa174d8
-extern int g_a17518;                                // 0xa17518
 extern int g_a17588;                                // 0xa17588
 extern int g_a5a9fbc;                               // 0x5a9fbc
 extern int g_trial_mode;                            // 0x5e29c4

@@ -22,6 +22,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
+#include "../key_names.h"
 using rgl::vector4;
 using rgl::matrix;
 
@@ -45,12 +46,10 @@ extern int g_conversation_agent;   // 0x8ed50dc
 extern char g_strtable[]; // 0x5e2a18
 extern char g_gui[]; // 0x5d7080
 extern char g_game_keys[]; // 0xa73730
-extern char g_keyboard[]; // 0xa170c8
 extern char g_windows[]; // 0xa73980
 extern char g_map_flags[]; // 0x5e291c
 extern char g_mission_ctx[]; // 0xa73300
 extern char g_game_keys[]; // 0xa73730
-extern char g_keyboard[]; // 0xa170c8
 #include "../placed_obj.h"
 #include "../../include/shape.h"
 #include "../std_vec_out_of_line.h"
@@ -296,7 +295,7 @@ struct DialogMgr_s26130 {
 #define g_strtable_s261e0 (*(StrTable_s261e0*)g_strtable)
 #define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
 #define g_keytable_s261e0 (*(KeyTable_s261e0*)g_game_keys)
-#define g_keyready_s261e0 (*(KeyReady_s261e0*)g_keyboard)
+#define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
 #define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #define g_game_s261e0 (*(GameData_s261e0**)&g_game)
 #define g_main_menu_s261e0 (*(MainMenu_s261e0*)g_windows)
@@ -567,8 +566,6 @@ extern int  g_a7333c;                                   // 0xa7333c
 struct Obj73300_s261e0 { void f_5295a0(); };                   // 0x5295a0
 
 extern int  g_show_quest_notes;                                   // 0xa181b4
-extern int  g_a170d8;                                   // 0xa170d8
-extern int  g_a174d8;                                   // 0xa174d8
 
 // the 4-int-block deque-like container at 0xa739f8 (map at +4, mapsize at +8, offset at +0xc, size at +0x10)
 struct IntDeque_s261e0 {
@@ -581,7 +578,6 @@ struct IntDeque_s261e0 {
 
 
 // float constants in .rdata
-extern const float g_f54a6e4;                           // 0x54a6e4 = 0.2f
 extern const float g_f549ca8;                           // 0x549ca8 = 0.0f
 extern const float g_f54a6d0;                           // 0x54a6d0 = 1e-05f
 extern const float g_f54b8b0;                           // 0x54b8b0 = 1.5f
@@ -833,7 +829,7 @@ struct MissionHdr_s27c90 {
 #define g_mission_s284a0 (*(Mission_s284a0**)&g_mission)
 #define g_game_s284a0 (*(Game_s284a0**)&g_game)
 #define g_keys_s284a0 (*(KeyTable_s284a0*)g_game_keys)
-#define g_key_names_s284a0 (*(KeyNames_s284a0*)g_keyboard)
+#define g_key_names_s284a0 (*(KeyNames_s284a0*)&g_keyboard)
 // Slice s005284a0: the mission player-view / aim controller's per-frame update (0x5284a0, 8192 bytes).
 //
 // It damps the view yaw/pitch (+0x268/+0x26c) from the look input, clamps the pitch, the look speed

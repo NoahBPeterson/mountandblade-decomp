@@ -375,7 +375,11 @@ def main():
     ap.add_argument("--faithful", action="store_true",
                     help="the reconstruction exactly as the checks compile it: no default sets, no default cflags (%s)"
                          % DEFAULT_CFLAGS)
+    ap.add_argument("--jobs", type=int, help="worker processes for the resolve and data-gate steps (default: MB_JOBS, "
+                    "else CPUs - 2); lanes building side by side pass a small number")
     a = ap.parse_args()
+    if a.jobs:
+        os.environ["MB_JOBS"] = str(a.jobs)                       # resolve_map (subprocess) and data_size_audit read it
     if a.faithful:
         a.no_default_patches = True
     default_cflags = "" if a.faithful or a.cflags else DEFAULT_CFLAGS

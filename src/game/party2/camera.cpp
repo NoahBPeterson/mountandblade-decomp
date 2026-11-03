@@ -771,7 +771,6 @@ struct Mission {
     Sprite* build_legend_mesh(OrderObj* o) { return (Sprite*)::build_legend_mesh((ColourOwner*)o); }                // 0x495b20 (ret 4)
     void check_slot(int id, unsigned bits);         // 0x49c170 (ret 8)
 };
-extern char g_show_party_ids_instead_of_names;                              // 0xa181b8
 struct ResMgr {   // 0x418a70: the original builds a tstring from the literal first (0x42bbe0), passes it, frees it
     Sprite* material(const char* name) {
         tstring tmp(name);

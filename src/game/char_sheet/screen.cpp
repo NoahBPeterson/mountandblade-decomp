@@ -2,6 +2,7 @@
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../key_names.h"
 
 // @ 0x4ebc10
 // Saves the next free screenshot file, then logs "ui_screenshot_taken_to_value" with the file name, or
@@ -293,8 +294,8 @@ void GuiScreen::process(int param)
 // camera present and a module-leave pending, it leaves the current module.
 void __cdecl frame_hook(void)
 {
-    if ((g_a17148 || g_a17348) && g_a1741c && !g_a1781c)
+    if ((g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a1741c && !g_a1781c)
         take_screenshot();
-    else if (g_5a9fb0 && (g_a17148 || g_a17348) && (g_a1717c || g_a171ac) && g_a17190 && !g_a17590)
+    else if (g_5a9fb0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_a1717c || g_keyboard.down[0x36]) && g_a17190 && !g_a17590)
         menu_variables_loaded(0);   // 0x4ebb80
 }

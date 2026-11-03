@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include "tstring.h"
+#include "shared_vars.h"
 
 struct MapIcon;
 struct PresentationTable;
@@ -40,16 +41,11 @@ extern unsigned g_input_flags; // 0x5e2470
 extern int g_script_error; // 0x5e259c set by report(); copied to *error at the end of execute
 // this_or_next chain latch of the interpreter (cleared each run);
 extern int g_or_latch; // 0x5e25a4 this_or_next chain already satisfied
-// 256-entry key table; two declarations (char[256], int[0x40]) of the same storage.
-extern char g_key_states[256]; // 0x5e27c8
-// Incremented in game_app / gui_manager.cpp bump_counter, cleared in world_app.
-extern int g_counter; // 0x5e28cc
 // Event of the loader thread (cls_map.cpp init sets g_mt_inited then InitializeCriticalSection(&g_mt_cs));
 extern HANDLE g_mt_event; // 0x5e28d8
 // Critical section guarded by g_mt_inited (mission_5.cpp Enter/LeaveCriticalSection(&g_cs)).
 extern CRITICAL_SECTION g_mt_cs; // 0x5e28dc
 // game_variables key display_wp_one_handed ...
-extern int g_display_wp_one_handed; // 0x5e2900
 // Consumers: mesh_pass.cpp (rebuild before the next pass, then cleared), facegen_misc (test and clear).
 extern char g_scene_dirty; // 0x5e2938 rebuild latch
 // Script op check_menu (0x49ce90) bounds-checks against it.
@@ -66,10 +62,6 @@ extern int g_propkind_count; // 0x5e29e0
 extern MapIcon* g_map_icons; // 0x5e29f0
 // Script op validation (0x49d0c0).
 extern int g_party_template_count; // 0x5e29fc
-// Count of g_mission_templates (script 0x49d070).
-extern int g_mission_template_count; // 0x5e2a04
-// Set by hud.cpp, cleared by world_app, test-and-set latch in mission_ctx.cpp.
-extern char g_saved; // 0x5e2a08
 // Set to 1 by cls_map.cpp right after InitializeCriticalSection(&g_mt_cs);
 extern unsigned char g_mt_inited; // 0x5e2a09
 // Accumulates dt while the flag at 0x5e2a09 is set (mesh_game.cpp) and is applied as one physics step later (gui_edit.cpp g_load_dt).
@@ -78,14 +70,8 @@ extern float g_paused_time; // 0x5e2a0c
 extern tstring g_skin_name; // 0x5fe888
 // Same int (mission_ctx.cpp g_a170c0).
 extern int g_psys_scene; // 0xa170c0
-// game_variables.txt key "scan_module_sounds" (trigger_vec.cpp loader);
-extern int g_scan_module_sounds; // 0xa1810c
-// game_variables.txt key "time_multiplier" (trigger_vec.cpp loader);
-extern float g_time_multiplier; // 0xa18110
 // game_variables.txt key "seeing_range" (trigger_vec.cpp loader);
 extern float g_seeing_range; // 0xa18114
-// game_variables.txt key "track_spotting_multiplier" (trigger_vec.cpp loader);
-extern float g_track_spotting; // 0xa18118
 // game_variables.txt key "blood_multiplier" (trigger_vec.cpp loader);
 extern float g_blood_multiplier; // 0xa1811c
 // game_variables.txt key "skill_leadership_bonus" (trigger_vec.cpp loader);
@@ -108,16 +94,8 @@ extern float g_player_wounded_treshold; // 0xa1813c
 extern int g_num_hints; // 0xa18140
 // game_variables.txt key "map_sea_direction" (trigger_vec.cpp loader);
 extern float g_map_sea_direction; // 0xa18144
-// game_variables.txt key "map_sea_speed_x" (trigger_vec.cpp loader);
-extern float g_map_sea_speed_x; // 0xa18148
-// game_variables.txt key "map_sea_speed_y" (trigger_vec.cpp loader);
-extern float g_map_sea_speed_y; // 0xa1814c
 // game_variables.txt key "map_river_direction" (trigger_vec.cpp loader);
 extern float g_map_river_direction; // 0xa18150
-// game_variables.txt key "map_river_speed_x" (trigger_vec.cpp loader);
-extern float g_map_river_speed_x; // 0xa18154
-// game_variables.txt key "map_river_speed_y" (trigger_vec.cpp loader);
-extern float g_map_river_speed_y; // 0xa18158
 // game_variables keys map_tree_types / map_snow / map_steppe / map_desert_tree_types are four consecutive ints (0xa1815c..0xa18168).
 extern int g_map_tree_types; // 0xa1815c
 // game_variables.txt key "damage_interrupt_attack_treshold" (trigger_vec.cpp loader);
@@ -140,12 +118,8 @@ extern int g_enable_quick_battles; // 0xa181a4
 extern int g_disable_food_slot; // 0xa181a8
 // game_variables.txt key "limit_hair_colors" (trigger_vec.cpp loader);
 extern int g_limit_hair_colors; // 0xa181ac
-// game_variables.txt key "show_faction_color" (trigger_vec.cpp loader);
-extern int g_show_faction_color; // 0xa181b0
 // game_variables.txt key "show_quest_notes" (trigger_vec.cpp loader);
 extern int g_show_quest_notes; // 0xa181b4
-// game_variables.txt key "show_party_ids_instead_of_names" (trigger_vec.cpp loader);
-extern unsigned char g_show_party_ids_instead_of_names; // 0xa181b8
 // game_variables.txt key "main_menu_font_color_red" (trigger_vec.cpp loader);
 extern int g_main_menu_font_color_red; // 0xa181bc
 // game_variables.txt key "main_menu_font_color_green" (trigger_vec.cpp loader);

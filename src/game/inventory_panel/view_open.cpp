@@ -10,6 +10,10 @@
 #include <vector>
 #include "../../rgl/rgl_math.h"
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_a75f64;                                   // 0xa75f64
+
+
 #define MB_NOTHROW throw()
 
 extern "C" int _fltused = 0;
@@ -95,7 +99,6 @@ int clamp_index(int* skin, int* flags, int* count);       // 0x432510
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 extern float g_fov_k;                                       // 0x5e20a8
 extern int g_limit_hair_colors;                                        // 0xa181ac
-extern int g_a75f64;                                        // 0xa75f64
 
 void free_535712(void* p);                                  // 0x535712 (operator delete)
 

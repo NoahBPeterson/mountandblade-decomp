@@ -483,8 +483,6 @@ void __stdcall FSOUND_3D_SetRolloffFactor(float factor);      // 0x5342ee
 // ---- globals -------------------------------------------------------------------------------------------
 extern int g_use_shaders;                                // 0x5e28fc
 extern int g_5e28c8;                                // 0x5e28c8
-extern int g_counter;                                // 0x5e28cc
-extern char g_saved;                               // 0x5e2a08
 // g_cfg.disable_sound (config/config.h Config +0x40 of g_cfg 0x5a9f98; that header brings d3dapp.h, which would redefine
 // CD3DApplication here)
 #define CFG_DISABLE_SOUND (g_sound_muted)
@@ -653,7 +651,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             ShellExecuteA(0, "open", "http://www.gamersgate.com", 0, 0, 5);
             break;
         case 0x410: {
-            orig::g_5e2630 = 0;
+            g_5e2630 = 0;
             int sel = 0;
             if (f38c > 1) {
                 // the control is looked up again for each message (0x4d4140 calls GetDlgItem twice)

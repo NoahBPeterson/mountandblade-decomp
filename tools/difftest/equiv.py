@@ -2586,6 +2586,9 @@ class Runner:
             return
         spans = self._stub_spans(page)
         buf = bytearray(pages[page])
+        # the stub calls that can reach this page, in trace order: _stub_only's first match for an address of the page is
+        # the same over this list as over the whole trace (thousands of calls, scanned once per differing dword before)
+        calls = self._stub_calls(page) if page & 0xFFF == 0 and len(buf) <= 0x1000 else None
         base = self._region_baseline(label, page) or b"\0" * 0x1000
         n = 0
         for i in range(0, len(buf) - 3, 4):
@@ -2600,7 +2603,7 @@ class Runner:
             if other is not None and any(not other.isdisjoint(range(lo, hi, 4))
                                          for lo, hi in spans if lo <= addr < hi):
                 continue        # the other pass wrote inside this buffer: the whole buffer stays compared
-            who = self._stub_only(addr)
+            who = self._stub_only(addr, calls)
             if not who:
                 continue
             buf[i:i + 4] = base[i:i + 4]
@@ -2612,19 +2615,42 @@ class Runner:
             self.trimmed[key] = n
             self.tolerated["stub-scratch"] = self.tolerated.get("stub-scratch", 0) + n
 
-    def _stub_only(self, addr):
+    def _stub_calls(self, page):
+        """[(name, span, args)] of the do-nothing stub calls of this run, in trace order, that can reach an address of
+        the (page-aligned) `page`: a declared buffer [a, a + span) that intersects it, or, without a span, an argument
+        on it. _stub_only(addr, calls) over this list gives the same answer as over the whole trace."""
+        m = self.m
+        out = []
+        for name, args in list(getattr(m, "trace_imports", ()) or ()):
+            h = m.handlers.get(name)
+            if h is None or h.get("fn") is not None:
+                continue
+            span = h.get("span")
+            if span:
+                if any(isinstance(a, int) and a < page + 0x1000 and a + span > page for a in args):
+                    out.append((name, span, args))
+            elif span is None:
+                if any(isinstance(a, int) and (a & ~0xFFF) == page for a in args):
+                    out.append((name, span, args))
+        return out
+
+    def _stub_only(self, addr, calls=None):
         """Name of the do-nothing import handler when EVERY import call this run recorded that reaches
         `addr` as a buffer argument is a stub (fn is None: sprintf, strcpy, ...), else None.
 
         `addr` must actually be inside a buffer the stub was handed (the previous form ignored it and
-        excused any address in the run as soon as one stub with one int argument existed)."""
+        excused any address in the run as soon as one stub with one int argument existed). `calls`:
+        _stub_calls of addr's page (the same stub calls, prefiltered), else the whole trace is scanned."""
         m = self.m
         names = set()
-        for name, args in list(getattr(m, "trace_imports", ()) or ()):
-            h = m.handlers.get(name)
-            if h is None or h.get("fn") is not None:
-                continue                    # a real handler (memcpy, malloc, a modelled function): not a stub
-            span = h.get("span")            # handlers are dicts: getattr(h, "span") was always None
+        if calls is None:
+            calls = []
+            for name, args in list(getattr(m, "trace_imports", ()) or ()):
+                h = m.handlers.get(name)
+                if h is None or h.get("fn") is not None:
+                    continue                # a real handler (memcpy, malloc, a modelled function): not a stub
+                calls.append((name, h.get("span"), args))     # handlers are dicts: getattr(h, "span") was always None
+        for name, span, args in calls:
             if span and any(isinstance(a, int) and a <= addr < a + span for a in args):
                 names.add(name)
                 break

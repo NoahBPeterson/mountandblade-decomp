@@ -54,7 +54,10 @@
 extern int g_propkind_count;                                // 0x5e29e0
 extern int g_sound_muted;                                   // 0x5a9fd8
 
+#include "../shared_vars.h"
+
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+TriggerResult g_trigger_result;   // 0xa70458
 Presentation* g_presentation;                               // 0x5e299c the running presentation
 int g_fixed_point_multiplier;                               // 0xa70460 (g_script + 0x20; position_get_x 0x4a1d65)
 int g_cue_track;                                            // 0xa7047c (play_cue_track 0x4a173f)
@@ -448,7 +451,7 @@ __declspec(noinline) char __fastcall warn_track(const int& value)
     int v = value;
     char r = 1;
     if (v < 0 || v >= g_track_count) {
-        if (g_warnings_off_a == 0 && g_sound_muted == 0) {
+        if (g_sound_paused == 0 && g_sound_muted == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, v);
             report(buf);
         }
@@ -598,7 +601,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::key_clicked:
         if (IN_RANGE(params[0], 0, 0x100))
-            result = g_keyboard.is_ready((int)params[0]);
+            result = (char)((Slot*)&g_keyboard)->is_ready((int)params[0]);   // 0x487900
         break;
     case op::game_key_is_down:
         if (IN_RANGE(params[0], 0, 0x25))
@@ -1452,7 +1455,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::set_show_messages:
-        g_show_messages = params[0] != 0;
+        g_msglog.enabled = params[0] != 0;      // 0x4a30a0
         break;
     case op::add_troop_note_tableau_mesh:
         if (check_troop((int)params[0]) && warn_tableau((int)params[1]))
@@ -3888,7 +3891,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         set_lvalue(locals, g_trigger_param_2);
         break;
     case op::set_trigger_result:
-        g_trigger_result = params[0];
+        g_trigger_result.value = params[0];
         break;
 
     // ---- arithmetic (64-bit; fixed point by g_fixed_point_multiplier) ------------------------------------------

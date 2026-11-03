@@ -34,6 +34,7 @@
 #include "../terrain_b/emit.h"
 #define vec cell_grid_vec                 // cell_grid.h's vec (no clear) under another name: the global vec below is the one whose clear() 0x41f4b0 is called
 #include "../terrain_b/cell_grid.h"
+#include "../key_names.h"
 #undef vec
 
 using rgl::vector4;
@@ -115,15 +116,6 @@ struct OriginPairs {                                              // the key tab
     bool is_down(int key);                                           // 0x48ac50 (ret 4)
 };
 extern OriginPairs g_game_keys;                                         // 0xa73730
-extern int g_cam_version;                                         // 0xa17118
-extern int g_cam_down;                                            // 0xa17518
-extern int g_cam_left;                                            // 0xa17150
-extern int g_cam_right;                                           // 0xa1714c
-extern int g_cam_in;                                              // 0xa17154
-extern int g_cam_out;                                             // 0xa17158
-extern int g_cam_roll;                                            // 0xa1718c
-extern int g_cam_lock;                                            // 0xa17148
-extern int g_cam_lock2;                                           // 0xa17348
 extern int g_cam_sens;                                            // 0x5a9fdc
 
 extern float g_screen_a;                                          // 0x5d75dc
@@ -184,7 +176,6 @@ extern DustTerrain g_terrain;                                 // 0xa76630 (the m
 
 extern int g_use_shaders;                                      // 0x5e28fc
 extern ShadowMap g_shadow_map;                                        // 0xa70248
-extern int g_flag_a17108, g_flag_a17148, g_flag_a17348;           // 0xa17108, 0xa17148, 0xa17348 (key states that force the sun to full size)
 extern int g_screen_w;                                            // 0x5d75c8
 extern int g_screen_h;                                            // 0x5d75cc
 

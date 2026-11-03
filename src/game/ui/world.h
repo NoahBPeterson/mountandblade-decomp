@@ -16,8 +16,6 @@
 // member function 0x48a150 (GameData::template_count; the slices called it sl_cell_coord). The ui members of it are defined in mission_ui.cpp.
 
 extern char* g_party_templates;                  // 0x5e29f8 table of 0xb0-byte party template records (0x48a150)
-extern int g_store0;                        // 0xa70458 first out-slot of sl_query
-extern int g_store1;                        // 0xa7045c
 
 #include "./named_rec.h"
 

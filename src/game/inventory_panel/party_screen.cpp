@@ -14,8 +14,12 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
+#include "../shared_vars.h"
 
-extern const char g_empty_string[];                 // 0x54a480 ("")
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_item_sel;                                  // 0xa75f6c (the selected item index; negative = nothing selected)
+
+
 extern tstring g_module_name;                       // 0x8ee3c38 (end of the skill table)
 extern int g_skill_clamp;                  // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp              // (clamped level value of the hero percentage; lives outside the loaded image)
@@ -573,7 +577,7 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     }
     float total = (float)count * unit;
     if (total < bar_amount[type]) {
-        total += unit * g_grow_frac;
+        total += unit * 0.2f;
         if (!(total < bar_amount[type]))
             total = bar_amount[type];
     }
@@ -635,11 +639,11 @@ void PartyScreen::money_label(int type, int troop)
 // @ 0x504e20
 int GameDataV::weekly_cost()
 {
-    g_store0 = 0;
-    g_store1 = 0;
+    g_trigger_result.store0 = 0;
+    g_trigger_result.store1 = 0;
     int total = 0;
     if (sl_query(8, 0, 0))
-        return g_store0;
+        return g_trigger_result.store0;
 
     int id = ((Map10007*)&parties)->lookup(f78);
     int* blk = (int*)parties.pages._Myfirst[id >> 4];
@@ -828,7 +832,7 @@ void PartyScreen::setup_skills()
     skills_base = w;
     label_refresh(skills_base, tstring("party_bo_skills"));
     {
-        tstring empty(g_empty_string);
+        tstring empty("");
         float pos[2];                                   // passed uninitialised by the original
         PSO(skills_base)->set_text(pos, &empty);
     }
@@ -1076,10 +1080,10 @@ void PartyScreen::refresh_selection()
             label = *g_strtable.lookup(k);
         }
         if (sel_type == 0 && (stk.flags & 1) != 0) {
-            g_store0 = 1;
-            g_store1 = 0;
+            g_trigger_result.store0 = 1;
+            g_trigger_result.store1 = 0;
             // a script that answers and leaves both out-slots clear refuses the sale (0x506684..0x50669e)
-            if (!(g_game->emit_event(0xb, stk.troop, 0) != 0 && g_store0 == 0 && g_store1 == 0))
+            if (!(g_game->emit_event(0xb, stk.troop, 0) != 0 && g_trigger_result.store0 == 0 && g_trigger_result.store1 == 0))
                 action = true;
         }
     } else if (cmd == 3) {
@@ -1150,10 +1154,10 @@ void PartyScreen::refresh_selection()
             int v;
             {
                 tstring k("ui_price");
-                g_store0 = 0;
-                g_store1 = 0;
+                g_trigger_result.store0 = 0;
+                g_trigger_result.store1 = 0;
                 if (g_game->emit_event(10, stk.troop, g_game->f78) != 0)
-                    v = g_store0;
+                    v = g_trigger_result.store0;
                 else
                     v = GD_I(0x13a20);
                 sprintf(cost_buf, g_strtable.lookup(k)->c_str(), v);

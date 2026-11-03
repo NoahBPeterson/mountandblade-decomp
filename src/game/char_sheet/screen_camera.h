@@ -52,6 +52,7 @@ using rgl::mat4;
 #include "../../include/frustum.h"
 using rgl::frustum;
 #include "../rgl_mesh.h"
+#include "../key_names.h"
 using rgl::scene;
 // the scene-container object g_scene (0xa732b4, Mission +0) as the camera tick sees it: the slice called it `scene` because its first
 // 0x150 bytes are laid out like a render scene (frustum at +0x30), but it is much larger (the inverse frame at +0x30c); renamed so that
@@ -80,7 +81,6 @@ struct WorldCam {
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 // ---- globals ------------------------------------------------------------------------------------------
 extern WorldCam* g_level;                       // 0xa732b4
-extern int g_a17148;                            // 0xa17148
 extern int g_a1717c;                            // 0xa1717c
 extern int g_5a9fbc;                            // 0x5a9fbc
 extern float g_map_min_x;                            // 0x5aa120  map min x (-50)

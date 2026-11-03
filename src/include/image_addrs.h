@@ -34,17 +34,14 @@ extern const float k_0_9f;                 // 0x549d6c
 extern const float g_half;                 // 0x549d70
 extern const float g_ten;                  // 0x549d74
 extern const float k_0_1f;                 // 0x549d7c
-extern const char g_empty_text[];                      // 0x54a480
 extern const float k_1_5708f;              // 0x54a534
 extern const double g_day_period;          // 0x54a5d8
 extern const float k_1em05f;               // 0x54a6d0
-extern const float k_0_2f;                 // 0x54a6e4
 extern const float g_three;                // 0x54a710
 extern const float k_100f;                 // 0x54ab28
 extern const char g_rgl_name[];                        // 0x54b048
 extern const float k_0_4f;                 // 0x54b3b8
 extern const float k_0_05f;                // 0x54b4d0
-extern const float k_100000f;              // 0x54b86c
 extern const float k_1_1f;                 // 0x54b888
 extern const float k_1_5f;                 // 0x54b8b0
 extern const float k_0_03f;                // 0x54b8b4
@@ -102,7 +99,6 @@ extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern float g_mouse_x;                    // 0x5d7094
 extern float g_mouse_y;                    // 0x5d7098
 extern int g_mission_clock;                // 0x5d8790
-extern char g_5e2630;                      // 0x5e2630
 extern ptype* g_ptypes;                    // 0x5e28f8
 extern int g_use_shaders;                  // 0x5e28fc
 extern MapFlags g_map_flags;               // 0x5e291c
@@ -120,7 +116,6 @@ extern int g_a1751c;                       // 0xa1751c
 extern int g_a17854;                       // 0xa17854
 extern renderer g_render;                  // 0xa17910
 extern char g_use_hw_shadow;               // 0xa17f24
-extern unsigned char g_show_party_ids_instead_of_names; // 0xa181b8
 extern int g_works_with_version_min;       // 0xa181c8
 extern int g_works_with_version_max;       // 0xa181cc
 extern ini_file g_module_info;             // 0xa18238

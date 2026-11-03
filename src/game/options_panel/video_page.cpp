@@ -22,6 +22,7 @@
 using rgl::vector4;
 
 #include "../str_table.h"                                                 // StrTable g_strtable (0x5e2a18)
+#include "../shared_vars.h"
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
 extern "C" char* __cdecl _itoa(int, char*, int);                            // 0x5371f7
@@ -309,7 +310,7 @@ void VideoPage::update(int reason)
             {
                 // 0x4d6ab9: the key is looked up and the text goes in as the body; the title is the empty string
                 tstring key("ui_change_graphics_settings_explanation");
-                tstring title((const char*)orig::g_empty_text);
+                tstring title("");
                 tstring* e = g_strtable.lookup(key);
                 g_main_menu.rec->setup(&title, e);
             }

@@ -226,7 +226,7 @@ void options_panel::update_cursor()
 void options_panel::refresh_texts()
 {
     {
-        tstring empty(EMPTY_TEXT);                                  // 0x54a480 ""
+        tstring empty("");
         texts->set_text(empty);
     }
     if (menu_open == 0)
@@ -238,7 +238,7 @@ void options_panel::draw_faction_report()
 {
     float row = 0.6f;
     {
-        tstring empty(EMPTY_TEXT);                                  // 0x54a480 ""
+        tstring empty("");
         texts->set_text(empty);
     }
     {

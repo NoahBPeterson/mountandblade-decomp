@@ -16,6 +16,7 @@ using rgl::mat3;
 
 #include "./cs_common.h"
 #include "./cs_mat.h"                                // identity_pos, UiD, WindowMgrW, FaceRace, FaceGen
+#include "../key_names.h"
 
 // key state / settings globals
 extern int g_a17204;                                    // 0xa17204
@@ -32,8 +33,6 @@ extern float g_a178d8;                                  // 0xa178d8
 
 // globals of the face-generator update (0x4ea8e0)
 extern int g_no_cam;                                    // 0x5a9fb0
-extern int g_a17148;                                    // 0xa17148
-extern int g_a17348;                                    // 0xa17348
 extern int g_a1711c;                                    // 0xa1711c
 extern int g_a1751c;                                    // 0xa1751c
 extern int g_world_time;                                // 0x5d8790

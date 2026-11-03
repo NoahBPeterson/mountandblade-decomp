@@ -68,12 +68,7 @@ struct Marker {
     char pad0[0x1f4];
     float f1f4, f1f8, f1fc, f200, f204, f208;   // +0x1f4
 };
-struct MarkerList {
-    Marker** first;
-    Marker** last;
-    int count() const { return first ? (int)(last - first) : 0; }
-    Marker* operator[](unsigned i) const { return first[i]; }
-};
+#include "../int_vec.h"            // RawVec g_mat_vec[4] (0xa732c0..): the marker lists are g_mat_vec[0] (a), [1] (d), [2] (b), [3] (c)
 
 struct MapModel { void set_fade(const float* v); };   // 0x4b1800 (the map entity at Party+0x59c0: PartyModel::set_fade, party2/party_2.h)
 // the objects at game+0x139e8 (snd_bank::update_all 0x462760, ui/item_ref.h) and game+0x139f4 (TimerList::update 0x48add0,

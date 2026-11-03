@@ -13,6 +13,7 @@
 #include "../tstring.h"
 
 #include "../str_table.h"
+#include "../shared_vars.h"
 extern StrTable g_strtable;                             // 0x5e2a18
 
 struct gui_manager {                                    // game/strat/gui_manager.h (cannot be included next to this slice's types)
@@ -43,7 +44,6 @@ struct PartyCellRec {                                        // 0xb0 bytes at 0x
     char pad30[0xb0 - 0x30];
 };
 extern PartyCellRec* g_party_templates;                             // 0x5e29f8
-extern int g_show_faction_color;                               // 0xa181b0
 
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 

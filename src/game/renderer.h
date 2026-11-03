@@ -11,6 +11,7 @@
 #include "../rgl/rgl_math.h"
 #include "./mat4.h"
 #include "../include/frustum.h"
+#include "shared_vars.h"
 
 // ---- globals -----------------------------------------------------------------------------------------
 extern int g_use_shaders;                   // 0x5e28fc

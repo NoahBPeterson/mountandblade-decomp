@@ -24,7 +24,21 @@ export WINEPATH="$(winpath "$tc/bin")"
 # Output goes through a temp file, never the caller's pipes: wine's services inherit cl's stdio and
 # would hold a caller's pipe open until the wine session ends (see spore-decomp tools/matching/cl.sh).
 tmp=$(mktemp "${TMPDIR:-/tmp}/clsh.XXXXXX")
-wine "$tc/bin/cl.exe" "$@" </dev/null >"$tmp" 2>&1
-rc=$?
+# Machine-wide compile slots (MB_CL_SLOTS, default one per CPU), shared by every lane: worktrees symlink work/, so
+# the lock files are the same. Without them five lanes' builds ran ~65 cl.exe at once on 10 cores and a full
+# recompile took 47 min instead of a few; a waiting compile costs nothing. lockf -t 0 exits 75 (EX_TEMPFAIL) when
+# the slot is held; cl.exe itself returns 0 or 2.
+slots=${MB_CL_SLOTS:-$(sysctl -n hw.ncpu 2>/dev/null || echo 8)}
+locks="$root/work/locks"; mkdir -p "$locks"
+while :; do
+    i=1
+    while [ "$i" -le "$slots" ]; do
+        lockf -t 0 -k "$locks/cl.$i" wine "$tc/bin/cl.exe" "$@" </dev/null >"$tmp" 2>&1
+        rc=$?
+        [ "$rc" -ne 75 ] && break 2
+        i=$((i + 1))
+    done
+    sleep 0.2
+done
 cat "$tmp"; rm -f "$tmp"
 exit $rc

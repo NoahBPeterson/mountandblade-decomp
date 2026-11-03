@@ -256,14 +256,14 @@ def duplicates(rmap_path, map_path):
 
 def gate(rmap_path, map_path, jobs_n=None):
     """build.py's gate -> (undersized, duplicates, number of definitions checked)."""
-    under, _s = audit(rmap_path, jobs_n or max(1, (os.cpu_count() or 2) - 2), suspects=False)
+    under, _s = audit(rmap_path, jobs_n or int(os.environ.get("MB_JOBS") or max(1, (os.cpu_count() or 2) - 2)), suspects=False)
     return under, duplicates(rmap_path, map_path), STATS.get("defined", 0)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--resolve-map", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
-    ap.add_argument("--jobs", type=int, default=max(1, (os.cpu_count() or 2) - 2))
+    ap.add_argument("--jobs", type=int, default=int(os.environ.get("MB_JOBS") or max(1, (os.cpu_count() or 2) - 2)))
     ap.add_argument("--map", help="the linked exe's map: also report original addresses with 2+ storage locations")
     ap.add_argument("-v", action="store_true", help="list the suspects (the original's code reaches past our storage)")
     a = ap.parse_args()

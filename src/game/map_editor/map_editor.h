@@ -21,16 +21,14 @@
 #include "../mission.h"
 #include "../placed_obj.h"
 #include "../int_vec.h"      // IntVec: push_back with the inlined fast path and the library insert_n (0x43e7b0), as 0x5305b0 uses it
+#include "../key_names.h"
+#include "../main_menu.h"
 
 using rgl::matrix;
 using rgl::vector4;
 
 // ---- engine globals (the input state words of the keyboard object; the editor's modifier / action keys) --------------
 extern int g_a17458;                    // 0xa17458
-extern int g_a17858;                    // 0xa17858
-extern int g_a17148;                    // 0xa17148  select-all modifier
-extern int g_a17348;                    // 0xa17348
-extern int g_a1714c;                    // 0xa1714c
 extern int g_a1754c;                    // 0xa1754c
 extern int g_a17420;                    // 0xa17420  delete key
 extern int g_a17820;                    // 0xa17820
@@ -51,7 +49,6 @@ inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->m1b4; }
 
 // the current editor entity (0xa739b8)
 #include "../editor_entity.h"
-extern EditorEntity* g_editor;                                  // 0xa739b8
 
 // ---- Mission: the editor's view (0x5305b0) ---------------------------------------------------------------------------
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)

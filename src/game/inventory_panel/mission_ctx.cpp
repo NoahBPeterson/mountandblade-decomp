@@ -22,15 +22,20 @@
 #include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../shared_vars.h"
+#include "../last_scene.h"
+#include "../game_keys.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+float g_mouse_dx;                                // 0x5d70a4
+float g_mouse_dy;                                // 0x5d70a8
+
 
 #define SCENE ((MissionV*)g_mission)
 
 extern MsgLog g_msglog;                                 // 0x5d7080
 extern int g_a735c0;                                    // 0xa735c0 (scene counter)
-extern char g_a73320;                                   // 0xa73320
 extern int g_a73438;                                    // 0xa73438 (page index)
-extern int g_a7343c;                                    // 0xa7343c (page 1 party slot)
-extern int g_a73440;                                    // 0xa73440 (page 0 party slot)
 
 void autosave_notice();                                 // 0x514830
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (cdecl)
@@ -40,7 +45,6 @@ struct BattleRec {                                      // the 0x98-byte object 
 };
 #include "../mode_rec.h"                              // MissionTemplate (0x58 bytes, array at 0x5e2a00): the one definition
 extern MissionTemplate* g_mission_templates;                    // 0x5e2a00
-extern int g_mission_template_count;                            // 0x5e2a04
 
 using rgl::mat3;
 mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
@@ -124,18 +128,12 @@ extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
 extern ShadowMapP* g_shadow_map;                                    // 0xa70248
 extern int g_psys_scene;            // 0xa170c0
-extern int g_a170d8;            // 0xa170d8
-extern int g_a174d8;            // 0xa174d8
 extern int g_show_quest_notes;            // 0xa181b4
 extern int g_a171b8;            // 0xa171b8
 extern int g_a17454;            // 0xa17454
 extern int g_a17854;            // 0xa17854
-extern int g_a17148;            // 0xa17148
-extern int g_a17348;            // 0xa17348
-extern int g_a70438;            // 0xa70438
 extern int g_use_shaders;       // 0x5e28fc
 extern int g_no_cam;            // 0x5a9fb0
-extern char g_saved;            // 0x5e2a08
 extern int g_trial_mode;        // 0x5e29c4
 extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
@@ -144,29 +142,13 @@ extern int g_level;         // 0xa732b4
 extern const float g_zero;          // 0x549ca8  0.0f
 extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_oneone;        // 0x54b888  1.1f
-extern const float g_pttwo;         // 0x54a6e4  0.2f
 extern const float g_three;         // 0x54a710  3.0f
 extern const float g_four;          // 0x5935c8  4.0f
 extern const float g_003;           // 0x54b8b4  0.03f
 extern const float g_axis_x;        // 0xa178d4
-extern const float g_axis_y;        // 0xa178dc
-extern const float g_mouse_dx;      // 0x5d70a4
-extern const float g_mouse_dy;      // 0x5d70a8
-extern int g_key_1730;              // 0xa73730
-extern int g_key_1734;              // 0xa73734
-extern int g_key_1738;              // 0xa73738
-extern int g_key_173c;              // 0xa7373c
-extern int g_key_1740;              // 0xa73740
-extern int g_key_1744;              // 0xa73744
-extern int g_key_1748;              // 0xa73748
-extern int g_key_174c;              // 0xa7374c
-extern int g_keydown[];             // 0xa170d4
 extern int g_in_17204;              // 0xa17204
-extern int g_in_17210;              // 0xa17210
 extern int g_in_17214;              // 0xa17214
-extern int g_in_17218;              // 0xa17218
 extern int g_in_17458;              // 0xa17458
-extern int g_in_17858;              // 0xa17858
 extern const float g_half;          // 0x549d70  0.5f
 
 // the party record behind an id (the page table at +0x139c8)
@@ -207,11 +189,11 @@ void MapFlags::commit(char* out)
         g_mission_ctx.start_mission();
     }
     else if (key == 2) {
-        g_mission_ctx.build_hero_table(g_a73440, -1, -1, 3);
+        g_mission_ctx.build_hero_table(g_mission_ctx.f140, -1, -1, 3);
     }
     else if (key == 0x40 || key == 0x20) {
         if (key == 0x20) {
-            int p = g_a7343c;
+            int p = g_mission_ctx.f13c;
             g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 2);
         }
         else if (key == 0x40) {
@@ -221,7 +203,7 @@ void MapFlags::commit(char* out)
     }
     else if (key == 0x10) {
         g_wAC->f4 = 0;
-        if (g_a73320 != 0)
+        if (g_mission_ctx.f20 != 0)
             g_wAC->f4 = 2;
         g_wAC->f18 = 0x64;
         g_wAC->f4 = 0;
@@ -239,7 +221,7 @@ void MapFlags::commit(char* out)
     }
     else if (key == 4) {
         g_mission_ctx.pick_template();
-        g_wA8->f18 = 0x64;
+        window_slot<MenuWidget>(10)->f18 = 0x64;
         return g_main_menu.set_state(0xa);
     }
     else if (key == 0x800) {
@@ -259,8 +241,8 @@ void MapFlags::commit(char* out)
         g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
         MI(g_mission, 0x5270) = g_a735c0++;
         SCENE->start_setup();
-        g_wB8->v4();
-        g_wB8->f18 = 0x64;
+        window_slot<MenuWidget>(14)->v4();
+        window_slot<MenuWidget>(14)->f18 = 0x64;
         return g_main_menu.set_state(0xe);
     }
     else if (key == 0x200) {
@@ -269,7 +251,7 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(7);
     }
     else if (key == 0x400 && f8 <= 0) {
-        g_w98->f18 = 0x64;
+        window_slot<MenuWidget>(6)->f18 = 0x64;
         return g_main_menu.set_state(6);
     }
     else if (g_game->fc8 == 1) {
@@ -279,7 +261,7 @@ void MapFlags::commit(char* out)
         return g_main_menu.set_state(7);
     }
     else if (f8 <= 0) {
-        g_w98->f18 = 0x64;
+        window_slot<MenuWidget>(6)->f18 = 0x64;
         return g_main_menu.set_state(6);
     }
     else {
@@ -808,14 +790,14 @@ void Screen::frame_update(float dt)
         g_main_menu.set_state(0x1a);
         return;
     }
-    if (g_a170d8 != 0 && g_a174d8 == 0) {
-        g_w94->f18 = 7;
+    if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
+        window_slot<MenuWidget>(5)->f18 = 7;
         g_main_menu.set_state(5);
         return;
     }
     if (f48 != 0 && PSO(f48)->clicked_on(0x10000)) {
-        g_wD8->f18 = 7;
-        g_wD8->f4 = 0;
+        window_slot<MenuWidget>(22)->f18 = 7;
+        window_slot<MenuWidget>(22)->f4 = 0;
         g_main_menu.set_state(0x16);
         return;
     }
@@ -1015,7 +997,7 @@ no_party:
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_no_cam != 0 && (g_a17148 != 0 || g_a17348 != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
+    if (g_no_cam != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {
@@ -1037,32 +1019,32 @@ void Screen::camera_move(float dt)
     mat2 m(&src[0][0], &src[1][0]);
     m.rotate_2x2(-yaw);
 
-    bool b = g_key_1740 >= 0 && g_keydown[g_key_1740] != 0;
-    if ((g_key_1744 >= 0 && g_keydown[g_key_1744] != 0) || b) {
+    bool b = g_game_keys.bind[4] >= 0 && g_keyboard.down[g_game_keys.bind[4]] != 0;
+    if ((g_game_keys.bind[5] >= 0 && g_keyboard.down[g_game_keys.bind[5]] != 0) || b) {
         float h = height + g_ten;
         x -= m.m[0] * h * dt;
         z -= m.m[1] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1748 >= 0 && g_keydown[g_key_1748] != 0;
-    if ((g_key_174c >= 0 && g_keydown[g_key_174c] != 0) || b) {
+    b = g_game_keys.bind[6] >= 0 && g_keyboard.down[g_game_keys.bind[6]] != 0;
+    if ((g_game_keys.bind[7] >= 0 && g_keyboard.down[g_game_keys.bind[7]] != 0) || b) {
         float h = height + g_ten;
         x += m.m[0] * h * dt;
         z += m.m[1] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1730 >= 0 && g_keydown[g_key_1730] != 0;
-    if ((g_key_1734 >= 0 && g_keydown[g_key_1734] != 0) || b) {
+    b = g_game_keys.bind[0] >= 0 && g_keyboard.down[g_game_keys.bind[0]] != 0;
+    if ((g_game_keys.bind[1] >= 0 && g_keyboard.down[g_game_keys.bind[1]] != 0) || b) {
         float h = height + g_ten;
         x += m.m[2] * h * dt;
         z += m.m[3] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_key_1738 >= 0 && g_keydown[g_key_1738] != 0;
-    if ((g_key_173c >= 0 && g_keydown[g_key_173c] != 0) || b) {
+    b = g_game_keys.bind[2] >= 0 && g_keyboard.down[g_game_keys.bind[2]] != 0;
+    if ((g_game_keys.bind[3] >= 0 && g_keyboard.down[g_game_keys.bind[3]] != 0) || b) {
         float h = height + g_ten;
         x -= m.m[2] * h * dt;
         z -= m.m[3] * h * dt;
@@ -1072,10 +1054,10 @@ void Screen::camera_move(float dt)
 
     if (g_in_17204) speed += dt * g_oneone;
     if (g_in_17214) speed -= dt * g_oneone;
-    if (g_in_17210) vy += dt * g_oneone;
-    if (g_in_17218) vy -= dt * g_oneone;
+    if (g_keyboard.down[0x4f]) vy += dt * g_oneone;
+    if (g_keyboard.down[0x51]) vy -= dt * g_oneone;
 
-    if (g_in_17458 && !g_in_17858)
+    if (g_in_17458 && !g_keyboard.prev[0xe1])
         f2d4 = 0;
 
     float v = g_mouse_dx * 0.1f;
@@ -1094,12 +1076,12 @@ void Screen::camera_move(float dt)
         vy = expf(g_four * g_options.f10) * g_003 * g_axis_x * dt + vy;
     }
 
-    if (w != 0.0f || g_axis_y != 0.0f) {
+    if (w != 0.0f || g_keyboard.axis[2] != 0.0f) {
         y = y - w * height * dt;
-        if (g_axis_y > 0.0f)
-            y = y - height * g_pttwo;
-        else if (g_axis_y < 0.0f)
-            y = height * g_pttwo + y;
+        if (g_keyboard.axis[2] > 0.0f)
+            y = y - height * 0.2f;
+        else if (g_keyboard.axis[2] < 0.0f)
+            y = height * 0.2f + y;
     }
 }
 

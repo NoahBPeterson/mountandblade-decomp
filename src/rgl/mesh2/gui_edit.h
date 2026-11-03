@@ -552,7 +552,6 @@ extern char g_ui_website[];                             // 0x595db8
 extern char g_ui_cancel2[];                             // 0x595dac
 extern char g_ui_current_setting[];                     // 0x595d98
 extern char g_bmp_main[];                               // 0x595d8c ("main.bmp")
-extern char g_empty[];                                  // 0x54a480 ("")
 
 // the localized text of `key` (the table stores a missing key as an empty string)
 inline const char* text(const char* key)
@@ -806,7 +805,6 @@ extern ModRec g_item_modifiers[];                                            // 
 extern ModRec g_item_modifiers[]; // 0xa75f70 (43 x 0x28)
 extern SkillRec g_skill_tbl[];                                             // 0x8ee3100 (42 x 0x44)
 extern int g_menu_count;                                                   // 0x5e29b4
-extern char g_show_party_ids_instead_of_names;                                                  // 0xa181b8
 
 
 // the text log is written through its virtual w_cstr slot (+0x28), as the call sites do

@@ -2,6 +2,7 @@
 #include "../bit_words.h"      // g_bits 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../key_names.h"
 
 unsigned g_5e2464 = (unsigned)g_bit[2];                       // 0x5e2464 (no reader in this source; set at startup like its twin)
 unsigned g_5e2468 = (unsigned)g_bit[4];                       // 0x5e2468
@@ -43,19 +44,19 @@ void TerrainPage::simulate(float dt)
     float a = -yaw;
     ((rot2*)&m[0].x)->rotate_2x2(a);                        // 0x4f3b40 turns m[0].xy / m[1].xy
 
-    if (g_key_1714c) {
+    if (g_keyboard.down[0x1e]) {
         view_x = view_x - (m[0].x * 50.0f) * dt;
         view_y = view_y - (m[0].y * 50.0f) * dt;
     }
-    if (g_key_17154) {
+    if (g_keyboard.down[0x20]) {
         view_x = (m[0].x * 50.0f) * dt + view_x;
         view_y = (m[0].y * 50.0f) * dt + view_y;
     }
-    if (g_key_17118) {
+    if (g_keyboard.down[0x11]) {
         view_x = (m[1].x * 50.0f) * dt + view_x;
         view_y = (m[1].y * 50.0f) * dt + view_y;
     }
-    if (g_key_17150) {
+    if (g_keyboard.down[0x1f]) {
         view_x = view_x - (m[1].x * 50.0f) * dt;
         view_y = view_y - (m[1].y * 50.0f) * dt;
     }
@@ -71,10 +72,10 @@ void TerrainPage::simulate(float dt)
     if (g_look_y < 0.5f) {
         if (g_key_17458) {
             yaw = (g_axis_x * dt) * 1.7f + yaw;
-            pitch = pitch - (g_axis_y * dt) * 1.7f;
+            pitch = pitch - (g_keyboard.axis[2] * dt) * 1.7f;
         }
         if (g_key_17454)
-            zoom = ((g_axis_y * dt) * 0.5f + 1.0f) * zoom;
+            zoom = ((g_keyboard.axis[2] * dt) * 0.5f + 1.0f) * zoom;
     }
 
     if (pitch < 0.1f)

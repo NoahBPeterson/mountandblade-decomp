@@ -15,6 +15,7 @@
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../options.h"   // g_options 0x5aa008
+#include "../../game/shared_vars.h"
 
 // agent.h's allocator tag of the one-int record (0x436d80); declared here to avoid that header
 struct int1 { int a; };

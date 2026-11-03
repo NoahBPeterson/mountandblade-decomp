@@ -5,6 +5,7 @@
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../key_names.h"
 struct GameData;
 extern GameData* g_game;                                    // 0x5e2930
 
@@ -58,7 +59,7 @@ void CamView::update_model(float dt)
 {
     int n = *(int*)((char*)g_skins_begin + skin * 0x1f8 + 0x3c) - 1;
 
-    if (g_no_cam && (g_a17148 || g_a17348) && orig::g_a1711c && !orig::g_a1751c) {
+    if (g_no_cam && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && orig::g_a1711c && !orig::g_a1751c) {
         if (*(int*)((char*)g_game + 0x1a090) == 0) {
             *(int*)((char*)g_game + 0x1a090) = 1;
             cam_btn->vb4();

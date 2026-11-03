@@ -25,6 +25,13 @@ void mb_error(const char* fmt, ...);                 // 0x42cc80
 // stream_base (stream.h cannot be included here: see stream_fwd.h); every typed slot is abstract, as in the original.
 #include "../../rgl/stream_fwd.h"
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+#include "../shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_loaded_sound_count;                      // 0x5d878c
+char g_path[0x100];                            // 0x8ee41f0
+int g_map_icon_count;   // 0x5e29f4
+int g_mission_template_count;   // 0x5e2a04
 struct stream_root {
     virtual void reset();                            // slot 0
     virtual void rewind();                           // 1
@@ -76,7 +83,6 @@ STREAM_FWD_TEXT_READER(tstream3)
 // ---------------------------------------------------------------- module path helper
 
 extern tstring g_module_path;                        // 0x8ee3c28
-extern char g_path[0x100];                           // 0x8ee41f0
 
 // g_path = <module path><file name>; abort the load if the file cannot be opened.  Inlined at
 // all sixteen call sites in the original.  The stream is returned as a base reference, which is
@@ -226,8 +232,6 @@ extern LogSink g_log;                                // 0x5a9f60
 
 // ---------------------------------------------------------------- module state
 
-extern int g_scan_module_sounds;                        // 0xa1810c
-extern int g_loaded_sound_count;                            // 0x5d878c
 
 extern int g_propkind_count;                        // 0x5e29e0
 extern MissionObj* g_propkinds;                       // 0x5e29dc
@@ -235,13 +239,11 @@ extern MissionObj* g_propkinds;                       // 0x5e29dc
 extern int g_menu_count;                             // 0x5e29b4
 extern MenuRec* g_menus;                             // 0x5e29b0
 
-extern int g_map_icon_count;                         // 0x5e29f4
 extern MapIcon* g_map_icons;                         // 0x5e29f0
 
 extern ItemKind* g_items;                            // 0x5e29d0
 extern int g_item_kind_count;                             // 0x5e29d4
 
-extern int g_mission_template_count;                             // 0x5e2a04
 extern ModeRec* g_mission_templates;                             // 0x5e2a00
 
 extern int g_party_template_count;                   // 0x5e29fc

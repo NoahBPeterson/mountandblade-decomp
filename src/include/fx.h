@@ -183,6 +183,5 @@ struct FxDef {                                                  // 0x7c bytes
     void attach_group(int idx, PsysGroup* g);                   // 0x4424a0 (agent_fx_sound.cpp)
 };
 
-extern __int64 g_ticks_dt[]; // 0x5e2970 per-clock last step (ticks)
 extern float g_step_tbl[]; // 0x5a9c20 per-clock step (seconds)
 #endif // INCLUDE_FX_H

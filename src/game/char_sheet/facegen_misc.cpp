@@ -166,7 +166,6 @@ extern int g_5a9fa0;                                    // 0x5a9fa0
 extern int g_5a9fb8;                                    // 0x5a9fb8
 extern int g_5a9fb0;                                    // 0x5a9fb0
 extern tstring g_5a9f50;                                // 0x5a9f50
-extern const char g_54a480[];                           // 0x54a480 ("")
 
 struct Viewport { int x, y, w, h; float minz, maxz; };
 typedef void (__stdcall* DevCall2)(void*, void*);

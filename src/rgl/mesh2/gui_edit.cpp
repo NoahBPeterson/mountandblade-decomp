@@ -32,6 +32,7 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/s
 struct Presentation;
 extern Presentation* g_presentation;                        // 0x5e299c
 extern int g_propkind_count;                                // 0x5e29e0
+#include "../../game/shared_vars.h"
 struct OptionsDlg {
     void choose_dx_settings(struct Config* cfg, bool overwrite);   // 0x4b9b90 (game/config/options_dlg.h, which cannot be mixed with windows.h here)
 };
@@ -1197,13 +1198,13 @@ void ConfigDialog::init()
     HANDLE h = FindFirstFileA(skin, &fd);
     if (h != INVALID_HANDLE_VALUE) {
         FindClose(h);
-        SetDlgItemTextA(hwnd, 0x410, g_empty);
-        SetDlgItemTextA(hwnd, 0x41f, g_empty);
-        SetDlgItemTextA(hwnd, 0x46b, g_empty);
-        SetDlgItemTextA(hwnd, 0x405, g_empty);
-        SetDlgItemTextA(hwnd, 0x406, g_empty);
-        SetDlgItemTextA(hwnd, 0x469, g_empty);
-        SetDlgItemTextA(hwnd, 0x425, g_empty);
+        SetDlgItemTextA(hwnd, 0x410, "");
+        SetDlgItemTextA(hwnd, 0x41f, "");
+        SetDlgItemTextA(hwnd, 0x46b, "");
+        SetDlgItemTextA(hwnd, 0x405, "");
+        SetDlgItemTextA(hwnd, 0x406, "");
+        SetDlgItemTextA(hwnd, 0x469, "");
+        SetDlgItemTextA(hwnd, 0x425, "");
     } else {
         {
             tstring key(g_ui_play);
