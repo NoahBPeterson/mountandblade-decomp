@@ -39,10 +39,10 @@ struct shape_base {
     __declspec(noinline) shape_base();                      // 0x407ff0
     __forceinline shape_base(inline_init) : m4(-1), m8(8), mc(-1), min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
     virtual ~shape_base() {}                                // 0  0x40a540 (deleting)
-    virtual int shape_type();                               // 1
-    virtual rgl::string type_name() const;                  // 2
-    virtual void load(stream_base* s);                      // 3
-    virtual void save(stream_base* s);                      // 4
+    virtual int shape_type() = 0;                           // 1  (_purecall in the original's table)
+    virtual rgl::string type_name() const = 0;              // 2
+    virtual void load(stream_base* s) = 0;                  // 3
+    virtual void save(stream_base* s) = 0;                  // 4
     virtual shape_base* clone();                            // 5  0x408020 (returns 0)
     virtual void draw();                                    // 6  0x477b70 (an empty function of another object)
     virtual void scale(const float* s);                     // 7  0x408030
@@ -156,6 +156,10 @@ struct composite : shape_base {
 struct manifold : shape_base {
     char pad[0x30];
     manifold();                                             // 0x40c670 (shapes.h defines it inline in the full class; callers of the view call it out of line: rgl/core/resmgr.cpp)
+    virtual int shape_type();                               // 1  0x48c460 (the overrides of the full class, which make the view concrete)
+    virtual rgl::string type_name() const;                  // 2
+    virtual void load(stream_base* s);                      // 3
+    virtual void save(stream_base* s);                      // 4
     shape_base* build_composite();                          // 0x40cb60
 };
 #endif
