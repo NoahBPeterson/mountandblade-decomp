@@ -23,6 +23,7 @@
 #include "../../include/renderer.h"
 #include "../skill_cap.h"
 #include "../key_names.h"
+#include "../../include/render_flags.h"
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
@@ -91,8 +92,8 @@ void MissionHud::refresh()
         int n = *(unsigned char*)(troop + 0x7a) & 0xf;
         if (n < 0)
             n = 0;
-        else if (n > (*(int*)&g_skill_tbl[36].cap))
-            n = (*(int*)&g_skill_tbl[36].cap);
+        else if (n > (*(int*)&g_skill_tbl[36].max_rank))
+            n = (*(int*)&g_skill_tbl[36].max_rank);
         int h = lvl + n * 2 + 0x23;
         if (h > status_height) {
             int id = g_mission->player_id;

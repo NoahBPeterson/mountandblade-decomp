@@ -18,12 +18,7 @@ extern const float RENOWN_SCALE;                                    // 0x54ab28 
 #include "../str_table.h"
 extern StrTable g_strtable;                                         // 0x5e2a18
 
-// the keyboard object (0xa170c8); the key-name function only passes it through
-struct ctr {
-    char pad0[0x100];
-    __declspec(noinline) tstring key_name(int key);                 // 0x4d7610 (defined after its first caller 0x4d7370)
-};
-extern ctr g_keyboard;                                              // 0xa170c8
+#include "../slot.h"                                // Slot, g_keyboard (0xa170c8): key_name 0x4d7610
 
 // a ui control: +0x2c set_cursor(bool), +0x44 is_key_down(int)
 struct ui_control {

@@ -14,6 +14,7 @@
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 __int64 g_ticks_dt[5];   // 0x5e2970
 
+#include "../../include/clock_table.h"
 
 using rgl::vector4;
 

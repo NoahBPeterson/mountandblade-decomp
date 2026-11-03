@@ -14,6 +14,7 @@
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_a70438;   // 0xa70438
 
+#include "../../include/render_flags.h"
 
 // std::vector<Widget*>::push_back as the original inlines it (0x4ec824): with room, std::_Uninit_fill_n of the pointer
 // instance (0x40f8a0, ICF-folded: last, 1, &value, allocator; cdecl), else _Insert_n at the end (0x4927d0, thiscall)
@@ -219,7 +220,7 @@ void Screen::init_screen()
 // @ 0x4ecce0
 void Screen::camera_mark_entities()
 {
-    g_game->f13acc = (f2b8 * g_590bb8 + g_549cdc) * g_54b3b4;
+    g_game->f13acc = (f2b8 * g_590bb8 + g_549cdc) * 0.8f;
     PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
     for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id((int*)&id)) {
         int idx = ((Map10007*)(void*)mgr)->lookup(id);

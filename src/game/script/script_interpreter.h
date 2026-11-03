@@ -84,7 +84,7 @@ struct MissionUi { void set_fog(const float* ref, const float* lo, const float* 
 struct ElemList { void call0(int i, int a); void call1(int i, int a); };     // 0x488e20 / 0x488e40 (ui/mission_ui.cpp)
 void sl_item_flag_all();                                                       // 0x48a210 (ui/mission_ui.cpp; ui/world.h declares the same)
 void __stdcall sl_item_set_all(float v);                                       // 0x48a250
-struct Slot { int is_ready(int key); };                                      // 0x487900 (slot.cpp)
+#include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
 struct ArrHolder { int lookup(int index, int arg); };                        // 0x48d5f0 (mission_ui2/mission_3.cpp)
 struct ListHolder { void set_owner(void* owner); };                          // 0x48cfc0 (mission_ui2/mission_3.cpp)
@@ -186,11 +186,11 @@ extern MsgLog g_msglog;                // 0x5d7080
 extern char g_log[];                // 0x5a9f60 the text log stream (a stream_base; slot 10 = w_cstr)
 
 // ---- conversations and the window manager -------------------------------------------------------------------------
+#include "../dialog_mgr.h"                  // DialogMgr g_dialogs (0x8ed50c8)
 // DialogMgrX: DialogMgr (dialog_manager.h) members it does not declare
 struct DialogMgrX : DialogMgr {
     __forceinline tstring get_name() { return ((GameData*)this)->get_name(); }   // 0x489c30 (copy of cur_text, +0xe028): GameData::get_name
 };
-extern DialogMgrX g_dialogs;            // 0x8ed50c8
 struct DialogBox {
     __forceinline void show(const tstring& title, const tstring& text) { ((NamedRec*)this)->setup(&title, &text); }   // 0x48a3a0 (ret 8)
     __forceinline void setup2(const tstring& text, const tstring& yes, const tstring& no, int* answer) { ((NamedRec*)this)->setup2(&text, &yes, &no, (int)answer); }   // 0x48a3d0 (ret 0x10)
@@ -655,8 +655,6 @@ __forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
 __forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
 __forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
 
-extern int g_conversation_troop;        // 0x8ed50d4 (g_dialogs +0xc; start_quest)
-extern int g_encountered_party;         // 0x8ed50d8 (g_dialogs +0x10; party_can_join)
 extern int g_siege_attack;              // 0xa73438 (store_defender_count 0x4ae36e)
 extern int g_conversation_agent;        // 0x8ed50dc (g_dialogs +0x14; store_conversation_agent)
 struct MissionUiX {
@@ -672,7 +670,6 @@ extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
 extern __int64 g_trigger_param_1;       // 0xa70448 (g_script +8)
 extern __int64 g_trigger_param_2;       // 0xa70450 (g_script +0x10)
 extern unsigned g_battle_flags;         // 0xa73464 bit 0 = end the battle (end_current_battle 0x4a55fe)
-extern int g_skin_count;                // 0x8ed4f88 (troop_set_type)
 extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a2ad0)
 extern char g_in_meta_mission;          // 0x8ee30ec (read by in_meta_mission)
 

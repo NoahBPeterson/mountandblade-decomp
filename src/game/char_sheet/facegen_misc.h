@@ -118,9 +118,6 @@ struct FaceGen {
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
 
 extern int g_cur;                                       // 0x8ed4f68
-extern int g_x8ed4f64;                                  // 0x8ed4f64
-extern int g_x8ed4f74;                                  // 0x8ed4f74
-extern int g_char_count;                                // 0x8ed4f88
 extern float g_dummy_mat;                               // 0x8ed4f8c
 extern float g_dummy0;                                  // 0x8ed5088
 extern float g_dummy1;                                  // 0x8ed508c

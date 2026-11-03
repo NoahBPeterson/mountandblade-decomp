@@ -23,7 +23,7 @@ struct CellGrid;                                // terrain_b/cell_grid.h: the sc
 struct Entity;                                  // terrain_b/entity_rec.h: scene entity (dust cell objects)
 struct SpawnSet;                                // terrain_b/terrain.h
 struct ivec2 { int dx, dy; };
-extern ivec2 g_nbr[];                           // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
+extern const ivec2 g_nbr[8];                         // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
 
 // ---- tables ---------------------------------------------------------------------------------------------------
 // ground type record (table of 11 at 0x8ed4df8, 0x20 bytes each): name, then the values copied into a layer
@@ -38,6 +38,7 @@ extern GroundType g_ground_types[11];           // 0x8ed4df8 (beyond the annotat
 
 #include "../game_globals.h"   // canonical: g_bit (0x5a8e68)
 extern int g_use_shaders;                       // 0x5e28fc
+extern int g_terrain_gate;                      // 0x5aa03c
 extern unsigned g_river_mask_a;                 // 0x5e2580 (0x46bc70: flag bit of the river path)
 extern unsigned g_river_mask_b;                 // 0x5e2584
 extern const char* g_name_elevation;            // 0x5a9bf4 "ground_elevation"
@@ -135,6 +136,7 @@ struct HexWords {
 
 // bit-field accessors: word array at this, widths from the power-of-two table at 0x5a8e70 (0x464960, 0x4649b0, 0x4649f0)
 #include "../bit_words.h"
+#include "../../include/render_flags.h"
 
 // ---- the terrain layers (0x28 bytes each, from +0x28) ------------------------------------------------------------
 struct TerrainLayer {

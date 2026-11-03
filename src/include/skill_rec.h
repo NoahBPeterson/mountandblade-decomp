@@ -9,8 +9,9 @@ struct SkillRec {
     tstring desc;                                   // +0x00
     tstring name;                                   // +0x10
     tstring key;                                    // +0x20
-    int f30, f34;                                   // +0x30 / +0x34
-    int cap;                                        // +0x38 (the level cap)
+    int f30;                                        // +0x30
+    int max_rank;                                   // +0x34 (Troop::nibble 0x4351a0 / GameData::skill_level 0x437b20 clamp ranks to it; skills.txt column 4, 0 for missing records)
+    int cap;                                        // +0x38 (the level cap shown by the character sheet; skills.txt copies max_rank into it)
     int f3c;                                        // +0x3c
     unsigned attr;                                  // +0x40 (low nibble: 0-based attribute the skill needs)
     tstring translated();                           // 0x4c6100

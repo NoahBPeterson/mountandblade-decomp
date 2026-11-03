@@ -34,6 +34,7 @@ int g_level_exp[61] = {1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 
     42929679, 53668349, 67091786, 83871183, 160204600, 320304600, 644046000, 2050460000};   // 0x5934bc
 int g_5a75f60;                                       // 0xa75f60 (.bss) set by the tableau render callback, read by the tableau button
 rgl::vector4 g_event_pos;                            // 0xa708c0 (.bss) where the party's map event happened (emit_event 0x14 reads it)
+#include "../../rgl/options.h"
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160
@@ -246,6 +247,9 @@ extern float g_k0_7;                                // 0x54b3c8
 extern float g_k0_6;                                // 0x590d94
 extern float g_k1;                                  // 0x549cdc
 extern float g_k0_02;                               // 0x590cd0
+extern float g_k0;                                  // 0x549ca8
+extern float g_k3;                                  // 0x54a710
+extern float g_k0_4;                                // 0x54b3b8
 
 // @ 0x4b1b20
 void copy_items_forward(E92* dst, E92* end, const E92* src)
@@ -875,7 +879,6 @@ void Party::set_order_agent(int* t)
 extern float g_k0_1;                                 // 0x54b8b0  0.1f
 extern float g_rand_k;                               // 0x54a6bc  1/15817
 struct options;
-extern options g_options;                   // 0x5aa008
 extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp               // outside the annotation range, so a literal cast
 

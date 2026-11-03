@@ -31,7 +31,9 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../game/config/config_block.h"    // Config g_cfg (0x5a9f98): use_vertex_shaders / use_pixel_shaders
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/render_flags.h"
 
 // 0x54a85c "Unexpected End of File while reading file: %s"
 __int64 __cdecl file_length(FILE* f);             // 0x42cbc0 (src/game/strat/gui_manager.cpp; rgl_string.h still has the old name and a long result)
@@ -419,9 +421,9 @@ bool material::supported()
         ok = false;
     if (shdr == 0 && g_use_shaders)
         ok = false;
-    if ((flags1c & 0x1000) && (g_caps.PixelShaderVersion < 0xffff0101 || !g_use_pixel_shaders))
+    if ((flags1c & 0x1000) && (g_caps.PixelShaderVersion < 0xffff0101 || !g_cfg.use_pixel_shaders))
         ok = false;
-    if (shdr != 0 && (g_caps.VertexShaderVersion < 0xfffe0101 || !g_use_vertex_shaders))
+    if (shdr != 0 && (g_caps.VertexShaderVersion < 0xfffe0101 || !g_cfg.use_vertex_shaders))
         ok = false;
     if (flags20 & 0x10000)
         ok = false;
@@ -485,7 +487,7 @@ void stage_io::save(stream_base* s)
 void material_io::create_shaders()
 {
     if (!ps_done) {
-        if ((flags20 & 0x10000000) && g_use_pixel_shaders && supported()) {
+        if ((flags20 & 0x10000000) && g_cfg.use_pixel_shaders && supported()) {
             ID3DXBuffer* code;
             ID3DXBuffer* errors;
             if (D3DXAssembleShaderFromFileA(ps_file.c_str(), 0, 0, 0, &code, &errors) < 0)

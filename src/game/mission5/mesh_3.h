@@ -106,6 +106,7 @@ extern char g_windows[]; // 0xa73980
 extern void* g_items; // 0x5e29d0
 #include "../prop_kind.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
+#include "../config/config_block.h"
 
 
 // ======================================================= slice s0052cf60: classes, globals, helpers
@@ -236,10 +237,11 @@ extern int g_a174e0;                                // 0xa174e0  press, code 0x3
 extern int g_a174e4;                                // 0xa174e4  press, code 0x39
 extern int g_a1758c;                                // 0xa1758c  press, code 0x63
 extern int g_a17590;                                // 0xa17590  press, code 0x64
+#include "../slot.h"                        // Slot, g_keyboard (0xa170c8)
+extern int g_a17420;                                // 0xa17420  press, code 0x08
+extern int g_a17820;                                // 0xa17820  previous, code 0x08
 extern const float g_one;                           // 0x549cdc = 1.0f
 extern const float g_hilite_dim;                    // 0x54b4d0 = 0.05f
-extern const float g_rot_step;                      // 0x590c60 = 0.005f
-extern const double g_percent;                      // 0x59c480 = 0.01
 
 // ======================================================= slice s0052da20: classes, globals, helpers
 
@@ -662,10 +664,8 @@ struct MapEditorDialog_s2f250 {
 
 
 
-extern int g_key_inc_prev;                      // 0xa17814
-extern int g_key_dec_prev;                      // 0xa177f4
-extern int g_cursor_x;                          // 0x5d70b4
-extern int g_cursor_y;                          // 0x5d70b8
+extern int g_warp_x;                          // 0x5d70b4
+extern int g_warp_y;                          // 0x5d70b8
 extern int g_saved_x;                           // 0x5e2130
 extern int g_saved_y;                           // 0x5e2134
 extern HWND g_editor_hwnd;                      // 0x8ee3d30
@@ -746,18 +746,7 @@ struct MapEditor_s2f250 {
 
 
 // ---- global input axes / camera flags (0xa17xxx block; names provisional) -------------------------------
-extern int   g_a1715c;                                  // 0xa1715c
-extern int   g_a17120;                                  // 0xa17120
-extern int   g_a17520;                                  // 0xa17520
-extern int   g_a17188;                                  // 0xa17188
-extern int   g_a17128;                                  // 0xa17128
-extern int   g_a17184;                                  // 0xa17184
-extern int   g_a1712c;                                  // 0xa1712c
-extern int   g_a17194;                                  // 0xa17194
-extern int   g_a17594;                                  // 0xa17594
 
-extern float  g_k005;                                   // 0x590c60 (0.005f)
-extern double g_d001;                                   // 0x59c480 (0.01)
 extern const float g_one;                                    // 0x549cdc (1.0f)
 extern float  g_k005b;                                  // 0x54b4d0 (0.05f)
 
@@ -794,7 +783,6 @@ struct MapEntry_s2fe40 {
     MapName_s2fe40* names;                                     // +0x1c
 };
 
-extern int g_ptype_count;                                 // 0x5e29e8
 
 struct MapPoint_s2fe40 {
     char pad0[0x10];

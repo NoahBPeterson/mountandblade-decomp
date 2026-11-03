@@ -1,5 +1,6 @@
 #include "./dust.h"
 #include "../../rgl/options.h"   // g_options
+#include "../../include/render_flags.h"
 
 // @ 0x4f3e10
 void DustTerrain::update_particles(const matrix* view)

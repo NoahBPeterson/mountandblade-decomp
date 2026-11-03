@@ -54,8 +54,6 @@ struct FaceGenome {
     FaceRace* unpack(const unsigned __int64* key);   // 0x473800 (returns the race record, left in EAX)
     void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
 };
-extern unsigned g_mask64;                       // 0x5a8e98 (64)
-extern unsigned g_mask8;                        // 0x5a8e80 (8)
 extern unsigned g_rand_seed;                    // 0x5d7078
 
 // breed calls unpack and relax through the same addresses from outside their definitions

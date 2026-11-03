@@ -14,7 +14,6 @@
 #include "shared_vars.h"
 
 // ---- globals -----------------------------------------------------------------------------------------
-extern int g_use_shaders;                   // 0x5e28fc
 extern unsigned g_stage_arg[8];             // 0x5a9c00 D3DTA_* by 3-bit code
 extern IDirect3DDevice9* g_device;          // 0xa17f28  // old name of g_render, removed after the names merge
 void mb_error(const char* fmt, ...);        // 0x42cc80
@@ -73,6 +72,7 @@ struct sort_rec { char pad[0x218]; __int64 key; };
 
 // ---- 2D cell grid (rows of 16-byte cells; dtor 0x41ecc0 in an earlier object) ------------------------------
 #include "../include/height_field.h"      // HCell: the 16-byte cell (its constructor is the one `new grid_cell[n]` ran)
+#include "../include/render_flags.h"
 struct cell_rows {                  // = HeightField (src/include/height_field.h) as 0x41ecc0 / 0x462420 see it
     HCell** rows;                   // +0
     int pad[4];

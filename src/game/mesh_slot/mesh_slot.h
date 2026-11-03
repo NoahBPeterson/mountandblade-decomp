@@ -29,8 +29,6 @@
 using rgl::vector4;
 using rgl::matrix;
 
-extern __int64 g_ticks[];                       // 0x5e2948 clock table (64-bit, 1e-5 s ticks)
-extern int g_use_shaders;                       // 0x5e28fc programmable pipeline in use
 extern float g_ramp_gamma;                      // 0x5a9bfc gamma exponent of the software colour path (0x463790)
 // rgl::unpack_color returns nothing in rgl_math.h; the callers below use its result pointer (eax = out)
 typedef vector4* (__cdecl *unpack_color_fn)(vector4* out, const unsigned* argb);
@@ -130,6 +128,7 @@ struct EChar : TroopMgr {
 // same ~138 MB global (props at +0x6688 is Mission::props, wx/wy at +0x270 Terrain::wx). TerrainX adds the members past
 // the end of Terrain (arr3 ends at 0x845e030) that the scene-entity builder uses.
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/render_flags.h"
 struct ShadowMapP : ShadowMap {
     rgl::scene& sc() { return *(rgl::scene*)((char*)this + 0x18); }
     NOINL void build_hw();   // 0x47fce0

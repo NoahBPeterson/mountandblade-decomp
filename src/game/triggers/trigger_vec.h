@@ -91,14 +91,13 @@ void load_game_variables();                                                 // 0
 void parse_module_info();                                                   // 0x4c05b0
 
 // ---- globals of the device-object handlers and the module_info.txt parser -------------------------------------------------
-extern int g_use_shaders;               // 0x5e28fc
-extern D3DCAPS9 g_caps;                 // 0xa17f2c (GetDeviceCaps fills it)
-extern int  g_renderer_vsync;           // 0xa180e4
 #include "../../include/renderer.h"            // g_render 0xa17910
+#include "../../include/render_flags.h"
+#include "../../include/d3d_caps.h"
+#include "../../rgl/options.h"
 struct options;
 extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h clashes with the log declarations here)
 extern render_batch g_batch;            // 0x5fe898
-extern ShadowMap g_shadow_map;          // 0xa70248 (w at +0x10 = 0xa70258, surf at +0xc = 0xa70254)
 extern ini_file g_module_info;          // 0xa18238 module_info.txt table (count at 0xa44238)
 extern ini_file g_game_vars;            // 0xa44240 game_variables.txt table (rec_tables.h views it as ini_file_x g_ini)
 // g_resmgr_x: the view of g_resmgr (0x5d6fa0) declared in config.h
@@ -113,7 +112,6 @@ extern int g_missile_damage_speed_power_int; // 0x5e29c8 (provisional)
 HRESULT build_shader();                                                     // 0x4c17c0
 HRESULT gfx_restore();                                                      // 0x4c1b00
 char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a, ptr_tag tag); // 0x4c1b60 (catch funclet 0x4c1bcc)
-void* __fastcall dialog_mgr_ctor(void* self);                               // 0x4c2470 (DialogMgr::DialogMgr)
 void* __cdecl read_psys_rec(stream_base* s, char* o);                       // 0x4bdc00 (cdecl; config.h declares it as the static member psys_record::read)
 
 // ---- FMOD stream calls of the music monitor (0x4c25e0), stdcall thunks into fmod.dll -----------------------------------------
@@ -124,7 +122,6 @@ extern "C" int   __stdcall FSOUND_Stream_GetTime(void* stream);         // 0x534
 extern "C" short __stdcall FSOUND_Stream_Close(void* stream);          // 0x5342e2 (config.cpp: FSOUND_Stream_Close)
 struct ScriptState;
 extern ScriptState g_script;                // 0xa70440 (dialog_manager.h clashes with game.h)
-extern float g_music_volume_floor;      // 0x590cd0 (0.02f) volume below which the monitor idles
 // ---- record vectors (0x4c1c20..0x4c23f0) ------------------------------------------------------------------------------------
 #include "../../include/vec.h"   // V2: 8-byte vector with an empty user ctor: arrays of it go through the compiler's array-ctor helper
 typedef tstring mstr;       // a tstring as a MouseRec member: its ctor / dtor are the outlined 0x42bbd0 / 0x42bc40

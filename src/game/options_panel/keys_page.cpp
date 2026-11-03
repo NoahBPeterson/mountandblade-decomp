@@ -42,6 +42,8 @@ using rgl::vector4;
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
 #include "../key_names.h"
+#include "../terrain_a/game_state.h"
+#include "../../include/render_flags.h"
 
 // 0x4bab70 (byte-exact in s004bab70): build the user path of a file name in place. A static function in the
 // original, so cl passes `out` in esi; this is a local copy with the same body.
@@ -117,9 +119,6 @@ struct code_table {
 struct options_panel {
     void key_name(int which, tstring* out);                               // 0x4d7370
     void key_binding_name(int slot, tstring* out, int* translated);       // 0x4d7d10
-};
-struct Slot {
-    int is_ready(int index);   // 0x487900
 };
 extern ControlKeyTable g_game_keys;                                                // 0xa73730
 
@@ -239,7 +238,7 @@ void KeysPage::update(int reason)
         p->w164->show();
         int pressed = -1;
         for (int i = 0; i < 0x100; i++)             // the last bound key wins
-            if ((char)((Slot*)(void*)&g_key_names)->is_ready(i))   // the caller tests al only
+            if ((char)g_keyboard.is_ready(i))   // the caller tests al only
                 pressed = i;
         if (pressed >= 0) {
             if (pressed != 1) {

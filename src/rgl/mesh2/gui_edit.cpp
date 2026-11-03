@@ -31,6 +31,16 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/s
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
 #include "../../game/shared_vars.h"
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../game/animator.h"
+#include "../../game/dialog_mgr.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+char g_loading = 1;                                // 0x5a9c38 (loader thread runs while set)
+const char* g_conv_names[3] = {"tab_game_character_sheet", "tab_game_inventory_window", "tab_game_party_window"};  // 0x5a9c98
+HANDLE g_mt_event;                                 // 0x5e28d8 (.bss)
+CRITICAL_SECTION g_mt_cs;                          // 0x5e28dc (.bss)
+extern const float g_54ab2c = 0.0625f;             // 0x54ab2c (rdata: the sample volume scale of music_set::load; a literal here is reassociated by cl)
+
 struct OptionsDlg {
     void choose_dx_settings(struct Config* cfg, bool overwrite);   // 0x4b9b90 (game/config/options_dlg.h, which cannot be mixed with windows.h here)
 };
@@ -365,20 +375,20 @@ void gui_view::set_view(const float* v)
     if (!o568)
         return;
     ((mnode*)o568)->calc_bounds(&lo, &hi);   // o568 is a scene node: mesh_bnd is a view of it, the callee 0x438d80 is mnode::calc_bounds
-    if (lo.x + fx < g_f011) {
-        fx = g_f011 - lo.x;
-    } else if (hi.x + fx > g_f989) {
-        fx = g_f989 - hi.x;
+    if (lo.x + fx < 0.011f) {
+        fx = 0.011f - lo.x;
+    } else if (hi.x + fx > 0.989f) {
+        fx = 0.989f - hi.x;
     }
-    if (lo.y + fy < g_f011) {
-        fy = g_f011 - lo.y;
-    } else if (hi.y + fy > g_f739) {
-        fy = g_f739 - hi.y;
+    if (lo.y + fy < 0.011f) {
+        fy = 0.011f - lo.y;
+    } else if (hi.y + fy > 0.739f) {
+        fy = 0.739f - hi.y;
     }
-    if (hi.y - lo.y > g_f728) {
-        float s = g_f728 / (hi.y - lo.y);
+    if (hi.y - lo.y > 0.728f) {
+        float s = 0.728f / (hi.y - lo.y);
         fs = s;
-        fy = g_f011 - s * lo.y;
+        fy = 0.011f - s * lo.y;
     }
 }
 
@@ -700,7 +710,7 @@ tstring PartyTemplate::translated()
         return *r;
     tstring s = name;
     {
-        tstring door(s__door);
+        tstring door("{***}");
         s.append(door);
     }
     return s;
@@ -714,7 +724,7 @@ tstring SkillRec::translated()
         return *r;
     tstring s = name;
     {
-        tstring door(s__door);
+        tstring door("{***}");
         s.append(door);
     }
     return s;
@@ -725,7 +735,7 @@ tstring* SkillRec::desc_name()
 {
     tstring* r;
     {
-        tstring prefix(s_prefix_desc);
+        tstring prefix("_desc");
         r = g_strtable.find(&(key + prefix));
     }
     return r ? r : (tstring*)this;
@@ -736,7 +746,7 @@ tstring SkillRec::translated_desc()
 {
     tstring* r;
     {
-        tstring prefix(s_prefix_desc);
+        tstring prefix("_desc");
         r = g_strtable.find(&(key + prefix));
     }
     if (r)
@@ -744,7 +754,7 @@ tstring SkillRec::translated_desc()
     {
         tstring s = desc;
         {
-            tstring door(s__door);
+            tstring door("{***}");
             s.append(door);
         }
         return s;
@@ -759,7 +769,7 @@ tstring MenuDoor::translated()
         return *r;
     tstring s = name;
     {
-        tstring door(s__door);
+        tstring door("{***}");
         s.append(door);
     }
     return s;
@@ -770,7 +780,7 @@ tstring RecA::translated_plural()
 {
     tstring* r;
     {
-        tstring suffix(s__pl);
+        tstring suffix("_pl");
         r = g_strtable.find(&(field + suffix));
     }
     if (r)
@@ -778,7 +788,7 @@ tstring RecA::translated_plural()
     {
         tstring s = text;
         {
-            tstring door(s__door);
+            tstring door("{***}");
             s.append(door);
         }
         return s;
@@ -793,7 +803,7 @@ tstring RecA::translated()
         return *r;
     tstring s = name;
     {
-        tstring door(s__door);
+        tstring door("{***}");
         s.append(door);
     }
     return s;
@@ -804,7 +814,7 @@ tstring RecA::translated_text()
 {
     tstring* r;
     {
-        tstring suffix(s__text);
+        tstring suffix("_text");
         r = g_strtable.find(&(key + suffix));
     }
     if (r)
@@ -812,7 +822,7 @@ tstring RecA::translated_text()
     {
         tstring s = text;
         {
-            tstring door(s__door);
+            tstring door("{***}");
             s.append(door);
         }
         return s;
@@ -829,7 +839,7 @@ tstring RecB::translated()
         return *r;
     tstring s = field;
     {
-        tstring door(s__door);
+        tstring door("{***}");
         s.append(door);
     }
     return s;
@@ -855,30 +865,30 @@ static inline const char* cs(char** pbuf) { return *pbuf ? *pbuf : (const char*)
 void ItemPage::format(char* out)
 {
     if (kind == 1) {
-        tstring key(s_entry_point);
+        tstring key("ui_entry_point_entrypointname");
         _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), text_ptr);
     } else if (kind == 5) {
-        tstring key(s_passage);
+        tstring key("ui_passage_menu_item_passagename");
         _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), text_ptr2);
     } else if (kind == 4) {
         if (index < 0 || index >= g_ptype_count) {
-            _snprintf(out, 0x80, s_invalid_plant);
+            _snprintf(out, 0x80, "INVALID PLANT");
             return;
         }
-        tstring key(s_plant);
-        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&g_ptypes[index].name));
+        tstring key("ui_plant_plantname");
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&g_ptypes[index].name.buf));
     } else if (kind == 2 || kind == 6) {
         if (index < 0 || index >= g_item_kind_count) {
-            _snprintf(out, 0x80, s_invalid_item);
+            _snprintf(out, 0x80, "INVALID ITEM");
             return;
         }
-        tstring key(s_item_name);
+        tstring key("ui_item_itemname");
         _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), g_items[index].display_name()->c_str());
     } else if (kind == 0) {
-        tstring key(s_prop);
+        tstring key("ui_prop_propname");
         _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&field.buf));
     } else {
-        tstring key(s_unknown);
+        tstring key("ui_unknown_unknownname");
         _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), field.c_str());
     }
 }
@@ -893,7 +903,7 @@ tstring RecC::translated()
         return *r;
     tstring s = name;
     {
-        tstring door(s__door);
+        tstring door("{***}");
         s.append(door);
     }
     return s;
@@ -981,7 +991,7 @@ tstring* MapObject::mesh_ptr()
 {
     tstring* r;
     {
-        tstring door(s_suffix_door);
+        tstring door("_door");
         r = g_strtable.find(&(mesh + door));
     }
     return r ? r : &name;
@@ -994,7 +1004,7 @@ tstring MenuDoor::translated_door()
 {
     tstring* r;
     {
-        tstring suffix(s_suffix_door);
+        tstring suffix("_door");
         r = g_strtable.find(&(key + suffix));
     }
     if (r)
@@ -1002,7 +1012,7 @@ tstring MenuDoor::translated_door()
     {
         tstring s = text;
         {
-            tstring door(s__door);
+            tstring door("{***}");
             s.append(door);
         }
         return s;
@@ -1168,7 +1178,7 @@ void ConfigDialog::init()
 {
     RenderConfig cfg;
     ((Config*)&cfg)->init_defaults();            // RenderConfig is Config's 0x70-byte layout (first_time at +0)
-    FILE* f = mb_open_user_file(g_rgl_name, g_mode_rb);
+    FILE* f = mb_open_user_file("rgl_config.txt", "r");
     if (f) {
         ((Config*)&cfg)->load_file(f);
         fclose(f);
@@ -1176,7 +1186,7 @@ void ConfigDialog::init()
     if (cfg.first_time) {
         cfg.first_time = 0;
         ((OptionsDlg*)this)->choose_dx_settings((Config*)&cfg, true);   // ConfigDialog::init runs on the OptionsDlg object
-        f = mb_open_user_file(g_rgl_name, g_mode_wb);
+        f = mb_open_user_file("rgl_config.txt", "w");
         ((rgl_config*)&cfg)->save(f);
         fclose(f);
     }
@@ -1205,41 +1215,41 @@ void ConfigDialog::init()
         SetDlgItemTextA(hwnd, 0x425, "");
     } else {
         {
-            tstring key(g_ui_play);
+            tstring key("ui_play");
             SetDlgItemTextA(hwnd, 0x410, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
-            tstring key(g_ui_configure);
+            tstring key("ui_configure");
             SetDlgItemTextA(hwnd, 0x405, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
-            tstring key(g_ui_check_for_new_version);
+            tstring key("ui_check_for_new_version");
             SetDlgItemTextA(hwnd, 0x41f, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
-            tstring key(g_ui_download_new_settings);
+            tstring key("ui_download_new_settings");
             SetDlgItemTextA(hwnd, 0x46b, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
-            tstring key(g_ui_website);
+            tstring key("ui_website");
             SetDlgItemTextA(hwnd, 0x406, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
-            tstring key(g_ui_cancel2);
+            tstring key("ui_cancel2");
             SetDlgItemTextA(hwnd, 0x469, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
         {
-            tstring key(g_ui_current_setting);
+            tstring key("ui_current_setting");
             SetDlgItemTextA(hwnd, 0x425, ((StrTable&)g_strtable).lookup(key)->c_str());
         }
     }
 
     tstring file(g_module_path);
-    file.append(tstring(g_bmp_main));
+    file.append(tstring("main.bmp"));
     HBITMAP logo = (HBITMAP)LoadImageA(0, file.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     *(HBITMAP*)((char*)this + 0x354) = logo;
     if (!logo)
-        *(HBITMAP*)((char*)this + 0x354) = (HBITMAP)LoadImageA(0, g_bmp_main, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        *(HBITMAP*)((char*)this + 0x354) = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     if (g_trial_mode)
         ShowWindow(GetDlgItem(hwnd, 0x419), 5);
 }
@@ -1327,7 +1337,7 @@ void MapEditorDialog::update_object_type()
     if (!list_type) {
         int count = orig::g_propkind_count;
         for (int i = 0, off = 0; i < count; i++, off += 0x78) {
-            char* e = (char*)(*(int*)&orig::g_propkinds + off);
+            char* e = (char*)((char*)g_propkinds + off);
             // the substring is a temporary of the add-string call (destroyed once, right after it: 0x4c7caa)
             int item = SendMessageA(list, 0x180, 0, (LPARAM)((tstring*)e)->substr(4, *(int*)(e + 0xc)).c_str());
             SendMessageA(list, 0x19a, item, i);
@@ -1343,9 +1353,9 @@ void MapEditorDialog::update_object_type()
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 4) {
-        int count = orig::g_ptype_count;
+        int count = g_ptype_count;
         for (int i = 0, off = 0; i < count; i++, off += 0x20) {
-            tstring* s = (tstring*)(*(int*)&orig::g_ptypes + off);          // the 0x20-byte record starts with its name (0x4c7d76 reads its buf at +4)
+            tstring* s = (tstring*)((char*)g_ptypes + off);          // the 0x20-byte record starts with its name (0x4c7d76 reads its buf at +4)
             int item = SendMessageA(list, 0x180, 0, (LPARAM)s->c_str());
             SendMessageA(list, 0x19a, item, i);
         }
@@ -1914,7 +1924,7 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\item_modifiers.csv", "wt+");     // 0x595fdc
-        for (ModRec* r = g_item_modifiers; r < g_item_modifiers + 43; r++) {
+        for (ModRec* r = (ModRec*)g_item_mods; r < (ModRec*)g_item_mods + 43; r++) {
             if (translated) {
                 tstring v = ((PartyTemplate*)r)->translated();
                 write_row(f, r->key, v);
@@ -1939,29 +1949,29 @@ void GameData::save_language_files(bool translated)
         fclose(f);
     }
 
-    if (g_n_game_strings > 0) {
+    if (g_strings.count > 0) {
         FILE* f = fopen("new_language\\game_strings.csv", "wt+");       // 0x595f98
-        for (int i = 0; i < g_n_game_strings; i++) {
+        for (int i = 0; i < g_strings.count; i++) {
             if (translated) {
-                tstring v = ((PartyTemplate*)&g_strings[i])->translated();
-                write_row(f, g_strings[i].key, v);
+                tstring v = ((PartyTemplate*)&((GameString*)g_strings.strings)[i])->translated();
+                write_row(f, ((GameString*)g_strings.strings)[i].key, v);
             } else {
-                write_row(f, g_strings[i].key,
-                          *find_or(g_strings[i].key, g_strings[i].name));
+                write_row(f, ((GameString*)g_strings.strings)[i].key,
+                          *find_or(((GameString*)g_strings.strings)[i].key, ((GameString*)g_strings.strings)[i].name));
             }
         }
         fclose(f);
     }
 
-    if (g_n_quick_strings > 0) {
+    if (g_strings.quick_count > 0) {
         FILE* f = fopen("new_language\\quick_strings.csv", "wt+");      // 0x595f78
-        for (int i = 0; i < g_n_quick_strings; i++) {
+        for (int i = 0; i < g_strings.quick_count; i++) {
             if (translated) {
-                tstring v = ((PartyTemplate*)&g_quick_strings[i])->translated();
-                write_row(f, g_quick_strings[i].key, v);
+                tstring v = ((PartyTemplate*)&((QuickString*)g_strings.quick)[i])->translated();
+                write_row(f, ((QuickString*)g_strings.quick)[i].key, v);
             } else {
-                write_row(f, g_quick_strings[i].key,
-                          *find_or(g_quick_strings[i].key, g_quick_strings[i].name));
+                write_row(f, ((QuickString*)g_strings.quick)[i].key,
+                          *find_or(((QuickString*)g_strings.quick)[i].key, ((QuickString*)g_strings.quick)[i].name));
             }
         }
         fclose(f);
@@ -1986,19 +1996,19 @@ void GameData::save_language_files(bool translated)
         fclose(f);
     }
 
-    if (g_n_dialogs > 0) {
+    if (g_dialogs.count > 0) {
         FILE* f = fopen("new_language\\dialogs.csv", "wt+");            // 0x595f44
-        for (int i = 0; i < g_n_dialogs; i++) {
+        for (int i = 0; i < g_dialogs.count; i++) {
             for (int j = 0; j < i; j++) {
-                if (g_dialogs[i].id.equals(g_dialogs[j].id))
+                if (g_dialogs.recs[i].id.equals(g_dialogs.recs[j].id))
                     goto next_dialog;
             }
             if (translated) {
-                tstring v = ((PartyTemplate*)&g_dialogs[i])->translated();
-                write_row(f, g_dialogs[i].id, v);
+                tstring v = ((PartyTemplate*)&g_dialogs.recs[i])->translated();
+                write_row(f, g_dialogs.recs[i].id, v);
             } else {
-                write_row(f, g_dialogs[i].id,
-                          *find_or(g_dialogs[i].id, g_dialogs[i].text));
+                write_row(f, g_dialogs.recs[i].id,
+                          *find_or(g_dialogs.recs[i].id, g_dialogs.recs[i].text));
             }
         next_dialog:
             ;
@@ -2008,14 +2018,14 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\skins.csv", "wt+");              // 0x595f2c
-        for (unsigned i = 0; g_skins_begin && i < (unsigned)(g_skins_end - g_skins_begin); i++) {
-            for (int j = 0; j < g_skins_begin[i].n_elems; j++) {
+        for (unsigned i = 0; g_anim.skins && i < (unsigned)(g_anim.skins_end - g_anim.skins); i++) {
+            for (int j = 0; j < g_anim.skins[i].n_elems; j++) {
                 if (translated) {
-                    tstring v = ((PartyTemplate*)&g_skins_begin[i].elems[j])->translated();
-                    write_row(f, g_skins_begin[i].elems[j].key, v);
+                    tstring v = ((PartyTemplate*)&g_anim.skins[i].elems[j])->translated();
+                    write_row(f, g_anim.skins[i].elems[j].key, v);
                 } else {
-                    write_row(f, g_skins_begin[i].elems[j].key,
-                              *find_or(g_skins_begin[i].elems[j].key, g_skins_begin[i].elems[j].name));
+                    write_row(f, g_anim.skins[i].elems[j].key,
+                              *find_or(g_anim.skins[i].elems[j].key, g_anim.skins[i].elems[j].name));
                 }
             }
         }

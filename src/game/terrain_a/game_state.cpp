@@ -9,6 +9,7 @@
 #include <string.h>
 #include <new>
 #include "./game_state.h"
+#include "../config/config_block.h"           // Config g_cfg (0x5a9f98): shadowmap_quality
 #include "../../include/game_data.h"   // GameData (the game state object 0x5e2930; listed directly for the resolution tools)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
@@ -17,6 +18,18 @@
 #include "../../include/vec.h"
 #include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../include/clock_table.h"
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+ShadowMap g_shadow_map;                             // 0xa70248 (.bss: target, target2, surf, w, h, ... zero until setup())
+int g_max_tex_w;                                    // 0xa17f84 (0x463bc0)
+int g_max_tex_h;                                    // 0xa17f88 (0x463bc0)
+char g_use_hw_shadow;                               // 0xa17f24 (0x463e10, 0x464070, 0x4640d0)
+float g_hero_wounded_treshold;                      // 0xa18138 (0x4638f0)
+char g_path_buf[256];                               // 0x5e2480 (0x4639d0)
+float g_ramp_gamma = 0.45454544f;                   // 0x5a9bfc (1 / 2.2: gamma exponent of the software colour path)
+
 
 using rgl::vector4;
 using rgl::matrix;
@@ -162,10 +175,10 @@ void ShadowMap::pick_size()
 {
     w = 0x400;
     h = 0x400;
-    if (g_shadow_quality == 1) {
+    if (g_cfg.shadowmap_quality == 1) {
         w = 0x800;
         h = 0x800;
-    } else if (g_shadow_quality == 2) {
+    } else if (g_cfg.shadowmap_quality == 2) {
         w = 0x1000;
         h = 0x1000;
     }

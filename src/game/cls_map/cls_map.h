@@ -31,6 +31,7 @@
 #include "../config/ui_widgets_c.h"
 #include "../../include/game_data.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/render_flags.h"
 
 // 0x43a1e0 is StrTable::lookup (agent2/agent_stats.cpp; the table g_strtable 0x5e2a18 seen by mesh2_common.h as LangTables), which takes its key by reference:
 // only the member is declared, under the defining class
@@ -440,7 +441,6 @@ struct OptionsWin {
     char f_ed;                                  // +0xed
     void init();                                // 0x4e05c0
 };
-extern int g_use_shaders;        // 0x5e28fc
 
 // ---- 0x4e25a0..0x4e3780: the key-binding page of the options menu (global at 0xa73730; the key table and the page share it) -----------
 struct OptionsMenu {

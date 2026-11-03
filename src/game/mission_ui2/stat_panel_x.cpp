@@ -18,6 +18,7 @@
 #include "../item_ref.h"
 #include "../../include/item_kind.h"
 #include "../../include/troop.h"
+#include "../../include/clock_table.h"
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
 static __forceinline int rnd(const float* p)
@@ -74,7 +75,7 @@ void Troop::set_attr(int idx, int val)
     int v = F7A(this) & 0xf;
     int x = v;
     int base = ATTR(this)[0];
-    int m = g_skill_tbl[36].cap;
+    int m = g_skill_tbl[36].max_rank;
     if (v < 0)
         x = 0;
     else if (v > m)
@@ -93,22 +94,22 @@ void Troop::set_skill(int idx, int val)
 {
     if (val < 0)
         val = 0;
-    else if (val > g_skill_tbl[idx].cap)
-        val = g_skill_tbl[idx].cap;
+    else if (val > g_skill_tbl[idx].max_rank)
+        val = g_skill_tbl[idx].max_rank;
     int word = idx / 8;
     int shift = (idx % 8) * 4;
     int cur = ((unsigned)nib[word] >> shift) & 0xf;
     if (cur < 0)
         cur = 0;
-    else if (cur > g_skill_tbl[idx].cap)
-        cur = g_skill_tbl[idx].cap;
+    else if (cur > g_skill_tbl[idx].max_rank)
+        cur = g_skill_tbl[idx].max_rank;
     if (val > cur && idx == 0x24)
         hp += (float)((val - cur) * 2);
     nib[word] = (nib[word] & ~(0xf << shift)) | ((val & 0xf) << shift);
     int v = F7A(this) & 0xf;
     int m;
     int base = ATTR(this)[0];
-    m = g_skill_tbl[36].cap;
+    m = g_skill_tbl[36].max_rank;
     int x = v;
     if (v < 0)
         x = 0;

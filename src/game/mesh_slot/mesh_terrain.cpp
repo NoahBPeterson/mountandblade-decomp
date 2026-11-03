@@ -8,6 +8,12 @@
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_anim_table (listed directly: the audit reads only the source's own includes)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/render_flags.h"
+#include "../config/config_block.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+unsigned char g_x8ed4e14[10 * 0x20];                // 0x8ed4e14, 0x20-byte records, bit 1 = affects terrain
+
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
@@ -217,7 +223,6 @@ struct world_t {                        // the scene object at terrain_obj+0xc3b
 // 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri (terrain_a/wind.h; hidden return pointer)
 rgl::vector4 tri_normal(const rgl::vector4* tri);
 // light-slot table at terrain+0x258; the cell lum[] entries are only used for slots flagged in 0x8ed4e14
-extern unsigned char g_x8ed4e14[];              // 0x8ed4e14, 0x20-byte records, bit 1 = affects terrain
 
 // @ 0x481570 -- re-tessellate every terrain quad into two triangles (four when the half-quad normals disagree), assigning
 // each touched corner cell a point in the new Geom and each quad a 0x88-byte element record with the final lighting, then
@@ -367,7 +372,7 @@ extern EChar* g_skins_begin;                  // 0x8ed4f7c
 extern int g_skin_count;                // 0x8ed4f88
 
 // @ 0x481c40 -- append a character mesh to the world: select the character, set up the animator, collect the lod meshes
-// and return &g_skins_begin[g_cur] with the mesh count written to *out
+// and return &g_anim.chars[g_cur] with the mesh count written to *out
 // the third argument receives the three lod meshes and the fourth / fifth are the face codes (0x481c75: unpack [esp+0x10],
 // 0x481cad: collect into [esp+0xc] +0/+4/+8); the old a/b/c order decoded the caller's output array and collected the
 // meshes over the troop's face code, leaving the head mesh null (crash in build_appearance when agents spawn)
@@ -375,8 +380,8 @@ EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carr
 {
     if (colour < 0)
         g_cur = 0;
-    else if (colour >= g_skin_count)
-        g_cur = g_skin_count - 1;
+    else if (colour >= g_anim.char_count)
+        g_cur = g_anim.char_count - 1;
     else
         g_cur = colour;
 
@@ -388,8 +393,8 @@ EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carr
         g_x8ed4f64 = -1;
     g_anim_view.collect(g_module_settings.limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
-    EChar* ec = &g_skins_begin[g_cur];
-    int* rec = (int*)((char*)ec->mats + g_x8ed4f74 * 0xb0 + 0x18);
+    EChar* ec = &g_anim.chars[g_cur];
+    int* rec = (int*)((char*)ec->mats + g_anim.material * 0xb0 + 0x18);
     int* slot = out;
     *slot = *rec;
     return ec;

@@ -81,6 +81,7 @@ void __cdecl build_appearance(AgentBody* b, int kind, int troop, int f94, ItemRe
 
 // ---- globals and engine objects the HUD code uses ---------------------------------------------------------------------
 #include "../gui_mgr.h"                                         // GuiManager: the gui manager at 0x5d7080
+#include "../../include/render_flags.h"
 extern GuiManager g_gui;                                              // 0x5d7080
 extern char g_gui_dirty;                                          // 0x5d8788 (set after a screen was built)
 extern char g_hud_flag;                                           // 0x5e212c (set to 1 by 0x4f7f00)
@@ -88,7 +89,6 @@ extern char g_scene_dirty;                                          // 0x5e2938 
 extern int g_pending_action;                                            // 0x5a9f18 (set to -1)
 
 
-extern __int64 g_ticks[];                                         // 0x5e2948 clock table (1e-5 s ticks)
 struct UiVec {                                                    // a widget list at game +0x1a1b8
     void resize(int a, int b);                                     // 0x43f310 (ret 8)
 };
@@ -185,8 +185,6 @@ extern SoundMgr g_sound_mgr;                                          // 0x5aa12
 extern int g_listener_off;                                        // 0x5a9fd8 (nonzero: the sound listener does not follow the camera)
 extern matrix g_listener;                                         // 0x5aa138 (s, f, u rows and the position o at 0x5aa168)
 
-extern int g_use_shaders;                                      // 0x5e28fc
-extern ShadowMap g_shadow_map;                                        // 0xa70248
 extern int g_screen_w;                                            // 0x5d75c8
 extern int g_screen_h;                                            // 0x5d75cc
 extern float g_scale_a;                                           // 0x5aa08c

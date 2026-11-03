@@ -49,11 +49,8 @@ void __cdecl frame_hook(void);                               // 0x4ec460 (game/c
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 // ---- globals ------------------------------------------------------------------------------------------
-extern __int64 g_ticks;                 // 0x5e2948
-extern float g_5a9c20;                  // 0x5a9c20
 extern int   g_no_cam;                  // 0x5a9fb0
 extern int g_a17158;    // 0xa17158
-extern int g_a1717c;    // 0xa1717c
 // the Direct3D9 device (0xa17f28); __stdcall virtuals -> the COM-style call pattern
 struct IDev9 {
     virtual long __stdcall s0(); virtual long __stdcall s1(); virtual long __stdcall s2();
@@ -74,9 +71,7 @@ extern GuiManager g_gui;        // 0x5d7080
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                 // 0x5d6fa0
 
-struct Slot {                           // game/ui (slot.cpp): the input device at 0xa170c8
-    void update(float dt);              // 0x487930
-};
+#include "../slot.h"                    // Slot, g_keyboard (0xa170c8)
 
 struct sound_engine {                   // rgl/mesh2/rec_tables.h: the music player at 0xa73a10
     void __fastcall tick();             // 0x4c4100
@@ -112,6 +107,10 @@ extern Output g_log;                 // 0x5a9f60
 
 #include "../map_editor_obj.h"        // MapEditor (the object at 0x8ee3c48)
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+__int64 g_ticks[7];                                 // 0x5e2948 (clock table, 1e-5 s ticks)
+
+
 // ---- free functions --------------------------------------------------------------------------------
 extern "C" void __stdcall _FSOUND_Update(void);              // 0x53433c
 void bump_counter(void);                                     // 0x42cb70 (?bump_counter@@YAXXZ)
@@ -127,6 +126,7 @@ void global_4bf870(void);                                    // 0x4c3330 (rgl/me
 // ---- the loading screen (0x50f440 lives in slice s0050f440; see there) ------------------------------
 #include "../loading_screen.h"       // LoadingScreen: update 0x50f390 here, advance 0x50f440 in loading_screen.cpp
 #include "../../include/renderer.h"
+#include "../../include/clock_table.h"
 
 // ---- the per-frame update ---------------------------------------------------------------------------
 // @ 0x50ec40
@@ -143,8 +143,8 @@ int GameApp::Update()
     g_8ee42f0 = dt;
     t = (__int64)(dt * 100000.0f);
     g_ticks_dt[0] = t;   // 0x5e2970 (frame time step, scaled)
-    g_ticks += t;
-    g_5a9c20 = dt;
+    g_ticks[0] += t;
+    g_step_tbl[0] = dt;
     g_5d8798 = m_34c;
     m_34c = -1;
 
@@ -165,7 +165,7 @@ int GameApp::Update()
     }
     if (g_no_cam) {
         if (g_keyboard.down[0x32] && !g_keyboard.prev[0x32]) {
-            if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_a1717c)) {
+            if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_keyboard.down[42])) {
                 load_skyboxes();
                 g_gui.add(tstring("Animation data restored."), -1);
             } else if (g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) {

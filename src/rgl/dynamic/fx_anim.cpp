@@ -16,6 +16,7 @@
 #include "../../include/key_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/fx.h"
+#include "../../game/slot.h"
 
 using namespace rgl;
 
@@ -462,7 +463,7 @@ quaternion* FxAnim::value(quaternion* out, int i, int j, int k)
             BK->kb()[2 * i + j].w = -BK->kb()[2 * i + j].w;
         }
     }
-    if (g_use_slerp != 0) {
+    if (g_keyboard.down[66] != 0) {
         quaternion* va = r->table->tables[k].qv();
         slerp_x(&q, &va[cur], &va[cur + 1], &frac);
     } else {

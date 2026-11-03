@@ -1,6 +1,6 @@
 // render_cache.h: the part of the Direct3D 9 render-state cache (global object 0xa17910) that mesh_obj.cpp
 // uses: the blend-mode and texture-coordinate-generation setters (0x40e940, 0x40ea00) and the fields the mesh
-// material setup (0x40f3f0) reads. It is the same object as src/game/renderer.h's `renderer` (which has the
+// material setup (0x40f3f0) reads. It is the same object as src/include/renderer.h's `renderer` (declared here under the same name, as a partial view) (which has the
 // rest of the fields and the other setters); that header cannot be included next to src/rgl/resource.h (both
 // define global `material` and `mesh_inst`-style classes), so this module keeps its own view of it under
 // another name. Merge into one `renderer` class when the headers are unified.
@@ -9,7 +9,7 @@
 #include <windows.h>
 #include <d3d9.h>
 
-struct render_cache {
+struct renderer {
     char pad000[0x574];
     int stage_xform[3];              // 0x574 per-stage D3DTSS_TEXTURETRANSFORMFLAGS cache   (setup_material 0x40f3f0)
     int stage_texgen[3];             // 0x580 per-stage TEXCOORDINDEX mode cache             (0x40ea00)
@@ -21,6 +21,6 @@ struct render_cache {
     void set_blend_mode(int mode);                  // 0x40e940
     void set_texcoord_gen(int stage, int mode);     // 0x40ea00
 };
-extern render_cache g_render;                 // 0xa17910
+extern renderer g_render;                 // 0xa17910
 
 #endif

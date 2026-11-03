@@ -38,6 +38,8 @@
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../animator.h"
+#include "../../include/clock_table.h"
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 // ---- data this module owns (docs/standalone_data.md) ----
@@ -443,7 +445,6 @@ struct TickPair {                                   // g_ticks[i].lo + g_ticks[i
     int lo, hi;
     operator __int64() const { return ((long long)hi << 32) | (unsigned)lo; }
 };
-extern TickPair g_ticks[];                          // 0x5e2948
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);        // 0x536f8f
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);  // 0x415100
@@ -985,7 +986,6 @@ inline void bump(Leader* L, int v) { ((Sel*)L)->bump(v); }                      
 inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf); }                                      // 0x48d940
 
 struct TickPair { int a; int b; };
-extern TickPair g_ticks[];                  // 0x5e2948
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 
 static Agent* agent_by_id(Mission* m, int id) {
@@ -1168,8 +1168,8 @@ void Mission::order(int index, int order) {
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            a->form_a = g_ticks[a->unit].a;
-            a->form_b = g_ticks[a->unit].b;
+            a->form_a = ((int*)&g_ticks[a->unit])[0];
+            a->form_b = ((int*)&g_ticks[a->unit])[1];
             a->form_delay = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
         }
         tbl->next_used(&id);
@@ -1205,7 +1205,6 @@ extern const float g_590cd0;                    // 0x590cd0  0.02f
 struct gui_manager;
 extern gui_manager g_gui;                   // 0x5d7080 (strat/gui_manager.h: +0x548 / +0x54c = the view width / height factors 0x5d75c8 / 0x5d75cc)
 // tick counters, 8 bytes each; timers index this array through their own key field.
-extern __int64 g_ticks[];                       // 0x5e2948
 // ---- stub interfaces for the virtual calls -------------------------------------------------------
 struct follow_iface {                           // the two follow objects at +0x480
     virtual void  s0(); virtual void  s1(); virtual void  s2(); virtual void  s3();
@@ -2135,8 +2134,6 @@ struct Group {                                                                  
     char pad18[0x30 - 0x18];
 };
 extern Group* g_anims;                                                           // 0xa76628
-extern int* g_skins_begin;                                                         // 0x8ed4f7c (vector<int>, entry ptr at +0x1e8)
-extern unsigned g_skin_count;                                                     // 0x8ed4f88
 
 // @ 0x49f060
 // Decide whether party `a` can be attached to `b`, and where the join point is. When the leader of `b` is not
@@ -2271,8 +2268,8 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         count = 1;
     } else {
         unsigned t = (unsigned)g_game->chars[party].flags & 0xf;
-        def->init((FxRes*)(t < (unsigned)g_skin_count
-                              ? *(void**)((char*)g_skins_begin + 0x1e8 + t * 0x1f8) : 0));
+        def->init((FxRes*)(t < (unsigned)(unsigned)g_anim.char_count
+                              ? *(void**)((char*)g_anim.skins + 0x1e8 + t * 0x1f8) : 0));
         int level = g_game->chars[party].level;
         for (int i = 0; i < 10; i++)
             *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,
@@ -2865,7 +2862,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             in_key = 1;
             first = 0;
             for (;;) {
-                g_keyboard.frame(0);
+                g_keyboard.update(0.0f);
                 if (!first) {
                     first = 1;
                     tstring s0 = renumber((int)buf, idx, 1, &pr_lo, &pr_hi);

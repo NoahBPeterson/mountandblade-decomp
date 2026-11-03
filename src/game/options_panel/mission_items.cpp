@@ -17,7 +17,6 @@
 using rgl::vector4;
 
 // ---- globals --------------------------------------------------------------------------------------------
-extern int g_ticks[];                                           // 0x5e2948 / 0x5e294c (two-dword clock)
 extern char* g_game;                                            // 0x5e2930 (the GameData instance)
 extern char* g_menus;                                           // 0x5e29b0 (the menu array)
 extern int g_5e2930_dummy;
@@ -58,6 +57,7 @@ struct frustum_ctor { void ctor(); };   // 0x41ef60
 // vtable where the original has functions; deriving from head_rec keeps the layout (id at +8, name at +0x1c) and
 // the slots real. `item_base` stays as the name this file uses.
 #include "../head_rec.h"
+#include "../../include/clock_table.h"
 struct item_base : head_rec {
     // head_rec's ctor sets +8 to 0x63; these records store 99 instead, so the ctor here finishes the job.
     item_base() { w08 = 99; }
@@ -108,18 +108,18 @@ MissionBlocker::MissionBlocker()
     _ReadWriteBarrier();
     w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
-    clock = g_ticks[0];
-    clock_hi = g_ticks[1];
+    clock = ((int*)g_ticks)[0];
+    clock_hi = ((int*)g_ticks)[1];
     f58 = 1.0f;
     f40 = -1;
     f5c = 0;
     CONSTRUCT_FRUSTUM(fst);
     f_2a8 = 0;
-    f_2b0 = g_ticks[0];
-    f_2b4 = g_ticks[1];
+    f_2b0 = ((int*)g_ticks)[0];
+    f_2b4 = ((int*)g_ticks)[1];
     f_2b8 = 0;
-    f_2c0 = g_ticks[0];
-    f_2c4 = g_ticks[1];
+    f_2c0 = ((int*)g_ticks)[0];
+    f_2c4 = ((int*)g_ticks)[1];
     _ReadWriteBarrier();
     f_d4 = 0;
     f_d8 = 0;
@@ -260,8 +260,8 @@ ItemA::ItemA()
     _ReadWriteBarrier();
     w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
-    clock = g_ticks[0];
-    clock_hi = g_ticks[1];
+    clock = ((int*)g_ticks)[0];
+    clock_hi = ((int*)g_ticks)[1];
     _ReadWriteBarrier();
     f5c = 0;
     f58 = 1.0f;
@@ -274,8 +274,8 @@ ItemB::ItemB()
     _ReadWriteBarrier();
     w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
-    clock = g_ticks[0];
-    clock_hi = g_ticks[1];
+    clock = ((int*)g_ticks)[0];
+    clock_hi = ((int*)g_ticks)[1];
     _ReadWriteBarrier();
     f5c = 0;
     f58 = 1.0f;
@@ -288,8 +288,8 @@ ItemC::ItemC()
     _ReadWriteBarrier();
     w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
-    clock = g_ticks[0];
-    clock_hi = g_ticks[1];
+    clock = ((int*)g_ticks)[0];
+    clock_hi = ((int*)g_ticks)[1];
     _ReadWriteBarrier();
     f5c = 0;
     f58 = 1.0f;

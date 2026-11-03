@@ -47,7 +47,7 @@ void Animator::randomise()
 // @ 0x4eb3c0
 void FaceGen::refresh()
 {
-    int n = g_skins_begin[skin].n_elems - 1;
+    int n = g_anim.skins[skin].n_elems - 1;
     for (int i = 0; i < n; i++)
         (&g_dummy_mat)[i] = deform_rows[i]->get_float();
     f360 = sl_age->get_float();
@@ -55,13 +55,13 @@ void FaceGen::refresh()
     ent->clear();
     int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int zero = 0;
-    g_cur = clamp_index(&flags, &zero, &g_char_count);
+    g_cur = clamp_index(&flags, &zero, &g_anim.char_count);
     g_dummy1 = f364;
     g_dummy0 = f360;
     g_anim.material = f35c;
     g_anim.set = f350 - 1;
     g_anim.item = f354 - 1;
-    int r = f358 % g_skins_begin[g_cur].div;
+    int r = f358 % g_anim.skins[g_cur].div;
     g_anim.variant = r;
     g_anim.f10 = r;
     void *a, *b, *c;

@@ -57,6 +57,8 @@
 #include "../../include/height_field.h"
 #include "../agent/curve.h"   // Curve: set_rec_phase 0x433b20 (the canonical class of the Skeleton record)
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/rec78.h"
+#include "../../include/emit_ids.h"
 
 #undef resmgr
 #undef g_resmgr
@@ -2476,11 +2478,11 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
 }
 
 // ---- Mission::spawn_prop: instantiate scene-prop record props[*idx] as a world entity (meshes, collision shape, 3D sounds) ----
-// views of tables of other objects (offsets read here): g_tbl20 entries 0x48 bytes at +0x1c, count at +0x18; g_tbl78 records
+// views of tables of other objects (offsets read here): g_ptypes entries 0x48 bytes at +0x1c, count at +0x18; g_propkinds records
 // flags +0x10, meshes +0x40, shape +0x50, sounds +0x6c; ItemKind sounds +0x228
 struct Rec20Entry { tstring name; char pad10[0x20 - 0x10]; res_shape* shape; char pad24[0x48 - 0x24]; };   // +0x20 the body resource
 struct Rec20V { char pad0[0x18]; int count; Rec20Entry* entries; };
-static inline Rec20V& r20(int i) { return *(Rec20V*)&g_tbl20[i]; }
+static inline Rec20V& r20(int i) { return *(Rec20V*)&g_ptypes[i]; }
 static inline unsigned r78_flags(Rec78* r) { return *(unsigned*)((char*)r + 0x10); }
 static inline std::vector<res_obj*>& r78_meshes(Rec78* r) { return *(std::vector<res_obj*>*)((char*)r + 0x40); }
 static inline res_shape* r78_shape(Rec78* r) { return *(res_shape**)((char*)r + 0x50); }
@@ -2544,7 +2546,7 @@ void Mission::spawn_prop(int* idx, int* id)
         if (tbl < 0 || tbl >= g_tbl78_count) {
             tbl = -1;
         } else {
-            Rec78* rec = &g_tbl78[tbl];
+            Rec78* rec = &g_propkinds[tbl];
             if (g_flag5a9fb0 != 0 || !(r78_flags(rec) & 0x4000))
                 meshes = r78_meshes(rec);
             shape_res = r78_shape(rec);
@@ -2603,7 +2605,7 @@ after:
                 vector4 dir, col;
                 ((level*)scene_world)->light_at(r->m18.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
             }
-            if (r->kind == 0 && tbl >= 0 && tbl < g_tbl78_count && (r78_flags(&g_tbl78[tbl]) & 0x12000))
+            if (r->kind == 0 && tbl >= 0 && tbl < g_tbl78_count && (r78_flags(&g_propkinds[tbl]) & 0x12000))
                 m->f10c = 0xffff;
             else
                 m->f10c = 0x1ffff;
@@ -2613,12 +2615,12 @@ after:
         }
         if (shape_res) {
             if (r->kind == 3 || r->kind == 5 ||
-                (r->kind == 0 && tbl >= 0 && ((r78_flags(&g_tbl78[tbl]) & 0xff) == 5 || (r78_flags(&g_tbl78[tbl]) & 0xff) == 10)))
+                (r->kind == 0 && tbl >= 0 && ((r78_flags(&g_propkinds[tbl]) & 0xff) == 5 || (r78_flags(&g_propkinds[tbl]) & 0xff) == 10)))
                 e->shape = ((body_res*)shape_res)->copy_shape();
             shape_base* sh = ((shape_resource*)shape_res)->clone_shape();
             int v = 8;
             if (r->kind == 0 && tbl >= 0) {
-                unsigned fl = r78_flags(&g_tbl78[tbl]);
+                unsigned fl = r78_flags(&g_propkinds[tbl]);
                 if ((char)fl == 8)
                     v = 0x10c;
                 else if (fl & 0x4000)
@@ -2676,8 +2678,8 @@ done_shape:
     int ty = r->kind;
     if (ty == 0) {
         int ri = r->id;
-        if (ri >= 0 && ri < g_tbl78_count && rsnd(&g_tbl78[ri]).count > 0) {
-            SoundSet* ss = &rsnd(&g_tbl78[ri]);
+        if (ri >= 0 && ri < g_tbl78_count && rsnd(&g_propkinds[ri]).count > 0) {
+            SoundSet* ss = &rsnd(&g_propkinds[ri]);
             ((Placement*)g_game)->set_matrix(&r->m18);
             g_game->f1a1f0 = *idx;
             SceneEnt* en = P_ENT(r);
@@ -6389,9 +6391,9 @@ void Agent::process_blow(int unused)
         int e1 = g_anim_table.get_f1f0(vi);
         int e2 = g_anim_table.get_f1f4(vi);
         if (e1 == 0)
-            e1 = g_voice_default_a;
+            e1 = g_emit_id[2];
         if (e2 == 0)
-            e2 = g_voice_default_b;
+            e2 = g_emit_id[3];
         if (e1 >= 0) {
             Emit* em = g_mission->spawn_effect(e1, (const rgl::mat4*)&m2, (int)(ef + ef));
             float s = (ef + 10.0f) * 0.1f;
@@ -6515,7 +6517,6 @@ void Agent::process_blow(int unused)
 // ---- Agent::swing_trace: the melee swing / missile hit test ------------------------------------------------------------------------
 // AgentX::f100_is_0x48_and_charged 0x432470: declared in agent3/agent_types.h (agent3: out of line at the damage-doubling site; inlined as couching()); the agent calls it with an unused agent in ecx
 int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (agent2/agent_stats.cpp)
-extern char* g_propkinds;                          // 0x5e29dc (PropKind, 0x78 bytes: flags at +0x10, the sound set at +0x6c)
 extern rgl::matrix g_last_hit_frame;                // 0xa708d0
 static __forceinline int round_inl(const float& x)
 {
@@ -6882,7 +6883,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                     PlacedObj* pr = &((PlacedObj*)((Vec1c8*)&g_mission->props)->first)[pi];
                     prop_done = 1;
                     if (pr->kind == 0) {
-                        unsigned kf = prop_flags(g_propkinds + pr->id * 0x78) & 0x8000;
+                        unsigned kf = prop_flags((char*)g_propkinds + pr->id * 0x78) & 0x8000;
                         if ((kf != 0 && 0.0f < pr->hp()) || kf == 0) {
                             float dmg = 0.0f;
                             int flg = 0;
@@ -6890,7 +6891,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 hit_damage(0, missile, &dmg, (unsigned*)&flg, 0xffffffff, scale);
                                 pr->hp() = pr->hp() - dmg;
                             }
-                            char* kind = g_propkinds + pr->id * 0x78;
+                            char* kind = (char*)g_propkinds + pr->id * 0x78;
                             ((Placement*)g_game)->set_matrix(&pr->m18);
                             g_game->f1a1f0 = pi;
                             g_a70448 = pi;
@@ -7876,7 +7877,6 @@ reset_pos:
 // ---- Agent::update, Agent::tick: the per-frame agent update ---------------------------------------------------------------------------
 struct SubV { char pad0[8]; unsigned flags; char padc[0x1c - 0xc]; float ev[4]; char pad2c[0x40 - 0x2c]; };   // 0x40 bytes: a part of an animation (flags: 0x100 footstep dust, 0x200 sound)
 struct AnimDefW { char pad0[0x10]; SubV* subs; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x45f660 reads it
-extern int g_default_fx;                                // 0x8ed50a8
 extern int g_snd_224;                                   // 0x5aa224 (footstep sounds)
 extern int g_snd_228;                                   // 0x5aa228
 extern int g_snd_22c;                                   // 0x5aa22c
@@ -8026,7 +8026,7 @@ void Agent::update(float dt)
                                 float v = 0.0f;
                                 if (speed > 5.5f && fbc && (((shape_base*)fbc)->m8 & 0x4000))
                                     v = speed + 10.0f;
-                                if (fx1ac->idx != g_default_fx)
+                                if (fx1ac->idx != g_emit_id[4])
                                     v = v * 3.0f;
                                 ((Obj3*)fx1ac)->reset_pending((int)(v * 0.15f));
                             }

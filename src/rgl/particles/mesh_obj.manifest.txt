@@ -1,5 +1,5 @@
-../src/rgl/particles/mesh_obj.cpp  ?set_blend_mode@render_cache@@QAEXH@Z  0040e940  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?set_texcoord_gen@render_cache@@QAEXHH@Z  0040ea00  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?set_blend_mode@renderer@@QAEXH@Z  0040e940  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?set_texcoord_gen@renderer@@QAEXHH@Z  0040ea00  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?get_flags@material@@QAEHXZ  0040eab0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??0aabb@rgl@@QAE@XZ  0040eaf0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?get70@mesh@rgl@@QAEAAV?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@XZ  0040eba0  /O2 /MT /Gy /TP

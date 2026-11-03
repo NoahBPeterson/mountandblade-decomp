@@ -112,7 +112,7 @@ void __cdecl vmin3(float* a, const float* b);   // 0x468360
 
 // ---- render-state cache calls (global object 0xa17910; the class is src/game/renderer.h's, which needs rgl.h) ---------
 #include "../../include/renderer.h"       // renderer (shared)
-extern IDirect3DBaseTexture9* g_tex_cache[];    // 0xa17e5c texture bound per stage
+extern IDirect3DBaseTexture9* g_tex_cache[3];    // 0xa17e5c texture bound per stage
 
 // ---- texture / shader / skin: the members the binders add (views of src/rgl/resource.h's classes) ---------------------
 struct texture_x : texture {

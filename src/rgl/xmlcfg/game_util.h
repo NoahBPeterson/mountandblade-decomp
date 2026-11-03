@@ -76,7 +76,7 @@ struct PendingForce {
     vector4 force;                          // 0xa18214
     vector4 torque;                         // 0xa18224
 };
-extern PendingForce g_pending;              // 0xa18210
+extern PendingForce g_pending_force;              // 0xa18210
 
 #include "../../include/timer.h"
 void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread);       // 0x432c40

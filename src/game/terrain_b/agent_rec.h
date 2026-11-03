@@ -7,7 +7,6 @@
 #define TERRAIN_B_AGENT_REC_H
 #include "../../rgl/rgl_math.h"
 
-extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s ticks
 
 #include "../view_state.h"           // tick, tk, Timer16, Vec4z, ViewBody, ViewState (shared with ui/troop_inv)
 struct Timed { int state; int pad; tick t; };       // 0x10: state (2 = idle) and the tick it was set

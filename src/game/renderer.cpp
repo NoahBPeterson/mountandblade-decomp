@@ -19,12 +19,14 @@
 #include "./renderer.h"
 #include "./config/config_block.h"           // Config g_cfg (0x5a9f98)
 struct options;
-extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h: i38 = +0x38, f80 = +0x80)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "./dev_buffer.h"
 #include "../include/frustum.h"
 #include "../include/mat4.h"
 #include "../include/height_field.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "../include/render_flags.h"
+#include "config/config_block.h"
+#include "../rgl/options.h"
 
 using rgl::vector4;
 using rgl::mat4;

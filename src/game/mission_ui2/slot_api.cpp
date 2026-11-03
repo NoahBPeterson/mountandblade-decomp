@@ -31,6 +31,7 @@
 #include "../../include/shape.h"
 #include "../../include/game_data.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../../include/clock_table.h"
 
 extern StrTable g_strtable;                     // 0x5e2a18
 extern char g_script[]; // 0xa70440
@@ -225,10 +226,10 @@ void Mission::retag_props(int from, int to)
         Rec1c8* r = base + i;
         if (r->destroyed)
             continue;
-        if (!r->name.equals(g_tbl78[from].name))
+        if (!r->name.equals(g_propkinds[from].name))
             continue;
         r->kind = to;
-        r->name = g_tbl78[to].name;
+        r->name = g_propkinds[to].name;
     }
 }
 

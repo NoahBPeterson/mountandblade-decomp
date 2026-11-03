@@ -37,5 +37,5 @@
 ../src/game/triggers/trigger_vec.cpp  ?read@MapIcon@@QAEXAAUstream_base@@@Z  004c20c0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?read@MissionTemplate@@QAEXAAUstream_base@@@Z  004c2300  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?read@PresentationRec@@QAEXAAUstream_base@@@Z  004c23f0  /O2 /MT /Gy /TP
-../src/game/triggers/trigger_vec.cpp  ?dialog_mgr_ctor@@YIPAXPAX@Z  004c2470  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ??0DialogMgr@@QAE@XZ  004c2470  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?init@MetaMission@@QAEXXZ  004be730  /O2 /MT /Gy /TP

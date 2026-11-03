@@ -3,7 +3,6 @@
 #ifndef GAME_UI_COMMON_H
 #define GAME_UI_COMMON_H
 
-extern __int64 g_ticks[];                   // 0x5e2948 clock table, indexed by a per-object clock index (0x4625d0, 0x488560, 0x48a420)
 
 extern unsigned g_rand_seed;                // 0x5d7078 (seeded by 0x462e20, read back after the multiply steps)
 

@@ -18,9 +18,6 @@
 #include "../../include/rec1c8.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "./cell_grid.h"
 #include "./cell_world.h"
-struct render_cache {
-    void set_blend_mode(int mode);   // 0x40e940 (rgl/particles/render_cache.h; that header's g_render clashes with renderer.h's): the renderer object's blend-state cache
-};
 #include "./terrain.h"
 #include "./records.h"
 #include "./game_data.h"
@@ -65,6 +62,7 @@ struct render_cache {
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../include/render_flags.h"
 
 using rgl::vector4;
 using rgl::matrix;
@@ -214,7 +212,7 @@ void render_batch::render_scene(scene* sc)
                 g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 1);
             }
         }
-        ((render_cache*)&g_render)->set_blend_mode(1);   // 0x40e940
+        g_render.set_blend_mode(1);   // 0x40e940
         if (g_render.alpha_mode)
             g_render.dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
         g_render.alpha_mode = 0;
@@ -892,7 +890,7 @@ void Terrain::generate_heights()
     float scale = (r1 * 0.5f + 1.0f) * (wy + wx) * 0.5f;
     float r2 = (float)(rand() % 15817) * 6.322312e-05f;
     noise_seed = (r2 * 0.5f + 1.0f) * (wy + wx) * 0.2f;
-    float fl = (float)((g_field_mask - 1) & flags) * 0.01f;
+    float fl = (float)(((unsigned)g_bit[7] - 1) & flags) * 0.01f;
     float off[3];
     off[0] = (float)(rand() % 15817) * 0.6322311f;
     off[1] = (float)(rand() % 15817) * 0.6322311f;
@@ -946,7 +944,7 @@ void Terrain::generate_heights()
         lim = &w;
     }
     // random brush strokes, coarse to fine
-    int lv = (int)(flags >> 14 & (g_field_mask - 1));
+    int lv = (int)(flags >> 14 & ((unsigned)g_bit[7] - 1));
     if (lv < 0) lv = 0;
     else if (lv > 99) lv = 99;
     float ratio = scale / ((float)pow(2.0, (double)((100 - lv) * 0.045f)) * 4.0f);
@@ -1539,10 +1537,10 @@ void FaceRace::relax(int skip, float* v)
 // @ 0x473800
 FaceRace* FaceGenome::unpack(const unsigned __int64* key)
 {
-    pick_b = ((unsigned)key[0] & (g_mask64 - 1)) - 1;
-    pick_a = ((unsigned)(key[0] >> 6) & (g_mask64 - 1)) - 1;
-    pick_c = (unsigned)(key[0] >> 12) & (g_mask64 - 1);
-    pick_d = (unsigned)(key[0] >> 18) & (g_mask64 - 1);
+    pick_b = ((unsigned)key[0] & ((unsigned)g_bit[6] - 1)) - 1;
+    pick_a = ((unsigned)(key[0] >> 6) & ((unsigned)g_bit[6] - 1)) - 1;
+    pick_c = (unsigned)(key[0] >> 12) & ((unsigned)g_bit[6] - 1);
+    pick_d = (unsigned)(key[0] >> 18) & ((unsigned)g_bit[6] - 1);
     FaceRace* r = &races[race];
     if (pick_b >= r->n_b)
         pick_b = -1;
@@ -1552,8 +1550,8 @@ FaceRace* FaceGenome::unpack(const unsigned __int64* key)
         pick_c = 0;
     if (pick_d >= r->n_d)
         pick_d = 0;
-    age = (float)(int)((unsigned)(key[0] >> 24) & (g_mask64 - 1)) * 0.015873017f;
-    weight = (float)(int)((unsigned)(key[0] >> 30) & (g_mask64 - 1)) * 0.015873017f;
+    age = (float)(int)((unsigned)(key[0] >> 24) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
+    weight = (float)(int)((unsigned)(key[0] >> 30) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
     int i = 0;
     for (r = &races[race]; i < r->nmorph; r = &races[race]) {
         int w = 1;
@@ -1562,7 +1560,7 @@ FaceRace* FaceGenome::unpack(const unsigned __int64* key)
             w = 2;
             sh -= 63;
         }
-        morph[i] = (float)(int)((unsigned)(key[w] >> sh) & (g_mask8 - 1)) * 0.14285715f;
+        morph[i] = (float)(int)((unsigned)(key[w] >> sh) & ((unsigned)g_bit[3] - 1)) * 0.14285715f;
         i++;
     }
     return r;

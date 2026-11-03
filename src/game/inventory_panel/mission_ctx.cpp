@@ -12,6 +12,7 @@
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
 #include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
+#include "../game_globals.h"      // g_bit (0x5a8e68)
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
@@ -72,10 +73,7 @@ struct GenB {
     void f();                                           // 0x494310 (this = 0x5aa128; SoundW::stop_all of world_data/world_data.cpp)
 };
 int save_game(int id, tstring* name);                  // 0x4e8980
-struct DialogMgr {                                      // the dialog manager at 0x8ed50c8
-    void start(int a, int b, int c, int d, char e);     // 0x4610b0 (ret 0x14)
-};
-extern DialogMgr g_dialogs;                             // 0x8ed50c8
+#include "../dialog_mgr.h"                              // DialogMgr g_dialogs (0x8ed50c8)
 
 
 int count_hero_items();                                 // 0x513e10
@@ -84,9 +82,7 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 // ---- objects and constants of other translation units ----------------------------------------------------------------
 #include "../ui/named_rec.h"                            // NamedRec: setup 0x48a3a0 (ret 8)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-struct Slot {
-    int is_ready(int index);   // 0x487900 (ret 4; game/mesh_slot: Slot::is_ready, the keyboard slot table)
-};
+#include "../slot.h"
 struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 #include "../key_names.h"
 #include "../../include/logger.h"                     // Logger g_debug_log (0x5a9f30): slot 10 (+0x28) prints one line
@@ -108,6 +104,8 @@ int g_scene_counter;                                // 0xa735c0
 
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 #include "../window_mgr.h"      // slot_as<T>(i)
+#include "../../include/render_flags.h"
+#include "../shadow_map.h"
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -135,13 +133,11 @@ extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x
 extern tstring g_scratch;                               // 0xa70464
 extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
-extern ShadowMapP* g_shadow_map;                                    // 0xa70248
 extern int g_psys_scene;            // 0xa170c0
 #include "../game_globals.h"      // g_module_settings.show_quest_notes (canonical)
 extern int g_a171b8;            // 0xa171b8
 extern int g_a17454;            // 0xa17454
 extern int g_a17854;            // 0xa17854
-extern int g_use_shaders;       // 0x5e28fc
 extern int g_no_cam;            // 0x5a9fb0
 extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
@@ -285,7 +281,7 @@ void MapFlags::commit(char* out)
 // @ 0x513b10
 unsigned MissionCtx::pop_key()
 {
-    unsigned* p = (unsigned*)orig::g_bit;
+    unsigned* p = (unsigned*)g_bit;
 
     do {
         unsigned k = *p;
@@ -294,7 +290,7 @@ unsigned MissionCtx::pop_key()
             return k;
         }
         p += 2;
-    } while ((int)p < (int)(orig::g_bit + 32));
+    } while ((int)p < (int)(g_bit + 32));
     return 0;
 }
 
@@ -725,9 +721,9 @@ void Screen::frame_update(float dt)
     char flag;                                      // 1 while the map is idle
     bool start;
 
-    if (g_shadow_map != 0 && g_shadow_map->f48[0x50 / 4] != g_psys_scene
+    if (g_shadow_map.target != 0 && ((ShadowMapP*)g_shadow_map.target)->f48[0x50 / 4] != g_psys_scene
         && g_a70438 == (int)g_level && g_use_shaders != 0)
-        g_shadow_map->render();
+        ((ShadowMapP*)g_shadow_map.target)->render();
 
     cam.perspective = 1;
     cam.nearz = 0.2f;
@@ -985,7 +981,7 @@ no_party:
                 || PARTIES->get(bpid)->action == 6 || PARTIES->get(bpid)->action == 9)
                 GD_I(0x13aa4) = 1;
         }
-        if (g_a171b8 != 0) {
+        if (g_keyboard.down[57] != 0) {
             PARTIES->get(GD_I(0x78))->action = 0;
             PARTIES->get(GD_I(0x78))->reissue_order();
             GD_I(0x13aa4) = 2;
@@ -1004,7 +1000,7 @@ no_party:
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_no_cam != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
+    if (g_no_cam != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {
@@ -1226,8 +1222,8 @@ void MissionCtx::update_anim()
                 int k = ((char*)t)[0x7a] & 0xf;
                 if (k < 0)
                     k = 0;
-                else if (k > (*(int*)&g_skill_tbl[36].cap))
-                    k = (*(int*)&g_skill_tbl[36].cap);
+                else if (k > (*(int*)&g_skill_tbl[36].max_rank))
+                    k = (*(int*)&g_skill_tbl[36].max_rank);
                 int n = t->f58[0] + k * 2 + 0x23;
                 float g = (float)(int)((float)n * g_half + 3.0f);
                 if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips

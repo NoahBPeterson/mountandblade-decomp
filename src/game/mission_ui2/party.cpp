@@ -15,6 +15,7 @@
 #include "../../include/party.h"
 #include "../../include/game_recs.h"
 #include "../../include/game_data.h"
+#include "../../include/clock_table.h"
 
 
 // the six member slots of a party template (+0x40): troop, minimum, maximum and flags (bit 0: prisoners)

@@ -19,6 +19,13 @@
 #include "../../rgl/mesh.h"
 #include "../key_names.h"
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_warp_x;                                     // 0x5d70b4
+int g_warp_y;                                     // 0x5d70b8
+int g_saved_x;                                      // 0x5e2130
+int g_saved_y;                                      // 0x5e2134
+
+
 // ======================================================= slice s0052cf60: functions
 #undef g_game_s2cf60
 #define g_game_s2cf60 (*(Game_s2cf60**)&g_game)
@@ -64,7 +71,7 @@ void MapEditor_s2cf60::update()
         dt = 0.06f;
 
     // --- mode switch keys ----------------------------------------------------------------------
-    if (g_a170dc != 0 && g_a174dc == 0) {
+    if (g_keyboard.down[2] != 0 && g_keyboard.prev[2] == 0) {
         g_game_s2cf60->sub_option = 0;
         g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
         g_editor_dialog_s2cf60.update_checks();
@@ -72,7 +79,7 @@ void MapEditor_s2cf60::update()
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
     }
-    if (g_a170e0 != 0 && g_a174e0 == 0) {
+    if (g_keyboard.down[3] != 0 && g_keyboard.prev[3] == 0) {
         g_game_s2cf60->sub_option = 1;
         g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
         g_editor_dialog_s2cf60.update_checks();
@@ -80,7 +87,7 @@ void MapEditor_s2cf60::update()
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
     }
-    if (g_a170e4 != 0 && g_a174e4 == 0) {
+    if (g_keyboard.down[4] != 0 && g_keyboard.prev[4] == 0) {
         g_game_s2cf60->sub_option = 2;
         g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
         g_editor_dialog_s2cf60.update_checks();
@@ -91,12 +98,12 @@ void MapEditor_s2cf60::update()
 
     // --- free drag: rotate the two 2x2 basis blocks by the editor's angle, then move the terrain
     //     along the rotated step ------------------------------------------------------------------
-    if (g_a1715c != 0) {
+    if (g_keyboard.down[34] != 0) {
         mat2_s2cf60 keep  = {{1.0f, 0.0f, 0.0f, 1.0f}};   // the original initialises a second identity block
         mat2_s2cf60 basis = {{1.0f, 0.0f, 0.0f, 1.0f}};
         basis.rotate_2x2(this->angle);
-        float a = ((*(float*)((char*)&g_keyboard + 0x80c)) * dt) * g_percent;
-        float b = ((*(float*)((char*)&g_keyboard + 0x810)) * dt) * g_percent;
+        float a = ((*(float*)((char*)&g_keyboard + 0x80c)) * dt) * 0.01;
+        float b = ((*(float*)((char*)&g_keyboard + 0x810)) * dt) * 0.01;
         vector4 pos;
         pos.x = basis.m[0] * a - basis.m[2] * b;
         pos.y = basis.m[1] * a - basis.m[3] * b;
@@ -114,7 +121,7 @@ void MapEditor_s2cf60::update()
         pos.x = 0.0f;
         pos.y = 0.0f;
         if (g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0)
-            pos.z = -((dt * g_percent) * (*(float*)((char*)&g_keyboard + 0x810)));
+            pos.z = -((dt * 0.01) * (*(float*)((char*)&g_keyboard + 0x810)));
         else
             pos.z = 0.0f;
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);
@@ -125,11 +132,11 @@ void MapEditor_s2cf60::update()
     }
 
     // --- the three per-mode rotate keys (blocked while a modifier is held) -----------------------
-    if (g_a17188 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
+    if (g_keyboard.down[45] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
         mat3_s2cf60  m;
         float angle;
         identity3(&m);
-        angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step;
+        angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f;
         m.rotate_fu(angle);
         g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
@@ -137,11 +144,11 @@ void MapEditor_s2cf60::update()
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
         g_game_s2cf60->dirty = 1;
     }
-    if (g_a17128 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
+    if (g_keyboard.down[21] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
         mat3_s2cf60  m;
         float angle;
         identity3(&m);
-        angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step;
+        angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f;
         m.rotate_su(angle);
         g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
@@ -149,14 +156,14 @@ void MapEditor_s2cf60::update()
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
         g_game_s2cf60->dirty = 1;
     }
-    if (g_a17184 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        if (g_a17194 != 0)
+    if (g_keyboard.down[44] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
+        if (g_keyboard.down[48] != 0)
             goto L5c6;
         {
             mat3_s2cf60  m;
             float angle;
             identity3(&m);
-            angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step;
+            angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f;
             m.rotate_sf(angle);
             g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
             g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
@@ -168,19 +175,19 @@ void MapEditor_s2cf60::update()
 
     // --- highlight colour: the "no key" colour dims all three lanes, a held rotate key dims one -
 L59f:
-    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0)
+    if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0)
         goto L5c6;
     goto L666;
 
 L5c6:
-    if (g_a17188 != 0)
+    if (g_keyboard.down[45] != 0)
         goto L673;
-    if (g_a17128 != 0)
+    if (g_keyboard.down[21] != 0)
         goto L728;
-    if (g_a17184 != 0)
+    if (g_keyboard.down[44] != 0)
         goto L7dd;
     {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
         vector4 c;
         c.x = dim;
         c.y = dim;
@@ -193,11 +200,11 @@ L5c6:
     }
 
 L666:
-    if (g_a17188 == 0)
+    if (g_keyboard.down[45] == 0)
         goto L71b;
 L673:
-    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+    if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
         vector4 c;
         c.x = dim;
         c.y = 1.0f;
@@ -210,11 +217,11 @@ L673:
     }
 
 L71b:
-    if (g_a17128 == 0)
+    if (g_keyboard.down[21] == 0)
         goto L7d0;
 L728:
-    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+    if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
         c.y = dim;
@@ -227,11 +234,11 @@ L728:
     }
 
 L7d0:
-    if (g_a17184 == 0)
+    if (g_keyboard.down[44] == 0)
         goto L885;
 L7dd:
-    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+    if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
         c.y = 1.0f;
@@ -254,11 +261,11 @@ L885:
     }
 
     // --- drag the selection (needs a held code 0x52/0xd2 key) ----------------------------------
-    if ((*(int*)((char*)&g_keyboard + 0xc4)) != 0 && g_a1758c == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0))
+    if ((*(int*)((char*)&g_keyboard + 0xc4)) != 0 && g_keyboard.prev[46] == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0))
         g_scene_s2cf60->mesh_s2cf60.make_copy(this->drag_state);
 
-    if (g_a17190 != 0 && g_a17590 == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) &&
-        g_a1717c == 0 && g_keyboard.down[0x36] == 0) {
+    if (g_keyboard.down[47] != 0 && g_keyboard.prev[47] == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) &&
+        g_keyboard.down[42] == 0 && g_keyboard.down[0x36] == 0) {
         g_scene_s2cf60->mesh_s2cf60.apply_copy(this->drag_state);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
@@ -837,13 +844,13 @@ void MapEditor_s2f250::update()
         if (this->f314 < g_ticks[0] - 35000)
             set_list_scroll(-1);
     }
-    if ((*(int*)((char*)&g_keyboard + 0x34c)) != 0 && g_key_inc_prev == 0)
+    if ((*(int*)((char*)&g_keyboard + 0x34c)) != 0 && g_keyboard.prev[208] == 0)
         this->f318 = (int)g_ticks[0];
-    if ((*(int*)((char*)&g_keyboard + 0x32c)) != 0 && g_key_dec_prev == 0)
+    if ((*(int*)((char*)&g_keyboard + 0x32c)) != 0 && g_keyboard.prev[200] == 0)
         this->f314 = (int)g_ticks[0];
-    if ((*(int*)((char*)&g_keyboard + 0x34c)) == 0 && g_key_inc_prev != 0)
+    if ((*(int*)((char*)&g_keyboard + 0x34c)) == 0 && g_keyboard.prev[208] != 0)
         this->f318 = 0;
-    if ((*(int*)((char*)&g_keyboard + 0x32c)) == 0 && g_key_dec_prev != 0)
+    if ((*(int*)((char*)&g_keyboard + 0x32c)) == 0 && g_keyboard.prev[200] != 0)
         this->f314 = 0;
 
     // rebuild the preview when the kind / record / variant changed
@@ -991,9 +998,9 @@ place:
     goto refresh;
 
 set_cursor:
-    SetCursorPos(g_cursor_x, g_cursor_y);
-    g_saved_x = g_cursor_x;
-    g_saved_y = g_cursor_y;
+    SetCursorPos(g_warp_x, g_warp_y);
+    g_saved_x = g_warp_x;
+    g_saved_y = g_warp_y;
     g_map_s2f250->object->frame.o = this->f304;
     g_map_s2f250->object->frame.o.z += g_game_s2f250->f1a0ac;
     g_map_s2f250->object->f140 = 1;
@@ -1019,7 +1026,7 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         k = 0.6f * 0.1;
     // two statements: the original rounds (y+x)*k to 24 bit before multiplying by 0.005
     float angle = ((*(float*)((char*)&g_keyboard + 0x80c)) + (*(float*)((char*)&g_keyboard + 0x810))) * k;
-    angle = angle * g_k005;
+    angle = angle * 0.005f;
 
     *f1 = 0;
     *f2 = 0;
@@ -1027,17 +1034,17 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
 
     vector2_s2fe40 m[2];
 
-    if (g_a1715c != 0) {
+    if (g_keyboard.down[34] != 0) {
         vector2_s2fe40 a = vector2_s2fe40(1.0f, 0.0f);
         vector2_s2fe40 b = vector2_s2fe40(0.0f, 1.0f);
         m[0] = a;
         m[1] = b;
         ((Mat2_s2fe40*)&m[0])->rotate_2x2(yaw);
 
-        float dx = (*(float*)((char*)&g_keyboard + 0x80c)) * k * g_d001;
+        float dx = (*(float*)((char*)&g_keyboard + 0x80c)) * k * 0.01;
         pos[0] += m[0].x * dx;
         pos[1] += m[0].y * dx;
-        float dy = (*(float*)((char*)&g_keyboard + 0x810)) * k * g_d001;
+        float dy = (*(float*)((char*)&g_keyboard + 0x810)) * k * 0.01;
         pos[0] -= m[1].x * dy;
         pos[1] -= m[1].y * dy;
         *f1 = 1;
@@ -1047,7 +1054,7 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
     if ((*(int*)((char*)&g_keyboard + 0x5c)) != 0) {
         if (g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
             // (k*0.01) first, then *axis_y, to match the original's 24-bit rounding order
-            double dz = k * g_d001;
+            double dz = k * 0.01;
             pos[2] = pos[2] - dz * (*(float*)((char*)&g_keyboard + 0x810));
         } else
             pos[2] = 0.0f;
@@ -1055,32 +1062,32 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f4 = 1;
     }
 
-    if (g_a17120 != 0 && g_a17520 == 0) {
+    if (g_keyboard.down[19] != 0 && g_keyboard.prev[19] == 0) {
         Matrix12_s2fe40 tmp;
         Matrix12_s2fe40* id = identity3(&tmp);
         *(Matrix12_s2fe40*)out = *id;
         *f2 = 1;
     }
 
-    if (g_a17188 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
+    if (g_keyboard.down[45] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
         ((Matrix12_s2fe40*)out)->rotate_fu(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
-    if (g_a17128 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
+    if (g_keyboard.down[21] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
         ((Matrix12_s2fe40*)out)->rotate_su(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
-    if (g_a17184 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_a17194 == 0) {
+    if (g_keyboard.down[44] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
         ((Matrix12_s2fe40*)out)->rotate_sf(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
-    if (g_a1712c != 0) {
+    if (g_keyboard.down[22] != 0) {
         float c = cos(angle);
         float s = sin(angle);
         rotate_pair_s2fe40(out + 0, c, s);
@@ -1090,8 +1097,8 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f4 = 1;
     }
 
-    if (g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 &&
-        g_a17188 == 0 && g_a17128 == 0 && g_a17184 == 0) {
+    if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 &&
+        g_keyboard.down[45] == 0 && g_keyboard.down[21] == 0 && g_keyboard.down[44] == 0) {
         float s = g_one - angle * g_k005b;
         vec[0] = vec[0] * s;
         vec[1] = vec[1] * s;
@@ -1099,25 +1106,25 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f3 = 1;
         *f4 = 1;
     }
-    if (g_a17188 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
+    if (g_keyboard.down[45] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float s = g_one - angle * g_k005b;
         vec[0] = vec[0] * s;
         *f3 = 1;
         *f4 = 1;
     }
-    if (g_a17128 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
+    if (g_keyboard.down[21] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float s = g_one - angle * g_k005b;
         vec[1] = vec[1] * s;
         *f3 = 1;
         *f4 = 1;
     }
-    if (g_a17184 != 0 && g_a17194 != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
+    if (g_keyboard.down[44] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
         float s = g_one - angle * g_k005b;
         vec[2] = vec[2] * s;
         *f3 = 1;
         *f4 = 1;
     }
-    if (g_a17194 != 0 && g_a17594 == 0 && (g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0)) {
+    if (g_keyboard.down[48] != 0 && g_keyboard.prev[48] == 0 && (g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0)) {
         vec[0] = 1.0f;
         vec[1] = 1.0f;
         vec[2] = 1.0f;

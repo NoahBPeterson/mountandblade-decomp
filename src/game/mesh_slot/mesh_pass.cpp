@@ -6,12 +6,16 @@
 #include "../../include/renderer.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../dev_buffer.h"    // buffer_pair (restore_all 0x4623c0): the canonical class of the device buffer pairs
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+char g_scene_dirty;                                 // 0x5e2938 (set when the device must be rebuilt before the next pass)
+
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
-extern char g_scene_dirty;                      // 0x5e2938 (set when the device must be rebuilt before the next pass)
 long __cdecl gfx_restore();                     // 0x4c1b00 (HRESULT: triggers/trigger_vec.cpp)
 struct sort_rec;
 bool __cdecl rec_less(sort_rec* const* a, sort_rec* const* b);   // 0x4622a0 (renderer.cpp: sort predicate of the queue records, taken by pointer)

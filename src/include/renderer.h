@@ -59,9 +59,14 @@ struct renderer {
     IDirect3DDevice9* dev;          // 0x618
     char pad61c[0x688 - 0x61c];
     int max_aniso;                  // 0x688                                      0x4617b0
-    char pad68c[0x754 - 0x68c];
+    char pad68c[0x74c - 0x68c];
+    int width;                      // 0x74c window width (renderer_setup 0x4c3510 publishes it)
+    int height;                     // 0x750 window height
     D3DMATRIX view;                 // 0x754                                      0x461630
     rgl::matrix cur;                // 0x794 current world matrix (also written as the second view slot by 0x461630)
+    int vsync;                      // 0x7d4 present interval cache (renderer_setup sets -1)
+
+    renderer();                                             // 0x4bc2d0 (config/config.cpp: dev = 0, width = 0, both matrices identity)
 
     void set_view(const rgl::mat4* p);                      // 0x461630
     void reset_state();                                     // 0x4617b0
@@ -73,6 +78,7 @@ struct renderer {
     void set_material(float power, const float* specular);  // 0x461e10
     void set_specular(const float* c);                      // 0x461eb0
     void set_blend_mode(int mode);                          // 0x40e940
+    void set_texcoord_gen(int stage, int mode);             // 0x40ea00
 
     // the debug drawer's matrix stack and primitives (src/rgl/shapes/shapes.cpp)
     __declspec(noinline) void translate(const rgl::vector4& t);                  // 0x408170

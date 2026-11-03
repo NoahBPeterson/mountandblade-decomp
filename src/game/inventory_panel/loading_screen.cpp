@@ -46,6 +46,7 @@ struct MusicTable {
 #include "../../rgl/rgl_string.h"
 #include "../rgl_mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../game_globals.h"
 using rgl::vector4;
 using rgl::mesh;
 
@@ -239,7 +240,6 @@ void Entries::add(const TrackEntry& val)
 
 #include "../str_table.h"
 extern StrTable g_strtable;                          // 0x5e2a18
-extern tstring  g_module_path;                       // 0x8ee3c28 (the module directory)
 
 void mb_error(const char* fmt, ...);                 // 0x42cc80
 void parse_module_info();                            // 0x4c05b0
@@ -276,7 +276,6 @@ struct text_stream {
 };
 
 struct Table2;                                       // built by MusicTable::build below (0x50f7e0)
-extern MusicTable g_music_situation;                          // 0xa73a10
 
 #include "../ini_file.h"                          // ini_file (load 0x4bd630) and g_module_info (0xa18238)
 
@@ -332,7 +331,7 @@ bool LoadingScreen::advance(int* step, int* total, tstring* text)
                 tstring name(g_module_path);
                 { tstring m("music.txt"); name.append(m); }
                 if (ts.open_read_text(name.c_str())) {
-                    g_music_situation.build((Src*)&ts);
+                    ((MusicTable*)&g_music_situation)->build((Src*)&ts);
                     ts.failed = 1;
                 } else {
                     mb_error("Unable to find module music file");

@@ -79,8 +79,6 @@ extern float g_140;                                         // 0x598e6c (140.0f)
 extern float g_one;                                         // 0x549d74 (1.0f)
 extern float g_half;                                        // 0x549d70 (0.5f)
 #include "../renderer.h"
-extern void* g_a17110;                                      // 0xa17110
-extern void* g_a17510;                                      // 0xa17510
 extern terrain_obj g_terrain_obj;                           // 0xa76630
 extern const char g_fmt_d[];                                // 0x54a0f4 "%d"
 

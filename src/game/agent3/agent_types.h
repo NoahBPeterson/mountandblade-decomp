@@ -104,7 +104,6 @@ inline bool Agent::f100_is_0x48_and_charged() const { return anim[1].cur == 0x48
 // AgentTable: src/game/agent_obj.h
 // Mission (g_mission 0x5e292c): src/game/mission.h
 #include "../mission.h"
-extern __int64 g_ticks[];                               // 0x5e2948 clock table (1e-5 s ticks)
 
 // ---- game data: troop records, parties, slot table (g_game 0x5e2930): the shared classes GameData / TroopRec / Party / Stack / Level494
 #include "../../include/game_data.h"

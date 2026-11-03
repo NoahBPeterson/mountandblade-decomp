@@ -15,7 +15,6 @@
 
 // ---- colour ramp: n stops (3 floats each, stride 0x10) from +0x2c, count at +0xac -----------------------------------
 #include "../ramp.h"                      // Ramp (the 0xb0-byte colour-ramp / material record; shared with mesh_slot)
-extern int g_use_shaders;                       // 0x5e28fc (0: colours are gamma-corrected on output; 0x463790)
 extern float g_ramp_gamma;                      // 0x5a9bfc (0x463790)
 
 #include "../../include/vec.h"
@@ -73,7 +72,6 @@ struct named_object;
 void __stdcall clear_f14(named_object* r);      // 0x4175f0
 union ReleaseFn { void (ShResMgr::*as_member)(void*); void (__stdcall *clear_f14)(named_object*); };
 extern ShResMgr g_shadow_resmgr;                // 0x5d6fa0
-extern int g_shadow_quality;                    // 0x5aa000 (0x463bc0)
 extern int g_max_tex_w;                         // 0xa17f84 (0x463bc0)
 extern int g_max_tex_h;                         // 0xa17f88 (0x463bc0)
 extern char g_use_hw_shadow;                    // 0xa17f24 (0x463e10, 0x464070, 0x4640d0)
@@ -84,5 +82,6 @@ extern char g_use_hw_shadow;                    // 0xa17f24 (0x463e10, 0x464070,
 #define g_resmgr_sh (*(ShResMgr*)&g_resmgr)       // ShResMgr: the calls game_state.cpp makes on the resource manager (a view of resource.h's g_resmgr)
 
 #include "../shadow_map.h"                    // ShadowMap (shared with terrain_b)
+#include "../../include/render_flags.h"
 
 #endif // TERRAIN_A_GAME_STATE_H

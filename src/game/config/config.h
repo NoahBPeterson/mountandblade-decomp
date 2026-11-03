@@ -25,11 +25,11 @@
 
 // ---- globals ---------------------------------------------------------------------------------------------------
 #include "../../include/renderer.h"            // g_render 0xa17910 (dev at +0x618 = 0xa17f28)
-extern int g_use_shaders;                        // 0x5e28fc (also g_use_shaders)
 extern int g_edit_key;                              // 0x5e28d0 first value of the line being edited
 extern int g_edit_value;                            // 0x5e28d4 second value of the line being edited
 extern "C" const char g_eq_sep[];                   // 0x593160 " = "
 extern __int64 g_ticks[];                           // 0x5e2948 clock table, 1e-5 s ticks (same table as gui_manager.h's g_time)
+extern const char g_eol[];                          // 0x54b118 ""
 
 void __cdecl refresh_settings_list(const tstring* page, char detailed);        // 0x4bb3f0
 void set_list_scroll(int delta);                    // 0x4bb260
@@ -74,16 +74,6 @@ struct CreateGameOptionsPage {
 // ---- input state and device set (0x4bc2d0..0x4bc430) -------------------------------------------------------------
 struct Matrix { float m[16]; };
 struct pos;                                          // src/include/mat4.h: the frame type the definition of 0x40cd00 names (config.cpp declares the function)
-struct DisplayState {                               // the input state prefix of InputSet plus two view matrices
-    char unk000[0x618];
-    int  unk618;                                    // +0x618 (cleared by 0x4bc2d0, 0x4bc350 reads +0x74c)
-    char unk61c[0x130];
-    int  unk74c;                                    // +0x74c
-    int  unk750;                                    // +0x750
-    Matrix mat1;                                    // +0x754
-    Matrix mat2;                                    // +0x794
-    DisplayState();                                 // 0x4bc2d0
-};
 struct InputSet {
     IDirectInput8A* dinput;                         // +0x000 0x4bc430
     IDirectInputDevice8A* keyboard;                 // +0x004
@@ -98,10 +88,10 @@ struct InputSet {
     int unk3[0x130 / 4];                            // +0x61c
     int unk74c;                                     // +0x74c a COM-style object whose vtable slot +0x28 is called by 0x4bc350
     int unk750;                                     // +0x750
-    int init_devices(HWND hwnd);                    // 0x4bc430
 };
 void __fastcall apply_input_settings(InputSet* self);   // 0x4bc350
-void __fastcall release_input_devices(InputSet* self);  // 0x4bc3d0
+struct Slot;
+void __fastcall release_input_devices(Slot* self);  // 0x4bc3d0
 
 // ---- the render batch's buffer table (0x4bc540..0x4bd0c0): dev_buffer / buffer_pair
 #include "../dev_buffer.h"
@@ -119,6 +109,7 @@ struct resource_manager_x {                         // the resource manager (0x5
 #include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0 (the one declaration)
 #define g_resmgr_x (*(resource_manager_x*)&g_resmgr)   // the 0x5d6fa0 object seen through the shader / texture view above
 #include "../render_batch.h"                   // render_batch (shared with terrain_b)
+#include "../../include/render_flags.h"
 struct font_details {                               // 0x1c: the staged glyph record Font::load 0x4d9aa0 copies into the
     float a, b, c, d, e, f, g;                      // table (a = u/f0, b = h/f4, c = w/f8, d = v/fc, e..g = shifts)
     font_details();                                 // 0x4bd120 (zeroes all seven)

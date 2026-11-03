@@ -36,9 +36,9 @@ using rgl::matrix;
 // ---- calls into other objects -----------------------------------------------------------------------------------------
 void mb_error(const char* fmt, ...);            // 0x42cc80
 extern int g_use_shaders;                       // 0x5e28fc
-extern int g_nav_param;                         // 0x59132c
 extern __int64 g_ticks[];                       // 0x5e2948
 extern ptype* g_ptypes;                         // 0x5e28f8
+extern int g_mesh_quality;                      // 0x5aa084
 #include "../../include/mat4.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
@@ -58,6 +58,14 @@ extern ptype* g_ptypes;                         // 0x5e28f8
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ptype.h"
+#include "../../include/clock_table.h"
+#include "../../include/render_flags.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_emit_id[12];                                  // 0x8ed5098 (bss: ids of the ambient and default effects)
+extern const int g_nav_param = 2;                  // 0x59132c (rdata)
+
 using rgl::mat3;
 mat3* __cdecl identity3(mat3* out);             // 0x40cd60
 matrix* __cdecl identity_pos(matrix* out);      // 0x40cd00
@@ -609,7 +617,7 @@ layers:
         pos.y = 0.15f;
         if (a->f10 == 1)
             pos.y = 0.65f;
-        idx = g_fog_id_a;
+        idx = g_emit_id[7];
         owner = 0;
         Emit* e0 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e0) {
@@ -617,7 +625,7 @@ layers:
             a->f250->add_emitter(e0);
             a->f1b0 = (int)e0;
         }
-        idx = g_fog_id_b;
+        idx = g_emit_id[8];
         owner = 0;
         Emit* e1 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e1) {
@@ -626,7 +634,7 @@ layers:
             a->f1b4 = (int)e1;
         }
         pos.y = pos.y + 0.6f;
-        idx = g_fog_id_c;
+        idx = g_emit_id[9];
         owner = 0;
         Emit* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e2) {

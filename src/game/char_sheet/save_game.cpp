@@ -32,7 +32,7 @@ void MapScreen::buttons(int arg)
                 g_main_menu.set_state(0x15);
                 return;
             }
-            if (f60->changed(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
+            if (f60->changed(0x10000) || (char)g_keyboard.is_ready(1)) {
                 g_main_menu.set_state(menu_sel);
                 return;
             }
@@ -87,6 +87,7 @@ STREAM_FWD_BIN_WRITER(file_writer)
 int file_writer::flush() { return ((bin_writer*)this)->bin_writer::flush(); }
 
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../include/clock_table.h"
 
 // @ 0x4e8980    int save_game(int version, tstring* name)
 int save_game(int version, tstring* name)

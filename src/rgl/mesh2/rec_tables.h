@@ -20,6 +20,9 @@
 #include "./mesh2_common.h"
 #include "./head_rec.h"
 #include "../../game/result_window.h"
+#include "../../include/render_flags.h"
+#include "../../include/d3d_caps.h"
+#include "../../game/game_globals.h"
 
 using rgl::vector4;
 
@@ -153,12 +156,6 @@ struct tstr_ll {
 
 // ---- options.dat loader (0x4c3a40) and GameApp::InitDeviceObjects (0x4c3510) -----------------------------------
 #include "../../include/renderer.h"   // canonical: g_render.pad504 (0xa17e14)
-extern D3DCAPS9 g_caps;                            // 0xa17f2c (GetDeviceCaps fills it here)
-extern int   g_renderer_width;                     // 0xa1805c
-extern int   g_renderer_height;                    // 0xa18060
-extern int   g_renderer_vsync;                     // 0xa180e4
-extern int   g_use_shaders;                        // 0x5e28fc (also g_dinput_enabled)
-extern int   g_shader_support;                     // 0x5a9fcc "use_vertex_shaders"
 
 struct font_ref { void set_device(IDirect3DDevice9* d); };   // 0x404c00 (CD3DFont::InitDeviceObjects, ret 4)
 
@@ -180,7 +177,6 @@ struct GameAppView {
 // the input object at 0xa17910 (apply_input_settings' argument), the device set at 0xa170c8 (init_devices), the render
 // batch at 0x5fe898 (init_decls) and the resource manager at 0x5d6fa0 (load_all) are config.h's InputSet,
 // render_batch.h's render_batch and rgl/core/resmgr.h's resmgr (included by rec_tables.cpp).
-extern tstring g_module_path;                              // 0x8ee3c28
 
 // the ini table at 0xa44240 (0x2c-byte entries: key tstring +0, value tstring +0x1c); get_float is inline (header)
 struct ini_entry_x { tstring key; char pad10[0xc]; tstring value; };
@@ -353,16 +349,7 @@ struct elem48_holder {
 #include "../../include/dialog_rec.h"      // DialogRec (vdel 0x4609d0: the vector deleting destructor): the shared dialog record
 struct tstr_rec { int w0, w4, w8; tstring s; };   // 0x1c bytes (the string sits at +0xc)
 
-struct scenefile_obj {
-    int  w000;
-    DialogRec* w004;         // +4   (freed first, moving to ecx for the call)
-    char pad8[0x24 - 8];
-    tstr_rec ts_a[0x400];    // +0x24
-    tstr_rec ts_b[0x400];    // +0x7024
-    char pad_e024[4];
-    tstring s_e028;          // +0xe028
-    ~scenefile_obj();
-};
+#include "../../game/dialog_mgr.h"    // DialogMgr: ~DialogMgr 0x4c4090 is defined in rec_tables.cpp
 
 struct music_rec {
     FSOUND_SAMPLE* sample;   // +0
