@@ -157,3 +157,27 @@ Effort: a literal or a string label is minutes (grep, replace, delete the extern
 member, rename); a canonical-header unification is 20-40 minutes because of header conflicts (cl compile loop 3-5 min on
 a loaded machine; `cl /Zs` syntax-only is the fast check). The pilot took about 4 hours, dominated by waiting for
 compiles, builds (resolve_map alone 15 min under load) and run_all.
+
+## 8. Lane D3 (mission5 / mesh_slot / terrain / rgl): what the data work found
+
+- Object overlays: one object, several views is the main reason a label stays. The unifications done: the input device record
+  at 0xa170c8 is `Slot` (include `game/slot.h`; `Keyboard` is a typedef; `down[]` / `prev[]` / `axis[]` are the key tables and look
+  axes, `init_devices` is 0x4bc430); the render state cache at 0xa17910 is `renderer` (its constructor is 0x4bc2d0, the window
+  size and present interval are members at +0x74c / +0x750 / +0x7d4); `DialogMgr` (0x8ed50c8), the skill table `SkillRec[42]`
+  (0x8ee3100: `max_rank` at +0x34 is what Troop::nibble clamps to, `cap` at +0x38 is the character sheet's), `item_mod[43]`
+  (0xa75f70), the 0x20-byte `ptype` table and the 0x78-byte `Rec78` / `PropKind` table.
+- A partial view named like the real class mangles identically (`struct renderer { ... }` in rgl/particles/render_cache.h,
+  `struct ShadowMap` in char_sheet/cs_common.h): that is how a TU that cannot include the real header still shares the storage
+  without an alias. The same name with a different type (`extern MarkerList g_list_a`, `extern char g_cfg[]`) is a second
+  symbol and a glue alias.
+- Annotations can be wrong by one field. `g_mat_vec` was annotated 0xa732c0 but the vectors begin at 0xa732bc (allocator
+  dword first): masked relocations hide this in the byte-exact rows and the standalone exe would have read `last` instead of `first`.
+  The first/last/end offsets in the original's code, not the annotation, decide (xref the operand in the image).
+- Names with two original addresses fail the build: three lane names collided with other addresses (`g_cursor_x` 0x5d7094
+  float vs int 0x5d70b4, `g_pending` 0x5e2a14 vs 0xa18210, `g_emit_pos` 0xa708c0 vs 0x8eb235c, `g_spawn_hi`); the D3 side was renamed
+  (`g_warp_x`, `g_pending_force`, `g_world_color`).
+- A constant that cl reassociates when it is a literal (`ch * 250.0f * 0.0625f`: the power-of-two factor moves in front) is
+  defined in another TU as the original had it (`g_54ab2c` in rgl/mesh2/gui_edit.cpp).
+- Compiler-constructed objects replace their hand stubs in static_init.cpp (`g_module_path`, `g_dialogs`, `g_item_mods`,
+  `g_skeletons`, `g_render`): the stub, its destructor stub and its table entry go in the same change, and the manifest rows of
+  the removed stubs go with them (the constructors themselves, 0x4c2470 / 0x4bc2d0, stay byte-exact as members).
