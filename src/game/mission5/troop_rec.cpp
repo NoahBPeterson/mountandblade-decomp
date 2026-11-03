@@ -336,7 +336,7 @@ static __forceinline int slot_cap(ItemRef* s)
         float f = (float)v * 0.13f;
         double d = floor(f);                        // 0x536b10
         int q = (int)d;
-        if (f - d > g_half)
+        if (f - d > 0.5f)
             q++;
         if (q < 1)
             q = 1;

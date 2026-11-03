@@ -5,6 +5,7 @@
 // Names are provisional.
 #include "../../include/image_addrs.h"
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <windows.h>
 #include <d3d9.h>
@@ -107,6 +108,7 @@ extern Output g_log;                 // 0x5a9f60
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 #include "../map_editor_obj.h"        // MapEditor (the object at 0x8ee3c48)
+#include "../ui_globals.h"      // UI / core globals
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 __int64 g_ticks[7];                                 // 0x5e2948 (clock table, 1e-5 s ticks)
@@ -154,7 +156,7 @@ int GameApp::Update()
     g_music_situation.tick();
     _FSOUND_Update();
 
-    if (g_no_cam) {
+    if (g_cfg.enable_edit_mode) {
         if (g_a17158 && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
             if (build_shader() < 0) {
                 mb_error("Unable to compile the effect file.");
@@ -164,7 +166,7 @@ int GameApp::Update()
             ((resource_manager*)&g_resmgr)->resolve_effect_sets(g_effect);
         }
     }
-    if (g_no_cam) {
+    if (g_cfg.enable_edit_mode) {
         if (g_keyboard.down[0x32] && !g_keyboard.prev[0x32]) {
             if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_keyboard.down[42])) {
                 load_skyboxes();

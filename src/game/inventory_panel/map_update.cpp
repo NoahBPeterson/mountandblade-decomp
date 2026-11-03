@@ -30,7 +30,6 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 
 #include "../str_table.h"
 #include "../world.h"                          // world (= Level): the scene object g_level points to
-extern StrTable g_strtable;                  // 0x5e2a18
 
 // --------------------------------------------------------------------------------- collision shapes ----
 // shape_base: 0x20 bytes; slot 0 dtor, slot 1 shape_type (the picker's `v1() != 2` mask key).
@@ -125,6 +124,7 @@ static inline Party* party_at(GameData* g, int id)
 
 #include "map_panel.h"                      // MapPanel / MapView (shared with map_info.cpp)
 #include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../ui_globals.h"      // UI / core globals
 
 // --------------------------------------------------------------------------------- globals -------------
 
@@ -294,7 +294,7 @@ void MapPanel::update_target()
 
     // ---- 0x519997: commit the pick -----------------------------------------------------------------
     if (bestobj) {
-        if (g_a17458 == 0 && g_keyboard.prev[0xe1] != 0 && f2d4 == 0) {
+        if (g_keyboard.down[0xe1] == 0 && g_keyboard.prev[0xe1] != 0 && f2d4 == 0) {
             g_game->n_labels  = 0;
             g_game->cur_label = -1;
             f2d8 = ((MapSceneObj*)bestobj)->party;

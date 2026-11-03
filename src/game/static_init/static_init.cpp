@@ -16,6 +16,7 @@
 #include <string>
 #include "../last_scene.h"
 #include "../../include/clock_table.h"
+#include "../animator.h"       // Animator g_anim (0x8ed4f60)
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
@@ -33,7 +34,6 @@ extern unsigned g_8ee41ec;  // 0x8ee41ec
 extern unsigned g_8ee41e8;  // 0x8ee41e8
 extern float g_5a9f20;      // 0x5a9f20
 extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
-extern char g_5e2a18[];     // 0x5e2a18 the string tables
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
 extern char g_5fe898[];     // 0x5fe898
@@ -67,7 +67,6 @@ extern char g_a76628[];     // 0xa76628
 extern char g_a76630[];     // 0xa76630 the terrain
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 extern char g_8ed4f58[];    // 0x8ed4f58 the meshes
-extern char g_8ed4f78[];    // 0x8ed4f78
 extern char g_8ed5090[];    // 0x8ed5090 the particle systems
 
 extern char g_8ee3c38[];    // 0x8ee3c38 the module name
@@ -85,7 +84,6 @@ struct tstring { tstring(); ~tstring(); char rec[0x20]; };   // 0x42bbd0, 0x42bc
 struct tstring11 { tstring a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
-struct LangTables { LangTables(); void release_strings(); };   // 0x4cda20, 0x4ca720
 struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
 struct big_holder { void release(); };              // 0x4ca830
 struct PhysSet { void reset(); };                   // 0x47dc50
@@ -231,8 +229,6 @@ void __cdecl static_dtor_548420() { ((world_obj*)g_a76630)->~world_obj(); }
 void __cdecl static_dtor_548430() { g_5aa380.~basic_string(); }
 // @ 0x548460
 void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
-// @ 0x548470
-void __cdecl static_dtor_548470() { ((LangTables*)g_5e2a18)->release_strings(); }
 // @ 0x548480
 void __cdecl static_dtor_548480() { ((big_holder*)g_5fe898)->release(); }
 // @ 0x548490
@@ -255,7 +251,7 @@ void __cdecl static_dtor_5484b0()
 // @ 0x548500
 void __cdecl static_dtor_548500() { ((TwoVec*)g_a75f40)->~TwoVec(); }
 // @ 0x548510
-void __cdecl static_dtor_548510() { ((BigArray*)g_8ed4f78)->destroy(); }
+void __cdecl static_dtor_548510() { ((BigArray*)&g_anim.skins_alloc)->destroy(); }   // the skin vector at 0x8ed4f78
 
 // ---- initializers, in the original table order -----------------------------------------------------------------
 // @ 0x5479a0
@@ -278,8 +274,6 @@ void __cdecl static_init_547a40() { g_8ee41ec = g_5a8e78; }
 void __cdecl static_init_547a50() { g_8ee41e8 = g_5a8e88; }
 // @ 0x547a60
 void __cdecl static_init_547a60() { g_5a9f28[0] = g_549cdc - g_5a9f20; }
-// @ 0x547a80
-void __cdecl static_init_547a80() { new (g_5e2a18) LangTables; atexit(static_dtor_548470); }
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable
 void __cdecl static_init_547aa0()
 {
@@ -397,7 +391,7 @@ typedef void (__cdecl* init_fn)();
 init_fn g_static_init_table[] = {
     static_init_5479a0, static_init_5479c0, static_init_5479e0, static_init_5479f0, static_init_547a00,
     static_init_547a20, static_init_547a30, static_init_547a40, static_init_547a50, static_init_547a60,
-    static_init_547a80, static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
+    static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
     static_init_547d80, static_init_547da0,
     static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,

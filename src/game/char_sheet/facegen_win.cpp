@@ -161,7 +161,7 @@ void facegen_win::init()
         tstring n("region type");
         region_type = (UiWidget*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
     }
-    for (int* r = g_region_names; r < g_region_names + 8; r++) {
+    for (const int* r = g_region_types; r < g_region_types + 8; r++) {
         char buf[64];
         region_name(*r, buf);
         tstring s(buf);

@@ -59,6 +59,7 @@ extern const float k_1_25f;                // 0x590c80
 extern const float k_0_0005f;              // 0x590d7c
 extern const float k_3_5f;                 // 0x590d8c
 extern const float k_0_014f;               // 0x590f7c
+extern const float k_0_23f;                // 0x590e68
 extern const float k_1_7f;                 // 0x590fa4
 extern const float k_75f;                  // 0x5910fc
 extern const float k_0_98f;                // 0x5911d8
@@ -68,9 +69,6 @@ extern const char str_passage[];                       // 0x595e6c
 extern const char str_entry_point[];                   // 0x595e74
 extern const char str_no_beard_mesh[];                 // 0x598308
 extern const char str_no_face_mesh[];                  // 0x598328
-extern const float k_m1em05f;              // 0x598688
-extern const float k_235f;                 // 0x59868c
-extern const float k_105f;                 // 0x598690
 extern const char str_plants[];                        // 0x5999ac
 extern const char str_item_kinds[];                    // 0x5999b4
 extern const char str_scene_props[];                   // 0x5999c0
@@ -113,7 +111,6 @@ extern int g_shadow_quality_req;           // 0x5aa004
 extern SoundMgr g_sound_mgr;               // 0x5aa128
 extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
-extern int g_mission_clock;                // 0x5d8790
 extern ptype* g_ptypes;                    // 0x5e28f8
 extern int g_use_shaders;                  // 0x5e28fc
 extern MapFlags g_map_flags;               // 0x5e291c
@@ -127,6 +124,11 @@ extern render_batch g_batch;               // 0x5fe898
 
 
 
+extern int g_ptype_count;                  // 0x5e29e8
+extern render_batch g_batch;               // 0x5fe898
+extern InputSet g_input_a;                 // 0xa170c8
+extern void* g_a17110;                     // 0xa17110
+extern void* g_a17510;                     // 0xa17510
 extern renderer g_render;                  // 0xa17910
 
 extern ini_file g_module_info;             // 0xa18238

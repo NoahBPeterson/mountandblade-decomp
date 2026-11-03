@@ -21,6 +21,7 @@
 #define g_resmgr g_resmgr_agent_view      // its `extern resmgr g_resmgr`: the defining declaration is `resource_manager g_resmgr` (rgl/resource.h), declared below
 #include <stdlib.h>
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <math.h>
 #include <string.h>
 #include <vector>
@@ -2548,18 +2549,18 @@ void Mission::spawn_prop(int* idx, int* id)
             tbl = -1;
         } else {
             Rec78* rec = &g_propkinds[tbl];
-            if (g_flag5a9fb0 != 0 || !(r78_flags(rec) & 0x4000))
+            if (g_cfg.enable_edit_mode != 0 || !(r78_flags(rec) & 0x4000))
                 meshes = r78_meshes(rec);
             shape_res = r78_shape(rec);
         }
     } else if (t != 3) {
         if (t == 1) {
-            if (g_flag5a9fb0)
+            if (g_cfg.enable_edit_mode)
                 name.assign("entry_arrow");
             else
                 name.assign("");
         } else if (t == 5) {
-            if (g_flag5a9fb0)
+            if (g_cfg.enable_edit_mode)
                 name.assign("_mesh_passage");
             else
                 name.assign("");
@@ -4244,7 +4245,6 @@ void Agent::refresh_carried(Missile* other)
 
 // ---- Agent::drop_held, the text layout wrapper, the message log, the animator visibility switch, Agent::get_label_box -----------
 extern MsgLog g_gui;                                 // 0x5d7080
-extern StrTable g_strtable;                             // 0x5e2a18
 extern Font* g_font;                                    // 0x5e2934
 // the animator's inline accessor of a bone record's world frame (brings the poses up to date first)
 static __forceinline char* skel_rec_inl(Skeleton* sk, int i)

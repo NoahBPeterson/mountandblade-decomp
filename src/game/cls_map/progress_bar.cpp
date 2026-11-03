@@ -20,7 +20,6 @@
 
 // ---- 0x4e3eb0: the progress bar widget (vtable 0x597f20) -----------------------------------------------------------------------
 extern const float g_progressbar_scale;         // 0x590e0c-ish constant 0.01f (the ctor stores it as the initial value)
-extern const float g_min_ratio;                 // 0x54a6f0 = 0.01f
 extern const float g_max_ratio;                 // 0x549cdc = 1.0f
 
 // @ 0x4e3eb0
@@ -45,9 +44,9 @@ void progress_bar::draw_label(rgl::scene* sc, float* count, int c, int d)
 // @ 0x4e3f60
 void progress_bar::set_ratio(float r)
 {
-    if (r < g_min_ratio) {
+    if (r < 0.01f) {
         f184 = 1;
-        v168 = g_min_ratio;
+        v168 = 0.01f;
         return;
     }
     v168 = (r > g_max_ratio) ? g_max_ratio : r;
@@ -86,6 +85,7 @@ void progress_bar::update()
 #include "../model_b.h"
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
 #include "../../include/render_flags.h"
+#include "../ui_globals.h"      // UI / core globals
 inline loading_config::loading_config() { new ((void*)this) model_b; }
 template class std::vector<E50>;
 template class std::vector<E68>;
@@ -319,7 +319,7 @@ void SaveWindow::init()
 
     {
         void* root = window;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(root);
     }
 }
@@ -750,7 +750,7 @@ void SaveWinCtl::create()
     vt(win)->d25(u.v);
     block.init(win, *(int*)((char*)g_game + 0x13b04));
     u.root = win;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(u.root);
 }
 
@@ -780,7 +780,7 @@ void SaveWinCtl::create2()
         vt(win)->d31(0, res_get(n)->clone());
     }
     void* root = win;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(root);
 }
 

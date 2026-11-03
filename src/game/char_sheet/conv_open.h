@@ -35,7 +35,6 @@ extern int g_n_strings;                                  // 0xa70240
 extern cfg_entry g_strings;                                  // 0xa44240 (indexed from 0xa4425c)
 
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
-extern unsigned char g_ui_dirty;                         // 0x5d8788
 
 // lookup of one setting (0x4bd5a0 + atof), 0.0f when the key is missing
 static float config_float(const char* name)
@@ -80,7 +79,6 @@ struct gui_manager_s;
 extern gui_manager_s* g_gui;
 // (g_gui is at 0x5d7080)
 #include "../str_table.h"
-extern StrTable g_strtable;                              // 0x5e2a18
 
 // ---- widget slots used here (s004f73c0 / s0042d360 gui.h) ----------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
@@ -103,6 +101,7 @@ Widget* make_body_button(Widget* parent, const tstring& a, const tstring& b, con
 
 // ---- mission / agent list helpers ---------------------------------------------------------------------
 #include "../mission.h"
+#include "../ui_globals.h"      // UI / core globals
 
 
 extern Mission* g_mission;                               // 0x5e292c

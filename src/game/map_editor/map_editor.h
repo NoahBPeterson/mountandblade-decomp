@@ -55,6 +55,7 @@ inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->m1b4; }
 // ---- Mission: the editor's view (0x5305b0) ---------------------------------------------------------------------------
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
 #include "../key_names.h"      // g_keyboard (0xa170c8)
+#include "../ui_globals.h"      // UI / core globals
 
 struct MapMission : Mission {
     rgl::entity* cursor() { return (rgl::entity*)f65d0; }       // +0x65d0 the selection cursor object

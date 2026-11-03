@@ -324,7 +324,7 @@ struct QuickString { tstring name; tstring key; tstring translated(); };   // tr
 struct GameString { tstring name; tstring key; tstring translated(); };    // translated 0x4c6080
 #include "../../include/game_recs.h"       // PartyTemplate (translated 0x4c6080), QuestRec, FactionRec: the shared record classes
 #include "../../include/dialog_rec.h"      // DialogRec (translated 0x4c6080): the shared dialog record
-#include "../../include/skin_set.h"              // SkinSet, SkinElem, g_skins_begin (shared with src/game/char_sheet)
+#include "../../include/skin_set.h"              // SkinSet, SkinElem, g_anim.skins (shared with src/game/char_sheet)
 struct ModRec {
     tstring name;                                                       // +0x00
     tstring key;                                                        // +0x10
@@ -452,7 +452,6 @@ struct RenderConfig {                                   // game/config/config.h 
     char data[0x70 - 4];
 };   // the methods are Config's init_defaults 0x4bc020 / load_file 0x4bbf70 and rgl_config::save 0x415fb0 (called through casts in gui_edit.cpp)
 
-extern tstring g_skin_name;                             // 0x5fe888 (the skin name; buf at 0x5fe88c)
 extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb_skin_%s.smf")
 
 // the settings / configuration dialog

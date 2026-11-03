@@ -52,6 +52,7 @@ typedef Widget RangeWidget;
 #include "../bit_words.h"
 
 extern int g_size_modes[8];                                 // 0x59394c terrain-size mode table (only [0] is ours)
+extern int g_use_shaders;                                          // 0x5e28fc (shaders on)
 
 // ---- the page: src/game/terrain_page.h ------------------------------------------------------------------
 #include "../terrain_page.h"
@@ -64,15 +65,8 @@ void paste_clipboard(TerrainPage* p);                               // 0x4f3c30
 void simulate(TerrainPage* p, float dt);                     // 0x4f37f0
 void path(TerrainPage* p, float dt);                     // 0x4f3cf0
 
-extern const float g_half;                                  // 0x549d70 (0.5f)
-extern const float g_01;                                    // 0x54a6f0 (0.01f)
-extern const float g_140;                                   // 0x598e6c (140.0f)
-extern const float g_00143;                                 // 0x598e68 (0.0014285714f)
-extern const float g_10;                                    // 0x549d74 (10.0f)
 
-extern const char g_fmt_d[];                                // 0x54a0f4 "%d"
 extern const char g_str_enabled[];                          // 0x598e7c "Enabled"
 extern const char g_str_disabled[];                         // 0x598e70 "Disabled"
-extern const char g_hex_sep[];                              // 0x598e84 " "
 
 #endif

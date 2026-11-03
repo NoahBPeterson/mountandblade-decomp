@@ -1,10 +1,18 @@
 #include "./facegen_misc.h"
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../game_globals.h"      // g_limit_hair_colors, g_module_name ... (canonical global declarations)
+#include "../../include/logger.h"      // Logger g_debug_log (0x5a9f30): its buf (+0x20 = 0x5a9f50) is the status text the save/load screen draws
 #include "../../include/msg_log.h"      // MsgLog::build_scene 0x4e6050 (listed directly: the resolution audit reads only the source's own includes)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_5e28c8;   // 0x5e28c8
+Animator g_anim;   // 0x8ed4f60 the skin table / character builder (0x130 bytes: set, item, cur, variant, material, the skin vector at +0x18, count at +0x28, 63 weights, scale, time); the one object behind g_anim.skins 0x8ed4f7c, g_anim.char_count 0x8ed4f88
+
 
 // @ 0x4eb270
 void FaceGen::update_view(int unused)
@@ -50,19 +58,19 @@ void FaceGen::refresh()
 {
     int n = g_anim.skins[skin].n_elems - 1;
     for (int i = 0; i < n; i++)
-        (&g_dummy_mat)[i] = deform_rows[i]->get_float();
+        g_anim.weights[i] = deform_rows[i]->get_float();
     f360 = sl_age->get_float();
     f364 = sl_hair_color->get_float();
     ent->clear();
     int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int zero = 0;
-    g_cur = clamp_index(&flags, &zero, &g_anim.char_count);
-    g_dummy1 = f364;
-    g_dummy0 = f360;
+    g_anim.cur = clamp_index(&flags, &zero, &g_anim.char_count);
+    g_anim.time = f364;
+    g_anim.scale = f360;
     g_anim.material = f35c;
     g_anim.set = f350 - 1;
     g_anim.item = f354 - 1;
-    int r = f358 % g_anim.skins[g_cur].div;
+    int r = f358 % g_anim.skins[g_anim.cur].div;
     g_anim.variant = r;
     g_anim.f10 = r;
     void *a, *b, *c;
@@ -157,21 +165,10 @@ void Forwarder::forward(int a, int b, int c)
 // @ 0x4eb8e0 save-load UI entry (whole body reconstructed at 0x4eb8e0; 0x4eb8ed is its interior
 // continuation and is not separately callable)
 #include "../game_globals.h"
-extern int g_5e28c8;                                    // 0x5e28c8
-extern int g_a16c58;                                    // 0xa16c58
-extern int g_5d75c8;                                    // 0x5d75c8 (view width)
-extern int g_5d75cc;                                    // 0x5d75cc (view height)
-
-extern char* g_5a9f54;                                  // 0x5a9f54 (save/load text)
-extern int g_5a9f5c;                                    // 0x5a9f5c (text length)
-
-
-
-extern tstring g_5a9f50;                                // 0x5a9f50
+#include "../../include/renderer.h"       // g_render.dev: the Direct3D device (0xa17f28)
+#include "../id_stack.h"                 // g_id_stack (0xa739f8, a73a04, a73a08), current_screen_id
 
 struct Viewport { int x, y, w, h; float minz, maxz; };
-typedef void (__stdcall* DevCall2)(void*, void*);
-typedef void (__stdcall* DevCall3i)(void*, int, int);
 typedef void (__stdcall* PanelCall7)(void*, int, int, int, int, float, int);
 typedef int  (__stdcall* PanelCall1i)(void*);
 typedef void (__stdcall* PanelCall1)(void*);
@@ -194,9 +191,9 @@ int SaveLoadUi::run()
 
     Viewport vp;
     vp.x = 0; vp.y = 0;
-    vp.w = g_5d75c8; vp.h = g_5d75cc;
+    vp.w = g_screen_w; vp.h = g_screen_h;
     vp.minz = 0.0f; vp.maxz = 1.0f;
-    ((DevCall2)(*(void***)g_a17f28)[0xbc / 4])(g_a17f28, &vp);
+    g_render.dev->SetViewport((D3DVIEWPORT9*)&vp);
 
     void* panel = *(void**)((char*)this + 0xf8);
     ((PanelCall7)(*(void***)panel)[0xac / 4])(panel, 0, 0, 2, 0x302010, 1.0f, 0);
@@ -204,29 +201,29 @@ int SaveLoadUi::run()
     g_msglog.build_scene();
     ((RenderPass*)&g_renderer)->render(0);   // 0x47e520
 
-    if (g_5a9fa0 != 0) {
+    if (g_cfg.show_framerate != 0) {
         void* w = *(void**)((char*)this + 0xf8);
         if (((PanelCall1i)(*(void***)w)[0xa4 / 4])(w) >= 0) {
             Viewport vp2;
             vp2.x = 0; vp2.y = 0;
-            vp2.w = g_5d75c8; vp2.h = g_5d75cc;
+            vp2.w = g_screen_w; vp2.h = g_screen_h;
             vp2.minz = 0.0f; vp2.maxz = 1.0f;
-            ((DevCall2)(*(void***)g_a17f28)[0xbc / 4])(g_a17f28, &vp2);
+            g_render.dev->SetViewport((D3DVIEWPORT9*)&vp2);
 
             CD3DFont* font = *(CD3DFont**)((char*)this + 0x348);
             font->DrawText(2.0f, 0.0f, 0xffffff00, (const char*)this + 0x2da, 0);
 
-            if (g_5a9fb8 != 0 || g_5a9fb0 != 0) {
+            if (g_cfg.debug_mode != 0 || g_cfg.enable_edit_mode != 0) {
                 Viewport vp3;
                 vp3.x = 0; vp3.y = 0;
-                vp3.w = g_5d75c8; vp3.h = g_5d75cc;
+                vp3.w = g_screen_w; vp3.h = g_screen_h;
                 vp3.minz = 0.0f; vp3.maxz = 1.0f;
-                ((DevCall2)(*(void***)g_a17f28)[0xbc / 4])(g_a17f28, &vp3);
+                g_render.dev->SetViewport((D3DVIEWPORT9*)&vp3);
 
                 tstring ts;
                 int y = 40;
-                for (int i = 0; i < g_5a9f5c; ++i) {
-                    char ch = g_5a9f54[i];
+                for (int i = 0; i < g_debug_log.buf.len; ++i) {
+                    char ch = g_debug_log.buf.buf[i];
                     if (ch == ';') {
                         char* s = ts.buf ? ts.buf : (char*)&ts.buf;
                         font->DrawText(2.0f, (float)y, 0xff64ff64, s, 0);
@@ -242,14 +239,14 @@ int SaveLoadUi::run()
                 }
             }
 
-            ((DevCall3i)(*(void***)g_a17f28)[0x104 / 4])(g_a17f28, 0, 0);
-            ((DevCall3i)(*(void***)g_a17f28)[0x104 / 4])(g_a17f28, 1, 0);
+            g_render.dev->SetTexture(0, 0);
+            g_render.dev->SetTexture(1, 0);
             void* w2 = *(void**)((char*)this + 0xf8);
             ((PanelCall1)(*(void***)w2)[0xa8 / 4])(w2);
         }
     }
 
-    g_5a9f50.assign("");
+    g_debug_log.buf.assign("");
     return 0;
 }
 
@@ -293,31 +290,15 @@ void Animator::pack_state(PackedState* out)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 extern main_menu g_main_menu;                           // 0xa73980
-struct MenuVars {
-    char pad0[4];
-    int** rows;                                         // +4
-    unsigned count;                                     // +8
-};
-extern MenuVars g_menu_vars;                            // 0xa739f8
-extern unsigned g_a73a04;                               // 0xa73a04
-extern unsigned g_a73a08;                               // 0xa73a08
 
 void __cdecl menu_variables_loaded(char flag)
 {
-    if (!flag && !g_no_cam)
+    if (!flag && !g_cfg.enable_edit_mode)
         return;
     load_game_variables();   // 0x4c0520
     if (flag)
         return;
-    unsigned u = g_a73a08 + g_a73a04 - 1;
-    unsigned q = u >> 2;
-    unsigned r = u - q * 4;
-    MenuVars* vars = &g_menu_vars;
-    unsigned count = vars->count;
-    int** rows = vars->rows;
-    if (count <= q)
-        q -= count;
-    int value = rows[q][r];
+    int value = current_screen_id();
     g_main_menu.set_state(value);
     g_msglog.add("Menu variables are loaded...", 0xffff0000);
 }

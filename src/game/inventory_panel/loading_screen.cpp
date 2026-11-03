@@ -241,6 +241,7 @@ void Entries::add(const TrackEntry& val)
 
 #include "../str_table.h"
 extern StrTable g_strtable;                          // 0x5e2a18
+extern tstring  g_module_path;                       // 0x8ee3c28 (the module directory)
 
 void mb_error(const char* fmt, ...);                 // 0x42cc80
 void parse_module_info();                            // 0x4c05b0

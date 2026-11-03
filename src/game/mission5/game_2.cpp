@@ -15,6 +15,7 @@
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <string.h>
 #include "./game_2.h"
+#include "../../include/troop.h"          // g_level_xp
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../party/game.h"
@@ -1213,7 +1214,7 @@ void QuestFile::read_file(stream_base& s)
     f0.underscores_to_spaces();
     f10.underscores_to_spaces();
     f30 = *((QuestRec*)this)->raw_title();       // QuestRec (include/game_recs.h) is this record: raw_title 0x48d750
-    tstring* p = ((LangTables*)&g_strtable)->find(&f54);
+    tstring* p = g_strtable.find(&f54);
     f40 = p ? *p : f0;
 }
 

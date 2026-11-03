@@ -29,13 +29,13 @@ void TerrainPage::read_fields()
 // @ 0x4f37f0
 void TerrainPage::simulate(float dt)
 {
-    if (g_key_17204)
+    if (g_keyboard.down[0x4c])
         pitch = pitch - dt * 1.1f;
-    if (g_key_17214)
+    if (g_keyboard.down[0x50])
         pitch = dt * 1.1f + pitch;
-    if (g_key_1720c)
+    if (g_keyboard.down[0x4e])
         zoom = (dt * 2.1f + 1.0f) * zoom;
-    if (g_key_171fc)
+    if (g_keyboard.down[0x4a])
         zoom = (1.0f - dt * 2.1f) * zoom;
 
     vector2 m[2];                                           // the camera frame: m[0] = strafe axis, m[1] = forward
@@ -69,12 +69,12 @@ void TerrainPage::simulate(float dt)
         view_y = 250.0f;
 
     if (g_gui.mouse[0] < 0.5f) {
-        if (g_key_17458) {
-            yaw = (g_axis_x * dt) * 1.7f + yaw;
-            pitch = pitch - (g_keyboard.axis[2] * dt) * 1.7f;
+        if (g_keyboard.down[0xe1]) {
+            yaw = (g_keyboard.axis[0] * dt) * 1.7f + yaw;
+            pitch = pitch - (g_keyboard.axis[1] * dt) * 1.7f;
         }
-        if (g_key_17454)
-            zoom = ((g_keyboard.axis[2] * dt) * 0.5f + 1.0f) * zoom;
+        if (g_keyboard.down[0xe0])
+            zoom = ((g_keyboard.axis[1] * dt) * 0.5f + 1.0f) * zoom;
     }
 
     if (pitch < 0.1f)

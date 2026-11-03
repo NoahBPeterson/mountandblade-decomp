@@ -1,5 +1,6 @@
 #include "../../include/image_addrs.h"
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./screen_init.h"
 #include "../gui_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -11,6 +12,7 @@
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../shared_vars.h"
 #include "../last_scene.h"
+#include "../ui_globals.h"      // UI / core globals
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_a70438;   // 0xa70438
@@ -61,7 +63,7 @@ void Screen::init_screen()
     s0.x = 1.0f;
     s0.y = 0.75f;
     overlay->set_scale(&s0.x);
-    g_5d8788 = 1;
+    g_gui_dirty = 1;
     ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)overlay);   // 0x49b120
 
     Overlay* buttons = (Overlay*)new_container(0x188, vtbl_597050);   // 0x4931a0, then vptr 0x597050
@@ -81,7 +83,7 @@ void Screen::init_screen()
         buttons->set_mesh(0, bar_mesh);
     }
     f48 = 0;
-    if (g_5a9fb0) {
+    if (g_cfg.enable_edit_mode) {
         f48 = (int)make_short_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_terrain")), 0.002f, 0.006f, 0.03f);
     }
     f4c = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);

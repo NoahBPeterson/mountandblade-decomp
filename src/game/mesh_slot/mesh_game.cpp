@@ -226,10 +226,7 @@ extern char* g_mission_templates;                // 0x5e2a00 (the mission mode t
 extern char g_script[]; // 0xa70440
 #include "../skill_cap.h"
 extern char g_gui[]; // 0x5d7080
-struct StrTable {                       // game/str_table.h (the translation table; its lookup takes the key by reference)
-    tstring* lookup(const tstring& key);    // 0x43a1e0
-};
-extern StrTable g_strtable;             // 0x5e2a18
+#include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
 long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
 
 // the mission object as the spawner sees it

@@ -74,6 +74,7 @@ struct SkillNames {                                     // a skill record seen f
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../slot.h"
 #include "../skill_cap.h"
+#include "../ui_globals.h"      // UI / core globals
 
 // @ 0x50fe20
 void InventoryPanel::refresh_transaction(int unused)
@@ -84,10 +85,10 @@ void InventoryPanel::refresh_transaction(int unused)
     if (g_gui_root.mouse[0] < 0.5f && view_count == 2)
         page = 1;
 
-    if (g_ui_tick != 0) {
+    if (g_mission_clock != 0) {
         InvBar* bar = view[page]->bar;
         int stop = bar->stop;
-        bar->set_value((g_ui_tick / bar->stops[stop]) * bar->scale * 0.0005f +
+        bar->set_value((g_mission_clock / bar->stops[stop]) * bar->scale * 0.0005f +
                        (bar->stops[stop] - bar->scale) *
                        ((bar->thumb - bar->track_start) / (bar->track_end - bar->track_start)));
         PSO(bar)->set_key_flags(0x10000);

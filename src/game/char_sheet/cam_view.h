@@ -21,37 +21,22 @@ using rgl::mat3;
 // key state / settings globals
 extern gui_manager g_gui;                              // 0x5d7080 (cs_common.h view: the pointer position g_gui.mouse, 0x5d7094 / 0x5d7098)
 
-
-
-
-
-
-
-
-
-
 // globals of the face-generator update (0x4ea8e0)
-
-
-
 extern int g_world_time;                                // 0x5d8790
 extern float g_scroll;                                  // 0x590d7c
 extern char* g_game;                                    // 0x5e2930
-extern float g_dummy_mat;                               // 0x8ed4f8c (float; one per deform key)
-extern float g_dummy1;                                  // 0x8ed508c
 
 #include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)
-extern int g_cur;                                       // 0x8ed4f68
 
 #include "../scene_world.h"                              // World::step 0x427f40
 #include "../tstring.h"
 #include "../str_table.h"      // 0x43a1e0
-extern StrTable g_strtable;                             // 0x5e2a18
 #include "../main_menu.h"
 #define g_main_menu (orig::g_main_menu_obj)
 
 #include "../../rgl/text_stream.h"                    // mb_snprintf (0x415100)
 #include "../animator.h"                              // Animator, g_anim
+#include "../ui_globals.h"      // UI / core globals
 
 // a UI element; only the vtable slots this function calls are named
 struct Ctrl {
@@ -128,7 +113,7 @@ struct CamView {
     void update_model(float dt);
 };
 
-#define SKIN_INT(off) (*(int*)((char*)g_anim.skins + g_cur * 0x1f8 + (off)))
-#define g_dummy_mat_arr (&g_dummy_mat)
+#define SKIN_INT(off) (*(int*)((char*)g_anim.skins + g_anim.cur * 0x1f8 + (off)))
+#define g_dummy_mat_arr (g_anim.weights)
 
 #endif

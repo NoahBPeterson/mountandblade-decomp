@@ -364,36 +364,31 @@ void TerrainX::tessellate()
 
 // ---- 0x481c40 ----------------------------------------------------------------------------------------------------------
 
-#define g_anim_view (*(Animator*)&g_anim_table)          // g_anim_table (0x8ed4f60, game_globals.h) seen as the Animator
-extern int g_cur;                       // 0x8ed4f68
-extern int g_x8ed4f64;                  // 0x8ed4f64
-extern int g_x8ed4f74;                  // 0x8ed4f74
-extern EChar* g_skins_begin;                  // 0x8ed4f7c
-extern int g_skin_count;                // 0x8ed4f88
+#define g_anim_view g_anim                              // 0x8ed4f60 (animator.h)
 
 // @ 0x481c40 -- append a character mesh to the world: select the character, set up the animator, collect the lod meshes
-// and return &g_anim.chars[g_cur] with the mesh count written to *out
+// and return &g_anim.chars[g_anim.cur] with the mesh count written to *out
 // the third argument receives the three lod meshes and the fourth / fifth are the face codes (0x481c75: unpack [esp+0x10],
 // 0x481cad: collect into [esp+0xc] +0/+4/+8); the old a/b/c order decoded the caller's output array and collected the
 // meshes over the troop's face code, leaving the head mesh null (crash in build_appearance when agents spawn)
 EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carried, int* out)
 {
     if (colour < 0)
-        g_cur = 0;
+        g_anim.cur = 0;
     else if (colour >= g_anim.char_count)
-        g_cur = g_anim.char_count - 1;
+        g_anim.cur = g_anim.char_count - 1;
     else
-        g_cur = colour;
+        g_anim.cur = colour;
 
     if (kind == -1)
         ((FaceGenome*)&g_anim_view)->unpack((const unsigned __int64*)a);        // 0x473800
     else
         ((FaceGenome*)&g_anim_view)->breed((const unsigned __int64*)a, (const unsigned __int64*)b, kind);     // 0x4746e0
     if (carried)
-        g_x8ed4f64 = -1;
+        g_anim.item = -1;
     g_anim_view.collect(g_module_settings.limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
-    EChar* ec = &g_anim.chars[g_cur];
+    EChar* ec = &g_anim.chars[g_anim.cur];
     int* rec = (int*)((char*)ec->mats + g_anim.material * 0xb0 + 0x18);
     int* slot = out;
     *slot = *rec;

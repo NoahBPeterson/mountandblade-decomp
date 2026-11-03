@@ -43,6 +43,10 @@ float frand();                                   // 0x40e400
 
 // constants of the projectile code
 extern float g_f54a6f0;        // 0x54a6f0 (0.01f)
+extern float g_f54b3b4;        // 0x54b3b4 (0.8f: reach without an item)
+extern float g_f54b708;        // 0x54b708 (per-tick gravity coefficient)
+extern float g_f590fa4;        // 0x590fa4 (1.7f: first-sample distance)
+extern float g_f590e68;        // 0x590e68 (0.23f)
 extern float g_f549cdc;        // 0x549cdc (1.0f)
 extern float g_f591334;        // 0x591334 (20.0f)
 extern float g_f590c74;        // 0x590c74 (0.08f)
@@ -356,7 +360,7 @@ void MissileU::update(float dt)
     if (troop < 0)
         d.z = 0.8f;
     else
-        d.z = (float)g_items[troop].weight * g_f54a6f0;
+        d.z = (float)g_items[troop].weight * 0.01f;
     pb.x = d.z * vel.x;
     d.y = d.z * vel.y;
     d.z = d.z * vel.z;

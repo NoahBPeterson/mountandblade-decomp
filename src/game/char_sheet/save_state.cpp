@@ -13,7 +13,7 @@
 int GameData::save_state(OutStream* out)
 {
     WL_MARKER(12)
-    __int64 counter = g_time1;
+    __int64 counter = g_ticks[1];
     out->w_int8((int*)&counter);
     out->w_raw((char*)this + 4);
     out->w_raw((char*)this + 0xb4);

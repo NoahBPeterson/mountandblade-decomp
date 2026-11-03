@@ -25,6 +25,7 @@
 extern MapEditorDialog g_editor_dialog;          // 0x8ee3c48 (the application object seen as the map editor dialog)
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../slot.h"
+#include "../ui_globals.h"      // UI / core globals
 
 
 
@@ -89,7 +90,7 @@ static __forceinline float normalize_vec(vector4& v)
 void MapEditorDialog::update()
 {
     // 1. list-modifier: toggle the picked record in the multi-selection list
-    if (g_a17458 != 0 && g_keyboard.prev[0xe1] == 0) {
+    if (g_keyboard.down[0xe1] != 0 && g_keyboard.prev[0xe1] == 0) {
         bool found = false;
         unsigned pos_ = 0;
 

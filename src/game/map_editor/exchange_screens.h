@@ -268,12 +268,11 @@ extern int g_a735c4;                        // 0xa735c4
 extern int g_a7333c;                        // 0xa7333c
 extern int* g_menu_data;                    // 0xa739c0
 extern char* g_menus;                   // 0x5e29b0 (GameMenu* in rgl/mesh2/gui_edit.h; the rows of 0x60 bytes are read raw here)
-extern float g_half;                        // 0x549d70 (0.5f)
 struct KeyDown {};                          // the key state object at 0xa73730: OriginPairs
 struct OriginPairs {
     bool clicked(int key);   // 0x48ac90 (ret 4)
 };
 extern KeyDown g_game_keys;                    // 0xa73730
-#define STR_TABLE ((StrTable*)&orig::g_strtable)     // the localized string table (str_table.h)
+#define STR_TABLE (&g_strtable)     // the localized string table (str_table.h)
 
 #endif // GAME_MAP_EDITOR_PARTY_SCREEN_H

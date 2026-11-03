@@ -90,8 +90,6 @@ extern float g_map_max_y;                            // 0x5aa11c  map max y ( 50
 extern char g_world0[0x28];                     // the strategy world whose +0x28 cell table 0x470f40 reads
 
 // the by-name float constants (the originals live in the read-only pools noted here)
-#define C_549D74 (orig::g_ten)             // 10.0
-#define C_549D70 (orig::g_half)             // 0.5
 #define C_549CDC (orig::g_one)             // 1.0
 #define C_54A534 (orig::k_1_5708f)             // 1.5707964
 #define C_598690 (orig::k_105f)             // 105.0
@@ -102,7 +100,6 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_590F7C (orig::k_0_014f)             // 0.014
 #define C_590E68 (0.23f)             // 0.23
 #define C_54B4D0 (orig::k_0_05f)             // 0.05
-#define C_5915A0 (orig::k_m10f)             // -10.0
 #define C_54B3B8 (orig::k_0_4f)             // 0.4
 #define C_590C74 (orig::k_0_08f)             // 0.08
 #define C_590FA4 (1.7f)             // 1.7
@@ -126,6 +123,7 @@ extern Listener3D g_listener;                   // 0x5aa138
 // ---- callees ------------------------------------------------------------------------------------------
 #include "./cs_common.h"
 #include "./cs_mat.h"                                      // identity_pos 0x40cd00
+#include "../game_globals.h"      // canonical global declarations (g_map_min_x ...)
 using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl_mesh.h)
 
 struct envelope;                                            // the scene-envelope object 0x4624c0 works on

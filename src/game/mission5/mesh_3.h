@@ -242,6 +242,8 @@ void rotate_2x2(float angle);                       // 0x4f3b40 (thiscall, ret 4
 
 extern const float g_one;                           // 0x549cdc = 1.0f
 extern const float g_hilite_dim;                    // 0x54b4d0 = 0.05f
+extern const float g_rot_step;                      // 0x590c60 = 0.005f
+extern const double g_percent;                      // 0x59c480 = 0.01
 
 // ======================================================= slice s0052da20: classes, globals, helpers
 
@@ -748,7 +750,6 @@ struct MapEditor_s2f250 {
 // ---- global input axes / camera flags (0xa17xxx block; names provisional) -------------------------------
 
 extern const float g_one;                                    // 0x549cdc (1.0f)
-extern float  g_k005b;                                  // 0x54b4d0 (0.05f)
 
 // ---- game tables ---------------------------------------------------------------------------------------
 namespace rgl {

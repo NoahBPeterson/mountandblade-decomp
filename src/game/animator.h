@@ -22,14 +22,14 @@ struct Animator {
     int variant;                 // 0x0c
     int f10;                     // 0x10 (facegen: the same value as variant)
     int material;                // 0x14
-    char pad18[4];
+    int skins_alloc;             // 0x18 the allocator dword of the skin vector (0x8ed4f78: its atexit destructor 0x548510 runs BigArray::destroy 0x4eb810 on &skins_alloc)
     union {
-        EChar* chars;            // 0x1c (mesh_slot view)
-        SkinSet* skins;          // 0x1c (g_skins_begin, 0x8ed4f7c: 0x1f8-byte sets; face-gen view)
+        EChar* chars;            // 0x1c the vector's first element (mesh_slot view; 0x8ed4f7c)
+        SkinSet* skins;          // 0x1c the same pointer, the face-gen / language-export view: 0x1f8-byte sets
     };
-    SkinSet* skins_end;          // 0x20 (g_skins_end, 0x8ed4f80)
-    int pad24;
-    int char_count;              // 0x28 (g_char_count 0x8ed4f88 is the same word)
+    SkinSet* skins_end;          // 0x20 the vector's last (0x8ed4f80)
+    char pad24[4];               // 0x24 its end of storage
+    int char_count;              // 0x28 the number of skin sets (0x8ed4f88)
     float weights[63];           // 0x2c (one weight per bone / deform key, up to +0x128)
     float scale;                 // 0x128
     float time;                  // 0x12c
@@ -41,6 +41,6 @@ struct Animator {
     void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
 };
 typedef char animator_weights_check[(offsetof(Animator, scale) == 0x128) ? 1 : -1];
-extern Animator g_anim;          // 0x8ed4f60  // old name of g_anim_table, removed after the names merge
+extern Animator g_anim;          // 0x8ed4f60 the one object (the skin table / character builder; defined in char_sheet/facegen_misc.cpp: every word of it is a member, no separate label)
 
 #endif // MB_GAME_ANIMATOR_H

@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include "tstring.h"
 #include "shared_vars.h"
+#include "./ui_globals.h"   // screen size, ui-dirty flag, mission clock, dev mode (a leaf header the UI modules include without the rest)
 
 struct MapIcon;
 struct PresentationTable;
 struct AnimDefV;
-struct AnimTable;
 struct DialogMgr;   // dialog_manager.h
 
 // The table of single-bit masks (8-byte entries 1<<i) starts here;
@@ -63,7 +63,6 @@ extern unsigned char g_mt_inited; // 0x5e2a09
 // Accumulates dt while the flag at 0x5e2a09 is set (mesh_game.cpp) and is applied as one physics step later (gui_edit.cpp g_load_dt).
 extern float g_paused_time; // 0x5e2a0c
 // "the skin name; buf at 0x5fe88c".
-extern tstring g_skin_name; // 0x5fe888
 // Same int (mission_ctx.cpp g_a170c0).
 extern int g_psys_scene; // 0xa170c0
 // game_variables.txt key "scan_module_sounds" (trigger_vec.cpp loader);
@@ -119,11 +118,11 @@ extern int g_scene_counter; // 0xa735c0
 extern PresentationTable g_presentations; // 0xa75f2c
 // 0x30-byte animation definitions indexed by animation id (agent_logic.cpp g_anims[0x1a3]).
 extern AnimDefV* g_anims; // 0xa76628
-// module_files.cpp loads this table;
-extern AnimTable g_anim_table; // 0x8ed4f60
 // Count belonging to the skin table (script troop_set_type validates against it);
 // DialogMgr (dialog_manager.h, +0 count, +4 recs ...);
 extern DialogMgr g_dialogs; // 0x8ed50c8
+// The empty string copied by the conversation refresh (conv_refresh.cpp);
+
 // The module directory string;
 extern tstring g_module_path; // 0x8ee3c28
 // trigger_vec.cpp load_game_variables: the selected module name;

@@ -97,7 +97,8 @@ int clamp_index(int* skin, int* flags, int* count);       // 0x432510
 
 // ---- the game singleton ----------------------------------------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
-extern float g_fov_k;                                       // 0x5e20a8
+#include "../game_globals.h"      // canonical global declarations
+#include "../ui_globals.h"      // g_fov_k (0x5e20a8)
 
 void free_535712(void* p);                                  // 0x535712 (operator delete)
 

@@ -1100,7 +1100,7 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
 
     if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 &&
         g_keyboard.down[45] == 0 && g_keyboard.down[21] == 0 && g_keyboard.down[44] == 0) {
-        float s = g_one - angle * g_k005b;
+        float s = g_one - angle * g_rot_step;
         vec[0] = vec[0] * s;
         vec[1] = vec[1] * s;
         vec[2] = vec[2] * s;
@@ -1108,19 +1108,19 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f4 = 1;
     }
     if (g_keyboard.down[45] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_k005b;
+        float s = g_one - angle * g_rot_step;
         vec[0] = vec[0] * s;
         *f3 = 1;
         *f4 = 1;
     }
     if (g_keyboard.down[21] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_k005b;
+        float s = g_one - angle * g_rot_step;
         vec[1] = vec[1] * s;
         *f3 = 1;
         *f4 = 1;
     }
     if (g_keyboard.down[44] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_k005b;
+        float s = g_one - angle * g_rot_step;
         vec[2] = vec[2] * s;
         *f3 = 1;
         *f4 = 1;

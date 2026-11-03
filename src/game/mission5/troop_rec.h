@@ -60,6 +60,8 @@ typedef vec<mface> VecView;                                              // std:
 
 // ---- the item stack helpers of the troop item passes -----------------------------------------------------------------
 extern float g_half;                                // 0x549d70 (0.5f)
+extern float g_inv_gain;                            // 0x590b10 (0.13f)
+extern float g_start_time;                          // 0x59bffc
 #include "../config/config.h"
 
 // the 4-bit skill fields of a troop's first word (+0x68), as the start-up writes them

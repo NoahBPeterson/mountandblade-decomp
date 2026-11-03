@@ -65,7 +65,7 @@ void dev_list::select_windowed(int a)
 
 // @ 0x4ca720
 // Releases both hash tables of the translation table: every bucket's strings, then its buffer.
-void LangTables::release_strings()
+void StrTable::release_strings()
 {
     lang_bucket* p = &vals[0xdf3];
     int n = 0xdf3;
@@ -650,13 +650,17 @@ void __fastcall fix_skeletons(std::vector<RegSkeleton>* list)
 }
 
 // @ 0x4cda20
-LangTables::LangTables()
+StrTable::StrTable()
 {
     notfound.assign("STR NOT FOUND");
 }
 
+// The UI string table: a real definition, built by the compiler's dynamic initialiser (the ctor above) and torn down by its
+// atexit destructor (release_strings 0x4ca720); it replaces static_init's hand stubs 0x547a80 / 0x548470.
+StrTable g_strtable;   // 0x5e2a18
+
 // @ 0x4cda90
-void LangTables::load(const tstring* root_t)
+void StrTable::load(const tstring* root_t)
 {
     const char* root = root_t->c_str();
     FILE* f = fopen("language.txt", "r");

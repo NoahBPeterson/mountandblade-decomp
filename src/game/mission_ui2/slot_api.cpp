@@ -33,7 +33,6 @@
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 #include "../../include/clock_table.h"
 
-extern StrTable g_strtable;                     // 0x5e2a18
 extern char g_script[]; // 0xa70440
 extern Rec78* g_tbl78;                          // 0x5e29dc the scene prop kinds (0x78-byte records)
 

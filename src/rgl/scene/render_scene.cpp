@@ -254,7 +254,7 @@ void world::render_scene(scene* sc, bool reflect)
     if (!sc->rt->loaded)
         return;
     sc->refl->reset();
-    if (g_log_on)
+    if (g_cfg.enable_edit_mode)
         ((Logger*)g_log_obj)->get("RENDERING REFLECTIONS;");
     if (!g_cfg.fake_reflections)
         sc->refl->flags |= 0x200;

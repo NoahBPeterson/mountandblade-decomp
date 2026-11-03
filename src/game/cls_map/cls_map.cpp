@@ -35,11 +35,13 @@ struct OptionsDlg {
 #include "../../include/rec78.h"
 #include "../ptype.h"
 #include "../../include/render_flags.h"
+#include "../module_name.h"      // g_module_name (0x8ee3c38)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
 float g_5a9f24 = 0.65f;                          // 0x5a9f24 (the meeting window columns' top)
 float g_5a9f28[2] = { 0.0f, 0.21450001f };       // 0x5a9f28 {x, y} column size; [0] = 1.0f - 0x5a9f20 is set by static_init_547a60 (static_init owner)
+
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
 extern "C" void __stdcall SkinMagic_Init(HINSTANCE, const char*, int, int);   // 0x535452 (ordinal 1)
@@ -95,7 +97,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     g_app_obj.hinstance = hInstance;
     g_app_obj.init_flag = 0;
-    g_skin_name.assign("en");
+    g_strtable.language.assign("en");
 
     {
         WL_MARKER(13)
@@ -108,7 +110,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     char skin_path[0x104];
     sprintf(skin_path, ".\\Skins\\mb_skin_%s.smf",
-            g_skin_name.buf ? g_skin_name.buf : (char*)&g_skin_name.buf);
+            g_strtable.language.buf ? g_strtable.language.buf : (char*)&g_strtable.language.buf);
 
     WIN32_FIND_DATAA fd;
     HANDLE hfind = FindFirstFileA(skin_path, &fd);
@@ -478,7 +480,7 @@ void LoadingScreen::init()
         vt(text)->d29(&flag);
     }
 
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     {
         void* root = overlay;
         ADD_ROOT_REF(root);
@@ -752,7 +754,7 @@ void MissionScreen::init_mission_window()
     else if (g_mission_ctx.mode == 3 || g_mission_ctx.mode == 4 || g_mission_ctx.mode == 5)
         fill_single_mission();
     ADD_ROOT((void*)overlay);
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
 }
 
 // @ 0x4db1f0
@@ -788,7 +790,7 @@ void MissionScreen::init_meeting_window()
         vt(overlay)->d50(c);
     } while (j < 3);
     ADD_ROOT((void*)overlay);
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     fill_mission_row(0);
     fill_mission_row(1);
     fill_mission_row(2);
@@ -885,7 +887,7 @@ void MissionScreen::init_done_window()
     }
     {
         void* self = overlay;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(self);
     }
     {
@@ -1079,7 +1081,7 @@ void ResultWindow::slot_empty_2()
     }
     {
         void* self = win;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(self);
     }
     f64 = g_gui.f560;
@@ -1313,7 +1315,7 @@ void MainMenuScreen::create()
     }
     vt(version)->d38(&colour);
 
-    const char* prefix = g_save_prefix ? g_save_prefix : (const char*)&g_save_prefix;
+    const char* prefix = g_module_name.c_str();
     scan_saves((int)ids, &count, &first_free, prefix);
     if (first_free == -1)
         vt(row_new_game)->d46();
@@ -1325,7 +1327,7 @@ void MainMenuScreen::create()
     }
 
     void* wv = win;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(wv);
 }
 
@@ -1548,7 +1550,7 @@ void EscapeMenu::create()
         vt(win)->d31(0, res_get(n)->clone());
     }
     void* wv = win;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(wv);
 }
 
@@ -1607,7 +1609,7 @@ void MessageMenu::create_message()
     }
 
     void* wv = win;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(wv);
     f58 = g_gui.f560;
 }
@@ -1657,7 +1659,7 @@ void DebriefMenu::create_report()
     }
 
     void* wv = win;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(wv);
 }
 
@@ -1783,7 +1785,7 @@ void DebriefMenu::create_debrief()
 
     {
         void* wv = win;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(wv);
     }
 }
@@ -2136,7 +2138,7 @@ void OptionsScreen::open()
 
     {
         void* w = root;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(w);
     }
     if (g_game)
@@ -2396,7 +2398,7 @@ void OptionsWin::init()
 
     {
         void* w = window;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(w);
     }
     if (!g_use_shaders) {
@@ -2521,7 +2523,7 @@ void OptionsMenu::init()
     iv = 0xfff0f0f0;
     vt(f1b0)->d38(&iv);
     void* q = (void*)quad;
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     ADD_ROOT_REF(q);
     g_game_keys.copy_slots();
     f1b4 = 0;
@@ -2806,7 +2808,7 @@ void MeetingWindow::init()
     vt(bg)->d31(0, m);
     {
         void* w = bg;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(w);
     }
     {
@@ -2909,7 +2911,7 @@ void MeetingWindow::init2()
     }
     {
         void* w = bg;
-        g_ui_changed = 1;
+        g_gui_dirty = 1;
         ADD_ROOT_REF(w);
     }
     panel = 0;

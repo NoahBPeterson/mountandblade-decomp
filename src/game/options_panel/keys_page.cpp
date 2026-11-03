@@ -175,7 +175,7 @@ void KeysPage::update_perf()
     char high = g_use_hw_shadow;
     perf += g_options.i34 * 0.1f;
     int shadows = orig::g_use_shaders;
-    perf += g_scale_y * orig::g_ten;
+    perf += g_scale_y * 10.0f;
 
     if (d3d) {
         if (g_cfg.shadow_quality_req >= 2)
@@ -383,7 +383,7 @@ void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, 
     row->set_size((const float*)&scale);
     vector2 pos;
     pos.x = 0;
-    pos.y = bx * orig::g_half - s * orig::k_0_3f;
+    pos.y = bx * 0.5f - s * orig::k_0_3f;
     row->set_offset((const float*)&pos);
     { char r[8]; row->set_text(r, *text); }
 }

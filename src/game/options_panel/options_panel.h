@@ -16,7 +16,6 @@ extern const float RENOWN_SCALE;                                    // 0x54ab28 
 
 // the game's localized-string table (0x5e2a18): lookup by a scratch tstring holding the text key
 #include "../str_table.h"
-extern StrTable g_strtable;                                         // 0x5e2a18
 
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8): key_name 0x4d7610
 

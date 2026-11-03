@@ -1,5 +1,6 @@
 #include "../../include/image_addrs.h"
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./editor_ui.h"
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
@@ -9,6 +10,9 @@
 #include "../../rgl/mesh2/mesh2_common.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_trial_mode (listed directly: the audit reads only the source's own includes)
+
+// ---- data this module owns (docs/standalone_data.md) ----
+int g_5e29a4;   // 0x5e29a4 trial-mode flag as engine_init copied it
 
 // @ 0x4f5d20
 WidgetA* __cdecl new_key_label(void* parent, const tstring* name, const tstring* text)
@@ -255,7 +259,7 @@ int __cdecl engine_init()
 {
     srand(timeGetTime());
     ((render_batch*)&orig::g_batch)->init_formats();   // 0x4bc5b0
-    g_log_path.assign("rgl_log.txt");
+    g_log.name.assign("rgl_log.txt");
     FILE* f = fopen("rgl_log.txt", "w");
     g_log_file = f;
     bool ok = true;
@@ -265,10 +269,10 @@ int __cdecl engine_init()
     } else {
         g_log_flag94 = ok;
     }
-    g_log_flag78 = ok;
-    ((stream_base*)(void*)&g_log)->w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
-    g_5d705c = g_module_path;
-    bool b = g_no_cam != 0;
+    g_log.autoflush = ok;
+    g_log.w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
+    g_5d705c = g_path_prefix;
+    bool b = g_cfg.enable_edit_mode != 0;
     g_5d706c = b;
     g_5d706d = b;
     {

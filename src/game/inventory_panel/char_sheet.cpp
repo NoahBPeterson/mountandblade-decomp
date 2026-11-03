@@ -1,5 +1,6 @@
 #include "../../include/image_addrs.h"
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <stddef.h>
 // Slice s00507400: the character sheet's window builder (0x507400).
@@ -114,14 +115,13 @@ extern ResMgr g_resmgr;                         // 0x5d6fa0
 
 #include "../gui_mgr.h"
 extern GuiManager g_gui;                        // 0x5d7080
-extern char g_ui_dirty;                         // 0x5d8788
 
 #include "../str_table.h"
-extern StrTable g_strtable;                     // 0x5e2a18
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
 #include "../skill_cap.h"
+#include "../ui_globals.h"      // UI / core globals
 
 
 extern "C" double atof(const char* s);          // 0x537352
@@ -282,7 +282,7 @@ void CharSheet::init()
     }
 
     CharSheetWidget* pw = window;
-    g_ui_dirty = 1;
+    g_gui_dirty = 1;
     g_gui.add_root(&pw);
 
     // reset-changes button (this+0x430) and done button (this+0x42c)
@@ -672,7 +672,7 @@ void CharSheet::init()
     label_refresh(stats, tstring("char_b_stats"));
 
     f52c = 1;
-    if (g_game_mode == 0 && player != g_game->player)
+    if (g_cfg.enable_edit_mode == 0 && player != g_game->player)
         f52c = 0;
     if (mode != -1) {
         f52c = 0;
@@ -681,7 +681,7 @@ void CharSheet::init()
     prev = 0;
     next = 0;
 
-    if (g_game_mode != 0 && mode == -1) {
+    if (g_cfg.enable_edit_mode != 0 && mode == -1) {
         {
             tstring kh("char_b_next_h");
             tstring kc("ui_next");
@@ -695,7 +695,7 @@ void CharSheet::init()
         label_refresh(next, tstring("char_b_next"));
     }
 
-    if (g_game_mode != 0 && mode == -1) {
+    if (g_cfg.enable_edit_mode != 0 && mode == -1) {
         {
             tstring kh("char_b_prev_h");
             tstring kc("ui_prev");

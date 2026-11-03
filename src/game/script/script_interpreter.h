@@ -21,6 +21,7 @@
 #include "../../include/vec.h"                  // Vec2
 #include "../../include/msg_log.h"             // MsgLog: the on-screen message log (add 0x452c00, push 0x4334b0)
 #include "../../include/sound_mgr.h"           // SoundMgr: play 0x442650
+#include "../ui_globals.h"      // UI / core globals
 
 
 // ---- callees declared under the class that defines them ---------------------------------------------------------------------

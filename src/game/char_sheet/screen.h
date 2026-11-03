@@ -34,7 +34,7 @@ using rgl::mesh;
 
 #include "../str_table.h"
 #include "../key_names.h"
-extern StrTable g_strtable;                             // 0x5e2a18
+#include "../str_table.h"                          // StrTable g_strtable (0x5e2a18)
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 
@@ -99,6 +99,7 @@ void __fastcall RowModel::erase_all(int unused)   // 0x4d10f0
 }
 #include "../../include/vec_table.h"     // vec_table (8 bytes: data, count; ctor 0x417cb0). It was a 0x260-byte stand-in here.
 #include "../../include/clock_table.h"
+#include "../ui_globals.h"      // UI / core globals
 
 // a matrix-array entry of the screen: 3 identity rows + a 4th scale vector (0x40 bytes).
 struct xform {
@@ -111,8 +112,6 @@ struct Timer {
     float elapsed() const;   // 0x432c10 (seconds since the record was touched; include/timer.h)
 };
 
-// ---- the module's string table heads (the 0x8ee3c3c slot read by 0x4ebc10) --------------------------
-extern char* g_save_prefix;             // 0x8ee3c3c (the capture-file prefix; null before init)
 
 // 0x4babf0 is a file-local helper: cl's register convention for `static` functions hands it its out
 // pointer in ESI. Defining it here (body shape taken from 0x4babf0) makes the caller emit
@@ -254,9 +253,6 @@ extern float g_four_tenths;             // 0x54b3b8  0.4f
 
 extern float zero;                      // 0x549ca8  0.0f
 extern float g_one;                     // 0x549cdc  1.0f
-extern float g_eps;                     // 0x54a6f0  0.01f
-extern float g_ninety_nine;             // 0x54a5cc  0.99f
-extern float g_seventy_four;            // 0x5985f4  0.74f
 
 // (leave_module 0x4ebb80 is menu_variables_loaded: cs_common.h)
 

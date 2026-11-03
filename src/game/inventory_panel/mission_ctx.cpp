@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
 #include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
 #include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
@@ -107,6 +108,7 @@ int g_scene_counter;                                // 0xa735c0
 #include "../window_mgr.h"      // slot_as<T>(i)
 #include "../../include/render_flags.h"
 #include "../shadow_map.h"
+#include "../ui_globals.h"      // UI / core globals
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -963,7 +965,7 @@ no_party:
     g_msglog.flush();
     if (GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) != 0) {
         PSO(f58)->act_b4();
-        if (g_a17454 == 0 && g_a17854 != 0)
+        if (g_keyboard.down[0xe0] == 0 && g_keyboard.prev[0xe0] != 0)
             GD_F(0x13ad0) = 0.0f;
     } else {
         PSO(f58)->clear();
@@ -1001,7 +1003,7 @@ no_party:
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_no_cam != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.is_ready(0x12))
+    if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {
@@ -1025,7 +1027,7 @@ void Screen::camera_move(float dt)
 
     bool b = g_game_keys.bind[4] >= 0 && g_keyboard.down[g_game_keys.bind[4]] != 0;
     if ((g_game_keys.bind[5] >= 0 && g_keyboard.down[g_game_keys.bind[5]] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x -= m.m[0] * h * dt;
         z -= m.m[1] * h * dt;
         GD_C(0x88) = 0;
@@ -1033,7 +1035,7 @@ void Screen::camera_move(float dt)
     }
     b = g_game_keys.bind[6] >= 0 && g_keyboard.down[g_game_keys.bind[6]] != 0;
     if ((g_game_keys.bind[7] >= 0 && g_keyboard.down[g_game_keys.bind[7]] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x += m.m[0] * h * dt;
         z += m.m[1] * h * dt;
         GD_C(0x88) = 0;
@@ -1041,7 +1043,7 @@ void Screen::camera_move(float dt)
     }
     b = g_game_keys.bind[0] >= 0 && g_keyboard.down[g_game_keys.bind[0]] != 0;
     if ((g_game_keys.bind[1] >= 0 && g_keyboard.down[g_game_keys.bind[1]] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x += m.m[2] * h * dt;
         z += m.m[3] * h * dt;
         GD_C(0x88) = 0;
@@ -1049,19 +1051,19 @@ void Screen::camera_move(float dt)
     }
     b = g_game_keys.bind[2] >= 0 && g_keyboard.down[g_game_keys.bind[2]] != 0;
     if ((g_game_keys.bind[3] >= 0 && g_keyboard.down[g_game_keys.bind[3]] != 0) || b) {
-        float h = height + g_ten;
+        float h = height + 10.0f;
         x -= m.m[2] * h * dt;
         z -= m.m[3] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
 
-    if (g_in_17204) speed += dt * 1.1f;
-    if (g_in_17214) speed -= dt * 1.1f;
+    if (g_keyboard.down[0x4c]) speed += dt * 1.1f;
+    if (g_keyboard.down[0x50]) speed -= dt * 1.1f;
     if (g_keyboard.down[0x4f]) vy += dt * 1.1f;
     if (g_keyboard.down[0x51]) vy -= dt * 1.1f;
 
-    if (g_in_17458 && !g_keyboard.prev[0xe1])
+    if (g_keyboard.down[0xe1] && !g_keyboard.prev[0xe1])
         f2d4 = 0;
 
     float v = g_mouse_dx * 0.1f;
@@ -1072,12 +1074,12 @@ void Screen::camera_move(float dt)
     if (!(w > -2.0f)) w = -2.0f;
     else if (w > 2.0f) w = 2.0f;
 
-    if (g_axis_x != 0.0f)
+    if (g_keyboard.axis[0] != 0.0f)
         f2d4 = 1;
 
     vy = v * dt + vy;
-    if (g_in_17458) {
-        vy = expf(4.0f * g_exp_arg) * 0.03f * g_axis_x * dt + vy;
+    if (g_keyboard.down[0xe1]) {
+        vy = expf(4.0f * g_exp_arg) * 0.03f * g_keyboard.axis[0] * dt + vy;
     }
 
     if (w != 0.0f || g_keyboard.axis[2] != 0.0f) {
@@ -1226,7 +1228,7 @@ void MissionCtx::update_anim()
                 else if (k > (*(int*)&g_skill_tbl[36].max_rank))
                     k = (*(int*)&g_skill_tbl[36].max_rank);
                 int n = t->f58[0] + k * 2 + 0x23;
-                float g = (float)(int)((float)n * g_half + 3.0f);
+                float g = (float)(int)((float)n * 0.5f + 3.0f);
                 if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips
                     t->hp = g;
             }
