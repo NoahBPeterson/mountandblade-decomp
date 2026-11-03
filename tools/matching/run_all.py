@@ -3,7 +3,7 @@
 
 usage: run_all.py [--filter substr] [-v] [--manifest path] [--jobs N]
 
-Manifests: match/manifest.txt, match/slices/*/manifest.txt, match/clones.txt, match/synth/*.manifest.
+Manifests: match/manifest.txt, match/slices/*/manifest.txt, match/clones.txt, match/synth/*.manifest, src/**/*.manifest.txt.
 Each distinct (source, flags) pair is compiled once, in parallel, into its own object file; every
 function is then compared in-process (relocations masked on both sides). Only one run_all may run
 at a time (work/run_all.lock). Results are written to work/verify_results.json.
@@ -63,6 +63,7 @@ def manifests(only=None):
     if os.path.exists(os.path.join(ROOT, "match", "clones.txt")):
         m.append(os.path.join(ROOT, "match", "clones.txt"))
     m += sorted(glob.glob(os.path.join(ROOT, "match", "synth", "*.manifest")))
+    m += sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True))   # the decompiled modules
     return m
 
 
