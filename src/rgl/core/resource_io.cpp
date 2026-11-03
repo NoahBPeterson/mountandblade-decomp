@@ -294,6 +294,7 @@ stream_base& w_skeleton(stream_base& s, skeleton* k)
 }
 
 // ---- textures -----------------------------------------------------------------------------------------
+int texture::type() { return 2; }                             // 0x48b590 (folded)
 // @ 0x416540
 int texture::load(int check_exists, rgl::string* root)
 {
@@ -385,6 +386,7 @@ int texture::unload()
 }
 
 // ---- shaders (`material`) -----------------------------------------------------------------------------
+int material::type() { return 4; }                            // 0x48c460 (folded)
 // @ 0x416830
 material::material()
 {
@@ -497,6 +499,7 @@ void material_io::create_shaders()
 }
 
 // ---- materials (`skin`) ---------------------------------------------------------------------------------
+int skin::type() { return 3; }                                // 0x48b880 (folded)
 // @ 0x416cd0
 skin::skin()
 {

@@ -260,6 +260,7 @@ vector4* sphere::get_max(vector4* out)
 }
 
 // ---- capsule (0x408600..0x408910) ------------------------------------------------------------------------------
+int capsule::shape_type() { return 1; }                    // 0x48b1f0 (the original's `return 1` is one function for the engine: the linker folds this copy with it)
 // @ 0x408630
 string capsule::type_name() const { return "capsule"; }
 // @ 0x408650
@@ -314,6 +315,7 @@ void capsule::save(stream_base* s)
 }
 
 // ---- face (0x408980..0x408e40) ---------------------------------------------------------------------------------
+int face::shape_type() { return 2; }                       // 0x48b590 (folded)
 // @ 0x4089c0
 string face::type_name() const { return "face"; }
 // @ 0x4089e0
@@ -1076,6 +1078,7 @@ template str::basic_string(const char*);
 // agent_combat.manifest.txt (vec_xlen 0x43e2a0 throws std::length_error), where the compiled bytes equal the original's.
 
 // ---- manifold (0x40c670..0x40cb60) -----------------------------------------------------------------------------
+int manifold::shape_type() { return 4; }                   // 0x48c460 (folded)
 // @ 0x40c6c0
 string manifold::type_name() const { return "manifold"; }
 // @ 0x40c6e0
@@ -1206,6 +1209,7 @@ __declspec(noinline) mat3* __cdecl identity3(mat3* out)
 }
 
 // ---- composite (0x40ce10..0x40d320) ----------------------------------------------------------------------------
+int composite::shape_type() { return 3; }                  // 0x48b880 (folded)
 // @ 0x40ce10
 shape_base* composite::clone() { return new composite(*this); }
 // @ 0x40ce50

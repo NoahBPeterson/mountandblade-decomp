@@ -75,6 +75,7 @@ vec_table::vec_table()
         }
 }
 
+int frame_set::type() { return 7; }                          // 0x49df30 (folded with Camera::type)
 // @ 0x417e10
 frame_set::frame_set()
 {
