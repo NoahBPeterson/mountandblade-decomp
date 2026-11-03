@@ -7,6 +7,7 @@
 // `resource_manager` is the other half of this object) and ends where core/frustum_grid.cpp (0x41e470) begins;
 // the forward calls 0x41a2c0 -> 0x41ef30, 0x41ca60 -> 0x41f970 only put a boundary below world_items.cpp.
 #include <windows.h>
+#include "../../game/config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <stdio.h>
@@ -39,10 +40,10 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../game/ui_globals.h"      // UI / core globals
 
 using namespace rgl;
 
-extern int g_use_text_res;                     // 0x5a9fb0 (the text resources .trf are read when set)
 extern int g_mesh_npts;                        // 0x5e2998 (point count of the mesh being read)
 extern __int64 g_bit[];                        // 0x5a8e68 g_bit[i] == 1 << i
 
@@ -1196,7 +1197,7 @@ void resmgr::load_pack(const rgl::string& name, int user)
     rgl::string brf = mkpath(dir, name, ".brf");
     all.resize(0, 0);
     bool done = false;
-    if (g_use_text_res) {
+    if (g_cfg.enable_edit_mode) {
         struct _stat st_t, st_b;
         if (_stat(trf.c_str(), &st_t) != -1) {
             if (_stat(brf.c_str(), &st_b) == -1 || difftime(st_t.st_mtime, st_b.st_mtime) > 0.0) {

@@ -5,6 +5,7 @@
 // Migrated from slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
 // s004c8ca0 and s004ca550 (0x4ca550).
 #include "../../include/image_addrs.h"
+#include "../../game/animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../../game/trial_mode.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./gui_edit.h"
@@ -42,9 +43,6 @@ struct mnode {
 };
 struct PresentationRec {
     void read(stream_base& s);   // 0x4c23f0 (game/triggers/trigger_vec.h)
-};
-struct StrTable {
-    tstring* lookup(const tstring& key);   // 0x43a1e0 (game/agent2/agent_stats.h): the UI string table
 };
 struct clip_pair {
     clip_pair(void* a_, void* b_, const int* src);   // 0x4be9c0 (game/triggers/trigger_vec.h)
@@ -679,7 +677,7 @@ void graph_obj::find_triangle(const int* e, int* a, int* b)
 // @ 0x4c6010
 // Looks `key` up in the hash bucket of its hash (0x433bb0): the keys of the bucket are one 0x10-stride vector (+4),
 // the translations the vector of the same bucket in the second table (+0xdf34).
-tstring* LangTables::find(const tstring* key) throw()
+tstring* StrTable::find(const tstring* key)
 {
     unsigned h = hash_string(key);
     lang_bucket* b = &keys[h];
@@ -1191,7 +1189,7 @@ void ConfigDialog::init()
     SetWindowPos(GetDlgItem(hwnd, 0x420), 0, 0xb4, 0x1c, 0x19a, 0xa, 0x14);
 
     char skin[128];
-    sprintf(skin, ".\\Skins\\mb_skin_%s.smf", g_skin_name.c_str());
+    sprintf(skin, ".\\Skins\\mb_skin_%s.smf", g_strtable.language.c_str());
     WIN32_FIND_DATAA fd;
     HANDLE h = FindFirstFileA(skin, &fd);
     if (h != INVALID_HANDLE_VALUE) {
@@ -2008,14 +2006,14 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\skins.csv", "wt+");              // 0x595f2c
-        for (unsigned i = 0; g_skins_begin && i < (unsigned)(g_skins_end - g_skins_begin); i++) {
-            for (int j = 0; j < g_skins_begin[i].n_elems; j++) {
+        for (unsigned i = 0; g_anim.skins && i < (unsigned)(g_anim.skins_end - g_anim.skins); i++) {
+            for (int j = 0; j < g_anim.skins[i].n_elems; j++) {
                 if (translated) {
-                    tstring v = ((PartyTemplate*)&g_skins_begin[i].elems[j])->translated();
-                    write_row(f, g_skins_begin[i].elems[j].key, v);
+                    tstring v = ((PartyTemplate*)&g_anim.skins[i].elems[j])->translated();
+                    write_row(f, g_anim.skins[i].elems[j].key, v);
                 } else {
-                    write_row(f, g_skins_begin[i].elems[j].key,
-                              *find_or(g_skins_begin[i].elems[j].key, g_skins_begin[i].elems[j].name));
+                    write_row(f, g_anim.skins[i].elems[j].key,
+                              *find_or(g_anim.skins[i].elems[j].key, g_anim.skins[i].elems[j].name));
                 }
             }
         }

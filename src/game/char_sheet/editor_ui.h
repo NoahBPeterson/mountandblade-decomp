@@ -41,15 +41,8 @@ __forceinline mesh* load_mesh(const char* name)
 #include "../../rgl/mesh2/mesh2_common.h"   // LangTables (shared: find 0x4c6010, load 0x4cda90) and its global g_strtable 0x5e2a18
 
 // ---- text log stream (0x5a9f60, see s004bd990) -----------------------------------------------------
-struct stream_base {
-    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03(); virtual void s04();
-    virtual void s05(); virtual void s06(); virtual void s07(); virtual void s08(); virtual void s09();
-    virtual stream_base& w_cstr(const char* s); // +0x28 (slot 10)
-};
-struct text_stream : stream_base {
-    virtual stream_base& w_cstr(const char* s);   // 0x4153a0 (rgl/text_stream.h: the class of g_log)
-};
-extern stream_base g_log;                       // 0x5a9f60
+#include "../../rgl/stream.h"                     // text_stream: name, autoflush, fp, failed, is_open
+extern text_stream g_log;                         // 0x5a9f60 the engine text log (include/rgl_globals.h declares it too; that header pulls the world classes in)
 
 // ---- widgets ---------------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
@@ -95,18 +88,14 @@ void* make_medium_button(void* parent, const tstring* text, int a2, int a3, floa
 
 
 // ---- globals ---------------------------------------------------------------------------------------
-extern int g_no_cam;                            // 0x5a9fb0
-extern tstring g_log_path;                      // 0x5a9f64
 extern FILE* g_log_file;                        // 0x5a9f90
 extern unsigned char g_log_flag94;              // 0x5a9f94
 extern unsigned char g_log_flag95;              // 0x5a9f95
-extern unsigned char g_log_flag78;              // 0x5a9f78
 extern tstring g_path_prefix;                   // 0x8ee3c28
+extern tstring g_5d705c;                        // 0x5d705c (resmgr::cur, +0xbc of the resource manager g_alloc 0x5d6fa0)
+extern unsigned char g_5d706c;                  // 0x5d706c (the resource manager's +0xcc)
+extern unsigned char g_5d706d;                  // 0x5d706d (+0xcd)
 extern char g_path_prefix_chars[];              // 0x8ee3c28
-extern tstring g_5d705c;                        // 0x5d705c
-extern unsigned char g_5d706c;                  // 0x5d706c
-extern unsigned char g_5d706d;                  // 0x5d706d
-extern int g_5e29a4;                            // 0x5e29a4
 #include "../game_globals.h"
 extern void* g_font;                        // 0x5e2934
 

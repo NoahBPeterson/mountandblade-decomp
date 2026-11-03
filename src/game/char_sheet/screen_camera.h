@@ -83,34 +83,16 @@ struct WorldCam {
 // ---- globals ------------------------------------------------------------------------------------------
 extern int g_a1717c;                            // 0xa1717c
 extern int g_5a9fd8;                            // 0x5a9fd8  listener already set
-extern float g_map_min_x;                            // 0x5aa120  map min x (-50)
-extern float g_map_max_x;                            // 0x5aa118  map max x ( 50)
-extern float g_map_min_y;                            // 0x5aa124  map min y (-50)
-extern float g_map_max_y;                            // 0x5aa11c  map max y ( 50)
 extern char g_world0[0x28];                     // the strategy world whose +0x28 cell table 0x470f40 reads
 
 // the by-name float constants (the originals live in the read-only pools noted here)
-#define C_549D74 (orig::g_ten)             // 10.0
-#define C_549D70 (orig::g_half)             // 0.5
 #define C_549CDC (orig::g_one)             // 1.0
-#define C_54A534 (orig::k_1_5708f)             // 1.5707964
-#define C_598690 (orig::k_105f)             // 105.0
-#define C_59868C (orig::k_235f)             // 235.0
-#define C_598688 (orig::k_m1em05f)             // -1e-05
-#define C_590D8C (orig::k_3_5f)             // 3.5
-#define C_590AF0 (orig::k_9_8f)             // 9.8
-#define C_590F7C (orig::k_0_014f)             // 0.014
 #define C_590E68 (orig::k_0_23f)             // 0.23
 #define C_54B4D0 (orig::k_0_05f)             // 0.05
-#define C_5915A0 (orig::k_m10f)             // -10.0
 #define C_54B3B8 (orig::k_0_4f)             // 0.4
 #define C_590C74 (orig::k_0_08f)             // 0.08
 #define C_590FA4 (orig::k_1_7f)             // 1.7
-#define C_591AF4 (orig::k_0_94f)             // 0.94
-#define C_590C48 (orig::k_1_6f)             // 1.6
-#define C_5911D8 (orig::k_0_98f)             // 0.98
 #define C_54B8B0 (orig::k_1_5f)             // 1.5
-#define C_549D6C (orig::k_0_9f)             // 0.9
 
 // the listener block (written by 0x5342dc, from the map frame)
 struct Listener3D {
@@ -126,6 +108,7 @@ extern Listener3D g_listener;                   // 0x5aa138
 // ---- callees ------------------------------------------------------------------------------------------
 #include "./cs_common.h"
 #include "./cs_mat.h"                                      // identity_pos 0x40cd00
+#include "../game_globals.h"      // canonical global declarations (g_map_min_x ...)
 using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl_mesh.h)
 
 struct envelope;                                            // the scene-envelope object 0x4624c0 works on

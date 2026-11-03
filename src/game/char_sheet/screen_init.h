@@ -37,11 +37,9 @@ struct Rect {                                   // the 0x10-byte region copied i
 #include "../str_table.h"                      // StrTable (0x5e2a18; was StrTab here: find(name) was lookup 0x43a1e0)
 
 #define g_gui     (*(GuiManager*)&orig::g_gui_mgr)
-#define g_strtab  (orig::g_strtable)
+#define g_strtab  g_strtable
 
 extern char g_5e212c;                           // 0x5e212c
-extern char g_5d8788;                           // 0x5d8788
-extern int g_5a9fb0;                            // 0x5a9fb0 (no terrain camera)
 #include "../renderer.h"
 extern float g_590bb8;                          // 0x590bb8
 extern float g_549cdc;                          // 0x549cdc (1.0f)
@@ -54,6 +52,7 @@ extern float g_54b3b4;                          // 0x54b3b4
 // the party manager at g_game+0xf8 (include/party.h)
 #include "../../include/party.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../ui_globals.h"      // UI / core globals
 
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 #define g_psys ((char*)&orig::g_shadow_map)                         // the shadow / particle system (ShadowMap, ShadowMapP: cs_common.h)

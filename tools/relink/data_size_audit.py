@@ -18,6 +18,16 @@ For each original data address our objects define (the resolver's `defined` entr
                 address any declaration, name or annotation of ours puts a label on
 UNDERSIZED = our size < claimed: a definite error (exit 1, and build.py's gate). SUSPECT = our size < accessed:
 listed for judgement (the next original object may simply not have a label of ours); never fails the build.
+
+OVERLAP = a definition's range [address, address + claimed size) holds the address of another definition, or of any
+other label (an annotated declaration, a name the resolver binds there): two owners for one stretch of the original's
+memory. The glue lays the original's bytes out once, so the inner name is a second view of the outer object's bytes
+that the outer type has to provide as a member (the logger's name is a member of the logger class, not a separate
+`tstring` global at logger + 0x20); the linker keeps both and the code that fills one never sees the other. A name
+reaching into an object through the outer object's own type is not a label of its own and is not reported. The
+claimed size is the compiler-measured sizeof of the declaration, so an object declared as a bare `char[1]` cannot
+report what it does not claim. Exit 1 and build.py's gate for every overlap not listed in data_overlaps_known.txt
+(the ones that predate the check: they only get fewer).
 """
 import argparse, collections, json, multiprocessing, os, re, struct, subprocess, sys
 
@@ -193,6 +203,7 @@ def accessed_addresses():
 
 
 STATS = {}
+STATE = {}
 
 
 def audit(rmap_path, jobs_n, suspects=True):
@@ -215,6 +226,7 @@ def audit(rmap_path, jobs_n, suspects=True):
                     defined[v].append(n)
     labels = sorted(labelled)
     STATS.update(defined=sum(len(v) for v in defined.values()), sized=sum(1 for v in defined if v in claims), claims=len(claims))
+    STATE.update(claims=claims, defined=defined, labelled=labelled)
     uses = sorted(accessed_addresses()) if suspects else []
     import bisect
     under, suspect = [], []
@@ -254,10 +266,68 @@ def duplicates(rmap_path, map_path):
     return [(v, dict(at)) for v, at in sorted(byva.items()) if len(at) > 1]
 
 
+def overlaps():
+    """After audit(): every pair (outer, inner) of labels with the inner address inside the outer's claimed range
+    [address, address + size), at least one of the two a definition of ours (see OVERLAP above). An extern
+    declaration is an outer too: a `Logger g_log; // 0x5a9f30` the glue defines still owns its 0x40 bytes.
+    -> [(outer va, outer name, outer size, inner va, [inner names])], sorted."""
+    claims, defined, labelled = STATE["claims"], STATE["defined"], STATE["labelled"]
+    names = collections.defaultdict(set)
+    for va, cl in claims.items():
+        names[va].update(n for _s, n, _at in cl)
+    for va, ns in defined.items():
+        names[va].update(ns)
+    points = sorted(set(labelled) | set(names))
+    import bisect
+    out = []
+    for va in sorted(claims):
+        size = max(s for s, _n, _a in claims[va])
+        i = bisect.bisect_right(points, va)
+        while i < len(points) and points[i] < va + size:
+            if va in defined or points[i] in defined:
+                out.append((va, sorted(names[va])[0], size, points[i], sorted(names[points[i]])))
+            i += 1
+    return out
+
+
+KNOWN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_overlaps_known.txt")
+
+
+def known_overlaps():
+    """{(outer va, inner va)} the repository already has (data_overlaps_known.txt: `OUTER INNER  # names`, one per
+    line). Each is a real second owner of some bytes, found when the check was added; the gate fails on every other
+    overlap, so the list only shrinks. Fix one and delete its line (--update-known rewrites the file)."""
+    got = set()
+    if os.path.exists(KNOWN):
+        for line in open(KNOWN):
+            p = line.split("#")[0].split()
+            if len(p) == 2:
+                got.add((int(p[0], 16), int(p[1], 16)))
+    return got
+
+
+def write_known(over):
+    with open(KNOWN, "w") as f:
+        f.write("# data_size_audit.py: overlapping labels (OVERLAP in its docstring) that predate the check; the build gate "
+                "fails on any other.\n# OUTER_VA INNER_VA  # outer name holds inner name. Fix one, then drop its line "
+                "(data_size_audit.py --update-known).\n")
+        for va, name, size, inner, names in sorted(over, key=lambda o: (o[0], o[3])):
+            f.write("%08x %08x  # %s (%#x bytes) holds %s\n" % (va, inner, name, size, ", ".join(names)))
+
+
+def split_known(over):
+    """-> (new overlaps, known overlaps still present, known entries that no longer overlap)"""
+    known = known_overlaps()
+    new = [o for o in over if (o[0], o[3]) not in known]
+    old = [o for o in over if (o[0], o[3]) in known]
+    gone = sorted(known - {(o[0], o[3]) for o in over})
+    return new, old, gone
+
+
 def gate(rmap_path, map_path, jobs_n=None):
-    """build.py's gate -> (undersized, duplicates, number of definitions checked)."""
+    """build.py's gate -> (undersized, duplicates, number of definitions checked, overlaps)."""
     under, _s = audit(rmap_path, jobs_n or int(os.environ.get("MB_JOBS") or max(1, (os.cpu_count() or 2) - 2)), suspects=False)
-    return under, duplicates(rmap_path, map_path), STATS.get("defined", 0)
+    return under, duplicates(rmap_path, map_path), STATS.get("defined", 0), split_known(overlaps())[0]
 
 
 def main():
@@ -265,6 +335,7 @@ def main():
     ap.add_argument("--resolve-map", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
     ap.add_argument("--jobs", type=int, default=int(os.environ.get("MB_JOBS") or max(1, (os.cpu_count() or 2) - 2)))
     ap.add_argument("--map", help="the linked exe's map: also report original addresses with 2+ storage locations")
+    ap.add_argument("--update-known", action="store_true", help="rewrite data_overlaps_known.txt from this run")
     ap.add_argument("-v", action="store_true", help="list the suspects (the original's code reaches past our storage)")
     a = ap.parse_args()
     os.chdir(ROOT)
@@ -278,9 +349,18 @@ def main():
     dups = duplicates(a.resolve_map, a.map) if a.map else []
     for va, at in dups:
         print("DUPLICATE  %08x: %s" % (va, "; ".join("%#x %s" % (x, ", ".join(ns)) for x, ns in sorted(at.items()))))
+    over_all = overlaps()
+    if a.update_known:
+        write_known(over_all)
+    over, old, gone = split_known(over_all)
+    for va, name, size, inner, names in over:
+        print("OVERLAP    %08x %s (%#x bytes) holds %08x %s" % (va, name, size, inner, ", ".join(names) or "(a resolver label)"))
+    for o, i in gone:
+        print("note: %08x / %08x is listed in data_overlaps_known.txt but no longer overlaps: drop the line" % (o, i))
     print("%(defined)d data definitions at original addresses, %(sized)d with a measured declared size (%(claims)d addresses probed)" % STATS)
-    print("%d undersized definitions, %d suspects, %d addresses with several storage locations" % (len(under), len(suspect), len(dups)))
-    return 1 if under or dups else 0
+    print("%d undersized definitions, %d suspects, %d addresses with several storage locations, %d new overlaps (%d known)" % (
+        len(under), len(suspect), len(dups), len(over), len(old)))
+    return 1 if under or dups or over else 0
 
 
 if __name__ == "__main__":

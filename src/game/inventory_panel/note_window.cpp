@@ -94,17 +94,8 @@ struct mesh_x {
 #include "../gui_mgr.h"
 #define GUI ((GuiManager*)&orig::g_gui_mgr)
 
-struct StrTable {
-    tstring* lookup(const tstring& key);   // 0x43a1e0 (game/str_table.h)
-};
-struct LangTables {
-    tstring* find(const tstring* key);   // 0x4c6010 (rgl/mesh2/gui_edit.cpp)
-};
-struct UiTextDb {                                            // the UI string table at 0x5e2a18, as both classes call it
-    __forceinline tstring* lookup(const tstring* key) { return ((StrTable*)this)->lookup(*key); }
-    __forceinline tstring* find(const tstring* key) { return ((LangTables*)this)->find(key); }
-};
-#define UITEXT ((UiTextDb*)&orig::g_strtable)
+#include "../str_table.h"                          // StrTable g_strtable (0x5e2a18): lookup 0x43a1e0, find 0x4c6010
+#define UITEXT (&g_strtable)
 
 #include "../ini_file.h"
 #define CONFIG (&g_game_vars)
@@ -134,7 +125,7 @@ struct Map10007 {
 // expression that uses the result: it is destroyed after the call the translation is passed to (0x50a476..0x50a4ae)
 static __forceinline tstring* tr_key(const tstring& k)
 {
-    return UITEXT->lookup(const_cast<tstring*>(&k));
+    return UITEXT->lookup(k);
 }
 #define tr_obj(key) tr_key(tstring(key))
 // localised string for a key (a macro: the temporary key lives to the end of the caller's full expression, the way the

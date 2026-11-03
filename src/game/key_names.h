@@ -9,8 +9,10 @@ struct KeyNames {
 extern KeyNames g_key_names;                                                // 0xa170c8  // old name of g_keyboard, removed after the names merge
 // The keyboard / input state object (0xa170c8): the per-key state tables the game code reads by DirectInput key code
 // (g_keyboard.down[0x1d] = left Ctrl, [0x9d] = right Ctrl, [1] = Esc ...). Members are the ones the code reaches.
+struct DiDev;                           // the DirectInput device (char_sheet/screen.h)
 struct Keyboard {
-    char pad0[0xc];
+    char pad0[8];
+    DiDev* mouse_dev;                   // +0x008 the DirectInput mouse device (0xa170d0), may be null
     int down[256];                      // +0x00c key is held (key_is_down 0x49fd8c)
     int prev[256];                      // +0x40c key was held last frame (a press is down && !prev)
     float axis[3];                      // +0x80c the stick / mouse look axes (+0x80c x, +0x810, +0x814 y)

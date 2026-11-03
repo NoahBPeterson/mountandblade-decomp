@@ -7,6 +7,7 @@
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "./party_screen.h"
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -16,12 +17,12 @@
 #include "../../include/troop.h"
 #include "../shared_vars.h"
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
+#include "../ui_globals.h"      // UI / core globals
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_item_sel;                                  // 0xa75f6c (the selected item index; negative = nothing selected)
 
-extern int g_skill_clamp;                  // 0x8ee3ac4
-#define g_clamp_max g_skill_clamp              // (clamped level value of the hero percentage; lives outside the loaded image)
+#define g_clamp_max g_skill_tbl[36].cap         // 0x8ee3ac4 (the level cap of skill 36)
 #define WINT(w, off) (*(int*)((char*)(w) + (off)))
 
 // ini lookup with the scan loop expanded in the caller (0x4bd5e0 inlined: tstring::equals per entry, then atof)
@@ -113,7 +114,7 @@ void PartyScreen::open_party_window()
         ResMesh* c = m->clone();
         PSO(win)->add_image(0, c);
     }
-    g_ui_changed = 1;
+    g_gui_dirty = 1;
     g_gui_root.add_root((MissionUi**)&window);
 
     // buttons on the window

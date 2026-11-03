@@ -32,7 +32,6 @@ using namespace rgl;
 // logging globals of another object
 #include "../../include/logger.h"                       // Logger (shared with game/terrain_b/scene_file.h)
 extern char g_log_obj[];                                // 0x5a9f30 (a Logger)
-extern int g_log_on;                                    // 0x5a9fb0
 
 namespace rgl {
 
@@ -253,7 +252,7 @@ void world::render_scene(scene* sc, bool reflect)
     if (!sc->rt->loaded)
         return;
     sc->refl->reset();
-    if (g_log_on)
+    if (g_cfg.enable_edit_mode)
         ((Logger*)g_log_obj)->get("RENDERING REFLECTIONS;");
     if (!g_cfg.fake_reflections)
         sc->refl->flags |= 0x200;

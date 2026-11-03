@@ -162,13 +162,13 @@ void XferWin::update(int)
     char commit_out[4];
 
     if (f94 != 0 && f94->f_f4 < f90->f_f4) {
-        if (g_gui.mouse[0] < g_half) {
+        if (g_gui.mouse[0] < 0.5f) {
             f94->src->on_value_changed((float)g_mission_clock);
             f94->src->set_key_flags(0x10000);
             goto after_scroll;
         }
     } else {
-        if (g_gui.mouse[0] < g_half && f8c8 == 2)
+        if (g_gui.mouse[0] < 0.5f && f8c8 == 2)
             extra = 1;
     }
 
@@ -183,7 +183,7 @@ void XferWin::update(int)
         float fv = (*pe - s->step) * ratio;
         float t = (float)g_mission_clock / *pe;
         t = t * s->step;
-        t = t * g_char_scale;
+        t = t * 0.0005f;
         fv += t;
         s->set_value(fv);
         (*pt)->src->set_key_flags(0x10000);
@@ -663,7 +663,7 @@ static __forceinline float anim_value(ValueSource* vs)
     float a = F(vs, 0x168, float) - F(vs, 0x16c, float);
     float b = F(vs, 0x170, float) - F(vs, 0x16c, float);
     return (a / b) * (base[0] - F(vs, 0x17c, float))
-         + ((float)g_mission_clock / base[0]) * F(vs, 0x17c, float) * g_char_scale;
+         + ((float)g_mission_clock / base[0]) * F(vs, 0x17c, float) * 0.0005f;
 }
 
 // the first term of anim_value alone (0x533bda..0x533c09: no clock term)

@@ -27,6 +27,7 @@
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
 #include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ui_globals.h"      // UI / core globals
 
 // ---- layout proofs of the members this object added to PartyWindow ---------------------------------------------------------
 typedef char chk_page_widget[offsetof(PartyWindow, page_widget) == 0x2c ? 1 : -1];
@@ -70,7 +71,6 @@ struct WidgetB;
 WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
 void __cdecl label_refresh(MissionUi* w, tstring name);                // 0x4e4c70 (cdecl, the name by value; cls_map/progress_bar.cpp)
 struct GameData { tstring string_value(int index); };                  // 0x48e9e0 (include/game_data.h; ret 8: hidden return)
-extern char g_gui_dirty;                        // 0x5d8788 (set whenever a window was installed)
 extern int g_tutorial_off;                      // 0x5a9fac (non-zero: tutorials are switched off)
 extern void* g_windows[];                       // 0xa73980 (the window manager: its first screen is the message box)
 struct WindowOpener {                           // the window manager (world_data.h WindowMgrW)

@@ -27,9 +27,6 @@ using rgl::matrix;
 using rgl::vector4;
 
 extern int g_use_shaders;                       // 0x5e28fc: programmable pipeline in use
-extern float g_k_0_2;                           // 0x54b4c8
-extern float g_k_1_20;                          // 0x54b4d0
-extern float g_k_reach;                         // 0x598e8c (36.0)
 
 // ---- engine std::vector views (alloc, begin, end, cap): size() is inline, capacity()/resize are out of line ---
 #include "../../include/mat4.h"
