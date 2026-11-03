@@ -3,8 +3,6 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../key_names.h"
-#include "../game_globals.h"      // canonical global declarations (g_module_name ...)
-#include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4ebc10
 // Saves the next free screenshot file, then logs "ui_screenshot_taken_to_value" with the file name, or
@@ -18,14 +16,14 @@ void __cdecl take_screenshot(void)
     tstring* s;
     HANDLE h;
 
-    _sprintf(dir, "", g_module_name.c_str());
+    _sprintf(dir, "", g_save_prefix ? g_save_prefix : (char*)&g_save_prefix);
     screenshots_path(dir);
-    _sprintf(name, "%s%s", dir, g_module_name.c_str());
+    _sprintf(name, "%s%s", dir, g_save_prefix ? g_save_prefix : (char*)&g_save_prefix);
     CreateDirectoryA(name, 0);
     for (;;) {
         g_screenshots_counter++;
         mb_snprintf(name, 0x200, "%s%s\\mb%d.bmp", dir,
-                    g_module_name.c_str(),
+                    g_save_prefix ? g_save_prefix : (char*)&g_save_prefix,
                     g_screenshots_counter);
         h = FindFirstFileA(name, &fd);
         if (h == (HANDLE)-1)
@@ -130,31 +128,31 @@ void GuiScreen::process(int param)
 
     this->dmx = 0.0f;
     this->dmy = 0.0f;
-    if (this->mx <= 0.01f) {
-        if (g_keyboard.axis[0] < 0.0f) {
-            this->dmx = g_keyboard.axis[0];
-            this->ax = this->ax + g_keyboard.axis[0];
+    if (this->mx <= g_eps) {
+        if (g_a178d4 < 0.0f) {
+            this->dmx = g_a178d4;
+            this->ax = this->ax + g_a178d4;
         }
     }
-    else if (this->mx >= 0.99f) {
-        if (g_keyboard.axis[0] > 0.0f) {
-            this->dmx = g_keyboard.axis[0];
-            this->ax = this->ax + g_keyboard.axis[0];
+    else if (this->mx >= g_ninety_nine) {
+        if (g_a178d4 > 0.0f) {
+            this->dmx = g_a178d4;
+            this->ax = this->ax + g_a178d4;
         }
     }
     else {
         this->ax = 0.0f;
     }
-    if (this->my <= 0.01f) {
-        if (g_keyboard.axis[1] > 0.0f) {
-            this->dmy = -g_keyboard.axis[1];
-            this->ay = this->ay - g_keyboard.axis[1];
+    if (this->my <= g_eps) {
+        if (g_a178d8 > 0.0f) {
+            this->dmy = -g_a178d8;
+            this->ay = this->ay - g_a178d8;
         }
     }
-    else if (this->my >= 0.74f) {
-        if (g_keyboard.axis[1] < 0.0f) {
-            this->dmy = -g_keyboard.axis[1];
-            this->ay = this->ay - g_keyboard.axis[1];
+    else if (this->my >= g_seventy_four) {
+        if (g_a178d8 < 0.0f) {
+            this->dmy = -g_a178d8;
+            this->ay = this->ay - g_a178d8;
         }
     }
     else {
@@ -162,9 +160,9 @@ void GuiScreen::process(int param)
     }
 
     count = 0x10;
-    if (g_keyboard.mouse_dev) {
-        if (g_keyboard.mouse_dev->vtbl->GetDeviceData(g_keyboard.mouse_dev, 0x14, buf, &count, 0)) {
-            while (g_keyboard.mouse_dev->vtbl->Acquire(g_keyboard.mouse_dev) == (long)0x8007001e)
+    if (g_a170d0) {
+        if (g_a170d0->vtbl->GetDeviceData(g_a170d0, 0x14, buf, &count, 0)) {
+            while (g_a170d0->vtbl->Acquire(g_a170d0) == (long)0x8007001e)
                 ;
         }
     }
@@ -296,8 +294,8 @@ void GuiScreen::process(int param)
 // camera present and a module-leave pending, it leaves the current module.
 void __cdecl frame_hook(void)
 {
-    if ((g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0xd2] && !g_keyboard.prev[0xd2])
+    if ((g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_a1741c && !g_a1781c)
         take_screenshot();
-    else if (g_dev_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_a1717c || g_keyboard.down[0x36]) && g_a17190 && !g_a17590)
+    else if (g_5a9fb0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_a1717c || g_keyboard.down[0x36]) && g_a17190 && !g_a17590)
         menu_variables_loaded(0);   // 0x4ebb80
 }

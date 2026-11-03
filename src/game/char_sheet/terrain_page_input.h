@@ -58,13 +58,19 @@ __declspec(noinline) void identity_2x2(float* m);          // 0x4f3be0 (the orig
 
 // ---- the page: src/game/terrain_page.h ------------------------------------------------------------------
 #include "../terrain_page.h"
-#include "../ui_globals.h"      // UI / core globals
 
 // the input flags the camera reads (0xa17xxx block; names provisional)
+extern int g_key_17204;                                     // 0xa17204  pitch down
+extern int g_key_17214;                                     // 0xa17214  pitch up
+extern int g_key_1720c;                                     // 0xa1720c  zoom in
+extern int g_key_171fc;                                     // 0xa171fc  zoom out
 extern int g_key_1714c;                                     // 0xa1714c  strafe one way (camera-space axis)
 extern int g_key_17154;                                     // 0xa17154  strafe the other way
 extern int g_key_17150;                                     // 0xa17150  pan one way
 extern int g_key_17118;                                     // 0xa17118  pan the other way
 extern gui_manager g_gui;                              // 0x5d7080 (cs_common.h view: the pointer position g_gui.mouse, 0x5d7094 / 0x5d7098)
+extern int g_key_17458;                                     // 0xa17458  turn (heading)
+extern int g_key_17454;                                     // 0xa17454  roll with the vertical axis
+extern float g_axis_x;                                      // 0xa178d4  first input axis
 
 #endif

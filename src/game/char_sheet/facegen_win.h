@@ -45,7 +45,6 @@ typedef Widget UiWidget;                // the slice's name for it
 #include "../map_widget.h"                // MapWidget (0x358 bytes, ctor 0x4ed630): the 3D preview
 #include "../terrain_page.h"              // TerrainPage: the same object (update 0x4f2730, refresh_hex 0x4f2960)
 #include "../int_vec.h"                   // IntVec (the entity's mesh list at +0x118: _Insert_n 0x410610)
-#include "../ui_globals.h"      // UI / core globals
 
 // the children vector of a container widget (+0x178: allocator slot, first, last, end), pushed onto as the original inlines it
 struct ChildList {
@@ -110,6 +109,8 @@ struct facegen_win : UiWidget {
 // ---- helpers / globals ------------------------------------------------------------------------------
 extern char g_gui[];                                        // 0x5d7080 (the GUI root object)
 // (reset 0x42d1b0 is gui_manager::reset, gui_push 0x49b120 is NodeVec::push_back: cs_common.h)
+extern unsigned char g_gui_dirty;                           // 0x5d8788
+extern int g_region_names[];                                // 0x59394c, 8 entries ending at 0x59396c
 extern char vtbl_592208[];                                  // 0x592208 (the single-line editor UiE, config/ui_widgets_c.h)
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);    // 0x536f8f

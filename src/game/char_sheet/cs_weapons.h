@@ -13,6 +13,7 @@
 
 // translation table object at 0x5e2a18
 #include "../str_table.h"
+extern StrTable g_strtable;                         // 0x5e2a18
 
 // ---- the character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) is the troop record,
 // src/include/troop.h (the slice called it CharRec): +0x30 flags30, +0x80 f80[] per-class weapon proficiency, +0xa4 skill_points,
@@ -21,7 +22,7 @@
 
 #include "../../include/game_data.h"
 
-extern const int g_weapon_xp[11];                   // 0x5938c8 (experience needed per weapon class)
+extern int g_weapon_xp[];                           // 0x5938c8[9] (experience needed per weapon class)
 
 void mb_vsprintf(char* out, const char* fmt, va_list args);   // 0x536f8f (used by the inlined sprintf)
 

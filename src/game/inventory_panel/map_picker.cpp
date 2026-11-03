@@ -27,6 +27,7 @@ int g_sel_party = -1;                         // 0x5aa3ac (currently selected pa
 int g_5d8784;                                   // 0x5d8784 (zeroed with the current label object)
 rgl::mesh* g_label_obj;                           // 0x5d75ec (current label object)
 
+extern StrTable g_strtable;             // 0x5e2a18
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_resmgr;                 // 0x5d6fa0

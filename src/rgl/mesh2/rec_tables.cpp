@@ -618,7 +618,7 @@ void __fastcall sound_engine::tick()
     vol = vol * 255.0f;
     float fl = (float)floor((double)vol);
     int n = (int)fl;
-    int iv = (vol - fl <= 0.5f) ? n : n + 1;
+    int iv = (vol - fl <= g_549d70) ? n : n + 1;
     int idx;
     int level = (iv < 0) ? 0 : ((iv >= 255) ? 254 : iv);
     if (w240c != 0) {

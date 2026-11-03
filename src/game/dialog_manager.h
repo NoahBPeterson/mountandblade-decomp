@@ -36,6 +36,7 @@ struct stream_base {
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 
 #include "./str_table.h"
+extern StrTable g_strtable;                                // 0x5e2a18
 
 // ---- parties, troops and the game globals: the shared classes (Party / PartyMgr / TroopRec / GameData / g_game 0x5e2930) ----------------
 #include "../include/game_data.h"

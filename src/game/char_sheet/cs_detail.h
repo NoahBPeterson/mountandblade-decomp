@@ -19,6 +19,7 @@ extern "C" void __cdecl mb_snprintf(char*, unsigned, const char*, ...);    // 0x
 #include "../tstring.h"
 
 #include "../str_table.h"
+extern StrTable g_strtable;                         // 0x5e2a18
 
 // translated text of a key (lookup, falling back to the empty string stored in place)
 static const char* str_text(const tstring& key)

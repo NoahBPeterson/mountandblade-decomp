@@ -32,9 +32,12 @@
 #include "../../include/game_data.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
-// 0x43a1e0 is StrTable::lookup (agent2/agent_stats.cpp), which takes its key by reference: the one class, game/str_table.h
-#include "../str_table.h"
-#define g_strtable_c g_strtable
+// 0x43a1e0 is StrTable::lookup (agent2/agent_stats.cpp; the table g_strtable 0x5e2a18 seen by mesh2_common.h as LangTables), which takes its key by reference:
+// only the member is declared, under the defining class
+struct StrTable {
+    tstring* lookup(const tstring& key);   // 0x43a1e0
+};
+#define g_strtable_c (*(StrTable*)&g_strtable)
 struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party pool, ret 4)
 };
@@ -212,7 +215,7 @@ struct resmgr { rgl::mesh* get_object(const rgl::string* name);      // 0x419540
                 lod_group* get_lod_mesh(const rgl::string& name); };   // 0x41cdc0 (rgl/core/resmgr.h)
 inline gui_mesh* res_get(const tstring& name) { return (gui_mesh*)((resmgr*)&g_resmgr)->get_object((const rgl::string*)&name); }
 extern gui_manager g_gui;                       // 0x5d7080
-extern unsigned char g_gui_dirty;               // 0x5d8788 (set to 1 whenever a window was installed; game_globals.h declares it, which clashes with this header's table views)
+extern unsigned char g_ui_changed;              // 0x5d8788 (set to 1 whenever a window was installed)
 
 // ---- 0x4dada0..0x4db660: the campaign diary screens (mission window, meeting window, "done" window) --------------------
 // The screen manager (`this` of 0x4db020..0x4db660, 0x4de1b0..): one of the screen objects, a window pointer table.
@@ -354,6 +357,7 @@ struct DebriefMenu {
 // globals of the menus
 extern int g_music_situation;                      // 0xa73a10 (set to 0x400000)
 extern int g_main_menu_kind;                    // 0xa75f34
+extern char* g_save_prefix;                     // 0x8ee3c3c (the c_str idiom falls back to its own address)
 extern BlockOwner* g_presentation;               // 0x5e299c
 
 // 0x4de3e0: builds a textured quad (four points, four vertices, two faces) in a mesh; a member of the mesh class

@@ -6,7 +6,6 @@
 #include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4f66e0
 void ConvScreen::open(int dialog, int* out)
@@ -29,7 +28,7 @@ void ConvScreen::open(int dialog, int* out)
     }
     {
         NodeA* v = (NodeA*)talk;
-        g_gui_dirty = 1;
+        g_ui_dirty = 1;
         ((NodeVec*)(void*)g_gui)->push_back(v);   // 0x49b120
     }
 

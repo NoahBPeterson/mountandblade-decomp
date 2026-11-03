@@ -22,10 +22,13 @@ extern char* g_game;                                            // 0x5e2930 (the
 extern char* g_menus;                                           // 0x5e29b0 (the menu array)
 extern int g_5e2930_dummy;
 
-// The string table is game/str_table.h's StrTable (find 0x4c6010, lookup 0x43a1e0); the script state (0xa70440) is dialog_manager.h's ScriptState
-// (expand 0x4606d0, thiscall, ret 8: hidden return + token). Those headers declare g_game and friends in other types than this TU's, so the
-// member is repeated under the class name.
-#include "../str_table.h"                                       // StrTable g_strtable (0x5e2a18)
+// The string table object (0x5e2a18) as the map editor's LangTables (rgl/mesh2/gui_edit.h, mesh2_common.h: find 0x4c6010) and the
+// script state (0xa70440) as dialog_manager.h's ScriptState (expand 0x4606d0, thiscall, ret 8: hidden return + token). Those
+// headers declare g_game and friends in other types than this TU's, so the two members are repeated under the class names.
+struct LangTables {
+    tstring* find(const tstring* key);                          // 0x4c6010
+};
+extern LangTables g_strtable;                                   // 0x5e2a18
 struct ScriptState {
     tstring expand(const tstring& in);                          // 0x4606d0
 };

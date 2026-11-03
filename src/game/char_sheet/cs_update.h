@@ -65,7 +65,6 @@ extern MsgLog g_msglog;                             // 0x5d7080
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 extern int g_world_time;                            // 0x5d8790 (compared as an int)
-#include "../ui_globals.h"      // UI / core globals
 
 // scroll bar / slider (0x48baa0 set_value)
 struct UiDsv {

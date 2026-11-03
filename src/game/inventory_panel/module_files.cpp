@@ -173,7 +173,7 @@ struct music_set {
     void load(stream_base* s, int count, const tstring* path);   // 0x4c4340 (rgl/mesh2/rec_tables.h: SoundTable::load)
 };
 #include "../emit.h"
-#include "../animator.h"                          // Animator g_anim (0x8ed4f60): the skin table skins.txt is read into
+struct AnimTable { char pad; };                      // 0x8ed4f60
 struct AccessStream;
 struct mesh_scene {
     void read(AccessStream* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
@@ -214,6 +214,7 @@ struct csv_row {
 
 extern SoundTable g_sound_mgr;                          // 0x5aa128
 extern EmitTable g_emit_defs;                        // 0x8ed5090
+extern AnimTable g_anim_table;                            // 0x8ed4f60
 extern TableauTable g_tableaus;                       // 0xa75f40
 extern PresentationTable g_presentations;            // 0xa75f2c
 extern ScriptTable g_scripts;                        // 0xa75eb0
@@ -297,7 +298,7 @@ void load_module_files()
     in_skins.r_tstr(&str1);
     in_skins.r_tstr(&str2);
     in_skins.r_int(&version);
-    ((mesh_scene*)&g_anim)->read((AccessStream*)&s_skins);
+    ((mesh_scene*)&g_anim_table)->read((AccessStream*)&s_skins);
     s_skins.failed = 1;
 
     // scene_props.txt

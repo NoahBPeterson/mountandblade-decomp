@@ -7,7 +7,6 @@
 #include "../../include/image_addrs.h"
 #include "./inv_common.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-#include "../ui_globals.h"      // UI / core globals
 
 // a 0x20-byte stack row copied by 0x503810 (the same record as Stack, src/include/party.h)
 struct PsRow { int v[8]; };
@@ -117,6 +116,7 @@ struct SkillRow {                                   // the 42 x 0x44-byte skill 
 extern SkillRow g_skill_rows[];                     // 0x8ee3110
 
 // ---- objects and functions of other translation units --------------------------------------------------------------
+extern char g_ui_changed;                           // 0x5d8788 (set to 1 whenever a window was installed)
 #include "../game_globals.h"      // g_module_settings (canonical)
 extern int g_item_sel;                              // 0xa75f6c (the selected item index; negative = nothing selected)
 extern ObjTable g_tableaus;                          // 0xa75f40

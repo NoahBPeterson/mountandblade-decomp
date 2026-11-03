@@ -57,7 +57,6 @@
 #include "../../include/height_field.h"
 #include "../agent/curve.h"   // Curve: set_rec_phase 0x433b20 (the canonical class of the Skeleton record)
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-extern int g_dev_mode;   // 0x5a9fb0 developer/edit-mode flag (the canonical declaration is game_globals.h; not includable here: agent_logic.h views the armor factors as float[3])
 
 #undef resmgr
 #undef g_resmgr
@@ -2487,6 +2486,7 @@ static inline std::vector<res_obj*>& r78_meshes(Rec78* r) { return *(std::vector
 static inline res_shape* r78_shape(Rec78* r) { return *(res_shape**)((char*)r + 0x50); }
 static inline SoundSet& rsnd(Rec78* r) { return *(SoundSet*)((char*)r + 0x6c); }
 static inline SoundSet& isnd(ItemKind* k) { return *(SoundSet*)((char*)k + 0x228); }
+extern int g_flag5a9fb0;                                // 0x5a9fb0
 #define P_ENT(r) (*(SceneEnt**)&(r)->m1b4)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
 #define P_ENT2(r) (*(SceneEnt**)&(r)->m1b8)
 #define ents (*(EntVec*)((char*)this + 0x63c0))         // Mission +0x63c0: the entity list of the props
@@ -2545,18 +2545,18 @@ void Mission::spawn_prop(int* idx, int* id)
             tbl = -1;
         } else {
             Rec78* rec = &g_tbl78[tbl];
-            if (g_dev_mode != 0 || !(r78_flags(rec) & 0x4000))
+            if (g_flag5a9fb0 != 0 || !(r78_flags(rec) & 0x4000))
                 meshes = r78_meshes(rec);
             shape_res = r78_shape(rec);
         }
     } else if (t != 3) {
         if (t == 1) {
-            if (g_dev_mode)
+            if (g_flag5a9fb0)
                 name.assign("entry_arrow");
             else
                 name.assign("");
         } else if (t == 5) {
-            if (g_dev_mode)
+            if (g_flag5a9fb0)
                 name.assign("_mesh_passage");
             else
                 name.assign("");
@@ -4241,6 +4241,7 @@ void Agent::refresh_carried(Missile* other)
 
 // ---- Agent::drop_held, the text layout wrapper, the message log, the animator visibility switch, Agent::get_label_box -----------
 extern MsgLog g_gui;                                 // 0x5d7080
+extern StrTable g_strtable;                             // 0x5e2a18
 extern Font* g_font;                                    // 0x5e2934
 // the animator's inline accessor of a bone record's world frame (brings the poses up to date first)
 static __forceinline char* skel_rec_inl(Skeleton* sk, int i)

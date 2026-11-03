@@ -10,7 +10,6 @@
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../shared_vars.h"
 #include "../last_scene.h"
-#include "../ui_globals.h"      // UI / core globals
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_a70438;   // 0xa70438
@@ -60,7 +59,7 @@ void Screen::init_screen()
     s0.x = 1.0f;
     s0.y = 0.75f;
     overlay->set_scale(&s0.x);
-    g_gui_dirty = 1;
+    g_5d8788 = 1;
     ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)overlay);   // 0x49b120
 
     Overlay* buttons = (Overlay*)new_container(0x188, vtbl_597050);   // 0x4931a0, then vptr 0x597050
@@ -80,7 +79,7 @@ void Screen::init_screen()
         buttons->set_mesh(0, bar_mesh);
     }
     f48 = 0;
-    if (g_dev_mode) {
+    if (g_5a9fb0) {
         f48 = (int)make_short_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_terrain")), 0.002f, 0.006f, 0.03f);
     }
     f4c = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
@@ -220,7 +219,7 @@ void Screen::init_screen()
 // @ 0x4ecce0
 void Screen::camera_mark_entities()
 {
-    g_game->f13acc = (f2b8 * 0.07f + g_549cdc) * g_54b3b4;
+    g_game->f13acc = (f2b8 * g_590bb8 + g_549cdc) * g_54b3b4;
     PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
     for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id((int*)&id)) {
         int idx = ((Map10007*)(void*)mgr)->lookup(id);

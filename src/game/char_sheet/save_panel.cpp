@@ -61,6 +61,7 @@ struct SavePanel {
 };
 
 #include "../str_table.h"
+extern StrTable g_strtable;                                     // 0x5e2a18
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                         // 0x5d7080
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);  // 0x415100
@@ -68,13 +69,13 @@ int  __cdecl crt_sprintf(char* buf, const char* fmt, ...);      // 0x536f8f
 int  __cdecl crt_remove(const char* path);                      // 0x539023
 void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
+extern char* g_save_prefix;                                     // 0x8ee3c3c (prefix string pointer)
 extern char* g_game;                                            // 0x5e2930
 extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
 #include "../main_menu.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
-#include "../game_globals.h"      // canonical global declarations (g_module_name ...)
 #define g_main_menu (*(main_menu*)g_main_menu_obj)
 // The menu record's tstrings/fields live on the object g_main_menu.rec points at, NOT on the screen manager itself:
 // the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
@@ -135,7 +136,9 @@ void SavePanel::update(int)
             crt_sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
-            const char* pf = g_module_name.c_str();
+            const char* pf = g_save_prefix;
+            if (!pf)
+                pf = (char*)&g_save_prefix;
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
                         selected / 10, selected % 10);
             *(int*)(slot_as<char>(3) + 4) = 1;
@@ -165,7 +168,9 @@ void SavePanel::update(int)
             crt_sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
-            const char* pf = g_module_name.c_str();
+            const char* pf = g_save_prefix;
+            if (!pf)
+                pf = (char*)&g_save_prefix;
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
                         selected / 10, selected % 10);
             if (crt_remove(name) != 0) {

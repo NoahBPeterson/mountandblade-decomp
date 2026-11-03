@@ -24,6 +24,7 @@
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
+extern StrTable g_strtable;                 // 0x5e2a18
 extern ini_file g_game_vars;                      // 0xa44240 (the option table: key tstring +0, value tstring +0x1c, count +0x2c000)
 
 // ---- classes of other modules whose definitions own methods the game data view calls --------------------------------------

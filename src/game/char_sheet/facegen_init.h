@@ -107,21 +107,29 @@ struct FaceGen {
 // ---- globals ---------------------------------------------------------------------------------------------
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
+extern unsigned char g_msg_tick;                        // 0x5d8788
 struct gui_mgr {
     void set_window(widget** w);   // 0x49b120
 };
 extern gui_mgr g_gui;                                   // 0x5d7080
 #include "../str_table.h"   // 0x43a1e0
+extern StrTable g_strtable;                             // 0x5e2a18
 #include "../ini_file.h"
-#include "../ui_globals.h"      // UI / core globals
 extern ini_file g_config;                               // 0xa44240
 extern "C" double atof(const char* s);                  // 0x537352
 
 #include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
+extern int g_no_cam;                                    // 0x5a9fb0
 
 #include "../animator.h"                              // Animator, g_anim
+extern float g_dummy_mat;                               // 0x8ed4f8c
+extern float g_dummy0;                                  // 0x8ed5088
+extern float g_dummy1;                                  // 0x8ed508c
 extern int g_char_count;                                // 0x8ed4f88
+extern float g_k0_01;                                   // 0x54a6f0 = 0.01f
+extern float g_fov_k;                                   // 0x5e20a8
+extern const double g_tan_ang;                          // 0x598e90
 
 struct TextPart {
     void get_text(int row, int index, tstring* out);   // 0x4f5d90 (editor_ui.cpp; the animator's text table at 0x8ed4f60)

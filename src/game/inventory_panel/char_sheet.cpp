@@ -113,12 +113,13 @@ extern ResMgr g_resmgr;                         // 0x5d6fa0
 
 #include "../gui_mgr.h"
 extern GuiManager g_gui;                        // 0x5d7080
+extern char g_ui_dirty;                         // 0x5d8788
 
 #include "../str_table.h"
+extern StrTable g_strtable;                     // 0x5e2a18
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
-#include "../ui_globals.h"      // UI / core globals
 
 
 extern "C" double atof(const char* s);          // 0x537352
@@ -172,7 +173,8 @@ static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstri
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ini_file.h"
 
-#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp (canonical, defined in triggers/trigger_vec.cpp)
+extern int g_game_mode;                         // 0x5a9fb0
+#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp_one_handed (canonical, defined in triggers/trigger_vec.cpp)
 extern char g_skill_tbl[];                    // 0x8ee3100 (records of 0x44 bytes)
 
 // the two mode/tutorial objects touched at the end
@@ -279,7 +281,7 @@ void CharSheet::init()
     }
 
     CharSheetWidget* pw = window;
-    g_gui_dirty = 1;
+    g_ui_dirty = 1;
     g_gui.add_root(&pw);
 
     // reset-changes button (this+0x430) and done button (this+0x42c)
@@ -669,7 +671,7 @@ void CharSheet::init()
     label_refresh(stats, tstring("char_b_stats"));
 
     f52c = 1;
-    if (g_dev_mode == 0 && player != g_game->player)
+    if (g_game_mode == 0 && player != g_game->player)
         f52c = 0;
     if (mode != -1) {
         f52c = 0;
@@ -678,7 +680,7 @@ void CharSheet::init()
     prev = 0;
     next = 0;
 
-    if (g_dev_mode != 0 && mode == -1) {
+    if (g_game_mode != 0 && mode == -1) {
         {
             tstring kh("char_b_next_h");
             tstring kc("ui_next");
@@ -692,7 +694,7 @@ void CharSheet::init()
         label_refresh(next, tstring("char_b_next"));
     }
 
-    if (g_dev_mode != 0 && mode == -1) {
+    if (g_game_mode != 0 && mode == -1) {
         {
             tstring kh("char_b_prev_h");
             tstring kc("ui_prev");

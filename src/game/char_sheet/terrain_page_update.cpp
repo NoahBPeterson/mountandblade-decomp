@@ -5,8 +5,6 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the camera sliders; passed by address)
-
 // the original inlines set_enabled_text (0x4f28a0) and refresh_hex (0x4f2960) into the two "Enable terrain" branches
 // (they stay calls in the other branches); same behaviour, spelled out so the call sequence matches
 #define inline_enabled_text(w) do { if ((w)->get_value()) { char r[8]; (w)->set_text(r, tstring("Enabled")); } \
@@ -32,7 +30,7 @@ void TerrainPage::update(float dt)
             sync_bits();
             bit_fields[i]->get_text(&text);
             int v;
-            sscanf(text.c_str(), "%d", &v);
+            sscanf(text.c_str(), g_fmt_d, &v);
             int lo, hi;
             if (i == 0)      { lo = 0x00; hi = 0x1e; }
             else if (i == 1) { lo = 0x20; hi = 0x3e; }
@@ -67,13 +65,13 @@ void TerrainPage::update(float dt)
         refresh_hex();
     } else if (page_changed(x_slider)) {
         float zero = 0.0f;
-        float v = x_slider->get_float() * 700.0f + 140.0f;
-        camera_x = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
+        float v = x_slider->get_float() * g_500 + g_140;
+        camera_x = clamp(&v, &zero, &g_clamp_lo);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(y_slider)) {
         float zero = 0.0f;
-        float v = y_slider->get_float() * 700.0f + 140.0f;
-        camera_y = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
+        float v = y_slider->get_float() * g_500 + g_140;
+        camera_y = clamp(&v, &zero, &g_clamp_lo);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(z_slider)) {
         camera_z = z_slider->get_float() * 100.0f + g_one;
@@ -88,7 +86,7 @@ void TerrainPage::update(float dt)
         water_height = height_slider->get_float();
         refresh_hex();
     } else if (page_changed(type_box)) {
-        terrain_type = g_region_types[type_box->get_value()];
+        terrain_type = g_size_modes[type_box->get_value()];
         refresh_hex();
     } else if (page_changed(size_box)) {
         map_size = size_box->get_value();
@@ -121,9 +119,9 @@ done:
         int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
         owner[0] = 0; owner[1] = 0; owner[2] = 0; owner[3] = 0;
         ((TerrainX*)(void*)&g_terrain_obj)->destroy_water((int)owner);   // 0x4814a0
-        float x = camera_x * 0.5f;
+        float x = camera_x * g_half;
         view_x = x;
-        float y = camera_y * 0.5f;
+        float y = camera_y * g_half;
         view_y = y;
         if (owner[1] != 0)
             free_ptr((void*)owner[1]);

@@ -139,6 +139,7 @@ typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     
 
 // ------------------------------------------------------------------------------------- globals ------
 extern gui_manager g_gui;                    // 0x5d7080
+extern StrTable   g_strtable;                // 0x5e2a18
 
 
 void mb_snprintf(char* buf, size_t n, const char* fmt, ...);   // 0x415100

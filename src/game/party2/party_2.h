@@ -39,6 +39,7 @@ using rgl::vector4;
 void mb_warning(const char* fmt, ...);                  // 0x42cb80 (logs a message)
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (printf-style log)
 float __cdecl frand();                                  // 0x40e400 (rand() % 15817 / 15817, in st0)
+extern int g_level_exp[];                               // 0x5934bc experience needed per level
 struct ScriptState;
 extern ScriptState g_script;                // 0xa70440 (dialog_manager.h cannot be included here)
 

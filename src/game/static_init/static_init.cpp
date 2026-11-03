@@ -14,7 +14,6 @@
 #include <string.h>
 #include <string>
 #include "../last_scene.h"
-#include "../key_names.h"      // g_keyboard (0xa170c8)
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
@@ -32,6 +31,7 @@ extern unsigned g_8ee41ec;  // 0x8ee41ec
 extern unsigned g_8ee41e8;  // 0x8ee41e8
 extern float g_5a9f20;      // 0x5a9f20
 extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
+extern char g_5e2a18[];     // 0x5e2a18 the string tables
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
 extern char g_5fe898[];     // 0x5fe898
@@ -39,6 +39,7 @@ extern char g_5e2948[];     // 0x5e2948 the tick counter (64-bit)
 extern char g_a178f0[];     // 0xa178f0
 extern char g_a17900[];     // 0xa17900
 extern char g_a170d4[];     // 0xa170d4 the key state table (0x100 dwords)
+extern char g_a178d4[];     // 0xa178d4
 extern char g_a178e0[];     // 0xa178e0
 extern char g_a17910[];     // 0xa17910 the display state
 extern char g_a180e8[];     // 0xa180e8 the skeleton name vector (allocator, first, last, end)
@@ -87,6 +88,7 @@ struct tstring { tstring(); ~tstring(); char rec[0x20]; };   // 0x42bbd0, 0x42bc
 struct tstring11 { tstring a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
+struct LangTables { LangTables(); void release_strings(); };   // 0x4cda20, 0x4ca720
 struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
 struct big_holder { void release(); };              // 0x4ca830
 struct DisplayState { DisplayState(); };            // 0x4bc2d0
@@ -249,6 +251,8 @@ void __cdecl static_dtor_548420() { ((world_obj*)g_a76630)->~world_obj(); }
 void __cdecl static_dtor_548430() { g_5aa380.~basic_string(); }
 // @ 0x548460
 void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
+// @ 0x548470
+void __cdecl static_dtor_548470() { ((LangTables*)g_5e2a18)->release_strings(); }
 // @ 0x548480
 void __cdecl static_dtor_548480() { ((big_holder*)g_5fe898)->release(); }
 // @ 0x548490
@@ -306,6 +310,8 @@ void __cdecl static_init_547a40() { g_8ee41ec = g_5a8e78; }
 void __cdecl static_init_547a50() { g_8ee41e8 = g_5a8e88; }
 // @ 0x547a60
 void __cdecl static_init_547a60() { g_5a9f28[0] = g_549cdc - g_5a9f20; }
+// @ 0x547a80
+void __cdecl static_init_547a80() { new (g_5e2a18) LangTables; atexit(static_dtor_548470); }
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable
 void __cdecl static_init_547aa0()
 {
@@ -343,8 +349,8 @@ void __cdecl static_init_547b50()
     memset(g_a170d4, 0, 0x400);
     AT(int, g_a178e0, 0) = 0;
     AT(int, g_a178e0, 4) = 0;
-    g_keyboard.axis[0] = 0;
-    g_keyboard.axis[1] = 0;
+    AT(int, g_a178d4, 0) = 0;
+    AT(int, g_a178d4, 4) = 0;
 }
 // @ 0x547ba0
 void __cdecl static_init_547ba0() { new (g_a17910) DisplayState; }
@@ -441,7 +447,7 @@ typedef void (__cdecl* init_fn)();
 init_fn g_static_init_table[] = {
     static_init_5479a0, static_init_5479c0, static_init_5479e0, static_init_5479f0, static_init_547a00,
     static_init_547a20, static_init_547a30, static_init_547a40, static_init_547a50, static_init_547a60,
-    static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
+    static_init_547a80, static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
     static_init_547ba0, static_init_547bb0, static_init_547d80, static_init_547da0,
     static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,

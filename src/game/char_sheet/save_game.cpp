@@ -173,7 +173,7 @@ done:
 // @ 0x4e8d70    int SaveCtx::write(OutStream* out)
 int SaveCtx::write(OutStream* out)
 {
-    struct { char magic[5]; } hdr = { "WRDR" };
+    struct { int magic; char zero; } hdr = { g_59811c, g_598120 };
     out->w_raw(&hdr);
     int version = 0x3f3;
     out->w_raw(&version);

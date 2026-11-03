@@ -65,7 +65,6 @@ int g_lineno;                                    // 0x5e2598 (.bss) line of the 
 int g_script_error;                              // 0x5e259c (.bss) set by report(); copied to *error at the end of execute
 int g_cur_opcode;                                // 0x5e25a0 (.bss) opcode word of the statement being run
 int g_or_latch;                                  // 0x5e25a4 (.bss) this_or_next chain already satisfied
-#include "../ui_globals.h"      // UI / core globals
 
 // ==== by-reference helpers with their bodies in this object ================================================
 // The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
@@ -1427,7 +1426,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             game()->message_log.append(tstring(num));
             game()->message_log.push_back('|');
             game()->message_log.append(text);
-            if (g_dev_mode) {
+            if (g_text_log_enabled) {
                 text.push_back('\n');
                 ((stream_base*)g_log)->w_tstr(&text);
             }
@@ -1440,7 +1439,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 color = (int)params[1];
             tstring text = g_script.expand(g_strings.get_string((int)params[0], types[0]));
             g_msglog.add(text, color);
-            if (g_dev_mode) {
+            if (g_text_log_enabled) {
                 text.push_back('\n');
                 ((stream_base*)g_log)->w_tstr(&text);
             }

@@ -1,9 +1,6 @@
 #include "./cs_weapons.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-// ---- data this module owns (docs/standalone_data.md) ----
-const int g_weapon_xp[11] = { 60, 100, 140, 180, 220, 260, 300, 340, 380, 420, 460 };   // 0x5938c8
-
 // @ 0x4f04f0
 void weapon_class_caption(int type, char* out)
 {

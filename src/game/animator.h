@@ -40,6 +40,6 @@ struct Animator {
     void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
 };
 typedef char animator_weights_check[(offsetof(Animator, scale) == 0x128) ? 1 : -1];
-extern Animator g_anim;          // 0x8ed4f60 the one object (the skin table / character builder; defined in char_sheet/facegen_misc.cpp)
+extern Animator g_anim;          // 0x8ed4f60  // old name of g_anim_table, removed after the names merge
 
 #endif // MB_GAME_ANIMATOR_H

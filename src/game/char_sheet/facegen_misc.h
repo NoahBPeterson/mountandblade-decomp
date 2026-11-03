@@ -116,15 +116,19 @@ struct FaceGen {
     void refresh();                                     // 0x4eb3c0
 };
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
-#include "../ui_globals.h"      // UI / core globals
 
+extern int g_cur;                                       // 0x8ed4f68
 extern int g_x8ed4f64;                                  // 0x8ed4f64
 extern int g_x8ed4f74;                                  // 0x8ed4f74
 extern int g_char_count;                                // 0x8ed4f88
+extern float g_dummy_mat;                               // 0x8ed4f8c
+extern float g_dummy0;                                  // 0x8ed5088
+extern float g_dummy1;                                  // 0x8ed508c
 // (0x432510 is clamp_index, cs_common.h)
 
 extern const float g_590c54;                            // 0x590c54 = 7.0f
 extern const float g_598588;                            // 0x598588 = 63.0f
+extern const float g_549d70;                            // 0x549d70 = 0.5f
 extern "C" int __cdecl sprintf(char*, const char*, ...);            // 0x536f8f
 extern "C" char* __cdecl _itoa(int, char*, int);                    // 0x5371f7
 extern "C" double __cdecl floor(double);                            // 0x536b10
@@ -134,7 +138,7 @@ static inline int grid_count(float v)
 {
     double fl = floor((double)v);
     int f = (int)fl;
-    if (v - (float)fl <= 0.5f)
+    if (v - (float)fl <= g_549d70)
         return f;
     return f + 1;
 }

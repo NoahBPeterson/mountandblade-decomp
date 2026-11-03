@@ -39,10 +39,10 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../../game/ui_globals.h"      // UI / core globals
 
 using namespace rgl;
 
+extern int g_use_text_res;                     // 0x5a9fb0 (the text resources .trf are read when set)
 extern int g_mesh_npts;                        // 0x5e2998 (point count of the mesh being read)
 extern __int64 g_bit[];                        // 0x5a8e68 g_bit[i] == 1 << i
 
@@ -1196,7 +1196,7 @@ void resmgr::load_pack(const rgl::string& name, int user)
     rgl::string brf = mkpath(dir, name, ".brf");
     all.resize(0, 0);
     bool done = false;
-    if (g_dev_mode) {
+    if (g_use_text_res) {
         struct _stat st_t, st_b;
         if (_stat(trf.c_str(), &st_t) != -1) {
             if (_stat(brf.c_str(), &st_b) == -1 || difftime(st_t.st_mtime, st_b.st_mtime) > 0.0) {

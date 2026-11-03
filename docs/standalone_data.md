@@ -157,26 +157,3 @@ Effort: a literal or a string label is minutes (grep, replace, delete the extern
 member, rename); a canonical-header unification is 20-40 minutes because of header conflicts (cl compile loop 3-5 min on
 a loaded machine; `cl /Zs` syntax-only is the fast check). The pilot took about 4 hours, dominated by waiting for
 compiles, builds (resolve_map alone 15 min under load) and run_all.
-
-## 8. Lane D2 (char_sheet and the UI core globals): what was learned
-
-- **Do not add `#include "../game_globals.h"` to every module.** game_globals.h declares the canonical type of hundreds of
-  addresses, and a module that still keeps its own (wrong-typed) extern of one of them stops compiling (`g_presentations`,
-  `g_log_flag95`, `g_music_situation`, `g_display_wp_one_handed` in cls_map, progress_bar, game_app, char_sheet ...). The
-  globals every UI module touches (viewport size, window-dirty flag, mission clock, developer mode, the input key/axis state)
-  live in the leaf header `src/game/ui_globals.h`, which game_globals.h includes; modules with clashing externs include only
-  that one. A module that needs both includes game_globals.h.
-- **Neighbour names are members.** `g_cur`, `g_dummy_mat`, `g_dummy0`, `g_dummy1` are `g_anim.cur / .weights / .scale / .time`
-  (the Animator at 0x8ed4f60); `g_5a9f54` / `g_5a9f5c` are `g_5a9f50.buf / .len`; `g_log_path` / `g_log_flag78` are
-  `g_log.name / .autoflush`; `g_save_prefix` is `g_module_name.buf` (the `p ? p : (char*)&p` idiom is `tstring::c_str()`);
-  `g_a73a04` / `g_a73a08` are the `g_id_stack` fields; `g_a17f28` is `g_render.dev`.
-- **One class per object.** `g_strtable` had two classes (StrTable in game/str_table.h, LangTables in rgl/mesh2/mesh2_common.h)
-  and eight partial copies; it is now `StrTable` (str_table.h: buckets, ctor 0x4cda20, load, find, lookup, release_strings) with
-  one definition `StrTable g_strtable;` in mesh_2.cpp, built by the compiler's initialiser; static_init's stubs 0x547a80 /
-  0x548470 are gone. Same recipe for the objects still open below.
-- **Literals are not free for x87 code.** Replacing a fake constant by its literal keeps every byte-exact function exact, but a
-  few nonmatching functions move by a few bytes (register allocation shifts); see the lane report.
-- Open (each is a many-module class unification like g_strtable): `g_gui` 0x5d7080 (gui_manager; 14 partial views incl. MsgLog,
-  GuiManager, GuiRoot, UiSoundHost), `g_windows` 0xa73980 (+ `g_wDC` = slot 23; WindowMgrW / main_menu / screen_cfg / raw
-  arrays; ctor = conv_zero_node 0x4c8c20, dtor Tail2 0x4c4d10 on the deque at +0x78), `g_terrain` 0xa76630 (nine `Terrain`
-  partials, BitWords, DustTerrain, TerrainGen), the vtables 0x591fb0 / 0x592848 / 0x597050 / 0x598698 (vtable lane).

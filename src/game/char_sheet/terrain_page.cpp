@@ -3,9 +3,6 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-// ---- data this module owns (docs/standalone_data.md) ----
-const int g_region_types[8] = { 2, 3, 4, 5, 11, 12, 10, 13 };   // 0x59394c
-
 // @ 0x4f2730
 void TerrainPage::update()
 {
@@ -22,18 +19,18 @@ void TerrainPage::update()
     for (int i = 0; mode == -1; i++) {
         if (i >= 8)
             break;
-        if (g_region_types[i] == terrain_type)
+        if (g_size_modes[i] == terrain_type)
             mode = i;
     }
     if (mode >= 0)
         type_box->activate(mode);
     size_box->activate(map_size);
 
-    x_slider->set_value((camera_x - 140.0f) * 0.0014285714f);
-    y_slider->set_value((camera_y - 140.0f) * 0.0014285714f);
-    z_slider->set_value((camera_z - 10.0f) * 0.01f);
+    x_slider->set_value((camera_x - g_140) * g_00143);
+    y_slider->set_value((camera_y - g_140) * g_00143);
+    z_slider->set_value((camera_z - g_10) * g_01);
     fog_slider->set_value(fog);
-    level_slider->set_value((float)water_level * 0.01f);
+    level_slider->set_value((float)water_level * g_01);
     height_slider->set_value(water_height);
 
     set_hex3_text(0);
@@ -53,7 +50,7 @@ void TerrainPage::set_enabled_text(Widget* w)
 void TerrainPage::set_hex3_text(int i)
 {
     char buf[512];
-    sprintf(buf, "%d", layer_bits[i]);
+    sprintf(buf, g_fmt_d, layer_bits[i]);
     tstring text(buf);
     { char r[8]; bit_fields[i]->set_text(r, text); }
 }
@@ -71,7 +68,7 @@ void TerrainPage::refresh_hex()
 void BitWords::build_hex_text(tstring& out)
 {
     char buf[12];
-    out.assign("0x");
+    out.assign(g_hex_sep);
     for (int i = 5; i >= 0; i--) {
         format_hex(w[i], buf);
         out.append(tstring(buf));

@@ -4,9 +4,6 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-const int g_level_xp[64] = {0, 0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362, 40682, 47892, 56103, 65441, 77233, 90809, 106425, 124371, 144981, 168636, 195769, 226879, 262533, 303381, 350164, 412091, 484440, 568947, 667638, 782877, 917424, 1074494, 1257843, 1471851, 1721626, 2070551, 2489361, 2992033, 3595340, 4319408, 5188389, 6231267, 7482821, 8984785, 11236531, 14051314, 17569892, 21968215, 27466219, 34338823, 42929679, 53668349, 67091786, 83871183, 160204600, 320304600, 644046000, 2050460000};  // 0x5937c8
-
 // Each looked-up string / posted line is a named tstring local (the original takes their address with lea).
 #define POS(W, LINE, KEY_Y, KEY_X)                       \
     do {                                                 \
@@ -60,7 +57,7 @@ void CharSheet::refresh_panels()
 
     {
         tstring k("ui_next_level_at");
-        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), g_level_xp[c->level + 1]);
+        mb_vsprintf(line, g_strtable.lookup(k)->c_str(), g_level_table[c->level]);
     }
     POS(xp_bar, line, "char_t_next_level_at_y", "char_t_next_level_at_x");
 

@@ -45,7 +45,10 @@ extern const float k_0_65f;                // 0x590b6c
 extern const float k_1_6f;                 // 0x590c48
 extern const float k_0_08f;                // 0x590c74
 extern const float k_0_02f;                // 0x590cd0
+extern const float k_0_0005f;              // 0x590d7c
+extern const float k_3_5f;                 // 0x590d8c
 extern const float k_0_23f;                // 0x590e68
+extern const float k_0_014f;               // 0x590f7c
 extern const float k_1_7f;                 // 0x590fa4
 extern const float k_0_98f;                // 0x5911d8
 extern const float k_m10f;                 // 0x5915a0
@@ -54,12 +57,16 @@ extern const char str_passage[];                       // 0x595e6c
 extern const char str_entry_point[];                   // 0x595e74
 extern const char str_no_beard_mesh[];                 // 0x598308
 extern const char str_no_face_mesh[];                  // 0x598328
+extern const float k_m1em05f;              // 0x598688
+extern const float k_235f;                 // 0x59868c
+extern const float k_105f;                 // 0x598690
 extern const char str_plants[];                        // 0x5999ac
 extern const char str_item_kinds[];                    // 0x5999b4
 extern const char str_scene_props[];                   // 0x5999c0
 extern const float k_0_00105f;             // 0x59c268
 extern unsigned __int64 g_bit[];                             // 0x5a8e68
 extern text_stream g_log;                  // 0x5a9f60
+extern int g_no_cam;                       // 0x5a9fb0
 extern int g_sound_muted;                  // 0x5a9fd8
 extern options_record g_options;           // 0x5aa008
 extern float g_music_volume;               // 0x5aa010
@@ -90,6 +97,7 @@ extern float g_scale_z;                    // 0x5aa090
 extern SoundMgr g_sound_mgr;               // 0x5aa128
 extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
+extern int g_mission_clock;                // 0x5d8790
 extern ptype* g_ptypes;                    // 0x5e28f8
 extern int g_use_shaders;                  // 0x5e28fc
 extern Mission* g_mission;                 // 0x5e292c
@@ -98,10 +106,15 @@ extern int g_item_kind_count;              // 0x5e29d4
 extern PropKind* g_propkinds;              // 0x5e29dc
 extern int g_propkind_count;               // 0x5e29e0
 extern int g_ptype_count;                  // 0x5e29e8
+extern StrTable g_strtable;                // 0x5e2a18
 extern render_batch g_batch;               // 0x5fe898
 extern InputSet g_input_a;                 // 0xa170c8
 extern void* g_a17110;                     // 0xa17110
+extern int g_a1711c;                       // 0xa1711c
+extern int g_a17454;                       // 0xa17454
 extern void* g_a17510;                     // 0xa17510
+extern int g_a1751c;                       // 0xa1751c
+extern int g_a17854;                       // 0xa17854
 extern renderer g_render;                  // 0xa17910
 extern char g_use_hw_shadow;               // 0xa17f24
 extern ini_file g_module_info;             // 0xa18238
