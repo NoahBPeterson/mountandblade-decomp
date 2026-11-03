@@ -36,7 +36,7 @@ inline void* operator new(size_t, void* p, raw_place) { return p; }
 inline void operator delete(void*, void*, raw_place) {}
 
 // ---- callees -------------------------------------------------------------------------------------------
-extern tstring g_module_path;                                        // 0x8ee3c28
+tstring g_module_path;                                           // 0x8ee3c28 (constructed by the compiler: tstring::tstring 0x42bbd0)
 extern tstring g_module_name;                                      // 0x8ee3c38
 extern tstring g_module_path_copy;                                   // 0xa75e8c
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)

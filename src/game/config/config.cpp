@@ -36,7 +36,7 @@
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-extern renderer g_render;                                  // 0xa17910 (constructed by the compiler: renderer::renderer 0x4bc2d0)
+renderer g_render;                                         // 0xa17910 (constructed by the compiler: renderer::renderer 0x4bc2d0)
 Config g_cfg = {  // 0x5a9f98
     /*first_time*/ 1, /*texture_detail*/ 50, /*show_framerate*/ 0, /*max_framerate*/ 100, /*start_windowed*/ 0, /*skip_tutorial*/ 0,
     /*enable_edit_mode*/ 0, /*force_single_threading*/ 0, /*debug_mode*/ 0, /*cheat_mode*/ 0, /*enable_blood*/ 1, /*fake_reflections*/ 1,
