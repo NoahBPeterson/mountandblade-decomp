@@ -114,5 +114,34 @@
    "reached through tables": 17005900,
    "library data": 57058
   }
+ },
+ "2026-11-03T00:03:29-06:00": {
+  "data_labels": 707,
+  "aliases": 468,
+  "traps": 252,
+  "redirects": 308,
+  "vtable_slots_rewritten": 6,
+  "vptr_stores_moved": 513,
+  "vtbl_externs": 23,
+  "placeholder_virtuals": 45,
+  "forwarding_stubs": 1026,
+  "data_definitions": 111,
+  "when": "2026-11-03T00:03:29-06:00",
+  "commit": "3783e00c",
+  "build": "main_d2fix",
+  "items": {
+   "defined in source": 146,
+   "generated from source": 2553,
+   "borrowed from image": 399,
+   "reached through tables": 624,
+   "library data": 538
+  },
+  "bytes": {
+   "defined in source": 55749,
+   "generated from source": 318648,
+   "borrowed from image": 126857611,
+   "reached through tables": 17005900,
+   "library data": 57058
+  }
  }
 }
