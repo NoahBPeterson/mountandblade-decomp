@@ -429,7 +429,7 @@ close_menu:
 }
 
 // @ 0x5324d0
-void XferWin::clear_selection()
+void C4c3160::clear_selection()
 {
     if (f8e4 != -1) {
         int idx = (f8e0 + f8dc * 2) * 0x40 + f8e4;
@@ -442,7 +442,7 @@ void XferWin::clear_selection()
 }
 
 // @ 0x532520
-void XferWin::get_cell(int a, int b, int c, int* main, int* cell)
+void C4c3160::get_cell(int a, int b, int c, int* main, int* cell)
 {
     *cell = sel_slots[(b + a * 2) * 0x40 + c];
     *main = g_game->f78;
@@ -451,7 +451,7 @@ void XferWin::get_cell(int a, int b, int c, int* main, int* cell)
 }
 
 // @ 0x532560
-void XferWin::move_men(int amount)
+void C4c3160::move_men(int amount)
 {
     g_game->troops[g_game->player].f3b4 += amount;
     g_game->troops[w14].f3b4 -= amount;
@@ -461,7 +461,7 @@ struct Row { int v[8]; };
 typedef char assert_row[sizeof(Row) == 0x20 ? 1 : -1];
 
 // @ 0x5325b0
-void XferWin::apply(int which)
+void C4c3160::apply(int which)
 {
     GameData* g = g_game;
     int mainp = g->f78;
@@ -498,7 +498,7 @@ void XferWin::apply(int which)
 }
 
 // @ 0x532740
-void XferWin::swap_rows(int which)
+void C4c3160::swap_rows(int which)
 {
     int slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
     int owner = g_game->f78;
@@ -522,7 +522,7 @@ void XferWin::swap_rows(int which)
 }
 
 // @ 0x532830
-void XferWin::stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed)
+void C4c3160::stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed)
 {
     int* table;
     Row local;
@@ -641,7 +641,7 @@ void GameDataX::update_party_sprites()
 
 
 // @ 0x533020
-void XferWin::set_selection(int a, int b, int c)
+void C4c3160::set_selection(int a, int b, int c)
 {
     clear_selection();
     f8dc = a;

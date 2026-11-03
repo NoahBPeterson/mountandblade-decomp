@@ -5,7 +5,7 @@
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // @ 0x4ee840
-void __fastcall quest_window::refresh()
+void __fastcall Rec454::refresh()
 {
     if (QUEST_COUNT > 0x80) {
         tstring s("ui_too_many_quests");     // 0x4ee861: tstring(const char*) 0x42bbe0

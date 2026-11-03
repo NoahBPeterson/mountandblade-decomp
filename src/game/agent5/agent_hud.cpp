@@ -1408,7 +1408,7 @@ static MissionUi* make_tab(FrameWidget* frame, const char* name, float x, float 
 }
 
 // @ 0x4fc820
-void LogScreen::build(bool show)
+void Rec58::build(bool show)
 {
     float v[2];
     g_gui.reset();
