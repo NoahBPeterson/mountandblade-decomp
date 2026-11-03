@@ -21,6 +21,7 @@
 #include "../../include/vec.h"                  // Vec2
 #include "../../include/msg_log.h"             // MsgLog: the on-screen message log (add 0x452c00, push 0x4334b0)
 #include "../../include/sound_mgr.h"           // SoundMgr: play 0x442650
+#include "../ui_globals.h"      // UI / core globals
 
 
 // ---- callees declared under the class that defines them ---------------------------------------------------------------------
@@ -481,7 +482,6 @@ __forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; 
 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
-extern int g_text_log_enabled;          // 0x5a9fb0 (display_message 0x4a305a)
 
 // ---- map battles (table at game +0xcc) ---------------------------------------------------------------------------
 #include "../battle_rec.h"            // BattleRec, BattleTable: the one definition (party2 and script)

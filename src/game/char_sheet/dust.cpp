@@ -10,14 +10,14 @@ void DustTerrain::update_particles(const matrix* view)
             if (emitted[b][a] == 0) {
                 float dx = rec->x - view->o.x;
                 float dy = rec->y - view->o.y;
-                if ((float)sqrt(dy * dy + dx * dx) < rec->reach + g_k_reach)
+                if ((float)sqrt(dy * dy + dx * dx) < rec->reach + 36.0f)
                     emit_cell(b, a);
             }
             cell_obj* o = grid[b][a];
             if (o->list && (o->list_end - o->list) != 0) {
                 float dx = o->pos.x - view->o.x;
                 float dy = o->pos.y - view->o.y;
-                if ((float)sqrt(dy * dy + dx * dx) > o->length() + g_k_reach) {
+                if ((float)sqrt(dy * dy + dx * dx) > o->length() + 36.0f) {
                     o->active = 0;
                 } else {
                     o->active = 1;
@@ -28,15 +28,15 @@ void DustTerrain::update_particles(const matrix* view)
                     m->f.w = 0.0f;
                     m->u.w = 0.0f;
                     *(mat3*)m = *(const mat3*)view;
-                    m->s.x *= g_k_0_2;
-                    m->s.y *= g_k_0_2;
-                    m->s.z *= g_k_0_2;
-                    m->f.x *= g_k_0_2;
-                    m->f.y *= g_k_0_2;
-                    m->f.z *= g_k_0_2;
-                    m->u.x *= g_k_0_2;
-                    m->u.y *= g_k_0_2;
-                    m->u.z *= g_k_0_2;
+                    m->s.x *= 0.0125f;
+                    m->s.y *= 0.0125f;
+                    m->s.z *= 0.0125f;
+                    m->f.x *= 0.0125f;
+                    m->f.y *= 0.0125f;
+                    m->f.z *= 0.0125f;
+                    m->u.x *= 0.0125f;
+                    m->u.y *= 0.0125f;
+                    m->u.z *= 0.0125f;
                     vector4 tint(0.5f, 0.5f, 0.5f);
                     m->o = tint;
                 }
@@ -62,7 +62,7 @@ void DustTerrain::emit_cell(int x, int y)
         int i = 0;
         do {
             DustParticle* p = &dust[i];
-            int ix = (int)(p->frame.o.x * g_k_1_20);
+            int ix = (int)(p->frame.o.x * 0.05f);
             int cx;
             if (ix < 0) {
                 cx = 0;
@@ -71,7 +71,7 @@ void DustTerrain::emit_cell(int x, int y)
                 if (ix < n_inner)
                     cx = ix;
             }
-            int cy = (int)(p->frame.o.y * g_k_1_20);
+            int cy = (int)(p->frame.o.y * 0.05f);
             if (cy < 0)
                 cy = 0;
             else if (cy >= n_outer)
@@ -96,12 +96,12 @@ void DustTerrain::emit_cell(int x, int y)
         v90->reserve_nr(no);
     for (int i = 0; i < dust_count; i++) {
         DustParticle* p = &dust[i];
-        int cx = (int)(p->frame.o.x * g_k_1_20);
+        int cx = (int)(p->frame.o.x * 0.05f);
         if (cx < 0)
             cx = 0;
         else if (cx >= n_inner)
             cx = n_inner - 1;
-        int cy = (int)(p->frame.o.y * g_k_1_20);
+        int cy = (int)(p->frame.o.y * 0.05f);
         if (cy < 0)
             cy = 0;
         else if (cy >= n_outer)
@@ -149,14 +149,14 @@ void DustTerrain::emit_cell(int x, int y)
         for (unsigned i = 0; m->f50.first != 0 && i < m->f50.size(); i++) {
             frame60* fr = (frame60*)m->f50.first + i;
             char* v = m->f70.first + (fr->type_index << 5);
-            vec2 t = { *(float*)v * g_k_0_2, *(float*)(v + 4) * g_k_0_2 };
+            vec2 t = { *(float*)v * 0.0125f, *(float*)(v + 4) * 0.0125f };
             fr->xy = t;
         }
     }
     if (g_use_shaders == 0 || g_options.i7c != 2) {
         for (int i = 0; i < dust_count; i++) {
             DustParticle* p = &dust[i];
-            int ix = (int)(p->frame.o.x * g_k_1_20);
+            int ix = (int)(p->frame.o.x * 0.05f);
             int cx;
             if (ix < 0) {
                 cx = 0;
@@ -165,7 +165,7 @@ void DustTerrain::emit_cell(int x, int y)
                 if (ix < n_inner)
                     cx = ix;
             }
-            int cy = (int)(p->frame.o.y * g_k_1_20);
+            int cy = (int)(p->frame.o.y * 0.05f);
             if (cy < 0)
                 cy = 0;
             else if (cy >= n_outer)

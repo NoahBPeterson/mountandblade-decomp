@@ -40,7 +40,7 @@ extern char g_dialogs[]; // 0x8ed50c8
 extern int g_conversation_troop;   // 0x8ed50d4
 extern int g_encountered_party;    // 0x8ed50d8
 extern int g_conversation_agent;   // 0x8ed50dc
-extern char g_strtable[]; // 0x5e2a18
+#include "../str_table.h"   // StrTable g_strtable (0x5e2a18): the one definition
 extern char g_gui[]; // 0x5d7080
 extern char g_game_keys[]; // 0xa73730
 extern char g_windows[]; // 0xa73980
@@ -54,6 +54,7 @@ extern char g_game_keys[]; // 0xa73730
 #include "../prop_kind.h"
 #include "../menu_rec.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../ui_globals.h"      // UI / core globals
 extern void* g_mission_templates; // 0x5e2a00
 extern char g_terrain[]; // 0xa76630
 extern char g_app_obj[]; // 0x8ee3c48
@@ -291,7 +292,7 @@ struct DialogMgr_s26130 {
 
 
 // ======================================================= slice s005261e0: classes, globals, helpers
-#define g_strtable_s261e0 (*(StrTable_s261e0*)g_strtable)
+#define g_strtable_s261e0 g_strtable
 #define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
 #define g_keytable_s261e0 (*(KeyTable_s261e0*)g_game_keys)
 #define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
@@ -331,9 +332,6 @@ struct DialogMgr_s26130 {
 // 0x42c110, dtor 0x42bc40.  c_str() is the inline `buf ? buf : (char*)&buf` seen at 0x526b7f.
 
 
-struct StrTable_s261e0 {
-    __forceinline tstring* lookup(tstring* key);                      // 0x43a1e0 (thiscall, ret 4)
-};
 
 
 // -----------------------------------------------------------------------------------------------------
@@ -560,7 +558,6 @@ extern unsigned char g_a17908;                          // 0xa17908
 extern int  g_presentation;                                  // 0x5e299c
 #include "../../include/renderer.h"
 extern char g_script[]; // 0xa70440
-extern int g_skill_clamp;                       // 0x8ee3ac4
 #define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
 struct Obj73300_s261e0 {                                        // g_mission_ctx (0xa73300)
     char pad0[0x3c];
@@ -1172,7 +1169,6 @@ extern int g_flag5aa070;                                      // 0x5aa070
 struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
 extern float g_deg2rad;                                       // 0x590ce4 (0.017453292)
-extern float g_half;                                          // 0x549d70 (0.5f)
 extern float g_0375;                                          // 0x59c310 (0.375f)
 extern float g_2p5;                                           // 0x590c4c (2.5f)
 extern float g_255;                                           // 0x590cec (255.0f)
@@ -1327,7 +1323,7 @@ __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add); // 0x52
 
 // ======================================================= slice s00529ec0: classes, globals, helpers
 #define g_gui_s29ec0 (*(gui_manager_s29ec0*)g_gui)
-#define g_strtable_s29ec0 (*(StrTable_s29ec0*)g_strtable)
+#define g_strtable_s29ec0 g_strtable
 #define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
 #define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_propkinds)
@@ -1378,10 +1374,6 @@ struct hud_panel_s29ec0 {
 };
 
 // ---- localisation tables (0x5e2a18) ------------------------------------------------------------------
-struct StrTable_s29ec0 {
-    __forceinline tstring* find(const tstring* key);                          // 0x4c6010 (null when absent, ret 4)
-    __forceinline tstring* lookup(const tstring& key);                        // 0x43a1e0 (ret 4)
-};
 
 
 // ---- collision shapes (s00439100) --------------------------------------------------------------------
@@ -1567,7 +1559,7 @@ struct Screen_s29ec0 {
 // ======================================================= slice s0052ae70: classes, globals, helpers
 #define g_resmgr_s2ae70 (*(resmgr_s2ae70*)&g_resmgr)
 #define g_gui_s2ae70 (*(gui_manager_s2ae70*)g_gui)
-#define g_strtable_s2ae70 (*(StrTable_s2ae70*)g_strtable)
+#define g_strtable_s2ae70 g_strtable
 #define g_mission_s2ae70 (*(Mission_s2ae70**)&g_mission)
 // Slice s0052ae70: the mission order markers.
 //   0x52ae70  build (once) the two "order" entities: the round/tetrahedron marker built from the shape
@@ -1601,9 +1593,6 @@ struct gui_manager_s2ae70 {
 
 
 // ---- localisation table (0x5e2a18) ---------------------------------------------------------------------
-struct StrTable_s2ae70 {
-    __forceinline tstring* lookup(const tstring& key);                // 0x43a1e0 (thiscall, ret 4)
-};
 
 
 // ---- rgl::mesh_s2ae70 (0x260 bytes; ctor 0x412a90) ------------------------------------------------------------
@@ -1693,7 +1682,7 @@ struct Screen_s2ae70 {
 // shape builders (all take the shape in ecx and the target mesh_s2ae70 on the stack)
 
 // ======================================================= slice s0052b5c0: classes, globals, helpers
-#define g_strtable_s2b5c0 (*(StrTable_s2b5c0*)g_strtable)
+#define g_strtable_s2b5c0 g_strtable
 #define g_gui_s2b5c0 (*(Gui_s2b5c0*)g_gui)
 #define g_items_s2b5c0 (*(ItemKind_s2b5c0**)&g_items)
 #define g_terrain_s2b5c0 (*(Terrain_s2b5c0*)g_terrain)
@@ -1717,9 +1706,6 @@ using rgl::matrix;
 // ---- engine string (16 bytes) -------------------------------------------------------------------------
 
 
-struct StrTable_s2b5c0 {
-    __forceinline tstring* lookup(const tstring& key);                // 0x43a1e0 (thiscall, ret 4)
-};
 
 
 // ---- gui / message log (one big object at 0x5d7080) ---------------------------------------------------
@@ -1968,8 +1954,6 @@ typedef unsigned int uint;
 // globals (addresses from the annotations in the disassembly)
 #define g_game_c ((char*)g_game)
 extern float g_00;                   // 0x549ca8  0.0f
-extern float g_10;                   // 0x549cdc  1.0f
-extern float g_098;                  // 0x5911d8  0.98f (scan threshold)
 extern double g_001;                 // 0x59c480  unused here (other slices)
 
 void* __cdecl operator new[](uint size);      // 0x535482  ??_U@YAPAXI@Z operator new[]
@@ -2099,9 +2083,6 @@ struct ItemRef {
     int stat_1ec();   // 0x434c50
     void name(char*);   // 0x512730
 };   // layout of src/game/item_ref.h ItemRef (8 bytes: item, m4); that header clashes with this file's g_items
-struct LangTables {
-    tstring* find(tstring const*);   // 0x4c6010
-};
 struct Local {
     void read(stream_base&);   // 0x524f00
 };
@@ -2176,9 +2157,6 @@ struct Shape {
 struct Slot {
     int is_ready(int);   // 0x487900
 };
-struct StrTable {
-    tstring* lookup(tstring const&);   // 0x43a1e0
-};
 struct TerrainX {
     void emit_particle(int, int, int, int, float);   // 0x47ff60
     void light_entities(rgl::mesh**, int);   // 0x47ce00
@@ -2248,7 +2226,6 @@ __forceinline float MissionSub_s261e0::elapsed() const { return ((Timer*)this)->
 __forceinline void Terrain_s2bf40::emit_particle(int a0, int a1, int a2, int a3, float a4) { ((TerrainX*)this)->emit_particle(a0, a1, a2, a3, a4); }
 __forceinline bool Agent_s29130::f100_is_0x48_and_charged() const { return ((AgentX*)this)->f100_is_0x48_and_charged(); }
 __forceinline void Screen_s261e0::f_529ec0() { ((Screen_s29ec0*)this)->f_529ec0(); }
-__forceinline tstring* StrTable_s29ec0::find(tstring const* a0) { return ((LangTables*)this)->find(a0); }
 __forceinline int AgentTable_s257f0::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline int AgentTable_s26130::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline int AgentTable_s261e0::first_used() { return ((AgentTable*)this)->first_used(); }
@@ -2275,10 +2252,6 @@ __forceinline char KeyNames_s284a0::is_ready(int a0) { return (char)((Slot*)this
 __forceinline char KeyReady_s261e0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
 __forceinline int DialogMgr_s26130::listener() { return ((DialogMgr*)this)->listener(); }
 __forceinline void Terrain_s2bf40::load_layer(int* a0, int a1) { ((terrain_obj*)this)->load_layer(a0, a1); }
-__forceinline tstring* StrTable_s261e0::lookup(tstring* a0) { return ((StrTable*)this)->lookup(*(tstring const*)a0); }
-__forceinline tstring* StrTable_s29ec0::lookup(tstring const& a0) { return ((StrTable*)this)->lookup(a0); }
-__forceinline tstring* StrTable_s2ae70::lookup(tstring const& a0) { return ((StrTable*)this)->lookup(a0); }
-__forceinline tstring* StrTable_s2b5c0::lookup(tstring const& a0) { return ((StrTable*)this)->lookup(a0); }
 __forceinline void LabelSub_s261e0::make_label(char* a0) { ((ForceLabel*)this)->make_label(a0); }
 __forceinline int ItemRef_s2b5c0::max_amount() { return ((ItemRef*)this)->max_amount(); }
 __forceinline tstring* MapObject_s29ec0::mesh_ptr() { return ((MapObject*)this)->mesh_ptr(); }

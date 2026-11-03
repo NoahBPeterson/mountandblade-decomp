@@ -8,6 +8,11 @@
 #include "../engvec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui_globals.h"      // UI / core globals
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+float g_fov_k;   // 0x5e20a8
+
 
 // @ 0x4f49d0
 void FaceGen::init()
@@ -43,7 +48,7 @@ void FaceGen::init()
     }
     {
         widget* w = ui;
-        g_msg_tick = 1;
+        g_gui_dirty = 1;
         ((NodeVec*)(void*)&g_gui)->push_back((NodeA* const&)w);   // 0x49b120
     }
     float deform_k = config_float("face_deform_key_h");
@@ -96,7 +101,7 @@ void FaceGen::init()
         push_item(ui, sl);
     }
     cam_btn = 0;
-    if (g_no_cam) {
+    if (g_dev_mode) {
         tstring t("key");
         cam_btn = (elem*)new_button((ContainerBase*)ui, t, 0.0f, 0.72f, 0.5f, 0.028f);   // 0x4db810
         cam_btn->sb0();
@@ -276,7 +281,7 @@ void FaceGen::init()
 
     // ---- the camera frustum (16:9 fit around the body) ---------------------------------------------
     float ratio = b->size_y / b->size_x * g_fov_k;
-    float tanv = (float)tan(g_tan_ang);
+    float tanv = (float)tan(((double)0.30543262f));
     fr.perspective = 1;
     fr.nearz = 0.01f;
     fr.farz = 20.0f;
@@ -313,14 +318,14 @@ void FaceGen::init()
         f350 = *(int*)((char*)&g_anim + 0x00);
         f35c = *(int*)((char*)&g_anim + 0x14);
         f358 = *(int*)((char*)&g_anim + 0x0c);
-        f360 = g_dummy0;
-        f364 = g_dummy1;
+        f360 = g_anim.scale;
+        f364 = g_anim.time;
         f354++;
         f350++;
         for (int i = 0; i < keys; i++)
-            deform_rows[i]->s34((&g_dummy_mat)[i]);
-        sl_age->s34(g_dummy0);
-        sl_hair_color->s34(g_dummy1);
+            deform_rows[i]->s34(g_anim.weights[i]);
+        sl_age->s34(g_anim.scale);
+        sl_hair_color->s34(g_anim.time);
     }
     refresh();
 

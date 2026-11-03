@@ -36,7 +36,6 @@ extern float g_char_scale;                          // 0x590d7c
 extern __int64 g_spawn_lo;                          // 0xa70448
 extern __int64 g_spawn_hi;                          // 0xa70450
 extern int g_ticks_[2];                             // 0x5e2948 (the 64-bit tick clock)
-extern int g_mission_clock;                         // 0x5d8790 (mission time; 0 = no mission)
 
 extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 #include "../../include/crt.h"   // canonical: ftol2 (0x535a64)
@@ -61,6 +60,7 @@ inline void play_family_sound(int family, int id)
 // control widget: "activate" at vtable +0x2c, "value" at +0x30, "float" at +0x38, "used" at +0x44,
 // "key flags" at +0x48, "kind" at +0xc0 (slots cross-checked with s004cf7b0 / s004dd830).
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_globals.h"      // UI / core globals
 
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
 // +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.

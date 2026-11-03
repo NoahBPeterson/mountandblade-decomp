@@ -43,9 +43,6 @@ struct mnode {
 struct PresentationRec {
     void read(stream_base& s);   // 0x4c23f0 (game/triggers/trigger_vec.h)
 };
-struct StrTable {
-    tstring* lookup(const tstring& key);   // 0x43a1e0 (game/agent2/agent_stats.h): the UI string table
-};
 struct clip_pair {
     clip_pair(void* a_, void* b_, const int* src);   // 0x4be9c0 (game/triggers/trigger_vec.h)
 };
@@ -679,7 +676,7 @@ void graph_obj::find_triangle(const int* e, int* a, int* b)
 // @ 0x4c6010
 // Looks `key` up in the hash bucket of its hash (0x433bb0): the keys of the bucket are one 0x10-stride vector (+4),
 // the translations the vector of the same bucket in the second table (+0xdf34).
-tstring* LangTables::find(const tstring* key) throw()
+tstring* StrTable::find(const tstring* key)
 {
     unsigned h = hash_string(key);
     lang_bucket* b = &keys[h];
