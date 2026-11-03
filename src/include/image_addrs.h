@@ -25,7 +25,6 @@ struct ptype;
 struct render_batch;
 struct renderer;
 struct resmgr;
-struct terrain_obj;
 struct text_stream;
 
 namespace orig {
@@ -147,7 +146,6 @@ extern int g_a73304[];                          // 0xa73304
 extern main_menu g_main_menu_obj;              // 0xa73980
 extern TableauTbl g_tableaus;              // 0xa75f40
 extern AnimDefV g_anim_set;                // 0xa76628
-extern terrain_obj g_terrain;              // 0xa76630
 }  // namespace orig
 
 // vtables

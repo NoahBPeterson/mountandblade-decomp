@@ -265,7 +265,7 @@ struct MenuKindRec {
     char pad18[0x20 - 0x18];
     int first;                                  // +0x20 background image id (0 = none)
 };
-extern MenuKindRec* g_presentations;               // 0xa75f2c
+#include "../game_globals.h"                  // g_presentations (0xa75f2c, canonical PresentationTable: the table of MenuKindRec)
 extern int g_menu_kind_count;                   // 0xa75f38
 // the menu block: a widget (vtable 0x5924a0, 0x188 bytes) that owns a vector (alloc +0x178, first +0x17c, last, end). The UiFrame of
 // ../party/party_window.h (destroying destructor 0x5021f0); that header conflicts with game_data.h on g_game, so this is its view here.

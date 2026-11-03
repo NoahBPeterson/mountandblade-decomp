@@ -1,5 +1,5 @@
 #include "./terrain_page_update.h"
-#include "../bit_words.h"      // g_bits 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
+#include "../terrain_a/terrain.h"      // g_terrain 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -12,7 +12,7 @@ static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the ca
 // (they stay calls in the other branches); same behaviour, spelled out so the call sequence matches
 #define inline_enabled_text(w) do { if ((w)->get_value()) { char r[8]; (w)->set_text(r, tstring("Enabled")); } \
     else { char r[8]; (w)->set_text(r, tstring("Disabled")); } } while (0)
-#define inline_refresh_hex() do { sync_bits(); tstring t_; g_bits.build_hex_text(t_); \
+#define inline_refresh_hex() do { sync_bits(); tstring t_; g_terrain.build_hex_text(t_); \
     { char r_[8]; hexbox->set_text(r_, t_); } } while (0)
 
 // @ 0x4f2d70
@@ -25,7 +25,7 @@ void TerrainPage::update(float dt)
             set_hex3_text(i);
             sync_bits();
             tstring text;
-            g_bits.build_hex_text(text);
+            g_terrain.build_hex_text(text);
             { char r[8]; hexbox->set_text(r, text); }
         }
         if (page_changed(bit_fields[i])) {
@@ -38,7 +38,7 @@ void TerrainPage::update(float dt)
             if (i == 0)      { lo = 0x00; hi = 0x1e; }
             else if (i == 1) { lo = 0x20; hi = 0x3e; }
             else             { lo = 0x40; hi = 0x5e; }
-            g_bits.set(lo, hi, v);
+            g_terrain.set_bits(lo, hi, v);
             read_fields();
             this->update();         // 0x4f2730: refresh every widget from the page fields
         }
@@ -116,12 +116,12 @@ done:
         flash->f44 = dir;
         flash->f44.normalize();                     // inlined in the original (0x407d60 body: (0,1,0) when the length is <= 1e-10)
         sync_bits();
-        ((TerrainX*)(void*)&g_terrain_obj)->generate((int)world, (int*)0, 0);   // 0x481d10
+        g_terrain.generate((int)world, (int*)0, 0);   // 0x481d10
         void* water_out;                            // 0x482170 stores the new water mesh here; the original never reads it back
-        ((TerrainX*)(void*)&g_terrain_obj)->regenerate_water(&water_out, 0);   // 0x482170
+        g_terrain.regenerate_water(&water_out, 0);   // 0x482170
         int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
         owner[0] = 0; owner[1] = 0; owner[2] = 0; owner[3] = 0;
-        ((TerrainX*)(void*)&g_terrain_obj)->destroy_water((int)owner);   // 0x4814a0
+        g_terrain.destroy_water((int)owner);   // 0x4814a0
         float x = camera_x * 0.5f;
         view_x = x;
         float y = camera_y * 0.5f;

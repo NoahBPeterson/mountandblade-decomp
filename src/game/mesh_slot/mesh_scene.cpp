@@ -61,11 +61,11 @@ extern float g_f590d94;        // 0x590d94 (0.6f)
 // ---- 0x47cae0 ----------------------------------------------------------------------------------------------------
 
 // @ 0x47cae0 -- build the 3x3 scene entities of the world object from the meshes named like the scene and light them
-void TerrainX::build_entity()
+void Terrain::build_entity()
 {
-    if (name().len < 4)
+    if (tail.len < 4)
         return;
-    smeshes() = g_resmgr_c->find_meshes((const rgl::string*)&name());
+    meshes = g_resmgr_c->find_meshes((const rgl::string*)&tail);
 
     vector4 center;
     center.x = wx - 10.0f;
@@ -73,7 +73,7 @@ void TerrainX::build_entity()
     center.z = (wx + wy) * 0.5f;
     vector4 tv(5.0f, 5.0f, 0.0f);
 
-    entity** e = sent();
+    entity** e = sent;
     int i = 3;
     do {
         int j = 3;
@@ -84,11 +84,11 @@ void TerrainX::build_entity()
         } while (--j);
     } while (--i);
 
-    for (unsigned n = 0; n < smeshes().size(); n++) {
-        mesh* m = ((mesh_x*)smeshes()[n])->clone();
+    for (unsigned n = 0; n < meshes.size(); n++) {
+        mesh* m = ((mesh_x*)meshes[n])->clone();
         ((mesh_x*)m)->set_color(center);
         ((mesh*)m)->translate(&tv);
-        ((TerrainX*)this)->snap(m);
+        ((Terrain*)this)->snap(m);
         ((mesh_x*)m)->compute_bounds();
 
         int ix;
@@ -105,7 +105,7 @@ void TerrainX::build_entity()
             iy = 2;
         else
             iy = 1;
-        entity** ep = &sent()[ix * 3 + iy];
+        entity** ep = &sent[ix * 3 + iy];
 
         m->f214 = 10;
         entity* e0 = *ep;
@@ -121,7 +121,7 @@ void TerrainX::build_entity()
         (*ep)->box.extend(&m->bounds.max);
     }
 
-    entity** q = sent();
+    entity** q = sent;
     int k = 3;
     do {
         int j = 3;
@@ -138,7 +138,7 @@ void TerrainX::build_entity()
 
 // @ 0x47ce00
 // Light every mesh of `list` whose material wants the per-mesh pass, with an identity frame.
-void TerrainX::light_entities(mesh** list, int count)
+void Mission::light_entities(mesh** list, int count)
 {
     for (int i = 0; i < count; i++) {
         mesh* e = list[i];
@@ -150,7 +150,7 @@ void TerrainX::light_entities(mesh** list, int count)
             matrix frame;
             memcpy(&frame, identity3(&ident), 0x30);
             frame.o = o;
-            ((world_x*)((Mission*)this)->scene_world)->light_mesh(e, &frame, 1);
+            ((world_x*)scene_world)->light_mesh(e, &frame, 1);
         }
     }
 }
@@ -164,9 +164,9 @@ struct PropRecV {                                // the fields of Rec1c8 (src/in
     entity* ent;                                 // 0x1b4
     char pad1b8[0x1c8 - 0x1b8];
 };
-void TerrainX::light_props()
+void Mission::light_props()
 {
-#define props (*(std::vector<PropRecV>*)&((Mission*)this)->props)
+#define props (*(std::vector<PropRecV>*)&props)
 #define PENT(i) (props[i].ent)
     for (unsigned i = 0; i < props.size(); i++) {
         if (props[i].destroyed == 4 || props[i].ent == 0)
@@ -175,7 +175,7 @@ void TerrainX::light_props()
             skin* r = PENT(i)->meshes[j]->res;
             bool k = ((r->shader->flags20 >> 7) & 1) != 0;
             if (k && (r->flags & 0x700) != 0x300)
-                ((world_x*)((Mission*)this)->scene_world)->light_mesh(PENT(i)->meshes[j], &PENT(i)->local, 1);
+                ((world_x*)scene_world)->light_mesh(PENT(i)->meshes[j], &PENT(i)->local, 1);
         }
     }
 #undef PENT
@@ -637,7 +637,7 @@ struct GmRec {                        // 0x48 bytes: a per-map record list (the 
 // The record cursor `pr` points at TerrainParticle::anim (+0x64) of the current record; the original addresses every
 // field relative to it.
 #define RV(T, off) (*(T*)(pr + (off)))
-void TerrainX::gen_set_init(particle_list* s)
+void Terrain::gen_set_init(particle_list* s)
 {
     std::vector<mesh*> grid[25];
     int ri = 0;

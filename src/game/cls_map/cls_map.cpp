@@ -1416,11 +1416,11 @@ void BlockOwner::activate()
 {
     g_presentation = (Presentation*)this;
     if (index >= 0) {
-        f14 = g_presentations[index].a;
+        f14 = (*(MenuKindRec**)&g_presentations)[index].a;
         int clk = timer.clock;
         timer.start = g_ticks[clk];
         int idx2 = *(volatile int*)(&index);
-        g_presentations[idx2].sound.play(-60);
+        (*(MenuKindRec**)&g_presentations)[idx2].sound.play(-60);
     } else {
         f14 = 0;
     }
@@ -1436,7 +1436,7 @@ void BlockOwner::init(ContainerBase* parent, int which)
     vt(block)->d22(parent->e);
     vt(parent)->d50(block);
     index = which;
-    int n = g_presentations[which].first;
+    int n = (*(MenuKindRec**)&g_presentations)[which].first;
     if (n > 0)
         vt(block)->d31(0, g_meshes.placed(n));
     activate();

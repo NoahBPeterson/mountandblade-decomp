@@ -881,7 +881,7 @@ MissionRec2::MissionRec2()
 Terrain::Terrain()
 {
     sun_ambient = rgl::vector4(0.2f, 0.2f, 0.2f);
-    *(rgl::vector4*)sun_diffuse = rgl::vector4(0.6f, 0.55f, 0.5f);       // the w lane (+0x843bd48) is the uninitialised w of the temporary
+    sun_diffuse = rgl::vector4(0.6f, 0.55f, 0.5f);       // the w lane (+0x843bd48) is the uninitialised w of the temporary
     scale = 2.0f;
     block = 0x28;
     flag843bd75 = 0;

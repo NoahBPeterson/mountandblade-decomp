@@ -124,34 +124,12 @@ struct MapLoader {
 // A partial view of the MapScreen class of src/game/char_sheet/save_game.h (0x4e87d0 buttons, which that module owns; its header
 // cannot be included here: it pulls match/include/rgl.h). Only the members these two functions touch are named.
 #include "../terrain_desc.h"
-struct TerrainX {
-    void emit_particle(int layerno, int blend, int cx, int cy, float z);   // 0x47ff60 (mesh_slot/mesh_slot.h)
-};
-struct Terrain {
-    void fill_desc_named(TerrainDesc* d);   // 0x4656c0 (terrain_a/terrain.h)
-};
 struct MapScreen {
     void* view;                                 // +0x00
-    char pad04[0x60 - 0x04];
-    MissionUi* f60;                             // +0x60
-    char pad64[0x278 - 0x64];
-    int ncols;                                  // +0x278
-    int nrows;                                  // +0x27c
-    char pad280[0x288 - 0x280];
-    char cells[1];                              // +0x288 (stride 0x94, row 0x911c)
-    char pad289[0x5df4 - 0x289];
+    char pad04[0x5df4 - 0x04];
     int f5df4;                                  // +0x5df4
     char pad5df8[0x6698 - 0x5df8];
     Shape mesh;                                 // +0x6698 (the map mesh: builder state; +0x94 / +0x98 / +0x9c the meshes it fills)
-    char pada0[0xc3b0dc - 0x6698 - sizeof(Shape)];
-    char* mapview;                              // +0xc3b0dc
-    char padview[0x845d984 - 0xc3b0dc - 4];
-    int nchunk_rows;                            // +0x0845d984
-    int nchunk_cols;                            // +0x0845d988
-    // 0x47ff60 is TerrainX::emit_particle (mesh_slot/mesh_terrain.cpp), 0x4656c0 Terrain::fill_desc_named (terrain_a): this object is that terrain
-    void emit_particle(int slot, int type, int row, int col, float f) { ((TerrainX*)this)->emit_particle(slot, type, row, col, f); }   // 0x47ff60 (ret 0x14)
-    void fill_desc_named(void* desc) { ((Terrain*)this)->fill_desc_named((TerrainDesc*)desc); }       // 0x4656c0 (ret 4)
-    void init(void* desc);                      // 0x4e85d0 (ret 4)
     void frame_step();                          // 0x4e8720
 };
 

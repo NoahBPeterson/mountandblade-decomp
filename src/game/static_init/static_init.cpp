@@ -67,7 +67,6 @@ extern char g_a75eb0[];     // 0xa75eb0 the scripts
 extern char g_a75f2c[];     // 0xa75f2c the presentations
 extern char g_a75f40[];     // 0xa75f40 the tableaus
 extern char g_a76628[];     // 0xa76628
-extern char g_a76630[];     // 0xa76630 the terrain
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 extern char g_8ed4f58[];    // 0x8ed4f58 the meshes
 extern char g_8ed5090[];    // 0x8ed5090 the particle systems
@@ -101,14 +100,12 @@ struct big_obj { void release(); };                 // 0x4cb9e0
 struct MetaMission { void init(); };                // 0x4be742 (entered through the marker at 0x4be730)
 struct music_player { music_player(); };            // 0x4c24c0
 struct rec_table { rec_table(); };                  // 0x4be520
-struct Terrain { Terrain(); };                      // 0x4ce720
 struct GameApp { GameApp(); };                      // 0x4d3ec0
 struct Tail2 { ~Tail2(); };                         // 0x4c4d10
 struct RefList { void retire(); };                  // 0x4c6900
 struct TwoVec { ~TwoVec(); };                       // 0x4da9c0
 struct TriggerEntryVec { void dtor(); };            // 0x4c2200
 struct ItemPage { void clear(); };                  // 0x4c6aa0
-struct world_obj { ~world_obj(); };                 // 0x4c4ee0
 struct BigArray { void destroy(); };                // 0x4eb810
 struct loaded_psys_table { void clear(); };         // 0x4c1f20
 struct scenefile_obj { ~scenefile_obj(); };         // 0x4c4090
@@ -245,8 +242,6 @@ void __cdecl static_dtor_5483f0() { ((scenefile_obj*)g_8ed50c8)->~scenefile_obj(
 void __cdecl static_dtor_548400() { ((RefList*)g_a75f2c)->retire(); }
 // @ 0x548410
 void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
-// @ 0x548420
-void __cdecl static_dtor_548420() { ((world_obj*)g_a76630)->~world_obj(); }
 // @ 0x548460
 void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
 // @ 0x548480
@@ -368,8 +363,6 @@ void __cdecl static_init_547f60()
 void __cdecl static_init_547fa0() { atexit(static_dtor_548340); }
 // @ 0x547fb0
 void __cdecl static_init_547fb0() { atexit(static_dtor_548410); }
-// @ 0x547fc0
-void __cdecl static_init_547fc0() { new (g_a76630) Terrain; atexit(static_dtor_548420); }
 // @ 0x547fe0
 void __cdecl static_init_547fe0()
 {
@@ -410,7 +403,7 @@ init_fn g_static_init_table[] = {
     static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547f60, static_init_547fa0, static_init_547fb0,
-    static_init_547fc0, static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,
+    static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,
     static_init_548050, static_init_548070, static_init_5480b0, 
     static_init_548110,
 };

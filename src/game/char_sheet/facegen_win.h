@@ -29,12 +29,6 @@ using rgl::mesh;
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 extern resmgr g_alloc;                                      // 0x5d6fa0
 
-// world / terrain object at 0xa76630 (the terrain generator)
-struct TerrainGen {
-    void reset();                                       // 0x4647e0 (Terrain::reset: no symbol of that class exists in src; see cs_common.h)
-};
-extern TerrainGen g_terrain_gen;                            // 0xa76630
-
 // ---- the widget interface (slot offsets in comments) -----------------------------------------------
 struct tvec2 {
     float x, y;

@@ -34,16 +34,13 @@ using rgl::vector4;
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
-#include "../bit_words.h"
+#include "../terrain_a/terrain.h"                   // Terrain (g_terrain 0xa76630)
 #include "../key_names.h"
 extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_globals.h): g_bit[4] is the terrain type mask (4 bits wide), g_bit[2] the size mask (2 bits)
 extern int g_use_shaders;                                   // 0x5e28fc (shaders on: the water checkbox stores the inverse)
 
 // ---- the world / scene --------------------------------------------------------------------------------
 struct FrustumBlock { int d[0x48]; };                        // the 0x120-byte frustum (copied page +0x70 -> world +0x1ac)
-struct DustTerrain {
-    void update_particles(const rgl::matrix* view);   // 0x4f3e10 (dust.h: the terrain object 0xa76630)
-};
 #include "../scene_world.h"                              // World: the page's +0x6c pointer target (block[] +0x1ac)
 
 // 0x40cd00 has a hidden return pointer and returns it; the two rotation helpers are thiscall on the matrix and

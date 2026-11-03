@@ -668,7 +668,7 @@ void Terrain::make_grid()
     for (int y = 0; y < 0x30; y++) {
         for (int x = 0; x < 0x30; x++) {
             gridA[y][x] = 0;
-            gridB[y][x] = 0;
+            emitted[y][x] = 0;
             boxes[y][x].reset();
         }
     }

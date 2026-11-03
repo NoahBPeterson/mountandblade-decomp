@@ -7,7 +7,6 @@
 extern char g_ovl_005e2948[];   // 0x005e2948
 extern char g_ovl_00a73300[];   // 0x00a73300
 extern char g_ovl_00a73a10[];   // 0x00a73a10
-extern char g_ovl_00a76630[];   // 0x00a76630
 struct ShadowMap;
 extern ShadowMap g_shadow_map;         // (defined in game_state.cpp)
 
@@ -15,7 +14,6 @@ extern ShadowMap g_shadow_map;         // (defined in game_state.cpp)
 #define g_a70260 ((char*)((char*)&g_shadow_map + 0x18))   // 0x00a70260
 #define g_battle_advantage (*(int*)(g_ovl_00a73300 + 0x1c))   // 0x00a7331c
 #define g_battle_flags (*(unsigned*)(g_ovl_00a73300 + 0x164))   // 0x00a73464
-#define g_a76644 (*(unsigned*)(g_ovl_00a76630 + 0x14))   // 0x00a76644 (Terrain::flags14; src/game/cls_map cannot include terrain.h)
 #define g_track_count (*(int*)(g_ovl_00a73a10 + 0x4))   // 0x00a73a14
 
 #endif // MB_DATA_VIEWS_H

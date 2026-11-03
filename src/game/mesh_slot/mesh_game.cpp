@@ -615,7 +615,7 @@ void MissionG::frame(float dt, bool spawn)
         unsigned flags = *(unsigned*)(*(char**)(((char*)g_game) + 0x13a50) + f5df4 * 0x494 + 0x30);
         int* water = (int*)&MAT(int, 0x63c0);
         if (flags & 0x100) {
-            ((TerrainX*)&g_terrain)->destroy_water((int)water);        // 0x4814a0
+            g_terrain.destroy_water((int)water);        // 0x4814a0
         } else if (!(flags & 1)) {
             ((ShadowMapP*)ps)->render();
         }

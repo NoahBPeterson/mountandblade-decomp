@@ -9,6 +9,7 @@
 #include "../../game/trial_mode.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./gui_edit.h"
+#include "../../game/terrain_a/terrain.h"   // Terrain::conv_build_scene (0x4c8630)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
@@ -222,15 +223,10 @@ void list_int_make_node_funclet(void* node)
 }
 
 // @ 0x4c4ee0
-// Frees the owned block at +0x845e7bc, clears the three words there; the member destructors then destroy the
-// string at +0x845e784 and the fifteen 0x28-byte string records from +0x248 back down to +0x18.
-world_obj::~world_obj()
+// The destructor of the world-map Terrain: the std::vector member frees its block and clears first/last/end, then the member
+// destructors destroy the string at +0x845e784 and LayerNames' base destructor the fifteen 0x28-byte layer-name strings.
+Terrain::~Terrain()
 {
-    if (blk != 0)
-        operator delete(blk);
-    blk = 0;
-    blk2 = 0;
-    blk3 = 0;
 }
 
 // @ 0x4c4f40
@@ -1613,31 +1609,19 @@ void __fastcall conv_free_one(conv_rec* self)
 }
 
 // @ 0x4c8630
-void __fastcall conv_build_scene(conv_rec* self)
+void Terrain::conv_build_scene()
 {
-    char* c = (char*)self;
-    int gy = 0;
-    if (*(int*)(c + 0x27c) >= 0) {
-        tab_cell* q = (tab_cell*)(c + 0x288);
-        do {
-            int x = 0;
-            if (*(int*)(c + 0x278) >= 0) {
-                int y16 = gy * 16;
-                tab_cell* qq = q;
-                do {
-                    int* cell = (*(world_root**)(c + 0xc3b0dc))->codes->cols[x];
-                    *(int*)(y16 + (int)cell) = *(int*)&qq->v.z;
-                    if (qq->vert >= 0)
-                        (*(world_root**)(c + 0xc3b0dc))->sub->verts[qq->vert].pos = qq->v;
-                    x++;
-                    qq = (tab_cell*)((char*)qq + 0x911c);
-                } while (x <= *(int*)(c + 0x278));
-            }
-            gy++;
-            q = (tab_cell*)((char*)q + 0x94);
-        } while (gy <= *(int*)(c + 0x27c));
+    world_root* wr = (world_root*)world;
+    for (int gy = 0; gy <= h; gy++) {
+        for (int x = 0; x <= w; x++) {
+            int* codes = wr->codes->cols[x];
+            terrain_cell& c = this->cell[x][gy];
+            codes[gy * 4] = *(int*)&c.pz;                      // the tableau code rides in the cell's z lane
+            if (c.f14 >= 0)
+                wr->sub->verts[c.f14].pos = *(vector4*)&c;     // f14: scene vertex index (< 0 = none)
+        }
     }
-    world_sub* sub = (*(world_root**)(c + 0xc3b0dc))->sub;
+    world_sub* sub = wr->sub;
     for (unsigned k = 0; k < sub->items.size(); k++) {
         scene_obj* r = sub->items[k].obj;
         if (r) {

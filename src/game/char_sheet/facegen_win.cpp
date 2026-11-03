@@ -7,6 +7,7 @@
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../int_vec.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../terrain_a/terrain.h"      // Terrain, g_terrain
 #include "./cs_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // the scene entity's slot 4 (+0x10), called once its mesh list is filled
@@ -43,7 +44,7 @@ void facegen_win::init()
     int i;
     for (i = 0; i < 3; i++)
         layer_bits[i] = rand() % 0x1b5781;
-    ((Terrain*)(void*)&g_terrain_gen)->reset();   // 0x4647e0
+    g_terrain.reset();   // 0x4647e0
 
     water_on = 0;
     river_on = 0;

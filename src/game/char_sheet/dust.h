@@ -35,6 +35,7 @@ extern float g_k_reach;                         // 0x598e8c (36.0)
 // ---- engine std::vector views (alloc, begin, end, cap): size() is inline, capacity()/resize are out of line ---
 #include "../../include/mat4.h"
 #include "./cs_common.h"
+#include "../terrain_a/terrain.h"                   // Terrain (g_terrain 0xa76630): the dust pass is Terrain::update_particles
 #include "./cs_res.h"
 #include <vector>
 #include "../../include/mesh_parts.h"             // rgl::vertex60
@@ -143,26 +144,6 @@ struct cell_rec {                               // 0x34 per cell; x stride 0x9c0
     float reach;                                // +0x10
     char pad14[0x20];
 };
-
-// ---- the terrain object (0xa76630) --------------------------------------------------------------------------------------
-struct DustTerrain {
-    char pad0[0x5c3b8f4];
-    int dust_count;                             // +0x5c3b8f4 (the list header: count, then the entries)
-    DustParticle dust[1];                           // +0x5c3b8f8 (stride 0xa0; really 0x40000)
-    char pad1[0x843bd78 - 0x5c3b8f8 - sizeof(DustParticle)];
-    cell_obj* grid[0x30][0x30];                 // +0x843bd78, [x][y]
-    int emitted[0x30][0x30];                    // +0x843e178, [x][y]
-    char pad2[0x8440598 - 0x843e178 - 0x900 * 4];
-    cell_rec cells[0x2f][0x30];                 // +0x8440598, [x][y] (0x34 each; the last row is cut short by n_inner)
-    char pad3[0x845d97c - 0x8440598 - 0x2f * 0x30 * 0x34];
-    int n_inner;                                // +0x845d97c (cells along x)
-    int n_outer;                                // +0x845d980 (cells along y)
-
-    void update_particles(const matrix* view);                  // 0x4f3e10 (ret 4)
-    void emit_cell(int x, int y);                               // 0x4f4060 (ret 8)
-    // (ground_color 0x464d50 and light_particle 0x471b30 are Terrain's, cs_common.h)
-};
-
 
 mat3* __cdecl identity3(mat3* out);                             // 0x40cd60
 namespace rgl { unsigned pack_color(const vector4* c); }       // 0x40e440
