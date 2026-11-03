@@ -74,7 +74,7 @@ void TerrainPage::update(float dt)
         camera_y = clamp(&v, &zero, &g_clamp_lo);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(z_slider)) {
-        camera_z = z_slider->get_float() * g_0_01 + g_one;
+        camera_z = z_slider->get_float() * g_0_01 + g_ten;
         refresh_hex();
     } else if (page_changed(fog_slider)) {
         fog = fog_slider->get_float();
