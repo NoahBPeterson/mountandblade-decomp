@@ -76,6 +76,14 @@ ModuleSettings::ModuleSettings()
     show_party_ids_instead_of_names = 0;
 }
 
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_module_version;   // 0x5e29c0
+float g_map_min_y = -50.0f;   // 0x5aa124
+float g_map_min_x = -50.0f;   // 0x5aa120
+float g_map_max_y = 50.0f;   // 0x5aa11c
+float g_map_max_x = 50.0f;   // 0x5aa118
+
+
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
 
 // @ 0x4be730

@@ -15,7 +15,6 @@
 
 // translation table object at 0x5e2a18
 #include "../str_table.h"
-extern StrTable g_strtable;                         // 0x5e2a18
 
 // ---- the character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) is the troop record,
 // src/include/troop.h (the slice called it CharRec): +0x20 key, +0x30 flags32, +0x58 attrs / lvl58, +0x78 nib[3], +0x9c exp,
@@ -29,8 +28,6 @@ extern StrTable g_strtable;                         // 0x5e2a18
 #include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
 extern "C" double atof(const char* s);              // 0x537352
 
-extern int g_level_table[];                         // 0x5937cc (char_t_next_level_at_ values)
-extern int g_skill_clamp;                           // 0x8ee3ac4 (upper clamp of the skill offset)
 #include "../../rgl/text_stream.h"           // mb_snprintf 0x415100 (size-limited formatter)
 void mb_vsprintf(char* buf, const char* fmt, ...);          // 0x536f8f (unlimited formatter)
 
@@ -61,5 +58,6 @@ typedef SheetWidget SkillLine;
 
 // ---- the character-sheet panel (only the slots this function touches) -----------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
+#include "../ui_globals.h"      // UI / core globals
 
 #endif

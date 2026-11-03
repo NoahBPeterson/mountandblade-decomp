@@ -248,7 +248,6 @@ extern "C" double floor(double v);     // 0x536b10 CRT floor (x87 double arg on 
 
 // float constants in the image's read-only data (each 4 bytes, cited by address).
 extern const float g_one;               // 0x549cdc 1.0f
-extern const float g_half;              // 0x549d70 0.5f
 extern const float g_k002;              // 0x590cd0 0.02f
 
 // The tick table's scale: a float at 0x54a6d0 (loaded with fmul, so it must be a global, not a literal).
@@ -505,9 +504,9 @@ void Effect::animate(float dt)
         float h0 = 0.0f;
         float h1 = 0.0f;
         if (flags148 & 0x10)
-            h0 = f0f0 * g_half;
+            h0 = f0f0 * 0.5f;
         if (flags148 & 0x1000)
-            h1 = f0f4 * g_half;
+            h1 = f0f4 * 0.5f;
         pair[0] = ((f80 - h0) * e5 + (periodF - e5) * a0) * (g_one / periodF);
         pair[1] = ((periodF - e5) * a4 + (f84 - h1) * e5) * (g_one / periodF);
         d22(pair);
@@ -516,9 +515,9 @@ void Effect::animate(float dt)
         float h0 = 0.0f;
         float h1 = 0.0f;
         if (flags148 & 0x10)
-            h0 = f0f0 * g_half;
+            h0 = f0f0 * 0.5f;
         if (flags148 & 0x1000)
-            h1 = f0f4 * g_half;
+            h1 = f0f4 * 0.5f;
         pair[0] = f80 - h0;
         pair[1] = f84 - h1;
         d22(pair);

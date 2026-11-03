@@ -13,7 +13,6 @@
 // rgl_config.txt (written by 0x415fb0, global at 0x5a9f98)
 struct rgl_config { void save(FILE* f); };     // 0x415fb0
 
-extern IDirect3DDevice9* g_device;             // 0xa17f28  // old name of g_render, removed after the names merge
 extern int g_shadow_quality;                   // 0x5aa000 (shadowmap quality step, counted down on failure)
 extern int g_use_shaders;                      // 0x5e28fc: non-zero when the programmable pipeline is in use
 extern text_stream g_log;                      // 0x5a9f60 (the engine's text log)
