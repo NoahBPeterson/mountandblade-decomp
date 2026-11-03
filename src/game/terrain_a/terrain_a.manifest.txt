@@ -8,7 +8,6 @@
 ../src/game/terrain_a/terrain_a.cpp  ?set_pct@Terrain@@QAEXABM@Z  004649f0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?set_field_a@Terrain@@QAEXPBM@Z  00464a60  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?set_field_b@Terrain@@QAEXPBM@Z  00464ac0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?cell_of@Terrain@@QAEPAHPAHPBM@Z  00464b40  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?rand_avg4@Terrain@@QAEMXZ  004659e0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?noise_at@Terrain@@QAEMHH@Z  00465a70  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?clear_flags@Terrain@@QAEXI@Z  00466480  /O2 /MT /Gy /TP

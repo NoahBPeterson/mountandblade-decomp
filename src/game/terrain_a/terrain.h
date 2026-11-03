@@ -2,9 +2,9 @@
 // 250 x 250 quads of 0x38 bytes that follow them, three particle lists, the sun and the chunk entities) and the
 // records around it that terrain_a.cpp (0x464200..0x46e590) reads: the sco terrain description, the ground-type and
 // particle-type tables, the packed bit-field helpers. One layout per class; every offset cites the function that
-// proves it. The slices called the object Terrain (s00464a60, s004650f0, s00465a70, s00468da0, s0046b6e0) and
-// terrain_obj (s004661e0 .. s0046bc70): both are kept as the two class names of the symbols (terrain_obj derives from
-// Terrain, no vtable, no new members), so the mangled names of the byte-exact rows are unchanged.
+// proves it. The slices called the object Terrain, terrain_obj, TerrainX, BitWords, HexWords, DustTerrain, MapScreen ...: they are all this
+// one class. The single definition is g_terrain (mesh_slot/mesh_start.cpp); LayerNames is its empty first base, so the layer-name
+// strings are built first and destroyed last, as in the original.
 // src/game/terrain_b declares a smaller Terrain/ShadowMap/particle of its own for 0x46e590+ (see MIGRATION.md).
 #ifndef TERRAIN_A_TERRAIN_H
 #define TERRAIN_A_TERRAIN_H
@@ -161,7 +161,7 @@ struct layer_set {                              // set of sco layers handed to l
 // Terrain (offset 0 == the Terrain's this), so that these constructions precede the member constructions as in the original.
 void __fastcall tstring_ctor(tstring* p);       // 0x42bbd0 (tstring::tstring, called on raw slots; no placement-new null test)
 struct LayerNames {
-    ~LayerNames() { for (int i = 14; i >= 0; i--) ((tstring*)((char*)this + 0x18 + i * 0x28))->~tstring(); }
+    ~LayerNames() { char* p = (char*)this + 0x270; int n = 15; do { p -= 0x28; ((tstring*)p)->~tstring(); } while (--n); }   // back to front, as an array destructor
     LayerNames() { for (int i = 0; i < 15; i++) tstring_ctor((tstring*)((char*)this + 0x18 + i * 0x28)); }
 };
 
@@ -315,6 +315,6 @@ TERRAIN_AT(arr3, 0x845da54); TERRAIN_AT(brushed, 0x845e030); TERRAIN_AT(tail, 0x
 TERRAIN_AT(flags, 0x10); TERRAIN_AT(layer, 0x28); TERRAIN_AT(sun_ambient, 0x843bd2c); TERRAIN_AT(sun_diffuse, 0x843bd3c); TERRAIN_AT(noise_seed, 0x843bd4c);
 typedef char Terrain_size[(sizeof(Terrain) == 0x845e7c8) ? 1 : -1];
 
-extern Terrain g_terrain; // 0xa76630 (the one definition: terrain_a.cpp)
+extern Terrain g_terrain; // 0xa76630 (the one definition: mesh_slot/mesh_start.cpp)
 
 #endif // TERRAIN_A_TERRAIN_H

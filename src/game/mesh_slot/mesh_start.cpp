@@ -161,6 +161,9 @@ struct PropObj {                                             // object at prop +
 #include "../nav_mesh.h"
 #include "../terrain_desc.h"
 #include "../terrain_a/terrain.h"                         // Terrain, g_terrain (0xa76630)
+
+// ---- data this module owns ----
+Terrain g_terrain;                                  // 0xa76630 (the world-map terrain, used by Mission::start_setup: 0x845e7c8 bytes; constructed by Terrain::Terrain 0x4ce720)
 struct Psys {
     void attach_camera(World* w) { ((ShadowMap*)this)->attach_camera((CellGrid*)w); }       // 0x4711e0
     void extend(BodyRec* b) { ((ShadowMap*)this)->extend((const vector4*)b); }          // 0x468c20

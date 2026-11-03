@@ -28,7 +28,6 @@ extern Mission* g_mission;                                  // 0x5e292c
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-Terrain g_terrain;                                  // 0xa76630 (the world-map terrain: 0x845e7c8 bytes; constructed by Terrain::Terrain 0x4ce720)
 
 
 
@@ -323,20 +322,6 @@ void Terrain::set_field_b(const float* p)
     unsigned m = ((unsigned*)g_bit)[14] - 1;
     if (v > m) v = m;
     flags = (flags & ~(m << 21)) | (v << 21);
-}
-
-// @ 0x464b40
-int* Terrain::cell_of(int* out, const float* p)
-{
-    float s = 1.0f / scale;
-    int x = IFLOOR(s * p[0]);
-    int ix;
-    if (x < 0) ix = 0; else { ix = w - 1; if (x < w) ix = x; }
-    int y = IFLOOR(s * p[1]);
-    int iy;
-    if (y < 0) iy = 0; else if (y >= h) iy = h - 1; else iy = y;
-    out[0] = ix; out[1] = iy;
-    return out;
 }
 
 // @ 0x464bf0
