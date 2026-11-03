@@ -259,5 +259,34 @@
    "reached through tables": 17005900,
    "library data": 57058
   }
+ },
+ "2026-11-03T12:57:55-06:00": {
+  "data_labels": 256,
+  "aliases": 408,
+  "traps": 262,
+  "redirects": 318,
+  "vtable_slots_rewritten": 5,
+  "vptr_stores_moved": 522,
+  "vtbl_externs": 20,
+  "placeholder_virtuals": 2,
+  "forwarding_stubs": 32,
+  "data_definitions": 197,
+  "when": "2026-11-03T12:57:55-06:00",
+  "commit": "833bccf4",
+  "build": "step_D3D6",
+  "items": {
+   "defined in source": 200,
+   "generated from source": 2597,
+   "borrowed from image": 106,
+   "reached through tables": 624,
+   "library data": 538
+  },
+  "bytes": {
+   "defined in source": 205948,
+   "generated from source": 320404,
+   "borrowed from image": 126705656,
+   "reached through tables": 17005900,
+   "library data": 57058
+  }
  }
 }
