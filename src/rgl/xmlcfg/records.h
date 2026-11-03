@@ -139,15 +139,6 @@ struct RecY : IfaceB {
     RecY();
     virtual ~RecY();
 };
-// IfaceB-derived, 0x5928 bytes: vector<int> at +0x1c, Tail2 at +0x53c0 (vector deleting dtor 0x431f40).
-struct RecZ : IfaceB {
-    char pad10[0x18 - 0xc];
-    std::vector<int> v;             // +0x1c
-    char pad2c[0x53c0 - 0x2c];
-    Tail2 t;                        // +0x53c0
-    char tail[0x5928 - 0x53e0];
-    RecZ();
-};
 // 0x5340-byte object: the reset at 0x432080 clears five fields (offsets as stored there).
 struct BigObj {
     char pad[0x5340];

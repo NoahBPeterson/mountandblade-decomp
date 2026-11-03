@@ -1460,11 +1460,7 @@ void MAgent::reset()
     f5830 = 2;
     f5844 = 0;
     f5850 = 90000.0f;
-    if (f20)
-        delete f20;
-    f20 = 0;
-    f24 = 0;
-    f28 = 0;
+    ids.tidy();
     f587c = -1;
     f57b4 = 1.0f;
     fc0 = 0;
@@ -2107,7 +2103,7 @@ ViewState::ViewState()
     ta8.init(2);
     t5118.init(2);
     t5128.init(2);
-    v516c.x = 0.0f; v516c.y = 0.0f; v516c.z = 0.0f; v516c.w = 0.0f;
+    tail2.arr = 0; tail2.count = 0; tail2.refbase = 0; tail2.refcap = 0;
     Vec2 z; z.x = 0.0f; z.y = 0.0f;
     v50e8 = z;
 }
@@ -2189,7 +2185,6 @@ void mesh_flip::flip_faces()
 // @ 0x477a30
 MAgent::MAgent()
 {
-    f20 = 0; f24 = 0; f28 = 0;
     t40.state = 2; t40.t = tk(2);
     new (&view) ViewState;   // 0x475e50
     subB.init();
