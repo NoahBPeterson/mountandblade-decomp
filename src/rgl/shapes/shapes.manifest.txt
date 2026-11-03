@@ -72,15 +72,9 @@
 ../src/rgl/shapes/shapes.cpp  ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@II@Z  0040c0c0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXII@Z  0040c140  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ  0040c290  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ??1logic_error@@UAE@XZ  0040c2c0  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ??_Glogic_error@@UAEPAXI@Z  0040c310  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@II@Z  0040c360  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBDI@Z  0040c450  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z  0040c540  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ??0logic_error@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z  0040c580  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ??_Glength_error@@UAEPAXI@Z  0040c5c0  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ??0logic_error@@QAE@ABV0@@Z  0040c5f0  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ??0length_error@@QAE@ABV0@@Z  0040c630  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0manifold@@QAE@XZ  0040c670  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?type_name@manifold@@UBE?AUstring@rgl@@XZ  0040c6c0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?save@manifold@@UAEXPAUstream_base@@@Z  0040c6e0  /O2 /MT /Gy /TP

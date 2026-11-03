@@ -60,9 +60,7 @@ struct Mission_s2b5c0 {
 struct Mission {
     int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn);   // 0x44f870 (agent4/agent_logic.cpp)
 };
-struct PlacedObj {
-    void reset();                                           // 0x4352f0 (agent/agent.cpp)
-};
+struct PlacedObj;                                           // placed_obj.h (below): the 0x1c8-byte record, reset 0x4352f0 (agent/agent.cpp)
 struct GuiCtx;
 struct MeshOwner_s2fe40;
 void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out);   // 0x5302f0 (defined in mesh_3.cpp)
@@ -512,35 +510,11 @@ using rgl::matrix;
 
 #include "../../include/fx.h"
 
-// ---- 0x1c8-byte placed-object record (layout from s0044f3c0 / s00435490, vtable 0x590b84) --------
-struct IfaceB_s2f250 {
-    int f4, f8, fc;
-    IfaceB_s2f250() {}
-    virtual ~IfaceB_s2f250() {}                 // slot 0: 0x437870 is PlacedObj's deleting destructor
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
-struct Quad_s2f250 {
-    int a, b, c, d;
-    Quad_s2f250() : a(2), c(((int*)g_ticks)[4]), d(((int*)g_ticks)[5]) {}
-};
-struct PlacedObj_s2f250 : IfaceB_s2f250 {
-    int m10, m14;                               // +0x10
-    matrix a18, a58, a98, ad8, a118;            // +0x18 .. +0x157
-    vector4 v158;                               // +0x158
-    int m168;                                   // +0x168
-    float f16c;                                 // +0x16c
-    Quad_s2f250 q170;                                  // +0x170
-    int m180, m184, m188, m18c;                 // +0x180 (m188 = kind)
-    tstring name;                               // +0x190
-    int m1a0, m1a4, m1a8, m1ac, m1b0;           // +0x1a0 (m1a0 = slot number)
-    void* f1b4;                                 // +0x1b4  spawn handle, virtual +0x5c
-    int m1b8, m1bc, m1c0, m1c4;                 // +0x1b8
-    PlacedObj_s2f250() { reset(); }                    // 0x437830 (inlined here)
-    __forceinline void reset() { ((PlacedObj*)this)->reset(); }     // 0x4352f0 (PlacedObj::reset)
-};
+// ---- the 0x1c8-byte placed-object record (vtable 0x590b84): the one class of src/game/placed_obj.h (this slice used to carry its own
+// IfaceB / Quad / PlacedObj copies, with a vtable of their own) ------------------------------------------------------------------
+#include "../placed_obj.h"
 
-// ---- the non-virtual slot at +0x5c of the object behind record->f1b4 ------------------------------
+// ---- the non-virtual slot at +0x5c of the object behind record->m1b4 ------------------------------
 struct Prop_s2f250 {
     virtual void p00(); virtual void p01(); virtual void p02(); virtual void p03();
     virtual void p04(); virtual void p05(); virtual void p06(); virtual void p07();
@@ -605,9 +579,9 @@ struct Map_s2f250 {
     char pad0[0x65e4];
     SceneObj_s2f250* object;                           // +0x65e4  the edited scene object
     char pad65e8[0x668c - 0x65e8];
-    PlacedObj_s2f250* records;                         // +0x668c  the 0x1c8 record array
-    __forceinline void init_placed(PlacedObj_s2f250*, const int* kind, const int* id, const int* value, const matrix*);   // 0x435860
-    __forceinline void build_mesh_name(PlacedObj_s2f250*, MeshVec_s2f250*);    // 0x5302f0
+    PlacedObj* records;                         // +0x668c  the 0x1c8 record array
+    __forceinline void init_placed(PlacedObj*, const int* kind, const int* id, const int* value, const matrix*);   // 0x435860
+    __forceinline void build_mesh_name(PlacedObj*, MeshVec_s2f250*);    // 0x5302f0
     __forceinline int add_placed(const int* kind, const int* id, const int* value, const matrix*, int* spawn);     // 0x44f870 (Mission::add_placed)
 };
 struct IntVec_s2f250 {
@@ -862,9 +836,9 @@ inline void MapEditor_s2f250::apply(char* a, vector4* off, char* b, mat3_s2f250*
 { ((ViewCtrl_s2fe40*)this)->apply(a, (float*)off, b, (float*)frame, c, (float*)col, out); }
 __forceinline mesh_s2f250* mesh_s2f250::clone() { return (mesh_s2f250*)((mesh_x*)this)->clone(); }
 __forceinline void mesh_s2f250::set_color(vector4 c) { ((mesh_x*)this)->set_color(c); }
-__forceinline void Map_s2f250::init_placed(PlacedObj_s2f250* o, const int* kind, const int* id, const int* value, const matrix* m)
-{ ::init_placed((PlacedObj*)o, kind, id, value, m); }
-__forceinline void Map_s2f250::build_mesh_name(PlacedObj_s2f250* o, MeshVec_s2f250* v)
+__forceinline void Map_s2f250::init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m)
+{ ::init_placed(o, kind, id, value, m); }
+__forceinline void Map_s2f250::build_mesh_name(PlacedObj* o, MeshVec_s2f250* v)
 { ::build_mesh_name((MeshOwner_s2fe40*)o, (std::vector<rgl::mesh*>*)v); }
 __forceinline int Map_s2f250::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn)
 { return ((Mission*)this)->add_placed(kind, id, value, m, spawn); }

@@ -1,3 +1,9 @@
+../src/game/agent3/agent_combat.cpp  ??1logic_error@std@@UAE@XZ  0040c2c0  /O2 /MT /Gy /TP
+../src/game/agent3/agent_combat.cpp  ??_Glogic_error@std@@UAEPAXI@Z  0040c310  /O2 /MT /Gy /TP
+../src/game/agent3/agent_combat.cpp  ??0logic_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z  0040c580  /O2 /MT /Gy /TP
+../src/game/agent3/agent_combat.cpp  ??_Glength_error@std@@UAEPAXI@Z  0040c5c0  /O2 /MT /Gy /TP
+../src/game/agent3/agent_combat.cpp  ??0logic_error@std@@QAE@ABV01@@Z  0040c5f0  /O2 /MT /Gy /TP
+../src/game/agent3/agent_combat.cpp  ??0length_error@std@@QAE@ABV01@@Z  0040c630  /O2 /MT /Gy /TP
 ../src/game/agent3/agent_combat.cpp  ?measure@Font@@QAEMPBHHPAH1@Z  0043e200  /O2 /MT /Gy /TP
 ../src/game/agent3/agent_combat.cpp  ?vec_xlen@@YAXXZ  0043e2a0  /O2 /MT /Gy /TP
 ../src/game/agent3/agent_combat.cpp  ?_Insert_n@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXViterator@12@IABUtstring@@@Z  0043e310  /O2 /MT /Gy /TP

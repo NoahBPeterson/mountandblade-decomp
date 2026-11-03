@@ -52,7 +52,7 @@ struct dtor_obj { virtual ~dtor_obj(); };                       // anything dele
 
 struct entity {
     virtual ~entity();                                          // 0x4213f0 (body; scalar deleting dtor ??_Gentity is 0x4214e0, slot 0)
-    virtual int type_id();                                      // 1: 0x408020
+    virtual int type_id();                                      // 1: 0x408020 (returns 0; the ICF-folded owner is another class's)
     virtual string type_name();                                 // 2: 0x41fcb0 "entity"
     virtual void sync();                                        // 3: 0x41fcd0
     virtual void recalc();                                      // 4: 0x41ffe0
@@ -62,13 +62,13 @@ struct entity {
     virtual void set_f144(const float* p);                      // 8: 0x41fdd0
     virtual void render(scene* sc, render_info* out);           // 9: 0x420310
     virtual bool awake();                                       // 10: 0x4280e0
-    virtual void s11();                                         // 11: 0x4280e0
+    virtual bool s11();                                         // 11: 0x4280e0
     virtual const vector4* local_origin();                      // 12: 0x41fde0
     virtual const vector4* get_vac();                           // 13: 0x41fdf0
     virtual const vector4* get_v9c();                           // 14: 0x41fe00
     virtual int is_dirty();                                     // 15: 0x41fe10 (the flag at +0x141; entity.cpp defines it int)
     virtual void load(stream_base* s);                          // 16: 0x4284e0
-    virtual int slot17();                                       // 17: 0x408030
+    virtual void slot17(int);                                   // 17: 0x408030 (ret 4: ignores its argument)
     virtual void set_mode(unsigned m);                          // 18: 0x41fe30
     virtual void clear();                                       // 19: 0x420960
     virtual void set_local(const matrix* m);                    // 20: 0x41fe50
@@ -114,15 +114,19 @@ struct contact_vec {            // std::vector<Contact> written out (VC7.1 layou
     void _Tidy() { if (first != 0) operator delete(first); first = 0; last = 0; end = 0; }
 };
 
+// the contact list zeroes itself in its constructor (a member initializer), which is where the original zeroes it: right after the
+// entity constructor, before the rigid body's state (dynamic_entity 0x425370) and before skeleton_entity's own members (0x427d80)
+struct contact_list_m : contact_vec { contact_list_m() { first = 0; last = 0; end = 0; } };
+
 struct collision_entity : entity {                              // vtable 0x54b548
-    float restitution;          // 0x15c (0.9: inline ctor in skeleton_entity::skeleton_entity 0x427d80)
-    contact_vec contacts;       // 0x160
-    collision_entity() { contacts.first = 0; contacts.last = 0; contacts.end = 0; restitution = 0.9f; }
+    float restitution;          // 0x15c (0.9: set by the constructor of the rigid body and by skeleton_entity::skeleton_entity 0x427d80)
+    contact_list_m contacts;    // 0x160
+    collision_entity() { restitution = 0.9f; }
     // inline: the body (0x427cd0) is inlined into ~skeleton_entity 0x427e10; out-of-line copy 0x427cd0, deleting 0x427d20
     virtual ~collision_entity() { contacts._Tidy(); }
-    virtual int type_id();                                      // 1: 0x48b880
+    virtual int type_id() { return 3; }                         // 1: 0x48b880 (ICF-shared with the resource classes' type())
     virtual string type_name();                                 // 2: 0x421500 "collision_entity"
-    virtual bool is_dynamic();                                  // 24: 0x48b170
+    virtual bool is_dynamic() { return true; }                  // 24: 0x48b170 (ICF-shared with every `return true`)
     virtual vector4* point_velocity(vector4* out, const vector4* p);        // 25: 0x421520 (default: zero)
     virtual void apply_impulse(const vector4* p, const vector4* j);         // 26: 0x421540 (default: nothing)
     virtual float impulse_response(const vector4* p, const vector4* n);     // 27: 0x421550 (default: 0.0)
@@ -145,7 +149,7 @@ struct static_entity : entity {                                 // vtable 0x54b7
     virtual int type_id();                                      // 1: 0x493300
     virtual string type_name();                                 // 2: 0x4280c0
     virtual bool awake();                                       // 10: 0x4280e0
-    virtual void s11();                                         // 11: 0x48b170
+    virtual bool s11();                                         // 11: 0x48b170
 };
 
 // the strategic entity (vtable 0x54b5d0, 0x320 bytes, ctor 0x421720): a mesh entity that carries an effect definition
@@ -193,7 +197,7 @@ struct strategic_entity : entity {
     virtual void add_emitter(psys* e);                          // 25: 0x421aa0
     virtual void clear_emitters();                              // 26: 0x421b00
     virtual int find_emitter(int tag);                          // 27: 0x421a50
-    virtual void s_last() {}                    // placeholder: original table 0x54b5d0 has 29 slots, ours 28
+    virtual void add_shape(item_obj* o);                        // 28: 0x424100 (world_grid.cpp: keep the shape, tag it, register it with the world)
 };
 
 // the rigid body entity (vtable 0x54b668, 0x1d8 bytes) is defined in ../dynamic/dynamic_entity.h (collision_entity's

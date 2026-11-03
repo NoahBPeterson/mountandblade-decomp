@@ -84,10 +84,8 @@ RecY* make_recy_array(int n) { return new RecY[n]; }
 // @ 0x431ec0
 void delete_recy_array(RecY* p) { delete[] p; }
 
-RecZ::RecZ() {}
-RecZ* make_recz_array(int n) { return new RecZ[n]; }
-// @ 0x431f40
-void delete_recz_array(RecZ* p) { delete[] p; }
+// 0x431f40 is the vector deleting destructor of the mission agent, MAgent (vtable 0x591848); the compiler emits it with MAgent's vtable
+// in game/terrain_b/terrain_b.cpp (MAgent::MAgent), where its row is.
 
 // @ 0x432010
 RecT::~RecT() {}

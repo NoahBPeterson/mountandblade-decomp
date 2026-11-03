@@ -1462,11 +1462,7 @@ void MAgent::reset()
     f5830 = 2;
     f5844 = 0;
     f5850 = 90000.0f;
-    if (f20)
-        delete f20;
-    f20 = 0;
-    f24 = 0;
-    f28 = 0;
+    ids.tidy();
     f587c = -1;
     f57b4 = 1.0f;
     fc0 = 0;
@@ -2030,7 +2026,7 @@ void Mission::update_team_stats()
             unsigned i6 = agent_pool(this).first_used();
             while (i6 < (unsigned)agent_pool(this).next_id) {
                 int o = AGENT(this, i6).view.target;
-                if (o >= 0 && o < agent_pool(this).next_id && AGENT(this, o).used != 0)
+                if (o >= 0 && o < agent_pool(this).next_id && AGENT(this, o).f4 != 0)
                     AGENT(this, o).f55e8++;
                 agent_pool(this).next_used(&i6);
             }
@@ -2109,7 +2105,7 @@ ViewState::ViewState()
     ta8.init(2);
     t5118.init(2);
     t5128.init(2);
-    v516c.x = 0.0f; v516c.y = 0.0f; v516c.z = 0.0f; v516c.w = 0.0f;
+    tail2.arr = 0; tail2.count = 0; tail2.refbase = 0; tail2.refcap = 0;
     Vec2 z; z.x = 0.0f; z.y = 0.0f;
     v50e8 = z;
 }
@@ -2191,7 +2187,6 @@ void mesh_flip::flip_faces()
 // @ 0x477a30
 MAgent::MAgent()
 {
-    f20 = 0; f24 = 0; f28 = 0;
     t40.state = 2; t40.t = tk(2);
     new (&view) ViewState;   // 0x475e50
     subB.init();
@@ -2229,7 +2224,7 @@ template<> void Pool<MAgent>::reset()
 {
     free_ids.resize(0, 0);
     for (int i = 0; i < next_id; i++) {
-        pages[(unsigned)i >> 4][i & 0xf].used = 0;
+        pages[(unsigned)i >> 4][i & 0xf].f4 = 0;
         free_ids.push_back(i);
     }
 }
@@ -2249,8 +2244,8 @@ template<> int Pool<MAgent>::alloc()
         MAgent* blk = new MAgent[16];
         pages.push_back(blk);
         for (int j = 0; j < 16; j++) {
-            blk[j].used = 0;
-            blk[j].id = next_id + j;
+            blk[j].f4 = 0;
+            blk[j].f8 = next_id + j;
             free_ids.push_back(next_id + j);
         }
         next_id += 16;
@@ -2258,8 +2253,8 @@ template<> int Pool<MAgent>::alloc()
     unsigned id = free_ids.back();
     free_ids.pop_back();
     MAgent* r = &pages[id >> 4][id & 0xf];
-    r->used = 1;
-    r->serial = serial;
+    r->f4 = 1;
+    r->fc = serial;
     serial++;
     return id;
 }

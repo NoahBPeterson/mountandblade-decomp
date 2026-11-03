@@ -1,0 +1,15 @@
+../src/rgl/scene/entity_base.cpp  ??0entity@rgl@@QAE@XZ  0041fba0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?type_name@entity@rgl@@UAE?AUstring@2@XZ  0041fcb0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?sync@entity@rgl@@UAEXXZ  0041fcd0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?get_radius@entity@rgl@@UAEMXZ  0041fd80  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?set_fbc@entity@rgl@@UAEXPBM@Z  0041fd90  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?update@entity@rgl@@UAEXM@Z  0041fda0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?set_f144@entity@rgl@@UAEXPBM@Z  0041fdd0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?local_origin@entity@rgl@@UAEPBUvector4@2@XZ  0041fde0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?get_vac@entity@rgl@@UAEPBUvector4@2@XZ  0041fdf0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?get_v9c@entity@rgl@@UAEPBUvector4@2@XZ  0041fe00  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?is_dirty@entity@rgl@@UAEHXZ  0041fe10  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?set_mode@entity@rgl@@UAEXI@Z  0041fe30  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?set_local@entity@rgl@@UAEXPBUmatrix@2@@Z  0041fe50  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?set_local_dirty@entity@rgl@@UAEXPBUmat4@2@@Z  0041fe70  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?set_local_scaled@entity@rgl@@UAEXPBUmatrix@2@PBUvector4@2@@Z  0041fe90  /O2 /MT /Gy /TP
