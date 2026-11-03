@@ -49,6 +49,8 @@ struct file_text : file_text_base {                 // vtable 0x54ac88: text rea
 
 // ---- std::vector<tstring> internals (VC7.1, 0x10-byte element) ---------------------------------------------------
 #include "../../include/ptr_tag.h"             // ptr_tag: std::_Nonscalar_ptr_iterator_tag (empty, passed by value)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/level_global.h"      // g_level (0xa732b4)
 // The out-of-line instances of std::vector<tstring> / std::vector<int> that other objects define (agent_combat.cpp 0x43e310 and 0x43e2a0,
 // gui_manager 0x42d360, mesh_obj.cpp 0x410610) are called through their std:: names: an explicit specialization declared without a
 // definition makes every use a call. The accessors below reach the protected members from the hand-written vector views.
@@ -255,7 +257,6 @@ struct Local : growable_array {
 
 // ---- script emitters (0xa75eb0 array, count 0xa75eb4) ------------------------------------------------------------
 #include "../emitter_rec.h"
-extern int g_emitter_count;                         // 0xa75eb4
 
 struct SkeletonBody { void load(const tstring& path); };           // 0x50fc60 (inventory_panel/skeleton_load.cpp; ret 4)
 struct RegSkeleton;
@@ -333,11 +334,11 @@ extern float g_maxx;                 // 0xa732a4
 extern float g_maxy;                 // 0xa732a8
 extern float g_sizex;                // 0xa732ac
 extern float g_sizey;                // 0xa732b0
-#include "../game_globals.h"   // canonical g_map_tree_types (0xa1815c), g_map_sea_direction (0xa18144), g_map_river_direction (0xa18150)
-// the slices read these as ints (g_map_sea_direction/river_direction are floats in game_globals.h, same words)
-#define g_map_tree_types_a ((int*)&g_map_tree_types)                  // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
-#define g_map_sea_direction_i (*(int*)&g_map_sea_direction)
-#define g_map_river_direction_i (*(int*)&g_map_river_direction)
+#include "../game_globals.h"   // canonical g_module_settings.map_tree_types (0xa1815c), g_module_settings.map_sea_direction (0xa18144), g_module_settings.map_river_direction (0xa18150)
+// the slices read these as ints (g_module_settings.map_sea_direction/river_direction are floats, same words)
+#define g_map_tree_types_a ((int*)&g_module_settings.map_tree_types)                  // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
+#define g_map_sea_direction_i (*(int*)&g_module_settings.map_sea_direction)
+#define g_map_river_direction_i (*(int*)&g_module_settings.map_river_direction)
 extern unsigned __int64 g_bit[]; // 0x5a8e68
 extern int    g_use_shaders;                // 0x5e28fc
 void __stdcall scan_arrays(void* p, int unused); // 0x523630
@@ -378,7 +379,6 @@ struct world { void erase_entity(rgl::entity* e); };                // 0x41f450 
 struct Poser { void add_extra(int x); };                            // 0x442110 (agent3/agent_fx_sound.cpp; ret 4: the mesh pointer is its argument)
 #include "../../include/party.h"                                    // PartyMgr (Game +0xf8, game.h's Scene): first_party_id 0x460d20, next_party_id 0x460ca0
 struct GamePool { void next(int* idx); };                           // 0x517960 (inventory_panel/game_tick.h; ret 4: SpriteTable at Game +0xcc)
-extern CellGrid* g_level;                                           // 0xa732b4 (terrain_b.h declares it too; that header cannot be included next to game.h)
 // the resource manager (object 0x5d6fa0) as rgl/core/resmgr.h's `resmgr` defines get_object (that header cannot be included here)
 struct resmgr;       // get_object 0x419540: declared by rgl/scene/scene.h (resmgr : resource_manager)
 #include "../../rgl/scene/scene_math.h"   // rgl::identity3 (0x40cd60)

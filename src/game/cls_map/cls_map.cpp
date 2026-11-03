@@ -29,6 +29,9 @@ struct OptionsDlg {
 #include "../../dxframework/dxutil.h"   // DXUtil_Timer 0x407660 (stdcall, TIMER_COMMAND)
 #include "../../rgl/options.h"       // options::save 0x4181c0
 #include <hash_map>
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/game_recs.h"
+#include "../map_icon.h"      // g_map_icons (0x5e29f0)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
@@ -478,13 +481,13 @@ void LoadingScreen::init()
         ADD_ROOT_REF(root);
     }
 
-    if (g_num_hints != 0) {
+    if (g_module_settings.num_hints != 0) {
         srand(timeGetTime());
         int idx;
-        if (g_num_hints <= 1)
+        if (g_module_settings.num_hints <= 1)
             idx = 0;
         else
-            idx = rand() % g_num_hints;
+            idx = rand() % g_module_settings.num_hints;
 
         tstring prefix("hint_");
         char num[0x40];
@@ -549,7 +552,6 @@ void crt_exit();                                        // 0x535458
 #include "../ptype.h"             // ptype* g_ptypes (0x5e28f8)
 #include "../../include/item_kind.h"   // ItemKind* g_items (0x5e29d0)
 #include "../terrain_b/emit.h"     // EnvRow* g_env_rows (0x5e28f4)
-extern PartyTemplate* g_party_templates;                   // 0x5e29f8 (PartyTemplate: game_recs.h, via game_data.h; the type script_interpreter.h and party/game.h declare)
 extern void* g_mission_templates;                          // 0x5e2a00
 struct E24;
 E24* g_5e2928;                                          // 0x5e2928 (the array shutdown() deletes)
@@ -808,7 +810,7 @@ void MissionScreen::fill_mission_row(int side)
 
     float v[2];
     const tstring* text;
-    if (g_show_party_ids_instead_of_names)
+    if (g_module_settings.show_party_ids_instead_of_names)
         text = &party->key;
     else if (party->flag == 0 && (text = g_strtable.find(&party->key)) != 0)
         text = text;
@@ -1206,34 +1208,34 @@ void MainMenuScreen::create()
     int base_colour = 0xff442323;
     vt(win)->d38(&base_colour);
 
-    int r = g_main_menu_font_color_red;
+    int r = g_module_settings.main_menu_font_color_red;
     r = r < 0 ? 0 : (r >= 0xff ? 0xfe : r);
-    int g = g_main_menu_font_color_green;
+    int g = g_module_settings.main_menu_font_color_green;
     g = g < 0 ? 0 : (g >= 0xff ? 0xfe : g);
-    int b = g_main_menu_font_color_blue;
+    int b = g_module_settings.main_menu_font_color_blue;
     b = b < 0 ? 0 : (b >= 0xff ? 0xfe : b);
     int colour = ((((unsigned)r | 0xffffff00u) << 8) | (unsigned)g) << 8 | (unsigned)b;
     int down = (int)0xffffdd00;
     int tp = 0;
 
-    float step = g_enable_quick_battles ? 0.06f : 0.08f;
+    float step = g_module_settings.enable_quick_battles ? 0.06f : 0.08f;
 
     {
         tstring k("ui_start_tutorial");
         row_tutorial = build_row(win, g_strtable_c.lookup(k), 0.33f,
-                               (g_enable_quick_battles ? 5 : 4) * step + 0.08f, 0.6f, 0.05f);
+                               (g_module_settings.enable_quick_battles ? 5 : 4) * step + 0.08f, 0.6f, 0.05f);
     }
     {
         tstring k("ui_start_a_new_game");
         row_new_game = build_row(win, g_strtable_c.lookup(k), 0.33f,
-                               (g_enable_quick_battles ? 4 : 3) * step + 0.08f, 0.6f, 0.05f);
+                               (g_module_settings.enable_quick_battles ? 4 : 3) * step + 0.08f, 0.6f, 0.05f);
     }
     {
         tstring k("ui_restore_a_saved_game");
         row_restore = build_row(win, g_strtable_c.lookup(k), 0.33f,
-                              (g_enable_quick_battles ? 3 : 2) * step + 0.08f, 0.6f, 0.05f);
+                              (g_module_settings.enable_quick_battles ? 3 : 2) * step + 0.08f, 0.6f, 0.05f);
     }
-    if (g_enable_quick_battles) {
+    if (g_module_settings.enable_quick_battles) {
         {
             tstring k("ui_custom_battle");
             row_custom = build_row(win, g_strtable_c.lookup(k), 0.33f, step + step + 0.08f, 0.6f, 0.05f);
@@ -1457,11 +1459,11 @@ void EscapeMenu::create()
     int no = -1;
     vt(win)->d38(&no);
 
-    int r = g_main_menu_font_color_red;
+    int r = g_module_settings.main_menu_font_color_red;
     r = r < 0 ? 0 : (r >= 0xff ? 0xfe : r);
-    int g = g_main_menu_font_color_green;
+    int g = g_module_settings.main_menu_font_color_green;
     g = g < 0 ? 0 : (g >= 0xff ? 0xfe : g);
-    int b = g_main_menu_font_color_blue;
+    int b = g_module_settings.main_menu_font_color_blue;
     b = b < 0 ? 0 : (b >= 0xff ? 0xfe : b);
     int color = ((((unsigned)r | 0xffffff00) << 8) | (unsigned)g) << 8 | (unsigned)b;
 
@@ -1636,7 +1638,7 @@ void DebriefMenu::create_report()
     Party** page = party->pages._Myfirst;
     char* rec = (char*)((h & 0xf) * 0x5ac8 + (char*)page[h >> 4]);
     const tstring* text;
-    if (g_show_party_ids_instead_of_names)
+    if (g_module_settings.show_party_ids_instead_of_names)
         text = (const tstring*)(rec + 0x20);
     else if (*(char*)(rec + 0x1c) != 0)
         text = (const tstring*)(rec + 0xc);

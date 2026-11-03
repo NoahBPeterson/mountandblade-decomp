@@ -33,25 +33,6 @@ extern int g_map_icon_count; // 0x5e29f4
 extern int g_mission_template_count; // 0x5e2a04
 // Set by hud.cpp, cleared by world_app, test-and-set latch in mission_ctx.cpp.
 extern char g_saved; // 0x5e2a08
-extern int g_scan_module_textures; // 0xa18108
-// game_variables.txt key "scan_module_sounds" (trigger_vec.cpp loader);
-extern int g_scan_module_sounds; // 0xa1810c
-// game_variables.txt key "time_multiplier" (trigger_vec.cpp loader);
-extern float g_time_multiplier; // 0xa18110
-// game_variables.txt key "track_spotting_multiplier" (trigger_vec.cpp loader);
-extern float g_track_spotting; // 0xa18118
-// game_variables.txt key "map_sea_speed_x" (trigger_vec.cpp loader);
-extern float g_map_sea_speed_x; // 0xa18148
-// game_variables.txt key "map_sea_speed_y" (trigger_vec.cpp loader);
-extern float g_map_sea_speed_y; // 0xa1814c
-// game_variables.txt key "map_river_speed_x" (trigger_vec.cpp loader);
-extern float g_map_river_speed_x; // 0xa18154
-// game_variables.txt key "map_river_speed_y" (trigger_vec.cpp loader);
-extern float g_map_river_speed_y; // 0xa18158
-// game_variables.txt key "show_faction_color" (trigger_vec.cpp loader);
-extern int g_show_faction_color; // 0xa181b0
-// game_variables.txt key "show_party_ids_instead_of_names" (trigger_vec.cpp loader);
-extern unsigned char g_show_party_ids_instead_of_names; // 0xa181b8
 // The script engine's trigger result: set_trigger_result (0x4ac3f2) stores one 64-bit value, the event dispatch (GameData::emit_event / sl_query)
 // reads and clears it as two dwords.
 union TriggerResult { __int64 value; struct { int store0; int store1; }; };

@@ -113,5 +113,6 @@ struct PartyTemplate {                      // 0xb0 bytes
     __declspec(noinline) void read(stream_base* s);        // 0x51e410
     tstring translated();                   // 0x4c6080
 };
+extern PartyTemplate* g_party_templates;    // 0x5e29f8 the party-template table (g_party_template_count rows of 0xb0 bytes; allocated by the module loader, inventory_panel/module_files.cpp)
 
 #endif // MB_GAME_RECS_H

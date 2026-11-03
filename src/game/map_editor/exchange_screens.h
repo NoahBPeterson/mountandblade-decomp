@@ -31,6 +31,7 @@
 
 #include "../party_x.h"                   // PartyX : Party: the one definition (map_editor and script)
 #include "../key_names.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 struct PartyMgrX : PartyMgr {};
 // the party-by-id getter 0x51ee50 (Scene::get(int), ret 4) and the other canonical classes the exchange screens call
@@ -107,11 +108,9 @@ inline GameDataX* gx() { return (GameDataX*)g_game; }
 inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
 
 // ---- small objects ----------------------------------------------------------------------------------------------------
-struct FrameFlags {};                                   // the framed command block at 0x5e291c: MapFlags
-struct MapFlags {
-    void commit(char* out);   // 0x513710 (ret 4)
-};
-extern FrameFlags g_map_flags;                          // 0x5e291c
+#include "../map_flags.h"                            // MapFlags, g_map_flags (0x5e291c): the one definition (defined in inventory_panel/mission_ctx.cpp)
+#include "../window_mgr.h"      // g_windows (0xa73980), slot_as<T>(i): the screens are its slots
+#include "../key_names.h"      // g_keyboard (0xa170c8)
 extern MsgLog g_gui;                             // 0x5d7080
 
 // the menu / mission controller object at 0xa73300 (the slices called it MissionUi, Screen and AuxObj)
@@ -127,6 +126,8 @@ struct MenuCtl {
     int f3c;                                // +0x3c
     char pad40[0x160 - 0x40];
     int f160;                               // +0x160
+    char pad164[0x2c4 - 0x164];
+    int f2c4;                               // +0x2c4 passage menu (set_passage_menu 0x4a55f3; 0 or less: no menu to close)
     // (setup 0x513f80, update_parties 0x513b40, build_hero_table 0x514890 are MissionCtx's)
     __declspec(noinline) void setup_entry(struct MenuEntry* e);  // 0x531600
     __declspec(noinline) int weight(unsigned flags);             // 0x5316f0
@@ -136,7 +137,7 @@ extern MenuCtl g_mission_ctx;                       // 0xa73300
 // one menu option (8 bytes, array at Menu+0x94)
 struct MenuEntry { int id; int value; };
 
-// the screens' option records (g_a739a0 ...): id +4, +0x10/+0x14 arguments, +0x18 the option to return to
+// the screens' option records (slots of g_windows ...): id +4, +0x10/+0x14 arguments, +0x18 the option to return to
 struct MenuItem {
     char pad0[4];
     int f4;                                 // +0x04
@@ -147,19 +148,7 @@ struct MenuItem {
 };
 
 // mission template tables (records at 0xa735d0, 0x20 bytes each)
-struct TplOpt {                             // 0x18 bytes
-    char pad0[0x10];
-    unsigned flags;                         // +0x10
-    int setup_arg;                          // +0x14
-};
-struct TplRec {
-    char pad0[0x10];
-    int f10;                                // +0x10
-    char pad14[4];
-    int count;                              // +0x18
-    TplOpt* list;                           // +0x1c
-};
-extern TplRec g_templates[];                // 0xa735d0
+#include "../mission_type.h"                    // mission_type g_mission_types (0xa735d0): the start options of the mission menus
 
 // ---- the mission start menus: vtables 0x595810 / 0x595858, same member layout -------------------------------------------
 struct MenuBase {
@@ -268,26 +257,9 @@ struct SourceScreen : ScreenBase {          // vtables 0x5961f0 / 0x596214: +0x3
 };
 
 // ---- globals -----------------------------------------------------------------------------------------------------------
-extern int g_a17144;                        // 0xa17144
-extern int g_a17544;                        // 0xa17544
 extern int g_a17188;                        // 0xa17188
-extern int g_a17588;                        // 0xa17588
-extern int g_a5a9fbc;                       // 0x5a9fbc
-extern int g_a735c4;                        // 0xa735c4
-extern int g_show_quest_notes;                        // 0xa181b4
-extern int g_a7333c;                        // 0xa7333c
-extern int* g_menu_data;                    // 0xa739c0
 extern char* g_menus;                   // 0x5e29b0 (GameMenu* in rgl/mesh2/gui_edit.h; the rows of 0x60 bytes are read raw here)
-extern float g_k59c48c;                     // 0x59c48c (weight ramp constant)
 extern float g_half;                        // 0x549d70 (0.5f)
-extern float g_033;                         // 0x54b894 (0.33f)
-extern MenuItem* g_a739a0;                  // 0xa739a0
-extern MenuItem* g_a739b0;                  // 0xa739b0
-extern MenuItem* g_a739b4;                  // 0xa739b4
-extern MenuItem* g_a739bc;                  // 0xa739bc
-extern MenuItem* g_a739e4;                  // 0xa739e4
-extern MenuItem* g_a739e8;                  // 0xa739e8
-extern MenuItem* g_a739ec;                  // 0xa739ec
 struct KeyDown {};                          // the key state object at 0xa73730: OriginPairs
 struct OriginPairs {
     bool clicked(int key);   // 0x48ac90 (ret 4)

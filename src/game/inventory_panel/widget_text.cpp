@@ -34,6 +34,7 @@ struct item50 {
 
 // Scratch argument the folded STL helpers take by value (the original's slots at -0x2c/-0x30/-0x34/-0x38/-0x3c are read-only).
 #include "../junk_tag.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // The folded STL helpers are cdecl functions of other modules whose definitions omit the trailing scratch arguments (item_modifier_array_dtor,
 // destroy_range, append_rows, uninit_fill take 2 / 2 / 4 / 4 parameters); the original pushes them anyway (the caller pops), so every
@@ -237,7 +238,7 @@ static inline const char* name_of_3(int id)
     int v = ((Map10007*)mgr)->lookup(id);
     char* rec = (*(char***)(mgr + 0x138d0))[v >> 4] + (v & 0xf) * 0x5ac8;      // the page table is a pointer (0x50ce86)
     const tstring* t = (const tstring*)(rec + 0xc);
-    if (g_show_party_ids_instead_of_names) {
+    if (g_module_settings.show_party_ids_instead_of_names) {
         t = (const tstring*)(rec + 0x20);
     } else if (rec[0x1c] == 0) {
         const tstring* q = ((StrTable*)&orig::g_strtable)->find((const tstring*)(rec + 0x20));

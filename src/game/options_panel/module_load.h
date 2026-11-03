@@ -49,9 +49,7 @@ struct ground_spec {
 };
 
 // mission type record (0x20 bytes): detail in 0x4c2dd0.
-struct mission_type {
-    char pad0[0x20];
-};
+#include "../mission_type.h"            // mission_type (0xa735d0 table): a name, two ints and the owned options
 
 // The allocators of the three record vectors: construct (0x4d1140/0x4d1160/0x4d1180) copy-constructs one
 // element in place through the record's copy_from.

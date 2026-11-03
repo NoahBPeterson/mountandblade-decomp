@@ -18,7 +18,7 @@
 #include <string.h>
 #include <math.h>
 #include "../tstring.h"
-#include "../game_globals.h"      // canonical g_player_wounded_treshold
+#include "../game_globals.h"      // canonical g_module_settings.player_wounded_treshold
 #include "../str_table.h"
 #include "../../rgl/rgl_math.h"
 #include "../../include/vec.h"
@@ -32,6 +32,9 @@
 #include "../../include/rec1c8.h"
 
 #include "./raw_place.h"            // raw_place: constructing a canonical class in raw storage
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/game_recs.h"
+#include "../../include/level_global.h"      // g_level (0xa732b4)
 
 // raw field of a view class
 #define WD_FLD(T, off) (*(T*)((char*)this + (off)))
@@ -142,7 +145,6 @@ struct LevelRef {
     char pad0[0xb0];
     LevelObj* obj;                                              // +0xb0 (0x490030)
 };
-extern LevelRef* g_level;                                   // 0xa732b4 (terrain_b.h calls it g_level)
 struct FaceId {
     int m0;
     int m4;                                                     // +4 face index (-1: none)
@@ -151,8 +153,6 @@ struct FaceId {
 int __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
 int trigger_item_mesh(int context);                             // 0x4904a0 (context in EAX in the original: a static function with a register convention)
 
-extern char* g_party_templates;                                     // 0x5e29f8 (0xb0-byte party-template rows, +0x38 counter: 0x4915d0)
-extern float g_k15;                                             // 0x590da0 (15.0f)
 extern float g_k065;                                            // 0x590b6c (0.65f)
 
 struct GameW : GameData {
@@ -410,14 +410,13 @@ struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int
 struct SoundW {
     char pad0[0x40];
     rgl::vector4 listener;                                      // +0x40
-    char pad50[0x248 - 0x50];
+    int slot[(0x248 - 0x50) / 4];                                // +0x50 group index by sound id (include/sound_mgr.h); the quest sounds are slot[3..7] (0x5aa184..0x5aa194)
     std::vector<int> channels;                                  // +0x248 looping channels (allocator word, first at +0x24c)
     rgl::matrix& listener_frame() { return WD_FLD(rgl::matrix, 0x10); }   // +0x10 the listener frame (position at +0x40: 0x494310)
     void play_ui(int sound, unsigned flags);                    // 0x4942f0 (ret 8)
     void stop_all();                                            // 0x494310
 };
 extern SoundW g_sound_mgr;                                          // 0x5aa128
-extern int g_quest_sounds[];                                    // 0x5aa184 .. (completed 0x5aa184, succeeded 0x5aa188, concluded 0x5aa18c, failed 0x5aa190, cancelled 0x5aa194)
 
 #define g_msglog (*(MsgLog*)&g_gui)                          // the on-screen message log view of the UI root g_gui (0x5d7080)
 extern StrTable g_strtable;                                     // 0x5e2a18

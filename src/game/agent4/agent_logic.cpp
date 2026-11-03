@@ -4599,7 +4599,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             float y = A.y - missile->p40.y * missile->f5c;
             spd = (float)sqrt((A.z - z) * (A.z - z) + y * y + x * x);        // 0x4539d7: (dz^2 + y^2) + x^2
         }
-        *out_dmg = (float)pow((double)(spd / missile->f60), (double)g_missile_damage_speed_power) * missile->f64 * *scale;
+        *out_dmg = (float)pow((double)(spd / missile->f60), (double)g_module_settings.missile_damage_speed_power) * missile->f64 * *scale;
     } else {
         int st = hand ? mode2 : mode1;
         unsigned fl = (st == 0);
@@ -4616,7 +4616,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             *out_dmg = (*out_dmg + 5.0f) * (float)pow((double)len, (double)1.8f);
             vector4 q = ((const ::pos&)body->m).rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
             q.normalize();
-            *out_dmg = ((0.2f - (q.z * d.z + q.y * d.y + q.x * d.x)) * *out_dmg) * g_couched_lance_damage_multiplier * 0.2f;
+            *out_dmg = ((0.2f - (q.z * d.z + q.y * d.y + q.x * d.x)) * *out_dmg) * g_module_settings.couched_lance_damage_multiplier * 0.2f;
             if (g_ui_enabled) {
                 if (id == g_mission->player_id)
                     g_gui.add(*lk(tstring("ui_delivered_couched_lance_damage")), 0xffd03030);
@@ -4683,7 +4683,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                     t = 0.3f;
                 else if (t > 3.0f)
                     t = 3.0f;
-                float p = (float)pow((double)t, (double)g_melee_damage_speed_power);
+                float p = (float)pow((double)t, (double)g_module_settings.melee_damage_speed_power);
                 *out_dmg = p * *out_dmg;
                 float bonus = (p - 1.0f) * 100.0f;
                 int n = round_float(&bonus);
@@ -4985,14 +4985,14 @@ void Agent::reduce_blow(Blow* b)
     }
     float x, y;
     if (b->kind == 0) {
-        x = g_armor_soak_factor_against_cut[0] * armor_v;
-        armor_v = g_armor_reduction_factor_against_cut[0] * armor_v;
+        x = g_module_settings.armor_soak_factor[0] * armor_v;
+        armor_v = g_module_settings.armor_reduction_factor[0] * armor_v;
     } else if (b->kind == 1) {
-        x = g_armor_soak_factor_against_cut[1] * armor_v;
-        armor_v = g_armor_reduction_factor_against_cut[1] * armor_v;
+        x = g_module_settings.armor_soak_factor[1] * armor_v;
+        armor_v = g_module_settings.armor_reduction_factor[1] * armor_v;
     } else {
-        x = g_armor_soak_factor_against_cut[2] * armor_v;
-        armor_v = g_armor_reduction_factor_against_cut[2] * armor_v;
+        x = g_module_settings.armor_soak_factor[2] * armor_v;
+        armor_v = g_module_settings.armor_reduction_factor[2] * armor_v;
     }
     y = ((float)(rand() % 0x3dc9) * 3.4772715e-05f + 0.45f) * x;
     x = dmg - y;
@@ -5778,11 +5778,6 @@ extern int g_opt_shot_difficulty;                   // 0x5aa064
 extern int g_opt_kill_msgs;                         // 0x5aa068
 extern int g_opt_blood;                             // 0x5aa020
 extern int g_opt_hit_fx;                            // 0x5a9fc0
-extern float g_damage_interrupt_attack_treshold;                            // 0xa18178
-extern float g_blood_multiplier;                            // 0xa1811c
-extern float g_player_xp_multiplier;                            // 0xa1812c
-extern float g_hero_xp_multiplier;                            // 0xa18130
-extern float g_regulars_xp_multiplier;                            // 0xa18134
 extern int g_voice_default_a;                       // 0x8ed50a0
 extern int g_voice_default_b;                       // 0x8ed50a4
 struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c
@@ -6167,7 +6162,7 @@ void Agent::process_blow(int unused)
     } else {
         if (troop >= 0) {
             if (((dmg < 1.0f) && (last_blow().dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].f58[1] + 15) * 0.2f)) ||
-                dmg < g_damage_interrupt_attack_treshold) {
+                dmg < g_module_settings.damage_interrupt_attack_treshold) {
                 if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->f10 == 0)
                     stunned = true;
             }
@@ -6311,11 +6306,11 @@ void Agent::process_blow(int unused)
             if (chars[g_mission->agents.get(atk_rider)->troop].is_hero()) {
                 GameData* g = g_game;
                 if (atk_troop == g->player)
-                    g->add_experience(atk_troop, (int)((float)xp * g_player_xp_multiplier));
+                    g->add_experience(atk_troop, (int)((float)xp * g_module_settings.player_xp_multiplier));
                 else
-                    g->add_experience(atk_troop, (int)((float)xp * g_hero_xp_multiplier));
+                    g->add_experience(atk_troop, (int)((float)xp * g_module_settings.hero_xp_multiplier));
             } else {
-                g_mission->agents.get(atk_rider)->xp_pool += (int)((float)xp * g_regulars_xp_multiplier);
+                g_mission->agents.get(atk_rider)->xp_pool += (int)((float)xp * g_module_settings.regulars_xp_multiplier);
             }
         }
     }
@@ -6383,7 +6378,7 @@ void Agent::process_blow(int unused)
     if (dmg > 1.0f && !(g_mission->terrain.f158 & 1) && g_opt_hit_fx != 0) {
         float hi = 50.0f;
         float lo = 1.0f;
-        float k = ((dmg + 5.0f) * g_blood_multiplier) * 0.1f + 1.0f;
+        float k = ((dmg + 5.0f) * g_module_settings.blood_multiplier) * 0.1f + 1.0f;
         float ef = clamp(&k, &lo, &hi);
         matrix m2;
         m2.o = last_blow().pos;
@@ -7435,7 +7430,6 @@ struct PartV { char pad0[0xc]; float f0c; char pad10[0x2c - 0x10]; vector4 v2c; 
 struct AnimSlotCall { bool set(int id, unsigned prio); };   // 0x4378a0 out of line (agent_stats.cpp)
 struct Vec3;
 void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30 (the result is *out)
-extern float g_horse_charge_damage_multiplier;                              // 0xa1819c
 static __forceinline float elapsed_inl(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
 static __forceinline void mv_vadd_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
 struct MV3 { float x, y, z; MV3() {} MV3(float a, float b, float c) : x(a), y(b), z(c) {} };
@@ -7586,7 +7580,7 @@ void Agent::move_step(float dt)
                             vector4 nn(-contact.normal.x, -contact.normal.y, -contact.normal.z);
                             b.bone = 7;
                             int s2 = f8c.stat_214() + 5;
-                            float dmg = (((nn.z * v56a4.z + nn.y * v56a4.y + nn.x * v56a4.x) + 0.1f) * (float)s2 * g_horse_charge_damage_multiplier) * vel_xy.y * 0.015f;
+                            float dmg = (((nn.z * v56a4.z + nn.y * v56a4.y + nn.x * v56a4.x) + 0.1f) * (float)s2 * g_module_settings.horse_charge_damage_multiplier) * vel_xy.y * 0.015f;
                             if (dmg < 0.0f)
                                 dmg = 0.0f;
                             b.dmg_in = dmg;

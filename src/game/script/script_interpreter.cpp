@@ -57,6 +57,15 @@ extern MsgLog g_gui;                          // 0x5d7080 (g_gui.mouse: 0x5d7094
 TriggerResult g_trigger_result;   // 0xa70458
 
 
+#include "./script_globals.h"      // canonical declarations of the interpreter's globals (listed directly: the resolution audit reads only the source's own includes)
+
+// ---- data this module owns (docs/standalone_data.md) ----
+int g_cur_param;                                 // 0x5e2590 (.bss)
+int g_lineno;                                    // 0x5e2598 (.bss) line of the statement being run
+int g_script_error;                              // 0x5e259c (.bss) set by report(); copied to *error at the end of execute
+int g_cur_opcode;                                // 0x5e25a0 (.bss) opcode word of the statement being run
+int g_or_latch;                                  // 0x5e25a4 (.bss) this_or_next chain already satisfied
+
 // ==== by-reference helpers with their bodies in this object ================================================
 // The original's interpreter sees these bodies (header inlines its inliner left out of line in the 70 KB execute()):
 // a temporary or local whose address is passed to a callee cl can see is known not to escape, so it shares the
@@ -1903,7 +1912,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_passage_menu:
         if (check_menu((int)params[0]))
-            g_passage_menu = (int)params[0];
+            g_mission_ctx.passage_menu = (int)params[0];
         break;
     case op::end_current_battle:
         g_battle_flags |= 1;
@@ -3858,7 +3867,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::jump_to_menu:
         if (check_menu((int)params[0])) {
             game()->current_menu = (int)params[0];
-            g_passage_menu = (int)params[0];
+            g_mission_ctx.passage_menu = (int)params[0];
             g_menu_b = (int)params[0];
             game()->next_window = 0x12;
         }

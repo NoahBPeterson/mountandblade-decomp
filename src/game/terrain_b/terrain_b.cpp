@@ -46,7 +46,7 @@ struct render_cache {
 #include "../../include/timer.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
-#include "../game_globals.h"      // canonical g_player_wounded_treshold / g_hero_wounded_treshold (listed directly: the audit reads only the source's own includes)
+#include "../game_globals.h"      // canonical g_module_settings.player_wounded_treshold / g_module_settings.hero_wounded_treshold (listed directly: the audit reads only the source's own includes)
 #include "../../include/phys_set.h"
 #include "../../include/height_field.h"
 #include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -855,7 +855,7 @@ void GameData::blend(float* out, float x, float y)
         // cl treats y as dead after the loop and reused its home (for t, a spill, even a pointer to y), so p[1]
         // read garbage and ours faulted where the original returned. A real pair gives the callee the same x, y.
         float p[2] = { x, y };
-        ground_height(g_level, p, &t);
+        ground_height((CellGrid*)g_level, p, &t);
     }
     out[0] = r0 - t * 10.0f;
     out[1] = r1;
@@ -1595,8 +1595,8 @@ void __stdcall reset_spawned(int party_id)
 inline bool agent_low_inl(int idx)
 {
     if (idx == g_game->player)
-        return g_game->troops[idx].hp < g_player_wounded_treshold;
-    return g_game->troops[idx].hp < g_hero_wounded_treshold;
+        return g_game->troops[idx].hp < g_module_settings.player_wounded_treshold;
+    return g_game->troops[idx].hp < g_module_settings.hero_wounded_treshold;
 }
 inline Party* get_party(int id)
 {

@@ -146,7 +146,7 @@ bool mb_file_exists(const char* path);           // 0x415120
 // 0x4b9b90 and passes the same register (edi) to 0x4bee10 / 0x4bf170 / 0x4c6f90 / 0x4b9790. Core, OptionsDlg and
 // MapDialog all keep the dialog window at +0x380 (Core::options_hwnd, OptionsDlg::hwnd, MapDialog::hwnd); the code at
 // 0x4b9790 / 0x4c6f90 serves the dialog through those views, so the calls go through the canonical classes.
-// The launcher's option block is the Config at 0x5aa0a8 (+4 = 0x5aa0ac, the first combo's selection).
+// The launcher's option block is g_launcher_cfg, the Config at 0x5aa0a8 (+4 = texture_detail, the first combo's selection).
 // rgl_config::save (0x415fb0): src/rgl/resource_manager.h declares it, but that header's g_log clashes with config.h's
 // (strat/gui_manager.h), so the one-member class is repeated verbatim.
 struct rgl_config { void save(FILE* f); };

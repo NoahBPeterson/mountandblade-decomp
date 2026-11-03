@@ -22,6 +22,7 @@
 #include "../../rgl/mesh.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../key_names.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr
@@ -29,7 +30,7 @@
 #undef g_dlg
 #define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
 #undef g_513710
-#define g_513710    (*(Mgr513710_s25160*)&orig::g_map_flags)
+#define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #undef g_big
 #define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
 // agent record i of the mission (pages of 16, 0x5928 bytes each)
@@ -147,7 +148,7 @@ done:
 
     if (v == 0x10)
     {
-        char* t = *(char**)&orig::g_wE8;
+        char* t = *(char**)(g_windows + 0x68);
         *(int*)(t + 0x18) = 0x10;
         g_dlg.open(0x1a);
         return;
@@ -190,7 +191,7 @@ done:
 
     if (v == 5 || v == 7 || v == 6 || v == 9 || v == 0xa)
     {
-        char* t = *(char**)&orig::g_wB0;
+        char* t = *(char**)(g_windows + 0x30);
         *(int*)(t + 0x18) = 0x10;
         if (v == 5 || v == 6 || v == 7)
         {
@@ -232,7 +233,7 @@ done:
 
     if (v == 0xb || v == 0xc)
     {
-        char* t = *(char**)&orig::g_wBC;
+        char* t = *(char**)(g_windows + 0x3c);
         *(int*)(t + 0x18) = 0x10;
         *(int*)(t + 0x14) = g_conversation_troop;
         *(int*)(t + 4) = (v != 0xb) + 1;
@@ -452,7 +453,7 @@ int find_listener_agent()
 #undef g_w_a739c0_s261e0
 #define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
 #undef g_flags_s261e0
-#define g_flags_s261e0 (*(Flags5e291c_s261e0*)g_map_flags)
+#define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
 #undef g_a73300_s261e0
 #define g_a73300_s261e0 (*(Obj73300_s261e0*)g_mission_ctx)
 #undef g_deque_s261e0
@@ -490,7 +491,7 @@ void Screen_s261e0::tick(float dt)
         Mission_s261e0* m = g_mission_s261e0;
         if (m->f6810 > 0.0f) {
             __int64 d = g_ticks[m->f6800] - *(__int64*)((char*)m + 0x6808);
-            float r = (float)d * g_f54a6d0;
+            float r = (float)d * 1e-5f;
             r = r / m->f6810;      // 0x52630b..0x526311: fmul then fdiv (the fused expression compiles to fdiv then fmul)
             if (r >= 1.0f) {
                 *(int*)&m->f67f4 = *(int*)&m->f67f8;
@@ -730,10 +731,10 @@ void Screen_s261e0::tick(float dt)
     // ---- region-change / texture timers ------------------------------------------------------------
     {
         __int64 d = g_ticks[f2a8] - f2b0;
-        if ((float)d * g_f54a6d0 > g_f590b38 && g_mission_s261e0->local_id >= 0) {
+        if ((float)d * 1e-5f > g_f590b38 && g_mission_s261e0->local_id >= 0) {
             f29c = 0;
             __int64 d2 = g_ticks[f2b8] - f2c0;
-            if ((float)d2 * g_f54a6d0 > 0.1f) {
+            if ((float)d2 * 1e-5f > 0.1f) {
                 f_529ec0();
                 f2c0 = g_ticks[f2b8];
             }
@@ -888,7 +889,7 @@ void Screen_s261e0::tick(float dt)
     if (g_presentation != 0) {
         ((Src_s261e0*)((char*)this + 0x30))->pick((int*)&val14);
         __int64 d = g_ticks[f48] - f50;
-        if ((float)d * g_f54a6d0 > f58) {
+        if ((float)d * 1e-5f > f58) {
             g_presentation = 0;
             if (f34 != 0)
                 operator delete(f34);
@@ -955,7 +956,7 @@ void Screen_s261e0::tick(float dt)
         }
 
         if (any_pressed_s261e0(g_keys_73c0, 2) && g_game_s261e0->b18 == 0) {
-            if (g_show_quest_notes == 0) {
+            if (g_module_settings.show_quest_notes == 0) {
                 g_w_a739b4_s261e0->f18 = 0xe;
                 g_w_a739b4_s261e0->f4 = 0;
                 g_main_menu_s261e0.set_state(0xd);
@@ -1015,7 +1016,7 @@ void Screen_s261e0::tick(float dt)
         if (g_game_s261e0->f13af4 < 0)
             goto after;
         g_a73300_s261e0.f_5295a0();
-        g_a7333c |= 8;
+        g_a73300_s261e0.f3c |= 8;
         g_flags_s261e0.commit((char*)&flag13);
         goto unlock;
     }

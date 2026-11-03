@@ -4,6 +4,7 @@
 #include "../../include/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // a skill's "name: description" title; the separator and the partial sum die before the caller goes on, as in the
 // original (both destroyed straight after the second operator+)
@@ -35,11 +36,11 @@ void CharSheet::update_detail()
         int id = f_228[row];
         SkillRec* sk = &g_skill_tbl[id];
         tstring s = skill_row_title(sk);
-        const char* anchor = 0;
+        int anchor = 0;
         if (id == 2)
-            anchor = g_skill_prisoner_management_bonus;
+            anchor = g_module_settings.skill_prisoner_management_bonus;
         else if (id == 1)
-            anchor = g_skill_leadership_bonus;
+            anchor = g_module_settings.skill_leadership_bonus;
         mb_snprintf(title, 0x400, s.c_str(), anchor);
         {
             tstring tt(title);

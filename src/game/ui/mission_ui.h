@@ -17,7 +17,6 @@
 #include "./item_ref.h"
 #include "../../rgl/mesh.h"
 
-extern float g_tick_scale;                  // 0x54a6d0 1e-5f (the tick table's scale; loaded with fmul from the image)
 
 struct MissionUi {
     // vtable 0x591c80, 49 slots. Names where a caller shows the signature; the rest are placeholders. Every slot is

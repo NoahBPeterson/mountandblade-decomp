@@ -1,5 +1,6 @@
 #include "../../include/image_addrs.h"
 #include "./cam_view.h"
+#include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -216,7 +217,7 @@ void CamView::update_model(float dt)
         if (state == 1) {
             state = -1;
             *(int*)(g_game + 0x13aec) = 1;
-            *(int*)(*(char**)&orig::g_wDC + 0x18) = 7;
+            *(int*)((char*)slot_as<char>(23) + 0x18) = 7;
             ch = 0x17;
         } else {
             ch = choice;

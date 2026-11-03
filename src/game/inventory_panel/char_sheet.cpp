@@ -33,6 +33,7 @@ extern "C" int _fltused = 0;
 #include "../tstring.h"
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- widgets ------------------------------------------------------------------------------------------
 // Slot offsets used here: +0x58 set_rect(vector2*), +0x64 set_scale(vector2*),
@@ -173,6 +174,7 @@ static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstri
 #include "../ini_file.h"
 
 extern int g_game_mode;                         // 0x5a9fb0
+#include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp_one_handed (canonical, defined in triggers/trigger_vec.cpp)
 extern char g_skill_tbl[];                    // 0x8ee3100 (records of 0x44 bytes)
 
 // the two mode/tutorial objects touched at the end

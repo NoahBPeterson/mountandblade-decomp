@@ -80,14 +80,12 @@ struct Cfg30 {                                      // the object at game+0x30
 // ---- globals and callees of other translation units ----------------------------------------------------------------
 extern float    g_step;                 // 0x5a9c20  frame step (seconds)
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
-extern int      g_disable_food_slot;             // 0xa181a8  0: allow the "loading" clock message
 
 extern int g_use_shaders;                                   // 0x5e28fc  0 = linear colour path
 extern int g_page_rows;                              // 0xa73298
 extern int g_page_cols;                              // 0xa73294
 extern char g_map_pages[];                                // 0xa73094  host grid (array of cell pointers)
-extern float g_hero_wounded_treshold;                     // 0xa18138
-extern float g_player_wounded_treshold;                // 0xa1813c
+#include "../game_globals.h"      // g_module_settings.disable_food_slot, g_module_settings.player_wounded_treshold (canonical)
 extern MsgLog g_msglog;                                 // 0x5d7080
 void set_clock_step(int* clock, float step);            // 0x461420
 bool is_daytime();                                          // 0x435700 (true in the 4..20 h window; game/agent/agent.cpp)
@@ -129,14 +127,14 @@ void GameG::tick(float dt)
 
     if (f13aa0 || f13ad0 > 0.0f) {
         int n = f13adc;
-        float v = (n ? (float)n : 10.0f) * g_time_multiplier * dt;
+        float v = (n ? (float)n : 10.0f) * g_module_settings.time_multiplier * dt;
         flags = 0x10001;
         speed = v;
         f13ad0 -= v;
     } else if (f13aa4 == 0) {
         speed = 0.0f;
     } else if (f13aa4 == 2) {
-        float v = g_time_multiplier * dt;
+        float v = g_module_settings.time_multiplier * dt;
         speed = v;
         if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
             speed = v * 10.0f;
@@ -149,7 +147,7 @@ void GameG::tick(float dt)
         if (d == 0.0f)
             speed = 0.0f;
         else
-            speed = g_time_multiplier * dt;
+            speed = g_module_settings.time_multiplier * dt;
     }
 
     static const int map_clock = 1;                 // 0x5937b4 (the map clock's index in g_ticks)
@@ -160,7 +158,7 @@ void GameG::tick(float dt)
 
     int target = -1;
 
-    if (g_disable_food_slot == 0 &&
+    if (g_module_settings.disable_food_slot == 0 &&
         ((Troop*)((char*)troops + player * 0x508))->equip[9].item == -1) {
         float d = (g_ticks[msg_timer.clock] - msg_timer.t) * 1e-5f;
         if (d > 1.0f) {
@@ -228,7 +226,7 @@ void GameG::tick(float dt)
         }
     }
 
-    g_map_scene->step(g_step);
+    ((World*)g_level)->step(g_step);
 
     if (g_cfg.cheat_mode && g_keyboard.down[0x14] && !g_keyboard.prev[0x14] && g_keyboard.down[0x1d])
         f95 = !f95;
@@ -264,20 +262,20 @@ void GameG::update_markers()
         g_mat_vec[0].at<Marker>(i)->f208 = g_mat_vec[0].at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_mat_vec[2].count(); i++) {
-        g_mat_vec[2].at<Marker>(i)->f1f4 += g_step * g_map_sea_speed_x * 3.0f;
-        g_mat_vec[2].at<Marker>(i)->f1f8 += g_step * g_map_sea_speed_y * 3.0f;
+        g_mat_vec[2].at<Marker>(i)->f1f4 += g_step * g_module_settings.map_sea_speed_x * 3.0f;
+        g_mat_vec[2].at<Marker>(i)->f1f8 += g_step * g_module_settings.map_sea_speed_y * 3.0f;
         g_mat_vec[2].at<Marker>(i)->f204 = g_mat_vec[2].at<Marker>(i)->f1f4;
         g_mat_vec[2].at<Marker>(i)->f208 = g_mat_vec[2].at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_mat_vec[3].count(); i++) {
-        g_mat_vec[3].at<Marker>(i)->f1f4 -= g_step * g_map_sea_speed_x * 2.0f;
-        g_mat_vec[3].at<Marker>(i)->f1f8 -= g_step * g_map_sea_speed_y * 2.0f;
+        g_mat_vec[3].at<Marker>(i)->f1f4 -= g_step * g_module_settings.map_sea_speed_x * 2.0f;
+        g_mat_vec[3].at<Marker>(i)->f1f8 -= g_step * g_module_settings.map_sea_speed_y * 2.0f;
         g_mat_vec[3].at<Marker>(i)->f204 = g_mat_vec[3].at<Marker>(i)->f1f4;
         g_mat_vec[3].at<Marker>(i)->f208 = g_mat_vec[3].at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_mat_vec[1].count(); i++) {
-        g_mat_vec[1].at<Marker>(i)->f1f4 += g_step * g_map_river_speed_x;
-        g_mat_vec[1].at<Marker>(i)->f1f8 += g_step * g_map_river_speed_y;
+        g_mat_vec[1].at<Marker>(i)->f1f4 += g_step * g_module_settings.map_river_speed_x;
+        g_mat_vec[1].at<Marker>(i)->f1f8 += g_step * g_module_settings.map_river_speed_y;
         g_mat_vec[1].at<Marker>(i)->f204 = g_mat_vec[1].at<Marker>(i)->f1f4;
         g_mat_vec[1].at<Marker>(i)->f208 = g_mat_vec[1].at<Marker>(i)->f1f8;
     }
@@ -327,14 +325,14 @@ void GameG::update_colors()
                             (float)pow(color_base.y, GAMMA),
                             (float)pow(color_base.z, GAMMA));
         target_obj->v.w = 1.0f;                      // the original copies the sun's w lane here
-        g_map_scene->color = rgl::vector4((float)pow(color_sky.x, GAMMA),
+        ((World*)g_level)->color = rgl::vector4((float)pow(color_sky.x, GAMMA),
                                  (float)pow(color_sky.y, GAMMA),
                                  (float)pow(color_sky.z, GAMMA));
     } else {
         target_obj->v = color_base;
-        g_map_scene->color = color_sky;
+        ((World*)g_level)->color = color_sky;
     }
-    g_map_scene->color.w = 1.0f;                         // +0x74 is the scene alpha
+    ((World*)g_level)->color.w = 1.0f;                         // +0x74 is the scene alpha
 }
 
 // @ 0x5176e0
@@ -719,7 +717,7 @@ void GameG::track_parties(float dt)
 {
     PartyV4 pos = player_party()->pos;
     int skill = player_party()->skill_level(0x10);
-    float radius = ((float)skill * 0.125f + 1.0f) * g_track_spotting;
+    float radius = ((float)skill * 0.125f + 1.0f) * g_module_settings.track_spotting;
     if (!is_daytime())
         radius *= 0.3f;
     float threshold = radius * radius;
@@ -869,7 +867,7 @@ void GameG::train_troops()
             continue;
         if (!(troops[s.troop].flags30 & 0x10))
             continue;
-        if (s.troop == player ? troops[s.troop].hp < g_player_wounded_treshold : troops[s.troop].hp < g_hero_wounded_treshold)
+        if (s.troop == player ? troops[s.troop].hp < g_module_settings.player_wounded_treshold : troops[s.troop].hp < g_module_settings.hero_wounded_treshold)
             continue;
         int lvl = skill_level(s.troop, 0x11);
         if (lvl > 10)
@@ -889,7 +887,7 @@ void GameG::train_troops()
             if (troops[q.troop].level >= troops[s.troop].level)
                 continue;
             if (troops[q.troop].flags30 & 0x10) {
-                if (q.troop == player ? troops[q.troop].hp < g_player_wounded_treshold : troops[q.troop].hp < g_hero_wounded_treshold)
+                if (q.troop == player ? troops[q.troop].hp < g_module_settings.player_wounded_treshold : troops[q.troop].hp < g_module_settings.hero_wounded_treshold)
                     continue;
                 gain[j] += cost;
                 total += cost;

@@ -30,11 +30,7 @@ using rgl::vector4;
 // ---- engine globals (the input state words of the keyboard object; the editor's modifier / action keys) --------------
 extern int g_a17458;                    // 0xa17458
 extern int g_a1714c;                    // 0xa1714c
-extern int g_a1754c;                    // 0xa1754c
-extern int g_a17420;                    // 0xa17420  delete key
-extern int g_a17820;                    // 0xa17820
 extern int g_a1712c;                    // 0xa1712c
-extern int g_a1752c;                    // 0xa1752c
 extern HWND g_editor_hwnd;              // 0x8ee3d30
 
 // pos3: a frame with the engine's "advance along forward" helper (matrix::move_forward, 0x531380). The multiplication
@@ -54,6 +50,7 @@ inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->m1b4; }
 
 // ---- Mission: the editor's view (0x5305b0) ---------------------------------------------------------------------------
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
+#include "../key_names.h"      // g_keyboard (0xa170c8)
 
 struct MapMission : Mission {
     rgl::entity* cursor() { return (rgl::entity*)f65d0; }       // +0x65d0 the selection cursor object

@@ -19,6 +19,10 @@
 #include "../../include/mat4.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
+// ---- data this module owns (docs/standalone_data.md) ----
+char g_error_flag;                               // 0x5d7070 (.bss) set by mb_error before the message box
+int g_gui_counter;                               // 0x5d7074 (.bss) bumped by bump_counter
+
 // @ 0x42cb70
 void bump_counter() { g_gui_counter++; }
 

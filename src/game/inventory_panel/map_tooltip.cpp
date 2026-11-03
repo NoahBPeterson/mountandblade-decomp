@@ -43,9 +43,10 @@ struct PartyCellRec {                                        // 0xb0 bytes at 0x
     int f2c;                                            // +0x2c
     char pad30[0xb0 - 0x30];
 };
-extern PartyCellRec* g_party_templates;                             // 0x5e29f8
 
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/game_recs.h"
 
 
 // ---- the two points the distance test reads -----------------------------------------------------------
@@ -203,9 +204,9 @@ int __stdcall draw_party_line(int index)
                         return n / 7;
                 }
                 {
-                    PartyCellRec* r = &g_party_templates[n];
+                    PartyCellRec* r = (PartyCellRec*)&g_party_templates[n];
                     unsigned color;
-                    if (g_show_faction_color != 0)
+                    if (g_module_settings.show_faction_color != 0)
                         color = *(unsigned*)&g_game->rel[r->f2c * 0xc0 + 0xa];
                     else
                         color = g_game->color_of(g_game->rel[r->f2c * 0xc0 + 0xb], 1);   // 0x4b1930

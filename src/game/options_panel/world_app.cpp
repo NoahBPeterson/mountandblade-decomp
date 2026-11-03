@@ -35,13 +35,13 @@ inline void* operator new(size_t, void* p, raw_place) { return p; }
 inline void operator delete(void*, void*, raw_place) {}
 
 // ---- callees -------------------------------------------------------------------------------------------
-extern tstring g_module_name;                                      // 0x8ee3c38
 extern tstring g_module_path;                                        // 0x8ee3c28
 extern tstring g_module_path_copy;                                   // 0xa75e8c
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 // The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, E176 0xb0) and the std algorithms the original keeps out of line for them;
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
 #include "./elem_calls.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct scalar4 { int v; };                          // e68.h: the 4-byte element of the hash bucket vector
 namespace std {
 template<> E176* _Copy_opt<E176*, E176*>(E176*, E176*, E176*, _Nonscalar_ptr_iterator_tag);   // 0x4cd620
@@ -730,10 +730,10 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
             tstring v1;
             tstring v2;
-            if (orig::g_works_with_version_min > 0x3f3) {
+            if (g_module_settings.works_with_version_min > 0x3f3) {
                 MessageBoxA(hwnd, UI("ui_module_newer_than_application")->c_str(), 0, 0x30);
             }
-            else if (orig::g_works_with_version_max < 0x3f3) {
+            else if (g_module_settings.works_with_version_max < 0x3f3) {
                 MessageBoxA(hwnd, UI("ui_module_older_than_application")->c_str(), 0, 0x40);
             }
 

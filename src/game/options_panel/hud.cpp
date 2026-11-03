@@ -307,9 +307,9 @@ void MissionSource::pick(int* arg)
     {
         __int64 now = *(__int64*)(g_ticks_ + slot * 2);
         __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
-        g_spawn_lo = (__int64)(int)((double)d * 1000.0f * g_tick_scale);
+        g_spawn_lo = (__int64)(int)((double)d * 1000.0f * 1e-5f);
         play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
-        t = (float)(fmod((double)*(__int64*)g_ticks_ * g_tick_scale, 1.0) * 40.0f
+        t = (float)(fmod((double)*(__int64*)g_ticks_ * 1e-5f, 1.0) * 40.0f
                     + 100.0f);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
     }
     if (g_mission_clock) {

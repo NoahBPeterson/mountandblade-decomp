@@ -71,12 +71,11 @@ void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
 extern char* g_save_prefix;                                     // 0x8ee3c3c (prefix string pointer)
 extern char* g_game;                                            // 0x5e2930
-extern int g_a17420;                                            // 0xa17420
-extern int g_a17820;                                            // 0xa17820
 extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
 #include "../main_menu.h"
+#include "../key_names.h"      // g_keyboard (0xa170c8)
 #define g_main_menu (*(main_menu*)g_main_menu_obj)
 // The menu record's tstrings/fields live on the object g_main_menu.rec points at, NOT on the screen manager itself:
 // the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
@@ -160,7 +159,7 @@ void SavePanel::update(int)
     // remaining case is the save/remove path. Ours had that second test as an OR of the positive bit, which sent
     // the ordinary save/load click into the confirmation (equiv.py reported FAIL until this was ANDed).
     if (panel->changed(0x10000) ||
-        (g_a17420 != 0 && g_a17820 == 0 && ((*(unsigned char*)((char*)panel + 0x104) & 2) == 0)))
+        (g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0 && ((*(unsigned char*)((char*)panel + 0x104) & 2) == 0)))
         goto confirm_delete;
     {
         // +0x21c is the dialog's answer slot (the confirm sets it to -1 before opening the box). The original

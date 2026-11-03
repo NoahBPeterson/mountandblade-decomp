@@ -30,6 +30,7 @@
 #include "../font.h"
 #include "../config/ui_widgets_c.h"
 #include "../../include/game_data.h"
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // 0x43a1e0 is StrTable::lookup (agent2/agent_stats.cpp; the table g_strtable 0x5e2a18 seen by mesh2_common.h as LangTables), which takes its key by reference:
 // only the member is declared, under the defining class
@@ -185,7 +186,6 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 // ---- 0x4daa10: the loading-screen object (a screen like the menus below: the overlay window at +0x2c, three child widgets) ----
 // (0x4da900 is gui_manager::rebuild, ../strat/gui_manager.h; this object only shares the offsets +0x568.. with it by accident of the slice)
 #include "../loading_screen.h"        // LoadingScreen: one definition (update 0x50f390, advance 0x50f440 are in inventory_panel)
-extern int g_num_hints;                        // 0xa18140 (number of "hint_N" strings; 0 = none)
 
 // ---- widgets: this module's call sites go through vt() (../config/widget_mgr.h): slot n of the widget vtable is dNN at +4n ----
 // The slots and the call sites that name them (offset: role: callers in this module):
@@ -356,10 +356,6 @@ struct DebriefMenu {
 
 // globals of the menus
 extern int g_music_situation;                      // 0xa73a10 (set to 0x400000)
-extern int g_enable_quick_battles;                  // 0xa181a4
-extern int g_main_menu_font_color_red;                     // 0xa181bc
-extern int g_main_menu_font_color_green;                   // 0xa181c0
-extern int g_main_menu_font_color_blue;                    // 0xa181c4
 extern int g_main_menu_kind;                    // 0xa75f34
 extern char* g_save_prefix;                     // 0x8ee3c3c (the c_str idiom falls back to its own address)
 extern BlockOwner* g_presentation;               // 0x5e299c

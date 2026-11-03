@@ -112,7 +112,6 @@ struct Timer {
 
 // ---- the module's string table heads (the 0x8ee3c3c slot read by 0x4ebc10) --------------------------
 extern char* g_save_prefix;             // 0x8ee3c3c (the capture-file prefix; null before init)
-extern int g_module_name;                   // 0x8ee3c38
 
 // 0x4babf0 is a file-local helper: cl's register convention for `static` functions hands it its out
 // pointer in ESI. Defining it here (body shape taken from 0x4babf0) makes the caller emit
@@ -222,7 +221,6 @@ extern GameMgr g_game;                  // 0x5e2930
 // ---- globals --------------------------------------------------------------------------------------------
 extern int g_screenshots_counter;       // 0xa70440
 
-extern int g_module_name;                   // 0x8ee3c38
 extern int g_5a9fb0;                    // 0x5a9fb0 (camera enabled)
 extern int g_a1741c;                    // 0xa1741c (screenshot requested)
 extern int g_a1781c;                    // 0xa1781c (screenshot already done)
@@ -254,7 +252,6 @@ struct DiObjectData {
 };
 
 extern float g_ticks[];                // 0x5e2948 (float pairs: x at [i*2], y at [i*2+1])
-extern float g_four_tenths;             // 0x54b3b8  0.4f
 
 extern float zero;                      // 0x549ca8  0.0f
 extern float g_one;                     // 0x549cdc  1.0f

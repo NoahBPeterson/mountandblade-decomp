@@ -40,26 +40,11 @@ struct resmgr {
 #include "../render_batch.h"
 
 // ---- the options dialog's persistent values (0x4bf170 reads them, 0x4bee10 writes them back) -------------------------
-extern int g_opt_5aa0b0;    // 0x5aa0b0  0x445
-extern int g_opt_5aa0b8;    // 0x5aa0b8  0x444
-extern int g_opt_5aa0c0;    // 0x5aa0c0  0x44c
-extern int g_opt_5aa0c4;    // 0x5aa0c4  0x44a
-extern int g_opt_5aa0cc;    // 0x5aa0cc  0x442
-extern int g_opt_5aa0d0;    // 0x5aa0d0  0x443 (inverted)
-extern int g_opt_5aa0d8;    // 0x5aa0d8  0x44d (inverted)
-extern int g_opt_5aa0dc;    // 0x5aa0dc  0x468
-extern int g_opt_5aa0e0;    // 0x5aa0e0  0x441
-extern int g_opt_5aa0e4;    // 0x5aa0e4  0x446
-extern int g_opt_5aa0e8;    // 0x5aa0e8  0x452
-extern int g_opt_5aa0f4;    // 0x5aa0f4  resolution width
-extern int g_opt_5aa0f8;    // 0x5aa0f8  resolution height
-extern int g_opt_5aa104;    // 0x5aa104  multisample type found by the probe (0x4bf170)
-extern int g_opt_5aa108;    // 0x5aa108  0x487
-extern int g_opt_5aa110;    // 0x5aa110  control 0x467 item data
 
 // ---- meta mission (global object at 0xa73300, 0x4be742: called as MetaMission::init; the original brackets it with an
 // 18-byte WinLicense marker pair at 0x4be730 / before 0x4be7c0) ---------------------------------------------------
 #include "../meta_mission.h"      // MetaMission (0xa73300): the one definition (triggers and party)
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- script-code table (0x4a ints, every second one named: 0x4be7c0, also called as a bare function by rgl/mesh2) ---
 struct code_table {
@@ -112,8 +97,6 @@ extern int  g_renderer_vsync;           // 0xa180e4
 #include "../../include/renderer.h"            // g_render 0xa17910
 struct options;
 extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h clashes with the log declarations here)
-extern tstring g_module_name;           // 0x8ee3c38 the selected module (load_game_variables)
-extern tstring g_module_info_name;      // 0xa180f8 module_name directive of module_info.txt
 extern render_batch g_batch;            // 0x5fe898
 extern ShadowMap g_shadow_map;          // 0xa70248 (w at +0x10 = 0xa70258, surf at +0xc = 0xa70254)
 extern ini_file g_module_info;          // 0xa18238 module_info.txt table (count at 0xa44238)
@@ -121,42 +104,6 @@ extern ini_file g_game_vars;            // 0xa44240 game_variables.txt table (re
 // g_resmgr_x: the view of g_resmgr (0x5d6fa0) declared in config.h
 extern int g_compatible_module_version;      // 0x5e29b8
 extern int g_module_version;                 // 0x5e29c0
-extern float g_seeing_range;                 // 0xa18114
-extern float g_blood_multiplier;             // 0xa1811c
-extern int g_skill_leadership_bonus;         // 0xa18120
-extern int g_skill_prisoner_management_bonus;// 0xa18124
-extern int g_base_companion_limit;           // 0xa18128
-extern float g_player_xp_multiplier;         // 0xa1812c
-extern float g_hero_xp_multiplier;           // 0xa18130
-extern float g_regulars_xp_multiplier;       // 0xa18134
-extern float g_hero_wounded_treshold;        // 0xa18138
-extern float g_player_wounded_treshold;      // 0xa1813c
-extern int g_num_hints;                      // 0xa18140
-extern float g_map_sea_direction;            // 0xa18144
-extern float g_map_river_direction;          // 0xa18150
-extern int g_map_tree_types;                 // 0xa1815c
-extern int g_map_snow_tree_types;            // 0xa18160
-extern int g_map_steppe_tree_types;          // 0xa18164
-extern int g_map_desert_tree_types;          // 0xa18168
-extern int g_starting_year;                  // 0xa1816c
-extern int g_starting_month;                 // 0xa18170
-extern int g_starting_day;                   // 0xa18174
-extern float g_damage_interrupt_attack_treshold;      // 0xa18178
-extern float g_armor_soak_factor_against_cut;         // 0xa1817c
-extern float g_armor_soak_factor_against_pierce;      // 0xa18180
-extern float g_armor_soak_factor_against_blunt;       // 0xa18184
-extern float g_armor_reduction_factor_against_cut;    // 0xa18188
-extern float g_armor_reduction_factor_against_pierce; // 0xa1818c
-extern float g_armor_reduction_factor_against_blunt;  // 0xa18190
-extern float g_missile_damage_speed_power;   // 0xa18194
-extern float g_melee_damage_speed_power;     // 0xa18198
-extern float g_horse_charge_damage_multiplier;   // 0xa1819c
-extern float g_couched_lance_damage_multiplier;  // 0xa181a0
-extern int g_main_menu_font_color_red;       // 0xa181bc
-extern int g_main_menu_font_color_green;     // 0xa181c0
-extern int g_main_menu_font_color_blue;      // 0xa181c4
-extern int g_works_with_version_min;         // 0xa181c8
-extern int g_works_with_version_max;         // 0xa181cc
 extern float g_map_min_x;                    // 0x5aa120
 extern float g_map_min_y;                    // 0x5aa124
 extern float g_map_max_x;                    // 0x5aa118

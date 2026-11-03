@@ -78,11 +78,10 @@ struct WorldCam {
 
 // ---- game objects -------------------------------------------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
+#include "../../include/level_global.h"      // g_level (0xa732b4)
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 // ---- globals ------------------------------------------------------------------------------------------
-extern WorldCam* g_level;                       // 0xa732b4
 extern int g_a1717c;                            // 0xa1717c
-extern int g_5a9fbc;                            // 0x5a9fbc
 extern int g_5a9fd8;                            // 0x5a9fd8  listener already set
 extern float g_map_min_x;                            // 0x5aa120  map min x (-50)
 extern float g_map_max_x;                            // 0x5aa118  map max x ( 50)
@@ -94,9 +93,7 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_549D74 (orig::g_ten)             // 10.0
 #define C_549D70 (orig::g_half)             // 0.5
 #define C_549CDC (orig::g_one)             // 1.0
-#define C_549CA8 (orig::g_zero)             // 0.0
 #define C_54A534 (orig::k_1_5708f)             // 1.5707964
-#define C_54A6D0 (orig::k_1em05f)             // 1e-05
 #define C_598690 (orig::k_105f)             // 105.0
 #define C_59868C (orig::k_235f)             // 235.0
 #define C_598688 (orig::k_m1em05f)             // -1e-05

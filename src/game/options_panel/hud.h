@@ -35,7 +35,6 @@ extern float g_char_scale;                          // 0x590d7c
 #include "../dialog_manager.h"   // canonical: g_script (0xa70440)
 extern __int64 g_spawn_lo;                          // 0xa70448
 extern __int64 g_spawn_hi;                          // 0xa70450
-extern float g_tick_scale;                          // 0x54a6d0 (1e-5f: fmul dword)
 extern int g_ticks_[2];                             // 0x5e2948 (the 64-bit tick clock)
 extern int g_mission_clock;                         // 0x5d8790 (mission time; 0 = no mission)
 
@@ -65,7 +64,7 @@ inline void play_family_sound(int family, int id)
 
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
 // +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.
-// UiD (ui/ui_widgets.h, whose g_tick_scale clashes with this header's): the progress bar (vtable 0x592140) that ValueSource views
+// UiD (ui/ui_widgets.h): the progress bar (vtable 0x592140) that ValueSource views
 // (+0x178 index, +0x17c step); the two members the sources call.
 struct UiD {
     float value();   // 0x48b930

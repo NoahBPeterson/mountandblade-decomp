@@ -29,14 +29,12 @@ struct terrain_obj;
 struct text_stream;
 
 namespace orig {
-extern const float g_zero;                 // 0x549ca8
 extern const float g_one;                  // 0x549cdc
 extern const float k_0_3f;                 // 0x549d68
 extern const float k_0_9f;                 // 0x549d6c
 extern const float g_half;                 // 0x549d70
 extern const float g_ten;                  // 0x549d74
 extern const float k_1_5708f;              // 0x54a534
-extern const float k_1em05f;               // 0x54a6d0
 extern const char g_rgl_name[];                        // 0x54b048
 extern const float k_0_39f;                // 0x54b3b0
 extern const float k_0_4f;                 // 0x54b3b8
@@ -102,7 +100,6 @@ extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern int g_mission_clock;                // 0x5d8790
 extern ptype* g_ptypes;                    // 0x5e28f8
 extern int g_use_shaders;                  // 0x5e28fc
-extern MapFlags g_map_flags;               // 0x5e291c
 extern Mission* g_mission;                 // 0x5e292c
 extern ItemKind* g_items;                  // 0x5e29d0
 extern int g_item_kind_count;              // 0x5e29d4
@@ -120,17 +117,11 @@ extern int g_a1751c;                       // 0xa1751c
 extern int g_a17854;                       // 0xa17854
 extern renderer g_render;                  // 0xa17910
 extern char g_use_hw_shadow;               // 0xa17f24
-extern int g_works_with_version_min;       // 0xa181c8
-extern int g_works_with_version_max;       // 0xa181cc
 extern ini_file g_module_info;             // 0xa18238
 extern ShadowMap g_shadow_map;             // 0xa70248
 extern MissionCtx g_mission_ctx;           // 0xa73300
 extern int g_a73304[];                          // 0xa73304
 extern main_menu g_main_menu_obj;              // 0xa73980
-extern void* g_wB0;                        // 0xa739b0
-extern void* g_wBC;                        // 0xa739bc
-extern void* g_wDC;                        // 0xa739dc
-extern void* g_wE8;                        // 0xa739e8
 extern TableauTbl g_tableaus;              // 0xa75f40
 extern AnimDefV g_anim_set;                // 0xa76628
 extern terrain_obj g_terrain;              // 0xa76630

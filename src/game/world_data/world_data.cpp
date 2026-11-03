@@ -33,6 +33,7 @@
 #include "./widget_mgr_w.h"
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 
 // ==== 0x490030: a random position around a point ===========================================================
@@ -63,7 +64,7 @@ void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
             FaceId* g = (FaceId*)find_at(&out->x);
             if (g != 0) {
                 gi = g->m4;
-                ok = ((RiderTable*)g_level->obj)->shares(first, gi) != 0;
+                ok = ((RiderTable*)((LevelRef*)g_level)->obj)->shares(first, gi) != 0;
             }
         }
     }
@@ -88,7 +89,7 @@ char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
         FaceId* f = (FaceId*)find_at(&out->x);
         if (f == 0)
             continue;
-        int kind = *(int*)(g_level->obj->kinds + f->m4 * 0x88 + 0x24);
+        int kind = *(int*)(((LevelRef*)g_level)->obj->kinds + f->m4 * 0x88 + 0x24);
         int low = kind & 7;
         if (any)
             ok = low == 0 || kind == 7;
@@ -528,9 +529,9 @@ void GameW::recruit(int id, int count, PartyW* dest)
                                     dest->add_members(troop, 1, 0, 1, 0);
                             }
                         } else {
-                            if (troops[troop].hp > g_player_wounded_treshold)
-                                troops[troop].hp = g_player_wounded_treshold;
-                            troops[troop].hp -= g_k15;
+                            if (troops[troop].hp > g_module_settings.player_wounded_treshold)
+                                troops[troop].hp = g_module_settings.player_wounded_treshold;
+                            troops[troop].hp -= 15.0f;
                             if (troops[troop].hp < 0.0f)
                                 troops[troop].hp = 0.0f;
                             if (dest != 0)
@@ -619,7 +620,7 @@ void GameW::remove_party(int id)
         p->fol_end() = 0;
     }
     if (p->owner >= 0)
-        *(int*)(g_party_templates + p->owner * 0xb0 + 0x38) += 1;
+        g_party_templates[p->owner].num_destroyed += 1;
     p->clear_map_flag();
 
     idx = ((Map10007*)(void*)m)->lookup(id);
@@ -1808,7 +1809,7 @@ void GameW::quest_done(int _idx)
                 tstring _txt(_buf);
                 g_msglog.push(_txt, 0xffd0f0c8);
             }
-            ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[0], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+            ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[3], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
         }
         if ((*(unsigned*)(_e + 0x50) >> 1 & 1) == 0)
             *(unsigned*)(_e + 0x64) |= 0x200;
@@ -1838,7 +1839,7 @@ void GameW::quest_succeeded(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xff90ff28);
     }
-    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[1], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[4], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1862,7 +1863,7 @@ void GameW::quest_failed(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[3], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[6], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1898,7 +1899,7 @@ void GameW::set_quest_concluded(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[2], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[5], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1922,7 +1923,7 @@ void GameW::set_quest_cancelled(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_quest_sounds[4], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[7], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
     WL_MARKER(13)
 }
 

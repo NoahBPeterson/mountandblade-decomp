@@ -221,7 +221,7 @@ void GuiScreen::process(int param)
                 if ((char)rec[0] < 0) {
                     ((gui_view*)(void*)this)->wheel_step(0x10);
                     cr = &this->click3;
-                    if (((const Timer*)cr)->elapsed() < g_four_tenths) {
+                    if (((const Timer*)cr)->elapsed() < 0.4f) {
                         ((gui_view*)(void*)this)->wheel_step(0x200);
                     }
                     else {
@@ -237,7 +237,7 @@ void GuiScreen::process(int param)
                 if ((char)rec[0] < 0) {
                     ((gui_view*)(void*)this)->wheel_step(0x40);
                     cr = &this->click2;
-                    if (((const Timer*)cr)->elapsed() < g_four_tenths) {
+                    if (((const Timer*)cr)->elapsed() < 0.4f) {
                         ((gui_view*)(void*)this)->wheel_step(0x400);
                     }
                     else {
@@ -253,7 +253,7 @@ void GuiScreen::process(int param)
                 if ((char)rec[0] < 0) {
                     ((gui_view*)(void*)this)->wheel_step(0x100);
                     cr = &this->click1;
-                    if (((const Timer*)cr)->elapsed() < g_four_tenths) {
+                    if (((const Timer*)cr)->elapsed() < 0.4f) {
                         ((gui_view*)(void*)this)->wheel_step(0x800);
                     }
                     else {

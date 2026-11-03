@@ -66,8 +66,7 @@ struct dev_index {
 
 extern gui_manager g_gui;                        // 0x5d7080
 #include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
-extern int g_windowed_setting;                   // 0xa17144
-extern int g_windowed_other;                     // 0xa17544
+#include "../../game/key_names.h"      // g_keyboard (0xa170c8)
 
 // the window manager (game/window_mgr.h, g_windows 0xa73980: 30 screen objects, then the request queue at +0x78) with the
 // apply step of this module; the screens are read as dev_item here

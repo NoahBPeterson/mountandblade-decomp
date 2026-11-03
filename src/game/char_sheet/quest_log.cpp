@@ -166,7 +166,7 @@ void __fastcall quest_window::build()
     refresh();
 
     // the quest list frame: 0x188 bytes, vtable 0x5924a0
-    float h = (float)count * g_54ab1c + g_591d54;
+    float h = (float)count * 0.04f + g_591d54;
     if (h < g_5987e4)     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
         h = 0.56f;
     widget* fr = (widget*)operator new(0x188);
@@ -210,7 +210,7 @@ void __fastcall quest_window::build()
         rows[i] = row;
         float rp[2];
         rp[0] = 0.01f;
-        rp[1] = h - (float)i * g_54ab1c;
+        rp[1] = h - (float)i * 0.04f;
         row->set_pos(rp);
         float rs[2];
         rs[0] = 0.3f;

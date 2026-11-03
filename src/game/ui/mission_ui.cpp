@@ -1210,7 +1210,7 @@ int GameData::sl_pick_chain(int leader, char lancer)
 // @ 0x48a150
 int GameData::template_count(int party, int cell, float)
 {
-    char* base = g_party_templates + party * 0xb0;
+    char* base = (char*)&g_party_templates[party];
     int roll = rand() % 0x3dc9;
     int lo = range_lo;
     int hi = range_hi;

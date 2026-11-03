@@ -245,7 +245,7 @@ L7dd:
 
 L885:
     // --- rebuild every per-mode table ----------------------------------------------------------
-    if (g_a17420 != 0 && g_a17820 == 0) {
+    if (g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0) {
         g_scene_s2cf60->mesh_s2cf60.remove_selected();
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;

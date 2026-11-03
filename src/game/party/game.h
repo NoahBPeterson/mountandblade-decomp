@@ -24,8 +24,6 @@
 // the second element of the clock table g_ticks (ui_common.h, 0x5e2948) as two dwords: the original reads and
 // writes the halves separately (0x51cfa0 copies lo then hi; 0x51dbd0 stores them from the loaded value)
 #include "../../include/fx.h"            // g_ticks 0x5e2948
-extern int g_tick1_hi;                      // 0x5e2954
-extern float g_tick_scale;                  // 0x54a6d0 1e-5f (0x51cc80: g_ticks[0] * scale)
 extern char g_new_game_done;                // 0xa73090 (0x51d2b0 returns at once when set; 0x51c720 step 6 sets it)
 
 inline tstring& troop_name(Troop* t) { return *(tstring*)t; }      // the name is the first member (0x51c720)
@@ -439,8 +437,7 @@ struct Game {
     void load_game_data(int extra_triggers);   // 0x5236f0 (ret 4: opens the Data\*.txt tables in turn)
 };
 extern Game* g_game;                        // 0x5e2930
-extern I64Vec g_list_a70480;                // 0xa70480 (read first by 0x51dbd0 after the clock)
-extern PartyTemplate* g_party_templates;    // 0x5e29f8 (0xb0-byte records)
+#include "../list8.h"                        // List8 : I64Vec, g_list_a70480 (0xa70480; read first by 0x51dbd0 after the clock)
 extern int g_party_template_count;             // 0x5e29fc
 extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes, up to 0x8ee3c60; the first dword of each is saved)
 
