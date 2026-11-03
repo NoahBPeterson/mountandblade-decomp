@@ -117,11 +117,10 @@ extern gui_mgr g_gui;                                   // 0x5d7080
 extern ini_file g_config;                               // 0xa44240
 extern "C" double atof(const char* s);                  // 0x537352
 
-#include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
+#include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
 
 #include "../animator.h"                              // Animator, g_anim
-extern int g_char_count;                                // 0x8ed4f88
 
 struct TextPart {
     void get_text(int row, int index, tstring* out);   // 0x4f5d90 (editor_ui.cpp; the animator's text table at 0x8ed4f60)

@@ -1,19 +1,16 @@
 #include "./facegen_misc.h"
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../game_globals.h"      // g_limit_hair_colors, g_module_name ... (canonical global declarations)
+#include "../../include/logger.h"      // Logger g_debug_log (0x5a9f30): its buf (+0x20 = 0x5a9f50) is the status text the save/load screen draws
 #include "../../include/msg_log.h"      // MsgLog::build_scene 0x4e6050 (listed directly: the resolution audit reads only the source's own includes)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_5e28c8;   // 0x5e28c8
-int g_dev_mode;   // 0x5a9fb0 developer/edit-mode flag (text resources .trf, text log, no terrain camera)
-Animator g_anim;   // 0x8ed4f60 the skin table / character builder (0x130 bytes: set, item, cur, variant, material, the skin vector at +0x18, count at +0x28, 63 weights, scale, time); the one object behind g_skins_begin 0x8ed4f7c, g_skin_count 0x8ed4f88
-int g_a16c58;   // 0xa16c58 frame counter of the save/load screen
-tstring g_5a9f50;   // 0x5a9f50 the ';'-separated status text of the save/load screen (buf 0x5a9f54, len 0x5a9f5c)
-int g_5a9fa0;   // 0x5a9fa0 show the header line
-int g_5a9fb8;   // 0x5a9fb8 show the status text
+Animator g_anim;   // 0x8ed4f60 the skin table / character builder (0x130 bytes: set, item, cur, variant, material, the skin vector at +0x18, count at +0x28, 63 weights, scale, time); the one object behind g_anim.skins 0x8ed4f7c, g_anim.char_count 0x8ed4f88
 
 
 // @ 0x4eb270
@@ -58,7 +55,7 @@ void Animator::randomise()
 // @ 0x4eb3c0
 void FaceGen::refresh()
 {
-    int n = g_skins_begin[skin].n_elems - 1;
+    int n = g_anim.skins[skin].n_elems - 1;
     for (int i = 0; i < n; i++)
         g_anim.weights[i] = deform_rows[i]->get_float();
     f360 = sl_age->get_float();
@@ -66,13 +63,13 @@ void FaceGen::refresh()
     ent->clear();
     int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int zero = 0;
-    g_anim.cur = clamp_index(&flags, &zero, &g_char_count);
+    g_anim.cur = clamp_index(&flags, &zero, &g_anim.char_count);
     g_anim.time = f364;
     g_anim.scale = f360;
     g_anim.material = f35c;
     g_anim.set = f350 - 1;
     g_anim.item = f354 - 1;
-    int r = f358 % g_skins_begin[g_anim.cur].div;
+    int r = f358 % g_anim.skins[g_anim.cur].div;
     g_anim.variant = r;
     g_anim.f10 = r;
     void *a, *b, *c;
@@ -203,7 +200,7 @@ int SaveLoadUi::run()
     g_msglog.build_scene();
     ((RenderPass*)&g_renderer)->render(0);   // 0x47e520
 
-    if (g_5a9fa0 != 0) {
+    if (g_cfg.show_framerate != 0) {
         void* w = *(void**)((char*)this + 0xf8);
         if (((PanelCall1i)(*(void***)w)[0xa4 / 4])(w) >= 0) {
             Viewport vp2;
@@ -215,7 +212,7 @@ int SaveLoadUi::run()
             CD3DFont* font = *(CD3DFont**)((char*)this + 0x348);
             font->DrawText(2.0f, 0.0f, 0xffffff00, (const char*)this + 0x2da, 0);
 
-            if (g_5a9fb8 != 0 || g_dev_mode != 0) {
+            if (g_cfg.debug_mode != 0 || g_cfg.enable_edit_mode != 0) {
                 Viewport vp3;
                 vp3.x = 0; vp3.y = 0;
                 vp3.w = g_screen_w; vp3.h = g_screen_h;
@@ -224,8 +221,8 @@ int SaveLoadUi::run()
 
                 tstring ts;
                 int y = 40;
-                for (int i = 0; i < g_5a9f50.len; ++i) {
-                    char ch = g_5a9f50.buf[i];
+                for (int i = 0; i < g_debug_log.buf.len; ++i) {
+                    char ch = g_debug_log.buf.buf[i];
                     if (ch == ';') {
                         char* s = ts.buf ? ts.buf : (char*)&ts.buf;
                         font->DrawText(2.0f, (float)y, 0xff64ff64, s, 0);
@@ -248,7 +245,7 @@ int SaveLoadUi::run()
         }
     }
 
-    g_5a9f50.assign("");
+    g_debug_log.buf.assign("");
     return 0;
 }
 
@@ -294,7 +291,7 @@ extern main_menu g_main_menu;                           // 0xa73980
 
 void __cdecl menu_variables_loaded(char flag)
 {
-    if (!flag && !g_dev_mode)
+    if (!flag && !g_cfg.enable_edit_mode)
         return;
     load_game_variables();   // 0x4c0520
     if (flag)

@@ -14,6 +14,8 @@
 //       map editor starts (0x52cf60, class Mesh | Elem). The map's boundary 0x5249f0 is not kept (see game_2.cpp).
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./mission_5.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../tstring.h"
@@ -24,10 +26,6 @@
 #include "../key_names.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../ui_globals.h"      // UI / core globals
-
-// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_skill_clamp;   // 0x8ee3ac4 upper clamp of the skill offset
-
 
 // ======================================================= slice s00525160: functions
 #undef g_mgr
@@ -148,7 +146,7 @@ done:
 
     if (v == 1)
         goto case1;
-    if (g_dev_mode != 0 && *(int*)&orig::g_a17110 != 0 && *(int*)&orig::g_a17510 == 0)
+    if (g_cfg.enable_edit_mode != 0 && *(int*)&orig::g_a17110 != 0 && *(int*)&orig::g_a17510 == 0)
         goto case1;
 
     if (v == 0x10)
@@ -464,7 +462,7 @@ int find_listener_agent()
 #undef g_deque_s261e0
 #define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 #undef g_clamp_max
-#define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
+#define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
 // @ 0x5261e0
 void Screen_s261e0::tick(float dt)
 {

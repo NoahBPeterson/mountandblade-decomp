@@ -1,4 +1,5 @@
 #include "./screen.h"
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -298,6 +299,6 @@ void __cdecl frame_hook(void)
 {
     if ((g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0xd2] && !g_keyboard.prev[0xd2])
         take_screenshot();
-    else if (g_dev_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_a1717c || g_keyboard.down[0x36]) && g_a17190 && !g_a17590)
+    else if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && (g_a1717c || g_keyboard.down[0x36]) && g_a17190 && !g_a17590)
         menu_variables_loaded(0);   // 0x4ebb80
 }

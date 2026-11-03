@@ -26,7 +26,7 @@ extern int g_world_time;                                // 0x5d8790
 extern float g_scroll;                                  // 0x590d7c
 extern char* g_game;                                    // 0x5e2930
 
-#include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
+#include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)
 
 #include "../scene_world.h"                              // World::step 0x427f40
 #include "../tstring.h"
@@ -113,7 +113,7 @@ struct CamView {
     void update_model(float dt);
 };
 
-#define SKIN_INT(off) (*(int*)((char*)g_skins_begin + g_anim.cur * 0x1f8 + (off)))
+#define SKIN_INT(off) (*(int*)((char*)g_anim.skins + g_anim.cur * 0x1f8 + (off)))
 #define g_dummy_mat_arr (g_anim.weights)
 
 #endif

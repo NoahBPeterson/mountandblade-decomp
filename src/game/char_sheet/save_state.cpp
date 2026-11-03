@@ -8,14 +8,11 @@
 extern char g_troop_extra[];                // 0x8ee3138 (42 entries of 0x44 bytes)
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
 
-// ---- data this module owns (docs/standalone_data.md) ----
-__int64 g_time1;   // 0x5e2950 the 64-bit clock counter
-
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)
 {
     WL_MARKER(12)
-    __int64 counter = g_time1;
+    __int64 counter = g_ticks[1];
     out->w_int8((int*)&counter);
     out->w_raw((char*)this + 4);
     out->w_raw((char*)this + 0xb4);

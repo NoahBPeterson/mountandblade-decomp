@@ -11,6 +11,7 @@
 //     renumber, link, pop_try, run_line, emit. The slices viewed these as `Interp`, `Mission` and `ScriptHolder`.
 #define MB_CAMERA_TU
 #include "../../include/image_addrs.h"
+#include "../animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <new>
 #include <string.h>
@@ -2119,8 +2120,6 @@ struct Group {                                                                  
     char pad18[0x30 - 0x18];
 };
 extern Group* g_anims;                                                           // 0xa76628
-extern int* g_skins_begin;                                                         // 0x8ed4f7c (vector<int>, entry ptr at +0x1e8)
-extern unsigned g_skin_count;                                                     // 0x8ed4f88
 
 // @ 0x49f060
 // Decide whether party `a` can be attached to `b`, and where the join point is. When the leader of `b` is not
@@ -2255,8 +2254,8 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         count = 1;
     } else {
         unsigned t = (unsigned)g_game->chars[party].flags & 0xf;
-        def->init((FxRes*)(t < (unsigned)g_skin_count
-                              ? *(void**)((char*)g_skins_begin + 0x1e8 + t * 0x1f8) : 0));
+        def->init((FxRes*)(t < (unsigned)g_anim.char_count
+                              ? *(void**)((char*)((int*)g_anim.chars) + 0x1e8 + t * 0x1f8) : 0));
         int level = g_game->chars[party].level;
         for (int i = 0; i < 10; i++)
             *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,

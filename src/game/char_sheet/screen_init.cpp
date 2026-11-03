@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./screen_init.h"
 #include "../gui_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -80,7 +81,7 @@ void Screen::init_screen()
         buttons->set_mesh(0, bar_mesh);
     }
     f48 = 0;
-    if (g_dev_mode) {
+    if (g_cfg.enable_edit_mode) {
         f48 = (int)make_short_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_terrain")), 0.002f, 0.006f, 0.03f);
     }
     f4c = (Widget*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);

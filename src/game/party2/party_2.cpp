@@ -13,6 +13,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding them
 #include "./party_2.h"
+#include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_module_settings.seeing_range
 #include "../terrain_b/terrain_b.h"
@@ -871,7 +872,7 @@ extern float g_k0_1;                                 // 0x54b8b0  0.1f
 extern float g_rand_k;                               // 0x54a6bc  1/15817
 struct options;
 extern options g_options;                   // 0x5aa008
-#define g_clamp_max g_skill_clamp               // outside the annotation range, so a literal cast
+#define g_clamp_max g_skill_tbl[36].cap          // 0x8ee3ac4
 
 // @ 0x4b2c00
 void Party::tick_stats()

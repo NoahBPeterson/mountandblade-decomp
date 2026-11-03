@@ -62,7 +62,7 @@ typedef rgl::strategic_entity Entity;
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 
 // ---- skin record table (0x8ed4f7c, 0x1f8-byte records) -------------------------------------------------
-#include "../../include/skin_set.h"              // SkinSet, g_skins_begin (shared with src/rgl/mesh2/gui_edit.h)
+#include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- face-gen window (ctor 0x4f49d0) --------------------------------------------------------------------
@@ -118,9 +118,7 @@ struct FaceGen {
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
 #include "../ui_globals.h"      // UI / core globals
 
-extern int g_x8ed4f64;                                  // 0x8ed4f64
-extern int g_x8ed4f74;                                  // 0x8ed4f74
-extern int g_char_count;                                // 0x8ed4f88
+extern int g_a16c58;                                    // 0xa16c58 frame counter of the save/load screen (inside the 0x5fe898 render batch)
 // (0x432510 is clamp_index, cs_common.h)
 
 extern const float g_590c54;                            // 0x590c54 = 7.0f

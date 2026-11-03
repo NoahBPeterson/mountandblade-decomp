@@ -19,6 +19,8 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
+#include "../animator.h"      // Animator g_anim (0x8ed4f60)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <stdlib.h>
 #include "./script_interpreter.h"
 #include "../../include/msg_log.h"          // MsgLog: the UI root view with the pointer position
@@ -1427,7 +1429,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             game()->message_log.append(tstring(num));
             game()->message_log.push_back('|');
             game()->message_log.append(text);
-            if (g_dev_mode) {
+            if (g_cfg.enable_edit_mode) {
                 text.push_back('\n');
                 ((stream_base*)g_log)->w_tstr(&text);
             }
@@ -1440,7 +1442,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 color = (int)params[1];
             tstring text = g_script.expand(g_strings.get_string((int)params[0], types[0]));
             g_msglog.add(text, color);
-            if (g_dev_mode) {
+            if (g_cfg.enable_edit_mode) {
                 text.push_back('\n');
                 ((stream_base*)g_log)->w_tstr(&text);
             }
@@ -1944,7 +1946,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- troops ------------------------------------------------------------------------------------------------
     case op::troop_set_type:
         if (check_troop((int)params[0])) {
-            troop((int)params[0])->set_flags_low(clamp_index((int)params[1], 0, g_skin_count));
+            troop((int)params[0])->set_flags_low(clamp_index((int)params[1], 0, g_anim.char_count));
         }
         break;
     case op::troop_get_type:

@@ -172,7 +172,7 @@ struct SpawnSetG {                      // the 0x58-byte per-set record at g_mis
     char pad54[4];
 };
 typedef char SpawnSetG_size_check[sizeof(SpawnSetG) == 0x58 ? 1 : -1];
-struct ItemKindT {                      // the item-kind table entry the spawner reads (g_skins_begin at 0x8ed4f7c, 0x1f8 bytes)
+struct ItemKindT {                      // the item-kind table entry the spawner reads (((ItemKindT*)g_anim.chars) at 0x8ed4f7c, 0x1f8 bytes)
     char pad0[0x1e8];
     int f1e8;                           // +0x1e8
     float f1ec;                         // +0x1ec
@@ -218,8 +218,6 @@ void setup_item_meshes(SkelBodyV* body, int kind, int troop, char* inv, int f130
 extern char* g_mission_templates;                // 0x5e2a00 (the mission mode table base)
 extern char g_script[]; // 0xa70440
 extern int g_spawn_hi;                  // 0xa7044c
-extern int g_skin_count;                // g_char_count 0x8ed4f88
-extern ItemKindT* g_skins_begin;         // 0x8ed4f7c
 #include "../skill_cap.h"
 extern char g_gui[]; // 0x5d7080
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
@@ -290,13 +288,13 @@ NOINL void MissionG::spawn(AgentS* a)
     if (a->kind == 0) {
         unsigned skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         int obj = 0;
-        if (skin_i < (unsigned)g_skin_count)
-            obj = g_skins_begin[skin_i].f1e8;
+        if (skin_i < (unsigned)g_anim.char_count)
+            obj = ((ItemKindT*)g_anim.chars)[skin_i].f1e8;
         e->skel->init((FxRes*)obj);
         skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         float h;
-        if (skin_i < (unsigned)g_skin_count)
-            h = g_skins_begin[skin_i].f1ec;
+        if (skin_i < (unsigned)g_anim.char_count)
+            h = ((ItemKindT*)g_anim.chars)[skin_i].f1ec;
         else
             h = 1.0f;
         a->scale = h;

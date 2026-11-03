@@ -1078,7 +1078,7 @@ void Terrain::light_all(particle_list* l, bool trace)
 // @ 0x472050
 void Mission::update_prop_flags()
 {
-    if (g_dev_mode != 0) {
+    if (g_cfg.enable_edit_mode != 0) {
         if (special)
             special->flag = (g_game->f1a20c == 0 && g_game->f1a090 != 0) ? 1 : 0;
         for (unsigned i = 0; i < props.size(); i++) {

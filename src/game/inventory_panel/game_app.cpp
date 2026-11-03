@@ -4,6 +4,7 @@
 // (s00401010: CD3DApplication = `Application`) and the engine's tstring (s0042a1f0) / widget vtables.
 // Names are provisional.
 #include "../../include/image_addrs.h"
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <windows.h>
 #include <d3d9.h>
@@ -153,7 +154,7 @@ int GameApp::Update()
     g_music_situation.tick();
     _FSOUND_Update();
 
-    if (g_dev_mode) {
+    if (g_cfg.enable_edit_mode) {
         if (g_a17158 && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
             if (build_shader() < 0) {
                 mb_error("Unable to compile the effect file.");
@@ -163,7 +164,7 @@ int GameApp::Update()
             ((resource_manager*)&g_resmgr)->resolve_effect_sets(g_effect);
         }
     }
-    if (g_dev_mode) {
+    if (g_cfg.enable_edit_mode) {
         if (g_keyboard.down[0x32] && !g_keyboard.prev[0x32]) {
             if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_a1717c)) {
                 load_skyboxes();

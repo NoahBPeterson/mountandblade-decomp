@@ -5,6 +5,7 @@
 // Migrated from slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
 // s004c8ca0 and s004ca550 (0x4ca550).
 #include "../../include/image_addrs.h"
+#include "../../game/animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../../game/trial_mode.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./gui_edit.h"
@@ -1188,7 +1189,7 @@ void ConfigDialog::init()
     SetWindowPos(GetDlgItem(hwnd, 0x420), 0, 0xb4, 0x1c, 0x19a, 0xa, 0x14);
 
     char skin[128];
-    sprintf(skin, ".\\Skins\\mb_skin_%s.smf", g_skin_name.c_str());
+    sprintf(skin, ".\\Skins\\mb_skin_%s.smf", g_strtable.language.c_str());
     WIN32_FIND_DATAA fd;
     HANDLE h = FindFirstFileA(skin, &fd);
     if (h != INVALID_HANDLE_VALUE) {
@@ -2005,14 +2006,14 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\skins.csv", "wt+");              // 0x595f2c
-        for (unsigned i = 0; g_skins_begin && i < (unsigned)(g_skins_end - g_skins_begin); i++) {
-            for (int j = 0; j < g_skins_begin[i].n_elems; j++) {
+        for (unsigned i = 0; g_anim.skins && i < (unsigned)(g_anim.skins_end - g_anim.skins); i++) {
+            for (int j = 0; j < g_anim.skins[i].n_elems; j++) {
                 if (translated) {
-                    tstring v = ((PartyTemplate*)&g_skins_begin[i].elems[j])->translated();
-                    write_row(f, g_skins_begin[i].elems[j].key, v);
+                    tstring v = ((PartyTemplate*)&g_anim.skins[i].elems[j])->translated();
+                    write_row(f, g_anim.skins[i].elems[j].key, v);
                 } else {
-                    write_row(f, g_skins_begin[i].elems[j].key,
-                              *find_or(g_skins_begin[i].elems[j].key, g_skins_begin[i].elems[j].name));
+                    write_row(f, g_anim.skins[i].elems[j].key,
+                              *find_or(g_anim.skins[i].elems[j].key, g_anim.skins[i].elems[j].name));
                 }
             }
         }

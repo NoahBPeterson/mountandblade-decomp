@@ -61,7 +61,6 @@ extern unsigned char g_mt_inited; // 0x5e2a09
 // Accumulates dt while the flag at 0x5e2a09 is set (mesh_game.cpp) and is applied as one physics step later (gui_edit.cpp g_load_dt).
 extern float g_paused_time; // 0x5e2a0c
 // "the skin name; buf at 0x5fe88c".
-extern tstring g_skin_name; // 0x5fe888
 // Same int (mission_ctx.cpp g_a170c0).
 extern int g_psys_scene; // 0xa170c0
 // game_variables.txt key "scan_module_sounds" (trigger_vec.cpp loader);
@@ -118,7 +117,6 @@ extern PresentationTable g_presentations; // 0xa75f2c
 // 0x30-byte animation definitions indexed by animation id (agent_logic.cpp g_anims[0x1a3]).
 extern AnimDefV* g_anims; // 0xa76628
 // Count belonging to the skin table (script troop_set_type validates against it);
-extern int g_skin_count; // 0x8ed4f88
 // DialogMgr (dialog_manager.h, +0 count, +4 recs ...);
 extern DialogMgr g_dialogs; // 0x8ed50c8
 // The empty string copied by the conversation refresh (conv_refresh.cpp);

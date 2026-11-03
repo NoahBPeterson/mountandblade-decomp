@@ -52,7 +52,7 @@ struct StrTableBase {
 
 struct StrTable : StrTableBase {
     tstring notfound;                                           // +0x1be60 the shared entry answering a miss ("STR NOT FOUND")
-    tstring language;                                           // +0x1be70
+    tstring language;                                           // +0x1be70 (0x5fe888) the language of the skin file name 
     StrTable();                                                 // 0x4cda20
     ~StrTable() { release_strings(); }                          // the atexit destructor 0x548470
     tstring* lookup(const tstring* key);                        // 0x43a1e0 (key -> translated string; ret 4)

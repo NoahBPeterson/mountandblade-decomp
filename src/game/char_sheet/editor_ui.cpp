@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./editor_ui.h"
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
@@ -10,9 +11,6 @@
 #include "../game_globals.h"      // canonical g_trial_mode (listed directly: the audit reads only the source's own includes)
 
 // ---- data this module owns (docs/standalone_data.md) ----
-tstring g_5d705c;   // 0x5d705c the module path as engine_init copied it
-unsigned char g_5d706c;   // 0x5d706c dev-mode flag, copy 1
-unsigned char g_5d706d;   // 0x5d706d dev-mode flag, copy 2
 int g_5e29a4;   // 0x5e29a4 trial-mode flag as engine_init copied it
 
 // @ 0x4f5d20
@@ -273,7 +271,7 @@ int __cdecl engine_init()
     g_log.autoflush = ok;
     g_log.w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
     g_5d705c = g_path_prefix;
-    bool b = g_dev_mode != 0;
+    bool b = g_cfg.enable_edit_mode != 0;
     g_5d706c = b;
     g_5d706d = b;
     {

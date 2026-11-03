@@ -38,7 +38,6 @@ struct OptionsDlg {
 int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
 float g_5a9f24 = 0.65f;                          // 0x5a9f24 (the meeting window columns' top)
 float g_5a9f28[2] = { 0.0f, 0.21450001f };       // 0x5a9f28 {x, y} column size; [0] = 1.0f - 0x5a9f20 is set by static_init_547a60 (static_init owner)
-unsigned char g_gui_dirty;   // 0x5d8788 set whenever a window was installed
 
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
@@ -95,7 +94,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     g_app_obj.hinstance = hInstance;
     g_app_obj.init_flag = 0;
-    g_skin_name.assign("en");
+    g_strtable.language.assign("en");
 
     {
         WL_MARKER(13)
@@ -108,7 +107,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     char skin_path[0x104];
     sprintf(skin_path, ".\\Skins\\mb_skin_%s.smf",
-            g_skin_name.buf ? g_skin_name.buf : (char*)&g_skin_name.buf);
+            g_strtable.language.buf ? g_strtable.language.buf : (char*)&g_strtable.language.buf);
 
     WIN32_FIND_DATAA fd;
     HANDLE hfind = FindFirstFileA(skin_path, &fd);

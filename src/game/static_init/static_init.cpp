@@ -15,6 +15,7 @@
 #include <string>
 #include "../last_scene.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
+#include "../animator.h"       // Animator g_anim (0x8ed4f60)
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
@@ -67,7 +68,6 @@ extern char g_a76628[];     // 0xa76628
 extern char g_a76630[];     // 0xa76630 the terrain
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 extern char g_8ed4f58[];    // 0x8ed4f58 the meshes
-extern char g_8ed4f78[];    // 0x8ed4f78
 extern char g_8ed5090[];    // 0x8ed5090 the particle systems
 extern char g_8ed50c8[];    // 0x8ed50c8 the dialogs
 extern char g_8ee3120[];    // 0x8ee3120 0x2a records of 0x44 (three strings each, at -0x20, -0x10, 0)
@@ -271,7 +271,7 @@ void __cdecl static_dtor_5484b0()
 // @ 0x548500
 void __cdecl static_dtor_548500() { ((TwoVec*)g_a75f40)->~TwoVec(); }
 // @ 0x548510
-void __cdecl static_dtor_548510() { ((BigArray*)g_8ed4f78)->destroy(); }
+void __cdecl static_dtor_548510() { ((BigArray*)&g_anim.skins_alloc)->destroy(); }   // the skin vector at 0x8ed4f78
 // @ 0x548520   std::vector<NameVecRec>::~vector of the skeleton names
 void __cdecl static_dtor_548520()
 {

@@ -2,12 +2,6 @@
 #include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
 
-// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_screen_h;   // 0x5d75cc viewport height
-int g_screen_w;   // 0x5d75c8 viewport width
-float g_div;   // 0x5d7594 1/radius
-
-
 // @ 0x4ed6f0
 void GuiCtx::render_shape_frame(int a, vector4* v, int b, int c)
 {

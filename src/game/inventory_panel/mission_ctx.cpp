@@ -9,6 +9,7 @@
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
 #include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
@@ -998,7 +999,7 @@ no_party:
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_dev_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
+    if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && ((Slot*)&g_key_names)->is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {

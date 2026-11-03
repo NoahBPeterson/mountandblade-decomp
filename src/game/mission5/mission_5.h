@@ -558,7 +558,7 @@ extern unsigned char g_a17908;                          // 0xa17908
 extern int  g_presentation;                                  // 0x5e299c
 #include "../../include/renderer.h"
 extern char g_script[]; // 0xa70440
-#define g_clamp_max g_skill_clamp                  // 0x8ee3ac4
+#define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
 struct Obj73300_s261e0 {                                        // g_mission_ctx (0xa73300)
     char pad0[0x3c];
     unsigned f3c;                                               // +0x3c accumulated key mask (0xa7333c)

@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./facegen_init.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -9,10 +10,6 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
-
-// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-float g_fov_k;   // 0x5e20a8
-
 
 // @ 0x4f49d0
 void FaceGen::init()
@@ -26,7 +23,7 @@ void FaceGen::init()
     skin = 0;
     if (troop >= 0)
         skin = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
-    int keys = g_skins_begin[skin].n_elems - 1;
+    int keys = g_anim.skins[skin].n_elems - 1;
     ((gui_manager*)(void*)&g_msglog)->reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
     overlay* o = (overlay*)new_container(0x190, vtbl_592848);
@@ -101,7 +98,7 @@ void FaceGen::init()
         push_item(ui, sl);
     }
     cam_btn = 0;
-    if (g_dev_mode) {
+    if (g_cfg.enable_edit_mode) {
         tstring t("key");
         cam_btn = (elem*)new_button((ContainerBase*)ui, t, 0.0f, 0.72f, 0.5f, 0.028f);   // 0x4db810
         cam_btn->sb0();
@@ -160,7 +157,7 @@ void FaceGen::init()
         tstring* kv = g_strtable.lookup(v);
         t_hair_color = (widget*)new_key_label(buttons, kv, &t);
     }
-    if (g_skins_begin[skin].first_face == 0) {
+    if (g_anim.skins[skin].first_face == 0) {
         b_next_beard->sb0();
         b_prev_beard->sb0();
         t_change_beard->sb0();
@@ -312,7 +309,7 @@ void FaceGen::init()
         char* rec = g_game->chars_c + troop * 0x508;
         int sk = *(int*)(rec + 0x30) & 0xf;
         int flags = 0;
-        g_anim.cur = clamp_index(&sk, &flags, &g_char_count);   // 0x432510
+        g_anim.cur = clamp_index(&sk, &flags, &g_anim.char_count);   // 0x432510
         ((FaceGenome*)&g_anim)->unpack((const unsigned __int64*)(rec + 0x3c0));   // 0x473800
         f354 = *(int*)((char*)&g_anim + 0x04);
         f350 = *(int*)((char*)&g_anim + 0x00);

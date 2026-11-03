@@ -20,6 +20,7 @@
 #define resmgr resmgr_agent_view
 #define g_resmgr g_resmgr_agent_view      // its `extern resmgr g_resmgr`: the defining declaration is `resource_manager g_resmgr` (rgl/resource.h), declared below
 #include <stdlib.h>
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <math.h>
 #include <string.h>
 #include <vector>
@@ -57,7 +58,6 @@
 #include "../../include/height_field.h"
 #include "../agent/curve.h"   // Curve: set_rec_phase 0x433b20 (the canonical class of the Skeleton record)
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-extern int g_dev_mode;   // 0x5a9fb0 developer/edit-mode flag (the canonical declaration is game_globals.h; not includable here: agent_logic.h views the armor factors as float[3])
 
 #undef resmgr
 #undef g_resmgr
@@ -2545,18 +2545,18 @@ void Mission::spawn_prop(int* idx, int* id)
             tbl = -1;
         } else {
             Rec78* rec = &g_tbl78[tbl];
-            if (g_dev_mode != 0 || !(r78_flags(rec) & 0x4000))
+            if (g_cfg.enable_edit_mode != 0 || !(r78_flags(rec) & 0x4000))
                 meshes = r78_meshes(rec);
             shape_res = r78_shape(rec);
         }
     } else if (t != 3) {
         if (t == 1) {
-            if (g_dev_mode)
+            if (g_cfg.enable_edit_mode)
                 name.assign("entry_arrow");
             else
                 name.assign("");
         } else if (t == 5) {
-            if (g_dev_mode)
+            if (g_cfg.enable_edit_mode)
                 name.assign("_mesh_passage");
             else
                 name.assign("");

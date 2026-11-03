@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <stddef.h>
 // Slice s00507400: the character sheet's window builder (0x507400).
@@ -669,7 +670,7 @@ void CharSheet::init()
     label_refresh(stats, tstring("char_b_stats"));
 
     f52c = 1;
-    if (g_dev_mode == 0 && player != g_game->player)
+    if (g_cfg.enable_edit_mode == 0 && player != g_game->player)
         f52c = 0;
     if (mode != -1) {
         f52c = 0;
@@ -678,7 +679,7 @@ void CharSheet::init()
     prev = 0;
     next = 0;
 
-    if (g_dev_mode != 0 && mode == -1) {
+    if (g_cfg.enable_edit_mode != 0 && mode == -1) {
         {
             tstring kh("char_b_next_h");
             tstring kc("ui_next");
@@ -692,7 +693,7 @@ void CharSheet::init()
         label_refresh(next, tstring("char_b_next"));
     }
 
-    if (g_dev_mode != 0 && mode == -1) {
+    if (g_cfg.enable_edit_mode != 0 && mode == -1) {
         {
             tstring kh("char_b_prev_h");
             tstring kc("ui_prev");

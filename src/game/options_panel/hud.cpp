@@ -16,10 +16,6 @@
 #include "../key_names.h"
 #include "../ui_globals.h"      // UI / core globals
 
-// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_mission_clock;   // 0x5d8790 mission time; 0 = no mission
-
-
 // @ 0x4d4b80
 bool EditMesh::on_selection_changed()
 {
