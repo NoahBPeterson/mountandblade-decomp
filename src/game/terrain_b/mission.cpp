@@ -59,6 +59,7 @@ extern int g_mesh_quality;                      // 0x5aa084
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_emit_id[12];                                  // 0x8ed5098 (bss: ids of the ambient and default effects)
 extern const int g_nav_param = 2;                  // 0x59132c (rdata)
 
 using rgl::mat3;
@@ -612,7 +613,7 @@ layers:
         pos.y = 0.15f;
         if (a->f10 == 1)
             pos.y = 0.65f;
-        idx = g_fog_id_a;
+        idx = g_emit_id[7];
         owner = 0;
         Emit* e0 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e0) {
@@ -620,7 +621,7 @@ layers:
             a->f250->add_emitter(e0);
             a->f1b0 = (int)e0;
         }
-        idx = g_fog_id_b;
+        idx = g_emit_id[8];
         owner = 0;
         Emit* e1 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e1) {
@@ -629,7 +630,7 @@ layers:
             a->f1b4 = (int)e1;
         }
         pos.y = pos.y + 0.6f;
-        idx = g_fog_id_c;
+        idx = g_emit_id[9];
         owner = 0;
         Emit* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e2) {

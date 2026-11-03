@@ -6,10 +6,7 @@
 #include "../../rgl/rgl_math.h"
 
 #include "../emit.h"                  // Emit, EmitTable (shared with agent3)
-extern int g_emit_id[];                                 // 0x8ed5098 (ids of the ambient emitters: dense fog 4, thin 6)
-extern int g_fog_id_a;                                  // 0x8ed50b4 (ground fog layer)
-extern int g_fog_id_b;                                  // 0x8ed50b8
-extern int g_fog_id_c;                                  // 0x8ed50bc
+#include "../../include/emit_ids.h"
 extern int g_env_on;                                    // 0x5aa028 (environmental effects)
 extern int g_fog_density;                               // 0x5aa03c (>= 10: build the dust grid)
 
