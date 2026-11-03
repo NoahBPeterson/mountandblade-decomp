@@ -61,8 +61,7 @@ parameter / member shadowing bugs (`compute(mode)`, `can_transfer(mode)`) are re
 `GameG::tick`.
 
 **Carried over (the other 13 modules, 45 rows).** Their slice sources define their own ad-hoc layouts (`rgl.h` of
-`match/include`, plus `map_info_tstring.h` / `skeleton_tinyxml.h`, the copies of the slice-local `tstring.h` /
-`tinyxml.h`, renamed so they cannot shadow the canonical headers). They are byte-for-byte the slice sources, so all
+`match/include`, plus `map_info_tstring.h`, the copy of the slice-local `tstring.h`, renamed so it cannot shadow the canonical header; the skeleton loader's copy of `tinyxml.h` is gone, it includes `src/tinyxml/tinyxml.h`). They are byte-for-byte the slice sources, so all
 44 byte-exact rows stay exact and no number changed. This is the part of the region that is NOT yet on the canonical
 headers: the classes `MapPanel` / `MapScreen` / `Camera` (one world-map screen class), `CharSheet` / `char_window`
 (the existing `src/game/char_sheet/*.h` are partial and disagree with each other), `note_window`, `EditorPanel` /

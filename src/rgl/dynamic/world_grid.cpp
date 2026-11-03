@@ -209,7 +209,7 @@ void shape_vec::remove(grid_shape* o)
 
 // ---- entity::add_shape / register the shape with the world ---------------------------------------------------------
 // @ 0x424100
-void entity_grid::add_shape(rgl::item_obj* o)
+void rgl::strategic_entity::add_shape(rgl::item_obj* o)
 {
     items.push_back(o);
     ((grid_shape*)o)->set_mc(id);

@@ -1,7 +1,7 @@
 // dynamic_entity.cpp (0x425370..0x427d80): the rigid-body entity and what its collision pass uses. dynamic_entity
 // (constructor, point velocity, impulses, force step, torques, contact resolution, integration, collide), the world's
 // per-cell shape and entity queries with their box tests and the group-mask ordering predicate, std::unique and the
-// introsort instances behind the query's sort, rigid_base::collide_entity / collide_shape, the std::vector<Contact>
+// introsort instances behind the query's sort, dynamic_entity::on_entity / on_shape, the std::vector<Contact>
 // members and the collision entity's destructor. Migrated from slices s004251c0 (0x425370..0x425920), s004259a0,
 // s004260a0, s00426a30, s00427000 and s00427900 (its first four functions; the rest of it is entity_types.cpp's).
 // Boundary: see MIGRATION.md.
@@ -30,10 +30,6 @@ void sort_range_x(std::vector<entity*>::iterator first, std::vector<entity*>::it
 #pragma comment(linker, "/alternatename:?sort_range_x@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0H@Z=?sort_range@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0H@Z")
 #pragma comment(linker, "/alternatename:?ufill_ext@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@std@@@Z=??$_Uninitialized_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@@Z")
 #pragma comment(linker, "/alternatename:?_Insert_n@contact_inl@@QAEXPAUContact@rgl@@IABU23@@Z=?_Insert_n@contact_ops@rgl@@QAEXPAUContact@2@IABU32@@Z")
-#pragma comment(linker, "/alternatename:?is_dynamic@coll_base@rgl@@UAE_NXZ=?is_dynamic@collision_entity@rgl@@UAE_NXZ")
-#pragma comment(linker, "/alternatename:?point_velocity@coll_base@rgl@@UAEPAUvector4@2@PAU32@PBU32@@Z=?point_velocity@collision_entity@rgl@@UAEPAUvector4@2@PAU32@PBU32@@Z")
-#pragma comment(linker, "/alternatename:?apply_impulse@coll_base@rgl@@UAEXPBUvector4@2@0@Z=?apply_impulse@collision_entity@rgl@@UAEXPBUvector4@2@0@Z")
-#pragma comment(linker, "/alternatename:?impulse_response@coll_base@rgl@@UAEMPBUvector4@2@0@Z=?impulse_response@collision_entity@rgl@@UAEMPBUvector4@2@0@Z")
 #pragma comment(linker, "/alternatename:?box3_b@@YA_NPBUvector4@rgl@@000@Z=?box_overlap3@@YAHPBUvector4@rgl@@000@Z")
 #pragma comment(linker, "/alternatename:?box2_b@@YA_NPBUvector4@rgl@@000@Z=?box_overlap2@@YAHPBUvector4@rgl@@000@Z")
 
@@ -524,14 +520,15 @@ template void std::_Insertion_sort<It>(It, It);
 // @ 0x426f40
 template void std::_Rotate<It, int, u32>(It, It, It, int*, u32*);
 
-// ---- rigid_base::collide_entity / collide_shape --------------------------------------------------------------------
+// ---- dynamic_entity::on_entity / on_shape --------------------------------------------------------------------
 static __forceinline float vdot(const vector4& a, const vector4& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 // collide_entity's dots sum z first: (a.z*b.z + a.y*b.y) + a.x*b.x (0x4271ee, 0x427287, 0x42735d)
 static __forceinline float vdot_zyx(const vector4& a, const vector4& b) { return a.z * b.z + a.y * b.y + a.x * b.x; }
 
 // @ 0x427000
-bool rigid_base::collide_entity(rigid_base* o)
+bool dynamic_entity::on_entity(entity* e)
 {
+    rigid_base* o = (rigid_base*)e;
     if (shape == 0)
         return false;
     if (o->shape == 0)
@@ -730,8 +727,9 @@ struct contact_inl : contact_vec {
 };
 
 // @ 0x427900
-bool rigid_base::collide_shape(coll_shape* s)
+bool dynamic_entity::on_shape(grid_shape* g)
 {
+    coll_shape* s = (coll_shape*)g;
     if (shape == 0)
         return false;
     contact_rec c[4];

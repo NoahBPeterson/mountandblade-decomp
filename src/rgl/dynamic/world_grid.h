@@ -6,13 +6,13 @@
 // The classes are views of the shared ones; this header adds only members, never fields:
 //   world_grid : rgl::world      the members of rgl::world that world.h does not declare (relocate, add_shape,
 //                                add_tree, reg_shape); rgl::world::add_item (0x423c00) is declared in world.h
-//   entity_grid : rgl::entity    entity::add_shape (0x424100)
+//   (strategic_entity::add_shape 0x424100, slot 28 of the strategic entity's table, is declared in scene_entity.h)
 //   grid_cell                    rgl::cell (world.h) with its sorted shape vector and the shape list typed
 //   ground_store : rgl::ground_geom   the ground geometry's two vectors (world.h leaves its fields out)
 // The shapes are src/rgl/shapes' grid_shape / face / composite (the slices called them Obj, kind() = shape_type()); that
 // header cannot be included next to resource.h (scene.h pulls it in, both define grid_shape), so the grid sees them as
 // views of resource.h's grid_shape that add the vtable slots 5..13 and the two fields it reads.
-// The slices' names: World (world_grid), Registry (world_grid::reg_shape), Scene (entity_grid), Cell (grid_cell),
+// The slices' names: World (world_grid), Registry (world_grid::reg_shape), Scene (the strategic entity's add_shape), Cell (grid_cell),
 // Store (ground_store), ObjVec / ObjList (shape_vec / shape_list), Obj (grid_shape).
 #ifndef RGL_DYNAMIC_WORLD_GRID_H
 #define RGL_DYNAMIC_WORLD_GRID_H
@@ -114,9 +114,5 @@ struct world_grid : rgl::world {
 };
 int2* min2(int2* out, const int2* a, const int2* b);        // 0x423e70
 int2* max2(int2* out, const int2* a, const int2* b);        // 0x423ea0
-
-struct entity_grid : rgl::entity {
-    void add_shape(rgl::item_obj* o);                        // 0x424100: keep the shape, tag it with the entity id, register it in the world
-};
 
 #endif
