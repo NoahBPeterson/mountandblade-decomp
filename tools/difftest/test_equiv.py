@@ -1172,3 +1172,69 @@ def test_d3d_lockrect_surface_comes_from_the_input():
     assert r["verdict"] == "PASS" and not r["fp_tol"]["real_mismatches"], r
     assert equiv.Runner.D3D_LOCK_BITS == equiv.M.POOL_BASE + equiv.M.POOL_SIZE - 0x40000
     assert equiv.Runner.D3D_LOCK_BITS % equiv.M.SLOT == 0
+
+
+# ---------------------------------------------------------------------- native tracing hooks (tools/difftest/native)
+
+def _both_paths(fn):
+    """fn() on the native hooks and on the pure-Python hooks (EQUIV_NATIVE=0); skipped without the library."""
+    import eqnative
+    import pytest
+    if not eqnative.available():
+        pytest.skip("native tracing library not buildable here: %s" % eqnative._state.get("why"))
+    real, real_nc = equiv._native, os.environ.get("DIFFTEST_NO_CACHE")
+    os.environ["DIFFTEST_NO_CACHE"] = "1"           # the second path must emulate, not read the first one's cached verdict
+    try:
+        equiv._native = lambda: eqnative
+        a = fn()
+        equiv._native = lambda: None
+        b = fn()
+    finally:
+        equiv._native = real
+        if real_nc is None:
+            del os.environ["DIFFTEST_NO_CACHE"]
+        else:
+            os.environ["DIFFTEST_NO_CACHE"] = real_nc
+    return a, b
+
+
+def _strip_seconds(o):
+    if isinstance(o, dict):
+        return {k: _strip_seconds(v) for k, v in o.items() if k != "seconds"}
+    if isinstance(o, list):
+        return [_strip_seconds(v) for v in o]
+    return o
+
+
+def test_native_uninit_taint_matches_python_on_the_fakes():
+    """Runner.uninit_both on the hand-built stack scenarios: the native taint pass reports the same bytes with the same
+    origins (a, writer pc, read pc) as the Python hooks."""
+    def go():
+        out = []
+        for ob, ou in (("callee_then_copy", "callee_then_copy"), ("callee_then_own_write", "callee_then_own_write"),
+                       ("callee_then_copy", "callee_then_own_write"), ("never_called", "never_called")):
+            f, inp = _uninit_fake(ob, ou)
+            out.append((equiv.Runner.uninit_both(f, inp), f.last_call_uninit, getattr(f, "stale_w_slots", None)))
+        return out
+    nat, py = _both_paths(go)
+    assert nat == py, (nat, py)
+    assert any(x[0] for x in py), py                    # the scenarios do taint something
+
+
+def test_native_hooks_give_identical_row_results():
+    """Whole rows through test_function on both paths: identical JSON except 'seconds'. obj_tbl 0x499050 exercises the
+    uninit-copy pass (its tolerated 'uninit-copy' count); the config mutant under --fp-tol exercises the reference run's
+    write/read tracking (fstore, huge/denormal inputs)."""
+    src = os.path.join(ROOT, "src", "game", "world_data", "obj_tbl.cpp")
+    a, b = _both_paths(lambda: _strip_seconds(equiv.test_function("obj_tbl", 0x499050, equiv.parse_args(
+        ["obj_tbl", "499050", "--src", src, "--inputs", "60", "--no-regress", "--fp-tol", "--typed-share", "0",
+         "--time-limit", "3000"]))))
+    assert a == b
+    assert a["tolerated"].get("uninit-copy"), a["tolerated"]
+    path = cfg_mutant("f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;",
+                      "f.v[0] = view.o.x + f.px * view.s.x + py * view.f.x + f.z * view.u.x;", "assoc_native")
+    a, b = _both_paths(lambda: _strip_seconds(equiv.test_function("config", 0x4bd2f0, equiv.parse_args(
+        ["config", "4bd2f0", "--typed-share", "0", "--src", path, "--flags", CFG_FLAGS, "--inputs", "60",
+         "--no-regress", "--fp-tol", "--time-limit", "3000"]))))
+    assert a == b
+    assert a["fp_tol"]["fp_tolerable"] > 0, a["fp_tol"]
