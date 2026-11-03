@@ -13,14 +13,15 @@ size (when every member is a plain 1/2/4/8-byte item, an array of them, or a kno
 with different bodies is reported, sorted: size mismatch first (the dangerous ones), then differing bodies whose
 size could not be inferred, then identical bodies (harmless duplicates).
 
---sizes asks the real compiler (tools/matching/cl.sh) for sizeof() of each definition that lives in a *header*:
+--sizes asks the real compiler (tools/matching/cl.sh, cl.exe on Windows) for sizeof() of each definition that lives in a *header*:
 one probe TU per header, so what is reported is the compiler's answer, not the inference.
 """
 import argparse, os, re, subprocess, sys, collections
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, "src")
-CL = os.path.join(ROOT, "tools", "matching", "cl.sh")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from winnative import CL, winpath      # cl.sh under wine on the Mac, cl.exe on Windows
 
 BUILTIN = {"char": 1, "signed char": 1, "unsigned char": 1, "bool": 1, "__int8": 1, "short": 2, "unsigned short": 2,
            "__int16": 2, "int": 4, "unsigned": 4, "unsigned int": 4, "long": 4, "unsigned long": 4, "__int32": 4,
@@ -159,13 +160,13 @@ def main():
         for header, names in sorted(by_header.items()):
             names = sorted(names)
             tmpdir = tempfile.mkdtemp()
-            src = '#include "Z:%s"\n' % os.path.join(ROOT, header).replace("/", "\\")
+            src = '#include "%s"\n' % winpath(os.path.join(ROOT, header))
             src += "".join('int sz_%s = sizeof(%s);\n' % (n, n) for n in names)
             open(os.path.join(tmpdir, "p.cpp"), "w").write(src)
             subprocess.run([CL, "/nologo", "/c", "/FAs",
-                            "/FaZ:" + os.path.join(tmpdir, "p.asm").replace("/", "\\"),
-                            "Z:" + os.path.join(tmpdir, "p.cpp").replace("/", "\\"),
-                            "/FoZ:" + os.path.join(tmpdir, "p.obj").replace("/", "\\")],
+                            "/Fa" + winpath(os.path.join(tmpdir, "p.asm")),
+                            winpath(os.path.join(tmpdir, "p.cpp")),
+                            "/Fo" + winpath(os.path.join(tmpdir, "p.obj"))],
                            cwd=ROOT, capture_output=True)
             asm = os.path.join(tmpdir, "p.asm")
             if not os.path.exists(asm):

@@ -9,21 +9,17 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 
 from coff import Coff  # noqa: E402
+from winnative import CL, winpath  # noqa: E402  (cl.sh under wine on the Mac, cl.exe on Windows; wine / native paths)
 
 DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/TP"]  # cl 13.10; static CRT; /EHsc only where the original has EH frames
-INCLUDE = "/I" + "Z:" + os.path.join(ROOT, "match", "include").replace("/", "\\")
+INCLUDE = "/I" + winpath(os.path.join(ROOT, "match", "include"))
 OBJDIR = os.path.join(ROOT, "work", "difftest", "obj")
-CL = os.path.join(ROOT, "tools", "matching", "cl.sh")
 
 FLAG_RE = re.compile(r"(?<![\w/])(/(?:O[12dxyst]-?|Ob\d|Oi-?|Oy-?|M[DT]d?|Gy-?|EH\w+|TP|TC|arch:\w+|fp:\w+|GS-?|GR-?|Gz|Gr|Gd|Zp\d+|GF|Gs\d*|J|vc71))(?![\w:])")
 
 
 # an explicit note: 'flags' (or 'Flags:') immediately followed by the flag list
 EXPLICIT_RE = re.compile(r"\bflags?\s*[:=]?\s*((?:/[\w:+\-]+(?![\w:+\-])[\s,]*)+)", re.I)
-
-
-def winpath(p):
-    return "Z:" + p.replace("/", "\\")
 
 
 def slice_dir(sid):

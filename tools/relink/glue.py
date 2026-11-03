@@ -28,6 +28,7 @@ import argparse, collections, json, os, re, struct, subprocess, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
+from winnative import WIN, winpath      # noqa: E402  (native link.exe on Windows, wine on the Mac)
 
 TC = os.path.join(ROOT, "work", "toolchain")
 SDK_LIBS = [os.path.join(TC, "vc71tk", "lib"), os.path.join(TC, "vc9sp1", "WinSDK", "Lib"),
@@ -46,8 +47,6 @@ TEXT_LO, TEXT_HI = 0x401000, 0x548578
 IAT_LO, IAT_HI = 0x549000, 0x5494c8
 
 
-def winpath(p):
-    return "Z:" + p.replace("/", "\\")
 
 
 # ------------------------------------------------------------------ archives
@@ -264,7 +263,7 @@ def make_import_libs(img, out_dir, needed):
         deff = os.path.join(out_dir, dll + ".def")
         open(deff, "w").write("LIBRARY %s\nEXPORTS\n%s\n" % (dname, "\n".join("  " + l for l in lines)))
         lib = os.path.join(out_dir, dll + ".lib")
-        subprocess.run(["wine", os.path.join(TC, "vc71tk", "bin", "link.exe"), "/lib", "/nologo", "/machine:x86",
+        subprocess.run((["wine"] if not WIN else []) + [os.path.join(TC, "vc71tk", "bin", "link.exe"), "/lib", "/nologo", "/machine:x86",
                         "/def:" + winpath(deff), "/out:" + winpath(lib)], env=env, stdin=subprocess.DEVNULL,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if patch:

@@ -26,6 +26,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 import slice as S          # noqa: E402
+from winnative import WIN, winpath, toolchain_env      # noqa: E402
 
 TC = os.path.join(ROOT, "work", "toolchain")
 LIBS = ["libcmt.lib", "libcpmt.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "advapi32.lib", "shell32.lib",
@@ -34,10 +35,6 @@ LIBS = ["libcmt.lib", "libcpmt.lib", "kernel32.lib", "user32.lib", "gdi32.lib", 
 CRT_LO, CRT_HI = 0x535440, 0x549000          # static CRT / C++ library code in the original
 CATS = ("name mismatch", "global data", "no annotation", "missing body", "third-party", "CRT", "other")
 HIST = os.path.join(ROOT, "docs", "relink_history.json")
-
-
-def winpath(p):
-    return "Z:" + p.replace("/", "\\")
 
 
 def objects():
@@ -65,6 +62,8 @@ def link(objs, out_dir, glue=None, extra=(), name="trial.exe", icf=True):
                                                    os.path.join(ROOT, "work", "ext", "dxsdk_jun10", "DXSDK", "Lib", "x86"))))
     cmd = ["wine", os.path.join(TC, "vc71tk", "bin", "link.exe"), "/NOLOGO", "/OUT:" + winpath(os.path.join(out_dir, name)),
            "/SUBSYSTEM:WINDOWS", "/MACHINE:X86", "/FORCE:MULTIPLE", "/OPT:REF", "/OPT:ICF" if icf else "/OPT:NOICF"] + list(extra) + ["@" + winpath(rsp)] + libs
+    if WIN:                                      # native link.exe: no wine, the same LIB (dxsdk last)
+        cmd, env = cmd[1:], toolchain_env(link=True)
     with tempfile.TemporaryFile("w+") as f:      # never the caller's pipes: wine services inherit stdio
         subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=f, stderr=subprocess.STDOUT, env=env)
         f.seek(0)
