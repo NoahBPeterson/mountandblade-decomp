@@ -145,7 +145,21 @@ def vtable_starts(img):
             continue
         w = (b[:-3].astype(np.uint32) | (b[1:-2].astype(np.uint32) << 8) | (b[2:-1].astype(np.uint32) << 16)
              | (b[3:].astype(np.uint32) << 24))
-        w = w[(w >= RDATA[1]) & (w < RDATA[2]) & (w % 4 == 0)]
+        keep = (w >= RDATA[1]) & (w < RDATA[2]) & (w % 4 == 0)
+        if lo == TEXT_LO:
+            # A table start is named by an operand that stores or loads its address: `mov r, imm32` (b8+r), `push imm32` (68) or
+            # `mov [mem], imm32` (c7 /0 with a 1-7 byte modrm / sib / disp in between: the vptr stores). The same four bytes
+            # elsewhere are not a reference: `call [slot]` / `jmp [slot]` (ff 15 / ff 25) name ONE slot (the entity factory's
+            # direct `call [0x54b4dc]` is slot 1 of mesh_entity's table 0x54b4d8), and unaligned byte coincidences inside
+            # other instructions (0x4444cc looks like 0x54b800, the middle of static_entity's table) are nothing.
+            idx = np.nonzero(keep)[0]
+            idx = idx[idx >= 7]
+            ok = (b[idx - 1] == 0x68) | ((b[idx - 1] >= 0xb8) & (b[idx - 1] <= 0xbf))
+            for k in (2, 3, 4, 6, 7):
+                ok |= b[idx - k] == 0xc7
+            keep[:] = False
+            keep[idx[ok]] = True
+        w = w[keep]
         for v in np.unique(w):
             v = int(v)
             if img.u32(v) in img.start_set:
