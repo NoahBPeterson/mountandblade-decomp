@@ -12,7 +12,7 @@ work/run_all_m/<key>.lock, work/run_all_m/<key>.json, key = hash of the manifest
 manifests never wait for each other (fix pass 6 F26: mig7 agents waited 20-40 minutes on the shared lock).
 Exit 0 iff every listed function matches.
 """
-import argparse, bisect, glob, hashlib, json, os, subprocess, sys
+import argparse, bisect, glob, hashlib, json, os, re, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -108,9 +108,33 @@ class Original:
         return data, mask
 
 
-def resolve(syms, sym):
+ANON_NS = re.compile(r"\?A0x[0-9a-f]{8}@")   # an anonymous namespace: cl names it by a hash of the file's inputs
+
+
+def resolve(syms, sym, va=None, func_vas=None):
+    if sym.startswith("$L") and func_vas is not None:
+        # A compiler label inside a function (the tail after an EH block): its number is counted over the whole
+        # translation unit, so any header change renumbers it. Find it by place instead: the label whose enclosing
+        # function (the symbol before it in its section) is a manifest row at va - (label offset - function offset).
+        by_sec = {}
+        for s, (si, off) in syms.items():
+            by_sec.setdefault(si, []).append((off, s))
+        c = []
+        for s, (si, off) in syms.items():
+            if not s.startswith("$L"):
+                continue
+            fn = [(o, n) for o, n in by_sec[si] if o <= off and not n.startswith("$L")]
+            if fn:
+                foff, fname = max(fn)
+                if func_vas.get(fname) == va - (off - foff):
+                    c.append(s)
+        return c[0] if len(c) == 1 else None
     if sym in syms:
         return sym
+    if ANON_NS.search(sym):
+        pat = re.compile(ANON_NS.pattern.join(re.escape(p) for p in ANON_NS.split(sym)) + "$")
+        c = [s for s in syms if pat.match(s)]
+        return c[0] if len(c) == 1 else None
     c = [s for s in syms if sym in s and not s.startswith(("__ehhandler", "__unwindfunclet", "__catch", "__tryend"))]
     return c[0] if len(c) == 1 else None
 
@@ -153,6 +177,10 @@ def main():
     orig = Original()
     coff_cache, const_cache = {}, {}
     results, ok = {}, 0
+    func_vas = {}       # (source, flags) -> {function symbol: original address}, to place the $L label rows
+    for src, sym, va, flags in rows:
+        if not sym.startswith("$L"):
+            func_vas.setdefault((src, flags), {})[sym] = va
     for src, sym, va, flags in rows:
         obj = objs.get((src, flags))
         status = "FAIL no object"
@@ -164,7 +192,7 @@ def main():
                     starts.setdefault(si_, set()).add(off_)
                 coff_cache[obj] = (secs_, syms_, {k: sorted(v) for k, v in starts.items()})
             secs, syms, starts = coff_cache[obj]
-            name = resolve(syms, sym)
+            name = resolve(syms, sym, va, func_vas.get((src, flags)))
             if name is None:
                 status = "FAIL symbol %s not found/ambiguous" % sym
             else:
