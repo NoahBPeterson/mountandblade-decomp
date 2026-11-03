@@ -654,7 +654,7 @@ void Game::build_map_trees()
                             float dpi = dist[pi];
                             if (mt == 0) {                                    // 0x5229c3
                                 float sd = sqrtf(dpi);
-                                if (!(sd < 5.0f)) sd = 5.0f;                 // 0x59393c
+                                if (!(sd < 5.0f)) sd = 5.0f;                 // (g_aim_range_tbl[12])
                                 float f = (g_use_shaders == 0) ? (8.0f - sd) * 0.125f      // 0x590b38 / 0x54b8a0
                                                                : (6.0f - sd) * 0.16666667f; // 0x590b34 / 0x59c07c
                                 cr *= f; cg *= f; cb *= f;

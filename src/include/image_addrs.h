@@ -76,7 +76,6 @@ extern const char str_plants[];                        // 0x5999ac
 extern const char str_item_kinds[];                    // 0x5999b4
 extern const char str_scene_props[];                   // 0x5999c0
 extern const float g_four;                 // 0x5935c8
-extern const float k_5f;                   // 0x59393c
 extern const char str_ui_difficulty_rating_percentage[]; // 0x5967a0
 extern const float k_30000f;               // 0x596854
 extern const float k_0_00117647f;          // 0x596858
