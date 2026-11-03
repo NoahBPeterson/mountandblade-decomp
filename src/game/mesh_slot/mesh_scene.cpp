@@ -10,6 +10,7 @@
 #include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
 #include "../../include/sound_mgr.h"   // SoundMgr, g_sound_mgr 0x5aa128 (play 0x442650)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature
@@ -397,7 +398,7 @@ void MissileU::update(float dt)
                 d.y = g_mission->view.o.y - pa.y;
                 d.z = g_mission->view.o.z - pa.z;
                 if (d.x * vel.x + (d.y * vel.y + d.z * vel.z) < 0.0f
-                    && g_mission->view.o.z - 1.0f < pa.z) {
+                    && g_mission->view.o.z - g_one < pa.z) {
                     mode = 3;
                     if (d.out_length() < g_f591334) {
                         tmp = v.out_length();

@@ -41,6 +41,7 @@ using rgl::vector4;
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
 #include "../key_names.h"
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../float_consts.h"   // shared float constants kept in memory
 
 // 0x4bab70 (byte-exact in s004bab70): build the user path of a file name in place. A static function in the
 // original, so cl passes `out` in esi; this is a local copy with the same body.
@@ -193,7 +194,7 @@ void KeysPage::update_perf()
         }
     }
     if (shadows)
-        perf *= (1 - orig::g_simple_reflect) * 0.65f + 1.0f;
+        perf *= (1 - orig::g_simple_reflect) * g_k065 + g_one;
     perf *= orig::g_particle * orig::k_0_03f + orig::g_day_period;
     perf *= orig::g_texture_detail + orig::k_400f;
     perf *= orig::k_0_002f;
@@ -367,12 +368,12 @@ void KeysPage::refresh()
 // @ 0x4d7270
 void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, float bw)
 {
-    float s = bx * 0.65f;
+    float s = bx * g_k065;
     int maxn = 0x800;
     int len;
     int buf[0x800];
     decode_utf8(text, &len, buf, &maxn);
-    float tw = len * s * 0.39f;
+    float tw = len * s * g_k039;
     float room = bx * by - bx / bz * bw;
     if (tw > room)
         s *= room / tw;
@@ -382,7 +383,7 @@ void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, 
     row->set_size((const float*)&scale);
     vector2 pos;
     pos.x = 0;
-    pos.y = bx * orig::g_half - s * 0.3f;
+    pos.y = bx * orig::g_half - s * g_chunk_scale;
     row->set_offset((const float*)&pos);
     { char r[8]; row->set_text(r, *text); }
 }

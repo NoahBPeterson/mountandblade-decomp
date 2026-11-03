@@ -35,6 +35,7 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 
 // ==== 0x490030: a random position around a point ===========================================================
@@ -519,7 +520,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
                     if ((float)(rand() % 0x3dc9) * (float)hp * 6.322312e-05f < 2.0f) {
                         tr = &troops[troop];
                         if ((tr->flags30 & 0x10) == 0) {
-                            if ((float)(rand() % 0x3dc9) * 6.322312e-05f < 0.65f
+                            if ((float)(rand() % 0x3dc9) * 6.322312e-05f < g_k065
                                 || (troops[troop].flags30 & 0x80) != 0) {
                                 st->count--;
                                 if (dest != 0)

@@ -25,6 +25,7 @@
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160
@@ -422,7 +423,7 @@ void Party::prepare()
 float Party::strength()
 {
     if (f88 != -1) {
-        return 1.0f;
+        return g_one;
     }
     int a = 0;
     int b = 0;
@@ -441,8 +442,8 @@ float Party::strength()
     if (v < g_k0) {
         return g_k0;
     }
-    if (v >= 1.0f) {
-        return 1.0f;
+    if (v >= g_one) {
+        return g_one;
     }
     return v;
 }
@@ -505,7 +506,7 @@ float Troop::food_factor()
     if (f & 0x400) {
         return (nibble(0x18) * g_k0_04 + g_k1_2) * g_k6_9;
     }
-    return (nibble(0x19) * g_k0_04 + 1.0f) * g_k6_9;
+    return (nibble(0x19) * g_k0_04 + g_one) * g_k6_9;
 }
 
 // @ 0x4b22b0
@@ -907,7 +908,7 @@ void Party::tick_stats()
             }
             float limit = (float)(ch->lvl58 + level * 2 + 0x23);
             if (ch->hp < limit) {
-                float add = ((float)(rand() % 15817) * (1.0f / 0x3dc9) + 0.5f) * 0.5f * speed;
+                float add = ((float)(rand() % 15817) * g_rand_k + 0.5f) * 0.5f * speed;
                 if (troop == g_game->player) {
                     add = add * (3 - (*(int*)((char*)&g_options + 0x4c)));
                 }
@@ -920,7 +921,7 @@ void Party::tick_stats()
             int n = stacks[i].wounded;
             float chance = speed * 0.04f;
             do {
-                if ((float)(rand() % 15817) * (1.0f / 0x3dc9) < chance) {
+                if ((float)(rand() % 15817) * g_rand_k < chance) {
                     stacks[i].wounded--;
                 }
             } while (--n);
@@ -949,7 +950,7 @@ void Party::tick_stats()
                 if (zoom > 0.1f) {
                     chance = chance * 3.0f;
                 }
-                while ((float)(rand() % 15817) * (1.0f / 0x3dc9) < chance) {
+                while ((float)(rand() % 15817) * g_rand_k < chance) {
                     if (slot->item < 0) {
                         break;
                     }
@@ -1032,7 +1033,7 @@ void Party::tick_stats()
         if (g->item >= 0
             && *(unsigned char*)&g_items[g->item].type_flags == 1
             && (g->m4 & 0xff000000) == 0x1e000000
-            && (float)(rand() % 15817) * (1.0f / 0x3dc9) < grid_chance) {
+            && (float)(rand() % 15817) * g_rand_k < grid_chance) {
             *((unsigned char*)g + 7) = 0;
             g->reduce(0);
         }
@@ -2535,7 +2536,7 @@ void BattleRec::update_nav_anim(int)
             __int64 elapsed = g_ticks[born.clock] - born.start;
             float secs = (float)elapsed * g_scale;
             if (next_simulation_time < secs) {
-                next_simulation_time = frand() + 1.0f;
+                next_simulation_time = frand() + g_one;
                 born.start = g_ticks[born.clock];
                 commit();
             }

@@ -67,6 +67,7 @@ extern ID3DXEffect* g_effect;                                                // 
 // 0x415160: open a user file ("rgl_config.txt").
 #include "../../rgl/text_stream.h"             // mb_open_user_file (0x415160)
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../float_consts.h"   // shared float constants kept in memory
 // 0x4b99c0: settings refresh.
 void run_settings_probe();                            // 0x4b99c0 (options_dlg.h; that header's winsock2.h cannot follow windows.h)
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index (clamped to 5).
@@ -213,7 +214,7 @@ void VideoPage::update(int reason)
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
         float gamma = w34->get_float();
         g_options.f80 = gamma;
-        float inv = 1.0f / gamma;
+        float inv = g_one / gamma;
         vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
         vi.x = vi.y = vi.z = vi.w = inv;

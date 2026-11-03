@@ -17,6 +17,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // ======================================================= slice s0052cf60: functions
 #undef g_game_s2cf60
@@ -179,7 +180,7 @@ L5c6:
     if (g_a17184 != 0)
         goto L7dd;
     {
-        float dim = 1.0f - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = dim;
         c.y = dim;
@@ -196,7 +197,7 @@ L666:
         goto L71b;
 L673:
     if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float dim = 1.0f - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = dim;
         c.y = 1.0f;
@@ -213,7 +214,7 @@ L71b:
         goto L7d0;
 L728:
     if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float dim = 1.0f - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
         c.y = dim;
@@ -230,7 +231,7 @@ L7d0:
         goto L885;
 L7dd:
     if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float dim = 1.0f - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
+        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * g_rot_step) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
         c.y = 1.0f;
@@ -1091,7 +1092,7 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
 
     if (g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0 &&
         g_a17188 == 0 && g_a17128 == 0 && g_a17184 == 0) {
-        float s = 1.0f - angle * g_k005b;
+        float s = g_one - angle * g_k005b;
         vec[0] = vec[0] * s;
         vec[1] = vec[1] * s;
         vec[2] = vec[2] * s;
@@ -1099,19 +1100,19 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         *f4 = 1;
     }
     if (g_a17188 != 0 && g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float s = 1.0f - angle * g_k005b;
+        float s = g_one - angle * g_k005b;
         vec[0] = vec[0] * s;
         *f3 = 1;
         *f4 = 1;
     }
     if (g_a17128 != 0 && g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float s = 1.0f - angle * g_k005b;
+        float s = g_one - angle * g_k005b;
         vec[1] = vec[1] * s;
         *f3 = 1;
         *f4 = 1;
     }
     if (g_a17184 != 0 && g_a17194 != 0 && g_a171b4 == 0 && g_a173b4 == 0) {
-        float s = 1.0f - angle * g_k005b;
+        float s = g_one - angle * g_k005b;
         vec[2] = vec[2] * s;
         *f3 = 1;
         *f4 = 1;

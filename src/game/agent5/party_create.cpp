@@ -27,6 +27,7 @@
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
 #include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // ---- layout proofs of the members this object added to PartyWindow ---------------------------------------------------------
 typedef char chk_page_widget[offsetof(PartyWindow, page_widget) == 0x2c ? 1 : -1];
@@ -209,7 +210,7 @@ void PartyWindow::create()
         else
             n = g_game_G->troops[idx].inv_count();
         int nrows = (n + 2) / 3;
-        float rows_h = (float)nrows * 0.088f;
+        float rows_h = (float)nrows * g_row_unit;
         float visible = cfg(tstring("inv_visible_inventory_area"));
 
         InvList* v;

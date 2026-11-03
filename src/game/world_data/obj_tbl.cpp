@@ -16,6 +16,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../include/mesh_parts.h"
 #include "../../include/mesh_prims.h"
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // the mesh widget (MissionUi-derived, vtable 0x5922e8, 0x178 bytes): the slots the factories call
 struct MeshWidgetVt {
@@ -53,7 +54,7 @@ rgl::mesh* scene_tbl::placed(int index)
     ((rgl::matrix*)&frame)->rotate_about_f(&a);
     a = r->rz * 0.017453292f;
     ((rgl::matrix*)&frame)->rotate_about_u(&a);
-    if (r->sx != 1.0f || r->sy != 1.0f || r->sz != 1.0f)
+    if (r->sx != g_one || r->sy != g_one || r->sz != g_one)
         m->set_color(sc);
     m->set_part(*(rgl::matrix*)&frame);
     if (pos.z * pos.z + pos.y * pos.y + pos.x * pos.x != g_zero)

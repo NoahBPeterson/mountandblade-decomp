@@ -36,6 +36,7 @@
 #include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
 #include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 extern Font* g_font;                                // 0x5e2934
@@ -1510,7 +1511,7 @@ void Camera::update(int)
 
     // shake: blend toward the far weights and hand the offset to the object
     if (d5 < lim[5]) {
-        float inv = 1.0f / lim[5];
+        float inv = g_one / lim[5];
         float rest = lim[5] - d5;
         v.x = (d5 * w40 + rest * w42) * inv;
         v.y = (d5 * w41 + rest * w43) * inv;

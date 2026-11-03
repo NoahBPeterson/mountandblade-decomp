@@ -2,6 +2,7 @@
 // s004e4c70, s004e55f0, s004e5f80, s004e65e0, s004e6a70, s004e75a0, s004e7b30 and s004e85d0 (head). T-regime region: helpers sit
 // right after their first caller; the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
@@ -47,7 +48,7 @@ void progress_bar::set_ratio(float r)
         v168 = g_min_ratio;
         return;
     }
-    v168 = (r > 1.0f) ? 1.0f : r;
+    v168 = (r > g_one) ? g_one : r;
     f184 = 1;
 }
 
@@ -168,10 +169,10 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     float d = widest - w;
     float n = run + d;
     run = n;
-    if (!(n >= widest * (-0.5f))) {
-        n = n - d * 0.525f;
+    if (!(n >= widest * g_half_ratio)) {
+        n = n - d * g_ratio_a;
         run = n;
-        widest = n * (-2.1f);
+        widest = n * g_ratio_b;
     } else {
         widest = w;
     }
@@ -1264,7 +1265,7 @@ void MapScreen::init(void* desc)
     }
     rgl::vector4 box = *(rgl::vector4*)(mapview + 0x68);
     float f = box.z + box.y;
-    f = (f + box.x) * 0.3f;
+    f = (f + box.x) * g_chunk_scale;
     int row;
     for (row = 0; row < nchunk_rows; row++) {
         int col;
