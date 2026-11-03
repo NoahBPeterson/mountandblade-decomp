@@ -5,6 +5,11 @@
   .venv/bin/python tools/progress.py --plot [out.png]     # progress over time (default work/progress.png)
   .venv/bin/python tools/progress.py --treemap [out.png]  # one box per module -> function, area = instructions,
                                                           # colour = verdict (default work/treemap.png)
+  .venv/bin/python tools/progress.py --treemap-data [out.png] [--map resolve_map.json]
+                                                          # the original's .rdata/.data/.bss, one panel per section,
+                                                          # area = bytes, colour = who provides it (work/treemap_data.png)
+  .venv/bin/python tools/progress.py --plot-standalone [out.png]   # the standalone-link crutch counts per recorded build
+                                                          # (docs/standalone_history.json; work/standalone.png)
 
 Coverage is computed by tools/status.py itself (run via runpy), so the numbers match docs/STATUS.md.
 """
@@ -150,6 +155,42 @@ if dc:
     print(table(["Class", "Items", "Share", ".rdata+.data", "Share (bytes)", ".bss"],
                 [[c, it[c], pc(it[c], gitems) if c in gcls else "-", "%.1f KB" % (init(c) / 1024),
                   pc(init(c), ginit) if c in gcls else "-", "%.1f MB" % (sb[".bss"][c] / 1e6)] for c in it]))
+
+# Standalone independence: the crutches the relinked exe still leans on, per recorded build
+# (tools/relink/data_coverage.py --from-build DIR --record -> docs/standalone_history.json). (key, title, up is good)
+SA_COLS = (("data_labels", "Glue data labels", False), ("aliases", "Glue aliases", False),
+           ("traps", "Traps (code addresses)", False), ("redirects", "Code pointers redirected to traps", False),
+           ("vtable_slots_rewritten", "Vtable slots rewritten", False),
+           ("vptr_stores_moved", "Vptr stores moved to the original's vtable", False),
+           ("vtbl_externs", "vtbl_* externs", False), ("placeholder_virtuals", "Placeholder virtuals", False),
+           ("forwarding_stubs", "Slots bound by forwarding stubs", False),
+           ("borrowed_items", "Data items borrowed from the image", False),
+           ("borrowed_mb", "Data borrowed from the image (MB)", False),
+           ("data_definitions", "Data definitions at original addresses", True))
+try:
+    SA = sorted(json.load(open(W("docs", "standalone_history.json"))).values(), key=lambda p: p["when"])
+except (OSError, ValueError):
+    SA = []
+
+
+def _sa_value(pt, key):
+    if key == "borrowed_items":
+        return pt["items"]["borrowed from image"]
+    if key == "borrowed_mb":
+        return pt["bytes"]["borrowed from image"] / 1e6
+    return pt.get(key)
+
+
+if SA:
+    a0, a1 = SA[0], SA[-1]
+    print()
+    print("Standalone independence (what the relinked exe still takes from the original image; build %s at commit %s, "
+          "change since %s at %s):" % (a1["build"], a1["commit"], a0["build"], a0["commit"]))
+    srow = lambda title, key, good, f: [title + (" (up is good)" if good else ""), f % _sa_value(a1, key), f % _sa_value(a0, key),
+                                        ("%+d" % (_sa_value(a1, key) - _sa_value(a0, key))) if f == "%d"
+                                        else "%+.2f" % (_sa_value(a1, key) - _sa_value(a0, key))]
+    print(table(["Crutch", "Latest", "First", "Change"],
+                [srow(t, k, g, "%.2f" if k == "borrowed_mb" else "%d") for k, t, g in SA_COLS if _sa_value(a1, k) is not None]))
 
 rows = []
 for bf in sorted(glob.glob(W("work", "batches", "*.json")), key=os.path.getmtime):
@@ -521,6 +562,64 @@ def _tree_cells(rows, names):
     return out
 
 
+def _fit_labels(fig, ax, labels, FS):
+    """Fit [(Text, (x, y, w, h), name)] into their boxes and return how many stayed drawn."""
+    # Fit the labels, horizontally first, then rotated; drop the ones that still do not fit. Two draw passes measure
+    # real glyph extents, so no label can spill into its neighbour.
+    def bbox_data(t):
+        bb = t.get_window_extent(fig.canvas.get_renderer())
+        (x0, y0), (x1, y1) = ax.transData.inverted().transform([[bb.x0, bb.y0], [bb.x1, bb.y1]])
+        return min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)
+
+    def place(t, r, rot):
+        """Rotate the label and put its *measured* box inside the cell; False when it cannot fit at this size."""
+        t.set_rotation(rot)
+        t.set_ha("left")
+        t.set_va("top" if rot == 0 else "bottom")
+        x0, y0, x1, y1 = bbox_data(t)
+        fx, fy, fw, fh = r
+        if x1 - x0 > fw - 0.4 or y1 - y0 > fh - 0.3:
+            return False
+        px, py = t.get_position()
+        t.set_position((px + (fx + 0.2 - x0), py + (fy + fh - 0.2 - y1)))     # exact containment, no clipping
+        return True
+
+    placed, pending = 0, labels
+    for size in (FS, FS - 0.9, FS - 1.7, 4.5):   # shrink before giving up: a smaller word beats an unlabelled box
+        for t, r, _nm in pending:
+            t.set_fontsize(size)
+            t.set_position((r[0] + 0.2, r[1] + r[3] - 0.2))
+            t.set_rotation(0)
+        fig.canvas.draw()
+        rot, still = [], []
+        for t, r, nm in pending:
+            if place(t, r, 0):
+                placed += 1
+                continue
+            t.set_position((r[0] + 0.2, r[1] + 0.25))
+            rot.append((t, r, nm))
+        fig.canvas.draw()
+        for t, r, nm in rot:
+            if place(t, r, 90):
+                placed += 1
+                continue
+            t.set_rotation(0)
+            still.append((t, r, nm))
+        pending = still
+    # last resort: abbreviate the name at the smallest size (a clipped word is better than a blank box)
+    for t, r, _nm in pending:
+        t.set_text(_nm[:9] + "…" if len(_nm) > 10 else _nm)
+        t.set_fontsize(4.5)
+        t.set_position((r[0] + 0.2, r[1] + r[3] - 0.15))
+    fig.canvas.draw()
+    for t, r, _nm in pending:
+        if place(t, r, 0):
+            placed += 1
+        else:
+            t.remove()                           # nothing fits: the colour still carries the verdict
+    return placed
+
+
 def treemap(path):
     """Treemap of every census function: group -> source file (module) -> function, area = instructions,
     colour = verdict. Every file box is drawn; its label is measured and only kept where it fits (horizontal first,
@@ -600,70 +699,7 @@ def treemap(path):
                         bbox=dict(boxstyle="square,pad=0.1", fc=SURFACE, ec="none", alpha=0.85))
             labels.append((t, (fx, fy, fw, fh), nm))
 
-    # Fit the labels, horizontally first, then rotated; drop the ones that still do not fit. Two draw passes measure
-    # real glyph extents, so no label can spill into its neighbour.
-    def keep(t, r, rot):
-        t.set_rotation(rot)
-        bb = t.get_window_extent(fig.canvas.get_renderer())
-        (x0, y0), (x1, y1) = ax.transData.inverted().transform([[bb.x0, bb.y0], [bb.x1, bb.y1]])
-        w, h = abs(x1 - x0), abs(y1 - y0)
-        fx, fy, fw, fh = r
-        if w <= fw - 0.5 and h <= fh - 0.35:
-            return True
-        return False
-
-    def bbox_data(t):
-        bb = t.get_window_extent(fig.canvas.get_renderer())
-        (x0, y0), (x1, y1) = ax.transData.inverted().transform([[bb.x0, bb.y0], [bb.x1, bb.y1]])
-        return min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)
-
-    def place(t, r, rot):
-        """Rotate the label and put its *measured* box inside the cell; False when it cannot fit at this size."""
-        t.set_rotation(rot)
-        t.set_ha("left")
-        t.set_va("top" if rot == 0 else "bottom")
-        x0, y0, x1, y1 = bbox_data(t)
-        fx, fy, fw, fh = r
-        if x1 - x0 > fw - 0.4 or y1 - y0 > fh - 0.3:
-            return False
-        px, py = t.get_position()
-        t.set_position((px + (fx + 0.2 - x0), py + (fy + fh - 0.2 - y1)))     # exact containment, no clipping
-        return True
-
-    placed, pending = 0, labels
-    for size in (FS, FS - 0.9, FS - 1.7, 4.5):   # shrink before giving up: a smaller word beats an unlabelled box
-        for t, r, _nm in pending:
-            t.set_fontsize(size)
-            t.set_position((r[0] + 0.2, r[1] + r[3] - 0.2))
-            t.set_rotation(0)
-        fig.canvas.draw()
-        rot, still = [], []
-        for t, r, nm in pending:
-            if place(t, r, 0):
-                placed += 1
-                continue
-            t.set_position((r[0] + 0.2, r[1] + 0.25))
-            rot.append((t, r, nm))
-        fig.canvas.draw()
-        for t, r, nm in rot:
-            if place(t, r, 90):
-                placed += 1
-                continue
-            t.set_rotation(0)
-            still.append((t, r, nm))
-        pending = still
-    # last resort: abbreviate the name at the smallest size (a clipped word is better than a blank box)
-    for t, r, _nm in pending:
-        t.set_text(_nm[:9] + "…" if len(_nm) > 10 else _nm)
-        t.set_fontsize(4.5)
-        t.set_position((r[0] + 0.2, r[1] + r[3] - 0.15))
-    fig.canvas.draw()
-    for t, r, _nm in pending:
-        if place(t, r, 0):
-            placed += 1
-        else:
-            t.remove()                           # nothing fits: the colour still carries the verdict
-    labels = placed
+    labels = _fit_labels(fig, ax, labels, FS)
     handles = [Patch(fc=colour[k], ec="#d8d6cf", lw=0.5,
                      label="%s - %d functions, %.1f%% of the instructions" % (label[k], counts[k], 100.0 * insn[k] / tot_i))
                for k, _l, _c in TREE_CATS if counts[k]]
@@ -686,6 +722,185 @@ def treemap(path):
           ", ".join("%s %d" % (k, v) for k, v in counts.items() if v)))
 
 
+# ---------------------------------------------------------------- standalone independence
+
+# Who provides each item of the original's static data. Same Okabe-Ito palette as the verdicts above; the one warm,
+# saturated colour is the crutch (borrowed from the original image), everything that is ours is a cool colour.
+DATA_CATS = (("defined in source", "Defined in source: a named global at the original's address", "#0072B2"),     # blue
+             ("generated from source", "Generated from source: string literals, constants, vtables", "#009E73"),  # bluish green
+             ("borrowed from image", "BORROWED from the original image (the crutch)", "#D55E00"),                # vermillion
+             ("reached through tables", "Reached only through pointer tables (the pages of a pool)", "#CC79A7"), # reddish purple
+             ("library data", "Library data: static CRT/C++, linked from libcmt", "#8FB1C8"))
+
+
+def _module_of(rel):
+    """Module name of a src/ or match/slices/ file that claims a function (see _files_by_function)."""
+    if not rel:
+        return None
+    if rel.startswith("match/slices/"):
+        return "slices/" + rel.split("/")[2]
+    n = rel.rsplit("/", 1)[-1]
+    for suf in (".nonmatching.txt", ".manifest.txt", ".partial.txt", ".txt"):
+        if n.endswith(suf):
+            return n[:-len(suf)]
+    return n
+
+
+def _bytes_str(n):
+    return "%.1f MB" % (n / 1e6) if n >= 1e6 else "%.0f KB" % (n / 1024) if n >= 1024 else "%d B" % n
+
+
+def treemap_data(path):
+    """Treemap of the original's static data: one panel per section (.bss is megabytes of arrays, so it cannot share
+    a scale with the kilobytes of .rdata/.data), module -> class -> item, area = bytes, colour = who provides the item.
+    Items come from tools/relink/data_coverage.py (recovered from their uses). Owning module: the module of the first
+    row that references the item's name, for items our source defines or generates; otherwise the module of the
+    lowest-addressed game function that uses the item."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch, Rectangle
+    sys.path.insert(0, W("tools", "relink"))
+    import data_coverage as DC
+    import resolve as R
+    from glue import section_of
+    mp = sys.argv[sys.argv.index("--map") + 1] if "--map" in sys.argv else W("work", "relink", "resolve_map.json")
+    rmap = json.load(open(mp))
+    first = {}
+    items, _uses, named = DC.data_items(R.Image(), rmap, starts, game, first)
+    owners = DC.item_owners(items, first, named, rmap)
+    files = _files_by_function()
+    INK, MUTED, SURFACE = "#0b0b0b", "#52514e", "#fcfcfb"
+    colour = dict((k, c) for k, _l, c in DATA_CATS)
+    label = dict((k, l) for k, l, _c in DATA_CATS)
+    SECS = (".rdata", ".data", ".bss")
+    cells = {s: {} for s in SECS}              # section -> module -> [(class, bytes)]
+    rule = {"defined": 0, "first user": 0, "neither": 0}
+    cnt = {k: [0, 0] for k, _l, _c in DATA_CATS}
+    sec_tot = {s: {k: [0, 0] for k, _l, _c in DATA_CATS} for s in SECS}
+    for (s, e, c), (fn, mod) in zip(items, owners):
+        sec = section_of(s)[0].split("$")[0]
+        if mod and c in ("defined in source", "generated from source"):
+            m, how = mod, "defined"
+        elif fn is not None:
+            m, how = _module_of(files.get(fn)) or "(no source)", "first user"
+        else:
+            m, how = "(library)" if c == "library data" else "(pointer tables)", "neither"
+        rule[how] += 1
+        cells[sec].setdefault(m, []).append((c, e - s))
+        for t in (cnt[c], sec_tot[sec][c]):
+            t[0] += 1
+            t[1] += e - s
+    src = [cnt["defined in source"][i] + cnt["generated from source"][i] for i in (0, 1)]
+    bor = cnt["borrowed from image"]
+    n_items, n_bytes = sum(v[0] for v in cnt.values()), sum(v[1] for v in cnt.values())
+
+    fig = plt.figure(figsize=(16.0, 13.5), dpi=150)
+    fig.patch.set_facecolor(SURFACE)
+    pos = {".rdata": [0.012, 0.495, 0.585, 0.355], ".data": [0.61, 0.495, 0.378, 0.355], ".bss": [0.012, 0.095, 0.976, 0.34]}
+    FS = 6.4
+    placed = 0
+    for sec in SECS:
+        ax = fig.add_axes(pos[sec])
+        W_, H_ = 100.0 * pos[sec][2] * 16.0 / (pos[sec][3] * 13.5), 100.0
+        ax.set_facecolor(SURFACE)
+        ax.set_xlim(0, W_)
+        ax.set_ylim(0, H_)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        for sp in ax.spines.values():
+            sp.set_visible(False)
+        st = sec_tot[sec]
+        s_b = st["defined in source"][1] + st["generated from source"][1]
+        tot = sum(v[1] for v in st.values()) or 1
+        ax.set_title("%s: %s in %d items\n%.1f%% of the bytes from our source, %.1f%% borrowed from the image (%d items)" % (
+            sec, _bytes_str(tot), sum(v[0] for v in st.values()), 100.0 * s_b / tot,
+            100.0 * st["borrowed from image"][1] / tot, st["borrowed from image"][0]),
+            loc="left", fontsize=9, color=INK, weight="bold")
+        labels = []
+        mods = cells[sec]
+        for m, (mx, my, mw, mh) in squarify([(m, sum(b for _c, b in v)) for m, v in mods.items()], 0, 0, W_, H_):
+            mx, my, mw, mh = mx + 0.1, my + 0.1, mw - 0.2, mh - 0.2
+            if mw <= 0 or mh <= 0:
+                continue
+            ax.add_patch(Rectangle((mx, my), mw, mh, fill=False, lw=0.5, ec=MUTED, zorder=4))
+            byc = {}
+            for c, b in mods[m]:
+                byc[c] = byc.get(c, 0) + b
+            for c, (cx, cy, cw, ch) in squarify(list(byc.items()), mx, my, mw, mh):           # one block per class ...
+                for _i, (x_, y_, w_, h_) in squarify(list(enumerate(b for c2, b in mods[m] if c2 == c)), cx, cy, cw, ch):
+                    ax.add_patch(Rectangle((x_, y_), w_, h_, fc=colour[c], ec=SURFACE, lw=0.15, zorder=2))   # ... one cell per item
+            t = ax.text(mx + 0.25, my + mh - 0.2, m, ha="left", va="top", fontsize=FS, color=INK, zorder=6,
+                        bbox=dict(boxstyle="square,pad=0.1", fc=SURFACE, ec="none", alpha=0.85))
+            labels.append((t, (mx, my, mw, mh), m))
+        placed += _fit_labels(fig, ax, labels, FS)
+    handles = [Patch(fc=colour[k], ec="#d8d6cf", lw=0.5,
+                     label="%s - %d items, %s" % (label[k], cnt[k][0], _bytes_str(cnt[k][1]))) for k, _l, _c in DATA_CATS]
+    fig.legend(handles=handles, loc="lower left", bbox_to_anchor=(0.012, 0.004), frameon=False, fontsize=8.6,
+               labelcolor=INK, ncol=2, handlelength=1.1, handleheight=0.9)
+    fig.suptitle("Mount & Blade 1.011 static data: %d items, %s - %d items (%s) come from our source, %d (%s) are "
+                 "borrowed from the original image" % (n_items, _bytes_str(n_bytes), src[0], _bytes_str(src[1]), bor[0],
+                                                       _bytes_str(bor[1])), x=0.012, ha="left", fontsize=12, color=INK)
+    fig.text(0.012, 0.955, "One panel per section (their scales differ by 400x); box = module, area = item bytes, colour = who provides the item "
+             "(tools/relink/data_coverage.py).\n"
+             "Owning module: for items our source defines or generates, the module of the first row that references the name "
+             "(%d items); otherwise the module of the lowest-addressed game function\nthat uses the item (%d); "
+             "items no game function uses are grouped as (library) or (pointer tables) (%d).  Resolution map: %s.\n"
+             "Item sizes are approximate: an item absorbs padding and unreferenced data up to the next item.  The vermillion boxes are "
+             "what the standalone link still takes from the original image;\nthe few huge ones are .bss arrays."
+             % (rule["defined"], rule["first user"], rule["neither"], os.path.relpath(mp, ROOT) if mp.startswith(ROOT) else mp),
+             fontsize=8.2, color=MUTED, va="top")
+    fig.savefig(path, facecolor=SURFACE)
+    print("\nwrote %s (%d items, %d module labels)" % (os.path.relpath(path, ROOT), n_items, placed))
+
+
+def plot_standalone(path):
+    """The crutch counts of every build recorded in docs/standalone_history.json (tools/relink/data_coverage.py
+    --from-build DIR --record), one small panel per count. Blue-green panels count what source now provides."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    BAD, GOOD = "#D55E00", "#009E73"
+    SURFACE, INK, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e6e5e0"
+    if not SA:
+        sys.exit("no points in docs/standalone_history.json")
+    fig, axs = plt.subplots(3, 4, figsize=(16.0, 9.6), dpi=150)
+    fig.patch.set_facecolor(SURFACE)
+    xs = list(range(len(SA)))
+    for ax, (key, title, good) in zip(axs.flat, SA_COLS):
+        ys = [_sa_value(p, key) for p in SA]
+        ax.set_facecolor(SURFACE)
+        ax.set_title(title, loc="left", fontsize=9, color=INK)
+        ax.grid(axis="y", color=GRID, lw=1)
+        ax.set_axisbelow(True)
+        col = GOOD if good else BAD
+        pts = [(x, y) for x, y in zip(xs, ys) if y is not None]
+        ax.plot([x for x, _ in pts], [y for _, y in pts], color=col, lw=2, marker="o", ms=4)
+        top = max(y for _, y in pts) or 1
+        ax.set_ylim(0, top * 1.22)
+        ax.set_xlim(-0.35, len(SA) - 1 + 0.9)
+        fmt = (lambda v: "%.2f" % v) if isinstance(pts[-1][1], float) else (lambda v: "%d" % v)
+        ax.annotate(fmt(pts[-1][1]), pts[-1], xytext=(6, 0), textcoords="offset points", ha="left", va="center",
+                    fontsize=10, color=col, weight="bold")
+        ax.annotate(fmt(pts[0][1]), pts[0], xytext=(0, 7), textcoords="offset points", ha="center", va="bottom",
+                    fontsize=8, color=MUTED)
+        ax.set_xticks(xs)
+        ax.set_xticklabels([p["commit"][:7] for p in SA], fontsize=6.5, color=MUTED)
+        ax.tick_params(axis="y", labelsize=7, colors=MUTED)
+        for sp in ("top", "right"):
+            ax.spines[sp].set_visible(False)
+    fig.suptitle("Standalone independence: what the relinked exe still borrows from the original image (%d recorded builds)" % len(SA),
+                 x=0.012, ha="left", fontsize=12, color=INK)
+    fig.text(0.012, 0.012, "One point per recorded build (x = the build's commit, evenly spaced, oldest left; %s to %s); "
+             "tools/relink/data_coverage.py --from-build DIR --record adds one.  Axes start at 0; first and last value labelled.\n"
+             "Vermillion panels count a crutch (down is good); green panels count what our source defines (up is good).  "
+             "Commits are the last one on main before the build finished, so a build from a branch may be off." % (
+                 SA[0]["when"][:10], SA[-1]["when"][:10]), fontsize=8.2, color=MUTED)
+    fig.subplots_adjust(left=0.04, right=0.985, top=0.9, bottom=0.12, wspace=0.28, hspace=0.5)
+    fig.savefig(path, facecolor=SURFACE)
+    print("\nwrote %s (%d builds)" % (os.path.relpath(path, ROOT), len(SA)))
+
+
 # Last on purpose: the chart paths are the final lines of output.
 def _out(name, default):
     i = sys.argv.index(name)
@@ -694,5 +909,9 @@ def _out(name, default):
 
 if "--treemap" in sys.argv:
     treemap(_out("--treemap", "treemap.png"))
+if "--treemap-data" in sys.argv:
+    treemap_data(_out("--treemap-data", "treemap_data.png"))
+if "--plot-standalone" in sys.argv:
+    plot_standalone(_out("--plot-standalone", "standalone.png"))
 if "--plot" in sys.argv:
     plot_history(_out("--plot", "progress.png"))

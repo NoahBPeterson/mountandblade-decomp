@@ -1,0 +1,118 @@
+{
+ "2026-11-01T11:58:08-06:00": {
+  "data_labels": 1412,
+  "aliases": 483,
+  "traps": 248,
+  "redirects": 304,
+  "vtable_slots_rewritten": 8,
+  "vptr_stores_moved": 512,
+  "vtbl_externs": 24,
+  "placeholder_virtuals": 45,
+  "forwarding_stubs": 1032,
+  "data_definitions": 20,
+  "when": "2026-11-01T11:58:08-06:00",
+  "commit": "815f8598",
+  "build": "standalone",
+  "items": {
+   "defined in source": 99,
+   "generated from source": 2321,
+   "borrowed from image": 785,
+   "reached through tables": 790,
+   "library data": 538
+  },
+  "bytes": {
+   "defined in source": 6368,
+   "generated from source": 313796,
+   "borrowed from image": 126908024,
+   "reached through tables": 17009720,
+   "library data": 57058
+  }
+ },
+ "2026-11-02T12:52:44-06:00": {
+  "data_labels": 1412,
+  "aliases": 483,
+  "traps": 248,
+  "redirects": 304,
+  "vtable_slots_rewritten": 8,
+  "vptr_stores_moved": 512,
+  "vtbl_externs": 24,
+  "placeholder_virtuals": 45,
+  "forwarding_stubs": 1032,
+  "data_definitions": 20,
+  "when": "2026-11-02T12:52:44-06:00",
+  "commit": "e648849b",
+  "build": "sa_base3",
+  "items": {
+   "defined in source": 99,
+   "generated from source": 2321,
+   "borrowed from image": 785,
+   "reached through tables": 790,
+   "library data": 538
+  },
+  "bytes": {
+   "defined in source": 6368,
+   "generated from source": 313796,
+   "borrowed from image": 126908024,
+   "reached through tables": 17009720,
+   "library data": 57058
+  }
+ },
+ "2026-11-02T16:51:20-06:00": {
+  "data_labels": 1182,
+  "aliases": 478,
+  "traps": 248,
+  "redirects": 304,
+  "vtable_slots_rewritten": 6,
+  "vptr_stores_moved": 513,
+  "vtbl_externs": 23,
+  "placeholder_virtuals": 45,
+  "forwarding_stubs": 1026,
+  "data_definitions": 74,
+  "when": "2026-11-02T16:51:20-06:00",
+  "commit": "e8a863ab",
+  "build": "d1_build",
+  "items": {
+   "defined in source": 143,
+   "generated from source": 2343,
+   "borrowed from image": 654,
+   "reached through tables": 790,
+   "library data": 538
+  },
+  "bytes": {
+   "defined in source": 51125,
+   "generated from source": 314156,
+   "borrowed from image": 126862907,
+   "reached through tables": 17009720,
+   "library data": 57058
+  }
+ },
+ "2026-11-02T20:25:20-06:00": {
+  "data_labels": 708,
+  "aliases": 468,
+  "traps": 252,
+  "redirects": 308,
+  "vtable_slots_rewritten": 6,
+  "vptr_stores_moved": 513,
+  "vtbl_externs": 23,
+  "placeholder_virtuals": 45,
+  "forwarding_stubs": 1026,
+  "data_definitions": 128,
+  "when": "2026-11-02T20:25:20-06:00",
+  "commit": "a039dce2",
+  "build": "main_merged",
+  "items": {
+   "defined in source": 163,
+   "generated from source": 2553,
+   "borrowed from image": 395,
+   "reached through tables": 624,
+   "library data": 538
+  },
+  "bytes": {
+   "defined in source": 57041,
+   "generated from source": 318648,
+   "borrowed from image": 126856319,
+   "reached through tables": 17005900,
+   "library data": 57058
+  }
+ }
+}
