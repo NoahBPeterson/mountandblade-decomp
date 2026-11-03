@@ -486,15 +486,16 @@ def main():
     steps["traps"] = "%d trapped code addresses, all proven unreachable (no data label, literal or vtable reaches them)" % ntraps
 
     # data gate: a definition smaller than the original object (a 4-byte `char* t[1]` for a 0x160-byte table overlaps
-    # every global linked after it) or two definitions for one original address (the glue aliases the address to one;
+    # every global linked after it), a label inside another object's range (a second owner of the same bytes) or two definitions for one original address (the glue aliases the address to one;
     # code that fills or reads the other never sees it). tools/relink/data_size_audit.py lists them.
     import data_size_audit as DA
-    under, dup_addrs, ndefs = DA.gate(rmap_path, map_path)
-    if under or dup_addrs:
+    under, dup_addrs, ndefs, over = DA.gate(rmap_path, map_path)
+    if under or dup_addrs or over:
         sys.exit("data gate: %d undersized definitions (%s); %d original addresses with several storage locations (%s); "
-                 "see tools/relink/data_size_audit.py" % (
+                 "%d overlapping labels, a name inside another object's range (%s); see tools/relink/data_size_audit.py" % (
                      len(under), ", ".join("%08x %s %d<%d" % (e["va"], e["name"], e["size"], e["claimed"]) for e in under[:8]),
-                     len(dup_addrs), ", ".join("%08x" % v for v, _a in dup_addrs[:8])))
+                     len(dup_addrs), ", ".join("%08x" % v for v, _a in dup_addrs[:8]),
+                     len(over), ", ".join("%08x+%x %s" % (o[0], o[3] - o[0], o[4][0] if o[4] else "?") for o in over[:8])))
     # one data name, several original addresses: the glue gives the name one of them, so the sources annotated with the
     # other read or write the wrong bytes (g_gui_dirty: 0x5d8788 in agent_hud, 0x5d8789 in gui_manager -- the dropdown
     # list's close flag landed on the neighbouring byte and the list never closed). Harness model addresses don't count.
@@ -509,7 +510,7 @@ def main():
         sys.exit("data gate: %d data names annotated with more than one original address (%s): pick the right address "
                  "for each source (resolve_map.json 'names' lists the rows behind each)" % (
                      len(multi), "; ".join("%s %s" % (n, "/".join(v)) for n, v in sorted(multi.items())[:8])))
-    steps["data"] = "%d data definitions at original addresses: none smaller than a declaration of its address, one storage each, one address per name" % ndefs
+    steps["data"] = "%d data definitions at original addresses: none smaller than a declaration of its address, one storage each, one address per name, none inside another object's range" % ndefs
 
     import resolve as R
     img = R.Image()
