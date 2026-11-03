@@ -43,3 +43,8 @@
 00a75f70 00a75f90  # g_a75f70 (0x6b8 bytes) holds ?g_sort_val@@3PAUSortVal@@A, g_sort_val
 08ed4df8 08ed4e14  # ?g_ttypes@@3PAUttype@@A (0x160 bytes) holds g_x8ed4e14
 08ee3c48 08ee3fc4  # g_app_dialog (0x5a0 bytes) holds ?g_dlg_options@@3PAXA, g_dlg_options
+005fe898 00a170c0  # g_5fe898 (0x41882c bytes: the render batch view runs one word past the real object) holds g_psys_scene
+00a17000 00a170c0  # g_key_a (0x400 bytes, annotated 0xa17000: the old camera key view, 0xd4 below the real tables) holds g_psys_scene
+00a17000 00a170c8  # g_key_a (as above) holds g_keyboard
+00a76630 08eb235c  # g_a76630 (the terrain view, 0x845e7c8 bytes) holds g_world_color (D3 data)
+00a76630 08ed4db4  # g_a76630 (as above) holds g_tstr (D3 data)

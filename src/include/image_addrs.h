@@ -92,9 +92,6 @@ extern text_stream g_log;                  // 0x5a9f60
 
 
 extern options_record g_options;           // 0x5aa008
-extern int g_iWindowWidth;                 // 0x5a9fe4
-extern int g_iWindowHeight;                // 0x5a9fe8
-extern int g_shadow_quality_req;           // 0x5aa004
 
 
 
@@ -121,17 +118,6 @@ extern int g_shadow_quality_req;           // 0x5aa004
 
 
 extern SoundMgr g_sound_mgr;               // 0x5aa128
-extern int g_texture_detail;               // 0x5a9f9c
-
-extern int g_simple_reflect;               // 0x5a9fc4
-extern int g_iWindowWidth;                 // 0x5a9fe4
-extern int g_iWindowHeight;                // 0x5a9fe8
-extern int g_shadow_quality_req;           // 0x5aa004
-extern int g_char_shadow;                  // 0x5aa028
-
-extern int g_plant_shadow;                 // 0x5aa034
-extern int g_ragdoll_lim;                  // 0x5aa03c
-extern int g_particle;                     // 0x5aa040
 
 extern Config g_launcher_cfg;              // 0x5aa0a8
 extern resmgr g_resmgr_obj;                    // 0x5d6fa0
@@ -154,8 +140,6 @@ extern render_batch g_batch;               // 0x5fe898
 extern int g_ptype_count;                  // 0x5e29e8
 extern render_batch g_batch;               // 0x5fe898
 extern InputSet g_input_a;                 // 0xa170c8
-extern void* g_a17110;                     // 0xa17110
-extern void* g_a17510;                     // 0xa17510
 extern renderer g_render;                  // 0xa17910
 
 extern ini_file g_module_info;             // 0xa18238

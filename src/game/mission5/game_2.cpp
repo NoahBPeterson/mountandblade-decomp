@@ -442,7 +442,7 @@ void Game::build_map_trees()
     // ---- G: grid dimensions and cell entities -----------------------------
     g_sizex = g_maxx - g_minx;
     g_sizey = g_maxy - g_miny;
-    float stepx = (g_sizex + 5.0f) * 0.125f;                                 // 0x59393c, 0x54b8a0
+    float stepx = (g_sizex + 5.0f) * 0.125f;                                 // (rdata constants)
     float stepy = (g_sizey + 5.0f) * 0.125f;
     g_page_cols = (int)ceil(g_sizex / stepx);                                // ceil 0x535ae0, __ftol2 0x535a64
     g_page_rows = (int)ceil(g_sizey / stepy);

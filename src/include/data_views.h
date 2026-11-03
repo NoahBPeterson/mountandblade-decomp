@@ -14,12 +14,14 @@ extern char g_ovl_005aa0a8[];   // 0x005aa0a8
 extern char g_ovl_005aa128[];   // 0x005aa128
 extern char g_ovl_005d7080[];   // 0x005d7080
 extern char g_ovl_005e2948[];   // 0x005e2948
-extern char g_ovl_00a170c8[];   // 0x00a170c8
 extern char g_ovl_00a17910[];   // 0x00a17910
 extern char g_ovl_00a17f2c[];   // 0x00a17f2c
 extern char g_ovl_00a180f8[];   // 0x00a180f8
 extern char g_ovl_00a181f8[];   // 0x00a181f8
-extern char g_ovl_00a70248[];   // 0x00a70248
+struct Slot;
+extern Slot g_keyboard;                // (the object itself: a second label for it would be a second storage)
+struct ShadowMap;
+extern ShadowMap g_shadow_map;         // (defined in game_state.cpp)
 extern char g_ovl_00a70450[];   // 0x00a70450
 extern char g_ovl_00a73300[];   // 0x00a73300
 extern char g_ovl_00a73a10[];   // 0x00a73a10
@@ -115,79 +117,79 @@ extern char g_ovl_08ee3c48[];   // 0x08ee3c48
 #define g_tick_lo (*(int*)(g_ovl_005e2948 + 0x10))   // 0x005e2958
 #define g_tick_hi (*(int*)(g_ovl_005e2948 + 0x14))   // 0x005e295c
 #define g_ticks_dt ((__int64*)(g_ovl_005e2948 + 0x28))   // 0x005e2970
-#define g_a170d0 (*(DiDev **)(g_ovl_00a170c8 + 0x8))   // 0x00a170d0
-#define g_a170d4 ((char*)(g_ovl_00a170c8 + 0xc))   // 0x00a170d4
-#define g_a170dc (*(int*)(g_ovl_00a170c8 + 0x14))   // 0x00a170dc
-#define g_a170e0 (*(int*)(g_ovl_00a170c8 + 0x18))   // 0x00a170e0
-#define g_a170e4 (*(int*)(g_ovl_00a170c8 + 0x1c))   // 0x00a170e4
-#define g_flag_a17108 (*(int*)(g_ovl_00a170c8 + 0x40))   // 0x00a17108
-#define g_a17118 (*(int*)(g_ovl_00a170c8 + 0x50))   // 0x00a17118
-#define g_cam_version (*(int*)(g_ovl_00a170c8 + 0x50))   // 0x00a17118
-#define g_key_17118 (*(int*)(g_ovl_00a170c8 + 0x50))   // 0x00a17118
-#define g_a1711c (*(int*)(g_ovl_00a170c8 + 0x54))   // 0x00a1711c
-#define g_a17128 (*(int*)(g_ovl_00a170c8 + 0x60))   // 0x00a17128
-#define g_a1712c (*(int*)(g_ovl_00a170c8 + 0x64))   // 0x00a1712c
-#define g_a17144 (*(int*)(g_ovl_00a170c8 + 0x7c))   // 0x00a17144
-#define g_a1714c (*(int*)(g_ovl_00a170c8 + 0x84))   // 0x00a1714c
-#define g_cam_right (*(int*)(g_ovl_00a170c8 + 0x84))   // 0x00a1714c
-#define g_key_1714c (*(int*)(g_ovl_00a170c8 + 0x84))   // 0x00a1714c
-#define g_cam_left (*(int*)(g_ovl_00a170c8 + 0x88))   // 0x00a17150
-#define g_key_17150 (*(int*)(g_ovl_00a170c8 + 0x88))   // 0x00a17150
-#define g_cam_in (*(int*)(g_ovl_00a170c8 + 0x8c))   // 0x00a17154
-#define g_key_17154 (*(int*)(g_ovl_00a170c8 + 0x8c))   // 0x00a17154
-#define g_a17158 (*(int*)(g_ovl_00a170c8 + 0x90))   // 0x00a17158
-#define g_cam_out (*(int*)(g_ovl_00a170c8 + 0x90))   // 0x00a17158
-#define g_a1715c (*(int*)(g_ovl_00a170c8 + 0x94))   // 0x00a1715c
-#define g_a1717c (*(int*)(g_ovl_00a170c8 + 0xb4))   // 0x00a1717c
-#define g_a17184 (*(int*)(g_ovl_00a170c8 + 0xbc))   // 0x00a17184
-#define g_a17188 (*(int*)(g_ovl_00a170c8 + 0xc0))   // 0x00a17188
-#define g_cam_roll (*(int*)(g_ovl_00a170c8 + 0xc4))   // 0x00a1718c
-#define g_a17190 (*(int*)(g_ovl_00a170c8 + 0xc8))   // 0x00a17190
-#define g_a17194 (*(int*)(g_ovl_00a170c8 + 0xcc))   // 0x00a17194
-#define g_a171b8 (*(int*)(g_ovl_00a170c8 + 0xf0))   // 0x00a171b8
-#define g_a171fc (*(int*)(g_ovl_00a170c8 + 0x134))   // 0x00a171fc
-#define g_key_171fc (*(int*)(g_ovl_00a170c8 + 0x134))   // 0x00a171fc
-#define g_a17204 (*(int*)(g_ovl_00a170c8 + 0x13c))   // 0x00a17204
-#define g_in_17204 (*(int*)(g_ovl_00a170c8 + 0x13c))   // 0x00a17204
-#define g_key_17204 (*(int*)(g_ovl_00a170c8 + 0x13c))   // 0x00a17204
-#define g_a1720c (*(int*)(g_ovl_00a170c8 + 0x144))   // 0x00a1720c
-#define g_key_1720c (*(int*)(g_ovl_00a170c8 + 0x144))   // 0x00a1720c
-#define g_a17214 (*(int*)(g_ovl_00a170c8 + 0x14c))   // 0x00a17214
-#define g_in_17214 (*(int*)(g_ovl_00a170c8 + 0x14c))   // 0x00a17214
-#define g_key_17214 (*(int*)(g_ovl_00a170c8 + 0x14c))   // 0x00a17214
-#define g_key_b ((int*)(g_ovl_00a170c8 + 0x338))   // 0x00a17400
-#define g_a1741c (*(int*)(g_ovl_00a170c8 + 0x354))   // 0x00a1741c
-#define g_a17420 (*(int*)(g_ovl_00a170c8 + 0x358))   // 0x00a17420
-#define g_a17454 (*(int*)(g_ovl_00a170c8 + 0x38c))   // 0x00a17454
-#define g_key_17454 (*(int*)(g_ovl_00a170c8 + 0x38c))   // 0x00a17454
-#define g_a17458 (*(int*)(g_ovl_00a170c8 + 0x390))   // 0x00a17458
-#define g_in_17458 (*(int*)(g_ovl_00a170c8 + 0x390))   // 0x00a17458
-#define g_key_17458 (*(int*)(g_ovl_00a170c8 + 0x390))   // 0x00a17458
-#define g_origin_state ((int*)(g_ovl_00a170c8 + 0x40c))   // 0x00a174d4
-#define g_a174dc (*(int*)(g_ovl_00a170c8 + 0x414))   // 0x00a174dc
-#define g_a174e0 (*(int*)(g_ovl_00a170c8 + 0x418))   // 0x00a174e0
-#define g_a174e4 (*(int*)(g_ovl_00a170c8 + 0x41c))   // 0x00a174e4
-#define g_a17518 (*(int*)(g_ovl_00a170c8 + 0x450))   // 0x00a17518
-#define g_cam_down (*(int*)(g_ovl_00a170c8 + 0x450))   // 0x00a17518
-#define g_a1751c (*(int*)(g_ovl_00a170c8 + 0x454))   // 0x00a1751c
-#define g_a1752c (*(int*)(g_ovl_00a170c8 + 0x464))   // 0x00a1752c
-#define g_a17544 (*(int*)(g_ovl_00a170c8 + 0x47c))   // 0x00a17544
-#define g_a1754c (*(int*)(g_ovl_00a170c8 + 0x484))   // 0x00a1754c
-#define g_a17588 (*(int*)(g_ovl_00a170c8 + 0x4c0))   // 0x00a17588
-#define g_a1758c (*(int*)(g_ovl_00a170c8 + 0x4c4))   // 0x00a1758c
-#define g_a17590 (*(int*)(g_ovl_00a170c8 + 0x4c8))   // 0x00a17590
-#define g_a1781c (*(int*)(g_ovl_00a170c8 + 0x754))   // 0x00a1781c
-#define g_a17820 (*(int*)(g_ovl_00a170c8 + 0x758))   // 0x00a17820
-#define g_a17854 (*(int*)(g_ovl_00a170c8 + 0x78c))   // 0x00a17854
-#define g_a178d4 (*(float*)(g_ovl_00a170c8 + 0x80c))   // 0x00a178d4
-#define g_axis_x (*(float*)(g_ovl_00a170c8 + 0x80c))   // 0x00a178d4
-#define g_a178d8 (*(float*)(g_ovl_00a170c8 + 0x810))   // 0x00a178d8
-#define g_a178e0 ((char*)(g_ovl_00a170c8 + 0x818))   // 0x00a178e0
-#define g_stick_x (*(float*)(g_ovl_00a170c8 + 0x818))   // 0x00a178e0
-#define g_stick_y (*(float*)(g_ovl_00a170c8 + 0x81c))   // 0x00a178e4
-#define g_a178f0 ((char*)(g_ovl_00a170c8 + 0x828))   // 0x00a178f0
-#define g_a17900 ((char*)(g_ovl_00a170c8 + 0x838))   // 0x00a17900
-#define g_a17908 (*(unsigned char*)(g_ovl_00a170c8 + 0x840))   // 0x00a17908
+#define g_a170d0 (*(DiDev **)((char*)&g_keyboard + 0x8))   // 0x00a170d0
+#define g_a170d4 ((char*)((char*)&g_keyboard + 0xc))   // 0x00a170d4
+#define g_a170dc (*(int*)((char*)&g_keyboard + 0x14))   // 0x00a170dc
+#define g_a170e0 (*(int*)((char*)&g_keyboard + 0x18))   // 0x00a170e0
+#define g_a170e4 (*(int*)((char*)&g_keyboard + 0x1c))   // 0x00a170e4
+#define g_flag_a17108 (*(int*)((char*)&g_keyboard + 0x40))   // 0x00a17108
+#define g_a17118 (*(int*)((char*)&g_keyboard + 0x50))   // 0x00a17118
+#define g_cam_version (*(int*)((char*)&g_keyboard + 0x50))   // 0x00a17118
+#define g_key_17118 (*(int*)((char*)&g_keyboard + 0x50))   // 0x00a17118
+#define g_a1711c (*(int*)((char*)&g_keyboard + 0x54))   // 0x00a1711c
+#define g_a17128 (*(int*)((char*)&g_keyboard + 0x60))   // 0x00a17128
+#define g_a1712c (*(int*)((char*)&g_keyboard + 0x64))   // 0x00a1712c
+#define g_a17144 (*(int*)((char*)&g_keyboard + 0x7c))   // 0x00a17144
+#define g_a1714c (*(int*)((char*)&g_keyboard + 0x84))   // 0x00a1714c
+#define g_cam_right (*(int*)((char*)&g_keyboard + 0x84))   // 0x00a1714c
+#define g_key_1714c (*(int*)((char*)&g_keyboard + 0x84))   // 0x00a1714c
+#define g_cam_left (*(int*)((char*)&g_keyboard + 0x88))   // 0x00a17150
+#define g_key_17150 (*(int*)((char*)&g_keyboard + 0x88))   // 0x00a17150
+#define g_cam_in (*(int*)((char*)&g_keyboard + 0x8c))   // 0x00a17154
+#define g_key_17154 (*(int*)((char*)&g_keyboard + 0x8c))   // 0x00a17154
+#define g_a17158 (*(int*)((char*)&g_keyboard + 0x90))   // 0x00a17158
+#define g_cam_out (*(int*)((char*)&g_keyboard + 0x90))   // 0x00a17158
+#define g_a1715c (*(int*)((char*)&g_keyboard + 0x94))   // 0x00a1715c
+#define g_a1717c (*(int*)((char*)&g_keyboard + 0xb4))   // 0x00a1717c
+#define g_a17184 (*(int*)((char*)&g_keyboard + 0xbc))   // 0x00a17184
+#define g_a17188 (*(int*)((char*)&g_keyboard + 0xc0))   // 0x00a17188
+#define g_cam_roll (*(int*)((char*)&g_keyboard + 0xc4))   // 0x00a1718c
+#define g_a17190 (*(int*)((char*)&g_keyboard + 0xc8))   // 0x00a17190
+#define g_a17194 (*(int*)((char*)&g_keyboard + 0xcc))   // 0x00a17194
+#define g_a171b8 (*(int*)((char*)&g_keyboard + 0xf0))   // 0x00a171b8
+#define g_a171fc (*(int*)((char*)&g_keyboard + 0x134))   // 0x00a171fc
+#define g_key_171fc (*(int*)((char*)&g_keyboard + 0x134))   // 0x00a171fc
+#define g_a17204 (*(int*)((char*)&g_keyboard + 0x13c))   // 0x00a17204
+#define g_in_17204 (*(int*)((char*)&g_keyboard + 0x13c))   // 0x00a17204
+#define g_key_17204 (*(int*)((char*)&g_keyboard + 0x13c))   // 0x00a17204
+#define g_a1720c (*(int*)((char*)&g_keyboard + 0x144))   // 0x00a1720c
+#define g_key_1720c (*(int*)((char*)&g_keyboard + 0x144))   // 0x00a1720c
+#define g_a17214 (*(int*)((char*)&g_keyboard + 0x14c))   // 0x00a17214
+#define g_in_17214 (*(int*)((char*)&g_keyboard + 0x14c))   // 0x00a17214
+#define g_key_17214 (*(int*)((char*)&g_keyboard + 0x14c))   // 0x00a17214
+#define g_key_b ((int*)((char*)&g_keyboard + 0x338))   // 0x00a17400
+#define g_a1741c (*(int*)((char*)&g_keyboard + 0x354))   // 0x00a1741c
+#define g_a17420 (*(int*)((char*)&g_keyboard + 0x358))   // 0x00a17420
+#define g_a17454 (*(int*)((char*)&g_keyboard + 0x38c))   // 0x00a17454
+#define g_key_17454 (*(int*)((char*)&g_keyboard + 0x38c))   // 0x00a17454
+#define g_a17458 (*(int*)((char*)&g_keyboard + 0x390))   // 0x00a17458
+#define g_in_17458 (*(int*)((char*)&g_keyboard + 0x390))   // 0x00a17458
+#define g_key_17458 (*(int*)((char*)&g_keyboard + 0x390))   // 0x00a17458
+#define g_origin_state ((int*)((char*)&g_keyboard + 0x40c))   // 0x00a174d4
+#define g_a174dc (*(int*)((char*)&g_keyboard + 0x414))   // 0x00a174dc
+#define g_a174e0 (*(int*)((char*)&g_keyboard + 0x418))   // 0x00a174e0
+#define g_a174e4 (*(int*)((char*)&g_keyboard + 0x41c))   // 0x00a174e4
+#define g_a17518 (*(int*)((char*)&g_keyboard + 0x450))   // 0x00a17518
+#define g_cam_down (*(int*)((char*)&g_keyboard + 0x450))   // 0x00a17518
+#define g_a1751c (*(int*)((char*)&g_keyboard + 0x454))   // 0x00a1751c
+#define g_a1752c (*(int*)((char*)&g_keyboard + 0x464))   // 0x00a1752c
+#define g_a17544 (*(int*)((char*)&g_keyboard + 0x47c))   // 0x00a17544
+#define g_a1754c (*(int*)((char*)&g_keyboard + 0x484))   // 0x00a1754c
+#define g_a17588 (*(int*)((char*)&g_keyboard + 0x4c0))   // 0x00a17588
+#define g_a1758c (*(int*)((char*)&g_keyboard + 0x4c4))   // 0x00a1758c
+#define g_a17590 (*(int*)((char*)&g_keyboard + 0x4c8))   // 0x00a17590
+#define g_a1781c (*(int*)((char*)&g_keyboard + 0x754))   // 0x00a1781c
+#define g_a17820 (*(int*)((char*)&g_keyboard + 0x758))   // 0x00a17820
+#define g_a17854 (*(int*)((char*)&g_keyboard + 0x78c))   // 0x00a17854
+#define g_a178d4 (*(float*)((char*)&g_keyboard + 0x80c))   // 0x00a178d4
+#define g_axis_x (*(float*)((char*)&g_keyboard + 0x80c))   // 0x00a178d4
+#define g_a178d8 (*(float*)((char*)&g_keyboard + 0x810))   // 0x00a178d8
+#define g_a178e0 ((char*)((char*)&g_keyboard + 0x818))   // 0x00a178e0
+#define g_stick_x (*(float*)((char*)&g_keyboard + 0x818))   // 0x00a178e0
+#define g_stick_y (*(float*)((char*)&g_keyboard + 0x81c))   // 0x00a178e4
+#define g_a178f0 ((char*)((char*)&g_keyboard + 0x828))   // 0x00a178f0
+#define g_a17900 ((char*)((char*)&g_keyboard + 0x838))   // 0x00a17900
+#define g_a17908 (*(unsigned char*)((char*)&g_keyboard + 0x840))   // 0x00a17908
 #define g_light_on ((char*)(g_ovl_00a17910 + 0x507))   // 0x00a17e17
 #define g_tex_cache ((IDirect3DBaseTexture9 **)(g_ovl_00a17910 + 0x54c))   // 0x00a17e5c
 #define g_e68 (*(int*)(g_ovl_00a17910 + 0x558))   // 0x00a17e68
@@ -211,7 +213,7 @@ extern char g_ovl_08ee3c48[];   // 0x08ee3c48
 #define g_show_quest_notes (*(int*)(g_ovl_00a180f8 + 0xbc))   // 0x00a181b4
 #define g_pending_force (*(PendingForce*)(g_ovl_00a181f8 + 0x18))   // 0x00a18210
 #define g_tick_b (*(int*)(g_ovl_00a181f8 + 0x3c))   // 0x00a18234
-#define g_a70260 ((char*)(g_ovl_00a70248 + 0x18))   // 0x00a70260
+#define g_a70260 ((char*)((char*)&g_shadow_map + 0x18))   // 0x00a70260
 #define g_fixed_point_multiplier (*(int*)(g_ovl_00a70450 + 0x10))   // 0x00a70460
 #define g_next_track (*(int*)(g_ovl_00a70450 + 0x24))   // 0x00a70474
 #define g_next_track_options (*(int*)(g_ovl_00a70450 + 0x28))   // 0x00a70478

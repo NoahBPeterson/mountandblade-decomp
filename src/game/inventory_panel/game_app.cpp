@@ -145,7 +145,7 @@ int GameApp::Update()
     if (dt > 0.1f) dt = 0.1f;
     g_8ee42f0 = dt;
     t = (__int64)(dt * 100000.0f);
-    g_ticks_dt[0] = t;   // 0x5e2970 (frame time step, scaled)
+    g_ticks_dt[0] = t;   // (frame time step, scaled; g_ticks + 0x28)
     g_ticks[0] += t;
     g_step_tbl[0] = dt;
     g_5d8798 = m_34c;
