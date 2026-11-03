@@ -777,8 +777,8 @@ void Rec118::slot_empty_2()
     int j = 0;
     do {
         j++;
-        ContainerBase* c = (ContainerBase*)operator new(0x188);
-        col[j - 1] = c != 0 ? (((ContainerW*)c)->construct(), *(void**)c = (void*)vtbl_597050, c) : 0;
+        ContainerBase* c = new text_box;
+        col[j - 1] = c;
         {
             float v[2] = { 0.6f, g_5a9f24 - j * g_5a9f28[1] };     // globals in the original (0x4db3bf / 0x4db3c6)
             vt(c)->d22(v);
@@ -1418,21 +1418,7 @@ void BlockOwner::init(ContainerBase* parent, int which)
 {
     if (which < 0)
         return;
-    UiFrame* b;
-    {
-        UiFrame* w = (UiFrame*)::operator new(0x188);
-        if (w != 0) {
-            ((MissionUiCtor*)w)->ctor();
-            *(void**)w = (void*)vtbl_5924a0;
-            w->f17c = 0;
-            w->f180 = 0;
-            w->f184 = 0;
-            b = w;
-        } else {
-            b = 0;
-        }
-    }
-    block = b;
+    block = new UiFrame;
     vt(block)->d25(parent->screen);
     vt(block)->d22(parent->e);
     vt(parent)->d50(block);
@@ -2829,8 +2815,7 @@ void Rec48::slot_empty_2()
         import_btn = new_long_button(bg, g_strtable_c.lookup(t), 0.5f, 0.5f, 0.04f);
     }
     {
-        ContainerBase* c = (ContainerBase*)operator new(0x188);
-        panel = c != 0 ? (((ContainerW*)c)->construct(), *(void**)c = (void*)vtbl_597050, c) : 0;
+        panel = new text_box;
     }
     f2[0] = 0.05f;
     f2[1] = 0.0f;

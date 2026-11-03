@@ -18,6 +18,7 @@
 #include "../ui/ui_common.h"
 #include "../ui/item_ref.h"
 #include "../ui/mission_ui.h"
+#include "../ui/container.h"
 #include "../config/widget_mgr.h"
 #include "./mission_4.h"
 #include "./field_panel.h"
@@ -27,20 +28,20 @@
 #include "../../include/party.h"
 
 // @ 0x48ef40
-void FrameBox::release()
+void ContainerBase::update_children()
 {
-    VDtor** p = first;
-    while (p != last) {
-        VDtor* o = *p;
+    MissionUi** p = kids._Myfirst;
+    while (p != kids._Mylast) {
+        MissionUi* o = *p;
         if (o)
             delete o;
         p++;
     }
-    if (first)
-        operator delete(first);
-    first = 0;
-    last = 0;
-    cap = 0;
+    if (kids._Myfirst)
+        operator delete(kids._Myfirst);
+    kids._Myfirst = 0;
+    kids._Mylast = 0;
+    kids._Myend = 0;
 }
 
 // @ 0x48efa0

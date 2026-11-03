@@ -141,9 +141,9 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
         }
         {
             rgl::string n("progressbar_handle");
-            w->f18c = (int)((resmgr*)&g_resmgr_full)->get_object(&n);
+            w->src = ((resmgr*)&g_resmgr_full)->get_object(&n);
         }
-        *(vector4*)&w->f198 = sc;
+        w->v198 = sc;
     }
     vt(w)->d03();
 
@@ -338,7 +338,7 @@ void widget_mgr::set_size(int idx, const float* pos)
     if (vt(ITEM)->kind() == 3) {
         SCALE_BY_OLD(0);
         SCALE_BY_OLD(2);
-        *(vector4*)&((UiC*)ITEM)->f198 = vector4(pos[0] * 0.38940808f, pos[1], 1.0f);   // 0x49a786: stored after the two scalings
+        ((UiC*)ITEM)->v198 = vector4(pos[0] * 0.38940808f, pos[1], 1.0f);   // 0x49a786: stored after the two scalings
         *(int*)&((UiC*)ITEM)->f194 = (int)0xcb3c57cb;
         vt(ITEM)->d03();
         vt(ITEM)->d25(&vector4(pos[0] * 0.25f, ITEM->screen[1], 1.0f));
@@ -394,7 +394,7 @@ void widget_mgr::set_area_size(int idx, const float* pos)
 // @ 0x49abc0
 // The text is laid out by the widget's own font (+0x124) or by the global one (0x5e2934); the 0xf8 / 0xf0 bounds are
 // the same either way (the original duplicates the argument pushes per branch).
-void MissionUiText::layout_text_to(const tstring* text, const float* pos)
+void MissionUi::layout_text_to(const tstring* text, const float* pos)
 {
     float out[2];
     vector4 p;
@@ -414,6 +414,37 @@ void MissionUiText::layout_text_to(const tstring* text, const float* pos)
         *(int*)((char*)tracks[4] + 0x114) = one;
         *(int*)((char*)tracks[4] + 0x140) = one;
     }
+}
+
+// @ 0x49b4f0 (in the original it sits after DropDown::create, in the object of the text-list code)
+// The widget's text rect: lays the name out into the primary mesh (a "ui_font" mesh made on first use) and
+// hands the rect back through the hidden result pointer.
+void MissionUi::get_xy(float* out)
+{
+    if (tracks[4] == 0) {
+        rgl::mesh* m = new rgl::mesh;
+        {
+            tstring s("ui_font");
+            *(void**)((char*)m + 0x2c) = g_resmgr_full.get_material(*(const rgl::string*)&s);
+        }
+        run(4, (int)m);
+    }
+    if (b122) {
+        *(int*)((char*)tracks[4] + 0x114) = 1;
+        *(int*)((char*)tracks[4] + 0x140) = 1;
+    }
+    float r[2];
+    float pos[4];
+    pos[1] = f13c;
+    pos[2] = 0.0f;
+    int arg = -1;
+    pos[0] = f138;
+    Font* font = f124 ? (Font*)f124 : g_font;
+    tracks[4]->clear_geometry();
+    font->layout_text(r, &name, (vector4*)pos, &f140, tracks[4], (int)&arg, &screen[2], &screen[0], f148);
+    set_color(&color14c);
+    out[0] = r[0];
+    out[1] = r[1];
 }
 
 // @ 0x49aca0

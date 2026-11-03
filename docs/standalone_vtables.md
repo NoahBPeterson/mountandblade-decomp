@@ -125,8 +125,50 @@ are shorter than the original's. The stream families are done: `src/rgl/stream.h
 `bin_writer`), every class defines its own slot bodies (the `STREAM_FWD_*` macros and `stream_fwd.h` are gone), and the
 constructors/destructors the original inlines into its loaders are in `src/rgl/stream_inline.h`. An audit "long" on the log
 file's 0x595618 is a tool artifact: the dtor calls slot 26 by absolute address, which `vtable_starts` reads as a table start.
+
+Widget family: hand-built widgets of these classes in other families' sources (`*(void**)w = vtbl_...`): agent5/agent_hud.h
+(`GroupWidget`, `TextGroupWidget`, `FrameWidget`, `FlagWidget`, `ToggleWidget`), inventory_panel/party_screen.h (`PsBar`,
+`PsListWidget`), note_window.cpp, char_sheet/quest_log.cpp, char_sheet/editor_ui.cpp, char_sheet/facegen_win.cpp,
+inventory_panel/char_sheet.cpp, party2/camera.cpp (`ContainerBase`, `UiB`, `UiA`, `UiE`, `NodeA`, `text_box`: use
+`new <class>` from ui/container.h / ui/ui_widgets.h / config/ui_widgets_c.h), party/party_window.h (`PartyPanel` 0x599bf8,
+`PartySlot` 0x599d28) and the drop-down (ListPanelW / DropDownW / DropDown, 0x592570: a UiA with a row vector). The widget
+call sites still go through `WVt` (config/widget_mgr.h), a view of MissionUi's slots with the call sites' argument types.
+
 Re-run the audit after each family: the
 `stub` / `placeholder` / `dtor` counts per module are the remaining work.
+
+## The widget family (ui/, config/, cls_map/, world_data/)
+
+The widget tables are one hierarchy, not one class per table:
+
+```
+MissionUi (0x591c80, 49 virtuals; ui/mission_ui.h)
+  UiA (0x591d58, the toggle button; inline ctor)   <- UiAInline (same table), MediumButton (0x591e20), XyzButton (0x591ee8), UiE (0x592208)
+  UiB (0x591fb0, slider) <- UiC (0x592078, + update_children);   UiD (0x592140)
+  ContainerBase (0x5924a0, ui/container.h) <- NodeA (0x592848), text_box (0x597050)
+  progress_bar (0x597f20)
+```
+
+* Every base slot has its real name and signature, and its body is defined in the TU of the original function
+  (`MissionUi::animate` in mesh_slot/slot.cpp, `update_bounds` in mission_ui2/mission_3.cpp, `normalize_uv` in
+  world_data/mesh_hud.cpp, `layout_text_to` / `get_xy` in config/widget_mgr.cpp ...). The slices' names (`Effect`, `FieldPanel`,
+  `MeshX`, `HudBar`, `PObj`, `ContainerW`, `FrameBox`, `UiFrame`, `gui_window`, `text_box_base`) were views of these classes.
+* A derived widget overrides a slot by declaring it `virtual` and defining it where the original function is
+  (`UiB::animate` is HudBar's 0x497880 in mesh_hud.cpp, `ContainerBase::update_children` is FrameBox::release 0x48ef40 in
+  mission_4.cpp). No `d10` / `d35` names, no `jmp` stubs, no `vtbl_*` stores for these classes: `new UiB`, `new NodeA`,
+  `new text_box`, `new UiAInline`.
+* Constructors the original inlines into its callers (UiA's, ContainerBase's) are in-class definitions; cl then inlines them
+  at the sites the original did and keeps the out-of-line copy where it needs one. `typedef ContainerBase UiFrame` keeps the
+  old name for the sources that still use it.
+* A deleting destructor is the compiler's. `NodeA` declares an inline `~NodeA() {}` so cl expands the base destructor call in
+  its own `??_G` (0x49b0f0, byte-exact). `text_box` (0x597050) is the one table of the family still `dtor`: its slot 0 is 0x5021f0,
+  the container's `??_G` as party_window.cpp's object compiled it (the derived vptr store dead, the vector freed through the
+  shared out-of-line `vec<mface>::clear`); our `??_Gtext_box` is a different instance of the same source. `ContainerBase::destroy`
+  keeps 0x5021f0 as a function of its own for PartyPanel's table (0x599bf8, still hand-stored: party/party_window.h).
+* The `long` the audit printed for UiB / NodeA was `vtable_starts` taking a code immediate for the start of another table inside
+  them; the audit now keeps the table whole when the pointer run is as long as ours.
+* Slots that the original points at a `gui_window` function (key / refresh of MissionUi and ContainerBase, NodeA::key) are
+  bodies in ui/widget_slots.cpp, copies of strat/gui_manager.cpp's; the ICF trial link folds them.
 
 ## Entity tail and agent record (lane V4): what the compiler does with derived deleting destructors
 

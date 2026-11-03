@@ -86,11 +86,8 @@ void UiD::set_value(float x)
 // @ 0x48bb10
 UiE::UiE()
 {
-    f178 = 0;
-    b121 = 0;
     f180 = 0;
     f181 = 0;
-    *(int*)this = (int)vtbl_592208;
     f184 = 0x1c;
 }
 
@@ -169,7 +166,7 @@ leave_edit:
 }
 
 // @ 0x48bda0
-void UiE::update(void* a, float* b, int c, int d)
+void UiE::render(rgl::scene* a, float* b, int c, int d)
 {
     if (f180 != 0)
         f178 = 0;
@@ -179,10 +176,13 @@ void UiE::update(void* a, float* b, int c, int d)
     if (f178 != 0) {
         b11c[2] = 1;
         b11c[1] = 0;
-        render((rgl::scene*)a, b, c, d);
+        MissionUi::render(a, b, c, d);
         return;
     }
     b11c[2] = 0;
     b11c[1] = 1;
-    render((rgl::scene*)a, b, c, d);
+    MissionUi::render(a, b, c, d);
 }
+
+// (0x4171f0 in the original's table: a leaf the linker shares with other widgets' kind slots)
+int UiE::kind() { return 6; }

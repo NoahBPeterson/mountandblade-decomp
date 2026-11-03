@@ -2064,10 +2064,10 @@ void GameData::save_language_files(bool translated)
 // @ 0x4ca550
 void ResultWindow::scale_3(float)
 {
-    if (b3c->d17(0x10000))
+    if (b3c->clear_mask(0x10000))
         goto off;
     if (b40) {
-        if (b40->d17(0x10000))
+        if (b40->clear_mask(0x10000))
             goto on;
         return;
     } else {

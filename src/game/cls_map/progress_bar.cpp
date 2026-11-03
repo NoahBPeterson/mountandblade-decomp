@@ -32,16 +32,16 @@ progress_bar::progress_bar()
 }
 
 // @ 0x4e3f20   (ret 0x10: a MissionUi::render call with the same four arguments after marking the widget dirty)
-void progress_bar::draw_label(rgl::scene* sc, float* count, int c, int d)
+void progress_bar::render(rgl::scene* sc, float* count, int c, int d)
 {
     b11c[2] = 1;                                // +0x11e
     b11c[0] = 1;                                // +0x11c
     update_children();                          // vtable +0xc4
-    render(sc, count, c, d);                    // 0x488720
+    MissionUi::render(sc, count, c, d);         // 0x488720
 }
 
 // @ 0x4e3f60
-void progress_bar::set_ratio(float r)
+void progress_bar::set168(float r)
 {
     if (r < 0.01f) {
         f184 = 1;
@@ -55,7 +55,7 @@ void progress_bar::set_ratio(float r)
 struct VDtor { virtual ~VDtor(); };   // slot 0 = the deleting destructor (delete p calls it with flag 1)
 
 // @ 0x4e3fb0
-void progress_bar::update()
+void progress_bar::update_children()
 {
     if (tracks[2] != 0) {
         if (f184 == 0)

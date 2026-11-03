@@ -3,11 +3,11 @@
 ../src/game/world_data/world_data.cpp  ?clear@PartyMgrW@@QAEXXZ  00490340  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?is_live@PartyMgrW@@QAEHI@Z  004903e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?trigger_entity@@YIHH@Z  00490430  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?dtor_common@ContainerW@@QAEXXZ  00490520  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?activate_all@ContainerW@@QAEXXZ  004906b0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?reset_all@ContainerW@@QAEXXZ  004906e0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?update_all@ContainerW@@QAEXH@Z  004908c0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?destroy@ContainerW@@QAEPAU1@I@Z  00490930  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??1ContainerBase@@UAE@XZ  00490520  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?on_moved@ContainerBase@@UAEXXZ  004906b0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?clear_c8@ContainerBase@@UAEXXZ  004906e0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?animate@ContainerBase@@UAEXH@Z  004908c0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??_GContainerBase@@UAEPAXI@Z  00490930  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?detach_party@GameW@@QAEXI@Z  00490a30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?list_members@GameW@@QAEXIPAH0@Z  00490fa0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?token_lookup@GameW@@QAEHHHHH@Z  00491f20  /O2 /MT /Gy /TP
@@ -28,7 +28,7 @@
 ../src/game/world_data/world_data.cpp  ?push_back@?$vector@PAUParty@@V?$allocator@PAUParty@@@std@@@std@@QAEXABQAUParty@@@Z  004936b0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?grow@PartyMgrW@@QAEPAU1@XZ  00493830  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_slot@PartyMgrW@@QAEHXZ  00493960  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?add_child@ContainerW@@QAEXPAUMissionUi@@@Z  00493a30  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?add_child@ContainerBase@@UAEXPAUMissionUi@@@Z  00493a30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?reserve@I64VecW@@QAEXPAH@Z  00493c40  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set@SlotArray@@QAEXABHAB_J@Z  00493d70  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set40@SlotHolder40@@QAEXHH@Z  00493db0  /O2 /MT /Gy /TP
@@ -44,8 +44,9 @@
 ../src/game/world_data/world_data.cpp  ?add@EmitterCtl@@QAEXH@Z  004955e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?push@SceneList@@QAEPAUSceneObject@@XZ  00495650  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_state@WindowMgrW@@QAEXH@Z  00495700  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?place@ContainerW@@QAEXPAH@Z  00490570  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?move_a@ContainerBase@@UAEXPAM@Z  00490570  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?quest_succeeded@GameW@@QAEXH@Z  00494560  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?quest_failed@GameW@@QAEXH@Z  00494680  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_quest_concluded@GameW@@QAEXH@Z  004947a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_quest_cancelled@GameW@@QAEXH@Z  004948c0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??0ContainerBase@@QAE@XZ  004931a0  /O2 /MT /Gy /TP

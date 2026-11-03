@@ -50,7 +50,7 @@ void C4c3050::scale_3(float)
     int found = -1;
     for (int i = 0; i < count; i++) {
         if (rows[i]) {
-            if (rows[i]->d17(0x10000))
+            if (((Widget*)(void*)rows[i])->changed(0x10000))
                 found = i;
         }
     }

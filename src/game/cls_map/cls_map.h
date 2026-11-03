@@ -9,7 +9,7 @@
 // gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), E50 / E176 / R44 /
 // b16 (../../include/vec_elems.h), E68 (../../include/e68.h), Config / ini_file (../config/config.h), Core (the
 // application object; ../config/core.h), MissionUi and its widget classes (../ui), the widget factories' classes
-// (../config/widget_mgr.h: WVt, ButtonBase, UiAInline, ContainerBase, DropDown, gui_mesh).
+// (../config/widget_mgr.h: WVt, DropDown, gui_mesh; ../ui/ui_widgets.h: UiAInline; ../ui/container.h: ContainerBase).
 #ifndef GAME_CLS_MAP_CLS_MAP_H
 #define GAME_CLS_MAP_CLS_MAP_H
 #include "../../include/image_addrs.h"
@@ -191,13 +191,15 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 //   +0x80 d32 install mesh(slot)   +0x98 d38 colour   +0x9c d39 highlight colour   +0xa4 d41 set text (out, text)
 //   +0xac d43 set text (text, pos): 0x4db090   +0xb8 d46 hide: 0x4dcef0   +0xc8 d50 add child
 // The overlay window (vtable 0x592848, 0x190 bytes): the base constructor 0x4931a0 (ContainerBase), then the vptr and the byte at +0x188.
+// The two sites that build it (DebriefMenu::create_debrief 0x4de5b0, SaveWinCtl::create 0x4e5d90) call the constructor out of line;
+// the other sites (text_box columns, MeetingWindow::init) have it inlined (`new text_box`).
 struct ContainerW {
     void* construct();   // 0x4931a0: the base constructor of the overlay window (world_data/world_data.cpp ContainerW::construct, returns this)
 };
 #define NEW_OVERLAY_WINDOW(var) \
     ContainerBase* var; \
     { ContainerBase* np_ = (ContainerBase*)::operator new(0x190); \
-      var = np_ != 0 ? (((ContainerW*)np_)->construct(), *(void**)np_ = (void*)vtbl_592848, np_->f188 = 0, np_) : 0; }
+      var = np_ != 0 ? (((ContainerW*)np_)->construct(), *(void**)np_ = (void*)vtbl_592848, ((NodeA*)np_)->f188 = 0, np_) : 0; }
 // the resource manager's get_object (0x419540) for tstring keys, and the UI globals
 // 0x419540 is resmgr::get_object (rgl/core/resmgr.h), which cannot be included next to resource.h: only the member is declared
 // 0x49b120 is NodeVec::push_back (config/widget_node.cpp: the UI root vector at the start of g_gui / g_ui_sound), not gui_manager::add_root:
@@ -268,7 +270,6 @@ extern int g_menu_kind_count;                   // 0xa75f38
 // the menu block: a widget (vtable 0x5924a0, 0x188 bytes) that owns a vector (alloc +0x178, first +0x17c, last, end). The UiFrame of
 // ../party/party_window.h (destroying destructor 0x5021f0); that header conflicts with game_data.h on g_game, so this is its view here.
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
-struct MissionUiCtor { void ctor(); };          // 0x48ae20 (MissionUi's constructor on raw memory)
 // a menu block owner: the selected kind, its value and a tick (embedded at +0x30 of the main / escape menu)
 struct BlockOwner {
     char pad0[0x10];

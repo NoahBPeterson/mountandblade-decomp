@@ -198,45 +198,36 @@ int trigger_item_mesh(int c)
     return g_items[id].ammo_skill();
 }
 
-// The container's base destructor (0x487c00) is Buffer's virtual destructor (called here non-virtually), its resource release
-// (0x48ef40) mission_ui2's FrameBox::release, and 0x4175f0 the resource manager's clear_f14 (stdcall; named_object is rgl/resource.h's).
-struct Buffer { virtual ~Buffer(); };
-struct FrameBox {
-    void release();   // 0x48ef40
-};
 struct named_object;
-void __stdcall clear_f14(named_object* o);                      // 0x4175f0
+void __stdcall clear_f14(named_object* o);                      // 0x4175f0 (the resource manager's clear_f14; named_object is rgl/resource.h's)
 
-// ==== 0x490520: the container widget (children vector at +0x17c) =================================================
+// ==== 0x490520: the container widget (children vector at +0x178) ================================================
+// The class is ui/container.h's ContainerBase. Its destructor stores the vptr, releases the children (the virtual
+// update_children, called non-virtually: 0x48ef40, mission_ui2/mission_4.cpp), frees the vector and runs MissionUi's
+// destructor 0x487c00. The deleting destructor 0x490930 is the compiler's: the destructor inlined, then operator delete.
 // @ 0x490520
-void ContainerW::dtor_common()
+ContainerBase::~ContainerBase()
 {
-    *(void**)this = (void*)vtbl_5924a0;
-    ((FrameBox*)(void*)this)->release();
-    if (ents_first() != 0)
-        operator delete(ents_first());
-    ents_first() = 0;
-    ents_last() = 0;
-    ents_end() = 0;
-    ((Buffer*)(void*)this)->Buffer::~Buffer();                  // 0x487c00
+    ContainerBase::update_children();
 }
 
 // @ 0x490570
-void ContainerW::place(int* a)
+void ContainerBase::move_a(float* p)
 {
+    int* a = (int*)p;
     WD_FLD(int, 0xe8) = a[0];
     WD_FLD(int, 0xec) = a[1];
     if (p154 != 0) {
-        ((EntVt*)p154)->v23(this);
+        p154->on_child_moved(this);
     } else {
         WD_FLD(int, 0xe0) = a[0];
         WD_FLD(int, 0xe4) = a[1];
     }
-    ((EntVt*)this)->v24();    // one shared tail call: an early return in the first arm moved the register allocation
+    on_moved();    // one shared tail call: an early return in the first arm moved the register allocation
 }
 
 // @ 0x4905c0
-void ContainerW::track_bounds(void* p)
+void ContainerBase::on_child_moved(MissionUi* p)
 {
     char* e = (char*)p;
     float n[2];
@@ -245,7 +236,7 @@ void ContainerW::track_bounds(void* p)
     *(int*)(e + 0xe0) = *(int*)&n[0];
     n[1] = ep[1] + *(float*)((char*)this + 0xe4);
     *(int*)(e + 0xe4) = *(int*)&n[1];
-    ((EntVt*)e)->v24();
+    p->on_moved();
     if (f104 & 0x100) {
         float v;
         v = *(float*)(e + 0xf0) + *(float*)(e + 0xe8);
@@ -264,34 +255,37 @@ void ContainerW::track_bounds(void* p)
 }
 
 // @ 0x4906b0
-void ContainerW::activate_all()
+void ContainerBase::on_moved()
 {
-    void** i = ents_first();
-    while (i != ents_last()) {
-        ((EntVt*)this)->v23(*i);
+    MissionUi** i = kids._Myfirst;
+    while (i != kids._Mylast) {
+        on_child_moved(*i);
         i++;
     }
 }
 
 // @ 0x4906e0
-void ContainerW::reset_all()
+void ContainerBase::clear_c8()
 {
-    void** i = ents_first();
-    while (i != ents_last()) {
-        ((EntVt*)*i)->v16();
+    MissionUi** i = kids._Myfirst;
+    while (i != kids._Mylast) {
+        (*i)->clear_c8();
         i++;
     }
 }
 
 // @ 0x490710
-void ContainerW::bounds_of(int* a, float* p3, float* p4, float* p5)
+void ContainerBase::render(rgl::scene* sc, float* p3, int c, int d)
 {
+// the two bounds pairs arrive as ints (the slot's signature is MissionUi::render's); naming them keeps the original's register use
+#define p4 ((float*)c)
+#define p5 ((float*)d)
     if (f104 & 1)
         return;
     struct __declspec(align(8)) Locals {
         float z, y0, hy, ly, mx, my;
     } l;
-    MissionUi::render((rgl::scene*)a, p3, (int)p4, (int)p5);   // 0x488720
+    MissionUi::render(sc, p3, c, d);   // 0x488720
     l.mx = p4[0];
     l.y0 = p3[0];
     l.my = p4[1];
@@ -305,53 +299,39 @@ void ContainerW::bounds_of(int* a, float* p3, float* p4, float* p5)
     if (l.my < v) l.my = v;
     v = *(float*)((char*)this + 0xf4) + *(float*)((char*)this + 0xe4);
     if (l.ly > v) l.ly = v;
-    void** i = ents_first();
-    while (i != ents_last()) {
+    MissionUi** i = kids._Myfirst;
+    while (i != kids._Mylast) {
         char* e = (char*)*i;
         if (!(*p5 < *(float*)(e + 0xf8) + *(float*)(e + 0xe0)) &&
             !(p5[1] < *(float*)(e + 0xfc) + *(float*)(e + 0xe4)) &&
             !(*(float*)(e + 0xf0) + *(float*)(e + 0xe0) < p4[0]) &&
             !(*(float*)(e + 0xf4) + *(float*)(e + 0xe4) < p4[1])) {
             l.z = p3[0];
-            ((EntVt*)e)->v10(a, &l.z, &l.mx, &l.hy);
+            ((MissionUi*)e)->render(sc, &l.z, (int)&l.mx, (int)&l.hy);
             if (l.z > l.y0) l.y0 = l.z;
         }
         i++;
     }
     p3[0] = l.y0;
 }
+#undef p4
+#undef p5
 
 // @ 0x4908c0
-void ContainerW::update_all(int p)
+void ContainerBase::animate(int p)
 {
     if (f104 & 1)
         return;
-    void** i = ents_first();
-    while (i != ents_last()) {
+    MissionUi** i = kids._Myfirst;
+    while (i != kids._Mylast) {
         *(int*)((char*)*i + 0x100) = 0;
         i++;
     }
-    i = ents_first();
-    while (i != ents_last()) {
-        ((EntVt*)*i)->v02(p);
+    i = kids._Myfirst;
+    while (i != kids._Mylast) {
+        (*i)->animate(p);
         i++;
     }
-}
-
-// @ 0x490930
-ContainerW* ContainerW::destroy(unsigned flag)
-{
-    *(void**)this = (void*)vtbl_5924a0;
-    ((FrameBox*)(void*)this)->release();
-    if (ents_first() != 0)
-        operator delete(ents_first());
-    ents_first() = 0;
-    ents_last() = 0;
-    ents_end() = 0;
-    ((Buffer*)(void*)this)->Buffer::~Buffer();                  // 0x487c00
-    if (flag & 1)
-        operator delete(this);
-    return this;
 }
 
 // ==== 0x490990: mark the parties of one kind dirty ===============================================================
@@ -1158,14 +1138,10 @@ template void std::vector<__int64>::resize(size_t, __int64);
 template void std::deque<int>::push_back(const int&);
 
 // ==== 0x4931a0 .. 0x493400: the container / list panels =================================================================
-// @ 0x4931a0
+// the constructor body as the sources that build a container by hand call it (returns this)
 void* ContainerW::construct()
 {
-    ((MissionUi*)(void*)this)->MissionUi::MissionUi();                    // 0x48ae20
-    *(void**)this = (void*)vtbl_5924a0;
-    ents_first() = 0;
-    ents_last() = 0;
-    ents_end() = 0;
+    new (this) ContainerBase;
     return this;
 }
 
@@ -1259,7 +1235,7 @@ void* ListPanelW::destroy(unsigned _flags)
 {
     char* self = (char*)this;
     ((TailVec*)(self + 0x18c))->_Tidy();                        // 0x42d390
-    ((Buffer*)(void*)self)->Buffer::~Buffer();                  // 0x487c00
+    ((MissionUi*)(void*)self)->MissionUi::~MissionUi();                  // 0x487c00
     if (_flags & 1)
         ::operator delete(self);
     return self;
@@ -1474,11 +1450,11 @@ int PartyMgrW::add_slot()
 }
 
 // @ 0x493a30
-void ContainerW::add_child(MissionUi* _obj)
+void ContainerBase::add_child(MissionUi* _obj)
 {
-    children().push_back(_obj);
+    kids.push_back(_obj);
     _obj->p154 = this;
-    ((EntVt*)this)->v23(_obj);
+    on_child_moved(_obj);
 }
 
 // @ 0x493ab0
@@ -1687,16 +1663,7 @@ void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 // @ 0x494110
 int WidgetMgrW::create_button_overlay(const tstring* text, unsigned flags)
 {
-    // UiAInline is built by hand: its (inline) constructors would emit a vtable of unresolved MissionUi slots; the real one is 0x591d58
-    UiAInline* w = (UiAInline*)operator new(sizeof(UiAInline));
-    if (w) {
-        new ((void*)w, raw_place()) MissionUi;                  // 0x48ae20
-        *(void**)w = (void*)vtbl_591d58;
-        w->f178 = 0;
-        w->b121 = 0;
-        w->f180 = 0;
-        w->f184 = 0;
-    }
+    UiAInline* w = new UiAInline;
 
     {
         vec2 v;

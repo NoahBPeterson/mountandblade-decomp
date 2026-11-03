@@ -162,27 +162,13 @@ unsigned widget::flag1() const
     return flags & 1;
 }
 
-// the text box (vtable 0x597050, size 0x188): the widget base plus the child vector. The base is MissionUi (ui/mission_ui.h,
-// ctor 0x48ae20; that header does not go with this TU's rgl.h), whose slot 0 is the destroying destructor taking the delete
-// flag, not a C++ virtual destructor: deriving from widget.h's view (virtual ~widget) made cl emit ??_Gtext_box calling a
-// ~widget the original does not have. 0x597050 has 51 slots: slot 0 is 0x5021f0 (ui/ui_frame.h UiFrame::destroy, shared
-// through ICF), slots 1..49 the MissionUi ones it overrides or inherits, slot 50 add_child (0x493a30).
-#include "./text_box_base.h"                    // text_box_base (the 50 virtuals of vtable 0x597050; slots in text_box_slots.cpp)
-struct text_box : text_box_base {
-    vec_widget kids;                                // +0x178
-    text_box();                                     // 0x50d0b0
-    virtual void add_child(text_box_base* c);       // +0xc8 slot 50 (0x493a30)
-};
-struct MissionUi;
-struct ContainerW { void add_child(MissionUi* child); };        // 0x493a30 (world_data/world_data.cpp)
-void text_box::add_child(text_box_base* c) { ((ContainerW*)this)->add_child((MissionUi*)c); }
+// the text box (vtable 0x597050, size 0x188): ui/container.h's container with nothing added. Its slot 0 is the container's
+// destroying destructor (0x5021f0, the copy party_window.cpp's object holds).
+#include "../ui/container.h"
 
 // @ 0x50d0b0 text_box::text_box
 text_box::text_box()
 {
-    kids.first = 0;
-    kids.last = 0;
-    kids.end = 0;
 }
 
 // ------------------------------------------------------------------ the selection list ----------------------
