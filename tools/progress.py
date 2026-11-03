@@ -13,7 +13,7 @@
 
 Coverage is computed by tools/status.py itself (run via runpy), so the numbers match docs/STATUS.md.
 """
-import contextlib, datetime, glob, io, json, os, re, runpy, subprocess, sys
+import collections, contextlib, datetime, glob, io, json, os, re, runpy, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 W = lambda *p: os.path.join(ROOT, *p)
@@ -750,12 +750,44 @@ def _bytes_str(n):
     return "%.1f MB" % (n / 1e6) if n >= 1e6 else "%.0f KB" % (n / 1024) if n >= 1024 else "%d B" % n
 
 
+def _demangle_global(n):
+    """?g_terrain@@3UTerrain@@A -> ("g_terrain", "Terrain"); the type is None when the symbol is not a struct/class object."""
+    import data_coverage as DC
+    m = re.match(r"^\?([^@]+)@", n)
+    return (m.group(1) if m else n), DC.type_of_symbol(n)
+
+
+def _data_map(argv):
+    """The resolution map the data treemap reads: --map FILE, else the newest build recorded by
+    tools/relink/data_coverage.py --record --from-build (work/relink/latest_build.json) when its resolve_map.json is newer
+    than work/relink/resolve_map.json, else work/relink/resolve_map.json. Prints which one."""
+    default = W("work", "relink", "resolve_map.json")
+    if "--map" in argv:
+        mp, why = argv[argv.index("--map") + 1], "--map"
+    else:
+        mp, why = default, "default; no build recorded"
+        try:
+            b = json.load(open(W("work", "relink", "latest_build.json")))["build"]
+            cand = os.path.join(b, "resolve_map.json")
+            if os.path.exists(cand) and (not os.path.exists(default) or os.path.getmtime(cand) > os.path.getmtime(default)):
+                mp, why = cand, "newest recorded build"
+            else:
+                why = "default; the recorded build %s is not newer" % b
+        except (OSError, ValueError, KeyError):
+            pass
+    print("resolution map: %s (%s, written %s)" % (
+        mp, why, datetime.datetime.fromtimestamp(os.path.getmtime(mp)).strftime("%Y-%m-%d %H:%M")))
+    return mp
+
+
 def treemap_data(path):
     """Treemap of the original's static data: one panel per section (.bss is megabytes of arrays, so it cannot share
     a scale with the kilobytes of .rdata/.data), module -> class -> item, area = bytes, colour = who provides the item.
-    Items come from tools/relink/data_coverage.py (recovered from their uses). Owning module: the module of the first
-    row that references the item's name, for items our source defines or generates; otherwise the module of the
-    lowest-addressed game function that uses the item."""
+    Items come from tools/relink/data_coverage.py (recovered from their uses). Owning module: for an item our source
+    defines or generates, the module of the object file that defines it (the link map beside the resolution map; else
+    the first row that references the name); otherwise the module whose functions use the item most. An item over 1%
+    of its section is labelled with its name and type; one whose type has `// +0x..` member offsets in src/ headers is
+    split into one cell per member."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -764,30 +796,46 @@ def treemap_data(path):
     import data_coverage as DC
     import resolve as R
     from glue import section_of
-    mp = sys.argv[sys.argv.index("--map") + 1] if "--map" in sys.argv else W("work", "relink", "resolve_map.json")
+    mp = _data_map(sys.argv)
     rmap = json.load(open(mp))
-    first = {}
-    items, _uses, named = DC.data_items(R.Image(), rmap, starts, game, first)
-    owners = DC.item_owners(items, first, named, rmap)
+    lmap = DC.MAP_OF(mp)
+    syms = DC.link_map_symbols(lmap) if os.path.exists(lmap) else None
+    first, users = {}, {}
+    items, _uses, named = DC.data_items(R.Image(), rmap, starts, game, first, syms, users)
+    owners = DC.item_owners(items, first, named, rmap, syms, users)
     files = _files_by_function()
     INK, MUTED, SURFACE = "#0b0b0b", "#52514e", "#fcfcfb"
     colour = dict((k, c) for k, _l, c in DATA_CATS)
     label = dict((k, l) for k, l, _c in DATA_CATS)
     SECS = (".rdata", ".data", ".bss")
-    cells = {s: {} for s in SECS}              # section -> module -> [(class, bytes)]
-    rule = {"defined": 0, "first user": 0, "neither": 0}
+    cells = {s: {} for s in SECS}              # section -> module -> [(class, bytes, info)]
+    rule = {"defined": 0, "most used": 0, "neither": 0}
     cnt = {k: [0, 0] for k, _l, _c in DATA_CATS}
     sec_tot = {s: {k: [0, 0] for k, _l, _c in DATA_CATS} for s in SECS}
-    for (s, e, c), (fn, mod) in zip(items, owners):
+    sec_all = collections.Counter()
+    for s, e, _c in items:
+        sec_all[section_of(s)[0].split("$")[0]] += e - s
+    for (s, e, c), (fn, mod, fns) in zip(items, owners):
         sec = section_of(s)[0].split("$")[0]
         if mod and c in ("defined in source", "generated from source"):
             m, how = mod, "defined"
+        elif fns:
+            votes = collections.Counter(_module_of(files.get(f)) or "(no source)" for f in fns)
+            m, how = min(votes, key=lambda k: (-votes[k], k)), "most used"
         elif fn is not None:
-            m, how = _module_of(files.get(fn)) or "(no source)", "first user"
+            m, how = _module_of(files.get(fn)) or "(no source)", "most used"
         else:
             m, how = "(library)" if c == "library data" else "(pointer tables)", "neither"
         rule[how] += 1
-        cells[sec].setdefault(m, []).append((c, e - s))
+        info = None
+        if e - s > 0.01 * sec_all[sec]:                        # a big block: name and type, and its members when annotated
+            nm = named[s][1][0] if s in named and named[s][1] else None
+            iname, ityp = _demangle_global(nm) if nm else ("item 0x%x" % s, None)
+            info = {"name": iname, "type": ityp, "subs": None}
+            mem = DC.struct_members(ityp, e - s) if ityp else None
+            if mem and len(mem) > 1:
+                info["subs"] = [(n, sz) for _o, sz, n in mem if sz > 0]
+        cells[sec].setdefault(m, []).append((c, e - s, info))
         for t in (cnt[c], sec_tot[sec][c]):
             t[0] += 1
             t[1] += e - s
@@ -817,23 +865,39 @@ def treemap_data(path):
             sec, _bytes_str(tot), sum(v[0] for v in st.values()), 100.0 * s_b / tot,
             100.0 * st["borrowed from image"][1] / tot, st["borrowed from image"][0]),
             loc="left", fontsize=9, color=INK, weight="bold")
-        labels = []
+        labels, iboxes = [], []
         mods = cells[sec]
-        for m, (mx, my, mw, mh) in squarify([(m, sum(b for _c, b in v)) for m, v in mods.items()], 0, 0, W_, H_):
+        for m, (mx, my, mw, mh) in squarify([(m, sum(x[1] for x in v)) for m, v in mods.items()], 0, 0, W_, H_):
             mx, my, mw, mh = mx + 0.1, my + 0.1, mw - 0.2, mh - 0.2
             if mw <= 0 or mh <= 0:
                 continue
             ax.add_patch(Rectangle((mx, my), mw, mh, fill=False, lw=0.5, ec=MUTED, zorder=4))
             byc = {}
-            for c, b in mods[m]:
+            for c, b, _i in mods[m]:
                 byc[c] = byc.get(c, 0) + b
             for c, (cx, cy, cw, ch) in squarify(list(byc.items()), mx, my, mw, mh):           # one block per class ...
-                for _i, (x_, y_, w_, h_) in squarify(list(enumerate(b for c2, b in mods[m] if c2 == c)), cx, cy, cw, ch):
+                for k, (x_, y_, w_, h_) in squarify([(k, b) for k, (c2, b, _i) in enumerate(mods[m]) if c2 == c], cx, cy, cw, ch):
                     ax.add_patch(Rectangle((x_, y_), w_, h_, fc=colour[c], ec=SURFACE, lw=0.15, zorder=2))   # ... one cell per item
+                    info = mods[m][k][2]
+                    if info is None:
+                        continue
+                    sz = _bytes_str(mods[m][k][1])
+                    head = "%s : %s, %s" % (info["name"], info["type"], sz) if info["type"] else "%s, %s" % (info["name"], sz)
+                    if info["subs"] is None:                                  # big and whole: name and type inside the cell
+                        iboxes.append(((x_, y_, w_, h_), head))
+                        continue
+                    hh = min(3.4, h_ * 0.25)                                  # members above a header strip at the foot of the item
+                    iboxes.append(((x_, y_, w_, hh), head))
+                    for j, (x2, y2, w2, h2) in squarify(list(enumerate(b for _n, b in info["subs"])), x_, y_ + hh, w_, h_ - hh):
+                        ax.add_patch(Rectangle((x2, y2), w2, h2, fc=colour[c], ec=SURFACE, lw=0.6, zorder=3))
+                        iboxes.append(((x2, y2, w2, h2), "%s.%s (%s)" % (info["name"], info["subs"][j][0], _bytes_str(info["subs"][j][1]))))
             t = ax.text(mx + 0.25, my + mh - 0.2, m, ha="left", va="top", fontsize=FS, color=INK, zorder=6,
                         bbox=dict(boxstyle="square,pad=0.1", fc=SURFACE, ec="none", alpha=0.85))
             labels.append((t, (mx, my, mw, mh), m))
         placed += _fit_labels(fig, ax, labels, FS)
+        il = [(ax.text(r[0] + 0.2, r[1] + r[3] - 0.2, txt, ha="left", va="top", fontsize=FS, color="#ffffff", weight="bold",
+                       zorder=7), r, txt) for r, txt in iboxes]
+        _fit_labels(fig, ax, il, FS)
     handles = [Patch(fc=colour[k], ec="#d8d6cf", lw=0.5,
                      label="%s - %d items, %s" % (label[k], cnt[k][0], _bytes_str(cnt[k][1]))) for k, _l, _c in DATA_CATS]
     fig.legend(handles=handles, loc="lower left", bbox_to_anchor=(0.012, 0.004), frameon=False, fontsize=8.6,
@@ -843,12 +907,12 @@ def treemap_data(path):
                                                        _bytes_str(bor[1])), x=0.012, ha="left", fontsize=12, color=INK)
     fig.text(0.012, 0.955, "One panel per section (their scales differ by 400x); box = module, area = item bytes, colour = who provides the item "
              "(tools/relink/data_coverage.py).\n"
-             "Owning module: for items our source defines or generates, the module of the first row that references the name "
-             "(%d items); otherwise the module of the lowest-addressed game function\nthat uses the item (%d); "
+             "Owning module: for items our source defines or generates, the module of the object file that defines it "
+             "(%d items); otherwise the module whose functions use the item most\n(%d); "
              "items no game function uses are grouped as (library) or (pointer tables) (%d).  Resolution map: %s.\n"
              "Item sizes are approximate: an item absorbs padding and unreferenced data up to the next item.  The vermillion boxes are "
              "what the standalone link still takes from the original image;\nthe few huge ones are .bss arrays."
-             % (rule["defined"], rule["first user"], rule["neither"], os.path.relpath(mp, ROOT) if mp.startswith(ROOT) else mp),
+             % (rule["defined"], rule["most used"], rule["neither"], os.path.relpath(mp, ROOT) if mp.startswith(ROOT) else mp),
              fontsize=8.2, color=MUTED, va="top")
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d items, %d module labels)" % (os.path.relpath(path, ROOT), n_items, placed))
