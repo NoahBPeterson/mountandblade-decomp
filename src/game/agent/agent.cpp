@@ -8,6 +8,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <string.h>
 #include <new>
 #include <algorithm>
@@ -32,7 +33,7 @@
 extern int g_propkind_count;                                // 0x5e29e0
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_clamp_level;                                          // 0x8ee3860
+
 extern const float g_chunk_scale = 0.3f;     // 0x549d68
 extern const float g_half_ratio = -0.5f;     // 0x549d78
 extern const float g_k039 = 0.39f;           // 0x54b3b0

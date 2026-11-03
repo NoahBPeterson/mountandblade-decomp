@@ -7,6 +7,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./map_editor.h"
 #include "../editor_entity.h"     // (listed directly: the resolution audit reads only the source's own includes)

@@ -385,7 +385,7 @@ void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, 
     row->set_size((const float*)&scale);
     vector2 pos;
     pos.x = 0;
-    pos.y = bx * 0.5f - s * orig::k_0_3f;
+    pos.y = bx * 0.5f - s * g_chunk_scale;
     row->set_offset((const float*)&pos);
     { char r[8]; row->set_text(r, *text); }
 }

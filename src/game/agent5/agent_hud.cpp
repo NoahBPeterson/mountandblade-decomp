@@ -9,6 +9,7 @@
 //       caller are __declspec(noinline). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"
@@ -25,12 +26,12 @@
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../menu_rec.h"   // g_menus 0x5e29b0
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
-extern int g_sound_muted;                                   // 0x5a9fd8
+
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-tstring* g_msg_end;                                         // 0x5e23c8
-tstring* g_msg_begin;                                       // 0x5e23c4 (the recent-messages ring: 0x10-byte tstrings)
-int g_cam_sens;                                             // 0x5a9fdc
+
+
+
 
 #include "../key_names.h"
 #pragma intrinsic(tan, atan2, atan, sqrt)

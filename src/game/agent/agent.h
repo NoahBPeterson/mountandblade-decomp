@@ -34,7 +34,7 @@ int ftoi_helper(int x);                     // 0x435440
 // ---- troop record (0x508 bytes, array at world+0x13a00): packed 4-bit skill levels and per-slot values
 // (the address comments below stay bare: the resolver reads the last 0x... of a declaration's comment)
 #include "../skill_cap.h"            // SkillCap, g_skill_tbl 0x8ee3100 (shared with agent2)
-extern int g_clamp_level;               // 0x8ee3860
+
 extern const int g_tier_dist[11];       // 0x590a70
 #include "../../include/troop.h"   // Troop / TroopRec: the 0x508-byte troop record (has_flag10 0x435130, stat_int 0x435150, scaled_b0 0x435170, nibble 0x4351a0, falloff 0x4375b0, adjust 0x437770)
 

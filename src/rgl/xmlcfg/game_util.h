@@ -72,11 +72,11 @@ struct NewtonBody;
 void __cdecl apply_force_and_torque(const NewtonBody* body);        // 0x432a50
 // a force/torque the game wants applied to one body on the next physics step
 struct PendingForce {
-    const NewtonBody* body;                 // 0xa18210
-    vector4 force;                          // 0xa18214
-    vector4 torque;                         // 0xa18224
+    const NewtonBody* body;                 // (member; the object is at g_phys+0x18)
+    vector4 force;                          // member
+    vector4 torque;                         // member
 };
-extern PendingForce g_pending;              // 0xa18210
+
 
 #include "../../include/timer.h"
 void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread);       // 0x432c40

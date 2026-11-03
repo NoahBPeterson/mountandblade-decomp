@@ -12,13 +12,14 @@
 //       0x52f250 and 0x5305b0 in turn, so all three may belong to the caller's object).
 //-----------------------------------------------------------------------------
 #include "./mesh_3.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
-extern HWND g_editor_hwnd;                                  // 0x8ee3d30
+
 #include "../key_names.h"
 
 // ======================================================= slice s0052cf60: functions

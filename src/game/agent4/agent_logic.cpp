@@ -20,6 +20,7 @@
 #define resmgr resmgr_agent_view
 #define g_resmgr g_resmgr_agent_view      // its `extern resmgr g_resmgr`: the defining declaration is `resource_manager g_resmgr` (rgl/resource.h), declared below
 #include <stdlib.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <math.h>
 #include <string.h>
@@ -63,7 +64,7 @@
 extern int g_propkind_count;                                // 0x5e29e0
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_opt_hit_fx = 1;                                       // 0x5a9fc0 non-zero: hits spawn their effect
+
 unsigned g_input_mask;                                      // 0x5e2474
 
 
@@ -5784,7 +5785,7 @@ extern int g_opt_damage_msgs;                       // 0x5aa060
 extern int g_opt_shot_difficulty;                   // 0x5aa064
 extern int g_opt_kill_msgs;                         // 0x5aa068
 extern int g_opt_blood;                             // 0x5aa020
-extern int g_opt_hit_fx;                            // 0x5a9fc0
+
 int g_voice_default_a;                                      // 0x8ed50a0
 int g_voice_default_b;                                      // 0x8ed50a4
 struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c

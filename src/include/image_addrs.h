@@ -30,7 +30,6 @@ struct text_stream;
 
 namespace orig {
 extern const float g_one;                  // 0x549cdc
-extern const float k_0_3f;                 // 0x549d68
 extern const float g_zero;                 // 0x549ca8
 extern const float k_0_9f;                 // 0x549d6c
 extern const float g_half;                 // 0x549d70
@@ -73,7 +72,7 @@ extern const float k_105f;                 // 0x598690
 extern const float k_0_00105f;             // 0x59c268
 extern unsigned __int64 g_bit[];                             // 0x5a8e68
 extern text_stream g_log;                  // 0x5a9f60
-extern int g_sound_muted;                  // 0x5a9fd8
+
 extern options_record g_options;           // 0x5aa008
 extern float g_music_volume;               // 0x5aa010
 extern float g_master_volume;              // 0x5aa014
@@ -114,8 +113,6 @@ extern int g_ragdoll_lim;                  // 0x5aa03c
 extern int g_particle;                     // 0x5aa040
 extern int g_mesh_quality;                 // 0x5aa084
 extern Config g_launcher_cfg;              // 0x5aa0a8
-extern int g_opt_5aa0ac;                   // 0x5aa0ac
-extern int g_opt_5aa0b4;                   // 0x5aa0b4
 extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern ptype* g_ptypes;                    // 0x5e28f8

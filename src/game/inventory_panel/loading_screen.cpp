@@ -1,6 +1,7 @@
 // s0050f440 - loading screen: module table load, frame/quads meshes, record reader.
 // All six functions belong to the module-loading state machine object.
 #include <stdio.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 
 #include "../tstring.h"
 #include "../shared_vars.h"
@@ -289,7 +290,7 @@ extern EditorDialog g_app_obj;                 // 0x8ee3c48
 extern GuiManager g_gui;                                 // 0x5d7080
 
 
-extern int   g_sound_muted;                          // 0x5a9fd8
+
 
 #include "../loading_screen.h"       // LoadingScreen: advance 0x50f440 here
 

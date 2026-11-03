@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Agent::update_alarm 0x443140 calls vector4::operator- 0x407ca0 instead of expanding it
 #include "./agent_fx_sound.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../tstring.h"
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -33,9 +34,9 @@
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_sound_muted;                                          // 0x5a9fd8 non-zero: sound is off (the listener does not follow the camera, script sound ops warn)
+
 SoundMgr g_sound_mgr;                                       // 0x5aa128 the sound player (defs, groups, listener frame, named sound slots)
-int g_no_freq;                                              // 0x5a9fc8
+
 const int g_xp_table[63] = {                             // 0x590974
     0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362, 40682, 47892, 56103, 65441, 77233,
     90809, 106425, 124371, 144981, 168636, 195769, 226879, 262533, 303381, 350164, 412091, 484440, 568947, 667638, 782877, 917424,

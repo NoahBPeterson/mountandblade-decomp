@@ -406,7 +406,7 @@ struct GlobVec {                                                // the running p
 
 // ---- the sound player (g_sound_mgr 0x5aa128): include/sound_mgr.h ----------------
 #include "../../include/sound_mgr.h"
-extern int g_quest_sounds[];                                    // 0x5aa184 .. (completed 0x5aa184, succeeded 0x5aa188, concluded 0x5aa18c, failed 0x5aa190, cancelled 0x5aa194)
+
 
 #define g_msglog (*(MsgLog*)&g_gui)                          // the on-screen message log view of the UI root g_gui (0x5d7080)
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100

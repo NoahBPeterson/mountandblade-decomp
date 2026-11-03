@@ -1,4 +1,5 @@
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./screen_camera.h"
 #include "../config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -8,7 +9,7 @@
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
-extern int g_sound_muted;                                   // 0x5a9fd8
+
 #include "../key_names.h"
 
 // @ 0x4ece20

@@ -2,6 +2,7 @@
 // s004e4c70, s004e55f0, s004e5f80, s004e65e0, s004e6a70, s004e75a0, s004e7b30 and s004e85d0 (head). T-regime region: helpers sit
 // right after their first caller; the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
@@ -798,6 +799,7 @@ struct GuiChild {
     virtual void build(rgl::scene* s, float* t, const float* pos, const float* size);   // +0x28
 };
 struct SceneWalk { void scene_walk(rgl::scene* s, float* t); };      // 0x4bd170 (thiscall, ret 8; this = the gui_manager)
+
 int g_pending;                                              // 0x5e2a14
 extern char g_pending_text[];                   // 0x5e25b0
 
@@ -1245,7 +1247,7 @@ void MapLoader::read(SlotReader* stream)
 // ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------
 extern int      g_use_shaders;                  // 0x5e28fc
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (game_globals.h): g_bit[2] = 4, the terrain size mask
-unsigned g_a76644;                                          // 0xa76644
+
 
 // @ 0x4e85d0   MapScreen::init(void* desc)   (thiscall, ret 4)
 void MapScreen::init(void* desc)

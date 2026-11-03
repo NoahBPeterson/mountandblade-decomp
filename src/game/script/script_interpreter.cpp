@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
+#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <stdlib.h>
@@ -56,25 +57,25 @@ extern MsgLog g_gui;                          // 0x5d7080 (g_gui.mouse: 0x5d7094
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 extern int g_propkind_count;                                // 0x5e29e0
-extern int g_sound_muted;                                   // 0x5a9fd8
+
 
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 TriggerResult g_trigger_result;   // 0xa70458
 Presentation* g_presentation;                               // 0x5e299c the running presentation
-int g_fixed_point_multiplier;                               // 0xa70460 (g_script + 0x20; position_get_x 0x4a1d65)
-int g_cue_track;                                            // 0xa7047c (play_cue_track 0x4a173f)
-int g_next_track_options;                                   // 0xa70478
-int g_next_track;                                           // 0xa70474 (play_track 0x4a1716)
-unsigned g_battle_flags;                                    // 0xa73464 bit 0 = end the battle (end_current_battle 0x4a55fe)
-int g_battle_advantage;                                     // 0xa7331c (set_battle_advantage 0x4a87af)
-char g_in_meta_mission;                                     // 0x8ee30ec (read by in_meta_mission)
-int g_particle_system_count;                                // 0x8ed5094 (warn_particle_system)
+
+
+
+
+
+
+
+
 int g_animation_count;                                      // 0xa7662c (0x49d4b0)
 int g_presentation_count;                                   // 0xa75f30 (check_presentation 0x49cd50)
 int g_music_culture;                                        // 0xa75e58 (music_set_culture 0x4a1755)
-int g_track_count;                                          // 0xa73a14 (0x49d3d0)
+
 int g_visitor_scene;                                        // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 float g_spawn_radius = 3.0f;                                // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 

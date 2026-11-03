@@ -173,9 +173,9 @@ extern int g_menu_count;                // 0x5e29b4 (check_menu 0x49ce90)
 #include "../mode_rec.h"             // MissionTemplate (the 0x58-byte records at 0x5e2a00) and SpawnRec (its 0x4c-byte entries): the one definition
 extern MissionTemplate* g_mission_templates;   // 0x5e2a00
 extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
-extern int g_particle_system_count;     // 0x8ed5094 (warn_particle_system)
+
 #define g_scene_prop_count g_propkind_count    // 0x5e29e0: agent.h's 0x78-byte record table is the scene prop kinds
-extern int g_track_count;               // 0xa73a14 (0x49d3d0)
+
 extern int g_animation_count;           // 0xa7662c (0x49d4b0)
 
 // ---- message log and text log (report 0x49cc60) -----------------------------------------------------------------
@@ -271,7 +271,7 @@ double __cdecl ceil_float_comdat(float x);                     // 0x404590 (src/
 
 // ---- position registers: g_script + 0x450, 128 frames of 0x40 bytes ----------------------------------------------
 __forceinline Pos& script_pos(int i) { return ((Pos*)((char*)&g_script + 0x450))[i]; }
-extern int g_fixed_point_multiplier;    // 0xa70460 (g_script + 0x20; position_get_x 0x4a1d65)
+
 
 // std::vector<int> (VC7.1: allocator word, then first / last / end)
 #include "../int_vec.h"                 // IntVec (was IntVector here: size() 0x40f010)
@@ -320,9 +320,9 @@ int __fastcall trigger_mesh_obj(int context);                              // 0x
 
 // ---- sound and music -------------------------------------------------------------------------------------------------
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128: play 0x442650, play_ui 0x4942f0, stop_all 0x494310
-extern int g_next_track;                // 0xa70474 (play_track 0x4a1716)
-extern int g_next_track_options;        // 0xa70478
-extern int g_cue_track;                 // 0xa7047c (play_cue_track 0x4a173f)
+
+
+
 extern int g_music_situation;           // 0xa73a10 (music_set_situation 0x4a174a)
 extern int g_music_culture;             // 0xa75e58 (music_set_culture 0x4a1755)
 // the scene entity of the object a trigger runs for (scene prop / agent triggers; 0 otherwise); +0x88 is its position
@@ -657,16 +657,16 @@ struct MissionUiX {
     __forceinline void select_side(int side) { ((BattleW*)this)->select_side(side); }        // 0x492750 (thiscall, ret 4)
 };
 extern MissionUiX g_mission_ctx;         // 0xa73300
-extern int g_battle_advantage;           // 0xa7331c (set_battle_advantage 0x4a87af)
+
 extern int g_menu_b;                    // 0x5e2924 (jump_to_menu 0x4ac3a0)
 #include "../map_flags.h"   // g_map_flags.f8 = 0x5e2924 (jump_to_menu 0x4ac3a0)
 struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
 extern __int64 g_trigger_param_1;       // 0xa70448 (g_script +8)
 extern __int64 g_trigger_param_2;       // 0xa70450 (g_script +0x10)
-extern unsigned g_battle_flags;         // 0xa73464 bit 0 = end the battle (end_current_battle 0x4a55fe)
+
 extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a2ad0)
-extern char g_in_meta_mission;          // 0x8ee30ec (read by in_meta_mission)
+
 
 // ---- the mission (g_mission, 0x5e292c; Mission in agent.h) --------------------------------------------------------
 // The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16): the slices' AgentX.

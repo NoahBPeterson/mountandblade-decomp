@@ -30,7 +30,7 @@ using rgl::vector4;
 // ---- engine globals (the input state words of the keyboard object; the editor's modifier / action keys) --------------
 extern int g_a1714c;                    // 0xa1714c
 extern int g_a1712c;                    // 0xa1712c
-extern HWND g_editor_hwnd;              // 0x8ee3d30
+
 
 // pos3: a frame with the engine's "advance along forward" helper (matrix::move_forward, 0x531380). The multiplication
 // is rgl::mat4::operator* (0x40e870), the relative transform pos::relative (0x4329d0).

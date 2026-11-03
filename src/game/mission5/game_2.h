@@ -99,8 +99,6 @@ struct tstring_vec : tstring_alloc {
 #include "../str_table.h"       // StrTable g_strtable (0x5e2a18): find 0x4c6010
 struct GameData { const char* module_path(const char* sub); void init_event(struct E92* r); };   // 0x4639d0, 0x4b36a0 (include/game_data.h: Game is the game-data object)
 #define MODULE_PATH(sub) (((GameData*)this)->module_path(sub))
-extern int g_level_lo[];                            // 0x5937c8
-extern int g_level_hi[];                            // 0x5937cc
 
 // (item, modifier word) pairs of the statement / troop / scene records are the shared ItemRef (../item_ref.h; item -1 = none)
 

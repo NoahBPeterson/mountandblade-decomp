@@ -116,7 +116,7 @@ struct OriginPairs {                                              // the key tab
     bool is_down(int key);                                           // 0x48ac50 (ret 4)
 };
 extern OriginPairs g_game_keys;                                         // 0xa73730
-extern int g_cam_sens;                                            // 0x5a9fdc
+
 
 extern float g_screen_a;                                          // 0x5d75dc
 extern float g_screen_b;                                          // 0x5d75d8
@@ -455,8 +455,8 @@ struct ParamEntry {                                               // 0x2c-byte r
 };
 extern ParamEntry g_game_vars[];                                     // 0xa44240
 extern int g_param_count;                                         // 0xa70240
-extern tstring* g_msg_begin;                                      // 0x5e23c4 (the recent-messages ring: 0x10-byte tstrings)
-extern tstring* g_msg_end;                                        // 0x5e23c8
+
+
 #include "../str_table.h"                                          // StrTable: lookup 0x43a1e0 (ret 4)
 struct UiAInline : MissionUi {};                                  // cls_map/progress_bar.cpp's name for the widget make_short_button returns
 UiAInline* __cdecl make_short_button(MissionUi* frame, const tstring* text, float x, float y, float h);   // 0x4e5570

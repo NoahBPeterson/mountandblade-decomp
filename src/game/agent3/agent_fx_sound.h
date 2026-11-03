@@ -98,7 +98,7 @@ int __cdecl round_float(float* p);                                      // 0x432
 int __cdecl rand_below(const int* n);                                   // 0x432580
 
 #include "../../include/sound_mgr.h"             // SoundDef, SoundGroup, SoundMgr (shared with agent5, party2, inventory_panel)
-extern int g_no_freq;                                   // 0x5a9fc8
+
 extern const int g_xp_table[63];                        // 0x590974: experience needed for each level
 
 // ---- message log (object at 0x5d7080): enabled byte at +0x1714, 32-entry ring at +0xb0b8 ------------------------------------

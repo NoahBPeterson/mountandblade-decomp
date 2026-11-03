@@ -46,7 +46,7 @@ struct HOut { GlyphNode* node; char inserted; };
 struct node_pair { int key; Glyph value; };
 
 // ---- 0x4d9450: WinMain's globals and callees ---------------------------------------------------------------------
-extern HWND      g_editor_hwnd;                  // 0x8ee3d30 (m_hWnd)
+
 extern unsigned char g_mt_inited;                // 0x5e2a09
 extern void*     g_mt_event;                     // 0x5e28d8
 extern CRITICAL_SECTION g_mt_cs;                 // 0x5e28dc

@@ -126,5 +126,5 @@ extern tstring g_module_path; // 0x8ee3c28
 // trigger_vec.cpp load_game_variables: the selected module name;
 #include "./module_name.h"      // g_module_name (0x8ee3c38)
 
-extern int g_sound_muted;                                   // 0x5a9fd8 non-zero: sound is off (the listener does not follow the camera, script sound ops warn)
+
 #endif // GAME_GAME_GLOBALS_H
