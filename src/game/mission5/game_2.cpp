@@ -67,7 +67,7 @@ void Game::build_map()
 {
     if (!g_new_game_done) {
         g_nav = (NavGraph*)new NavCore();
-        file_text s;
+        tstream3 s;
         const char* path = MODULE_PATH("map.txt");
         if (!OPEN_READ_TEXT(s, path))
             mb_error("Unable to open %s", path);
@@ -928,7 +928,7 @@ void Game::load_game_data(int extra_triggers)
     tstring str2;                                        // +0x28
 
     // ---- factions.txt -----------------------------------------------------------------------------------
-    file_text s_factions;                                // +0x80
+    tstream3 s_factions;                                // +0x80
     {
         const char* path = MODULE_PATH("factions.txt");
         if (!OPEN_READ_TEXT(s_factions, path))
@@ -950,7 +950,7 @@ void Game::load_game_data(int extra_triggers)
     s_factions.failed = 1;
 
     // ---- skills.txt -------------------------------------------------------------------------------------
-    file_text s_skills;                                  // +0x198
+    tstream3 s_skills;                                  // +0x198
     {
         const char* path = MODULE_PATH("skills.txt");
         if (!OPEN_READ_TEXT(s_skills, path))
@@ -976,7 +976,7 @@ void Game::load_game_data(int extra_triggers)
     fix_skeletons((std::vector<RegSkeleton>*)g_skeletons);
 
     // ---- troops.txt -------------------------------------------------------------------------------------
-    file_text s_troops;                                  // +0xb8
+    tstream3 s_troops;                                  // +0xb8
     {
         const char* path = MODULE_PATH("troops.txt");
         if (!OPEN_READ_TEXT(s_troops, path))
@@ -994,7 +994,7 @@ void Game::load_game_data(int extra_triggers)
     s_troops.failed = 1;
 
     // ---- scenes.txt -------------------------------------------------------------------------------------
-    file_text s_scenes;                                  // +0xf0
+    tstream3 s_scenes;                                  // +0xf0
     {
         const char* path = MODULE_PATH("scenes.txt");
         if (!OPEN_READ_TEXT(s_scenes, path))
@@ -1012,7 +1012,7 @@ void Game::load_game_data(int extra_triggers)
     s_scenes.failed = 1;
 
     // ---- quests.txt -------------------------------------------------------------------------------------
-    file_text s_quests;                                  // +0x48
+    tstream3 s_quests;                                  // +0x48
     {
         const char* path = MODULE_PATH("quests.txt");
         if (!OPEN_READ_TEXT(s_quests, path))
@@ -1030,7 +1030,7 @@ void Game::load_game_data(int extra_triggers)
     s_quests.failed = 1;
 
     // ---- triggers.txt -----------------------------------------------------------------------------------
-    file_text s_triggers;                                // +0x160
+    tstream3 s_triggers;                                // +0x160
     {
         const char* path = MODULE_PATH("triggers.txt");
         if (!OPEN_READ_TEXT(s_triggers, path))
@@ -1043,7 +1043,7 @@ void Game::load_game_data(int extra_triggers)
     s_triggers.failed = 1;
 
     // ---- simple_triggers.txt ----------------------------------------------------------------------------
-    file_text s_simple;                                  // +0x128
+    tstream3 s_simple;                                  // +0x128
     {
         const char* path = MODULE_PATH("simple_triggers.txt");
         if (!OPEN_READ_TEXT(s_simple, path))
@@ -1390,7 +1390,3 @@ void Local::read(stream_base& s)
         s.w_int(&e.c);
     }
 }
-
-// ---- the text reader classes' slots (folded into text_stream's by the original's linker) ----
-STREAM_FWD_TEXT_BOTH(file_text_b)
-STREAM_FWD_TEXT_READER(file_text)

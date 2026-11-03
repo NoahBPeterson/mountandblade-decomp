@@ -53,7 +53,7 @@ struct stream_base {
     virtual int flush();                                   // 26 0x408020 (returns 0; ICF-shared)
 };
 
-// The concrete classes' typed slots.
+// The typed slots of the classes that declare all of them (log_stream, gui_manager.h).
 #define STREAM_SLOTS \
     virtual stream_base& w_stream(stream_base* o); \
     virtual stream_base& w_float(float* v); \
@@ -77,22 +77,18 @@ struct stream_base {
     virtual stream_base& r_tstr(rgl::string* v); \
     virtual stream_base& slot22(void* v);
 
-// File-backed streams keep their fields in an intermediate class whose inline ctor does the init: that is
-// why the derived vptr store comes last in 0x417c10 / 0x417c50 / 0x4172d0.
+// File-backed writers keep their fields in an intermediate class (log_stream, gui_manager.h).
 struct file_writer_base : stream_base {
     FILE* fp;                                  // +0x30
     char failed;                               // +0x34
     char is_open;                              // +0x35
     file_writer_base() { failed = 1; is_open = 0; state = 0; }
 };
-struct file_reader_base : stream_base {
-    FILE* fp;                                  // +0x30
-    char failed;                               // +0x34
-    file_reader_base() { fp = 0; state = 0; failed = 1; }
-};
 
-// Text stream (vtable 0x54a7d0): writes values followed by a blank, reads whitespace tokens.
-// Slots defined in src/rgl/text_stream.cpp (0x415290..0x415880) and in the next object (0x415900..).
+// ---- the text streams -------------------------------------------------------------------------------------------
+// Text stream (vtable 0x54a7d0): writes values followed by a blank, reads whitespace tokens. The engine's text log and its
+// derived file classes (options_panel.h's outfile_b) build on it.
+// Slots: text_stream.cpp (0x4153a0..0x415880), resource_io.cpp (0x415900..0x415d60).
 struct text_stream : file_writer_base {
     virtual stream_base& w_stream(stream_base* o);         // 0x415800
     virtual stream_base& w_float(float* v);                // 0x415790
@@ -122,36 +118,112 @@ struct text_stream : file_writer_base {
     bool open_read_text(const char* path);     // 0x415d60
 };
 
-// Second text stream class (vtable 0x54a890, same slots as text_stream); only its dtor is in src/rgl.
-struct text_stream2 : text_stream {
-    ~text_stream2();                           // 0x417310
+// The text reader chain (vtable 0x54a890): text_stream's slots, folded by the original's linker, each class with its own
+// copy. This class has a user-declared empty destructor (0x417310); the loaders that build readers on their stack inline it
+// (stream_inline.h), which leaves its vtable store in their destructors.
+struct text_stream2 : stream_base {
+    FILE* fp;                                  // +0x30
+    char failed;                               // +0x34
+    virtual stream_base& w_stream(stream_base* o);         // 0x415800
+    virtual stream_base& w_float(float* v);                // 0x415790
+    virtual stream_base& w_bool(char* v);                  // 0x415730
+    virtual stream_base& w_u64(unsigned __int64* v);       // 0x415670
+    virtual stream_base& w_i64(__int64* v);                // 0x415590
+    virtual stream_base& w_uint(unsigned* v);              // 0x415500 (ICF with w_int)
+    virtual stream_base& w_int(int* v);                    // 0x415500
+    virtual stream_base& w_byte(unsigned char* v);         // 0x415470
+    virtual stream_base& w_cstr(const char* s);            // 0x4153a0
+    virtual stream_base& w_tstr(const rgl::string* s);     // 0x415410
+    virtual stream_base& slot12(void* v);                  // 0x415870 (returns *this)
+    virtual stream_base& r_stream(stream_base* o);         // 0x415cf0
+    virtual stream_base& r_float(float* v);                // 0x415c80
+    virtual stream_base& r_bool(char* v);                  // 0x415c10
+    virtual stream_base& r_uint(unsigned* v);              // 0x415930 (ICF with r_int)
+    virtual stream_base& r_u64(unsigned __int64* v);       // 0x415b60
+    virtual stream_base& r_i64(__int64* v);                // 0x415a60
+    virtual stream_base& r_int(int* v);                    // 0x415930
+    virtual stream_base& r_byte(char* v);                  // 0x4159f0
+    virtual stream_base& r_tstr(rgl::string* v);           // 0x415880
+    virtual stream_base& slot22(void* v);                  // 0x415870 (ICF with slot12)
+    __forceinline text_stream2() {}
+    ~text_stream2();                           // 0x417310 (stream_inline.h: the inline copy)
+    void expect_token();                       // 0x415900
+    bool open_read(const char* path);          // 0x415290
+    bool open_read_text(const char* path);     // 0x415d60
 };
 
-// Text reader (vtable 0x54ac88): text_stream's read slots, the write slots 3-8 and 11 return *this.
-struct tstream3 : file_reader_base {
-    STREAM_SLOTS
-    tstream3();                                // 0x4172d0
+// The text readers' constructor level (no virtuals of its own): the file fields' initial values are set here, which is why a
+// reader's own vtable store comes after them (0x4172d0).
+struct text_reader_base : text_stream2 {
+    __forceinline text_reader_base() { failed = 1; fp = 0; state = 0; }
 };
 
-// In-memory binary stream (vtable 0x54ad68): every read and write slot is real (src/rgl/mem_stream.cpp).
+// Text reader (vtable 0x54ac88): text_stream2's read slots, the write slots 3-8 and 11 return *this.
+struct tstream3 : text_reader_base {
+    tstream3();                                // 0x4172d0 (stream_inline.h: the inline copy)
+    virtual stream_base& w_float(float* v);                // 0x415870
+    virtual stream_base& w_bool(char* v);                  // 0x415870
+    virtual stream_base& w_u64(unsigned __int64* v);       // 0x415870
+    virtual stream_base& w_i64(__int64* v);                // 0x415870
+    virtual stream_base& w_uint(unsigned* v);              // 0x415870
+    virtual stream_base& w_int(int* v);                    // 0x415870
+    virtual stream_base& w_tstr(const rgl::string* s);     // 0x415870
+};
+
+// ---- the binary streams -----------------------------------------------------------------------------------------
+// In-memory binary stream (vtable 0x54ad68): every read and write slot is real (src/rgl/mem_stream.cpp). The loaders
+// that build one on their stack inline the user-declared destructor (stream_inline.h); the out-of-line copy is 0x417c90.
 struct mem_stream : stream_base {
-    STREAM_SLOTS
-    ~mem_stream();                             // 0x417c90
+    virtual stream_base& w_stream(stream_base* o);         // 0x417930
+    virtual stream_base& w_float(float* v);                // 0x4179e0 (ICF with w_int)
+    virtual stream_base& w_bool(char* v);                  // 0x417a70 (ICF with w_byte)
+    virtual stream_base& w_u64(unsigned __int64* v);       // 0x417a00 (ICF with w_i64)
+    virtual stream_base& w_i64(__int64* v);                // 0x417a00
+    virtual stream_base& w_uint(unsigned* v);              // 0x4179e0 (ICF with w_int)
+    virtual stream_base& w_int(int* v);                    // 0x4179e0
+    virtual stream_base& w_byte(unsigned char* v);         // 0x417a70
+    virtual stream_base& w_cstr(const char* s);            // 0x417990
+    virtual stream_base& w_tstr(const rgl::string* s);     // 0x417a20
+    virtual stream_base& slot12(void* v);                  // 0x415870 (returns *this)
+    virtual stream_base& r_stream(stream_base* o);         // 0x417b50
+    virtual stream_base& r_float(float* v);                // 0x417b10 (ICF with r_int)
+    virtual stream_base& r_bool(char* v);                  // 0x417af0 (ICF with r_byte)
+    virtual stream_base& r_uint(unsigned* v);              // 0x417b10 (ICF with r_int)
+    virtual stream_base& r_u64(unsigned __int64* v);       // 0x417b30 (ICF with r_i64)
+    virtual stream_base& r_i64(__int64* v);                // 0x417b30
+    virtual stream_base& r_int(int* v);                    // 0x417b10
+    virtual stream_base& r_byte(char* v);                  // 0x417af0
+    virtual stream_base& r_tstr(rgl::string* v);           // 0x417a90
+    virtual stream_base& slot22(void* v);                  // 0x415870 (returns *this)
+    __forceinline mem_stream() {}
+    ~mem_stream();                             // 0x417c90 (stream_inline.h: the inline copy)
 };
 
-// File binary writer (vtable 0x54add8): mem_stream's write slots (ICF), flush 0x417bb0.
+// The binary file reader's constructor level (no virtuals of its own, see text_reader_base).
+struct bin_reader_base : mem_stream {
+    FILE* fp;                                  // +0x30
+    char failed;                               // +0x34
+    __forceinline bin_reader_base() { failed = 1; fp = 0; state = 0; }
+};
+
+// File binary writer (vtable 0x54add8): its own copies of mem_stream's write slots (the original's linker folded them), the
+// read slots return *this; flush 0x417bb0. Not derived from mem_stream: its destructor does not store that vtable.
 struct bin_writer : file_writer_base {
     bin_writer();                              // 0x417c10
     STREAM_SLOTS
     virtual int flush();                       // 0x417bb0
 };
 
-// File binary reader (vtable 0x54ae48): mem_stream's read slots (ICF).
-struct bin_reader : file_reader_base {
-    bin_reader();                              // 0x417c50
-    STREAM_SLOTS
+// File binary reader (vtable 0x54ae48): mem_stream's read slots, the write slots 3-8 and 11 return *this.
+struct bin_reader : bin_reader_base {
+    bin_reader();                              // 0x417c50 (stream_inline.h: the inline copy)
+    virtual stream_base& w_float(float* v);                // 0x415870
+    virtual stream_base& w_bool(char* v);                  // 0x415870
+    virtual stream_base& w_u64(unsigned __int64* v);       // 0x415870
+    virtual stream_base& w_i64(__int64* v);                // 0x415870
+    virtual stream_base& w_uint(unsigned* v);              // 0x415870
+    virtual stream_base& w_int(int* v);                    // 0x415870
+    virtual stream_base& w_tstr(const rgl::string* s);     // 0x415870
 };
-
-#include "./stream_fwd.h"   // the forwarding slot-body macros (STREAM_FWD_*)
 
 #endif

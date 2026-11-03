@@ -21,6 +21,8 @@
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
+#include "../../rgl/stream_inline.h"   // the file writer built on save_scene's stack: constructor inline
+__forceinline bin_writer::bin_writer() {}   // inline here (resmgr.cpp load_pack calls the out-of-line 0x417c10)
 #include "../../rgl/mesh.h"
 #include "../conv_screen.h"      // Rec1208 (ConvScreen): the conversation screen record, whose slot 3 is handle_event 0x525160
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -1057,7 +1059,7 @@ unlock:
 void GameData_s27c90::save_scene(int idx)
 {
     tstring path = scene_path(idx);
-    bin_writer_i w;
+    bin_writer w;
     const char* p = module_path(path.c_str());
     ((tstring*)&w.name)->assign(p);
     w.is_open = 0;
@@ -3217,7 +3219,3 @@ int* Scene_s2ce00::clamp(int* out, int* in)
     out[1] = iy;
     return out;
 }
-
-// ---- bin_writer_i's slots (the original's linker folded them into mem_stream's / text_stream's) ----
-STREAM_FWD_BIN_WRITER(bin_writer_i)
-int bin_writer_i::flush() { return ((bin_writer*)this)->bin_writer::flush(); }

@@ -1201,8 +1201,8 @@ void resmgr::load_pack(const rgl::string& name, int user)
         struct _stat st_t, st_b;
         if (_stat(trf.c_str(), &st_t) != -1) {
             if (_stat(brf.c_str(), &st_b) == -1 || difftime(st_t.st_mtime, st_b.st_mtime) > 0.0) {
-                text_reader ts;
-                if (((text_stream*)&ts)->open_read_text(trf.c_str())) {
+                tstream3 ts;
+                if (ts.open_read_text(trf.c_str())) {
                     load_stream(&ts);
                     ts.failed = 1;
                     done = true;
@@ -1215,7 +1215,7 @@ void resmgr::load_pack(const rgl::string& name, int user)
         }
     }
     if (!done) {
-        file_reader br;
+        bin_reader br;
         const char* p = brf.c_str();
         if (!((text_stream*)&br)->open_read(p))        // 0x415290
             mb_error("Unable to open file: %s\n", p);
@@ -1224,8 +1224,3 @@ void resmgr::load_pack(const rgl::string& name, int user)
     }
 }
 
-// ---- the reader classes' slots (the original's linker folded them into text_stream's / mem_stream's) ----
-STREAM_FWD_TEXT_BOTH(text_reader_b)
-STREAM_FWD_TEXT_READER(text_reader)
-STREAM_FWD_MEM(mem_stream_inl)
-STREAM_FWD_BIN_READER(file_reader)

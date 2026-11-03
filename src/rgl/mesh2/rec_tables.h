@@ -144,22 +144,9 @@ struct ini_file_x {
 void load_game_variables();                         // 0x4c0520 (resets one buffer-size group)
 // 0x4bab70 user_path (argument in ESI, a static helper of another TU) has a local copy in rec_tables.cpp.
 
-// The binary file reader the options loader builds on its stack (vtable 0x54ae48 = bin_reader): the same inline chain
-// as rgl/core/resmgr.h (inline ctors, user-declared empty destructor of the in-memory stream 0x54ad68).
-struct opt_mem_stream : stream_base {
-    STREAM_SLOTS
-    __forceinline opt_mem_stream() {}
-    ~opt_mem_stream() {}
-};
-struct opt_reader_b : opt_mem_stream {
-    FILE* fp;                                  // +0x30
-    char failed;                               // +0x34
-    __forceinline opt_reader_b() { failed = 1; fp = 0; state = 0; }
-};
-struct opt_reader : opt_reader_b {             // vtable 0x54ae48
-    __forceinline opt_reader() {}
-    STREAM_SLOTS
-};
+// The binary file reader the options loader builds on its stack (vtable 0x54ae48, bin_reader): its constructor and the
+// user-declared empty destructor of the in-memory stream 0x54ad68 are inlined there (stream_inline.h).
+#include "../stream_inline.h"
 
 // 0x9c bytes; the loader reads the fields in the order shown, with the file's tokens in a different order.
 // (Field names/layout mirror options::save() at 0x4181c0.)
