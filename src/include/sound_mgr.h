@@ -27,13 +27,13 @@ struct SoundMgr {                                       // the sound player (g_s
     SoundDef* defs;                                     // +4
     int ngroups;                                        // +8
     SoundGroup* groups;                                 // +0xc
-    char pad10[0x40 - 0x10];
-    rgl::vector4 listener;                              // +0x40 (the listener position; 0x5aa138 is g_listener of agent_hud)
-    int slot[(0x248 - 0x50) / 4];                       // +0x50 group index by sound id
+    rgl::matrix frame;                                  // +0x10 the listener frame (s, f, u rows; the position o is at +0x40)
+    int slot[(0x248 - 0x50) / 4];                       // +0x50 group index by sound id (the game's named sounds: slot[0x11] = pain, slot[1] = level up)
     std::vector<int> channels;                          // +0x248 looping channels
     int play(int idx, int flags, const float* pos, float freq, int* out_id);   // 0x442650 (ret 0x14)
     int play_slot(int n, int flags, const float* pos, float freq, int* out_id);   // 0x4428a0 (ret 0x14; agent5/agent_hud called it start)
-    void stop_all();                                    // 0x494310 (agent5/agent_hud.cpp)
+    void play_ui(int sound, unsigned flags);            // 0x4942f0 (ret 8; world_data.cpp: plays a sound at the listener position)
+    void stop_all();                                    // 0x494310 (world_data.cpp)
 };
 
 extern SoundMgr g_sound_mgr; // 0x5aa128

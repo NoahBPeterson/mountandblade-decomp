@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../last_scene.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../animator.h"       // Animator g_anim (0x8ed4f60)
@@ -74,9 +75,8 @@ extern char g_8ee3120[];    // 0x8ee3120 0x2a records of 0x44 (three strings eac
 extern char g_8ee3c28[];    // 0x8ee3c28 the module path
 extern char g_8ee3c38[];    // 0x8ee3c38 the module name
 extern char g_8ee3c48[];    // 0x8ee3c48 the application
-extern char g_5aa128[];     // 0x5aa128 the sound manager
-extern std::string g_5aa380;   // 0x5aa380
-extern char g_59c490[];     // 0x59c490 (its 0x40-character initial value)
+struct SoundMgr;
+extern SoundMgr g_sound_mgr;   // 0x5aa128 the sound player (defined in agent_fx_sound.cpp; no constructor, only the destructor registered below)
 extern void* g_vt_54a7d0[]; // 0x54a7d0 the debug text log's vtable
 extern void* g_vt_595990[]; // 0x595990 outfile's vtable
 extern void* g_vt_595618[]; // 0x595618 outfile_b's vtable (its base)
@@ -90,7 +90,6 @@ struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
 struct big_holder { void release(); };              // 0x4ca830
 struct DisplayState { DisplayState(); };            // 0x4bc2d0
-struct PhysSet { void reset(); };                   // 0x47dc50
 struct ini_file { ini_file(); };                    // 0x4c1be0
 namespace rgl { struct scene { scene(); ~scene(); }; }   // 0x429740, 0x41f4e0
 struct model_a { model_a(); };                      // 0x4d3580
@@ -121,7 +120,6 @@ void __fastcall destroy_tstring_pairs(tstring_pair** p);   // 0x4c4640
 void __fastcall destroy_elem48_array(elem48** p);   // 0x4c3f60
 void __fastcall core_dtor(Core* c);                 // 0x4bed90
 void destroy_range(NameVecRec* first, NameVecRec* last);   // 0x4f6680
-void destroy_range_e56(void* first, void* last, void* alloc, ptr_tag tag);   // 0x43e6e0 (std::_Destroy_range<E56>)
 void __fastcall nameholder_dtor(void* p);           // 0x4316b0 (NameHolder::~NameHolder)
 void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (__fastcall* dtor)(void*));   // 0x401830
 
@@ -242,11 +240,9 @@ void __cdecl static_dtor_5483f0() { ((scenefile_obj*)g_8ed50c8)->~scenefile_obj(
 // @ 0x548400
 void __cdecl static_dtor_548400() { ((RefList*)g_a75f2c)->retire(); }
 // @ 0x548410
-void __cdecl static_dtor_548410() { ((ItemPage*)g_5aa128)->clear(); }
+void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 // @ 0x548420
 void __cdecl static_dtor_548420() { ((world_obj*)g_a76630)->~world_obj(); }
-// @ 0x548430
-void __cdecl static_dtor_548430() { g_5aa380.~basic_string(); }
 // @ 0x548460
 void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
 // @ 0x548480
@@ -255,19 +251,6 @@ void __cdecl static_dtor_548480() { ((big_holder*)g_5fe898)->release(); }
 void __cdecl static_dtor_548490() { ((rgl::scene*)g_a70260)->~scene(); }
 // @ 0x5484a0
 void __cdecl static_dtor_5484a0() { ((big_obj*)g_a70440)->release(); }
-// @ 0x5484b0   std::vector<E56>::~vector of the physics set (allocator at +0, first/last/end at +4/+8/+0xc)
-void __cdecl static_dtor_5484b0()
-{
-    void* first = AT(void*, g_a181f8, 4);
-    if (first) {
-        ptr_tag tag;   // empty tag passed by value: the original pushes an uninitialised slot (src/include/ptr_tag.h)
-        destroy_range_e56(first, AT(void*, g_a181f8, 8), g_a181f8, tag);
-        operator delete(AT(void*, g_a181f8, 4));
-    }
-    AT(void*, g_a181f8, 4) = 0;
-    AT(void*, g_a181f8, 8) = 0;
-    AT(void*, g_a181f8, 0xc) = 0;
-}
 // @ 0x548500
 void __cdecl static_dtor_548500() { ((TwoVec*)g_a75f40)->~TwoVec(); }
 // @ 0x548510
@@ -290,22 +273,6 @@ void __cdecl static_dtor_548520()
 void __cdecl static_init_5479a0() { new (g_5d6fa0) resmgr; atexit(static_dtor_548130); }
 // @ 0x5479c0
 void __cdecl static_init_5479c0() { new (g_5d7080) gui_manager; atexit(static_dtor_548140); }
-// @ 0x5479e0
-void __cdecl static_init_5479e0() { g_5e2464 = g_5a8e78; }
-// @ 0x5479f0
-void __cdecl static_init_5479f0() { g_5e2468 = g_5a8e88; }
-// @ 0x547a00
-void __cdecl static_init_547a00() { g_5a9be8 = g_549cdc - g_5a9be0; }
-// @ 0x547a20
-void __cdecl static_init_547a20() { g_5e2584 = g_5a8e78; }
-// @ 0x547a30
-void __cdecl static_init_547a30() { g_5e2580 = g_5a8e88; }
-// @ 0x547a40
-void __cdecl static_init_547a40() { g_8ee41ec = g_5a8e78; }
-// @ 0x547a50
-void __cdecl static_init_547a50() { g_8ee41e8 = g_5a8e88; }
-// @ 0x547a60
-void __cdecl static_init_547a60() { g_5a9f28[0] = g_549cdc - g_5a9f20; }
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable
 void __cdecl static_init_547aa0()
 {
@@ -350,8 +317,6 @@ void __cdecl static_init_547b50()
 void __cdecl static_init_547ba0() { new (g_a17910) DisplayState; }
 // @ 0x547bb0
 void __cdecl static_init_547bb0() { atexit(static_dtor_548520); }
-// @ 0x547d80
-void __cdecl static_init_547d80() { ((PhysSet*)g_a181f8)->reset(); atexit(static_dtor_5484b0); }
 // @ 0x547da0
 void __cdecl static_init_547da0() { new (g_a18238) ini_file; atexit(static_dtor_5481a0); }
 // @ 0x547dc0
@@ -430,8 +395,6 @@ void __cdecl static_init_548070()
 }
 // @ 0x5480b0
 void __cdecl static_init_5480b0() { new (g_8ee3c28) tstring; atexit(static_dtor_548150); }
-// @ 0x5480f0
-void __cdecl static_init_5480f0() { g_5aa380.assign(g_59c490, 0x40); atexit(static_dtor_548430); }
 // @ 0x548110
 void __cdecl static_init_548110() { new (g_8ee3c48) GameApp; atexit(static_dtor_5482a0); }
 
@@ -439,15 +402,15 @@ void __cdecl static_init_548110() { new (g_8ee3c48) GameApp; atexit(static_dtor_
 typedef void (__cdecl* init_fn)();
 #pragma data_seg(".CRT$XCU")
 init_fn g_static_init_table[] = {
-    static_init_5479a0, static_init_5479c0, static_init_5479e0, static_init_5479f0, static_init_547a00,
-    static_init_547a20, static_init_547a30, static_init_547a40, static_init_547a50, static_init_547a60,
+    static_init_5479a0, static_init_5479c0, 
+    
     static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
-    static_init_547ba0, static_init_547bb0, static_init_547d80, static_init_547da0,
+    static_init_547ba0, static_init_547bb0, static_init_547da0,
     static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547f60, static_init_547fa0, static_init_547fb0,
     static_init_547fc0, static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,
-    static_init_548050, static_init_548070, static_init_5480b0, static_init_5480f0,
+    static_init_548050, static_init_548070, static_init_5480b0, 
     static_init_548110,
 };
 #pragma data_seg()

@@ -18,8 +18,6 @@ using rgl::vector4;
 
 // ---- globals --------------------------------------------------------------------------------------------
 extern int g_ticks[];                                           // 0x5e2948 / 0x5e294c (two-dword clock)
-extern char* g_game;                                            // 0x5e2930 (the GameData instance)
-extern char* g_menus;                                           // 0x5e29b0 (the menu array)
 extern int g_5e2930_dummy;
 
 // The string table is game/str_table.h's StrTable (find 0x4c6010, lookup 0x43a1e0); the script state (0xa70440) is dialog_manager.h's ScriptState
@@ -55,6 +53,9 @@ struct frustum_ctor { void ctor(); };   // 0x41ef60
 // vtable where the original has functions; deriving from head_rec keeps the layout (id at +8, name at +0x1c) and
 // the slots real. `item_base` stays as the name this file uses.
 #include "../head_rec.h"
+#include "../menu_rec.h"   // g_menus 0x5e29b0
+struct GameData;
+extern GameData* g_game;                                    // 0x5e2930
 struct item_base : head_rec {
     // head_rec's ctor sets +8 to 0x63; these records store 99 instead, so the ctor here finishes the job.
     item_base() { w08 = 99; }
@@ -201,7 +202,7 @@ void MissionParams::init()
     *(int*)(base + 0x268) = 0;
     *(float*)(base + 0x26c) = -0.1f;
     *(int*)(base + 0x284) = 0;
-    *(int*)(g_game + 0x1a20c) = 0;
+    *(int*)((char*)g_game + 0x1a20c) = 0;
     *(char*)(base + 0x2f8) = 0;
     *(int*)(base + 0x270) = 0;
     *(int*)(base + 0x274) = 0;
@@ -406,12 +407,12 @@ void ItemA::s_last() { ((MissionUpdater*)this)->update(); }
 // @ 0x4ceb90
 void MissionUpdater::update()
 {
-    int i = *(int*)(g_game + 0x13aec);
+    int i = *(int*)((char*)g_game + 0x13aec);
     menu_rec* g = (menu_rec*)(i * 0x60 + (int)g_menus);
     tstring* t = g_strtable.find((tstring*)((char*)g + 0x10));
     if (t == 0)
         t = (tstring*)g;
-    tstring& title = *(tstring*)(g_game + 0xb8);                // the game's current menu title (assign 0x42bc50)
+    tstring& title = *(tstring*)((char*)g_game + 0xb8);                // the game's current menu title (assign 0x42bc50)
     title = g_script.expand(*t);
     { tstring stripped = title.strip_tags(); scene->relayout(&stripped); }
     for (int k = 0; k < 16; k++) {
@@ -421,7 +422,7 @@ void MissionUpdater::update()
     for (int idx = 0; idx < g->count; idx++) {
         if (count >= 0x10)
             break;
-        *(char*)(g_game + 0x14054) = 0;
+        *(char*)((char*)g_game + 0x14054) = 0;
         if (g->recs[idx].cond.play(8)) {
             placed_rec* r = &g->recs[idx];
             tstring* nm = g_strtable.find((tstring*)((char*)r + 0x20));
@@ -431,7 +432,7 @@ void MissionUpdater::update()
             items[count]->set_text(ret, g_script.expand(*nm).strip_tags());
             if ((g->flags & 0x10) == 0)
                 items[count]->show();
-            if (*(char*)(g_game + 0x14054))                 // menu_option_disabled (script_interpreter.h +0x14054)
+            if (*(char*)((char*)g_game + 0x14054))                 // menu_option_disabled (script_interpreter.h +0x14054)
                 items[count]->disable();
             ids[count] = idx;
             count++;

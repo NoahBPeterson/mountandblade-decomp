@@ -34,6 +34,11 @@
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
+struct Presentation;
+extern Presentation* g_presentation;                        // 0x5e299c
 
 
 // ==== 0x490030: a random position around a point ===========================================================
@@ -1748,15 +1753,15 @@ void WindowMgrW::open(int _idx)
 
 // ==== 0x4942f0, 0x494310: the sound player ================================================================================
 // @ 0x4942f0
-void SoundW::play_ui(int _a, unsigned _b)
+void SoundMgr::play_ui(int _a, unsigned _b)
 {
     unsigned _f = _b;
     _f |= 1;
-    ((SoundMgr*)(void*)this)->play(_a, (int)_f, (const float*)&listener, 1.0f, 0);
+    play(_a, (int)_f, (const float*)&frame.o, 1.0f, 0);
 }
 
 // @ 0x494310
-void SoundW::stop_all()
+void SoundMgr::stop_all()
 {
     if (g_cfg.disable_sound != 0)
         return;
@@ -1776,8 +1781,8 @@ void SoundW::stop_all()
     *(rgl::mat3*)&_m = _rot;
     _m.o = _pos;
     if (g_cfg.disable_sound == 0) {
-        listener_frame() = _m;
-        FSOUND_3D_Listener_SetAttributes(&listener, 0, *(int*)((char*)this + 0x20), *(int*)((char*)this + 0x28), *(int*)((char*)this + 0x24),
+        frame = _m;
+        FSOUND_3D_Listener_SetAttributes(&frame.o.x, 0, *(int*)((char*)this + 0x20), *(int*)((char*)this + 0x28), *(int*)((char*)this + 0x24),
                                *(int*)((char*)this + 0x30), *(int*)((char*)this + 0x38), *(int*)((char*)this + 0x34));
     }
 }
@@ -1809,7 +1814,7 @@ void GameW::quest_done(int _idx)
                 tstring _txt(_buf);
                 g_msglog.push(_txt, 0xffd0f0c8);
             }
-            ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[3], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+            g_sound_mgr.play(g_quest_sounds[0], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
         }
         if ((*(unsigned*)(_e + 0x50) >> 1 & 1) == 0)
             *(unsigned*)(_e + 0x64) |= 0x200;
@@ -1839,7 +1844,7 @@ void GameW::quest_succeeded(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xff90ff28);
     }
-    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[4], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    g_sound_mgr.play(g_quest_sounds[1], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1863,7 +1868,7 @@ void GameW::quest_failed(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[6], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    g_sound_mgr.play(g_quest_sounds[3], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1899,7 +1904,7 @@ void GameW::set_quest_concluded(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[5], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    g_sound_mgr.play(g_quest_sounds[2], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1923,7 +1928,7 @@ void GameW::set_quest_cancelled(int _idx)
         tstring _txt(_buf);
         g_msglog.push(_txt, 0xffd02028);
     }
-    ((SoundMgr*)(void*)&g_sound_mgr)->play(g_sound_mgr.slot[7], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    g_sound_mgr.play(g_quest_sounds[4], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 

@@ -20,6 +20,7 @@
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/options.h"   // g_options 0x5aa008
 
 // FMOD 3 imports (stdcall thunks in the image's import library)
 extern "C" {
@@ -67,7 +68,7 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 void __fastcall play_sound(UiSoundHost* m)
 {
     int ch = FSOUND_PlaySoundEx(-1, (void*)m->handle, 0, 1);
-    float v = g_master_volume * 155.0f;
+    float v = g_options.f0c * 155.0f;
     if (!(v > 0.0f))
         v -= 0.99999988f;
     FSOUND_SetVolume(ch, (int)v);

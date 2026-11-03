@@ -33,11 +33,21 @@ struct OptionsDlg {
 #include "../../include/game_recs.h"
 #include "../map_icon.h"      // g_map_icons (0x5e29f0)
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+struct Presentation;
+extern Presentation* g_presentation;                        // 0x5e299c
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+HWND g_editor_hwnd;                                         // 0x8ee3d30 the editor window (m_hWnd)
+Font* g_font;                                               // 0x5e2934 the game font
 int g_video_played;                              // 0x5e2a10 (1 once the intro video started, 2 once it was skipped)
 float g_5a9f24 = 0.65f;                          // 0x5a9f24 (the meeting window columns' top)
-float g_5a9f28[2] = { 0.0f, 0.21450001f };       // 0x5a9f28 {x, y} column size; [0] = 1.0f - 0x5a9f20 is set by static_init_547a60 (static_init owner)
+extern const float g_time_scale = 60.0f;         // 0x590e28 read by SaveWindow::list_saves (progress_bar.cpp)
+extern float g_5a9f20;                                      // 0x5a9f20 the meeting window columns' left edge (progress_bar.cpp: a definition in this TU would be folded)
+extern float g_5a9be0;                                      // 0x5a9be0 (progress_bar.cpp)
+float g_5a9be8 = 1.0f - g_5a9be0;                           // 0x5a9be8 computed at startup
+float g_5a9f28[2] = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} column size (x is computed at startup)
 
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
@@ -554,7 +564,7 @@ void crt_exit();                                        // 0x535458
 #include "../ptype.h"             // ptype* g_ptypes (0x5e28f8)
 #include "../../include/item_kind.h"   // ItemKind* g_items (0x5e29d0)
 #include "../terrain_b/emit.h"     // EnvRow* g_env_rows (0x5e28f4)
-extern void* g_mission_templates;                          // 0x5e2a00
+extern PartyTemplate* g_party_templates;                   // 0x5e29f8 (PartyTemplate: game_recs.h, via game_data.h; the type script_interpreter.h and party/game.h declare)
 struct E24;
 E24* g_5e2928;                                          // 0x5e2928 (the array shutdown() deletes)
 extern Font* g_font;                                // 0x5e2934
@@ -697,7 +707,7 @@ void MissionScreen::fill_mission_grid()
 // the base construction shared by 0x4dae40 and 0x4db1f0 (both build the same sequence with a different overlay mesh name)
 #define NEW_OVERLAY_BASE(name_string)                                                   \
     g_gui.reset();                                                                      \
-    stop_all((void*)&orig::g_sound_mgr);                                                \
+    g_sound_mgr.stop_all();                                                \
     { NEW_OVERLAY_WINDOW(p_) overlay = p_; }                                            \
     {                                                                                   \
         float v[2] = { 0.0f, 0.0f };                                                    \
@@ -1400,7 +1410,7 @@ UiAInline* build_row(ContainerBase* parent, const tstring* key, float x, float y
 // @ 0x4dd9e0
 void BlockOwner::activate()
 {
-    g_presentation = this;
+    g_presentation = (Presentation*)this;
     if (index >= 0) {
         f14 = g_presentations[index].a;
         int clk = timer.clock;
@@ -1752,7 +1762,7 @@ void PanelMesh::build_panel(const float* base, const float* size, const float* u
 // @ 0x4de5b0
 void DebriefMenu::create_debrief()
 {
-    stop_all((void*)&orig::g_sound_mgr);
+    g_sound_mgr.stop_all();
 
     ContainerBase* w;
     {

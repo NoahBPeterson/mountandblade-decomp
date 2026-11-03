@@ -68,13 +68,17 @@ int  __cdecl crt_sprintf(char* buf, const char* fmt, ...);      // 0x536f8f
 int  __cdecl crt_remove(const char* path);                      // 0x539023
 void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
-extern char* g_game;                                            // 0x5e2930
+extern int g_a17420;                                            // 0xa17420
+extern int g_a17820;                                            // 0xa17820
+extern char* g_save_dialog;                                     // 0xa7398c
 extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
 #include "../main_menu.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../game_globals.h"      // canonical global declarations (g_module_name ...)
+struct GameData;
+extern GameData* g_game;                                    // 0x5e2930
 #define g_main_menu (*(main_menu*)g_main_menu_obj)
 // The menu record's tstrings/fields live on the object g_main_menu.rec points at, NOT on the screen manager itself:
 // the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
@@ -123,8 +127,8 @@ void SavePanel::update(int)
         if (*(int*)((char*)this + selected * 0x30 + 0x4c) != 0)
             slotname = (int*)((char*)this + selected * 0x30 + 0x2c);
         else
-            slotname = (int*)(*(int*)(g_game + 0x8c) * 0x508 +
-                              *(int*)(g_game + 0x13a00));
+            slotname = (int*)(*(int*)((char*)g_game + 0x8c) * 0x508 +
+                              *(int*)((char*)g_game + 0x13a00));
         ((tstring*)((char*)g_menu_rec + 0x54))->operator=(*(tstring*)slotname);
         g_menu_rec->open = 3;
         g_main_menu.set_state(0);
@@ -178,7 +182,7 @@ void SavePanel::update(int)
         if (*(int*)((char*)this + 0x220) != 0)
             return;
         save_game(selected, (tstring*)((char*)this + 0x224));
-        ((tstring*)(g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
+        ((tstring*)((char*)g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
         tstring ok("ui_game_saved");
         g_msglog.add(*g_strtable.lookup(ok), -1);
         g_main_menu.set_state(*(int*)((char*)this + 0x18));

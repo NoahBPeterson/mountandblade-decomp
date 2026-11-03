@@ -63,7 +63,7 @@ void LoadingPanel::update(int arg)
         int m = mode;
         if (m == 0) {
             log_stream_ptr()->w_cstr("Switching to menu window...\n");
-            g_game->f13aec = 0;
+            g_game_G->f13aec = 0;
             *(int*)(*(char**)((char*)&g_windows + 0x3c) + 0x14) = 0;
             *(int*)(*(char**)((char*)&g_windows + 0x5c) + 0x18) = 0xf;
             (*(main_menu*)&g_windows).set_state(0x17);
@@ -74,12 +74,12 @@ void LoadingPanel::update(int arg)
             return;
         }
         if (m == 2) {
-            g_game->f13aec = 2;
-            g_map_flags.f8 = g_game->f13aec;
+            g_game_G->f13aec = 2;
+            g_map_flags.f8 = g_game_G->f13aec;
             g_map_flags.f0 = 1;
         } else {
-            g_game->f13aec = 3;
-            g_map_flags.f8 = g_game->f13aec;
+            g_game_G->f13aec = 3;
+            g_map_flags.f8 = g_game_G->f13aec;
             g_map_flags.f0 = 1;
         }
         g_map_flags.f2 = 0;
@@ -112,24 +112,24 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
     }
     if (step == 1) {
         Game* g = new Game;
-        g_game = g;
+        g_game_G = g;
         g->reset();
-        g_game->init(g_module_name, header.f34, mode == 2 || mode == 3);
-        g_game->f1a05c = 1;
+        g_game_G->init(g_module_name, header.f34, mode == 2 || mode == 3);
+        g_game_G->f1a05c = 1;
         *counter = *counter + 1;
         tstring k("ui_loading_setting_data");
         out->assign(g_strtable.lookup(&k)->c_str());
         return false;
     }
     if (step == 2) {
-        g_game->load_game_data(g_a75eb8);   // 0x5236f0
+        g_game_G->load_game_data(g_a75eb8);   // 0x5236f0
         if (mode == 1) {
-            Game* g = g_game;
+            Game* g = g_game_G;
             {
                 tstring tmp(header.hero);
                 troop_name(&g->troops[g->cur_troop]) = tmp;
             }
-            g_game->title = header.title;
+            g_game_G->title = header.title;
         }
         *counter = *counter + 1;
         tstring k("ui_loading_savegame_file");
@@ -138,7 +138,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
     }
     if (step == 3) {
         if (mode == 1) {
-            g_game->load_state(save);
+            g_game_G->load_state(save);
             save->failed = 1;
             if (save) {
                 ((mem_stream*)save)->mem_stream::~mem_stream();   // 0x417c90, called directly (the stream base destructor)
@@ -154,16 +154,16 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
     if (step == 4) {
         int m = mode;
         if (m == 0 || m == 2 || m == 3) {
-            g_game->start_new_game();          // 0x51f1a0
+            g_game_G->start_new_game();          // 0x51f1a0
             if (mode == 2 || mode == 3) {      // re-read after the call (0x51ca17)
-                Game* g = g_game;
+                Game* g = g_game_G;
                 tstring key("ui_player");
                 tstring name(*g_strtable.lookup(&key));
                 troop_name(&g->troops[g->cur_troop]) = name;
             }
         }
         if (mode != 2 && mode != 3)
-            g_game->build_map();               // 0x520b20
+            g_game_G->build_map();               // 0x520b20
         log_stream_ptr()->w_cstr("load_map_data complete.\n");
         *counter = *counter + 1;
         tstring k("ui_initializing_map");
@@ -172,7 +172,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
     }
     if (step == 5) {
         if (mode != 2 && mode != 3)
-            g_game->init_map();
+            g_game_G->init_map();
         *counter = *counter + 1;
         {
             tstring k("ui_launching_game");
@@ -185,7 +185,7 @@ bool LoadingPanel::sub(int* counter, int* unused, tstring* out)
         ((MetaMission*)&orig::g_mission_ctx)->init();
         log_stream_ptr()->w_cstr("init_meta_mission complete.\n");
         if (mode != 2 && mode != 3) {
-            g_game->build_scene();             // 0x520d60
+            g_game_G->build_scene();             // 0x520d60
             g_new_game_done = 1;
         }
         log_stream_ptr()->w_cstr("launch complete.\n");

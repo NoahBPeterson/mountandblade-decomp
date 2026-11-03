@@ -30,6 +30,10 @@ rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/s
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10)
 #include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
+#include "../../game/menu_rec.h"   // g_menus 0x5e29b0
+struct Presentation;
+extern Presentation* g_presentation;                        // 0x5e299c
+extern int g_propkind_count;                                // 0x5e29e0
 #include "../../game/shared_vars.h"
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct OptionsDlg {
@@ -1323,7 +1327,7 @@ void MapEditorDialog::update_object_type()
     int list_type = SendMessageA(type, WM_USER_LIST, type_sel, 0);
     SendMessageA(list, 0x184, 0, 0);
     if (!list_type) {
-        int count = orig::g_propkind_count;
+        int count = g_propkind_count;
         for (int i = 0, off = 0; i < count; i++, off += 0x78) {
             char* e = (char*)(*(int*)&orig::g_propkinds + off);
             // the substring is a temporary of the add-string call (destroyed once, right after it: 0x4c7caa)
@@ -1331,9 +1335,9 @@ void MapEditorDialog::update_object_type()
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 2) {
-        int count = orig::g_item_kind_count;
+        int count = g_item_kind_count;
         for (int i = 0, off = 0; i < count; i++, off += 0x238) {
-            char* rec = (char*)(*(int*)&orig::g_items + off);
+            char* rec = (char*)(*(int*)&g_items + off);
             tstring* text = g_strtable.find((tstring*)(rec + 0x20));     // the translation of the key at +0x20,
             if (!text)
                 text = (tstring*)rec;                                   // else the record's name at +0 (0x4c7cfa)
@@ -2042,29 +2046,29 @@ void GameData::save_language_files(bool translated)
     {
         FILE* f = fopen("new_language\\game_menus.csv", "wt+");         // 0x595ef8
         for (int i = 0; i < g_menu_count; i++) {
-            write_row(f, g_menus[i].key, *find_or(g_menus[i].key, g_menus[i].name));
-            for (int j = 0; j < g_menus[i].n_doors; j++) {
+            write_row(f, g_menus[i].id, *find_or(g_menus[i].id, g_menus[i].text));
+            for (int j = 0; j < g_menus[i].count; j++) {
                 if (translated) {
-                    tstring v = g_menus[i].doors[j].translated();
-                    write_row(f, g_menus[i].doors[j].key, v);
+                    tstring v = ((MenuDoor*)g_menus[i].items)[j].translated();
+                    write_row(f, ((MenuDoor*)g_menus[i].items)[j].key, v);
                     tstring suffix("_door");                            // 0x595d64
-                    tstring lookup = g_menus[i].doors[j].key + suffix;
+                    tstring lookup = ((MenuDoor*)g_menus[i].items)[j].key + suffix;
                     const tstring* p = g_strtable.find(&lookup);
                     if (!p)
-                        p = &g_menus[i].doors[j].text;
+                        p = &((MenuDoor*)g_menus[i].items)[j].text;
                     if (p->len > 2) {
                         tstring suffix2("_door");
-                        tstring v2 = g_menus[i].doors[j].translated_door();
-                        write_row(f, g_menus[i].doors[j].key + suffix2, v2);
+                        tstring v2 = ((MenuDoor*)g_menus[i].items)[j].translated_door();
+                        write_row(f, ((MenuDoor*)g_menus[i].items)[j].key + suffix2, v2);
                     }
                 } else {
-                    write_row(f, g_menus[i].doors[j].key,
-                              *find_or(g_menus[i].doors[j].key, g_menus[i].doors[j].name));
-                    const tstring* p = suffix_or(g_menus[i].doors[j].key, "_door",
-                                                 g_menus[i].doors[j].text);
+                    write_row(f, ((MenuDoor*)g_menus[i].items)[j].key,
+                              *find_or(((MenuDoor*)g_menus[i].items)[j].key, ((MenuDoor*)g_menus[i].items)[j].name));
+                    const tstring* p = suffix_or(((MenuDoor*)g_menus[i].items)[j].key, "_door",
+                                                 ((MenuDoor*)g_menus[i].items)[j].text);
                     if (p->len > 2)
-                        write_row(f, g_menus[i].doors[j].key + tstring("_door"),
-                                  *suffix_or(g_menus[i].doors[j].key, "_door", g_menus[i].doors[j].text));
+                        write_row(f, ((MenuDoor*)g_menus[i].items)[j].key + tstring("_door"),
+                                  *suffix_or(((MenuDoor*)g_menus[i].items)[j].key, "_door", ((MenuDoor*)g_menus[i].items)[j].text));
                 }
             }
         }

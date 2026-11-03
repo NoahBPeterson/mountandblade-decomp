@@ -7,6 +7,8 @@
 #include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+extern int g_sound_muted;                                   // 0x5a9fd8
 #include "../key_names.h"
 
 // @ 0x4ece20
@@ -162,11 +164,11 @@ void Screen::camera_update(float dt)
     WorldCam* sc = (WorldCam*)g_level;
     sc->f30c = vector4(-frame.u.x, -frame.u.y, -frame.u.z);   // w never written (3-component constructor)
     sc->f31c = frame.o;
-    if (!g_5a9fd8) {
-        *(mat4*)&g_listener.pos = frame;
+    if (!g_sound_muted) {
+        *(mat4*)&g_sound_mgr.frame = frame;
         // FMOD wants y/z swapped (the engine is z-up)
-        listener_set(&g_listener.up.x, 0, g_listener.vel.x, g_listener.vel.z, g_listener.vel.y,
-                     g_listener.dir.x, g_listener.dir.z, g_listener.dir.y);
+        listener_set(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y,
+                     g_sound_mgr.frame.u.x, g_sound_mgr.frame.u.z, g_sound_mgr.frame.u.y);
     }
 }
 

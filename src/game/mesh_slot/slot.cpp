@@ -14,6 +14,7 @@
 #define NOINL __declspec(noinline)     // keeps the definition's name visible to tools/difftest/slice.py's marker scan
 #include "../../include/fx.h"
 #include "../../include/dialog_rec.h"   // DialogBlock: the 0x1c-byte script block, whose runner emit 0x4b09e0 the channel play calls
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // DirectInput-style device interface (vtable: +0x1c poll/acquire, +0x24 GetDeviceState).
 struct SomeIface {
@@ -247,7 +248,8 @@ Buffer::~Buffer()
 extern "C" double floor(double v);     // 0x536b10 CRT floor (x87 double arg on the stack)
 
 // float constants in the image's read-only data (each 4 bytes, cited by address).
-extern const float g_one;               // 0x549cdc 1.0f
+extern const float g_half;              // 0x549d70 0.5f
+extern const float g_zero;              // 0x549ca8 0.0f
 extern const float g_k002;              // 0x590cd0 0.02f
 
 // The tick table's scale: a float at 0x54a6d0 (loaded with fmul, so it must be a global, not a literal).

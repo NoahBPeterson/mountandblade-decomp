@@ -36,6 +36,7 @@
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../shared_vars.h"
 #include "../key_names.h"
 
@@ -1157,12 +1158,12 @@ int GameData::sl_value_factor()
     float f = 1.0f;
     if (fb4)
         f = 0.75f;
-    f = (1.0f - (float)g_difficulty * 0.09f) * (((g_speed_base - 0.5f) * 0.15f + 1.0f) * f);
-    f = f * ((float)(g_int_5aa054 - 2) * 0.15f + 1.0f);
-    f = f * ((float)(g_int_5aa058 - 2) * 0.2f + 1.0f);
-    if (g_stick_mode == 1)
+    f = (1.0f - (float)g_options.i44 * 0.09f) * (((g_options.f74 - 0.5f) * 0.15f + 1.0f) * f);
+    f = f * ((float)(g_options.i4c - 2) * 0.15f + 1.0f);
+    f = f * ((float)(g_options.i50 - 2) * 0.2f + 1.0f);
+    if (g_options.i70 == 1)
         f = f * 1.2f;
-    return (int)(((float)(g_agent_count - 2) * 0.05f + 1.05f) * f * 100.01f);
+    return (int)(((float)(g_options.i48 - 2) * 0.05f + 1.05f) * f * 100.01f);
 }
 
 // @ 0x48a000
@@ -1225,14 +1226,14 @@ int GameData::template_count(int party, int cell, float)
 // @ 0x48a210
 void sl_item_flag_all()
 {
-    for (int i = 0; i < g_item_count; i++)
+    for (int i = 0; i < g_item_kind_count; i++)
         g_items[i].f21c = 1.0f;
 }
 
 // @ 0x48a250
 void __stdcall sl_item_set_all(float v)
 {
-    for (int i = 0; i < g_item_count; i++)
+    for (int i = 0; i < g_item_kind_count; i++)
         g_items[i].f224 = v;
 }
 

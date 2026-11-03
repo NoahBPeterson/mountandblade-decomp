@@ -25,6 +25,12 @@
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+shape_base* g_hit_shape;                                    // 0x5e246c: last shape hit by trace_ray
+
 
 // signed_angle reads the x and y words of its two arguments (agent2/agent_types.h declares them vec2*); the agent's vel / fx are
 // float records (vector4 or float[]) whose first two words are x and y, so the pointer is the same
@@ -232,12 +238,12 @@ int Agent::pick_attack_dir(unsigned tid)
 {
     int alt = 0;
     int dir;
-    if (g_ctl_mode > 0) {
+    if (g_options.i6c > 0) {
         float dx = g_stick_x;
         float dy = g_stick_y;
-        if (g_invert != 0)
+        if (g_options.i14 != 0)
             dy = -dy;
-        if (g_ctl_mode == 2) {
+        if (g_options.i6c == 2) {
             dx = -dx;
             dy = -dy;
         }
@@ -374,7 +380,7 @@ void Agent::start_shoot(int slot)
             alt = 3 - dir;
     }
     int tgt = pick_front();
-    if (id == g_mission->player_id && (g_ctl_mode != 0 || tgt != -1))
+    if (id == g_mission->player_id && (g_options.i6c != 0 || tgt != -1))
         dir = pick_attack_dir(tgt);
     unsigned __int64 kind = flags & itcf_shoot_mask;
     if (kind == 0) {
@@ -453,7 +459,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
     *b = -1;
     *c = -1;
     int mode = 0;
-    if (id != g_mission->player_id || g_stick_mode == 0) {
+    if (id != g_mission->player_id || g_options.i70 == 0) {
         int t = pick_duel();
         if (t != -1) {
             Agent* o = agent_by_id(t);
@@ -462,10 +468,10 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
             else if (o->active == 1)
                 mode = o->mode1;
         }
-    } else if (g_stick_mode == 1) {
+    } else if (g_options.i70 == 1) {
         float dx = g_stick_x;
         float dy = g_stick_y;
-        if (g_invert != 0)
+        if (g_options.i14 != 0)
             dy = -dy;
         if (dx > dy) {
             if (dx > -dy)

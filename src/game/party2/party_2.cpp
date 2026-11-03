@@ -30,6 +30,8 @@
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_5a75f60;                                       // 0xa75f60 (.bss) set by the tableau render callback, read by the tableau button
 rgl::vector4 g_event_pos;                            // 0xa708c0 (.bss) where the party's map event happened (emit_event 0x14 reads it)
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160
@@ -241,6 +243,11 @@ extern float g_k0_01;                               // 0x54a6f0
 extern float g_k0_7;                                // 0x54b3c8
 extern float g_k0_6;                                // 0x590d94
 extern float g_k1;                                  // 0x549cdc
+extern float g_k1_2;                                // 0x590b94
+extern float g_k1_25;                               // 0x590c80
+extern float g_k1_05;                               // 0x590f24
+extern float g_k0;                                  // 0x549ca8
+extern float g_k3;                                  // 0x54a710
 extern float g_k0_02;                               // 0x590cd0
 
 // @ 0x4b1b20
@@ -417,7 +424,7 @@ void Party::prepare()
 float Party::strength()
 {
     if (f88 != -1) {
-        return g_k1;
+        return g_one;
     }
     int a = 0;
     int b = 0;
@@ -436,8 +443,8 @@ float Party::strength()
     if (v < 0.0f) {
         return 0.0f;
     }
-    if (v >= g_k1) {
-        return g_k1;
+    if (v >= g_one) {
+        return g_one;
     }
     return v;
 }
@@ -869,7 +876,7 @@ void Party::set_order_agent(int* t)
 
 // ---- the per-frame party stats --------------------------------------------------------------------------------------------
 extern float g_k0_1;                                 // 0x54b8b0  0.1f
-extern float g_rand_k;                               // 0x54a6bc  1/15817
+extern float g_k_item_weight;                        // 0x593640  per-item weight of the equipped grid item
 struct options;
 extern options g_options;                   // 0x5aa008
 #define g_clamp_max g_skill_tbl[36].cap          // 0x8ee3ac4
@@ -2308,6 +2315,8 @@ void Party::leave_battle()
 
 // ---- the world-map path finder and the nav drivers ----------------------------------------------------------------------
 extern float g_one;         // 0x549cdc = 1.0f
+extern float g_half;        // 0x549d70 = 0.5f
+extern float g_105;         // 0x59364c = 10.5f
 extern float g_10;          // 0x549d74 = 10.0f
 extern float g_005;         // 0x54b4d0 = 0.05f
 extern float g_vis;         // 0x54a6f0 = 0.01f

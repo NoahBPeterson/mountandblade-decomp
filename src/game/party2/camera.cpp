@@ -39,6 +39,8 @@
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 // ---- data this module owns (docs/standalone_data.md) ----
@@ -710,13 +712,6 @@ struct Reinf {                                      // 0x4c-byte reinforcement r
     int flags;                                      // +4
     char pad8[0x4c - 8];
 };
-struct ReinfSet {                                   // 0x58-byte reinforcement packet
-    char pad0[0x34];
-    Reinf* recs;                                    // +0x34
-    int count;                                      // +0x38
-    char pad3c[0x58 - 0x3c];
-};
-extern ReinfSet* g_mission_templates;                           // 0x5e2a00
 
 struct Unit {                                       // 0x130-byte leader/unit record inside Mission
     char pad0[0x6b0];
@@ -852,8 +847,8 @@ void MissionAgents::add_order_arrow(int id)
 // @ 0x49c170
 void Mission::check_slot(int id, unsigned bits)
 {
-    if (id >= 0 && id < g_mission_templates[cur_set].count) {
-        Reinf* r = &g_mission_templates[cur_set].recs[id];
+    if (id >= 0 && id < g_mission_templates[cur_set].n_spawns) {
+        Reinf* r = (Reinf*)&g_mission_templates[cur_set].recs[id];
         int eax_, ebx_;
 
         memcpy((char*)this + r->idx * 0x130 + 0x6b0, (char*)this + r->idx * 0x130 + 0x6f0, 0x40);
@@ -1186,6 +1181,7 @@ inline void identity_pos(float* m) { ::identity_pos((::pos*)m); }               
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
 extern const float g_549cdc;                    // 0x549cdc  1.0f
+extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
 extern const float g_590cd0;                    // 0x590cd0  0.02f
 
@@ -1505,7 +1501,7 @@ void Camera::update(int)
 
     // shake: blend toward the far weights and hand the offset to the object
     if (d5 < lim[5]) {
-        float inv = g_549cdc / lim[5];
+        float inv = g_one / lim[5];
         float rest = lim[5] - d5;
         v.x = (d5 * w40 + rest * w42) * inv;
         v.y = (d5 * w41 + rest * w43) * inv;
@@ -2333,7 +2329,7 @@ static __forceinline void value_message(GameData* m, int amount, const char* key
         sprintf(buf, g_strtable.lookup(s)->c_str(), m->string_value(amount).c_str());
     }
     g_gui.add(tstring(buf), -1);
-    g_sound_mgr.play(*sound_id, 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+    g_sound_mgr.play(*sound_id, 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
 }
 
 // @ 0x49b720
@@ -2373,7 +2369,7 @@ void GameData::start_quest(int quest, int giver_troop)
             mb_snprintf(buf, 0x200, f->c_str(), n);
         }
         g_gui.add(tstring(buf), 0xffd0f0c8);
-        g_sound_mgr.play(g_sound_mgr.slot[2], 1, (const float*)&g_sound_mgr.listener, 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[2], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
         rec->flags = 0x100;
     }
     WL_MARKER(13)

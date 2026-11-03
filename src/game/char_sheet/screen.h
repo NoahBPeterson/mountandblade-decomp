@@ -215,7 +215,6 @@ struct CurObj {
 };
 
 struct GameMgr;
-extern GameMgr g_game;                  // 0x5e2930
 
 // ---- globals --------------------------------------------------------------------------------------------
 extern int g_screenshots_counter;       // 0xa70440
@@ -248,6 +247,9 @@ extern float g_ticks[];                // 0x5e2948 (float pairs: x at [i*2], y a
 
 extern float zero;                      // 0x549ca8  0.0f
 extern float g_one;                     // 0x549cdc  1.0f
+extern float g_eps;                     // 0x54a6f0  0.01f
+extern float g_ninety_nine;             // 0x54a5cc  0.99f
+extern float g_seventy_four;            // 0x5985f4  0.74f
 
 // (leave_module 0x4ebb80 is menu_variables_loaded: cs_common.h)
 

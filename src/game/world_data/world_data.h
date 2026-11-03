@@ -153,7 +153,8 @@ struct FaceId {
 int __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
 int trigger_item_mesh(int context);                             // 0x4904a0 (context in EAX in the original: a static function with a register convention)
 
-extern float g_k065;                                            // 0x590b6c (0.65f)
+#include "../../include/game_recs.h"   // PartyTemplate* g_party_templates (0x5e29f8)
+extern float g_k15;                                             // 0x590da0 (15.0f)
 
 struct GameW : GameData {
     rgl::vector4& cur_color() { return WD_FLD(rgl::vector4, 0x13fb4); }     // +0x13fb4 (0x4952f0)
@@ -402,21 +403,10 @@ struct GlobVec {                                                // the running p
     int f8;                                                     // +8
     int fc;                                                     // +0xc
 };
-extern GlobVec* g_presentation;                            // 0x5e299c
 
-// ---- the sound player (g_sound_mgr 0x5aa128; agent3/agent_fx_sound.h has the full class under src/rgl-based headers) ----------------
-// agent3/agent_fx_sound.h's SoundMgr::play (0x442650); the header does not go with this one
-struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out_id); };
-struct SoundW {
-    char pad0[0x40];
-    rgl::vector4 listener;                                      // +0x40
-    int slot[(0x248 - 0x50) / 4];                                // +0x50 group index by sound id (include/sound_mgr.h); the quest sounds are slot[3..7] (0x5aa184..0x5aa194)
-    std::vector<int> channels;                                  // +0x248 looping channels (allocator word, first at +0x24c)
-    rgl::matrix& listener_frame() { return WD_FLD(rgl::matrix, 0x10); }   // +0x10 the listener frame (position at +0x40: 0x494310)
-    void play_ui(int sound, unsigned flags);                    // 0x4942f0 (ret 8)
-    void stop_all();                                            // 0x494310
-};
-extern SoundW g_sound_mgr;                                          // 0x5aa128
+// ---- the sound player (g_sound_mgr 0x5aa128): include/sound_mgr.h ----------------
+#include "../../include/sound_mgr.h"
+extern int g_quest_sounds[];                                    // 0x5aa184 .. (completed 0x5aa184, succeeded 0x5aa188, concluded 0x5aa18c, failed 0x5aa190, cancelled 0x5aa194)
 
 #define g_msglog (*(MsgLog*)&g_gui)                          // the on-screen message log view of the UI root g_gui (0x5d7080)
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100

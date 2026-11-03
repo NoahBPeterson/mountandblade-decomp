@@ -31,17 +31,21 @@ struct text_stream;
 namespace orig {
 extern const float g_one;                  // 0x549cdc
 extern const float k_0_3f;                 // 0x549d68
+extern const float g_zero;                 // 0x549ca8
 extern const float k_0_9f;                 // 0x549d6c
 extern const float g_half;                 // 0x549d70
 extern const float g_ten;                  // 0x549d74
 extern const float k_1_5708f;              // 0x54a534
 extern const char g_rgl_name[];                        // 0x54b048
-extern const float k_0_39f;                // 0x54b3b0
 extern const float k_0_4f;                 // 0x54b3b8
 extern const float k_0_05f;                // 0x54b4d0
 extern const float k_1_5f;                 // 0x54b8b0
 extern const float k_9_8f;                 // 0x590af0
 extern const float k_0_65f;                // 0x590b6c
+extern const float k_300f;                 // 0x590b20
+extern const float k_400f;                 // 0x590b58
+extern const float k_250f;                 // 0x590b60
+extern const float k_1_2f;                 // 0x590b94
 extern const float k_1_6f;                 // 0x590c48
 extern const float k_0_08f;                // 0x590c74
 extern const float k_0_02f;                // 0x590cd0
@@ -57,6 +61,15 @@ extern const char str_no_face_mesh[];                  // 0x598328
 extern const char str_plants[];                        // 0x5999ac
 extern const char str_item_kinds[];                    // 0x5999b4
 extern const char str_scene_props[];                   // 0x5999c0
+extern const float g_four;                 // 0x5935c8
+extern const float k_5f;                   // 0x59393c
+extern const char str_ui_difficulty_rating_percentage[]; // 0x5967a0
+extern const float k_30000f;               // 0x596854
+extern const float k_0_00117647f;          // 0x596858
+extern const float k_0_000909091f;         // 0x59685c
+extern const float k_m1em05f;              // 0x598688
+extern const float k_235f;                 // 0x59868c
+extern const float k_105f;                 // 0x598690
 extern const float k_0_00105f;             // 0x59c268
 extern unsigned __int64 g_bit[];                             // 0x5a8e68
 extern text_stream g_log;                  // 0x5a9f60
@@ -88,6 +101,21 @@ extern float g_scale_x;                    // 0x5aa088
 extern float g_scale_y;                    // 0x5aa08c
 extern float g_scale_z;                    // 0x5aa090
 extern SoundMgr g_sound_mgr;               // 0x5aa128
+extern int g_texture_detail;               // 0x5a9f9c
+extern int g_no_cam;                       // 0x5a9fb0
+extern int g_simple_reflect;               // 0x5a9fc4
+extern int g_iWindowWidth;                 // 0x5a9fe4
+extern int g_iWindowHeight;                // 0x5a9fe8
+extern int g_shadow_quality_req;           // 0x5aa004
+extern int g_char_shadow;                  // 0x5aa028
+extern int g_shadows_on;                   // 0x5aa030
+extern int g_plant_shadow;                 // 0x5aa034
+extern int g_ragdoll_lim;                  // 0x5aa03c
+extern int g_particle;                     // 0x5aa040
+extern int g_mesh_quality;                 // 0x5aa084
+extern Config g_launcher_cfg;              // 0x5aa0a8
+extern int g_opt_5aa0ac;                   // 0x5aa0ac
+extern int g_opt_5aa0b4;                   // 0x5aa0b4
 extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern ptype* g_ptypes;                    // 0x5e28f8
@@ -95,8 +123,9 @@ extern int g_use_shaders;                  // 0x5e28fc
 extern Mission* g_mission;                 // 0x5e292c
 extern ItemKind* g_items;                  // 0x5e29d0
 extern int g_item_kind_count;              // 0x5e29d4
+extern MapFlags g_map_flags;               // 0x5e291c
+extern int g_trial_mode;                   // 0x5e29c4
 extern PropKind* g_propkinds;              // 0x5e29dc
-extern int g_propkind_count;               // 0x5e29e0
 extern int g_ptype_count;                  // 0x5e29e8
 extern render_batch g_batch;               // 0x5fe898
 extern InputSet g_input_a;                 // 0xa170c8

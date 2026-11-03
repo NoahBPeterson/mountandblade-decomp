@@ -22,13 +22,23 @@
 #include "../../rgl/resource_manager.h"
 #include "../../include/renderer.h"
 #include "../skill_cap.h"
+#include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
+#include "../menu_rec.h"   // g_menus 0x5e29b0
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+extern int g_sound_muted;                                   // 0x5a9fd8
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+tstring* g_msg_end;                                         // 0x5e23c8
+tstring* g_msg_begin;                                       // 0x5e23c4 (the recent-messages ring: 0x10-byte tstrings)
+int g_cam_sens;                                             // 0x5a9fdc
+
 #include "../key_names.h"
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
 struct ModeFlag {
     // 0x435840 as the caller inlines it (Mission::mode_flag1 is out of line elsewhere)
-    static __forceinline char of(const Mission* m) { return ((g_modes2[m->mode].flags >> 1) & 1) != 0; }
+    static __forceinline char of(const Mission* m) { return ((g_mission_templates[m->mode].flags >> 1) & 1) != 0; }
 };
 
 // @ 0x4f7d70
@@ -447,7 +457,7 @@ void MissionHud::update_camera(float dt)
         else if (f300 > 20.0f)
             f300 = 20.0f;
         t = f300;
-        if (g_cam_version == 0 && g_cam_down != 0) {
+        if (g_keyboard.down[0x11] == 0 && g_keyboard.prev[0x11] != 0) {
             int now = (int)g_ticks[0];
             if (now - GAME_AT(int, 0x1a0b4) < 35000) {
                 int step = GAME_AT(int, 0x1a0b0) * 2;
@@ -459,28 +469,28 @@ void MissionHud::update_camera(float dt)
             }
             GAME_AT(int, 0x1a0b4) = now;
         }
-        if (g_cam_version != 0) {
+        if (g_keyboard.down[0x11] != 0) {
             u = (float)GAME_AT(int, 0x1a0b0) * t;
             hv_sub_to(gcam, ((k.u * u) * dt));
             f300 = dt * 25.0f + f300;
         }
-        if (g_cam_left != 0) {
+        if (g_keyboard.down[0x1f] != 0) {
             hv_add_to(gcam, ((k.u * t) * dt));
             f300 = dt * 25.0f + f300;
         }
-        if (g_cam_right != 0) {
+        if (g_keyboard.down[0x1e] != 0) {
             hv_sub_to(gcam, ((k.s * t) * dt));
             f300 = dt * 17.5f + f300;
         }
-        if (g_cam_in != 0) {
+        if (g_keyboard.down[0x20] != 0) {
             hv_add_to(gcam, ((k.s * t) * dt));
             f300 = dt * 17.5f + f300;
         }
-        if (g_cam_out != 0) {
+        if (g_keyboard.down[0x21] != 0) {
             gcam.z = t * dt * 0.5f + gcam.z;
             f300 = dt * 17.5f + f300;
         }
-        if (g_cam_roll != 0 && g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0) {
+        if (g_keyboard.down[0x2e] != 0 && g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0) {
             gcam.z = gcam.z - t * dt * 0.5f;
             f300 = dt * 17.5f + f300;
         }
@@ -714,11 +724,11 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     lis.o.x = lis.o.x - back.x;
     lis.o.y = lis.o.y - back.y;
     lis.o.z = lis.o.z - back.z;
-    if (g_listener_off == 0) {
-        g_listener = lis;
+    if (g_sound_muted == 0) {
+        g_sound_mgr.frame = lis;
         // FMOD is y-up: y and z swap (0x4fa887..0x4fa8ae push f.x, f.z, f.y, u.x, u.z, u.y)
-        FSOUND_3D_Listener_SetAttributes(&g_listener.o.x, 0, g_listener.f.x, g_listener.f.z, g_listener.f.y, g_listener.u.x,
-                                         g_listener.u.z, g_listener.u.y);
+        FSOUND_3D_Listener_SetAttributes(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y, g_sound_mgr.frame.u.x,
+                                         g_sound_mgr.frame.u.z, g_sound_mgr.frame.u.y);
     }
     FrameNode* sun = (FrameNode*)f65b8;
     if (sun) {
@@ -729,7 +739,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         sun->pos.s.normalize();
         sun->pos.f = cross(sun->pos.u, sun->pos.s);
         if (f6664 < 0 && fog_dense == 1)
-            f6664 = g_sound_mgr.play_slot(8, 3, &g_listener.o.x, 1.0f, 0);
+            f6664 = g_sound_mgr.play_slot(8, 3, &g_sound_mgr.frame.o.x, 1.0f, 0);
     }
     FrameNode* flare = (FrameNode*)f65c0;
     if (flare) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
@@ -834,12 +844,12 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
 {
     float px = (float)(g_screen_w + g_screen_h);
     float area = (px * 0.5f) * 0.00086956524f;
-    float size_v = ((g_scale_a * 0.5f + 0.75f) * *scale) * area;
+    float size_v = ((g_options.f84 * 0.5f + 0.75f) * *scale) * area;
     float& size = *(float*)&scale;       // the original stores the result back into the (dead) parameter slot
     size = size_v;
-    if (g_flag_a17108 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]))
+    if (g_keyboard.down[0x0d] && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]))
         size = 1000.0f;
-    float range = g_scale_b * area;
+    float range = g_options.f88 * area;
     ViewLight* vl = (ViewLight*)this;
     AgentTable* tbl = (AgentTable*)((char*)this + 4);
     int n = *(int*)tbl;
@@ -1207,18 +1217,18 @@ void GameScreen::build()
 {
     float v[2];
     g_gui.reset();
-    ((SoundW*)&g_sound_mgr)->stop_all();
+    g_sound_mgr.stop_all();
 
-    char* rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
+    char* rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
     bool ok = true;
     int color = (int)(*(__int64*)(rec + 0x20) >> 32) | 0xff000000;
     GAME_AT(int, 0xc8) = 0;
     GAME_AT(int, 0xa8) = 0;
-    rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
+    rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
     struct MenuMesh { char pad0[0x28]; tstring mesh; };   // menu_rec.h's MenuRec, of which this path uses +0x28 only
     g_game->mesh1a210 = ((MenuMesh*)rec)->mesh;      // the game menu's mesh override (+0x1a210)
     GAME_AT(int, 0x1a220) = -1;
-    ((DialogBlock*)(g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->play(8);
+    ((DialogBlock*)((char*)g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->play(8);
     if (GAME_AT(int, 0xc8) != 0)
         ok = false;
 
@@ -1250,7 +1260,7 @@ void GameScreen::build()
             rgl::mesh* src = g_resmgr_full.get_object((const rgl::string*)((char*)g_game + 0x1a210));
             if (src) {
                 rgl::mesh* m = src->clone();
-                rec = g_menus + GAME_AT(int, 0x13aec) * 0x60;
+                rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
                 if ((*(unsigned*)(rec + 0x20) & 0x1000) && 1.35f < g_screen_b / g_screen_a) {
                     float f = 1.33f / (g_screen_b / g_screen_a);
                     vector4 c;
@@ -1741,7 +1751,7 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
         } while (i < n);
     }
 }
-extern const int g_text_maxn;                                     // 0x5937ac (0x2000: the decode buffer's capacity)
+static const int g_text_maxn = 0x2000;                             // the decode buffer's capacity, passed by address
 
 // the inlined vector<int>::push_back
 static __forceinline void ints_push(IntList* v, const int& x)

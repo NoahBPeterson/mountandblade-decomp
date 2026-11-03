@@ -69,9 +69,6 @@ struct SceneSub { int dummy; void f(int v, PlacedObj o); };   // 0x4777c0 (ret 0
 struct Terrain {
     void reset();   // 0x4647e0 (this = 0xa76630; game/terrain_a/terrain.h)
 };
-struct GenB {
-    void f();                                           // 0x494310 (this = 0x5aa128; SoundW::stop_all of world_data/world_data.cpp)
-};
 int save_game(int id, tstring* name);                  // 0x4e8980
 struct DialogMgr {                                      // the dialog manager at 0x8ed50c8
     void start(int a, int b, int c, int d, char e);     // 0x4610b0 (ret 0x14)
@@ -110,6 +107,8 @@ int g_scene_counter;                                // 0xa735c0
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 #include "../window_mgr.h"      // slot_as<T>(i)
 #include "../ui_globals.h"      // UI / core globals
+#include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -148,6 +147,14 @@ extern float g_view_b;          // 0x5d75dc
 extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_quarter;       // 0x54b868  0.25f
 extern const float g_exp_arg;       // 0x5aa018
+extern const float g_oneone;        // 0x54b888  1.1f
+extern const float g_three;         // 0x54a710  3.0f
+extern const float g_four;          // 0x5935c8  4.0f
+extern const float g_003;           // 0x54b8b4  0.03f
+extern const float g_axis_x;        // 0xa178d4
+extern int g_in_17204;              // 0xa17204
+extern int g_in_17214;              // 0xa17214
+extern int g_in_17458;              // 0xa17458
 extern const float g_half;          // 0x549d70  0.5f
 
 // the party record behind an id (the page table at +0x139c8)
@@ -550,7 +557,7 @@ void MissionV::init_scene()
     t.out.d = t.f1c;
     *(FramePlacement*)((char*)this + 0x6624) = t.out;
     ((Terrain*)&orig::g_terrain)->reset();
-    ((GenB*)&orig::g_sound_mgr)->f();
+    g_sound_mgr.stop_all();
     ((IVector*)((char*)this + 0x63c0))->resize(0, 0);
     *((char*)this + 0x6668) = 0;
     *((char*)this + 0x6669) = 0;

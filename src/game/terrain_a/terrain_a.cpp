@@ -18,6 +18,13 @@
 #include "../../include/frustum.h"            // rgl::frustum (to_clip 0x4621f0)
 #include "../../include/mat4.h"               // pos (identity_pos 0x40cd00)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
+
+extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_globals.h): g_bit[2] = 4 (size mask), g_bit[4] = 0x10 (type mask)
+unsigned g_river_mask_b = (unsigned)g_bit[2];               // 0x5e2584
+unsigned g_river_mask_a = (unsigned)g_bit[4];               // 0x5e2580
+struct Mission;
+extern Mission* g_mission;                                  // 0x5e292c
 
 using rgl::vector4;
 using rgl::matrix;
@@ -1269,7 +1276,7 @@ float Mission3::speed_factor(float x)
 void Mission3::add_amount(int idx, unsigned flags)
 {
     unsigned mask = flags & 0xfffffff;
-    char* rec = (char*)g_modes2[mode].recs + idx * 0x4c;
+    char* rec = (char*)g_mission_templates[mode].recs + idx * 0x4c;
     if (mask == 0) return;
     unsigned rf = *(unsigned*)(rec + 4);
     unsigned amount;
@@ -1430,7 +1437,7 @@ void Missile::init()
     f94 = 1.0f;
     fa4 = -1;
     f9c = 1;
-    vector4 d(g_mission->cam[0] - p20.x, g_mission->cam[1] - p20.y, g_mission->cam[2] - p20.z);
+    vector4 d(((MissionCam*)g_mission)->cam[0] - p20.x, ((MissionCam*)g_mission)->cam[1] - p20.y, ((MissionCam*)g_mission)->cam[2] - p20.z);
     if (0.1f < d.x * p40.x + (d.z * p40.z + d.y * p40.y))
         fa0 = 1;
 }

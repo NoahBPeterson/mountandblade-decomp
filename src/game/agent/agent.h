@@ -27,7 +27,6 @@ struct Rec20 { tstring name; char pad[0x10]; };      // 0x20-byte named record (
 extern Rec20* g_tbl20;                  // 0x5e28f8
 #include "../ptype.h"
 extern Rec78* g_tbl78;                  // 0x5e29dc
-extern int g_tbl78_count;               // 0x5e29e0
 int find_in_table20(const tstring* name);   // 0x435260 (cdecl)
 int find_in_table78(const tstring* name);   // 0x4352a0 (cdecl)
 int ftoi_helper(int x);                     // 0x435440
@@ -36,7 +35,7 @@ int ftoi_helper(int x);                     // 0x435440
 // (the address comments below stay bare: the resolver reads the last 0x... of a declaration's comment)
 #include "../skill_cap.h"            // SkillCap, g_skill_tbl 0x8ee3100 (shared with agent2)
 extern int g_clamp_level;               // 0x8ee3860
-extern const int g_tier_dist[];         // 0x590a70
+extern const int g_tier_dist[11];       // 0x590a70
 #include "../../include/troop.h"   // Troop / TroopRec: the 0x508-byte troop record (has_flag10 0x435130, stat_int 0x435150, scaled_b0 0x435170, nibble 0x4351a0, falloff 0x4375b0, adjust 0x437770)
 
 // ---- two item references at +0x80 of the record 0x4351f0 reads (a different object than Troop: ints, not floats)
@@ -51,7 +50,6 @@ struct Wielder {
 // called by 0x435860 (init_placed), 0x437830 (ctor) and 0x477ea0 (vector<..>::resize).
 #include "../placed_obj.h"             // PlacedObj, IfaceB, Quad (shared with agent2; reset 0x4352f0)
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x432510 (earlier object)
-extern const int g_value_max;           // 0x590a9c upper bound of a placed object's value (0x435860)
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m);   // 0x435860
 
 // ---- RecZ sub-object initialiser (called by the RecZ ctor 0x477a30): three rows plus ids

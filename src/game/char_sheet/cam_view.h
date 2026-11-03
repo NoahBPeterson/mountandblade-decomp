@@ -24,7 +24,6 @@ extern gui_manager g_gui;                              // 0x5d7080 (cs_common.h 
 // globals of the face-generator update (0x4ea8e0)
 extern int g_world_time;                                // 0x5d8790
 extern float g_scroll;                                  // 0x590d7c
-extern char* g_game;                                    // 0x5e2930
 
 #include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)
 

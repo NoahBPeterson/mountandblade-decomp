@@ -9,6 +9,8 @@
 #include "../../rgl/mesh2/mesh2_common.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_trial_mode (listed directly: the audit reads only the source's own includes)
+struct Font;
+extern Font* g_font;                                        // 0x5e2934
 
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_5e29a4;   // 0x5e29a4 trial-mode flag as engine_init copied it
@@ -299,11 +301,11 @@ int __cdecl engine_init()
         FontDef* p = (FontDef*)::operator new(0x386c);
         if (p != 0)
             p = (FontDef*)new (p, raw_place()) Font;   // 0x4d99d0
-        g_font = p;
+        g_font = (Font*)p;
     }
     {
         tstring n("Data\\font_data.xml");
-        ((Font*)g_font)->load((const char*)&n);   // 0x4d9aa0
+        g_font->load((const char*)&n);   // 0x4d9aa0
     }
     ((GuiState*)&orig::g_gui_mgr)->init_widgets();
     init_mission_trigger_records();

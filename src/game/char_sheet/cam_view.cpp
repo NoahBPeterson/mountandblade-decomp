@@ -9,6 +9,8 @@
 #include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
 #include "../ui_globals.h"      // UI / core globals
+struct GameData;
+extern GameData* g_game;                                    // 0x5e2930
 
 // @ 0x4eb050
 void CamView::update(float dt)
@@ -61,11 +63,11 @@ void CamView::update_model(float dt)
     int n = *(int*)((char*)g_anim.skins + skin * 0x1f8 + 0x3c) - 1;
 
     if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x12] && !g_keyboard.prev[0x12]) {
-        if (*(int*)(g_game + 0x1a090) == 0) {
-            *(int*)(g_game + 0x1a090) = 1;
+        if (*(int*)((char*)g_game + 0x1a090) == 0) {
+            *(int*)((char*)g_game + 0x1a090) = 1;
             cam_btn->vb4();
         } else {
-            *(int*)(g_game + 0x1a090) = 0;
+            *(int*)((char*)g_game + 0x1a090) = 0;
             cam_btn->vb0();
         }
     }
@@ -204,7 +206,7 @@ void CamView::update_model(float dt)
 
     if (b_done->v44(0x10000)) {
         if (troop >= 0) {
-            char* rec = *(char**)(g_game + 0x13a00);
+            char* rec = *(char**)((char*)g_game + 0x13a00);
             int idx = troop;
             *(float*)(rec + idx * 0x508 + 0x3c0) = pose[0];
             *(float*)(rec + idx * 0x508 + 0x3c4) = pose[1];
@@ -218,7 +220,7 @@ void CamView::update_model(float dt)
         int ch;
         if (state == 1) {
             state = -1;
-            *(int*)(g_game + 0x13aec) = 1;
+            *(int*)((char*)g_game + 0x13aec) = 1;
             *(int*)((char*)slot_as<char>(23) + 0x18) = 7;
             ch = 0x17;
         } else {

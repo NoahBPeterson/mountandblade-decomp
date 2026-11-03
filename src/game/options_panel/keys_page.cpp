@@ -42,6 +42,8 @@ using rgl::vector4;
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
 #include "../key_names.h"
+#include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../float_consts.h"   // shared float constants kept in memory
 
 // 0x4bab70 (byte-exact in s004bab70): build the user path of a file name in place. A static function in the
 // original, so cl passes `out` in esi; this is a local copy with the same body.
@@ -168,7 +170,7 @@ void KeysPage::update_perf()
     int limit = *(int*)&orig::g_max_dead;
     if (limit >= 100) limit = 100;
     perf += limit * 0.2f;
-    limit = orig::g_tick_a;
+    limit = g_options.i40;
     if (limit >= 5) limit = 5;
     perf += limit;
     int d3d = g_options.i2c;
@@ -368,12 +370,12 @@ void KeysPage::refresh()
 // @ 0x4d7270
 void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, float bw)
 {
-    float s = bx * orig::k_0_65f;
+    float s = bx * g_k065;
     int maxn = 0x800;
     int len;
     int buf[0x800];
     decode_utf8(text, &len, buf, &maxn);
-    float tw = len * s * orig::k_0_39f;
+    float tw = len * s * g_k039;
     float room = bx * by - bx / bz * bw;
     if (tw > room)
         s *= room / tw;

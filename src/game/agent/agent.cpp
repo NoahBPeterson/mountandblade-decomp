@@ -29,6 +29,21 @@
 #include "../../include/key_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+extern int g_propkind_count;                                // 0x5e29e0
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_clamp_level;                                          // 0x8ee3860
+extern const float g_chunk_scale = 0.3f;     // 0x549d68
+extern const float g_half_ratio = -0.5f;     // 0x549d78
+extern const float g_k039 = 0.39f;           // 0x54b3b0
+extern const float g_rand_k = 1.0f / 0x3dc9; // 0x54a6bc
+extern const float g_k065 = 0.65f;           // 0x590b6c
+extern const float g_ratio_b = -2.1f;        // 0x597fe8
+extern const float g_ratio_a = 0.525f;       // 0x597fec
+extern const float g_row_unit = 0.088f;      // 0x599ae8 (the height of one row of the 3-column item grid)
+static const int g_value_max = 64;   // upper bound of a placed object's value (0x435860), passed by address
+const int g_tier_dist[11] = { 60, 100, 140, 180, 220, 260, 300, 340, 380, 420, 460 };   // 0x590a70
+
 
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)
 static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
@@ -307,7 +322,7 @@ int find_in_table20(const tstring* name)
 int find_in_table78(const tstring* name)
 {
     int r = -1;
-    for (int i = 0; i < g_tbl78_count && r == -1; i++)
+    for (int i = 0; i < g_propkind_count && r == -1; i++)
         if (g_tbl78[i].name.equals(*name)) r = i;
     return r;
 }

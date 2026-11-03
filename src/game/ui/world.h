@@ -21,6 +21,7 @@ extern int g_int_5aa054;                    // 0x5aa054
 extern int g_int_5aa058;                    // 0x5aa058
 extern int g_stick_mode;                    // 0x5aa078
 extern float g_speed_base;                  // 0x5aa07c (1.0f)
+#include "../../include/game_recs.h"   // PartyTemplate* g_party_templates (0x5e29f8)
 
 #include "./named_rec.h"
 

@@ -74,7 +74,9 @@ void   free_ptr(void* p);                                   // 0x535712
 
 extern float g_500;                                         // 0x590b40 (500.0f)
 extern float g_140;                                         // 0x598e6c (140.0f)
-extern float g_one;                                         // 0x549d74 (1.0f)
+extern float g_0_01;                                        // 0x54ab28 (0.01f)
+extern const float g_ten;                                   // 0x549d74 (10.0f; this was declared g_one, which the linker bound to a 1.0f definition of another address)
+extern float g_half;                                        // 0x549d70 (0.5f)
 #include "../renderer.h"
 extern void* g_a17110;                                      // 0xa17110
 extern void* g_a17510;                                      // 0xa17510

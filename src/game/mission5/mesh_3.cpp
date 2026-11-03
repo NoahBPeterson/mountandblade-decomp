@@ -17,6 +17,8 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
+extern HWND g_editor_hwnd;                                  // 0x8ee3d30
 #include "../key_names.h"
 
 // ======================================================= slice s0052cf60: functions

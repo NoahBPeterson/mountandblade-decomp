@@ -27,7 +27,7 @@ extern PropKind* g_propkinds;                   // 0x5e29dc
 struct EntFlag { char pad0[0x140]; char flag; };         // scene entity: +0x140 visibility (0x472050)
 
 // ---- spawn rules (0x473a60) ---------------------------------------------------------------------------------------
-#include "../mode_rec.h"                      // SpawnRec, ModeRec2, g_modes2 (shared with terrain_a / agent)
+#include "../mode_rec.h"                      // SpawnRec, ModeRec2, g_mission_templates (shared with terrain_a / agent)
 int __cdecl rand_below(const int* n);           // 0x432580 (0 when *n < 2, else rand() % *n)
 
 #include "../game_globals.h"

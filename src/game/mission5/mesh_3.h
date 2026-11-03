@@ -97,13 +97,14 @@ template<> void vector<MEdge, allocator<MEdge> >::push_back(const MEdge&);      
 using rgl::vector4;
 using rgl::matrix;
 
-// ---- the globals the slices saw with their own view types (one raw declaration each)
-extern void* g_game; // 0x5e2930
+// ---- the globals the slices saw with their own view types (the canonical declaration; the per-slice views below cast it)
+struct Mission; struct GameData; struct ItemKind;
+extern ItemKind* g_items;                        // 0x5e29d0
+extern Mission* g_mission;                       // 0x5e292c
+extern GameData* g_game;                         // 0x5e2930
 extern char g_app_obj[]; // 0x8ee3c48
-extern char g_mission[]; // 0x5e292c
 #include "../ptype.h"
 extern char g_windows[]; // 0xa73980
-extern void* g_items; // 0x5e29d0
 #include "../prop_kind.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 
@@ -236,7 +237,8 @@ extern int g_a174e0;                                // 0xa174e0  press, code 0x3
 extern int g_a174e4;                                // 0xa174e4  press, code 0x39
 extern int g_a1758c;                                // 0xa1758c  press, code 0x63
 extern int g_a17590;                                // 0xa17590  press, code 0x64
-extern const float g_one;                           // 0x549cdc = 1.0f
+extern int g_a17820;                                // 0xa17820  previous, code 0x08
+extern const float g_hilite_dim;                    // 0x54b4d0 = 0.05f
 extern const float g_rot_step;                      // 0x590c60 = 0.005f
 extern const double g_percent;                      // 0x59c480 = 0.01
 
@@ -667,7 +669,6 @@ extern int g_cursor_x;                          // 0x5d70b4
 extern int g_cursor_y;                          // 0x5d70b8
 extern int g_saved_x;                           // 0x5e2130
 extern int g_saved_y;                           // 0x5e2134
-extern HWND g_editor_hwnd;                      // 0x8ee3d30
 
 
 
@@ -757,7 +758,7 @@ extern int   g_a17594;                                  // 0xa17594
 
 extern float  g_k005;                                   // 0x590c60 (0.005f)
 extern double g_d001;                                   // 0x59c480 (0.01)
-extern const float g_one;                                    // 0x549cdc (1.0f)
+extern float  g_k005b;                                  // 0x54b4d0 (0.05f)
 
 // ---- game tables ---------------------------------------------------------------------------------------
 namespace rgl {

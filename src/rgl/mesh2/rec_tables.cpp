@@ -14,6 +14,7 @@
 #include "../../game/render_batch.h"          // render_batch (g_batch 0x5fe898)
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../options.h"   // g_options 0x5aa008
 #include "../../game/shared_vars.h"
 
 // agent.h's allocator tag of the one-int record (0x436d80); declared here to avoid that header
@@ -605,7 +606,7 @@ void __fastcall sound_engine::tick()
         ((music_player*)this)->advance_piece();   // the music player object; 0x4c25e0
         t2418.start = g_ticks[t2418.clock];
     }
-    float vol = g_music_volume;
+    float vol = g_options.f08;
     if (fading != 0) {
         if ((float)(g_ticks[t2450.clock] - t2450.start) * 1e-5f > 5.0f) {
             vol = 0.0f;
@@ -622,7 +623,7 @@ void __fastcall sound_engine::tick()
     int idx;
     int level = (iv < 0) ? 0 : ((iv >= 255) ? 254 : iv);
     if (w240c != 0) {
-        float f = g_music_volume * 255.0f;
+        float f = g_options.f08 * 255.0f;
         int v = round_float(&f);
         if (v < 0)
             v = 0;

@@ -58,6 +58,14 @@
 #include "../../include/height_field.h"
 #include "../agent/curve.h"   // Curve: set_rec_phase 0x433b20 (the canonical class of the Skeleton record)
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+extern int g_propkind_count;                                // 0x5e29e0
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int g_opt_hit_fx = 1;                                       // 0x5a9fc0 non-zero: hits spawn their effect
+unsigned g_input_mask;                                      // 0x5e2474
+
 
 #undef resmgr
 #undef g_resmgr
@@ -588,9 +596,8 @@ float frand();                                                          // 0x40e
 float clamp(const float* x, const float* lo, const float* hi);          // 0x40e3d0
 float __cdecl fmin_ref(const float* a, const float* b);                 // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
-extern float g_dt_scale;                                                // 0x5a9bf0
-extern int g_int_5aa04c;                                                // 0x5aa04c
-extern unsigned g_input_flags;                                         // 0x5e2470
+float g_dt_scale = 1.0f;                                    // 0x5a9bf0
+unsigned g_input_flags;                                     // 0x5e2470
 extern int g_player_agent;                                              // 0x8ed50dc
 
 __forceinline ClassInfo* Agent::class_rec()
@@ -781,7 +788,7 @@ void Agent::update_ai()
                     int hf = always_attack_in_melee;
                     float push = (((float)r * (1.0f / 15817.0f)) * diff * g_dt_scale) * 20.0f;
                     if (hf == 0)
-                        push = ((float)g_int_5aa04c * 0.5f + (40.0f - (float)g_game->troops[troop].fb0) * 0.012f) + push;
+                        push = ((float)g_options.i44 * 0.5f + (40.0f - (float)g_game->troops[troop].fb0) * 0.012f) + push;
                     push = push + f314;
                     f314 = push;
                     if (push < 0.0f)
@@ -2089,7 +2096,7 @@ set7:
 
 melee:
         // ---- melee / no ranged weapon -----------------------------------------------------------------------------------
-        reach0 = (frand() - 0.5f) * (float)(g_difficulty + 1) * 0.15f + 0.9f;
+        reach0 = (frand() - 0.5f) * (float)(g_options.i44 + 1) * 0.15f + 0.9f;
         facing = tv.y * vel.y + tv.x * vel.x;
         ofacing = -tv.x * o->vel.x + -tv.y * o->vel.y;
         {
@@ -2267,7 +2274,7 @@ b508:
                     if (b5a) {
                         int sv = p.stat_1f0a();
                         int sk = g_game->troops[troop].fb0 + 0x28;
-                        ((gui_timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
+                        ((gui_timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.i44 * 0.25f + 0.6f) * (100.0f / (float)sv)));
                         combat_state = 4;
                     } else if (ai_timer.elapsed() > 8.0f || reach0 * 4.0f < distL) {
                         f53bc = fl | 0x300;
@@ -2295,7 +2302,7 @@ b508:
                         if (can_hit(id, target, 0, 0, zero) == 0) {
                             if (wprof > 100.0f && frand() < 0.03f)
                                 combat_state = 0;
-                        } else if (frand() < ((4.0f - (float)g_difficulty) * wprof) * 0.0005f) {
+                        } else if (frand() < ((4.0f - (float)g_options.i44) * wprof) * 0.0005f) {
                             combat_state = 0;
                         }
                     }
@@ -2541,7 +2548,7 @@ void Mission::spawn_prop(int* idx, int* id)
         tbl = find_in_table78(&r->name);
         if (tbl < 0)
             tbl = r->id;
-        if (tbl < 0 || tbl >= g_tbl78_count) {
+        if (tbl < 0 || tbl >= g_propkind_count) {
             tbl = -1;
         } else {
             Rec78* rec = &g_tbl78[tbl];
@@ -2603,7 +2610,7 @@ after:
                 vector4 dir, col;
                 ((level*)scene_world)->light_at(r->m18.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
             }
-            if (r->kind == 0 && tbl >= 0 && tbl < g_tbl78_count && (r78_flags(&g_tbl78[tbl]) & 0x12000))
+            if (r->kind == 0 && tbl >= 0 && tbl < g_propkind_count && (r78_flags(&g_tbl78[tbl]) & 0x12000))
                 m->f10c = 0xffff;
             else
                 m->f10c = 0x1ffff;
@@ -2676,7 +2683,7 @@ done_shape:
     int ty = r->kind;
     if (ty == 0) {
         int ri = r->id;
-        if (ri >= 0 && ri < g_tbl78_count && rsnd(&g_tbl78[ri]).count > 0) {
+        if (ri >= 0 && ri < g_propkind_count && rsnd(&g_tbl78[ri]).count > 0) {
             SoundSet* ss = &rsnd(&g_tbl78[ri]);
             ((Placement*)g_game)->set_matrix(&r->m18);
             g_game->f1a1f0 = *idx;
@@ -3064,10 +3071,10 @@ void Agent::ai_idle_tick(const float* dt)
         E32 e;
         float r1 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         e.v[0] = f53bc;
-        float hi = (float)g_difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].fb0 + 10);
+        float hi = (float)g_options.i44 * 0.02f + 0.2f / (float)(g_game->troops[troop].fb0 + 10);
         f310_f() = (r1 * 0.03f + hi) + 0.05f;
         float r2 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
-        float ga = (float)g_difficulty * 0.1f;
+        float ga = (float)g_options.i44 * 0.1f;
         float rb = (r2 + 1.0f) * 0.1f;
         float t = ga + rb;
         if (troop >= 0)
@@ -3132,7 +3139,7 @@ void Agent::shoot()
         float cy = dn.z * q.x - q.z * dn.x;
         float cz = q.y * dn.x - dn.y * q.x;
         float err = cls + 20.0f;
-        float g5 = (float)g_difficulty * 0.5f;
+        float g5 = (float)g_options.i44 * 0.5f;
         float cm = (float)sqrt(cx * cx + cz * cz + cy * cy);
         float rm = (float)sqrt(rel.x * rel.x + rel.z * rel.z + rel.y * rel.y);
         float A2 = err;
@@ -4153,11 +4160,10 @@ void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
             skin(*it, flag);
     }
 }
-extern int g_blood_enabled;                             // 0x5a9fc0 (provisional)
 // @ 0x4525a0
 void Mission::blood_burst(float x, float y, float z, int unused, float amount)
 {
-    if (g_blood_enabled) {
+    if (g_opt_hit_fx) {
         unsigned i = agents.first_used();
         if (i < (unsigned)agents.count) {
             do {
@@ -4686,7 +4692,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                 *out_dmg = p * *out_dmg;
                 float bonus = (p - 1.0f) * 100.0f;
                 int n = round_float(&bonus);
-                if (n != 0 && g_ui_enabled && id == g_mission->player_id) {
+                if (n != 0 && g_options.i58 && id == g_mission->player_id) {
                     char msg[512];
                     if (n > 0)
                         sprintf(msg, lk(tstring("ui_speed_bonus_plus"))->c_str(), n);
@@ -4790,7 +4796,7 @@ void Agent::ragdoll_update()
                                 lim = 0.35f;
                             if (!f58c4 && !f58d8 && hold.o.z - w->o.z < 0.0f &&
                                 w->o.z - ((level*)g_mission->scene_world)->floor_z(&w->o.x) < lim) {
-                                g_sound_mgr.play(g_sound_blood, 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
+                                g_sound_mgr.play(g_sound_mgr.slot[74], 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
                                 f58d8 = 1;
                             }
                             hold = *w;
@@ -4927,7 +4933,7 @@ void Agent::ragdoll_update()
             ((AgentBodyV*)mb)->f298 = ((AgentBodyV*)body)->f8;
     }
     fxp->visible = 0;
-    if (g_fx_on != 0)
+    if (g_options.i54 != 0)
         fxp->visible = 1;
 }
 
@@ -5133,7 +5139,7 @@ void Agent::tick_death()
                 g_mission->queue_dead(this);
             queued = 1;
         }
-        if (g_tick_a > g_tick_b && TICKS_SINCE(tm) > 0.0f && t5918.elapsed() > 0.0f) {
+        if (g_options.i40 > g_tick_b && TICKS_SINCE(tm) > 0.0f && t5918.elapsed() > 0.0f) {
             if (disabled == 0 && queued == 0)
                 start_ragdoll();
         }
@@ -5175,10 +5181,12 @@ void Agent::note_blow(Blow* b)
 
 // ---- Agent::update_controls: the movement update of an agent ------------------------------------------------------------------------
 struct GaitBand { float lo, hi; };
-extern GaitBand g_gait_walk[];                          // 0x590940
-extern GaitBand g_gait_mount[];                         // 0x590910
-extern float g_move_fwd;                                // 0x5e2478
-extern float g_move_side;                               // 0x5e247c
+extern const GaitBand g_gait_walk[3];
+extern const GaitBand g_gait_mount[6];
+const GaitBand g_gait_walk[3] = { { -10000.0f, 0.3f }, { 0.27f, 2.32f }, { 2.27f, 10000.08f } };       // 0x590940 {lo, hi} per speed band
+const GaitBand g_gait_mount[6] = { { -3.0f, -0.01f }, { -0.01f, 0.01f }, { 0.2f, 2.1f }, { 2.0f, 3.9f }, { 3.8f, 6.3f }, { 6.2f, 200.5f } };   // 0x590910
+float g_move_fwd;                                           // 0x5e2478
+float g_move_side;                                          // 0x5e247c
 #define PICK(m2, m3, m1, m0) (mode == 2 ? (m2) : mode == 3 ? (m3) : mode == 1 ? (m1) : (m0))
 static __forceinline bool aset_inl(AnimSlot& s, int id, unsigned prio)         // 0x4378a0 inlined (AnimSlot::set is a call elsewhere in this object)
 {
@@ -5777,8 +5785,8 @@ extern int g_opt_shot_difficulty;                   // 0x5aa064
 extern int g_opt_kill_msgs;                         // 0x5aa068
 extern int g_opt_blood;                             // 0x5aa020
 extern int g_opt_hit_fx;                            // 0x5a9fc0
-extern int g_voice_default_a;                       // 0x8ed50a0
-extern int g_voice_default_b;                       // 0x8ed50a4
+int g_voice_default_a;                                      // 0x8ed50a0
+int g_voice_default_b;                                      // 0x8ed50a4
 struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c
 struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x457b40 reads it (agent_obj.h's AnimDef calls +0x10 `subs`)
 extern AnimDefV* g_anims;                           // 0xa76628
@@ -5878,7 +5886,7 @@ void Agent::process_blow(int unused)
     if ((f10 == 0 && last_blow().bone == 9) || (f10 == 1 && last_blow().bone == 7)) {
         if (last_blow().item >= 0 && g_items[last_blow().item].is_ranged()) {
             dmg = dmg * 1.75f;
-            if (attacker == m->player_id && g_opt_damage_msgs != 0) {
+            if (attacker == m->player_id && g_options.i58 != 0) {
                 tstring k("ui_head_shot");
                 g_gui.add(*g_strtable.lookup(&k), 0xffffdd11);
                 m = g_mission;
@@ -5886,12 +5894,12 @@ void Agent::process_blow(int unused)
         }
     }
     if (id == m->player_id || f30 == m->player_id) {
-        if (g_opt_dmg_to_player == 1)
+        if (g_options.i4c == 1)
             dmg = dmg * 0.5f;
-        else if (g_opt_dmg_to_player == 0)
+        else if (g_options.i4c == 0)
             dmg = dmg * 0.25f;
     } else {
-        int dd = g_opt_dmg_to_friends;
+        int dd = g_options.i50;
         GameData* g = g_game;
         if (dd != 2 &&
             ((f10 == 0 && f1bc == g->f78) ||
@@ -5906,7 +5914,7 @@ void Agent::process_blow(int unused)
 
     // ---- the damage messages ----
     {
-        int shown = g_opt_damage_msgs;
+        int shown = g_options.i58;
         if (last_blow().attacker == m->player_id && shown != 0) {
             char msgbuf[512];
             {
@@ -5934,7 +5942,7 @@ void Agent::process_blow(int unused)
                 }
             } else {
                 const char* key = 0;
-                shown = g_opt_damage_msgs;
+                shown = g_options.i58;
                 m = g_mission;
                 if (id == m->player_id && shown != 0) {
                     key = "ui_received_number_damage";
@@ -6014,9 +6022,9 @@ void Agent::process_blow(int unused)
             blood = 0.2f;
         else if (last_blow().kind == 1)
             blood = 0.7f;
-        if (g_opt_blood > 0 && last_blow().kind != 2) {
+        if (g_options.i18 > 0 && last_blow().kind != 2) {
             bool go = false;
-            if (g_opt_blood == 2) {
+            if (g_options.i18 == 2) {
                 go = true;
             } else if (g_mission->player_id >= 0) {
                 if ((last_blow().pos - g_mission->agents.get(g_mission->player_id)->pos).out_length_squared() < 70.0f)
@@ -6338,7 +6346,7 @@ void Agent::process_blow(int unused)
                     tt = 1.0f;
                 else if (tt > 12.0f)
                     tt = 12.0f;
-                if (last_blow().attacker == g_mission->player_id && g_opt_shot_difficulty != 0) {
+                if (last_blow().attacker == g_mission->player_id && g_options.i5c != 0) {
                     float sd = tt;
                     if (last_blow().bone == 9)
                         sd = tt * 1.2f;
@@ -6430,7 +6438,7 @@ void Agent::process_blow(int unused)
         }
         if ((int)last_blow().attacker >= 0)
             m->agents.get(last_blow().attacker)->kill_count++;
-        if (g_opt_kill_msgs != 0) {
+        if (g_options.i60 != 0) {
             char msgbuf[512];
             tstring unused_s;
             if (atk_troop >= 0) {
@@ -6473,7 +6481,7 @@ void Agent::process_blow(int unused)
         }
         if ((int)last_blow().attacker >= 0)
             m->agents.get(last_blow().attacker)->wounded_count++;
-        if (g_opt_kill_msgs != 0) {
+        if (g_options.i60 != 0) {
             char namebuf[256];
             if (atk_troop >= 0) {
                 tstring k("ui_value_knocked_unconscious_by_value");
@@ -6945,8 +6953,6 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
 #define itcf_reload_pistol 0x0000007000000000i64
 #define itcf_reload_musket 0x0000008000000000i64
 #define itcf_reload_mask   0x000000f000000000i64
-extern int g_ctl_mode;                              // 0x5aa074
-extern int g_stick_mode;                            // 0x5aa078
 int __cdecl ftoi_helper(int x);                     // 0x435440
 static __forceinline ItemRef* cur_ptr(Agent* a) { ItemRef* p = 0; if (a->wield[0] >= 0) p = &a->pairs[a->wield[0]]; return p; }
 #define ACT anim[1].cur          // +0x100 current animation id
@@ -7023,7 +7029,7 @@ void Agent::update_attack(float dt)
             if (ACT == snd_a && !(in_flags & 0x200)) {
                 if (id == g_mission->player_id) {
                     if (in_flags & 0x100) {
-                        if (PROG < 0.3f && g_ctl_mode > 0) {
+                        if (PROG < 0.3f && g_options.i6c > 0) {
                             if (pick_attack_dir(0) != mode1) {
                                 start_shoot(0);
                                 if (snd_a != -1) {
@@ -7385,7 +7391,7 @@ tail:
         }
         if (ACT == f5614 || ACT == f561c || ACT == f5618) {
             if (ACT == f5614 && PROG < 0.99f) {
-                if (PROG < 0.5f && g_stick_mode != 0) {
+                if (PROG < 0.5f && g_options.i70 != 0) {
                     int a, b, c;
                     pick_sound_ids(&a, &b, &c);
                     if (a != f5614) {
@@ -7875,12 +7881,7 @@ reset_pos:
 // ---- Agent::update, Agent::tick: the per-frame agent update ---------------------------------------------------------------------------
 struct SubV { char pad0[8]; unsigned flags; char padc[0x1c - 0xc]; float ev[4]; char pad2c[0x40 - 0x2c]; };   // 0x40 bytes: a part of an animation (flags: 0x100 footstep dust, 0x200 sound)
 struct AnimDefW { char pad0[0x10]; SubV* subs; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x45f660 reads it
-extern int g_default_fx;                                // 0x8ed50a8
-extern int g_snd_224;                                   // 0x5aa224 (footstep sounds)
-extern int g_snd_228;                                   // 0x5aa228
-extern int g_snd_22c;                                   // 0x5aa22c
-extern int g_snd_230;                                   // 0x5aa230
-extern int g_snd_2e0;                                   // 0x5aa2e0
+int g_default_fx;                                           // 0x8ed50a8
 // @ 0x45f660
 void Agent::update(float dt)
 {
@@ -7918,12 +7919,12 @@ void Agent::update(float dt)
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_snd_230, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_snd_224, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[43], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     }
                 } else if (k == 1) {
@@ -7932,12 +7933,12 @@ void Agent::update(float dt)
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_snd_22c, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.4f + 0.8f;
-                        g_sound_mgr.play(g_snd_228, 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[44], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     }
                 }
@@ -7974,7 +7975,7 @@ void Agent::update(float dt)
                         case 0x1a3:
                         case 0x1a4: {
                             pitch = frand() * 0.4f + 0.8f;
-                            g_sound_mgr.play(g_snd_2e0, 0, (const float*)&body->m.o, pitch, 0);
+                            g_sound_mgr.play(g_sound_mgr.slot[73], 0, (const float*)&body->m.o, pitch, 0);
                         }
                         }
                     }

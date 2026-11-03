@@ -102,9 +102,7 @@ struct ContainerBase;
 struct UiAInline;
 UiAInline* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570 (progress_bar)
 MissionUi* __cdecl make_hint(ContainerBase* parent, const tstring& text, float a, float b, float c, float d);   // 0x4dada0 (cls_map)
-struct SoundW {                                                     // world_data/world_data.h: the campaign UI root 0x5aa128 is one
-    void stop_all();                                                // 0x494310
-};
+#include "../../include/sound_mgr.h"
 // the particle / shadow system g_psys (0xa70248)
 struct Wind;
 struct CellGrid {                                                   // the scene World (scene_world.h; mission)

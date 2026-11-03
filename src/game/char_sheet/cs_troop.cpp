@@ -3,6 +3,7 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 // @ 0x4ef420 -------------------------------------------------------------------------------
 void CharSheet::apply_to_troop()

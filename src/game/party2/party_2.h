@@ -283,6 +283,7 @@ inline Party* party_of(PartyMgr* m, int id) { return party_at(m, ((Map10007*)m)-
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 extern SoundMgr g_sound_mgr;                            // 0x5aa128
+extern int g_sound_bank;                                // 0x5aa304 (the sound index, passed by value)
 extern "C" void __stdcall FSOUND_StopSound(int id);                      // 0x5342a6 (FSOUND_StopSound@4)
 
 struct resmgr { texture* get_texture(int w, int h, int fmt);      // 0x41c400 (rgl/core/resmgr.cpp)

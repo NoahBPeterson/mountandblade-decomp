@@ -258,7 +258,23 @@ struct SourceScreen : ScreenBase {          // vtables 0x5961f0 / 0x596214: +0x3
 
 // ---- globals -----------------------------------------------------------------------------------------------------------
 extern int g_a17188;                        // 0xa17188
-extern char* g_menus;                   // 0x5e29b0 (GameMenu* in rgl/mesh2/gui_edit.h; the rows of 0x60 bytes are read raw here)
+extern int g_a17588;                        // 0xa17588
+extern int g_a5a9fbc;                       // 0x5a9fbc
+extern int g_trial_mode;                    // 0x5e29c4
+extern int g_a735c4;                        // 0xa735c4
+extern int g_show_quest_notes;                        // 0xa181b4
+extern int g_a7333c;                        // 0xa7333c
+extern int* g_menu_data;                    // 0xa739c0
+extern float g_k59c48c;                     // 0x59c48c (weight ramp constant)
+extern float g_half;                        // 0x549d70 (0.5f)
+extern float g_033;                         // 0x54b894 (0.33f)
+extern MenuItem* g_a739a0;                  // 0xa739a0
+extern MenuItem* g_a739b0;                  // 0xa739b0
+extern MenuItem* g_a739b4;                  // 0xa739b4
+extern MenuItem* g_a739bc;                  // 0xa739bc
+extern MenuItem* g_a739e4;                  // 0xa739e4
+extern MenuItem* g_a739e8;                  // 0xa739e8
+extern MenuItem* g_a739ec;                  // 0xa739ec
 struct KeyDown {};                          // the key state object at 0xa73730: OriginPairs
 struct OriginPairs {
     bool clicked(int key);   // 0x48ac90 (ret 4)

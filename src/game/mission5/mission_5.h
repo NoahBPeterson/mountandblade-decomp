@@ -33,9 +33,12 @@ struct bin_writer_i : file_writer_base {
     virtual int flush();
 };
 
-// ---- the globals the slices saw with their own view types (one raw declaration each)
-extern void* g_mission; // 0x5e292c
-extern void* g_game; // 0x5e2930
+// ---- the globals the slices saw with their own view types (the canonical declaration; the per-slice views below cast it)
+struct Mission; struct GameData; struct ItemKind; struct MissionTemplate;
+extern Mission* g_mission;                       // 0x5e292c
+extern GameData* g_game;                         // 0x5e2930
+extern ItemKind* g_items;                        // 0x5e29d0
+extern MissionTemplate* g_mission_templates;     // 0x5e2a00
 extern char g_dialogs[]; // 0x8ed50c8
 extern int g_conversation_troop;   // 0x8ed50d4
 extern int g_encountered_party;    // 0x8ed50d8
@@ -46,7 +49,6 @@ extern char g_game_keys[]; // 0xa73730
 extern char g_windows[]; // 0xa73980
 #include "../map_flags.h"      // MapFlags, g_map_flags (0x5e291c): the one definition
 extern char g_mission_ctx[]; // 0xa73300
-extern void* g_items; // 0x5e29d0
 extern char g_game_keys[]; // 0xa73730
 #include "../placed_obj.h"
 #include "../../include/shape.h"
@@ -55,7 +57,6 @@ extern char g_game_keys[]; // 0xa73730
 #include "../menu_rec.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../ui_globals.h"      // UI / core globals
-extern void* g_mission_templates; // 0x5e2a00
 extern char g_terrain[]; // 0xa76630
 extern char g_app_obj[]; // 0x8ee3c48
 
@@ -108,7 +109,7 @@ struct Big5e292c_s25160 { void m_483f60(int a, int b); };
 #define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
 #define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
 #define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
-#define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
+#define g_big       (*(Big5e292c_s25160**)&g_mission)
 
 // ---------------------------------------------------------------------------
 // the game object (only the members this handler touches)
@@ -555,7 +556,6 @@ extern int  g_pending_action;                                  // 0x5a9f18
 extern int  g_vert_budget;                                  // 0x5a9c34
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 extern unsigned char g_a17908;                          // 0xa17908
-extern int  g_presentation;                                  // 0x5e299c
 #include "../../include/renderer.h"
 extern char g_script[]; // 0xa70440
 #define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
@@ -580,6 +580,7 @@ struct IntDeque_s261e0 {
 // float constants in .rdata
 extern const float g_f549ca8;                           // 0x549ca8 = 0.0f
 extern const float g_f549cdc;                           // 0x549cdc = 1.0f
+extern const float g_f54a6d0;                           // 0x54a6d0 = 1e-05f
 extern const float g_f54b8b0;                           // 0x54b8b0 = 1.5f
 extern const float g_f590b38;                           // 0x590b38 = 8.0f
 
@@ -1003,9 +1004,6 @@ extern int g_a17160;                                    // 0xa17160
 extern int g_a17560;                                    // 0xa17560
 extern int g_a73790;                                    // 0xa73790
 extern int g_a73794;                                    // 0xa73794
-extern int g_presentation;                                    // 0x5e299c
-extern int g_invert;                                    // 0x5aa01c
-extern int g_stick_mode;                                // 0x5aa078
 #include "../../include/fx.h"
 #include "../../rgl/resource_manager.h"
 
@@ -1164,8 +1162,6 @@ struct MissionHud_s29130 {
 // ---- externals -----------------------------------------------------------------------------------------
 
 
-extern int g_flag5aa06c;                                      // 0x5aa06c
-extern int g_flag5aa070;                                      // 0x5aa070
 struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
 extern float g_deg2rad;                                       // 0x590ce4 (0.017453292)
@@ -1173,7 +1169,6 @@ extern float g_0375;                                          // 0x59c310 (0.375
 extern float g_2p5;                                           // 0x590c4c (2.5f)
 extern float g_255;                                           // 0x590cec (255.0f)
 extern float g_0;                                             // 0x549ca8 (0.0f)
-extern float g_1;                                             // 0x549cdc (1.0f)
 extern float g_range_tbl[];                                   // 0x59390c (lo/hi pairs)
 
 float __cdecl signed_angle(void* a, void* b);                 // 0x4381e0
@@ -1954,6 +1949,7 @@ typedef unsigned int uint;
 // globals (addresses from the annotations in the disassembly)
 #define g_game_c ((char*)g_game)
 extern float g_00;                   // 0x549ca8  0.0f
+extern float g_098;                  // 0x5911d8  0.98f (scan threshold)
 extern double g_001;                 // 0x59c480  unused here (other slices)
 
 void* __cdecl operator new[](uint size);      // 0x535482  ??_U@YAPAXI@Z operator new[]

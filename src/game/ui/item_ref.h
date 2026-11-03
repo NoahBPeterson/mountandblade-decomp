@@ -9,7 +9,6 @@
 // item type / modifier constants (itp_*, imod_*), ItemMesh, ItemKind and ItemRef are the shared headers' (g_items 0x5e29d0)
 #include "../../include/item_kind.h"
 #include "../item_ref.h"
-extern int g_item_count;                    // 0x5e29d4 (g_item_kind_count of src/include/item_kind.h)
 
 int __cdecl round_float(float* f);          // 0x432540 (round to nearest: floor(x) + (x - floor(x) > 0.5))
 

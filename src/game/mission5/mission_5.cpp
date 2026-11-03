@@ -23,6 +23,11 @@
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
+#include "../menu_rec.h"   // g_menus 0x5e29b0
+#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+struct Presentation;
+extern Presentation* g_presentation;                        // 0x5e299c
 #include "../key_names.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../ui_globals.h"      // UI / core globals
@@ -35,7 +40,7 @@
 #undef g_513710
 #define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #undef g_big
-#define g_big       (*(Big5e292c_s25160**)&orig::g_mission)
+#define g_big       (*(Big5e292c_s25160**)&g_mission)
 // agent record i of the mission (pages of 16, 0x5928 bytes each)
 #define REC_S25160(i) ((*(char***)((char*)g_big + 0x1c))[(i) >> 4] + ((i) & 0xf) * 0x5928)
 // @ 0x525160
@@ -1341,7 +1346,7 @@ void ViewCtrl_s284a0::update(float dt)
                     hand0 = (t == 2 || t == 3 || t == 4);
                 }
                 if (((hand0 && a->f560c == 1 && g_options.i6c > 0 && a->f100 == a->f55ec) ||
-                     (w1.item < 0 && a->f5610 > 0 && g_stick_mode > 0 && a->f100 == a->f5614)) &&
+                     (w1.item < 0 && a->f5610 > 0 && g_options.i70 > 0 && a->f100 == a->f5614)) &&
                     a->f118 < 0.6f)
                     k *= 0.1f;
             }
@@ -1374,7 +1379,7 @@ void ViewCtrl_s284a0::update(float dt)
         yaw_rate = yaw_rate * r;
         pitch_rate = pitch_rate * r;
         yaw_rate = yaw_rate + look_x * fov * 0.0018f;
-        if (g_invert)
+        if (g_options.i14)
             look_y = -look_y;
         pitch_rate = pitch_rate + look_y * fov * 0.0018f;
         yaw = yaw - yaw_rate * k * dt;
@@ -1617,7 +1622,7 @@ void MissionHud_s29130::update_marks()
         if ((*(int*)((char*)&g_game_keys + 0x68)) >= 0 && ((void**)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x68))]) other = true;
         if (((*(int*)((char*)&g_game_keys + 0x6c)) < 0 || ((void**)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x6c))] == 0) && !other) {
             int type = g_items_s29130[pair.item].type & 0xff;
-            if ((type == 8 || type == 9 || type == 10 || type == 16 || type == 17) && g_flag5aa06c) {
+            if ((type == 8 || type == 9 || type == 10 || type == 16 || type == 17) && g_options.i64) {
                 if (!cur_agent_s29130()->f100_is_0x48_and_charged()) {
                     Agent_s29130* a2 = cur_agent_s29130();
                     bool in_range = true;
@@ -1632,7 +1637,7 @@ void MissionHud_s29130::update_marks()
                     }
                 }
             } else if (type == 2 || type == 3 || type == 4) {
-                if (g_flag5aa070 || !g_options.i6c) {
+                if (g_options.i68 || !g_options.i6c) {
                     int t = a->pick_front();
                     if (t >= 0) {
                         int dir = a->pick_attack_dir(t);

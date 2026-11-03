@@ -88,6 +88,12 @@ extern "C" {
 extern int g_a17118;                                // 0xa17118
 extern int g_a17188;                                // 0xa17188
 extern int g_a17518;                                // 0xa17518
+extern int* g_menu_state;                           // 0xa739f4 (menu data, +0x14/+0x18 fields)
+extern int* g_army_state;                           // 0xa739e0
+extern int g_a17188;                                // 0xa17188
+extern int g_a17588;                                // 0xa17588
+extern int g_a5a9fbc;                               // 0x5a9fbc
+extern int g_trial_mode;                            // 0x5e29c4
 }
 
 // 0x495700 "choose menu option" (tail-called through g_main_menu)

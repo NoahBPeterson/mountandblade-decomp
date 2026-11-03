@@ -176,7 +176,7 @@ void GuiScreen::process(int param)
     this->prev_mx = this->mx;
     this->mx = (float)(this->cur_mx - this->view_w) / (float)this->view_x;
     this->prev_my = this->my;
-    this->my = (g_one - (float)(this->cur_my - this->view_y) / (float)this->view_h) * this->f514;
+    this->my = (1.0f - (float)(this->cur_my - this->view_y) / (float)this->view_h) * this->f514;
 
     if (this->cur) {
         this->cur->key(1);

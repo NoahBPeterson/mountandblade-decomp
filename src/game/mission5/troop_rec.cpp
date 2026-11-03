@@ -265,8 +265,8 @@ void Game::start_new_game()
             ((VecView*)&r->list)->clear();
         }
     }
-    if (g_item_count > 0) {
-        for (int i = 0; i < g_item_count; i++)
+    if (g_item_kind_count > 0) {
+        for (int i = 0; i < g_item_kind_count; i++)
             ((VecView*)((char*)&g_items[i] + 0x30))->clear();
     }
 

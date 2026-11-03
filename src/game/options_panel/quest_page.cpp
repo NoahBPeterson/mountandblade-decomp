@@ -116,7 +116,7 @@ struct KeysPage { void set_enabled_text(Widget* w); };
 
 // @ 0x4d5ba0
 // The selected quest's record: the selection indexes the int table at this+0x4c.
-#define QREC (&g_game->quests[((int*)((char*)this + 0x4c))[sel]])
+#define QREC (&g_game_G->quests[((int*)((char*)this + 0x4c))[sel]])
 
 void QuestPage::fill()
 {
@@ -133,7 +133,7 @@ void QuestPage::fill()
     // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
     {
         tstring key("ui_given_on_date");
-        Game* g = g_game;
+        Game* g = g_game_G;
         int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
         g_quest_text.assign("");
         ((SoundCtl*)g)->emit_event(0xf, days / 24, days);
@@ -216,7 +216,7 @@ void QuestPage::update_days()
 // @ 0x4d6300
 void QuestPage::update_difficulty()
 {
-    if (g_game == 0) {
+    if (g_game_G == 0) {
         wd4->hide();   // slot +0xb0 (the slice called it show)
         return;
     }
@@ -226,7 +226,7 @@ void QuestPage::update_difficulty()
         tstring key("ui_difficulty_rating_percentage");
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
-        sprintf(buf, fmt, ((GameData*)g_game)->sl_value_factor());
+        sprintf(buf, fmt, ((GameData*)g_game_G)->sl_value_factor());
     }
     {
         tstring text((const char*)&buf[0]);
@@ -239,70 +239,70 @@ void QuestPage::update_difficulty()
 void QuestPage::update_settings(int reason)
 {
     if (w7c->changed(0x10000))
-        orig::g_music_volume = control_float(w7c);
+        g_options.f08 = control_float(w7c);
     if (w80->changed(0x10000))
-        orig::g_master_volume = control_float(w80);
+        g_options.f0c = control_float(w80);
     if (w84->changed(0x10000))
-        orig::g_exp_arg = control_float(w84);
+        g_options.f10 = control_float(w84);
     if (w78->changed(0x10000)) {
         g_options.f74 = control_float(w78);
         update_difficulty();
         update_days();
     }
     if (w44->changed(0x10000)) {
-        orig::g_opt_dmg_to_player = control_value(w44);
+        g_options.i4c = control_value(w44);
         update_difficulty();
     }
     if (w48->changed(0x10000)) {
-        orig::g_opt_dmg_to_friends = control_value(w48);
+        g_options.i50 = control_value(w48);
         update_difficulty();
     }
     if (w4c->changed(0x10000)) {
-        orig::g_difficulty = control_value(w4c);
+        g_options.i44 = control_value(w4c);
         update_difficulty();
     }
     if (w50->changed(0x10000)) {
-        orig::g_agent_count = control_value(w50);
+        g_options.i48 = control_value(w50);
         update_difficulty();
     }
     if (w54->changed(0x10000)) {
-        orig::g_stick_mode = control_value(w54);
+        g_options.i70 = control_value(w54);
         update_difficulty();
     }
     if (w58->changed(0x10000)) {
-        orig::g_ctl_mode = control_value(w58);
+        g_options.i6c = control_value(w58);
         update_difficulty();
     }
     if (w5c->changed(0x10000)) {
-        orig::g_flag5aa06c = control_value(w5c);
+        g_options.i64 = control_value(w5c);
         ((KeysPage*)(void*)this)->set_enabled_text(w5c);
     }
     if (w60->changed(0x10000)) {
-        orig::g_flag5aa070 = control_value(w60);
+        g_options.i68 = control_value(w60);
         ((KeysPage*)(void*)this)->set_enabled_text(w60);
     }
     if (w64->changed(0x10000)) {
-        orig::g_fx_on = control_value(w64);
+        g_options.i54 = control_value(w64);
         ((KeysPage*)(void*)this)->set_enabled_text(w64);
     }
     if (w68->changed(0x10000)) {
-        orig::g_opt_damage_msgs = control_value(w68);
+        g_options.i58 = control_value(w68);
         ((KeysPage*)(void*)this)->set_enabled_text(w68);
     }
     if (w6c->changed(0x10000)) {
-        orig::g_opt_shot_difficulty = control_value(w6c);
+        g_options.i5c = control_value(w6c);
         ((KeysPage*)(void*)this)->set_enabled_text(w6c);
     }
     if (w70->changed(0x10000)) {
-        orig::g_opt_kill_msgs = control_value(w70);
+        g_options.i60 = control_value(w70);
         ((KeysPage*)(void*)this)->set_enabled_text(w70);
     }
     if (w74->changed(0x10000)) {
-        orig::g_show_messages = control_value(w74);
+        g_options.i78 = control_value(w74);
         ((KeysPage*)(void*)this)->set_enabled_text(w74);
     }
     if (w88->changed(0x10000)) {
-        orig::g_invert = control_value(w88);
+        g_options.i14 = control_value(w88);
         ((KeysPage*)(void*)this)->set_enabled_text(w88);
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)

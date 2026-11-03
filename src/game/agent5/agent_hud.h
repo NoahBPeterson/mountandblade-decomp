@@ -58,7 +58,6 @@ struct FieldPanel { void update(); };                              // 0x48d470 (
 struct HudOuter { void scroll_refresh(vector4* v); };              // 0x498420 (world_data/mesh_hud.cpp)
 struct PartyModel { void set_fade(const float* v); };              // 0x4b1800 (party2/party_2.cpp)
 struct UiD { void set_value(float v); };                           // 0x48baa0 (ui/ui_widgets_c.cpp)
-struct SoundW { void stop_all(); };                                // 0x494310 (world_data.cpp)
 // level (trace_ray 0x439d60, query_segment 0x439870): terrain_b/cell_grid.h
 float __cdecl time_of_day();                                       // 0x4356e0 (agent.cpp)
 pos* __cdecl identity_pos(pos* out);                               // 0x40cd00 (shapes.cpp; rgl::identity_pos(matrix*) of the scene headers is the same function)
@@ -117,13 +116,6 @@ struct OriginPairs {                                              // the key tab
     bool is_down(int key);                                           // 0x48ac50 (ret 4)
 };
 extern OriginPairs g_game_keys;                                         // 0xa73730
-extern int g_cam_version;                                         // 0xa17118
-extern int g_cam_down;                                            // 0xa17518
-extern int g_cam_left;                                            // 0xa17150
-extern int g_cam_right;                                           // 0xa1714c
-extern int g_cam_in;                                              // 0xa17154
-extern int g_cam_out;                                             // 0xa17158
-extern int g_cam_roll;                                            // 0xa1718c
 extern int g_cam_sens;                                            // 0x5a9fdc
 
 extern float g_screen_a;                                          // 0x5d75dc
@@ -181,9 +173,6 @@ extern DustTerrain g_terrain;                                 // 0xa76630 (the m
 #include "../../rgl/resource_manager.h"
 #include "../../include/renderer.h"
 #include "../skill_cap.h"
-extern SoundMgr g_sound_mgr;                                          // 0x5aa128
-extern int g_listener_off;                                        // 0x5a9fd8 (nonzero: the sound listener does not follow the camera)
-extern matrix g_listener;                                         // 0x5aa138 (s, f, u rows and the position o at 0x5aa168)
 
 extern int g_use_shaders;                                      // 0x5e28fc
 extern ShadowMap g_shadow_map;                                        // 0xa70248
@@ -197,11 +186,9 @@ int __stdcall FSOUND_3D_Listener_SetAttributes(float* pos, float* vel, float fx,
 void __cdecl mb_warning(const char* fmt, ...);                    // 0x42cb80 (logs a warning)
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (the display mesh of an item, scaled to fit *scale)
 
-extern char* g_menus;                                         // 0x5e29b0 (the game menu records, 0x60 bytes each: +0x20 flags, +0x24 colour, +0x28 background mesh name, +0x38 condition block)
 struct TableauTbl {                                            // the object table at 0xa75f40 (world_data/tableau.h: TableauTbl)
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8)
 };
-extern int g_flag_a17108;   // 0xa17108 (a key state that forces the sun to full size)
 extern TableauTbl g_tableaus;                                    // 0xa75f40
 struct MenuLayout { char pad[1]; };                               // the part of the game screen at +0x30; its build (0x4dd920, ret 8) is BlockOwner::init above
 

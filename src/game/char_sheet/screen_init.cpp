@@ -9,13 +9,13 @@
 #include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../shared_vars.h"
 #include "../last_scene.h"
 #include "../ui_globals.h"      // UI / core globals
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_a70438;   // 0xa70438
-
 
 // std::vector<Widget*>::push_back as the original inlines it (0x4ec824): with room, std::_Uninit_fill_n of the pointer
 // instance (0x40f8a0, ICF-folded: last, 1, &value, allocator; cdecl), else _Insert_n at the end (0x4927d0, thiscall)
@@ -44,7 +44,7 @@ void Screen::init_screen()
     g_gui.reset();
     g_game->f1a090 = 0;
     g_5e212c = 1;
-    ((SoundW*)&orig::g_sound_mgr)->stop_all();   // 0x494310
+    g_sound_mgr.stop_all();   // 0x494310
     g_game->f88 = 1;
     f2d4 = 0;
     f2d5 = 0;
@@ -221,7 +221,7 @@ void Screen::init_screen()
 // @ 0x4ecce0
 void Screen::camera_mark_entities()
 {
-    g_game->f13acc = (f2b8 * 0.07f + g_549cdc) * g_54b3b4;
+    g_game->f13acc = (f2b8 * g_590bb8 + 1.0f) * g_54b3b4;
     PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
     for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id((int*)&id)) {
         int idx = ((Map10007*)(void*)mgr)->lookup(id);

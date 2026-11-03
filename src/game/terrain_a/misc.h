@@ -32,7 +32,7 @@ struct slot130 {                                // 0x130 bytes, array at mission
     int f0e8;                                   // 0xe8
     char padec[0x130 - 0xec];
 };
-#include "../mode_rec.h"                      // ModeRec2, g_modes2 0x5e2a00 (+0x34 -> 0x4c-byte spawn rules)
+#include "../mode_rec.h"                      // ModeRec2, g_mission_templates 0x5e2a00 (+0x34 -> 0x4c-byte spawn rules)
 struct World3 { char pad0[0x13a00]; Troop* troops; char pad1[0x13a50 - 0x13a04]; int* tbl; };   // the world object 0x5e2930
 #include "../../include/game_data.h"   // canonical: g_game (0x5e2930)
 
@@ -103,7 +103,6 @@ struct Prop {
 
 // ---- missile (pool record; 0x467f80, 0x467fb0) --------------------------------------------------------------------
 struct MissionCam { char pad[0x6654]; float cam[3]; };      // the mission object's camera position (+0x6654)
-extern MissionCam* g_mission;                   // 0x5e292c
 #include "../missile.h"                 // Missile (shared with agent4)
 
 // per-component max / min of two 3-vectors (0x468300, 0x468360)
@@ -324,6 +323,6 @@ extern int g_tss_d;                             // 0xa17e7c
 extern int g_alpha_test;                        // 0xa17ea0
 extern int g_texfactor;                         // 0xa17ea4
 extern int g_cull_cur;                          // 0xa17ed0
-extern unsigned g_stage_arg[8];                 // 0x5a9c00 D3DTA_* by 3-bit code
+extern unsigned g_stage_arg[6];                 // 0x5a9c00 D3DTA_* by 3-bit code
 
 #endif // TERRAIN_A_MISC_H

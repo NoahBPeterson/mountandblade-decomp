@@ -305,7 +305,6 @@ int   __stdcall FSOUND_Sample_GetDefaults(FSOUND_SAMPLE* s, int* freq, int* vol,
 
 extern const float g_54ab2c;   // 0x54ab2c (0.0625f)
 extern int    g_sound_muted;    // 0x5a9fd8
-extern float  g_music_volume;   // 0x5aa010
 
 // a clock reading: slot into g_time[] and the start tick; elapsed() = (g_time[slot] - start) * 1e-5f
 // (include/timer.h's Timer: {clock index, pad, start}; elapsed() is 0x432c10)

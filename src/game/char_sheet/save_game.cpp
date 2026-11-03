@@ -88,6 +88,9 @@ int file_writer::flush() { return ((bin_writer*)this)->bin_writer::flush(); }
 
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
+#include <string>
+std::string g_base64_chars("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0x40);   // 0x5aa380 the base64 alphabet (no reader in this source; built at startup)
+
 // @ 0x4e8980    int save_game(int version, tstring* name)
 int save_game(int version, tstring* name)
 {

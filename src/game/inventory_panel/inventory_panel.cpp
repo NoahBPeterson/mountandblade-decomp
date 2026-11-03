@@ -232,8 +232,8 @@ void InventoryPanel::refresh_transaction(int unused)
         rec->equip[9].m4 = 0;
         rec->equip[9].reduce(0);
         set_slot_flag(2, 9, 2, 1);
-        SOUNDMGR->play(g_snd_id_a, 1, ((float*)&g_sound_mgr.listener), 1.0f, 0);
-        SOUNDMGR->play(g_snd_id_b, 1, ((float*)&g_sound_mgr.listener), 1.0f, 0);
+        g_sound_mgr.play(g_snd_id_a, 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
+        g_sound_mgr.play(g_snd_id_b, 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
         init_window();
     }
 

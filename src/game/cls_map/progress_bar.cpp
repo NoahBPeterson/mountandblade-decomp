@@ -2,6 +2,7 @@
 // s004e4c70, s004e55f0, s004e5f80, s004e65e0, s004e6a70, s004e75a0, s004e7b30 and s004e85d0 (head). T-regime region: helpers sit
 // right after their first caller; the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
@@ -20,6 +21,7 @@
 // ---- 0x4e3eb0: the progress bar widget (vtable 0x597f20) -----------------------------------------------------------------------
 extern const float g_progressbar_scale;         // 0x590e0c-ish constant 0.01f (the ctor stores it as the initial value)
 extern const float g_max_ratio;                 // 0x549cdc = 1.0f
+extern const float g_min_ratio;                 // 0x54a6f0 = 0.01f
 
 // @ 0x4e3eb0
 progress_bar::progress_bar()
@@ -48,7 +50,7 @@ void progress_bar::set_ratio(float r)
         v168 = 0.01f;
         return;
     }
-    v168 = (r > g_max_ratio) ? g_max_ratio : r;
+    v168 = (r > g_one) ? g_one : r;
     f184 = 1;
 }
 
@@ -97,9 +99,6 @@ struct mnode {
     void calc_bounds(rgl::vector4* mn, rgl::vector4* mx);   // 0x438d80 (thiscall, ret 8: the mesh's min / max corners; agent2/agent_stats.cpp)
 };
 struct gui_view { void set_view(const float* v); };                               // 0x4c5190 (thiscall, ret 4: the view state pair; rgl/mesh2/gui_edit.h)
-extern const float g_half_ratio;                // 0x549d78
-extern const float g_ratio_a;                   // 0x597fec
-extern const float g_ratio_b;                   // 0x597fe8
 extern const float g_pad_out;                   // 0x590cd0
 
 // @ 0x4e43e0
@@ -210,7 +209,10 @@ void RagModel::load(TiXmlElement* e)
 
 // ---- 0x4e4790: the save / load screen ----------------------------------------------------------------------------------------------
 extern int g_compatible_module_version;                          // 0x5e29b8
-extern float g_time_scale;                      // 0x590e28
+float g_5a9be0 = 0.6f;                          // 0x5a9be0
+float g_5a9f20 = 0.6f;                          // 0x5a9f20 the meeting window columns' left edge (cls_map.cpp computes the column x from it)
+extern const float g_time_scale;                // 0x590e28 (60.0f; defined in cls_map.cpp: a literal here is folded to a double operand)
+extern const float g_minus_one;                 // 0x549ca8 (-1.0f)
 extern "C" int __cdecl sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 // The screen searches the settings table by hand: it walks 0x2c bytes at a time from 0xa44240, calls tstring::equals (0x42bdd0) on each
@@ -725,7 +727,7 @@ __declspec(noinline) int ini_file::hex_field(const tstring& key)
 }
 
 // ---- 0x4e5d80..0x4e5f50: the panel that wraps a menu block --------------------------------------------------------------------------------
-extern int g_menu_kind_sel;                     // 0xa75f3c (the menu kind create2 builds; g_menu_kind_count is 0xa75f38)
+int g_menu_kind_sel;                                        // 0xa75f3c (the menu kind create2 builds; g_menu_kind_count is 0xa75f38)
 
 // @ 0x4e5d80 (a jump to 0x4e5d90; not reproducible from source, see the partial list)
 void SaveWinCtl::create_stub()
@@ -796,7 +798,7 @@ struct GuiChild {
     virtual void build(rgl::scene* s, float* t, const float* pos, const float* size);   // +0x28
 };
 struct SceneWalk { void scene_walk(rgl::scene* s, float* t); };      // 0x4bd170 (thiscall, ret 8; this = the gui_manager)
-extern int g_pending;                           // 0x5e2a14
+int g_pending;                                              // 0x5e2a14
 extern char g_pending_text[];                   // 0x5e25b0
 
 // the 12-float basis + three scalars the scene build hands to mesh::render
@@ -1242,9 +1244,8 @@ void MapLoader::read(SlotReader* stream)
 
 // ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------
 extern int      g_use_shaders;                  // 0x5e28fc
-extern unsigned g_mask_w;                       // 0x5a8e78
-extern unsigned g_a76644;                       // 0xa76644
-extern float    g_chunk_scale;                  // 0x549d68
+extern unsigned __int64 g_bit[];                // 0x5a8e68 (game_globals.h): g_bit[2] = 4, the terrain size mask
+unsigned g_a76644;                                          // 0xa76644
 
 // @ 0x4e85d0   MapScreen::init(void* desc)   (thiscall, ret 4)
 void MapScreen::init(void* desc)
@@ -1293,9 +1294,9 @@ void MapScreen::frame_step()
     if (!(*(unsigned*)(*(char**)((char*)g_game + 0x13a50) + f5df4 * 0x494 + 0x30) & 0x100))
         return;
     int mode = 3;
-    if (((g_mask_w - 1) & g_a76644) != 0 &&
-        ((g_a76644 & (g_mask_w - 1)) == 1 || (g_a76644 & (g_mask_w - 1)) == 2 ||
-         ((g_mask_w - 1) & g_a76644) == 3))
+    if ((((unsigned)g_bit[2] - 1) & g_a76644) != 0 &&
+        ((g_a76644 & ((unsigned)g_bit[2] - 1)) == 1 || (g_a76644 & ((unsigned)g_bit[2] - 1)) == 2 ||
+         (((unsigned)g_bit[2] - 1) & g_a76644) == 3))
         mode = 2;
     mesh.build(*(void**)((char*)view + 0x64), mode);
     mesh.polygon_to_mesh(mesh.poly_mesh);
@@ -1393,7 +1394,6 @@ struct face204 {
 
 // the front table the slot ids are looked up in (0x5aa130 count, 0x5aa134 entries of 0x98 bytes, the name at +0)
 #include "../../include/sound_mgr.h"   // canonical: g_sound_mgr.ngroups (0x5aa130)
-extern char* g_front;                           // 0x5aa134
 struct front_rec {
     tstring name;                               // +0x00
 };
@@ -1457,7 +1457,7 @@ void MapSceneRec::read(MsStream* s)
     stream_str(s, &name28);
     lod38 = MAP_RESMGR->get_lod_mesh(&name28);
     if (lod38->has == 0)
-        mb_error((const char*)orig::str_no_face_mesh, name28.c_str());
+        mb_error("Unable to find face mesh: %s", name28.c_str());
 
     // the poses
     stream_i(s, &npose);
@@ -1527,7 +1527,7 @@ void MapSceneRec::read(MsStream* s)
         stream_str(s, &mats[i].name);
         mats[i].res14 = MAP_RESMGR->get_lod_mesh(&mats[i].name);
         if (lod38->has == 0)                                        // the original tests [+0x38], not the material
-            mb_error((const char*)orig::str_no_beard_mesh, mats[i].name.c_str());
+            mb_error("Unable to find beard mesh: %s", mats[i].name.c_str());
         ((TroopMgr*)this)->copy_troop(&matrecs[i], (const MeshGroupRec*)mats[i].res14);   // 0x473570
     }
 
@@ -1599,7 +1599,7 @@ void MapSceneRec::read(MsStream* s)
         if (id >= 0 && id < 7) {
             int found = -1;
             for (int j = 0; found == -1 && j < g_sound_mgr.ngroups; j++) {
-                if (((front_rec*)(g_front + j * 0x98))->name.equals(nm))
+                if (((front_rec*)((char*)g_sound_mgr.groups + j * 0x98))->name.equals(nm))
                     found = j;
             }
             slot1cc[id] = found;

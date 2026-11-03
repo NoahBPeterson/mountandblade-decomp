@@ -16,6 +16,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../include/mesh_parts.h"
 #include "../../include/mesh_prims.h"
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // the mesh widget (MissionUi-derived, vtable 0x5922e8, 0x178 bytes): the slots the factories call
 struct MeshWidgetVt {

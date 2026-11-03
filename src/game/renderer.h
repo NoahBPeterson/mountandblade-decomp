@@ -15,7 +15,8 @@
 
 // ---- globals -----------------------------------------------------------------------------------------
 extern int g_use_shaders;                   // 0x5e28fc
-extern unsigned g_stage_arg[8];             // 0x5a9c00 D3DTA_* by 3-bit code
+extern ID3DXEffect* g_effect;               // 0x5e293c
+extern unsigned g_stage_arg[6];             // 0x5a9c00 D3DTA_* by 3-bit code
 void mb_error(const char* fmt, ...);        // 0x42cc80
 
 // ---- render-state cache (global object 0xa17910) ----------------------------------------------------------

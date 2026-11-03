@@ -28,6 +28,7 @@
 #include "../../rgl/mesh.h"
 #include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_globals.h"      // UI / core globals
+#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // ---- layout proofs of the members this object added to PartyWindow ---------------------------------------------------------
 typedef char chk_page_widget[offsetof(PartyWindow, page_widget) == 0x2c ? 1 : -1];
@@ -76,7 +77,6 @@ extern void* g_windows[];                       // 0xa73980 (the window manager:
 struct WindowOpener {                           // the window manager (world_data.h WindowMgrW)
     void open(int window);                      // 0x494260 (ret 4)
 };
-extern float g_row_unit;                        // 0x599ae8 (0.088f: the height of one row of the 3-column item grid)
 MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 
@@ -125,12 +125,12 @@ void PartyWindow::create()
     }
 
     if (f4 == 1) {
-        troop = g_game->f13af0;
+        troop = g_game_G->f13af0;
         if (troop <= 0)
-            troop = g_game->hero_troop;
+            troop = g_game_G->hero_troop;
     } else if (f4 == 0) {
-        troop = g_game->hero_troop;
-        ItemRef* inv = g_game->troops[troop].inv;
+        troop = g_game_G->hero_troop;
+        ItemRef* inv = g_game_G->troops[troop].inv;
         for (int k = 0; k < 0x60; k++)
             inv[k].item = -1;
     }
@@ -188,7 +188,7 @@ void PartyWindow::create()
         float out[2];
         WOPS(container)->set_text(out, &e);
     }
-    add_strip_icon((char*)&icon_a84, tstring("inv_i_character"), g_game->cur_troop, spec_ac0);
+    add_strip_icon((char*)&icon_a84, tstring("inv_i_character"), g_game_G->cur_troop, spec_ac0);
     if (f4 == 4)
         add_strip_icon((char*)&icon_a88, tstring("inv_i_character2"), troop, spec_ac4);
 
@@ -201,14 +201,14 @@ void PartyWindow::create()
 
     for (int i = 0; i < pages; i++) {
         page_widget[i] = build_page(i);
-        int idx = g_game->cur_troop;
+        int idx = g_game_G->cur_troop;
         if (i != 0)
             idx = troop;
         int n;
-        if (idx == g_game->hero_troop && f4 == 0)
+        if (idx == g_game_G->hero_troop && f4 == 0)
             n = 9;
         else
-            n = g_game->troops[idx].inv_count();
+            n = g_game_G->troops[idx].inv_count();
         int nrows = (n + 2) / 3;
         float rows_h = (float)nrows * g_row_unit;
         float visible = cfg(tstring("inv_visible_inventory_area"));
@@ -254,14 +254,14 @@ void PartyWindow::create()
         else
             label_refresh(g, tstring("inv_t_gold2"));
         WOPS(container)->add_child(g);
-        if (f4 != 0 || idx != g_game->hero_troop)
+        if (f4 != 0 || idx != g_game_G->hero_troop)
             money_label(i);
 
         MissionUi* nm = new MissionUi;
         name[i] = nm;
         if (i == 0) {
             label_refresh(nm, tstring("inv_t_name1"));
-            Troop* t0 = g_game->troops;
+            Troop* t0 = g_game_G->troops;
             tstring* s = g_strtable.find(&t0->key);
             if (s == 0)
                 s = &t0->name;
@@ -270,7 +270,7 @@ void PartyWindow::create()
         } else {
             label_refresh(nm, tstring("inv_t_name2"));
             if (f4 == 2 || f4 == 4) {
-                Troop* t = &g_game->troops[troop];
+                Troop* t = &g_game_G->troops[troop];
                 tstring* s = g_strtable.find(&t->key);
                 if (s == 0)
                     s = &t->name;
@@ -331,9 +331,9 @@ void PartyWindow::create()
         int n = 1;
         int off = 0x20;
         for (;;) {
-            int party = g_game->f78;
-            int slot = ((Map10007*)&g_game->scene)->lookup(party);
-            char** pg = *(char***)((char*)&g_game->scene + 0x138d0);
+            int party = g_game_G->f78;
+            int slot = ((Map10007*)&g_game_G->scene)->lookup(party);
+            char** pg = *(char***)((char*)&g_game_G->scene + 0x138d0);
             char* rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             int count = *(int*)(rec + 0x8a8);
             int c = 0;
@@ -350,8 +350,8 @@ void PartyWindow::create()
             }
             if (n >= c)
                 break;
-            slot = ((Map10007*)&g_game->scene)->lookup(party);
-            pg = *(char***)((char*)&g_game->scene + 0x138d0);
+            slot = ((Map10007*)&g_game_G->scene)->lookup(party);
+            pg = *(char***)((char*)&g_game_G->scene + 0x138d0);
             rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             if (troop == *(int*)(rec + 0xac + off))
                 f_abc = 1;
@@ -367,7 +367,7 @@ void PartyWindow::create()
     }
     init_window();
 
-    if ((g_game->f13ae8 & 1) == 0 && f4 == 2 && g_tutorial_off == 0) {
+    if ((g_game_G->f13ae8 & 1) == 0 && f4 == 2 && g_tutorial_off == 0) {
         tstring t1("ui_tutorial_inventory");
         tstring t2("ui_tutorial");
         tstring* text = g_strtable.lookup(&t1);
@@ -379,22 +379,22 @@ void PartyWindow::create()
         *(int*)(box + 0x50) = 0;
         *(int*)(box + 4) = 0;
         ((WindowOpener*)g_windows)->open(0);
-        g_game->f13ae8 |= 1;
+        g_game_G->f13ae8 |= 1;
     }
 }
 
 // @ 0x501940
 void PartyWindow::money_label(int which)
 {
-    int idx = g_game->cur_troop;
+    int idx = g_game_G->cur_troop;
     if (which != 0)
         idx = troop;
-    int money = g_game->troops[idx].f3b4;
+    int money = g_game_G->troops[idx].f3b4;
 
     char buf[512];
     {
         tstring key("ui_money_value");
-        sprintf(buf, g_strtable.lookup(&key)->c_str(), ((GameData*)g_game)->string_value(money).c_str());   // the callee builds the string in place through the hidden return pointer
+        sprintf(buf, g_strtable.lookup(&key)->c_str(), ((GameData*)g_game_G)->string_value(money).c_str());   // the callee builds the string in place through the hidden return pointer
     }
     {
         tstring s(buf);

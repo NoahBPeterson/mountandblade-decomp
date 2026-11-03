@@ -57,7 +57,7 @@ struct rgl_config {
     void save(FILE* f);   // 0x415fb0
 };
 
-extern Game* g_game;                                                        // 0x5e2930
+extern ID3DXEffect* g_effect;                                                // 0x5e293c (renderer.h)
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
 #include "../id_stack.h"                         // the screen id stack (0xa739f8)
@@ -65,6 +65,8 @@ extern Game* g_game;                                                        // 0
 
 // 0x415160: open a user file ("rgl_config.txt").
 #include "../../rgl/text_stream.h"             // mb_open_user_file (0x415160)
+#include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../float_consts.h"   // shared float constants kept in memory
 // 0x4b99c0: settings refresh.
 void run_settings_probe();                            // 0x4b99c0 (options_dlg.h; that header's winsock2.h cannot follow windows.h)
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index (clamped to 5).
@@ -136,7 +138,7 @@ struct VideoPage {
 void VideoPage::update(int reason)
 {
     if (w50->changed(0x10000)) {
-        orig::g_opt_blood = settings_value(w50);
+        g_options.i18 = settings_value(w50);
         update_performance_caption(this);
     }
 
@@ -157,7 +159,7 @@ void VideoPage::update(int reason)
     }
 
     if (w64->changed(0x10000)) {
-        orig::g_char_detail = settings_value(w64);
+        g_options.i1c = settings_value(w64);
         set_enabled_text_local(w64, this);
         update_performance_caption(this);
     }
@@ -210,8 +212,8 @@ void VideoPage::update(int reason)
     if (w34->changed(0x10000)) {
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
         float gamma = w34->get_float();
-        orig::g_scale_x = gamma;
-        float inv = orig::g_one / gamma;
+        g_options.f80 = gamma;
+        float inv = g_one / gamma;
         vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
         vi.x = vi.y = vi.z = vi.w = inv;
@@ -251,11 +253,11 @@ void VideoPage::update(int reason)
     }
 
     if (w38->changed(0x10000)) {
-        orig::g_scale_y = w38->get_float();
+        g_options.f84 = w38->get_float();
         update_performance_caption(this);
     }
     if (w3c->changed(0x10000)) {
-        orig::g_scale_z = w3c->get_float();
+        g_options.f88 = w3c->get_float();
         update_performance_caption(this);
     }
     if (w40->changed(0x10000)) {

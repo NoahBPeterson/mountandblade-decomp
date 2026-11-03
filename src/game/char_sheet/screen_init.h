@@ -42,7 +42,6 @@ struct Rect {                                   // the 0x10-byte region copied i
 extern char g_5e212c;                           // 0x5e212c
 #include "../renderer.h"
 extern float g_590bb8;                          // 0x590bb8
-extern float g_549cdc;                          // 0x549cdc (1.0f)
 extern float g_54b3b4;                          // 0x54b3b4
 
 // ---- callees -------------------------------------------------------------------------------------------

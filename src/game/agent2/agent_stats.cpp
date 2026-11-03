@@ -45,6 +45,13 @@
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../rgl/options.h"   // g_options 0x5aa008
+#include "../../include/item_kind.h"   // g_items 0x5e29d0
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+const RangePair g_range_tbl[6] = {                       // 0x590aac
+    { -0.5f, 3.1415927f }, { -2.0f, 2.0f }, { -1.5f, 2.5f }, { -1.0f, 3.0f }, { -1.3f, 2.8f }, { -3.0f, 1.0f } };
+
 
 // inline vector helpers of the original: rgl's operators are out-of-line in other objects
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -393,15 +400,15 @@ float Agent::damage_factor(int idx)
             int lvl = g_game->skill_level(troop, 0x1a);
             r = ((float)lvl * 0.25f + 1.0f) * r;
             if (id == g_mission->f5c) {
-                if (g_agent_count > 1)
-                    r = (((float)g_agent_count * 0.7f + 9.3f) * r) * 0.07f;
+                if (g_options.i48 > 1)
+                    r = (((float)g_options.i48 * 0.7f + 9.3f) * r) * 0.07f;
             } else {
-                r = ((float)g_agent_count * 0.07f + 0.93f) * r;
+                r = ((float)g_options.i48 * 0.07f + 0.93f) * r;
             }
         }
         unsigned t2 = ik->type_flags & 0xff;
-        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != g_mission->f5c || g_agent_count > 1))
-            r = ((float)g_agent_count * 0.07f + 0.93f) * r;
+        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != g_mission->f5c || g_options.i48 > 1))
+            r = ((float)g_options.i48 * 0.07f + 0.93f) * r;
     }
     return r;
 }
@@ -411,12 +418,11 @@ float Agent::damage_factor(int idx)
 void Agent::smooth_turn(float dt)
 {
     float v = signed_angle((const vec2*)&vel, (const vec2*)&fx);
-    int o = variant * 8;
     float c;
-    if (*(float*)(g_range_tbl + o) <= v && v < *(float*)(g_range_tbl + o + 4))
+    if (g_range_tbl[variant].lo <= v && v < g_range_tbl[variant].hi)
         c = v;
     else
-        c = closer_angle(&v, (float*)(g_range_tbl + o), (float*)(g_range_tbl + o + 4));
+        c = closer_angle(&v, &g_range_tbl[variant].lo, &g_range_tbl[variant].hi);
     float d = c - cur;
     if (!(fabs(d) < 0.8f))
         c = d * dt * 9.0f + cur;
