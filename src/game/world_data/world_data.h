@@ -175,7 +175,7 @@ struct MissionW : Mission {
     bool all_defeated(int team);                                // 0x4920e0 (ret 4)
     bool hero_down();                                           // 0x492170
     unsigned find_agent_by_troop(int troop);                    // 0x4921b0 (ret 4)
-    void add_wind_effect(int a1, int a2);                       // 0x4952f0 (ret 8)
+    void add_wind_effect(float a1, float a2);                       // 0x4952f0 (ret 8)
     void set_weapon_order_1(int team, unsigned value);          // 0x492230 (ret 8)
     void set_weapon_order_2(int team, unsigned value);          // 0x492350 (ret 8)
 };
@@ -251,9 +251,7 @@ struct E68W : E68 {
     void purge();                                               // 0x493e90 (thiscall, ret 0)
     void* find_or_create(int* key);                             // 0x493df0 (thiscall, ret 4)
 };
-struct ViewParams {
-    ViewParams();   // 0x46b940
-};
+#include "../../include/view_params.h"                       // ViewParams (ctor 0x46b940)
 struct SceneBaseCtor {                                          // the scene base object (0x36c bytes): its constructor body, kept opaque from 0x495650
     SceneBaseCtor* construct();                                 // 0x493ab0 (returns this)
 };
@@ -329,7 +327,6 @@ struct CarryBody {
 void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430
 
 // ---- 0x4952f0: the effect object the mission's scene container hands out (the wind / light record, 0x7c bytes) ----------------------------
-#include "../eff_obj.h"                                         // EffObj / EffMgr
 
 // ---- the particle-system table and the emitter control (0x4955e0) -----------------------------------------------------------------------------
 struct Emitter;
@@ -361,13 +358,5 @@ struct SceneBase {
 inline SceneBase::SceneBase() { ((SceneBaseCtor*)this)->construct(); }
 struct SceneObject : SceneBase { rgl::frustum frustum; char tail[0x14]; };   // 0x4a0 total
 
-// Views of classes defined in other translation units, declared here under the defining class's name (their headers do not go with this
-// one): terrain_b's CellGrid::spawn_wind (0x478f30).
-struct Wind;
-struct CellGrid {
-    ~CellGrid();   // 0x475d50
-    Wind* spawn_wind();   // 0x478f30
-    void init(const float* lo, const float* hi, int dimx, int dimy);   // 0x478830
-};
 
 #endif // GAME_WORLD_DATA_H

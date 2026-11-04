@@ -93,13 +93,12 @@ HeightField::~HeightField()
 // Clamps a 2D point to cell indices (0 .. n-1).
 void world::to_cell(const float* p, int* out)
 {
-    const grid_view* g = (const grid_view*)this;
     for (int i = 0; i < 2; i++) {
-        float f = (p[i] - g->lo[i]) / g->step[i];
+        float f = (p[i] - lo[i]) / cell_size[i];
         if (f <= 0.0f)
             out[i] = 0;
-        else if ((float)(g->n[i] - 1) <= f)
-            out[i] = g->n[i] - 1;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
         else
             out[i] = (int)f + 1;
     }
@@ -120,7 +119,7 @@ void world::release_links(entity* e)
         if (l->prev != 0)
             l->prev->next = l->next;
         else
-            rows[r->x][r->y].head = l->next;
+            cells[r->x][r->y].head = l->next;
         if (l->next != 0)
             l->next->prev = l->prev;
         l->next = nodes.freelist;

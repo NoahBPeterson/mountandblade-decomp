@@ -75,15 +75,7 @@ struct mesh_node {
 struct RiderTable {
     int shares(const int& a, const int& b) const;   // 0x48efa0 (mission_ui2/mission_4.cpp, ret 8)
 };
-namespace rgl { struct scene; struct mesh; struct entity;
-                struct world {
-                    void step(float dt);                                  // 0x427f40
-                    void render_scene(scene* sc, bool reflect);           // 0x429890
-                    void remove_entity(int id);                           // 0x41f0d0
-                    entity* create_entity(int type_id);                   // 0x428440
-                    void reset();                                         // 0x421390
-                };
-              }
+#include "../terrain_b/cell_world.h"        // rgl::world: step 0x427f40, render_scene 0x429890, remove_entity 0x41f0d0, create_entity 0x428440, reset 0x421390, ground (NavData)
 struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party / agent / scene pools, ret 4)
 };
@@ -157,7 +149,7 @@ struct TabFrustum : rgl::frustum {                      // the frustum plus the 
     int flag;                                           // +0x120   0x4b1160
     float mat4[4];                                      // +0x124
 };
-struct TabWorld : CellGrid {                            // a tableau world: the scene container plus a frustum at +0x36c
+struct TabWorld : rgl::world {                            // a tableau world: the scene container plus a frustum at +0x36c
     int f344, f348;                                     // +0x344   0x4b1160
     char pad34c[0x36c - 0x34c];
     TabFrustum fr;                                      // +0x36c
@@ -222,7 +214,7 @@ struct NavRec : NavCell {
     float* pos() { return (float*)((char*)this + 0x74); }   // +0x74 x, y, z                         0x4b6b40
     float& limit() { return *(float*)((char*)this + 0x80); }// +0x80 keep distance of the node       0x4b6b40
 };
-inline NavRec* nav_recs() { return (NavRec*)((CellGrid*)g_script.level)->core->cells.first; }       // the record array (+0x14 of the nav data)
+inline NavRec* nav_recs() { return (NavRec*)((rgl::world*)g_script.level)->ground->cells.first; }       // the record array (+0x14 of the nav data)
 
 #include "../battle_rec.h"            // BattleObj, BattleRec, BattleTable: the one definition (party2 and script)
 inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }

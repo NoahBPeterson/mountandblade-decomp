@@ -15,6 +15,7 @@
 #include "../../game/screen_records.h"     // C4c3050: slot 3 (0x4ca6c0) is its pressed-button finder
 #include "../../game/ui/mission_ui.h"
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10, stamp 0x4c1ee0)
+#include "../scene/world.h"                // rgl::world: ~world 0x475d50 (the grid's destructor body, called without the delete)
 #include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -26,9 +27,6 @@ std::vector<RegSkeleton> g_skeletons;                           // 0xa180e8 (con
 // canonical declarations of callees defined in other modules, reached through this module's layout views
 struct PolyMesh {
     void build_adjacency();   // 0x470920 (game/terrain_b/poly_mesh.h): graph_obj is the same object
-};
-struct CellGrid {
-    ~CellGrid();   // 0x475d50 (game/terrain_b): the grid's destructor body, called without the delete
 };
 
 const char g_none[] = "none";                                   // 0x54ac00
@@ -376,7 +374,7 @@ void CharSheet::reset_screen()
     g_gui.reset();
     res_rec* r = scene;
     if (r) {
-        ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
+        ((rgl::world*)r)->~world();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
         scene = 0;
     }
@@ -389,7 +387,7 @@ void TerrainPage::reset_screen()
     g_gui.reset();
     res_rec* r = (res_rec*)world;
     if (r) {
-        ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
+        ((rgl::world*)r)->~world();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
     }
 }
@@ -401,7 +399,7 @@ void FaceGen::reset_screen()
     g_gui.reset();
     res_rec* r = (res_rec*)world;
     if (r) {
-        ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
+        ((rgl::world*)r)->~world();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
     }
 }
@@ -482,7 +480,7 @@ static inline void tidy_list(RawVec& v)
 ScriptState::~ScriptState()
 {
     if (level) {
-        ((CellGrid*)level)->~CellGrid();   // 0x475d50: the grid destructor, called before the delete
+        ((rgl::world*)level)->~world();   // 0x475d50: the grid destructor, called before the delete
         operator delete(level);
     }
     for (int i = 0; i < 8; i++) {

@@ -57,7 +57,7 @@ struct TextPart {
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 
 // the 0x7c-byte wind track (ctor 0x461480)
-#include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)
+#include "../light.h"                             // Light (shared with terrain_a/wind.cpp)
 
 static void push_item(ContainerBase* w, MissionUi* o)
 {

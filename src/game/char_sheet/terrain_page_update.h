@@ -60,7 +60,6 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 
 // ---- the world / scene --------------------------------------------------------------------------------
 // effect object created by 0x478f30 (0x7c bytes; layout from s00494e40)
-#include "../eff_obj.h"                                     // EffObj / EffMgr
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 #include "../window_mgr.h"                         // g_windows (0xa73980)
 

@@ -38,7 +38,7 @@ UiA* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, 
 MissionUi* __cdecl make_hint(ContainerBase* parent, const tstring& text, float a, float b, float c, float d);   // 0x4dada0 (cls_map)
 #include "../../include/sound_mgr.h"
 // the particle / shadow system g_psys (0xa70248)
-struct CellGrid;                                                    // terrain_b/cell_grid.h (a TU that calls into it includes that header)
+namespace rgl { struct world; }                                                    // terrain_b/cell_grid.h (a TU that calls into it includes that header)
 #include "../shadow_map.h"
 struct ShadowMapP {
     void render();                                                  // 0x47fef0

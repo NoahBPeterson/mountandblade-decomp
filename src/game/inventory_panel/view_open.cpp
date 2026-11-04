@@ -53,7 +53,7 @@ struct named_object;
 template<> void std::vector<named_object*, std::allocator<named_object*> >::push_back(named_object* const&);   // 0x41b750 (rgl/core/resmgr.cpp's instance; the entity's +0x108 list is a std::vector<named_object*>)
 
 // ---- wind track (0x7c bytes) -----------------------------------------------------------------------------
-#include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)
+#include "../light.h"                             // Light (shared with terrain_a/wind.cpp)
 
 // ---- the world (0x344 bytes) -----------------------------------------------------------------------------
 #include "../engvec.h"                                     // engvec<T>
@@ -117,7 +117,7 @@ void char_window::open_view()
         face_body* b = new face_body;
         label_refresh((MissionUi*)b, tstring("char_i_character"));
         if (world != 0) {
-            ((CellGrid*)world)->~CellGrid();    // 0x475d50 (the CellGrid destructor body), then the free
+            ((rgl::world*)world)->~world();    // 0x475d50 (the CellGrid destructor body), then the free
             free(world);
             world = 0;
         }
@@ -132,7 +132,7 @@ void char_window::open_view()
         int zero3 = 0;
         rgl::world* w = (rgl::world*)::operator new(sizeof(rgl::world));
         if (w)
-            new (w, raw_place()) CellGrid(lo, hi, &zero, &zero2, &zero3);   // 0x478ad0
+            new (w, raw_place()) rgl::world(lo, hi, &zero, &zero2, &zero3);   // 0x478ad0
         world = w;
         w->ambient.x = 0.23f;
         w->ambient.y = 0.25f;
@@ -145,24 +145,24 @@ void char_window::open_view()
             ((MissionUi*)w)->set_fog((const float*)&z2, (const float*)&five, (const float*)&col);   // 0x488cd0
         }
         {
-            wind* wd = new wind;
-            w->lights.push_back((rgl::light*)wd);
-            wd->v04 = rgl::vector4(0.1f, 0.15f, 0.2f);
-            wd->v14 = rgl::vector4(0.1f, 0.15f, 0.2f);
-            wd->v24 = rgl::vector4(-2.0f, -2.0f, 12.0f);
+            Light* wd = new Light;
+            w->lights.push_back(wd);
+            wd->color = rgl::vector4(0.1f, 0.15f, 0.2f);
+            wd->base_color = rgl::vector4(0.1f, 0.15f, 0.2f);
+            wd->pos = rgl::vector4(-2.0f, -2.0f, 12.0f);
             wd->type = 2;
-            wd->f54 = 20.0f;
-            wd->v44 = rgl::vector4(-0.5f, 0.0f, -1.0f);
+            wd->range = 20.0f;
+            wd->dir = rgl::vector4(-0.5f, 0.0f, -1.0f);
         }
         {
-            wind* wd = new wind;
-            w->lights.push_back((rgl::light*)wd);
-            wd->v04 = rgl::vector4(0.45f, 0.42f, 0.4f);
-            wd->v14 = rgl::vector4(0.4f, 0.4f, 0.4f);
-            wd->v24 = rgl::vector4(2.0f, 2.0f, 2.0f);
+            Light* wd = new Light;
+            w->lights.push_back(wd);
+            wd->color = rgl::vector4(0.45f, 0.42f, 0.4f);
+            wd->base_color = rgl::vector4(0.4f, 0.4f, 0.4f);
+            wd->pos = rgl::vector4(2.0f, 2.0f, 2.0f);
             wd->type = 2;
-            wd->f54 = 20.0f;
-            wd->v44 = rgl::vector4(0.6f, -1.0f, -2.0f);
+            wd->range = 20.0f;
+            wd->dir = rgl::vector4(0.6f, -1.0f, -2.0f);
         }
         b->world = w;
         b->scene3d.flags |= 0x1200;

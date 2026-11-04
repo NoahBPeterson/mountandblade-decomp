@@ -306,7 +306,7 @@ void world_q::query_shapes(entity* e, grid_shape** out, int* count, int* use3d, 
 {
     *count = 0;
     for (cellref* r = (cellref*)e->refs; r != 0; r = r->next) {
-        cell_q* c = (cell_q*)&rows[r->x][r->y];
+        cell_q* c = (cell_q*)&cells[r->x][r->y];
         c->collect(e->get_v9c(), e->get_vac(), use3d, mask, out, count);
     }
 }
@@ -426,7 +426,7 @@ void world_q::query_entities(entity* e, unsigned mask, bool ordered, std::vector
 {
     out->clear();
     for (cellref* r = (cellref*)e->refs; r != 0; r = r->next) {
-        for (cellnode* nd = rows[r->x][r->y].head; nd != 0; nd = nd->next) {
+        for (cellnode* nd = cells[r->x][r->y].head; nd != 0; nd = nd->next) {
             entity** pe = &nd->obj;
             if (*pe != e) {
                 if (type_ok((*pe)->type_id(), mask)) {

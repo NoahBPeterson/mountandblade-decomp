@@ -48,7 +48,7 @@ struct Ctx {
 // type, and the "river" mesh over the wet triangles
 void Terrain::create_water(void** out)
 {
-    Entity* e = (Entity*)((rgl::world*)grid)->create_entity(9);       // CellGrid is the rgl::world of src/rgl/scene/world.h (its reset 0x421390 is rgl::world::reset)
+    rgl::entity* e = ((rgl::world*)grid)->create_entity(9);       // CellGrid is the rgl::world of src/rgl/scene/world.h (its reset 0x421390 is rgl::world::reset)
     float cmap = (*(float*)((char*)this + 0x843bd24) + *(float*)((char*)this + 0x843bd20) + *(float*)((char*)this + 0x843bd1c)) * 0.33f;   // summed z, y, x as at 0x480dce
     rgl::world* wo = (rgl::world*)world;
     float cz = (wo->ambient.z + wo->ambient.y + wo->ambient.x) * 0.3f;   // summed z, y, x as at 0x480e0e
@@ -202,8 +202,8 @@ struct Geom_t : NavCore {                           // 0x68
 struct world_t {                        // the scene object at Terrain+0xc3b0dc (CellGrid of terrain_b)
     char pad0[0x64];
     HeightField* cells;                 // 0x64 current cell-row table
-    void build_faces(Geom_t* g) { ((CellGrid*)this)->build_faces((NavData*)g); }       // 0x479980 (CellGrid::build_faces, terrain_b/cell_grid.h)
-    void update_probes(int use_shaders) { ((CellGrid*)this)->update_probes(use_shaders); }      // 0x472ed0
+    void build_faces(Geom_t* g) { ((rgl::world*)this)->build_faces((NavData*)g); }       // 0x479980 (CellGrid::build_faces, terrain_b/cell_grid.h)
+    void update_probes(int use_shaders) { ((rgl::world*)this)->update_probes(use_shaders); }      // 0x472ed0
 };
 
 // 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri (terrain_a/wind.h; hidden return pointer)
@@ -469,7 +469,7 @@ void Terrain::generate(int seed, int* objs, char flag)
     spawn_particles(&list_a, 0);
     spawn_particles(&list_c, 2);
     ((Terrain*)this)->create_chunk_entities();
-    g_shadow_map.attach_camera((CellGrid*)world);
+    g_shadow_map.attach_camera((rgl::world*)world);
     float v[3];
     v[0] = 0.0f;
     v[1] = 0.0f;

@@ -61,7 +61,7 @@ struct MissionW {                                                            // 
     bool hero_down();                                                       // 0x492170
     int count_agents(int team);                                             // 0x491f50
     unsigned find_agent_by_troop(int troop);                                // 0x4921b0
-    void add_wind_effect(int a1, int a2);                                   // 0x4952f0
+    void add_wind_effect(float a1, float a2);                                   // 0x4952f0
 };
 struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
 struct Sel { void set_vec(const int* a, const int* b, const int* c); };     // 0x4898e0 (ui/mission_ui.cpp)
@@ -700,7 +700,7 @@ struct MissionX {
     __forceinline float blend2_param() { return ((Mission*)this)->blend2_param(); }                                   // 0x48a7d0 (blend2_param)
     __forceinline int find_agent_by_troop(int troop) { return ((MissionW*)this)->find_agent_by_troop(troop); }        // 0x4921b0 (ret 4)
     __forceinline void check_slot(int entry, int count) { ((c49bea0::Mission*)this)->check_slot(entry, count); }      // 0x49c170 (ret 8)
-    __forceinline void add_wind_effect(float flicker_magnitude, float flicker_interval) { ((MissionW*)this)->add_wind_effect(fbits(flicker_magnitude), fbits(flicker_interval)); }   // 0x4952f0 (ret 8)
+    __forceinline void add_wind_effect(float flicker_magnitude, float flicker_interval) { ((MissionW*)this)->add_wind_effect(flicker_magnitude, flicker_interval); }   // 0x4952f0 (ret 8)
     __forceinline void spawn_effect(int psys, const rgl::matrix* p, int strength) { ((Mission*)this)->spawn_effect(psys, (const rgl::mat4*)p, strength); }   // 0x442ca0 (ret 0xc)
     __forceinline int place(const ItemRef* item) { return ((Mission*)this)->place((const int*)item); }   // 0x49b4b0 (ret 4)
     __forceinline int exec_trigger(int troop) { return ((Mission*)this)->exec_trigger(troop); }          // 0x49f9e0 (ret 4)

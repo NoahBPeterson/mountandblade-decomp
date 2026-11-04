@@ -167,6 +167,9 @@ template<class T> struct vec {
     int alloc;
     T* first; T* last; T* end;
     void clear() { if (first != 0) operator delete(first); first = 0; last = 0; end = 0; }
+    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
+    unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
+    T& operator[](unsigned i) const { return first[i]; }
 };
 
 

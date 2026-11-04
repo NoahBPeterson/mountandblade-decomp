@@ -37,7 +37,7 @@ using rgl::mat3;
 // be included here; the calls go to the members of the classes that define them, which are declared (members only) in this block.
 #include "../../rgl/mesh.h"          // rgl::mesh
 #include "../../rgl/scene/scene.h"      // resmgr (res_manager()), resource_manager g_resmgr 0x5d6fa0
-struct skin; struct face; struct CellGrid; struct BodyRecC;
+struct skin; struct face; namespace rgl { struct world; } struct BodyRecC;
 namespace rgl {
 struct entity; struct scene;
 unsigned __cdecl pack_color(const vector4* c);               // 0x40e440
@@ -128,7 +128,7 @@ struct PropObj {                                             // object at prop +
 // ---- data this module owns ----
 Terrain g_terrain;                                  // 0xa76630 (the world-map terrain, used by Mission::start_setup: 0x845e7c8 bytes; constructed by Terrain::Terrain 0x4ce720)
 struct Psys {
-    void attach_camera(rgl::world* w) { ((ShadowMap*)this)->attach_camera((CellGrid*)w); }       // 0x4711e0
+    void attach_camera(rgl::world* w) { ((ShadowMap*)this)->attach_camera((rgl::world*)w); }       // 0x4711e0
     void extend(BodyRec* b) { ((ShadowMap*)this)->extend((const vector4*)b); }          // 0x468c20
     void fit_bounds() { ((ShadowMap*)this)->fit_bounds(); }                              // 0x463cc0
     void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
@@ -633,7 +633,7 @@ void Mission::start_setup()
             nav.compute_edge_creases();
         }
     }
-    ((CellGrid*)at<rgl::world*>(0))->build(&nav);   // 0x478c50
+    ((rgl::world*)at<rgl::world*>(0))->build(&nav);   // 0x478c50
 
     // ---- light/frame table: 64 slots + 5 extra for a custom camera --------------------------
     SceneSlot* slots = &at<SceneSlot>(0x670);

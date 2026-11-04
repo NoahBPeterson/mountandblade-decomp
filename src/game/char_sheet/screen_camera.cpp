@@ -137,7 +137,7 @@ void CampaignScreen::camera_update(float dt)
     frame.o.z = frame.u.z * f2b8 + frame.o.z;
     // the ground probe point under the eye (3-component constructor: w is never written)
     vector4 h(frame.o.x - frame.u.x * 0.5f, frame.o.y - frame.u.y * 0.5f, frame.o.z - frame.u.z * 0.5f);
-    ground_height((CellGrid*)g_script.level, (const float*)&h, &q);
+    ground_height((rgl::world*)g_script.level, (const float*)&h, &q);
     q = q + 0.5f;
     if (frame.o.z < q)
         frame.o.z = q;

@@ -4,8 +4,8 @@
 // embedded in CellGrid at +0x22c.. / +0x27c / +0x2bc).
 #ifndef GAME_VIEW_PARAMS_H
 #define GAME_VIEW_PARAMS_H
-#include "../include/rgl_base.h"
-#include "../include/frustum.h"
+#include "./rgl_base.h"
+#include "./frustum.h"
 
 struct ViewParams {
     float f0, f4, f8;                           // +0x00 1000, -1, -100

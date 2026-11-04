@@ -12,7 +12,7 @@
 #include "../rgl/scene_rec.h"    // rgl::scene
 
 struct ShSkin;
-struct CellGrid;
+namespace rgl { struct world; }
 struct LightCam;
 
 struct ShadowMap {
@@ -35,7 +35,7 @@ struct ShadowMap {
     void sync_readback();                       // 0x4640d0
     void read_pixel(int unused, int x, int y, unsigned* a, unsigned* b);   // 0x4641a0
     void extend(const rgl::vector4* p);         // 0x468c20 (grow the caster bounds by a world point; terrain_a.cpp)
-    void attach_camera(CellGrid* c);            // 0x4711e0 (terrain_b.cpp)
+    void attach_camera(rgl::world* c);            // 0x4711e0 (terrain_b.cpp)
     bool test(unsigned p, float* out);          // 0x468c80 (depth test of a world point; terrain_a.cpp; src/game/terrain_b calls it Probe::test)
     bool sample(const rgl::vector4* p, float* out);    // 0x4faee0 (ret 8: nine depth taps around the point; src/game/agent5)
 };

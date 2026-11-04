@@ -2,7 +2,6 @@
 #include "../float_consts.h"
 #include "../terrain_a/terrain.h"      // g_terrain 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../slot.h"
@@ -108,15 +107,15 @@ done:
         vector4 clear_colour(0.4f, 0.4f, 0.6f);
         world->ambient = clear_colour;
         world->ambient.w = 1.0f;
-        EffObj* flash = (EffObj*)((CellGrid*)(void*)world)->spawn_wind();     // 0x478f30
-        flash->pos = vector4(0.9f, 0.9f, 0.9f);
-        flash->f14 = vector4(1.0f, 1.0f, 1.0f);
-        flash->f24 = vector4(-1000.0f, -1000.0f, 1000.0f);
-        flash->f0 = 2;
-        flash->f54 = 20.0f;
+        Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30
+        flash->color = vector4(0.9f, 0.9f, 0.9f);
+        flash->base_color = vector4(1.0f, 1.0f, 1.0f);
+        flash->pos = vector4(-1000.0f, -1000.0f, 1000.0f);
+        flash->type = 2;
+        flash->range = 20.0f;
         vector4 dir(1.0f, 1.0f, -1.0f);
-        flash->f44 = dir;
-        flash->f44.normalize();                     // inlined in the original (0x407d60 body: (0,1,0) when the length is <= 1e-10)
+        flash->dir = dir;
+        flash->dir.normalize();                     // inlined in the original (0x407d60 body: (0,1,0) when the length is <= 1e-10)
         sync_bits();
         g_terrain.generate((int)world, (int*)0, 0);   // 0x481d10
         void* water_out;                            // 0x482170 stores the new water mesh here; the original never reads it back

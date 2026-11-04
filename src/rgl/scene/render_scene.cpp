@@ -269,7 +269,7 @@ void world::render_scene(scene* sc, bool reflect)
     sc->refl->ambient = ambient;
     sc->refl->target = sc->rt;
     sc->refl->owner = this;
-    sc->refl->f1b0 = env;
+    sc->refl->f1b0 = &view;
     sc->refl->list = (const ptr_list&)lights;
     render_info rinfo;
     rinfo.valid = 0;

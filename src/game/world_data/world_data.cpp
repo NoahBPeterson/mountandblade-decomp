@@ -30,10 +30,10 @@
 #include "../../include/e68.h"
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/scene/world.h"      // rgl::world (ctor 0x478ad0, dtor 0x475d50, init 0x478830, spawn_wind 0x478f30)
 #include "./tableau.h"
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40): the table's members defined here
 #include "./widget_mgr_w.h"
-#include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
@@ -1057,7 +1057,7 @@ void TableauTbl::pop_back_delete()
     unsigned _n = worlds.size();
     SceneObject* _Ptr = worlds[_n - 1];
     if (_Ptr != 0) {
-        ((CellGrid*)_Ptr)->CellGrid::~CellGrid();                // 0x475d50
+        ((rgl::world*)_Ptr)->~world();                // 0x475d50
         ::operator delete(_Ptr);
     }
     if (worlds._Myfirst != 0 && worlds.size() != 0)
@@ -1456,7 +1456,7 @@ SceneBaseCtor* SceneBaseCtor::construct()
     {
         float _x[2] = { 1000.0f, 1000.0f };
         float _y[2] = { -1000.0f, -1000.0f };
-        ((CellGrid*)(void*)this)->init(_y, _x, 0, 0);
+        ((rgl::world*)(void*)this)->init(_y, _x, 0, 0);
     }
 
     *(float*)(self + 0x30c) = 1.0f;
@@ -2068,14 +2068,14 @@ int GameW::add_random_experience(int amount)
 
 // ==== 0x4952f0: put a light / wind object at the trigger frame ======================================================
 // @ 0x4952f0
-void MissionW::add_wind_effect(int a1, int a2)
+void MissionW::add_wind_effect(float a1, float a2)
 {
     GameW* g = (GameW*)g_game;
-    EffObj* o = (EffObj*)((CellGrid*)*(void**)this)->spawn_wind();   // 0x478f30
-    o->f70 = a1;
-    o->f74 = a2;
-    o->pos = g->cur_color();
-    o->f0 = 0;
+    Light* o = ((rgl::world*)*(void**)this)->spawn_wind();   // 0x478f30
+    o->flicker_magnitude = a1;
+    o->flicker_interval = a2;
+    o->color = g->cur_color();
+    o->type = 0;
     rgl::vector4 v;
     v.x = g->trig_row(2).x * g->pos_delta().z + g->trig_row(1).x * g->pos_delta().y +
           g->trig_row(0).x * g->pos_delta().x + g->trig_row(3).x;
@@ -2083,9 +2083,9 @@ void MissionW::add_wind_effect(int a1, int a2)
           g->trig_row(1).y * g->pos_delta().y + g->trig_row(3).y;
     v.z = g->trig_row(0).z * g->pos_delta().x + g->trig_row(2).z * g->pos_delta().z +
           g->trig_row(1).z * g->pos_delta().y + g->trig_row(3).z;
-    o->f24 = v;
-    o->f14 = o->pos;
-    o->f54 = (o->pos.z + o->pos.y + o->pos.x) * 10.0f;
+    o->pos = v;
+    o->base_color = o->color;
+    o->range = (o->color.z + o->color.y + o->color.x) * 10.0f;
 }
 
 // ==== 0x495430: show / hide the carried meshes of an agent's four slots ========================================================

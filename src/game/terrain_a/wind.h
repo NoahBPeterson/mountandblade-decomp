@@ -7,7 +7,7 @@
 // The agent record (init_max_hp 0x461200 reads +0x1bc and writes +0x1c0): src/game/agent_obj.h.
 #include "../agent_obj.h"
 
-#include "../wind.h"                         // wind (the 0x7c-byte wind track; shared with char_sheet and inventory_panel)
+#include "../light.h"                        // Light (the 0x7c-byte light / wind track: init 0x461480, sample 0x461570)
 
 elem24* __cdecl copy_range(elem24* first, elem24* last, elem24* dest);          // 0x461230
 elem24* __cdecl copy_backward24(elem24* first, elem24* last, elem24* dest);     // 0x461280

@@ -2816,7 +2816,7 @@
   },
   "00470c00": {
    "verdict": "DIFF",
-   "symbol": "?build_light_frame@CellGrid@@QAEXPAUmatrix@rgl@@PAUvector4@3@@Z",
+   "symbol": "?build_light_frame@world@rgl@@QAEXPAUmatrix@2@PAUvector4@2@@Z",
    "insns": 116,
    "ours": 116,
    "unverified": 0,
@@ -2836,7 +2836,7 @@
   },
   "00470f40": {
    "verdict": "DIFF",
-   "symbol": "?ground_height@@YG_NPAUCellGrid@@PBMPAM@Z",
+   "symbol": "?ground_height@@YG_NPAUworld@rgl@@PBMPAM@Z",
    "insns": 76,
    "ours": 76,
    "unverified": 0,
@@ -2856,7 +2856,7 @@
   },
   "004711e0": {
    "verdict": "DIFF",
-   "symbol": "?attach_camera@ShadowMap@@QAEXPAUCellGrid@@@Z",
+   "symbol": "?attach_camera@ShadowMap@@QAEXPAUworld@rgl@@@Z",
    "insns": 117,
    "ours": 114,
    "unverified": 0,
@@ -3038,7 +3038,7 @@
   },
   "00478a10": {
    "verdict": "DIFF",
-   "symbol": "?insert@CellGrid@@QAEXHPBM0@Z",
+   "symbol": "?insert@world@rgl@@QAEXHPBM0@Z",
    "insns": 74,
    "ours": 77,
    "unverified": 0,
@@ -3048,7 +3048,7 @@
   },
   "00478c50": {
    "verdict": "DIFF",
-   "symbol": "?build@CellGrid@@QAEXPAUPolyMesh@@@Z",
+   "symbol": "?build@world@rgl@@QAEXPAUPolyMesh@@@Z",
    "insns": 239,
    "ours": 234,
    "unverified": 0,
@@ -3068,7 +3068,7 @@
   },
   "00479980": {
    "verdict": "DIFF",
-   "symbol": "?build_faces@CellGrid@@QAEXPAUNavData@@@Z",
+   "symbol": "?build_faces@world@rgl@@QAEXPAUNavData@@@Z",
    "insns": 299,
    "ours": 321,
    "unverified": 0,

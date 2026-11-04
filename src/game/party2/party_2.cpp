@@ -104,9 +104,9 @@ void scene_step(int material)
     sc.f190 = o->fr.flag;
     sc.f1b0 = &o->view;
     sc.f160 = 1;
-    sc.list = *(rgl::ptr_list*)&o->winds;
-    o->amb = *(vector4*)o->fr.mat4;
-    o->amb.w = 1.0f;
+    sc.list = *(rgl::ptr_list*)&o->lights;
+    o->ambient = *(vector4*)o->fr.mat4;
+    o->ambient.w = 1.0f;
 
     sc.target = (texture*)m->target;
     o->step(0.0f);
@@ -1362,7 +1362,7 @@ void Party::plan_order()
                 give_up = true;
             }
             if (a) {
-                NavData* w = ((CellGrid*)g_script.level)->core;
+                NavData* w = ((rgl::world*)g_script.level)->ground;
                 if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                     unsigned k2 = nav_recs()[a->m4].mask();
                     if (flags_lo & 0x200) {
@@ -1463,7 +1463,7 @@ chase:
             give_up = true;
         }
         if (a) {
-            NavData* w = ((CellGrid*)g_script.level)->core;
+            NavData* w = ((rgl::world*)g_script.level)->ground;
             if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                 unsigned k2 = nav_recs()[a->m4].mask();
                 if (flags_lo & 0x200) {
@@ -1520,7 +1520,7 @@ void Party::step_route()
         float ndx = pos.x - d.x;
         float ndy = pos.y - d.y;
         float dist = ndx * ndx + ndy * ndy;
-        if (dist < lim && ((CellGrid*)g_script.level)->core->can_move(cur, pos.x, pos.y, goal, &d.x, 0, tries))
+        if (dist < lim && ((rgl::world*)g_script.level)->ground->can_move(cur, pos.x, pos.y, goal, &d.x, 0, tries))
             cursor = i + 1;
     }
     if (cursor < n) {
@@ -2565,7 +2565,7 @@ bool Party::start_path(int from, float tx, float ty)
     int mask_req = 0;
     int mask_ban = 0;
     char mine = (id == g_game->f78);
-    bool ok = ((CellGrid*)g_script.level)->core->find_path(mesh->m4, from, path, detail, &npath, &visited, &from,
+    bool ok = ((rgl::world*)g_script.level)->ground->find_path(mesh->m4, from, path, detail, &npath, &visited, &from,
                                       (unsigned*)&mask_req, (unsigned*)&mask_ban, &mine);
     goal_x = tx;
     goal_y = ty;
@@ -2676,7 +2676,7 @@ void Party::update_nav()
                 float p4[4];
                 p4[0] = detail[cur * 4 + 4];                 // 0x4b77ac: +0x197c + cur * 16
                 p4[1] = detail[cur * 4 + 5];                 // 0x4b77b3: +0x1980 + cur * 16
-                if (!((CellGrid*)g_script.level)->core->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
+                if (!((rgl::world*)g_script.level)->ground->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
                     break;
                 cursor = cur + 1;
                 progress++;
@@ -2998,7 +2998,7 @@ void Party::tick(float dt)
     face* node = g_game->find_at(&pq.x);
     if (node != 0) {
         unsigned animfield = nav_recs()[node->m4].mask();
-        bool adjacent = ((RiderTable*)((CellGrid*)g_script.level)->core)->shares(node->m4, mesh->m4) != 0;
+        bool adjacent = ((RiderTable*)((rgl::world*)g_script.level)->ground)->shares(node->m4, mesh->m4) != 0;
         bool commit = false;
         if (flags_lo & 0x200) {
             if ((char)terrain_is_road(animfield)) {

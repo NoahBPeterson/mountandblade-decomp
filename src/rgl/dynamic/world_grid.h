@@ -108,7 +108,7 @@ struct vec136 {
 };
 rgl::vector4 face_normal(const rgl::vector4* a, const rgl::vector4* b, const rgl::vector4* c);   // 0x424650
 
-struct ground_store : rgl::ground_geom {                    // the object at world+0xb0
+struct ground_store {                    // the object at world+0xb0
     std::vector<ground_v36> verts;   // +0
     vec136 groups;              // +0x10
     int add(int n, const rgl::vector4* pts);                // 0x424220: one polygon -> n vertices + a group; returns the group index

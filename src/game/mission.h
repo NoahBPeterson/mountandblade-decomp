@@ -22,12 +22,12 @@
 #include "./terrain_b/poly_mesh.h"
 #include "./agent_obj.h"
 
-struct CellGrid;                                // terrain_b/cell_grid.h: the scene container terrain_b sees
+namespace rgl { struct world; }                                // terrain_b/cell_grid.h: the scene container terrain_b sees
 struct world;                                   // world.h: the scene as agent3 sees it
 struct level;                                   // agent2/agent_types.h: the scene as agent2 sees it
 typedef world Level;                              // world.h: the scene as agent sees it (agent.h, script, inventory_panel/map_update.cpp call it Level)
 struct Emit;
-struct Wind;
+struct Light;
 struct PlacedObj;
 struct PlacedObj;                                  // the 0x1c8-byte prop record (terrain_b/records.h, agent3/agent_combat.h)
 struct MAgent;                                  // terrain_b/agent_rec.h: the agent slot as the pool sees it
@@ -87,7 +87,7 @@ struct MarkRec {                                // 0x130 bytes; array at Mission
 
 struct Mission {
     union {
-        CellGrid* scene;                        // +0x0000 terrain_b (the slices' grid / nav / Scene)
+        rgl::world* scene;                        // +0x0000 terrain_b (the slices' grid / nav / Scene)
         world* scene_world;                     //   agent3 (0x440e30, 0x442ca0)
         level* scene_level;                     //   agent2 (0x43cb30, 0x43dd70)
         Level* scene_L;                         //   agent (0x4417d0)
@@ -136,8 +136,8 @@ struct Mission {
     rgl::vector4 f6598;                         // +0x6598
     float f65a8;                                // +0x65a8 (sky object / sky time)
     float f65ac;                                // +0x65ac
-    Wind* f65b0;                                // +0x65b0 ambient wind A
-    Wind* f65b4;                                // +0x65b4 ambient wind B
+    Light* f65b0;                                // +0x65b0 ambient wind A
+    Light* f65b4;                                // +0x65b4 ambient wind B
     int f65b8;                                  // +0x65b8 camera node
     int f65bc;
     int f65c0;                                  // +0x65c0 camera node

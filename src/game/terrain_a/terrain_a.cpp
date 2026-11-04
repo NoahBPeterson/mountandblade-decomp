@@ -2073,7 +2073,7 @@ void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../../include/vec.h"
 #include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../terrain_desc.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)

@@ -87,9 +87,13 @@ void world::step(float dt)
     for (psys** it = emitters._Myfirst; it < emitters._Mylast; ++it)
         ((emitter*)*it)->update(&dt, (*it)->mf4);
     partition_items();
-    for (int* it = removed.first; it < removed.last; ++it)
+    for (int* it = removed._Myfirst; it < removed._Mylast; ++it)
         remove_entity(*it);
-    removed.clear();
+    if (removed._Myfirst != 0)
+        operator delete(removed._Myfirst);
+    removed._Myfirst = 0;
+    removed._Mylast = 0;
+    removed._Myend = 0;
 }
 
 // @ 0x4280c0

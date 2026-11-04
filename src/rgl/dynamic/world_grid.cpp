@@ -61,7 +61,7 @@ void world_grid::relocate(grid_shape* o)
         for (p.y = mn.y; p.y <= mx.y; p.y++) {
             if ((bool)in_rect(&p, lo, hi)) {
                 if (!(bool)in_rect(&p, &nlo, &nhi)) {
-                    grid_cell* c = &((grid_cell**)rows)[p.x][p.y];
+                    grid_cell* c = &((grid_cell**)cells)[p.x][p.y];
                     c->remove(o);
                     shape_list::node* h = c->objs.head;
                     shape_list::node* n = h->next;
@@ -78,7 +78,7 @@ void world_grid::relocate(grid_shape* o)
                     }
                 }
             } else if ((bool)in_rect(&p, &nlo, &nhi)) {
-                ((grid_cell**)rows)[p.x][p.y].add(o);
+                ((grid_cell**)cells)[p.x][p.y].add(o);
             }
         }
     }
@@ -299,7 +299,7 @@ void world_grid::add_shape(grid_shape* s)
     to_cell((const float*)s->get_max(&t1), hi);
     for (int i = lo[0]; i <= hi[0]; i++)
         for (int j = lo[1]; j <= hi[1]; j++)
-            ((grid_cell**)rows)[i][j].add(s);
+            ((grid_cell**)cells)[i][j].add(s);
     s->min_x = lo[0];
     s->min_y = lo[1];
     s->max_x = hi[0];

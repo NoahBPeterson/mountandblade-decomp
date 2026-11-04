@@ -1,6 +1,6 @@
-../src/game/terrain_b/mission.cpp  ?init@CellGrid@@QAEXPBM0HH@Z  00478830  /O2 /MT /Gy /TP
-../src/game/terrain_b/mission.cpp  ??0CellGrid@@QAE@PBM0PBH11@Z  00478ad0  /O2 /MT /Gy /TP
-../src/game/terrain_b/mission.cpp  ?spawn_wind@CellGrid@@QAEPAUWind@@XZ  00478f30  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?init@world@rgl@@QAEXPBM0HH@Z  00478830  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ??0world@rgl@@QAE@PBM0PBH11@Z  00478ad0  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?spawn_wind@world@rgl@@QAEPAULight@@XZ  00478f30  /O2 /MT /Gy /TP
 ../src/game/terrain_b/mission.cpp  ?add@IdHolder@@QAEXH@Z  00478fb0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/mission.cpp  ?load@SceneFile@@QAEXPAUstream_base@@H@Z  00479000  /O2 /MT /Gy /TP
 ../src/game/terrain_b/mission.cpp  ?reset@Mission@@QAEXXZ  00479160  /O2 /MT /Gy /TP

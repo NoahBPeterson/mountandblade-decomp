@@ -3321,8 +3321,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 SceneEntity* ent = (SceneEntity*)trigger_entity(-50);
                 if (ent) {
                     int mesh = trigger_item_mesh(-50);
-                    Light* l = (Light*)operator new(sizeof(Light));
-                    l = l ? l->init() : 0;
+                    Light* l = new Light;
                     l->flicker_magnitude = (float)params[0] * 0.01f;
                     l->flicker_interval = (float)params[1] * 0.01f;
                     l->color = game()->current_color;

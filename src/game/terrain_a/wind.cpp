@@ -78,28 +78,27 @@ void set_clock_step(int* clock, float step)
 }
 
 // @ 0x461480
-wind* wind::init()
+Light::Light() throw()
 {
     vector4 z(0.0f, 0.0f, 0.0f);
-    v04 = z; v14 = z; v24 = z; v34 = z;
-    v44 = vector4(0.0f, 1.0f, 0.0f);
+    color = z; base_color = z; pos = z; v34 = z;
+    dir = vector4(0.0f, 1.0f, 0.0f);
     type = 0;
-    f54 = 0.0f; f58 = 0.0f; f5c = 1.0f; f60 = 0.0f; f64 = 0.0f; f68 = 0.0f; f6c = 0.0f;
-    strength = 0.0f;
-    noise_seed = 0.0f;
+    range = 0.0f; f58 = 0.0f; f5c = 1.0f; f60 = 0.0f; f64 = 0.0f; f68 = 0.0f; flags = 0;
+    flicker_magnitude = 0.0f;
+    flicker_interval = 0.0f;
     phase = (unsigned)rand() % 0x3f9;
-    return this;
 }
 
 // @ 0x461570
-vector4 wind::sample()
+vector4 Light::sample()
 {
     vector4 in;
     in.y = 0.0f; in.z = 0.0f;
     in.x = (float)(g_ticks[2] % 1000000000) * 1e-5f + (float)phase;
     vector4 n;
-    noise_fractal(noise_seed, 0.6f, 3, 0, &in.x, &n.x);
-    float k = n.x * strength * 15.0f + 1.0f;
-    n.x = k * v04.x; n.y = k * v04.y; n.z = k * v04.z;
+    noise_fractal(flicker_interval, 0.6f, 3, 0, &in.x, &n.x);
+    float k = n.x * flicker_magnitude * 15.0f + 1.0f;
+    n.x = k * color.x; n.y = k * color.y; n.z = k * color.z;
     return n;
 }

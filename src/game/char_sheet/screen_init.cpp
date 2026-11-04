@@ -199,7 +199,7 @@ void CampaignScreen::init_screen()
     camera_update(0.0f);                                   // 0x4ece20 (push ebx = 0)
 
     if ((int)g_script.level != (int)g_shadow_map.cam && g_use_shaders) {
-        ((ShadowMap*)g_psys)->attach_camera((CellGrid*)g_script.level);   // 0x4711e0
+        ((ShadowMap*)g_psys)->attach_camera((rgl::world*)g_script.level);   // 0x4711e0
         void* scene_objs = *(void**)((char*)g_script.level + 0xb0);
         int count = (*(int*)((char*)scene_objs + 8) - *(int*)((char*)scene_objs + 4)) / 0x24;
         char* p = *(char**)((char*)scene_objs + 4);

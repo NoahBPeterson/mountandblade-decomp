@@ -19,8 +19,8 @@
 #include "../../include/vec.h"
 #include "../../include/mesh_prims.h"       // rgl::aabb
 namespace rgl { struct mesh; struct entity; }
-struct CellGrid;                                // terrain_b/cell_grid.h: the scene container (Terrain::world seen by terrain_b)
-struct Entity;                                  // terrain_b/entity_rec.h: scene entity (dust cell objects)
+namespace rgl { struct world; }                                // terrain_b/cell_grid.h: the scene container (Terrain::world seen by terrain_b)
+namespace rgl { struct entity; }                // rgl/scene/scene_entity.h: scene entity (dust cell objects)
 struct SpawnSet;                                // terrain_b/terrain.h
 struct ivec2 { int dx, dy; };
 extern const ivec2 g_nbr[8];                         // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
@@ -189,7 +189,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     terrain_quad quads[250 * 250];              // +0x8e48fc index x * 250 + y
     union {
         SceneWorld* world;                      // +0xc3b0dc (0x466fa0)
-        CellGrid* grid;                         // the same pointer as terrain_b types it (0x471a30, 0x471b30, 0x47a460)
+        rgl::world* grid;                         // the same pointer as terrain_b types it (0x471a30, 0x471b30, 0x47a460)
     };
     float scale;                                // +0xc3b0e0 world size of a cell (0x464b40, 0x468da0, 0x466c10, 0x46a270)
     particle_list list_a;                       // +0xc3b0e4 mode 1 (0x4650f0: scatter_all passes &set1)
@@ -209,7 +209,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     char pad_843bd74;
     char flag843bd75;                           // +0x843bd75 (0x4664e0, 0x46bc70)
     char pad_843bd76[0x843bd78 - 0x843bd76];
-    Entity* gridA[0x30][0x30];                  // +0x843bd78 scene object of each dust cell, [inner][outer] (0x47a460)
+    rgl::entity* gridA[0x30][0x30];                  // +0x843bd78 scene object of each dust cell, [inner][outer] (0x47a460)
     int emitted[0x30][0x30];                    // +0x843e178 1 once the dust of the cell was emitted (char_sheet/dust.cpp)
     rgl::aabb boxes[0x30][0x30];                // +0x8440578 per-cell dust bounds (rgl::aabb is 0x34 bytes: ends at 0x845d978)
     char pad_845d978[4];

@@ -14,7 +14,7 @@ void MapWidget::render(rgl::scene* sc, float* v, int b, int c)
     scene3d.f4 = grid_count((g_one / g_gui.aspect) * (g_gui.aspect - (fE4 + screen[1])) * (float)g_gui.screen_h);
     scene3d.f8 = grid_count((float)g_gui.screen_w * screen[0]);
     scene3d.fc = grid_count((g_one / g_gui.aspect) * (float)g_gui.screen_h * screen[1]);
-    scene3d.f1b0 = ((rgl::world*)world)->env;
+    scene3d.f1b0 = &((rgl::world*)world)->view;
     scene3d.f10 = 0;
     scene3d.f14 = 1.0f;
     scene3d.f160 = 1;

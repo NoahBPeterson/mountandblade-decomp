@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include "./agent_hud.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/scene/world.h"      // rgl::world (m30c / m31c: the light listener)
 #include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
 #include "../agent_obj.h"      // rgl::matrix::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -717,7 +718,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
 {
     view = *(const rgl::matrix*)eye;
     apply_sun_light(&eye->o, far_plane);
-    CellGrid* sc = (CellGrid*)scene;
+    rgl::world* sc = (rgl::world*)scene;
     sc->m30c = vector4(-eye->u.x, -eye->u.y, -eye->u.z);
     sc->m31c = eye->o;
     matrix lis = *eye;

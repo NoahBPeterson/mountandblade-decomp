@@ -3,7 +3,7 @@
 00470750  142  PolyMesh::compute_edge_creases: complete (450 vs 444 bytes); improved from 315 diff bytes in the slice. [equiv: PASS, 315 valid, all edges]
 00470920  181  PolyMesh::build_adjacency: complete (217 vs 225 bytes). [equiv: PASS, 281 valid, all edges]
 00470a00  464  PolyMesh::build_geometry: complete (512 vs 489 bytes). [equiv: WEAK, no mismatch, 9/18 edges both builds]
-00470c00  24  CellGrid::build_light_frame: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/2 edges]
+00470c00  24  rgl::world::build_light_frame: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/2 edges]
 00470db0  343  TroopMgr::apply_group: complete (394 vs 392 bytes). [equiv: WEAK, no mismatch, 19/20 edges]
 00470f40  34  ground_height: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/8 edges both builds]
 00471040  341  GameData::blend: complete (408 vs 329 bytes). [equiv: WEAK, no mismatch, 3/4 edges]

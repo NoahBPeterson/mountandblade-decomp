@@ -87,9 +87,7 @@ static __forceinline vector4 make4(float a, float b, float c, float d)
     v.x = a; v.y = b; v.z = c; v.w = d;
     return v;
 }
-struct wind {
-    vector4 sample();   // 0x461570 (src/game/wind.h: the same 0x7c-byte record)
-};
+#include "../light.h"            // Light (sample 0x461570)
 struct light {                          // 0x7c bytes (layout from s00461280)
     int type;                           // 0: point/dir with flicker, 2: sun
     vector4 diffuse;                    // 0x04
@@ -102,7 +100,7 @@ struct light {                          // 0x7c bytes (layout from s00461280)
     char pad58[0x6c - 0x58];
     unsigned flags;                     // 0x6c
     char pad70[0x7c - 0x70];
-    __forceinline vector4 sample() { return ((wind*)this)->sample(); }   // 0x461570 (wind::sample, src/game/wind.h)
+    __forceinline vector4 sample() { return ((Light*)this)->sample(); }   // 0x461570 (Light::sample, src/game/light.h)
 };
 
 struct sky_t {

@@ -7,7 +7,6 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
 #include "./cell_grid.h"
-#include "./entity_rec.h"
 #include "../terrain_a/terrain.h"          // Terrain, particle, particle_list, terrain_cell (shared with terrain_a)
 
 // ---- world-map particles lit by Terrain::light_particle -----------------------------------------------------------
@@ -16,7 +15,6 @@ struct DustEntry {                              // 0xa0 bytes (0x47a460)
     float x, y, z;
     char pad0c[0xa0 - 0x0c];
 };
-struct Entity;
 struct res_shape;
 struct SpawnEntry {                             // 0xa0 bytes: one prop spawn (0x479da0)
     int type;                                   // +0x00 index into g_ptypes

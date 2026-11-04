@@ -33,10 +33,8 @@
 #include "../../include/dialog_rec.h"
 #include "../shadow_map.h"
 #include "../terrain_b/emit.h"
-#define vec cell_grid_vec                 // cell_grid.h's vec (no clear) under another name: the global vec below is the one whose clear() 0x41f4b0 is called
 #include "../terrain_b/cell_grid.h"
 #include "../key_names.h"
-#undef vec
 
 using rgl::vector4;
 using rgl::matrix;

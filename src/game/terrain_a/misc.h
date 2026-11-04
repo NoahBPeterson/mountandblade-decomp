@@ -122,7 +122,7 @@ enum {
 };
 
 // ---- camera-relative view parameters (0x46b940) --------------------------------------------------------------------
-#include "../view_params.h"            // ViewParams (shared with terrain_b)
+#include "../../include/view_params.h"            // ViewParams (shared with terrain_b)
 
 // ---- an agent's equipment slots, line of fire (0x46b190, 0x46b2d0, 0x46b410) ------------------------------------------------
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);    // 0x46b190

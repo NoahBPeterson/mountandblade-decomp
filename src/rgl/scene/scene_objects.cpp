@@ -144,12 +144,12 @@ void world::clear_cells()
     for (std::vector<Obj*>::iterator it = objs.begin(); it < objs.end(); ++it)
         delete *it;
     objs.resize(0, 0);
-    for (int i = 0; i < nrows; i++) {
-        for (int j = 0; j < ncols; j++) {
-            cell* c = &rows[i][j];
+    for (int i = 0; i < n[0]; i++) {
+        for (int j = 0; j < n[1]; j++) {
+            cell* c = &cells[i][j];
             c->a.resize(0, 0);
             c->b.resize(0, 0);
-            rows[i][j].c.~int_vector();
+            cells[i][j].c.~int_vector();
         }
     }
     nodes.link_chunks();
@@ -291,12 +291,12 @@ void world::reset()
         delete ground;
         ground = 0;
     }
-    fb4 = 0;
+    nav = 0;
     if (hf) {
         delete hf;
         hf = 0;
     }
-    loaded = false;
+    view.b2c = 0;
 }
 
 // @ 0x4213f0
@@ -343,9 +343,9 @@ void world::insert(entity* o, int x, int y)
     cellnode* n = nodes.alloc();
     n->obj = o;
     n->prev = 0;
-    n->next = rows[x][y].head;
-    if (rows[x][y].head) rows[x][y].head->prev = n;
-    rows[x][y].head = n;
+    n->next = cells[x][y].head;
+    if (cells[x][y].head) cells[x][y].head->prev = n;
+    cells[x][y].head = n;
     cellref* r = refs.alloc();
     r->node = n;
     r->x = x;

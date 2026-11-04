@@ -29,7 +29,7 @@
 #include "./scene_file.h"
 #include "./tmesh.h"
 #include "./face.h"
-#include "./entity_rec.h"
+#include "./tmesh.h"
 
 using rgl::vector4;
 using rgl::matrix;
@@ -51,7 +51,7 @@ extern ptype* g_ptypes;                         // 0x5e28f8
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../terrain_desc.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../terrain_a/terrain.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -83,13 +83,11 @@ namespace std { template<> void vector<rgl::Obj*>::_Insert_n(iterator, size_type
 struct ObjPtrVecPub : std::vector<rgl::Obj*> { using std::vector<rgl::Obj*>::_Insert_n; };
 __forceinline void MeshVec::insert_n(iterator where, size_t n, rgl::mesh* const& v)
 { ((IntVecPub*)this)->_Insert_n(std::vector<int>::iterator((int*)&*where), n, *(const int*)&v); }
-__forceinline void ObjVec::insert_n(iterator where, size_t count, void* const& val)
-{ ((ObjPtrVecPub*)this)->_Insert_n(std::vector<rgl::Obj*>::iterator((rgl::Obj**)&*where), count, *(rgl::Obj* const*)&val); }
 template<> void Pool<MAgent>::reset();          // 0x477f00 (terrain_b.cpp)
 template<> void Pool<RecJ>::reset();           // 0x477f90
 
 // @ 0x478830
-void CellGrid::init(const float* lo_, const float* hi_, int dimx, int dimy)
+void rgl::world::init(const float* lo_, const float* hi_, int dimx, int dimy)
 {
     lo[0] = lo_[0];
     lo[1] = lo_[1];
@@ -102,72 +100,72 @@ void CellGrid::init(const float* lo_, const float* hi_, int dimx, int dimy)
         for (int i = 0; i < dim[k]; i++)
             n[k] *= 2;
     }
-    cells = new Cell*[n[0]];
+    cells = new rgl::cell*[n[0]];
     for (int i = 0; i < n[0]; i++) {
-        cells[i] = new Cell[n[1]];
+        cells[i] = new rgl::cell[n[1]];
         for (int j = 0; j < n[1]; j++)
-            cells[i][j].tail = 0;
+            cells[i][j].head = 0;
     }
     if (n[0] == 1) {
         lo[0] = 1e12f;
         hi[0] = 1e12f;
-        step[0] = 1.0f;
+        cell_size[0] = 1.0f;
     } else if (n[0] == 2) {
         lo[0] = (hi[0] + lo[0]) * 0.5f;
         hi[0] = 1e12f;
-        step[0] = 1e12f - lo[0];
+        cell_size[0] = 1e12f - lo[0];
     } else {
-        step[0] = (hi[0] - lo[0]) / (float)(n[0] - 2);
+        cell_size[0] = (hi[0] - lo[0]) / (float)(n[0] - 2);
     }
     if (n[1] == 1) {
         lo[1] = 1e12f;
         hi[1] = 1e12f;
-        step[1] = 1.0f;
+        cell_size[1] = 1.0f;
     } else if (n[1] == 2) {
         lo[1] = (lo[1] + hi[1]) * 0.5f;
         hi[1] = 1e12f;
-        step[1] = 1e12f - lo[1];
+        cell_size[1] = 1e12f - lo[1];
     } else {
-        step[1] = (hi[1] - lo[1]) / (float)(n[1] - 2);
+        cell_size[1] = (hi[1] - lo[1]) / (float)(n[1] - 2);
     }
 }
 
 // @ 0x478a10
-void CellGrid::insert(int id, const float* lo_, const float* hi_)
+void rgl::world::insert(int id, const float* lo_, const float* hi_)
 {
     int a[2], b[2];
     to_cell(lo_, a);
     to_cell(hi_, b);
     for (int x = a[0]; x <= b[0]; x++)
         for (int y = a[1]; y <= b[1]; y++)
-            cells[x][y].b.push_back(id);
+            cells[x][y].c.push_back(id);
 }
 
 // @ 0x478ad0
-CellGrid::CellGrid(const float* lo_, const float* hi_, const int* dimx, const int* dimy, const int* v)
-    : v7c(), v8c(), va0(), winds(), vc8(), view(), v32c()
+rgl::world::world(const float* lo_, const float* hi_, const int* dimx, const int* dimy, const int* v)
+    : ents(), ents2(), removed(), lights(), meshes(), view(), emitters()
 {
-    f340 = *v;
-    f9c = 1;
+    noise_counter = *v;
+    next_id = 1;
     init(lo_, hi_, *dimx, *dimy);
     m30c = vector4(1.0f, 0.0f, 0.0f);
-    core = 0;
-    navmesh = 0;
+    ground = 0;
+    nav = 0;
     hf = 0;
     m31c = vector4(0.0f, 0.0f, 0.0f);
-    amb = vector4(0.0f, 0.0f, 0.0f);
-    f78 = 0;
+    ambient = vector4(0.0f, 0.0f, 0.0f);
+    sky = 0;
 }
 
 // @ 0x478c50
-void CellGrid::build(PolyMesh* m)
+void rgl::world::build(PolyMesh* m)
 {
-    navmesh = m;
+    nav = m;
     if (m == 0)
         return;
-    for (unsigned i = 0; i < navmesh->faces.size(); i++) {
-        MPoly* r = &vat(navmesh->faces, i);
-        MVert* verts = &*navmesh->verts.begin();
+    for (unsigned i = 0; i < nav->faces.size(); i++) {
+        MPoly* r = &::vat(nav->faces, i);
+        MVert* verts = &*nav->verts.begin();
         float lo[3] = { 1e6f, 1e6f, 0.0f };
         float maxy = -1e6f;
         float hi[3] = { -1e6f, maxy, 0.0f };
@@ -186,10 +184,10 @@ void CellGrid::build(PolyMesh* m)
 }
 
 // @ 0x478f30
-Wind* CellGrid::spawn_wind()
+Light* rgl::world::spawn_wind()
 {
-    Wind* w = new Wind();
-    winds.push_back(w);
+    Light* w = new Light();
+    lights.push_back(w);
     return w;
 }
 
@@ -309,7 +307,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 
         // ---- first wind object: a horizontal "sheet" whose normal comes from the hourly table
         f65b0 = scene->spawn_wind();
-        f65b0->f0 = 2;
+        f65b0->type = 2;
 
         float hour = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
         bool day = (4.0f <= hour && hour < 20.0f);
@@ -317,15 +315,15 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         int slot = (int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24;
         {
             vector4 dir = sp->get_dir(slot, day);
-            f65b0->f44 = dir;
-            f65b0->f24 = vector4(dir.x * -10000.0f, dir.y * -10000.0f, dir.z * -10000.0f);
+            f65b0->dir = dir;
+            f65b0->pos = vector4(dir.x * -10000.0f, dir.y * -10000.0f, dir.z * -10000.0f);
         }
-        f65b0->f54 = 20000.0f;
-        f65b0->f6c = 0;
+        f65b0->range = 20000.0f;
+        f65b0->flags = 0;
 
         if (lv->flags & 1) {
             // flat variant: the wind object just sits at the origin, the cell gets a uniform colour
-            f65b0->pos = vector4(0.0f, 0.0f, 0.0f);
+            f65b0->color = vector4(0.0f, 0.0f, 0.0f);
             vector4 c;
             if (g_use_shaders) {
                 c.x = 0.03f;
@@ -336,9 +334,9 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
                 c.y = 0.15f;
                 c.z = 0.15f;
             }
-            scene->amb = c;
-            scene->amb.w = 1.0f;
-            f65b0->f14 = f65b0->pos;
+            scene->ambient = c;
+            scene->ambient.w = 1.0f;
+            f65b0->base_color = f65b0->color;
             return;
         }
 
@@ -346,7 +344,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         float p = (float)pow((double)(1.0f - k), 1.5);
         vector4 u(p * sp->v20[0], p * sp->v20[1], p * sp->v20[2]);
         if ((sp->f10 & 0x10000000) || sqrtf(u.x * u.x + (u.y * u.y + u.z * u.z)) < 0.1f)
-            f65b0->f6c |= 2;
+            f65b0->flags |= 2;
         if (!g_use_shaders) {
             u.x = sqrtf(u.x);
             u.y = sqrtf(u.y);
@@ -355,8 +353,8 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         float cx = col.x * k;
         float cy = col.y * k;
         col.z *= k;
-        f65b0->pos = u;
-        f65b0->f14 = f65b0->pos;
+        f65b0->color = u;
+        f65b0->base_color = f65b0->color;
 
         // the cell colour: the unpacked table colour faded by k, offset by the table base position
         u.x = cx * 0.2f + sp->base[0];
@@ -367,14 +365,14 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
             u.y = sqrtf(u.y);
             u.z = sqrtf(u.z);
         }
-        scene->amb = u;
-        scene->amb.w = 1.0f;
+        scene->ambient = u;
+        scene->ambient.w = 1.0f;
     }
 
     // ---- second wind object: the table's direction rotated by 3.5 rad, normalised, half-size
     {
     f65b4 = scene->spawn_wind();
-    f65b4->f0 = 2;
+    f65b4->type = 2;
 
     float hour2 = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
     bool day2 = (4.0f <= hour2 && hour2 < 20.0f);
@@ -394,16 +392,16 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
     }
     vector4 rd(cos(3.5) * cx - sin(3.5) * cy, sin(3.5) * cx + cos(3.5) * cy, -0.9f);
     rd.normalize();
-    f65b4->f44 = rd;
+    f65b4->dir = rd;
 
-    f65b4->pos = *(vector4*)sp->base;
-    f65b4->pos.x *= 0.5f;
-    f65b4->pos.y *= 0.5f;
-    f65b4->pos.z *= 0.5f;
-    f65b4->f14 = f65b4->pos;
-    f65b4->f24 = vector4(rd.x * -10000.0f, rd.y * -10000.0f, rd.z * -10000.0f);
-    f65b4->f54 = 20000.0f;
-    f65b4->f6c = 1;
+    f65b4->color = *(vector4*)sp->base;
+    f65b4->color.x *= 0.5f;
+    f65b4->color.y *= 0.5f;
+    f65b4->color.z *= 0.5f;
+    f65b4->base_color = f65b4->color;
+    f65b4->pos = vector4(rd.x * -10000.0f, rd.y * -10000.0f, rd.z * -10000.0f);
+    f65b4->range = 20000.0f;
+    f65b4->flags = 1;
     }
 }
 
@@ -411,11 +409,11 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 template std::vector<MRow56>::iterator std::vector<MRow56>::erase(std::vector<MRow56>::iterator, std::vector<MRow56>::iterator);
 
 // @ 0x479980
-void CellGrid::build_faces(NavData* map)
+void rgl::world::build_faces(NavData* map)
 {
-    if (core != 0)
-        delete core;
-    core = map;
+    if (ground != 0)
+        delete ground;
+    ground = map;
 
     for (unsigned k = 0; k < map->cells.size(); k++) {
         face* f = new face;
@@ -433,11 +431,11 @@ void CellGrid::build_faces(NavData* map)
         m.u = rot.u;
         m.o = vector4(0.0f, 0.0f, 0.0f);
         f->transform((const pos*)&m);
-        if (items.size() < items.capacity()) {
-            *items._Mylast = f;
-            items._Mylast++;
+        if (objs.size() < objs.capacity()) {
+            *objs._Mylast = (rgl::Obj*)f;
+            objs._Mylast++;
         } else {
-            items.insert_n(items._Mylast, 1, f);
+            objs.insert(objs.end(), (rgl::Obj*)f);
         }
         post(f);
         c->obj = f;
@@ -549,7 +547,7 @@ void Mission::rebuild_nav(int which, int)
     }
     int lod1 = LOG2UP((hi.x - lo.x) * (1.0f / 3.0f));
     int lod2 = LOG2UP((hi.y - lo.y) * (1.0f / 3.0f));
-    CellGrid* s = new CellGrid(&lo.x, &hi.x, &lod1, &lod2, &g_nav_param);
+    rgl::world* s = new rgl::world(&lo.x, &hi.x, &lod1, &lod2, &g_nav_param);
     scene = s;
     if ((sl->flags & 0x100) == 0) {
         s->build_faces(core_);
@@ -681,7 +679,7 @@ void Terrain::make_grid()
                     m->res = g_resmgr.get_material(rs(tstring("grass_no_shadow")));
                 m->flags |= 0x10000000;
                 ((MeshPush*)&gridA[y][x]->meshes)->push(m);
-                gridA[y][x]->refresh();
+                gridA[y][x]->recalc();
             }
         }
         for (int i = 0; i < list_c.count; i++) {
@@ -724,16 +722,16 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
     meshes = g_resmgr.find_meshes(&es->name34);
     if (meshes.size() == 0)
         mb_error("Error unable to find interior mesh %s", es->name34.c_str());
-    Entity* e = scene->create_entity(9);
+    rgl::entity* e = scene->create_entity(9);
     *n = (int)meshes.size();
     for (int i = 0; i < *n; i++) {
         rgl::mesh* m = ((rgl::mesh*)meshes[i])->clone();
         out[i] = m;
         e->meshes.push_back(m);
-        e->refresh();
+        e->recalc();
     }
     float dist = 100000.0f;
-    e->set_distance(&dist);
+    e->set_fbc(&dist);
 }
 
 // @ 0x47a980

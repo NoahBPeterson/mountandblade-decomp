@@ -18,7 +18,7 @@
 #include "../../rgl/mesh.h"
 #include "../../rgl/mesh.h"            // rgl::mesh::compute_bounds (0x419300)
 #include "../../rgl/stream.h"            // text_stream::open_read_text (0x415d60)
-#include "../wind.h"                     // wind::init (0x461480)
+#include "../light.h"                    // Light::init (0x461480)
 #include "../../rgl/scene/scene_entity.h"
 #include "../terrain_b/cell_grid.h"      // CellGrid (the level, 0xa732b4), NavData, Wind
 #include "../../rgl/scene/world.h"            // rgl::world
@@ -290,7 +290,7 @@ struct GameMapView {
     rgl::vector4 fog2;               // +0x58
     rgl::vector4 fog3;               // +0x68
     char   pad78[0x139dc - 0x78];
-    Wind*  wind;                     // +0x139dc (the fog / sun object; +0x44 = its direction)
+    Light* wind;                     // +0x139dc (the fog / sun object; +0x44 = its direction)
     char   pad139e0[0x1a2a8 - 0x139e0];
     rgl::entity* compass;            // +0x1a2a8
 };

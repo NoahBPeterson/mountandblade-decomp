@@ -30,7 +30,6 @@
 #include "./physics.h"
 #include "./missile.h"
 #include "./face_gen.h"
-#include "./entity_rec.h"
 #include "./tmesh.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
@@ -49,7 +48,7 @@
 #include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../terrain_desc.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -742,7 +741,7 @@ void PolyMesh::build_geometry()
 }
 
 // @ 0x470c00
-void CellGrid::build_light_frame(matrix* m, vector4* amb)
+void rgl::world::build_light_frame(matrix* m, vector4* amb)
 {
     vector4 d;
     {
@@ -798,7 +797,7 @@ void TroopMgr::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
 }
 
 // @ 0x470f40
-bool __stdcall ground_height(CellGrid* lv, const float* p, float* out)
+bool __stdcall ground_height(rgl::world* lv, const float* p, float* out)
 {
     face* hits[0x2000];
     int count;
@@ -811,7 +810,7 @@ bool __stdcall ground_height(CellGrid* lv, const float* p, float* out)
     use3d = 0;
     lv->to_cell(&q.x, cellxy);
     count = 0;
-    Cell* col = lv->cells[cellxy[0]];
+    rgl::cell* col = lv->cells[cellxy[0]];
     col[cellxy[1]].collect_point(&q.x, &use3d, 0x104, hits, &count);
     int n = count;
     for (int i = 0; i < n; i++) {
@@ -855,7 +854,7 @@ void GameData::blend(float* out, float x, float y)
         // cl treats y as dead after the loop and reused its home (for t, a spill, even a pointer to y), so p[1]
         // read garbage and ours faulted where the original returned. A real pair gives the callee the same x, y.
         float p[2] = { x, y };
-        ground_height((CellGrid*)g_script.level, p, &t);
+        ground_height((rgl::world*)g_script.level, p, &t);
     }
     out[0] = r0 - t * 10.0f;
     out[1] = r1;
@@ -864,7 +863,7 @@ void GameData::blend(float* out, float x, float y)
 }
 
 // @ 0x4711e0
-void ShadowMap::attach_camera(CellGrid* c)
+void ShadowMap::attach_camera(rgl::world* c)
 {
     WL_MARKER(12)
     // marker "WL" 12 here in the original
@@ -1146,20 +1145,22 @@ void Mission::replace_mark(int idx)
         a.y = ((float)(rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 1.2f;
     } while (n <= 100);
     if (recs[idx].floor == 0)
-        recs[idx].floor = *(face**)scene->items._Myfirst;
+        recs[idx].floor = *(face**)scene->objs._Myfirst;
 done:
     if (recs[idx].cnt == 0)
         recs[idx].m2 = *(rgl::matrix*)sv;
 }
 
 // @ 0x472460
-void PList::free_values()
+template<class T> void rgl::pool<T>::free_values()
 {
-    for (std::list<int*>::iterator i = begin(); i != end(); ++i)
+    for (typename std::list<T*>::iterator i = chunks.begin(); i != chunks.end(); ++i)
         delete[] *i;
-    clear();
-    n = 0;
+    chunks.clear();
+    freelist = 0;
 }
+template void rgl::pool<rgl::cellnode>::free_values();
+template void rgl::pool<rgl::cellref>::free_values();
 
 // 0x467940 is a stdcall function that ignores `this` (src/game/terrain_a/misc.h): the member spelling of game/mission.h would name
 // a symbol nothing defines, so the call goes to the definition's own declaration
@@ -1231,7 +1232,7 @@ bool MissileG::settle(const char* arg)
         if (q->z < h) {
             r = true;
             if (id >= 0) {
-                NavCell* gf = &g_mission->scene->core->cells[id];
+                NavCell* gf = &g_mission->scene->ground->cells[id];
                 vector4 pl = gf->trans;
                 vector4 n;
                 n.x = -pl.x; n.y = -pl.y; n.z = -pl.z;
@@ -1341,9 +1342,9 @@ void PhysSet::update(float dt)
 }
 
 // @ 0x472ed0
-void CellGrid::update_probes(unsigned flags)
+void rgl::world::update_probes(unsigned flags)
 {
-    for (NavVert* pr = core->verts.first; pr < core->verts.last; pr++) {
+    for (NavVert* pr = ground->verts.first; pr < ground->verts.last; pr++) {
         if (pr->level < -0.1f) {
             vector4 dir, col;
             light_at(pr->p, pr->n, &dir, &col, flags, 1.0f);
@@ -2078,21 +2079,21 @@ ArrSet* vecArrS::ufill(ArrSet* f, unsigned n, const ArrSet& v)
 // @ 0x475bb0 (_Buffered_merge_sort)
 template void std::_Buffered_merge_sort(It8, It8, int, std::_Temp_iterator<P8>&, Pred8);
 
-Cell::~Cell() {}                // 0x431ab0: defined here so that the array delete below is emitted as in the original
+rgl::cell::~cell() {}                // 0x431ab0: defined here so that the array delete below is emitted as in the original
 
 // @ 0x475c60
-__declspec(noinline) CellGridBase::~CellGridBase()
+__declspec(noinline) rgl::cell_grid::~cell_grid()
 {
     for (int i = 0; i < n[0]; i++)
         if (cells[i])
             delete[] cells[i];
     delete[] cells;
-    pool0.free_values();
-    pool1.free_values();
+    nodes.free_values();
+    refs.free_values();
 }
 
 // @ 0x475d50
-CellGrid::~CellGrid()
+rgl::world::~world()
 {
     reset();
 }

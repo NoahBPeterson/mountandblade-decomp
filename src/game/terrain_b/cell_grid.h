@@ -1,9 +1,8 @@
-// cell_grid.h: the scene container the mission points at (Mission::scene, +0) and the terrain object calls into
-// (Terrain::world): a 2D grid of per-cell id lists, two free lists, the object list, the height field, the ground
-// nav data, the wind objects, the view / shadow-camera block and the light sampling entry points. The slices
-// called this one 0x344-byte object CellGrid, NavStore, Scene, World, Ctx, SceneW, SunCtx, LightCtx and Level;
-// src/rgl/scene/world.h declares the same class as rgl::world (constructor 0x478ad0 there is world::world).
-// Offsets are the ones read or written by a function of terrain_b.cpp / mission.cpp (cited at each field).
+// cell_grid.h: what the callers of the scene container (rgl::world, src/rgl/scene/world.h; Mission::scene, +0) see besides
+// the class itself. The slices called the one 0x344-byte object CellGrid, NavStore, Scene, World, Ctx, SceneW, SunCtx,
+// LightCtx and Level; it is rgl::world now (cell_world.h forwards the members that other modules define under the names of
+// their own views of it). Offsets are the ones read or written by a function of terrain_b.cpp / mission.cpp (cited at each
+// field in rgl/scene/world.h).
 #ifndef TERRAIN_B_CELL_GRID_H
 #define TERRAIN_B_CELL_GRID_H
 #include <stddef.h>
@@ -12,12 +11,14 @@
 #include "../../rgl/rgl_math.h"
 #include "./frustum.h"
 #include "./poly_mesh.h"
+#include "./nav_data.h"
+#include "../../include/height_field.h"      // HCell, HeightField (cols 0x471b30, 0x4785e0; line_clear 0x436da0; sample 0x433510)
+#include "../../include/view_params.h"       // ViewParams (shared with terrain_a); the five vectors after the frustum are the shadow camera bounds
 
 struct face;
-struct Entity;
-// Classes of other modules that own methods this grid's callers reach (the definitions carry these names; the views below
-// forward to them, so the call sites keep their spelling): the grid cell (game/cell.h), the scene as agent2 sees it
-// (agent2/agent_types.h), rgl::world (rgl/scene/world.h) and rgl::world_grid (rgl/dynamic/world_grid.h).
+// Classes of other modules that own methods the scene's callers reach (the definitions carry these names; cell_world.h
+// forwards to them, so the call sites keep their spelling): the grid cell (game/cell.h), the scene as agent2 sees it
+// (agent2/agent_types.h) and the collision registry (rgl/dynamic/world_grid.h).
 struct shape_base; struct grid_shape;
 struct cell {
     void collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count);   // 0x439780
@@ -33,149 +34,6 @@ struct world_grid {
     void reg_shape(grid_shape* o);                                          // 0x424170
     void add_tree(grid_shape* s);                                           // 0x425240
 };
-
-// ---- height field (CellGrid::hf, +0x64): 16-byte cells in columns -------------------------------------------------
-#include "../../include/height_field.h"      // HCell, HeightField (cols 0x471b30, 0x4785e0; line_clear 0x436da0; sample 0x433510)
-
-// ---- ground / nav data (CellGrid::core, +0xb0): the four-vector container with other element types ---------------
-template<class T> struct vec {
-    char pad[4];
-    T* first, *last, *end;
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
-    T& operator[](unsigned i) const { return first[i]; }
-};
-struct NavVert {                // 0x24 bytes (0x479980, 0x472ed0: the scene's light probes are these vertices)
-    rgl::vector4 p;             // +0x00
-    rgl::vector4 n;             // +0x10 accumulated normal (0x479980)
-    float level;                // +0x20 accumulated brightness (0x472ed0; the f20 of 0x479980)
-};
-struct NavCell {                // 0x88 bytes (0x479980, 0x472650: the cell's ground plane is trans)
-    int npts;                   // +0x00
-    int ids[0x14];              // +0x04 vertex indices
-    rgl::vector4 trans;         // +0x54 plane (normal, distance)
-    float scale;                // +0x64
-    int f68;                    // +0x68
-    char pad6c[0x84 - 0x6c];
-    face* obj;            // +0x84
-};
-struct NavData {                // 0x68 bytes
-    vec<NavVert> verts;         // +0x00
-    vec<NavCell> cells;         // +0x10
-    vec<int> v20;               // +0x20
-    vec<int> v30;               // +0x30
-    int m40;                    // +0x40
-    rgl::vector4 e44;           // +0x44
-    rgl::vector4 f54;           // +0x54
-    int m64;                    // +0x64
-    NavData();                  // 0x478150 (same constructor as NavCore's, ICF-folded)
-    ~NavData();                 // 0x41f5d0 (four_vecs::~four_vecs)
-    // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----
-    bool shares(const int* a, const int* b);    // 0x48efa0 (other object)
-    bool can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max);   // 0x4b3420 (ret 0x1c)
-    void reset();                               // 0x4b33c0 (new search generation: m64)
-    bool find_path(int from, int to, int* path, float* detail, int* count, int* visited, int* guard,
-                  unsigned* mask_req, unsigned* mask_ban, char* avoid);       // 0x4b6b40 (ret 0x28)
-};
-
-// ---- smaller records ----------------------------------------------------------------------------------------------
-// One cell of the grid (0x34 bytes): ground-collision ids, a list, the ids of the objects overlapping it.
-struct Cell {
-    std::vector<int> a;                         // +0x00
-    std::list<int> l;                           // +0x10
-    int pad1c;
-    std::vector<int> b;                         // +0x20
-    int tail;                                   // +0x30
-    ~Cell();                                    // 0x431ab0 (the slices' RecP: array delete in ~CellGridBase)
-    __forceinline void collect_point(const float* p, int* use3d, unsigned mask, face** out, int* count)   // 0x439780
-    { ((cell*)this)->collect_point(p, use3d, mask, (shape_base**)out, count); }
-};
-// A list of owned int arrays (pages of ids) with a capacity and a count (0x14 bytes): the grid's two free lists. The
-// destructor of the grid frees the arrays first (free_values 0x472460), then the usual node sweep.
-struct PList : std::list<int*> {
-    int cap;                    // +0x0c (0x400 for the grid's lists)
-    int n;                      // +0x10
-    PList() : cap(0x400), n(0) {}
-    void free_values();         // 0x472460
-    ~PList() { free_values(); }
-};
-// The object list: a std::vector<void*> whose growth path (_Insert_n of the pointer vectors) is the shared instance 0x41f720.
-struct ObjVec : std::vector<void*> {
-    void insert_n(iterator where, size_t count, void* const& val);   // 0x41f720 (mission.cpp forwards it to vector<rgl::Obj*>::_Insert_n)
-};
-struct Wind {                   // 0x7c-byte effect / wind object (0x478f30, 0x4792d0)
-    int f0;                     // +0x00
-    rgl::vector4 pos;           // +0x04
-    rgl::vector4 f14;           // +0x14
-    rgl::vector4 f24;           // +0x24
-    char pad34[0x44 - 0x34];
-    rgl::vector4 f44;           // +0x44
-    float f54;                  // +0x54
-    char pad58[0x6c - 0x58];
-    int f6c;                    // +0x6c flags (bit 1: too weak)
-    char pad70[0x7c - 0x70];
-    Wind();                     // 0x461480
-};
-// Viewport / light parameter block; layout and constructor (0x46b940) from the terrain object's module. The five
-// vectors after the frustum are the shadow camera's bounds (ShadowMap::attach_camera 0x4711e0).
-#include "../view_params.h"            // ViewParams (shared with terrain_a); the five vectors after the frustum are the shadow camera bounds
-
-// ---- the container ---------------------------------------------------------------------------------------------
-// The grid part (destructor 0x475c60): dimensions, the cell array and the two page lists, the object list.
-struct CellGridBase {
-    int dim[2];                                 // +0x00 log2 of the cell counts (0x478830)
-    int n[2];                                   // +0x08 (n[0]: number of cell columns, 0x475c60)
-    float lo[2];                                // +0x10
-    float hi[2];                                // +0x18
-    float step[2];                              // +0x20
-    Cell** cells;                               // +0x28 cells[x] -> array of n[1] cells
-    PList pool0;                                // +0x2c
-    PList pool1;                                // +0x40
-    ObjVec items;                               // +0x54 owned objects (0x479980)
-    ~CellGridBase();                            // 0x475c60
-};
-struct CellGrid : CellGridBase {
-    HeightField* hf;                            // +0x64 (0x471a30, 0x471b30, 0x472650, 0x4785e0)
-    rgl::vector4 amb;                           // +0x68 colour the cell hands to the emitters, w (+0x74) = strength
-    int f78;                                    // +0x78
-    std::vector<int> v7c;                       // +0x7c
-    std::vector<int> v8c;                       // +0x8c
-    int f9c;                                    // +0x9c
-    std::vector<int> va0;                       // +0xa0
-    NavData* core;                              // +0xb0 ground / nav data (0x472ed0, 0x472650, 0x479980)
-    PolyMesh* navmesh;                              // +0xb4 the nav mesh the grid is built from (0x478c50)
-    std::vector<Wind*> winds;                   // +0xb8
-    std::vector<int> vc8;                       // +0xc8
-    ViewParams view;                            // +0xd8 (shadow camera: +0x22c .. +0x2fc)
-    rgl::vector4 shadow_amb;                    // +0x2fc light colour of the shadow camera (0x4711e0)
-    rgl::vector4 m30c;                          // +0x30c
-    rgl::vector4 m31c;                          // +0x31c
-    std::vector<int> v32c;                      // +0x32c
-    int f33c;                                   // +0x33c (not touched by the constructor)
-    int f340;                                   // +0x340
-
-    void init(const float* lo_, const float* hi_, int dimx, int dimy);      // 0x478830
-    void to_cell(const float* p, int* out) const;                            // 0x41ed00 (forwards to rgl::world::to_cell: cell_world.h)
-    void insert(int id, const float* lo_, const float* hi_);                // 0x478a10
-    CellGrid(const float* lo_, const float* hi_, const int* dimx, const int* dimy, const int* v);  // 0x478ad0
-    ~CellGrid();                                                            // 0x475d50
-    void build(PolyMesh* m);                                                    // 0x478c50
-    Wind* spawn_wind();                                                     // 0x478f30
-    Entity* create_entity(int type_id);                                     // 0x428440 (rgl::world::create_entity: cell_world.h)
-    void reset();                                                           // 0x421390 (rgl::world::reset: cell_world.h)
-    void sample_lights(const rgl::vector4* p, rgl::vector4* dir, rgl::vector4* amb);   // 0x42ad60
-    void build_light_frame(rgl::matrix* m, rgl::vector4* amb);              // 0x470c00
-    int trace_ray(const rgl::vector4* from, const rgl::vector4* to, float maxlen, int a, void** hit);   // 0x439d60 (ret 0x14; the callers use TRACE_RAY at the end of this header)
-    __forceinline void floor_at(const float* p, float* out_z, face** out_face) { ((level*)this)->floor_at(p, out_z, out_face); }   // 0x439be0 (ret 0xc)
-    __forceinline void light_at(rgl::vector4 p, rgl::vector4 n, rgl::vector4* out_dir, rgl::vector4* out_col, unsigned flags, float scale)   // 0x43ac40 (ret 0x30)
-    { ((level*)this)->light_at(p, n, out_dir, out_col, flags, scale); }
-    void update_probes(unsigned flags);                                     // 0x472ed0
-    __forceinline void reg_shape(void* o) { ((world_grid*)this)->reg_shape((grid_shape*)o); }                      // 0x424170
-    __forceinline void post(void* o) { ((world_grid*)this)->add_tree((grid_shape*)o); }                           // 0x425240
-    void build_faces(NavData* map);                                         // 0x479980
-    void remove_entity(int id);                                             // 0x41f0d0 (ret 4; src/game/party2 clear_map_flag)
-};
-
 
 // level::trace_ray returns bool; the callers test the whole of eax, so the call is made through the int-returning member type
 #define TRACE_RAY(grid, from, to, maxlen, a, hit) \

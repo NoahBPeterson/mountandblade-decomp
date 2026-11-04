@@ -139,7 +139,7 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
 void Game::build_scene()
 {
     GameMapView* self = (GameMapView*)this;
-    CellGrid* world = (CellGrid*)g_script.level;
+    rgl::world* world = (rgl::world*)g_script.level;
     if (g_script.new_game_done) {
         for (int i = 0; i < g_script.page_rows; i++) {
             for (int j = 0; j < g_script.page_cols; j++) {
@@ -163,16 +163,14 @@ void Game::build_scene()
     self->fog1 = rgl::vector4(0.5f, 0.48f, 0.47f);
     self->fog2 = rgl::vector4(0.8f, 0.8f, 0.8f);
     self->fog3 = rgl::vector4(0.35f, 0.37f, 0.4f);
-    world->amb = rgl::vector4(0.35f, 0.37f, 0.4f);
-    world->amb.w = 1.0f;
+    world->ambient = rgl::vector4(0.35f, 0.37f, 0.4f);
+    world->ambient.w = 1.0f;
 
-    Wind* w = (Wind*)::operator new(sizeof(Wind));                // new Wind: the 0x7c-byte wind object; wind.h's init() is its constructor 0x461480
-    if (w)
-        w = (Wind*)((wind*)w)->init();
+    Light* w = new Light;                                         // the 0x7c-byte wind object (constructor 0x461480)
     {
-        std::vector<Wind*>& wv = world->winds;
+        std::vector<Light*>& wv = world->lights;
         if (wv.size() < wv.capacity()) {
-            Wind** p = wv._Mylast;
+            Light** p = wv._Mylast;
             *p = w;
             wv._Mylast = p + 1;
         } else {
@@ -180,21 +178,21 @@ void Game::build_scene()
         }
     }
     self->wind = w;
-    self->wind->f0 = 2;
-    self->wind->pos = self->fog1;
-    self->wind->f54 = 30000.0f;
-    self->wind->f24 = rgl::vector4(700.0f, 200.0f, 900.0f);
-    self->wind->f44 = rgl::vector4(-0.8f, -0.6f, -1.0f);
-    float len = self->wind->f44.length();
+    self->wind->type = 2;
+    self->wind->color = self->fog1;
+    self->wind->range = 30000.0f;
+    self->wind->pos = rgl::vector4(700.0f, 200.0f, 900.0f);
+    self->wind->dir = rgl::vector4(-0.8f, -0.6f, -1.0f);
+    float len = self->wind->dir.length();
     if (len > 1e-10f) {
         float inv = 1.0f / len;
-        self->wind->f44.x = self->wind->f44.x * inv;
-        self->wind->f44.y = self->wind->f44.y * inv;
-        self->wind->f44.z = self->wind->f44.z * inv;
+        self->wind->dir.x = self->wind->dir.x * inv;
+        self->wind->dir.y = self->wind->dir.y * inv;
+        self->wind->dir.z = self->wind->dir.z * inv;
     } else {
-        self->wind->f44.x = 0.0f;
-        self->wind->f44.y = 1.0f;
-        self->wind->f44.z = 0.0f;
+        self->wind->dir.x = 0.0f;
+        self->wind->dir.y = 1.0f;
+        self->wind->dir.z = 0.0f;
     }
 
     rgl::entity* track = (rgl::entity*)((rgl::world*)world)->create_entity(9);
@@ -212,7 +210,7 @@ void Game::build_scene()
     ((Poser*)obj)->add_extra((int)self->map_obj);
     d = 100000000.0f;
     obj->set_fbc(&d);
-    world->f78 = (int)obj;
+    world->sky = (rgl::entity*)obj;
 
     self->compass = (rgl::entity*)((rgl::world*)world)->create_entity(9);
     RStr compass_name("compass");
@@ -292,7 +290,7 @@ struct MapObjView {
 void Game::build_map_trees()
 {
     GameMapView* self = (GameMapView*)this;
-    MapNav* mgr = (MapNav*)((CellGrid*)g_script.level)->core;
+    MapNav* mgr = (MapNav*)((rgl::world*)g_script.level)->ground;
 
     // ---- A: reset the four per-material mesh vectors -----------------------
     RawVec* lists[4] = { &g_script.mat_type0, &g_script.mat_river, &g_script.mat_sea, &g_script.mat_sea2 };
@@ -926,12 +924,12 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
 // @ 0x523630
 void __stdcall scan_arrays(void* p, int unused)
 {
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->a_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((rgl::world*)g_script.level)->ground)->a_size(); i++)
         *(int*)((char*)p + 0xc3500) = (int)0xcb189680;
     char buf[100000];
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->b_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((rgl::world*)g_script.level)->ground)->b_size(); i++)
         buf[i] = 0;
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->b_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((rgl::world*)g_script.level)->ground)->b_size(); i++)
         ;
 }
 

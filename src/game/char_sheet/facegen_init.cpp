@@ -205,59 +205,55 @@ void FaceGen::init_screen()
     int zero = 0;
     rgl::world* w = (rgl::world*)::operator new(sizeof(rgl::world));
     if (w)
-        new (w, raw_place()) CellGrid(lo, hi, &zero, &zero, &zero);   // 0x478ad0 (World::World names it)
+        new (w, raw_place()) rgl::world(lo, hi, &zero, &zero, &zero);   // 0x478ad0 (World::World names it)
     world = w;
     w->ambient.x = 0.3f;
     w->ambient.y = 0.3f;
     w->ambient.z = 0.3f;
     w->ambient.w = 1.0f;
     {
-        wind* wd = (wind*)::operator new(sizeof(wind));
-        if (wd)
-            wd->init();   // 0x461480
-        w->lights.push_back((rgl::light*)wd);   // _Insert_n 0x410610
-        wd->v04.x = 0.1f;
-        wd->v04.y = 0.15f;
-        wd->v04.z = 0.2f;
-        wd->v04.w = 0.0f;
-        wd->v14.x = 0.2f;
-        wd->v14.y = 0.2f;
-        wd->v14.z = 0.2f;
-        wd->v14.w = 0.0f;
-        wd->v24.x = -2.0f;
-        wd->v24.y = -2.0f;
-        wd->v24.z = 12.0f;
-        wd->v24.w = 0.0f;
+        Light* wd = new Light;   // 0x461480
+        w->lights.push_back(wd);   // _Insert_n 0x410610
+        wd->color.x = 0.1f;
+        wd->color.y = 0.15f;
+        wd->color.z = 0.2f;
+        wd->color.w = 0.0f;
+        wd->base_color.x = 0.2f;
+        wd->base_color.y = 0.2f;
+        wd->base_color.z = 0.2f;
+        wd->base_color.w = 0.0f;
+        wd->pos.x = -2.0f;
+        wd->pos.y = -2.0f;
+        wd->pos.z = 12.0f;
+        wd->pos.w = 0.0f;
         wd->type = 2;
-        wd->f54 = 20.0f;
-        wd->v44.x = -0.5f;
-        wd->v44.y = 0.0f;
-        wd->v44.z = -1.0f;
-        wd->v44.w = 0.0f;
+        wd->range = 20.0f;
+        wd->dir.x = -0.5f;
+        wd->dir.y = 0.0f;
+        wd->dir.z = -1.0f;
+        wd->dir.w = 0.0f;
     }
     {
-        wind* wd = (wind*)::operator new(sizeof(wind));
-        if (wd)
-            wd->init();   // 0x461480
-        w->lights.push_back((rgl::light*)wd);   // _Insert_n 0x410610
-        wd->v04.x = 1.0f;
-        wd->v04.y = 1.0f;
-        wd->v04.z = 1.0f;
-        wd->v04.w = 0.0f;
-        wd->v14.x = 1.0f;
-        wd->v14.y = 1.0f;
-        wd->v14.z = 1.0f;
-        wd->v14.w = 0.0f;
-        wd->v24.x = -2.0f;
-        wd->v24.y = -2.0f;
-        wd->v24.z = 2.0f;
-        wd->v24.w = 0.0f;
+        Light* wd = new Light;   // 0x461480
+        w->lights.push_back(wd);   // _Insert_n 0x410610
+        wd->color.x = 1.0f;
+        wd->color.y = 1.0f;
+        wd->color.z = 1.0f;
+        wd->color.w = 0.0f;
+        wd->base_color.x = 1.0f;
+        wd->base_color.y = 1.0f;
+        wd->base_color.z = 1.0f;
+        wd->base_color.w = 0.0f;
+        wd->pos.x = -2.0f;
+        wd->pos.y = -2.0f;
+        wd->pos.z = 2.0f;
+        wd->pos.w = 0.0f;
         wd->type = 2;
-        wd->f54 = 20.0f;
-        wd->v44.x = 1.0f;
-        wd->v44.y = 1.0f;
-        wd->v44.z = -1.0f;
-        wd->v44.w = 0.0f;
+        wd->range = 20.0f;
+        wd->dir.x = 1.0f;
+        wd->dir.y = 1.0f;
+        wd->dir.z = -1.0f;
+        wd->dir.w = 0.0f;
     }
     ent = (rgl::strategic_entity*)((rgl::world*)w)->create_entity(9);   // 0x428440
     b->world = w;

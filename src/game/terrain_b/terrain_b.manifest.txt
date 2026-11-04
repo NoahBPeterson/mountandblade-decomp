@@ -2,7 +2,7 @@
 ../src/game/terrain_b/terrain_b.cpp  ?set_slot@MeterBar@@QAEXHH@Z  00470d80  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?sun_visibility@Terrain@@QAEMPBM@Z  00471a30  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?light_all@Terrain@@QAEXPAUparticle_list@@_N@Z  00472020  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?free_values@PList@@QAEXXZ  00472460  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?free_values@?$pool@Ucellnode@rgl@@@rgl@@QAEXXZ  00472460  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?ufill@vecMRow36@@QAEPAUMRow36@@PAU2@IABU2@@Z  004724c0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?ufill@vec18@@QAEPAUMVert@@PAU2@IABU2@@Z  004724f0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?ufill@vec64@@QAEPAUMPoly@@PAU2@IABU2@@Z  00472520  /O2 /MT /Gy /TP
@@ -19,7 +19,7 @@
 ../src/game/terrain_b/terrain_b.cpp  ??$_Buffered_rotate@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HUP8@@@std@@YA?AViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@V120@00HHAAV?$_Temp_iterator@UP8@@@0@@Z  00472ad0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?clamp_rec@PhysSet@@QAEXH@Z  00472c50  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?update@PhysSet@@QAEXM@Z  00472dc0  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?update_probes@CellGrid@@QAEXI@Z  00472ed0  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?update_probes@world@rgl@@QAEXI@Z  00472ed0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?copy_troop@TroopMgr@@QAEXPAUArrSet@@PBUMeshGroupRec@@@Z  00473570  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?relax@FaceRace@@QAEXHPAM@Z  004735e0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?unpack@FaceGenome@@QAEPAUFaceRace@@PB_K@Z  00473800  /O2 /MT /Gy /TP
@@ -35,8 +35,8 @@
 ../src/game/terrain_b/terrain_b.cpp  ?destroy@vecArrS@@QAEXPAUArrSet@@0@Z  00475b60  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?ufill@vecArrS@@QAEPAUArrSet@@PAU2@IABU2@@Z  00475b80  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ??$_Buffered_merge_sort@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HUP8@@P6A_NABU4@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0HAAV?$_Temp_iterator@UP8@@@0@P6A_NABUP8@@2@Z@Z  00475bb0  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ??1CellGridBase@@QAE@XZ  00475c60  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ??1CellGrid@@QAE@XZ  00475d50  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ??1cell_grid@rgl@@QAE@XZ  00475c60  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ??1world@rgl@@QAE@XZ  00475d50  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?erase@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00475f20  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ??$_Stable_sort@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HUP8@@P6A_NABU4@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0HAAV?$_Temp_iterator@UP8@@@0@P6A_NABUP8@@2@Z@Z  00475f70  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?reserve@?$vector@UE36x@@V?$allocator@UE36x@@@std@@@std@@QAEXI@Z  00476020  /O2 /MT /Gy /TP

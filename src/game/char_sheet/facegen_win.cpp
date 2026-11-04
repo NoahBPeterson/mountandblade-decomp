@@ -179,7 +179,7 @@ void TerrainPage::init_screen()
         int cells2 = 6;
         int flag = 0;
         void* p = operator new(0x344);
-        world = p ? (rgl::world*)new (p) CellGrid((const float*)&lo, (const float*)&hi, &cells, &cells2, &flag) : 0;   // 0x478ad0
+        world = p ? (rgl::world*)new (p) rgl::world((const float*)&lo, (const float*)&hi, &cells, &cells2, &flag) : 0;   // 0x478ad0
     }
     {
         float start = 500.0f;
