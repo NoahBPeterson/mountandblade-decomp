@@ -1401,42 +1401,14 @@ AnimSet::~AnimSet()
     delete[] base;
 }
 
-// RecH's vector deleting destructor 0x4315d0 (??_ERecH, rgl/xmlcfg/records.cpp) and tstring::tstring() 0x42bbd0 as plain
-// thiscalls: the original calls both out of line (an inline delete[] unrolls the element loop; a placement new adds a null test).
-struct RecH_vd {
-    void* vecdel(unsigned flags);
-};
-struct tstring_raw {
-    char pad[0x10];
-    void build();
-};
-#pragma comment(linker, "/alternatename:?vecdel@RecH_vd@@QAEPAXI@Z=??_ERecH@@QAEPAXI@Z")
-#pragma comment(linker, "/alternatename:?build@tstring_raw@@QAEXXZ=??0tstring@@QAE@XZ")
-
 // @ 0x4c2250
 int __cdecl entry_vec_resize(stream_base* sp, AnimSet* self)
 {
     stream_base& s = *sp;
     AnimSet* t = self;
-    if (t->data != 0)
-        ((RecH_vd*)t->data)->vecdel(3);    // 0x4315d0
+    delete[] t->data;    // 0x4315d0 (??_ERecH)
     s.r_int(&t->count);
-    int n = t->count;
-    int* blk = (int*)operator new[](n * sizeof(RecH) + 4);
-    RecH* p;
-    if (blk != 0) {
-        p = (RecH*)(blk + 1);
-        blk[0] = n;
-        RecH* q = p;
-        for (int i = n - 1; i >= 0; i--, q++) {
-            ((tstring_raw*)&q->name)->build();
-            ((tstring_raw*)&q->s.name)->build();
-            q->s.ptr = 0;
-        }
-    } else {
-        p = 0;
-    }
-    t->data = p;
+    t->data = new RecH[t->count];
     for (int i = 0; i < t->count; i++)
         read_entry(s, t->data[i]);
     return (int)&s;

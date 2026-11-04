@@ -163,17 +163,13 @@ Findings that change the slices' reading:
 
 Kept (each is needed for the byte-exact rows):
 
-- **"ext" declarations** (`pos_ext::transform_point`, `pos_ext::rot_ext`, `matrix_ext`, `vec4_ext`,
-  `normalize_ext`, `vmin_ext`, `vmax_ext` in shapes.h): the original's callers of these functions were compiled
-  without cl's knowledge of the callee. When cl compiles the callee first in the same object it keeps its
-  register use and side effects: the callers then choose other registers (`mov edx, ecx` instead of
-  `push esi`), or do not reload `count` after the call (face::get_min/get_max, 114 bytes instead of 129). The
-  slices got this by declaring the callee without a body. The module still defines the real functions;
-  `shapes.cpp` binds each ext name to its function with `#pragma comment(linker, "/alternatename:...")`, so the
-  link has one function per address. `// 0x...` annotations on the ext declarations give the resolver the
-  original address. (Why the original's compile had no callee information, though the callee is in the same
-  stretch, is open; `inline` + `noinline` on the callee, definition order and moving the definition did not
-  change anything.)
+- **No "ext" declarations any more** (there were `pos_ext::transform_point`, `pos_ext::rot_ext`, `matrix_ext`, `vec4_ext`,
+  `normalize_ext`, `vmin_ext`, `vmax_ext`, bound with `/alternatename`): the original's callers of these functions were compiled
+  without cl's knowledge of the callee; with the real declaration cl uses the callee's register use and side effects (callers
+  choose other registers, or do not reload `count` after the call in face::get_min/get_max). `inline` + `noinline` on the callee,
+  definition order and moving the definition do not change that. The callers now make the real calls; the five whose bytes
+  depended on it (sphere::transform 0x408420, renderer::apply 0x40a870, matrix::rot3 0x40a920, face::get_min 0x40aef0,
+  face::get_max 0x40aff0) are rows of shapes.nonmatching.txt, each equiv PASS (200 valid inputs).
 - **`shape_base(inline_init)`** next to the out-of-line `shape_base()` (0x407ff0): the constructors of sphere,
   capsule, face and manifold (and `composite::load`'s `new`s) have the base stores expanded inline; the creation
   sites of composite (0x40cb60, 0x40ce10) call 0x407ff0. Both forms exist in the object; the slices got the call
@@ -197,7 +193,7 @@ Removed:
   local `shape_base`/`sphere`/`capsule` stubs, the `stream` stubs (`stream_base` is used), `d3d_device` /
   `IDirect3DDevice9` stubs (real `<d3d9.h>` compiles: `D3DRS_*`, `D3DTS_WORLD`, `D3DPT_LINELIST`, `D3DCMP_*` are
   used instead of `0x8b`, `0x100`, `2`, `4`), `name_string` (`rgl::string`), `log_error` (`mb_error`).
-- `pos_ext` for `sphere::transform` stays (above); `write_vec3`/`read_vec3` are now `read_vec3` at 0x408510
+- `write_vec3`/`read_vec3` are now `read_vec3` at 0x408510
   and `write_vec3` at 0x408570 (the slice had them reversed together with save/load).
 - `vec32`/`elem32` of s0040e060 (same template as `vec<mface>`, different name): one instantiation,
   `vec<mface>::insert_n`/`uninit_fill_n<mface>`, which is now byte-exact over the whole COMDAT.

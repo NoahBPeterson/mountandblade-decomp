@@ -135,20 +135,12 @@ struct quaternion_x : quaternion {
     quaternion operator+(const quaternion& o) const;                                       // 0x422e10
     void normalize();                                                                      // 0x422e40
     quaternion mul(const quaternion& o) const;                                             // 0x422eb0
-    quaternion* mul_out(quaternion* r, const quaternion* o) const;                     // 0x422eb0 (the by-value return as its out-parameter)
     quaternion mul_conj(const quaternion& o) const;                                        // 0x422f60
     float dot(const quaternion& o) const;                                                  // 0x423010
     bool dot_negative(const quaternion& o) const;                                          // 0x423040
 };
 void quat_to_matrix_x(rgl::matrix* m, const quaternion* q);                                // 0x423080
 void quat_to_axis_angle_x(rgl::vector4* axis, float* angle, const quaternion* q);          // 0x423160
-void slerp_x(quaternion* out, const quaternion* a, const quaternion* b, const float* t);   // 0x4238c0
-void nlerp_x(quaternion* out, const quaternion* a, const quaternion* b, const float* t);   // 0x4239c0
-struct KeyTable_x : KeyTable { void find(int* cur, float* frac, float* key); };            // 0x423a50
-struct AnimRec_x : AnimRec {
-    float phase();                                          // 0x4231f0
-    float shape(float x);                                   // 0x4232b0
-};
 struct FxAnim_x : FxAnim {
     rgl::vector4 key_value(int i);                          // 0x423300
     quaternion bone_quat(int i, int j, int k);              // 0x423540 (value, by-value return)

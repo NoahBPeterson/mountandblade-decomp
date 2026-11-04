@@ -26,20 +26,14 @@ using namespace rgl;
 #pragma comment(linker, "/alternatename:?bone_quat@FxAnim_x@@QAE?AUquaternion@@HHH@Z=?value@FxAnim@@QAEPAUquaternion@@PAU2@HHH@Z")
 #pragma comment(linker, "/alternatename:?dot@quaternion_x@@QBEMABUquaternion@@@Z=?dot@quaternion@@QBEMABU1@@Z")
 #pragma comment(linker, "/alternatename:?dot_negative@quaternion_x@@QBE_NABUquaternion@@@Z=?dot_negative@quaternion@@QBE_NABU1@@Z")
-#pragma comment(linker, "/alternatename:?find@KeyTable_x@@QAEXPAHPAM1@Z=?find@KeyTable@@QAEXPAHPAM1@Z")
 #pragma comment(linker, "/alternatename:?key_value@FxAnim_x@@QAE?AUvector4@rgl@@H@Z=?key_value@FxAnim@@QAE?AUvector4@rgl@@H@Z")
 #pragma comment(linker, "/alternatename:?mul@quaternion_x@@QBE?AUquaternion@@ABU2@@Z=?mul@quaternion@@QBE?AU1@ABU1@@Z")
 #pragma comment(linker, "/alternatename:?mul_conj@quaternion_x@@QBE?AUquaternion@@ABU2@@Z=?mul_conj@quaternion@@QBE?AU1@ABU1@@Z")
-#pragma comment(linker, "/alternatename:?mul_out@quaternion_x@@QBEPAUquaternion@@PAU2@PBU2@@Z=?mul@quaternion@@QBE?AU1@ABU1@@Z")
-#pragma comment(linker, "/alternatename:?nlerp_x@@YAXPAUquaternion@@PBU1@1PBM@Z=?nlerp@@YAXPAUquaternion@@PBU1@1PBM@Z")
 #pragma comment(linker, "/alternatename:?normalize@quaternion_x@@QAEXXZ=?normalize@quaternion@@QAEXXZ")
 #pragma comment(linker, "/alternatename:?parent_quat@FxAnim_x@@QAE?AUquaternion@@HH@Z=?chain@FxAnim@@QAEPAUquaternion@@PAU2@HH@Z")
-#pragma comment(linker, "/alternatename:?phase@AnimRec_x@@QAEMXZ=?phase@AnimRec@@QAEMXZ")
 #pragma comment(linker, "/alternatename:?quat_to_axis_angle_x@@YAXPAUvector4@rgl@@PAMPBUquaternion@@@Z=?quat_to_axis_angle@@YAXPAUvector4@rgl@@PAMPBUquaternion@@@Z")
 #pragma comment(linker, "/alternatename:?quat_to_matrix_x@@YAXPAUmatrix@rgl@@PBUquaternion@@@Z=?quat_to_matrix@@YAXPAUmatrix@rgl@@PBUquaternion@@@Z")
 #pragma comment(linker, "/alternatename:?set@quaternion_x@@QAEAAUquaternion@@ABM000@Z=?set@quaternion@@QAEAAU1@ABM000@Z")
-#pragma comment(linker, "/alternatename:?shape@AnimRec_x@@QAEMM@Z=?shape@AnimRec@@QAEMM@Z")
-#pragma comment(linker, "/alternatename:?slerp_x@@YAXPAUquaternion@@PBU1@1PBM@Z=?slerp@@YAXPAUquaternion@@PBU1@1PBM@Z")
 
 #define QX(e) ((quaternion_x&)(e))
 
@@ -127,8 +121,8 @@ void FxAnim::update_poses2()
     vector4 pos_old = v0c;
     for (int i = 0; i < nrecs; i++) {
         AnimRec& R = RC[i];
-        float p = ((AnimRec_x&)R).phase();
-        R.f18 = ((AnimRec_x&)R).shape(p);
+        float p = R.phase();
+        R.f18 = R.shape(p);
     }
     for (int b = 0; b < nbones; b++) {
         quaternion saved = BN(b).rot();
@@ -411,7 +405,7 @@ vector4 FxAnim::table_value(int i)
     int a = r.key_begin;
     float key = (float)(r.key_end - a) * r.f18 + a;
     float frac;
-    ((KeyTable_x&)r.table->tbl).find(&f1c, &frac, &key);
+    r.table->tbl.find(&f1c, &frac, &key);
     float s = 1.0f - frac;
     const vector4* e = &r.table->tbl.v4()[f1c];
     vector4 v = vadd((frac * e[1]), (s * e[0]));
@@ -441,7 +435,7 @@ quaternion* FxAnim::value(quaternion* out, int i, int j, int k)
     int slot = (k * 0x77 + 2 * i + j) * 4 + 0x104;
     int cur = *(int*)((char*)elems + slot);
     float frac;
-    ((KeyTable_x&)r->table->tables[k]).find(&cur, &frac, &key);
+    r->table->tables[k].find(&cur, &frac, &key);
     quaternion q;
 #define BK bone(k)
     if (cur != *(int*)((char*)elems + slot) || r->table != BK->tab()[i]) {
@@ -465,9 +459,9 @@ quaternion* FxAnim::value(quaternion* out, int i, int j, int k)
     }
     if (g_keyboard.down[66] != 0) {
         quaternion* va = r->table->tables[k].qv();
-        slerp_x(&q, &va[cur], &va[cur + 1], &frac);
+        slerp(&q, &va[cur], &va[cur + 1], &frac);
     } else {
-        nlerp_x(&q, &BK->ka()[2 * i + j], &BK->kb()[2 * i + j], &frac);
+        nlerp(&q, &BK->ka()[2 * i + j], &BK->kb()[2 * i + j], &frac);
     }
 #undef BK
     *out = q;
@@ -573,7 +567,8 @@ quaternion* FxAnim::chain(quaternion* out, int i, int k)
     int parent = bone(k)->parent;
     if (parent != -1) {
         chain(&t, i, parent);
-        p = QX(t).mul_out(&t3, &q);
+        t3 = t.mul(q);
+        p = &t3;
     }
     *out = *p;
     return out;

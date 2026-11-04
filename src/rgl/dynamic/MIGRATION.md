@@ -71,8 +71,12 @@ Header conflicts and gaps (worked around locally, to be absorbed upstream):
 4. `fx.h`: `FxElem` has quaternion fields as raw floats (views `Bone`), `EnvRec` = our `AnimRec`.
 5. `rgl_math.h` declares `vector4` operators out of line; the effect code inlines them (local `vmul/vadd/vsub/vnormalize` in fx_anim.cpp).
 6. The audit binds callers' by-value/out-parameter views through ext twins (`quaternion_x`, `FxAnim_x`, ...) bound to the real
-   function with `/alternatename` (see `symbols/slices/fx_anim.txt`); fx_anim.cpp and two of dynamic_entity.cpp (`ufill_ext`, `contact_inl::_Insert_n`)
-   still have them, because their callers were compiled without the callee's body in the object. world_grid.cpp has none: its callers use the
+   function with `/alternatename` (see `symbols/slices/fx_anim.txt`); only fx_anim.cpp's `update_poses2` still has them (13 twins: the quaternion
+   members, `FxAnim::key_value` / `value` / `chain` and `quat_to_matrix` / `quat_to_axis_angle`), because its callers were compiled without the
+   callee's body in the object: with the real calls cl allocates differently and the junk `w` lane of the angular velocity differs, which
+   equiv.py reports as a FAIL (the real calls are used everywhere else: `phase` / `shape` / `KeyTable::find` / `slerp` / `nlerp` and
+   `chain`'s multiply). dynamic_entity.cpp has none: `on_shape` calls the explicit `std::_Uninitialized_fill_n<Contact*...>` specialization
+   (0x427ca0, noinline, declared before the vector code) and the real `contact_ops::_Insert_n`, whose own fill is the body of the std function (`fill_n_inl`). world_grid.cpp has none: its callers use the
    real `world_grid::in_rect` / `add_tree`, `min2` / `max2`, `face_normal`, `ground_store::add` and the real `std::vector<Obj*>::push_back` / `insert`
    (noinline specializations declared before the callers and defined at the end of world_grid.cpp; `reg_shape` is a nonmatching row because of it), `std::vector<ground_v36>` and the one `ground_g136` / `vec136` of world_grid.h.
 

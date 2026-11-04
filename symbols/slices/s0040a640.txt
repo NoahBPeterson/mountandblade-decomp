@@ -8,7 +8,6 @@
 00408460 ?transform_point@pos@@QBE?AUvector4@rgl@@ABU23@@Z  # s00408110
 00407e00 ?normalize@rgl@@YAXAAUvector4@1@ABU21@@Z  # s00407c10
 00a17910 ?g_render@@3Urenderer@@A  # render state object (matrix stack, device at +0x618, world matrix at +0x794)
-0040af80 ?vmin_ext@@YAXPAUvector4@rgl@@PBU12@1@Z  # same function as vmin, declared apart in the source
 0054a540 ??_7capsule@@6B@  # capsule vtable
 0054a588 ??_7face@@6B@  # face vtable
 0040a540 ??_Gface@@UAEPAXI@Z  # slot 0 of the shape vtables (scalar deleting dtor; folded)

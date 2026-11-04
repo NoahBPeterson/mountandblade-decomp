@@ -17,16 +17,6 @@
 #include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
 using namespace rgl;
 
-// Bind the ext declarations of shapes.h to the functions they stand for (see there).
-#pragma comment(linker, "/alternatename:?transform_point@pos_ext@@QBE?AUvector4@rgl@@ABU23@@Z=?transform_point@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z")
-#pragma comment(linker, "/alternatename:?rot_ext@pos_ext@@QBE?AUvector4@rgl@@ABU23@@Z=?rot@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z")
-#pragma comment(linker, "/alternatename:?normalize_ext@rgl@@YAXAAUvector4@1@ABU21@@Z=?normalize@rgl@@YAXAAUvector4@1@ABU21@@Z")
-#pragma comment(linker, "/alternatename:?orthonormalize@matrix_ext@@QAEXXZ=?orthonormalize@matrix@rgl@@QAEXXZ")
-#pragma comment(linker, "/alternatename:?transform_point_to_local@matrix_ext@@QBE?AUvector4@rgl@@ABU23@@Z=?transform_point_to_local@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z")
-#pragma comment(linker, "/alternatename:?normalize@vec4_ext@@QAEMXZ=?normalize@vector4@rgl@@QAEMXZ")
-#pragma comment(linker, "/alternatename:?vmin_ext@@YAXPAUvector4@rgl@@PBU12@1@Z=?vmin@@YAXPAUvector4@rgl@@PBU12@1@Z")
-#pragma comment(linker, "/alternatename:?vmax_ext@@YAXPAUvector4@rgl@@PBU12@1@Z=?vmax@@YAXPAUvector4@rgl@@PBU12@1@Z")
-
 // ---- vector4 / matrix (0x407c30..0x407f70) ---------------------------------------------------------------
 // @ 0x407c10
 const char* string_view_::get() const { return buf ? buf : (const char*)&buf; }
@@ -196,7 +186,7 @@ void sphere::scale(const float* s)
 // @ 0x408420
 void sphere::transform(const pos* m)
 {
-    center = ((const pos_ext*)m)->transform_point(local_center);
+    center = m->transform_point(local_center);
 }
 // @ 0x408460
 vector4 matrix::transform_point(const vector4& p) const
@@ -469,7 +459,7 @@ void sphere_sphere_contact(sphere* a, sphere* b, int max, contact* out, int* cou
         int n = ++*count;
         if (n <= max) {
             vector4 nrm;
-            normalize_ext(nrm, d);
+            normalize(nrm, d);
             float t = b->radius / (a->radius + b->radius);
             vector4 dt(d.x * t, d.y * t, d.z * t);
             d.x = dt.x + b->center.x; d.y = dt.y + b->center.y; d.z = dt.z + b->center.z;
@@ -508,8 +498,8 @@ void segment_closest_points(const vector4* a0, const vector4* a1, const vector4*
         m.u = tu;
         m.f = d1;
         m.orthonormalize();
-        vector4 l3 = ((matrix_ext&)m).transform_point_to_local(*b0);
-        vector4 l4 = ((matrix_ext&)m).transform_point_to_local(*b1);
+        vector4 l3 = m.transform_point_to_local(*b0);
+        vector4 l4 = m.transform_point_to_local(*b1);
         float len = (float)sqrt(a);
         float lo = l3.y, hi = l4.y;
         bool swapped = false;
@@ -553,7 +543,7 @@ void capsule_sphere_contact(capsule* a, sphere* b, int max, contact* out, int* c
 {
     vector4 A(a->p1.x - a->p0.x, a->p1.y - a->p0.y, a->p1.z - a->p0.z);
     vector4 B;
-    normalize_ext(B, A);
+    normalize(B, A);
     vector4 v(b->center.x - a->p0.x, b->center.y - a->p0.y, b->center.z - a->p0.z);
     float t = v.x * B.x + (v.y * B.y + v.z * B.z);
     if (t < 0.0f) A = a->p0;
@@ -568,7 +558,7 @@ void capsule_sphere_contact(capsule* a, sphere* b, int max, contact* out, int* c
     if (0.0f <= depth) {
         int n = ++*count;
         if (n <= max) {
-            normalize_ext(A, B);
+            normalize(A, B);
             contact c;
             c.normal = A;
             vector4 pr(A.x * b->radius, A.y * b->radius, A.z * b->radius);
@@ -586,7 +576,7 @@ float capsule_sphere_gap(capsule* a, sphere* b)
 {
     vector4 d(a->p1.x - a->p0.x, a->p1.y - a->p0.y, a->p1.z - a->p0.z);
     vector4 dir;
-    normalize_ext(dir, d);
+    normalize(dir, d);
     vector4 v(b->center.x - a->p0.x, b->center.y - a->p0.y, b->center.z - a->p0.z);
     float t = v.x * dir.x + (v.y * dir.y + v.z * dir.z);
     vector4 c;
@@ -610,7 +600,7 @@ void capsule_capsule_contact(capsule* a, capsule* b, int max, contact* out, int*
             float t = b->radius / (a->radius + b->radius);
             vector4 dt(d.x * t, d.y * t, d.z * t);
             pa.x = dt.x + pb.x; pa.y = dt.y + pb.y; pa.z = dt.z + pb.z;
-            normalize_ext(pb, d);
+            normalize(pb, d);
             contact c;
             c.normal = pb;
             c.point = pa;
@@ -630,7 +620,7 @@ void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* coun
     vector4 e0 = vsub(v[1], v[0]);
     vector4 n;
     vcross(n, e0, e1);
-    normalize_ext(n, n);
+    normalize(n, n);
     float dist = (b->center.x - v[0].x) * n.x + ((b->center.y - v[0].y) * n.y + (b->center.z - v[0].z) * n.z);
     if (dist > b->radius)
         return;
@@ -654,7 +644,7 @@ void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* coun
         const vector4& s = v[i - 1];
         vector4 e = vsub(v[j], s);
         vector4 ed;
-        normalize_ext(ed, e);
+        normalize(ed, e);
         vector4 w;
         vsubo(w, b->center, s);
         float cx = ed.y * w.z - ed.z * w.y;
@@ -700,10 +690,10 @@ void capsule::draw()
 {
     vector4 d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
     float half = d.length() * 0.5f;
-    normalize_ext(d, d);
+    normalize(d, d);
     vector4 e;
     vcross(e, d, vector4(1.0f, 0.0f, 0.0f));
-    normalize_ext(e, e);
+    normalize(e, e);
     vector4 f;
     vcross(f, e, d);
     matrix m;
@@ -727,14 +717,14 @@ void renderer::apply(const matrix* m)
 {
     struct { mat3 r; vector4 o; } t;
     matrix* c = &cur;
-    t.o = ((const pos_ext*)c)->transform_point(m->o);
+    t.o = c->transform_point(m->o);
     t.r = ((const pos*)c)->rot3(*m);
     *c = *(matrix*)&t;
     c->s.w = 0.0f; c->f.w = 0.0f; c->u.w = 0.0f; c->o.w = 1.0f;
     dev->SetTransform(D3DTS_WORLD, (const D3DMATRIX*)c);
 }
 // @ 0x40a920
-mat3 matrix::rot3(const matrix& m) const { return mat3(((const pos_ext*)this)->rot_ext(m.s), ((const pos_ext*)this)->rot_ext(m.f), ((const pos_ext*)this)->rot_ext(m.u)); }
+mat3 matrix::rot3(const matrix& m) const { return mat3(this->rot(m.s), this->rot(m.f), this->rot(m.u)); }
 // @ 0x40a9c0
 vector4 matrix::rot(const vector4& p) const
 {
@@ -811,31 +801,17 @@ face::face(const face& o) : shape_base(inline_init()), count(o.count)
 vector4* face::get_min(vector4* out)
 {
     vector4 t = w[0];
-    for (int i = 1; i < count; i++) vmin_ext(&t, &t, &w[i]);
+    for (int i = 1; i < count; i++) vmin(&t, &t, &w[i]);
     *out = t;
     return out;
-}
-// @ 0x40af80
-__declspec(noinline) void __cdecl vmin(vector4* out, const vector4* a, const vector4* b)
-{
-    out->x = fmin_(a->x, b->x);
-    out->y = fmin_(a->y, b->y);
-    out->z = fmin_(a->z, b->z);
 }
 // @ 0x40aff0
 vector4* face::get_max(vector4* out)
 {
     vector4 t = w[0];
-    for (int i = 1; i < count; i++) vmax_ext(&t, &t, &w[i]);
+    for (int i = 1; i < count; i++) vmax(&t, &t, &w[i]);
     *out = t;
     return out;
-}
-// @ 0x40b080
-__declspec(noinline) void __cdecl vmax(vector4* out, const vector4* a, const vector4* b)
-{
-    out->x = fmax_(a->x, b->x);
-    out->y = fmax_(a->y, b->y);
-    out->z = fmax_(a->z, b->z);
 }
 
 // ---- polygon / capsule contact (0x40b0f0) ---------------------------------------------------------------------
@@ -919,7 +895,7 @@ void polygon_capsule_contact(face* poly, capsule* cap, int max, contact* out, in
                 vector4 g(qe.x - pe.x, qe.y - pe.y, qe.z - pe.z);
                 vector4 ne;
                 vector4 etmp = e;
-                normalize_ext(ne, etmp);
+                normalize(ne, etmp);
                 vector4 gc(g.z * ne.y - g.y * ne.z, ne.z * g.x - g.z * ne.x, g.y * ne.x - ne.y * g.x);
                 if (gc.x * poly->normal.x + (gc.y * poly->normal.y + gc.z * poly->normal.z) < 0.0f) {
                     done = true;
@@ -960,7 +936,7 @@ void polygon_capsule_contact(face* poly, capsule* cap, int max, contact* out, in
         } else {
             const vector4* q1 = &cap->p1;
             vector4 dir(q1->x - cap->p0.x, q1->y - cap->p0.y, q1->z - cap->p0.z);
-            ((vec4_ext&)dir).normalize();
+            dir.normalize();
             vector4 dv(poly->w[0].x - cap->p0.x, poly->w[0].y - cap->p0.y, poly->w[0].z - cap->p0.z);
             float k = dir.x * poly->normal.x + (dir.y * poly->normal.y + dir.z * poly->normal.z);
             if (k == 0.0f) {
@@ -1615,3 +1591,17 @@ matrix matrix::operator*(const matrix& m) const
 }
 
 } // namespace rgl
+// @ 0x40af80
+__declspec(noinline) void __cdecl vmin(vector4* out, const vector4* a, const vector4* b)
+{
+    out->x = fmin_(a->x, b->x);
+    out->y = fmin_(a->y, b->y);
+    out->z = fmin_(a->z, b->z);
+}
+// @ 0x40b080
+__declspec(noinline) void __cdecl vmax(vector4* out, const vector4* a, const vector4* b)
+{
+    out->x = fmax_(a->x, b->x);
+    out->y = fmax_(a->y, b->y);
+    out->z = fmax_(a->z, b->z);
+}

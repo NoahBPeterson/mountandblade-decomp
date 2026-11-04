@@ -18,13 +18,7 @@
 
 using namespace rgl;
 
-// ---- the ext twins ------------------------------------------------------------------------------------------------
-// Callers of these functions saw them as opaque functions (see fx_anim.h / world_grid.cpp): the twin is only declared
-// and bound to the real function with /alternatename.
-void __cdecl ufill_ext(Contact* p, unsigned int n, const Contact& v, std::allocator<Contact>& al);   // 0x427ca0
 void sort_range(std::vector<entity*>::iterator first, std::vector<entity*>::iterator last, int ideal);          // 0x426a30
-#pragma comment(linker, "/alternatename:?ufill_ext@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@std@@@Z=??$_Uninitialized_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@@Z")
-#pragma comment(linker, "/alternatename:?_Insert_n@contact_inl@@QAEXPAUContact@rgl@@IABU23@@Z=?_Insert_n@contact_ops@rgl@@QAEXPAUContact@2@IABU32@@Z")
 
 static inline void scale3(vector4* v, float k) { v->x = k * v->x; v->y = k * v->y; v->z = k * v->z; }
 static __forceinline void set3(vector4* o, float x, float y, float z) { o->x = x; o->y = y; o->z = z; }
@@ -601,8 +595,17 @@ template<> void _Uninit_fill_n<Contact*, unsigned int, Contact, allocator<Contac
 }
 }
 
+namespace std {
+template<> __declspec(noinline) void _Uninitialized_fill_n<Contact*, unsigned int, Contact, allocator<Contact> >(Contact*, unsigned int, const Contact&, allocator<Contact>&);   // 0x427ca0, defined at the end of the file
+}
+// The body of std::_Uninitialized_fill_n (VC7.1 <memory>) as the callers of this vector inline it; the explicit specialization of the
+// std function itself (0x427ca0) is the out-of-line copy that on_shape's push_back calls.
+template<class _FI, class _Diff, class _Tval, class _Alloc> __forceinline void fill_n_inl(_FI _F, _Diff _N, const _Tval& _X, _Alloc& _Al)
+{
+    std::_Uninit_fill_n(_F, _N, _X, _Al, std::_Ptr_cat(_F, _F));
+}
 __forceinline Contact* contact_ops::_Ucopy(Contact* f, Contact* l, Contact* p) { return std::_Uninitialized_copy(f, l, p, *(std::allocator<Contact>*)this); }
-__forceinline Contact* contact_ops::_Ufill(Contact* p, size_type n, const Contact& v) { std::_Uninitialized_fill_n(p, n, v, *(std::allocator<Contact>*)this); return p + n; }
+__forceinline Contact* contact_ops::_Ufill(Contact* p, size_type n, const Contact& v) { fill_n_inl(p, n, v, *(std::allocator<Contact>*)this); return p + n; }
 // @ 0x427450
 void contact_ops::push_back(const Contact& _Val)
 {
@@ -683,27 +686,18 @@ void contact_ops::_Insert_n(Contact* _Where, size_type _Count, const Contact& _V
     }
 }
 
-// std::_Uninitialized_fill_n for Contact, called out of line from push_back's fast path (the callers see the twin
-// ufill_ext: the instantiation would be inlined into them)
-// @ 0x427ca0
-template void std::_Uninitialized_fill_n<Contact*, unsigned int, Contact, std::allocator<Contact> >(Contact*, unsigned int, const Contact&, std::allocator<Contact>&);
-
 // The std::vector<Contact> members as collide_shape has them: push_back and insert expanded inline, the fill through the
-// out-of-line 0x427ca0 and the insertion through 0x427590 (twins, bound below)
-struct contact_inl : contact_vec {
-    typedef unsigned size_type;
+// out-of-line 0x427ca0 and the insertion through 0x427590 (the real members, contact_ops'
+struct contact_inl : contact_ops {
     struct iterator {
         Contact* _Ptr;
         iterator() {}
         iterator(Contact* p) : _Ptr(p) {}
         iterator operator+(int off) const;                          // 0x40f880
     };
-    size_type capacity() const { return first == 0 ? 0 : end - first; }
-    size_type size() const { return first == 0 ? 0 : last - first; }
     iterator begin() { return iterator(first); }
     iterator end_() { return iterator(last); }
-    Contact* _Ufill(Contact* p, size_type n, const Contact& v) { ufill_ext(p, n, v, *(std::allocator<Contact>*)this); return p + n; }
-    void _Insert_n(Contact* _Where, size_type _Count, const Contact& _Val);            // 0x427590
+    Contact* _Ufill(Contact* p, size_type n, const Contact& v) { std::_Uninitialized_fill_n(p, n, v, *(std::allocator<Contact>*)this); return p + n; }   // the out-of-line 0x427ca0
     __forceinline iterator insert(iterator _Where, const Contact& _Val)
     {
         size_type _Off = size() == 0 ? 0 : _Where._Ptr - first;
@@ -763,4 +757,13 @@ bool dynamic_entity::on_shape(grid_shape* g)
         }
     }
     return true;
+}
+
+namespace std {
+// @ 0x427ca0
+template<> __declspec(noinline) void _Uninitialized_fill_n<Contact*, unsigned int, Contact, allocator<Contact> >(Contact* _First, unsigned int _Count, const Contact& _Val, allocator<Contact>& _Al)
+{
+    _Nonscalar_ptr_iterator_tag _Cat;
+    _Uninit_fill_n(_First, _Count, _Val, _Al, _Cat);
+}
 }

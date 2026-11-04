@@ -42,26 +42,6 @@ using rgl::mat3;
 void __cdecl vmin(rgl::vector4* out, const rgl::vector4* a, const rgl::vector4* b);     // 0x40af80
 void __cdecl vmax(rgl::vector4* out, const rgl::vector4* a, const rgl::vector4* b);     // 0x40b080
 
-// The "ext" declarations. The original's callers of the functions above were compiled without cl's knowledge of
-// the callee (cl 13.10 keeps the callee's register use and side effects when the callee was compiled first in the
-// same object: the callers then differ in register choice and in reloading fields after the call). Declaring
-// the callee under a second name that is only declared reproduces the callers; shapes.cpp binds each ext
-// symbol to the real function with /alternatename, so the link is unchanged.
-struct pos_ext : rgl::matrix {
-    rgl::vector4 transform_point(const rgl::vector4& p) const;      // 0x408460
-    rgl::vector4 rot_ext(const rgl::vector4& p) const;              // 0x40a9c0
-};
-struct matrix_ext : rgl::matrix {
-    void orthonormalize();                                          // 0x407ef0
-    rgl::vector4 transform_point_to_local(const rgl::vector4& p) const;     // 0x407f70
-};
-struct vec4_ext : rgl::vector4 { float normalize(); };              // 0x407d60
-namespace rgl {
-void normalize_ext(vector4& out, const vector4& in);                // 0x407e00
-}
-void __cdecl vmin_ext(rgl::vector4* out, const rgl::vector4* a, const rgl::vector4* b);     // 0x40af80
-void __cdecl vmax_ext(rgl::vector4* out, const rgl::vector4* a, const rgl::vector4* b);     // 0x40b080
-
 // ---- the debug renderer: global state object 0xa17910 -----------------------------------------------------
 // Only the fields these shapes use (the D3D9 render-state cache with the same address is src/game/renderer.h,
 // which cannot be included here: it pulls in match/include/rgl.h, whose vector4 collides with rgl_math.h).

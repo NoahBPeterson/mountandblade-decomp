@@ -59,32 +59,11 @@ void* hash_new_node(void* node, void* hint, void* key);                   // 0x4
 // original's (node, hint, key); gui_edit defines it __fastcall with an unused edx word, declared here as it is defined.
 struct list_int;
 void* __fastcall list_int_make_node(list_int* self, void* edx, void* node, void* hint, void* key);   // 0x4c4e50
-// The sub-objects the mission constructor builds in place: rgl/mesh2/rec_tables.h's C4c2d10 (the 0x140-byte block, ctor
-// 0x4c2d10), config/config.h's clip_table (ctor 0x4be6b0) and module_load.h's growable_array (ctor 0x4d1360); those headers do
-// not go with this TU's, so only the constructors are repeated under the class names.
-struct C4c2d10 {
-    char pad[0x140];
-    C4c2d10();   // 0x4c2d10
-    void build();   // the same constructor as a plain thiscall: a placement new would add a null test the original lacks
-};
-struct clip_table {
-    char pad[0x14c];
-    clip_table();   // 0x4be6b0
-    void build();   // 0x4be6b0 (see C4c2d10::build)
-};
-struct growable_array {
-    char pad[0x140];
-    growable_array();   // 0x4d1360
-    void build();   // 0x4d1360 (see C4c2d10::build)
-};
-struct tstring_raw {
-    char pad[0x10];
-    void build();   // tstring::tstring() 0x42bbd0 (see C4c2d10::build)
-};
-#pragma comment(linker, "/alternatename:?build@C4c2d10@@QAEXXZ=??0C4c2d10@@QAE@XZ")
-#pragma comment(linker, "/alternatename:?build@clip_table@@QAEXXZ=??0clip_table@@QAE@XZ")
-#pragma comment(linker, "/alternatename:?build@growable_array@@QAEXXZ=??0growable_array@@QAE@XZ")
-#pragma comment(linker, "/alternatename:?build@tstring_raw@@QAEXXZ=??0tstring@@QAE@XZ")
+// The sub-objects the mission constructor builds in place: the 0x130-byte mark records (rec_tables.h's C4c2d10, ctor 0x4c2d10),
+// config.h's clip_table (ctor 0x4be6b0), module_load.h's growable_array (ctor 0x4d1360) and a tstring.
+#include "../../rgl/mesh2/rec_tables.h"
+#include "../config/config.h"
+#include "./growable_array.h"
 #include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
 struct WindowMgrW {
     void open(int flag);   // 0x494260 (world_data/world_data.h; the main menu object 0xa73980)
@@ -92,7 +71,9 @@ struct WindowMgrW {
 
 // 0x34-byte element (two tstrings at +0 / +0x10, a heap pointer at +0x30); not the vtable-0x59584c Rec34 of trigger_records.h.
 // dxframework/d3dapp.cpp's MBRecord34: the original calls its vector deleting destructor 0x401870 (??_EMBRecord34, which has no
-// source spelling) with flags 3, as a plain call; the linker binds this view's symbol to it.
+// source spelling) with flags 3, as a plain call; the linker binds this view's symbol to it. A real `delete[]` here expands the
+// destructor loop inline instead (equiv.py then reports a call-trace FAIL: the orig's element destructors run through the
+// 0x401830 callback helper and are not traced), so this one directive stays.
 struct MBRecord34 {
     char pad[0x34];
     void* vecdel(unsigned flags);   // 0x401870
@@ -222,7 +203,7 @@ Big* Big::init()
     p->f030 = 0;
     p->v48.end = 0; p->v58.alloc = 0;
     for (int i = 0; i < 0x40; i++)
-        ((C4c2d10*)(p->blocks + i * 0x130))->build();
+        new (p->blocks + i * 0x130) C4c2d10;
 
     p->f5de0 = 2;
     p->f5de8 = ((int*)g_ticks)[4];
@@ -245,11 +226,11 @@ Big* Big::init()
     p->f6330 = ((int*)g_ticks)[4];
     p->f6334 = ((int*)g_ticks)[5];
     p->f63c4 = 0; p->f63c8 = 0; p->f63cc = 0;
-    ((clip_table*)p->f63d0)->build();
+    new (p->f63d0) clip_table;
 
     p->f667c = 0; p->f6680 = 0; p->f6684 = 0;
     p->f668c = 0; p->f6690 = 0; p->f6694 = 0;
-    ((growable_array*)p->f6698)->build();
+    new (p->f6698) growable_array;
 
     p->f67d8 = 2;
     p->f67e0 = ((int*)g_ticks)[4];
@@ -258,7 +239,7 @@ Big* Big::init()
     p->f6808 = ((int*)g_ticks)[4];
     p->f680c = ((int*)g_ticks)[5];
 
-    ((tstring_raw*)p->f6814)->build();
+    new (p->f6814) tstring;
     p->f000 = 0;
     *(int*)((char*)p + 0x5270) = 0;
     return this;

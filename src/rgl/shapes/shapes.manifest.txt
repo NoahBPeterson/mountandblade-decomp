@@ -28,7 +28,6 @@
 ../src/rgl/shapes/shapes.cpp  ?pop@renderer@@QAEXXZ  004081b0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?draw_sphere@renderer@@QAEXM@Z  004081f0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?scale@sphere@@UAEXPBM@Z  004083f0  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?transform@sphere@@UAEXPBUmatrix@rgl@@@Z  00408420  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?transform_point@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z  00408460  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?load@sphere@@UAEXPAUstream_base@@@Z  004084c0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?read_vec3@@YAPAUstream_base@@PAU1@PAM@Z  00408510  /O2 /MT /Gy /TP
@@ -53,17 +52,13 @@
 ../src/rgl/shapes/shapes.cpp  ??_Gshape_base@@UAEPAXI@Z  0040a540  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?clone@capsule@@UAEPAUshape_base@@XZ  0040a560  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0capsule@@QAE@ABU0@@Z  0040a580  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?apply@renderer@@QAEXPBUmatrix@rgl@@@Z  0040a870  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?rot3@matrix@rgl@@QBE?AUmat3@2@ABU12@@Z  0040a920  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?rot@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z  0040a9c0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?draw_capsule@renderer@@QAEXMMM@Z  0040aa20  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?get_min@capsule@@UAEPAUvector4@rgl@@PAU23@@Z  0040ad80  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?get_max@capsule@@UAEPAUvector4@rgl@@PAU23@@Z  0040ade0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?clone@face@@UAEPAUshape_base@@XZ  0040ae40  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0face@@QAE@ABU0@@Z  0040ae70  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?get_min@face@@UAEPAUvector4@rgl@@PAU23@@Z  0040aef0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?vmin@@YAXPAUvector4@rgl@@PBU12@1@Z  0040af80  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?get_max@face@@UAEPAUvector4@rgl@@PAU23@@Z  0040aff0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?vmax@@YAXPAUvector4@rgl@@PBU12@1@Z  0040b080  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?shape_contacts@@YAXPAUshape_base@@0HPAUcontact@@PAH@Z  0040bcb0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?shape_contact_count@@YAHPAUshape_base@@0HPAUcontact@@@Z  0040bfe0  /O2 /MT /Gy /TP
