@@ -9,7 +9,7 @@
 004d9840 ??4?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QAEAAV01@ABV01@@Z
 004d99d0 ??0Font@@QAE@XZ
 004d9aa0 ?load@Font@@QAEXPBD@Z
-004d9e80 ?teardown@TearObj@@QAEXXZ
+004d9e80 ?teardown@TearObj@@QAE_NXZ
 004d9ea0 ?_Ufill@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@IAEPAUE50@@PAU3@IABU3@@Z
 004d9ed0 ?_Insert_n@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@IAEXViterator@12@IABUE50@@@Z
 004da1f0 ??0?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAE@ABV01@@Z

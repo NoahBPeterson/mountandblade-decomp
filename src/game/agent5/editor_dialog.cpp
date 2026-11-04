@@ -73,7 +73,7 @@ struct graph_obj {                                    // mesh_2.cpp / gui_edit.c
     void update_poly_mode();                          // 0x4c5c80
     void update_vertex_mode();                        // 0x4c5a20
 };
-struct TearObj { char teardown(); };                  // 0x4d9e80 (cls_map.cpp): the caller tests the success flag in AL, which the definition (declared void, "void hides eax") does not type; the row stays unresolved until cls_map.cpp declares the flag
+struct TearObj { bool teardown(); };                  // 0x4d9e80 (cls_map.cpp)
 struct MapScreen { void frame_step(); };      // 0x4e8720 (progress_bar.cpp)
 struct MapDialog { void set_object_target(int sel); };               // 0x4c6dc0 (gui_edit.cpp)
 struct MapEditorDialog { void refresh(); void update_object_type(); };   // 0x4c77c0 / 0x4c7bf0 (gui_edit.cpp): the dialog procedure's own object

@@ -4,7 +4,7 @@
 ../src/game/cls_map/cls_map.cpp  ??$_Ucopy@PAUE68@@@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IAEPAUE68@@PAU2@00@Z  004d9400  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ??$_Ucopy@PAUE176@@@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@IAEPAUE176@@PAU2@00@Z  004d9420  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ??4?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QAEAAV01@ABV01@@Z  004d9840  /O2 /MT /Gy /TP
-../src/game/cls_map/cls_map.cpp  ?teardown@TearObj@@QAEXXZ  004d9e80  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?teardown@TearObj@@QAE_NXZ  004d9e80  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?_Ufill@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@IAEPAUE50@@PAU3@IABU3@@Z  004d9ea0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?_Insert_n@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@IAEXViterator@12@IABUE50@@@Z  004d9ed0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ??0?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAE@ABV01@@Z  004da1f0  /O2 /MT /Gy /TP

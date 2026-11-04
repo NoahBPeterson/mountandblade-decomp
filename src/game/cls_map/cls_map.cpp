@@ -324,10 +324,10 @@ void Font::load(const char* filename)
 
 // ---- 0x4d9e80: teardown wrapper ------------------------------------------------------------------------------------
 // @ 0x4d9e80
-void TearObj::teardown()
+bool TearObj::teardown()
 {
     calc_vertex_mode(f78);
-    on_selection_changed();
+    return on_selection_changed();
 }
 
 // ---- 0x4da410: loading_config::operator= ----------------------------------------------------------------------------

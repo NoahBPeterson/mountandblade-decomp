@@ -86,8 +86,8 @@ struct TearObj {
     char pad0[0x78];
     void* f78;                                  // +0x78
     void calc_vertex_mode(void* mode) { ((graph_obj*)this)->calc_vertex_mode((int)mode); }       // 0x4c54f0
-    void on_selection_changed() { ((EditMesh*)this)->on_selection_changed(); }               // 0x4d4b80
-    void teardown();                            // 0x4d9e80
+    bool on_selection_changed() { return ((EditMesh*)this)->on_selection_changed(); }               // 0x4d4b80
+    bool teardown();                            // 0x4d9e80
 };
 
 // ---- 0x4da410..0x4dc1c0: the loading-screen configuration record --------------------------------------------------
