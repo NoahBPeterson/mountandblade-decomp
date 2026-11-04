@@ -253,7 +253,7 @@ void C4c31c0::init_screen()
     is_load = (*(int*)(slot_as<char>(21) + 0x18) == 5);
     g_gui.reset();
 
-    NEW_OVERLAY_WINDOW(w)
+    ContainerBase* w = new NodeA(0);
     window = w;
 
     {
@@ -708,7 +708,7 @@ void ItemB::init_screen()
 void ItemB::create()
 {
     g_gui.reset();
-    NEW_OVERLAY_WINDOW(w)
+    ContainerBase* w = new NodeA(0);
     win = w;
     union { float v[2]; void* root; } u;   // the root ref shares the position pair's slot (frame 8, not 0xc)
     u.v[0] = -0.001f;
@@ -734,7 +734,7 @@ void ItemC::init_screen()
 void ItemC::create2()
 {
     g_gui.reset();
-    NEW_OVERLAY_WINDOW(w)
+    ContainerBase* w = new NodeA(0);
     win = w;
     float v[2];
     v[0] = -0.001f;

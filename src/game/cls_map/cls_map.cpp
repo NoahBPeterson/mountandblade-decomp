@@ -435,7 +435,7 @@ void C4c2fb0::init_screen()
 {
     g_gui.reset();
 
-    NEW_OVERLAY_WINDOW(o)
+    ContainerBase* o = new NodeA(0);
     overlay = o;
 
     {
@@ -712,7 +712,7 @@ void MissionScreen::fill_mission_grid()
 #define NEW_OVERLAY_BASE(name_string)                                                   \
     g_gui.reset();                                                                      \
     g_sound_mgr.stop_all();                                                \
-    { NEW_OVERLAY_WINDOW(p_) overlay = p_; }                                            \
+    overlay = new NodeA(0);                                            \
     {                                                                                   \
         float v[2] = { 0.0f, 0.0f };                                                    \
         vt(overlay)->d22(v);                                                            \
@@ -868,7 +868,7 @@ void MissionScreen::fill_mission_row(int side)
 void Rec3c::init_screen()
 {
     g_gui.reset();
-    { NEW_OVERLAY_WINDOW(p_) overlay = p_; }
+    overlay = new NodeA(0);
     {
         float mv[2];
         mv[0] = 0.0f;
@@ -988,7 +988,7 @@ void ResultWindow::init_screen()
         tstring key("ui_ok");
         s78 = *g_strtable_c.lookup(key);
     }
-    { NEW_OVERLAY_WINDOW(p_) win = p_; }
+    win = new NodeA(0);
     mv[0] = 0.25f; mv[1] = 0.2f; mv[2] = 0.5f; mv[3] = 0.44f;
     vt(win)->d22(mv);
     vt(win)->d25(&mv[2]);
@@ -1218,7 +1218,7 @@ void ItemRec::init_screen()
     g_music.situation = 0x400000;
     g_gui.reset();
 
-    { NEW_OVERLAY_WINDOW(p_) win = p_; }
+    win = new NodeA(0);
 
     { V2 t_(-0.001f, -0.001f); vt(win)->d22(&t_); }
     { V2 t_(1.003f, 0.753f); vt(win)->d25(&t_); }
@@ -1448,7 +1448,7 @@ void ItemRec2::init_screen()
 {
     BlockOwner& block = *(BlockOwner*)&owned;
     g_gui.reset();
-    NEW_OVERLAY_WINDOW(w)
+    ContainerBase* w = new NodeA(0);
     win = w;
 
     float v[2];
@@ -1558,7 +1558,7 @@ void C4c3050::init_screen()
 {
     ContainerBase* w;
     {
-        NEW_OVERLAY_WINDOW(p)
+        ContainerBase* p = new NodeA(0);
         w = p;
     }
     win = w;
@@ -1621,7 +1621,7 @@ void Rec38::init_screen()
     float tv[2];
     ContainerBase* w;
     {
-        NEW_OVERLAY_WINDOW(p)
+        ContainerBase* p = new NodeA(0);
         w = p;
     }
     win = w;
@@ -1758,7 +1758,7 @@ void Rec34::init_screen()
 
     ContainerBase* w;
     {
-        NEW_OVERLAY_WINDOW(p)
+        ContainerBase* p = new NodeA(0);
         w = p;
     }
     win = w;
@@ -1938,7 +1938,7 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 void Recd8::init_screen()
 {
     g_gui.reset();
-    { NEW_OVERLAY_WINDOW(p_) root = p_; }
+    root = new NodeA(0);
     {
         float p[2];
         p[0] = -0.001f; p[1] = -0.001f;
@@ -2179,7 +2179,7 @@ void Recf0::init_screen()
     f_ed = 0;
     day_saved = g_cfg.texture_detail;
     g_gui.reset();
-    { NEW_OVERLAY_WINDOW(p_) window = p_; }
+    window = new NodeA(0);
     {
         float p[2];
         p[0] = -0.001f; p[1] = -0.001f;
@@ -2413,7 +2413,7 @@ void Rec1bc::init_screen()
 {
     f1b8 = -1;
     g_gui.reset();
-    { NEW_OVERLAY_WINDOW(p_) quad = p_; }
+    quad = new NodeA(0);
     float f2[2];
     f2[0] = -0.001f;
     f2[1] = -0.001f;
@@ -2790,7 +2790,7 @@ extern float g_meeting_dy;                      // 0x54b8b4 (0.03f)
 void Rec48::init_screen()
 {
     g_gui.reset();
-    { NEW_OVERLAY_WINDOW(p_) bg = p_; }
+    bg = new NodeA(0);
     float f2[2];
     f2[0] = 0.0f;
     f2[1] = 0.0f;
@@ -2863,7 +2863,7 @@ void C4c3290::init_screen()
     g_gui.reset();
     f44 = 10;
     f48 = 0;
-    { NEW_OVERLAY_WINDOW(p_) overlay = p_; }
+    overlay = new NodeA(0);
     float f2[2];
     f2[0] = -0.001f;
     f2[1] = -0.001f;

@@ -94,12 +94,7 @@ void PartyScreen::init_screen()
     bar_start[1] = ini_float(tstring("party_bo_member2_y"));
 
     // main window
-    PsWindow* win = (PsWindow*)::operator new(0x190);
-    if (win) {
-        window_ctor(win);
-        *(void**)win = (void*)vtbl_592848;
-        win->f188 = 0;
-    }
+    NodeA* win = new NodeA(0);
     window = win;
 
     float pos[2];
@@ -126,14 +121,10 @@ void PartyScreen::init_screen()
     label_refresh(reset_btn, tstring("party_b_reset"));
 
     // info panel
-    MissionUi* panel = (MissionUi*)::operator new(0x188);
-    if (panel) {
-        window_ctor(panel);
-        *(void**)panel = (void*)vtbl_597050;
-    }
+    text_box* panel = new text_box;
     info = panel;
     label_refresh(info, tstring("party_bo_info"));
-    win->panels.push_back(info);
+    win->kids.push_back(info);
 
     // text panels inside the info panel
     name_lbl = (MissionUi*)::operator new(0x178);
@@ -672,7 +663,7 @@ void PartyScreen::setup_party(int side)
 {
     float caption_pos[2];           // passed uninitialized by the original (a game bug)
 
-    members_base[side] = new_ps_bar();
+    members_base[side] = new text_box;
     if (side == 0) {
         label_refresh(members_base[0], tstring("party_bo_party1"));
         if (g_game->skill_level(g_game->player, 2) == 0) {
@@ -687,7 +678,7 @@ void PartyScreen::setup_party(int side)
     }
 
     for (int page = 0; page < 2; page++) {
-        members_page[side][page] = new_ps_list();
+        members_page[side][page] = new ContainerBase;
         label_refresh(members_page[side][page], tstring("party_bo_members_base"));
         // the scrollbar goes on the base, the list on this page (0x5050cc / 0x505131); each name dies after its call
         if (page == 0) {
@@ -724,12 +715,12 @@ void PartyScreen::setup_party(int side)
                                   tstring("party_member_button"),
                                   tstring("party_member_button_pressed"),
                                   ratio, ev, 0.085f);
-            ((PsListWidget*)buttons[side * 2 + page][i])->f184 |= 3;
+            ((UiA*)buttons[side * 2 + page][i])->f184 |= 3;
         }
     }
 
     // the member base is a child of the party body
-    ((PsWindow*)window)->panels.push_back(members_base[side]);
+    ((NodeA*)window)->kids.push_back(members_base[side]);
 
     if (side == 0) {
         gold = new MissionUi;
@@ -830,7 +821,7 @@ void PartyScreen::setup_party(int side)
 void PartyScreen::setup_skills()
 {
     // ---- the skills panel ----
-    MissionUi* w = new_ps_bar();                   // 0x188, ctor 0x4931a0, vptr 0x597050
+    MissionUi* w = new text_box;
     skills_base = w;
     label_refresh(skills_base, tstring("party_bo_skills"));
     {

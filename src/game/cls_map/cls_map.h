@@ -188,16 +188,7 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 //   +0x6c d27 size pair   +0x70 d28 text offset pair   +0x78 d30 text flags: 0x4dc630   +0x7c d31 install mesh(kind): 0x4dada0
 //   +0x80 d32 install mesh(slot)   +0x98 d38 colour   +0x9c d39 highlight colour   +0xa4 d41 set text (out, text)
 //   +0xac d43 set text (text, pos): 0x4db090   +0xb8 d46 hide: 0x4dcef0   +0xc8 d50 add child
-// The overlay window (vtable 0x592848, 0x190 bytes): the base constructor 0x4931a0 (ContainerBase), then the vptr and the byte at +0x188.
-// The two sites that build it (DebriefMenu::create_debrief 0x4de5b0, SaveWinCtl::create 0x4e5d90) call the constructor out of line;
-// the other sites (text_box columns, MeetingWindow::init) have it inlined (`new text_box`).
-struct ContainerW {
-    void* construct();   // 0x4931a0: the base constructor of the overlay window (world_data/world_data.cpp ContainerW::construct, returns this)
-};
-#define NEW_OVERLAY_WINDOW(var) \
-    ContainerBase* var; \
-    { ContainerBase* np_ = (ContainerBase*)::operator new(0x190); \
-      var = np_ != 0 ? (((ContainerW*)np_)->construct(), *(void**)np_ = (void*)vtbl_592848, ((NodeA*)np_)->f188 = 0, np_) : 0; }
+// The overlay window (vtable 0x592848, 0x190 bytes) is ui/container.h's NodeA: `new NodeA(0)` (the byte at +0x188 cleared).
 // the resource manager's get_object (0x419540) for tstring keys, and the UI globals
 // 0x419540 is resmgr::get_object (rgl/core/resmgr.h), which cannot be included next to resource.h: only the member is declared
 // 0x49b120 is NodeVec::push_back (config/widget_node.cpp: the UI root vector at the start of g_gui / g_ui_sound), not gui_manager::add_root:

@@ -46,7 +46,6 @@ using rgl::matrix;
 // defining declaration's symbol, so these are declared as that definition has them and the object is cast at the call. Each says why.
 struct NodeA;
 struct NodeVec { void push_back(NodeA* const& n); };               // 0x49b120 (widget_node.cpp): g_gui's "make this window the active root"; takes the address of a pointer to the window
-struct ContainerW { void* construct(); };                          // 0x4931a0 (world_data.cpp): the window base constructor body, returns this
 struct BlockOwner { void init(struct ContainerBase* c, int id); }; // 0x4dd920 (cls_map.cpp): MenuLayout::build
 #include "../mesh_slot/mesh_build.h"        // setup_item_meshes (0x47cfe0)
 // vec<mface>::clear 0x41f4b0 (entity.cpp; vec of rgl/mesh.h: the vector release shared by every record vector) is called out of line, through its member pointer

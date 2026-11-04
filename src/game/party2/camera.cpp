@@ -136,7 +136,6 @@ struct R8 { int a, b; };                        // an 8-byte returned rect (2 fl
 struct E16 { int a, b, c, d; };                 // one 16-byte text-row record
 
 // ---- external callees ----------------------------------------------------------------------------
-void __fastcall base_ctor_4931a0(void* o);      // 0x4931a0 (ecx = object)
 void __fastcall base_ctor_48ae20(void* o);      // 0x48ae20 (ecx = object)
 void __fastcall dtor_common(void* o);      // 0x490520 (ecx = object)
 void __fastcall play_sound(void* m);     // 0x48b2d0
@@ -1457,16 +1456,7 @@ int View::create_text_overlay(int arg, int flags)
             cam = 0;
         *(int*)((char*)cam + 0x104) |= 0x20;
         *(scene_obj**)((char*)cam + 0x484) = ps;
-        scene_obj* grp = (scene_obj*)operator new(0x188);
-        if (grp) {
-            grp = base_ctor(grp);                        // 0x48ae20
-            *(void**)grp = (void*)vtbl_5924a0;
-            *(int*)((char*)grp + 0x17c) = 0;
-            *(int*)((char*)grp + 0x180) = 0;
-            *(int*)((char*)grp + 0x184) = 0;
-        } else {
-            grp = 0;
-        }
+        scene_obj* grp = (scene_obj*)new ContainerBase;
         float2 z2;
         z2.x = 0;
         z2.y = 0;

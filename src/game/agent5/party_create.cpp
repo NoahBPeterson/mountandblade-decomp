@@ -65,7 +65,6 @@ struct gui_manager { void reset(); };           // 0x42d1b0 (strat/gui_manager.c
 extern gui_manager g_gui;                       // 0x5d7080
 struct NodeA;
 struct NodeVec { void push_back(NodeA* const& n); };   // 0x49b120 (widget_node.cpp): "make this window the active root"; takes the address of a pointer to the window
-struct ContainerW { void* construct(); };       // 0x4931a0 (world_data.cpp): the window base constructor body, returns this
 struct Map10007 { int lookup(unsigned id); };   // 0x48ad00 (ui/mission.h): the party table of the game object (Game::scene) starts with this 0x2717-entry table
 struct FieldPanel { void update(); };           // 0x48d470 (mission_ui2/mission_3.cpp): lays the list out
 #include "../res_mgr.h"                      // res_manager(): the resource manager at 0x5d6fa0
@@ -85,24 +84,6 @@ MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
 // the scrolling item list is Camera (constructor 0x49deb0, size 0x4a8): the flags word is Object's; +0x484 (follow[1]) the scroll bar, +0x490 (target) the page it scrolls (the same page is its one child)
 #include "../party2/camera_class.h"      // Camera: the scrolling item list
 
-// the window (constructor 0x4931a0, vptr 0x592848, size 0x190)
-struct InvWindow : ContainerBase {
-    char f188;                                  // +0x188
-    char pad189[7];
-private:
-    InvWindow();                                // (never defined: built by new_inv_window)
-};
-// new InvWindow: the allocation, then the base constructor body 0x4931a0 (ContainerW::construct, which runs MissionUi's 0x48ae20 itself), the vptr and f188
-static __forceinline InvWindow* new_inv_window()
-{
-    void* mem = operator new(sizeof(InvWindow));
-    if (mem == 0)
-        return 0;
-    ((ContainerW*)mem)->construct();
-    *(void**)mem = (void*)vtbl_592848;
-    ((InvWindow*)mem)->f188 = 0;
-    return (InvWindow*)mem;
-}
 
 // @ 0x500ad0
 void PartyWindow::init_screen()
@@ -134,7 +115,7 @@ void PartyWindow::init_screen()
     icon_a84 = 0;
     icon_a88 = 0;
 
-    InvWindow* win = new_inv_window();
+    NodeA* win = new NodeA(0);
     container = win;
     {
         Vec2 p(0.0f, 0.0f);
