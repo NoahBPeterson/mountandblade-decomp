@@ -121,7 +121,7 @@ struct TableauTbl {
 struct ContainerW {
     void* construct();   // 0x4931a0 (world_data: the list container's constructor body, returns this)
 };
-struct UiAInline; struct WidgetB; struct WidgetC; struct NodeA;
+struct UiAInline; struct WidgetC; struct NodeA;
 static __forceinline void __fastcall window_ctor(void* p) { ((ContainerW*)p)->construct(); }   // 0x4931a0
 static __forceinline void __fastcall panel_ctor(void* p) { new (p) MissionUi; }                   // 0x48ae20 (MissionUi::MissionUi)
 UiAInline* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4e5570
@@ -158,7 +158,8 @@ static __forceinline PsScrollList* new_scroll_list()
         new (m) c49deb0::Camera;
     return (PsScrollList*)m;
 }
-WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name);                        // 0x4f6160
+struct UiD;
+UiD* __cdecl make_scrollbar(void* parent, const tstring* name);                        // 0x4f6160
 WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int sc);              // 0x4f62f0
 static __forceinline MissionUi* make_short_button(MissionUi* p, tstring* t, int a, int b, float h)
 { return (MissionUi*)make_short_button(p, (const tstring*)t, (float)a, (float)b, h); }

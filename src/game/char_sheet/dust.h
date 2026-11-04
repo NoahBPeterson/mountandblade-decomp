@@ -71,14 +71,7 @@ struct vec32 {                                  // 0x20-byte elements (s0040ea00
     void reserve_nr(unsigned n) { ((vec<E32>*)this)->reserve_nr(n); }                                // 0x4f4860
 };
 
-namespace rgl {                                 // the rgl::mesh members this slice calls (the class has other members and is larger)
-struct mesh {
-    std::vector<vertex60>& get50();             // 0x40ebd0
-    std::vector<point20>& get70();              // 0x40eba0
-    std::vector<face20>& get90();               // 0x40ec30
-    void append_skinned(mesh* src, const mat4* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
-};
-}
+#include "../../rgl/mesh.h"                    // rgl::mesh: get50 0x40ebd0, get70 0x40eba0, get90 0x40ec30, append_skinned 0x44eb00
 struct dmesh;
 struct dmesh {                                  // an rgl::mesh as far as this slice sees it
     char pad00[0x18];

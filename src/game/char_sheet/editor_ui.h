@@ -44,22 +44,6 @@ extern text_stream g_log;                         // 0x5a9f60 the engine text lo
 // ---- widgets ---------------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
-// the plain 0x178-byte widget: only the base ctor runs
-struct WidgetA : Widget {
-    char pad[0x178 - 4];
-};
-
-// the 0x188-byte slider / scrollbar widgets (vptr 0x591fb0 / 0x592140)
-struct WidgetB : Widget {
-    char pad0[0x168 - 4];
-    float f168;                                 // +0x168
-    char pad1[0x178 - 0x16c];
-    int f178;                                   // +0x178
-    float f17c;                                 // +0x17c
-    int f180;                                   // +0x180
-    int f184;                                   // +0x184
-};
-
 // the 0x4a8-byte editor list widget (ctor 0x49deb0)
 struct WidgetC : Widget {
     char pad0[0x104 - 4];

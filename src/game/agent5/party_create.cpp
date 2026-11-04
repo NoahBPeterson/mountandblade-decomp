@@ -69,8 +69,8 @@ struct ContainerW { void* construct(); };       // 0x4931a0 (world_data.cpp): th
 struct Map10007 { int lookup(unsigned id); };   // 0x48ad00 (ui/mission.h): the party table of the game object (Game::scene) starts with this 0x2717-entry table
 struct FieldPanel { void update(); };           // 0x48d470 (mission_ui2/mission_3.cpp): lays the list out
 struct resmgr { rgl::mesh* get_object(const rgl::string* name); };   // 0x419540 (rgl/core/resmgr.cpp): the resource manager at 0x5d6fa0
-struct WidgetB;
-WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
+struct UiD;
+UiD* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
 void __cdecl label_refresh(MissionUi* w, tstring name);                // 0x4e4c70 (cdecl, the name by value; cls_map/progress_bar.cpp)
 struct GameData { tstring string_value(int index); };                  // 0x48e9e0 (include/game_data.h; ret 8: hidden return)
 

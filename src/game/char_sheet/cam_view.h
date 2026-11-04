@@ -15,7 +15,11 @@ using rgl::mat4;
 using rgl::mat3;
 
 #include "./cs_common.h"
-#include "./cs_mat.h"                                // identity_pos, UiD, WindowMgrW, FaceRace, FaceGen
+#include "./cs_mat.h"                                // identity_pos, UiD, WindowMgrW, FaceRace
+struct FaceGen {                                                    // facegen_misc.h defines the whole class (that header cannot be read next to scene_world.h: Entity)
+    void update_view(int unused);                                   // 0x4eb270
+    void refresh();                                                 // 0x4eb3c0
+};
 #include "../key_names.h"
 
 // key state / settings globals

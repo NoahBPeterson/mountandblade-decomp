@@ -221,7 +221,7 @@ void DialogBlock::read(stream_base* s)
 void DialogRec::read(stream_base* s)
 {
     char buf[0x200];
-    s->r_tstr(&id);
+    s->r_tstr((rgl::string*)&id);
     s->r_int((int*)&flags).r_int(&f24);
     cond.read(s);
     _snprintf(buf, 0x200, "dialog condition: %s", id.c_str());
@@ -229,7 +229,7 @@ void DialogRec::read(stream_base* s)
         tstring t(buf);
         cond.text = t;
     }
-    s->r_tstr(&text);
+    s->r_tstr((rgl::string*)&text);
     text.underscores_to_spaces();
     s->r_int(&f60);
     conseq.read(s);
