@@ -210,7 +210,6 @@ struct Rot3 {                                           // the three rows of a f
     vector4 s, f, u;
     void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770 (ret 4: rows s and f about u)
 };
-namespace rgl { struct mat3; mat3* __cdecl identity3(mat3* out); }     // 0x40cd60 (rgl/shapes/shapes.cpp)
 inline Rot3* identity3(Rot3* out) { return (Rot3*)rgl::identity3((rgl::mat3*)out); }
 struct MeshRes : rgl::mesh {                            // the master mesh the resource manager hands out for a name
     rgl::mesh* copy_of() { return (rgl::mesh*)((MeshX*)this)->copy_of(); }              // 0x4958f0

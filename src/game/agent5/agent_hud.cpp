@@ -18,7 +18,7 @@
 #include "../gui_mgr.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/mesh_x.h"
 #include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
-#include "../agent_obj.h"      // posm::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
+#include "../agent_obj.h"      // rgl::matrix::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/fx.h"
@@ -451,9 +451,9 @@ void MissionHud::update_camera(float dt)
         float ang, t, u;
         vector4& gcam = GAME_AT(vector4, 0x1a1a4);
         ang = 1.5707964f;
-        k.rotate_about_s(ang);
+        k.rotate_about_s(&ang);
         k.rotate_about_f(&yaw);
-        k.rotate_about_s(pitch);
+        k.rotate_about_s(&pitch);
         k.rotate_about_f(&f284);
         f300 = (1.0f - (dt + dt)) * f300;
         if (f300 < 0.0f)
@@ -534,7 +534,7 @@ void MissionHud::update_camera(float dt)
         }
         if (CAMSLOT.agent >= 0) {
             if (CAMSLOT.attached != 0) {
-                *(matrix*)&k = AG(CAMSLOT.agent)->body->m.mul(k);
+                *(matrix*)&k = AG(CAMSLOT.agent)->body->m * k;
                 k.orthonormalize();
                 goto pass2;
             }
@@ -559,7 +559,7 @@ void MissionHud::update_camera(float dt)
                 float ang;
                 if (!sk->ready)
                     sk->ensure_updated();
-                *(matrix*)&k = body->m.mul(*(matrix*)(sk->recs + 0x1140));
+                *(matrix*)&k = body->m * *(matrix*)(sk->recs + 0x1140);
                 ang = 3.1415927f;
                 k.rotate_about_f(&ang);
                 hv_add_to(k.o, (k.f * 0.15f));
@@ -576,9 +576,9 @@ void MissionHud::update_camera(float dt)
                 hv_add_to(lag, (c * (clamp(&radial, &lo, &hi))));
                 k.o = body->m.transform_point(lag);
                 ang = 1.5707964f;
-                k.rotate_about_s(ang);
+                k.rotate_about_s(&ang);
                 k.rotate_about_f(&yaw);
-                k.rotate_about_s(pitch);
+                k.rotate_about_s(&pitch);
                 hv_add_to(k.o, hv_add((k.f * 0.15f), (k.u * 0.11f)));
             }
         } else if (id >= 0) {
@@ -609,9 +609,9 @@ void MissionHud::update_camera(float dt)
             head.x = head.x + ag->v98.x;
             head.y = ag->v98.y + head.y;
             head.z = ag->v98.z + head.z;
-            k.rotate_about_s(ang);
+            k.rotate_about_s(&ang);
             k.rotate_about_f(&yaw);
-            k.rotate_about_s(pitch);
+            k.rotate_about_s(&pitch);
             k.rotate_about_f(&f284);
             k.o = head;
             d = (pitch < -3.0f ? -3.0f : (pitch < 3.0f ? pitch : 3.0f)) * 0.0f + f278 + f27c;
@@ -672,7 +672,7 @@ pass2:
                 m.o = CAMSLOT.sway.o;
                 if (CAMSLOT.agent >= 0) {
                     if (CAMSLOT.attached != 0) {
-                        m = AG(CAMSLOT.agent)->body->m.mul(m);
+                        m = AG(CAMSLOT.agent)->body->m * m;
                     } else {
                         vector4* bo = &AG(CAMSLOT.agent)->body->m.o;
                         m.o.x = m.o.x + bo->x;
@@ -718,7 +718,7 @@ pass2:
 // @ 0x4fa790
 void Mission::camera_to(const matrix* eye, const float* far_plane)
 {
-    view = *(const posm*)eye;
+    view = *(const rgl::matrix*)eye;
     apply_sun_light(&eye->o, far_plane);
     CellGrid* sc = (CellGrid*)scene;
     sc->m30c = vector4(-eye->u.x, -eye->u.y, -eye->u.z);
@@ -974,7 +974,7 @@ void MissionHud::update_status()
                     piece->set_offset(*(const vector4*)&v);
                     identity3((rgl::mat3*)&frame);
                     float ang = -1.45f;
-                    ((posm*)&frame)->rotate_about_u(&ang);
+                    ((rgl::matrix*)&frame)->rotate_about_u(&ang);
                     piece->set_part(&frame);
                     identity_pos((pos*)&frame);
                     frame.o.z -= 10.0f;
@@ -1109,12 +1109,12 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
     float angle;
     if (type == 0xd) {
         angle = -1.5707964f;
-        ((posm*)&m)->rotate_about_s(angle);
+        ((rgl::matrix*)&m)->rotate_about_s(&angle);
         angle = 3.1415927f;
         goto sf;
     } else if (type == 1) {
         angle = -1.5707964f;
-        ((posm*)&m)->rotate_about_s(angle);
+        ((rgl::matrix*)&m)->rotate_about_s(&angle);
         angle = 1.5707964f;
         goto sf;
     } else if (type == 2 || type == 3 || type == 4) {
@@ -1122,26 +1122,26 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         goto sf;
     } else if (type == 0xe) {
         angle = -1.5707964f;
-        ((posm*)&m)->rotate_about_s(angle);
+        ((rgl::matrix*)&m)->rotate_about_s(&angle);
         angle = 2.670354f;
-        ((posm*)&m)->rotate_about_u(&angle);
+        ((rgl::matrix*)&m)->rotate_about_u(&angle);
         angle = -0.31415927f;
-        ((posm*)&m)->rotate_about_s(angle);
+        ((rgl::matrix*)&m)->rotate_about_s(&angle);
         goto done;
     } else if (type == 7) {
         angle = 1.5707964f;
         goto sf;
     } else if (type == 0xc) {
         angle = -0.47123894f;
-        ((posm*)&m)->rotate_about_f(&angle);
+        ((rgl::matrix*)&m)->rotate_about_f(&angle);
         angle = 0.62831855f;
-        ((posm*)&m)->rotate_about_s(angle);
+        ((rgl::matrix*)&m)->rotate_about_s(&angle);
         goto done;
     } else if (type == 9) {
         angle = 1.5707964f;
-        ((posm*)&m)->rotate_about_f(&angle);
+        ((rgl::matrix*)&m)->rotate_about_f(&angle);
         angle = -2.3561945f;
-        ((posm*)&m)->rotate_about_s(angle);
+        ((rgl::matrix*)&m)->rotate_about_s(&angle);
         goto done;
     } else if (type == 0x11) {
         goto done;
@@ -1153,19 +1153,19 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         goto sf;
     } else if (type == 0xb) {
         angle = -1.2566371f;
-        ((posm*)&m)->rotate_about_s(angle);
+        ((rgl::matrix*)&m)->rotate_about_s(&angle);
         angle = 0.7853982f;
         goto sf;
     } else if (type == 0x14) {
         angle = -0.62831855f;
-        ((posm*)&m)->rotate_about_s(angle);
+        ((rgl::matrix*)&m)->rotate_about_s(&angle);
         angle = -0.47123894f;
         goto sf;
     } else {
         goto done;
     }
 sf:
-    ((posm*)&m)->rotate_about_u(&angle);
+    ((rgl::matrix*)&m)->rotate_about_u(&angle);
 done:
     result->set_part(&m);
 

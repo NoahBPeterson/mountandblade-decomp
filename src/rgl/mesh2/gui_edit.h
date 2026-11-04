@@ -663,8 +663,6 @@ struct var_rec {
     scene_obj* obj;                                          // +0x84
 };
 
-struct matrix3 { vector4 s, f, u; };                         // identity3's result (0x30 bytes)
-matrix3* __cdecl identity3(matrix3* out);                    // 0x40cd60
 
 // the scene graph global (at +0xc3b0dc of the layout record)
 struct world_sub {

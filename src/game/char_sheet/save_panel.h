@@ -20,7 +20,6 @@ using rgl::vector4;
 using rgl::mat3;
 using rgl::mat4;
 
-mat3* identity3(mat3* out);                             // 0x40cd60 (cdecl; returns out)
 
 struct vertex60;
 #include "../../rgl/mesh.h"

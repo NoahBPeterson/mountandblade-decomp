@@ -18,7 +18,6 @@ struct pos2 : rgl::matrix {
     void rotate_su(const float* angle) { rotate_about_f(angle); }     // 0x40e670 rotates rows s and u
     void rotate_sf(const float* angle) { rotate_about_u(angle); }     // 0x40e770 rotates rows s and f
 };
-struct pos;                                 // the global-namespace twin of rgl::matrix that the definition of 0x40cd00 names (src/include/mat4.h)
-pos2 identity_pos();                        // 0x40cd00 (cdecl, hidden return pointer: identity rotation, zero origin; item_kind.cpp calls the definition's own pos* form)
+namespace rgl { struct matrix; } typedef rgl::matrix pos;                                 // the global-namespace twin of rgl::matrix that the definition of 0x40cd00 names (src/include/mat4.h)
 
 #endif // AGENT_ITEM_KIND_H

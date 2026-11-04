@@ -68,8 +68,6 @@ Mission* g_mission;                                         // 0x5e292c the miss
 extern const int g_nav_param = 2;                  // 0x59132c (rdata)
 
 using rgl::mat3;
-mat3* __cdecl identity3(mat3* out);             // 0x40cd60
-matrix* __cdecl identity_pos(matrix* out);      // 0x40cd00
 // resource-manager members this object calls that rgl/resource.h does not declare (no new fields)
 struct resmgr : resource_manager {
     std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (hidden return pointer)

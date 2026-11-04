@@ -1413,7 +1413,7 @@ void ViewCtrl_s284a0::update(float dt)
     Agent_s284a0* a;
     {
         matrix m;
-        identity3(&m);
+        identity3((rgl::mat3*)&m);
         ((MatrixExt_s284a0*)&m)->rotate_sf(&yaw);
         ((MatrixExt_s284a0*)&m)->rotate_fu(&pitch);
 
@@ -2766,7 +2766,7 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
 
     capsule_s2b5c0 cap(0.0f, &near_pt, &far_pt);
     matrix m;
-    cap.transform((const ::pos*)identity(&m));
+    cap.transform((const ::pos*)identity_pos(&m));
 
     vector4 p;
     p.x = near_pt.x;

@@ -35,16 +35,6 @@ struct Emit;
 struct ClassInfo;
 struct Blow;
 
-// a frame with the operations the agent code calls (rgl::mat4 + the rotation 0x40e570; mul is mat4's operator* 0x40e870)
-struct posm : rgl::mat4 {
-    rgl::matrix mul(const rgl::matrix& m) const;       // 0x40e870 (hidden return pointer)
-    void rotate_about_s(const float& angle);                // 0x40e570
-    void rotate_about_f(const float* angle);                // 0x40e670 (0x44fc60)
-    vector4 rot(const vector4& p) const;           // 0x40a9c0 (rotation part only; 0x453710)
-    void rotate_about_u(const float* angle);                // 0x40e770 (0x448eb0)
-    vector4 transform_point(const vector4& p) const;   // 0x408460
-};
-
 // ---- animation requests and the definition list at agent+0x12c ----------------------------------------------------------
 struct SubAnim {                                        // 0x40 bytes: one sub-animation request (AnimCmd)
     const void* anim;                                   // +0 (0x43a980)
@@ -77,7 +67,7 @@ struct AgentBody {                                      // the scene-side body (
     int f0, f4;
     int id;                                             // +8 scene entity id (0x43a6f0)
     char padc[0x58 - 0xc];
-    posm m;                                             // +0x58: s, f, u, o rows of the body frame (0x4417d0, 0x43b7b0, 0x43cc30, 0x43f6d0, 0x4406a0)
+    rgl::matrix m;                                          // +0x58: s, f, u, o rows of the body frame (0x4417d0, 0x43b7b0, 0x43cc30, 0x43f6d0, 0x4406a0)
     char pad98[0x304 - 0x98];
     Skeleton* skel;                                     // +0x304 (0x435c10, 0x43f560, 0x43f970, 0x440e30, 0x443aa0, 0x444370)
 };

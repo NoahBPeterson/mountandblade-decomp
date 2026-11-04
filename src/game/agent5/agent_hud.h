@@ -59,8 +59,6 @@ struct HudOuter { void scroll_refresh(vector4* v); };              // 0x498420 (
 struct PartyModel { void set_fade(const float* v); };              // 0x4b1800 (party2/party_2.cpp)
 // level (trace_ray 0x439d60, query_segment 0x439870): terrain_b/cell_grid.h
 float __cdecl time_of_day();                                       // 0x4356e0 (agent.cpp)
-pos* __cdecl identity_pos(pos* out);                               // 0x40cd00 (shapes.cpp; rgl::identity_pos(matrix*) of the scene headers is the same function)
-rgl::mat3* __cdecl identity3(rgl::mat3* out);                      // 0x40cd60 (shapes.cpp)
 namespace rgl { vector4 unpack_color(const unsigned* argb); }      // 0x40e4e0 (shapes.cpp: the vector comes back through the hidden pointer; rgl_math.h declares an out-parameter spelling)
 template <class T> void __cdecl uninit_fill_n(T* first, unsigned n, const T& val, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);   // 0x40df60 (shapes.cpp)
 // the protected std::vector<T>::_Insert_n of the vectors the widget code fills by hand (VC7.1 layout: allocator word, first, last, end)
@@ -244,7 +242,7 @@ struct MissionHud {
     int ammo_stage;                                               // +0xf4
     rgl::frustum fr;                                              // +0xf8 (0x4f7f00 sets the near / far pair and the four edges; 0x4f8c80 refreshes it every tick)
     vector4 head;                                                 // +0x218 (0x4f8c80: the agent's head position plus the camera height)
-    posm k;                                                       // +0x228 the camera frame (0x4f8c80; s, f, u, o rows)
+    rgl::matrix k;                                                       // +0x228 the camera frame (0x4f8c80; s, f, u, o rows)
     float yaw;                                                    // +0x268 (0x4f7f00, 0x4f8c80)
     float pitch;                                                  // +0x26c (0x4f8c80)
     int f270, f274;                                               // +0x270 (cleared by 0x4f7f00)

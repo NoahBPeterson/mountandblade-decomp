@@ -97,11 +97,13 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
                 }
             }
         }
-        shadow_a->render(sc, (const rgl::matrix&)rgl::identity_pos());
+        rgl::matrix id_a;
+        shadow_a->render(sc, *rgl::identity_pos(&id_a));
         f170 = 1;
     }
     if (b) {
-        shadow_b->render(sc, (const rgl::matrix&)rgl::identity_pos());
+        rgl::matrix id_b;
+        shadow_b->render(sc, *rgl::identity_pos(&id_b));
     }
 }
 

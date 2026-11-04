@@ -34,8 +34,7 @@ void __cdecl vector_constructor_iterator(void* dst, int size, int n, void* ctor)
 // ResultWindow (vtable 0x595740, ctor 0x4c2c50): game/result_window.h
 
 struct M44 { float f[16]; };
-struct pos;                                          // include/mat4.h: the 0x40-byte frame, layout of M44
-pos* __cdecl identity_pos(pos* out);                 // 0x40cd00 (fills `out`, returns it; shapes.h)
+namespace rgl { struct matrix; } typedef rgl::matrix pos;                                          // include/mat4.h: the 0x40-byte frame, layout of M44
 
 // 0x140-byte record: four 0x40-byte matrices filled from 0x40cd00, counters at +0x100/+0x104,
 // a mode int at +0x110 and a clock snapshot / rate at +0x118..+0x128 (ctor 0x4c2d10).

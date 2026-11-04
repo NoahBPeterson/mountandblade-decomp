@@ -37,7 +37,6 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 #include "../../include/shape.h"
 #include "../../include/mat4.h"
 
-matrix* identity_pos(matrix* out);                                               // 0x40cd00
 
 // --------------------------------------------------------------------------------- map / game records --
 struct shape_base;

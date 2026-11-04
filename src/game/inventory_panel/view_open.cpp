@@ -37,13 +37,6 @@ void label_refresh(MissionUi* w, tstring name);                    // 0x4e4c70 (
 
 // ---- frustum (0x120 bytes) -------------------------------------------------------------------------------
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
-// ---- frame / matrix --------------------------------------------------------------------------------------
-struct frame : rgl::matrix {
-    void rotate_about_s(const float* angle);                     // 0x40e570
-    void rotate_about_f(const float* angle);                     // 0x40e670
-};
-pos* identity_pos(pos* out);                                // 0x40cd00 (cdecl, returns out)
-
 // ---- entities --------------------------------------------------------------------------------------------
 struct Entity {
     virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
@@ -175,7 +168,7 @@ void char_window::open_view()
         // the camera frame: the body's aspect scaled by the global fov factor
         float aspect = b->screen[1] / b->screen[0] * g_fov_k;
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);
-        frame mat;
+        rgl::matrix mat;
         identity_pos((pos*)&mat);
         // identity_pos (0x40cd00) has its worker 0x40cd60 copy its OWN stack locals into the matrix' w
         // lanes, so u.w (and s.w/f.w) hold whatever the deepest previous callee left on the stack rather
@@ -187,7 +180,7 @@ void char_window::open_view()
         mat.o.x += mat.u.x * 1.2f;
         mat.o.y += mat.u.y * 1.2f;
         mat.o.z += mat.u.z * 1.2f;
-        *(frame*)((char*)this + 0x3b4) = mat;
+        *(rgl::matrix*)((char*)this + 0x3b4) = mat;
         fr.build_planes();
         rect[0] = 0.0f;
         rect[1] = 0.0f;
@@ -198,7 +191,7 @@ void char_window::open_view()
         f424 = 0.7f;
         b->view = fr;
         Entity* e = w->create_entity(9);
-        frame m2;
+        rgl::matrix m2;
         identity_pos((pos*)&m2);
         m2.o.y = -0.12f;
         float ang = -0.2f;

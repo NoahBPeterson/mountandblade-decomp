@@ -965,7 +965,6 @@ struct MatrixExt_s284a0 {
     __forceinline void rotate_sf(float* angle);                       // 0x40e770
     __forceinline void rotate_fu(float* angle);                       // 0x40e570
 };
-void identity3(matrix* m);                              // 0x40cd60
 
 // ---- key tables -------------------------------------------------------------------------------------
 struct KeyTable_s284a0 {                                       // 0xa73730
@@ -1724,7 +1723,6 @@ struct shape_base_s2b5c0 {
     __forceinline void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0
 };
 typedef capsule capsule_s2b5c0;
-matrix* identity(matrix* out);                                              // 0x40cd00
 
 struct Scene_s2b5c0 {
     char pad[0x64];
@@ -1924,7 +1922,7 @@ struct level {
 struct RecZSubB {
     RecZSubB* init();   // 0x4353a0
 };
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionHud; struct MissionSource; struct MsgLog; struct NamedRec; struct OriginPairs; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct gui_manager; struct gui_obj; struct gui_view; struct level; struct pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionHud; struct MissionSource; struct MsgLog; struct NamedRec; struct OriginPairs; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct gui_manager; struct gui_obj; struct gui_view; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;

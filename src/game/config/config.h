@@ -73,7 +73,7 @@ struct CreateGameOptionsPage {
 
 // ---- input state and device set (0x4bc2d0..0x4bc430) -------------------------------------------------------------
 struct Matrix { float m[16]; };
-struct pos;                                          // src/include/mat4.h: the frame type the definition of 0x40cd00 names (config.cpp declares the function)
+namespace rgl { struct matrix; } typedef rgl::matrix pos;                                          // src/include/mat4.h: the frame type the definition of 0x40cd00 names (config.cpp declares the function)
 struct InputSet {
     IDirectInput8A* dinput;                         // +0x000 0x4bc430
     IDirectInputDevice8A* keyboard;                 // +0x004

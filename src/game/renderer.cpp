@@ -329,7 +329,8 @@ D3DXMATRIX rgl::frustum::projection()
 mat4 frustum_view::view_matrix()
 {
     mat4 rel;
-    rel = ((mat4&)m).relative(rgl::identity_pos());
+    mat4 id;
+    rel = ((mat4&)m).relative(*rgl::identity_pos(&id));
     rel.s.w = 0.0f; rel.f.w = 0.0f; rel.u.w = 0.0f; rel.o.w = 1.0f;
     return rel;
 }

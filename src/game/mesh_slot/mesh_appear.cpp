@@ -11,7 +11,6 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 namespace rgl { struct mat3; }
-rgl::mat3* __cdecl identity3(rgl::mat3* out);     // 0x40cd60 (rgl/shapes/shapes.cpp: the global function; fills the 3x3 and returns out)
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
@@ -186,7 +185,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         // the identity's 3x3, scaled by 0.95 (the item mesh frame)
         float mtx[16];
-        ::identity3((rgl::mat3*)mtx);
+        rgl::identity3((rgl::mat3*)mtx);
         mtx[12] = mtx[13] = mtx[14] = mtx[15] = 0.0f;
         mtx[0] *= 0.95f;  mtx[1] *= 0.95f;  mtx[2]  *= 0.95f;
         mtx[4] *= 0.95f;  mtx[5] *= 0.95f;  mtx[6]  *= 0.95f;

@@ -43,6 +43,5 @@ void push_back_body(std::vector<const NewtonBody*>& v, const NewtonBody* const& 
 #include "../../include/shape.h"
 #include "../../include/mat4.h"
 using rgl::mat3;
-mat3* __cdecl identity3(mat3* out);                     // 0x40cd60
 
 #endif // AGENT_PHYS_SET_H

@@ -55,7 +55,6 @@ struct BattleRec {                                      // the 0x98-byte object 
 extern MissionTemplate* g_mission_templates;                    // 0x5e2a00
 
 using rgl::mat3;
-mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
 struct FramePlacement { mat3 m; int a, b, c, d; };      // 0x40 bytes (rotation + position; was Placement: agent/agent.h's Placement is the game-data view of 0x435650)
 struct FrameTemp {                                      // init_scene's 0x1c8-byte frame scratch (never constructed)
     char pad0[0x10];

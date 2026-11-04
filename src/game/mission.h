@@ -154,7 +154,7 @@ struct Mission {
     int cam;                                    // +0x660c index of the camera row (0x47a0c0, 0x442ca0)
     float f6610;                                // +0x6610 (agent4/agent_think.cpp 0x44e2b0: the view distance scale of the aim error)
     char pad6614[0x6624 - 0x6614];
-    posm view;                                  // +0x6624 (0x43f970, 0x440070)
+    rgl::matrix view;                                  // +0x6624 (0x43f970, 0x440070)
     int f6664;                                  // +0x6664
     char pad6668[0x6678 - 0x6668];
     std::vector<Agent*> dead;                   // +0x6678 (first at +0x667c; dead / culled list: 0x442dc0, terrain_b reset 0x479160)

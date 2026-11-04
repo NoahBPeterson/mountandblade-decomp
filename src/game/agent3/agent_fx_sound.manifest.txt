@@ -5,7 +5,7 @@
 ../src/game/agent3/agent_fx_sound.cpp  ?collect_boxed@world@@QAEXPBUvector4@rgl@@0PAV?$vector@IV?$allocator@I@std@@@std@@@Z  00442180  /O2 /MT /Gy /TP
 ../src/game/agent3/agent_fx_sound.cpp  ?add_psys@FxElem@@QAEXH@Z  00442390  /O2 /MT /Gy /TP
 ../src/game/agent3/agent_fx_sound.cpp  ?add_group@FxElem@@QAEXH@Z  004423f0  /O2 /MT /Gy /TP
-../src/game/agent3/agent_fx_sound.cpp  ?attach_psys@FxDef@@QAEXHPAUPsys@@PBUmat4@rgl@@@Z  00442460  /O2 /MT /Gy /TP
+../src/game/agent3/agent_fx_sound.cpp  ?attach_psys@FxDef@@QAEXHPAUPsys@@PBUmatrix@rgl@@@Z  00442460  /O2 /MT /Gy /TP
 ../src/game/agent3/agent_fx_sound.cpp  ?attach_group@FxDef@@QAEXHPAUPsysGroup@@@Z  004424a0  /O2 /MT /Gy /TP
 ../src/game/agent3/agent_fx_sound.cpp  ?play_slot@SoundMgr@@QAEHHHPBMMPAH@Z  004428a0  /O2 /MT /Gy /TP
 ../src/game/agent3/agent_fx_sound.cpp  ?queue_dead@Mission@@QAEXPAUAgent@@@Z  00442dc0  /O2 /MT /Gy /TP

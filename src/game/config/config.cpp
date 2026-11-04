@@ -51,7 +51,6 @@ extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(HWND hwnd, int 
 extern "C" IDirect3D9* __stdcall Direct3DCreate9(UINT);     // 0x534342
 extern "C" short __stdcall FSOUND_Stream_Close(FMOD_STREAM s);                                              // 0x5342e2
 extern "C" FMOD_STREAM __stdcall FSOUND_Stream_Open(const char* name, unsigned mode, int offset, int length);   // 0x5342e8
-pos* __cdecl identity_pos(pos* out);                         // 0x40cd00 fills out and returns it (the definition's own declaration)
 bool ConfirmDeviceHelper(D3DCAPS9* pCaps, VertexProcessingType vp, D3DFORMAT adapterFormat, D3DFORMAT backBufferFormat);   // 0x401010
 
 // ---- 0x4b9e70 ----------------------------------------------------------------------------------------------------------
@@ -935,7 +934,6 @@ void buffer_pair::release()
 
 // @ 0x4ebea0 (the members are built in declaration order by the compiler: five vertex pairs and the index pair (0x4cd720), the scene
 // vector, the bone-origin table (0x417cb0), the mesh (0x412a90) and the scene (0x429740))
-rgl::mat3* __cdecl identity3(rgl::mat3* out);                       // 0x40cd60
 render_batch::render_batch()
 {
     world_mats = new xform[0x20];

@@ -1,4 +1,4 @@
-../src/game/renderer.cpp  ?set_view@renderer@@QAEXPBUmat4@rgl@@@Z  00461630  /O2 /MT /Gy /TP
+../src/game/renderer.cpp  ?set_view@renderer@@QAEXPBUmatrix@rgl@@@Z  00461630  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?reset_state@renderer@@QAEXXZ  004617b0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?set_lighting@renderer@@QAEX_N@Z  00461ba0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?set_stage_color@renderer@@QAEXHH@Z  00461bd0  /O2 /MT /Gy /TP
@@ -11,7 +11,7 @@
 ../src/game/renderer.cpp  ?set_state@mesh_part@@QAEXXZ  00461f80  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?set_part@mesh_inst@@QAEXPAUmesh_part@@@Z  004620b0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?projection@frustum@rgl@@QAE?AUD3DXMATRIX@@XZ  004620d0  /O2 /MT /Gy /TP
-../src/game/renderer.cpp  ?view_matrix@frustum_view@@QAE?AUmat4@rgl@@XZ  00462170  /O2 /MT /Gy /TP
+../src/game/renderer.cpp  ?view_matrix@frustum_view@@QAE?AUmatrix@rgl@@XZ  00462170  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?to_clip@frustum@rgl@@QAE?AUvector4@2@ABU32@@Z  004621f0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?rec_less@@YA_NPBQAUsort_rec@@0@Z  004622a0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?restore@dev_buffer@@QAEJXZ  004622e0  /O2 /MT /Gy /TP

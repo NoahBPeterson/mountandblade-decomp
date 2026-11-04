@@ -4,6 +4,4 @@
 #ifndef CHAR_SHEET_CS_MAT_H
 #define CHAR_SHEET_CS_MAT_H
 #include "../../include/mat4.h"             // rgl::mat3, the global `pos`, rgl::matrix
-pos* __cdecl identity_pos(pos* out);                                // 0x40cd00
-rgl::mat3* __cdecl identity3(rgl::mat3* out);                       // 0x40cd60
 #endif

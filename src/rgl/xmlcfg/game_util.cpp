@@ -247,9 +247,9 @@ rot3x rot3x::mul_t(const rot3x& b) const
 
 // b expressed in this frame
 // @ 0x4329d0
-rgl::mat4 rgl::mat4::relative(const rgl::mat4& b) const
+rgl::matrix rgl::matrix::relative(const rgl::matrix& b) const
 {
-    rgl::mat4 m;
+    rgl::matrix m;
     m.o = transform_point_to_local(b.o);
     *(rot3x*)&m = ((const rot3x*)this)->mul_t(*(const rot3x*)&b);
     return m;

@@ -782,7 +782,6 @@ void SaveWinCtl::create2()
 
 // ---- 0x4e6050: gui_manager::build_scene ----------------------------------------------------------------------------------------------
 namespace rgl { struct mat3; }
-rgl::mat3* __cdecl identity3(rgl::mat3* m);     // 0x40cd60 (fills 0x30 bytes, returns m; the definition, rgl/shapes/shapes.cpp, takes the rgl::mat3 frame)
 // the widget slot +0x28 of the polymorphic children (gui_manager::objs)
 struct GuiChild {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();

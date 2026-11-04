@@ -245,8 +245,8 @@ void render_batch::render_scene(scene* sc)
         b.rot = *(rot3*)identity3((mat3*)&idt);
         b.o = vector4(0.0f, 0.0f, 0.0f);
         float ang = 1.5707964f;
-        ((m4*)&b)->rotate_about_s(&ang);
-        a = *(frame4*)&(*(m4*)&b * *(m4*)&a);
+        ((rgl::matrix*)&b)->rotate_about_s(&ang);
+        a = *(frame4*)&(*(rgl::matrix*)&b * *(rgl::matrix*)&a);
     }
     a.rot.s.w = 0.0f; a.rot.f.w = 0.0f; a.rot.u.w = 0.0f; a.o.w = 1.0f;
 

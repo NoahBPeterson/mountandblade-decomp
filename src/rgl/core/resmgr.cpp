@@ -719,7 +719,7 @@ lod_group::lod_group()
 {
     count = 0;
     matrix t;
-    m8c = *identity(&t);
+    m8c = *identity_pos(&t);
     cur = 0;
     mask = 0xffff;
 }

@@ -18,8 +18,8 @@
 using namespace rgl;
 
 // Bind the ext declarations of shapes.h to the functions they stand for (see there).
-#pragma comment(linker, "/alternatename:?transform_point@pos_ext@@QBE?AUvector4@rgl@@ABU23@@Z=?transform_point@pos@@QBE?AUvector4@rgl@@ABU23@@Z")
-#pragma comment(linker, "/alternatename:?rot_ext@pos_ext@@QBE?AUvector4@rgl@@ABU23@@Z=?rot@pos@@QBE?AUvector4@rgl@@ABU23@@Z")
+#pragma comment(linker, "/alternatename:?transform_point@pos_ext@@QBE?AUvector4@rgl@@ABU23@@Z=?transform_point@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z")
+#pragma comment(linker, "/alternatename:?rot_ext@pos_ext@@QBE?AUvector4@rgl@@ABU23@@Z=?rot@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z")
 #pragma comment(linker, "/alternatename:?normalize_ext@rgl@@YAXAAUvector4@1@ABU21@@Z=?normalize@rgl@@YAXAAUvector4@1@ABU21@@Z")
 #pragma comment(linker, "/alternatename:?orthonormalize@matrix_ext@@QAEXXZ=?orthonormalize@matrix@rgl@@QAEXXZ")
 #pragma comment(linker, "/alternatename:?transform_point_to_local@matrix_ext@@QBE?AUvector4@rgl@@ABU23@@Z=?transform_point_to_local@matrix@rgl@@QBE?AUvector4@2@ABU32@@Z")
@@ -199,7 +199,7 @@ void sphere::transform(const pos* m)
     center = ((const pos_ext*)m)->transform_point(local_center);
 }
 // @ 0x408460
-vector4 pos::transform_point(const vector4& p) const
+vector4 matrix::transform_point(const vector4& p) const
 {
     return vector4(s.x * p.x + f.x * p.y + u.x * p.z + o.x,
                    s.y * p.x + f.y * p.y + u.y * p.z + o.y,
@@ -734,9 +734,9 @@ void renderer::apply(const matrix* m)
     dev->SetTransform(D3DTS_WORLD, (const D3DMATRIX*)c);
 }
 // @ 0x40a920
-mat3 pos::rot3(const matrix& m) const { return mat3(((const pos_ext*)this)->rot_ext(m.s), ((const pos_ext*)this)->rot_ext(m.f), ((const pos_ext*)this)->rot_ext(m.u)); }
+mat3 matrix::rot3(const matrix& m) const { return mat3(((const pos_ext*)this)->rot_ext(m.s), ((const pos_ext*)this)->rot_ext(m.f), ((const pos_ext*)this)->rot_ext(m.u)); }
 // @ 0x40a9c0
-vector4 pos::rot(const vector4& p) const
+vector4 matrix::rot(const vector4& p) const
 {
     return vector4(p.x * s.x + (f.x * p.y + u.x * p.z),
                    f.y * p.y + (s.y * p.x + u.y * p.z),
@@ -1190,7 +1190,7 @@ shape_base* manifold::build_composite()
     return c;
 }
 // @ 0x40cd00
-__declspec(noinline) pos* __cdecl identity_pos(pos* out)
+__declspec(noinline) matrix* __cdecl rgl::identity_pos(matrix* out)
 {
     vector4 o(0.0f, 0.0f, 0.0f);
     mat3 m;
@@ -1199,7 +1199,7 @@ __declspec(noinline) pos* __cdecl identity_pos(pos* out)
     return out;
 }
 // @ 0x40cd60
-__declspec(noinline) mat3* __cdecl identity3(mat3* out)
+__declspec(noinline) mat3* __cdecl rgl::identity3(mat3* out)
 {
     vector4 a(1.0f, 0.0f, 0.0f), b(0.0f, 1.0f, 0.0f), c(0.0f, 0.0f, 1.0f);
     out->s = a;

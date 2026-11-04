@@ -163,7 +163,7 @@ refresh_list:
         vector4 dir(-cam_x, -cam_y, -cam_z);
         pos3 m;
         rgl::mat3 idtmp;
-        *(rgl::mat3*)&m = *::identity3(&idtmp);
+        *(rgl::mat3*)&m = *rgl::identity3(&idtmp);
         m.o = ed_pos(g_game);
         cross3(m.s, dir, m.u);
         normalize_vec(m.s);

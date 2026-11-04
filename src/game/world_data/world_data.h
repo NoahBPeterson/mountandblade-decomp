@@ -379,7 +379,6 @@ struct GlobVec {                                                // the running p
 #include "../../include/renderer.h"                              // g_render 0xa17910 (dev at +0x618 = 0xa17f28)
 struct RotRows { rgl::vector4 s, f, u; };                       // the rotation part of a frame (0x30 bytes)
 #include "../../include/mat4.h"                              // rgl::mat3
-rgl::mat3* __cdecl identity3(rgl::mat3* out);                  // 0x40cd60 (cdecl; returns out)
 extern "C" void __stdcall FSOUND_StopSound(int handle);                            // 0x5342a6 _FSOUND_StopSound@4
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 

@@ -44,16 +44,50 @@ void cross(vector4& r, const vector4& a, const vector4& b);                 // 0
 void normalize(vector4& out, const vector4& in);  // (0,1,0) if length <= 0  0x407e00
 float dot(const vector4& a, const vector4& b);                              // 0x407e90
 
-// position/frame: s(ide), f(orward), u(p) rows and origin o (module system `pos`). 64 bytes.
+// 3x3 rotation, rows s(ide), f(orward), u(p) padded to 4 floats (48 bytes). rot3 is the plain triple; mat3 adds the by-value
+// constructor (src/rgl/shapes/shapes.cpp builds results with it).
+struct rot3 { vector4 s, f, u; };
+struct mat3 {
+    vector4 s, f, u;
+    mat3() {}
+    __forceinline mat3(const vector4& s_, const vector4& f_, const vector4& u_) : s(s_), f(f_), u(u_) {}
+};
+
+// position/frame: s(ide), f(orward), u(p) rows and origin o (the Module System `pos`). 64 bytes. The one class every
+// module (rgl scene, game, shapes, the interpreter) uses for it; the 64-byte layout is verified by entity (0x41fcd0 /
+// 0x41fda0 / 0x41fe50 copy the frame at +0x18 / +0x58), renderer (0x461630, 0x462170), frustum::to_clip (0x4621f0),
+// entity::render 0x420310 (transform_point), FxDef::skin 0x4291c0 (rot_t, rot3), game_util 0x4329d0 (relative).
+// No constructors: the scene code keeps it an aggregate.
 struct matrix {
     vector4 s, f, u, o;
     void orthonormalize();                                                  // 0x407ef0
     vector4 transform_point_to_local(const vector4& p) const;               // 0x407f70
-    matrix operator*(const matrix& b) const;                                // 0x40e870 (this = left operand)
-    void rotate_about_s(const float* angle);                                // 0x40e570 (provisional)
+    matrix operator*(const matrix& b) const;                                // 0x40e870 (this = left operand, hidden return; rotation via rot3, origin via transform_point)
+    void rotate_about_s(const float* angle);                                // 0x40e570 (rows f and u about s)
     void rotate_about_f(const float* angle);  // rotates rows s and u about f   0x40e670
     void rotate_about_u(const float* angle);  // rotates rows s and f about u   0x40e770
+    __declspec(noinline) vector4 transform_point(const vector4& p) const;   // 0x408460 (hidden return pointer)
+    mat3 rot3(const matrix& m) const;                                       // 0x40a920 (rotation rows of m through this; hidden mat3 return)
+    __declspec(noinline) vector4 rot(const vector4& p) const;               // 0x40a9c0 (no translation)
+    mat3* rot_t(mat3* out) const;                                           // 0x429670 (transposed rotation of this, returns out)
+    matrix relative(const matrix& base) const;                              // 0x4329d0 (base expressed in this frame; hidden return + base)
+    __forceinline vector4 transform_point_inl(const vector4& p) const       // the body as callers inline it
+    {
+        return vector4(s.x * p.x + f.x * p.y + u.x * p.z + o.x,
+                       s.y * p.x + f.y * p.y + u.y * p.z + o.y,
+                       s.z * p.x + f.z * p.y + u.z * p.z + o.z);
+    }
 };
+// a frame whose rows can be scaled in place (entity::local, 0x41fee0)
+struct smat : matrix {
+    void scale_rows(const vector4* k);                                      // 0x41fee0
+};
+// the scene code's name for the frame
+typedef matrix mat4;
+mat3* __cdecl identity3(mat3* out);                                         // 0x40cd60 (cdecl; returns out; defined in shapes/shapes.cpp)
+matrix* __cdecl identity_pos(matrix* out);                                  // 0x40cd00 (cdecl; returns out)
+struct frame_value : matrix {};                                              // a frame with a base class: cl 13.10 builds such a temporary in place (a plain matrix is copied once more)
+frame_value identity_pos();                                                  // 0x40cd00 (the hidden-return-pointer spelling of the same function: renderer::set_view's temporaries)
 
 // packed ARGB <-> float colour (cdecl)
 unsigned pack_color(const vector4* c);                                      // 0x40e440

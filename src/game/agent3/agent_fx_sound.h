@@ -112,6 +112,5 @@ extern MsgLog g_gui;                                 // 0x5d7080
 // ---- mesh objects hanging off the agent (0x443aa0, 0x444370) ----------------------------------------------------------------------
 #include "../../include/mat4.h"
 using rgl::mat3;
-mat3* __cdecl identity3(mat3* out);                     // 0x40cd60
 
 #endif // AGENT3_FX_SOUND_H

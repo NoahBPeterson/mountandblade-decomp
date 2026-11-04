@@ -86,7 +86,6 @@ struct matrix {                                              // 4 rows; row 3 = 
     void rotate_sf(float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770
 };
 struct RectF { float x0, y0, x1, y1; };
-mat3* __cdecl identity3(mat3* out);                          // 0x40cd60
 float __cdecl frand();                                       // 0x40e400
 void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
 

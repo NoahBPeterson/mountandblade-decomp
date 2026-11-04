@@ -38,7 +38,7 @@ extern char g_log_obj[];                                // 0x5a9f30 (a Logger)
 namespace rgl {
 
 // @ 0x429670
-mat3* mat4::rot_t(mat3* out) const
+mat3* matrix::rot_t(mat3* out) const
 {
     mat3 t;
     t.s.x = s.x; t.s.y = f.x; t.s.z = u.x;

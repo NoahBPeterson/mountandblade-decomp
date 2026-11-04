@@ -155,8 +155,6 @@ struct manifold : shape_base {
 // shapes composite::load creates inline (vtables 0x54a4f0, 0x54a540, 0x54a588, 0x54a5f4) are the classes above.
 
 // identity frame (0x40cd00, hidden return pointer) and the identity rotation (0x40cd60)
-pos* __cdecl identity_pos(pos* out);                        // 0x40cd00
-mat3* __cdecl identity3(mat3* out);                         // 0x40cd60
 
 // ---- float / colour helpers and the matrix axis rotations (0x40e3d0..0x40e870) -----------------------------
 float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0

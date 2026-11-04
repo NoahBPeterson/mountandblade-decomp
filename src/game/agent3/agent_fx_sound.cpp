@@ -183,7 +183,8 @@ void EmitTable::setup(Emit* e, int idx, const vector4* pos)
     }
     e->f1b0 = d->fb8;
     e->f1b4 = d->fbc;
-    mat4 m = rgl::identity_pos();
+    mat4 m;
+    rgl::identity_pos(&m);
     m.o = *pos;
     ((Obj3*)e)->set_placement(&m, &d->a, &d->b, d->c);
 }

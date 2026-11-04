@@ -53,7 +53,6 @@ inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b
 
 // 0x40cd00 as the definition declares it (src/rgl/shapes/shapes.cpp): writes the identity frame to `out` and returns it (cdecl). The by-value
 // rgl::identity_pos of include/mat4.h is the same function seen through its hidden return pointer; a call that must link to the definition names this one.
-pos* __cdecl identity_pos(pos* out);                                // 0x40cd00
 
 // @ 0x434b20
 tstring ItemRef::mesh_name()

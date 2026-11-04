@@ -870,7 +870,7 @@ void MapEditor_s2f250::update()
             value = this->f31c;
 
         matrix m;
-        identity(&m);
+        identity_pos(&m);
         g_map_s2f250->init_placed(&rec, &g_game_s2f250->mode, &g_game_s2f250->id, &value, &m);
         g_map_s2f250->build_mesh_name(&rec, &list);
 

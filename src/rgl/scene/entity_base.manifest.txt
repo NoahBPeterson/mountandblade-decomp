@@ -11,5 +11,5 @@
 ../src/rgl/scene/entity_base.cpp  ?is_dirty@entity@rgl@@UAEHXZ  0041fe10  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_base.cpp  ?set_mode@entity@rgl@@UAEXI@Z  0041fe30  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_base.cpp  ?set_local@entity@rgl@@UAEXPBUmatrix@2@@Z  0041fe50  /O2 /MT /Gy /TP
-../src/rgl/scene/entity_base.cpp  ?set_local_dirty@entity@rgl@@UAEXPBUmat4@2@@Z  0041fe70  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?set_local_dirty@entity@rgl@@UAEXPBUmatrix@2@@Z  0041fe70  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_base.cpp  ?set_local_scaled@entity@rgl@@UAEXPBUmatrix@2@PBUvector4@2@@Z  0041fe90  /O2 /MT /Gy /TP

@@ -230,22 +230,9 @@ struct vec4 : rgl::vector4 {
     __forceinline void rotate_b(float angle) { ((vec2x*)this)->rotate_b(angle); }   // 0x4327f0 (x / y about the z axis)
 };
 inline vec4& V(rgl::vector4& v) { return (vec4&)v; }
-// Pos: a frame (Module System `pos`: rows s(ide) f(orward) u(p), origin o), with the members the interpreter calls
-// (rgl::matrix / rgl::mat4 / pos2 in the shared headers carry subsets of them)
-struct Pos {
-    vec4 s, f, u, o;
-    Pos operator*(const Pos& b) const;                          // 0x40e870 (to parent: this * b)
-    __forceinline Pos relative(const Pos& b) const { rgl::mat4 r = ((const rgl::mat4*)this)->relative(*(const rgl::mat4*)&b); return *(Pos*)&r; }   // 0x4329d0 (b in the frame of this)
-    __forceinline void rotate_about_s(const float* angle) { ((rgl::matrix*)this)->rotate_about_s(angle); }   // 0x40e570 (rows f and u about s)
-    __forceinline void rotate_about_f(const float* angle) { ((rgl::matrix*)this)->rotate_about_f(angle); }   // 0x40e670 (rows s and u about f)
-    __forceinline void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770 (rows s and f about u)
-    __forceinline void orthonormalize() { ((rgl::matrix*)this)->orthonormalize(); }   // 0x407ef0 (rgl_math.h: keeps f)
-};
-struct Rot { vec4 s, f, u; };                                   // the rotation part of a Pos
-rgl::mat3* __cdecl identity3(rgl::mat3* out);                   // 0x40cd60 (shapes.cpp; returns out)
-pos* __cdecl identity_pos(pos* out);                            // 0x40cd00 (shapes.cpp; returns out)
+struct Rot { vec4 s, f, u; };                                   // the rotation part of a frame
 __forceinline Rot identity3() { Rot r; identity3((rgl::mat3*)&r); return r; }      // (the interpreter's by-value spelling)
-__forceinline Pos identity_frame() { Pos p; identity_pos((pos*)&p); return p; }    // (the interpreter's by-value spelling; item_kind.h: identity_pos)
+__forceinline rgl::matrix identity_frame() { rgl::matrix p; identity_pos((pos*)&p); return p; }    // (the interpreter's by-value spelling; item_kind.h: identity_pos)
 float __cdecl clamp(const float* v, const float* lo, const float* hi);    // 0x40e3d0
 // by-reference spellings of the clamp helpers: the helpers take pointers (agent.h / game_util.h declare them so; the original passes
 // temporaries), so these forward to the pointer declarations
@@ -262,8 +249,8 @@ __forceinline float fmin_ref(const float& a, const float& b) { return fmin_ref(&
 // the out-of-line copy of <math.h>'s inline float ceil(float) the linker took from d3dfont.obj
 double __cdecl ceil_float_comdat(float x);                     // 0x404590 (src/dxframework/d3dfont.cpp)
 
-// ---- position registers: g_script.pos, 128 frames of 0x40 bytes (rgl::matrix; Pos is this module's richer spelling of the same frame) ---
-__forceinline Pos& script_pos(int i) { return (Pos&)g_script.pos[i]; }
+// ---- position registers: g_script.pos, 128 frames of 0x40 bytes (rgl::matrix) ---
+__forceinline rgl::matrix& script_pos(int i) { return (rgl::matrix&)g_script.pos[i]; }
 
 
 // std::vector<int> (VC7.1: allocator word, then first / last / end)
@@ -288,20 +275,20 @@ struct TableauVec {
     };
     // the tableau table (TableauTbl / TableauStack / TabTable: the original's callers see the object under each of them)
     __forceinline Current* current() { return (Current*)((TableauStack*)this)->current(); }                                                  // 0x48f450
-    __forceinline void spawn(int tableau, int value, const Pos* p, const rgl::vector4& scale) { ((TableauTbl*)this)->spawn(tableau, value, (const rgl::matrix*)p, &scale); }   // 0x4992b0 (ret 0x10)
+    __forceinline void spawn(int tableau, int value, const rgl::matrix* p, const rgl::vector4& scale) { ((TableauTbl*)this)->spawn(tableau, value, (const rgl::matrix*)p, &scale); }   // 0x4992b0 (ret 0x10)
     void* add_spawned(const int* tableau, const int* instance_code);          // 0x4b14b0 (ret 8): returns the new object in EAX; the definition (TabTable::add_spawned, party2/party_2.cpp) is declared void, so this row stays unresolved
     __forceinline void set_background_color(int color) { ((TableauStack*)this)->set_background_color(color); }                               // 0x48f570 (ret 4)
     __forceinline void set_ambient_light(const rgl::vector4& c) { ((TableauStack*)this)->set_ambient_light((const float*)&c); }             // 0x48f5a0 (ret 4)
-    __forceinline void set_camera_position(const Pos* p) { ((TableauStack*)this)->set_camera_position((const rgl::matrix*)p); }             // 0x48f480 (ret 4)
+    __forceinline void set_camera_position(const rgl::matrix* p) { ((TableauStack*)this)->set_camera_position((const rgl::matrix*)p); }             // 0x48f480 (ret 4)
     __forceinline void set_camera_parameters(const bool* perspective, const float* w, const float* h, const float* near_,
                                               const float* far_) { ((TableauStack*)this)->set_camera_parameters((const char*)perspective, w, h, near_, far_); }   // 0x48f4c0 (ret 0x14)
-    __forceinline void add_point_light(const Pos* p, const rgl::vector4& c) { ((TableauTbl*)this)->add_point_light((const rgl::matrix*)p, c); }   // 0x493f80 (ret 8)
-    __forceinline void add_sun_light(const Pos* p, const rgl::vector4& c) { ((TableauTbl*)this)->add_sun_light((const rgl::matrix*)p, c); }       // 0x494020 (ret 8)
-    __forceinline void spawn_scaled(int mesh, const Pos* p, const rgl::vector4& scale, const float* alpha, const int* color) { ((TableauTbl*)this)->spawn_scaled(mesh, (const rgl::matrix*)p, &scale, alpha, (const unsigned*)color); }   // 0x499390 (ret 0x14)
-    __forceinline void spawn_scaled2(int icon, const Pos* p, const float* scale) { ((TableauTbl*)this)->spawn_scaled2(icon, (const rgl::matrix*)p, scale); }   // 0x499540 (ret 0xc)
+    __forceinline void add_point_light(const rgl::matrix* p, const rgl::vector4& c) { ((TableauTbl*)this)->add_point_light((const rgl::matrix*)p, c); }   // 0x493f80 (ret 8)
+    __forceinline void add_sun_light(const rgl::matrix* p, const rgl::vector4& c) { ((TableauTbl*)this)->add_sun_light((const rgl::matrix*)p, c); }       // 0x494020 (ret 8)
+    __forceinline void spawn_scaled(int mesh, const rgl::matrix* p, const rgl::vector4& scale, const float* alpha, const int* color) { ((TableauTbl*)this)->spawn_scaled(mesh, (const rgl::matrix*)p, &scale, alpha, (const unsigned*)color); }   // 0x499390 (ret 0x14)
+    __forceinline void spawn_scaled2(int icon, const rgl::matrix* p, const float* scale) { ((TableauTbl*)this)->spawn_scaled2(icon, (const rgl::matrix*)p, scale); }   // 0x499540 (ret 0xc)
 };
 extern TableauVec g_tableaus;           // 0xa75f40
-__forceinline void tableau_add_agent(int troop, int horse_item, const Pos* p, const int* animation, const int* instance) { c49f060::spawn_party_scene(troop, horse_item, (int*)p, (int*)animation, (int*)instance); }   // 0x49f3d0
+__forceinline void tableau_add_agent(int troop, int horse_item, const rgl::matrix* p, const int* animation, const int* instance) { c49f060::spawn_party_scene(troop, horse_item, (int*)p, (int*)animation, (int*)instance); }   // 0x49f3d0
 // the item / scene object of a trigger context (ti_on_init_item -50, scene prop -40, map icon -70)
 struct TriggerItem {
     __forceinline void set_owner(void* m) { ((ListHolder*)this)->set_owner(m); } // 0x48cfc0 (ret 4)
@@ -348,7 +335,7 @@ struct Presentation {
     __forceinline void set_val(int overlay, int value) { ((widget_mgr*)this)->set_val(overlay, value); }                                          // 0x48e340
     __forceinline void set_limits(int overlay, int min_value, int max_value) { ((widget_mgr*)this)->set_limits(overlay, min_value, max_value); }   // 0x48e4c0 (ret 0xc)
     __forceinline void set_area_size(int overlay, const rgl::vector4* size) { ((widget_mgr*)this)->set_area_size(overlay, (const float*)size); }  // 0x49ab80
-    __forceinline void set_mesh_matrix(int overlay, const Pos* pos) { ((widget_mgr*)this)->set_mesh_matrix(overlay, pos); }                       // 0x48db20
+    __forceinline void set_mesh_matrix(int overlay, const rgl::matrix* pos) { ((widget_mgr*)this)->set_mesh_matrix(overlay, pos); }                       // 0x48db20
     __forceinline void add_item(int overlay, const tstring& text) { ((widget_mgr*)this)->add_item(overlay, (int)&text); }                         // 0x48e590
     __forceinline void animate_to_color(int overlay, float duration, int color) { ((widget_mgr*)this)->animate_color(overlay, duration, color); }                // 0x48e650 (ret 0xc)
     __forceinline void animate_to_alpha(int overlay, float duration, int alpha) { ((widget_mgr*)this)->animate_alpha(overlay, duration, alpha); }               // 0x48e6d0
@@ -553,7 +540,7 @@ struct GameX {
     rgl::vector4 current_color;         // +0x13fb4 (set_current_color 0x4aa91e)
     rgl::vector4 position_delta;        // +0x13fc4 (set_position_delta 0x4aa974)
     char pad13fd4[0x14014 - 0x13fd4];
-    Pos trigger_object_pos;             // +0x14014 also the spawn position (set_spawn_position 0x4aac92)
+    rgl::matrix trigger_object_pos;             // +0x14014 also the spawn position (set_spawn_position 0x4aac92)
     char menu_option_disabled;          // +0x14054 (disable_menu_option 0x4ac3b9)
     char pad14055[0x1405c - 0x14055];
     char stack_rows[0x80 * 32];         // +0x1405c per-stack rows that move with remove_stack (0x4a4490)
@@ -658,18 +645,18 @@ extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a
 SI_ASSERT(agent_size, sizeof(Agent) == 0x5928);
 struct PropInst {                       // 0x1c8-byte scene prop instance
     char pad0[0x18];
-    Pos frame;                          // +0x18 (prop_instance_get_position 0x4aa404)
+    rgl::matrix frame;                          // +0x18 (prop_instance_get_position 0x4aa404)
     char pad58[0x98 - 0x58];
-    Pos start_frame;                    // +0x98 (prop_instance_get_starting_position 0x4aa459)
+    rgl::matrix start_frame;                    // +0x98 (prop_instance_get_starting_position 0x4aa459)
     char padd8[0x158 - 0xd8];
     float scale_x, scale_y, scale_z;    // +0x158 (prop_instance_get_scale 0x4aa4df)
     char pad164[0x1c8 - 0x164];
-    __forceinline void set_position(const Pos* p) { ((MissionView*)this)->set((void*)p); }   // 0x489820 (ret 4)
-    __forceinline void animate_to(const Pos* p, const float* seconds, const float* a3) { ((MissionView*)this)->setup((void*)p, (int*)seconds, (int*)a3); }   // 0x4897a0 (ret 0xc)
+    __forceinline void set_position(const rgl::matrix* p) { ((MissionView*)this)->set((void*)p); }   // 0x489820 (ret 4)
+    __forceinline void animate_to(const rgl::matrix* p, const float* seconds, const float* a3) { ((MissionView*)this)->setup((void*)p, (int*)seconds, (int*)a3); }   // 0x4897a0 (ret 0xc)
 };
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
 // the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)
-struct EntryPoint { Pos pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
+struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
 // TeamRec (0x16c bytes at mission +0x5280): src/game/mission.h
 // a point light added by add_point_light (0x7c bytes)
 #include "../light.h"                   // Light (shared with agent2 / strat)
@@ -743,8 +730,8 @@ struct MissionX {
     PropVec props;                      // +0x6688 (first +0x668c, last +0x6690, end +0x6694; warn_scene_prop_instance 0x49d290)
     char pad6698[0x6748 - 0x6698];
     int cam_mode;                       // +0x6748 0 automatic, 1 manual (mission_cam_set_mode 0x4ab858)
-    Pos cam_frame;                      // +0x674c (ui/mission.h frame_a)
-    Pos cam_target_frame;               // +0x678c (frame_b)
+    rgl::matrix cam_frame;                      // +0x674c (ui/mission.h frame_a)
+    rgl::matrix cam_target_frame;               // +0x678c (frame_b)
     float cam_aperture;                 // +0x67cc (mission_cam_set_aparture 0x4abc2d; blend_from)
     float cam_target_aperture;          // +0x67d0 (blend_to)
     float cam_anim_time;                // +0x67d4 seconds, 0 = no animation
@@ -779,13 +766,13 @@ struct MissionX {
     __forceinline int find_prop(int prop, int n) { return ((Mission*)this)->find_prop(prop, n); }                     // 0x48ee90 (ret 8: -1 = none)
     __forceinline void retag_props(int old_prop, int new_prop) { ((Mission*)this)->retag_props(old_prop, new_prop); } // 0x48ed60 (ret 8)
     __forceinline void start_clock(int a1) { ((Mission*)this)->start_clock(a1); }                                     // 0x48a860 (ret 4)
-    __forceinline Pos get_frame() { Pos f; ((Mission*)this)->get_frame((rgl::matrix*)&f); return f; }                 // 0x48a420 (ret 4: hidden return; ui/mission.h get_frame)
+    __forceinline rgl::matrix get_frame() { rgl::matrix f; ((Mission*)this)->get_frame((rgl::matrix*)&f); return f; }                 // 0x48a420 (ret 4: hidden return; ui/mission.h get_frame)
     __forceinline float blend_param() { return ((Mission*)this)->blend_param(); }                                     // 0x48a740 (blend_param)
     __forceinline float blend2_param() { return ((Mission*)this)->blend2_param(); }                                   // 0x48a7d0 (blend2_param)
     __forceinline int find_agent_by_troop(int troop) { return ((MissionW*)this)->find_agent_by_troop(troop); }        // 0x4921b0 (ret 4)
     __forceinline void check_slot(int entry, int count) { ((c49bea0::Mission*)this)->check_slot(entry, count); }      // 0x49c170 (ret 8)
     __forceinline void add_wind_effect(float flicker_magnitude, float flicker_interval) { ((MissionW*)this)->add_wind_effect(fbits(flicker_magnitude), fbits(flicker_interval)); }   // 0x4952f0 (ret 8)
-    __forceinline void spawn_effect(int psys, const Pos* p, int strength) { ((Mission*)this)->spawn_effect(psys, (const rgl::mat4*)p, strength); }   // 0x442ca0 (ret 0xc)
+    __forceinline void spawn_effect(int psys, const rgl::matrix* p, int strength) { ((Mission*)this)->spawn_effect(psys, (const rgl::mat4*)p, strength); }   // 0x442ca0 (ret 0xc)
     __forceinline int place(const ItemRef* item) { return ((Mission*)this)->place((const int*)item); }   // 0x49b4b0 (ret 4)
     __forceinline int exec_trigger(int troop) { return ((Mission*)this)->exec_trigger(troop); }          // 0x49f9e0 (ret 4)
     __forceinline int enter_trigger(int item, int modifier) { return ((Mission*)this)->enter_trigger(item, modifier); }   // 0x49f980 (ret 8)

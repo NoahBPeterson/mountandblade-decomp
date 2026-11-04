@@ -138,7 +138,6 @@ struct cell_rec {                               // 0x34 per cell; x stride 0x9c0
     char pad14[0x20];
 };
 
-mat3* __cdecl identity3(mat3* out);                             // 0x40cd60
 namespace rgl { unsigned pack_color(const vector4* c); }       // 0x40e440
 
 #endif

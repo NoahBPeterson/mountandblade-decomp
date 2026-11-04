@@ -218,7 +218,7 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
                 else
                     ((FxAnim*)sk)->update_poses2();
             }
-            matrix tm = body->m.mul(*(matrix*)(sk->recs + i * 0x1dc + 0x84));
+            matrix tm = body->m * *(matrix*)(sk->recs + i * 0x1dc + 0x84);
             c.transform((const ::pos*)&tm);
             contact ct;
             if (shape_contact_count(&c, other, 1, &ct)) {
@@ -287,7 +287,7 @@ int Agent::pick_attack_dir(unsigned tid)
         AgentBody* tb = t->body;
         if (tb == 0)
             return 0;
-        posm cam = g_mission->view;
+        rgl::matrix cam = g_mission->view;
         { const float quarter = -1.5707964f; cam.matrix::rotate_about_s(&quarter); }
         vector4 p = t->pos;
         p.z = p.z + 0.7f;
@@ -492,7 +492,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
             Agent* o = agent_by_id(t);
             AgentBody* tb = o->body;
             if (tb != 0) {
-                posm cam = g_mission->view;
+                rgl::matrix cam = g_mission->view;
                 { const float quarter = -1.5707964f; cam.matrix::rotate_about_s(&quarter); }
                 vector4 p = o->pos;
                 p.z = p.z + 0.7f;
@@ -574,7 +574,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
     b->get_dir(&f.x);
     if (strike) {
         if (grp == 199 && f.y * u.y + f.x * u.x < -0.4f) {
-            matrix m = b->body->m.mul(*(const matrix*)b->body->skel->rec(12));
+            matrix m = b->body->m * *(const matrix*)b->body->skel->rec(12);
             vector4 hp = vadd(m.o, vmul(m.f, 0.2f));
             float pz = hp.z;
             float lo = 0.0f, hi = 0.0f;

@@ -100,8 +100,7 @@ struct Curve {
 };
 struct ColourOwner;
 rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);                               // 0x495b20 world_data/mesh_hud.cpp
-struct pos;
-pos* __cdecl identity_pos(pos* out);                                                // 0x40cd00 rgl/shapes/shapes.cpp
+namespace rgl { struct matrix; } typedef rgl::matrix pos;
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
 struct CarryBody; struct CarryRef; struct CarryCtx;
 void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
@@ -596,7 +595,7 @@ namespace c49bea0 {
 
 struct vector4 { float x, y, z, w; };
 struct matrix { float m[4][4]; };
-inline matrix* identity_pos(matrix* out) { return (matrix*)::identity_pos((::pos*)out); }   // 0x40cd00 (cdecl; returns out)
+inline matrix* identity_pos(matrix* out) { return (matrix*)rgl::identity_pos((rgl::matrix*)out); }   // 0x40cd00 (cdecl; returns out)
 
 // sprite (0x6c bytes, reference counted at +0x64); a "+0x2c slot" object also ref-counted
 struct Sprite { char pad[0x64]; int refs; };
@@ -1136,7 +1135,7 @@ namespace c49deb0 {   // the slice's own callee / data declarations (their link 
 using rgl::vector4;
 
 // ---- callees that live in other slices -----------------------------------------------------------
-inline void identity_pos(float* m) { ::identity_pos((::pos*)m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
+inline void identity_pos(float* m) { rgl::identity_pos((rgl::matrix*)m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
 extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp

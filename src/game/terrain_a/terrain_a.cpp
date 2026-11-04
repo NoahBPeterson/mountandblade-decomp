@@ -2082,7 +2082,6 @@ void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 using rgl::mat3;
-__declspec(noinline) mat3* identity3(mat3* out);                             // 0x40cd60
 static __forceinline rgl::vector4 t_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline rgl::vector4 t_cross(const rgl::vector4& a, const rgl::vector4& b)
 {

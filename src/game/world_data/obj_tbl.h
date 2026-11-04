@@ -20,7 +20,6 @@ struct MeshY : MeshX {};
 // (rgl::mat3 of include/mat4.h; identity3 is the global-scope writer 0x40cd60 declared in world_data.h; the axis rotations
 // 0x40e570 / 0x40e670 / 0x40e770 are rgl::matrix's own, applied to the frame as the matrix it starts)
 struct Frame3 : rgl::mat3 {};
-rgl::mat3* __cdecl identity3(rgl::mat3* out);                   // 0x40cd60 (cdecl; returns out)
 // 0x442110 is agent3's Poser::add_extra (the entity takes the extra mesh as an int); 0x428440 is rgl::world::create_entity
 // (Poser::add_extra is declared in mesh_hud.h)
 namespace rgl {

@@ -77,11 +77,9 @@ struct ItemKind {                                           // include/item_kind
 struct resmgr {
     std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (rgl/core/resmgr.h)
 };
-struct Vec3; struct pos;
+struct Vec3; namespace rgl { struct matrix; } typedef rgl::matrix pos;
 void vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);     // 0x432830 (cdecl)
-pos* __cdecl identity_pos(pos* out);                        // 0x40cd00
 namespace rgl { struct mat3; }
-rgl::mat3* identity3(rgl::mat3* out);                       // 0x40cd60 (cdecl; returns out)
 struct mface;
 struct MVert { char b[0x18]; };  struct MPoly { char b[0x64]; };  struct MEdge { char b[0x34]; };   // terrain_b/poly_mesh.h
 template<class T> struct vec { void* v0; void* v1; void* v2; void* v3; void clear(); };     // entity.h's vec<T>: vec<mface>::clear is 0x41f4b0, shared by every 4-byte-element vector
@@ -645,7 +643,6 @@ struct MapEditorDialog_s2f250 {
 
 // ---- callees / helpers not local to this slice ---------------------------------------------------
 void set_list_scroll(int dir);                      // 0x4bb260 (cdecl)
-__forceinline matrix* identity(matrix* out) { return (matrix*)identity_pos((pos*)out); }                    // 0x40cd00 (cdecl, returns out)
 __forceinline mat3_s2f250* identity3(mat3_s2f250* out) { return (mat3_s2f250*)identity3((rgl::mat3*)out); }   // 0x40cd60 (cdecl, returns out)
 
 // The original inlines a component-wise cross (0x407dc0's body); keep the same evaluation order.

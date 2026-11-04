@@ -70,7 +70,6 @@ unsigned g_input_mask;                                      // 0x5e2474
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
 struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
-::pos* __cdecl identity_pos(::pos* out);                     // 0x40cd00 (returns out; shapes.cpp)
 __forceinline void SceneEnt::add_extra(res_obj* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
 namespace std { template<> void vector<rgl::scene*, allocator<rgl::scene*> >::push_back(rgl::scene* const&); }   // 0x4119d0 (mesh_obj.cpp's instance, shared by every pointer vector)
 __forceinline MeshVec& MeshVec::operator=(const std::vector<res_obj*>& o) { ((std::vector<int>*)this)->operator=(*(const std::vector<int>*)&o); return *this; }   // 0x43f0a0
@@ -1612,7 +1611,7 @@ process:
                             e->id != (unsigned)f30) {
                             Agent* o = agent_by_id(e->id);
                             if (o->f10 == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
-                                posm m = body->m;
+                                rgl::matrix m = body->m;
                                 int flag = 1;
                                 float ang = 0.01f;
                                 ((rgl::matrix&)m).rotate_about_u(&ang);
@@ -3698,17 +3697,17 @@ void Agent::start_ragdoll()
         int p = rec->parent;
         matrix T;
         if (p < 0) {
-            W[i] = b->m.mul(b->skel->regs[i].m84);
-            T = b->m.mul(rec->m);
+            W[i] = b->m * b->skel->regs[i].m84;
+            T = b->m * rec->m;
             A[i] = T;
         } else {
-            W[i] = ((posm&)W[p]).mul(b->skel->regs[i].m44);
+            W[i] = ((rgl::matrix&)W[p]) * b->skel->regs[i].m44;
             matrix cur = rec->m;
             int j = p;
             for (;;) {
                 if (sd->items[j].caps.size() != 0)
                     break;
-                cur = sd->items[j].m.mul(cur);
+                cur = sd->items[j].m * cur;
                 j = sd->items[j].parent;
             }
             T = cur;
@@ -3718,7 +3717,7 @@ void Agent::start_ragdoll()
             ((rgl::matrix&)T).rotate_about_f(&a1);
             float a2 = rec->rot_z * 0.017453292f;
             ((rgl::matrix&)T).rotate_about_u(&a2);
-            A[i] = ((posm&)A[j]).mul(T);
+            A[i] = ((rgl::matrix&)A[j]) * T;
         }
         if (rec->caps.size() != 0) {
             float radius = 0.0f, height = 0.01f;
@@ -3804,7 +3803,7 @@ void Agent::start_ragdoll()
         float height = 1.2886f * h->scale;
         make_frame(R, dir);
         R.o = vector4(0.0f * h->scale, 0.5443f * h->scale, -0.0629f * h->scale);
-        matrix m0 = h->body->m.mul(h->body->skel->regs->m84);
+        matrix m0 = h->body->m * h->body->skel->regs->m84;
         float zero = 0.0f;
         mount_body = g_phys.add_capsule_body(phys_idx, &radius, &height, &zero, &m0, &R, false);
     }
@@ -4539,7 +4538,7 @@ static __forceinline vector4 vsub(const vector4& a, const vector4& b)
     r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z;
     return r;
 }
-static __forceinline vector4 rot_xy(const posm& M, vec2 p)
+static __forceinline vector4 rot_xy(const rgl::matrix& M, vec2 p)
 {
     vector4 t;
     t.x = p.x * M.s.x + 0.0f * M.u.x + p.y * M.f.x;
@@ -4547,7 +4546,7 @@ static __forceinline vector4 rot_xy(const posm& M, vec2 p)
     t.z = 0.0f * M.u.z + p.x * M.s.z + p.y * M.f.z;
     return t;
 }
-static __forceinline vector4 rot_inl(const posm& M, const vector4& p)
+static __forceinline vector4 rot_inl(const rgl::matrix& M, const vector4& p)
 {
     vector4 t;
     t.x = p.x * M.s.x + p.z * M.u.x + p.y * M.f.x;

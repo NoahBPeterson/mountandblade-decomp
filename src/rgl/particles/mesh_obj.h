@@ -19,10 +19,8 @@ inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b
 // (same cdecl call, but the result is copied out of a temporary)
 vector4 unpack_color(const unsigned* argb);                         // 0x40e4e0
 
-matrix* identity(matrix* out);                                          // 0x40cd00 (cdecl, returns out)
 } // namespace rgl
-struct pos;                                                             // include/mat4.h: the Module System position (an rgl::matrix)
-pos* __cdecl identity_pos(pos* out);                                    // 0x40cd00 (cdecl, returns out; rgl/shapes/shapes.h)
+namespace rgl { struct matrix; } typedef rgl::matrix pos;                                                             // include/mat4.h: the Module System position (an rgl::matrix)
 namespace rgl {
 
 // the matrix operations that rgl_math.h does not declare (callers: emitter::spawn 0x40ec90)

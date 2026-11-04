@@ -11,7 +11,6 @@
 #include "../res_mgr.h"
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
-pos* __cdecl identity_pos(pos* out);        // 0x40cd00 (cdecl: writes the identity rotation and a zero origin to out, returns out; the definition's own declaration)
 
 // @ 0x433bf0
 tstring ItemKind::mesh_name_for(int bit)

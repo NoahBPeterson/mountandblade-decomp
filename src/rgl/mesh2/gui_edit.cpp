@@ -25,7 +25,6 @@
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
-rgl::mat3* __cdecl identity3(rgl::mat3* out);                 // 0x40cd60 (rgl/shapes/shapes.h; matrix3 of gui_edit.h is a view of it)
 // canonical declarations of the callees this module reaches through its layout views (definitions in other modules)
 #include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10)
@@ -1582,10 +1581,10 @@ void Terrain::conv_build_scene()
             for (int j = 0; j < sub->items[k].n; j++)
                 r->pts[j] = sub->verts[sub->items[k].idx[j]].pos;
             vector4 z0(0.0f, 0.0f, 0.0f);
-            matrix3 t;
-            matrix3* ip = (matrix3*)identity3((rgl::mat3*)&t);
+            rgl::mat3 t;
+            rgl::mat3* ip = identity3(&t);
             rgl::matrix m;
-            *(matrix3*)&m = *ip;
+            *(rgl::mat3*)&m = *ip;
             m.o = z0;
             r->set_frame(&m);
         }

@@ -193,7 +193,6 @@ __declspec(dllimport) void __cdecl NewtonRagDollSetForceAndTorqueCallback(const 
 __declspec(dllimport) NewtonBody* __cdecl NewtonRagDollBoneGetBody(const NewtonRagDollBone* b);                 // 0x549294
 }
 void __cdecl apply_force_and_torque(const NewtonBody* body);                                                    // 0x432a50
-rgl::mat3* __cdecl identity3(rgl::mat3* out);                                                                   // 0x40cd60
 
 struct V4 { float x, y, z, w; };               // constructor-free storage for the local arrays of start_ragdoll
 struct M4 { V4 s, f, u, o; };

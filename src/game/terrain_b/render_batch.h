@@ -149,12 +149,6 @@ struct vec_arr { D3DXVECTOR4* data; UINT count; };
 struct mi_ops { __forceinline void setup_material() { ((mesh*)this)->setup_material(); } };   // 0x40f3f0 (rgl::mesh::setup_material, thiscall)
 struct frame4 { rot3 rot; vector4 o; };
 using rgl::mat3;
-mat3* __cdecl identity3(mat3* out);        // 0x40cd60
-struct m4 {
-    vector4 s, f, u, o;
-    m4 operator*(const m4& b) const;        // 0x40e870 (this = left operand)
-    __forceinline void rotate_about_s(const float* angle) { ((matrix*)this)->rotate_about_s(angle); }     // 0x40e570
-};
 
 #define AT(T, base, off) (*(T*)((char*)(base) + (off)))
 

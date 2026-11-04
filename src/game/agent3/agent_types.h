@@ -19,7 +19,7 @@
 using rgl::vector4;
 using rgl::matrix;
 
-// posm (rgl::mat4 + the rotation 0x40e570) is in src/game/agent_obj.h
+// rgl::matrix (rgl::mat4 + the rotation 0x40e570) is in src/game/agent_obj.h
 
 // ---- collision shapes (vtable 0x54a4b8 shape_base, 0x54a540 capsule): src/include/shape.h ---------------------------
 #include "../../include/shape.h"
@@ -34,12 +34,12 @@ struct node_groups; typedef node_groups Mesh;                              // th
 
 // ---- animation channels / skeleton (the animator at body+0x304) ---------------------------------------------
 struct CapDef { vector4 a; vector4 b; float r; int pad[2]; };     // 0x2c bytes (0x43f6d0)
-#include "../agent_obj.h"                              // posm
+#include "../agent_obj.h"                              // rgl::matrix
 struct ChanRec {                                      // 0xdc bytes (0x43f6d0: items[i] stride)
     char pad0[4];
     int parent;                                       // +4 parent bone, -1 = root (0x44fc60)
     char pad8[4];
-    posm m;                                           // +0xc local frame (0x44fc60)
+    rgl::matrix m;                                           // +0xc local frame (0x44fc60)
     char pad4c[0x9c - 0x4c];
     float mass;                                       // +0x9c (0x44fc60)
     float lim_min, lim_max, lim_twist;                // +0xa0 / +0xa4 / +0xa8 (degrees)
