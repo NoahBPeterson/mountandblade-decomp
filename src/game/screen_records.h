@@ -13,7 +13,7 @@
 struct ContainerBase;
 struct MissionUi;
 struct res_rec;
-struct UiA;
+struct UiA; struct NodeA; struct Camera;
 struct UiB;
 struct DropDown;
 struct bin_reader;
@@ -220,20 +220,19 @@ struct Rec34 : head_rec { MB_ZERO_TAIL(Rec34)   // vtable 0x59584c (the debrief 
     virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
-struct widget;
 struct Rec454 : head_rec { MB_ZERO_TAIL(Rec454)   // vtable 0x595894 (the quest log: slot 2 char_sheet/quest_log.cpp 0x4ee230, slot 3 options_panel/hud.cpp 0x4d5a20)
-    widget* window;           // +0x2c
-    widget* done;             // +0x30 the "done" text
-    widget* active_tab;       // +0x34
-    widget* finished_tab;     // +0x38
-    widget* list;             // +0x3c
-    widget* frame;            // +0x40 the quest row frame
-    widget* panel1;           // +0x44
-    widget* panel2;           // +0x48
+    NodeA* window;               // +0x2c
+    UiA* done;                   // +0x30 the "done" text
+    UiA* active_tab;             // +0x34
+    UiA* finished_tab;           // +0x38
+    Camera* list;                // +0x3c
+    ContainerBase* frame;        // +0x40 the quest row frame
+    MissionUi* panel1;           // +0x44
+    MissionUi* panel2;           // +0x48
     int indices[0x80];        // +0x4c
     int count;                // +0x24c
     int f250;                 // +0x250 selected row
-    widget* rows[0x80];       // +0x254
+    UiA* rows[0x80];             // +0x254
     void __fastcall refresh();                // 0x4ee840 (char_sheet/quest_log.cpp)
     virtual void slot_empty_1();
     virtual void slot_empty_2();

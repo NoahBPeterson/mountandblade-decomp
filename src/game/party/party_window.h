@@ -21,8 +21,9 @@
 #include "../ui/item_ref.h"
 #include "../ui/troop_inv.h"
 #include "../ui/ui_widgets.h"
+#include "../ui/container.h"      // ContainerBase
+#include "../party2/camera_class.h"   // Camera: the scrolling item lists
 #include "./game.h"
-#include "./widget_ops.h"
 #include "./externs.h"
 
 // ---- objects of other translation units ----------------------------------------------------------------
@@ -43,11 +44,7 @@ inline ItemSound* item_sound(ItemKind* k) { return (ItemSound*)((char*)k + 0x228
 extern int g_equip_page;                    // 0xa75f68 (negative: nothing selected)  0x5024e0
 
 // ---- widgets -------------------------------------------------------------------------------------------
-struct UiWindow : MissionUi {               // 0x188 bytes, constructor 0x4931a0
-    char pad178[0x188 - 0x178];
-    UiWindow();                             // 0x4931a0
-};
-struct PartyPanel : UiWindow {              // vtable 0x599bf8 (the equipment menu / inventory page block)
+struct PartyPanel : ContainerBase {              // vtable 0x599bf8 (the equipment menu / inventory page block)
     PartyPanel() { *(void**)this = (void*)vtbl_599bf8; }
 };
 struct PartySlot : MissionUi {              // vtable 0x599d28, size 0x178 (the item slot)
@@ -66,9 +63,6 @@ struct WidgetDtor {
 struct mface;
 template <class T> struct vec { void clear(); };
 
-// 0x42cf50 is gui_window::mouse_event (strat/gui_manager.h): the base class's handler of the window below
-struct gui_window { char mouse_event(unsigned mask); };
-
 // ---- the window ---------------------------------------------------------------------------------------
 struct PartyWindow {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
@@ -85,27 +79,27 @@ struct PartyWindow {
     char pad8[0x14 - 0x8];
     int troop;                              // +0x14  0x502320, 0x501a20
     char pad18[0x2c - 0x18];
-    void* page_widget[2];                   // +0x2c  0x500ad0 (the page widget build_page(i) returns)
-    void* view[2];                          // +0x34  0x500ad0 (the scrolling item lists)
-    void* panels[2];                        // +0x3c  0x501a20 (equipment menu panel of row idx)
-    void* gold[2];                          // +0x44  0x500ad0, 0x501940 (the money labels)
-    void* name[2];                          // +0x4c  0x500ad0 (the troop name labels)
-    void* hinge[4];                         // +0x54  0x500ad0 (the four window hinges)
-    void* widgets[2][0x60];                 // +0x64  0x502320 (page * 0x180 + 0x64 + slot * 4)
+    ContainerBase* page_widget[2];                   // +0x2c  0x500ad0 (the page widget build_page(i) returns)
+    Camera* view[2];                        // +0x34  0x500ad0 (the scrolling item lists)
+    ContainerBase* panels[2];                      // +0x3c  0x501a20 (equipment menu panel of row idx)
+    MissionUi* gold[2];                          // +0x44  0x500ad0, 0x501940 (the money labels)
+    MissionUi* name[2];                          // +0x4c  0x500ad0 (the troop name labels)
+    MissionUi* hinge[4];                         // +0x54  0x500ad0 (the four window hinges)
+    MissionUi* widgets[2][0x60];                 // +0x64  0x502320 (page * 0x180 + 0x64 + slot * 4)
     int flags[2][0x60];                     // +0x364 0x502920 (bit 2: the slot needs a mesh)
     int aux[2][0x60];                       // +0x664 0x502320
     int pages;                              // +0x964 0x5025a0
     int rows;                               // +0x968 0x5025a0 (at most two)
-    void* container;                        // +0x96c 0x5024e0, 0x501a20
-    void* row_slot[2][10];                  // +0x970 0x501a20, 0x502c30
+    ContainerBase* container;                      // +0x96c 0x5024e0, 0x501a20
+    MissionUi* row_slot[2][10];                  // +0x970 0x501a20, 0x502c30
     int row_state[2][10];                   // +0x9c0 0x501a20, 0x502c30
     char pada10[0xa60 - 0xa10];
-    void* total_cost;                       // +0xa60 0x500ad0
-    void* armor_labels[2][4];               // +0xa64 0x5025a0 (head, body, legs, encumbrance)
-    void* icon_a84;                         // +0xa84 0x5029f0
-    void* icon_a88;                         // +0xa88 0x5029f0
+    MissionUi* total_cost;                       // +0xa60 0x500ad0
+    MissionUi* armor_labels[2][4];               // +0xa64 0x5025a0 (head, body, legs, encumbrance)
+    StripIcon* icon_a84;                       // +0xa84 0x5029f0
+    StripIcon* icon_a88;                       // +0xa88 0x5029f0
     int f_a8c;                              // +0xa8c 0x500ad0 (cleared)
-    void* leave;                            // +0xa90 0x500ad0 (the leave button)
+    MissionUi* leave;                            // +0xa90 0x500ad0 (the leave button)
     char pada94[0xa98 - 0xa94];
     int f_a98;                              // +0xa98 0x500ad0 (cleared)
     char pada9c[0xab0 - 0xa9c];
@@ -113,7 +107,7 @@ struct PartyWindow {
     char f_abc;                             // +0xabc 0x500ad0 (the other party's hero is on the list)
     char padabd[3];
     int spec_ac0, spec_ac4;                 // +0xac0 0x5029f0
-    void* equip_bg;                         // +0xac8 0x500ad0 (mode 4: the equipment panel background)
+    MissionUi* equip_bg;                         // +0xac8 0x500ad0 (mode 4: the equipment panel background)
 
     void create();                                              // 0x500ad0 (builds the window: src/game/agent5/party_create.cpp)
     void money_label(int which);                                // 0x501940 (ret 4: src/game/agent5/party_create.cpp)
@@ -121,15 +115,15 @@ struct PartyWindow {
     char mouse_event(unsigned mask);                            // 0x5021b0 (ret 4)
     MissionUi* make_slot(ItemRef* slot);                        // 0x502230 (ret 4)
     char refresh_event(unsigned mask);                          // 0x5022c0 (ret 4)
-    void* build_page(int page);                                 // 0x502320 (ret 4)
-    void add_strip_icon(char* slot, const tstring& name, int troop, int kind);   // 0x5024e0 (ret 0x10)
+    PartyPanel* build_page(int page);                                 // 0x502320 (ret 4)
+    void add_strip_icon(StripIcon** slot, const tstring& name, int troop, int kind);   // 0x5024e0 (ret 0x10)
     void init_window();                                         // 0x5025a0
-    void refresh_armor(void** labels, int troop);               // 0x502620 (ret 8)
+    void refresh_armor(MissionUi** labels, int troop);               // 0x502620 (ret 8)
     void refresh_page(int page);                                // 0x502920 (ret 4)
     void place_slot(MissionUi* w, ItemRef* item, int idx, int* state, int page, char flag);   // 0x5029f0 (ret 0x18)
     ResMesh* make_mesh(ItemRef* item, float* scale, int troop); // 0x502b80 (ret 0xc)
     void refresh_stash(int row);                                // 0x502c30
-    char base_mouse_event(unsigned mask) { return ((gui_window*)this)->mouse_event(mask); }     // 0x42cf50 (ret 4; the gui widget base)
+    char base_mouse_event(unsigned mask) { return ((ContainerBase*)this)->ContainerBase::key(mask); }     // 0x42cf50 ContainerBase::key (ret 4; the gui widget base)
 };
 
 #endif // GAME_PARTY_PARTY_WINDOW_H

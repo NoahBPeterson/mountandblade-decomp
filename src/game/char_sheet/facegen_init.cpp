@@ -26,73 +26,73 @@ void FaceGen::init()
     int keys = g_anim.skins[skin].n_elems - 1;
     ((gui_manager*)(void*)&g_msglog)->reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
-    overlay* o = (overlay*)new_container(0x190, vtbl_592848);
+    NodeA* o = (NodeA*)new_container(0x190, vtbl_592848);
     if (o != 0)
         o->f188 = 0;
     ui = o;
     float f2[2];
     f2[0] = 0.0f;
     f2[1] = 0.0f;
-    o->set_pos(f2);
+    o->move_a(f2);
     f2[0] = 1.0f;
     f2[1] = 0.75f;
-    o->set_size(f2);
+    o->set_xy(f2);
     {
         tstring n("face_gen_window");
         rgl::mesh* m = res_manager().get_object((const rgl::string*)&n);
         mesh_x* c = ((mesh_x*)m)->clone();
-        o->add_item2(0, (rgl::mesh*)c);
+        o->set_track(0, (rgl::mesh*)c);
     }
     {
-        widget* w = ui;
+        MissionUi* w = ui;
         g_gui_dirty = 1;
         ((NodeVec*)(void*)&g_gui)->push_back((NodeA* const&)w);   // 0x49b120
     }
     float deform_k = config_float("face_deform_key_h");
     float ab[2];
     {
-        elem* d = (elem*)new_container(0x188, vtbl_597050);
+        ContainerBase* d = (ContainerBase*)new_container(0x188, vtbl_597050);
         deform = d;
         label_refresh((MissionUi*)d, tstring("face_bo_deform"));
-        ab[0] = d->x1;
-        ab[1] = (float)keys * deform_k + d->y1;
-        d->set_size(ab);
+        ab[0] = d->screen[0];
+        ab[1] = (float)keys * deform_k + d->screen[1];
+        d->set_xy(ab);
     }
     {
-        elem* b = (elem*)new_container(0x188, vtbl_597050);
+        ContainerBase* b = (ContainerBase*)new_container(0x188, vtbl_597050);
         buttons = b;
         label_refresh((MissionUi*)b, tstring("face_bo_button"));
-        push_item(ui, (widget*)b);
+        push_item(ui, (MissionUi*)b);
     }
-    struct { int a, b; } btn_text;                 // set_text's 8-byte result (the original's [esp+0x30] slot: never constructed or destroyed)
+    float btn_text[2];                 // set_text's 8-byte result (the original's [esp+0x30] slot: never constructed or destroyed)
     {
         tstring empty("");
-        deform->set_text(&btn_text, &empty);   // 0x4f4cab: [ebp+0x180] (the deform panel), not the buttons panel
+        deform->set_text(btn_text, &empty);   // 0x4f4cab: [ebp+0x180] (the deform panel), not the buttons panel
     }
     for (int i = 0; i < keys; i++) {
         tstring row_name("face_sl_deform_key_base");
-        elem* row = (elem*)make_slider(deform, &row_name);
+        ContainerBase* row = (ContainerBase*)make_slider(deform, &row_name);
         deform_rows[i] = row;
-        float y = (float)i * deform_k + row->ey;
-        ab[0] = row->ex;
+        float y = (float)i * deform_k + row->fEC;
+        ab[0] = row->fE8;
         ab[1] = y;
-        row->set_pos(ab);
+        row->move_a(ab);
         tstring kt;
         ((TextPart*)&g_anim)->get_text(skin, i, &kt);   // 0x4f5d90
-        widget* lab = (widget*)new_widget_base(0x178);
+        MissionUi* lab = (MissionUi*)new_widget_base(0x178);
         key_labels[i] = lab;
         label_refresh((MissionUi*)lab, tstring("face_t_deform_key_base"));
-        ab[0] = lab->ex;
-        ab[1] = y + lab->ey;
-        lab->set_pos(ab);
-        lab->set_text(&btn_text, &kt);
+        ab[0] = lab->fE8;
+        ab[1] = y + lab->fEC;
+        lab->move_a(ab);
+        lab->set_text(btn_text, &kt);
         deform->add_child(lab);
     }
     {
         tstring t("face_s_deform");
-        elem* sc = (elem*)make_scrollbar(ui, &t);
+        ContainerBase* sc = (ContainerBase*)make_scrollbar(ui, &t);
         tstring t2("face_sc_deform");
-        elem* sl = (elem*)make_editor_list(deform, &t2, (int)sc);
+        ContainerBase* sl = (ContainerBase*)make_editor_list(deform, &t2, (int)sc);
         slider = sl;
         ((MissionPanel*)sl)->draw();   // 0x488d50
         push_item(ui, sl);
@@ -100,74 +100,74 @@ void FaceGen::init()
     cam_btn = 0;
     if (g_cfg.enable_edit_mode) {
         tstring t("key");
-        cam_btn = (elem*)new_button((ContainerBase*)ui, t, 0.0f, 0.72f, 0.5f, 0.028f);   // 0x4db810
-        cam_btn->sb0();
+        cam_btn = (ContainerBase*)new_button((ContainerBase*)ui, t, 0.0f, 0.72f, 0.5f, 0.028f);   // 0x4db810
+        cam_btn->hide();
     }
     float arrow_h = config_float("face_button_h");
     float arrow_h2 = config_float("face_button_arrow_h");
     float arrow_w = config_float("arrow_button_height");
     float arrow_r = config_float("arrow_button_width_ratio");
-    b_next_face = (widget*)make_right_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
+    b_next_face = (MissionUi*)make_right_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
     label_refresh((MissionUi*)b_next_face, tstring("face_b_next_face"));
-    b_next_beard = (widget*)make_right_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
+    b_next_beard = (MissionUi*)make_right_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
     label_refresh((MissionUi*)b_next_beard, tstring("face_b_next_beard"));
-    b_next_hair = (widget*)make_right_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
+    b_next_hair = (MissionUi*)make_right_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
     label_refresh((MissionUi*)b_next_hair, tstring("face_b_next_hair"));
-    b_prev_face = (widget*)make_left_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
+    b_prev_face = (MissionUi*)make_left_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
     label_refresh((MissionUi*)b_prev_face, tstring("face_b_prev_face"));
-    b_prev_beard = (widget*)make_left_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
+    b_prev_beard = (MissionUi*)make_left_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
     label_refresh((MissionUi*)b_prev_beard, tstring("face_b_prev_beard"));
-    b_prev_hair = (widget*)make_left_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
+    b_prev_hair = (MissionUi*)make_left_arrow(buttons, 0, 0, arrow_h2, *(int*)&arrow_r, arrow_w);
     label_refresh((MissionUi*)b_prev_hair, tstring("face_b_prev_hair"));
     {
         tstring t("face_t_change_beard");
         tstring v("ui_change_beard");
         tstring* kv = g_strtable.lookup(v);
-        t_change_beard = (widget*)new_key_label(buttons, kv, &t);
+        t_change_beard = (MissionUi*)new_key_label(buttons, kv, &t);
     }
     {
         tstring t("face_t_change_face");
         tstring v("ui_change_skin");
         tstring* kv = g_strtable.lookup(v);
-        t_change_face = (widget*)new_key_label(buttons, kv, &t);
+        t_change_face = (MissionUi*)new_key_label(buttons, kv, &t);
     }
     {
         tstring t("face_t_change_hair");
         tstring v("ui_change_hair");
         tstring* kv = g_strtable.lookup(v);
-        t_change_hair = (widget*)new_key_label(buttons, kv, &t);
+        t_change_hair = (MissionUi*)new_key_label(buttons, kv, &t);
     }
     {
         tstring n("face_sl_age");
-        sl_age = (elem*)make_slider(buttons, &n);
+        sl_age = (ContainerBase*)make_slider(buttons, &n);
     }
     {
         tstring t("face_t_age");
         tstring v("ui_age");
         tstring* kv = g_strtable.lookup(v);
-        t_age = (widget*)new_key_label(buttons, kv, &t);
+        t_age = (MissionUi*)new_key_label(buttons, kv, &t);
     }
     {
         tstring n("face_sl_hair_color");
-        sl_hair_color = (elem*)make_slider(buttons, &n);
+        sl_hair_color = (ContainerBase*)make_slider(buttons, &n);
     }
     {
         tstring t("face_t_hair_color");
         tstring v("ui_change_hair_color");
         tstring* kv = g_strtable.lookup(v);
-        t_hair_color = (widget*)new_key_label(buttons, kv, &t);
+        t_hair_color = (MissionUi*)new_key_label(buttons, kv, &t);
     }
     if (g_anim.skins[skin].first_face == 0) {
-        b_next_beard->sb0();
-        b_prev_beard->sb0();
-        t_change_beard->sb0();
+        b_next_beard->hide();
+        b_prev_beard->hide();
+        t_change_beard->hide();
     }
     {
         tstring v("ui_randomize");
         tstring* kv = g_strtable.lookup(v);
         tstring a("medium_button_down");
         tstring b2("medium_button");
-        widget* btn = (widget*)new_sized_button((MissionUi*)buttons, *kv, 0.0f, 0.0f, arrow_h, b2, a, 3.7f, 0.072f, 0.085f);   // 0x4dcc50
+        MissionUi* btn = (MissionUi*)new_sized_button((MissionUi*)buttons, *kv, 0.0f, 0.0f, arrow_h, b2, a, 3.7f, 0.072f, 0.085f);   // 0x4dcc50
         b_randomize = btn;
         label_refresh((MissionUi*)btn, tstring("face_b_randomize"));
     }
@@ -176,7 +176,7 @@ void FaceGen::init()
         tstring* kv = g_strtable.lookup(v);
         tstring a("medium_button_down");
         tstring b2("medium_button");
-        widget* btn = (widget*)new_sized_button((MissionUi*)buttons, *kv, 0.0f, 0.0f, arrow_h, b2, a, 3.7f, 0.072f, 0.085f);   // 0x4dcc50
+        MissionUi* btn = (MissionUi*)new_sized_button((MissionUi*)buttons, *kv, 0.0f, 0.0f, arrow_h, b2, a, 3.7f, 0.072f, 0.085f);   // 0x4dcc50
         b_reset = btn;
         label_refresh((MissionUi*)btn, tstring("face_b_reset"));
     }
@@ -185,7 +185,7 @@ void FaceGen::init()
         tstring* kv = g_strtable.lookup(v);
         tstring a("medium_button_down");
         tstring b2("medium_button");
-        widget* btn = (widget*)new_sized_button((MissionUi*)buttons, *kv, 0.0f, 0.0f, arrow_h, b2, a, 3.7f, 0.072f, 0.085f);   // 0x4dcc50
+        MissionUi* btn = (MissionUi*)new_sized_button((MissionUi*)buttons, *kv, 0.0f, 0.0f, arrow_h, b2, a, 3.7f, 0.072f, 0.085f);   // 0x4dcc50
         b_done = btn;
         label_refresh((MissionUi*)btn, tstring("face_b_done"));
     }
@@ -288,7 +288,7 @@ void FaceGen::init()
     fr.top = ratio * (0.01f * tanv);
     fr.build_planes();
 
-    push_item(ui, (widget*)b);
+    push_item(ui, (MissionUi*)b);
 
     fr.m.o.x = 0.0f;
     fr.m.o.y = 0.0f;
@@ -320,9 +320,9 @@ void FaceGen::init()
         f354++;
         f350++;
         for (int i = 0; i < keys; i++)
-            deform_rows[i]->s34(g_anim.weights[i]);
-        sl_age->s34(g_anim.scale);
-        sl_hair_color->s34(g_anim.time);
+            deform_rows[i]->set168(g_anim.weights[i]);
+        sl_age->set168(g_anim.scale);
+        sl_hair_color->set168(g_anim.time);
     }
     refresh();
 

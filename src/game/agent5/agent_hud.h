@@ -121,9 +121,10 @@ extern OriginPairs g_game_keys;                                         // 0xa73
 extern float g_screen_a;                                          // 0x5d75dc
 extern float g_screen_b;                                          // 0x5d75d8
 float __cdecl fmax_ref(const float* a, const float* b);           // 0x4324d0 (the larger of the two)
-struct widget;                                                    // char_sheet/quest_log.h: the window widget the scroll helpers take and return (a MissionUi)
-widget* __cdecl make_scroll_track(widget* parent, float a, float b, float c, float d);   // 0x4ee910 (cdecl)
-widget* __cdecl make_quest_list(widget* content, const float* a, const float* b, int track);   // 0x4eea90 (cdecl; track is the scroll track widget)
+#include "../ui/ui_widgets.h"                                  // UiD
+#include "../party2/camera_class.h"                             // Camera (the list widget)
+UiD* __cdecl make_scroll_track(ContainerBase* parent, float a, float b, float c, float d);   // 0x4ee910 (cdecl)
+Camera* __cdecl make_quest_list(ContainerBase* content, const float* a, const float* b, UiD* track);   // 0x4eea90 (cdecl; track is the scroll track widget)
 float __cdecl clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 
 // the scene's segment query (level, above) and the skeleton's head bone, as the camera tick reaches them

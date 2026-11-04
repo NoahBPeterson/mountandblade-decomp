@@ -1,0 +1,4 @@
+../src/game/ui/widget_slots.cpp  ?key@MissionUi@@UAEDI@Z  0042cd60  /O2 /MT /Gy /TP
+../src/game/ui/widget_slots.cpp  ?refresh@MissionUi@@UAEXXZ  0042ce50  /O2 /MT /Gy /TP
+../src/game/ui/widget_slots.cpp  ?refresh@ContainerBase@@UAEXXZ  0042cec0  /O2 /MT /Gy /TP
+../src/game/ui/widget_slots.cpp  ?key@NodeA@@UAEDI@Z  0042d170  /O2 /MT /Gy /TP

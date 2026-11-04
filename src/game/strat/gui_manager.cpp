@@ -90,14 +90,6 @@ void gui_timer::set_delay(float seconds)
     t = g_ticks[clock] - (int)(seconds * 100000.0f);
 }
 
-// @ 0x42cd60
-char gui_window::refresh_all(unsigned mask)
-{
-    on_input(mask);
-    refresh();
-    return 0;
-}
-
 // @ 0x42cd80
 void gui_manager::set_o564(gui_obj* p)
 {
@@ -128,88 +120,9 @@ void gui_manager::set_o568(gui_obj* p, bool clear_lines)
     f1700 = 0;
 }
 
-// @ 0x42ce50
-void gui_window::wheel_step()
-{
-    if (pending & enabled_mask) {
-        int w = wheel;
-        if (w & 1) sel = sel + 1;
-        else if (w & 2) sel = sel - 1;
-        if (sel < sel_lo) sel = sel_lo;
-        else if (sel > sel_hi) sel = sel_hi;
-        if (w & 3) g_gui.f1709 = 1;   // 0x42cead: mov byte [0x5d8789], 1 (g_gui+0x1709: close the top window)
-    }
-    pending = 0;
-}
-
-// @ 0x42cec0
-void gui_window::wheel_focus()
-{
-    if ((pending & enabled_mask) && (wheel & 4) && focus) {
-        unsigned top = (unsigned)-1;
-        for (unsigned i = 0; i < children.size(); i++) {
-            if (children[i]->hit_test(0x10000))
-                top = i;
-        }
-        if ((int)top >= 0)
-            focus->set_focus(top);
-        focus->on_event(0x10000);
-    }
-    wheel_step();
-}
-
-// @ 0x42cf50
-char gui_window::mouse_event(unsigned mask)
-{
-    char r = 0;
-    if (flags & 3) return 0;
-    if (mask & 7) {
-        for (std::vector<widget*>::iterator it = children.begin(); it != children.end(); ++it) {
-            widget* c = *it;
-            if ((c->flags & 3) == 0) {
-                bool inside = false;
-                if (c->x_lo + c->x0 <= g_gui.mouse[0] && g_gui.mouse[0] < c->x1 + c->x0 &&
-                    c->y_lo + c->y0 <= g_gui.mouse[1] && g_gui.mouse[1] < c->y1 + c->y0)
-                    inside = true;
-                if (!(mask & 4) && inside) {
-                    if (c->hover) {
-                        c->on_event(1);
-                    } else {
-                        c->on_event(2);
-                        (*it)->hover = 1;
-                    }
-                } else if (c->hover) {
-                    c->on_event(4);
-                    (*it)->hover = 0;
-                }
-            }
-        }
-    } else {
-        for (int i = (int)children.size() - 1; i >= 0 && !r; i--) {
-            widget* c = children[i];
-            r = 0;
-            if ((c->flags & 3) == 0) {
-                if (c->x0 + c->x_lo <= g_gui.mouse[0] && g_gui.mouse[0] < c->x0 + c->x1 &&
-                    c->y0 + c->y_lo <= g_gui.mouse[1] && g_gui.mouse[1] < c->y0 + c->y1)
-                    r = c->on_event(mask);
-            }
-        }
-    }
-    on_input(mask);
-    refresh();
-    return r;
-}
-
-// @ 0x42d170
-char gui_window::handle_event(unsigned mask)
-{
-    if (mouse_event(mask)) return 1;
-    if (wants_redraw && (mask & 0x10)) {
-        g_gui.f1709 = 1;              // 0x42d19c: g_gui+0x1709, not g_gui_dirty (+0x1708)
-        return 1;
-    }
-    return 0;
-}
+// 0x42cd60 MissionUi::key, 0x42ce50 MissionUi::refresh, 0x42cec0 ContainerBase::refresh, 0x42cf50 ContainerBase::key and
+// 0x42d170 NodeA::key (the slices' gui_window::refresh_all / wheel_step / wheel_focus / mouse_event / handle_event) are
+// defined once, as the widget classes' own virtuals, in ui/widget_slots.cpp.
 
 // @ 0x42d1b0
 void gui_manager::reset()

@@ -1353,11 +1353,12 @@ void GameScreen::build()
     v[0] = 0.75f;
     v[1] = 0.36f;
     UI(value)->set_pos(v);
-    MissionUi* made = (MissionUi*)make_scroll_track((widget*)frame, 0.7f, 0.02f, 0.01f, 0.36f);
+    UiD* track_made = make_scroll_track((ContainerBase*)frame, 0.7f, 0.02f, 0.01f, 0.36f);
+    Camera* made;
     {
         float a[2] = { 0.01f, 0.02f };
         float b[2] = { 0.75f, 0.36f };
-        made = (MissionUi*)make_quest_list((widget*)value, a, b, (int)made);
+        made = make_quest_list((ContainerBase*)value, a, b, track_made);
     }
     slider = made;
     UI(frame)->add_child(UI(made));
@@ -1499,7 +1500,7 @@ void Rec58::build(bool show)
     UI(bar)->set_pos(v);
     UI(bar)->add_child(UI(log));
 
-    MissionUi* track = (MissionUi*)make_scroll_track((widget*)frame, 0.95f, 0.08f, 0.02f, 0.64f);
+    UiD* track = make_scroll_track((ContainerBase*)frame, 0.95f, 0.08f, 0.02f, 0.64f);
     {
         float ymin = y < 0.64f ? y : 0.64f;
         float d = 0.64f - y;
@@ -1507,7 +1508,7 @@ void Rec58::build(bool show)
             d = 0.0f;
         float a[2] = { 0.03f, d + 0.08f };
         float b[2] = { 0.915f, ymin };
-        slider = (MissionUi*)make_quest_list((widget*)bar, a, b, (int)track);
+        slider = make_quest_list((ContainerBase*)bar, a, b, track);
     }
     UI(frame)->add_child(UI(slider));
 

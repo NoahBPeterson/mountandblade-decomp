@@ -8,8 +8,9 @@
 #ifndef GAME_RES_MESH_H
 #define GAME_RES_MESH_H
 #include "./tstring.h"
+#include "../rgl/mesh.h"                  // rgl::mesh: a resource mesh is one
 
-struct ResMesh {
+struct ResMesh : rgl::mesh {              // the object is the 0x260-byte rgl::mesh; the two members below are the resource calls on it
     ResMesh* clone();                       // 0x41c6d0
     void translate(const void* v);          // 0x44f240 (ret 4): a vector4
 };

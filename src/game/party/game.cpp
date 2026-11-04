@@ -16,7 +16,6 @@
 #include "./nav_graph.h"
 #include "../tstring.h"
 #include "../../rgl/stream.h"
-#include "./widget_ops.h"
 #include "../screen_records.h"        // C4c2fb0: the "creating game" panel (slot 3 is update 0x51c5a0, sub 0x51c720)
 #include "./externs.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -57,7 +56,7 @@ void C4c2fb0::scale_3(float)
     _snprintf(buf, 0x100, "%d", counter);
     {
         float out[2];
-        WOPS(hint)->set_text(out, &s);
+        hint->set_text(out, &s);
     }
 
     if (ok) {

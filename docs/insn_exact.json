@@ -1014,13 +1014,13 @@
   },
   "0042cf50": {
    "verdict": "DIFF",
-   "symbol": "?mouse_event@gui_window@@QAEDI@Z",
+   "symbol": "?key@ContainerBase@@UAEDI@Z",
    "insns": 150,
    "ours": 141,
    "unverified": 0,
    "unresolved": [],
    "why": "#0 42cf50/0 push ecx | push ebx: reads ecx / ebx but ecx is bound to ecx",
-   "src": "src/game/strat/gui_manager.cpp"
+   "src": "src/game/ui/widget_slots.cpp"
   },
   "0042d5c0": {
    "verdict": "DIFF",

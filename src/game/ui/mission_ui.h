@@ -127,6 +127,7 @@ struct MissionUi {
     int f174;                               // +0x174
 
     MissionUi();                                        // 0x48ae20
+    unsigned flag1() const;                             // 0x50cc60 (inventory_panel/widget_text.cpp: the hidden bit)
     // views of the track records for the animate overrides (mesh_hud.cpp)
     float elapsed(int i) const { return (float)(g_ticks[*(const int*)((const char*)this + 8 + i * 0x10)] - *(const __int64*)((const char*)this + 0x10 + i * 0x10)) * 1e-5f; }
     float& dur(int i) { return (&periodA)[i]; }                 // +0x68 + 4i
