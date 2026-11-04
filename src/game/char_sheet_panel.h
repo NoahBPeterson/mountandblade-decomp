@@ -1,16 +1,16 @@
 // char_sheet_panel.h: the character sheet panel (CharSheet; the window 0x4ef420 / 0x4eeb10 / 0x4ef7d0 / 0x4ef9f0 / 0x4f0820 / 0x4f06f0 act
 // on and the opener 0x507400 builds). ONE definition for char_sheet (cs_update, cs_troop, cs_detail, cs_panels, cs_weapons: each
 // slice saw the part of the layout its functions touch) and inventory_panel/char_sheet.cpp (the opener, which typed the widget
-// rows CharSheetWidget, a row object with its own data). Offsets agree wherever the views overlap (+0x14 troop index, +0x2d0 row
+// rows with their own view class). Offsets agree wherever the views overlap (+0x14 troop index, +0x2d0 row
 // count, +0x2d4 selected row, +0x2d8 page, +0x42c.. buttons, +0x478/+0x494 proficiency rows, +0x4b0.. panels, +0x52c face page);
 // the anonymous unions keep every slice's spelling of the same slot. The widget rows are MissionUi pointers (src/game/ui_widget.h);
-// the opener's rows are CharSheetWidget pointers (forward declared here, completed by its TU).
+// the opener's rows are typed with their real classes (UiA, UiE, text_box, NodeA, Camera).
 // Needs the includer's tstring.
 #ifndef MB_GAME_CHAR_SHEET_PANEL_H
 #define MB_GAME_CHAR_SHEET_PANEL_H
 #include "./ui_widget.h"
 
-struct CharSheetWidget;
+struct NodeA; struct UiA; struct UiE; struct text_box; struct Camera;
 
 struct CharSheet {
     int vptr;                                       // +0x00
@@ -20,10 +20,10 @@ struct CharSheet {
     union { int f_14; int player; };                // +0x14 (edited troop index = the character shown)
     int f_18;                                       // +0x18 (sound / message id)
     char pad1c[0x2c - 0x1c];
-    CharSheetWidget* window;                        // +0x2c (the 0x190-byte panel)
+    NodeA* window;                                  // +0x2c (the 0x190-byte panel)
     union {
         MissionUi* f_30[10];                           // +0x30 (skill-row number labels)
-        CharSheetWidget* skill_row[7];              // +0x30 (num_skills rows actually used)
+        UiA* skill_row[7];              // +0x30 (num_skills rows actually used)
     };
     char pad58[0xd8 - 0x58];
     MissionUi* label[0x2a];                            // +0xd8 (rank text per skill row)
@@ -42,40 +42,40 @@ struct CharSheet {
     char pad2e0[0x2e4 - 0x2e0];
     int f_2e4;                                      // +0x2e4 (the world stepped each frame)
     char pad2e8[0x42c - 0x2e8];
-    union { MissionUi* f_42c; CharSheetWidget* done; };        // +0x42c (done/cancel buttons)
-    union { MissionUi* f_430; CharSheetWidget* reset; };       // +0x430 (skills page panel)
-    union { MissionUi* f_434; CharSheetWidget* explanation; }; // +0x434 (description box)
+    union { MissionUi* f_42c; UiA* done; };        // +0x42c (done/cancel buttons)
+    union { MissionUi* f_430; UiA* reset; };       // +0x430 (skills page panel)
+    union { MissionUi* f_434; MissionUi* explanation; }; // +0x434 (description box)
     char pad438[0x440 - 0x438];
-    union { MissionUi* f_440; CharSheetWidget* stats; };       // +0x440 (back to the army button)
-    union { MissionUi* f_444; CharSheetWidget* next; };        // +0x444 (next/previous troop)
-    union { MissionUi* f_448; CharSheetWidget* prev; };        // +0x448
+    union { MissionUi* f_440; UiA* stats; };       // +0x440 (back to the army button)
+    union { MissionUi* f_444; UiA* next; };        // +0x444 (next/previous troop)
+    union { MissionUi* f_448; UiA* prev; };        // +0x448
     union {
         MissionUi* f_44c[4];                           // +0x44c (attribute left buttons)
         MissionUi* skill_pos[4];
-        CharSheetWidget* attrib_row[4];
+        UiA* attrib_row[4];
     };
     union {
         MissionUi* f_45c[4];                           // +0x45c (attribute right buttons)
         MissionUi* skill_val[4];
     };
-    union { MissionUi* f_46c; CharSheetWidget* weapon_title; };  // +0x46c
-    CharSheetWidget* attrib_title;                  // +0x470
-    CharSheetWidget* skill_title;                   // +0x474
+    union { MissionUi* f_46c; MissionUi* weapon_title; };  // +0x46c
+    MissionUi* attrib_title;                  // +0x470
+    MissionUi* skill_title;                   // +0x474
     union {
         MissionUi* f_478[7];                           // +0x478 (proficiency number labels)
         MissionUi* labels[7];                          // +0x478 (caption line per weapon class)
-        CharSheetWidget* weapon_row[7];
+        UiA* weapon_row[7];
     };
     union {
         MissionUi* f_494[7];                           // +0x494 (proficiency rows)
         MissionUi* rows[7];                            // +0x494 (one widget per weapon class)
     };
-    union { MissionUi* level_at; CharSheetWidget* attribs; };  // +0x4b0 (next-level / level / attribute lines)
-    union { MissionUi* xp_bar; CharSheetWidget* general; };    // +0x4b4 (experience bar)
-    union { MissionUi* f_4b8; CharSheetWidget* skill_desc; };  // +0x4b8 (title label)
-    union { MissionUi* f_4bc; CharSheetWidget* skills_outer; };// +0x4bc (scroll/slider bar)
-    CharSheetWidget* skills;                        // +0x4c0
-    union { MissionUi* f_4c4; CharSheetWidget* name; };// +0x4c4 (portrait / name)
+    union { MissionUi* level_at; text_box* attribs; };  // +0x4b0 (next-level / level / attribute lines)
+    union { MissionUi* xp_bar; text_box* general; };    // +0x4b4 (experience bar)
+    union { MissionUi* f_4b8; text_box* skill_desc; };  // +0x4b8 (title label)
+    union { MissionUi* f_4bc; Camera* skills_outer; };// +0x4bc (scroll/slider bar)
+    text_box* skills;                               // +0x4c0
+    union { MissionUi* f_4c4; UiE* name; };// +0x4c4 (portrait / name)
     union { char f_4c8; char f4c8; };               // +0x4c8 (skills visible)
     char pad4c9[0x4cc - 0x4c9];
     MissionUi* f_4cc;                                  // +0x4cc (edit face button)
