@@ -18,6 +18,10 @@ void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 
 #include "../screen_records.h"   // the record classes (vtables 0x595740..0x596c68)
 #include "../conv_screen.h"      // Rec1208: the conversation screen
+#include "../../rgl/mesh2/head_rec.h"   // head_cam, head_obj2
+#include "../result_window.h"            // ResultWindow
+#include "../triggers/item_rec.h"        // ItemRec, ItemRec2
+#include "./mission_item_recs.h"         // MissionBlocker, ItemA..ItemD
 
 #include "../window_mgr.h"   // canonical: g_windows (0xa73980); the records are its slots (see trigger_records.cpp)
 extern int g_5e29ac;   // 0x5e29ac

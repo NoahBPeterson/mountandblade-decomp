@@ -154,21 +154,6 @@ void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
     { char* p = (char*)::operator new(n); if (p && n > 0x2c) memset(p + 0x2c, 0, n - 0x2c); return p; }
 
 struct MissionItem;
-struct RecCam { char body[0x2dc]; RecCam(); };   // ctor 0x4c49f0
-struct RecMenu { char body[0x98]; RecMenu(); };   // ctor 0x4c2c50
-struct RecProfile { char body[0xcc]; RecProfile(); };   // ctor 0x4c3050
-struct RecItem90 { char body[0x90]; RecItem90(); };   // ctor 0x4ce870
-struct Rec98b { char body[0x98]; Rec98b(); };   // ctor 0x4c3290
-struct Rec90b { char body[0x90]; Rec90b(); };   // ctor 0x4c2fb0
-struct Rec80 { char body[0x80]; Rec80(); };   // ctor 0x4ce8d0
-struct Rec3910 { char body[0x3910]; Rec3910(); };   // ctor 0x4c3160
-struct RecBlocker { char body[0x328]; RecBlocker(); };   // ctor 0x4ce960
-struct RecObj2 { char body[0x530]; RecObj2(); };   // ctor 0x4c4cc0
-struct Rec238 { char body[0x238]; Rec238(); };   // ctor 0x4c31c0
-struct RecItemA { char body[0xf8]; RecItemA(); };   // ctor 0x4ceb30
-struct RecItemD { char body[0xb4]; RecItemD(); };   // ctor 0x4cee50
-struct RecItemB { char body[0x60]; RecItemB(); };   // ctor 0x4cef20
-struct RecItemC { char body[0x60]; RecItemC(); };   // ctor 0x4cef80
 struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
     ContainerBase* overlay;   // +0x2c the window
     MissionUi* row[16];       // +0x30 the faction rows
