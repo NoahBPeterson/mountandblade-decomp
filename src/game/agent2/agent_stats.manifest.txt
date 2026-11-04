@@ -24,7 +24,7 @@
 ../src/game/agent2/agent_stats.cpp  ?fill_ptr@IntVec@@QAEPAHPAHIABH@Z  00438c30  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?fill1c8@@YAXPAUPlacedObj@@0ABU1@@Z  00438c60  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?ucopy@vec12@@QAEPAUE12@@PAU2@00@Z  00438c90  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?calc_bounds@mnode@@QAEXPAUvector4@rgl@@0@Z  00438d80  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?calc_bounds@mesh@rgl@@QAEXPAUvector4@2@0@Z  00438d80  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?uninit_fill_n_str@@YAXPAUtstring@@IABU1@AAUalloc_tstring@@Uptr_tag@@@Z  00438f00  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?cap_all@node_list@@QAEXPBM@Z  00438f90  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?cap_all@node_groups@@QAEXPBM@Z  00439000  /O2 /MT /Gy /TP

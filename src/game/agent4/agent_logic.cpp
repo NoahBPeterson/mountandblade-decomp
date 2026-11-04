@@ -4339,7 +4339,7 @@ void gui_manager::add(tstring msg, int color)
             meshB[cur].append_skinned(&meshA[cur], (mat4*)&M, -1, -1, 0);
             this->color[cur] = color;
             age[cur] = 0;
-            ((mnode*)&meshA[cur])->calc_bounds(&ext, &p);       // mnode (agent2/agent_types.h) is the mesh seen by its node lists
+            meshA[cur].calc_bounds(&ext, &p);       // 0x438d80
             height[cur] = p.y - ext.y;
             total_h += height[cur];
         }

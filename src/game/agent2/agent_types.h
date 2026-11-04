@@ -104,21 +104,7 @@ struct vec_e32 {
     unsigned size() const { return first == 0 ? 0 : last - first; }
     V32& operator[](unsigned i) { return *(first + i); }
 };
-// rgl::mesh (src/rgl/mesh.h; its header clashes with the game headers here, so only the two chain accessors mnode calls are declared)
-namespace rgl { struct point20; struct keyframes; struct mesh { std::vector<point20>& get70(); keyframes& get_kf(); }; }   // 0x40eba0, 0x40ec00
-struct mnode {
-    char pad0[0x18];
-    mnode* master;                                      // 0x18
-    char pad1c[0x70 - 0x1c];
-    vec_e32 verts;                                      // 0x70
-    char pad80[0xa1 - 0x80];
-    char is_owner;                                      // 0xa1
-    char pada2[2];
-    struct { int a0; int* data; int count; } ints;      // 0xa4
-    char pad_b0[0xc8 - 0xb0];
-    float f_c8;                                         // 0xc8
-    void calc_bounds(vector4* mn, vector4* mx);         // 0x438d80
-};
+#include "../../rgl/mesh.h"                   // rgl::mesh (calc_bounds 0x438d80 is its member; the node lists point at it)
 
 // ---- the agent: src/game/agent_obj.h (Agent, AgentBody, Threat, InputRec, InputState; one definition for src/game) ----
 #include "../agent_obj.h"

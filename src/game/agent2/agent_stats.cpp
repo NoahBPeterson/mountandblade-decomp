@@ -580,20 +580,20 @@ template<class T> inline T minv(T a, T b) { return (a < b) ? a : b; }
 template<class T> inline T maxv(T a, T b) { return (a > b) ? a : b; }
 
 // @ 0x438d80
-void mnode::calc_bounds(vector4* mn, vector4* mx)
+void rgl::mesh::calc_bounds(vector4* mn, vector4* mx)
 {
     *mn = vector4(1e7f, 1e7f, 1e7f);
     *mx = vector4(-1e7f, -1e7f, -1e7f);
-    vec_e32* v = is_owner ? &verts : (vec_e32*)&((rgl::mesh*)master)->get70();
+    std::vector<rgl::point20>* v = local_a1 ? &v70 : &parent->get70();
     for (unsigned i = 0; i < v->size(); ++i) {
-        const V32& e = (*v)[i];
-        mn->x = minv(mn->x, e.x);
-        mn->y = minv(mn->y, e.y);
-        mn->z = minv(mn->z, e.z);
-        const V32& f = (*v)[i];
-        mx->x = maxv(mx->x, f.x);
-        mx->y = maxv(mx->y, f.y);
-        mx->z = maxv(mx->z, f.z);
+        const rgl::point20& e = (*v)[i];
+        mn->x = minv(mn->x, e.a.x);
+        mn->y = minv(mn->y, e.a.y);
+        mn->z = minv(mn->z, e.a.z);
+        const rgl::point20& f = (*v)[i];
+        mx->x = maxv(mx->x, f.a.x);
+        mx->y = maxv(mx->y, f.a.y);
+        mx->z = maxv(mx->z, f.a.z);
     }
 }
 
@@ -613,15 +613,15 @@ void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_t
 // @ 0x438f90
 void node_list::cap_all(const float* limit)
 {
-    for (mnode** it = first; it < last; ++it) {
-        mnode* n = *it;
+    for (rgl::mesh** it = first; it < last; ++it) {
+        rgl::mesh* n = *it;
         struct L { int a0; int* data; int count; };
-        L* l = n->is_owner ? (L*)&n->ints : (L*)&((rgl::mesh*)n->master)->get_kf();
+        L* l = n->local_a1 ? (L*)&n->kf : (L*)&n->parent->get_kf();
         if (0 < l->count) {
             if (*limit > (float)l->data[l->count - 1])
-                n->f_c8 = (float)l->data[l->count - 1];
+                n->c8 = (float)l->data[l->count - 1];
             else
-                n->f_c8 = *limit;
+                n->c8 = *limit;
         }
     }
 }

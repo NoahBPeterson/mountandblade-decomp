@@ -56,9 +56,6 @@ struct OptionsDlg {
 struct rgl_config {
     void save(FILE* f);   // 0x415fb0 (rgl/resource_manager.h clashes on g_log)
 };
-struct mnode {
-    void calc_bounds(rgl::vector4* lo, rgl::vector4* hi);   // 0x438d80 (game/agent2/agent_types.h)
-};
 struct PresentationRec {
     void read(stream_base& s);   // 0x4c23f0 (game/triggers/trigger_vec.h)
 };

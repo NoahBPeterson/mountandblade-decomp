@@ -241,10 +241,7 @@ struct body_res {
     shape_base* copy_shape();   // 0x439100 (game/agent2/agent_stats.h; thiscall: mesh -> body shape)
 };
 inline shape_res* body_copy_shape(mesh* m) { return (shape_res*)((body_res*)m)->copy_shape(); }
-struct mnode {
-    void calc_bounds(vector4* mn, vector4* mx);   // 0x438d80 (game/agent2/agent_types.h; thiscall, ret 8)
-};
-inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { ((mnode*)node)->calc_bounds(mn, mx); }
+inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { node->calc_bounds(mn, mx); }   // 0x438d80
 void vmin(vector4* r, const vector4* a, const vector4* b);  // 0x40af80
 void vmax(vector4* r, const vector4* a, const vector4* b);  // 0x40b080
 

@@ -50,10 +50,6 @@ UiD* make_scrollbar(void* parent, const tstring* name);                         
 Camera* make_editor_list(void* parent, const tstring* name, int child);                      // 0x4f62f0
 
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-struct mnode {                                       // game/agent2/agent_types.h: the font object's bounds are mnode::calc_bounds
-    void calc_bounds(rgl::vector4* a, rgl::vector4* b);                // 0x438d80 (this = font object)
-    __forceinline void calc_bounds(float* a, float* b) { calc_bounds((rgl::vector4*)a, (rgl::vector4*)b); }
-};
 
 // ---------------------------------------------------------------------------
 // globals
@@ -799,7 +795,7 @@ void note_window::build(int page_, int arg_)
 
     if (this->picture->flag1() == 0) {
         float a[2], b[2];
-        ((mnode*)this->picture->tracks[0])->calc_bounds(a, b);
+        ((rgl::mesh*)this->picture->tracks[0])->calc_bounds((rgl::vector4*)a, (rgl::vector4*)b);   // 0x438d80 (the font object)
         float h = b[1] - a[1];
         float w = b[0] - a[0];
         float border = cfg_float("note_image_border");

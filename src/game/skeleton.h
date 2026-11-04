@@ -4,7 +4,7 @@
 // agent3 (agent_combat.cpp 0x43e740.., agent_fx_sound.cpp 0x443aa0 / 0x444370).
 // The record array and the +8 pointer are typed differently by the three modules, so they share anonymous unions of
 // pointers (recs: raw bytes in agent3 / Region in agent2 / BoneRec in agent; +8: bone-mask table in agent2 / SkelData in
-// agent3). Channel, SkelData, Anim and mnode are declared by the modules that use them (only pointers are stored here).
+// agent3). Channel, SkelData, Anim are declared by the modules that use them (only pointers are stored here).
 #ifndef GAME_SKELETON_H
 #define GAME_SKELETON_H
 #include <vector>
@@ -18,7 +18,7 @@ struct node_groups;
 struct Channel;
 struct SkelData;
 struct Anim;
-struct mnode;
+
 struct NewtonRagDollBone;
 namespace rgl { struct mesh; }
 
@@ -89,7 +89,7 @@ struct Skeleton {
 
 // ---- the display mesh's node lists (0x438f90, 0x439000) ----------------------------------------------------------
 struct node_list {
-    int al; mnode** first; mnode** last; mnode** end;
+    int al; rgl::mesh** first; rgl::mesh** last; rgl::mesh** end;
     void cap_all(const float* limit);                   // 0x438f90
 };
 struct node_groups {                                    // the lod mesh (rgl::lod_mesh); agent3 calls it Mesh
