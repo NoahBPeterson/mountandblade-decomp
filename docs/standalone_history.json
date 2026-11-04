@@ -1796,5 +1796,39 @@
    "library data": 10424,
    "unnamed bss": 42135
   }
+ },
+ "2026-11-04T14:04:51-06:00": {
+  "data_labels": 21,
+  "aliases": 165,
+  "source_aliases": 27,
+  "source_hacks": 4,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 0,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 171,
+  "when": "2026-11-04T14:04:51-06:00",
+  "commit": "af981d43",
+  "build": "b4",
+  "label": "g_gui gui_manager",
+  "items": {
+   "defined in source": 167,
+   "generated from source": 821,
+   "borrowed from image": 28,
+   "reached through tables": 7,
+   "library data": 212,
+   "unnamed bss": 16
+  },
+  "bytes": {
+   "defined in source": 143805288,
+   "generated from source": 281624,
+   "borrowed from image": 776,
+   "reached through tables": 95,
+   "library data": 10424,
+   "unnamed bss": 495
+  }
  }
 }
