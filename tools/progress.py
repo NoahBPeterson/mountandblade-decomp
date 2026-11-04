@@ -944,7 +944,9 @@ def treemap_data(path):
 
 def _sa_tick(p):
     """A recorded build's x-axis label: what landed (data_coverage.py --record --label) and when, e.g. 'terrain  11-03 14:57'."""
-    return "%s  %s %s" % (p.get("label") or p["commit"][:7], p["when"][5:10], p["when"][11:16])
+    what = p.get("label") or p["commit"][:7]
+    what = what if len(what) <= 26 else what[:25] + "\u2026"     # long labels ran into the footer
+    return "%s  %s %s" % (what, p["when"][5:10], p["when"][11:16])
 
 
 def plot_standalone(path):
