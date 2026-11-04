@@ -125,9 +125,7 @@ struct int3 { int a, b, c; };       // 12 bytes
 struct int1 { int a; };
 struct alloc_int3;
 #define AGENT_ALLOC(N, T) struct N { __declspec(noinline) void construct(T* p, const T& v); };
-AGENT_ALLOC(alloc_tstring, tstring)
-AGENT_ALLOC(alloc_rec36, rec36)
-AGENT_ALLOC(alloc_rec136, rec136)
+#include "../alloc_construct.h"   // alloc_tstring / alloc_rec36 / alloc_rec136
 AGENT_ALLOC(alloc_int3, int3)
 AGENT_ALLOC(alloc_int1, int1)
 int3* uninit_copy_int3(const int3* first, const int3* last, int3* dest, alloc_int3& al);   // 0x436d10

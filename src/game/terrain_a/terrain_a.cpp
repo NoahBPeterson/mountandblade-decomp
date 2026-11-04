@@ -2324,7 +2324,7 @@ E1c8* __cdecl copy1c8(E1c8* f, E1c8* l, E1c8* d)
 // ---- std::_Uninit_fill_n with an opaque allocator::construct (catch(...) { throw; } funclets follow) -------------------------------
 
 // @ 0x46b500 (+ funclet 0x46b564)
-void __cdecl uninit_fill_n36(rec36* first, unsigned count, const rec36& val, alloc36& al)
+void __cdecl uninit_fill_n36(rec36* first, unsigned count, const rec36& val, alloc_rec36& al)
 {
     rec36* next = first;
     try {
@@ -2379,7 +2379,7 @@ void allocArr::construct(ArrSet* p, const ArrSet& v) { if (p) new (p) ArrSet(v);
 // ---- _Uninit_copy with an opaque allocator::construct ---------------------------------------------------------------------------------
 
 // @ 0x46b6e0 (+ catch(...) funclet 0x46b746)
-rec36* __cdecl uninit_copy36(rec36* first, rec36* last, rec36* dest, alloc36& al, std::_Nonscalar_ptr_iterator_tag tag)
+rec36* __cdecl uninit_copy36(rec36* first, rec36* last, rec36* dest, alloc_rec36& al, std::_Nonscalar_ptr_iterator_tag tag)
 {
     rec36* next = dest;
     try {
@@ -2392,7 +2392,7 @@ rec36* __cdecl uninit_copy36(rec36* first, rec36* last, rec36* dest, alloc36& al
 }
 
 // @ 0x46b750 (+ catch(...) funclet 0x46b7bc)
-rec136* __cdecl uninit_copy_arrset(rec136* first, rec136* last, rec136* dest, alloc136& al, std::_Nonscalar_ptr_iterator_tag tag)
+rec136* __cdecl uninit_copy_arrset(rec136* first, rec136* last, rec136* dest, alloc_rec136& al, std::_Nonscalar_ptr_iterator_tag tag)
 {
     rec136* next = dest;
     try {

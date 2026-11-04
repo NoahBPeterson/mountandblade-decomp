@@ -1170,7 +1170,7 @@ bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, ch
 MRow36* vecMRow36::ufill(MRow36* f, unsigned n, const MRow36& v)
 {
     ptr_tag t;
-    ((fill36_t)uninit_fill_n36)((rec36*)f, n, (const rec36&)v, (alloc36&)*this, t);
+    ((fill36_t)uninit_fill_n36)((rec36*)f, n, (const rec36&)v, (alloc_rec36&)*this, t);
     return f + n;
 }
 
@@ -1208,7 +1208,7 @@ template std::vector<PlacedObj>::iterator std::vector<PlacedObj>::erase(std::vec
 ArrSet* vecArr::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
 {
     std::_Nonscalar_ptr_iterator_tag t;
-    return (ArrSet*)uninit_copy_arrset((rec136*)f, (rec136*)l, (rec136*)d, (alloc136&)*this, t);
+    return (ArrSet*)uninit_copy_arrset((rec136*)f, (rec136*)l, (rec136*)d, (alloc_rec136&)*this, t);
 }
 
 // (0x467f80: a copy of the other object's function, kept in this object so cl knows its register use)

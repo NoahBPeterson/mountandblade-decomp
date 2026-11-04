@@ -59,8 +59,7 @@ struct CandRec { int f0; int troop; unsigned char f8; };
 bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, char p6);    // 0x467940
 
 // ---- std::vector<T> (VC7.1 layout: allocator at +0, _First +4, _Last +8, _End +0xc) and allocator::construct stubs ----
-struct alloc36 { void construct(rec36* p, const rec36& v); };              // 0x436cb0
-struct alloc136 { void construct(rec136* p, const rec136& v); };           // 0x436cd0
+#include "../alloc_construct.h"      // alloc_rec36 0x436cb0, alloc_rec136 0x436cd0
 struct alloc24 { void construct(elem24* p, const elem24& v); void destroy(elem24* p) { p->~elem24(); } };            // 0x468130
 struct alloc100 { void construct(particle100* p, const particle100& v); void destroy(particle100* p) { p->~particle100(); } };   // 0x468170
 struct alloc52 { void construct(elem52* p, const elem52& v); void destroy(elem52* p) { p->~elem52(); } };            // 0x468190
@@ -68,7 +67,7 @@ struct alloc24_def { void construct(elem24* p, const elem24& v); };        // 0x
 struct alloc100_def { void construct(particle100* p, const particle100& v); };   // 0x468170
 struct alloc52_def { void construct(elem52* p, const elem52& v); };        // 0x468190
 
-struct vec36 { alloc36 _Alval; rec36* first; rec36* last; rec36* end; int size() const; rec36* _Ucopy(rec36* f, rec36* l, rec36* d); };         // 0x467ac0 / 0x46c150
+struct vec36 { alloc_rec36 _Alval; rec36* first; rec36* last; rec36* end; int size() const; rec36* _Ucopy(rec36* f, rec36* l, rec36* d); };         // 0x467ac0 / 0x46c150
 struct vec24 { alloc24 _Alval; elem24* first; elem24* last; elem24* end; int size() const; elem24* _Ucopy(elem24* f, elem24* l, elem24* d); };   // 0x467ae0 / 0x46c170
 struct vec52 { alloc52 _Alval; elem52* first; elem52* last; elem52* end; int size() const; elem52* _Ucopy(elem52* f, elem52* l, elem52* d); };   // 0x467b00 / 0x46c1b0
 struct vec516 { int alloc; s516* first; s516* last; s516* end; int size() const; };      // 0x467b20

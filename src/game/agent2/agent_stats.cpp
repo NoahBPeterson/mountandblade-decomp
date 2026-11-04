@@ -460,7 +460,7 @@ E1c8* __cdecl copy_backward1c8(E1c8* f, E1c8* l, E1c8* d)
 
 // std::_Uninit_copy for tstring (catch funclet 0x438a7a: destroys [s, d) then `throw;`)
 // @ 0x438a10
-tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, allocstr& al, ptr_tag tag)
+tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, alloc_tstring& al, ptr_tag tag)
 {
     tstring* s = d;
     try {
@@ -599,7 +599,7 @@ void mnode::calc_bounds(vector4* mn, vector4* mx)
 
 // std::_Uninit_fill_n for tstring (catch funclet 0x438f68: destroys [s, f) then `throw;`)
 // @ 0x438f00
-void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, allocstr& al, ptr_tag tag)
+void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag)
 {
     tstring* s = f;
     try {
@@ -634,7 +634,7 @@ void node_groups::cap_all(const float* limit)
 }
 
 // @ 0x439040
-void allocE1c8_def::construct(E1c8* p, const E1c8& v) { new ((void*)p) E1c8(v); }
+void allocE1c8::construct(E1c8* p, const E1c8& v) { new ((void*)p) E1c8(v); }
 
 // std::_Uninit_copy for the 0x1c8-byte elements (catch funclet 0x4390d0: destroys [s, d) then `throw;`)
 // @ 0x439060

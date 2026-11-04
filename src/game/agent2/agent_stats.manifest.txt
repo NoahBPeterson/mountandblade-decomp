@@ -15,7 +15,7 @@
 ../src/game/agent2/agent_stats.cpp  ??$remove_copy@Viterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@std@@V123@PAUshape_base@@@std@@YA?AViterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@0@V120@00ABQAUshape_base@@@Z  00438910  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?uninit_fill_n12@@YAXPAUE12@@IABU1@AAUallocE12@@Uptr_tag@@@Z  00438960  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?copy_backward1c8@@YAPAUPlacedObj@@PAU1@00@Z  004389d0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?uninit_copy_str@@YAPAUtstring@@PAU1@00AAUallocstr@@Uptr_tag@@@Z  00438a10  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?uninit_copy_str@@YAPAUtstring@@PAU1@00AAUalloc_tstring@@Uptr_tag@@@Z  00438a10  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?uninit_copy_int@@YAPAHPAH00AAUallocint@@Uptr_tag@@@Z  00438aa0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?adjust_heap_node@@YAXPAUhnode@@HHU1@Unode_gt@@@Z  00438b10  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?set_modifier@ItemRef@@QAEXH@Z  00438bc0  /O2 /MT /Gy /TP
@@ -25,10 +25,10 @@
 ../src/game/agent2/agent_stats.cpp  ?fill1c8@@YAXPAUPlacedObj@@0ABU1@@Z  00438c60  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?ucopy@vec12@@QAEPAUE12@@PAU2@00@Z  00438c90  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?calc_bounds@mnode@@QAEXPAUvector4@rgl@@0@Z  00438d80  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?uninit_fill_n_str@@YAXPAUtstring@@IABU1@AAUallocstr@@Uptr_tag@@@Z  00438f00  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?uninit_fill_n_str@@YAXPAUtstring@@IABU1@AAUalloc_tstring@@Uptr_tag@@@Z  00438f00  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?cap_all@node_list@@QAEXPBM@Z  00438f90  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?cap_all@node_groups@@QAEXPBM@Z  00439000  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?construct@allocE1c8_def@@QAEXPAUPlacedObj@@ABU2@@Z  00439040  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?construct@allocE1c8@@QAEXPAUPlacedObj@@ABU2@@Z  00439040  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?uninit_copy1c8@@YAPAUPlacedObj@@PAU1@00AAUallocE1c8@@Uptr_tag@@@Z  00439060  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?copy_shape@body_res@@QAEPAUshape_base@@XZ  00439100  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?next_stamp@NavMesh@@QAEXXZ  00439410  /O2 /MT /Gy /TP

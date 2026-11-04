@@ -143,16 +143,15 @@ float __cdecl hit_chance(int* who, Agent* a);           // 0x438cb0
 #include "../../include/clock_table.h"
 typedef PlacedObj E1c8;                                  // the 0x1c8-byte polymorphic record
 struct allocE12  { void construct(E12* p, const E12& v); };             // 0x436cf0
-struct allocstr  { void construct(tstring* p, const tstring& v); };     // 0x436c90
+#include "../alloc_construct.h"   // alloc_tstring 0x436c90
 struct allocint  { void construct(int* p, const int& v); };             // 0x436d80
-struct allocE1c8_def { void construct(E1c8* p, const E1c8& v); };       // 0x439040
 struct allocE1c8 { void construct(E1c8* p, const E1c8& v); };           // 0x439040
 struct vec12 : allocE12 {
     E12* first; E12* last; E12* end;
     E12* ufill(E12* f, unsigned n, const E12& v);       // 0x43a4a0
     E12* ucopy(E12* a, E12* b, E12* c);                 // 0x438c90
 };
-struct vecstr : allocstr {
+struct vecstr : alloc_tstring {
     tstring* first; tstring* last; tstring* end;
     tstring* ucopy(tstring* f, tstring* l, tstring* d); // 0x43a4d0
     tstring* ufill(tstring* f, unsigned n, const tstring& v);   // 0x43b2b0
@@ -178,11 +177,11 @@ void __cdecl push_heap_elem(OpenItem* first, int hole, int top, OpenItem val, He
 // the free functions of this object
 void __cdecl uninit_fill_n12(E12* f, unsigned n, const E12& v, allocE12& al, ptr_tag tag);                       // 0x438960
 E1c8* __cdecl copy_backward1c8(E1c8* f, E1c8* l, E1c8* d);                                                       // 0x4389d0
-tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, allocstr& al, ptr_tag tag);                 // 0x438a10
+tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, alloc_tstring& al, ptr_tag tag);                 // 0x438a10
 int* __cdecl uninit_copy_int(int* f, int* l, int* d, allocint& al, ptr_tag tag);                                 // 0x438aa0
 void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, node_gt pred);                      // 0x438b10
 void __cdecl fill1c8(E1c8* f, E1c8* l, const E1c8& v);                                                           // 0x438c60
-void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, allocstr& al, ptr_tag tag);             // 0x438f00
+void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag);             // 0x438f00
 E1c8* __cdecl uninit_copy1c8(E1c8* f, E1c8* l, E1c8* d, allocE1c8& al, ptr_tag tag);                             // 0x439060
 void __cdecl uninit_fill_n1c8(E1c8* f, unsigned n, const E1c8& v, allocE1c8& al, ptr_tag tag);                   // 0x43ab50
 

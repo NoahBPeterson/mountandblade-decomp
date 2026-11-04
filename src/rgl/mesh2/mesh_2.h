@@ -218,10 +218,8 @@ struct csv_row {                                                // 0x238 bytes (
 };
 
 extern std::vector<RegSkeleton> g_skeletons;                      // 0xa180e8 (the registered skeletons, filled from skeleton_bodies.xml)
-struct allocstr {
-    void construct(tstring* p, const tstring& v);   // 0x436c90 (game/agent2/agent_types.h)
-};
-void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, allocstr& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
+#include "../../game/alloc_construct.h"   // alloc_tstring 0x436c90
+void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
 // std::vector<tstring>::_Insert_n (0x43e310, protected): reached through a class that makes it public
 struct tstring_vec_pub : std::vector<tstring> { using std::vector<tstring>::_Insert_n; };
 void __fastcall fix_skeletons(std::vector<RegSkeleton>* list);               // 0x4cd850

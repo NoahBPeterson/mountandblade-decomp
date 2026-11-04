@@ -47,8 +47,7 @@ template<> void vector<tstring, allocator<tstring> >::_Insert_n(vector<tstring, 
 template<> void vector<tstring, allocator<tstring> >::_Destroy(tstring*, tstring*);                                                        // 0x42d360
 }
 #include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
-struct allocstr { void construct(tstring* p, const tstring& v); };          // 0x436c90 (agent_stats.h's allocator view; uninit_fill_n_str takes it)
-struct alloc_tstring { void construct(tstring* p, const tstring& v); };     // 0x436c90 (agent/agent.h; the definition's name)
+#include "../alloc_construct.h"   // alloc_tstring 0x436c90
 struct tstring_stdvec : std::vector<tstring> {
     __forceinline void destroy_range(tstring* f, tstring* l) { _Destroy(f, l); }
     __forceinline void insert_n(tstring* p, size_t n, const tstring& v) { _Insert_n(iterator(p), n, v); }
@@ -56,7 +55,7 @@ struct tstring_stdvec : std::vector<tstring> {
 struct tstring_alloc {
     int pad;                                        // +0 allocator subobject
 };
-void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, allocstr& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
+void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
 tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag);       // 0x524cd0
 void __stdcall vector_constructor_iterator(void* dst, unsigned size, int count, void (__fastcall *ctorfn)(void*));        // 0x401800
 
@@ -74,7 +73,7 @@ struct tstring_vec : tstring_alloc {
         if (size() < capacity()) {
             ptr_tag t;
             tstring* p = last;
-            uninit_fill_n_str(p, 1, v, *(allocstr*)this, t);
+            uninit_fill_n_str(p, 1, v, *(alloc_tstring*)this, t);
             last = p + 1;
         } else {
             tstring* pos = last_pos();

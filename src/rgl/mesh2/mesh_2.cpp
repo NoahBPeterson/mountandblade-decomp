@@ -707,14 +707,14 @@ void StrTable::load(const tstring* root_t)
                     } else {
                         lang_bucket* kb = &keys[hash];
                         if (kb->size() < (unsigned)(kb->myend - kb->myfirst)) {
-                            uninit_fill_n_str(kb->mylast, 1, key, *(allocstr*)kb, tag);
+                            uninit_fill_n_str(kb->mylast, 1, key, *(alloc_tstring*)kb, tag);
                             kb->mylast++;
                         } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
                             ((tstring_vec_pub*)kb)->_Insert_n(std::vector<tstring>::iterator(kb->mylast), 1, key);
                         }
                         lang_bucket* vb = &vals[hash];
                         if (vb->size() < (unsigned)(vb->myend - vb->myfirst)) {
-                            uninit_fill_n_str(vb->mylast, 1, value, *(allocstr*)vb, tag);
+                            uninit_fill_n_str(vb->mylast, 1, value, *(alloc_tstring*)vb, tag);
                             vb->mylast++;
                         } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
                             ((tstring_vec_pub*)vb)->_Insert_n(std::vector<tstring>::iterator(vb->mylast), 1, value);

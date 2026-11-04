@@ -34,18 +34,19 @@ typedef std::vector<P8>::iterator It8;
 // The wrappers stand for the _Ufill members of vector<MRow36>, vector<MVert>, vector<MPoly> and vector<MEdge> that
 // _Insert_n (0x476370, 0x476620, 0x4768f0, 0x476bb0) calls; the fill itself is an instance in an earlier object.
 struct alloc18 {}; struct alloc24 {}; struct alloc34 {}; struct alloc64 {};
-struct alloc36 {}; struct alloc52 {}; struct alloc100 {};
+#include "../alloc_construct.h"   // alloc_rec36
+struct alloc52 {}; struct alloc100 {};
 // The callees are the cdecl _Uninit_fill_n instances of src/game/terrain_a (misc.h), declared there for the element types elem24 /
-// rec36 / elem52 / particle100 with their allocators alloc24 / alloc36 / alloc52 / alloc100 and WITHOUT the empty `tag`
+// rec36 / elem52 / particle100 with their allocators alloc24 / alloc_rec36 / alloc52 / alloc100 and WITHOUT the empty `tag`
 // parameter. The vectors here hold layout-identical records (MVert, MRow36, MEdge, MPoly), and the original still pushes the tag's
 // slot: the helpers below take the definitions' addresses and call them through the five-parameter type (cdecl: the caller pops).
 struct elem24; struct rec36; struct elem52; struct particle100;
 void __cdecl uninit_fill_n24(elem24* f, unsigned n, const elem24& v, alloc24& al);            // 0x46b570
-void __cdecl uninit_fill_n36(rec36* f, unsigned n, const rec36& v, alloc36& al);              // 0x46b500
+void __cdecl uninit_fill_n36(rec36* f, unsigned n, const rec36& v, alloc_rec36& al);              // 0x46b500
 void __cdecl uninit_fill_n52(elem52* f, unsigned n, const elem52& v, alloc52& al);            // 0x46b650
 void __cdecl uninit_fill_n100(particle100* f, unsigned n, const particle100& v, alloc100& al); // 0x46b5e0
 typedef void (__cdecl *fill24_t)(elem24*, unsigned, const elem24&, alloc24&, ptr_tag);
-typedef void (__cdecl *fill36_t)(rec36*, unsigned, const rec36&, alloc36&, ptr_tag);
+typedef void (__cdecl *fill36_t)(rec36*, unsigned, const rec36&, alloc_rec36&, ptr_tag);
 typedef void (__cdecl *fill52_t)(elem52*, unsigned, const elem52&, alloc52&, ptr_tag);
 typedef void (__cdecl *fill100_t)(particle100*, unsigned, const particle100&, alloc100&, ptr_tag);
 struct vecMRow36 : alloc24 { MRow36* first; MRow36* last; MRow36* end; MRow36* ufill(MRow36* f, unsigned n, const MRow36& v); };            // 0x4724c0
@@ -81,10 +82,9 @@ struct alloc_arrset {
     void destroy(ArrSet* p) { p->~ArrSet(); }
 };
 
-// 0x46b750: terrain_a's instance is declared for rec136 / alloc136 (the same 0x38-byte record) with std's own tag type;
+// 0x46b750: terrain_a's instance is declared for rec136 / alloc_rec136 (the same 0x38-byte record) with std's own tag type;
 // 0x46c1d0 has no tag parameter (the caller still pushes its slot)
-struct rec136; struct alloc136;
-rec136* __cdecl uninit_copy_arrset(rec136* f, rec136* l, rec136* d, alloc136& al, std::_Nonscalar_ptr_iterator_tag tag);   // 0x46b750
+rec136* __cdecl uninit_copy_arrset(rec136* f, rec136* l, rec136* d, alloc_rec136& al, std::_Nonscalar_ptr_iterator_tag tag);   // 0x46b750
 ArrSet* __cdecl uninit_copy_arrset2(ArrSet* f, ArrSet* l, ArrSet* d, allocArr& al);   // 0x46c1d0 (a second instance)
 typedef ArrSet* (__cdecl *copy2_t)(ArrSet*, ArrSet*, ArrSet*, allocArr&, ptr_tag);
 ArrSet* __cdecl copy_arrset(ArrSet* f, ArrSet* l, ArrSet* d, ptr_tag tag);                          // 0x468050
