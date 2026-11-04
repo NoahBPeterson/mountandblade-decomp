@@ -21,6 +21,8 @@ from cmpobj import parse_coff, REL_SIZES, coff_constants, constant_diffs
 import imgcache
 import asm_audit
 from winnative import CL, winpath, lock as lock_file    # cl.sh under wine on the Mac, cl.exe on Windows
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "difftest"))
+import slice as S                                       # the shared object cache (compile_obj)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IMAGE = os.path.join(ROOT, "work", "mb.analysis.bin")
@@ -78,12 +80,11 @@ def read_rows(paths, filt):
 
 
 def compile_one(key):
+    # The difftest object cache (slice.compile_obj: keyed by the source, every header it reaches and the flags, shared
+    # by every worktree): an unchanged source costs no compiler run. Without it every run recompiled all ~500 sources.
     src, flags = key
-    obj = obj_path(src, list(flags))
-    r = subprocess.run([CL, "/nologo", "/c", *resolve_flags(flags), INCLUDE,
-                        "/Fo" + winpath(obj), winpath(os.path.join(ROOT, "match", src))],
-                       capture_output=True, text=True)
-    return key, (obj if r.returncode == 0 else None), (r.stdout + r.stderr)[-2000:]
+    obj, log = S.compile_obj(os.path.join(ROOT, "match", src), list(flags))
+    return key, obj, log[-2000:]
 
 
 class Original:
