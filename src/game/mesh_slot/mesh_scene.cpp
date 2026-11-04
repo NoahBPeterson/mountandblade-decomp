@@ -5,7 +5,7 @@
 #include "./mesh_build.h"          // build_appearance (0x482240), setup_item_meshes (0x47cfe0)
 #include "../../include/fx.h"
 #include "../../include/phys_set.h"
-#include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
 #include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
@@ -87,11 +87,11 @@ void Terrain::build_entity()
     } while (--i);
 
     for (unsigned n = 0; n < meshes.size(); n++) {
-        mesh* m = ((mesh_x*)meshes[n])->clone();
-        ((mesh_x*)m)->set_color(center);
+        mesh* m = ((rgl::mesh*)meshes[n])->clone();
+        ((rgl::mesh*)m)->set_color(center);
         ((mesh*)m)->translate(&tv);
         ((Terrain*)this)->snap(m);
-        ((mesh_x*)m)->compute_bounds();
+        ((rgl::mesh*)m)->compute_bounds();
 
         int ix;
         if (m->bounds.center.x < 0.0f)
@@ -531,7 +531,7 @@ void PhysSet::reset()
 
 static __forceinline void vcopy(vector4* d, const vector4* s) { d->x = s->x; d->y = s->y; d->z = s->z; d->w = s->w; }
 
-struct mesh_anim_x : mesh_x {
+struct mesh_anim_x : rgl::mesh {
     void apply_anim(const float* t);             // 0x47dcd0
 };
 struct lod_mesh_a : lod_mesh {
@@ -710,7 +710,7 @@ void Terrain::gen_set_init(particle_list* s)
                 if ((ge->flags & 0x20000) == 0)
                     ((mesh*)cur2)->append_skinned(src, (const mat4*)&mat, -1, -1, 0);
                 else
-                    ((mesh_x*)cur2)->transform(src, &mat, -1);
+                    ((rgl::mesh*)cur2)->transform(src, &mat, -1);
                 if (RV(int, 0x38) < 4) {
                     ((int*)(pr + 0x28))[RV(int, 0x38)] = cur2->v50._Myfirst ? (int)cur2->v50.size() : 0;
                     RV(int, 0x38) = RV(int, 0x38) + 1;
@@ -734,7 +734,7 @@ void Terrain::gen_set_init(particle_list* s)
                         id.o = o;
                         ((world_x*)world)->light_mesh(grid[cell][j], &id, 1);
                     }
-                    ((mesh_x*)grid[cell][j])->compute_bounds();
+                    ((rgl::mesh*)grid[cell][j])->compute_bounds();
                     TEntity* e = ents[cell];
                     mesh* mm = grid[cell][j];
                     std::vector<mesh*>& em = *(std::vector<mesh*>*)((char*)e + 0x118);

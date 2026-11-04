@@ -28,9 +28,9 @@ tstring ItemKind::mesh_name_for(int bit)
     return key;
 }
 // @ 0x433cb0
-res_obj* ItemKind::mesh_for(unsigned __int64 cls, int bit)
+rgl::mesh* ItemKind::mesh_for(unsigned __int64 cls, int bit)
 {
-    res_obj* none = 0;
+    rgl::mesh* none = 0;
     unsigned __int64 mask = 1i64 << bit;
     int n = mesh_count;
     bit = -1;
@@ -46,7 +46,7 @@ res_obj* ItemKind::mesh_for(unsigned __int64 cls, int bit)
         i++;
     } while (i < n);
     if (bit == -1) return 0;
-    return (res_obj*)res_manager().get_object(&meshes[bit].name);
+    return (rgl::mesh*)res_manager().get_object(&meshes[bit].name);
 }
 // @ 0x433d90
 bool ItemKind::is_ranged()

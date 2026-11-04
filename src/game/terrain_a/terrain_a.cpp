@@ -1592,7 +1592,7 @@ void skin_x::apply_state(const float* t)
 }
 
 // @ 0x468620
-int mesh_x::count(int kind)
+int rgl::mesh::count(int kind)
 {
     if (kind == 1) {
         std::vector<rgl::face20>& f = local_a0 ? v90 : parent->get90();
@@ -2078,7 +2078,7 @@ void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 using rgl::mat3;
@@ -2618,7 +2618,7 @@ ArrSet* __cdecl uninit_copy_arrset2(ArrSet* first, ArrSet* last, ArrSet* dest, a
 // @ 0x46c4f0
 #define VS(f) (*(int*)&vs[i].f)
 #define PT(f) (*(int*)&ps[vs[i].index].f)
-void mesh_x::fill_vertices(int* p, const unsigned* fmt)
+void rgl::mesh::fill_vertices(int* p, const unsigned* fmt)
 {
     bool b18 = (res->shader->stages[0].b & 0x1f) == 0x18;
     std::vector<rgl::vertex60>& vs = local_a1 ? v50 : parent->get50();
@@ -2685,7 +2685,7 @@ void mesh_x::fill_vertices(int* p, const unsigned* fmt)
 }
 
 // @ 0x46c920
-void mesh_x::fill_indices(unsigned short* out)
+void rgl::mesh::fill_indices(unsigned short* out)
 {
     std::vector<rgl::face20>& fs = local_a0 ? v90 : parent->get90();
     for (unsigned i = 0; i < fs.size(); i++) {
@@ -2879,7 +2879,7 @@ void RenderScene::apply_state()
 
 // ---- vertex / index buffer uploader ---------------------------------------------------------------------------------------------------------
 
-// Body of mesh_x::count (0x468620, above in this object): visible here so that cl sees it has no side effects, which lets it hoist loads
+// Body of rgl::mesh::count (0x468620, above in this object): visible here so that cl sees it has no side effects, which lets it hoist loads
 // across the calls below.
 #define LOG_GROW(KIND_WORD, KIND_V_WORD)                                                           \
     do {                                                                                           \
@@ -2931,7 +2931,7 @@ int dev_buffer::upload(void* scratch, void* tag)
         for (; it != meshes.end(); ++it) {
             rgl::slot& s = *(rgl::slot*)((char*)&(*it)->slots[0] + off);
             if (generation != s.fc || s.f28 != 0 || s.f14 != s.f4)
-                need += ((mesh_x*)*it)->count(type);
+                need += ((rgl::mesh*)*it)->count(type);
         }
         if (need == 0)
             return 0;
@@ -2960,22 +2960,22 @@ int dev_buffer::upload(void* scratch, void* tag)
             for (it = meshes.begin(); it != meshes.end(); ++it) {
                 rgl::slot& s = (*it)->slots[type];
                 if (s.fc != generation || s.f28 != 0 || s.f14 != s.f4) {
-                    if ((((mesh_x*)*it)->count(type) + n) * elem_size >= 0x418000) {
+                    if ((((rgl::mesh*)*it)->count(type) + n) * elem_size >= 0x418000) {
                         memcpy(locked + written, scratch, elem_size * n);
                         written += elem_size * n;
                         n = 0;
                     }
                     char* dst = (char*)scratch + elem_size * n;
                     if (type == 1)
-                        ((mesh_x*)*it)->fill_indices((unsigned short*)dst);
+                        ((rgl::mesh*)*it)->fill_indices((unsigned short*)dst);
                     else
-                        ((mesh_x*)*it)->fill_vertices((int*)dst, &fvf);
+                        ((rgl::mesh*)*it)->fill_vertices((int*)dst, &fvf);
                     s.f8 = cursor + base;
                     s.fc = generation;
                     s.f14 = s.f4;
                     s.f28 = 0;
                     int k = type;
-                    mesh_x* tm = (mesh_x*)*it;
+                    rgl::mesh* tm = (rgl::mesh*)*it;
                     n += tm->count(k);
                     base += tm->count(k);
                 }
@@ -2994,7 +2994,7 @@ int dev_buffer::upload(void* scratch, void* tag)
         base = 0;
         int total = 0;
         for (it = meshes.begin(); it != meshes.end(); ++it)
-            total += ((mesh_x*)*it)->count(type);
+            total += ((rgl::mesh*)*it)->count(type);
         if (total > *pcap)
             LOG_GROW("Static", ":Out of Static vertex buffer memory. Needed = ");
         if (type == 1) {
@@ -3006,22 +3006,22 @@ int dev_buffer::upload(void* scratch, void* tag)
         }
         for (it = meshes.begin(); it != meshes.end(); ++it) {
             rgl::slot& s = (*it)->slots[type];
-            if ((((mesh_x*)*it)->count(type) + n) * elem_size >= 0x418000) {
+            if ((((rgl::mesh*)*it)->count(type) + n) * elem_size >= 0x418000) {
                 memcpy(locked + written, scratch, elem_size * n);
                 written += elem_size * n;
                 n = 0;
             }
             char* dst = (char*)scratch + elem_size * n;
             if (type == 1)
-                ((mesh_x*)*it)->fill_indices((unsigned short*)dst);
+                ((rgl::mesh*)*it)->fill_indices((unsigned short*)dst);
             else
-                ((mesh_x*)*it)->fill_vertices((int*)dst, &fvf);
+                ((rgl::mesh*)*it)->fill_vertices((int*)dst, &fvf);
             s.f8 = base;
             s.fc = generation;
             s.f14 = s.f4;
             s.f28 = 0;
             int k = type;
-            mesh_x* tm = (mesh_x*)*it;
+            rgl::mesh* tm = (rgl::mesh*)*it;
             base += tm->count(k);
             n += tm->count(k);
         }
@@ -3037,7 +3037,7 @@ int dev_buffer::upload(void* scratch, void* tag)
     }
     int total = 0;
     for (; it != meshes.end(); ++it)
-        total += ((mesh_x*)*it)->count(type);
+        total += ((rgl::mesh*)*it)->count(type);
     int* pcap = &count;
     if (total > count)
         LOG_GROW("dynamic", ":Out of dynamic vertex buffer memory. Needed = ");
@@ -3057,20 +3057,20 @@ int dev_buffer::upload(void* scratch, void* tag)
     }
     for (it = meshes.begin(); it != meshes.end(); ++it) {
         rgl::slot& s = (*it)->slots[type];
-        if ((((mesh_x*)*it)->count(type) + n) * elem_size >= 0x418000) {
+        if ((((rgl::mesh*)*it)->count(type) + n) * elem_size >= 0x418000) {
             memcpy(locked + written, scratch, elem_size * n);
             written += elem_size * n;
             n = 0;
         }
         char* dst = (char*)scratch + elem_size * n;
         if (type == 1)
-            ((mesh_x*)*it)->fill_indices((unsigned short*)dst);
+            ((rgl::mesh*)*it)->fill_indices((unsigned short*)dst);
         else
-            ((mesh_x*)*it)->fill_vertices((int*)dst, &fvf);
+            ((rgl::mesh*)*it)->fill_vertices((int*)dst, &fvf);
         s.f8 = base;
         s.f14 = s.f4;
         int k = type;
-        mesh_x* tm = (mesh_x*)*it;
+        rgl::mesh* tm = (rgl::mesh*)*it;
         base += tm->count(k);
         n += tm->count(k);
     }

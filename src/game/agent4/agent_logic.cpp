@@ -69,10 +69,10 @@ unsigned g_input_mask;                                      // 0x5e2474
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
 struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
-__forceinline void SceneEnt::add_extra(res_obj* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
+__forceinline void SceneEnt::add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
 namespace std { template<> void vector<rgl::scene*, allocator<rgl::scene*> >::push_back(rgl::scene* const&); }   // 0x4119d0 (mesh_obj.cpp's instance, shared by every pointer vector)
-__forceinline MeshVec& MeshVec::operator=(const std::vector<res_obj*>& o) { ((std::vector<int>*)this)->operator=(*(const std::vector<int>*)&o); return *this; }   // 0x43f0a0
-__forceinline void MeshVec::push_back(res_obj* const& x) { ((std::vector<rgl::scene*>*)this)->push_back(*(rgl::scene* const*)&x); }                         // 0x4119d0
+__forceinline MeshVec& MeshVec::operator=(const std::vector<rgl::mesh*>& o) { ((std::vector<int>*)this)->operator=(*(const std::vector<int>*)&o); return *this; }   // 0x43f0a0
+__forceinline void MeshVec::push_back(rgl::mesh* const& x) { ((std::vector<rgl::scene*>*)this)->push_back(*(rgl::scene* const*)&x); }                         // 0x4119d0
 
 // inline vector helpers of the original object
 static inline vector4 a_vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
@@ -2421,24 +2421,24 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     SceneEnt* e = (SceneEnt*)((rgl::world*)scene_world)->create_entity(9);
     pos2 ident;
     identity_pos((::pos*)&ident);
-    res_obj* m;
+    rgl::mesh* m;
     // a launcher of type 10 names the flying mesh itself (0x44bed6..0x44befd read the third argument); otherwise
     // the ammo item's own mesh (0x44bf04.. read the fourth)
     if ((g_items[launcher->item].type_flags & 0xff) == 10) {
         tstring tn = launcher->mesh_name();
-        m = (res_obj*)res_manager().get_object(&tn);
+        m = (rgl::mesh*)res_manager().get_object(&tn);
     } else {
         m = 0;
         if (ammo->item >= 0 && ammo->item < g_item_kind_count)
             m = g_items[ammo->item].mesh_for(0x2000000000000000ui64, ((signed char*)ammo)[7]);
         if (!m) {
             tstring name("flying_missile");
-            m = (res_obj*)res_manager().get_object(&name);
+            m = (rgl::mesh*)res_manager().get_object(&name);
         }
     }
     if (m) {
-        res_obj* c = m->clone();
-        c->xform = ident;
+        rgl::mesh* c = m->clone();
+        c->m_cc = ident;
         e->add_extra(c);
     }
     e->local.f = *dir;
@@ -2474,7 +2474,7 @@ struct Rec20Entry { tstring name; char pad10[0x20 - 0x10]; res_shape* shape; cha
 struct Rec20V { char pad0[0x18]; int count; Rec20Entry* entries; };
 static inline Rec20V& r20(int i) { return *(Rec20V*)&g_ptypes[i]; }
 static inline unsigned r78_flags(Rec78* r) { return *(unsigned*)((char*)r + 0x10); }
-static inline std::vector<res_obj*>& r78_meshes(Rec78* r) { return *(std::vector<res_obj*>*)((char*)r + 0x40); }
+static inline std::vector<rgl::mesh*>& r78_meshes(Rec78* r) { return *(std::vector<rgl::mesh*>*)((char*)r + 0x40); }
 static inline res_shape* r78_shape(Rec78* r) { return *(res_shape**)((char*)r + 0x50); }
 static inline SoundSet& rsnd(Rec78* r) { return *(SoundSet*)((char*)r + 0x6c); }
 static inline SoundSet& isnd(ItemKind* k) { return *(SoundSet*)((char*)k + 0x228); }
@@ -2483,7 +2483,7 @@ static inline SoundSet& isnd(ItemKind* k) { return *(SoundSet*)((char*)k + 0x228
 #define P_ENT2(r) (*(SceneEnt**)&(r)->m1b8)
 #define ents (*(EntVec*)((char*)this + 0x63c0))         // Mission +0x63c0: the entity list of the props
 // mesh of an item for the prop display class, null for an invalid item index (bounds check inlined)
-static inline res_obj* item_mesh(int item, int packed)
+static inline rgl::mesh* item_mesh(int item, int packed)
 {
     if (item < 0 || item >= g_item_kind_count)
         return 0;
@@ -2512,7 +2512,7 @@ void Mission::spawn_prop(int* idx, int* id)
         ItemRef ref;
         ref.item = item;
         ref.m4 = param;
-        res_obj* m;
+        rgl::mesh* m;
         if (!((k == 2 || k == 3 || k == 4 || k == 6 || k == 5 || k == 0x12) && (m = item_mesh(ref.item, (int)ref.m4)) != 0))
             name = ref.mesh_name();
         else
@@ -2558,7 +2558,7 @@ after:
     if (name.len > 0)
         {
             std::vector<rgl::mesh*> found = res_manager().find_meshes(&name);
-            meshes = *(const std::vector<res_obj*>*)&found;
+            meshes = *(const std::vector<rgl::mesh*>*)&found;
         }
     if (s2.differs("0") && s2.len != 0)
         shape_res = (res_shape*)g_resmgr.get_object60(s2);
@@ -2566,7 +2566,7 @@ after:
     if (r->kind == 7) {
         r->id = find_item(&r->name);
         SceneEnt* e = (SceneEnt*)((rgl::world*)scene_world)->create_entity(7);
-        res_obj** first = meshes._Myfirst;
+        rgl::mesh** first = meshes._Myfirst;
         for (unsigned i = 0; first != 0 && i < (unsigned)(meshes._Mylast - first); i++)
             e->add_extra(first[i]->clone());
         if (shape_res)
@@ -2589,15 +2589,15 @@ after:
     } else {
         SceneEnt* e = (SceneEnt*)((rgl::world*)scene_world)->create_entity(9);
         for (unsigned i = 0; i < meshes.size(); i++) {
-            res_obj* m = meshes[i]->clone();
+            rgl::mesh* m = meshes[i]->clone();
             if (r->kind == 4) {
                 vector4 dir, col;
                 ((level*)scene_world)->light_at(r->m18.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
             }
             if (r->kind == 0 && tbl >= 0 && tbl < g_propkind_count && (r78_flags(&g_propkinds[tbl]) & 0x12000))
-                m->f10c = 0xffff;
+                m->mask = 0xffff;
             else
-                m->f10c = 0x1ffff;
+                m->mask = 0x1ffff;
             if (r->v158.z * r->v158.y * r->v158.x < 0.0f)
                 m->f4c = 1;
             e->add_extra(m);
@@ -3418,7 +3418,7 @@ static inline tstring item_mesh_name(ItemKind* items, const ItemRef& r)
         return items[r.item].mesh_name_for((int)r.m4 >> 24);
     return tstring("Error: Invalid item");
 }
-static __forceinline res_obj* get_obj(const tstring& n) { return (res_obj*)res_manager().get_object(&n); }
+static __forceinline rgl::mesh* get_obj(const tstring& n) { return (rgl::mesh*)res_manager().get_object(&n); }
 static __forceinline mesh* build_ranged(int i, ItemRef r)
 {
     mesh* result = 0;
@@ -6899,7 +6899,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                         *(rgl::mat3*)&fm2 = *(rgl::mat3*)&frame;
                                         fm2.o = o2;
                                         *(rgl::mat4*)&m->m_cc = ((rgl::mat4*)&e->local)->relative((const rgl::mat4&)fm2);
-                                        e->add_extra((res_obj*)m);
+                                        e->add_extra((rgl::mesh*)m);
                                         ragdoll = true;
                                     }
                                 }

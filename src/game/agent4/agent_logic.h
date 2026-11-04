@@ -76,7 +76,7 @@ extern unsigned g_input_flags;                                          // 0x5e2
 // which cannot be extended here: the physics entities add virtual slots 24..28 and the code reads fields of the derived classes).
 // Slot / field names are the ones of the calls in this module; unused slots are placeholders.
 struct shape_base;
-struct res_obj;
+namespace rgl { struct mesh; }
 struct capsule;
 struct SceneEnt {
     virtual ~SceneEnt();                                // 0
@@ -103,7 +103,7 @@ struct SceneEnt {
     char pad9c[0xc4 - 0x9c];
     rgl::vector4 vc4;                                   // +0xc4 (0x44be50)
     char padd4[0x118 - 0xd4];
-    std::vector<res_obj*> meshes;                       // +0x118 (first at +0x11c) (0x44c210)
+    std::vector<rgl::mesh*> meshes;                       // +0x118 (first at +0x11c) (0x44c210)
     char pad128[0x140 - 0x128];
     char f140;                                          // +0x140 (visible) (0x44be50)
     char pad141[0x15c - 0x141];
@@ -115,7 +115,7 @@ struct SceneEnt {
     rgl::vector4 v1ac;                                  // +0x1ac
     char pad1bc[0x1d4 - 0x1bc];
     char f1d4;                                          // +0x1d4 (0x44c210)
-    __forceinline void add_extra(res_obj* m);            // 0x442110 (Poser::add_extra; defined in the .cpp)
+    __forceinline void add_extra(rgl::mesh* m);            // 0x442110 (Poser::add_extra; defined in the .cpp)
 };
 struct EntVec {                                         // std::vector<SceneEnt*> layout (VC7.1), freed by hand (0x448eb0); Mission +0x63c0 (0x44c210)
     int alloc_pad;
@@ -137,10 +137,10 @@ struct EntVec {                                         // std::vector<SceneEnt*
     }
 };
 
-// std::vector<res_obj*> whose assignment and push_back stay out of line (pointer vectors fold with vector<int>) (0x44c210)
-struct MeshVec : std::vector<res_obj*> {
-    __forceinline MeshVec& operator=(const std::vector<res_obj*>& o);     // 0x43f0a0 (std::vector<int>::operator=; defined in the .cpp)
-    __forceinline void push_back(res_obj* const& x);                      // 0x4119d0 (std::vector<rgl::scene*>::push_back; defined in the .cpp)
+// std::vector<rgl::mesh*> whose assignment and push_back stay out of line (pointer vectors fold with vector<int>) (0x44c210)
+struct MeshVec : std::vector<rgl::mesh*> {
+    __forceinline MeshVec& operator=(const std::vector<rgl::mesh*>& o);     // 0x43f0a0 (std::vector<int>::operator=; defined in the .cpp)
+    __forceinline void push_back(rgl::mesh* const& x);                      // 0x4119d0 (std::vector<rgl::scene*>::push_back; defined in the .cpp)
 };
 
 // the body resource of a prop (0x44c210): src/game/res_shape.h (shared with terrain_b)

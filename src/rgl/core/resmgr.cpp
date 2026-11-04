@@ -38,7 +38,7 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/render_flags.h"
 #include "../../game/ui_globals.h"      // UI / core globals
@@ -102,7 +102,7 @@ stream_base* save_frame(stream_base* s, frame_t* f)
 
 // ---- the mesh object's late members ------------------------------------------------------------------------
 // @ 0x419300
-void mesh_x::compute_bounds()
+void rgl::mesh::compute_bounds()
 {
     bounds.reset();
     std::vector<point20>* v;
@@ -117,7 +117,7 @@ void mesh_x::compute_bounds()
 
 // Converts the vertex colours from gamma space to linear (pow 2.2) and copies the packed result to +0x58.
 // @ 0x419360
-void mesh_x::linearise_vertex_colors()
+void rgl::mesh::linearise_vertex_colors()
 {
     if (local_a1) {
         int n = (int)v50.size();
@@ -205,7 +205,7 @@ void resmgr::linearise_meshes()
 {
     if (g_use_shaders && !meshes_ready) {
         for (std::vector<mesh*>::iterator it = meshes.begin(); it != meshes.end(); ++it)
-            ((mesh_x*)*it)->linearise_vertex_colors();
+            ((rgl::mesh*)*it)->linearise_vertex_colors();
         meshes_ready = 1;
     }
 }
@@ -782,10 +782,10 @@ int resmgr::load_all(int check_exists, rgl::string* root)
 
 // ---- mesh clone, LOD groups ---------------------------------------------------------------------------------------------------
 // @ 0x41c6d0
-mesh_x* mesh_x::clone()
+rgl::mesh* rgl::mesh::clone()
 {
-    mesh_x* self = this;
-    mesh_x* m = (mesh_x*)new mesh;
+    rgl::mesh* self = this;
+    rgl::mesh* m = (rgl::mesh*)new mesh;
     if (self->parent)
         m->parent = self->parent;
     else
@@ -847,7 +847,7 @@ lod_group* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
         if (copy) {
             vpush(g->lists[level], *it);
         } else {
-            mesh* mm = ((mesh_x*)*it)->clone();
+            mesh* mm = ((rgl::mesh*)*it)->clone();
             vpush(g->lists[level], mm);
         }
         if (level + 1 > g->count)
@@ -864,7 +864,7 @@ lod_group* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
                 } else {
                     mesh** src = &vat(prev, j);
                     mesh** dst = &vat(cur, j);
-                    *dst = ((mesh_x*)*src)->clone();
+                    *dst = ((rgl::mesh*)*src)->clone();
                 }
             }
         }
@@ -937,7 +937,7 @@ static inline void vnorm_xzy(vector4& v)
 // axes for degenerate cases) and the bitangent is flipped to keep the frame's handedness.
 // The vertex's vector at +0 is the normal as read, +0x10 the tangent and +0x20 the bitangent (vertex60 names
 // them pos, f10, f20); +0x30 keeps the normal as read.
-void mesh_x::compute_tangents()
+void rgl::mesh::compute_tangents()
 {
     ensure_local();
     if (!local_a0) {
@@ -1089,7 +1089,7 @@ stream_base* read_mesh(stream_base* s, mesh* m)
             s->r_int(q++);
     }
 
-    ((mesh_x*)m)->compute_tangents();
+    ((rgl::mesh*)m)->compute_tangents();
 
     m->f228 = 0;
     for (int i = 0; i < nbi; i++) {
@@ -1100,7 +1100,7 @@ stream_base* read_mesh(stream_base* s, mesh* m)
         mb_error("Too many bones in mesh %s", m->name.c_str());
     if (nbi != 0 || (m->res && m->res->shader && (m->res->shader->flags20 & 0x80000000) != 0))
         m->build_skin();
-    ((mesh_x*)m)->compute_bounds();
+    ((rgl::mesh*)m)->compute_bounds();
     m->slots[1].f4 = 0;
     m->slots[0].f4 = 0;
     return s;

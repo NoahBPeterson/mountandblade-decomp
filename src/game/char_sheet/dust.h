@@ -36,7 +36,7 @@ extern float g_k_reach;                         // 0x598e8c (36.0)
 #include "../../include/mat4.h"
 #include "./cs_common.h"
 #include "../terrain_a/terrain.h"                   // Terrain (g_terrain 0xa76630): the dust pass is Terrain::update_particles
-#include "../../rgl/mesh_x.h"                    // mesh_x (compute_bounds 0x419300, transform 0x47aa40, clone 0x41c6d0), rgl::mesh
+#include "../../rgl/mesh.h"                    // rgl::mesh (compute_bounds 0x419300, transform 0x47aa40, clone 0x41c6d0), rgl::mesh
 #include <vector>
 #include "../../include/mesh_parts.h"             // rgl::vertex60
 #include "../../include/mesh_prims.h"             // rgl::point20, rgl::face20
@@ -91,7 +91,7 @@ struct dmesh {                                  // an rgl::mesh as far as this s
     vec96* get50() { return flag_a1 ? &f50 : (vec96*)&((rgl::mesh*)master)->get50(); }
     vec32* get70() { return flag_a1 ? &f70 : (vec32*)&((rgl::mesh*)master)->get70(); }
     vec32* get90() { return flag_a0 ? &f90 : (vec32*)&((rgl::mesh*)master)->get90(); }
-    // (compute_bounds 0x419300 and transform 0x47aa40 are mesh_x's, append_skinned 0x44eb00 is rgl::mesh's: cs_common.h / above)
+    // (compute_bounds 0x419300 and transform 0x47aa40 are rgl::mesh's, append_skinned 0x44eb00 is rgl::mesh's: cs_common.h / above)
 };
 
 #include "../../include/vec.h"

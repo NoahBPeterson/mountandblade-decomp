@@ -9,7 +9,7 @@
 // gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), E50 / E176 / R44 /
 // b16 (../../include/vec_elems.h), E68 (../../include/e68.h), Config / ini_file (../config/config.h), Core (the
 // application object; ../config/core.h), MissionUi and its widget classes (../ui), the widget factories' classes
-// (../config/widget_mgr.h: WVt, DropDown, gui_mesh; ../ui/ui_widgets.h: UiA; ../ui/container.h: ContainerBase).
+// (../config/widget_mgr.h: WVt, DropDown, rgl::mesh; ../ui/ui_widgets.h: UiA; ../ui/container.h: ContainerBase).
 #ifndef GAME_CLS_MAP_CLS_MAP_H
 #define GAME_CLS_MAP_CLS_MAP_H
 #include "../../include/image_addrs.h"
@@ -201,7 +201,7 @@ struct NodeVec {
 struct lod_group;
 struct resmgr { rgl::mesh* get_object(const rgl::string* name);      // 0x419540
                 lod_group* get_lod_mesh(const rgl::string& name); };   // 0x41cdc0 (rgl/core/resmgr.h)
-inline gui_mesh* res_get(const tstring& name) { return (gui_mesh*)((resmgr*)&g_resmgr)->get_object(&name); }
+inline rgl::mesh* res_get(const tstring& name) { return (rgl::mesh*)((resmgr*)&g_resmgr)->get_object(&name); }
 extern gui_manager g_gui;                       // 0x5d7080
 extern unsigned char g_gui_dirty;               // 0x5d8788 (set to 1 whenever a window was installed; game_globals.h declares it, which clashes with this header's table views)
 

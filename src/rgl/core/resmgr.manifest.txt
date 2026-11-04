@@ -1,6 +1,6 @@
 ../src/rgl/core/resmgr.cpp  ?save_elem14@@YAPAUstream_base@@PAU1@PAUbone_influence@rgl@@@Z  00419190  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?save_frame@@YAPAUstream_base@@PAU1@PAUframe_t@rgl@@@Z  00419200  /O2  /MT  /Gy  /TP
-../src/rgl/core/resmgr.cpp  ?compute_bounds@mesh_x@@QAEXXZ  00419300  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?compute_bounds@mesh@rgl@@QAEXXZ  00419300  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ??1mesh_owner@@QAE@XZ  00419420  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?forget@mesh_owner@@QAEXXZ  00419470  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?save_keyframes@@YAPAUstream_base@@PAU1@PAUkeyframes@rgl@@@Z  004194c0  /O2  /MT  /Gy  /TP
@@ -55,7 +55,7 @@
 ../src/rgl/core/resmgr.cpp  ??$_Uninit_fill_n@PAUbone_influence@rgl@@IU12@V?$allocator@Ubone_influence@rgl@@@std@@@std@@YAXPAUbone_influence@rgl@@IABU12@AAV?$allocator@Ubone_influence@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0041c5c0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?erase@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0041c650  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?_Ufill@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@IAEPAUbone_influence@rgl@@PAU34@IABU34@@Z  0041c6a0  /O2  /MT  /Gy  /TP
-../src/rgl/core/resmgr.cpp  ?clone@mesh_x@@QAEPAU1@XZ  0041c6d0  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?clone@mesh@rgl@@QAEPAU12@XZ  0041c6d0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?_Insert_n@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@IAEXViterator@12@IABUbone_influence@rgl@@@Z  0041c760  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?resize@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@QAEXIUbone_influence@rgl@@@Z  0041cd10  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?get_lod_mesh@resmgr@@QAEPAUlod_group@@ABUtstring@@@Z  0041cdc0  /O2  /MT  /Gy  /TP

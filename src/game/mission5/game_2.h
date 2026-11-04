@@ -16,7 +16,7 @@
 #include "../../include/iface.h"        // IfaceB (the polymorphic base of the scene record)
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
-#include "../../rgl/mesh_x.h"            // mesh_x::compute_bounds (0x419300)
+#include "../../rgl/mesh.h"            // rgl::mesh::compute_bounds (0x419300)
 #include "../../rgl/stream.h"            // text_stream::open_read_text (0x415d60)
 #include "../wind.h"                     // wind::init (0x461480)
 #include "../../rgl/scene/scene_entity.h"

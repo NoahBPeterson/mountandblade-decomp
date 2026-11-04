@@ -12,7 +12,7 @@
 #include "../include/frustum.h"
 #include "./ui/container.h"
 #include "./map_widget.h"
-#include "../rgl/mesh_x.h"                       // mesh_x: clone 0x41c6d0, set_color 0x47af30
+#include "../rgl/mesh.h"                       // rgl::mesh: clone 0x41c6d0, set_color 0x47af30
 
 struct Rec1208 : head_rec {                              // vtable 0x595bfc, size 0x1208: slot 2 is the opener 0x4f66e0 (char_sheet/conv_open.cpp), slot 3 the event handler 0x525160 (mission5/mission_5.cpp)
     NodeA* talk;                                       // +0x2c

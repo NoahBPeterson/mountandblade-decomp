@@ -35,26 +35,18 @@ using rgl::mat3;
 // ---- the defining classes of the callees below ------------------------------------------------------------------------------
 // This slice carries its own views (Mesh, Entity, World, terrain_obj, Psys, ...) of objects whose classes live in other modules and cannot
 // be included here; the calls go to the members of the classes that define them, which are declared (members only) in this block.
+#include "../../rgl/mesh.h"          // rgl::mesh
+#include "../../rgl/scene/scene.h"      // resmgr (res_manager()), resource_manager g_resmgr 0x5d6fa0
 struct skin; struct face; struct CellGrid; struct BodyRecC;
 namespace rgl {
 struct entity; struct scene;
-struct mesh { mesh(); void scale(float s); };                // 0x412a90 / 0x44f0c0 (src/rgl/mesh.h)
 struct world {
     entity* create_entity(int type_id);   // 0x428440 (src/rgl/scene/world.h)
 };
 unsigned __cdecl pack_color(const vector4* c);               // 0x40e440
 }
-struct mesh_x {
-    mesh_x* clone();   // 0x41c6d0 (src/rgl/mesh_x.h)
-};
 struct Poser {
     void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.h)
-};
-struct resmgr {
-    rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (src/rgl/core/resmgr.h)
-};
-struct resource_manager {
-    skin* get_material(const rgl::string& name);   // 0x418a70 (src/rgl/resource.h)
 };
 struct ShadowMapP {
     void render();   // 0x47fef0 (mesh_char.cpp)
@@ -112,7 +104,7 @@ struct BodyVec {
 struct Mesh : Raw {                                          // rgl::mesh, 0x260 bytes
     char b[0x260];
     Mesh() { ((rgl::mesh*)this)->rgl::mesh::mesh(); }        // 0x412a90
-    Mesh* clone() { return (Mesh*)((mesh_x*)this)->clone(); }   // 0x41c6d0
+    Mesh* clone() { return (Mesh*)((rgl::mesh*)this)->clone(); }   // 0x41c6d0
     void scale(float s) { ((rgl::mesh*)this)->scale(s); }    // 0x44f0c0
 };
 #include "../emit.h"
@@ -170,12 +162,6 @@ struct Psys {
     void fit_bounds() { ((ShadowMap*)this)->fit_bounds(); }                              // 0x463cc0
     void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
 };
-struct ResMgr {
-    Mesh* get_object(const tstring& name) { return (Mesh*)((::resmgr*)this)->get_object(&name); }     // 0x419540
-    Mesh* get_object(void* name) { return (Mesh*)((::resmgr*)this)->get_object((const rgl::string*)name); }
-    void* get_material(tstring* name) { return ((resource_manager*)this)->get_material(*name); }   // 0x418a70
-};
-extern ResMgr g_resmgr;                                      // 0x5d6fa0
 
 struct SndSlot {                                             // 0x78 bytes, array in the mode record bank
     char pad0[0xc]; int f0c; char pad10[0x78 - 0x10];
@@ -624,7 +610,7 @@ void Mission::start_setup()
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
     Entity* sun = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
-    Mesh* sm = g_resmgr.get_object(&g_env_rows[at<int>(0x660c)].name) ->clone();
+    Mesh* sm = (Mesh*)((resmgr*)&g_resmgr)->get_object(&g_env_rows[at<int>(0x660c)].name)->clone();
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {
@@ -876,7 +862,7 @@ void Mission::start_setup()
         }
         {
             tstring nm("sun");
-            at<Mesh*>(0x65c8) = g_resmgr.get_object(nm)->clone();
+            at<Mesh*>(0x65c8) = (Mesh*)((resmgr*)&g_resmgr)->get_object(&nm)->clone();
         }
         at<Mesh*>(0x65c8)->at<int>(0x114) = 1;
         at<Mesh*>(0x65c8)->at<int>(0x140) = 1;
@@ -903,7 +889,7 @@ void Mission::start_setup()
     }
     {
         tstring nm("edit_cursor");
-        at<Mesh*>(0x65d4) = g_resmgr.get_object(nm)->clone();
+        at<Mesh*>(0x65d4) = (Mesh*)((resmgr*)&g_resmgr)->get_object(&nm)->clone();
     }
     {
         Entity* e2 = at<Entity*>(0x65d0);
@@ -914,7 +900,7 @@ void Mission::start_setup()
     at<Mesh*>(0x65d8) = new Mesh;
     {
         tstring nm("vertex_color_add_mat");
-        at<Mesh*>(0x65d8)->at<void*>(0x2c) = g_resmgr.get_material(&nm);
+        at<Mesh*>(0x65d8)->at<void*>(0x2c) = g_resmgr.get_material(nm);
     }
     at<Entity*>(0x65d0)->add_extra(at<Mesh*>(0x65d8));
     at<int>(0x65dc) = 0;
@@ -926,7 +912,7 @@ void Mission::start_setup()
     at<Mesh*>(0x65e0) = new Mesh;
     {
         tstring nm("vertex_color_add_mat");
-        at<Mesh*>(0x65e0)->at<void*>(0x2c) = g_resmgr.get_material(&nm);
+        at<Mesh*>(0x65e0)->at<void*>(0x2c) = g_resmgr.get_material(nm);
     }
     at<Entity*>(0x65dc)->add_extra(at<Mesh*>(0x65e0));
     at<Entity*>(0x65e4) = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);

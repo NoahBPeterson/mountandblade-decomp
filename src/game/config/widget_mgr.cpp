@@ -40,19 +40,19 @@ int widget_mgr::create_game_button_overlay(int id)
     }
 
     {
-        gui_mesh* m;
+        rgl::mesh* m;
         {
             rgl::string n("medium_button");
-            m = clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n));
+            m = ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone();
         }
         m->scale(0.5555556f);
         vt(w)->d32(2, m);
     }
     {
-        gui_mesh* m;
+        rgl::mesh* m;
         {
             rgl::string n("medium_button_down");
-            m = clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n));
+            m = ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone();
         }
         m->scale(0.5555556f);
         vt(w)->d32(1, m);
@@ -128,13 +128,13 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
 
         {
             rgl::string n("progressbar");
-            vt(w)->d32(0, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
+            vt(w)->d32(0, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
         }
-        ((gui_mesh*)w->tracks[0])->set_color(sc);
+        ((rgl::mesh*)w->tracks[0])->set_color(sc);
 
         {
             rgl::string n("handle_hor");
-            vt(w)->d32(2, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
+            vt(w)->d32(2, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
         }
         {
             rgl::string n("progressbar_handle");
@@ -175,29 +175,29 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop");
-        vt(w)->d32(2, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
+        vt(w)->d32(2, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[2])->set_color(c);
+        ((rgl::mesh*)w->tracks[2])->set_color(c);
     }
 
     {
         rgl::string n("button_drop_clicked");
-        vt(w)->d32(1, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
+        vt(w)->d32(1, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[1])->set_color(c);
+        ((rgl::mesh*)w->tracks[1])->set_color(c);
     }
 
     {
         rgl::string n("button_drop_hl");
-        vt(w)->d32(3, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
+        vt(w)->d32(3, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[3])->set_color(c);
+        ((rgl::mesh*)w->tracks[3])->set_color(c);
     }
 
     {
@@ -261,20 +261,20 @@ int widget_mgr::create_text_box_overlay()
 
     {
         rgl::string n("party_button");
-        vt(w)->d32(2, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
+        vt(w)->d32(2, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[2])->set_color(c);
+        ((rgl::mesh*)w->tracks[2])->set_color(c);
     }
 
     {
         rgl::string n("party_button_down");
-        vt(w)->d32(1, clone_gui(((resmgr*)&g_resmgr_full)->get_object(&n)));
+        vt(w)->d32(1, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
-        ((gui_mesh*)w->tracks[1])->set_color(c);
+        ((rgl::mesh*)w->tracks[1])->set_color(c);
 
         vt(w)->d03();
 
@@ -294,7 +294,7 @@ int widget_mgr::create_text_box_overlay()
 #define STORE_SIZE() \
     do { WItem* it_ = ITEM; it_->fD8 = pos[0]; it_->fDC = pos[1]; } while (0)
 #define SCALE_BY_OLD(t) \
-    ((gui_mesh*)ITEM->tracks[t])->set_color(vector4(pos[0] / ITEM->fD8, pos[1] / ITEM->fDC, 1.0f))
+    ((rgl::mesh*)ITEM->tracks[t])->set_color(vector4(pos[0] / ITEM->fD8, pos[1] / ITEM->fDC, 1.0f))
 
 // @ 0x49a300
 void widget_mgr::set_size(int idx, const float* pos)

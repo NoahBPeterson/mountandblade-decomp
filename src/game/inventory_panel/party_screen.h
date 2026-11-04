@@ -20,10 +20,7 @@
 // ---- objects and functions of other translation units --------------------------------------------------------------
 #include "../game_globals.h"      // g_module_settings (canonical)
 extern int g_item_sel;                              // 0xa75f6c (the selected item index; negative = nothing selected)
-extern ObjTable g_tableaus;                          // 0xa75f40
-struct TableauTbl {
-    rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (game/world_data/tableau.h; ObjTable is the same table)
-};
+#include "../world_data/tableau.h"                    // TableauTbl g_tableaus 0xa75f40
 struct UiA; struct Camera; struct NodeA;
 static __forceinline void __fastcall panel_ctor(void* p) { new (p) MissionUi; }                   // 0x48ae20 (MissionUi::MissionUi)
 UiA* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4e5570

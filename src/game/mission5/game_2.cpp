@@ -206,7 +206,7 @@ void Game::build_scene()
     ((Poser*)self->track_entity)->add_extra((int)self->map_track);
 
     rgl::entity* obj = (rgl::entity*)((rgl::world*)world)->create_entity(9);
-    self->map_obj = ((mesh_x*)((resmgr*)&g_resmgr)->get_object(&g_env_rows->name))->clone();
+    self->map_obj = ((rgl::mesh*)((resmgr*)&g_resmgr)->get_object(&g_env_rows->name))->clone();
     self->map_obj->scale(60.0f);
     self->map_obj->mask = 0xfffeffff;
     ((Poser*)obj)->add_extra((int)self->map_obj);
@@ -216,7 +216,7 @@ void Game::build_scene()
 
     self->compass = (rgl::entity*)((rgl::world*)world)->create_entity(9);
     RStr compass_name("compass");
-    rgl::mesh* mc = ((mesh_x*)((resmgr*)&g_resmgr)->get_object(&compass_name))->clone();
+    rgl::mesh* mc = ((rgl::mesh*)((resmgr*)&g_resmgr)->get_object(&compass_name))->clone();
     mc->scale(0.28f);
     ((Poser*)self->compass)->add_extra((int)mc);
 
@@ -742,7 +742,7 @@ void Game::build_map_trees()
                     *(void**)((char*)m + 0x2c) = terrain_material(mt);     // 0x523390
                     ((NibbleObj*)m)->set_nibble(mi - 6);                // 0x523360 (add eax,-6 on the loop index)
                     *(int*)((char*)m + 0x10c) = 0x17fff;
-                    ((mesh_x*)m)->compute_bounds();                     // 0x419300
+                    ((rgl::mesh*)m)->compute_bounds();                     // 0x419300
 
                     RawVec cv;
                     cv.first = *(void***)((char*)cell + 0x11c);
@@ -785,7 +785,7 @@ void Game::build_map_trees()
                 name->~tstring();                                               // 0x42bc40
                 ((NibbleObj*)cellmesh)->set_nibble(2);                     // 0x523360
                 *(int*)((char*)cellmesh + 0x10c) = 0x1ffff;
-                ((mesh_x*)cellmesh)->compute_bounds();                  // 0x419300
+                ((rgl::mesh*)cellmesh)->compute_bounds();                  // 0x419300
 
                 RawVec cv;
                 cv.first = *(void***)((char*)cell + 0x11c);

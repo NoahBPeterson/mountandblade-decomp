@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include "./agent_hud.h"
 #include "../gui_mgr.h"           // (listed directly: the resolution audit reads only the source's own includes)
-#include "../../rgl/mesh_x.h"
+#include "../../rgl/mesh.h"
 #include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
 #include "../agent_obj.h"      // rgl::matrix::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -986,7 +986,7 @@ void MissionBlocker::update_status()
                         tstring shadow("ui_item_shadow");
                         shadow_mesh->res = g_resmgr_full.base().get_material(shadow);
                     }
-                    ((mesh_x*)shadow_mesh)->set_bone_index(-1);
+                    ((rgl::mesh*)shadow_mesh)->set_bone_index(-1);
                     shadow_mesh->color = 0xff777777;
                     delete piece;
                 }
@@ -1068,7 +1068,7 @@ void rgl::mesh::set_offset(const vector4& pos)
         }
     }
     slots[0].f28 = 1;                       // +0x138 (dirty flag)
-    ((mesh_x*)this)->compute_bounds();
+    ((rgl::mesh*)this)->compute_bounds();
 }
 
 static __forceinline const rgl::string* as_rgl_string(const tstring& t) { return &t; }

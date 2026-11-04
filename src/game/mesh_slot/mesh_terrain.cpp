@@ -4,7 +4,7 @@
 #include "../terrain_b/cell_grid.h"
 #include "../terrain_a/game_state.h"          // LightCam
 #include "../../include/vec.h"
-#include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_anim_table (listed directly: the audit reads only the source's own includes)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
@@ -139,8 +139,8 @@ void Terrain::create_water(void** out)
     id.s.w = 0.0f; id.f.w = 0.0f; id.u.w = 0.0f;
     id.o.x = 0.0f; id.o.y = 0.0f; id.o.z = 0.0f; id.o.w = 1.0f;
     m->m1d4 = id;
-    ((mesh_x*)m)->compute_tangents();
-    ((mesh_x*)m)->compute_bounds();
+    ((rgl::mesh*)m)->compute_tangents();
+    ((rgl::mesh*)m)->compute_bounds();
     ((rgl::entity*)e)->meshes.push_back(m);
     ((rgl::entity*)e)->recalc();
     *out = m;
@@ -754,7 +754,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
         m->mask = 0xffff;
     } else {
         if (g_use_shaders) {
-            ((mesh_x*)m)->compute_tangents();
+            ((rgl::mesh*)m)->compute_tangents();
             ((world_x*)world)->light_mesh(m, (matrix*)((char*)ents[cx * 5 + cy] + 0x58), 1);
         }
         arr3[layerno][cx * 5 + cy] = (int)m;
@@ -777,7 +777,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
             found = k;
     }
     if ((int)found < 0) {
-        ((mesh_x*)m)->compute_bounds();
+        ((rgl::mesh*)m)->compute_bounds();
         vpush(em, m);
         e->recalc();
     }

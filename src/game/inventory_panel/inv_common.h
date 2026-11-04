@@ -168,7 +168,6 @@ static inline Party* party_index(int id)
 #define PARTIES (&g_game->parties)
 
 // the rgl mesh/resource objects reached through the resource manager (0x5d6fa0)
-#include "../res_mesh.h"                       // ResMesh (was RMesh), ResMgr (was RResMgr), ObjTable: the one definition
 
 void __cdecl label_refresh(MissionUi* w, tstring name);  // 0x4e4c70 (cdecl, the name by value: sets a freshly built widget up from its ini keys)
 #define label_refresh(w, name) label_refresh((MissionUi*)(w), name)

@@ -10,7 +10,7 @@
 struct progress_bar : MissionUi {               // vtable 0x597f20
     int idx;                                    // +0x178 index of the scaled component of the rect (new_progress_bar 0x4e3d50 clears it)
     float ratio;                                // +0x17c (new_progress_bar: width * 0.31)
-    gui_mesh* handle;                           // +0x180 the source mesh of the bar (a resource; cloned by update)
+    rgl::mesh* handle;                           // +0x180 the source mesh of the bar (a resource; cloned by update)
     unsigned char f184;                         // +0x184 dirty flag (the ctor sets it)
     unsigned char f185, f186, f187;             // +0x185
     rgl::vector4 rect;                          // +0x188 (1, 1, 1, 0 after the ctor)

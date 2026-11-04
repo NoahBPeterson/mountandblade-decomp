@@ -72,9 +72,6 @@ using rgl::mat3;
 struct resmgr : resource_manager {
     std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (hidden return pointer)
 };
-struct mesh_x : rgl::mesh {
-    mesh_x* clone();                            // 0x41c6d0 (a copy of the mesh)
-};
 struct lod_group {
     char data[0xe0];
     lod_group();   // 0x41c2a0 (the interior record's constructor: tmesh() is the same code)
@@ -654,7 +651,7 @@ tmesh* tmesh::clone()
         rgl::mesh* zero = 0;
         c->lists[i].resize(lists[i].size(), zero);
         for (unsigned j = 0; j < lists[i].size(); j++)
-            c->lists[i][j] = ((mesh_x*)lists[i][j])->clone();
+            c->lists[i][j] = ((rgl::mesh*)lists[i][j])->clone();
     }
     return c;
 }
@@ -734,7 +731,7 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
     Entity* e = scene->create_entity(9);
     *n = (int)meshes.size();
     for (int i = 0; i < *n; i++) {
-        rgl::mesh* m = ((mesh_x*)meshes[i])->clone();
+        rgl::mesh* m = ((rgl::mesh*)meshes[i])->clone();
         out[i] = m;
         e->meshes.push_back(m);
         e->refresh();

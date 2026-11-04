@@ -47,7 +47,7 @@
 ../src/game/terrain_a/terrain_a.cpp  ?bind@texture_x@@QAEXHM@Z  004683c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?bind@material_x@@QAEXPAPAUtexture@@PBM@Z  00468440  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?apply_state@skin_x@@QAEXPBM@Z  004684d0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?count@mesh_x@@QAEHH@Z  00468620  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?count@mesh@rgl@@QAEHH@Z  00468620  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?max_hit_points@Rec468770@@QAEHXZ  00468770  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?unequip_all@TroopEq@@QAEXXZ  004687a0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?auto_equip@TroopEq@@QAEXHHDD@Z  004687e0  /O2 /MT /Gy /TP

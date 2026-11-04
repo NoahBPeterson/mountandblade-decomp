@@ -19,6 +19,7 @@
 #include <d3dx9.h>
 #include <vector>
 #include "../../rgl/rgl_math.h"
+#include "../../rgl/mesh.h"          // rgl::mesh: set_color 0x47af30
 
 // GetDlgItem: User32 exports it as GetDlgItem (IAT 0x54932c); windows.h's A/W-neutral macro maps to it.
 
@@ -80,7 +81,6 @@ struct EditorApp { void refresh_dialog(); };                         // 0x4f6390
 struct CreateGameOptionsPage { void update_checks(); };              // 0x4bf640 (trigger_vec.cpp)
 struct gui_timer { void set_delay(float seconds); };                 // 0x42cd20 (gui_manager.cpp)
 struct ptr_vec { void pop_back_if(); };                              // 0x438bf0 (agent_stats.cpp)
-struct mesh_x { void set_color(rgl::vector4 c); };                    // 0x47af30 (mesh_ops.cpp; the colour by value, ret 0x10)
 // the vector<int> members of the game object / scene (VC7.1 layout: allocator slot, first, last, end); size, push_back and the release are the library's
 // instantiations (mesh_obj.cpp 0x40f010, agent_combat.cpp 0x440b30, entity.cpp 0x41f4b0), called out of line through their member pointers
 typedef std::vector<int> IntVec;
@@ -560,8 +560,8 @@ command:
                     inv.y = invy;
                     inv.z = invz;
                     inv.w = ow;
-                    ((mesh_x**)*(void**)(so + 0x11c))[i]->set_color(inv);
-                    ((mesh_x**)*(void**)(so + 0x11c))[i]->set_color(*(rgl::vector4*)&g_game_ed->rt_x);
+                    ((rgl::mesh**)*(void**)(so + 0x11c))[i]->set_color(inv);
+                    ((rgl::mesh**)*(void**)(so + 0x11c))[i]->set_color(*(rgl::vector4*)&g_game_ed->rt_x);
                     i++;
                 } while (i < (int)vsize((IntVec*)(so + 0x118)));
                 return 1;

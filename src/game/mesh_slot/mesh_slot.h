@@ -11,7 +11,7 @@
 #include <new>
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
-#include "../../rgl/mesh_x.h"
+#include "../../rgl/mesh.h"
 #include "../../rgl/scene/world.h"
 #include "../tstring.h"
 #include "../arr_set.h"
@@ -36,7 +36,7 @@ typedef vector4* (__cdecl *unpack_color_fn)(vector4* out, const unsigned* argb);
 unsigned pack_signed_color(const float* c);     // 0x461370 (cdecl)
 
 // ---- members of rgl::mesh defined in this TU (0x47aa40..0x47b3b0) ------------------------------------------------
-// mesh_x (the members above) is src/rgl/mesh_x.h
+// rgl::mesh (the members above) is src/rgl/mesh.h
 // (compute_normals 0x451c50 is rgl::mesh's own member, reset 0x428f30 rgl::scene's; clone 0x47a370 is tmesh::clone, terrain_b/tmesh.h: only that
 // member is declared, under its class, because the header brings another layout)
 struct tmesh {

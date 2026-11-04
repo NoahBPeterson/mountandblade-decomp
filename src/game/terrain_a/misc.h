@@ -125,7 +125,7 @@ struct skin_x : skin {
 };
 
 // ---- the mesh members of this object (a view of rgl::mesh) -----------------------------------------------------------
-#include "../../rgl/mesh_x.h"             // mesh_x (shared with src/rgl/core/resmgr.h)
+#include "../../rgl/mesh.h"             // rgl::mesh (shared with src/rgl/core/resmgr.h)
 #include "../lod_mesh_x.h"            // mesh_list_x::apply 0x46c990, lod_mesh_x::apply 0x46c9f0 (shared with mesh_slot)
 
 // ---- effect slot record (0xd8 bytes; reset 0x4686a0, inline ctor / dtor in 0x46b9d0) --------------------------------

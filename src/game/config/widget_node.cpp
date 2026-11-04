@@ -92,12 +92,12 @@ NodeA* DropDown::create()
         m2[1] = f1c8 * fDC;
         vt(c)->d28(m2);
 
-        vt(c)->d32(2, clone_gui(m1a4));
-        ((gui_mesh*)c->tracks[2])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
-        vt(c)->d32(1, clone_gui(m1a0));
-        ((gui_mesh*)c->tracks[1])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
-        vt(c)->d32(3, clone_gui(m1a8));
-        ((gui_mesh*)c->tracks[3])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
+        vt(c)->d32(2, ((rgl::mesh*)(m1a4))->clone());
+        ((rgl::mesh*)c->tracks[2])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
+        vt(c)->d32(1, ((rgl::mesh*)(m1a0))->clone());
+        ((rgl::mesh*)c->tracks[1])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
+        vt(c)->d32(3, ((rgl::mesh*)(m1a8))->clone());
+        ((rgl::mesh*)c->tracks[3])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
 
         float e[2];
         vt(c)->d41(e, &rows[u]);

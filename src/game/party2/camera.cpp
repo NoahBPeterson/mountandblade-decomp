@@ -392,12 +392,6 @@ using rgl::mesh;
 
 struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out); };  // 0x442650
 
-struct ResMgr {
-    void*  get_material(const tstring& name) { return ((::resource_manager*)this)->get_material(name); }       // 0x418a70
-    mesh*  get_object(tstring* name) { return ((::resmgr*)this)->get_object(name); }                      // 0x419540 (ret 4)
-};
-extern ResMgr g_resmgr;                             // 0x5d6fa0
-
 
 struct TickPair {                                   // g_ticks[i].lo + g_ticks[i].hi * 2^32
     int lo, hi;
@@ -552,7 +546,7 @@ void Mission::spawn_battle_icon(unsigned id)
     if (rec->f10 == 1) {
         {
             tstring nm("battle_icon");
-            e->add_extra(g_resmgr.get_object(&nm)->clone());
+            e->add_extra(((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
         }
         {
             float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
@@ -722,14 +716,6 @@ struct Mission {
     Sprite* build_legend_mesh(OrderObj* o) { return (Sprite*)::build_legend_mesh((ColourOwner*)o); }                // 0x495b20 (ret 4)
     void check_slot(int id, unsigned bits);         // 0x49c170 (ret 8)
 };
-struct ResMgr {   // 0x418a70: the original builds a tstring from the literal first (0x42bbe0), passes it, frees it
-    Sprite* material(const char* name) {
-        tstring tmp(name);
-        Sprite* r = (Sprite*)((::resource_manager*)this)->get_material(tmp);
-        return r;
-    }
-};
-extern ResMgr g_resmgr;                             // 0x5d6fa0
 
 // 0xa732b4 is g_level; the original calls the *direct* create_entity (0x49bea0: mov ecx,[0xa732b4]; push 9;
 // call 0x428440), not a virtual slot - the object at g_level is not polymorphic (its first dword is data).
@@ -783,7 +769,8 @@ void MissionAgents::add_order_arrow(int id)
             }
             if (e->flags & 0x400) {
                 ((Mission*)g_game)->label_text(e->label, nm, 1, (int)h, &scale);
-                Sprite* mat = g_resmgr.material("map_legend_outline");
+                tstring mat_name("map_legend_outline");
+                Sprite* mat = (Sprite*)((::resource_manager*)&::g_resmgr)->get_material(mat_name);
                 Sprite* old = ((RefSlot*)e->label)->sprite;
                 if (old) old->refs--;
                 ((RefSlot*)e->label)->sprite = mat;

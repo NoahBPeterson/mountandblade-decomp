@@ -74,7 +74,7 @@ void skeleton_entity::load(stream_base* s)
             s->r_int(&idx);
             s->r_tstr((string*)&a);
             if (a.differs("none"))
-                m = ((mesh_x*)resmgr().get_object((string*)&a))->clone();
+                m = ((rgl::mesh*)resmgr().get_object((string*)&a))->clone();
             fx->elems[idx].psys.push_back((particle_mesh*)m);
         }
     }

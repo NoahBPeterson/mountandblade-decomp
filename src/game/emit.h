@@ -17,21 +17,10 @@ struct tstream3;
 struct EmitVec4 { float x, y, z, w; };
 struct EmitPair { int a, b; };
 
+namespace rgl { struct mesh; }
 struct EmitRes {                                        // what Emit::res points to
     char pad0[0x1c];
     unsigned flags;                                     // +0x1c (0x40: follows the camera) (0x442ca0)
-};
-struct res_obj {                                        // resource returned by resmgr::get_object
-    char pad0[0x1c];
-    unsigned flags;                                     // +0x1c
-    char pad20[0x2c - 0x20];
-    EmitRes* f2c;                                       // +0x2c (0x4424c0)
-    char pad30[0x4c - 0x30];
-    int f4c;                                            // +0x4c mirrored flag (0x44c210)
-    char pad50[0xcc - 0x50];
-    rgl::matrix xform;                                  // +0xcc local transform of a mesh object (0x44be50)
-    int f10c;                                           // +0x10c collision mask (0x44c210)
-    res_obj* clone();                                   // 0x41c6d0 (mesh objects)
 };
 struct EmitDef {                                        // 0xc0-byte definition record
     char pad0[0x10];
@@ -48,8 +37,8 @@ struct EmitDef {                                        // 0xc0-byte definition 
 };
 struct Emit {                                           // particle emitter (0x1bc bytes)
     char pad0[4];
-    EmitRes* res;                                       // +4 (0x4424c0 stores res_obj::f2c; 0x442ca0 reads its flags)
-    res_obj* obj;                                       // +8
+    EmitRes* res;                                       // +4 (0x4424c0 stores rgl::mesh::f2c; 0x442ca0 reads its flags)
+    rgl::mesh* obj;                                       // +8
     char padc[4];
     int f10, f14, f18;                                  // +0x10 (0x479d20 zeroes them)
     int f1c, f20, f24;                                  // +0x1c

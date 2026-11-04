@@ -107,8 +107,8 @@ void PartyScreen::init_screen()
 
     {
         tstring key("party_window_b");
-        ResMesh* m = (ResMesh*)res_manager().get_object(&key);
-        ResMesh* c = m->clone();
+        rgl::mesh* m = (rgl::mesh*)res_manager().get_object(&key);
+        rgl::mesh* c = m->clone();
         PSO(win)->add_image(0, c);
     }
     g_gui_dirty = 1;

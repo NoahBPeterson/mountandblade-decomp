@@ -9,7 +9,7 @@
 #include "./frustum.h"
 #include "./emitter.h"
 #include "../mesh.h"           // mesh, scene (full), ptr_list, render_info, vec
-#include "../mesh_x.h"         // mesh_x (clone 0x41c6d0)
+#include "../mesh.h"         // rgl::mesh (clone 0x41c6d0)
 
 namespace rgl {
 
@@ -22,7 +22,7 @@ struct mesh_ext : mesh {
     // (the out-of-line copy 0x40eba0 of get70 is mesh::get70 itself, __declspec(noinline) in ../mesh.h)
     std::vector<skin_vert>& get60_();                              // 0x40ec60 (out-of-line copy of get60)
     void clear_geometry();                                      // 0x428e80
-    // (clone, 0x41c6d0: mesh_x::clone of ../mesh_x.h, called as ((mesh_x*)m)->clone())
+    // (clone, 0x41c6d0: rgl::mesh::clone of rgl/mesh.h, called as ((rgl::mesh*)m)->clone())
     mat4*& bone_mats() { return *(mat4**)&p220; }               // 0x220: 32 matrices, allocated on first skinning (0x4291c0)
     const void*& bone_src() { return *(const void**)&f224; }    // 0x224
     int& nbones() { return *(int*)&f228; }                      // 0x228: max bone index + 1

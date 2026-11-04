@@ -31,7 +31,7 @@ enum {
     imod_rotten, imod_large_bag
 };
 
-struct res_obj;
+namespace rgl { struct mesh; }
 struct pos2;
 struct tstream3;
 
@@ -70,7 +70,7 @@ struct ItemKind {                       // 0x238 bytes
     ~ItemKind();                                            // 0x4c8a40
     void read(tstream3* s, int version);                    // 0x4c8110 (module_files.cpp: the item_kinds.txt loader)
     tstring mesh_name_for(int bit);                         // 0x433bf0
-    res_obj* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0
+    rgl::mesh* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0
     bool is_ranged();                                       // 0x433d90
     bool is_melee();                                        // 0x433dc0
     int ammo_skill();                                       // 0x433df0

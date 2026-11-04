@@ -24,7 +24,7 @@ void Rec1208::init_screen()
     }
     {
         tstring name("conversation_window");
-        talk->set_mesh(0, ((mesh_x*)res_manager().get_object(&name))->clone());
+        talk->set_mesh(0, ((rgl::mesh*)res_manager().get_object(&name))->clone());
     }
     {
         NodeA* v = (NodeA*)talk;
@@ -106,7 +106,7 @@ void Rec1208::init_screen()
     }
     {
         tstring name("message_window");
-        msg->set_mesh(0, ((mesh_x*)res_manager().get_object(&name))->clone());
+        msg->set_mesh(0, ((rgl::mesh*)res_manager().get_object(&name))->clone());
     }
     msg->hide();
 
@@ -120,7 +120,7 @@ void Rec1208::init_screen()
     }
     {
         tstring name("talk_relation_bar");
-        rbar->set_mesh(0, ((mesh_x*)res_manager().get_object(&name))->clone());
+        rbar->set_mesh(0, ((rgl::mesh*)res_manager().get_object(&name))->clone());
     }
     msg->add_child(rbar);
 
@@ -134,7 +134,7 @@ void Rec1208::init_screen()
     }
     {
         tstring name("talk_reln_pointer");
-        rptr->set_track(0, ((mesh_x*)res_manager().get_object(&name))->clone());
+        rptr->set_track(0, ((rgl::mesh*)res_manager().get_object(&name))->clone());
     }
     msg->add_child(rptr);
 

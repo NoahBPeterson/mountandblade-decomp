@@ -15,7 +15,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
 #include "../../rgl/mesh.h"
-#include "../../rgl/mesh_x.h"        // mesh_x: set_bone_index 0x47b360 (the mesh class that defines it)
+#include "../../rgl/mesh.h"        // rgl::mesh: set_bone_index 0x47b360 (the mesh class that defines it)
 #include "../../rgl/core/resmgr.h"
 #include "../tstring.h"
 #include "../item_ref.h"

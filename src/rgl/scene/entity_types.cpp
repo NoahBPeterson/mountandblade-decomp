@@ -172,7 +172,7 @@ void entity::load(stream_base* s)
         if (!(nm.equals("none")))
         {
             mesh*& slot = *(meshes.begin() + i);
-            slot = ((mesh_x*)resmgr().get_object(&nm))->clone();
+            slot = ((rgl::mesh*)resmgr().get_object(&nm))->clone();
         }
     }
 }

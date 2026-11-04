@@ -50,13 +50,13 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
     }
     {
         tstring n("slider_hor");
-        gui_mesh* m = (gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&n);
+        rgl::mesh* m = (rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&n);
         void* object = m->clone();
         w->set_track(0, (rgl::mesh*)object);
     }
     {
         tstring n("handle_hor");
-        gui_mesh* m = (gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&n);
+        rgl::mesh* m = (rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&n);
         void* object = m->clone();
         w->set_track(2, (rgl::mesh*)object);
     }
@@ -152,7 +152,7 @@ void MeshX::set_part(const rgl::matrix& mtx)
         }
     }
     slots[0].f28 = 1;
-    ((mesh_x*)(void*)this)->compute_bounds();            // 0x419300
+    ((rgl::mesh*)(void*)this)->compute_bounds();            // 0x419300
 }
 
 // ==== 0x495f00: set the alpha of every vertex record ===========================================================
@@ -298,15 +298,15 @@ void XyzButton::animate(int)
         float k = 1.0f / dur(4);
         float x = (e2 * f88 + (dur(4) - e2) * a8) * k;
         float y = ((dur(4) - e2) * ac + e2 * f8c) * k;
-        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         update_bounds();
         fD8 = x;
         fDC = y;
     } else if (c4) {
         c4 = 0;
-        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         update_bounds();
         fD8 = f88;
         fDC = f8c;
@@ -378,9 +378,9 @@ void DropDown::animate(int)
         float k = 1.0f / dur(4);
         float x = (e4 * f88 + (dur(4) - e4) * a8) * k;
         float y = ((dur(4) - e4) * ac + e4 * f8c) * k;
-        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((gui_mesh*)tracks[3])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         float sy = y * 0.02f;
         rgl::vector4 v(sy, sy, 1.0f);
         set_size((float*)&v);
@@ -392,9 +392,9 @@ void DropDown::animate(int)
         fDC = y;
         dirty = 1;
     } else if (c4) {
-        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((gui_mesh*)tracks[3])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         float sy = f8c * 0.02f;
         rgl::vector4 w(sy, sy, 1.0f);
         set_size((float*)&w);
@@ -509,8 +509,8 @@ void UiB::animate(int)
         float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
         float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
         rgl::vector4 v(x / fD8, y / fDC, 1.0f);
-        ((gui_mesh*)tracks[0])->set_color(v);
-        ((gui_mesh*)tracks[2])->set_color(v);
+        ((rgl::mesh*)tracks[0])->set_color(v);
+        ((rgl::mesh*)tracks[2])->set_color(v);
         update_bounds();
         v.x = x * 0.25f;
         v.y = screen[1];
@@ -520,8 +520,8 @@ void UiB::animate(int)
     } else if (c4) {
         rgl::vector4 v(f88 / fD8, f8c / fDC, 1.0f);
         c4 = 0;
-        ((gui_mesh*)tracks[0])->set_color(v);
-        ((gui_mesh*)tracks[2])->set_color(v);
+        ((rgl::mesh*)tracks[0])->set_color(v);
+        ((rgl::mesh*)tracks[2])->set_color(v);
         update_bounds();
         v.x = f88 * 0.25f;
         v.y = screen[1];
@@ -572,8 +572,8 @@ void UiC::animate(int)
         f194 = -23234124.0f;                     // 0xcbb14326: never a real frame, so refresh rebuilds
         rgl::vector4 c(x * 0.38940808f, y, 1.0f);
         v198 = c;
-        ((gui_mesh*)tracks[0])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         update_bounds();
         rgl::vector4 s(x * 0.25f, screen[1], 1.0f);
         set_xy((float*)&s);
@@ -584,8 +584,8 @@ void UiC::animate(int)
         v198 = c;
         c4 = 0;
         f194 = -23234124.0f;
-        ((gui_mesh*)tracks[0])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         update_bounds();
         rgl::vector4 s(f88 * 0.25f, screen[1], 1.0f);
         set_xy((float*)&s);
@@ -641,8 +641,8 @@ void UiE::animate(int)
         float k = 1.0f / dur(4);
         float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
         float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
-        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         rgl::vector4 v(y * 0.02f, y * 0.02f, 1.0f);
         set_size((float*)&v);
         v.x = 0.0f;
@@ -654,8 +654,8 @@ void UiE::animate(int)
         changed = true;
     } else if (c4) {
         c4 = 0;
-        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         rgl::vector4 v(f8c * 0.02f, f8c * 0.02f, 1.0f);
         set_size((float*)&v);
         v.x = 0.0f;
@@ -764,7 +764,7 @@ void UiC::update_children()
     }
     delete tracks[1];
     if (src) {
-        gui_mesh* m = clone_gui(src);
+        rgl::mesh* m = ((rgl::mesh*)(src))->clone();
         float f = (1.0f / screen[0]) * f17c;
         vector4 col = v198;
         ((float*)&col)[f178] = ((1.0f - 2.0f * f) * ((v168 - f16c) / (f170 - f16c)) + f) * ((float*)&col)[f178];
@@ -782,7 +782,7 @@ void UiD::update_children(float arg)
     if (tracks[2]) {
         vector4 v(1.0f, 1.0f, 1.0f);
         ((float*)&v)[f178] = screen[f178] / f17c * arg;
-        ((gui_mesh*)tracks[2])->set_color(v);
+        ((rgl::mesh*)tracks[2])->set_color(v);
         f17c = arg * screen[f178];
     }
 }
@@ -811,9 +811,9 @@ void HudOuter::scroll_refresh(vector4* arg)
 
     vector4 scale(0.5f, arg->y * 1.5576323f, 1.0f);
     // the names are temporaries: each dies right after its clone (0x498534, 0x49858a)
-    gui_mesh* a = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&tstring("scrollbar")))->clone();
+    rgl::mesh* a = ((rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&tstring("scrollbar")))->clone();
     a->set_color(scale);
-    gui_mesh* b = ((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&tstring("scrollbar_handle")))->clone();
+    rgl::mesh* b = ((rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&tstring("scrollbar_handle")))->clone();
     b->set_color(scale);
     bar->set_track(0, a);
     bar->set_track(2, b);

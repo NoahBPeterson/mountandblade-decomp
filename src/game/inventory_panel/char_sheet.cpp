@@ -39,7 +39,6 @@ extern "C" int _fltused = 0;
 // ---- engine globals -----------------------------------------------------------------------------------
 #include "../../include/game_data.h"
 
-#include "../res_mesh.h"                       // ResMesh (was Mesh), ResMgr: the one definition
 #include "../../rgl/mesh.h"                       // rgl::mesh (clone 0x41c6d0)
 #include "../res_mgr.h"                        // res_manager(): the resource manager 0x5d6fa0
 

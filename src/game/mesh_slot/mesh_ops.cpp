@@ -2,7 +2,7 @@
 // lod mesh operations that drive them, the per-vertex lighting pass, the mirror/seam builder, the two skin blends and
 // the ground snap. See MIGRATION.md for the boundary and the header notes.
 #include "./mesh_slot.h"
-#include "../../rgl/mesh_x.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/render_flags.h"
 
@@ -48,7 +48,7 @@ struct level {
 // (f = normalise(cross(up, s)), s = cross(f, up)), `src`'s points are rotated, flattened onto the plane of m->u and
 // offset by m->o, its vertices are rotated and tinted by the unpacked colour, and its faces are re-added with the
 // vertex indices shifted by this mesh's existing vertex count.
-void mesh_x::transform(mesh* src, const matrix* m, unsigned color)
+void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
 {
     if (!local_a0) {
         *(std::vector<point20>*)&v90 = *(std::vector<point20>*)&parent->v90;      // 0x411630
@@ -65,8 +65,8 @@ void mesh_x::transform(mesh* src, const matrix* m, unsigned color)
     mm.f.normalize();
     mm.s = cross_i(mm.f, mm.u);
 
-    std::vector<point20>& pts = ((mesh_x*)src)->get70_rec();
-    std::vector<vertex60>& sv = ((mesh_x*)src)->get50_rec();
+    std::vector<point20>& pts = ((rgl::mesh*)src)->get70_rec();
+    std::vector<vertex60>& sv = ((rgl::mesh*)src)->get50_rec();
 
     for (size_t i = 0; i < pts.size(); i++) {
         float x = mm.s.x * pts[i].a.x + mm.f.x * pts[i].a.y + mm.u.x * pts[i].a.z;
@@ -100,7 +100,7 @@ void mesh_x::transform(mesh* src, const matrix* m, unsigned color)
         v50.push_back(vt);                        // 0x411420
     }
 
-    std::vector<face20>& faces = ((mesh_x*)src)->get90_rec();
+    std::vector<face20>& faces = ((rgl::mesh*)src)->get90_rec();
     for (size_t i = 0; i < faces.size(); i++)
         add_face(faces[i].a + nverts, faces[i].b + nverts, faces[i].c + nverts);
 
@@ -111,7 +111,7 @@ void mesh_x::transform(mesh* src, const matrix* m, unsigned color)
 
 // @ 0x47af30 -- multiply the vertex colour terms and the key-frame colours by `color`, renormalise the colour
 // vectors of every vertex, and rebuild the slot vertices when one or three components are negative.
-void mesh_x::set_color(vector4 color)
+void rgl::mesh::set_color(vector4 color)
 {
     ensure_local();
 
@@ -162,7 +162,7 @@ void mesh_x::set_color(vector4 color)
 }
 
 // @ 0x47b360 -- stamp the bone index into every vertex record, then mark the first slot dirty
-void mesh_x::set_bone_index(int bone)
+void rgl::mesh::set_bone_index(int bone)
 {
     ensure_local();
     for (size_t i = 0; i < v50.size(); i++)
@@ -171,7 +171,7 @@ void mesh_x::set_bone_index(int bone)
 }
 
 // @ 0x47b3b0
-void mesh_x::multiply_color(const vector4* tint)
+void rgl::mesh::multiply_color(const vector4* tint)
 {
     ensure_local();
     for (unsigned i = 0; i < v50.size(); i++) {
@@ -192,7 +192,7 @@ void mesh_list_x::append(mesh_list* src, int bone, const matrix* m, const unsign
 {
     for (std::vector<mesh*>::iterator it = src->v.begin(); it < src->v.end(); ++it) {
         if (bone == -1) {
-            mesh* c = ((mesh_x*)*it)->clone();
+            mesh* c = ((rgl::mesh*)*it)->clone();
             vpush(v, c);
         } else {
             mesh* c = new mesh;
@@ -215,7 +215,7 @@ void lod_mesh_x::set_color(unsigned color)
     for (int i = 0; i < count; i++) {
         std::vector<mesh*>& l = lists[i].v;
         for (std::vector<mesh*>::iterator it = l.begin(); it < l.end(); ++it)
-            ((mesh_x*)*it)->set_bone_index(color);
+            ((rgl::mesh*)*it)->set_bone_index(color);
     }
 }
 
@@ -225,7 +225,7 @@ void lod_mesh_x::transform(const matrix& m)
     for (int i = 0; i < count; i++) {
         std::vector<mesh*>& l = lists[i].v;
         for (std::vector<mesh*>::iterator it = l.begin(); it < l.end(); ++it)
-            ((mesh_x*)*it)->transform(m);
+            ((rgl::mesh*)*it)->transform(m);
     }
 }
 
@@ -280,7 +280,7 @@ void world_x::light_mesh(mesh* m, const matrix* frame, unsigned flags)
             c.y = (float)pow(c.y, g_ramp_gamma);
             c.z = (float)pow(c.z, g_ramp_gamma);
         }
-        ((mesh_x*)m)->multiply_color(&c);
+        ((rgl::mesh*)m)->multiply_color(&c);
         return;
     }
 

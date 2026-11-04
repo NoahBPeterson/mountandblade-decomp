@@ -232,7 +232,7 @@ MissionUi* PartyWindow::make_slot(ItemRef* slot)
     }
     {
         tstring n("inv_slot");
-        w->set_mesh(0, g_resmgr_party.get_object(&n)->clone());
+        w->set_mesh(0, res_manager().get_object(&n)->clone());
     }
     return w;
 }

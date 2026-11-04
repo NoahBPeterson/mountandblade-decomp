@@ -68,7 +68,7 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
     mesh* m;
     {
         tstring hl("left_arrow_hl");
-        m = (mesh*)((mesh_x*)res_manager().get_object(&hl))->clone();
+        m = (mesh*)((rgl::mesh*)res_manager().get_object(&hl))->clone();
     }
     m->scale(x / z);
     ((MissionUi*)b)->set_track(3, m);
@@ -88,7 +88,7 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
     mesh* m;
     {
         tstring hl("right_arrow_hl");
-        m = (mesh*)((mesh_x*)res_manager().get_object(&hl))->clone();
+        m = (mesh*)((rgl::mesh*)res_manager().get_object(&hl))->clone();
     }
     m->scale(x / z);
     ((MissionUi*)b)->set_track(3, m);

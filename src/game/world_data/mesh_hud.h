@@ -13,7 +13,7 @@
 #include "./widget_mgr_w.h"
 #include "./raw_place.h"
 #include "../../rgl/mesh.h"
-#include "../../rgl/mesh_x.h"        // mesh_x: compute_bounds 0x419300, set_bone_index 0x47b360
+#include "../../rgl/mesh.h"        // rgl::mesh: compute_bounds 0x419300, set_bone_index 0x47b360
 #include "../../rgl/rgl_math.h"
 #include "../ui/mission_ui.h"
 #include "../../include/clock_table.h"
@@ -24,7 +24,7 @@ using rgl::vector4;
 #define WD_FLD(T, off) (*(T*)((char*)this + (off)))
 
 // ---- rgl::mesh members the shared header lacks (same object, 0x260 bytes) -------------------------------------------------------
-struct MeshX : gui_mesh {
+struct MeshX : rgl::mesh {
     float& uv(int i) { return WD_FLD(float, 0xf0 + 4 * i); }    // +0xf0 .. +0xfc the uv rectangle (0x495fa0)
     MeshX* copy_of();                                           // 0x4958f0 (thiscall, ret 0)
     void set_part(const rgl::matrix& mtx);                      // 0x495ba0 (ret 4)
@@ -55,7 +55,7 @@ rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);    // 0x495b20 (ret
 // the animate overrides of the widget classes whose tables the audit does not cover (update_1); the others are their classes' own
 // (UiB::animate 0x497880, UiC::animate 0x497e30, XyzButton::animate 0x4966b0, UiE::animate 0x4985f0)
 struct HudBar : MissionUi {
-    gui_mesh* msh(int i) { return (gui_mesh*)tracks[i]; }
+    rgl::mesh* msh(int i) { return (rgl::mesh*)tracks[i]; }
     void s03() { update_bounds(); }                                       // vtable +0x0c (invalidate)
     void s22(void* v) { move_a((float*)v); }                               // vtable +0x58 (set the position)
     void s25(void* v) { set_xy((float*)v); }                           // vtable +0x64

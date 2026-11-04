@@ -59,15 +59,8 @@ struct WVt {
 };
 #define vt(w) ((WVt*)(w))
 
-// ---- mesh members the shared headers lack (same object as rgl::mesh) ----------------------------------------
-// (src/rgl/core/resmgr.h has mesh_x::clone but cannot be included with ../ui/mission_ui.h: both define rgl::mesh.)
-#include "../../rgl/mesh_x.h"      // mesh_x::set_color 0x47af30
-struct gui_mesh : rgl::mesh {
-    gui_mesh* clone();                          // 0x41c6d0
-    void scale(float s);                        // 0x44f0c0
-    void set_color(vector4 v) { ((mesh_x*)this)->set_color(v); }     // 0x47af30 (mesh_x::set_color, rgl/mesh_x.h; v by value, .w is copied uninitialised)
-};
-#define clone_gui(m) (((gui_mesh*)(m))->clone())
+// ---- rgl::mesh (shared header) ----
+#include "../../rgl/mesh.h"      // rgl::mesh::set_color 0x47af30
 
 // the resource manager object (0x5d6fa0; resource.h's `resource_manager` is a partial view of it)
 struct resmgr_gui : resource_manager {

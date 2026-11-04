@@ -23,7 +23,7 @@
 #include "../map_widget.h"
 #include "./cs_common.h"
 #include "../res_mgr.h"                                 // res_manager()
-#include "../../rgl/mesh_x.h"                           // mesh_x::clone 0x41c6d0
+#include "../../rgl/mesh.h"                           // rgl::mesh::clone 0x41c6d0
 
 // ---- the campaign screen (`this` of 0x4ec4d0 / 0x4ecce0) -----------------------------------------------
 #include "../campaign_screen.h"            // CampaignScreen (the campaign map screen)

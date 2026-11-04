@@ -30,7 +30,7 @@ using rgl::mesh;
 __forceinline mesh* load_mesh(const char* name)
 {
     tstring n(name);
-    return (mesh*)((mesh_x*)res_manager().get_object(&n))->clone();
+    return (mesh*)((rgl::mesh*)res_manager().get_object(&n))->clone();
 }
 
 // ---- language / text tables (0x5e2a18) -------------------------------------------------------------

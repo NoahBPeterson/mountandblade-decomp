@@ -113,6 +113,14 @@ struct mesh : named_object {
     std::vector<face20>& get90_();                  // 0x40ec30
     std::vector<skin_vert>& get60_();               // 0x40ec60
     void compute_bounds();                          // 0x419300 (bounds of the points)
+    void linearise_vertex_colors();                 // 0x419360 (gamma 2.2 to linear, copy to +0x58)
+    void compute_tangents();                        // 0x41ce80
+    int count(int kind);                            // 0x468620 (1: faces * 3, else vertices)
+    void fill_vertices(int* p, const unsigned* fmt);   // 0x46c4f0
+    void fill_indices(unsigned short* out);         // 0x46c920
+    void transform(mesh* src, const matrix* m, unsigned color);   // 0x47aa40 (ret 0xc)
+    void multiply_color(const vector4* tint);       // 0x47b3b0
+
     int add_vertex_rec(int index, const vertex60& v);   // add_vertex's form create_shadow_mesh 0x42b080 reaches: v50 grows by exactly ONE element per ground vertex (0x42b590 _Insert_n, 0x4106f0 _Ufill, 0x40ff60)
     void append_plain(mesh* other, const mat4* m);  // 0x4520b0 (ret 8, tail of append_skinned)
     void transform(mat4 m);                         // 0x44f3c0 (matrix by value, ret 0x40)

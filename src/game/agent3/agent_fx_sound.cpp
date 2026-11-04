@@ -158,13 +158,13 @@ void EmitTable::setup(Emit* e, int idx, const vector4* pos)
     if (idx < 0 || idx >= count)
         return;
     EmitDef* d = &defs[idx];
-    res_obj* r = (res_obj*)res_manager().get_object(&d->name);
+    rgl::mesh* r = (rgl::mesh*)res_manager().get_object(&d->name);
     if (r == 0)
         return;
     e->init();
     e->idx = idx;
     e->obj = r;
-    e->res = r->f2c;
+    e->res = (EmitRes*)r->res;
     e->flags = d->f10;
     e->f198 = d->f24;
     e->fa0 = d->f30;

@@ -10,7 +10,7 @@
 //
 // Header gaps worked around locally (the shared headers are not ours to edit; see MIGRATION.md):
 //   - rgl::mesh (../particles/mesh_obj.h) has no compute_bounds (0x419300), linearise_vertex_colors (0x419360),
-//     compute_tangents (0x41ce80) or clone (0x41c6d0): `mesh_x` adds them. Its vertex60 names the first
+//     compute_tangents (0x41ce80) or clone (0x41c6d0): `rgl::mesh` adds them. Its vertex60 names the first
 //     vector `pos` and the one at +0x30 `normal`; the stream carries the normal at +0 (the working normal,
 //     tangent frame input) and a copy at +0x30, so the tangent builder reads pos/f10/f20 as normal/tan/bit.
 //   - named_object (../resource.h) has no slots 2 and 3 (the serialisers `load`/`save`): `named_object_x`.
@@ -66,7 +66,7 @@ struct skel_anim : named_object {
 
 // ---- meshes ------------------------------------------------------------------------------------------------
 // (0x30-byte "tangent frame" views of rgl::vertex60: see the header comment)
-#include "../mesh_x.h"                   // mesh_x (shared with src/game/terrain_a)
+#include "../mesh.h"                   // rgl::mesh (shared with src/game/terrain_a)
 
 // 16-byte list of owned meshes (resource_manager's LOD groups own their meshes)
 struct mesh_owner : std::vector<rgl::mesh*> {

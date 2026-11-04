@@ -989,7 +989,7 @@ void ResultWindow::init_screen()
     mv[0] = 0.25f; mv[1] = 0.2f; mv[2] = 0.5f; mv[3] = 0.44f;
     vt(win)->d22(mv);
     vt(win)->d25(&mv[2]);
-    gui_mesh* m;
+    rgl::mesh* m;
     {
         tstring name("message_window");
         m = res_get(name)->clone();
@@ -1063,7 +1063,7 @@ void ResultWindow::init_screen()
         }
         {
             rgl::vector4 c(0.5f, 0.5f, 1.0f);
-            ((gui_mesh*)box38->tracks[2])->set_color(c);
+            ((rgl::mesh*)box38->tracks[2])->set_color(c);
         }
         {
             tstring n("party_button_down");
@@ -1071,7 +1071,7 @@ void ResultWindow::init_screen()
         }
         {
             rgl::vector4 c(0.5f, 0.5f, 1.0f);
-            ((gui_mesh*)box38->tracks[1])->set_color(c);
+            ((rgl::mesh*)box38->tracks[1])->set_color(c);
         }
         vt(box38)->d03();
         { struct { int a, b; } ret; vt(box38)->d41(&ret, &s54); }
@@ -1158,12 +1158,12 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
     float r = 1.0f / k2;
     float s = r * c;
     {
-        gui_mesh* m = res_get(name)->clone();
+        rgl::mesh* m = res_get(name)->clone();
         m->scale(s);
         vt(p)->d32(2, m);
     }
     {
-        gui_mesh* m = res_get(down)->clone();
+        rgl::mesh* m = res_get(down)->clone();
         m->scale(s);
         vt(p)->d32(1, m);
     }
@@ -1569,7 +1569,7 @@ void C4c3050::init_screen()
 
     vt(win)->d25(v + 2);
 
-    gui_mesh* m;
+    rgl::mesh* m;
     {
         tstring t("message_window");
         m = res_get(t)->clone();
@@ -1763,7 +1763,7 @@ void Rec34::init_screen()
     { V2 t_(0.2f, 0.15f); vt(win)->d22(&t_); }
     { V2 t_(0.6f, 0.45f); vt(win)->d25(&t_); }
 
-    gui_mesh* m;
+    rgl::mesh* m;
     {
         tstring t("debrief_window");
         m = res_get(t)->clone();
@@ -1788,7 +1788,7 @@ void Rec34::init_screen()
 
 // ---- 0x4dfd50 / 0x4dfec0: slider and drop-down makers ----------------------------------------------------------------------
 // load and clone a named mesh (the original's tstring temporary lives inside the inlined helper)
-static __forceinline gui_mesh* load_mesh(const char* name)
+static __forceinline rgl::mesh* load_mesh(const char* name)
 {
     tstring n(name);
     return res_get(n)->clone();
@@ -1828,8 +1828,8 @@ UiB* make_slider(MissionUi* parent, float x, float y, float k)
         V2 size(k * 0.25f, k * 0.03f);              // 0x4dfd90: both from k ([esp+0x4c] / [esp+0x50] after the push)
         vt(w)->d25(&size);
     }
-    gui_mesh* track = load_mesh("slider_hor");
-    gui_mesh* handle = load_mesh("handle_hor");
+    rgl::mesh* track = load_mesh("slider_hor");
+    rgl::mesh* handle = load_mesh("handle_hor");
     if (k != 1.0f) {
         track->set_color(rgl::vector4(k, k, k));
         handle->set_color(rgl::vector4(k, k, k));
@@ -1853,19 +1853,19 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         tstring n("button_drop");
         vt(b)->d32(2, res_get(n)->clone());
     }
-    ((gui_mesh*)b->tracks[2])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
+    ((rgl::mesh*)b->tracks[2])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
 
     {
         tstring n("button_drop_clicked");
         vt(b)->d32(1, res_get(n)->clone());
     }
-    ((gui_mesh*)b->tracks[1])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
+    ((rgl::mesh*)b->tracks[1])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
 
     {
         tstring n("button_drop_hl");
         vt(b)->d32(3, res_get(n)->clone());
     }
-    ((gui_mesh*)b->tracks[3])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
+    ((rgl::mesh*)b->tracks[3])->set_color(rgl::vector4(1.0f, 0.5f, 1.0f));
 
     {
         tstring n("button_drop_child");
@@ -1952,7 +1952,7 @@ void Recd8::init_screen()
         vt(root)->d38(&c);
     }
     {
-        gui_mesh* m;
+        rgl::mesh* m;
         {
             tstring k("options_window");
             m = res_get(k)->clone();
@@ -1972,7 +1972,7 @@ void Recd8::init_screen()
     }
     {
         tstring k("warrider_logo");
-        gui_mesh* m = res_get(k)->clone();
+        rgl::mesh* m = res_get(k)->clone();
         vt(header)->d31(0, m);
     }
     vt(root)->d50(header);
@@ -2193,7 +2193,7 @@ void Recf0::init_screen()
         vt(window)->d38(&c);
     }
     {
-        gui_mesh* m;
+        rgl::mesh* m;
         {
             tstring k("options_window");
             m = res_get(k)->clone();
@@ -2279,9 +2279,9 @@ void Recf0::init_screen()
         { tstring k("Resolution"); resolution = make_dropdown((MissionUi*)window, &k, 0.52f, 0.665f); }
         // The original passes 3-argument vector4 temporaries (w never set, 0x4e1751 / 0x4e1797 / 0x4e17dd copy the temp's
         // unwritten 4th float); set_color 0x47af30 reads only x, y, z
-        ((gui_mesh*)resolution->tracks[2])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
-        ((gui_mesh*)resolution->tracks[1])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
-        ((gui_mesh*)resolution->tracks[3])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
+        ((rgl::mesh*)resolution->tracks[2])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
+        ((rgl::mesh*)resolution->tracks[1])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
+        ((rgl::mesh*)resolution->tracks[3])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
         float sc[2];
         sc[0] = 0.0139999995f;   // 0x3c656041 (0.014f would be 0x3c656042)
         sc[1] = 0.0139999995f;
@@ -2418,7 +2418,7 @@ void Rec1bc::init_screen()
     vt(quad)->d38(&v);
     {
         tstring name("options_window");
-        gui_mesh* c = res_get(name)->clone();
+        rgl::mesh* c = res_get(name)->clone();
         vt(quad)->d31(0, c);
     }
     {
@@ -2791,7 +2791,7 @@ void Rec48::init_screen()
     f2[0] = 1.0f;
     f2[1] = 0.75f;
     vt(bg)->d25(f2);
-    gui_mesh* m;
+    rgl::mesh* m;
     {
         tstring name("meeting_window");
         m = res_get(name)->clone();
@@ -2929,7 +2929,7 @@ progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, floa
     v.z = 1.0f;
     vt(p)->d25(size);
     p->ratio = v.y * 0.31f;
-    gui_mesh* c;
+    rgl::mesh* c;
     {
         tstring name("progressbar");
         c = res_get(name)->clone();

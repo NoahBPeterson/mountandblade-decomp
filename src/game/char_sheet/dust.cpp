@@ -130,7 +130,7 @@ void Terrain::emit_cell(int x, int y)
             p->anim = p->anim % pt->nframes;
             dmesh* src = (dmesh*)pt->boxes[p->anim].meshes[0];
             if ((pt->flags & 0x20000i64) != 0)
-                ((mesh_x*)cell_at(this, cx, cy)->list[0])->transform((rgl::mesh*)src, (const matrix*)&mm, color);
+                ((rgl::mesh*)cell_at(this, cx, cy)->list[0])->transform((rgl::mesh*)src, (const matrix*)&mm, color);
             else
                 ((rgl::mesh*)cell_at(this, cx, cy)->list[0])->append_skinned((rgl::mesh*)src, (const rgl::mat4*)&mm, -1, color, 0);
             p->last[0] = cell_at(this, cx, cy)->list[0]->f50.size();
@@ -139,7 +139,7 @@ void Terrain::emit_cell(int x, int y)
     cell_obj* o = cell_at(this, x, y);
     if (o->list && (o->list_end - o->list) != 0) {
         dmesh* m = o->list[0];
-        ((mesh_x*)m)->compute_bounds();
+        ((rgl::mesh*)m)->compute_bounds();
         cell_at(this, x, y)->refresh();
         vector4 zv(0.0f, 0.0f, 0.0f);
         mat3 tmp;

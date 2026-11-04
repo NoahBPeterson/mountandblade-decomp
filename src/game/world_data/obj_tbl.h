@@ -13,7 +13,7 @@
 #include "../../include/render_flags.h"
 
 // ---- mesh members the shared headers lack (same object as rgl::mesh) ---------------------------------------------------------------------
-// (translate 0x44f240 and add_quad 0x44e970 are rgl::mesh's own, set_bone_index 0x47b360 is mesh_x's: rgl/mesh.h, rgl/mesh_x.h)
+// (translate 0x44f240 and add_quad 0x44e970 are rgl::mesh's own, set_bone_index 0x47b360 is rgl::mesh's: rgl/mesh.h, rgl/mesh.h)
 struct MeshY : MeshX {};
 
 // ---- a 3x3 frame (the rotation rows of a matrix): identity3 writes 0x30 bytes -------------------------------------------------------------

@@ -47,7 +47,7 @@ struct Poser {
     void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.cpp, ret 4)
 };
 #include "../../include/ptr_vec.h"
-#include "../../rgl/mesh_x.h"      // mesh_x::clone 0x41c6d0 (the canonical class)
+#include "../../rgl/mesh.h"      // rgl::mesh::clone 0x41c6d0 (the canonical class)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct int3 { int v[3]; };
 struct alloc_int3 {
@@ -206,7 +206,7 @@ struct Rot3 {                                           // the three rows of a f
 inline Rot3* identity3(Rot3* out) { return (Rot3*)rgl::identity3((rgl::mat3*)out); }
 struct MeshRes : rgl::mesh {                            // the master mesh the resource manager hands out for a name
     rgl::mesh* copy_of() { return (rgl::mesh*)((MeshX*)this)->copy_of(); }              // 0x4958f0
-    rgl::mesh* clone() { return (rgl::mesh*)((mesh_x*)this)->clone(); }                 // 0x41c6d0
+    rgl::mesh* clone() { return (rgl::mesh*)((rgl::mesh*)this)->clone(); }                 // 0x41c6d0
 };
 // the party's map model (Party::model, an rgl entity of type 9): the slots, fields and members the update code uses
 struct PartyModel {

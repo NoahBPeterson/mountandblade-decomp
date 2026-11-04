@@ -77,7 +77,7 @@ static const char* troop_text(int id)
 
 #include "./cs_common.h"
 #include "../res_mgr.h"                          // res_manager()
-#include "../../rgl/mesh_x.h"                    // mesh_x::clone 0x41c6d0
+#include "../../rgl/mesh.h"                    // rgl::mesh::clone 0x41c6d0
 
 // 0x487b00 (UTF-8 decoder) is a static helper with a register convention: conv_refresh.cpp has its local copy
 

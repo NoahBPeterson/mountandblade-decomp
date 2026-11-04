@@ -394,7 +394,7 @@
   },
   "00419360": {
    "verdict": "DIFF",
-   "symbol": "?linearise_vertex_colors@mesh_x@@QAEXXZ",
+   "symbol": "?linearise_vertex_colors@mesh@rgl@@QAEXXZ",
    "insns": 61,
    "ours": 62,
    "unverified": 0,
@@ -506,7 +506,7 @@
   },
   "0041ce80": {
    "verdict": "DIFF",
-   "symbol": "?compute_tangents@mesh_x@@QAEXXZ",
+   "symbol": "?compute_tangents@mesh@rgl@@QAEXXZ",
    "insns": 668,
    "ours": 660,
    "unverified": 0,
@@ -2726,7 +2726,7 @@
   },
   "0046c4f0": {
    "verdict": "DIFF",
-   "symbol": "?fill_vertices@mesh_x@@QAEXPAHPBI@Z",
+   "symbol": "?fill_vertices@mesh@rgl@@QAEXPAHPBI@Z",
    "insns": 334,
    "ours": 332,
    "unverified": 0,
@@ -2736,7 +2736,7 @@
   },
   "0046c920": {
    "verdict": "DIFF",
-   "symbol": "?fill_indices@mesh_x@@QAEXPAG@Z",
+   "symbol": "?fill_indices@mesh@rgl@@QAEXPAG@Z",
    "insns": 39,
    "ours": 41,
    "unverified": 0,
@@ -3118,7 +3118,7 @@
   },
   "0047aa40": {
    "verdict": "DIFF",
-   "symbol": "?transform@mesh_x@@QAEXPAUmesh@rgl@@PBUmatrix@3@I@Z",
+   "symbol": "?transform@mesh@rgl@@QAEXPAU12@PBUmatrix@2@I@Z",
    "insns": 347,
    "ours": 346,
    "unverified": 0,
@@ -3128,7 +3128,7 @@
   },
   "0047af30": {
    "verdict": "DIFF",
-   "symbol": "?set_color@mesh_x@@QAEXUvector4@rgl@@@Z",
+   "symbol": "?set_color@mesh@rgl@@QAEXUvector4@2@@Z",
    "insns": 345,
    "ours": 343,
    "unverified": 0,
@@ -3138,7 +3138,7 @@
   },
   "0047b3b0": {
    "verdict": "DIFF",
-   "symbol": "?multiply_color@mesh_x@@QAEXPBUvector4@rgl@@@Z",
+   "symbol": "?multiply_color@mesh@rgl@@QAEXPBUvector4@2@@Z",
    "insns": 67,
    "ours": 64,
    "unverified": 0,

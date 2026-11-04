@@ -21,7 +21,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
-#include "../../rgl/mesh_x.h"
+#include "../../rgl/mesh.h"
 #include "../key_names.h"
 
 // ---- canonical declarations -----------------------------------------------------------------------------------------------------
@@ -69,10 +69,10 @@ void __fastcall pick_entity(GuiCtx* ctx);                   // 0x4ed8d0 (char_sh
 struct ItemRef {
     tstring mesh_name();                                    // 0x434b20 (item_ref.h)
 };
-struct res_obj;
+namespace rgl { struct mesh; }
 struct ItemKind {                                           // include/item_kind.h
     tstring mesh_name_for(int bit);                         // 0x433bf0
-    res_obj* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0 (returns the res_obj that is the mesh)
+    rgl::mesh* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0 (returns the rgl::mesh that is the mesh)
 };
 struct resmgr {
     std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (rgl/core/resmgr.h)
@@ -819,8 +819,8 @@ static void rotate_pair_s2fe40(float* p, float c, float s)
 // ---- forwarders: the views reach the functions other objects define through the classes that define them -------------------------------
 inline void MapEditor_s2f250::apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out)
 { ((ViewCtrl_s2fe40*)this)->apply(a, (float*)off, b, (float*)frame, c, (float*)col, out); }
-__forceinline mesh_s2f250* mesh_s2f250::clone() { return (mesh_s2f250*)((mesh_x*)this)->clone(); }
-__forceinline void mesh_s2f250::set_color(vector4 c) { ((mesh_x*)this)->set_color(c); }
+__forceinline mesh_s2f250* mesh_s2f250::clone() { return (mesh_s2f250*)((rgl::mesh*)this)->clone(); }
+__forceinline void mesh_s2f250::set_color(vector4 c) { ((rgl::mesh*)this)->set_color(c); }
 __forceinline void Map_s2f250::init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m)
 { ::init_placed(o, kind, id, value, m); }
 __forceinline void Map_s2f250::build_mesh_name(PlacedObj* o, MeshVec_s2f250* v)

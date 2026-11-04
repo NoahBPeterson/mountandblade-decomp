@@ -69,7 +69,7 @@ void progress_bar::update_children()
     if (tracks[2] != 0)
         delete (VDtor*)tracks[2];
     if (handle != 0) {
-        gui_mesh* c = handle->clone();
+        rgl::mesh* c = handle->clone();
         float sx = v168;
         rgl::vector4 r = rect;
         float* d = &r.x + idx;
