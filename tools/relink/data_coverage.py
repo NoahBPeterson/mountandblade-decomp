@@ -356,7 +356,8 @@ def main():
             os.makedirs(os.path.dirname(LATEST), exist_ok=True)       # the history keeps only the basename; progress.py --treemap-data wants the dir
             json.dump({"build": os.path.abspath(a.from_build), "when": rep["when"], "commit": commit}, open(LATEST, "w"), indent=1)
             _record(SA_HIST, dict(crutch_counts(a.from_build), when=rep["when"], commit=commit,
-                                  build=os.path.basename(a.from_build.rstrip("/")), items=rep["items"], bytes=rep["bytes"]))
+                                  build=os.path.basename(a.from_build.rstrip("/")), label=a.label, items=rep["items"],
+                                  bytes=rep["bytes"]))
     return 0
 
 

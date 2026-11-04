@@ -386,7 +386,8 @@
    "borrowed from image": 2870952,
    "reached through tables": 2121208,
    "library data": 57058
-  }
+  },
+  "label": "init stubs"
  },
  "2026-11-03T18:25:52-06:00": {
   "data_labels": 237,

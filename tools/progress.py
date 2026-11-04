@@ -170,7 +170,7 @@ SA_COLS = (("data_labels", "Glue data labels", False), ("aliases", "Glue aliases
            ("forwarding_stubs", "Slots bound by forwarding stubs", False),
            ("borrowed_items", "Data items borrowed from the image", False),
            ("borrowed_mb", "Data borrowed from the image (MB)", False),
-           ("data_definitions", "Data definitions at original addresses", True))
+           ("source_pct", "Static data items from source (%)", True))
 try:
     SA = sorted(json.load(open(W("docs", "standalone_history.json"))).values(), key=lambda p: p["when"])
 except (OSError, ValueError):
@@ -178,6 +178,9 @@ except (OSError, ValueError):
 
 
 def _sa_value(pt, key):
+    if key == "source_pct":                    # data items our source (or the static CRT) provides, of all the original's items
+        n = pt["items"]                        # (by items: by bytes the one 124 MB terrain object hides everything else)
+        return 100.0 * (n["defined in source"] + n["generated from source"] + n["library data"]) / (sum(n.values()) or 1)
     if key == "borrowed_items":
         return pt["items"]["borrowed from image"]
     if key == "borrowed_mb":
@@ -956,16 +959,24 @@ def plot_standalone(path):
     for ax, (key, title, good) in zip(axs.flat, SA_COLS):
         ys = [_sa_value(p, key) for p in SA]
         ax.set_facecolor(SURFACE)
-        ax.set_title(title, loc="left", fontsize=9, color=INK)
+        vals = [y for y in ys if y is not None]
+        if good:                               # work done: percent of the goal
+            sub, ok = "\u2191 goal 100%%: %.1f%% done" % vals[-1], True
+        else:                                  # a crutch: down to zero; how much of it is gone since the first build
+            gone = 100.0 * (vals[0] - vals[-1]) / vals[0] if vals[0] else 0.0
+            sub, ok = ("\u2193 goal 0: %.0f%% eliminated" % gone, True) if gone >= 0 else ("\u2193 goal 0: UP %.0f%%" % -gone, False)
+        ax.set_title(title, loc="left", fontsize=9, color=INK, pad=15)
+        ax.text(0, 1.02, sub, transform=ax.transAxes, fontsize=8.5, weight="bold", color=GOOD if ok else BAD,
+                ha="left", va="bottom")
         ax.grid(axis="y", color=GRID, lw=1)
         ax.set_axisbelow(True)
         col = GOOD if good else BAD
         pts = [(x, y) for x, y in zip(xs, ys) if y is not None]
         ax.plot([x for x, _ in pts], [y for _, y in pts], color=col, lw=2, marker="o", ms=4)
-        top = max(y for _, y in pts) or 1
+        top = 100.0 if good else (max(y for _, y in pts) or 1)
         ax.set_ylim(0, top * 1.22)
         ax.set_xlim(-0.35, len(SA) - 1 + 0.9)
-        fmt = (lambda v: "%.2f" % v) if isinstance(pts[-1][1], float) else (lambda v: "%d" % v)
+        fmt = (lambda v: "%.1f%%" % v) if good else (lambda v: "%.2f" % v) if isinstance(pts[-1][1], float) else (lambda v: "%d" % v)
         ax.annotate(fmt(pts[-1][1]), pts[-1], xytext=(6, 0), textcoords="offset points", ha="left", va="center",
                     fontsize=10, color=col, weight="bold")
         ax.annotate(fmt(pts[0][1]), pts[0], xytext=(0, 7), textcoords="offset points", ha="center", va="bottom",
