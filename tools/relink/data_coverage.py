@@ -202,9 +202,16 @@ def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None):
 
 
 def drop_dead(items):
-    """The items without the ones inside a range the glue does not copy (glue.py DEAD_RANGES)."""
+    """The items without the storage inside a range the glue does not copy (glue.py DEAD_RANGES): an item the range
+    covers whole goes, one it covers part of keeps the rest (an item the range only touched at its tail counted whole)."""
     from glue import DEAD_RANGES
-    return [it for it in items if not any(lo <= it[0] and it[1] <= hi for lo, hi, _why in DEAD_RANGES)]
+    out = []
+    for s, e, c in items:
+        pieces = [(s, e)]
+        for lo, hi, _why in DEAD_RANGES:
+            pieces = [p for a, b in pieces for p in ((a, min(b, lo)), (max(a, hi), b)) if p[0] < p[1]]
+        out += [[a, b, c] for a, b in pieces]
+    return out
 
 
 def _absorb(items, named, syms, section_of, uses):
