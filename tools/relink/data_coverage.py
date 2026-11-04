@@ -26,6 +26,8 @@ Classes, per item:
   borrowed from image     game code uses it, our source only declares it (extern) or names it nowhere
   reached through tables  no instruction uses it; a pointer table in the data does (the pages of a pool)
   library data            used only by the static CRT/C++ library (linked from libcmt/libcpmt, not decompiled)
+Not an item: data the glue does not copy (glue.py DEAD_RANGES: the original's CRT tables, strings only the original's
+own pointer tables reached, the dead activation library); it is counted in "before the first item" with the unreferenced bytes.
 The import address table is excluded.
 """
 import argparse, bisect, collections, contextlib, datetime, io, json, os, re, runpy, struct, subprocess, sys
@@ -171,6 +173,12 @@ def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None):
     if syms:
         items = _absorb(items, named, syms, section_of)
     return items, uses, named
+
+
+def drop_dead(items):
+    """The items without the ones inside a range the glue does not copy (glue.py DEAD_RANGES)."""
+    from glue import DEAD_RANGES
+    return [it for it in items if not any(lo <= it[0] and it[1] <= hi for lo, hi, _why in DEAD_RANGES)]
 
 
 def _absorb(items, named, syms, section_of):
@@ -330,6 +338,7 @@ def main():
     rmap = json.load(open(a.map))
     syms = link_map_symbols(MAP_OF(a.map)) if not a.no_extents and os.path.exists(MAP_OF(a.map)) else None
     items, uses, named = data_items(img, rmap, starts, game, syms=syms)
+    items = drop_dead(items)
     by = {c: [0, 0] for c in CLASSES}
     per_sec = {s[0]: {c: 0 for c in CLASSES} for s in (RDATA, DATA, BSS)}
     for s, e, c in items:

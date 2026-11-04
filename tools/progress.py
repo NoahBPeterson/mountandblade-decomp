@@ -812,6 +812,7 @@ def treemap_data(path):
     syms = DC.link_map_symbols(lmap) if os.path.exists(lmap) else None
     first, users = {}, {}
     items, _uses, named = DC.data_items(R.Image(), rmap, starts, game, first, syms, users)
+    items = DC.drop_dead(items)
     owners = DC.item_owners(items, first, named, rmap, syms, users)
     files = _files_by_function()
     INK, MUTED, SURFACE = "#0b0b0b", "#52514e", "#fcfcfb"

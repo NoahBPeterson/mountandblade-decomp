@@ -55,6 +55,29 @@ IAT_LO, IAT_HI = 0x549000, 0x5494c8
 # reaches a dead range (check_dead_ranges), the way the trap gate does for traps.
 DEAD_RANGES = (
     (0x5a8000, 0x5a80f4, "CRT initializer/terminator tables .CRT$XCA..XTZ"),
+    # strings and tables only the original's own pointer tables reached (data_coverage.py "reached through tables"). The
+    # tables are defined in source now (their strings are our objects' literals), so the original's copies are never read.
+    (0x54bbf4, 0x54bd74, "tinyxml error strings (TiXmlBase::errorString entries), 0x5a9070 in source"),
+    (0x54bd7c, 0x54bd88, "tinyxml \"No error\""),
+    (0x54c1a8, 0x54c1b0, "tinyxml entity string \"&amp;\""),
+    (0x5a90ec, 0x5a9bd8, "name-pointer arrays (693 pointers to act_* / ground_* / tab_* strings) that no instruction and no pointer reaches"),
+    (0x58d24c, 0x58d29c, "tab_game_* name strings"),
+    (0x58d2d8, 0x59080c, "act_* / scene action name strings"),
+    # the 2004 hardware-locked activation library (CVS ids actusr.c, sigver.c, actdat.c, hwinfo.c, hwenc.c): its code was
+    # dropped by /OPT:REF, so its tables are inert (no instruction of the original reads them); then libcmt / libcpmt RTTI
+    # name strings up to 0x5d5cf4 that the original's EH tables reached
+    (0x5aa3b8, 0x5d5cb0, "activation library data (code dropped by /OPT:REF); the RTTI type descriptors after it stay"),
+)
+
+# The original's copy of an object our source defines: the exe uses our definition, so the copy's bytes are never read
+# (a pointer to the object is relocated to ours, a name at its address is an alias of ours). Not copied (left zero), which
+# also drops the pointers it holds from what the dead-range gate checks. Sizes are the source declarations' (the data gate
+# proves each definition is at least as large as what the original's code addresses).
+SUPERSEDED = (
+    (0x5a9070, 0x5a90b0, "TiXmlBase::errorString[16] (tinyxmlparser.cpp)"),
+    (0x5a90b0, 0x5a90ec, "TiXmlBase::entity[5] (tinyxmlparser.cpp)"),
+    (0x5a9bf4, 0x5a9bfc, "g_name_elevation, g_name_leveling (terrain_a.cpp)"),
+    (0x5a9c98, 0x5a9ca4, "g_conv_names[3] (gui_edit.cpp)"),
 )
 
 
@@ -115,8 +138,14 @@ def ranges_of(dead_sorted):
 
 
 # dwords in the copy that equal a dead-range address by accident: 0x5d3ef4 sits inside a table of 16-bit entries
-# (80 00 4f 00 80 50 ...: bytes 0x5a 0x00 0x80 0x00 here), not a pointer
-NOT_POINTERS = (0x5d3ef4,)
+# (80 00 4f 00 80 50 ...: bytes 0x5a 0x00 0x80 0x00 here), not a pointer; 0x5d60fc holds 0x5ba2e8 inside the CRT's
+# 16-bit character-class tables (... a2cf a2e4 001a a2e5 a2e8 005b ...); 0x5a67c8 holds 0x5d0000 across the end of
+# "NewtonRagDollBegin" and the start of the next import name; 0x5a1958 is the 4 bytes of the string "./\" (2e 2f 5c 00)
+NOT_POINTERS = (0x5d3ef4, 0x5d60fc, 0x5a67c8, 0x5a1958)
+
+
+def in_superseded(va):
+    return next((r for r in SUPERSEDED if r[0] <= va < r[1]), None)
 
 
 def in_dead_range(va):
@@ -503,8 +532,14 @@ def main():
     for lo, hi, _why in DEAD_RANGES:
         sec = section_of(lo)
         obj.sections[secno[sec[0]] - 1]["data"][lo - sec[1]:hi - sec[1]] = b"\0" * (hi - lo)
+    for lo, hi, _why in SUPERSEDED:
+        sec = section_of(lo)
+        obj.sections[secno[sec[0]] - 1]["data"][lo - sec[1]:hi - sec[1]] = b"\0" * (hi - lo)
     reach = []
     for n, (sec, off) in sorted(labels.items()):
+        r = in_superseded(sec[1] + off)
+        if r:
+            reach.append("label %s at %08x inside the superseded copy of %s" % (n, sec[1] + off, r[2]))
         if in_dead_range(sec[1] + off):
             reach.append("label %s at %08x" % (n, sec[1] + off))
     for v, n in our_data.items():
