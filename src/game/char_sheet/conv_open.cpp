@@ -25,7 +25,7 @@ void Rec1208::slot_empty_2()
     }
     {
         tstring name("conversation_window");
-        talk->set_mesh(0, (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone());
+        talk->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     {
         NodeA* v = (NodeA*)talk;
@@ -107,7 +107,7 @@ void Rec1208::slot_empty_2()
     }
     {
         tstring name("message_window");
-        msg->set_mesh(0, (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone());
+        msg->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->hide();
 
@@ -121,7 +121,7 @@ void Rec1208::slot_empty_2()
     }
     {
         tstring name("talk_relation_bar");
-        rbar->set_mesh(0, (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone());
+        rbar->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->add_child(rbar);
 
@@ -135,7 +135,7 @@ void Rec1208::slot_empty_2()
     }
     {
         tstring name("talk_reln_pointer");
-        rptr->set_track(0, (base_mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&name))->clone());
+        rptr->set_track(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->add_child(rptr);
 

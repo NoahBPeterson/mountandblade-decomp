@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Agent::update_alarm 0x443140 calls vector4::operator- 0x407ca0 instead of expanding it
 #include "./agent_fx_sound.h"
+#include "../res_mgr.h"
 #include "../config/config_block.h"
 #include "../tstring.h"
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
@@ -156,7 +157,7 @@ void EmitTable::setup(Emit* e, int idx, const vector4* pos)
     if (idx < 0 || idx >= count)
         return;
     EmitDef* d = &defs[idx];
-    res_obj* r = g_resmgr.get_object(&d->name);
+    res_obj* r = (res_obj*)res_manager().get_object((const rgl::string*)&d->name);
     if (r == 0)
         return;
     e->init();

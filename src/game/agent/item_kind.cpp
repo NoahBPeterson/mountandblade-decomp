@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <math.h>
 #include "./item_kind.h"
+#include "../res_mgr.h"
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 pos* __cdecl identity_pos(pos* out);        // 0x40cd00 (cdecl: writes the identity rotation and a zero origin to out, returns out; the definition's own declaration)
@@ -46,7 +47,7 @@ res_obj* ItemKind::mesh_for(unsigned __int64 cls, int bit)
         i++;
     } while (i < n);
     if (bit == -1) return 0;
-    return g_resmgr.get_object(&meshes[bit].name);
+    return (res_obj*)res_manager().get_object((const rgl::string*)&meshes[bit].name);
 }
 // @ 0x433d90
 bool ItemKind::is_ranged()

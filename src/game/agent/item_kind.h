@@ -11,21 +11,6 @@
 
 using rgl::vector4;
 
-// the resource manager's object lookup (0x419540, ret 4) as item_kind.cpp uses it; the class itself is migrated
-// with the 0x419420 object (src/rgl/resource.h does not declare get_object yet, and defines g_resmgr with its own
-// type, so that header cannot be included here).
-namespace rgl { struct mesh; }
-struct res_shape;
-struct resmgr {
-    rgl::mesh* get_object(const rgl::string* name);                 // 0x419540, as the definition (src/rgl/core/resmgr.cpp) declares it
-    // a tstring and an rgl::string are the same 16 bytes (pos, buf, cap, len); the resource is an rgl::mesh (res_obj is its opaque view here)
-    res_obj* get_object(const tstring* name) { return (res_obj*)get_object((const rgl::string*)name); }
-    std::vector<res_obj*> find_meshes(const tstring* prefix);       // 0x41b960 (agent4: the meshes whose names start with prefix)
-    void* get_material(const tstring* name);                        // 0x418a70 (agent4: a material by name)
-    res_shape* get_object60(const tstring* name);                   // 0x418c10 (agent4: a body resource)
-};
-extern resmgr g_resmgr;                                         // 0x5d6fa0
-
 // local frame of a carried item: matrix plus the three rotation members of 0x40e570 / 0x40e670 / 0x40e770
 // (rgl::matrix::rotate_about_s / _f / _u, declared in match/include/rgl.h)
 struct pos2 : rgl::matrix {

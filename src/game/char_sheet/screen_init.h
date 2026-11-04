@@ -22,7 +22,8 @@
 #include "../overlay.h"
 #include "../map_widget.h"
 #include "./cs_common.h"
-#include "./cs_res.h"
+#include "../res_mgr.h"                                 // res_manager()
+#include "../../rgl/mesh_x.h"                           // mesh_x::clone 0x41c6d0
 
 // ---- the campaign screen (`this` of 0x4ec4d0 / 0x4ecce0) -----------------------------------------------
 #include "../campaign_screen.h"            // Screen (the campaign map screen)
@@ -40,7 +41,7 @@ struct Rect {                                   // the 0x10-byte region copied i
 #define g_strtab  g_strtable
 
 extern char g_5e212c;                           // 0x5e212c
-#include "../renderer.h"
+#include "../../include/renderer.h"
 extern float g_590bb8;                          // 0x590bb8
 extern float g_54b3b4;                          // 0x54b3b4
 extern float g_549cdc;                          // 0x549cdc (1.0f)

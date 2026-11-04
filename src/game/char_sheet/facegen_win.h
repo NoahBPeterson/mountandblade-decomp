@@ -27,7 +27,6 @@ using rgl::mesh;
 
 // resource manager object at 0x5d6fa0
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
-extern resmgr g_alloc;                                      // 0x5d6fa0
 
 // ---- the widget interface (slot offsets in comments) -----------------------------------------------
 struct tvec2 {

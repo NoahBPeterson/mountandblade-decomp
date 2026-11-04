@@ -35,7 +35,7 @@ static __forceinline void board_text(UiWidget* parent, const char* text, float x
 static __forceinline mesh* board_mesh(const char* name)
 {
     tstring n(name);
-    return g_alloc.get_object((const rgl::string*)&n)->clone();   // 0x419540, 0x41c6d0
+    return res_manager().get_object((const rgl::string*)&n)->clone();   // 0x419540, 0x41c6d0
 }
 
 // @ 0x4f1460
@@ -206,7 +206,7 @@ void facegen_win::init()
     EntityV* ent = (EntityV*)((rgl::world*)(void*)scene)->create_entity(9);   // 0x428440
     {
         tstring n("prtcl_drop");
-        mesh* m = g_alloc.get_object((const rgl::string*)&n)->clone();
+        mesh* m = res_manager().get_object((const rgl::string*)&n)->clone();
         ((IntVec*)((char*)ent + 0x118))->push_back_mesh((int)m);   // _Insert_n 0x410610
         ent->refresh();
     }

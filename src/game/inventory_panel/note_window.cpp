@@ -34,6 +34,9 @@ extern "C" double atof(const char* s);                       // 0x537352
 // ---------------------------------------------------------------------------
 
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../res_mgr.h"                   // res_manager(): the resource manager 0x5d6fa0 (get_object 0x419540)
+#include "../../rgl/mesh_x.h"             // mesh_x::clone 0x41c6d0
+#include "../ui/ui_widgets.h"             // UiD (scroll bar slider, vtable 0x592140): make_scrollbar 0x4f6160 returns one
 
 // (each constructor on its own line inside its class: the resolution tools read a '// 0x' annotation in the class's scope)
 struct NotePanel : Widget {
@@ -59,33 +62,16 @@ extern "C" Widget* make_short_button(Widget* parent, tstring* text,
                                      float x, float y, float h);            // 0x4e5570
 extern "C" Widget* make_map_button(Widget* parent, tstring* text,
                                    float x, float y, float h);              // 0x4dcbd0
-extern "C" Widget* make_scrollbar(Widget* parent, const tstring* name);        // 0x4f6160
+extern "C" UiD* make_scrollbar(Widget* parent, const tstring* name);           // 0x4f6160
 extern "C" Widget* make_scroll2(Widget* parent, const tstring* name,
-                                Widget* other);                            // 0x4f62f0
+                                UiD* other);                            // 0x4f62f0
 
 #include "../party/widget_ops.h"            // WidgetOps: the one definition (relayout 0x488d50, visible 0x50cc60)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-struct MissionPanel {
-    void draw();   // 0x488d50 (game/ui/mission_ui.h): WidgetOps::draw is the same code
-};
 struct mnode {                                       // game/agent2/agent_types.h: the font object's bounds are mnode::calc_bounds
     void calc_bounds(rgl::vector4* a, rgl::vector4* b);                // 0x438d80 (this = font object)
     __forceinline void calc_bounds(float* a, float* b) { calc_bounds((rgl::vector4*)a, (rgl::vector4*)b); }
 };
-struct UiD {                                         // game/ui (ui_widgets_c.cpp): the scroll bar's value setter
-    void set_value(float pos);                       // 0x48baa0 (this = scroll bar)
-};
-namespace rgl { struct mesh; }
-struct resmgr {
-    rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (rgl/core/resmgr.h)
-};
-struct ThemeDb {
-    __forceinline void* get_object(const tstring* key) { return ((resmgr*)this)->get_object((const rgl::string*)key); }   // 0x419540
-};
-struct mesh_x {
-    mesh_x* clone();   // 0x41c6d0 (rgl/mesh_x.h)
-};
-#define THEME ((ThemeDb*)&orig::g_resmgr_obj)
 
 // ---------------------------------------------------------------------------
 // globals
@@ -321,7 +307,7 @@ void note_window::build(int page_, int arg_)
     }
     {
         tstring key("note_window");
-        void* item = THEME->get_object(&key);       // 0x419540
+        rgl::mesh* item = res_manager().get_object((const rgl::string*)&key);       // 0x419540
         panel->set_track(0, ((mesh_x*)item)->clone());   // 0x41c6d0
     }
 
@@ -860,7 +846,7 @@ void note_window::build(int page_, int arg_)
     this->data_panel->add_child(this->links);
 
     // each key string is a temporary that dies right after its call (0x50c5f1..0x50c642)
-    Widget* keys_scroll_base;
+    UiD* keys_scroll_base;
     {
         tstring s_keys("note_s_keys");
         keys_scroll_base = make_scrollbar(this->panel, &s_keys);      // 0x4f6160
@@ -894,7 +880,7 @@ void note_window::build(int page_, int arg_)
     }
 
     // each key string is a temporary that dies right after its call (0x50c5f1..0x50c642)
-    Widget* data_scroll_base;
+    UiD* data_scroll_base;
     {
         tstring s_data("note_s_data");
         data_scroll_base = make_scrollbar(this->panel, &s_data);      // 0x4f6160

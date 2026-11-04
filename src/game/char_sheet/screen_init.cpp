@@ -75,7 +75,7 @@ void Screen::init_screen()
         void* bar_mesh;
         {
             tstring map_bar("map_bar");
-            bar_mesh = (void*)((mesh_x*)g_alloc.get_object((const rgl::string*)&map_bar))->clone();
+            bar_mesh = (void*)((mesh_x*)res_manager().get_object((const rgl::string*)&map_bar))->clone();
         }                                           // the key string dies before set_mesh (0x4ec681 dtor, then 0x4ec6.. call 0x488aa0)
         buttons->set_mesh(0, bar_mesh);
     }

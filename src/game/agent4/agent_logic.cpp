@@ -13,15 +13,10 @@
 //       Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #define ANIM_SLOT_SET_OUT_OF_LINE       // 0x4378a0 is a real call here (the body is in agent2/agent_stats.cpp)
-// The shared resource classes (rgl/resource.h's resource_manager g_resmgr: get_material 0x418a70, get_object60 0x418c10; rgl/core/resmgr.h's
-// resmgr: get_object 0x419540, find_meshes 0x41b960) are read first. agent/item_kind.h declares a view `resmgr` / `g_resmgr` whose members do
-// not carry the defining signatures (res_obj / tstring in place of rgl::mesh / rgl::string); its names are changed while the headers are read.
 #include <vector>
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
-#include "../../rgl/core/resmgr.h"                             // resmgr: get_object 0x419540, find_meshes 0x41b960; resource_manager g_resmgr: get_material 0x418a70, get_object60 0x418c10
-#define resmgr resmgr_agent_view
-#define g_resmgr g_resmgr_agent_view
+#include "../res_mgr.h"                                        // res_manager(): get_object 0x419540, find_meshes 0x41b960; resource_manager g_resmgr: get_material 0x418a70, get_object60 0x418c10
 #include <stdlib.h>
 #include "../dialog_mgr.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
@@ -72,11 +67,6 @@ unsigned g_input_mask;                                      // 0x5e2474
 
 #include "../../include/rec78.h"
 #include "../../include/emit_ids.h"
-
-#undef resmgr
-#undef g_resmgr
-#define RESMGR ((resmgr*)&g_resmgr)
-#define RESOURCE_MANAGER (&g_resmgr)
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
 struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
@@ -2438,14 +2428,14 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     // the ammo item's own mesh (0x44bf04.. read the fourth)
     if ((g_items[launcher->item].type_flags & 0xff) == 10) {
         tstring tn = launcher->mesh_name();
-        m = (res_obj*)RESMGR->get_object((const rgl::string*)&tn);
+        m = (res_obj*)res_manager().get_object((const rgl::string*)&tn);
     } else {
         m = 0;
         if (ammo->item >= 0 && ammo->item < g_item_kind_count)
             m = g_items[ammo->item].mesh_for(0x2000000000000000ui64, ((signed char*)ammo)[7]);
         if (!m) {
             tstring name("flying_missile");
-            m = (res_obj*)RESMGR->get_object((const rgl::string*)&name);
+            m = (res_obj*)res_manager().get_object((const rgl::string*)&name);
         }
     }
     if (m) {
@@ -2569,11 +2559,11 @@ void Mission::spawn_prop(int* idx, int* id)
 after:
     if (name.len > 0)
         {
-            std::vector<rgl::mesh*> found = RESMGR->find_meshes((const rgl::string*)&name);
+            std::vector<rgl::mesh*> found = res_manager().find_meshes((const rgl::string*)&name);
             meshes = *(const std::vector<res_obj*>*)&found;
         }
     if (s2.differs("0") && s2.len != 0)
-        shape_res = (res_shape*)RESOURCE_MANAGER->get_object60(*(const rgl::string*)&s2);
+        shape_res = (res_shape*)g_resmgr.get_object60(*(const rgl::string*)&s2);
 
     if (r->kind == 7) {
         r->id = find_item(&r->name);
@@ -3430,7 +3420,7 @@ static inline tstring item_mesh_name(ItemKind* items, const ItemRef& r)
         return items[r.item].mesh_name_for((int)r.m4 >> 24);
     return tstring("Error: Invalid item");
 }
-static __forceinline res_obj* get_obj(const tstring& n) { return (res_obj*)RESMGR->get_object((const rgl::string*)&n); }
+static __forceinline res_obj* get_obj(const tstring& n) { return (res_obj*)res_manager().get_object((const rgl::string*)&n); }
 static __forceinline mesh* build_ranged(int i, ItemRef r)
 {
     mesh* result = 0;
@@ -4256,7 +4246,7 @@ static __forceinline char* skel_rec_inl(Skeleton* sk, int i)
     return sk->recs + i * 0x1dc + 0x84;
 }
 static __forceinline tstring* lk(const tstring& k) { return g_strtable.lookup(&k); }
-static __forceinline skin* get_mat(const tstring& n) { return RESOURCE_MANAGER->get_material(*(const rgl::string*)&n); }
+static __forceinline skin* get_mat(const tstring& n) { return g_resmgr.get_material(*(const rgl::string*)&n); }
 
 // @ 0x4529e0
 void Agent::drop_held()

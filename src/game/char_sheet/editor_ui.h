@@ -24,14 +24,13 @@
 using rgl::mesh;
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
-extern resmgr g_alloc;                          // 0x5d6fa0
 
 // resource lookup + clone, as the factories do it (the original inlines this twice, giving the two
 // tstring temporaries separate stack slots)
 __forceinline mesh* load_mesh(const char* name)
 {
     tstring n(name);
-    return (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&n))->clone();
+    return (mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&n))->clone();
 }
 
 // ---- language / text tables (0x5e2a18) -------------------------------------------------------------
@@ -71,7 +70,7 @@ extern FILE* g_log_file;                        // 0x5a9f90
 extern unsigned char g_log_flag94;              // 0x5a9f94
 extern unsigned char g_log_flag95;              // 0x5a9f95
 extern tstring g_path_prefix;                   // 0x8ee3c28
-extern tstring g_5d705c;                        // 0x5d705c (resmgr::cur, +0xbc of the resource manager g_alloc 0x5d6fa0)
+extern tstring g_5d705c;                        // 0x5d705c (resmgr::cur, +0xbc of the resource manager 0x5d6fa0)
 extern unsigned char g_5d706c;                  // 0x5d706c (the resource manager's +0xcc)
 extern unsigned char g_5d706d;                  // 0x5d706d (+0xcd)
 extern char g_path_prefix_chars[];              // 0x8ee3c28

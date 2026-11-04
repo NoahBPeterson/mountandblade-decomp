@@ -66,7 +66,7 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
     mesh* m;
     {
         tstring hl("left_arrow_hl");
-        m = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&hl))->clone();
+        m = (mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&hl))->clone();
     }
     m->scale(x / z);
     ((Widget*)b)->set_track(3, m);
@@ -86,7 +86,7 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
     mesh* m;
     {
         tstring hl("right_arrow_hl");
-        m = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&hl))->clone();
+        m = (mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&hl))->clone();
     }
     m->scale(x / z);
     ((Widget*)b)->set_track(3, m);
@@ -266,23 +266,23 @@ int __cdecl engine_init()
     g_5d706d = b;
     {
         tstring n("core_shaders");
-        g_alloc.load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack((const rgl::string&)n, 0);
     }
     {
         tstring n("core_textures");
-        g_alloc.load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack((const rgl::string&)n, 0);
     }
     {
         tstring n("core_materials");
-        g_alloc.load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack((const rgl::string&)n, 0);
     }
     {
         tstring n("core_ui_meshes");
-        g_alloc.load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack((const rgl::string&)n, 0);
     }
     {
         tstring n("core_pictures");
-        g_alloc.load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack((const rgl::string&)n, 0);
     }
     g_strtable.load(&g_module_path);
     {
