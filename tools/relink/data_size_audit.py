@@ -36,6 +36,7 @@ sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+AUDIT_CACHE = os.environ.get("MB_AUDIT_CACHE") or os.path.join(ROOT, "work", "relink", "dataaudit_cache")
 LO, HI = 0x549000, 0x8ee5b94          # the original's .rdata through .bss
 GENERATED = ("??_C@", "__real@", "__int64@", "__xmm@", "__mask@", "??_7", "??_R", "$SG", "??_8", "??_9")
 # `extern T name[N]...; // 0xADDR`, `T name[N] = ...; // 0xADDR`, `static T Cls::name[N] = // 0xADDR`
@@ -112,24 +113,53 @@ def decls(path):
     return out
 
 
+def _tlog(kind, secs):
+    """MB_TIMING_LOG=file: append one 'kind seconds' line per probe step (workers are separate processes)."""
+    f = os.environ.get("MB_TIMING_LOG")
+    if f:
+        with open(f, "a") as fh:
+            fh.write("%s %.3f\n" % (kind, secs))
+
+
+def _store(cache, rows):
+    os.makedirs(os.path.dirname(cache), exist_ok=True)
+    part = "%s.%d.part" % (cache, os.getpid())
+    json.dump(rows, open(part, "w"))
+    os.replace(part, cache)
+
+
 def probe_one(job):
     """Compile src with one size probe per declaration appended -> [(name, addr, file, line, size)]."""
+    import time
+    t_start = time.time()
     src, flags, entries = job
     os.chdir(ROOT)
     import slice as S
     if not entries:
         return []
     flags = S.resolve_include_flags(flags)
-    # the probe's result depends only on what the compile of src sees plus the probed names: cache it under the same
-    # key compile_obj names objects by (an unchanged source costs no compiler run on the next build)
+    t0 = time.time()
+    # The probe's result depends only on what the compiler sees of src plus the probed names. Two cache levels, as for
+    # objects (slice.compile_obj): the coarse compile_key (work/relink/dataaudit_cache, shared with older tools), then
+    # the preprocessed-text key (dataaudit_cache_pp: a header edit that leaves src's preprocessed text alone costs
+    # no compiler run). Results go to both.
     import hashlib
-    key = hashlib.md5((S.compile_key(src, flags) + repr(entries)).encode()).hexdigest()
-    cache = os.path.join(ROOT, "work", "relink", "dataaudit_cache", key + ".json")
-    if os.path.exists(cache):
-        try:
-            return [tuple(e) for e in json.load(open(cache))]
-        except (OSError, ValueError):
-            pass
+    coarse = S.compile_key(src, flags)
+    caches = [os.path.join(AUDIT_CACHE, hashlib.md5((coarse + repr(entries)).encode()).hexdigest() + ".json")]
+    _tlog("key", time.time() - t0)
+    ppk = S.pp_key(src, flags, coarse)
+    if ppk:
+        caches.append(os.path.join(AUDIT_CACHE + "_pp", hashlib.md5(("pp1" + ppk + repr(entries)).encode()).hexdigest() + ".json"))
+    for n, cache in enumerate(caches):
+        if os.path.exists(cache):
+            try:
+                got = [tuple(e) for e in json.load(open(cache))]
+            except (OSError, ValueError):
+                continue
+            _tlog("hit" if n == 0 else "pphit", time.time() - t_start)
+            if n == 0 and ppk and not os.path.exists(caches[1]):      # a coarse-key result is also the result for this text: file it there
+                _store(caches[1], got)
+            return got
     tmp = os.path.join(os.path.dirname(src), "_dataaudit_%s" % os.path.basename(src))
     base = open(src, errors="replace").read()
     if not base.endswith("\n"):
@@ -138,7 +168,9 @@ def probe_one(job):
     probes = ["/* probes */"] + ["char (*da_%d_)[sizeof(%s) + 1] = 1;" % (k, e[0]) for k, e in enumerate(entries)]
     try:
         open(tmp, "w").write(base + "\n".join(probes) + "\n")
+        t0 = time.time()
         r = subprocess.run([S.CL, "/nologo", "/c", "/Zs", *flags, S.INCLUDE, S.winpath(tmp)], capture_output=True, text=True)
+        _tlog("cl", time.time() - t0)
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
@@ -149,10 +181,8 @@ def probe_one(job):
             name, addr, f, line = entries[k]
             out.append((name, addr, f, line, int(m[2]) - 1))
     if out:     # an empty answer to a non-empty probe list means the compile itself failed: measure again next time
-        os.makedirs(os.path.dirname(cache), exist_ok=True)
-        part = "%s.%d.part" % (cache, os.getpid())
-        json.dump(out, open(part, "w"))
-        os.replace(part, cache)
+        for cache in caches:
+            _store(cache, out)
     return out
 
 
@@ -208,13 +238,18 @@ STATE = {}
 
 def audit(rmap_path, jobs_n, suspects=True):
     """-> (undersized, suspect) lists of dicts."""
+    import time
     import trial_link as T
+    t0 = time.time()
     objs, fails = T.objects()
     if fails:
         sys.exit("data size audit: %d sources did not compile: %s" % (len(fails), ", ".join(fails[:6])))
     ours = our_sizes(objs)
     rmap = json.load(open(rmap_path))
+    STATE["t_objs"] = time.time() - t0
+    t0 = time.time()
     claims, ann_labels = claimed_sizes(jobs_n)
+    STATE["t_probes"] = time.time() - t0
     defined = collections.defaultdict(list)          # va -> [mangled names we define there]
     labelled = set(ann_labels)
     for n, d in rmap["names"].items():
@@ -326,7 +361,12 @@ def split_known(over):
 
 def gate(rmap_path, map_path, jobs_n=None):
     """build.py's gate -> (undersized, duplicates, number of definitions checked, overlaps)."""
+    import time
+    t0 = time.time()
     under, _s = audit(rmap_path, jobs_n or int(os.environ.get("MB_JOBS") or max(1, (os.cpu_count() or 2) - 2)), suspects=False)
+    if os.environ.get("MB_TIMING"):
+        print("TIMING data_size_audit.audit: wall %.1fs (of which objects %.1fs, probes %.1fs)" % (
+            time.time() - t0, STATE.get("t_objs", 0), STATE.get("t_probes", 0)), file=sys.stderr)
     return under, duplicates(rmap_path, map_path), STATS.get("defined", 0), split_known(overlaps())[0]
 
 

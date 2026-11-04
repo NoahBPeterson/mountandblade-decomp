@@ -41,10 +41,10 @@ def objects():
     import compile_all as C
     objs, fails = [], []
     extra = os.environ.get("MB_EXTRA_CFLAGS", "").split()      # build.py --cflags: a variant build (never the faithful one)
-    for src, flags in C.sources():
-        if os.sep + "src" + os.sep not in src:
-            continue
-        o, _log = S.compile_obj(src, list(flags) + extra)
+    todo = [(src, list(flags) + extra) for src, flags in C.sources() if os.sep + "src" + os.sep in src]
+    S.ensure_objs(todo, jobs=int(os.environ.get("MB_JOBS") or 0) or None)       # misses: preprocess-keyed, batched compiles
+    for src, flags in todo:
+        o, _log = S.compile_obj(src, flags)
         (objs if o else fails).append(o or os.path.relpath(src, ROOT))
     return objs, fails
 
