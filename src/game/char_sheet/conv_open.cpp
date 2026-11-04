@@ -14,9 +14,7 @@ void Rec1208::init_screen()
 {
     ((gui_manager*)g_gui)->reset();   // 0x42d1b0 (g_gui is the gui_manager)
 
-    NodeA* panel = (NodeA*)new_container(0x190, vtbl_592848);
-    if (panel)
-        panel->f188 = 0;
+    NodeA* panel = new NodeA(0);
     talk = panel;
     {
         float pos[2] = { 0.0f, 0.0f };
@@ -36,7 +34,7 @@ void Rec1208::init_screen()
 
     float sentence_y_a = config_float("conv_sentence_y_a");
 
-    text_box* bar = (text_box*)new_container(0x188, vtbl_597050);
+    text_box* bar = new text_box;
     bar_reln = bar;
     {
         tstring name("conv_bo_board");
@@ -65,7 +63,7 @@ void Rec1208::init_screen()
     float min_y = config_float("conv_choices_min_y");
     sentence_y_a = (scaled > min_y) ? scaled : min_y;
 
-    Choices* ch = (Choices*)new_container(0x188, 0);   // 0x4931a0 (vtable 0x5924a0, the three ints cleared)
+    ContainerBase* ch = new ContainerBase;
     choice = ch;
     {
         tstring name("conv_bo_choices");
@@ -98,7 +96,7 @@ void Rec1208::init_screen()
     talk->add_child(input);
 
     // the message window (+0x11e0): a text_box at 0.03/0.3, 0.25/0.21, mesh "message_window"
-    text_box* msg = (text_box*)new_container(0x188, vtbl_597050);
+    text_box* msg = new text_box;
     msg_window = msg;
     {
         float pos[2] = { 0.03f, 0.3f };

@@ -26,9 +26,7 @@ void FaceGen::init_screen()
     int keys = g_anim.skins[skin].n_elems - 1;
     ((gui_manager*)(void*)&g_msglog)->reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
-    NodeA* o = (NodeA*)new_container(0x190, vtbl_592848);
-    if (o != 0)
-        o->f188 = 0;
+    NodeA* o = new NodeA(0);
     ui = o;
     float f2[2];
     f2[0] = 0.0f;
@@ -51,7 +49,7 @@ void FaceGen::init_screen()
     float deform_k = config_float("face_deform_key_h");
     float ab[2];
     {
-        ContainerBase* d = (ContainerBase*)new_container(0x188, vtbl_597050);
+        text_box* d = new text_box;
         deform = d;
         label_refresh((MissionUi*)d, tstring("face_bo_deform"));
         ab[0] = d->screen[0];
@@ -59,7 +57,7 @@ void FaceGen::init_screen()
         d->set_xy(ab);
     }
     {
-        ContainerBase* b = (ContainerBase*)new_container(0x188, vtbl_597050);
+        text_box* b = new text_box;
         buttons = b;
         label_refresh((MissionUi*)b, tstring("face_bo_button"));
         push_item(ui, (MissionUi*)b);

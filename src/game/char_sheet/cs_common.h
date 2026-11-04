@@ -37,35 +37,16 @@ struct world {                                                      // the scene
 };
 }
 
-// ---- widgets: the constructors that the char_sheet views (MissionUi / NodeA / text_box) stand for -------------------
-// ui_widget.h's MissionUi() and container.h's NodeA() are declarations of the constructors that the definitions name MissionUi::MissionUi
-// (0x48ae20) and ContainerW::construct (0x4931a0, which stores the container vptr 0x5924a0, clears +0x17c..+0x184 and returns this). An
-// object is built as the original does: operator new, that constructor in place, then the final vptr when the kind has its own
-// (NodeA 0x592848, text_box 0x597050).
+// ---- widgets: MissionUi's constructor (0x48ae20) in place; the container kinds are ui/container.h's classes (`new NodeA`, `new text_box`) ----
 #include "../../include/image_addrs.h"
 #include <new>
 #include "../world_data/raw_place.h"
 namespace rgl { struct mesh; }                                     // (the set_track pointer argument; ui/mission_ui.h has the full class)
-struct ContainerW {                                                 // world_data/world_data.h
-    void* construct();                                              // 0x4931a0
-};
-extern char vtbl_597050[];                                          // 0x597050 (text_box, FaceBoard)
-extern char vtbl_592848[];                                          // 0x592848 (NodeA; the caller also clears the byte at +0x188)
 static __forceinline void* new_widget_base(unsigned size)
 {
     void* p = ::operator new(size);
     if (p)
         new (p, raw_place()) MissionUi;
-    return p;
-}
-static __forceinline void* new_container(unsigned size, void* vtbl)
-{
-    void* p = ::operator new(size);
-    if (p) {
-        ((ContainerW*)p)->construct();
-        if (vtbl)
-            *(void**)p = vtbl;
-    }
     return p;
 }
 int __cdecl clamp_index(const int* a, const int* b, const int* c); // 0x432510 (game_util)

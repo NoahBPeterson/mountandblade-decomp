@@ -63,9 +63,7 @@ void TerrainPage::init_screen()
 
     ((gui_manager*)(void*)g_gui)->reset();   // 0x42d1b0
 
-    NodeA* w = (NodeA*)new_container(0x190, vtbl_592848);
-    if (w)
-        w->f188 = 0;
+    NodeA* w = new NodeA(0);
     board = w;
     { tvec2 p = { 0.0f, 0.0f }; board->move_a((const float*)&p); }
     { tvec2 s = { 1.0f, 0.75f }; board->set_xy((const float*)&s); }
@@ -75,7 +73,7 @@ void TerrainPage::init_screen()
         ((NodeVec*)(void*)g_gui)->push_back((NodeA* const&)root);   // 0x49b120
     }
 
-    panel = (text_box*)new_container(0x188, vtbl_597050);
+    panel = new text_box;
     { tvec2 p = { 0.5f, 0.0f }; panel->move_a((const float*)&p); }
     { tvec2 s = { 0.5f, 0.75f }; panel->set_xy((const float*)&s); }
     {

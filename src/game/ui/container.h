@@ -36,6 +36,7 @@ struct NodeA : ContainerBase {
     char f188;                                  // +0x188 (1: a click on the container itself closes it)
     char pad189[0x190 - 0x189];
     NodeA() { f188 = 1; }
+    explicit NodeA(char closes) { f188 = closes; }   // the sites that clear the byte
     ~NodeA() {}
     virtual char key(unsigned mask);            // +0x8c 0x42d170
 };

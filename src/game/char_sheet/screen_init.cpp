@@ -48,9 +48,7 @@ void CampaignScreen::init_screen()
     f2d4 = 0;
     f2d5 = 0;
 
-    NodeA* bar = (NodeA*)new_container(0x190, vtbl_592848);   // 0x4931a0, then vptr 0x592848
-    if (bar != 0)
-        bar->f188 = 0;
+    NodeA* bar = new NodeA(0);
     overlay = bar;
     vector2 p0;
     p0.x = 0.0f;
@@ -63,7 +61,7 @@ void CampaignScreen::init_screen()
     g_gui_dirty = 1;
     ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)overlay);   // 0x49b120
 
-    text_box* buttons = (text_box*)new_container(0x188, vtbl_597050);   // 0x4931a0, then vptr 0x597050
+    text_box* buttons = new text_box;
     f34 = (MissionUi*)buttons;
     p0.x = 0.0f;
     p0.y = 0.0f;

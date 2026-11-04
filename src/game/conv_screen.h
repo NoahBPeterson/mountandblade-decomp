@@ -14,11 +14,6 @@
 #include "./map_widget.h"
 #include "../rgl/mesh_x.h"                       // mesh_x: clone 0x41c6d0, set_color 0x47af30
 
-struct Choices : MissionUi {                             // vtable 0x5924a0, ctor 0x48ae20, 0x188 bytes
-    int f178;                                            // +0x178 (the allocator slot of the vec that the shared constructor 0x4931a0 leaves in front of the three zeroed words)
-    int f17c, f180, f184;                                // +0x17c/+0x180/+0x184
-};
-
 struct Rec1208 : head_rec {                              // vtable 0x595bfc, size 0x1208: slot 2 is the opener 0x4f66e0 (char_sheet/conv_open.cpp), slot 3 the event handler 0x525160 (mission5/mission_5.cpp)
     NodeA* talk;                                       // +0x2c
     MapWidget* window;                                   // +0x30
@@ -30,7 +25,7 @@ struct Rec1208 : head_rec {                              // vtable 0x595bfc, siz
     text_box* bar_reln;                                   // +0x180
     char pad184[0x188 - 0x184];
     MissionUi* question;                                    // +0x188
-    Choices* choice;                                     // +0x18c
+    ContainerBase* choice;                                     // +0x18c
     MissionUi* buttons[0x400];                              // +0x190
     int n_lines;                                         // +0x1190
     rgl::matrix world;                                   // +0x1194 (camera world transform, 0x40)
