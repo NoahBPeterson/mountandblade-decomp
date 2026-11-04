@@ -217,10 +217,6 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
         if e["slots"] != n_true:
             report.setdefault("shape", {})[vt] = "ours %d slots, original %d" % (e["slots"], n_true)
         for k in range(limit):
-            if k >= n_true and exe.u32(ours + 4 * k) == 0:
-                # alignment padding after our table, past the original's own end (not a slot): listed, never patched
-                report.setdefault("padding_slots", []).append([vt, k, "%08x" % img.u32(ova + 4 * k), n_true, e["slots"]])
-                break
             t = img.u32(ova + 4 * k)
             if t not in img.start_set:
                 continue
