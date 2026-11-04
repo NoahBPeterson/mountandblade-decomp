@@ -4,4 +4,3 @@
 005021f0 UiFrame::~UiFrame  # vptr 0x5924a0, free the vector at +0x178 (0x41f4b0), base dtor 0x487c00, scalar deleting dtor (ret 4)
 00502230 make_inventory_menu  # the inventory slot: 0x178-byte UiText2 (0x48ae20) with vptr 0x599d28, set_scale(0.088,0.088) via slot +0x64, add_image(0, clone of "inv_i_slot") via slot +0xc4
 005022c0 PartySlot::key  # mask 0x10 -> set_key_flags(0x10000), then set_key_flags(mask) and refresh (+0x90)
-0041f4b0 ?_Tidy@?$vector@PAUMissionUi@@V?$allocator@PAUMissionUi@@@std@@@std@@IAEXXZ  # std::vector<T*>::_Tidy (the shared out-of-line instance; PartyPanel / text_box deleting destructor 0x5021f0 calls it)

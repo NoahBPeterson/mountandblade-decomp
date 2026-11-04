@@ -1,4 +1,3 @@
-../src/game/party/party_window.cpp  ??_GPartyPanel@@UAEPAXI@Z  005021f0  /O2 /MT /Gy /TP
 ../src/game/party/party_window.cpp  ?key@PartyPanel@@UAEDI@Z  005021b0  /O2 /MT /Gy /TP
 ../src/game/party/party_window.cpp  ?make_slot@PartyWindow@@QAEPAUMissionUi@@PAUItemRef@@@Z  00502230  /O2 /MT /Gy /TP
 ../src/game/party/party_window.cpp  ?key@PartySlot@@UAEDI@Z  005022c0  /O2 /MT /Gy /TP
