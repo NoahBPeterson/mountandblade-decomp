@@ -1083,5 +1083,36 @@
    "reached through tables": 44390,
    "library data": 55770
   }
+ },
+ "2026-11-04T00:01:41-06:00": {
+  "data_labels": 146,
+  "aliases": 228,
+  "source_aliases": 69,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 14,
+  "placeholder_virtuals": 2,
+  "forwarding_stubs": 15,
+  "data_definitions": 183,
+  "when": "2026-11-04T00:01:41-06:00",
+  "commit": "0b494532",
+  "build": "merge_tp",
+  "label": "MissionCtx, TerrainPage",
+  "items": {
+   "defined in source": 195,
+   "generated from source": 2059,
+   "borrowed from image": 80,
+   "reached through tables": 69,
+   "library data": 501
+  },
+  "bytes": {
+   "defined in source": 143682918,
+   "generated from source": 309248,
+   "borrowed from image": 8872,
+   "reached through tables": 42590,
+   "library data": 55770
+  }
  }
 }
