@@ -7,7 +7,7 @@
 004fb8e0	380	rgl::mesh::set_offset: complete (384 vs 343 bytes). Vertex loop is not unrolled the way the original is.
 004fba40	960	make_item_mesh: complete (1190 vs 1194 bytes). Item mesh builder with the inlined tstring temporaries; scheduling differs.
 004fbef0	98	rgl::mesh::darken_vertices: complete (165 vs 167 bytes). Register allocation (this in ESI instead of EDI). [equiv: 242/242 valid inputs bit-identical]
-004fbfa0	1320	GameScreen::build: complete (2158 vs 2146 bytes). The slice constants were wrong (add_image slots +0x80 / +0x7c); widget construction order and temporaries scheduled differently.
+004fbfa0	1320	ItemA::init_screen: complete (2158 vs 2146 bytes). The slice constants were wrong (add_image slots +0x80 / +0x7c); widget construction order and temporaries scheduled differently.
 004fc820	1724	LogScreen::build: complete (2210 vs 2239 bytes). The seven tabs are unrolled with the shared parameter lookup inlined; schedule of the float chain differs.
 004fd150	25	MWidget::MWidget: complete (116 bytes, same size). The stores of the three vector headers are scheduled one position away from the original (the push of the 0 argument for 0x4fd490 comes before them here).
 004fd1d0	384	MWidget::key: complete (455 vs 471 bytes). The click hit-test over the tag rectangles is reproduced; the original re-tests the vector pointer at the top of every iteration, cl keeps the loop condition at the bottom. [equiv: 365/365 valid inputs bit-identical]

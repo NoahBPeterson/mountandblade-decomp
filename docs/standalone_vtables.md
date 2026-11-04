@@ -106,23 +106,18 @@ Lessons that cost time:
   step) and slot 7 are its own virtuals; InventoryPanel's methods (inventory_panel/inventory_panel.cpp, built with the GameData
   header) are its members, so there is no forwarding stub left for this record.
 * C4c3160 is PartyScreen now (game/party_screen_class.h; slot 2 `init_screen` 0x502cc0, slot 3 `frame_update` 0x531800): no stub left.
-* mission_items extents (checked with the offsets each target reads off `this`, 2026-11-04): every target fits its record, so each is a real
-  member of it and not an ICF-folded copy of another class: ItemA (0xf8 bytes) is GameScreen::build (reads to +0xf4), EventScreen::on_event
-  (+0xec), MissionUpdater::update (+0xec) and MapDialog::reset_state (+0x2c); ItemB / ItemC (0x60) SourceScreen::hook_a / hook_b (+0x58);
-  ItemD (0xb4) view_obj::reset / InputScreen::on_input (+0xb0); MissionBlocker (0x328) MissionParams::init (+0x324), MissionHud::refresh
-  (+0x2fc), Screen_s261e0::tick (+0x324). The `vtable 0x59619c / 0x5961cc / 0x5961f0 / 0x596214` the exchange_screens.h views name are
-  interior pointers of the item tables (slot 3 of 0x596190 / 0x5961c0 / 0x5961e4 / 0x596208), not tables of other classes. So the merges are
-  the same kind as PartyScreen / FaceGen: the views (ScreenBase raw screens, GameScreen / MissionHud in agent5/agent_hud.h, Screen_s261e0
-  in mission5/mission_5.h, MapDialog in four headers, SaveWinCtl / BlockOwner, MissionSource) fold into ItemA..D / MissionBlocker; the
-  ItemA..C constructors still carry _ReadWriteBarrier and need the owned_block base first.
-* mission_items: ItemA / ItemB / ItemC / ItemD / MissionBlocker. Their deleting destructor in the original is 0x4ce930, the
-  ItemRec one: ItemA..C start with the same `owned_block` at +0x30 as ItemRec (their `f34 f38 f3c` are its begin/end/cap), so
-  the item family has a shared base class (head_rec + owned_block + clock / stamp), ItemRec / ItemRec2 / ItemA..C derive from
-  it and the base's destructor is the folded one. The slot 2 / 3 targets are `GameScreen::build` / `EventScreen::on_event`
-  (ItemA), `SaveWinCtl::create` / `SourceScreen::hook_a` (ItemB: its slot 2 0x4e5d80 is a `jmp` thunk to create),
-  `create_flagged` / `hook_b` (ItemC), `view_obj::reset` / `InputScreen::on_input` (ItemD), `MissionHud::refresh` /
-  `Screen_s261e0::tick` (MissionBlocker, slot 4 `MissionParams::init` is in the TU). Their views (SourceScreen = MissionSource at
-  +0x30 + interval, ScreenBase) are the same record.
+* mission_items (2026-11-04): ItemA (0xf8), ItemB / ItemC (0x60) and ItemD (0xb4) are one head_rec class each in
+  options_panel/mission_item_recs.h with their slots 1 / 2 / 3 / 9 as their own virtuals, sizes checked by `ItemX_size_check`
+  typedefs: ItemA reset_screen = gui_edit.cpp 0x4c6e10, init_screen = agent_hud.cpp 0x4fbfa0 (the former GameScreen::build, the sixteen
+  rows / panel / lists are its members), frame_update = exchange_screens.cpp 0x533070, s_last = mission_items.cpp 0x4ceb90 (the former
+  MissionUpdater::update); ItemB init_screen 0x4e5d80 (a `jmp` to its own `create` 0x4e5d90) / frame_update 0x534180, ItemC init_screen
+  0x4e5e50 (sets the music situation, then its own `create2` 0x4e5e60) / frame_update 0x534230 (progress_bar.cpp, exchange_screens.cpp);
+  ItemD init_screen = view_open.cpp 0x50a140 (the former view_obj::reset), frame_update = exchange_screens.cpp 0x533aa0 (the former
+  InputScreen::on_input). The views GameScreen, EventScreen, MissionUpdater, MapDialog::reset_state, SaveWinCtl, SourceScreen, InputScreen
+  and view_obj are gone. ItemA..C carry `owned_block` (so their destructors release it, as the original's shared 0x4ce930 does).
+  The four constructors (0x4ceb30 / 0x4cef20 / 0x4cef80 / 0x4cee50) no longer use `_ReadWriteBarrier`: cl then orders the independent
+  stores differently (the base's `[this+8]` and the record's vptr store after the zero stores), so those rows are parked in
+  mission_items.nonmatching.txt (same store set, order only). Three MissionBlocker slots (2 / 3 / 4) were still forwarding stubs.
 * head_cam and head_obj2 are now CampaignScreen and CharSheet, each one class with its screen (game/campaign_screen.h, game/char_sheet_panel.h).
 
 ## Still open (see the audit)

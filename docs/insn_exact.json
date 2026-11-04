@@ -6358,7 +6358,7 @@
   },
   "004ceb90": {
    "verdict": "DIFF",
-   "symbol": "?update@MissionUpdater@@QAEXXZ",
+   "symbol": "?s_last@ItemA@@UAEXXZ",
    "insns": 191,
    "ours": 193,
    "unverified": 0,
@@ -7206,7 +7206,7 @@
   },
   "004e5e60": {
    "verdict": "DIFF",
-   "symbol": "?create2@SaveWinCtl@@QAEXXZ",
+   "symbol": "?create2@ItemC@@QAEXXZ",
    "insns": 70,
    "ours": 70,
    "unverified": 0,
@@ -7918,7 +7918,7 @@
   },
   "004fbfa0": {
    "verdict": "DIFF",
-   "symbol": "?build@GameScreen@@QAEXXZ",
+   "symbol": "?init_screen@ItemA@@UAEXXZ",
    "insns": 551,
    "ours": 550,
    "unverified": 0,
@@ -9740,7 +9740,7 @@
   },
   "00533070": {
    "verdict": "DIFF",
-   "symbol": "?on_event@EventScreen@@QAEXH@Z",
+   "symbol": "?frame_update@ItemA@@UAEXM@Z",
    "insns": 503,
    "ours": 495,
    "unverified": 0,
@@ -9760,7 +9760,7 @@
   },
   "00533aa0": {
    "verdict": "DIFF",
-   "symbol": "?on_input@InputScreen@@QAEXH@Z",
+   "symbol": "?frame_update@ItemD@@UAEXM@Z",
    "insns": 490,
    "ours": 491,
    "unverified": 0,

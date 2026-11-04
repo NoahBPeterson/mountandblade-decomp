@@ -20,10 +20,10 @@
 004e5570 ?make_short_button@@YAPAUUiA@@PAUMissionUi@@PBUtstring@@MMM@Z
 004e55f0 ?slot_button@C4c31c0@@QAEXPAUContainerBase@@HPAPAUWidget@@@Z
 004e5d30 ?hex_field@ini_file@@QAEHABUtstring@@@Z
-004e5d80 ?create_stub@SavePanel@@QAEXXZ
-004e5d90 ?create@SavePanel@@QAEXXZ
-004e5e50 ?create_flagged@SavePanel@@QAEXXZ
-004e5e60 ?create2@SavePanel@@QAEXXZ
+004e5d80 ?init_screen@ItemB@@UAEXXZ
+004e5d90 ?create@ItemB@@QAEXXZ
+004e5e50 ?init_screen@ItemC@@UAEXXZ
+004e5e60 ?create2@ItemC@@QAEXXZ
 004e5f50 ?_Destroy@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@IAEXPAUloading_config@@0@Z
 004e5f80 ??$fill@PAURagModel@@U1@@std@@YAXPAURagModel@@0ABU1@@Z
 004e5fc0 ??$_Uninit_fill_n@PAUloading_config@@IU1@V?$allocator@Uloading_config@@@std@@@std@@YAXPAUloading_config@@IABU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z

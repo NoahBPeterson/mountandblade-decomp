@@ -1214,7 +1214,7 @@ void rgl::mesh::darken_vertices()
 }
 
 // @ 0x4fbfa0
-void GameScreen::build()
+void ItemA::init_screen()
 {
     float v[2];
     g_gui.reset();
@@ -1236,13 +1236,13 @@ void GameScreen::build()
     for (int i = 0; i < 16; i++)
         kids[i] = 0;
 
-    frame = new_frame_widget();
+    win = (ContainerBase*)new_frame_widget();
     v[0] = -0.001f;
     v[1] = -0.001f;
-    frame->move_a(v);
+    frame()->move_a(v);
     v[0] = 1.002f;
     v[1] = 0.752f;
-    frame->set_xy(v);
+    frame()->set_xy(v);
 
     GAME_AT(int, 0xac) = -1;
 
@@ -1254,7 +1254,7 @@ void GameScreen::build()
     v[1] = 1e-05f;
     fill->set_xy(v);
     fill->hide();
-    frame->add_child(fill);
+    frame()->add_child(fill);
 
     if (ok) {
         if (((tstring*)((char*)g_game + 0x1a210))->differs("none")) {
@@ -1271,7 +1271,7 @@ void GameScreen::build()
                     tr.x = 1.0f - f; tr.y = 0.0f; tr.z = 0.0f; tr.w = 0.0f;
                     m->translate(&tr);
                 }
-                frame->set_track(2, m);
+                frame()->set_track(2, m);
             }
         }
         if (GAME_AT(int, 0x1a220) >= 0) {
@@ -1288,9 +1288,9 @@ void GameScreen::build()
 
     {
         unsigned c = 0xffffffff;
-        frame->set_color(&c);
+        frame()->set_color(&c);
     }
-    fa0 = 0;
+    count = 0;
 
     panel = new MissionUi;
     v[0] = 0.0f;
@@ -1318,7 +1318,7 @@ void GameScreen::build()
     v[0] = 0.0f;
     v[1] = 0.0f;
     flag->move_a(v);
-    frame->add_child(flag);
+    frame()->add_child(flag);
 
     tree = new Camera;
     tree->f104 |= 0x20;
@@ -1342,7 +1342,7 @@ void GameScreen::build()
     v[0] = 0.65f;
     v[1] = 0.31f;
     ((HudOuter*)tree)->scroll_refresh((vector4*)v);
-    frame->add_child(tree);
+    frame()->add_child(tree);
 
     ContainerBase* value = new ContainerBase;
     v[0] = 0.0f;
@@ -1351,7 +1351,7 @@ void GameScreen::build()
     v[0] = 0.75f;
     v[1] = 0.36f;
     value->set_xy(v);
-    UiD* track_made = make_scroll_track((ContainerBase*)frame, 0.7f, 0.02f, 0.01f, 0.36f);
+    UiD* track_made = make_scroll_track(win, 0.7f, 0.02f, 0.01f, 0.36f);
     Camera* made;
     {
         float a[2] = { 0.01f, 0.02f };
@@ -1359,7 +1359,7 @@ void GameScreen::build()
         made = make_quest_list((ContainerBase*)value, a, b, track_made);
     }
     slider = made;
-    frame->add_child(made);
+    frame()->add_child(made);
 
     MissionUi** kp = kids;
     for (int i = 16; i != 0; i--, kp++) {
@@ -1377,13 +1377,13 @@ void GameScreen::build()
 
     if (ok) {
         ((ScreenOps*)this)->begin();
-        ((BlockOwner*)((char*)this + 0x30))->init((ContainerBase*)frame, GAME_AT(int, 0xac));
+        ((BlockOwner*)((char*)this + 0x30))->init(win, GAME_AT(int, 0xac));
         if (f40 < 0)
-            frame->set_mesh(0, g_resmgr_full.get_object((const rgl::string*)&tstring("meeting_window"))->clone());
+            frame()->set_mesh(0, g_resmgr_full.get_object((const rgl::string*)&tstring("meeting_window"))->clone());
     }
     g_gui_dirty = 1;
     {
-        MissionUi* root = frame;
+        MissionUi* root = frame();
         ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
     }
 }

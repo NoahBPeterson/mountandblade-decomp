@@ -34,9 +34,6 @@ struct rec68 { int pad[0x68 / 4]; };       // E68 (stride 0x68)
 struct recb0 { int pad[0xb0 / 4]; };       // E176 (stride 0xb0)
 #include "./elem_calls.h"
 
-// A compiler fence (no code): pins the store order the original has (base id/vptr stores before the zero and
-// load/store runs) where cl 13.10 otherwise sinks them (docs/codegen.md 10.9).
-extern "C" void _ReadWriteBarrier(void);
 
 // The frustum sub-object at +0xf8 is built in the ctor body, not by a member ctor (the original calls rgl::frustum::frustum,
 // 0x41ef60, after the first group of stores): constructed on the raw bytes of the record.
@@ -58,7 +55,6 @@ extern GameData* g_game;                                    // 0x5e2930
 // @ 0x4ce960
 MissionBlocker::MissionBlocker()
 {
-    _ReadWriteBarrier();
     w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
     clock = ((int*)g_ticks)[0];
@@ -73,7 +69,6 @@ MissionBlocker::MissionBlocker()
     f_2b8 = 0;
     f_2c0 = ((int*)g_ticks)[0];
     f_2c4 = ((int*)g_ticks)[1];
-    _ReadWriteBarrier();
     f_d4 = 0;
     f_d8 = 0;
 }
@@ -174,12 +169,10 @@ void MissionParams::init()
 // @ 0x4ceb30
 ItemA::ItemA()
 {
-    _ReadWriteBarrier();
     w04 = 0;
-    f34 = 0; f38 = 0; f3c = 0; f48 = 0;
-    clock = ((int*)g_ticks)[0];
-    clock_hi = ((int*)g_ticks)[1];
-    _ReadWriteBarrier();
+    owned.begin = 0; owned.end = 0; owned.cap = 0;
+    clock = 0;
+    stamp = g_ticks[0];
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -188,12 +181,10 @@ ItemA::ItemA()
 // @ 0x4cef20
 ItemB::ItemB()
 {
-    _ReadWriteBarrier();
     w04 = 0;
-    f34 = 0; f38 = 0; f3c = 0; f48 = 0;
-    clock = ((int*)g_ticks)[0];
-    clock_hi = ((int*)g_ticks)[1];
-    _ReadWriteBarrier();
+    owned.begin = 0; owned.end = 0; owned.cap = 0;
+    clock = 0;
+    stamp = g_ticks[0];
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -202,12 +193,10 @@ ItemB::ItemB()
 // @ 0x4cef80
 ItemC::ItemC()
 {
-    _ReadWriteBarrier();
     w04 = 0;
-    f34 = 0; f38 = 0; f3c = 0; f48 = 0;
-    clock = ((int*)g_ticks)[0];
-    clock_hi = ((int*)g_ticks)[1];
-    _ReadWriteBarrier();
+    owned.begin = 0; owned.end = 0; owned.cap = 0;
+    clock = 0;
+    stamp = g_ticks[0];
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -222,32 +211,16 @@ ItemC::ItemC()
 // @ 0x4cee50 (the two owned triples are built by their member constructors, as in 0x4ceec0)
 ItemD::ItemD()
 {
-    _ReadWriteBarrier();
     blk0.p0 = 0; blk0.p1 = 0; blk0.p2 = 0;
     blk1.p0 = 0; blk1.p1 = 0; blk1.p2 = 0;
 }
 
 
-// The item records' slot overrides (tables 0x596190 / 0x5961e4 / 0x596208 / 0x5961c0): forwarding stubs to the image's functions.
-struct MapDialog { void reset_state(); };                       // 0x4c6e10
-struct GameScreen { void build(); };                            // 0x4fbfa0
-struct EventScreen { void on_event(int); };                     // 0x533070
-struct SaveWinCtl { void create(); void create_flagged(); };   // 0x4e5d90 / 0x4e5e50 (0x4e5d80 create_stub is `jmp create`)
-struct SourceScreen { void hook_a(int); void hook_b(int); };    // 0x534180 / 0x534230
-struct view_obj { void reset(); };                              // 0x50a140
-struct InputScreen { void on_input(int); };                     // 0x533aa0
-void ItemA::reset_screen() { ((MapDialog*)this)->reset_state(); }
-void ItemA::init_screen() { ((GameScreen*)this)->build(); }
-void ItemA::frame_update(float a) { ((EventScreen*)this)->on_event(*(int*)&a); }
+// The item records' slot 1 (tables 0x5961e4 / 0x596208 / 0x5961c0): reset_gui 0x4c6e00. Slots 2 / 3 are the records' own functions
+// (progress_bar.cpp, exchange_screens.cpp, view_open.cpp, agent_hud.cpp); ItemA's slot 1 is gui_edit.cpp's 0x4c6e10.
 void ItemB::reset_screen() { g_gui.reset(); }
-void ItemB::init_screen() { ((SaveWinCtl*)this)->create(); }     // the same `jmp create` as 0x4e5d80: the linker's ICF folds them
-void ItemB::frame_update(float a) { ((SourceScreen*)this)->hook_a(*(int*)&a); }
 void ItemC::reset_screen() { g_gui.reset(); }
-void ItemC::init_screen() { ((SaveWinCtl*)this)->create_flagged(); }
-void ItemC::frame_update(float a) { ((SourceScreen*)this)->hook_b(*(int*)&a); }
 void ItemD::reset_screen() { g_gui.reset(); }
-void ItemD::init_screen() { ((view_obj*)this)->reset(); }
-void ItemD::frame_update(float a) { ((InputScreen*)this)->on_input(*(int*)&a); }
 
 // ---- per-frame update of the placed objects (0x4ceb90) --------------------------------------------------
 // The updater's sixteen row widgets (+0x60), the shown count (+0xa0) and the record index per row (+0xa4) fill the menu's
@@ -276,22 +249,8 @@ struct FieldPanel {
     void relayout(const tstring* text);                         // 0x48f020 (thiscall, ret 4; mission_ui2/mission_4.cpp)
 };
 
-struct MissionUpdater {
-    char pad0[0x60];
-    MissionUi* items[0x10];                                        // +0x60
-    int count;                                                  // +0xa0
-    int ids[0x10];                                              // +0xa4
-    char pade4[0x4];
-    FieldPanel* scene;                                          // +0xe8 (0x4cec0d)
-    Camera* group;                                        // +0xec (0x4cee0c)
-    void update();                                              // 0x4ceb90
-};
-
-// ItemA slot 9: the record IS the updater's `this` (0x4ceb90); declared before the definition so it stays a `jmp`.
-void ItemA::s_last() { ((MissionUpdater*)this)->update(); }
-
 // @ 0x4ceb90
-void MissionUpdater::update()
+void ItemA::s_last()
 {
     int i = *(int*)((char*)g_game + 0x13aec);
     menu_rec* g = (menu_rec*)(i * 0x60 + (int)g_menus);
@@ -300,10 +259,10 @@ void MissionUpdater::update()
         t = (tstring*)g;
     tstring& title = *(tstring*)((char*)g_game + 0xb8);                // the game's current menu title (assign 0x42bc50)
     title = g_script.expand(*t);
-    { tstring stripped = title.strip_tags(); scene->relayout(&stripped); }
+    { tstring stripped = title.strip_tags(); ((FieldPanel*)tree)->relayout(&stripped); }
     for (int k = 0; k < 16; k++) {
-        items[k]->hide();
-        items[k]->flag2_clear();
+        kids[k]->hide();
+        kids[k]->flag2_clear();
     }
     for (int idx = 0; idx < g->count; idx++) {
         if (count >= 0x10)
@@ -315,11 +274,11 @@ void MissionUpdater::update()
             if (nm == 0)
                 nm = (tstring*)r;
             int ret[2];                                         // the 8-byte result slot set_text fills (never read)
-            items[count]->set_text((float*)ret, &(g_script.expand(*nm).strip_tags()));
+            kids[count]->set_text((float*)ret, &(g_script.expand(*nm).strip_tags()));
             if ((g->flags & 0x10) == 0)
-                items[count]->show();
+                kids[count]->show();
             if (*(char*)((char*)g_game + 0x14054))                 // menu_option_disabled (script_interpreter.h +0x14054)
-                items[count]->flag2_set();
+                kids[count]->flag2_set();
             ids[count] = idx;
             count++;
         }
@@ -329,9 +288,9 @@ void MissionUpdater::update()
         f = 0.24f;
     for (int k = 0; k < count; k++) {
         float pos[2];
-        pos[0] = 0.325f - ((MissionUi*)items[k])->screen[0] * 0.5f;    // 0x5961b8, 0x549d70
+        pos[0] = 0.325f - kids[k]->screen[0] * 0.5f;    // 0x5961b8, 0x549d70
         pos[1] = f - (float)(k + 1) * 0.04f;
-        items[k]->move_a((float*)pos);
+        kids[k]->move_a((float*)pos);
     }
     float h = (float)count * 0.04f;
     if (!(h > 0.24f))
@@ -339,8 +298,8 @@ void MissionUpdater::update()
     float sc[2];
     sc[0] = 0.75f;
     sc[1] = h;
-    group->target->set_xy(sc);
-    group->draw();
+    slider->target->set_xy(sc);
+    slider->draw();
 }
 
 // ---- the array walkers (0x4cf070 / 0x4cf0a0 / 0x4cf0d0) --------------------------------------------------

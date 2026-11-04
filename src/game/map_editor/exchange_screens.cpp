@@ -705,7 +705,7 @@ static __forceinline void clear_anim(TickScreen* s)
 
 
 // @ 0x533070
-void EventScreen::on_event(int code)
+void ItemA::frame_update(float)
 {
     int slot = (int)this;
     ((MissionSource*)((char*)this + 0x30))->pick(&slot);
@@ -990,7 +990,7 @@ void ChoiceList::get3(int* a, int* b, int* c)
 
 
 // @ 0x533aa0
-void InputScreen::on_input(int code)
+void ItemD::frame_update(float)
 {
     if (g_mission_clock != 0) {
         if (g_gui.mouse[0] < 0.7f
@@ -1131,11 +1131,11 @@ int** VecIter::advance(int** out, int n)
 }
 
 // @ 0x534180
-void SourceScreen::hook_a(int arg)
+void ItemB::frame_update(float arg)
 {
-    src.pick(&arg);
-    if ((float)(g_ticks[src.slot] - *(__int64*)&src.tick_lo) * 1e-5f > interval) {
-        int id = f18;
+    src().pick((int*)&arg);
+    if ((float)(g_ticks[src().slot] - *(__int64*)&src().tick_lo) * 1e-5f > f58) {
+        int id = w18;
         if (id == 100) {
             g_map_flags.commit((char*)&arg);
             return;
@@ -1150,11 +1150,11 @@ void SourceScreen::hook_a(int arg)
 }
 
 // @ 0x534230
-void SourceScreen::hook_b(int arg)
+void ItemC::frame_update(float arg)
 {
-    src.pick(&arg);
-    if ((float)(g_ticks[src.slot] - *(__int64*)&src.tick_lo) * 1e-5f > interval) {
-        int id = f18;
+    src().pick((int*)&arg);
+    if ((float)(g_ticks[src().slot] - *(__int64*)&src().tick_lo) * 1e-5f > f58) {
+        int id = w18;
         if (id == 100) {
             g_map_flags.commit((char*)&arg);
             return;

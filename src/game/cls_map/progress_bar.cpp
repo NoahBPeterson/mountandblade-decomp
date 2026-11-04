@@ -722,13 +722,13 @@ __declspec(noinline) int ini_file::hex_field(const tstring& key)
 int g_menu_kind_sel;                                        // 0xa75f3c (the menu kind create2 builds; g_menu_kind_count is 0xa75f38)
 
 // @ 0x4e5d80 (a jump to 0x4e5d90; not reproducible from source, see the partial list)
-void SaveWinCtl::create_stub()
+void ItemB::init_screen()
 {
     create();
 }
 
 // @ 0x4e5d90
-void SaveWinCtl::create()
+void ItemB::create()
 {
     g_gui.reset();
     NEW_OVERLAY_WINDOW(w)
@@ -740,21 +740,21 @@ void SaveWinCtl::create()
     u.v[0] = 1.002f;
     u.v[1] = 0.752f;
     vt(win)->d25(u.v);
-    block.init(win, *(int*)((char*)g_game + 0x13b04));
+    block().init(win, *(int*)((char*)g_game + 0x13b04));
     u.root = win;
     g_gui_dirty = 1;
     ADD_ROOT_REF(u.root);
 }
 
 // @ 0x4e5e50
-void SaveWinCtl::create_flagged()
+void ItemC::init_screen()
 {
     g_music.situation = 0x400000;
     create2();
 }
 
 // @ 0x4e5e60
-void SaveWinCtl::create2()
+void ItemC::create2()
 {
     g_gui.reset();
     NEW_OVERLAY_WINDOW(w)
@@ -766,8 +766,8 @@ void SaveWinCtl::create2()
     v[0] = 1.002f;
     v[1] = 0.752f;
     vt(win)->d25(v);
-    block.init(win, g_menu_kind_sel);
-    if (block.index < 0) {
+    block().init(win, g_menu_kind_sel);
+    if (block().index < 0) {
         tstring n("load_window");
         vt(win)->d31(0, res_get(n)->clone());
     }

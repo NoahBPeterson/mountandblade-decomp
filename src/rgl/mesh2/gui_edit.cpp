@@ -9,6 +9,7 @@
 #include "../../game/trial_mode.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./gui_edit.h"
+#include "../../game/options_panel/mission_item_recs.h"   // ItemA::reset_screen (0x4c6e10)
 #include "../../game/terrain_a/terrain.h"   // Terrain::conv_build_scene (0x4c8630)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
@@ -1005,11 +1006,11 @@ void reset_gui()
     g_gui.reset();
 }
 
-// @ 0x4c6e10
-void MapDialog::reset_state()
+// @ 0x4c6e10 (slot 1 of the game menu record ItemA: drop the window)
+void ItemA::reset_screen()
 {
     g_gui.reset();
-    f2c = 0;
+    win = 0;
 }
 
 // @ 0x4c6e30

@@ -388,9 +388,7 @@ struct MapDialog {
     ListObj** list_start;                               // +0x18
     ListObj** list_end;                                 // +0x1c
     ListObj** list_cap;                                 // +0x20
-    char pad24[0x2c - 0x24];                            // +0x24
-    int f2c;                                            // +0x2c (reset by reset_state)
-    char pad30[0xf4 - 0x30];                            // +0x30
+    char pad24[0xf4 - 0x24];                            // +0x24
     SelList* list;                                      // +0xf4
     char padf8[0x380 - 0xf8];                           // +0xf8
     HWND hwnd;                                          // +0x380
@@ -399,7 +397,6 @@ struct MapDialog {
     char pad5a0[0x668c - 0x5a0];                        // +0x5a0
     MapRecord* records;                                 // +0x668c (the map's record array)
 
-    void reset_state();                                 // 0x4c6e10
     void clear_objects();                               // 0x4c6e30
     void set_object_target(int n);                      // 0x4c6dc0
     MapRecord* insert_a(MapRecord* arr, int index, int z);       // 0x4c6eb0

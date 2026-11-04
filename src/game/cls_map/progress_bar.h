@@ -40,16 +40,7 @@ struct RagModel {
 void label_refresh(MissionUi* w, tstring key);  // 0x4e4c70 (cdecl, the prefix by value)
 __declspec(noinline) UiA* make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570
 
-// the panel that wraps a menu block (like MainMenu / EscapeMenu): 0x4e5d80 .. 0x4e5f50
-struct SaveWinCtl {
-    char pad0[0x2c];
-    ContainerBase* win;                         // +0x2c
-    BlockOwner block;                           // +0x30
-    void create_stub();                         // 0x4e5d80 (a jump to create)
-    void create();                              // 0x4e5d90
-    void create_flagged();                      // 0x4e5e50 (sets the window flag word, then create2)
-    void create2();                             // 0x4e5e60
-};
+#include "../options_panel/mission_item_recs.h"   // ItemB / ItemC: the panels that wrap a menu block (create 0x4e5d90, create2 0x4e5e60)
 
 // ---- 0x4e65e0..0x4e7a70: the shape that owns the point / face / segment records and builds render meshes from them ---------------------------
 // (a map polygon set: the three builders take the mesh to fill as their argument; names provisional, every offset is read off the disassembly)

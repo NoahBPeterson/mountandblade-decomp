@@ -1,6 +1,6 @@
 // Slice s00509980: the character-sheet window's 3D portrait view.
 //   0x509980  char_window::open_view  - build the portrait world (3D view) or the flat shadow fallback
-//   0x50a140  view_obj::reset         - clear the selection, drop the buffers, rebuild the view
+//   0x50a140  ItemD::init_screen       - clear the selection, drop the buffers, rebuild the view
 // The widget slots, tstring / rgl::frustum / face-body / world / wind layouts and the callee conventions
 // follow the verified neighbours s004f49d0 (the same 0x358 face body, 0x344 world and 0x7c wind trio),
 // s004f8c80 (frustum) and s00502300 (widget vtables).  Names are provisional; every offset comes from
@@ -247,38 +247,24 @@ void char_window::open_view()
 struct note_window {
     void build(int a, int b);   // 0x50a1c0 (inventory_panel/note_window.cpp): the same object
 };
-struct view_obj {
-    char pad0[0x7c];
-    int*  p7c;                                              // +0x7c (heap buffer)
-    int   f80;                                              // +0x80
-    int   f84;                                              // +0x84
-    char  pad88[0x8c - 0x88];
-    int*  p8c;                                              // +0x8c (heap buffer)
-    int   f90;                                              // +0x90
-    int   f94;                                              // +0x94
-    char  pad98[0xa8 - 0x98];
-    int   fa8;                                              // +0xa8
-    int   fac;                                              // +0xac
-    float fb0;                                              // +0xb0
-    void  reset();                                          // 0x50a140
-};
+#include "../options_panel/mission_item_recs.h"          // ItemD: the screen record 0x4d0620 allocates (0xb4 bytes)
 
-static void clear_buffer(int*& data, int& a, int& b)
+static void clear_buffer(owned_triple& t)
 {
-    if (data != 0)
-        delete data;
-    data = 0;
-    a = 0;
-    b = 0;
+    if (t.p0 != 0)
+        operator delete(t.p0);
+    t.p0 = 0;
+    t.p1 = 0;
+    t.p2 = 0;
 }
 
 // @ 0x50a140 -----------------------------------------------------------------------------------------------
-void view_obj::reset()
+void ItemD::init_screen()
 {
     fa8 = -1;
     fac = -1;
     fb0 = -1.0f;
-    clear_buffer(p7c, f80, f84);
-    clear_buffer(p8c, f90, f94);
+    clear_buffer(blk0);
+    clear_buffer(blk1);
     ((note_window*)this)->build(g_game->f13b08, g_game->f13b0c);
 }

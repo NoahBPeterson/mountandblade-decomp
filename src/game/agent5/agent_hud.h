@@ -275,22 +275,8 @@ struct ScreenOps {                                                // the screen 
     virtual void v18(); virtual void v1c(); virtual void v20();
     virtual void begin();                                         // +0x24
 };
-struct GameScreen {                                               // the game menu window (built by 0x4fbfa0)
-    char pad0[0x2c];
-    NodeA* frame;                                           // +0x2c
-    char pad30[0x40 - 0x30];                                      // +0x30 the MenuLayout part
-    int f40;                                                      // +0x40
-    char pad44[0x60 - 0x44];
-    MissionUi* kids[16];                                          // +0x60 the sixteen option buttons
-    int fa0;                                                      // +0xa0
-    char pada4[0xe4 - 0xa4];
-    MissionUi* panel;                                             // +0xe4
-    Camera* tree;                                             // +0xe8
-    MissionUi* slider;                                            // +0xec
-    char padf0[4];
-    MissionUi* fill;                                              // +0xf4
-    void build();                                                 // 0x4fbfa0
-};
+// (the game menu window is the record ItemA of options_panel/mission_item_recs.h: its slot 2 is build 0x4fbfa0)
+#include "../options_panel/mission_item_recs.h"
 
 // ---- the game-log text widget and the map-text row renderer ------------------------------------------------------------------
 extern Font* g_font;                                              // 0x5e2934

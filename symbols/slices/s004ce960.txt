@@ -1,9 +1,9 @@
 004ce960 ??0MissionBlocker@@QAE@XZ  # ctor of the 0x2c8-byte mission blocker (vtable 0x59616c; owns a 0xd4 frustum at +0xf8)
 004cea10 ?init@MissionParams@@QAEXH@Z  # initialiser of the 0x328-byte mission parameter block (thiscall, one int arg)
 004ceb30 ??0ItemA@@QAE@XZ  # ctor of the 0x60-byte item record, vtable 0x596190
-004ceb90 ?update@MissionUpdater@@QAEXXZ  # per-frame update of the placed mission objects (16-slot table, snd_channel scheduling)
-004cee50 ??0ItemD@@QAE@XZ  # ctor of the 0x9c-byte item record with two owned pointer triples, vtable 0x5961c0
-004ceea0 ??_GItemD_vt@@UAEPAXI@Z  # deleting dtor of the 0x9c-byte record above (ret 4; frees when the flag bit is set)
+004ceb90 ?s_last@ItemA@@UAEXXZ  # per-frame update of the placed mission objects (16-slot table, snd_channel scheduling)
+004cee50 ??0ItemD@@QAE@XZ  # ctor of the 0xb4-byte item record (vtable 0x5961c0) with two owned pointer triples, vtable 0x5961c0
+004ceea0 ??_GItemD_vt@@UAEPAXI@Z  # deleting dtor of the 0xb4-byte record above (ret 4; frees when the flag bit is set)
 004ceec0 ??1ItemD_vt@@UAE@XZ  # releasing dtor of that record (frees both owned blocks, then the tstring)
 004cef20 ??0ItemB@@QAE@XZ  # ctor of the 0x60-byte item record, vtable 0x5961e4
 004cef80 ??0ItemC@@QAE@XZ  # ctor of the 0x60-byte item record, vtable 0x596208

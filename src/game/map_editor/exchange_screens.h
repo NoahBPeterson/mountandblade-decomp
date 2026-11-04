@@ -18,6 +18,7 @@
 #include "../options_panel/hud.h"
 #include "../screen_records.h"          // MenuEntry, Rec118 / Rec34 (the mission start menus)
 #include "../party_screen_class.h"      // PartyScreen: the party exchange window (slot 3 is update 0x531800)
+#include "../options_panel/mission_item_recs.h"   // ItemA..D, MissionBlocker: the trigger-record screens whose slots 2 / 3 live in this file
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
@@ -148,19 +149,7 @@ struct ScreenBase {                         // what the raw-layout screens share
 struct TickScreen : ScreenBase {            // vtable 0x595a08
     // (build(a, b) 0x50a1c0 is note_window's, build(arg) 0x4fc820 is LogScreen's)
 };
-struct EventScreen : ScreenBase {           // vtable 0x59619c
-    void on_event(int code);                // 0x533070 (ret 4)
-};
-struct InputScreen : TickScreen {           // vtable 0x5961cc (shares the animation helpers)
-    void on_input(int code);                // 0x533aa0 (ret 4)
-};
-struct SourceScreen : ScreenBase {          // vtables 0x5961f0 / 0x596214: +0x30 the item source, +0x58 the repeat interval
-    char pad1c[0x30 - 0x1c];
-    MissionSource src;                      // +0x30
-    float interval;                         // +0x58
-    void hook_a(int arg);                   // 0x534180 (vtable 0x5961f0 slot 0)
-    void hook_b(int arg);                   // 0x534230 (vtable 0x596214 slot 0)
-};
+// (the screens whose slot 3 is in this file are the records ItemA / ItemB / ItemC / ItemD of options_panel/mission_item_recs.h)
 
 // ---- globals -----------------------------------------------------------------------------------------------------------
 
