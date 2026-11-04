@@ -167,7 +167,7 @@ Camera* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
     if (a3 != 0)
         w->follow[1] = (MissionUi*)a3;
     w->target = (ContainerBase*)parent;
-    ((MissionUi*)w)->add_child(parent);
+    w->add_child((MissionUi*)parent);
     label_refresh((MissionUi*)w, *name);
     return w;
 }

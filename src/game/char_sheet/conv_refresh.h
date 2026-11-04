@@ -73,9 +73,8 @@ static const char* troop_text(int id)
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // the conversation screen (`this` of 0x4f73c0)
-#include "../conv_screen.h"                      // ConvScreen (full layout), base_mesh
+#include "../conv_screen.h"                      // ConvScreen (full layout)
 
-struct base_mesh;
 #include "./cs_common.h"
 #include "../res_mgr.h"                          // res_manager()
 #include "../../rgl/mesh_x.h"                    // mesh_x::clone 0x41c6d0

@@ -133,10 +133,6 @@ struct TargetW {                            // a scroll target (a list widget): 
     char pad2[0x484 - 0xf8];
     ValueSource* src;                       // +0x484 (hud.h: the value source behind the widget)
 };
-struct XWidget : MissionUi {                   // a window button: the flag byte at +0x104 (0x531800)
-    char pad[0x104 - sizeof(MissionUi)];
-    char f104;                              // +0x104
-};
 
 typedef C4c3160 XferWin;       // the party exchange window: the record of rgl/mesh2/rec_tables.h (slot 3 is update 0x531800)
 

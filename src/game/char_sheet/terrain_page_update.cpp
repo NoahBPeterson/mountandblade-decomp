@@ -10,10 +10,10 @@ static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the ca
 
 // the original inlines set_enabled_text (0x4f28a0) and refresh_hex (0x4f2960) into the two "Enable terrain" branches
 // (they stay calls in the other branches); same behaviour, spelled out so the call sequence matches
-#define inline_enabled_text(w) do { if ((w)->get_value()) { char r[8]; (w)->set_text(r, tstring("Enabled")); } \
-    else { char r[8]; (w)->set_text(r, tstring("Disabled")); } } while (0)
+#define inline_enabled_text(w) do { if ((w)->get15c()) { float r[2]; tstring s_("Enabled"); (w)->set_text(r, &s_); } \
+    else { float r[2]; tstring s_("Disabled"); (w)->set_text(r, &s_); } } while (0)
 #define inline_refresh_hex() do { sync_bits(); tstring t_; g_terrain.build_hex_text(t_); \
-    { char r_[8]; hexbox->set_text(r_, t_); } } while (0)
+    { float r_[2]; hexbox->set_text(r_, &t_); } } while (0)
 
 // @ 0x4f2d70
 void TerrainPage::update(float dt)
@@ -26,12 +26,12 @@ void TerrainPage::update(float dt)
             sync_bits();
             tstring text;
             g_terrain.build_hex_text(text);
-            { char r[8]; hexbox->set_text(r, text); }
+            { float r[2]; hexbox->set_text(r, &text); }
         }
         if (page_changed(bit_fields[i])) {
             tstring text;
             sync_bits();
-            bit_fields[i]->get_text(&text);
+            bit_fields[i]->put(&text);
             int v;
             sscanf(text.c_str(), "%d", &v);
             int lo, hi;
@@ -46,7 +46,7 @@ void TerrainPage::update(float dt)
 
     // the two "Enable terrain" checkboxes also recaption themselves, so they form a chain of their own
     if (page_changed(terrain_box)) {
-        terrain_on = terrain_box->get_value();
+        terrain_on = terrain_box->get15c();
         inline_enabled_text(terrain_box);
         inline_refresh_hex();
         goto done;
@@ -140,7 +140,7 @@ done:
 void TerrainPage::copy_clipboard()
 {
     tstring s;
-    hexbox->get_text(&s);
+    hexbox->put(&s);
     if (OpenClipboard(0)) {
         // GMEM_MOVEABLE | GMEM_DDESHARE (0x2002); a failure just leaves the clipboard closed again
         HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, s.len + 1);

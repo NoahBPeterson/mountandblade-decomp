@@ -6,7 +6,7 @@
 #include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
@@ -19,15 +19,15 @@
 // std::vector<MissionUi*>::push_back as the original inlines it (0x4ec824): with room, std::_Uninit_fill_n of the pointer
 // instance (0x40f8a0, ICF-folded: last, 1, &value, allocator; cdecl), else _Insert_n at the end (0x4927d0, thiscall)
 void __cdecl uninit_fill_ptrs(MissionUi** dst, unsigned n, MissionUi* const* v, void* al);   // 0x40f8a0
-static inline void push_child(vec<MissionUi*>& c, MissionUi* const& v)
+static inline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
 {
-    unsigned n = c.first == 0 ? 0 : (unsigned)(c.last - c.first);
-    if (c.first != 0 && n < (unsigned)(c.end - c.first)) {
-        MissionUi** p = c.last;
+    unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
+    if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
+        MissionUi** p = c._Mylast;
         uninit_fill_ptrs(p, 1, &v, &c);
-        c.last = p + 1;
+        c._Mylast = p + 1;
     } else {
-        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c.last), 1, (SceneObject* const&)v);
+        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
     }
 }
 
@@ -48,7 +48,7 @@ void Screen::init_screen()
     f2d4 = 0;
     f2d5 = 0;
 
-    Overlay* bar = (Overlay*)new_container(0x190, vtbl_592848);   // 0x4931a0, then vptr 0x592848
+    NodeA* bar = (NodeA*)new_container(0x190, vtbl_592848);   // 0x4931a0, then vptr 0x592848
     if (bar != 0)
         bar->f188 = 0;
     overlay = bar;
@@ -63,7 +63,7 @@ void Screen::init_screen()
     g_gui_dirty = 1;
     ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)overlay);   // 0x49b120
 
-    Overlay* buttons = (Overlay*)new_container(0x188, vtbl_597050);   // 0x4931a0, then vptr 0x597050
+    text_box* buttons = (text_box*)new_container(0x188, vtbl_597050);   // 0x4931a0, then vptr 0x597050
     f34 = (MissionUi*)buttons;
     p0.x = 0.0f;
     p0.y = 0.0f;
@@ -72,10 +72,10 @@ void Screen::init_screen()
     s0.y = 0.05f;
     buttons->set_xy(&s0.x);
     {
-        void* bar_mesh;
+        rgl::mesh* bar_mesh;
         {
             tstring map_bar("map_bar");
-            bar_mesh = (void*)((mesh_x*)res_manager().get_object((const rgl::string*)&map_bar))->clone();
+            bar_mesh = ((mesh_x*)res_manager().get_object((const rgl::string*)&map_bar))->clone();
         }                                           // the key string dies before set_mesh (0x4ec681 dtor, then 0x4ec6.. call 0x488aa0)
         buttons->set_mesh(0, bar_mesh);
     }
@@ -89,7 +89,7 @@ void Screen::init_screen()
     f40 = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
     f44 = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_character")), 0.564f, 0.006f, 0.03f);
     f3c = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
-    push_child(overlay->children, *(MissionUi**)&f34);   // 0x4ec824: the map-bar overlay takes the button bar
+    push_child(overlay->kids, *(MissionUi**)&f34);   // 0x4ec824: the map-bar overlay takes the button bar
 
     {
         {
@@ -126,7 +126,7 @@ void Screen::init_screen()
     ms.x = 1.0f;
     ms.y = 0.71f;
     map->set_xy(&ms.x);
-    push_back_inline(overlay->children, *(MissionUi**)&map);   // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
+    push_back_inline(overlay->kids, *(MissionUi**)&map);   // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
     f54 = new_widget(0x178);
     {
         vector2 pp;
@@ -155,7 +155,7 @@ void Screen::init_screen()
         struct { int a, b; } ret;                    // set_text's 8-byte result: its own slot, not the key string
         f54->set_text((float*)&ret, &(*(const tstring*)g_strtab.lookup(name)));
     }
-    overlay->children.push_back2(*(MissionUi**)&f54);
+    overlay->kids.push_back(*(MissionUi**)&f54);
 
     f58 = new_widget(0x178);
     {
@@ -185,7 +185,7 @@ void Screen::init_screen()
         struct { int a, b; } ret;                    // set_text's 8-byte result: its own slot, not the key string
         f58->set_text((float*)&ret, &(*(const tstring*)g_strtab.lookup(name)));
     }
-    overlay->children.push_back2(*(MissionUi**)&f58);
+    overlay->kids.push_back(*(MissionUi**)&f58);
 
     {
         PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);

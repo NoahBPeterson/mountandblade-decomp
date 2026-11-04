@@ -129,16 +129,11 @@ int sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 // The definitions behind the helpers below live in other modules under their own declarations; the declarations here are
 // theirs (class stubs carry only the member this file calls), and the CharSheetWidget views reach them through casts.
-struct MissionUi {
-    MissionUi();   // 0x48ae20 (the widget base constructor: ui/mission_ui.cpp)
-};
+#include "../ui/container.h"                      // MissionUi (ctor 0x48ae20), MissionPanel (draw 0x488d50), ContainerBase
 struct ContainerW {
     void* construct();   // 0x4931a0 (the list container's constructor body: world_data)
 };
-struct MissionPanel {
-    void draw();   // 0x488d50 (ui/mission_ui.cpp)
-};
-struct ContainerBase; struct UiA; struct UiButton; struct Camera;
+struct UiA; struct Camera;
 
 static __forceinline void ctor_window(void* p) { ((ContainerW*)p)->construct(); }       // 0x4931a0
 static __forceinline void init_mission_ui(void* p) { new (p) MissionUi; }                // 0x48ae20
@@ -151,7 +146,7 @@ CharSheetWidget* make_medium_button(CharSheetWidget* parent, tstring* caption, i
                            tstring* up, tstring* down,
                            float a8, float a9, float a10);                           // 0x4dcc50
 MissionUi* make_hint(ContainerBase* parent, const tstring& text, float x, float y, float sx, float sy);  // 0x4dada0
-UiButton* make_button(MissionUi* parent, const tstring* text, float x, float y, int flag, float sy);   // 0x509770
+UiA* make_button(ContainerBase* parent, const tstring* text, float x, float y, int flag, float sy);   // 0x509770
 void label_refresh(MissionUi* w, tstring key);                                                    // 0x4e4c70
 struct UiD;
 UiD* make_scrollbar(void* parent, const tstring* key);                                       // 0x4f6160
@@ -164,7 +159,7 @@ static __forceinline CharSheetWidget* make_short_button(CharSheetWidget* p, tstr
 static __forceinline CharSheetWidget* make_hint(CharSheetWidget* p, tstring* t, float x, float y, float sx, float sy)
 { return (CharSheetWidget*)make_hint((ContainerBase*)p, *t, x, y, sx, sy); }
 static __forceinline CharSheetWidget* make_button(CharSheetWidget* p, tstring* t, float x, float y, int flag, float sy)
-{ return (CharSheetWidget*)make_button((MissionUi*)p, t, x, y, flag, sy); }
+{ return (CharSheetWidget*)make_button((ContainerBase*)p, t, x, y, flag, sy); }
 static __forceinline CharSheetWidget* make_scrollbar(CharSheetWidget* p, tstring* k)
 { return (CharSheetWidget*)make_scrollbar((void*)p, k); }
 static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstring* k, CharSheetWidget* c)

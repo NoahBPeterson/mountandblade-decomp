@@ -167,7 +167,7 @@ int GameApp::Update()
     }
 
     frame_hook();
-    slot_as<MissionUi>(current_screen_id())->update_bounds(dt);
+    slot_as<head_rec>(current_screen_id())->scale_3(dt);
 
     if (g_game) {
         // (0x50f057, the "hide" path, is reached whenever f1a090 is 0, on screen 0xe or not)

@@ -28,7 +28,7 @@
 #include "../../include/troop.h"
 #include "../../include/msg_log.h"
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../shared_vars.h"

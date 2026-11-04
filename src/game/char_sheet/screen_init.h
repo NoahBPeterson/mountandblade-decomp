@@ -17,9 +17,9 @@
 // ---- engine string (16 bytes, see s0042a1f0/tstring.h) --------------------------------------------------
 #include "../tstring.h"
 
-// ---- widgets and overlays (src/game/ui_widget.h, overlay.h, map_widget.h) -----------------------------------
+// ---- widgets and overlays (src/game/ui_widget.h, ui/container.h, map_widget.h) -----------------------------------
 #include "../ui_widget.h"
-#include "../overlay.h"
+#include "../ui/container.h"
 #include "../map_widget.h"
 #include "./cs_common.h"
 #include "../res_mgr.h"                                 // res_manager()

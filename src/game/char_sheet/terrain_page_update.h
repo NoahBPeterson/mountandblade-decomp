@@ -76,7 +76,7 @@ extern float g_half;                                        // 0x549d70 (0.5f)
 // the page: src/game/terrain_page.h (Paged, TerrainPage)
 #include "../terrain_page.h"
 
-static __forceinline bool page_changed(MissionUi* w) { return w->changed(0x10000) != 0; }
+static __forceinline bool page_changed(MissionUi* w) { return w->clear_mask(0x10000) != 0; }
 
 // the caption / visibility updates that follow a checkbox change (slice s004f25a0)
 void set_enabled_text(MissionUi* w);                           // 0x4f28a0

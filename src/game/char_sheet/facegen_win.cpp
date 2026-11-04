@@ -8,6 +8,7 @@
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../int_vec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_a/terrain.h"      // Terrain, g_terrain
+#include "../config/widget_mgr.h"      // DropDown (append 0x493400)
 #include "./cs_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // the scene entity's slot 4 (+0x10), called once its mesh list is filled
@@ -30,7 +31,7 @@ static __forceinline void board_text(MissionUi* parent, const char* text, float 
 {
     tstring s(text);
     tvec2 p = { x, y };
-    parent->set_text_at(s, (const float*)&p);   // +0xac
+    parent->layout_text_to(&s, (const float*)&p);   // +0xac
 }
 static __forceinline mesh* board_mesh(const char* name)
 {
@@ -61,21 +62,21 @@ void facegen_win::init()
 
     ((gui_manager*)(void*)g_gui)->reset();   // 0x42d1b0
 
-    MissionUi* w = (MissionUi*)new_container(0x190, vtbl_592848);
+    NodeA* w = (NodeA*)new_container(0x190, vtbl_592848);
     if (w)
-        *((char*)w + 0x188) = 0;
+        w->f188 = 0;
     board = w;
-    { tvec2 p = { 0.0f, 0.0f }; board->set_pos((const float*)&p); }
-    { tvec2 s = { 1.0f, 0.75f }; board->set_scale((const float*)&s); }
+    { tvec2 p = { 0.0f, 0.0f }; board->move_a((const float*)&p); }
+    { tvec2 s = { 1.0f, 0.75f }; board->set_xy((const float*)&s); }
     {
         MissionUi* root = board;                     // (the original passes a stack copy)
         g_gui_dirty = 1;
         ((NodeVec*)(void*)g_gui)->push_back((NodeA* const&)root);   // 0x49b120
     }
 
-    panel = (MissionUi*)new_container(0x188, vtbl_597050);
-    { tvec2 p = { 0.5f, 0.0f }; panel->set_pos((const float*)&p); }
-    { tvec2 s = { 0.5f, 0.75f }; panel->set_scale((const float*)&s); }
+    panel = (text_box*)new_container(0x188, vtbl_597050);
+    { tvec2 p = { 0.5f, 0.0f }; panel->move_a((const float*)&p); }
+    { tvec2 s = { 0.5f, 0.75f }; panel->set_xy((const float*)&s); }
     {
         mesh* m = board_mesh("facegen_board");
         panel->set_mesh(0, m);                      // +0x7c
@@ -83,10 +84,10 @@ void facegen_win::init()
     {
         tstring e("");
         char out[8];
-        panel->set_text(out, e);                    // +0xa4
+        panel->set_text((float*)out, &(e));                    // +0xa4
     }
     { tvec2 s = { 0.02f, 0.02f }; panel->set_size((const float*)&s); }
-    push_child((ChildList*)((char*)board + 0x178), panel);
+    push_child(board->kids, panel);
 
     board_text(panel, "Shade occluded:", 0.24f, 0.62f);
     w218 = board_button(panel, "disabled", 0.36f, 0.62f, 0.03f, "medium_button_down", "medium_button", 3.7f);
@@ -118,7 +119,7 @@ void facegen_win::init()
             *(int*)(e + 0x184) = 0x1c;
         }
         seeds[i] = (MissionUi*)e;
-        { tvec2 p = { 0.1f, y }; seeds[i]->set_pos((const float*)&p); }
+        { tvec2 p = { 0.1f, y }; seeds[i]->move_a((const float*)&p); }
         { tvec2 s = { 0.225f, 0.025f }; seeds[i]->set_xy((const float*)&s); }
         mesh* up = board_mesh("party_button");
         mesh* down = board_mesh("party_button_down");
@@ -160,22 +161,22 @@ void facegen_win::init()
 
     {
         tstring n("region type");
-        region_type = (MissionUi*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
+        region_type = make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
     }
     for (const int* r = g_region_types; r < g_region_types + 8; r++) {
         char buf[64];
         region_name(*r, buf);
         tstring s(buf);
-        region_type->add_child(&s);                 // +0xc8: the drop-down's add-item
+        region_type->append(&s);                    // +0xc8: the drop-down's add-item
     }
     {
         tstring n("region detail");
-        region_detail = (MissionUi*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.54f);
+        region_detail = make_dropdown((MissionUi*)panel, &n, 0.23f, 0.54f);
     }
-    { tstring s("2 meters"); region_detail->add_child(&s); }
-    { tstring s("3 meters"); region_detail->add_child(&s); }
-    { tstring s("4 meters"); region_detail->add_child(&s); }
-    { tstring s("5 meters"); region_detail->add_child(&s); }
+    { tstring s("2 meters"); region_detail->append(&s); }
+    { tstring s("3 meters"); region_detail->append(&s); }
+    { tstring s("4 meters"); region_detail->append(&s); }
+    { tstring s("5 meters"); region_detail->append(&s); }
 
     // the 3D preview: the view widget, its scene and camera
     view = new MapWidget;                           // 0x4ed630
@@ -201,7 +202,7 @@ void facegen_win::init()
     view->clear_color = 0xff111133;
     cam.init(0.69813174f, 1.5f, 2.0f, 1000.0f);    // 0x4f25a0 (40 degrees)
     view->view = cam;
-    push_child((ChildList*)((char*)board + 0x178), view);
+    push_child(board->kids, view);
 
     EntityV* ent = (EntityV*)((rgl::world*)(void*)scene)->create_entity(9);   // 0x428440
     {

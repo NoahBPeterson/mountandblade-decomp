@@ -61,12 +61,8 @@ inline void play_family_sound(int family, int id)
 
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
 // +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.
-// UiD (ui/ui_widgets.h): the progress bar (vtable 0x592140) that ValueSource views
-// (+0x178 index, +0x17c step); the two members the sources call.
-struct UiD {
-    float value();   // 0x48b930
-    void set_value(float x);   // 0x48baa0
-};
+// UiD (ui/ui_widgets.h): the progress bar (vtable 0x592140) that ValueSource views (+0x178 index, +0x17c step).
+#include "../ui/ui_widgets.h"
 struct ValueSource {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
     virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
@@ -90,26 +86,8 @@ struct ValueSource {
 // value source reached through an item pointer (Hud+0x30 sources): only the vtable slots matter
 typedef ValueSource ValueWidget;
 
-// an item record: a MissionUi with the offset vector at +0xe0 (x0,y0,w,h), the mesh animation nodes at
-// +0x108, a name at +0x128 (string) and two item flags at +0x180/+0x184.
-struct MissionItem : MissionUi {
-    char         pade0[0xe0 - sizeof(MissionUi)];
-    float        org[2];                            // +0xe0 x, +0xe4 y
-    char         pade8[0xf0 - 0xe8];
-    float        ext[4];                            // +0xf0 x far, +0xf4 y far, +0xf8 x near, +0xfc y near (offsets
-                                                    // from org; 0x4d54f5..0x4d55d3 test org+near <= mouse < org+far)
-    char         pad100[0x108 - 0x100];
-    void*        nodes[5];                          // +0x108 .. +0x118
-    char         pad11c[0x128 - 0x11c];
-    tstring      name;                              // +0x128
-    char         pad138[0x180 - 0x138];
-    char         f180;                              // +0x180
-    char         pad181[3];
-    int          f184;                              // +0x184
-};
-
 // the per-item value source is a pointer at item+0x484
-inline ValueWidget* item_value(MissionItem* it) { return *(ValueWidget**)((char*)(void*)it + 0x484); }
+inline ValueWidget* item_value(MissionUi* it) { return *(ValueWidget**)((char*)(void*)it + 0x484); }
 
 // the item source (0x4d5410's `this`, Hud+0x30): an STL vector of MissionItem* at +0x4/+0x8/+0xc, the
 // item family at +0x10 (its sound is the family-th ItemSound), the current clock slot at +0x18 and the

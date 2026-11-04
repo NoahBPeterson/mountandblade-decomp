@@ -276,10 +276,10 @@ void Rec38::scale_3(float)
 void Rec454::scale_3(float)
 {
     if (g_mission_clock) {
-        ValueWidget* u = item_value((MissionItem*)(void*)list);
+        ValueWidget* u = item_value((MissionUi*)(void*)list);
         float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
         u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * 0.0005f + v);
-        item_value((MissionItem*)(void*)list)->set_key_flags(0x10000);
+        item_value((MissionUi*)(void*)list)->set_key_flags(0x10000);
     }
     for (int i = 0; i < count; i++) {
         if (W(rows[i])->clear_mask(0x10000)) {
@@ -325,25 +325,25 @@ void MissionSource::pick(int* arg)
         float best_d = 1.0e5f;
         int best = -1;
         for (unsigned i = 0; i < (unsigned)size(); i++) {
-            MissionItem* it = begin[i];
+            MissionUi* it = begin[i];
             if (it->kind() != 7)
                 continue;
             // inside [org + near, org + far) on an axis: 0, else the distance to the nearer edge (0x4d54f5..0x4d55f0)
             float dx;
-            if (it->ext[2] + it->org[0] <= g_gui.mouse[0] && g_gui.mouse[0] < it->ext[0] + it->org[0]) {
+            if (it->screen[2] + it->e[0] <= g_gui.mouse[0] && g_gui.mouse[0] < it->screen[0] + it->e[0]) {
                 dx = 0.0f;
             } else {
-                dx = ABS(g_gui.mouse[0] - (it->ext[0] + it->org[0]));
-                float alt = ABS(g_gui.mouse[0] - (it->ext[2] + it->org[0]));
+                dx = ABS(g_gui.mouse[0] - (it->screen[0] + it->e[0]));
+                float alt = ABS(g_gui.mouse[0] - (it->screen[2] + it->e[0]));
                 if (alt < dx)
                     dx = alt;
             }
             float dy;
-            if (it->ext[3] + it->org[1] <= g_gui.mouse[1] && g_gui.mouse[1] < it->ext[1] + it->org[1]) {
+            if (it->screen[3] + it->e[1] <= g_gui.mouse[1] && g_gui.mouse[1] < it->screen[1] + it->e[1]) {
                 dy = 0.0f;
             } else {
-                dy = ABS(g_gui.mouse[1] - (it->ext[1] + it->org[1]));
-                float alt = ABS(g_gui.mouse[1] - (it->org[1] + it->ext[3]));
+                dy = ABS(g_gui.mouse[1] - (it->screen[1] + it->e[1]));
+                float alt = ABS(g_gui.mouse[1] - (it->e[1] + it->screen[3]));
                 if (alt < dy)
                     dy = alt;
             }
@@ -366,8 +366,8 @@ void MissionSource::pick(int* arg)
         // every use re-reads the item from the vector (the original goes through its iterator, 0x534160, each
         // time): a callee may move the storage, so a pointer to begin[i] taken once can go stale
         for (int n = 0; n < 5; n++) {
-            if (begin[i]->nodes[n])
-                ((mesh_node*)begin[i]->nodes[n])->set_time(&t);
+            if (begin[i]->tracks[n])
+                ((mesh_node*)begin[i]->tracks[n])->set_time(&t);
         }
         if (begin[i]->clear_mask(0x10000)) {
             g_script.param1 = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
@@ -381,10 +381,10 @@ void MissionSource::pick(int* arg)
             } else if (k == 6) {
                 g_script.str[0] = begin[i]->name;
                 play_family_sound(family, -0x3e);
-            } else if (k != 8 || begin[i]->f184 != 1) {
+            } else if (k != 8 || ((UiA*)begin[i])->f184 != 1) {
                 play_family_sound(family, -0x3e);
             } else {
-                g_script.param2 = begin[i]->f180 != 0;
+                g_script.param2 = ((UiA*)begin[i])->f180 != 0;
                 play_family_sound(family, -0x3e);
             }
         } else if (begin[i]->clear_mask(2)) {

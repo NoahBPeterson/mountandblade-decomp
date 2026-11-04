@@ -16,7 +16,7 @@
 // Identified widget classes (all constructed through ::operator new + a ctor that stores the vtable):
 //   base MissionUi   0x178 bytes, ctor 0x48ae20, vtable 0x591c80
 //   Panel         0x190 bytes, ctor 0x4931a0, vtable 0x592848, extra byte field +0x188
-//   TextBox       0x188 bytes, ctor 0x4931a0, vtable 0x597050, vector<MissionUi*> at +0x178
+//   text_box      0x188 bytes, ctor 0x4931a0, vtable 0x597050, vector<MissionUi*> at +0x178
 //   Choices       0x188 bytes, ctor 0x48ae20, vtable 0x5924a0, three ints +0x17c/+0x180/+0x184
 //   ViewWindow    0x358 bytes, ctor 0x4ed630, vtable 0x598698
 #include <windows.h>
@@ -66,7 +66,6 @@ static float scan_float(const char* name)
     return r;
 }
 
-struct base_mesh;
 #include "./cs_common.h"                                 // label_refresh, make_*, gui_manager ...
 #include "./cs_mat.h"                                    // identity3 0x40cd60
 #include "../res_mgr.h"                                 // res_manager()
@@ -81,8 +80,7 @@ extern gui_manager_s* g_gui;
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- widget classes -------------------------------------------------------------------------------------
-#include "../overlay.h"                       // Overlay (the slice's Panel), TextBox
-typedef Overlay Panel;                         // the slice's name for it
+#include "../ui/container.h"                       // NodeA (the slice's Panel), text_box
 #include "../map_widget.h"                       // MapWidget (the slice's ViewWindow: ctor 0x4ed630, vtable 0x598698, 0x358 bytes)
 typedef MapWidget ViewWindow;
 
@@ -94,7 +92,7 @@ MissionUi* make_body_button(MissionUi* parent, const tstring& a, const tstring& 
                          float f7, float f8);                                // 0x4dcc50
 
 // ---- the conversation screen (`this` of 0x4f66e0, 0x4f73c0, 0x4f7d70) --------------------------------
-#include "../conv_screen.h"                      // ConvScreen, Choices, base_mesh
+#include "../conv_screen.h"                      // ConvScreen, Choices
 
 // ---- mission / agent list helpers ---------------------------------------------------------------------
 #include "../mission.h"

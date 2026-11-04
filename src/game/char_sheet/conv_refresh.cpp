@@ -2,7 +2,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
@@ -160,17 +160,17 @@ void Rec1208::refresh(int sel, int* out)
             struct { int a, b; } ret;
             buttons[i]->set_text((float*)&ret, &(text));            // +0xa4
             float q = X / size_y;
-            base_mesh* bm;
+            mesh_x* bm;
             {
                 tstring name("dlg_button");
-                bm = (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
+                bm = ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
             }
             rgl::vector4 col(1.0f, q, 1.0f);             // w is left uninitialised, as in the original
             bm->set_color(col);
             buttons[i]->set_track(2, bm);
             {
                 tstring name("dlg_button_down");
-                bm = (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
+                bm = ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
             }
             rgl::vector4 col2(1.0f, q, 1.0f);
             bm->set_color(col2);

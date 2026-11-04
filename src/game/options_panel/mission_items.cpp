@@ -380,12 +380,6 @@ struct menu_rec {
 struct FieldPanel {
     void relayout(const tstring* text);                         // 0x48f020 (thiscall, ret 4; mission_ui2/mission_4.cpp)
 };
-// the list panel at +0xec (ui/mission_ui.cpp MissionPanel): its scroll widget at +0x490 and draw
-struct MissionPanel {
-    char pad0[0x490];
-    MissionUi* scroll;                                             // +0x490
-    void draw();                                                // 0x488d50 (ui/mission_ui.cpp)
-};
 
 struct MissionUpdater {
     char pad0[0x60];
@@ -440,7 +434,7 @@ void MissionUpdater::update()
         f = 0.24f;
     for (int k = 0; k < count; k++) {
         float pos[2];
-        pos[0] = 0.325f - ((MissionUi*)items[k])->size_x * 0.5f;    // 0x5961b8, 0x549d70
+        pos[0] = 0.325f - ((MissionUi*)items[k])->screen[0] * 0.5f;    // 0x5961b8, 0x549d70
         pos[1] = f - (float)(k + 1) * 0.04f;
         items[k]->move_a((float*)pos);
     }
@@ -450,7 +444,7 @@ void MissionUpdater::update()
     float sc[2];
     sc[0] = 0.75f;
     sc[1] = h;
-    group->scroll->set_scale(sc);
+    group->host->set_xy(sc);
     group->draw();
 }
 

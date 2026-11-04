@@ -219,7 +219,7 @@ ContainerBase::~ContainerBase()
 }
 
 // @ 0x490570
-void ContainerBase::move_a(float* p)
+void ContainerBase::move_a(const float* p)
 {
     int* a = (int*)p;
     WD_FLD(int, 0xe8) = a[0];

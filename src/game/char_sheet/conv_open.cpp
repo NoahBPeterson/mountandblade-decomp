@@ -3,7 +3,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
@@ -13,19 +13,19 @@ void Rec1208::slot_empty_2()
 {
     ((gui_manager*)g_gui)->reset();   // 0x42d1b0 (g_gui is the gui_manager)
 
-    Panel* panel = (Panel*)new_container(0x190, vtbl_592848);
+    NodeA* panel = (NodeA*)new_container(0x190, vtbl_592848);
     if (panel)
         panel->f188 = 0;
     talk = panel;
     {
         float pos[2] = { 0.0f, 0.0f };
-        talk->set_pos(pos);
+        talk->move_a(pos);
         float sz[2] = { 1.0f, 0.75f };
-        talk->set_scale(sz);
+        talk->set_xy(sz);
     }
     {
         tstring name("conversation_window");
-        talk->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
+        talk->set_mesh(0, ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     {
         NodeA* v = (NodeA*)talk;
@@ -35,13 +35,13 @@ void Rec1208::slot_empty_2()
 
     float sentence_y_a = config_float("conv_sentence_y_a");
 
-    TextBox* bar = (TextBox*)new_container(0x188, vtbl_597050);
+    text_box* bar = (text_box*)new_container(0x188, vtbl_597050);
     bar_reln = bar;
     {
         tstring name("conv_bo_board");
         label_refresh((MissionUi*)bar, name);
     }
-    push_back_inline(talk->children, bar);
+    push_back_inline(talk->kids, bar);
 
     MissionUi* line = (MissionUi*)new_widget_base(0x178);
     label_text = line;
@@ -73,7 +73,7 @@ void Rec1208::slot_empty_2()
     {
         float zero = 0.0f;
         float v[2] = { zero, -sentence_y_a };
-        ch->set_y(v);
+        ch->move_f8(v);
     }
 
     tstring scroll_name("conv_s_choices");
@@ -92,22 +92,22 @@ void Rec1208::slot_empty_2()
     {
         tstring key("ui_press_left_mouse_button_to_continue");
         struct { int a, b; } ret;                        // set_text's 8-byte result (original [esp+0x10]); the looked-up string is the text
-        input->set_text(&ret, *g_strtable.lookup(key));
+        input->set_text((float*)&ret, &(*g_strtable.lookup(key)));
     }
     talk->add_child(input);
 
-    // the message window (+0x11e0): a TextBox at 0.03/0.3, 0.25/0.21, mesh "message_window"
-    TextBox* msg = (TextBox*)new_container(0x188, vtbl_597050);
+    // the message window (+0x11e0): a text_box at 0.03/0.3, 0.25/0.21, mesh "message_window"
+    text_box* msg = (text_box*)new_container(0x188, vtbl_597050);
     msg_window = msg;
     {
         float pos[2] = { 0.03f, 0.3f };
-        msg->set_pos(pos);
+        msg->move_a(pos);
         float sz[2] = { 0.25f, 0.21f };
-        msg->set_scale(sz);
+        msg->set_xy(sz);
     }
     {
         tstring name("message_window");
-        msg->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
+        msg->set_mesh(0, ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->hide();
 
@@ -121,7 +121,7 @@ void Rec1208::slot_empty_2()
     }
     {
         tstring name("talk_relation_bar");
-        rbar->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
+        rbar->set_mesh(0, ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->add_child(rbar);
 
@@ -135,7 +135,7 @@ void Rec1208::slot_empty_2()
     }
     {
         tstring name("talk_reln_pointer");
-        rptr->set_track(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
+        rptr->set_track(0, ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->add_child(rptr);
 
@@ -217,7 +217,7 @@ void Rec1208::slot_empty_2()
     }
 
     // the talk panel's child vector gets the view window at +0x30 pushed directly (again via _Insert_n)
-    push_back_inline(talk->children, (MissionUi*)vw);
+    push_back_inline(talk->kids, (MissionUi*)vw);
     started = 1;
 
     n_lines = 0;

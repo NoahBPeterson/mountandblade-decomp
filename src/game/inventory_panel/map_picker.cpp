@@ -215,8 +215,8 @@ void MapWidget::project(vector4* out, const vector4* in)
         x = p.x;
         y = p.y;
     }
-    out->x = ((x - view.left) * size_x) / (view.right - view.left) + rect_x;
-    out->y = ((y - view.bottom) * size_y) / (view.top - view.bottom) + rect_y;
+    out->x = ((x - view.left) * screen[0]) / (view.right - view.left) + fE0;
+    out->y = ((y - view.bottom) * screen[1]) / (view.top - view.bottom) + fE4;
 }
 
 // ---- 0x51a760 -------------------------------------------------------------------------------------------

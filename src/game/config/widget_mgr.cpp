@@ -427,7 +427,7 @@ void MissionUi::get_xy(float* out)
             tstring s("ui_font");
             *(void**)((char*)m + 0x2c) = g_resmgr_full.get_material(*(const rgl::string*)&s);
         }
-        run(4, (int)m);
+        set_mesh(4, m);
     }
     if (b122) {
         *(int*)((char*)tracks[4] + 0x114) = 1;

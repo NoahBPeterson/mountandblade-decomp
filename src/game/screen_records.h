@@ -412,7 +412,6 @@ struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
 struct Slot20 {              // 0x20 bytes
     int a, b, c, d, e, f, g, h;
 };
-struct XWidget;
 struct TargetW;
 struct C4c3160 : head_rec {  // vtable 0x595870 (the party exchange window: slot 2 party_screen.cpp 0x50xxxx, slot 3 map_editor/exchange_screens.cpp 0x531800)
     char pad2c[4];
@@ -422,7 +421,7 @@ struct C4c3160 : head_rec {  // vtable 0x595870 (the party exchange window: slot
     MissionUi* w44;                            // +0x44
     MissionUi* w48;                            // +0x48
     MissionUi* w4c;                            // +0x4c
-    XWidget* w50;                           // +0x50
+    MissionUi* w50;                            // +0x50
     MissionUi* w54;                            // +0x54
     MissionUi* w58;                            // +0x58
     char pad5c[0x90 - 0x5c];

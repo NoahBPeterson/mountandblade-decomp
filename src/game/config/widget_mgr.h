@@ -109,6 +109,10 @@ struct DropDown : MissionUi {                   // ctor 0x4931d0 (installs its o
     DropDown();                                 // 0x4931d0
     char on_event(unsigned ev);                 // 0x49aca0
     NodeA* create();                     // 0x49ad20
+    // vtable 0x592570: the base's slots, then kind (0x493300: 5), slot 49 (0x4933b0) and the add-item slot 50 (0x493400)
+    virtual int kind();                         // +0xc0 0x493300
+    virtual void reset_tail();                  // +0xc4 0x4933b0
+    virtual void append(const tstring* name);   // +0xc8 0x493400 (ret 4): adds a row
 };
 
 // ---- widget items as set_size sees them ---------------------------------------------------------------------

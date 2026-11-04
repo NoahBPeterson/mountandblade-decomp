@@ -9,7 +9,7 @@
 #ifndef MB_GAME_CAMPAIGN_SCREEN_H
 #define MB_GAME_CAMPAIGN_SCREEN_H
 #include "./ui_widget.h"
-#include "./overlay.h"
+#include "./ui/container.h"
 #include "./map_widget.h"
 #include "../include/frustum.h"
 
@@ -19,7 +19,7 @@ struct Screen {
     virtual void s08(int); virtual void s09(int);
     int f4;                                     // +0x4
     char pad8[0x2c - 8];
-    Overlay* overlay;                           // +0x2c   map bar
+    NodeA* overlay;                           // +0x2c   map bar
     MapWidget* f30;                             // +0x30   the map widget (the 3D panel)
     MissionUi* f34;                                // +0x34   menu buttons
     MissionUi* f38;                                // +0x38

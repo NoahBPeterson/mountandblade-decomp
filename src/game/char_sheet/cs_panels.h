@@ -47,15 +47,10 @@ static __forceinline float config_float(const tstring& key)
 // ---- widgets --------------------------------------------------------------------------------------------
 // One widget type (vtable slots verified at the call sites): +0xa4 post_text(out, text) (ret 8; `out` is an
 // uninitialised 16-byte result slot), +0xac set_position(text, &pos) (ret 8), +0xb0 show, +0xb4
-// show_selected.  The label flag is the byte at +0x181 (the vptr takes +0).
+// show_selected.  
 struct PostSlot { int a, b, c, d; };
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
-struct SheetWidget : MissionUi {
-    char pad[0x181 - 4];
-    char has_label;                                                  // +0x181
-};
-typedef SheetWidget ColorText;
-typedef SheetWidget SkillLine;
+#include "../ui/ui_widgets.h"             // UiA: the label flag is its byte at +0x181 (f181)
 
 // ---- the character-sheet panel (only the slots this function touches) -----------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)

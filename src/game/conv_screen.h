@@ -10,13 +10,9 @@
 #include "./ui_widget.h"
 #include "./head_rec.h"
 #include "../include/frustum.h"
-#include "./overlay.h"
+#include "./ui/container.h"
 #include "./map_widget.h"
-
-struct base_mesh {
-    base_mesh* clone();                                  // 0x41c6d0
-    void set_color(rgl::vector4 c);                      // 0x47af30 (four floats BY VALUE, ret 0x10: a pointer here left the caller's stack 12 bytes off)
-};
+#include "../rgl/mesh_x.h"                       // mesh_x: clone 0x41c6d0, set_color 0x47af30
 
 struct Choices : MissionUi {                             // vtable 0x5924a0, ctor 0x48ae20, 0x188 bytes
     int f178;                                            // +0x178 (the allocator slot of the vec that the shared constructor 0x4931a0 leaves in front of the three zeroed words)
@@ -24,14 +20,14 @@ struct Choices : MissionUi {                             // vtable 0x5924a0, cto
 };
 
 struct Rec1208 : head_rec {                              // vtable 0x595bfc, size 0x1208: slot 2 is the opener 0x4f66e0 (char_sheet/conv_open.cpp), slot 3 the event handler 0x525160 (mission5/mission_5.cpp)
-    Overlay* talk;                                       // +0x2c
+    NodeA* talk;                                       // +0x2c
     MapWidget* window;                                   // +0x30
     rgl::frustum fr;                                     // +0x34 (0x120 bytes, built by the creation function; canonical src/include/frustum.h)
     char pad154[0x174 - 0x154];
     MissionUi* label_speaker;                               // +0x174
     MissionUi* label_text;                                  // +0x178
     MissionUi* input_label;                                 // +0x17c (the refresher called it body)
-    TextBox* bar_reln;                                   // +0x180
+    text_box* bar_reln;                                   // +0x180
     char pad184[0x188 - 0x184];
     MissionUi* question;                                    // +0x188
     Choices* choice;                                     // +0x18c
@@ -41,7 +37,7 @@ struct Rec1208 : head_rec {                              // vtable 0x595bfc, siz
     int quest_mode;                                      // +0x11d4
     char started;                                        // +0x11d8 (byte flag)
     char pad11d9[0x11e0 - 0x11d9];
-    TextBox* msg_window;                                 // +0x11e0
+    text_box* msg_window;                                 // +0x11e0
     MissionUi* reln_pointer;                                // +0x11e4
     MissionUi* relation_bar;                                // +0x11e8
     MissionUi* lines[5];                                    // +0x11ec

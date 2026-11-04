@@ -9,6 +9,8 @@
 #define GAME_GUI_MGR_H
 #include "tstring.h"
 
+struct MissionUi;
+
 struct GuiManager {
     char pad00[0x10];
     void* ui_active;                            // +0x10 the widget being dragged (gui_manager::ui_active, g_ui_active 0x5d7090)
