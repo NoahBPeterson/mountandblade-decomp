@@ -510,6 +510,16 @@ def main():
     src_alt = sum(open(o, "rb").read().count(b"/alternatename:") for o in objs
                   if not os.path.abspath(o).startswith(glue_dir))
     steps["source_aliases"] = "%d /alternatename directives in our objects (#pragma comment(linker) in source)" % src_alt
+    # codegen hacks the source must not need: volatile and _ReadWriteBarrier (code lines, not comments)
+    hack = re.compile(r"\bvolatile\b|_ReadWriteBarrier")
+    n_hacks = 0
+    for dp, _dn, fns in os.walk(os.path.join(ROOT, "src")):
+        for fn in fns:
+            if fn.endswith((".cpp", ".h")):
+                for line in open(os.path.join(dp, fn), errors="replace"):
+                    code = line.split("//", 1)[0]
+                    n_hacks += bool(hack.search(code))
+    steps["source_hacks"] = "%d source lines with volatile or _ReadWriteBarrier" % n_hacks
 
     # trap gate: glue.py points the original's data at int3 traps for code we do not define. That is only acceptable
     # where nothing we link can reach the slot (tools/relink/trap_report.py has the proof; docs/standalone_traps.md)

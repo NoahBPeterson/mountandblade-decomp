@@ -45,6 +45,7 @@ SA_HIST = os.path.join(ROOT, "docs", "standalone_history.json")
 # original's addresses by name)
 CRUTCHES = (("data_labels", "glue", r"data labels (\d+)"), ("aliases", "glue", r"aliases (\d+)"),
             ("source_aliases", "source_aliases", r"(\d+) /alternatename directives"),
+            ("source_hacks", "source_hacks", r"(\d+) source lines with volatile"),
             ("traps", "traps", r"(\d+) trapped code addresses"),
             ("redirects", "glue", r"'code->trap': (\d+)"),
             ("vtable_slots_rewritten", "vtables", r"(\d+) slots rewritten"),
