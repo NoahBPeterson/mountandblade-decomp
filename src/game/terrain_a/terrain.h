@@ -26,12 +26,8 @@ struct ivec2 { int dx, dy; };
 extern const ivec2 g_nbr[8];                         // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
 
 // ---- tables ---------------------------------------------------------------------------------------------------
-// ground type record (table of 11 at 0x8ed4df8, 0x20 bytes each): name, then the values copied into a layer
-struct GroundType {
-    tstring name;                               // +0 (0x464200, 0x4656c0)
-    int f10, f14, f18, f1c;                     // +0x10.. (0x464f10: fc <- f10, f14 <- f18, f4 <- f1c; 0x467250)
-};
-extern GroundType g_ground_types[11];           // 0x8ed4df8 (beyond the annotation range: bound by symbols/slices/terrain_a.txt)
+// ground type record (table of 11 at 0x8ed4df8, 0x20 bytes each): name, then the values copied into a layer (include/ground_type.h)
+#include "../../include/ground_type.h"
 
 // particle / ground-spec type record (table at *0x5e28f8, count 0x5e29e8, 0x20 bytes each) and its 0x48-byte boxes
 #include "../ptype.h"

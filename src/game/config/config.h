@@ -208,14 +208,7 @@ struct menu_item {                                  // 0x68 bytes
     menu_item();                                    // 0x4be420
 };
 #include "../../include/rec34.h"                 // rec34 (shared with rgl/mesh2/gui_edit.h)
-struct rec20 {                                      // 0x20 bytes
-    tstring name;                                   // +0x00
-    void*   mat;                                    // +0x10
-    void*   mat2;                                   // +0x14
-    float   f18;                                    // +0x18
-    int     f1c;                                    // +0x1c
-    void read(stream_base* s);                      // 0x4be600
-};
+#include "../../include/ground_type.h"           // GroundType (the 0x20-byte ground-spec record; GroundType::read 0x4be600 is below)
 struct clip_slot_raw {                              // 0x18 bytes
     raw_tstring name;                               // +0x00
     int     v10;                                    // +0x10

@@ -55,6 +55,8 @@ struct MissionCtx {
     int f2c8_word;                                      // +0x2c8 the same word (the world map's frame sets it as a dword)
     };
 
+    MissionCtx() { init(); }                            // the original's static initializer 0x547e40 calls init
+    ~MissionCtx() {}                                    // (empty: the original registers an empty atexit function, 0x548200)
     void init();                                        // 0x4be742 (MetaMission::init, entered through the WinLicense marker at 0x4be730)
     void setup_entry(struct MenuEntry* e);              // 0x531600
     int weight(unsigned flags);                         // 0x5316f0
@@ -76,6 +78,6 @@ struct MissionCtx {
     void reset_party_heroes(int party_id);              // 0x529670 (mission_5.cpp; this unused)
     void select_side(int side);                         // 0x492750 (ret 4; world_data.cpp)
 };
-extern MissionCtx g_mission_ctx;                        // 0xa73300 (defined in inventory_panel/mission_ctx.cpp)
+extern MissionCtx g_mission_ctx;                        // 0xa73300 (defined in triggers/trigger_vec.cpp)
 
 #endif

@@ -7,12 +7,12 @@
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_anim_table (listed directly: the audit reads only the source's own includes)
+#include "../../include/ground_type.h"   // g_ground_types (0x8ed4df8): f1c bit 1 = affects terrain
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/render_flags.h"
 #include "../config/config_block.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-unsigned char g_x8ed4e14[10 * 0x20];                // 0x8ed4e14, 0x20-byte records, bit 1 = affects terrain
 
 
 using namespace rgl;
@@ -320,7 +320,7 @@ void Terrain::tessellate()
                     float mult = 1.0f;
                     float* l = &c->w[14];
                     for (int m = 15; m != 0; m--) {     // a countdown, as the original (dec esi; jne at 0x481aa7): cl unrolls an up-count
-                        if (*slot >= 0 && (g_x8ed4e14[*slot * 0x20] & 2))
+                        if (*slot >= 0 && (g_ground_types[*slot].f1c & 2))
                             acc += mult * *l;
                         slot -= 10;
                         mult *= 1.0f - *l;          // 0x481aa1: fsub [ecx + 4] after the pointer step, i.e. the entry just used

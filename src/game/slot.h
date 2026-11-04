@@ -28,6 +28,7 @@ struct Slot {
     char b840;                                              // +0x840
     char pad841[0x848 - 0x841];
 
+    Slot();                                                 // both tick snapshots = clock 0's time, the held-key table and look axes cleared (the original's static initializer 0x547b50)
     void update(float dt);                                  // 0x487930 (thiscall, ret 4)
     int read_keys();                                        // 0x487640
     int read_state();                                       // 0x4876e0

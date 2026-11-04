@@ -28,6 +28,7 @@
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/sound_mgr.h"      // SoundMgr g_sound_mgr (0x5aa128): defined here, with the destructor 0x4c6aa0
 // canonical declarations of the callees this module reaches through its layout views (definitions in other modules)
 #include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10)
@@ -902,23 +903,20 @@ void PresentationTable::fill_records(RefRecord* rec)
 }
 
 // @ 0x4c6aa0
-void ItemPage::clear()
+// The sound player's destructor (the original's atexit function 0x548410 for g_sound_mgr jumps here; its sound-definition and
+// group arrays are freed here, the channel vector by the member destructor).
+SoundMgr::~SoundMgr()
 {
-    if (*(void**)((char*)this + 0x4)) {
-        delete[] *(char**)((char*)this + 0x4);
-        *(void**)((char*)this + 0x4) = 0;
+    if (defs) {
+        delete[] defs;
+        defs = 0;
     }
-    Pad98*& p = *(Pad98**)((char*)this + 0xc);
-    if (p) {
-        delete[] p;
-        p = 0;
+    if (groups) {
+        delete[] groups;
+        groups = 0;
     }
-    if (extra)
-        operator delete(extra);
-    extra = 0;
-    extra_end = 0;
-    extra_cap = 0;
 }
+SoundMgr g_sound_mgr;                                       // 0x5aa128 (.bss; the compiler registers ~SoundMgr with atexit)
 
 // @ 0x4c6b30
 // Morph-target pose: clears the target's per-point offsets, finds the key frame nearest to the record's key time and

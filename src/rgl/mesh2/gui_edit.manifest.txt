@@ -28,7 +28,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?reset@ItemPage@@QAEXXZ  004c65d0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@RecC@@QAE?AUtstring@@XZ  004c6860  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1PresentationTable@@QAE@XZ  004c6900  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?clear@ItemPage@@QAEXXZ  004c6aa0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ??1SoundMgr@@QAE@XZ  004c6aa0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?mesh_ptr@MapObject@@QAEPAUtstring@@XZ  004c6ca0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated_door@MenuDoor@@QAE?AUtstring@@XZ  004c6d00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?reset_gui@@YAXXZ  004c6e00  /O2 /MT /Gy /TP

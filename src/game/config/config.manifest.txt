@@ -42,7 +42,7 @@
 ../src/game/config/config.cpp  ??0menu_item@@QAE@XZ  004be420  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@rec34@@QAEHPAUstream_base@@@Z  004be470  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_used@rec34_table@@QAEXXZ  004be560  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?read@rec20@@QAEXPAUstream_base@@@Z  004be600  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?read@GroundType@@QAEXPAUstream_base@@@Z  004be600  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0clip_table@@QAE@XZ  004be6b0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??1clip_table@@QAE@XZ  004be6f0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0clip_slot@@QAE@XZ  004be720  /O2 /MT /Gy /TP

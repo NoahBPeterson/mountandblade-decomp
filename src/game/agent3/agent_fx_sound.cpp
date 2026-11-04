@@ -37,7 +37,6 @@
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 
-SoundMgr g_sound_mgr;                                       // 0x5aa128 the sound player (defs, groups, listener frame, named sound slots)
 
 const int g_xp_table[63] = {                             // 0x590974
     0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362, 40682, 47892, 56103, 65441, 77233,

@@ -36,13 +36,8 @@ extern GameData* g_game;                                 // 0x5e2930 (game_data.
 struct Mission;
 extern Mission* g_mission;                              // 0x5e292c (mission.h; its ptr_vec clashes with this file's)
 #define g_editor ((EditorSceneView*)g_mission)   // the editor's view of the mission object g_mission (0x5e292c)
-// the table itself lives at 0x8ed4df8 (0x20-byte records; a record's name tstring has its buf at +4): the original
-// indexes it in place (0x4feaff: j * 0x20 + 0x8ed4df8). Ours declared a pointer to it and read garbage through 0x8ed4df8.
-// The table's one definition is module_load.cpp's g_ttypes (0x8ed4df8, 11 x 0x20 bytes), which the ground-spec loader
-// (0x4d0e5b) fills. A second definition here gave the editor, terrain.h's g_ground_types and static_init's g_8ed4df8 a
-// separate, never-filled copy (null layer materials: crash in world_x::light_mesh when a scene starts); before that it
-// was 4 bytes and overlapped the globals after it. Declared only: the glue binds this name to the definition.
-extern char* g_object_names[];                      // 0x8ed4df8
+// the ground-type table (0x8ed4df8: 0x20-byte records, include/ground_type.h) is indexed in place (0x4feaff: j * 0x20 + 0x8ed4df8); its one
+// definition is module_load.cpp's g_ground_types, which the ground-spec loader (0x4d0e5b) fills.
 
 // These live in the original's shared float-constant pool (.rdata). Defined without an initialiser they are
 // zero in our build, which silently broke every use: g_one = 0 made GuiScreen::process's cursor y negative
@@ -282,9 +277,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             if (j >= 0) {
                 // name table: 0x20-byte records at 0x8ed4df8 starting with a tstring: its c_str() (buf at +4, NULL ->
                 // the address of that buf field, 0x4feb0a)
-                const char* name = g_object_names[j * 8 + 1];
-                if (name == 0)
-                    name = (const char*)&g_object_names[j * 8 + 1];
+                const char* name = g_ground_types[j].name.c_str();
                 WPARAM idx = SendMessageA(objs, CB_ADDSTRING, 0, (LPARAM)name);
                 SendMessageA(objs, CB_SETITEMDATA, idx, n);
             }

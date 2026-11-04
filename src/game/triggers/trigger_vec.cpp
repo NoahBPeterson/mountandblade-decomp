@@ -94,6 +94,8 @@ float g_map_max_y = 50.0f;   // 0x5aa11c
 float g_map_max_x = 50.0f;   // 0x5aa118
 
 
+MissionCtx g_mission_ctx;   // 0xa73300 (.bss, 0x2cc bytes; constructed by the compiler's static initializer, the original's 0x547e40, which calls MissionCtx::init below)
+
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
 
 // @ 0x4be730

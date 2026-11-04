@@ -1798,14 +1798,14 @@ void rec34_table::load_used()
 }
 
 // @ 0x4be600
-void rec20::read(stream_base* s)
+void GroundType::read(stream_base* s)
 {
     RS(*s, &name);
     RI(*s, &f1c);
     tstring tmp;
     RS(*s, &tmp);
     mat = g_resmgr.get_material(tmp);
-    s->r_float(&f18);
+    s->r_float((float*)&f18);
     mat2 = 0;
     tstring tmp2;
     RS(*s, &tmp2);

@@ -36,7 +36,6 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-MissionCtx g_mission_ctx;                        // 0xa73300 (.bss, 0x2cc bytes; initialised by static_init_547e40 through MissionCtx::init)
 
 
 #define SCENE ((MissionV*)g_mission)

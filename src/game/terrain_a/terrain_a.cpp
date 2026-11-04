@@ -395,14 +395,14 @@ void Terrain::init_layers()
     switch (r) {
     case 0:
         layer[0].type = 0;
-        layer[0].fc = g_ground_types[0].f10;
+        layer[0].fc = (int)g_ground_types[0].mat;
         layer[0].f14 = g_ground_types[0].f18;
         layer[0].f4 = g_ground_types[0].f1c;
         layer[0].f8 = -1;
         break;
     case 1:
         layer[0].type = 1;
-        layer[0].fc = g_ground_types[1].f10;
+        layer[0].fc = (int)g_ground_types[1].mat;
         layer[0].f14 = g_ground_types[1].f18;
         layer[0].f4 = g_ground_types[1].f1c;
         layer[0].f8 = -1;
@@ -442,7 +442,7 @@ void Terrain::init_layers()
     layer[1].type = c;
     if (c >= 0) {
         GroundType* gt = &g_ground_types[c];
-        layer[1].fc = gt->f10;
+        layer[1].fc = (int)gt->mat;
         layer[1].f14 = gt->f18;
         layer[1].f4 = gt->f1c;
         layer[1].f8 = -1;
@@ -450,19 +450,19 @@ void Terrain::init_layers()
     layer[2].type = b;
     if (b >= 0) {
         GroundType* gt = &g_ground_types[b];
-        layer[2].fc = gt->f10;
+        layer[2].fc = (int)gt->mat;
         layer[2].f14 = gt->f18;
         layer[2].f4 = gt->f1c;
         layer[2].f8 = -1;
     }
     layer[3].type = 8;
-    layer[3].fc = g_ground_types[8].f10;
+    layer[3].fc = (int)g_ground_types[8].mat;
     layer[3].f14 = g_ground_types[8].f18;
     layer[3].f4 = g_ground_types[8].f1c;
     layer[3].f8 = -1;
     layer[1].f10 = 0;
     if (a >= 0)
-        layer[1].f10 = g_ground_types[a].f14;
+        layer[1].f10 = (int)g_ground_types[a].mat2;
 }
 
 // @ 0x4650f0
@@ -1220,7 +1220,7 @@ void Terrain::load_layer(int* set, int idx)
             l->type = t;
             if (t >= 0) {
                 GroundType* tt = &g_ground_types[t];
-                l->f1c = tt->f10;
+                l->f1c = (int)tt->mat;
                 l->f24 = tt->f18;
                 l->f14 = tt->f1c;
                 l->f18 = -1;

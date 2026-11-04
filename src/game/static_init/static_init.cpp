@@ -60,45 +60,10 @@ void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (_
 #define AT(type, p, off) (*(type*)((char*)(p) + (off)))
 
 // ---- destructors (atexit) -------------------------------------------------------------------------------------
-// @ 0x548200
-void __cdecl static_dtor_548200() {}
-// @ 0x548250
-void __cdecl static_dtor_548250()
-{
-    char* p = (char*)&g_meshes;                 // the ground types end where the mesh table begins
-    for (int n = 0xb; n; n--) {
-        p -= 0x20;
-        ((tstring*)p)->~tstring();
-    }
-}
-// @ 0x548410
-void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 // @ 0x548510
 void __cdecl static_dtor_548510() { ((BigArray*)&g_anim.skins_alloc)->destroy(); }   // the skin vector at 0x8ed4f78
 
 // ---- initializers, in the original table order -----------------------------------------------------------------
-// @ 0x547b50   input state: both tick snapshots, the key table, the axes
-void __cdecl static_init_547b50()
-{
-    __int64 now = g_ticks[0];
-    g_keyboard.t828 = now;
-    g_keyboard.t838 = now;
-    memset(g_keyboard.down, 0, 0x400);
-    g_keyboard.f818 = 0;
-    g_keyboard.f81c = 0;
-    g_keyboard.axis[0] = 0;
-    g_keyboard.axis[1] = 0;
-}
-// @ 0x547e40
-void __cdecl static_init_547e40() { g_mission_ctx.init(); atexit(static_dtor_548200); }
-// @ 0x547fb0
-void __cdecl static_init_547fb0() { atexit(static_dtor_548410); }
-// @ 0x547fe0
-void __cdecl static_init_547fe0()
-{
-    new (g_8ed4df8) tstring11;
-    atexit(static_dtor_548250);
-}
 // @ 0x548030
 void __cdecl static_init_548030() { atexit(static_dtor_548510); }
 
@@ -106,9 +71,6 @@ void __cdecl static_init_548030() { atexit(static_dtor_548510); }
 typedef void (__cdecl* init_fn)();
 #pragma data_seg(".CRT$XCU")
 init_fn g_static_init_table[] = {
-    static_init_547b50,
-    static_init_547e40,
-    static_init_547fb0,
-    static_init_547fe0, static_init_548030,
+    static_init_548030,
 };
 #pragma data_seg()

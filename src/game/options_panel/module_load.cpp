@@ -10,6 +10,7 @@
 #include "./module_load.h"
 #include "./elem_calls.h"      // E50 / E68 / E176: the copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170
 #include "../ptype.h"
+#include "../../include/ground_type.h"   // GroundType, g_ground_types (0x8ed4df8)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 item_mod g_item_mods[43];                                   // 0xa75f70 (constructed and destroyed by the compiler: two tstrings per record)
@@ -30,7 +31,7 @@ int g_num_ground_specs;                          // 0x5e29ec
 // mission-type table: 0x20-byte records 0xa735d0..0xa73730.
 mission_type g_mission_types[(0xa73730 - 0xa735d0) / 0x20];   // 0xa735d0 (.bss; built / destroyed by the compiler: see mission_type.h)
 
-ttype g_ttypes[(0x8ed4f58 - 0x8ed4df8) / 0x20];  // 0x8ed4df8
+GroundType g_ground_types[11];                    // 0x8ed4df8 (the 11 records up to the mesh table at 0x8ed4f58; constructed and destroyed by the compiler: a name string each)
 
 void load_skyboxes();                            // 0x4c3350
 
@@ -169,8 +170,8 @@ void load_data_files()
     text_reader_l ts3;
     if (!((text_file*)&ts3)->open_read_text("data\\ground_specs.txt"))
         mb_error("Unable to open %s", "data\\ground_specs.txt");
-    for (ttype* t = g_ttypes; t < g_ttypes + sizeof g_ttypes / sizeof *g_ttypes; t++)   // 11 (to 0x8ed4f58)
-        ((rec20*)t)->read(&ts3);           // 0x4be600
+    for (GroundType* t = g_ground_types; t < g_ground_types + 11; t++)   // 11 (to 0x8ed4f58)
+        t->read(&ts3);                     // 0x4be600
     // data\skyboxes.txt: a count, then that many 0x4c-byte records (the table at 0x5e28f4 / 0x5e29ec)
     text_reader_l ts4;
     if (!((text_file*)&ts4)->open_read_text("data\\skyboxes.txt"))

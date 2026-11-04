@@ -51,17 +51,12 @@ struct flora_alloc { void construct(flora_kind* dst, const flora_kind& src); };
 struct ground_alloc { void construct(ground_spec* dst, const ground_spec& src); };
 struct mission_alloc { void construct(mission_type* dst, const mission_type& src); };
 
-// "ttype" record (0x20 bytes, array at 0x8ed4df8).
-struct ttype {
-    char pad0[0x20];
-};
 
 // The record classes of the readers the loaders call (the engine's own names; mesh_2.cpp / rec_tables.cpp / config.cpp define
 // them, headers that cannot be included next to this one's stream.h): the mission-type table entry is rec_tables.cpp's Blk2dd0
-// (read 0x4c2dd0), the ttype entry config.cpp's rec20 (read 0x4be600), the ground spec config.cpp's prsnt_record (load_extras
+// (read 0x4c2dd0), the ground type entry GroundType (include/ground_type.h; read 0x4be600), the ground spec config.cpp's prsnt_record (load_extras
 // 0x4bddf0), and the flora kind mesh_2.cpp's ObjectList (read 0x4cdfd0).
 struct Blk2dd0 { void read(stream_base* s); };
-struct rec20 { void read(stream_base* s); };
 struct prsnt_record { void load_extras(stream_base& s); };
 struct ObjectList { void read(stream_base* s); };
 

@@ -150,10 +150,6 @@ struct RefItem {                // 0x24-byte entry of the record array
     RefItem() { kf = 0; f18 = 0; f1c = 0; }   // the array-new expansion 0x4c6a20: tstring ctor, then these three
     ~RefItem() { ((RecGList*)&kf)->clear(); }   // 0x4317b0: the keyframe track array is a RecGList-style owner
 };
-struct Pad98 {                  // a 0x98-byte record whose head is a string (see clear)
-    tstring name;               // +0
-    char pad10[0x98 - 0x10];
-};
 
 struct RefRecord {              // the source record: [0x4c] gives two strings, [0x54] two more
     virtual void deleting_dtor(unsigned flags);   // slot 0
@@ -248,14 +244,10 @@ struct ItemPage {
     tstring field;              // +0x190
     char* text_ptr;             // +0x1a0 (kind 1: the entry-point name)
     char* text_ptr2;            // +0x1a4 (kind 5: the passage name)
-    char pad1a8[0x24c - 0x1a8];
-    void* extra;                // +0x24c (free_mem'd)
-    void* extra_end;            // +0x250
-    void* extra_cap;            // +0x254
+    char pad1a8[0x258 - 0x1a8];
 
     void reset();                               // 0x4c65d0
     void format(char* out);                     // 0x4c6620
-    void clear();                               // 0x4c6aa0
     void place(int e);                          // 0x4c6b30
 };
 

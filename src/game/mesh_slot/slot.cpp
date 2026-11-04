@@ -19,7 +19,16 @@
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-Slot g_keyboard;                                    // 0xa170c8 (.bss)
+Slot g_keyboard;                                    // 0xa170c8 (.bss; constructed by the compiler's static initializer, the original's 0x547b50)
+Slot::Slot()
+    : t828(g_ticks[0]), t838(g_ticks[0])
+{
+    memset(down, 0, sizeof down);
+    f818 = 0;
+    f81c = 0;
+    axis[0] = 0;
+    axis[1] = 0;
+}
 
 
 // DirectInput-style device interface (vtable: +0x1c poll/acquire, +0x24 GetDeviceState).
