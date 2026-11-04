@@ -1,3 +1,5 @@
+#include <direct.h>
+#include <stdio.h>
 #include "./save_panel.h"
 namespace rgl {
 struct mesh_ext {                                   // rgl/scene/scene.h: the mesh object with the scene-side members
@@ -50,8 +52,6 @@ typedef Widget Control;
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                         // 0x5d7080
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);  // 0x415100
-int  __cdecl crt_sprintf(char* buf, const char* fmt, ...);      // 0x536f8f
-int  __cdecl crt_remove(const char* path);                      // 0x539023
 void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
 
@@ -122,7 +122,7 @@ void C4c31c0::scale_3(float)
         } else {
         char* slot = (char*)this + sel218 * 0x30;
         if (slot[0x58] == 0 && slot[0x59] == 0 && slot[0x5a] == 0) {
-            crt_sprintf(pathbuf, "");
+            sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
             const char* pf = g_module_name.c_str();
@@ -152,13 +152,13 @@ void C4c31c0::scale_3(float)
         // +0x21c is the dialog's answer slot (the confirm sets it to -1 before opening the box). The original
         // (0x4ea5f5: cmp [esi+0x21c], 0 / jne 0x4ea6bc) removes the file when the answer is 0 (ui_yes).
         if (*(int*)((char*)this + 0x21c) == 0) {
-            crt_sprintf(pathbuf, "");
+            sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
             const char* pf = g_module_name.c_str();
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
                         sel218 / 10, sel218 % 10);
-            if (crt_remove(name) != 0) {
+            if (_rmdir(name) != 0) {
                 tstring err("ui_error_removing_file");
                 g_msglog.add(*g_strtable.lookup(err), 0xffff0000);
             }

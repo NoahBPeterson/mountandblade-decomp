@@ -167,7 +167,7 @@ void Screen::camera_update(float dt)
     if (!g_cfg.disable_sound) {
         *(mat4*)&g_sound_mgr.frame = frame;
         // FMOD wants y/z swapped (the engine is z-up)
-        listener_set(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y,
+        FSOUND_3D_Listener_SetAttributes(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y,
                      g_sound_mgr.frame.u.x, g_sound_mgr.frame.u.z, g_sound_mgr.frame.u.y);
     }
 }

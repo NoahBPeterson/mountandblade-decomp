@@ -19,9 +19,9 @@ void __cdecl take_screenshot(void)
     tstring* s;
     HANDLE h;
 
-    _sprintf(dir, "", g_module_name.c_str());
+    sprintf(dir, "", g_module_name.c_str());
     screenshots_path(dir);
-    _sprintf(name, "%s%s", dir, g_module_name.c_str());
+    sprintf(name, "%s%s", dir, g_module_name.c_str());
     CreateDirectoryA(name, 0);
     for (;;) {
         g_screenshots_counter++;
@@ -38,7 +38,7 @@ void __cdecl take_screenshot(void)
         {
             tstring key("ui_screenshot_taken_to_value");
             s = g_strtable.lookup(key);
-            _sprintf(msg, s->buf ? s->buf : (char*)&s->buf, name);
+            sprintf(msg, s->buf ? s->buf : (char*)&s->buf, name);
         }
         g_msglog.add(tstring(msg), -1);
     } else {

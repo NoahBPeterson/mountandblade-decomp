@@ -1749,8 +1749,8 @@ void SoundMgr::stop_all()
     _m.o = _pos;
     if (g_cfg.disable_sound == 0) {
         frame = _m;
-        FSOUND_3D_Listener_SetAttributes(&frame.o.x, 0, *(int*)((char*)this + 0x20), *(int*)((char*)this + 0x28), *(int*)((char*)this + 0x24),
-                               *(int*)((char*)this + 0x30), *(int*)((char*)this + 0x38), *(int*)((char*)this + 0x34));
+        FSOUND_3D_Listener_SetAttributes(&frame.o.x, 0, *(float*)((char*)this + 0x20), *(float*)((char*)this + 0x28), *(float*)((char*)this + 0x24),
+                               *(float*)((char*)this + 0x30), *(float*)((char*)this + 0x38), *(float*)((char*)this + 0x34));
     }
 }
 

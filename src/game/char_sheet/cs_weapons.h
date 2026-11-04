@@ -23,7 +23,6 @@
 
 extern const int g_weapon_xp[11];                   // 0x5938c8 (experience needed per weapon class)
 
-void mb_vsprintf(char* out, const char* fmt, va_list args);   // 0x536f8f (used by the inlined sprintf)
 
 // ---- 0x4f04f0: character-sheet caption of weapon class `type` ------------------------------------------
 // (same seven keys as 0x43a280, but a plain function of (type, buffer))

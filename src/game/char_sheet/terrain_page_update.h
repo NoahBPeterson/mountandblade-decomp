@@ -7,6 +7,7 @@
 //   0x4f34c0  copy the hex terrain code (the text of the page's hex field) to the Windows clipboard.
 // All names provisional. The page layout is the one recovered in slice s004f25a0 (TerrainPage); the page is a
 // widget page whose fields start at +0x18 (the option the menu returns to).
+#include <stdlib.h>
 #include <windows.h>
 #include <stdio.h>
 #include <math.h>
@@ -64,7 +65,6 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
 float  clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
-void   free_ptr(void* p);                                   // 0x535712
 
 extern float g_500;                                         // 0x590b40 (500.0f)
 extern float g_140;                                         // 0x598e6c (140.0f)

@@ -127,7 +127,7 @@ done:
         float y = camera_y * 0.5f;
         view_y = y;
         if (owner[1] != 0)
-            free_ptr((void*)owner[1]);
+            free((void*)owner[1]);
     }
     simulate(dt);
     world->step(dt);

@@ -178,7 +178,7 @@ extern ShadowMap g_shadow_map;                                        // 0xa7024
 
 
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x432510 (max(lo, min(v, hi - 1)))
-int __stdcall FSOUND_3D_Listener_SetAttributes(float* pos, float* vel, float fx, float fy, float fz, float ux, float uy, float uz);   // 0x5342dc (_FSOUND_3D_Listener_SetAttributes@32)
+#include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 
 void __cdecl mb_warning(const char* fmt, ...);                    // 0x42cb80 (logs a warning)
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (the display mesh of an item, scaled to fit *scale)

@@ -403,7 +403,7 @@ struct RotRows { rgl::vector4 s, f, u; };                       // the rotation 
 #include "../../include/mat4.h"                              // rgl::mat3
 rgl::mat3* __cdecl identity3(rgl::mat3* out);                  // 0x40cd60 (cdecl; returns out)
 extern "C" void __stdcall FSOUND_StopSound(int handle);                            // 0x5342a6 _FSOUND_StopSound@4
-extern "C" void __stdcall FSOUND_3D_Listener_SetAttributes(void* pos, int, int, int, int, int, int, int);   // 0x5342dc _FSOUND_3D_Listener_SetAttributes@32
+#include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 
 // ---- the carried-item placement of an agent body (0x495430): views of the item kind, mesh, skeleton ---------------------------------------
 struct CarryKind {                                              // include/item_kind.h ItemKind (0x238 bytes, g_items 0x5e29d0)

@@ -5,6 +5,7 @@
 // follow the verified neighbours s004f49d0 (the same 0x358 face body, 0x344 world and 0x7c wind trio),
 // s004f8c80 (frustum) and s00502300 (widget vtables).  Names are provisional; every offset comes from
 // this slice's disassembly.
+#include <stdlib.h>
 #include <windows.h>
 #include <new>
 #include <vector>
@@ -100,7 +101,6 @@ int clamp_index(int* skin, int* flags, int* count);       // 0x432510
 #include "../game_globals.h"      // canonical global declarations
 #include "../ui_globals.h"      // g_fov_k (0x5e20a8)
 
-void free_535712(void* p);                                  // 0x535712 (operator delete)
 
 // ---- the character-sheet window --------------------------------------------------------------------------
 struct char_window {
@@ -136,7 +136,7 @@ void char_window::open_view()
         label_refresh((widget*)b, tstring("char_i_character"));
         if (world != 0) {
             world->destroy();                   // 0x475d50 (the CellGrid destructor body), then the free
-            free_535712(world);
+            free(world);
             world = 0;
         }
         float lo[2];

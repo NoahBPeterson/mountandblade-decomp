@@ -6,6 +6,7 @@
 // field). Names provisional.
 #ifndef AGENT3_FX_SOUND_H
 #define AGENT3_FX_SOUND_H
+#include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -84,7 +85,6 @@ struct PsysGroup;
 extern "C" {
 int __stdcall FSOUND_PlaySoundEx(int channel, void* sample, void* dsp, int startpaused);        // 0x5342d6
 int __stdcall FSOUND_3D_SetAttributes(int channel, const float* pos, const float* vel);         // 0x5342d0
-int __stdcall FSOUND_SetVolume(int channel, int vol);                                           // 0x5342ca
 int __stdcall FSOUND_SetLoopMode(int channel, unsigned mode);                                   // 0x5342c4
 int __stdcall FSOUND_SetCurrentPosition(int channel, unsigned offset);                          // 0x5342be
 int __stdcall FSOUND_SetFrequency(int channel, int freq);                                       // 0x5342b8

@@ -27,7 +27,6 @@ struct log_stream {
 
 bool print_and_remove(const char* path);                // 0x539023
 int  rename_file(char* from, const char* to);           // 0x538ff5
-extern "C" int __cdecl crt_sprintf(char* buf, const char* fmt, ...);   // 0x536f8f
 extern "C" void __cdecl crt_free(void* p);              // 0x537168
 extern "C" int _fltused = 0;
 void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100

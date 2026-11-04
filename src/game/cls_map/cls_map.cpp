@@ -559,7 +559,7 @@ struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<i
 #include "../main_menu.h"                                    // g_main_menu (the record at 0xa73980)
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
 
-void __stdcall FSOUND_Close();                          // 0x534336 (the import thunk of fmod!FSOUND_Close)
+#include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 void crt_exit();                                        // 0x535458
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 #include "../menu_rec.h"           // MenuRec* g_menus (0x5e29b0)

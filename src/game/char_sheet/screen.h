@@ -116,17 +116,16 @@ struct Timer {
 // 0x4babf0 is a file-local helper: cl's register convention for `static` functions hands it its out
 // pointer in ESI. Defining it here (body shape taken from 0x4babf0) makes the caller emit
 // `lea esi,[esp+0x18]; call ...` instead of a normal stack argument.
-extern "C" int _sprintf(char* buf, const char* fmt, ...);   // 0x536f8f
 extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(void*, int, void*, unsigned long, char*);
 __declspec(noinline) static void screenshots_path(char* out)
 {
     char home[0x104];
     char path[0x104];
     SHGetFolderPathA(0, 5, 0, 0, home);
-    _sprintf(path, "%s\\Mount&Blade Screenshots", home);
+    sprintf(path, "%s\\Mount&Blade Screenshots", home);
     CreateDirectoryA(path, 0);
-    _sprintf(path, "%s", out);
-    _sprintf(out, "%s\\Mount&Blade Screenshots\\%s", home, path);
+    sprintf(path, "%s", out);
+    sprintf(out, "%s\\Mount&Blade Screenshots\\%s", home, path);
 }
 
 using rgl::scene;

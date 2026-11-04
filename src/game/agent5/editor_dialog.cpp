@@ -9,6 +9,8 @@
 //       the same objects and are not compatible with the rgl.h world this function needs.
 //       Names provisional.
 //-----------------------------------------------------------------------------
+#include <stdlib.h>
+#include <stdio.h>
 #include "../../include/image_addrs.h"
 #include "../terrain_a/terrain.h"   // Terrain, g_terrain (0xa76630)
 #include <windows.h>
@@ -20,11 +22,9 @@
 
 // GetDlgItem: User32 exports it as GetDlgItem (IAT 0x54932c); windows.h's A/W-neutral macro maps to it.
 
-long __cdecl _atol(const char*);                    // 0x53734d
 char* __cdecl _itoa(int, char*, int);               // 0x5371f7
 #include <string.h>        // strcmp: /O2 inlines it (the original compares the digit strings inline, 0x4fed02..0x4fed2b)
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
-int  __cdecl _sprintf(char*, const char*, ...);     // 0x536f8f
 
 struct EditorSceneView;                                 // the editor's scene/document (0x5e292c)
 struct EditorGameView;                                   // the game object (0x5e2930)
@@ -180,7 +180,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                     d = (double)g_game_ed->mz;
                 }
                 char buf[512];
-                _sprintf(buf, "%1.0f", d);
+                sprintf(buf, "%1.0f", d);
                 SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
                 return 0;
             }
@@ -199,7 +199,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                     d = (double)g_game_ed->sz;
                 }
                 char buf[512];
-                _sprintf(buf, "%1.2f", d);
+                sprintf(buf, "%1.2f", d);
                 SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
                 return 0;
             }
@@ -218,7 +218,7 @@ LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
                     d = (double)g_game_ed->tz;
                 }
                 char buf[512];
-                _sprintf(buf, "%1.2f", d);
+                sprintf(buf, "%1.2f", d);
                 SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
                 return 0;
             }
@@ -453,13 +453,13 @@ command:
             float v1 = g_game_ed->my, v2 = g_game_ed->sy, v3 = g_game_ed->ty;
             char buf[512];
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
-            _sprintf(buf, "%1.0f", (double)v1);
+            sprintf(buf, "%1.0f", (double)v1);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
-            _sprintf(buf, "%1.2f", (double)v2);
+            sprintf(buf, "%1.2f", (double)v2);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
-            _sprintf(buf, "%1.2f", (double)v3);
+            sprintf(buf, "%1.2f", (double)v3);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
         }
         return 1;
@@ -478,13 +478,13 @@ command:
             float v1 = g_game_ed->mx, v2 = g_game_ed->sx, v3 = g_game_ed->tx;
             char buf[512];
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
-            _sprintf(buf, "%1.0f", (double)v1);
+            sprintf(buf, "%1.0f", (double)v1);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
-            _sprintf(buf, "%1.2f", (double)v2);
+            sprintf(buf, "%1.2f", (double)v2);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
-            _sprintf(buf, "%1.2f", (double)v3);
+            sprintf(buf, "%1.2f", (double)v3);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
         }
         return 1;
@@ -497,13 +497,13 @@ command:
             float v1 = g_game_ed->mz, v2 = g_game_ed->sz, v3 = g_game_ed->tz;
             char buf[512];
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
-            _sprintf(buf, "%1.0f", (double)v1);
+            sprintf(buf, "%1.0f", (double)v1);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
-            _sprintf(buf, "%1.2f", (double)v2);
+            sprintf(buf, "%1.2f", (double)v2);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
-            _sprintf(buf, "%1.2f", (double)v3);
+            sprintf(buf, "%1.2f", (double)v3);
             SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
         }
         return 1;
@@ -747,7 +747,7 @@ command:
         if (text[0] == 0)
             v = 0;
         else {
-            v = _atol(text);
+            v = atol(text);
             if (v > 0xff)
                 v = 0xff;
             else if (v < 0)
@@ -774,7 +774,7 @@ command:
         if (text[0] == 0)
             v = 0;
         else {
-            v = _atol(text);
+            v = atol(text);
             if (v > 0xff)
                 v = 0xff;
             else if (v < 0)
@@ -795,7 +795,7 @@ command:
         char text[0x40];
         long v;
         GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
-        if (text[0] == 0 || (v = _atol(text)) < 0)
+        if (text[0] == 0 || (v = atol(text)) < 0)
             v = 0;
         else if (v > 0xff)
             v = 0xff;

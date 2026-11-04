@@ -138,8 +138,6 @@ struct envelope {
 // (scene() 0x429740 and ~scene() 0x41f4e0 are rgl_mesh.h's, the widget base constructor 0x48ae20 is MissionUi's, its destructor 0x487c00 Buffer's: cs_common.h)
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
-void __stdcall listener_set(float* pos, float* vel,
-                            float dx, float dy, float dz,
-                            float ux, float uy, float uz);  // 0x5342dc (FMOD 3; 8 args)
+#include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 
 #endif

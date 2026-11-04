@@ -219,12 +219,7 @@ int   __cdecl round_float(const float* f);             // 0x432540: round to nea
 float __cdecl clamp(const float& v, const float& lo, const float& hi);  // 0x40e3d0
 
 // FMOD 3 entry points used by the sound loader.
-struct FSOUND_SAMPLE;
-FSOUND_SAMPLE* __stdcall FSOUND_Sample_Load(int index, const char* name, unsigned flags, int offset, int length); // 0x534330 (ret 20)
-void  __stdcall FSOUND_SetVolume(int channel, int volume);                                                       // 0x5342ca (ret 8)
-int   __stdcall FSOUND_Sample_SetDefaults(FSOUND_SAMPLE* s, int freq, int vol, int pan, int pri);                 // 0x53432a (ret 20)
-int   __stdcall FSOUND_Sample_GetLength(FSOUND_SAMPLE* s);                                                         // 0x534324 (ret 4)
-int   __stdcall FSOUND_Sample_GetDefaults(FSOUND_SAMPLE* s, int* freq, int* vol, int* pan, int* pri);              // 0x53431e (ret 20)
+#include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 
 extern const float g_54ab2c;   // 0x54ab2c (0.0625f)
 extern const float g_549d70;   // 0x549d70 (0.5f)

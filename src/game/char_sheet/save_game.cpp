@@ -168,7 +168,7 @@ void log_save_path()
 {
     char dir[260];
     char path[512];
-    crt_sprintf(dir, "");
+    sprintf(dir, "");
     save_path(dir);
     CreateDirectoryA(dir, NULL);
     mb_snprintf(path, 0x200, "%s%s", dir, g_game->module.c_str());

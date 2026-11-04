@@ -23,9 +23,9 @@
 #include "../../rgl/options.h"   // g_options 0x5aa008
 
 // FMOD 3 imports (stdcall thunks in the image's import library)
+#include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 extern "C" {
 int __stdcall FSOUND_PlaySoundEx(int channel, void* sample, void* dsp, int startpaused);   // 0x5342d6
-int __stdcall FSOUND_SetVolume(int channel, int vol);                                      // 0x5342ca
 int __stdcall FSOUND_SetPaused(int channel, int paused);                                   // 0x5342ac
 }
 
