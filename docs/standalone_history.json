@@ -1400,5 +1400,37 @@
    "reached through tables": 42598,
    "library data": 55978
   }
+ },
+ "2026-11-04T11:23:07-06:00": {
+  "data_labels": 125,
+  "aliases": 209,
+  "source_aliases": 50,
+  "source_hacks": 4,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 0,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 7,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 183,
+  "when": "2026-11-04T11:23:07-06:00",
+  "commit": "0ea145c2",
+  "build": "merge_mh",
+  "label": "MeshWidget",
+  "items": {
+   "defined in source": 188,
+   "generated from source": 1957,
+   "borrowed from image": 65,
+   "reached through tables": 71,
+   "library data": 525
+  },
+  "bytes": {
+   "defined in source": 143688050,
+   "generated from source": 304868,
+   "borrowed from image": 7712,
+   "reached through tables": 42598,
+   "library data": 56170
+  }
  }
 }
