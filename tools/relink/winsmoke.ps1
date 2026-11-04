@@ -71,18 +71,25 @@ function Shot($proc, $path) {
   if ($h -ne [IntPtr]::Zero) {
     $wr = New-Object W+RECT
     [W]::GetWindowRect($h, [ref]$wr) | Out-Null
+  }
+  # a window being created or resized can be 0 high for a moment: then the screen copy below (a 0-sized bitmap throws)
+  if ($h -ne [IntPtr]::Zero -and ($wr.R - $wr.L) -gt 0 -and ($wr.B - $wr.T) -gt 0) {
     $full = New-Object System.Drawing.Bitmap ($wr.R - $wr.L), ($wr.B - $wr.T)
     $g = [System.Drawing.Graphics]::FromImage($full)
     $dc = $g.GetHdc(); [W]::PrintWindow($h, $dc, 2) | Out-Null; $g.ReleaseHdc($dc); $g.Dispose()
     $crop = New-Object System.Drawing.Rectangle ($x - $wr.L), ($y - $wr.T), $w, $hh
     $crop.Intersect((New-Object System.Drawing.Rectangle 0, 0, $full.Width, $full.Height))
-    $cand = $full.Clone($crop, $full.PixelFormat); $full.Dispose()
-    $sum = 0; $cnt = 0
-    for ($i = 0; $i -lt 40; $i++) { for ($j = 0; $j -lt 40; $j++) {
-      $c = $cand.GetPixel([int]($cand.Width * ($i + 0.5) / 40), [int]($cand.Height * ($j + 0.5) / 40)); $sum += $c.R + $c.G + $c.B; $cnt++ } }
-    if ($sum / $cnt -gt 6) { $bmp = $cand } else { $cand.Dispose() }
+    if ($crop.Width -gt 0 -and $crop.Height -gt 0) {
+      $cand = $full.Clone($crop, $full.PixelFormat)
+      $sum = 0; $cnt = 0
+      for ($i = 0; $i -lt 40; $i++) { for ($j = 0; $j -lt 40; $j++) {
+        $c = $cand.GetPixel([int]($cand.Width * ($i + 0.5) / 40), [int]($cand.Height * ($j + 0.5) / 40)); $sum += $c.R + $c.G + $c.B; $cnt++ } }
+      if ($sum / $cnt -gt 6) { $bmp = $cand } else { $cand.Dispose() }
+    }
+    $full.Dispose()
   }
   if ($bmp -eq $null) {
+    if ($w -le 0 -or $hh -le 0) { $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds; $x = $b.X; $y = $b.Y; $w = $b.Width; $hh = $b.Height }
     $bmp = New-Object System.Drawing.Bitmap $w, $hh
     $g = [System.Drawing.Graphics]::FromImage($bmp)
     $g.CopyFromScreen($x, $y, 0, 0, $bmp.Size)
@@ -134,7 +141,7 @@ try {
       $menu = $true
       break
     }
-    if ([int]((Get-Date) - $t0).TotalSeconds / 20 -gt $n) { $n++; Shot $gp ("$Out\load_{0:D3}.png" -f ($n * 20)) | Out-Null }
+    if ([int]((Get-Date) - $t0).TotalSeconds / 20 -gt $n) { $n++; try { Shot $gp ("$Out\load_{0:D3}.png" -f ($n * 20)) | Out-Null } catch { } }   # a progress shot never fails the run
   }
   if (-not $menu) { Status "fail timeout" }
 } catch {
