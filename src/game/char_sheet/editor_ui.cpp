@@ -163,10 +163,10 @@ Camera* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
         w = new (w, raw_place()) Camera;   // 0x49deb0
     else
         w = 0;
-    w->flags |= 0x20;
+    w->f104 |= 0x20;
     if (a3 != 0)
-        w->follow[1] = (follow_iface*)a3;
-    w->target = (shape_ref*)parent;
+        w->follow[1] = (MissionUi*)a3;
+    w->target = (ContainerBase*)parent;
     ((Widget*)w)->add_child(parent);
     label_refresh((MissionUi*)w, *name);
     return w;

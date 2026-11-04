@@ -1155,26 +1155,8 @@ extern gui_manager g_gui;                   // 0x5d7080 (strat/gui_manager.h: +0
 
 // tick counters, 8 bytes each; timers index this array through their own key field.
 // ---- stub interface for the virtual calls (the other interfaces are in camera_class.h) ----
-struct view_iface {                             // `this` seen as its own descriptor (0x5931a8)
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-    virtual void s8(); virtual void s9(); virtual void s10(); virtual void s11();
-    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-    virtual void s20(); virtual void s21();
-    virtual void s22(void* v);                                          // [this+0x58] shake
-    virtual void s23(void* v);                                          // [this+0x5c] follow target
-};
 
 
-// ---- the engine object base's members (declared in camera_class.h) ----
-__forceinline void Object::base_ctor() { ((MissionUi*)this)->MissionUi::MissionUi(); }                 // 0x48ae20
-__forceinline void Object::dtor_common() { ((ContainerBase*)this)->ContainerBase::~ContainerBase(); }     // 0x490520
-__forceinline void Object::update() { ((FieldPanel*)this)->update(); }                       // 0x48d470
-__forceinline void Object::terrain_refresh(void* p) { ((WItem*)this)->terrain_refresh((const float*)p); }                // 0x48f120  (p = &w20)
-__forceinline void Object::set_color(unsigned v) { ((FieldPanel*)this)->set_color(v); }             // 0x48d350
-__forceinline void Object::set_alpha(unsigned v) { ((FieldPanel*)this)->set_alpha(v); }             // 0x48d3c0
-__forceinline void Object::bounds_of(void* scene, float* pos, void* c, void* d) { ((ContainerBase*)this)->ContainerBase::render((rgl::scene*)scene, pos, (int)c, (int)d); }   // 0x490710
 
 // Blend one colour level from `a` (target) to `b` (rendered) over a fade of length `lim` that has run for
 // `d`, rounded half-up.  The first colour byte is read as a masked dword (unsigned), the others as bytes.
@@ -1200,11 +1182,7 @@ static __forceinline int blend_i(const float& lim, const float& d, int a, int b)
 // @ 0x49deb0
 Camera::Camera()
 {
-    base_ctor();
-    sub0 = 0;
-    sub1 = 0;
-    sub2 = 0;
-    vptr = (void*)vtbl_5931a8;                     // the view's own class descriptor
+    *(void**)this = (void*)vtbl_5931a8;                     // the view's own class descriptor
     shake_x = 0;
     shake_y = 0;
     follow[0] = 0;
@@ -1214,7 +1192,7 @@ Camera::Camera()
 }
 
 // @ 0x49df30
-int Camera::type()
+int Camera::kind()
 {
     return 7;
 }
@@ -1223,104 +1201,104 @@ int Camera::type()
 unsigned Camera::mask(int a)
 {
     if (a == 0)
-        return flags & 0x10;
-    return flags & 0x20;
+        return f104 & 0x10;
+    return f104 & 0x20;
 }
 
 // @ 0x49df60
 // Place the followed object at the view position (plus its own displacement), undo the current shake
 // if it is the tracked object, then tell it it moved.
-void Camera::move(shape_ref* e)
+void Camera::on_child_moved(MissionUi* e)
 {
-    e->pos = float2(e->disp.x + px, e->disp.y + py);
+    *(float2*)&e->fE0 = float2(e->fE8 + fE0, e->fEC + fE4);
     if (e == target) {
-        e->pos.x = e->pos.x - shake_x;
-        e->pos.y = e->pos.y - shake_y;
+        e->fE0 = e->fE0 - shake_x;
+        e->fE4 = e->fE4 - shake_y;
     }
-    ((shape_ref::iface*)e)->s24();
+    e->on_moved();
 }
 
 // @ 0x49dfe0
 // Per-frame view update: the two shake axes follow the tracked object while its follow objects report
 // a weight, then the four fades (zoom, colour, level, shake) are advanced.
-void Camera::update(int)
+void Camera::animate(int)
 {
     float2 v;
 
-    shake_x = target->sb[0];
-    shake_y = target->sb[1];
+    shake_x = target->screen[2];
+    shake_y = target->screen[3];
     for (int i = 2; i != 0; i--) {
         int k = 2 - i;
         if (follow[k] && follow_shape[k]) {
-            float r = follow[k]->s14();
-            (&shake_x)[k] = (target->sa[k] - target->sb[k] - (&w)[k]) * r + target->sb[k];
+            float r = follow[k]->get168();
+            (&shake_x)[k] = (target->screen[k] - target->screen[2 + k] - screen[k]) * r + target->screen[2 + k];
         }
     }
-    ((view_iface*)this)->s23(target);
+    on_child_moved(target);
 
-    float d0 = (float)(g_ticks[timer[0].clock] - timer[0].start) * 1e-5f;    // colour
-    float d1 = (float)(g_ticks[timer[1].clock] - timer[1].start) * 1e-5f;    // level
-    float d4 = (float)(g_ticks[timer[4].clock] - timer[4].start) * 1e-5f;    // zoom
-    float d5 = (float)(g_ticks[timer[5].clock] - timer[5].start) * 1e-5f;    // shake
+    float d0 = elapsed(0);    // colour
+    float d1 = elapsed(1);    // level
+    float d4 = elapsed(4);    // zoom
+    float d5 = elapsed(5);    // shake
 
     // zoom: blend the target's zoom from the near weights toward the far ones
-    if (d4 < lim[4]) {
-        float inv = 1.0f / lim[4];
-        float rest = lim[4] - d4;
-        float xn = d4 * w20 + rest * w22;
+    if (d4 < dur(4)) {
+        float inv = 1.0f / dur(4);
+        float rest = dur(4) - d4;
+        float xn = d4 * f88 + rest * a8;
         // the original spills both y terms and their sum to float slots before scaling (volatile
         // forces the same float rounding; it matters for denormal results)
-        volatile float yb = d4 * w21;
-        volatile float yr = rest * w23;
+        volatile float yb = d4 * f8c;
+        volatile float yr = rest * ac;
         volatile float yn = yr + yb;
         float x = xn * inv;
         float y = yn * inv;
         v.x = x * 0.02f;
         v.y = y * 0.02f;
-        (*target->sub)->s27(&v);
-        f_d8 = x;
-        f_dc = y;
-        Object::update();
-    } else if (flag2) {
-        flag2 = 0;
-        terrain_refresh(&w20);
+        target->kids[0]->set_size((float*)&v);
+        fD8 = x;
+        fDC = y;
+        ((FieldPanel*)this)->update();
+    } else if (c2) {
+        c2 = 0;
+        ((WItem*)this)->terrain_refresh(&f88);
     }
 
     // colour: the three level bytes blended from the target levels and packed under the inherited
     // alpha byte, then the target sub-object's colour slot
-    if (d0 < lim[0]) {
-        int i0 = blend_u(lim[0], d0, *(unsigned*)le & 0xff, *(unsigned*)lv & 0xff);
-        int i1 = blend_i(lim[0], d0, le[1], lv[1]);
-        int i2 = blend_i(lim[0], d0, le[2], lv[2]);
-        unsigned col = (colour | (*target->sub)->colour) & 0xff000000u;
+    if (d0 < dur(0)) {
+        int i0 = blend_u(dur(0), d0, srcA & 0xff, valA & 0xff);
+        int i1 = blend_i(dur(0), d0, ((unsigned char*)&srcA)[1], ((unsigned char*)&valA)[1]);
+        int i2 = blend_i(dur(0), d0, ((unsigned char*)&srcA)[2], ((unsigned char*)&valA)[2]);
+        unsigned col = (color14c | target->kids[0]->color14c) & 0xff000000u;
         col |= (unsigned)((i2 << 16) + (i1 << 8) + i0);
-        (*target->sub)->s38(&col);
-        (*target->sub)->s37(&v);
-    } else if (flag0) {
-        flag0 = 0;
-        set_color(colour ^ ((colour ^ *(unsigned*)lv) & 0xffffff));
+        target->kids[0]->set_color(&col);
+        target->kids[0]->get_xy((float*)&v);
+    } else if (c0) {
+        c0 = 0;
+        ((FieldPanel*)this)->set_color(color14c ^ ((color14c ^ valA) & 0xffffff));
     }
 
     // level
-    if (d1 < lim[1]) {
-        set_alpha(blend_i(lim[1], d1, le[7], lv[7]));
-    } else if (flag1) {
-        flag1 = 0;
-        set_alpha(lv[7]);
+    if (d1 < dur(1)) {
+        ((FieldPanel*)this)->set_alpha(blend_i(dur(1), d1, ((unsigned char*)&srcA)[7], ((unsigned char*)&valA)[7]));
+    } else if (c1) {
+        c1 = 0;
+        ((FieldPanel*)this)->set_alpha(((unsigned char*)&valA)[7]);
     }
 
     // shake: blend toward the far weights and hand the offset to the object
-    if (d5 < lim[5]) {
-        float inv = g_one / lim[5];
-        float rest = lim[5] - d5;
-        v.x = (d5 * w40 + rest * w42) * inv;
-        v.y = (d5 * w41 + rest * w43) * inv;
-        ((view_iface*)this)->s22(&v);
-        Object::update();
-    } else if (flag3) {
-        ((view_iface*)this)->s22(&w40);
-        Object::update();
-        flag3 = 0;
+    if (d5 < dur(5)) {
+        float inv = g_one / dur(5);
+        float rest = dur(5) - d5;
+        v.x = (d5 * f80 + rest * a0) * inv;
+        v.y = (d5 * f84 + rest * a4) * inv;
+        move_a((float*)&v);
+        ((FieldPanel*)this)->update();
+    } else if (c3) {
+        move_a(&f80);
+        ((FieldPanel*)this)->update();
+        c3 = 0;
     }
 }
 
@@ -1328,7 +1306,7 @@ void Camera::update(int)
 void* Camera::destroy(unsigned flags)
 {
     scene.~scene();
-    Object::dtor_common();
+    ContainerBase::~ContainerBase();
     if (flags & 1)
         ::operator delete(this);
     return this;
@@ -1351,31 +1329,31 @@ static __forceinline void set_box(rgl::frustum* f, float l, float r, float b, fl
     f->farz = fa;
 }
 struct V4 { float x, y, z, w; };
-void Camera::render(int a, float* pos, void* c, void* d)
+void Camera::render(rgl::scene* a, float* pos, int c, int d)
 {
     scene.reset();
-    scene.f0 = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x548)) * px);
-    scene.f4 = (int)((0.75f - (py + h)) * (float)(*(int*)((char*)&c49deb0::g_gui + 0x54c)) * 1.3333334f);
-    scene.f8 = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x548)) * w);
-    scene.fc = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x54c)) * h * 1.3333334f);
+    scene.f0 = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x548)) * fE0);
+    scene.f4 = (int)((0.75f - (fE4 + screen[1])) * (float)(*(int*)((char*)&c49deb0::g_gui + 0x54c)) * 1.3333334f);
+    scene.f8 = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x548)) * screen[0]);
+    scene.fc = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x54c)) * screen[1] * 1.3333334f);
     scene.f14 = 1.0f;
     scene.f10 = 0;
     scene.flags |= 0x1000;
     rgl::frustum* f = &fr;
-    set_box(f, w * -0.5f, w * 0.5f, h * -0.5f, h * 0.5f, 0, 501.0f);
+    set_box(f, screen[0] * -0.5f, screen[0] * 0.5f, screen[1] * -0.5f, screen[1] * 0.5f, 0, 501.0f);
     f->build_planes();
     float m[16];
     c49deb0::identity_pos(m);
     V4 v;
     v.z = 400.0f;
-    v.x = w * 0.5f + px;
-    v.y = h * 0.5f + py;
+    v.x = screen[0] * 0.5f + fE0;
+    v.y = screen[1] * 0.5f + fE4;
     *(V4*)&m[12] = v;
     memcpy(&f->m, m, 0x40);
     f->build_planes();
     memcpy(&scene.fr, f, 0x120);
     *pos = *pos + 1.0f;
-    bounds_of(&scene, pos, c, d);
+    ContainerBase::render(&scene, pos, c, d);
 }
 
 

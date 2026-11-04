@@ -209,19 +209,19 @@ void PartyWindow::create()
         if (i == 0) {
             MissionUi* sc = (MissionUi*)make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory1"));
             v = new Camera;
-            v->flags |= 0x20;
+            v->f104 |= 0x20;
             if (sc != 0)
-                v->follow[1] = (follow_iface*)sc;
-            v->target = (shape_ref*)(size_t)nrows;
+                v->follow[1] = (MissionUi*)sc;
+            v->target = (ContainerBase*)(size_t)nrows;
             SET_ROWS(v, nrows);
             label_refresh(v, tstring("inv_sc_inventory1_outer"));
         } else {
             MissionUi* sc = (MissionUi*)make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
             v = new Camera;
-            v->flags |= 0x20;
+            v->f104 |= 0x20;
             if (sc != 0)
-                v->follow[1] = (follow_iface*)sc;
-            v->target = (shape_ref*)(size_t)nrows;
+                v->follow[1] = (MissionUi*)sc;
+            v->target = (ContainerBase*)(size_t)nrows;
             SET_ROWS(v, nrows);
             label_refresh(v, tstring("inv_sc_inventory2_outer"));
         }
@@ -229,11 +229,11 @@ void PartyWindow::create()
 
         float m = rows_h < visible ? rows_h : visible;
         {
-            Vec2 p(v->f_e8, v->f_ec - m);
+            Vec2 p(v->fE8, v->fEC - m);
             WOPS(v)->set_pos(&p.x);
         }
         {
-            Vec2 s(v->w, m);
+            Vec2 s(v->screen[0], m);
             WOPS(v)->set_scale(&s.x);
         }
         ((FieldPanel*)v)->update();

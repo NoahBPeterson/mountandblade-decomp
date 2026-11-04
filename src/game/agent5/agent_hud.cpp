@@ -1323,8 +1323,8 @@ void GameScreen::build()
     UI(frame)->add_child(UI(flag));
 
     tree = new Camera;
-    tree->flags |= 0x20;
-    tree->follow[1] = (follow_iface*)flag;           // +0x484
+    tree->f104 |= 0x20;
+    tree->follow[1] = (MissionUi*)flag;           // +0x484
 
     GroupWidget* bar = new GroupWidget;
     v[0] = 0.0f;
@@ -1332,7 +1332,7 @@ void GameScreen::build()
     UI(bar)->set_size(v);
     UI(bar)->set_pos(&panel->screen[0]);
     UI(bar)->add_child(UI(panel));
-    tree->target = (shape_ref*)bar;                // +0x490
+    tree->target = (ContainerBase*)bar;                // +0x490
     UI(tree)->add_child(UI(bar));
     v[0] = 0.0f;
     v[1] = 0.0f;
