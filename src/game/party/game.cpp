@@ -108,7 +108,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         }
         *counter = *counter + 1;
         tstring k("ui_creating_game");
-        out->assign(g_strtable.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(k)->c_str());
         return r;
     }
     if (step == 1) {
@@ -119,7 +119,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         g_game_G->f1a05c = 1;
         *counter = *counter + 1;
         tstring k("ui_loading_setting_data");
-        out->assign(g_strtable.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(k)->c_str());
         return false;
     }
     if (step == 2) {
@@ -134,7 +134,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         }
         *counter = *counter + 1;
         tstring k("ui_loading_savegame_file");
-        out->assign(g_strtable.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(k)->c_str());
         return false;
     }
     if (step == 3) {
@@ -149,7 +149,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         }
         *counter = *counter + 1;
         tstring k("ui_loading_map_file");
-        out->assign(g_strtable.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(k)->c_str());
         return false;
     }
     if (step == 4) {
@@ -159,7 +159,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             if (w04 == 2 || w04 == 3) {      // re-read after the call (0x51ca17)
                 Game* g = g_game_G;
                 tstring key("ui_player");
-                tstring name(*g_strtable.lookup(&key));
+                tstring name(*g_strtable.lookup(key));
                 troop_name(&g->troops[g->cur_troop]) = name;
             }
         }
@@ -168,7 +168,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         log_stream_ptr()->w_cstr("load_map_data complete.\n");
         *counter = *counter + 1;
         tstring k("ui_initializing_map");
-        out->assign(g_strtable.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(k)->c_str());
         return false;
     }
     if (step == 5) {
@@ -177,7 +177,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         *counter = *counter + 1;
         {
             tstring k("ui_launching_game");
-            out->assign(g_strtable.lookup(&k)->c_str());
+            out->assign(g_strtable.lookup(k)->c_str());
         }   // the key dies before the log line (0x51cb4a, then the call at 0x51cb5e)
         log_stream_ptr()->w_cstr("Init_map complete.\n");
         return false;
@@ -192,7 +192,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         log_stream_ptr()->w_cstr("launch complete.\n");
         *counter = *counter + 1;
         tstring k("ui_finished");
-        out->assign(g_strtable.lookup(&k)->c_str());
+        out->assign(g_strtable.lookup(k)->c_str());
         return false;
     }
     return true;

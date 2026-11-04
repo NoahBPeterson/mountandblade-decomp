@@ -244,7 +244,7 @@ void PartyWindow::init_screen()
                 nm->set_text(out, s);
             } else if (w04 == 0) {
                 float out[2];
-                nm->set_text(out, g_strtable.lookup(&tstring("ui_dump")));
+                nm->set_text(out, g_strtable.lookup(tstring("ui_dump")));
             }
         }
         container->add_child(nm);
@@ -254,7 +254,7 @@ void PartyWindow::init_screen()
 
     {
         float y = cfg(tstring("inv_b_leave_h"));
-        tstring* label = g_strtable.lookup(&tstring("ui_return"));
+        tstring* label = g_strtable.lookup(tstring("ui_return"));
         leave = new_sized_button((MissionUi*)container, *label, 0.0f, 0.0f, y, tstring("short_button"), tstring("short_button_down"), 3.0f, 0.072f, 0.085f);
     }
     label_refresh((MissionUi*)leave, tstring("inv_b_leave_h"));
@@ -263,7 +263,7 @@ void PartyWindow::init_screen()
         total_cost = tc;
         label_refresh(tc, tstring("inv_t_total_cost"));
         float out[2];
-        tc->set_text(out, g_strtable.lookup(&tstring("ui_no_cost")));
+        tc->set_text(out, g_strtable.lookup(tstring("ui_no_cost")));
         container->add_child(tc);
     }
 
@@ -336,8 +336,8 @@ void PartyWindow::init_screen()
     if ((g_game_G->f13ae8 & 1) == 0 && w04 == 2 && g_cfg.skip_tutorial == 0) {
         tstring t1("ui_tutorial_inventory");
         tstring t2("ui_tutorial");
-        tstring* text = g_strtable.lookup(&t1);
-        tstring* title = g_strtable.lookup(&t2);
+        tstring* text = g_strtable.lookup(t1);
+        tstring* title = g_strtable.lookup(t2);
         g_windows.box()->set_inline(title, text);
         g_windows.open(0);
         g_game_G->f13ae8 |= 1;
@@ -355,7 +355,7 @@ void PartyWindow::money_label(int which)
     char buf[512];
     {
         tstring key("ui_money_value");
-        sprintf(buf, g_strtable.lookup(&key)->c_str(), ((GameData*)g_game_G)->string_value(money).c_str());   // the callee builds the string in place through the hidden return pointer
+        sprintf(buf, g_strtable.lookup(key)->c_str(), ((GameData*)g_game_G)->string_value(money).c_str());   // the callee builds the string in place through the hidden return pointer
     }
     {
         tstring s(buf);

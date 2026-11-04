@@ -115,7 +115,7 @@ tstring GameData::string_value(int index)
         char buf[0x200];
         {
             tstring key("ui_value_denars");
-            tstring* value = g_strtable.lookup(&key);
+            tstring* value = g_strtable.lookup(key);
             sprintf(buf, value->c_str(), index);
         }
         g_script.result_string.assign(buf);
@@ -173,7 +173,7 @@ void GameData::add_inventory(int item, int amount)
             tstring key("ui_got_item_value");
             tstring* nm = g_strtable.find(&g_items[item].key);
             const char* name = (nm ? nm : (tstring*)&g_items[item])->c_str();
-            tstring* fmt = g_strtable.lookup(&key);
+            tstring* fmt = g_strtable.lookup(key);
             sprintf(buf, fmt->c_str(), name);
         }
         {

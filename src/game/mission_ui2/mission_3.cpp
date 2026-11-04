@@ -653,16 +653,16 @@ static void unit_class_name(unsigned kind, char* out)
 {
     if (kind == 0) {
         tstring key("ui_infantry");
-        strcpy(out, g_strtable.lookup(&key)->c_str());
+        strcpy(out, g_strtable.lookup(key)->c_str());
     } else if (kind == 2) {
         tstring key("ui_cavalry");
-        strcpy(out, g_strtable.lookup(&key)->c_str());
+        strcpy(out, g_strtable.lookup(key)->c_str());
     } else if (kind == 1) {
         tstring key("ui_archers");
-        strcpy(out, g_strtable.lookup(&key)->c_str());
+        strcpy(out, g_strtable.lookup(key)->c_str());
     } else {
         tstring key("ui_everyone");
-        strcpy(out, g_strtable.lookup(&key)->c_str());
+        strcpy(out, g_strtable.lookup(key)->c_str());
     }
 }
 
@@ -677,7 +677,7 @@ void ForceLabel::make_label(char* out)
         all = 0;
     if (n2 != 0 && all) {
         tstring key("ui_everyone");
-        strcpy(out, g_strtable.lookup(&key)->c_str());
+        strcpy(out, g_strtable.lookup(key)->c_str());
         return;
     }
 
@@ -699,10 +699,10 @@ void ForceLabel::make_label(char* out)
             strcpy(acc, out);
             if (grouped) {
                 tstring key("ui_str_and_str");
-                sprintf(out, g_strtable.lookup(&key)->c_str(), acc, part);
+                sprintf(out, g_strtable.lookup(key)->c_str(), acc, part);
             } else {
                 tstring key("ui_str_comma_str");
-                sprintf(out, g_strtable.lookup(&key)->c_str(), acc, part);
+                sprintf(out, g_strtable.lookup(key)->c_str(), acc, part);
             }
         }
     }

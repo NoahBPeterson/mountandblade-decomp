@@ -55,12 +55,8 @@ struct StrTable : StrTableBase {
     tstring language;                                           // +0x1be70 (0x5fe888) the language of the skin file name 
     StrTable();                                                 // 0x4cda20
     ~StrTable() { release_strings(); }                          // the atexit destructor 0x548470
-    tstring* lookup(const tstring* key);                        // 0x43a1e0 (key -> translated string; ret 4)
     tstring* find(const tstring* key);                          // 0x4c6010 (null when absent)
-    // the reference spelling of lookup (a caller that has the key as an object): one thiscall, one pointer argument, so the call
-    // sites compile identically; only the C++ mangled name differs (it never reaches the image). find has no such twin: a second
-    // overload of it made the resolution audit bind options_panel's find calls to the wrong function.
-    tstring* lookup(const tstring& key);                        // 0x43a1e0
+    tstring* lookup(const tstring& key);                        // 0x43a1e0 (key -> translated string; ret 4)
     void load(const tstring* root);                             // 0x4cda90 (the path prefix is a tstring: buf, else its inline bytes at +4)
     void release_strings();                                     // 0x4ca720
 };

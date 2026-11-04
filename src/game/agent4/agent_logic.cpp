@@ -4242,7 +4242,7 @@ static __forceinline char* skel_rec_inl(Skeleton* sk, int i)
     }
     return sk->recs + i * 0x1dc + 0x84;
 }
-static __forceinline tstring* lk(const tstring& k) { return g_strtable.lookup(&k); }
+static __forceinline tstring* lk(const tstring& k) { return g_strtable.lookup(k); }
 static __forceinline skin* get_mat(const tstring& n) { return g_resmgr.get_material(n); }
 
 // @ 0x4529e0
@@ -4459,7 +4459,7 @@ void Agent::shield_hit(int damage)
                             int m = s->b.mod;
                             if (m == 1) {
                                 if (frand() < 0.2f) {
-                                    { tstring key("ui_shield_broken"); g_gui.add(*g_strtable.lookup(&key), 0xddbbbb); }
+                                    { tstring key("ui_shield_broken"); g_gui.add(*g_strtable.lookup(key), 0xddbbbb); }
                                     
                                     if (s->item == STORED(g_game->player, old).item && pairs[old].m4 == STORED(g_game->player, old).m4)
                                         STORED(g_game->player, old).item = -1;
@@ -4468,12 +4468,12 @@ void Agent::shield_hit(int damage)
                             } else if (m == 5) {
                                 if (!(frand() < 0.2f))
                                     return;
-                                { tstring key("ui_shield_cracked"); g_gui.add(*g_strtable.lookup(&key), 0xddbbbb); }
+                                { tstring key("ui_shield_cracked"); g_gui.add(*g_strtable.lookup(key), 0xddbbbb); }
                                 bits = 0x1000000;
                             } else {
                                 if (!(frand() < 0.2f))
                                     return;
-                                { tstring key("ui_shield_deformed"); g_gui.add(*g_strtable.lookup(&key), 0xddbbbb); }
+                                { tstring key("ui_shield_deformed"); g_gui.add(*g_strtable.lookup(key), 0xddbbbb); }
                                 bits = 0x5000000;
                             }
                             
@@ -4963,7 +4963,7 @@ void Agent::reduce_blow(Blow* b)
                     armor_v = (float)bonus + armor_v;
                     if (id == g_mission->player_id) {
                         tstring key("ui_hit_shield_on_back");
-                        g_gui.add(*g_strtable.lookup(&key), -1);
+                        g_gui.add(*g_strtable.lookup(key), -1);
                     }
                 }
             }
@@ -5782,31 +5782,31 @@ static __declspec(noinline) void ui_weapon_class_name(int type, char* out)
 {
     if (type == 0) {
         tstring k("ui_one_handed_weapons");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else if (type == 1) {
         tstring k("ui_two_handed_weapons");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else if (type == 2) {
         tstring k("ui_polearms");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else if (type == 3) {
         tstring k("ui_archery");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else if (type == 4) {
         tstring k("ui_crossbows");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else if (type == 5) {
         tstring k("ui_throwing");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     } else if (type == 6) {
         tstring k("ui_firearms");
-        const char* s = g_strtable.lookup(&k)->c_str();
+        const char* s = g_strtable.lookup(k)->c_str();
         { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
     }
 }
@@ -5869,7 +5869,7 @@ void Agent::process_blow(int unused)
             dmg = dmg * 1.75f;
             if (attacker == m->player_id && g_options.damage_msgs != 0) {
                 tstring k("ui_head_shot");
-                g_gui.add(*g_strtable.lookup(&k), 0xffffdd11);
+                g_gui.add(*g_strtable.lookup(k), 0xffffdd11);
                 m = g_mission;
             }
         }
@@ -5901,7 +5901,7 @@ void Agent::process_blow(int unused)
             {
                 tstring k((f10 != 0 && f30 != -1) ? "ui_delivered_number_damage_to_horse"
                                                         : "ui_delivered_number_damage");
-                sprintf(msgbuf, g_strtable.lookup(&k)->c_str(), round_float(&dmg));
+                sprintf(msgbuf, g_strtable.lookup(k)->c_str(), round_float(&dmg));
             }
             {
                 tstring t(msgbuf);
@@ -5915,7 +5915,7 @@ void Agent::process_blow(int unused)
                 char hbuf[256];
                 {
                     tstring k("ui_horse_charged_for_number_damage");
-                    sprintf(hbuf, g_strtable.lookup(&k)->c_str(), round_float(&dmg));
+                    sprintf(hbuf, g_strtable.lookup(k)->c_str(), round_float(&dmg));
                 }
                 {
                     tstring t(hbuf);
@@ -5937,7 +5937,7 @@ void Agent::process_blow(int unused)
                     char hbuf[256];
                     {
                         tstring k(key);
-                        sprintf(hbuf, g_strtable.lookup(&k)->c_str(), round_float(&dmg));
+                        sprintf(hbuf, g_strtable.lookup(k)->c_str(), round_float(&dmg));
                     }
                     g_gui.add(tstring(hbuf), 0xffe0c0c0);
                 }
@@ -6033,14 +6033,14 @@ void Agent::process_blow(int unused)
                 if ((horse->m4 & 0xff000000) == (unsigned)imod_lame << 24) {
                     if (frand() < 0.2f) {
                         tstring k("ui_horse_fell_dead");
-                        g_gui.add(*g_strtable.lookup(&k), 0xffdd6655);
+                        g_gui.add(*g_strtable.lookup(k), 0xffdd6655);
                         horse->item = -1;
                     }
                 } else {
                     if (frand() < 0.2f) {
                         {
                             tstring k("ui_horse_crippled");
-                            g_gui.add(*g_strtable.lookup(&k), 0xffeebbbb);
+                            g_gui.add(*g_strtable.lookup(k), 0xffeebbbb);
                         }
                         horse->b.mod = 0;
                         horse->m4 |= (unsigned)imod_lame << 24;
@@ -6333,7 +6333,7 @@ void Agent::process_blow(int unused)
                         sd = tt * 1.2f;
                     {
                         tstring k("ui_shot_difficulty");
-                        sprintf(msgbuf, g_strtable.lookup(&k)->c_str(), (double)sd);
+                        sprintf(msgbuf, g_strtable.lookup(k)->c_str(), (double)sd);
                     }
                     {
                         g_gui.add(tstring(msgbuf), 0xffaaaaaa);
@@ -6351,11 +6351,11 @@ void Agent::process_blow(int unused)
                 if (diff == 1) {
                     {
                         tstring k("ui_you_have_improved_your_proficiency_in_value_to_number");
-                        sprintf(msgbuf, g_strtable.lookup(&k)->c_str(), namebuf, nw);
+                        sprintf(msgbuf, g_strtable.lookup(k)->c_str(), namebuf, nw);
                     }
                 } else {
                     tstring k("ui_your_proficiency_in_value_has_improved_by_number_to_number");
-                    sprintf(msgbuf, g_strtable.lookup(&k)->c_str(), namebuf, diff, nw);
+                    sprintf(msgbuf, g_strtable.lookup(k)->c_str(), namebuf, diff, nw);
                 }
                 g_gui.add(tstring(msgbuf), 0xffffdf44);
             }
@@ -6426,11 +6426,11 @@ void Agent::process_blow(int unused)
                 tstring k("ui_value_killed_by_value");
                 const char* n1 = g_game->chars[atk_troop].display_name()->c_str();
                 const char* n2 = g_game->chars[troop].display_name()->c_str();
-                sprintf(msgbuf, g_strtable.lookup(&k)->c_str(), n2, n1);
+                sprintf(msgbuf, g_strtable.lookup(k)->c_str(), n2, n1);
             } else {
                 tstring k("ui_value_fell_dead");
                 const char* n2 = g_game->chars[troop].display_name()->c_str();
-                sprintf(msgbuf, g_strtable.lookup(&k)->c_str(), n2);
+                sprintf(msgbuf, g_strtable.lookup(k)->c_str(), n2);
             }
             m = g_mission;
             int lid = m->player_id;
@@ -6468,11 +6468,11 @@ void Agent::process_blow(int unused)
                 tstring k("ui_value_knocked_unconscious_by_value");
                 const char* n1 = g_game->chars[atk_troop].display_name()->c_str();
                 const char* n2 = g_game->chars[troop].display_name()->c_str();
-                sprintf(namebuf, g_strtable.lookup(&k)->c_str(), n2, n1);
+                sprintf(namebuf, g_strtable.lookup(k)->c_str(), n2, n1);
             } else {
                 tstring k("ui_value_fell_unconscious");
                 const char* n2 = g_game->chars[troop].display_name()->c_str();
-                sprintf(namebuf, g_strtable.lookup(&k)->c_str(), n2);
+                sprintf(namebuf, g_strtable.lookup(k)->c_str(), n2);
             }
             m = g_mission;
             int lid = m->player_id;
@@ -6734,7 +6734,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             if (result != 0 && sw_vlen(hv) < maxdist) {
                                 hit_flag = true;
                                 if (id == g_mission->player_id && is_friend(o)) {
-                                    g_gui.add(*g_strtable.lookup(&tstring("ui_you_hit_a_friendly_troop")),
+                                    g_gui.add(*g_strtable.lookup(tstring("ui_you_hit_a_friendly_troop")),
                                                  0xffff0000);
                                 }
                                 out->flags = 0;
@@ -6939,7 +6939,7 @@ static __forceinline ItemRef* cur_ptr(Agent* a) { ItemRef* p = 0; if (a->wield[0
 #define PRIO1 anim[1].events     // +0x114
 #define PROG anim[1].scale       // +0x118 animation progress
 #define TYPE (ik->type_flags & 0xff)
-#define LOG_TIMED(str) { ::log_message(g_strtable.lookup(&tstring(str)), 0x41a00000); }
+#define LOG_TIMED(str) { ::log_message(g_strtable.lookup(tstring(str)), 0x41a00000); }
 // @ 0x45c220
 void Agent::update_attack(float dt)
 {
@@ -7155,7 +7155,7 @@ void Agent::update_attack(float dt)
                         f5620 = 0x7b;
                     } else if (ik->type_flags & itp_cant_reload_on_horseback) {
                         if (id == g_mission->player_id) {
-                            g_gui.add(*g_strtable.lookup(&tstring("ui_cant_reload_this_weapon_on_horseback")), -1);
+                            g_gui.add(*g_strtable.lookup(tstring("ui_cant_reload_this_weapon_on_horseback")), -1);
                         }
                     } else {
                         f5620 = 0x7c;

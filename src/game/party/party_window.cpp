@@ -57,7 +57,7 @@ static __forceinline float cfg(const tstring& n)
 // the string-table lookup with a named key (a temporary of the caller's expression)
 static inline tstring* lookup(const tstring& k)
 {
-    return g_strtable.lookup(&k);
+    return g_strtable.lookup(k);
 }
 
 // (x, y) pair handed to the widget methods
