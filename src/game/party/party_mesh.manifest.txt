@@ -1,1 +1,0 @@
-../src/game/party/party_mesh.cpp  ?make_mesh@PartyWindow@@QAEPAUmesh@rgl@@PAUItemRef@@PAXH@Z  00502b80  /O2 /MT /Gy /TP

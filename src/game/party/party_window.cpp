@@ -4,7 +4,7 @@
 // Desc: the party screen's inventory window: the equipment menu builder, the slot factory, the page builder, the
 //       armour / encumbrance refresh and the slot placement. Names provisional.
 //       "T regime" region (docs/tu_map.md): cl emitted this object in source order, so the file keeps the binary
-//       order and the helpers that follow their caller (refresh_page -> place_slot) are
+//       order and the helpers that follow their caller (refresh_page -> place_slot -> make_mesh) are
 //       __declspec(noinline), as the original calls them. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #define UIA_CTOR_OUT_OF_LINE   // add_strip_icon calls the constructor 0x48b1c0 (StripIcon is built out of line, then stores its vptr)
@@ -422,7 +422,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
         } else if ((fl & 1) != 0) {
             t = w14;
         }
-        float sc = 0.088f;              // (make_mesh is in party_mesh.cpp: it ignores this argument, and a same-TU definition would let cl drop the store)
+        float sc = 0.088f;
         rgl::mesh* m = make_mesh(item, &sc, t);
         rgl::vector4 off(0.044f, 0.044f, 0.0f);
         m->translate(&off);
@@ -440,6 +440,26 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
         tstring n("inv_i_character2");
         add_strip_icon(&icon_a88, n, w14, spec_ac4);
     }
+}
+
+// @ 0x502b80
+MB_NOINLINE rgl::mesh* PartyWindow::make_mesh(ItemRef* item, void* unused, int t)
+{
+    rgl::mesh* m = 0;
+    if (item->item >= 0) {
+        float s = 0.088f;
+        m = make_item_mesh(item, &s);
+        g_game_G->f1a1f4 = -1;
+        g_game_G->f1a1f8 = t;
+        g_game_G->f1a204 = -10000;
+        g_game_G->f1a200 = (int)m;
+        g_game_G->f1a1fc = 0;
+        g_script.param1_lo = -1;
+        g_script.param1_hi = -1;
+        g_script.param2 = t;
+        item_sound(&g_items[item->item])->play(-0x32);
+    }
+    return m;
 }
 
 // @ 0x502c30  (the last function of the object; the slice listed 0x502c30 as exact in s00502300)
