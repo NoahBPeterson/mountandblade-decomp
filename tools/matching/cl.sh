@@ -30,6 +30,14 @@ tmp=$(mktemp "${TMPDIR:-/tmp}/clsh.XXXXXX")
 # the slot is held; cl.exe itself returns 0 or 2.
 slots=${MB_CL_SLOTS:-$(sysctl -n hw.ncpu 2>/dev/null || echo 8)}
 locks="$root/work/locks"; mkdir -p "$locks"
+# When every local slot is busy, a pass also offers the compile to the Windows laptop's compile server (tools/remote/rcl.py:
+# native cl.exe, up to 11 more slots, docs/remote_worker.md). It exits 75 when the laptop is busy or unreachable (quick: 1 s
+# connect timeout, then a 30 s "down" marker) and 76 when this command can only run here (not configured, odd flags, a header
+# that was not shipped); either way we keep waiting for a local slot. Off unless ~/.config/mb-compile-server exists.
+remote=1; pass=0
+[ -r "$HOME/.config/mb-compile-server" ] || [ -n "$MB_RC_ENDPOINT" ] || remote=0
+[ "$MB_RC" = 0 ] && remote=0
+command -v python3 >/dev/null 2>&1 || remote=0
 while :; do
     i=1
     while [ "$i" -le "$slots" ]; do
@@ -38,6 +46,13 @@ while :; do
         [ "$rc" -ne 75 ] && break 2
         i=$((i + 1))
     done
+    if [ "$remote" = 1 ] && [ $((pass % 5)) -eq 0 ]; then
+        python3 "$root/tools/remote/rcl.py" "$@" </dev/null >"$tmp" 2>&1
+        rc=$?
+        [ "$rc" -eq 76 ] && remote=0
+        [ "$rc" -ne 75 ] && [ "$rc" -ne 76 ] && break
+    fi
+    pass=$((pass + 1))
     sleep 0.2
 done
 cat "$tmp"; rm -f "$tmp"

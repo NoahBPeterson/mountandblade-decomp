@@ -74,3 +74,50 @@ preempted). Open no windows; nothing needs a GUI.
   digits, `/` before, which had reordered the objects and shifted 4725 symbols).
 * Speed: the laptop at Idle priority is about 1.0 to 1.7x slower per emulated input than the Mac (facegen_win 919 s vs 553 s,
   facegen_misc 8 s vs 7 s) while another game runs; a cold first run is several times slower (disk and virus scan).
+
+## Compile server (laptop as extra `cl.exe` slots for the Mac)
+
+When all of the Mac's compile slots (`work/locks/cl.N`, `MB_CL_SLOTS`) are busy, `tools/matching/cl.sh` offers the compile to a
+server on the laptop that runs the native `cl.exe` (no wine; a compile that takes 1 to 60 s under contention takes ~0.5 s). Every
+caller of `cl.sh` benefits unchanged (`slice.compile_obj`, `run_all`, the `/Zs` probes, `trial_link`); the cache keys are untouched.
+
+How it works:
+* `tools/remote/compile_server.py` (copy at `D:\mb\rc\compile_server.py`, not the repo checkout) listens on the Tailscale IP, port
+  47813, 11 slots. Auth: both ends hold the same token (`~/.config/mb-compile-token` on the Mac, `D:\mb\rc\token` on the laptop, both
+  outside the repo); only HMACs of a fresh nonce cross the wire, in both directions (the client will not send source to a server that
+  fails the check). The server runs `cl.exe` only, args starting with `@` are refused, job paths cannot leave the job directory.
+* `tools/remote/rcl.py` (stdlib only) is the client. It reserves a slot first (a busy laptop answers in one round trip), then scans the
+  source for `#include "..."` / `<...>` (includer's directory and its includers, then `/I` dirs, then `src/include`, `match/include`),
+  ships exactly the repo files reached that the server lacks, content-addressed by SHA-1 (`D:\mb\rc\store`, 14-day prune at start), and
+  gets the `.obj` (`/Fo`, `/Fa`) back. The job runs in a fresh `D:\mb\rc\j\<id>` stage tree holding only the shipped files, so the
+  laptop's own `D:\mb\repo` sources can never leak in; the toolchain and DX SDK are the laptop's copies under `D:\mb\repo\work`.
+  Paths in cl's messages are mapped back to the Mac's.
+* Falls back silently: connect timeout 1 s, then a 30 s "down" marker (`work/locks/rcl.down`); a busy/unreachable laptop means cl.sh
+  keeps waiting for a local slot. Commands it cannot ship (`@file`, `/Zi`, `/Fd`, `/Fp`, `/P`, no `/Fo`) and compiles that report C1083
+  (a header the scan missed) run locally. `MB_RC=0` turns it off. It is also off when `~/.config/mb-compile-server` (one line,
+  `100.84.111.92:47813`) does not exist (or `MB_RC_ENDPOINT` unset).
+
+Start / stop / check (the server must be detached from the ssh session, so use WMI, not `startjob.ps1`'s `Start-Process`, which dies with
+the session):
+
+    # start: a ps1 run through ssh containing
+    $cmd = 'cmd.exe /c "D:\mb\repo\.venv\Scripts\python D:\mb\rc\compile_server.py --bind 100.84.111.92 > D:\mb\jobs\rcserver.log 2>&1"'
+    $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine=$cmd; CurrentDirectory='D:\mb\repo'}
+    (Get-Process -Id $r.ProcessId).PriorityClass = 'Idle'; Set-Content D:\mb\jobs\rcserver.pid $r.ProcessId
+    # check:  netstat -ano | findstr 47813      (LISTENING)   and   type D:\mb\jobs\rcserver.log
+    #         from the Mac: python3 tools/remote/rcl.py with MB_RC_ENDPOINT set, or any compile with cl.sh while the Mac is saturated
+    # stop:   taskkill /pid <PID in D:\mb\jobs\rcserver.pid> /t /f
+
+It must be restarted after a laptop reboot. Compile jobs run at Idle priority (the laptop's game wins).
+
+Objects from the laptop vs the Mac: code, data, relocations, symbol names/values and the SEH table are identical; only the COFF
+timestamp, the `.file` symbol, and the `.debug$S` record (which holds the `/Fo` path) differ, plus the symbol-table indices that follow
+from the `.file` length. The Mac's own objects already differ from each other in exactly these fields (`compile_obj` compiles to a
+per-pid `.part.obj` path), so nothing byte-compares whole objects. Anonymous-namespace mangled names hash the source path, so a TU
+with `namespace {` mangles differently on the laptop (see "What differs"): `rcl.py` sends those to the local compiler.
+
+Measured (30 real `src/game/*/*.cpp` modules, 11 compiles in flight, load average 13 to 22 from the other lanes, wine slots all busy):
+Mac only (`MB_RC=0`) 760 s wall, 173 to 445 s per compile (the queue for a slot, not the compiler); with the laptop 3.9 s wall,
+0.3 to 2 s per compile (a few seconds with a cold store; the connect + auth + reserve handshake is ~25 ms over Tailscale). The 30
+objects were compared to the Mac-built ones with a COFF section/relocation/symbol comparison: 30 of 30 identical apart from the
+timestamp, `.file` and `.debug$S` path fields (also agent.cpp, curve.cpp, item_kind.cpp, facegen_win.cpp).
