@@ -117,7 +117,14 @@ Lessons that cost time:
   and view_obj are gone. ItemA..C carry `owned_block` (so their destructors release it, as the original's shared 0x4ce930 does).
   The four constructors (0x4ceb30 / 0x4cef20 / 0x4cef80 / 0x4cee50) no longer use `_ReadWriteBarrier`: cl then orders the independent
   stores differently (the base's `[this+8]` and the record's vptr store after the zero stores), so those rows are parked in
-  mission_items.nonmatching.txt (same store set, order only). Three MissionBlocker slots (2 / 3 / 4) were still forwarding stubs.
+  mission_items.nonmatching.txt (same store set, order only).
+* MissionBlocker (the mission screen, 0x328 bytes, mission_item_recs.h) is one class too: slot 2 is `refresh` 0x4f7f00 (agent_hud.cpp, the former
+  MissionHud), slot 3 `tick` 0x5261e0 (mission_5.cpp, the former Screen_s261e0), slot 4 the camera / parameter initialiser 0x4cea10 (the former
+  MissionParams::init); update_camera / update_status / update_equipment / update_marks (0x529130, the former MissionHud_s29130) are its members,
+  and the views MissionHud, MissionHud_s29130, Screen_s261e0 and MissionParams are gone. Its frustum at +0xf8 is a real member (so cl constructs it at
+  the top of the constructor: the 0x4ce960 row stays parked). The vtable gate reports 0 slots bound by forwarding stubs (12 -> 0); the "slots
+  differ" count rose 2 -> 3 only because `fix_vtables` now reads one zero word of alignment padding after MissionBlocker's table (its 10th word,
+  not a slot of the table).
 * head_cam and head_obj2 are now CampaignScreen and CharSheet, each one class with its screen (game/campaign_screen.h, game/char_sheet_panel.h).
 
 ## Still open (see the audit)

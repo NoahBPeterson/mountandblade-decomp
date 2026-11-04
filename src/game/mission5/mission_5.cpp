@@ -477,7 +477,7 @@ int find_listener_agent()
 #undef g_clamp_max
 #define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
 // @ 0x5261e0
-void Screen_s261e0::tick(float dt)
+void MissionBlocker::frame_update(float dt)
 {
     float sdt;              // local_438
     bool  b6;               // local at esp+0x12
@@ -531,7 +531,7 @@ void Screen_s261e0::tick(float dt)
             rgl::g_vert_budget += 5;
     }
 
-    update(sdt);
+    ((ViewCtrl_s284a0*)this)->update(sdt);
     g_mission_s261e0->b6554 = 0;
     g_mission_s261e0->frame(sdt, 1);
     if (g_mission_s261e0->local_id >= 0) {
@@ -573,7 +573,7 @@ void Screen_s261e0::tick(float dt)
         ((Screen_s2ae70*)g_mission_s261e0)->init_order_markers();   // 0x52653e: ecx = g_mission (0x5e292c), not the screen
     }
     if (g_game_s261e0->f1a090 != 0) {
-        update_ui();
+        ((Mission_s2b5c0*)this)->update_ui();
         if (g_mt_inited) {
             LeaveCriticalSection(&g_mt_cs);
             SetEvent(g_mt_event);
@@ -617,25 +617,25 @@ void Screen_s261e0::tick(float dt)
         if (((int*)((char*)&g_keyboard + 0xc))[29] == 0 && ((int*)((char*)&g_keyboard + 0xc))[157] == 0) {
             if (g_keytable_s261e0.clicked(0x15)) {
                 f2a0 = 0;
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x16)) {
                 f2a0 = 1;
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x17)) {
                 f2a0 = 2;
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x1a)) {
                 f2a0 = 5;
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x1b)) {
                 f2a0 = 6;
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x1c)) {
                 f2a0 = 7;
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x1d)) {
                 f2a0 = 8;
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x18)) {
                 if (g_mission_s261e0->f6674 == 0) {
                     f2a0 = 4;
@@ -644,7 +644,7 @@ void Screen_s261e0::tick(float dt)
                     f2a0 = 3;
                     g_mission_s261e0->f6674 = 0;
                 }
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x1e)) {
                 if (g_mission_s261e0->f666c == 0) {
                     f2a0 = 9;
@@ -653,7 +653,7 @@ void Screen_s261e0::tick(float dt)
                     f2a0 = 10;
                     g_mission_s261e0->f666c = 0;
                 }
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             } else if (g_keytable_s261e0.clicked(0x19)) {
                 if (g_mission_s261e0->f6670 == 0) {
                     f2a0 = 0xc;
@@ -662,7 +662,7 @@ void Screen_s261e0::tick(float dt)
                     f2a0 = 0xd;
                     g_mission_s261e0->f6670 = 0;
                 }
-                order_tick();
+                ((Screen_s2ae70*)this)->order_tick();
             }
         }
         if (g_keytable_s261e0.clicked(0x1f) || g_keytable_s261e0.clicked(0x20) || g_keytable_s261e0.clicked(0x21) ||
@@ -745,13 +745,13 @@ void Screen_s261e0::tick(float dt)
 
     // ---- region-change / texture timers ------------------------------------------------------------
     {
-        __int64 d = g_ticks[f2a8] - f2b0;
+        __int64 d = g_ticks[clock_a] - stamp_a;
         if ((float)d * 1e-5f > g_f590b38 && g_mission_s261e0->local_id >= 0) {
             f29c = 0;
-            __int64 d2 = g_ticks[f2b8] - f2c0;
+            __int64 d2 = g_ticks[clock_b] - stamp_b;
             if ((float)d2 * 1e-5f > 0.1f) {
-                f_529ec0();
-                f2c0 = g_ticks[f2b8];
+                ((Screen_s29ec0*)this)->f_529ec0();
+                stamp_b = g_ticks[clock_b];
             }
             if (f2c8 == -1) {
                 g_gui_s261e0.set_o568(0, 1);
@@ -894,7 +894,7 @@ void Screen_s261e0::tick(float dt)
         f324 = g_game_s261e0->f13b04;
     }
     if (f324 >= 0 && g_presentation == 0) {
-        ((Src_s261e0*)((char*)this + 0x30))->init(f2c, f324);
+        ((Src_s261e0*)((char*)this + 0x30))->init((int)frame, f324);
         if ((flags44 & 1) == 0) {
             if (g_render.dev != 0)
                 ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 1);
@@ -903,7 +903,7 @@ void Screen_s261e0::tick(float dt)
     }
     if (g_presentation != 0) {
         ((Src_s261e0*)((char*)this + 0x30))->pick((int*)&val14);
-        __int64 d = g_ticks[f48] - f50;
+        __int64 d = g_ticks[f48] - stamp;
         if ((float)d * 1e-5f > f58) {
             g_presentation = 0;
             if (f34 != 0)
@@ -922,7 +922,7 @@ void Screen_s261e0::tick(float dt)
     if (b6) {
         // ---- boolean-true branch -------------------------------------------------------------------
         if (flag13 != 0 && g_mission_s261e0->local_id >= 0 && g_game_s261e0->b18 == 0) {
-            f2f1 = 1;
+            refresh_slots = 1;
             g_w_a739a0_s261e0->f18 = 0xe;
             if (val14 < 0) {
                 g_w_a739a0_s261e0->f4 = 0;
@@ -944,14 +944,14 @@ void Screen_s261e0::tick(float dt)
         }
 
         if (any_pressed_s261e0(g_keys_73a8, 2) && g_mission_s261e0->local_id >= 0 && g_game_s261e0->b18 == 0) {
-            f2f2 = 1;
+            grow_health = 1;
             char* rec = (char*)g_game_s261e0->chars;
             int v = (unsigned char)rec[0x7a] & 0xf;
             if (v < 0)                                    // (always false after the mask; the original tests it: and eax,0xf / jge)
                 v = 0;
             else if (v > g_clamp_max)
                 v = g_clamp_max;
-            f2f4 = *(int*)(rec + 0x58) + 0x23 + v * 2;
+            status_height = *(int*)(rec + 0x58) + 0x23 + v * 2;
             g_w_a739bc_s261e0->f18 = 0xe;
             g_w_a739bc_s261e0->f4 = 0;
             g_w_a739bc_s261e0->f14 = g_game_s261e0->f8c;
@@ -1015,7 +1015,7 @@ void Screen_s261e0::tick(float dt)
         if (g_mission_s261e0->f6620 != -1) {
             if (g_mission_s261e0->f6620 < 0)
                 goto after;
-            f2f1 = 1;
+            refresh_slots = 1;
             unsigned id = (unsigned)g_mission_s261e0->f6620;
             g_mission_s261e0->f6620 = -1;
             Agent_s261e0* a = page_agent_s261e0((int)id);
@@ -1038,11 +1038,11 @@ void Screen_s261e0::tick(float dt)
 
     // ---- boolean-false branch ----------------------------------------------------------------------
     g_mission_ctx.tick();
-    if (f18 != 100) {
+    if (w18 != 100) {
         if (g_game_s261e0->f13ad0 > 0.0f && g_game_s261e0->f13ad4 != 0)
             g_main_menu_s261e0.set_state(7);
         else
-            g_main_menu_s261e0.set_state(f18);
+            g_main_menu_s261e0.set_state(w18);
         goto unlock;
     }
     if (0 < g_mission_ctx.passage_menu) {
@@ -1580,16 +1580,16 @@ void ViewCtrl_s284a0::update(float dt)
 #undef g_items_s29130
 #define g_items_s29130 (*(ItemKind_s29130**)&g_items)
 // @ 0x529130
-void MissionHud_s29130::update_marks()
+void MissionBlocker::update_marks()
 {
     Agent_s29130* a = &g_scene_s29130->agents.pages[g_scene_s29130->cur_agent_s29130 >> 4][g_scene_s29130->cur_agent_s29130 & 0xf];
 
-    float y = (g_half / tanf(f288 * 0.017453292f * g_half)) * tanf(a->aim_error);
+    float y = (g_half / tanf(zoom * 0.017453292f * g_half)) * tanf(a->aim_error);
 
     float p[2];
     p[0] = 0.5f;
     p[1] = y + 0.375f;
-    w[0]->set_pos(p);
+    w[0]->move_a(p);
 
     float x = 0.0f;
     p[0] = x;
@@ -1600,7 +1600,7 @@ void MissionHud_s29130::update_marks()
     float ny = p[0] * s + p[1] * c;
     p[0] = nx + g_half;
     p[1] = ny + 0.375f;
-    w[1]->set_pos(p);
+    w[1]->move_a(p);
 
     p[0] = x;
     p[1] = y;
@@ -1610,7 +1610,7 @@ void MissionHud_s29130::update_marks()
     ny = p[0] * s + p[1] * c;
     p[0] = nx + g_half;
     p[1] = ny + 0.375f;
-    w[2]->set_pos(p);
+    w[2]->move_a(p);
 
     w[0]->hide();
     w[1]->hide();

@@ -6,6 +6,9 @@
 #include <stddef.h>
 #include "../head_rec.h"
 #include "../tstring.h"
+#include "../../rgl/rgl_math.h"      // vector4, matrix
+#include "../../include/frustum.h"      // rgl::frustum
+using rgl::vector4;
 #include "../triggers/item_rec.h"   // owned_block (the menu layout block ItemA..C start with, as ItemRec does)
 
 struct item_base : head_rec {
@@ -13,40 +16,102 @@ struct item_base : head_rec {
     item_base() { w08 = 99; }
 };
 
+// The mission screen: the record 0x4d0620 allocates at slot 14 (0x328 bytes, vtable 0x59616c). Its slots are its own functions: reset_gui,
+// the widget builder `refresh` 0x4f7f00 (agent5/agent_hud.cpp), the per-frame `tick` 0x5261e0 (mission5/mission_5.cpp) and the camera /
+// parameter initialiser 0x4cea10 (options_panel/mission_items.cpp); update_camera 0x4f8c80, update_status 0x4fb350, update_equipment
+// 0x4f8b40 and update_marks 0x529130 are its other members.
+namespace rgl { struct mesh; }
+struct NodeA; struct MapWidget; struct Mark_s29130;
 struct MissionBlocker : item_base {
-                             // 0x2c8 bytes, vtable 0x59616c
-    char pad2c[0x8];
-    int f34, f38, f3c, f40, f44, f48, f4c;
-    int clock;                                                  // +0x50 = g_ticks[0]
-    int clock_hi;                                               // +0x54 = g_ticks[1]
+    NodeA* frame;                                               // +0x2c the screen's root widget
+    int f30;                                                    // +0x30
+    void* f34;                                                  // +0x34 = 0 (the item source's buffer: begin / end / cap at +0x34..+0x3c)
+    int f38, f3c;                                               // +0x38 / +0x3c = 0
+    int f40;                                                    // +0x40 = -1 (the block owner's menu kind)
+    unsigned char flags44;                                      // +0x44
+    unsigned char f45, f46, f47;
+    int f48;                                                    // +0x48 = 0 (tick clock index)
+    int f4c;
+    __int64 stamp;                                              // +0x50 = g_ticks[0]
     float f58;                                                  // +0x58 = 1.0f
-    int f5c;                                                    // +0x5c = 0
-    char pad60[0xd4 - 0x60];
-    int f_d4;                                                   // +0xd4 = 0
-    int f_d8;                                                   // +0xd8 = 0
-    char pad_dc[0xf8 - 0xdc];
-    char fst[0x120];                                            // +0xf8 frustum, constructed in the body by the
-                                                                // original's own order (0x41ef60 at 0x4ce9b8)
-    char pad1cc[0x2a8 - 0x218];
-    int f_2a8;                                                  // +0x2a8 = 0
-    char pad2ac[0x4];
-    int f_2b0;                                                  // +0x2b0 = g_ticks[0]
-    int f_2b4;                                                  // +0x2b4 = g_ticks[1]
-    int f_2b8;                                                  // +0x2b8 = 0
-    char pad2bc[0x4];
-    int f_2c0;                                                  // +0x2c0 = g_ticks[0]
-    int f_2c4;                                                  // +0x2c4 = g_ticks[1]
-    // The image's table (0x59616c) overrides five of the base's slots: declaring them here under the base's slot
-    // names, each with the image's own target in the comment (the item_rec.h annotation shape), binds the table's
-    // slots to the image's functions. Nothing in this TU calls them, so they stay declared, not defined.
-    virtual void reset_screen();                                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
-    virtual void init_screen();                                // slot 2  0x4f7f00 MissionHud::refresh (agent_hud.cpp)
-    virtual void frame_update(float);                         // slot 3  0x5261e0 Screen_s261e0::tick(float) (mission_5.cpp)
-    virtual void slot_empty_4();                                // slot 4  0x4cea10 MissionParams::init (this file)
+    void* f5c;                                                  // +0x5c = 0 (the block owner's menu block)
+    MapWidget* name_widget;                                     // +0x60 (0x4f7f00; 0x4f8c80 copies the frustum into it)
+    int f64;                                                    // +0x64
+    MissionUi* w[7];                                            // +0x68 the three crosshair arms, then the four arrows (0x4f7f00; 0x529130 shows / hides them)
+    float color[7];                                             // +0x84 the arms' fade (cleared by 0x4f7f00, driven by 0x529130)
+    rgl::mesh* marks[7];                                        // +0xa0 their meshes (0x4f7f00; the colour word at mesh +0x3c is 0x529130's)
+    MissionUi* ui_font;                                         // +0xbc ("ui_font" text, 0x4fb350 shield text cur)
+    MissionUi* ui_font_bg;                                      // +0xc0 (0x4fb350 shield text max)
+    ContainerBase* status_group;                                // +0xc4 (the status background, vtable 0x5924a0; 0x4fb350 hides / shows it)
+    MissionUi* shield_icon;                                     // +0xc8 (0x4fb350 ammo icon)
+    MissionUi* status_bar;                                      // +0xcc (0x4fb350 shield piece)
+    MissionUi* health_bar;                                      // +0xd0
+    rgl::mesh* shield_mesh;                                     // +0xd4 = 0 (0x4cea10)
+    rgl::mesh* shadow_mesh;                                     // +0xd8 = 0 (0x4cea10)
+    rgl::mesh* health_mesh;                                     // +0xdc ("status_health_bar"; 0x4fb350)
+    int shown_health;                                           // +0xe0 (0x4f7f00 -1; 0x4fb350 the health shown)
+    int shield_max;                                             // +0xe4 (0x4f7f00 -2)
+    int shield_cur;                                             // +0xe8
+    int shield_aux;                                             // +0xec
+    int ammo_count;                                             // +0xf0
+    int ammo_stage;                                             // +0xf4
+    rgl::frustum fr;                                            // +0xf8 (0x4ce960 constructs it; 0x4f7f00 sets the near / far pair and the four edges, 0x4f8c80 refreshes it every tick)
+    vector4 head;                                               // +0x218 (0x4f8c80: the agent's head position plus the camera height)
+    rgl::matrix k;                                              // +0x228 the camera frame (0x4f8c80; s, f, u, o rows)
+    float yaw;                                                  // +0x268 = 0 (0x4f7f00, 0x4f8c80)
+    float pitch;                                                // +0x26c = -0.1f
+    int f270, f274;                                             // +0x270 = 0
+    float f278;                                                 // +0x278 = 1.1f
+    float f27c;                                                 // +0x27c (0x4f7f00 0 / 0.1; 0x4f8c80)
+    float f280;                                                 // +0x280 (0x4f7f00 1.65 / 2.4; 0x4f8c80)
+    float f284;                                                 // +0x284 = 0
+    float zoom;                                                 // +0x288 = 97.0f (field of view, degrees)
+    vector4 lag;                                                // +0x28c (0x4f8c80: the smoothed head bone position; x = -1e6f)
+    int f29c;                                                   // +0x29c = 0
+    int f2a0;                                                   // +0x2a0 = -1 (the order group tick() steps through)
+    int f2a4;                                                   // +0x2a4
+    int clock_a;                                                // +0x2a8 tick clock index
+    int f2ac;
+    __int64 stamp_a;                                            // +0x2b0 (10 s before clock_a's time)
+    int clock_b;                                                // +0x2b8
+    int f2bc;
+    __int64 stamp_b;                                            // +0x2c0
+    int f2c8;                                                   // +0x2c8
+    int f2cc;                                                   // +0x2cc
+    int f2d0;                                                   // +0x2d0
+    int f2d4, f2d8, f2dc;                                       // +0x2d4
+    unsigned char f2e0;                                         // +0x2e0 = 0 (cheat: freeze)
+    unsigned char f2e1;                                         // +0x2e1 = 0 (cheat: slow motion)
+    unsigned char f2e2, f2e3;
+    int f2e4, f2e8;                                             // +0x2e4
+    float f2ec;                                                 // +0x2ec = 1.1f (0x4f8c80: the smoothed camera pull-in distance)
+    bool f2f0;                                                  // +0x2f0 = 0
+    bool refresh_slots;                                         // +0x2f1 = 0 (0x4f7f00: the selected agent's slots need re-initialising)
+    bool grow_health;                                           // +0x2f2 = 0 (0x4f7f00: the status block height must grow)
+    char f2f3;
+    int status_height;                                          // +0x2f4
+    char f2f8, f2f9;                                            // +0x2f8 = 0
+    char f2fa, f2fb;
+    int f2fc;                                                   // +0x2fc
+    float f300;                                                 // +0x300 = 0 (0x4f8c80: the free camera's speed)
+    int f304, f308, f30c, f310;                                 // +0x304
+    int f314, f318, f31c;                                       // +0x314 = 0
+    int f320;                                                   // +0x320 = -1
+    int f324;                                                   // +0x324 = -1
+    // The image's table (0x59616c) overrides five of the base's slots; each is the record's own function.
+    virtual void reset_screen();                                // slot 1  0x4c6e00 reset_gui (mission_items.cpp)
+    virtual void init_screen();                                // slot 2  0x4f7f00 refresh (agent_hud.cpp)
+    virtual void frame_update(float);                         // slot 3  0x5261e0 tick (mission_5.cpp)
+    virtual void slot_empty_4();                                // slot 4  0x4cea10 the camera / parameter initialiser (mission_items.cpp)
     virtual char pure_7() { return 1; }                         // slot 7  0x48b170 (overrides the base's pure slot)
     virtual char always_true() { return 0; }                    // slot 8  0x4280e0 rgl::static_entity::awake (xor al,al; ret: ICF folds it)
+    void update_camera(float dt);                               // 0x4f8c80 (ret 4; agent_hud.cpp)
+    void update_status();                                       // 0x4fb350 (agent_hud.cpp)
+    void update_equipment();                                    // 0x4f8b40 (this unused; agent_hud.cpp)
+    __declspec(noinline) void update_marks();                   // 0x529130 (mission_5.cpp)
     MissionBlocker();                                           // 0x4ce960
 };
+typedef char MissionBlocker_size_check[sizeof(MissionBlocker) == 0x328 ? 1 : -1];
 
 
 struct NodeA; struct Camera;                    // widget classes the ItemA members point at (agent5 / party2)

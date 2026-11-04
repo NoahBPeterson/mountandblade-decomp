@@ -15,7 +15,7 @@
 //   slot 2  0x477b70  init_screen()       the same empty function
 //   slot 3  0x408030  frame_update(float)  `ret 4` - takes its argument (the frame time) and returns (shape_base::scale)
 //   slot 4  0x477b70  slot_empty_4()       the same empty function (MissionBlocker overrides it with
-//                                          MissionParams::init, 0x4cea10)
+//                                          MissionBlocker::slot_empty_4, 0x4cea10)
 //   slot 5  0x408030  write_stream(w_stream*)  `ret 4` (the same function as slot 3)
 //   slot 6  0x408030  read_stream(w_stream*)  `ret 4` (the same function as slot 3)
 //   slot 7  0x5363c8  pure_7() = 0          __purecall: the base declares this one pure and EVERY derived class

@@ -57,112 +57,52 @@ MissionBlocker::MissionBlocker()
 {
     w04 = 0;
     f34 = 0; f38 = 0; f3c = 0; f48 = 0;
-    clock = ((int*)g_ticks)[0];
-    clock_hi = ((int*)g_ticks)[1];
+    stamp = g_ticks[0];
     f58 = 1.0f;
     f40 = -1;
     f5c = 0;
-    CONSTRUCT_FRUSTUM(fst);
-    f_2a8 = 0;
-    f_2b0 = ((int*)g_ticks)[0];
-    f_2b4 = ((int*)g_ticks)[1];
-    f_2b8 = 0;
-    f_2c0 = ((int*)g_ticks)[0];
-    f_2c4 = ((int*)g_ticks)[1];
-    f_d4 = 0;
-    f_d8 = 0;
+    clock_a = 0;
+    stamp_a = g_ticks[0];
+    clock_b = 0;
+    stamp_b = g_ticks[0];
+    shield_mesh = 0;
+    shadow_mesh = 0;
 }
-
-// ---- the 0x328-byte mission parameter block (0x4cea10) ---------------------------------------------------
-struct MissionParams {
-    char pad0[0xd4];
-    int f_d4;                                                   // +0xd4 = 0
-    int f_d8;                                                   // +0xd8 = 0
-    char pade0[0x114];
-    vector4 v_1f0;                                              // +0x1f0 (0, 0, 10, w)
-    char pad200[0x18];
-    vector4 v_218;                                              // +0x218 (0, 0, 10, w)
-    char pad228[0x40];
-    int f_268;                                                  // +0x268 = 0
-    float f_26c;                                                // +0x26c = -0.1f
-    int f_270;                                                  // +0x270 = 0
-    int f_274;                                                  // +0x274 = 0
-    float f_278;                                                // +0x278 = 1.1f
-    char pad27c[0x8];
-    int f_284;                                                  // +0x284 = 0
-    float f_288;                                                // +0x288 = 97.0f
-    float f_28c;                                                // +0x28c = -1e6f
-    char pad290[0xc];
-    int f_29c;                                                  // +0x29c = 0
-    int f_2a0;                                                  // +0x2a0 = -1
-    char pad2a4[0x3c];
-    char b_2e0;                                                 // +0x2e0 = 0
-    char b_2e1;                                                 // +0x2e1 = 0
-    char pad2e2[0xa];
-    float f_2ec;                                                // +0x2ec = 1.1f
-    char b_2f0;                                                 // +0x2f0 = 0
-    char b_2f1;                                                 // +0x2f1 = 0
-    char b_2f2;                                                 // +0x2f2 = 0
-    char pad2f3[0x5];
-    char b_2f8;                                                 // +0x2f8 = 0
-    char b_2f9;                                                 // +0x2f9 = 0
-    char pad2fa[0x6];
-    int f_300;                                                  // +0x300 = 0
-    char pad304[0x10];
-    int f_314;                                                  // +0x314 = 0
-    int f_318;                                                  // +0x318 = 0
-    int f_31c;                                                  // +0x31c = 0
-    int f_320;                                                  // +0x320 = -1
-    int f_324;                                                  // +0x324 = -1
-    void init();                                                // 0x4cea10
-};
-typedef char MissionParams_size_check[sizeof(MissionParams) == 0x328 ? 1 : -1];
 
 char* g_mission_params;                                         // unknown owner; init called from here
 
-// MissionBlocker's slot overrides: forwarding stubs (a bare `jmp`) to the functions the image's table 0x59616c names. The
-// record is not those classes' view (MissionHud / Screen_s261e0 are other screens), so the stubs stay stubs. They sit
-// before MissionParams::init's definition so cl does not inline it into slot 4.
-struct MissionHud { void refresh(); };                          // 0x4f7f00
-struct Screen_s261e0 { void tick(float); };                     // 0x5261e0
 void MissionBlocker::reset_screen() { g_gui.reset(); }
-void MissionBlocker::init_screen() { ((MissionHud*)this)->refresh(); }
-void MissionBlocker::frame_update(float a) { ((Screen_s261e0*)this)->tick(*(float*)&a); }
-void MissionBlocker::slot_empty_4() { ((MissionParams*)this)->init(); }
 
 // @ 0x4cea10
-void MissionParams::init()
+void MissionBlocker::slot_empty_4()
 {
-    char* base = (char*)this;
-    void* p1 = base + 0x1f0;
-    void* p2 = base + 0x218;
-    *(vector4*)p1 = vector4(0.0f, 0.0f, 10.0f);
-    *(vector4*)p2 = vector4(0.0f, 0.0f, 10.0f);
-    *(float*)(base + 0x278) = 1.1f;
-    *(float*)(base + 0x2ec) = 1.1f;
-    *(int*)(base + 0x324) = -1;
-    *(char*)(base + 0x2e1) = 0;
-    *(char*)(base + 0x2e0) = 0;
-    *(char*)(base + 0x2f1) = 0;
-    *(char*)(base + 0x2f2) = 0;
-    *(int*)(base + 0x29c) = 0;
-    *(int*)(base + 0x2a0) = -1;
-    *(float*)(base + 0x288) = 97.0f;
-    *(int*)(base + 0x268) = 0;
-    *(float*)(base + 0x26c) = -0.1f;
-    *(int*)(base + 0x284) = 0;
+    fr.m.o = vector4(0.0f, 0.0f, 10.0f);
+    head = vector4(0.0f, 0.0f, 10.0f);
+    f278 = 1.1f;
+    f2ec = 1.1f;
+    f324 = -1;
+    f2e1 = 0;
+    f2e0 = 0;
+    refresh_slots = 0;
+    grow_health = 0;
+    f29c = 0;
+    f2a0 = -1;
+    zoom = 97.0f;
+    yaw = 0.0f;
+    pitch = -0.1f;
+    f284 = 0.0f;
     *(int*)((char*)g_game + 0x1a20c) = 0;
-    *(char*)(base + 0x2f8) = 0;
-    *(int*)(base + 0x270) = 0;
-    *(int*)(base + 0x274) = 0;
-    *(float*)(base + 0x28c) = -1e6f;
-    *(char*)(base + 0x2f0) = 0;
-    *(char*)(base + 0x2f9) = 0;
-    *(int*)(base + 0x300) = 0;
-    *(int*)(base + 0x314) = 0;
-    *(int*)(base + 0x318) = 0;
-    *(int*)(base + 0x31c) = 0;
-    *(int*)(base + 0x320) = -1;
+    f2f8 = 0;
+    f270 = 0;
+    f274 = 0;
+    lag.x = -1e6f;
+    f2f0 = 0;
+    f2f9 = 0;
+    f300 = 0.0f;
+    f314 = 0;
+    f318 = 0;
+    f31c = 0;
+    f320 = -1;
 }
 
 // ---- the remaining item constructors (0x4ceb30 / 0x4cef20 / 0x4cef80) --------------------------------------

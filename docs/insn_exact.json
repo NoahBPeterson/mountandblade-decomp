@@ -6348,7 +6348,7 @@
   },
   "004cea10": {
    "verdict": "DIFF",
-   "symbol": "?init@MissionParams@@QAEXXZ",
+   "symbol": "?slot_empty_4@MissionBlocker@@UAEXXZ",
    "insns": 58,
    "ours": 58,
    "unverified": 0,
@@ -7828,7 +7828,7 @@
   },
   "004f7f00": {
    "verdict": "DIFF",
-   "symbol": "?refresh@MissionHud@@QAEXXZ",
+   "symbol": "?init_screen@MissionBlocker@@UAEXXZ",
    "insns": 824,
    "ours": 788,
    "unverified": 0,
@@ -7838,7 +7838,7 @@
   },
   "004f8c80": {
    "verdict": "DIFF",
-   "symbol": "?update_camera@MissionHud@@QAEXM@Z",
+   "symbol": "?update_camera@MissionBlocker@@QAEXM@Z",
    "insns": 1742,
    "ours": 1722,
    "unverified": 0,
@@ -7878,7 +7878,7 @@
   },
   "004fb350": {
    "verdict": "DIFF",
-   "symbol": "?update_status@MissionHud@@QAEXXZ",
+   "symbol": "?update_status@MissionBlocker@@QAEXXZ",
    "insns": 378,
    "ours": 369,
    "unverified": 0,
@@ -9280,7 +9280,7 @@
   },
   "005261e0": {
    "verdict": "DIFF",
-   "symbol": "?tick@Screen_s261e0@@QAEXM@Z",
+   "symbol": "?frame_update@MissionBlocker@@UAEXM@Z",
    "insns": 1819,
    "ours": 1637,
    "unverified": 0,
@@ -9330,7 +9330,7 @@
   },
   "00529130": {
    "verdict": "DIFF",
-   "symbol": "?update_marks@MissionHud_s29130@@QAEXXZ",
+   "symbol": "?update_marks@MissionBlocker@@QAEXXZ",
    "insns": 322,
    "ours": 304,
    "unverified": 0,

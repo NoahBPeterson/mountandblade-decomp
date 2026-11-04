@@ -83,7 +83,7 @@ static __forceinline rgl::mesh* res_clone(const tstring& n)
 }
 
 // @ 0x4f7f00
-void MissionHud::refresh()
+void MissionBlocker::init_screen()
 {
     float v[2];
     f2fc = 0;
@@ -152,60 +152,60 @@ void MissionHud::refresh()
         ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
     }
     for (int i = 0; i < 3; i++) {
-        MissionUi* w = new MissionUi;
-        crosshair[i] = w;
+        MissionUi* wd = new MissionUi;
+        w[i] = wd;
         {
             v[0] = 0.5f;
         v[1] = 0.375f;
-            w->move_a(v);
+            wd->move_a(v);
         }
         {
             v[0] = 0.03f;
         v[1] = 0.04f;
-            crosshair[i]->set_xy(v);
+            w[i]->set_xy(v);
         }
-        crosshair_mesh[i] = res_clone(tstring(i == 0 ? "crosshair_up" : (i == 1 ? "crosshair_left" : "crosshair_right")));
-        crosshair[i]->set_track(0, crosshair_mesh[i]);
-        frame->add_child(crosshair[i]);
+        marks[i] = res_clone(tstring(i == 0 ? "crosshair_up" : (i == 1 ? "crosshair_left" : "crosshair_right")));
+        w[i]->set_track(0, marks[i]);
+        frame->add_child(w[i]);
     }
     for (int i = 0; i < 4; i++) {
-        MissionUi* w = new MissionUi;
-        arrow[i] = w;
+        MissionUi* wd = new MissionUi;
+        w[3 + i] = wd;
         {
             v[0] = 0.5f;
         v[1] = 0.35f;
-            w->move_a(v);
+            wd->move_a(v);
         }
         {
             v[0] = 0.03f;
         v[1] = 0.04f;
-            arrow[i]->set_xy(v);
+            w[3 + i]->set_xy(v);
         }
-        arrow_mesh[i] = res_clone(tstring(i == 0 ? "arrow_up" : (i == 1 ? "arrow_right" : (i == 2 ? "arrow_down" : "arrow_left"))));
-        arrow[i]->set_track(0, arrow_mesh[i]);
-        frame->add_child(arrow[i]);
+        marks[3 + i] = res_clone(tstring(i == 0 ? "arrow_up" : (i == 1 ? "arrow_right" : (i == 2 ? "arrow_down" : "arrow_left"))));
+        w[3 + i]->set_track(0, marks[3 + i]);
+        frame->add_child(w[3 + i]);
     }
     {
         v[0] = 0.5f;
         v[1] = 0.45f;
-        arrow[0]->move_a(v);
+        w[3 + 0]->move_a(v);
         v[0] = 0.65f;
         v[1] = 0.35f;
-        arrow[1]->move_a(v);
+        w[3 + 1]->move_a(v);
         v[0] = 0.5f;
         v[1] = 0.3f;
-        arrow[2]->move_a(v);
+        w[3 + 2]->move_a(v);
         v[0] = 0.35f;
         v[1] = 0.35f;
-        arrow[3]->move_a(v);
+        w[3 + 3]->move_a(v);
     }
-    f84[0] = 0;
-    f84[1] = 0;
-    f84[2] = 0;
-    f84[3] = 0;
-    f84[4] = 0;
-    f84[5] = 0;
-    f84[6] = 0;
+    color[0] = 0.0f;
+    color[1] = 0.0f;
+    color[2] = 0.0f;
+    color[3] = 0.0f;
+    color[4] = 0.0f;
+    color[5] = 0.0f;
+    color[6] = 0.0f;
 
     // the status background group, its health bar and bar, the two text widgets and the shield icon
     status_group = new ContainerBase;
@@ -361,7 +361,7 @@ void MissionHud::refresh()
 }
 
 // @ 0x4f8b40
-void MissionHud::update_equipment()
+void MissionBlocker::update_equipment()
 {
     if (g_mission->player_id < 0)
         return;
@@ -402,7 +402,7 @@ static __forceinline void hv_sub_to(vector4& a, const vector4& b) { a.x = a.x - 
 #define AG(i) agent_by_id(i)
 
 // @ 0x4f8c80
-void MissionHud::update_camera(float dt)
+void MissionBlocker::update_camera(float dt)
 {
     float radius, zoomL;
 
@@ -899,7 +899,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
 
 
 // @ 0x4fb350
-void MissionHud::update_status()
+void MissionBlocker::update_status()
 {
     int id = g_mission->player_id;
     if (id < 0)

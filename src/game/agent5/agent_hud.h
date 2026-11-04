@@ -203,71 +203,8 @@ inline NodeA* new_frame_widget()
 // The screen object of the mission view (created and ticked by 0x5261e0 / 0x5284a0 of other objects): refresh() 0x4f7f00 builds its
 // widgets, update_camera() 0x4f8c80 moves the camera, update_status() 0x4fb350 keeps the status bars. One object, three
 // slices (the slices called it MissionObj, Camera and StatusWidget).
-struct MissionHud {
-    char pad0[0x2c];
-    NodeA* frame;                                           // +0x2c (0x4f7f00; the screen's root widget)
-    char pad30[0x60 - 0x30];
-    MapWidget* name_widget;                                      // +0x60 (0x4f7f00; 0x4f8c80 copies the frustum into it)
-    char pad64[4];
-    MissionUi* crosshair[3];                                      // +0x68 (0x4f7f00: sized 0.5 x 0.375, meshes at +0xa0)
-    MissionUi* arrow[4];                                          // +0x74 (0x4f7f00: meshes at +0xac)
-    int f84[7];                                                   // +0x84 (cleared by 0x4f7f00)
-    rgl::mesh* crosshair_mesh[3];                                 // +0xa0 (0x4f7f00)
-    rgl::mesh* arrow_mesh[4];                                     // +0xac
-    MissionUi* ui_font;                                           // +0xbc (0x4f7f00: "ui_font" text, 0x4fb350 shield text cur)
-    MissionUi* ui_font_bg;                                        // +0xc0 (0x4f7f00; 0x4fb350 shield text max)
-    ContainerBase* status_group;                                    // +0xc4 (0x4f7f00: the status background, vtable 0x5924a0; 0x4fb350 hides / shows it)
-    MissionUi* shield_icon;                                       // +0xc8 (0x4f7f00; 0x4fb350 ammo icon)
-    MissionUi* status_bar;                                        // +0xcc (0x4f7f00; 0x4fb350 shield piece)
-    MissionUi* health_bar;                                        // +0xd0 (0x4f7f00)
-    rgl::mesh* shield_mesh;                                       // +0xd4 (0x4f7f00 slot 2 of the status bar; 0x4fb350 shield piece mesh)
-    rgl::mesh* shadow_mesh;                                       // +0xd8 (0x4fb350)
-    rgl::mesh* health_mesh;                                       // +0xdc (0x4f7f00 "status_health_bar"; 0x4fb350)
-    int shown_health;                                             // +0xe0 (0x4f7f00 -1; 0x4fb350 the health shown)
-    int shield_max;                                               // +0xe4 (0x4f7f00 -2)
-    int shield_cur;                                               // +0xe8
-    int shield_aux;                                               // +0xec
-    int ammo_count;                                               // +0xf0
-    int ammo_stage;                                               // +0xf4
-    rgl::frustum fr;                                              // +0xf8 (0x4f7f00 sets the near / far pair and the four edges; 0x4f8c80 refreshes it every tick)
-    vector4 head;                                                 // +0x218 (0x4f8c80: the agent's head position plus the camera height)
-    rgl::matrix k;                                                       // +0x228 the camera frame (0x4f8c80; s, f, u, o rows)
-    float yaw;                                                    // +0x268 (0x4f7f00, 0x4f8c80)
-    float pitch;                                                  // +0x26c (0x4f8c80)
-    int f270, f274;                                               // +0x270 (cleared by 0x4f7f00)
-    float f278;                                                   // +0x278 (0x4f8c80)
-    float f27c;                                                   // +0x27c (0x4f7f00 0 / 0.1; 0x4f8c80)
-    float f280;                                                   // +0x280 (0x4f7f00 1.65 / 2.4; 0x4f8c80)
-    float f284;                                                   // +0x284 (0x4f8c80)
-    float zoom;                                                   // +0x288 (0x4f8c80)
-    vector4 lag;                                                  // +0x28c (0x4f8c80: the smoothed head bone position)
-    char pad29c[0x2a8 - 0x29c];
-    int clock_a;                                                  // +0x2a8 (tick clock index, 0x4f7f00)
-    char pad2ac[0x2b0 - 0x2ac];
-    __int64 stamp_a;                                              // +0x2b0 (10 s before clock_a's time)
-    int clock_b;                                                  // +0x2b8
-    char pad2bc[0x2c0 - 0x2bc];
-    __int64 stamp_b;                                              // +0x2c0
-    int f2c8;                                                     // +0x2c8
-    char pad2cc[0x2d4 - 0x2cc];
-    int f2d4, f2d8, f2dc;                                         // +0x2d4
-    char pad2e0[0x2e4 - 0x2e0];
-    int f2e4, f2e8;                                               // +0x2e4
-    float f2ec;                                                   // +0x2ec (0x4f8c80: the smoothed camera pull-in distance)
-    bool f2f0;                                                    // +0x2f0
-    bool refresh_slots;                                           // +0x2f1 (0x4f7f00: the selected agent's slots need re-initialising)
-    bool grow_health;                                             // +0x2f2 (0x4f7f00: the status block height must grow)
-    char pad2f3;
-    int status_height;                                            // +0x2f4
-    char pad2f8[0x2fc - 0x2f8];
-    int f2fc;                                                     // +0x2fc
-    float f300;                                                   // +0x300 (0x4f8c80: the free camera's speed)
-
-    void refresh();                                               // 0x4f7f00
-    void update_camera(float dt);                                 // 0x4f8c80 (ret 4)
-    void update_status();                                         // 0x4fb350
-    void update_equipment();                                      // 0x4f8b40 (this unused)
-};
+// (the mission HUD screen is the record MissionBlocker of options_panel/mission_item_recs.h: refresh is its slot 2)
+#include "../options_panel/mission_item_recs.h"
 
 // ---- the game menu screen -----------------------------------------------------------------------------------------------
 struct ScreenOps {                                                // the screen objects' vtable (slot 9 begins the screen)
