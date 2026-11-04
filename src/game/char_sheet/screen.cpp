@@ -58,7 +58,7 @@ void __stdcall destroy(UiRow* param)
     int* l = &self->pad10;
     if (l[1]) {
         // arg 4 is a distinct 4-arg instantiation ICF-folded with the 2-arg range destructor.
-        ((void (__cdecl*)(void*, void*, void*, void*))item_modifier_array_dtor)((void*)l[1], (void*)l[2], l, *(UiRow* const volatile*)&param);   // 0x4d10f0 (reads two)
+        ((void (__cdecl*)(void*, void*, void*, void*))item_modifier_array_dtor)((void*)l[1], (void*)l[2], l, param);   // 0x4d10f0 (reads two)
         ::operator delete((void*)l[1]);
     }
     l[1] = 0;

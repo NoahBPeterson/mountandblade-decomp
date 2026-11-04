@@ -981,10 +981,9 @@ void Rec58::frame_update(float)
 // @ 0x533a60
 void ChoiceList::get3(int* a, int* b, int* c)
 {
-    int* pa = (int*)((char*)F(this, 0x19c, int*) + F(this, 0x1cc, int) * 4);
-    *a = *(volatile int*)pa;
-    int* pb = (int*)((char*)F(this, 0x1ac, int*) + F(this, 0x1cc, int) * 4);
-    *b = *(volatile int*)pb;
+    // the two arrays are std::vector<int>s (+0x198 / +0x1a8: pad, first at +0x19c / +0x1ac): operator[] gives the lea + load
+    *a = (*(std::vector<int>*)((char*)this + 0x198))[F(this, 0x1cc, int)];
+    *b = (*(std::vector<int>*)((char*)this + 0x1a8))[F(this, 0x1cc, int)];
     *c = F(this, 0x1cc, int);
 }
 

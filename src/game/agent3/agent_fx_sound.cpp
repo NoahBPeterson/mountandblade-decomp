@@ -111,10 +111,10 @@ void world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<
     out->_Mylast = 0;
     out->_Myend = 0;
     int lo[2];
-    volatile int hi[2];                     // read from memory at every test (that is what the original compiled to)
+    int hi[2];
     int c[2];
     ((rgl::world*)this)->to_cell(&bmin->x, lo);
-    ((rgl::world*)this)->to_cell(&bmax->x, (int*)hi);
+    ((rgl::world*)this)->to_cell(&bmax->x, hi);
     for (c[0] = lo[0]; c[0] <= hi[0]; c[0]++) {
         for (c[1] = lo[1]; c[1] <= hi[1]; c[1]++) {
             for (enode* nd = cells[c[0]][c[1]].ents; nd != 0; nd = nd->next) {

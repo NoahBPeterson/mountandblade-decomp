@@ -465,7 +465,22 @@ void Game::more_start()
 // id and the item type are each read twice; keep them separate so the same code shape comes out.
 static __forceinline void init_slot(ItemRef* s)
 {
-    int id = *(volatile int*)&s->item;
+    int id = s->item;
+    if (id <= 0)
+        return;
+    int ty = item_type(id);
+    if (ty == 10 || ty == 5 || ty == 6 || ty == 0x10 || ty == 0x11 || ty == 9 || ty == 0x12) {
+        s->b.amount = 0;
+    } else if (ty == 7 || ty == 1 || ty == 0x13) {
+        int r = s->stat_1e8();                      // 0x434df0 (fill a stack, returns the count)
+        *(short*)&s->m4 = 0;
+        s->m4 |= r;
+    }
+}
+
+static __forceinline void init_slot_reread(ItemRef* s)
+{
+    int id = *(volatile int*)&s->item;   // KEPT HACK (apply_items only): without the re-read equiv FAILs on edx (see troop_rec.nonmatching / report)
     if (id <= 0)
         return;
     int ty = item_type(id);
@@ -518,7 +533,7 @@ void TroopRec::apply_items()
             if (!(ty == 9 || ty == 0x11 || ty == 0x10))
                 continue;
         }
-        init_slot(s);
+        init_slot_reread(s);
     }
 
     s = equip;
@@ -530,7 +545,7 @@ void TroopRec::apply_items()
             if (!(ty == 9 || ty == 0x11 || ty == 0x10))
                 continue;
         }
-        init_slot(s);
+        init_slot_reread(s);
     }
 }
 
@@ -557,17 +572,14 @@ static __forceinline int get_skill(TroopRec* t, T i)
 // @ 0x520270
 void TroopRec::level_up()
 {
-    // The original writes the running value back after every subtraction (the compiler only keeps those stores when the
-    // location is volatile), so model it that way.
-    volatile int* hp_max_p = &fa8;
-    int v = level + 0x14;
-    *hp_max_p = v;
-    v -= attr(this, 0); *hp_max_p = v;
-    v -= attr(this, 1); *hp_max_p = v;
-    v -= attr(this, 2); *hp_max_p = v;
-    v -= attr(this, 3); *hp_max_p = v;
-    if (v < 0)
-        *hp_max_p = 0;
+    // the hit-point pool is updated in place: level + 20 less the four attributes, clamped at 0
+    fa8 = level + 0x14;
+    fa8 -= attr(this, 0);
+    fa8 -= attr(this, 1);
+    fa8 -= attr(this, 2);
+    fa8 -= attr(this, 3);
+    if (fa8 < 0)
+        fa8 = 0;
 
     fa4 = level + 3;
     for (unsigned i = 0; i < 0x2a; i += 6)

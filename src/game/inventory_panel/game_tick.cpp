@@ -55,8 +55,7 @@ float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-cloc
 #define f13b18 FLD(int, 0x13b18)
 #define f13b20 FLD(int, 0x13b20)
 #define f13b24 FLD(int, 0x13b24)
-#define f13b18v FLD(volatile int, 0x13b18)
-#define f13b20v FLD(volatile __int64, 0x13b20)
+#define f13b20i64 FLD(__int64, 0x13b20)
 #define f13b28 FLD(int, 0x13b28)
 #define f13b2c FLD(int, 0x13b2c)
 #define f13b30 FLD(int, 0x13b30)
@@ -173,31 +172,31 @@ void GameG::tick(float dt)
     party_at(&parties, ((Map10007*)&parties)->lookup(cur_agent))->dirty = 1;
 
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f);
+        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f);
         if (v > f13b28) {
             update_weather();
             f13b28 = v;
         }
     }
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * (1.0f / 24));
+        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 24));
         if (v > f13b2c) {
             train_troops();
             f13b2c = v;
         }
     }
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * (1.0f / 720));
+        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 720));
         if (v > f13b30)
             f13b30 = v;
     }
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * (1.0f / 8640));
+        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 8640));
         if (v > f13b34)
             f13b34 = v;
     }
     {
-        int v = (int)((g_ticks[f13b18v] - f13b20v) * 1e-5f * (1.0f / 168));
+        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 168));
         if (v > f13b38)
             f13b38 = v;
     }

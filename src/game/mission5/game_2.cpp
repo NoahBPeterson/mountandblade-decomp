@@ -928,7 +928,7 @@ void __stdcall scan_arrays(void* p, int unused)
 {
     for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->a_size(); i++)
         *(int*)((char*)p + 0xc3500) = (int)0xcb189680;
-    volatile char buf[100000];
+    char buf[100000];
     for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->b_size(); i++)
         buf[i] = 0;
     for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->b_size(); i++)

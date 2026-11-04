@@ -380,7 +380,7 @@ void buffer_pair::restore_all()
             if (b.loaded != 0) {
                 if (b.type == 1)
                     b.ib->Release();
-                else if (*(volatile int*)&b.count != 0 && b.vb)     // (a plain read gets CSE'd with the loop test; the original re-reads)
+                else if (b.count != 0 && b.vb)
                     b.vb->Release();
                 b.generation++;
                 b.loaded = 0;
