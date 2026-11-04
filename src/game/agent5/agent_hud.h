@@ -382,13 +382,14 @@ struct GameScreen {                                               // the game me
 
 // ---- the game-log text widget and the map-text row renderer ------------------------------------------------------------------
 extern Font* g_font;                                              // 0x5e2934
+#include "../../include/vec_xlen.h"
 struct IntList {                                                  // a VC7.1 vector<int> (alloc slot, first, last, end) as the layout code fills it
     int alloc;
     int* first;
     int* last;
     int* end;
     __declspec(noinline) bool buy(unsigned n);                                         // 0x4fd490 (ret 4: the allocation of the vector<int>'s first block)
-    void xlen();                                                  // 0x43e2a0 (std::vector<int>::_Xlen: the original loads `this` in ECX; agent3/agent_combat.cpp defines it as the free function vec_xlen, so this row stays unresolved)
+    void xlen() { VEC_XLEN_CALL(this); }                          // 0x43e2a0 (std::vector<int>::_Xlen, agent3/agent_combat.cpp)
     void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }   // the inlined vector release of ~MWidget
 };
 // std::vector<int>::push_back called out of line (the original calls the instantiation 0x4fe0b0 where the library would expand it): through its member pointer

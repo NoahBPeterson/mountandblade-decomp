@@ -59,7 +59,7 @@ extern Font* g_font;                                // 0x5e2934
 // the linker cannot resolve: the mangled name has to carry the class that DEFINES the function. These are member-only stubs under
 // the defining name (only their `// 0x...` callee is declared); the views forward to them with `this` cast, which compiles to the
 // same call. Each comment names the defining source.
-void vec_xlen();                                                                    // 0x43e2a0 agent3/agent_combat.cpp (the vector's _Xlen: throws length_error)
+#include "../../include/vec_xlen.h"                                                // 0x43e2a0 std::vector<int>::_Xlen (agent3/agent_combat.cpp)
 struct Mission3 {
     void add_amount(int idx, unsigned flags);   // 0x4677a0 terrain_a/terrain_a.cpp (ret 8)
 };
@@ -157,7 +157,7 @@ struct PVec {
     __declspec(noinline) void push_back(const E4& x);   // 0x49b120
     void insert(E4** out, E4* where, const E4& x);      // 0x49b170
     void _Insert_n(E4* where, unsigned count, const E4& x);  // 0x49b1c0
-    void _Xlen() const { ::vec_xlen(); }        // 0x43e2a0 (the lib's _Xlen: agent3/agent_combat.cpp vec_xlen)
+    void _Xlen() const { VEC_XLEN_CALL(this); }      // 0x43e2a0
 };
 
 // 0x435a10 is the int* instance of std::_Copy_opt (agent/agent.cpp; trivial _Uninit_copy = memmove). cl 13.10 takes an ICE on an explicit

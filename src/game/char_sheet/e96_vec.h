@@ -17,6 +17,7 @@
 struct E96 { int v[24]; };      // 0x60
 #include "../../include/pod_elems.h"   // E32 (shared with agent3/agent_combat.h)
 
+#include "../../include/vec_xlen.h"
 template<class T> struct vec {                  // std::vector<T> layout
     std::allocator<T> al;
     T* first;
@@ -32,8 +33,8 @@ template<class T> struct vec {                  // std::vector<T> layout
     };
     unsigned size() const { return first == 0 ? 0 : last - first; }
     unsigned capacity() const { return first == 0 ? 0 : end - first; }
-    void xlen() const;                          // 0x43e2a0 (shared body, throws length_error)
-    __declspec(noreturn) void xlen_nr() const;  // same body, declared noreturn in the E32 instance's TU
+    __forceinline void xlen() const { VEC_XLEN_CALL(this); }   // 0x43e2a0 (shared body, throws length_error)
+    __forceinline void xlen_nr() const { VEC_XLEN(this); }     // same body, declared noreturn in the E32 instance's TU
     void reserve(unsigned n);                   // 0x4f46d0 (E96): _Xlen is an ordinary call
     void reserve_nr(unsigned n);                // 0x4f4860 (E32): same code, but cl knew _Xlen is noreturn here (n stays in edx)
 };

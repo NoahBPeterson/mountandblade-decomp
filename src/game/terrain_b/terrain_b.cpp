@@ -2291,7 +2291,7 @@ void PolyMesh::load(stream_base* s)
         s->r_int(&c.edges[i].face[1]);
     }
     s->r_int(&n3);
-    c.faces.resize_default(n3);
+    c.faces.resize(n3);
     for (int i = 0; i < n3; i++) {
         s->r_int(&c.faces[i].n);
         for (int j = 0; j < c.faces[i].n; j++)
@@ -2341,8 +2341,8 @@ void PolyMesh::clear()
     MVert v;
     v.flag = 0;
     c.verts.resize(0, v);
-    c.edges.resize_default(0);
-    c.faces.resize_default(0);
+    c.edges.resize(0);
+    c.faces.resize(0);
 }
 
 // @ 0x4785e0

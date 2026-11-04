@@ -46,7 +46,7 @@ namespace std {
 template<> void vector<tstring, allocator<tstring> >::_Insert_n(vector<tstring, allocator<tstring> >::iterator, size_t, const tstring&);   // 0x43e310
 template<> void vector<tstring, allocator<tstring> >::_Destroy(tstring*, tstring*);                                                        // 0x42d360
 }
-void vec_xlen();                                    // 0x43e2a0 (agent_combat.cpp: std::vector<tstring>::_Xlen)
+#include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
 struct allocstr { void construct(tstring* p, const tstring& v); };          // 0x436c90 (agent_stats.h's allocator view; uninit_fill_n_str takes it)
 struct alloc_tstring { void construct(tstring* p, const tstring& v); };     // 0x436c90 (agent/agent.h; the definition's name)
 struct tstring_stdvec : std::vector<tstring> {

@@ -133,6 +133,7 @@ struct Rec5c;                               // src/game/rec5c.h: the 0x5c-byte r
 struct Vec5c {
     Rec5c** shift_over(Rec5c** out, Rec5c* dst, Rec5c* src);   // 0x518990 (ret 0xc; inventory_panel/game_tick.h)
 };
+#include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
 struct E92 { int v[23]; ~E92() {} };        // 0x5c: the same record as party2/party_2.h E92 (same definition)
 // std::vector<E92>::_Insert_n (0x4b54a0, party2/party_2.cpp) is a template member that stays out of line; its explicit specialization is only
 // declared. It is protected, so E92Vec (never constructed) reaches it.
@@ -149,7 +150,7 @@ struct TrackVec {                           // Game +0x13a60 (std::vector<TrackR
     __declspec(noinline) bool buy(unsigned count);            // 0x51d1c0 (_Buy: 0x5c-byte elements, max 0x2c8590b)
     int size() const { if (_Myfirst == 0) return 0; return (int)(_Mylast - _Myfirst); }
     __declspec(noinline) void resize(unsigned n, TrackRec val);     // 0x51e7a0 (ret 0x60)
-    void _Xlen() const;                                       // 0x43e2a0 (thiscall: the caller loads ecx; the definition, agent3/agent_combat.cpp, is a free cdecl vec_xlen, so this row stays open)
+    void _Xlen() const { VEC_XLEN_CALL(this); }               // 0x43e2a0 (std::vector<int>::_Xlen, agent3/agent_combat.cpp)
     void insert_n(TrackRec* where, unsigned count, const TrackRec* val) { ((E92Vec*)this)->insert_n((E92*)where, count, *(const E92*)val); }   // 0x4b54a0
     void shift_over(TrackRec** out, TrackRec* first, TrackRec* last) { ((Vec5c*)this)->shift_over((Rec5c**)out, (Rec5c*)first, (Rec5c*)last); }   // 0x518990
 };

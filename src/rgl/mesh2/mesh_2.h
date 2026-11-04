@@ -75,8 +75,7 @@ struct list_node {
 };
 
 
-__declspec(noreturn) void vec_xlen();                                       // 0x43e2a0 (game/agent3/agent_combat.cpp)
-typedef __declspec(noreturn) void (__fastcall *XlenFn)(const void*);
+#include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
 struct tvec {
     char pad0[4];
     tstring* begin;                              // +0x04
@@ -90,7 +89,7 @@ struct tvec {
     // the lib's _Xlen (0x43e2a0): never returns. The original loads ecx = this before the call, while the definition (agent_combat.cpp
     // vec_xlen) is a free cdecl function without parameters (?vec_xlen@@YAXXZ): the call goes to that symbol through the fastcall type
     // that the original's `mov ecx, this; call` stands for
-    __forceinline void _Xlen() const { ((XlenFn)vec_xlen)(this); }           // 0x43e2a0
+    __forceinline void _Xlen() const { VEC_XLEN(this); }                    // 0x43e2a0
 };
 
 // ============================================================================================================

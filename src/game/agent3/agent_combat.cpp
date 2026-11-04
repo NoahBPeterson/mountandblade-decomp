@@ -101,7 +101,7 @@ float Font::measure(const int* text, int len, int* start, int* end)
 }
 
 // @ 0x43e2a0
-void vec_xlen() { throw std::length_error("vector<T> too long"); }
+template void std::vector<int, std::allocator<int> >::_Xlen() const;
 
 // ---- container instantiations (VC7.1 <vector> / <deque>) -----------------------------------------------------------
 // Built WITHOUT an EH switch: the STL try/catch alone makes cl emit the frames (with /EHa cl also keeps the ~E56 call
