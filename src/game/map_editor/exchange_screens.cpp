@@ -10,6 +10,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include <stdlib.h>
 #include <math.h>

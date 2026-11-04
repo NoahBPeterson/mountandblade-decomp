@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
 #include "../music_player.h"   // g_music (0xa73a10)
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
@@ -74,7 +75,6 @@ Presentation* g_presentation;                               // 0x5e299c the runn
 
 int g_animation_count;                                      // 0xa7662c (0x49d4b0)
 int g_presentation_count;                                   // 0xa75f30 (check_presentation 0x49cd50)
-int g_music_culture;                                        // 0xa75e58 (music_set_culture 0x4a1755)
 
 int g_visitor_scene;                                        // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 float g_spawn_radius = 3.0f;                                // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
@@ -1010,7 +1010,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         g_music.situation = (int)params[0];
         break;
     case op::music_set_culture:
-        g_music_culture = (int)params[0];
+        g_music.mask = (int)params[0];
         break;
     case op::stop_all_sounds:
         g_sound_mgr.stop_all();

@@ -12,6 +12,7 @@
 #include "../include/vec.h"
 #include "../include/mesh_parts.h"
 #include "../include/mesh_prims.h"
+#include "../rgl/scene_rec.h"                // rgl::scene: the one definition
 #include "../include/mat4.h"                  // rgl::mat4 (the shared frame; rotate_su / rotate_sf are pos2 members, agent/item_kind.h)
 
 namespace rgl {
@@ -151,19 +152,6 @@ struct mesh : mesh_base {
 
 typedef char mesh_size_check[sizeof(mesh) == 0x260 ? 1 : -1];
 
-struct scene {
-    char pad0[0x194];
-    std::vector<obj_c0*> list;   // 0x194: attached objects collected this frame
-    char pad1[0x1a8 - 0x1a4];
-    unsigned mask;               // 0x1a8
-    char pad2[0x1c8 - 0x1ac];
-    std::vector<mesh*> cache;    // 0x1c8: one mesh per resource
-    mesh* get_mesh(res_t* r);                       // 0x412c30
-    scene();                                        // 0x429740 (char_sheet/screen.cpp: the Screen constructor builds one at +0x...)
-    ~scene();                                       // 0x41f4e0
-};
-
-typedef char scene_size_check[sizeof(scene) == 0x1d8 ? 1 : -1];
 
 struct mesh_list {               // 16 bytes: std::vector<mesh*>
     std::vector<mesh*> v;

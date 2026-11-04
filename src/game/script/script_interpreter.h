@@ -322,7 +322,6 @@ int __fastcall trigger_mesh_obj(int context);                              // 0x
 
 
 
-extern int g_music_culture;             // 0xa75e58 (music_set_culture 0x4a1755)
 // the scene entity of the object a trigger runs for (scene prop / agent triggers; 0 otherwise); +0x88 is its position
 int __fastcall trigger_entity(int context);                     // 0x490430
 

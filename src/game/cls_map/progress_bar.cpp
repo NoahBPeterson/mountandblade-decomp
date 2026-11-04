@@ -2,6 +2,7 @@
 // s004e4c70, s004e55f0, s004e5f80, s004e65e0, s004e6a70, s004e75a0, s004e7b30 and s004e85d0 (head). T-regime region: helpers sit
 // right after their first caller; the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"

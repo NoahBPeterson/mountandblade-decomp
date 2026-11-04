@@ -9,6 +9,7 @@
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "./mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"

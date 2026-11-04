@@ -9,9 +9,7 @@
 #include <d3d9.h>
 #include "../include/rgl_base.h"
 #include "../include/frustum.h"
-#if !defined(GAME_RGL_MESH_H)
-#include "../rgl/mesh.h"        // rgl::scene (the rgl_mesh.h universe's modules include game/rgl_mesh.h first: the same 0x1d8-byte class)
-#endif
+#include "../rgl/scene_rec.h"    // rgl::scene
 
 struct ShSkin;
 struct CellGrid;

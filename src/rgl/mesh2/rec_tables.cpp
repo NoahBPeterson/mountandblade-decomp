@@ -5,6 +5,7 @@
 // 0x4c3050..0x4c48d0 is the "T regime" region (docs/tu_map.md): helpers sit right after their caller, so
 // the functions stay in binary order and the helpers defined after a caller are kept out of line.
 #include "../../include/image_addrs.h"
+#include "../../game/music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../../game/config/config_block.h"
 #include "./rec_tables.h"
 #include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
