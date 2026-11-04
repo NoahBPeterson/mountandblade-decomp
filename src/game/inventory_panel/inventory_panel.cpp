@@ -43,7 +43,6 @@ extern MsgLog g_msglog;                                 // 0x5d7080
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 #include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp (canonical, defined in triggers/trigger_vec.cpp)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 int round_float(float* v);                              // 0x432540
 void item_events(int item_no, int* a, int* b, int* c);  // 0x4ef730
 void weapon_class_caption(int cls, char* out);          // 0x4f04f0
@@ -71,6 +70,7 @@ struct SkillNames {                                     // a skill record seen f
 #include "../slot.h"
 #include "../skill_cap.h"
 #include "../ui_globals.h"      // UI / core globals
+#include "../../rgl/text_stream.h"
 
 // @ 0x50fe20
 void InventoryPanel::refresh_transaction(int unused)

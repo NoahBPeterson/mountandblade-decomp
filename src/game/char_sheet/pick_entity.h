@@ -15,7 +15,6 @@
 using rgl::vector4;
 
 // ---- constants / callees ------------------------------------------------------------------------------------
-extern const float g_549cdc;            // 1.0f
 extern const float g_549d70;            // 0.5f
 // compile-time constants: the original stores / pushes them as immediates (0x4ed921, 0x4ed99d, 0x4ed9a9), no image address
 const float g_3f000000 = 0.5f;          // 0x3f000000 (contact radius)
@@ -69,6 +68,7 @@ struct OverlayItf {                     // vtable 0x590064
 #include "./gui_ctx.h"                // GuiCtx (was Ctx; shared with render_shape.h)
 #include "../../include/rec78.h"
 #include "../ptype.h"
+#include "../float_consts.h"
 
 // ------------------------------------------------------------------------------------------------------------
 #endif

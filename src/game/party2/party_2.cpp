@@ -244,7 +244,6 @@ unsigned GameData::color_of(float t, int flag)
 extern float g_k0_01;                               // 0x54a6f0
 extern float g_k0_7;                                // 0x54b3c8
 extern float g_k0_6;                                // 0x590d94
-extern float g_k1;                                  // 0x549cdc
 extern float g_k1_2;                                // 0x590b94
 extern float g_k1_25;                               // 0x590c80
 extern float g_k1_05;                               // 0x590f24
@@ -496,7 +495,7 @@ MB_NOINLINE OpenItem* construct_items(OpenItem* first, OpenItem* last, OpenItem*
 // @ 0x4b21e6
 void throw_stub_21e6()
 {
-    __CxxThrowException(0, 0);
+    throw;
 }
 
 // @ 0x4b21f0
@@ -512,7 +511,7 @@ float Troop::food_factor()
     if (f & 0x400) {
         return (nibble(0x18) * 0.04f + 1.2f) * 6.9f;
     }
-    return (nibble(0x19) * 0.04f + g_k1) * 6.9f;
+    return (nibble(0x19) * 0.04f + g_one) * 6.9f;
 }
 
 // @ 0x4b22b0
@@ -683,7 +682,7 @@ void construct_elems2(OpenItem* dst, unsigned count, OpenItem* val, ElemCopier* 
 // @ 0x4b2514
 void throw_stub_2514()
 {
-    __CxxThrowException(0, 0);
+    throw;
     __assume(0);
 }
 
@@ -744,7 +743,7 @@ MB_NOINLINE E92* construct_events(E92* first, E92* last, E92* dst, ElemCopier* c
 // @ 0x4b26d6
 void throw_stub_26d6()
 {
-    __CxxThrowException(0, 0);
+    throw;
     __assume(0);
 }
 
@@ -1074,7 +1073,7 @@ MB_NOINLINE void construct_events_n(void* dst, unsigned count, const void* src, 
 // @ 0x4b33b4
 void throw_stub_33b4()
 {
-    __CxxThrowException(0, 0);
+    throw;
     __assume(0);
 }
 
@@ -2317,7 +2316,6 @@ void Party::leave_battle()
 
 
 // ---- the world-map path finder and the nav drivers ----------------------------------------------------------------------
-extern float g_one;         // 0x549cdc = 1.0f
 extern float g_half;        // 0x549d70 = 0.5f
 extern float g_105;         // 0x59364c = 10.5f
 extern float g_10;          // 0x549d74 = 10.0f

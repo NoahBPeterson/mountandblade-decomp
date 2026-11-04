@@ -37,7 +37,6 @@ using rgl::vector4;
 // 0x43a1e0 (thiscall on the table at 0x5e2a18, arg pushed, ret 4): localized text of a table key.
 #include "../str_table.h"                                                 // StrTable g_strtable (0x5e2a18)
 
-void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
 #include "../../include/crt.h"   // canonical: floor (0x536b10)
 
@@ -62,6 +61,7 @@ struct GameData {
 
 // ---- control stub -----------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
+#include "../../rgl/text_stream.h"
 
 // The settings-tab view of the same controls that 0x4d5f20's polls go through (changed() is MissionUi's +0x44):
 // the integer value at +0x30 (MissionUi::get_value) and the float at +0x38 (MissionUi::get_float).

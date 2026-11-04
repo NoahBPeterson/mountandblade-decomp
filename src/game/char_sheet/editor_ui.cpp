@@ -261,7 +261,7 @@ int __cdecl engine_init()
     }
     g_log.autoflush = ok;
     g_log.w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
-    g_5d705c = g_path_prefix;
+    g_5d705c = g_module_path;
     bool b = g_cfg.enable_edit_mode != 0;
     g_5d706c = b;
     g_5d706d = b;

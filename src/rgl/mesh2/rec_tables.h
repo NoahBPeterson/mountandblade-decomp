@@ -201,7 +201,7 @@ struct elem58 {
 // ---- music / sound objects (0x4c3d90..0x4c4640; s004c3d90) -------------------------------------------------------
 int   __stdcall ftol2(double d);                   // 0x535a64
 int   __cdecl round_float(const float* f);             // 0x432540: round to nearest
-float __cdecl clamp(const float& v, const float& lo, const float& hi);  // 0x40e3d0
+float clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0 (the definition: rgl/shapes/shapes.h, which cannot be included next to this header)
 
 // FMOD 3 entry points used by the sound loader.
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)

@@ -74,6 +74,7 @@ extern GuiManager g_gui;        // 0x5d7080
 #include "../slot.h"                    // Slot, g_keyboard (0xa170c8)
 
 #include "../music_player.h"   // g_music (0xa73a10)
+#include "../../include/fmod_api.h"
 
 struct GuiScreen {
     void process(int param);   // 0x4ebfd0 (game/char_sheet/screen.h): the gui object at 0x5d7080 (the dt rides in as its bits)
@@ -102,7 +103,6 @@ __int64 g_tick_dt[5];                               // 0x5e2970 (the last step o
 
 
 // ---- free functions --------------------------------------------------------------------------------
-extern "C" void __stdcall _FSOUND_Update(void);              // 0x53433c
 void bump_counter(void);                                     // 0x42cb70 (?bump_counter@@YAXXZ)
 long build_shader(void);                                    // 0x4c17c0 (game/triggers/trigger_vec.cpp, returns an HRESULT)
 void mb_error(const char* fmt, ...);                          // 0x42cc80
@@ -141,7 +141,7 @@ int GameApp::Update()
     ((GuiScreen*)&g_gui)->process(*(int*)&dt);
     ((Slot*)&g_keyboard)->update(dt);   // 0x487930
     g_music.tick();
-    _FSOUND_Update();
+    FSOUND_Update();
 
     if (g_cfg.enable_edit_mode) {
         if (g_keyboard.down[0x1f] && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {

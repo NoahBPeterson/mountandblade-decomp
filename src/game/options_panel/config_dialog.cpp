@@ -15,6 +15,7 @@
 #include "../config/config.h"          // Config, Core (the dialog's object is g_app_obj, 0x8ee3c48)
 #include "../../rgl/mesh2/gui_edit.h"  // MapDialog
 #include "../../rgl/text_stream.h"     // mb_open_user_file
+#include "../../include/skinmagic.h"
 
 // 0x43a1e0: the string table's lookup (thiscall on g_strtable 0x5e2a18, key -> localized text)
 // (g_strtable is mesh2_common.h's LangTables, through gui_edit.h)
@@ -124,7 +125,6 @@ const float g_width_scale = 0.0023752970155328512f;    // 0x59642c
 const float g_height_scale = 0.0020833334419876337f;   // 0x596430
 
 // skinmagic ordinal 9: skins a dialog window with a registered skin class name.
-int __stdcall SkinDialog(HWND hwnd, const char* cls);    // SkinMagic ord9, thunk 0x535446
 
 #include "../../include/crt.h"   // canonical: sprintf (0x536f8f)
 
@@ -268,7 +268,7 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg) {
     case WM_INITDIALOG:
         m_hwnd = hwnd;
-        SkinDialog(hwnd, "Dialog");
+        SetSingleDialogSkin(hwnd, "Dialog");
         char path[256];
         sprintf(path, k_config);          // the file name is the format string itself (0x4d0295)
         user_path(path);

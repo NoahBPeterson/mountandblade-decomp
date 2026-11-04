@@ -16,6 +16,7 @@
 // the implicit ones, swapped forget() arguments, a restore() two dwords off, a performance formula missing
 // four factors, a save() that never wrote the table, and no body for 0x4d7270.
 #include "../../include/image_addrs.h"
+#include "../float_consts.h"
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg
 #include <windows.h>
@@ -175,7 +176,7 @@ void KeysPage::update_perf()
     int d3d = g_options.i2c;
     char high = g_render.use_hw_shadow;
     perf += g_options.i34 * 0.1f;
-    int shadows = orig::g_use_shaders;
+    int shadows = g_use_shaders;
     perf += g_options.scale_y * 10.0f;
 
     if (d3d) {
@@ -195,7 +196,7 @@ void KeysPage::update_perf()
         }
     }
     if (shadows)
-        perf *= (1 - g_cfg.fake_reflections) * orig::k_0_65f + orig::g_one;
+        perf *= (1 - g_cfg.fake_reflections) * g_k065 + g_one;
     perf *= g_options.i38 * 0.03f + 1.0;
     perf *= g_cfg.texture_detail + 400.0f;
     perf *= 0.002f;

@@ -26,8 +26,8 @@
 #include "../../include/mat4.h"
 #include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
-extern "C" int __cdecl _isalpha(int c);                                 // 0x537f65 (CRT; the compiler's isalpha)
-extern "C" int __cdecl _isdigit(int c);                                 // 0x537fa4
+extern "C" int __cdecl isalpha(int c);                                 // 0x537f65 (CRT; the compiler's isalpha)
+extern "C" int __cdecl isdigit(int c);                                 // 0x537fa4
 
 // request text fragments of the update checker (the narrow literals live in .rdata at 0x593668..0x593794)
 static const char kUserAgent[] = "User-Agent: Mozilla/4.0\r\n";          // 0x593694
@@ -81,7 +81,7 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
     if (*p == '/' && p[1] == '/')
         p += 2;
     char* start = p;
-    while (_isalpha(*p) || _isdigit(*p) || *p == '-' || *p == '.' ||
+    while (isalpha(*p) || isdigit(*p) || *p == '-' || *p == '.' ||
            *p == ':')
         p++;
     *p = '\0';

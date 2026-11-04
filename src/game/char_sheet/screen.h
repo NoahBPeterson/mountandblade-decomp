@@ -41,8 +41,9 @@ extern MsgLog g_msglog;                                 // 0x5d7080
 bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format);  // 0x4bb9c0 (2-arg cdecl)
 void take_screenshot(void);
 #include "../../rgl/text_stream.h"                  // mb_snprintf 0x415100
+#include "../../include/crt.h"
+#include "../float_consts.h"
 // (0x4d10f0 is item_modifier_array_dtor, 0x4e42f0 allocator<RagModel>::construct: cs_common.h)
-void __cdecl __CxxThrowException(void* p, void* info);  // 0x5368e6
 // the MSVC 7.1 formulation of _AddressOfReturnAddress
 #define _AddressOfReturnAddress() ((void*)((char*)&_AddressOfReturnAddress_ + 4))
 int _AddressOfReturnAddress_;
@@ -232,7 +233,6 @@ struct DiObjectData {
 extern float g_four_tenths;             // 0x54b3b8  0.4f
 
 extern float zero;                      // 0x549ca8  0.0f
-extern float g_one;                     // 0x549cdc  1.0f
 extern float g_eps;                     // 0x54a6f0  0.01f
 extern float g_ninety_nine;             // 0x54a5cc  0.99f
 extern float g_seventy_four;            // 0x5985f4  0.74f

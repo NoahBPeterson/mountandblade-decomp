@@ -57,7 +57,6 @@ void* make_medium_button(void* parent, const tstring* text, int a2, int a3, floa
 extern FILE* g_log_file;                        // 0x5a9f90
 extern unsigned char g_log_flag94;              // 0x5a9f94
 extern unsigned char g_log_flag95;              // 0x5a9f95
-extern tstring g_path_prefix;                   // 0x8ee3c28
 extern tstring g_5d705c;                        // 0x5d705c (resmgr::cur, +0xbc of the resource manager 0x5d6fa0)
 extern unsigned char g_5d706c;                  // 0x5d706c (the resource manager's +0xcc)
 extern unsigned char g_5d706d;                  // 0x5d706d (+0xcd)

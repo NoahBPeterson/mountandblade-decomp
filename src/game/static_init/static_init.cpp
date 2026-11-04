@@ -19,6 +19,7 @@
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../../include/clock_table.h"
 #include "../animator.h"       // Animator g_anim (0x8ed4f60)
+#include "../float_consts.h"
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
 extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
@@ -27,7 +28,6 @@ extern char g_5d7080[];     // 0x5d7080 the gui manager
 
 extern unsigned g_5e2464;   // 0x5e2464
 extern unsigned g_5e2468;   // 0x5e2468
-extern float g_549cdc;      // 0x549cdc
 extern float g_5a9be0;      // 0x5a9be0
 extern float g_5a9be8;      // 0x5a9be8
 extern unsigned g_5e2584;   // 0x5e2584

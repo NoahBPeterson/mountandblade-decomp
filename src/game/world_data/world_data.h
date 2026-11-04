@@ -35,6 +35,7 @@
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../../rgl/text_stream.h"
 
 // raw field of a view class
 #define WD_FLD(T, off) (*(T*)((char*)this + (off)))
@@ -373,7 +374,6 @@ struct GlobVec {                                                // the running p
 
 
 #define g_msglog (*(MsgLog*)&g_gui)                          // the on-screen message log view of the UI root g_gui (0x5d7080)
-void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100
 #include "../config/config.h"                                  // g_cfg 0x5a9f98
 #include "../strat/gui_manager.h"                             // gui_manager g_gui 0x5d7080 (UI root: set_o568, reset, f560)
 #include "../../include/renderer.h"                              // g_render 0xa17910 (dev at +0x618 = 0xa17f28)

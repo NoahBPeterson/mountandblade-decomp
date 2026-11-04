@@ -200,7 +200,7 @@ void* __fastcall list_int_buynode(list_int* self)
 void list_int_buynode_funclet(list_node_int* node)
 {
     operator delete(node);
-    __CxxThrowException(0, 0);
+    throw;
 }
 
 // @ 0x4c4e50
@@ -219,7 +219,7 @@ void* __fastcall list_int_make_node(list_int* self, void*, void* a, void* b, voi
 void list_int_make_node_funclet(void* node)
 {
     operator delete(node);
-    __CxxThrowException(0, 0);
+    throw;
 }
 
 // @ 0x4c4ee0
@@ -286,7 +286,7 @@ void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier*
 // EH funclet of 0x4c5010.
 void fill_records_funclet()
 {
-    __CxxThrowException(0, 0);
+    throw;
 }
 
 // @ 0x4c5080

@@ -40,7 +40,8 @@ struct elem2 : widget {
 extern char g_vt_591ee8[];                                  // 0x591ee8
 
 // load the widget's "<name>_*" parameters from the ini table (0x4e4c70)
-void label_refresh(widget* w, tstring name);                    // 0x4e4c70 (tstring by value)
+struct MissionUi;
+void label_refresh(MissionUi* w, tstring name);                    // 0x4e4c70 (tstring by value)
 
 // ---- frustum (0x120 bytes) -------------------------------------------------------------------------------
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
@@ -90,7 +91,7 @@ extern TableauTbl g_tableaus;                                    // 0xa75f40
 // ---- the global animator ---------------------------------------------------------------------------------
 #include "../animator.h"                                  // Animator, g_anim
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-int clamp_index(int* skin, int* flags, int* count);       // 0x432510
+int __cdecl clamp_index(const int* v, const int* lo, const int* hi);       // 0x432510
 
 // ---- the game singleton ----------------------------------------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
@@ -129,7 +130,7 @@ void char_window::open_view()
     if (g_a75f64 < 0) {
         // ---- 3D portrait: build the body, the world, the wind tracks and the camera ----
         face_body* b = new face_body;
-        label_refresh((widget*)b, tstring("char_i_character"));
+        label_refresh((MissionUi*)b, tstring("char_i_character"));
         if (world != 0) {
             world->destroy();                   // 0x475d50 (the CellGrid destructor body), then the free
             free(world);
@@ -238,7 +239,7 @@ void char_window::open_view()
         if (f2dc == -1) {
             widget* a = new widget;
             f4d0 = a;
-            label_refresh(a, tstring("char_i_character_shadow"));
+            label_refresh((MissionUi*)a, tstring("char_i_character_shadow"));
             {
                 tstring nm("character_window_shadow");
                 mesh* m = res_manager().get_object((const rgl::string*)&nm);
@@ -256,7 +257,7 @@ void char_window::open_view()
                 *(void**)c = (void*)g_vt_591ee8;
             }
             f4cc = c;
-            label_refresh(c, tstring("char_i_character"));
+            label_refresh((MissionUi*)c, tstring("char_i_character"));
             mesh* m2 = g_tableaus.make_mesh_from(&mode, &troop);
             c->add_item2(0, m2);
             ui->add_child(c);

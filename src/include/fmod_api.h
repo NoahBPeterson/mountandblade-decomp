@@ -8,6 +8,7 @@ struct FSOUND_SAMPLE;
 
 extern "C" {
 void           __stdcall FSOUND_Close();                                                                        // 0x534336
+void           __stdcall FSOUND_Update();                                                                       // 0x53433c
 FSOUND_SAMPLE* __stdcall FSOUND_Sample_Load(int index, const char* name_or_data, unsigned int inputmode, int offset,
                                             int length);                                                        // 0x534330
 signed char    __stdcall FSOUND_SetVolume(int channel, int vol);                                                // 0x5342ca

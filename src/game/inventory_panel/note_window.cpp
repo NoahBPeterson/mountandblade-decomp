@@ -46,7 +46,7 @@ struct UiList : MissionUi {             // the list widget MWidget (agent5/agent
 };
 
 // widget helper functions
-extern "C" void  label_refresh(MissionUi* w, tstring name);                       // 0x4e4c70
+void label_refresh(MissionUi* w, tstring name);                       // 0x4e4c70
 extern "C" MissionUi* make_short_button(MissionUi* parent, tstring* text,
                                      float x, float y, float h);            // 0x4e5570
 extern "C" MissionUi* make_map_button(MissionUi* parent, tstring* text,

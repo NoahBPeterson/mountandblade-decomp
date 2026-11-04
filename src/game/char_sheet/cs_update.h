@@ -63,6 +63,7 @@ extern MsgLog g_msglog;                             // 0x5d7080
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 extern int g_world_time;                            // 0x5d8790 (compared as an int)
 #include "../ui_globals.h"      // UI / core globals
+#include "../trial_mode.h"
 
 // scroll bar / slider (0x48baa0 set_value)
 struct UiDsv {
@@ -84,7 +85,6 @@ struct Profile { char pad[0x50]; int troop; };      // +0x50
 extern "C" {
 extern int* g_menu_state;                           // 0xa739f4 (menu data, +0x14/+0x18 fields)
 extern int* g_army_state;                           // 0xa739e0
-extern int g_trial_mode;                            // 0x5e29c4
 }
 
 // 0x495700 "choose menu option" (tail-called through g_main_menu)

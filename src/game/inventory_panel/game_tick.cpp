@@ -85,7 +85,6 @@ struct Cfg30 {                                      // the object at game+0x30
 };
 
 // ---- globals and callees of other translation units ----------------------------------------------------------------
-extern float    g_step;                 // 0x5a9c20  frame step (seconds)
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
 
 #include "../game_globals.h"      // g_module_settings.disable_food_slot, g_module_settings.player_wounded_treshold (canonical)
@@ -229,7 +228,7 @@ void GameG::tick(float dt)
         }
     }
 
-    ((World*)g_script.level)->step(g_step);
+    ((World*)g_script.level)->step(g_step_tbl[0]);
 
     if (g_cfg.cheat_mode && g_keyboard.down[0x14] && !g_keyboard.prev[0x14] && g_keyboard.down[0x1d])
         f95 = !f95;
@@ -265,20 +264,20 @@ void GameG::update_markers()
         g_script.mat_type0.at<Marker>(i)->f208 = g_script.mat_type0.at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_script.mat_sea.count(); i++) {
-        g_script.mat_sea.at<Marker>(i)->f1f4 += g_step * g_module_settings.map_sea_speed_x * 3.0f;
-        g_script.mat_sea.at<Marker>(i)->f1f8 += g_step * g_module_settings.map_sea_speed_y * 3.0f;
+        g_script.mat_sea.at<Marker>(i)->f1f4 += g_step_tbl[0] * g_module_settings.map_sea_speed_x * 3.0f;
+        g_script.mat_sea.at<Marker>(i)->f1f8 += g_step_tbl[0] * g_module_settings.map_sea_speed_y * 3.0f;
         g_script.mat_sea.at<Marker>(i)->f204 = g_script.mat_sea.at<Marker>(i)->f1f4;
         g_script.mat_sea.at<Marker>(i)->f208 = g_script.mat_sea.at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_script.mat_sea2.count(); i++) {
-        g_script.mat_sea2.at<Marker>(i)->f1f4 -= g_step * g_module_settings.map_sea_speed_x * 2.0f;
-        g_script.mat_sea2.at<Marker>(i)->f1f8 -= g_step * g_module_settings.map_sea_speed_y * 2.0f;
+        g_script.mat_sea2.at<Marker>(i)->f1f4 -= g_step_tbl[0] * g_module_settings.map_sea_speed_x * 2.0f;
+        g_script.mat_sea2.at<Marker>(i)->f1f8 -= g_step_tbl[0] * g_module_settings.map_sea_speed_y * 2.0f;
         g_script.mat_sea2.at<Marker>(i)->f204 = g_script.mat_sea2.at<Marker>(i)->f1f4;
         g_script.mat_sea2.at<Marker>(i)->f208 = g_script.mat_sea2.at<Marker>(i)->f1f8;
     }
     for (unsigned i = 0; i < (unsigned)g_script.mat_river.count(); i++) {
-        g_script.mat_river.at<Marker>(i)->f1f4 += g_step * g_module_settings.map_river_speed_x;
-        g_script.mat_river.at<Marker>(i)->f1f8 += g_step * g_module_settings.map_river_speed_y;
+        g_script.mat_river.at<Marker>(i)->f1f4 += g_step_tbl[0] * g_module_settings.map_river_speed_x;
+        g_script.mat_river.at<Marker>(i)->f1f8 += g_step_tbl[0] * g_module_settings.map_river_speed_y;
         g_script.mat_river.at<Marker>(i)->f204 = g_script.mat_river.at<Marker>(i)->f1f4;
         g_script.mat_river.at<Marker>(i)->f208 = g_script.mat_river.at<Marker>(i)->f1f8;
     }

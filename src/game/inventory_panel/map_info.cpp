@@ -71,6 +71,7 @@ struct RecR {                                // 0x5ac8  party / roster record
 
 #include "../rec98.h"                       // Rec98 (this slice called it MapAgent): the 0x98-byte record, a = f54, b = f58
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../rgl/text_stream.h"
 
 struct PageTable98 {                         // lives at GameData+0xcc (the page table slot_api.cpp defines slot() for)
     char      pad00[0x18];
@@ -141,7 +142,6 @@ typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     
 extern gui_manager g_gui;                    // 0x5d7080
 
 
-void mb_snprintf(char* buf, size_t n, const char* fmt, ...);   // 0x415100
 
 // ------------------------------------------------------------------------------------- helpers ------
 // party page lookup, exactly as inlined at 0x51ac38 / 0x51aed3: pages[idx >> 4] + (idx & 15)
