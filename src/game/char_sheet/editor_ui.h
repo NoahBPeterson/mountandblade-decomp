@@ -38,7 +38,6 @@ __forceinline mesh* load_mesh(const char* name)
 
 // ---- text log stream (0x5a9f60, see s004bd990) -----------------------------------------------------
 #include "../../rgl/stream.h"                     // text_stream: name, autoflush, fp, failed, is_open
-extern text_stream g_log;                         // 0x5a9f60 the engine text log (include/rgl_globals.h declares it too; that header pulls the world classes in)
 
 // ---- widgets ---------------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)

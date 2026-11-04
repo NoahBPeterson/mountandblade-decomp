@@ -156,7 +156,7 @@ static __declspec(noinline) void report(const char* msg)
     char buf[1024];
     sprintf(buf, "%s; LINE NO: %d:", msg, g_lineno);
     g_msglog.add(tstring(buf), 0xffff5555);
-    stream_base& lg = *(stream_base*)g_log;
+    stream_base& lg = g_log;
     lg.w_cstr(buf);
     g_script_error = 1;
 }
@@ -1452,7 +1452,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             game()->message_log.append(text);
             if (g_cfg.enable_edit_mode) {
                 text.push_back('\n');
-                ((stream_base*)g_log)->w_tstr((const rgl::string*)&text);
+                ((stream_base&)g_log).w_tstr((const rgl::string*)&text);
             }
         }
         break;
@@ -1465,7 +1465,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_msglog.add(text, color);
             if (g_cfg.enable_edit_mode) {
                 text.push_back('\n');
-                ((stream_base*)g_log)->w_tstr((const rgl::string*)&text);
+                ((stream_base&)g_log).w_tstr((const rgl::string*)&text);
             }
         }
         break;

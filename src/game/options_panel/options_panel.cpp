@@ -632,26 +632,7 @@ stream_base& outfile::r_u64(unsigned __int64* v) { return *this; }
 stream_base& outfile::r_i64(__int64* v) { return *this; }
 stream_base& outfile::r_int(int* v) { return *this; }
 stream_base& outfile::r_tstr(rgl::string* v) { return *this; }
-// 0x42cc10: writes the unwritten part of the buffer and flushes (the log file's flush: 0x595618 and 0x595990 each have the
-// same body, which the original's linker folded into log_stream::flush, gui_manager.cpp)
-int outfile_b::flush()
-{
-    int r = 0;
-    if (is_open) {
-        int n = buf.len;
-        if (flushed < n) {
-            int bad = 0;
-            const char* p = buf.c_str();
-            size_t w = fwrite(flushed + p, 1, n - flushed, fp);
-            if (w != buf.len - flushed)
-                bad = 1;
-            flushed = buf.len;
-            fflush(fp);
-            r = bad;
-        }
-    }
-    return r;
-}
+// 0x42cc10: outfile's own flush has the same body as log_stream::flush (gui_manager.cpp), which the original's linker folded
 int outfile::flush()
 {
     int r = 0;

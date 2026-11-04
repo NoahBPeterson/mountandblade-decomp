@@ -32,7 +32,7 @@ struct Src {
 using rgl::vector4;
 using rgl::mesh;
 
-struct resmgr {                                       // rgl/core/resmgr.h (the object at 0x5d6fa0)
+struct resmgr {                                       // rgl/core/resmgr.h (the object at 0x5d6fa0; this module's mesh class is rgl_mesh.h's: res_mgr.h's real mesh changes the codegen)
     mesh* get_object(const rgl::string* name);      // 0x419540
     int load_all(int check_exists, rgl::string* root);   // 0x41c540
 };
@@ -229,26 +229,6 @@ void parse_module_info();                            // 0x4c05b0
 void load_data_files();                                    // 0x4d0c20 (options_panel/module_load.cpp)
 void load_module_files();                                    // 0x50d5e0 (inventory_panel/module_files.cpp)
 
-// message logger (0x5a9f60): the text sink is the virtual `operator<<(const char*)` at +0x28.
-struct logger {
-    virtual void v00();                              // +0x00
-    virtual void v04();                              // +0x04
-    virtual void v08();                              // +0x08
-    virtual void v0c();                              // +0x0c
-    virtual void v10();                              // +0x10
-    virtual void v14();                              // +0x14
-    virtual void v18();                              // +0x18
-    virtual void v1c();                              // +0x1c
-    virtual void v20();                              // +0x20
-    virtual void v24();                              // +0x24
-    // cl 13.10 lays an overload set out in *reverse* declaration order, occupying the slots of the
-    // first-declared member: so the string sink lands back on slot 10 (+0x28) as in the original.
-    virtual logger& operator<<(float v);             // +0x30
-    virtual logger& operator<<(int v);               // +0x2c
-    virtual logger& operator<<(const char* s);       // +0x28
-};
-extern logger g_log;                              // 0x5a9f60
-
 // the text stream used to read music.txt (vtable 0x54ac88, 0x38 bytes, `failed` at +0x34): rgl/stream.h's tstream3, whose constructor and
 // destructor (0x4172d0, 0x417310) are called out of line here
 #include "../../rgl/stream.h"
@@ -303,7 +283,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 3) {
         if (!g_cfg.disable_music && !g_cfg.disable_sound) {
-            g_log << "Loading Music...\n";
+            ((stream_base&)g_log).w_cstr("Loading Music...\n");
             tstream3 ts;
             {
                 tstring name(g_module_path);
@@ -329,9 +309,9 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         { tstring key("ui_loading_textures"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 7) {
-        g_log << "Loading Textures...\n";
+        ((stream_base&)g_log).w_cstr("Loading Textures...\n");
         g_res.load_all(g_module_settings.scan_module_textures, (rgl::string*)&g_module_path);
-        g_log << "Finished Loading Textures...\n";
+        ((stream_base&)g_log).w_cstr("Finished Loading Textures...\n");
         { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else {

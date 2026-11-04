@@ -68,7 +68,7 @@ struct NodeVec { void push_back(NodeA* const& n); };   // 0x49b120 (widget_node.
 struct ContainerW { void* construct(); };       // 0x4931a0 (world_data.cpp): the window base constructor body, returns this
 struct Map10007 { int lookup(unsigned id); };   // 0x48ad00 (ui/mission.h): the party table of the game object (Game::scene) starts with this 0x2717-entry table
 struct FieldPanel { void update(); };           // 0x48d470 (mission_ui2/mission_3.cpp): lays the list out
-struct resmgr { rgl::mesh* get_object(const rgl::string* name); };   // 0x419540 (rgl/core/resmgr.cpp): the resource manager at 0x5d6fa0
+#include "../res_mgr.h"                      // res_manager(): the resource manager at 0x5d6fa0
 struct UiD;
 UiD* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
 void __cdecl label_refresh(MissionUi* w, tstring name);                // 0x4e4c70 (cdecl, the name by value; cls_map/progress_bar.cpp)
@@ -148,7 +148,7 @@ void PartyWindow::create()
     }
     {
         tstring n("inventory_window_b");
-        ResMesh* m = ((ResMesh*)((resmgr*)&g_resmgr_party)->get_object((const rgl::string*)&n))->clone();
+        ResMesh* m = ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone();
         WOPS(win)->add_image(0, m);
     }
 
@@ -158,7 +158,7 @@ void PartyWindow::create()
         label_refresh(bg, tstring("inv_i_equipment_pangel_bg"));
         {
             tstring n("inventory_equipment_panel");
-            WOPS(bg)->add_image_a(0, ((ResMesh*)((resmgr*)&g_resmgr_party)->get_object((const rgl::string*)&n))->clone());
+            WOPS(bg)->add_image_a(0, ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone());
         }
         WOPS(container)->add_child(bg);
     }
@@ -171,7 +171,7 @@ void PartyWindow::create()
         label_refresh(h, tstring(buf));
         {
             tstring n("inventory_window_hinge");
-            WOPS(h)->add_image_a(0, ((ResMesh*)((resmgr*)&g_resmgr_party)->get_object((const rgl::string*)&n))->clone());
+            WOPS(h)->add_image_a(0, ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone());
         }
         WOPS(container)->add_child(h);
     }

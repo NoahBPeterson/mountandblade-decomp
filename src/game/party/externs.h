@@ -11,6 +11,6 @@
 #include "../str_table.h"
 
 // the engine log (global 0x5a9f60): stream slot 10 (+0x28) writes a C string
-inline stream_base* log_stream_ptr() { return (stream_base*)&orig::g_log; }
+inline stream_base* log_stream_ptr() { return (stream_base*)&g_log; }
 
 #endif // GAME_PARTY_EXTERNS_H

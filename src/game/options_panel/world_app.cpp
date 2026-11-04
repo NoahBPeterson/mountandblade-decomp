@@ -494,7 +494,7 @@ extern int g_use_shaders;                                // 0x5e28fc
 #include "../game_globals.h"      // canonical g_key_states (listed directly: the audit reads only the source's own includes)
 #define g_key_states_i (*(int(*)[0x40])g_key_states)     // g_key_states (0x5e27c8, game_globals.h) as 0x40 ints
 
-#include "../log_stream.h"                       // LogStream: slot 10 (+0x28) is w_cstr
+#include "../../rgl/stream.h"                   // g_log (log_stream)
 
 // ---- the application object: Application / GameApp (../application.h) --------------------------------
 // @ 0x4d3ec0
@@ -538,7 +538,7 @@ GameApp::GameApp()
         RegCreateKeyExA((HKEY)0x80000001, "Software\\MountAndBladeKeys", 0, 0, 0, 0x20007, 0,
                         &key, &disp);
         if (disp == 1)
-            ((LogStream*)&orig::g_log)->w_cstr("Creating new Registry Key");
+            ((stream_base&)g_log).w_cstr("Creating new Registry Key");
         if (key != 0) {
             tstring modname;
             read_key_string(&key, "last_module", &modname);

@@ -205,17 +205,7 @@ struct LevelRaw : Raw {                                      // 0x494-byte level
 #include "../../include/game_data.h"                           // GameData (g_game 0x5e2930; was a local GameState view with load_scene / blend)
 #include "../../include/phys_set.h"
 
-struct log_base {
-    virtual void p00(); virtual void p01(); virtual void p02(); virtual void p03(); virtual void p04();
-    virtual void p05(); virtual void p06(); virtual void p07(); virtual void p08(); virtual void p09();
-    virtual log_base& w_cstr(const char* s);
-};
-struct log_stream : log_base {
-    virtual void p00(); virtual void p01(); virtual void p02(); virtual void p03(); virtual void p04();
-    virtual void p05(); virtual void p06(); virtual void p07(); virtual void p08(); virtual void p09();
-    virtual log_base& w_cstr(const char* s);
-};
-extern log_stream g_log;                                     // 0x5a9f60
+#include "../../rgl/stream.h"                           // g_log (log_stream)
 
 struct SceneObjRec : Raw { char b[0x88]; };
 struct SceneObjs { char pad0[0x14]; SceneObjRec* first; SceneObjRec* last; };    // g_level +0xb0
@@ -317,7 +307,7 @@ void Mission::start_setup()
     at<__int64>(0x6300) = g_ticks[at<int>(0x62f8)];
     at<__int64>(0x6310) = g_ticks[at<int>(0x6308)];
     at<__int64>(0x6320) = g_ticks[at<int>(0x6318)];
-    ((log_base&)g_log).w_cstr("begin_setup");
+    ((stream_base&)g_log).w_cstr("begin_setup");
     g_phys.reset();
 
     ModeRec* mrec = (ModeRec*)((char*)g_mission_templates + at<int>(0x5df0) * 0x58);
@@ -1041,7 +1031,7 @@ void Mission::start_setup()
             ((Psys*)&g_shadow_map)->render();
         }
     }
-    ((log_base&)g_log).w_cstr("end_setup");
+    ((stream_base&)g_log).w_cstr("end_setup");
     at<char>(0x6555) = 0;
 }
 

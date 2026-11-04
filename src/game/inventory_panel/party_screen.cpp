@@ -9,6 +9,7 @@
 #include "../../include/image_addrs.h"
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "./party_screen.h"
+#include "../res_mgr.h"                         // res_manager()
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
@@ -111,7 +112,7 @@ void PartyScreen::open_party_window()
 
     {
         tstring key("party_window_b");
-        ResMesh* m = (ResMesh*)((resmgr*)&g_resmgr_inv)->get_object((const rgl::string*)&key);
+        ResMesh* m = (ResMesh*)res_manager().get_object((const rgl::string*)&key);
         ResMesh* c = m->clone();
         PSO(win)->add_image(0, c);
     }

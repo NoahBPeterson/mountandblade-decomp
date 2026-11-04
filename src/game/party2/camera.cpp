@@ -2235,7 +2235,7 @@ static __declspec(noinline) void report(const char* msg)
     char buf[1024];
     sprintf(buf, "%s; LINE NO: %d:", msg, g_lineno);
     g_gui.add(tstring(buf), 0xffff5555);
-    LogStreamBase& lg = g_log;
+    stream_base& lg = g_log;
     lg.w_cstr(buf);
     g_script_error = 1;
 }
@@ -2602,7 +2602,7 @@ char DialogBlock::run_line(int locals, int* idx, int script)
         char buf[512];
         _snprintf(buf, 0x200, "At %s.", text.c_str());
         g_gui.add(tstring(buf), 0xffff5555);
-        LogStreamBase& lg = g_log;
+        stream_base& lg = g_log;
         lg.w_cstr(buf);
     }
     return ok;
@@ -2643,7 +2643,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
         const char* q = text.c_str();
         _snprintf(msg, 0x200, "At %s.", q);
         g_gui.add(tstring(msg), 0xffff5555);
-        LogStreamBase& lg = g_log;
+        stream_base& lg = g_log;
         lg.w_cstr(msg);
     }
     g_script_error = 0;
@@ -2826,7 +2826,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             const char* q = self->text.c_str();
             _snprintf(msg, 0x200, "At %s.", q);
             g_gui.add(tstring(msg), 0xffff5555);
-            LogStreamBase& lg = g_log;
+            stream_base& lg = g_log;
             lg.w_cstr(msg);
         }
         if (!last_ok)
