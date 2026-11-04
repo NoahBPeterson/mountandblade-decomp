@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <math.h>
 #include "../../rgl/options.h"   // g_options
+#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include <new>
 #include "../../rgl/mesh.h"
 #include "../../rgl/stream.h"
@@ -352,7 +353,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 
         // ---- variant B: an anisotropically scaled wind gust
         float p = (float)pow((double)(1.0f - k), 1.5);
-        vector4 u(p * sp->v20.x, p * sp->v20.y, p * sp->v20.z);
+        vector4 u(p * sp->v20[0], p * sp->v20[1], p * sp->v20[2]);
         if ((sp->f10 & 0x10000000) || sqrtf(u.x * u.x + (u.y * u.y + u.z * u.z)) < 0.1f)
             f65b0->f6c |= 2;
         if (!g_use_shaders) {
@@ -367,9 +368,9 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         f65b0->f14 = f65b0->pos;
 
         // the cell colour: the unpacked table colour faded by k, offset by the table base position
-        u.x = cx * 0.2f + sp->base.x;
-        u.y = cy * 0.2f + sp->base.y;
-        u.z = col.z * 0.2f + sp->base.z;
+        u.x = cx * 0.2f + sp->base[0];
+        u.y = cy * 0.2f + sp->base[1];
+        u.z = col.z * 0.2f + sp->base[2];
         if (!g_use_shaders) {
             u.x = sqrtf(u.x);
             u.y = sqrtf(u.y);
@@ -404,7 +405,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
     rd.normalize();
     f65b4->f44 = rd;
 
-    f65b4->pos = sp->base;
+    f65b4->pos = *(vector4*)sp->base;
     f65b4->pos.x *= 0.5f;
     f65b4->pos.y *= 0.5f;
     f65b4->pos.z *= 0.5f;
@@ -573,11 +574,11 @@ void Mission::rebuild_nav(int which, int)
 void Mission::post_spawn(MAgent* a)
 {
     EnvRow* row = &g_env_rows[cam];
-    float sz = row->v20.z * 0.4f;
+    float sz = row->v20[2] * 0.4f;
     vector4 sc;
-    sc.x = row->base.x + row->v20.x * 0.4f;
-    sc.y = row->base.y + row->v20.y * 0.4f;
-    sc.z = row->base.z + sz;
+    sc.x = row->base[0] + row->v20[0] * 0.4f;
+    sc.y = row->base[1] + row->v20[1] * 0.4f;
+    sc.z = row->base[2] + sz;
     vector4 pos;
     pos.x = 0.0f;
     pos.y = 0.0f;

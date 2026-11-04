@@ -353,6 +353,6 @@ struct RStr : tstring {
     RStr(const char* s) : tstring(s) {}
     operator const rgl::string&() const { return *(const rgl::string*)this; }
 };
-extern rgl::string* g_env_rows;                                 // 0x5e28f4
+#include "../env_row.h"                                      // EnvRow, g_env_rows (0x5e28f4)
 
 #endif // MISSION5_GAME_2_H

@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Agent::update_alarm 0x443140 calls vector4::operator- 0x407ca0 instead of expanding it
 #include "./agent_fx_sound.h"
+#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../res_mgr.h"
 #include "../config/config_block.h"
 #include "../tstring.h"
@@ -334,14 +335,14 @@ Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
     g_emit_defs.setup(e, idx, &v);
     e->world = *m * e->local;
     if (e->res != 0 && (e->res->flags & 0x40)) {
-        CamRec* c = &g_env_rows[cam];
+        EnvRow* c = &g_env_rows[cam];
         vector4 t;
-        t.x = c->dx * 0.3f;
-        t.y = c->dy * 0.3f;
-        t.z = c->dz * 0.3f;
-        v.x = t.x + c->px;
-        v.y = t.y + c->py;
-        v.z = t.z + c->pz;
+        t.x = c->v20[0] * 0.3f;
+        t.y = c->v20[1] * 0.3f;
+        t.z = c->v20[2] * 0.3f;
+        v.x = t.x + c->base[0];
+        v.y = t.y + c->base[1];
+        v.z = t.z + c->base[2];
         e->offs = v;
     }
     e->flags &= ~1u;

@@ -9,6 +9,7 @@
 //       caller are __declspec(noinline). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../config/config_block.h"
 #include "../../include/msg_log.h"
 #include <stdlib.h>
@@ -792,7 +793,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         d = 0.0f;
     else if (d >= 1.0f)
         d = 1.0f;
-    float size = *(float*)((char*)&g_env_rows[cam_row] + 0x1c);
+    float size = g_env_rows[cam_row].size;
     float in = d * size * flare_amt * sc2;
     vector4 col(in * 1.1f, in, in * 0.8f);
     fm->color = rgl::pack_color(&col);

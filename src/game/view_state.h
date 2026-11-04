@@ -41,7 +41,6 @@ struct ViewBody {
     char pad5188[0x5374 - 0x5188];
     void init_timers();         // 0x475e50  // old name of ViewState::ViewState, removed after the names merge
     void init();                // 0x463370 (src/game/ui/troop_inv.cpp: the reset path)
-    rgl::vector4 get_dir(int a, int b);     // 0x463610 (troop_inv.cpp)
 };
 struct ViewState : ViewBody {
     ViewState();                // 0x475e50 (terrain_b.cpp)

@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <math.h>
 #include "../tstring.h"
+#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "./ui_common.h"
@@ -392,10 +393,10 @@ void ViewBody::init()
 }
 
 // @ 0x463610
-rgl::vector4 ViewBody::get_dir(int a, int b)
+rgl::vector4 EnvRow::get_dir(int a, int b)
 {
     rgl::vector4 r;
-    float ang = FL(0x18) * 0.017453292f;
+    float ang = sun_angle * 0.017453292f;
     float c = (float)cos(ang), s = (float)sin(ang);
     float x1 = c * -1.0f - s * 0.0f;
     r.z = c * 0.0f - s * 1.0f;

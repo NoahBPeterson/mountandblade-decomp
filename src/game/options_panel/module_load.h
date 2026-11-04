@@ -35,8 +35,8 @@ struct flora_kind {
     int f1c;            // +0x1c
 };
 
-// ground spec record (0x4c bytes, the table data\skyboxes.txt fills; detail in s004bddf0): a name at +0 that the
-// array new of 0x4d0c20 constructs (with the element count stored before the array)
+#include "../env_row.h"           // EnvRow: the 0x4c-byte record of the table data\skyboxes.txt fills (g_env_rows 0x5e28f4)
+// the element the std::vector allocator of 0x4d1160 / 0x4d1230 / 0x4d129a copies (0x68 bytes in the vector; a name at +0)
 struct ground_spec {
     tstring name;       // +0
     char pad10[0x4c - 0x10];

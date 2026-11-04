@@ -14,6 +14,7 @@
 #include <math.h>
 #include <string.h>
 #include "./game_2.h"
+#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../../include/troop.h"          // g_level_xp
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -206,7 +207,7 @@ void Game::build_scene()
     ((Poser*)self->track_entity)->add_extra((int)self->map_track);
 
     rgl::entity* obj = (rgl::entity*)((rgl::world*)world)->create_entity(9);
-    self->map_obj = ((mesh_x*)((resmgr*)&g_resmgr)->get_object(g_env_rows))->clone();
+    self->map_obj = ((mesh_x*)((resmgr*)&g_resmgr)->get_object((const rgl::string*)&g_env_rows->name))->clone();
     self->map_obj->scale(60.0f);
     self->map_obj->mask = 0xfffeffff;
     ((Poser*)obj)->add_extra((int)self->map_obj);

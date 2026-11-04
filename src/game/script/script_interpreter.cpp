@@ -20,6 +20,7 @@
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
+#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../music_player.h"   // g_music (0xa73a10)
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
@@ -3161,7 +3162,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->fog_distance = (float)params[0];
             if (mission()->scene) {
                 MissionX* m = mission();
-                su_0 = g_env_rows[m->env_row].fog_color;
+                su_0 = g_env_rows[m->env_row].f44;
                 if (params[1])
                     su_0 = (unsigned)params[1];
                 sf_0 = (float)params[0];

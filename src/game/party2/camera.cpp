@@ -1851,8 +1851,6 @@ int Mission::exec_trigger(int val)
 // "taken" stamp and the label text layout. Fields not in game_data.h are reached by offset.
 // ======================================================================================
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/msg_log.h"
-extern MsgLog g_gui;                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
 
 // ---- shared log tail of 0x49b720 / 0x49b820 (inlined in both; the source of the original
 // likely had a static helper, but cl 13.10 inlines it at /O2 regardless of `noinline`) ----------

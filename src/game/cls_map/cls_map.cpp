@@ -3,6 +3,7 @@
 // s004e05c0, s004e25a0, s004e2ea0 and s004e3780. T-regime region: helpers sit right after their first caller;
 // the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
@@ -543,7 +544,6 @@ loading_config* copy_loading_config(loading_config* self, const loading_config* 
 struct GameDtor  { ~GameDtor(); };                      // 0x492f40 (the game object)
 struct WorldDtor { ~WorldDtor(); };                     // 0x4d51d0 (the mission object)
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
-struct E4C   { tstring s; char pad[0x3c]; };            // 0x4c bytes
 struct S3c   { char pad[0xc]; ~S3c(); };                // 0xc bytes at +0x3c (dtor 0x4317b0)
 struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; S3c m3c; };   // 0x48 bytes
 struct Item238 { char pad[0x238]; ~Item238(); };        // dtor 0x4c8a40
@@ -606,7 +606,7 @@ int shutdown()
         delete[] (E20b*)g_ptypes;
     }
     if (g_env_rows) {
-        delete[] (E4C*)g_env_rows;
+        delete[] g_env_rows;
     }
     if (g_map_icons) {
         delete[] (NameRec48*)g_map_icons;

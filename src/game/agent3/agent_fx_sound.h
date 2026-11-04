@@ -107,14 +107,7 @@ extern const int g_xp_table[63];                        // 0x590974: experience 
 extern MsgLog g_gui;                                 // 0x5d7080
 
 // ---- effect spawn (0x442ca0) ---------------------------------------------------------------------------------------------------
-struct CamRec {                                         // 0x4c bytes, array behind the pointer at 0x5e28f4
-    char pad0[0x20];
-    float dx, dy, dz;                                   // +0x20
-    char pad2c[4];
-    float px, py, pz;                                   // +0x30
-    char pad3c[0x4c - 0x3c];
-};
-extern CamRec* g_env_rows;                                  // 0x5e28f4
+#include "../env_row.h"                                 // EnvRow, g_env_rows (0x5e28f4)
 
 // ---- mesh objects hanging off the agent (0x443aa0, 0x444370) ----------------------------------------------------------------------
 #include "../../include/mat4.h"

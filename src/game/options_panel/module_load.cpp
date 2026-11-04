@@ -4,6 +4,7 @@
 // Names provisional; class names follow the Module System's record names.
 #include <windows.h>
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include <new>
 #include <d3d9.h>
 #include "./module_load.h"
@@ -23,7 +24,7 @@ ptype* g_ptypes;                                 // 0x5e28f8 (flora_kinds.txt: t
 int g_ptype_count;                               // 0x5e29e8
 
 // ground specs: count (0x5e29ec) + heap array of 0x4c-byte records.
-ground_spec* g_ground_specs;                     // 0x5e28f4
+EnvRow* g_env_rows;                              // 0x5e28f4
 int g_num_ground_specs;                          // 0x5e29ec
 
 // mission-type table: 0x20-byte records 0xa735d0..0xa73730.
@@ -175,9 +176,9 @@ void load_data_files()
     if (!((text_stream*)&ts4)->open_read_text("data\\skyboxes.txt"))
         mb_error("Unable to open %s", "data\\skyboxes.txt");
     ts4.r_int(&g_num_ground_specs);
-    g_ground_specs = new ground_spec[g_num_ground_specs];
+    g_env_rows = new EnvRow[g_num_ground_specs];
     for (int i = 0; i < g_num_ground_specs; i++)
-        ((prsnt_record*)&g_ground_specs[i])->load_extras(ts4);        // 0x4bddf0
+        ((prsnt_record*)&g_env_rows[i])->load_extras(ts4);        // 0x4bddf0
     text_reader_l ts5;
     if (!((text_stream*)&ts5)->open_read_text("Data\\mission_types.txt"))
         mb_error("Unable to open %s", "Data\\mission_types.txt");

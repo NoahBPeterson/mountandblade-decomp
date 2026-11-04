@@ -14,16 +14,6 @@ extern int g_emit_id[];                                 // 0x8ed5098 (ids of the
 
 
 
-// the 0x4c-byte rows at g_env_rows (0x5e28f4): camera rows (post_spawn) and hourly ambient rows (setup_ambient)
-struct EnvRow {
-    char pad0[0x10];
-    int f10;                                            // +0x10
-    char pad14[0x20 - 0x14];
-    rgl::vector4 v20;                                   // +0x20 camera focus (x, y, z) / wind strength per axis
-    rgl::vector4 base;                                  // +0x30 (the 4th lane is read by post_spawn)
-    float f40, f44, f48;                                // +0x40
-    rgl::vector4 get_dir(int idx, int day);             // 0x463610 (returns by hidden pointer)
-};
-extern EnvRow* g_env_rows;                              // 0x5e28f4
+#include "../env_row.h"                                 // EnvRow, g_env_rows (0x5e28f4)
 
 #endif // TERRAIN_B_EMIT_H

@@ -188,9 +188,6 @@ struct SndBank {                                             // at mode record +
 };
 #include "../mode_rec.h"
 
-struct SndRec : Raw {                                        // 0x4c bytes, array g_env_rows
-    char b[0x4c];
-};
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../prop_kind.h"                                    // PropKind (g_propkinds records, 0x78 bytes; shared with terrain_b)
 
@@ -229,7 +226,7 @@ struct SceneSlot {                                                // 0x130 bytes
 #include "../../include/fx.h"
 extern ModeRec*   g_mission_templates;        // 0x5e2a00  mode table (0x58-byte records)
 static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)((char*)m + 0x4c); }   // the sound bank at mode record +0x4c
-extern SndRec*    g_env_rows;          // 0x5e28f4  sound slot records (0x4c bytes)
+#include "../env_row.h"                               // EnvRow, g_env_rows (0x5e28f4)
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../prop_kind.h"
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
@@ -459,18 +456,18 @@ void Mission::start_setup()
 
     // ---- ambient sound slot selection -------------------------------------------------------
     for (int i = 0; i < g_num_ground_specs; i++) {
-        SndRec* s = &g_env_rows[i];
+        EnvRow* s = &g_env_rows[i];
         float r = RND() * 6.32231149e-07f;
-        s->at<float>(0x48) = r;
-        if ((at<float>(0x65e8) > 7.0f && at<float>(0x65e8) < 17.0f) ? (s->at<int>(0x10) & 3) == 0 :
-            (at<float>(0x65e8) > 4.0f && at<float>(0x65e8) < 20.0f) ? (s->at<int>(0x10) & 3) == 1 :
-            (s->at<int>(0x10) & 3) == 2)
-            s->at<float>(0x48) = r + 1.0f;
-        s->at<float>(0x48) = s->at<float>(0x48) - abs(at<int>(0x65fc) - ((s->at<int>(0x10) >> 4) & 0xf)) * 0.100000001f;
+        s->rank = r;
+        if ((at<float>(0x65e8) > 7.0f && at<float>(0x65e8) < 17.0f) ? (s->f10 & 3) == 0 :
+            (at<float>(0x65e8) > 4.0f && at<float>(0x65e8) < 20.0f) ? (s->f10 & 3) == 1 :
+            (s->f10 & 3) == 2)
+            s->rank = r + 1.0f;
+        s->rank = s->rank - abs(at<int>(0x65fc) - ((s->f10 >> 4) & 0xf)) * 0.100000001f;
     }
     at<int>(0x660c) = 0;
     for (int i = 1; i < g_num_ground_specs; i++)
-        if (g_env_rows[i].at<float>(0x48) > g_env_rows[at<int>(0x660c)].at<float>(0x48))
+        if (g_env_rows[i].rank > g_env_rows[at<int>(0x660c)].rank)
             at<int>(0x660c) = i;
 
     // ---- sky / cloud / fog bit fields -------------------------------------------------------
@@ -622,13 +619,13 @@ void Mission::start_setup()
     // ---- fade, params, ambient, sun ---------------------------------------------------------
     rebuild_nav(at<int>(0x5df4), at<int>(0x5df0));
     at<int>(0x5274) = 0;
-    at<World*>(0)->set_fade(&at<float>(0x6614), (char*)&g_env_rows[at<int>(0x660c)] + 0x44);
+    at<World*>(0)->set_fade(&at<float>(0x6614), (char*)&g_env_rows[at<int>(0x660c)].f44);
     unsigned color = 0xff334455;
     ((envelope*)at<World*>(0))->set_params(-5.0f, 10.0f, (const int*)&color, (const int*)&at<float>(0x654c));     // 0x462540
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
     Entity* sun = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
-    Mesh* sm = g_resmgr.get_object(&g_env_rows[at<int>(0x660c)]) ->clone();
+    Mesh* sm = g_resmgr.get_object((rgl::string*)&g_env_rows[at<int>(0x660c)].name) ->clone();
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {
@@ -640,7 +637,7 @@ void Mission::start_setup()
         GameData* g1 = g_game;
         int secs = (int)((g_ticks[RAWAT(int, g1, 0x13b18)] - RAWAT(__int64, g1, 0x13b20)) * 1e-5f);
         int h = secs % 24;
-        float angle = g_env_rows[at<int>(0x660c)].at<float>(0x14) * 0.0174532924f -
+        float angle = g_env_rows[at<int>(0x660c)].f14 * 0.0174532924f -
                       (float)(h - 12) * 0.0174532924f * 15.0;
         sun->at<matrix>(0x58).rotate_sf(&angle);
         angle = 1.0e8f;
@@ -792,8 +789,8 @@ void Mission::start_setup()
 
     // ---- scene effect object (rain / snow emitter) ---------------------------------------------
     if ((*(int*)((char*)&g_options + 0x20)) != 0 && !lrec->flags.b0 && at<int>(0x6604) > 0) {
-        SndRec* sr = &g_env_rows[at<int>(0x660c)];
-        u = sr->at<vector4>(0x30);
+        EnvRow* sr = &g_env_rows[at<int>(0x660c)];
+        u = *(vector4*)sr->base;
         float scale = (u.x * 3.0f + 1.0f) * 0.400000006f;
         Entity* fx = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
         at<Entity*>(0x65b8) = fx;
@@ -884,7 +881,7 @@ void Mission::start_setup()
         }
         at<Mesh*>(0x65c8)->at<int>(0x114) = 1;
         at<Mesh*>(0x65c8)->at<int>(0x140) = 1;
-        float c = (1.0f - 150.0f / (at<float>(0x6610) + 150.0f)) * g_env_rows[at<int>(0x660c)].at<float>(0x1c) * 0.899999976f;
+        float c = (1.0f - 150.0f / (at<float>(0x6610) + 150.0f)) * g_env_rows[at<int>(0x660c)].size * 0.899999976f;
         u.x = u.y = u.z = c;
         at<Mesh*>(0x65c8)->at<unsigned>(0x3c) = rgl::pack_color(&u);
         at<Mesh*>(0x65c8)->at<unsigned>(0x3c) |= 0xff000000;

@@ -798,8 +798,7 @@ SI_ASSERT(mission_cam, offsetof(MissionX, cam_frame) == 0x674c);
 SI_ASSERT(mission_speed, offsetof(MissionX, time_speed_anim_time) == 0x6810);
 SI_ASSERT(prop_scale, offsetof(PropInst, scale_x) == 0x158);
 // the 0x4c-byte environment rows (EnvRow in src/game/terrain_b/emit.h)
-struct EnvRowX { char pad0[0x44]; unsigned fog_color; char pad48[0x4c - 0x48]; };
-extern EnvRowX* g_env_rows;           // 0x5e28f4 (set_fog_distance 0x4aa230)
+#include "../env_row.h"                  // EnvRow, g_env_rows (0x5e28f4; set_fog_distance 0x4aa230)
 __forceinline MissionX* mission() { return (MissionX*)g_mission; }
 __forceinline Agent* agent(int id) { return mission()->agents.get(id); }
 
