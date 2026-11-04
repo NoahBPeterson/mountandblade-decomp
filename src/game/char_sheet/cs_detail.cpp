@@ -49,9 +49,9 @@ void CharSheet::update_detail()
         mb_snprintf(body, 0x200, tr(tstring("ui_current_level_value")), g_game->skill_level(f_14, id));
         {
             tstring ky("char_t_current_level_y");
-            float fy = g_config.get_float(ky);
+            float fy = g_game_vars.get_float(ky);
             tstring kx("char_t_current_level_x");
-            float fx = g_config.get_float(kx);
+            float fx = g_game_vars.get_float(kx);
             tstring bt(body);
             vec2 xy = { fx, fy };
             f_4b8->set_text_at(bt, (const float*)&xy);
@@ -62,9 +62,9 @@ void CharSheet::update_detail()
                     : SKILL_ATTR(id) == 2 ? tr(tstring("ui_int")) : tr(tstring("ui_cha")));
         {
             tstring ky("char_t_base_attrib_y");
-            float fy = g_config.get_float(ky);
+            float fy = g_game_vars.get_float(ky);
             tstring kx("char_t_base_attrib_x");
-            float fx = g_config.get_float(kx);
+            float fx = g_game_vars.get_float(kx);
             tstring bt(body);
             vec2 xy = { fx, fy };
             f_4b8->set_text_at(bt, (const float*)&xy);

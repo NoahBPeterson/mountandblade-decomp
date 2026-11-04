@@ -28,7 +28,7 @@ int g_equip_page;                                    // 0xa75f68 (.bss) the equi
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../item_sound.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
@@ -41,16 +41,14 @@ void __cdecl label_refresh(MissionUi* w, tstring name);      // 0x4e4c70 (cdecl,
 #define EQUIP(t, k) (g_game_G->troops[(t)].equip[(k)])
 #define INV(t, k) (g_game_G->troops[(t)].inv[(k)])
 
-struct ini_file;
-extern ini_file g_game_vars;                // 0xa44240 (viewed as the ConfigTable of config_table.h)
 // the config lookup every equipment key goes through: a missing key yields 0. The key is a temporary of the
 // caller's expression (it is destroyed after the value is stored).
 static __forceinline float cfg(const tstring& n)
 {
     float r = 0.0f;
-    int i = ((ConfigTable&)g_game_vars).find(n);
+    int i = g_game_vars.find(n);
     if (i >= 0)
-        r = (float)atof(CONFIG_ENTRIES[i].value ? CONFIG_ENTRIES[i].value : (char*)&CONFIG_ENTRIES[i].value);
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
     return r;
 }
 

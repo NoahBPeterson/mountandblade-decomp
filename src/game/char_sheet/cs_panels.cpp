@@ -1,7 +1,7 @@
 #include "./cs_panels.h"
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
 

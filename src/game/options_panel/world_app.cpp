@@ -5,6 +5,7 @@
 // (Core, ../config/core.h): their constructors / destructors are the only functions here, written against partial
 // views because mission.h / core.h declare neither (see MIGRATION.md).
 #include "../../include/image_addrs.h"
+#include "../ini_file.h"                      // ini_file, g_module_info (0xa18238)
 #include "../config/config_block.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <windows.h>
@@ -600,9 +601,6 @@ long __cdecl    get_latest_version();                          // 0x4b9aa0
 void __fastcall unescape(tstring* s);                  // 0x4bac70
 void __cdecl    open_keys_key(HKEY* out);                         // 0x4b96d0
 void __cdecl    keys_write_value(HKEY* key, const char* name, const tstring* val);   // 0x4beb80
-struct ini_file {
-    void load(FILE* f);   // config/config.h: the module.ini reader (0x4bd630)
-};
 int __stdcall   SkinDialog(HWND h, const char* s);       // 0x535446 (SkinMagic SetSingleDialogSkin: stdcall, the callers do not pop)
 
 #define STRTAB (&g_strtable)
@@ -732,7 +730,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
             void* f = fopen(ini.c_str(), "r");
             if (f != 0) {
-                ((ini_file*)&orig::g_module_info)->load((FILE*)f);
+                g_module_info.load((FILE*)f);
                 fclose((FILE*)f);
             }
 

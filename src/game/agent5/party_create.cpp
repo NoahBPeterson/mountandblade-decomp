@@ -27,7 +27,7 @@
 #include "../view_state.h"
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
-#include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_globals.h"      // UI / core globals
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
@@ -48,9 +48,9 @@ typedef char chk_bg[offsetof(PartyWindow, equip_bg) == 0xac8 ? 1 : -1];
 static __forceinline float cfg(const tstring& n)
 {
     float r = 0.0f;
-    int i = g_config.find(n);
+    int i = g_game_vars.find(n);
     if (i >= 0)
-        r = (float)atof(CONFIG_ENTRIES[i].value ? CONFIG_ENTRIES[i].value : (char*)&CONFIG_ENTRIES[i].value);
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
     return r;
 }
 

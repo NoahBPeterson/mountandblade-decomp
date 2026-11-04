@@ -30,21 +30,17 @@ using rgl::vector4;
 
 // ---- string / tables -----------------------------------------------------------------------------------
 #include "../tstring.h"
-struct cfg_entry { int f0; char* value; char pad[0x2c - 8]; };  // config-table entry (0xa4425c + 0x2c*i)
-extern int g_n_strings;                                  // 0xa70240
-extern cfg_entry g_strings;                                  // 0xa44240 (indexed from 0xa4425c)
-
-#include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
+#include "../ini_file.h"                      // ini_file, g_game_vars (0xa44240; its count is 0xa70240)
 
 // lookup of one setting (0x4bd5a0 + atof), 0.0f when the key is missing
 static float config_float(const char* name)
 {
     tstring key(name);
-    int idx = g_config.find(key);
+    int idx = g_game_vars.find(key);
     float r = 0.0f;
     if (idx >= 0) {
-        cfg_entry* e = (cfg_entry*)((char*)&g_strings + 0x1c) + idx;
-        r = (float)atof(e->value ? e->value : (char*)&e->value);
+        ini_entry* e = &g_game_vars.entries[idx];
+        r = (float)atof(e->value.c_str());
     }
     return r;
 }
@@ -56,16 +52,16 @@ static float scan_float(const char* name)
     int idx = -1;
     int i = 0;
     do {
-        if (i >= g_n_strings)
+        if (i >= g_game_vars.count)
             break;
-        if (((tstring*)((char*)&g_strings + i * 0x2c))->equals(key))   // entry i's key (+0, 0x2c-byte stride) as this
+        if (g_game_vars.entries[i].key.equals(key))
             idx = i;
         i++;
     } while (idx == -1);
     float r = 0.0f;
     if (idx >= 0) {
-        cfg_entry* e = (cfg_entry*)((char*)&g_strings + 0x1c) + idx;
-        r = (float)atof(e->value ? e->value : (char*)&e->value);
+        ini_entry* e = &g_game_vars.entries[idx];
+        r = (float)atof(e->value.c_str());
     }
     return r;
 }

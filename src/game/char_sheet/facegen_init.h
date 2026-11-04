@@ -114,7 +114,6 @@ extern gui_mgr g_gui;                                   // 0x5d7080
 #include "../str_table.h"   // 0x43a1e0
 #include "../ini_file.h"
 #include "../ui_globals.h"      // UI / core globals
-extern ini_file g_config;                               // 0xa44240
 extern "C" double atof(const char* s);                  // 0x537352
 
 #include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)
@@ -158,11 +157,11 @@ static float config_float(const char* key)
 {
     float f = 0.0f;
     tstring t(key);
-    int idx = g_config.find(t);
+    int idx = g_game_vars.find(t);
     if (idx >= 0) {
         // the original: add eax, 0xa4425c / mov ecx, [eax+4] -> the value tstring's buf (entry +0x20), or the
         // inline bytes at &buf when it is null; not the entry's +0x1c dword
-        f = (float)atof(g_config.entries[idx].value.c_str());
+        f = (float)atof(g_game_vars.entries[idx].value.c_str());
     }
     return f;
 }

@@ -1,7 +1,7 @@
 #include "../../include/image_addrs.h"
 #include "./conv_open.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
