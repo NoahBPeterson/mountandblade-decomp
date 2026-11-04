@@ -453,6 +453,13 @@ def main():
     rmap = json.load(open(rmap_path))
     owner = {sym: stem for sym, stem in rmap["defined_at"].values()}
     stem_of = lambda o: os.path.basename(o).rsplit("_", 1)[0]
+    # Link in the original's module order (each module's lowest original address): the linker lays out .CRT$XCU, and
+    # so runs the compiler-made static initialisers, in link order, as the original's did (its initialisers 0x547e00..
+    # 0x548500 follow its modules' order); modules without rows keep their place after those with rows.
+    first_va = {}
+    for va, (_sym, stem) in rmap["defined_at"].items():
+        first_va[stem] = min(first_va.get(stem, 1 << 32), int(va, 16))
+    objs.sort(key=lambda o: first_va.get(stem_of(o), 1 << 32))
     if a.patches:
         pobjs, replaced = patch_objects(a.patches, rmap)
         for sym, stem in replaced.items():          # the patch owns the symbol: the link-order logic below keeps its copy
