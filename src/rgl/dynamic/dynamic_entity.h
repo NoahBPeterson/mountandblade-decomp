@@ -104,6 +104,7 @@ struct rigid_base : collision_entity {
 // vtable 0x54b668, 0x1d8 bytes
 struct dynamic_entity : rigid_base {
     dynamic_entity();                                                      // 0x425370
+    virtual ~dynamic_entity();
     virtual int type_id() { return 7; }                                    // 1: 0x49df30 (ICF-shared with Camera::type)
     virtual string type_name();                                           // 2: 0x425490
     virtual void update(float dt);                                         // 7: 0x425730

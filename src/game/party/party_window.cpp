@@ -8,6 +8,14 @@
 //       __declspec(noinline), as the original calls them. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #define UIA_CTOR_OUT_OF_LINE   // add_strip_icon calls the constructor 0x48b1c0 (StripIcon is built out of line, then stores its vptr)
+#include "../ui/container.h"
+// The panel's deleting destructor (0x5021f0) expands ~ContainerBase (0x490520) and releases the child vector through the
+// shared out-of-line _Tidy 0x41f4b0 (every 4-byte-element vector uses that one instance).
+template<> void std::vector<MissionUi*, std::allocator<MissionUi*> >::_Tidy();
+inline ContainerBase::~ContainerBase()
+{
+    ContainerBase::update_children();
+}
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../../include/image_addrs.h"
 #include <stdio.h>
@@ -219,8 +227,12 @@ char PartyPanel::key(unsigned mask)
     return r;
 }
 
-// @ 0x5021f0 ??_GPartyPanel is the compiler's deleting destructor of PartyPanel (implicit; text_box's, slot 0 of 0x597050, is the
-// same code folded by ICF). Parked, see party_window.nonmatching.txt.
+// @ 0x5021f0 ??_GPartyPanel is the compiler's deleting destructor of PartyPanel (text_box's, slot 0 of 0x597050, is the same
+// code folded by ICF): the destructor below has no body of its own, the deleting destructor expands ~ContainerBase.
+PartyPanel::~PartyPanel()
+{
+}
+
 // @ 0x502230
 MissionUi* PartyWindow::make_slot(ItemRef* slot)
 {

@@ -43,7 +43,8 @@ struct NodeA : ContainerBase {
 // The text box (vtable 0x597050, inventory_panel/widget_text.cpp): the container, nothing added; the screens that list text
 // rows build one per row.
 struct text_box : ContainerBase {
-    text_box();                                 // 0x50d0b0 (no destructor of its own: slot 0 is the container's deleting destructor)
+    text_box();                                 // 0x50d0b0
+    virtual ~text_box();                        // no code of its own: slot 0 is the deleting destructor 0x5021f0 (ICF-folded with PartyPanel's), the container's destructor expanded
 };
 
 #endif // GAME_UI_CONTAINER_H

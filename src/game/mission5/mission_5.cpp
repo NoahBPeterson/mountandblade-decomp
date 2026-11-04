@@ -872,11 +872,11 @@ void MissionBlocker::frame_update(float dt)
         __int64 d = g_ticks[f48] - stamp;
         if ((float)d * 1e-5f > f58) {
             g_presentation = 0;
-            if (f34 != 0)
-                operator delete(f34);
-            f34 = 0;
-            f38 = 0;
-            f3c = 0;
+            if (owned.begin != 0)
+                operator delete(owned.begin);
+            owned.begin = 0;
+            owned.end = 0;
+            owned.cap = 0;
             ((SrcVtbl_s261e0*)f5c)->v49();
             if (g_render.dev != 0)
                 ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 0);

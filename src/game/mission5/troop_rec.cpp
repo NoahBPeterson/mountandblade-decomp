@@ -478,74 +478,55 @@ static __forceinline void init_slot(ItemRef* s)
     }
 }
 
-static __forceinline void init_slot_reread(ItemRef* s)
-{
-    int id = *(volatile int*)&s->item;   // KEPT HACK (apply_items only): without the re-read equiv FAILs on edx (see troop_rec.nonmatching / report)
-    if (id <= 0)
-        return;
-    int ty = item_type(id);
-    if (ty == 10 || ty == 5 || ty == 6 || ty == 0x10 || ty == 0x11 || ty == 9 || ty == 0x12) {
-        s->b.amount = 0;
-    } else if (ty == 7 || ty == 1 || ty == 0x13) {
-        int r = s->stat_1e8();                      // 0x434df0 (fill a stack, returns the count)
-        *(short*)&s->m4 = 0;
-        s->m4 |= r;
-    }
-}
-
 // @ 0x51ff90
 void TroopRec::reset_items(int all)
 {
-    ItemRef* s = inv;
-    for (int i = 0; i < 0x60; i++, s++) {
-        if (s->item <= 0)
+    for (int i = 0; i < 0x60; i++) {
+        if (inv[i].item <= 0)
             continue;
         if (all) {
-            int ty = item_type(s->item);
+            int ty = item_type(inv[i].item);
             if (!(ty == 5 || ty == 6 || ty == 10 || ty == 7))
                 continue;
         }
-        init_slot(s);
+        init_slot(&inv[i]);
     }
 
-    s = equip;
-    for (int i = 0; i < 10; i++, s++) {
-        if (s->item <= 0)
+    for (int i = 0; i < 10; i++) {
+        if (equip[i].item <= 0)
             continue;
         if (all) {
-            int ty = item_type(s->item);
+            int ty = item_type(equip[i].item);
             if (!(ty == 5 || ty == 6 || ty == 10 || ty == 7))
                 continue;
         }
-        init_slot(s);
+        init_slot(&equip[i]);
     }
 }
 
 // @ 0x520110
 void TroopRec::apply_items()
 {
-    ItemRef* s = inv;
-    for (int i = 0; i < 0x60; i++, s++) {
-        if (s->item <= 0)
+    for (int i = 0; i < 0x60; i++) {
+        if (inv[i].item <= 0)
             continue;
         {
-            int ty = item_type(s->item);
+            int ty = item_type(inv[i].item);
             if (!(ty == 9 || ty == 0x11 || ty == 0x10))
                 continue;
         }
-        init_slot_reread(s);
+        init_slot(&inv[i]);
     }
 
-    s = equip;
-    for (int i = 0; i < 10; i++, s++) {
-        if (s->item <= 0)
+    for (int i = 0; i < 10; i++) {
+        if (equip[i].item <= 0)
             continue;
         {
-            int ty = item_type(s->item);
+            int ty = item_type(equip[i].item);
             if (!(ty == 9 || ty == 0x11 || ty == 0x10))
                 continue;
         }
-        init_slot_reread(s);
+        init_slot(&equip[i]);
     }
 }
 

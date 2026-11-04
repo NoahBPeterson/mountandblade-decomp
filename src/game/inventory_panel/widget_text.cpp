@@ -17,6 +17,13 @@
 // ------------------------------------------------------------------ engine string (0x10 bytes) -----------
 #include "../tstring.h"
 #include "../ui/container.h"                          // MissionUi (flag1 0x50cc60), text_box (0x50d0b0)
+// The text box's deleting destructor expands ~ContainerBase (0x490520) and releases the child vector through the shared
+// out-of-line _Tidy 0x41f4b0 (every 4-byte-element vector uses that one instance).
+template<> void std::vector<MissionUi*, std::allocator<MissionUi*> >::_Tidy();
+inline ContainerBase::~ContainerBase()
+{
+    ContainerBase::update_children();
+}
 #include "../shared_vars.h"                             // g_show_party_ids_instead_of_names 0xa181b8
 
 namespace c49aca0 {                                                     // game/party2/camera.cpp
@@ -170,6 +177,10 @@ unsigned MissionUi::flag1() const
 
 // @ 0x50d0b0 text_box::text_box
 text_box::text_box()
+{
+}
+
+text_box::~text_box()
 {
 }
 

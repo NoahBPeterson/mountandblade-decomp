@@ -24,6 +24,8 @@ static inline void scale3(vector4* v, float k) { v->x = k * v->x; v->y = k * v->
 static __forceinline void set3(vector4* o, float x, float y, float z) { o->x = x; o->y = y; o->z = z; }
 
 // @ 0x425370
+dynamic_entity::~dynamic_entity() {}
+
 dynamic_entity::dynamic_entity()
 {
     mass = 5.0f;

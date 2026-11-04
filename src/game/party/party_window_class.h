@@ -27,6 +27,7 @@ namespace rgl { struct mesh; }
 
 // ---- the widgets the window's member functions build (party/party_window.cpp) ------------------------------------
 struct PartyPanel : ContainerBase {         // vtable 0x599bf8 (the equipment menu / inventory page block)
+    virtual ~PartyPanel();
     virtual char key(unsigned mask);        // +0x8c 0x5021b0
 };
 struct PartySlot : MissionUi {              // vtable 0x599d28, size 0x178 (the item slot)

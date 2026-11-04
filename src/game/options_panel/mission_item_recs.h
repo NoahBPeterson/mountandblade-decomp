@@ -24,9 +24,7 @@ namespace rgl { struct mesh; }
 struct NodeA; struct MapWidget; struct Mark_s29130;
 struct MissionBlocker : item_base {
     NodeA* frame;                                               // +0x2c the screen's root widget
-    int f30;                                                    // +0x30
-    void* f34;                                                  // +0x34 = 0 (the item source's buffer: begin / end / cap at +0x34..+0x3c)
-    int f38, f3c;                                               // +0x38 / +0x3c = 0
+    owned_block owned;                                          // +0x30 the item source's buffer (begin / end / cap at +0x34..+0x3c, = 0); its destructor is the one the whole family's deleting destructor 0x4ce930 runs
     int f40;                                                    // +0x40 = -1 (the block owner's menu kind)
     unsigned char flags44;                                      // +0x44
     unsigned char f45, f46, f47;
