@@ -311,7 +311,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         FILE* f = fopen(path.c_str(), "r");
         if (f) {
             g_module_info.load(f);
-            f44 = (int)((char*)g_module_info.count + 5);   // 0xa44238 = g_module_info.count
+            f44 = (int)((char*)g_module_info.count + 5);   // the table's count (g_module_info.count)
             fclose(f);
         } else {
             mb_error("Unable to find module info file");

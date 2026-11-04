@@ -1251,8 +1251,8 @@ ini_file::ini_file()
 
 // the two tables, one definition each (constructed by the compiler: ini_file::ini_file above, ~ini_file 0x4be920 at exit; these replace
 // static_init's stubs 0x547da0 / 0x547dc0 and 0x5481a0 / 0x5481d0)
-ini_file g_module_info;     // 0xa18238 module.ini (the count is 0xa44238)
-ini_file g_game_vars;       // 0xa44240 game_variables.txt (the count is 0xa70240)
+ini_file g_module_info;     // 0xa18238 module.ini
+ini_file g_game_vars;       // 0xa44240 game_variables.txt
 
 // ---- trigger and game records -------------------------------------------------------------------------------------------------
 struct TimedVal { int id; int pad; __int64 t; };    // a (clock index, reading) pair: trigger_entry +0x20, TriggerRec +0x48 / +0x58 / +0x68
