@@ -52,12 +52,6 @@ struct ArrSet;
 void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last); // 0x4727a0
 typedef void (__cdecl *obj_free_t)(ArrSet*, ArrSet*, void*, ptr_tag);
 
-struct rec_2e4 {
-    void release();                              // 0x4cb610
-    char pad0[0x2e4];
-    res_rec* p;                                  // +0x2e4
-};
-
 struct vec3_holder {
     void clear();                                // 0x4cb6b0
     char pad0[4];

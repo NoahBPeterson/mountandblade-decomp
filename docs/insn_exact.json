@@ -7560,7 +7560,7 @@
   },
   "004eeb10": {
    "verdict": "DIFF",
-   "symbol": "?update@CharSheet@@QAEXM@Z",
+   "symbol": "?frame_update@CharSheet@@UAEXM@Z",
    "insns": 686,
    "ours": 693,
    "unverified": 0,
@@ -8208,7 +8208,7 @@
   },
   "00507400": {
    "verdict": "DIFF",
-   "symbol": "?init@CharSheet@@QAEXXZ",
+   "symbol": "?init_screen@CharSheet@@UAEXXZ",
    "insns": 2211,
    "ours": 1838,
    "unverified": 0,

@@ -8,18 +8,17 @@
 // Needs the includer's tstring.
 #ifndef MB_GAME_CHAR_SHEET_PANEL_H
 #define MB_GAME_CHAR_SHEET_PANEL_H
+#include "./head_rec.h"                      // head_rec: the vptr, +4 / +8, the troop at +0x14, the name at +0x1c
 #include "./ui_widget.h"
+#include "../include/frustum.h"
 
+struct res_rec;
 struct NodeA; struct UiA; struct UiE; struct text_box; struct Camera;
 
-struct CharSheet {
-    int vptr;                                       // +0x00
-    union { int f_4; int flag4; };                  // +0x04 (flag4: a record was supplied by the caller)
-    union { int f_8; int flag8; };                  // +0x08 (flag8: already initialised once)
-    char pad0c[0x14 - 0xc];
-    union { int f_14; int player; };                // +0x14 (edited troop index = the character shown)
-    int f_18;                                       // +0x18 (sound / message id)
-    char pad1c[0x2c - 0x1c];
+// A head_rec (vtable 0x595c20, entry 15 of the window manager (g_windows), 0x530 bytes as 0x4d0620 allocates it): w04 says a
+// record was supplied by the caller, w08 (0x63) that the sheet was already initialised once, w14 is the edited troop
+// index (the character shown), w18 the sound / message id.
+struct CharSheet : head_rec {
     NodeA* window;                                  // +0x2c (the 0x190-byte panel)
     union {
         MissionUi* f_30[10];                           // +0x30 (skill-row number labels)
@@ -40,8 +39,10 @@ struct CharSheet {
     union { int f_2d8; int f2d8; };                 // +0x2d8 (page: 0 attributes, 1 skills, 2 profs, 3 face)
     union { int f_2dc; int mode; };                 // +0x2dc (done state: 0 idle, 1 waiting / 0 = new game, 1 = tutorial)
     char pad2e0[0x2e4 - 0x2e0];
-    int f_2e4;                                      // +0x2e4 (the world stepped each frame)
-    char pad2e8[0x42c - 0x2e8];
+    res_rec* scene;                                 // +0x2e4 (the preview world stepped each frame; reset_screen deletes it)
+    char pad2e8[4];
+    rgl::frustum fr;                                // +0x2ec (0x120 bytes: the preview camera, built by the constructor)
+    char pad40c[0x42c - 0x40c];
     union { MissionUi* f_42c; UiA* done; };        // +0x42c (done/cancel buttons)
     union { MissionUi* f_430; UiA* reset; };       // +0x430 (skills page panel)
     union { MissionUi* f_434; MissionUi* explanation; }; // +0x434 (description box)
@@ -91,13 +92,16 @@ struct CharSheet {
     int f_514, f_518, f_51c, f_520, f_524, f_528;   // +0x514 (skill values, see s004eeb10)
     union { char f_52c; char f52c; };               // +0x52c (face page visible)
 
-    void update(float dt);                          // 0x4eeb10
+    CharSheet();                                    // 0x4c4cc0
+    virtual void reset_screen();                    // slot 1: 0x4cb610 (rgl/mesh2/mesh_2.cpp), releases the preview world
+    virtual void init_screen();                     // slot 2: 0x507400
+    virtual void frame_update(float dt);            // slot 3: 0x4eeb10
+    virtual char pure_7() { return 1; }             // slot 7: 0x48b170
     void apply_to_troop();                          // 0x4ef420
     void update_skill_rows();                       // 0x4ef7d0
     void update_detail();                           // 0x4ef9f0
     void update_weapons();                          // 0x4f06f0
     void refresh_panels();                          // 0x4f0820 (cs_update's name for update_texts)
-    void init();                                    // 0x507400
 };
 
 #endif // MB_GAME_CHAR_SHEET_PANEL_H

@@ -4,7 +4,7 @@
 // symbols/slices/rec_tables.txt and symbols/slices/gui_edit.txt; a derived class declares one virtual so
 // that cl emits its vptr store).
 // Layout evidence: 0x4c2c50 (ResultWindow::ResultWindow: vt, name ctor +0x1c, +4 = 0, +8 = 0x63), 0x4c4c90 (head_rec_delete:
-// vt 0x5947d8, name dtor), 0x4c49f0 (CampaignScreen::CampaignScreen), 0x4c4cc0 (head_obj2::head_obj2).
+// vt 0x5947d8, name dtor), 0x4c49f0 (CampaignScreen::CampaignScreen), 0x4c4cc0 (CharSheet::CharSheet).
 // Merged from s004c2b20 (Base0 / C4c2da8), s004c46d0 (head_rec), s004c3d90 (particle_cam).
 #ifndef MESH2_HEAD_REC_H
 #define MESH2_HEAD_REC_H
@@ -32,22 +32,6 @@ struct w_stream {
     virtual void v12();                                 // 12
     virtual void v13();                                 // 13
     virtual w_stream* r_float(float* v);                // 14  0x38, returns the next reader
-};
-
-// The second head object of 0x4c4cc0 (vtable 0x595c20, frustum at +0x2ec).
-struct head_obj2 : head_rec {
-    char    pad30[0x2dc - 0x2c];
-    int     w2dc;              // +0x2dc  -1
-    int     w2e0;              // +0x2e0
-    int     w2e4;              // +0x2e4  0
-    char    pad2e8[4];
-    rgl::frustum fr;           // +0x2ec
-    head_obj2();               // 0x4c4cc0
-    virtual void reset_screen();
-    virtual void init_screen();
-    virtual void frame_update(float);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 
 #endif

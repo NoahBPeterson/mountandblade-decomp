@@ -12,6 +12,7 @@
 #include "../../game/terrain_a/terrain.h"   // Terrain::conv_build_scene (0x4c8630)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
+#include "../../game/char_sheet_panel.h"   // CharSheet (0x4c4cc0)
 #include "../../game/campaign_screen.h"   // CampaignScreen (0x4c49f0, write_stream 0x4c4b70, read_stream 0x4c4c00)
 #include "../../include/mat4.h"
 #include "../../include/ptr_vec.h"
@@ -142,10 +143,10 @@ void CampaignScreen::read_stream(w_stream* w)
 }
 
 // @ 0x4c4cc0
-head_obj2::head_obj2()
+CharSheet::CharSheet()
 {
-    w2dc = -1;
-    w2e4 = 0;
+    f_2dc = -1;
+    scene = 0;
 }
 
 // @ 0x4c4d10

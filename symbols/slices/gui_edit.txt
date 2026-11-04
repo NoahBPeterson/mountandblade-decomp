@@ -3,7 +3,7 @@
 004c4b70 ?write_stream@CampaignScreen@@UAEXPAUw_stream@@@Z
 004c4c00 ?read_stream@CampaignScreen@@UAEXPAUw_stream@@@Z
 004c4c90 ??_Ghead_rec@@UAEPAXI@Z
-004c4cc0 ??0head_obj2@@QAE@XZ
+004c4cc0 ??0CharSheet@@QAE@XZ
 004c4d10 ??1Tail2@@QAE@XZ
 004c4d80 ?clear@list_int@@QAEXXZ
 004c4dc0 ?list_int_buynode@@YIPAXPAUlist_int@@@Z
@@ -94,7 +94,7 @@
 004ca550 ?refresh@screen_text@@QAEXH@Z
 005947d8 ??_7head_rec@@6B@  # head record base vtable (CampaignScreen / head_obj2 ctors store it first)
 00595bd8 ??_7CampaignScreen@@6B@  # CampaignScreen vtable (ctor 0x4c49f0)
-00595c20 ??_7head_obj2@@6B@  # head_obj2 vtable (ctor 0x4c4cc0)
+00595c20 ??_7CharSheet@@6B@  # head_obj2 vtable (ctor 0x4c4cc0)
 00535482 ?engine_alloc@@YAPAXI@Z  # operator new[]
 0053545e ?engine_new@@YAPAXI@Z  # operator new
 0053570d ?engine_free@@YAXPAX@Z  # operator delete[]

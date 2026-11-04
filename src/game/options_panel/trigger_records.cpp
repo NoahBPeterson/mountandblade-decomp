@@ -26,7 +26,7 @@ void init_mission_trigger_records()
     slot_as<C4c3160>(12) = new C4c3160;
     slot_as<Rec454>(13) = new Rec454;
     slot_as<MissionBlocker>(14) = new MissionBlocker;
-    slot_as<head_obj2>(15) = new head_obj2;
+    slot_as<CharSheet>(15) = new CharSheet;
     slot_as<Rec1208>(16) = new Rec1208;
     slot_as<Rec3c>(17) = new Rec3c;
     slot_as<Recd8>(18) = new Recd8;

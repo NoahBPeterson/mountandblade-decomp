@@ -2,7 +2,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?write_stream@CampaignScreen@@UAEXPAUw_stream@@@Z  004c4b70  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read_stream@CampaignScreen@@UAEXPAUw_stream@@@Z  004c4c00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??_Ghead_rec@@UAEPAXI@Z  004c4c90  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ??0head_obj2@@QAE@XZ  004c4cc0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ??0CharSheet@@QAE@XZ  004c4cc0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1Tail2@@QAE@XZ  004c4d10  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?clear@list_int@@QAEXXZ  004c4d80  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1Terrain@@QAE@XZ  004c4ee0  /O2 /MT /Gy /TP

@@ -8,27 +8,27 @@
 // @ 0x4ef420 -------------------------------------------------------------------------------
 void CharSheet::apply_to_troop()
 {
-    { TroopRec* t = &g_game->chars[f_14]; t->skill_points = f_508; }
-    { TroopRec* t = &g_game->chars[f_14]; t->attr_points = f_50c; }
-    { TroopRec* t = &g_game->chars[f_14]; t->prof_points = f_510; }
-    { TroopRec* t = &g_game->chars[f_14]; t->fa0 = f_504; }
-    { TroopRec* t = &g_game->chars[f_14]; t->attrs[0] = f_4d8; }
-    { TroopRec* t = &g_game->chars[f_14]; t->attrs[1] = f_4dc; }
-    { TroopRec* t = &g_game->chars[f_14]; t->attrs[2] = f_4e0; }
-    { TroopRec* t = &g_game->chars[f_14]; t->attrs[3] = f_4e4; }
-    { TroopRec* t = &g_game->chars[f_14]; t->nib[0] = f_514; }
-    { TroopRec* t = &g_game->chars[f_14]; t->nib[1] = f_518; }
-    { TroopRec* t = &g_game->chars[f_14]; t->nib[2] = f_51c; }
-    { TroopRec* t = &g_game->chars[f_14]; t->nib[3] = f_520; }
-    { TroopRec* t = &g_game->chars[f_14]; t->nib[4] = f_524; }
-    { TroopRec* t = &g_game->chars[f_14]; t->nib[5] = f_528; }
-    { TroopRec* t = &g_game->chars[f_14]; t->istat[0] = f_4e8; }
-    { TroopRec* t = &g_game->chars[f_14]; t->istat[1] = f_4ec; }
-    { TroopRec* t = &g_game->chars[f_14]; t->istat[2] = f_4f0; }
-    { TroopRec* t = &g_game->chars[f_14]; t->istat[3] = f_4f4; }
-    { TroopRec* t = &g_game->chars[f_14]; t->istat[4] = f_4f8; }
-    { TroopRec* t = &g_game->chars[f_14]; t->istat[5] = f_4fc; }
-    { TroopRec* t = &g_game->chars[f_14]; t->istat[6] = f_500; }
+    { TroopRec* t = &g_game->chars[w14]; t->skill_points = f_508; }
+    { TroopRec* t = &g_game->chars[w14]; t->attr_points = f_50c; }
+    { TroopRec* t = &g_game->chars[w14]; t->prof_points = f_510; }
+    { TroopRec* t = &g_game->chars[w14]; t->fa0 = f_504; }
+    { TroopRec* t = &g_game->chars[w14]; t->attrs[0] = f_4d8; }
+    { TroopRec* t = &g_game->chars[w14]; t->attrs[1] = f_4dc; }
+    { TroopRec* t = &g_game->chars[w14]; t->attrs[2] = f_4e0; }
+    { TroopRec* t = &g_game->chars[w14]; t->attrs[3] = f_4e4; }
+    { TroopRec* t = &g_game->chars[w14]; t->nib[0] = f_514; }
+    { TroopRec* t = &g_game->chars[w14]; t->nib[1] = f_518; }
+    { TroopRec* t = &g_game->chars[w14]; t->nib[2] = f_51c; }
+    { TroopRec* t = &g_game->chars[w14]; t->nib[3] = f_520; }
+    { TroopRec* t = &g_game->chars[w14]; t->nib[4] = f_524; }
+    { TroopRec* t = &g_game->chars[w14]; t->nib[5] = f_528; }
+    { TroopRec* t = &g_game->chars[w14]; t->istat[0] = f_4e8; }
+    { TroopRec* t = &g_game->chars[w14]; t->istat[1] = f_4ec; }
+    { TroopRec* t = &g_game->chars[w14]; t->istat[2] = f_4f0; }
+    { TroopRec* t = &g_game->chars[w14]; t->istat[3] = f_4f4; }
+    { TroopRec* t = &g_game->chars[w14]; t->istat[4] = f_4f8; }
+    { TroopRec* t = &g_game->chars[w14]; t->istat[5] = f_4fc; }
+    { TroopRec* t = &g_game->chars[w14]; t->istat[6] = f_500; }
 }
 
 // @ 0x4ef7d0 -------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ void CharSheet::update_skill_rows()
             int cap;
             int id;
             {
-                int troop = f_14;
+                int troop = w14;
                 id = skill_id[i];
                 cap = (int)((unsigned)((int*)g_game->chars)[troop * 0x142 + id / 8 + 0x1a] >> (id % 8 * 4)) & 0xf;
                 if (cap < 0)
@@ -70,7 +70,7 @@ void CharSheet::update_skill_rows()
             }
             btn[i]->hide();
             {
-                int troop = f_14;
+                int troop = w14;
                 TroopRec* t = &g_game->chars[troop];
                 id = skill_id[i];
                 if (t->skill_points > 0) {

@@ -50,20 +50,20 @@ void weapon_class_caption(int type, char* out)
 // @ 0x4f06f0
 void CharSheet::update_weapons()
 {
-    Troop* c = &g_game->chars[player];
+    Troop* c = &g_game->chars[w14];
     int i = 0;
     do {
         char line[512];
         char caption[512];
         weapon_class_caption(i, caption);
-        sprintf(line, "%s:  %d", caption, (int)g_game->chars[player].f80[i]);
+        sprintf(line, "%s:  %d", caption, (int)g_game->chars[w14].f80[i]);
         {
             tstring text(line);
             char unset[8];                          // the original passes the address of 8 uninitialised bytes
             labels[i]->set_text((float*)unset, &(text));
         }
         if (c->prof_points > 0
-            && (float)g_weapon_xp[g_game->skill_level(player, 0x1b)] >= c->f80[i]
+            && (float)g_weapon_xp[g_game->skill_level(w14, 0x1b)] >= c->f80[i]
             && g_display_wp[i] != 0
             && c->steps_to_point(i) <= c->prof_points)
             rows[i]->show();   // slot +0xb4 (the slice called it show_selected)

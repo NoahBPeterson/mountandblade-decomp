@@ -26,7 +26,7 @@ const int g_level_xp[64] = {0, 0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297
 void CharSheet::refresh_panels()
 {
     int i;
-    Troop* c = (Troop*)((char*)g_game->chars + player * 0x508);
+    Troop* c = (Troop*)((char*)g_game->chars + w14 * 0x508);
     char line[512];
     int* stats = (int*)((char*)c + 0x58);    // the four stat dwords at +0x58..+0x64 (str, agi, int, cha)
 

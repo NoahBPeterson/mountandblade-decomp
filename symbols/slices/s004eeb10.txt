@@ -1,5 +1,5 @@
 # names used while matching slice s004eeb10 (character-sheet per-frame update)
-004eeb10  CharSheet::update
+004eeb10  CharSheet::frame_update
 004ef420  CharSheet::apply_to_troop
 004ef6d0  CharSheet::steps_to_point
 004ef7d0  CharSheet::update_skill_rows

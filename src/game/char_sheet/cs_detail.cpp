@@ -46,7 +46,7 @@ void CharSheet::update_detail()
             tstring tt(title);
             { char r[8]; f_4b8->set_text((float*)r, &(tt)); }
         }
-        mb_snprintf(body, 0x200, tr(tstring("ui_current_level_value")), g_game->skill_level(f_14, id));
+        mb_snprintf(body, 0x200, tr(tstring("ui_current_level_value")), g_game->skill_level(w14, id));
         {
             tstring ky("char_t_current_level_y");
             float fy = g_game_vars.get_float(ky);
@@ -70,14 +70,14 @@ void CharSheet::update_detail()
             f_4b8->layout_text_to(&(bt), (const float*)&xy);
         }
         GameData* g = g_game;
-        if (f_14 != g->player) {
+        if (w14 != g->player) {
             f_434->hide();
             return;
         }
         int maxlvl = g_skill_tbl[id].cap;
-        TroopRec* t = &g->chars[f_14];
+        TroopRec* t = &g->chars[w14];
         if (t->nibble(id) < maxlvl && t->skill_points >= 1 &&
-            (g_game->chars[f_14].nibble(id) + 1) * 3 <= g->chars[f_14].attrs[SKILL_ATTR(id)]) {
+            (g_game->chars[w14].nibble(id) + 1) * 3 <= g->chars[w14].attrs[SKILL_ATTR(id)]) {
             f_434->hide();
             return;
         }

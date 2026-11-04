@@ -9,6 +9,7 @@
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
+#include "../../game/char_sheet_panel.h"      // CharSheet: slot 1 (0x4cb610) releases its preview world
 #include "../../game/screen_records.h"     // C4c3050: slot 3 (0x4ca6c0) is its pressed-button finder
 #include "../../game/ui/mission_ui.h"
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10, stamp 0x4c1ee0)
@@ -368,14 +369,14 @@ bool graph_obj::split_edge(int e)
 
 // @ 0x4cb610
 
-void rec_2e4::release()
+void CharSheet::reset_screen()
 {
     g_gui.reset();
-    res_rec* r = p;
+    res_rec* r = scene;
     if (r) {
         ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);
-        p = 0;
+        scene = 0;
     }
 }
 

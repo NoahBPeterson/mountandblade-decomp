@@ -9,18 +9,6 @@
 #include "../campaign_screen.h"
 #include "../strat/gui_manager.h"     // g_gui
 
-struct rec_2e4 {
-    void release();
-};
-struct CharSheet {
-    void init();
-    void update(float);
-};
-
 // CampaignScreen (game/campaign_screen.h)
 void CampaignScreen::reset_screen() { g_gui.reset(); }
 
-// head_obj2
-void head_obj2::reset_screen() { ((rec_2e4*)this)->release(); }
-void head_obj2::init_screen() { ((CharSheet*)this)->init(); }
-void head_obj2::frame_update(float a) { ((CharSheet*)this)->update(a); }

@@ -15,14 +15,14 @@
 // @ 0x4eeb10 -------------------------------------------------------------------------------
 // The click handling of the rows is `selected |= press on either button` / `released |= release on either`;
 // a click on the right button of a row spends the corresponding points.
-void CharSheet::update(float dt)
+void CharSheet::frame_update(float dt)
 {
     int zero = 0;
     bool selected = false;
     bool released = false;
 
-    if (f_2e4 != 0)
-        ((World*)f_2e4)->step(dt);
+    if (scene != 0)
+        ((World*)scene)->step(dt);
     g_msglog.flush();
     if (f_4d4 != 0)
         f_430->show();
@@ -49,7 +49,7 @@ void CharSheet::update(float dt)
             if (f_30[i]->clear_mask(4) || f_180[i]->clear_mask(4))
                 released = true;
             if (f_180[i]->clear_mask(0x10000)) {
-                int troop = f_14;
+                int troop = w14;
                 int id = f_228[i];
                 TroopRec* tb = g_game->chars;
                 int rank = (int)((unsigned)((int*)tb)[troop * 0x142 + id / 8 + 0x1a] >> (id % 8 * 4)) & 0xf;
@@ -58,7 +58,7 @@ void CharSheet::update(float dt)
                 else if (rank > g_skill_tbl[id].max_rank)
                     rank = g_skill_tbl[id].max_rank;
                 tb[troop].set_skill(id, rank + 1);
-                g_game->chars[f_14].skill_points--;
+                g_game->chars[w14].skill_points--;
                 f_4d4 = 1;
                 update_detail();
                 update_skill_rows();
@@ -77,9 +77,9 @@ void CharSheet::update(float dt)
             if (f_478[i]->clear_mask(4) || f_494[i]->clear_mask(4))
                 released = true;
             if (f_494[i]->clear_mask(0x10000)) {
-                int cost = g_game->chars[f_14].steps_to_point(i);
-                g_game->chars[f_14].adjust(i, (float)cost);
-                g_game->chars[f_14].prof_points -= cost;
+                int cost = g_game->chars[w14].steps_to_point(i);
+                g_game->chars[w14].adjust(i, (float)cost);
+                g_game->chars[w14].prof_points -= cost;
                 f_4d4 = 1;
                 update_weapons();
                 refresh_panels();
@@ -98,10 +98,10 @@ void CharSheet::update(float dt)
         if (f_44c[i]->clear_mask(4) || f_45c[i]->clear_mask(4))
             released = true;
         if (f_45c[i]->clear_mask(0x10000)) {
-            g_game->chars[f_14].add_attr(i, 1);
-            g_game->chars[f_14].attr_points--;
+            g_game->chars[w14].add_attr(i, 1);
+            g_game->chars[w14].attr_points--;
             if (i == 1)
-                g_game->chars[f_14].prof_points += 5;
+                g_game->chars[w14].prof_points += 5;
             f_4d4 = 1;
             refresh_panels();
             update_detail();
@@ -121,7 +121,7 @@ void CharSheet::update(float dt)
         f_2d4 = -1;
         update_detail();
     }
-    if (f_14 == 0 && f_4c4->clear_mask(0x10000)) {
+    if (w14 == 0 && f_4c4->clear_mask(0x10000)) {
         g_game->chars[0].name = tstring(((HeroEntry*)f_4c4)->name);
         ((SoundCtl*)g_game)->emit_event(0x18, 0, 0);
     }
@@ -152,7 +152,7 @@ void CharSheet::update(float dt)
         if (f_42c->clear_mask(0x10000)) {
             f_2dc = -1;
             ((TroopEq*)&g_game->chars[g_game->player])->auto_equip(-1, 0, 0, 0);
-            slot_as<int>(29)[5] = f_14;
+            slot_as<int>(29)[5] = w14;
             menu_choose(0x1d);
             return;
         }
@@ -167,20 +167,20 @@ void CharSheet::update(float dt)
         }
     } else {
         if (step != 0) {
-            f_14 += step;
-            f_14 = (f_14 + g_game->ntroops) % g_game->ntroops;
-            f_4 = 1;
+            w14 += step;
+            w14 = (w14 + g_game->ntroops) % g_game->ntroops;
+            w04 = 1;
             menu_choose(0xf);
             return;
         }
         if (f_52c != 0 && f_4cc != 0 && f_4cc->clear_mask(0x10000)) {
-            slot_as<int>(29)[5] = f_14;
+            slot_as<int>(29)[5] = w14;
             slot_as<int>(29)[6] = 0xf;
             menu_choose(0x1d);
             return;
         }
         if (f_440 != 0 && f_440->clear_mask(0x10000)) {
-            slot_as<int>(24)[5] = f_14;
+            slot_as<int>(24)[5] = w14;
             slot_as<int>(24)[6] = 0xf;
             menu_choose(0x18);
             return;
@@ -195,19 +195,19 @@ void CharSheet::update(float dt)
             return;
         }
         if (f_42c->clear_mask(0x10000)) {
-            menu_choose(f_18);
+            menu_choose(w18);
             return;
         }
         // game keys: rest / export / learning
         if (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0) {
-            menu_choose(f_18);
+            menu_choose(w18);
         } else {
             if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0)
                 return;
             if (g_keyboard.down[0x2d] != 0 && g_keyboard.prev[0x2d] == 0 && g_cfg.cheat_mode != 0) {
                 WL_MARKER(12)
                 if (g_trial_mode != 0) {
-                    g_game->add_experience(f_14, 1000);
+                    g_game->add_experience(w14, 1000);
                     menu_choose(0xf);
                 }
                 WL_MARKER(13)

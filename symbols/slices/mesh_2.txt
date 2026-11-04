@@ -7,7 +7,7 @@
 004ca9b0 ?remove_edge@graph_obj@@QAEXH@Z
 004caa40 ?combine@graph_obj@@QAE_NXZ
 004cb3a0 ?split_edge@graph_obj@@QAE_NH@Z
-004cb610 ?release@rec_2e4@@QAEXXZ
+004cb610 ?reset_screen@CharSheet@@UAEXXZ
 004cb650 ?reset_screen@Rec23c@@UAEXXZ
 004cb680 ?reset_screen@Rec428@@UAEXXZ
 004cb6b0 ?clear@vec3_holder@@QAEXXZ

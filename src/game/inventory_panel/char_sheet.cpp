@@ -4,7 +4,7 @@
 #include <stddef.h>
 // Slice s00507400: the character sheet's window builder (0x507400).
 //
-//   0x507400  CharSheet::init: if the caller did not hand over a character record, take the player's;
+//   0x507400  CharSheet::init_screen: if the caller did not hand over a character record, take the player's;
 //             on the first call clear the mode; reset the gui manager; build the 0x190-byte panel
 //             container (vtable 0x592848) at this+0x2c, give it the "character_window" mesh, register
 //             it with the gui, then hang the reset/done buttons off it.
@@ -142,15 +142,15 @@ static float config_float_walk(const tstring& key)
 }
 
 // @ 0x507400
-void CharSheet::init()
+void CharSheet::init_screen()
 {
     int i;
 
-    if (flag4 == 0)
-        player = g_game->player;
-    if (flag8 == 0) {
+    if (w04 == 0)
+        w14 = g_game->player;
+    if (w08 == 0) {
         mode = 0;
-        flag8 = 1;
+        w08 = 1;
     }
 
     g_gui.reset();
@@ -421,7 +421,7 @@ void CharSheet::init()
     }
 
     {
-        char* rec = (char*)g_game->chars + (unsigned)player * 0x508;
+        char* rec = (char*)g_game->chars + (unsigned)w14 * 0x508;
         tstring* nm = g_strtable.find((tstring*)(rec + 0x20));
         if (nm == 0)
             nm = (tstring*)rec;
@@ -429,7 +429,7 @@ void CharSheet::init()
         name->set_text(&tx.x, nm);
     }
 
-    if (player == 0 && ((tstring*)g_game->chars)->equals("")) {
+    if (w14 == 0 && ((tstring*)g_game->chars)->equals("")) {
         name->f181 = 1;
         unsigned col = 0;
         int idx = config_index(tstring("char_tb_character_name_t_c"));
@@ -495,7 +495,7 @@ void CharSheet::init()
     label_refresh(stats, tstring("char_b_stats"));
 
     f52c = 1;
-    if (g_cfg.enable_edit_mode == 0 && player != g_game->player)
+    if (g_cfg.enable_edit_mode == 0 && w14 != g_game->player)
         f52c = 0;
     if (mode != -1) {
         f52c = 0;
