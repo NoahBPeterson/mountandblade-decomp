@@ -4,7 +4,7 @@
 // loaders. ALL NAMES PROVISIONAL. Every offset cites the function whose disassembly proves it.
 //
 // Shared classes come from their canonical headers: tstring (../tstring.h), the streams and the engine log
-// (../strat/gui_manager.h, ../../rgl/stream.h), the application object `Core` (../config/core.h: members added for
+// (../strat/gui_manager.h, ../../rgl/stream.h), the application object `GameApp` (../config/core.h: members added for
 // 0x4bed90..0x4c1ad0, offsets unchanged), GameConfig / CreateGameOptionsPage / trigger_rec / trigger_entry /
 // music_player / ini_file (../config/config.h), TriggerRec (../party/game.h: the full layout of the 0x78-byte
 // record), RecH (../../rgl/xmlcfg/records.h: the 0x30-byte trigger entry), DialogMgr (../dialog_manager.h).
@@ -80,9 +80,6 @@ void __cdecl read_key_string(HKEY* key, LPCSTR name, tstring* out);         // 0
 void keys_write_value(HKEY* key, LPCSTR name, const tstring* v);            // 0x4beb80
 bool module_ini_exists(const char* module);                                 // 0x4bebc0
 void scan_module_folders(tstring* out, int* count);                         // 0x4bec60
-void __fastcall core_dtor(Core* self);                                      // 0x4bed90 (the destructor of the application object, vtable 0x5948e0)
-void* __fastcall core_deleting_dtor(Core* self, int, unsigned flags);       // 0x4bedf0
-extern void* g_dlg_options;     // 0x8ee3fc4 the options dialog window (untyped so the call reloads it into eax), set by options_dlg_proc
 INT_PTR CALLBACK options_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4bf5f0
 
 // ---- the module folder dialog (0x4c03b0; 0x4c3340 jumps to it with ecx = g_app_obj, unused) ----------------------------

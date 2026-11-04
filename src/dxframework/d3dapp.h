@@ -162,7 +162,7 @@ public:
     virtual INT     Run();                                         // 0x402ee0 (vtable 14)
     virtual LRESULT MsgProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );  // 0x403120 (vtable 15)
     virtual void    Pause( bool bPause );                          // 0x401480 (vtable 16)
-    virtual         ~CD3DApplication();                            // 0x401a30 (vtable 17, deleting)
+    virtual         ~CD3DApplication() {}                          // 0x401a30 (vtable 17, deleting; inline: the derived destructors expand it, as the original's 0x4bed90 does)
 
     // Internal constructor
     CD3DApplication();                                             // 0x401910

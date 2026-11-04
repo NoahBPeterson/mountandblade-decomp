@@ -12,6 +12,7 @@
 #include "../party2/camera_class.h"      // Camera (the 0x4a8-byte object make_editor_list builds)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_trial_mode (listed directly: the audit reads only the source's own includes)
+#include "../config/core.h"      // GameApp: OneTimeSceneInit is vtable slot 4 of the application object
 struct Font;
 extern Font* g_font;                                        // 0x5e2934
 
@@ -245,7 +246,7 @@ void EditorApp::refresh_dialog()
 }
 
 // @ 0x4f63c0
-int __cdecl engine_init()
+HRESULT GameApp::OneTimeSceneInit()
 {
     srand(timeGetTime());
     g_batch.init_formats();   // 0x4bc5b0

@@ -168,25 +168,17 @@ void Forwarder::forward(int a, int b, int c)
 #include "../id_stack.h"                 // g_id_stack (0xa739f8, a73a04, a73a08), current_screen_id
 
 struct Viewport { int x, y, w, h; float minz, maxz; };
-typedef void (__stdcall* PanelCall7)(void*, int, int, int, int, float, int);
-typedef int  (__stdcall* PanelCall1i)(void*);
-typedef void (__stdcall* PanelCall1)(void*);
 
-struct SaveLoadUi {
-    int run();                                          // 0x4eb8e0
-    // (update_view_rect 0x4bace0 is Core's, cs_common.h)
-};
-
-int SaveLoadUi::run()
+HRESULT GameApp::Render()
 {
     if (g_scene_dirty) {
         g_scene_dirty = 0;
-        g_editor.InvalidateDeviceObjects();
-        g_editor.RestoreDeviceObjects();
+        g_app_obj.GameApp::InvalidateDeviceObjects();
+        g_app_obj.GameApp::RestoreDeviceObjects();
     }
     ++g_5e28c8;
     ++g_batch.frame;
-    ((Core*)(void*)this)->update_view_rect();   // 0x4bace0 (the Core object is g_app_obj 0x8ee3c48)
+    update_view_rect();   // 0x4bace0
 
     Viewport vp;
     vp.x = 0; vp.y = 0;
@@ -194,23 +186,20 @@ int SaveLoadUi::run()
     vp.minz = 0.0f; vp.maxz = 1.0f;
     g_render.dev->SetViewport((D3DVIEWPORT9*)&vp);
 
-    void* panel = *(void**)((char*)this + 0xf8);
-    ((PanelCall7)(*(void***)panel)[0xac / 4])(panel, 0, 0, 2, 0x302010, 1.0f, 0);
+    m_pd3dDevice->Clear(0, 0, 2, 0x302010, 1.0f, 0);
 
     g_msglog.build_scene();
     g_batch.render(0);   // 0x47e520
 
     if (g_cfg.show_framerate != 0) {
-        void* w = *(void**)((char*)this + 0xf8);
-        if (((PanelCall1i)(*(void***)w)[0xa4 / 4])(w) >= 0) {
+        if (m_pd3dDevice->BeginScene() >= 0) {
             Viewport vp2;
             vp2.x = 0; vp2.y = 0;
             vp2.w = g_screen_w; vp2.h = g_screen_h;
             vp2.minz = 0.0f; vp2.maxz = 1.0f;
             g_render.dev->SetViewport((D3DVIEWPORT9*)&vp2);
 
-            CD3DFont* font = *(CD3DFont**)((char*)this + 0x348);
-            font->DrawText(2.0f, 0.0f, 0xffffff00, (const char*)this + 0x2da, 0);
+            font->DrawText(2.0f, 0.0f, 0xffffff00, m_strFrameStats, 0);
 
             if (g_cfg.debug_mode != 0 || g_cfg.enable_edit_mode != 0) {
                 Viewport vp3;
@@ -240,8 +229,7 @@ int SaveLoadUi::run()
 
             g_render.dev->SetTexture(0, 0);
             g_render.dev->SetTexture(1, 0);
-            void* w2 = *(void**)((char*)this + 0xf8);
-            ((PanelCall1)(*(void***)w2)[0xa8 / 4])(w2);
+            m_pd3dDevice->EndScene();
         }
     }
 
@@ -249,7 +237,7 @@ int SaveLoadUi::run()
     return 0;
 }
 
-// 0x4eb8ed: interior continuation of SaveLoadUi::run (the 645 bytes after the 13-byte prologue at
+// 0x4eb8ed: interior continuation of GameApp::Render (the 645 bytes after the 13-byte prologue at
 // 0x4eb8e0). It is not a separately callable function and has no source symbol of its own; the body is
 // the one reconstructed above.
 
@@ -285,7 +273,6 @@ void Animator::pack_state(PackedState* out)
 
 #include "../main_menu.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../map_editor_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 extern main_menu g_main_menu;                           // 0xa73980

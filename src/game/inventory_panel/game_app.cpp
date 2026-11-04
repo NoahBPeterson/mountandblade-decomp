@@ -34,8 +34,8 @@ static __forceinline const char* c_str(const tstring* s)
     return p;
 }
 
-// ---- CD3DApplication / GameApp: one definition (../application.h) -----------------------------------
-#include "../application.h"
+// ---- GameApp : CD3DApplication, the application object (../config/core.h) ---------------------------------
+#include "../config/core.h"
 
 // ---- screens: g_windows[30] (0xa73980) is the global screen table; the id stack at 0xa739f8 keeps
 //      the current screen id (a ring of 4-int blocks). ------------------------------------------------
@@ -85,15 +85,11 @@ struct MapEditorDialog {
     void update_object_type();   // 0x4c7bf0 / 0x4c7e20 (rgl/mesh2/gui_edit.h): the dialog of the application object
     void update_objects();   // 0x4c7e20
 };
-struct CD3DApplication {
-    virtual long MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x403120 (dxframework/d3dapp.h)
-};
 
 #include "../../rgl/stream.h"                   // g_log (log_stream)
 
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
-#include "../map_editor_obj.h"        // MapEditor (the object at 0x8ee3c48)
 #include "../ui_globals.h"      // UI / core globals
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -120,7 +116,7 @@ void global_4bf870(void);                                    // 0x4c3330 (rgl/me
 
 // ---- the per-frame update ---------------------------------------------------------------------------
 // @ 0x50ec40
-int GameApp::Update()
+HRESULT GameApp::FrameMove()
 {
     float dt;
     __int64 t;
@@ -135,8 +131,8 @@ int GameApp::Update()
     g_tick_dt[0] = t;   // (frame time step, scaled)
     g_ticks[0] += t;
     g_step_tbl[0] = dt;
-    g_5d8798 = m_34c;
-    m_34c = -1;
+    g_5d8798 = last_key;
+    last_key = -1;
 
     ((GuiScreen*)&g_gui)->process(*(int*)&dt);
     ((Slot*)&g_keyboard)->update(dt);   // 0x487930
@@ -219,30 +215,30 @@ int GameApp::Update()
         }
         if (g_game->f1a060) {
             if (!g_game->f1a064) {
-                if (!m_hScriptDlg) {
-                    m_hScriptDlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xdf, m_hWnd,
+                if (!script_dlg) {
+                    script_dlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xdf, m_hWnd,
                                                       (DLGPROC)global_4bf870, 0);
                 }
-                ShowWindow(m_hScriptDlg, 5);
+                ShowWindow(script_dlg, 5);
                 g_game->f1a064 = 1;
             }
         } else if (g_game->f1a064) {
-            if (m_hScriptDlg) {
-                EndDialog(m_hScriptDlg, 2);
-                m_hScriptDlg = 0;
+            if (script_dlg) {
+                EndDialog(script_dlg, 2);
+                script_dlg = 0;
             }
             g_game->f1a064 = 0;
         }
     }
 
     m_bShowCursorWhenFullscreen = g_5d75e0;
-    if (g_saved) ((GameApp*)this)->f4 = true;
+    if (g_saved) m_bQuitRequested = true;
     return 0;
 }
 
 // ---- the window procedure ---------------------------------------------------------------------------
 // @ 0x50f130
-int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
+LRESULT GameApp::MsgProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     POINT pt;
 
@@ -296,7 +292,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
             ((tstring*)((char*)g_game + 0x1a06c))->clear();
             break;
         case 0x9c58:
-            DialogBoxParamA(m_hInstance, (LPCSTR)0xe0, m_hWnd, (DLGPROC)script_dialog_proc, 0);
+            DialogBoxParamA(hinstance, (LPCSTR)0xe0, m_hWnd, (DLGPROC)script_dialog_proc, 0);
             // falls through
         }
         // falls through
@@ -309,13 +305,13 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
         break;
     case 0x109:
         if (wparam == 0xffff) return 1;
-        m_34c = wparam;
+        last_key = wparam;
         break;
     case 0x102:                                 // WM_CHAR
-        m_34c = wparam;
+        last_key = wparam;
         break;
     }
-    return ((CD3DApplication*)this)->CD3DApplication::MsgProc(hWnd, msg, wparam, lparam);
+    return CD3DApplication::MsgProc(hWnd, msg, wparam, lparam);
 }
 
 // ---- the loading screen's step ----------------------------------------------------------------------

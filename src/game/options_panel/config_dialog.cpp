@@ -11,8 +11,7 @@
 #include <vector>
 #include <new>
 #include "../tstring.h"
-#include "./config_dialog.h"                 // Dialog
-#include "../config/config.h"          // Config, Core (the dialog's object is g_app_obj, 0x8ee3c48)
+#include "../config/config.h"          // Config, GameApp (the dialog's object is g_app_obj, 0x8ee3c48)
 #include "../../rgl/mesh2/gui_edit.h"  // MapDialog
 #include "../../rgl/text_stream.h"     // mb_open_user_file
 #include "../../include/skinmagic.h"
@@ -162,16 +161,16 @@ const char k_config[] = "rgl_config.txt";        // 0x54b048
 #define KEY_TEXT(s) ((char*)strtab_lookup(tstring(s)))
 
 // @ 0x4cf7b0
-void Dialog::fill_video_tab()
+void GameApp::fill_video_tab()
 {
     // TCM_INSERTITEM's TCITEM (0x4cf7c5 / 0x4cf7cd): mask TCIF_TEXT at +0, pszText at +0xc, iImage -1 at +0x14; the
     // other fields stay as the stack left them
     int item[6];
     item[0] = 1;
     item[5] = -1;
-    m_ctrl = 0;
+    options_ctrl = 0;
 
-    HWND tabs = GetDlgItem(m_hwnd, 0x43d);
+    HWND tabs = GetDlgItem(options_hwnd, 0x43d);
     item[3] = (int)KEY_TEXT("ui_video");
     SendMessageA(tabs, 0x1307, 0, (LPARAM)item);
     item[3] = (int)KEY_TEXT("ui_audio");
@@ -183,7 +182,7 @@ void Dialog::fill_video_tab()
 
     RECT dlg;
     RECT rc;
-    GetWindowRect(m_hwnd, &dlg);
+    GetWindowRect(options_hwnd, &dlg);
     GetWindowRect(tabs, &rc);
     rc.top -= 0x3c;
     rc.left -= 10;
@@ -196,7 +195,7 @@ void Dialog::fill_video_tab()
     int w = (int)((float)dw * (float)(rc.right - 10) * g_width_scale - (float)left);
     SetWindowPos(tabs, NULL, left - dlg.left, top - dlg.top, w, h, 0x14);
 
-    HWND modes = GetDlgItem(m_hwnd, 0x45f);
+    HWND modes = GetDlgItem(options_hwnd, 0x45f);
     if (modes) {
         SendMessageA(modes, 0x14b, 0, 0);
         std::vector<tstring> list = list_modes();
@@ -205,7 +204,7 @@ void Dialog::fill_video_tab()
     }
     SendMessageA(modes, 0x14a, 0, (LPARAM)KEY_TEXT("ui_use_desktop_resolution"));
 
-    HWND quality = GetDlgItem(m_hwnd, 0x467);
+    HWND quality = GetDlgItem(options_hwnd, 0x467);
     {
         int i = SendMessageA(quality, 0x14a, 0, (LPARAM)KEY_TEXT("ui_m_ultra_high"));
         SendMessageA(quality, 0x151, i, 2);
@@ -219,12 +218,12 @@ void Dialog::fill_video_tab()
         SendMessageA(quality, 0x151, i, 0);
     }
     {
-        int i = SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x14a, 0, (LPARAM)KEY_TEXT("ui_directx_9"));
-        SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x151, i, 1);
+        int i = SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x14a, 0, (LPARAM)KEY_TEXT("ui_directx_9"));
+        SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x151, i, 1);
     }
     {
-        int i = SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x14a, 0, (LPARAM)KEY_TEXT("ui_directx_7"));
-        SendMessageA(GetDlgItem(m_hwnd, 0x468), 0x151, i, 0);
+        int i = SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x14a, 0, (LPARAM)KEY_TEXT("ui_directx_7"));
+        SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x151, i, 0);
     }
 
     ((MapDialog*)this)->refresh_list(1);
@@ -233,41 +232,41 @@ void Dialog::fill_video_tab()
     tstring caption(*strtab_entry(tstring("ui_configure_caption")));
     {
         char* p = (char*)caption.c_str();      // an empty string passes &buf (0x4cfc97)
-        SendMessageA(m_hwnd, 0xc, 0, (LPARAM)p);
+        SendMessageA(options_hwnd, 0xc, 0, (LPARAM)p);
     }
 
-    SetDlgItemTextA(m_hwnd, 0x43f, KEY_TEXT("ui_texture_detail"));
-    SetDlgItemTextA(m_hwnd, 0x449, KEY_TEXT("ui_max_frame_rate"));
-    SetDlgItemTextA(m_hwnd, 0x460, KEY_TEXT("ui_screen_size"));
-    SetDlgItemTextA(m_hwnd, 0x462, KEY_TEXT("ui_antialiasing"));
-    SetDlgItemTextA(m_hwnd, 0x492, KEY_TEXT("ui_shadow_quality"));
-    SetDlgItemTextA(m_hwnd, 0x493, KEY_TEXT("ui_enable_vertex_shaders"));
-    SetDlgItemTextA(m_hwnd, 0x44b, KEY_TEXT("ui_create_brf"));
-    SetDlgItemTextA(m_hwnd, 0x443, KEY_TEXT("ui_disable_blood"));
-    SetDlgItemTextA(m_hwnd, 0x446, KEY_TEXT("ui_disable_music"));
-    SetDlgItemTextA(m_hwnd, 0x452, KEY_TEXT("ui_disable_sound"));
-    SetDlgItemTextA(m_hwnd, 0x442, KEY_TEXT("ui_enable_cheats"));
-    SetDlgItemTextA(m_hwnd, 0x44c, KEY_TEXT("ui_enable_edit_mode"));
-    SetDlgItemTextA(m_hwnd, 0x44a, KEY_TEXT("ui_force_single_threading"));
-    SetDlgItemTextA(m_hwnd, 0x441, KEY_TEXT("ui_enable_pixel_shaders"));
-    SetDlgItemTextA(m_hwnd, 0x44d, KEY_TEXT("ui_enable_sound_variation"));
-    SetDlgItemTextA(m_hwnd, 0x445, KEY_TEXT("ui_show_framerate"));
-    SetDlgItemTextA(m_hwnd, 0x487, KEY_TEXT("ui_force_vsync"));
-    SetDlgItemTextA(m_hwnd, 0x444, KEY_TEXT("ui_start_windowed"));
-    SetDlgItemTextA(m_hwnd, 2, KEY_TEXT("ui_cancel2"));
-    SetDlgItemTextA(m_hwnd, 1, KEY_TEXT("ui_ok2"));
-    SetDlgItemTextA(m_hwnd, 0x45e, KEY_TEXT("ui_auto_adjust"));
+    SetDlgItemTextA(options_hwnd, 0x43f, KEY_TEXT("ui_texture_detail"));
+    SetDlgItemTextA(options_hwnd, 0x449, KEY_TEXT("ui_max_frame_rate"));
+    SetDlgItemTextA(options_hwnd, 0x460, KEY_TEXT("ui_screen_size"));
+    SetDlgItemTextA(options_hwnd, 0x462, KEY_TEXT("ui_antialiasing"));
+    SetDlgItemTextA(options_hwnd, 0x492, KEY_TEXT("ui_shadow_quality"));
+    SetDlgItemTextA(options_hwnd, 0x493, KEY_TEXT("ui_enable_vertex_shaders"));
+    SetDlgItemTextA(options_hwnd, 0x44b, KEY_TEXT("ui_create_brf"));
+    SetDlgItemTextA(options_hwnd, 0x443, KEY_TEXT("ui_disable_blood"));
+    SetDlgItemTextA(options_hwnd, 0x446, KEY_TEXT("ui_disable_music"));
+    SetDlgItemTextA(options_hwnd, 0x452, KEY_TEXT("ui_disable_sound"));
+    SetDlgItemTextA(options_hwnd, 0x442, KEY_TEXT("ui_enable_cheats"));
+    SetDlgItemTextA(options_hwnd, 0x44c, KEY_TEXT("ui_enable_edit_mode"));
+    SetDlgItemTextA(options_hwnd, 0x44a, KEY_TEXT("ui_force_single_threading"));
+    SetDlgItemTextA(options_hwnd, 0x441, KEY_TEXT("ui_enable_pixel_shaders"));
+    SetDlgItemTextA(options_hwnd, 0x44d, KEY_TEXT("ui_enable_sound_variation"));
+    SetDlgItemTextA(options_hwnd, 0x445, KEY_TEXT("ui_show_framerate"));
+    SetDlgItemTextA(options_hwnd, 0x487, KEY_TEXT("ui_force_vsync"));
+    SetDlgItemTextA(options_hwnd, 0x444, KEY_TEXT("ui_start_windowed"));
+    SetDlgItemTextA(options_hwnd, 2, KEY_TEXT("ui_cancel2"));
+    SetDlgItemTextA(options_hwnd, 1, KEY_TEXT("ui_ok2"));
+    SetDlgItemTextA(options_hwnd, 0x45e, KEY_TEXT("ui_auto_adjust"));
 
-    SendMessageA(GetDlgItem(m_hwnd, 0x43e), 0x406, 0, 0x64000a);   // TBM_SETRANGE: the result is dropped (0x4d0216)
-    ((OptionsDlg*)this)->set_active_tab(m_ctrl);                    // m_ctrl is still the 0 set above
+    SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x406, 0, 0x64000a);   // TBM_SETRANGE: the result is dropped (0x4d0216)
+    ((OptionsDlg*)this)->set_active_tab(options_ctrl);                    // options_ctrl is still the 0 set above
 }
 
 // @ 0x4d0240
-LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
     case WM_INITDIALOG:
-        m_hwnd = hwnd;
+        options_hwnd = hwnd;
         SetSingleDialogSkin(hwnd, "Dialog");
         char path[256];
         sprintf(path, k_config);          // the file name is the format string itself (0x4d0295)
@@ -281,24 +280,24 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, false);
         fill_video_tab();
-        ((Core*)this)->show_options();
+        show_options();
         return 1;
     case 0x114: {
-        int v = (int)SendMessageA(GetDlgItem(m_hwnd, 0x43e), 0x400, 0, 0);
+        int v = (int)SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x400, 0, 0);
         char text[256];
         sprintf(text, "%d", v);
-        SetWindowTextA(GetDlgItem(m_hwnd, 0x450), text);
+        SetWindowTextA(GetDlgItem(options_hwnd, 0x450), text);
         return 1;
     }
     case WM_NOTIFY:             // 0x4e: only the tab control (0x43d, compared as a 16-bit word) is handled
         if ((short)wParam != 0x43d)
             return DefWindowProcA(hwnd, msg, wParam, lParam);
-        ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(GetDlgItem(m_hwnd, 0x43d), 0x130b, 0, 0));
+        ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(GetDlgItem(options_hwnd, 0x43d), 0x130b, 0, 0));
         // falls through to the control dispatch: a tab notification also runs it
     case WM_COMMAND:            // 0x111 enters the dispatch directly (4d03d1)
         switch (wParam & 0xffff) {
         case 1: {               // ok: write the config back
-            ((Core*)this)->read_options();
+            read_options();
             FILE* f = mb_open_user_file(k_config, "w");
             ((rgl_config*)LAUNCHER_CFG)->save(f);
             fclose(f);
@@ -311,19 +310,19 @@ LRESULT Dialog::proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case 0x448:             // refresh-rate edit: keep 10..999, else restore
             if ((wParam >> 16) == 0x200) {
                 BOOL ok;
-                int v = (int)GetDlgItemInt(m_hwnd, 0x448, &ok, 0);   // signed compares (jl / jge)
+                int v = (int)GetDlgItemInt(options_hwnd, 0x448, &ok, 0);   // signed compares (jl / jge)
                 if (ok && v >= 10 && v < 1000) {
                     g_launcher_cfg.max_framerate = v;
                 } else {
-                    SetDlgItemInt(m_hwnd, 0x448, g_launcher_cfg.max_framerate, 0);
+                    SetDlgItemInt(options_hwnd, 0x448, g_launcher_cfg.max_framerate, 0);
                 }
             }
             return 1;
         case 0x45e:             // auto adjust: re-detect and re-read the config
-            ((Core*)this)->read_options();
+            read_options();
             g_launcher_cfg.first_time = 0;
             ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, true);
-            ((Core*)this)->show_options();
+            show_options();
             return 1;
         case 0x45f:             // display-mode list changed
             if ((wParam >> 16) == 9) {

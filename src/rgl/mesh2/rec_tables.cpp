@@ -187,17 +187,16 @@ C4c3290::C4c3290() {}                               // t50, t60, t70: the member
 
 // Tail-call thunks: `mov ecx, 0x8ee3c48; jmp 0x4bf870` -> a thiscall member call on the editor singleton
 // (the MapEditorDialog instance, ?g_editor_dialog@@3UMapEditorDialog@@A).
-// The targets are dialog procedures: 0x4bf870 is Core::script_debugger_proc (a thiscall member taking the four window-procedure
+// The targets are dialog procedures: 0x4bf870 is GameApp::script_debugger_proc (a thiscall member taking the four window-procedure
 // arguments, which the thunk leaves on the stack) and 0x4c03b0 is the stdcall folder_dlg_proc (it ignores ecx). The thunk calls each
 // definition's own symbol through the argument-less thiscall member type the original's `mov ecx; jmp` stands for.
 INT_PTR CALLBACK folder_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4c03b0 (game/triggers/trigger_vec.h)
 struct EditorObj {
     void thunk();
 };
-extern EditorObj g_app_obj_thunk;                       // 0x8ee3c48 (the application object, g_app_obj)
 union DlgThunk {
     void (EditorObj::*thunk)();
-    INT_PTR (Core::*script_debugger_proc)(HWND, UINT, WPARAM, LPARAM);
+    INT_PTR (GameApp::*script_debugger_proc)(HWND, UINT, WPARAM, LPARAM);
     INT_PTR (CALLBACK *folder_dlg_proc)(HWND, UINT, WPARAM, LPARAM);
 };
 
@@ -205,8 +204,8 @@ union DlgThunk {
 void global_4bf870()
 {
     DlgThunk f;
-    f.script_debugger_proc = &Core::script_debugger_proc;
-    ((g_app_obj_thunk).*f.thunk)();
+    f.script_debugger_proc = &GameApp::script_debugger_proc;
+    (((EditorObj*)&g_app_obj)->*f.thunk)();
 }
 
 // @ 0x4c3340
@@ -214,7 +213,7 @@ void script_dialog_proc()
 {
     DlgThunk f;
     f.folder_dlg_proc = ::folder_dlg_proc;
-    ((g_app_obj_thunk).*f.thunk)();
+    (((EditorObj*)&g_app_obj)->*f.thunk)();
 }
 
 // skyboxes.txt of the module: a tstream3 text reader (vtable 0x54ac88; constructor 0x4172d0 inlined in the
@@ -286,15 +285,15 @@ static __forceinline float game_var_float(const tstring& key)
 // The original brackets two groups of statements with 18-byte WinLicense markers (jmp +0x10 over the 16-byte
 // record "WL  ",12/13,0,"WL  ") that cl cannot emit from C++ (an _emit block would be an asm transcription):
 // they are left out here, everything between them is the original's code.
-int __fastcall renderer_setup(GameAppView* self)
+HRESULT GameApp::InitDeviceObjects()
 {
-    self->font->set_device(self->device);
-    g_render.dev = self->device;
-    g_render.width = self->width;
-    if (self->windowed)
-        g_render.height = self->height;
+    font->InitDeviceObjects(m_pd3dDevice);
+    g_render.dev = m_pd3dDevice;
+    g_render.width = (int)m_pD3D;                       // (the dword at +0xf4 and the one at +0x22c, m_d3dsdBackBuffer.Format, are what the original publishes as the render state's width / height)
+    if (m_bWindowed)
+        g_render.height = (int)m_d3dsdBackBuffer.Format;
     else
-        g_render.height = self->height;
+        g_render.height = (int)m_d3dsdBackBuffer.Format;
     g_render.dev->GetDeviceCaps(&g_render.caps);
     g_render.vsync = -1;
     g_render.pad504 = 0;
@@ -303,7 +302,7 @@ int __fastcall renderer_setup(GameAppView* self)
         ((unsigned*)&g_render.caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_render.caps)[0xd4 / 4] & 1) != 0 && g_cfg.use_vertex_shaders != 0)
         g_use_shaders = 1;
     apply_input_settings((InputSet*)&g_render);
-    ((void (__fastcall*)(void*))load_game_variables)(self);
+    ((void (__fastcall*)(void*))load_game_variables)(this);
     {
         tstring k1("buffer_size_dx7_regular_ffp_dynamic");
         int v1 = (int)game_var_float(k1);
@@ -328,7 +327,7 @@ int __fastcall renderer_setup(GameAppView* self)
         g_batch.init_decls(&v10, &v9, &v8, &v7, &v6, &v5, &v4, &v3, &v2, &v1);
     }
     ((resmgr*)&orig::g_resmgr_obj)->load_all(1, &g_module_path);
-    g_keyboard.init_devices(self->hwnd);
+    g_keyboard.init_devices(m_hWndFocus);
     return 0;
 }
 

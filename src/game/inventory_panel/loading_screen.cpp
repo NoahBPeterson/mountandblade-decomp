@@ -240,8 +240,7 @@ struct Table2;                                       // built by MusicTable::bui
 // 0x4c0520 is a cdecl function without parameters (game/triggers/trigger_vec.cpp); the original calls it with ecx = the application object,
 // which it ignores: the call goes to that symbol through the fastcall type of the original's call
 void load_game_variables();                                      // 0x4c0520
-struct EditorDialog {};
-extern EditorDialog g_app_obj;                 // 0x8ee3c48
+#include "../config/core.h"                       // GameApp g_app_obj (0x8ee3c48)
 
 #include "../gui_mgr.h"
 extern GuiManager g_gui;                                 // 0x5d7080

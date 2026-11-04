@@ -107,9 +107,9 @@ Worked around, not changed (found while verifying):
 ## Tricks kept / removed
 
 Removed: the slices' hand-declared Win32 and D3D prototypes (real headers now), the `tstring` / `stream` / `logger` look-alikes, the `__fastcall` wrappers around tstring members,
-the `Block44` / `Block204` assignments (now `Alloc2c` / `Alloc204`), `_atol`, the explicit `EditorPanel` / `GameApp` / `Application` classes (the object is `Core`).
-Kept: `core_dtor` writes the vtable pointers 0x5948e0 / 0x549c60 and calls `~CD3DEnumeration` by hand (the base destructor of CD3DApplication is out of line, the original
-inlined it); the `(stream_base&)g_log` cast, which keeps cl from devirtualising the log calls; `V2() {}` / `mstr` for the inline array constructors; `ini_file::~ini_file`
+the `Block44` / `Block204` assignments (now `Alloc2c` / `Alloc204`), `_atol`, the explicit `EditorPanel` / `Application` classes (the object is `GameApp`).
+Kept (application object): none; `GameApp : CD3DApplication` (../config/core.h) is one real class, `GameApp::~GameApp` is 0x4bed90 (the base destructor is inline in d3dapp.h, so it expands there as in the original), and the vtable 0x5948e0 / the object are the compiler's.
+Kept: the `(stream_base&)g_log` cast, which keeps cl from devirtualising the log calls; `V2() {}` / `mstr` for the inline array constructors; `ini_file::~ini_file`
 is the empty destructor (the member destructors generate the original's loop).
 Not reproducible from C++: the 18-byte WinLicense markers in `MetaMission::init` (0x4be730), `music_player::music_player` (0x4c2542, 0x4c25c1) and `parse_module_info` (0x4c05ff).
 

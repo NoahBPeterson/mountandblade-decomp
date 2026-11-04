@@ -89,7 +89,7 @@ Class-name unifications made while moving (aliases the slices used for one objec
 | `options_panel` (one class) | `options_panel` of s004d7370 and of s004d7d10 | key words at +0, +8, +0x10, +0x18 of 0x4d7370 and the menu words of 0x4d7d10 are one table; +0x18 is `key_next` and `menu_choice` (union) |
 | `GameIo : Game` (two member functions of `Game`) | `game_data::char_export_write` (s004d86d0), `game_globals::export_character` / `import_apply` and `Game::import_char` (s004d7d10, s004d8c20) | 0x4d86d0 and 0x4d8c20 are called with `ecx = g_game` |
 | `outfile` / `outfile_a` / `outfile_b` | `stream_text` (s004d86d0) | slot 10 of the export file's vtable (+0x28) is the line writer |
-| `Core::Core()` = `GameApp::GameApp()` 0x4d3ec0, `Core::msg_proc` = `GameApp::msg_proc` 0x4d4140 | `GameApp`, `Application` | `Core : CD3DApplication` in ../config/core.h has the same layout (+0x348 font, +0x390 module names, +0x590 mode) and vtable 0x5948e0; not merged, see below |
+| `GameApp::GameApp()` 0x4d3ec0, `GameApp::msg_proc` 0x4d4140, `GameApp::config_proc` 0x4d0240 | `GameApp`, `Application` | merged: `GameApp : CD3DApplication` in ../config/core.h (+0x348 font, +0x390 module names, +0x590 mode; vtable 0x5948e0 the compiler's), defined here as `g_app_obj` |
 | `Big` (0x4d3720 / 0x4d3880) = `World` (0x4d51d0) = `Mission` | `Big`, `World`, `WorldBase` | the object `g_5e292c` = `g_mission` (../mission.h); not merged, see below |
 | `RagBone` | `Bone` (s004d2df0) | the ragdoll bone with mass and cone limits, not rgl's skeleton `Bone` (src/rgl/core/resource_io.h) |
 | `ControlKeyTable`, `KeysPage` | `KeyTable`, `VideoPage` (s004d6b80) | `KeyTable` is src/include/key_table.h's key-frame table, `VideoPage` is video_page.cpp's class |

@@ -137,7 +137,6 @@ extern TableauTbl g_tableaus;              // 0xa75f40
 }  // namespace orig
 
 // vtables
-extern char vtbl_CD3DApplication[];              // 0x549c60
 extern char vtbl_591d58[];                       // 0x591d58
 extern char vtbl_XyzButton[];                    // 0x591ee8
 extern char vtbl_591fb0[];                       // 0x591fb0
@@ -147,7 +146,6 @@ extern char vtbl_592570[];                       // 0x592570
 extern char vtbl_592644[];                       // 0x592644
 extern char vtbl_592848[];                       // 0x592848
 extern char vtbl_5947d8[];                       // 0x5947d8
-extern char vtbl_5948e0[];                       // 0x5948e0
 extern char vtbl_C4c3050[];                      // 0x5957bc
 extern char vtbl_597050[];                       // 0x597050
 extern char vtbl_5995c0[];                       // 0x5995c0

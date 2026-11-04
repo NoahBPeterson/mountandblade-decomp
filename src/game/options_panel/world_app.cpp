@@ -17,12 +17,7 @@
 #include "../tstring.h"
 #include "../party/game.h"
 #include "../../include/rec_dtors.h"
-// application.h's flat view of the framework class is called Application there; its constructor (0x401910) is the real
-// CD3DApplication::CD3DApplication, which GameApp's constructor calls first. Compile the view under that name (this TU includes
-// neither d3dapp.h nor core.h) so the call binds to the definition.
-#define Application CD3DApplication
-#include "../application.h"
-#undef Application
+#include "../config/core.h"                 // GameApp : CD3DApplication, the application object (defined below, g_app_obj)
 
 // Tail (0x10 bytes, dtor 0x42d390) is src/include/rec_dtors.h
 
@@ -31,13 +26,14 @@ struct Rec18 {                                      // 0x18-byte record with a t
     ~Rec18();                                       // 0x42bc40
 };
 
-// Constructing a tstring in raw storage (0x42bbd0): placement new without the null test std's throw() placement operator adds
-struct raw_place {};
-inline void* operator new(size_t, void* p, raw_place) { return p; }
-inline void operator delete(void*, void*, raw_place) {}
 
 // ---- callees -------------------------------------------------------------------------------------------
-tstring g_module_path;                                           // 0x8ee3c28 (constructed by the compiler: tstring::tstring 0x42bbd0)
+// The original constructs the application object last of all its statics (its initialiser 0x548110 is the final entry of the
+// initialiser table): the constructor 0x4d3ec0 writes the module name / music root, logs through g_log and builds the mission
+// object, all of which other objects' initialisers set up first. The linker orders the objects' initialisers by object
+// order, not by the original's address order, so this object's initialisers go to the section that follows .CRT$XCU.
+#pragma init_seg(".CRT$XCV")
+tstring g_module_path;                                          // 0x8ee3c28 (constructed by the compiler: tstring::tstring 0x42bbd0)
 extern tstring g_module_name;                                      // 0x8ee3c38
 
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
@@ -498,42 +494,33 @@ extern int g_use_shaders;                                // 0x5e28fc
 #include "../../rgl/stream.h"                   // g_log (log_stream)
 #include "../music_player.h"                    // g_music (0xa73a10): root is the module path copy at +0x247c
 
-// ---- the application object: Application / GameApp (../application.h) --------------------------------
+// ---- the application object: GameApp (../config/core.h) ------------------------------------------------
+GameApp g_app_obj;                                  // 0x8ee3c48 (.bss; constructed by the compiler: GameApp::GameApp 0x4d3ec0, destructor registered with atexit)
+
 // @ 0x4d3ec0
 GameApp::GameApp()
 {
     WL_MARKER(12)
-    tstring* arrp = (tstring*)arr;
-    *(void**)this = (void*)vtbl_5948e0;
-
-    tstring* p = arrp;
-    int n = 0x20;
-    do {
-        new ((void*)p, raw_place()) tstring;
-        p++;
-    } while (--n);
-
     f350 = 0;
 
-    *(int*)((char*)this + 0x334) = (int)"m";
-    *(int*)((char*)this + 0x338) = (int)"Mount&Blade";
-    *(char*)((char*)this + 0x30) = 1;
-    *(int*)((char*)this + 0x33c) = 0x190;
-    *(int*)((char*)this + 0x340) = 0x12c;
-    *(char*)((char*)this + 0x344) = 1;
+    m_dw334 = (DWORD)"m";
+    m_strWindowTitle = (TCHAR*)"Mount&Blade";
+    m_d3dEnumeration.AppUsesDepthBuffer = true;
+    m_dwCreationWidth = 0x190;
+    m_dwCreationHeight = 0x12c;
+    m_bShowCursorWhenFullscreen = true;
 
-    CD3DFont* font = new CD3DFont("Arial", 9, 1);
-    *(CD3DFont**)((char*)this + 0x348) = font;
-    *(int*)((char*)this + 0x34c) = -1;
+    font = new CD3DFont("Arial", 9, 1);
+    last_key = -1;
 
     for (int i = 0; i < 0x40; i++)
         g_key_states_i[i] = 0;
 
     g_counter = 0;
     g_5e28c8 = 0;
-    scan_module_folders(arrp, &f38c);
-    if (f38c > 0) {
-        g_module_name = *arrp;
+    scan_module_folders(module_names, &module_count);
+    if (module_count > 0) {
+        g_module_name = module_names[0];
 
         HKEY  key;
         DWORD disp;
@@ -575,10 +562,10 @@ GameApp::GameApp()
     }
 
     *(tstring*)&g_music.root = g_module_path;
-    *(int*)((char*)this + 0x364) = 0;
+    hwnd = 0;
     m_hMapEditorDlg = 0;
-    m_hScriptDlg = 0;
-    f37c = 0;
+    script_dlg = 0;
+    dlg_options = 0;
     WL_MARKER(13)
 }
 
@@ -586,12 +573,10 @@ GameApp::GameApp()
 int g_trial_mode;                                   // 0x5e29c4 (set when the game runs as the trial; 6 modules read it)
 
 // @ 0x4d4130
-#include "./config_dialog.h"                      // Dialog: proc 0x4d0240 (the dialog procedure of the application object)
 
-extern Dialog g_app_dialog;                                        // 0x8ee3c48 (the application object)
 int __stdcall wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
-    return (int)g_app_dialog.proc(h, msg, wp, lp);
+    return (int)g_app_obj.config_proc(h, msg, wp, lp);
 }
 
 // ---- callees used by the main window procedure (0x4d4140) ----------------------------------------------
@@ -625,7 +610,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         hwnd = h;
         SetSingleDialogSkin(h, "MainFrame");
         ((ConfigDialog*)(void*)this)->init();
-        if (f38c == 0) {
+        if (module_count == 0) {
             ShowWindow(GetDlgItem(hwnd, 0x410), 0);
             ShowWindow(GetDlgItem(hwnd, 0x425), 0);
             MessageBoxA(0, UI("ui_there_are_no_modules_installed")->c_str(), "ERROR", 0x10);
@@ -635,8 +620,8 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         if (list == 0)
             break;
         SendMessageA(list, 0x14b, 0, 0);
-        for (int i = 0; i < f38c; i++) {
-            int r = SendMessageA(list, 0x14a, 0, (LPARAM)mod(i)->c_str());
+        for (int i = 0; i < module_count; i++) {
+            int r = SendMessageA(list, 0x14a, 0, (LPARAM)mod_name(i)->c_str());
             SendMessageA(list, 0x151, r, i);
         }
         int r = SendMessageA(list, 0x158, (WPARAM)-1, (LPARAM)g_module_name.c_str());
@@ -660,12 +645,12 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         case 0x410: {
             g_5e2630 = 0;
             int sel = 0;
-            if (f38c > 1) {
+            if (module_count > 1) {
                 // the control is looked up again for each message (0x4d4140 calls GetDlgItem twice)
                 int idx = SendMessageA(GetDlgItem(h, 0x420), 0x147, 0, 0);
                 sel = SendMessageA(GetDlgItem(h, 0x420), 0x150, idx, 0);
             }
-            g_module_name = *mod(sel);
+            g_module_name = *mod_name(sel);
             g_module_path.assign("Modules\\");
             g_module_path.append(g_module_name);
             g_module_path.append(tstring("\\"));
@@ -714,9 +699,9 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
                 break;
             int idx = SendMessageA(GetDlgItem(h, 0x420), 0x147, 0, 0);    // GetDlgItem per message, as above
             int sel = SendMessageA(GetDlgItem(h, 0x420), 0x150, idx, 0);
-            if (f38c <= sel)
-                sel = f38c - 1;
-            g_module_name = *mod(sel);
+            if (module_count <= sel)
+                sel = module_count - 1;
+            g_module_name = *mod_name(sel);
 
             path.assign("Modules\\");
             path.append(g_module_name);

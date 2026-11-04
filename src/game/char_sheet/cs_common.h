@@ -14,9 +14,6 @@ struct FaceRace {                                                   // terrain_b
 struct FaceGenome {                                                 // terrain_b: the animator g_anim 0x8ed4f60 is one
     FaceRace* unpack(const unsigned __int64* rec);                  // 0x473800
 };
-struct Core {                                                       // config/config.cpp: the application object 0x8ee3c48
-    void update_view_rect();                                        // 0x4bace0
-};
 void __cdecl load_game_variables();                                 // 0x4c0520 (trigger_vec)
 struct loading_config { char pad[0x1f8]; };                         // a SkinSet / TextRow
 struct SoundCtl {                                                   // agent/agent.h; the game object's event emitter

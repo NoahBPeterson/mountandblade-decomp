@@ -52,7 +52,6 @@ ID3DXEffect* g_effect;   // 0x5e293c
 // The module settings object (module_settings.h): module_info.txt / game_variables.txt are read into it below.
 ModuleSettings g_module_settings;                // 0xa180f8 (.bss, built by the dynamic initialiser below)
 tstring g_module_name;                           // 0x8ee3c38 (.bss) the selected module (dynamic initialiser: tstring ctor + atexit dtor)
-void* g_dlg_options;                             // 0x8ee3fc4 (.bss) the options dialog window (untyped so the call reloads it into eax), set by options_dlg_proc
 
 // @ 0x547bc0   the defaults before module_info.txt / game_variables.txt are read
 ModuleSettings::ModuleSettings()
@@ -314,40 +313,20 @@ void scan_module_folders(tstring* out, int* count)
 }
 
 // ---- the application object's destructor (vtable 0x5948e0, base CD3DApplication vtable 0x549c60) ---------------------------
-// @ 0x4bed90
-void __fastcall core_dtor(Core* self)
+// @ 0x4bed90   (the scalar deleting destructor 0x4bedf0 is the compiler's)
+GameApp::~GameApp()
 {
-    CD3DFont* font = self->font;
-    *(void**)self = (void*)vtbl_5948e0;
-    if (font != 0) {
-        font->~CD3DFont();
-        operator delete(font);
-        self->font = 0;
+    CD3DFont* f = font;
+    if (f != 0) {
+        f->~CD3DFont();
+        operator delete(f);
+        font = 0;
     }
-    {
-        tstring* p = (tstring*)(self->module_names + sizeof(self->module_names));
-        int n = 0x20;
-        do {
-            p--;
-            p->~tstring();
-        } while (--n);
-    }
-    *(void**)self = (void*)vtbl_CD3DApplication;
-    ((CD3DEnumeration*)((char*)self + 0xc))->~CD3DEnumeration();
-}
-
-// @ 0x4bedf0
-void* __fastcall core_deleting_dtor(Core* self, int, unsigned flags)
-{
-    core_dtor(self);
-    if ((flags & 1) != 0)
-        ::operator delete(self);
-    return self;
 }
 
 // ---- options dialog: write the stored values into the controls (0x4bee10), read them back (0x4bf170) -------------------
 // @ 0x4bee10
-void Core::show_options()
+void GameApp::show_options()
 {
     char buf[0x200];
 
@@ -388,7 +367,7 @@ void Core::show_options()
 }
 
 // @ 0x4bf170
-void Core::read_options()
+void GameApp::read_options()
 {
     g_launcher_cfg.texture_detail = SendMessageA(GetDlgItem(options_hwnd, 0x43e), WM_USER, 0, 0);
     g_launcher_cfg.use_pixel_shaders = SendMessageA(GetDlgItem(options_hwnd, 0x441), BM_GETCHECK, 0, 0) == 1;
@@ -464,7 +443,7 @@ INT_PTR CALLBACK options_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lPar
 {
     switch (msg) {
     case WM_INITDIALOG:
-        g_dlg_options = dlg;
+        g_app_obj.dlg_options = dlg;
         SetDlgItemTextA(dlg, 0x488,
     "Common Keys\r\n"
         "-----------------\r\n"
@@ -541,7 +520,7 @@ INT_PTR CALLBACK options_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case 1:
-            EndDialog((HWND)g_dlg_options, 1);
+            EndDialog((HWND)g_app_obj.dlg_options, 1);
             break;
         }
         break;
@@ -572,7 +551,7 @@ void CreateGameOptionsPage::update_checks()
 // toggle (0x4b3), the reset button (2), the index combo (0x46c) and the script combo (0x4bb, which loads module_scripts.py
 // without its "#" comment lines into the viewer and colours the quoted strings); WM_SIZING keeps the layout.
 // @ 0x4bf870
-INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     char msgbuf[0x1000];
     char buf[0x400];
@@ -1152,7 +1131,7 @@ HRESULT build_shader()
 }
 
 // @ 0x4c1940
-HRESULT Core::RestoreDeviceObjects()
+HRESULT GameApp::RestoreDeviceObjects()
 {
     font->RestoreDeviceObjects();
     m_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
@@ -1185,7 +1164,7 @@ HRESULT Core::RestoreDeviceObjects()
 }
 
 // @ 0x4c1a60
-HRESULT Core::InvalidateDeviceObjects()
+HRESULT GameApp::InvalidateDeviceObjects()
 {
     font->InvalidateDeviceObjects();
     if (g_effect != 0) {
@@ -1204,7 +1183,7 @@ HRESULT Core::InvalidateDeviceObjects()
 }
 
 // @ 0x4c1ad0
-HRESULT Core::DeleteDeviceObjects()
+HRESULT GameApp::DeleteDeviceObjects()
 {
     font->DeleteDeviceObjects();
     g_resmgr_full.invalidate();
@@ -1215,8 +1194,8 @@ HRESULT Core::DeleteDeviceObjects()
 // @ 0x4c1b00
 HRESULT gfx_restore()
 {
-    g_app_obj.Core::InvalidateDeviceObjects();
-    return g_app_obj.Core::RestoreDeviceObjects();
+    g_app_obj.GameApp::InvalidateDeviceObjects();
+    return g_app_obj.GameApp::RestoreDeviceObjects();
 }
 
 // ---- allocator objects of the vectors of 0x2c- and 0x204-byte records ----------------------------------------------------------

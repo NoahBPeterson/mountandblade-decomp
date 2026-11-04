@@ -53,7 +53,8 @@ extern char g_game_keys[]; // 0xa73730
 #include "../config/config_block.h"
 #include "../ui_globals.h"      // UI / core globals
 #include "../terrain_a/terrain.h"   // Terrain, g_terrain (0xa76630)
-extern char g_app_obj[]; // 0x8ee3c48
+struct GameApp;
+extern GameApp g_app_obj;   // 0x8ee3c48 (config/core.h)
 
 
 // ======================================================= slice s00525160: classes, globals, helpers
@@ -1567,7 +1568,7 @@ struct Screen_s2ae70 {
 #define g_items_s2b5c0 (*(ItemKind_s2b5c0**)&g_items)
 #define g_game_s2b5c0 (*(CampaignGame_s2b5c0**)&g_game)
 #define g_mission_s2b5c0 (*(Mission_s2b5c0**)&g_mission)
-#define g_editor_s2b5c0 (*(Editor_s2b5c0*)g_app_obj)
+#define g_editor_s2b5c0 (*(Editor_s2b5c0*)&g_app_obj)
 // Slice s0052b5c0: the mission order and cursor/terrain helpers.
 //   0x52b5c0  Mission_s2b5c0::order_agent   -- give an item/order to one of an agent's four order slots
 //   0x52ba10  Mission_s2b5c0::update_ui     -- per-frame UI/cursor state machine

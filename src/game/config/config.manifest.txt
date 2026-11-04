@@ -2,9 +2,9 @@
 ../src/game/config/config.cpp  ?user_path@@YAXPAD@Z  004bab70  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?screenshots_path@@YAXPAD@Z  004babf0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?unescape@@YIXPAUtstring@@@Z  004bac70  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?update_view_rect@Core@@QAEXXZ  004bace0  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?init_d3d@Core@@QAEHXZ  004bad70  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?choose_display_mode@Core@@QAE_N_N0@Z  004badf0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?update_view_rect@GameApp@@QAEXXZ  004bace0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?init_d3d@GameApp@@QAEHXZ  004bad70  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?FindBestFullscreenMode@GameApp@@UAE_N_N0@Z  004badf0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?set_list_scroll@@YAXH@Z  004bb260  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?pump_messages@@YAXXZ  004bb310  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?set_debug_label@@YAXXZ  004bb390  /O2 /MT /Gy /TP

@@ -155,10 +155,10 @@ struct EditorSceneView {
 
 static inline EditorTerrainView* terrain(int i) { return (EditorTerrainView*)((char*)g_editor->world + i * 0x1c8); }
 
-#include "../editor_panel.h"       // EditorPanel : GameApp (hinst = m_hInstance +0x358, m_hMapEditorDlg = m_hMapEditorDlg +0x374)
+#include "../config/core.h"       // GameApp (hinstance = +0x358, m_hMapEditorDlg = +0x374)
 
 // @ 0x4fe860
-LRESULT EditorPanel::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_COMMAND) {
         goto command;
     }
@@ -520,7 +520,7 @@ command:
         CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
         return 1;
     case 0x489:
-        DialogBoxParamA(m_hInstance, (LPCSTR)0xde, m_hMapEditorDlg, options_dlg_proc, 0);
+        DialogBoxParamA(hinstance, (LPCSTR)0xde, m_hMapEditorDlg, options_dlg_proc, 0);
         return 1;
     case 0x491:
     case 0x492:

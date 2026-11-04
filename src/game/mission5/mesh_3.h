@@ -98,7 +98,7 @@ struct Mission; struct GameData; struct ItemKind;
 extern ItemKind* g_items;                        // 0x5e29d0
 extern Mission* g_mission;                       // 0x5e292c
 extern GameData* g_game;                         // 0x5e2930
-#include "../config/core.h"      // Core g_app_obj (0x8ee3c48)
+#include "../config/core.h"      // GameApp g_app_obj (0x8ee3c48)
 #include "../ptype.h"
 extern char g_windows[]; // 0xa73980
 #include "../prop_kind.h"

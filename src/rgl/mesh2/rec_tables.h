@@ -86,22 +86,6 @@ inline void st_int(void* s, int* dst) { ((vt_rec*)(*(char**)s))[0x4c / 4](s, dst
 // ---- options.dat loader (0x4c3a40) and GameApp::InitDeviceObjects (0x4c3510) -----------------------------------
 #include "../../include/renderer.h"   // canonical: g_render.pad504 (0xa17e14)
 
-struct font_ref { void set_device(IDirect3DDevice9* d); };   // 0x404c00 (CD3DFont::InitDeviceObjects, ret 4)
-
-// layout-only view of the application object (GameApp : CD3DApplication)
-struct GameAppView {
-    char  pad0[0xa4];
-    char  windowed;                 // +0xa4
-    char  pada5[0xec - 0xa5];
-    HWND  hwnd;                     // +0xec
-    int   pad_f0;
-    int   width;                    // +0xf4
-    IDirect3DDevice9* device;       // +0xf8
-    char  padfc[0x22c - 0xfc];
-    int   height;                   // +0x22c
-    char  pad230[0x348 - 0x230];
-    font_ref* font;                 // +0x348
-};
 
 // the input object at 0xa17910 (apply_input_settings' argument), the device set at 0xa170c8 (init_devices), the render
 // batch at 0x5fe898 (init_decls) and the resource manager at 0x5d6fa0 (load_all) are config.h's InputSet,

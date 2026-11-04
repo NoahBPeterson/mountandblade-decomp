@@ -32,4 +32,3 @@
 00a75f40 00a75f60  # g_a75f40 (0x24 bytes) holds ?g_5a75f60@@3HA, g_5a75f60
 00a75f70 00a75f90  # g_a75f70 (0x6b8 bytes) holds ?g_sort_val@@3PAUSortVal@@A, g_sort_val
 08ed4df8 08ed4e14  # ?g_ttypes@@3PAUttype@@A (0x160 bytes) holds ?g_x8ed4e14@@3PAEA, g_x8ed4e14
-08ee3c48 08ee3fc4  # g_8ee3c48 (0x5a0 bytes) holds ?g_dlg_options@@3PAXA, g_dlg_options

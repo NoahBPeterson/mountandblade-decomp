@@ -222,9 +222,9 @@ void __fastcall unescape(tstring* s)
     s->buf[dst + 1] = 0;
 }
 
-// ---- the application object's start-up probes (Core, ./core.h) -------------------------------------------------------
+// ---- the application object's start-up probes (GameApp, ./core.h) -------------------------------------------------------
 // @ 0x4bace0
-void Core::update_view_rect()
+void GameApp::update_view_rect()
 {
     RECT r;
     GetWindowRect(m_hWnd, &r);
@@ -240,7 +240,7 @@ void Core::update_view_rect()
 }
 
 // @ 0x4bad70
-int Core::init_d3d()
+int GameApp::init_d3d()
 {
     m_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
     if (!m_pD3D) {
@@ -278,7 +278,7 @@ static inline int DepthStencilFormatRank(D3DFORMAT fmt)
 // The SDK's FindBestFullscreenMode with the configured display (width, height, bits) standing in for the desktop
 // mode: picks the device combo, the closest listed mode, the depth format, the multisample type from the option
 // block and the present interval (vsync) and stores them into the fullscreen half of the D3D settings.
-bool Core::choose_display_mode(bool bRequireHAL, bool bRequireREF)
+bool GameApp::FindBestFullscreenMode(bool bRequireHAL, bool bRequireREF)
 {
     D3DDISPLAYMODE want;
     D3DDISPLAYMODE best_want = { 0, 0, 0, (D3DFORMAT)0 };
@@ -395,8 +395,8 @@ EndFullscreenDeviceComboSearch:
 // top-visible and selected entry in the game data object.
 void set_list_scroll(int delta)
 {
-    HWND list = GetDlgItem(g_app_obj.page_hwnd, 0x431);
-    HWND combo = GetDlgItem(g_app_obj.page_hwnd, 0x433);
+    HWND list = GetDlgItem(g_app_obj.m_hMapEditorDlg, 0x431);
+    HWND combo = GetDlgItem(g_app_obj.m_hMapEditorDlg, 0x433);
     ((GameConfig*)g_game)->list_top = SendMessageA(list, 0x150, SendMessageA(list, 0x147, 0, 0), 0);
     int cur = SendMessageA(combo, 0x188, 0, 0);             // CB_GETCOUNT
     int count = SendMessageA(combo, 0x18b, 0, 0);

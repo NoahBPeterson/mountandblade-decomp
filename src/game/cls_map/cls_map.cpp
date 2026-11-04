@@ -83,14 +83,11 @@ Glyph* GlyphMap::at(const int& key)
 
 // ---- the main window procedure thunk (0x4d9440): enters the shared handler with this = the application object -------
 // 0x4d4140: the application window procedure, GameApp::msg_proc (options_panel/world_app.cpp; thiscall with this = g_app_obj)
-struct GameApp {
-    int msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp);   // 0x4d4140
-};
 
 // @ 0x4d9440   main window procedure thunk
 int __stdcall msg_proc_thunk(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    return ((GameApp*)&g_app_obj)->msg_proc(hwnd, msg, wParam, lParam);
+    return g_app_obj.msg_proc(hwnd, msg, wParam, lParam);
 }
 
 struct SoundCtl {
@@ -109,7 +106,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         ;
 
     g_app_obj.hinstance = hInstance;
-    g_app_obj.init_flag = 0;
+    g_app_obj.hbmp = 0;
     g_strtable.language.assign("en");
 
     {
@@ -575,7 +572,7 @@ extern Font* g_font;                                // 0x5e2934
 extern ScreenObj* g_windows[30];                        // 0xa73980 .. 0xa739f8
 
 // @ 0x4da5b0
-int shutdown()
+HRESULT GameApp::FinalCleanup()
 {
     FSOUND_Close();
     ((text_stream*)&g_log)->text_stream::w_cstr("Saving options...");     // 0x4153a0 (the log is a text_stream: called directly)

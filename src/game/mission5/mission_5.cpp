@@ -2429,7 +2429,7 @@ void Screen_s2ae70::draw_order_menu()
 #undef g_mission_s2b5c0
 #define g_mission_s2b5c0 (*(Mission_s2b5c0**)&g_mission)
 #undef g_editor_s2b5c0
-#define g_editor_s2b5c0 (*(Editor_s2b5c0*)g_app_obj)
+#define g_editor_s2b5c0 (*(Editor_s2b5c0*)&g_app_obj)
 // @ 0x52b5c0
 bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
 {

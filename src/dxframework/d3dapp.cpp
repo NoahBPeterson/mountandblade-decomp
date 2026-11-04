@@ -465,11 +465,7 @@ HRESULT CD3DApplication::ConfirmDevice( D3DCAPS9*, DWORD, D3DFORMAT, D3DFORMAT )
     return S_OK;
 }
 
-// (0x401a30 is the scalar deleting destructor generated for this destructor)
-// @ 0x401a30
-CD3DApplication::~CD3DApplication()
-{
-}
+// (0x401a30 is the scalar deleting destructor generated for this destructor, defined inline in d3dapp.h)
 
 //-----------------------------------------------------------------------------
 // Name: FindBestWindowedMode()

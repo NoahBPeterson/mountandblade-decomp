@@ -53,7 +53,6 @@ extern char g_a75f40[];     // 0xa75f40 the tableaus
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 #include "../../include/mesh_table.h"   // MeshTable g_meshes (0x8ed4f58)
 
-extern char g_8ee3c48[];    // 0x8ee3c48 the application
 struct SoundMgr;
 extern SoundMgr g_sound_mgr;   // 0x5aa128 the sound player (defined in agent_fx_sound.cpp; no constructor, only the destructor registered below)
 extern void* g_vt_54a7d0[]; // 0x54a7d0 the debug text log's vtable
@@ -67,15 +66,12 @@ struct tstring11 { TStrRec a[11]; };            // a table of 11 such records, c
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct ini_file { ini_file(); };                    // 0x4c1be0
-struct GameApp { GameApp(); };                      // 0x4d3ec0
 struct Tail2 { ~Tail2(); };                         // 0x4c4d10
 struct TwoVec { ~TwoVec(); };                       // 0x4da9c0
 struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct BigArray { void destroy(); };                // 0x4eb810
-struct Core;
 void __fastcall fn_4c2ea0(void* keys);              // 0x4c2ea0
 void* __fastcall conv_zero_node(void* p);           // 0x4c8c20
-void __fastcall core_dtor(Core* c);                 // 0x4bed90
 void __fastcall nameholder_dtor(void* p);           // 0x4316b0 (NameHolder::~NameHolder)
 void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (__fastcall* dtor)(void*));   // 0x401830
 
@@ -105,8 +101,6 @@ void __cdecl static_dtor_548250()
         ((TStrRec*)p)->~TStrRec();
     }
 }
-// @ 0x5482a0
-void __cdecl static_dtor_5482a0() { core_dtor((Core*)g_8ee3c48); }
 // @ 0x5482b0   the log stream's destructor: back to the base vtable, close the file if it is open, then the strings
 void __cdecl static_dtor_5482b0()
 {
@@ -194,8 +188,6 @@ void __cdecl static_init_547fe0()
 }
 // @ 0x548030
 void __cdecl static_init_548030() { atexit(static_dtor_548510); }
-// @ 0x548110
-void __cdecl static_init_548110() { new (g_8ee3c48) GameApp; atexit(static_dtor_5482a0); }
 
 // The table, as __xc_a..__xc_z held it (0x5a8008..0x5a80bc); the CRT runs .CRT$XCU after its own initializers.
 typedef void (__cdecl* init_fn)();
@@ -208,6 +200,5 @@ init_fn g_static_init_table[] = {
     static_init_547e90, static_init_547ec0,
     static_init_547f50, static_init_547fb0,
     static_init_547fe0, static_init_548030,
-    static_init_548110,
 };
 #pragma data_seg()

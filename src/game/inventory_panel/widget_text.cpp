@@ -281,8 +281,7 @@ void __stdcall sort_list(sel_list* l, int mode)
 }
 
 // ------------------------------------------------------------------ the dialog thunk -----------------------
-#include "../editor_panel.h"
-extern EditorPanel g_app_obj;                         // 0x8ee3c48
+#include "../config/core.h"                      // GameApp g_app_obj (0x8ee3c48)
 
 // @ 0x50d250 dialog_thunk
 LRESULT __stdcall dialog_thunk(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
