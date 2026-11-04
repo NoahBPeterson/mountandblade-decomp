@@ -32,6 +32,8 @@ struct Rec18 {                                      // 0x18-byte record: a strin
 // initialiser table): the constructor 0x4d3ec0 writes the module name / music root, logs through g_log and builds the mission
 // object, all of which other objects' initialisers set up first. The linker orders the objects' initialisers by object
 // order, not by the original's address order, so this object's initialisers go to the section that follows .CRT$XCU.
+// (Tried without it once static_init.cpp was gone: the linker then runs this object's initialisers before g_log's and g_game_keys's, and
+// the constructor logs through g_log, so the section stays.)
 #pragma init_seg(".CRT$XCV")
 tstring g_module_path;                                          // 0x8ee3c28 (constructed by the compiler: tstring::tstring 0x42bbd0)
 extern tstring g_module_name;                                      // 0x8ee3c38
