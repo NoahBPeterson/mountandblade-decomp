@@ -52,12 +52,6 @@ struct Font {
 
 
 // ---- globals ---------------------------------------------------------------------------------------
-extern FILE* g_log_file;                        // 0x5a9f90
-extern unsigned char g_log_flag94;              // 0x5a9f94
-extern unsigned char g_log_flag95;              // 0x5a9f95
-extern tstring g_5d705c;                        // 0x5d705c (resmgr::cur, +0xbc of the resource manager 0x5d6fa0)
-extern unsigned char g_5d706c;                  // 0x5d706c (the resource manager's +0xcc)
-extern unsigned char g_5d706d;                  // 0x5d706d (+0xcd)
 extern char g_path_prefix_chars[];              // 0x8ee3c28
 #include "../game_globals.h"
 

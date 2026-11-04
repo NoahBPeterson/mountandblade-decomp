@@ -52,9 +52,6 @@ struct node_pair { int key; Glyph value; };
 extern unsigned char g_mt_inited;                // 0x5e2a09
 extern void*     g_mt_event;                     // 0x5e28d8
 extern CRITICAL_SECTION g_mt_cs;                 // 0x5e28dc
-extern FILE*     g_log_file;                     // 0x5a9f90 (game_globals.h: the log stream's FILE*)
-extern unsigned char g_log_flag94;               // 0x5a9f94 (game_globals.h)
-extern unsigned char g_log_flag95;               // 0x5a9f95 (game_globals.h)
 struct MapIcon;
 extern MapIcon*  g_map_icons;                    // 0x5e29f0 (game_globals.h)
 extern int       g_video_played;                 // 0x5e2a10

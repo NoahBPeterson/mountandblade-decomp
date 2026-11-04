@@ -119,7 +119,7 @@ struct text_stream : file_writer_base {
 };
 
 // The engine's text log (global g_log at 0x5a9f60; vtable 0x595618): a text_stream whose flush (slot 26, 0x42cc10) writes the
-// unflushed tail of the buffer, and whose destructor closes the file. The export file (options_panel.h's outfile) derives from it.
+// unflushed tail of the buffer, and whose destructor closes the file. The log file objects (outfile, below) derive from it.
 struct log_stream : text_stream {
     log_stream() {}
     virtual int flush();                                            // 0x42cc10 (gui_manager.cpp)
@@ -134,7 +134,21 @@ struct log_stream : text_stream {
     }
     ~log_stream() { shut(); }
 };
-extern log_stream g_log;            // 0x5a9f60
+// 0x595990 (outfile): the log stream's table, 27 slots like the others (the read slots return *this). The export file
+// (options_panel.h) and the engine's log, g_log (0x5a9f60), are both outfiles; the log is destroyed through ~log_stream.
+struct outfile : log_stream {
+    outfile() {}
+    outfile(const char* p) { name.assign(p); }
+    virtual stream_base& r_float(float* v);                         // 0x415870
+    virtual stream_base& r_bool(char* v);                           // 0x415870
+    virtual stream_base& r_uint(unsigned* v);                       // 0x415870
+    virtual stream_base& r_u64(unsigned __int64* v);                // 0x415870
+    virtual stream_base& r_i64(__int64* v);                         // 0x415870
+    virtual stream_base& r_int(int* v);                             // 0x415870
+    virtual stream_base& r_tstr(rgl::string* v);                    // 0x415870
+    virtual int flush();                                            // 0x42cc10
+};
+extern outfile g_log;               // 0x5a9f60 (defined in game/options_panel/options_panel.cpp; its fp / failed / is_open are 0x5a9f90 / 0x5a9f94 / 0x5a9f95)
 
 // The text reader chain (vtable 0x54a890): text_stream's slots, folded by the original's linker, each class with its own
 // copy. This class has a user-declared empty destructor (0x417310); the loaders that build readers on their stack inline it

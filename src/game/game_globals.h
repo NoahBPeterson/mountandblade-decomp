@@ -17,12 +17,6 @@ extern unsigned __int64 g_bit[]; // 0x5a8e68 (g_bit[i] == 1 << i)
 extern const int g_level_xp[64]; // 0x5937c8
 // -1 = nothing pending: set to -1 by agent_hud (0x4f7f00 path) and world_app, tested in mission_5.cpp (0 = rebuild mission geometry, then reset to -1).
 extern int g_pending_action; // 0x5a9f18 -1 = none; 0 = rebuild mission geometry
-// Log file handle shared by cls_map.cpp (g_5a9f90) and char_sheet/editor_ui.h (g_log_file).
-extern FILE* g_log_file; // 0x5a9f90
-// Same flag, named g_5a9f94 (char) in cls_map.cpp.
-extern unsigned char g_log_flag94; // 0x5a9f94
-// Same flag, named g_5a9f95 (char) in cls_map.cpp.
-extern unsigned char g_log_flag95; // 0x5a9f95
 // game_variables key "map_max_x" (trigger_vec.cpp);
 extern float g_map_max_x; // 0x5aa118
 // game_variables key "map_max_y" (trigger_vec.cpp);

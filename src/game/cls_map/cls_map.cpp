@@ -630,11 +630,11 @@ HRESULT GameApp::FinalCleanup()
         operator delete(f);
     }
     ExitSkinMagicLib();
-    if (g_log_flag95) {
+    if (g_log.is_open) {
         if (g_log.flush() == 0)
-            fclose(g_log_file);
-        g_log_flag94 = 1;
-        g_log_flag95 = 0;
+            fclose(g_log.fp);
+        g_log.failed = 1;
+        g_log.is_open = 0;
     }
     return 0;
 }

@@ -624,6 +624,10 @@ void options_panel::export_path(char* out)
     sprintf(out, "CharExport\\%s.txt", name);
 }
 
+// the engine log (0x5a9f60): an outfile like the export file, constructed by the compiler (the original's static initializer 0x547ae0)
+// and destroyed through log_stream's destructor (0x5482b0)
+outfile g_log;                                                      // 0x5a9f60
+
 // the read slots the log file does not have: "return *this" (0x415870, folded by the original's linker)
 stream_base& outfile::r_float(float* v) { return *this; }
 stream_base& outfile::r_bool(char* v) { return *this; }

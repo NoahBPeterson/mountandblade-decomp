@@ -127,4 +127,4 @@
 00a17544 ?g_windowed_other@@3HA
 00a17f28 ?g_dev_renderer@@3PAUdev_rec@@A  # current render device record
 005d75e0 ?g_5d75e0@@3EA  # device state index
-005a9f60 ?g_log@@3Ulog_stream@@A  # text log stream
+005a9f60 ?g_log@@3Uoutfile@@A  # text log stream

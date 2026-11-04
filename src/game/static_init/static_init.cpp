@@ -36,7 +36,6 @@ extern unsigned g_8ee41e8;  // 0x8ee41e8
 extern float g_5a9f20;      // 0x5a9f20
 extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
-extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
 
 
 
@@ -55,9 +54,6 @@ extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 struct SoundMgr;
 extern SoundMgr g_sound_mgr;   // 0x5aa128 the sound player (defined in agent_fx_sound.cpp; no constructor, only the destructor registered below)
 extern void* g_vt_54a7d0[]; // 0x54a7d0 the debug text log's vtable
-extern void* g_vt_595990[]; // 0x595990 outfile's vtable
-extern void* g_vt_595618[]; // 0x595618 log_stream's vtable (its base)
-extern FILE* g_5a9f90;      // 0x5a9f90 the log's FILE
 
 // ---- callees --------------------------------------------------------------------------------------------------
 #include "../tstring.h"                       // tstring::tstring 0x42bbd0, ~tstring 0x42bc40
@@ -98,20 +94,6 @@ void __cdecl static_dtor_548250()
         ((tstring*)p)->~tstring();
     }
 }
-// @ 0x5482b0   the log stream's destructor: back to the base vtable, close the file if it is open, then the strings
-void __cdecl static_dtor_5482b0()
-{
-    AT(void*, g_5a9f60, 0) = g_vt_595618;
-    if (g_5a9f60[0x35]) {
-        typedef int (__fastcall* close_fn)(void* self);   // a thiscall slot with no arguments
-        if (((close_fn)g_vt_595618[0x1a])(g_5a9f60) == 0)
-            fclose(g_5a9f90);
-        g_5a9f60[0x34] = 1;
-        g_5a9f60[0x35] = 0;
-    }
-    ((tstring*)(g_5a9f60 + 0x20))->~tstring();
-    ((tstring*)(g_5a9f60 + 0x4))->~tstring();
-}
 // @ 0x548410
 void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 // @ 0x548460
@@ -134,19 +116,6 @@ void __cdecl static_init_547aa0()
     AT(void*, g_5a9f30, 0) = g_vt_54a7d0;
     AT(int, g_5a9f30, 0x14) = 0;
     atexit(static_dtor_548170);
-}
-// @ 0x547ae0   the log file stream (outfile): two strings, flags, vtable
-void __cdecl static_init_547ae0()
-{
-    new (g_5a9f60 + 0x4) TStrRec;
-    new (g_5a9f60 + 0x20) TStrRec;
-    g_5a9f60[0x18] = 0;
-    AT(int, g_5a9f60, 0x1c) = 0;
-    g_5a9f60[0x34] = 1;
-    g_5a9f60[0x35] = 0;
-    AT(int, g_5a9f60, 0x14) = 0;
-    AT(void*, g_5a9f60, 0) = g_vt_595990;
-    atexit(static_dtor_5482b0);
 }
 // @ 0x547b50   input state: both tick snapshots, the key table, the axes
 void __cdecl static_init_547b50()
@@ -190,7 +159,7 @@ typedef void (__cdecl* init_fn)();
 init_fn g_static_init_table[] = {
     static_init_5479c0,
     
-    static_init_547aa0, static_init_547ae0, static_init_547b50,
+    static_init_547aa0, static_init_547b50,
     static_init_547e40,
     static_init_547e90, static_init_547ec0,
     static_init_547f50, static_init_547fb0,

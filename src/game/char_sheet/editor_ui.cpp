@@ -252,13 +252,13 @@ HRESULT GameApp::OneTimeSceneInit()
     g_batch.init_formats();   // 0x4bc5b0
     g_log.name.assign("rgl_log.txt");
     FILE* f = fopen("rgl_log.txt", "w");
-    g_log_file = f;
+    g_log.fp = f;
     bool ok = true;
     if (f != 0) {
-        g_log_flag94 = 0;
-        g_log_flag95 = ok;
+        g_log.failed = 0;
+        g_log.is_open = ok;
     } else {
-        g_log_flag94 = ok;
+        g_log.failed = ok;
     }
     g_log.autoflush = ok;
     g_log.w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
