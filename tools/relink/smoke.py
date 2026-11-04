@@ -9,7 +9,7 @@ This is the check that can. The launcher is passed with crashrun --play (Return 
 window to the front for a moment). Exit status: 0 menu matches the reference, 1 it does not (or the game died or never reached
 the menu), 2 usage, 3 a game is already running (it is never killed: it may be the user's).
 
-Shots go to --out (default work/smoke/<exe dir name>): load_NNN.png every 20 s while loading, menu.png 8 s after the
+Shots go to --out (default work/smoke/<exe dir name>): load_NNN.png every 20 s while loading, menu.png 8 s and menu_2.png 14 s after the
 engine logs "Finished All". The score is the mean absolute difference of the two menus as 320x200 greyscale (0..255);
 a correct menu scores a few points (the hover highlight, the fps counter), a broken one tens.
 """
@@ -73,7 +73,7 @@ def main():
     run = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "relink", "crashrun.py"), "--exe", exe,
                             "--timeout", str(a.timeout + 60), "--play"], stdout=open(os.path.join(out, "crashrun.log"), "w"),
                            stderr=subprocess.STDOUT, cwd=ROOT)
-    menu, n, status = None, 0, "timeout"
+    menu, menus, n, status = None, [], 0, "timeout"
     try:
         while time.time() - t0 < a.timeout:
             time.sleep(5)
@@ -82,9 +82,19 @@ def main():
                 break
             fresh = os.path.exists(log) and os.path.getmtime(log) > t0
             if fresh and "Finished All" in open(log, errors="replace").read():
-                time.sleep(8)
-                menu = os.path.join(out, "menu.png")
-                status = "menu" if shot(tool, menu) else "menu reached, no window to capture"
+                # two shots 6 s apart (a capture can land mid-transition: 15.0 once, 0.0 on the rerun); a broken menu
+                # is wrong in every frame, so the better of the two is the verdict. A failed window capture is retried.
+                menus = []
+                for k, wait in enumerate((8, 6)):
+                    time.sleep(wait)
+                    m = os.path.join(out, "menu.png" if k == 0 else "menu_2.png")
+                    for _ in range(3):
+                        if shot(tool, m):
+                            menus.append(m)
+                            break
+                        time.sleep(2)
+                menu = menus[0] if menus else None
+                status = "menu" if menus else "menu reached, no window to capture"
                 break
             if int(time.time() - t0) // 20 > n:
                 n += 1
@@ -107,7 +117,7 @@ def main():
     if not os.path.exists(a.ref):
         print("no reference menu (%s): run a known-good build with --save-ref" % os.path.relpath(a.ref, ROOT))
         return 1
-    s = score(menu, a.ref)
+    s = min(score(m, a.ref) for m in menus)
     ok = s <= THRESHOLD
     print("menu vs reference: %.1f (threshold %.0f) -> %s" % (s, THRESHOLD, "OK" if ok else "DIFFERS"))
     return 0 if ok else 1
