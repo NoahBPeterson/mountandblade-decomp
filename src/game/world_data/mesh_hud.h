@@ -23,13 +23,6 @@ using rgl::vector4;
 
 #define WD_FLD(T, off) (*(T*)((char*)this + (off)))
 
-// ---- rgl::mesh members the shared header lacks (same object, 0x260 bytes) -------------------------------------------------------
-struct MeshX : rgl::mesh {
-    float& uv(int i) { return WD_FLD(float, 0xf0 + 4 * i); }    // +0xf0 .. +0xfc the uv rectangle (0x495fa0)
-    MeshX* copy_of();                                           // 0x4958f0 (thiscall, ret 0)
-    void set_part(const rgl::matrix& mtx);                      // 0x495ba0 (ret 4)
-    void set_alpha(float a);                                    // 0x495f00 (ret 4)
-};
 namespace rgl { vector4 unpack_color(const unsigned* c); }      // 0x40e4e0 (shapes.cpp: the colour by value, hidden return pointer)
 extern char vtbl_591fb0[];                                     // 0x591fb0 (UiB's vtable: the slider widget)
 // mission_ui2's FieldPanel::update (0x48d470), what the outer HUD's refresh calls

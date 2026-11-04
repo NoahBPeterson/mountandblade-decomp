@@ -50,9 +50,6 @@ struct Poser {
 #include "../../rgl/mesh.h"      // rgl::mesh::clone 0x41c6d0 (the canonical class)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../alloc_construct.h"   // alloc_E12 0x436cf0 (agent/agent.cpp, ret 8)
-struct MeshX {
-    MeshX* copy_of();   // 0x4958f0 (world_data/mesh_hud.cpp)
-};
 struct GameW {                                                   // world_data/world_data.cpp
     void detach_party(unsigned id);                              // 0x490a30 (ret 4)
     void remove_party(int id);                                   // 0x4915d0 (ret 4)
@@ -175,10 +172,6 @@ struct Rot3 {                                           // the three rows of a f
     void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770 (ret 4: rows s and f about u)
 };
 inline Rot3* identity3(Rot3* out) { return (Rot3*)rgl::identity3((rgl::mat3*)out); }
-struct MeshRes : rgl::mesh {                            // the master mesh the resource manager hands out for a name
-    rgl::mesh* copy_of() { return (rgl::mesh*)((MeshX*)this)->copy_of(); }              // 0x4958f0
-    rgl::mesh* clone() { return (rgl::mesh*)((rgl::mesh*)this)->clone(); }                 // 0x41c6d0
-};
 // the party's map model (Party::model, an rgl entity of type 9): the slots, fields and members the update code uses
 struct PartyModel {
     virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5();

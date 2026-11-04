@@ -2725,7 +2725,7 @@ void Party::update_flags()
     rgl::mesh* m2 = 0;
     int rider = f94;
     PartyTypeDef* d = (PartyTypeDef*)((char*)g_map_icons + def);
-    rgl::mesh* m = ((MeshRes*)g_resmgr.get_object(&d->name))->copy_of();
+    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&d->name))->copy_of();
     float a = d->scale;
     SCALE_ROWS(m, a);
     GDP(rgl::mesh*, 0x1a200) = m;
@@ -2734,7 +2734,7 @@ void Party::update_flags()
     d->frames.update(-0x46);
     if (rider > 0) {
         PartyTypeDef* r = (PartyTypeDef*)((char*)g_map_icons + (unsigned)rider * 0x48);
-        m2 = ((MeshRes*)g_resmgr.get_object(&r->name))->clone();
+        m2 = ((rgl::mesh*)g_resmgr.get_object(&r->name))->clone();
         m2->translate(&d->pos);
         if (!(flags_lo & 0x400)) {
             float b = r->scale;

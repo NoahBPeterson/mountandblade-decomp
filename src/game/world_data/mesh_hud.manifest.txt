@@ -1,4 +1,4 @@
-../src/game/world_data/mesh_hud.cpp  ?copy_of@MeshX@@QAEPAU1@XZ  004958f0  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?copy_of@mesh@rgl@@QAEPAU12@XZ  004958f0  /O2 /MT /Gy /TP
 ../src/game/world_data/mesh_hud.cpp  ?normalize_uv@MissionUi@@UAEXPAUmesh@rgl@@@Z  00495fa0  /O2 /MT /Gy /TP
 ../src/game/world_data/mesh_hud.cpp  ?update_children@UiC@@UAEXXZ  00497d10  /O2 /MT /Gy /TP
 ../src/game/world_data/mesh_hud.cpp  ?update_children@UiD@@UAEXM@Z  00498390  /O2 /MT /Gy /TP

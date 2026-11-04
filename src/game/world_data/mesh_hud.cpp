@@ -18,9 +18,9 @@
 
 // ==== 0x4958f0: clone a mesh with the same owner, material, flags and name =====================================
 // @ 0x4958f0
-MeshX* MeshX::copy_of()
+rgl::mesh* rgl::mesh::copy_of()
 {
-    MeshX* m = (MeshX*)new rgl::mesh;
+    rgl::mesh* m = new rgl::mesh;
     if (parent)
         m->parent = parent;
     else
@@ -99,7 +99,7 @@ rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent)
 // Every sum is written in the original's evaluation order, which differs per row (0x495bdd..0x495e92: the position
 // pair's x rows add f,s then u; the other rows s,u then f, or u,f then s); cl keeps the written order here.
 // @ 0x495ba0
-void MeshX::set_part(const rgl::matrix& mtx)
+void rgl::mesh::set_part(const rgl::matrix& mtx)
 {
     ensure_local();
     {
@@ -159,7 +159,7 @@ void MeshX::set_part(const rgl::matrix& mtx)
 // Each vertex record keeps its packed colour at +0x54; that colour is unpacked into floats, the alpha lane is replaced
 // by `a`, and it is packed back.
 // @ 0x495f00
-void MeshX::set_alpha(float a)
+void rgl::mesh::set_alpha(float a)
 {
     ensure_local();
     std::vector<rgl::vertex60>& verts = v50;
@@ -178,7 +178,7 @@ void MeshX::set_alpha(float a)
 // @ 0x495fa0
 void MissionUi::normalize_uv(rgl::mesh* src_mesh)
 {
-    MeshX* src = (MeshX*)src_mesh;
+    rgl::mesh* src = src_mesh;
     float u0 = 0.0f, v0 = 0.0f, u1 = 0.0f, v1 = 0.0f;
     src->ensure_local();
     rgl::point20* p = src->v70._Myfirst;

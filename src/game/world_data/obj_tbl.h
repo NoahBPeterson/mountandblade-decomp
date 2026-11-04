@@ -12,10 +12,6 @@
 #include "./widget_mgr_w.h"
 #include "../../include/render_flags.h"
 
-// ---- mesh members the shared headers lack (same object as rgl::mesh) ---------------------------------------------------------------------
-// (translate 0x44f240 and add_quad 0x44e970 are rgl::mesh's own, set_bone_index 0x47b360 is rgl::mesh's: rgl/mesh.h, rgl/mesh.h)
-struct MeshY : MeshX {};
-
 // ---- a 3x3 frame (the rotation rows of a matrix): identity3 writes 0x30 bytes -------------------------------------------------------------
 // (rgl::mat3 of include/mat4.h; identity3 is the global-scope writer 0x40cd60 declared in world_data.h; the axis rotations
 // 0x40e570 / 0x40e670 / 0x40e770 are rgl::matrix's own, applied to the frame as the matrix it starts)

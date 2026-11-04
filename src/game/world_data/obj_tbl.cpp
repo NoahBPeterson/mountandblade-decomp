@@ -39,7 +39,7 @@ struct MeshWidgetVt {
 rgl::mesh* MeshTable::placed(int index)
 {
     SceneRec48* recs = (SceneRec48*)records;
-    MeshY* m = (MeshY*)((rgl::mesh*)g_resmgr.get_object(&recs[index].name))->clone();
+    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&recs[index].name))->clone();
     if (recs[index].flags & 1)
         m->f214 += 0x2000;
     vector4 pos;
@@ -67,7 +67,7 @@ rgl::mesh* MeshTable::placed(int index)
 // @ 0x4991d0
 rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
 {
-    MeshY* m = (MeshY*)new rgl::mesh;
+    rgl::mesh* m = new rgl::mesh;
     int i = *index;
     vector4 b, a;
     vec2 uv1, uv0;
@@ -98,7 +98,7 @@ void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl:
 {
     TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
     TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
-    MeshY* m = (MeshY*)make_mesh_from(&index, &from);
+    rgl::mesh* m = make_mesh_from(&index, &from);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
        && 0.99999f <= scale->y && scale->y < 1.00001f
        && 0.99999f <= scale->z && scale->z < 1.00001f))
@@ -113,7 +113,7 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
 {
     TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
     TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
-    MeshY* m = (MeshY*)g_meshes.placed(index);
+    rgl::mesh* m = g_meshes.placed(index);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
        && 0.99999f <= scale->y && scale->y < 1.00001f
        && 0.99999f <= scale->z && scale->z < 1.00001f))
@@ -146,7 +146,7 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 {
     TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
     TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
-    MeshY* m = (MeshY*)((MeshX*)((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
+    rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
     ((Poser*)(void*)e)->add_extra((int)m);
@@ -181,7 +181,7 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
     *(int*)&v.x = 0x700;
     ((MeshWidgetVt*)w)->w29(&v);
     if (a >= 0) {
-        MeshY* m = (MeshY*)g_meshes.placed(a);
+        rgl::mesh* m = g_meshes.placed(a);
         skin* nr = (skin*)g_tableaus.add_spawned(&b, (const int*)&c);   // 0x4b14b0
         if (m->res)
             --*(int*)((char*)m->res + 0x64);

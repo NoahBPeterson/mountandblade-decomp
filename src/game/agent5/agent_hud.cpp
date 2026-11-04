@@ -972,7 +972,7 @@ void MissionBlocker::update_status()
                     identity3((rgl::mat3*)&frame);
                     float ang = -1.45f;
                     ((rgl::matrix*)&frame)->rotate_about_u(&ang);
-                    piece->set_part(&frame);
+                    piece->set_part(frame);
                     identity_pos((pos*)&frame);
                     frame.o.z -= 10.0f;
                     shield_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
@@ -1164,7 +1164,7 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
 sf:
     ((rgl::matrix*)&m)->rotate_about_u(&angle);
 done:
-    result->set_part(&m);
+    result->set_part(m);
 
     vector4 bmin, bmax;
     result->calc_bounds(&bmin, &bmax);
