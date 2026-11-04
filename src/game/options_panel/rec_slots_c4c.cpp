@@ -6,6 +6,7 @@
 // base signature is scale_3(const float*) while the real functions take int/float: the stub forwards the 4-byte
 // argument unchanged.
 #include "../../rgl/mesh2/rec_tables.h"
+#include "../strat/gui_manager.h"     // g_gui
 
 struct PartyScreen {
     void open_party_window();
@@ -19,7 +20,7 @@ void C4c2fb0::slot_empty_1() { g_gui.reset(); }
 void C4c3290::slot_empty_1() { g_gui.reset(); }
 
 // C4c3160
-void C4c3160::slot_empty_1() { reset_gui(); }
+void C4c3160::slot_empty_1() { g_gui.reset(); }
 void C4c3160::slot_empty_2() { ((PartyScreen*)this)->open_party_window(); }
 
 void C4c31c0::slot_empty_1() { g_gui.reset(); }

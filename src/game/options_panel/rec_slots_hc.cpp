@@ -6,6 +6,7 @@
 // base signature is scale_3(const float*) while the real functions take int/float: the stub forwards the 4-byte
 // argument unchanged.
 #include "../../rgl/mesh2/head_rec.h"
+#include "../strat/gui_manager.h"     // g_gui
 
 struct Screen {
     void init_screen();
@@ -20,7 +21,7 @@ struct CharSheet {
 };
 
 // head_cam
-void head_cam::slot_empty_1() { reset_gui(); }
+void head_cam::slot_empty_1() { g_gui.reset(); }
 void head_cam::slot_empty_2() { ((Screen*)this)->init_screen(); }
 void head_cam::scale_3(float a) { ((Screen*)this)->frame_update(a); }
 void head_cam::scale_5(const float* a) { write_stream((w_stream*)a); }

@@ -49,6 +49,7 @@ extern "C" void _ReadWriteBarrier(void);
 // vtable where the original has functions; deriving from head_rec keeps the layout (id at +8, name at +0x1c) and
 // the slots real. `item_base` stays as the name this file uses.
 #include "../head_rec.h"
+#include "../strat/gui_manager.h"     // g_gui
 #include "../menu_rec.h"   // g_menus 0x5e29b0
 #include "./mission_item_recs.h"
 struct GameData;
@@ -129,8 +130,7 @@ char* g_mission_params;                                         // unknown owner
 // before MissionParams::init's definition so cl does not inline it into slot 4.
 struct MissionHud { void refresh(); };                          // 0x4f7f00
 struct Screen_s261e0 { void tick(float); };                     // 0x5261e0
-void reset_gui();                                               // 0x4c6e00
-void MissionBlocker::slot_empty_1() { reset_gui(); }
+void MissionBlocker::slot_empty_1() { g_gui.reset(); }
 void MissionBlocker::slot_empty_2() { ((MissionHud*)this)->refresh(); }
 void MissionBlocker::scale_3(float a) { ((Screen_s261e0*)this)->tick(*(float*)&a); }
 void MissionBlocker::slot_empty_4() { ((MissionParams*)this)->init(); }
@@ -239,13 +239,13 @@ struct InputScreen { void on_input(int); };                     // 0x533aa0
 void ItemA::slot_empty_1() { ((MapDialog*)this)->reset_state(); }
 void ItemA::slot_empty_2() { ((GameScreen*)this)->build(); }
 void ItemA::scale_3(float a) { ((EventScreen*)this)->on_event(*(int*)&a); }
-void ItemB::slot_empty_1() { reset_gui(); }
+void ItemB::slot_empty_1() { g_gui.reset(); }
 void ItemB::slot_empty_2() { ((SaveWinCtl*)this)->create(); }     // the same `jmp create` as 0x4e5d80: the linker's ICF folds them
 void ItemB::scale_3(float a) { ((SourceScreen*)this)->hook_a(*(int*)&a); }
-void ItemC::slot_empty_1() { reset_gui(); }
+void ItemC::slot_empty_1() { g_gui.reset(); }
 void ItemC::slot_empty_2() { ((SaveWinCtl*)this)->create_flagged(); }
 void ItemC::scale_3(float a) { ((SourceScreen*)this)->hook_b(*(int*)&a); }
-void ItemD::slot_empty_1() { reset_gui(); }
+void ItemD::slot_empty_1() { g_gui.reset(); }
 void ItemD::slot_empty_2() { ((view_obj*)this)->reset(); }
 void ItemD::scale_3(float a) { ((InputScreen*)this)->on_input(*(int*)&a); }
 
