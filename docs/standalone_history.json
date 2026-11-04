@@ -973,21 +973,21 @@
   "forwarding_stubs": 23,
   "data_definitions": 181,
   "when": "2026-11-03T23:25:39-06:00",
-  "commit": "d5567eff",
+  "commit": "8fa4d675",
   "build": "merge_tb",
-  "label": "dead activation lib not copied, head_rec stream slots",
+  "label": "measurement: real item sizes",
   "items": {
-   "defined in source": 185,
-   "generated from source": 2057,
-   "borrowed from image": 62,
-   "reached through tables": 47,
+   "defined in source": 193,
+   "generated from source": 2059,
+   "borrowed from image": 86,
+   "reached through tables": 68,
    "library data": 501
   },
   "bytes": {
-   "defined in source": 143721724,
-   "generated from source": 309196,
-   "borrowed from image": 15088,
-   "reached through tables": 2220,
+   "defined in source": 143672842,
+   "generated from source": 309248,
+   "borrowed from image": 21748,
+   "reached through tables": 44390,
    "library data": 55770
   }
  }
