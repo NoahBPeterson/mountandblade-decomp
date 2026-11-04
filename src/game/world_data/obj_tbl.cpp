@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
 #include "./obj_tbl.h"
+#include "./mesh_hud.h"      // MeshWidget
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/widget_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../ui/mission_ui.h"
@@ -32,7 +33,6 @@ struct MeshWidgetVt {
     virtual void w30(); virtual void w31();
     virtual void w32(int a, rgl::mesh* m);                      // +0x80
 };
-struct MeshWidget : MissionUi {};
 
 // @ 0x499050
 rgl::mesh* scene_tbl::placed(int index)
@@ -155,11 +155,7 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 // @ 0x4995e0
 int WidgetMgrW::create_mesh_overlay(int index)
 {
-    MeshWidget* w = (MeshWidget*)operator new(0x178);
-    if (w) {
-        new ((void*)w, raw_place()) MissionUi;                  // 0x48ae20
-        *(void**)w = (void*)vtbl_5922e8;
-    }
+    MeshWidget* w = new MeshWidget;
     vec2 v;
     v.x = 0.0f;
     v.y = 0.0f;
@@ -176,11 +172,7 @@ int WidgetMgrW::create_mesh_overlay(int index)
 // @ 0x4996e0
 int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
 {
-    MeshWidget* w = (MeshWidget*)operator new(0x178);
-    if (w) {
-        new ((void*)w, raw_place()) MissionUi;                  // 0x48ae20
-        *(void**)w = (void*)vtbl_5922e8;
-    }
+    MeshWidget* w = new MeshWidget;
     vec2 v;
     v.x = 0.0f;
     v.y = 0.0f;

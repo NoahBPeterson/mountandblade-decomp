@@ -218,7 +218,7 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
 
 // ==== the HUD bar widget ==========================================================================================
 // @ 0x496100
-void HudBar::update_1(int)
+void MeshWidget::animate(int)
 {
     float e0 = elapsed(0);
     float e1 = elapsed(1);

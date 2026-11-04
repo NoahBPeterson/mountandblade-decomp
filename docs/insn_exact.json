@@ -4526,7 +4526,7 @@
   },
   "00496100": {
    "verdict": "DIFF",
-   "symbol": "?update_1@HudBar@@QAEXH@Z",
+   "symbol": "?animate@MeshWidget@@UAEXH@Z",
    "insns": 395,
    "ours": 378,
    "unverified": 0,

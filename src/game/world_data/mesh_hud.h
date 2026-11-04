@@ -31,7 +31,6 @@ struct MeshX : gui_mesh {
     void set_alpha(float a);                                    // 0x495f00 (ret 4)
 };
 namespace rgl { vector4 unpack_color(const unsigned* c); }      // 0x40e4e0 (shapes.cpp: the colour by value, hidden return pointer)
-extern char vtbl_5922e8[];                                     // 0x5922e8 (the mesh widget's vtable)
 extern char vtbl_591fb0[];                                     // 0x591fb0 (UiB's vtable: the slider widget)
 // mission_ui2's FieldPanel::update (0x48d470), what the outer HUD's refresh calls
 struct FieldPanel { void update(); };
@@ -67,8 +66,14 @@ struct HudBar : MissionUi {
     void s38(unsigned* c) { set_color(c); }                     // vtable +0x98
     void s39(unsigned* c) { set_target(c); }                           // vtable +0x9c
 
-    void update_1(int arg);                                     // 0x496100 (one mesh)
     void update_3(int arg);                                     // 0x496d30 (three meshes, two colour groups)
+};
+
+// The mesh overlay widget (vtable 0x5922e8, 0x178 bytes: MissionUi's members only): the placed-mesh and tableau overlays of
+// WidgetMgrW::create_mesh_overlay (obj_tbl.cpp). Its table is MissionUi's with animate 0x496100 (one mesh) and kind 4 (0x48c460).
+struct MeshWidget : HudBar {
+    virtual void animate(int arg);                              // +0x08 0x496100 (one mesh)
+    virtual int kind() { return 4; }                            // +0xc0 0x48c460 (ICF-folded with the shapes' type codes)
 };
 
 // ---- the outer HUD that owns the bar widget and the scrollbar (widget_mgr.h WItem::terrain_refresh_mesh 0x498420) --------------------------
