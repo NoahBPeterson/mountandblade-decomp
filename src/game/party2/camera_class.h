@@ -38,7 +38,7 @@ struct Camera : ContainerBase {
     virtual void render(rgl::scene* sc, float* pos, int c, int d);   // +0x28 0x49e5b0
     virtual void on_child_moved(MissionUi* e);  // +0x5c 0x49df60
     virtual int kind();                         // +0xc0 0x49df30 (7)
-    unsigned mask(int a);                       // 0x49df40
+    virtual unsigned mask(int a);               // +0xcc 0x49df40 (vtable slot 51)
 };
 
 // compile-time layout check (VC7.1 has no static_assert)

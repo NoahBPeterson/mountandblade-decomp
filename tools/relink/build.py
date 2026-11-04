@@ -180,7 +180,7 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
     for n_, a_ in symmap.items():
         if isinstance(a_, int):
             by_addr.setdefault(a_, []).append(n_)
-    redirect = {}
+    redirect, why = {}, {}
     vt_starts = vtable_starts(img)
     _sym_addrs = sorted({v for v in symmap.values() if isinstance(v, int)})
     from glue import RDATA
@@ -220,7 +220,8 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
                 continue
             want, have = symmap[name], exe.u32(ours + 4 * k)
             if want != have and slot_equivalent(icf_map, name, by_addr.get(have) or []):
-                comparable += 1          # (not `agree`: the match-suspect test below counts exact slots only)
+                comparable += 1
+                agree += 1               # the same code, folded by the original's own /OPT:ICF: the slot agrees
                 continue
             if want != have:
                 # a slot bound in source by a forwarding stub (`void C::s() { ((Owner*)this)->f(); }` compiles to
@@ -257,12 +258,19 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
             if n_orig >= 2 and RDATA[1] <= ova < RDATA[2]:
                 redirect[ours] = ova
                 report.setdefault("redirected_short", {})[vt] = "our %d slots, original %d" % (e["slots"], n_orig)
+                why[ours] = (vt, "suspect (%d of %d slots agree)" % (agree, comparable))
             continue
         for k, want in plan:
             exe.put(ours + 4 * k, want)
         report["patched_slots"] += len(plan)
         report["vtables"] += 1
-        redirect[ours] = ova
+        if n_true > e["slots"]:
+            # Our compiled table is shorter than the original's: only then do the vptr stores go to the copy of the
+            # original's table. A table with every slot (equal, or rewritten in place above) keeps ours.
+            redirect[ours] = ova
+            why[ours] = (vt, ("%d slots rewritten" % len(plan) if plan else "") +
+                         (" " if plan and n_true > e["slots"] else "") +
+                         ("our %d slots, original %d" % (e["slots"], n_true) if n_true > e["slots"] else ""))
         # Our source may declare fewer virtuals than the class really has, so our compiled table is short and a
         # call through a later slot reads the .rdata that follows (a string, or a float: 0x3ea66666 = 0.325f,
         # 0x3cb923a2 = 0.009f). Point the vptr stores at the glue's copy of the original table, which has every
@@ -286,6 +294,7 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
                 o = tp + va - t0
                 exe.d[o:o + 4] = new
                 moved += 1
+                report.setdefault("moved_by_vtable", {}).setdefault(why[ours][0], [why[ours][1], 0])[1] += 1
     report["vptr_stores_redirected"] = moved
     return report
 

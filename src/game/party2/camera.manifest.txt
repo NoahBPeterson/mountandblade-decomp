@@ -2,7 +2,7 @@
 ../src/game/party2/camera.cpp  ?add_gold@GameData@@QAEXHH@Z  0049b720  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?remove_gold@GameData@@QAEXHH@Z  0049b820  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?kind@Camera@@UAEHXZ  0049df30  /O2 /MT /Gy /TP
-../src/game/party2/camera.cpp  ?mask@Camera@@QAEIH@Z  0049df40  /O2 /MT /Gy /TP
+../src/game/party2/camera.cpp  ?mask@Camera@@UAEIH@Z  0049df40  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?on_child_moved@Camera@@UAEXPAUMissionUi@@@Z  0049df60  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ??_GCamera@@UAEPAXI@Z  0049e580  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?render@Camera@@UAEXPAUscene@rgl@@PAMHH@Z  0049e5b0  /O2 /MT /Gy /TP
