@@ -33,6 +33,7 @@ extern Mission* g_mission;                       // 0x5e292c
 extern GameData* g_game;                         // 0x5e2930
 extern ItemKind* g_items;                        // 0x5e29d0
 extern MissionTemplate* g_mission_templates;     // 0x5e2a00
+#include "../../include/dialog_rec.h"      // DialogBlock::play 0x4875e0
 #include "../dialog_mgr.h"           // DialogMgr g_dialogs (0x8ed50c8)
 
 #include "../str_table.h"   // StrTable g_strtable (0x5e2a18): the one definition
@@ -487,9 +488,6 @@ struct SoundSlot_s261e0 {
 };
 struct SoundBank_s261e0 {
     __forceinline void update_all(int arg);                           // 0x462760 (ret 4)
-};
-struct EmitSub_s261e0 {
-    __forceinline void play(int idx);                          // 0x4875e0 (ret 4)
 };
 
 // ---- plain globals ----------------------------------------------------------------------------------
@@ -1708,9 +1706,6 @@ vector4 unpack_color(const unsigned* argb);   // 0x40e4e0
 }
 struct conv_rec; struct GuiCtx;
 void __fastcall pick_entity(GuiCtx*);   // 0x4ed8d0
-struct SlotChan {
-    void play(int);   // 0x4875e0
-};
 struct UiD {
     void set_value(float);   // 0x48baa0
 };
@@ -1718,7 +1713,7 @@ struct UiD {
 struct RecZSubB {
     RecZSubB* init();   // 0x4353a0
 };
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -1915,7 +1910,6 @@ __forceinline Blow_s284a0::Blow_s284a0() { ((RecZSubB*)this)->init(); }
 __forceinline int rgl::mesh_s2ae70::add_vertex(int a0, const vec2_s2ae70* a1, const unsigned* a2, const vector4* a3, const int* a4) { return ((rgl::mesh*)this)->add_vertex(a0, (const vec2*)a1, a2, a3, a4); }
 __forceinline int Mission_s2b5c0::add_placed(const int* a0, const int* a1, const int* a2, const matrix* a3, int* a4) { return ((Mission*)this)->add_placed(a0, a1, a2, a3, a4); }
 
-__forceinline void EmitSub_s261e0::play(int a0) { ((SlotChan*)this)->play(a0); }
 
 __forceinline void Mission_s2b5c0::pick_entity() { ::pick_entity((GuiCtx*)this); }
 

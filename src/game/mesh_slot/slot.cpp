@@ -45,11 +45,6 @@ struct SomeIface {
     virtual int __stdcall Read(unsigned n, void* buf) = 0;  // +0x24
 };
 
-struct SlotChan {                                            // element of the channels array
-    char pad[0x1c];
-    void play(int arg);                                     // 0x4875e0 (thiscall, ret 4)
-};
-
 // A 0x60-byte record (a "vector3-plus-state" used by the slot's clock helpers).
 struct TimeKey {
     int mode;                                               // +0x00
@@ -63,12 +58,11 @@ struct TimeKey {
 
 
 // @ 0x4875e0
-void SlotChan::play(int arg)
+char DialogBlock::play(int mode)
 {
     char buf[128];
     int n = 0;
-    // a channel is a DialogBlock (0x1c bytes; its play is 0x4875e0, which runs the block through emit 0x4b09e0 with `this` passed straight through)
-    ((DialogBlock*)this)->emit(arg, 0, &n, (__int64*)buf, -1);
+    return emit(mode, 0, &n, (__int64*)buf, -1);    // 0x4b09e0
 }
 
 // @ 0x487620

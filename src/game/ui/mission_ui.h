@@ -157,7 +157,7 @@ struct PairStack {
 // A timed voice: a period, one sound channel (0x1c bytes) and a clock; 0x30 bytes (0x488e90, 0x48add0).
 struct TimerChild {
     float period;                           // +0x00 seconds between plays; < -1: play when round(period) == the request
-    snd_channel ch;                         // +0x04
+    DialogBlock ch;                           // +0x04
     Timer last;                             // +0x20 clock index into g_ticks, +0x28 last play time (0x488e90)
     void tick(int idx);                     // 0x488e90
 };

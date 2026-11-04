@@ -764,7 +764,7 @@ void MissionBlocker::frame_update(float dt)
             int idx = *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a0);
             g_game_s261e0->f13af8 = idx;
             char* obj = *(char**)((char*)g_mission_templates + g_mission_ctx.passage_menu * 0x60 + 0x58);
-            ((EmitSub_s261e0*)(obj + *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a4) * 0x68 + 0x4c))
+            ((DialogBlock*)(obj + *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a4) * 0x68 + 0x4c))
                 ->play(0x10);
         }
 

@@ -89,7 +89,7 @@ rest class names only.
 
 | header | classes | verified by |
 |---|---|---|
-| item_ref.h | `snd_channel`, `snd_slot` (0x78), `snd_bank`, `ItemKind` (0x238), `ItemRef` (8), item constants | 0x4625d0..0x462a10; 0x48b2d0 (volume) |
+| item_ref.h | `snd_slot` (0x78), `snd_bank`, `ItemKind` (0x238), `ItemRef` (8), item constants | 0x4625d0..0x462a10; 0x48b2d0 (volume) |
 | troop_inv.h | `Troop` inventory members, `Placed`, `ViewState` (0x5374) | 0x462ac0..0x463610 |
 | party.h | `Stack20`, `Party` (0x5ac8: flags +0xa0, stacks +0xa8, count +0x8a8) | 0x489420..0x489620, 0x463190 |
 | mission.h | `Mission`, `MissionView`, `NamedRec`, `Sel`, `Placed` records | 0x489890..0x48a420 |

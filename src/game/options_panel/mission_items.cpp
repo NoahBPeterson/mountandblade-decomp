@@ -168,12 +168,12 @@ void ItemD::reset_screen() { g_gui.reset(); }
 // set_text +0xa4, show +0xb4, disable +0xb8, set_pos +0x58, set_scale +0x64).
 #include "../ui_widget.h"                                     // MissionUi / MissionUi (the widget interface, ctor 0x48ae20)
 #include "../party2/camera_class.h"      // Camera (draw 0x488d50)
-#include "../ui/snd_channel.h"                               // snd_channel: play 0x4875e0 (thiscall, ret 4)
+#include "../../include/dialog_rec.h"                         // DialogBlock: play 0x4875e0 (thiscall, ret 4)
 
 // the 0x60-byte menu record of g_menus (0x5e29b0): title key +0x10, 64-bit flags +0x20, the 0x68-byte entries at +0x54/+0x58
 struct placed_rec {                                             // 0x68 bytes: name +0, translation key +0x20, condition +0x30
     char pad0[0x30];
-    snd_channel cond;                                           // +0x30 (play 0x4875e0: the entry's condition)
+    DialogBlock cond;                                           // +0x30 (play 0x4875e0: the entry's condition)
     char pad4c[0x68 - 0x4c];
 };
 struct menu_rec {

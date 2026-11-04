@@ -494,7 +494,7 @@ void TimerChild::tick(int idx)
         if (idx == rnd(&period)) {
             __int64 buf[16];
             int zero = 0;
-            ((DialogBlock*)&ch)->emit(idx, 0, &zero, buf, (unsigned)-1);   // 0x4b09e0
+            ch.emit(idx, 0, &zero, buf, (unsigned)-1);   // 0x4b09e0
         }
     } else {
         long long d = g_ticks[last.clock] - last.start;
