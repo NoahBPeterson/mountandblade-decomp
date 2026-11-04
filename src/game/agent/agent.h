@@ -74,7 +74,7 @@ struct Placement {
 };
 
 // event emitter (0x4b09e0) used by the game-data object (s00514d40 names the same 0x435790 GameData::emit_event)
-#include "../emitter_rec.h"
+#include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 struct SoundCtl {
     char pad0[0x1a068];
     int f1a068;

@@ -1788,7 +1788,7 @@ void rec34_table::load_used()
         int found = -1;
         int i = 0;
         for (; found == -1 && i < count; ++i) {
-            if (records[i].name.equals(g_script_names[k]))
+            if ((*this)[i].name.equals(g_script_names[k]))
                 found = i;
         }
         if (found == -1)

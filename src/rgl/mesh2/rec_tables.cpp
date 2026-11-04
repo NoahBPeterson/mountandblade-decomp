@@ -9,6 +9,7 @@
 #include "../../game/config/config_block.h"
 #include "./rec_tables.h"
 #include "../../game/party_screen_class.h"   // PartyScreen (0x4c3160)
+#include "../../game/string_table.h"      // StringTable g_strings (0xa75ea0)
 #include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
@@ -604,50 +605,51 @@ void music_set::load(stream_base* s, int load_samples, const tstring* dir)
     ((loaded_snd_table*)this)->load_used();   // 0x4be270 reads count at +8 and records at +0xc: music_set's count2 / names
 }
 
-// ---- the two 0x20-byte tstring arrays destroyed by 0x4c4640 ----------------------------------------
+// ---- the string table (g_strings 0xa75ea0): two arrays of 0x20-byte tstring pairs -----------------------------------------------
+
+StringTable g_strings;                              // 0xa75ea0 (.bss; the compiler registers the destructor with atexit)
 
 // @ 0x4c4640
-// Destructor of an object holding two arrays of 0x20-byte tstring pairs ([this] and [this+4]).
-void __fastcall destroy_tstring_pairs(tstring_pair** self)
+StringTable::~StringTable()
 {
-    if (self[0])
-        delete[] self[0];
-    if (self[1])
-        delete[] self[1];
+    if (strings)
+        delete[] strings;
+    if (quick)
+        delete[] quick;
 }
 
 // @ 0x4c46d0
 // Loader (ret 4) of the first pair array: reads the count, rebuilds the array (two tstrings per 0x20-byte element),
 // reads both strings of each element and converts the underscores of the first to spaces.
-void pair_holder::load1(stream_base* s)
+void StringTable::load1(stream_base* s)
 {
-    s->r_int(&count1);
-    if (arr1) {
-        delete[] arr1;
-        arr1 = 0;
+    s->r_int(&count);
+    if (strings) {
+        delete[] strings;
+        strings = 0;
     }
-    arr1 = new tstring_pair[count1];
-    for (int i = 0; i < count1; i++) {
-        s->r_tstr((rgl::string*)&arr1[i].b);
-        s->r_tstr((rgl::string*)&arr1[i].a);
-        arr1[i].a.underscores_to_spaces();
+    strings = new Str[count];
+    for (int i = 0; i < count; i++) {
+        s->r_tstr((rgl::string*)&strings[i].key);
+        s->r_tstr((rgl::string*)&strings[i].name);
+        strings[i].name.underscores_to_spaces();
     }
 }
 
 // @ 0x4c47d0
 // Same loader for the second array (+4, count at +0xc).
-void pair_holder::load2(stream_base* s)
+void StringTable::load2(stream_base* s)
 {
-    s->r_int(&count2);
-    if (arr2) {
-        delete[] arr2;
-        arr2 = 0;
+    s->r_int(&quick_count);
+    if (quick) {
+        delete[] quick;
+        quick = 0;
     }
-    arr2 = new tstring_pair[count2];
-    for (int i = 0; i < count2; i++) {
-        s->r_tstr((rgl::string*)&arr2[i].b);
-        s->r_tstr((rgl::string*)&arr2[i].a);
-        arr2[i].a.underscores_to_spaces();
+    quick = new Str[quick_count];
+    for (int i = 0; i < quick_count; i++) {
+        s->r_tstr((rgl::string*)&quick[i].key);
+        s->r_tstr((rgl::string*)&quick[i].name);
+        quick[i].name.underscores_to_spaces();
     }
 }
 

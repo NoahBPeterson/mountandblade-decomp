@@ -1072,8 +1072,8 @@ void Game::load_game_data(int extra_triggers)
     s_simple.failed = 1;
 
     // one extra simple trigger per script emitter whose delay is non-negative
-    if (g_emitter_count > 0) {
-        Emitter* e = g_scripts;
+    if (g_scripts.count > 0) {
+        rec34* e = (rec34*)g_scripts.records;
         int off = first * 0x30;
         int idx = 0;
         do {
@@ -1084,8 +1084,8 @@ void Game::load_game_data(int extra_triggers)
                 off += 0x30;
             }
             idx++;
-            e = (Emitter*)((char*)e + 0x34);
-        } while (idx < g_emitter_count);
+            e = (rec34*)((char*)e + 0x34);
+        } while (idx < g_scripts.count);
     }
 
     // ---- combat parameter records (six records of four floats at +0x13b64) ------------------------------

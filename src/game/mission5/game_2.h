@@ -231,7 +231,7 @@ struct Local : growable_array {
 };
 
 // ---- script emitters (0xa75eb0 array, count 0xa75eb4) ------------------------------------------------------------
-#include "../emitter_rec.h"
+#include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 
 struct SkeletonBody { void load(const tstring& path); };           // 0x50fc60 (inventory_panel/skeleton_load.cpp; ret 4)
 struct RegSkeleton;

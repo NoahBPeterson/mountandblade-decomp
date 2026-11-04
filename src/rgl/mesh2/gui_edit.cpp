@@ -70,7 +70,19 @@ struct clip_pair {
 // @ 0x4c48d0
 // Loader (ret 4): reads two tstrings and an int into locals, then the count at +4, rebuilds the 0x34-byte
 // records and counts the ones whose 0x4be470 load succeeded; finishes the list.
-void rec34_list::load(stream_base& s)
+rec34_table g_scripts;                                 // 0xa75eb0 (.bss; constructed by the compiler: rec_table::rec_table 0x4be520, destructor below)
+
+// the atexit destructor of g_scripts (the original's stub 0x5483c0)
+rec34_table::~rec34_table()
+{
+    RecK* r = (RecK*)records;
+    if (r) {
+        delete[] r;
+        records = 0;
+    }
+}
+
+void rec34_table::load(stream_base& s)
 {
     tstring a;
     tstring b;
@@ -79,17 +91,17 @@ void rec34_list::load(stream_base& s)
     s.r_tstr((rgl::string*)&b);
     s.r_int(&dummy);
     s.r_int(&count);
-    if (v != 0) {
-        delete[] (RecK*)v;                                      // 0x4318c0 is the vector deleting destructor of RecK (rec34 has the same 0x34-byte layout)
-        v = 0;
+    if (records != 0) {
+        delete[] (RecK*)records;                                // 0x4318c0 is the vector deleting destructor of RecK (rec34 has the same 0x34-byte layout)
+        records = 0;
     }
-    nok = 0;
-    v = new rec34[count];           // the compiler's vector-ctor-iterator expansion: cookie, then name/body per record
+    success = 0;
+    records = new rec34[count];     // the compiler's vector-ctor-iterator expansion: cookie, then name/body per record
     for (int i = 0; i < count; i++) {
-        if ((char)v[i].read(&s))        // rec34::read returns a char (config.cpp declares int for the same code)
-            nok++;
+        if ((char)(*this)[i].read(&s))      // rec34::read returns a char (config.cpp declares int for the same code)
+            success++;
     }
-    ((rec34_table*)this)->load_used();   // 0x4be560: rec34_list has rec34_table's records / count / success head
+    load_used();   // 0x4be560
 }                                       // a and b are destroyed by the epilogue, b first
 
 // @ 0x4c49f0
@@ -1883,11 +1895,11 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\game_strings.csv", "wt+");       // 0x595f98
         for (int i = 0; i < g_strings.count; i++) {
             if (translated) {
-                tstring v = ((PartyTemplate*)&((GameString*)g_strings.strings)[i])->translated();
-                write_row(f, ((GameString*)g_strings.strings)[i].key, v);
+                tstring v = ((PartyTemplate*)&g_strings.strings[i])->translated();
+                write_row(f, g_strings.strings[i].key, v);
             } else {
-                write_row(f, ((GameString*)g_strings.strings)[i].key,
-                          *find_or(((GameString*)g_strings.strings)[i].key, ((GameString*)g_strings.strings)[i].name));
+                write_row(f, g_strings.strings[i].key,
+                          *find_or(g_strings.strings[i].key, g_strings.strings[i].name));
             }
         }
         fclose(f);
@@ -1897,11 +1909,11 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\quick_strings.csv", "wt+");      // 0x595f78
         for (int i = 0; i < g_strings.quick_count; i++) {
             if (translated) {
-                tstring v = ((PartyTemplate*)&((QuickString*)g_strings.quick)[i])->translated();
-                write_row(f, ((QuickString*)g_strings.quick)[i].key, v);
+                tstring v = ((PartyTemplate*)&g_strings.quick[i])->translated();
+                write_row(f, g_strings.quick[i].key, v);
             } else {
-                write_row(f, ((QuickString*)g_strings.quick)[i].key,
-                          *find_or(((QuickString*)g_strings.quick)[i].key, ((QuickString*)g_strings.quick)[i].name));
+                write_row(f, g_strings.quick[i].key,
+                          *find_or(g_strings.quick[i].key, g_strings.quick[i].name));
             }
         }
         fclose(f);

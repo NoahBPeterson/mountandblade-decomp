@@ -34,11 +34,11 @@
 #include "../map_flags.h"                                     // MapFlags (0x5e291c): the one definition
 #include "../window_mgr.h"                                 // g_windows (0xa73980; screen slot 15 = 0xa739bc: +0x14 cleared; slot 23 = 0xa739dc: +0x18 set)
 #include "../../include/level_global.h"                     // g_level (0xa732b4)
+#include "../../include/rec34.h"                 // g_scripts (0xa75eb0): .success is the extra-triggers argument of load_game_data
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_save_kind;                                            // 0x5e29bc (.bss) kind of the loaded save header
-int g_a75eb8;                                               // 0xa75eb8 (.bss) extra-triggers argument of load_game_data
 
 #include "../inventory_panel/mission_ctx_rec.h"          // MissionCtx (0xa73300): init is 0x4be742, entered through 0x4be730
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -123,7 +123,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         return false;
     }
     if (step == 2) {
-        g_game_G->load_game_data(g_a75eb8);   // 0x5236f0
+        g_game_G->load_game_data(g_scripts.success);   // 0x5236f0
         if (w04 == 1) {
             Game* g = g_game_G;
             {

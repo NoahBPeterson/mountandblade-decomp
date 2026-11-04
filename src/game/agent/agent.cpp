@@ -459,8 +459,8 @@ char SoundCtl::emit_event(int id, int a, int b)
         tag = (unsigned)-1;
     char r = 0;
     count = 2;
-    if (g_emitter_idx[id] >= 0)
-        r = g_scripts[g_emitter_idx[id]].sub.emit(0x200000, 0, &count, v, tag);
+    if (g_scripts.used[id] >= 0)
+        r = g_scripts[g_scripts.used[id]].body.emit(0x200000, 0, &count, v, tag);
     return r;
 }
 // @ 0x435840

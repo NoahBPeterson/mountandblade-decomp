@@ -49,8 +49,6 @@ extern char g_a73730[];     // 0xa73730 the game keys (0x4a dwords)
 extern char g_a7374c[];     // 0xa7374c (the key records' end)
 extern char g_a73980[];     // 0xa73980 the main menu
 extern char g_a739f8[];     // 0xa739f8
-extern char g_a75ea0[];     // 0xa75ea0 the game strings
-extern char g_a75eb0[];     // 0xa75eb0 the scripts
 extern char g_a75f2c[];     // 0xa75f2c the presentations
 extern char g_a75f40[];     // 0xa75f40 the tableaus
 extern char g_a76628[];     // 0xa76628
@@ -79,12 +77,10 @@ struct TwoVec { ~TwoVec(); };                       // 0x4da9c0
 struct TriggerEntryVec { void dtor(); };            // 0x4c2200
 struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct BigArray { void destroy(); };                // 0x4eb810
-struct tstring_pair;
 struct elem48;
 struct Core;
 void __fastcall fn_4c2ea0(void* keys);              // 0x4c2ea0
 void* __fastcall conv_zero_node(void* p);           // 0x4c8c20
-void __fastcall destroy_tstring_pairs(tstring_pair** p);   // 0x4c4640
 void __fastcall destroy_elem48_array(elem48** p);   // 0x4c3f60
 void __fastcall core_dtor(Core* c);                 // 0x4bed90
 void __fastcall nameholder_dtor(void* p);           // 0x4316b0 (NameHolder::~NameHolder)
@@ -134,17 +130,6 @@ void __cdecl static_dtor_5482b0()
 }
 // @ 0x548340
 void __cdecl static_dtor_548340() { ((TriggerEntryVec*)g_a76628)->dtor(); }
-// @ 0x5483b0
-void __cdecl static_dtor_5483b0() { destroy_tstring_pairs((tstring_pair**)g_a75ea0); }
-// @ 0x5483c0
-void __cdecl static_dtor_5483c0()
-{
-    RecK* r = AT(RecK*, g_a75eb0, 0);
-    if (r) {
-        delete[] r;
-        AT(RecK*, g_a75eb0, 0) = 0;
-    }
-}
 // @ 0x5483e0
 void __cdecl static_dtor_5483e0() { destroy_elem48_array((elem48**)g_8ed4f58); }
 // @ 0x548400
@@ -210,10 +195,6 @@ void __cdecl static_init_547e90()
 }
 // @ 0x547ec0
 void __cdecl static_init_547ec0() { conv_zero_node(g_a73980); atexit(static_dtor_548460); }
-// @ 0x547f00
-void __cdecl static_init_547f00() { atexit(static_dtor_5483b0); }
-// @ 0x547f10
-void __cdecl static_init_547f10() { new (g_a75eb0) rec_table; atexit(static_dtor_5483c0); }
 // @ 0x547f30
 void __cdecl static_init_547f30() { new (g_a75f2c) rec_table; atexit(static_dtor_548400); }
 // @ 0x547f50
@@ -243,7 +224,7 @@ init_fn g_static_init_table[] = {
     
     static_init_547aa0, static_init_547ae0, static_init_547b50,
     static_init_547e40,
-    static_init_547e90, static_init_547ec0, static_init_547f00, static_init_547f10,
+    static_init_547e90, static_init_547ec0,
     static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,
     static_init_547fe0, static_init_548010, static_init_548030,
     static_init_548110,

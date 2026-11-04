@@ -6,17 +6,18 @@
 #define GAME_STRING_TABLE_H
 #include "./tstring.h"
 
-struct tstream3;
+struct stream_base;
 
 struct StringTable {
-    struct Str { tstring id; tstring text; };                   // 0x20 bytes
+    struct Str { tstring name; tstring key; };                  // 0x20 bytes (name +0, key +0x10; load1 reads the key first)
     Str* strings;                       // +0  s_* strings
     Str* quick;                         // +4  quick strings
     int count;                          // +8  (check_string_arg 0x49cda0)
     int quick_count;                    // +0xc
     tstring get_string(int id, int type);      // 0x48e8f0 (thiscall, ret 0xc: hidden return; type 0 = register, 0x16 = quick)
-    void load1(tstream3* s);             // 0x4c46d0
-    void load2(tstream3* s);       // 0x4c47d0
+    ~StringTable();                     // 0x4c4640 (the atexit destructor: deletes both arrays; rgl/mesh2/rec_tables.cpp)
+    void load1(stream_base* s);         // 0x4c46d0 (rgl/mesh2/rec_tables.cpp)
+    void load2(stream_base* s);         // 0x4c47d0
 };
 extern StringTable g_strings;           // 0xa75ea0
 

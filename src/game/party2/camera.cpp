@@ -54,7 +54,6 @@ extern MsgLog g_gui;                    // 0x5d7080
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 // ---- data this module owns (docs/standalone_data.md) ----
-int g_emitter_count;                                // 0xa75eb4 (.bss) number of script emitters (g_scripts, party2/camera.h)
 
 extern Font* g_font;                                // 0x5e2934
 
@@ -2462,7 +2461,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             if (op == 1) {
                 which = 0;
                 int id = (int)stmt->get_operand((__int64*)buf, &which, &out1);
-                if (id < 0 || id >= g_emitter_count || depth >= 0x100) {
+                if (id < 0 || id >= g_scripts.count || depth >= 0x100) {
                     ok = 0;
                     advance = 0;
                     idx = stmt->f90;
@@ -2481,7 +2480,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 else
                     t = 0xffffffff;
                 nsub = stmt->n - 1;
-                ok = g_scripts[id].script.emit(script, depth + 1, &nsub, sub, t);
+                ok = g_scripts[id].body.emit(script, depth + 1, &nsub, sub, t);
                 if (!ok) {
                     advance = 0;
                     idx = stmt->f90;

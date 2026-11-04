@@ -1,4 +1,4 @@
-../src/rgl/mesh2/gui_edit.cpp  ?load@rec34_list@@QAEXAAUstream_base@@@Z  004c48d0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?load@rec34_table@@QAEXAAUstream_base@@@Z  004c48d0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?write_stream@CampaignScreen@@UAEXPAUw_stream@@@Z  004c4b70  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read_stream@CampaignScreen@@UAEXPAUw_stream@@@Z  004c4c00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??_Ghead_rec@@UAEPAXI@Z  004c4c90  /O2 /MT /Gy /TP

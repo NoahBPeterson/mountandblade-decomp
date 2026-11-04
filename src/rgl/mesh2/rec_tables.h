@@ -263,15 +263,6 @@ struct music_set {
     void load(stream_base* s, int load_samples, const tstring* dir);   // 0x4c4340 (thiscall, ret 0xc)
 };
 
-// the object with two pair arrays: arrays at +0 / +4, counts at +8 / +0xc (destroyed by 0x4c4640)
-struct pair_holder {
-    tstring_pair* arr1;   // +0
-    tstring_pair* arr2;   // +4
-    int count1;           // +8
-    int count2;           // +0xc
-    void load1(stream_base* s);   // 0x4c46d0 (thiscall, ret 4)
-    void load2(stream_base* s);   // 0x4c47d0 (thiscall, ret 4)
-};
 
 
 void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al); // 0x4c3ef0

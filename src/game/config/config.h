@@ -245,18 +245,6 @@ struct menu_item {                                  // 0x68 bytes
     menu_item();                                    // 0x4be420
 };
 #include "../../include/rec34.h"                 // rec34 (shared with rgl/mesh2/gui_edit.h)
-struct rec_table {                                  // {records, count} pair of the module-file tables (globals 0xa75eb0, 0xa75f2c, 0x8ed4f58)
-    void* records;                                  // +0
-    int   count;                                    // +4
-    rec_table();                                    // 0x4be520 (the original is bracketed by WinLicense marker records)
-};
-struct rec34_table {
-    rec34* records;                                 // +0x00
-    int    count;                                   // +0x04
-    int    success;                                 // +0x08
-    int    used[28];                                // +0x0c
-    void load_used();                               // 0x4be560
-};
 struct rec20 {                                      // 0x20 bytes
     tstring name;                                   // +0x00
     void*   mat;                                    // +0x10

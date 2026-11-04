@@ -101,8 +101,6 @@ extern float g_paused_time; // 0x5e2a0c
 // game_variables.txt key "main_menu_font_color_red" (trigger_vec.cpp loader);
 // game_variables.txt key "main_menu_font_color_green" (trigger_vec.cpp loader);
 // game_variables.txt key "main_menu_font_color_blue" (trigger_vec.cpp loader);
-// Number of script emitters (the array is g_scripts, emitter_rec.h); camera.cpp defines it, game_2.cpp walks the emitters.
-extern int g_emitter_count; // 0xa75eb4
 // Script op music_set_situation 0x4a174a writes it;
 // Number of scenes opened so far: each mission stamps its id at +0x5270 (hud.cpp, mission_ctx.cpp).
 // module_files.cpp loads presentations into it (0x4c6950);

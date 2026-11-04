@@ -140,6 +140,7 @@ struct music_set {
     void load(stream_base* s, int count, const tstring* path);   // 0x4c4340 (rgl/mesh2/rec_tables.h: SoundTable::load)
 };
 #include "../emit.h"
+#include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 #include "../animator.h"                          // Animator g_anim (0x8ed4f60): the skin table skins.txt is read into
 struct AccessStream;
 struct mesh_scene {
@@ -155,18 +156,10 @@ struct RefRecord;
 struct ItemPage {
     void fill_records(RefRecord* s);         // 0x4c6950 (PresentationTable::fill_records: rgl/mesh2/gui_edit.h)
 };
-struct ScriptTable { char pad; };                    // 0xa75eb0
-struct rec34_list {
-    void load(stream_base& s);              // 0x4c48d0 (ScriptTable::load, ret 4: rgl/mesh2/gui_edit.h)
-};
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
 struct MeshTable { char pad; };                      // 0x8ed4f58
 struct elem48_holder;
 void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s);   // 0x4c3fb0 (MeshTable::load: rgl/mesh2/rec_tables.cpp)
-struct pair_holder {
-    void load1(stream_base* s);   // 0x4c46d0 / 0x4c47d0 (StringTable::load1 / load2: rgl/mesh2/rec_tables.h)
-    void load2(stream_base* s);   // 0x4c47d0
-};
 struct Block {
     void read(stream_base* s, int version);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; ret 8, the file version is the second argument)
 };
@@ -177,7 +170,6 @@ struct csv_row {
 
 extern TableauTable g_tableaus;                       // 0xa75f40
 extern PresentationTable g_presentations;            // 0xa75f2c
-extern ScriptTable g_scripts;                        // 0xa75eb0
 extern MeshTable g_meshes;                           // 0x8ed4f58
 
 // ---------------------------------------------------------------- module state
@@ -297,7 +289,7 @@ void load_module_files()
     // scripts.txt
     tstream3 s_scripts;
     open_module_file(s_scripts, "scripts.txt");
-    ((rec34_list*)&g_scripts)->load(*(stream_base*)&s_scripts);
+    g_scripts.load(*(stream_base*)&s_scripts);
     s_scripts.failed = 1;
 
     // map_icons.txt
@@ -324,13 +316,13 @@ void load_module_files()
     in_strings.r_tstr(RSTR(&str1));
     in_strings.r_tstr(RSTR(&str2));
     in_strings.r_int(&version);
-    ((pair_holder*)&g_strings)->load1((stream_base*)&s_strings);
+    g_strings.load1((stream_base*)&s_strings);
     s_strings.failed = 1;
 
     // quick_strings.txt
     tstream3 s_quick_strings;
     open_module_file(s_quick_strings, "quick_strings.txt");
-    ((pair_holder*)&g_strings)->load2((stream_base*)&s_quick_strings);
+    g_strings.load2((stream_base*)&s_quick_strings);
     s_quick_strings.failed = 1;
 
     // meshes.txt

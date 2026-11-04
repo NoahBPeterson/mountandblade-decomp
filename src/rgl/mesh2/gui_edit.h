@@ -35,12 +35,6 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 // ============================================================================================================
 #include "../../include/rec34.h"      // rec34 (shared with game/config/config.h; the loader 0x4be470 is rec34::read)
 
-struct rec34_list {
-    rec34* v;        // +0
-    int   count;     // +4
-    int   nok;       // +8
-    void load(stream_base& s);              // 0x4c48d0 (ret 4: thiscall, the stream on the stack)
-};
 
 // ============================================================================================================
 // 0x4c4d10..0x4c5074: the Tail2 record, std::list<int> helpers, the world object destructor, element deleters
@@ -305,8 +299,6 @@ struct ItemPage {
     void place(int e);                          // 0x4c6b30
 };
 
-struct QuickString { tstring name; tstring key; tstring translated(); };   // translated 0x4c6080
-struct GameString { tstring name; tstring key; tstring translated(); };    // translated 0x4c6080
 #include "../../include/game_recs.h"       // PartyTemplate (translated 0x4c6080), QuestRec, FactionRec: the shared record classes
 #include "../../include/dialog_rec.h"      // DialogRec (translated 0x4c6080): the shared dialog record
 #include "../../include/skin_set.h"              // SkinSet, SkinElem, g_anim.skins (shared with src/game/char_sheet)

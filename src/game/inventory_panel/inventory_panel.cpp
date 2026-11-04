@@ -66,7 +66,7 @@ struct SkillNames {                                     // a skill record seen f
 #include "../../include/item_mod.h"                  // item_mod, g_item_mods (0xa75f70)
 
 // script emitter record (0x34 bytes, array pointer at 0xa75eb0, parallel index array at 0xa75ebc)
-#include "../emitter_rec.h"
+#include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 #include "../main_menu.h"
 #include "../ui/named_rec.h"      // NamedRec::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config/config.h"
@@ -757,8 +757,8 @@ char GameDataV::emit_event4(int id, int a, int b, int c)
         tag = (unsigned)-1;
     char r = 0;
     int count = 3;
-    if (g_emitter_idx[id] >= 0)
-        r = g_scripts[g_emitter_idx[id]].sub.emit(0x200000, 0, &count, vals, tag);
+    if (g_scripts.used[id] >= 0)
+        r = g_scripts[g_scripts.used[id]].body.emit(0x200000, 0, &count, vals, tag);
     return r;
 }
 

@@ -32,15 +32,7 @@ struct EmitAudio {
 };
 #define EMIT_AUDIO (*(EmitAudio*)((char*)g_game + 0x1a068))
 
-// the 0x34-byte emitter records at 0xa75eb0; the script block is at +0x18 and the name at +4
-struct ScriptEmitter {
-    int pad0;                                   // +0
-    tstring name;                               // +4
-    char pad14[0x18 - 0x14];
-    DialogBlock script;                         // +0x18
-    char pad34[0x34 - 0x18 - sizeof(DialogBlock)];
-};
-extern ScriptEmitter* g_scripts;               // 0xa75eb0
+#include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0): the script emitter records (name +4, script block +0x18)
 
 // The goto/branch stack object (local_410 of emit): 0x400 bytes of entries, then the depth counter at +0x400
 // (read by 0x488e60 / 0x49d7f0 / 0x49f7c0; the emitter only tests it against 0) and one more dword. Both
