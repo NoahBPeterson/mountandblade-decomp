@@ -29,43 +29,14 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 
 // ---------------------------------------------------------------------------------- record layouts --
 
-#include "map_panel.h"                      // MapPanel / MapView / Pos4 (shared with map_update.cpp)
+#include "map_panel.h"                      // MapPanel / MapView / PartyV4 (shared with map_update.cpp)
 
-struct RecR;
 struct FactionRec;
 
 #include "../../include/game_data.h"
 #include "../../include/party.h"      // Party::prepare / speed_factor (listed directly: the resolution audit reads only the source's own includes)
 
-struct RecR {                                // 0x5ac8  party / roster record
-    RecR();                                  // 0x4934d0
-    ~RecR();                                 // 0x431b90
-    // prepare (0x4b1eb0) and speed_factor (0x4b20b0) are Party's (include/party.h); dist_is_zero is the free function below
-    tstring* display_name();                 // 0x48d7b0  (the name used when appending an order)
-
-    char     pad00[0x0c];
-    tstring  name;                           // +0x0c
-    char     f1c;                            // +0x1c  "key is a string-table token"
-    char     pad1d[3];
-    tstring  key;                            // +0x20
-    Pos4     pos;                            // +0x30
-    char     pad40[0x54 - 0x40];
-    tstring  text;                           // +0x54  free-form note (len at +0x60)
-    char     pad64[0x6c - 0x64];
-    int      f6c;                            // +0x6c  nonzero = roster with sub-parties
-    int      faction;                        // +0x70  index into the faction table
-    char     pad74[0x88 - 0x74];
-    int      agent;                          // +0x88  map agent / battle side, -1 if none
-    char     pad8c[0xa0 - 0x8c];
-    unsigned flags;                          // +0xa0  (0x400, 0x40000, 0x200000, 0x400000 used here)
-    unsigned color;                          // +0xa4
-    Stack    stacks[64];                     // +0xa8
-    int      count;                          // +0x8a8
-    char     pad8ac[0x918 - 0x8ac];
-    int      state;                          // +0x918  order state
-    int      target;                         // +0x91c  party the order refers to
-    char     pad920[0x5ac8 - 0x920];
-};
+// the party record (include/party.h Party; the roster built for the selected party is a Party too: constructor 0x4934d0, destructor 0x431b90)
 
 
 
@@ -109,23 +80,8 @@ int __stdcall draw_party_line(int id);                                    // 0x5
 // ---- layout guards (MSVC 13 has no static_assert: a mismatch is a negative array size) -------------
 // Sizes: every record's stride appears in the original as an `imul ..., <stride>` immediate.
 typedef char assert_Faction_300  [(sizeof(FactionRec)    == 0x300)   ? 1 : -1];
-typedef char assert_RecR_5ac8    [(sizeof(RecR)       == 0x5ac8)  ? 1 : -1];
 typedef char assert_AgentPages   [(sizeof(AgentPages) == 0x1c)    ? 1 : -1];
 // Field offsets: taken straight from the original's displacements (see the header comment).
-typedef char assert_RecR_name    [(offsetof(RecR, name)      == 0x0c)    ? 1 : -1];
-typedef char assert_RecR_f1c     [(offsetof(RecR, f1c)       == 0x1c)    ? 1 : -1];
-typedef char assert_RecR_key     [(offsetof(RecR, key)       == 0x20)    ? 1 : -1];
-typedef char assert_RecR_pos     [(offsetof(RecR, pos)       == 0x30)    ? 1 : -1];
-typedef char assert_RecR_text    [(offsetof(RecR, text)      == 0x54)    ? 1 : -1];
-typedef char assert_RecR_f6c     [(offsetof(RecR, f6c)       == 0x6c)    ? 1 : -1];
-typedef char assert_RecR_faction [(offsetof(RecR, faction)   == 0x70)    ? 1 : -1];
-typedef char assert_RecR_agent   [(offsetof(RecR, agent)     == 0x88)    ? 1 : -1];
-typedef char assert_RecR_flags   [(offsetof(RecR, flags)     == 0xa0)    ? 1 : -1];
-typedef char assert_RecR_color   [(offsetof(RecR, color)     == 0xa4)    ? 1 : -1];
-typedef char assert_RecR_stacks  [(offsetof(RecR, stacks)    == 0xa8)    ? 1 : -1];
-typedef char assert_RecR_count   [(offsetof(RecR, count)     == 0x8a8)   ? 1 : -1];
-typedef char assert_RecR_state   [(offsetof(RecR, state)     == 0x918)   ? 1 : -1];
-typedef char assert_RecR_target  [(offsetof(RecR, target)    == 0x91c)   ? 1 : -1];
 typedef char assert_Faction_f10  [(offsetof(FactionRec, f10)    == 0x10)    ? 1 : -1];
 typedef char assert_Faction_key  [(offsetof(FactionRec, key)    == 0x14)    ? 1 : -1];
 typedef char assert_Faction_f24  [(offsetof(FactionRec, f24)    == 0x24)    ? 1 : -1];
@@ -145,11 +101,11 @@ extern gui_manager g_gui;                    // 0x5d7080
 
 // ------------------------------------------------------------------------------------- helpers ------
 // party page lookup, exactly as inlined at 0x51ac38 / 0x51aed3: pages[idx >> 4] + (idx & 15)
-static RecR* party_at(PartyMgr* mgr, int idx)
+static Party* party_at(PartyMgr* mgr, int idx)
 {
-    return (RecR*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf);
+    return (Party*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf);
 }
-static RecR* party_by_id(int id)
+static Party* party_by_id(int id)
 {
     return party_at(&g_game->parties, g_game->parties.index_of(id));
 }
@@ -160,16 +116,16 @@ static Rec98* agent_at(int idx)
 }
 
 // a record's display string: the key's string-table entry when the key is a token (0x51afb6, 0x51b2cb)
-static tstring* record_name(RecR* r)
+static tstring* record_name(Party* r)
 {
     if (g_module_settings.show_party_ids_instead_of_names) return &r->key;
-    if (r->f1c == 0) {
+    if (r->flag == 0) {
         tstring* s = g_strtable.find(&r->key);
         if (s) return s;
     }
     return &r->name;
 }
-static const char* record_name_c(RecR* r) { return record_name(r)->c_str(); }
+static const char* record_name_c(Party* r) { return record_name(r)->c_str(); }
 
 // a troop's display string (no key-mode check, see 0x51bc05)
 static const char* troop_name_c(Troop* t)
@@ -179,7 +135,7 @@ static const char* troop_name_c(Troop* t)
 }
 
 // index of the first prisoner/enemy stack, rescanned on every iteration (0x51bb56)
-static int first_enemy_stack(RecR* r)
+static int first_enemy_stack(Party* r)
 {
     int i = 0;
     while (i < r->count && !(r->stacks[i].flags & 1)) i++;
@@ -198,8 +154,8 @@ void MapPanel::update(int type, int id)
 {
     tstring label;                           // [E+0x2c]  the accumulated order text
     tstring scratch;                         // [E+0x170] constructed and destroyed, otherwise unused
-    Pos4    pos = { 0.0f, 0.0f, 0.0f, 0.0f };// [E+0x40]  world anchor of the selection
-    RecR*   rec  = 0;                        // [E+0x60]  record currently being painted
+    PartyV4    pos = { 0.0f, 0.0f, 0.0f, 0.0f };// [E+0x40]  world anchor of the selection
+    Party*   rec  = 0;                        // [E+0x60]  record currently being painted
     int     ncols = 1;                       // [E+0x28]
     int     agent;                           // [E+0x14]  battle side shown in the current column
 
@@ -208,9 +164,9 @@ void MapPanel::update(int type, int id)
         rec = party_by_id(id);
         pos = rec->pos;
     } else if (type == 3) {
-        pos = *(Pos4*)(g_game->fleet + id * 0x5c);
+        pos = *(PartyV4*)(g_game->fleet + id * 0x5c);
     } else if (type == 4) {
-        rec = (RecR*)g_game->parties.get(id);
+        rec = (Party*)g_game->parties.get(id);
         pos = rec->pos;
     }
 
@@ -222,11 +178,11 @@ void MapPanel::update(int type, int id)
 
     if (type != 0) {
         if (type == 1) {
-            RecR roster;                     // [E+0xae0] the selected party's own roster (0x4934d0)
+            Party roster;                     // [E+0xae0] the selected party's own roster (0x4934d0)
 
             ncols = 1;
             rec = party_by_id(id);
-            if (rec->agent >= 0) {
+            if (rec->battle >= 0) {
                 g_gui.draw_string(*g_strtable.lookup(tstring("ui_capital_battle")), 0.02f, 0xffffffff, 1);
                 ncols = 2;
             }
@@ -234,8 +190,8 @@ void MapPanel::update(int type, int id)
             for (int c = 0; c < ncols; c++) {                       // 0x51adc0
                 agent = id;
                 if (ncols > 1) {
-                    RecR*     r    = party_by_id(id);
-                    Rec98* slot = agent_at(r->agent);
+                    Party*     r    = party_by_id(id);
+                    Rec98* slot = agent_at(r->battle);
                     agent = (c == 0) ? slot->f58 : slot->f54;
                 }
                 if (c > 0) {
@@ -277,8 +233,8 @@ void MapPanel::update(int type, int id)
                         g_game->party_counts(m, &size, &wounded, &extra);    // 0x51be60: arg2 = troops, arg3 = wounded, arg4 = prisoners (the "+ N")
 
                         char buf[0x100];
-                        RecR* mr = party_by_id(m);
-                        if (mr->flags & 0x200000) {
+                        Party* mr = party_by_id(m);
+                        if (mr->flags_lo & 0x200000) {
                             _snprintf(buf, 0x100, "%s", record_name_c(mr));
                         } else if (wounded != 0) {
                             if (extra != 0)
@@ -300,7 +256,7 @@ void MapPanel::update(int type, int id)
                 }
 
                 // ---- faction tag -------------------------------------------------------------------
-                if ((rec->flags & 0x400000) && rec->faction >= 0) {
+                if ((rec->flags_lo & 0x400000) && rec->faction >= 0) {
                     FactionRec* f = &g_game->factions[rec->faction];
                     if (f->f24 == 0) {
                         tstring* fn = &f->name;
@@ -317,12 +273,12 @@ void MapPanel::update(int type, int id)
                         g_gui.draw_string(tstring(buf), 0.022f, fcol, 1);     // 0x3cb43958
                     }
                 }
-                if (rec->text.len > 2)
-                    g_gui.draw_string(rec->text, 0.023f, 0xffffffff, 1);
+                if (rec->extra_text.len > 2)
+                    g_gui.draw_string(rec->extra_text, 0.023f, 0xffffffff, 1);
 
                 // ---- the order line (single-column display only) -----------------------------------
                 if (ncols == 1) {
-                    switch (rec->state) {                                    // 0x51b5d1
+                    switch (rec->action) {                                    // 0x51b5d1
                     case 0:
                         label = *g_strtable.lookup(tstring("ui_waiting"));
                         break;
@@ -355,7 +311,7 @@ void MapPanel::update(int type, int id)
                                                    : g_strtable.lookup(tstring("ui_travelling")));
                         break;
                     case 7: {
-                        int a = rec->agent;
+                        int a = rec->battle;
                         if (a >= 0) {
                             Rec98* slot = (Rec98*)agents_of()->slot(a);         // 0x48ef20
                             int other = (slot->f54 == agent) ? slot->f58 : slot->f54;
@@ -374,7 +330,7 @@ void MapPanel::update(int type, int id)
                         break;                       // unknown order: the label stays empty
                     }
 
-                    if (!(rec->flags & 0x400)) {
+                    if (!(rec->flags_lo & 0x400)) {
                         g_gui.draw_string(label, 0.021f, 0xffc0b0a0, 1);
                         if (!dist_is_zero((DistObj*)rec)) {
                             char buf[0x200];
@@ -386,9 +342,9 @@ void MapPanel::update(int type, int id)
                 }
 
                 // ---- garrison contents -------------------------------------------------------------
-                if (!(rec->flags & 0x200000) && rec->f6c != 0) {              // 0x51ba69
+                if (!(rec->flags_lo & 0x200000) && rec->f6c != 0) {              // 0x51ba69
                     unsigned tcol = 0xffd0b0e0;
-                    g_gui.draw_string(*g_strtable.lookup(tstring((rec->flags & 0x400) ? "ui_defenders"
+                    g_gui.draw_string(*g_strtable.lookup(tstring((rec->flags_lo & 0x400) ? "ui_defenders"
                                                                                     : "ui_troops")),
                                       0.02f, 0xffc08020, 1);
                     for (int i = 0; i < roster.count; i++) {

@@ -1681,10 +1681,10 @@ float GameData::party_value(unsigned id)
     for (int i = 0;; i++) {
         int idx2 = ((Map10007*)&parties)->lookup(id);
         Party* q = &parties.pages[idx2 >> 4][idx2 & 0xf];
-        if (q->attached.first == 0 || (unsigned)(q->attached.last - q->attached.first) <= (unsigned)i)
+        if (q->attached._Myfirst == 0 || (unsigned)(q->attached._Mylast - q->attached._Myfirst) <= (unsigned)i)
             break;
         int idx3 = ((Map10007*)&parties)->lookup(id);
-        int copy = parties.pages[idx3 >> 4][idx3 & 0xf].attached.first[i];
+        int copy = parties.pages[idx3 >> 4][idx3 & 0xf].attached._Myfirst[i];
         total = party_value(copy) + total;
     }
     return total;
@@ -1976,7 +1976,7 @@ float __cdecl march_time(Party* self)
     int other_sum = 0;
     int kind1 = 0;
 
-    PartyTmp rec;
+    Party rec;                                          // a scratch block: constructed by 0x4934d0, destroyed by 0x431b90
     rec.nstacks = 0;
     g_game->fill_parties(self->id, &rec);
     rec.prepare();
@@ -2119,12 +2119,12 @@ void BattleRec::detach()
             q->f88 = -1;
             total = q->sum_stat(0x10);
 
-            for (k = (q->attached.first ? (int)(q->attached.last - q->attached.first) : 0) - 1; k >= 0; k--) {
-                int mid = q->attached.first[k];
+            for (k = (q->attached._Myfirst ? (int)(q->attached._Mylast - q->attached._Myfirst) : 0) - 1; k >= 0; k--) {
+                int mid = q->attached._Myfirst[k];
                 j = ((Map10007*)pm)->lookup(mid);
                 if ((pm->pages[j >> 4] + (j & 15))->f8cc) {
                     ((GameW*)g_game)->detach_party(mid);
-                    m = ((Map10007*)pm)->lookup(q->attached.first[k]);
+                    m = ((Map10007*)pm)->lookup(q->attached._Myfirst[k]);
                     (pm->pages[m >> 4] + (m & 15))->action = 0;
                 }
             }
@@ -2152,12 +2152,12 @@ void BattleRec::detach()
                     }
                     total += m;
 
-                    for (k = (q->attached.first ? (int)(q->attached.last - q->attached.first) : 0) - 1; k >= 0; k--) {
-                        int mid = q->attached.first[k];
+                    for (k = (q->attached._Myfirst ? (int)(q->attached._Mylast - q->attached._Myfirst) : 0) - 1; k >= 0; k--) {
+                        int mid = q->attached._Myfirst[k];
                         j = ((Map10007*)pm)->lookup(mid);
                         if ((pm->pages[j >> 4] + (j & 15))->f8cc) {
                             ((GameW*)g_game)->detach_party(mid);
-                            m = ((Map10007*)pm)->lookup(q->attached.first[k]);
+                            m = ((Map10007*)pm)->lookup(q->attached._Myfirst[k]);
                             (pm->pages[m >> 4] + (m & 15))->action = 0;
                         }
                     }
@@ -2716,10 +2716,10 @@ void Party::update_flags()
 {
     if (f5a04) {
         f5a04 = 0;
-        for (unsigned i = 0; deferred.first != 0 && i < (unsigned)(deferred.last - deferred.first); i++) {
+        for (unsigned i = 0; deferred._Myfirst != 0 && i < (unsigned)(deferred._Mylast - deferred._Myfirst); i++) {
             vector4 p(0.0f, 0.0f, 0.0f);
             int idx = 0;
-            Emit* e = g_emit_defs.spawn(&deferred.first[i], &p, &idx);
+            Emit* e = g_emit_defs.spawn(&deferred._Myfirst[i], &p, &idx);
             if (e)
                 model->add_emitter(e);
         }

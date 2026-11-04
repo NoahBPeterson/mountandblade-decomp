@@ -9,7 +9,7 @@
 #include <vector>
 #include "../game/tstring.h"
 #include "./timer.h"
-#include "./ptr_vec.h"
+#include "./iface.h"
 #include "../game/slot_array.h"
 namespace rgl { struct mesh; }
 struct PartyV4 { float x, y, z, w; };       // a plain 4-float vector (no constructors: the party record is built by memory copies)
@@ -33,8 +33,11 @@ struct Stack {                              // 0x20 bytes, array at party+0xa8
     void clear();                           // 0x4893e0 (script: party_remove_members_of_troop / clear paths)
 };
 
-struct Party {                              // 0x5ac8 bytes
-    int f0;
+// ONE class: the compiler emits its vtable 0x592644 (slot 0 the vector deleting destructor 0x431cb0 of `delete[]` / `new Party[16]`, slot 1 the
+// reset 0x4936a0, slot 2 IfaceA's empty 0x477b70), the constructor 0x4934d0 (world_data) and the implicit destructor 0x431b90.
+struct Party : IfaceA {                     // 0x5ac8 bytes
+    Party() throw();                        // 0x4934d0 (src/game/world_data/world_data.cpp)
+    virtual void slot1();                   // +0x04 0x4936a0 (tail jump to init)
     int type;                               // +4 (1 = ordinary party)   0x460ca0
     int id;                                 // +8   0x460ca0
     tstring name;                           // +0x0c   0x4c6530
@@ -100,7 +103,7 @@ struct Party {                              // 0x5ac8 bytes
     char dirty;                             // +0x8b4
     char f8b5;                              // +0x8b5 0x4b7e50 (kill-feed visible)
     char pad8b6[2];
-    ptr_vec attached;                       // +0x8b8 std::vector<int> of attached party ids (allocator word, first, last, end)   0x4b4800, 0x4b6180
+    std::vector<int> attached;              // +0x8b8 attached party ids (allocator word, first, last, end)   0x4b4800, 0x4b6180
     union {
         int f8c8;                           // +0x8c8 attached-to party, -1 = none   0x4b2c00, 0x4b3910
         int attached_to;                    // +0x8c8 (script party_get_attached_to 0x4a87e2)
@@ -132,10 +135,15 @@ struct Party {                              // 0x5ac8 bytes
         float f8f4;                         // +0x8f4 0x4b3ce0
         float ai_patrol_radius;             // +0x8f4 (script party_set_ai_patrol_radius 0x4a7abc)
     };
-    int f8f8;                               // +0x8f8 clock index   0x4b3ce0
-    char pad8fc[4];
-    int f900;                               // +0x900 0x4b3ce0 (clock lo)
-    int f904;                               // +0x904 (clock hi)
+    union {
+        Timer clk8f8;                       // +0x8f8 (constructor 0x4934d0: clock 1)
+        struct {
+            int f8f8;                       // +0x8f8 clock index   0x4b3ce0
+            char pad8fc[4];
+            int f900;                       // +0x900 0x4b3ce0 (clock lo)
+            int f904;                       // +0x904 (clock hi)
+        };
+    };
     Timer clk908;                           // +0x908 footstep timer   0x4b80d0
     union {
         int action;                         // +0x918 map order (ai behaviour)   0x4b3910, 0x4b3ce0, 0x4b4a00
@@ -154,9 +162,14 @@ struct Party {                              // 0x5ac8 bytes
         int order_state;                    // +0x934 0x4b3bc0
         float t934;                         // 0x4b80d0 (next order-plan delay)
     };
-    int idx938;                             // +0x938 clock index   0x4b80d0
-    char pad93c[4];
-    __int64 t940;                           // +0x940 0x4b80d0
+    union {
+        Timer clk938;                       // +0x938 (constructor 0x4934d0: clock 1)
+        struct {
+            int idx938;                     // +0x938 clock index   0x4b80d0
+            char pad93c[4];
+            __int64 t940;                   // +0x940 0x4b80d0
+        };
+    };
     Timer clk948;                           // +0x948 0x4b80d0
     union {
         float f958;                         // +0x958 aggression scale   0x4b4a00
@@ -192,16 +205,16 @@ struct Party {                              // 0x5ac8 bytes
     };
     struct face* tgt;                       // +0x59a4 target face   0x4b2970
     int tgt_id;                             // +0x59a8 target party id   0x4b2ab0
-    char pad59ac[0x59c0 - 0x59ac];
+    int f59ac;                              // +0x59ac
+    Timer clk59b0;                          // +0x59b0 (constructor 0x4934d0: clock 1; its start is re-set to 1 s back after init)
     struct PartyModel* model;               // +0x59c0 0x4b32f0 (release), 0x4b80d0
     float trail_len;                        // +0x59c4 0x4b80d0
     PartyV4 trail;                          // +0x59c8 last event position   0x4b2880, 0x4b80d0
-    SlotArray slots;                        // +0x59d8 (script party_set_slot 0x4a0815)
-    char pad59d9[0x59e8 - 0x59d9];
+    SlotVec slots;                          // +0x59d8 (script party_set_slot 0x4a0815)
     rgl::mesh* label;                       // +0x59e8 rgl::mesh* of the hud label   0x4b7e50, 0x49bea0
     rgl::mesh* e59ec;                       // +0x59ec 0x4b7840, 0x4b80d0
     rgl::mesh* e59f0;                       // +0x59f0
-    ptr_vec deferred;                       // +0x59f4 std::vector<int> (allocator word; first at +0x59f8) emitter ids   0x4b7840
+    std::vector<int> deferred;              // +0x59f4 emitter ids (allocator word; first at +0x59f8)   0x4b7840
     char f5a04;                             // +0x5a04
     char pad5a05[0x5a08 - 0x5a05];
     int note_times[8];                      // +0x5a08 (script add_party_note_from_dialog 0x4a35fb)

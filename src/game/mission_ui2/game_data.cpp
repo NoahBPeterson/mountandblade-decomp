@@ -30,7 +30,7 @@ void GameData::fill_parties(int party, Party* dest)
     }
     unsigned j;
     for (j = 0; j < PARTY(party)->attached.size(); j++)
-        fill_parties(PARTY(party)->attached.first[j], dest);
+        fill_parties(PARTY(party)->attached._Myfirst[j], dest);
 }
 
 // @ 0x48ff70

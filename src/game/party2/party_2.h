@@ -43,12 +43,10 @@ float __cdecl frand();                                  // 0x40e400 (rand() % 15
 
 // ---- the callees' own classes: member-only stubs under the name of the class that defines them (the link needs the defining owner in the
 // mangled name); the view classes below forward to them with `this` cast, which compiles to the same call ----------------------------
-struct PartyW {
-    PartyW* construct();   // 0x4934d0 (world_data.cpp: the party record's constructor body, returns this)
-};
 struct Poser {
     void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.cpp, ret 4)
 };
+#include "../../include/ptr_vec.h"
 #include "../../rgl/mesh_x.h"      // mesh_x::clone 0x41c6d0 (the canonical class)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct int3 { int v[3]; };
@@ -122,11 +120,6 @@ struct ElemCopier {                                     // the allocator-like co
     OpenItem* fill_n_elems(OpenItem* dst, unsigned count, OpenItem* val);          // 0x4b26e0 (_Uninit_fill_n)
     void* fill_n_events(void* dst, int count, const void* val);                   // 0x4b49d0 (E92 version)
     void move_events(E92* first, E92* last, E92* dst);                             // 0x4b38f0 (tail call into 0x4b2670)
-};
-// a party record used as a scratch block (constructed by 0x4934d0, destroyed by 0x431b90)
-struct PartyTmp : Party {
-    PartyTmp() { ((PartyW*)this)->construct(); }        // 0x4934d0
-    ~PartyTmp();                                        // 0x431b90
 };
 struct vec2r : vec2 {
     void rotate_a(float ang) { ((vec2x*)this)->rotate_a(ang); }       // 0x432600 (replace by the unit vector at `ang`)

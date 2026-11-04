@@ -2283,7 +2283,7 @@ void DialogBlock::pop_try(int locals, int* stack, int* out)
         int one = 1;
         int type;
         int p = (int)items[idx].get_operand((__int64*)locals, &one, &type);
-        val = g_game->parties.get(p)->attached.first[val];
+        val = g_game->parties.get(p)->attached._Myfirst[val];
     }
     __int64 wide = val;
     items[idx].set_lvalue((__int64*)locals, wide);

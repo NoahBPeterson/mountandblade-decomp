@@ -25,7 +25,7 @@
 ../src/game/world_data/world_data.cpp  ?set15c@DropDown@@UAEXH@Z  00493310  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?reset_tail@DropDown@@UAEXXZ  004933b0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??_GDropDown@@UAEPAXI@Z  004933d0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?thunk_4936a0@PartyW@@QAEXXZ  004936a0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?slot1@Party@@UAEXXZ  004936a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?push_back@?$vector@PAUParty@@V?$allocator@PAUParty@@@std@@@std@@QAEXABQAUParty@@@Z  004936b0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?grow@PartyMgrW@@QAEPAU1@XZ  00493830  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_slot@PartyMgrW@@QAEHXZ  00493960  /O2 /MT /Gy /TP
@@ -51,3 +51,6 @@
 ../src/game/world_data/world_data.cpp  ?set_quest_concluded@GameW@@QAEXH@Z  004947a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_quest_cancelled@GameW@@QAEXH@Z  004948c0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??0ContainerBase@@QAE@XZ  004931a0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??_GIfaceA@@UAEPAXI@Z  00431400  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??1Party@@UAE@XZ  00431b90  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??_EParty@@UAEPAXI@Z  00431cb0  /O2 /MT /Gy /TP

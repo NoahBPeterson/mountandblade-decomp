@@ -1,4 +1,3 @@
-../src/rgl/xmlcfg/records.cpp  ??_GIfaceA@@UAEPAXI@Z  00431400  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_GIfaceB@@UAEPAXI@Z  00431420  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1RecD@@QAE@XZ  00431440  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_ERecD@@QAEPAXI@Z  00431480  /O2 /MT /Gy /TP
@@ -16,9 +15,7 @@
 ../src/rgl/xmlcfg/records.cpp  ?_Tidy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXXZ  00431a60  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1RecP@@QAE@XZ  00431ab0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1RecQ@@QAE@XZ  00431b10  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??1RecR@@UAE@XZ  00431b90  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1RecS@@QAE@XZ  00431c40  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??_ERecR@@UAEPAXI@Z  00431cb0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_ERecP@@QAEPAXI@Z  00431d30  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1RecY@@UAE@XZ  00431e10  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_ERecY@@UAEPAXI@Z  00431ec0  /O2 /MT /Gy /TP

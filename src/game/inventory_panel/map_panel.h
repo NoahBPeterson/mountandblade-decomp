@@ -7,8 +7,6 @@
 #define GAME_INVENTORY_PANEL_MAP_PANEL_H
 namespace rgl { struct vector4; }
 
-struct RecR;
-struct Pos4 { float x, y, z, w; };
 
 struct MapView {
     virtual void v00(); virtual void v08(); virtual void v10(); virtual void v18();

@@ -18,8 +18,7 @@
 template void std::vector<Item>::_Destroy(Item*, Item*);       // 0x431a30
 template void std::vector<Item>::_Tidy();                       // 0x431a60
 
-// @ 0x431400
-IfaceA::IfaceA() {}
+// 0x431400 is the scalar deleting destructor of IfaceA; the compiler emits it with the vtable 0x5908ec of ~Party (game/world_data/world_data.cpp, where its row is)
 
 // @ 0x431440
 RecD::~RecD() {}
@@ -66,14 +65,9 @@ RecP::~RecP() {}
 // @ 0x431b10
 RecQ::~RecQ() {}
 
-RecR::RecR() {}
-// 0x431b90 RecR::~RecR (implicit)
-RecR* make_recr_array(int n) { return new RecR[n]; }
-
+// 0x431b90 / 0x431cb0 are ~Party and its vector deleting destructor (game/world_data/world_data.cpp: the compiler emits them with the constructor 0x4934d0)
 // @ 0x431c40
 RecS::~RecS() {}
-// @ 0x431cb0
-void delete_recr_array(RecR* p) { delete[] p; }
 // @ 0x431d30
 void delete_recp_array(RecP* p) { delete[] p; }
 

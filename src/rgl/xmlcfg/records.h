@@ -16,14 +16,7 @@
 
 #include "../../include/rec_dtors.h"   // SubA, SubB (the (array, name) pairs), RecD, RecI, Tail, RecQ, RecS, RecT (shared)
 
-// Two abstract-looking bases (vtables 0x5908ec and 0x5908f8; slots 1 and 2 are the empty function 0x477b70).
-// Their scalar deleting destructors are slot 0 (0x431400, 0x431420).
-struct IfaceA {
-    IfaceA();
-    virtual ~IfaceA() {}
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
+// IfaceA / IfaceB (the polymorphic bases; vtables 0x5908ec and 0x5908f8, slots 1 and 2 the empty function 0x477b70) are in include/iface.h.
 #include "../../include/iface.h"        // IfaceB (shared; its constructor is inline, the vtable is emitted by the first user below)
 
 // 0x30 bytes, one pair at +4: vector deleting destructor 0x431540.
@@ -79,25 +72,7 @@ struct RecP {
     int tail;
     ~RecP();
 };
-// IfaceA-derived, 0x5ac8 bytes. ~RecR 0x431b90 (implicit), vector deleting destructor 0x431cb0.
-struct RecR : IfaceA {
-    char pad4[8];
-    tstring n0;                     // +0xc
-    char pad1c[4];
-    tstring n1;                     // +0x20
-    char pad30[0x54 - 0x30];
-    tstring n2;                     // +0x54
-    char pad64[0x8b8 - 0x64];
-    std::vector<int> v0;            // +0x8b8
-    char pad8c8[0x59d8 - 0x8c8];
-    std::vector<int> v1;            // +0x59d8
-    char pad59e8[0xc];
-    std::vector<int> v2;            // +0x59f4
-    char pad5a04[0x5a28 - 0x5a04];
-    tstring names[8];               // +0x5a28
-    char tail[0x5ac8 - 0x5aa8];
-    RecR();
-};
+// (the 0x5ac8-byte IfaceA-derived record is Party, include/party.h: its ~Party 0x431b90 and vector deleting destructor 0x431cb0 are emitted with its constructor in game/world_data)
 // IfaceB-derived, 0x494 bytes, own vtable 0x590904. ~RecY 0x431e10, vector deleting dtor 0x431ec0.
 struct RecY : IfaceB {
     tstring n0;                     // +0x10

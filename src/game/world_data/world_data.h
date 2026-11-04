@@ -5,7 +5,7 @@
 //
 // The shared classes are included, not redefined: GameData / PartyMgr / Party / Stack / Troop / QuestRec / tstring /
 // MsgLog / StrTable / Vec2 / MissionUi / ContainerBase / DropDown come from src/include and src/game. What those headers
-// lack is added here as *views*: a derived class with no data members (`GameW : GameData`, `PartyW : Party`, ...) whose
+// lack is added here as *views*: a derived class with no data members (`GameW : GameData`, ...) whose
 // inline accessors read the raw offsets this module's functions use (the technique of script/script_interpreter.h).
 // Pure additions to canonical headers: none.
 #ifndef GAME_WORLD_DATA_H
@@ -40,35 +40,12 @@
 // raw field of a view class
 #define WD_FLD(T, off) (*(T*)((char*)this + (off)))
 
-// ---- party record (include/party.h Party, 0x5ac8 bytes) ---------------------------------------------------------
-struct PartyW : Party {
-    int& kind70() { return WD_FLD(int, 0x70); }                 // +0x70 faction / kind (0x490990)
-    float& x30() { return WD_FLD(float, 0x30); }                // +0x30 map position (0x491e50)
-    float& y34() { return WD_FLD(float, 0x34); }                // +0x34
-    char& flag8b5() { return WD_FLD(char, 0x8b5); }             // +0x8b5 (0x490990)
-    unsigned char& f8b4() { return WD_FLD(unsigned char, 0x8b4); }     // +0x8b4 follower list dirty (0x490a30, 0x4915d0, 0x4949d0)
-    std::vector<int>& list() { return WD_FLD(std::vector<int>, 0x8b8); }   // +0x8b8 the follower ids as a std::vector<int> (0x4949d0)
-    int*& fol_first() { return WD_FLD(int*, 0x8bc); }           // +0x8bc follower id vector (0x490a30; allocator word at +0x8b8)
-    int*& fol_last() { return WD_FLD(int*, 0x8c0); }            // +0x8c0
-    int*& fol_end() { return WD_FLD(int*, 0x8c4); }             // +0x8c4
-    int& leader() { return WD_FLD(int, 0x8c8); }                // +0x8c8 attached-to party id, -1 = none
-    unsigned char& f8cc() { return WD_FLD(unsigned char, 0x8cc); }     // +0x8cc
-    int& f8e4() { return WD_FLD(int, 0x8e4); }                  // +0x8e4 (0x4915d0)
-    int& f8e8() { return WD_FLD(int, 0x8e8); }                  // +0x8e8
-    int& f918() { return WD_FLD(int, 0x918); }                  // +0x918
-    int& f91c() { return WD_FLD(int, 0x91c); }                  // +0x91c
-    // add_members 0x48c840, find_worth 0x4b1d30, clear_map_flag 0x4b32f0, skill_level 0x4b2370, place_on_map 0x4b2880,
-    // add_xp_to_stack 0x4b1d80, init 0x48f180 and max_stacks 0x4b1700 are Party's own (include/party.h)
-    PartyW* construct();                                        // 0x4934d0 (the constructor: returns this)
-    void thunk_4936a0();                                        // 0x4936a0 (tail jump to the reset 0x48f180)
-};
-
 // ---- the party manager embedded in the game object at +0xf8 (include/party.h PartyMgr) --------------------------------
 struct PartyMgrW : PartyMgr {
     unsigned& limit() { return WD_FLD(unsigned, 0x138dc); }     // +0x138dc id bound (PartyMgr::n_parties)
-    PartyW* at(int idx) { return (PartyW*)((char*)pages[idx >> 4] + (idx & 0xf) * 0x5ac8); }
-    PartyW* atu(unsigned idx) { return (PartyW*)((char*)pages[idx >> 4] + (idx & 0xf) * 0x5ac8); }
-    PartyW* get_w(unsigned id) { int i = index_of(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
+    Party* at(int idx) { return pages[idx >> 4] + (idx & 0xf); }
+    Party* atu(unsigned idx) { return pages[idx >> 4] + (idx & 0xf); }
+    Party* get_w(unsigned id) { int i = index_of(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
     int is_live(unsigned id);                                   // 0x4903e0 (thiscall, ret 4)
     // PartyMgr::index_of(int) (include/party.h) is declared but not defined: the lookup 0x48ad00 is ui/mission.h's
     // Map10007::lookup(unsigned) (the id -> index hash table at the start of the manager), called as ((Map10007*)mgr)->lookup(id)
@@ -156,7 +133,7 @@ struct GameW : GameData {
     unsigned& cur_agent_idx() { return WD_FLD(unsigned, 0x1a1f4); }   // +0x1a1f4
     int& free_slot() { return WD_FLD(int, 0x1a204); }           // +0x1a204 (0x4904a0)
         PartyMgrW& pm() { return *(PartyMgrW*)&parties; }
-    PartyW* party(int id) { PartyMgrW& m = pm(); return m.at(m.index_of(id)); }
+    Party* party(int id) { PartyMgrW& m = pm(); return m.at(m.index_of(id)); }
 
     // find_at 0x48ea80, agent_low 0x4638f0 and add_experience 0x4428c0 are GameData's own (include/game_data.h). add_experience is
     // void there, but add_random_experience (0x4952a0, a byte-exact row returning int) returns the callee's eax: that one call
@@ -170,8 +147,8 @@ struct GameW : GameData {
     void detach_party(unsigned id);                             // 0x490a30 (ret 4)
     void count_units(unsigned id, int* a, int* b, int* c, int* d);  // 0x490ce0 (ret 0x14)
     void list_members(unsigned id, int* out, int* n);          // 0x490fa0 (ret 0xc)
-    void recruit(int id, int count, PartyW* dest);              // 0x4910a0 (ret 0xc)
-    void handout(PartyW* p, int id);                            // 0x491430 (ret 8)
+    void recruit(int id, int count, Party* dest);              // 0x4910a0 (ret 0xc)
+    void handout(Party* p, int id);                            // 0x491430 (ret 8)
     void remove_party(int id);                                      // 0x4915d0 (ret 4)
     bool can_transfer(unsigned id, int other, char flag);       // 0x4918d0 (ret 0xc)
     int gate_rating(unsigned p1, unsigned p2, int p3);          // 0x491b20 (ret 0xc)
@@ -256,7 +233,6 @@ struct RecPoly { virtual ~RecPoly(); };                         // a scene recor
 
 typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 extern char vtbl_5924a0[];                                     // 0x5924a0
-extern char vtbl_592644[];                                      // 0x592644
 
 struct PtrStack14 {                                             // an object with a pointer vector (no allocator word) at +0x14
     char pad0[0x14];
@@ -276,15 +252,8 @@ struct RecPool {                                                // an object wit
     unsigned alloc_record();                                    // 0x493700 (thiscall; returns the popped record id, in eax)
 };
 // The pool record is mission_ui2/stat_panel_x.h's Event (constructor 0x48c210, vtable 0x5922cc, an IfaceB of 0x98 bytes); the pages are
-// `new Event[16]`, which is where the vector deleting destructor in the vtable is emitted. A party record as `new Party[16]` builds it:
-// vtable 0x592644 at +0, constructor 0x4934d0 (nothrow), whose body is PartyW::construct below (the constructor forwards to it, so the
-// array new binds to the one definition).
+// `new Event[16]`, which is where the vector deleting destructor in the vtable is emitted. The party pages are `new Party[16]` (PartyMgrW::grow).
 #include "../mission_ui2/stat_panel_x.h"
-struct PartyNew {
-    ~PartyNew() {}                                              // (non-virtual here: the vtable is stored by PartyW::construct; the destructor only makes `new[]` keep a count cookie: no code in the binary)
-    char body[0x5ac8];
-    PartyNew() throw() { ((PartyW*)(void*)this)->construct(); }   // 0x4934d0 (forwards to PartyW::construct)
-};
 #include "./thiscall_free.h"
 #include "../../rgl/resource.h"                               // resource_manager g_resmgr 0x5d6fa0
 struct ResSlot {                                                // a resource slot of the cache group (0x493df0, 0x493e90)

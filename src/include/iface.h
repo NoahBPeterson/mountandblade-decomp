@@ -11,6 +11,13 @@
 
 
 
+// IfaceA: the same, without data (vtable 0x5908ec; the scalar deleting destructor is 0x431400). Party (include/party.h) derives from it.
+struct IfaceA {
+    IfaceA() {}
+    virtual ~IfaceA() {}
+    virtual void slot1() {}
+    virtual void slot2() {}
+};
 struct IfaceB {
     int f4, f8, fc;
     IfaceB() {}

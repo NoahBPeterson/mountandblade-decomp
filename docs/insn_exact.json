@@ -1,9 +1,9 @@
 {
- "when": "2026-11-01T15:47:31-06:00",
+ "when": "2026-11-04T12:07:20-06:00",
  "counts": {
-  "DIFF": 892,
-  "INSN-EXACT": 35,
-  "FRAGMENT": 130
+  "DIFF": 891,
+  "FRAGMENT": 130,
+  "INSN-EXACT": 36
  },
  "rows": {
   "00408a50": {
@@ -4154,17 +4154,17 @@
   },
   "004905c0": {
    "verdict": "DIFF",
-   "symbol": "?track_bounds@ContainerW@@QAEXPAX@Z",
+   "symbol": "?on_child_moved@ContainerBase@@UAEXPAUMissionUi@@@Z",
    "insns": 64,
    "ours": 64,
    "unverified": 0,
    "unresolved": [],
-   "why": "#10 4905e1/21 fld dword ptr [esi + 0xec] | mov dword ptr [esi + 0xe0], eax: mnemonic",
+   "why": "#3 4905c8/8 fld dword ptr [esi + 0xe8] | mov edx, dword ptr [esi]: mnemonic",
    "src": "src/game/world_data/world_data.cpp"
   },
   "00490710": {
    "verdict": "DIFF",
-   "symbol": "?bounds_of@ContainerW@@QAEXPAHPAM11@Z",
+   "symbol": "?render@ContainerBase@@UAEXPAUscene@rgl@@PAMHH@Z",
    "insns": 135,
    "ours": 135,
    "unverified": 0,
@@ -4194,7 +4194,7 @@
   },
   "004910a0": {
    "verdict": "DIFF",
-   "symbol": "?recruit@GameW@@QAEXHHPAUPartyW@@@Z",
+   "symbol": "?recruit@GameW@@QAEXHHPAUParty@@@Z",
    "insns": 255,
    "ours": 240,
    "unverified": 0,
@@ -4204,7 +4204,7 @@
   },
   "00491430": {
    "verdict": "DIFF",
-   "symbol": "?handout@GameW@@QAEXPAUPartyW@@H@Z",
+   "symbol": "?handout@GameW@@QAEXPAUParty@@H@Z",
    "insns": 124,
    "ours": 118,
    "unverified": 0,
@@ -4284,7 +4284,7 @@
   },
   "00492470": {
    "verdict": "DIFF",
-   "symbol": "?refresh_rating@BattleW@@QAEXXZ",
+   "symbol": "?refresh_rating@MissionCtx@@QAEXXZ",
    "insns": 58,
    "ours": 60,
    "unverified": 0,
@@ -4304,7 +4304,7 @@
   },
   "00492750": {
    "verdict": "DIFF",
-   "symbol": "?select_side@BattleW@@QAEXH@Z",
+   "symbol": "?select_side@MissionCtx@@QAEXH@Z",
    "insns": 49,
    "ours": 49,
    "unverified": 0,
@@ -4323,28 +4323,30 @@
    "src": "src/game/world_data/world_data.cpp"
   },
   "004931a0": {
-   "verdict": "DIFF",
-   "symbol": "?construct@ContainerW@@QAEPAXXZ",
+   "verdict": "INSN-EXACT",
+   "symbol": "??0ContainerBase@@QAE@XZ",
    "insns": 11,
    "ours": 11,
-   "unverified": 0,
-   "unresolved": [],
-   "why": "#4 4931aa/a mov dword ptr [esi], 0x5924a0 | mov dword ptr [esi + 0x17c], eax: operand kinds",
+   "unverified": 1,
+   "unresolved": [
+    "??_7ContainerBase@@6B@"
+   ],
+   "why": "",
    "src": "src/game/world_data/world_data.cpp"
   },
   "004931d0": {
    "verdict": "DIFF",
-   "symbol": "?construct@DropDownW@@QAEPAU1@XZ",
+   "symbol": "??0DropDown@@QAE@XZ",
    "insns": 38,
-   "ours": 38,
+   "ours": 25,
    "unverified": 0,
    "unresolved": [],
-   "why": "#7 4931e9/19 mov dword ptr [esi], 0x592570 | mov dword ptr [esi + 0x190], eax: operand kinds",
+   "why": "#0 4931d0/0 sub esp, 8 | push esi: mnemonic",
    "src": "src/game/world_data/world_data.cpp"
   },
   "004932a0": {
    "verdict": "DIFF",
-   "symbol": "?set_mode@ListPanelW@@QAEXXZ",
+   "symbol": "?render@DropDown@@UAEXPAUscene@rgl@@PAMHH@Z",
    "insns": 19,
    "ours": 19,
    "unverified": 0,
@@ -4364,9 +4366,9 @@
   },
   "00493400": {
    "verdict": "DIFF",
-   "symbol": "?append@ListPanelW@@QAEXPBUtstring@@@Z",
+   "symbol": "?append@DropDown@@UAEXPBUtstring@@@Z",
    "insns": 62,
-   "ours": 64,
+   "ours": 62,
    "unverified": 0,
    "unresolved": [],
    "why": "#2 49340a/a fld dword ptr [0x590cd0] | push ebx: mnemonic",
@@ -4374,12 +4376,12 @@
   },
   "004934d0": {
    "verdict": "DIFF",
-   "symbol": "?construct@PartyW@@QAEPAU1@XZ",
+   "symbol": "??0Party@@QAE@XZ",
    "insns": 99,
-   "ours": 99,
+   "ours": 95,
    "unverified": 0,
    "unresolved": [],
-   "why": "#19 49350e/3e mov dword ptr [eax + 0x14], ebx | mov dword ptr [eax + 0xc], ebx: constant 0x14 vs 0xc",
+   "why": "#0 4934d0/0 push ecx | push ebx: reads ecx / ebx but ecx is bound to ecx",
    "src": "src/game/world_data/world_data.cpp"
   },
   "00493700": {
@@ -4418,10 +4420,10 @@
    "verdict": "DIFF",
    "symbol": "?create_button_overlay@WidgetMgrW@@QAEHPBUtstring@@I@Z",
    "insns": 108,
-   "ours": 106,
+   "ours": 108,
    "unverified": 0,
    "unresolved": [],
-   "why": "#11 49412b/1b je 0x494154 | je 0x42: branch target #20 vs #19",
+   "why": "#29 494176/66 mov eax, dword ptr [esi] | and edx, 0x181c: mnemonic",
    "src": "src/game/world_data/world_data.cpp"
   },
   "00494260": {
@@ -4498,10 +4500,10 @@
    "verdict": "DIFF",
    "symbol": "?create_slider_overlay@WidgetMgrW@@QAEHHH@Z",
    "insns": 130,
-   "ours": 126,
+   "ours": 122,
    "unverified": 0,
    "unresolved": [],
-   "why": "#9 495988/18 je 0x4959cb | je 0x59: branch target #19 vs #18",
+   "why": "#6 495981/11 mov esi, eax | add esp, 4: mnemonic",
    "src": "src/game/world_data/mesh_hud.cpp"
   },
   "00495ba0": {
@@ -4536,7 +4538,7 @@
   },
   "004966b0": {
    "verdict": "DIFF",
-   "symbol": "?update_2@HudBar@@QAEXH@Z",
+   "symbol": "?animate@XyzButton@@UAEXH@Z",
    "insns": 441,
    "ours": 429,
    "unverified": 0,
@@ -4546,7 +4548,7 @@
   },
   "00496d30": {
    "verdict": "DIFF",
-   "symbol": "?update_3@HudBar@@QAEXH@Z",
+   "symbol": "?animate@DropDown@@UAEXH@Z",
    "insns": 764,
    "ours": 746,
    "unverified": 0,
@@ -4556,7 +4558,7 @@
   },
   "00497880": {
    "verdict": "DIFF",
-   "symbol": "?update_4@HudBar@@QAEXH@Z",
+   "symbol": "?animate@UiB@@UAEXH@Z",
    "insns": 301,
    "ours": 272,
    "unverified": 0,
@@ -4566,7 +4568,7 @@
   },
   "00497e30": {
    "verdict": "DIFF",
-   "symbol": "?update_5@HudBar@@QAEXH@Z",
+   "symbol": "?animate@UiC@@UAEXH@Z",
    "insns": 348,
    "ours": 318,
    "unverified": 0,
@@ -4586,7 +4588,7 @@
   },
   "004985f0": {
    "verdict": "DIFF",
-   "symbol": "?update_full@HudBar@@QAEXH@Z",
+   "symbol": "?animate@UiE@@UAEXH@Z",
    "insns": 706,
    "ours": 692,
    "unverified": 0,
@@ -4618,20 +4620,24 @@
    "verdict": "DIFF",
    "symbol": "?create_mesh_overlay@WidgetMgrW@@QAEHH@Z",
    "insns": 90,
-   "ours": 88,
-   "unverified": 0,
-   "unresolved": [],
-   "why": "#9 4995f8/18 je 0x499609 | je 0x27: branch target #14 vs #13",
+   "ours": 90,
+   "unverified": 1,
+   "unresolved": [
+    "??_7MeshWidget@@6B@"
+   ],
+   "why": "#15 49960b/2b mov eax, dword ptr [esi] | push ebx: mnemonic",
    "src": "src/game/world_data/obj_tbl.cpp"
   },
   "004996e0": {
    "verdict": "DIFF",
    "symbol": "?create_mesh_overlay_with_tableau@WidgetMgrW@@QAEHHHM@Z",
    "insns": 119,
-   "ours": 117,
-   "unverified": 0,
-   "unresolved": [],
-   "why": "#9 4996f8/18 je 0x499709 | je 0x27: branch target #14 vs #13",
+   "ours": 119,
+   "unverified": 1,
+   "unresolved": [
+    "??_7MeshWidget@@6B@"
+   ],
+   "why": "#15 49970b/2b mov eax, dword ptr [esi] | push ebx: mnemonic",
    "src": "src/game/world_data/obj_tbl.cpp"
   },
   "0049a300": {

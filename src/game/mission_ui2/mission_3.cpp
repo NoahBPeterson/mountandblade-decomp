@@ -637,11 +637,11 @@ tstring* Party::display_name()
 // @ 0x48d7e0
 void Party::clear_particle_systems()
 {
-    if (deferred.first)
-        operator delete(deferred.first);
-    deferred.first = 0;
-    deferred.last = 0;
-    deferred.end = 0;
+    if (deferred._Myfirst)
+        operator delete(deferred._Myfirst);
+    deferred._Myfirst = 0;
+    deferred._Mylast = 0;
+    deferred._Myend = 0;
     if (model)
         ((PartyModelV*)model)->release();
 }

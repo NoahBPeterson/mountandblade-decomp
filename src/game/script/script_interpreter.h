@@ -30,7 +30,7 @@
 // DEFINES that address in the sources, declared here with that class's name and signature. The modules that define them name the
 // class after another of their users, and the linker folds identical bodies, so the view object is the object the definition works
 // on (cast at the forwarder). The namespaces cNNNNNN are the anonymous namespaces src/game/party2/camera.cpp wraps its local classes in.
-struct PartyW; struct Emit; struct mesh_part; struct TabCurrent;
+struct Emit; struct mesh_part; struct TabCurrent;
 struct EmitterCtl { void add(int e); };                                      // 0x4955e0 (world_data.cpp): registers an emitter in a table
 struct GameW {                                                               // world_data.cpp: the game object's world operations
     bool can_transfer(unsigned id, int other, char flag);                   // 0x4918d0
@@ -39,13 +39,13 @@ struct GameW {                                                               // 
     int stack_dna(unsigned id, int stack, int a3, int a4);                  // 0x4902a0
     void award_experience(int party, float amount, int mode);               // 0x494e40
     void detach_party(unsigned id);                                         // 0x490a30
-    void handout(PartyW* p, int id);                                        // 0x491430
+    void handout(Party* p, int id);                                        // 0x491430
     void mark_kind(int kind);                                               // 0x490990
     void quest_done(int quest);                                             // 0x494410
     void quest_failed(int quest);                                           // 0x494680
     void quest_succeeded(int quest);                                        // 0x494560
     void random_position_around(Vec2 pos, float r, Vec2* out);              // 0x490030
-    void recruit(int id, int count, PartyW* dest);                          // 0x4910a0
+    void recruit(int id, int count, Party* dest);                          // 0x4910a0
     void remove_party(int id);                                              // 0x4915d0
     void set_objective(int party, int value);                               // 0x4949d0
     void set_pos(float x, float y, int id, float radius);                   // 0x491e50
@@ -611,8 +611,8 @@ struct GameX {
     __forceinline void share_experience(int party, float xp) { ((GameW*)this)->share_experience(party, xp); }                         // 0x494b60 (ret 8)
     __forceinline void add_template(int party, int party_template, int reverse_prisoners) { ((GameData*)this)->add_template(party, party_template, reverse_prisoners); }   // 0x48fbd0 (ret 0xc)
     __forceinline int battle_root(int party) { return ((GameData*)this)->battle_root(party); }                                         // 0x48fce0 (ret 4)
-    __forceinline void recruit(int party, int rounds, PartyV* dest) { ((GameW*)this)->recruit(party, rounds, (PartyW*)dest); }         // 0x4910a0 (ret 0xc)
-    __forceinline void handout(PartyV* party, int root) { ((GameW*)this)->handout((PartyW*)party, root); }                             // 0x491430 (ret 8)
+    __forceinline void recruit(int party, int rounds, PartyV* dest) { ((GameW*)this)->recruit(party, rounds, dest); }         // 0x4910a0 (ret 0xc)
+    __forceinline void handout(PartyV* party, int root) { ((GameW*)this)->handout(party, root); }                             // 0x491430 (ret 8)
 };
 SI_ASSERT(game_troops, offsetof(GameX, troops) == 0x13a00);
 SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139d8 - 0xf8);

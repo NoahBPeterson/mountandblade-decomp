@@ -348,8 +348,8 @@ void GameW::mark_kind(int kind)
     PartyMgrW* m = &pm();
     unsigned i = m->first_party_id();
     while (i < parties.n_parties) {
-        if (m->at(((Map10007*)(void*)m)->lookup(i))->kind70() == kind)
-            m->at(((Map10007*)(void*)m)->lookup(i))->flag8b5() = 1;
+        if (m->at(((Map10007*)(void*)m)->lookup(i))->faction == kind)
+            m->at(((Map10007*)(void*)m)->lookup(i))->f8b5 = 1;
         m->next_party_id((int*)&i);
     }
 }
@@ -366,16 +366,16 @@ void GameW::detach_party(unsigned id)
         return;
     if (m->atu((unsigned)i)->type != 1)
         return;
-    if (m->at(((Map10007*)(void*)m)->lookup(id))->leader() < 0)
+    if (m->at(((Map10007*)(void*)m)->lookup(id))->attached_to < 0)
         return;
     bool done = false;
-    unsigned* dst = (unsigned*)m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->leader()))->fol_first();
+    unsigned* dst = (unsigned*)m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->attached_to))->attached._Myfirst;
     unsigned* cur = dst + 1;
     do {
-        if ((int*)dst >= m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->leader()))->fol_last())
+        if ((int*)dst >= m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->attached_to))->attached._Mylast)
             break;
         if (*dst == id) {
-            std::vector<int>& l = m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->leader()))->list();
+            std::vector<int>& l = m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->attached_to))->attached;
             memmove(dst, cur, (int)(l._Mylast - (int*)cur) * 4);
             --l._Mylast;
             done = true;
@@ -383,10 +383,10 @@ void GameW::detach_party(unsigned id)
         dst++;
         cur++;
     } while (!done);
-    m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->leader()))->dirty = 1;
-    m->at(((Map10007*)(void*)m)->lookup(id))->f8cc() = 0;
+    m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->attached_to))->dirty = 1;
+    m->at(((Map10007*)(void*)m)->lookup(id))->f8cc = 0;
     m->at(((Map10007*)(void*)m)->lookup(id))->dirty = 1;
-    m->at(((Map10007*)(void*)m)->lookup(id))->leader() = -1;
+    m->at(((Map10007*)(void*)m)->lookup(id))->attached_to = -1;
 }
 
 // ==== 0x490ce0: total a party's stacks (and its followers') into counters ========================================
@@ -423,8 +423,8 @@ void GameW::count_units(unsigned id, int* a, int* b, int* c, int* d)
             k += 0x20;
         } while (n < m->at(((Map10007*)(void*)m)->lookup(id))->nstacks);
     }
-    for (unsigned j = 0; j < m->at(((Map10007*)(void*)m)->lookup(id))->list().size(); j++)
-        count_units(m->at(((Map10007*)(void*)m)->lookup(id))->list()[j], a, b, c, d);
+    for (unsigned j = 0; j < m->at(((Map10007*)(void*)m)->lookup(id))->attached.size(); j++)
+        count_units(m->at(((Map10007*)(void*)m)->lookup(id))->attached[j], a, b, c, d);
 }
 
 // ==== 0x490fa0: a party and, recursively, its followers ===========================================================
@@ -443,13 +443,13 @@ void GameW::list_members(unsigned id, int* out, int* n)
         return;
     out[*n] = (int)id;
     (*n)++;
-    for (unsigned j = 0; j < m->at(((Map10007*)(void*)m)->lookup(id))->list().size(); j++)
-        list_members(m->at(((Map10007*)(void*)m)->lookup(id))->list()[j], out, n);
+    for (unsigned j = 0; j < m->at(((Map10007*)(void*)m)->lookup(id))->attached.size(); j++)
+        list_members(m->at(((Map10007*)(void*)m)->lookup(id))->attached[j], out, n);
 }
 
 // ==== 0x4910a0: casualties of a battle: turn some of a party's troops into prisoners / dead =====================
 // @ 0x4910a0
-void GameW::recruit(int id, int count, PartyW* dest)
+void GameW::recruit(int id, int count, Party* dest)
 {
     PartyMgrW* m = &pm();
     if ((unsigned)id >= m->limit())
@@ -470,7 +470,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
     int total = a - b;
 
     idx = ((Map10007*)(void*)m)->lookup(id);
-    PartyW* p = m->at(idx);
+    Party* p = m->at(idx);
     if (p->stacks[0].troop == player && !agent_low(player))
         total--;
 
@@ -491,7 +491,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
                 if (j >= n)
                     break;
                 int mi = ((Map10007*)(void*)m)->lookup(members[j]);
-                PartyW* mp = m->at(mi);
+                Party* mp = m->at(mi);
                 int sum = mp->sum_stat(0x134);
                 base += sum;
                 if (pick < base) {
@@ -536,7 +536,7 @@ void GameW::recruit(int id, int count, PartyW* dest)
 
 // ==== 0x491430: spread a party's stacks over the members of a battle group =======================================
 // @ 0x491430
-void GameW::handout(PartyW* p, int id)
+void GameW::handout(Party* p, int id)
 {
     int n = 0;
     int members[128];
@@ -581,30 +581,30 @@ void GameW::remove_party(int id)
         return;
 
     idx = ((Map10007*)(void*)m)->lookup(id);
-    PartyW* p = m->at(idx);
-    if (p->leader() >= 0) {
-        if (m->is_live(p->leader()))
+    Party* p = m->at(idx);
+    if (p->attached_to >= 0) {
+        if (m->is_live(p->attached_to))
             detach_party(id);
-        p->leader() = -1;
+        p->attached_to = -1;
     }
-    if (p->fol_first() != 0 && p->fol_last() - p->fol_first() != 0) {
-        for (unsigned k = 0; p->fol_first() != 0 && k < (unsigned)(p->fol_last() - p->fol_first()); k++) {
-            if ((unsigned)p->fol_first()[k] >= parties.n_parties)
+    if (p->attached._Myfirst != 0 && p->attached._Mylast - p->attached._Myfirst != 0) {
+        for (unsigned k = 0; p->attached._Myfirst != 0 && k < (unsigned)(p->attached._Mylast - p->attached._Myfirst); k++) {
+            if ((unsigned)p->attached._Myfirst[k] >= parties.n_parties)
                 continue;
-            int j = ((Map10007*)(void*)m)->lookup(p->fol_first()[k]);
+            int j = ((Map10007*)(void*)m)->lookup(p->attached._Myfirst[k]);
             if (j < 0)
                 continue;
             if (m->atu(j)->type != 1)
                 continue;
-            m->at(((Map10007*)(void*)m)->lookup(p->fol_first()[k]))->leader() = -1;
-            m->at(((Map10007*)(void*)m)->lookup(p->fol_first()[k]))->f8cc() = 0;
-            m->at(((Map10007*)(void*)m)->lookup(p->fol_first()[k]))->f8b4() = 1;
+            m->at(((Map10007*)(void*)m)->lookup(p->attached._Myfirst[k]))->attached_to = -1;
+            m->at(((Map10007*)(void*)m)->lookup(p->attached._Myfirst[k]))->f8cc = 0;
+            m->at(((Map10007*)(void*)m)->lookup(p->attached._Myfirst[k]))->dirty = 1;
         }
-        if (p->fol_first() != 0)
-            operator delete(p->fol_first());
-        p->fol_first() = 0;
-        p->fol_last() = 0;
-        p->fol_end() = 0;
+        if (p->attached._Myfirst != 0)
+            operator delete(p->attached._Myfirst);
+        p->attached._Myfirst = 0;
+        p->attached._Mylast = 0;
+        p->attached._Myend = 0;
     }
     if (p->owner >= 0)
         g_party_templates[p->owner].num_destroyed += 1;
@@ -617,14 +617,14 @@ void GameW::remove_party(int id)
     unsigned cur = m->first_party_id();
     if (cur < parties.n_parties) {
         do {
-            PartyW* q = m->at(((Map10007*)(void*)m)->lookup(cur));
-            if (q->f91c() == id) {
-                q->f918() = 0;
-                q->f91c() = -1;
+            Party* q = m->at(((Map10007*)(void*)m)->lookup(cur));
+            if (q->target == id) {
+                q->action = 0;
+                q->target = -1;
             }
-            if (q->f8e8() == id) {
-                q->f8e4() = 0;
-                q->f8e8() = -1;
+            if (q->state_target == id) {
+                q->f8e4 = 0;
+                q->state_target = -1;
             }
             m->next_party_id((int*)&cur);
         } while (cur < parties.n_parties);
@@ -642,9 +642,9 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
     if (mgr->atu((unsigned)idx)->type != 1) return false;
     if (!mgr->is_live(other)) return false;
     int ia = ((Map10007*)(void*)mgr)->lookup(id);
-    PartyW* a = mgr->at(ia);
+    Party* a = mgr->at(ia);
     int ib = ((Map10007*)(void*)mgr)->lookup(other);
-    PartyW* b = mgr->at(ib);
+    Party* b = mgr->at(ib);
     if (b->flags_lo & 0x100000) {
         if (!flag) {
             if (b->sum_head() + a->sum_head() > b->max_members()) return false;
@@ -750,9 +750,9 @@ void GameW::set_pos(float x, float y, int id, float radius) {
     if (i < 0) return;
     if (m->atu((unsigned)i)->type != 1) return;
     i = ((Map10007*)(void*)m)->lookup(id);
-    PartyW* p = m->at(i);
-    p->x30() = x;
-    p->y34() = y;
+    Party* p = m->at(i);
+    p->pos.x = x;
+    p->pos.y = y;
     i = ((Map10007*)(void*)m)->lookup(id);
     m->at(i)->place_on_map();
 }
@@ -917,7 +917,7 @@ void MissionCtx::refresh_rating()
 {
     GameW* g = (GameW*)g_game;
     PartyMgrW* mgr = &g->pm();
-    PartyW* pp = mgr->at(((Map10007*)(void*)mgr)->lookup(ids[side]));
+    Party* pp = mgr->at(((Map10007*)(void*)mgr)->lookup(ids[side]));
     int t = pp->sum_stat(0x10);
     if (t <= 3)
         tier = 0;
@@ -941,8 +941,8 @@ void GameW::transfer_stack(int a, int b, char flag)
 {
     WL_MARKER(12)
     PartyMgrW* mgr = &pm();
-    PartyW* pa = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
-    PartyW* pb = mgr->at(((Map10007*)(void*)mgr)->lookup(b));
+    Party* pa = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
+    Party* pb = mgr->at(((Map10007*)(void*)mgr)->lookup(b));
     int* wstacks = &tbl[0][0];
     for (int k = 0; k < pa->nstacks; k++) {
         Stack* s = &pa->stacks[k];
@@ -972,7 +972,7 @@ void GameW::transfer_stack(int a, int b, char flag)
                 } else {
                     v = -1;
                     if (a >= 0) {
-                        PartyW* px = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
+                        Party* px = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
                         v = px->stacks[k].troop;
                     }
                     v = v * 0x1bf + 0x45db + a * 0x7bb7 + j;
@@ -1293,76 +1293,45 @@ namespace std { template<> list<int, allocator<int> >::_Nodeptr list<int, alloca
 struct ListInt : std::list<int> { using std::list<int>::_Buynode; };
 
 // @ 0x4936a0
-void PartyW::thunk_4936a0()
+void Party::slot1()
 {
     init();
 }
 
-// tstring::tstring() 0x42bbd0 as a plain thiscall on raw storage: a placement new adds a null test the original lacks.
-struct tstring_raw {
-    char pad[0x10];
-    void build();
-};
-#pragma comment(linker, "/alternatename:?build@tstring_raw@@QAEXXZ=??0tstring@@QAE@XZ")
-
-// @ 0x4934d0
-PartyW* PartyW::construct()
+// @ 0x4934d0 (the constructor: the members' own constructors run first, then this body)
+Party::Party() throw()
 {
-    char* self = (char*)this;
-
-    *(void**)(self) = (void*)vtbl_592644;
-    ((tstring_raw*)(self + 0xc))->build();
-    ((tstring_raw*)(self + 0x20))->build();
-    ((tstring_raw*)(self + 0x54))->build();
-
-    {
-        char* p = self + 0xa8;
-        for (int i = 0; i < 0x40; ++i) {
-            *(int*)(p + 0x00) = 0;
-            *(int*)(p + 0x04) = -1;
-            *(int*)(p + 0x08) = 0;
-            *(int*)(p + 0x0c) = 0;
-            *(int*)(p + 0x10) = 0;
-            *(int*)(p + 0x14) = 0;
-            *(int*)(p + 0x18) = 0;
-            p += 0x20;
-        }
+    for (int i = 0; i < 0x40; ++i) {
+        stacks[i].count = 0;
+        stacks[i].troop = -1;
+        stacks[i].flags = 0;
+        stacks[i].spawned = 0;
+        stacks[i].wounded = 0;
+        stacks[i].f14 = 0;
+        stacks[i].f18 = 0;
     }
 
-    *(int*)(self + 0x8bc) = 0;
-    *(int*)(self + 0x8c0) = 0;
-    *(int*)(self + 0x8c4) = 0;
-    *(int*)(self + 0x8d0) = 1;
-    *(__int64*)(self + 0x8d8) = g_ticks[1];
-    *(int*)(self + 0x8f8) = 1;
-    *(__int64*)(self + 0x900) = g_ticks[1];
-    *(int*)(self + 0x908) = 0;
-    *(__int64*)(self + 0x910) = g_ticks[0];
-    *(int*)(self + 0x938) = 1;
-    *(__int64*)(self + 0x940) = g_ticks[1];
-    *(int*)(self + 0x948) = 1;
-    *(__int64*)(self + 0x950) = g_ticks[1];
-    *(int*)(self + 0x59b0) = 1;
-    *(__int64*)(self + 0x59b8) = g_ticks[1];
-    *(int*)(self + 0x59dc) = 0;
-    *(int*)(self + 0x59e0) = 0;
-    *(int*)(self + 0x59e4) = 0;
-    *(int*)(self + 0x59f8) = 0;
-    *(int*)(self + 0x59fc) = 0;
-    *(int*)(self + 0x5a00) = 0;
+    clk8d0.clock = 1;
+    clk8d0.start = g_ticks[1];
+    clk8f8.clock = 1;
+    clk8f8.start = g_ticks[1];
+    clk908.clock = 0;
+    clk908.start = g_ticks[0];
+    clk938.clock = 1;
+    clk938.start = g_ticks[1];
+    clk948.clock = 1;
+    clk948.start = g_ticks[1];
+    clk59b0.clock = 1;
+    clk59b0.start = g_ticks[1];
 
-    for (int i = 0; i < 8; ++i)
-        ((tstring_raw*)(self + 0x5a28 + i * 0x10))->build();
-
-    *(int*)(self + 0x5aa8) = -1;
-    *(int*)(self + 0x5ab0) = 1;
-    *(__int64*)(self + 0x5ab8) = g_ticks[1];
+    note_tableau = -1;
+    ignore_timer.clock = 1;
+    ignore_timer.start = g_ticks[1];
 
     init();
 
-    *(__int64*)(self + 0x59b8) = g_ticks[*(int*)(self + 0x59b0)] - 100000;
-    *(char*)(self + 0x5a04) = 0;
-    return this;
+    clk59b0.start = g_ticks[clk59b0.clock] - 100000;
+    f5a04 = 0;
 }
 
 // @ 0x4936b0
@@ -1393,7 +1362,7 @@ unsigned RecPool::alloc_record()
 // @ 0x493830
 PartyMgrW* PartyMgrW::grow()
 {
-    Party* blk = (Party*)new PartyNew[16];
+    Party* blk = new Party[16];
     pages.push_back(blk);
 
     for (int i = 0; i < 0x10; ++i) {
@@ -1880,14 +1849,14 @@ void GameW::set_quest_cancelled(int _idx)
 void GameW::set_objective(int party, int value)
 {
     PartyMgrW* m = &pm();
-    PartyW* pp = m->at(((Map10007*)(void*)m)->lookup(party));
-    if (pp->leader() >= 0)
+    Party* pp = m->at(((Map10007*)(void*)m)->lookup(party));
+    if (pp->attached_to >= 0)
         detach_party(party);
-    PartyW* pp2 = m->at(((Map10007*)(void*)m)->lookup(party));
-    pp2->leader() = value;
-    PartyW* pv = m->at(((Map10007*)(void*)m)->lookup(value));
-    pv->list().push_back(party);
-    m->at(((Map10007*)(void*)m)->lookup(value))->f8b4() = 1;
+    Party* pp2 = m->at(((Map10007*)(void*)m)->lookup(party));
+    pp2->attached_to = value;
+    Party* pv = m->at(((Map10007*)(void*)m)->lookup(value));
+    pv->attached.push_back(party);
+    m->at(((Map10007*)(void*)m)->lookup(value))->dirty = 1;
 }
 
 // @ 0x494ad0
@@ -1901,7 +1870,7 @@ void GameW::switch_objective(int party, int mode)
         return;
     if (!objectives_on())
         return;
-    if (((PartyW*)parties.get(party))->leader() >= 0)
+    if (((Party*)parties.get(party))->attached_to >= 0)
         detach_party(party);
     if (mode == 0)
         set_objective(party, f78);
@@ -1909,7 +1878,7 @@ void GameW::switch_objective(int party, int mode)
         set_objective(party, encountered_a());
     else if (mode == 2)
         set_objective(party, encountered_b());
-    ((PartyW*)parties.get(party))->f8cc() = 1;
+    ((Party*)parties.get(party))->f8cc = 1;
 }
 
 // ==== 0x494b60: share an experience amount over a party ==================================================================
@@ -1924,7 +1893,7 @@ void GameW::share_experience(int party, float amount)
         return;
     if (pm_->pages[idx >> 4][idx & 15].type != 1)
         return;
-    PartyW* p = pm_->at(((Map10007*)(void*)pm_)->lookup(party));
+    Party* p = pm_->at(((Map10007*)(void*)pm_)->lookup(party));
     int total = 0;
     int i = 0;
     for (; i < p->nstacks; i++) {
@@ -1985,7 +1954,7 @@ void GameW::award_experience(int party, float amount, int mode)
     if (m2.atu((unsigned)idx)->type != 1)
         return;
     idx = ((Map10007*)(void*)&m2)->lookup(party);                      // the original looks the party up a second time
-    PartyW* p = &((PartyW*)(m2.pages[idx >> 4]))[idx & 15];
+    Party* p = &((Party*)(m2.pages[idx >> 4]))[idx & 15];
     int m = mode != 0 ? mode - 1 : rand() % 2;
 
     int total = 0;
@@ -2222,7 +2191,7 @@ void GameW::spread_party_experience(int amount)
     WL_MARKER(12)
     GameData::add_experience(player, amount);
     PartyMgrW* m = &pm();
-    PartyW* p = m->at(((Map10007*)(void*)m)->lookup(f78));
+    Party* p = m->at(((Map10007*)(void*)m)->lookup(f78));
     int live = 0;
     for (int i = 0; i < p->nstacks; i++) {
         if (p->stacks[i].flags & 1)
