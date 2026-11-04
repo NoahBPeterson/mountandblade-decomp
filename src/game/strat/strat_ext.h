@@ -11,7 +11,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../mat4.h"
 #include "../tstring.h"
-#include "../rgl_mesh.h"                    // rgl::res_t / mat_t / res_obj4 / elem30 / elem14 / mesh_base (one definition for the rgl.h universe)
+#include "../../rgl/mesh.h"                    // rgl::res_t / mat_t / res_obj4 / elem30 / elem14 / mesh_base (one definition for the rgl.h universe)
 #include "../../include/mesh_prims.h"
 #include "../../include/frustum.h"
 
@@ -28,11 +28,8 @@ using rgl::frustum;
 struct StratEnt;
 struct MeshEnt;
 struct Ctx;
-struct scene;
-struct mesh;
 
-// 64-byte-per-element helpers of the mesh's std::vectors (rgl::mesh in src/rgl/mesh.h is the namespaced twin)
-// element types of the mesh's std::vectors
+// the mesh, scene and resource classes are the shared ones (src/rgl/mesh.h, resource.h)
 #include "../../include/vec.h"
 // vec2 is an aggregate; strat_entity.cpp builds its uv offsets through a constructor call (a temporary, then a copy)
 struct vec2c : vec2 { vec2c(float x_, float y_) { x = x_; y = y_; } };
@@ -42,127 +39,10 @@ using rgl::frame_t;
 using rgl::obj_c0;
 using rgl::slot;
 using rgl::render_info;
-using rgl::elem30;                           // 0x30, vector at +0x60 (src/game/rgl_mesh.h)
-using rgl::elem14;                           // 0x14, vector at +0x80 (items' element type unknown)
 using rgl::face20;                           // 0x20, vector at +0x90 (src/include/mesh_prims.h)
-
-// inline vector helpers used by the mesh code (src/game/rgl_mesh.h; distinct from the out-of-line rgl::operator* in rgl.h)
-using rgl::vscale;
-using rgl::vadd;
-
 using rgl::keyframes;
-
-using rgl::mat_t;
-using rgl::res_obj4;
-using rgl::res_t;
-
-struct mesh;
-struct scene;
-
-using rgl::mesh_base;                 // vtable 0x54a6c8 (src/game/rgl_mesh.h)
-
-struct mesh : mesh_base {
-    mesh* parent;                // 0x18
-    tstring name2;                  // 0x1c
-    res_t* res;                  // 0x2c
-    unsigned flags;              // 0x30
-    int f34;
-    char f38;
-    unsigned color;              // 0x3c: packed ARGB multiplier
-    int f40;
-    float f44;
-    int f48, f4c;
-    std::vector<vertex60> v50;
-    std::vector<elem30> v60;
-    std::vector<point20> v70;
-    std::vector<elem14> v80;
-    std::vector<face20> v90;
-    char local_a0, local_a1;     // 0xa0: faces are local, 0xa1: points/vertices local
-    keyframes kf;                // 0xa4
-    std::vector<mesh*> kids;     // 0xb0
-    obj_c0* p_c0;                // 0xc0
-    float c4, c8;
-    mat4 m_cc;
-    unsigned mask;               // 0x10c
-    slot slots[3];               // 0x110 (slots[0].f28 at 0x138 and slots[1].f28 at 0x164 are dirty flags)
-    mat4 m194, m1d4;
-    int f214, f218, f21c, f220, f224, f228;
-    aabb v22c;
-
-    mesh();                                         // 0x412a90
-    virtual ~mesh();                                // 0x4127f0 (body; scalar deleting dtor 0x417730)
-    virtual int slot1() { return 1; }               // 0x48b1f0
-    virtual void slot2();                           // 0x412980
-
-    // parent-chain accessors: walk up until a mesh that owns its data (recursive; the out-of-line copies at
-    // 0x40eba0.. are the tail-call-optimised loops, callers inline one level)
-    std::vector<point20>& get70() { return local_a1 ? v70 : parent->get70(); }    // 0x40eba0
-    std::vector<point20>& get70_();                 // 0x40eba0 (out-of-line call)
-    std::vector<vertex60>& get50() { return local_a1 ? v50 : parent->get50(); }   // 0x40ebd0
-    keyframes& get_kf() { return local_a1 ? kf : parent->get_kf(); }              // 0x40ec00
-    std::vector<face20>& get90() { return local_a0 ? v90 : parent->get90(); }     // 0x40ec30
-    std::vector<elem30>& get60() { return local_a1 ? v60 : parent->get60(); }     // 0x40ec60
-    std::vector<elem30>& get60_();                  // 0x40ec60 (out-of-line call)
-    std::vector<vertex60>& get50_();                // 0x40ebd0 (out-of-line call)
-    int should_batch();                                // 0x40f7f0
-    void ensure_skin();                            // 0x412700
-    void update(scene* sc);                   // 0x414960
-    void ensure_local();                            // 0x412ee0
-    int add_point(const vector4* p);                // 0x412f50
-    void append(mesh* other, const mat4* m);        // 0x412fe0
-    void update_morph();                            // 0x413320
-    int render(scene* sc, const mat4& frame);       // 0x413750
-    int add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c);   // 0x413c50
-    // @ 0x413c50 form create_shadow_mesh 0x42b080 calls: v50 grows by exactly ONE element and the nt uv/colour
-    // records of a ground vertex are joined into it one after another (0x42b590 _Insert_n, 0x4106f0 _Ufill,
-    // 0x40ff60 the vertex60 shift). add_vertex's resize-then-fill compiles to a call per record instead.
-    int add_vertex_rec(int index, const vertex60& v);
-    void add_face(int a, int b, int c);             // 0x411920
-    void clear_geometry();                               // 0x428e80 (resizes every vector to 0)
-};
-
-
-// ---- render target / skin resources: only the fields used here
-struct render_res { char pad0[0x18]; char loaded; char pad19[0x24 - 0x19]; int f24; };
-struct skin {
-    char pad0[0x1c];
-    unsigned id;                // +0x1c
-    tstring file;               // +0x20
-    int f30;                    // +0x30
-    char pad34[0x48 - 0x34];
-    render_res* refs[5];        // +0x48
-};
-struct resmgr {
-    res_t* lookup(const tstring& name);                      // 0x418a70
-    skin* get_shadow_skin(int w, int h, int fmt, int f34);   // 0x41c420
-    int resolve_shader(tstring* name);                          // 0x418e90
-};
-extern resmgr g_resmgr;                                      // 0x5d6fa0
-
-// ---- the render scene (0x1d8 bytes; ctor 0x429740): viewport/camera block with an embedded frustum at +0x30.
-// shadow_tick (0x42b790) fills the block field by field.
-struct scene {
-    int f0, f4, f8, fc, f10;    // 0x00
-    float f14;                  // 0x14
-    int f18, f1c, f20, f24, f28;
-    float f2c;
-    frustum fr;                 // 0x30 (0x120 bytes)
-    render_res* target;         // 0x150
-    char pad154[0x164 - 0x154];
-    int f164;                   // 0x164
-    char pad168[0x18c - 0x168];
-    int f18c, f190;             // 0x18c
-    char pad194[0x1a5 - 0x194];
-    char f1a5;                  // 0x1a5
-    char pad1a6[2];
-    unsigned mask;              // 0x1a8
-    char pad1ac[0x1d8 - 0x1ac];
-    scene();                    // 0x429740
-};
-OFFSET_CHECK3(scene, target, 0x150);
-OFFSET_CHECK3(scene, f164, 0x164);
-OFFSET_CHECK3(scene, f1a5, 0x1a5);
-OFFSET_CHECK3(scene, mask, 0x1a8);
+using rgl::mesh;
+using rgl::scene;
 
 extern __int64 g_ticks[];                                // 0x5e2948 clock table (64-bit ticks, 1e-5 s)
 
@@ -178,16 +58,12 @@ struct FxDef { void draw(scene* sc, const matrix* m, const float* p); };   // 0x
 // The stand-in classes above keep the global names the manifest rows bind (StratEnt::render takes a global scene*); the definitions of
 // the functions they call are in the rgl modules under rgl:: names (or another class of the module), so a call binds its symbol through
 // these declarations and casts the object, which is the one the definition works on (the same object under the stand-in's name).
-namespace rgl {                                                  // (rgl::scene and rgl::mesh are rgl_mesh.h's: constructor 0x429740, add_point 0x412f50, add_vertex 0x413c50, render 0x413750)
+namespace rgl {                                                  // (rgl::scene and rgl::mesh are rgl/mesh.h's: constructor 0x429740, add_point 0x412f50, add_vertex 0x413c50, render 0x413750)
 struct psys { void update(scene* sc); };                         // 0x414960 (rgl/psys.cpp)
 struct world { void to_cell(const float* p, int* out); };        // 0x41ed00 (rgl/core/frustum_grid.cpp)
 struct mesh_ext { void clear_geometry(); };                      // 0x428e80 (rgl/scene/fx_support.cpp)
 struct entity { virtual void render(scene* sc, render_info* out); };   // 0x420310 (rgl/scene/entity_render): the base render of MeshEnt
 }
-struct material;
-struct resource_manager {                                        // rgl/resource_manager.cpp: the resource manager at 0x5d6fa0
-    skin* get_material(const rgl::string& name);                 // 0x418a70
-    material* resolve_shader(const rgl::string& name);          // 0x418e90
-};
+#include "../../rgl/core/resmgr.h"                        // resmgr: the full layout of the resource manager 0x5d6fa0 (get_shadow_skin 0x41c420); resource.h's resource_manager is its lookup half
 
 #endif // STRAT_EXT_H

@@ -27,8 +27,6 @@ namespace rgl {
 struct mesh_ext { void clear_geometry(); };              // 0x428e80 (rgl/scene/scene.h)
 struct entity;
 struct world;   // members in agent3/agent_types.h (create_entity 0x428440)
-struct aabb;
-struct box_ext { void extend_box(const aabb* other, const matrix* m); };   // 0x4201b0 (rgl/scene/entity_render.cpp)
 }
 struct shape_base;
 struct shape_resource { shape_base* clone_shape(); };    // 0x4285e0 (the body resource of a prop: res_shape.h's res_shape)
@@ -38,7 +36,7 @@ struct world_grid { void reg_shape(grid_shape* s); };    // 0x424170 (rgl/dynami
 struct level;   // members in agent3/agent_combat.h (floor_at 0x439be0, floor_z 0x439d40, light_at 0x43ac40)
 struct StratEnt;
 struct Ctx { StratEnt* find_entity(int id); };           // 0x42ba50 (strat/strat_entity.cpp)
-struct lod_group { char pad[0xe0]; lod_group(); };       // 0x41c2a0 (rgl/core/resmgr.cpp; the lod mesh of rgl_mesh.h is 0xe0 bytes)
+struct lod_group;                                        // rgl/core/resmgr.h (0xe0 bytes, ctor 0x41c2a0)
 bool is_night();                                         // 0x435740 (agent/agent.cpp)
 struct PlacedObj;
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (agent/agent.cpp)

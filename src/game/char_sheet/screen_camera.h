@@ -51,12 +51,12 @@ using rgl::mat4;
 // ---- the render scene (0x1d8 bytes, ctor 0x429740; see s00428240/world.h) ------------------------------
 #include "../../include/frustum.h"
 using rgl::frustum;
-#include "../rgl_mesh.h"
+#include "../../rgl/mesh.h"
 #include "../key_names.h"
 using rgl::scene;
 // the scene-container object g_scene (0xa732b4, Mission +0) as the camera tick sees it: the slice called it `scene` because its first
 // 0x150 bytes are laid out like a render scene (frustum at +0x30), but it is much larger (the inverse frame at +0x30c); renamed so that
-// `scene` is only the 0x1d8-byte render scene (rgl_mesh.h) that the map widget embeds at +0x17c.
+// `scene` is only the 0x1d8-byte render scene (rgl/mesh.h) that the map widget embeds at +0x17c.
 struct WorldCam {
     int f0, f4, f8, fc, f10;                    // 0x00
     float f14;                                  // 0x14
@@ -122,7 +122,7 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #include "./cs_common.h"
 #include "./cs_mat.h"                                      // identity_pos 0x40cd00
 #include "../game_globals.h"      // canonical global declarations (g_map_min_x ...)
-using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl_mesh.h)
+using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl/mesh.h)
 
 struct envelope;                                            // the scene-envelope object 0x4624c0 works on
 
@@ -135,7 +135,7 @@ struct envelope {
     void set_fade(const float* dist, const int* color);   // 0x4624c0
 };
 
-// (scene() 0x429740 and ~scene() 0x41f4e0 are rgl_mesh.h's, the widget base constructor 0x48ae20 is MissionUi's, its destructor 0x487c00 Buffer's: cs_common.h)
+// (scene() 0x429740 and ~scene() 0x41f4e0 are rgl/mesh.h's, the widget base constructor 0x48ae20 is MissionUi's, its destructor 0x487c00 Buffer's: cs_common.h)
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)

@@ -26,7 +26,7 @@ struct MissionUi {
     void set_fog(const float* a, const float* b, const float* c);   // 0x488cd0 (game/ui/mission_ui.h): World::set_fog is the same code
 };
 // ---- engine mesh -----------------------------------------------------------------------------------------
-#include "../rgl_mesh.h"
+#include "../../rgl/mesh.h"
 using rgl::mesh;
 
 // ---- widgets ---------------------------------------------------------------------------------------------
@@ -89,7 +89,6 @@ struct TableauTbl {                                             // the image tab
 extern TableauTbl g_tableaus;                                    // 0xa75f40
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
-extern resmgr g_resmgr;                                     // 0x5d6fa0
 
 // ---- the global animator ---------------------------------------------------------------------------------
 #include "../animator.h"                                  // Animator, g_anim
@@ -245,7 +244,7 @@ void char_window::open_view()
             label_refresh(a, tstring("char_i_character_shadow"));
             {
                 tstring nm("character_window_shadow");
-                mesh* m = g_resmgr.get_object(nm);
+                mesh* m = res_manager().get_object((const rgl::string*)&nm);
                 m = m->clone();
                 a->add_item(0, m);
             }

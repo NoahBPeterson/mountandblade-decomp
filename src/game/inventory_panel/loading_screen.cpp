@@ -44,7 +44,7 @@ struct MusicTable {
 
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
-#include "../rgl_mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
+#include "../../rgl/mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../game_globals.h"
 using rgl::vector4;
@@ -55,7 +55,7 @@ struct resmgr {                                       // rgl/core/resmgr.h (the 
     int load_all(int check_exists, rgl::string* root);   // 0x41c540
 };
 extern resmgr g_res;                    // 0x5d6fa0
-// rgl::mesh::build_panel is declared with float* arguments by rgl_mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
+// rgl::mesh::build_panel is declared with float* arguments by rgl/mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
 struct PanelMesh {
     void build_panel(const float* a, const float* b, const float* c, const float* d, int* color);   // 0x4de3e0 (game/cls_map)
 };
@@ -267,14 +267,9 @@ struct logger {
 };
 extern logger g_log;                              // 0x5a9f60
 
-// the text stream used to read music.txt (vtable 0x54ac88, 0x38 bytes, `failed` at +0x34).
-struct text_stream {
-    char data[0x34];
-    char failed;                                     // +0x34
-    text_stream();                                   // 0x4172d0
-    ~text_stream();                                  // 0x417310
-    bool open_read_text(const char* path);           // 0x415d60
-};
+// the text stream used to read music.txt (vtable 0x54ac88, 0x38 bytes, `failed` at +0x34): rgl/stream.h's tstream3, whose constructor and
+// destructor (0x4172d0, 0x417310) are called out of line here
+#include "../../rgl/stream.h"
 
 struct Table2;                                       // built by MusicTable::build below (0x50f7e0)
 
@@ -327,7 +322,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
     } else if (*step == 3) {
         if (!g_cfg.disable_music && !g_cfg.disable_sound) {
             g_log << "Loading Music...\n";
-            text_stream ts;
+            tstream3 ts;
             {
                 tstring name(g_module_path);
                 { tstring m("music.txt"); name.append(m); }

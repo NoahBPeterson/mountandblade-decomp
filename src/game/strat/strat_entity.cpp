@@ -80,7 +80,7 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
         if (b) {
             create_shadow_mesh(&shadow_b, 0);
             tstring name("shadow_default");
-            shadow_b->res = (res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
+            shadow_b->res = g_resmgr.get_material(*(const rgl::string*)&name);
         }
     }
     if (a) {
@@ -90,18 +90,18 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
                 t2b8 = g_ticks[f2b0] - (int)((k - (float)(rand() % 0x3dc9) * 6.3223115e-07f) * 100000.0f);
                 shadow_tick();
                 if (p288 != 0) {
-                    shadow_a->res = (res_t*)p288;
+                    shadow_a->res = p288;
                 } else {
                     tstring name("shadow_default");
-                    shadow_a->res = (res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
+                    shadow_a->res = g_resmgr.get_material(*(const rgl::string*)&name);
                 }
             }
         }
-        ((rgl::mesh*)shadow_a)->render((rgl::scene*)sc, (const rgl::matrix&)rgl::identity_pos());
+        shadow_a->render(sc, (const rgl::matrix&)rgl::identity_pos());
         f170 = 1;
     }
     if (b) {
-        ((rgl::mesh*)shadow_b)->render((rgl::scene*)sc, (const rgl::matrix&)rgl::identity_pos());
+        shadow_b->render(sc, (const rgl::matrix&)rgl::identity_pos());
     }
 }
 
@@ -313,7 +313,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         *slot = (mesh*)new rgl::mesh;
         {
             tstring name("shadow_default");
-            (*slot)->res = (res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
+            (*slot)->res = g_resmgr.get_material(*(const rgl::string*)&name);
         }
         (*slot)->slots[1].f4 = 1;
         (*slot)->slots[0].f4 = 1;

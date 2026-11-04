@@ -1,5 +1,5 @@
 // res_mesh.h: a resource mesh handed out by the resource manager (global 0x5d6fa0) and the image table (global 0xa75f40), as the
-// game modules that do not share rgl_mesh.h's rgl::mesh call it: clone 0x41c6d0, translate 0x44f240 (ret 4). ONE definition of the
+// game modules that do not share rgl/mesh.h's rgl::mesh call it: clone 0x41c6d0, translate 0x44f240 (ret 4). ONE definition of the
 // stub triple for src/game/party (party_window.h: MeshOps, ResMgr, ObjTable) and src/game/inventory_panel (char_sheet.cpp: Mesh,
 // ResMgr; party_screen.h: ObjTable, inv_common.h: RMesh). The vector parameter of translate is untyped (the party window passes a
 // rgl_math vector4, other modules a rgl.h one).

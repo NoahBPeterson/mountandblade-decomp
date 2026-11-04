@@ -20,7 +20,7 @@
 #include "../tstring.h"
 
 // ---- resource manager (0x5d6fa0) -------------------------------------------------------------------
-#include "../rgl_mesh.h"
+#include "../../rgl/mesh.h"
 using rgl::mesh;
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
@@ -28,9 +28,6 @@ extern resmgr g_alloc;                          // 0x5d6fa0
 
 // resource lookup + clone, as the factories do it (the original inlines this twice, giving the two
 // tstring temporaries separate stack slots)
-struct mesh_x {
-    mesh_x* clone();   // 0x41c6d0 (rgl/mesh_x.h)
-};
 __forceinline mesh* load_mesh(const char* name)
 {
     tstring n(name);

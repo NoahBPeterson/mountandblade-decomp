@@ -109,7 +109,7 @@ typedef char chk_csw_b180[offsetof(CharSheetWidget, b180) == 0x180 ? 1 : -1];
 #include "../../include/game_data.h"
 
 #include "../res_mesh.h"                       // ResMesh (was Mesh), ResMgr: the one definition
-#include "../rgl_mesh.h"                       // rgl::mesh (clone 0x41c6d0)
+#include "../../rgl/mesh.h"                       // rgl::mesh (clone 0x41c6d0)
 extern ResMgr g_resmgr;                         // 0x5d6fa0
 
 #include "../gui_mgr.h"
