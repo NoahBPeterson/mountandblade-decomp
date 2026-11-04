@@ -239,7 +239,7 @@ def main(argv):
             return LOCAL
         shas = {k: sha1_of(p) for k, p in files.items()}
         send(sock, {"op": "compile", "args": args, "files": shas, "outs": {k: v[0] for k, v in outs.items()}})
-        sock.settimeout(1200)
+        sock.settimeout(300)                            # a stalled job falls back to a local slot (cl.sh) instead of waiting 20 min
         need = recv(sock)["need"]
         by_sha = {}
         for k, h in shas.items():
