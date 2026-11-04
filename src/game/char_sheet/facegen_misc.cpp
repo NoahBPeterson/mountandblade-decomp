@@ -21,9 +21,9 @@ void FaceGen::update_view(int unused)
     float angle = 1.5707964f;
     ((rgl::matrix*)&m)->rotate_about_s(&angle);
     vector4 t;
-    t.x = m.u.x * f16c;
-    t.y = m.u.y * f16c;
-    t.z = m.u.z * f16c;
+    t.x = m.u.x * zoom;
+    t.y = m.u.y * zoom;
+    t.z = m.u.z * zoom;
     m.o.x = t.x + m.o.x;
     m.o.y = t.y + m.o.y;
     m.o.z = t.z + m.o.z;
@@ -61,7 +61,7 @@ void FaceGen::refresh()
     f360 = sl_age->get168();
     f364 = sl_hair_color->get168();
     ent->clear();
-    int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
+    int flags = *(int*)(g_game->chars_c + w14 * 0x508 + 0x30) & 0xf;
     int zero = 0;
     g_anim.cur = clamp_index(&flags, &zero, &g_anim.char_count);
     g_anim.time = f364;

@@ -344,26 +344,6 @@ struct Rec58 : head_rec { MB_ZERO_TAIL(Rec58)   // vtable 0x5959fc (the game-log
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
-struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
-    // Without the zeroed tail, slot +0x04 (`release`, 0x4cb680) freed whatever sat at +0x178 as a CellGrid and its
-    // tstring destructor freed garbage (crash 0x3c6d9166). The original's constructor (inline at 0x4d0bc1) writes only
-    // the head and the frustum.
-    char pad2c[0x8];
-    rgl::frustum fr;    // +0x34
-    char pad154[0x178 - 0x154];
-    res_rec* p;         // +0x178 the grid slot 1 releases (rgl/mesh2/mesh_2.cpp 0x4cb680)
-    char tail[0x428 - 0x17c];
-    virtual void reset_screen();
-    virtual void init_screen();
-    virtual void frame_update(float);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
-    // head_rec now declares the nine slots the original's table at 0x595c68 has (slot +0x08 is FaceGen::init, +0x0c
-    // CamView::update_model), so this record only overrides slot 0 with its own vfunc.
-};
-
-
-
 struct Slot20 {              // 0x20 bytes
     int a, b, c, d, e, f, g, h;
 };

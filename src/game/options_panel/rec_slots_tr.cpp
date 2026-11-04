@@ -1,13 +1,10 @@
 // rec_slots_tr.cpp: the trigger records' slot 1 (the screen reset, once per class: the original's linker folded the copies) and the
 // slot 2 / 3 overrides still bound by forwarding stubs (a bare `jmp` to the function the image's slot names), see docs/standalone_vtables.md:
-//   Rec428  (face generator) slot 2 FaceGen::init 0x4f49d0,     slot 3 CamView::update_model 0x4ea8e0   (two views of one record, char_sheet)
 // Every other trigger record has its slot 2 / 3 defined as a member of the record in the TU of the original function.
 #include "./trigger_records.h"
 #include "../strat/gui_manager.h"     // g_gui
 #include "../party/party_window_class.h"   // PartyWindow
 
-struct FaceGen { void init(); };
-struct CamView { void update_model(float); };
 
 void Rec118::reset_screen() { g_gui.reset(); overlay = 0; }       // 0x4c6e10 (ICF-folded with ItemA's copy)
 void Rec1208::reset_screen() { g_gui.reset(); }
@@ -23,5 +20,3 @@ void Rec44::reset_screen() { g_gui.reset(); }
 void Rec454::reset_screen() { g_gui.reset(); }
 void Rec58::reset_screen() { g_gui.reset(); }
 
-void Rec428::init_screen() { ((FaceGen*)this)->init(); }
-void Rec428::frame_update(float a) { ((CamView*)this)->update_model(a); }

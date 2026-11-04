@@ -7372,7 +7372,7 @@
   },
   "004ea8e0": {
    "verdict": "DIFF",
-   "symbol": "?update_model@CamView@@QAEXM@Z",
+   "symbol": "?frame_update@FaceGen@@UAEXM@Z",
    "insns": 488,
    "ours": 483,
    "unverified": 0,
@@ -7738,7 +7738,7 @@
   },
   "004f49d0": {
    "verdict": "DIFF",
-   "symbol": "?init@FaceGen@@QAEXXZ",
+   "symbol": "?init_screen@FaceGen@@UAEXXZ",
    "insns": 1331,
    "ours": 1089,
    "unverified": 0,

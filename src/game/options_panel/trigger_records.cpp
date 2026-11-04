@@ -40,6 +40,6 @@ void init_mission_trigger_records()
     slot_as<ItemD>(26) = new ItemD;
     slot_as<ItemB>(27) = new ItemB;
     slot_as<ItemC>(28) = new ItemC;
-    slot_as<Rec428>(29) = new Rec428;
+    slot_as<FaceGen>(29) = new FaceGen;
     g_5e29ac = g_trial_mode;
 }

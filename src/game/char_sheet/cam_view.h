@@ -16,10 +16,7 @@ using rgl::mat3;
 
 #include "./cs_common.h"
 #include "./cs_mat.h"                                // identity_pos, UiD, WindowMgrW, FaceRace
-struct FaceGen {                                                    // facegen_misc.h defines the whole class (that header cannot be read next to scene_world.h: Entity)
-    void update_view(int unused);                                   // 0x4eb270
-    void refresh();                                                 // 0x4eb3c0
-};
+#include "../face_gen.h"                              // FaceGen: the face-generator window record (the per-frame update 0x4ea8e0 is its slot 3)
 #include "../key_names.h"
 
 // key state / settings globals
@@ -62,58 +59,6 @@ struct Ctrl {
     virtual void vb0();                                 // +0xb0
     virtual void vb4();                                 // +0xb4
     // (set_value 0x48baa0 is UiD's: ((UiD*)ctrl)->set_value(v))
-};
-
-// the character-sheet / face-generator preview (ctor 0x4f49d0); offsets from this range
-struct CamView {
-    char pad0[0x08];
-    int  state;                                         // +0x08
-    char pad0c[0x14 - 0x0c];
-    int  troop;                                         // +0x14
-    int  choice;                                        // +0x18
-    char pad1c[0x30 - 0x1c];
-    char* target;                                       // +0x30
-    char pad34[0x164 - 0x34];
-    float yaw;                                          // +0x164
-    float pitch;                                        // +0x168
-    float zoom;                                         // +0x16c
-    unsigned char follow;                               // +0x170
-    char pad171[0x174 - 0x171];
-    int  skin;                                          // +0x174
-    World* world;                                       // +0x178
-    Ctrl* slider;                                       // +0x17c
-    char pad180[0x188 - 0x180];
-    Ctrl* cam_btn;                                      // +0x188
-    Ctrl* rows[0x1c];                                   // +0x18c
-    char pad25c[0x30c - 0x1fc];
-    Ctrl* b_next_beard;                                 // +0x30c
-    Ctrl* b_next_hair;                                  // +0x310
-    Ctrl* b_next_face;                                  // +0x314
-    Ctrl* b_prev_beard;                                 // +0x318
-    Ctrl* b_prev_hair;                                  // +0x31c
-    Ctrl* b_prev_face;                                  // +0x320
-    char pad324[0x330 - 0x324];
-    Ctrl* sl_age;                                       // +0x330
-    Ctrl* sl_hair_color;                                // +0x334
-    char pad338[0x340 - 0x338];
-    Ctrl* b_done;                                       // +0x340
-    Ctrl* b_reset;                                      // +0x344
-    Ctrl* b_randomize;                                  // +0x348
-    void* ent;                                          // +0x34c
-    int  f350;                                          // +0x350
-    int  f354;                                          // +0x354
-    int  f358;                                          // +0x358
-    int  f35c;                                          // +0x35c
-    char pad360[0x368 - 0x360];
-    float pose[8];                                      // +0x368 (x..., 8 pose floats)
-    char buf388[0x28];                                  // +0x388
-    char buf3b0[0x28];                                  // +0x3b0
-    char buf3d8[0x28];                                  // +0x3d8
-    char buf400[0x10];                                  // +0x400
-
-    void update(float dt);                              // 0x4eb050
-    // (setup 0x4eb270 and refresh 0x4eb3c0 are FaceGen's update_view / refresh, cs_common.h)
-    void update_model(float dt);
 };
 
 #define SKIN_INT(off) (*(int*)((char*)g_anim.skins + g_anim.cur * 0x1f8 + (off)))

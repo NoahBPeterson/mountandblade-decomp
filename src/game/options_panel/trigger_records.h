@@ -22,6 +22,7 @@ void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 #include "../campaign_screen.h"          // CampaignScreen
 #include "../char_sheet_panel.h"         // CharSheet
 #include "../terrain_page.h"             // TerrainPage
+#include "../face_gen.h"                 // FaceGen
 #include "../result_window.h"            // ResultWindow
 #include "../triggers/item_rec.h"        // ItemRec, ItemRec2
 #include "./mission_item_recs.h"         // MissionBlocker, ItemA..ItemD

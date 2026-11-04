@@ -14,4 +14,4 @@
 00595c44 ??_7TerrainPage@@6B@  # record vtable
 0059596c ??_7Rec48@@6B@  # record vtable
 005959fc ??_7Rec58@@6B@  # record vtable
-00595c68 ??_7Rec428@@6B@  # record vtable
+00595c68 ??_7FaceGen@@6B@  # record vtable

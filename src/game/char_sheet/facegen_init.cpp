@@ -12,7 +12,7 @@
 #include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4f49d0
-void FaceGen::init()
+void FaceGen::init_screen()
 {
     f360 = 0.5f;
     f364 = 0.5f;
@@ -21,8 +21,8 @@ void FaceGen::init()
     f358 = 0;
     f35c = 0;
     skin = 0;
-    if (troop >= 0)
-        skin = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
+    if (w14 >= 0)
+        skin = *(int*)(g_game->chars_c + w14 * 0x508 + 0x30) & 0xf;
     int keys = g_anim.skins[skin].n_elems - 1;
     ((gui_manager*)(void*)&g_msglog)->reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
@@ -262,7 +262,7 @@ void FaceGen::init()
         wd->v44.z = -1.0f;
         wd->v44.w = 0.0f;
     }
-    ent = (Entity*)((rgl::world*)w)->create_entity(9);   // 0x428440
+    ent = (rgl::strategic_entity*)((rgl::world*)w)->create_entity(9);   // 0x428440
     b->world = w;
 
     float p2[2];
@@ -298,15 +298,15 @@ void FaceGen::init()
     v154[1] = 0.0f;
     v154[2] = 0.0f;
     v154[3] = 0.0f;
-    f164 = -0.3f;
-    f168 = -0.05f;
-    f16c = 0.7f;
-    f170 = 0;
+    yaw = -0.3f;
+    pitch = -0.05f;
+    zoom = 0.7f;
+    follow = 0;
     b->scene3d.fr = fr;
 
-    // ---- hook the face up to the troop's anim table ------------------------------------------------
-    if (troop >= 0) {
-        char* rec = g_game->chars_c + troop * 0x508;
+    // ---- hook the face up to the w14's anim table ------------------------------------------------
+    if (w14 >= 0) {
+        char* rec = g_game->chars_c + w14 * 0x508;
         int sk = *(int*)(rec + 0x30) & 0xf;
         int flags = 0;
         g_anim.cur = clamp_index(&sk, &flags, &g_anim.char_count);   // 0x432510

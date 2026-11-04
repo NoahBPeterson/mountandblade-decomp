@@ -13,7 +13,7 @@ struct GameData;
 extern GameData* g_game;                                    // 0x5e2930
 
 // @ 0x4eb050
-void CamView::update(float dt)
+void FaceGen::update(float dt)
 {
     if (g_keyboard.down[0x4c])
         pitch = pitch - dt * 1.1f;
@@ -25,8 +25,8 @@ void CamView::update(float dt)
         zoom = dt * 2.1f + zoom;
     if (g_keyboard.down[0xe0]) {
         if (g_keyboard.prev[0xe0] == 0 &&
-            g_gui.mouse[0] < *(float*)(target + 0xf0) &&
-            g_gui.mouse[1] > *(float*)(target + 0xe4))
+            g_gui.mouse[0] < *(float*)((char*)body + 0xf0) &&
+            g_gui.mouse[1] > *(float*)((char*)body + 0xe4))
             follow = 1;
         if (g_keyboard.down[0xe0])
             goto check_follow;
@@ -58,21 +58,21 @@ check_follow:
 }
 
 // @ 0x4ea8e0
-void CamView::update_model(float dt)
+void FaceGen::frame_update(float dt)
 {
     int n = *(int*)((char*)g_anim.skins + skin * 0x1f8 + 0x3c) - 1;
 
     if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x12] && !g_keyboard.prev[0x12]) {
         if (*(int*)((char*)g_game + 0x1a090) == 0) {
             *(int*)((char*)g_game + 0x1a090) = 1;
-            cam_btn->vb4();
+            cam_btn->show();
         } else {
             *(int*)((char*)g_game + 0x1a090) = 0;
-            cam_btn->vb0();
+            cam_btn->hide();
         }
     }
 
-    Ctrl* sl = *(Ctrl**)(*(char**)((char*)this + 0x17c) + 0x484);
+    MissionUi* sl = *(MissionUi**)((char*)slider + 0x484);
     if (g_mission_clock != 0) {
         float a = *(float*)((char*)sl + 0x168) - *(float*)((char*)sl + 0x16c);
         float b = *(float*)((char*)sl + 0x170) - *(float*)((char*)sl + 0x16c);
@@ -80,13 +80,13 @@ void CamView::update_model(float dt)
         float v = (a / b) * (arr[0] - *(float*)((char*)sl + 0x17c))
                 + ((float)g_mission_clock / arr[0]) * *(float*)((char*)sl + 0x17c) * 0.0005f;
         ((UiD*)(void*)sl)->set_value(v);
-        sl->v48(0x10000);
+        sl->set_key_flags(0x10000);
     }
 
-    if (cam_btn && cam_btn->v44(0x10000)) {
+    if (cam_btn && cam_btn->clear_mask(0x10000)) {
         if (OpenClipboard(0)) {
             char text[0x200];
-            mb_snprintf(text, 0x200, "0x%s%s%s%s", buf388, buf3b0, buf3d8, buf400);
+            mb_snprintf(text, 0x200, "0x%s%s%s%s", keys[0], keys[1], keys[2], keys[3]);
             int len = 0;
             while (text[len])
                 len++;
@@ -109,61 +109,61 @@ void CamView::update_model(float dt)
 
     char flag = 0;
     for (int i = 0; i < n; i++) {
-        Ctrl* row = rows[i];
-        if (row->v44(0x10000)) {
-            g_dummy_mat_arr[i] = row->v38();
+        ContainerBase* row = deform_rows[i];
+        if (row->clear_mask(0x10000)) {
+            g_dummy_mat_arr[i] = row->get168();
             SkinSet* set = (SkinSet*)((char*)g_anim.skins + g_anim.cur * 0x1f8);
             ((FaceRace*)set)->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
-                rows[j]->v34(g_dummy_mat_arr[j]);
+                deform_rows[j]->set168(g_dummy_mat_arr[j]);
             flag = 1;
         }
     }
 
-    if (b_next_beard && b_next_beard->v44(0x10000)) {
+    if (b_next_beard && b_next_beard->clear_mask(0x10000)) {
         f350 = f350 + 1;
         flag = 1;
     }
-    if (b_next_hair->v44(0x10000)) {
+    if (b_next_hair->clear_mask(0x10000)) {
         f354 = f354 + 1;
         flag = 1;
     }
-    if (b_next_face->v44(0x10000)) {
+    if (b_next_face->clear_mask(0x10000)) {
         f35c = f35c + 1;
         flag = 1;
     }
-    if (b_prev_beard && b_prev_beard->v44(0x10000)) {
+    if (b_prev_beard && b_prev_beard->clear_mask(0x10000)) {
         int m = SKIN_INT(0x88);
         f350 = (f350 + m) % (m + 1);
         flag = 1;
     }
-    if (b_prev_hair->v44(0x10000)) {
+    if (b_prev_hair->clear_mask(0x10000)) {
         int m = SKIN_INT(0x18c);
         f354 = (f354 + m) % (m + 1);
         flag = 1;
     }
-    if (b_prev_face->v44(0x10000)) {
+    if (b_prev_face->clear_mask(0x10000)) {
         int m = SKIN_INT(0x190);
         f35c = (m - 1 + f35c) % m;
         flag = 1;
     }
-    if (sl_age->v44(0x10000))
+    if (sl_age->clear_mask(0x10000))
         flag = 1;
-    if (sl_hair_color->v44(0x10000))
+    if (sl_hair_color->clear_mask(0x10000))
         flag = 1;
-    if (b_randomize->v44(0x10000)) {
+    if (b_randomize->clear_mask(0x10000)) {
         g_anim.randomise();
         for (int i = 0; i < n; i++)
-            rows[i]->v34(g_dummy_mat_arr[i]);
+            deform_rows[i]->set168(g_dummy_mat_arr[i]);
         int m = SKIN_INT(0x18c);
         f354 = (m < 2 ? 0 : rand() % m) + 1;
         f350 = rand();
         f35c = rand();
         f358 = rand();
-        sl_hair_color->v34(g_anim.time);
+        sl_hair_color->set168(g_anim.time);
         flag = 1;
     }
-    if (b_reset->v44(0x10000)) {
+    if (b_reset->clear_mask(0x10000)) {
         float* p = g_dummy_mat_arr;
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
@@ -171,7 +171,7 @@ void CamView::update_model(float dt)
         ((FaceRace*)set)->relax(-1, g_dummy_mat_arr);
         flag = 1;
         for (int i = 0; i < n; i++)
-            rows[i]->v34(g_dummy_mat_arr[i]);
+            deform_rows[i]->set168(g_dummy_mat_arr[i]);
     }
 
     f350 = f350 % (SKIN_INT(0x88) + 1);
@@ -179,14 +179,14 @@ void CamView::update_model(float dt)
     f35c = f35c % SKIN_INT(0x190);
 
     if (flag)
-        ((FaceGen*)(void*)this)->refresh();
+        refresh();
 
     update(dt);
     world->step(dt);
-    ((FaceGen*)(void*)this)->update_view(*(int*)&dt);
+    update_view(*(int*)&dt);
 
-    if (state == 0) {
-        state = 1;
+    if (w08 == 0) {
+        w08 = 1;
         {
             tstring t1("ui_tutorial_face_generator");
             tstring t2("ui_tutorial");
@@ -204,10 +204,10 @@ void CamView::update_model(float dt)
         return;
     }
 
-    if (b_done->v44(0x10000)) {
-        if (troop >= 0) {
+    if (b_done->clear_mask(0x10000)) {
+        if (w14 >= 0) {
             char* rec = *(char**)((char*)g_game + 0x13a00);
-            int idx = troop;
+            int idx = w14;
             *(float*)(rec + idx * 0x508 + 0x3c0) = pose[0];
             *(float*)(rec + idx * 0x508 + 0x3c4) = pose[1];
             *(float*)(rec + idx * 0x508 + 0x3c8) = pose[2];
@@ -218,13 +218,13 @@ void CamView::update_model(float dt)
             *(float*)(rec + idx * 0x508 + 0x3dc) = pose[7];
         }
         int ch;
-        if (state == 1) {
-            state = -1;
+        if (w08 == 1) {
+            w08 = -1;
             *(int*)((char*)g_game + 0x13aec) = 1;
             *(int*)((char*)slot_as<char>(23) + 0x18) = 7;
             ch = 0x17;
         } else {
-            ch = choice;
+            ch = w18;
         }
         g_main_menu.set_state(ch);
     }

@@ -9,7 +9,7 @@
 004cb3a0 ?split_edge@graph_obj@@QAE_NH@Z
 004cb610 ?reset_screen@CharSheet@@UAEXXZ
 004cb650 ?reset_screen@TerrainPage@@UAEXXZ
-004cb680 ?reset_screen@Rec428@@UAEXXZ
+004cb680 ?reset_screen@FaceGen@@UAEXXZ
 004cb6b0 ?clear@vec3_holder@@QAEXXZ
 004cb6f0 ?grow@list_node@@QAEXI@Z
 004cb780 ?clear_vecs@graph_obj@@QAEXXZ

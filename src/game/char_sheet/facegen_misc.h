@@ -54,56 +54,8 @@ typedef rgl::strategic_entity Entity;
 #include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
-// ---- face-gen window (ctor 0x4f49d0) --------------------------------------------------------------------
-struct FaceGen {
-    char pad0[0x14];
-    int troop;                                          // +0x14
-    char pad18[0x2c - 0x18];
-    MissionUi* ui;                                           // +0x2c
-    face_body* body;                                    // +0x30
-    rgl::frustum fr;                                     // +0x34 (0x120 bytes)
-    float v154[4];                                      // +0x154
-    float f164;                                         // +0x164
-    float f168;                                         // +0x168
-    float f16c;                                         // +0x16c zoom
-    unsigned char f170;                                 // +0x170
-    char pad171[0x174 - 0x171];
-    int skin;                                           // +0x174
-    World* world;                                       // +0x178
-    MissionUi* slider;                                       // +0x17c
-    MissionUi* deform;                                       // +0x180
-    MissionUi* buttons;                                      // +0x184
-    MissionUi* cam_btn;                                      // +0x188
-    UiB* deform_rows[0x30];                             // +0x18c (one row per deform key; 0x30 slots up to key_labels)
-    MissionUi* key_labels[0x30];                             // +0x24c (up to b_next_beard)
-    MissionUi* b_next_beard;                                 // +0x30c
-    MissionUi* b_next_hair;                                  // +0x310
-    MissionUi* b_next_face;                                  // +0x314
-    MissionUi* b_prev_beard;                                 // +0x318
-    MissionUi* b_prev_hair;                                  // +0x31c
-    MissionUi* b_prev_face;                                  // +0x320
-    MissionUi* t_change_beard;                               // +0x324
-    MissionUi* t_change_hair;                                // +0x328
-    MissionUi* t_change_face;                                // +0x32c
-    UiB* sl_age;                                        // +0x330
-    UiB* sl_hair_color;                                 // +0x334
-    MissionUi* t_age;                                        // +0x338
-    MissionUi* t_hair_color;                                 // +0x33c
-    MissionUi* b_done;                                       // +0x340
-    MissionUi* b_reset;                                      // +0x344
-    MissionUi* b_randomize;                                  // +0x348
-    Entity* ent;                                        // +0x34c
-    int f350;                                           // +0x350
-    int f354;                                           // +0x354
-    int f358;                                           // +0x358
-    int f35c;                                           // +0x35c
-    float f360;                                         // +0x360
-    float f364;                                         // +0x364
-    PackedState state;                                  // +0x368
-    char keys[4][0x28];                                 // +0x388
-    void update_view(int unused);                       // 0x4eb270 (ret 4)
-    void refresh();                                     // 0x4eb3c0
-};
+// ---- face-gen window: game/face_gen.h ----------------------------------------------------------------
+#include "../face_gen.h"
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
 #include "../ui_globals.h"      // UI / core globals
 
