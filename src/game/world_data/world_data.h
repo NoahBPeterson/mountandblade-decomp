@@ -315,16 +315,11 @@ struct RecPool {                                                // an object wit
     int serial;                                                 // +0x24
     unsigned alloc_record();                                    // 0x493700 (thiscall; returns the popped record id, in eax)
 };
-// The pool record's constructor is stat_panel_x's Event::Event (0x48c210), declared under the defining class's name; a party record
-// as `new Party[16]` builds it: vtable 0x592644 at +0, constructor 0x4934d0 (nothrow), whose body is PartyW::construct below (the
-// constructor forwards to it, so the array new binds to the one definition).
-// Its destructor has no code in the binary (no caller, no definition): it only makes `new[]` keep the count cookie, so it is
-// an empty inline one here (an out-of-line ~Rec98 would be an external no object defines); the pages are used as Rec98.
-struct Event {
-    char body[0x98];
-    Event();   // 0x48c210
-    ~Event() {}
-};
+// The pool record is mission_ui2/stat_panel_x.h's Event (constructor 0x48c210, vtable 0x5922cc, an IfaceB of 0x98 bytes); the pages are
+// `new Event[16]`, which is where the vector deleting destructor in the vtable is emitted. A party record as `new Party[16]` builds it:
+// vtable 0x592644 at +0, constructor 0x4934d0 (nothrow), whose body is PartyW::construct below (the constructor forwards to it, so the
+// array new binds to the one definition).
+#include "../mission_ui2/stat_panel_x.h"
 struct PartyNew {
     ~PartyNew() {}                                              // (non-virtual here: the vtable is stored by PartyW::construct; the destructor only makes `new[]` keep a count cookie: no code in the binary)
     char body[0x5ac8];

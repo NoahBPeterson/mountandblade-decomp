@@ -4,16 +4,16 @@
 #ifndef GAME_MISSION_UI2_STAT_PANEL_X_H
 #define GAME_MISSION_UI2_STAT_PANEL_X_H
 #include "../tstring.h"
+#include "../../include/iface.h"   // IfaceB: the record base (vtable 0x5908f8; Event is the same family as RecF)
 
 // highest skill rank / tier, read by Troop::set_attr and Troop::set_skill (bound through symbols/slices/stat_panel_x.txt: outside the image)
 #include "../skill_cap.h"
 
-// A scripted-event placeholder (vtable 0x5922cc, size 0x94): a name, a position/size record and the two clock readings.
-// Constructor 0x48c210; init() is the object's vtable slot 1 (0x5922d0, no direct callers).
-struct Event {
-    virtual void v00();                     // +0x00 vptr 0x5922cc (0x48c210); slot 0 is not defined in this object
-    virtual void init();                    // slot 1 (0x5922d0): 0x48c260
-    char pad04[0x10 - 4];
+// A scripted-event placeholder (vtable 0x5922cc, size 0x98, an IfaceB like RecF): a name, a position/size record and the two
+// clock readings. Constructor 0x48c210; slot 1 (0x5922d0, no direct callers) is the IfaceB::slot1 override 0x48c260 (it
+// initialises the event); slot 0 is the compiler's vector deleting destructor (the same code as RecF's, 0x4316c0) and slot 2
+// IfaceB's empty one.
+struct Event : IfaceB {
     int f10;                                // +0x10 (0x48c260)
     tstring name;                           // +0x14 "An Event" (0x48c260), "" (0x48c210)
     int f24;                                // +0x24
@@ -37,8 +37,9 @@ struct Event {
     int f88;                                // +0x88 g_ticks[0] low word
     int f8c;                                // +0x8c g_ticks[0] high word
     int f90;                                // +0x90
+    int f94;                                // +0x94 (no function of this object touches it)
     Event();                                // 0x48c210
-    virtual void s_last() {}                 // placeholder: original table 0x5922cc has 3 slots, ours 2
+    virtual void slot1();                   // 1: 0x48c260 (init)
 };
 
 #endif // GAME_MISSION_UI2_STAT_PANEL_X_H

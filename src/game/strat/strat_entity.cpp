@@ -27,23 +27,23 @@
 #include "../../include/clock_table.h"
 
 // @ 0x42a090
-void StratEnt::render(scene* sc, render_info* out)
+void rgl::strategic_entity::render(rgl::scene* sc, rgl::render_info* out)
 {
     if (f140) {
         if (fx)
-            fx->draw(sc, &pos, &f144);
-        ((rgl::entity*)this)->rgl::entity::render((rgl::scene*)sc, out);
+            fx->draw(sc, &local, &f144);
+        rgl::entity::render(sc, out);
         if ((sc->mask & 1) && (mode & 3) && g_options.i28) {
-            Light* l = ctx->first_dir_light();
+            Light* l = ((Ctx*)owner)->first_dir_light();
             if (l && !(l->flags & 2)) {
                 bool a = f160 * f294 > 0.05f;
                 bool b = f164 * f294 > 0.05f;
                 if (a || b)
-                    update_shadows(sc, a, b);
+                    ((StratEnt*)this)->update_shadows(sc, a, b);
             }
         }
-        for (Psys** p = emitters_first; p != emitters_last; ++p)
-            ((rgl::psys*)*p)->update((rgl::scene*)sc);
+        for (std::vector<rgl::psys*>::iterator p = emitters.begin(); p != emitters.end(); ++p)
+            (*p)->update(sc);
         f31c++;
     }
 }

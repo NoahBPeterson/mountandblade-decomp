@@ -58,12 +58,8 @@ struct FxDef { void draw(scene* sc, const matrix* m, const float* p); };   // 0x
 // The stand-in classes above keep the global names the manifest rows bind (StratEnt::render takes a global scene*); the definitions of
 // the functions they call are in the rgl modules under rgl:: names (or another class of the module), so a call binds its symbol through
 // these declarations and casts the object, which is the one the definition works on (the same object under the stand-in's name).
-namespace rgl {                                                  // (rgl::scene and rgl::mesh are rgl/mesh.h's: constructor 0x429740, add_point 0x412f50, add_vertex 0x413c50, render 0x413750)
-struct psys { void update(scene* sc); };                         // 0x414960 (rgl/psys.cpp)
-struct world { void to_cell(const float* p, int* out); };        // 0x41ed00 (rgl/core/frustum_grid.cpp)
-struct mesh_ext { void clear_geometry(); };                      // 0x428e80 (rgl/scene/fx_support.cpp)
-struct entity { virtual void render(scene* sc, render_info* out); };   // 0x420310 (rgl/scene/entity_render): the base render of MeshEnt
-}
-#include "../../rgl/core/resmgr.h"                        // resmgr: the full layout of the resource manager 0x5d6fa0 (get_shadow_skin 0x41c420); resource.h's resource_manager is its lookup half
+#include "../../rgl/scene/scene_entity.h"            // rgl::entity / strategic_entity / psys (the entity classes the member functions work on)
+#include "../../rgl/scene/world.h"                   // rgl::world (to_cell 0x41ed00)
+#include "../../rgl/scene/scene.h"                   // rgl::mesh_ext (clear_geometry 0x428e80)
 
 #endif // STRAT_EXT_H

@@ -221,7 +221,7 @@ Event::Event()
 }
 
 // @ 0x48c260
-void Event::init()
+void Event::slot1()
 {
     f10 = 0;
     name.assign("An Event");

@@ -207,6 +207,11 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
         _sa = _sym_addrs
         _i = bisect.bisect_right(_sa, ours)
         n_ours = (_sa[_i] - ours) // 4 if _i < len(_sa) else 0
+        if n_ours > e["slots"] > 0:
+            # the next symbol is further than the table's declared slots: the dword between is the 8-byte alignment of the next
+            # table (UiE's 49 slots, outfile's 27), not a slot of ours. It must not be compared with the original's NEXT table's
+            # first slot (back to back there) and overwritten.
+            n_ours = e["slots"]
         limit = min(max(e["slots"], n_orig), n_ours) if n_ours > 0 else e["slots"]
         plan, agree, comparable = [], 0, 0
         if e["slots"] != n_true:
@@ -241,6 +246,7 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
                 # row owner wrote by hand or a different class's folded copy. Not rewritten (the class's own is right
                 # for it); listed so the class gets its real destructor chain.
                 report.setdefault("dtor_slots", []).append(vt)
+                report.setdefault("dtor_detail", {})[vt] = {"original": "%08x %s" % (t, name), "ours": "%08x %s" % (have, (by_addr.get(have) or ["?"])[:3])}
                 comparable += 1
                 continue
             if have == symmap.get("__purecall") and want != have:

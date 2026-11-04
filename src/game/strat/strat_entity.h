@@ -86,7 +86,6 @@ struct MeshEnt {
     vector4 scale;              // 0x14c
 };
 struct StratEnt : MeshEnt {
-    virtual void render(scene* sc, render_info* out);   // 9: 0x42a090
     float f15c;                 // 0x15c   update_shadows 0x42a1f0 (-1/(f15c*25)), create_shadow_mesh 0x42b080 (sample count)
     float f160, f164;           // 0x160 / 0x164   render 0x42a090 (shadow strengths), create_shadow_mesh 0x42b080
     int f168, f16c, f170;       // 0x168 / 0x16c / 0x170   f170: update_shadows 0x42a1f0 (= 1)
@@ -136,12 +135,7 @@ OFFSET_CHECK3(StratEnt, fx, 0x304);
 OFFSET_CHECK3(StratEnt, emitters_first, 0x30c);
 OFFSET_CHECK3(StratEnt, f31c, 0x31c);
 
-// the point transform of a frame (0x408460), as callers inline it
-static __forceinline vector4 tp(const matrix& m, const vector4& p)
-{
-    return vector4(m.s.x * p.x + m.f.x * p.y + m.u.x * p.z + m.o.x,
-                   m.s.y * p.x + m.f.y * p.y + m.u.y * p.z + m.o.y,
-                   m.s.z * p.x + m.f.z * p.y + m.u.z * p.z + m.o.z);
-}
+// the point transform of a frame (0x408460), as callers inline it: rgl::tp (rgl/scene/scene_math.h)
+using rgl::tp;
 
 #endif // STRAT_ENTITY_H
