@@ -868,5 +868,35 @@
    "reached through tables": 192944,
    "library data": 55422
   }
+ },
+ "2026-11-03T22:49:20-06:00": {
+  "data_labels": 157,
+  "aliases": 255,
+  "traps": 0,
+  "redirects": null,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 16,
+  "placeholder_virtuals": 2,
+  "forwarding_stubs": 32,
+  "data_definitions": 181,
+  "when": "2026-11-03T22:49:20-06:00",
+  "commit": "4f72003a",
+  "build": "merge_ns",
+  "label": "vectors, Rec classes, widgets, c49 views",
+  "items": {
+   "defined in source": 185,
+   "generated from source": 2057,
+   "borrowed from image": 64,
+   "reached through tables": 620,
+   "library data": 482
+  },
+  "bytes": {
+   "defined in source": 143722124,
+   "generated from source": 308796,
+   "borrowed from image": 15488,
+   "reached through tables": 192944,
+   "library data": 55614
+  }
  }
 }
