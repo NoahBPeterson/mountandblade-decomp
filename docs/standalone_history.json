@@ -1607,22 +1607,24 @@
   "forwarding_stubs": 0,
   "data_definitions": 184,
   "when": "2026-11-04T12:59:21-06:00",
-  "commit": "5a5b57b4",
+  "commit": "7ec16379",
   "build": "merge_rm",
-  "label": "one rgl::mesh",
+  "label": "measurement: unnamed bss split out",
   "items": {
    "defined in source": 181,
    "generated from source": 821,
    "borrowed from image": 55,
-   "reached through tables": 30,
-   "library data": 212
+   "reached through tables": 10,
+   "library data": 212,
+   "unnamed bss": 20
   },
   "bytes": {
    "defined in source": 143759672,
    "generated from source": 281516,
    "borrowed from image": 5488,
-   "reached through tables": 42298,
-   "library data": 10424
+   "reached through tables": 163,
+   "library data": 10424,
+   "unnamed bss": 42135
   }
  }
 }
