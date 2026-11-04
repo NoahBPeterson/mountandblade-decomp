@@ -392,6 +392,60 @@ DEFAULT_PATCHES = ["perf_sound"]
 DEFAULT_CFLAGS = "/arch:SSE2"
 
 
+XC_TABLE = (0x5a8008, 0x5a80c0)         # the original's .CRT$XCU: __xc_a + 4 .. __xc_z (one pointer per static initialiser)
+
+
+def initialiser_table(img):
+    """[(initialiser VA, {4-byte values in its code})]: each `$E` function up to its final ret or tail jump."""
+    import capstone
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    out = []
+    for slot in range(XC_TABLE[0], XC_TABLE[1], 4):
+        f = img.u32(slot)
+        end = f
+        for ins in md.disasm(img.read(f, 0x200), f):
+            end = ins.address + ins.size
+            if ins.mnemonic in ("ret", "jmp"):
+                break
+        code = img.read(f, end - f)
+        out.append((f, {struct.unpack_from("<I", code, i)[0] for i in range(len(code) - 3)}))
+    return out
+
+
+def definitions_by_stem(stems):
+    """{stem: {original VA: first line}} of the data definitions in each module's own source: a column-0 declaration
+    (no extern) whose comment starts with the global's original address, `float g_x = 1.0f;   // 0x5a9f24 (...)`."""
+    pat = re.compile(r"^(?!extern\b|typedef\b|struct\b|class\b|template\b|using\b|namespace\b)[A-Za-z_](?:(?!//).)*[;{]\s*//\s*0x([0-9a-f]{6,8})\b", re.I)
+    out = {}
+    for dp, _dn, fns in os.walk(os.path.join(ROOT, "src")):
+        for fn in fns:
+            if fn.endswith(".cpp") and fn[:-4] in stems:
+                for line in open(os.path.join(dp, fn), encoding="utf-8", errors="replace"):
+                    m = pat.match(line)
+                    if m and int(m[1], 16) >= 0x59a000:         # .rdata / .data / .bss
+                        out.setdefault(fn[:-4], {})[int(m[1], 16)] = line.split("//")[0].strip()
+    return out
+
+
+def order_by_initialisers(objs, stem_of):
+    """Put the objects that define initialised globals in the order of the original's initialiser table (the first
+    initialiser that constructs one of a module's globals ranks the module); every other object keeps its place."""
+    import resolve as R
+    table = initialiser_table(R.Image())
+    defs = definitions_by_stem({stem_of(o) for o in objs})
+    rank, used = {}, set()
+    for stem, vas in defs.items():
+        hits = [i for i, (_f, ops) in enumerate(table) if ops & set(vas)]
+        if hits:
+            rank[stem] = min(hits)
+            used |= set(hits)
+    slots = [i for i, o in enumerate(objs) if stem_of(o) in rank]
+    moved = sorted((objs[i] for i in slots), key=lambda o: rank[stem_of(o)])
+    for i, o in zip(slots, moved):
+        objs[i] = o
+    return objs, "%d of %d initialisers belong to %d modules, linked in table order" % (len(used), len(table), len(rank))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "relink", "standalone"))
@@ -453,13 +507,16 @@ def main():
     rmap = json.load(open(rmap_path))
     owner = {sym: stem for sym, stem in rmap["defined_at"].values()}
     stem_of = lambda o: os.path.basename(o).rsplit("_", 1)[0]
-    # Link in the original's module order (each module's lowest original address): the linker lays out .CRT$XCU, and
-    # so runs the compiler-made static initialisers, in link order, as the original's did (its initialisers 0x547e00..
-    # 0x548500 follow its modules' order); modules without rows keep their place after those with rows.
+    # Code order first: each module's lowest original code address (the original's modules are laid out in link order).
     first_va = {}
     for va, (_sym, stem) in rmap["defined_at"].items():
         first_va[stem] = min(first_va.get(stem, 1 << 32), int(va, 16))
     objs.sort(key=lambda o: first_va.get(stem_of(o), 1 << 32))
+    # The linker lays out .CRT$XCU, and so runs the compiler-made static initialisers, in link order, as the original's did
+    # (its table follows the order of the objects that defined the globals). A global's definition sits in the module that
+    # uses it most, not in the object that defined it, so the code order is not the initialiser order: the modules that
+    # define initialised globals are put in the order of the original's own table.
+    objs, steps["init_order"] = order_by_initialisers(objs, stem_of)
     if a.patches:
         pobjs, replaced = patch_objects(a.patches, rmap)
         for sym, stem in replaced.items():          # the patch owns the symbol: the link-order logic below keeps its copy
