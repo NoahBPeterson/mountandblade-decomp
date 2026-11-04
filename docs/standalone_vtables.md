@@ -106,6 +106,15 @@ Lessons that cost time:
   step) and slot 7 are its own virtuals; InventoryPanel's methods (inventory_panel/inventory_panel.cpp, built with the GameData
   header) are its members, so there is no forwarding stub left for this record.
 * C4c3160 is PartyScreen now (game/party_screen_class.h; slot 2 `init_screen` 0x502cc0, slot 3 `frame_update` 0x531800): no stub left.
+* mission_items extents (checked with the offsets each target reads off `this`, 2026-11-04): every target fits its record, so each is a real
+  member of it and not an ICF-folded copy of another class: ItemA (0xf8 bytes) is GameScreen::build (reads to +0xf4), EventScreen::on_event
+  (+0xec), MissionUpdater::update (+0xec) and MapDialog::reset_state (+0x2c); ItemB / ItemC (0x60) SourceScreen::hook_a / hook_b (+0x58);
+  ItemD (0xb4) view_obj::reset / InputScreen::on_input (+0xb0); MissionBlocker (0x328) MissionParams::init (+0x324), MissionHud::refresh
+  (+0x2fc), Screen_s261e0::tick (+0x324). The `vtable 0x59619c / 0x5961cc / 0x5961f0 / 0x596214` the exchange_screens.h views name are
+  interior pointers of the item tables (slot 3 of 0x596190 / 0x5961c0 / 0x5961e4 / 0x596208), not tables of other classes. So the merges are
+  the same kind as PartyScreen / FaceGen: the views (ScreenBase raw screens, GameScreen / MissionHud in agent5/agent_hud.h, Screen_s261e0
+  in mission5/mission_5.h, MapDialog in four headers, SaveWinCtl / BlockOwner, MissionSource) fold into ItemA..D / MissionBlocker; the
+  ItemA..C constructors still carry _ReadWriteBarrier and need the owned_block base first.
 * mission_items: ItemA / ItemB / ItemC / ItemD / MissionBlocker. Their deleting destructor in the original is 0x4ce930, the
   ItemRec one: ItemA..C start with the same `owned_block` at +0x30 as ItemRec (their `f34 f38 f3c` are its begin/end/cap), so
   the item family has a shared base class (head_rec + owned_block + clock / stamp), ItemRec / ItemRec2 / ItemA..C derive from
