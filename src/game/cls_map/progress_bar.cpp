@@ -467,30 +467,7 @@ __declspec(noinline) float ini_file::get_float(int* idx)
 // ---- 0x4e5270: list the nine save files ("sgDD.sav") and read their headers ----------------------------------------------------------------
 // the header 0x4e54e0 reads out of a slot file (list_saves keeps one on its stack; fields by offset)
 // the stream object 0x4e5270 builds (0x54ae48 reader -> 0x54ad68 mem_stream) and 0x4e54e0 reads
-struct SlotStreamBase {
-    void* vptr;                                 // +0x00
-    SlotStreamBase() { vptr = (void*)vtbl_54a740; }
-};
-struct SlotStream : SlotStreamBase {
-    tstring name;                               // +0x04
-    int f14;                                    // +0x14
-    char f18;                                   // +0x18
-    int f1c;                                    // +0x1c
-    tstring data;                               // +0x20
-    FILE* file;                                 // +0x30
-    char failed;                                // +0x34
-    SlotStream()
-    {
-        f18 = 0;
-        f1c = 0;
-        failed = 1;
-        file = 0;
-        f14 = 0;
-        vptr = (void*)vtbl_54ae48;
-    }
-    ~SlotStream() { vptr = (void*)vtbl_54ad68; }
-    char open_read(const char* path) { return ((text_stream*)this)->open_read(path); }     // 0x415290 (ret 4; the folded text_stream::open_read)
-};
+#include "../../rgl/stream_inline.h"          // bin_reader: the 0x54ae48 reader whose inline constructor and destructor 0x4e5270 expands
 struct SlotReader {                             // the 0x54ae48 reader's virtuals
     virtual void r0(); virtual void r1(); virtual void r2(); virtual void r3(); virtual void r4();
     virtual void r5(); virtual void r6(); virtual void r7(); virtual void r8(); virtual void r9();
@@ -517,8 +494,8 @@ void C4c31c0::list_saves()
         sprintf(dir, "");
         save_path(dir);
         mb_snprintf(full, 0x200, "%s%s\\sg%d%d.sav", dir, p, i / 10, i % 10);
-        SlotStream s;
-        char ok = s.open_read(full);
+        bin_reader s;
+        char ok = ((text_stream*)&s)->open_read(full);   // 0x415290 (ret 4; the folded text_stream::open_read)
         slot->seconds = 0;
         if (ok) {
             if (hdr.read_slot((SlotReader*)&s)) {

@@ -140,9 +140,6 @@ extern AnimDefV g_anim_set;                // 0xa76628
 
 // vtables
 extern char vtbl_CD3DApplication[];              // 0x549c60
-extern char vtbl_54a740[];                       // 0x54a740
-extern char vtbl_54ad68[];                       // 0x54ad68
-extern char vtbl_54ae48[];                       // 0x54ae48
 extern char vtbl_591d58[];                       // 0x591d58
 extern char vtbl_XyzButton[];                    // 0x591ee8
 extern char vtbl_591fb0[];                       // 0x591fb0

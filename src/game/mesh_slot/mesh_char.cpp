@@ -152,53 +152,16 @@ void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
     ((EChar_c*)&chars[cur])->collect(a, b, c, weights, item, set, material, v, scale, time);
 }
 
+// The binary reader on the stack: its constructor and destructor are expanded inline in the original (stream_inline.h);
+// src/rgl/stream.h's bin_reader::bin_reader is the out-of-line 0x417c50.
+#include "../../rgl/stream_inline.h"
+
 // @ 0x47fbd0
-// The binary reader on the stack: its constructor and destructor are expanded inline in the original (vtable 0x54a740 stored
-// first, 0x54ae48 last; 0x54ad68 in the destructor), so it is spelled out here; src/rgl/stream.h's bin_reader::bin_reader
-// is the out-of-line 0x417c50.
-struct btstr {
-    int pos;                     // +0
-    char* buf;                   // +4
-    int cap;                     // +8
-    int len;                     // +0xc
-    void ctor() { ((tstring*)this)->tstring::tstring(); }      // 0x42bbd0 (tstring::tstring)
-    void dtor() { ((tstring*)this)->~tstring(); }              // 0x42bc40 (tstring::~tstring)
-};
-struct bin_reader_o {
-    void* vt;                    // 0x00
-    btstr name;                  // 0x04
-    int state;                   // 0x14
-    char autoflush;              // 0x18
-    char pad19[3];
-    int flushed;                 // 0x1c
-    btstr buf;                   // 0x20
-    FILE* fp;                    // 0x30
-    char failed;                 // 0x34
-    bin_reader_o()
-    {
-        vt = (void*)vtbl_54a740;
-        name.ctor();
-        buf.ctor();
-        autoflush = 0;
-        flushed = 0;
-        failed = 1;
-        fp = 0;
-        state = 0;
-        vt = (void*)vtbl_54ae48;
-    }
-    ~bin_reader_o()
-    {
-        vt = (void*)vtbl_54ad68;
-        buf.dtor();
-        name.dtor();
-    }
-    bool open_read(const char* path) { return ((text_stream*)this)->open_read(path); }     // 0x415290 (the folded text_stream::open_read)
-};
 void GameData::load_scene(int idx)
 {
     tstring path = scene_path(idx);
-    bin_reader_o s;
-    if (!s.open_read(module_path(path.c_str()))) {
+    bin_reader s;
+    if (!((text_stream*)&s)->open_read(module_path(path.c_str()))) {
         g_gui.add("Unable to load scene objects!", 0xffff0000);
         g_gui.add(levels[idx].name10, 0xffff0000);
     } else {

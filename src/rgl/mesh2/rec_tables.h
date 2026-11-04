@@ -80,17 +80,6 @@ typedef void (__fastcall *vt_int)(void* self, int* dst);
 inline void st_str(void* s, void* dst) { ((vt_rec*)(*(char**)s))[0x54 / 4](s, dst); }
 inline void st_int(void* s, int* dst) { ((vt_rec*)(*(char**)s))[0x4c / 4](s, dst); }
 
-// A half-initialised tstring used by 0x4c2ea0 / 0x4c3350 (vtable pointer 0x54a740, restored to 0x54ad68 on exit).
-struct tstr_ll {
-    void*      typ;     // +0
-    tstring    s;       // +4
-    tstr_ll() : typ((void*)vtbl_54a740) { }
-    tstr_ll(const char* c) : typ((void*)vtbl_54a740), s(c) { }                // 0x42bbe0
-    tstr_ll(const tstring& o) : typ((void*)vtbl_54a740), s(o) { }             // 0x42c110
-    ~tstr_ll() { typ = (void*)vtbl_54ad68; }
-    const char* text() const { return s.buf ? s.buf : (const char*)&s.buf; }
-};
-
 #include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
 
 
