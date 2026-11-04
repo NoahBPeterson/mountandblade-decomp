@@ -181,8 +181,8 @@ Kept: the inline `__asm` tail of `Dialog::proc` 0x4d0240 (the C spelling of the 
 cl 13.10; the slice's note); `__declspec(noinline)` on the T-regime helpers (`ctr::key_name` 0x4d7610 defined after its caller
 0x4d7370, `options_panel::update_cursor` / `refresh_texts` / `draw_faction_report`, `ControlKeyTable::restore`,
 `flora_alloc::construct` and its siblings); the explicit `~tstring()` calls of video_page.cpp (the slice's device to reproduce
-the original's destructor placement); `ItemSource` in hud.h (the callee 0x4d5410 seen without its body, so `handle_buttons`
-calls it with the C convention instead of cl's whole-TU register convention); `MeshCalls` / `MeshExt` casts in mesh_edit.cpp
+the original's destructor placement); `MissionSource::pick` 0x4d5410 in its own object mission_pick.cpp (so hud.cpp's `handle_buttons` sees it without its body and
+calls it with the C convention instead of cl's whole-TU register convention; this replaced the `ItemSource` view and its /alternatename); `MeshCalls` / `MeshExt` casts in mesh_edit.cpp
 for the same reason; the volatile spills in `add_triangle`; local copies of `user_path` and `decode_utf8` in keys_page.cpp
 (static helpers in the original with register conventions; the audit lists them as "local copies").
 

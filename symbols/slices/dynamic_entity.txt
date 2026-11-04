@@ -1,8 +1,4 @@
-00426690 ?box3_b@@YA_NPBUvector4@rgl@@000@Z  # src/rgl/dynamic/dynamic_entity.cpp: bool-returning twin of box_overlap3 (the callers test al)
-00426700 ?box2_b@@YA_NPBUvector4@rgl@@000@Z  # bool-returning twin of box_overlap2
 00427ca0 ?ufill_ext@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@std@@@Z  # ext twin of std::_Uninitialized_fill_n<Contact*>
-00426e90 ?pop_heap_0_ext@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0PAPAUentity@rgl@@@Z  # ext twin of std::_Pop_heap_0
-00426a30 ?sort_range_x@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0H@Z  # ext twin of sort_range (std::sort's body; query_entities calls it)
 00427590 ?_Insert_n@contact_inl@@QAEXPAUContact@rgl@@IABU23@@Z  # ext twin of contact_ops::_Insert_n (collide_shape expands push_back inline)
 0040f880 ??Hiterator@contact_inl@@QBE?AU01@H@Z  # std::vector<Contact>::iterator::operator+ (out of line, another object)
 0041f4b0 ?clear@contact_ops@rgl@@QAEXXZ  # std::vector<Contact>::clear as the game's vec<T>::clear: frees the block (shared by every 4-byte-element vector)

@@ -21,17 +21,10 @@ using namespace rgl;
 // ---- the ext twins ------------------------------------------------------------------------------------------------
 // Callers of these functions saw them as opaque functions (see fx_anim.h / world_grid.cpp): the twin is only declared
 // and bound to the real function with /alternatename.
-bool box3_b(const vector4* a, const vector4* b, const vector4* c, const vector4* d);       // 0x426690
-bool box2_b(const vector4* a, const vector4* b, const vector4* c, const vector4* d);       // 0x426700
 void __cdecl ufill_ext(Contact* p, unsigned int n, const Contact& v, std::allocator<Contact>& al);   // 0x427ca0
-void pop_heap_0_ext(std::vector<entity*>::iterator first, std::vector<entity*>::iterator last, entity** tag);   // 0x426e90
-void sort_range_x(std::vector<entity*>::iterator first, std::vector<entity*>::iterator last, int ideal);          // 0x426a30
-#pragma comment(linker, "/alternatename:?pop_heap_0_ext@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0PAPAUentity@rgl@@@Z=??$_Pop_heap_0@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@PAUentity@rgl@@@std@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@0PAPAUentity@rgl@@@Z")
-#pragma comment(linker, "/alternatename:?sort_range_x@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0H@Z=?sort_range@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@0H@Z")
+void sort_range(std::vector<entity*>::iterator first, std::vector<entity*>::iterator last, int ideal);          // 0x426a30
 #pragma comment(linker, "/alternatename:?ufill_ext@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@std@@@Z=??$_Uninitialized_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@@Z")
 #pragma comment(linker, "/alternatename:?_Insert_n@contact_inl@@QAEXPAUContact@rgl@@IABU23@@Z=?_Insert_n@contact_ops@rgl@@QAEXPAUContact@2@IABU32@@Z")
-#pragma comment(linker, "/alternatename:?box3_b@@YA_NPBUvector4@rgl@@000@Z=?box_overlap3@@YAHPBUvector4@rgl@@000@Z")
-#pragma comment(linker, "/alternatename:?box2_b@@YA_NPBUvector4@rgl@@000@Z=?box_overlap2@@YAHPBUvector4@rgl@@000@Z")
 
 static inline void scale3(vector4* v, float k) { v->x = k * v->x; v->y = k * v->y; v->z = k * v->z; }
 static __forceinline void set3(vector4* o, float x, float y, float z) { o->x = x; o->y = y; o->z = z; }
@@ -368,9 +361,9 @@ void cell_q::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsig
         const vector4* smin = sh->get_min(&tv[0]);
         bool hit;
         if (*use3d == 0)
-            hit = box2_b(bmin, bmax, smin, smax);
+            hit = box_overlap2(bmin, bmax, smin, smax);
         else
-            hit = box3_b(bmin, bmax, smin, smax);
+            hit = box_overlap3(bmin, bmax, smin, smax);
         if (!hit) {
             st.i++;
             continue;
@@ -449,7 +442,7 @@ void world_q::query_entities(entity* e, unsigned mask, bool ordered, std::vector
             }
         }
     }
-    sort_range_x(out->begin(), out->end(), out->end() - out->begin());
+    sort_range(out->begin(), out->end(), out->end() - out->begin());
     out->erase(std::unique(out->begin(), out->end()), out->end());
 }
 
@@ -498,7 +491,7 @@ void sort_range(It first, It last, int ideal)
         std::make_heap(first, last);
         for (; 1 < last - first; --last) {
             if (1 < last - first)
-                pop_heap_0_ext(first, last, (u32*)0);
+                std::_Pop_heap_0(first, last, (u32*)0);
         }
     } else if (1 < count)
         std::_Insertion_sort(first, last);

@@ -54,7 +54,7 @@ Findings for the TU map (not applied elsewhere):
 ## Headers
 
 New: `fx_anim.h` (FxAnim, AnimRec, FxBone, KeyTable, quaternion, with their ext twins), `world_grid.h` (world_grid, grid_cell,
-shape_vec, ground_store, vec36/vec136), `dynamic_entity.h` (rigid_base, dynamic_entity, Contact, world_q, cell_q, contact vectors),
+shape_vec, ground_store, vec136), `dynamic_entity.h` (rigid_base, dynamic_entity, Contact, world_q, cell_q, contact vectors),
 `grid_shape.h` (the collision shape as the grid sees it). Existing headers used: `../rgl_math.h`, `../resource.h`,
 `../scene/{scene_math,frustum,scene,emitter,scene_entity,world,fx}.h`. Nothing outside this directory was edited. Layouts cite
 their proving addresses in the headers. The slices' names map as: Animator/Curve -> FxAnim, World -> world_grid, Store ->
@@ -70,8 +70,11 @@ Header conflicts and gaps (worked around locally, to be absorbed upstream):
    full class is defined in `dynamic_entity.h`.
 4. `fx.h`: `FxElem` has quaternion fields as raw floats (views `Bone`), `EnvRec` = our `AnimRec`.
 5. `rgl_math.h` declares `vector4` operators out of line; the effect code inlines them (local `vmul/vadd/vsub/vnormalize` in fx_anim.cpp).
-6. The audit binds callers' by-value/out-parameter views through ext twins (`quaternion_x`, `FxAnim_x`, `shape_vec_x`, ...)
-   bound to the real function with `/alternatename` (see `symbols/slices/fx_anim.txt`).
+6. The audit binds callers' by-value/out-parameter views through ext twins (`quaternion_x`, `FxAnim_x`, ...) bound to the real
+   function with `/alternatename` (see `symbols/slices/fx_anim.txt`); fx_anim.cpp and two of dynamic_entity.cpp (`ufill_ext`, `contact_inl::_Insert_n`)
+   still have them, because their callers were compiled without the callee's body in the object. world_grid.cpp has none: its callers use the
+   real `world_grid::in_rect` / `add_tree`, `min2` / `max2`, `face_normal`, `ground_store::add` and the real `std::vector<Obj*>::push_back` / `insert`
+   (specializations in src/game/entity.cpp, declared in world.h), `std::vector<ground_v36>` and the one `ground_g136` / `vec136` of world_grid.h.
 
 ## Tricks kept
 - Operand orders and temporaries written to reproduce the original's x87 sequences (`mul`/`mul_conj` explicit left-associated
