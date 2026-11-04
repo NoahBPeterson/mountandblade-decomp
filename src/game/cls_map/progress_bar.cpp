@@ -1186,9 +1186,9 @@ void TableauTbl::read(SlotReader* stream)
     stream->get_int(&n);                        // vtable +0x4c: the block count
     E68 blank;
     blank.b0 = -1;
-    blank.m.p = 0;
-    blank.m.n = 0;
-    blank.m.c = 0;
+    blank.m.items = 0;
+    blank.m.count = 0;
+    blank.m.done = 0;
     blank.t = 0;
     recs.resize(n, blank);                    // 0x4e40f0
     WL_MARKER(13)

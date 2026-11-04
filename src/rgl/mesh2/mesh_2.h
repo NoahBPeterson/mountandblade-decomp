@@ -95,7 +95,7 @@ struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared 
 #include "../../include/vec_elems.h"   // R44, b16, E50, E176 (shared with game/cls_map)
 
 
-#include "../../include/e68.h"           // E68, M28, block_base, scalar4 (shared with game/ui/mission.h)
+#include "../../include/e68.h"           // E68, scalar4 (shared with game/ui/mission.h)
 
 // _Nonscalar_ptr_iterator_tag: an empty tag that cl 13.10 still passes as one 4-byte stack slot
 // (which is where the last `mov eax, [esp+8]` in 0x4cc260 comes from).

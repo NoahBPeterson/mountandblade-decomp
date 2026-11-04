@@ -34,8 +34,8 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?reset_gui@@YAXXZ  004c6e00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?reset_screen@ItemA@@UAEXXZ  004c6e10  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?clear_objects@MapDialog@@QAEXXZ  004c6e30  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?free_materials@Block@@QAEXXZ  004c8330  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?read_terrain@Block@@QAEXPAUstream_base@@@Z  004c83a0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?free_materials@E68@@QAEXXZ  004c8330  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?read_terrain@E68@@QAEXPAUstream_base@@@Z  004c83a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_free_one@@YIXPAUconv_rec@@@Z  004c85e0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?erase_range@ptr_vec@@QAE?AUptr_iter@@PAH0@Z  004c88a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?loader_thread_body@@YGXXZ  004c8900  /O2 /MT /Gy /TP

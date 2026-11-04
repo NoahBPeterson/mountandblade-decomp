@@ -37,7 +37,6 @@ extern tstring g_module_name;                                      // 0x8ee3c38
 #include "./elem_calls.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/skinmagic.h"
-struct scalar4 { int v; };                          // e68.h: the 4-byte element of the hash bucket vector
 namespace std {
 template<> E176* _Copy_opt<E176*, E176*>(E176*, E176*, E176*, _Nonscalar_ptr_iterator_tag);   // 0x4cd620
 template<> void _Destroy_range<E176, allocator<E176> >(E176*, E176*, allocator<E176>&, _Nonscalar_ptr_iterator_tag);   // 0x4ca7e0

@@ -490,6 +490,7 @@ struct Rec78Tail {                                      // the sub-object at +0x
         b->release();
     }
 };
+#include "../../include/e68.h"                          // E68: the map block (free_materials 0x4c8330, read_terrain 0x4c83a0)
 #include "../../include/rec78.h"                        // Rec78: the 0x78-byte element of the array (shared); its raw tail[] at +0x44 is a Rec78Tail
 inline Rec78Tail& rec78_tail(Rec78* r) { return *(Rec78Tail*)r->tail; }
 
@@ -515,10 +516,7 @@ struct Block {
     char* variations_cap;                               // +0x60
     void* material;                                     // +0x64
 
-    std::vector<BlockMat*>& mats() { return *(std::vector<BlockMat*>*)((char*)this + 0x54); }   // allocator lane +0x54
     void read(stream_base* stream, int version);        // 0x4c8110 (ret 8: the file version gates the triggers)
-    void free_materials();                              // 0x4c8330
-    void read_terrain(stream_base* stream);             // 0x4c83a0
 };
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/strat/gui_manager.h)
 

@@ -582,6 +582,25 @@ template class std::vector<NamePtrs56>;
 template class std::vector<R44>;
 template class std::vector<E50>;
 template class std::vector<E68>;
+
+// @ 0x4cd100
+E68::E68(const E68& o)
+    : s(o.s), b0(o.b0), b1(o.b1), b2(o.b2), b3(o.b3), b4(o.b4), b5(o.b5), b6(o.b6), b7(o.b7), b8(o.b8), b9(o.b9),
+      m(o.m), v(o.v), t(o.t)
+{
+}
+
+// @ 0x4cd2f0
+E68& E68::operator=(const E68& o)
+{
+    s = o.s;
+    b0 = o.b0; b1 = o.b1; b2 = o.b2; b3 = o.b3; b4 = o.b4;
+    b5 = o.b5; b6 = o.b6; b7 = o.b7; b8 = o.b8; b9 = o.b9;
+    m = o.m;
+    v = o.v;
+    t = o.t;
+    return *this;
+}
 template class std::vector<E176>;
 
 // @ 0x4cc260

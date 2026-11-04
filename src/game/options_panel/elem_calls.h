@@ -10,11 +10,7 @@ struct E50 {
     E50(const E50& o);   // 0x4cd080
     E50& operator=(const E50& o);   // 0x4cd270
 };
-struct E68 {
-    int pad[0x68 / 4];
-    E68(const E68& o);   // 0x4cd100
-    E68& operator=(const E68& o);   // 0x4cd2f0
-};
+#include "../../include/e68.h"   // E68 (copy constructor 0x4cd100 / assignment 0x4cd2f0 out of line, mesh_2.cpp)
 struct E176 {
     int pad[0xb0 / 4];
     E176(const E176& o);   // 0x4cd170

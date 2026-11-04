@@ -1472,47 +1472,46 @@ void Block::read(stream_base* stream, int version)
 
 
 // @ 0x4c8330
-void Block::free_materials()
+void E68::free_materials()
 {
-    for (unsigned i = 0; i < mats().size(); i++) {
-        mats()[i]->owned = 0;                           // the block no longer owns the material
+    for (unsigned i = 0; i < v.size(); i++) {
+        ((BlockMat*)v[i].v)->owned = 0;                 // the block no longer owns the material
         ReleaseFn rel;
         rel.clear_f14 = clear_f14;
-        (g_resmgr.*rel.as_member)(mats()[i]);
+        (g_resmgr.*rel.as_member)((void*)v[i].v);
     }
-    tidy3((char*)this + 0x58);
-    *(int*)((char*)this + 0x64) = 0;
+    tidy3(&v._Myfirst);
+    t = 0;
 }
 
 // @ 0x4c83a0
-void Block::read_terrain(stream_base* stream)
+void E68::read_terrain(stream_base* stream)
 {
     tstring name;
-    this->free_materials();
-    stream->r_tstr((rgl::string*)((char*)this + 0x00));
-    stream->r_int((int*)((char*)this + 0x14));
+    free_materials();
+    stream->r_tstr(&s);
+    stream->r_int(&b1);
     stream->r_tstr(&name);
-    stream->r_int((int*)((char*)this + 0x18));
-    stream->r_int((int*)((char*)this + 0x1c));
-    stream->r_float((float*)((char*)this + 0x28));
-    float* f2 = (float*)((char*)this + 0x2c);
-    stream->r_float(f2);
-    stream->r_float((float*)((char*)this + 0x30));
-    stream->r_float((float*)((char*)this + 0x34));
-    *(float*)((char*)this + 0x28) *= 0.001;
-    *f2 *= 0.001;
-    *(float*)((char*)this + 0x30) *= 0.001;
-    *(float*)((char*)this + 0x34) *= 0.001;
-    ((DialogBlock*)((char*)this + 0x38))->read(stream);   // 0x4607e0
+    stream->r_int(&b2);
+    stream->r_int(&b3);
+    stream->r_float(&b6);
+    stream->r_float(&b7);
+    stream->r_float(&b8);
+    stream->r_float(&b9);
+    b6 *= 0.001;
+    b7 *= 0.001;
+    b8 *= 0.001;
+    b9 *= 0.001;
+    m.read(stream);   // 0x4607e0
     char buf[0x200];
-    _snprintf(buf, 0x200, "Tableau material %s", ((tstring*)this)->c_str());
+    _snprintf(buf, 0x200, "Tableau material %s", s.c_str());
     {
         tstring mat(buf);
-        ((tstring*)((char*)this + 0x44))->operator=(mat);
+        m.text.operator=(mat);
     }
     if (name.len > 1) {
         if (name.differs("none"))
-            *(void**)((char*)this + 0x64) = g_resmgr.get_material(name);
+            t = g_resmgr.get_material(name);
     }
 }
 
@@ -1724,7 +1723,7 @@ void graph_obj::remove_node(int idx)
 void __fastcall conv_list_dtor(conv_rec* self)
 {
     char* p = (char*)self;
-    ((Block*)self)->free_materials();   // conv_rec is the mesh block (Block) here; 0x4c8330
+    ((E68*)self)->free_materials();   // conv_rec is the mesh block (E68) here; 0x4c8330
     void** v = (void**)(p + 0x58);
     if (v[0] != 0)
         operator delete(v[0]);
