@@ -173,6 +173,6 @@ void TerrainPage::path(float dt)
 
     cam.m = m;                               // page +0x138
     cam.build_planes();                    // 0x41e4f0: thiscall on this+0x70
-    *(FrustumBlock*)&view->view = *(FrustumBlock*)&cam;             // 0x120 bytes: page +0x70 -> world +0x1ac
+    *(FrustumBlock*)&view->scene3d.fr = *(FrustumBlock*)&cam;             // 0x120 bytes: page +0x70 -> world +0x1ac
     g_terrain.update_particles(&m);        // 0x4f3e10
 }
