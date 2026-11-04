@@ -138,26 +138,6 @@ template void std::list<int>::_Insert_n(std::list<int>::iterator, std::list<int>
 // 0x41f720 (same COMDAT).
 // 0x41f720 vector::_Insert_n (vector<Obj*>)
 template void std::vector<rgl::Obj*>::_Insert_n(std::vector<rgl::Obj*>::iterator, size_t, rgl::Obj* const&);
-// 0x423fc0 / 0x424010: the world grid's calls (src/rgl/dynamic/world_grid.cpp), declared in world.h as specializations so that their bodies
-// stay out of every caller (cl 13.10 would inline the stock members)
-namespace std {
-template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X)
-{
-    size_type _Off = size() == 0 ? 0 : _P - begin();
-    _Insert_n(_P, (size_type)1, _X);
-    return (begin() + _Off);
-}
-template<> __declspec(noinline) void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X)
-{
-    if (size() < capacity())
-        _Mylast = _Ufill(_Mylast, 1, _X);
-    else
-        insert(end(), _X);
-}
-}
-template void std::vector<rgl::Obj*>::push_back(rgl::Obj* const&);
-template std::vector<rgl::Obj*>::iterator std::vector<rgl::Obj*>::insert(std::vector<rgl::Obj*>::iterator, rgl::Obj* const&);
-
 // 0x41f970 vector::resize (vector<mesh*>)
 template void std::vector<rgl::mesh*>::resize(size_t, rgl::mesh*);
 // 0x41fa00 vector::resize (vector<Obj*>)

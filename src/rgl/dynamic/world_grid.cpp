@@ -113,6 +113,13 @@ int world_grid::in_rect(const int2* p, const int2* lo, const int2* hi)
     return 0;
 }
 
+// std::vector<Obj*>::push_back / insert (0x423fc0 / 0x424010, shared by every pointer vector): the callers call them out of line; the
+// specializations are declared before the callers and defined where the original has them
+namespace std {
+template<> __declspec(noinline) void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X);
+template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X);
+}
+
 // ---- the cell ----------------------------------------------------------------------------------------------------
 // @ 0x423f10
 void grid_cell::add(grid_shape* x)
@@ -190,9 +197,9 @@ void world_grid::reg_shape(grid_shape* o)
     } else {
         o->shape_type();
     }
-    grid_shape* t = o;
-    objs.push_back((rgl::Obj* const&)t);   // 0x423fc0
-    add_tree(t);
+    rgl::Obj* t = (rgl::Obj*)o;
+    objs.push_back(t);   // 0x423fc0
+    add_tree((grid_shape*)t);
 }
 
 // ---- the ground geometry store ---------------------------------------------------------------------------------
@@ -468,3 +475,23 @@ template void vector<ground_v36>::resize(size_t, ground_v36);
 // @ 0x4247e0
 template vector<ground_v36>::iterator vector<ground_v36>::erase(vector<ground_v36>::iterator, vector<ground_v36>::iterator);
 }
+
+// @ 0x423fc0 / 0x424010
+namespace std {
+template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X)
+{
+    size_type _Off = size() == 0 ? 0 : _P - begin();
+    _Insert_n(_P, (size_type)1, _X);
+    return (begin() + _Off);
+}
+template<> __declspec(noinline) void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X)
+{
+    if (size() < capacity())
+        _Mylast = _Ufill(_Mylast, 1, _X);
+    else
+        insert(end(), _X);
+}
+}
+template void std::vector<rgl::Obj*>::push_back(rgl::Obj* const&);
+template std::vector<rgl::Obj*>::iterator std::vector<rgl::Obj*>::insert(std::vector<rgl::Obj*>::iterator, rgl::Obj* const&);
+

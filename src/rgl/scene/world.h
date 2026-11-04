@@ -90,10 +90,4 @@ struct world {
 
 } // namespace rgl
 
-// The pointer-vector members the world's grid calls out of line: the instances at 0x423fc0 and 0x424010 are shared by every
-// pointer vector (identical-code folding); the specializations are defined in src/game/entity.cpp.
-namespace std {
-template<> void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X);                               // 0x423fc0
-template<> vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X);   // 0x424010
-}
 #endif

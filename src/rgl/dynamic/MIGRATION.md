@@ -74,7 +74,7 @@ Header conflicts and gaps (worked around locally, to be absorbed upstream):
    function with `/alternatename` (see `symbols/slices/fx_anim.txt`); fx_anim.cpp and two of dynamic_entity.cpp (`ufill_ext`, `contact_inl::_Insert_n`)
    still have them, because their callers were compiled without the callee's body in the object. world_grid.cpp has none: its callers use the
    real `world_grid::in_rect` / `add_tree`, `min2` / `max2`, `face_normal`, `ground_store::add` and the real `std::vector<Obj*>::push_back` / `insert`
-   (specializations in src/game/entity.cpp, declared in world.h), `std::vector<ground_v36>` and the one `ground_g136` / `vec136` of world_grid.h.
+   (noinline specializations declared before the callers and defined at the end of world_grid.cpp; `reg_shape` is a nonmatching row because of it), `std::vector<ground_v36>` and the one `ground_g136` / `vec136` of world_grid.h.
 
 ## Tricks kept
 - Operand orders and temporaries written to reproduce the original's x87 sequences (`mul`/`mul_conj` explicit left-associated
