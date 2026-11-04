@@ -86,10 +86,11 @@ struct file_writer_base : stream_base {
 };
 
 // ---- the text streams -------------------------------------------------------------------------------------------
-// Text stream (vtable 0x54a7d0): writes values followed by a blank, reads whitespace tokens. The engine's text log and its
-// derived file classes (options_panel.h's outfile_b) build on it.
+// Text stream (vtable 0x54a7d0, 0x30 bytes): writes values followed by a blank, reads whitespace tokens; the text is the stream's
+// buffer, no file is involved. The debug log (g_debug_log 0x5a9f30) is one; text_file below adds the file.
 // Slots: text_stream.cpp (0x4153a0..0x415880), resource_io.cpp (0x415900..0x415d60).
-struct text_stream : file_writer_base {
+struct text_stream : stream_base {
+    text_stream() { state = 0; }
     virtual stream_base& w_stream(stream_base* o);         // 0x415800
     virtual stream_base& w_float(float* v);                // 0x415790
     virtual stream_base& w_bool(char* v);                  // 0x415730
@@ -112,6 +113,15 @@ struct text_stream : file_writer_base {
     virtual stream_base& r_tstr(rgl::string* v);           // 0x415880
     virtual stream_base& slot22(void* v);                  // 0x415870 (ICF with slot12)
     void expect_token();                       // 0x415900 (EOF check, "Unexpected End of File ...")
+};
+extern text_stream g_debug_log;                // 0x5a9f30 (defined in game/char_sheet/facegen_misc.cpp): slot 10 prints one line; buf is the status text of the save/load screen
+
+// The text stream of a file (0x38 bytes: the file fields of file_writer_base after the 0x30 of the stream).
+struct text_file : text_stream {
+    FILE* fp;                                  // +0x30
+    char failed;                               // +0x34
+    char is_open;                              // +0x35
+    text_file() { failed = 1; is_open = 0; state = 0; }
     bool open_read(const char* path);          // 0x415290
     int open_write(const char* path);          // 0x415320
     int close();                               // 0x415370
@@ -120,7 +130,7 @@ struct text_stream : file_writer_base {
 
 // The engine's text log (global g_log at 0x5a9f60; vtable 0x595618): a text_stream whose flush (slot 26, 0x42cc10) writes the
 // unflushed tail of the buffer, and whose destructor closes the file. The log file objects (outfile, below) derive from it.
-struct log_stream : text_stream {
+struct log_stream : text_file {
     log_stream() {}
     virtual int flush();                                            // 0x42cc10 (gui_manager.cpp)
     void shut()

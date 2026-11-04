@@ -5,7 +5,7 @@
 #include "../rgl/stream.h"
 #include "../rgl/scene/world.h"
 
-// The engine text log: all views (log_stream, Output, logger, char[] g_log_obj, LogSink) call slot 10 (w_cstr) on it.
+// The engine text log: all views (log_stream, Output, logger, g_debug_log, LogSink) call slot 10 (w_cstr) on it.
 // The current level/scene: world class (mission.h: typedef world Level;
 #include "./level_global.h"      // g_level 0xa732b4
 

@@ -105,7 +105,7 @@ void __fastcall fn_4c2ea0(void* self)
     char path[0x104];
     sprintf(path, "controls.dat");
     user_path(path);
-    ((text_stream*)&r)->open_read(path);
+    ((text_file*)&r)->open_read(path);
     if (r.failed) {
         ((code_table*)self)->init();
     } else {
@@ -226,7 +226,7 @@ void load_skyboxes()
     tstring path(g_module_path);
     path.append(tstring("actions.txt"));
     const char* nm = path.buf ? path.buf : (const char*)&path.buf;
-    if (!((text_stream*)&r)->open_read_text(nm))
+    if (!((text_file*)&r)->open_read_text(nm))
         mb_error("Unable to open %s", nm);
     entry_vec_resize(&r, &g_anim_set);
     r.failed = 1;
@@ -350,7 +350,7 @@ void options_record::load()
     bin_reader br;
     sprintf(path, "options.dat");
     user_path(path);
-    ((text_stream*)&br)->open_read(path);
+    ((text_file*)&br)->open_read(path);
     if (!br.failed) {
         stream_base& st = br;
         st.r_float(&f08);

@@ -7,7 +7,7 @@
 ../src/rgl/core/resource_io.cpp  ?r_bool@text_stream@@UAEAAUstream_base@@PAD@Z  00415c10  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?r_float@text_stream@@UAEAAUstream_base@@PAM@Z  00415c80  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?r_stream@text_stream@@UAEAAUstream_base@@PAU2@@Z  00415cf0  /O2 /MT /Gy /TP
-../src/rgl/core/resource_io.cpp  ?open_read_text@text_stream@@QAE_NPBD@Z  00415d60  /O2 /MT /Gy /TP
+../src/rgl/core/resource_io.cpp  ?open_read_text@text_file@@QAE_NPBD@Z  00415d60  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?w_rotation@@YAAAUstream_base@@AAU1@PAUmatrix@rgl@@@Z  00415df0  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?r_rotation@@YAAAUstream_base@@AAU1@PAUmatrix@rgl@@@Z  00415e70  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?w_matrix@@YAAAUstream_base@@AAU1@PAUmatrix@rgl@@@Z  00415ef0  /O2 /MT /Gy /TP

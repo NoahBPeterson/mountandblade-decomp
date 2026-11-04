@@ -78,7 +78,7 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 #include "../slot.h"
 struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 #include "../key_names.h"
-#include "../../include/logger.h"                     // Logger g_debug_log (0x5a9f30): slot 10 (+0x28) prints one line
+#include "../../rgl/stream.h"                           // text_stream g_debug_log (0x5a9f30): slot 10 (+0x28, w_cstr) prints one line
 #include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
@@ -991,10 +991,10 @@ no_party:
         int bpid = GD_I(0x78);
         sprintf(buf, "Position: %3.2f, %3.2f ;",
                 (double)PARTIES->get(bpid)->pos.x, (double)PARTIES->get(bpid)->pos.y);
-        Logger& log = g_debug_log;          // reached through a reference: the calls stay virtual (+0x28), as in the original
-        log.get(";-------------------;");
-        log.get(buf);
-        log.get(";-------------------;");
+        text_stream& log = g_debug_log;     // reached through a reference: the calls stay virtual (+0x28), as in the original
+        log.w_cstr(";-------------------;");
+        log.w_cstr(buf);
+        log.w_cstr(";-------------------;");
     }
 }
 

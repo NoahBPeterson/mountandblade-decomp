@@ -192,7 +192,7 @@ static inline void read_from_inl(rgl::string& s, FILE* f, size_t n)
 
 // @ 0x415d60
 // Like open_read, but opens in text mode and takes the byte count fread returns.
-bool text_stream::open_read_text(const char* path)
+bool text_file::open_read_text(const char* path)
 {
     name.assign(path);
     fp = fopen(path, "r");

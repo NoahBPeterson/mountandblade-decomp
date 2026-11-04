@@ -1,8 +1,8 @@
 0054a740 ??_7stream_base@@6B@  # vtable of the abstract text stream (27 slots, slots 2..22 _purecall), s00414960/s00415320
 0054a7d0 ??_7text_stream@@6B@  # vtable 1 of the concrete text stream (identical slots to 0x54a890)
 0054a890 ??_7text_stream2@@6B@  # vtable 2 of the concrete text stream (second class sharing every method; name provisional)
-00415320 ?open_write@text_stream@@QAEHPBD@Z  # opens the file "wb" (writer)
-00415370 ?close@text_stream@@QAEHXZ  # flush + fclose
+00415320 ?open_write@text_file@@QAEHPBD@Z  # opens the file "wb" (writer)
+00415370 ?close@text_file@@QAEHXZ  # flush + fclose
 004153a0 ?w_cstr@text_stream@@UAEAAUstream_base@@PBD@Z  # write C string + blank
 00415410 ?w_tstr@text_stream@@UAEAAUstream_base@@PBUtstring@@@Z  # write tstring + blank
 00415470 ?w_byte@text_stream@@UAEAAUstream_base@@PAE@Z  # write byte as decimal + blank

@@ -1228,9 +1228,9 @@ void resmgr::load_pack(const rgl::string& name, int user)
                     ts.failed = 1;
                     done = true;
                     bin_writer w;
-                    ((text_stream*)&w)->open_write(brf.c_str());   // file_writer_base members (0x415320, 0x415370)
+                    ((text_file*)&w)->open_write(brf.c_str());   // file_writer_base members (0x415320, 0x415370)
                     save(&w);
-                    ((text_stream*)&w)->close();
+                    ((text_file*)&w)->close();
                 }
             }
         }
@@ -1238,7 +1238,7 @@ void resmgr::load_pack(const rgl::string& name, int user)
     if (!done) {
         bin_reader br;
         const char* p = brf.c_str();
-        if (!((text_stream*)&br)->open_read(p))        // 0x415290
+        if (!((text_file*)&br)->open_read(p))        // 0x415290
             mb_error("Unable to open file: %s\n", p);
         load_stream(&br);
         br.failed = 1;

@@ -9,7 +9,7 @@
 00415250 ?at_end@stream_base@@UAE_NXZ  # slot 23: cursor >= length
 00415270 ?set_autoflush@stream_base@@UAEXD@Z  # slot 24
 00415280 ?get_autoflush@stream_base@@UAEDXZ  # slot 25
-00415290 ?open_read@text_stream@@QAE_NPBD@Z  # fopen "rb", reads the whole file into the buffer
+00415290 ?open_read@text_file@@QAE_NPBD@Z  # fopen "rb", reads the whole file into the buffer
 00408020 ?flush@stream_base@@UAEHXZ  # slot 26: returns 0 (shared by ICF with other empty slots)
 00414960 ?update@psys@@QAEXPAUscene2@@@Z  # per-frame driver of the particle system (name provisional)
 00414ae0 ?noise_gradient@@YAXMPBMPAM@Z  # 3-D gradient (Perlin-style) noise, per-component weighted sum

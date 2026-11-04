@@ -496,7 +496,7 @@ void C4c31c0::list_saves()
         save_path(dir);
         mb_snprintf(full, 0x200, "%s%s\\sg%d%d.sav", dir, p, i / 10, i % 10);
         bin_reader s;
-        char ok = ((text_stream*)&s)->open_read(full);   // 0x415290 (ret 4; the folded text_stream::open_read)
+        char ok = ((text_file*)&s)->open_read(full);   // 0x415290 (ret 4; the folded text_stream::open_read)
         slot->seconds = 0;
         if (ok) {
             if (hdr.read_slot((SlotReader*)&s)) {

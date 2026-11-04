@@ -8,9 +8,9 @@
 ../src/rgl/text_stream.cpp  ?at_end@stream_base@@UAE_NXZ  00415250  /O2 /MT /Gy /TP
 ../src/rgl/text_stream.cpp  ?set_autoflush@stream_base@@UAEXD@Z  00415270  /O2 /MT /Gy /TP
 ../src/rgl/text_stream.cpp  ?get_autoflush@stream_base@@UAEDXZ  00415280  /O2 /MT /Gy /TP
-../src/rgl/text_stream.cpp  ?open_read@text_stream@@QAE_NPBD@Z  00415290  /O2 /MT /Gy /TP
-../src/rgl/text_stream.cpp  ?open_write@text_stream@@QAEHPBD@Z  00415320  /O2 /MT /Gy /TP
-../src/rgl/text_stream.cpp  ?close@text_stream@@QAEHXZ  00415370  /O2 /MT /Gy /TP
+../src/rgl/text_stream.cpp  ?open_read@text_file@@QAE_NPBD@Z  00415290  /O2 /MT /Gy /TP
+../src/rgl/text_stream.cpp  ?open_write@text_file@@QAEHPBD@Z  00415320  /O2 /MT /Gy /TP
+../src/rgl/text_stream.cpp  ?close@text_file@@QAEHXZ  00415370  /O2 /MT /Gy /TP
 ../src/rgl/text_stream.cpp  ?w_cstr@text_stream@@UAEAAUstream_base@@PBD@Z  004153a0  /O2 /MT /Gy /TP
 ../src/rgl/text_stream.cpp  ?w_tstr@text_stream@@UAEAAUstream_base@@PBUtstring@@@Z  00415410  /O2 /MT /Gy /TP
 ../src/rgl/text_stream.cpp  ?w_byte@text_stream@@UAEAAUstream_base@@PAE@Z  00415470  /O2 /MT /Gy /TP

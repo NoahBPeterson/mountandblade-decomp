@@ -35,7 +35,6 @@ extern unsigned g_8ee41ec;  // 0x8ee41ec
 extern unsigned g_8ee41e8;  // 0x8ee41e8
 extern float g_5a9f20;      // 0x5a9f20
 extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
-extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 
 
 
@@ -50,7 +49,6 @@ extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 
 struct SoundMgr;
 extern SoundMgr g_sound_mgr;   // 0x5aa128 the sound player (defined in agent_fx_sound.cpp; no constructor, only the destructor registered below)
-extern void* g_vt_54a7d0[]; // 0x54a7d0 the debug text log's vtable
 
 // ---- callees --------------------------------------------------------------------------------------------------
 #include "../tstring.h"                       // tstring::tstring 0x42bbd0, ~tstring 0x42bc40
@@ -69,12 +67,6 @@ void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (_
 // ---- destructors (atexit) -------------------------------------------------------------------------------------
 // @ 0x548140
 void __cdecl static_dtor_548140() { ((gui_manager*)g_5d7080)->~gui_manager(); }
-// @ 0x548170
-void __cdecl static_dtor_548170()
-{
-    ((tstring*)(g_5a9f30 + 0x20))->~tstring();
-    ((tstring*)(g_5a9f30 + 0x4))->~tstring();
-}
 // @ 0x548200
 void __cdecl static_dtor_548200() {}
 // @ 0x548210
@@ -96,17 +88,6 @@ void __cdecl static_dtor_548510() { ((BigArray*)&g_anim.skins_alloc)->destroy();
 // ---- initializers, in the original table order -----------------------------------------------------------------
 // @ 0x5479c0
 void __cdecl static_init_5479c0() { new (g_5d7080) gui_manager; atexit(static_dtor_548140); }
-// @ 0x547aa0   the debug text log: its two strings, flags, and vtable
-void __cdecl static_init_547aa0()
-{
-    new (g_5a9f30 + 0x4) TStrRec;
-    new (g_5a9f30 + 0x20) TStrRec;
-    g_5a9f30[0x18] = 0;
-    AT(int, g_5a9f30, 0x1c) = 0;
-    AT(void*, g_5a9f30, 0) = g_vt_54a7d0;
-    AT(int, g_5a9f30, 0x14) = 0;
-    atexit(static_dtor_548170);
-}
 // @ 0x547b50   input state: both tick snapshots, the key table, the axes
 void __cdecl static_init_547b50()
 {
@@ -145,7 +126,7 @@ typedef void (__cdecl* init_fn)();
 init_fn g_static_init_table[] = {
     static_init_5479c0,
     
-    static_init_547aa0, static_init_547b50,
+    static_init_547b50,
     static_init_547e40,
     static_init_547e90,
     static_init_547fb0,

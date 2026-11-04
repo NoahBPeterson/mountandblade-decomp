@@ -149,7 +149,7 @@ void destroy_range_mission(mission_type* first, mission_type* last)
 void load_data_files()
 {
     text_reader_l ts1;
-    if (!((text_stream*)&ts1)->open_read_text("Data\\item_modifiers.txt"))
+    if (!((text_file*)&ts1)->open_read_text("Data\\item_modifiers.txt"))
         mb_error("Unable to open %s", "Data\\item_modifiers.txt");
     for (item_mod* m = g_item_mods; m < &g_item_mods[43]; m++) {
         ts1.r_tstr(&m->key);
@@ -160,27 +160,27 @@ void load_data_files()
     }
     WL_MARKER(4)
     text_reader_l ts2;
-    if (!((text_stream*)&ts2)->open_read_text("Data\\flora_kinds.txt"))
+    if (!((text_file*)&ts2)->open_read_text("Data\\flora_kinds.txt"))
         mb_error("Unable to open %s", "Data\\flora_kinds.txt");
     ts2.r_int(&g_ptype_count);
     g_ptypes = (ptype*)new flora_kind[g_ptype_count];
     for (int i = 0; i < g_ptype_count; i++)
         ((ObjectList*)&g_ptypes[i])->read(&ts2);   // 0x4cdfd0
     text_reader_l ts3;
-    if (!((text_stream*)&ts3)->open_read_text("data\\ground_specs.txt"))
+    if (!((text_file*)&ts3)->open_read_text("data\\ground_specs.txt"))
         mb_error("Unable to open %s", "data\\ground_specs.txt");
     for (ttype* t = g_ttypes; t < g_ttypes + sizeof g_ttypes / sizeof *g_ttypes; t++)   // 11 (to 0x8ed4f58)
         ((rec20*)t)->read(&ts3);           // 0x4be600
     // data\skyboxes.txt: a count, then that many 0x4c-byte records (the table at 0x5e28f4 / 0x5e29ec)
     text_reader_l ts4;
-    if (!((text_stream*)&ts4)->open_read_text("data\\skyboxes.txt"))
+    if (!((text_file*)&ts4)->open_read_text("data\\skyboxes.txt"))
         mb_error("Unable to open %s", "data\\skyboxes.txt");
     ts4.r_int(&g_num_ground_specs);
     g_env_rows = new EnvRow[g_num_ground_specs];
     for (int i = 0; i < g_num_ground_specs; i++)
         ((prsnt_record*)&g_env_rows[i])->load_extras(ts4);        // 0x4bddf0
     text_reader_l ts5;
-    if (!((text_stream*)&ts5)->open_read_text("Data\\mission_types.txt"))
+    if (!((text_file*)&ts5)->open_read_text("Data\\mission_types.txt"))
         mb_error("Unable to open %s", "Data\\mission_types.txt");
     for (mission_type* m = g_mission_types; m < g_mission_types + sizeof g_mission_types / sizeof *g_mission_types; m++)   // 11 (to 0xa73730)
         ((Blk2dd0*)m)->read(&ts5);                       // 0x4c2dd0

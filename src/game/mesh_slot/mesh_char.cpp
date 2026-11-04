@@ -158,7 +158,7 @@ void GameData::load_scene(int idx)
 {
     tstring path = scene_path(idx);
     bin_reader s;
-    if (!((text_stream*)&s)->open_read(module_path(path.c_str()))) {
+    if (!((text_file*)&s)->open_read(module_path(path.c_str()))) {
         g_gui.add("Unable to load scene objects!", 0xffff0000);
         g_gui.add(levels[idx].name10, 0xffff0000);
     } else {

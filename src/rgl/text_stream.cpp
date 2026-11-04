@@ -86,7 +86,7 @@ char stream_base::get_autoflush() { return autoflush; }
 int stream_base::flush() { return 0; }
 
 // @ 0x415290
-bool text_stream::open_read(const char* path)
+bool text_file::open_read(const char* path)
 {
     TS(name).assign(path);
     fp = fopen(path, "rb");
@@ -105,7 +105,7 @@ bool text_stream::open_read(const char* path)
 // 0x54a83c " ", 0x54a840 "0 ", 0x54a844 "1 ", 0x54a848 "%f ", 0x54a84c "format broken"
 
 // @ 0x415320
-int text_stream::open_write(const char* path)
+int text_file::open_write(const char* path)
 {
     TS(name).assign(path);
     is_open = 0;
@@ -119,7 +119,7 @@ int text_stream::open_write(const char* path)
 }
 
 // @ 0x415370
-int text_stream::close()
+int text_file::close()
 {
     int r = 1;
     if (is_open) {

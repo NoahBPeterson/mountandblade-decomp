@@ -95,7 +95,7 @@ int save_game(int version, tstring* name)
     ps = g->module.c_str();
     mb_snprintf(pathD, 0x200, "%s%s\\new_game.sav", dirC, ps);
     LOG("Creating new savegame file...");
-    r = ((text_stream*)&w)->open_write(pathD);
+    r = ((text_file*)&w)->open_write(pathD);
     if (!r) {
         LOG("Saving header...");
         {

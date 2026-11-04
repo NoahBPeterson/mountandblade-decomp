@@ -31,8 +31,7 @@
 using namespace rgl;
 
 // logging globals of another object
-#include "../../include/logger.h"                       // Logger (shared with game/terrain_b/scene_file.h)
-extern char g_log_obj[];                                // 0x5a9f30 (a Logger)
+#include "../stream.h"                                  // text_stream g_debug_log (0x5a9f30)
 
 
 namespace rgl {
@@ -255,7 +254,7 @@ void world::render_scene(scene* sc, bool reflect)
         return;
     sc->refl->reset();
     if (g_cfg.enable_edit_mode)
-        ((Logger*)g_log_obj)->get("RENDERING REFLECTIONS;");
+        g_debug_log.w_cstr("RENDERING REFLECTIONS;");
     if (!g_cfg.fake_reflections)
         sc->refl->flags |= 0x200;
     matrix cam = sc->fr.m;
