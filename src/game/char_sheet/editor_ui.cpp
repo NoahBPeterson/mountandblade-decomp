@@ -2,6 +2,7 @@
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./editor_ui.h"
+#include "../render_batch.h"      // g_batch (0x5fe898): init_formats (listed directly: the resolution audit reads only the source's own includes)
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
