@@ -18,9 +18,10 @@ the panel is two functions with no data of its own). `refresh_stash` (0x502c30) 
 NavGraph (`g_nav` 0xa732b8, nodes of 0x88 bytes) owns 0x51d3a0..0x51db70; the slices filed these under `Game`.
 
 ## Tricks
-Kept: `__declspec(noinline)` helpers defined after callers, binary order, `volatile float` + cast in
-`place_slot` (cl drops the store of an unused by-address argument), `*(volatile int*)&kind` in `add_strip_icon`
-(only form that reproduced register order in the module), local annotated `g_item_count // 0x5e29d4`
+Kept: `__declspec(noinline)` helpers defined after callers, binary order, 
+`make_mesh` in its own object (party_mesh.cpp: a same-TU definition lets cl drop `place_slot`'s store of the by-address
+argument the callee ignores; the volatile that stood for this is gone). `add_strip_icon` has no volatile either: its index
+sum loads troop before kind (3 bytes, registers swapped; nonmatching row), local annotated `g_item_count // 0x5e29d4`
 (mangled-name collision in the audit), `symbols/slices/party_game.txt` for `g_troop_extra`.
 Removed: slice-local `Panel`/`Rec78Tag`/`Rec508`/`Rec300` ad-hoc types.
 
