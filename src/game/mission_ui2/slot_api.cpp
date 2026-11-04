@@ -22,7 +22,7 @@
 #include "../mission.h"
 #include "../item_ref.h"
 #include "../str_table.h"
-#include "../cell.h"
+
 #include "../../include/item_kind.h"
 #include "../../include/troop.h"
 #include "../../include/party.h"
@@ -135,9 +135,9 @@ face* GameData::find_at(const float* p)
     q[0] = p[0];
     q[1] = p[1];
     q[2] = 0;                                      // 0x48ea80 builds a 3-float point with z = 0
-    ((rgl::world*)g_script.level)->to_cell(q, idx);       // g_level (0xa732b4) is the rgl::world: world.h rows +0x28 = LevelGrid::cells
+    g_script.level->to_cell(q, idx);
     flag = 0;
-    cell* c = &((LevelGrid*)g_script.level)->cells[idx[0]][idx[1]];
+    rgl::cell* c = &g_script.level->cells[idx[0]][idx[1]];
     c->collect_point(q, &flag, 0x100, cand, &count);
     for (int k = 0; k < count; k++) {
         shape_base* s = cand[k];

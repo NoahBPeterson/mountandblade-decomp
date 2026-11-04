@@ -31,7 +31,7 @@ struct NavData {                // 0x68 bytes
     rgl::vector4 f54;           // +0x54
     int m64;                    // +0x64
     NavData();                  // 0x478150 (same constructor as NavCore's, ICF-folded)
-    ~NavData();                 // 0x41f5d0 (four_vecs::~four_vecs)
+    ~NavData();                 // 0x41f5d0 (game/entity.cpp)
     // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----
     bool shares(const int* a, const int* b);    // 0x48efa0 (other object)
     bool can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max);   // 0x4b3420 (ret 0x1c)

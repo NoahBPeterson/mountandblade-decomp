@@ -31,7 +31,6 @@
 #include "../scene/world.h"
 #include "../../include/vec_xlen.h"
 
-struct int2 { int x, y; };                          // a cell coordinate
 struct ground_v36 { rgl::vector4 p; rgl::vector4 n; int f20; };   // 0x24-byte vertex record of the ground geometry: position, face normal, a flag
 
 // ---- the cell ---------------------------------------------------------------------------------------------------
@@ -115,13 +114,6 @@ struct ground_store {                    // the object at world+0xb0
 };
 
 // ---- the world's members ------------------------------------------------------------------------------------------
-struct world_grid : rgl::world {
-    int in_rect(const int2* p, const int2* lo, const int2* hi);   // 0x423ed0 (a member that never reads this)
-    void relocate(grid_shape* o);                           // 0x423c80
-    void reg_shape(grid_shape* o);                          // 0x424170
-    void add_tree(grid_shape* s);                           // 0x425240
-    void add_shape(grid_shape* s);                          // 0x4252c0
-};
 int2* min2(int2* out, const int2* a, const int2* b);        // 0x423e70
 int2* max2(int2* out, const int2* a, const int2* b);        // 0x423ea0
 

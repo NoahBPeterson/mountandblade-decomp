@@ -6,8 +6,7 @@
 // order, every field with the address of a function that proves it. Names provisional (the slices called it Mission, Mission4,
 // FxMarks, Scene and, in script_interpreter.h, MissionX, which stays a separate view of the script interpreter's names).
 //
-// Views that differ between modules sit in anonymous unions of pointers: the scene container at +0 is `scene` for terrain_b
-// (CellGrid), `scene_world` for agent3 (world), `scene_level` for agent2 (level) and `scene_L` for agent (Level). The agent table at +4
+// Views that differ between modules sit in anonymous unions of pointers; the scene container at +0 is the rgl::world. The agent table at +4
 // is AgentTable (agent_obj.h); terrain_b reads the same bytes as Pool<MAgent> (agent_pool() in terrain_b/mission.h), and the record pool at +0x30
 // as Pool<RecJ> (pool_j()). Needs rgl::vector4 / rgl::matrix (rgl_base.h picks the module's own).
 #ifndef GAME_MISSION_H
@@ -23,9 +22,7 @@
 #include "./agent_obj.h"
 
 namespace rgl { struct world; }                                // terrain_b/cell_grid.h: the scene container terrain_b sees
-struct world;                                   // world.h: the scene as agent3 sees it
-struct level;                                   // agent2/agent_types.h: the scene as agent2 sees it
-typedef world Level;                              // world.h: the scene as agent sees it (agent.h, script, inventory_panel/map_update.cpp call it Level)
+
 struct Emit;
 struct Light;
 struct PlacedObj;
@@ -86,12 +83,7 @@ struct MarkRec {                                // 0x130 bytes; array at Mission
 };
 
 struct Mission {
-    union {
-        rgl::world* scene;                        // +0x0000 terrain_b (the slices' grid / nav / Scene)
-        world* scene_world;                     //   agent3 (0x440e30, 0x442ca0)
-        level* scene_level;                     //   agent2 (0x43cb30, 0x43dd70)
-        Level* scene_L;                         //   agent (0x4417d0)
-    };
+    rgl::world* scene;                          // +0x0000 the scene container (src/rgl/scene/world.h; the slices called it grid / nav / Scene / world / level / Level)
     AgentTable agents;                          // +0x0004 (0x43b160, 0x43b1b0, 0x43b1f0; terrain_b reads it as Pool<MAgent>: agent_pool() in terrain_b/mission.h)
     char pad2c[0x30 - 0x2c];
     char poolJ[0x28];                           // +0x0030 Pool<RecJ> (terrain_b/pool.h: pool_j(); reset 0x477f90)

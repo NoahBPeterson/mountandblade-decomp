@@ -26,7 +26,7 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 #include "../tstring.h"
 
 #include "../str_table.h"
-#include "../world.h"                          // world (= Level): the scene object g_level points to
+#include "../../rgl/scene/world.h"             // rgl::world: the scene object g_level points to (ground = the strategy-map cell table)
 
 // --------------------------------------------------------------------------------- collision shapes ----
 // shape_base: 0x20 bytes; slot 0 dtor, slot 1 shape_type (the picker's `v1() != 2` mask key).
@@ -69,15 +69,6 @@ struct BigRec {                              // 0x88  world-map cell record
     char     pad28[0x88 - 0x28];
 };
 
-struct LevelNav {                            // a view of NavData (terrain_b/cell_grid.h; that header cannot be included next to match/include/rgl.h): recs = cells (+0x10), zmin/zmax = e44.z / f54.z
-    char     pad00[0x14];
-    BigRec*  recs;                           // +0x14
-    char     pad18[0x4c - 0x18];
-    float    zmin;                           // +0x4c
-    char     pad50[0x5c - 0x50];
-    float    zmax;                           // +0x5c
-    // shares (0x48efa0) is RiderTable::shares (game/mission4): called through a cast below
-};
 
 
 struct GroundItem {                          // 0x5c  fleet entry
@@ -95,9 +86,7 @@ struct Map10007 {
 struct PlaneTrace {
     void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0 (inventory_panel/map_picker.cpp)
 };
-struct level {
-    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* n);   // 0x439870 (game/agent2/agent_stats.h)
-};
+
 struct camera_ray {
     void screen_to_world(vector4* near_pt, vector4* far_pt);   // 0x4bd2f0 (game/config/config.h)
 };
@@ -196,9 +185,9 @@ void MapPanel::update_target()
     vector4 fp = farp;
 
     // ---- 0x519517: clip against the world's z range ------------------------------------------------
-    if (((::world*)g_script.level)->wmap) {
-        float zmin = ((::world*)g_script.level)->wmap->zmin;
-        float zmax = ((::world*)g_script.level)->wmap->zmax;
+    if (g_script.level->ground) {
+        float zmin = g_script.level->ground->e44.z;
+        float zmax = g_script.level->ground->f54.z;
         if (np.z < zmin) {
             float t = fabsf((zmin - np.z) / dir.z);
             np.x += dir.x * t; np.y += dir.y * t; np.z += dir.z * t;
@@ -236,7 +225,7 @@ void MapPanel::update_target()
     int       best  = -1;
     shape_base* hits[0x2000];                  // the sweep is told 0x110, but the slot is 0x2000 wide
     int       count;
-    ((level*)g_script.level)->query_segment(seg_a, seg_b, 0x110, hits, &count);   // 0x439870
+    g_script.level->query_segment(seg_a, seg_b, 0x110, hits, &count);   // 0x439870
 
     vector4 bestpt;
     for (int i = 0; i < count; i++) {
@@ -259,14 +248,14 @@ void MapPanel::update_target()
     int rec_mask  = -1;
     if (best >= 0) {
         rec_index = hits[best]->m4;
-        rec_mask  = (int)((::world*)g_script.level)->wmap->recs[rec_index].mask;
+        rec_mask  = (int)g_script.level->ground->cells[rec_index].ids[8];
     }
 
     // ---- 0x519829: party agents under the cursor ---------------------------------------------------
     shape_base* bestobj = 0;
-    shape_base* agents[0x2000];                // Picker::collect does not bound *count, so the size matters
+    rgl::entity* agents[0x2000];               // world::collect does not bound *count, so the size matters
     int       acount;
-    ((::world*)g_script.level)->collect(9, agents, &acount);
+    g_script.level->collect(9, agents, &acount);
     bestd += 1.0f;
 
     for (int i = 0; i < acount; i++) {
@@ -367,7 +356,7 @@ void MapPanel::update_target()
             bool go = true;
             if (g_keyboard.down[0x1d] && g_cfg.cheat_mode) {
                 *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-            } else if (!((RiderTable*)((::world*)g_script.level)->wmap)->shares(rec_index,
+            } else if (!((RiderTable*)g_script.level->ground)->shares(rec_index,
                                                *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
                 go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
             }

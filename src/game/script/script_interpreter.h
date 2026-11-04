@@ -80,7 +80,7 @@ struct mesh_inst { void set_part(mesh_part* p); };                           // 
 struct Obj3 { void reset_pending(int v); };                                  // 0x433810 (rgl/xmlcfg/game_util.cpp)
 struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
 struct AgentX { int agent_class() const; };   // 0x433140 (rgl/xmlcfg/game_util.cpp)
-struct level { int nearest_face(const float* p); };                          // 0x439a50 (agent2/agent_stats.cpp)
+
 struct string_view_ { const char* get() const; };                            // 0x407c10 (rgl/shapes/shapes.cpp): the out-of-line c_str
 struct widget_mgr {                                                          // config/widget_mgr.cpp and the modules that add to it: the presentation's overlays
     int create_check_box_overlay(int a, int b);                             // 0x499b50
@@ -626,7 +626,7 @@ struct MTimer {                         // clock index + start (Timer in src/rgl
     __forceinline float elapsed() const { return ((const Timer*)this)->elapsed(); }   // 0x432c10 (seconds)
 };
 struct MissionX {
-    world* scene;                       // +0
+    rgl::world* scene;                  // +0
     AgentTable agents;                  // +4
     char pad2c[0x5c - 0x2c];            // (AgentTable is 0x28 bytes: count, free-id list, page vector, serial)
     int player_agent;                   // +0x5c (heal_party 0x4a488d)

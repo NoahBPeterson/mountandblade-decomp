@@ -24,16 +24,15 @@ struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pend
 // AnimRec::phase 0x4231f0: agent/curve.h
 namespace rgl {
 struct entity;
-struct world;   // members in agent3/agent_types.h (create_entity 0x428440)
+
 }
 struct shape_base;
 struct shape_resource { shape_base* clone_shape(); };    // 0x4285e0 (the body resource of a prop: res_shape.h's res_shape)
 struct body_res { shape_base* copy_shape(); };           // 0x439100 (agent2/agent_stats.cpp)
 struct grid_shape;
-struct world_grid { void reg_shape(grid_shape* s); };    // 0x424170 (rgl/dynamic/world_grid.cpp)
-struct level;   // members in agent3/agent_combat.h (floor_at 0x439be0, floor_z 0x439d40, light_at 0x43ac40)
+
 struct StratEnt;
-struct Ctx { StratEnt* find_entity(int id); };           // 0x42ba50 (strat/strat_entity.cpp)
+
 struct lod_group;                                        // rgl/core/resmgr.h (0xe0 bytes, ctor 0x41c2a0)
 bool is_night();                                         // 0x435740 (agent/agent.cpp)
 struct PlacedObj;

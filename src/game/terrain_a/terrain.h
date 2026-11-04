@@ -91,7 +91,6 @@ struct TEntity {                                // stub of the scene entity (vta
     char pad[0xc4 - 4];
     rgl::vector4 pos;                           // +0xc4 (0x466fa0)
 };
-struct SceneWorld { char pad0[0x9c]; TEntity* create_entity(int id); };     // 0x428440
 
 struct TerrainParticle {                               // 0xa0
     int type;                                   // +0x00 index into g_ptypes
@@ -187,10 +186,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
         terrain_cell cells[251 * 251];          // index x * 251 + y
     };
     terrain_quad quads[250 * 250];              // +0x8e48fc index x * 250 + y
-    union {
-        SceneWorld* world;                      // +0xc3b0dc (0x466fa0)
-        rgl::world* grid;                         // the same pointer as terrain_b types it (0x471a30, 0x471b30, 0x47a460)
-    };
+    rgl::world* world;                          // +0xc3b0dc (0x466fa0, 0x471a30, 0x471b30, 0x47a460)
     float scale;                                // +0xc3b0e0 world size of a cell (0x464b40, 0x468da0, 0x466c10, 0x46a270)
     particle_list list_a;                       // +0xc3b0e4 mode 1 (0x4650f0: scatter_all passes &set1)
     particle_list list_b;                       // +0x343b4ec mode 0, type flag 0x400000

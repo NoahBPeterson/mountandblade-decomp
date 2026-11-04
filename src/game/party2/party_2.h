@@ -75,7 +75,7 @@ struct mesh_node {
 struct RiderTable {
     int shares(const int& a, const int& b) const;   // 0x48efa0 (mission_ui2/mission_4.cpp, ret 8)
 };
-#include "../terrain_b/cell_world.h"        // rgl::world: step 0x427f40, render_scene 0x429890, remove_entity 0x41f0d0, create_entity 0x428440, reset 0x421390, ground (NavData)
+#include "../../rgl/scene/world.h"          // rgl::world: step 0x427f40, render_scene 0x429890, remove_entity 0x41f0d0, create_entity 0x428440, reset 0x421390, ground (NavData)
 struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party / agent / scene pools, ret 4)
 };

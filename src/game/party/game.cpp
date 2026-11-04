@@ -14,7 +14,7 @@
 #include "./game.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "./nav_graph.h"
-#include "../terrain_b/cell_world.h"       // rgl::world: ctor 0x478ad0, build_faces 0x479980 (NavData: the map object g_script.nav)
+#include "../../rgl/scene/world.h"         // rgl::world: ctor 0x478ad0, build_faces 0x479980 (NavData: the map object g_script.nav)
 #include "../world_data/raw_place.h"       // construct in raw storage
 #include "../tstring.h"
 #include "../../rgl/stream.h"

@@ -21,7 +21,6 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
-#include "../cell.h"
 #include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/clock_table.h"
@@ -34,7 +33,7 @@ void rgl::strategic_entity::render(rgl::scene* sc, rgl::render_info* out)
             fx->draw(sc, &local, &f144);
         rgl::entity::render(sc, out);
         if ((sc->mask & 1) && (mode & 3) && g_options.i28) {
-            Light* l = ((Ctx*)owner)->first_dir_light();
+            Light* l = owner->first_dir_light();
             if (l && !(l->flags & 2)) {
                 bool a = f160 * f294 > 0.05f;
                 bool b = f164 * f294 > 0.05f;
@@ -49,7 +48,7 @@ void rgl::strategic_entity::render(rgl::scene* sc, rgl::render_info* out)
 }
 
 // @ 0x42a1a0
-Light* Ctx::first_dir_light()
+Light* rgl::world::first_dir_light()
 {
     Light* found = 0;
     unsigned i = 0;
@@ -134,17 +133,17 @@ void StratEnt::update_ground_cache()
         int id = *(int*)((char*)found[i] + 4);
         if (id < 0)
             continue;
-        GFace* face = &ctx->ground->faces[id];
+        NavCell* face = &ctx->ground->cells[id];
         vector4 nu(-m.u.x, -m.u.y, -m.u.z);
-        const float* nn = face->normal;
+        const float* nn = &face->trans.x;
         if (!(nu.x * nn[0] + (nu.y * nn[1] + nu.z * nn[2]) < 0.0f))   // 0x42a720: the z and y terms are summed first
             continue;
         if (shape_contact_count(&cap, found[i], 0, 0) == 0)
             continue;
-        face = &ctx->ground->faces[*(int*)((char*)found[i] + 4)];
+        face = &ctx->ground->cells[*(int*)((char*)found[i] + 4)];
         vector4 c[4];
-        for (int k = 0; k < face->n; k++) {
-            GVert* gv = &ctx->ground->verts[face->idx[k]];
+        for (int k = 0; k < face->npts; k++) {
+            NavVert* gv = &ctx->ground->verts[face->ids[k]];
             vector4 v = gv->p;
             c[k] = m.transform_point_to_local(v);
             float inv = 0.5f / radius;
@@ -152,11 +151,11 @@ void StratEnt::update_ground_cache()
             c[k].y = inv * c[k].y;
             c[k].z = inv * c[k].z;
         }
-        if ((c[0].z <= -0.5f || c[1].z <= -0.5f || c[2].z <= -0.5f || (face->n == 4 && c[3].z <= -0.5f)) &&
-            (c[0].z - c[0].x <= -0.5f || c[1].z - c[1].x <= -0.5f || c[2].z - c[2].x <= -0.5f || (face->n == 4 && c[3].z - c[3].x <= -0.5f)) &&
-            (c[0].x + c[0].z <= -0.5f || c[1].x + c[1].z <= -0.5f || c[2].x + c[2].z <= -0.5f || (face->n == 4 && c[3].x + c[3].z <= -0.5f)) &&
-            (c[0].z - c[0].y <= -0.5f || c[1].z - c[1].y <= -0.5f || c[2].z - c[2].y <= -0.5f || (face->n == 4 && c[3].z - c[3].y <= -0.5f)) &&
-            (c[0].y + c[0].z <= -0.5f || c[1].y + c[1].z <= -0.5f || c[2].y + c[2].z <= -0.5f || (face->n == 4 && c[3].y + c[3].z <= -0.5f))) {
+        if ((c[0].z <= -0.5f || c[1].z <= -0.5f || c[2].z <= -0.5f || (face->npts == 4 && c[3].z <= -0.5f)) &&
+            (c[0].z - c[0].x <= -0.5f || c[1].z - c[1].x <= -0.5f || c[2].z - c[2].x <= -0.5f || (face->npts == 4 && c[3].z - c[3].x <= -0.5f)) &&
+            (c[0].x + c[0].z <= -0.5f || c[1].x + c[1].z <= -0.5f || c[2].x + c[2].z <= -0.5f || (face->npts == 4 && c[3].x + c[3].z <= -0.5f)) &&
+            (c[0].z - c[0].y <= -0.5f || c[1].z - c[1].y <= -0.5f || c[2].z - c[2].y <= -0.5f || (face->npts == 4 && c[3].z - c[3].y <= -0.5f)) &&
+            (c[0].y + c[0].z <= -0.5f || c[1].y + c[1].z <= -0.5f || c[2].y + c[2].z <= -0.5f || (face->npts == 4 && c[3].y + c[3].z <= -0.5f))) {
             ids[nids] = *(int*)((char*)found[i] + 4);
             nids++;
         }
@@ -164,17 +163,17 @@ void StratEnt::update_ground_cache()
 }
 
 // @ 0x42aa50
-void Ctx::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
+void rgl::world::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
 {
     int lo[2], hi[2];
-    ((rgl::world*)this)->to_cell(bmin, lo);
-    ((rgl::world*)this)->to_cell(bmax, hi);
+    to_cell(bmin, lo);
+    to_cell(bmax, hi);
     *count = 0;
     for (int i = lo[0]; i <= hi[0]; i++) {
         if (lo[1] <= hi[1]) {
             int flat = 1;
             for (int j = lo[1]; j <= hi[1]; j++)
-                cells[i][j].collect(bmin, bmax, &flat, mask, out, count);
+                cells[i][j].collect((const vector4*)bmin, (const vector4*)bmax, &flat, mask, out, count);
         }
     }
 }
@@ -224,7 +223,7 @@ static inline float nrm(vector4& v)
 }
 
 // @ 0x42ad60
-void Ctx::sample_lights(const vector4* p, vector4* dir, vector4* amb)
+void rgl::world::sample_lights(const vector4* p, vector4* dir, vector4* amb)
 {
     *dir = vector4(0.0f, 0.0f, 0.0f);
     *amb = vector4(0.0f, 0.0f, 0.0f);
@@ -306,7 +305,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
     vec2 uv;
     int f5c;
     int q;
-    GFace* face;
+    NavCell* face;
     const vector4* n;
     float k, dx, dy, dz, shade, c, dx2, dy2, dz2, a, t;
     int al;
@@ -321,7 +320,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         (*slot)->slots[0].f4 = 1;
     }
     ((rgl::mesh*)*slot)->clear_geometry();
-    vector4 a2 = ctx->ambient();
+    vector4 a2 = ctx->get_ambient();
     nt = 1;
     s0 = ((a2.z + a2.y) + a2.x) * 0.35f;
     if (f15c > 0.5f) {
@@ -339,11 +338,11 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         off[2] = vec2c(0.00546875f, -0.005078125f);
     }
     for (i = 0; i < nids; i++) {
-        face = &ctx->ground->faces[ids[i]];
-        for (j = 0; j < face->n; j++) {
+        face = &ctx->ground->cells[ids[i]];
+        for (j = 0; j < face->npts; j++) {
             k = radius * 0.03f;
-            p = ctx->ground->verts[face->idx[j]].p;
-            n = &ctx->ground->verts[face->idx[j]].n;
+            p = ctx->ground->verts[face->ids[j]].p;
+            n = &ctx->ground->verts[face->ids[j]].n;
             dy = k * n->y;
             dz = k * n->z;
             p.x = k * n->x + p.x;
@@ -368,7 +367,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             }
             u = u + 0.5f;
             v = v + 0.5f;
-            shade = ctx->ground->verts[face->idx[j]].shade;
+            shade = ctx->ground->verts[face->ids[j]].level;
             c = shade / (s0 + shade);
             if (c < 0.0f) c = 0.0f;
             else if (c > 0.75f) c = 0.75f;
@@ -403,7 +402,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         }
         for (q = 0; q < nt; q++) {
             ((rgl::mesh*)*slot)->add_face(vtx[q][1], vtx[q][2], vtx[q][0]);
-            if (face->n > 3)
+            if (face->npts > 3)
                 ((rgl::mesh*)*slot)->add_face(vtx[q][0], vtx[q][2], vtx[q][3]);
         }
     }

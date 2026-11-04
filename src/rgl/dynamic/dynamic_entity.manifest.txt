@@ -7,10 +7,10 @@
 ../src/rgl/dynamic/dynamic_entity.cpp  ?update@dynamic_entity@rgl@@UAEXM@Z  00425730  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?add_torque@dynamic_entity@rgl@@UAEXPBUvector4@2@@Z  004258e0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?add_torque_at@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  00425920  /O2 /MT /Gy /TP
-../src/rgl/dynamic/dynamic_entity.cpp  ?query_shapes@world_q@rgl@@QAEXPAUentity@2@PAPAUgrid_shape@@PAH2I@Z  00426490  /O2 /MT /Gy /TP
+../src/rgl/dynamic/dynamic_entity.cpp  ?query_shapes@world@rgl@@QAEXPAUentity@2@PAPAUshape_base@@PAH2I@Z  00426490  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?box_overlap3@@YAHPBUvector4@rgl@@000@Z  00426690  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?box_overlap2@@YAHPBUvector4@rgl@@000@Z  00426700  /O2 /MT /Gy /TP
-../src/rgl/dynamic/dynamic_entity.cpp  ?less@world_q@rgl@@QAE_NPAUentity@2@0@Z  00426960  /O2 /MT /Gy /TP
+../src/rgl/dynamic/dynamic_entity.cpp  ?less@world@rgl@@QAE_NPAUentity@2@0@Z  00426960  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ??$unique@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@std@@YA?AViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@V120@0@Z  004269e0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ??$_Unguarded_partition@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@std@@YA?AU?$pair@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@V123@@0@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@0@Z  00426b20  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ??$_Median@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@std@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@00@Z  00426c70  /O2 /MT /Gy /TP

@@ -692,12 +692,9 @@ struct Mission_s27c90 {
 };
 
 // ---- world (Mission_s27c90+0) ---------------------------------------------------------------------------------
-struct World_s27c90 {
-    __forceinline void remove_entity(int id);              // 0x41f0d0 (ret 4)
-};
-
+#include "../../rgl/scene/world.h"
 struct MissionHdr_s27c90 {
-    World_s27c90* world;                           // +0
+    rgl::world* world;                             // +0
 };
 
 // ======================================================= slice s005284a0: classes, globals, helpers
@@ -1218,14 +1215,7 @@ struct SceneEntity_s29ec0 {
     vector4 pos;                                                // +0x88
     shape_base_s29ec0* shape;                                          // +0x98
 };
-struct Scene_s29ec0 {
-    __forceinline void query_segment(const float* a, const float* b, unsigned mask,
-                       shape_base_s29ec0** out, int* count);           // 0x439870 (ret 0x14)
-    char pad0[0x80];
-    SceneEntity_s29ec0** ent_begin;                                    // +0x80
-    SceneEntity_s29ec0** ent_end;                                      // +0x84
-    __forceinline void collect(int type, SceneEntity_s29ec0** out, int* count);   // 0x51a3a0 (ret 0xc)
-};
+
 
 // ---- items (s00434ad0 / s0043b5d0) -------------------------------------------------------------------
 struct ItemKind_s29ec0 {                                               // 0x238, array at 0x5e29d0
@@ -1296,7 +1286,7 @@ struct PropKind_s29ec0 {                                               // 0x78, 
 
 
 struct Mission_s29ec0 {
-    Scene_s29ec0* scene;                                               // +0x00 (level grid + entity list)
+    rgl::world* scene;                                                 // +0x00 (level grid + entity list)
     char pad4[0x1c - 0x04];
     Agent_s29ec0** pages;                                              // +0x1c agent table pages
     char pad20[0x5c - 0x20];
@@ -1416,9 +1406,6 @@ struct Entity_s2ae70 {
     __forceinline void add_extra(rgl::mesh_s2ae70* m);                        // 0x442110 (thiscall, ret 4)
 };
 
-struct World_s2ae70 {
-    __forceinline Entity_s2ae70* create_entity(int type);                    // 0x428440 (thiscall, ret 4)
-};
 
 // the shape owned by the Screen_s2ae70 at +0x6698 (0x94 bytes; see s004e65e0 / s004e6a70)
 struct Shape_s2ae70 {
@@ -1446,7 +1433,7 @@ struct Mission_s2ae70 {
 
 // ---- the mission screen --------------------------------------------------------------------------------
 struct Screen_s2ae70 {
-    World_s2ae70* world;                                       // +0
+    rgl::world* world;                                         // +0
     char pad4[0x29c - 4];
     int f29c;                                           // +0x29c order state
     int f2a0;                                           // +0x2a0 selected order
@@ -1543,12 +1530,6 @@ struct shape_base_s2b5c0 {
 };
 typedef capsule capsule_s2b5c0;
 
-struct Scene_s2b5c0 {
-    char pad[0x64];
-    int f64;                                            // +0x64
-    __forceinline void query_segment(const float* a, const float* b, unsigned mask,
-                       shape_base_s2b5c0** out, int* count);   // 0x439870
-};
 
 struct Camera_s2b5c0 {
     __forceinline void screen_to_world(vector4* near_pt, vector4* far_pt);    // 0x4bd2f0
@@ -1582,7 +1563,7 @@ struct CampaignGame_s2b5c0 {
 
 
 struct Mission_s2b5c0 {
-    Scene_s2b5c0* f0;                                          // +0x00
+    rgl::world* f0;                                            // +0x00
     char pad4[0x18 - 4];
     std::vector<Agent_s2b5c0*> pages;                          // +0x18 (data pointer at +0x1c)
     char pad28[0x60 - 0x28];
@@ -1735,9 +1716,7 @@ struct SlotChan {
 struct UiD {
     void set_value(float);   // 0x48baa0
 };
-struct level {
-    void query_segment(const float*, const float*, unsigned, shape_base**, int*);   // 0x439870
-};
+
 struct RecZSubB {
     RecZSubB* init();   // 0x4353a0
 };
@@ -1846,12 +1825,7 @@ struct Mission {
 struct camera_ray {
     void screen_to_world(rgl::vector4*, rgl::vector4*);   // 0x4bd2f0
 };
-namespace rgl {
-struct world {
-    rgl::entity* create_entity(int);   // 0x428440
-    void remove_entity(int);   // 0x41f0d0
-};
-}
+
 __forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((Poser*)this)->add_extra((int)a0); }
 __forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((rgl::mesh*)this)->add_face(a0, a1, a2); }
 __forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return ((rgl::mesh*)this)->add_point(a0); }
@@ -1861,9 +1835,9 @@ __forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((Shape*)
 __forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_spikes((rgl::mesh*)a0); }
 __forceinline void Mission_s257f0::camera_to(rgl::matrix* a0, float& a1) { ((Mission*)this)->camera_to((rgl::matrix const*)a0, (float const*)&a1); }
 __forceinline void BrushElem_s2c2b0::clear() { ((Elem_s2ce00*)this)->clear(); }
-__forceinline void Scene_s29ec0::collect(int a0, SceneEntity_s29ec0** a1, int* a2) { ((Picker*)this)->collect((unsigned)a0, (Pickable**)a1, a2); }
+
 __forceinline void Flags5e291c_s261e0::commit(char* a0) { ((MapFlags*)this)->commit(a0); }
-__forceinline Entity_s2ae70* World_s2ae70::create_entity(int a0) { return (Entity_s2ae70*)((rgl::world*)this)->create_entity(a0); }
+
 __forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot(a0); }
 __forceinline float MissionSub_s261e0::elapsed() const { return ((Timer*)this)->elapsed(); }
 __forceinline bool Agent_s29130::f100_is_0x48_and_charged() const { return ((AgentX*)this)->f100_is_0x48_and_charged(); }
@@ -1942,10 +1916,9 @@ __forceinline ItemRef Agent_s29130::slot_pair(int a0) const { return ((Agent*)th
 __forceinline Blow_s284a0::Blow_s284a0() { ((RecZSubB*)this)->init(); }
 __forceinline int rgl::mesh_s2ae70::add_vertex(int a0, const vec2_s2ae70* a1, const unsigned* a2, const vector4* a3, const int* a4) { return ((rgl::mesh*)this)->add_vertex(a0, (const vec2*)a1, a2, a3, a4); }
 __forceinline int Mission_s2b5c0::add_placed(const int* a0, const int* a1, const int* a2, const matrix* a3, int* a4) { return ((Mission*)this)->add_placed(a0, a1, a2, a3, a4); }
-__forceinline void Scene_s29ec0::query_segment(const float* a0, const float* a1, unsigned a2, shape_base_s29ec0** a3, int* a4) { ((level*)this)->query_segment(a0, a1, a2, (shape_base**)a3, a4); }
-__forceinline void Scene_s2b5c0::query_segment(const float* a0, const float* a1, unsigned a2, shape_base_s2b5c0** a3, int* a4) { ((level*)this)->query_segment(a0, a1, a2, (shape_base**)a3, a4); }
+
 __forceinline void EmitSub_s261e0::play(int a0) { ((SlotChan*)this)->play(a0); }
-__forceinline void World_s27c90::remove_entity(int a0) { ((rgl::world*)this)->remove_entity(a0); }
+
 __forceinline void Mission_s2b5c0::pick_entity() { ::pick_entity((GuiCtx*)this); }
 
 #endif // MISSION5_MISSION_5_H

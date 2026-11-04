@@ -14,7 +14,11 @@
 #include <string.h>
 #include <new>
 #include "../rgl/rgl_math.h"
-#include "./entity.h"
+#include "../include/mat4.h"
+#include "../include/mesh_prims.h"
+#include "../include/mesh_parts.h"             // rgl::render_info (and the other mesh records)
+#include "../rgl/scene/world.h"                // rgl::world / pool / cellnode / cellref, scene, mesh: the real classes
+#include "../include/pod_elems.h"              // E8 / E12 / E100 / rec36 / rec136 (shared)
 #include "./world_data/thiscall_free.h"   // CALL_STDCALL_ON
 struct named_object;
 #include "../rgl/resource.h"              // resmgr g_resmgr (0x5d6fa0), clear_f14 0x4175f0 (the resource manager's release, a free stdcall function; mem_stream.cpp)
@@ -24,7 +28,6 @@ struct named_object;
 #include "../include/mesh_prims.h"
 #include "../include/poly.h"
 #include "../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
-#include "./world.h"
 #include "../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using rgl::vector4;
@@ -48,9 +51,9 @@ void FxElem::set_data(void* p)
 {
     if (psys.size() != 0) {
         rgl::mesh* s = psys[0];
-        if (s->data != 0)
-            operator delete(s->data);
-        s->data = p;
+        if (s->p_c0 != 0)
+            operator delete(s->p_c0);
+        s->p_c0 = (rgl::obj_c0*)p;
     } else {
         operator delete(p);
     }
@@ -62,7 +65,7 @@ int FxElem::find_kid(int id)
     int r = -1;
     if (psys.size() != 0) {
         for (unsigned i = 0; i < psys[0]->kids.size(); i++) {
-            if (psys[0]->kids[i]->id == id)
+            if (psys[0]->kids[i]->tag == id)
                 r = i;
         }
     }
@@ -77,57 +80,63 @@ int FxElem::find_kid(int id)
 template std::list<int>::iterator std::list<int>::erase(std::list<int>::iterator);
 
 // ---- chunked free-list pool ----
-template<class T> void pool<T>::link_chunks()
+template<class T> void rgl::pool<T>::link_chunks()
 {
     typedef typename std::list<T*>::iterator It;
     for (It it = chunks.begin(); it != chunks.end(); ++it) {
-        for (int i = 0; i < per_chunk - 1; i++) {
+        for (int i = 0; i < count - 1; i++) {
             (*it)[i].next = &(*it)[i + 1];
         }
         It nx = it;
         ++nx;
         if (nx != chunks.end())
-            (*it)[per_chunk - 1].next = *nx;
+            (*it)[count - 1].next = *nx;
         else
-            (*it)[per_chunk - 1].next = 0;
+            (*it)[count - 1].next = 0;
     }
     if (chunks.begin() != chunks.end())
-        free_head = *chunks.begin();
+        freelist = *chunks.begin();
 }
-// 0x41f350 pool::link_chunks (cell12)
-template void pool<cell12>::link_chunks();
-// 0x41f3d0 pool::link_chunks (cell16)
-template void pool<cell16>::link_chunks();
+// 0x41f350 pool::link_chunks (the scene's cell-node pool)
+template void rgl::pool<rgl::cellnode>::link_chunks();
+// 0x41f3d0 pool::link_chunks (the scene's cell-reference pool)
+template void rgl::pool<rgl::cellref>::link_chunks();
 
 // @ 0x41f450
-void world::erase_entity(rgl::entity* e)
+void rgl::world::erase_entity(rgl::entity* e)
 {
     std::vector<rgl::entity*>::iterator it = std::remove(ents.begin(), ents.end(), e);
     ents.erase(it, ents.end());
 }
 
 // 0x41f4b0 vec::clear (vec<mface>)
-template void vec<mface>::clear();
+template void rgl::vec<mface>::clear();
 
 // @ 0x41f4e0
 rgl::scene::~scene()
 {
-    if (handle != 0) {
-        CALL_STDCALL_ON(clear_f14, &g_resmgr, handle);   // 0x4175f0 (the resource manager in ecx)
-        handle = 0;
+    if (rt != 0) {
+        CALL_STDCALL_ON(clear_f14, &g_resmgr, rt);   // 0x4175f0 (the resource manager in ecx)
+        rt = 0;
     }
-    scene* c = child;
+    scene* c = refl;
     if (c != 0)
         delete c;
     for (unsigned i = 0; i < cache.size(); i++) {
-        Poly* o = cache[i];
+        mesh* o = cache[i];
         if (o != 0)
             delete o;
     }
 }
 
 // @ 0x41f5d0
-four_vecs::~four_vecs() {}
+NavData::~NavData()
+{
+    v30.clear();
+    v20.clear();
+    cells.clear();
+    verts.clear();
+}
 
 // 0x41f640 list::_Insert
 template void std::list<int>::_Insert(std::list<int>::iterator, const int&);

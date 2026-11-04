@@ -7,7 +7,7 @@
 // zeroes its contact list through the member initializer, which is where the original does); scene_entity.h only forward-declares
 // rgl::dynamic_entity (the entity factory in entity_types.cpp includes this header). The slices' names (rigid_base: the base with the state; dyn.h's Obj,
 // entity, cell, cell_ref, enode, contact_list) are the shared classes: the queries below are members of derived views
-// (world_q : rgl::world, cell_q : rgl::cell) because world.h cannot be extended from here.
+// are members of rgl::world / rgl::cell (../scene/world.h), defined in dynamic_entity.cpp.
 #ifndef RGL_DYNAMIC_DYNAMIC_ENTITY_H
 #define RGL_DYNAMIC_DYNAMIC_ENTITY_H
 #include <vector>
@@ -60,17 +60,6 @@ struct contact_rec {                   // 0x24 bytes
     float depth;
 };
 
-
-// ---- the grid cell and the world, seen through the queries ---------------------------------------------------------
-struct cell_q : cell {
-    // the shapes are the cell's std::vector at +0 (rgl::cell::a); the entity list is the node chain at +0x30
-    void collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigned mask, grid_shape** out, int* count);   // 0x426500
-};
-struct world_q : world {
-    void query_shapes(entity* e, grid_shape** out, int* count, int* use3d, unsigned mask);                     // 0x426490
-    void query_entities(entity* e, unsigned mask, bool ordered, std::vector<entity*>* out);                   // 0x426750
-    bool less(entity* a, entity* b);                                                                          // 0x426960
-};
 
 // ---- the rigid body ----------------------------------------------------------------------------------------------------
 // Fields read or written by the function cited. Its constructor is inline (forced) in dynamic_entity::dynamic_entity

@@ -146,7 +146,7 @@ void Game::build_scene()
                 rgl::entity*& cell = g_script.map_cell[j * 8 + i];
                 rgl::entity* p = cell;
                 if (p) {
-                    ((::world*)world)->erase_entity(p);
+                    ((rgl::world*)world)->erase_entity(p);
                     g_script.map_saved[j * 8 + i] = cell;
                     cell = 0;
                 }

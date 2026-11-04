@@ -262,7 +262,7 @@ NOINL void Mission::spawn(AgentS* a)
     } else if (a->kind == 1) {
         a->f12c = (int)&g_anim_set;
     }
-    EntityG* e = (EntityG*)((world_x*)scene_world)->create_entity(9);
+    EntityG* e = (EntityG*)((rgl::world*)scene)->create_entity(9);
     e->id = a->id;
     e->type = 0xb;
     a->ent = e;
@@ -677,7 +677,7 @@ void Mission::frame(float dt, bool spawn)
         int n = (int)retire_list.size();                    // signed: cmp edi,1; jg / cdq; idiv (0x4842a5)
         int k = n > 1 ? rand() % n : 0;
         int id = *(int*)(retire_list[k] + 8);
-        ((rgl::world*)scene_world)->remove_entity(id);       // 0x41f0d0
+        ((rgl::world*)scene)->remove_entity(id);       // 0x41f0d0
         unsigned last = (unsigned)retire_list.size();
         retire_list[k] = retire_list[last - 1];
         retire_list.resize(last - 1);
@@ -730,7 +730,7 @@ void Mission::frame(float dt, bool spawn)
     }
 
     update_team_stats();
-    ((rgl::world*)scene_world)->step(dt);                  // 0x427f40
+    ((rgl::world*)scene)->step(dt);                  // 0x427f40
     update_team_counts();
     MAT(unsigned, 0x6550)++;
     if (g_mt_inited)

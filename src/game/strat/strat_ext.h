@@ -27,7 +27,6 @@ using rgl::frustum;
 
 struct StratEnt;
 struct MeshEnt;
-struct Ctx;
 
 // the mesh, scene and resource classes are the shared ones (src/rgl/mesh.h, resource.h)
 #include "../../include/vec.h"

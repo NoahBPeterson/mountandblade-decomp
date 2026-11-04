@@ -26,11 +26,11 @@ using rgl::matrix;
 extern shape_base* g_hit_shape;                         // 0x5e246c: last shape hit by trace_ray
 
 struct Emit;                                            // particle emitter (agent_fx_sound.h)
-struct cell;                                            // world grid cell (agent_fx_sound.h)
+
 struct node_groups; typedef node_groups Mesh;                              // the lod mesh hanging off the agent (agent_fx_sound.cpp 0x443aa0)
 
-// the scene (rgl world): first field of the mission object, defined once in ../world.h (members of other objects only declared)
-#include "../world.h"
+// the scene (rgl world): first field of the mission object (src/rgl/scene/world.h)
+#include "../../rgl/scene/world.h"
 
 // ---- animation channels / skeleton (the animator at body+0x304) ---------------------------------------------
 struct CapDef { vector4 a; vector4 b; float r; int pad[2]; };     // 0x2c bytes (0x43f6d0)
@@ -82,14 +82,7 @@ struct Obj3 {
     void reset_pending(int v);                                      // 0x433810
     void set_placement(const matrix* m, const vector4* a, const vector4* b, int c);   // 0x433770 (game_util.h: scene object with a placement block; Emit's)
 };
-namespace rgl {
-struct entity; struct psys;
-struct world {                                                      // src/rgl/scene (the global `world` of world.h is this class)
-    entity* create_entity(int type_id);                             // 0x428440 (rgl/scene/world.h)
-    psys* alloc_emitter();                                          // 0x427ea0
-    void to_cell(const float* p, int* out);                         // 0x41ed00 (frustum_grid.cpp)
-};
-}
+
 
 // ---- animation slot: 2 x 0x2c bytes at agent+0xd4 (0x4406a0 reads slot[1].cur at +0x100 and .scale at +0x118;
 // 0x444370 sets cur/next/events/rate through the inlined 0x4378a0) ----------------------------------------------

@@ -27,7 +27,6 @@ namespace rgl { struct Obj; }        // entity.cpp: the element type of the std:
 // @ 0x423c00
 void rgl::world::add_item(rgl::item_obj* e)
 {
-    world_grid* self = (world_grid*)this;
     grid_shape* o = (grid_shape*)e;
     if (o->shape_type() == 3) {
         grid_composite* c = (grid_composite*)o;
@@ -35,15 +34,15 @@ void rgl::world::add_item(rgl::item_obj* e)
             if (c->bodies[i]->shape_type() == 3)
                 add_item((rgl::item_obj*)c->bodies[i]);
             else
-                self->relocate(c->bodies[i]);
+                relocate(c->bodies[i]);
         }
     } else if (o->shape_type() != 4) {
-        self->relocate(o);
+        relocate(o);
     }
 }
 
 // @ 0x423c80
-void world_grid::relocate(grid_shape* o)
+void rgl::world::relocate(grid_shape* o)
 {
     float tmp[3];
     int2 nlo, nhi;
@@ -106,7 +105,7 @@ int2* max2(int2* out, const int2* a, const int2* b)
 }
 
 // @ 0x423ed0
-int world_grid::in_rect(const int2* p, const int2* lo, const int2* hi)
+int rgl::world::in_rect(const int2* p, const int2* lo, const int2* hi)
 {
     if (p->x >= lo->x && p->x <= hi->x && p->y >= lo->y && p->y <= hi->y)
         return 1;
@@ -178,11 +177,11 @@ void rgl::strategic_entity::add_shape(rgl::item_obj* o)
 {
     items.push_back(o);
     ((grid_shape*)o)->set_mc(id);
-    ((world_grid*)owner)->reg_shape((grid_shape*)o);
+    owner->reg_shape((grid_shape*)o);
 }
 
 // @ 0x424170
-void world_grid::reg_shape(grid_shape* o)
+void rgl::world::reg_shape(grid_shape* o)
 {
     if (o->shape_type() == 2) {
         o->m4 = ((ground_store*)ground)->add(((grid_face*)o)->count, ((grid_face*)o)->w);
@@ -275,7 +274,7 @@ vec136::iterator_ vec136::iterator_::operator+(int off) const { iterator_ r; r._
 
 // ---- add_tree / add_shape -------------------------------------------------------------------------------------
 // @ 0x425240
-void world_grid::add_tree(grid_shape* s)
+void rgl::world::add_tree(grid_shape* s)
 {
     if (s->shape_type() == 3) {
         grid_composite* c = (grid_composite*)s;
@@ -291,7 +290,7 @@ void world_grid::add_tree(grid_shape* s)
 }
 
 // @ 0x4252c0
-void world_grid::add_shape(grid_shape* s)
+void rgl::world::add_shape(grid_shape* s)
 {
     int lo[2], hi[2];
     vector4 t0, t1;

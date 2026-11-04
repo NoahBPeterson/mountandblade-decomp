@@ -418,7 +418,7 @@ struct EntityFull {
     int      f168;                                  // +0x168  (end fall behaviour = 3)
     void add_extra(mesh* m) { ((Poser*)this)->add_extra((int)m); }                         // 0x442110 (thiscall, ret 4)
 };
-struct EntityHost { EntityFull* create_entity(int type) { return (EntityFull*)((rgl::world*)this)->create_entity(type); } };   // 0x428440 (ret 4)
+
 
 
 // ---- records ---------------------------------------------------------------------------------------
@@ -471,7 +471,7 @@ struct Mission {
 void Mission::spawn_battle_icon(unsigned id)
 {
     Rec98* rec = (Rec98*)((id & 0xf) * 0x98 + *(f0e0.begin() + (id >> 4)));
-    EntityFull* e = ((EntityHost*)g_script.level)->create_entity(9);
+    EntityFull* e = (EntityFull*)g_script.level->create_entity(9);
     rec->f50 = (int)e;
 
     Shape* shape;
@@ -703,7 +703,7 @@ struct Mission {
 // call 0x428440), not a virtual slot - the object at g_level is not polymorphic (its first dword is data).
 static OrderObj* order_create_entity(int type)
 {
-    return (OrderObj*)((rgl::world*)g_script.level)->create_entity(type);
+    return (OrderObj*)g_script.level->create_entity(type);
 }
 
 // @ 0x49bea0
@@ -866,10 +866,9 @@ struct Agent {
 };
 typedef char Agent_offset_check[offsetof(Agent, form_a) == 0x2b8 && offsetof(Agent, alt) == 0x56b4 ? 1 : -1];
 
-struct Level { int nearest_face(vector4* p) { return ((::level*)this)->nearest_face((const float*)p); } };     // 0x439a50 (thiscall) -> face index
 
 struct Mission {
-    Level*      level;                      // +0x00
+    rgl::world* level;                      // +0x00
     AgentTable  agents;                     // +4
     char        pad8[0x1c - 8];
     void**      agent_pages;                // +0x1c  page table, dir[id >> 4] then + (id&0xf)*0x5928
@@ -993,7 +992,7 @@ void Mission::order(int index, int order) {
                 continue;
             s->target = p;
             s->target.w = 0.0f;
-            s->face = level->nearest_face(&p);
+            s->face = level->nearest_face(&p.x);
             s->extra.x = 0.0f;
             s->extra.y = 0.0f;
             s->extra.z = 0.0f;
@@ -1019,7 +1018,7 @@ void Mission::order(int index, int order) {
                 continue;
             s->target = p;
             s->target.w = 0.0f;
-            s->face = level->nearest_face(&p);
+            s->face = level->nearest_face(&p.x);
             s->extra.x = 0.0f;
             s->extra.y = 0.0f;
             s->extra.z = 0.0f;

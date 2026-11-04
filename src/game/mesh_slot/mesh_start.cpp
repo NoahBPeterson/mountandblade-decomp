@@ -909,7 +909,7 @@ void Mission::start_setup()
         s->face = 0;
         int n = 0;
         do {
-            ((level*)at<rgl::world*>(0))->floor_at(&s->B.o.x, &outY, (face**)&s->face);     // 0x439be0
+            ((rgl::world*)at<rgl::world*>(0))->floor_at(&s->B.o.x, &outY, (face**)&s->face);     // 0x439be0
             if (s->face == 0) {
                 s->B.o.x = (frand() - 0.5f) * 0.01f + s->B.o.x;
                 s->B.o.y = (frand() - 0.5f) * 0.01f + s->B.o.y;
@@ -963,7 +963,7 @@ void Mission::start_setup()
             v = at<vector4>(0x6598);
             v.x = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.x;
             v.y = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.y;
-            ((level*)at<rgl::world*>(0))->floor_at(&v.x, &outY, (face**)&sink);
+            ((rgl::world*)at<rgl::world*>(0))->floor_at(&v.x, &outY, (face**)&sink);
             v.z = outY;
             RAWAT(vector4, p, 0x48) = v;
             if (RAWAT(PropObj*, p, 0x1b4) != 0)

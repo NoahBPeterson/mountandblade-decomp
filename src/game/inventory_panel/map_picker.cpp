@@ -35,6 +35,7 @@ extern Font* g_font;                    // 0x5e2934
 #include "../../include/mesh_prims.h"
 using rgl::point20;
 #include "../../rgl/mesh.h"
+#include "../../rgl/scene/world.h"            // rgl::world: collect 0x51a3a0
 using rgl::mesh;
 
 // ---- globals --------------------------------------------------------------------------------------------
@@ -70,15 +71,7 @@ void PlaneTrace::intersect(vector4* out, const vector4* a, const vector4* b)
 }
 
 // ---- 0x51a3a0 -------------------------------------------------------------------------------------------
-struct Pickable {
-    virtual ~Pickable();
-    virtual unsigned v1();                          // 0
-};
-struct Picker {
-    char pad0[0x7c];
-    std::vector<Pickable*> objs;                    // +0x7c (_Myfirst at +0x80, _Mylast at +0x84)
-    void collect(unsigned key, Pickable** out, int* count);     // 0x51a3a0 ret 0xc
-};
+
 
 // bit-prefix match: true when every set bit of "key" is also set in "value" (key==0 matches anything).
 // The equality case is handled here, so the loop cannot spin on value == key.
@@ -94,11 +87,11 @@ static bool mask_contains(unsigned value, unsigned key)
 }
 
 // @ 0x51a3a0
-void Picker::collect(unsigned key, Pickable** out, int* count)
+void rgl::world::collect(unsigned key, entity** out, int* count)
 {
     *count = 0;
-    for (std::vector<Pickable*>::iterator it = objs.begin(); it < objs.end(); ++it) {
-        if (mask_contains((*it)->v1(), key)) {
+    for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {
+        if (mask_contains((*it)->type_id(), key)) {
             out[*count] = *it;
             ++*count;
         }

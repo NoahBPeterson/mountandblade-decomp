@@ -18,12 +18,7 @@
 struct Frame3 : rgl::mat3 {};
 // 0x442110 is agent3's Poser::add_extra (the entity takes the extra mesh as an int); 0x428440 is rgl::world::create_entity
 // (Poser::add_extra is declared in mesh_hud.h)
-namespace rgl {
-struct entity;
-struct world {
-    entity* create_entity(int type_id);   // 0x428440
-};
-}
+#include "../../rgl/scene/world.h"            // rgl::world::create_entity 0x428440
 
 // ---- the scene a tableau renders into and the entity it creates -----------------------------------------------------------------------------
 struct TableauEntity {

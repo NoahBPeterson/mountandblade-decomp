@@ -17,7 +17,7 @@
 #include "./poly_mesh.h"
 #include "../placed_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "./cell_grid.h"
-#include "./cell_world.h"
+
 #include "./terrain.h"
 #include "./records.h"
 #include "./game_data.h"
@@ -799,7 +799,7 @@ void TroopMgr::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
 // @ 0x470f40
 bool __stdcall ground_height(rgl::world* lv, const float* p, float* out)
 {
-    face* hits[0x2000];
+    shape_base* hits[0x2000];
     int count;
     int use3d;
     int cellxy[2];
@@ -814,8 +814,8 @@ bool __stdcall ground_height(rgl::world* lv, const float* p, float* out)
     col[cellxy[1]].collect_point(&q.x, &use3d, 0x104, hits, &count);
     int n = count;
     for (int i = 0; i < n; i++) {
-        if (hits[i]->m4 >= 0 && hits[i]->contains_xy(p)) {
-            face* f = hits[i];
+        if (hits[i]->m4 >= 0 && ((face*)hits[i])->contains_xy(p)) {
+            face* f = (face*)hits[i];
             *out = f->w[0].z - ((p[0] - f->w[0].x) * f->normal.x + (p[1] - f->w[0].y) * f->normal.y) / f->normal.z;
             return true;
         }
@@ -981,14 +981,14 @@ float Terrain::sun_visibility(const float* p)
     vector4 d;
     {
         vector4 amb;                       // light colour: unused; its slot is shared with the scratch below
-        grid->sample_lights(&a, &d, &amb);
+        world->sample_lights(&a, &d, &amb);
     }
     vector4 s;
     s.x = d.x * 1000.0f; s.y = d.y * 1000.0f; s.z = d.z * 1000.0f;
     a.x = p[0] - s.x; a.y = p[1] - s.y; a.z = p[2] - s.z;
     s.x = d.x * 0.05f; s.y = d.y * 0.05f; s.z = d.z * 0.05f;
     d.x = p[0] - s.x; d.y = p[1] - s.y; d.z = p[2] - s.z;
-    bool vis = g_use_shaders != 0 || grid->hf->line_clear(&d, &a);
+    bool vis = g_use_shaders != 0 || world->hf->line_clear(&d, &a);
     if (vis)
         return 1.0f;
     return 0.0f;
@@ -1004,7 +1004,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
             mesh* m = p->meshes[k];
             if (m->res->flags & 0x40) {
                 float light = 1.0f;
-                if ((pt->flags & 0x80000i64) != 0 && ((int*)grid->hf->cols[p->cx])[p->f0c + p->cy * 4 + 2] >= 0) {
+                if ((pt->flags & 0x80000i64) != 0 && ((int*)world->hf->cols[p->cx])[p->f0c + p->cy * 4 + 2] >= 0) {
                     vector4 n;
                     n.x = -sun_dir[0]; n.y = -sun_dir[1]; n.z = -sun_dir[2];
                     light = max2(0.0f, dot3(n, p->frame.u));
@@ -1031,9 +1031,9 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         near_.x = pos.x - d.x; near_.y = pos.y - d.y; near_.z = pos.z - d.z;
                         bool visible;
                         if (trace)
-                            visible = TRACE_RAY(grid, &near_, &far_, 50.0f, 0, 0) != 0;
+                            visible = world->trace_ray(&near_.x, &far_.x, 50.0f, 0, 0) != 0;
                         else
-                            visible = grid->hf->line_clear(&near_, &far_) != 0;
+                            visible = world->hf->line_clear(&near_, &far_) != 0;
                         if (!visible)
                             light *= 0.1f;
                     }
@@ -1135,7 +1135,7 @@ void Mission::replace_mark(int idx)
                 from.z = from.z + 0.7f;
                 vector4 to = b;
                 to.z = to.z + 0.7f;
-                if (TRACE_RAY(scene, &from, &to, 15.0f, 0, 0)) {
+                if (scene->trace_ray(&from.x, &to.x, 15.0f, 0, 0)) {
                     *ov = b;
                     goto done;
                 }

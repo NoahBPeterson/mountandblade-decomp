@@ -12,53 +12,6 @@ OFFSET_CHECK3(Light, dir, 0x44);
 OFFSET_CHECK3(Light, flags, 0x6c);
 
 struct Psys;
-#include "../cell.h"          // cell (collect 0x426500)
-
-// face record of the static ground mesh (0x88 bytes): vertex count and up to 4 vertex indices, plane normal at +0x54
-struct GFace { int n; int idx[4]; char pad14[0x54 - 0x14]; float normal[3]; char pad60[0x88 - 0x60]; };
-struct GVert { vector4 p; vector4 n; float shade; };   // 0x24 bytes: position, normal (+0x10), shading weight (+0x20)
-struct Ground {
-    char pad0[4];
-    GVert* verts;               // 0x04
-    char pad8[0x14 - 8];
-    GFace* faces;               // 0x14
-};
-
-// the scene/world object (strategic_entity::ctx): collision grid cells at +0x28, ground at +0xb0, lights at +0xb8
-// the scene/world object (strategic_entity::ctx): collision grid cells at +0x28, ground at +0xb0, lights at +0xb8
-struct Ctx {
-    char pad0[8];
-    int n[2];                   // 0x08 grid size
-    float lo[2];                // 0x10
-    float pad18[2];
-    float step[2];              // 0x20
-    cell** cells;               // 0x28   query_box 0x42aa50
-    char pad2c[0x68 - 0x2c];
-    vector4 amb;                // 0x68 base ambient colour (ambient 0x42b6d0)
-    MeshEnt* sky;               // 0x78 optional backdrop entity (render_scene 0x429890)
-    std::vector<MeshEnt*> ents_a;   // 0x7c (first at 0x80)   find_entity 0x42ba50
-    std::vector<MeshEnt*> ents_b;   // 0x8c (first at 0x90)   find_entity 0x42ba50
-    char pad9c[0xb0 - 0x9c];
-    Ground* ground;             // 0xb0   update_ground_cache 0x42a480, create_shadow_mesh 0x42b080
-    char padb4[4];
-    std::vector<Light*> lights; // 0xb8 (first at 0xbc)   first_dir_light 0x42a1a0, sample_lights 0x42ad60, ambient 0x42b6d0
-    std::vector<mesh*> meshes;  // 0xc8 (first at 0xcc)   (render_scene)
-    char env[0x32c - 0xd8];     // 0xd8
-    std::vector<Psys*> psyss;   // 0x32c (first at 0x330) (render_scene)
-    void to_cell(const float* p, int* out) const;    // 0x41ed00
-    Light* first_dir_light();                       // 0x42a1a0
-    void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60
-    vector4 ambient();                              // 0x42b6d0 (by-value return)
-    StratEnt* find_entity(int id);                  // 0x42ba50
-    void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
-    void render_scene(scene* sc, bool reflect);     // 0x429890 (another module)
-};
-OFFSET_CHECK3(Ctx, cells, 0x28);
-OFFSET_CHECK3(Ctx, amb, 0x68);
-OFFSET_CHECK3(Ctx, ents_a, 0x7c);
-OFFSET_CHECK3(Ctx, ents_b, 0x8c);
-OFFSET_CHECK3(Ctx, ground, 0xb0);
-OFFSET_CHECK3(Ctx, lights, 0xb8);
 
 // ---- the strategic entity (vtable 0x54b5d0). MeshEnt is the base part (0x420310 is the base render); its other
 // functions are in the fx/entity modules. Fields below +0x58 are the ones this object's functions touch.
@@ -69,7 +22,7 @@ struct MeshEnt {
     virtual float get_radius();                         // slot 5 (0x41fd80)
     virtual void s6(); virtual void s7(); virtual void s8();
     virtual void render(scene* sc, render_info* out);   // 9: 0x420310 (base), 0x42a090 (StratEnt)
-    Ctx* ctx;                   // 0x04   render 0x42a090 (first_dir_light), 0x42a480, 0x42b080, 0x42b790 (find_entity)
+    rgl::world* ctx;            // 0x04   render 0x42a090 (first_dir_light), 0x42a480, 0x42b080, 0x42b790 (find_entity)
     int id;                     // 0x08   find_entity 0x42ba50
     char padc[0x58 - 0xc];
     matrix pos;                 // 0x58 (origin at 0x88)   render 0x42a090 (&pos to fx->draw), build_shadow_frame 0x42aaf0, update_shadows 0x42a1f0 (origin)

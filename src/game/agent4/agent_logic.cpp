@@ -796,10 +796,10 @@ void Agent::update_ai()
                             set_goal_near(&scripted_destination.o, &r2);
                         } else {
                             int fid = -1;
-                            if (g_mission->scene_world->hf)
-                                g_mission->scene_world->hf->sample(pos.x, pos.y, wsum, &fid);
+                            if (g_mission->scene->hf)
+                                g_mission->scene->hf->sample(pos.x, pos.y, wsum, &fid);
                             if (dist < 4.0f ||
-                                (g_mission->scene_world->hf && (fbc == 0 || ((int*)fbc)[1] != fid))) {
+                                (g_mission->scene->hf && (fbc == 0 || ((int*)fbc)[1] != fid))) {
                                 set_goal_agent(target);
                             } else {
                                 float r30 = 30.0f;
@@ -1562,7 +1562,7 @@ void Agent::ai_update_control()
             cap.get_max(&bmax);
             shape_base* shapes[8188];
             int count;
-            g_mission->scene_world->query_box(&bmin.x, &bmax.x, 2, shapes, &count);
+            g_mission->scene->query_box(&bmin.x, &bmax.x, 2, shapes, &count);
             shape_base* hit;
             int found = 0;
             int i = 0;
@@ -1601,7 +1601,7 @@ process:
                 ents.first = 0;
                 ents.last = 0;
                 ents.end = 0;
-                g_mission->scene_world->collect_boxed(&bmin, &bmax, (std::vector<unsigned>*)&ents);
+                g_mission->scene->collect_boxed(&bmin, &bmax, (std::vector<unsigned>*)&ents);
                 SceneEnt** pe = ents.first;
                 if (pe < ents.last) {
                     do {
@@ -2418,7 +2418,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     else
         mount_f = shooter->fac;
     int id = ((Pool*)poolJ)->alloc();
-    SceneEnt* e = (SceneEnt*)((rgl::world*)scene_world)->create_entity(9);
+    SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(9);
     pos2 ident;
     identity_pos((::pos*)&ident);
     rgl::mesh* m;
@@ -2565,7 +2565,7 @@ after:
 
     if (r->kind == 7) {
         r->id = find_item(&r->name);
-        SceneEnt* e = (SceneEnt*)((rgl::world*)scene_world)->create_entity(7);
+        SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(7);
         rgl::mesh** first = meshes._Myfirst;
         for (unsigned i = 0; first != 0 && i < (unsigned)(meshes._Mylast - first); i++)
             e->add_extra(first[i]->clone());
@@ -2587,12 +2587,12 @@ after:
         e->f1d4 = 0;
         e->v1ac = a_vadd(a_vadd(vmul(d, r->m18.s), vmul(c2, r->m18.f)), vmul(a2, r->m18.u));
     } else {
-        SceneEnt* e = (SceneEnt*)((rgl::world*)scene_world)->create_entity(9);
+        SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(9);
         for (unsigned i = 0; i < meshes.size(); i++) {
             rgl::mesh* m = meshes[i]->clone();
             if (r->kind == 4) {
                 vector4 dir, col;
-                ((level*)scene_world)->light_at(r->m18.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
+                ((rgl::world*)scene)->light_at(r->m18.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
             }
             if (r->kind == 0 && tbl >= 0 && tbl < g_propkind_count && (r78_flags(&g_propkinds[tbl]) & 0x12000))
                 m->mask = 0xffff;
@@ -2635,7 +2635,7 @@ after:
             if (sh) {
                 sh->scale((const float*)&r->v158);
                 sh->transform((const pos*)&r->m18);
-                ((world_grid*)scene_world)->reg_shape((grid_shape*)sh);
+                ((rgl::world*)scene)->reg_shape((grid_shape*)sh);
             }
         } else if (r->kind == 6) {
             unsigned k = g_items[r->id].type_flags & 0xff;
@@ -4776,7 +4776,7 @@ void Agent::ragdoll_update()
                             else if (i == 8)
                                 lim = 0.35f;
                             if (!f58c4 && !f58d8 && hold.o.z - w->o.z < 0.0f &&
-                                w->o.z - ((level*)g_mission->scene_world)->floor_z(&w->o.x) < lim) {
+                                w->o.z - g_mission->scene->floor_z(&w->o.x) < lim) {
                                 g_sound_mgr.play(g_sound_mgr.slot[74], 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
                                 f58d8 = 1;
                             }
@@ -5061,7 +5061,7 @@ void Agent::spawn_corpse()
             i++;
             if (i == 30 || i == 60)
                 pos = saved;
-            ((level*)g_mission->scene_world)->floor_at(&pos.x, &z, pf);
+            g_mission->scene->floor_at(&pos.x, &z, pf);
             if (*pf != 0)
                 break;
             pos.x = ((float)(rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 0.01f + pos.x;
@@ -6860,7 +6860,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
     if (!prop_done && !hit_flag && !can && probed != 0) {
         int eid = found->mc;
         if (eid >= 0) {
-            SceneEnt* e = (SceneEnt*)((Ctx*)g_mission->scene_world)->find_entity(eid);
+            SceneEnt* e = (SceneEnt*)g_mission->scene->find_entity(eid);
             if (e != 0) {
                 int pi = e->id;
                 e->type = 0xc;
@@ -7450,7 +7450,7 @@ void Agent::move_step(float dt)
         push = vector4(a.x + b.x, a.y + b.y, a.z + b.z);
         int fid = ((shape_base*)fbc)->mc;
         if (fid >= 0) {
-            SceneEnt* ent = (SceneEnt*)((Ctx*)g_mission->scene_world)->find_entity(fid);
+            SceneEnt* ent = (SceneEnt*)g_mission->scene->find_entity(fid);
             if (ent && ent->is_movable()) {
                 vector4 loc = ent->p18.transform_point_to_local(pos);
                 vector4 wp = ((::pos*)&ent->local)->transform_point(loc);
@@ -7513,7 +7513,7 @@ void Agent::move_step(float dt)
         ents.first = 0;
         ents.last = 0;
         ents.end = 0;
-        g_mission->scene_world->collect_boxed(&bmin, &bmax, (std::vector<unsigned>*)&ents);
+        g_mission->scene->collect_boxed(&bmin, &bmax, (std::vector<unsigned>*)&ents);
         for (SceneEnt** it = ents.first; it < ents.last; ++it) {
             SceneEnt* e = *it;
             if (e->shape != 0 && e->type == 0xb && e->id != id && e->id != (unsigned)f2c && e->id != (unsigned)f30) {
@@ -7612,7 +7612,7 @@ void Agent::move_step(float dt)
     if (id == (unsigned)g_mission->player_id || !(flags3c & 1))
         mask = 0x8102;
     int count;
-    g_mission->scene_world->query_box(&bmin.x, &bmax.x, mask, (shape_base**)shapes, &count);
+    g_mission->scene->query_box(&bmin.x, &bmax.x, mask, (shape_base**)shapes, &count);
     nh = 0;
     float best = 0.0f;
     fc0 = (int)0;
@@ -7686,7 +7686,7 @@ void Agent::move_step(float dt)
     face* nf;
     int tries;
     float fz;
-    world* scene = g_mission->scene_world;
+    rgl::world* scene = g_mission->scene;
     if (gv.y * gv.y + gv.z * gv.z + gv.x * gv.x == 0.0f) {
         np = pos;
         nf = 0;
@@ -7708,7 +7708,7 @@ void Agent::move_step(float dt)
         tries = 0;
     }
     do {
-        ((level*)scene)->floor_at(&np.x, &fz, &nf);
+        ((rgl::world*)scene)->floor_at(&np.x, &fz, &nf);
         face* cur = (face*)fbc;
         if (cur == 0) {
             np = mv_vadd(mv_vscale(0.95f, mv_vsub(np, pos)), pos);
@@ -7719,7 +7719,7 @@ void Agent::move_step(float dt)
                 break;
             nf = cur;
             if (nf == 0)
-                nf = *scene->faces;
+                nf = (face*)*scene->objs._Myfirst;
             np = pos;
             fz = pos.z;
         }
@@ -7730,7 +7730,7 @@ void Agent::move_step(float dt)
             vector4 probe = mv_vadd(mv_vscale(0.4f, mv_unit_up(mv_vsub(np, pos))), pos);
             float fz2;
             face* tf;
-            ((level*)scene)->floor_at(&probe.x, &fz2, &tf);
+            ((rgl::world*)scene)->floor_at(&probe.x, &fz2, &tf);
             float dz2 = pos.z - fz2;
             bool up = false;
             if (nh > 0) {

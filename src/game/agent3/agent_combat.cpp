@@ -18,7 +18,7 @@
 #include "../../include/mat4.h"
 #include "../../include/timer.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
-#include "../world.h"
+#include "../../rgl/scene/world.h"
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -38,10 +38,8 @@ shape_base* g_hit_shape;                                    // 0x5e246c: last sh
 static __forceinline const vec2* xy(const void* v) { return (const vec2*)v; }
 
 // inline helpers: the original compiled them into the callers
-static __forceinline vector4 vmul(const vector4& v, const float& k) { return vector4(v.x * k, v.y * k, v.z * k); }
 static __forceinline vector4 smul(const float& k, const vector4& v) { return vector4(k * v.x, k * v.y, k * v.z); }
 static inline vector4 vscale(const vector4& v, float k) { return vector4(v.x * k, v.y * k, v.z * k); }
-static inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static inline vector4 to_world(const matrix& m, const vector4& t)
 {
     return vector4(t.x * m.s.x + (t.y * m.f.x + t.z * m.u.x) + m.o.x,
@@ -683,7 +681,7 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
                 return false;
         }
         if (dp > -0.3f || len < 2.0f)
-            r = ((level*)g_mission->scene_world)->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
+            r = g_mission->scene->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
     }
     return r;
 }

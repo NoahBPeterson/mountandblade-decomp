@@ -303,7 +303,7 @@ void MapMission::remove_prop(int index)
 #define pv ((PropVec&)props)
     if (pv[index].ent)
     {
-        ((rgl::world*)scene_world)->remove_entity(((rgl::entity*)pv[index].ent)->id);
+        ((rgl::world*)scene)->remove_entity(((rgl::entity*)pv[index].ent)->id);
         pv[index].ent = 0;
     }
     pv.erase(pv.begin() + index);

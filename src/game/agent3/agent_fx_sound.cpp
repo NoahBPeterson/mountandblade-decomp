@@ -19,8 +19,7 @@
 #include "../str_table.h"
 #include "../../include/mat4.h"
 #include "../../include/timer.h"
-#include "../cell.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
-#include "../world.h"
+#include "../../rgl/scene/world.h"
 #include "../../include/fx.h"
 #include "../emit.h"
 #include "../anim_slot.h"
@@ -102,7 +101,7 @@ static __forceinline bool box3_inl(const vector4* a, const vector4* b, const vec
 }
 
 // @ 0x442180
-void world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<unsigned>* out)
+void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<unsigned>* out)
 {
     if (out->_Myfirst != 0)
         operator delete(out->_Myfirst);
@@ -112,13 +111,13 @@ void world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<
     int lo[2];
     int hi[2];
     int c[2];
-    ((rgl::world*)this)->to_cell(&bmin->x, lo);
-    ((rgl::world*)this)->to_cell(&bmax->x, hi);
+    to_cell(&bmin->x, lo);
+    to_cell(&bmax->x, hi);
     for (c[0] = lo[0]; c[0] <= hi[0]; c[0]++) {
         for (c[1] = lo[1]; c[1] <= hi[1]; c[1]++) {
-            for (enode* nd = cells[c[0]][c[1]].ents; nd != 0; nd = nd->next) {
-                EntView** pe = &nd->ent;
-                if (box3_inl(bmin, bmax, (*pe)->get_min(), (*pe)->get_max()))
+            for (cellnode* nd = cells[c[0]][c[1]].head; nd != 0; nd = nd->next) {
+                entity** pe = &nd->obj;
+                if (box3_inl(bmin, bmax, (*pe)->get_v9c(), (*pe)->get_vac()))
                     out->push_back(*(unsigned*)pe);
             }
         }
@@ -330,7 +329,7 @@ void GameData::add_experience(int troop, int amount)
 // @ 0x442ca0
 Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
 {
-    Emit* e = (Emit*)((rgl::world*)scene_world)->alloc_emitter();
+    Emit* e = (Emit*)((rgl::world*)scene)->alloc_emitter();
     vector4 v(0.0f, 0.0f, 0.0f);
     g_emit_defs.setup(e, idx, &v);
     e->world = *m * e->local;

@@ -544,18 +544,18 @@ int Agent::update_nav_face()
         int face = nav_face;
         nav_pos = *p;
         if (face != -1) {
-            if (g_mission->scene_level->nav->inside(&nav_face, &p->x))
+            if (g_mission->scene->nav->inside(&nav_face, &p->x))
                 return nav_face;
             if (face != -1) {
                 int mode = 2;
-                nav_face = g_mission->scene_level->locate_near(p, &nav_face, &mode);
+                nav_face = g_mission->scene->locate_near(p, &nav_face, &mode);
                 if (nav_face != -1)
                     return nav_face;
-                nav_face = g_mission->scene_level->nearest_face(&p->x);
+                nav_face = g_mission->scene->nearest_face(&p->x);
                 return nav_face;
             }
         }
-        nav_face = g_mission->scene_level->nearest_face(&p->x);
+        nav_face = g_mission->scene->nearest_face(&p->x);
     }
     return nav_face;
 }
@@ -901,9 +901,9 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
         face = cur;
     } else {
         int mode = 2;
-        if (cur >= 0 && (face = m->scene_level->locate_near(&p, &goal_face, &mode)) != -1) {
+        if (cur >= 0 && (face = m->scene->locate_near(&p, &goal_face, &mode)) != -1) {
         } else {
-            face = g_mission->scene_level->nearest_face(&p.x);
+            face = g_mission->scene->nearest_face(&p.x);
         }
     }
     set_goal_point(p, face);

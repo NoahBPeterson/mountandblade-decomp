@@ -32,7 +32,7 @@
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/phys_set.h"
 #include "../../include/height_field.h"
-#include "../cell.h"
+#include "../../rgl/scene/world.h"
 #include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -58,7 +58,6 @@ const RangePair g_range_tbl[6] = {                       // 0x590aac
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline vector4 vneg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
 static __forceinline float vdot(const vector4& a, const vector4& b) { return a.x * b.x + (a.y * b.y + a.z * b.z); }
-static __forceinline vector4 vmul(const vector4& a, float s) { return vector4(a.x * s, a.y * s, a.z * s); }
 
 
 // ---- the 0x1c8-byte record -----------------------------------------------------------------------------------------
@@ -807,14 +806,14 @@ bool PolyMesh::trace(int face, vector4 from, int end_face, const float* to, int*
 
 // merge this cell's shapes (those whose group mask does not intersect `mask`) into the sorted array out[0..*count)
 // @ 0x4396b0
-void cell::collect_masked(unsigned mask, shape_base** out, int* count)
+void rgl::cell::collect_masked(unsigned mask, shape_base** out, int* count)
 {
     shape_base* buf[0x2000];
     int n = 0;
     int k = 0;
     unsigned i = 0;
-    while (i < shapes.size()) {
-        shape_base* sh = shapes[i];
+    while (i < a.size()) {
+        shape_base* sh = a[i];
         if (sh->m8 & mask) {
             i++;
             continue;
@@ -847,12 +846,12 @@ void cell::collect_masked(unsigned mask, shape_base** out, int* count)
 
 // shapes of this cell containing the point p (xy box, or the 3-D box via in_box when *use3d != 0)
 // @ 0x439780
-void cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count)
+void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count)
 {
     unsigned i = 0;
     *count = 0;
-    while (i < shapes.size()) {
-        shape_base* sh = shapes[i];
+    while (i < a.size()) {
+        shape_base* sh = a[i];
         if (sh->m8 & mask) {
             i++;
             continue;
@@ -866,7 +865,7 @@ void cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base**
         else
             hit = in_box(smin, smax, (const vector4*)p);
         if (hit) {
-            out[*count] = shapes[i];
+            out[*count] = a[i];
             i++;
             (*count)++;
         } else
@@ -875,11 +874,11 @@ void cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base**
 }
 
 // @ 0x439870
-void level::query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count)
+void rgl::world::query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count)
 {
     int pairs[0x2000][2];
     int n;
-    ((Grid2*)this)->walk(a, b, pairs, &n);               // the level's cell grid is agent/agent.h's Grid2 (dim +8, mn +0x10, mx +0x18, cell +0x20)
+    walk(a, b, pairs, &n);
     *count = 0;
     for (int i = 0; i < n; i++)
         cells[pairs[i][0]][pairs[i][1]].collect_masked(mask, out, count);
@@ -887,7 +886,7 @@ void level::query_segment(const float* a, const float* b, unsigned mask, shape_b
 
 // recursive walk over the neighbours of nav face *face, keeping the nearest face whose polygon contains p
 // @ 0x439900
-void level::nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d)
+void rgl::world::nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d)
 {
     if (nav != 0) {
         for (int i = 0; i < nav->faces[*face].n; i++) {
@@ -912,7 +911,7 @@ void level::nav_search(const float* p, const int* face, const int* max_depth, in
 
 // nearest nav face to p: a face containing p (best |dz| < 2 below) wins over near faces (score 10 - dist - |dz|)
 // @ 0x439a50
-int level::nearest_face(const float* p)
+int rgl::world::nearest_face(const float* p)
 {
     PolyMesh* m = nav;
     int best = -1;
@@ -956,7 +955,7 @@ int level::nearest_face(const float* p)
 
 // highest floor polygon under (or at most 1 above) p; falls back to the lowest polygon above it
 // @ 0x439be0
-void level::floor_at(const float* p, float* out_z, face** out_face)
+void rgl::world::floor_at(const float* p, float* out_z, face** out_face)
 {
     int n = 0;
     *out_z = -1000000.0f;
@@ -965,7 +964,7 @@ void level::floor_at(const float* p, float* out_z, face** out_face)
     {
         int use3d = 0;
         int ci[2];
-        ((rgl::world*)this)->to_cell(p, ci);
+        to_cell(p, ci);
         count = 0;
         cells[ci[0]][ci[1]].collect_point(p, &use3d, 0x304, shapes, &count);
     }
@@ -999,7 +998,7 @@ void level::floor_at(const float* p, float* out_z, face** out_face)
 }
 
 // @ 0x439d40
-float level::floor_z(const float* p)
+float rgl::world::floor_z(const float* p)
 {
     float z;
     face* f;
@@ -1010,7 +1009,7 @@ float level::floor_z(const float* p)
 // sweep the segment a->b (clipped to maxlen) with a thin capsule; false if the height field blocks it or a shape
 // is hit (that shape goes to *hit)
 // @ 0x439d60
-bool level::trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused)
+int rgl::world::trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused)
 {
     bool ok = true;
     if (hit) *hit = 0;
@@ -1236,7 +1235,7 @@ void Agent::hand_pos(vector4* out)
     out->y = y2 + t4;
     float height = x2;
     face* hit;
-    g_mission->scene_level->floor_at(&out->x, &height, &hit);
+    g_mission->scene->floor_at(&out->x, &height, &hit);
     out->z = height;
 }
 
@@ -1244,7 +1243,7 @@ void Agent::hand_pos(vector4* out)
 // @ 0x43a6f0
 void Agent::release_body()
 {
-    ((rgl::world*)g_mission->scene_level)->remove_entity(body->id);       // the level is the rgl::world (world.h rows +0x28 = level::cells)
+    g_mission->scene->remove_entity(body->id);       // the level is the rgl::world (world.h rows +0x28 = level::cells)
     body = 0;
 }
 
@@ -1261,7 +1260,7 @@ int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base*
     unsigned mask = 0x8116;
     if (*flag)
         mask = 0x811e;
-    ((Ctx*)g_mission->scene_level)->query_box(&mn.x, &mx.x, mask, found, &n);
+    g_mission->scene->query_box(&mn.x, &mx.x, mask, found, &n);
     int count = n;
     for (int i = 0; i < count; i++) {
         if (shape_contact_count(s, found[i], 1, &c) != 0) {
@@ -1371,7 +1370,7 @@ void __cdecl uninit_fill_n1c8(E1c8* f, unsigned n, const E1c8& v, allocE1c8& al,
 
 // nearest nav face to pos by a depth-limited neighbour search from *hint
 // @ 0x43abf0
-int level::locate_near(const vector4* pos, int* hint, int* mode)
+int rgl::world::locate_near(const vector4* pos, int* hint, int* mode)
 {
     int face = -1;
     float dist = 100000.0f;
@@ -1382,12 +1381,12 @@ int level::locate_near(const vector4* pos, int* hint, int* mode)
 
 // ---- scene light accumulator ---------------------------------------------------------------------------------------------------------------------------
 // @ 0x43ac40
-void level::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale)
+void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale)
 {
     *out_dir = vector4(0.0f, 0.0f, 0.0f);
     *out_col = vector4(0.0f, 0.0f, 0.0f);
-    Light** it = lights_first;
-    if (it < lights_last) {
+    Light** it = lights._Myfirst;
+    if (it < lights._Mylast) {
         unsigned skip_dir = flags & 2;
         do {
             if (skip_dir && (*it)->type == 2) goto next;
@@ -1446,7 +1445,7 @@ void level::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, u
             }
         next:
             it++;
-        } while (it < lights_last);
+        } while (it < lights._Mylast);
     }
     float len = (float)sqrt(out_dir->x * out_dir->x + (out_dir->y * out_dir->y + out_dir->z * out_dir->z));
     if (len > 1e-10f) {

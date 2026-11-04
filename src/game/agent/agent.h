@@ -59,7 +59,7 @@ struct RecZSubB {
 
 // ---- scene and mission ----------------------------------------------------------------------------------
 struct shape_base;
-#include "../world.h"                         // world / Level: the scene, first field of the mission object (0x4417d0 reads it at +0); Level = world
+#include "../../rgl/scene/world.h"            // rgl::world: the scene, first field of the mission object (0x4417d0 reads it at +0)
 #include "../mission.h"                       // Mission, TeamRec, g_mission (one definition for src/game); ModeRec: mode_rec.h
 #include "../mode_rec.h"
 extern ModeRec* g_mission_templates;                         // 0x5e2a00
@@ -118,14 +118,7 @@ struct Triple { int a, b, c; };
 
 // ---- height field + 2-D grid walkers (0x436da0, 0x437290)
 #include "../../include/height_field.h"      // HCell, HeightField (line_clear 0x436da0)
-struct Grid2 {
-    char pad0[8];
-    int dim[2];                         // +8, +0xc cells per axis
-    float mn[2];                        // +0x10
-    float mx[2];                        // +0x18
-    float cell[2];                      // +0x20
-    void walk(const float* a, const float* b, int (*cells)[2], int* count);   // 0x437290
-};
+
 
 // ---- time of day / misc free functions
 float time_of_day();                    // 0x4356e0

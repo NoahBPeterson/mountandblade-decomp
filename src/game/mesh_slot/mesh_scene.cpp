@@ -79,7 +79,7 @@ void Terrain::build_entity()
     do {
         int j = 3;
         do {
-            *e = ((world_x*)world)->create_entity(9);
+            *e = world->create_entity(9);
             (*e)->box.reset();
             e++;
         } while (--j);
@@ -114,9 +114,9 @@ void Terrain::build_entity()
         e0->recalc();
 
         if (g_use_shaders == 0)
-            ((world_x*)world)->light_mesh(m, &(*ep)->local, 1);
+            world->light_mesh(m, &(*ep)->local, 1);
         else if ((((char*)m->res)[0x1c] & 0x40) != 0)
-            ((world_x*)world)->light_mesh(m, &(*ep)->local, 1);
+            world->light_mesh(m, &(*ep)->local, 1);
 
         (*ep)->box.extend(&m->bounds.min);
         (*ep)->box.extend(&m->bounds.max);
@@ -151,7 +151,7 @@ void Mission::light_entities(mesh** list, int count)
             matrix frame;
             memcpy(&frame, identity3(&ident), 0x30);
             frame.o = o;
-            ((world_x*)scene_world)->light_mesh(e, &frame, 1);
+            ((rgl::world*)scene)->light_mesh(e, &frame, 1);
         }
     }
 }
@@ -176,7 +176,7 @@ void Mission::light_props()
             skin* r = PENT(i)->meshes[j]->res;
             bool k = ((r->shader->flags20 >> 7) & 1) != 0;
             if (k && (r->flags & 0x700) != 0x300)
-                ((world_x*)scene_world)->light_mesh(PENT(i)->meshes[j], &PENT(i)->local, 1);
+                ((rgl::world*)scene)->light_mesh(PENT(i)->meshes[j], &PENT(i)->local, 1);
         }
     }
 #undef PENT
@@ -385,7 +385,7 @@ void MissileU::update(float dt)
             pos = ent->local.o;
             qhit = 1;
         } else if (r != 0) {
-            ((world_x*)g_mission->scene_world)->remove_entity(ent->id);
+            g_mission->scene->remove_entity(ent->id);
             ent = 0;
             state = 2;
             clk.start = g_ticks[clk.clock];
@@ -440,7 +440,7 @@ void MissileU::update(float dt)
         __int64 sub = g_items[item].flags & 0xff000;
         if (sub == 0x10000 || sub == 0x80000 || sub == 0x70000) {
             state = 3;
-            ((world_x*)g_mission->scene_world)->remove_entity(ent->id);
+            g_mission->scene->remove_entity(ent->id);
             ent = 0;
             clk.start = g_ticks[clk.clock];
         } else {
@@ -731,7 +731,7 @@ void Terrain::gen_set_init(particle_list* s)
                         matrix id;
                         *(mat3*)&id = *identity3(&im);
                         id.o = o;
-                        ((world_x*)world)->light_mesh(grid[cell][j], &id, 1);
+                        world->light_mesh(grid[cell][j], &id, 1);
                     }
                     ((rgl::mesh*)grid[cell][j])->compute_bounds();
                     TEntity* e = ents[cell];

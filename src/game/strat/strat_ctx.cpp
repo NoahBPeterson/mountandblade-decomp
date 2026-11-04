@@ -20,7 +20,7 @@
 // @ 0x42b6d0
 // The ambient light colour of the scene: the colour of the last enabled ambient light (type 2, flags bit 0),
 // scaled by 0.7 and added to the base ambient at +0x68.
-vector4 Ctx::ambient()
+vector4 rgl::world::get_ambient()
 {
     vector4 c(0.0f, 0.0f, 0.0f);
     for (unsigned i = 0; i < lights.size(); i++) {
@@ -29,7 +29,7 @@ vector4 Ctx::ambient()
             c = l->color;
     }
     vector4 t(c.x * 0.7f, c.y * 0.7f, c.z * 0.7f);
-    return vector4(t.x + amb.x, t.y + amb.y, t.z + amb.z);
+    return vector4(t.x + ambient.x, t.y + ambient.y, t.z + ambient.z);
 }
 
 // @ 0x42b790
@@ -87,7 +87,7 @@ void StratEnt::shadow_tick()
         if (fx) fx->draw(sc28c, &pos, &f144);
         ((rgl::entity*)this)->rgl::entity::render(sc28c, &ri);
         if (f298 >= 0) {
-            StratEnt* e = ctx->find_entity(f298);
+            StratEnt* e = (StratEnt*)ctx->find_entity(f298);
             if (e != 0 && e->type() == 9 && e->fx != 0)
                 e->fx->draw(sc28c, &e->pos, &f144);
         }
@@ -97,23 +97,23 @@ void StratEnt::shadow_tick()
 // @ 0x42ba50
 // Looks an entity up by id: the first list is searched until a hit (the first match wins), the second list
 // is searched to the end (the last match wins).
-StratEnt* Ctx::find_entity(int id)
+rgl::entity* rgl::world::find_entity(int id)
 {
-    MeshEnt** p = ents_a._Myfirst;
-    MeshEnt* r = 0;
+    entity** p = ents._Myfirst;
+    entity* r = 0;
     bool found = false;
-    if (p < ents_a._Mylast) {
+    if (p < ents._Mylast) {
         do {
-            if (found) return (StratEnt*)r;
+            if (found) return r;
             if ((*p)->id == id) {
                 r = *p;
                 found = true;
             }
             p++;
-        } while (p < ents_a._Mylast);
-        if (found) return (StratEnt*)r;
+        } while (p < ents._Mylast);
+        if (found) return r;
     }
-    for (p = ents_b._Myfirst; p < ents_b._Mylast; p++)
+    for (p = ents2._Myfirst; p < ents2._Mylast; p++)
         if ((*p)->id == id) r = *p;
-    return (StratEnt*)r;
+    return r;
 }

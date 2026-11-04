@@ -50,39 +50,8 @@ void __cdecl noise_gradient(float scale, const float* in, float* out);   // 0x41
 #include "../terrain_b/poly_mesh.h"
 
 // ---- the level (scene: first field of the mission object) -----------------------------------------------------
-#include "../cell.h"                                  // cell: one grid cell (0x34 bytes; collect_masked 0x4396b0, collect_point 0x439780)
 #include "../light.h"                   // Light (shared with strat / script)
-// The level is the engine's world (src/rgl/scene/world.h; mission.h's scene_world is the same object for agent3). Its walk / to_cell /
-// query_box / remove_entity are the functions of the classes that define them, so they are called through these declarations
-// of just those members (agent/agent.h, strat/strat_entity.h and rgl/scene/world.h cannot be included next to this header's classes).
-namespace rgl { struct world { void to_cell(const float* p, int* out); void remove_entity(int id); }; }   // 0x41ed00, 0x41f0d0
-struct Grid2 { void walk(const float* a, const float* b, int (*cells)[2], int* count); };               // 0x437290 (agent/agent.h)
-struct Ctx { void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count); };   // 0x42aa50 (strat/strat_entity.h)
-struct level {
-    char pad0[8];
-    int dim[2];                                         // 0x08 cells per axis
-    float mn[2];                                        // 0x10
-    float mx[2];                                        // 0x18
-    float cellsz;                                       // 0x20
-    char pad24[4];
-    cell** cells;                                       // 0x28 cells[grid] -> array of cells
-    char pad2c[0x64 - 0x2c];
-    HeightField* hf;                                    // 0x64
-    char pad68[0xb4 - 0x68];
-    PolyMesh* nav;                                       // 0xb4
-    int lights_alloc;                                   // 0xb8 (std::vector<Light*>: allocator, first, last, end)
-    Light** lights_first;                               // 0xbc
-    Light** lights_last;                                // 0xc0
-    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870
-    void nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d);   // 0x439900
-    int nearest_face(const float* p);                                               // 0x439a50
-    void floor_at(const float* p, float* out_z, face** out_face);             // 0x439be0
-    float floor_z(const float* p);                                                  // 0x439d40
-    bool trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60
-    int locate_near(const vector4* pos, int* hint, int* mode);                      // 0x43abf0
-    // 0x43ac40: vector4 arguments by value
-    void light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale);
-};
+#include "../../rgl/scene/world.h"      // rgl::world: the level / scene (first field of the mission object), rgl::cell
 
 // ---- animation: the animator at body+0x304 (Skeleton), its channels (Curve in src/game/agent/curve.h) ---------------
 #include "../../include/key_table.h"                    // KeyTable: the 12-byte track element (vals, keys, count); sample 0x436ae0

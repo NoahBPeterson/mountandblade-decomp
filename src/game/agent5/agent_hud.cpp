@@ -627,7 +627,7 @@ void MissionBlocker::update_camera(float dt)
                 c.normalize();
                 vector4 a = (p0 - (c * 0.4f));
                 capsule cap(1e-5f, &q, &a);
-                ((level*)g_mission->scene)->query_segment(&p0.x, &q.x, 0x110, list, &count);
+                g_mission->scene->query_segment(&p0.x, &q.x, 0x110, list, &count);
                 t = 1000.0f;
                 for (i = 0; i < count; i++) {
                     if (list[i]->shape_type() == 2 && shape_contact_count(list[i], &cap, 1, &ct) != 0) {
@@ -759,7 +759,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         flare_amt = (vis - flare_amt) * g_step_tbl[2] * 10.0f + flare_amt;
     } else {
         vector4 to(eye->o.x - dir.x * 500.0f, eye->o.y - dir.y * 500.0f, eye->o.z - dir.z * 500.0f);
-        if (((level*)scene)->trace_ray(&eye->o.x, &to.x, 1000.0f, 0, 0))
+        if (((rgl::world*)scene)->trace_ray(&eye->o.x, &to.x, 1000.0f, 0, 0))
             flare_amt = flare_amt + g_step_tbl[2] * 3.5f;
         else
             flare_amt = flare_amt - g_step_tbl[2] * 3.5f;

@@ -38,11 +38,6 @@ struct mesh_flip {
     void flip_faces();   // 0x4779b0
 };
 
-// 0x43ac40 is level::light_at (game/agent2/agent_types.h, agent_stats.cpp): the scene object (world_x here) under the name agent2 gives it.
-// agent_types.h brings another layout than this TU's, so only the member is declared.
-struct level {
-    void light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale);   // 0x43ac40
-};
 
 // @ 0x47aa40 -- append a transformed copy of `src` to this mesh: the matrix rows are re-orthogonalised against +Z
 // (f = normalise(cross(up, s)), s = cross(f, up)), `src`'s points are rotated, flattened onto the plane of m->u and
@@ -254,7 +249,7 @@ void lod_mesh_x::append(lod_mesh* src, int bone, const matrix* m, const unsigned
 
 // @ 0x47b7b0 -- the scene lights every vertex of a mesh, bakes the result into the vertex colours and (for the
 // tangent-space material modes) also into the two extra colour words.
-void world_x::light_mesh(mesh* m, const matrix* frame, unsigned flags)
+void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
 {
     m->ensure_local();
     matrix lm = (*frame) * m->m_cc;
@@ -269,7 +264,7 @@ void world_x::light_mesh(mesh* m, const matrix* frame, unsigned flags)
     // Flat-lit resources: no per-vertex work, just combine the scene light colour with the tint.
     if (m->res->flags & 0x40) {
         vector4 dir, col;
-        ((level*)this)->light_at(lm.o, lm.u, &dir, &col, flags, 1.0f);
+        light_at(lm.o, lm.u, &dir, &col, flags, 1.0f);
         vector4 c;
         c.x = col.x * 0.7f + tint.x;
         c.y = col.y * 0.7f + tint.y;
@@ -315,10 +310,10 @@ void world_x::light_mesh(mesh* m, const matrix* frame, unsigned flags)
 
         vector4 dir, col, dir2, col2;
         if (!g_use_shaders) {
-            ((level*)this)->light_at(pos, nrm, &dir, &col, flags, alpha);
+            light_at(pos, nrm, &dir, &col, flags, alpha);
         } else {
-            ((level*)this)->light_at(pos, nrm, &dir, &col, flags | 2, 1.0f);
-            ((level*)this)->light_at(pos, nrm, &dir2, &col2, flags | 4, 1.0f);
+            light_at(pos, nrm, &dir, &col, flags | 2, 1.0f);
+            light_at(pos, nrm, &dir2, &col2, flags | 4, 1.0f);
         }
 
         if (tangent || flat) {

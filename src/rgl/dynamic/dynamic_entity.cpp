@@ -287,14 +287,14 @@ void dynamic_entity::integrate(float t)
 // @ 0x4263d0
 void dynamic_entity::collide()
 {
-    grid_shape* found[0x2000];
+    shape_base* found[0x2000];
     int count;
     int use3d = 1;
-    ((world_q*)owner)->query_shapes(this, found, &count, &use3d, 0x8106);
+    owner->query_shapes(this, found, &count, &use3d, 0x8106);
     for (int i = 0; i < count; i++)
-        on_shape(found[i]);
+        on_shape((grid_shape*)found[i]);
     std::vector<entity*> others;
-    ((world_q*)owner)->query_entities(this, 3, true, &others);
+    owner->query_entities(this, 3, true, &others);
     for (std::vector<entity*>::iterator it = others.begin(); it < others.end(); ++it)
         if (((collision_entity*)*it)->is_dynamic())
             on_entity(*it);
@@ -302,11 +302,11 @@ void dynamic_entity::collide()
 
 // ---- the world's queries ------------------------------------------------------------------------------------------
 // @ 0x426490
-void world_q::query_shapes(entity* e, grid_shape** out, int* count, int* use3d, unsigned mask)
+void world::query_shapes(entity* e, shape_base** out, int* count, int* use3d, unsigned mask)
 {
     *count = 0;
     for (cellref* r = (cellref*)e->refs; r != 0; r = r->next) {
-        cell_q* c = (cell_q*)&cells[r->x][r->y];
+        cell* c = &cells[r->x][r->y];
         c->collect(e->get_v9c(), e->get_vac(), use3d, mask, out, count);
     }
 }
@@ -338,16 +338,15 @@ int __declspec(noinline) box_overlap2(const vector4* a, const vector4* b, const 
 }
 
 // @ 0x426500
-void cell_q::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigned mask, grid_shape** out, int* count)
+void cell::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigned mask, shape_base** out, int* count)
 {
-#define shapes ((std::vector<grid_shape*>&)a)
-    grid_shape* buf[0x2000];
+    shape_base* buf[0x2000];
     int n = 0;
     struct { unsigned i; int k; } st;               // lives in memory in the original (reloaded every iteration)
     st.i = 0;
     st.k = 0;
-    while (shapes.size() > st.i) {
-        grid_shape* sh = shapes[st.i];
+    while (a.size() > st.i) {
+        grid_shape* sh = (grid_shape*)a[st.i];
         if (sh->m8 & mask) {
             st.i++;
             continue;
@@ -365,8 +364,8 @@ void cell_q::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsig
             continue;
         }
         if (st.k < *count) {
-            grid_shape* o = out[st.k];
-            grid_shape* cur = shapes[st.i];
+            shape_base* o = out[st.k];
+            shape_base* cur = a[st.i];
             if (cur >= o) {
                 st.k++;
                 if (cur == o) {
@@ -378,19 +377,18 @@ void cell_q::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsig
                 continue;
             }
         }
-        grid_shape* cur2 = shapes[st.i];
+        shape_base* cur2 = a[st.i];
         st.i++;
         buf[n++] = cur2;
     }
     if (st.k < *count) {
         int m = *count - st.k;
-        memcpy(&buf[n], &out[st.k], m * sizeof(grid_shape*));
+        memcpy(&buf[n], &out[st.k], m * sizeof(shape_base*));
         n += m;
     }
     *count = n;
     for (int j = 0; j < *count; j++)
         out[j] = buf[j];
-#undef shapes
 }
 
 // does a type mask a pass the filter b: equal, or the lowest differing bit is clear in b
@@ -422,7 +420,7 @@ template<> __declspec(noinline) vector<rgl::entity*>::iterator unique(vector<rgl
 }
 
 // @ 0x426750
-void world_q::query_entities(entity* e, unsigned mask, bool ordered, std::vector<entity*>* out)
+void world::query_entities(entity* e, unsigned mask, bool ordered, std::vector<entity*>* out)
 {
     out->clear();
     for (cellref* r = (cellref*)e->refs; r != 0; r = r->next) {
@@ -443,7 +441,7 @@ void world_q::query_entities(entity* e, unsigned mask, bool ordered, std::vector
 }
 
 // @ 0x426960
-bool world_q::less(entity* a, entity* b)
+bool world::less(entity* a, entity* b)
 {
     int k = 0;
     unsigned ta = a->type_id();

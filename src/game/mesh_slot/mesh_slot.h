@@ -56,12 +56,7 @@ struct scene_ms2 : rgl::scene {
 // ---- the scene container's lighting pass --------------------------------------------------------------------------
 struct Geom_t;
 // (create_entity 0x428440 is rgl::world's own member, src/rgl/scene/world.h; light_at 0x43ac40 is level::light_at of agent2/agent_types.h, see mesh_ops.cpp)
-struct world_x : rgl::world {
-    void build_faces(void* g);                                                                                  // 0x479980
-    void update_probes(int use_shaders);                                                                           // 0x472ed0
-    void sample_lights(float* v, const float* sun_dir, const float* centre);                                   // 0x42ad60
-    void light_mesh(rgl::mesh* m, const matrix* frame, unsigned flags);                                    // 0x47b7b0
-};
+
 
 
 // ---- the character / troop mesh owner (0x1f8 bytes): TroopMgr (src/game/terrain_b/troop_mgr.h) is the same object seen

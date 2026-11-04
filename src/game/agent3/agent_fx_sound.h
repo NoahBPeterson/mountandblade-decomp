@@ -58,14 +58,6 @@ struct Poser {
 };
 
 // ---- world grid (0x442180) -----------------------------------------------------------------------------------------------
-struct EntView {                                            // entity base: virtual slots, 13 = max, 14 = min
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4();
-    virtual void s5(); virtual void s6(); virtual void s7(); virtual void s8(); virtual void s9();
-    virtual void s10(); virtual void s11(); virtual void s12();
-    virtual const vector4* get_max();                   // 13 (+0x34)
-    virtual const vector4* get_min();                   // 14 (+0x38)
-};
-#include "../cell.h"                                  // enode, cell (ents +0x30: 0x442180)
 namespace rgl { struct entity; }
 typedef std::vector<rgl::entity*>::iterator UIt;
 void __cdecl sort_range(UIt first, UIt last, int ideal);        // 0x426a30 (std::_Sort; the vector of entity pointers the grid collects)

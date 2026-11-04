@@ -698,7 +698,7 @@
   },
   "00423c80": {
    "verdict": "DIFF",
-   "symbol": "?relocate@world_grid@@QAEXPAUgrid_shape@@@Z",
+   "symbol": "?relocate@world@rgl@@QAEXPAUgrid_shape@@@Z",
    "insns": 170,
    "ours": 173,
    "unverified": 0,
@@ -708,7 +708,7 @@
   },
   "004240d0": {
    "verdict": "DIFF",
-   "symbol": "?find@shape_vec_f@@QBEHPAUgrid_shape@@@Z",
+   "symbol": "?find@shape_vec@@QBEHPAUgrid_shape@@@Z",
    "insns": 22,
    "ours": 19,
    "unverified": 0,
@@ -772,7 +772,7 @@
   },
   "004252c0": {
    "verdict": "DIFF",
-   "symbol": "?add_shape@world_grid@@QAEXPAUgrid_shape@@@Z",
+   "symbol": "?add_shape@world@rgl@@QAEXPAUgrid_shape@@@Z",
    "insns": 65,
    "ours": 65,
    "unverified": 0,
@@ -812,7 +812,7 @@
   },
   "00426500": {
    "verdict": "DIFF",
-   "symbol": "?collect@cell_q@rgl@@QAEXPBUvector4@2@0PAHIPAPAUgrid_shape@@1@Z",
+   "symbol": "?collect@cell@rgl@@QAEXPBUvector4@2@0PAHIPAPAUshape_base@@1@Z",
    "insns": 132,
    "ours": 129,
    "unverified": 0,
@@ -822,7 +822,7 @@
   },
   "00426750": {
    "verdict": "DIFF",
-   "symbol": "?query_entities@world_q@rgl@@QAEXPAUentity@2@I_NPAV?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@Z",
+   "symbol": "?query_entities@world@rgl@@QAEXPAUentity@2@I_NPAV?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@Z",
    "insns": 188,
    "ours": 185,
    "unverified": 0,
@@ -842,7 +842,7 @@
   },
   "00427000": {
    "verdict": "DIFF",
-   "symbol": "?collide_entity@rigid_base@rgl@@QAE_NPAU12@@Z",
+   "symbol": "?on_entity@dynamic_entity@rgl@@UAE_NPAUentity@2@@Z",
    "insns": 304,
    "ours": 303,
    "unverified": 0,
@@ -914,7 +914,7 @@
   },
   "0042a1f0": {
    "verdict": "DIFF",
-   "symbol": "?update_shadows@StratEnt@@QAEXPAUscene@@_N1@Z",
+   "symbol": "?update_shadows@StratEnt@@QAEXPAUscene@rgl@@_N1@Z",
    "insns": 168,
    "ours": 166,
    "unverified": 0,
@@ -934,7 +934,7 @@
   },
   "0042aa50": {
    "verdict": "DIFF",
-   "symbol": "?query_box@Ctx@@QAEXPBM0IPAPAUshape_base@@PAH@Z",
+   "symbol": "?query_box@world@rgl@@QAEXPBM0IPAPAUshape_base@@PAH@Z",
    "insns": 59,
    "ours": 64,
    "unverified": 0,
@@ -954,7 +954,7 @@
   },
   "0042b080": {
    "verdict": "DIFF",
-   "symbol": "?create_shadow_mesh@StratEnt@@QAEXPAPAUmesh@@D@Z",
+   "symbol": "?create_shadow_mesh@StratEnt@@QAEXPAPAUmesh@rgl@@D@Z",
    "insns": 422,
    "ours": 422,
    "unverified": 0,
@@ -1248,7 +1248,7 @@
   },
   "00437290": {
    "verdict": "DIFF",
-   "symbol": "?walk@Grid2@@QAEXPBM0PAY01HPAH@Z",
+   "symbol": "?walk@cell_grid@rgl@@QAEXPBM0PAY01HPAH@Z",
    "insns": 202,
    "ours": 201,
    "unverified": 0,
@@ -1358,7 +1358,7 @@
   },
   "00439780": {
    "verdict": "DIFF",
-   "symbol": "?collect_point@cell@@QAEXPBMPAHIPAPAUshape_base@@1@Z",
+   "symbol": "?collect_point@cell@rgl@@QAEXPBMPAHIPAPAUshape_base@@1@Z",
    "insns": 91,
    "ours": 87,
    "unverified": 0,
@@ -1368,7 +1368,7 @@
   },
   "00439a50": {
    "verdict": "DIFF",
-   "symbol": "?nearest_face@level@@QAEHPBM@Z",
+   "symbol": "?nearest_face@world@rgl@@QAEHPBM@Z",
    "insns": 126,
    "ours": 127,
    "unverified": 0,
@@ -1378,7 +1378,7 @@
   },
   "00439d60": {
    "verdict": "DIFF",
-   "symbol": "?trace_ray@level@@QAE_NPBM0MPAPAUshape_base@@H@Z",
+   "symbol": "?trace_ray@world@rgl@@QAEHPBM0MPAPAUshape_base@@H@Z",
    "insns": 110,
    "ours": 107,
    "unverified": 0,
@@ -1422,7 +1422,7 @@
   },
   "0043ac40": {
    "verdict": "DIFF",
-   "symbol": "?light_at@level@@QAEXUvector4@rgl@@0PAU23@1IM@Z",
+   "symbol": "?light_at@world@rgl@@QAEXUvector4@2@0PAU32@1IM@Z",
    "insns": 317,
    "ours": 299,
    "unverified": 0,
@@ -1744,7 +1744,7 @@
   },
   "00442ca0": {
    "verdict": "DIFF",
-   "symbol": "?spawn_effect@Mission@@QAEPAUEmit@@HPBUmat4@rgl@@H@Z",
+   "symbol": "?spawn_effect@Mission@@QAEPAUEmit@@HPBUmatrix@rgl@@H@Z",
    "insns": 76,
    "ours": 76,
    "unverified": 0,
@@ -1884,7 +1884,7 @@
   },
   "00445ea0": {
    "verdict": "DIFF",
-   "symbol": "?_Insert_n@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEXViterator@12@IABUE56@@@Z",
+   "symbol": "?_Insert_n@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IAEXViterator@12@IABUPlacedObj@@@Z",
    "insns": 185,
    "ours": 168,
    "unverified": 1,
@@ -1994,7 +1994,7 @@
   },
   "0044eb00": {
    "verdict": "DIFF",
-   "symbol": "?append_skinned@mesh@rgl@@QAEXPAU12@PBUmat4@2@HID@Z",
+   "symbol": "?append_skinned@mesh@rgl@@QAEXPAU12@PBUmatrix@2@HID@Z",
    "insns": 454,
    "ours": 446,
    "unverified": 0,
@@ -2014,7 +2014,7 @@
   },
   "0044f3c0": {
    "verdict": "DIFF",
-   "symbol": "?transform@mesh@rgl@@QAEXUmat4@2@@Z",
+   "symbol": "?transform@mesh@rgl@@QAEXUmatrix@2@@Z",
    "insns": 168,
    "ours": 169,
    "unverified": 0,
@@ -2064,7 +2064,7 @@
   },
   "00451710": {
    "verdict": "DIFF",
-   "symbol": "?dust_vertices@@YAXPAUmesh@rgl@@PBUmat4@2@PBM22PBUvector4@2@@Z",
+   "symbol": "?dust_vertices@@YAXPAUmesh@rgl@@PBUmatrix@2@PBM22PBUvector4@2@@Z",
    "insns": 214,
    "ours": 215,
    "unverified": 0,
@@ -2116,7 +2116,7 @@
   },
   "00452c00": {
    "verdict": "DIFF",
-   "symbol": "?add@MsgLog@@QAEXUtstring@@H@Z",
+   "symbol": "?add@gui_manager@@QAEXUtstring@@H@Z",
    "insns": 229,
    "ours": 229,
    "unverified": 0,
@@ -2462,7 +2462,7 @@
   },
   "004658c0": {
    "verdict": "DIFF",
-   "symbol": "?parse@HexWords@@QAEXABUtstring@@@Z",
+   "symbol": "?parse@Terrain@@QAEXABUtstring@@@Z",
    "insns": 98,
    "ours": 99,
    "unverified": 0,
@@ -2502,7 +2502,7 @@
   },
   "004661e0": {
    "verdict": "DIFF",
-   "symbol": "?smooth_heights@terrain_obj@@QAEXXZ",
+   "symbol": "?smooth_heights@Terrain@@QAEXXZ",
    "insns": 193,
    "ours": 170,
    "unverified": 0,
@@ -2512,7 +2512,7 @@
   },
   "004666b0": {
    "verdict": "DIFF",
-   "symbol": "?pick_diagonals@terrain_obj@@QAEXXZ",
+   "symbol": "?pick_diagonals@Terrain@@QAEXXZ",
    "insns": 174,
    "ours": 177,
    "unverified": 0,
@@ -2522,7 +2522,7 @@
   },
   "00466ed0": {
    "verdict": "DIFF",
-   "symbol": "?sun_light@terrain_obj@@QAEXPAUvector4@rgl@@PBM1@Z",
+   "symbol": "?sun_light@Terrain@@QAEXPAUvector4@rgl@@PBM1@Z",
    "insns": 57,
    "ours": 56,
    "unverified": 0,
@@ -2532,7 +2532,7 @@
   },
   "00466fa0": {
    "verdict": "DIFF",
-   "symbol": "?create_chunk_entities@terrain_obj@@QAEXXZ",
+   "symbol": "?create_chunk_entities@Terrain@@QAEXXZ",
    "insns": 211,
    "ours": 196,
    "unverified": 0,
@@ -2542,7 +2542,7 @@
   },
   "00467250": {
    "verdict": "DIFF",
-   "symbol": "?load_layer@terrain_obj@@QAEXPAHH@Z",
+   "symbol": "?load_layer@Terrain@@QAEXPAHH@Z",
    "insns": 223,
    "ours": 223,
    "unverified": 0,
@@ -2614,7 +2614,7 @@
   },
   "00468fc0": {
    "verdict": "DIFF",
-   "symbol": "?trace_path@terrain_obj@@QAEXPBH0EPAHPAMMMHD@Z",
+   "symbol": "?trace_path@Terrain@@QAEXPBH0EPAHPAMMMHD@Z",
    "insns": 757,
    "ours": 736,
    "unverified": 0,
@@ -2624,7 +2624,7 @@
   },
   "00469a70": {
    "verdict": "DIFF",
-   "symbol": "?spread_flow@terrain_obj@@QAEXIHI@Z",
+   "symbol": "?spread_flow@Terrain@@QAEXIHI@Z",
    "insns": 501,
    "ours": 498,
    "unverified": 0,
@@ -2634,7 +2634,7 @@
   },
   "0046a270": {
    "verdict": "DIFF",
-   "symbol": "?spawn_particles@terrain_obj@@QAEXPAUparticle_list@@H@Z",
+   "symbol": "?spawn_particles@Terrain@@QAEXPAUparticle_list@@H@Z",
    "insns": 635,
    "ours": 638,
    "unverified": 0,
@@ -2644,7 +2644,7 @@
   },
   "0046ad50": {
    "verdict": "DIFF",
-   "symbol": "?compute_normals@terrain_obj@@QAEXXZ",
+   "symbol": "?compute_normals@Terrain@@QAEXXZ",
    "insns": 301,
    "ours": 303,
    "unverified": 0,
@@ -2708,7 +2708,7 @@
   },
   "0046bc70": {
    "verdict": "DIFF",
-   "symbol": "?make_river@terrain_obj@@QAEXXZ",
+   "symbol": "?make_river@Terrain@@QAEXXZ",
    "insns": 337,
    "ours": 339,
    "unverified": 0,
@@ -2746,7 +2746,7 @@
   },
   "0046d060": {
    "verdict": "DIFF",
-   "symbol": "?upload@GeomBuffer@@QAEHPAX0@Z",
+   "symbol": "?upload@dev_buffer@@QAEHPAX0@Z",
    "insns": 745,
    "ours": 678,
    "unverified": 0,
@@ -2756,7 +2756,7 @@
   },
   "0046d8c0": {
    "verdict": "DIFF",
-   "symbol": "?draw@drawer@@QAEXPAUview_t@@@Z",
+   "symbol": "?draw@render_batch@@QAEXPAUview_t@@@Z",
    "insns": 871,
    "ours": 857,
    "unverified": 0,
@@ -2906,7 +2906,7 @@
   },
   "00472848": {
    "verdict": "DIFF",
-   "symbol": "??$_Chunked_merge@PAUP8@@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HP6A_NABU1@0@Z@std@@YAXPAUP8@@0Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@HHP6A_NABU1@2@Z@Z",
+   "symbol": "??$_Chunked_merge@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@V?$_Temp_iterator@UP8@@@3@HP6A_NABUP8@@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0V?$_Temp_iterator@UP8@@@0@HHP6A_NABUP8@@2@Z@Z",
    "insns": 12,
    "ours": 66,
    "unverified": 0,
@@ -3008,7 +3008,7 @@
   },
   "00477ca0": {
    "verdict": "DIFF",
-   "symbol": "?resize@?$vector@HV?$allocator@H@std@@@std@@QAEXIH@Z",
+   "symbol": "?resize@?$vector@UMPoly@@V?$allocator@UMPoly@@@std@@@std@@QAEXI@Z",
    "insns": 31,
    "ours": 57,
    "unverified": 0,
@@ -3018,7 +3018,7 @@
   },
   "00477db0": {
    "verdict": "DIFF",
-   "symbol": "?resize@?$vector@HV?$allocator@H@std@@@std@@QAEXIH@Z",
+   "symbol": "?resize@?$vector@UMEdge@@V?$allocator@UMEdge@@@std@@@std@@QAEXI@Z",
    "insns": 27,
    "ours": 57,
    "unverified": 0,
@@ -3148,7 +3148,7 @@
   },
   "0047b7b0": {
    "verdict": "DIFF",
-   "symbol": "?light_mesh@world_x@@QAEXPAUmesh@rgl@@PBUmatrix@3@I@Z",
+   "symbol": "?light_mesh@world@rgl@@QAEXPAUmesh@2@PBUmatrix@2@I@Z",
    "insns": 661,
    "ours": 598,
    "unverified": 0,
@@ -3188,7 +3188,7 @@
   },
   "0047c9b0": {
    "verdict": "DIFF",
-   "symbol": "?snap@TerrainX@@QAEXPAUmesh@rgl@@@Z",
+   "symbol": "?snap@Terrain@@QAEXPAUmesh@rgl@@@Z",
    "insns": 98,
    "ours": 99,
    "unverified": 0,
@@ -3260,7 +3260,7 @@
   },
   "0047df80": {
    "verdict": "DIFF",
-   "symbol": "?gen_set_init@TerrainX@@QAEXPAUparticle_list@@@Z",
+   "symbol": "?gen_set_init@Terrain@@QAEXPAUparticle_list@@@Z",
    "insns": 447,
    "ours": 468,
    "unverified": 0,
@@ -3320,7 +3320,7 @@
   },
   "0047ff60": {
    "verdict": "DIFF",
-   "symbol": "?emit_particle@TerrainX@@QAEXHHHHM@Z",
+   "symbol": "?emit_particle@Terrain@@QAEXHHHHM@Z",
    "insns": 959,
    "ours": 906,
    "unverified": 0,
@@ -3330,7 +3330,7 @@
   },
   "00480db0": {
    "verdict": "DIFF",
-   "symbol": "?create_water@TerrainX@@QAEXPAPAX@Z",
+   "symbol": "?create_water@Terrain@@QAEXPAPAX@Z",
    "insns": 476,
    "ours": 459,
    "unverified": 0,
@@ -3340,7 +3340,7 @@
   },
   "00481570": {
    "verdict": "DIFF",
-   "symbol": "?tessellate@TerrainX@@QAEXXZ",
+   "symbol": "?tessellate@Terrain@@QAEXXZ",
    "insns": 480,
    "ours": 470,
    "unverified": 0,
@@ -3360,7 +3360,7 @@
   },
   "00481d10": {
    "verdict": "DIFF",
-   "symbol": "?generate@TerrainX@@QAEXHPAHD@Z",
+   "symbol": "?generate@Terrain@@QAEXHPAHD@Z",
    "insns": 317,
    "ours": 300,
    "unverified": 0,
@@ -3390,7 +3390,7 @@
   },
   "004832b0": {
    "verdict": "DIFF",
-   "symbol": "?spawn@MissionG@@QAEXPAUAgentS@@@Z",
+   "symbol": "?spawn@Mission@@QAEXPAUAgentS@@@Z",
    "insns": 288,
    "ours": 283,
    "unverified": 0,
@@ -3400,7 +3400,7 @@
   },
   "00483870": {
    "verdict": "DIFF",
-   "symbol": "?spawn_full@MissionG@@QAEHPBUmatrix@rgl@@HHHHHHHHPAH@Z",
+   "symbol": "?spawn_full@Mission@@QAEHPBUmatrix@rgl@@HHHHHHHHPAH@Z",
    "insns": 392,
    "ours": 371,
    "unverified": 0,
@@ -3410,7 +3410,7 @@
   },
   "00483f60": {
    "verdict": "DIFF",
-   "symbol": "?frame@MissionG@@QAEXM_N@Z",
+   "symbol": "?frame@Mission@@QAEXM_N@Z",
    "insns": 492,
    "ours": 507,
    "unverified": 0,
@@ -3480,7 +3480,7 @@
   },
   "00488720": {
    "verdict": "DIFF",
-   "symbol": "?render@MissionUi@@QAEXPAUscene@rgl@@PAMHH@Z",
+   "symbol": "?render@MissionUi@@UAEXPAUscene@rgl@@PAMHH@Z",
    "insns": 108,
    "ours": 113,
    "unverified": 0,
@@ -4598,7 +4598,7 @@
   },
   "00499050": {
    "verdict": "DIFF",
-   "symbol": "?placed@scene_tbl@@QAEPAUmesh@rgl@@H@Z",
+   "symbol": "?placed@MeshTable@@QAEPAUmesh@rgl@@H@Z",
    "insns": 116,
    "ours": 109,
    "unverified": 0,
@@ -4708,7 +4708,7 @@
   },
   "0049b630": {
    "verdict": "DIFF",
-   "symbol": "?set_font_mesh@HudRoot@c49b630@@QAEXPBUtstring@@H@Z",
+   "symbol": "?set_font_mesh@gui_manager@@QAEXPBUtstring@@H@Z",
    "insns": 61,
    "ours": 60,
    "unverified": 0,
@@ -4998,7 +4998,7 @@
   },
   "0049deb0": {
    "verdict": "DIFF",
-   "symbol": "??0Camera@c49deb0@@QAE@XZ",
+   "symbol": "??0Camera@@QAE@XZ",
    "insns": 30,
    "ours": 30,
    "unverified": 0,
@@ -5008,7 +5008,7 @@
   },
   "0049dfe0": {
    "verdict": "DIFF",
-   "symbol": "?update@Camera@c49deb0@@QAEXH@Z",
+   "symbol": "?animate@Camera@@UAEXH@Z",
    "insns": 403,
    "ours": 391,
    "unverified": 0,
@@ -5028,7 +5028,7 @@
   },
   "0049e9c0": {
    "verdict": "DIFF",
-   "symbol": "?attach_party_center@Party@c49e780@@QAEHPAUfloat2@2@HH@Z",
+   "symbol": "?attach_party_center@GameData@@QAEHPBMHH@Z",
    "insns": 157,
    "ours": 141,
    "unverified": 0,
@@ -5038,7 +5038,7 @@
   },
   "0049ebd0": {
    "verdict": "DIFF",
-   "symbol": "?add_sprite@Party@c49e780@@QAEHHHH@Z",
+   "symbol": "?add_sprite@GameData@@QAEHMMH@Z",
    "insns": 238,
    "ours": 262,
    "unverified": 0,
@@ -5048,7 +5048,7 @@
   },
   "0049ef00": {
    "verdict": "DIFF",
-   "symbol": "?create_companion_party@Party@c49e780@@QAEHHHHH@Z",
+   "symbol": "?create_companion_party@GameData@@QAEHHMMM@Z",
    "insns": 103,
    "ours": 88,
    "unverified": 0,
@@ -5058,7 +5058,7 @@
   },
   "0049f020": {
    "verdict": "DIFF",
-   "symbol": "?spawn_around@Party@c49e780@@QAEXHHHH@Z",
+   "symbol": "?spawn_around@GameData@@QAEHMMHM@Z",
    "insns": 22,
    "ours": 24,
    "unverified": 0,
@@ -5068,7 +5068,7 @@
   },
   "0049f060": {
    "verdict": "DIFF",
-   "symbol": "?deploy_party@GameData@c49f060@@QAE_NHH@Z",
+   "symbol": "?deploy_party@GameData@@QAE_NHH@Z",
    "insns": 264,
    "ours": 270,
    "unverified": 0,
@@ -7934,7 +7934,7 @@
   },
   "004fc820": {
    "verdict": "DIFF",
-   "symbol": "?build@LogScreen@@QAEX_N@Z",
+   "symbol": "?build@Rec58@@QAEX_N@Z",
    "insns": 652,
    "ours": 634,
    "unverified": 0,
@@ -7984,7 +7984,7 @@
   },
   "004fdff0": {
    "verdict": "DIFF",
-   "symbol": "?push_back@V4List@@QAEXABUvector4@rgl@@@Z",
+   "symbol": "?push_back@?$vector@HV?$allocator@H@std@@@std@@QAEXABH@Z",
    "insns": 43,
    "ours": 47,
    "unverified": 0,
@@ -7994,7 +7994,7 @@
   },
   "004fe060": {
    "verdict": "DIFF",
-   "symbol": "?insert@V4List@@QAE?AUiterator@1@U21@ABUvector4@rgl@@@Z",
+   "symbol": "?insert@?$vector@HV?$allocator@H@std@@@std@@QAE?AViterator@12@V312@ABH@Z",
    "insns": 31,
    "ours": 30,
    "unverified": 0,
@@ -9246,7 +9246,7 @@
   },
   "00525160": {
    "verdict": "DIFF",
-   "symbol": "?handle_event@Game_s25160@@QAEXH@Z",
+   "symbol": "?frame_update@Rec1208@@UAEXM@Z",
    "insns": 479,
    "ours": 395,
    "unverified": 0,
@@ -9446,7 +9446,7 @@
   },
   "0052bf40": {
    "verdict": "DIFF",
-   "symbol": "?update@Terrain_s2bf40@@QAEXPAHPAUvector4@rgl@@HHH@Z",
+   "symbol": "?update@Terrain@@QAEXPAHPAUvector4@rgl@@HHH@Z",
    "insns": 270,
    "ours": 255,
    "unverified": 0,
@@ -9456,7 +9456,7 @@
   },
   "0052c2b0": {
    "verdict": "DIFF",
-   "symbol": "?brush@SceneBrush_s2c2b0@@QAEXPAH00PAM00PAD@Z",
+   "symbol": "?brush@Terrain@@QAEXPAH00PAM00PAD@Z",
    "insns": 853,
    "ours": 728,
    "unverified": 0,
@@ -9466,7 +9466,7 @@
   },
   "0052cef0": {
    "verdict": "DIFF",
-   "symbol": "?clamp@Scene_s2ce00@@QAEPAHPAH0@Z",
+   "symbol": "?clamp_cell@Terrain@@QAEPAHPAH0@Z",
    "insns": 49,
    "ours": 48,
    "unverified": 0,

@@ -1889,7 +1889,7 @@ void Screen_s29ec0::f_529ec0()
     shape_base_s29ec0* found[0x2000];
     int count = 0;
 
-    m->scene->query_segment((const float*)&back, (const float*)&front, 0x110, found, &count);
+    m->scene->query_segment((const float*)&back, (const float*)&front, 0x110, (shape_base**)found, &count);
     for (int i = 0; i < count; i++) {
         shape_base_s29ec0* s = found[i];
         if (s->shape_type() != 2)
@@ -1929,7 +1929,7 @@ void Screen_s29ec0::f_529ec0()
     cap.radius = 0.1f;
     best += 1.0f;
 
-    m->scene->collect(9, (SceneEntity_s29ec0**)found, &count);
+    m->scene->collect(9, (rgl::entity**)found, &count);
     for (int i = 0; i < count; i++) {
         SceneEntity_s29ec0* e = (SceneEntity_s29ec0*)found[i];
         if (!e->shape)
@@ -2217,7 +2217,7 @@ no_selection:
 void Screen_s2ae70::init_order_markers()
 {
     if (f6738 == 0) {
-        f6738 = world->create_entity(9);
+        f6738 = (Entity_s2ae70*)world->create_entity(9);
         float scale = 100000.0f;
         f6738->set_scale(&scale);
 
@@ -2247,7 +2247,7 @@ void Screen_s2ae70::init_order_markers()
     }
 
     if (f6740 == 0) {
-        f6740 = world->create_entity(9);
+        f6740 = (Entity_s2ae70*)world->create_entity(9);
 
         f673c = (rgl::mesh_s2ae70*)new rgl::mesh;
         {
@@ -2657,7 +2657,7 @@ L_bbc5:
 // @ 0x52bc80
 void Mission_s2b5c0::update_cursor()
 {
-    if (g_mission_s2b5c0->f0->f64 == 0)
+    if (g_mission_s2b5c0->f0->hf == 0)
         return;
 
     vector4 pos;
@@ -2730,7 +2730,7 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
     float best = 1000000.0f;
     shape_base_s2b5c0* shapes[8191];
     int count;
-    g_mission_s2b5c0->f0->query_segment((const float*)&p, b, 0x100, shapes, &count);
+    g_mission_s2b5c0->f0->query_segment((const float*)&p, b, 0x100, (shape_base**)shapes, &count);
 
     for (int i = 0; i < count; i++) {
         shape_base_s2b5c0* s = shapes[i];

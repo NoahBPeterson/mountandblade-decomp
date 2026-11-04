@@ -1,10 +1,10 @@
 ../src/rgl/dynamic/world_grid.cpp  ?add_item@world@rgl@@QAEXPAUitem_obj@2@@Z  00423c00  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?min2@@YAPAUint2@@PAU1@PBU1@1@Z  00423e70  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?max2@@YAPAUint2@@PAU1@PBU1@1@Z  00423ea0  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_grid.cpp  ?in_rect@world_grid@@QAEHPBUint2@@00@Z  00423ed0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_grid.cpp  ?in_rect@world@rgl@@QAEHPBUint2@@00@Z  00423ed0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?add@grid_cell@@QAEXPAUgrid_shape@@@Z  00423f10  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?push_back@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXABQAUObj@rgl@@@Z  00423fc0  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_grid.cpp  ?insert@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABQAUObj@rgl@@@Z  00424010  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_grid.cpp  ?insert@?$vector@PAUitem_obj@rgl@@V?$allocator@PAUitem_obj@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABQAUitem_obj@rgl@@@Z  00424010  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?remove@shape_vec@@QAEXPAUgrid_shape@@@Z  00424060  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?add_shape@strategic_entity@rgl@@UAEXPAUitem_obj@2@@Z  00424100  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ??0ground_g136@@QAE@XZ  004246f0  /O2 /MT /Gy /TP
@@ -18,4 +18,4 @@
 ../src/rgl/dynamic/world_grid.cpp  ?_Insert_n@vec136@@QAEXPAUground_g136@@IABU2@@Z  00424db0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ??$_Uninit_copy@PAUground_g136@@PAU1@V?$allocator@Uground_g136@@@std@@@std@@YAPAUground_g136@@PAU1@00AAV?$allocator@Uground_g136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00425140  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ??$_Uninit_fill_n@PAUground_g136@@IU1@V?$allocator@Uground_g136@@@std@@@std@@YAXPAUground_g136@@IABU1@AAV?$allocator@Uground_g136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004251c0  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_grid.cpp  ?add_tree@world_grid@@QAEXPAUgrid_shape@@@Z  00425240  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_grid.cpp  ?add_tree@world@rgl@@QAEXPAUgrid_shape@@@Z  00425240  /O2 /MT /Gy /TP

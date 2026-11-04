@@ -32,10 +32,10 @@
 ../src/game/agent2/agent_stats.cpp  ?uninit_copy1c8@@YAPAUPlacedObj@@PAU1@00AAUallocE1c8@@Uptr_tag@@@Z  00439060  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?copy_shape@body_res@@QAEPAUshape_base@@XZ  00439100  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?next_stamp@PolyMesh@@QAEXXZ  00439410  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?query_segment@level@@QAEXPBM0IPAPAUshape_base@@PAH@Z  00439870  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?nav_search@level@@QAEXPBMPBH1HPAHPAM@Z  00439900  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?floor_at@level@@QAEXPBMPAMPAPAUface@@@Z  00439be0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?floor_z@level@@QAEMPBM@Z  00439d40  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?query_segment@world@rgl@@QAEXPBM0IPAPAUshape_base@@PAH@Z  00439870  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?nav_search@world@rgl@@QAEXPBMPBH1HPAHPAM@Z  00439900  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?floor_at@world@rgl@@QAEXPBMPAMPAPAUface@@@Z  00439be0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?floor_z@world@rgl@@QAEMPBM@Z  00439d40  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?remove_shape@Skeleton@@QAEXPAUshape_base@@@Z  00439ec0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?start_anim@Skeleton@@QAEXHPAUAnim@@HH@Z  00439fc0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?all_shapes@Skeleton@@QAEXPAPAUshape_base@@PAH@Z  0043a130  /O2 /MT /Gy /TP
@@ -50,4 +50,4 @@
 ../src/game/agent2/agent_stats.cpp  ?rebuild_static_body@PhysSet@@QAEXH@Z  0043a900  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?start_channel@Agent@@QAEXHPAUSubAnim@@PAIPAM@Z  0043a980  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?uninit_fill_n1c8@@YAXPAUPlacedObj@@IABU1@AAUallocE1c8@@Uptr_tag@@@Z  0043ab50  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?locate_near@level@@QAEHPBUvector4@rgl@@PAH1@Z  0043abf0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?locate_near@world@rgl@@QAEHPBUvector4@2@PAH1@Z  0043abf0  /O2 /MT /Gy /TP

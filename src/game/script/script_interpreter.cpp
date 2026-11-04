@@ -55,7 +55,7 @@
 #include "../string_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../world.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../rgl/scene/world.h"      // rgl::world (the scene object at mission +0 and in g_script.level)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 extern int g_propkind_count;                                // 0x5e29e0
@@ -1170,7 +1170,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             MissionX* m = mission();
             rgl::vector4& o = script_pos((int)params[0]).o;
             if (m->min_x <= o.x && o.x < m->max_x && m->min_y <= o.y && o.y < m->max_y)
-                script_pos((int)params[0]).o.z = m->scene->ground_height(&o);
+                script_pos((int)params[0]).o.z = m->scene->floor_z(&o.x);
         }
         break;
 
@@ -2958,7 +2958,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[2]) {
                 rgl::vector4* o = &script_pos((int)params[1]).o;
                 if (m->min_x <= o->x && o->x < m->max_x && m->min_y <= o->y && o->y < m->max_y) {
-                    script_pos((int)params[1]).o.z = m->scene->ground_height(o);
+                    script_pos((int)params[1]).o.z = m->scene->floor_z(&o->x);
                     m = mission();
                 }
             }
@@ -3107,7 +3107,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             MissionX* m = mission();
             rgl::vector4* p = &script_pos((int)params[2]).o;
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
-            si_0 = ((level*)m->scene)->nearest_face((const float*)p);
+            si_0 = m->scene->nearest_face((const float*)p);
             vec4 off;
             TEAM_SEL(m, (int)params[0])->set_vec((const int*)p, &si_0, (const int*)&off.set(sf_2, sf_1, sf_0));
             mission()->unselect_team((int)params[0]);

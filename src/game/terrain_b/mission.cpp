@@ -20,7 +20,7 @@
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./cell_grid.h"
-#include "./cell_world.h"
+
 #include "./poly_mesh.h"
 #include "./records.h"
 #include "./game_data.h"
@@ -437,7 +437,7 @@ void rgl::world::build_faces(NavData* map)
         } else {
             objs.insert(objs.end(), (rgl::Obj*)f);
         }
-        post(f);
+        add_tree((grid_shape*)f);
         c->obj = f;
     }
 
@@ -498,7 +498,7 @@ void Terrain::spawn_bodies(SpawnSet* r)
             shape_calls* o = (shape_calls*)rs->clone_shape();
             o->transform(&e->m);
             o->or_m8(0x200);
-            grid->reg_shape(o);
+            world->reg_shape((grid_shape*)o);
         }
     }
 }
@@ -555,7 +555,7 @@ void Mission::rebuild_nav(int which, int)
         matrix m;
         identity_pos(&m);
         o->transform(&m);
-        s->reg_shape(o);
+        s->reg_shape((grid_shape*)o);
     }
 }
 
@@ -671,7 +671,7 @@ void Terrain::make_grid()
             n_outer = 0x30;
         for (int x = 0; x < n_outer; x++) {
             for (int y = 0; y < n_inner; y++) {
-                gridA[y][x] = grid->create_entity(9);
+                gridA[y][x] = world->create_entity(9);
                 rgl::mesh* m = new rgl::mesh;
                 if (g_use_shaders != 0 && g_options.i7c == 2)
                     m->res = g_resmgr.get_material(rs(tstring("grass")));

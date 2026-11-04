@@ -37,10 +37,7 @@ struct FaceGenome {
     FaceRace* unpack(const unsigned __int64* key);   // 0x473800 (returns the race record, left in EAX)
     void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
 };
-// 0x42ad60 is Ctx::sample_lights (strat/strat_entity.h): the scene object's light sampling
-struct Ctx {
-    void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60
-};
+
 
 // ---- 0x480db0 -------------------------------------------------------------------------------------------------------
 
@@ -48,9 +45,9 @@ struct Ctx {
 // type, and the "river" mesh over the wet triangles
 void Terrain::create_water(void** out)
 {
-    rgl::entity* e = ((rgl::world*)grid)->create_entity(9);       // CellGrid is the rgl::world of src/rgl/scene/world.h (its reset 0x421390 is rgl::world::reset)
+    rgl::entity* e = world->create_entity(9);
     float cmap = (*(float*)((char*)this + 0x843bd24) + *(float*)((char*)this + 0x843bd20) + *(float*)((char*)this + 0x843bd1c)) * 0.33f;   // summed z, y, x as at 0x480dce
-    rgl::world* wo = (rgl::world*)world;
+    rgl::world* wo = world;
     float cz = (wo->ambient.z + wo->ambient.y + wo->ambient.x) * 0.3f;   // summed z, y, x as at 0x480e0e
 
     for (int y = 0; y <= h; y++) {
@@ -199,12 +196,7 @@ struct Geom_t : NavCore {                           // 0x68
     void build() { ((PolyGeom*)this)->build(); }                    // 0x47ee60
     void compute_bounds() { ((PointSet*)this)->compute_bounds(); }  // 0x4704b0 (PointSet: poly_mesh.h)
 };
-struct world_t {                        // the scene object at Terrain+0xc3b0dc (CellGrid of terrain_b)
-    char pad0[0x64];
-    HeightField* cells;                 // 0x64 current cell-row table
-    void build_faces(Geom_t* g) { ((rgl::world*)this)->build_faces((NavData*)g); }       // 0x479980 (CellGrid::build_faces, terrain_b/cell_grid.h)
-    void update_probes(int use_shaders) { ((rgl::world*)this)->update_probes(use_shaders); }      // 0x472ed0
-};
+
 
 // 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri (terrain_a/wind.h; hidden return pointer)
 rgl::vector4 tri_normal(const rgl::vector4* tri);
@@ -333,13 +325,13 @@ void Terrain::tessellate()
 
     g->build();
     g->compute_bounds();
-    ((world_t*)world)->build_faces(g);
+    world->build_faces((NavData*)g);
 
-    HeightField* old = ((world_t*)world)->cells;
+    HeightField* old = world->hf;
     if (old)
         delete old;
-    ((world_t*)world)->cells = cr;
-    ((world_t*)world)->update_probes(g_use_shaders != 0);
+    world->hf = cr;
+    world->update_probes(g_use_shaders != 0);
 }
 
 // ---- 0x481c40 ----------------------------------------------------------------------------------------------------------
@@ -391,7 +383,7 @@ void Terrain::generate(int seed, int* objs, char flag)
     flag843bd75 = (char)((char)((*(int*)((char*)&g_bit + 0x8)) - 1) & (char)((unsigned)hword >> 31)) != 0;
     wx = (float)(unsigned)(hword & ((*(int*)((char*)&g_bit + 0x50)) - 1));                 // height band -> map extent
     wy = (float)(unsigned)(((unsigned)hword >> 10) & ((*(int*)((char*)&g_bit + 0x50)) - 1));
-    world = (SceneWorld*)seed;
+    world = (rgl::world*)seed;
 
     float inv = 1.0f / scale;
     w = (int)(inv * wx);
@@ -469,12 +461,12 @@ void Terrain::generate(int seed, int* objs, char flag)
     spawn_particles(&list_a, 0);
     spawn_particles(&list_c, 2);
     ((Terrain*)this)->create_chunk_entities();
-    g_shadow_map.attach_camera((rgl::world*)world);
+    g_shadow_map.attach_camera(world);
     float v[3];
     v[0] = 0.0f;
     v[1] = 0.0f;
     v[2] = 0.0f;
-    ((Ctx*)world)->sample_lights((vector4*)v, (vector4*)sun_dir, (vector4*)((char*)this + 0x843bd1c));     // the scene object (Ctx / CellGrid)
+    world->sample_lights((vector4*)v, (vector4*)sun_dir, (vector4*)((char*)this + 0x843bd1c));
     tessellate();
     refresh_cells();
 }
@@ -703,7 +695,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     col = col & 0xffffff;
                     if (layerno == 15) {
                         col = 0x810;
-                        float* arr = *(float**)((char*)((rgl::world*)world)->ground + 4);
+                        float* arr = *(float**)((char*)world->ground + 4);
                         float li = arr[c->f14 * 9 + 8];
                         float r = li / (z + li);
                         if (!(r >= 0.0f)) r = 0.0f;
@@ -737,7 +729,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     } else {
         if (g_use_shaders) {
             ((rgl::mesh*)m)->compute_tangents();
-            ((world_x*)world)->light_mesh(m, (matrix*)((char*)ents[cx * 5 + cy] + 0x58), 1);
+            world->light_mesh(m, (matrix*)((char*)ents[cx * 5 + cy] + 0x58), 1);
         }
         arr3[layerno][cx * 5 + cy] = (int)m;
         m->mask = 0x17fff;

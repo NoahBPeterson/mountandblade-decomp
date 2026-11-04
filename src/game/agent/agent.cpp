@@ -62,8 +62,6 @@ extern const int g_tier_dist[11] = { 60, 100, 140, 180, 220, 260, 300, 340, 380,
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)
 static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
 { r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x; }
-inline vector4 vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
-inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 
 // 0x40cd00 as the definition declares it (src/rgl/shapes/shapes.cpp): writes the identity frame to `out` and returns it (cdecl). The by-value
 // rgl::identity_pos of include/mat4.h is the same function seen through its hidden return pointer; a call that must link to the definition names this one.
@@ -897,7 +895,6 @@ int Agent::total_missing_ammo()
 // 0x40f0d0 is rgl::keyframes::find (src/include/keyframes.h, 12 bytes: frames, integer times, count; it reads only times and count). That header
 // needs rgl::frame_t of the src/rgl family, so the member is declared here under its own name; KeyFrames has the same three fields and
 // forwards to it.
-namespace rgl { struct keyframes { void find(int* lo, int* hi, float* frac, const float* t); }; }   // 0x40f0d0
 inline void KeyFrames::find(int* a, int* b, float* t, const float* time) { ((rgl::keyframes*)this)->find(a, b, t, time); }
 
 // @ 0x436ae0
@@ -1054,7 +1051,7 @@ bool HeightField::line_clear(const vector4* a, const vector4* b)
 }
 
 // @ 0x437290
-void Grid2::walk(const float* a, const float* b, int (*cells)[2], int* count)
+void rgl::cell_grid::walk(const float* a, const float* b, int (*cells)[2], int* count)
 {
     vec2 d;
     d.x = b[0] - a[0];
@@ -1078,27 +1075,27 @@ void Grid2::walk(const float* a, const float* b, int (*cells)[2], int* count)
         else
             step[i] = -1;
         float inv = 1.0f / dd[i];
-        tdelta[i] = (float)fabs(inv * cell[i]);
-        fpos[i] = (a[i] - mn[i]) / cell[i];
+        tdelta[i] = (float)fabs(inv * cell_size[i]);
+        fpos[i] = (a[i] - lo[i]) / cell_size[i];
         cur[i] = (int)floor(fpos[i]) + 1;
         if (cur[i] < 0)
             cur[i] = 0;
-        else if (cur[i] > dim[i] - 1)
-            cur[i] = dim[i] - 1;
-        if (a[i] < mn[i]) {
+        else if (cur[i] > n[i] - 1)
+            cur[i] = n[i] - 1;
+        if (a[i] < lo[i]) {
             if (step[i] < 0)
                 tmax[i] = 1e10f;
             else
-                tmax[i] = (float)fabs((mn[i] - a[i]) * inv);
-        } else if (a[i] > mx[i]) {
+                tmax[i] = (float)fabs((lo[i] - a[i]) * inv);
+        } else if (a[i] > hi[i]) {
             if (step[i] > 0)
                 tmax[i] = 1e10f;
             else
-                tmax[i] = (float)fabs((a[i] - mx[i]) * inv);
+                tmax[i] = (float)fabs((a[i] - hi[i]) * inv);
         } else {
-            float fr = (float)fmod(a[i] - mn[i], cell[i]);
+            float fr = (float)fmod(a[i] - lo[i], cell_size[i]);
             if (step[i] > 0)
-                fr = cell[i] - fr;
+                fr = cell_size[i] - fr;
             tmax[i] = (float)fabs((double)(fr * inv));
         }
     }
@@ -1127,7 +1124,7 @@ void Grid2::walk(const float* a, const float* b, int (*cells)[2], int* count)
         acc += *tp;
         if (pc[idx] == 0)
             *tp = 1e10f;
-        else if (pc[idx] == dim[idx] - 1)
+        else if (pc[idx] == this->n[idx] - 1)
             *tp = 1e10f;
         else
             *tp = tdelta[idx];

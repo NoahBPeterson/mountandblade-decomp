@@ -20,6 +20,10 @@
 #include "../../game/terrain_b/nav_data.h"
 
 struct PolyMesh;                // game/terrain_b/poly_mesh.h: the nav mesh the grid is built from
+struct shape_base;              // include/shape.h: the collision shapes the cells hold
+struct face;                    // include/shape.h: the ground polygons
+struct grid_shape;              // rgl/dynamic/grid_shape.h
+struct int2 { int x, y; };      // a cell coordinate (rgl/dynamic/world_grid.h)
 
 namespace rgl {
 
@@ -28,13 +32,15 @@ struct cellnode { cellnode* next; cellnode* prev; entity* obj; };           // 1
 struct cellref { cellref* next; cellnode* node; int x, y; };                // 16 bytes
 // one cell of the table (0x34 bytes): ground-collision vectors, the ids of the objects overlapping it and the head of the node list
 struct cell {
-    std::vector<Obj*> a;        // 0x00
+    std::vector<shape_base*> a; // 0x00 the collision shapes in the cell, sorted by address
     std::list<int> b;           // 0x10
     int f1c;                    // 0x1c
     std::vector<int> c;         // 0x20  ids of the objects overlapping the cell (world::insert 0x478a10)
     cellnode* head;             // 0x30  World::insert 0x421560, world::release_links 0x41ee20
     ~cell();                    // 0x431ab0 (defined with the grid's destructor: the array delete is emitted as in the original)
-    void collect_point(const float* p, int* use3d, unsigned mask, ::face** out, int* count);   // 0x439780 (agent2/agent_stats.cpp)
+    void collect_masked(unsigned mask, shape_base** out, int* count);                                     // 0x4396b0 (agent2/agent_stats.cpp)
+    void collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count);          // 0x439780 (agent2/agent_stats.cpp)
+    void collect(const vector4* bmin, const vector4* bmax, int* flat, unsigned mask, shape_base** out, int* count);  // 0x426500 (strat/strat_entity.cpp)
 };
 
 // chunked free-list pool: a list of chunk pointers, `count` cells per chunk (grow: 0x4206a0 / 0x420720); the grid's two
@@ -63,6 +69,7 @@ struct cell_grid {
     pool<cellref> refs;         // 0x40 (free list at +0x50)
     std::vector<Obj*> objs;     // 0x54 owned objects (0x420a70 deletes them; 0x479980 fills it)
     ~cell_grid();               // 0x475c60
+    void walk(const float* a, const float* b, int (*cells)[2], int* count);   // 0x437290 (agent/agent.cpp: the cells a segment crosses)
 };
 
 struct world : cell_grid {
@@ -96,11 +103,31 @@ struct world : cell_grid {
     void build_light_frame(matrix* m, vector4* amb);            // 0x470c00
     void update_probes(unsigned flags);                         // 0x472ed0
     void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60 (strat/strat_entity.cpp)
-    // ---- queries (agent2/agent_stats.cpp, rgl/dynamic/world_grid.cpp; callers include terrain_b/cell_world.h) ----
+    // ---- queries (each defined in the module whose address range holds it) ----
+    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870 (agent2/agent_stats.cpp)
+    void nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d);   // 0x439900
+    int nearest_face(const float* p);                           // 0x439a50
     void floor_at(const float* p, float* out_z, ::face** out_face);   // 0x439be0 (ret 0xc)
+    float floor_z(const float* p);                              // 0x439d40
+    int trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60 (ret 0x14)
+    int locate_near(const vector4* pos, int* hint, int* mode);  // 0x43abf0
     void light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale);   // 0x43ac40 (ret 0x30)
-    void reg_shape(void* o);                                    // 0x424170
-    void post(void* o);                                         // 0x425240
+    Light* first_dir_light();                                   // 0x42a1a0 (strat/strat_entity.cpp)
+    void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
+    vector4 get_ambient();                                      // 0x42b6d0 (strat/strat_ctx.cpp, by-value return)
+    entity* find_entity(int id);                                // 0x42ba50
+    int in_rect(const int2* p, const int2* lo, const int2* hi);   // 0x423ed0 (rgl/dynamic/world_grid.cpp: a member that never reads this)
+    void relocate(grid_shape* o);                               // 0x423c80
+    void reg_shape(grid_shape* o);                              // 0x424170
+    void add_tree(grid_shape* s);                               // 0x425240
+    void add_shape(grid_shape* s);                              // 0x4252c0
+    void collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<unsigned>* out);   // 0x442180 (game/agent3/agent_fx_sound.cpp: the entities whose box meets the query box)
+    void erase_entity(entity* e);                               // 0x41f450 (game/entity.cpp)
+    void collect(unsigned key, entity** out, int* count);       // 0x51a3a0 (game/inventory_panel/map_picker.cpp: the entities whose type_id() bit-mask contains the key)
+    void light_mesh(mesh* m, const matrix* frame, unsigned flags);   // 0x47b7b0 (game/mesh_slot/mesh_ops.cpp: bakes the scene lights into a mesh's vertex colours)
+    void query_shapes(entity* e, shape_base** out, int* count, int* use3d, unsigned mask);   // 0x426490 (rgl/dynamic/dynamic_entity.cpp)
+    void query_entities(entity* e, unsigned mask, bool ordered, std::vector<entity*>* out);  // 0x426750
+    bool less(entity* a, entity* b);                            // 0x426960
 
     void render_part(scene* sc, int rem, int div);              // 0x421110
     void reset();                                               // 0x421390

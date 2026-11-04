@@ -46,7 +46,7 @@ const char* g_name_leveling = "ground_leveling";    // 0x5a9bf8
 using rgl::vector4;
 using rgl::matrix;
 
-namespace rgl { struct entity; struct world { entity* create_entity(int type_id); }; }   // 0x428440 (rgl/scene/world.h)
+#include "../../rgl/scene/world.h"                                                        // rgl::world: create_entity 0x428440
 
 static inline float fmin_(float a, float b) { return b < a ? b : a; }
 static inline float fmax_(float a, float b) { return b > a ? b : a; }
@@ -1153,7 +1153,7 @@ void Terrain::create_chunk_entities()
     for (int j = 0; j < ny; j++) {
         for (int i = 0; i < nx; i++) {
             TEntity** slot = &ents[i * 5 + j];
-            *slot = (TEntity*)((rgl::world*)world)->create_entity(9);   // 0x428440: SceneWorld is the rgl::world
+            *slot = (TEntity*)world->create_entity(9);   // 0x428440
             int ch = block;
             int cw = ch;
             if (i == nx - 1) {
