@@ -473,7 +473,7 @@ stream_base* read_frame_set(stream_base* s, frame_x* m)
 
 // The destructor of frame_set (shared with ??_Eframe_set 0x41aee0, the vector deleting destructor in vtable
 // 0x54aeb4 slot 0).
-frame_set::~frame_set() { if (f18 != 0 && f1c != 0) delete[] (Bone*)f1c; delete[] table.data; }
+frame_set::~frame_set() { if (f18 != 0 && f1c != 0) delete[] (Bone*)f1c; }   // (table.data: ~vec_table)
 
 // @ 0x41b4e0
 skel_anim::skel_anim() {}

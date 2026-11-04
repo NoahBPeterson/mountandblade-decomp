@@ -22,6 +22,7 @@
 #include "../../include/party.h"
 #include "../../include/troop.h"
 #include "../../rgl/mesh.h"
+#include "../render_batch.h"   // g_batch (0x5fe898): render 0x47e520
 #include "../config/widget_mgr.h"
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -124,7 +125,7 @@ void scene_step(int material)
         texture* t = g_resmgr_tab.get_texture(w, h, 0x50);
         if (t != 0)
             sc.f15c = (int)t;
-        bool ok = rgl::g_scene_registry.render(&sc);
+        bool ok = g_batch.render(&sc);
         if (t != 0)
             g_resmgr_tab.release(t);
         if (ok)

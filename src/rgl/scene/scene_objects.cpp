@@ -15,6 +15,7 @@
 #include "../resource.h"
 #include "./scene_math.h"
 #include "./frustum.h"
+#include "../../game/render_batch.h"   // g_batch (0x5fe898): register_scene 0x412040
 #include "./scene.h"
 #include "./emitter.h"
 #include "./scene_entity.h"
@@ -240,7 +241,7 @@ void world::render_part(scene* view, int rem, int div)
     view->owner = this;
     view->ambient = ambient;
     view->fr.build_planes();
-    g_scene_registry.register_scene(view);
+    g_batch.register_scene(view);
     render_info flag;
     flag.valid = 0;
     for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {

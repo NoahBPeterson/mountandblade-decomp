@@ -51,3 +51,8 @@
 ../src/game/config/config.cpp  ?load_used@loaded_prsnt_table@@QAEXXZ  004bdec0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_used@loaded_snd_table@@QAEXXZ  004be270  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0rec_table@@QAE@XZ  004be520  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ??1dev_buffer@@QAE@XZ  004c5110  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ??1buffer_pair@@QAE@XZ  004c5150  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ??0buffer_pair@@QAE@XZ  004cd720  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ??1render_batch@@QAE@XZ  004ca830  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ??0render_batch@@QAE@XZ  004ebea0  /O2 /MT /Gy /TP

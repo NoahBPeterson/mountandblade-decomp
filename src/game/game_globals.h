@@ -64,7 +64,6 @@ extern unsigned char g_mt_inited; // 0x5e2a09
 extern float g_paused_time; // 0x5e2a0c
 // "the skin name; buf at 0x5fe88c".
 // Same int (mission_ctx.cpp g_a170c0).
-extern int g_psys_scene; // 0xa170c0
 // game_variables.txt key "scan_module_sounds" (trigger_vec.cpp loader);
 // game_variables.txt key "time_multiplier" (trigger_vec.cpp loader);
 // game_variables.txt key "seeing_range" (trigger_vec.cpp loader);

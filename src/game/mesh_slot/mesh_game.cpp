@@ -6,6 +6,7 @@
 #include "../terrain_b/pool.h"          // Pool<RecJ>::next_used 0x474300
 #include "../../include/fx.h"           // FxDef (the skeleton of an agent entity: ctor 0x428820, init 0x4288c0, set_env_count 0x46b9d0, f5c)
 #include "../../include/phys_set.h"     // PhysSet::update 0x472dc0
+#include "../render_batch.h"   // g_batch (0x5fe898): counter 0x418828
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 #include "../../include/msg_log.h"
@@ -14,7 +15,6 @@
 long long g_tick_cur;                              // 0x5e2980 (the last frame's tick count)
 unsigned char g_mt_inited;                         // 0x5e2a09
 float g_paused_time;                               // 0x5e2a0c
-int g_psys_scene;                                  // 0xa170c0
 
 
 using namespace rgl;
@@ -610,7 +610,7 @@ extern "C" int rand();                 // 0x536a9f
 void MissionG::frame(float dt, bool spawn)
 {
     psys_rec* ps = (psys_rec*)g_shadow_map.target;
-    bool scene_changed = ps != 0 && *(int*)(ps->scene + 0x50) != g_psys_scene;
+    bool scene_changed = ps != 0 && *(int*)(ps->scene + 0x50) != g_batch.counter;
     if (scene_changed) {
         unsigned flags = *(unsigned*)(*(char**)(((char*)g_game) + 0x13a50) + f5df4 * 0x494 + 0x30);
         int* water = (int*)&MAT(int, 0x63c0);

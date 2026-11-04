@@ -77,9 +77,11 @@ struct Font {
     Font();   // 0x4d99d0 (FontDef's constructor)
     void load(const char* path);   // 0x4d9aa0 (the original hands it a tstring)
 };
+// render_batch.h cannot be included next to the rgl_mesh.h universe this TU lives in (rgl::mesh / rgl::scene are declared twice): the one member the start-up calls
 struct render_batch {
-    void init_formats();   // 0x4bc5b0 (terrain_b/render_batch.h; the object at 0x5fe898 the start-up sequence initialises)
+    void init_formats();   // 0x4bc5b0 (src/game/render_batch.h: the class of g_batch, 0x5fe898)
 };
+extern render_batch g_batch;   // 0x5fe898 (src/game/render_batch.h; defined in config.cpp)
 void* make_medium_button(void* parent, const tstring* text, int a2, int a3, float a4,
                          const tstring* up, const tstring* down, int a5, float a6, float k);  // 0x4dcc50
 

@@ -31,11 +31,7 @@ using rgl::mat4;
 
 // ---- save/load menu interfaces --------------------------------------------------------------------------
 #include "../../dxframework/d3dfont.h"               // CD3DFont (DrawText 0x404f00)
-struct SceneRegistry {};                                       // the render-pass object at 0x5fe898: RenderPass
-struct RenderPass {
-    bool render(int pass);   // 0x47e520
-};
-extern SceneRegistry g_renderer;                             // 0x5fe898
+#include "../render_batch.h"                           // render_batch, g_batch (0x5fe898): frame 0x4183c0, render 0x47e520
 #include "../map_editor_obj.h"                      // MapEditor, instance at 0x8ee3c48
 extern MapEditor g_editor_obj;                      // 0x8ee3c48
 #define g_editor g_editor_obj
@@ -113,7 +109,6 @@ struct FaceGen {
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
 #include "../ui_globals.h"      // UI / core globals
 
-extern int g_a16c58;                                    // 0xa16c58 frame counter of the save/load screen (inside the 0x5fe898 render batch)
 // (0x432510 is clamp_index, cs_common.h)
 
 extern const float g_590c54;                            // 0x590c54 = 7.0f

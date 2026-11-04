@@ -97,7 +97,6 @@ void parse_module_info();                                                   // 0
 #include "../../rgl/options.h"
 struct options;
 extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h clashes with the log declarations here)
-extern render_batch g_batch;            // 0x5fe898
 extern ini_file g_module_info;          // 0xa18238 module_info.txt table (count member)
 extern ini_file g_game_vars;            // 0xa44240 game_variables.txt table
 // g_resmgr_x: the view of g_resmgr (0x5d6fa0) declared in config.h

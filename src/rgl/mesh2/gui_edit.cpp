@@ -309,34 +309,6 @@ void copy_range38_catch(void)
 {
 }
 
-// @ 0x4c5110
-void editor::clear_vec38()
-{
-    if (v38)
-        operator delete((void*)v38);
-    v38 = 0;
-    v3c = 0;
-    v40 = 0;
-    name.~tstring();
-}
-
-// @ 0x4c5150
-void editor::free_items()
-{
-    char* p = (char*)this + 0xd0;
-    int i = 2;
-    do {
-        p -= 0x4c;
-        void** v = (void**)p;
-        if (v[0])
-            operator delete(v[0]);
-        v[0] = 0;
-        v[1] = 0;
-        v[2] = 0;
-        ((tstring*)(p - 0x20))->~tstring();
-    } while (--i);
-}
-
 static inline void tidy3(void* base)
 {
     void** q = (void**)base;

@@ -259,7 +259,7 @@ void EditorApp::refresh_dialog()
 int __cdecl engine_init()
 {
     srand(timeGetTime());
-    ((render_batch*)&orig::g_batch)->init_formats();   // 0x4bc5b0
+    g_batch.init_formats();   // 0x4bc5b0
     g_log.name.assign("rgl_log.txt");
     FILE* f = fopen("rgl_log.txt", "w");
     g_log_file = f;

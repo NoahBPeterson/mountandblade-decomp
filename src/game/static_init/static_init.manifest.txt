@@ -14,7 +14,6 @@
 ../src/game/static_init/static_init.cpp  ?static_dtor_548400@@YAXXZ  00548400  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_dtor_548410@@YAXXZ  00548410  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_dtor_548460@@YAXXZ  00548460  /O2 /MT /Gy /TP
-../src/game/static_init/static_init.cpp  ?static_dtor_548480@@YAXXZ  00548480  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_dtor_548490@@YAXXZ  00548490  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_dtor_5484a0@@YAXXZ  005484a0  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_dtor_548500@@YAXXZ  00548500  /O2 /MT /Gy /TP
@@ -23,7 +22,6 @@
 ../src/game/static_init/static_init.cpp  ?static_init_5479c0@@YAXXZ  005479c0  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_init_547aa0@@YAXXZ  00547aa0  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_init_547ae0@@YAXXZ  00547ae0  /O2 /MT /Gy /TP
-../src/game/static_init/static_init.cpp  ?static_init_547b30@@YAXXZ  00547b30  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_init_547de0@@YAXXZ  00547de0  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_init_547e20@@YAXXZ  00547e20  /O2 /MT /Gy /TP
 ../src/game/static_init/static_init.cpp  ?static_init_547e40@@YAXXZ  00547e40  /O2 /MT /Gy /TP

@@ -14,6 +14,7 @@
 #include "./terrain.h"
 #include "./game_state.h"
 #include "./misc.h"
+#include "../render_batch.h"                // render_batch (draw 0x46d8c0), dev_buffer (upload 0x46d060)
 #include "./wind.h"                          // tri_normal (0x4612d0)
 #include "../../include/frustum.h"            // rgl::frustum (to_clip 0x4621f0)
 #include "../../include/mat4.h"               // pos (identity_pos 0x40cd00)
@@ -2885,7 +2886,7 @@ void RenderScene::apply_state()
     do {                                                                                           \
         stream_base& lg = g_log;                                                                   \
         stream_base* ls;                                                                           \
-        if (kind == 1)                                                                             \
+        if (type == 1)                                                                             \
             ls = &lg.w_cstr("Out of " KIND_WORD " index buffer memory. Needed = ");                \
         else                                                                                       \
             ls = &lg.w_tstr((rgl::string*)&name).w_cstr(KIND_V_WORD);                              \
@@ -2907,17 +2908,17 @@ void RenderScene::apply_state()
     } while (0)
 
 // @ 0x46d060
-int GeomBuffer::upload(void* scratch, void* tag)
+int dev_buffer::upload(void* scratch, void* tag)
 {
     int n = 0;                          // elements staged in scratch
     int base = 0;                       // elements assigned so far in this upload
     int written = 0;                    // bytes already copied into the locked buffer
     char* locked;
-    if (kind == 1)
-        stride = 2;
+    if (type == 1)
+        elem_size = 2;
     std::vector<rgl::mesh*>::iterator it;
     for (it = meshes.begin(); it != meshes.end(); ++it) {
-        rgl::slot& s = (*it)->slots[kind];
+        rgl::slot& s = (*it)->slots[type];
         if (s.f24 != (int)tag) {
             s.f24 = (int)tag;
             (&s.pa)[s.f20] = (unsigned char)s.f28;
@@ -2927,18 +2928,18 @@ int GeomBuffer::upload(void* scratch, void* tag)
     it = meshes.begin();
     if (!is_dynamic) {
         int need = 0;
-        int off = kind * sizeof(rgl::slot);
+        int off = type * sizeof(rgl::slot);
         for (; it != meshes.end(); ++it) {
             rgl::slot& s = *(rgl::slot*)((char*)&(*it)->slots[0] + off);
-            if (gen != s.fc || s.f28 != 0 || s.f14 != s.f4)
-                need += ((mesh_x*)*it)->count(kind);
+            if (generation != s.fc || s.f28 != 0 || s.f14 != s.f4)
+                need += ((mesh_x*)*it)->count(type);
         }
         if (need == 0)
             return 0;
-        int* pcap = &capacity;
+        int* pcap = &count;
         if (cursor + need < *pcap) {
             int tries = 0;
-            if (kind == 1) {
+            if (type == 1) {
                 do {
                     if (ib->Lock(cursor * 2, need * 2, (void**)&locked, D3DLOCK_NOOVERWRITE) >= 0)
                         break;
@@ -2949,7 +2950,7 @@ int GeomBuffer::upload(void* scratch, void* tag)
                 } while (tries < 100);
             } else {
                 do {
-                    if (vb->Lock(cursor * stride, stride * need, (void**)&locked, D3DLOCK_NOOVERWRITE) >= 0)
+                    if (vb->Lock(cursor * elem_size, elem_size * need, (void**)&locked, D3DLOCK_NOOVERWRITE) >= 0)
                         break;
                     tries++;
                     Sleep(10);
@@ -2958,30 +2959,30 @@ int GeomBuffer::upload(void* scratch, void* tag)
                 } while (tries < 100);
             }
             for (it = meshes.begin(); it != meshes.end(); ++it) {
-                rgl::slot& s = (*it)->slots[kind];
-                if (s.fc != gen || s.f28 != 0 || s.f14 != s.f4) {
-                    if ((((mesh_x*)*it)->count(kind) + n) * stride >= 0x418000) {
-                        memcpy(locked + written, scratch, stride * n);
-                        written += stride * n;
+                rgl::slot& s = (*it)->slots[type];
+                if (s.fc != generation || s.f28 != 0 || s.f14 != s.f4) {
+                    if ((((mesh_x*)*it)->count(type) + n) * elem_size >= 0x418000) {
+                        memcpy(locked + written, scratch, elem_size * n);
+                        written += elem_size * n;
                         n = 0;
                     }
-                    char* dst = (char*)scratch + stride * n;
-                    if (kind == 1)
+                    char* dst = (char*)scratch + elem_size * n;
+                    if (type == 1)
                         ((mesh_x*)*it)->fill_indices((unsigned short*)dst);
                     else
-                        ((mesh_x*)*it)->fill_vertices((int*)dst, &fmt);
+                        ((mesh_x*)*it)->fill_vertices((int*)dst, &fvf);
                     s.f8 = cursor + base;
-                    s.fc = gen;
+                    s.fc = generation;
                     s.f14 = s.f4;
                     s.f28 = 0;
-                    int k = kind;
+                    int k = type;
                     mesh_x* tm = (mesh_x*)*it;
                     n += tm->count(k);
                     base += tm->count(k);
                 }
             }
-            memcpy(locked + written, scratch, stride * n);
-            if (kind == 1) {
+            memcpy(locked + written, scratch, elem_size * n);
+            if (type == 1) {
                 ib->Unlock();
                 cursor += base;
                 return 0;
@@ -2990,14 +2991,14 @@ int GeomBuffer::upload(void* scratch, void* tag)
             cursor += base;
             return 0;
         }
-        gen++;
+        generation++;
         base = 0;
         int total = 0;
         for (it = meshes.begin(); it != meshes.end(); ++it)
-            total += ((mesh_x*)*it)->count(kind);
+            total += ((mesh_x*)*it)->count(type);
         if (total > *pcap)
             LOG_GROW("Static", ":Out of Static vertex buffer memory. Needed = ");
-        if (kind == 1) {
+        if (type == 1) {
             if (ib->Lock(0, 0, (void**)&locked, D3DLOCK_DISCARD) < 0)
                 mb_error("unable to lock index buffer");
         } else {
@@ -3005,28 +3006,28 @@ int GeomBuffer::upload(void* scratch, void* tag)
                 mb_error("unable to lock vertex buffer");
         }
         for (it = meshes.begin(); it != meshes.end(); ++it) {
-            rgl::slot& s = (*it)->slots[kind];
-            if ((((mesh_x*)*it)->count(kind) + n) * stride >= 0x418000) {
-                memcpy(locked + written, scratch, stride * n);
-                written += stride * n;
+            rgl::slot& s = (*it)->slots[type];
+            if ((((mesh_x*)*it)->count(type) + n) * elem_size >= 0x418000) {
+                memcpy(locked + written, scratch, elem_size * n);
+                written += elem_size * n;
                 n = 0;
             }
-            char* dst = (char*)scratch + stride * n;
-            if (kind == 1)
+            char* dst = (char*)scratch + elem_size * n;
+            if (type == 1)
                 ((mesh_x*)*it)->fill_indices((unsigned short*)dst);
             else
-                ((mesh_x*)*it)->fill_vertices((int*)dst, &fmt);
+                ((mesh_x*)*it)->fill_vertices((int*)dst, &fvf);
             s.f8 = base;
-            s.fc = gen;
+            s.fc = generation;
             s.f14 = s.f4;
             s.f28 = 0;
-            int k = kind;
+            int k = type;
             mesh_x* tm = (mesh_x*)*it;
             base += tm->count(k);
             n += tm->count(k);
         }
-        memcpy(locked + written, scratch, stride * n);
-        if (kind == 1) {
+        memcpy(locked + written, scratch, elem_size * n);
+        if (type == 1) {
             ib->Unlock();
             cursor = base;
             return 0;
@@ -3037,14 +3038,14 @@ int GeomBuffer::upload(void* scratch, void* tag)
     }
     int total = 0;
     for (; it != meshes.end(); ++it)
-        total += ((mesh_x*)*it)->count(kind);
-    int* pcap = &capacity;
-    if (total > capacity)
+        total += ((mesh_x*)*it)->count(type);
+    int* pcap = &count;
+    if (total > count)
         LOG_GROW("dynamic", ":Out of dynamic vertex buffer memory. Needed = ");
-    if (kind == 1) {
+    if (type == 1) {
         if (ib->Lock(0, 0, (void**)&locked, D3DLOCK_DISCARD) < 0)
             mb_error("unable to lock index buffer");
-    } else if (capacity != 0) {
+    } else if (count != 0) {
         int tries = 0;
         do {
             if (vb->Lock(0, 0, (void**)&locked, D3DLOCK_DISCARD) >= 0)
@@ -3056,30 +3057,30 @@ int GeomBuffer::upload(void* scratch, void* tag)
         } while (tries < 100);
     }
     for (it = meshes.begin(); it != meshes.end(); ++it) {
-        rgl::slot& s = (*it)->slots[kind];
-        if ((((mesh_x*)*it)->count(kind) + n) * stride >= 0x418000) {
-            memcpy(locked + written, scratch, stride * n);
-            written += stride * n;
+        rgl::slot& s = (*it)->slots[type];
+        if ((((mesh_x*)*it)->count(type) + n) * elem_size >= 0x418000) {
+            memcpy(locked + written, scratch, elem_size * n);
+            written += elem_size * n;
             n = 0;
         }
-        char* dst = (char*)scratch + stride * n;
-        if (kind == 1)
+        char* dst = (char*)scratch + elem_size * n;
+        if (type == 1)
             ((mesh_x*)*it)->fill_indices((unsigned short*)dst);
         else
-            ((mesh_x*)*it)->fill_vertices((int*)dst, &fmt);
+            ((mesh_x*)*it)->fill_vertices((int*)dst, &fvf);
         s.f8 = base;
         s.f14 = s.f4;
-        int k = kind;
+        int k = type;
         mesh_x* tm = (mesh_x*)*it;
         base += tm->count(k);
         n += tm->count(k);
     }
-    memcpy(locked + written, scratch, stride * n);
-    if (kind == 1) {
+    memcpy(locked + written, scratch, elem_size * n);
+    if (type == 1) {
         ib->Unlock();
         return 0;
     }
-    if (capacity != 0)
+    if (count != 0)
         vb->Unlock();
     return 0;
 }
@@ -3092,7 +3093,7 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 }
 
 // @ 0x46d8c0
-void drawer::draw(view_t* v)
+void render_batch::draw(view_t* v)
 {
     if (v->b162 || v->f164) {
         if (g_render.b506) {
@@ -3161,17 +3162,17 @@ void drawer::draw(view_t* v)
         skin_x* part = (skin_x*)p->m->res;
         int b = p->m->slots[0].f4;
         int a = p->m->slots[0].f0;
-        if (cur_a != b || cur_b != a) {
-            cur_a = b;
-            cur_b = a;
-            g_render.dev->SetVertexDeclaration(vbs[b + a * 2].decl);
-            g_render.dev->SetStreamSource(0, vbs[b + a * 2].vb, 0, vbs[b + a * 2].stride);
+        if (cur_vf_a != b || cur_vf_b != a) {
+            cur_vf_a = b;
+            cur_vf_b = a;
+            g_render.dev->SetVertexDeclaration(vf[a].bufs[b].decl);
+            g_render.dev->SetStreamSource(0, vf[a].bufs[b].vb, 0, vf[a].bufs[b].elem_size);
         }
         rgl::mesh* node = p->m->local_a0 ? p->m : p->m->parent;
         int ibi = node->slots[1].f4;
         if (cur_ib != ibi) {
             cur_ib = ibi;
-            g_render.dev->SetIndices(ib(ibi));
+            g_render.dev->SetIndices(ib.bufs[ibi].ib);
         }
         if (!v->b162) {
             if (v->f164) goto L_state;

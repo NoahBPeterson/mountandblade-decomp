@@ -5,6 +5,7 @@
 #include "../terrain_a/game_state.h"
 #include "../terrain_b/scene_file.h"
 #include "../../include/msg_log.h"
+#include "../render_batch.h"                // render_batch, g_batch (0x5fe898): render 0x47e520
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/render_flags.h"
 
@@ -18,11 +19,6 @@ using namespace rgl;
 void __stdcall clear_f14(named_object* r);                                 // 0x4175f0
 
 extern MsgLog g_gui;                          // 0x5d7080 (MsgLog::add 0x452c00, ret 0x14, is the message log's own member)
-// 0x47e520 is RenderPass::render (mesh_pass.cpp), the pass driver of the scene registry object g_batch (0x5fe898)
-struct RenderPass {
-    bool render(int pass);   // 0x47e520
-};
-extern RenderPass g_batch;                   // 0x5fe898
 
 // EChar::collect lives next to its caller (the original's tail call)
 struct EChar_c : EChar {
@@ -240,7 +236,7 @@ NOINL void ShadowMapP::build_hw()
         for (int i = 0; i < 4; i++) {
             SC.flags = i ? 1 : 0x301;
             ((rgl::world*)cam)->render_part(&SC, i, 4);      // 0x421110
-            g_batch.render((int)&SC);
+            g_batch.render(&SC);
         }
     }
 }
@@ -268,7 +264,7 @@ NOINL void ShadowMapP::build_sw()
         SC.f15c = (int)target2;
         SC.active = 0;
         ((rgl::world*)cam)->render_scene(&SC, 0);        // 0x429890
-        g_batch.render((int)&SC);
+        g_batch.render(&SC);
     }
     if (target2 != 0) {
         clear_f14((named_object*)target2);          // 0x4175f0

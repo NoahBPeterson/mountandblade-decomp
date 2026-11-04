@@ -84,36 +84,6 @@ UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dest, RowAlloc& al)
     return dest;
 }
 
-// @ 0x4ebea0
-GuiScreen::GuiScreen()
-{
-    for (int i = 0; i < 5; i++)
-        ((Obj720*)((char*)this + 0x14))[i].Obj720::Obj720();
-    ((Obj720*)((char*)this + 0x30c))->Obj720::Obj720();
-    *(int*)((char*)this + 0x3a8) = 0;
-    *(int*)((char*)this + 0x3ac) = 0;
-    *(int*)((char*)this + 0x3b0) = 0;
-    ((vec_table*)((char*)this + 0x4183d8))->vec_table::vec_table();
-    ((mesh*)((char*)this + 0x4183e0))->mesh::mesh();
-    ((scene*)((char*)this + 0x418640))->scene::scene();
-    *(xform**)((char*)this + 0x4183d4) = new xform[0x20];
-    mat3 m;
-    xform p;
-    p.ex = vector4(0, 0, 0);
-    for (int j = 0; j < 0x800; j += 0x40) {
-        p.m = *identity3(&m);
-        *MAT_XFORM(j) = p;
-        xform* d = MAT_XFORM(j);
-        d->m.s.w = 0;
-        d->m.f.w = 0;
-        d->m.u.w = 0;
-        d->ex.w = 1.0f;
-    }
-    *(int*)((char*)this + 0x4183c4) = 0;
-    *(int*)((char*)this + 0x4183c0) = 0;
-    *(int*)((char*)this + 0x418828) = 0;
-}
-
 // @ 0x4ebfd0
 // One input pass: resets the top overlay, clamps the mouse delta against the screen edges, drains
 // DirectInput (GetDeviceData, re-acquiring while the device is unacquired), maps the raw cursor into the

@@ -44,6 +44,7 @@ Config g_cfg = {  // 0x5a9f98
     /*render_buffer_size*/ 15, /*display_width*/ 0, /*display_height*/ 0, /*display_bits*/ 32, /*antialiasing*/ 1, /*sample_quality*/ 0,
     /*force_vsync*/ 0, /*unk64*/ 1, /*shadowmap_quality*/ 1, /*unk6c*/ 1
 };
+render_batch g_batch;                                      // 0x5fe898 (0x41882c bytes; constructed by the compiler: render_batch::render_batch 0x4ebea0, destroyed by ~render_batch 0x4ca830)
 
 
 // ---- imports and library functions the slices declared by hand ------------------------------------------------------
@@ -934,6 +935,36 @@ void buffer_pair::release()
     b.loaded = 0;
 }
 
+// @ 0x4ebea0 (the members are built in declaration order by the compiler: five vertex pairs and the index pair (0x4cd720), the scene
+// vector, the bone-origin table (0x417cb0), the mesh (0x412a90) and the scene (0x429740))
+rgl::mat3* __cdecl identity3(rgl::mat3* out);                       // 0x40cd60
+render_batch::render_batch()
+{
+    world_mats = new xform[0x20];
+    rgl::mat3 m;
+    xform p;
+    p.ex = rgl::vector4(0, 0, 0);
+    for (int i = 0; i < 0x20; i++) {
+        p.m = *identity3(&m);
+        world_mats[i] = p;
+        xform* d = &world_mats[i];
+        d->m.s.w = 0;
+        d->m.f.w = 0;
+        d->m.u.w = 0;
+        d->ex.w = 1.0f;
+    }
+    f4183c4 = 0;
+    frame = 0;
+    counter = 0;
+}
+
+// @ 0x4ca830 (the members are destroyed by the compiler: the work scene (0x41f4e0), the work mesh (0x4127f0), the bone-origin table,
+// the scene vector, the index pair (0x4c5150) and the five vertex pairs (0x4c5110))
+render_batch::~render_batch()
+{
+    operator delete[](world_mats);
+}
+
 // @ 0x4bc5b0
 void render_batch::init_formats()
 {
@@ -1164,10 +1195,6 @@ font_details::font_details()
 {
     a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0;
 }
-
-// A particle mesh is an rgl::mesh (0x260 bytes, rgl/mesh.h; 0x413750 is rgl::mesh::render): only the member is declared here (config.h is
-// included next to rgl/mesh.h by world_data.cpp).
-namespace rgl { struct scene; struct mesh { int render(scene* sc, const matrix& frame); }; }    // 0x413750
 
 // ---- ambient particle ring ----------------------------------------------------------------------------------------------
 // @ 0x4bd170

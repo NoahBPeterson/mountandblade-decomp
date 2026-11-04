@@ -95,8 +95,8 @@
 ../src/rgl/particles/mesh_obj.cpp  ?construct@?$allocator@Ubone_influence@rgl@@@std@@QAEXPAUbone_influence@rgl@@ABU34@@Z  00411b60  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_copy@PAUbone_influence@rgl@@PAU12@V?$allocator@Ubone_influence@rgl@@@std@@@std@@YAPAUbone_influence@rgl@@PAU12@00AAV?$allocator@Ubone_influence@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00411b80  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?copy_from@frame_t@rgl@@QAEXABU12@@Z  00411c10  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?register_scene@scene_registry@rgl@@QAEXPAUscene@2@@Z  00412040  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?add_mesh@scene_registry@rgl@@QAEXPAUscene@2@PAUmesh@2@@Z  00412100  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?register_scene@render_batch@@QAEXPAUscene@rgl@@@Z  00412040  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?add_mesh@render_batch@@QAEXPAUscene@rgl@@PAUmesh@3@@Z  00412100  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??4keyframes@rgl@@QAEXABU01@@Z  004125e0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?update_emitters@mesh@rgl@@QAEXPBMABUmatrix@2@@Z  004126a0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?ensure_skin@mesh@rgl@@QAEXXZ  00412700  /O2 /MT /Gy /TP
