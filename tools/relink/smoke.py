@@ -1,7 +1,7 @@
 """Runtime smoke test of a relinked build: launch it in the game folder, capture the window while it loads and at the main
 menu, close it, and compare the menu with a reference shot of a known-good build.
 
-usage: smoke.py --exe DIR/mb_standalone.exe [--host mac|win|auto] [--out DIR] [--ref work/smoke/ref_menu.png] [--save-ref] [--timeout 420]
+usage: smoke.py --exe DIR/mb_standalone.exe [--host mac|win|auto] [--out DIR] [--ref work/smoke/ref_menu.png] [--save-ref] [--timeout 420] [--wait SECONDS]
 
 --host mac (default) runs under CrossOver here; --host win runs natively on the Windows laptop (docs/remote_worker.md, "Smoke test on the
 laptop"; reference work/smoke/ref_menu_win.png); --host auto takes the Mac when no game runs there, else the laptop when it is free.
@@ -10,7 +10,7 @@ The byte, equivalence and data gates cannot see a build that runs wrong while ev
 two owners for one piece of data left every loading-screen message and the whole loading screen drawn under the menu).
 This is the check that can. The launcher is passed with crashrun --play (Return at the launcher: it brings the game
 window to the front for a moment). Exit status: 0 menu matches the reference, 1 it does not (or the game died or never reached
-the menu), 2 usage, 3 a game is already running (it is never killed: it may be the user's).
+the menu), 2 usage, 3 a game is already running (it is never killed: it may be the user's; --wait SECONDS polls every 20 s for a free host first).
 
 Shots go to --out (default work/smoke/<exe dir name>): load_NNN.png every 20 s while loading, menu.png 8 s and menu_2.png 14 s after the
 engine logs "Finished All". The score is the mean absolute difference of the two menus as 320x200 greyscale (0..255);
@@ -202,6 +202,19 @@ def run_win(a, exe, out, cfg):
     return status, menus
 
 
+def free_host(want, cfg):
+    """(host, None) for a host with no game running, else (None, why). A running game is never touched: it may be the user's."""
+    if want in ("mac", "auto") and not game_pids():
+        return "mac", None
+    if want in ("win", "auto") and cfg and not win_busy(cfg):
+        return "win", None
+    if want == "mac":
+        return None, "a game is already running (pids %s): not touching it" % game_pids()
+    if want == "win":
+        return None, "a game is already running on the laptop: not touching it"
+    return None, "busy: a game is running on the Mac and the laptop is %s" % ("busy too" if cfg else "not configured (MB_WORKER_SSH)")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--exe", required=True)
@@ -210,26 +223,24 @@ def main():
     ap.add_argument("--ref", help="reference menu (default work/smoke/ref_menu.png, ref_menu_win.png for --host win)")
     ap.add_argument("--save-ref", action="store_true", help="store this run's menu as the reference (a known-good build)")
     ap.add_argument("--timeout", type=int, default=420, help="seconds to reach the menu")
+    ap.add_argument("--wait", type=int, default=0, help="seconds to wait for a free host instead of exiting 3 at once")
     a = ap.parse_args()
-    host, cfg = a.host, win_cfg()
-    if host == "auto":
-        if not game_pids():
-            host = "mac"
-        elif cfg and not win_busy(cfg):
-            host = "win"
-        else:
-            print("busy: a game is running on the Mac and the laptop is %s" % ("busy too" if cfg else "not configured (MB_WORKER_SSH)"))
-            return 3
-    if host == "mac" and game_pids():
-        print("a game is already running (pids %s): not touching it" % game_pids())
+    if not os.path.isfile(a.exe):
+        print("no such exe: %s" % a.exe)
+        return 2
+    cfg = win_cfg()
+    if a.host == "win" and not cfg:
+        print("the laptop is not configured: set MB_WORKER_SSH, MB_WORKER_SCP, MB_WORKER_HOST (docs/remote_worker.md)")
+        return 2
+    deadline = time.time() + a.wait
+    while True:
+        host, busy = free_host(a.host, cfg)
+        if host or time.time() >= deadline:
+            break
+        time.sleep(20)
+    if not host:
+        print(busy)
         return 3
-    if host == "win":
-        if not cfg:
-            print("the laptop is not configured: set MB_WORKER_SSH, MB_WORKER_SCP, MB_WORKER_HOST (docs/remote_worker.md)")
-            return 2
-        if win_busy(cfg):
-            print("a game is already running on the laptop: not touching it")
-            return 3
     ref = a.ref or os.path.join(ROOT, "work", "smoke", "ref_menu_win.png" if host == "win" else "ref_menu.png")
     exe = os.path.abspath(a.exe)
     out = a.out or os.path.join(ROOT, "work", "smoke", os.path.basename(os.path.dirname(exe)) + ("_win" if host == "win" else ""))
