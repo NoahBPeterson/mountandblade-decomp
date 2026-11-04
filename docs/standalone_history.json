@@ -928,5 +928,36 @@
    "reached through tables": 192944,
    "library data": 55614
   }
+ },
+ "2026-11-03T23:17:25-06:00": {
+  "data_labels": 155,
+  "aliases": 227,
+  "source_aliases": 69,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 14,
+  "placeholder_virtuals": 2,
+  "forwarding_stubs": 25,
+  "data_definitions": 181,
+  "when": "2026-11-03T23:17:25-06:00",
+  "commit": "1c63f7e4",
+  "build": "merge_mf",
+  "label": "PartyWindow, one matrix class, reset_gui virtuals",
+  "items": {
+   "defined in source": 185,
+   "generated from source": 2057,
+   "borrowed from image": 62,
+   "reached through tables": 620,
+   "library data": 508
+  },
+  "bytes": {
+   "defined in source": 143721724,
+   "generated from source": 309196,
+   "borrowed from image": 15088,
+   "reached through tables": 192944,
+   "library data": 56014
+  }
  }
 }
