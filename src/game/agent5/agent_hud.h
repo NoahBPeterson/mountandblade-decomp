@@ -28,7 +28,7 @@
 #include "../../include/shape.h"
 #include "../../include/frustum.h"
 #include "../party2/camera_class.h"      // Camera: the scrolling list (constructor 0x49deb0; layout 0x48d470 is FieldPanel::update, scroll_refresh 0x498420 (ret 4) is HudOuter's)
-#include "../ui/mission_ui.h"
+#include "../ui/ui_widgets.h"
 #include "../font.h"
 #include "../../include/dialog_rec.h"
 #include "../shadow_map.h"
@@ -58,7 +58,6 @@ struct Buffer { virtual ~Buffer(); };                              // 0x487c00 (
 struct FieldPanel { void update(); };                              // 0x48d470 (mission_ui2/mission_3.cpp): the list widget's layout
 struct HudOuter { void scroll_refresh(vector4* v); };              // 0x498420 (world_data/mesh_hud.cpp)
 struct PartyModel { void set_fade(const float* v); };              // 0x4b1800 (party2/party_2.cpp)
-struct UiD { void set_value(float v); };                           // 0x48baa0 (ui/ui_widgets_c.cpp)
 // level (trace_ray 0x439d60, query_segment 0x439870): terrain_b/cell_grid.h
 float __cdecl time_of_day();                                       // 0x4356e0 (agent.cpp)
 pos* __cdecl identity_pos(pos* out);                               // 0x40cd00 (shapes.cpp; rgl::identity_pos(matrix*) of the scene headers is the same function)
@@ -274,14 +273,6 @@ struct FlagWidget : MissionUi {                                   // vtable 0x59
     FlagWidget() { *(void**)this = (void*)vtbl_UiD; f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
     void set_value(float x);                                      // 0x48baa0
 };
-struct ToggleWidget : MissionUi {                                 // vtable 0x591d58 (ui_widgets.h's UiA, constructor inlined), size 0x188
-    int f178;                                                     // +0x178 (0x4fbfa0)
-    float f17c;                                                   // +0x17c
-    char f180;                                                    // +0x180
-    char pad181[3];
-    int f184;                                                     // +0x184
-    ToggleWidget() { f178 = 0; b121 = 0; *(void**)this = (void*)vtbl_591d58; f180 = 0; f184 = 0; }
-};
 struct NameWidget : MissionUi {                                   // ctor 0x4ed630, vptr 0x598698, size 0x358
     void* mission_scene;                                          // +0x178 (Mission::scene, stored by 0x4f7f00)
     char pad17c[0x1ac - 0x17c];
@@ -438,8 +429,7 @@ struct MWidget {
 
 
 #include "../str_table.h"                                          // StrTable: lookup 0x43a1e0 (ret 4)
-struct UiAInline : MissionUi {};                                  // cls_map/progress_bar.cpp's name for the widget make_short_button returns
-UiAInline* __cdecl make_short_button(MissionUi* frame, const tstring* text, float x, float y, float h);   // 0x4e5570
+UiA* __cdecl make_short_button(MissionUi* frame, const tstring* text, float x, float y, float h);   // 0x4e5570
 struct TStringArray {                                             // an array of tstrings allocated with new[] (the count sits in front of the first element)
     __declspec(noinline) void* destroy(unsigned flags);           // 0x4fd0e0 (this = the first element; called, not inlined, by 0x4fc820)
 };

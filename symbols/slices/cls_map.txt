@@ -31,7 +31,7 @@
 004db1f0 ?init_meeting_window@Screen@@QAEXXZ
 004db440 ?fill_mission_row@Screen@@QAEXH@Z
 004db660 ?init_done_window@Screen@@QAEXXZ
-004db810 ?new_button@@YAPAUUiAInline@@PAUContainerBase@@ABUtstring@@MMMM@Z
+004db810 ?new_button@@YAPAUUiA@@PAUContainerBase@@ABUtstring@@MMMM@Z
 004db960 ?insert@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAE?AViterator@12@V312@ABUE50@@@Z
 004db9d0 ?_Insert_n@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IAEXViterator@12@IABUE68@@@Z
 004dbcc0 ?_Insert_n@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@IAEXViterator@12@IABUE176@@@Z
@@ -40,13 +40,13 @@
 004dc1c0 ??4?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAEAAV01@ABV01@@Z
 004dc350 ?set_rect@FrameGui@@QAEXPBM0@Z
 004dc630 ?init@ResultWindow@@QAEXXZ
-004dcbd0 ?new_long_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z
-004dcc50 ?new_sized_button@@YAPAUUiAInline@@PAUMissionUi@@ABUtstring@@MMM11MMM@Z
-004dce70 ?new_medium_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z
+004dcbd0 ?new_long_button@@YAPAUUiA@@PAUMissionUi@@PBUtstring@@MMM@Z
+004dcc50 ?new_sized_button@@YAPAUUiA@@PAUMissionUi@@ABUtstring@@MMM11MMM@Z
+004dce70 ?new_medium_button@@YAPAUUiA@@PAUMissionUi@@PBUtstring@@MMM@Z
 004dcef0 ?create@MainMenuScreen@@QAEXXZ
 004dd6e0 ?scan_saves@@YAXHPAH0PBD@Z
 004dd7b0 ?save_path@@YAXPAD@Z
-004dd830 ?build_row@@YAPAUUiAInline@@PAUContainerBase@@PBUtstring@@MMMM@Z
+004dd830 ?build_row@@YAPAUUiA@@PAUContainerBase@@PBUtstring@@MMMM@Z
 004dd920 ?init@BlockOwner@@QAEXPAUContainerBase@@H@Z
 004dd9e0 ?activate@BlockOwner@@QAEXXZ
 004dda40 ?create@EscapeMenu@@QAEXXZ

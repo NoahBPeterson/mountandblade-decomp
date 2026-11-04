@@ -86,7 +86,7 @@ struct scene_tbl {
 extern scene_tbl g_meshes;                       // 0x8ed4f58
 extern scene_tbl g_scene;                       // 0x8ed4f58  // old name of g_meshes, removed after the names merge
 
-// ---- widget classes (vtable addresses in the comments); the button family (UiA, MediumButton, XyzButton, UiAInline) is in ../ui/ui_widgets.h ----
+// ---- widget classes (vtable addresses in the comments); the button family (UiA, MediumButton, XyzButton, UiA) is in ../ui/ui_widgets.h ----
 // The list container a drop-down opens (NodeA, vtable 0x592848) and the container it derives from are in ../ui/container.h.
 
 struct DropDown : MissionUi {                   // ctor 0x4931d0 (installs its own vtable), size 0x1d0

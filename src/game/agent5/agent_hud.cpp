@@ -1315,7 +1315,7 @@ void GameScreen::build()
         UI(panel)->set_text(out, &name);
     }
 
-    FlagWidget* flag = new FlagWidget;
+    UiD* flag = new UiD;
     flag->f178 = 1;
     v[0] = 0.0f;
     v[1] = 0.0f;
@@ -1364,7 +1364,7 @@ void GameScreen::build()
 
     MissionUi** kp = kids;
     for (int i = 16; i != 0; i--, kp++) {
-        ToggleWidget* child = new ToggleWidget;
+        UiA* child = new UiA;
         *kp = child;
         unsigned c9 = 0xff55ff50;
         UI(*kp)->set_color(&c9);
@@ -1516,25 +1516,25 @@ void Rec58::build(bool show)
     float h = param_value("note_button_h");
     float dy = param_value("note_button_x_a");
     tab_log = MAKE_TAB("ui_game_log");
-    ((ToggleWidget*)tab_log)->f184 = 1;
+    ((UiA*)tab_log)->f184 = 1;
     yy += dy;
     tab_recent = MAKE_TAB("ui_recent_messages");
-    ((ToggleWidget*)tab_recent)->f184 = 1;
+    ((UiA*)tab_recent)->f184 = 1;
     yy += dy;
     tab_quests = MAKE_TAB("ui_quests");
-    ((ToggleWidget*)tab_quests)->f184 = 1;
+    ((UiA*)tab_quests)->f184 = 1;
     yy += dy;
     tab_troops = MAKE_TAB("ui_troops2");
-    ((ToggleWidget*)tab_troops)->f184 = 1;
+    ((UiA*)tab_troops)->f184 = 1;
     yy += dy;
     tab_locations = MAKE_TAB("ui_locations");
-    ((ToggleWidget*)tab_locations)->f184 = 1;
+    ((UiA*)tab_locations)->f184 = 1;
     yy += dy;
     tab_factions = MAKE_TAB("ui_factions");
-    ((ToggleWidget*)tab_factions)->f184 = 1;
+    ((UiA*)tab_factions)->f184 = 1;
     yy += dy;
     tab_return = MAKE_TAB("ui_return");
-    ((ToggleWidget*)tab_return)->f184 = 1;
+    ((UiA*)tab_return)->f184 = 1;
 
     MissionUi* active;
     if (show) {

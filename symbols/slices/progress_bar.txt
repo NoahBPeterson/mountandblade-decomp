@@ -17,7 +17,7 @@
 004e5230 ?get_float@ini_file@@QAEMPAH@Z
 004e5270 ?list_saves@C4c31c0@@QAEXXZ
 004e54e0 ?read_slot@SlotHeader@@QAE_NPAUSlotReader@@@Z
-004e5570 ?make_short_button@@YAPAUUiAInline@@PAUMissionUi@@PBUtstring@@MMM@Z
+004e5570 ?make_short_button@@YAPAUUiA@@PAUMissionUi@@PBUtstring@@MMM@Z
 004e55f0 ?slot_button@C4c31c0@@QAEXPAUContainerBase@@HPAPAUWidget@@@Z
 004e5d30 ?hex_field@ini_file@@QAEHABUtstring@@@Z
 004e5d80 ?create_stub@SavePanel@@QAEXXZ

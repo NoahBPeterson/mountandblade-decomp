@@ -891,7 +891,7 @@ void Rec3c::slot_empty_2()
         tstring none("");
         row[2] = new_button(overlay, none, 0.65f, 0.6f, 0.15f, 0.05f);
     }
-    ((UiAInline*)row[2])->f184 |= 1;
+    ((UiA*)row[2])->f184 |= 1;
     {
         tstring n("ui_factions");
         struct { int a, b; } ret;
@@ -912,9 +912,9 @@ void Rec3c::slot_empty_2()
 }
 
 // @ 0x4db810
-UiAInline* new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy)
+UiA* new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy)
 {
-    UiAInline* r = new UiAInline;
+    UiA* r = new UiA;
     {
         float t[2];
         t[0] = px; t[1] = py;
@@ -1100,7 +1100,7 @@ void ResultWindow::slot_empty_2()
 }
 
 // @ 0x4dcbd0
-UiAInline* new_long_button(MissionUi* parent, const tstring* text, float a, float b, float c)
+UiA* new_long_button(MissionUi* parent, const tstring* text, float a, float b, float c)
 {
     tstring d("longer_button_down");
     tstring nm("longer_button");
@@ -1145,12 +1145,12 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 
 // (parent, text, a, b, c, mesh name, pressed mesh name, k1, k2, k3): a button sized from the text width
 // @ 0x4dcc50
-UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
+UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3)
 {
     float tmp = c * k1;
     int buf[0x800];
-    UiAInline* p = new UiAInline;
+    UiA* p = new UiA;
     {
         float v[2] = { a, b };
         vt(p)->d22(v);
@@ -1199,7 +1199,7 @@ UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
 }
 
 // @ 0x4dce70
-UiAInline* new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c)
+UiA* new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c)
 {
     tstring d("medium_button_down");
     tstring nm("medium_button");
@@ -1382,9 +1382,9 @@ void scan_saves(int ids, int* count, int* first, const char* prefix)
 
 
 // @ 0x4dd830
-UiAInline* build_row(ContainerBase* parent, const tstring* key, float x, float y, float w, float h)
+UiA* build_row(ContainerBase* parent, const tstring* key, float x, float y, float w, float h)
 {
-    UiAInline* p = new UiAInline;
+    UiA* p = new UiA;
 
     float v[2] = {x, y};
     vt(p)->d22(v);
@@ -1994,7 +1994,7 @@ void Recd8::slot_empty_2()
     s84 = make_slider((MissionUi*)root, 0.23f, 0.455f, 1.0f);
     vt(s84)->d13(g_options.exp_arg);
     { tstring k("ui_enabled"); b88 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.23f, 0.405f, 0.03f); }
-    ((UiAInline*)b88)->f184 = 1;
+    ((UiA*)b88)->f184 = 1;
     vt(b88)->d11(g_options.invert);
     set_enabled_text(b88);
     { tstring k("Combat dif"); dd44 = make_dropdown((MissionUi*)root, &k, 0.7f, 0.605f); }
@@ -2104,31 +2104,31 @@ void Recd8::slot_empty_2()
     { unsigned c = COLOR_ENABLED; vt(hd0)->d38(&c); }
     { unsigned c = COLOR_ENABLED; vt(hd0)->d37(&c); }
     { tstring k("ui_enabled"); b60 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.345f, 0.035f); }
-    ((UiAInline*)b60)->f184 = 1;
+    ((UiA*)b60)->f184 = 1;
     vt(b60)->d11(g_options.i68);
     set_enabled_text(b60);
     { tstring k("ui_enabled"); b5c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.305f, 0.035f); }
-    ((UiAInline*)b5c)->f184 = 1;
+    ((UiA*)b5c)->f184 = 1;
     vt(b5c)->d11(g_options.i64);
     set_enabled_text(b5c);
     { tstring k("ui_enabled"); b64 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.265f, 0.035f); }
-    ((UiAInline*)b64)->f184 = 1;
+    ((UiA*)b64)->f184 = 1;
     vt(b64)->d11(g_options.fx_on);
     set_enabled_text(b64);
     { tstring k("ui_enabled"); b68 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.225f, 0.035f); }
-    ((UiAInline*)b68)->f184 = 1;
+    ((UiA*)b68)->f184 = 1;
     vt(b68)->d11(g_options.damage_msgs);
     set_enabled_text(b68);
     { tstring k("ui_enabled"); b6c = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.185f, 0.035f); }
-    ((UiAInline*)b6c)->f184 = 1;
+    ((UiA*)b6c)->f184 = 1;
     vt(b6c)->d11(g_options.shot_difficulty);
     set_enabled_text(b6c);
     { tstring k("ui_enabled"); b70 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.145f, 0.035f); }
-    ((UiAInline*)b70)->f184 = 1;
+    ((UiA*)b70)->f184 = 1;
     vt(b70)->d11(g_options.kill_msgs);
     set_enabled_text(b70);
     { tstring k("ui_enabled"); b74 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.105f, 0.035f); }
-    ((UiAInline*)b74)->f184 = 1;
+    ((UiA*)b74)->f184 = 1;
     vt(b74)->d11(g_options.show_messages);
     set_enabled_text(b74);
     { tstring k(""); hd4 = make_hint((ContainerBase*)root, k, 0.34f, 0.03f, 0.3f, 0.04f); }
@@ -2167,7 +2167,7 @@ static __forceinline int drop_count(DropDown* d) { return d->rows_first ? (int)(
 #define QBTN(m, y, getval) \
     { tstring k_("ui_enabled"); tstring* t_ = g_strtable_c.lookup(k_); tstring d_("medium_button_down"); tstring u_("medium_button"); \
       m = new_sized_button((MissionUi*)window, *t_, 0.52f, y, 0.035f, u_, d_, 3.7f, 0.072f, 0.085f); } \
-    ((UiAInline*)m)->f184 = 1; \
+    ((UiA*)m)->f184 = 1; \
     vt(m)->d11(getval); \
     set_enabled_text(m);
 #define DD_ITEM(dd, key) { tstring k_(key); vt(dd)->d50(g_strtable_c.lookup(k_)); }
@@ -2487,7 +2487,7 @@ void Rec1bc::slot_empty_2()
         tstring down("medium_button_down");
         MissionUi* b = new_sized_button(quad, txt, x + 0.195f, c + 0.005f, 0.034f, up, down, 3.7f, 0.072f, 0.085f);
         slot_buttons[i] = b;
-        ((UiAInline*)b)->f184 |= 1;
+        ((UiA*)b)->f184 |= 1;
     }
     for (int i = 0; i < 7; i++) {
         float c = 0.677f - (float)i * 0.037f;

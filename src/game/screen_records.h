@@ -13,7 +13,7 @@
 struct ContainerBase;
 struct MissionUi;
 struct res_rec;
-struct UiAInline;
+struct UiA;
 struct UiB;
 struct DropDown;
 struct bin_reader;
@@ -256,12 +256,12 @@ struct Recd8 : head_rec { MB_ZERO_TAIL(Recd8) // vtable 0x5958b8
     ContainerBase* root;                        // +0x2c options_window container
     MissionUi* header;                          // +0x30 warrider_logo container
     MissionUi* h34;                             // +0x34 the "days" caption (update_days 0x4d6270 rewrites it)
-    UiAInline* b38, *b3c, *b40;                 // +0x38 ui_controls, +0x3c ui_video_options, +0x40 ui_done
+    UiA* b38, *b3c, *b40;                 // +0x38 ui_controls, +0x3c ui_video_options, +0x40 ui_done
     DropDown* dd44, *dd48, *dd4c, *dd50, *dd54, *dd58;   // +0x44..0x58 the drop-downs
-    UiAInline* b5c, *b60, *b64, *b68, *b6c, *b70, *b74;  // +0x5c..0x74 the ui_enabled toggles
+    UiA* b5c, *b60, *b64, *b68, *b6c, *b70, *b74;  // +0x5c..0x74 the ui_enabled toggles
     UiB* sl78;                                  // +0x78
     UiB* s7c, *s80, *s84;                       // +0x7c..0x84 the sliders
-    UiAInline* b88;                             // +0x88
+    UiA* b88;                             // +0x88
     MissionUi* h8c, *h90, *h94, *h98, *h9c, *ha0, *ha4, *ha8, *hac, *hb0, *hb4, *hb8, *hbc, *hc0, *hc4, *hc8, *hcc, *hd0, *hd4;   // +0x8c..0xd4 the hint labels
     void update_difficulty();                   // 0x4d6300 (options_panel/quest_page.cpp; defined in cls_map/cls_map.h)
     virtual void slot_empty_1();
@@ -284,7 +284,7 @@ struct Recf0 : head_rec { MB_ZERO_TAIL(Recf0) // vtable 0x5958dc
     DropDown* resolution;                       // +0x58
     DropDown* shadow_quality;                   // +0x5c
     MissionUi* change;                          // +0x60
-    UiAInline* quality[6];                      // +0x64..0x78
+    UiA* quality[6];                      // +0x64..0x78
     MissionUi* lbl_texture_detail;              // +0x7c "ui_texture_detail"
     MissionUi* val_texture_detail;              // +0x80 texture detail percentage text
     MissionUi* lbl_shadow_quality;              // +0x84 "ui_shadow_quality2"

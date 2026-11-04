@@ -575,7 +575,7 @@ bool SlotHeader::read_slot(SlotReader* r)
 }
 
 // @ 0x4e5570   the save screen's small button: "short_button" with the "short_button_down" pressed state
-UiAInline* make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c)
+UiA* make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c)
 {
     tstring d("short_button_down");
     tstring nm("short_button");
@@ -645,7 +645,7 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, Widget** out)
                                 save_size_y, key, key_down,
                                 1.5544f, save_button_h, 0.085f);
     }
-    ((UiAInline*)(void*)*out)->f184 = 1;
+    ((UiA*)(void*)*out)->f184 = 1;
 
     // one full expression: both lookups' key strings live until d27 returns (0x4e5734..0x4e5767 destroy them after it)
     vt(*out)->d27(pair_ref(PairF(config_float_key(tstring("save_b_save_t_s")), config_float_key(tstring("save_b_save_t_s")))));

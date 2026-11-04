@@ -115,12 +115,12 @@ struct TableauTbl {
 struct ContainerW {
     void* construct();   // 0x4931a0 (world_data: the list container's constructor body, returns this)
 };
-struct UiAInline; struct Camera; struct NodeA;
+struct UiA; struct Camera; struct NodeA;
 static __forceinline void __fastcall window_ctor(void* p) { ((ContainerW*)p)->construct(); }   // 0x4931a0
 static __forceinline void __fastcall panel_ctor(void* p) { new (p) MissionUi; }                   // 0x48ae20 (MissionUi::MissionUi)
-UiAInline* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4e5570
-UiAInline* __cdecl new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4dce70
-UiAInline* __cdecl new_long_button(MissionUi* parent, const tstring* text, float a, float b, float h);     // 0x4dcbd0
+UiA* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4e5570
+UiA* __cdecl new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4dce70
+UiA* __cdecl new_long_button(MissionUi* parent, const tstring* text, float a, float b, float h);     // 0x4dcbd0
 // the `new` expressions of the widget classes: allocate, run the constructor 0x4931a0 / 0x49deb0 of the definitions, and store the
 // class's vtable pointer by its address (0x597050), as the original does after the call
 static __forceinline PsBar* new_ps_bar()

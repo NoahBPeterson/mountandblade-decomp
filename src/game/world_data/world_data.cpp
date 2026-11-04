@@ -1670,7 +1670,7 @@ void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 // @ 0x494110
 int WidgetMgrW::create_button_overlay(const tstring* text, unsigned flags)
 {
-    UiAInline* w = new UiAInline;
+    UiA* w = new UiA;
 
     {
         vec2 v;

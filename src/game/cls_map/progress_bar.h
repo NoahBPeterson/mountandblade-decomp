@@ -38,7 +38,7 @@ struct RagModel {
 // (the save window is C4c31c0, game/screen_records.h: its nine SlotRecs, list_saves 0x4e5270 and slot_button 0x4e55f0)
 #include "../screen_records.h"
 void label_refresh(MissionUi* w, tstring key);  // 0x4e4c70 (cdecl, the prefix by value)
-__declspec(noinline) UiAInline* make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570
+__declspec(noinline) UiA* make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570
 
 // the panel that wraps a menu block (like MainMenu / EscapeMenu): 0x4e5d80 .. 0x4e5f50
 struct SaveWinCtl {

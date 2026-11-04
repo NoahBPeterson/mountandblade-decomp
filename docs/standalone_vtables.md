@@ -127,7 +127,7 @@ constructors/destructors the original inlines into its loaders are in `src/rgl/s
 file's 0x595618 is a tool artifact: the dtor calls slot 26 by absolute address, which `vtable_starts` reads as a table start.
 
 Widget family: hand-built widgets of these classes in other families' sources (`*(void**)w = vtbl_...`): agent5/agent_hud.h
-(`GroupWidget`, `TextGroupWidget`, `FrameWidget`, `FlagWidget`, `ToggleWidget`), inventory_panel/party_screen.h (`PsBar`,
+(`GroupWidget`, `TextGroupWidget`, `FrameWidget`, `FlagWidget`), inventory_panel/party_screen.h (`PsBar`,
 `PsListWidget`), note_window.cpp, char_sheet/quest_log.cpp, char_sheet/editor_ui.cpp, char_sheet/facegen_win.cpp,
 inventory_panel/char_sheet.cpp, party2/camera.cpp (`ContainerBase`, `UiB`, `UiA`, `UiE`, `NodeA`, `text_box`: use
 `new <class>` from ui/container.h / ui/ui_widgets.h / config/ui_widgets_c.h), party/party_window.h (`PartyPanel` 0x599bf8,
@@ -143,7 +143,7 @@ The widget tables are one hierarchy, not one class per table:
 
 ```
 MissionUi (0x591c80, 49 virtuals; ui/mission_ui.h)
-  UiA (0x591d58, the toggle button; inline ctor)   <- UiAInline (same table), MediumButton (0x591e20), XyzButton (0x591ee8), UiE (0x592208)
+  UiA (0x591d58, the toggle button; inline ctor)   <- UiA (same table), MediumButton (0x591e20), XyzButton (0x591ee8), UiE (0x592208)
   UiB (0x591fb0, slider) <- UiC (0x592078, + update_children);   UiD (0x592140)
   ContainerBase (0x5924a0, ui/container.h) <- NodeA (0x592848), text_box (0x597050)
   progress_bar (0x597f20)
@@ -156,7 +156,7 @@ MissionUi (0x591c80, 49 virtuals; ui/mission_ui.h)
 * A derived widget overrides a slot by declaring it `virtual` and defining it where the original function is
   (`UiB::animate` is HudBar's 0x497880 in mesh_hud.cpp, `ContainerBase::update_children` is FrameBox::release 0x48ef40 in
   mission_4.cpp). No `d10` / `d35` names, no `jmp` stubs, no `vtbl_*` stores for these classes: `new UiB`, `new NodeA`,
-  `new text_box`, `new UiAInline`.
+  `new text_box`, `new UiA`.
 * Constructors the original inlines into its callers (UiA's, ContainerBase's) are in-class definitions; cl then inlines them
   at the sites the original did and keeps the out-of-line copy where it needs one. `typedef ContainerBase UiFrame` keeps the
   old name for the sources that still use it.

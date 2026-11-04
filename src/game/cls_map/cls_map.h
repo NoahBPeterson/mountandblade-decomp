@@ -9,7 +9,7 @@
 // gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), E50 / E176 / R44 /
 // b16 (../../include/vec_elems.h), E68 (../../include/e68.h), Config / ini_file (../config/config.h), Core (the
 // application object; ../config/core.h), MissionUi and its widget classes (../ui), the widget factories' classes
-// (../config/widget_mgr.h: WVt, DropDown, gui_mesh; ../ui/ui_widgets.h: UiAInline; ../ui/container.h: ContainerBase).
+// (../config/widget_mgr.h: WVt, DropDown, gui_mesh; ../ui/ui_widgets.h: UiA; ../ui/container.h: ContainerBase).
 #ifndef GAME_CLS_MAP_CLS_MAP_H
 #define GAME_CLS_MAP_CLS_MAP_H
 #include "../../include/image_addrs.h"
@@ -237,7 +237,7 @@ struct MissionScreen {
 };
 // the hint bar / label maker (0x4dada0) and the 0x4db810 button maker
 MissionUi* __cdecl make_hint(ContainerBase* o, const tstring& text, float x, float y, float w, float h);   // 0x4dada0
-UiAInline* __cdecl new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy);   // 0x4db810
+UiA* __cdecl new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy);   // 0x4db810
 
 // globals of the campaign diary screens (addresses; names provisional)
 extern GameData* g_game;                        // 0x5e2930
@@ -252,8 +252,8 @@ extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145} ([1] i
 // the option table (0xa44240): ini_file, entries of 0x2c bytes with the value string at +0x1c of each entry (from +0x1c: 0xa4425c)
 extern ini_file g_game_vars;                          // 0xa44240
 #include "../result_window.h"                    // ResultWindow: the head_rec record of vtable 0x595740 (its slot 2 is the window maker below)
-UiAInline* new_long_button(MissionUi* parent, const tstring* text, float a, float b, float c);     // 0x4dcbd0
-UiAInline* new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70
+UiA* new_long_button(MissionUi* parent, const tstring* text, float a, float b, float c);     // 0x4dcbd0
+UiA* new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70
 
 // ---- 0x4dcef0..0x4de6f0: the main menu, the in-game (escape) menu, the message menu and the debrief menu -------------------
 // the menu-kind record (stride 0x24; table g_menu_kinds 0xa75f2c): the menu's background image count and its sound holder
@@ -281,8 +281,8 @@ struct BlockOwner {
     void init(ContainerBase* parent, int which);   // 0x4dd920 (ret 8)
     void activate();                            // 0x4dd9e0
 };
-UiAInline* build_row(ContainerBase* parent, const tstring* key, float x, float y, float w, float h);   // 0x4dd830
-__declspec(noinline) UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
+UiA* build_row(ContainerBase* parent, const tstring* key, float x, float y, float w, float h);   // 0x4dd830
+__declspec(noinline) UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 void mb_snprintf(char* dest, unsigned size, const char* fmt, ...);   // 0x415100
 void scan_saves(int ids, int* count, int* first, const char* prefix);   // 0x4dd6e0

@@ -59,7 +59,7 @@ Forward-call rule re-checked on `work/migrate/facts.json` (calls and tail jumps;
 | core.h | `Core : CD3DApplication` (g_app_obj 0x8ee3c48, `mode` +0x590) | 0x4bace0, 0x4bad70, 0x4badf0, 0x4b99c0 |
 | config.h | `Config` (g_cfg 0x5a9f98), `GameConfig`, `CreateGameOptionsPage`, `Cursor`, `DisplayState`, `InputSet`, `dev_buffer`/`buffer_pair`/`render_batch`, `weather`, `camera_ray`, `ini_file`, `Elem`/`Block`, `trigger_rec`/`trigger_entry`, `psys_record`, `prsnt_record`, `sound_def`, `sound_record`, load tables, `music_player`, `menu_item`, `rec34`, `rec20`, `clip_table`/`clip_slot` | each field cites its function |
 | options_dlg.h | `OptionsDlg`, `byte_buf`, `http_result`, HTTP/registry helpers | 0x4b8f40..0x4b9af0 |
-| widget_mgr.h | `widget_mgr`, `DropDown`, `NodeA`, `UiAInline`, buttons, `MissionUiText`, `Font` | 0x499830..0x49b0f0 |
+| widget_mgr.h | `widget_mgr`, `DropDown`, `NodeA`, `UiA`, buttons, `MissionUiText`, `Font` | 0x499830..0x49b0f0 |
 | ui_widgets_c.h | `UiEBase`, `UiE` | 0x48bb10..0x48bda0 |
 
 Existing headers reused by inclusion: `../tstring.h`, `../strat/gui_manager.h` (streams, `g_log`, `mb_error`, mouse

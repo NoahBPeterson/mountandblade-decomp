@@ -70,8 +70,8 @@ static __forceinline void* new_container(unsigned size, void* vtbl)
 }
 int __cdecl clamp_index(const int* a, const int* b, const int* c); // 0x432510 (game_util)
 struct ContainerBase;
-struct UiAInline;
-UiAInline* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570 (progress_bar)
+struct UiA;
+UiA* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570 (progress_bar)
 MissionUi* __cdecl make_hint(ContainerBase* parent, const tstring& text, float a, float b, float c, float d);   // 0x4dada0 (cls_map)
 #include "../../include/sound_mgr.h"
 // the particle / shadow system g_psys (0xa70248)
@@ -84,9 +84,9 @@ struct CellGrid {                                                   // the scene
 struct ShadowMapP {
     void render();                                                  // 0x47fef0
 };
-UiAInline* __cdecl new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70 (cls_map)
-UiAInline* __cdecl new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy);   // 0x4db810 (cls_map)
-UiAInline* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
+UiA* __cdecl new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70 (cls_map)
+UiA* __cdecl new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy);   // 0x4db810 (cls_map)
+UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50 (cls_map)
 
 // out-of-line std instances (the defining modules are named in the comments)

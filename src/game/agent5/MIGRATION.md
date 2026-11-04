@@ -78,7 +78,7 @@ Workarounds (a view of the same object, because the canonical header cannot be u
 
 * `agent_hud.h`: `HudUi` (pure slot interface over `MissionUi`, as `WidgetOps` / `DrawObj`), `SkelView` (the skeleton fields 0x4f7e00 touches; `skeleton.h`
   needs world (a)), `GameClock`, `SunBody`, `CamSlot`, `FrameNode`, `GuiMgr` (`g_gui` 0x5d7080), `UiVec`, `InputKeys`, and the widget classes of this region
-  (`GroupWidget`, `WindowBase`, `FrameWidget`, `FlagWidget`, `ToggleWidget`, `ListWidget`, `NameWidget`, `MWidget`). `GameData` is used for g_game here,
+  (`GroupWidget`, `WindowBase`, `FrameWidget`, `FlagWidget`, `ListWidget`, `NameWidget`, `MWidget`). `GameData` is used for g_game here,
   `Game` in `party_create`: three incompatible views of the object at 0x5e2930 (`GameData`, `World`, `Game`) exist in the tree.
 * `agent_vec.cpp`: `CfgRec` (0x1f8 bytes) and `RowRec` (0x1c8 bytes) stand for `loading_config` (`cls_map/cls_map.h`) and `UiRow` (`char_sheet/screen.h`). Their
   headers pull in `match/include/rgl.h` (world (a)) and a record with real members would inline its own copy constructor, which the original keeps out of line

@@ -138,15 +138,15 @@ struct ContainerW {
 struct MissionPanel {
     void draw();   // 0x488d50 (ui/mission_ui.cpp)
 };
-struct ContainerBase; struct UiAInline; struct UiButton; struct Camera;
+struct ContainerBase; struct UiA; struct UiButton; struct Camera;
 
 static __forceinline void ctor_window(void* p) { ((ContainerW*)p)->construct(); }       // 0x4931a0
 static __forceinline void init_mission_ui(void* p) { new (p) MissionUi; }                // 0x48ae20
 static __forceinline void draw(CharSheetWidget* w) { ((MissionPanel*)w)->draw(); }     // 0x488d50
 
 // ---- widget factories ----------------------------------------------------------------------------------
-UiAInline* make_short_button(MissionUi* parent, const tstring* caption, float a, float b, float h);  // 0x4e5570
-UiAInline* new_medium_button(MissionUi* parent, const tstring* caption, float a, float b, float h);  // 0x4dce70
+UiA* make_short_button(MissionUi* parent, const tstring* caption, float a, float b, float h);  // 0x4e5570
+UiA* new_medium_button(MissionUi* parent, const tstring* caption, float a, float b, float h);  // 0x4dce70
 CharSheetWidget* make_medium_button(CharSheetWidget* parent, tstring* caption, int a, int b, float h,
                            tstring* up, tstring* down,
                            float a8, float a9, float a10);                           // 0x4dcc50

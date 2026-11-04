@@ -75,7 +75,7 @@ NodeA* DropDown::create()
     vt(b)->d20(4);
 
     for (unsigned u = 0; rows_first != 0 && u < (unsigned)(rows_last - rows_first); u++) {
-        UiAInline* c = new UiAInline;
+        UiA* c = new UiA;
 
         float d[2];
         d[0] = 0.0f;

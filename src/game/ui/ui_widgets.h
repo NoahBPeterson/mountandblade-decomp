@@ -25,13 +25,8 @@ struct UiA : UiABase {                      // vtable 0x591d58: the toggle butto
     char f181;                              // +0x181 (UiE: has a selection)
     char pad182[2];
     unsigned f184;                          // +0x184 flags     0x48b200
-    // the constructor 0x48b1c0: the base half, the vptr, then the field stores. The original inlines it into most callers; some
-    // of them (the factories' UiAInline) store their own vptr right after the base half and do the field stores themselves.
+    // the constructor 0x48b1c0: the base half, the vptr, then the field stores. The original inlines it into most callers.
     UiA();                                  // 0x48b1c0, defined out of line in mission_ui.cpp and inline below for the TUs that see the body
-protected:
-    struct base_only {};
-    UiA(base_only) {}
-public:
     void set_flag() { f184 = 1; }           // 0x499b50
     void* construct();                      // the constructor on raw memory, for the callers that do not inline it (mission_ui.cpp)
     // the slots of vtable 0x591d58 that differ from the base's
@@ -42,9 +37,6 @@ public:
     virtual void flag2_set();               // +0xb8 0x48b180
     virtual int kind();                     // +0xc0 0x48b1f0 (1)
 };
-
-// The same table, for the widgets the factories build (cls_map, world_data, config/widget_node.cpp).
-struct UiAInline : UiA { UiAInline() : UiA(base_only()) { f180 = 0; f184 = 0; } };
 
 // The two toggle variants: the medium button (text fitted to the button, vtable 0x591e20) and the xyz button (vtable 0x591ee8, the
 // strip icons; it animates through HudBar's update 0x4966b0).
