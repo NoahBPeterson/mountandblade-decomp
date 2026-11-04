@@ -194,7 +194,7 @@ struct Camera : Object {
 
     Camera();                                   // 0x49deb0
     int  type();                                // 0x49df30
-    virtual unsigned mask(int a);               // 0x49df40
+    unsigned mask(int a);                       // 0x49df40
     void move(shape_ref* e);                    // 0x49df60
     void update(int unused);                    // 0x49dfe0
     void* destroy(unsigned flags);              // 0x49e580
