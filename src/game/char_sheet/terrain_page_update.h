@@ -72,7 +72,7 @@ extern const float g_ten;                                   // 0x549d74 (10.0f; 
 extern float g_half;                                        // 0x549d70 (0.5f)
 #include "../renderer.h"
 
-// the page: src/game/terrain_page.h (Paged, TerrainPage)
+// the page: src/game/terrain_page.h (TerrainPage)
 #include "../terrain_page.h"
 
 static __forceinline bool page_changed(MissionUi* w) { return w->clear_mask(0x10000) != 0; }

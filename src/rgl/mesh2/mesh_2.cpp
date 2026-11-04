@@ -9,6 +9,7 @@
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
+#include "../../game/terrain_page.h"            // TerrainPage: slot 1 (0x4cb650) deletes its preview scene
 #include "../../game/char_sheet_panel.h"      // CharSheet: slot 1 (0x4cb610) releases its preview world
 #include "../../game/screen_records.h"     // C4c3050: slot 3 (0x4ca6c0) is its pressed-button finder
 #include "../../game/ui/mission_ui.h"
@@ -382,10 +383,10 @@ void CharSheet::reset_screen()
 
 // @ 0x4cb650
 
-void Rec23c::reset_screen()
+void TerrainPage::reset_screen()
 {
     g_gui.reset();
-    res_rec* r = p;
+    res_rec* r = (res_rec*)world;
     if (r) {
         ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
         operator delete(r);

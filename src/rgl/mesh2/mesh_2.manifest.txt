@@ -4,7 +4,7 @@
 ../src/rgl/mesh2/mesh_2.cpp  ?rebuild@graph_obj@@QAEXXZ  004ca8c0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?remove_edge@graph_obj@@QAEXH@Z  004ca9b0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?reset_screen@CharSheet@@UAEXXZ  004cb610  /O2 /MT /Gy /TP
-../src/rgl/mesh2/mesh_2.cpp  ?reset_screen@Rec23c@@UAEXXZ  004cb650  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?reset_screen@TerrainPage@@UAEXXZ  004cb650  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?reset_screen@Rec428@@UAEXXZ  004cb680  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?clear@vec3_holder@@QAEXXZ  004cb6b0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?grow@list_node@@QAEXI@Z  004cb6f0  /O2 /MT /Gy /TP

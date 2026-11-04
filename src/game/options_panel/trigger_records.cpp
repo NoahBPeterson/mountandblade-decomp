@@ -33,7 +33,7 @@ void init_mission_trigger_records()
     slot_as<Recf0>(19) = new Recf0;
     slot_as<Rec1bc>(20) = new Rec1bc;
     slot_as<C4c31c0>(21) = new C4c31c0;
-    slot_as<Rec23c>(22) = new Rec23c;
+    slot_as<TerrainPage>(22) = new TerrainPage;
     slot_as<ItemA>(23) = new ItemA;
     slot_as<Rec48>(24) = new Rec48;
     slot_as<Rec58>(25) = new Rec58;

@@ -2,6 +2,7 @@
 #include "../terrain_a/terrain.h"      // g_terrain 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../map_widget.h"        // MapWidget: the preview widget whose frustum (+0x1ac) takes the camera
 #include "../key_names.h"
 #include "../../include/render_flags.h"
 
@@ -46,29 +47,29 @@ void TerrainPage::simulate(float dt)
     ((rot2*)&m[0].x)->rotate_2x2(a);                        // 0x4f3b40 turns m[0].xy / m[1].xy
 
     if (g_keyboard.down[0x1e]) {
-        view_x = view_x - (m[0].x * 50.0f) * dt;
-        view_y = view_y - (m[0].y * 50.0f) * dt;
+        view_pos.x = view_pos.x - (m[0].x * 50.0f) * dt;
+        view_pos.y = view_pos.y - (m[0].y * 50.0f) * dt;
     }
     if (g_keyboard.down[0x20]) {
-        view_x = (m[0].x * 50.0f) * dt + view_x;
-        view_y = (m[0].y * 50.0f) * dt + view_y;
+        view_pos.x = (m[0].x * 50.0f) * dt + view_pos.x;
+        view_pos.y = (m[0].y * 50.0f) * dt + view_pos.y;
     }
     if (g_keyboard.down[0x11]) {
-        view_x = (m[1].x * 50.0f) * dt + view_x;
-        view_y = (m[1].y * 50.0f) * dt + view_y;
+        view_pos.x = (m[1].x * 50.0f) * dt + view_pos.x;
+        view_pos.y = (m[1].y * 50.0f) * dt + view_pos.y;
     }
     if (g_keyboard.down[0x1f]) {
-        view_x = view_x - (m[1].x * 50.0f) * dt;
-        view_y = view_y - (m[1].y * 50.0f) * dt;
+        view_pos.x = view_pos.x - (m[1].x * 50.0f) * dt;
+        view_pos.y = view_pos.y - (m[1].y * 50.0f) * dt;
     }
-    if (view_x < 0.0f)
-        view_x = 0.0f;
-    else if (view_x > 250.0f)
-        view_x = 250.0f;
-    if (view_y < 0.0f)
-        view_y = 0.0f;
-    else if (view_y > 250.0f)
-        view_y = 250.0f;
+    if (view_pos.x < 0.0f)
+        view_pos.x = 0.0f;
+    else if (view_pos.x > 250.0f)
+        view_pos.x = 250.0f;
+    if (view_pos.y < 0.0f)
+        view_pos.y = 0.0f;
+    else if (view_pos.y > 250.0f)
+        view_pos.y = 250.0f;
 
     if (g_gui.mouse[0] < 0.5f) {
         if (g_keyboard.down[0xe1]) {
@@ -153,9 +154,9 @@ void TerrainPage::path(float dt)
     vector4 pos;                                            // the eye (w stays uninitialised, copied into m.o.w)
     mat_self m;
     identity_pos((::pos*)&m);                                 // 0x40cd00 (cdecl, returns its argument)
-    pos.x = view_x;
-    pos.y = view_y;
-    pos.z = view_z;
+    pos.x = view_pos.x;
+    pos.y = view_pos.y;
+    pos.z = view_pos.z;
     m.o = pos;
     float angle = 1.5707964f;                               // +90 degrees
     ((rgl::matrix*)&m)->rotate_about_s(&angle);             // 0x40e570
@@ -170,8 +171,8 @@ void TerrainPage::path(float dt)
     m.o.y = m.o.y + pos.y;
     m.o.z = m.o.z + pos.z;
 
-    *(rgl::matrix*)frame = m;                               // page +0x138
-    ((rgl::frustum*)map_block)->build_planes();                    // 0x41e4f0: thiscall on this+0x70
-    *(FrustumBlock*)world6c->block = *(FrustumBlock*)map_block;             // 0x120 bytes: page +0x70 -> world +0x1ac
+    cam.m = m;                               // page +0x138
+    cam.build_planes();                    // 0x41e4f0: thiscall on this+0x70
+    *(FrustumBlock*)&view->view = *(FrustumBlock*)&cam;             // 0x120 bytes: page +0x70 -> world +0x1ac
     g_terrain.update_particles(&m);        // 0x4f3e10
 }

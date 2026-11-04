@@ -17,7 +17,7 @@ static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the ca
     { float r_[2]; hexbox->set_text(r_, &t_); } } while (0)
 
 // @ 0x4f2d70
-void TerrainPage::update(float dt)
+void TerrainPage::frame_update(float dt)
 {
     // the three terrain slots: a "select" checkbox, random bits, the %d caption of the number field
     for (int i = 0; i < 3; i++) {
@@ -124,9 +124,9 @@ done:
         owner[0] = 0; owner[1] = 0; owner[2] = 0; owner[3] = 0;
         g_terrain.destroy_water((int)owner);   // 0x4814a0
         float x = camera_x * 0.5f;
-        view_x = x;
+        view_pos.x = x;
         float y = camera_y * 0.5f;
-        view_y = y;
+        view_pos.y = y;
         if (owner[1] != 0)
             free((void*)owner[1]);
     }
@@ -134,7 +134,7 @@ done:
     world->step(dt);
     path(dt);
     if (page_changed(back_btn) || (g_keyboard.down[15] != 0 && g_keyboard.prev[15] == 0))
-        g_main_menu.set_state(option);
+        g_main_menu.set_state(w18);
 }
 
 // @ 0x4f34c0

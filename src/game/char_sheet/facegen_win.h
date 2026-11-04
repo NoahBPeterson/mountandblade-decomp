@@ -58,43 +58,8 @@ struct v4raw {
     float x, y, z, w;
 };
 
-// the terrain-generator window ("this"); TerrainPage (terrain_page.h) names the same offsets
 struct DropDown;
-struct facegen_win : head_rec {
-    char pad04[0x2c - 4];
-    int terrain_on, terraingen_on, water_on, river_on;      // +0x2c..+0x38 (cleared)
-    float camera_x, camera_y, camera_z;                     // +0x3c / +0x40 (150) / +0x44 (100)
-    float fog;                                              // +0x48 (0.5)
-    float water_height;                                     // +0x4c (0.8)
-    int water_level;                                        // +0x50 (30)
-    int layer_bits[3];                                      // +0x54 (rand() % 0x1b5781)
-    int terrain_type;                                       // +0x60 (3)
-    int map_size;                                           // +0x64 (0)
-    NodeA* board;                                            // +0x68 the window (0x190, vptr 0x592848)
-    MapWidget* view;                                        // +0x6c the 3D preview (0x358)
-    rgl::frustum cam;                                       // +0x70 (0x120 bytes; its frame's origin row is +0x168)
-    v4raw view_pos;                                         // +0x190 eye position
-    float yaw, pitch, zoom;                                 // +0x1a0 / +0x1a4 / +0x1a8
-    CellGrid* scene;                                        // +0x1ac the preview scene (0x344, ctor 0x478ad0)
-    text_box* panel;                                         // +0x1b0 the board panel (0x188, vptr 0x597050)
-    MissionUi* key;                                          // +0x1b4 the hex code text
-    MissionUi* copy;                                         // +0x1b8
-    MissionUi* paste;                                        // +0x1bc
-    MissionUi* sliders[6];                                   // +0x1c0 size x / size y / hill height / valley / ruggedness / vegetation
-    char pad1d8[0x200 - 0x1d8];
-    MissionUi* seeds[3];                                     // +0x200 the seed edit boxes (0x188, vptr 0x592208)
-    MissionUi* randomize[3];                                 // +0x20c the "randomize" buttons
-    MissionUi* w218;                                         // +0x218 shade occluded
-    MissionUi* w21c;                                         // +0x21c disable grass
-    MissionUi* w220;                                         // +0x220 place river
-    MissionUi* w224;                                         // +0x224 deep water
-    DropDown* region_type;                                   // +0x228
-    DropDown* region_detail;                                 // +0x22c
-    MissionUi* generate;                                     // +0x230
-    MissionUi* close;                                        // +0x234
-
-    void init();                                            // 0x4f1460
-};
+typedef TerrainPage facegen_win;     // the window object is the terrain page (terrain_page.h): init is its slot 2
 
 // ---- helpers / globals ------------------------------------------------------------------------------
 extern char g_gui[];                                        // 0x5d7080 (the GUI root object)

@@ -145,14 +145,6 @@ struct C4c3050 : head_rec {
 #include "../include/frustum.h"
 void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 
-// A record's slot 1 is `release` (0x4cb680), which frees the pointer at +0x178. The original allocates these records
-// with the plain operator new 0x53545e and its constructors write only the head and the member objects; ours left the
-// rest as raw heap and release freed garbage (runtime workaround, not in the original). Zero everything above the
-// base's head (vptr, w04, w08, name) when the record is allocated, before any constructor runs: zeroing it in the
-// constructor body wiped the members it had just built (Rec23c's frustum at +0x70, Rec118's tstring at +0x84).
-#define MB_ZERO_TAIL(T) static void* operator new(size_t n) \
-    { char* p = (char*)::operator new(n); if (p && n > 0x2c) memset(p + 0x2c, 0, n - 0x2c); return p; }
-
 struct MissionItem;
 struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
     ContainerBase* overlay;   // +0x2c the window
@@ -312,18 +304,6 @@ struct Rec1bc : head_rec { MB_ZERO_TAIL(Rec1bc)   // vtable 0x595900 (the key-bi
     char f1b4;                                  // +0x1b4 modified
     char pad1b5[3];
     int f1b8;                                   // +0x1b8 the row being assigned, -1 for none
-    virtual void reset_screen();
-    virtual void init_screen();
-    virtual void frame_update(float);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
-};
-struct Rec23c : head_rec { MB_ZERO_TAIL(Rec23c)   // vtable 0x595c44
-    char pad2c[0x44];
-    rgl::frustum fr;    // +0x70
-    char pad190[0x1ac - 0x190];
-    res_rec* p;         // +0x1ac the grid slot 1 releases (rgl/mesh2/mesh_2.cpp 0x4cb650)
-    char tail[0x23c - 0x1b0];
     virtual void reset_screen();
     virtual void init_screen();
     virtual void frame_update(float);

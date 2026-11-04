@@ -7630,7 +7630,7 @@
   },
   "004f2d70": {
    "verdict": "DIFF",
-   "symbol": "?update@TerrainPage@@QAEXM@Z",
+   "symbol": "?frame_update@TerrainPage@@UAEXM@Z",
    "insns": 507,
    "ours": 510,
    "unverified": 0,

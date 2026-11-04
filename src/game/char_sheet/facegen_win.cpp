@@ -40,7 +40,7 @@ static __forceinline mesh* board_mesh(const char* name)
 }
 
 // @ 0x4f1460
-void facegen_win::init()
+void TerrainPage::init_screen()
 {
     int i;
     for (i = 0; i < 3; i++)
@@ -90,24 +90,24 @@ void facegen_win::init()
     push_child(board->kids, panel);
 
     board_text(panel, "Shade occluded:", 0.24f, 0.62f);
-    w218 = board_button(panel, "disabled", 0.36f, 0.62f, 0.03f, "medium_button_down", "medium_button", 3.7f);
-    *(int*)((char*)w218 + 0x184) = 1;
+    water_box = board_button(panel, "disabled", 0.36f, 0.62f, 0.03f, "medium_button_down", "medium_button", 3.7f);
+    *(int*)((char*)water_box + 0x184) = 1;
     board_text(panel, "Place river:", 0.01f, 0.62f);
-    w220 = board_button(panel, "place river", 0.1f, 0.62f, 0.03f, "medium_button_down", "medium_button", 3.7f);
-    *(int*)((char*)w220 + 0x184) = 1;
+    terrain_box = board_button(panel, "place river", 0.1f, 0.62f, 0.03f, "medium_button_down", "medium_button", 3.7f);
+    *(int*)((char*)terrain_box + 0x184) = 1;
     board_text(panel, "Disable grass:", 0.24f, 0.58f);
-    w21c = board_button(panel, "3dgrass", 0.36f, 0.58f, 0.03f, "medium_button_down", "medium_button", 3.7f);
-    *(int*)((char*)w21c + 0x184) = 1;
+    river_box = board_button(panel, "3dgrass", 0.36f, 0.58f, 0.03f, "medium_button_down", "medium_button", 3.7f);
+    *(int*)((char*)river_box + 0x184) = 1;
     board_text(panel, "Deep water:", 0.01f, 0.58f);
-    w224 = board_button(panel, "deep water", 0.1f, 0.58f, 0.03f, "medium_button_down", "medium_button", 3.7f);
-    *(int*)((char*)w224 + 0x184) = 1;
+    terraingen_box = board_button(panel, "deep water", 0.1f, 0.58f, 0.03f, "medium_button_down", "medium_button", 3.7f);
+    *(int*)((char*)terraingen_box + 0x184) = 1;
 
     // the three seeds: a caption, a "randomize" button and an edit box (UiE, inlined constructor)
     for (i = 0; i < 3; i++) {
         float t = (float)i * 0.04f;
         board_text(panel, i == 0 ? "terrain seed" : i == 1 ? "river seed" : "flora seed", 0.03f, t + 0.07f);
         float y = t + 0.06f;
-        randomize[i] = board_button(panel, "randomize", 0.38f, y, 0.03f, "medium_button_down", "medium_button", 3.7f);
+        layer_boxes[i] = board_button(panel, "randomize", 0.38f, y, 0.03f, "medium_button_down", "medium_button", 3.7f);
 
         char* e = (char*)new_widget_base(0x188);    // 0x48ae20
         if (e) {
@@ -118,16 +118,16 @@ void facegen_win::init()
             *(e + 0x181) = 0;
             *(int*)(e + 0x184) = 0x1c;
         }
-        seeds[i] = (MissionUi*)e;
-        { tvec2 p = { 0.1f, y }; seeds[i]->move_a((const float*)&p); }
-        { tvec2 s = { 0.225f, 0.025f }; seeds[i]->set_xy((const float*)&s); }
+        bit_fields[i] = (MissionUi*)e;
+        { tvec2 p = { 0.1f, y }; bit_fields[i]->move_a((const float*)&p); }
+        { tvec2 s = { 0.225f, 0.025f }; bit_fields[i]->set_xy((const float*)&s); }
         mesh* up = board_mesh("party_button");
         mesh* down = board_mesh("party_button_down");
         up->scale(0.41666669f);                     // 0x44f0c0
         down->scale(0.41666669f);
-        seeds[i]->set_track(2, up);                 // +0x80
-        seeds[i]->set_track(1, down);
-        panel->add_child(seeds[i]);                 // +0xc8
+        bit_fields[i]->set_track(2, up);                 // +0x80
+        bit_fields[i]->set_track(1, down);
+        panel->add_child(bit_fields[i]);                 // +0xc8
     }
 
     // the six parameter sliders, each with its caption
@@ -147,36 +147,36 @@ void facegen_win::init()
         sliders[i] = (MissionUi*)make_slider((MissionUi*)panel, 0.23f, t + 0.19f, 1.0f);
     }
 
-    generate = board_button(panel, "Generate Terrain", 0.07f, 0.02f, 0.035f, "medium_button_down", "medium_button", 3.7f);
-    close = board_button(panel, "Close", 0.33f, 0.01f, 0.028f, "medium_button_down", "medium_button", 3.7f);
+    regen_btn = board_button(panel, "Generate Terrain", 0.07f, 0.02f, 0.035f, "medium_button_down", "medium_button", 3.7f);
+    back_btn = board_button(panel, "Close", 0.33f, 0.01f, 0.028f, "medium_button_down", "medium_button", 3.7f);
     {
         tstring k("key");
-        key = (MissionUi*)make_hint((ContainerBase*)panel, k, 0.0f, 0.72f, 0.5f, 0.02f);   // 0x4dada0
+        hexbox = (MissionUi*)make_hint((ContainerBase*)panel, k, 0.0f, 0.72f, 0.5f, 0.02f);   // 0x4dada0
     }
-    { tvec2 s = { 0.02f, 0.02f }; key->set_size((const float*)&s); }
-    copy = board_button(panel, "Copy", 0.1f, 0.685f, 0.025f, "short_button_down", "short_button", 3.0f);
-    paste = board_button(panel, "Paste", 0.25f, 0.685f, 0.025f, "short_button_down", "short_button", 3.0f);
+    { tvec2 s = { 0.02f, 0.02f }; hexbox->set_size((const float*)&s); }
+    copy_btn = board_button(panel, "Copy", 0.1f, 0.685f, 0.025f, "short_button_down", "short_button", 3.0f);
+    paste_btn = board_button(panel, "Paste", 0.25f, 0.685f, 0.025f, "short_button_down", "short_button", 3.0f);
     board_text(panel, "Terrain:", 0.03f, 0.49f);
     board_text(panel, "Polygon Size:", 0.03f, 0.54f);
 
     {
         tstring n("region type");
-        region_type = make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
+        type_box = (MissionUi*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
     }
     for (const int* r = g_region_types; r < g_region_types + 8; r++) {
         char buf[64];
         region_name(*r, buf);
         tstring s(buf);
-        region_type->append(&s);                    // +0xc8: the drop-down's add-item
+        ((DropDown*)type_box)->append(&s);                    // +0xc8: the drop-down's add-item
     }
     {
         tstring n("region detail");
-        region_detail = make_dropdown((MissionUi*)panel, &n, 0.23f, 0.54f);
+        size_box = (MissionUi*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.54f);
     }
-    { tstring s("2 meters"); region_detail->append(&s); }
-    { tstring s("3 meters"); region_detail->append(&s); }
-    { tstring s("4 meters"); region_detail->append(&s); }
-    { tstring s("5 meters"); region_detail->append(&s); }
+    { tstring s("2 meters"); ((DropDown*)size_box)->append(&s); }
+    { tstring s("3 meters"); ((DropDown*)size_box)->append(&s); }
+    { tstring s("4 meters"); ((DropDown*)size_box)->append(&s); }
+    { tstring s("5 meters"); ((DropDown*)size_box)->append(&s); }
 
     // the 3D preview: the view widget, its scene and camera
     view = new MapWidget;                           // 0x4ed630
@@ -187,15 +187,15 @@ void facegen_win::init()
         int cells2 = 6;
         int flag = 0;
         void* p = operator new(0x344);
-        scene = p ? new (p) CellGrid((const float*)&lo, (const float*)&hi, &cells, &cells2, &flag) : 0;   // 0x478ad0
+        world = p ? (World*)new (p) CellGrid((const float*)&lo, (const float*)&hi, &cells, &cells2, &flag) : 0;   // 0x478ad0
     }
     {
         float start = 500.0f;
         float end = 1000.0f;
         unsigned color = 0xff405060;
-        ((MissionUi*)(void*)scene)->set_fog(&start, &end, (const float*)&color);   // 0x488cd0
+        ((MissionUi*)(void*)world)->set_fog(&start, &end, (const float*)&color);   // 0x488cd0
     }
-    view->world = scene;
+    view->world = world;
     { tvec2 p = { 0.0f, 0.0f }; view->move_a((float*)(const float*)&p); }
     { tvec2 s = { 0.5f, 0.75f }; view->set_xy((const float*)&s); }
     view->scene3d.flags |= 0x100;
@@ -204,7 +204,7 @@ void facegen_win::init()
     view->scene3d.fr = cam;
     push_child(board->kids, view);
 
-    EntityV* ent = (EntityV*)((rgl::world*)(void*)scene)->create_entity(9);   // 0x428440
+    EntityV* ent = (EntityV*)((rgl::world*)(void*)world)->create_entity(9);   // 0x428440
     {
         tstring n("prtcl_drop");
         mesh* m = res_manager().get_object((const rgl::string*)&n)->clone();
@@ -217,20 +217,20 @@ void facegen_win::init()
         o.x = 0.0f;
         o.y = 0.0f;
         o.z = 10.0f;
-        *(v4raw*)((char*)this + 0x168) = o;         // the camera frame's origin row (cam +0xf8)
+        cam.m.o = *(rgl::vector4*)&o;         // the camera frame's origin row (cam +0xf8)
     }
     {
         v4raw o;
         o.x = 0.0f;
         o.y = 0.0f;
         o.z = 0.0f;
-        view_pos = o;
+        view_pos = *(rgl::vector4*)&o;
     }
     yaw = 0.0f;
     pitch = 1.0f;
     zoom = 250.0f;
-    ((TerrainPage*)(void*)this)->refresh_hex();     // 0x4f2960
-    ((TerrainPage*)(void*)this)->update();          // 0x4f2730
+    refresh_hex();     // 0x4f2960
+    update();          // 0x4f2730
 }
 // @ 0x4f25a0
 #pragma intrinsic(tan)

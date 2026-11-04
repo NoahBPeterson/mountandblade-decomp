@@ -84,7 +84,7 @@ handler; the parameter is the frame time, a handler that forwards its address, a
 Done (slot 1 + 2 + 3 unless noted): C4c2fb0, C4c3050, C4c31c0, C4c3290, Rec38 (debrief report / leave), Rec44 (mission window),
 Rec34 (debrief), Rec118 (meeting window / mission start menu), Rec3c (done window), Rec454 (quest log), Rec48 (import /
 export window), Rec58 (game log), Rec1208 (conversation), Rec1bc (key bindings), Recd8 (options), Recf0 (video options),
-ItemRec (main menu), ItemRec2 (escape menu; slot 2 EscapeMenu::create, slot 3 buttons), C4c3160 slot 3, Rec23c / Rec428 slot 1.
+ItemRec (main menu), ItemRec2 (escape menu; slot 2 EscapeMenu::create, slot 3 buttons), C4c3160 slot 3, TerrainPage / Rec428 slot 1.
 
 Lessons that cost time:
 
@@ -100,7 +100,7 @@ Lessons that cost time:
 
 ## What is left in the V1 scope (and why)
 
-* Rec23c (terrain page) slot 2 `facegen_win::init` 0x4f1460, slot 3 `TerrainPage::update` 0x4f2d70; Rec428 (face generator)
+* TerrainPage (Rec23c, now one class with facegen_win) slot 2 `init_screen` 0x4f1460, slot 3 `frame_update` 0x4f2d70 (no longer stubs); Rec428 (face generator)
   slots 2 / 3 `FaceGen::init` 0x4f49d0 and `CamView::update_model` 0x4ea8e0: two views with different names and widget types
   of one record (char_sheet/facegen_init.h and cam_view.h); merge their fields into Rec428, as was done for Rec58 / Rec454.
 * Recacc (party / inventory window): done. `PartyWindow` (party/party_window_class.h) is the one class, a head_rec: slot 1

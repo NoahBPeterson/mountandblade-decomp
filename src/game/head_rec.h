@@ -33,6 +33,9 @@
 #ifndef MB_GAME_HEAD_REC_H
 #define MB_GAME_HEAD_REC_H
 #include "./tstring.h"
+#include <stddef.h>
+#include <string.h>
+void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 
 // 0x4c6e00 (src/rgl/mesh2/gui_edit.cpp): resets the current module screen. Most derived records put it in slot 1.
 struct w_stream;                // rgl/mesh2/head_rec.h: the serializer slots 5 / 6 take
@@ -61,5 +64,13 @@ struct head_rec {
     struct no_w04 {};
     head_rec(no_w04) : name() { w08 = 0x63; }               // for derived ctors that store w04 themselves, later
 };
+
+// A record's slot 1 is `release` (0x4cb680), which frees the pointer at +0x178. The original allocates these records
+// with the plain operator new 0x53545e and its constructors write only the head and the member objects; ours left the
+// rest as raw heap and release freed garbage (runtime workaround, not in the original). Zero everything above the
+// base's head (vptr, w04, w08, name) when the record is allocated, before any constructor runs: zeroing it in the
+// constructor body wiped the members it had just built (TerrainPage's frustum at +0x70, Rec118's tstring at +0x84).
+#define MB_ZERO_TAIL(T) static void* operator new(size_t n) \
+    { char* p = (char*)::operator new(n); if (p && n > 0x2c) memset(p + 0x2c, 0, n - 0x2c); return p; }
 
 #endif // MB_GAME_HEAD_REC_H
