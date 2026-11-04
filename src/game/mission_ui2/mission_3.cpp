@@ -28,7 +28,7 @@
 #include "../slot_array.h"
 #include "../str_table.h"
 #include "../../include/i64_vec.h"
-#include "../../include/rec1c8.h"
+#include "../placed_obj.h"
 #include "../../include/item_kind.h"
 #include "../../include/troop.h"
 #include "../../include/party.h"
@@ -400,7 +400,7 @@ int __fastcall trigger_item(int key)
     if (key == -0x28 || key == -0x2b || key == -0x2a) {
         int i = ((SiteKeys*)g_game)->cur;
         if (i >= 0) {
-            Rec1c8* m = &g_mission->props._Myfirst[i];
+            PlacedObj* m = &g_mission->props._Myfirst[i];
             PropEnt::Vec* v = &((PropEnt*)m->ent)->lods;
             if (v->first != 0) {
                 unsigned n = v->last - v->first;
@@ -420,7 +420,7 @@ int __fastcall trigger_mesh_obj(int key)
     if (key == -0x28) {
         int i = ((SiteKeys*)g_game)->cur;
         if (i >= 0) {
-            Rec1c8* m = &g_mission->props._Myfirst[i];
+            PlacedObj* m = &g_mission->props._Myfirst[i];
             PropEnt::Vec* v = &((PropEnt*)m->ent)->meshes;
             if (v->first != 0) {
                 unsigned n = v->last - v->first;

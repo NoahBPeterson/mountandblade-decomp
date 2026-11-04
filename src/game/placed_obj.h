@@ -1,4 +1,4 @@
-// placed_obj.h: the 0x1c8-byte placed scene object (vtable 0x590b84, "PlacedObj"; the slices also called it Rec1c8 /
+// placed_obj.h: the 0x1c8-byte placed scene object (vtable 0x590b84, "PlacedObj"; the slices also called it PlacedObj /
 // E1c8) and its polymorphic base IfaceB (vtable 0x5908f8) with the Quad tick record. One definition for
 // src/game/agent (reset 0x4352f0, init_placed 0x435860) and src/game/agent2 (constructor 0x437830, copy constructor
 // 0x437bb0, assignment 0x437d60; deleting destructor 0x437870 is compiler generated).
@@ -12,6 +12,8 @@
 
 #include "../include/iface.h"        // IfaceB, Quad, g_tick_lo / g_tick_hi
 
+struct EntFlag;
+struct stream_base;
 struct PlacedObj : IfaceB {
     int m10;                            // +0x10 (0x4352f0)
     int m14;                            // +0x14 (0x4352f0)
@@ -30,14 +32,22 @@ struct PlacedObj : IfaceB {
     tstring name;                       // +0x190 (0x435860)
     int value;                          // +0x1a0 (0x435860)
     int m1a4, m1a8, m1ac;               // +0x1a4 (0x4352f0)
-    int m1b0, m1b4, m1b8;               // +0x1b0 (0x4352f0)
+    int m1b0;                           // +0x1b0 (0x4352f0)
+    EntFlag* ent;                       // +0x1b4 the prop's scene entity (0x4352f0 clears it; 0x472050 shows / hides it, src/game/prop_ent.h)
+    int m1b8;                           // +0x1b8 (0x4352f0; agent_logic's second scene entity)
     int m1bc, m1c0, m1c4;               // +0x1bc (m1c0 is the prop's hit points as a float: hp())
-    PlacedObj();                        // 0x437830
+#ifndef PLACEDOBJ_CTOR_OUT_OF_LINE
+    PlacedObj() { reset(); }            // 0x437830, inline: the original expands it into most callers (Mission update 0x52f250 ...)
+#else
+    PlacedObj();                        // 0x437830, out of line (agent2/agent_stats.cpp defines it): the TUs that define PLACEDOBJ_CTOR_OUT_OF_LINE
+#endif                                  // before this header call it, as the original's init_scene 0x5144d0 and fn_529d80 0x529d80 do
     PlacedObj(const PlacedObj& o);      // 0x437bb0
     PlacedObj& operator=(const PlacedObj& o);   // 0x437d60
     // implicit virtual destructor: deleting destructor 0x437870
     float& hp() { return *(float*)&m1c0; }   // +0x1c0 as a float: the prop's hit points (0x45a170; update_1c0 0x461200)
     void reset();                       // 0x4352f0 (src/game/agent/agent.cpp)
+    void read(stream_base* s, int version);     // 0x4631c0 (src/game/ui/troop_inv.cpp)
+    float& f1bc() { return *(float*)&m1bc; }    // +0x1bc as a float (read 0x4631c0: the prop kind's value)
     void update_1c0();                  // 0x461200 (agent4/agent_think.cpp spawn_prop; ICF-folded with Agent::init_max_hp)
 };
 

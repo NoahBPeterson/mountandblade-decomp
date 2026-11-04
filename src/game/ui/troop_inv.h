@@ -22,22 +22,8 @@ int find_in_table78(const tstring* name);   // 0x4352a0 (cdecl)
 
 stream_base& r_rotation(stream_base& s, rgl::matrix* m);    // 0x415e70 (cdecl)
 
-// A placed object (sprite-like) read from a stream. Offsets from the reader 0x4631c0.
-struct Placed {
-    char pad0[0x18];
-    rgl::matrix m18;                        // +0x18 (origin at +0x48)
-    char pad58[0x98 - 0x58];
-    rgl::matrix m98;                        // +0x98 (copy of m18)
-    char padd8[0x158 - 0xd8];
-    float f158, f15c, f160;                 // +0x158
-    char pad164[0x188 - 0x164];
-    int f188, f18c;                         // +0x188 / +0x18c
-    tstring name;                           // +0x190
-    int f1a0, f1a4;                         // +0x1a0 / +0x1a4
-    char pad1a8[0x1bc - 0x1a8];
-    float f1bc;                             // +0x1bc
-    void read(stream_base* s, int version); // 0x4631c0
-};
+// The placed object read from a stream (reader 0x4631c0): PlacedObj of src/game/placed_obj.h
+#include "../placed_obj.h"
 
 #include "../view_state.h"            // ViewState: the 0x5374-byte object (a camera / view-state block; fields reached by offset in 0x463370, 0x463610)
 

@@ -32,7 +32,7 @@ struct shape_base; struct face; struct capsule; struct contact;
 
 // ---- polymorphic records derived from IfaceB (vtable 0x5908f8 = ??_7IfaceB@@6B@) --------------------------------
 #include "../placed_obj.h"             // IfaceB, Quad, PlacedObj (shared with src/game/agent)
-// the 0x1c8-byte placed scene object (vtable 0x590b84; PlacedObj of src/game/agent/agent.h, "Rec1c8" in
+// the 0x1c8-byte placed scene object (vtable 0x590b84; PlacedObj of src/game/agent/agent.h, "PlacedObj" in
 // src/game/agent3, "E1c8" in the std helper rows below). Constructor 0x437830, deleting destructor 0x437870
 // (compiler-generated), copy constructor 0x437bb0, assignment 0x437d60; reset() is 0x4352f0 (src/game/agent).
 

@@ -81,7 +81,7 @@ struct lod_group {
     lod_group();   // 0x41c2a0 (the interior record's constructor: tmesh() is the same code)
 };
 static __forceinline const rgl::string& rs(const tstring& t) { return (const rgl::string&)t; }   // tstring is the 16-byte string the engine's code constructs
-template<> void std::vector<Rec1c8>::resize(size_t);   // 0x477ea0 (terrain_b.cpp)
+template<> void std::vector<PlacedObj>::resize(size_t);   // 0x477ea0 (terrain_b.cpp)
 // vector<int>::_Insert_n (0x410610) and vector<rgl::Obj*>::_Insert_n (0x41f720) are the instances the pointer vectors share (rgl/particles
 // and rgl/scene): declared here, never instantiated; the views reach them through classes that make the protected member public
 namespace std { template<> void vector<int>::_Insert_n(iterator, size_type, const int&); }   // 0x410610

@@ -285,18 +285,18 @@ int Party::first_flagged()
 static inline void r3(stream_base& s, float* p) { s.r_float(&p[0]).r_float(&p[1]).r_float(&p[2]); }
 
 // @ 0x4631c0
-void Placed::read(stream_base* s, int version)
+void PlacedObj::read(stream_base* s, int version)
 {
     int dummy;
-    s->r_int(&f188);
-    s->r_int(&f18c);
+    s->r_int(&kind);
+    s->r_int(&id);
     s->r_int(&dummy);
     rgl::matrix* m = &m18;
     r3(r_rotation(*s, m), &m->o.x);
     m98 = *m;
     s->r_tstr((rgl::string*)&name);
-    f1bc = 100.0f;
-    if (f188 == 0) {
+    f1bc() = 100.0f;
+    if (kind == 0) {
         if (name.len < 4 || name.buf[0] != 's' || name.buf[1] != 'p' || name.buf[2] != 'r' || name.buf[3] != '_') {
             tstring t("spr_");
             t.append(name);
@@ -304,22 +304,22 @@ void Placed::read(stream_base* s, int version)
         }
         int idx = find_in_table78(&name);
         if (idx != -1) {
-            f18c = idx;
+            id = idx;
         } else {
-            if (f18c < 0 || f18c >= g_propkind_count) {
-                f18c = 0;
+            if (id < 0 || id >= g_propkind_count) {
+                id = 0;
                 name = g_propkinds[0].name;
             } else {
-                name = g_propkinds[f18c].name;
+                name = g_propkinds[id].name;
             }
         }
-        f1bc = (float)g_propkinds[f18c].f14;
+        f1bc() = (float)g_propkinds[id].f14;
     }
-    s->r_int(&f1a0);
+    s->r_int(&value);
     if (version >= 2) {
-        s->r_int(&f1a4);
+        s->r_int(&m1a4);
         if (version >= 3)
-            r3(*s, &f158);
+            r3(*s, &v158.x);
     }
 }
 

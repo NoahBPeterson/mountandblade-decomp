@@ -2490,7 +2490,7 @@ static inline res_shape* r78_shape(Rec78* r) { return *(res_shape**)((char*)r + 
 static inline SoundSet& rsnd(Rec78* r) { return *(SoundSet*)((char*)r + 0x6c); }
 static inline SoundSet& isnd(ItemKind* k) { return *(SoundSet*)((char*)k + 0x228); }
 
-#define P_ENT(r) (*(SceneEnt**)&(r)->m1b4)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
+#define P_ENT(r) (*(SceneEnt**)&(r)->ent)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
 #define P_ENT2(r) (*(SceneEnt**)&(r)->m1b8)
 #define ents (*(EntVec*)((char*)this + 0x63c0))         // Mission +0x63c0: the entity list of the props
 // mesh of an item for the prop display class, null for an invalid item index (bounds check inlined)
@@ -3486,8 +3486,8 @@ int Mission::add_placed(const int* kind, const int* id, const int* value, const 
     int prev = -1;
     int idx = (int)props.size();
     {
-        Rec1c8 rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent.cpp): shared rec1c8.h
-        ((std::vector<Rec1c8>&)props).push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
+        PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent.cpp): shared rec1c8.h
+        ((std::vector<PlacedObj>&)props).push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
         int off = idx * 0x1c8;
         ::init_placed((PlacedObj*)((char*)&props[0] + off), kind, id, value, m);
         if (*kind == 7 || *kind == 6)

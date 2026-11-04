@@ -28,7 +28,7 @@ struct level;                                   // agent2/agent_types.h: the sce
 typedef world Level;                              // world.h: the scene as agent sees it (agent.h, script, inventory_panel/map_update.cpp call it Level)
 struct Emit;
 struct Wind;
-struct Rec1c8;
+struct PlacedObj;
 struct PlacedObj;                                  // the 0x1c8-byte prop record (terrain_b/records.h, agent3/agent_combat.h)
 struct MAgent;                                  // terrain_b/agent_rec.h: the agent slot as the pool sees it
 struct RecJ;
@@ -158,7 +158,7 @@ struct Mission {
     int f6664;                                  // +0x6664
     char pad6668[0x6678 - 0x6668];
     std::vector<Agent*> dead;                   // +0x6678 (first at +0x667c; dead / culled list: 0x442dc0, terrain_b reset 0x479160)
-    std::vector<Rec1c8> props;                  // +0x6688 (first at +0x668c) (0x472050)
+    std::vector<PlacedObj> props;                  // +0x6688 (first at +0x668c) (0x472050)
     NavMesh nav;                                // +0x6698 navigation mesh (agent2: 0x43cb30, 0x43dd70, 0x43df60)
     char pad66d0[0x672c - 0x6698 - sizeof(NavMesh)];
     int f672c;                                  // +0x672c
@@ -237,7 +237,7 @@ struct Mission {
     int riding_order(int i); // 0x48ab30
     int weapon_usage_order(int i); // 0x48ab90
     int hold_fire_order(int i); // 0x48abf0
-    // ---- src/game/mission_ui2 (the scene props at +0x668c, 0x1c8-byte Rec1c8 records) ----
+    // ---- src/game/mission_ui2 (the scene props at +0x668c, 0x1c8-byte PlacedObj records) ----
     void retag_props(int from, int to);         // 0x48ed60 (ret 8: every intact prop named like tag `from` is renamed to tag `to`)
     int count_props(int tag);                   // 0x48ee20 (ret 4: intact props of tag `tag`)
     int find_prop(int tag, int nth);            // 0x48ee90 (ret 8: index of the nth intact prop of tag `tag`, -1 when none)

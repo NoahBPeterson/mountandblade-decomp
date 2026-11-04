@@ -1,5 +1,5 @@
 // records.h: the small record types of the std::vector / std::stable_sort instantiations of terrain_b.cpp, the
-// name + five-array record (ArrSet), and the 0x1c8-byte polymorphic record (Rec1c8) that the same vectors hold.
+// name + five-array record (ArrSet), and the 0x1c8-byte polymorphic record (PlacedObj) that the same vectors hold.
 // Only sizes, offsets and the constructors the instantiations expose are verified (cited per type); the object
 // that owns each vector is elsewhere. Names provisional (the slices' names are kept where symbols/slices maps them).
 #ifndef TERRAIN_B_RECORDS_H
@@ -101,7 +101,7 @@ typedef void (__cdecl *destroy_arrsets_t)(ArrSet*, ArrSet*, alloc_arrset&, ptr_t
 void __cdecl uninit_fill_n_arrset(ArrSet* first, unsigned n, const ArrSet& val, alloc_arrset& al, ptr_tag tag);   // 0x4727e0
 
 // ---- the 0x1c8-byte polymorphic record (vtable 0x590b84; copy ctor 0x437bb0, operator= 0x437d60, reset 0x4352f0) -----
-// The slices called it Rec1c8, MAgent, PropRec and PlacedObj (symbols/slices maps ??_7Agent@@, ??_7Rec1c8@@, ??_7PlacedObj@@).
-#include "../../include/rec1c8.h"      // Rec1c8, IfaceB, Quad (shared)
+// The slices called it PlacedObj, MAgent, PropRec and PlacedObj (symbols/slices maps ??_7Agent@@, ??_7PlacedObj@@, ??_7PlacedObj@@).
+#include "../placed_obj.h"      // PlacedObj, IfaceB, Quad (shared)
 
 #endif // TERRAIN_B_RECORDS_H

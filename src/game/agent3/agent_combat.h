@@ -38,9 +38,9 @@ struct level {
 // ---- element types of the container instantiations -----------------------------------------------------------
 #include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 struct E48 { int v[12]; };                           // 0x30 (vector<E48>)
-// 0x1c8-byte polymorphic record (vtable 0x590b84, copy ctor 0x437bb0, deleting dtor 0x437870): the shared Rec1c8
-// (src/include/rec1c8.h; src/game/agent/agent.h calls it PlacedObj).
-#include "../../include/rec1c8.h"
+// 0x1c8-byte polymorphic record (vtable 0x590b84, copy ctor 0x437bb0, deleting dtor 0x437870): the shared PlacedObj
+// (src/game/placed_obj.h; src/game/agent/agent.h calls it PlacedObj).
+#include "../placed_obj.h"
 
 // ---- id pool: records handed out from pages of 16 (the agent table's allocator) ----------------------------------
 // the 0xb0-byte pool record is RecJ (src/include/recj.h; IfaceB: f4 in-use flag, f8 id, fc serial number; ctor 0x4377d0)

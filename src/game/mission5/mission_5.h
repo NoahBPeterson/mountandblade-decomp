@@ -1260,12 +1260,12 @@ struct IfaceB_s29840 {
     virtual void slot2() {}
 };
 // sig s1: the 0x1c8 record is the canonical PlacedObj (ctor 0x437830, copy 0x437bb0, operator= 0x437d60 in agent_stats.cpp)
-typedef PlacedObj Rec1c8_s29840;
+typedef PlacedObj PlacedObj;
 
 // ---- scene record list (the std::vector is at scene+0x104) ---------------------------------------------
 struct Scene_s29840 {
     char pad0[0x104];
-    std::vector<Rec1c8_s29840> recs;                                 // +0x104
+    std::vector<PlacedObj> recs;                                 // +0x104
     char pad114[0x494 - 0x114];
 };
 
@@ -1278,7 +1278,7 @@ struct Mission_s29840 {
     char pad60[0x5df4 - 0x60];
     int f5df4;                                                // +0x5df4 (scene index)
     char pad5df8[0x6688 - 0x5df8];
-    std::vector<Rec1c8_s29840> records;                              // +0x6688
+    std::vector<PlacedObj> records;                              // +0x6688
 
     __declspec(noinline) void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
     void fn_529b70(Agent_s29840* a);                                 // 0x529b70 (thiscall, ret 4)
@@ -1448,15 +1448,6 @@ struct GameData_s29ec0 {
 
 
 // ---- mission (0x5e292c) ------------------------------------------------------------------------------
-struct SceneProp_s29ec0 {                                              // 0x1c8, array at mission+0x668c
-    char pad0[0x188];
-    int destroyed;                                              // +0x188 (0 intact, 5 map object, 6 equipment)
-    int kind;                                                   // +0x18c scene prop kind
-    char pad190[0x1a0 - 0x190];
-    int inv;                                                    // +0x1a0 inventory / chest index
-    int obj;                                                    // +0x1a4 map object / equipment index
-    char pad1a8[0x1c8 - 0x1a8];
-};
 struct PropKind_s29ec0 {                                               // 0x78, array at 0x5e29dc
     char pad0[0x10];
     int flags;                                                  // +0x10 (low byte: 5 chest, 10 exit)
@@ -1481,7 +1472,7 @@ struct Mission_s29ec0 {
     float f6544;                                                // +0x6544 mission border max x
     float f6548;                                                // +0x6548 mission border max y
     char pad654c[0x668c - 0x654c];
-    SceneProp_s29ec0* props;                                           // +0x668c
+    PlacedObj* props;                                           // +0x668c
 };
 
 

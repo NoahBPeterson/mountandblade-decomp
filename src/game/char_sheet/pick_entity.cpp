@@ -2,7 +2,7 @@
 #include "./pick_entity.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../../include/rec1c8.h"      // Mission::props is a vector<Rec1c8>: complete here so the harness types the scene vector
+#include "../placed_obj.h"      // Mission::props is a vector<PlacedObj>: complete here so the harness types the scene vector
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
