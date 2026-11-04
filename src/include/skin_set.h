@@ -1,4 +1,4 @@
-// skin_set.h: the skin record table at *0x8ed4f7c (g_anim.skins; g_anim.skins_end 0x8ed4f80), 0x1f8-byte records. ONE definition for
+// skin_set.h: the skin record table at *0x8ed4f7c (g_anim.skin_vec.first; g_anim.skin_vec.last 0x8ed4f80), 0x1f8-byte records. ONE definition for
 // src/rgl/mesh2 (gui_edit.cpp: the language export walks elems, translated 0x4c6080) and src/game/char_sheet (facegen_init /
 // facegen_misc / cam_view: deform-key count, first face, divisor, regen 0x4735e0).
 // Offsets: +0x3c count (0x4f4a48, 0x4eb3d0), +0x40 elems (0x4c8ca0 export), +0x88 first_face (0x4f5448: the imul by 0x1f8 and
@@ -7,6 +7,20 @@
 #define MB_SKIN_SET_H
 #include "../game/tstring.h"
 
+struct EChar;
+struct SkinSet;
+// the skin vector of the Animator (g_anim +0x18): a VC7.1 std::vector<SkinSet> (allocator word, first, last, end of storage), its
+// destructor the atexit function 0x548510 reaches. The mesh code reads the same first pointer as an array of EChar.
+struct SkinVec {
+    int alloc;                                      // +0 the allocator word
+    union {
+        SkinSet* first;                             // +4 the face-gen / language-export view: 0x1f8-byte sets
+        EChar* chars;                               // +4 the mesh_slot view
+    };
+    SkinSet* last;                                  // +8
+    SkinSet* end;                                   // +0xc end of storage
+    ~SkinVec();                                     // 0x4eb810 (game/char_sheet/facegen_misc.cpp): destroys the sets, frees the storage
+};
 struct SkinElem {
     tstring name;                                   // +0x00
     tstring key;                                    // +0x10

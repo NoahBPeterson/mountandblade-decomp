@@ -1945,14 +1945,14 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\skins.csv", "wt+");              // 0x595f2c
-        for (unsigned i = 0; g_anim.skins && i < (unsigned)(g_anim.skins_end - g_anim.skins); i++) {
-            for (int j = 0; j < g_anim.skins[i].n_elems; j++) {
+        for (unsigned i = 0; g_anim.skin_vec.first && i < (unsigned)(g_anim.skin_vec.last - g_anim.skin_vec.first); i++) {
+            for (int j = 0; j < g_anim.skin_vec.first[i].n_elems; j++) {
                 if (translated) {
-                    tstring v = ((PartyTemplate*)&g_anim.skins[i].elems[j])->translated();
-                    write_row(f, g_anim.skins[i].elems[j].key, v);
+                    tstring v = ((PartyTemplate*)&g_anim.skin_vec.first[i].elems[j])->translated();
+                    write_row(f, g_anim.skin_vec.first[i].elems[j].key, v);
                 } else {
-                    write_row(f, g_anim.skins[i].elems[j].key,
-                              *find_or(g_anim.skins[i].elems[j].key, g_anim.skins[i].elems[j].name));
+                    write_row(f, g_anim.skin_vec.first[i].elems[j].key,
+                              *find_or(g_anim.skin_vec.first[i].elems[j].key, g_anim.skin_vec.first[i].elems[j].name));
                 }
             }
         }

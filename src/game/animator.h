@@ -8,10 +8,9 @@
 #ifndef MB_GAME_ANIMATOR_H
 #define MB_GAME_ANIMATOR_H
 #include <stddef.h>
+#include "../include/skin_set.h"   // SkinVec (the skin vector), SkinSet, EChar
 
 namespace rgl { struct lod_mesh; }
-struct EChar;
-struct SkinSet;
 
 struct PackedState { unsigned __int64 a, b, c, d; };    // the 32 bytes at troop record +0x3c0 (pack_state 0x4eb660)
 
@@ -22,13 +21,7 @@ struct Animator {
     int variant;                 // 0x0c
     int f10;                     // 0x10 (facegen: the same value as variant)
     int material;                // 0x14
-    int skins_alloc;             // 0x18 the allocator dword of the skin vector (0x8ed4f78: its atexit destructor 0x548510 runs BigArray::destroy 0x4eb810 on &skins_alloc)
-    union {
-        EChar* chars;            // 0x1c the vector's first element (mesh_slot view; 0x8ed4f7c)
-        SkinSet* skins;          // 0x1c the same pointer, the face-gen / language-export view: 0x1f8-byte sets
-    };
-    SkinSet* skins_end;          // 0x20 the vector's last (0x8ed4f80)
-    char pad24[4];               // 0x24 its end of storage
+    SkinVec skin_vec;            // 0x18 the skin vector (0x8ed4f78; first at 0x8ed4f7c, last 0x8ed4f80): the compiler registers its destructor 0x4eb810 with atexit (0x548510)
     int char_count;              // 0x28 the number of skin sets (0x8ed4f88)
     float weights[63];           // 0x2c (one weight per bone / deform key, up to +0x128)
     float scale;                 // 0x128

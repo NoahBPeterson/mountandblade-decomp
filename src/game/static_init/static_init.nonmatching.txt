@@ -1,1 +1,0 @@
-00547b50  8  input-state initializer (ticks, key table, axes): complete; the original keeps the zero in eax across the rep stosd and stores it to the axes after, ours reloads | equiv: UNSUPPORTED (resolution audit: the stores to 0xa178f4/0xa17904 are displacements off the 0xa178f0/0xa17900 labels, which the audit reads as disagreeing)

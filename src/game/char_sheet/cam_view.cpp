@@ -61,7 +61,7 @@ check_follow:
 // @ 0x4ea8e0
 void FaceGen::frame_update(float dt)
 {
-    int n = *(int*)((char*)g_anim.skins + skin * 0x1f8 + 0x3c) - 1;
+    int n = *(int*)((char*)g_anim.skin_vec.first + skin * 0x1f8 + 0x3c) - 1;
 
     if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x12] && !g_keyboard.prev[0x12]) {
         if (*(int*)((char*)g_game + 0x1a090) == 0) {
@@ -113,7 +113,7 @@ void FaceGen::frame_update(float dt)
         ContainerBase* row = deform_rows[i];
         if (row->clear_mask(0x10000)) {
             g_dummy_mat_arr[i] = row->get168();
-            SkinSet* set = (SkinSet*)((char*)g_anim.skins + g_anim.cur * 0x1f8);
+            SkinSet* set = (SkinSet*)((char*)g_anim.skin_vec.first + g_anim.cur * 0x1f8);
             ((FaceRace*)set)->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 deform_rows[j]->set168(g_dummy_mat_arr[j]);
@@ -168,7 +168,7 @@ void FaceGen::frame_update(float dt)
         float* p = g_dummy_mat_arr;
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
-        SkinSet* set = (SkinSet*)((char*)g_anim.skins + g_anim.cur * 0x1f8);
+        SkinSet* set = (SkinSet*)((char*)g_anim.skin_vec.first + g_anim.cur * 0x1f8);
         ((FaceRace*)set)->relax(-1, g_dummy_mat_arr);
         flag = 1;
         for (int i = 0; i < n; i++)

@@ -365,9 +365,8 @@ void vec_named::_Insert_n(named_vec* where, unsigned count, const named_vec& val
 struct CfgRec { char b[0x1f8]; };
 template<> void std::vector<CfgRec>::_Insert_n(std::vector<CfgRec>::iterator, size_t, const CfgRec&);   // 0x4fe520
 struct vec_cfg_pub : std::vector<CfgRec> { using std::vector<CfgRec>::_Insert_n; };
-struct SkinSet;
+#include "../../include/skin_set.h"   // SkinVec (~SkinVec 0x4eb810)
 struct BigArray {
-    void destroy();                                                     // 0x4eb810
     void erase(SkinSet** out, SkinSet* first, SkinSet* last);           // 0x4eb860
 };
 struct FaceRace {
@@ -405,7 +404,7 @@ struct mesh_scene {
 // @ 0x50d520 mesh_scene::read
 void mesh_scene::read(AccessStream* s)
 {
-    ((BigArray*)&models)->destroy();   // 0x4eb810
+    ((SkinVec*)&models)->~SkinVec();   // 0x4eb810 (the vector's destructor: the same skin vector as g_anim's)
     s->read_int(&count);
     unsigned n = count;
     models.resize(n);

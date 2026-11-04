@@ -136,16 +136,16 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
 // @ 0x47fb10
 void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
 {
-    weights[chars[cur].bone_count - 1] = 1.0f;
+    weights[skin_vec.chars[cur].bone_count - 1] = 1.0f;
 
     int v = variant;
     if (flag != 0) {
-        int* vals = ((Ramp*)chars[cur].mats)[material].vals;
-        unsigned n = vals ? ((Ramp*)chars[cur].mats)[material].vals_end - vals : 0;
+        int* vals = ((Ramp*)skin_vec.chars[cur].mats)[material].vals;
+        unsigned n = vals ? ((Ramp*)skin_vec.chars[cur].mats)[material].vals_end - vals : 0;
         v = vals[(unsigned)variant % n];
     }
 
-    ((EChar_c*)&chars[cur])->collect(a, b, c, weights, item, set, material, v, scale, time);
+    ((EChar_c*)&skin_vec.chars[cur])->collect(a, b, c, weights, item, set, material, v, scale, time);
 }
 
 // The binary reader on the stack: its constructor and destructor are expanded inline in the original (stream_inline.h);

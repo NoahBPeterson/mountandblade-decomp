@@ -23,7 +23,7 @@ void FaceGen::init_screen()
     skin = 0;
     if (w14 >= 0)
         skin = *(int*)(g_game->chars_c + w14 * 0x508 + 0x30) & 0xf;
-    int keys = g_anim.skins[skin].n_elems - 1;
+    int keys = g_anim.skin_vec.first[skin].n_elems - 1;
     g_gui.reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
     NodeA* o = new NodeA(0);
@@ -155,7 +155,7 @@ void FaceGen::init_screen()
         tstring* kv = g_strtable.lookup(v);
         t_hair_color = (MissionUi*)new_key_label(buttons, kv, &t);
     }
-    if (g_anim.skins[skin].first_face == 0) {
+    if (g_anim.skin_vec.first[skin].first_face == 0) {
         b_next_beard->hide();
         b_prev_beard->hide();
         t_change_beard->hide();

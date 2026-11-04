@@ -181,7 +181,7 @@ struct SpawnSetG {                      // the 0x58-byte per-set record at g_mis
     char pad54[4];
 };
 typedef char SpawnSetG_size_check[sizeof(SpawnSetG) == 0x58 ? 1 : -1];
-struct ItemKindT {                      // the item-kind table entry the spawner reads (((ItemKindT*)g_anim.chars) at 0x8ed4f7c, 0x1f8 bytes)
+struct ItemKindT {                      // the item-kind table entry the spawner reads (((ItemKindT*)g_anim.skin_vec.chars) at 0x8ed4f7c, 0x1f8 bytes)
     char pad0[0x1e8];
     int f1e8;                           // +0x1e8
     float f1ec;                         // +0x1ec
@@ -293,12 +293,12 @@ NOINL void MissionG::spawn(AgentS* a)
         unsigned skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         int obj = 0;
         if (skin_i < (unsigned)g_anim.char_count)
-            obj = ((ItemKindT*)g_anim.chars)[skin_i].f1e8;
+            obj = ((ItemKindT*)g_anim.skin_vec.chars)[skin_i].f1e8;
         e->skel->init((FxRes*)obj);
         skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         float h;
         if (skin_i < (unsigned)g_anim.char_count)
-            h = ((ItemKindT*)g_anim.chars)[skin_i].f1ec;
+            h = ((ItemKindT*)g_anim.skin_vec.chars)[skin_i].f1ec;
         else
             h = 1.0f;
         a->scale = h;

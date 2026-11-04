@@ -1675,7 +1675,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     } else {
         unsigned t = (unsigned)::g_game->chars[party].flags & 0xf;
         def->init((FxRes*)(t < (unsigned)g_anim.char_count
-                              ? *(void**)((char*)((int*)g_anim.chars) + 0x1e8 + t * 0x1f8) : 0));
+                              ? *(void**)((char*)((int*)g_anim.skin_vec.chars) + 0x1e8 + t * 0x1f8) : 0));
         int level = ::g_game->chars[party].level48;
         for (int i = 0; i < 10; i++)
             *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,

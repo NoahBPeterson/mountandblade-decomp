@@ -654,7 +654,7 @@ void Animator::reset(void* a, void* b)
 
     variant = -1;
 
-    int base = *(int*)(cur * 0x1f8 + 0x1c0 + (int)chars);
+    int base = *(int*)(cur * 0x1f8 + 0x1c0 + (int)skin_vec.chars);
     int* q = (int*)(base + 0x1c + v * 0xb0);
     int cnt = q[1];
     int m = (q[2] - cnt) >> 2;
