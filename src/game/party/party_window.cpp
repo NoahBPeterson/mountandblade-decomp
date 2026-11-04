@@ -423,9 +423,9 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
             t = w14;
         }
         volatile float sc = 0.088f;     // (volatile: make_mesh ignores its scale argument, which would otherwise drop this store)
-        ResMesh* m = make_mesh(item, (float*)&sc, t);
+        rgl::mesh* m = make_mesh(item, (float*)&sc, t);
         rgl::vector4 off(0.044f, 0.044f, 0.0f);
-        ((rgl::mesh*)m)->translate(&off);        // ResMesh is the view of rgl::mesh (rgl/mesh.h)
+        m->translate(&off);
         w->set_track(2, m);
         w->b11c[2] = 1;
         if (flag != 0 && idx < 9)
@@ -443,12 +443,12 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
 }
 
 // @ 0x502b80
-MB_NOINLINE ResMesh* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
+MB_NOINLINE rgl::mesh* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
 {
-    ResMesh* m = 0;
+    rgl::mesh* m = 0;
     if (item->item >= 0) {
         float s = 0.088f;
-        m = (ResMesh*)make_item_mesh(item, &s);
+        m = make_item_mesh(item, &s);
         g_game_G->f1a1f4 = -1;
         g_game_G->f1a1f8 = t;
         g_game_G->f1a204 = -10000;

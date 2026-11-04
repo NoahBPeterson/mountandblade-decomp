@@ -2,7 +2,7 @@
 // vtable 0x595764, size 0xacc). It is a head_rec: the screen record whose slot 2 builds the window (0x500ad0), whose slot 3
 // is the per-frame / event handler (the trade engine, inventory_panel/inventory_panel.cpp 0x50fe20) and whose slot 1 resets the
 // gui. The members are the record's own; the methods of party_create.cpp / party_window.cpp work on them and the ones of
-// inventory_panel.cpp see the same object through their own header (inventory_panel.h: InventoryPanel).
+// inventory_panel.cpp (0x50fe20..0x513710, the trade engine) are built with the GameData header instead.
 // This header only declares the class: the code that needs the Game object includes party_window.h.
 //
 // Layout (all offsets from `this`; each cites the function that proves it):
@@ -18,13 +18,22 @@
 #include "../head_rec.h"
 #include "../tstring.h"
 #include "../item_ref.h"
+#include "../ui/ui_widgets.h"     // XyzButton (the strip icon)
+#include "../ui/container.h"      // ContainerBase (the page panel, the window)
 
 struct MissionUi;
-struct ContainerBase;
-struct PartyPanel;
-struct StripIcon;
 struct Camera;
-struct ResMesh;
+namespace rgl { struct mesh; }
+
+// ---- the widgets the window's member functions build (party/party_window.cpp) ------------------------------------
+struct PartyPanel : ContainerBase {         // vtable 0x599bf8 (the equipment menu / inventory page block)
+    virtual char key(unsigned mask);        // +0x8c 0x5021b0
+};
+struct PartySlot : MissionUi {              // vtable 0x599d28, size 0x178 (the item slot)
+    virtual char key(unsigned mask);        // +0x8c 0x5022c0
+};
+struct StripIcon : XyzButton {              // the strip icons are XyzButtons (vtable 0x591ee8, size 0x188)
+};
 
 struct PartyWindow : head_rec {   // vtable 0x595764
     ContainerBase* page_widget[2];          // +0x2c  0x500ad0 (the page widget build_page(i) returns)
@@ -46,16 +55,16 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     MissionUi* armor_labels[2][4];          // +0xa64 0x5025a0 (head, body, legs, encumbrance)
     StripIcon* icon_a84;                    // +0xa84 0x5029f0
     StripIcon* icon_a88;                    // +0xa88 0x5029f0
-    int f_a8c;                              // +0xa8c 0x500ad0 (cleared; the pending trade value, 0x513360)
+    int pending;                            // +0xa8c the pending trade value (0x500ad0 clears it; 0x50fe20, 0x513360)
     MissionUi* leave;                       // +0xa90 0x500ad0 (the leave button)
-    int f_a94;                              // +0xa94 (0x50fe20)
-    int f_a98;                              // +0xa98 0x500ad0 (cleared; holding an item / trade locked, 0x512c80)
+    int f_a94;                              // +0xa94
+    int locked;                             // +0xa98 holding an item / trade locked (0x500ad0 clears it; 0x512c80)
     ItemRef held;                           // +0xa9c the held item (0x512c80)
     char held_flag;                         // +0xaa4 its saved flag
     char padaa5[3];
     int held_value;                         // +0xaa8 its saved value
     int held_page;                          // +0xaac the page it came from
-    int f_ab0, f_ab4, f_ab8;                // +0xab0 0x500ad0 (-1)
+    int q_pay, q_dump, q_food;              // +0xab0 the pay / dump / food question results (0x500ad0: -1; 0x50fe20)
     char f_abc;                             // +0xabc 0x500ad0 (the other party's hero is on the list)
     char padabd[3];
     int spec_ac0, spec_ac4;                 // +0xac0 0x5029f0
@@ -64,7 +73,7 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     PartyWindow() { w04 = 0; }
     virtual void slot_empty_1();            // slot 1  0x4c6e00: g_gui.reset()                 (options_panel/rec_slots_tr.cpp)
     virtual void slot_empty_2();            // slot 2  0x500ad0: builds the window             (agent5/party_create.cpp)
-    virtual void scale_3(float);            // slot 3  0x50fe20: the trade engine's per-frame step (options_panel/rec_slots_tr.cpp forwards it)
+    virtual void scale_3(float unused);     // slot 3  0x50fe20 (ret 4): the trade engine's per-frame step (inventory_panel/inventory_panel.cpp)
     virtual char pure_7() { return 1; }     // slot 7: 0x48b170
 
     void money_label(int which);                                // 0x501940 (ret 4: src/game/agent5/party_create.cpp)
@@ -76,8 +85,28 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     void refresh_armor(MissionUi** labels, int troop);          // 0x502620 (ret 8)
     void refresh_page(int page);                                // 0x502920 (ret 4)
     void place_slot(MissionUi* w, ItemRef* item, int idx, int* state, int page, char flag);   // 0x5029f0 (ret 0x18)
-    ResMesh* make_mesh(ItemRef* item, float* scale, int troop); // 0x502b80 (ret 0xc)
+    rgl::mesh* make_mesh(ItemRef* item, float* scale, int troop); // 0x502b80 (ret 0xc)
     void refresh_stash(int row);                                // 0x502c30
+
+    // 0x50fe20..0x513710 (inventory_panel/inventory_panel.cpp, built with the GameData header instead of party/game.h)
+    void set_slot_flag(int page, int idx, unsigned mask, char on);  // 0x510850 (ret 0x10)
+    void refresh_lists(int unused);                                 // 0x5108d0 (ret 4)
+    __declspec(noinline) void place_slot(MissionUi* w, ItemRef* slot, int page, int index);   // 0x510f50 (ret 0x10)
+    void place_slot_mesh(ItemRef* slot, float* pt, int page, int index);   // 0x510fa0 (ret 0x10)
+    __declspec(noinline) char test_slot_flag(int page, int slot, unsigned mask);         // 0x5126e0 (ret 0xc)
+    void compute(int* item, int mode);                              // 0x512960 (ret 8; the price stays in eax)
+    __forceinline int compute_price(int* item, int mode)   // 0x512960 (the same function; the price stays in eax: compute is called through its address read as an int-returning member)
+    {
+        union { void (PartyWindow::*v)(int*, int); int (PartyWindow::*i)(int*, int); } c;
+        c.v = &PartyWindow::compute;
+        return (this->*c.i)(item, mode);
+    }
+    void transfer_slot(ItemRef* item, int page, int slot);          // 0x512c80 (ret 0xc)
+    char can_transfer(ItemRef* item, int mode, int flag);           // 0x513230 (ret 0xc)
+    void set_slot_value(int page, int slot, int value);             // 0x5132e0 (ret 0xc)
+    __declspec(noinline) void or_slot_flag(int page, int slot);                          // 0x513320 (ret 8)
+    void add_cost(int delta);                                       // 0x513360 (ret 4)
+    bool try_place(ItemRef* item, int page, int slot);              // 0x5134c0 (ret 0xc)
 };
 
 typedef char party_window_size_check[(sizeof(PartyWindow) == 0xacc) ? 1 : -1];

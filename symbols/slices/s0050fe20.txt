@@ -1,13 +1,13 @@
 # names used while matching slice s0050fe20 (inventory panel per-frame trade step)
-0050fe20  InventoryPanel::refresh_transaction
+0050fe20  PartyWindow::scale_3
 005e2930  g_game (cur_troop +0x8c, hero_troop +0x90, troops +0x13a00, string_value 0x48e9e0)
 0049b720  World::add_value
 0049b820  World::sub_value
-00501940  InventoryPanel::money_label
-005024e0  InventoryPanel::add_strip_icon
-005025a0  InventoryPanel::init_window
-005108d0  InventoryPanel::refresh_lists
-00510850  InventoryPanel::slot_flags
+00501940  PartyWindow::money_label
+005024e0  PartyWindow::add_strip_icon
+005025a0  PartyWindow::init_window
+005108d0  PartyWindow::refresh_lists
+00510850  PartyWindow::slot_flags
 005e29d0  g_items (0x238-byte records, type at +0x1c8, name tstring at +0x20)
 005e2a18  g_strtable (0x43a1e0 lookup, 0x4c6010 find)
 005d7080  g_msglog (0x4f1390 flush)

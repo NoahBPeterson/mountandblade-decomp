@@ -8,7 +8,10 @@
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
 #include "../game_globals.h"   // g_trial_mode (canonical)
-#include "./inventory_panel.h"
+#include "../party/party_window_class.h"      // PartyWindow: the one class of this object
+#include "../party2/camera_class.h"            // Camera: the scrolling item list (its scroll bar is follow[1])
+#include "../ui/container.h"
+#include "../ui/ui_widgets.h"                  // UiD (the scroll bar's class)
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
@@ -31,7 +34,7 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-DragMesh* g_drag;                                // 0x5d75e4
+rgl::mesh* g_drag;                                // 0x5d75e4
 
 #define SOUNDMGR ((SoundMgr*)&orig::g_sound_mgr)                  // 0x5aa128
 
@@ -43,6 +46,7 @@ extern MsgLog g_msglog;                                 // 0x5d7080
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 #include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp (canonical, defined in triggers/trigger_vec.cpp)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 int round_float(float* v);                              // 0x432540
 void item_events(int item_no, int* a, int* b, int* c);  // 0x4ef730
 void weapon_class_caption(int cls, char* out);          // 0x4f04f0
@@ -70,24 +74,23 @@ struct SkillNames {                                     // a skill record seen f
 #include "../slot.h"
 #include "../skill_cap.h"
 #include "../ui_globals.h"      // UI / core globals
-#include "../../rgl/text_stream.h"
 
 // @ 0x50fe20
-void InventoryPanel::refresh_transaction(int unused)
+void PartyWindow::scale_3(float unused)
 {
     g_msglog.flush();
 
     int page = 0;
-    if (g_gui_root.mouse[0] < 0.5f && view_count == 2)
+    if (g_gui_root.mouse[0] < 0.5f && pages == 2)
         page = 1;
 
     if (g_mission_clock != 0) {
-        InvBar* bar = view[page]->bar;
-        int stop = bar->stop;
-        bar->set_value((g_mission_clock / bar->stops[stop]) * bar->scale * 0.0005f +
-                       (bar->stops[stop] - bar->scale) *
-                       ((bar->thumb - bar->track_start) / (bar->track_end - bar->track_start)));
-        PSO(bar)->set_key_flags(0x10000);
+        UiD* bar = (UiD*)view[page]->follow[1];
+        int stop = bar->f178;
+        bar->set_value((g_mission_clock / bar->e[stop]) * bar->f17c * 0.0005f +
+                       (bar->e[stop] - bar->f17c) *
+                       ((bar->v168 - bar->f16c) / (bar->f170 - bar->f16c)));
+        bar->set_key_flags(0x10000);
     }
 
     if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x2c] != 0 && g_keyboard.prev[0x2d] == 0 &&
@@ -96,27 +99,27 @@ void InventoryPanel::refresh_transaction(int unused)
         money_label(0);
     }
 
-    if (icon_a84 != 0 && PSO(icon_a84)->clicked_on(0x10000)) {
+    if (icon_a84 != 0 && icon_a84->clear_mask(0x10000)) {
         spec_ac0 = (spec_ac0 + 1) % 4;
-        add_strip_icon((char*)this + 0xa84, tstring("inv_i_character"), g_game->player, spec_ac0);
+        add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game->player, spec_ac0);
     }
-    if (icon_a88 != 0 && PSO(icon_a88)->clicked_on(0x10000)) {
+    if (icon_a88 != 0 && icon_a88->clear_mask(0x10000)) {
         spec_ac4 = (spec_ac4 + 1) % 4;
-        add_strip_icon((char*)this + 0xa88, tstring("inv_i_character2"), troop, spec_ac4);
+        add_strip_icon(&icon_a88, tstring("inv_i_character2"), w14, spec_ac4);
     }
 
     refresh_lists(0);
-    if (mode == 4)
+    if (w04 == 4)
         refresh_lists(1);
 
     // the question boxes live on the dialog record g_main_menu.rec points at (0x51036e: ecx = [0xa73980]); the screen
     // state is then left through g_main_menu itself (0x510395: ecx = 0xa73980)
     char eaten = 0;
-    if (PSO(leave)->clicked_on(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0 && pending == 0)) {
+    if (leave->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0 && pending == 0)) {
         if (locked == 0) {
             int worn = 0;
-            if (mode == 0 && troop == GD_I(0x90)) {
-                ItemRef* it = &TROOP(troop)->inv[0];
+            if (w04 == 0 && w14 == GD_I(0x90)) {
+                ItemRef* it = &TROOP(w14)->inv[0];
                 for (int i = 0; i < 9; i++) {
                     if (it[i].item >= 0)
                         worn++;
@@ -126,7 +129,7 @@ void InventoryPanel::refresh_transaction(int unused)
             if (pending < 0) {
                 if (-pending <= TROOP(g_game->player)->f3b4) {
                     g_game->remove_gold(-pending, g_game->player);
-                    TROOP(troop)->f3b4 -= pending;
+                    TROOP(w14)->f3b4 -= pending;
                     eaten = 1;
                 } else {
                     char buf[0x200];
@@ -140,12 +143,12 @@ void InventoryPanel::refresh_transaction(int unused)
                     }                                   // the value, then the key (0x5101a4, 0x5101ad)
                     tstring msg(buf);
                     float out[2];
-                    PSO(total_cost)->set_text(out, &msg);
+                    total_cost->set_text(out, &msg);
                 }
             } else if (pending > 0) {
-                if (pending <= TROOP(troop)->f3b4) {
+                if (pending <= TROOP(w14)->f3b4) {
                     g_game->add_gold(pending, g_game->player);
-                    TROOP(troop)->f3b4 -= pending;
+                    TROOP(w14)->f3b4 -= pending;
                     eaten = 1;
                 } else {
                     q_pay = -1;
@@ -153,10 +156,10 @@ void InventoryPanel::refresh_transaction(int unused)
                     {
                         tstring key("ui_merchant_cant_afford_value");
                         tstring_buffer vb1;
-                        const char* gold = GV->string_value(vb1.get(), TROOP(troop)->f3b4)->c_str();
+                        const char* gold = GV->string_value(vb1.get(), TROOP(w14)->f3b4)->c_str();
                         tstring_buffer vb2;
                         const char* price = GV->string_value(vb2.get(), pending)->c_str();
-                        Troop* rec = TROOP(troop);
+                        Troop* rec = TROOP(w14);
                         tstring* nm = g_strtable.find(&rec->key);
                         if (nm == 0)
                             nm = &rec->name;            // 0x510604: the record itself, not its key
@@ -234,75 +237,75 @@ void InventoryPanel::refresh_transaction(int unused)
     if (!eaten && q_pay != 0 && q_dump != 0)
         return;
     if (q_pay == 0) {
-        g_game->add_gold(TROOP(troop)->f3b4, g_game->player);
-        TROOP(troop)->f3b4 = 0;
+        g_game->add_gold(TROOP(w14)->f3b4, g_game->player);
+        TROOP(w14)->f3b4 = 0;
     }
 
-    if (troop >= 3) {
-        Troop* rec = TROOP(troop);
+    if (w14 >= 3) {
+        Troop* rec = TROOP(w14);
         unsigned f = rec->flags32;
         if ((f & 0x10) == 0 || (f & 0x1000) == 0) {
-            if (mode == 4)
+            if (w04 == 4)
                 ((TroopRec*)rec)->auto_equip(-1, 0x100e, 0, 0);
         }
     }
 
-    if (next_menu != 0x64)
-        g_main_menu.set_state(next_menu);
+    if (w18 != 0x64)
+        g_main_menu.set_state(w18);
     else
         g_map_flags.commit(&eaten);
 }
 
 
 // @ 0x510850
-void InventoryPanel::set_slot_flag(int page, int idx, unsigned mask, char on)
+void PartyWindow::set_slot_flag(int page, int idx, unsigned mask, char on)
 {
     if (page < 2) {
         if (on)
-            ((int*)((char*)this + 0x364))[page * 0x60 + idx] |= mask;
+            flags[page][idx] |= mask;
         else
-            ((int*)((char*)this + 0x364))[page * 0x60 + idx] &= ~mask;
+            flags[page][idx] &= ~mask;
     } else {
         if (on)
-            ((int*)((char*)this + 0x970))[page * 10 + idx] |= mask;
+            row_state[page - 2][idx] |= mask;
         else
-            ((int*)((char*)this + 0x970))[page * 10 + idx] &= ~mask;
+            row_state[page - 2][idx] &= ~mask;
     }
 }
 
 // @ 0x5108d0
-void InventoryPanel::refresh_lists(int unused)
+void PartyWindow::refresh_lists(int unused)
 {
-    for (int page = 0; page < view_count; page++) {
+    for (int page = 0; page < pages; page++) {
         int troop = g_game->player;
         if (page != 0)
-            troop = this->troop;
+            troop = w14;
         int count;
-        if (troop == GD_I(0x90) && mode == 0)
+        if (troop == GD_I(0x90) && w04 == 0)
             count = 9;
         else
             count = TROOP(troop)->inv_count();
         if (count > 0) {
-            MissionUi** w = (MissionUi**)((char*)this + 0x64 + page * 0x180);
+            MissionUi** w = widgets[page];
             for (int i = 0; i < count; i++)
-                if (PSO(w[i])->clicked_on(4))
+                if (w[i]->clear_mask(4))
                     g_gui_root.set_o568(0, true);
             for (int i = 0; i < count; i++)
-                if (PSO(w[i])->clicked_on(2) && locked == 0)
+                if (w[i]->clear_mask(2) && locked == 0)
                     place_slot(w[i], &EQUIP(troop, i), page, i);
         }
     }
 
-    for (int page = 0; page < view_count2; page++) {
+    for (int page = 0; page < rows; page++) {
         int troop = g_game->player;
         if (page != 0)
-            troop = this->troop;
-        MissionUi** w = (MissionUi**)((char*)this + 0x970 + page * 0x28);
+            troop = w14;
+        MissionUi** w = row_slot[page];
         for (int i = 0; i < 10; i++)
-            if (w[i] != 0 && PSO(w[i])->clicked_on(4) && locked == 0)
+            if (w[i] != 0 && w[i]->clear_mask(4) && locked == 0)
                 g_gui_root.set_o568(0, true);
         for (int i = 0; i < 10; i++)
-            if (w[i] != 0 && PSO(w[i])->clicked_on(2) && locked == 0)
+            if (w[i] != 0 && w[i]->clear_mask(2) && locked == 0)
                 place_slot(w[i], &GRID(troop, i), 2, i);
     }
 
@@ -321,56 +324,56 @@ void InventoryPanel::refresh_lists(int unused)
         g_sel_ent = 0;
     }
 
-    for (int page = 0; page < view_count; page++) {
-        if (!PSO(btn[page])->clicked_on(0x10000))
+    for (int page = 0; page < pages; page++) {
+        if (!page_widget[page]->clear_mask(0x10000))
             continue;
         int troop = g_game->player;
         if (page != 0)
-            troop = this->troop;
+            troop = w14;
         int count;
-        if (troop == GD_I(0x90) && mode == 0)
+        if (troop == GD_I(0x90) && w04 == 0)
             count = 9;
         else
             count = TROOP(troop)->inv_count();
         if (count <= 0)
             continue;
-        MissionUi** w = (MissionUi**)((char*)this + 0x64 + page * 0x180);
+        MissionUi** w = widgets[page];
         for (int i = 0; i < count; i++) {
-            if (!PSO(w[i])->clicked_on(0x10000))
+            if (!w[i]->clear_mask(0x10000))
                 continue;
             int idx = i;
             if (locked != 0 && page != 0) {
                 int r = TROOP(troop)->find_free();
-                if (r >= 0 && !(troop == GD_I(0x90) && mode == 0 && r >= 9))
+                if (r >= 0 && !(troop == GD_I(0x90) && w04 == 0 && r >= 9))
                     idx = r;
             }
             transfer_slot(&EQUIP(troop, idx), page, idx);
             place_slot(w[i], &EQUIP(troop, i), page, i);
             if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
-                locked != 0 && view_count == 2) {
-                int other = (page == 0) ? this->troop : g_game->player;
+                locked != 0 && pages == 2) {
+                int other = (page == 0) ? w14 : g_game->player;
                 int r = TROOP(other)->find_free();
-                if (r >= 0 && !(other == GD_I(0x90) && mode == 0 && r >= 9))
+                if (r >= 0 && !(other == GD_I(0x90) && w04 == 0 && r >= 9))
                     transfer_slot(&EQUIP(other, r), 1 - page, r);
             }
         }
     }
 
-    for (int page = 0; page < view_count2; page++) {
-        if (!PSO(btn2[page])->clicked_on(0x10000))
+    for (int page = 0; page < rows; page++) {
+        if (!panels[page]->clear_mask(0x10000))
             continue;
-        MissionUi** w = (MissionUi**)((char*)this + 0x970 + page * 0x28);
+        MissionUi** w = row_slot[page];
         for (int i = 0; i < 10; i++) {
             if (w[i] == 0)
                 continue;
-            if (!PSO(w[i])->clicked_on(0x10000))
+            if (!w[i]->clear_mask(0x10000))
                 continue;
-            int troop = (page != 0) ? this->troop : g_game->player;
+            int troop = (page != 0) ? w14 : g_game->player;
             ItemRef* slot = &GRID(troop, i);
             transfer_slot(slot, page + 2, i);
             place_slot(w[i], slot, 2, i);
             if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
-                locked != 0 && view_count2 == 2 && page == 1) {
+                locked != 0 && rows == 2 && page == 1) {
                 int t = g_game->player;
                 int count = TROOP(t)->inv_count();
                 int idx = -1;
@@ -392,7 +395,7 @@ void InventoryPanel::refresh_lists(int unused)
 }
 
 // @ 0x510f50
-void InventoryPanel::place_slot(MissionUi* w, ItemRef* slot, int page, int index)
+void PartyWindow::place_slot(MissionUi* w, ItemRef* slot, int page, int index)
 {
     float pt[2];
     if (slot->item >= 0) {
@@ -405,7 +408,7 @@ void InventoryPanel::place_slot(MissionUi* w, ItemRef* slot, int page, int index
 
 // @ 0x510fa0
 // ------------------------------------------------------------------------------------------------------------
-void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
+void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
 {
     int zero = 0;
     ItemKind* it = &g_items[slot->item];
@@ -462,7 +465,7 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
     if (page == 1) {
         if (buyable) {
             sprintf(buf, "%s", g_strtable.lookup(tstring("ui_reclaim_price"))->c_str(),
-                     values[1][index]);
+                     aux[1][index]);
         } else {
             const tstring* v = g_strtable.lookup(tstring("ui_buying_price"));
             int p = compute_price((int*)slot, 1);
@@ -472,9 +475,9 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
         if (buyable) {
             int p;
             if (page < 2)
-                p = values[page][index];
+                p = aux[page][index];
             else
-                p = vstash[page - 2][index];
+                p = row_value[page - 2][index];
             const tstring* v = g_strtable.lookup(tstring("ui_return_price"));
             sprintf(buf, v->c_str(), p);
         } else {
@@ -760,11 +763,11 @@ char GameDataV::emit_event4(int id, int a, int b, int c)
 }
 
 // @ 0x5126e0
-char InventoryPanel::test_slot_flag(int page_idx, int slot, unsigned mask)
+char PartyWindow::test_slot_flag(int page_idx, int slot, unsigned mask)
 {
     if (page_idx < 2)
         return (flags[page_idx][slot] & mask) != 0;
-    return (((unsigned*)&grid[0][0])[page_idx * 10 + slot] & mask) != 0;
+    return (row_state[page_idx - 2][slot] & mask) != 0;
 }
 
 // @ 0x512730
@@ -813,20 +816,20 @@ void attribute_name(int type, char* out)
 }
 
 // @ 0x512960
-void InventoryPanel::compute(int* item, int price_mode)
+void PartyWindow::compute(int* item, int price_mode)
 {
     char trade = 0;
     char grid = 0;
-    if (fabc != 0 || mode == 1 || mode == 3 || mode == 4)
+    if (f_abc != 0 || w04 == 1 || w04 == 3 || w04 == 4)
         trade = 1;
-    if (mode == 2)
+    if (w04 == 2)
         grid = 1;
     char plain;
     if (price_mode != 1)
         plain = 1;
     else
         plain = 0;
-    GV->price((ItemRef*)item, troop, plain, trade, grid);
+    GV->price((ItemRef*)item, w14, plain, trade, grid);
 }
 
 // @ 0x5129d0
@@ -895,7 +898,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
 
 
 // @ 0x512c80
-void InventoryPanel::transfer_slot(ItemRef* item, int page, int slot)
+void PartyWindow::transfer_slot(ItemRef* item, int page, int slot)
 {
     ItemRef tmp;
     char fl;
@@ -913,7 +916,7 @@ void InventoryPanel::transfer_slot(ItemRef* item, int page, int slot)
     if (item->item == -1)
         goto L_303e;
 L_cd4:
-    if (mode == 2 && try_place(item, page, slot))
+    if (w04 == 2 && try_place(item, page, slot))
         goto L_303e;
     if (locked == 0)
         goto L_de3;
@@ -940,7 +943,7 @@ L_de3:
     g_gui_root.play_sound();
     tmp = *item;
     fl = test_slot_flag(page, slot, 1);
-    sv = (page < 2) ? (int)values[page][slot] : (int)vstash[page - 2][slot];
+    sv = (page < 2) ? (int)aux[page][slot] : (int)row_value[page - 2][slot];
     item->item = -1;
     or_slot_flag(page, slot);
     if (locked == 0)
@@ -949,7 +952,7 @@ L_de3:
     hv = held_value;
     set_slot_flag(page, slot, 1, hf);
     set_slot_value(page, slot, hf ? hv : 0x1e61);
-    if (mode == 2) {
+    if (w04 == 2) {
         // trade mode: price the move, unless it stays on the same side
         if (page == 1) {
             if (held_page == 1)
@@ -979,8 +982,7 @@ L_f54:
     *item = held;
     or_slot_flag(page, slot);
     held.item = -1;
-    if (g_drag != 0)
-        g_drag->release(1);
+    delete g_drag;
     g_drag = 0;
     locked = 0;
 L_f9d:
@@ -995,15 +997,14 @@ L_f9d:
         int idx = g_game->player;
         if (page == 1 || page == 3) {
             if (fl == 0)
-                idx = troop;
+                idx = w14;
         } else {
             if (fl != 0)
-                idx = troop;
+                idx = w14;
         }
-        DragMesh* m = make_mesh(&held, &hv, idx);
+        rgl::mesh* m = make_mesh(&held, (float*)&hv, idx);
         m->scale(2.0f);
-        if (g_drag != 0)
-            g_drag->release(1);
+        delete g_drag;
         g_drag = m;
         locked = 1;
     }
@@ -1045,29 +1046,29 @@ L_304c:
     {
         tstring key("ui_troop_cant_use_item");
         sprintf(buf, g_strtable.lookup(key)->c_str(),
-                ((TroopRec*)((char*)g_game->chars + troop * 0x508))->display_name()->c_str());
+                ((TroopRec*)((char*)g_game->chars + w14 * 0x508))->display_name()->c_str());
     }
     g_msglog.add(tstring(buf), 0xffff7700);
 }
 
 // ---------------------------------------------------------------------------------------------------------
 // @ 0x513230
-char InventoryPanel::can_transfer(ItemRef* item, int where, int flag)
+char PartyWindow::can_transfer(ItemRef* item, int where, int flag)
 {
     char r = 1;
     if (where == 0)
         return r;
     if (where >= 2) {
-        int idx = (where == 2) ? g_game->player : troop;
+        int idx = (where == 2) ? g_game->player : w14;
         r = ((TroopRec*)((char*)g_game->chars + idx * 0x508))->fits_slot(item, flag);
         if (flag != 9)
             return r;
-        if (mode != 2 && mode != 4)
+        if (w04 != 2 && w04 != 4)
             return r;
     } else {
         if (where != 1)
             return r;
-        if (mode != 3)
+        if (w04 != 3)
             return r;
     }
     if (ITYPE(item->item) == 1)
@@ -1077,28 +1078,28 @@ char InventoryPanel::can_transfer(ItemRef* item, int where, int flag)
 
 // ---------------------------------------------------------------------------------------------------------
 // @ 0x5132e0
-void InventoryPanel::set_slot_value(int page, int slot, int value)
+void PartyWindow::set_slot_value(int page, int slot, int value)
 {
     if (page < 2)
-        values[page][slot] = (unsigned)value;
+        aux[page][slot] = (unsigned)value;
     else
-        vstash[page - 2][slot] = (unsigned)value;
+        row_value[page - 2][slot] = (unsigned)value;
 }
 
 // ---------------------------------------------------------------------------------------------------------
 // @ 0x513320
-void InventoryPanel::or_slot_flag(int page, int slot)
+void PartyWindow::or_slot_flag(int page, int slot)
 {
     if (page < 2)
         flags[page][slot] |= 2;
     else
-        fstash[page - 2][slot] |= 2;
+        row_state[page - 2][slot] |= 2;
 }
 
 // ---------------------------------------------------------------------------------------------------------
 
 // @ 0x513360
-void InventoryPanel::add_cost(int delta)
+void PartyWindow::add_cost(int delta)
 {
     char buf[0x200];
 
@@ -1122,13 +1123,13 @@ void InventoryPanel::add_cost(int delta)
     {
         tstring_buffer out;
         tstring msg(buf);
-        PSO(total_cost)->set_text((float*)out.get(), &msg);
+        total_cost->set_text((float*)out.get(), &msg);
     }
 }
 
 
 // @ 0x5134c0
-bool InventoryPanel::try_place(ItemRef* item, int page, int slot)
+bool PartyWindow::try_place(ItemRef* item, int page, int slot)
 {
     bool found = false;
     int id = item->item;
@@ -1141,10 +1142,10 @@ bool InventoryPanel::try_place(ItemRef* item, int page, int slot)
         return found;
 
     if (page == 1) {
-        int idx = troop;
+        int idx = w14;
         int n;
 
-        if (idx == GD_I(0x90) && mode == 0)
+        if (idx == GD_I(0x90) && w04 == 0)
             n = 9;
         else
             n = g_game->troops[idx].inv_count();
@@ -1157,7 +1158,7 @@ bool InventoryPanel::try_place(ItemRef* item, int page, int slot)
         int idx = g_game->player;
         int n;
 
-        if (idx == GD_I(0x90) && mode == 0)
+        if (idx == GD_I(0x90) && w04 == 0)
             n = 9;
         else
             n = g_game->troops[idx].inv_count();
@@ -1166,7 +1167,7 @@ bool InventoryPanel::try_place(ItemRef* item, int page, int slot)
                 found = true;
         }
         for (int i = 0; i < 10; i++) {
-            if (g_game->troops[idx].equip[i].item == id && (fstash[0][i] & 1))
+            if (g_game->troops[idx].equip[i].item == id && (row_state[0][i] & 1))
                 found = true;
         }
     }

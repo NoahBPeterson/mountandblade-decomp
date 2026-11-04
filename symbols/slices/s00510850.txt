@@ -1,10 +1,10 @@
 # names used while matching slice s00510850 (inventory panel list/grid refresh)
-00510850  InventoryPanel::set_slot_flag   # page/idx/mask/on -> OR or AND-NOT of the state dword
-005108d0  InventoryPanel::refresh         # both equipment pages, the ten-slot grids, the page buttons, gui reset
-00510f50  InventoryPanel::place_slot      # w->x/y + 0.044f, then hand the slot to 0x510fa0
-00510fa0  InventoryPanel::place_slot_mesh # outside the slice (builds the item mesh from the slot id)
-00512c80  InventoryPanel::transfer_slot   # outside the slice, ret 0xc (slot, page, index)
-005025a0  InventoryPanel::init_window     # tail call of refresh
+00510850  PartyWindow::set_slot_flag   # page/idx/mask/on -> OR or AND-NOT of the state dword
+005108d0  PartyWindow::refresh         # both equipment pages, the ten-slot grids, the page buttons, gui reset
+00510f50  PartyWindow::place_slot      # w->x/y + 0.044f, then hand the slot to 0x510fa0
+00510fa0  PartyWindow::place_slot_mesh # outside the slice (builds the item mesh from the slot id)
+00512c80  PartyWindow::transfer_slot   # outside the slice, ret 0xc (slot, page, index)
+005025a0  PartyWindow::init_window     # tail call of refresh
 00462b60  TroopRec::count                 # hero fewer-slot case uses 9 instead
 00463030  TroopRec::find_free             # first equipment slot with id == -1
 0042cdb0  GuiManager::set_o568(GuiObj*, bool)  # called as g_gui->set_o568(0, true)

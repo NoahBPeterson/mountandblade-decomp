@@ -34,15 +34,7 @@ inline ItemSound* item_sound(ItemKind* k) { return (ItemSound*)((char*)k + 0x228
 
 extern int g_equip_page;                    // 0xa75f68 (negative: nothing selected)  0x5024e0
 
-// ---- widgets -------------------------------------------------------------------------------------------
-struct PartyPanel : ContainerBase {         // vtable 0x599bf8 (the equipment menu / inventory page block)
-    virtual char key(unsigned mask);        // +0x8c 0x5021b0
-};
-struct PartySlot : MissionUi {              // vtable 0x599d28, size 0x178 (the item slot)
-    virtual char key(unsigned mask);        // +0x8c 0x5022c0
-};
-struct StripIcon : XyzButton {              // the strip icons are XyzButtons (vtable 0x591ee8, size 0x188)
-};
+// ---- widgets: PartyPanel / PartySlot / StripIcon are declared in party_window_class.h ----
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
 // the widget base's destructor body (0x487c00) and the scalar deleting destructor built on it (0x502300, the shared
 // slot 0 of vtable 0x591c80; mission_ui.h declares that slot as d00(int) without a body)

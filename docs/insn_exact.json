@@ -8068,7 +8068,7 @@
   },
   "00500ad0": {
    "verdict": "DIFF",
-   "symbol": "?create@PartyWindow@@QAEXXZ",
+   "symbol": "?slot_empty_2@PartyWindow@@UAEXXZ",
    "insns": 1027,
    "ours": 902,
    "unverified": 0,
@@ -8088,7 +8088,7 @@
   },
   "00502320": {
    "verdict": "DIFF",
-   "symbol": "?build_page@PartyWindow@@QAEPAXH@Z",
+   "symbol": "?build_page@PartyWindow@@QAEPAUPartyPanel@@H@Z",
    "insns": 124,
    "ours": 124,
    "unverified": 0,
@@ -8098,7 +8098,7 @@
   },
   "00502620": {
    "verdict": "DIFF",
-   "symbol": "?refresh_armor@PartyWindow@@QAEXPAPAXH@Z",
+   "symbol": "?refresh_armor@PartyWindow@@QAEXPAPAUMissionUi@@H@Z",
    "insns": 219,
    "ours": 216,
    "unverified": 0,
@@ -8372,7 +8372,7 @@
   },
   "0050fe20": {
    "verdict": "DIFF",
-   "symbol": "?refresh_transaction@InventoryPanel@@QAEXH@Z",
+   "symbol": "?scale_3@PartyWindow@@UAEXM@Z",
    "insns": 754,
    "ours": 620,
    "unverified": 0,
@@ -8382,7 +8382,7 @@
   },
   "005108d0": {
    "verdict": "DIFF",
-   "symbol": "?refresh_lists@InventoryPanel@@QAEXH@Z",
+   "symbol": "?refresh_lists@PartyWindow@@QAEXH@Z",
    "insns": 479,
    "ours": 469,
    "unverified": 0,
@@ -8392,7 +8392,7 @@
   },
   "00510fa0": {
    "verdict": "DIFF",
-   "symbol": "?place_slot_mesh@InventoryPanel@@QAEXPAUItemRef@@PAMHH@Z",
+   "symbol": "?place_slot_mesh@PartyWindow@@QAEXPAUItemRef@@PAMHH@Z",
    "insns": 1629,
    "ours": 1439,
    "unverified": 0,
@@ -8412,7 +8412,7 @@
   },
   "00512c80": {
    "verdict": "DIFF",
-   "symbol": "?transfer_slot@InventoryPanel@@QAEXPAUItemRef@@HH@Z",
+   "symbol": "?transfer_slot@PartyWindow@@QAEXPAUItemRef@@HH@Z",
    "insns": 410,
    "ours": 403,
    "unverified": 0,
@@ -8422,7 +8422,7 @@
   },
   "00513230": {
    "verdict": "DIFF",
-   "symbol": "?can_transfer@InventoryPanel@@QAEDPAUItemRef@@HH@Z",
+   "symbol": "?can_transfer@PartyWindow@@QAEDPAUItemRef@@HH@Z",
    "insns": 53,
    "ours": 53,
    "unverified": 0,
@@ -8432,7 +8432,7 @@
   },
   "00513360": {
    "verdict": "DIFF",
-   "symbol": "?add_cost@InventoryPanel@@QAEXH@Z",
+   "symbol": "?add_cost@PartyWindow@@QAEXH@Z",
    "insns": 109,
    "ours": 107,
    "unverified": 0,
@@ -8442,7 +8442,7 @@
   },
   "005134c0": {
    "verdict": "DIFF",
-   "symbol": "?try_place@InventoryPanel@@QAE_NPAUItemRef@@HH@Z",
+   "symbol": "?try_place@PartyWindow@@QAE_NPAUItemRef@@HH@Z",
    "insns": 170,
    "ours": 172,
    "unverified": 0,

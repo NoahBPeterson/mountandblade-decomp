@@ -39,7 +39,7 @@ typedef char chk_name[offsetof(PartyWindow, name) == 0x4c ? 1 : -1];
 typedef char chk_hinge[offsetof(PartyWindow, hinge) == 0x54 ? 1 : -1];
 typedef char chk_total[offsetof(PartyWindow, total_cost) == 0xa60 ? 1 : -1];
 typedef char chk_leave[offsetof(PartyWindow, leave) == 0xa90 ? 1 : -1];
-typedef char chk_ab0[offsetof(PartyWindow, f_ab0) == 0xab0 ? 1 : -1];
+typedef char chk_ab0[offsetof(PartyWindow, q_pay) == 0xab0 ? 1 : -1];
 typedef char chk_abc[offsetof(PartyWindow, f_abc) == 0xabc ? 1 : -1];
 typedef char chk_ac0[offsetof(PartyWindow, spec_ac0) == 0xac0 ? 1 : -1];
 typedef char chk_bg[offsetof(PartyWindow, equip_bg) == 0xac8 ? 1 : -1];
@@ -125,12 +125,12 @@ void PartyWindow::slot_empty_2()
             inv[k].item = -1;
     }
 
-    f_a8c = 0;
-    f_a98 = 0;
+    pending = 0;
+    locked = 0;
     g_gui.reset();
-    f_ab0 = -1;
-    f_ab4 = -1;
-    f_ab8 = -1;
+    q_pay = -1;
+    q_dump = -1;
+    q_food = -1;
     icon_a84 = 0;
     icon_a88 = 0;
 
