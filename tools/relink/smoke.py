@@ -107,9 +107,20 @@ WIN_TASK = "mb_smoke"
 
 
 def win_cfg():
-    """(ssh argv, scp argv, user@host) from the environment (see tools/remote/worker.py), or None when not set up."""
+    """(ssh argv, scp argv, user@host) from the environment (see tools/remote/worker.py), else from
+    ~/.config/mb-worker (KEY=VALUE lines, outside the repo; it names the password file, never holds a password),
+    or None when not set up."""
     import shlex
-    e = [os.environ.get(k) for k in ("MB_WORKER_SSH", "MB_WORKER_SCP", "MB_WORKER_HOST")]
+    keys = ("MB_WORKER_SSH", "MB_WORKER_SCP", "MB_WORKER_HOST")
+    conf = {}
+    try:
+        for line in open(os.path.expanduser("~/.config/mb-worker")):
+            k, _, v = line.strip().partition("=")
+            if k in keys:
+                conf[k] = v
+    except OSError:
+        pass
+    e = [os.environ.get(k) or conf.get(k) for k in keys]
     return (shlex.split(e[0]), shlex.split(e[1]), e[2]) if all(e) else None
 
 
@@ -194,7 +205,7 @@ def run_win(a, exe, out, cfg):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--exe", required=True)
-    ap.add_argument("--host", choices=("mac", "win", "auto"), default="mac")
+    ap.add_argument("--host", choices=("mac", "win", "auto"), default="auto")
     ap.add_argument("--out")
     ap.add_argument("--ref", help="reference menu (default work/smoke/ref_menu.png, ref_menu_win.png for --host win)")
     ap.add_argument("--save-ref", action="store_true", help="store this run's menu as the reference (a known-good build)")
