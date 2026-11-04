@@ -56,11 +56,10 @@ extern const int g_level_xp[64] = {  // 0x5937c8 experience bound per level (rda
 
 // ---- the map object (0xa732b8): vertex and group vectors of the ground geometry ---------------------------------------
 // The records and vectors are the ones world_grid.cpp (rgl/dynamic) defines: ground_v36 (0x24 bytes: position, normal, a flag) and ground_g136
-// (0x88 bytes), std::vector<ground_v36> and its group sibling vec136, the group constructor Group (0x4246f0), the container constructor NavCore
+// (0x88 bytes), std::vector<ground_v36> and its group sibling vec136, the group constructor (0x4246f0), the container constructor NavCore
 // (0x478150) and PolyGeom::build (mesh_slot/mesh_pass.cpp 0x47ee60). They are declared here in the shape this module needs.
 struct ground_v36  { int v[9]; };                               // 0x24 bytes
-struct ground_g136 { int v[34]; };                              // 0x88 bytes: n +0, vertex ids +4, ...
-struct Group : ground_g136 { Group(); };                        // 0x4246f0
+struct ground_g136 { int v[34]; ground_g136(); };              // 0x88 bytes: n +0, vertex ids +4, ...; ctor 0x4246f0
 namespace std {
 template<> void vector<ground_v36, allocator<ground_v36> >::resize(size_t, ground_v36);     // 0x424740
 }
@@ -117,12 +116,12 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
     // original therefore stamps whatever its stack template held; ours held heap bytes, and score_triggers 0x51dac0
     // treats any nb[k] != -1 as a node index and walked off the graph (the Start-New-Game fault). Initialise them
     // explicitly so the template is deterministic: nb = -1 (no neighbour), weights = 0.
-    Group tmpl;                                        // Group::Group 0x4246f0 (mask/+0x48..+0x70 +0x84, as the original)
+    ground_g136 tmpl;                                  // ground_g136::ground_g136 0x4246f0 (mask/+0x48..+0x70 +0x84, as the original)
     for (int k = 0; k < 4; k++) {
         ((int*)((char*)&tmpl + 0x28))[k] = -1;         // nb[k]: this list is filled by the graph builder, not by map.txt
         ((float*)((char*)&tmpl + 0x38))[k] = 0.0f;     // weight[k]
     }
-    map->groups.resize(n2, *(ground_g136*)&tmpl);
+    map->groups.resize(n2, tmpl);
     for (i = 0; i < n2; i++) {
         char* g = (char*)map->groups.first + i * 0x88;
         s->r_int((int*)(g + 0x24));
