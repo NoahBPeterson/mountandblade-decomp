@@ -501,6 +501,18 @@ def main():
     import glue as GL
     dead = [("literal %s" % l["value"]) for l in lits if GL.in_dead_range(int(l["value"], 16))]
     dead += ["vtable %s" % o for e in rmap["vtables"].values() for o in e["orig"] if GL.in_dead_range(int(o, 16))]
+    gj0 = json.load(open(os.path.join(out, "glue", "glue.json")))
+    dw = gj0["dead_words"]
+    dead_sorted = [w for lo, hi in dw["ranges"] for w in range(lo, hi, 4)]
+    runs = dw["runs"]
+    for l in lits:        # a literal address names an object: it reaches every dead dword inside it
+        v = int(l["value"], 16)
+        if GL.dead_in(v, GL.object_end(v, dw["starts"], runs), dead_sorted):
+            dead.append("literal %s spans dead EH / libcmt table dwords" % l["value"])
+    for e in rmap["vtables"].values():
+        for o in e["orig"]:
+            if GL.dead_in(int(o, 16), int(o, 16) + 4 * e["slots"], dead_sorted):
+                dead.append("vtable %s spans dead EH / libcmt table dwords" % o)
     if dead:
         sys.exit("dead-range gate: %d references into original data the glue does not copy (glue.py DEAD_RANGES): %s" % (
             len(dead), ", ".join(dead[:12])))
@@ -560,6 +572,56 @@ def main():
     vt = fix_vtables(exe, read_map(map_path), rmap, img, lib_names, read_map(icf_map_path))
     lit = fix_literals(exe, read_map(map_path), rmap, img, lib_names, read_map_by_object(map_path))
     exe.save()
+    # post-link proof for the dead EH / libcmt tables: every absolute address in the linked image is a base relocation
+    # (/FIXED:NO); none may point into the copied sections at an object that holds a dead dword. Covers our code, our
+    # data, the libraries and the copy itself, after the vtable and literal fix-ups.
+    bases = read_map(map_path)
+    sites = exe.reloc_sites()
+    cb = {nm: bases[nm] for nm in ("_mb_rdata_base", "_mb_data_base")}
+    spans = [(cb["_mb_rdata_base"], GL.RDATA), (cb["_mb_data_base"], GL.DATA)]
+
+    def orig_of(a):         # linked address inside the copy -> the original's address
+        for b, sec in spans:
+            if b <= a < b + sec[2] - sec[1]:
+                return a - b + sec[1]
+        return None
+
+    edges, roots = [], []           # (orig source, orig target) inside the copy; (linked source, orig target) from outside
+    for tgt, at in sites.items():
+        ot = orig_of(tgt)
+        if ot is None:
+            continue
+        for ra in at:
+            os_ = orig_of(ra)
+            if os_ is None:
+                roots.append((ra, ot))
+            else:
+                edges.append((os_, ot))
+    edges.sort()
+    esrc = [e[0] for e in edges]
+    # every object the linked image can reach in the copy: from each relocation outside it (code, our data, the
+    # libraries), then along the copy's own relocations. An object is [its address, the next referenced address) or
+    # the run of code pointers it starts; it may not contain a dead dword.
+    seen, stray, work = {}, [], [(t, "%08x" % ra) for ra, t in roots]
+    while work:
+        t, via = work.pop()
+        if t in seen:
+            continue
+        end = GL.object_end(t, dw["starts"], runs)
+        seen[t] = via
+        hit = GL.dead_in(t, end, dead_sorted)
+        if hit:
+            stray.append("%08x (from %s) holds dead dword %08x" % (t, via, hit[0]))
+            continue
+        i = bisect.bisect_left(esrc, t)
+        while i < len(edges) and edges[i][0] < end:
+            work.append((edges[i][1], via))
+            i += 1
+    if stray:
+        sys.exit("dead-range gate (linked exe): %d objects reachable through the linked image's relocations hold dead EH / "
+                 "libcmt table dwords: %s" % (len(stray), "; ".join(stray[:10])))
+    steps["dead_tables"] = "%d dwords of the original's EH / libcmt tables not copied (%d traps avoided); no object reachable from the linked image's %d relocations (%d outside the copy) holds one" % (
+        len(dead_sorted), dw["seeds"], sum(len(v) for v in sites.values()), len(roots))
     steps["literals"] = "%d literal image addresses rewritten; %d in dropped functions, %d without a target, %d not " \
                         "where expected" % (lit["patched"], len(lit["missing_function"]), len(lit["no_target"]),
                                             len(lit["changed"]))
