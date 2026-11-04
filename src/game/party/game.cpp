@@ -14,6 +14,8 @@
 #include "./game.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "./nav_graph.h"
+#include "../terrain_b/cell_world.h"       // rgl::world: ctor 0x478ad0, build_faces 0x479980 (NavData: the map object g_script.nav)
+#include "../world_data/raw_place.h"       // construct in raw storage
 #include "../tstring.h"
 #include "../../rgl/stream.h"
 #include "../screen_records.h"        // C4c2fb0: the "creating game" panel (slot 3 is update 0x51c5a0, sub 0x51c720)
@@ -399,9 +401,7 @@ MB_NOINLINE Scene::Scene() : list(0)
 }
 
 // the map objects reached through globals
-struct SceneInit { int Init(int a, int b, int* c, int* d, int* e); };      // 0x478ad0 (this = the new 0x344-byte scene)
 struct MapReset { void run(); };                                            // 0x4704b0 (this = g_nav)
-struct MapBuild { void build(int world); };                                 // 0x479980 (this = g_level)
 
 // @ 0x51d2b0
 void Game::init_map()
@@ -412,12 +412,12 @@ void Game::init_map()
     if (g_script.new_game_done != 0)
         return;
     ((MapReset*)g_script.nav)->run();
-    void* mem = operator new(0x344);
+    void* mem = operator new(sizeof(rgl::world));
     if (mem != 0) {
         t.b = 5;
         t.c = 5;
         t.a = 0;
-        g_script.level = (rgl::world*)((SceneInit*)mem)->Init((int)g_script.nav + 0x44, (int)g_script.nav + 0x54, &t.c, &t.b, &t.a);
+        g_script.level = new (mem, raw_place()) rgl::world(&((NavData*)g_script.nav)->e44.x, &((NavData*)g_script.nav)->f54.x, &t.c, &t.b, &t.a);   // 0x478ad0
     } else {
         g_script.level = 0;
     }
@@ -429,7 +429,7 @@ void Game::init_map()
     t.b = 0;
     t.a = 7;
     g_script.nav->solve(&t.a, &t.b, &t.c);
-    ((MapBuild*)g_script.level)->build((int)g_script.nav);
+    g_script.level->build_faces((NavData*)g_script.nav);   // 0x479980
 }
 
 // @ 0x51d3a0

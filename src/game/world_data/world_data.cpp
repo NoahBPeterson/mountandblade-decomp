@@ -1578,33 +1578,27 @@ void TableauTbl::purge_all()
 // @ 0x493f80
 void TableauTbl::add_point_light(const rgl::matrix* p, const rgl::vector4& c)
 {
-    char* other = (char*)p;
-    int* _n = (int*)((NodeAlloc*)(void*)worlds[worlds.size() - 1])->node_478f30();
-    const int* _d = (const int*)&c;
-    memcpy(_n + 1, _d, 0x10);
-    _n[0] = 0;
-    memcpy(_n + 9, other + 0x30, 0x10);
-    memcpy(_n + 5, _n + 1, 0x10);
-    float* _f = (float*)_n;
-    _f[0x15] = (_f[3] + _f[2] + _f[1]) * 10.0f;
+    Light* l = ((rgl::world*)worlds[worlds.size() - 1])->spawn_wind();   // 0x478f30
+    l->color = c;
+    l->type = 0;
+    l->pos = p->o;
+    l->base_color = l->color;
+    l->range = (l->color.z + l->color.y + l->color.x) * 10.0f;
 }
 
 // @ 0x494020
 void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 {
-    char* other = (char*)p;
     int _g[4];
-    int* _n = (int*)((NodeAlloc*)(void*)worlds[worlds.size() - 1])->node_478f30();
-    const int* _d = (const int*)&c;
-    memcpy(_n + 1, _d, 0x10);
-    _n[0] = 2;
-    memcpy(_n + 0x11, other + 0x10, 0x10);
-    float* _f = (float*)_n;
-    _f[9]  = *(float*)(other + 0x30) - _f[0x11] * 1000.0f;
-    _f[10] = *(float*)(other + 0x34) - _f[0x12] * 1000.0f;
-    _f[0xb] = *(float*)(other + 0x38) - _f[0x13] * 1000.0f;
-    _n[0xc] = _g[3];
-    memcpy(_n + 5, _n + 1, 0x10);
+    Light* l = ((rgl::world*)worlds[worlds.size() - 1])->spawn_wind();   // 0x478f30
+    l->color = c;
+    l->type = 2;
+    l->dir = p->u;
+    l->pos.x = p->o.x - l->dir.x * 1000.0f;
+    l->pos.y = p->o.y - l->dir.y * 1000.0f;
+    l->pos.z = p->o.z - l->dir.z * 1000.0f;
+    *(int*)&l->pos.w = _g[3];
+    l->base_color = l->color;
 }
 
 // ==== 0x494110: add a button widget to the manager ===================================================================

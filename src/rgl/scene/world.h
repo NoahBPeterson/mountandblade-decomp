@@ -121,6 +121,8 @@ struct world : cell_grid {
     void render_scene(scene* sc, bool reflect);                 // 0x429890
 };
 
+typedef char world_size_check[sizeof(world) == 0x344 ? 1 : -1];     // the scene container is allocated as 0x344 bytes (0x478ad0)
+
 } // namespace rgl
 
 #endif

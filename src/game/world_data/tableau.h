@@ -17,6 +17,5 @@ struct TableauRec {                                             // 0x68 bytes
     float f28, f2c, f30, f34;                                   // +0x28 the quad corners (0x4991d0)
     char padtail[0x68 - 0x38];
 };
-struct NodeAlloc { void* node_478f30(); };                      // 0x478f30 (thiscall: a new light node of a world)
 
 #endif // GAME_WORLD_DATA_TABLEAU_H
