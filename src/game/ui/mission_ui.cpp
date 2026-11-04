@@ -1658,7 +1658,8 @@ MissionUi::MissionUi()
     fD8 = d;
     f124 = 0;
     fC8 = fCC = fD0 = fD4 = 0;
-    f158 = v15c = f160 = 0;
+    f158 = 0;
+    v15c = f160 = 0;
     v168 = f16c = 0;
     b121 = 0;
     b122 = 0;

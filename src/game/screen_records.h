@@ -352,12 +352,12 @@ struct Rec48 : head_rec { MB_ZERO_TAIL(Rec48) // vtable 0x59596c
     virtual void scale_3(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
 };
-struct FrameWidget;
+struct NodeA;
 struct MWidget;
 struct Rec58 : head_rec { MB_ZERO_TAIL(Rec58)   // vtable 0x5959fc (the game-log window; w04 nonzero: the full log. slot 2 agent5/agent_hud.cpp 0x4fc810, slot 3 map_editor/exchange_screens.cpp 0x5337a0)
-    FrameWidget* frame;                                           // +0x2c
+    NodeA* frame;                                           // +0x2c
     MWidget* log;                                                 // +0x30
-    MissionUi* bar;                                               // +0x34
+    ContainerBase* bar;                                               // +0x34
     MissionUi* slider;                                            // +0x38
     MissionUi* tab_return;                                        // +0x3c
     MissionUi* tab_log;                                           // +0x40

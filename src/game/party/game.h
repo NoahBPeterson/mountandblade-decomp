@@ -19,6 +19,7 @@
 #include "../../rgl/stream.h"
 #include "../ui/ui_common.h"
 #include "../ui/troop_inv.h"
+#include "../ui/map_list.h"             // IntList (the scene's page vector, +0x138cc)
 
 // the one global g_game (0x5e2930) is declared by include/game_data.h as GameData*: this header's class Game is the same object (see above)
 struct GameData;
@@ -208,19 +209,12 @@ struct SpriteTable {
 };
 
 // ---- the scene object (Game +0xf8, up to +0x139e4): only what the constructor 0x51d250 touches ------------------
-struct IntList {
-    bool buy(unsigned n);   // 0x4fd490 (agent5/agent_hud.h: the first allocation of a vector<int>-shaped list)
-};
-struct PageVec {                            // +0x138cc (was SceneList; world_data.h SceneList is another object): a vector built by 0x4fd490(0); its first pointer (+0x138d0) is read by 0x51eaa0
-    char b[0x10];
-    PageVec(int n) { ((IntList*)this)->buy(n); }     // 0x4fd490 (ret 4)
-};
 struct Scene {
     int cells[0x2717 * 2];                  // +0       0x51d250 (pairs of -1)
     int f138b8;                             // +0x138b8 0x51d250
     char pad138bc[4];
     Zero3 f138c0;                           // +0x138c0 0x51d250
-    PageVec list;                           // +0x138cc
+    IntList list;                           // +0x138cc
     int f138dc, f138e0;                     // +0x138dc 0x51d250
     char pad138e4[0x138ec - 0x138e4];
     Scene();                                // 0x51d250

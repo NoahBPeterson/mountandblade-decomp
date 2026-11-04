@@ -117,7 +117,7 @@ struct MissionUi {
     unsigned f148;                          // +0x148 option flags  0x488a40, 0x488b50
     unsigned color14c, color150;            // +0x14c / +0x150  0x488720, 0x488b10, 0x488b20
     MissionUi* p154;                        // +0x154 forwarding target  0x488970
-    int f158;                               // +0x158  0x48ae20
+    MissionUi* f158;                               // +0x158  0x48ae20 (the window a drop-down list opened from: widget_mgr.cpp, ContainerBase::refresh)
     int v15c;                               // +0x15c  0x488890
     int f160;                               // +0x160
     int f164;                               // +0x164 (1)

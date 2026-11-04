@@ -111,8 +111,8 @@ void ContainerBase::refresh()
                 top = i;
         }
         if ((int)top >= 0)
-            ((MissionUi*)f158)->set15c(top);
-        ((MissionUi*)f158)->key(0x10000);
+            f158->set15c(top);
+        f158->key(0x10000);
     }
     MissionUi::refresh();
 }

@@ -460,7 +460,7 @@ char DropDown::on_event(unsigned ev)
                 ::play_sound(&g_ui_sound);
                 NodeA* o = create();
                 f188 = o;
-                o->f158 = (int)this;
+                o->f158 = this;
             }
         }
     } else if (ev == 0x10000) {

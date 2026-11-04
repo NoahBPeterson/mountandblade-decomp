@@ -82,10 +82,8 @@ struct WindowOpener {                           // the window manager (world_dat
 MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 
-// the scrolling item list is Camera (constructor 0x49deb0, size 0x4a8): the flags word is Object's; +0x484 (follow[1]) the scroll bar, +0x490 (target) the row count
+// the scrolling item list is Camera (constructor 0x49deb0, size 0x4a8): the flags word is Object's; +0x484 (follow[1]) the scroll bar, +0x490 (target) the page it scrolls (the same page is its one child)
 #include "../party2/camera_class.h"      // Camera: the scrolling item list
-// virtual +0xc8 of the list sets the row count (the widget base's slot at +0xc8 is add_child(child), which takes one stack word as well)
-#define SET_ROWS(w, n) w->add_child((MissionUi*)(size_t)(n))
 
 // the window (constructor 0x4931a0, vptr 0x592848, size 0x190)
 struct InvWindow : ContainerBase {
@@ -212,8 +210,8 @@ void PartyWindow::create()
             v->f104 |= 0x20;
             if (sc != 0)
                 v->follow[1] = sc;
-            v->target = (ContainerBase*)(size_t)nrows;
-            SET_ROWS(v, nrows);
+            v->target = page_widget[i];
+            v->add_child(page_widget[i]);
             label_refresh(v, tstring("inv_sc_inventory1_outer"));
         } else {
             UiD* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
@@ -221,8 +219,8 @@ void PartyWindow::create()
             v->f104 |= 0x20;
             if (sc != 0)
                 v->follow[1] = sc;
-            v->target = (ContainerBase*)(size_t)nrows;
-            SET_ROWS(v, nrows);
+            v->target = page_widget[i];
+            v->add_child(page_widget[i]);
             label_refresh(v, tstring("inv_sc_inventory2_outer"));
         }
         view[i] = v;

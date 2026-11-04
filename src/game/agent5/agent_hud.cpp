@@ -136,15 +136,15 @@ void MissionHud::refresh()
     ammo_stage = -1;
     GAME_AT(int, 0x1a090) = 0;
 
-    FrameWidget* fw = new_frame_widget();
+    NodeA* fw = new_frame_widget();
     frame = fw;
     {
         v[0] = 0.0f;
         v[1] = 0.0f;
-        UI(fw)->set_size(v);
+        fw->move_a(v);
         v[0] = 1.0f;
         v[1] = 0.75f;
-        UI(fw)->set_pos(v);
+        fw->set_xy(v);
     }
     {
         MissionUi* root = frame;
@@ -157,16 +157,16 @@ void MissionHud::refresh()
         {
             v[0] = 0.5f;
         v[1] = 0.375f;
-            UI(w)->set_size(v);
+            w->move_a(v);
         }
         {
             v[0] = 0.03f;
         v[1] = 0.04f;
-            UI(crosshair[i])->set_pos(v);
+            crosshair[i]->set_xy(v);
         }
         crosshair_mesh[i] = res_clone(tstring(i == 0 ? "crosshair_up" : (i == 1 ? "crosshair_left" : "crosshair_right")));
-        UI(crosshair[i])->add_image(0, crosshair_mesh[i]);
-        UI(frame)->add_child(UI(crosshair[i]));
+        crosshair[i]->set_track(0, crosshair_mesh[i]);
+        frame->add_child(crosshair[i]);
     }
     for (int i = 0; i < 4; i++) {
         MissionUi* w = new MissionUi;
@@ -174,30 +174,30 @@ void MissionHud::refresh()
         {
             v[0] = 0.5f;
         v[1] = 0.35f;
-            UI(w)->set_size(v);
+            w->move_a(v);
         }
         {
             v[0] = 0.03f;
         v[1] = 0.04f;
-            UI(arrow[i])->set_pos(v);
+            arrow[i]->set_xy(v);
         }
         arrow_mesh[i] = res_clone(tstring(i == 0 ? "arrow_up" : (i == 1 ? "arrow_right" : (i == 2 ? "arrow_down" : "arrow_left"))));
-        UI(arrow[i])->add_image(0, arrow_mesh[i]);
-        UI(frame)->add_child(UI(arrow[i]));
+        arrow[i]->set_track(0, arrow_mesh[i]);
+        frame->add_child(arrow[i]);
     }
     {
         v[0] = 0.5f;
         v[1] = 0.45f;
-        UI(arrow[0])->set_size(v);
+        arrow[0]->move_a(v);
         v[0] = 0.65f;
         v[1] = 0.35f;
-        UI(arrow[1])->set_size(v);
+        arrow[1]->move_a(v);
         v[0] = 0.5f;
         v[1] = 0.3f;
-        UI(arrow[2])->set_size(v);
+        arrow[2]->move_a(v);
         v[0] = 0.35f;
         v[1] = 0.35f;
-        UI(arrow[3])->set_size(v);
+        arrow[3]->move_a(v);
     }
     f84[0] = 0;
     f84[1] = 0;
@@ -208,68 +208,68 @@ void MissionHud::refresh()
     f84[6] = 0;
 
     // the status background group, its health bar and bar, the two text widgets and the shield icon
-    status_group = new GroupWidget;
+    status_group = new ContainerBase;
     {
         v[0] = 0.876249969f;
         v[1] = 0.0243749972f;
-        UI(status_group)->set_size(v);
+        status_group->move_a(v);
         v[0] = 0.17f;
         v[1] = 0.1175f;
-        UI(status_group)->set_pos(v);
+        status_group->set_xy(v);
     }
     {
         rgl::mesh* m = res_clone(tstring("status_background"));
-        UI(status_group)->add_image(0, m);
+        status_group->set_track(0, m);
     }
     health_bar = new MissionUi;
     {
         v[0] = 0.0f;
         v[1] = 0.0f;
-        UI(health_bar)->set_size(v);
+        health_bar->move_a(v);
         v[0] = 0.106500007f;
         v[1] = 0.00500000035f;
-        UI(health_bar)->set_pos(v);
+        health_bar->set_xy(v);
     }
     {
         health_mesh = res_clone(tstring("status_health_bar"));
-        UI(health_bar)->add_image(0, health_mesh);
+        health_bar->set_track(0, health_mesh);
     }
     status_bar = new MissionUi;
     {
         v[0] = 0.0725000203f;
         v[1] = 0.05075f;
-        UI(status_bar)->set_size(v);
+        status_bar->move_a(v);
         v[0] = 0.0400000028f;
         v[1] = 0.05f;
-        UI(status_bar)->set_pos(v);
+        status_bar->set_xy(v);
     }
     shadow_mesh = new rgl::mesh;
-    UI(status_bar)->add_image(0, shadow_mesh);
+    status_bar->set_track(0, shadow_mesh);
     shield_mesh = new rgl::mesh;
-    UI(status_bar)->add_image(2, shield_mesh);
+    status_bar->set_track(2, shield_mesh);
     shield_icon = new MissionUi;
     {
         v[0] = 0.0249999985f;
         v[1] = 0.0500000082f;
-        UI(shield_icon)->set_size(v);
+        shield_icon->move_a(v);
         v[0] = 0.05f;
         v[1] = 0.0600000024f;
-        UI(shield_icon)->set_pos(v);
+        shield_icon->set_xy(v);
     }
     ui_font = new MissionUi;
     {
         v[0] = 0.0718750283f;
         v[1] = 0.045f;
-        UI(ui_font)->set_size(v);
+        ui_font->move_a(v);
         v[0] = 0.120000005f;
         v[1] = 0.024f;
-        UI(ui_font)->set_pos(v);
+        ui_font->set_xy(v);
         int two = 2;
-        UI(ui_font)->set_int(&two);
+        ui_font->set148(&two);
     }
     {
         tstring n("0");
-                UI(ui_font)->set_text(v, &n);
+                ui_font->set_text(v, &n);
     }
     {
         tstring n("ui_font");
@@ -277,22 +277,22 @@ void MissionHud::refresh()
     }
     {
         unsigned col = 0xffffffff;
-        UI(ui_font)->set_color(&col);
+        ui_font->set_target(&col);
     }
     ui_font_bg = new MissionUi;
     {
         v[0] = 0.0718750283f;
         v[1] = 0.045f;
-        UI(ui_font_bg)->set_size(v);
+        ui_font_bg->move_a(v);
         v[0] = 0.120000005f;
         v[1] = 0.024f;
-        UI(ui_font_bg)->set_pos(v);
+        ui_font_bg->set_xy(v);
         int two = 2;
-        UI(ui_font_bg)->set_int(&two);
+        ui_font_bg->set148(&two);
     }
     {
         tstring n("0");
-                UI(ui_font_bg)->set_text(v, &n);
+                ui_font_bg->set_text(v, &n);
     }
     {
         tstring n("ui_font_background");
@@ -300,13 +300,13 @@ void MissionHud::refresh()
     }
     {
         unsigned col = 0xff000000;
-        UI(ui_font_bg)->set_color(&col);
+        ui_font_bg->set_target(&col);
     }
-    UI(status_group)->add_child(UI(status_bar));
-    UI(status_group)->add_child(UI(health_bar));
-    UI(status_group)->add_child(UI(shield_icon));
-    UI(status_group)->add_child(UI(ui_font));
-    UI(status_group)->add_child(UI(ui_font_bg));
+    status_group->add_child(status_bar);
+    status_group->add_child(health_bar);
+    status_group->add_child(shield_icon);
+    status_group->add_child(ui_font);
+    status_group->add_child(ui_font_bg);
     frame->kids.push_back(status_group);
 
     {
@@ -317,10 +317,10 @@ void MissionHud::refresh()
     {
         v[0] = 0.0f;
         v[1] = 0.0f;
-        UI(name_widget)->set_size(v);
+        name_widget->move_a(v);
         v[0] = 1.0f;
         v[1] = 0.75f;
-        UI(name_widget)->set_pos(v);
+        name_widget->set_xy(v);
     }
     if (g_options.i2c)
         name_widget->f354 = 1;
@@ -909,9 +909,9 @@ void MissionHud::update_status()
         return;
     Agent* ag = agent_raw(id);
     if (GAME_AT(int, 0x1a20c))
-        UI(status_group)->hide();
+        status_group->hide();
     else
-        UI(status_group)->show();
+        status_group->show();
     matrix frame;
     int hp = (int)ag->health;
     if (hp != shown_health) {
@@ -942,24 +942,24 @@ void MissionHud::update_status()
         sprintf(buf, "%d", la);
         {
             tstring t1(buf);
-            UI(ui_font)->set_text(tsz, &t1);
+            ui_font->set_text(tsz, &t1);
         }
         {
             tstring t2(buf);
-            UI(ui_font_bg)->set_text(tsz, &t2);
+            ui_font_bg->set_text(tsz, &t2);
         }
         if (shield_max < 0) {
-            UI(status_bar)->hide();
-            UI(ui_font)->hide();
-            UI(ui_font_bg)->hide();
+            status_bar->hide();
+            ui_font->hide();
+            ui_font_bg->hide();
         } else {
-            UI(status_bar)->show();
-            UI(ui_font)->show();
-            UI(ui_font_bg)->show();
+            status_bar->show();
+            ui_font->show();
+            ui_font_bg->show();
             unsigned color = 0xffffffff;
             if (shield_max <= 0)
                 color = 0xffb02020;
-            UI(ui_font)->set_color98(&color);
+            ui_font->set_color(&color);
         }
         if (res.item != shield_cur) {
             shield_mesh->clear_geometry();
@@ -1010,14 +1010,14 @@ void MissionHud::update_status()
         ammo_count = lo;
         if ((int)lo == -1) {
             ammo_stage = -1;
-            UI(shield_icon)->hide();
+            shield_icon->hide();
             return;
         }
         int stage = (int)((float)(int)lo * 5.0f / (float)hi + 0.999f);
         if (stage != ammo_stage) {
             ammo_stage = stage;
             if (stage <= 0) {
-                UI(shield_icon)->hide();
+                shield_icon->hide();
                 return;
             }
             const char* nm;
@@ -1037,8 +1037,8 @@ void MissionHud::update_status()
                 rgl::mesh* obj = g_resmgr_full.get_object((const rgl::string*)&icon);
                 cl = obj->clone();
             }
-            UI(shield_icon)->add_image(0, cl);
-            UI(shield_icon)->show();
+            shield_icon->set_track(0, cl);
+            shield_icon->show();
         }
     }
 }
@@ -1242,22 +1242,22 @@ void GameScreen::build()
     frame = new_frame_widget();
     v[0] = -0.001f;
     v[1] = -0.001f;
-    UI(frame)->set_size(v);
+    frame->move_a(v);
     v[0] = 1.002f;
     v[1] = 0.752f;
-    UI(frame)->set_pos(v);
+    frame->set_xy(v);
 
     GAME_AT(int, 0xac) = -1;
 
     fill = new MissionUi;
     v[0] = 0.1f;
     v[1] = 0.1f;
-    UI(fill)->set_size(v);
+    fill->move_a(v);
     v[0] = 1e-05f;
     v[1] = 1e-05f;
-    UI(fill)->set_pos(v);
-    UI(fill)->hide();
-    UI(frame)->add_child(UI(fill));
+    fill->set_xy(v);
+    fill->hide();
+    frame->add_child(fill);
 
     if (ok) {
         if (((tstring*)((char*)g_game + 0x1a210))->differs("none")) {
@@ -1274,86 +1274,86 @@ void GameScreen::build()
                     tr.x = 1.0f - f; tr.y = 0.0f; tr.z = 0.0f; tr.w = 0.0f;
                     m->translate(&tr);
                 }
-                UI(frame)->add_image(2, m);
+                frame->set_track(2, m);
             }
         }
         if (GAME_AT(int, 0x1a220) >= 0) {
             rgl::mesh* m = g_tableaus.make_mesh_from(&GAME_AT(int, 0x1a220), &GAME_AT(int, 0x1a224));
             if (GAME_AT(float, 0x1a230) != 1.0f)
                 m->scale(GAME_AT(float, 0x1a230));
-            UI(fill)->add_image(0, m);
+            fill->set_track(0, m);
             v[0] = GAME_AT(float, 0x1a228);
             v[1] = GAME_AT(float, 0x1a22c);
-            UI(fill)->set_size(v);
-            UI(fill)->show();
+            fill->move_a(v);
+            fill->show();
         }
     }
 
     {
         unsigned c = 0xffffffff;
-        UI(frame)->set_color98(&c);
+        frame->set_color(&c);
     }
     fa0 = 0;
 
     panel = new MissionUi;
     v[0] = 0.0f;
     v[1] = 0.0f;
-    UI(panel)->set_size(v);
+    panel->move_a(v);
     {
         int two = 0x710;
-        UI(panel)->set_int(&two);
+        panel->set148(&two);
     }
     v[0] = 1.0f;
     v[1] = 0.75f;
-    UI(panel)->set_pos(v);
+    panel->set_xy(v);
     {
         unsigned c = color;
-        UI(panel)->set_color98(&c);
+        panel->set_color(&c);
     }
     {
         tstring name("");
         float out[2];
-        UI(panel)->set_text(out, &name);
+        panel->set_text(out, &name);
     }
 
     UiD* flag = new UiD;
     flag->f178 = 1;
     v[0] = 0.0f;
     v[1] = 0.0f;
-    UI(flag)->set_size(v);
-    UI(frame)->add_child(UI(flag));
+    flag->move_a(v);
+    frame->add_child(flag);
 
     tree = new Camera;
     tree->f104 |= 0x20;
     tree->follow[1] = (UiD*)flag;           // +0x484
 
-    GroupWidget* bar = new GroupWidget;
+    ContainerBase* bar = new ContainerBase;
     v[0] = 0.0f;
     v[1] = 0.0f;
-    UI(bar)->set_size(v);
-    UI(bar)->set_pos(&panel->screen[0]);
-    UI(bar)->add_child(UI(panel));
+    bar->move_a(v);
+    bar->set_xy(&panel->screen[0]);
+    bar->add_child(panel);
     tree->target = (ContainerBase*)bar;                // +0x490
-    UI(tree)->add_child(UI(bar));
+    tree->add_child(bar);
     v[0] = 0.0f;
     v[1] = 0.0f;
-    UI(tree)->set_size(v);
+    tree->move_a(v);
     v[0] = 0.01f;
     v[1] = 0.38f;
-    UI(tree)->set_size(v);
+    tree->move_a(v);
     ((FieldPanel*)tree)->update();
     v[0] = 0.65f;
     v[1] = 0.31f;
     ((HudOuter*)tree)->scroll_refresh((vector4*)v);
-    UI(frame)->add_child(UI(tree));
+    frame->add_child(tree);
 
-    GroupWidget* value = new GroupWidget;
+    ContainerBase* value = new ContainerBase;
     v[0] = 0.0f;
     v[1] = 0.0f;
-    UI(value)->set_size(v);
+    value->move_a(v);
     v[0] = 0.75f;
     v[1] = 0.36f;
-    UI(value)->set_pos(v);
+    value->set_xy(v);
     UiD* track_made = make_scroll_track((ContainerBase*)frame, 0.7f, 0.02f, 0.01f, 0.36f);
     Camera* made;
     {
@@ -1362,27 +1362,27 @@ void GameScreen::build()
         made = make_quest_list((ContainerBase*)value, a, b, track_made);
     }
     slider = made;
-    UI(frame)->add_child(UI(made));
+    frame->add_child(made);
 
     MissionUi** kp = kids;
     for (int i = 16; i != 0; i--, kp++) {
         UiA* child = new UiA;
         *kp = child;
         unsigned c9 = 0xff55ff50;
-        UI(*kp)->set_color(&c9);
+        (*kp)->set_target(&c9);
         float pos[2] = { 0.64f, 0.04f };
-        UI(*kp)->set_pos(pos);
+        (*kp)->set_xy(pos);
         unsigned c8 = color;
-        UI(*kp)->set_color98(&c8);
-        UI(*kp)->hide();
-        UI(value)->add_child(UI(*kp));
+        (*kp)->set_color(&c8);
+        (*kp)->hide();
+        value->add_child(*kp);
     }
 
     if (ok) {
         ((ScreenOps*)this)->begin();
         ((BlockOwner*)((char*)this + 0x30))->init((ContainerBase*)frame, GAME_AT(int, 0xac));
         if (f40 < 0)
-            UI(frame)->add_image_a(0, g_resmgr_full.get_object((const rgl::string*)&tstring("meeting_window"))->clone());
+            frame->set_mesh(0, g_resmgr_full.get_object((const rgl::string*)&tstring("meeting_window"))->clone());
     }
     g_gui_dirty = 1;
     {
@@ -1417,7 +1417,7 @@ static __forceinline float param_value(const char* key)
     return v;
 }
 #define MAKE_TAB(name) make_tab(frame, name, x, yy, h)
-static MissionUi* make_tab(FrameWidget* frame, const char* name, float x, float y, float h)
+static MissionUi* make_tab(NodeA* frame, const char* name, float x, float y, float h)
 {
     return (MissionUi*)make_short_button(frame, g_strtable.lookup(tstring(name)), x, y, h);
 }
@@ -1431,30 +1431,30 @@ void Rec58::build(bool show)
     frame = new_frame_widget();
     v[0] = 0.0f;
     v[1] = 0.0f;
-    UI(frame)->set_size(v);
+    frame->move_a(v);
     v[0] = 1.0f;
     v[1] = 0.75f;
-    UI(frame)->set_pos(v);
-    UI(frame)->add_image(0, res_clone(tstring("game_log_window")));
+    frame->set_xy(v);
+    frame->set_track(0, res_clone(tstring("game_log_window")));
 
     log = new MWidget;
     {
         int c700 = 0x700;
-        UI(log)->set_int(&c700);
+        log->set148(&c700);
     }
     v[0] = 0.0f;
     v[1] = 0.0f;
-    UI(log)->set_size(v);
+    log->move_a(v);
     v[0] = 0.02f;
     v[1] = 0.02f;
-    UI(log)->set_inset(v);
+    log->set_size(v);
     {
         unsigned c = 0xff000000;
-        UI(log)->set_color98(&c);
+        log->set_color(&c);
     }
     v[0] = 0.915f;
     v[1] = 0.1f;
-    UI(log)->set_pos(v);
+    log->set_xy(v);
     tstring* text = &log->name;
     text->assign("");
 
@@ -1487,19 +1487,19 @@ void Rec58::build(bool show)
     }
     {
         float out[2];
-        UI(log)->set_text(out, text);
+        log->set_text(out, text);
     }
 
     float y = log->screen[1] + 0.001f;
 
-    bar = new TextGroupWidget;              // vptr 0x597050 (0x4fcb33)
+    bar = new text_box;              // vptr 0x597050 (0x4fcb33)
     v[0] = 0.0f;
     v[1] = 0.0f;
-    UI(bar)->set_size(v);
+    bar->move_a(v);
     v[0] = 0.915f;
     v[1] = y;
-    UI(bar)->set_pos(v);
-    UI(bar)->add_child(UI(log));
+    bar->set_xy(v);
+    bar->add_child(log);
 
     UiD* track = make_scroll_track((ContainerBase*)frame, 0.95f, 0.08f, 0.02f, 0.64f);
     {
@@ -1511,7 +1511,7 @@ void Rec58::build(bool show)
         float b[2] = { 0.915f, ymin };
         slider = make_quest_list((ContainerBase*)bar, a, b, track);
     }
-    UI(frame)->add_child(UI(slider));
+    frame->add_child(slider);
 
     float x = param_value("note_button_x");
     float yy = param_value("note_button_y");
@@ -1540,13 +1540,13 @@ void Rec58::build(bool show)
 
     MissionUi* active;
     if (show) {
-        UI(tab_log)->select(1);
+        tab_log->set15c(1);
         active = tab_log;
     } else {
-        UI(tab_recent)->select(1);
+        tab_recent->set15c(1);
         active = tab_recent;
     }
-    UI(active)->refresh();
+    active->flag2_set();
 
     g_gui_dirty = 1;
     {
@@ -1555,11 +1555,11 @@ void Rec58::build(bool show)
     }
 
     // the slider's value follows the log's scroll state
-    FlagWidget* flag = (FlagWidget*)((Camera*)slider)->follow[1];
+    UiD* flag = (UiD*)((Camera*)slider)->follow[1];
     float* pf = &flag->screen[flag->f178];
     float value = (*pf - flag->f17c) * ((flag->v168 - flag->f16c) / (flag->f170 - flag->f16c)) - (flag->f17c / *pf) * 5000.0f;
-    ((UiD*)flag)->set_value(value);
-    UI(flag)->flag_cmd(0x10000);
+    flag->set_value(value);
+    flag->set_key_flags(0x10000);
 }
 
 // ---- the tstring array and the map-text list widget -------------------------------------------------------

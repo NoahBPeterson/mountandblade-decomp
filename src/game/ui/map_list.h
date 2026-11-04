@@ -15,6 +15,8 @@ struct IntList {                                                  // a VC7.1 vec
     int* first;
     int* last;
     int* end;
+    IntList() {}
+    IntList(unsigned n) { buy(n); }                               // the vector built by 0x4fd490(n)
     __declspec(noinline) bool buy(unsigned n);                    // 0x4fd490 (ret 4: the allocation of the vector<int>'s first block)
     void xlen() { VEC_XLEN_CALL(this); }                          // 0x43e2a0 (std::vector<int>::_Xlen, agent3/agent_combat.cpp)
     void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }   // the inlined vector release of ~MWidget

@@ -189,90 +189,15 @@ struct TableauTbl {                                            // the object tab
 extern TableauTbl g_tableaus;                                    // 0xa75f40
 struct MenuLayout { char pad[1]; };                               // the part of the game screen at +0x30; its build (0x4dd920, ret 8) is BlockOwner::init above
 
-// ---- the widget slot view -----------------------------------------------------------------------------------------------
-// A pure interface laid over MissionUi's family (vtable 0x591c80 and its derived tables): the slots the HUD builders call, by
-// the name the call site shows (mission_ui.h names other slots of the same table with other signatures, as DrawObj does).
-// Slot offsets in comments.
-struct HudUi {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c(); virtual void v10(); virtual void v14();
-    virtual void v18(); virtual void v1c(); virtual void v20(); virtual void v24(); virtual void v28();
-    virtual void select(int on);                                  // +0x2c
-    virtual void v30(); virtual void v34(); virtual void v38(); virtual void v3c(); virtual void v40(); virtual void v44();
-    virtual void flag_cmd(int flags);                             // +0x48
-    virtual void v4c(); virtual void v50(); virtual void v54();
-    virtual void set_size(float* v);                              // +0x58
-    virtual void v5c(); virtual void v60();
-    virtual void set_pos(float* v);                               // +0x64
-    virtual void v68();
-    virtual void set_inset(float* v);                             // +0x6c
-    virtual void v70();
-    virtual void set_int(int* v);                                 // +0x74
-    virtual void v78();
-    virtual void add_image_a(int layer, rgl::mesh* m);            // +0x7c
-    virtual void add_image(int layer, rgl::mesh* m);              // +0x80
-    virtual void v84(); virtual void v88(); virtual void v8c(); virtual void v90(); virtual void v94();
-    virtual void set_color98(unsigned* c);                        // +0x98 (ret 4)
-    virtual void set_color(unsigned* c);                          // +0x9c
-    virtual void va0();
-    virtual void set_text(float* out, tstring* text);             // +0xa4
-    virtual void va8(); virtual void vac();
-    virtual void hide();                                          // +0xb0
-    virtual void show();                                          // +0xb4
-    virtual void refresh();                                       // +0xb8
-    virtual void vbc(); virtual void vc0(); virtual void vc4();
-    virtual void add_child(HudUi* c);                             // +0xc8
-};
-#define UI(p) ((HudUi*)(p))
 
 // ---- widgets: classes of this region ----------------------------------------------------------------------------------
-struct ChildVec {                                                 // a widget list: VC7.1 vector layout (alloc slot, first, last, end), push_back as the callers inline it
-    int alloc;
-    MissionUi** first;
-    MissionUi** last;
-    MissionUi** end;
-    void push_back(MissionUi* const& v)
-    {
-        if (first != 0 && (unsigned)(last - first) < (unsigned)(end - first)) {
-            *last = v;
-            ++last;
-        } else
-            ((VecOps<SceneObject*>*)this)->insert_n(std::vector<SceneObject*>::iterator((SceneObject**)last), 1, (SceneObject* const&)v);   // 0x4927d0 (world_data.cpp: std::vector<SceneObject*>::_Insert_n; the children are SceneObject pointers there)
-    }
-};
-struct GroupWidget : MissionUi {                                  // vtable 0x5924a0, size 0x188: a container of children (party_window.h's UiFrame)
-    ChildVec kids;                                                // +0x178
-    GroupWidget() { *(void**)this = (void*)vtbl_5924a0; kids.first = 0; kids.last = 0; kids.end = 0; }
-};
-struct TextGroupWidget : GroupWidget {                            // the same 0x188-byte container with vtable 0x597050 (container.h's text_box)
-    TextGroupWidget() { *(void**)this = (void*)vtbl_597050; }
-};
-struct WindowBase : MissionUi {                                   // the 0x188-byte window base (party_window.h's UiWindow); its constructor body 0x4931a0 is ContainerW::construct
-    ChildVec kids;                                                // +0x178 (first +0x17c)
-private:
-    WindowBase();                                                 // (never defined: windows are built by new_frame_widget)
-};
-struct FrameWidget : WindowBase {                                 // vtable 0x592848, size 0x190
-    char f188;                                                    // +0x188 (cleared by the constructor)
-    char pad189[7];
-};
-// new FrameWidget: the allocation, then the base constructor body 0x4931a0 (ContainerW::construct, which runs MissionUi's 0x48ae20 itself), the vptr and f188
-inline FrameWidget* new_frame_widget()
+// the mission start menu's frame window: the NodeA container (vtable 0x592848, size 0x190) with its +0x188 byte cleared
+inline NodeA* new_frame_widget()
 {
-    void* mem = operator new(sizeof(FrameWidget));
-    if (mem == 0)
-        return 0;
-    ((ContainerW*)mem)->construct();
-    *(void**)mem = (void*)vtbl_592848;
-    ((FrameWidget*)mem)->f188 = 0;
-    return (FrameWidget*)mem;
+    NodeA* w = new NodeA;
+    w->f188 = 0;
+    return w;
 }
-struct FlagWidget : MissionUi {                                   // vtable 0x592140 (ui_widgets.h's UiD: its constructor 0x48b890 is out of line there, here it is inlined), size 0x188
-    int f178;                                                     // +0x178 (0x4fbfa0)
-    float f17c;                                                   // +0x17c
-    int f180, f184;                                               // +0x180
-    FlagWidget() { *(void**)this = (void*)vtbl_UiD; f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
-    void set_value(float x);                                      // 0x48baa0
-};
 struct NameWidget : MissionUi {                                   // ctor 0x4ed630, vptr 0x598698, size 0x358
     void* mission_scene;                                          // +0x178 (Mission::scene, stored by 0x4f7f00)
     char pad17c[0x1ac - 0x17c];
@@ -293,7 +218,7 @@ MapWidget* __fastcall ctor_4ed630(MapWidget* p);                  // 0x4ed630 (e
 // slices (the slices called it MissionObj, Camera and StatusWidget).
 struct MissionHud {
     char pad0[0x2c];
-    FrameWidget* frame;                                           // +0x2c (0x4f7f00; the screen's root widget)
+    NodeA* frame;                                           // +0x2c (0x4f7f00; the screen's root widget)
     char pad30[0x60 - 0x30];
     NameWidget* name_widget;                                      // +0x60 (0x4f7f00; 0x4f8c80 copies the frustum into it)
     char pad64[4];
@@ -304,7 +229,7 @@ struct MissionHud {
     rgl::mesh* arrow_mesh[4];                                     // +0xac
     MissionUi* ui_font;                                           // +0xbc (0x4f7f00: "ui_font" text, 0x4fb350 shield text cur)
     MissionUi* ui_font_bg;                                        // +0xc0 (0x4f7f00; 0x4fb350 shield text max)
-    GroupWidget* status_group;                                    // +0xc4 (0x4f7f00: the status background, vtable 0x5924a0; 0x4fb350 hides / shows it)
+    ContainerBase* status_group;                                    // +0xc4 (0x4f7f00: the status background, vtable 0x5924a0; 0x4fb350 hides / shows it)
     MissionUi* shield_icon;                                       // +0xc8 (0x4f7f00; 0x4fb350 ammo icon)
     MissionUi* status_bar;                                        // +0xcc (0x4f7f00; 0x4fb350 shield piece)
     MissionUi* health_bar;                                        // +0xd0 (0x4f7f00)
@@ -365,7 +290,7 @@ struct ScreenOps {                                                // the screen 
 };
 struct GameScreen {                                               // the game menu window (built by 0x4fbfa0)
     char pad0[0x2c];
-    FrameWidget* frame;                                           // +0x2c
+    NodeA* frame;                                           // +0x2c
     char pad30[0x40 - 0x30];                                      // +0x30 the MenuLayout part
     int f40;                                                      // +0x40
     char pad44[0x60 - 0x44];

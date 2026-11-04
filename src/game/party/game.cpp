@@ -1034,7 +1034,7 @@ void Game::load_scene_parties(stream_base* s)
 {
     scene.read(s, 1);
     int idx = scene.index_of(f78);
-    char** pages = *(char***)(scene.list.b + 4);
+    char** pages = (char**)scene.list.first;
     char* rec = pages[idx >> 4] + (idx & 0xf) * 0x5ac8;
     for (int i = 0; i < *(int*)(rec + 0x8a8); i++) {
         char* e = rec + 0xc0 + i * 0x20;
