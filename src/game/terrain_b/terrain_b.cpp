@@ -90,14 +90,14 @@ void render_batch::render_scene(scene* sc)
             vector4 fog_col;
             if (lt) {
                 unsigned c = sky->fog_color_a;
-                unpack_color(&fog_col, &c);
+                fog_col = unpack_color(&c);
                 fog_col.w = 1.0f;
                 g_effect->SetFloat("fFogStart", sky->fog_start_a);
                 g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_a);
                 g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_a);
             } else {
                 unsigned c = sky->fog_color_b;
-                unpack_color(&fog_col, &c);
+                fog_col = unpack_color(&c);
                 fog_col.w = 1.0f;
                 g_effect->SetFloat("fFogStart", sky->fog_start_b);
                 g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_b);
@@ -458,14 +458,12 @@ void render_batch::render_scene(scene* sc)
                 mesh* im = it->m;
                 if (g_render.tex_factor != im->color) {
                     g_render.tex_factor = im->color;
-                    vector4 c;
-                    unpack_color(&c, &g_render.tex_factor);
+                    vector4 c = rgl::unpack_color(&g_render.tex_factor);
                     g_effect->SetVector("vMaterialColor", (D3DXVECTOR4*)&c);
                 }
                 if (g_render.tex_factor2 != (unsigned)im->f40) {
                     g_render.tex_factor2 = im->f40;
-                    vector4 c;
-                    unpack_color(&c, &g_render.tex_factor2);
+                    vector4 c = rgl::unpack_color(&g_render.tex_factor2);
                     g_effect->SetVector("vMaterialColor2", (D3DXVECTOR4*)&c);
                 }
                 ((mi_ops*)im)->setup_material();
@@ -1052,8 +1050,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         lf = occ * light;
                     }
                     vertex60& v = m->v50[j];
-                    vector4 col;
-                    rgl::unpack_color(&col, (const unsigned*)&v.f58);
+                    vector4 col = rgl::unpack_color((const unsigned*)&v.f58);
                     vector4 t1, t2, t3, r;
                     vscale_to(t1, sun_diffuse, lf);
                     vscale_to(t2, sun_ambient, 1.5f);

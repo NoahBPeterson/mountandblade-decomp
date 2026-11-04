@@ -141,8 +141,6 @@ float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0
 float frand();                                                      // 0x40e400
 #include "../../include/vec.h"
 namespace rgl {
-// The binary's 0x40e4e0 returns the colour by value (hidden return pointer, eax = it): rgl_math.h declares it as
-// `void unpack_color(vector4* out, const unsigned*)`, which cannot reproduce the code. Same call ABI, other symbol.
 vector4 unpack_color(const unsigned* argb);                         // 0x40e4e0
 }
 // rgl::pack_color (0x40e440) and rgl::matrix::rotate_about_* (0x40e570..) are

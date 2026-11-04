@@ -75,8 +75,7 @@ void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
         add_point(&out);
     }
 
-    vector4 tint;
-    unpack_color(&tint, &color);
+    vector4 tint = rgl::unpack_color(&color);
 
     vertex60* sp = sv._Myfirst;                      // the original walks a cached pointer (stale if src is this)
     for (size_t j = 0; j < sv.size(); j++, sp++) {
@@ -88,8 +87,7 @@ void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
         vector4 r(x, y, z);                          // w stays unset: the original copies the stack lane
         vt.pos = r;
         vt.normal = r;
-        vector4 uc;
-        vector4 c = *UNPACK_COLOR(&uc, &vt.color);
+        vector4 c = rgl::unpack_color(&vt.color);
         c.x *= tint.x;  c.y *= tint.y;  c.z *= tint.z;  c.w *= tint.w;
         vt.color = pack_color(&c);
         v50.push_back(vt);                        // 0x411420
@@ -171,8 +169,7 @@ void rgl::mesh::multiply_color(const vector4* tint)
     ensure_local();
     for (unsigned i = 0; i < v50.size(); i++) {
         vertex60* v = &vat(v50, i);
-        vector4 c;
-        unpack_color(&c, &v->color);
+        vector4 c = rgl::unpack_color(&v->color);
         c.x = c.x * tint->x;
         c.y = c.y * tint->y;
         c.z = c.z * tint->z;
@@ -360,8 +357,7 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
             col.z = (float)pow(col.z, g_ramp_gamma);
         }
 
-        vector4 vc;
-        unpack_color(&vc, &v->color);
+        vector4 vc = rgl::unpack_color(&v->color);
         vc.x *= col.x;
         vc.y *= col.y;
         vc.z *= col.z;

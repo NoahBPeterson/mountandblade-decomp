@@ -91,7 +91,7 @@ frame_value identity_pos();                                                  // 
 
 // packed ARGB <-> float colour (cdecl)
 unsigned pack_color(const vector4* c);                                      // 0x40e440
-void unpack_color(vector4* out, const unsigned* argb);                      // 0x40e4e0
+vector4 unpack_color(const unsigned* argb);                           // 0x40e4e0 (cdecl; the colour comes back through the hidden return pointer)
 
 } // namespace rgl
 #endif

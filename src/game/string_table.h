@@ -9,7 +9,10 @@
 struct stream_base;
 
 struct StringTable {
-    struct Str { tstring name; tstring key; };                  // 0x20 bytes (name +0, key +0x10; load1 reads the key first)
+    struct Str {                                                 // 0x20 bytes (name +0, key +0x10; load1 reads the key first)
+        tstring name; tstring key;
+        tstring* resolve();                 // 0x48e8d0 (the translated name, or the name itself when the key has no translation; slot_api.cpp)
+    };
     Str* strings;                       // +0  s_* strings
     Str* quick;                         // +4  quick strings
     int count;                          // +8  (check_string_arg 0x49cda0)

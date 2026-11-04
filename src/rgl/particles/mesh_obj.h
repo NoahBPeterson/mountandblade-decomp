@@ -15,8 +15,6 @@ inline vector4 vmul(const float& s, const vector4& a) { return vector4(s * a.x, 
 inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 // (vector4 + vector4 is rgl_math.h's member operator+: x, y, z added, w left unset)
 
-// 0x40e4e0 as setup_material calls it: the hidden return pointer form of rgl_math.h's unpack_color(out, argb)
-// (same cdecl call, but the result is copied out of a temporary)
 vector4 unpack_color(const unsigned* argb);                         // 0x40e4e0
 
 } // namespace rgl

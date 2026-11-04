@@ -624,8 +624,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         vector4 tmp;
                         vector4* gc = ground_color(&tmp, (const float*)c);
                         rgb.x = gc->x; rgb.y = gc->y; rgb.z = gc->z; rgb.w = gc->w;
-                        vector4 tc;
-                        unpack_color(&tc, (const unsigned*)&c->f8c);
+                        vector4 tc = rgl::unpack_color((const unsigned*)&c->f8c);
                         rgb.x = rgb.x * tc.x;
                         rgb.y = rgb.y * tc.y;
                         rgb.z = rgb.z * tc.z;

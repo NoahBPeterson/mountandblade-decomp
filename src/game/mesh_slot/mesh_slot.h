@@ -30,9 +30,6 @@ using rgl::vector4;
 using rgl::matrix;
 
 extern float g_ramp_gamma;                      // 0x5a9bfc gamma exponent of the software colour path (0x463790)
-// rgl::unpack_color returns nothing in rgl_math.h; the callers below use its result pointer (eax = out)
-typedef vector4* (__cdecl *unpack_color_fn)(vector4* out, const unsigned* argb);
-#define UNPACK_COLOR ((unpack_color_fn)(void (__cdecl*)(vector4*, const unsigned*))&rgl::unpack_color)
 unsigned pack_signed_color(const float* c);     // 0x461370 (cdecl)
 
 // ---- members of rgl::mesh defined in this TU (0x47aa40..0x47b3b0) ------------------------------------------------

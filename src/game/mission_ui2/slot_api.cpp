@@ -80,14 +80,14 @@ void widget_mgr::animate_size(int idx, float t, int v)
 }
 
 // @ 0x48e8d0
-__declspec(noinline) tstring* NameRec::resolve()
+__declspec(noinline) tstring* StringTable::Str::resolve()
 {
     tstring* r = g_strtable.find(&key);
     return r ? r : &name;
 }
 
 // @ 0x48e8f0
-tstring NameTable::get_string(int index, int kind)
+tstring StringTable::get_string(int index, int kind)
 {
     if (kind == 0) {
         if (index >= 0 && index < 0x80)
@@ -95,15 +95,15 @@ tstring NameTable::get_string(int index, int kind)
         return tstring("Invalid String-register!");
     }
     if (kind == 0x16) {
-        if (index >= 0 && index < count2) {
-            NameRec* rec = &base2[index];
+        if (index >= 0 && index < quick_count) {
+            Str* rec = &quick[index];
             tstring* r = g_strtable.find(&rec->key);
             return *(r ? r : &rec->name);
         }
         return tstring("Invalid Quick-String!");
     }
     if (index >= 0 && index < count)
-        return *(base[index].resolve());
+        return *(strings[index].resolve());
     return tstring("Unexisting String!");
 }
 

@@ -7411,7 +7411,6 @@ struct SceneObjV : shape_base {                         // a scene object return
     float fa8;                                          // +0xa8
 };
 struct PartV { char pad0[0xc]; float f0c; char pad10[0x2c - 0x10]; vector4 v2c; char pad3c[4]; };   // 0x40 bytes: a part of an animation record (AnimDef::subs)
-struct AnimSlotCall { bool set(int id, unsigned prio); };   // 0x4378a0 out of line (agent_stats.cpp)
 struct Vec3;
 void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30 (the result is *out)
 static __forceinline float elapsed_inl(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
@@ -7767,7 +7766,7 @@ reset_pos:
                 anim[0].events = 0x1000021;
                 anim[0].rate = 1.0f;
                 if ((defs->defs[0x19e].flags & 0x400) && anim[1].cur != -1 && (anim[1].events & 0x1ffff) < 0x21)
-                    ((AnimSlotCall*)&anim[1])->set(-1, 0x21);
+                    anim[1].set(-1, 0x21);
             }
             snd = 0x22;
             if (fz < g_mission->terrain.base_z)
@@ -7778,7 +7777,7 @@ reset_pos:
                 anim[0].events = 0x1000021;
                 anim[0].rate = 1.0f;
                 if ((defs->defs[3].flags & 0x400) && anim[1].cur != -1 && (anim[1].events & 0x1ffff) < 0x21)
-                    ((AnimSlotCall*)&anim[1])->set(-1, 0x21);
+                    anim[1].set(-1, 0x21);
             }
             snd = 0x1e;
             if (fz < g_mission->terrain.base_z)

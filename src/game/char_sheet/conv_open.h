@@ -84,10 +84,6 @@ typedef MapWidget ViewWindow;
 
 // (label_refresh 0x4e4c70, make_scrollbar 0x4f6160, make_editor_list 0x4f62f0 are cs_common.h's)
 
-// factory helpers (parent is the last argument)
-MissionUi* make_body_button(MissionUi* parent, const tstring& a, const tstring& b, const tstring& c,
-                         float x, float y, float w, float h, float f5, float f6,
-                         float f7, float f8);                                // 0x4dcc50
 
 // ---- the conversation screen (`this` of 0x4f66e0, 0x4f73c0, 0x4f7d70) --------------------------------
 #include "../conv_screen.h"                      // ConvScreen, Choices

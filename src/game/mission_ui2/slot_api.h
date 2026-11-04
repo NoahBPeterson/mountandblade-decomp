@@ -6,6 +6,7 @@
 #define GAME_MISSION_UI2_SLOT_API_H
 #include "../tstring.h"
 #include "../strat/gui_manager.h"     // gui_manager (push 0x4334b0)
+#include "../string_table.h"          // StringTable::get_string 0x48e8f0, Str::resolve 0x48e8d0
 
 // A widget as the overlay animators see it: the animation slots of its vtable take (seconds, value).
 struct AnimVt {
@@ -16,22 +17,6 @@ struct AnimVt {
     virtual void animate_hilight_alpha(float a, int b);       // +0x1c highlight alpha, b << 24 (0x48e7d0)
     virtual void animate_size(float a, int b);       // +0x20 size (0x48e850)
     virtual void animate_pos(float a, int b);       // +0x24 position (0x48e5d0)
-};
-
-// A 0x20-byte string record: the name at +0, the translation key at +0x10.
-struct NameRec {
-    tstring name;                           // +0
-    tstring key;                            // +0x10
-    tstring* resolve();                     // 0x48e8d0
-};
-
-// The string tables (global 0xa75ea0): two arrays of NameRec with their own counts.
-struct NameTable {
-    NameRec* base;                          // +0   named strings (0x48e8f0, kinds other than 0 / 0x16)
-    NameRec* base2;                         // +4   quick strings (kind 0x16)
-    int count;                              // +8
-    int count2;                             // +0xc
-    tstring get_string(int index, int kind);    // 0x48e8f0 (ret 0xc: hidden return)
 };
 
 // The level (global 0xa732b4) is the engine's rgl::world (src/rgl/scene/world.h): the grid of collision cells at +0x28 and the point locator.

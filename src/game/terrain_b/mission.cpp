@@ -294,8 +294,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
     EnvRow* sp = g_env_rows + spec_idx;
 
     {
-        vector4 col;
-        unpack_color(&col, (const unsigned*)&sp->f44);
+        vector4 col = rgl::unpack_color((const unsigned*)&sp->f44);
 
         float k;
         if (t * 60.0f < 0.0f)

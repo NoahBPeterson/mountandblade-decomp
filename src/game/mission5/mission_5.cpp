@@ -43,10 +43,9 @@ extern Presentation* g_presentation;                        // 0x5e299c
 extern const float g_aim_range_tbl[14] = {-0.5f, 3.1415927f, -2.0f, 2.0f, -1.5f, 2.5f, -1.0f, 3.0f, -1.3f, 2.8f, -3.0f, 1.0f, 5.0f, 4.0f};  // 0x59390c (rdata: {lo, hi} pairs)
 
 #include "../ui_globals.h"      // UI / core globals
+#include "../map_flags.h"      // MapFlags::commit 0x513710
 
 // ======================================================= slice s00525160: functions
-#undef g_513710
-#define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #undef g_big
 #define g_big       (*(Big5e292c_s25160**)&g_mission)
 // agent record i of the mission (pages of 16, 0x5928 bytes each)
@@ -264,7 +263,7 @@ case1:
     {
         int x = w18;
         if (x == 0x64)
-            g_513710.m((int*)&code_f);
+            g_map_flags.commit((char*)&code_f);
         else
             g_windows.set_state(x);
     }

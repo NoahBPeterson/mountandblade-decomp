@@ -124,8 +124,7 @@ void rgl::mesh::linearise_vertex_colors()
         int n = (int)v50.size();
         for (int i = 0; i < n; i++) {
             vertex60* v = &(&*v50.begin())[i];
-            vector4 c;
-            unpack_color(&c, &v->color);
+            vector4 c = rgl::unpack_color(&v->color);
             c.x = (float)pow(c.x, 2.2f);
             c.y = (float)pow(c.y, 2.2f);
             c.z = (float)pow(c.z, 2.2f);

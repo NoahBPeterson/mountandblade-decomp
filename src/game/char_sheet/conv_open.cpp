@@ -162,10 +162,9 @@ void Rec1208::init_screen()
     float button_height = scan_float("conv_sentence_button_height");
 
     for (int i = 0; i < 0x400; i++) {
-        buttons[i] = make_body_button(ch, tstring("dlg_button"), tstring("dlg_button_down"),
-                                      tstring("hello"), -((float)i * sentence_y_a),
-                                      width_ratio, sentence_size_y, button_height,
-                                      sentence_x, 1.0f, 0.085f, 0.085f);
+        buttons[i] = (MissionUi*)new_sized_button(ch, tstring("hello"), sentence_x, -((float)i * sentence_y_a), sentence_size_y,
+                                              tstring("dlg_button"), tstring("dlg_button_down"),
+                                              width_ratio, button_height, 0.085f);   // 0x4dcc50
     }
 
     // +0x30: a 0x358-byte view-window object (ctor 0x4ed630); its +0x1ac receives a copy of the screen's

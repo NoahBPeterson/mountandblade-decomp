@@ -92,11 +92,9 @@ struct VObj_s25160 {
     virtual void v45();                                         // 0xb4
 };
 
-struct Mgr513710_s25160 { void m(void* p); };                           // 0x513710
 struct Big5e292c_s25160 { };   // g_mission as the slice addresses it (frame 0x483f60 is Mission::frame)
 
 
-#define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #define g_big       (*(Big5e292c_s25160**)&g_mission)
 
 // ---------------------------------------------------------------------------

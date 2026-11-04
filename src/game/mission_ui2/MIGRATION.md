@@ -25,7 +25,7 @@ Byte-exact in the slices: 20 in total (per-module split not tracked) (all still 
 
 ## Tricks kept
 - "External view" structs (TroopExt::set_attr, ItemRefExt::compact) so cl treats an in-TU callee as external.
-- `__declspec(noinline)` on NameRec::resolve and unit_class_name.
+- `__declspec(noinline)` on StringTable::Str::resolve and unit_class_name.
 - goto structure in count_troops; `party_of` page-pointer shape (canonical get_party gives different codegen).
 - OW(idx) macro for widget access; Party::init stores through offset macros in disassembly order.
 - Local views (ItemRefStat204, FieldVisual, FieldHost) where a header annotation maps a member to another address.
