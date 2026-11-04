@@ -153,7 +153,6 @@ extern char vtbl_5924a0[];                       // 0x5924a0
 extern char vtbl_592570[];                       // 0x592570
 extern char vtbl_592644[];                       // 0x592644
 extern char vtbl_592848[];                       // 0x592848
-extern char vtbl_5931a8[];                       // 0x5931a8
 extern char vtbl_5947d8[];                       // 0x5947d8
 extern char vtbl_5948e0[];                       // 0x5948e0
 extern char vtbl_C4c3050[];                      // 0x5957bc

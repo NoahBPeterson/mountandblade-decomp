@@ -1174,7 +1174,6 @@ static __forceinline int blend_i(const float& lim, const float& d, int a, int b)
 // @ 0x49deb0
 Camera::Camera()
 {
-    *(void**)this = (void*)vtbl_5931a8;                     // the view's own class descriptor
     shake_x = 0;
     shake_y = 0;
     follow[0] = 0;
