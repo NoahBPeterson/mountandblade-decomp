@@ -1,7 +1,7 @@
 004c48d0 ?load@rec34_list@@QAIXAAUstream_base@@@Z
-004c49f0 ??0head_cam@@QAE@XZ
-004c4b70 ?write_stream@head_cam@@UAEXPAUw_stream@@@Z
-004c4c00 ?read_stream@head_cam@@UAEXPAUw_stream@@@Z
+004c49f0 ??0CampaignScreen@@QAE@XZ
+004c4b70 ?write_stream@CampaignScreen@@UAEXPAUw_stream@@@Z
+004c4c00 ?read_stream@CampaignScreen@@UAEXPAUw_stream@@@Z
 004c4c90 ??_Ghead_rec@@UAEPAXI@Z
 004c4cc0 ??0head_obj2@@QAE@XZ
 004c4d10 ??1Tail2@@QAE@XZ
@@ -92,8 +92,8 @@
 004c8c20 ?conv_zero_node@@YIPAXPAX@Z
 004c8ca0 ?save_language_files@GameData@@QAEX_N@Z
 004ca550 ?refresh@screen_text@@QAEXH@Z
-005947d8 ??_7head_rec@@6B@  # head record base vtable (head_cam / head_obj2 ctors store it first)
-00595bd8 ??_7head_cam@@6B@  # head_cam vtable (ctor 0x4c49f0)
+005947d8 ??_7head_rec@@6B@  # head record base vtable (CampaignScreen / head_obj2 ctors store it first)
+00595bd8 ??_7CampaignScreen@@6B@  # CampaignScreen vtable (ctor 0x4c49f0)
 00595c20 ??_7head_obj2@@6B@  # head_obj2 vtable (ctor 0x4c4cc0)
 00535482 ?engine_alloc@@YAPAXI@Z  # operator new[]
 0053545e ?engine_new@@YAPAXI@Z  # operator new

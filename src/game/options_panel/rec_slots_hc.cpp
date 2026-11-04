@@ -6,12 +6,9 @@
 // base signature is frame_update(const float*) while the real functions take int/float: the stub forwards the 4-byte
 // argument unchanged.
 #include "../../rgl/mesh2/head_rec.h"
+#include "../campaign_screen.h"
 #include "../strat/gui_manager.h"     // g_gui
 
-struct Screen {
-    void init_screen();
-    void frame_update(float);
-};
 struct rec_2e4 {
     void release();
 };
@@ -20,10 +17,8 @@ struct CharSheet {
     void update(float);
 };
 
-// head_cam
-void head_cam::reset_screen() { g_gui.reset(); }
-void head_cam::init_screen() { ((Screen*)this)->init_screen(); }
-void head_cam::frame_update(float a) { ((Screen*)this)->frame_update(a); }
+// CampaignScreen (game/campaign_screen.h)
+void CampaignScreen::reset_screen() { g_gui.reset(); }
 
 // head_obj2
 void head_obj2::reset_screen() { ((rec_2e4*)this)->release(); }

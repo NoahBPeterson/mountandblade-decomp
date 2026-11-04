@@ -4,7 +4,7 @@
 // symbols/slices/rec_tables.txt and symbols/slices/gui_edit.txt; a derived class declares one virtual so
 // that cl emits its vptr store).
 // Layout evidence: 0x4c2c50 (ResultWindow::ResultWindow: vt, name ctor +0x1c, +4 = 0, +8 = 0x63), 0x4c4c90 (head_rec_delete:
-// vt 0x5947d8, name dtor), 0x4c49f0 (head_cam::head_cam), 0x4c4cc0 (head_obj2::head_obj2).
+// vt 0x5947d8, name dtor), 0x4c49f0 (CampaignScreen::CampaignScreen), 0x4c4cc0 (head_obj2::head_obj2).
 // Merged from s004c2b20 (Base0 / C4c2da8), s004c46d0 (head_rec), s004c3d90 (particle_cam).
 #ifndef MESH2_HEAD_REC_H
 #define MESH2_HEAD_REC_H
@@ -15,8 +15,7 @@
 
 #include "../../game/head_rec.h"
 
-// The camera-like object of 0x4c49f0 (vtable 0x595bd8), written/read by 0x4c4b70 / 0x4c4c00. The slices called it
-// head_cam (s004c46d0) and particle_cam (s004c3d90).
+// The serializer slots 5 / 6 take (CampaignScreen::write_stream 0x4c4b70 / read_stream 0x4c4c00, game/campaign_screen.h).
 struct w_stream {
     virtual void v01();                                 // 0   0x04
     virtual void v02();                                 // 1   0x08
@@ -33,26 +32,6 @@ struct w_stream {
     virtual void v12();                                 // 12
     virtual void v13();                                 // 13
     virtual w_stream* r_float(float* v);                // 14  0x38, returns the next reader
-};
-
-struct head_cam : head_rec {
-    char    pad30[0x64 - 0x2c];
-    char    flag64;            // +0x64
-    char    pad65[0x170 - 0x65];
-    rgl::frustum fr;           // +0x170 (0x120 bytes)
-    rgl::vector4 p290;         // +0x290
-    rgl::vector4 p2a0;         // +0x2a0
-    int     w2b0;              // +0x2b0
-    float   f2b4;              // +0x2b4
-    float   f2b8;              // +0x2b8
-    head_cam();                // 0x4c49f0
-    virtual void reset_screen();
-    virtual void init_screen();
-    virtual void frame_update(float);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    virtual void write_stream(w_stream* w);     // slot 5  0x4c4b70
-    virtual void read_stream(w_stream* r);      // slot 6  0x4c4c00
-    // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 
 // The second head object of 0x4c4cc0 (vtable 0x595c20, frustum at +0x2ec).

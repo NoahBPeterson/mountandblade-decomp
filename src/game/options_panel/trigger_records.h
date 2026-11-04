@@ -18,7 +18,8 @@ void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 
 #include "../screen_records.h"   // the record classes (vtables 0x595740..0x596c68)
 #include "../conv_screen.h"      // Rec1208: the conversation screen
-#include "../../rgl/mesh2/head_rec.h"   // head_cam, head_obj2
+#include "../../rgl/mesh2/head_rec.h"   // head_obj2, w_stream
+#include "../campaign_screen.h"          // CampaignScreen
 #include "../result_window.h"            // ResultWindow
 #include "../triggers/item_rec.h"        // ItemRec, ItemRec2
 #include "./mission_item_recs.h"         // MissionBlocker, ItemA..ItemD

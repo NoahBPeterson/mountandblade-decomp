@@ -12,6 +12,7 @@
 #include "../../game/terrain_a/terrain.h"   // Terrain::conv_build_scene (0x4c8630)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
+#include "../../game/campaign_screen.h"   // CampaignScreen (0x4c49f0, write_stream 0x4c4b70, read_stream 0x4c4c00)
 #include "../../include/mat4.h"
 #include "../../include/ptr_vec.h"
 #include "../../include/vec.h"
@@ -91,9 +92,9 @@ void rec34_list::load(stream_base& s)
 }                                       // a and b are destroyed by the epilogue, b first
 
 // @ 0x4c49f0
-head_cam::head_cam()
+CampaignScreen::CampaignScreen()
 {
-    rgl::frustum* f = &fr;
+    rgl::frustum* f = &cam;
     WL_MARKER(12)
     f->perspective = 1;
     f->nearz = 0.2f;
@@ -103,11 +104,11 @@ head_cam::head_cam()
     f->bottom = -0.07f;
     f->top = 0.07f;
     f->build_planes();
-    fr.m.o = vector4(0, 0, 10);
-    p290 = vector4(0, 0, 0);
-    p2a0 = vector4(0, 0, 0);
-    w2b0 = 0;
-    flag64 = 0;
+    cam.m.o = vector4(0, 0, 10);
+    target = vector4(0, 0, 0);
+    velocity = vector4(0, 0, 0);
+    f2b0 = 0;
+    f64 = 0;
     f2b4 = 1.0f;
     f2b8 = 5.0f;
     WL_MARKER(13)
@@ -115,27 +116,27 @@ head_cam::head_cam()
 
 // @ 0x4c4b70
 // (ret 4, this in ecx) Writes the vector4s part by part, each through the writer returned by the previous
-// call (p290, p2a0, then the int at +0x2b0, the two floats).
-void head_cam::write_stream(w_stream* w)
+// call (the target and velocity triples, then the int at +0x2b0, the two floats).
+void CampaignScreen::write_stream(w_stream* w)
 {
-    vector4* p = &p290;
+    vector4* p = &target;
     w->w_float(&p->x)->w_float(&p->y)->w_float(&p->z);
-    p = &p2a0;
+    p = &velocity;
     w->w_float(&p->x)->w_float(&p->y)->w_float(&p->z);
-    w->w_float((float*)&w2b0);
+    w->w_float(&f2b0);
     w->w_float(&f2b4);
     w->w_float(&f2b8);
 }
 
 // @ 0x4c4c00
 // Reader counterpart of 0x4c4b70 (ret 4, this in ecx): the same chained calls through slot 14 (+0x38).
-void head_cam::read_stream(w_stream* w)
+void CampaignScreen::read_stream(w_stream* w)
 {
-    vector4* p = &p290;
+    vector4* p = &target;
     w->r_float(&p->x)->r_float(&p->y)->r_float(&p->z);
-    p = &p2a0;
+    p = &velocity;
     w->r_float(&p->x)->r_float(&p->y)->r_float(&p->z);
-    w->r_float((float*)&w2b0);
+    w->r_float(&f2b0);
     w->r_float(&f2b4);
     w->r_float(&f2b8);
 }

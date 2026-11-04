@@ -1,7 +1,7 @@
 #ifndef SCREEN_INIT_H
 #define SCREEN_INIT_H
 // Slice s004ec4d0: the campaign screen's UI construction and the map-camera entity pass.
-//  0x4ec4d0  Screen::init_screen  rebuilds the whole campaign UI: resets the GUI, creates the map bar
+//  0x4ec4d0  CampaignScreen::init_screen  rebuilds the whole campaign UI: resets the GUI, creates the map bar
 //                                overlay (+0x2c), the button overlay (+0x34) with its terrain map and the six
 //                                translated menu buttons, two hint widgets, the paused banner (+0x5c), the
 //                                wait-hint widget (+0x58) and the three-dimensional map widget (+0x30).
@@ -26,10 +26,10 @@
 #include "../../rgl/mesh_x.h"                           // mesh_x::clone 0x41c6d0
 
 // ---- the campaign screen (`this` of 0x4ec4d0 / 0x4ecce0) -----------------------------------------------
-#include "../campaign_screen.h"            // Screen (the campaign map screen)
+#include "../campaign_screen.h"            // CampaignScreen (the campaign map screen)
 
 // ---- game objects -------------------------------------------------------------------------------------
-struct Rect {                                   // the 0x10-byte region copied into Screen+0x290
+struct Rect {                                   // the 0x10-byte region copied into CampaignScreen+0x290
     int x, y, w, h;
 };
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)

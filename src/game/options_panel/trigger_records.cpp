@@ -11,7 +11,7 @@ int g_5e29ac;                                       // 0x5e29ac
 void init_mission_trigger_records()
 {
     WL_MARKER(6)
-    slot_as<head_cam>(7) = new head_cam;
+    slot_as<CampaignScreen>(7) = new CampaignScreen;
     slot_as<ResultWindow>(0) = new ResultWindow;
     slot_as<C4c3050>(1) = new C4c3050;
     slot_as<ItemRec>(4) = new ItemRec;

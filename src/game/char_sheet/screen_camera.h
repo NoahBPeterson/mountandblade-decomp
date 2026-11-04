@@ -1,7 +1,7 @@
 #ifndef SCREEN_CAMERA_H
 #define SCREEN_CAMERA_H
 // Slice s004ece20: the campaign map camera tick and the map widget's constructor / destructor.
-//  0x4ece20  Screen::camera_update steps the campaign map camera by dt:
+//  0x4ece20  CampaignScreen::camera_update steps the campaign map camera by dt:
 //            * integrates the pan stick (+0x2bc / +0x2c0) and the yaw rate (+0x2c4) at 10x, then the
 //              zoom rate (+0x2c8) at 10x into the zoom (+0x2b8), clamped to 3.5 .. 105.  While the
 //              tactical-view globals 0xa17148 / 0xa1717c / 0x5a9fbc are all set the pan and yaw are
@@ -71,7 +71,7 @@ struct WorldCam {
 };
 
 // ---- the campaign screen (`this` of 0x4ece20) ----------------------------------------------------------
-#include "../campaign_screen.h"            // Screen (the campaign map screen)
+#include "../campaign_screen.h"            // CampaignScreen (the campaign map screen)
 
 // 0x4903e0 / 0x48ad00: thiscall on the party manager (g_game + 0xf8), one argument each
 #include "../../include/party.h"

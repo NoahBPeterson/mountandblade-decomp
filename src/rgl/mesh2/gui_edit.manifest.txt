@@ -1,6 +1,6 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?load@rec34_list@@QAEXAAUstream_base@@@Z  004c48d0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?write_stream@head_cam@@UAEXPAUw_stream@@@Z  004c4b70  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?read_stream@head_cam@@UAEXPAUw_stream@@@Z  004c4c00  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?write_stream@CampaignScreen@@UAEXPAUw_stream@@@Z  004c4b70  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?read_stream@CampaignScreen@@UAEXPAUw_stream@@@Z  004c4c00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??_Ghead_rec@@UAEPAXI@Z  004c4c90  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??0head_obj2@@QAE@XZ  004c4cc0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1Tail2@@QAE@XZ  004c4d10  /O2 /MT /Gy /TP
@@ -53,4 +53,4 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?insert_a@MapDialog@@QAEPAUMapRecord@@PAU2@HH@Z  004c6eb0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?insert_b@MapDialog@@QAEPAHPAHHH@Z  004c6ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?ufill@edit_vec@@QAEPAUedit_vert@@PAU2@HPBU2@@Z  004c8810  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ??0head_cam@@QAE@XZ  004c49f0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ??0CampaignScreen@@QAE@XZ  004c49f0  /O2 /MT /Gy /TP

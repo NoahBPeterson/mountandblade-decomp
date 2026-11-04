@@ -1,7 +1,7 @@
 # slice s00514d40 (batch ds1) - layout notes
 #
-# 0x514d40 Screen::frame_update(float dt): the campaign map screen's per-frame update, 4154 bytes,
-# thiscall (ret 4), `this` in ECX. Its last call is 0x4ece20 (Screen::camera_update) on the same object, so
+# 0x514d40 CampaignScreen::frame_update(float dt): the campaign map screen's per-frame update, 4154 bytes,
+# thiscall (ret 4), `this` in ECX. Its last call is 0x4ece20 (CampaignScreen::camera_update) on the same object, so
 # `this` is the Screen of slice s004ece20. 0x514d40 is complete but NOT byte-exact (emitted 3979 bytes,
 # 2921 differing bytes); the diffs are codegen only - stack-slot/register allocation - see
 # match/slices/s00514d40/nonmatching.txt for the exact list. Nothing in this slice is a byte-exact row.
@@ -37,8 +37,8 @@
 # 1 - (int)(hours * -0.041666668f) > 30, both && !g_trial_mode, gated to a single fire by a `char f64`
 # flag and a `char start` flag; the battle start recomputes the scene node from +0xe4 every time and
 # f516250/f516370 + ItemSound(-6) + the command block follow it.
-0x514d40 ?frame_update@Screen@@QAEXM@Z  # campaign screen per-frame update; complete, not byte-exact (see nonmatching.txt)
-0x4ece20 ?camera_update@Screen@@QAEXM@Z  # Screen::camera_update, called last by frame_update; `this` owner
+0x514d40 ?frame_update@CampaignScreen@@UAEXM@Z  # campaign screen per-frame update; complete, not byte-exact (see nonmatching.txt)
+0x4ece20 ?camera_update@CampaignScreen@@QAEXM@Z  # CampaignScreen::camera_update, called last by frame_update; `this` owner
 0x515d80 Screen::f515d80  # 0x515d80 ret 4, per-frame overlay/timer step on the same screen
 0x516250 Screen::f516250  # 0x516250 ret 4, battle start helper A
 0x516370 Screen::f516370  # 0x516370 ret 4, battle start helper B

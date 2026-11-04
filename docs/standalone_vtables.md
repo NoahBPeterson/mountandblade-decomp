@@ -116,7 +116,7 @@ Lessons that cost time:
   `create_flagged` / `hook_b` (ItemC), `view_obj::reset` / `InputScreen::on_input` (ItemD), `MissionHud::refresh` /
   `Screen_s261e0::tick` (MissionBlocker, slot 4 `MissionParams::init` is in the TU). Their views (SourceScreen = MissionSource at
   +0x30 + interval, ScreenBase) are the same record.
-* head_cam / head_obj2 (rec_slots_hc.cpp): `Screen::init_screen` / `frame_update`, `CharSheet::init` / `update`, `rec_2e4::release`.
+* head_obj2 (rec_slots_hc.cpp; head_cam is now CampaignScreen, one class with the campaign map screen): `CharSheet::init` / `update`, `rec_2e4::release`.
 
 ## Still open (see the audit)
 

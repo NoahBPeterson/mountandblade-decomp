@@ -1,5 +1,5 @@
 // mission_ctx.h: the mission start-up object (global at 0xa73300; the slices called it MissionCtx, Unit, Screen's
-// "MissionUi", InventoryPanel and g_panel; trigger_vec.h MetaMission, world_data.h BattleW), the map screen (Screen) and
+// "MissionUi", InventoryPanel and g_panel; trigger_vec.h MetaMission, world_data.h BattleW), the map screen (CampaignScreen) and
 // the small records of the mission start (code 0x513710..0x516ac0). Layout: every offset cites the function that
 // proves it. Names provisional. The game data is read through GameDataV / GD_I (inv_common.h), the mission object
 // through MissionV (a view of src/game/mission.h's Mission with the two methods of 0x5143f0 / 0x5144d0).
@@ -59,7 +59,7 @@ struct Team {                                           // the team record seen 
 };
 
 // the map screen (`this` of 0x514d40 / 0x515d80)
-#include "../campaign_screen.h"            // Screen (the campaign map screen; its Cam is rgl::frustum)
+#include "../campaign_screen.h"            // CampaignScreen (the campaign map screen; its Cam is rgl::frustum)
 #include "../window_mgr.h"      // g_windows (0xa73980), slot_as<T>(i)
 
 // the mission start-up object (global g_mission_ctx, 0xa73300): the one definition is mission_ctx_rec.h (no includes), so that

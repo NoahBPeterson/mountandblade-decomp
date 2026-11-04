@@ -38,7 +38,7 @@ static char* party_bytes(PartyMgr* mgr, int idx)
 }
 
 // @ 0x4ec4d0
-void Screen::init_screen()
+void CampaignScreen::init_screen()
 {
     g_gui.reset();
     g_game->f1a090 = 0;
@@ -195,7 +195,7 @@ void Screen::init_screen()
     }
     {
         float zero = 0.0f;
-        f298 = f298 + 1.0f;                           // +0x298 (camera target z; 0x4ecc09), not the zoom at +0x2b8
+        target.z = target.z + 1.0f;                           // +0x298 (camera target z; 0x4ecc09), not the zoom at +0x2b8
         *(float*)((char*)this + 0x2bc) = zero;
         *(float*)((char*)this + 0x2c0) = zero;
         *(float*)((char*)this + 0x2c4) = zero;
@@ -218,7 +218,7 @@ void Screen::init_screen()
 }
 
 // @ 0x4ecce0
-void Screen::camera_mark_entities()
+void CampaignScreen::camera_mark_entities()
 {
     g_game->f13acc = (f2b8 * g_590bb8 + 1.0f) * g_54b3b4;
     PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);

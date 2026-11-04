@@ -7480,7 +7480,7 @@
   },
   "004ec4d0": {
    "verdict": "DIFF",
-   "symbol": "?init_screen@Screen@@QAEXXZ",
+   "symbol": "?init_screen@CampaignScreen@@UAEXXZ",
    "insns": 572,
    "ours": 533,
    "unverified": 0,
@@ -7490,7 +7490,7 @@
   },
   "004ecce0": {
    "verdict": "DIFF",
-   "symbol": "?camera_mark_entities@Screen@@QAEXXZ",
+   "symbol": "?camera_mark_entities@CampaignScreen@@QAEXXZ",
    "insns": 87,
    "ours": 81,
    "unverified": 0,
@@ -7500,7 +7500,7 @@
   },
   "004ece20": {
    "verdict": "DIFF",
-   "symbol": "?camera_update@Screen@@QAEXM@Z",
+   "symbol": "?camera_update@CampaignScreen@@QAEXM@Z",
    "insns": 495,
    "ours": 482,
    "unverified": 0,
@@ -8552,7 +8552,7 @@
   },
   "00514d40": {
    "verdict": "DIFF",
-   "symbol": "?frame_update@Screen@@QAEXM@Z",
+   "symbol": "?frame_update@CampaignScreen@@UAEXM@Z",
    "insns": 1099,
    "ours": 1007,
    "unverified": 0,
@@ -8562,7 +8562,7 @@
   },
   "00515d80": {
    "verdict": "DIFF",
-   "symbol": "?camera_move@Screen@@QAEXM@Z",
+   "symbol": "?camera_move@CampaignScreen@@QAEXM@Z",
    "insns": 300,
    "ours": 276,
    "unverified": 0,

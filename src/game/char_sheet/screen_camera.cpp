@@ -13,15 +13,15 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // @ 0x4ece20
-void Screen::camera_update(float dt)
+void CampaignScreen::camera_update(float dt)
 {
     // --- pan: the stick and yaw rates are integrated at 10x ---------------------------------------
     // the original shares dt*10 and spills the y increment as a float before adding it (x87 register pressure);
     // the volatile temporary keeps that rounding, which an in-register sum does not
     float r = dt * 10.0f;
     volatile float ry = r * f2c0;
-    f290 = r * f2bc + f290;
-    f294 = ry + f294;
+    target.x = r * f2bc + target.x;
+    target.y = ry + target.y;
     f2b0 = dt * f2c4 * 10.0f + f2b0;        // a literal: with the 0x549d74 global cl evaluates (10 * f2c4) * dt
 
     float max_zoom = 105.0f;                  // 105
@@ -61,14 +61,14 @@ void Screen::camera_update(float dt)
     f2c8 *= d;
 
     // --- keep the camera over the map --------------------------------------------------------------
-    if (f290 < g_map_min_x)
-        f290 = g_map_min_x;
-    else if (f290 > g_map_max_x)
-        f290 = g_map_max_x;
-    if (f294 < g_map_min_y)
-        f294 = g_map_min_y;
-    else if (f294 > g_map_max_y)
-        f294 = g_map_max_y;
+    if (target.x < g_map_min_x)
+        target.x = g_map_min_x;
+    else if (target.x > g_map_max_x)
+        target.x = g_map_max_x;
+    if (target.y < g_map_min_y)
+        target.y = g_map_min_y;
+    else if (target.y > g_map_max_y)
+        target.y = g_map_max_y;
 
     // --- the pitch follows the zoom ----------------------------------------------------------------
     f2b4 = f2b8 * 0.014f + C_590E68;
@@ -86,9 +86,9 @@ void Screen::camera_update(float dt)
             Party* p = (Party*)((char*)g_game->parties.pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);
             vector4 rect = *(vector4*)&p->pos;
             rect.z = rect.z + C_549CDC;
-            float dx = rect.x - f290;
-            float dy = rect.y - f294;
-            float dz = rect.z - f298;
+            float dx = rect.x - target.x;
+            float dy = rect.y - target.y;
+            float dz = rect.z - target.z;
             // pan toward the party only while it is farther than 5% of the zoom (0x4ed165: fcompp; test ah, 5; jp skip)
             if (f2b8 * 0.05f < sqrtf(dz * dz + dy * dy + dx * dx)) {
                 if (dx < -10.0f)
@@ -99,33 +99,33 @@ void Screen::camera_update(float dt)
                     dy = -10.0f;
                 else if (dy > 10.0f)
                     dy = 10.0f;
-                f2a0 += (dx * 4.0f) * dt;
-                f2a4 += (dy * 4.0f) * dt;
-                f2a8 += (dz * 4.0f) * dt;
+                velocity.x += (dx * 4.0f) * dt;
+                velocity.y += (dy * 4.0f) * dt;
+                velocity.z += (dz * 4.0f) * dt;
             }
         } else {
-            f2a0 *= 0.0f;
-            f2a4 *= 0.0f;
-            f2a8 *= 0.0f;
+            velocity.x *= 0.0f;
+            velocity.y *= 0.0f;
+            velocity.z *= 0.0f;
         }
     }
 
     // --- integrate the velocity and decay it (1 - 2*dt) -------------------------------------------
-    f290 = dt * f2a0 + f290;
-    f294 = dt * f2a4 + f294;
-    f298 = dt * f2a8 + f298;
+    target.x = dt * velocity.x + target.x;
+    target.y = dt * velocity.y + target.y;
+    target.z = dt * velocity.z + target.z;
     float d2 = 1.0f - (dt + dt);
-    f2a0 *= d2;
-    f2a4 *= d2;
-    f2a8 *= d2;
+    velocity.x *= d2;
+    velocity.y *= d2;
+    velocity.z *= d2;
 
     // --- the frame: identity, +90deg, -yaw, then -pitch; the eye becomes frame.o --------------------
     mat4 frame;
     identity_pos((pos*)&frame.s);
-    frame.o.x = f290;
-    frame.o.y = f294;
-    frame.o.z = f298;
-    frame.o.w = f29c;
+    frame.o.x = target.x;
+    frame.o.y = target.y;
+    frame.o.z = target.z;
+    frame.o.w = target.w;
     float ang = 1.5707964f;
     ((rgl::matrix*)&frame)->rotate_about_s(&ang);
     ang = -f2b0;

@@ -699,7 +699,7 @@ void MissionCtx::start_mission()
 }
 
 // @ 0x514d40 ---------------------------------------------------------------------------------------
-void Screen::frame_update(float dt)
+void CampaignScreen::frame_update(float dt)
 {
     float t = 0.0f;                                 // game hours since the clock's reference tick
     char flag;                                      // 1 while the map is idle
@@ -1000,7 +1000,7 @@ no_party:
 }
 
 // @ 0x515d80
-void Screen::camera_move(float dt)
+void CampaignScreen::camera_move(float dt)
 {
     float src[2][2] = { { 1.0f, 0.0f }, { 0.0f, 1.0f } };   // the identity: a = {1,0} at [esp+0xc], b = {0,1} at [esp+4] (0x515d94)
     mat2 m(&src[0][0], &src[1][0]);
