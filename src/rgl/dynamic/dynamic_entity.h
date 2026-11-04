@@ -15,6 +15,7 @@
 #include <memory>
 #include <new>
 #include <stdexcept>
+#include "../../include/vec_xlen.h"
 #include <string.h>
 #include "../rgl_string.h"
 #include "../rgl_math.h"
@@ -45,7 +46,7 @@ struct contact_ops : contact_vec {
     __forceinline Contact* _Ucopy(Contact* f, Contact* l, Contact* p);
     __forceinline Contact* _Ufill(Contact* p, size_type n, const Contact& v);
     void _Destroy(Contact* f, Contact* l) { for (; f != l; ++f) std::_Destroy(f); }
-    __declspec(noreturn) void _Xlen() const;                        // 0x43e2a0 (throws length_error "vector<T> too long")
+    __forceinline void _Xlen() const { VEC_XLEN(this); }            // 0x43e2a0 (throws length_error "vector<T> too long")
     void _Insert_n(Contact* _Where, size_type _Count, const Contact& _Val);    // 0x427590
     __declspec(noinline) iterator insert(iterator _Where, const Contact& _Val);    // 0x427540
     void push_back(const Contact& _Val);                            // 0x427450

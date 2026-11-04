@@ -75,20 +75,13 @@ struct MPoly {
     MPoly(raw_t) {}
 };
 
-// std::vector<MPoly> / std::vector<MEdge> whose one-argument resize() stays out of line in the original.
-struct PolyVec : std::vector<MPoly> {
-    void resize_default(unsigned n);            // 0x477ca0
-};
-struct EdgeVec : std::vector<MEdge> {
-    void resize_default(unsigned n);            // 0x477db0
-};
 
 // The four-vector container (constructor 0x478150, ICF-folded with the same constructor of other element types).
 struct NavCore {
     std::vector<int> v0;        // +0x00
     std::vector<MVert> verts;   // +0x10
-    PolyVec faces;              // +0x20
-    EdgeVec edges;              // +0x30
+    std::vector<MPoly> faces;              // +0x20
+    std::vector<MEdge> edges;              // +0x30
     int m40;
     vector4 e44, f54;
     int m64;

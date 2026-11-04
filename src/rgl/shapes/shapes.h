@@ -91,6 +91,7 @@ void shape_contacts(shape_base* a, shape_base* b, int max, contact* out, int* co
 // ---- std::vector instantiations (VC7.1 layout: empty allocator, first, last, end) --------------------------
 // Written out so that each out-of-line member can be pinned: clear() (0x41f4b0), _Buy (0x42d570 / 0x4105c0)
 // and _Xlen (0x43e2a0) live in other objects.
+#include "../../include/vec_xlen.h"
 template<class T> T* uninit_copy(T* first, T* last, T* dest, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);
 template<class T> void uninit_fill_n(T* first, unsigned count, const T& val, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);
 template<class T> struct vec {
@@ -119,7 +120,7 @@ template<class T> struct vec {
     vec& operator=(const vec& r);
     void clear();                                       // 0x41f4b0
     bool buy(unsigned n);                               // 0x42d570 (vector4), 0x4105c0 (mface)
-    __declspec(noreturn) void xlen() const;             // 0x43e2a0 (vector4): throws length_error
+    __forceinline void xlen() const { VEC_XLEN(this); } // 0x43e2a0: throws length_error
     void resize(unsigned n) { resize(n, T()); }
     void resize(unsigned n, T val);                     // 0x40db80 (vector4), 0x40dff0 (mface)
     iter erase(iter f, iter l);                         // 0x40dbf0 (vector4), 0x40fd40 (mface)

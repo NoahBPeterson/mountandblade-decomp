@@ -6,6 +6,7 @@
 // first three functions and the _eh part).
 // Boundary: see MIGRATION.md.
 #include <vector>
+#include "../../include/vec_xlen.h"
 #include <list>
 #include <new>
 #include <memory>
@@ -410,7 +411,7 @@ template<> void _Uninit_fill_n<ground_g136*, unsigned int, ground_g136, allocato
     __forceinline T* _Ucopy(T* f, T* l, T* p) { return std::_Uninitialized_copy(f, l, p, _Alval); } \
     __forceinline T* _Ufill(T* p, size_type n, const T& v) { std::_Uninitialized_fill_n(p, n, v, _Alval); return p + n; } \
     void _Destroy(T* f, T* l) { for (; f != l; ++f) std::_Destroy(f); } \
-    void _Xlen() const;
+    __forceinline void _Xlen() const { VEC_XLEN_CALL(this); }   // 0x43e2a0
 
 #define SZ() (_Myfirst == 0 ? 0 : _Mylast - _Myfirst)
 

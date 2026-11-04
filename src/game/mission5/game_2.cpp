@@ -1301,7 +1301,7 @@ void FactionFile::read_file(stream_base& s, int count)
 void tstring_vec::reserve(unsigned n)
 {
     if (n > 0x0fffffff)
-        vec_xlen();
+        VEC_XLEN_CALL(this);
     if (capacity() >= n)
         return;
     tstring* p = (tstring*)::operator new(n * 0x10);

@@ -24,6 +24,9 @@ template std::vector<rgl::vertex60>::iterator std::vector<rgl::vertex60>::erase(
 // 0x413bb0 vector::resize (std::vector<rgl::vertex60>, explicit instantiation)
 template void std::vector<rgl::vertex60>::resize(size_t, rgl::vertex60);
 
+// out-of-line std::vector<vertex60>::push_back, called by the original
+template<> void std::vector<rgl::vertex60, std::allocator<rgl::vertex60> >::push_back(const rgl::vertex60& v);   // 0x411420 (rgl/particles/mesh_obj.cpp)
+
 namespace rgl {
 
 // @ 0x413c50
@@ -76,8 +79,6 @@ static __forceinline float eval_curve(float t, const curve4& c)
     return (c.v1 - c.v0) * ((t - c.t0) / (c.t1 - c.t0)) + c.v0;
 }
 
-// out-of-line std::vector<vertex60> append (push_back's slow path), called by the original
-struct vertex_vec : std::vector<vertex60> { void push_ext(const vertex60& v); };   // 0x411420
 
 // @ 0x413e50
 void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
@@ -199,7 +200,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             vx.pos.x = dx; vx.pos.y = dy; vx.pos.z = dz;
             vx.normal.x = dx; vx.normal.y = dy; vx.normal.z = dz;
             vx.color = color;
-            ((vertex_vec*)&out->v50)->push_ext(vx);
+            out->v50.push_back(vx);
         }
         std::vector<face20>& fcs = src->local_a0 ? src->v90 : (src->parent->*&mesh::get90)();
         for (unsigned i = 0; i < fcs.size(); i++)
