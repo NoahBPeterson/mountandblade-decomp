@@ -1762,5 +1762,39 @@
    "library data": 10424,
    "unnamed bss": 42135
   }
+ },
+ "2026-11-04T13:50:19-06:00": {
+  "data_labels": 45,
+  "aliases": 173,
+  "source_aliases": 27,
+  "source_hacks": 4,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 0,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 188,
+  "when": "2026-11-04T13:50:19-06:00",
+  "commit": "0aad1ed6",
+  "build": "final",
+  "label": "tableaus/debug log/keys",
+  "items": {
+   "defined in source": 183,
+   "generated from source": 821,
+   "borrowed from image": 40,
+   "reached through tables": 7,
+   "library data": 212,
+   "unnamed bss": 20
+  },
+  "bytes": {
+   "defined in source": 143760740,
+   "generated from source": 281624,
+   "borrowed from image": 3684,
+   "reached through tables": 95,
+   "library data": 10424,
+   "unnamed bss": 42135
+  }
  }
 }
