@@ -44,7 +44,6 @@ Config g_cfg = {  // 0x5a9f98
     /*render_buffer_size*/ 15, /*display_width*/ 0, /*display_height*/ 0, /*display_bits*/ 32, /*antialiasing*/ 1, /*sample_quality*/ 0,
     /*force_vsync*/ 0, /*unk64*/ 1, /*shadowmap_quality*/ 1, /*unk6c*/ 1
 };
-render_batch g_batch;                                      // 0x5fe898 (0x41882c bytes; constructed by the compiler: render_batch::render_batch 0x4ebea0, destroyed by ~render_batch 0x4ca830)
 
 
 // ---- imports and library functions the slices declared by hand ------------------------------------------------------

@@ -36,6 +36,9 @@ int rgl::g_vert_budget = 30;                      // 0x5a9c34 base vertex budget
 
 using namespace rgl;
 
+// ---- data this module owns ----
+render_batch g_batch;                               // 0x5fe898 (the batch renderer: 0x418830 bytes; constructed by render_batch::render_batch 0x4ebea0 (config.cpp), destroyed by ~render_batch 0x4ca830)
+
 // ---- render-state setters (global object 0xa17910) ----------------------------------------------------------------
 // @ 0x40e940
 void renderer::set_blend_mode(int mode)
