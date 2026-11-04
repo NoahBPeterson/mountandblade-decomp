@@ -56,8 +56,6 @@ struct MeshX {
 struct GameW {                                                   // world_data/world_data.cpp
     void detach_party(unsigned id);                              // 0x490a30 (ret 4)
     void remove_party(int id);                                   // 0x4915d0 (ret 4)
-    void count_units(unsigned id, int* a, int* b, int* c, int* d);   // 0x490ce0 (ret 0x14)
-    void list_members(unsigned id, int* out, int* n);            // 0x490fa0 (ret 0xc: the party and its attached parties)
     void set_objective(int party, int value);                    // 0x4949d0 (ret 8)
     void random_position_around(Vec2 pos, float r, Vec2* out);   // 0x490030 (ret 0x10)
 };

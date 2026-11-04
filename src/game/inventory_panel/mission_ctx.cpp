@@ -285,7 +285,7 @@ void MissionCtx::update_parties()
             g_game->parties.get(party[side])->dirty = 1;
             // only 0x490ce0's first counter is observable here, and it zeroes the slot itself, so all four
             // out-parameters alias the original's single stack home (the other three were dead)
-            ((GameW*)g_game)->count_units(party[side], &n, &n, &n, &n);
+            g_game->count_units(party[side], &n, &n, &n, &n);
         }
         if (f2c8 != 0) {
             if (party[1 - side] >= 0 && g_game->parties.is_live(party[1 - side])) {
@@ -293,7 +293,7 @@ void MissionCtx::update_parties()
 
                 GV->clear_hero_ammo(party[1 - side]);
                 g_game->parties.get(party[1 - side])->dirty = 1;
-                ((GameW*)g_game)->count_units(party[1 - side], &n, &n, &n, &n);
+                g_game->count_units(party[1 - side], &n, &n, &n, &n);
             }
         }
 
@@ -417,14 +417,14 @@ void MissionCtx::setup(unsigned flags, int delta)
         l[2] = 0;
         l[4] = 0;
         l[6] = 0;
-        ((GameW*)g_game)->count_units(party[side], &l[6], &l[4], &l[2], &l[0]);
+        g_game->count_units(party[side], &l[6], &l[4], &l[2], &l[0]);
         int d = -l[0];
         if (mode == 4) {
             l[1] = 0;
             l[3] = 0;
             l[5] = 0;
             l[7] = 0;
-            ((GameW*)g_game)->count_units(party[1 - side], &l[7], &l[5], &l[3], &l[1]);
+            g_game->count_units(party[1 - side], &l[7], &l[5], &l[3], &l[1]);
         }
         if (((signed char)f10 < 0 || f2c8 != 0) &&
             ((flags & 0x2000000) || (d <= 0 && passage_menu <= 0))) {
@@ -483,15 +483,15 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
     int p0 = ctx->party[0];
     if (p0 >= 0) {
         cnt[0] = 0;
-        ((GameW*)g_game)->list_members(p0, (int*)list[0], (int*)&cnt[0]);
+        g_game->list_members(p0, (int*)list[0], (int*)&cnt[0]);
     }
     int p1 = ctx->party[1];
     if (p1 >= 0) {
         cnt[1] = 0;
-        ((GameW*)g_game)->list_members(p1, (int*)list[1], (int*)&cnt[1]);
+        g_game->list_members(p1, (int*)list[1], (int*)&cnt[1]);
     }
     f6218 = a7;
-    ((GameW*)g_game)->list_members(g_game->f78, (int*)(list[1] - a7 * 0x80), (int*)((char*)this + (0x1884 - a7) * 4));
+    g_game->list_members(g_game->f78, (int*)(list[1] - a7 * 0x80), (int*)((char*)this + (0x1884 - a7) * 4));
     init_scene();
 }
 

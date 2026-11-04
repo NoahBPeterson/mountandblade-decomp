@@ -1476,12 +1476,12 @@ int GameData::attach_party_center(const float* pt, int a, int b)
     battle_rec(this, id)->f78 = 0;
     if (a >= 0) {
         int d[4] = { 0, 0, 0, 0 };
-        ((GameW*)this)->count_units(a, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
+        count_units(a, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
         battle_rec(this, id)->f78 += d[0];
     }
     if (b >= 0) {
         int d[4] = { 0, 0, 0, 0 };
-        ((GameW*)this)->count_units(b, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
+        count_units(b, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
         battle_rec(this, id)->f78 += d[0];
     }
     parties.get_party(a)->action = 7;

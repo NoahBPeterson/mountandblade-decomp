@@ -30,10 +30,8 @@ extern ini_file g_game_vars;                      // 0xa44240 (the option table:
 // (the definitions carry these class names; a call through GameData / PartyMgr would name a symbol nothing defines)
 struct GameW {                                          // game/world_data: GameData's methods of 0x490ce0..0x491f20
     void remove_party(int id);                          // 0x4915d0
-    void count_units(unsigned id, int* a, int* b, int* c, int* d);   // 0x490ce0
     int gate_rating(unsigned p1, unsigned p2, int p3);  // 0x491b20 (ret 0xc)
     int token_lookup(int party, int a, int b, int c);   // 0x491f20 (ret 0x10)
-    void list_members(unsigned id, int* out, int* n);   // 0x490fa0 (ret 0xc)
 };
 
 // ---- the game data (g_game) with the members these modules call ----------------------------------------------------

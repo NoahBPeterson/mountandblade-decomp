@@ -55,9 +55,6 @@ typedef PageTable98 AgentPages;
 struct MapWidget {
     void project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (inventory_panel/map_picker.cpp)
 };
-struct GameW {
-    void list_members(unsigned id, int* out, int* n);   // 0x490fa0 (game/world_data)
-};
 struct DistObj;
 bool __fastcall dist_is_zero(DistObj* o);                                 // 0x51be20 (map_tooltip.cpp)
 int __stdcall draw_party_line(int id);                                    // 0x51c090 (map_tooltip.cpp)
@@ -207,7 +204,7 @@ void MapPanel::update(int type, int id)
                 } else {
                     int members[128];                                        // [E+0x8e0]
                     int count = 0;                                           // [E+0x18]
-                    ((GameW*)g_game)->list_members(agent, members, &count);                 // 0x490fa0
+                    g_game->list_members(agent, members, &count);                 // 0x490fa0
                     for (int i = 0; i < count; i++) {
                         int      m    = members[i];
                         float    mrel = g_game->relation(m, g_game->f78);

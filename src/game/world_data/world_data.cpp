@@ -392,9 +392,9 @@ void GameW::detach_party(unsigned id)
 
 // ==== 0x490ce0: total a party's stacks (and its followers') into counters ========================================
 // @ 0x490ce0
-void GameW::count_units(unsigned id, int* a, int* b, int* c, int* d)
+void GameData::count_units(unsigned id, int* a, int* b, int* c, int* d)
 {
-    PartyMgrW* m = &pm();
+    PartyMgrW* m = (PartyMgrW*)&parties;
     if (id >= m->limit())
         return;
     int i = ((Map10007*)(void*)m)->lookup(id);
@@ -430,9 +430,9 @@ void GameW::count_units(unsigned id, int* a, int* b, int* c, int* d)
 
 // ==== 0x490fa0: a party and, recursively, its followers ===========================================================
 // @ 0x490fa0
-void GameW::list_members(unsigned id, int* out, int* n)
+void GameData::list_members(unsigned id, int* out, int* n)
 {
-    PartyMgrW* m = &pm();
+    PartyMgrW* m = (PartyMgrW*)&parties;
     if (id >= m->limit())
         return;
     int i = ((Map10007*)(void*)m)->lookup(id);

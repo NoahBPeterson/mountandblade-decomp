@@ -303,6 +303,8 @@ struct GameData {
     void push_event(const int* pos, unsigned nation);       // 0x4b5fe0 (ret 8: events vector at +0x13a60)
     void push_party_event(int party, const int* pos, const float* heading);   // 0x4b6070 (ret 0xc)
     unsigned color_of(float relation, int flag);           // 0x4b1930 (ret 8: relation colour ramp)
+    void count_units(unsigned id, int* a, int* b, int* c, int* d);   // 0x490ce0 (ret 0x14: world_data/world_data.cpp)
+    void list_members(unsigned id, int* out, int* n);          // 0x490fa0 (ret 0xc: the party and its attached parties)
     bool is_night();                            // 0x435740 (the slices' not_afternoon)
     int remove_troops(int party, int troop, int count, char prisoners, int a5);   // 0x48f9f0 (ret 0x14: count removed)
     float relation(int a, int b);               // 0x48ffa0 (ret 8: party relation, -1..1)

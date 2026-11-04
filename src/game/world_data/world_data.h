@@ -140,8 +140,6 @@ struct GameW : GameData {
     int stack_dna(unsigned id, int stack, int a3, int a4);      // 0x4902a0 (ret 0x10)
     void mark_kind(int kind);                                   // 0x490990 (ret 4)
     void detach_party(unsigned id);                             // 0x490a30 (ret 4)
-    void count_units(unsigned id, int* a, int* b, int* c, int* d);  // 0x490ce0 (ret 0x14)
-    void list_members(unsigned id, int* out, int* n);          // 0x490fa0 (ret 0xc)
     void recruit(int id, int count, Party* dest);              // 0x4910a0 (ret 0xc)
     void handout(Party* p, int id);                            // 0x491430 (ret 8)
     void remove_party(int id);                                      // 0x4915d0 (ret 4)

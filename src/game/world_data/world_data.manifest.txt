@@ -9,7 +9,7 @@
 ../src/game/world_data/world_data.cpp  ?animate@ContainerBase@@UAEXH@Z  004908c0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??_GContainerBase@@UAEPAXI@Z  00490930  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?detach_party@GameW@@QAEXI@Z  00490a30  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?list_members@GameW@@QAEXIPAH0@Z  00490fa0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?list_members@GameData@@QAEXIPAH0@Z  00490fa0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?token_lookup@GameW@@QAEHHHHH@Z  00491f20  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?hero_down@MissionW@@QAE_NXZ  00492170  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_weapon_order_1@MissionW@@QAEXHI@Z  00492230  /O2 /MT /Gy /TP

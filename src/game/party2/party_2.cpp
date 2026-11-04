@@ -2070,7 +2070,7 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
     r.angle = *src;
     int a = 0, b = 0, c = 0, d = 0;
     r.f14 = 0;
-    ((GameW*)this)->count_units(party, &a, &b, &c, &d);
+    count_units(party, &a, &b, &c, &d);
     EventFlags fl;
     fl.all = 0;
     fl.f.low = (a + c) & 0xff;
@@ -2101,8 +2101,8 @@ void BattleRec::detach()
     if (type != 1)
         goto tail;
 
-    ((GameW*)g_game)->list_members(party_a, (int*)list1, &n1);
-    ((GameW*)g_game)->list_members(party_b, (int*)list2, &n2);
+    g_game->list_members(party_a, (int*)list1, &n1);
+    g_game->list_members(party_b, (int*)list2, &n2);
 
     {
         PartyMgr* pm = &g_game->parties;
@@ -2265,8 +2265,8 @@ void BattleRec::commit()
     if (g_script.trigger_result.value == 0)
         g_game->emit_event(2, party_b, party_a);
 
-    ((GameW*)g_game)->list_members(party_a, (int*)list1, &n1);
-    ((GameW*)g_game)->list_members(party_b, (int*)list2, &n2);
+    g_game->list_members(party_a, (int*)list1, &n1);
+    g_game->list_members(party_b, (int*)list2, &n2);
 
     for (int i = 0; i < n2; i++) {
         unsigned id = list2[i];
@@ -2828,7 +2828,7 @@ void Party::update_hud_text()
     vector4 t;
     float v;
     int b = 0, d = 0, c = 0;
-    ((GameW*)g_game)->count_units(id, &ammo, &c, &b, &d);
+    g_game->count_units(id, &ammo, &c, &b, &d);
     GameData* g = g_game;
     v = *(float*)((char*)g->factions + f70 * 0x300 + 0x2c);
     unsigned color;
