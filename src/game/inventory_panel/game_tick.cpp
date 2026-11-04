@@ -96,7 +96,7 @@ bool is_daytime();                                          // 0x435700 (true in
 struct PageTable98 {
     void* slot(unsigned idx);   // 0x48ef20 (game/slot_api)
 };
-// resmgr (inv_common.h): get_object 0x419540 (rgl/core/resmgr.h)
+#include "../res_mgr.h"                         // res_manager(): get_object 0x419540 (rgl/core/resmgr.h)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 #define GAMMA (0.45454543828964233f)                    // 0x5a9f1c  1 / 2.2 (the compiler's rounding)
 
@@ -792,12 +792,12 @@ void GameG::update_tracks()
     rgl::mesh* track;
     {
         tstring n("track");
-        track = ((resmgr*)&g_resmgr_inv)->get_object((const rgl::string*)&n);
+        track = res_manager().get_object((const rgl::string*)&n);
     }
     rgl::mesh* battle;
     {
         tstring n("battle_track");
-        battle = ((resmgr*)&g_resmgr_inv)->get_object((const rgl::string*)&n);
+        battle = res_manager().get_object((const rgl::string*)&n);
     }
 
     float denom = (float)party_at(&parties, ((Map10007*)&parties)->lookup(f78))->skill_level(0x10) + 8.0f;

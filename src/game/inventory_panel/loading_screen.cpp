@@ -4,6 +4,7 @@
 #include "../config/config_block.h"
 
 #include "../tstring.h"
+#include "../music_player.h"   // music_player (g_music 0xa73a10), MusicTrack
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -21,61 +22,42 @@ struct Src {
     virtual void out_vec(float* p);     // +0x54
 };
 
-// one 0x20 byte record of the module table
-struct Rec {
-    int f0;                             // +0
-    int f4;                             // +4
-    int f8;                             // +8
-    int fc;                             // +0xc
-    float f10;                          // +0x10
-    float f14;                          // +0x14
-    float f18;                          // +0x18
-    float f1c;                          // +0x1c
-    __declspec(noinline) void read(Src* src);   // 0x50f840
-};
 
-struct MusicTable {
-    char pad0[4];
-    int count;                          // +4
-    Rec rec[0x100];                     // +8
-    int idx[0x100];                     // +0x2008
-    void build(Src* src);               // 0x50f7e0
-};
 
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
-#include "../rgl_mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
+#include "../../rgl/mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../game_globals.h"
 using rgl::vector4;
 using rgl::mesh;
 
-struct resmgr {                                       // rgl/core/resmgr.h (the object at 0x5d6fa0)
+struct resmgr {                                       // rgl/core/resmgr.h (the object at 0x5d6fa0; this module's mesh class is rgl_mesh.h's: res_mgr.h's real mesh changes the codegen)
     mesh* get_object(const rgl::string* name);      // 0x419540
     int load_all(int check_exists, rgl::string* root);   // 0x41c540
 };
 extern resmgr g_res;                    // 0x5d6fa0
-// rgl::mesh::build_panel is declared with float* arguments by rgl_mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
+// rgl::mesh::build_panel is declared with float* arguments by rgl/mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
 struct PanelMesh {
     void build_panel(const float* a, const float* b, const float* c, const float* d, int* color);   // 0x4de3e0 (game/cls_map)
 };
 
 // ---------------------------------------------------------------- 0x50f7e0
 // @ 0x50f7e0
-void MusicTable::build(Src* src)
+void music_player::build(Src* src)
 {
-    src->out_int(&count);
-    if (count > 0x100)
-        count = 0x100;
-    for (int i = 0; i < count; i++) {
-        rec[i].read(src);
-        idx[i] = 0;
+    src->out_int(&track_count);
+    if (track_count > 0x100)
+        track_count = 0x100;
+    for (int i = 0; i < track_count; i++) {
+        tracks[i].read(src);
+        start[i] = 0;
     }
 }
 
 // ---------------------------------------------------------------- 0x50f840
 // @ 0x50f840
-void Rec::read(Src* src)
+void MusicTrack::read(Src* src)
 {
     src->out_vec(&f10);
     src->out_int(&f0);
@@ -247,7 +229,9 @@ void parse_module_info();                            // 0x4c05b0
 void load_data_files();                                    // 0x4d0c20 (options_panel/module_load.cpp)
 void load_module_files();                                    // 0x50d5e0 (inventory_panel/module_files.cpp)
 
-#include "../../rgl/stream.h"                   // g_log (log_stream), tstream3 (the music.txt reader)
+// the text stream used to read music.txt (vtable 0x54ac88, 0x38 bytes, `failed` at +0x34): rgl/stream.h's tstream3, whose constructor and
+// destructor (0x4172d0, 0x417310) are called out of line here
+#include "../../rgl/stream.h"
 
 struct Table2;                                       // built by MusicTable::build below (0x50f7e0)
 
@@ -284,7 +268,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         FILE* f = fopen(path.c_str(), "r");
         if (f) {
             g_module_info.load(f);
-            f44 = (int)((char*)g_module_info.count + 5);   // 0xa44238 = g_module_info.count
+            f44 = (int)((char*)g_module_info.count + 5);   // the table's count (g_module_info.count)
             fclose(f);
         } else {
             mb_error("Unable to find module info file");
@@ -305,7 +289,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
                 tstring name(g_module_path);
                 { tstring m("music.txt"); name.append(m); }
                 if (ts.open_read_text(name.c_str())) {
-                    ((MusicTable*)&g_music_situation)->build((Src*)&ts);
+                    g_music.build((Src*)&ts);
                     ts.failed = 1;
                 } else {
                     mb_error("Unable to find module music file");

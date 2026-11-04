@@ -19,7 +19,8 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
+#include "../music_player.h"   // g_music (0xa73a10)
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <stdlib.h>
@@ -62,7 +63,6 @@ extern int g_propkind_count;                                // 0x5e29e0
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-TriggerResult g_trigger_result;   // 0xa70458
 Presentation* g_presentation;                               // 0x5e299c the running presentation
 
 
@@ -74,7 +74,6 @@ Presentation* g_presentation;                               // 0x5e299c the runn
 
 int g_animation_count;                                      // 0xa7662c (0x49d4b0)
 int g_presentation_count;                                   // 0xa75f30 (check_presentation 0x49cd50)
-int g_music_culture;                                        // 0xa75e58 (music_set_culture 0x4a1755)
 
 int g_visitor_scene;                                        // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 float g_spawn_radius = 3.0f;                                // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
@@ -466,7 +465,7 @@ __declspec(noinline) char __fastcall warn_track(const int& value)
     char buf[512];
     int v = value;
     char r = 1;
-    if (v < 0 || v >= g_track_count) {
+    if (v < 0 || v >= g_music.track_count) {
         if (g_cfg.disable_music == 0 && g_cfg.disable_sound == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, v);
             report(buf);
@@ -609,7 +608,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_result_string:
         if (check_string_arg(types[0], (int)params[0]))
-            g_result_string = g_script.expand(g_strings.get_string((int)params[0], types[0]));
+            g_script.result_string = g_script.expand(g_strings.get_string((int)params[0], types[0]));
         break;
     case op::key_is_down:
         if (IN_RANGE(params[0], 0, 0x100))
@@ -1007,10 +1006,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_script.cue_track = (int)params[0];
         break;
     case op::music_set_situation:
-        g_music_situation = (int)params[0];
+        g_music.situation = (int)params[0];
         break;
     case op::music_set_culture:
-        g_music_culture = (int)params[0];
+        g_music.mask = (int)params[0];
         break;
     case op::stop_all_sounds:
         g_sound_mgr.stop_all();
@@ -1940,7 +1939,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_mission_ctx.passage_menu = (int)params[0];
         break;
     case op::end_current_battle:
-        g_battle_flags |= 1;
+        g_mission_ctx.f164 |= 1;
         break;
     case op::set_mercenary_source_party:
         if (check_party((int)params[0]))
@@ -2694,10 +2693,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
 
     case op::get_battle_advantage:
-        SET_LV((__int64)g_battle_advantage);
+        SET_LV((__int64)g_mission_ctx.f1c);
         break;
     case op::set_battle_advantage:
-        g_battle_advantage = clamp_index((int)params[0], -32, 6);
+        g_mission_ctx.f1c = clamp_index((int)params[0], -32, 6);
         break;
     case op::party_get_attached_to:
         {
@@ -3901,13 +3900,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         game()->menu_option_disabled = 1;
         break;
     case op::store_trigger_param_1:
-        set_lvalue(locals, g_trigger_param_1);
+        set_lvalue(locals, g_script.param1);
         break;
     case op::store_trigger_param_2:
-        set_lvalue(locals, g_trigger_param_2);
+        set_lvalue(locals, g_script.param2);
         break;
     case op::set_trigger_result:
-        g_trigger_result.value = params[0];
+        g_script.trigger_result.value = params[0];
         break;
 
     // ---- arithmetic (64-bit; fixed point by g_fixed_point_multiplier) ------------------------------------------

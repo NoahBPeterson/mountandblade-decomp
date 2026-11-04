@@ -36,7 +36,7 @@ extern float g_k_reach;                         // 0x598e8c (36.0)
 #include "../../include/mat4.h"
 #include "./cs_common.h"
 #include "../terrain_a/terrain.h"                   // Terrain (g_terrain 0xa76630): the dust pass is Terrain::update_particles
-#include "./cs_res.h"
+#include "../../rgl/mesh_x.h"                    // mesh_x (compute_bounds 0x419300, transform 0x47aa40, clone 0x41c6d0), rgl::mesh
 #include <vector>
 #include "../../include/mesh_parts.h"             // rgl::vertex60
 #include "../../include/mesh_prims.h"             // rgl::point20, rgl::face20
