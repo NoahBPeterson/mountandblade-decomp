@@ -225,6 +225,10 @@ def _absorb(items, named, syms, section_of, uses):
     larger than the symbol (the span up to the next use also held storage no definition of ours covers: a field the code
     reaches that no symbol names, the next original object) is cut at the symbol's end and the rest is classed by what
     uses it: borrowed from image if game code does, library data, else reached through tables. [start, end, class]."""
+    # an object file's symbol size runs to the next symbol of its section, alignment padding included (g_anim_set, 8 bytes,
+    # reads 12 when an 8-aligned object follows it): an overrun of less than the alignment into the next object our source
+    # defines at its own address is that padding, not storage of this one
+    starts = sorted(v for v, (defined, _names) in named.items() if defined)
     out, cover = [], 0
     for s, e, c in items:
         if s < cover:
@@ -233,6 +237,9 @@ def _absorb(items, named, syms, section_of, uses):
             s = cover
         if c == "defined in source":
             ext = max([syms[n][0] or 0 for n in (named[s][1] if s in named else []) if n in syms] or [0])
+            i = bisect.bisect_right(starts, s)
+            if i < len(starts) and 0 < s + ext - starts[i] < 8:
+                ext = starts[i] - s
             if ext > e - s:
                 e = min(s + ext, section_of(s)[2])
                 cover = max(cover, e)
