@@ -1,4 +1,4 @@
-../src/game/party2/camera.cpp  ?place@PObj@c49aca0@@QAEXPAH@Z  0049b4b0  /O2 /MT /Gy /TP
+../src/game/party2/camera.cpp  ?place@Mission@@QAEHPBH@Z  0049b4b0  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?add_gold@GameData@@QAEXHH@Z  0049b720  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?remove_gold@GameData@@QAEXHH@Z  0049b820  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?kind@Camera@@UAEHXZ  0049df30  /O2 /MT /Gy /TP
@@ -6,7 +6,7 @@
 ../src/game/party2/camera.cpp  ?on_child_moved@Camera@@UAEXPAUMissionUi@@@Z  0049df60  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ??_GCamera@@UAEPAXI@Z  0049e580  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?render@Camera@@UAEXPAUscene@rgl@@PAMHH@Z  0049e5b0  /O2 /MT /Gy /TP
-../src/game/party2/camera.cpp  ?enter_trigger@Mission@c49f060@@QAEXHH@Z  0049f980  /O2 /MT /Gy /TP
-../src/game/party2/camera.cpp  ?exec_trigger@Mission@c49f060@@QAEXH@Z  0049f9e0  /O2 /MT /Gy /TP
+../src/game/party2/camera.cpp  ?enter_trigger@Mission@@QAEHHH@Z  0049f980  /O2 /MT /Gy /TP
+../src/game/party2/camera.cpp  ?exec_trigger@Mission@@QAEHH@Z  0049f9e0  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?run_line@DialogBlock@@QAEDHPAHH@Z  004b0940  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?link@DialogBlock@@QAEXXZ  0049dd30  /O2 /MT /Gy /TP

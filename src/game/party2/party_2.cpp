@@ -3050,9 +3050,9 @@ void Party::tick(float dt)
             Party* o3 = g_game->parties.get(target);
             if (id == g_game->f78 && !(o3->flags_lo & 0x400) && o3->f88 < 0 &&
                 o3->action == 4 && o3->target == id) {
-                ((c49f060::GameData*)g_game)->deploy_party(target, id);
+                g_game->deploy_party(target, id);
             } else {
-                ((c49f060::GameData*)g_game)->deploy_party(id, target);
+                g_game->deploy_party(id, target);
             }
             Party* o4 = g_game->parties.get(target);
             o4->kind = 0;

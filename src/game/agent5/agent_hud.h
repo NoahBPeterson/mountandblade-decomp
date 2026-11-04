@@ -48,8 +48,7 @@ struct NodeA;
 struct NodeVec { void push_back(NodeA* const& n); };               // 0x49b120 (widget_node.cpp): g_gui's "make this window the active root"; takes the address of a pointer to the window
 struct ContainerW { void* construct(); };                          // 0x4931a0 (world_data.cpp): the window base constructor body, returns this
 struct BlockOwner { void init(struct ContainerBase* c, int id); }; // 0x4dd920 (cls_map.cpp): MenuLayout::build
-struct SkelBodyV;
-void __cdecl setup_item_meshes(SkelBodyV* b, int kind, int troop, char* look, int f130, ItemRef* items, int id);   // 0x47cfe0 (mesh_scene.cpp)
+#include "../mesh_slot/mesh_build.h"        // setup_item_meshes (0x47cfe0)
 // vec<mface>::clear 0x41f4b0 (entity.cpp; vec of rgl/mesh.h: the vector release shared by every record vector) is called out of line, through its member pointer
 template <class T> struct vec { void clear(); };                   // the game's growable array (cell_grid.h, rgl/mesh.h, entity.h define it with their own members): only clear() 0x41f4b0 is called here
 typedef void (vec<mface>::*VecClear)();

@@ -140,17 +140,13 @@ struct TableauStack {                                                        // 
     void set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_);   // 0x48f4c0
     void set_camera_position(const rgl::matrix* m);                         // 0x48f480
 };
-namespace c49aca0 { struct PObj { void place(int* item); }; }                // 0x49b4b0 (party2/camera.cpp)
 namespace c49b630 { struct HudRoot { void set_font_mesh(const tstring* text, int color); }; }   // 0x49b630
 namespace c49bea0 { struct Mission { void check_slot(int id, unsigned bits); }; }   // 0x49c170
 namespace c49c2c0 { struct Mission { void order(int team, int order); }; }   // 0x49c2c0
 namespace c49e780 {
-struct Party { int create_companion_party(int a, int b, int c, int d); void spawn_around(int a, int b, int c, int d); };   // 0x49ef00 / 0x49f020
 struct View { int create_text_overlay(int text, int flags); };              // 0x49e780
 }
 namespace c49f060 {
-struct GameData { bool deploy_party(int a, int b); };                       // 0x49f060
-struct Mission { void enter_trigger(int val, int ip); void exec_trigger(int val); };   // 0x49f980 / 0x49f9e0
 void __cdecl spawn_party_scene(int a, int b, int* pos, int* anim, int* instance);   // 0x49f3d0
 }
 // a float handed to a callee that the definition's module declared as an int word (the bits are what the callee gets)
@@ -580,13 +576,13 @@ struct GameX {
     __forceinline void add_experience(int troop, int xp) { ((GameData*)this)->add_experience(troop, xp); }                             // 0x4428c0 (ret 8)
     __forceinline void add_random_experience(int gold) { ((GameW*)this)->add_random_experience(gold); }                               // 0x4952a0 (ret 4)
     __forceinline void spread_party_experience(int xp) { ((GameW*)this)->spread_party_experience(xp); }                               // 0x4957d0 (ret 4)
-    int spawn_around(float x, float y, int party_template, float radius);   // 0x49f020 (ret 0x10): the new party's id in EAX; the definition (c49e780::Party::spawn_around, party2/camera.cpp) is declared void, so this row stays unresolved
+    __forceinline int spawn_around(float x, float y, int party_template, float radius) { return ((GameData*)this)->spawn_around(x, y, party_template, radius); }   // 0x49f020 (ret 0x10): the new party's id
     __forceinline tstring event_string(int seconds) { return ((GameData*)this)->event_string(seconds); }                               // 0x48c470 (ret 8: hidden return)
     __forceinline void sl_item_flag_all() { ::sl_item_flag_all(); }                                                                    // 0x48a210
     __forceinline void transfer_stack(int from, int to, char as_prisoners) { ((GameW*)this)->transfer_stack(from, to, as_prisoners); }   // 0x492530 (ret 0xc)
     __forceinline int remove_troops(int party, int troop, int count, char prisoners, int a5) { return ((GameData*)this)->remove_troops(party, troop, count, prisoners, a5); }   // 0x48f9f0 (ret 0x14: count removed)
     __forceinline void remove_party(int party) { ((GameW*)this)->remove_party(party); }                                               // 0x4915d0 (ret 4)
-    __forceinline int create_companion_party(int troop, rgl::vector4 pos) { return ((c49e780::Party*)this)->create_companion_party(troop, fbits(pos.x), fbits(pos.y), fbits(pos.z)); }   // 0x49ef00 (ret 0x14)
+    __forceinline int create_companion_party(int troop, rgl::vector4 pos) { return ((GameData*)this)->create_companion_party(troop, pos.x, pos.y, pos.z); }   // 0x49ef00 (ret 0x14)
     __forceinline void mark_kind(int faction) { ((GameW*)this)->mark_kind(faction); }                                                 // 0x490990 (ret 4)
     __forceinline void start_quest(int quest, int giver_troop) { ((GameData*)this)->start_quest(quest, giver_troop); }                 // 0x49b930 (ret 8)
     __forceinline void quest_done(int quest) { ((GameW*)this)->quest_done(quest); }                                                    // 0x494410 (ret 4)
@@ -594,7 +590,7 @@ struct GameX {
     __forceinline void quest_failed(int quest) { ((GameW*)this)->quest_failed(quest); }                                                // 0x494680
     __forceinline void set_quest_cancelled(int quest) { ((GameW*)this)->set_quest_cancelled(quest); }                                  // 0x4948c0
     __forceinline void set_quest_concluded(int quest) { ((GameW*)this)->set_quest_concluded(quest); }                                  // 0x4947a0 (the original pushes one word at the call site and the callee pops 4)
-    __forceinline void deploy_party(int party, int other) { ((c49f060::GameData*)this)->deploy_party(party, other); }                  // 0x49f060 (ret 8)
+    __forceinline void deploy_party(int party, int other) { ((GameData*)this)->deploy_party(party, other); }                  // 0x49f060 (ret 8)
     __forceinline void sl_item_set_all(float rate) { ::sl_item_set_all(rate); }                                                        // 0x48a250 (ret 4)
     __forceinline char agent_low(int troop) { return ((GameData*)this)->agent_low(troop); }                                            // 0x4638f0 (ret 4)
     __forceinline void init_slots(int troop, int value) { ((GameData*)this)->init_slots(troop, value); }                               // 0x48c4c0 (ret 8)
@@ -788,9 +784,9 @@ struct MissionX {
     __forceinline void check_slot(int entry, int count) { ((c49bea0::Mission*)this)->check_slot(entry, count); }      // 0x49c170 (ret 8)
     __forceinline void add_wind_effect(float flicker_magnitude, float flicker_interval) { ((MissionW*)this)->add_wind_effect(fbits(flicker_magnitude), fbits(flicker_interval)); }   // 0x4952f0 (ret 8)
     __forceinline void spawn_effect(int psys, const Pos* p, int strength) { ((Mission*)this)->spawn_effect(psys, (const rgl::mat4*)p, strength); }   // 0x442ca0 (ret 0xc)
-    int place(const ItemRef* item);                        // 0x49b4b0 (ret 4): the result is used (EAX); the definition (c49aca0::PObj::place, party2/camera.cpp) is declared void and takes an int*, so this row stays unresolved
-    int exec_trigger(int troop);                                 // 0x49f9e0 (ret 4): the result is used (EAX); the definition (c49f060::Mission::exec_trigger, party2/camera.cpp) is declared void, so this row stays unresolved
-    int enter_trigger(int item, int modifier);                    // 0x49f980 (ret 8): likewise (c49f060::Mission::enter_trigger)
+    __forceinline int place(const ItemRef* item) { return ((Mission*)this)->place((const int*)item); }   // 0x49b4b0 (ret 4)
+    __forceinline int exec_trigger(int troop) { return ((Mission*)this)->exec_trigger(troop); }          // 0x49f9e0 (ret 4)
+    __forceinline int enter_trigger(int item, int modifier) { return ((Mission*)this)->enter_trigger(item, modifier); }   // 0x49f980 (ret 8)
 };
 SI_ASSERT(mission_props, offsetof(MissionX, props) == 0x6688);
 SI_ASSERT(mission_teams, offsetof(MissionX, teams) == 0x5280);

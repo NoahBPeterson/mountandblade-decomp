@@ -25,7 +25,8 @@ struct Troop {
         __int64 flags30s;                   // +0x30 as signed (0x10 = hero, 0x1000000 / 0x4000000 = troop class bits)   0x473a60
         unsigned flags32;                   // +0x30 low dword (low nibble 1 = female, low nibble = class)   0x460160, 0x443870
     };
-    char pad38[0x4c - 0x38];
+    char pad38[0x48 - 0x38];
+    int level48;                            // +0x48 (party2/camera.cpp spawn_party_scene 0x49f3d0: the number of equipment rolls)
     int faction;                            // +0x4c (script troop_set_faction 0x4a6948)
     union {
         struct {

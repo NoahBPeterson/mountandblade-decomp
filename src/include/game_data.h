@@ -106,8 +106,13 @@ struct GameData {
         int nrecords;                           // char_sheet/save_state.cpp
     };
     char pad13a08[4];
-    int excluded;                               // +0x13a0c record index skipped by sl_roll_other (ui/mission_ui.cpp 0x489ee0)
-    char pad13a10[0x13a1c - 0x13a10];
+    union {
+        int excluded;                           // +0x13a0c record index skipped by sl_roll_other (ui/mission_ui.cpp 0x489ee0)
+        int attach_party;                       // +0x13a0c the party the join point belongs to (deploy_party 0x49f060)
+    };
+    int attach_scene;                           // +0x13a10 its scene object index, -100000 = none (deploy_party)
+    int attach_flip;                            // +0x13a14 1 when the player is the second party of the join (deploy_party)
+    char pad13a18[0x13a1c - 0x13a18];
     int f13a1c;                                 // +0x13a1c current repeat index   0x460d80, 0x460de0
     int f13a20;                                 // +0x13a20 (char_sheet/save_state.cpp)
     char pad13a24[0x13a34 - 0x13a24];
@@ -156,7 +161,10 @@ struct GameData {
     int f13aa0;                                 // +0x13aa0 (char_sheet/save_state.cpp)
     char pad13aa4[0x13acc - 0x13aa4];
     float f13acc;                               // +0x13acc scaled zoom (char_sheet/screen_init.cpp 0x4ecce0)
-    int f13ad0;                            // +0x13ad0 (char_sheet/save_state.cpp write_clock 0x4e9190)
+    union {
+        int f13ad0;                        // +0x13ad0 (char_sheet/save_state.cpp write_clock 0x4e9190)
+        float f13ad0f;                     // +0x13ad0 the same word as a float (deploy_party 0x49f060: > 0 with f13ad4 set refuses a join)
+    };
     int f13ad4;                            // +0x13ad4 (char_sheet/save_state.cpp write_clock 0x4e9190)
     int f13ad8;                            // +0x13ad8 (char_sheet/save_state.cpp write_clock 0x4e9190)
     int f13adc;                            // +0x13adc (char_sheet/save_state.cpp write_clock 0x4e9190)
@@ -220,7 +228,9 @@ struct GameData {
     int cur_label;                              // +0x13bc8
     tstring labels[50];                         // +0x13bcc the map label texts (0x10 each)
     int label_target[64];                       // +0x13eec the party id of each label (map_update.cpp)
-    char pad13fec[0x1405c - 0x13fec];
+    char pad13fec[0x14014 - 0x13fec];
+    float trigger_frame[16];                    // +0x14014 the trigger frame (a rgl::matrix: the spawn / placement frame of the script's trigger block; party2/camera.cpp 0x49b4b0, 0x49f980)
+    char pad14054[0x1405c - 0x14054];
     int tbl[64][32];                            // +0x1405c (0x473a60)
     char pad1605c[0x1a060 - 0x1605c];
     int f1a060;                                 // +0x1a060 script dialog requested (inventory_panel/game_app.cpp)
@@ -325,6 +335,11 @@ struct GameData {
     int add_members(int party, int troop, int count, char prisoners);   // 0x48f8f0 (ret 0x10: returns how many members were added)
     void add_template(int party, int tmpl, int reverse);   // 0x48fbd0 (ret 0xc: fills a party from a party template's six slots)
     int battle_root(int party);                 // 0x48fce0 (ret 4: the end of the attached-to chain)
+    // ---- src/game/party2/camera.cpp (0x49e9c0..0x49f020): battle records and the parties that stand for them ----
+    int attach_party_center(const float* pt, int a, int b);              // 0x49e9c0 (ret 0xc: a new battle record at (pt[0], pt[1]) for parties a and b; its id)
+    int add_sprite(float x, float y, int tmpl);                          // 0x49ebd0 (ret 0xc: a new party of party template tmpl at (x, y); its id)
+    int create_companion_party(int troop, float x, float y, float z);    // 0x49ef00 (ret 0x14: a party named after the troop; its id)
+    int spawn_around(float x, float y, int tmpl, float radius);          // 0x49f020 (ret 0x10: add_sprite at a random position around (x, y))
     void collect_attachments(int party, Party* dest);   // 0x48ff70 (ret 8)
     int template_count(int tmpl, int slot, float t);   // 0x48a150 (ret 0xc: member count of a party template slot; rolls between range_lo..range_hi percent of the slot's min..max; the third word is unused: ui/mission_ui.cpp)
     int count_troops(int troop, int party, char prisoners);   // 0x48f790 (ret 0xc: members of `troop` in the party's regular (prisoners 0) or prisoner stacks)

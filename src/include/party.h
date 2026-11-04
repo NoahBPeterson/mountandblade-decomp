@@ -75,7 +75,7 @@ struct Party {                              // 0x5ac8 bytes
         int owner;                          // +0x8c   0x460b90
         int template_id;                    // +0x8c (script party_get_template_id 0x4a6d9f)
     };
-    char pad90[0x94 - 0x90];
+    int f90;                                // +0x90 (GameData::add_sprite 0x49ebd0: the party template's +0x28)
     union {
         int f94;                            // +0x94 rider troop (type table index)   0x4b7840
         int banner_icon;                    // +0x94 (script party_set_banner_icon 0x4a854a)

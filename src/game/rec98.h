@@ -25,7 +25,9 @@ struct Rec98 {
     int f50;                                        // +0x50 (scene entity; 0x49bbb0)
     int f54;                                        // +0x54 (agent id A / first side; 0x514d40, 0x51abd0)
     int f58;                                        // +0x58 (agent id B / other side)
-    char pad5c[0x98 - 0x5c];
+    char pad5c[0x78 - 0x5c];
+    int f78;                                        // +0x78 (the summed unit counts of both sides: attach_party_center 0x49e9c0)
+    char pad7c[0x98 - 0x7c];
     Rec98();                                        // 0x48c210
     ~Rec98();
     void bind_host();                               // 0x4b2770 (thiscall)

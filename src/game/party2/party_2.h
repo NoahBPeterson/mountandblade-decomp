@@ -58,9 +58,6 @@ struct alloc_int3 {
 struct MeshX {
     MeshX* copy_of();   // 0x4958f0 (world_data/mesh_hud.cpp)
 };
-#ifndef MB_CAMERA_TU        // (camera.cpp defines the class itself)
-namespace c49f060 { struct GameData { bool deploy_party(int a, int b); }; }   // 0x49f060 (camera.cpp: the party attach decision, ret 8)
-#endif
 struct GameW {                                                   // world_data/world_data.cpp
     void detach_party(unsigned id);                              // 0x490a30 (ret 4)
     void remove_party(int id);                                   // 0x4915d0 (ret 4)

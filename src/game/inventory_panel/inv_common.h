@@ -41,12 +41,6 @@ struct PartyMgrW {
 struct SoundCtl {
     char emit_event(int id, int a, int b);   // 0x435790 (ret 0xc; game/agent)
 };
-namespace c49e780 {                                     // game/camera
-    struct float2;
-    struct Party {
-        int attach_party_center(float2* pt, int a, int b);   // 0x49e9c0 (ret 0xc)
-    };
-}
 
 // ---- the game data (g_game) with the members these modules call ----------------------------------------------------
 struct GameDataV : GameData {
@@ -62,8 +56,6 @@ struct GameDataV : GameData {
     __forceinline int token_lookup(int party, int a, int b, int c) { return ((GameW*)this)->token_lookup(party, a, b, c); }   // 0x491f20 (ret 0x10)
     void fill_ids(int* out, int id);                        // 0x5168e0 (ret 8)
     __declspec(noinline) void reset_trade_ids();            // 0x5168b0
-    __forceinline void attach_party_center(const float* pt, int a, int b)   // 0x49e9c0 (ret 0xc)
-    { ((c49e780::Party*)this)->attach_party_center((c49e780::float2*)pt, a, b); }
     int weekly_cost();                      // 0x504e20 (thiscall, no args: the weekly wage of the player's party)
     __forceinline int sl_query(int kind, int troop, int arg) { return ((SoundCtl*)this)->emit_event(kind, troop, arg); }   // 0x435790 (ret 0xc; SoundCtl::emit_event)
 };

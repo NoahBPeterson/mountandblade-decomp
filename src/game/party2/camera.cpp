@@ -32,12 +32,16 @@
 #include "../../include/party.h"
 #include "../terrain_b/terrain_b.h"
 #include "./camera.h"
+#include "../mesh_slot/mesh_build.h"   // build_appearance (0x482240), setup_item_meshes (0x47cfe0)
+#include "../skeleton.h"                // node_groups / node_list (cap_all 0x438f90)
 #include "./party_2.h"
 #include "./camera_class.h"      // Camera (the one declaration of the 0x4a8-byte view object)
 #include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
 #include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
 #include "../ui/container.h"                 // ContainerBase (ui/mission_ui.h)
 #include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
+#include "../../include/msg_log.h"       // MsgLog (add 0x452c00, thiscall, ret 0x14)
+extern MsgLog g_gui;                    // 0x5d7080
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
@@ -91,9 +95,6 @@ struct SphereC {
     SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 rgl/xmlcfg/game_util.cpp (named `sphere` there)
 };
 struct Anim;
-struct Skeleton {
-    void start_anim(int rec, Anim* poly, int a, int b);   // 0x439fc0 agent2/agent_stats.cpp (ret 0x10; FxDef::start_anim in include/fx.h)
-};
 struct Curve {
     void reset_rec(int i);   // 0x4339d0 agent/curve.cpp (FxDef::reset_rec in include/fx.h)
 };
@@ -106,6 +107,7 @@ struct CarryBody; struct CarryRef; struct CarryCtx;
 void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
 struct MissionG {
     int create(const rgl::matrix* m, const struct ItemStackG* it, int troop);   // 0x4836e0 mesh_slot/mesh_game.cpp (ret 0xc)
+    int spawn_full(const rgl::matrix* m, int troop, int a, int b, int c, int d, int e, int f, int cnt, int* arr);   // 0x483870 mesh_slot/mesh_game.cpp (ret 0x28)
 };
 
 
@@ -220,7 +222,6 @@ struct PObj {
 
     char on_event(unsigned ev);                 // 0x49aca0
     NodeA* create();                            // 0x49ad20
-    void place(int* p);                         // 0x49b4b0
 };
 
 // ---- class B: the container (vptr 0x592848, base ctor 0x4931a0, size 0x190) ------------------------
@@ -358,17 +359,18 @@ void PVec::_Insert_n(E4* where, unsigned count, const E4& val)
 // 0x49b37d is not a function: it is the catch(...) funclet inside PVec::_Insert_n (0x49b1c0, whose COMDAT really spans
 // 0x49b1c0..0x49b4af); see nonmatching.txt.
 
-// @ 0x49b4b0
-void PObj::place(int* p)
-{
-    int a = -1;
-    int b = 6;
-    ((::Mission*)this)->add_placed(&b, p, p + 1, (const rgl::matrix*)((char*)g_game + 0x14014), &a);
-}
-
 // 0x49b4f0 is MissionUi::get_xy (config/widget_mgr.cpp): the base class's text-rect slot, not this panel's
 
 } // namespace c49aca0
+
+// @ 0x49b4b0
+// Mission::place: place the prop `item` (an ItemRef: id, modifier word) at the trigger block's frame.
+int Mission::place(const int* p)
+{
+    int a = -1;
+    int b = 6;
+    return add_placed(&b, p, p + 1, (const rgl::matrix*)::g_game->trigger_frame, &a);
+}
 
 // ======================================================================================
 // slice s0049b630 (namespace c49b630)
@@ -391,8 +393,6 @@ using rgl::matrix;
 using rgl::mesh;
 
 // ---- engine tables / globals ---------------------------------------------------------------------
-struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
-extern MsgLog g_gui;                             // 0x5d7080
 
 struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out); };  // 0x442650
 
@@ -593,8 +593,6 @@ namespace c49bea0 {
 
 #define MB_NOTHROW throw()
 
-struct MsgLog { void add(tstring msg, int color); };                    // 0x452c00 (thiscall, ret 0x14)
-extern MsgLog g_gui;                             // 0x5d7080
 
 struct vector4 { float x, y, z, w; };
 struct matrix { float m[4][4]; };
@@ -854,8 +852,6 @@ namespace c49c2c0 {
 
 #define MB_NOTHROW throw()
 
-struct MsgLog { void add(tstring msg, int color); };        // 0x452c00 (thiscall, ret 0x14)
-extern MsgLog g_gui;                             // 0x5d7080
 
 struct vector4 { float x, y, z, w; };
 
@@ -1380,19 +1376,6 @@ struct scene_api;                                        // 0x498420 (thiscall s
 // The global string table (this = 0x5e2a18) and its lookup (0 when absent).
 
 
-// The 0xb0-byte troop-type record (the name at +0x10; the field offsets are relative to the record).
-struct TroopRec {
-    char pad0[0x10];
-    tstring name;                                        // +0x10
-    int f20;                                             // +0x20
-    int f24;                                             // +0x24
-    int f28;                                             // +0x28
-    int f2c;                                             // +0x2c
-    int f30;                                             // +0x30
-    int f34;                                             // +0x34
-    char pad38[0xb0 - 0x38];
-};
-
 // ---- the objects create() builds ---------------------------------------------------------------
 // The constructors are thiscall (object in ecx) and return the object: 0x48ae20 the base scene object,
 // 0x48b890 its particle-system sibling, 0x49deb0 the view camera (slice s0049deb0).
@@ -1425,114 +1408,6 @@ inline scene_obj* cam_ctor(scene_obj* p) { new ((void*)p) Camera(); return p; } 
 
 // 0x498420: a free thiscall position setter (argument in ecx, one pointer argument).
 struct scene_api { void set_pos(float2* p) { ((HudOuter*)this)->scroll_refresh((rgl::vector4*)p); } };   // (HudOuter::scroll_refresh)
-
-// The 0x5ac8-byte object record (only the fields the sprite wrappers touch).
-struct ObjRec {
-    char pad0[0xc];
-    tstring name;                                        // +0xc
-    char flag1c;                                         // +0x1c
-    char pad1d[0x3];
-    tstring name2;                                       // +0x20
-    int f30;                                             // +0x30
-    int f34;                                             // +0x34
-    char pad38[0x8];
-    float2 rot;                                          // +0x40
-    char pad48[0x70 - 0x48];
-    int f70;                                             // +0x70
-    int f74;                                             // +0x74
-    int id;                                              // +0x78
-    char pad7c[0x88 - 0x7c];
-    int sprite;                                          // +0x88  owning sprite record id (-1 = none)
-    int f8c;                                             // +0x8c
-    int f90;                                             // +0x90
-    char pad94[0xa0 - 0x94];
-    int fa0;                                             // +0xa0
-    int fa4;                                             // +0xa4
-    char pad_a8[0x8e4 - 0xa8];
-    int f8e4;                                            // +0x8e4
-    int pad8e8;                                          // +0x8e8
-    int f8ec;                                            // +0x8ec
-    int f8f0;                                            // +0x8f0
-    char pad8f4[0x918 - 0x8f4];
-    int f918;                                            // +0x918
-    char pad91c[0x5ac8 - 0x91c];
-
-    void init() { ((::Party*)this)->init(); }                                        // 0x48f180 (thiscall, no args)
-    void add_members(tstring* n, int a, int b, int c, int d) { ((::Party*)this)->add_members((int)n, a, b, c, (char)d); } // 0x48c840
-};
-
-// The 0x508-byte character record.
-struct CharRec {
-    char pad0[0x20];
-    tstring name;                                        // +0x20
-    char pad30[0x4c - 0x30];
-    int f4c;                                             // +0x4c
-    char pad50[0x508 - 0x50];
-};
-
-// The 0x98-byte sprite record (16 to a page).
-struct SpriteRec {
-    char pad0[0x10];
-    int alive;                                           // +0x10
-    char pad14[0x24 - 0x14];
-    float2 pos;                                          // +0x24
-    char pad2c[0x54 - 0x2c];
-    int a;                                               // +0x54
-    int b;                                               // +0x58
-    char pad5c[0x78 - 0x5c];
-    int height;                                          // +0x78 sum of the two queried heights
-    char pad7c[0x98 - 0x7c];
-};
-
-// The child-id list at party+0xcc.
-struct ChildList {
-    int pop_front() { return ((RecPool*)this)->alloc_record(); }   // 0x493700 (thiscall; RecPool::alloc_record returns the record id)
-};
-
-// The scene embedded at party+0xf8.
-struct Scene {
-    char pad0[0x138d0];
-    ObjRec** objects;                                    // +0x138d0 (party +0x139c8)
-    char pad1[0x13908 - 0x138d4];
-    CharRec** chars;                                     // +0x13908 (party +0x13a00)
-
-    int index_of(int key) { return ((Map10007*)this)->lookup(key); }                              // 0x48ad00 (thiscall, key -> object id)
-    int add_slot() { return ((PartyMgrW*)this)->add_slot(); }                                          // 0x493960 (thiscall, back object id)
-    ObjRec* obj(int key)
-    {
-        int id = index_of(key);
-        return objects[id >> 4] + (id & 0xf);
-    }
-};
-
-// The party object the sprite wrappers work on.
-struct Party {
-    char pad0[0xcc];
-    ChildList list;                                      // +0xcc
-    char pad1[0xe4 - 0xd0];
-    SpriteRec** sprites;                                 // +0xe4 paged sprite records
-    char pad2[0xf8 - 0xe8];
-    Scene scene;                                         // +0xf8
-
-    CharRec* chars() { return *scene.chars; }
-    SpriteRec* sprite(unsigned id) { return sprites[id >> 4] + (id & 0xf); }
-
-    int attach_party_center(float2* pos, int a, int b);        // 0x49e9c0
-    int add_sprite(int x, int y, int troop);             // 0x49ebd0
-    int create_companion_party(int slot, int x, int y, int a);  // 0x49ef00
-    void spawn_around(int x, int y, int troop, int a);   // 0x49f020
-
-    void count_units(int troop, int* h, int* d, int* w, int* o) { ((GameW*)this)->count_units(troop, h, d, w, o); } // 0x490ce0
-    void add_template(int id, int troop, int a) { ((::GameData*)this)->add_template(id, troop, a); }           // 0x48fbd0
-    void spawn_battle_icon(int id) { ((c49b630::Mission*)this)->spawn_battle_icon(id); }                            // 0x49bbb0
-    void add_order_arrow(int id) { ((c49bea0::MissionAgents*)this)->add_order_arrow(id); }                            // 0x49bea0
-    void random_position_around(int x, int y, int a, int* out)            // 0x490030 (the slice typed the float pairs as ints: the same bytes)
-    {
-        ((GameW*)this)->random_position_around(*(Vec2*)&x /* x, y */, *(float*)&a, (Vec2*)out);
-    }
-};
-
-inline TroopRec* troop_rec(int troop) { return (TroopRec*)&g_party_templates[troop]; }
 
 // The view (`this`) seen from here: the child list object at +0x2c and its own vector at +4/+8.
 struct View {
@@ -1625,103 +1500,110 @@ int View::create_text_overlay(int arg, int flags)
     return (this->end - this->begin) - 1;
 }
 
-// ---- @ 0x49e9c0 -----------------------------------------------------------------------------------
-// Build a sprite record for troop types `a` and `b` at `pos`: the party's free list hands out the
-// record id, the record takes the position, both troop ids and the summed heights, and both troop
-// objects point at it.
-int Party::attach_party_center(float2* pos, int a, int b)
+} // namespace c49e780
+
+// ======================================================================================
+// GameData members of slice s0049e780 (the slice called the game-data object `Party`): the battle records (0x98 bytes, the pages
+// at +0xe4) and the parties that stand for them (0x5ac8 bytes, the pages at +0x138d0).
+// ======================================================================================
+// the battle record `id` (16 to a page)
+static __forceinline Rec98* battle_rec(GameData* g, unsigned id) { return (Rec98*)g->agent_pages[id >> 4] + (id & 0xf); }
+
+// @ 0x49e9c0
+// Build a battle record for the parties `a` and `b` at `pt`: the record pool hands out the id, the record takes the
+// position, both party ids and the summed unit counts, and both parties point at it.
+int GameData::attach_party_center(const float* pt, int a, int b)
 {
-    int id = list.pop_front();                           // 0x493700
-    sprite(id)->alive = 1;
-    sprite(id)->pos = *pos;
-    sprite(id)->alive = 1;
-    sprite(id)->a = a;
-    sprite(id)->b = b;
-    sprite(id)->height = 0;
+    int id = ((RecPool*)((char*)this + 0xcc))->alloc_record();   // 0x493700
+    battle_rec(this, id)->f10 = 1;
+    battle_rec(this, id)->f24 = pt[0];
+    battle_rec(this, id)->f28 = pt[1];
+    battle_rec(this, id)->f10 = 1;
+    battle_rec(this, id)->f54 = a;
+    battle_rec(this, id)->f58 = b;
+    battle_rec(this, id)->f78 = 0;
     if (a >= 0) {
         int d[4] = { 0, 0, 0, 0 };
-        count_units(a, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
-        sprite(id)->height += d[0];
+        ((GameW*)this)->count_units(a, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
+        battle_rec(this, id)->f78 += d[0];
     }
     if (b >= 0) {
         int d[4] = { 0, 0, 0, 0 };
-        count_units(b, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
-        sprite(id)->height += d[0];
+        ((GameW*)this)->count_units(b, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
+        battle_rec(this, id)->f78 += d[0];
     }
-    scene.obj(a)->f918 = 7;
-    scene.obj(b)->f918 = 7;
-    scene.obj(a)->sprite = id;
-    scene.obj(b)->sprite = id;
-    spawn_battle_icon(id);                                     // 0x49bbb0
+    parties.get_party(a)->action = 7;
+    parties.get_party(b)->action = 7;
+    parties.get_party(a)->f88 = id;
+    parties.get_party(b)->f88 = id;
+    ((c49b630::Mission*)this)->spawn_battle_icon(id);          // 0x49bbb0
     return id;
 }
 
-// ---- @ 0x49ebd0 -----------------------------------------------------------------------------------
-// Add a scene object for troop type `troop` at (x, y): the scene's last object record is filled from
-// the 0xb0-byte troop record, named after it, randomly rotated, and hooked to a fixture.
-int Party::add_sprite(int x, int y, int troop)
+// @ 0x49ebd0
+// Add a party of party template `tmpl` at (x, y): the last party record is filled from the template record, named after
+// it, randomly rotated, and given a fixture-following behaviour.
+int GameData::add_sprite(float x, float y, int tmpl)
 {
-    TroopRec* tr = troop_rec(troop);                     // 0x5e29f8 + 0xb0 * troop
-    int id = scene.add_slot();                               // 0x493960
-    scene.obj(id)->init();                              // 0x48f180
-    scene.obj(id)->f8c = troop;
-    scene.obj(id)->f30 = x;
-    scene.obj(id)->f34 = y;
-    scene.obj(id)->rot.x = 1.0f;
-    scene.obj(id)->rot.y = 0;
+    PartyTemplate* tr = &g_party_templates[tmpl];       // 0x5e29f8 + 0xb0 * tmpl
+    int id = ((PartyMgrW*)&parties)->add_slot();         // 0x493960
+    parties.get_party(id)->init();                       // 0x48f180
+    parties.get_party(id)->template_id = tmpl;
+    parties.get_party(id)->pos.x = x;
+    parties.get_party(id)->pos.y = y;
+    parties.get_party(id)->dirx = 1.0f;
+    parties.get_party(id)->diry = 0;
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
     float c = (float)cos(ang);
     float s = (float)sin(ang);
-    ObjRec* ro = scene.obj(id);
-    float oy = ro->rot.y;
-    float ox = ro->rot.x;
-    ro->rot.y = c * oy + s * ox;
-    ro->rot.x = c * ox - s * oy;
-    tstring* n = g_strtable.find(&tr->name);    // 0x4c6010
+    Party* ro = parties.get_party(id);
+    float oy = ro->diry;
+    float ox = ro->dirx;
+    ro->diry = c * oy + s * ox;
+    ro->dirx = c * ox - s * oy;
+    tstring* n = g_strtable.find(&tr->key);     // 0x4c6010
     if (n == 0)
-        n = (tstring*)tr;
-    scene.obj(id)->name = *n;
-    scene.obj(id)->flag1c = 1;
-    scene.obj(id)->name2 = tr->name;
-    scene.obj(id)->fa0 = tr->f20;
-    scene.obj(id)->fa4 = tr->f24;
-    scene.obj(id)->f90 = tr->f28;
-    scene.obj(id)->f70 = tr->f2c;
-    scene.obj(id)->f74 = tr->f30;
-    scene.obj(id)->f8e4 = 2;
-    scene.obj(id)->f8ec = x;
-    scene.obj(id)->f8f0 = y;
-    add_template(id, troop, 0);                            // 0x48fbd0
-    add_order_arrow(id);                                     // 0x49bea0
-    tr->f34 += 1;
+        n = &tr->name;
+    parties.get_party(id)->name = *n;
+    parties.get_party(id)->flag = 1;
+    parties.get_party(id)->key = tr->key;
+    parties.get_party(id)->flags_hi = tr->f24;
+    parties.get_party(id)->flags_lo = tr->f20;
+    parties.get_party(id)->f90 = tr->f28;
+    parties.get_party(id)->f70 = tr->f2c;
+    parties.get_party(id)->f74 = tr->f30;
+    parties.get_party(id)->state = 2;
+    parties.get_party(id)->ai_target_x = x;
+    parties.get_party(id)->ai_target_y = y;
+    add_template(id, tmpl, 0);                            // 0x48fbd0
+    ((c49bea0::MissionAgents*)this)->add_order_arrow(id);  // 0x49bea0
+    tr->num_created += 1;
     return id;
 }
 
-// ---- @ 0x49ef00 -----------------------------------------------------------------------------------
-// Add the sprite for character record `slot` at (x, y): name it after the character and move it to the
-// character's own position field.
-int Party::create_companion_party(int slot, int x, int y, int a)
+// @ 0x49ef00
+// Add the party for troop `troop` at (x, y): named after the troop (its translation when the string table has one).
+int GameData::create_companion_party(int troop, float x, float y, float z)
 {
     int id = add_sprite(x, y, 3);                        // 0x49ebd0
-    tstring* n = g_strtable.find(&chars()[slot].name); // 0x4c6010
+    tstring* n = g_strtable.find(&chars[troop].key);     // 0x4c6010
     if (n == 0)
-        n = &chars()[slot].name;
-    scene.obj(id)->name = *n;
-    scene.obj(id)->flag1c = 1;
-    scene.obj(id)->f70 = chars()[slot].f4c;
-    scene.obj(id)->add_members(n, 1, 0, 0, 0);            // 0x48c840
+        n = &chars[troop].key;
+    parties.get_party(id)->name = *n;
+    parties.get_party(id)->flag = 1;
+    parties.get_party(id)->f70 = chars[troop].faction;
+    parties.get_party(id)->add_members((int)n, 1, 0, 0, 0);            // 0x48c840
     return id;
 }
 
-// ---- @ 0x49f020 -----------------------------------------------------------------------------------
-// Pick the on-screen position for troop `troop` (x is adjusted in place) and add its sprite there.
-void Party::spawn_around(int x, int y, int troop, int a)
+// @ 0x49f020
+// Pick a position around (x, y) (x and y are adjusted in place) and add a party of template `tmpl` there.
+int GameData::spawn_around(float x, float y, int tmpl, float radius)
 {
-    random_position_around(x, y, a, &x);                                   // 0x490030
-    add_sprite(x, y, troop);                             // 0x49ebd0
+    Vec2 p(x, y);
+    ((GameW*)this)->random_position_around(p, radius, &p);                                   // 0x490030
+    return add_sprite(p.x, p.y, tmpl);                         // 0x49ebd0
 }
-
-} // namespace c49e780
 
 // ======================================================================================
 // slice s0049f060 (namespace c49f060)
@@ -1731,146 +1613,6 @@ namespace c49f060 {
 // attach/dismount onto party `b` (and where the join point is); 0x49f3d0 spawns the scene object of a party for a
 // party trigger; 0x49f7c0 pops/replaces the party on top of the trigger stack; 0x49f980 and 0x49f9e0 enter a
 // trigger block. Module System names: parties, party_tpl, triggers. Names provisional.
-
-// ---- the resource manager (0x5d6fa0; the slice called it the string table) ----
-struct ResTable { tstring* find(const tstring* key) { return (tstring*)((::resource_manager*)this)->get_object70(*(const rgl::string*)key); } };   // 0x418cf0 (ret 4, null when absent)
-extern ResTable g_resmgr;                                                           // 0x5d6fa0
-
-// ---- the game data ---------------------------------------------------------------------------------------
-struct Party;                                                                     // 0x5ac8 bytes
-struct PartyMgr {                                                                 // embedded in the game data at +0xf8
-    char pad0[0x138cc];
-    std::vector<char*> pages;                                                     // +0x138cc (page pointers, 16 parties per page)
-    int deflt;                                                                    // +0x138dc (never read here)
-    int index_of(int id) { return ((Map10007*)this)->lookup(id); }                // 0x48ad00 (thiscall, ret 4)
-    Party* get(int id)                                                            // 0x51ee50 (thiscall, ret 4): out of line when the caller is too big
-    {
-        int k = index_of(id);
-        return (Party*)((k & 0xf) * 0x5ac8 + *(pages.begin() + (k >> 4)));
-    }
-    void next_party_id(int* p);                                                   // 0x460ca0 (thiscall, ret 4)
-};
-struct KindRec {                                                                  // 0x98-byte scene object record
-    int kind;                                                                     // +0
-    char pad4[0x98 - 4];
-};
-struct Party {
-    char pad0[0x30];
-    float x, y, z, w;                                                             // +0x30 (position)
-    char pad40[0x54 - 0x40];
-    int f54;                                                                      // +0x54
-    char pad58[0x78 - 0x58];
-    int f78;                                                                      // +0x78 (the mounted/attached party)
-    char pad7c[0x88 - 0x7c];
-    int f88;                                                                      // +0x88 (scene object index, < 0 = not deployed)
-    char pad8c[0x8b4 - 0x8c];
-    char f8b4;                                                                    // +0x8b4
-    char pad8b5[0x8bc - 0x8b5];
-    int* f8bc;                                                                    // +0x8bc (item count table)
-    char pad8c0[0x8c8 - 0x8c0];
-    int f8c8;                                                                     // +0x8c8
-    char f8cc;                                                                    // +0x8cc
-    char pad8cd[0x5ac8 - 0x8cd];
-};
-struct TroopRec {                                                                 // 0x508 bytes
-    char pad0[0x30];
-    unsigned __int64 flags;                                                       // +0x30 tf_*
-    char pad38[0x48 - 0x38];
-    int level;                                                                    // +0x48
-    char pad4c[0x508 - 0x4c];
-};
-struct ItemRef {                                                                  // 8 bytes
-    int item; union { unsigned m4; struct { unsigned char amount; char pad[2]; signed char mod; } b; };
-};
-struct V2 {
-    float x, y;
-    V2(float a, float b) : x(a), y(b) {}
-};
-struct Receiver {                                                                 // a 0x98-byte scene object record
-    char pad0[0x54];
-    int f54;                                                                      // +0x54
-    int f58;                                                                      // +0x58
-    char pad5c[0x98 - 0x5c];
-};
-struct GameData {
-    char pad0[0x78];
-    int f78;                                                                      // +0x78 (player party)
-    char pad7c[0xe0 - 0x7c];
-    std::vector<char*> nodes;                                                     // +0xe0 (scene object pages, 16 records of 0x98 bytes)
-    char padf0[0xf8 - 0xf0];
-    PartyMgr parties;                                                             // +0xf8
-    char pad_to_chars[0x13a00 - 0xf8 - sizeof(PartyMgr)];
-    TroopRec* chars;                                                              // +0x13a00
-    char pad13a04[0x13a0c - 0x13a04];
-    int f13a0c;                                                                   // +0x13a0c
-    int f13a10;                                                                   // +0x13a10
-    int f13a14;                                                                   // +0x13a14
-    char pad13a18[0x13ad0 - 0x13a18];
-    float f13ad0;                                                                 // +0x13ad0
-    int f13ad4;                                                                   // +0x13ad4
-    char pad13ad8[0x14014 - 0x13ad8];
-    unsigned char f14014;                                                         // +0x14014 (trigger block object)
-
-    Receiver* node(unsigned idx)                                                  // scene object by index
-    {
-        return (Receiver*)((idx & 0xf) * 0x98 + *(nodes.begin() + (idx >> 4)));
-    }
-    int battle_root(int id) { return ((::GameData*)this)->battle_root(id); }                                // 0x48fce0 (ret 4)
-    float relation(int a, int b) { return ((::GameData*)this)->relation(a, b); }                            // 0x48ffa0 (ret 8)
-    void set_objective(int a, int b) { ((GameW*)this)->set_objective(a, b); }                                // 0x4949d0 (ret 8)
-    void attach_party_center(const V2& pt, int a, int b)                          // 0x49e9c0 (ret 0xc; defined above as c49e780::Party::attach_party_center)
-    {
-        c49e780::float2 p(pt.x, pt.y);
-        ((c49e780::Party*)this)->attach_party_center(&p, a, b);
-    }
-    bool deploy_party(int a, int b);                                              // 0x49f060 (ret 8)
-};
-extern GameData* g_game;                                                          // 0x5e2930
-
-
-// ---- the mission -----------------------------------------------------------------------------------------
-struct PartyStack { int id; int val; void reduce(int n) { ((::ItemRef*)this)->reduce(n); } };                       // 8 bytes, mission+0x404
-// PartyStack::reduce is 0x437510 (ItemStack::reduce: take `n` off the stack).
-struct TriggerStack {                                                             // the party trigger stack
-    PartyStack sp[0x80];                                                          // +0 (depth i reads sp[i-1])
-    int count;                                                                    // +0x400 (stack depth)
-};
-struct NextUsedTbl { void next_used(int* p); };                                   // 0x43b160 (thiscall, ret 4)
-struct Mission {
-    KindRec* table;                                                               // +0x0 (0x98-byte scene object records)
-    char pad4[0x5c - 4];
-    int local_id;                                                                 // +0x5c
-    char pad60[0x400 - 0x60];
-    int sp_count;                                                                 // +0x400 (party trigger stack depth)
-    PartyStack sp[0x80];                                                          // +0x404
-    char pad804[0x13a0c - 0x804];
-    int f13a0c;                                                                   // +0x13a0c
-    int f13a10;                                                                   // +0x13a10
-    int f13a14;                                                                   // +0x13a14
-    char pad13a18[0x13a48 - 0x13a18];
-    float* harvest;                                                               // +0x13a48 (party x party matrix)
-    char pad13a4c[0x13ad0 - 0x13a4c];
-    float f13ad0;                                                                 // +0x13ad0
-    int f13ad4;                                                                   // +0x13ad4
-
-    Party* battle_root(int id) { return (Party*)((::GameData*)this)->battle_root(id); }                       // 0x48fce0 (this = mission-4; ret 4)
-    float relation(int a, int b) { return ((::GameData*)this)->relation(a, b); }                              // 0x48ffa0 (this = mission-4; ret 8)
-    void set_objective(int a, int b) { ((GameW*)this)->set_objective(a, b); }                                  // 0x4949d0 (this = mission-4; ret 8)
-    void attach_party_center(const float* pt, int a, int b)                       // 0x49e9c0 (this = mission-4; ret 0xc)
-    {
-        ((c49e780::Party*)this)->attach_party_center((c49e780::float2*)pt, a, b);
-    }
-    void set_lvalue(int val, long long* out);                              // 0x49d500 (this = mission-4; ret 8)
-    int get_operand(int a, int* b, int* c);                              // 0x49d650 (this = mission-4; ret 0xc)
-    bool step_less(int a, void* t);                                            // 0x49d7f0 (ret 8)
-    void enter_trigger(int val, int ip);                                          // 0x49f980 (ret 8)
-    void exec_trigger(int val);                                                   // 0x49f9e0 (ret 4)
-    // trigger-block builders (thiscall, the block handle is the first argument)
-    void create(void* block, const void* pos, int one) { ((MissionG*)this)->create((const rgl::matrix*)block, (const ItemStackG*)pos, one); }   // 0x4836e0 (ret 0xc)
-    void block_exec(void* block, int val, int a, int b, int c, int d, int e, int f,
-                    int g, char* out);                                            // 0x483870 (ret 0x28)
-};
-extern Mission* g_mission;                                                        // 0x5e292c
 
 // ---- spawn helpers (other slices) ------------------------------------------------------------------------
 struct SceneObj {
@@ -1907,60 +1649,6 @@ struct Group {                                                                  
 };
 extern Group* g_anims;                                                           // 0xa76628
 
-// @ 0x49f060
-// Decide whether party `a` can be attached to `b`, and where the join point is. When the leader of `b` is not
-// deployed yet the two parties join at the midpoint of their positions (the player's party is always the first
-// one handed to attach_party_center); otherwise `a` adopts the leader's scene object (the player) or attaches to
-// the party standing next to it.
-bool GameData::deploy_party(int a, int b)
-{
-    int lead = battle_root(b);
-    if (parties.get(lead)->f88 >= 0) {
-        if (a == f78) {
-            f13a0c = node(parties.get(lead)->f88)->f58;
-            f13a10 = node(parties.get(lead)->f88)->f54;
-            f13a14 = 0;
-            parties.get(a)->f88 = parties.get(lead)->f88;
-            return 1;
-        }
-        Receiver* nd = node(parties.get(lead)->f88);
-        int x = nd->f58;
-        if (x == lead)
-            x = nd->f54;
-        if (relation(x, a) < -0.01f)
-            return 0;
-        set_objective(a, x);
-        parties.get(a)->f8cc = 1;
-        return 1;
-    }
-    if (a == f78) {
-        lead = battle_root(b);
-        f13a0c = lead;
-        f13a10 = -100000;
-        f13a14 = 0;
-        Party* pl = parties.get(lead);
-        Party* pa = parties.get(a);
-        attach_party_center(V2((pa->x + pl->x) * 0.5f, (pl->y + pa->y) * 0.5f), a, lead);
-        return 1;
-    }
-    if (b == f78) {
-        if (0.0f < f13ad0 && f13ad4 != 0)
-            return 0;
-        int la = battle_root(a);
-        f13a0c = la;
-        f13a10 = -100000;
-        f13a14 = 1;
-        Party* p1 = parties.get(la);
-        Party* p2 = parties.get(b);
-        attach_party_center(V2((p1->x + p2->x) * 0.5f, (p2->y + p1->y) * 0.5f), b, a);
-        return 1;
-    }
-    Party* p1 = parties.get(a);
-    Party* p2 = parties.get(lead);
-    attach_party_center(V2((p2->x + p1->x) * 0.5f, (p2->y + p1->y) * 0.5f), a, lead);
-    return 1;
-}
-
 // The work area 0x49f3d0 shares with the appearance/agent builders. The member names are the frame offsets of
 // the original (local_bc .. local_54): `b8` is local_b8, `f60` is local_60, and `f74`/`f70` receive the mesh
 // node lists the builders hand back.
@@ -1993,14 +1681,9 @@ struct PtrVec {                                                                 
     int size() { return (int)(end - begin); }
 };
 PtrVec g_world_list;                                                              // 0xa75f54 (.bss) the open worlds (its allocator word sits at 0xa75f50)
-struct MeshNodeList { void cap_all(float* v); };                                  // 0x438f90 (ret 4)
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
 inline __int64 pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
-void build_appearance(SceneObj* e, int count, int party, int arg, PartyStack* s, void* b8, void* name,
-                      void* sixty, float* dist, void* bc, ItemRef* items, int one); // 0x482240 (cdecl)
-void build_agent(SceneObj* e, int count, int party, void* b8, float* dist, ItemRef* items,
-                 int one);                                                        // 0x47cfe0 (cdecl, ret 0x1c)
 inline void place_scene_agents(SceneObj* e, ItemRef* items, void* b8) { ::place_scene_agents((CarryBody*)e, (CarryRef*)items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
 
 // @ 0x49f3d0
@@ -2019,9 +1702,9 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     SceneObj* e = world->create_entity(9);
     memcpy(e->m, frame, 0x40);
 
-    PartyStack s;
-    s.id = kind;
-    s.val = 0;
+    ItemRef s;
+    s.item = kind;
+    s.m4 = 0;
     s.reduce(0);
 
     SpawnArea area;
@@ -2033,35 +1716,36 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     def->set_env_count(2);
     def->f5c = 0;
 
-    ItemRef items[10];
+    ::ItemRef items[10];
     int count;
     if (party < 0) {
-        def->init((FxRes*)g_resmgr.find(&tstring("skel_horse")));
+        def->init((FxRes*)::g_resmgr.get_object70(*(const rgl::string*)&tstring("skel_horse")));
         count = 1;
     } else {
-        unsigned t = (unsigned)g_game->chars[party].flags & 0xf;
+        unsigned t = (unsigned)::g_game->chars[party].flags & 0xf;
         def->init((FxRes*)(t < (unsigned)g_anim.char_count
                               ? *(void**)((char*)((int*)g_anim.chars) + 0x1e8 + t * 0x1f8) : 0));
-        int level = g_game->chars[party].level;
+        int level = ::g_game->chars[party].level48;
         for (int i = 0; i < 10; i++)
             *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,
                                                            &world->f34c, 0, &scratch);
         count = level;
     }
     char name[0x10];
-    build_appearance(e, count, party, *args, &s, &area.b8, name, &area.f60, &dist, &area.bc, items, -1);
+    ::build_appearance((rgl::strategic_entity*)e, count, party, *args, &s, (rgl::lod_mesh2**)&area.b8, (int*)name, (rgl::lod_mesh2**)&area.f60,
+                       (int*)&dist, (rgl::lod_mesh2**)&area.bc, (EquipSet*)items, -1);
     if (party >= 0) {
-        build_agent(e, count, party, &area.b8, &dist, items, -1);
+        ::setup_item_meshes((SkelBodyV*)e, count, party, (char*)&area.b8, (int)&dist, items, -1);
         place_scene_agents(e, items, &area.b8);
         if (area.f74 != 0) {
             dist = 20.0f;
-            for (int i = 0; i < *(int*)(area.f74 + 0x84); i++)
-                ((MeshNodeList*)(area.f74 + 0x34 + i * 0x10))->cap_all(&dist);
+            for (int i = 0; i < ((node_groups*)area.f74)->nlists; i++)
+                ((node_groups*)area.f74)->lists[i].cap_all(&dist);
         }
         if (area.f70 != 0) {
             dist = 20.0f;
-            for (int i = 0; i < *(int*)(area.f70 + 0x84); i++)
-                ((MeshNodeList*)(area.f70 + 0x34 + i * 0x10))->cap_all(&dist);
+            for (int i = 0; i < ((node_groups*)area.f70)->nlists; i++)
+                ((node_groups*)area.f70)->lists[i].cap_all(&dist);
         }
     }
     Group* g = &g_anims[*group];
@@ -2077,28 +1761,90 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     e->set_pos(&dist);
 }
 
+} // namespace c49f060
+
+// the 0x98-byte scene object record of index `idx` (the pages at game+0xe4, 16 records each)
+static __forceinline Rec98* agent_rec(GameData* g, unsigned idx) { return (Rec98*)((idx & 0xf) * 0x98 + ((char**)g->agent_pages)[idx >> 4]); }
+static __forceinline void attach_center(GameData* g, float x, float y, int a, int b)   // 0x49e9c0 (ret 0xc)
+{
+    Vec2 p(x, y);
+    g->attach_party_center(&p.x, a, b);
+}
+
+// @ 0x49f060
+// Decide whether party `a` can be attached to `b`, and where the join point is. When the leader of `b` is not
+// deployed yet the two parties join at the midpoint of their positions (the player's party is always the first
+// one handed to attach_party_center); otherwise `a` adopts the leader's scene object (the player) or attaches to
+// the party standing next to it.
+bool GameData::deploy_party(int a, int b)
+{
+    int lead = battle_root(b);
+    if (parties.get_party(lead)->f88 >= 0) {
+        if (a == party_id_78) {
+            attach_party = agent_rec(this, parties.get_party(lead)->f88)->f58;
+            attach_scene = agent_rec(this, parties.get_party(lead)->f88)->f54;
+            attach_flip = 0;
+            parties.get_party(a)->f88 = parties.get_party(lead)->f88;
+            return 1;
+        }
+        Rec98* nd = agent_rec(this, parties.get_party(lead)->f88);
+        int x = nd->f58;
+        if (x == lead)
+            x = nd->f54;
+        if (relation(x, a) < -0.01f)
+            return 0;
+        ((GameW*)this)->set_objective(a, x);
+        parties.get_party(a)->f8cc = 1;
+        return 1;
+    }
+    if (a == party_id_78) {
+        lead = battle_root(b);
+        attach_party = lead;
+        attach_scene = -100000;
+        attach_flip = 0;
+        ::Party* pl = parties.get_party(lead);
+        Party* pa = parties.get_party(a);
+        attach_center(this, (pa->pos.x + pl->pos.x) * 0.5f, (pl->pos.y + pa->pos.y) * 0.5f, a, lead);
+        return 1;
+    }
+    if (b == party_id_78) {
+        if (0.0f < f13ad0f && f13ad4 != 0)
+            return 0;
+        int la = battle_root(a);
+        attach_party = la;
+        attach_scene = -100000;
+        attach_flip = 1;
+        Party* p1 = parties.get_party(la);
+        Party* p2 = parties.get_party(b);
+        attach_center(this, (p1->pos.x + p2->pos.x) * 0.5f, (p2->pos.y + p1->pos.y) * 0.5f, b, a);
+        return 1;
+    }
+    Party* p1 = parties.get_party(a);
+    Party* p2 = parties.get_party(lead);
+    attach_center(this, (p2->pos.x + p1->pos.x) * 0.5f, (p2->pos.y + p1->pos.y) * 0.5f, a, lead);
+    return 1;
+}
+
 // @ 0x49f980
 // Enter the trigger block `val` at statement `ip`: pack `ip` (0..0x2a) into the top byte of `val`, then
 // register the entry with the trigger block object at g_game+0x14014.
-void Mission::enter_trigger(int val, int ip)
+int Mission::enter_trigger(int val, int ip)
 {
-    PartyStack s;
-    s.id = val;
+    ItemRef s;
+    s.item = val;
     if (ip < 0x2b && ip >= 0) {
-        s.val = (s.val & 0xffffff) | (ip << 24);
+        s.m4 = (s.m4 & 0xffffff) | (ip << 24);
         s.reduce(0);
     }
-    create((void*)((char*)g_game + 0x14014), &s, 1);
+    return ((MissionG*)this)->create((const rgl::matrix*)g_game->trigger_frame, (const ItemStackG*)&s, 1);
 }
 
 // @ 0x49f9e0
-void Mission::exec_trigger(int val)
+int Mission::exec_trigger(int val)
 {
     char out[0x20];
-    block_exec((void*)((char*)g_game + 0x14014), val, -1, 0, 0, -1, 0, 0, 0, out);
+    return ((MissionG*)this)->spawn_full((const rgl::matrix*)g_game->trigger_frame, val, -1, 0, 0, -1, 0, 0, 0, (int*)out);
 }
-
-} // namespace c49f060
 
 // ======================================================================================
 // GameData members of slice s0049b630 (the slices called the game-data object `Mission`): the value counters, the quest

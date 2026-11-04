@@ -256,8 +256,9 @@ struct Mission {
     void light_props();                         // 0x47ced0
     void run_spawns();                          // 0x483eb0 (mesh_slot/mesh_game.cpp: up to 100 passes spawning every pending entry)
     void frame(float dt, int spawn);            // 0x483f60 (mesh_game.cpp: the per-frame mission tick; start_setup calls it with (0.1, 1))
-    void exec_trigger(int val); // 0x49f9e0
-    void enter_trigger(int val, int ip); // 0x49f980
+    int place(const int* item);                 // 0x49b4b0 (party2/camera.cpp: ret 4; the result is add_placed's)
+    int exec_trigger(int val);                  // 0x49f9e0 (party2/camera.cpp: ret 4; the result is spawn_full's)
+    int enter_trigger(int val, int ip);         // 0x49f980 (party2/camera.cpp: ret 8)
     void check_slot(int id, unsigned bits); // 0x49c170
     void spawn_battle_icon(unsigned id); // 0x49bbb0
 };

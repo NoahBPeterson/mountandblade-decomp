@@ -1,5 +1,6 @@
 // mesh_appear.cpp: TU 63 "mesh", part 6 (0x482240..0x4832b0): the agent appearance builder. See MIGRATION.md.
 #include "./mesh_slot.h"
+#include "./mesh_build.h"          // build_appearance (0x482240), setup_item_meshes (0x47cfe0)
 #include "../../include/fx.h"
 #include "../../include/troop.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)

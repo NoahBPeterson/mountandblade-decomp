@@ -604,7 +604,7 @@ void GameDataX::update_party_sprites()
     PartyX* p = party_index(this, *(int*)((char*)this + 0x7c));
     if (((Party*)p)->sum_stat(0x10) != 0) {
         PartyX* q = party_index(this, *(int*)((char*)this + 0x78));
-        int spr = ((c49e780::Party*)(void*)this)->add_sprite(*(int*)((char*)q + 0x30), *(int*)((char*)q + 0x34), 1);
+        int spr = add_sprite(*(float*)((char*)q + 0x30), *(float*)((char*)q + 0x34), 1);
         PartyX* r = party_index(this, spr);
         int n = *(int*)((char*)p + 0x8a8);
         int i = 0;
@@ -627,7 +627,7 @@ void GameDataX::update_party_sprites()
             if ((rec->flags32 & 0x10) != 0) {
                 int kind = (row[1] & 1) ? 2 : 1;
                 PartyX* q = party_index(this, *(int*)((char*)this + 0x78));
-                int spr = ((c49e780::Party*)(void*)this)->add_sprite(*(int*)((char*)q + 0x30), *(int*)((char*)q + 0x34), kind);
+                int spr = add_sprite(*(float*)((char*)q + 0x30), *(float*)((char*)q + 0x34), kind);
                 PartyX* d = party_index(this, spr);
                 Troop* src = &troops[row[0]];
                 tstring* s = STR_TABLE->find((const tstring*)((char*)src + 0x20));

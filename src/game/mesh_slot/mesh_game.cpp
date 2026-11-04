@@ -219,10 +219,9 @@ struct node_groups {
 };
 struct AgentEq;                          // terrain_a/misc.h: the agent's equipment slots as 0x46b2d0 sees them
 void __stdcall AgentEq_pick_slots(AgentEq* a);      // 0x46b2d0 (ret 4)
-struct SkelBodyV;                        // 0x47cfe0 (mesh_scene.cpp) names the body it builds the item meshes of
 void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* inv, void* f240, void* f194,
                       void* f1a4, void* f1a8, void* slots, int id);   // 0x482240 (__stdcall, ret 0x34)
-void setup_item_meshes(SkelBodyV* body, int kind, int troop, char* inv, int f130, ItemRef* slots, int id);  // 0x47cfe0 (cdecl)
+#include "./mesh_build.h"          // setup_item_meshes (0x47cfe0)
 #include "../skill_cap.h"
 extern char g_gui[]; // 0x5d7080
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)

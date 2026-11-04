@@ -41,11 +41,6 @@ struct PartyRecIO;
 struct Scene {
     PartyRecIO* get(int id);   // 0x51ee50 (the party manager's by-id getter)
 };
-namespace c49e780 {
-struct Party {
-    int add_sprite(int a, int b, int kind);   // 0x49ebd0 (ret 0xc)
-};
-}
 struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (ui/mission.h: the id hash table that opens the party manager)
 };
@@ -95,7 +90,7 @@ inline PartyX* party_index(GameData* g, int id)
 struct GameDataX : GameData {               // the game object with the members this region calls
     // (sl_party_price 0x48a320 is GameData's)
     __declspec(noinline) void update_party_sprites();            // 0x532de0
-    // (add_sprite 0x49ebd0 is c49e780::Party's)
+    // (add_sprite 0x49ebd0 is GameData's)
 };
 inline GameDataX* gx() { return (GameDataX*)g_game; }
 

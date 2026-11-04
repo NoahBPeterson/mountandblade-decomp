@@ -92,7 +92,7 @@ struct FactionRec {                         // 0x300 bytes
 struct PartyTemplate {                      // 0xb0 bytes
     tstring name;                           // +0x00
     tstring key;                            // +0x10
-    char pad20[0x34 - 0x20];
+    int f20, f24, f28, f2c, f30;            // +0x20 copied into a new party's +0xa0, +0xa4, +0x90, +0x70, +0x74 (GameData::add_sprite 0x49ebd0)
     union {
         int f34;                            // +0x34  0x51e410 (r_int)
         int num_created;                    // +0x34 (store_num_parties_created 0x4ad83a)
