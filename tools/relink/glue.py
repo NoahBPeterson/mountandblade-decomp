@@ -23,7 +23,7 @@ and writes:
                   made with link /lib from the original's import names, decorated as the DLL exports them.
   glue.json       what was done, and every symbol left unresolved, with the reason.
 """
-import argparse, collections, json, os, re, struct, subprocess, sys
+import argparse, bisect, collections, json, os, re, struct, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
@@ -54,6 +54,62 @@ IAT_LO, IAT_HI = 0x549000, 0x5494c8
 DEAD_RANGES = (
     (0x5a8000, 0x5a80f4, "CRT initializer/terminator tables .CRT$XCA..XTZ"),
 )
+
+
+# Dead tables found by content, inside windows. Their records are interleaved with live data (the ctype table, month
+# names, error strings), so a window is not zeroed whole; the dwords that are dead are:
+#   - a seed: a dword that points at original code we do not define (what would become a trap) and lies in a window.
+#     Those are the cleanup / catch funclets of the original's C++ EH maps and libcmt's locale / stdio code, whose
+#     functions our build recompiles (cl emits its own maps; our __ehhandler thunks name ours) or takes from libcmt.lib;
+#   - a referrer: a dword in a window that points at (or up to 20 bytes before) a dead dword, i.e. the try-block /
+#     handler-array / unwind-map / FuncInfo pointer chain that leads to a seed. Only the original's own __ehhandler
+#     immediates (code we do not link) reach the head of such a chain.
+# The windows are the three groups of the trap classification (docs/standalone_traps.md).
+DEAD_WINDOWS = (
+    (0x59c6d8, 0x59cf24, "libcmt EH / locale funclet tables (.rdata)"),
+    (0x5a0898, 0x5a60f4, "FuncInfo / unwind / try / catch maps of recompiled functions (.rdata)"),
+    (0x5d12a8, 0x5d12ac, "libcmt static (.data)"),
+    (0x5d5cf8, 0x5d6160, "libcmt statics (.data)"),
+)
+TYPE_INFO_VFTABLE = 0x59ca6c    # the original's type_info vftable (libcmt typinfo.obj); the glue binds libcmt's
+CHAIN_REACH = 0x14           # a chain pointer may address a record up to 20 bytes before its dead dword
+
+
+def in_window(va):
+    return any(lo <= va < hi for lo, hi, _w in DEAD_WINDOWS)
+
+
+def object_end(start, starts, runs=None):
+    """End of the object that begins at `start`: the next referenced / labelled address (the way trap_report.py
+    delimits objects), at least 4 bytes; inside a run of code pointers (a vtable's slots; `runs` is a sorted list of
+    [start, bytes]) it ends where the run does."""
+    i = bisect.bisect_right(starts, start)
+    end = max(start + 4, starts[i]) if i < len(starts) else start + 4
+    if runs:
+        j = bisect.bisect_right(runs, [start, 1 << 32]) - 1
+        if j >= 0 and start < runs[j][0] + runs[j][1]:
+            end = min(end, runs[j][0] + runs[j][1])
+    return end
+
+
+def dead_in(lo, hi, dead_sorted):
+    """The dead dwords inside [lo, hi)."""
+    i = bisect.bisect_left(dead_sorted, lo)
+    out = []
+    while i < len(dead_sorted) and dead_sorted[i] < hi:
+        out.append(dead_sorted[i])
+        i += 1
+    return out
+
+
+def ranges_of(dead_sorted):
+    out = []
+    for w in dead_sorted:
+        if out and out[-1][1] == w:
+            out[-1][1] = w + 4
+        else:
+            out.append([w, w + 4])
+    return out
 
 
 # dwords in the copy that equal a dead-range address by accident: 0x5d3ef4 sits inside a table of 16-bit entries
@@ -449,6 +505,61 @@ def main():
     for v, n in our_data.items():
         if in_dead_range(v):
             reach.append("definition %s at %08x" % (n, v))
+    # dead tables found by content (DEAD_WINDOWS): seeds, then the chain of dwords that lead to them
+    words = {}
+    in_string, str_starts = set(), set()
+    for sec in (RDATA, DATA):
+        data = obj.sections[secno[sec[0]] - 1]["data"]
+        mask = string_mask(bytes(data))
+        for i, m in enumerate(mask):
+            if m:
+                in_string.add(sec[1] + i)
+                if i == 0 or not mask[i - 1]:
+                    str_starts.add(sec[1] + i)
+        for off in range(0, len(data) - 3, 4):
+            va_here = sec[1] + off
+            if not (IAT_LO <= va_here < IAT_HI or any(mask[off:off + 4])):
+                words[va_here] = struct.unpack_from("<I", data, off)[0]
+    dead = {w for w, v in words.items() if in_window(w) and TEXT_LO <= v < TEXT_HI and v in img.start_set
+            and code_target(v)[0] is None}
+    nseeds = len(dead)
+    # a pointer into a C string (weekday names at 0x5a1640, a message at 0x5a1654) is not a link in an EH chain
+    # and the first dword of a record of these tables is a small count / index, -1 (an unwind entry's toState) or the
+    # FuncInfo magic: a pointer to "Sun\0" (0x6e7553) or to the first word of a function-pointer table is not a link
+    heads = dict(words)
+    def head_ok(v):
+        h = heads.get(v)
+        return h is not None and (h < 0x100 or h == 0xffffffff or h == 0x19930520)
+    refs_in = lambda v: v % 4 == 0 and v not in in_string and head_ok(v) and any(v + k in dead for k in range(0, CHAIN_REACH + 1, 4))
+    funcinfos = [w for w, v in words.items() if v == 0x19930520 and in_window(w)]   # FuncInfo: magic, 6 more fields
+    todo = True
+    while todo:
+        todo = False
+        for fi in funcinfos:
+            span = [fi + 4 * i for i in range(7)]
+            if any(x in dead for x in span) and not all(x in dead for x in span):
+                dead.update(x for x in span if x in words)       # a FuncInfo whose chain is dead is dead whole
+                todo = True
+        for w, v in words.items():
+            if w not in dead and in_window(w) and w not in NOT_POINTERS and refs_in(v):
+                dead.add(w)
+                todo = True
+    for w in dead:
+        sec = section_of(w)
+        struct.pack_into("<I", obj.sections[secno[sec[0]] - 1]["data"], w - sec[1], 0)
+        words[w] = 0
+    dead_sorted = sorted(dead)
+    starts = set(v for w, v in words.items() if RDATA[1] <= v < DATA[2]) | set(sec[1] + off for sec, off in labels.values()) | set(our_data) | str_starts
+    starts = sorted(starts)
+    runs = []                   # maximal runs of code pointers: [start, bytes] (vtables and function-pointer tables)
+    for w in sorted(heads):
+        if TEXT_LO <= heads[w] < TEXT_HI:
+            if runs and runs[-1][0] + runs[-1][1] == w:
+                runs[-1][1] += 4
+            else:
+                runs.append([w, 4])
+    report["dead_words"] = {"runs": runs, "seeds": nseeds, "dwords": len(dead), "ranges": [[lo, hi] for lo, hi in ranges_of(dead_sorted)],
+                            "starts": starts}
     for sec in (RDATA, DATA):
         s = obj.sections[secno[sec[0]] - 1]
         data = s["data"]
@@ -461,7 +572,13 @@ def main():
             tsec = section_of(v)
             if tsec and in_dead_range(v) and va_here not in NOT_POINTERS:
                 reach.append("pointer at %08x to %08x" % (va_here, v))
-            if tsec:
+            if v == TYPE_INFO_VFTABLE:
+                # the pVFTable of a copied _TypeDescriptor (.?AVexception@@, .?AVbad_alloc@std@@ ...): libcmt's own
+                # type_info vftable, not the copy of the original's (whose slot is a trapped destructor)
+                struct.pack_into("<I", data, off, 0)
+                s["relocs"].append((off, "??_7type_info@@6B@"))
+                report["pointers"]["type_info_vftable"] += 1
+            elif tsec:
                 if v in our_data:
                     struct.pack_into("<I", data, off, 0)
                     s["relocs"].append((off, our_data[v]))
