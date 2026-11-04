@@ -165,7 +165,7 @@ void Forwarder::forward(int a, int b, int c)
 // continuation and is not separately callable)
 #include "../game_globals.h"
 #include "../../include/renderer.h"       // g_render.dev: the Direct3D device (0xa17f28)
-#include "../id_stack.h"                 // g_id_stack (0xa739f8, a73a04, a73a08), current_screen_id
+#include "../window_mgr.h"                 // g_id_stack (0xa739f8, a73a04, a73a08), current_screen_id
 
 struct Viewport { int x, y, w, h; float minz, maxz; };
 
@@ -271,11 +271,10 @@ void Animator::pack_state(PackedState* out)
 
 // @ 0x4ebb80
 
-#include "../main_menu.h"
+#include "../window_mgr.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-extern main_menu g_main_menu;                           // 0xa73980
 
 void __cdecl menu_variables_loaded(char flag)
 {
@@ -285,6 +284,6 @@ void __cdecl menu_variables_loaded(char flag)
     if (flag)
         return;
     int value = current_screen_id();
-    g_main_menu.set_state(value);
+    g_windows.set_state(value);
     g_msglog.add("Menu variables are loaded...", 0xffff0000);
 }

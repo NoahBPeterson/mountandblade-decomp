@@ -4,7 +4,7 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../window_mgr.h"      // g_windows (0xa73980): the menu / army screens are its slots 29 (0xa739f4) and 24 (0xa739e0)
-#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)

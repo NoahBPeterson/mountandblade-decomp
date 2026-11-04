@@ -555,7 +555,7 @@ struct elem58 {
 void* __fastcall destroy_record_array(void* p, int unused, unsigned char flags);               // 0x4c7ee0
 void* __fastcall conv_item_array_dtor(conv_rec* self, int unused, unsigned char flags);        // 0x4c8980
 struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<int>::clear)
-#include "../main_menu.h"                                    // g_main_menu (the record at 0xa73980)
+#include "../window_mgr.h"                                    // g_windows (0xa73980)
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
 
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
@@ -569,7 +569,6 @@ extern PartyTemplate* g_party_templates;                   // 0x5e29f8 (PartyTem
 struct E24;
 E24* g_5e2928;                                          // 0x5e2928 (the array shutdown() deletes)
 extern Font* g_font;                                // 0x5e2934
-extern ScreenObj* g_windows[30];                        // 0xa73980 .. 0xa739f8
 
 // @ 0x4da5b0
 HRESULT GameApp::FinalCleanup()
@@ -613,8 +612,8 @@ HRESULT GameApp::FinalCleanup()
         conv_item_array_dtor((conv_rec*)g_party_templates, 0, 3);            // 0x4c8980
     }
     for (int i = 0; i < 30; i++) {
-        delete g_windows[i];
-        g_windows[i] = 0;
+        delete g_windows.arr[i];
+        g_windows.arr[i] = 0;
     }
     if (g_font) {
         // the font's inlined destructor: the bucket vector, then the list (sentinel at +0x4c)

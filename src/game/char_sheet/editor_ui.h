@@ -58,7 +58,7 @@ extern char g_path_prefix_chars[];              // 0x8ee3c28
 struct GuiState {
     void init_widgets();   // 0x5d7080
 };
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 struct EditorGame {
     char pad[0x2f9];
     unsigned char f2f9;                         // +0x2f9

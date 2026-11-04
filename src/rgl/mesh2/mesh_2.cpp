@@ -35,7 +35,7 @@ const char g_none[] = "none";                                   // 0x54ac00
 static const float HALF = 0.5f;                                 // 0x549d70
 
 // @ 0x4ca600
-void screen_cfg::apply()
+void WindowMgrW::apply()
 {
     g_gui.set_o568(0, true);
     ((dev_item*)arr[dq.back()])->restore();
@@ -61,7 +61,7 @@ void C4c3050::frame_update(float)
     if (found != -1) {
         sel = found;
         found = (int)&g_windows;
-        windows_cfg().apply();
+        g_windows.apply();
     }
 }
 

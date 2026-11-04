@@ -20,7 +20,7 @@ struct gui_manager {                                    // game/strat/gui_manage
 };
 extern gui_manager g_gui;                               // 0x5d7080
 
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 struct FlagBlock { void apply(void* p); };              // 0x513710 (thiscall on 0x5e291c, ret 4)
 
 // ---- party records -----------------------------------------------------------------------------------

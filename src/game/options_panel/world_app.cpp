@@ -65,9 +65,6 @@ void* __fastcall list_int_make_node(list_int* self, void* edx, void* node, void*
 #include "../config/config.h"
 #include "./growable_array.h"
 #include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
-struct WindowMgrW {
-    void open(int flag);   // 0x494260 (world_data/world_data.h; the main menu object 0xa73980)
-};
 
 // 0x34-byte element (two tstrings at +0 / +0x10, a heap pointer at +0x30); not the vtable-0x59584c Rec34 of trigger_records.h.
 // dxframework/d3dapp.cpp's MBRecord34: the original calls its vector deleting destructor 0x401870 (??_EMBRecord34, which has no
@@ -127,7 +124,7 @@ extern int g_pending_action;                                // 0x5a9f18
 int g_pending_action = -1;                                  // 0x5a9f18 -1 = nothing pending
 
 #include "../../include/render_flags.h"
-extern char* g_windows;                                  // 0xa73980
+#include "../window_mgr.h"                                     // g_windows (0xa73980)
 
 // ---- the large record (all members are nominal; accesses are by offset) --------------------------------
 struct Big {
@@ -292,16 +289,16 @@ void restore_defaults()
             const tstring* r1 = g_strtable.lookup(s1);
             const tstring* r2 = g_strtable.lookup(s2);
             const tstring* r3 = g_strtable.lookup(s3);
-            char* ui = g_windows;
-            ((tstring*)(ui + 0x68))->clear();
-            *(tstring*)(ui + 0x1c) = *r3;
-            *(tstring*)(ui + 0x78) = *r2;
-            *(tstring*)(ui + 0x88) = *r1;
-            *(int*)(ui + 0x4c) = (int)&g_pending_action;
-            *(int*)(ui + 0x50) = 0;
-            *(int*)(ui + 0x4) = 1;
+            NamedRec* ui = g_windows.box();
+            ui->name68.clear();
+            ui->name1c = *r3;
+            ui->name78 = *r2;
+            ui->name88 = *r1;
+            ui->f4c = (int)&g_pending_action;
+            ui->f50 = 0;
+            ui->f04 = 1;
         }
-        ((WindowMgrW*)&orig::g_main_menu_obj)->open(0);
+        g_windows.open(0);
         g_game_G->f1a090 = 0;
     }
 }

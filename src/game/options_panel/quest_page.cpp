@@ -49,7 +49,7 @@ struct GameData {
 };
 
 // 0x495700 (thiscall on 0xa73980, ret 4; see s00494e40): choose a main-menu option by index.
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 
 // 0xa73980: the main menu.
 // 0xa739d0 / 0xa739cc: menu entries whose +0x18 index the video/options buttons set.
@@ -309,17 +309,17 @@ void Recd8::frame_update(float)
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)
     if (W(b40)->clear_mask(0x10000)) {
-        g_main_menu.set_state(w18);
+        g_windows.set_state(w18);
         return;
     }
     if (W(b38)->clear_mask(0x10000)) {
         slot_as<int>(20)[6] = 0x12;
-        g_main_menu.set_state(0x14);
+        g_windows.set_state(0x14);
         return;
     }
     if (W(b3c)->clear_mask(0x10000)) {
         slot_as<int>(19)[6] = 0x12;
-        g_main_menu.set_state(0x13);
+        g_windows.set_state(0x13);
     }
 }
 #undef W

@@ -178,7 +178,7 @@ void PartyRecIO::read(stream_base* s, int flag)
     }
 }
 
-extern void* g_windows[];                         // 0xa73980 (30 menu pointers)
+#include "../window_mgr.h"                        // g_windows (0xa73980)
 
 static inline int clamp_rank(int v)
 {
@@ -220,7 +220,7 @@ void Game::start_new_game()
 
     if (g_cfg.skip_tutorial == 0) {
         for (int i = 0; i < 30; i++)
-            *(int*)((char*)g_windows[i] + 8) = 0;
+            *(int*)((char*)g_windows.arr[i] + 8) = 0;
     }
 
     f13b28 = -1;

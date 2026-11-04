@@ -3,7 +3,7 @@
 #include "../window_mgr.h"      // g_windows slots 18 (0xa739c8), 21 (0xa739d4)
 #include "../tstring.h"
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../triggers/item_rec.h"       // ItemRec2: the escape menu record (slot 3 is buttons 0x4e87d0)
@@ -20,22 +20,22 @@ void ItemRec2::frame_update(float arg)
         if (row5 == 0 || !W(row5)->clear_mask(0x10000)) {
             if (W(row2)->clear_mask(0x10000)) {
                 *(int*)(slot_as<char>(18) + 0x18) = 5;
-                g_main_menu.set_state(0x12);
+                g_windows.set_state(0x12);
                 return;
             }
             if (row3 != 0 && W(row3)->clear_mask(0x10000)) {
                 save_game(-1, 0);
                 g_msglog.add(*g_strtable.lookup(tstring("ui_game_saved")), -1);
-                g_main_menu.set_state(w18);
+                g_windows.set_state(w18);
                 return;
             }
             if (row4 != 0 && W(row4)->clear_mask(0x10000)) {
                 *(int*)(slot_as<char>(21) + 0x18) = 5;
-                g_main_menu.set_state(0x15);
+                g_windows.set_state(0x15);
                 return;
             }
             if (W(row0)->clear_mask(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
-                g_main_menu.set_state(w18);
+                g_windows.set_state(w18);
                 return;
             }
             return;
@@ -52,7 +52,7 @@ void ItemRec2::frame_update(float arg)
         operator delete(g);
         g_game = 0;
     }
-    g_main_menu.set_state(4);
+    g_windows.set_state(4);
 }
 #undef W
 

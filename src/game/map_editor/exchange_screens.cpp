@@ -26,7 +26,7 @@
 #include "../int_vec.h"
 #include "../str_table.h"
 #include "../../include/dialog_rec.h"
-#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -421,7 +421,7 @@ tail:
         g_mission_ctx.build_hero_table(w14, STACK_IDS[1 + b * 0x20],
                     g_game->f78, action);
         slot_as<int>(16)[6] = 0xc;
-        g_main_menu.set_state(0x10);
+        g_windows.set_state(0x10);
         return;
     }
 
@@ -432,7 +432,7 @@ close_menu:
         g_map_flags.commit((char*)commit_out + 3);
         return;
     }
-    g_main_menu.set_state(w18);
+    g_windows.set_state(w18);
 }
 
 // @ 0x5324d0
@@ -734,35 +734,35 @@ void ItemA::frame_update(float)
     if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x10)) {
         slot_as<MenuItem>(8)->f18 = 0x17;
         slot_as<MenuItem>(8)->f4 = 0;
-        g_main_menu.set_state(8);
+        g_windows.set_state(8);
     }
     else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x11)) {
         slot_as<MenuItem>(12)->f18 = 0x17;
         slot_as<MenuItem>(12)->f4 = 0;
-        g_main_menu.set_state(0xc);
+        g_windows.set_state(0xc);
     }
     else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0xf)) {
         slot_as<MenuItem>(15)->f18 = 0x17;
         slot_as<MenuItem>(15)->f4 = 0;
         slot_as<MenuItem>(15)->f14 = g_game->player;
-        g_main_menu.set_state(0xf);
+        g_windows.set_state(0xf);
     }
     else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x12)) {
         if (g_module_settings.show_quest_notes == 0) {
             slot_as<MenuItem>(13)->f18 = 0x17;
             slot_as<MenuItem>(13)->f4 = 0;
-            g_main_menu.set_state(0xd);
+            g_windows.set_state(0xd);
         } else {
             slot_as<MenuItem>(26)->f18 = 0x17;
             GI(0x13b08) = 4;
             GI(0x13b0c) = 0;
-            g_main_menu.set_state(0x1a);
+            g_windows.set_state(0x1a);
         }
     }
     else if ((k & 0x200) == 0 && ((OriginPairs*)&g_game_keys)->clicked(0x13)) {
         slot_as<MenuItem>(25)->f18 = 0x17;
         slot_as<MenuItem>(25)->f4 = 0;
-        g_main_menu.set_state(0x19);
+        g_windows.set_state(0x19);
     }
     else {
         // no hotkey: pick the row's option by key flag 0x10 (the first option) or by the pressed option widget
@@ -816,7 +816,7 @@ dispatch:
                 GI(0xa8) |= 1;
             } else {
                 g_mission_ctx.update_parties();
-                g_main_menu.set_state(F(this, 0x18, int));
+                g_windows.set_state(F(this, 0x18, int));
                 return;
             }
             g_map_flags.commit((char*)&slot);
@@ -825,7 +825,7 @@ dispatch:
         if (st == 0x11) {
             g_game->fc8 = 0;
             g_mission_ctx.update_parties();
-            g_main_menu.set_state(7);
+            g_windows.set_state(7);
             return;
         }
         if (st == 0xd) {
@@ -850,7 +850,7 @@ dispatch:
             g_game->fc8 = 0;
             if (F(this, 0x18, int) != 100) {
                 slot_as<MenuItem>(27)->f18 = 0x17;
-                g_main_menu.set_state(0x1b);
+                g_windows.set_state(0x1b);
                 return;
             }
             g_mission_ctx.f3c |= 0x1000;
@@ -861,7 +861,7 @@ dispatch:
             g_game->fc8 = 0;
             if (F(this, 0x18, int) != 100) {
                 slot_as<MenuItem>(26)->f18 = 0x17;
-                g_main_menu.set_state(0x1a);
+                g_windows.set_state(0x1a);
                 return;
             }
             g_mission_ctx.f3c |= 0x2000;
@@ -872,7 +872,7 @@ dispatch:
             g_game->fc8 = 0;
             GI(0x13af8) = 0;
             if (F(this, 0x18, int) != 100) {
-                g_main_menu.set_state(0x17);
+                g_windows.set_state(0x17);
                 return;
             }
             g_mission_ctx.f3c |= 0x400;
@@ -883,7 +883,7 @@ dispatch:
             slot_as<MenuItem>(8)->f18 = 0x17;
             slot_as<MenuItem>(8)->f14 = GI(0x13af0);
             slot_as<MenuItem>(8)->f4 = 2;
-            g_main_menu.set_state(8);
+            g_windows.set_state(8);
             return;
         }
         if (st == 8) {
@@ -907,7 +907,7 @@ dispatch:
             else if (st == 10)
                 v = 3;
             slot_as<MenuItem>(12)->f4 = v;
-            g_main_menu.set_state(0xc);
+            g_windows.set_state(0xc);
             g_game->fc8 = 0;
             return;
         }
@@ -936,35 +936,35 @@ void Rec58::frame_update(float)
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = a;
         GIF(0x13b0c, int) = b;
-        g_main_menu.set_state(0x1a);
+        g_windows.set_state(0x1a);
         return;
     }
     if (W(this, 0x48)->clear_mask(0x10000)) {
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 1;
         GIF(0x13b0c, int) = 0;
-        g_main_menu.set_state(0x1a);
+        g_windows.set_state(0x1a);
         return;
     }
     if (W(this, 0x4c)->clear_mask(0x10000)) {
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 3;
         GIF(0x13b0c, int) = 0;
-        g_main_menu.set_state(0x1a);
+        g_windows.set_state(0x1a);
         return;
     }
     if (W(this, 0x50)->clear_mask(0x10000)) {
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 2;
         GIF(0x13b0c, int) = 0;
-        g_main_menu.set_state(0x1a);
+        g_windows.set_state(0x1a);
         return;
     }
     if (W(this, 0x54)->clear_mask(0x10000)) {
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 4;
         GIF(0x13b0c, int) = 0;
-        g_main_menu.set_state(0x1a);
+        g_windows.set_state(0x1a);
         return;
     }
     if (W(this, 0x3c)->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
@@ -973,7 +973,7 @@ void Rec58::frame_update(float)
             g_map_flags.commit((char*)&slot);
             return;
         }
-        g_main_menu.set_state(F(this, 0x18, int));
+        g_windows.set_state(F(this, 0x18, int));
     }
 }
 
@@ -1097,19 +1097,19 @@ void ItemD::frame_update(float)
     if (W(this, 0x50)->clear_mask(0x10000)) {
         slot_as<MenuItem>(25)->f18 = slot_as<MenuItem>(26)->f18;
         slot_as<MenuItem>(25)->f4 = 1;
-        g_main_menu.set_state(0x19);
+        g_windows.set_state(0x19);
         return;
     }
     if (W(this, 0x74)->clear_mask(0x10000)) {
         GIF(0x88, char) = 1;
         GIF(0x84, int) = F(this, 0xac, int);
-        g_main_menu.set_state(F(this, 0x18, int));
+        g_windows.set_state(F(this, 0x18, int));
         return;
     }
     if (W(this, 0x54)->clear_mask(0x10000)) {
         slot_as<MenuItem>(25)->f18 = slot_as<MenuItem>(26)->f18;
         slot_as<MenuItem>(25)->f4 = 0;
-        g_main_menu.set_state(0x19);
+        g_windows.set_state(0x19);
         return;
     }
     if (W(this, 0x68)->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
@@ -1118,7 +1118,7 @@ void ItemD::frame_update(float)
             g_map_flags.commit((char*)&slot);
             return;
         }
-        g_main_menu.set_state(F(this, 0x18, int));
+        g_windows.set_state(F(this, 0x18, int));
     }
 }
 
@@ -1139,12 +1139,12 @@ void ItemB::frame_update(float arg)
             g_map_flags.commit((char*)&arg);
             return;
         }
-        g_main_menu.set_state(id);
+        g_windows.set_state(id);
         return;
     }
     if (GI(0xc8) == 0xf) {
         GI(0xc8) = 0;
-        g_main_menu.set_state(0x1b);
+        g_windows.set_state(0x1b);
     }
 }
 
@@ -1158,6 +1158,6 @@ void ItemC::frame_update(float arg)
             g_map_flags.commit((char*)&arg);
             return;
         }
-        g_main_menu.set_state(id);
+        g_windows.set_state(id);
     }
 }

@@ -31,8 +31,7 @@ extern float g_scroll;                                  // 0x590d7c
 #include "../scene_world.h"                              // World::step 0x427f40
 #include "../tstring.h"
 #include "../str_table.h"      // 0x43a1e0
-#include "../main_menu.h"
-#define g_main_menu (orig::g_main_menu_obj)
+#include "../window_mgr.h"
 
 #include "../../rgl/text_stream.h"                    // mb_snprintf (0x415100)
 #include "../animator.h"                              // Animator, g_anim

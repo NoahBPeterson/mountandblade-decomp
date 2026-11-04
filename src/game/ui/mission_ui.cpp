@@ -24,6 +24,7 @@
 #include "./ui_widgets.h"
 #include "./world.h"
 #include "./mission.h"
+#include "../window_mgr.h"      // WindowMgrW::clear_all 0x489be0
 #include "../../include/dialog_rec.h"      // DialogBlock::emit 0x4b09e0 (the block runner a TimerChild's sound channel stands for)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/keyframes.h"
@@ -1009,10 +1010,10 @@ void* MissionView::make(int* p)
 }
 
 // @ 0x489be0
-void Ptr30::clear_all()
+void WindowMgrW::clear_all()
 {
     int zero = 0, cnt = 0x63;
-    int** e = &p[2];
+    int** e = (int**)&arr[2];
     int i = 5;
     do {
         int* q;

@@ -67,7 +67,7 @@ struct SkillNames {                                     // a skill record seen f
 
 // script emitter record (0x34 bytes, array pointer at 0xa75eb0, parallel index array at 0xa75ebc)
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
-#include "../main_menu.h"
+#include "../window_mgr.h"
 #include "../ui/named_rec.h"      // NamedRec::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config/config.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
@@ -171,10 +171,10 @@ void PartyWindow::frame_update(float unused)
                         tstring think("ui_merchant_think_of_something_else");
                         tstring pay("ui_merchant_pay_whatever");
                         tstring msg(buf);
-                        ((NamedRec*)g_main_menu.rec)->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), (int)&q_pay);
+                        g_windows.box()->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), (int)&q_pay);
                     }                                   // msg, pay, think destroyed here (0x5106bd..0x5106cf)
-                    g_main_menu.rec->f4 = 2;
-                    g_main_menu.set_state(0);
+                    g_windows.box()->f04 = 2;
+                    g_windows.set_state(0);
                 }
             } else if (worn > 0) {
                 q_dump = -1;
@@ -187,10 +187,10 @@ void PartyWindow::frame_update(float unused)
                     tstring no("ui_no");
                     tstring yes("ui_yes");
                     tstring msg(buf);
-                    ((NamedRec*)g_main_menu.rec)->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_dump);
+                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_dump);
                 }
-                g_main_menu.rec->f4 = 2;
-                g_main_menu.set_state(0);
+                g_windows.box()->f04 = 2;
+                g_windows.set_state(0);
             } else {
                 eaten = 1;
             }
@@ -212,9 +212,9 @@ void PartyWindow::frame_update(float unused)
                     tstring no("ui_no");
                     tstring yes("ui_yes");
                     tstring msg(buf);
-                    ((NamedRec*)g_main_menu.rec)->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_food);
+                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_food);
                 }
-                g_main_menu.set_state(0);
+                g_windows.set_state(0);
                 eaten = 0;
             }
         }
@@ -251,7 +251,7 @@ void PartyWindow::frame_update(float unused)
     }
 
     if (w18 != 0x64)
-        g_main_menu.set_state(w18);
+        g_windows.set_state(w18);
     else
         g_map_flags.commit(&eaten);
 }

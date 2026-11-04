@@ -45,12 +45,8 @@ extern gui_manager g_gui;                        // 0x5d7080
 #include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
 #include "../../game/key_names.h"      // g_keyboard (0xa170c8)
 
-// the window manager (game/window_mgr.h, g_windows 0xa73980: 30 screen objects, then the request queue at +0x78) with the
-// apply step of this module; the screens are read as dev_item here
-struct screen_cfg : WindowMgrW {
-    __declspec(noinline) void apply();           // 0x4ca600
-};
-inline screen_cfg& windows_cfg() { return static_cast<screen_cfg&>(g_windows); }
+// the window manager (game/window_mgr.h, g_windows 0xa73980) applies the request queue (WindowMgrW::apply 0x4ca600, mesh_2.cpp);
+// the screens are read as dev_item there
 
 // a gadget with the current-mode flag at +0x0c and the name text at +0x24
 struct screen_gadget {

@@ -80,7 +80,7 @@ struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 #include "../key_names.h"
 #include "../../include/logger.h"                     // Logger g_debug_log (0x5a9f30): slot 10 (+0x28) prints one line
 #include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
-#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
@@ -193,35 +193,35 @@ void MapFlags::commit(char* out)
             slot_as<MenuWidget>(11)->f4 = 2;
         slot_as<MenuWidget>(11)->f18 = 0x64;
         slot_as<MenuWidget>(11)->f4 = 0;
-        return g_main_menu.reset(0xb);
+        return g_windows.open(0xb);
     }
     else if (key == 0x80) {
         slot_as<MenuWidget>(8)->f4 = 1;
         slot_as<MenuWidget>(8)->f18 = 0x64;
-        return g_main_menu.set_state(8);
+        return g_windows.set_state(8);
     }
     else if (key == 0x100) {
         slot_as<MenuWidget>(12)->f4 = 4;
         slot_as<MenuWidget>(12)->f18 = 0x64;
-        return g_main_menu.set_state(0xc);
+        return g_windows.set_state(0xc);
     }
     else if (key == 4) {
         g_mission_ctx.pick_template();
         slot_as<MenuWidget>(10)->f18 = 0x64;
-        return g_main_menu.set_state(0xa);
+        return g_windows.set_state(0xa);
     }
     else if (key == 0x800) {
         g_mission_ctx.start_battle(GD_I(0x13af0), GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
         slot_as<MenuWidget>(16)->f18 = 0x64;
-        return g_main_menu.set_state(0x10);
+        return g_windows.set_state(0x10);
     }
     else if (key == 0x1000) {
         slot_as<MenuWidget>(27)->f18 = 0x64;
-        return g_main_menu.set_state(0x1b);
+        return g_windows.set_state(0x1b);
     }
     else if (key == 0x2000) {
         slot_as<MenuWidget>(26)->f18 = 0x64;
-        return g_main_menu.set_state(0x1a);
+        return g_windows.set_state(0x1a);
     }
     else if (key == 8) {
         g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
@@ -229,36 +229,36 @@ void MapFlags::commit(char* out)
         SCENE->start_setup();
         slot_as<MenuWidget>(14)->v4();
         slot_as<MenuWidget>(14)->f18 = 0x64;
-        return g_main_menu.set_state(0xe);
+        return g_windows.set_state(0xe);
     }
     else if (key == 0x200) {
         g_mission_ctx.update_parties();
         autosave_notice();
-        return g_main_menu.set_state(7);
+        return g_windows.set_state(7);
     }
     else if (key == 0x400 && f8 <= 0) {
         slot_as<MenuWidget>(6)->f18 = 0x64;
-        return g_main_menu.set_state(6);
+        return g_windows.set_state(6);
     }
     else if (g_game->fc8 == 1) {
         g_game->fc8 = 0;
         g_mission_ctx.update_parties();
         autosave_notice();
-        return g_main_menu.set_state(7);
+        return g_windows.set_state(7);
     }
     else if (f8 <= 0) {
         slot_as<MenuWidget>(6)->f18 = 0x64;
-        return g_main_menu.set_state(6);
+        return g_windows.set_state(6);
     }
     else {
         f2 = 1;
         slot_as<MenuWidget>(23)->v4();
         slot_as<MenuWidget>(23)->f18 = 0x64;
-        return g_main_menu.set_state(0x17);
+        return g_windows.set_state(0x17);
     }
 
     slot_as<MenuWidget>(16)->f18 = 0x64;
-    return g_main_menu.set_state(0x10);
+    return g_windows.set_state(0x10);
 }
 
 // @ 0x513b10
@@ -761,30 +761,30 @@ void CampaignScreen::frame_update(float dt)
     if (cmd == 0x12) {
         GD_I(0xc8) = 0;
         slot_as<MenuWidget>(23)->f18 = 7;
-        g_main_menu.set_state(0x17);
+        g_windows.set_state(0x17);
         return;
     }
     if (cmd == 0xf) {
         GD_I(0xc8) = 0;
         slot_as<MenuWidget>(27)->f18 = 7;
-        g_main_menu.set_state(0x1b);
+        g_windows.set_state(0x1b);
         return;
     }
     if (cmd == 0x10) {
         GD_I(0xc8) = 0;
         slot_as<MenuWidget>(26)->f18 = 7;
-        g_main_menu.set_state(0x1a);
+        g_windows.set_state(0x1a);
         return;
     }
     if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
         slot_as<MenuWidget>(5)->f18 = 7;
-        g_main_menu.set_state(5);
+        g_windows.set_state(5);
         return;
     }
     if (f48 != 0 && PSO(f48)->clicked_on(0x10000)) {
         slot_as<MenuWidget>(22)->f18 = 7;
         slot_as<MenuWidget>(22)->f4 = 0;
-        g_main_menu.set_state(0x16);
+        g_windows.set_state(0x16);
         return;
     }
     if (flag) {
@@ -793,12 +793,12 @@ void CampaignScreen::frame_update(float dt)
                 slot_as<MenuWidget>(26)->f18 = 7;
                 GD_I(0x13b08) = 4;
                 GD_I(0x13b0c) = 0;
-                g_main_menu.set_state(0x1a);
+                g_windows.set_state(0x1a);
                 return;
             }
             slot_as<MenuWidget>(13)->f18 = 7;
             slot_as<MenuWidget>(13)->f4 = 0;
-            g_main_menu.set_state(0xd);
+            g_windows.set_state(0xd);
             return;
         }
     }
@@ -810,8 +810,8 @@ void CampaignScreen::frame_update(float dt)
         return;
     }
     if (GD_C(0x13ac8) != 0) {
-        ((NamedRec*)g_main_menu.f0)->setup((tstring*)((char*)g_game + 0x13ab8), (tstring*)((char*)g_game + 0x13aa8));
-        g_main_menu.reset(0);
+        g_windows.box()->setup((tstring*)((char*)g_game + 0x13ab8), (tstring*)((char*)g_game + 0x13aa8));
+        g_windows.open(0);
         GD_C(0x13ac8) = 0;
         return;
     }
@@ -819,7 +819,7 @@ void CampaignScreen::frame_update(float dt)
         GD_C(0x13a3c) = 0;
         g_mission_ctx.build_hero_table(GD_I(0x13a44), -1, -1, GD_I(0x13a40));
         slot_as<MenuWidget>(16)->f18 = 7;
-        g_main_menu.set_state(0x10);
+        g_windows.set_state(0x10);
         return;
     }
 
@@ -857,8 +857,8 @@ void CampaignScreen::frame_update(float dt)
             if (g_trial_mode == 0) {
                 tstring a("ui_explanation_time_limit");
                 tstring b("ui_time_limit_reached");
-                ((NamedRec*)g_main_menu.f0)->setup(g_strtable.lookup(b), g_strtable.lookup(a));
-                g_main_menu.reset(g_trial_mode);
+                g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
+                g_windows.open(g_trial_mode);
                 f64 = 1;
                 start = false;
             }
@@ -866,8 +866,8 @@ void CampaignScreen::frame_update(float dt)
     } else {
         tstring a("ui_explanation_level_limit");
         tstring b("ui_level_limit_reached");
-        ((NamedRec*)g_main_menu.f0)->setup(g_strtable.lookup(b), g_strtable.lookup(a));
-        g_main_menu.reset(g_trial_mode);
+        g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
+        g_windows.open(g_trial_mode);
         f64 = 1;
         start = false;
     }
@@ -904,26 +904,26 @@ no_party:
         if (PSO(f40)->clicked_on(0x10000) || g_keys.down(0x10)) {
             slot_as<MenuWidget>(8)->f18 = 7;
             slot_as<MenuWidget>(8)->f4 = 0;
-            g_main_menu.set_state(8);
+            g_windows.set_state(8);
             return;
         }
         if (PSO(f3c)->clicked_on(0x10000) || g_keys.down(0x11)) {
             slot_as<MenuWidget>(12)->f18 = 7;
             slot_as<MenuWidget>(12)->f4 = 0;
-            g_main_menu.set_state(0xc);
+            g_windows.set_state(0xc);
             return;
         }
         if (PSO(f44)->clicked_on(0x10000) || g_keys.down(0xf)) {
             slot_as<MenuWidget>(15)->f18 = 7;
             slot_as<MenuWidget>(15)->f4 = 0;
             slot_as<MenuWidget>(15)->f14 = GD_I(0x8c);
-            g_main_menu.set_state(0xf);
+            g_windows.set_state(0xf);
             return;
         }
         if (g_keys.down(0x13)) {
             slot_as<MenuWidget>(25)->f18 = 7;
             slot_as<MenuWidget>(25)->f4 = 0;
-            g_main_menu.set_state(0x19);
+            g_windows.set_state(0x19);
             return;
         }
         if (f4c != 0 && PSO(f4c)->clicked_on(0x10000)) {
@@ -935,7 +935,7 @@ no_party:
     if (f38 != 0 && PSO(f38)->clicked_on(0x10000)) {
         GD_I(0x13aec) = 4;
         slot_as<MenuWidget>(23)->f18 = 7;
-        g_main_menu.set_state(0x17);
+        g_windows.set_state(0x17);
         return;
     }
     if (GD_F(0x14058) == 0.0f)

@@ -21,7 +21,7 @@
 #include "../placed_obj.h"
 #include "../int_vec.h"
 #include "../key_names.h"
-#include "../main_menu.h"
+#include "../window_mgr.h"
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../slot.h"
 #include "../ui_globals.h"      // UI / core globals

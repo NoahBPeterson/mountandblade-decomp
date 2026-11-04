@@ -8,7 +8,7 @@
 #include "../tstring.h"
 
 // 0x495700 (thiscall, ret 4) on 0xa73980: pick a main-menu option.
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 #include "../key_names.h"
 
 // the widgets the menu options write back into are slots of the window manager (window_mgr.h): slot 3 (0xa7398c), 11 (0xa739ac),

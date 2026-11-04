@@ -8,7 +8,7 @@
 #include <new>
 #include "./mesh_edit.h"
 #include "./hud.h"
-#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"                               // Mission::destroy 0x4d51d0 (the world object 0x5e292c is the mission)
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -155,35 +155,35 @@ void ItemRec::frame_update(float arg)
         slot_as<int>(3)[6] = 4;
         slot_as<int>(3)[1] = 3;
         slot_as<int>(3)[0x8c / 4] = 0;
-        g_main_menu.set_state(3);
+        g_windows.set_state(3);
         return;
     }
     if (W(row_new_game)->clear_mask(0x10000)) {
         slot_as<int>(3)[1] = 0;
         slot_as<int>(3)[0x8c / 4] = first_free;
-        g_main_menu.set_state(3);
+        g_windows.set_state(3);
         return;
     }
     if (W(row_restore)->clear_mask(0x10000)) {
         slot_as<int>(21)[6] = 4;
-        g_main_menu.set_state(0x15);
+        g_windows.set_state(0x15);
         return;
     }
     if (row_custom != 0 && W(row_custom)->clear_mask(0x10000)) {
         slot_as<int>(3)[6] = 4;
         slot_as<int>(3)[1] = 2;
         slot_as<int>(3)[0x8c / 4] = 0;
-        g_main_menu.set_state(3);
+        g_windows.set_state(3);
         return;
     }
     if (W(row_options)->clear_mask(0x10000)) {
         slot_as<int>(18)[6] = 4;
-        g_main_menu.set_state(0x12);
+        g_windows.set_state(0x12);
         return;
     }
     if (W(row_credits)->clear_mask(0x10000)) {
         slot_as<int>(28)[6] = 4;
-        g_main_menu.set_state(0x1c);
+        g_windows.set_state(0x1c);
         return;
     }
     if (W(row_exit)->clear_mask(0x10000))
@@ -345,14 +345,14 @@ void Rec44::frame_update(float)
     slot_as<MenuScreen>(14)->f18 = w18;
     slot_as<int>(11)[1] = 0;
     slot_as<int>(11)[0x18 / 4] = w18;
-    g_main_menu.set_state(0xe);
+    g_windows.set_state(0xe);
 }
 
 // @ 0x4d59f0
 void Rec38::frame_update(float)
 {
     if (((MissionUi*)(void*)f34)->clear_mask(0x10000))
-        g_main_menu.set_state(7);
+        g_windows.set_state(7);
 }
 
 #define W(x) ((MissionUi*)(void*)(x))
@@ -377,16 +377,16 @@ void Rec454::frame_update(float)
             return;
         }
         w04 = 0;
-        g_main_menu.set_state(0xd);
+        g_windows.set_state(0xd);
     } else if (W(finished_tab)->clear_mask(0x10000)) {
         if (w04 == 1) {
             W(finished_tab)->set15c(1);
             return;
         }
         w04 = 1;
-        g_main_menu.set_state(0xd);
+        g_windows.set_state(0xd);
     } else if (W(done)->clear_mask(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
-        g_main_menu.set_state(w18);
+        g_windows.set_state(w18);
     }
 }
 #undef W

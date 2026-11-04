@@ -39,7 +39,7 @@ extern MissionTemplate* g_mission_templates;     // 0x5e2a00
 extern char g_gui[]; // 0x5d7080
 extern char g_game_keys[]; // 0xa73730
 #include "../slot.h"                        // Slot, g_keyboard (0xa170c8)
-extern char g_windows[]; // 0xa73980
+#include "../window_mgr.h"   // g_windows (0xa73980): the window manager, slot_as<T>(i) its screens, dq the id stack
 #include "../map_flags.h"      // MapFlags, g_map_flags (0x5e291c): the one definition
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): the one definition
 extern char g_game_keys[]; // 0xa73730
@@ -95,7 +95,6 @@ struct VObj_s25160 {
 };
 
 struct Mgr_s25160 { __forceinline void update(); };                                  // 0x4f1390
-struct Dlg_s25160 { __forceinline void open(int a); };                               // 0x495700
 struct Mgr513710_s25160 { void m(void* p); };                           // 0x513710
 struct Chunk_s25160 { void m_4464d0(int a); void m_4f8bc0(); };
 struct Troop_s25160 { void m_4630d0(int i); };
@@ -103,7 +102,6 @@ struct Big5e292c_s25160 { void m_483f60(int a, int b); };
 
 
 #define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
-#define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
 #define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #define g_big       (*(Big5e292c_s25160**)&g_mission)
 
@@ -294,18 +292,7 @@ struct DialogMgr_s26130 {
 #define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
 #define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #define g_game_s261e0 (*(GameData_s261e0**)&g_game)
-#define g_main_menu_s261e0 (*(MainMenu_s261e0*)g_windows)
-#define g_w_a739a0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x20)))
-#define g_w_a739bc_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x3c)))
-#define g_w_a739b0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x30)))
-#define g_w_a739b4_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x34)))
-#define g_w_a739e8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x68)))
-#define g_w_a739e4_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x64)))
-#define g_w_a73994_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x14)))
-#define g_w_a739c8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x48)))
-#define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
 #define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
-#define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 // Slice s005261e0: the mission screen / game-loop tick (0x5261e0, 6818 bytes, thiscall, ret 4).
 //
 // The `this` object is the mission HUD/controller: its fields +0x2c8 (mode), +0x2cc (selection),
@@ -320,7 +307,7 @@ struct DialogMgr_s26130 {
 //
 // Offsets were read from this function; names are provisional.  Declarations reuse the verified layouts
 // from slices s004d5410 (MissionSource, tstring, MsgLog_s261e0), s004f1390 (MsgLog_s261e0), s0043ac40 (AgentTable_s261e0),
-// s004532f0 (GameData_s261e0/Mission_s261e0) and s004d5410 (MainMenu_s261e0/Widget_s261e0), kept local to this slice.
+// s004532f0 (GameData_s261e0/Mission_s261e0) and s004d5410 (Widget_s261e0), kept local to this slice.
 
 // -----------------------------------------------------------------------------------------------------
 // rgl string table (16-byte tstring: read cursor, buffer, capacity, length); ctor 0x42bbe0, copy
@@ -491,16 +478,7 @@ struct Src_s261e0 {
     __forceinline void init(int a, int b);                            // 0x4dd920 (ret 8)
 };
 
-// menu + widgets (slice s004d5410 / s00494e40)
-struct MainMenu_s261e0 {
-    char pad0[0x18];
-    int  sel;                                           // +0x18
-    __forceinline void set_state(int option);                            // 0x495700 (ret 4)
-    __forceinline void open(int idx);                             // 0x494260 (ret 4)
-    __forceinline void setup2(tstring* a, tstring* b, tstring* c, int* v);  // 0x48a3d0 (ret 0x10)
-};
-
-
+// widgets (slice s004d5410 / s00494e40): the screens of the window manager as this slice reads them
 struct Widget_s261e0 {
     char pad0[4];
     int  f4;                                            // +4
@@ -553,14 +531,6 @@ extern int  g_vert_budget;                                  // 0x5a9c34
 
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
-// the 4-int-block deque-like container at 0xa739f8 (map at +4, mapsize at +8, offset at +0xc, size at +0x10)
-struct IntDeque_s261e0 {
-    int   pad0;
-    void** map;
-    int   mapsize;
-    int   off;
-    int   size;
-};
 
 
 // float constants in .rdata
@@ -1911,9 +1881,6 @@ struct MsgLog {
     void add(tstring, int);   // 0x452c00
     void flush();   // 0x4f1390
 };
-struct NamedRec {
-    void setup2(tstring const*, tstring const*, tstring const*, int);   // 0x48a3d0
-};
 struct OriginPairs {
     bool clicked(int);   // 0x48ac90
     bool is_down(int);   // 0x48ac50
@@ -1943,10 +1910,6 @@ struct Shape {
     void polygon_to_mesh(rgl::mesh*);   // 0x4e75a0
 };
 #include "../../include/timer.h"   // Timer (elapsed 0x432c10)
-struct WindowMgrW {
-    void open(int);   // 0x494260
-    void set_state(int);   // 0x495700
-};
 namespace c49c2c0 {
 struct Mission {
     void order(int, int);   // 0x49c2c0
@@ -2031,7 +1994,6 @@ __forceinline void AgentTable_s29840::next_used(unsigned* a0) { ((AgentTable*)th
 __forceinline void Agent_s284a0::note_blow(Blow_s284a0* a0) { ((Agent*)this)->note_blow((Blow*)a0); }
 __forceinline void Agent_s284a0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
 __forceinline void Agent_s2b5c0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
-__forceinline void MainMenu_s261e0::open(int a0) { ((WindowMgrW*)this)->open(a0); }
 __forceinline void Mission_s2ae70::order(int a0, int a1) { ((c49c2c0::Mission*)this)->order(a0, a1); }
 __forceinline void Src_s261e0::pick(int* a0) { ((MissionSource*)this)->pick(a0); }
 __forceinline int Agent_s29130::pick_attack_dir(unsigned a0) { return ((Agent*)this)->pick_attack_dir(a0); }
@@ -2051,12 +2013,10 @@ __forceinline void Camera_s2b5c0::screen_to_world(rgl::vector4* a0, rgl::vector4
 __forceinline void Gui_s2b5c0::set_o568(void* a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
 __forceinline void MsgLog_s261e0::set_o568(int a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
 __forceinline void gui_manager_s2ae70::set_o568(void* a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
-__forceinline void MainMenu_s261e0::set_state(int a0) { ((WindowMgrW*)this)->set_state(a0); }
 __forceinline void Gui_s2b5c0::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
 __forceinline void MsgLog_s261e0::set_view(float* a0) { ((gui_view*)this)->set_view((float const*)a0); }
 __forceinline void gui_manager_s29ec0::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
 __forceinline void gui_manager_s2ae70::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
-__forceinline void MainMenu_s261e0::setup2(tstring* a0, tstring* a1, tstring* a2, int* a3) { ((NamedRec*)this)->setup2((tstring const*)a0, (tstring const*)a1, (tstring const*)a2, (int)a3); }
 __forceinline int GameData_s29ec0::skill_level(int a0, int a1) { return ((GameData*)this)->skill_level(a0, a1); }
 __forceinline int Party_s29840::skill_level(int a0) { return ((Party*)this)->skill_level(a0); }
 __forceinline int DialogMgr_s257f0::speaker() { return ((DialogMgr*)this)->speaker(); }
@@ -2082,7 +2042,6 @@ __forceinline int Mission_s2b5c0::add_placed(const int* a0, const int* a1, const
 __forceinline void Scene_s29ec0::query_segment(const float* a0, const float* a1, unsigned a2, shape_base_s29ec0** a3, int* a4) { ((level*)this)->query_segment(a0, a1, a2, (shape_base**)a3, a4); }
 __forceinline void Scene_s2b5c0::query_segment(const float* a0, const float* a1, unsigned a2, shape_base_s2b5c0** a3, int* a4) { ((level*)this)->query_segment(a0, a1, a2, (shape_base**)a3, a4); }
 __forceinline void Mgr_s25160::update() { ((MsgLog*)this)->flush(); }
-__forceinline void Dlg_s25160::open(int a0) { ((WindowMgrW*)this)->set_state(a0); }
 __forceinline void EmitSub_s261e0::play(int a0) { ((SlotChan*)this)->play(a0); }
 __forceinline void World_s27c90::remove_entity(int a0) { ((rgl::world*)this)->remove_entity(a0); }
 __forceinline void Mission_s2b5c0::pick_entity() { ::pick_entity((GuiCtx*)this); }

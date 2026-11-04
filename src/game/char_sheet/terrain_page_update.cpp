@@ -1,7 +1,7 @@
 #include "./terrain_page_update.h"
 #include "../float_consts.h"
 #include "../terrain_a/terrain.h"      // g_terrain 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
-#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -134,7 +134,7 @@ done:
     world->step(dt);
     path(dt);
     if (page_changed(back_btn) || (g_keyboard.down[15] != 0 && g_keyboard.prev[15] == 0))
-        g_main_menu.set_state(w18);
+        g_windows.set_state(w18);
 }
 
 // @ 0x4f34c0

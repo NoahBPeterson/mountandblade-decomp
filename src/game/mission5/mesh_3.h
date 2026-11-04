@@ -97,7 +97,7 @@ extern Mission* g_mission;                       // 0x5e292c
 extern GameData* g_game;                         // 0x5e2930
 #include "../config/core.h"      // GameApp g_app_obj (0x8ee3c48)
 #include "../ptype.h"
-extern char g_windows[]; // 0xa73980
+#include "../window_mgr.h"   // g_windows (0xa73980)
 #include "../prop_kind.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../config/config_block.h"
@@ -490,7 +490,6 @@ struct Mesh_s2e960 {
 #define g_map_s2f250 (*(Map_s2f250**)&(*(void**)((char*)&g_mission + 0x0)))
 #define g_game_s2f250 (*(Frame__s2f250**)&g_game)
 #define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_ptypes)
-#define g_editor_view_s2f250 (*(EditorView_s2f250**)&(*(void**)((char*)&g_windows + 0x38)))
 #define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
 // Slice s0052f250: the map editor's per-frame object placement update (0x52f250, 3049 bytes).
 // Each frame it repeats the scroll keys into adjust_mode (0x4bb260), rebuilds the preview entity

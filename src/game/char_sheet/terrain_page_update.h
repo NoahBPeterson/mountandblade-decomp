@@ -62,7 +62,7 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 // effect object created by 0x478f30 (0x7c bytes; layout from s00494e40)
 #include "../eff_obj.h"                                     // EffObj / EffMgr
 #include "../scene_world.h"                              // World: the page's +0x1ac; scene object 0x421390 resets
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 
 float  clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 

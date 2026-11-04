@@ -163,24 +163,9 @@ CharSheet::CharSheet()
 }
 
 // @ 0x4c4d10
-// Tail2::~Tail2: first drains the +0x10 reference window through the inlined release() (clearing +0xc when it
-// reaches zero), then frees the owned pointers back to front through operator delete and drops the array.
-Tail2::~Tail2()
-{
-    while (refcap != 0)
-        release();
-    unsigned int i = count;
-    while (i > 0) {
-        void* p = arr[i - 1];
-        --i;
-        if (p != 0)
-            operator delete(p);
-    }
-    if (arr != 0)
-        operator delete(arr);
-    count = 0;
-    arr = 0;
-}
+// std::deque<int>::_Tidy: what ~deque tail-calls (pops every element, frees the blocks and the map). The window manager's id stack
+// (g_windows.dq, 0xa739f8: the atexit stub is `mov ecx, 0xa739f8; jmp 0x4c4d10`) and the agent view's tail (Tail2) run it out of line.
+template void std::deque<int>::_Tidy();
 
 // @ 0x4c4d80
 void list_int::clear()
@@ -1770,17 +1755,13 @@ void __fastcall conv_clear(void** self)
 }
 
 // @ 0x4c8c20
-void* __fastcall conv_zero_node(void* self)
+// The window manager's constructor: the id stack's empty state (the deque's own constructor), then the 30 screen slots cleared.
+WindowMgrW::WindowMgrW()
 {
-    unsigned* s = (unsigned*)self;
-    *(unsigned*)((char*)s + 0x7c) = 0;
-    *(unsigned*)((char*)s + 0x80) = 0;
-    *(unsigned*)((char*)s + 0x84) = 0;
-    *(unsigned*)((char*)s + 0x88) = 0;
-    for (int i = 0; i < 0x1e; i++)
-        s[i] = 0;
-    return self;
+    for (int i = 0; i < 30; i++)
+        arr[i] = 0;
 }
+WindowMgrW g_windows;                                       // 0xa73980 (compiler-constructed; the compiler registers ~deque for the id stack)
 
 
 // The accessors below are shared by classes with the same field layout (identical code folded by the linker): 0x4c6080 is
@@ -2051,13 +2032,13 @@ on:
         *flag = 1;
     if (text && box38)
         text->assign("");
-    windows_cfg().apply();
+    g_windows.apply();
     return;
 off:
     if (flag)
         *flag = 0;
     if (text && box38)
         *text = *(tstring*)((char*)box38 + 0x128);
-    windows_cfg().apply();
+    g_windows.apply();
 }
 

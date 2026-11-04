@@ -40,7 +40,7 @@ using rgl::vector4;
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- symbols -----------------------------------------------------------------------------------------
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
 #include "../key_names.h"
 #include "../../rgl/options.h"   // g_options 0x5aa008
@@ -269,7 +269,7 @@ void Rec1bc::frame_update(float)
         if (W(f30)->clear_mask(0x10000)) {
             if (f1b4)
                 g_game_keys.save();
-            g_main_menu.set_state(w18);
+            g_windows.set_state(w18);
         }
     }
 #undef W

@@ -45,8 +45,6 @@ extern const float g_aim_range_tbl[14] = {-0.5f, 3.1415927f, -2.0f, 2.0f, -1.5f,
 // ======================================================= slice s00525160: functions
 #undef g_mgr
 #define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
-#undef g_dlg
-#define g_dlg       (*(Dlg_s25160*)&orig::g_main_menu_obj)
 #undef g_513710
 #define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #undef g_big
@@ -166,9 +164,9 @@ done:
 
     if (v == 0x10)
     {
-        char* t = *(char**)(g_windows + 0x68);
+        char* t = slot_as<char>(26);
         *(int*)(t + 0x18) = 0x10;
-        g_dlg.open(0x1a);
+        g_windows.set_state(0x1a);
         return;
     }
 
@@ -184,11 +182,11 @@ done:
             for (int i = 0; i < 0xa; ++i)
                 ((Troop_s25160*)rec)->m_4630d0(i);
         }
-        char* t = *(char**)(g_windows + 0x20);
+        char* t = slot_as<char>(8);
         *(int*)(t + 0x18) = 0x10;
         *(int*)(t + 0x14) = g_dialogs.fc;
         *(int*)(t + 4) = 2;
-        g_dlg.open(8);
+        g_windows.set_state(8);
         return;
     }
 
@@ -196,20 +194,20 @@ done:
         target = g_dialogs.fc;
     if (v == 2 || v == 3)
     {
-        char* t = *(char**)(g_windows + 0x20);
+        char* t = slot_as<char>(8);
         *(int*)(t + 0x18) = 0x10;
         int a = *(int*)(*(char**)&g_game + 0x13af0);
         if (a == 0)
             a = g_dialogs.fc;
         *(int*)(t + 0x14) = a;
         *(int*)(t + 4) = ((v != 3) ? 0 : 3) + 1;
-        g_dlg.open(8);
+        g_windows.set_state(8);
         return;
     }
 
     if (v == 5 || v == 7 || v == 6 || v == 9 || v == 0xa)
     {
-        char* t = *(char**)(g_windows + 0x30);
+        char* t = slot_as<char>(12);
         *(int*)(t + 0x18) = 0x10;
         if (v == 5 || v == 6 || v == 7)
         {
@@ -223,40 +221,40 @@ done:
         if (v == 5)
         {
             *(int*)(t + 4) = 1;
-            g_dlg.open(0xc);
+            g_windows.set_state(0xc);
             return;
         }
         if (v == 7)
         {
             *(int*)(t + 4) = 7;
-            g_dlg.open(0xc);
+            g_windows.set_state(0xc);
             return;
         }
         if (v == 6)
         {
             *(int*)(t + 4) = 6;
-            g_dlg.open(0xc);
+            g_windows.set_state(0xc);
             return;
         }
         if (v == 9)
         {
             *(int*)(t + 4) = 2;
-            g_dlg.open(0xc);
+            g_windows.set_state(0xc);
             return;
         }
         *(int*)(t + 4) = 3;
-        g_dlg.open(0xc);
+        g_windows.set_state(0xc);
         return;
     }
 
     if (v == 0xb || v == 0xc)
     {
-        char* t = *(char**)(g_windows + 0x3c);
+        char* t = slot_as<char>(15);
         *(int*)(t + 0x18) = 0x10;
         *(int*)(t + 0x14) = g_dialogs.fc;
         *(int*)(t + 4) = (v != 0xb) + 1;
         ((VObj_s25160*)t)->v4();
-        g_dlg.open(0xf);
+        g_windows.set_state(0xf);
         return;
     }
 
@@ -268,7 +266,7 @@ case1:
         if (x == 0x64)
             g_513710.m((int*)&code_f);
         else
-            g_dlg.open(x);
+            g_windows.set_state(x);
     }
 }
 
@@ -450,30 +448,8 @@ int find_listener_agent()
 #define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #undef g_game_s261e0
 #define g_game_s261e0 (*(GameData_s261e0**)&g_game)
-#undef g_main_menu_s261e0
-#define g_main_menu_s261e0 (*(MainMenu_s261e0*)g_windows)
-#undef g_w_a739a0_s261e0
-#define g_w_a739a0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x20)))
-#undef g_w_a739bc_s261e0
-#define g_w_a739bc_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x3c)))
-#undef g_w_a739b0_s261e0
-#define g_w_a739b0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x30)))
-#undef g_w_a739b4_s261e0
-#define g_w_a739b4_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x34)))
-#undef g_w_a739e8_s261e0
-#define g_w_a739e8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x68)))
-#undef g_w_a739e4_s261e0
-#define g_w_a739e4_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x64)))
-#undef g_w_a73994_s261e0
-#define g_w_a73994_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x14)))
-#undef g_w_a739c8_s261e0
-#define g_w_a739c8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x48)))
-#undef g_w_a739c0_s261e0
-#define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
 #undef g_flags_s261e0
 #define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
-#undef g_deque_s261e0
-#define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 #undef g_clamp_max
 #define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
 // @ 0x5261e0
@@ -589,14 +565,8 @@ void MissionBlocker::frame_update(float dt)
         if (!(0.0f <= e)) {
             b6 = true;
         } else {
-            int u14 = g_deque_s261e0.off + g_deque_s261e0.size - 1;
-            unsigned page = (unsigned)u14 >> 2;
-            unsigned sub = (unsigned)u14 & 3;
-            if ((unsigned)g_deque_s261e0.mapsize <= page)
-                page -= (unsigned)g_deque_s261e0.mapsize;
-            int* blk = (int*)g_deque_s261e0.map[page];
             b6 = false;
-            if (blk[sub] == 0)
+            if (g_windows.dq.back() == 0)
                 b6 = true;
         }
     }
@@ -871,12 +841,12 @@ void MissionBlocker::frame_update(float dt)
                 if (best > 8.0f) {
                     f2dc = -1;
                     // 0x527591: ecx = [0xa73980] (the dialog box the menu points to), unlike set_state/open (ecx = 0xa73980)
-                    (*(MainMenu_s261e0**)g_windows)->setup2(
+                    g_windows.box()->setup2(
                         g_strtable.lookup(tstring("ui_question_leave_area")),
                         g_strtable.lookup(tstring("ui_yes")),
                         g_strtable.lookup(tstring("ui_no")),
-                        &f2dc);
-                    g_main_menu_s261e0.open(0);
+                        (int)&f2dc);
+                    g_windows.open(0);
                 } else {
                     g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_cant_retreat_there_are_enemies_nearby")),
                               0xffff3344);
@@ -923,21 +893,21 @@ void MissionBlocker::frame_update(float dt)
         // ---- boolean-true branch -------------------------------------------------------------------
         if (flag13 != 0 && g_mission_s261e0->local_id >= 0 && g_game_s261e0->b18 == 0) {
             refresh_slots = 1;
-            g_w_a739a0_s261e0->f18 = 0xe;
+            slot_as<Widget_s261e0>(8)->f18 = 0xe;
             if (val14 < 0) {
-                g_w_a739a0_s261e0->f4 = 0;
-                g_main_menu_s261e0.set_state(8);
+                slot_as<Widget_s261e0>(8)->f4 = 0;
+                g_windows.set_state(8);
             } else {
-                g_w_a739a0_s261e0->f4 = 3;
-                g_w_a739a0_s261e0->f14 = val14;
-                if (g_w_a739a0_s261e0->f14 < 0) {
-                    g_w_a739a0_s261e0->f14 = 0;
-                    g_main_menu_s261e0.set_state(8);
+                slot_as<Widget_s261e0>(8)->f4 = 3;
+                slot_as<Widget_s261e0>(8)->f14 = val14;
+                if (slot_as<Widget_s261e0>(8)->f14 < 0) {
+                    slot_as<Widget_s261e0>(8)->f14 = 0;
+                    g_windows.set_state(8);
                 } else {
                     int lim = g_game_s261e0->f13a04 - 1;
-                    if (g_w_a739a0_s261e0->f14 > lim)
-                        g_w_a739a0_s261e0->f14 = lim;
-                    g_main_menu_s261e0.set_state(8);
+                    if (slot_as<Widget_s261e0>(8)->f14 > lim)
+                        slot_as<Widget_s261e0>(8)->f14 = lim;
+                    g_windows.set_state(8);
                 }
             }
             goto after;
@@ -952,10 +922,10 @@ void MissionBlocker::frame_update(float dt)
             else if (v > g_clamp_max)
                 v = g_clamp_max;
             status_height = *(int*)(rec + 0x58) + 0x23 + v * 2;
-            g_w_a739bc_s261e0->f18 = 0xe;
-            g_w_a739bc_s261e0->f4 = 0;
-            g_w_a739bc_s261e0->f14 = g_game_s261e0->f8c;
-            g_main_menu_s261e0.set_state(0xf);
+            slot_as<Widget_s261e0>(15)->f18 = 0xe;
+            slot_as<Widget_s261e0>(15)->f4 = 0;
+            slot_as<Widget_s261e0>(15)->f14 = g_game_s261e0->f8c;
+            g_windows.set_state(0xf);
             goto after;
         }
 
@@ -963,42 +933,42 @@ void MissionBlocker::frame_update(float dt)
             int flags20 = *(int*)((char*)g_mission_templates + g_mission_s261e0->cur_rec * 0x58 + 0x20);
             if (any_pressed_s261e0(g_keys_73b8, 2) && g_game_s261e0->b18 == 0 &&
                 (((flags20 >> 1) & 1) == 0)) {
-                g_w_a739b0_s261e0->f18 = 0xe;
-                g_w_a739b0_s261e0->f4 = 5;
-                g_main_menu_s261e0.set_state(0xc);
+                slot_as<Widget_s261e0>(12)->f18 = 0xe;
+                slot_as<Widget_s261e0>(12)->f4 = 5;
+                g_windows.set_state(0xc);
                 goto after;
             }
         }
 
         if (any_pressed_s261e0(g_keys_73c0, 2) && g_game_s261e0->b18 == 0) {
             if (g_module_settings.show_quest_notes == 0) {
-                g_w_a739b4_s261e0->f18 = 0xe;
-                g_w_a739b4_s261e0->f4 = 0;
-                g_main_menu_s261e0.set_state(0xd);
+                slot_as<Widget_s261e0>(13)->f18 = 0xe;
+                slot_as<Widget_s261e0>(13)->f4 = 0;
+                g_windows.set_state(0xd);
             } else {
-                g_w_a739e8_s261e0->f18 = 0xe;
+                slot_as<Widget_s261e0>(26)->f18 = 0xe;
                 *(int*)((char*)g_game_s261e0 + 0x13b08) = 4;
                 *(int*)((char*)g_game_s261e0 + 0x13b0c) = 0;
-                g_main_menu_s261e0.set_state(0x1a);
+                g_windows.set_state(0x1a);
             }
             goto after;
         }
 
         if (any_pressed_s261e0(g_keys_73c8, 2) && g_game_s261e0->b18 == 0) {
-            g_w_a739e4_s261e0->f18 = 0xe;
-            g_w_a739e4_s261e0->f4 = 0;
-            g_main_menu_s261e0.set_state(0x19);
+            slot_as<Widget_s261e0>(25)->f18 = 0xe;
+            slot_as<Widget_s261e0>(25)->f4 = 0;
+            g_windows.set_state(0x19);
             goto after;
         }
 
         if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
             char c = g_mission_s261e0->mode_flag1();
             if (c == 0) {
-                g_w_a73994_s261e0->f18 = 0xe;
-                g_main_menu_s261e0.set_state(5);
+                slot_as<Widget_s261e0>(5)->f18 = 0xe;
+                g_windows.set_state(5);
             } else {
-                g_w_a739c8_s261e0->f18 = 0xe;
-                g_main_menu_s261e0.set_state(0x12);
+                slot_as<Widget_s261e0>(18)->f18 = 0xe;
+                g_windows.set_state(0x12);
             }
             goto after;
         }
@@ -1020,11 +990,11 @@ void MissionBlocker::frame_update(float dt)
             g_mission_s261e0->f6620 = -1;
             Agent_s261e0* a = page_agent_s261e0((int)id);
             int dialog_id = a->f88;
-            g_w_a739c0_s261e0->f18 = 0xe;
+            slot_as<Widget_s261e0>(16)->f18 = 0xe;
             g_dialogs.start(dialog_id, (int)id, -1, 0, 0);
             g_mission_s261e0->f6558 = a->f88;
             g_game_s261e0->f13a08 = a->f88;
-            g_main_menu_s261e0.set_state(0x10);
+            g_windows.set_state(0x10);
             goto after;
         }
 
@@ -1040,9 +1010,9 @@ void MissionBlocker::frame_update(float dt)
     g_mission_ctx.tick();
     if (w18 != 100) {
         if (g_game_s261e0->f13ad0 > 0.0f && g_game_s261e0->f13ad4 != 0)
-            g_main_menu_s261e0.set_state(7);
+            g_windows.set_state(7);
         else
-            g_main_menu_s261e0.set_state(w18);
+            g_windows.set_state(w18);
         goto unlock;
     }
     if (0 < g_mission_ctx.passage_menu) {

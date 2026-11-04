@@ -30,7 +30,7 @@ int  open_write(void* stream, char* path);         // 0x415320
 // ---- widgets --------------------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 
 // ---- serialisation streams ------------------------------------------------------------------------------
 #include "../out_stream.h"
@@ -130,7 +130,5 @@ void log_save_path();                                   // 0x4e8df0
 extern int      g_use_shaders;                          // 0x5e28fc
 
 #include "../window_mgr.h"                              // the save-game menu screens are slots of g_windows: 18 (0xa739c8), 21 (0xa739d4)
-extern int      g_a739c8;                               // 0xa739c8
-extern int      g_a739d4;                               // 0xa739d4
 
 #endif

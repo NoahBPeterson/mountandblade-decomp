@@ -19,7 +19,6 @@ struct StrTable;
 struct TableauTbl;
 struct gui_manager;
 struct ini_file;
-struct main_menu;
 struct options_record;
 struct ptype;
 struct renderer;
@@ -130,7 +129,6 @@ extern InputSet g_input_a;                 // 0xa170c8
 extern renderer g_render;                  // 0xa17910
 
 extern MissionCtx g_mission_ctx;           // 0xa73300
-extern main_menu g_main_menu_obj;              // 0xa73980
 extern TableauTbl g_tableaus;              // 0xa75f40
 }  // namespace orig
 

@@ -96,7 +96,7 @@ struct GuiRoot {
 extern GuiRoot g_gui_root;                          // 0x5d7080
 
 // the main menu / screen manager (0xa73980)
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 
 #include "../map_flags.h"                             // MapFlags (0x5e291c): the one definition
 #define GD_I(off) (*(int*)((char*)g_game + (off)))

@@ -6,7 +6,7 @@
 #include "../ui/container.h"      // ContainerBase: add_child 0x493a30
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/mesh2/mesh2_common.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../party2/camera_class.h"      // Camera (the 0x4a8-byte object make_editor_list builds)
@@ -300,6 +300,6 @@ HRESULT GameApp::OneTimeSceneInit()
     ((GuiState*)&orig::g_gui_mgr)->init_widgets();
     init_mission_trigger_records();
     g_5e29a4 = g_trial_mode;
-    ((MainMenu*)&orig::g_main_menu_obj)->set_state(2);
+    g_windows.set_state(2);
     return 0;
 }

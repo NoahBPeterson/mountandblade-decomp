@@ -6,7 +6,7 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../window_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
 #include "../ui_globals.h"      // UI / core globals
 struct GameData;
@@ -194,13 +194,13 @@ void FaceGen::frame_update(float dt)
             const tstring* r2 = g_strtable.lookup(t2);
             // the dialog record's fields (0xa73980+0 is the record pointer: the manager's +0x78 is the screen deque,
             // so writing these through the manager destroys the deque)
-            g_main_menu.rec->header = *r2;
-            g_main_menu.rec->title = *r1;
-            g_main_menu.rec->choice = 0;
-            g_main_menu.rec->v50 = 0;
-            g_main_menu.rec->open = 0;
+            g_windows.box()->name68 = *r2;
+            g_windows.box()->name1c = *r1;
+            g_windows.box()->f4c = 0;
+            g_windows.box()->f50 = 0;
+            g_windows.box()->f04 = 0;
         }
-        ((WindowMgrW*)(void*)&g_main_menu)->open(0);
+        g_windows.open(0);
         return;
     }
 
@@ -226,6 +226,6 @@ void FaceGen::frame_update(float dt)
         } else {
             ch = w18;
         }
-        g_main_menu.set_state(ch);
+        g_windows.set_state(ch);
     }
 }

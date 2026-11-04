@@ -593,7 +593,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         result = game()->encountered_party_is_attacker != 0;
         break;
     case op::conversation_screen_is_active:
-        result = g_screen_stack.back() == 0x10;
+        result = g_windows.dq.back() == 0x10;
         break;
     case op::in_meta_mission:
         result = g_dialogs.in_meta_mission;
@@ -1549,20 +1549,20 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::tutorial_box:
         // (tutorial_box / dialog_box, <text_string_id>, [title_string_id]); title defaults to string 1
-        if (check_string_arg(types[0], (int)params[0]) && g_screen_stack.back() != 0) {
+        if (check_string_arg(types[0], (int)params[0]) && g_windows.dq.back() != 0) {
             int title = 1, title_type = 3;
             if (params[1] > 0 && check_string_arg(types[1], (int)params[1])) {
                 title = (int)params[1];
                 title_type = types[1];
             }
-            g_windows.dialog_box->show(g_script.expand(g_strings.get_string(title, title_type)),
+            g_windows.box()->show(g_script.expand(g_strings.get_string(title, title_type)),
                                        g_script.expand(g_strings.get_string((int)params[0], types[0])));
             g_windows.open(0);
         }
         break;
     case op::question_box:
         // (question_box, <string_id>, [yes_string_id], [no_string_id]); defaults strings 2 / 3; answer in game +0x1a208
-        if (check_string_arg(types[0], (int)params[0]) && g_screen_stack.back() != 0) {
+        if (check_string_arg(types[0], (int)params[0]) && g_windows.dq.back() != 0) {
             int yes = 2, yes_type = 3, no = 3, no_type = 3;
             if (params[1] > 0 && check_string_arg(types[1], (int)params[1])) {
                 yes = (int)params[1];
@@ -1572,7 +1572,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 no = (int)params[2];
                 no_type = types[2];
             }
-            g_windows.dialog_box->setup2(g_script.expand(g_strings.get_string((int)params[0], types[0])),
+            g_windows.box()->ask(g_script.expand(g_strings.get_string((int)params[0], types[0])),
                                       g_script.expand(g_strings.get_string(yes, yes_type)),
                                       g_script.expand(g_strings.get_string(no, no_type)), &game()->question_answer);
             g_windows.open(0);

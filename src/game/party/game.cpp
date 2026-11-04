@@ -30,7 +30,7 @@
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 #include "../map_flags.h"                                     // MapFlags (0x5e291c): the one definition
 #include "../window_mgr.h"                                 // g_windows (0xa73980; screen slot 15 = 0xa739bc: +0x14 cleared; slot 23 = 0xa739dc: +0x18 set)
 #include "../../include/level_global.h"                     // g_level (0xa732b4)
@@ -65,13 +65,13 @@ void C4c2fb0::frame_update(float)
         if (m == 0) {
             log_stream_ptr()->w_cstr("Switching to menu window...\n");
             g_game_G->f13aec = 0;
-            *(int*)(*(char**)((char*)&g_windows + 0x3c) + 0x14) = 0;
-            *(int*)(*(char**)((char*)&g_windows + 0x5c) + 0x18) = 0xf;
-            (*(main_menu*)&g_windows).set_state(0x17);
+            *(int*)((char*)slot_as<char>(15) + 0x14) = 0;
+            *(int*)((char*)slot_as<char>(23) + 0x18) = 0xf;
+            g_windows.set_state(0x17);
             return;
         }
         if (m == 1) {
-            (*(main_menu*)&g_windows).set_state(7);
+            g_windows.set_state(7);
             return;
         }
         if (m == 2) {

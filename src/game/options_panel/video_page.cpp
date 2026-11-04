@@ -60,8 +60,8 @@ struct rgl_config {
 extern ID3DXEffect* g_effect;                                                // 0x5e293c (renderer.h)
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
-#include "../id_stack.h"                         // the screen id stack (0xa739f8)
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // the screen id stack (0xa739f8)
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 
 // 0x415160: open a user file ("rgl_config.txt").
 #include "../../rgl/text_stream.h"             // mb_open_user_file (0x415160)
@@ -74,8 +74,6 @@ void run_settings_probe();                            // 0x4b99c0 (options_dlg.h
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index (clamped to 5).
 
 // 0x4d6b80 and 0x4d6dd0 live in slice s004d6b80.
-// WindowMgrW (world_data/world_data.h; main_menu.h's `reset` is its old name): open(n) 0x494260 on the main menu object
-struct WindowMgrW { void open(int n); };
 struct VideoPage;
 // the keys page (keys_page.cpp) and this page share these two members: the page calls them on itself
 struct KeysPage {
@@ -149,14 +147,10 @@ void Recf0::frame_update(float)
             tstring explanation("ui_change_directx_explanation");
             tstring name("DirectX");
             tstring* e = g_strtable.lookup(explanation);   // 0x4d6418: the explanation is the key; "DirectX" is the header
-            MainMenu* r = g_main_menu.rec;                  // 0x4d641d: edi = the dialog box record, loaded from [0xa73980]
-            r->setup(&name, e);                             // header (+0x68) = "DirectX", title (+0x1c) = the looked-up text
-            r->f4c = 0;
-            r->f50 = 0;
-            r->f4 = 0;
+            NamedRec* r = g_windows.box();                  // 0x4d641d: edi = the dialog box record, loaded from [0xa73980]
+            r->set_inline(&name, e);                        // header (+0x68) = "DirectX", title (+0x1c) = the looked-up text
         }
-        MainMenu& m = g_main_menu;
-        ((WindowMgrW*)(void*)&m)->open(0);
+        g_windows.open(0);
     }
 
     if (W(quality[0])->clear_mask(0x10000)) {
@@ -311,16 +305,16 @@ void Recf0::frame_update(float)
                 tstring key("ui_change_graphics_settings_explanation");
                 tstring title("");
                 tstring* e = g_strtable.lookup(key);
-                g_main_menu.rec->setup(&title, e);
+                g_windows.box()->set_inline(&title, e);
             }
-            ((WindowMgrW*)(void*)&g_main_menu)->open(0);
+            g_windows.open(0);
         }
     }
 
     if (f_ed) {
         // the last menu entry is checked -> go back to the page that opened the options
         if (current_screen_id() != 0)
-            g_main_menu.set_state(w18);
+            g_windows.set_state(w18);
     }
 }
 #undef W

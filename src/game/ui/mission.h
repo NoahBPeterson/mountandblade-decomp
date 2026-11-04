@@ -106,11 +106,6 @@ struct Sel {
     void bump(int d);                                       // 0x4899e0
 };
 
-// ---- 30 pointers to int tables (0x489be0) ------------------------------------------------------------------
-struct Ptr30 {
-    int* p[30];
-    void clear_all();                       // 0x489be0
-};
 
 // ---- containers -------------------------------------------------------------------------------------------
 struct MapEntry { unsigned key; int value; };

@@ -55,21 +55,18 @@ void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
 
 
-extern char* g_save_dialog;                                     // 0xa7398c
-extern char g_main_menu_obj[];                                  // 0xa73980
 
 // main menu layout (see s004d7d10)
-#include "../main_menu.h"
+#include "../window_mgr.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../game_globals.h"      // canonical global declarations (g_module_name ...)
 #include "../../rgl/text_stream.h"
 struct GameData;
 extern GameData* g_game;                                    // 0x5e2930
-#define g_main_menu (*(main_menu*)g_main_menu_obj)
-// The menu record's tstrings/fields live on the object g_main_menu.rec points at, NOT on the screen manager itself:
+// The menu record's tstrings/fields live on the object g_windows.box() points at, NOT on the screen manager itself:
 // the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
 // +0x78/+0x88 answers (or constructing them) lands on the deque and destroys it (crash in current_screen_id).
-#define g_menu_rec (g_main_menu.rec)
+#define g_menu_rec (g_windows.box())
 
 static const char* text_of(const tstring* s)
 {
@@ -101,23 +98,23 @@ void C4c31c0::frame_update(float)
         tstring title2(name);
         const tstring* rc = g_strtable.lookup(cancel);
         const tstring* ro = g_strtable.lookup(ok);
-        g_menu_rec->header.clear();
+        g_menu_rec->name68.clear();
         // The original (0x4ea40c..0x4ea42d) stores the prompt into +0x1c and the two answers into +0x78/+0x88:
         // +0x1c = the question, +0x78 = ui_ok, +0x88 = ui_cancel. Ours had +0x1c and +0x88 swapped.
-        g_menu_rec->title = title2;
-        g_menu_rec->answer_yes = *ro;
-        g_menu_rec->answer_no = *rc;
-        g_menu_rec->choice = (int)((char*)this + 0x220);
-        g_menu_rec->v50 = (int)((char*)this + 0x224);
+        g_menu_rec->name1c = title2;
+        g_menu_rec->name78 = *ro;
+        g_menu_rec->name88 = *rc;
+        g_menu_rec->f4c = (int)((char*)this + 0x220);
+        g_menu_rec->f50 = (int)((char*)this + 0x224);
         int* slotname;
         if (*(int*)((char*)this + sel218 * 0x30 + 0x4c) != 0)
             slotname = (int*)((char*)this + sel218 * 0x30 + 0x2c);
         else
             slotname = (int*)(*(int*)((char*)g_game + 0x8c) * 0x508 +
                               *(int*)((char*)g_game + 0x13a00));
-        ((tstring*)((char*)g_menu_rec + 0x54))->operator=(*(tstring*)slotname);
-        g_menu_rec->open = 3;
-        g_main_menu.set_state(0);
+        g_menu_rec->name54 = *(tstring*)slotname;
+        g_menu_rec->f04 = 3;
+        g_windows.set_state(0);
         return;
         } else {
         char* slot = (char*)this + sel218 * 0x30;
@@ -131,13 +128,13 @@ void C4c31c0::frame_update(float)
             *(int*)(slot_as<char>(3) + 4) = 1;
             ((tstring*)(slot_as<char>(3) + 0x48))->assign(name);
             *(int*)(slot_as<char>(3) + 0x8c) = sel218;
-            g_main_menu.set_state(3);
+            g_windows.set_state(3);
             return;
         }
         }
     }
     if (btn_cancel->clear_mask(0x10000)) {
-        g_main_menu.set_state(*(int*)((char*)this + 0x18));
+        g_windows.set_state(*(int*)((char*)this + 0x18));
         return;
     }
     MissionUi* panel = btn_delete;
@@ -162,7 +159,7 @@ void C4c31c0::frame_update(float)
                 tstring err("ui_error_removing_file");
                 g_msglog.add(*g_strtable.lookup(err), 0xffff0000);
             }
-            g_main_menu.set_state(0x15);
+            g_windows.set_state(0x15);
             return;
         }
         if (*(int*)((char*)this + 0x220) != 0)
@@ -171,7 +168,7 @@ void C4c31c0::frame_update(float)
         ((tstring*)((char*)g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
         tstring ok("ui_game_saved");
         g_msglog.add(*g_strtable.lookup(ok), -1);
-        g_main_menu.set_state(*(int*)((char*)this + 0x18));
+        g_windows.set_state(*(int*)((char*)this + 0x18));
         return;
     }
 confirm_delete:
@@ -184,15 +181,15 @@ confirm_delete:
     tstring title2(name);
     const tstring* rn = g_strtable.lookup(no);
     const tstring* ry = g_strtable.lookup(yes);
-    g_menu_rec->header.clear();
+    g_menu_rec->name68.clear();
     // Same shape as the save-name box (0x4ea7e4..0x4ea801): +0x1c = the question, +0x78 = ui_yes, +0x88 = ui_no.
-    g_menu_rec->title = title2;
-    g_menu_rec->answer_yes = *ry;
-    g_menu_rec->answer_no = *rn;
-    g_menu_rec->choice = (int)((char*)this + 0x21c);
-    g_menu_rec->v50 = 0;
-    g_menu_rec->open = 1;
-    g_main_menu.set_state(0);
+    g_menu_rec->name1c = title2;
+    g_menu_rec->name78 = *ry;
+    g_menu_rec->name88 = *rn;
+    g_menu_rec->f4c = (int)((char*)this + 0x21c);
+    g_menu_rec->f50 = 0;
+    g_menu_rec->f04 = 1;
+    g_windows.set_state(0);
 }
 
 // @ 0x4ea850

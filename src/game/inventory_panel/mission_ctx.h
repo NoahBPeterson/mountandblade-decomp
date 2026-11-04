@@ -7,7 +7,7 @@
 #define GAME_INVENTORY_PANEL_MISSION_CTX_H
 #include "./inv_common.h"
 #include "../mission.h"
-#include "../main_menu.h"
+#include "../window_mgr.h"
 
 // a menu screen object: vtable (slot 4 = +0x10), state at +0x04, "highlight" counter at +0x18 (0x513710, 0x514d40)
 struct MenuWidget {

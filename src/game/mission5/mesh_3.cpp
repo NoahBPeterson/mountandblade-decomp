@@ -829,8 +829,7 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
 #define g_game_s2f250 (*(Frame__s2f250**)&g_game)
 #undef g_objrecs_s2f250
 #define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_ptypes)
-#undef g_editor_view_s2f250
-#define g_editor_view_s2f250 (*(EditorView_s2f250**)&(*(void**)((char*)&g_windows + 0x38)))
+#undef slot_as<EditorView_s2f250>(14)
 #undef g_editor_dialog_s2f250
 #define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
 // @ 0x52f250
@@ -977,8 +976,8 @@ place:
 
                 g_game_s2f250->dirty = 1;
                 g_editor_dialog_s2f250.update_objects();
-                g_editor_view_s2f250->pick_entity();
-                g_editor_view_s2f250->f2f9 = 1;
+                slot_as<EditorView_s2f250>(14)->pick_entity();
+                slot_as<EditorView_s2f250>(14)->f2f9 = 1;
                 SetFocus(g_app_obj.m_hWnd);
 
                 if (g_game_s2f250->rand_scale != 0) {

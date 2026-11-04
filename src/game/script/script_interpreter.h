@@ -63,21 +63,15 @@ struct MissionW {                                                            // 
     unsigned find_agent_by_troop(int troop);                                // 0x4921b0
     void add_wind_effect(int a1, int a2);                                   // 0x4952f0
 };
-struct WindowMgrW { void open(int window); void set_state(int state); };     // 0x494260 / 0x495700 (world_data.cpp)
 struct Mission3 {                                                            // terrain_a/misc.cpp
     void add_amount(int idx, unsigned flags);                               // 0x4677a0
     void clear_done();                                                      // 0x4676c0
 };
 struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
-struct Ptr30 { void clear_all(); };                                          // 0x489be0 (ui/mission_ui.cpp)
 struct OriginPairs { bool is_down(int i); bool clicked(int i); };            // 0x48ac50 / 0x48ac90 (ui/mission_ui.cpp)
 struct Sel { void set_vec(const int* a, const int* b, const int* c); };     // 0x4898e0 (ui/mission_ui.cpp)
 struct NamedSelRec { void set_name(const tstring* s); void set_sel(const int* src); };   // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
 struct Named16 { void set(const tstring* s); };                              // 0x489ab0 (ui/mission_ui.cpp)
-struct NamedRec {                                                            // ui/mission_ui.cpp
-    void setup(const tstring* a, const tstring* b);                         // 0x48a3a0
-    void setup2(const tstring* a, const tstring* b, const tstring* c, int v);   // 0x48a3d0
-};
 struct MissionView { void setup(void* src, int* b, int* c); void set(void* src); };   // 0x4897a0 / 0x489820 (ui/mission_ui.cpp)
 struct MissionUi { void set_fog(const float* ref, const float* lo, const float* hi); };   // 0x488cd0 (ui/mission_ui.cpp)
 struct ElemList { void call0(int i, int a); void call1(int i, int a); };     // 0x488e20 / 0x488e40 (ui/mission_ui.cpp)
@@ -183,17 +177,7 @@ extern MsgLog g_msglog;                // 0x5d7080
 struct DialogMgrX : DialogMgr {
     __forceinline tstring get_name() { return ((GameData*)this)->get_name(); }   // 0x489c30 (copy of cur_text, +0xe028): GameData::get_name
 };
-struct DialogBox {
-    __forceinline void show(const tstring& title, const tstring& text) { ((NamedRec*)this)->setup(&title, &text); }   // 0x48a3a0 (ret 8)
-    __forceinline void setup2(const tstring& text, const tstring& yes, const tstring& no, int* answer) { ((NamedRec*)this)->setup2(&text, &yes, &no, (int)answer); }   // 0x48a3d0 (ret 0x10)
-};
-struct WindowMgr {
-    DialogBox* dialog_box;              // +0 window 0 (tutorial_box 0x4a3baa)
-    __forceinline void open(int window) { ((WindowMgrW*)this)->open(window); }       // 0x494260 (thiscall, ret 4)
-    __forceinline void clear_all() { ((Ptr30*)this)->clear_all(); }                   // 0x489be0 (change_screen_quit 0x4ac332)
-    __forceinline void set_state(int state) { ((WindowMgrW*)this)->set_state(state); }   // 0x495700 (ret 4)
-};
-extern WindowMgr g_windows;             // 0xa73980
+#include "../window_mgr.h"             // g_windows (0xa73980): box() is the dialog box (tutorial_box 0x4a3baa), clear_all 0x489be0 (change_screen_quit 0x4ac332)
 
 // ---- translated UI strings (object 0x5e2a18; StrTable in dialog_manager.h) ------------------------------------------
 #define g_ui_strings g_strtable       // StrTable::lookup(const tstring&) 0x43a1e0 (ret 4: the translation, or the key)
@@ -214,11 +198,7 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 __forceinline char GameKeys::is_down(int key) { return ((OriginPairs*)this)->is_down(key); }   // 0x48ac50 (thiscall, ret 4)
 __forceinline char GameKeys::clicked(int key) { return ((OriginPairs*)this)->clicked(key); }   // 0x48ac90
 
-// the window/screen stack (a deque of screen ids; 0x10 = conversation)
-struct ScreenStack {
-    __forceinline int& back() { int& (std::deque<int>::*f)() = &std::deque<int>::back; return (((std::deque<int>*)this)->*f)(); }   // 0x490310 (thiscall): std::deque<int>::back, called out of line
-};
-extern ScreenStack g_screen_stack;      // 0xa739f8
+// the window/screen stack is g_windows.dq (a deque of screen ids; 0x10 = conversation)
 
 // ---- vectors and frames ----------------------------------------------------------------------------------------------
 // vec4: the vector4 members rgl.h does not declare

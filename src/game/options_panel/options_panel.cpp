@@ -9,9 +9,7 @@
 #include <stdlib.h>
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../ui/named_rec.h"   // NamedRec: the dialog box record (setup 0x48a3a0, setup2 0x48a3d0)
-// WindowMgrW (world_data/world_data.h; main_menu.h's `reset` is its old name): open(n) 0x494260 on the main menu object
-struct WindowMgrW { void open(int n); };
-#include "../main_menu.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../window_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define UI_NO_KEY_ASSIGNED  "ui_no_key_assigned"                    // 0x59687c
 
@@ -212,7 +210,7 @@ void Rec3c::frame_update(float)
         ((options_panel*)this)->refresh_texts();
     }
     if (((ui_control*)row[0])->is_key_down(0x10000))
-        g_main_menu.set_state(w18);
+        g_windows.set_state(w18);
 }
 
 // @ 0x4d7de0
@@ -308,9 +306,9 @@ void Rec48::frame_update(float)
         {
             tstring text(buf_b);
             tstring header("");
-            g_main_menu.rec->setup(&header, &text);
+            g_windows.box()->set_inline(&header, &text);
         }
-        ((WindowMgrW*)(void*)&g_main_menu)->open(0);
+        g_windows.open(0);
         return;
     }
     if (f44 == 0) {
@@ -333,16 +331,16 @@ void Rec48::frame_update(float)
             {
                 tstring text(buf_a);
                 tstring header("");
-                g_main_menu.rec->setup(&header, &text);
+                g_windows.box()->set_inline(&header, &text);
             }
-            ((WindowMgrW*)(void*)&g_main_menu)->open(0);
+            g_windows.open(0);
         } else {
             {
                 tstring msg("ui_unable_to_open_import_file");       // 0x596cd0
                 tstring header("");
-                g_main_menu.rec->setup(&header, g_strtable.lookup(msg));
+                g_windows.box()->set_inline(&header, g_strtable.lookup(msg));
             }
-            ((WindowMgrW*)(void*)&g_main_menu)->open(0);
+            g_windows.open(0);
         }
         return;
     }
@@ -359,24 +357,24 @@ void Rec48::frame_update(float)
                     tstring no("ui_no");                            // 0x596c94
                     tstring yes("ui_yes");                          // 0x596c8c
                     tstring text(buf_a);
-                    ((NamedRec*)(void*)g_main_menu.rec)->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&f44);
+                    g_windows.box()->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&f44);
                 }
-                g_main_menu.set_state(0);
+                g_windows.set_state(0);
             } else {
                 {
                     tstring msg("ui_unable_to_find_character_import_file"); // 0x596c64
                     tstring header("");
-                    g_main_menu.rec->setup(&header, g_strtable.lookup(msg));
+                    g_windows.box()->set_inline(&header, g_strtable.lookup(msg));
                 }
-                ((WindowMgrW*)(void*)&g_main_menu)->open(0);
+                g_windows.open(0);
             }
         } else {
             {
                 tstring msg("ui_mount_and_blade_is_running_in_trial_mode_please_buy_the_game_for_importing_a_character");
                 tstring header("");
-                g_main_menu.rec->setup(&header, g_strtable.lookup(msg));
+                g_windows.box()->set_inline(&header, g_strtable.lookup(msg));
             }
-            ((WindowMgrW*)(void*)&g_main_menu)->open(0);
+            g_windows.open(0);
         }
         return;
     }
@@ -393,16 +391,16 @@ void Rec48::frame_update(float)
                 tstring no("ui_no");
                 tstring yes("ui_yes");
                 tstring text(buf_a);
-                ((NamedRec*)(void*)g_main_menu.rec)->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&f40);
+                g_windows.box()->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&f40);
             }
-            g_main_menu.set_state(0);
+            g_windows.set_state(0);
         } else {
             f40 = 0;
         }
         return;
     }
     if (((ui_control*)done)->is_key_down(0x10000))
-        g_main_menu.set_state(w18);
+        g_windows.set_state(w18);
 }
 
 // @ 0x4d86d0

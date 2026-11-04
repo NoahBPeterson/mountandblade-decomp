@@ -22,7 +22,7 @@
 #include "../placed_obj.h"
 #include "../int_vec.h"      // IntVec: push_back with the inlined fast path and the library insert_n (0x43e7b0), as 0x5305b0 uses it
 #include "../key_names.h"
-#include "../main_menu.h"
+#include "../window_mgr.h"
 
 using rgl::matrix;
 using rgl::vector4;

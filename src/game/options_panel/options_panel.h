@@ -50,7 +50,7 @@ struct text_store {
     virtual void add_text(tstring* text, float* pos);               // +0xac
 };
 
-#include "../main_menu.h"                                   // main_menu (the slice called it MenuRec: g_main_menu.rec, 0xa73980)
+#include "../window_mgr.h"                                   // main_menu (the slice called it MenuRec: g_main_menu.rec, 0xa73980)
 // g_main_menu (0xa73980, `rec` at +0 is the dialog box record): main_menu, ../main_menu.h
 
 bool mb_file_exists(const char* path);                              // 0x415120

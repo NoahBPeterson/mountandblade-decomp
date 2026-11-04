@@ -44,7 +44,7 @@ static __forceinline const char* c_str(const tstring* s)
 
 void __cdecl frame_hook(void);                               // 0x4ec460 (game/char_sheet/screen.cpp: the end-of-frame callback, a free function)
 
-#include "../id_stack.h"               // IdStack g_id_stack (0xa739f8), current_screen_id
+#include "../window_mgr.h"               // IdStack g_id_stack (0xa739f8), current_screen_id
 
 // ---- game (0x5e2930).  Only the members touched here. ------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
@@ -88,7 +88,7 @@ struct MapEditorDialog {
 
 #include "../../rgl/stream.h"                   // g_log (log_stream)
 
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 
 #include "../ui_globals.h"      // UI / core globals
 
@@ -327,7 +327,7 @@ void C4c3290::frame_update(float)
     ((MissionUi*)hint)->set_text((float*)tmp, &(text));
     ((MissionUi*)bar)->set168((float)step * 0.14285715f);
     if (finished) {
-        g_main_menu.set_state(4);
+        g_windows.set_state(4);
         ((stream_base&)g_log).w_cstr("Finished All...\n");
     }
 }

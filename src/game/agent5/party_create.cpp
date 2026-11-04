@@ -74,10 +74,7 @@ void __cdecl label_refresh(MissionUi* w, tstring name);                // 0x4e4c
 struct GameData { tstring string_value(int index); };                  // 0x48e9e0 (include/game_data.h; ret 8: hidden return)
 
 
-extern void* g_windows[];                       // 0xa73980 (the window manager: its first screen is the message box)
-struct WindowOpener {                           // the window manager (world_data.h WindowMgrW)
-    void open(int window);                      // 0x494260 (ret 4)
-};
+#include "../window_mgr.h"                    // g_windows (0xa73980): the window manager, its first screen is the message box
 UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 
@@ -343,13 +340,8 @@ void PartyWindow::init_screen()
         tstring t2("ui_tutorial");
         tstring* text = g_strtable.lookup(&t1);
         tstring* title = g_strtable.lookup(&t2);
-        char* box = (char*)g_windows[0];
-        *(tstring*)(box + 0x68) = *title;
-        *(tstring*)(box + 0x1c) = *text;
-        *(int*)(box + 0x4c) = 0;
-        *(int*)(box + 0x50) = 0;
-        *(int*)(box + 4) = 0;
-        ((WindowOpener*)g_windows)->open(0);
+        g_windows.box()->set_inline(title, text);
+        g_windows.open(0);
         g_game_G->f13ae8 |= 1;
     }
 }

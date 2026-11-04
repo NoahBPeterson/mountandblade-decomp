@@ -59,7 +59,7 @@ struct SkillRows { MissionUi* w[5]; };
 // ---- world / UI services -----------------------------------------------------------------------------
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                             // 0x5d7080
-#include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
+#include "../window_mgr.h"                         // g_windows (0xa73980)
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 extern int g_world_time;                            // 0x5d8790 (compared as an int)
 #include "../ui_globals.h"      // UI / core globals
@@ -82,12 +82,8 @@ struct ScrollHost { char pad[0x484]; UiDsv* bar; }; // +0x484
 // the profile record at 0xa73984
 struct Profile { char pad[0x50]; int troop; };      // +0x50
 
-extern "C" {
-extern int* g_menu_state;                           // 0xa739f4 (menu data, +0x14/+0x18 fields)
-extern int* g_army_state;                           // 0xa739e0
-}
 
 // 0x495700 "choose menu option" (tail-called through g_main_menu)
-static inline void menu_choose(int option) { g_main_menu.set_state(option); }
+static inline void menu_choose(int option) { g_windows.set_state(option); }
 
 #endif

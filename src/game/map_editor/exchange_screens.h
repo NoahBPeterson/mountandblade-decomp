@@ -158,17 +158,9 @@ struct TickScreen : ScreenBase {            // vtable 0x595a08
 
 
 
-extern int* g_menu_data;                    // 0xa739c0
 extern float g_k59c48c;                     // 0x59c48c (weight ramp constant)
 extern float g_half;                        // 0x549d70 (0.5f)
 extern float g_033;                         // 0x54b894 (0.33f)
-extern MenuItem* g_a739a0;                  // 0xa739a0
-extern MenuItem* g_a739b0;                  // 0xa739b0
-extern MenuItem* g_a739b4;                  // 0xa739b4
-extern MenuItem* g_a739bc;                  // 0xa739bc
-extern MenuItem* g_a739e4;                  // 0xa739e4
-extern MenuItem* g_a739e8;                  // 0xa739e8
-extern MenuItem* g_a739ec;                  // 0xa739ec
 struct KeyDown {};                          // the key state object at 0xa73730: OriginPairs
 struct OriginPairs {
     bool clicked(int key);   // 0x48ac90 (ret 4)

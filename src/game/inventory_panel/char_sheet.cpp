@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include "../../rgl/rgl_math.h"
 #include "../shared_vars.h"
-#include "../main_menu.h"
+#include "../window_mgr.h"
 
 extern "C" int _fltused = 0;
 
@@ -570,12 +570,7 @@ void CharSheet::init_screen()
         tstring k2("ui_tutorial");
         tstring* gen = g_strtable.lookup(k1);
         tstring* tut = g_strtable.lookup(k2);
-        TutorialMenuRec* m = slot_as<TutorialMenuRec>(0);
-        m->b = *tut;
-        m->a = *gen;
-        m->f4c = 0;
-        m->f50 = 0;
-        m->f4 = 0;
+        g_windows.box()->set_inline(tut, gen);
         g_windows.open(0);
     }
 }
