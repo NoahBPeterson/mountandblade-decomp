@@ -19,6 +19,11 @@
 #include "../key_names.h"
 #include "../ui_globals.h"      // UI / core globals
 
+// mesh_node (rgl/xmlcfg/game_util.h, whose shape.h clashes with this TU's headers): the animation node's time setter.
+struct mesh_node {
+    void set_time(const float* t);   // 0x433190
+};
+
 // @ 0x4d5410
 void MissionSource::pick(int* arg)
 {

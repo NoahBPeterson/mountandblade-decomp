@@ -202,10 +202,6 @@ struct clip_table {
 #include "../../rgl/mesh2/graph_obj.h"   // graph_obj (clear_vecs 0x4cb780)
 // MapDialog (rgl/mesh2/gui_edit.h): that header cannot be included here (its mesh2_common.h declares another g_strtable), so the
 // one member the destructor needs is repeated under the same class name.
-// mesh_node (rgl/xmlcfg/game_util.h, whose shape.h clashes with this TU's headers): the animation node's time setter.
-struct mesh_node {
-    void set_time(const float* t);   // 0x433190
-};
 struct MapDialog {
     void clear_objects();   // 0x4c6e30
 };
