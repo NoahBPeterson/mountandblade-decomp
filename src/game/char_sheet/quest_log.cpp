@@ -1,6 +1,7 @@
 #include "../../include/image_addrs.h"
 #include "./quest_log.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../party2/camera_class.h"      // Camera (the 0x4a8-byte list object built by 0x49deb0)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_globals.h"      // UI / core globals
@@ -79,11 +80,12 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
 widget* make_quest_list(widget* parent, const float* pos, const float* size, int d)
 {
     widget* mem = (widget*)operator new(0x4a8);
-    widget* self = mem ? (widget*)new (mem, raw_place()) c49deb0::Camera : 0;
-    *(int*)((char*)self + 0x104) |= 0x20;
+    Camera* cam = mem ? new (mem, raw_place()) Camera : 0;    // 0x49deb0
+    cam->flags |= 0x20;
     if (d)
-        *(int*)((char*)self + 0x484) = d;
-    *(widget**)((char*)self + 0x490) = parent;      // the owner, also handed to add_child (vtable +0xc8)
+        cam->follow[1] = (follow_iface*)d;
+    cam->target = (shape_ref*)parent;      // the owner, also handed to add_child (vtable +0xc8)
+    widget* self = (widget*)cam;
     self->add_child(parent);
     self->set_pos(pos);
     self->set_size(size);

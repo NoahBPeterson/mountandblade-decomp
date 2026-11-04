@@ -56,7 +56,7 @@ extern const float g_592754;            // 0x592754  0.31f
 #define VCALLP(self, off, a)            ((void (*)(void*, const void*))((void**)*(void***)(self))[(off) / 4])(self, (a))
 #define VCALL2(self, off, a, b)         ((void (*)(void*, const void*, const void*))((void**)*(void***)(self))[(off) / 4])(self, (a), (b))
 
-// (the constructors 0x48ae20 MissionUi, 0x4931a0 ContainerW::construct, 0x48b890 UiD, 0x49deb0 c49deb0::Camera, draw 0x488d50, 0x49b120 NodeVec::push_back,
+// (the constructors 0x48ae20 MissionUi, 0x4931a0 ContainerW::construct, 0x48b890 UiD, 0x49deb0 Camera (party2/camera_class.h), draw 0x488d50, 0x49b120 NodeVec::push_back,
 // new_medium_button 0x4dce70 are cs_common.h's)
 mesh* make_background(float* col, int rgb);              // 0x4de320
 

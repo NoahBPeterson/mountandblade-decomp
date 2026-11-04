@@ -1322,9 +1322,9 @@ void GameScreen::build()
     UI(flag)->set_size(v);
     UI(frame)->add_child(UI(flag));
 
-    tree = new ListWidget;
-    tree->f104 |= 0x20;
-    tree->flag = flag;
+    tree = new Camera;
+    tree->flags |= 0x20;
+    tree->follow[1] = (follow_iface*)flag;           // +0x484
 
     GroupWidget* bar = new GroupWidget;
     v[0] = 0.0f;
@@ -1332,7 +1332,7 @@ void GameScreen::build()
     UI(bar)->set_size(v);
     UI(bar)->set_pos(&panel->screen[0]);
     UI(bar)->add_child(UI(panel));
-    tree->bar = bar;
+    tree->target = (shape_ref*)bar;                // +0x490
     UI(tree)->add_child(UI(bar));
     v[0] = 0.0f;
     v[1] = 0.0f;
@@ -1553,7 +1553,7 @@ void Rec58::build(bool show)
     }
 
     // the slider's value follows the log's scroll state
-    FlagWidget* flag = (FlagWidget*)((ListWidget*)slider)->flag;
+    FlagWidget* flag = (FlagWidget*)((Camera*)slider)->follow[1];
     float* pf = &flag->screen[flag->f178];
     float value = (*pf - flag->f17c) * ((flag->v168 - flag->f16c) / (flag->f170 - flag->f16c)) - (flag->f17c / *pf) * 5000.0f;
     ((UiD*)flag)->set_value(value);

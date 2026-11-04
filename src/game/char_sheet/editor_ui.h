@@ -43,17 +43,6 @@ extern text_stream g_log;                         // 0x5a9f60 the engine text lo
 // ---- widgets ---------------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 
-// the 0x4a8-byte editor list widget (ctor 0x49deb0)
-struct WidgetC : Widget {
-    char pad0[0x104 - 4];
-    int f104;                                   // +0x104
-    char pad1[0x484 - 0x108];
-    int f484;                                   // +0x484
-    char pad2[0x490 - 0x488];
-    int f490;                                   // +0x490
-    // (the constructor 0x49deb0 is c49deb0::Camera::Camera, below)
-};
-
 // ---- helpers declared elsewhere --------------------------------------------------------------------
 #include "./cs_common.h"                        // label_refresh(MissionUi*, tstring) 0x4e4c70, MissionUi, make_scrollbar / make_editor_list
 struct Font {

@@ -82,18 +82,8 @@ struct WindowOpener {                           // the window manager (world_dat
 MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 
-// the scrolling item list (constructor 0x49deb0, size 0x4a8): the flags word is MissionUi's; +0x484 the scroll bar, +0x490 the row count
-namespace c49deb0 {                             // party2/camera.cpp names the class of the constructor 0x49deb0 Camera in this namespace
-struct Camera : MissionUi {
-    char pad178[0x484 - 0x178];
-    MissionUi* scroll;                          // +0x484
-    char pad488[0x490 - 0x488];
-    int rows;                                   // +0x490
-    char pad494[0x4a8 - 0x494];
-    Camera();                                   // 0x49deb0
-};
-}
-typedef c49deb0::Camera InvList;
+// the scrolling item list is Camera (constructor 0x49deb0, size 0x4a8): the flags word is Object's; +0x484 (follow[1]) the scroll bar, +0x490 (target) the row count
+#include "../party2/camera_class.h"      // Camera: the scrolling item list
 // virtual +0xc8 of the list sets the row count (the widget base's slot at +0xc8 is add_child(child), which takes one stack word as well)
 #define SET_ROWS(w, n) WOPS(w)->add_child((void*)(size_t)(n))
 
@@ -215,23 +205,23 @@ void PartyWindow::create()
         float rows_h = (float)nrows * g_row_unit;
         float visible = cfg(tstring("inv_visible_inventory_area"));
 
-        InvList* v;
+        Camera* v;
         if (i == 0) {
             MissionUi* sc = (MissionUi*)make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory1"));
-            v = new InvList;
-            v->f104 |= 0x20;
+            v = new Camera;
+            v->flags |= 0x20;
             if (sc != 0)
-                v->scroll = sc;
-            v->rows = nrows;
+                v->follow[1] = (follow_iface*)sc;
+            v->target = (shape_ref*)(size_t)nrows;
             SET_ROWS(v, nrows);
             label_refresh(v, tstring("inv_sc_inventory1_outer"));
         } else {
             MissionUi* sc = (MissionUi*)make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
-            v = new InvList;
-            v->f104 |= 0x20;
+            v = new Camera;
+            v->flags |= 0x20;
             if (sc != 0)
-                v->scroll = sc;
-            v->rows = nrows;
+                v->follow[1] = (follow_iface*)sc;
+            v->target = (shape_ref*)(size_t)nrows;
             SET_ROWS(v, nrows);
             label_refresh(v, tstring("inv_sc_inventory2_outer"));
         }
@@ -239,11 +229,11 @@ void PartyWindow::create()
 
         float m = rows_h < visible ? rows_h : visible;
         {
-            Vec2 p(v->fE8, v->fEC - m);
+            Vec2 p(v->f_e8, v->f_ec - m);
             WOPS(v)->set_pos(&p.x);
         }
         {
-            Vec2 s(v->screen[0], m);
+            Vec2 s(v->w, m);
             WOPS(v)->set_scale(&s.x);
         }
         ((FieldPanel*)v)->update();

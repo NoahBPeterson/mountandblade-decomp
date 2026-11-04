@@ -9,6 +9,7 @@
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/mesh2/mesh2_common.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../party2/camera_class.h"      // Camera (the 0x4a8-byte object make_editor_list builds)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_trial_mode (listed directly: the audit reads only the source's own includes)
 struct Font;
@@ -155,18 +156,18 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
 }
 
 // @ 0x4f62f0
-WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
+Camera* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
 {
-    WidgetC* w = (WidgetC*)::operator new(0x4a8);
+    Camera* w = (Camera*)::operator new(0x4a8);
     if (w != 0)
-        w = (WidgetC*)new (w, raw_place()) c49deb0::Camera;   // 0x49deb0
+        w = new (w, raw_place()) Camera;   // 0x49deb0
     else
         w = 0;
-    w->f104 |= 0x20;
+    w->flags |= 0x20;
     if (a3 != 0)
-        w->f484 = a3;
-    w->f490 = (int)parent;
-    w->add_child(parent);
+        w->follow[1] = (follow_iface*)a3;
+    w->target = (shape_ref*)parent;
+    ((Widget*)w)->add_child(parent);
     label_refresh((MissionUi*)w, *name);
     return w;
 }

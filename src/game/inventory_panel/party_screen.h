@@ -12,7 +12,7 @@
 // a 0x20-byte stack row copied by 0x503810 (the same record as Stack, src/include/party.h)
 struct PsRow { int v[8]; };
 
-struct PsScrollList;
+struct Camera;
 struct PartyScreen {
     char pad0[4];
     int mode;                               // +0x04 command: 0/5 party, 1/6/7 give-take, 2 sell, 3 hire, 4 capture (0x502cc0, 0x503ed0, 0x5063e0)
@@ -45,7 +45,7 @@ struct PartyScreen {
     MissionUi* info;                        // +0x84 info panel (0x502cc0, 0x5063e0)
     MissionUi* members_base[2];             // +0x88 (0x504ef0)
     MissionUi* skills_base;                 // +0x90 (0x5059c0)
-    PsScrollList* skills_list;              // +0x94 (0x5059c0)
+    Camera* skills_list;                  // +0x94 (0x5059c0)
     MissionUi* member_list[2][2];           // +0x98 [side][page] (0x504ef0, 0x504ba0)
     MissionUi* members_page[2][2];          // +0xa8
     MissionUi* buttons[4][0x40];            // +0xb8 [2 * side + page][i] (0x504ef0, 0x503ed0)
@@ -100,13 +100,7 @@ struct PsListWidget : MissionUi {                   // 0x188 bytes, vptr 0x5924a
     int f178, f17c, f180;
     unsigned f184;
 };
-struct PsScrollList : MissionUi {                   // 0x4a8 bytes (ctor 0x49deb0): f104 flags (MissionUi), scrollbar +0x484, list +0x490
-    char pad178[0x484 - 0x178];
-    MissionUi* scrollbar;                           // +0x484
-    char pad488[0x490 - 0x488];
-    MissionUi* list;                                // +0x490
-    char pad494[0x4a8 - 0x494];
-};
+#include "../party2/camera_class.h"            // Camera: the 0x4a8-byte scrolling list (ctor 0x49deb0): flags +0x104, scrollbar +0x484 (follow[1]), list +0x490 (target)
 
 
 // ---- objects and functions of other translation units --------------------------------------------------------------
@@ -121,7 +115,7 @@ struct TableauTbl {
 struct ContainerW {
     void* construct();   // 0x4931a0 (world_data: the list container's constructor body, returns this)
 };
-struct UiAInline; struct WidgetC; struct NodeA;
+struct UiAInline; struct Camera; struct NodeA;
 static __forceinline void __fastcall window_ctor(void* p) { ((ContainerW*)p)->construct(); }   // 0x4931a0
 static __forceinline void __fastcall panel_ctor(void* p) { new (p) MissionUi; }                   // 0x48ae20 (MissionUi::MissionUi)
 UiAInline* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float h);   // 0x4e5570
@@ -129,7 +123,6 @@ UiAInline* __cdecl new_medium_button(MissionUi* parent, const tstring* text, flo
 UiAInline* __cdecl new_long_button(MissionUi* parent, const tstring* text, float a, float b, float h);     // 0x4dcbd0
 // the `new` expressions of the widget classes: allocate, run the constructor 0x4931a0 / 0x49deb0 of the definitions, and store the
 // class's vtable pointer by its address (0x597050), as the original does after the call
-namespace c49deb0 { struct Camera { Camera(); }; }   // 0x49deb0 (game/camera: ??0Camera@c49deb0@@QAE@XZ, the scroll list's constructor)
 static __forceinline PsBar* new_ps_bar()
 {
     PsBar* b = (PsBar*)::operator new(0x188);
@@ -151,16 +144,16 @@ static __forceinline PsListWidget* new_ps_list()      // 0x188 bytes, the constr
     }
     return w;
 }
-static __forceinline PsScrollList* new_scroll_list()
+static __forceinline Camera* new_scroll_list()
 {
     void* m = ::operator new(0x4a8);
     if (m != 0)
-        new (m) c49deb0::Camera;
-    return (PsScrollList*)m;
+        new (m) Camera;                                // 0x49deb0
+    return (Camera*)m;
 }
 struct UiD;
 UiD* __cdecl make_scrollbar(void* parent, const tstring* name);                        // 0x4f6160
-WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int sc);              // 0x4f62f0
+Camera* __cdecl make_editor_list(void* parent, const tstring* name, int sc);              // 0x4f62f0
 static __forceinline MissionUi* make_short_button(MissionUi* p, tstring* t, int a, int b, float h)
 { return (MissionUi*)make_short_button(p, (const tstring*)t, (float)a, (float)b, h); }
 static __forceinline MissionUi* new_medium_button(MissionUi* p, tstring* t, int a, int b, float h)

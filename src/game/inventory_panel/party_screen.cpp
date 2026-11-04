@@ -975,33 +975,33 @@ void PartyScreen::setup_skills()
     }
     {
         tstring name("party_sc_skills");
-        PsScrollList* list = new_scroll_list();            // 0x4a8, ctor 0x49deb0
-        list->f104 |= 0x20;
+        Camera* list = new_scroll_list();                  // 0x4a8, ctor 0x49deb0
+        list->flags |= 0x20;
         if (sb != 0)
-            list->scrollbar = sb;
-        list->list = skills_base;
+            list->follow[1] = (follow_iface*)sb;           // +0x484 the scroll bar
+        list->target = (shape_ref*)skills_base;            // +0x490
         PSO(list)->add_child(skills_base);
         label_refresh(list, name);
         skills_list = list;
     }
 
     // ---- place the list in the panel ----
-    PsScrollList* list = skills_list;
-    if (skills_base->screen[1] > list->screen[1])
+    Camera* list = skills_list;
+    if (skills_base->screen[1] > list->h)
         d[1] = 0.0f;
     else
-        d[1] = list->screen[1] - skills_base->screen[1];
-    d[0] = list->fE0;
-    d[1] = d[1] + list->fE4;
+        d[1] = list->h - skills_base->screen[1];
+    d[0] = list->px;
+    d[1] = d[1] + list->py;
     PSO(list)->set_pos(d);
     {
-        MissionUi* lower = skills_base->screen[1] > list->screen[1] ? list : skills_base;     // 0x50630c: the lower of the two
+        MissionUi* lower = skills_base->screen[1] > list->h ? (MissionUi*)list : skills_base;     // 0x50630c: the lower of the two
         float pos[2];
-        pos[0] = list->screen[0];
+        pos[0] = list->w;
         pos[1] = lower->screen[1];
         PSO(list)->set_size(pos);
     }
-    quarter_update(list);
+    quarter_update((MissionUi*)list);
     PSO(window)->add_child(skills_list);
 
     // ---- the party-skills information bar ----

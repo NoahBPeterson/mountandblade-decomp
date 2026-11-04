@@ -88,8 +88,7 @@ Workarounds (a view of the same object, because the canonical header cannot be u
 * `editor_dialog.cpp`: `EditorGameView` / `EditorSceneView` / `EditorTerrainView` (the slice's `GameState`, `EditorWorld`, `Terrain`; the canonical `GameState`
   (`terrain_a/game_state.h`) and `Terrain` (`terrain_a/terrain.h`) cover other offsets of the same objects). `EditorPanel` keeps its name because the caller
   (`inventory_panel/widget_text.cpp`) declares `EditorPanel::terrain_dialog`.
-* `party_create.cpp`: `InvList` (the 0x4a8 scrolling list, ctor 0x49deb0; `inventory_panel/party_screen.h` `PsScrollList` is the same class but that header is not
-  committed yet), `InvWindow` (ctor 0x4931a0, vptr 0x592848), `GuiHost` (0x5d7080), `GameStrings` (`string_value` 0x48e9e0 with the hidden pointer spelled out).
+* `party_create.cpp`: `Camera` (the 0x4a8 scrolling list, ctor 0x49deb0; the one declaration is `party2/camera_class.h`), `InvWindow` (ctor 0x4931a0, vptr 0x592848), `GuiHost` (0x5d7080), `GameStrings` (`string_value` 0x48e9e0 with the hidden pointer spelled out).
   The list's virtual +0xc8 (set row count) is called through the widget view's `add_child` slot, which takes one stack word as well.
 
 ## Flags

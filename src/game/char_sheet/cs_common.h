@@ -124,21 +124,16 @@ template<class V, class T> __forceinline void push_back_inline(V& c, T* const& v
         ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c.last), 1, (SceneObject* const&)v);
 }
 
-namespace c49deb0 {
-struct Camera {                                                     // the editor / quest list widget
-    Camera();                                                       // 0x49deb0
-};
-}
+struct Camera;                                                      // party2/camera_class.h: the 0x4a8-byte view / editor list object (ctor 0x49deb0)
 struct MapWidget;
 MapWidget* __fastcall ctor_4ed630(MapWidget* self);                 // 0x4ed630 (the 3D view widget's constructor; MapWidget() of map_widget.h names it)
 MissionUi* __cdecl new_key_label(void* parent, const tstring* name, const tstring* text);   // 0x4f5d20 (editor_ui)
 void __cdecl label_refresh(MissionUi* w, tstring name);             // 0x4e4c70 (progress_bar: sets a freshly built widget up from its ini keys)
-struct WidgetC;
 UiD* __cdecl make_scrollbar(void* parent, const tstring* name); // 0x4f6160 (editor_ui)
 UiB* __cdecl make_slider(void* parent, const tstring* name);    // 0x4f5fb0 (editor_ui)
 void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, float z);    // 0x4f5df0 (editor_ui)
 void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, float z);   // 0x4f5ed0 (editor_ui)
-WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int scroll);   // 0x4f62f0 (editor_ui)
+Camera* __cdecl make_editor_list(void* parent, const tstring* name, int scroll);   // 0x4f62f0 (editor_ui)
 struct gui_obj;
 struct gui_manager {                                                // strat/gui_manager.h (the object at 0x5d7080)
     char pad00[0x10];

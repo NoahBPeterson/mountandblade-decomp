@@ -27,6 +27,7 @@
 #include "../../include/fx.h"
 #include "../../include/shape.h"
 #include "../../include/frustum.h"
+#include "../party2/camera_class.h"      // Camera: the scrolling list (constructor 0x49deb0; layout 0x48d470 is FieldPanel::update, scroll_refresh 0x498420 (ret 4) is HudOuter's)
 #include "../ui/mission_ui.h"
 #include "../font.h"
 #include "../../include/dialog_rec.h"
@@ -281,17 +282,6 @@ struct ToggleWidget : MissionUi {                                 // vtable 0x59
     int f184;                                                     // +0x184
     ToggleWidget() { f178 = 0; b121 = 0; *(void**)this = (void*)vtbl_591d58; f180 = 0; f184 = 0; }
 };
-namespace c49deb0 {                                               // party2/camera.cpp names the class of the constructor 0x49deb0 Camera in this namespace
-struct Camera : MissionUi {                                       // the scrolling list (constructor 0x49deb0), size 0x4a8; layout 0x48d470 is FieldPanel::update, scroll_refresh 0x498420 (ret 4) is HudOuter's
-    char pad178[0x484 - 0x178];
-    MissionUi* flag;                                              // +0x484 (0x4fbfa0)
-    char pad488[0x490 - 0x488];
-    MissionUi* bar;                                               // +0x490
-    char pad494[0x4a8 - 0x494];
-    Camera();                                                     // 0x49deb0
-};
-}
-typedef c49deb0::Camera ListWidget;
 struct NameWidget : MissionUi {                                   // ctor 0x4ed630, vptr 0x598698, size 0x358
     void* mission_scene;                                          // +0x178 (Mission::scene, stored by 0x4f7f00)
     char pad17c[0x1ac - 0x17c];
@@ -392,7 +382,7 @@ struct GameScreen {                                               // the game me
     int fa0;                                                      // +0xa0
     char pada4[0xe4 - 0xa4];
     MissionUi* panel;                                             // +0xe4
-    ListWidget* tree;                                             // +0xe8
+    Camera* tree;                                             // +0xe8
     MissionUi* slider;                                            // +0xec
     char padf0[4];
     MissionUi* fill;                                              // +0xf4

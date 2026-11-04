@@ -33,6 +33,7 @@
 #include "../terrain_b/terrain_b.h"
 #include "./camera.h"
 #include "./party_2.h"
+#include "./camera_class.h"      // Camera (the one declaration of the 0x4a8-byte view object)
 #include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
 #include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
 #include "../ui/container.h"                 // ContainerBase (ui/mission_ui.h)
@@ -1126,9 +1127,8 @@ void Mission::order(int index, int order) {
 
 
 // ======================================================================================
-// slice s0049deb0 (namespace c49deb0)
+// slice s0049deb0 (the view object Camera: camera_class.h)
 // ======================================================================================
-namespace c49deb0 {
 // Slice s0049deb0: the mission "view" object.  It is an engine object (base ctor 0x48ae20, base dtor
 // 0x490520, descriptor 0x591c80) with a scene subobject at +0x188, a box frustum at +0x360 (0x120
 // bytes) and the per-frame shake/colour/zoom fields that update() drives.  The view's own descriptor
@@ -1136,6 +1136,7 @@ namespace c49deb0 {
 //
 // ctor 0x49deb0, type 0x49df30, mask 0x49df40, move 0x49df60, update 0x49dfe0,
 // scalar deleting dtor 0x49e580, render 0x49e5b0.
+namespace c49deb0 {   // the slice's own callee / data declarations (their link names carry this namespace)
 using rgl::vector4;
 
 // ---- callees that live in other slices -----------------------------------------------------------
@@ -1150,15 +1151,10 @@ extern const float g_590cd0;                    // 0x590cd0  0.02f
 // int globals: the view's z/w scale factors (zero in the image, set at startup by the game).
 struct gui_manager;
 extern gui_manager g_gui;                   // 0x5d7080 (strat/gui_manager.h: +0x548 / +0x54c = the view width / height factors 0x5d75c8 / 0x5d75cc)
-// tick counters, 8 bytes each; timers index this array through their own key field.
-// ---- stub interfaces for the virtual calls -------------------------------------------------------
-struct follow_iface {                           // the two follow objects at +0x480
-    virtual void  s0(); virtual void  s1(); virtual void  s2(); virtual void  s3();
-    virtual void  s4(); virtual void  s5(); virtual void  s6(); virtual void  s7();
-    virtual void  s8(); virtual void  s9(); virtual void  s10(); virtual void  s11();
-    virtual void  s12(); virtual void  s13(); virtual float s14(); virtual void  s15();
-};                                              // s14 = [this+0x38]: the follow weight (0..1)
+} // namespace c49deb0
 
+// tick counters, 8 bytes each; timers index this array through their own key field.
+// ---- stub interface for the virtual calls (the other interfaces are in camera_class.h) ----
 struct view_iface {                             // `this` seen as its own descriptor (0x5931a8)
     virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
     virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
@@ -1170,160 +1166,15 @@ struct view_iface {                             // `this` seen as its own descri
     virtual void s23(void* v);                                          // [this+0x5c] follow target
 };
 
-struct sub_iface {                              // the target's sub-object (*(target+0x17c))
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-    virtual void s8(); virtual void s9(); virtual void s10(); virtual void s11();
-    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-    virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23();
-    virtual void s24(); virtual void s25(); virtual void s26();
-    virtual void s27(void* v);                                          // [this+0x6c] zoom
-    virtual void s28(); virtual void s29(); virtual void s30(); virtual void s31();
-    virtual void s32(); virtual void s33(); virtual void s34(); virtual void s35();
-    virtual void s36();
-    virtual void s37(void* v);                                          // [this+0x94] colour reset
-    virtual void s38(void* v);                                          // [this+0x98] colour set
-    char pad_s[0x14c - 4];
-    unsigned colour;                            // +0x14c
-};
 
-struct float2 {                                 // a 2-float vector (position/displacement)
-    float x, y;
-    float2() {}
-    float2(float a, float b) : x(a), y(b) {}
-};
-
-struct shape_ref {                              // the object the view follows (an entity/agent)
-    struct iface {                              // s24 = [this+0x60]: "position changed"
-        virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-        virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-        virtual void s8(); virtual void s9(); virtual void s10(); virtual void s11();
-        virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-        virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-        virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23();
-        virtual void s24();
-    };
-    char pad0[0xe0];
-    float2 pos;                                 // +0xe0  world position, written by move()
-    float2 disp;                                // +0xe8  displacement for this frame
-    float sa[2];                                // +0xf0  shake target (near)
-    float sb[2];                                // +0xf8  shake base (far)
-    char pad100[0x17c - 0x100];
-    sub_iface** sub;                            // +0x17c  pointer to the sub-object pointer
-};
-
-// ---- the sub-objects -----------------------------------------------------------------------------
-struct Scene {                                  // the scene subobject, 0x1d8 bytes at +0x188
-    int   viewport[4];                          // +0x000  x, y, w, h (pixels)
-    int   f10;                                  // +0x010
-    float f14;                                  // +0x014
-    char  pad18[0x18c - 0x18];
-    int   flags;                                // +0x18c
-    char  tail[0x1d8 - 0x190];
-    void ctor() { ((rgl::scene*)this)->rgl::scene::scene(); }      // 0x429740
-    void dtor() { ((rgl::scene*)this)->~scene(); }                   // 0x41f4e0
-    void reset() { ((rgl::scene*)this)->reset(); }                   // 0x428f30
-};
-
-struct Frustum {                                // the box frustum, 0x120 bytes at +0x360
-    unsigned char first;                        // +0x000
-    char  pad1[0x108 - 0x1];
-    float box[6];                               // +0x108  half extents + the far plane
-    void ctor() { ((rgl::frustum*)this)->rgl::frustum::frustum(); }      // 0x41ef60
-    void build_planes() { ((rgl::frustum*)this)->build_planes(); }       // 0x41e4f0  recompute the 6 planes
-    // the box setter (inline): left, right, bottom, top, near, far
-    void set_box(float l, float r, float b, float t, float n, float f)
-    {
-        first = 0;
-        box[0] = l;
-        box[1] = r;
-        box[3] = b;
-        box[2] = t;
-        box[4] = n;
-        box[5] = f;
-    }
-};
-
-struct Timer {                                  // one of six 0x10-byte timers
-    int     key;                                // +0x00  index into g_ticks
-    int     pad;                                // +0x04
-    __int64 stamp;                              // +0x08  value of g_ticks[key] when started
-};
-
-// ---- the engine object base (0x48ae20) ------------------------------------------------------------
-struct Object {
-    void*   vptr;                               // +0x000  descriptor
-    int     f004;                               // +0x004
-    Timer   timer[6];                           // +0x008 .. +0x068
-    float   lim[6];                             // +0x068  per-timer fade length (-1 = idle)
-    float   w40, w41;                           // +0x080  timer 5 blend weights (near)
-    float   w20, w21;                           // +0x088  timer 4 blend weights (near)
-    unsigned char lv[8];                        // +0x090  colour levels (rendered)
-    char    pad098[0x0a0 - 0x098];
-    float   w42, w43;                           // +0x0a0  timer 5 blend weights (far)
-    float   w22, w23;                           // +0x0a8  timer 4 blend weights (far)
-    unsigned char le[8];                        // +0x0b0  colour levels (target)
-    char    pad0b8[0x0c0 - 0x0b8];
-    unsigned char flag0, flag1, f_c2, f_c3, flag2, flag3;   // +0x0c0
-    char    pad0c6[0x0c8 - 0x0c6];
-    int     f0c8, f0cc, f0d0, f0d4;             // +0x0c8
-    float   f_d8, f_dc;                         // +0x0d8  zoom levels written by update()
-    float   px, py;                             // +0x0e0  view position
-    float   f_e8, f_ec;                         // +0x0e8
-    float   w, h;                               // +0x0f0  view box size
-    float   f_f8, f_fc;                         // +0x0f8
-    int     f100;                               // +0x100
-    unsigned flags;                             // +0x104  drawing flags tested by mask()
-    int     arr108[5];                          // +0x108
-    unsigned char b11c, b11d, b11e, b11f, b120; // +0x11c
-    unsigned char f121, f122;                   // +0x121
-    char    pad123[0x124 - 0x123];
-    int     f124;                               // +0x124
-    char    tstr[0x10];                         // +0x128  an engine string
-    float   f138;                               // +0x138
-    int     f13c;                               // +0x13c
-    float   f140, f144;                         // +0x140
-    int     f148;                               // +0x148
-    unsigned colour;                            // +0x14c  view colour (AARRGGBB)
-    unsigned colour2;                           // +0x150
-    int     f154;                               // +0x154
-    int     f158, f15c, f160;                   // +0x158
-    int     f164;                               // +0x164
-    int     f168, f16c;                         // +0x168
-    float   f170;                               // +0x170
-    int     f174, f178;                         // +0x174
-    int     sub0, sub1, sub2;                   // +0x17c
-
-    void base_ctor() { ((MissionUi*)this)->MissionUi::MissionUi(); }                 // 0x48ae20
-    void dtor_common() { ((ContainerBase*)this)->ContainerBase::~ContainerBase(); }     // 0x490520
-    void update() { ((FieldPanel*)this)->update(); }                       // 0x48d470
-    void terrain_refresh(void* p) { ((WItem*)this)->terrain_refresh((const float*)p); }                // 0x48f120  (p = &w20)
-    void set_color(unsigned v) { ((FieldPanel*)this)->set_color(v); }             // 0x48d350
-    void set_alpha(unsigned v) { ((FieldPanel*)this)->set_alpha(v); }             // 0x48d3c0
-    void bounds_of(void* scene, float* pos, void* c, void* d) { ((ContainerBase*)this)->ContainerBase::render((rgl::scene*)scene, pos, (int)c, (int)d); }   // 0x490710
-};
-
-// ---- the view itself -----------------------------------------------------------------------------
-struct Camera : Object {
-    Scene   scene;                              // +0x188
-    Frustum fr;                                 // +0x360
-    follow_iface* follow[2];                    // +0x480  the two follow objects
-    void*   follow_shape[2];                    // +0x488  their shapes
-    shape_ref* target;                          // +0x490  the object the view tracks
-    float   shake_x;                            // +0x494
-    float   shake_y;                            // +0x498
-    float2  tail;                               // +0x49c
-    int     f4a4;                               // +0x4a4
-
-    Camera();                                   // 0x49deb0
-    int  type();                                // 0x49df30
-    unsigned mask(int a);                       // 0x49df40
-    void move(shape_ref* e);                    // 0x49df60
-    void update(int unused);                    // 0x49dfe0
-    void* destroy(unsigned flags);              // 0x49e580
-    void render(int a, float* pos, void* c, void* d);   // 0x49e5b0
-};
+// ---- the engine object base's members (declared in camera_class.h) ----
+__forceinline void Object::base_ctor() { ((MissionUi*)this)->MissionUi::MissionUi(); }                 // 0x48ae20
+__forceinline void Object::dtor_common() { ((ContainerBase*)this)->ContainerBase::~ContainerBase(); }     // 0x490520
+__forceinline void Object::update() { ((FieldPanel*)this)->update(); }                       // 0x48d470
+__forceinline void Object::terrain_refresh(void* p) { ((WItem*)this)->terrain_refresh((const float*)p); }                // 0x48f120  (p = &w20)
+__forceinline void Object::set_color(unsigned v) { ((FieldPanel*)this)->set_color(v); }             // 0x48d350
+__forceinline void Object::set_alpha(unsigned v) { ((FieldPanel*)this)->set_alpha(v); }             // 0x48d3c0
+__forceinline void Object::bounds_of(void* scene, float* pos, void* c, void* d) { ((ContainerBase*)this)->ContainerBase::render((rgl::scene*)scene, pos, (int)c, (int)d); }   // 0x490710
 
 // Blend one colour level from `a` (target) to `b` (rendered) over a fade of length `lim` that has run for
 // `d`, rounded half-up.  The first colour byte is read as a masked dword (unsigned), the others as bytes.
@@ -1354,8 +1205,6 @@ Camera::Camera()
     sub1 = 0;
     sub2 = 0;
     vptr = (void*)vtbl_5931a8;                     // the view's own class descriptor
-    scene.ctor();
-    fr.ctor();
     shake_x = 0;
     shake_y = 0;
     follow[0] = 0;
@@ -1409,10 +1258,10 @@ void Camera::update(int)
     }
     ((view_iface*)this)->s23(target);
 
-    float d0 = (float)(g_ticks[timer[0].key] - timer[0].stamp) * 1e-5f;    // colour
-    float d1 = (float)(g_ticks[timer[1].key] - timer[1].stamp) * 1e-5f;    // level
-    float d4 = (float)(g_ticks[timer[4].key] - timer[4].stamp) * 1e-5f;    // zoom
-    float d5 = (float)(g_ticks[timer[5].key] - timer[5].stamp) * 1e-5f;    // shake
+    float d0 = (float)(g_ticks[timer[0].clock] - timer[0].start) * 1e-5f;    // colour
+    float d1 = (float)(g_ticks[timer[1].clock] - timer[1].start) * 1e-5f;    // level
+    float d4 = (float)(g_ticks[timer[4].clock] - timer[4].start) * 1e-5f;    // zoom
+    float d5 = (float)(g_ticks[timer[5].clock] - timer[5].start) * 1e-5f;    // shake
 
     // zoom: blend the target's zoom from the near weights toward the far ones
     if (d4 < lim[4]) {
@@ -1478,7 +1327,7 @@ void Camera::update(int)
 // @ 0x49e580  (scalar deleting destructor)
 void* Camera::destroy(unsigned flags)
 {
-    scene.dtor();
+    scene.~scene();
     Object::dtor_common();
     if (flags & 1)
         ::operator delete(this);
@@ -1490,35 +1339,45 @@ void* Camera::destroy(unsigned flags)
 // the scene's volume and the view matrix, then hand the frame to the scene.  The view matrix is the
 // identity with its translation row set from a position vector whose w is never initialised (the
 // original copies that stack slot into m[15]).
+// the box setter (inline in the original): left, right, bottom, top, near, far
+static __forceinline void set_box(rgl::frustum* f, float l, float r, float b, float t, float n, float fa)
+{
+    f->perspective = 0;
+    f->left = l;
+    f->right = r;
+    f->bottom = b;
+    f->top = t;
+    f->nearz = n;
+    f->farz = fa;
+}
 struct V4 { float x, y, z, w; };
 void Camera::render(int a, float* pos, void* c, void* d)
 {
     scene.reset();
-    scene.viewport[0] = (int)((float)(*(int*)((char*)&g_gui + 0x548)) * px);
-    scene.viewport[1] = (int)((0.75f - (py + h)) * (float)(*(int*)((char*)&g_gui + 0x54c)) * 1.3333334f);
-    scene.viewport[2] = (int)((float)(*(int*)((char*)&g_gui + 0x548)) * w);
-    scene.viewport[3] = (int)((float)(*(int*)((char*)&g_gui + 0x54c)) * h * 1.3333334f);
+    scene.f0 = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x548)) * px);
+    scene.f4 = (int)((0.75f - (py + h)) * (float)(*(int*)((char*)&c49deb0::g_gui + 0x54c)) * 1.3333334f);
+    scene.f8 = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x548)) * w);
+    scene.fc = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x54c)) * h * 1.3333334f);
     scene.f14 = 1.0f;
     scene.f10 = 0;
     scene.flags |= 0x1000;
-    Frustum* f = &fr;
-    f->set_box(w * -0.5f, w * 0.5f, h * -0.5f, h * 0.5f, 0, 501.0f);
+    rgl::frustum* f = &fr;
+    set_box(f, w * -0.5f, w * 0.5f, h * -0.5f, h * 0.5f, 0, 501.0f);
     f->build_planes();
     float m[16];
-    identity_pos(m);
+    c49deb0::identity_pos(m);
     V4 v;
     v.z = 400.0f;
     v.x = w * 0.5f + px;
     v.y = h * 0.5f + py;
     *(V4*)&m[12] = v;
-    memcpy((char*)f + 0xc8, m, 0x40);
+    memcpy(&f->m, m, 0x40);
     f->build_planes();
-    memcpy((char*)this + 0x1b8, f, 0x120);
+    memcpy(&scene.fr, f, 0x120);
     *pos = *pos + 1.0f;
     bounds_of(&scene, pos, c, d);
 }
 
-} // namespace c49deb0
 
 // ======================================================================================
 // slice s0049e780 (namespace c49e780)
@@ -1592,7 +1451,7 @@ struct scene_obj {
 // the constructors work on the raw memory and return it (explicit constructor calls of the defining classes: no null test, no allocation)
 inline scene_obj* base_ctor(scene_obj* p) { ((MissionUi*)p)->MissionUi::MissionUi(); return p; }      // 0x48ae20 (MissionUi::MissionUi)
 inline scene_obj* ps_ctor(scene_obj* p) { ((UiD*)p)->UiD::UiD(); return p; }                        // 0x48b890 (UiD::UiD)
-inline scene_obj* cam_ctor(scene_obj* p) { new ((void*)p) c49deb0::Camera(); return p; }             // 0x49deb0 (c49deb0::Camera::Camera, above)
+inline scene_obj* cam_ctor(scene_obj* p) { new ((void*)p) Camera(); return p; }             // 0x49deb0 (Camera::Camera, above)
 
 // 0x498420: a free thiscall position setter (argument in ecx, one pointer argument).
 struct scene_api { void set_pos(float2* p) { ((HudOuter*)this)->scroll_refresh((rgl::vector4*)p); } };   // (HudOuter::scroll_refresh)
