@@ -50,6 +50,7 @@ CRUTCHES = (("data_labels", "glue", r"data labels (\d+)"), ("aliases", "glue", r
             ("forwarding_stubs", "vtable_gate", r"(\d+) slots bound by forwarding stubs"),
             ("data_definitions", "data", r"(\d+) data definitions at original addresses"))
 CLASSES = ("defined in source", "generated from source", "borrowed from image", "reached through tables", "library data")
+GLUE_MODULES = ("mb_data",)          # the glue's object: the original's bytes laid out under labels, never a definition
 GENERATED = ("??_C@", "__real@", "__int64@", "__xmm@", "__mask@", "??_7", "??_R", "$SG")
 
 
@@ -139,7 +140,9 @@ def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None):
         for va, e in d.items():
             v = int(va, 16)
             if in_data(v):
-                named[v][0] |= e["defined"]
+                # defined: a row of the defining module references it (the resolver), or the link map shows one of our
+                # objects defining it (a definition no row of its own module names: g_strtable in mesh_2.cpp)
+                named[v][0] |= e["defined"] or bool(syms and n in syms and syms[n][1] not in GLUE_MODULES)
                 named[v][1].append(n)
 
     def classify(v):
