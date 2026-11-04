@@ -32,7 +32,7 @@
 ../src/game/ui/mission_ui.cpp  ?show@MissionUi@@UAEXXZ  00488ca0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?flag2_set@MissionUi@@UAEXXZ  00488cb0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?flag2_clear@MissionUi@@UAEXXZ  00488cc0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_fog@MissionUi@@QAEXPBM00@Z  00488cd0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?set_fog@world@rgl@@QAEXPBM0PBH@Z  00488cd0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?draw@Camera@@QAEXXZ  00488d50  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?call0@ElemList@@QAEXHH@Z  00488e20  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?call1@ElemList@@QAEXHH@Z  00488e40  /O2 /MT /Gy /TP

@@ -3165,7 +3165,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     su_0 = (unsigned)params[1];
                 sf_0 = (float)params[0];
                 sf_1 = 1.0f;
-                ((MissionUi*)m->scene)->set_fog(&sf_1, &sf_0, (const float*)&su_0);
+                m->scene->set_fog(&sf_1, &sf_0, (const int*)&su_0);
             }
         }
         break;

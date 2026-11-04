@@ -15,6 +15,7 @@
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/scene/world.h"      // rgl::world::set_fog 0x488cd0 (the fog block at +0xdc)
 #include "./ui_common.h"
 #include "./item_ref.h"
 #include "./troop_inv.h"
@@ -420,25 +421,24 @@ void MissionUi::flag2_clear()
     f104 &= ~2u;
 }
 
-// Same fields and shape as renderer.h's envelope::set_fade (0x4624c0) / set_params (0x462540): the object's
-// +0xdc..+0xec block is a fade envelope (target, 1/period, peak, dirty byte, smoothing); see MIGRATION.md.
+// The fog block of the scene world (view.fog_ref .. fog_blend at +0xdc..+0xec): the target, the rate, the colour and the smoothing derived from the rate.
 // @ 0x488cd0
-void MissionUi::set_fog(const float* ref, const float* lo, const float* hi)
+void rgl::world::set_fog(const float* ref, const float* rate, const int* color)
 {
-    *(char*)&fE8 = 1;
-    fDC = *ref;
-    fE0 = *lo;
-    fE4 = *hi;
-    float f = (1.0f / fE0) * 3.0f;
+    view.fog_dirty = 1;
+    view.fog_ref = *ref;
+    view.fog_rate = *rate;
+    view.fog_color = *color;
+    float f = (1.0f / view.fog_rate) * 3.0f;
     if (f < 0.001f) {
-        fEC = 0.001f;
+        view.fog_blend = 0.001f;
         return;
     }
     if (f >= 0.95f) {
-        fEC = 0.95f;
+        view.fog_blend = 0.95f;
         return;
     }
-    fEC = f;
+    view.fog_blend = f;
 }
 
 // @ 0x488d50

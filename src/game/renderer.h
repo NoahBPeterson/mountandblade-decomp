@@ -69,22 +69,6 @@ struct sort_rec { char pad[0x218]; __int64 key; };
 #include "../include/height_field.h"      // HCell: the 16-byte cell (its constructor is the one `new grid_cell[n]` ran)
 #include "../include/render_flags.h"
 
-// ---- envelope / fade parameter block --------------------------------------------------------------------
-struct envelope {
-    char pad00[0xdc];
-    int fdc;                        // 0xdc                                       0x4624c0
-    float inv_time;                 // 0xe0
-    int fe4;                        // 0xe4
-    char dirty;                     // 0xe8                                       0x4624c0, 0x462540
-    char pade9[3];
-    float fade_time;                // 0xec                                       0x4624c0
-    float f0;                       // 0xf0                                       0x462540
-    float time;                     // 0xf4                                       0x462540
-    int f8;                         // 0xf8
-    int fc;                         // 0xfc
-    float smooth;                   // 0x100
-    void set_fade(const float* t, const int* v);                    // 0x4624c0
-    void set_params(float a, float t, const int* b, const int* c);  // 0x462540
-};
+// (the envelope / fade parameter block at world +0xdc is ViewParams' fog_ref..env_smooth; set_fade 0x4624c0 / set_params 0x462540 are rgl::world members, rgl/scene/world.h)
 
 #endif // GAME_RENDERER_H

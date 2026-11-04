@@ -27,6 +27,7 @@ struct options;
 #include "../include/render_flags.h"
 #include "config/config_block.h"
 #include "../rgl/options.h"
+#include "../rgl/scene/world.h"            // rgl::world: set_fade 0x4624c0 / set_params 0x462540 (the fog block at +0xdc)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 unsigned g_stage_arg[6] = { D3DTA_CURRENT, D3DTA_DIFFUSE, D3DTA_SPECULAR, D3DTA_TEMP, D3DTA_TEXTURE, D3DTA_TFACTOR };   // 0x5a9c00 D3DTA_* by 3-bit code
@@ -402,29 +403,29 @@ void HeightField::alloc(const int* dim)
 }
 
 // @ 0x4624c0
-void envelope::set_fade(const float* t, const int* v)
+void rgl::world::set_fade(const float* t, const int* v)
 {
-    dirty = 1;
-    fdc = 0;
+    view.fog_dirty = 1;
+    view.fog_ref = 0.0f;
     float d = *t > 0.0001f ? *t : 0.0001f;
     float inv = 1.0f / d;
     if (inv < 0.0f) inv = 0.0f;
     else if (inv >= 10000.0f) inv = 10000.0f;
-    inv_time = inv;
-    fe4 = *v;
-    fade_time = *t;
+    view.fog_rate = inv;
+    view.fog_color = *v;
+    view.fog_blend = *t;
 }
 // @ 0x462540
-void envelope::set_params(float a, float t, const int* b, const int* c)
+void rgl::world::set_params(float a, float t, const int* b, const float* c)
 {
-    f0 = a;
-    dirty = 1;
-    time = t;
-    f8 = *b;
-    fc = *c;
+    view.env_peak = a;
+    view.fog_dirty = 1;
+    view.env_time = t;
+    view.env_color = *b;
+    view.env_c = *c;
     float s = (1.0f / t) * 3.0f;
-    if (s < 0.001f) smooth = 0.001f;
-    else if (s >= 0.95f) smooth = 0.95f;
-    else smooth = s;
+    if (s < 0.001f) view.env_smooth = 0.001f;
+    else if (s >= 0.95f) view.env_smooth = 0.95f;
+    else view.env_smooth = s;
 }
 

@@ -184,8 +184,8 @@ void TerrainPage::init_screen()
     {
         float start = 500.0f;
         float end = 1000.0f;
-        unsigned color = 0xff405060;
-        ((MissionUi*)(void*)world)->set_fog(&start, &end, (const float*)&color);   // 0x488cd0
+        int color = (int)0xff405060;
+        ((rgl::world*)(void*)world)->set_fog(&start, &end, &color);   // 0x488cd0
     }
     view->world = world;
     { tvec2 p = { 0.0f, 0.0f }; view->move_a((float*)(const float*)&p); }

@@ -68,7 +68,6 @@ struct Sel { void set_vec(const int* a, const int* b, const int* c); };     // 0
 struct NamedSelRec { void set_name(const tstring* s); void set_sel(const int* src); };   // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
 struct Named16 { void set(const tstring* s); };                              // 0x489ab0 (ui/mission_ui.cpp)
 struct MissionView { void setup(void* src, int* b, int* c); void set(void* src); };   // 0x4897a0 / 0x489820 (ui/mission_ui.cpp)
-struct MissionUi { void set_fog(const float* ref, const float* lo, const float* hi); };   // 0x488cd0 (ui/mission_ui.cpp)
 struct ElemList { void call0(int i, int a); void call1(int i, int a); };     // 0x488e20 / 0x488e40 (ui/mission_ui.cpp)
 void sl_item_flag_all();                                                       // 0x48a210 (ui/mission_ui.cpp; ui/world.h declares the same)
 void __stdcall sl_item_set_all(float v);                                       // 0x48a250

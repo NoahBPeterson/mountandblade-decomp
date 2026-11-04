@@ -139,10 +139,10 @@ void char_window::open_view()
         w->ambient.z = 0.27f;
         w->ambient.w = 1.0f;
         {
-            int   z2 = 0;
+            float z2 = 0.0f;
             float five = 5.0f;
             int   col = (int)0xff221815;
-            ((MissionUi*)w)->set_fog((const float*)&z2, (const float*)&five, (const float*)&col);   // 0x488cd0
+            w->set_fog(&z2, &five, &col);   // 0x488cd0
         }
         {
             Light* wd = new Light;

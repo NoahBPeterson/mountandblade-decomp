@@ -49,10 +49,6 @@ struct ShadowMapP {
     void render();   // 0x47fef0 (mesh_char.cpp)
 };
 #include "../terrain_b/cell_grid.h"        // CellGrid (build 0x478c50), level (floor_at 0x439be0), PolyMesh (build_geometry 0x470a00, compute_edge_creases 0x470750)
-struct envelope {
-    void set_fade(const float* dist, const int* color);   // 0x4624c0 (renderer.cpp)
-    void set_params(float a, float t, const int* b, const int* c);   // 0x462540 (renderer.cpp)
-};
 struct snd_slot {
     void update(int arg);   // 0x4625d0 (ui/item_ref.cpp)
 };
@@ -575,9 +571,9 @@ void Mission::start_setup()
     // ---- fade, params, ambient, sun ---------------------------------------------------------
     rebuild_nav(at<int>(0x5df4), at<int>(0x5df0));
     at<int>(0x5274) = 0;
-    ((envelope*)at<rgl::world*>(0))->set_fade(&at<float>(0x6614), (const int*)&g_env_rows[at<int>(0x660c)].f44);   // 0x4624c0
+    at<rgl::world*>(0)->set_fade(&at<float>(0x6614), (const int*)&g_env_rows[at<int>(0x660c)].f44);   // 0x4624c0
     unsigned color = 0xff334455;
-    ((envelope*)at<rgl::world*>(0))->set_params(-5.0f, 10.0f, (const int*)&color, (const int*)&at<float>(0x654c));     // 0x462540
+    at<rgl::world*>(0)->set_params(-5.0f, 10.0f, (const int*)&color, &at<float>(0x654c));     // 0x462540
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
     Entity* sun = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);

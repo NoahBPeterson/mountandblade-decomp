@@ -129,6 +129,11 @@ struct world : cell_grid {
     void query_entities(entity* e, unsigned mask, bool ordered, std::vector<entity*>* out);  // 0x426750
     bool less(entity* a, entity* b);                            // 0x426960
 
+    // ---- the fog / fade block at +0xdc (view.fog_ref ..) ----
+    void set_fade(const float* t, const int* v);                // 0x4624c0 (game/renderer.cpp)
+    void set_params(float a, float t, const int* b, const float* c);   // 0x462540 (game/renderer.cpp)
+    void set_fog(const float* ref, const float* rate, const int* color);   // 0x488cd0 (game/ui/mission_ui.cpp)
+
     void render_part(scene* sc, int rem, int div);              // 0x421110
     void reset();                                               // 0x421390
     void clear_ents();                                          // 0x4207e0

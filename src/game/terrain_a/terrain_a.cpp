@@ -2412,11 +2412,11 @@ void sort_e8(std::vector<E8>& v, Pr8 pred) { std::stable_sort(v.begin(), v.end()
 // @ 0x46b940
 ViewParams::ViewParams()
 {
-    f14 = 0.1f; f28 = 0.1f;
-    fc = 0x384878; f20 = 0x384878;
-    f0 = 1000.0f; f8 = -100.0f; f4 = -1.0f;
-    f18 = -1.0f; f1c = -100.0f; f24 = -1.0e7f;
-    b10 = 0; b2c = 0;
+    fog_blend = 0.1f; env_smooth = 0.1f;
+    fog_color = 0x384878; env_color = 0x384878;
+    f0 = 1000.0f; fog_rate = -100.0f; fog_ref = -1.0f;
+    env_peak = -1.0f; env_time = -100.0f; env_c = -1.0e7f;
+    fog_dirty = 0; b2c = 0;
     pos tmp;
     matrix* id = identity_pos(&tmp);
     world = *id;

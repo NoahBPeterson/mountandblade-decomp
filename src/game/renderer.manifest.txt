@@ -16,5 +16,5 @@
 ../src/game/renderer.cpp  ?rec_less@@YA_NPBQAUsort_rec@@0@Z  004622a0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?restore@dev_buffer@@QAEJXZ  004622e0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?alloc@HeightField@@QAEXPBH@Z  00462420  /O2 /MT /Gy /TP
-../src/game/renderer.cpp  ?set_fade@envelope@@QAEXPBMPBH@Z  004624c0  /O2 /MT /Gy /TP
-../src/game/renderer.cpp  ?set_params@envelope@@QAEXMMPBH0@Z  00462540  /O2 /MT /Gy /TP
+../src/game/renderer.cpp  ?set_fade@world@rgl@@QAEXPBMPBH@Z  004624c0  /O2 /MT /Gy /TP
+../src/game/renderer.cpp  ?set_params@world@rgl@@QAEXMMPBHPBM@Z  00462540  /O2 /MT /Gy /TP

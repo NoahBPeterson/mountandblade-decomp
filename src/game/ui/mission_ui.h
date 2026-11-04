@@ -135,7 +135,6 @@ struct MissionUi {
     Color4& ab() { return *(Color4*)&srcB; }                    // +0xb4
     Color4& cb2() { return *(Color4*)&srcC; }                   // +0xb8
     Color4& ab2() { return *(Color4*)&srcD; }                   // +0xbc
-    void set_fog(const float* ref, const float* lo, const float* hi);   // 0x488cd0
 };
 
 // A list of 0x1dc-byte effect elements (FxElem, vtable 0x54b454) at +4; 0x488e20 / 0x488e40 forward to the

@@ -8,13 +8,17 @@
 #include "./frustum.h"
 
 struct ViewParams {
-    float f0, f4, f8;                           // +0x00 1000, -1, -100
-    int fc;                                     // +0x0c 0x384878
-    char b10;                                   // +0x10
-    float f14, f18, f1c;                        // +0x14 0.1, -1, -100
-    int f20;                                    // +0x20 0x384878
-    float f24;                                  // +0x24 -1e7
-    float f28;                                  // +0x28 0.1
+    float f0;                                   // +0x00 1000
+    float fog_ref;                              // +0x04 -1   world +0xdc: MissionUi's 0x488cd0 (set_fog) and set_fade 0x4624c0 write it
+    float fog_rate;                             // +0x08 -100 world +0xe0
+    int fog_color;                              // +0x0c 0x384878  world +0xe4 (a packed colour: set_fog copies it as the bits of a float, set_fade as an int)
+    char fog_dirty;                             // +0x10 world +0xe8 (set by every fog / fade write)
+    float fog_blend;                            // +0x14 0.1  world +0xec (the smoothing of set_fog, the fade time of set_fade)
+    float env_peak;                             // +0x18 -1   world +0xf0 (set_params 0x462540)
+    float env_time;                             // +0x1c -100 world +0xf4
+    int env_color;                              // +0x20 0x384878 world +0xf8
+    float env_c;                                // +0x24 -1e7 world +0xfc (set_params copies the bits of a float)
+    float env_smooth;                           // +0x28 0.1  world +0x100
     char b2c;                                   // +0x2c
     int f30;                                    // +0x30
     rgl::frustum fr;                            // +0x34
