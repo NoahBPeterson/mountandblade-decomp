@@ -38,9 +38,6 @@ struct GameW {                                          // game/world_data: Game
 struct PartyMgrW {
     int is_live(unsigned id);   // 0x4903e0 (game/world_data; ret 4)
 };
-struct SoundCtl {
-    char emit_event(int id, int a, int b);   // 0x435790 (ret 0xc; game/agent)
-};
 
 // ---- the game data (g_game) with the members these modules call ----------------------------------------------------
 struct GameDataV : GameData {
@@ -57,7 +54,7 @@ struct GameDataV : GameData {
     void fill_ids(int* out, int id);                        // 0x5168e0 (ret 8)
     __declspec(noinline) void reset_trade_ids();            // 0x5168b0
     int weekly_cost();                      // 0x504e20 (thiscall, no args: the weekly wage of the player's party)
-    __forceinline int sl_query(int kind, int troop, int arg) { return ((SoundCtl*)this)->emit_event(kind, troop, arg); }   // 0x435790 (ret 0xc; SoundCtl::emit_event)
+    __forceinline int sl_query(int kind, int troop, int arg) { return emit_event(kind, troop, arg); }   // 0x435790 (ret 0xc; SoundCtl::emit_event)
 };
 #define GV ((GameDataV*)g_game)
 

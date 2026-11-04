@@ -46,6 +46,7 @@ struct Pos2 { float x, y; };    // 8-byte position slot; the original passes an 
 // included next to party/game.h, so the member is repeated under the class name.
 struct GameData {
     int sl_value_factor();   // 0x489f40
+    char emit_event(int id, int a, int b);   // 0x435790 (agent/agent.cpp, ret 0xc: the game object's event emitter)
 };
 
 // 0x495700 (thiscall on 0xa73980, ret 4; see s00494e40): choose a main-menu option by index.
@@ -107,11 +108,6 @@ struct localized {
 
 // 0xa70464: the caption the game object's text helper writes into before it is shown.
 
-// 0x435790 (thiscall on the game, ret 0xc): SoundCtl of agent/agent.h, the game object's event emitter (the header cannot be
-// included here).
-struct SoundCtl {
-    char emit_event(int id, int a, int b);   // 0x435790
-};
 // 0x4d6dd0: KeysPage::set_enabled_text (keys_page.cpp); the page calls it on itself.
 struct KeysPage { void set_enabled_text(MissionUi* w); };
 
@@ -137,7 +133,7 @@ void QuestPage::fill()
         Game* g = g_game_G;
         int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
         g_script.result_string.assign("");
-        ((SoundCtl*)g)->emit_event(0xf, days / 24, days);
+        ((GameData*)g)->emit_event(0xf, days / 24, days);
         {
             tstring formatted(g_script.result_string);
             const char* arg = formatted.buf ? formatted.buf : (const char*)&formatted.buf;

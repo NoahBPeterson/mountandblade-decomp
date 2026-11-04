@@ -234,7 +234,7 @@ after_scroll:
             } else if (w04 == 2 && w14 >= 0) {
                 g_script.trigger_result.store0 = 0;
                 g_script.trigger_result.store1 = 0;
-                bool ok = ((SoundCtl*)g_game)->emit_event(10, w14, g_game->f78);   // 0x435790
+                bool ok = g_game->emit_event(10, w14, g_game->f78);   // 0x435790
                 v = g_script.trigger_result.store0;
                 if (!ok)
                     v = GI(0x13a20);

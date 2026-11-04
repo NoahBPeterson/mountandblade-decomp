@@ -84,7 +84,7 @@ struct tstring_vec : tstring_alloc {
 
 // ---- the data tables and their globals ---------------------------------------------------------------------------
 #include "../str_table.h"       // StrTable g_strtable (0x5e2a18): find 0x4c6010
-struct GameData { const char* module_path(const char* sub); void init_event(struct E92* r); };   // 0x4639d0, 0x4b36a0 (include/game_data.h: Game is the game-data object)
+struct GameData { const char* module_path(const char* sub); void init_event(struct E92* r); char emit_event(int id, int a, int b); };   // 0x4639d0, 0x4b36a0 (include/game_data.h: Game is the game-data object)
 #define MODULE_PATH(sub) (((GameData*)this)->module_path(sub))
 
 // (item, modifier word) pairs of the statement / troop / scene records are the shared ItemRef (../item_ref.h; item -1 = none)
@@ -297,7 +297,6 @@ struct GameMapView {
 struct GameG { rgl::vector4* sun_color(rgl::vector4* out); rgl::vector4* fog_color(rgl::vector4* out); };   // 0x5176e0, 0x517820 (inventory_panel/game_tick.h: the game object)
 namespace c49bea0 { struct MissionAgents { void add_order_arrow(int id); }; }     // 0x49bea0 (ret 4: one int arg; party2/camera.cpp)
 namespace c49b630 { struct Mission { void spawn_battle_icon(unsigned id); }; }              // 0x49bbb0 (party2/camera.cpp)
-struct SoundCtl { char emit_event(int id, int a, int b); };                               // 0x435790 (agent/agent.h)
 struct E92;
 #include "../game_globals.h"   // canonical g_module_settings.map_tree_types (0xa1815c), g_module_settings.map_sea_direction (0xa18144), g_module_settings.map_river_direction (0xa18150)
 // the slices read these as ints (g_module_settings.map_sea_direction/river_direction are floats, same words)

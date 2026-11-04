@@ -236,7 +236,9 @@ struct GameData {
     int f1a060;                                 // +0x1a060 script dialog requested (inventory_panel/game_app.cpp)
     int f1a064;                                 // +0x1a064 script dialog shown
     int f1a068;                                 // +0x1a068
-    char pad1a06c[0x1a090 - 0x1a06c];
+    tstring emit_name;                          // +0x1a06c the current emitter audio name (emit_event 0x435790)
+    int f1a07c;                                 // +0x1a07c
+    char pad1a080[0x1a090 - 0x1a080];
     int f1a090;                                 // +0x1a090 map editor active (0x472050)
     char pad1a094[0x1a160 - 0x1a094];
     int f1a160;                                 // +0x1a160 map editor dialog shown (inventory_panel/game_app.cpp)
@@ -304,7 +306,6 @@ struct GameData {
     bool is_night();                            // 0x435740 (the slices' not_afternoon)
     int remove_troops(int party, int troop, int count, char prisoners, int a5);   // 0x48f9f0 (ret 0x14: count removed)
     float relation(int a, int b);               // 0x48ffa0 (ret 8: party relation, -1..1)
-    void list_members(int id, unsigned* out, unsigned* n);   // 0x490fa0 (ret 0xc: the party and its attached parties)
     void detach_party(int id); // 0x490a30
     void remove_party(int party);               // 0x4915d0 (ret 4)
     void label_text(rgl::mesh* m, const tstring* text, char flag, int arg, const float* h);   // 0x49baa0 (ret 0x14: lays text out into a label mesh)
@@ -313,7 +314,6 @@ struct GameData {
     void remove_gold(int gold, int troop);      // 0x49b820 (ret 8: subtracts (clamped at 0) and logs ui_you_lost_value)
     void start_quest(int quest, int giver_troop);   // 0x49b930 (ret 8: stamps a quest record as started by the giver, logs ui_new_quest_taken)
     void fill_parties(int id, struct Party* out);   // 0x48fd60 (ret 8: merges the party and its attached parties into `out`)
-    void count_units(int party, int* a, int* b, int* c, int* d);   // 0x490ce0 (ret 0x14)
     // ---- src/game/ui (mission_ui.cpp; the slices called the object World, `sl_query` is emit_event 0x435790) ----
     tstring get_name();                         // 0x489c30 (hidden return pointer, ret 4: the string at +0xe028)
     int count_in(int idx, int id, char flag);   // 0x489c50

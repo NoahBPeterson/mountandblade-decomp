@@ -123,7 +123,7 @@ void CharSheet::frame_update(float dt)
     }
     if (w14 == 0 && f_4c4->clear_mask(0x10000)) {
         g_game->chars[0].name = tstring(((HeroEntry*)f_4c4)->name);
-        ((SoundCtl*)g_game)->emit_event(0x18, 0, 0);
+        g_game->emit_event(0x18, 0, 0);
     }
 
     // previous / next troop

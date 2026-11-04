@@ -46,9 +46,6 @@ struct Scene {
 struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (ui/mission.h: the id hash table that opens the party manager)
 };
-struct SoundCtl {
-    char emit_event(int id, int a, int b);   // 0x435790 (agent/agent.h)
-};
 struct note_window {
     void build(int a, int b);   // 0x50a1c0 (ret 8)
 };

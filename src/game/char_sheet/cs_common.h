@@ -16,9 +16,6 @@ struct FaceGenome {                                                 // terrain_b
 };
 void __cdecl load_game_variables();                                 // 0x4c0520 (trigger_vec)
 struct loading_config { char pad[0x1f8]; };                         // a SkinSet / TextRow
-struct SoundCtl {                                                   // agent/agent.h; the game object's event emitter
-    char emit_event(int id, int a, int b);                          // 0x435790
-};
 
 namespace rgl {
 struct entity;

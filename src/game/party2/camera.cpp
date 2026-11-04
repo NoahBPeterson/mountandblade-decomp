@@ -689,7 +689,7 @@ struct Mission {
     char pad666a[2];
     Unit units[1];                                  // +0x666c (0x130 each)
 
-    void add_amount(int a, unsigned b);                                                              // 0x4677a0 (terrain_a/terrain_a.cpp, ret 8)
+    void add_amount(int a, unsigned b) { ((::Mission*)this)->add_amount(a, b); }                     // 0x4677a0 (terrain_a/terrain_a.cpp, ret 8)
     int label_text(Sprite* label, const tstring* name, int a, int b, const float* h)   // 0x49baa0 (ret 0x14)
     {
         ((::GameData*)this)->label_text((rgl::mesh*)label, name, (char)a, b, h);

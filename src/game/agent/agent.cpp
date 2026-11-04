@@ -23,6 +23,7 @@
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/game_data.h"   // GameData::emit_event (0x435790)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -459,14 +460,14 @@ bool is_daytime()
 // @ 0x435740
 bool is_night() { return !is_daytime(); }
 // @ 0x435790
-char SoundCtl::emit_event(int id, int a, int b)
+char GameData::emit_event(int id, int a, int b)
 {
     int count;
     __int64 v[16];
     v[0] = a;
     v[1] = b;
     unsigned tag;
-    if (f1a068 && g_scripts[id].name.equals(name))
+    if (f1a068 && g_scripts[id].name.equals(emit_name))
         tag = (id << 16) | f1a07c;
     else
         tag = (unsigned)-1;

@@ -91,9 +91,6 @@ int __stdcall msg_proc_thunk(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return g_app_obj.msg_proc(hwnd, msg, wParam, lParam);
 }
 
-struct SoundCtl {
-    char emit_event(int id, int a, int b);   // 0x435790 (agent/agent.cpp; g_game is the object it works on)
-};
 
 // ---- 0x4d9450: WinMain --------------------------------------------------------------------------------------------
 // @ 0x4d9450
@@ -2842,7 +2839,7 @@ void Rec48::init_screen()
     }
     for (int i = 0; i < 10; i++) {
         g_script.result_string.assign("");
-        ((SoundCtl*)g_game)->emit_event(0xe, i, 0);
+        g_game->emit_event(0xe, i, 0);
         float pos[2];
         pos[0] = 0.0f;
         pos[1] = 0.63f - (float)i * 0.03f;

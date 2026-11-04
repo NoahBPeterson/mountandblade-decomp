@@ -75,13 +75,6 @@ struct Placement {
 
 // event emitter (0x4b09e0) used by the game-data object (s00514d40 names the same 0x435790 GameData::emit_event)
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
-struct SoundCtl {
-    char pad0[0x1a068];
-    int f1a068;
-    tstring name;                                // +0x1a06c
-    int f1a07c;
-    char emit_event(int id, int a, int b);       // 0x435790 (ret 0xc)
-};
 
 // floats at +0xf8 with a 0x2c stride (0x4354b0): a view of the agent
 struct Agent_f8 {

@@ -733,7 +733,7 @@ void CampaignScreen::frame_update(float dt)
 
     int hi = (int)t;
     g_script.result_string.assign("");
-    ((SoundCtl*)g_game)->emit_event(0xf, hi / 24, hi);
+    g_game->emit_event(0xf, hi / 24, hi);
     {
         tstring tmp(g_script.result_string);
         PSO(f60)->set_text(sz, &tmp);
@@ -873,7 +873,7 @@ void CampaignScreen::frame_update(float dt)
     GD_I(0x13aec) = 0;
     GD_I(0x13af8) = 0;
     ((ItemSound*)((char*)g_game + 0x139f4))->play(-6);
-    ((SoundCtl*)g_game)->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
+    g_game->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
     if (GD_I(0x13aec) > 0) {
         g_mission_ctx.frame(GD_I(0x13aec));
         party = PARTIES->get(GD_I(0x78));

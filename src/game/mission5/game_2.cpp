@@ -260,7 +260,7 @@ void Game::build_scene()
     release_orders();
     more_start();
     if (f13a34 == 0) {
-        ((SoundCtl*)self)->emit_event(0, 0, 0);
+        ((GameData*)self)->emit_event(0, 0, 0);
         f13a34 = 1;
     }
 }

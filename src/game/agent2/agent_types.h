@@ -58,7 +58,6 @@ void __cdecl noise_gradient(float scale, const float* in, float* out);   // 0x41
 namespace rgl { struct world { void to_cell(const float* p, int* out); void remove_entity(int id); }; }   // 0x41ed00, 0x41f0d0
 struct Grid2 { void walk(const float* a, const float* b, int (*cells)[2], int* count); };               // 0x437290 (agent/agent.h)
 struct Ctx { void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count); };   // 0x42aa50 (strat/strat_entity.h)
-struct SoundCtl { char emit_event(int id, int a, int b); };      // 0x435790 (agent/agent.h): GameData seen as the event emitter
 struct level {
     char pad0[8];
     int dim[2];                                         // 0x08 cells per axis

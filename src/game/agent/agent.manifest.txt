@@ -26,7 +26,7 @@
 ../src/game/agent/agent.cpp  ?time_of_day@@YAMXZ  004356e0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?is_daytime@@YA_NXZ  00435700  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?is_night@@YA_NXZ  00435740  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?emit_event@SoundCtl@@QAEDHHH@Z  00435790  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?emit_event@GameData@@QAEDHHH@Z  00435790  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?mode_flag1@Mission@@QBEDXZ  00435840  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?init_placed@@YGXPAUPlacedObj@@PBH11PBUmatrix@rgl@@@Z  00435860  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?size@Vec38@@QBEHXZ  00435990  /O2 /MT /Gy /TP

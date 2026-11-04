@@ -165,7 +165,7 @@ int GameData::skill_level(int agent, int skill)
     int lvl = (w >> (skill % 8 * 4)) & 0xf;
     g_script.trigger_result.store0 = 0;
     g_script.trigger_result.store1 = 0;
-    ((SoundCtl*)this)->emit_event(0x17, agent, skill);       // GameData is the SoundCtl view of agent/agent.h (the 0x435790 emitter)
+    emit_event(0x17, agent, skill);       // 0x435790
     lvl += g_script.trigger_result.store0;
     if (lvl < 0)
         return 0;
