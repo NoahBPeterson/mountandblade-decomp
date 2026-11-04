@@ -206,7 +206,7 @@ again:
         Q(*e).clear();
         o->registered = 0;
         for (unsigned i = 0; i < o->cache.size(); i++)
-            ((mesh_ext*)o->cache[i])->clear_geometry();
+            ((mesh*)o->cache[i])->clear_geometry();
     }
 
     if (only == 0)

@@ -98,7 +98,7 @@ FxElem::FxElem()
 namespace rgl {
 
 // @ 0x428e80
-void mesh_ext::clear_geometry()
+void mesh::clear_geometry()
 {
     {
         skin_vert e;
@@ -126,7 +126,7 @@ void scene::reset()
     f15c = 0;
     registered = false;
     for (unsigned i = 0; i < cache.size(); i++)
-        ((mesh_ext*)*(cache.begin() + i))->clear_geometry();
+        ((mesh*)*(cache.begin() + i))->clear_geometry();
 }
 
 // @ 0x428f80

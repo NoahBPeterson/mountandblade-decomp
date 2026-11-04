@@ -560,7 +560,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
         m = (rgl::mesh*)arr2[cx * 5 + cy];
     if (m == 0)
         m = new rgl::mesh();
-    ((mesh_ext*)m)->clear_geometry();
+    ((mesh*)m)->clear_geometry();
 
     if (layerno < 15) {
         if (blend < 0)

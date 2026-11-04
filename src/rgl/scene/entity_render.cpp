@@ -80,9 +80,9 @@ void entity::render(scene* sc, render_info* info)
                 lods[i]->select(&f144);
                 if (lods[i]->count != 0 && lods[i]->lists[0].v.size() != 0 &&
                     (lods[i]->lists[0].v[0]->res->shader->flags20 & 0x100) != 0) {
-                    if (((mesh_ext*)lods[i]->lists[0].v[0])->get70().size() > 0) {
+                    if (((mesh*)lods[i]->lists[0].v[0])->get70().size() > 0) {
                         info->valid = 1;
-                        info->depth = ((const pos&)local).transform_point(((const pos&)lods[i]->m8c).transform_point(((const std::vector<point20>&)((mesh_ext*)lods[i]->lists[0].v[0])->get70())[0].a)).z;
+                        info->depth = ((const pos&)local).transform_point(((const pos&)lods[i]->m8c).transform_point(((const std::vector<point20>&)((mesh*)lods[i]->lists[0].v[0])->get70())[0].a)).z;
                     }
                 }
                 ((lod_mesh*)lods[i])->render(sc, local);

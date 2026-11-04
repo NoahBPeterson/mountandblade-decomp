@@ -159,9 +159,10 @@ struct CellGrid : CellGridBase {
     void insert(int id, const float* lo_, const float* hi_);                // 0x478a10
     CellGrid(const float* lo_, const float* hi_, const int* dimx, const int* dimy, const int* v);  // 0x478ad0
     ~CellGrid();                                                            // 0x475d50
-    void reset();                                                         // 0x421390 (rgl::world::reset)
     void build(PolyMesh* m);                                                    // 0x478c50
     Wind* spawn_wind();                                                     // 0x478f30
+    Entity* create_entity(int type_id);                                     // 0x428440 (rgl::world::create_entity: cell_world.h)
+    void reset();                                                           // 0x421390 (rgl::world::reset: cell_world.h)
     void sample_lights(const rgl::vector4* p, rgl::vector4* dir, rgl::vector4* amb);   // 0x42ad60
     void build_light_frame(rgl::matrix* m, rgl::vector4* amb);              // 0x470c00
     int trace_ray(const rgl::vector4* from, const rgl::vector4* to, float maxlen, int a, void** hit);   // 0x439d60 (ret 0x14; the callers use TRACE_RAY at the end of this header)
@@ -171,7 +172,6 @@ struct CellGrid : CellGridBase {
     void update_probes(unsigned flags);                                     // 0x472ed0
     __forceinline void reg_shape(void* o) { ((world_grid*)this)->reg_shape((grid_shape*)o); }                      // 0x424170
     __forceinline void post(void* o) { ((world_grid*)this)->add_tree((grid_shape*)o); }                           // 0x425240
-    Entity* create_entity(int type_id);                                     // 0x428440
     void build_faces(NavData* map);                                         // 0x479980
     void remove_entity(int id);                                             // 0x41f0d0 (ret 4; src/game/party2 clear_map_flag)
 };

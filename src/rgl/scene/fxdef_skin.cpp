@@ -30,7 +30,7 @@ using namespace rgl;
 // @ 0x4291c0
 void FxDef::skin(mesh* mm, char flag)
 {
-    mesh_ext* P = (mesh_ext*)mm;
+    mesh* P = (mesh*)mm;
     P->ensure_skin();
     if (P->bone_mats() == 0)
         P->bone_mats() = new mat4[32];

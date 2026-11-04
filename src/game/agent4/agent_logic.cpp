@@ -4289,7 +4289,7 @@ void Agent::drop_held()
 rgl::vector4* Font::layout_clear(rgl::vector4* out_extent, const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m,
                                const int* a, const float* b, const float* c, unsigned flags)
 {
-    ((rgl::mesh_ext*)m)->clear_geometry();
+    ((rgl::mesh*)m)->clear_geometry();
     layout_text((float*)out_extent, text, pos, scale, m, (int)a, b, c, flags);
     return out_extent;
 }
@@ -4327,8 +4327,8 @@ void gui_manager::add(tstring msg, int color)
             scale.y = 0.021f;                                  // 0x3cac0831 (0x452d7a)
             f08 = 0.8f;
             cur = (cur + 31) % 32;
-            ((rgl::mesh_ext*)&meshA[cur])->clear_geometry();
-            ((rgl::mesh_ext*)&meshB[cur])->clear_geometry();
+            ((rgl::mesh*)&meshA[cur])->clear_geometry();
+            ((rgl::mesh*)&meshB[cur])->clear_geometry();
             zero = 0;
             minus1 = -1;
             p.x = 0.02f;

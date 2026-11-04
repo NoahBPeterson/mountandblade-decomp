@@ -143,6 +143,9 @@ struct mesh : named_object {
     void translate(const vector4* d);               // 0x44f240 (ret 4)
     mesh* clone();                                  // 0x41c6d0 (src/game/party2: s0049aca0 / s0049b630)
     void clear_geometry();                          // 0x428e80
+    mat4*& bone_mats() { return *(mat4**)&p220; }               // 0x220: 32 matrices, allocated on first skinning (0x4291c0)
+    const void*& bone_src() { return *(const void**)&f224; }    // 0x224
+    int& nbones() { return *(int*)&f228; }                      // 0x228: max bone index + 1
     void compute_normals();                         // 0x451c50
     // ---- src/game/agent5 (agent_hud.cpp: the HUD's item and status meshes) ----
     void append_skinned(mesh* other, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)

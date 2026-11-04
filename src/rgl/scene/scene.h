@@ -17,17 +17,6 @@ struct world;
 
 inline int mesh_render(mesh* m, scene* sc, const matrix& frame) { return m->render(sc, frame); }
 
-// ---- mesh members the scene modules add (no new fields: the derived class only carries methods) ------------
-struct mesh_ext : mesh {
-    // (the out-of-line copy 0x40eba0 of get70 is mesh::get70 itself, __declspec(noinline) in ../mesh.h)
-    std::vector<skin_vert>& get60_();                              // 0x40ec60 (out-of-line copy of get60)
-    void clear_geometry();                                      // 0x428e80
-    // (clone, 0x41c6d0: rgl::mesh::clone of rgl/mesh.h, called as ((rgl::mesh*)m)->clone())
-    mat4*& bone_mats() { return *(mat4**)&p220; }               // 0x220: 32 matrices, allocated on first skinning (0x4291c0)
-    const void*& bone_src() { return *(const void**)&f224; }    // 0x224
-    int& nbones() { return *(int*)&f228; }                      // 0x228: max bone index + 1
-};
-
 // std::vector<point20>::iterator and operator[] const stay out of line in entity::render
 struct iter32 {
     point20* _Ptr;

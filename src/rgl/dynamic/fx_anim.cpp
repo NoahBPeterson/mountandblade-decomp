@@ -64,7 +64,7 @@ void FxDef::update(float dt, const matrix* m)
     for (int i = 0; i < count; ++i) {
         for (std::vector<mesh*>::iterator it = elems[i].psys.begin(); it < elems[i].psys.end(); ++it) {
             if (!(*it)->kids.empty())
-                ((mesh_ext*)*it)->update_emitters(&dt, *m * elems[i].m84);
+                ((mesh*)*it)->update_emitters(&dt, *m * elems[i].m84);
         }
     }
 }

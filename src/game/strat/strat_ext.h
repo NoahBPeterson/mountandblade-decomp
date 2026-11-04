@@ -60,6 +60,6 @@ struct FxDef { void draw(scene* sc, const matrix* m, const float* p); };   // 0x
 // these declarations and casts the object, which is the one the definition works on (the same object under the stand-in's name).
 #include "../../rgl/scene/scene_entity.h"            // rgl::entity / strategic_entity / psys (the entity classes the member functions work on)
 #include "../../rgl/scene/world.h"                   // rgl::world (to_cell 0x41ed00)
-#include "../../rgl/scene/scene.h"                   // rgl::mesh_ext (clear_geometry 0x428e80)
+#include "../../rgl/scene/scene.h"                   // rgl::mesh (clear_geometry 0x428e80)
 
 #endif // STRAT_EXT_H

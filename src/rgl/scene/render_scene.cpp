@@ -189,7 +189,7 @@ void world::render_scene(scene* sc, bool reflect)
     sc->fr.build_planes();
     g_batch.register_scene(sc);
     for (unsigned i = 0; i < meshes.size(); i++)
-        ((mesh_ext*)meshes[i])->clear_geometry();
+        ((mesh*)meshes[i])->clear_geometry();
     render_info info;
     info.valid = 0;
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {

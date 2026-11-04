@@ -320,7 +320,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         (*slot)->slots[1].f4 = 1;
         (*slot)->slots[0].f4 = 1;
     }
-    ((rgl::mesh_ext*)*slot)->clear_geometry();
+    ((rgl::mesh*)*slot)->clear_geometry();
     vector4 a2 = ctx->ambient();
     nt = 1;
     s0 = ((a2.z + a2.y) + a2.x) * 0.35f;

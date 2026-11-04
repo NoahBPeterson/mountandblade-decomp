@@ -93,7 +93,7 @@ void strategic_entity::update(float dt)
     f142 = f141;
     f141 = false;
     for (std::vector<mesh*>::iterator it = meshes.begin(); it < meshes.end(); ++it)
-        ((mesh_ext*)*it)->update_emitters(&dt, local);
+        ((mesh*)*it)->update_emitters(&dt, local);
     if ((char)is_dirty()) {                             // the original tests the flag byte (al)
         for (unsigned i = 0; i < items.size(); ++i) {
             matrix m = local;

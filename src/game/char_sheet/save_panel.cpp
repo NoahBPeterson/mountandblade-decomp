@@ -1,18 +1,13 @@
 #include <direct.h>
 #include <stdio.h>
 #include "./save_panel.h"
-namespace rgl {
-struct mesh_ext {                                   // rgl/scene/scene.h: the mesh object with the scene-side members
-    void clear_geometry();                          // 0x428e80
-};
-}
 #include "../window_mgr.h"      // g_windows slot 3 (0xa7398c): the save dialog
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4ea0c0
 void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
 {
-    ((rgl::mesh_ext*)m)->clear_geometry();   // 0x428e80
+    ((rgl::mesh*)m)->clear_geometry();   // 0x428e80
     if (!o->skins)
         return;
     float prod = o->f160;

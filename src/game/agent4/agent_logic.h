@@ -23,7 +23,6 @@ struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pend
 #include "../../include/timer.h"                    // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
 // AnimRec::phase 0x4231f0: agent/curve.h
 namespace rgl {
-struct mesh_ext { void clear_geometry(); };              // 0x428e80 (rgl/scene/scene.h)
 struct entity;
 struct world;   // members in agent3/agent_types.h (create_entity 0x428440)
 }
