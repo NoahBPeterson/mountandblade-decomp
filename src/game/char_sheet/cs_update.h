@@ -24,10 +24,8 @@
 #include "../tstring.h"
 
 // ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../key_names.h"
-typedef Widget UiVt;                    // the slice's name for it
-typedef UiVt UiWidget;                              // widget pointers point at the polymorphic object itself
 
 // ---- game records ------------------------------------------------------------------------------------
 #include "../../include/troop.h"
@@ -56,7 +54,7 @@ struct HeroEntry {
 // the character sheet panel (see s004ef420 / s004ef9f0 for the detail page)
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
 // the skill rows at +0xd8 are the same widgets as +0x480 (the editor keeps them twice)
-struct SkillRows { UiWidget* w[5]; };
+struct SkillRows { MissionUi* w[5]; };
 
 // ---- world / UI services -----------------------------------------------------------------------------
 #include "../../include/msg_log.h"

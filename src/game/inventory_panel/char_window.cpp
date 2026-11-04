@@ -147,11 +147,10 @@ void char_window::fill_skills()
 
 // ---------------------------------------------------------------------------------------------------------
 // widgets (slot numbers from the call sites; see s00502300 / s004dfd50).
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
-typedef Widget UiWidget;                // the slice's name for it
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // the 0x188-byte image button (base ctor 0x48ae20, vptr 0x591d58)
-struct UiButton : UiWidget {
+struct UiButton : MissionUi {
     char pad[0x188 - 4];
 };
 
@@ -167,7 +166,7 @@ extern char g_vt_591d58[];                              // 0x591d58
 extern float g_590d94;                                  // 0x590d94 (0.6f)
 
 // @ 0x509770
-UiButton* make_button(UiWidget* parent, const tstring* text, float x, float y, int n, float s)
+UiButton* make_button(MissionUi* parent, const tstring* text, float x, float y, int n, float s)
 {
     UiButton* b = (UiButton*)alloc_53545e(0x188);
     if (b != 0) {
@@ -184,11 +183,11 @@ UiButton* make_button(UiWidget* parent, const tstring* text, float x, float y, i
         float v[2];
         v[0] = x;
         v[1] = y;
-        b->set_pos(v);
+        b->move_a((float*)v);
 
         v[0] = n * s;
         v[1] = s;
-        b->set_scale(v);
+        b->set_xy(v);
     }
 
     tstring up("button");
@@ -223,7 +222,7 @@ UiButton* make_button(UiWidget* parent, const tstring* text, float x, float y, i
         v[1] = sz;
         b->set_size(v);
 
-        b->set_text(v, *text);
+        b->set_text(v, &(*text));
     }
 
     parent->add_child(b);

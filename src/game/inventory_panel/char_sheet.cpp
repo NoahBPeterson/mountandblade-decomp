@@ -48,7 +48,7 @@ struct CharSheetWidget {
     CharSheetWidget* plus1c;                             // +0x1c  every later field was 8 bytes low)
     char pad20[0xa8 - 0x20];
     CharSheetWidget* levels;                             // +0xa8 (skill row level text)
-    // The offset vector is +0xe0/+0xe4 and the size +0xe8/+0xec (ui_widget.h WidgetObj: rect_x, rect_y, rect_w,
+    // The offset vector is +0xe0/+0xe4 and the size +0xe8/+0xec (ui_widget.h MissionUi: rect_x, rect_y, rect_w,
     // rect_h). This view had px/py at +0xe8/+0xec - the *size* fields - so every row was placed at the width and
     // height that label_refresh had just set instead of at its configured position. The class is polymorphic, so cl
     // puts the vptr in the first 4 bytes and every member compiles 4 bytes after its declaration (verified with
@@ -151,7 +151,7 @@ CharSheetWidget* make_medium_button(CharSheetWidget* parent, tstring* caption, i
                            tstring* up, tstring* down,
                            float a8, float a9, float a10);                           // 0x4dcc50
 MissionUi* make_hint(ContainerBase* parent, const tstring& text, float x, float y, float sx, float sy);  // 0x4dada0
-UiButton* make_button(Widget* parent, const tstring* text, float x, float y, int flag, float sy);   // 0x509770
+UiButton* make_button(MissionUi* parent, const tstring* text, float x, float y, int flag, float sy);   // 0x509770
 void label_refresh(MissionUi* w, tstring key);                                                    // 0x4e4c70
 struct UiD;
 UiD* make_scrollbar(void* parent, const tstring* key);                                       // 0x4f6160
@@ -164,7 +164,7 @@ static __forceinline CharSheetWidget* make_short_button(CharSheetWidget* p, tstr
 static __forceinline CharSheetWidget* make_hint(CharSheetWidget* p, tstring* t, float x, float y, float sx, float sy)
 { return (CharSheetWidget*)make_hint((ContainerBase*)p, *t, x, y, sx, sy); }
 static __forceinline CharSheetWidget* make_button(CharSheetWidget* p, tstring* t, float x, float y, int flag, float sy)
-{ return (CharSheetWidget*)make_button((Widget*)p, t, x, y, flag, sy); }
+{ return (CharSheetWidget*)make_button((MissionUi*)p, t, x, y, flag, sy); }
 static __forceinline CharSheetWidget* make_scrollbar(CharSheetWidget* p, tstring* k)
 { return (CharSheetWidget*)make_scrollbar((void*)p, k); }
 static __forceinline CharSheetWidget* make_editor_list(CharSheetWidget* p, tstring* k, CharSheetWidget* c)
@@ -386,7 +386,7 @@ void CharSheet::init()
             float levels_x = config_float_walk(tstring("char_b_skill_levels_x"));
             tstring empty("");
             // 0x507b6e: the level label goes only into this->label[i] (= [&skill_row[i] + 0xa8]), not into the row
-            label[i] = (Widget*)make_hint(sk, &empty, levels_x + skills_x, rowy,
+            label[i] = (MissionUi*)make_hint(sk, &empty, levels_x + skills_x, rowy,
                                      levels_w, skills_y);
             ((CharSheetWidget*)label[i])->set_color((const unsigned*)&row->color);                     // +0xd8: the per-row rank text update_skill_rows recolours
    // 0x507b9f pushes the row class's vptr+0x14c (an address, not a colour); row->color is the same byte the original reads
@@ -398,7 +398,7 @@ void CharSheet::init()
             // 0x507d69: [&skill_row[i] + 0x150] = this->btn[i]; the row object itself is not written
             CharSheetWidget* plus150 = make_button(sk, &plus, inc_x + skills_x, inc_y + rowy,
                                      1, skills_y - inc_h);
-            btn[i] = (Widget*)plus150;
+            btn[i] = (MissionUi*)plus150;
 
             float ts_x = config_float_walk(tstring("char_b_skill_increment_t_s"));
             float ts_y = config_float_walk(tstring("char_b_skill_increment_t_s"));
@@ -512,7 +512,7 @@ void CharSheet::init()
         vector2 ts;
         ts.x = ts_y;
         ts.y = ts_x;
-        rows[i] = (Widget*)plus1c;
+        rows[i] = (MissionUi*)plus1c;
         plus1c->set_text_size(&ts);
         {
             vector2 tx;
@@ -625,7 +625,7 @@ void CharSheet::init()
             row = 0;
         }
         attrib_row[i] = row;
-        skill_pos[i] = (Widget*)row;                 // +0x45c-8: refresh_panels sets each attribute row's text
+        skill_pos[i] = (MissionUi*)row;                 // +0x45c-8: refresh_panels sets each attribute row's text
         label_refresh(row, tstring("char_b_attribs_base"));
 
         float spacing = config_float_walk(tstring("char_b_attribs_y_a"));
@@ -642,7 +642,7 @@ void CharSheet::init()
         tstring plus("+");
         // [&attrib_row[i] + 0x10] = this->skill_val[i]; the row object itself is not written
         CharSheetWidget* plus10 = make_button(attribs, &plus, inc_x, rowy - inc_ya, 1, inc_h);
-        skill_val[i] = (Widget*)plus10;         // +0x45c: refresh_panels shows/hides the '+' per attribute
+        skill_val[i] = (MissionUi*)plus10;         // +0x45c: refresh_panels shows/hides the '+' per attribute
 
         float ts_x = config_float_walk(tstring("char_b_attrib_increment_t_s"));
         float ts_y = config_float_walk(tstring("char_b_attrib_increment_t_s"));

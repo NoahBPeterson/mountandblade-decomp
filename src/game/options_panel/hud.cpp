@@ -154,47 +154,47 @@ struct ItemSource {
 };
 #pragma comment(linker, "/alternatename:?pick@ItemSource@@QAEXPAH@Z=?pick@MissionSource@@QAEXPAH@Z")
 
-#define W(x) ((Widget*)(void*)(x))
+#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d5290
 void ItemRec::scale_3(float arg)
 {
     ((ItemSource*)((char*)(void*)this + 0x30))->pick((int*)&arg);
-    if (W(row_tutorial)->changed(0x10000)) {
+    if (W(row_tutorial)->clear_mask(0x10000)) {
         slot_as<int>(3)[6] = 4;
         slot_as<int>(3)[1] = 3;
         slot_as<int>(3)[0x8c / 4] = 0;
         g_main_menu.set_state(3);
         return;
     }
-    if (W(row_new_game)->changed(0x10000)) {
+    if (W(row_new_game)->clear_mask(0x10000)) {
         slot_as<int>(3)[1] = 0;
         slot_as<int>(3)[0x8c / 4] = first_free;
         g_main_menu.set_state(3);
         return;
     }
-    if (W(row_restore)->changed(0x10000)) {
+    if (W(row_restore)->clear_mask(0x10000)) {
         slot_as<int>(21)[6] = 4;
         g_main_menu.set_state(0x15);
         return;
     }
-    if (row_custom != 0 && W(row_custom)->changed(0x10000)) {
+    if (row_custom != 0 && W(row_custom)->clear_mask(0x10000)) {
         slot_as<int>(3)[6] = 4;
         slot_as<int>(3)[1] = 2;
         slot_as<int>(3)[0x8c / 4] = 0;
         g_main_menu.set_state(3);
         return;
     }
-    if (W(row_options)->changed(0x10000)) {
+    if (W(row_options)->clear_mask(0x10000)) {
         slot_as<int>(18)[6] = 4;
         g_main_menu.set_state(0x12);
         return;
     }
-    if (W(row_credits)->changed(0x10000)) {
+    if (W(row_credits)->clear_mask(0x10000)) {
         slot_as<int>(28)[6] = 4;
         g_main_menu.set_state(0x1c);
         return;
     }
-    if (W(row_exit)->changed(0x10000))
+    if (W(row_exit)->clear_mask(0x10000))
         g_saved = 1;
 }
 
@@ -267,11 +267,11 @@ void Rec44::scale_3(float)
 // @ 0x4d59f0
 void Rec38::scale_3(float)
 {
-    if (((Widget*)(void*)f34)->changed(0x10000))
+    if (((MissionUi*)(void*)f34)->clear_mask(0x10000))
         g_main_menu.set_state(7);
 }
 
-#define W(x) ((Widget*)(void*)(x))
+#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d5a20
 void Rec454::scale_3(float)
 {
@@ -282,26 +282,26 @@ void Rec454::scale_3(float)
         item_value((MissionItem*)(void*)list)->set_key_flags(0x10000);
     }
     for (int i = 0; i < count; i++) {
-        if (W(rows[i])->changed(0x10000)) {
+        if (W(rows[i])->clear_mask(0x10000)) {
             f250 = i;
             ((QuestPage*)(void*)this)->fill();
         }
     }
-    if (W(active_tab)->changed(0x10000)) {
+    if (W(active_tab)->clear_mask(0x10000)) {
         if (w04 == 0) {
-            W(active_tab)->activate(1);
+            W(active_tab)->set15c(1);
             return;
         }
         w04 = 0;
         g_main_menu.set_state(0xd);
-    } else if (W(finished_tab)->changed(0x10000)) {
+    } else if (W(finished_tab)->clear_mask(0x10000)) {
         if (w04 == 1) {
-            W(finished_tab)->activate(1);
+            W(finished_tab)->set15c(1);
             return;
         }
         w04 = 1;
         g_main_menu.set_state(0xd);
-    } else if (W(done)->changed(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
+    } else if (W(done)->clear_mask(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
         g_main_menu.set_state(w18);
     }
 }
@@ -369,14 +369,14 @@ void MissionSource::pick(int* arg)
             if (begin[i]->nodes[n])
                 ((mesh_node*)begin[i]->nodes[n])->set_time(&t);
         }
-        if (begin[i]->changed(0x10000)) {
+        if (begin[i]->clear_mask(0x10000)) {
             g_script.param1 = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
             int k = begin[i]->kind();
             if (k == 2 || k == 3) {
-                g_script.param2 = (__int64)(int)begin[i]->get_float();
+                g_script.param2 = (__int64)(int)begin[i]->get168();
                 play_family_sound(family, -0x3e);
             } else if (k == 5) {
-                g_script.param2 = (__int64)begin[i]->get_value();
+                g_script.param2 = (__int64)begin[i]->get15c();
                 play_family_sound(family, -0x3e);
             } else if (k == 6) {
                 g_script.str[0] = begin[i]->name;
@@ -387,11 +387,11 @@ void MissionSource::pick(int* arg)
                 g_script.param2 = begin[i]->f180 != 0;
                 play_family_sound(family, -0x3e);
             }
-        } else if (begin[i]->changed(2)) {
+        } else if (begin[i]->clear_mask(2)) {
             g_script.param2 = 0;
             g_script.param1 = i;
             play_family_sound(family, -0x3f);
-        } else if (begin[i]->changed(4)) {
+        } else if (begin[i]->clear_mask(4)) {
             g_script.param2 = 1;
             g_script.param1 = i;
             play_family_sound(family, -0x3f);

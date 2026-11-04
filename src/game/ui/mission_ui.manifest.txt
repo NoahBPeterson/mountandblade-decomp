@@ -21,7 +21,7 @@
 ../src/game/ui/mission_ui.cpp  ?set_offset@MissionUi@@UAEXPAM@Z  00488a10  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set148@MissionUi@@UAEXPAM@Z  00488a40  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?or148@MissionUi@@UAEXPAM@Z  00488a70  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?run@MissionUi@@UAEXHH@Z  00488aa0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?set_mesh@MissionUi@@UAEXHPAUmesh@rgl@@@Z  00488aa0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_track@MissionUi@@UAEXHPAUmesh@rgl@@@Z  00488ad0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_color@MissionUi@@UAEXPAI@Z  00488b10  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_target@MissionUi@@UAEXPAX@Z  00488b20  /O2 /MT /Gy /TP

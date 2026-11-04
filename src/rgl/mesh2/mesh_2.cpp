@@ -51,7 +51,7 @@ void C4c3050::scale_3(float)
     int found = -1;
     for (int i = 0; i < count; i++) {
         if (rows[i]) {
-            if (((Widget*)(void*)rows[i])->changed(0x10000))
+            if (((MissionUi*)(void*)rows[i])->clear_mask(0x10000))
                 found = i;
         }
     }

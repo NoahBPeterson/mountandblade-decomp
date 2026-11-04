@@ -294,12 +294,12 @@ void C4c31c0::slot_empty_2()
         tstring h("save_b_done_h");
         tstring caption("ui_save");
         float f = config_value(config_index(h));
-        btn_done = (Widget*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_done = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     } else {
         tstring h("save_b_done_h");
         tstring caption("ui_restore");
         float f = config_value(config_index(h));
-        btn_done = (Widget*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_done = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh((MissionUi*)(void*)btn_done, "save_b_done");
     vt(btn_done)->d46();
@@ -308,14 +308,14 @@ void C4c31c0::slot_empty_2()
         tstring h("save_b_cancel_h");
         tstring caption("ui_cancel");
         float f = config_value(config_index(h));
-        btn_cancel = (Widget*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_cancel = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh((MissionUi*)(void*)btn_cancel, "save_b_cancel");
     {
         tstring h("save_b_delete_h");
         tstring caption("ui_delete");
         float f = config_value(config_index(h));
-        btn_delete = (Widget*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_delete = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh((MissionUi*)(void*)btn_delete, "save_b_delete");
     vt(btn_delete)->d46();
@@ -623,7 +623,7 @@ static __forceinline float config_float(const char* name)
 
 // @ 0x4e55f0
 // `slot` is the slot index (the geometry divides it by three: three columns); `out` receives the button
-void C4c31c0::slot_button(ContainerBase* parent, int slot, Widget** out)
+void C4c31c0::slot_button(ContainerBase* parent, int slot, MissionUi** out)
 {
     float save_x = config_float("save_b_save_x");
     float save_y = config_float("save_b_save_y");
@@ -639,7 +639,7 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, Widget** out)
         tstring empty("");
         tstring key_down("restore_game_panel_down");
         tstring key("restore_game_panel");
-        *out = (Widget*)(void*)new_sized_button(parent, empty,
+        *out = (MissionUi*)(void*)new_sized_button(parent, empty,
                                 save_x + (float)col * save_x_a,
                                 save_y - (float)row * save_y_a,
                                 save_size_y, key, key_down,

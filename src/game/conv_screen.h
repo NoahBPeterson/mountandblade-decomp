@@ -18,7 +18,7 @@ struct base_mesh {
     void set_color(rgl::vector4 c);                      // 0x47af30 (four floats BY VALUE, ret 0x10: a pointer here left the caller's stack 12 bytes off)
 };
 
-struct Choices : WidgetObj {                             // vtable 0x5924a0, ctor 0x48ae20, 0x188 bytes
+struct Choices : MissionUi {                             // vtable 0x5924a0, ctor 0x48ae20, 0x188 bytes
     int f178;                                            // +0x178 (the allocator slot of the vec that the shared constructor 0x4931a0 leaves in front of the three zeroed words)
     int f17c, f180, f184;                                // +0x17c/+0x180/+0x184
 };
@@ -28,23 +28,23 @@ struct Rec1208 : head_rec {                              // vtable 0x595bfc, siz
     MapWidget* window;                                   // +0x30
     rgl::frustum fr;                                     // +0x34 (0x120 bytes, built by the creation function; canonical src/include/frustum.h)
     char pad154[0x174 - 0x154];
-    Widget* label_speaker;                               // +0x174
-    Widget* label_text;                                  // +0x178
-    Widget* input_label;                                 // +0x17c (the refresher called it body)
+    MissionUi* label_speaker;                               // +0x174
+    MissionUi* label_text;                                  // +0x178
+    MissionUi* input_label;                                 // +0x17c (the refresher called it body)
     TextBox* bar_reln;                                   // +0x180
     char pad184[0x188 - 0x184];
-    Widget* question;                                    // +0x188
+    MissionUi* question;                                    // +0x188
     Choices* choice;                                     // +0x18c
-    Widget* buttons[0x400];                              // +0x190
+    MissionUi* buttons[0x400];                              // +0x190
     int n_lines;                                         // +0x1190
     rgl::matrix world;                                   // +0x1194 (camera world transform, 0x40)
     int quest_mode;                                      // +0x11d4
     char started;                                        // +0x11d8 (byte flag)
     char pad11d9[0x11e0 - 0x11d9];
     TextBox* msg_window;                                 // +0x11e0
-    Widget* reln_pointer;                                // +0x11e4
-    Widget* relation_bar;                                // +0x11e8
-    Widget* lines[5];                                    // +0x11ec
+    MissionUi* reln_pointer;                                // +0x11e4
+    MissionUi* relation_bar;                                // +0x11e8
+    MissionUi* lines[5];                                    // +0x11ec
     int target;                                          // +0x1200
     int speaker_id;                                      // +0x1204
     Rec1208() { target = -1; }

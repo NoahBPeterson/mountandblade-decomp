@@ -8,7 +8,7 @@
 #ifndef MB_GAME_SCREEN_RECORDS_H
 #define MB_GAME_SCREEN_RECORDS_H
 #include "./head_rec.h"
-#include "./ui_widget.h"          // Widget: the engine's widget interface (the screens' buttons are reached through it)
+#include "./ui_widget.h"          // MissionUi: the engine's widget interface (the screens' buttons are reached through it)
 
 struct ContainerBase;
 struct MissionUi;
@@ -76,10 +76,10 @@ struct C4c31c0 : head_rec {
     SlotRec slots[9];          // +0x2c (stride 0x30)
     char pad1dc[4];
     ContainerBase* window;     // +0x1e0
-    Widget* labels[9];         // +0x1e4 one long button per slot
-    Widget* btn_done;          // +0x208
-    Widget* btn_cancel;        // +0x20c
-    Widget* btn_delete;        // +0x210
+    MissionUi* labels[9];         // +0x1e4 one long button per slot
+    MissionUi* btn_done;          // +0x208
+    MissionUi* btn_cancel;        // +0x20c
+    MissionUi* btn_delete;        // +0x210
     char pad214[4];
     int sel218, sel21c, sel220;    // +0x218 the selected slot (-1); +0x21c / +0x220 the confirmation answers (-1)
     tstring t224;              // +0x224 the typed save name
@@ -90,7 +90,7 @@ struct C4c31c0 : head_rec {
     virtual void scale_3(float);      // slot 3  0x4ea290 (char_sheet/save_panel.cpp)
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     void list_saves();                // 0x4e5270
-    void slot_button(ContainerBase* parent, int slot, Widget** out);   // 0x4e55f0 (ret 0xc)
+    void slot_button(ContainerBase* parent, int slot, MissionUi** out);   // 0x4e55f0 (ret 0xc)
     void select(int idx);             // 0x4ea850
 };
 
@@ -153,7 +153,6 @@ void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 #define MB_ZERO_TAIL(T) static void* operator new(size_t n) \
     { char* p = (char*)::operator new(n); if (p && n > 0x2c) memset(p + 0x2c, 0, n - 0x2c); return p; }
 
-struct Widget;
 struct MissionItem;
 struct RecCam { char body[0x2dc]; RecCam(); };   // ctor 0x4c49f0
 struct RecMenu { char body[0x98]; RecMenu(); };   // ctor 0x4c2c50
@@ -413,25 +412,24 @@ struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
 struct Slot20 {              // 0x20 bytes
     int a, b, c, d, e, f, g, h;
 };
-struct Widget;
 struct XWidget;
 struct TargetW;
 struct C4c3160 : head_rec {  // vtable 0x595870 (the party exchange window: slot 2 party_screen.cpp 0x50xxxx, slot 3 map_editor/exchange_screens.cpp 0x531800)
     char pad2c[4];
-    Widget* w30;                            // +0x30
-    Widget* w34;                            // +0x34
+    MissionUi* w30;                            // +0x30
+    MissionUi* w34;                            // +0x34
     char pad38[0x44 - 0x38];
-    Widget* w44;                            // +0x44
-    Widget* w48;                            // +0x48
-    Widget* w4c;                            // +0x4c
+    MissionUi* w44;                            // +0x44
+    MissionUi* w48;                            // +0x48
+    MissionUi* w4c;                            // +0x4c
     XWidget* w50;                           // +0x50
-    Widget* w54;                            // +0x54
-    Widget* w58;                            // +0x58
+    MissionUi* w54;                            // +0x54
+    MissionUi* w58;                            // +0x58
     char pad5c[0x90 - 0x5c];
     TargetW* f90;                           // +0x90
     TargetW* f94;                           // +0x94
     char pad98[0xb8 - 0x98];
-    Widget* grid[2][2][64];                 // +0xb8
+    MissionUi* grid[2][2][64];                 // +0xb8
     char pad4b8[0x4c8 - 0x4b8];
     int sel_slots[256];                     // +0x4c8
     int f8c8;                               // +0x8c8

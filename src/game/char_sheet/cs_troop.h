@@ -17,8 +17,7 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);    // 0x536f8f
 #include "../tstring.h"
 
 // ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
-typedef Widget UiVt;                    // the slice's name for it
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // the item kind table (0x5e29d0, 0x238-byte records): include/item_kind.h
 #include "../../include/item_kind.h"

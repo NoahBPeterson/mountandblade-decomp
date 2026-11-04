@@ -6,7 +6,7 @@
 // so the slices' "Menu", "Mission", "Screen", "GameObj" were several different classes. Canonical classes used:
 //   GameData (src/include/game_data.h; the offsets it lacks are read through GI/GF below), Party / PartyMgr / Stack
 //   (src/include/party.h), Troop (src/include/troop.h), MsgLog (src/include/msg_log.h), and from
-//   src/game/options_panel/hud.h: Widget (used() = vtable +0x44, set_key_flags() = +0x48), ValueSource, MainMenu,
+//   src/game/options_panel/hud.h: MissionUi (used() = vtable +0x44, set_key_flags() = +0x48), ValueSource, MainMenu,
 //   MissionSource (the item source embedded at +0x30 of the screens).
 // The classes below that are views of those (PartyX, PartyMgrX, GameDataX) only add member declarations of this region.
 #ifndef GAME_MAP_EDITOR_PARTY_SCREEN_H
@@ -133,15 +133,15 @@ struct TargetW {                            // a scroll target (a list widget): 
     char pad2[0x484 - 0xf8];
     ValueSource* src;                       // +0x484 (hud.h: the value source behind the widget)
 };
-struct XWidget : Widget {                   // a window button: the flag byte at +0x104 (0x531800)
-    char pad[0x104 - sizeof(Widget)];
+struct XWidget : MissionUi {                   // a window button: the flag byte at +0x104 (0x531800)
+    char pad[0x104 - sizeof(MissionUi)];
     char f104;                              // +0x104
 };
 
 typedef C4c3160 XferWin;       // the party exchange window: the record of rgl/mesh2/rec_tables.h (slot 3 is update 0x531800)
 
 // ---- the screens with raw layouts -------------------------------------------------------------------------------------
-struct ChoiceList : Widget {                // a choice list (was ListWidget; not agent5's 0x4a8-byte ListWidget, ctor 0x49deb0, whose +0x188 holds a scene): current index +0x1cc into the arrays at +0x19c / +0x1ac
+struct ChoiceList : MissionUi {                // a choice list (was ListWidget; not agent5's 0x4a8-byte ListWidget, ctor 0x49deb0, whose +0x188 holds a scene): current index +0x1cc into the arrays at +0x19c / +0x1ac
     __declspec(noinline) void get3(int* a, int* b, int* c);      // 0x533a60 (ret 0xc)
 };
 

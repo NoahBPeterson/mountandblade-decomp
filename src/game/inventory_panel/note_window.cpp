@@ -33,37 +33,37 @@ extern "C" double atof(const char* s);                       // 0x537352
 // widgets -- only the vtable slots touched by this function are named
 // ---------------------------------------------------------------------------
 
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../res_mgr.h"                   // res_manager(): the resource manager 0x5d6fa0 (get_object 0x419540)
 #include "../../rgl/mesh_x.h"             // mesh_x::clone 0x41c6d0
 #include "../ui/ui_widgets.h"             // UiD (scroll bar slider, vtable 0x592140): make_scrollbar 0x4f6160 returns one
 
 // (each constructor on its own line inside its class: the resolution tools read a '// 0x' annotation in the class's scope)
-struct NotePanel : Widget {
+struct NotePanel : MissionUi {
     char pad[0x190 - 4];
     NotePanel();                        // 0x4931a0
 };
-struct UiText2 : Widget {
+struct UiText2 : MissionUi {
     char pad[0x178 - 4];
     UiText2();                          // 0x48ae20
 };
-struct UiList : Widget {
+struct UiList : MissionUi {
     char pad[0x1d0 - 4];
     UiList();                           // 0x4fd150 (MWidget::MWidget, src/game/agent5/agent_hud.cpp)
 };
-struct UiPanel2 : Widget {
+struct UiPanel2 : MissionUi {
     char pad[0x188 - 4];
     UiPanel2();                         // 0x50d0b0
 };
 
 // widget helper functions
-extern "C" void  label_refresh(Widget* w, tstring name);                       // 0x4e4c70
-extern "C" Widget* make_short_button(Widget* parent, tstring* text,
+extern "C" void  label_refresh(MissionUi* w, tstring name);                       // 0x4e4c70
+extern "C" MissionUi* make_short_button(MissionUi* parent, tstring* text,
                                      float x, float y, float h);            // 0x4e5570
-extern "C" Widget* make_map_button(Widget* parent, tstring* text,
+extern "C" MissionUi* make_map_button(MissionUi* parent, tstring* text,
                                    float x, float y, float h);              // 0x4dcbd0
-extern "C" UiD* make_scrollbar(Widget* parent, const tstring* name);           // 0x4f6160
-extern "C" Widget* make_scroll2(Widget* parent, const tstring* name,
+extern "C" UiD* make_scrollbar(MissionUi* parent, const tstring* name);           // 0x4f6160
+extern "C" MissionUi* make_scroll2(MissionUi* parent, const tstring* name,
                                 UiD* other);                            // 0x4f62f0
 
 #include "../party/widget_ops.h"            // WidgetOps: the one definition (relayout 0x488d50, visible 0x50cc60)
@@ -222,25 +222,25 @@ struct note_window {
     char pad00[0x18];
     int  menu_id;              // +0x18
     char pad1c[0x2c - 0x1c];
-    Widget* panel;             // +0x2c
-    Widget* picture;           // +0x30
-    Widget* report;            // +0x34
-    Widget* title;             // +0x38
-    Widget* links;             // +0x3c
-    Widget* keys_panel;        // +0x40
-    Widget* data_panel;        // +0x44
-    Widget* keys_scroll;       // +0x48
-    Widget* data_scroll;       // +0x4c
-    Widget* btn_game_log;      // +0x50
-    Widget* btn_recent;        // +0x54
-    Widget* btn_troops;        // +0x58
-    Widget* btn_quests;        // +0x5c
-    Widget* btn_factions;      // +0x60
-    Widget* btn_locations;     // +0x64
-    Widget* btn_return;        // +0x68
-    Widget* btn_back;          // +0x6c
-    Widget* btn_forward;       // +0x70
-    Widget* btn_map;           // +0x74
+    MissionUi* panel;             // +0x2c
+    MissionUi* picture;           // +0x30
+    MissionUi* report;            // +0x34
+    MissionUi* title;             // +0x38
+    MissionUi* links;             // +0x3c
+    MissionUi* keys_panel;        // +0x40
+    MissionUi* data_panel;        // +0x44
+    MissionUi* keys_scroll;       // +0x48
+    MissionUi* data_scroll;       // +0x4c
+    MissionUi* btn_game_log;      // +0x50
+    MissionUi* btn_recent;        // +0x54
+    MissionUi* btn_troops;        // +0x58
+    MissionUi* btn_quests;        // +0x5c
+    MissionUi* btn_factions;      // +0x60
+    MissionUi* btn_locations;     // +0x64
+    MissionUi* btn_return;        // +0x68
+    MissionUi* btn_back;          // +0x6c
+    MissionUi* btn_forward;       // +0x70
+    MissionUi* btn_map;           // +0x74
     char   pad78[4];
     int*   back_beg;           // +0x7c
     int*   back_end;           // +0x80
@@ -793,13 +793,13 @@ void note_window::build(int page_, int arg_)
         float szT[2];
         this->links->get_text(&t);
         if (t.equals(*tr_obj("ui_click_button_to_view_note"))) {
-            this->links->set_text(szT, *tr_obj("ui_this_page_contains_no_information"));
+            this->links->set_text(szT, &(*tr_obj("ui_this_page_contains_no_information")));
             this->links->get_text(&t);
         }
         t.append(tstring("\n\n"));
         t.append(*tr_obj("ui_other_pages_that_link_here"));
         t.append(other);
-        float* r = (float*)this->links->set_text(szT, t);
+        float* r = (float*)this->links->set_text(szT, &(t));
         x_cur = r[1];
     }
 
@@ -814,7 +814,7 @@ void note_window::build(int page_, int arg_)
         float v[2];
         v[0] = fld(keys, 0xf0);
         v[1] = y_cur + fld(keys, 0xf4);
-        keys->set_scale(v);
+        keys->set_xy(v);
     }
 
     UiPanel2* data = new UiPanel2;
@@ -831,14 +831,14 @@ void note_window::build(int page_, int arg_)
         float v[2];
         v[0] = (fld(data, 0xf0) - w) * 0.5f - a[0];       // centred across the panel (0x50c568)
         v[1] = x_cur - b[1];
-        this->picture->set_pos(v);
+        this->picture->move_a((float*)v);
     }
 
     {
         float v[2];
         v[0] = fld(data, 0xf0);
         v[1] = x_cur + fld(data, 0xf4);
-        data->set_scale(v);
+        data->set_xy(v);
     }
 
     this->keys_panel->add_child(this->report);
@@ -864,12 +864,12 @@ void note_window::build(int page_, int arg_)
             h = 0.0f;
         v[0] = fld(this->keys_scroll, 0xe0);
         v[1] = h + fld(this->keys_scroll, 0xe4);
-        this->keys_scroll->set_pos(v);
+        this->keys_scroll->move_a((float*)v);
 
         v[1] = (y_cur <= fld(this->keys_scroll, 0xf4)) ? y_cur
                                                        : fld(this->keys_scroll, 0xf4);
         v[0] = fld(this->keys_scroll, 0xf0);
-        this->keys_scroll->set_scale(v);
+        this->keys_scroll->set_xy(v);
         ((MissionPanel*)this->keys_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->keys_scroll);
     }
@@ -898,12 +898,12 @@ void note_window::build(int page_, int arg_)
             h = 0.0f;
         v[0] = fld(this->data_scroll, 0xe0);
         v[1] = h + fld(this->data_scroll, 0xe4);
-        this->data_scroll->set_pos(v);
+        this->data_scroll->move_a((float*)v);
 
         v[1] = (x_cur <= fld(this->data_scroll, 0xf4)) ? x_cur
                                                        : fld(this->data_scroll, 0xf4);
         v[0] = fld(this->data_scroll, 0xf0);
-        this->data_scroll->set_scale(v);
+        this->data_scroll->set_xy(v);
         ((MissionPanel*)this->data_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->data_scroll);
     }
@@ -939,20 +939,20 @@ void note_window::build(int page_, int arg_)
     // ---- highlight the active page button and disable it (0x50cbb8: slot 0xb8) ----
     switch (page_) {
     case 1:
-        this->btn_troops->activate(1);
-        this->btn_troops->disable();
+        this->btn_troops->set15c(1);
+        this->btn_troops->flag2_set();
         break;
     case 2:
-        this->btn_factions->activate(1);
-        this->btn_factions->disable();
+        this->btn_factions->set15c(1);
+        this->btn_factions->flag2_set();
         break;
     case 3:
-        this->btn_locations->activate(1);
-        this->btn_locations->disable();
+        this->btn_locations->set15c(1);
+        this->btn_locations->flag2_set();
         break;
     case 4:
-        this->btn_quests->activate(1);
-        this->btn_quests->disable();
+        this->btn_quests->set15c(1);
+        this->btn_quests->flag2_set();
         break;
     default:
         break;

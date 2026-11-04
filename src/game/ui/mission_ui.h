@@ -61,7 +61,7 @@ struct MissionUi {
     virtual void set_offset(float* p);                          // +0x70 0x488a10 (0x48b3a0)
     virtual void set148(float* p);                              // +0x74 0x488a40
     virtual void or148(float* p);                               // +0x78 0x488a70
-    virtual void run(int a, int b);                             // +0x7c 0x488aa0
+    virtual void set_mesh(int slot, rgl::mesh* m);                           // +0x7c 0x488aa0
     virtual void set_track(int i, rgl::mesh* p);                // +0x80 0x488ad0 (0x488aa0)
     virtual void normalize_uv(rgl::mesh* src);   // +0x84 0x495fa0 (world_data/mesh_hud.cpp: rescales src's uv records into the rectangle screen[] holds; 0x488aa0)
     virtual void on_track_set(void* a);              // +0x88 `ret 4` (0x408030) (0x488ad0)

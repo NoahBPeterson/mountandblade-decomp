@@ -49,7 +49,7 @@ void Rec118::scale_3(float)
 {
     int idx = -1;
     for (int i = 0; i < count; i++)
-        if (((Widget*)(void*)row[i])->changed(0x10000))
+        if (((MissionUi*)(void*)row[i])->clear_mask(0x10000))
             idx = i;
     if (idx != -1)
     {
@@ -118,13 +118,13 @@ void Rec34::scale_3(float)
     if (w04 == 0)
     {
         char b;
-        if (((Widget*)(void*)f30)->changed(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
+        if (((MissionUi*)(void*)f30)->clear_mask(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
             g_map_flags.commit((char*)&b);
     }
     else
     {
         char b;
-        if (((Widget*)(void*)f30)->changed(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
+        if (((MissionUi*)(void*)f30)->clear_mask(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
             g_map_flags.commit((char*)&b);
     }
 }
@@ -210,13 +210,13 @@ after_scroll:
     for (r = 0; r < rows; r++) {
         for (c = 0; c < 2; c++) {
             for (i = 0; i < 64; i++) {
-                if (grid[r][c][i]->changed(0x10000))
+                if (grid[r][c][i]->clear_mask(0x10000))
                     set_selection(r, c, i);
             }
         }
     }
 
-    if (w50->changed(0x10000)) {
+    if (w50->clear_mask(0x10000)) {
         slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
         pid = f8dc != 0 ? w10 : g_game->f78;
         cmp_party = f8dc != 0 ? g_game->f78 : w10;
@@ -258,8 +258,8 @@ after_scroll:
         ((PartyScreen*)(void*)this)->refresh_morale();
     }
 
-    c48 = w48->changed(0x10000);
-    c4c = w4c->changed(0x10000);
+    c48 = w48->clear_mask(0x10000);
+    c4c = w4c->clear_mask(0x10000);
     if (c48 || c4c) {
         slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
         pid = f8dc != 0 ? w10 : g_game->f78;
@@ -388,8 +388,8 @@ tail:
         ((PartyScreen*)(void*)this)->refresh_morale();
     }
 
-    c54 = w54->changed(0x10000);
-    c58 = w58->changed(0x10000);
+    c54 = w54->clear_mask(0x10000);
+    c58 = w58->clear_mask(0x10000);
     if (c54 || c58) {
         int d = c54 ? -1 : 1;
         swap_rows(d);
@@ -398,8 +398,8 @@ tail:
         ((PartyScreen*)(void*)this)->refresh_selection();
     }
 
-    if (!w30->changed(0x10000) && (g_keyboard.down[0x1] != 0 || g_keyboard.prev[0x1] == 0)) {
-        if (w34->changed(0x10000)) {
+    if (!w30->clear_mask(0x10000) && (g_keyboard.down[0x1] != 0 || g_keyboard.prev[0x1] == 0)) {
+        if (w34->clear_mask(0x10000)) {
             apply(0);
             apply(1);
             clear_selection();
@@ -409,7 +409,7 @@ tail:
             ((PartyScreen*)(void*)this)->refresh_morale();
             return;
         }
-        if (!w44->changed(0x10000))
+        if (!w44->clear_mask(0x10000))
             return;                             // nothing pressed: stay on the screen (0x532384 -> the epilogue)
         if (f8e4 < 0)
             return;
@@ -440,8 +440,8 @@ void C4c3160::clear_selection()
 {
     if (f8e4 != -1) {
         int idx = (f8e0 + f8dc * 2) * 0x40 + f8e4;
-        Widget* w = ((Widget**)grid)[idx];
-        w->activate(0);
+        MissionUi* w = ((MissionUi**)grid)[idx];
+        w->set15c(0);
     }
     f8e4 = -1;
     f8e0 = -1;
@@ -655,8 +655,8 @@ void C4c3160::set_selection(int a, int b, int c)
     f8e0 = b;
     f8e4 = c;
     if (c != -1) {
-        Widget* w = ((Widget**)grid)[(b + a * 2) * 0x40 + c];
-        w->activate(1);
+        MissionUi* w = ((MissionUi**)grid)[(b + a * 2) * 0x40 + c];
+        w->set15c(1);
     }
     ((PartyScreen*)(void*)this)->refresh_selection();
 }
@@ -772,7 +772,7 @@ void EventScreen::on_event(int code)
                 int i = 0;
                 ChoiceList** ws = (ChoiceList**)((char*)this + 0x60);
                 do {
-                    if (ws[i]->changed(0x10000))
+                    if (ws[i]->clear_mask(0x10000))
                         local = i;
                     i++;
                 } while (i < F(this, 0xa0, int));
@@ -918,9 +918,9 @@ dispatch:
 // @ 0x5337a0
 void Rec58::scale_3(float)
 {
-    if (W(this, 0x40)->changed(0x10000))
+    if (W(this, 0x40)->clear_mask(0x10000))
         ((LogScreen*)(void*)this)->build(1 != 0);
-    if (W(this, 0x44)->changed(0x10000))
+    if (W(this, 0x44)->clear_mask(0x10000))
         ((LogScreen*)(void*)this)->build(0 != 0);
 
     if (g_mission_clock != 0) {
@@ -930,7 +930,7 @@ void Rec58::scale_3(float)
         vs2->set_key_flags(0x10000);
     }
 
-    if (W(this, 0x30)->changed(0x10000)) {
+    if (W(this, 0x30)->clear_mask(0x10000)) {
         int a, b, c;
         W(this, 0x30)->get3(&a, &b, &c);
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
@@ -939,35 +939,35 @@ void Rec58::scale_3(float)
         g_main_menu.set_state(0x1a);
         return;
     }
-    if (W(this, 0x48)->changed(0x10000)) {
+    if (W(this, 0x48)->clear_mask(0x10000)) {
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 1;
         GIF(0x13b0c, int) = 0;
         g_main_menu.set_state(0x1a);
         return;
     }
-    if (W(this, 0x4c)->changed(0x10000)) {
+    if (W(this, 0x4c)->clear_mask(0x10000)) {
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 3;
         GIF(0x13b0c, int) = 0;
         g_main_menu.set_state(0x1a);
         return;
     }
-    if (W(this, 0x50)->changed(0x10000)) {
+    if (W(this, 0x50)->clear_mask(0x10000)) {
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 2;
         GIF(0x13b0c, int) = 0;
         g_main_menu.set_state(0x1a);
         return;
     }
-    if (W(this, 0x54)->changed(0x10000)) {
+    if (W(this, 0x54)->clear_mask(0x10000)) {
         slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
         GIF(0x13b08, int) = 4;
         GIF(0x13b0c, int) = 0;
         g_main_menu.set_state(0x1a);
         return;
     }
-    if (W(this, 0x3c)->changed(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
+    if (W(this, 0x3c)->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
             g_map_flags.commit((char*)&slot);
@@ -1007,7 +1007,7 @@ void InputScreen::on_input(int code)
         }
     }
 
-    if (W(this, 0x6c)->changed(0x10000)) {
+    if (W(this, 0x6c)->clear_mask(0x10000)) {
         set_anim((TickScreen*)this, 0x88, 0x78);
         int a98 = F(this, 0x98, int);
         if (F(this, 0xa8, int) == a98) {
@@ -1017,7 +1017,7 @@ void InputScreen::on_input(int code)
         ((note_window*)(void*)this)->build(a98, F(this, 0x9c, int));
     }
 
-    if (W(this, 0x70)->changed(0x10000)) {
+    if (W(this, 0x70)->clear_mask(0x10000)) {
         set_anim((TickScreen*)this, 0x78, 0x88);
         int aa0 = F(this, 0xa0, int);
         if (F(this, 0xa8, int) == aa0) {
@@ -1027,7 +1027,7 @@ void InputScreen::on_input(int code)
         ((note_window*)(void*)this)->build(aa0, F(this, 0xa4, int));
     }
 
-    if (W(this, 0x34)->changed(0x10000)) {
+    if (W(this, 0x34)->clear_mask(0x10000)) {
         ChoiceList* w = W(this, 0x34);
         VecIter it;
         int* second;
@@ -1053,7 +1053,7 @@ void InputScreen::on_input(int code)
         ((note_window*)(void*)this)->build(iv2, iv1);
     }
 
-    if (W(this, 0x3c)->changed(0x10000)) {
+    if (W(this, 0x3c)->clear_mask(0x10000)) {
         ChoiceList* w = W(this, 0x3c);
         VecIter it;
         int* second;
@@ -1079,41 +1079,41 @@ void InputScreen::on_input(int code)
         ((note_window*)(void*)this)->build(iv2, iv1);
     }
 
-    if (W(this, 0x58)->changed(0x10000)) {
+    if (W(this, 0x58)->clear_mask(0x10000)) {
         clear_anim((TickScreen*)this);
         ((note_window*)(void*)this)->build(1, 0);
     }
-    if (W(this, 0x60)->changed(0x10000)) {
+    if (W(this, 0x60)->clear_mask(0x10000)) {
         clear_anim((TickScreen*)this);
         ((note_window*)(void*)this)->build(2, 0);
     }
-    if (W(this, 0x64)->changed(0x10000)) {
+    if (W(this, 0x64)->clear_mask(0x10000)) {
         clear_anim((TickScreen*)this);
         ((note_window*)(void*)this)->build(3, 0);
     }
-    if (W(this, 0x5c)->changed(0x10000)) {
+    if (W(this, 0x5c)->clear_mask(0x10000)) {
         clear_anim((TickScreen*)this);
         ((note_window*)(void*)this)->build(4, 0);
     }
-    if (W(this, 0x50)->changed(0x10000)) {
+    if (W(this, 0x50)->clear_mask(0x10000)) {
         slot_as<MenuItem>(25)->f18 = slot_as<MenuItem>(26)->f18;
         slot_as<MenuItem>(25)->f4 = 1;
         g_main_menu.set_state(0x19);
         return;
     }
-    if (W(this, 0x74)->changed(0x10000)) {
+    if (W(this, 0x74)->clear_mask(0x10000)) {
         GIF(0x88, char) = 1;
         GIF(0x84, int) = F(this, 0xac, int);
         g_main_menu.set_state(F(this, 0x18, int));
         return;
     }
-    if (W(this, 0x54)->changed(0x10000)) {
+    if (W(this, 0x54)->clear_mask(0x10000)) {
         slot_as<MenuItem>(25)->f18 = slot_as<MenuItem>(26)->f18;
         slot_as<MenuItem>(25)->f4 = 0;
         g_main_menu.set_state(0x19);
         return;
     }
-    if (W(this, 0x68)->changed(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
+    if (W(this, 0x68)->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
         if (F(this, 0x18, int) == 100) {
             char slot;
             g_map_flags.commit((char*)&slot);

@@ -52,47 +52,47 @@ void TerrainPage::update(float dt)
         goto done;
     }
     if (page_changed(terraingen_box)) {
-        terraingen_on = terraingen_box->get_value();
+        terraingen_on = terraingen_box->get15c();
         inline_enabled_text(terraingen_box);
         inline_refresh_hex();
         goto done;
     }
 
     if (page_changed(water_box)) {
-        water_on = water_box->get_value();
+        water_on = water_box->get15c();
         set_enabled_text(water_box);
         refresh_hex();
     } else if (page_changed(river_box)) {
-        river_on = river_box->get_value();
+        river_on = river_box->get15c();
         set_enabled_text(river_box);
         refresh_hex();
     } else if (page_changed(x_slider)) {
         float zero = 0.0f;
-        float v = x_slider->get_float() * 700.0f + 140.0f;
+        float v = x_slider->get168() * 700.0f + 140.0f;
         camera_x = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(y_slider)) {
         float zero = 0.0f;
-        float v = y_slider->get_float() * 700.0f + 140.0f;
+        float v = y_slider->get168() * 700.0f + 140.0f;
         camera_y = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(z_slider)) {
-        camera_z = z_slider->get_float() * g_0_01 + g_ten;
+        camera_z = z_slider->get168() * g_0_01 + g_ten;
         refresh_hex();
     } else if (page_changed(fog_slider)) {
-        fog = fog_slider->get_float();
+        fog = fog_slider->get168();
         refresh_hex();
     } else if (page_changed(level_slider)) {
-        water_level = (int)(level_slider->get_float() * 100.0f);   // fmul; call __ftol2 (0x535a64)
+        water_level = (int)(level_slider->get168() * 100.0f);   // fmul; call __ftol2 (0x535a64)
         refresh_hex();
     } else if (page_changed(height_slider)) {
-        water_height = height_slider->get_float();
+        water_height = height_slider->get168();
         refresh_hex();
     } else if (page_changed(type_box)) {
-        terrain_type = g_region_types[type_box->get_value()];
+        terrain_type = g_region_types[type_box->get15c()];
         refresh_hex();
     } else if (page_changed(size_box)) {
-        map_size = size_box->get_value();
+        map_size = size_box->get15c();
         refresh_hex();
     } else if (page_changed(copy_btn)) {
         copy_clipboard();

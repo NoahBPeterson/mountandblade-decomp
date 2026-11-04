@@ -9,7 +9,6 @@
 #define GAME_GUI_MGR_H
 #include "tstring.h"
 
-struct Widget;
 struct GuiManager {
     char pad00[0x10];
     void* ui_active;                            // +0x10 the widget being dragged (gui_manager::ui_active, g_ui_active 0x5d7090)
@@ -18,7 +17,7 @@ struct GuiManager {
     void add_root(void* window);                // 0x49b120 (ret 4: the address of a pointer to the window)
     void process(float dt);                       // 0x4ebfd0
     void add(tstring s, int type);          // 0x452c00 (tstring by value, then the type)
-    void add(Widget* w);                 // 0x50d0e0
+    void add(MissionUi* w);                 // 0x50d0e0
     void build_frames();                        // 0x50f930
     void build_quad();                          // 0x50f8a0
 };

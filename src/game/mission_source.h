@@ -2,7 +2,7 @@
 // char_sheet/save_game): an STL vector of MissionItem* at +0x4/+0x8/+0xc, the item family at +0x10 (its sound is the
 // family-th ItemSound), the current clock slot at +0x18 and the 64-bit tick the slot was entered at (+0x20/+0x24).
 // ONE definition for options_panel/hud.h (the definition of pick 0x4d5410), map_editor/exchange_screens and
-// char_sheet/save_game.h (a caller of pick). MissionItem (a Widget with the offset vector at +0xe0) is only pointed to here.
+// char_sheet/save_game.h (a caller of pick). MissionItem (a MissionUi with the offset vector at +0xe0) is only pointed to here.
 #ifndef MB_GAME_MISSION_SOURCE_H
 #define MB_GAME_MISSION_SOURCE_H
 

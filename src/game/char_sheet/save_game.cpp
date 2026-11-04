@@ -10,31 +10,31 @@
 #include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-#define W(x) ((Widget*)(void*)(x))
+#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4e87d0    ItemRec2::scale_3(float)
 void ItemRec2::scale_3(float arg)
 {
     ((MissionSource*)&owned)->pick((int*)&arg);
     bool save = false;
-    if (!W(row1)->changed(0x10000)) {
-        if (row5 == 0 || !W(row5)->changed(0x10000)) {
-            if (W(row2)->changed(0x10000)) {
+    if (!W(row1)->clear_mask(0x10000)) {
+        if (row5 == 0 || !W(row5)->clear_mask(0x10000)) {
+            if (W(row2)->clear_mask(0x10000)) {
                 *(int*)(slot_as<char>(18) + 0x18) = 5;
                 g_main_menu.set_state(0x12);
                 return;
             }
-            if (row3 != 0 && W(row3)->changed(0x10000)) {
+            if (row3 != 0 && W(row3)->clear_mask(0x10000)) {
                 save_game(-1, 0);
                 g_msglog.add(*g_strtable.lookup(tstring("ui_game_saved")), -1);
                 g_main_menu.set_state(w18);
                 return;
             }
-            if (row4 != 0 && W(row4)->changed(0x10000)) {
+            if (row4 != 0 && W(row4)->clear_mask(0x10000)) {
                 *(int*)(slot_as<char>(21) + 0x18) = 5;
                 g_main_menu.set_state(0x15);
                 return;
             }
-            if (W(row0)->changed(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
+            if (W(row0)->clear_mask(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
                 g_main_menu.set_state(w18);
                 return;
             }

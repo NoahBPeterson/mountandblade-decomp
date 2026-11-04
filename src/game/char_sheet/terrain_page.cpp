@@ -12,13 +12,13 @@ unsigned g_8ee41e8 = (unsigned)g_bit[4];                       // 0x8ee41e8
 // @ 0x4f2730
 void TerrainPage::update()
 {
-    water_box->activate(water_on);
+    water_box->set15c(water_on);
     set_enabled_text(water_box);
-    river_box->activate(river_on);
+    river_box->set15c(river_on);
     set_enabled_text(river_box);
-    terrain_box->activate(terrain_on);
+    terrain_box->set15c(terrain_on);
     set_enabled_text(terrain_box);
-    terraingen_box->activate(terraingen_on);
+    terraingen_box->set15c(terraingen_on);
     set_enabled_text(terraingen_box);
 
     int mode = -1;
@@ -29,15 +29,15 @@ void TerrainPage::update()
             mode = i;
     }
     if (mode >= 0)
-        type_box->activate(mode);
-    size_box->activate(map_size);
+        type_box->set15c(mode);
+    size_box->set15c(map_size);
 
-    x_slider->set_value((camera_x - 140.0f) * 0.0014285714f);
-    y_slider->set_value((camera_y - 140.0f) * 0.0014285714f);
-    z_slider->set_value((camera_z - 10.0f) * 0.01f);
-    fog_slider->set_value(fog);
-    level_slider->set_value((float)water_level * 0.01f);
-    height_slider->set_value(water_height);
+    x_slider->set168((camera_x - 140.0f) * 0.0014285714f);
+    y_slider->set168((camera_y - 140.0f) * 0.0014285714f);
+    z_slider->set168((camera_z - 10.0f) * 0.01f);
+    fog_slider->set168(fog);
+    level_slider->set168((float)water_level * 0.01f);
+    height_slider->set168(water_height);
 
     set_hex3_text(0);
     set_hex3_text(1);
@@ -48,12 +48,12 @@ void TerrainPage::update()
 struct tstr_c : tstring { tstr_c(const char* s) : tstring(s) {} };      // 0x42bbe0
 
 // @ 0x4f28a0
-void TerrainPage::set_enabled_text(Widget* w)
+void TerrainPage::set_enabled_text(MissionUi* w)
 {
-    if (w->get_value())
-        { char r[8]; w->set_text(r, tstr_c("Enabled")); }
+    if (w->get15c())
+        { char r[8]; w->set_text((float*)r, &(tstr_c("Enabled"))); }
     else
-        { char r[8]; w->set_text(r, tstr_c("Disabled")); }
+        { char r[8]; w->set_text((float*)r, &(tstr_c("Disabled"))); }
 }
 
 // @ 0x4f28f0
@@ -62,7 +62,7 @@ void TerrainPage::set_hex3_text(int i)
     char buf[512];
     sprintf(buf, "%d", layer_bits[i]);
     tstring text(buf);
-    { char r[8]; bit_fields[i]->set_text(r, text); }
+    { char r[8]; bit_fields[i]->set_text((float*)r, &(text)); }
 }
 
 // @ 0x4f2960
@@ -71,7 +71,7 @@ void TerrainPage::refresh_hex()
     sync_bits();
     tstring text;
     g_terrain.build_hex_text(text);            // 0x4f29b0, this = the bit-word object at 0xa76630
-    { char r[8]; hexbox->set_text(r, text); }
+    { char r[8]; hexbox->set_text((float*)r, &(text)); }
 }
 
 // @ 0x4f29b0

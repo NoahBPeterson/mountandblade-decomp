@@ -37,8 +37,8 @@ struct world {                                                      // the scene
 };
 }
 
-// ---- widgets: the constructors that the char_sheet views (Widget / WidgetObj / Overlay / TextBox) stand for -------------------
-// ui_widget.h's Widget() and overlay.h's Overlay() are declarations of the constructors that the definitions name MissionUi::MissionUi
+// ---- widgets: the constructors that the char_sheet views (MissionUi / MissionUi / Overlay / TextBox) stand for -------------------
+// ui_widget.h's MissionUi() and overlay.h's Overlay() are declarations of the constructors that the definitions name MissionUi::MissionUi
 // (0x48ae20) and ContainerW::construct (0x4931a0, which stores the container vptr 0x5924a0, clears +0x17c..+0x184 and returns this). An
 // object is built as the original does: operator new, that constructor in place, then the final vptr when the kind has its own
 // (Overlay 0x592848, TextBox 0x597050).

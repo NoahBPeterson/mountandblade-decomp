@@ -56,7 +56,7 @@ inline void play_family_sound(int family, int id)
 // ---- widgets -------------------------------------------------------------------------------------------
 // control widget: "activate" at vtable +0x2c, "value" at +0x30, "float" at +0x38, "used" at +0x44,
 // "key flags" at +0x48, "kind" at +0xc0 (slots cross-checked with s004cf7b0 / s004dd830).
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../ui_globals.h"      // UI / core globals
 
 // the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
@@ -90,10 +90,10 @@ struct ValueSource {
 // value source reached through an item pointer (Hud+0x30 sources): only the vtable slots matter
 typedef ValueSource ValueWidget;
 
-// an item record: a Widget with the offset vector at +0xe0 (x0,y0,w,h), the mesh animation nodes at
+// an item record: a MissionUi with the offset vector at +0xe0 (x0,y0,w,h), the mesh animation nodes at
 // +0x108, a name at +0x128 (string) and two item flags at +0x180/+0x184.
-struct MissionItem : Widget {
-    char         pade0[0xe0 - sizeof(Widget)];
+struct MissionItem : MissionUi {
+    char         pade0[0xe0 - sizeof(MissionUi)];
     float        org[2];                            // +0xe0 x, +0xe4 y
     char         pade8[0xf0 - 0xe8];
     float        ext[4];                            // +0xf0 x far, +0xf4 y far, +0xf8 x near, +0xfc y near (offsets

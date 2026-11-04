@@ -43,7 +43,7 @@ void Rec1208::slot_empty_2()
     }
     push_back_inline(talk->children, bar);
 
-    Widget* line = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* line = (MissionUi*)new_widget_base(0x178);
     label_text = line;
     {
         tstring name("conv_t_partner");
@@ -51,7 +51,7 @@ void Rec1208::slot_empty_2()
     }
     bar->add_child(line);
 
-    Widget* speaker = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* speaker = (MissionUi*)new_widget_base(0x178);
     label_speaker = speaker;
     {
         tstring name("conv_t_utterer_name");
@@ -77,13 +77,13 @@ void Rec1208::slot_empty_2()
     }
 
     tstring scroll_name("conv_s_choices");
-    Widget* reln = (Widget*)make_scrollbar(talk, &scroll_name);
+    MissionUi* reln = (MissionUi*)make_scrollbar(talk, &scroll_name);
     tstring list_name("conv_sc_choices");
-    question = (Widget*)make_editor_list(ch, &list_name, (int)reln);
+    question = (MissionUi*)make_editor_list(ch, &list_name, (int)reln);
     ((MissionPanel*)question)->draw();   // 0x488d50
     talk->add_child(question);
 
-    Widget* input = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* input = (MissionUi*)new_widget_base(0x178);
     input_label = input;
     {
         tstring name("conv_t_press_mouse");
@@ -111,13 +111,13 @@ void Rec1208::slot_empty_2()
     }
     msg->hide();
 
-    Widget* rbar = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* rbar = (MissionUi*)new_widget_base(0x178);
     relation_bar = rbar;
     {
         float pos[2] = { 0.01f, 0.02f };
-        rbar->set_pos(pos);
+        rbar->move_a((float*)pos);
         float sz[2] = { 0.23f, 0.02f };
-        rbar->set_scale(sz);
+        rbar->set_xy(sz);
     }
     {
         tstring name("talk_relation_bar");
@@ -125,13 +125,13 @@ void Rec1208::slot_empty_2()
     }
     msg->add_child(rbar);
 
-    Widget* rptr = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* rptr = (MissionUi*)new_widget_base(0x178);
     reln_pointer = rptr;
     {
         float pos[2] = { 0.1f, 0.02f };
-        rptr->set_pos(pos);
+        rptr->move_a((float*)pos);
         float sz[2] = { 0.03f, 0.03f };
-        rptr->set_scale(sz);
+        rptr->set_xy(sz);
     }
     {
         tstring name("talk_reln_pointer");
@@ -140,20 +140,20 @@ void Rec1208::slot_empty_2()
     msg->add_child(rptr);
 
     for (int i = 0; i < 5; i++) {
-        Widget* ln = (WidgetObj*)new_widget_base(0x178);
+        MissionUi* ln = (MissionUi*)new_widget_base(0x178);
         lines[i] = ln;
         float pos[2] = { 0.01f, 0.17f - (float)i * 0.03f };
-        ln->set_pos(pos);
+        ln->move_a((float*)pos);
         float sz[2] = { 0.23f, 0.03f };
-        ln->set_scale(sz);
+        ln->set_xy(sz);
         int flag = 4;
-        ln->set_flag(&flag);
+        ln->set148(&flag);
         float sc[2] = { 0.021f, 0.021f };
         ln->set_size(sc);
         msg->add_child(ln);
     }
 
-    talk->add_child((Widget*)msg);
+    talk->add_child((MissionUi*)msg);
 
     // the four trailing geometry settings use the explicit linear `equals` scan
     float sentence_x = scan_float("conv_sentence_x");
@@ -181,8 +181,8 @@ void Rec1208::slot_empty_2()
     {
         *(void**)((char*)vw + 0x178) = *(void**)g_mission;
         dword_copy(0x48, (char*)vw + 0x1ac, (char*)this + 0x34);
-        vw->set_pos(pos);
-        vw->set_scale(sz);
+        vw->move_a((float*)pos);
+        vw->set_xy(sz);
     }
 
     // the camera/frustum embedded in the screen at +0x34 (its +0xf8/+0x120 float4s and the projection fields)
@@ -217,7 +217,7 @@ void Rec1208::slot_empty_2()
     }
 
     // the talk panel's child vector gets the view window at +0x30 pushed directly (again via _Insert_n)
-    push_back_inline(talk->children, (Widget*)vw);
+    push_back_inline(talk->children, (MissionUi*)vw);
     started = 1;
 
     n_lines = 0;

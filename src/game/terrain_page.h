@@ -4,7 +4,7 @@
 // terrain_page (the page refresh, captions, hex text, bit sync: 0x4f2730..0x4f2ae0), terrain_page_update (0x4f2d70, 0x4f34c0)
 // and terrain_page_input (0x4f3570..0x4f3cf0). The three slices named the same offsets differently; the names below follow
 // the update/input slices (checkbox / camera spelling) and say which offsets the slices read in two ways.
-// Needs `tstring` (for Widget) declared by the includer.
+// Needs `tstring` (for MissionUi) declared by the includer.
 #ifndef MB_GAME_TERRAIN_PAGE_H
 #define MB_GAME_TERRAIN_PAGE_H
 #include "./ui_widget.h"
@@ -12,7 +12,7 @@
 struct World;                                               // the preview scene (each TU declares its own view of it)
 
 // One plain virtual in the class: a class with no virtuals at all makes cl 13.10 lay out every *later*
-// polymorphic class with a vfptr+vbtable-style prefix, so the Widget slots come out 0x20 too high.
+// polymorphic class with a vfptr+vbtable-style prefix, so the MissionUi slots come out 0x20 too high.
 struct Paged {
     virtual void page_update(float dt);                     // 0x4f2d70
 };
@@ -49,34 +49,34 @@ struct TerrainPage : Paged {
     float   zoom;                                           // +0x1a8  camera zoom (1.5..400.5)
     World*  world;                                          // +0x1ac  the scene object the page drives (terrain_page: obj1ac, used by 0x4f2d70 only)
     int     f1b0;                                           // +0x1b0  (unknown; 0x4f2960 reads the text box at +0x1b4)
-    Widget* hexbox;                                         // +0x1b4  the hex terrain text field
-    Widget* copy_btn;                                       // +0x1b8  copy terrain code
-    Widget* paste_btn;                                      // +0x1bc  paste terrain code
-    Widget* x_slider;                                       // +0x1c0  X position slider (a range widget: set_value is slot +0x34)
-    Widget* y_slider;                                       // +0x1c4  Y position slider
-    Widget* z_slider;                                       // +0x1c8  camera height slider
-    Widget* fog_slider;                                     // +0x1cc  fog slider
-    Widget* level_slider;                                   // +0x1d0  water level slider
-    Widget* height_slider;                                  // +0x1d4  water height slider
+    MissionUi* hexbox;                                         // +0x1b4  the hex terrain text field
+    MissionUi* copy_btn;                                       // +0x1b8  copy terrain code
+    MissionUi* paste_btn;                                      // +0x1bc  paste terrain code
+    MissionUi* x_slider;                                       // +0x1c0  X position slider (a range widget: set_value is slot +0x34)
+    MissionUi* y_slider;                                       // +0x1c4  Y position slider
+    MissionUi* z_slider;                                       // +0x1c8  camera height slider
+    MissionUi* fog_slider;                                     // +0x1cc  fog slider
+    MissionUi* level_slider;                                   // +0x1d0  water level slider
+    MissionUi* height_slider;                                  // +0x1d4  water height slider
     char    pad1d8[0x200 - 0x1d8];
-    Widget* bit_fields[3];                                  // +0x200  number fields of terrain slot 0..2 (num2)
-    Widget* layer_boxes[3];                                 // +0x20c  select checkbox / bit-field strip of terrain slot 0..2 (box3)
-    Widget* water_box;                                      // +0x218  Enable water (w218)
-    Widget* river_box;                                      // +0x21c  Enable river (w21c)
-    Widget* terrain_box;                                    // +0x220  Enable terrain (w220)
-    Widget* terraingen_box;                                 // +0x224  Enable terrain generation (w224)
-    Widget* type_box;                                       // +0x228  terrain type (w228)
-    Widget* size_box;                                       // +0x22c  terrain size (w22c)
-    Widget* regen_btn;                                      // +0x230  regenerate (w230)
-    Widget* back_btn;                                       // +0x234  back (w234)
+    MissionUi* bit_fields[3];                                  // +0x200  number fields of terrain slot 0..2 (num2)
+    MissionUi* layer_boxes[3];                                 // +0x20c  select checkbox / bit-field strip of terrain slot 0..2 (box3)
+    MissionUi* water_box;                                      // +0x218  Enable water (w218)
+    MissionUi* river_box;                                      // +0x21c  Enable river (w21c)
+    MissionUi* terrain_box;                                    // +0x220  Enable terrain (w220)
+    MissionUi* terraingen_box;                                 // +0x224  Enable terrain generation (w224)
+    MissionUi* type_box;                                       // +0x228  terrain type (w228)
+    MissionUi* size_box;                                       // +0x22c  terrain size (w22c)
+    MissionUi* regen_btn;                                      // +0x230  regenerate (w230)
+    MissionUi* back_btn;                                       // +0x234  back (w234)
     char    pad238[0x2c0 - 0x238];
 
     void update();                                          // 0x4f2730 (terrain_page: refresh every widget from the page fields, then the hex field)
     void update(float dt);                                  // 0x4f2d70 (terrain_page_update; the Paged slot-0 function)
-    __declspec(noinline) void set_enabled_text(Widget* w);                       // 0x4f28a0
+    __declspec(noinline) void set_enabled_text(MissionUi* w);                       // 0x4f28a0
     __declspec(noinline) void set_hex3_text(int i);                              // 0x4f28f0
     void refresh_hex();                                     // 0x4f2960
-    bool changed(Widget* w) { return w->changed(0x10000); } // +0x44 (the page's change flag)
+    bool changed(MissionUi* w) { return w->clear_mask(0x10000); } // +0x44 (the page's change flag)
     void sync_bits();                                       // 0x4f2ae0
     void copy_clipboard();                                  // 0x4f34c0
     void paste_clipboard();                                 // 0x4f3c30

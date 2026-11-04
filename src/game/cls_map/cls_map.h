@@ -78,9 +78,8 @@ struct EditMesh {
     bool on_selection_changed();   // 0x4d4b80
 };
 // the options-screen pages (options_panel/keys_page.cpp, quest_page.cpp, options_panel.cpp): the screens below are those objects; members only
-struct Widget;
 struct options_panel { void key_name(int which, tstring* out); void draw_faction_report(); };      // 0x4d7370 / 0x4d7e50
-struct KeysPage { void refresh(); void update_perf(); void set_enabled_text(Widget* w); };        // 0x4d7120 / 0x4d6b80 / 0x4d6dd0
+struct KeysPage { void refresh(); void update_perf(); void set_enabled_text(MissionUi* w); };        // 0x4d7120 / 0x4d6b80 / 0x4d6dd0
 struct QuestPage {
     void update_difficulty();   // 0x4d6300
     void update_days();         // 0x4d6270

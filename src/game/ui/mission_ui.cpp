@@ -318,10 +318,10 @@ void MissionUi::or148(float* p)
 }
 
 // @ 0x488aa0
-void MissionUi::run(int a, int b)
+void MissionUi::set_mesh(int a, rgl::mesh* b)
 {
-    normalize_uv((rgl::mesh*)b);
-    set_track(a, (rgl::mesh*)b);
+    normalize_uv(b);
+    set_track(a, b);
 }
 
 // @ 0x488ad0

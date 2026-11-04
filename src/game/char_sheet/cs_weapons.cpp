@@ -41,7 +41,7 @@ void weapon_class_caption(int type, char* out)
 // ---- widgets: only what these two functions call ---------------------------------------------------------
 // font text object: set_text(out8, text) is vtable slot 41 (+0xa4; out8 = address of 8 uninitialised stack bytes in
 // the caller), show / show_selected are slots 44 / 45 (+0xb0 / +0xb4)
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- the character-sheet panel that posts the weapon rows ------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
@@ -60,7 +60,7 @@ void CharSheet::update_weapons()
         {
             tstring text(line);
             char unset[8];                          // the original passes the address of 8 uninitialised bytes
-            labels[i]->set_text(unset, text);
+            labels[i]->set_text((float*)unset, &(text));
         }
         if (c->prof_points > 0
             && (float)g_weapon_xp[g_game->skill_level(player, 0x1b)] >= c->f80[i]

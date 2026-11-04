@@ -15,21 +15,21 @@ template <class T> struct vec {
     T* last;
     T* end;
     // (no out-of-line push_back: 0x4927d0 is _Insert_n(where, n, &v); the callers inline push_back, see cs_common.h's
-    // push_back_inline. A one-argument declaration here linked to an unrelated vec<Widget*>::push_back COMDAT.)
+    // push_back_inline. A one-argument declaration here linked to an unrelated vec<MissionUi*>::push_back COMDAT.)
     void push_back2(const T& v);                // 0x4936b0 (std::vector<T>::push_back)
     void fill_n(const T& v, int size);      // 0x40f8a0 (incremental copy_push_back)
 };
 
-struct Overlay : WidgetObj {                    // ctor 0x4931a0, vtable 0x592848, 0x190 bytes
-    vec<Widget*> children;                      // +0x178
+struct Overlay : MissionUi {                    // ctor 0x4931a0, vtable 0x592848, 0x190 bytes
+    vec<MissionUi*> children;                      // +0x178
     unsigned char f188;                         // +0x188
     char pad189[3];
     int pad18c;                                 // (the allocation is 0x190 bytes; nothing reads +0x18c)
     Overlay();                                  // 0x4931a0
 };
 
-struct TextBox : WidgetObj {                    // ctor 0x4931a0, vtable 0x597050, 0x188 bytes
-    vec<Widget*> children;                      // +0x178
+struct TextBox : MissionUi {                    // ctor 0x4931a0, vtable 0x597050, 0x188 bytes
+    vec<MissionUi*> children;                      // +0x178
 };
 
 #endif // MB_GAME_OVERLAY_H

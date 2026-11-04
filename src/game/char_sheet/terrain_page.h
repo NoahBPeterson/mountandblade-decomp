@@ -32,8 +32,8 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 // ---- controls (layouts verified in s004d5ba0 / s004d63b0 / s004d6b80) --------------------------------
 // set_text returns an 8-byte object through a hidden pointer that no caller destroys: a non-POD pair (a user
 // constructor, no destructor). 0x4f28a0/0x4f28f0/0x4f2960 reserve exactly 8 bytes for it.
-#include "../ui_widget.h"                 // Widget (the UI widget interface; the range widgets are Widgets too: set_value is slot +0x34)
-typedef Widget RangeWidget;
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface; the range widgets are Widgets too: set_value is slot +0x34)
+typedef MissionUi RangeWidget;
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 

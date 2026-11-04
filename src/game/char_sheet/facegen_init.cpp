@@ -268,11 +268,11 @@ void FaceGen::init()
     float p2[2];
     p2[0] = 0.05125f;                                  // 0x3d51eb85
     p2[1] = 0.266875f;                                 // 0x3e88a3d7
-    b->set_pos(p2);
+    b->move_a((float*)p2);
     float s2[2];
     s2[0] = 0.45875f;                                  // 0x3eeae148
     s2[1] = 0.44f;
-    b->set_scale(s2);
+    b->set_xy(s2);
     b->flags |= 0x300;
     b->clear_color = 0xff201815;
 

@@ -30,8 +30,7 @@ static const char* str_text(const tstring& key)
 // ---- the virtual interface of the widgets seen through their vptr (see s0048b760) ----------------------
 // set_text (+0xa4) returns an 8-byte non-POD pair through a hidden pointer that no caller destroys.
 #include "../../include/vec.h"
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
-typedef Widget UiWidget;                // the slice's name for it
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- game records ------------------------------------------------------------------------------------
 #include "../../include/troop.h"

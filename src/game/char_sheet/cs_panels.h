@@ -5,7 +5,7 @@
 // attributes / skill levels / weapon points / health into a 0x200-byte line and posts each line, with
 // its configured (x, y) position, on the matching text widget of the sheet.  Every position comes from
 // the settings table 0xa44240 (key -> entry index, entries of 0x2c bytes from 0xa4425c, text at +4,
-// atof 0x537352).  Widget slots (s004dfd50, s004f04f0): set_text +0xa4, set_position(text, &pos)
+// atof 0x537352).  MissionUi slots (s004dfd50, s004f04f0): set_text +0xa4, set_position(text, &pos)
 // +0xac, show +0xb0, show_selected +0xb4.  The empty-string literal is the shared 0x54a480.
 #include <windows.h>
 #include <stdio.h>
@@ -49,8 +49,8 @@ static __forceinline float config_float(const tstring& key)
 // uninitialised 16-byte result slot), +0xac set_position(text, &pos) (ret 8), +0xb0 show, +0xb4
 // show_selected.  The label flag is the byte at +0x181 (the vptr takes +0).
 struct PostSlot { int a, b, c, d; };
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
-struct SheetWidget : Widget {
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
+struct SheetWidget : MissionUi {
     char pad[0x181 - 4];
     char has_label;                                                  // +0x181
 };

@@ -359,7 +359,7 @@ void ItemD::scale_3(float a) { ((InputScreen*)this)->on_input(*(int*)&a); }
 // The updater's sixteen row widgets (+0x60), the shown count (+0xa0) and the record index per row (+0xa4) fill the menu's
 // list: the widgets are ui_widget.h Widgets (the calls are the original's vtable offsets: hide +0xb0, enable +0xbc,
 // set_text +0xa4, show +0xb4, disable +0xb8, set_pos +0x58, set_scale +0x64).
-#include "../ui_widget.h"                                     // Widget / WidgetObj (the widget interface, ctor 0x48ae20)
+#include "../ui_widget.h"                                     // MissionUi / MissionUi (the widget interface, ctor 0x48ae20)
 #include "../ui/snd_channel.h"                               // snd_channel: play 0x4875e0 (thiscall, ret 4)
 
 // the 0x60-byte menu record of g_menus (0x5e29b0): title key +0x10, 64-bit flags +0x20, the 0x68-byte entries at +0x54/+0x58
@@ -383,13 +383,13 @@ struct FieldPanel {
 // the list panel at +0xec (ui/mission_ui.cpp MissionPanel): its scroll widget at +0x490 and draw
 struct MissionPanel {
     char pad0[0x490];
-    Widget* scroll;                                             // +0x490
+    MissionUi* scroll;                                             // +0x490
     void draw();                                                // 0x488d50 (ui/mission_ui.cpp)
 };
 
 struct MissionUpdater {
     char pad0[0x60];
-    Widget* items[0x10];                                        // +0x60
+    MissionUi* items[0x10];                                        // +0x60
     int count;                                                  // +0xa0
     int ids[0x10];                                              // +0xa4
     char pade4[0x4];
@@ -414,7 +414,7 @@ void MissionUpdater::update()
     { tstring stripped = title.strip_tags(); scene->relayout(&stripped); }
     for (int k = 0; k < 16; k++) {
         items[k]->hide();
-        items[k]->enable();
+        items[k]->flag2_clear();
     }
     for (int idx = 0; idx < g->count; idx++) {
         if (count >= 0x10)
@@ -426,11 +426,11 @@ void MissionUpdater::update()
             if (nm == 0)
                 nm = (tstring*)r;
             int ret[2];                                         // the 8-byte result slot set_text fills (never read)
-            items[count]->set_text(ret, g_script.expand(*nm).strip_tags());
+            items[count]->set_text((float*)ret, &(g_script.expand(*nm).strip_tags()));
             if ((g->flags & 0x10) == 0)
                 items[count]->show();
             if (*(char*)((char*)g_game + 0x14054))                 // menu_option_disabled (script_interpreter.h +0x14054)
-                items[count]->disable();
+                items[count]->flag2_set();
             ids[count] = idx;
             count++;
         }
@@ -440,9 +440,9 @@ void MissionUpdater::update()
         f = 0.24f;
     for (int k = 0; k < count; k++) {
         float pos[2];
-        pos[0] = 0.325f - ((WidgetObj*)items[k])->size_x * 0.5f;    // 0x5961b8, 0x549d70
+        pos[0] = 0.325f - ((MissionUi*)items[k])->size_x * 0.5f;    // 0x5961b8, 0x549d70
         pos[1] = f - (float)(k + 1) * 0.04f;
-        items[k]->set_pos(pos);
+        items[k]->move_a((float*)pos);
     }
     float h = (float)count * 0.04f;
     if (!(h > 0.24f))

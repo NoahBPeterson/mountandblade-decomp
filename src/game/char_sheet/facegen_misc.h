@@ -37,9 +37,8 @@ extern MapEditor g_editor_obj;                      // 0x8ee3c48
 extern MsgLog g_msglog;                                 // 0x5d7080
 
 // ---- UI widget (vtable family 0x597050; s004f49d0 / s004dada0) ------------------------------------------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
-typedef Widget UiVt;                    // the slice's name for it
-struct Ui { UiVt* vt; };
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
+struct Ui { MissionUi* vt; };
 struct World;
 
 #include "../map_widget.h"                 // MapWidget (the slice's face_body: the 0x358-byte camera body, ctor 0x4ed630)
@@ -60,7 +59,7 @@ struct FaceGen {
     char pad0[0x14];
     int troop;                                          // +0x14
     char pad18[0x2c - 0x18];
-    UiVt* ui;                                           // +0x2c
+    MissionUi* ui;                                           // +0x2c
     face_body* body;                                    // +0x30
     rgl::frustum fr;                                     // +0x34 (0x120 bytes)
     float v154[4];                                      // +0x154
@@ -71,28 +70,28 @@ struct FaceGen {
     char pad171[0x174 - 0x171];
     int skin;                                           // +0x174
     World* world;                                       // +0x178
-    UiVt* slider;                                       // +0x17c
-    UiVt* deform;                                       // +0x180
-    UiVt* buttons;                                      // +0x184
-    UiVt* cam_btn;                                      // +0x188
+    MissionUi* slider;                                       // +0x17c
+    MissionUi* deform;                                       // +0x180
+    MissionUi* buttons;                                      // +0x184
+    MissionUi* cam_btn;                                      // +0x188
     UiB* deform_rows[0x30];                             // +0x18c (one row per deform key; 0x30 slots up to key_labels)
-    UiVt* key_labels[0x30];                             // +0x24c (up to b_next_beard)
-    UiVt* b_next_beard;                                 // +0x30c
-    UiVt* b_next_hair;                                  // +0x310
-    UiVt* b_next_face;                                  // +0x314
-    UiVt* b_prev_beard;                                 // +0x318
-    UiVt* b_prev_hair;                                  // +0x31c
-    UiVt* b_prev_face;                                  // +0x320
-    UiVt* t_change_beard;                               // +0x324
-    UiVt* t_change_hair;                                // +0x328
-    UiVt* t_change_face;                                // +0x32c
+    MissionUi* key_labels[0x30];                             // +0x24c (up to b_next_beard)
+    MissionUi* b_next_beard;                                 // +0x30c
+    MissionUi* b_next_hair;                                  // +0x310
+    MissionUi* b_next_face;                                  // +0x314
+    MissionUi* b_prev_beard;                                 // +0x318
+    MissionUi* b_prev_hair;                                  // +0x31c
+    MissionUi* b_prev_face;                                  // +0x320
+    MissionUi* t_change_beard;                               // +0x324
+    MissionUi* t_change_hair;                                // +0x328
+    MissionUi* t_change_face;                                // +0x32c
     UiB* sl_age;                                        // +0x330
     UiB* sl_hair_color;                                 // +0x334
-    UiVt* t_age;                                        // +0x338
-    UiVt* t_hair_color;                                 // +0x33c
-    UiVt* b_done;                                       // +0x340
-    UiVt* b_reset;                                      // +0x344
-    UiVt* b_randomize;                                  // +0x348
+    MissionUi* t_age;                                        // +0x338
+    MissionUi* t_hair_color;                                 // +0x33c
+    MissionUi* b_done;                                       // +0x340
+    MissionUi* b_reset;                                      // +0x344
+    MissionUi* b_randomize;                                  // +0x348
     Entity* ent;                                        // +0x34c
     int f350;                                           // +0x350
     int f354;                                           // +0x354
