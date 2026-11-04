@@ -23,38 +23,6 @@
 using rgl::vector4;
 namespace rgl { struct Obj; }        // entity.cpp: the element type of the std::vector<Obj*> instantiation whose resize 0x41fa00 the cell vectors call
 
-// ---- the ext twins -----------------------------------------------------------------------------------------------
-// Callers of these functions saw them as opaque functions (see fx_anim.h): the twin is only declared and bound to the
-// real function with /alternatename.
-struct shape_vec_x { char pad0[4]; grid_shape **first, **last, **end; void push_back(grid_shape* const& v); };   // 0x423fc0
-struct ground_store_x { int add(int n, const vector4* pts); };                                                    // 0x424220
-struct world_grid_x : world_grid {
-    void add_tree(grid_shape* s);                                                                                  // 0x425240
-    bool in_rect(const int2* p, const int2* lo, const int2* hi);                                                   // 0x423ed0
-};
-vector4* face_normal_x(vector4* out, const vector4* a, const vector4* b, const vector4* c);                       // 0x424650
-int2* min2_x(int2* out, const int2* a, const int2* b);                                                            // 0x423e70
-int2* max2_x(int2* out, const int2* a, const int2* b);                                                            // 0x423ea0
-struct shape_vec_f {                                                                                               // 0x4240d0 (real home of find)
-    char pad0[4];
-    grid_shape **first, **last, **end;
-    unsigned size() const { return first == 0 ? 0 : last - first; }
-    int find(grid_shape* o) const;
-};
-#pragma comment(linker, "/alternatename:?push_back@shape_vec_x@@QAEXABQAUgrid_shape@@@Z=?push_back@shape_vec@@QAEXABQAUgrid_shape@@@Z")
-#pragma comment(linker, "/alternatename:?add@ground_store_x@@QAEHHPBUvector4@rgl@@@Z=?add@ground_store@@QAEHHPBUvector4@rgl@@@Z")
-#pragma comment(linker, "/alternatename:?add_tree@world_grid_x@@QAEXPAUgrid_shape@@@Z=?add_tree@world_grid@@QAEXPAUgrid_shape@@@Z")
-#pragma comment(linker, "/alternatename:?in_rect@world_grid_x@@QAE_NPBUint2@@00@Z=?in_rect@world_grid@@QAEHPBH00@Z")
-#pragma comment(linker, "/alternatename:?face_normal_x@@YAPAUvector4@rgl@@PAU12@PBU12@11@Z=?face_normal@@YA?AUvector4@rgl@@PBU12@00@Z")
-#pragma comment(linker, "/alternatename:?min2_x@@YAPAUint2@@PAU1@PBU1@1@Z=?min2@@YAPAUint2@@PAU1@PBU1@1@Z")
-#pragma comment(linker, "/alternatename:?max2_x@@YAPAUint2@@PAU1@PBU1@1@Z=?max2@@YAPAUint2@@PAU1@PBU1@1@Z")
-#pragma comment(linker, "/alternatename:?find@shape_vec@@QBEHPAUgrid_shape@@@Z=?find@shape_vec_f@@QBEHPAUgrid_shape@@@Z")
-#pragma comment(linker, "/alternatename:?insert@shape_vec@@QAE?AUiter@1@U21@ABQAUgrid_shape@@@Z=?insert@?$vector@PAUitem_obj@rgl@@V?$allocator@PAUitem_obj@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABQAUitem_obj@rgl@@@Z")
-#pragma comment(linker, "/alternatename:?resize@V136@@QAEXIUGroup@@@Z=?resize@vec136@@QAEXIUground_g136@@@Z")
-#pragma comment(linker, "/alternatename:?resize@V36@@QAEXIUVert@@@Z=?resize@?$vector@Uground_v36@@V?$allocator@Uground_v36@@@std@@@std@@QAEXIUground_v36@@@Z")
-#pragma comment(linker, "/alternatename:??$_Uninit_fill_n@PAUground_g136@@IU1@V?$allocator@Uground_g136@@@std@@@std@@YAXPAUground_g136@@IABU1@AAV?$allocator@Uground_g136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z=??$uninit_fill_n@Uground_g136@@@@YAXPAUground_g136@@IABU0@AAV?$allocator@Uground_g136@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z")
-#pragma comment(linker, "/alternatename:?_Uninit_fill_n@std@@YAXPAUground_g136@@IABU2@AAV?$allocator@Uground_g136@@@1@U_Nonscalar_ptr_iterator_tag@1@@Z=??$uninit_fill_n@Uground_g136@@@@YAXPAUground_g136@@IABU0@AAV?$allocator@Uground_g136@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z")
-
 // ---- World::add_item / relocate ------------------------------------------------------------------------------------
 // @ 0x423c00
 void rgl::world::add_item(rgl::item_obj* e)
@@ -86,13 +54,13 @@ void world_grid::relocate(grid_shape* o)
     const int2* lo = (const int2*)&o->min_x;
     const int2* hi = (const int2*)&o->max_x;
     int2 t1, t2;
-    int2 mn = *min2_x(&t1, &nlo, lo);
-    int2 mx = *max2_x(&t2, &nhi, hi);
+    int2 mn = *min2(&t1, &nlo, lo);
+    int2 mx = *max2(&t2, &nhi, hi);
     int2 p;
     for (p.x = mn.x; p.x <= mx.x; p.x++) {
         for (p.y = mn.y; p.y <= mx.y; p.y++) {
-            if (((world_grid_x*)this)->in_rect(&p, lo, hi)) {
-                if (!((world_grid_x*)this)->in_rect(&p, &nlo, &nhi)) {
+            if ((bool)in_rect(&p, lo, hi)) {
+                if (!(bool)in_rect(&p, &nlo, &nhi)) {
                     grid_cell* c = &((grid_cell**)rows)[p.x][p.y];
                     c->remove(o);
                     shape_list::node* h = c->objs.head;
@@ -109,7 +77,7 @@ void world_grid::relocate(grid_shape* o)
                         c->objs.size--;
                     }
                 }
-            } else if (((world_grid_x*)this)->in_rect(&p, &nlo, &nhi)) {
+            } else if ((bool)in_rect(&p, &nlo, &nhi)) {
                 ((grid_cell**)rows)[p.x][p.y].add(o);
             }
         }
@@ -138,9 +106,9 @@ int2* max2(int2* out, const int2* a, const int2* b)
 }
 
 // @ 0x423ed0
-int world_grid::in_rect(const int* p, const int* lo, const int* hi)
+int world_grid::in_rect(const int2* p, const int2* lo, const int2* hi)
 {
-    if (p[0] >= lo[0] && p[0] <= hi[0] && p[1] >= lo[1] && p[1] <= hi[1])
+    if (p->x >= lo->x && p->x <= hi->x && p->y >= lo->y && p->y <= hi->y)
         return 1;
     return 0;
 }
@@ -161,7 +129,7 @@ void grid_cell::add(grid_shape* x)
             break;
     }
     if (pos == (unsigned)-1) {
-        push_back(x);
+        ((std::vector<rgl::Obj*>*)this)->push_back((rgl::Obj* const&)x);   // 0x423fc0
     } else {
         ((std::vector<rgl::Obj*>*)this)->resize(size() + 1, 0);   // 0x41fa00: the cell's shape vector is the std::vector<Obj*> instantiation of entity.cpp (identical-code folding)
         for (int j = size() - 1; j > (int)pos; j--)
@@ -173,19 +141,8 @@ void grid_cell::add(grid_shape* x)
     (((std::list<int>*)l)->*ins)(((std::list<int>*)l)->end(), (const int&)x);   // 0x41f640: entity.cpp's list<int>::_Insert, folded with every list of pointers
 }
 
-// @ 0x423fc0
-void shape_vec::push_back(grid_shape* const& v)
-{
-    if (size() < capacity()) {
-        grid_shape** p = last;
-        *p = v;
-        last = p + 1;
-    } else
-        { iter w; w.p = last; insert(w, v); }
-}
-
 // @ 0x4240d0
-int shape_vec_f::find(grid_shape* o) const
+__declspec(noinline) int shape_vec::find(grid_shape* o) const
 {
     for (unsigned i = 0; first != 0 && i < (unsigned)(last - first); i++)
         if (first[i] == o)
@@ -221,21 +178,21 @@ void rgl::strategic_entity::add_shape(rgl::item_obj* o)
 void world_grid::reg_shape(grid_shape* o)
 {
     if (o->shape_type() == 2) {
-        o->m4 = ((ground_store_x*)ground)->add(((grid_face*)o)->count, ((grid_face*)o)->w);
+        o->m4 = ((ground_store*)ground)->add(((grid_face*)o)->count, ((grid_face*)o)->w);
     } else if (o->shape_type() == 3) {
         grid_composite* c = (grid_composite*)o;
         for (int i = 0; i < c->count; i++) {
             if (c->bodies[i]->shape_type() == 2) {
                 grid_face* k = (grid_face*)c->bodies[i];
-                c->bodies[i]->m4 = ((ground_store_x*)ground)->add(k->count, k->w);
+                c->bodies[i]->m4 = ((ground_store*)ground)->add(k->count, k->w);
             }
         }
     } else {
         o->shape_type();
     }
     grid_shape* t = o;
-    ((shape_vec_x*)&objs)->push_back(t);
-    ((world_grid_x*)this)->add_tree(t);
+    objs.push_back((rgl::Obj* const&)t);   // 0x423fc0
+    add_tree(t);
 }
 
 // ---- the ground geometry store ---------------------------------------------------------------------------------
@@ -244,33 +201,32 @@ int ground_store::add(int n, const vector4* pts)
 {
     unsigned base = verts.size();
     {
-        Vert t36;
+        ground_v36 t36;
         verts.resize(base + n, t36);
     }
-    vector4 nrm;
-    face_normal_x(&nrm, pts, pts + 1, pts + 2);
+    vector4 nrm = face_normal(pts, pts + 1, pts + 2);
     vector4 sum;
     sum.x = 0.0f; sum.y = 0.0f; sum.z = 0.0f;
     for (int i = 0; i < n; i++) {
-        verts.first[base + i].p = pts[i];
-        verts.first[base + i].n = nrm;
-        verts.first[base + i].f20 = 0;
+        verts[base + i].p = pts[i];
+        verts[base + i].n = nrm;
+        verts[base + i].f20 = 0;
         sum.x += pts[i].x;
         sum.y += pts[i].y;
         sum.z += pts[i].z;
     }
     unsigned idx = groups.size();
-    Group g;
+    ground_g136 g;
     groups.resize(idx + 1, g);
-    groups.first[idx].n = n;
-    groups.first[idx].c = sum;
-    groups.first[idx].f24 = 0;
-    groups.first[idx].f68 = 0;
+    groups._Myfirst[idx].n = n;
+    groups._Myfirst[idx].c = sum;
+    groups._Myfirst[idx].f24 = 0;
+    groups._Myfirst[idx].f68 = 0;
     for (int k = 0; k < n; k++) {
-        groups.first[idx].link[k] = -1;
-        groups.first[idx].vidx[k] = base + k;
-        V136::iter it = groups.begin() + idx;
-        it.p->f38[k] = 0;
+        groups._Myfirst[idx].link[k] = -1;
+        groups._Myfirst[idx].vidx[k] = base + k;
+        vec136::iterator_ it = groups.begin() + idx;
+        it._Ptr->f38[k] = 0;
     }
     return idx;
 }
@@ -294,7 +250,7 @@ vector4 face_normal(const vector4* a, const vector4* b, const vector4* c)
 }
 
 // @ 0x4246f0
-Group::Group()
+ground_g136::ground_g136()
 {
     f24 = 0;
     f6c = 0;
@@ -308,12 +264,7 @@ Group::Group()
 }
 
 // @ 0x424720
-V136::iter V136::iter::operator+(int off) const { iter r; r.p = p + off; return r; }
-
-namespace std {
-// @ 0x424010
-template vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator, rgl::Obj* const&);
-}
+vec136::iterator_ vec136::iterator_::operator+(int off) const { iterator_ r; r._Ptr = _Ptr + off; return r; }
 
 // ---- add_tree / add_shape -------------------------------------------------------------------------------------
 // @ 0x425240
@@ -396,22 +347,20 @@ template<> ground_g136* _Uninit_copy<ground_g136*, ground_g136*, allocator<groun
     }
     return _Dest;
 }
-// 0x4251c0 (next slice): _Uninit_fill_n<ground_g136*>
-template<> void _Uninit_fill_n<ground_g136*, unsigned int, ground_g136, allocator<ground_g136> >(ground_g136* _First, unsigned int _Count, const ground_g136& _Val, allocator<ground_g136>& _Al, _Nonscalar_ptr_iterator_tag);
+// @ 0x4251c0 (cl 13.10 leaves allocator::construct out of line once the copied element exceeds 128 bytes, while the original inlined it)
+template<> __declspec(noinline) void _Uninit_fill_n<ground_g136*, unsigned int, ground_g136, allocator<ground_g136> >(ground_g136* _First, unsigned int _Count, const ground_g136& _Val, allocator<ground_g136>& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    ground_g136* _Next = _First;
+    try {
+        for (; 0 < _Count; --_Count, ++_First)
+            new ((void*)_First) ground_g136(_Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
 }
-
-#define VEC_COMMON(T) \
-    std::allocator<T> _Alval; \
-    T *_Myfirst, *_Mylast, *_Myend; \
-    typedef unsigned size_type; \
-    typedef T* iterator; \
-    size_type capacity() const { return _Myfirst == 0 ? 0 : _Myend - _Myfirst; } \
-    size_type size() const { return _Myfirst == 0 ? 0 : _Mylast - _Myfirst; } \
-    size_type max_size() const { return _Alval.max_size(); } \
-    __forceinline T* _Ucopy(T* f, T* l, T* p) { return std::_Uninitialized_copy(f, l, p, _Alval); } \
-    __forceinline T* _Ufill(T* p, size_type n, const T& v) { std::_Uninitialized_fill_n(p, n, v, _Alval); return p + n; } \
-    void _Destroy(T* f, T* l) { for (; f != l; ++f) std::_Destroy(f); } \
-    __forceinline void _Xlen() const { VEC_XLEN_CALL(this); }   // 0x43e2a0
+}
 
 #define SZ() (_Myfirst == 0 ? 0 : _Mylast - _Myfirst)
 
@@ -489,14 +438,6 @@ void vec36::_Insert_n(iterator _Where, size_type _Count, const ground_v36& _Val)
 
 __forceinline ground_g136* copy_nonscalar(ground_g136* f, ground_g136* l, ground_g136* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
 
-struct vec136 {
-    VEC_COMMON(ground_g136)
-    struct iterator_ { ground_g136* _Ptr; static iterator_ mk(ground_g136* p) { iterator_ r; r._Ptr = p; return r; } };
-    void insert(iterator w, size_type c, const ground_g136& v) { _Insert_n(w, c, v); }
-    void _Insert_n(iterator _Where, size_type _Count, const ground_g136& _Val);   // 0x424db0
-    void resize(size_type _Newsize, ground_g136 _Val);                            // 0x424cc0
-    iterator_ erase(iterator_ _First, iterator_ _Last);                    // 0x424d60
-};
 // @ 0x424db0
 void vec136::_Insert_n(iterator _Where, size_type _Count, const ground_g136& _Val)
 {
@@ -520,23 +461,6 @@ vec136::iterator_ vec136::erase(iterator_ _First, iterator_ _Last)
     }
     return _First;
 }
-
-// std::_Uninit_fill_n for the 0x88-byte group record: allocator::construct expanded (cl 13.10 leaves it out of line once
-// the copied element exceeds 128 bytes, while the original inlined it)
-template<class T> __declspec(noinline) void uninit_fill_n(T* first, unsigned count, const T& val, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag)
-{
-    T* next = first;
-    try {
-        for (; 0 < count; --count, ++first)
-            ::new ((void*)first) T(val);
-    } catch (...) {
-        for (; next != first; ++next) ;
-        throw;
-    }
-}
-
-// @ 0x4251c0
-template void uninit_fill_n<ground_g136>(ground_g136*, unsigned, const ground_g136&, std::allocator<ground_g136>&, std::_Nonscalar_ptr_iterator_tag);
 
 namespace std {
 // @ 0x424740

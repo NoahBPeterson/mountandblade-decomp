@@ -29,10 +29,10 @@
 #include "../scene/emitter.h"
 #include "../scene/scene_entity.h"
 #include "../scene/world.h"
+#include "../../include/vec_xlen.h"
 
 struct int2 { int x, y; };                          // a cell coordinate
-struct ground_v36  { int v[9]; };                          // 0x24-byte vertex record of the ground geometry
-struct ground_g136 { int v[34]; };                         // 0x88-byte face-group record
+struct ground_v36 { rgl::vector4 p; rgl::vector4 n; int f20; };   // 0x24-byte vertex record of the ground geometry: position, face normal, a flag
 
 // ---- the cell ---------------------------------------------------------------------------------------------------
 // std::vector<grid_shape*> written out (VC7.1 layout: allocator slot, first, last, end) so that its members stay out of
@@ -42,9 +42,6 @@ struct shape_vec {
     grid_shape **first, **last, **end;
     unsigned size() const { return first == 0 ? 0 : last - first; }
     unsigned capacity() const { return first == 0 ? 0 : end - first; }
-    struct iter { grid_shape** p; };
-    void push_back(grid_shape* const& v);                   // 0x423fc0
-    iter insert(iter where, grid_shape* const& v);          // 0x424010 (std::vector<grid_shape*>::insert)
     void resize(unsigned n, grid_shape* v);                 // 0x41fa00 (entity.cpp)
     int find(grid_shape* o) const;                          // 0x4240d0 (called by remove; defined on shape_vec_f)
     void remove(grid_shape* o);                             // 0x424060
@@ -64,9 +61,8 @@ struct grid_cell : shape_vec {
 };
 
 // ---- the ground geometry ------------------------------------------------------------------------------------------
-struct Vert { rgl::vector4 p; rgl::vector4 n; int f20; };   // ground_v36: position, face normal, a flag
-// ground_g136: up to four corners
-struct Group {
+// ground_g136: the 0x88-byte face-group record, up to four corners
+struct ground_g136 {
     int n;                      // +0x00
     int vidx[4];                // +0x04 first vertex index per corner
     char pad14[0x10];
@@ -79,34 +75,48 @@ struct Group {
     int f68, f6c, f70;          // +0x68 (0)
     rgl::vector4 c;             // +0x74 sum of the corner positions
     int f84;                    // +0x84 (0)
-    Group();                    // 0x4246f0
+    ground_g136();              // 0x4246f0
 };
-// vector<ground_v36> / vector<ground_g136> stand-ins (resize stays out of line)
-struct V36 {
-    char pad0[4];
-    Vert *first, *last, *end;
-    unsigned size() const { return first == 0 ? 0 : last - first; }
-    void resize(unsigned n, Vert v);                        // 0x424740
-};
-struct V136 {
-    char pad0[4];
-    Group *first, *last, *end;
-    unsigned size() const { return first == 0 ? 0 : last - first; }
-    void resize(unsigned n, Group v);                       // 0x424cc0
-    struct iter { Group* p; iter operator+(int off) const; };   // 0x424720 (out of line)
-    iter begin() const { iter r; r.p = first; return r; }
+// std::vector<ground_g136>, written out (VC7.1 layout: allocator slot, first, last, end). These bodies do not come out of the stock
+// <vector> with cl 13.10.3052 (it leaves allocator::construct and the _Ucopy / _Ufill wrappers out of line, and stops inlining
+// std::copy for elements of >= 128 bytes), so the members are written out with the same shape as the VC7.1 <vector>.
+#define VEC_COMMON(T) \
+    std::allocator<T> _Alval; \
+    T *_Myfirst, *_Mylast, *_Myend; \
+    typedef unsigned size_type; \
+    typedef T* iterator; \
+    size_type capacity() const { return _Myfirst == 0 ? 0 : _Myend - _Myfirst; } \
+    size_type size() const { return _Myfirst == 0 ? 0 : _Mylast - _Myfirst; } \
+    size_type max_size() const { return _Alval.max_size(); } \
+    __forceinline T* _Ucopy(T* f, T* l, T* p) { return std::_Uninitialized_copy(f, l, p, _Alval); } \
+    __forceinline T* _Ufill(T* p, size_type n, const T& v) { std::_Uninitialized_fill_n(p, n, v, _Alval); return p + n; } \
+    void _Destroy(T* f, T* l) { for (; f != l; ++f) std::_Destroy(f); } \
+    __forceinline void _Xlen() const { VEC_XLEN_CALL(this); }   // 0x43e2a0
+
+struct vec136 {
+    VEC_COMMON(ground_g136)
+    struct iterator_ {
+        ground_g136* _Ptr;
+        static iterator_ mk(ground_g136* p) { iterator_ r; r._Ptr = p; return r; }
+        iterator_ operator+(int off) const;                 // 0x424720 (out of line)
+    };
+    iterator_ begin() const { return iterator_::mk(_Myfirst); }
+    void insert(iterator w, size_type c, const ground_g136& v) { _Insert_n(w, c, v); }
+    void _Insert_n(iterator _Where, size_type _Count, const ground_g136& _Val);   // 0x424db0
+    void resize(size_type _Newsize, ground_g136 _Val);                            // 0x424cc0
+    iterator_ erase(iterator_ _First, iterator_ _Last);                           // 0x424d60
 };
 rgl::vector4 face_normal(const rgl::vector4* a, const rgl::vector4* b, const rgl::vector4* c);   // 0x424650
 
 struct ground_store : rgl::ground_geom {                    // the object at world+0xb0
-    V36 verts;                  // +0
-    V136 groups;                // +0x10
+    std::vector<ground_v36> verts;   // +0
+    vec136 groups;              // +0x10
     int add(int n, const rgl::vector4* pts);                // 0x424220: one polygon -> n vertices + a group; returns the group index
 };
 
 // ---- the world's members ------------------------------------------------------------------------------------------
 struct world_grid : rgl::world {
-    int in_rect(const int* p, const int* lo, const int* hi);   // 0x423ed0 (a member that never reads this)
+    int in_rect(const int2* p, const int2* lo, const int2* hi);   // 0x423ed0 (a member that never reads this)
     void relocate(grid_shape* o);                           // 0x423c80
     void reg_shape(grid_shape* o);                          // 0x424170
     void add_tree(grid_shape* s);                           // 0x425240
