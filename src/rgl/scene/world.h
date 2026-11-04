@@ -22,7 +22,6 @@
 struct PolyMesh;                // game/terrain_b/poly_mesh.h: the nav mesh the grid is built from
 struct shape_base;              // include/shape.h: the collision shapes the cells hold
 struct face;                    // include/shape.h: the ground polygons
-struct grid_shape;              // rgl/dynamic/grid_shape.h
 struct int2 { int x, y; };      // a cell coordinate (rgl/dynamic/world_grid.h)
 
 namespace rgl {
@@ -117,10 +116,10 @@ struct world : cell_grid {
     vector4 get_ambient();                                      // 0x42b6d0 (strat/strat_ctx.cpp, by-value return)
     entity* find_entity(int id);                                // 0x42ba50
     int in_rect(const int2* p, const int2* lo, const int2* hi);   // 0x423ed0 (rgl/dynamic/world_grid.cpp: a member that never reads this)
-    void relocate(grid_shape* o);                               // 0x423c80
-    void reg_shape(grid_shape* o);                              // 0x424170
-    void add_tree(grid_shape* s);                               // 0x425240
-    void add_shape(grid_shape* s);                              // 0x4252c0
+    void relocate(shape_base* o);                               // 0x423c80
+    void reg_shape(shape_base* o);                              // 0x424170
+    void add_tree(shape_base* s);                               // 0x425240
+    void add_shape(shape_base* s);                              // 0x4252c0
     void collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<unsigned>* out);   // 0x442180 (game/agent3/agent_fx_sound.cpp: the entities whose box meets the query box)
     void erase_entity(entity* e);                               // 0x41f450 (game/entity.cpp)
     void collect(unsigned key, entity** out, int* count);       // 0x51a3a0 (game/inventory_panel/map_picker.cpp: the entities whose type_id() bit-mask contains the key)
@@ -149,7 +148,7 @@ struct world : cell_grid {
     entity* instantiate(int type_id);                           // 0x428240
     entity* create_entity(int type_id);                         // 0x428440
     void add_pending(entity* o);                                // 0x4207a0
-    void add_item(item_obj* e);                                 // 0x423c00
+    void add_item(shape_base* e);                                 // 0x423c00
     void render_scene(scene* sc, bool reflect);                 // 0x429890
 };
 

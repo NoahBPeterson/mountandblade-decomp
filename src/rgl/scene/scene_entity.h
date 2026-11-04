@@ -13,6 +13,7 @@
 #include "./scene_math.h"
 #include "./scene.h"
 #include "./emitter.h"
+#include "../../include/shape.h"      // shape_base: the collision shape an entity carries
 
 struct FxDef;                   // fx.h (global, like FxElem)
 struct skin;                    // ../resource.h (global)
@@ -22,29 +23,11 @@ namespace rgl {
 struct world;
 struct psys;
 
-// object delete-able through its first virtual slot (an entity's frame helper, a record)
+// object delete-able through its first virtual slot: the element type of world::objs (the owned collision shapes; 0x420a70 deletes them).
+// A distinct element type from shape_base: the original instantiates the pointer vector of world::objs (out-of-line push_back 0x423fc0 / resize 0x41fa00)
+// separately from entity::items, whose push_back is expanded inline.
 struct Obj { virtual ~Obj(); int owner; int id; };
 
-// The collision shape an entity carries at +0x98 (shape_base of ../resource.h seen through the slots the entity
-// code calls): slot 8 positions it, slots 10 / 11 return its two extents. StrategicEntity::update 0x421b70,
-// entity::sync 0x41fcd0 (slots 8, 10, 11).
-struct coll_shape {
-    virtual ~coll_shape();                                      // 0
-    virtual int shape_type();                                   // 1
-    virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-    virtual void set_frame(const matrix* m);                    // 8 (+0x20)
-    virtual void s9();
-    virtual vector4 get_a();                                    // 10 (+0x28)
-    virtual vector4 get_b();                                    // 11 (+0x2c)
-};
-
-
-// items attached to an entity (entity::items, +0x128): placed by set_frame (slot 8) and registered with the world
-struct item_obj {
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-    virtual void set_frame(const matrix* m);                    // 8 (+0x20)
-};
 
 struct entity {
     virtual ~entity();                                          // 0x4213f0 (body; scalar deleting dtor ??_Gentity is 0x4214e0, slot 0)
@@ -74,11 +57,12 @@ struct entity {
 
     world* owner;               // 0x04  World::create_entity 0x428440
     int id;                     // 0x08  World::create_entity, world::remove_entity 0x41f0d0
-    int fc, f10;                // 0x0c
+    int game_id;                // 0x0c the game's id for the entity (an agent / party / prop index; -1 from the constructor)
+    int game_kind;              // 0x10 what game_id indexes (0xb agent, 0xc prop, 1 party ...)
     void* refs;                 // 0x14  cell memberships (world::release_links 0x41ee20)
     matrix prev;                // 0x18  previous frame (StrategicEntity::update 0x421b70: prev = pos)
     smat local;                 // 0x58  the frame (entity::set_local 0x41fe50)
-    coll_shape* shape;          // 0x98  collision shape (load 0x4284e0), the frame source of sync 0x41fcd0
+    shape_base* shape;          // 0x98  collision shape (load 0x4284e0), the frame source of sync 0x41fcd0 (transform 8, get_min 10, get_max 11)
     vector4 v9c;                // 0x9c  (StrategicEntity::update stores shape->get_a())
     vector4 vac;                // 0xac
     float fbc;                  // 0xbc  radius (recalc 0x41ffe0)
@@ -87,7 +71,7 @@ struct entity {
     aabb box;                   // 0xd4  (0x34 bytes)
     std::vector<lod_mesh2*> lods;   // 0x108
     std::vector<mesh*> meshes;      // 0x118
-    std::vector<item_obj*> items;   // 0x128 attached entities (StrategicEntity::update 0x421b70)
+    std::vector<shape_base*> items;   // 0x128 attached entities (StrategicEntity::update 0x421b70)
     mesh* shadow_a;             // 0x138 the ground-shadow decal meshes (strategic_entity::update_shadows), deleted by ~entity 0x4213f0
     mesh* shadow_b;             // 0x13c
     char f140, f141, f142;      // 0x140 visible, dirty flags
@@ -153,7 +137,7 @@ struct static_entity : entity {                                 // vtable 0x54b7
 struct strategic_entity : entity {
     float f15c;                 // 0x15c shadow sample quality (update_shadows 0x42a1f0: -1/(f15c*25); create_shadow_mesh 0x42b080: sample count)
     float f160, f164;           // 0x160, 0x164 shadow strengths (render 0x42a090, create_shadow_mesh)
-    int f168, f16c, f170;       // 0x168, 0x16c, 0x170
+    int map_kind, f16c, f170;   // 0x168 (the map picker's party / town kind), 0x16c, 0x170
     int ids[64];                // 0x174 ground faces under the entity (update_ground_cache 0x42a480 stores, create_shadow_mesh 0x42b080 reads)
     int nids;                   // 0x274
     vector4 shadow_pos;         // 0x278 where the ground cache was last built (x = -1e8 from the constructor)
@@ -192,7 +176,7 @@ struct strategic_entity : entity {
     virtual void add_emitter(psys* e);                          // 25: 0x421aa0
     virtual void clear_emitters();                              // 26: 0x421b00
     virtual int find_emitter(int tag);                          // 27: 0x421a50
-    virtual void add_shape(item_obj* o);                        // 28: 0x424100 (world_grid.cpp: keep the shape, tag it, register it with the world)
+    virtual void add_shape(shape_base* o);                        // 28: 0x424100 (world_grid.cpp: keep the shape, tag it, register it with the world)
 
     // the ground shadow (src/game/strat/strat_entity.cpp, strat_ctx.cpp)
     void build_shadow_frame(matrix* m, vector4* amb);           // 0x42aaf0

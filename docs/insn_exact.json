@@ -698,7 +698,7 @@
   },
   "00423c80": {
    "verdict": "DIFF",
-   "symbol": "?relocate@world@rgl@@QAEXPAUgrid_shape@@@Z",
+   "symbol": "?relocate@world@rgl@@QAEXPAUshape_base@@@Z",
    "insns": 170,
    "ours": 173,
    "unverified": 0,
@@ -708,7 +708,7 @@
   },
   "004240d0": {
    "verdict": "DIFF",
-   "symbol": "?find@shape_vec@@QBEHPAUgrid_shape@@@Z",
+   "symbol": "?find@shape_vec@@QBEHPAUshape_base@@@Z",
    "insns": 22,
    "ours": 19,
    "unverified": 0,
@@ -772,7 +772,7 @@
   },
   "004252c0": {
    "verdict": "DIFF",
-   "symbol": "?add_shape@world@rgl@@QAEXPAUgrid_shape@@@Z",
+   "symbol": "?add_shape@world@rgl@@QAEXPAUshape_base@@@Z",
    "insns": 65,
    "ours": 65,
    "unverified": 0,

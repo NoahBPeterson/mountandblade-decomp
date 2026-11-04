@@ -165,7 +165,7 @@ void entity::load(stream_base* s)
     string name;
     s->r_tstr(&name);
     if (!(name.equals("none")))
-        shape = (coll_shape*)((shape_resource*)g_resmgr.get_object60(name))->clone_shape();
+        shape = ((shape_resource*)g_resmgr.get_object60(name))->clone_shape();
     r_matrix(*s, &local);
     int n;
     s->r_int(&n);

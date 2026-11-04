@@ -72,9 +72,10 @@ void strategic_entity::update(float dt)
 {
     radius = fbc;
     if (shape) {
-        shape->set_frame((const matrix*)&local);
-        vac = shape->get_b();
-        v9c = shape->get_a();
+        shape->transform(&local);
+        vector4 t;
+        vac = *shape->get_max(&t);
+        v9c = *shape->get_min(&t);
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
         ((emitter*)*it)->update(&dt, local);
@@ -98,7 +99,7 @@ void strategic_entity::update(float dt)
         for (unsigned i = 0; i < items.size(); ++i) {
             matrix m = local;
             m.orthonormalize();
-            items[i]->set_frame(&m);
+            items[i]->transform(&m);
             owner->add_item(items[i]);
         }
     }

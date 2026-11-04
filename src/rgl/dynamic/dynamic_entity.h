@@ -20,7 +20,6 @@
 #include "../rgl_string.h"
 #include "../rgl_math.h"
 #include "../resource.h"
-#include "./grid_shape.h"
 #include "../scene/scene_math.h"
 #include "../scene/frustum.h"
 #include "../scene/scene.h"
@@ -108,7 +107,7 @@ struct dynamic_entity : rigid_base {
     virtual void add_torque(const vector4* t);                             // 32: 0x4258e0
     virtual void add_torque_at(const vector4* p, const vector4* f);        // 33: 0x425920
     virtual bool on_entity(entity* e);                                     // 34: 0x427000 (the other entity as a rigid body)
-    virtual bool on_shape(grid_shape* s);                                  // 35: 0x427900 (the shape as the entity's collision shape)
+    virtual bool on_shape(shape_base* s);                                  // 35: 0x427900 (the shape as the entity's collision shape)
 };
 
 } // namespace rgl

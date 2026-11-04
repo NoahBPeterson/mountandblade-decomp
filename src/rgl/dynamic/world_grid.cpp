@@ -25,14 +25,14 @@ namespace rgl { struct Obj; }        // entity.cpp: the element type of the std:
 
 // ---- World::add_item / relocate ------------------------------------------------------------------------------------
 // @ 0x423c00
-void rgl::world::add_item(rgl::item_obj* e)
+void rgl::world::add_item(shape_base* e)
 {
-    grid_shape* o = (grid_shape*)e;
+    shape_base* o = e;
     if (o->shape_type() == 3) {
-        grid_composite* c = (grid_composite*)o;
+        composite* c = static_cast<composite*>(o);
         for (int i = 0; i < c->count; i++) {
             if (c->bodies[i]->shape_type() == 3)
-                add_item((rgl::item_obj*)c->bodies[i]);
+                add_item(c->bodies[i]);
             else
                 relocate(c->bodies[i]);
         }
@@ -42,7 +42,7 @@ void rgl::world::add_item(rgl::item_obj* e)
 }
 
 // @ 0x423c80
-void rgl::world::relocate(grid_shape* o)
+void rgl::world::relocate(shape_base* o)
 {
     float tmp[3];
     int2 nlo, nhi;
@@ -112,7 +112,7 @@ int rgl::world::in_rect(const int2* p, const int2* lo, const int2* hi)
     return 0;
 }
 
-// std::vector<Obj*>::push_back / insert (0x423fc0 / 0x424010, shared by every pointer vector): the callers call them out of line; the
+// std::vector<rgl::Obj*>::push_back / insert (0x423fc0 / 0x424010, shared by every pointer vector): the callers call them out of line; the
 // specializations are declared before the callers and defined where the original has them
 namespace std {
 template<> __declspec(noinline) void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X);
@@ -121,7 +121,7 @@ template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::i
 
 // ---- the cell ----------------------------------------------------------------------------------------------------
 // @ 0x423f10
-void grid_cell::add(grid_shape* x)
+void grid_cell::add(shape_base* x)
 {
     unsigned pos = (unsigned)-1;
     unsigned i = 0;
@@ -137,7 +137,7 @@ void grid_cell::add(grid_shape* x)
     if (pos == (unsigned)-1) {
         ((std::vector<rgl::Obj*>*)this)->push_back((rgl::Obj* const&)x);   // 0x423fc0
     } else {
-        ((std::vector<rgl::Obj*>*)this)->resize(size() + 1, 0);   // 0x41fa00: the cell's shape vector is the std::vector<Obj*> instantiation of entity.cpp (identical-code folding)
+        ((std::vector<rgl::Obj*>*)this)->resize(size() + 1, 0);   // 0x41fa00: the cell's shape vector is the std::vector<rgl::Obj*> instantiation of entity.cpp (identical-code folding)
         for (int j = size() - 1; j > (int)pos; j--)
             first[j] = first[j - 1];
         first[pos] = x;
@@ -148,7 +148,7 @@ void grid_cell::add(grid_shape* x)
 }
 
 // @ 0x4240d0
-__declspec(noinline) int shape_vec::find(grid_shape* o) const
+__declspec(noinline) int shape_vec::find(shape_base* o) const
 {
     for (unsigned i = 0; first != 0 && i < (unsigned)(last - first); i++)
         if (first[i] == o)
@@ -157,13 +157,13 @@ __declspec(noinline) int shape_vec::find(grid_shape* o) const
 }
 
 // @ 0x424060
-void shape_vec::remove(grid_shape* o)
+void shape_vec::remove(shape_base* o)
 {
     int idx = find(o);
     if (idx >= 0) {
         unsigned i = idx;
         while (i < size() - 1) {
-            grid_shape** f = first;
+            shape_base** f = first;
             f[i] = f[i + 1];
             i++;
         }
@@ -173,23 +173,23 @@ void shape_vec::remove(grid_shape* o)
 
 // ---- entity::add_shape / register the shape with the world ---------------------------------------------------------
 // @ 0x424100
-void rgl::strategic_entity::add_shape(rgl::item_obj* o)
+void rgl::strategic_entity::add_shape(shape_base* o)
 {
     items.push_back(o);
-    ((grid_shape*)o)->set_mc(id);
-    owner->reg_shape((grid_shape*)o);
+    o->set_mc(id);
+    owner->reg_shape(o);
 }
 
 // @ 0x424170
-void rgl::world::reg_shape(grid_shape* o)
+void rgl::world::reg_shape(shape_base* o)
 {
     if (o->shape_type() == 2) {
-        o->m4 = ((ground_store*)ground)->add(((grid_face*)o)->count, ((grid_face*)o)->w);
+        o->m4 = ((ground_store*)ground)->add(((face*)o)->count, ((face*)o)->w);
     } else if (o->shape_type() == 3) {
-        grid_composite* c = (grid_composite*)o;
+        composite* c = (composite*)o;
         for (int i = 0; i < c->count; i++) {
             if (c->bodies[i]->shape_type() == 2) {
-                grid_face* k = (grid_face*)c->bodies[i];
+                face* k = (face*)c->bodies[i];
                 c->bodies[i]->m4 = ((ground_store*)ground)->add(k->count, k->w);
             }
         }
@@ -198,7 +198,7 @@ void rgl::world::reg_shape(grid_shape* o)
     }
     rgl::Obj* t = (rgl::Obj*)o;
     objs.push_back(t);   // 0x423fc0
-    add_tree((grid_shape*)t);
+    add_tree((shape_base*)t);
 }
 
 // ---- the ground geometry store ---------------------------------------------------------------------------------
@@ -274,10 +274,10 @@ vec136::iterator_ vec136::iterator_::operator+(int off) const { iterator_ r; r._
 
 // ---- add_tree / add_shape -------------------------------------------------------------------------------------
 // @ 0x425240
-void rgl::world::add_tree(grid_shape* s)
+void rgl::world::add_tree(shape_base* s)
 {
     if (s->shape_type() == 3) {
-        grid_composite* c = (grid_composite*)s;
+        composite* c = (composite*)s;
         for (int i = 0; i < c->count; i++) {
             if (c->bodies[i]->shape_type() == 3)
                 add_tree(c->bodies[i]);
@@ -290,7 +290,7 @@ void rgl::world::add_tree(grid_shape* s)
 }
 
 // @ 0x4252c0
-void rgl::world::add_shape(grid_shape* s)
+void rgl::world::add_shape(shape_base* s)
 {
     int lo[2], hi[2];
     vector4 t0, t1;

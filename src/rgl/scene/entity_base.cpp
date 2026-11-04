@@ -38,7 +38,7 @@ entity::entity()
     owner = 0;
     fbc = 0;
     vc4 = vector4(0.0f, 0.0f, 0.0f);
-    f10 = 0;
+    game_kind = 0;
     shadow_a = 0;
     shadow_b = 0;
     f141 = 0;
@@ -46,7 +46,7 @@ entity::entity()
     scale = vector4(1.0f, 1.0f, 1.0f);
     f140 = 1;
     shadow_radius = 0.01f;
-    fc = -1;
+    game_id = -1;
     f144 = 1.0f;
 }
 
@@ -59,9 +59,10 @@ void entity::sync()
     prev = local;
     const vector4* src;
     if (shape) {
-        shape->set_frame(&local);
-        v9c = shape->get_a();
-        src = &shape->get_b();
+        shape->transform(&local);
+        vector4 t;
+        v9c = *shape->get_min(&t);
+        src = shape->get_max(&t);
     } else {
         v9c = local.o;
         src = &local.o;

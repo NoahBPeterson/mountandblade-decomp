@@ -2635,7 +2635,7 @@ after:
             if (sh) {
                 sh->scale((const float*)&r->v158);
                 sh->transform((const pos*)&r->m18);
-                ((rgl::world*)scene)->reg_shape((grid_shape*)sh);
+                ((rgl::world*)scene)->reg_shape((shape_base*)sh);
             }
         } else if (r->kind == 6) {
             unsigned k = g_items[r->id].type_flags & 0xff;

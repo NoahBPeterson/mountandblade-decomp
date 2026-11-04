@@ -437,7 +437,7 @@ void rgl::world::build_faces(NavData* map)
         } else {
             objs.insert(objs.end(), (rgl::Obj*)f);
         }
-        add_tree((grid_shape*)f);
+        add_tree((shape_base*)f);
         c->obj = f;
     }
 
@@ -495,10 +495,10 @@ void Terrain::spawn_bodies(SpawnSet* r)
         e->counter = c;
         res_shape* rs = ty->boxes[c].res;
         if (rs) {
-            shape_calls* o = (shape_calls*)rs->clone_shape();
+            shape_base* o = rs->clone_shape();
             o->transform(&e->m);
             o->or_m8(0x200);
-            world->reg_shape((grid_shape*)o);
+            world->reg_shape(o);
         }
     }
 }
@@ -529,10 +529,10 @@ void Mission::rebuild_nav(int which, int)
     Level494* cs = g_game->levels + f5df4;
     NavData* core_ = 0;
     res_shape* r = 0;
-    V2 hi, lo;
+    vector4 hi, lo;
     if (sl->flags & 0x100) {
-        lo = V2(terrain.min_x - 1.0f, terrain.min_y - 1.0f);
-        hi = V2(terrain.max_x + 1.0f, terrain.max_y + 1.0f);
+        lo = vector4(terrain.min_x - 1.0f, terrain.min_y - 1.0f, 0.0f);
+        hi = vector4(terrain.max_x + 1.0f, terrain.max_y + 1.0f, 0.0f);
     } else {
         core_ = (NavData*)new NavCore;   // 0x478150 (NavData() is the same constructor, ICF-folded)
         r = (res_shape*)g_resmgr.get_object60(cs->name44);
@@ -540,10 +540,10 @@ void Mission::rebuild_nav(int which, int)
             tstring* nm = &cs->name44;
             mb_error("Unable to find body %s", nm->c_str());
         }
-        ((shape_calls*)r->sh)->get_max(&hi.x);
-        hi = V2(hi.x + 1.0f, hi.y + 1.0f);
-        ((shape_calls*)r->sh)->get_min(&lo.x);
-        lo = V2(lo.x - 1.0f, lo.y - 1.0f);
+        r->sh->get_max(&hi);
+        hi = vector4(hi.x + 1.0f, hi.y + 1.0f, 0.0f);
+        r->sh->get_min(&lo);
+        lo = vector4(lo.x - 1.0f, lo.y - 1.0f, 0.0f);
     }
     int lod1 = LOG2UP((hi.x - lo.x) * (1.0f / 3.0f));
     int lod2 = LOG2UP((hi.y - lo.y) * (1.0f / 3.0f));
@@ -551,11 +551,11 @@ void Mission::rebuild_nav(int which, int)
     scene = s;
     if ((sl->flags & 0x100) == 0) {
         s->build_faces(core_);
-        shape_calls* o = (shape_calls*)r->clone_shape();
+        shape_base* o = r->clone_shape();
         matrix m;
         identity_pos(&m);
         o->transform(&m);
-        s->reg_shape((grid_shape*)o);
+        s->reg_shape(o);
     }
 }
 

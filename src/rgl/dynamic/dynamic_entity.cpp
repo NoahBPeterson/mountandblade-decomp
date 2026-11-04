@@ -83,9 +83,10 @@ void dynamic_entity::update(float t)
         collide();
         integrate(t);
         if (shape) {
-            shape->set_frame(&local);
-            vac = shape->get_b();
-            v9c = shape->get_a();
+            shape->transform(&local);
+            vector4 t;
+            vac = *shape->get_max(&t);
+            v9c = *shape->get_min(&t);
         }
     }
 }
@@ -292,7 +293,7 @@ void dynamic_entity::collide()
     int use3d = 1;
     owner->query_shapes(this, found, &count, &use3d, 0x8106);
     for (int i = 0; i < count; i++)
-        on_shape((grid_shape*)found[i]);
+        on_shape((shape_base*)found[i]);
     std::vector<entity*> others;
     owner->query_entities(this, 3, true, &others);
     for (std::vector<entity*>::iterator it = others.begin(); it < others.end(); ++it)
@@ -346,7 +347,7 @@ void cell::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigne
     st.i = 0;
     st.k = 0;
     while (a.size() > st.i) {
-        grid_shape* sh = (grid_shape*)a[st.i];
+        shape_base* sh = (shape_base*)a[st.i];
         if (sh->m8 & mask) {
             st.i++;
             continue;
@@ -521,7 +522,7 @@ bool dynamic_entity::on_entity(entity* e)
     if (o->shape == 0)
         return false;
     contact_rec c[4];
-    int n = ::shape_contact_count((shape_base*)shape, (shape_base*)o->shape, 4, (contact*)c);
+    int n = ::shape_contact_count(shape, o->shape, 4, (contact*)c);
     if (n == 0)
         return false;
     for (int i = 0; i < n; ++i) {
@@ -714,13 +715,12 @@ struct contact_inl : contact_ops {
 };
 
 // @ 0x427900
-bool dynamic_entity::on_shape(grid_shape* g)
+bool dynamic_entity::on_shape(shape_base* g)
 {
-    coll_shape* s = (coll_shape*)g;
     if (shape == 0)
         return false;
     contact_rec c[4];
-    int n = ::shape_contact_count((shape_base*)shape, (shape_base*)s, 4, (contact*)c);
+    int n = ::shape_contact_count(shape, g, 4, (contact*)c);
     if (n == 0)
         return false;
     for (int i = 0; i < n; ++i) {

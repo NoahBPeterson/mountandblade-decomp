@@ -51,18 +51,6 @@ struct AgentRec {                            // 0x98
     char   pad58[0x98 - 0x58];
 };
 
-struct MapSceneObj {                         // a scene object returned by Picker::collect(9, ...) (not the 0x98 Rec98 record)
-    char       pad00[0x0c];
-    int        party;                        // +0x0c
-    char       pad10[0x88 - 0x10];
-    vector4    pos;                          // +0x88
-    shape_base* shape;                       // +0x98
-    char       pad9c[0x140 - 0x9c];
-    char       active;                       // +0x140
-    char       pad141[0x168 - 0x141];
-    int        kind;                         // +0x168
-};
-
 struct BigRec {                              // 0x88  world-map cell record
     char     pad0[0x24];
     unsigned mask;                           // +0x24
@@ -249,29 +237,29 @@ void MapPanel::update_target()
     }
 
     // ---- 0x519829: party agents under the cursor ---------------------------------------------------
-    shape_base* bestobj = 0;
+    rgl::strategic_entity* bestobj = 0;
     rgl::entity* agents[0x2000];               // world::collect does not bound *count, so the size matters
     int       acount;
     g_script.level->collect(9, agents, &acount);
     bestd += 1.0f;
 
     for (int i = 0; i < acount; i++) {
-        MapSceneObj* o = (MapSceneObj*)agents[i];
-        if (!o->active) continue;
+        rgl::strategic_entity* o = static_cast<rgl::strategic_entity*>(agents[i]);   // collect(9): the entities of type 9
+        if (!o->f140) continue;
         if (!o->shape) continue;
         if (!shape_contact_count(o->shape, &cap, 0, 0)) continue;
-        float ddx = nearp.x - o->pos.x;
-        float ddy = nearp.y - o->pos.y;
-        float ddz = nearp.z - o->pos.z;
+        float ddx = nearp.x - o->local.o.x;
+        float ddy = nearp.y - o->local.o.y;
+        float ddz = nearp.z - o->local.o.z;
         float d = sqrtf(ddz * ddz + ddy * ddy + ddx * ddx);   // the original sums z*z + y*y first, then x*x
-        if (o->kind == 1) {
+        if (o->map_kind == 1) {
             d -= 0.4f;
-            if (o->party == g_game->f78) d += 0.35f;
+            if (o->game_id == g_game->f78) d += 0.35f;
         }
         if (!(d < bestd)) continue;
-        if (o->kind == 1 && (party_at(g_game, o->party)->flags_lo & 0x80100)) continue;
+        if (o->map_kind == 1 && (party_at(g_game, o->game_id)->flags_lo & 0x80100)) continue;
         bestd   = d;
-        bestobj = (shape_base*)o;
+        bestobj = o;
     }
 
     // ---- 0x519997: commit the pick -----------------------------------------------------------------
@@ -279,20 +267,20 @@ void MapPanel::update_target()
         if (g_keyboard.down[0xe1] == 0 && g_keyboard.prev[0xe1] != 0 && f2d4 == 0) {
             g_game->n_labels  = 0;
             g_game->cur_label = -1;
-            f2d8 = ((MapSceneObj*)bestobj)->party;
+            f2d8 = bestobj->game_id;
             g_game->emit_event(0x15, f2d8, 0);
             if (g_game->n_labels > 0) {
                 f2d5 = 1;
                 ((MapPickScreen*)this)->set_label(f2d8);
             }
         }
-        int kind = ((MapSceneObj*)bestobj)->kind;
+        int kind = bestobj->map_kind;
         if (kind == 1) {
-            int id = ((MapSceneObj*)bestobj)->party;
+            int id = bestobj->game_id;
             if (!(party_at(g_game, id)->flags_lo & 0x80000))
                 update(1, id);
         } else if (kind == 2) {
-            update(2, ((MapSceneObj*)bestobj)->party);
+            update(2, bestobj->game_id);
         }
     } else {
         // ---- 0x519a8b: ground items -----------------------------------------------------------------
@@ -322,20 +310,20 @@ void MapPanel::update_target()
         g_game->sel_party = g_game->f78;
 
         if (bestobj) {
-            int kind = ((MapSceneObj*)bestobj)->kind;
+            int kind = bestobj->map_kind;
             if (kind == 1) {
-                if (((MapSceneObj*)bestobj)->party != g_game->f78) {
+                if (bestobj->game_id != g_game->f78) {
                     // 0x519c9e..0x519cd5: both arms are the same store (the `0x400` flags test survives
                     // only as a dead select); reproduced verbatim.
-                    if (party_at(g_game, ((MapSceneObj*)bestobj)->party)->flags_lo & 0x400)
+                    if (party_at(g_game, bestobj->game_id)->flags_lo & 0x400)
                         party_at(g_game, g_game->f78)->action = 4;
                     else
                         party_at(g_game, g_game->f78)->action = 4;
-                    party_at(g_game, g_game->f78)->target = ((MapSceneObj*)bestobj)->party;
+                    party_at(g_game, g_game->f78)->target = bestobj->game_id;
                     party_at(g_game, g_game->f78)->reissue_order();
                 }
             } else if (kind == 3) {
-                int id = ((MapSceneObj*)bestobj)->party;
+                int id = bestobj->game_id;
                 AgentRec* rec = ((AgentRec**)g_game->agent_pages)[(unsigned)id >> 4] + (id & 0xf)   /* 0x519d57: shr */;
                 if (rec->kind == 1) {
                     Party* pl = party_at(g_game, g_game->f78);

@@ -29,7 +29,7 @@ struct entity;
 struct shape_base;
 struct shape_resource { shape_base* clone_shape(); };    // 0x4285e0 (the body resource of a prop: res_shape.h's res_shape)
 struct body_res { shape_base* copy_shape(); };           // 0x439100 (agent2/agent_stats.cpp)
-struct grid_shape;
+struct shape_base;
 
 struct StratEnt;
 

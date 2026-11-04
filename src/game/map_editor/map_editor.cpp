@@ -311,7 +311,7 @@ void MapMission::remove_prop(int index)
     {
         rgl::entity* e = (rgl::entity*)pv[i].ent;
         if (e)
-            e->fc = i;
+            e->game_id = i;
     }
 #undef pv
 }
