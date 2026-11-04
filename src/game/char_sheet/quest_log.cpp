@@ -81,10 +81,10 @@ widget* make_quest_list(widget* parent, const float* pos, const float* size, int
 {
     widget* mem = (widget*)operator new(0x4a8);
     Camera* cam = mem ? new (mem, raw_place()) Camera : 0;    // 0x49deb0
-    cam->flags |= 0x20;
+    cam->f104 |= 0x20;
     if (d)
-        cam->follow[1] = (follow_iface*)d;
-    cam->target = (shape_ref*)parent;      // the owner, also handed to add_child (vtable +0xc8)
+        cam->follow[1] = (MissionUi*)d;
+    cam->target = (ContainerBase*)parent;      // the owner, also handed to add_child (vtable +0xc8)
     widget* self = (widget*)cam;
     self->add_child(parent);
     self->set_pos(pos);
