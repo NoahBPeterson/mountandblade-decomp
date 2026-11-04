@@ -76,25 +76,16 @@ struct PlaneTrace {
 };
 
 // @ 0x51a2d0
-// `volatile` on d (and on py) plus the right-associative numerator reproduce three distinct
-// properties of the original: d lives in its own float32 frame slot (so the frame is `sub esp`,
-// not `push ecx`), the numerator/denominator group as ...*n.z + (d.y*n.y + d.z*n.z), and e.y*t
-// is rounded to float32 before `+ a->y`.
+// Not byte-exact (map_picker.nonmatching.txt): x87 spill schedule of the e*t products
 void PlaneTrace::intersect(vector4* out, const vector4* a, const vector4* b)
 {
-    volatile vector4 d;
-    d.x = pt.x - a->x;
-    d.y = pt.y - a->y;
-    d.z = pt.z - a->z;
+    vector4 d = pt - *a;
     float t = (d.x * nrm.x + (d.y * nrm.y + d.z * nrm.z)) /
               ((b->x - a->x) * nrm.x + ((b->y - a->y) * nrm.y + (b->z - a->z) * nrm.z));
-    float rx = (b->x - a->x) * t + a->x;
-    volatile float py = (b->y - a->y) * t;
-    float ry = py + a->y;
-    float rz = (b->z - a->z) * t + a->z;
-    out->x = rx;
-    out->y = ry;
-    out->z = rz;
+    vector4 r = *a + vector4(b->x - a->x, b->y - a->y, b->z - a->z) * t;
+    out->x = r.x;
+    out->y = r.y;
+    out->z = r.z;
 }
 
 // ---- 0x51a3a0 -------------------------------------------------------------------------------------------
@@ -207,7 +198,7 @@ void MapPickScreen::set_label(int id)
 void MapWidget::project(vector4* out, const vector4* in)
 {
     vector4 p = scene3d.fr.m.transform_point_to_local(*in);
-    volatile float x, y;
+    float x, y;
     if (scene3d.fr.perspective) {
         x = -((1.0f / p.z) * scene3d.fr.nearz * p.x);
         y = -((1.0f / p.z) * scene3d.fr.nearz * p.y);
