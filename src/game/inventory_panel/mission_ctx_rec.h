@@ -71,6 +71,9 @@ struct MissionCtx {
     void frame(int tick);                               // 0x516370 (ret 4)
     void update_anim();                                 // 0x516700
     void reset_ids(int id);                             // 0x5169e0 (ret 4)
+    void tick();                                        // 0x5295a0 (mission_5.cpp)
+    void refresh_markers();                             // 0x529600 (mission_5.cpp)
+    void reset_party_heroes(int party_id);              // 0x529670 (mission_5.cpp; this unused)
     void select_side(int side);                         // 0x492750 (ret 4; world_data.cpp)
 };
 extern MissionCtx g_mission_ctx;                        // 0xa73300 (defined in inventory_panel/mission_ctx.cpp)

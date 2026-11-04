@@ -9340,7 +9340,7 @@
   },
   "00529670": {
    "verdict": "DIFF",
-   "symbol": "?reset_party_heroes@MissionHud_s29130@@QAEXH@Z",
+   "symbol": "?reset_party_heroes@MissionCtx@@QAEXH@Z",
    "insns": 133,
    "ours": 123,
    "unverified": 0,

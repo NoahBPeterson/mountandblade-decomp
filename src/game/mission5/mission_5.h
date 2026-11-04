@@ -41,7 +41,7 @@ extern char g_game_keys[]; // 0xa73730
 #include "../slot.h"                        // Slot, g_keyboard (0xa170c8)
 extern char g_windows[]; // 0xa73980
 #include "../map_flags.h"      // MapFlags, g_map_flags (0x5e291c): the one definition
-extern char g_mission_ctx[]; // 0xa73300
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): the one definition
 extern char g_game_keys[]; // 0xa73730
 #include "../placed_obj.h"
 #include "../../include/shape.h"
@@ -304,7 +304,6 @@ struct DialogMgr_s26130 {
 #define g_w_a739c8_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x48)))
 #define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
 #define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
-#define g_a73300_s261e0 (*(Obj73300_s261e0*)g_mission_ctx)
 #define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 // Slice s005261e0: the mission screen / game-loop tick (0x5261e0, 6818 bytes, thiscall, ret 4).
 //
@@ -550,11 +549,6 @@ extern int  g_vert_budget;                                  // 0x5a9c34
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 #include "../../include/renderer.h"
 #define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
-struct Obj73300_s261e0 {                                        // g_mission_ctx (0xa73300)
-    char pad0[0x3c];
-    unsigned f3c;                                               // +0x3c accumulated key mask (0xa7333c)
-    void f_5295a0();
-};                   // 0x5295a0
 
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
@@ -1114,25 +1108,14 @@ struct GameData_s29130 {
 
 // ---- the HUD object -----------------------------------------------------------------------------------
 struct MissionHud_s29130 {
-    int f0;                                                   // +0x00
-    int f4;                                                   // +0x04
-    char pad8[0x14 - 8];
-    int f14;                                                  // +0x14 (state: 1, 3, 4 tested here)
-    char pad18[0x68 - 0x18];
+    char pad0[0x68];
     Widget_s29130* w[7];                                             // +0x68
     float color[7];                                           // +0x84
     Mark_s29130* marks[7];                                           // +0xa0
-    char padbc[0x154 - 0xbc];
-    int f154;                                                 // +0x154 (party id)
-    char pad158[0x288 - 0x158];
+    char padbc[0x288 - 0xbc];
     float f288;                                               // +0x288 (field of view, degrees)
-    char pad28c[0x2c8 - 0x28c];
-    char f2c8;                                                // +0x2c8
 
     __declspec(noinline) void update_marks();                                      // 0x529130
-    void tick();                                              // 0x5295a0
-    void refresh_markers();                                   // 0x529600
-    void reset_party_heroes(int party);                       // 0x529670
 };
 
 // ---- externals -----------------------------------------------------------------------------------------

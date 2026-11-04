@@ -472,8 +472,6 @@ int find_listener_agent()
 #define g_w_a739c0_s261e0 (*(Widget_s261e0**)&(*(void**)((char*)&g_windows + 0x40)))
 #undef g_flags_s261e0
 #define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
-#undef g_a73300_s261e0
-#define g_a73300_s261e0 (*(Obj73300_s261e0*)g_mission_ctx)
 #undef g_deque_s261e0
 #define g_deque_s261e0 (*(IntDeque_s261e0*)((char*)((char*)&g_windows + 0x78)))
 #undef g_clamp_max
@@ -800,7 +798,7 @@ void Screen_s261e0::tick(float dt)
         } else if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 6 && f2d4 != 0) {
             int idx = *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a0);
             g_game_s261e0->f13af8 = idx;
-            char* obj = *(char**)((char*)g_mission_templates + (*(int*)((char*)&g_mission_ctx + 0x2c4)) * 0x60 + 0x58);
+            char* obj = *(char**)((char*)g_mission_templates + g_mission_ctx.passage_menu * 0x60 + 0x58);
             ((EmitSub_s261e0*)(obj + *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a4) * 0x68 + 0x4c))
                 ->play(0x10);
         }
@@ -1032,14 +1030,14 @@ void Screen_s261e0::tick(float dt)
 
         if (g_game_s261e0->f13af4 < 0)
             goto after;
-        g_a73300_s261e0.f_5295a0();
-        g_a73300_s261e0.f3c |= 8;
+        g_mission_ctx.tick();
+        g_mission_ctx.f3c |= 8;
         g_flags_s261e0.commit((char*)&flag13);
         goto unlock;
     }
 
     // ---- boolean-false branch ----------------------------------------------------------------------
-    g_a73300_s261e0.f_5295a0();
+    g_mission_ctx.tick();
     if (f18 != 100) {
         if (g_game_s261e0->f13ad0 > 0.0f && g_game_s261e0->f13ad4 != 0)
             g_main_menu_s261e0.set_state(7);
@@ -1047,8 +1045,8 @@ void Screen_s261e0::tick(float dt)
             g_main_menu_s261e0.set_state(f18);
         goto unlock;
     }
-    if (0 < (*(int*)((char*)&g_mission_ctx + 0x2c4))) {
-        int f = *(int*)((char*)g_menus + (*(int*)((char*)&g_mission_ctx + 0x2c4)) * 0x60 + 0x20);
+    if (0 < g_mission_ctx.passage_menu) {
+        int f = *(int*)((char*)g_menus + g_mission_ctx.passage_menu * 0x60 + 0x20);
         if ((f & 0x10) != 0)
             g_game_s261e0->fa8 |= 1;
     }
@@ -1692,7 +1690,7 @@ void MissionHud_s29130::update_marks()
 }
 
 // @ 0x5295a0
-void MissionHud_s29130::tick()
+void MissionCtx::tick()
 {
     WL_MARKER(12)
     g_game_s29130->more_start();
@@ -1703,7 +1701,7 @@ void MissionHud_s29130::tick()
 }
 
 // @ 0x529600
-void MissionHud_s29130::refresh_markers()
+void MissionCtx::refresh_markers()
 {
     int n = 1;
     if (g_scene_s29130->f6524 > 0)
@@ -1711,15 +1709,15 @@ void MissionHud_s29130::refresh_markers()
     else if (g_scene_s29130->f6524 < 0)
         n = 0x7031;
     g_scene_s29130->fn_529840(n);
-    if (f14 == 3 || f14 == 4 || f14 == 1) {
+    if (mode == 3 || mode == 4 || mode == 1) {
         reset_party_heroes(g_game_s29130->cur_party);
-        if (f0 >= 0) reset_party_heroes(f0);
-        if (f4 >= 0) reset_party_heroes(f4);
+        if (party[0] >= 0) reset_party_heroes(party[0]);
+        if (party[1] >= 0) reset_party_heroes(party[1]);
     }
 }
 
 // @ 0x529670
-void MissionHud_s29130::reset_party_heroes(int party_id)
+void MissionCtx::reset_party_heroes(int party_id)
 {
     PartyMgr_s29130* mgr = party_mgr_s29130();
     int idx = mgr->index_of(party_id);
@@ -2030,7 +2028,7 @@ void Screen_s29ec0::f_529ec0()
                     keep = true;
                 }
             } else if (p->kind == 5) {
-                if ((*(int*)((char*)&g_mission_ctx + 0x2c4)) <= 0 || p->m1a4 < 0 || p->m1a4 >= g_mapobjs_s29ec0[(*(int*)((char*)&g_mission_ctx + 0x2c4))].count) {
+                if (g_mission_ctx.passage_menu <= 0 || p->m1a4 < 0 || p->m1a4 >= g_mapobjs_s29ec0[g_mission_ctx.passage_menu].count) {
                     keep = true;
                 } else {
                     mode = 6;
@@ -2211,7 +2209,7 @@ no_selection:
         }
     } else if (mode == 6) {
         PlacedObj* p = &m->props[target];
-        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[(*(int*)((char*)&g_mission_ctx + 0x2c4))].objs + p->m1a4 * 0x68);
+        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[g_mission_ctx.passage_menu].objs + p->m1a4 * 0x68);
         name = *o->mesh_ptr();
         if (ok) {
             tstring k("ui_go");
