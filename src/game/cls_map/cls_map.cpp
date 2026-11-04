@@ -430,7 +430,7 @@ void gui_manager::rebuild()
 TwoVec::~TwoVec() {}
 
 // @ 0x4daa10   the loading screen: the overlay window, the logo, the hint line and one random hint text
-void C4c2fb0::slot_empty_2()
+void C4c2fb0::init_screen()
 {
     g_gui.reset();
 
@@ -755,7 +755,7 @@ void MissionScreen::fill_mission_grid()
     vt(overlay)->d50(row[2]);
 
 // @ 0x4dae40
-void Rec44::slot_empty_2()
+void Rec44::init_screen()
 {
     row[4] = 0;
     NEW_OVERLAY("mission_window")
@@ -768,7 +768,7 @@ void Rec44::slot_empty_2()
 }
 
 // @ 0x4db1f0
-void Rec118::slot_empty_2()
+void Rec118::init_screen()
 {
     NEW_OVERLAY_BASE("meeting_window")
     for (int i = 0; i < 16; i++) {
@@ -864,7 +864,7 @@ void MissionScreen::fill_mission_row(int side)
 }
 
 // @ 0x4db660
-void Rec3c::slot_empty_2()
+void Rec3c::init_screen()
 {
     g_gui.reset();
     { NEW_OVERLAY_WINDOW(p_) overlay = p_; }
@@ -980,7 +980,7 @@ void FrameGui::set_rect(const float* a, const float* b)
 // the long / medium button makers sit after init(); the shared maker 0x4dcc50 follows (T regime: kept out of line)
 
 // @ 0x4dc630
-void ResultWindow::slot_empty_2()
+void ResultWindow::init_screen()
 {
     float mv[4];
     if (w04 == 0) {
@@ -1206,7 +1206,7 @@ UiA* new_medium_button(MissionUi* parent, const tstring* text, float a, float b,
 
 // ---- 0x4dcef0..0x4ddf80: the main menu, the save scan, the menu rows, the block owner and the escape / message menus ----
 // @ 0x4dcef0
-void ItemRec::slot_empty_2()
+void ItemRec::init_screen()
 {
     BlockOwner& block = *(BlockOwner*)&owned;       // the +0x30 sub-object (index, timer, menu block) as the block owner sees it
     char text[0x200];
@@ -1443,7 +1443,7 @@ void BlockOwner::init(ContainerBase* parent, int which)
 }
 
 // @ 0x4dda40
-void ItemRec2::slot_empty_2()
+void ItemRec2::init_screen()
 {
     BlockOwner& block = *(BlockOwner*)&owned;
     g_gui.reset();
@@ -1553,7 +1553,7 @@ void ItemRec2::slot_empty_2()
 }
 
 // @ 0x4ddf80
-void C4c3050::slot_empty_2()
+void C4c3050::init_screen()
 {
     ContainerBase* w;
     {
@@ -1615,7 +1615,7 @@ void C4c3050::slot_empty_2()
 
 // ---- 0x4de1b0..0x4de6f0: the debrief menu --------------------------------------------------------------------------------
 // @ 0x4de1b0
-void Rec38::slot_empty_2()
+void Rec38::init_screen()
 {
     float tv[2];
     ContainerBase* w;
@@ -1751,7 +1751,7 @@ void PanelMesh::build_panel(const float* base, const float* size, const float* u
 }
 
 // @ 0x4de5b0
-void Rec34::slot_empty_2()
+void Rec34::init_screen()
 {
     g_sound_mgr.stop_all();
 
@@ -1934,7 +1934,7 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 #define COLOR_ENABLED 0xffdfcfbfu   // the ui colour word every label of the screen is tinted with (edi in the original)
 
 // @ 0x4de6f0
-void Recd8::slot_empty_2()
+void Recd8::init_screen()
 {
     g_gui.reset();
     { NEW_OVERLAY_WINDOW(p_) root = p_; }
@@ -2172,7 +2172,7 @@ static __forceinline int drop_count(DropDown* d) { return d->rows_first ? (int)(
 #define DD_TEXT(dd, text) { tstring t_(text); vt(dd)->d50(&t_); }
 
 // @ 0x4e05c0
-void Recf0::slot_empty_2()
+void Recf0::init_screen()
 {
     f_ec = 0;
     f_ed = 0;
@@ -2408,7 +2408,7 @@ void Recf0::slot_empty_2()
 
 // ---- 0x4e25a0: the key-binding page -----------------------------------------------------------------------------------------------
 // @ 0x4e25a0
-void Rec1bc::slot_empty_2()
+void Rec1bc::init_screen()
 {
     f1b8 = -1;
     g_gui.reset();
@@ -2786,7 +2786,7 @@ extern float g_meeting_y0;                      // 0x591d44 (0.63f)
 extern float g_meeting_dy;                      // 0x54b8b4 (0.03f)
 
 // @ 0x4e3780
-void Rec48::slot_empty_2()
+void Rec48::init_screen()
 {
     g_gui.reset();
     { NEW_OVERLAY_WINDOW(p_) bg = p_; }
@@ -2857,7 +2857,7 @@ void Rec48::slot_empty_2()
 }
 
 // @ 0x4e3aa0
-void C4c3290::slot_empty_2()
+void C4c3290::init_screen()
 {
     g_gui.reset();
     f44 = 10;

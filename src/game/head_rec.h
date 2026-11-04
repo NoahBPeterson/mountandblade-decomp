@@ -10,10 +10,10 @@
 //   slot 0  0x4c4c90  ~head_rec            releases the name tstring and, when asked, the object. Each derived
 //                                          class's deleting destructor follows from it (the item family shares one,
 //                                          0x4ce930, by ICF).
-//   slot 1  0x477b70  slot_empty_1()       `ret` - an empty function (the base's default; most derived classes
+//   slot 1  0x477b70  reset_screen()       `ret` - an empty function (the base's default; most derived classes
 //                                          override it with a screen reset)
-//   slot 2  0x477b70  slot_empty_2()       the same empty function
-//   slot 3  0x408030  scale_3(float)  `ret 4` - takes its argument (the frame time) and returns (shape_base::scale)
+//   slot 2  0x477b70  init_screen()       the same empty function
+//   slot 3  0x408030  frame_update(float)  `ret 4` - takes its argument (the frame time) and returns (shape_base::scale)
 //   slot 4  0x477b70  slot_empty_4()       the same empty function (MissionBlocker overrides it with
 //                                          MissionParams::init, 0x4cea10)
 //   slot 5  0x408030  write_stream(w_stream*)  `ret 4` (the same function as slot 3)
@@ -40,9 +40,9 @@ void reset_gui();
 
 struct head_rec {
     virtual ~head_rec() {}                                          // slot 0  0x4c4c90
-    virtual void slot_empty_1() {}                                  // slot 1  0x477b70 (empty)
-    virtual void slot_empty_2() {}                                  // slot 2  0x477b70 (the same function)
-    virtual void scale_3(float) {}                           // slot 3  0x408030 (ret 4)
+    virtual void reset_screen() {}                                  // slot 1  0x477b70 (empty)
+    virtual void init_screen() {}                                  // slot 2  0x477b70 (the same function)
+    virtual void frame_update(float) {}                           // slot 3  0x408030 (ret 4)
     virtual void slot_empty_4() {}                                  // slot 4  0x477b70 (the same function)
     virtual void write_stream(w_stream*) {}                        // slot 5  0x408030 (the same function)
     virtual void read_stream(w_stream*) {}                        // slot 6  0x408030 (the same function)

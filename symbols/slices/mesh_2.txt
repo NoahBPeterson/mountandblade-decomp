@@ -1,5 +1,5 @@
 004ca600 ?apply@screen_cfg@@QAEXXZ
-004ca6c0 ?scale_3@C4c3050@@UAEXM@Z
+004ca6c0 ?frame_update@C4c3050@@UAEXM@Z
 004ca720 ?release_strings@LangTables@@QAEXXZ
 004ca7e0 ??$_Destroy_range@UE176@@V?$allocator@UE176@@@std@@@std@@YAXPAUE176@@0AAV?$allocator@UE176@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
 004ca830 ?release@big_holder@@QAEXXZ
@@ -8,8 +8,8 @@
 004caa40 ?combine@graph_obj@@QAE_NXZ
 004cb3a0 ?split_edge@graph_obj@@QAE_NH@Z
 004cb610 ?release@rec_2e4@@QAEXXZ
-004cb650 ?slot_empty_1@Rec23c@@UAEXXZ
-004cb680 ?slot_empty_1@Rec428@@UAEXXZ
+004cb650 ?reset_screen@Rec23c@@UAEXXZ
+004cb680 ?reset_screen@Rec428@@UAEXXZ
 004cb6b0 ?clear@vec3_holder@@QAEXXZ
 004cb6f0 ?grow@list_node@@QAEXI@Z
 004cb780 ?clear_vecs@graph_obj@@QAEXXZ

@@ -204,7 +204,7 @@ void options_panel::key_binding_name(int slot, tstring* out, int* translated)
 }
 
 // @ 0x4d7d90
-void Rec3c::scale_3(float)
+void Rec3c::frame_update(float)
 {
     if (((ui_control*)row[2])->is_key_down(0x10000)) {
         w04 = 0;
@@ -280,7 +280,7 @@ void options_panel::draw_faction_report()
 }
 
 // @ 0x4d8000
-void Rec48::scale_3(float)
+void Rec48::frame_update(float)
 {
     char buf_a[512];
     char buf_b[512];

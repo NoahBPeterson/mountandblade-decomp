@@ -8068,7 +8068,7 @@
   },
   "00500ad0": {
    "verdict": "DIFF",
-   "symbol": "?slot_empty_2@PartyWindow@@UAEXXZ",
+   "symbol": "?init_screen@PartyWindow@@UAEXXZ",
    "insns": 1027,
    "ours": 902,
    "unverified": 0,
@@ -8372,7 +8372,7 @@
   },
   "0050fe20": {
    "verdict": "DIFF",
-   "symbol": "?scale_3@PartyWindow@@UAEXM@Z",
+   "symbol": "?frame_update@PartyWindow@@UAEXM@Z",
    "insns": 754,
    "ours": 620,
    "unverified": 0,

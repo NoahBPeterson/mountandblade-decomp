@@ -78,7 +78,7 @@ static const char* text_of(const tstring* s)
 }
 
 // @ 0x4ea290
-void C4c31c0::scale_3(float)
+void C4c31c0::frame_update(float)
 {
     // save_path reads this as a C string, then WRITES the whole "%s\Mount&Blade Savegames\%s" path back into
     // it (its own local buffer is 0x104), so this is a char buffer of that size - the 16 bytes it used to have

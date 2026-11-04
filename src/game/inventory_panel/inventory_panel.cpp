@@ -76,7 +76,7 @@ struct SkillNames {                                     // a skill record seen f
 #include "../ui_globals.h"      // UI / core globals
 
 // @ 0x50fe20
-void PartyWindow::scale_3(float unused)
+void PartyWindow::frame_update(float unused)
 {
     g_msglog.flush();
 

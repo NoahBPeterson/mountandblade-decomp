@@ -136,7 +136,7 @@ struct VideoPage {
 
 #define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d63b0
-void Recf0::scale_3(float)
+void Recf0::frame_update(float)
 {
     if (W(blood)->clear_mask(0x10000)) {
         g_options.blood = settings_value(W(blood));

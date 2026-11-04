@@ -54,7 +54,7 @@ extern const float g_aim_range_tbl[14] = {-0.5f, 3.1415927f, -2.0f, 2.0f, -1.5f,
 // agent record i of the mission (pages of 16, 0x5928 bytes each)
 #define REC_S25160(i) ((*(char***)((char*)g_big + 0x1c))[(i) >> 4] + ((i) & 0xf) * 0x5928)
 // @ 0x525160
-void Rec1208::scale_3(float code_f)
+void Rec1208::frame_update(float code_f)
 {
     g_mgr.update();
 

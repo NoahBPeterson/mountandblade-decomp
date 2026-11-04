@@ -105,7 +105,7 @@ static __forceinline InvWindow* new_inv_window()
 }
 
 // @ 0x500ad0
-void PartyWindow::slot_empty_2()
+void PartyWindow::init_screen()
 {
     spec_ac0 = 0;
     spec_ac4 = 0;

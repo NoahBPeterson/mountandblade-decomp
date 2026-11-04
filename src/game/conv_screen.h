@@ -44,9 +44,9 @@ struct Rec1208 : head_rec {                              // vtable 0x595bfc, siz
     int target;                                          // +0x1200
     int speaker_id;                                      // +0x1204
     Rec1208() { target = -1; }
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();                         // 0x4f66e0
-    virtual void scale_3(float);                         // 0x525160
+    virtual void reset_screen();
+    virtual void init_screen();                         // 0x4f66e0
+    virtual void frame_update(float);                         // 0x525160
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     void refresh(int sel, int* out);                     // 0x4f73c0
 };

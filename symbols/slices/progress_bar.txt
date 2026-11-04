@@ -11,7 +11,7 @@
 004e4340 ??$_Uninit_copy@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@PAUloading_config@@V?$allocator@Uloading_config@@@3@@std@@YAPAUloading_config@@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@0@0PAU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
 004e43e0 ?draw_string@gui_manager@@QAEXPAUtstring@@MHD@Z
 004e4690 ?load@RagModel@@QAEXPAVTiXmlElement@@@Z
-004e4790 ?slot_empty_2@C4c31c0@@UAEXXZ
+004e4790 ?init_screen@C4c31c0@@UAEXXZ
 004e4c70 ?label_refresh@@YAXPAUMissionUi@@Utstring@@@Z
 004e51e0 ?get_hex@ini_file@@QAEHPAH@Z
 004e5230 ?get_float@ini_file@@QAEMPAH@Z

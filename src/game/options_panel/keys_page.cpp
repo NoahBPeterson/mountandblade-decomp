@@ -234,7 +234,7 @@ void KeysPage::set_enabled_text(MissionUi* w)
 }
 
 // @ 0x4d6e50
-void Rec1bc::scale_3(float)
+void Rec1bc::frame_update(float)
 {
 #define W(x) ((MissionUi*)(void*)(x))
     if (f1b8 >= 0) {

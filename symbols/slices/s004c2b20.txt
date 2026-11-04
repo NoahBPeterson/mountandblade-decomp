@@ -9,7 +9,7 @@
 004c3000 ??_GC4c2fb0@@UAEPAXI@Z  # deleting dtor of C4c2fb0 (vtable slot; calls its dtor 0x4c3020)
 004c3020 ??1C4c2fb0@@UAE@XZ  # dtor, tstrings +0x68/+0x58/+0x48 reverse, then base +0x1c
 004c3050 ??0C4c3050@@QAE@XZ  # ctor, vtable 0x5957bc, tstring at +0x5c and 6 at +0x6c, +0x50=-1, +0x54=0
-004c30b0 ?slot_empty_1@C4c3050@@UAEXXZ  # g_5d8789 = 1
+004c30b0 ?reset_screen@C4c3050@@UAEXXZ  # g_5d8789 = 1
 004c30c0 ??_GC4c3050@@UAEPAXI@Z  # ICF-folded deleting dtor for C4c3050 (vtable slot)
 004c30e0 ??1C4c3050@@UAE@XZ  # dtor, 6 tstrings +0xbc..+0x6c reverse, +0x5c, then base +0x1c
 004c3120 ??_GRec118@@UAEPAXI@Z  # deleting dtor: tstring 0x42bc40 at +0x84 and the base's at +0x1c, base vtable 0x5947d8 restored (class vtable 0x595804, tstrings at +0x1c/+0x84)

@@ -8,7 +8,7 @@
 //                      7 0x48b170 always1
 //   0x596148 ItemRec2  1 0x4c6e00 reset_gui | 2 0x4dda40 EscapeMenu::create    | 3 0x4e87d0 MapScreen::buttons
 //                      7 0x48b170 always1
-// Slots 2 and 3 override slot_empty_2 / scale_3 (forwarding stubs in cls_map.cpp, hud.cpp, save_game.cpp).
+// Slots 2 and 3 override init_screen / frame_update (forwarding stubs in cls_map.cpp, hud.cpp, save_game.cpp).
 // Slots 3/5/6, 8 and the empty slots 1/2/4 are the base's unless overridden above.
 //
 // TESTABILITY: nothing in the binary constructs these records - no reference to 0x4ce870 / 0x4ce8d0 exists, and each
@@ -40,7 +40,7 @@ struct ItemRec : head_rec {                     // vtable 0x596124 (the main men
     __int64 stamp;                              // +0x50 g_ticks[0]
     float f58;                                  // +0x58 1.0f
     int f5c;                                    // +0x5c 0
-    MissionUi* row_tutorial;                    // +0x60 the main menu's rows (scale_3 0x4d5290 tests their used flags)
+    MissionUi* row_tutorial;                    // +0x60 the main menu's rows (frame_update 0x4d5290 tests their used flags)
     MissionUi* row_new_game;                    // +0x64
     MissionUi* row_restore;                     // +0x68
     MissionUi* row_custom;                      // +0x6c (may be null)
@@ -52,9 +52,9 @@ struct ItemRec : head_rec {                     // vtable 0x596124 (the main men
     MissionUi* pic;                             // +0x84
     int     first_free;                         // +0x88
     char    pad8c[0x90 - 0x8c];
-    virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui        (gui_edit.cpp)
-    virtual void slot_empty_2();                // slot 2  0x4dcef0 MainMenuScreen::create (cls_map.cpp)
-    virtual void scale_3(float);         // slot 3  0x4d5290 Hud::handle_buttons    (hud.cpp)
+    virtual void reset_screen();                // slot 1  0x4c6e00 reset_gui        (gui_edit.cpp)
+    virtual void init_screen();                // slot 2  0x4dcef0 MainMenuScreen::create (cls_map.cpp)
+    virtual void frame_update(float);         // slot 3  0x4d5290 Hud::handle_buttons    (hud.cpp)
     virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
     ItemRec();                                  // 0x4ce870
 };
@@ -77,9 +77,9 @@ struct ItemRec2 : head_rec {                    // vtable 0x596148 (the escape m
     MissionUi* row5;                            // +0x74
     MissionUi* logo;                            // +0x78
     char pad7c[0x80 - 0x7c];
-    virtual void slot_empty_1();                // slot 1  0x4c6e00 reset_gui        (gui_edit.cpp)
-    virtual void slot_empty_2();                // slot 2  0x4dda40 EscapeMenu::create    (cls_map.cpp)
-    virtual void scale_3(float);         // slot 3  0x4e87d0 MapScreen::buttons    (save_game.cpp)
+    virtual void reset_screen();                // slot 1  0x4c6e00 reset_gui        (gui_edit.cpp)
+    virtual void init_screen();                // slot 2  0x4dda40 EscapeMenu::create    (cls_map.cpp)
+    virtual void frame_update(float);         // slot 3  0x4e87d0 MapScreen::buttons    (save_game.cpp)
     virtual char pure_7() { return 1; }         // slot 7  0x48b170
     ItemRec2();                                 // 0x4ce8d0
 };

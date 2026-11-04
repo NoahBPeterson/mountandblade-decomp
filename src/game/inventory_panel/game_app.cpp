@@ -167,7 +167,7 @@ int GameApp::Update()
     }
 
     frame_hook();
-    slot_as<head_rec>(current_screen_id())->scale_3(dt);
+    slot_as<head_rec>(current_screen_id())->frame_update(dt);
 
     if (g_game) {
         // (0x50f057, the "hide" path, is reached whenever f1a090 is 0, on screen 0xe or not)
@@ -320,7 +320,7 @@ int GameApp::MsgProc(HWND hWnd, unsigned msg, unsigned wparam, unsigned lparam)
 
 // ---- the loading screen's step ----------------------------------------------------------------------
 // @ 0x50f390
-void C4c3290::scale_3(float)
+void C4c3290::frame_update(float)
 {
     char buf[0x100];
     tstring text;

@@ -238,7 +238,7 @@ void QuestPage::update_difficulty()
 
 #define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d5f20
-void Recd8::scale_3(float)
+void Recd8::frame_update(float)
 {
     if (W(s7c)->clear_mask(0x10000))
         g_options.music_volume = control_float(W(s7c));

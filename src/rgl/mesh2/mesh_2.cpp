@@ -46,7 +46,7 @@ void screen_cfg::apply()
 }
 
 // @ 0x4ca6c0
-void C4c3050::scale_3(float)
+void C4c3050::frame_update(float)
 {
     int found = -1;
     for (int i = 0; i < count; i++) {
@@ -381,7 +381,7 @@ void rec_2e4::release()
 
 // @ 0x4cb650
 
-void Rec23c::slot_empty_1()
+void Rec23c::reset_screen()
 {
     g_gui.reset();
     res_rec* r = p;
@@ -393,7 +393,7 @@ void Rec23c::slot_empty_1()
 
 // @ 0x4cb680
 
-void Rec428::slot_empty_1()
+void Rec428::reset_screen()
 {
     g_gui.reset();
     res_rec* r = p;

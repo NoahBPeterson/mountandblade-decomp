@@ -28,7 +28,7 @@ are its members:
    constructor) makes cl emit the vtable.
 2. Define each override in the TU where the original has it (a class's members may be spread over TUs: constructor and
    destructors with the record family, the window maker with the window code, ...), annotated `// @ 0xADDR`.
-3. Delete the forwarding stub (`void C::slot_empty_2() { ((Other*)this)->f(); }`), the `Other` view struct, and any
+3. Delete the forwarding stub (`void C::init_screen() { ((Other*)this)->f(); }`), the `Other` view struct, and any
    `extern char vtbl_X[]` the hand destructor used to store the vptr.
 4. Rename the manifest / slice rows to the new mangled names.
 
@@ -38,16 +38,16 @@ struct ResultWindow : head_rec {
     ContainerBase* win;  /* +0x2c ... */  int* flag; /* +0x4c */  tstring* text; /* +0x50 */  tstring s54; /* ... */
     ResultWindow();                          // 0x4c2c50
     __declspec(noinline) ~ResultWindow();    // 0x4c2cd0, called (not inlined) by the deleting destructor 0x4c2cb0
-    virtual void slot_empty_1();             // 0x4c30b0  g_gui.f1709 = 1
-    virtual void slot_empty_2();             // 0x4dc630  (cls_map.cpp)
-    virtual void scale_3(const float*);      // 0x4ca550  (gui_edit.cpp)
+    virtual void reset_screen();             // 0x4c30b0  g_gui.f1709 = 1
+    virtual void init_screen();             // 0x4dc630  (cls_map.cpp)
+    virtual void frame_update(const float*);      // 0x4ca550  (gui_edit.cpp)
     virtual char pure_7() { return 0; }      // 0x4280e0
 };
 // rec_tables.cpp
 ResultWindow::ResultWindow() { flag = 0; text = 0; }            // base ctor + vptr store come from the compiler
 ResultWindow::~ResultWindow() {}                                // members destroyed in reverse, vptr stores: the compiler's
 // cls_map.cpp   // @ 0x4dc630
-void ResultWindow::slot_empty_2() { if (w04 == 0) { ... } ... }
+void ResultWindow::init_screen() { if (w04 == 0) { ... } ... }
 ```
 
 ## Destructors
@@ -64,9 +64,9 @@ in the tables of four classes). Each class defines its own copy of the body; the
 the ICF trial link folds them. Do not write a free function and a stub per class.
 
 ```cpp
-void C4c3050::slot_empty_1()   { g_gui.f1709 = 1; }   // @ 0x4c30b0
-void ResultWindow::slot_empty_1() { g_gui.f1709 = 1; }
-void Rec34::slot_empty_1()     { g_gui.f1709 = 1; }
+void C4c3050::reset_screen()   { g_gui.f1709 = 1; }   // @ 0x4c30b0
+void ResultWindow::reset_screen() { g_gui.f1709 = 1; }
+void Rec34::reset_screen()     { g_gui.f1709 = 1; }
 ```
 
 ## Head records: what was done and what the rest needs (lane V1)
@@ -77,7 +77,7 @@ ItemRec2 in `game/triggers/item_rec.h`, C4c3160 + `Slot20` in screen_records.h, 
 (`OptionsScreen`/`OptionsWin`/`MeetingWindow`/`XferWin`/`LogScreen`/`quest_window`/`ConvScreen`) where one view was the
 whole record. Their overrides are defined in the TU of the original function (`// @ 0xADDR`), their destructors are the
 compiler's (`~X()` for the part the original calls out of line, implicit `??_GX`; the plain records need none: the
-compiler-emitted deleting destructors fold with the base's under ICF), slot 3 is `scale_3(float)` (the per-frame / event
+compiler-emitted deleting destructors fold with the base's under ICF), slot 3 is `frame_update(float)` (the per-frame / event
 handler; the parameter is the frame time, a handler that forwards its address, as `pick(&arg)` does, takes
 `(int*)&arg`), slot 1 is `g_gui.reset()` once per class (`g_gui.f1709 = 1` for the 0x4c30b0 group, `reset(); overlay = 0` for 0x4c6e10).
 

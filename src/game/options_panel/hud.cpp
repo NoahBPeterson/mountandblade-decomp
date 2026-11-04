@@ -156,7 +156,7 @@ struct ItemSource {
 
 #define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d5290
-void ItemRec::scale_3(float arg)
+void ItemRec::frame_update(float arg)
 {
     ((ItemSource*)((char*)(void*)this + 0x30))->pick((int*)&arg);
     if (W(row_tutorial)->clear_mask(0x10000)) {
@@ -252,7 +252,7 @@ __declspec(noinline) void ValueSource::on_value_changed(float arg)
 }
 
 // @ 0x4d5980
-void Rec44::scale_3(float)
+void Rec44::frame_update(float)
 {
     *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_mission_ctx.scene_counter;
     g_mission_ctx.scene_counter = g_mission_ctx.scene_counter + 1;
@@ -265,7 +265,7 @@ void Rec44::scale_3(float)
 }
 
 // @ 0x4d59f0
-void Rec38::scale_3(float)
+void Rec38::frame_update(float)
 {
     if (((MissionUi*)(void*)f34)->clear_mask(0x10000))
         g_main_menu.set_state(7);
@@ -273,7 +273,7 @@ void Rec38::scale_3(float)
 
 #define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d5a20
-void Rec454::scale_3(float)
+void Rec454::frame_update(float)
 {
     if (g_mission_clock) {
         ValueWidget* u = item_value((MissionUi*)(void*)list);

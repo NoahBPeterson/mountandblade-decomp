@@ -11,8 +11,8 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define W(x) ((MissionUi*)(void*)(x))
-// @ 0x4e87d0    ItemRec2::scale_3(float)
-void ItemRec2::scale_3(float arg)
+// @ 0x4e87d0    ItemRec2::frame_update(float)
+void ItemRec2::frame_update(float arg)
 {
     ((MissionSource*)&owned)->pick((int*)&arg);
     bool save = false;

@@ -1392,7 +1392,7 @@ void GameScreen::build()
 }
 
 // @ 0x4fc810
-void Rec58::slot_empty_2()
+void Rec58::init_screen()
 {
     build(w04 != 0);
 }

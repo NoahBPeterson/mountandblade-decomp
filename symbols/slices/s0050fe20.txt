@@ -1,5 +1,5 @@
 # names used while matching slice s0050fe20 (inventory panel per-frame trade step)
-0050fe20  PartyWindow::scale_3
+0050fe20  PartyWindow::frame_update
 005e2930  g_game (cur_troop +0x8c, hero_troop +0x90, troops +0x13a00, string_value 0x48e9e0)
 0049b720  World::add_value
 0049b820  World::sub_value

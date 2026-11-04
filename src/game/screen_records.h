@@ -53,9 +53,9 @@ struct C4c2fb0 : head_rec {
     SlotHeader header;         // +0x58
     int f8c;                   // +0x8c the value handed to Game::init (step 1)
     C4c2fb0();                 // 0x4c2fb0
-    virtual void slot_empty_1();      // slot 1  0x4c6e00: g_gui.reset()
-    virtual void slot_empty_2();      // slot 2  0x4daa10 (cls_map.cpp)
-    virtual void scale_3(float);      // slot 3  0x51c5a0 (party/game.cpp)
+    virtual void reset_screen();      // slot 1  0x4c6e00: g_gui.reset()
+    virtual void init_screen();      // slot 2  0x4daa10 (cls_map.cpp)
+    virtual void frame_update(float);      // slot 3  0x51c5a0 (party/game.cpp)
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     bool sub(int* counter, int* unused, tstring* out);          // 0x51c720 (ret 0xc)
 };
@@ -85,9 +85,9 @@ struct C4c31c0 : head_rec {
     tstring t224;              // +0x224 the typed save name
     bool is_load;              // +0x234
     C4c31c0();                 // 0x4c31c0
-    virtual void slot_empty_1();      // slot 1  0x4c6e00: g_gui.reset()
-    virtual void slot_empty_2();      // slot 2  0x4e4790 (cls_map/progress_bar.cpp)
-    virtual void scale_3(float);      // slot 3  0x4ea290 (char_sheet/save_panel.cpp)
+    virtual void reset_screen();      // slot 1  0x4c6e00: g_gui.reset()
+    virtual void init_screen();      // slot 2  0x4e4790 (cls_map/progress_bar.cpp)
+    virtual void frame_update(float);      // slot 3  0x4ea290 (char_sheet/save_panel.cpp)
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     void list_saves();                // 0x4e5270
     void slot_button(ContainerBase* parent, int slot, MissionUi** out);   // 0x4e55f0 (ret 0xc)
@@ -110,9 +110,9 @@ struct C4c3290 : head_rec {
     tstring t50;               // +0x50
     tstring_pair t60;          // +0x60, +0x70
     C4c3290();                 // 0x4c3290
-    virtual void slot_empty_1();      // slot 1  0x4c6e00: g_gui.reset()
-    virtual void slot_empty_2();      // slot 2  0x4e3aa0 (cls_map.cpp)
-    virtual void scale_3(float);      // slot 3  0x50f390 (inventory_panel/game_app.cpp)
+    virtual void reset_screen();      // slot 1  0x4c6e00: g_gui.reset()
+    virtual void init_screen();      // slot 2  0x4e3aa0 (cls_map.cpp)
+    virtual void frame_update(float);      // slot 3  0x50f390 (inventory_panel/game_app.cpp)
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     bool advance(int* step, int* total, tstring* text);   // 0x50f440
 };
@@ -132,9 +132,9 @@ struct C4c3050 : head_rec {
     char t6c[0x60];            // +0x6c the six button texts (tstrings 0x10 apart; built / destroyed by hand in the ctor / dtor)
     C4c3050();                 // 0x4c3050
     __declspec(noinline) ~C4c3050();   // 0x4c30e0 (called by the deleting destructor 0x4c30c0)
-    virtual void slot_empty_1();       // slot 1  0x4c30b0: g_gui.f1709 = 1
-    virtual void slot_empty_2();       // slot 2  0x4ddf80 (cls_map.cpp)
-    virtual void scale_3(float);   // slot 3  0x4ca6c0 (mesh_2.cpp)
+    virtual void reset_screen();       // slot 1  0x4c30b0: g_gui.f1709 = 1
+    virtual void init_screen();       // slot 2  0x4ddf80 (cls_map.cpp)
+    virtual void frame_update(float);   // slot 3  0x4ca6c0 (mesh_2.cpp)
     virtual char pure_7() { return 0; }   // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
 };
 
@@ -162,9 +162,9 @@ struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
     tstring second;     // +0x84
     MenuEntry entries[16];    // +0x94 the mission start menu's entries (slot 3 0x531590 picks the pressed one)
     int count;                // +0x114
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
@@ -172,27 +172,27 @@ struct Rec38 : head_rec { MB_ZERO_TAIL(Rec38)   // vtable 0x595828
     ContainerBase* win;       // +0x2c
     MissionUi* f30;           // +0x30
     MissionUi* f34;           // +0x34 the "leave" button (slot 3, hud.cpp 0x4d59f0)
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec44 : head_rec { MB_ZERO_TAIL(Rec44)   // vtable 0x5957e0 (the mission window: slot 2 cls_map.cpp 0x4dae40, slot 3 hud.cpp 0x4d5980)
     ContainerBase* overlay;   // +0x2c the window
     MissionUi* row[5];        // +0x30 (row[2] is the mission text, row[4] is cleared first)
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec34 : head_rec { MB_ZERO_TAIL(Rec34)   // vtable 0x59584c (the debrief window: slot 2 cls_map.cpp 0x4de5b0)
     ContainerBase* win;       // +0x2c
     MissionUi* f30;           // +0x30
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
@@ -210,9 +210,9 @@ struct Rec454 : head_rec { MB_ZERO_TAIL(Rec454)   // vtable 0x595894 (the quest 
     int f250;                 // +0x250 selected row
     UiA* rows[0x80];             // +0x254
     void __fastcall refresh();                // 0x4ee840 (char_sheet/quest_log.cpp)
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
@@ -220,9 +220,9 @@ struct Rec454 : head_rec { MB_ZERO_TAIL(Rec454)   // vtable 0x595894 (the quest 
 struct Rec3c : head_rec { MB_ZERO_TAIL(Rec3c)   // vtable 0x595948 (the "done" window: slot 2 cls_map.cpp 0x4db660, slot 3 options_panel.cpp 0x4d7d90)
     ContainerBase* overlay;   // +0x2c the window
     MissionUi* row[3];        // +0x30 ui_done button, -, the factions text
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
@@ -238,9 +238,9 @@ struct Recd8 : head_rec { MB_ZERO_TAIL(Recd8) // vtable 0x5958b8
     UiA* b88;                             // +0x88
     MissionUi* h8c, *h90, *h94, *h98, *h9c, *ha0, *ha4, *ha8, *hac, *hb0, *hb4, *hb8, *hbc, *hc0, *hc4, *hc8, *hcc, *hd0, *hd4;   // +0x8c..0xd4 the hint labels
     void update_difficulty();                   // 0x4d6300 (options_panel/quest_page.cpp; defined in cls_map/cls_map.h)
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
 };
 struct Recf0 : head_rec { MB_ZERO_TAIL(Recf0) // vtable 0x5958dc
@@ -289,9 +289,9 @@ struct Recf0 : head_rec { MB_ZERO_TAIL(Recf0) // vtable 0x5958dc
     int day_saved;                              // +0xe8
     char f_ec;                                  // +0xec
     char f_ed;                                  // +0xed
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
 };
 struct Rec1bc : head_rec { MB_ZERO_TAIL(Rec1bc)   // vtable 0x595900 (the key-binding page: slot 2 cls_map.cpp 0x4e25a0)
@@ -312,9 +312,9 @@ struct Rec1bc : head_rec { MB_ZERO_TAIL(Rec1bc)   // vtable 0x595900 (the key-bi
     char f1b4;                                  // +0x1b4 modified
     char pad1b5[3];
     int f1b8;                                   // +0x1b8 the row being assigned, -1 for none
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
@@ -324,9 +324,9 @@ struct Rec23c : head_rec { MB_ZERO_TAIL(Rec23c)   // vtable 0x595c44
     char pad190[0x1ac - 0x190];
     res_rec* p;         // +0x1ac the grid slot 1 releases (rgl/mesh2/mesh_2.cpp 0x4cb650)
     char tail[0x23c - 0x1b0];
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
@@ -338,9 +338,9 @@ struct Rec48 : head_rec { MB_ZERO_TAIL(Rec48) // vtable 0x59596c
     MissionUi* panel;                           // +0x3c the character list panel (0x597050)
     int f40;                                    // +0x40
     int f44;                                    // +0x44
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
 };
 struct NodeA;
@@ -358,9 +358,9 @@ struct Rec58 : head_rec { MB_ZERO_TAIL(Rec58)   // vtable 0x5959fc (the game-log
     MissionUi* tab_factions;                                      // +0x50
     MissionUi* tab_quests;                                        // +0x54
     void build(bool show);                                        // 0x4fc820 (ret 4)
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
@@ -373,9 +373,9 @@ struct Rec428 : head_rec { MB_ZERO_TAIL(Rec428)   // vtable 0x595c68
     char pad154[0x178 - 0x154];
     res_rec* p;         // +0x178 the grid slot 1 releases (rgl/mesh2/mesh_2.cpp 0x4cb680)
     char tail[0x428 - 0x17c];
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
     // head_rec now declares the nine slots the original's table at 0x595c68 has (slot +0x08 is FaceGen::init, +0x0c
@@ -416,9 +416,9 @@ struct C4c3160 : head_rec {  // vtable 0x595870 (the party exchange window: slot
     char f3908;                             // +0x3908
     char pad3909[0x3910 - 0x3909];
     C4c3160();               // 0x4c3160
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     __declspec(noinline) void clear_selection();                 // 0x5324d0
     __declspec(noinline) void get_cell(int a, int b, int c, int* main, int* cell);   // 0x532520

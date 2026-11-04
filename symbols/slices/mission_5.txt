@@ -1,4 +1,4 @@
-00525160 ?scale_3@Rec1208@@UAEXM@Z  # Game::handle_event(int code) - per-frame event handler / menu dispatch
+00525160 ?frame_update@Rec1208@@UAEXM@Z  # Game::handle_event(int code) - per-frame event handler / menu dispatch
 005257f0 ?update@ViewObj_s257f0@@QAEXXZ  # per-tick dialogue look-at / frame-blend update of the object passed in ecx; ViewObj is a provisional name
 00526070 ?find_speaker_agent@@YAHXZ  # last used agent whose troop (+0x88) equals DialogMgr::speaker, else g_player_agent
 00526130 ?find_listener_agent@@YAHXZ  # declared here, defined in slice s00526130

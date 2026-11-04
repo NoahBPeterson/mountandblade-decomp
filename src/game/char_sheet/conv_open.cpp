@@ -10,7 +10,7 @@
 #include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4f66e0
-void Rec1208::slot_empty_2()
+void Rec1208::init_screen()
 {
     ((gui_manager*)g_gui)->reset();   // 0x42d1b0 (g_gui is the gui_manager)
 

@@ -47,7 +47,7 @@ template<> void std::vector<__int64>::resize(size_t, __int64);   // 0x493090 (wo
 template<> void std::vector<int>::resize(size_t, int);       // 0x43f310 (agent3/agent_combat.cpp: the out-of-line instance, only declared)
 
 // @ 0x51c5a0
-void C4c2fb0::scale_3(float)
+void C4c2fb0::frame_update(float)
 {
     char tmp;
     tstring s;

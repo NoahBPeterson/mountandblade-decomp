@@ -2013,7 +2013,7 @@ void GameData::save_language_files(bool translated)
 }
 
 // @ 0x4ca550
-void ResultWindow::scale_3(float)
+void ResultWindow::frame_update(float)
 {
     if (b3c->clear_mask(0x10000))
         goto off;

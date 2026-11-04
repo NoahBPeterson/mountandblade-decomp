@@ -46,9 +46,9 @@ struct head_cam : head_rec {
     float   f2b4;              // +0x2b4
     float   f2b8;              // +0x2b8
     head_cam();                // 0x4c49f0
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     virtual void write_stream(w_stream* w);     // slot 5  0x4c4b70
     virtual void read_stream(w_stream* r);      // slot 6  0x4c4c00
@@ -64,9 +64,9 @@ struct head_obj2 : head_rec {
     char    pad2e8[4];
     rgl::frustum fr;           // +0x2ec
     head_obj2();               // 0x4c4cc0
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
+    virtual void reset_screen();
+    virtual void init_screen();
+    virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };

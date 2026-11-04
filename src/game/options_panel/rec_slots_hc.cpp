@@ -3,7 +3,7 @@
 // Hud::on_*, ResultWindow::init, ...), whose `this` is a different view of the record than the 0x30..0x1200-byte record
 // that owns the table. Each override is a forwarding stub: it compiles to a bare `jmp` to the function the image's
 // slot names (declared by a minimal local view of its class; the class name must match the mangled name). Slot 3's
-// base signature is scale_3(const float*) while the real functions take int/float: the stub forwards the 4-byte
+// base signature is frame_update(const float*) while the real functions take int/float: the stub forwards the 4-byte
 // argument unchanged.
 #include "../../rgl/mesh2/head_rec.h"
 #include "../strat/gui_manager.h"     // g_gui
@@ -21,11 +21,11 @@ struct CharSheet {
 };
 
 // head_cam
-void head_cam::slot_empty_1() { g_gui.reset(); }
-void head_cam::slot_empty_2() { ((Screen*)this)->init_screen(); }
-void head_cam::scale_3(float a) { ((Screen*)this)->frame_update(a); }
+void head_cam::reset_screen() { g_gui.reset(); }
+void head_cam::init_screen() { ((Screen*)this)->init_screen(); }
+void head_cam::frame_update(float a) { ((Screen*)this)->frame_update(a); }
 
 // head_obj2
-void head_obj2::slot_empty_1() { ((rec_2e4*)this)->release(); }
-void head_obj2::slot_empty_2() { ((CharSheet*)this)->init(); }
-void head_obj2::scale_3(float a) { ((CharSheet*)this)->update(a); }
+void head_obj2::reset_screen() { ((rec_2e4*)this)->release(); }
+void head_obj2::init_screen() { ((CharSheet*)this)->init(); }
+void head_obj2::frame_update(float a) { ((CharSheet*)this)->update(a); }

@@ -392,7 +392,7 @@ row fails on the vtable bytes. The fix pattern (mission_items 0x4ce960
 0x4ceb30 0x4cee50 0x4cef20 0x4cef80):
 
 - Declare the overridden slots **in the derived class, under the base's slot
-  names** (head_rec.h's `slot_empty_1/2/4`, `scale_3/5/6`, `pure_7`,
+  names** (head_rec.h's `reset_screen/2/4`, `frame_update/5/6`, `pure_7`,
   `always_true`), one `// slot N  0x<va> <Target>::<method> (owner TU)` comment
   per declaration - the item_rec.h shape. Never append new virtual names (each
   compiles to its own extra slot and the table grows past the image's), and
@@ -423,7 +423,7 @@ row fails on the vtable bytes. The fix pattern (mission_items 0x4ce960
   cls_map.cpp:3023; also hud.cpp:390, save_game.cpp:225). Targets owned by
   rgl-layer TUs (`reset_gui`, `MapDialog::reset_state` in gui_edit.cpp,
   `static_entity::awake` in entity_types.cpp) cannot include a game header, so
-  their thunks stay with the record (`void ItemRec::slot_empty_1() {
+  their thunks stay with the record (`void ItemRec::reset_screen() {
   reset_gui(); }`, item_rec.cpp:55).
 
 ---

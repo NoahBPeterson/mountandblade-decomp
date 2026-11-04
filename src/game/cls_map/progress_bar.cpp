@@ -247,7 +247,7 @@ static __forceinline float config_value(int i)
 }
 
 // @ 0x4e4790
-void C4c31c0::slot_empty_2()
+void C4c31c0::init_screen()
 {
     is_load = (*(int*)(slot_as<char>(21) + 0x18) == 5);
     g_gui.reset();

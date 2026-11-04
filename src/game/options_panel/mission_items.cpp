@@ -130,9 +130,9 @@ char* g_mission_params;                                         // unknown owner
 // before MissionParams::init's definition so cl does not inline it into slot 4.
 struct MissionHud { void refresh(); };                          // 0x4f7f00
 struct Screen_s261e0 { void tick(float); };                     // 0x5261e0
-void MissionBlocker::slot_empty_1() { g_gui.reset(); }
-void MissionBlocker::slot_empty_2() { ((MissionHud*)this)->refresh(); }
-void MissionBlocker::scale_3(float a) { ((Screen_s261e0*)this)->tick(*(float*)&a); }
+void MissionBlocker::reset_screen() { g_gui.reset(); }
+void MissionBlocker::init_screen() { ((MissionHud*)this)->refresh(); }
+void MissionBlocker::frame_update(float a) { ((Screen_s261e0*)this)->tick(*(float*)&a); }
 void MissionBlocker::slot_empty_4() { ((MissionParams*)this)->init(); }
 
 // @ 0x4cea10
@@ -236,18 +236,18 @@ struct SaveWinCtl { void create(); void create_flagged(); };   // 0x4e5d90 / 0x4
 struct SourceScreen { void hook_a(int); void hook_b(int); };    // 0x534180 / 0x534230
 struct view_obj { void reset(); };                              // 0x50a140
 struct InputScreen { void on_input(int); };                     // 0x533aa0
-void ItemA::slot_empty_1() { ((MapDialog*)this)->reset_state(); }
-void ItemA::slot_empty_2() { ((GameScreen*)this)->build(); }
-void ItemA::scale_3(float a) { ((EventScreen*)this)->on_event(*(int*)&a); }
-void ItemB::slot_empty_1() { g_gui.reset(); }
-void ItemB::slot_empty_2() { ((SaveWinCtl*)this)->create(); }     // the same `jmp create` as 0x4e5d80: the linker's ICF folds them
-void ItemB::scale_3(float a) { ((SourceScreen*)this)->hook_a(*(int*)&a); }
-void ItemC::slot_empty_1() { g_gui.reset(); }
-void ItemC::slot_empty_2() { ((SaveWinCtl*)this)->create_flagged(); }
-void ItemC::scale_3(float a) { ((SourceScreen*)this)->hook_b(*(int*)&a); }
-void ItemD::slot_empty_1() { g_gui.reset(); }
-void ItemD::slot_empty_2() { ((view_obj*)this)->reset(); }
-void ItemD::scale_3(float a) { ((InputScreen*)this)->on_input(*(int*)&a); }
+void ItemA::reset_screen() { ((MapDialog*)this)->reset_state(); }
+void ItemA::init_screen() { ((GameScreen*)this)->build(); }
+void ItemA::frame_update(float a) { ((EventScreen*)this)->on_event(*(int*)&a); }
+void ItemB::reset_screen() { g_gui.reset(); }
+void ItemB::init_screen() { ((SaveWinCtl*)this)->create(); }     // the same `jmp create` as 0x4e5d80: the linker's ICF folds them
+void ItemB::frame_update(float a) { ((SourceScreen*)this)->hook_a(*(int*)&a); }
+void ItemC::reset_screen() { g_gui.reset(); }
+void ItemC::init_screen() { ((SaveWinCtl*)this)->create_flagged(); }
+void ItemC::frame_update(float a) { ((SourceScreen*)this)->hook_b(*(int*)&a); }
+void ItemD::reset_screen() { g_gui.reset(); }
+void ItemD::init_screen() { ((view_obj*)this)->reset(); }
+void ItemD::frame_update(float a) { ((InputScreen*)this)->on_input(*(int*)&a); }
 
 // ---- per-frame update of the placed objects (0x4ceb90) --------------------------------------------------
 // The updater's sixteen row widgets (+0x60), the shown count (+0xa0) and the record index per row (+0xa4) fill the menu's

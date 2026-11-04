@@ -1,4 +1,4 @@
 ../src/game/options_panel/hud.cpp  ?destroy@Mission@@QAEXXZ  004d51d0  /O2 /MT /Gy /TP
 ../src/game/options_panel/hud.cpp  ?on_value_changed@ValueSource@@QAEXM@Z  004d5940  /O2 /MT /Gy /TP
-../src/game/options_panel/hud.cpp  ?scale_3@Rec38@@UAEXM@Z  004d59f0  /O2 /MT /Gy /TP
-../src/game/options_panel/hud.cpp  ?scale_3@Rec454@@UAEXM@Z  004d5a20  /O2 /MT /Gy /TP
+../src/game/options_panel/hud.cpp  ?frame_update@Rec38@@UAEXM@Z  004d59f0  /O2 /MT /Gy /TP
+../src/game/options_panel/hud.cpp  ?frame_update@Rec454@@UAEXM@Z  004d5a20  /O2 /MT /Gy /TP

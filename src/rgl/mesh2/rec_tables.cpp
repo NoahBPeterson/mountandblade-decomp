@@ -140,13 +140,13 @@ C4c3050::C4c3050()
 }
 
 // @ 0x4c30b0
-void C4c3050::slot_empty_1()
+void C4c3050::reset_screen()
 {
     g_gui.f1709 = 1;
 }
 
 // the same one-store function, once per class that has it as slot 1 (the original's linker folded the copies into 0x4c30b0)
-void ResultWindow::slot_empty_1()
+void ResultWindow::reset_screen()
 {
     g_gui.f1709 = 1;
 }

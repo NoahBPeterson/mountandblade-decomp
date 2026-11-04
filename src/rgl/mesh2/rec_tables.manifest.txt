@@ -6,7 +6,7 @@
 ../src/rgl/mesh2/rec_tables.cpp  ??_GC4c2fb0@@UAEPAXI@Z  004c3000  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??1C4c2fb0@@UAE@XZ  004c3020  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??0C4c3050@@QAE@XZ  004c3050  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?slot_empty_1@C4c3050@@UAEXXZ  004c30b0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?reset_screen@C4c3050@@UAEXXZ  004c30b0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??_GC4c3050@@UAEPAXI@Z  004c30c0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??1C4c3050@@UAE@XZ  004c30e0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??0C4c3160@@QAE@XZ  004c3160  /O2 /MT /Gy /TP

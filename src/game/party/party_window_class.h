@@ -71,9 +71,9 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     MissionUi* equip_bg;                    // +0xac8 0x500ad0 (mode 4: the equipment panel background)
 
     PartyWindow() { w04 = 0; }
-    virtual void slot_empty_1();            // slot 1  0x4c6e00: g_gui.reset()                 (options_panel/rec_slots_tr.cpp)
-    virtual void slot_empty_2();            // slot 2  0x500ad0: builds the window             (agent5/party_create.cpp)
-    virtual void scale_3(float unused);     // slot 3  0x50fe20 (ret 4): the trade engine's per-frame step (inventory_panel/inventory_panel.cpp)
+    virtual void reset_screen();            // slot 1  0x4c6e00: g_gui.reset()                 (options_panel/rec_slots_tr.cpp)
+    virtual void init_screen();            // slot 2  0x500ad0: builds the window             (agent5/party_create.cpp)
+    virtual void frame_update(float unused);     // slot 3  0x50fe20 (ret 4): the trade engine's per-frame step (inventory_panel/inventory_panel.cpp)
     virtual char pure_7() { return 1; }     // slot 7: 0x48b170
 
     void money_label(int which);                                // 0x501940 (ret 4: src/game/agent5/party_create.cpp)

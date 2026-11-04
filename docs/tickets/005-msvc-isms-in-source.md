@@ -14,7 +14,7 @@ or edits proven neutral by the byte-exact count.
 |---|---:|---|
 | calling-convention keywords | 931 in 158 files (`__cdecl` 556, `__stdcall` 204, `__fastcall` 160, `__thiscall` 11) | empty on 64-bit; on i686 clang supports all four; prelude macro |
 | `__int64` | 712 in 117 files | `#define __int64 long long` (prelude) or `int64_t` typedef in a shared header |
-| `__declspec(noinline)` 266, `dllimport` 54, `noreturn` 7, `naked` 1 | 328 | `-fms-extensions`, or `MB_NOINLINE` macro; `dllimport` of Newton/FMOD disappears with 010/011; the naked thunk (`Rec1208::slot_empty_2`, `jmp ConvScreen::open`) becomes a plain forwarding method |
+| `__declspec(noinline)` 266, `dllimport` 54, `noreturn` 7, `naked` 1 | 328 | `-fms-extensions`, or `MB_NOINLINE` macro; `dllimport` of Newton/FMOD disappears with 010/011; the naked thunk (`Rec1208::init_screen`, `jmp ConvScreen::open`) becomes a plain forwarding method |
 | `#pragma comment(linker, "/alternatename:...")` | 60 (shapes.cpp, fx_anim.cpp, ...) | These bind `*_ext` twin declarations to the real definition so cl keeps a call out-of-line (docs/Papercuts.md "_ext twin"). On clang: `__attribute__((alias))` wrappers or simply `#define` the twin to the real symbol under the prelude and add `[[gnu::noinline]]`; the twin only exists for codegen matching |
 | `__asm` blocks | 20 in 2 files (`WL_MARKER`, 18 bytes of `_emit`) | WinLicense protection markers: `#define WL_MARKER(id)` -> empty in the portable config (they have no runtime effect) |
 | MSVC CRT internals | `f->_flag & _IOEOF` (config.cpp `Config::load_file`), `_stat`, `_findfirst`, `_itoa` 19, `_snprintf` 47 | replace by `feof`/`getline`, `stat`, `mbp::find_first`, `snprintf` (write helpers in `port/`) |

@@ -91,7 +91,7 @@ Camera* make_quest_list(ContainerBase* parent, const float* pos, const float* si
 }
 
 // @ 0x4ee230
-void Rec454::slot_empty_2()
+void Rec454::init_screen()
 {
     ((gui_manager*)&orig::g_gui_mgr)->reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared

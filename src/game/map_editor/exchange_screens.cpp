@@ -45,7 +45,7 @@
 #define STACK_IDS ((int*)((char*)g_game + 0x14058))   // GameData +0x14058: the per-stack random ids (0x20 per stack); +0x1405c is the tbl of game_data.h
 
 // @ 0x531590
-void Rec118::scale_3(float)
+void Rec118::frame_update(float)
 {
     int idx = -1;
     for (int i = 0; i < count; i++)
@@ -112,7 +112,7 @@ int MissionCtx::weight(unsigned flags)
 }
 
 // @ 0x531780
-void Rec34::scale_3(float)
+void Rec34::frame_update(float)
 {
     g_gui.flush();
     if (w04 == 0)
@@ -130,7 +130,7 @@ void Rec34::scale_3(float)
 }
 
 // @ 0x531800
-void C4c3160::scale_3(float)
+void C4c3160::frame_update(float)
 {
     int extra = 0;
     int slot;
@@ -916,7 +916,7 @@ dispatch:
 }
 
 // @ 0x5337a0
-void Rec58::scale_3(float)
+void Rec58::frame_update(float)
 {
     if (W(this, 0x40)->clear_mask(0x10000))
         ((LogScreen*)(void*)this)->build(1 != 0);

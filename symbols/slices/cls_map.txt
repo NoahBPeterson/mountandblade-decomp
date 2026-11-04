@@ -23,7 +23,7 @@
 004da8c0 ?copy_configs_backward@@YAPAUloading_config@@PAU1@00@Z
 004da900 ?rebuild@gui_manager@@QAEXXZ
 004da9c0 ??1TwoVec@@QAE@XZ
-004daa10 ?slot_empty_2@C4c2fb0@@UAEXXZ
+004daa10 ?init_screen@C4c2fb0@@UAEXXZ
 004dada0 ?make_hint@@YAPAUMissionUi@@PAUContainerBase@@ABUtstring@@MMMM@Z
 004dae40 ?init_mission_window@Screen@@QAEXXZ
 004db020 ?fill_single_mission@Screen@@QAEXXZ
@@ -50,11 +50,11 @@
 004dd920 ?init@BlockOwner@@QAEXPAUContainerBase@@H@Z
 004dd9e0 ?activate@BlockOwner@@QAEXXZ
 004dda40 ?create@EscapeMenu@@QAEXXZ
-004ddf80 ?slot_empty_2@C4c3050@@UAEXXZ
+004ddf80 ?init_screen@C4c3050@@UAEXXZ
 004de1b0 ?create_report@DebriefMenu@@QAEXXZ
 004de320 ?make_background@@YAPAUmesh@rgl@@PAMH@Z
 004de3e0 ?build_panel@PanelMesh@@QAEXPBM000PAH@Z
-004de5b0 ?slot_empty_2@Rec34@@UAEXXZ
+004de5b0 ?init_screen@Rec34@@UAEXXZ
 004de6f0 ?open@OptionsScreen@@QAEXXZ
 004dfd50 ?make_slider@@YAPAUUiB@@PAUMissionUi@@MMM@Z
 004dfec0 ?make_dropdown@@YAPAUDropDown@@PAUMissionUi@@PBUtstring@@MM@Z
@@ -64,7 +64,7 @@
 004e2ce0 ?key_text@OptionsMenu@@QAEPAUtstring@@PAU2@H@Z
 004e2ea0 ?slot_text@OptionsMenu@@QAEPAUtstring@@PAU2@H@Z
 004e3780 ?init@MeetingWindow@@QAEXXZ
-004e3aa0 ?slot_empty_2@C4c3290@@UAEXXZ
+004e3aa0 ?init_screen@C4c3290@@UAEXXZ
 004e3d50 ?new_progress_bar@@YAPAUprogress_bar@@PAUContainerBase@@MMMM@Z
 
 # callees: the original addresses of the std::vector helpers this module instantiates
