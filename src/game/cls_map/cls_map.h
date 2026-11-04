@@ -291,7 +291,6 @@ void save_path(char* out);                                              // 0x4dd
 #include "../screen_records.h"          // C4c3050: the message window record (slot 2 is the window maker 0x4ddf80)
 
 // globals of the menus
-extern int g_music_situation;                      // 0xa73a10 (set to 0x400000)
 extern int g_main_menu_kind;                    // 0xa75f34
 
 

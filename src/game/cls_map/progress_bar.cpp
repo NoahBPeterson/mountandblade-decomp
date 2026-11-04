@@ -6,7 +6,6 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
-#include "../../include/data_views.h"
 #include "../terrain_a/terrain.h"   // Terrain::init_map (0x4e85d0), g_terrain
 #include "../window_mgr.h"      // g_windows slot 21 (0xa739d4)
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
@@ -749,7 +748,7 @@ void SaveWinCtl::create()
 // @ 0x4e5e50
 void SaveWinCtl::create_flagged()
 {
-    g_music_situation = 0x400000;
+    g_music.situation = 0x400000;
     create2();
 }
 

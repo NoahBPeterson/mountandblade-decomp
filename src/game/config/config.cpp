@@ -14,7 +14,7 @@
 // calls out of 0x4b8f40..0x4be730 are the FMOD / d3d9 import thunks at 0x5342e2.., 0x534342), so the range is
 // one object as far as the calls can tell; the map's class changes inside (Core | Config | Cursor | renderer |
 // ini_file | records) have no call support. See MIGRATION.md. The end is the WinLicense marker function at
-// 0x4be730 (next object, meta_mission::init).
+// 0x4be730 (next object, MissionCtx::init).
 //-----------------------------------------------------------------------------
 #include <string.h>
 #include <stdlib.h>
@@ -49,7 +49,6 @@ Config g_cfg = {  // 0x5a9f98
 // ---- imports and library functions the slices declared by hand ------------------------------------------------------
 extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(HWND hwnd, int csidl, HANDLE token, DWORD flags, char* path);   // 0x5492c0
 extern "C" IDirect3D9* __stdcall Direct3DCreate9(UINT);     // 0x534342
-typedef void* FMOD_STREAM;
 extern "C" short __stdcall FSOUND_Stream_Close(FMOD_STREAM s);                                              // 0x5342e2
 extern "C" FMOD_STREAM __stdcall FSOUND_Stream_Open(const char* name, unsigned mode, int offset, int length);   // 0x5342e8
 pos* __cdecl identity_pos(pos* out);                         // 0x40cd00 fills out and returns it (the definition's own declaration)
@@ -1639,10 +1638,10 @@ void sound_def::save(stream_base& a)
 // @ 0x4be0a0
 void music_player::stop(int i)
 {
-    FSOUND_Stream_Close(*(FMOD_STREAM*)&w[8 + i]);
-    *(FMOD_STREAM*)&w[8 + i] = 0;
-    w[i] = 0;
-    w[12 + i] = -1;
+    FSOUND_Stream_Close(stream[i]);
+    stream[i] = 0;
+    active[i] = 0;
+    channel[i] = -1;
 }
 
 // @ 0x4be0e0
@@ -1650,24 +1649,24 @@ void music_player::play(int rec, int* slot)
 {
     char path[1024];
     int index = *slot;
-    w[10 + index] = rec;
-    music_res* r = (music_res*)((char*)this + 0x20 * w[10 + index]);
+    track[index] = rec;
+    music_res* r = (music_res*)((char*)this + 0x20 * track[index]);
     const char* s = r->name;
     if (r->flags & 0x10000000) {
-        const char* root = *(const char**)((char*)this + 0x2480);
-        if (!root) root = (const char*)this + 0x2480;
+        const char* dir = root.buf;
+        if (!dir) dir = (const char*)&root.buf;
         if (!s) s = (const char*)r + 0x1c;
-        sprintf(path, "%sMusic\\%s", root, s);
+        sprintf(path, "%sMusic\\%s", dir, s);
     } else {
         if (!s) s = (const char*)r + 0x1c;
         sprintf(path, "music\\%s", s);
     }
-    *(FMOD_STREAM*)&w[8 + index] = FSOUND_Stream_Open(path, (r->flags & 0x40) ? 0x1000002 : 0x1000000, 0, 0);
-    w[index] = 1;
-    w[2 + index] = 0;
-    w[14 + index] = 10000;
-    w[26 + index] = 0;
-    start[w[10 + index]] = (float)g_ticks[0] * 1e-05f;
+    stream[index] = FSOUND_Stream_Open(path, (r->flags & 0x40) ? 0x1000002 : 0x1000000, 0, 0);
+    active[index] = 1;
+    opened[index] = 0;
+    volume[index] = 10000;
+    fading[index] = 0;
+    start[track[index]] = (float)g_ticks[0] * 1e-05f;
 }
 
 // @ 0x4be200

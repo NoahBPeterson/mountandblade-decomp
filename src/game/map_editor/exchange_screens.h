@@ -56,11 +56,6 @@ struct PartyScreen {
     void refresh_party_members(int);   // 0x503ed0
     void refresh_morale();   // 0x503a50
 };
-struct MissionCtx {
-    void setup(unsigned flags, int delta);   // 0x513f80
-    void update_parties();   // 0x513b40
-    void build_hero_table(int a, int b, int c, int d);   // 0x514890
-};
 struct note_window {
     void build(int a, int b);   // 0x50a1c0 (ret 8)
 };
@@ -112,26 +107,7 @@ inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 extern MsgLog g_gui;                             // 0x5d7080
 
-// the menu / mission controller object at 0xa73300 (the slices called it MissionUi, Screen and AuxObj)
-struct MenuCtl {
-    char pad0[0x10];
-    int f10;                                // +0x10 (0x531600)
-    char pad14[0x1c - 0x14];
-    int f1c;                                // +0x1c (0x5316f0)
-    char pad20[0x2c - 0x20];
-    int f2c;                                // +0x2c (0x531600)
-    int f30;                                // +0x30
-    char pad34[0x3c - 0x34];
-    int f3c;                                // +0x3c
-    char pad40[0x160 - 0x40];
-    int f160;                               // +0x160
-    char pad164[0x2c4 - 0x164];
-    int f2c4;                               // +0x2c4 passage menu (set_passage_menu 0x4a55f3; 0 or less: no menu to close)
-    // (setup 0x513f80, update_parties 0x513b40, build_hero_table 0x514890 are MissionCtx's)
-    __declspec(noinline) void setup_entry(struct MenuEntry* e);  // 0x531600
-    __declspec(noinline) int weight(unsigned flags);             // 0x5316f0
-};
-extern MenuCtl g_mission_ctx;                       // 0xa73300
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): setup_entry 0x531600, weight 0x5316f0
 
 // one menu option (8 bytes, array at Menu+0x94)
 

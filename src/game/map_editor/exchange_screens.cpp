@@ -58,15 +58,15 @@ void Rec118::scale_3(float)
 }
 
 // @ 0x531600
-void MenuCtl::setup_entry(MenuEntry* e)
+void MissionCtx::setup_entry(MenuEntry* e)
 {
-    f2c = e->id;
+    type = e->id;
     f30 = e->value;
     f160 = -1;
     mission_type* t = &g_mission_types[e->id];
     if (e->id <= 6)
     {
-        ((MissionCtx*)(void*)this)->setup(t->f10, 0);   // 0x513f80
+        setup(t->f10, 0);   // 0x513f80
         return;
     }
     int r = rand() % 100;
@@ -81,7 +81,7 @@ void MenuCtl::setup_entry(MenuEntry* e)
     }
     if (f160 != -1)
     {
-        ((MissionCtx*)(void*)this)->setup(t->list[f160].setup_arg, 0);   // 0x513f80
+        setup(t->list[f160].setup_arg, 0);   // 0x513f80
         f3c |= 0x10;
     }
     else
@@ -90,7 +90,7 @@ void MenuCtl::setup_entry(MenuEntry* e)
 }
 
 // @ 0x5316f0
-int MenuCtl::weight(unsigned flags)
+int MissionCtx::weight(unsigned flags)
 {
     float f = (float)(int)(flags & 0x7f);
     float x;
@@ -416,7 +416,7 @@ tail:
         if (party_index(a)->stacks[b].flags & 1)
             action = 0xe;
         w14 = party_index(a)->stacks[b].troop;
-        ((MissionCtx*)&g_mission_ctx)->build_hero_table(w14, STACK_IDS[1 + b * 0x20],
+        g_mission_ctx.build_hero_table(w14, STACK_IDS[1 + b * 0x20],
                     g_game->f78, action);
         slot_as<int>(16)[6] = 0xc;
         g_main_menu.set_state(0x10);
@@ -424,7 +424,7 @@ tail:
     }
 
 close_menu:
-    if (w04 == 4 && g_mission_ctx.f2c4 < 1)
+    if (w04 == 4 && g_mission_ctx.passage_menu < 1)
         gx()->update_party_sprites();
     if (w18 == 100) {
         g_map_flags.commit((char*)commit_out + 3);
@@ -813,7 +813,7 @@ dispatch:
             if (F(this, 0x18, int) == 100) {
                 GI(0xa8) |= 1;
             } else {
-                ((MissionCtx*)&g_mission_ctx)->update_parties();
+                g_mission_ctx.update_parties();
                 g_main_menu.set_state(F(this, 0x18, int));
                 return;
             }
@@ -822,7 +822,7 @@ dispatch:
         }
         if (st == 0x11) {
             g_game->fc8 = 0;
-            ((MissionCtx*)&g_mission_ctx)->update_parties();
+            g_mission_ctx.update_parties();
             g_main_menu.set_state(7);
             return;
         }

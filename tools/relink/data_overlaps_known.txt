@@ -20,7 +20,6 @@
 005d7080 005d8798  # g_5d7080 (0xb350 bytes) holds ?g_5d8798@@3HA, g_5d8798
 005e291c 005e2920  # ?g_map_flags@@3UMapFlags@@A (0xc bytes) holds f8
 005fe898 00a170c0  # g_5fe898 (0x41882c bytes) holds ?g_psys_scene@@3HA, g_psys_scene
-00a70248 00a70438  # ?g_shadow_map@@3UShadowMap@@A (0x1f4 bytes) holds ?g_a70438@@3HA, g_a70438
 00a70440 00a70458  # g_a70440 (0x2c50 bytes) holds ?g_trigger_result@@3TTriggerResult@@A, g_trigger_result
 00a70440 00a70470  # g_a70440 (0x2c50 bytes) holds ?g_num_valid@@3HA, g_num_valid
 00a70440 00a70480  # g_a70440 (0x2c50 bytes) holds ?g_list_a70480@@3UList8@@A, g_list_a70480
@@ -30,7 +29,6 @@
 00a70450 00a70470  # g_a70450 (0x40 bytes) holds ?g_num_valid@@3HA, g_num_valid
 00a70450 00a70480  # g_a70450 (0x40 bytes) holds ?g_list_a70480@@3UList8@@A, g_list_a70480
 00a70464 00a70470  # g_meeting_name (0x10 bytes) holds ?g_num_valid@@3HA, g_num_valid
-00a73300 00a735c0  # g_a73300 (0x2cc bytes) holds ?g_scene_counter@@3HA, g_scene_counter
 00a75f40 00a75f54  # g_a75f40 (0x24 bytes) holds ?g_world_list@c49f060@@3UPtrVec@1@A, g_world_list
 00a75f40 00a75f60  # g_a75f40 (0x24 bytes) holds ?g_5a75f60@@3HA, g_5a75f60
 00a75f70 00a75f90  # g_a75f70 (0x6b8 bytes) holds ?g_sort_val@@3PAUSortVal@@A, g_sort_val

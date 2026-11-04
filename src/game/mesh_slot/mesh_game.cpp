@@ -11,7 +11,6 @@
 #include "../../include/msg_log.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-long long g_tick_cur;                              // 0x5e2980 (the last frame's tick count)
 unsigned char g_mt_inited;                         // 0x5e2a09
 float g_paused_time;                               // 0x5e2a0c
 int g_psys_scene;                                  // 0xa170c0
@@ -625,7 +624,7 @@ void MissionG::frame(float dt, bool spawn)
         g_phys.update(dt);                       // 0x472dc0 (g_phys 0xa181f8)
 
     long long t = (long long)(dt * 100000.0f);
-    g_tick_cur = t;
+    g_tick_dt[2] = t;
     g_ticks[2] += t;
     g_step_tbl[2] = dt;
 

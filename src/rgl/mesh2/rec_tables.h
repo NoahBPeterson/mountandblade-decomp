@@ -216,25 +216,6 @@ extern const float g_549d70;   // 0x549d70 (0.5f)
 #include "../../include/timer.h"
 typedef Timer SndTimer;
 
-// the "sound manager" tail (0x2474-byte object, layout-only view)
-struct sound_engine {
-    int   w0;                       // +0
-    char  pad4[0x240c - 4];
-    int   w240c;                    // +0x240c  fade-out flag
-    char  pad2410[0x2418 - 0x2410];
-    SndTimer t2418;                 // +0x2418  last advance of the current piece
-    char  pad2428[0x2438 - 0x2428];
-    int   cur_index;                // +0x2438  channel driven so far (or -1)
-    int   channel;                  // +0x243c  channel of the current piece
-    int   last_volume;              // +0x2440
-    char  pad2444[0x2450 - 0x2444];
-    SndTimer t2450;                 // +0x2450  start of the new piece
-    SndTimer t2460;                 // +0x2460  fade end
-    int   fading;                   // +0x2470
-    // advance_piece (0x4c25e0) and stop (0x4be0a0) are music_player's (config.h): this is the same object, the music player
-    void __fastcall tick();                        // 0x4c4100
-};
-
 // Allocator objects of the engine's array helpers (provisional names): construct(dst, src) is a thiscall, ret 8.
 struct Alloc204 { void construct(void* dst, const void* src); };   // 0x4c1b40
 struct Alloc4   { void construct(void* dst, const void* src); };   // 0x436d80

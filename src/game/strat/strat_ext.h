@@ -164,7 +164,7 @@ OFFSET_CHECK3(scene, f164, 0x164);
 OFFSET_CHECK3(scene, f1a5, 0x1a5);
 OFFSET_CHECK3(scene, mask, 0x1a8);
 
-extern __int64 g_ticks[];                                // 0x5e2948 clock table (64-bit ticks, 1e-5 s)
+#include "../../include/clock_table.h"   // g_ticks (the clock table)
 
 
 struct Psys { };                                         // (update 0x414960 is rgl::psys::update below)

@@ -4,6 +4,7 @@
 #include "../config/config_block.h"
 
 #include "../tstring.h"
+#include "../music_player.h"   // music_player (g_music 0xa73a10), MusicTrack
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -21,26 +22,7 @@ struct Src {
     virtual void out_vec(float* p);     // +0x54
 };
 
-// one 0x20 byte record of the module table
-struct Rec {
-    int f0;                             // +0
-    int f4;                             // +4
-    int f8;                             // +8
-    int fc;                             // +0xc
-    float f10;                          // +0x10
-    float f14;                          // +0x14
-    float f18;                          // +0x18
-    float f1c;                          // +0x1c
-    __declspec(noinline) void read(Src* src);   // 0x50f840
-};
 
-struct MusicTable {
-    char pad0[4];
-    int count;                          // +4
-    Rec rec[0x100];                     // +8
-    int idx[0x100];                     // +0x2008
-    void build(Src* src);               // 0x50f7e0
-};
 
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
@@ -62,20 +44,20 @@ struct PanelMesh {
 
 // ---------------------------------------------------------------- 0x50f7e0
 // @ 0x50f7e0
-void MusicTable::build(Src* src)
+void music_player::build(Src* src)
 {
-    src->out_int(&count);
-    if (count > 0x100)
-        count = 0x100;
-    for (int i = 0; i < count; i++) {
-        rec[i].read(src);
-        idx[i] = 0;
+    src->out_int(&track_count);
+    if (track_count > 0x100)
+        track_count = 0x100;
+    for (int i = 0; i < track_count; i++) {
+        tracks[i].read(src);
+        start[i] = 0;
     }
 }
 
 // ---------------------------------------------------------------- 0x50f840
 // @ 0x50f840
-void Rec::read(Src* src)
+void MusicTrack::read(Src* src)
 {
     src->out_vec(&f10);
     src->out_int(&f0);
@@ -332,7 +314,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
                 tstring name(g_module_path);
                 { tstring m("music.txt"); name.append(m); }
                 if (ts.open_read_text(name.c_str())) {
-                    ((MusicTable*)&g_music_situation)->build((Src*)&ts);
+                    g_music.build((Src*)&ts);
                     ts.failed = 1;
                 } else {
                     mb_error("Unable to find module music file");

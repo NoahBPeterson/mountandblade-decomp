@@ -1214,7 +1214,7 @@ void ItemRec::slot_empty_2()
     char version_digits[0x40];
     int count;
 
-    g_music_situation = 0x400000;
+    g_music.situation = 0x400000;
     g_gui.reset();
 
     { NEW_OVERLAY_WINDOW(p_) win = p_; }

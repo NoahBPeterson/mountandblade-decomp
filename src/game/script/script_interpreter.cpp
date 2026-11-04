@@ -19,7 +19,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../music_player.h"   // g_music (0xa73a10)
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <stdlib.h>
@@ -466,7 +466,7 @@ __declspec(noinline) char __fastcall warn_track(const int& value)
     char buf[512];
     int v = value;
     char r = 1;
-    if (v < 0 || v >= g_track_count) {
+    if (v < 0 || v >= g_music.track_count) {
         if (g_cfg.disable_music == 0 && g_cfg.disable_sound == 0) {
             sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, v);
             report(buf);
@@ -1007,7 +1007,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_script.cue_track = (int)params[0];
         break;
     case op::music_set_situation:
-        g_music_situation = (int)params[0];
+        g_music.situation = (int)params[0];
         break;
     case op::music_set_culture:
         g_music_culture = (int)params[0];
@@ -1940,7 +1940,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_mission_ctx.passage_menu = (int)params[0];
         break;
     case op::end_current_battle:
-        g_battle_flags |= 1;
+        g_mission_ctx.f164 |= 1;
         break;
     case op::set_mercenary_source_party:
         if (check_party((int)params[0]))
@@ -2694,10 +2694,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
 
     case op::get_battle_advantage:
-        SET_LV((__int64)g_battle_advantage);
+        SET_LV((__int64)g_mission_ctx.f1c);
         break;
     case op::set_battle_advantage:
-        g_battle_advantage = clamp_index((int)params[0], -32, 6);
+        g_mission_ctx.f1c = clamp_index((int)params[0], -32, 6);
         break;
     case op::party_get_attached_to:
         {

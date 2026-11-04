@@ -102,11 +102,8 @@ struct CellGrid {                                                   // the scene
     CellGrid(const float* lo, const float* hi, const int* a, const int* b, const int* c);   // 0x478ad0
     Wind* spawn_wind();                                             // 0x478f30
 };
-struct ShadowMap {
-    void attach_camera(CellGrid* c);                                // 0x4711e0
-    void extend(const rgl::vector4* p);                             // 0x468c20
-    void fit_bounds();                                              // 0x463cc0
-};
+#include "../rgl_mesh.h"      // rgl::scene of this universe, before shadow_map.h (which would pull rgl/mesh.h)
+#include "../shadow_map.h"
 struct ShadowMapP {
     void render();                                                  // 0x47fef0
 };

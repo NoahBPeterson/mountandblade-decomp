@@ -40,7 +40,7 @@ struct mesh_flip : rgl::mesh {
 };
 
 // ---- globals ---------------------------------------------------------------------------------------------------------
-extern __int64 g_ticks[];                       // 0x5e2948 clock table, 1e-5 s ticks (the slices' g_time / g_ticks)
+#include "../../include/clock_table.h"   // g_ticks (the clock table)
 extern int g_use_shaders;                       // 0x5e28fc programmable pipeline in use / detail resources present
 extern ptype* g_ptypes;                         // 0x5e28f8 particle / prop type table
 

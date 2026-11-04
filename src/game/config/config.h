@@ -28,7 +28,7 @@
 extern int g_edit_key;                              // 0x5e28d0 first value of the line being edited
 extern int g_edit_value;                            // 0x5e28d4 second value of the line being edited
 extern "C" const char g_eq_sep[];                   // 0x593160 " = "
-extern __int64 g_ticks[];                           // 0x5e2948 clock table, 1e-5 s ticks (same table as gui_manager.h's g_time)
+#include "../../include/clock_table.h"   // g_ticks (the clock table)
 extern const char g_eol[];                          // 0x54b118 ""
 
 void __cdecl refresh_settings_list(const tstring* page, char detailed);        // 0x4bb3f0
@@ -241,15 +241,7 @@ struct music_res {                                  // 0x20-byte music record, i
     int v18;
     const char* name;                               // +0x1c tstring buffer pointer; NULL means the text is inline at +0x1c
 };
-struct music_player {
-    char pad0[0x2008];
-    float start[256];                               // +0x2008 start time per record
-    int w[0x26];                                    // +0x2408 state block: per-slot arrays (state, FMOD streams at +0x2428, record index +0x2430...)
-    void stop(int i);                               // 0x4be0a0
-    void play(int rec, int* slot);                  // 0x4be0e0
-    music_player();                                 // 0x4c24c0 (src/game/triggers: constructs the 0x100 record names, the three clocks, the monitor state)
-    void advance_piece();                                  // 0x4c25e0 per-frame monitor of the two stream slots and the track selection
-};
+#include "../music_player.h"            // music_player, g_music (0xa73a10), raw_tstring
 
 struct menu_item {                                  // 0x68 bytes
     tstring name;                                   // +0x00
@@ -281,7 +273,6 @@ struct rec20 {                                      // 0x20 bytes
     int     f1c;                                    // +0x1c
     void read(stream_base* s);                      // 0x4be600
 };
-struct raw_tstring { int pos; char* buf; int cap; int len; };   // tstring layout without the implicit ctor
 struct clip_slot_raw {                              // 0x18 bytes
     raw_tstring name;                               // +0x00
     int     v10;                                    // +0x10

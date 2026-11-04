@@ -36,7 +36,7 @@ using rgl::matrix;
 // ---- calls into other objects -----------------------------------------------------------------------------------------
 void mb_error(const char* fmt, ...);            // 0x42cc80
 extern int g_use_shaders;                       // 0x5e28fc
-extern __int64 g_ticks[];                       // 0x5e2948
+#include "../../include/clock_table.h"   // g_ticks (the clock table)
 extern ptype* g_ptypes;                         // 0x5e28f8
 
 #include "../../include/mat4.h"

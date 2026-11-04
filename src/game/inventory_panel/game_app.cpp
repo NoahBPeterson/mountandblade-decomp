@@ -4,7 +4,6 @@
 // (s00401010: CD3DApplication = `Application`) and the engine's tstring (s0042a1f0) / widget vtables.
 // Names are provisional.
 #include "../../include/image_addrs.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include <windows.h>
@@ -75,10 +74,7 @@ extern resmgr g_resmgr;                 // 0x5d6fa0
 
 #include "../slot.h"                    // Slot, g_keyboard (0xa170c8)
 
-struct sound_engine {                   // rgl/mesh2/rec_tables.h: the music player at 0xa73a10
-    void __fastcall tick();             // 0x4c4100
-};
-extern sound_engine g_music_situation;           // 0xa73a10
+#include "../music_player.h"   // g_music (0xa73a10)
 
 struct GuiScreen {
     void process(int param);   // 0x4ebfd0 (game/char_sheet/screen.h): the gui object at 0x5d7080 (the dt rides in as its bits)
@@ -111,7 +107,9 @@ extern Output g_log;                 // 0x5a9f60
 #include "../ui_globals.h"      // UI / core globals
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-__int64 g_ticks[7];                                 // 0x5e2948 (clock table, 1e-5 s ticks)
+#include "../../include/clock_table.h"
+__int64 g_ticks[5];                                 // 0x5e2948 (clock table, 1e-5 s ticks)
+__int64 g_tick_dt[5];                               // 0x5e2970 (the last step of each clock, in ticks)
 
 
 // ---- free functions --------------------------------------------------------------------------------
@@ -145,7 +143,7 @@ int GameApp::Update()
     if (dt > 0.1f) dt = 0.1f;
     g_8ee42f0 = dt;
     t = (__int64)(dt * 100000.0f);
-    g_ticks_dt[0] = t;   // (frame time step, scaled; g_ticks + 0x28)
+    g_tick_dt[0] = t;   // (frame time step, scaled)
     g_ticks[0] += t;
     g_step_tbl[0] = dt;
     g_5d8798 = m_34c;
@@ -153,7 +151,7 @@ int GameApp::Update()
 
     ((GuiScreen*)&g_gui)->process(*(int*)&dt);
     ((Slot*)&g_keyboard)->update(dt);   // 0x487930
-    g_music_situation.tick();
+    g_music.tick();
     _FSOUND_Update();
 
     if (g_cfg.enable_edit_mode) {

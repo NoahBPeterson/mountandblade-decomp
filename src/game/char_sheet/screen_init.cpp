@@ -11,11 +11,7 @@
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../shared_vars.h"
-#include "../last_scene.h"
 #include "../ui_globals.h"      // UI / core globals
-
-// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_a70438;   // 0xa70438
 
 #include "../../include/render_flags.h"
 
@@ -207,7 +203,7 @@ void Screen::init_screen()
     camera_mark_entities();
     camera_update(0.0f);                                   // 0x4ece20 (push ebx = 0)
 
-    if ((int)g_level != g_a70438 && g_use_shaders) {
+    if ((int)g_level != (int)g_shadow_map.cam && g_use_shaders) {
         ((ShadowMap*)g_psys)->attach_camera((CellGrid*)g_level);   // 0x4711e0
         void* scene_objs = *(void**)((char*)g_level + 0xb0);
         int count = (*(int*)((char*)scene_objs + 8) - *(int*)((char*)scene_objs + 4)) / 0x24;
