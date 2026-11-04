@@ -10,7 +10,6 @@
 #include <new>
 #include "../slot.h"
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx, g_mission_ctx (0xa73300)
-#include "../music_player.h"   // music_player, g_music (0xa73a10)
 #include "../../include/ptr_tag.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,16 +134,6 @@ void __cdecl static_dtor_5482b0()
     ((TStrRec*)(g_5a9f60 + 0x20))->~TStrRec();
     ((TStrRec*)(g_5a9f60 + 0x4))->~TStrRec();
 }
-// @ 0x548310
-void __cdecl static_dtor_548310()
-{
-    ((TStrRec*)&g_music.root)->~TStrRec();
-    char* p = (char*)&g_music.start[4];   // the end of the 0x100 track name strings (+0x2018)
-    for (int n = 0x100; n; n--) {
-        p -= 0x20;
-        ((TStrRec*)p)->~TStrRec();
-    }
-}
 // @ 0x548340
 void __cdecl static_dtor_548340() { ((TriggerEntryVec*)g_a76628)->dtor(); }
 // @ 0x548350
@@ -225,8 +214,6 @@ void __cdecl static_init_547e90()
 }
 // @ 0x547ec0
 void __cdecl static_init_547ec0() { conv_zero_node(g_a73980); atexit(static_dtor_548460); }
-// @ 0x547ee0
-void __cdecl static_init_547ee0() { new (&g_music) music_player; atexit(static_dtor_548310); }
 // @ 0x547f00
 void __cdecl static_init_547f00() { atexit(static_dtor_5483b0); }
 // @ 0x547f10
@@ -262,7 +249,7 @@ init_fn g_static_init_table[] = {
     
     static_init_547aa0, static_init_547ae0, static_init_547b50,
     static_init_547e40,
-    static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
+    static_init_547e90, static_init_547ec0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,
     static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,
     static_init_548110,

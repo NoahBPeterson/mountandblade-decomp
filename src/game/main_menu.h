@@ -14,10 +14,11 @@
 #define MB_GAME_MAIN_MENU_H
 #include "./tstring.h"   // tstring complete (the options_panel TUs' former typedef of rgl::string had the same 16-byte layout)
 
+struct menu_rec;
 struct main_menu {
     union {
         int f0;                                                 // +0x00 the dialog box record pointer as a raw int
-        main_menu* rec;                                         // +0x00 the same pointer (options_panel's OptMainMenu::rec; the record's methods are called through it)
+        menu_rec* rec;                                          // +0x00 the same pointer (options_panel's OptMainMenu::rec; the record's methods are called through it)
         char pad0[4];
     };
     union {
@@ -38,8 +39,6 @@ struct main_menu {
     };
     char pad54[0x68 - 0x54];
     tstring header;                                             // +0x68
-    tstring answer_yes;                                         // +0x78
-    tstring answer_no;                                          // +0x88
     void setup(const tstring* hdr, const tstring* text)         // 0x48a3a0 (ret 8)
     {
         header = *hdr;
@@ -52,6 +51,12 @@ struct main_menu {
     void ask(const void* question, const void* yes, const void* no, int* result);   // 0x48a3d0 (ret 0x10)  // old name of NamedRec::setup2, removed after the names merge
     void reset(int n);                                          // 0x494260 (ret 4)  // old name of WindowMgrW::open, removed after the names merge
     void set_state(int option);                                    // 0x495700 (ret 4)
+};
+// The dialog box record the manager's slot 0 points at (heap object, larger than the manager object at 0xa73980: the answer
+// strings lie past the manager's 0x90 bytes, which the object g_main_menu must not claim).
+struct menu_rec : main_menu {
+    tstring answer_yes;                                         // +0x78
+    tstring answer_no;                                          // +0x88
 };
 typedef main_menu MainMenu;
 extern main_menu g_main_menu;                                   // 0xa73980  // old name of g_windows, removed after the names merge

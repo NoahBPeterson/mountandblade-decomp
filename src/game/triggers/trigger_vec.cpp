@@ -1528,6 +1528,15 @@ void MenuRec::read(stream_base& s)
 extern "C" short __stdcall FSOUND_Stream_Close(void* stream);
 float frand();                                       // 0x40e400 (rand() % 15817 * (1 / 15817), in st0)
 
+music_player g_music;                                // 0xa73a10 (.bss; constructed by the compiler: music_player::music_player 0x4c24c0)
+
+music_player::~music_player()
+{
+    ((tstring*)&root)->~tstring();
+    for (int i = 0x100; i; i--)
+        ((tstring*)((char*)this + 0x18 + (i - 1) * 0x20))->~tstring();
+}
+
 // @ 0x4c24c0
 // (the original brackets the monitor initialisation with two 18-byte WinLicense markers, at 0x4c2542 and 0x4c25c1)
 music_player::music_player()

@@ -41,11 +41,12 @@ struct music_player {                               // the music player, global 
     raw_tstring root;                               // +0x247c the module's music root (ctor 0x4c24c0 constructs it as a tstring)
     void stop(int i);                               // 0x4be0a0
     void play(int rec, int* slot);                  // 0x4be0e0
+    ~music_player();                                // compiler-called at exit (the old static_dtor_548310: root, then the 0x100 names from the last)
     music_player();                                 // 0x4c24c0 (src/game/triggers: constructs the 0x100 record names, the three clocks, the monitor state)
     void advance_piece();                                  // 0x4c25e0 per-frame monitor of the two stream slots and the track selection
     void __fastcall tick();                         // 0x4c4100 (rgl/mesh2/rec_tables.cpp)
     void build(Src* src);                    // 0x50f7e0 (inventory_panel/loading_screen.cpp: reads track_count and the track records)
 };
-extern music_player g_music;                        // 0xa73a10
+extern music_player g_music;                        // 0xa73a10 (defined in triggers/trigger_vec.cpp; the compiler constructs it and registers the destructor)
 typedef char music_player_layout_check[(offsetof(music_player, start) == 0x2008 && offsetof(music_player, active) == 0x2408 && offsetof(music_player, t2460) == 0x2460 && offsetof(music_player, root) == 0x247c && sizeof(music_player) == 0x2490) ? 1 : -1];
 #endif // GAME_MUSIC_PLAYER_H

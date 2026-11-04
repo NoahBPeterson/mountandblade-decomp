@@ -39,7 +39,7 @@ inline void operator delete(void*, void*, raw_place) {}
 // ---- callees -------------------------------------------------------------------------------------------
 tstring g_module_path;                                           // 0x8ee3c28 (constructed by the compiler: tstring::tstring 0x42bbd0)
 extern tstring g_module_name;                                      // 0x8ee3c38
-extern tstring g_module_path_copy;                                   // 0xa75e8c
+
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 // The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, E176 0xb0) and the std algorithms the original keeps out of line for them;
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
@@ -496,6 +496,7 @@ extern int g_use_shaders;                                // 0x5e28fc
 #define g_key_states_i (*(int(*)[0x40])g_key_states)     // g_key_states (0x5e27c8, game_globals.h) as 0x40 ints
 
 #include "../../rgl/stream.h"                   // g_log (log_stream)
+#include "../music_player.h"                    // g_music (0xa73a10): root is the module path copy at +0x247c
 
 // ---- the application object: Application / GameApp (../application.h) --------------------------------
 // @ 0x4d3ec0
@@ -573,7 +574,7 @@ GameApp::GameApp()
         FSOUND_3D_SetRolloffFactor(0.5f);
     }
 
-    g_module_path_copy = g_module_path;
+    *(tstring*)&g_music.root = g_module_path;
     *(int*)((char*)this + 0x364) = 0;
     m_hMapEditorDlg = 0;
     m_hScriptDlg = 0;
