@@ -27,7 +27,7 @@ Classes, per item:
   reached through tables  no instruction uses it; a pointer table in the data does (the pages of a pool)
   library data            used only by the static CRT/C++ library (linked from libcmt/libcpmt, not decompiled)
 Not an item: data the glue does not copy (glue.py DEAD_RANGES: the original's CRT tables, strings only the original's
-own pointer tables reached, the dead activation library); it is counted in "before the first item" with the unreferenced bytes.
+own pointer tables reached, the dead activation library); it is reported as "not copied (dead)".
 The import address table is excluded.
 """
 import argparse, bisect, collections, contextlib, datetime, io, json, os, re, runpy, struct, subprocess, sys
@@ -338,7 +338,9 @@ def main():
     rmap = json.load(open(a.map))
     syms = link_map_symbols(MAP_OF(a.map)) if not a.no_extents and os.path.exists(MAP_OF(a.map)) else None
     items, uses, named = data_items(img, rmap, starts, game, syms=syms)
-    items = drop_dead(items)
+    live = drop_dead(items)
+    dead = sum(e - s for s, e, _c in items) - sum(e - s for s, e, _c in live)
+    items = live
     by = {c: [0, 0] for c in CLASSES}
     per_sec = {s[0]: {c: 0 for c in CLASSES} for s in (RDATA, DATA, BSS)}
     for s, e, c in items:
@@ -357,12 +359,13 @@ def main():
     rep = {"when": when.isoformat(timespec="seconds"), "commit": commit, "label": a.label,
            "items": {c: by[c][0] for c in CLASSES}, "bytes": {c: by[c][1] for c in CLASSES},
            "section_bytes": {k.split("$")[0]: v for k, v in per_sec.items()},
-           "unreferenced_bytes": total - covered, "total_bytes": total}
+           "unreferenced_bytes": total - covered - dead, "dead_bytes": dead, "total_bytes": total}
     print("static data: %d items, %.1f MB (.rdata %d KB, .data %d KB initialised, .bss %.1f MB)" % (
         len(items), total / 1e6, (RDATA[2] - RDATA[1]) // 1024, (DATA[2] - DATA[1]) // 1024, (BSS[2] - BSS[1]) / 1e6))
     for c in CLASSES:
         print("  %-22s %6d items  %10d bytes" % (c, by[c][0], by[c][1]))
-    print("  %-22s %6s        %10d bytes" % ("before the first item", "", total - covered))
+    print("  %-22s %6s        %10d bytes" % ("not copied (dead)", "", dead))
+    print("  %-22s %6s        %10d bytes" % ("before the first item", "", total - covered - dead))
     if a.json:
         json.dump(dict(rep, item_list=[["%08x" % s, e - s, c] for s, e, c in items]), open(a.json, "w"), indent=1)
     if a.record or a.record_data:
