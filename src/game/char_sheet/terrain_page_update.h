@@ -69,7 +69,7 @@ float  clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 extern float g_500;                                         // 0x590b40 (500.0f)
 extern float g_140;                                         // 0x598e6c (140.0f)
 extern const float g_ten;                                   // 0x549d74 (10.0f; this was declared g_one, which the linker bound to a 1.0f definition of another address)
-extern float g_half;                                        // 0x549d70 (0.5f)
+extern const float g_half;                                        // 0x549d70 (0.5f)
 #include "../renderer.h"
 
 // the page: src/game/terrain_page.h (TerrainPage)

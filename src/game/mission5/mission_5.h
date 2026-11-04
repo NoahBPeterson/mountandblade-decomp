@@ -998,7 +998,7 @@ struct GameData_s29130 {
 
 struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
-extern float g_half;                                          // 0x549d70 (0.5f)
+extern const float g_half;                                          // 0x549d70 (0.5f)
 extern float g_deg2rad;                                       // 0x590ce4 (0.017453292)
 extern float g_0375;                                          // 0x59c310 (0.375f)
 extern float g_2p5;                                           // 0x590c4c (2.5f)

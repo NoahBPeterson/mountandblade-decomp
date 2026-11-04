@@ -249,7 +249,7 @@ extern float g_k1_25;                               // 0x590c80
 extern float g_k1_05;                               // 0x590f24
 extern float g_k0;                                  // 0x549ca8
 extern float g_k3;                                  // 0x54a710
-extern float g_k0_02;                               // 0x590cd0
+extern const float g_k002;                              // 0x590cd0
 extern float g_k0;                                  // 0x549ca8
 extern float g_k3;                                  // 0x54a710
 extern float g_k0_4;                                // 0x54b3b8
@@ -443,7 +443,7 @@ float Party::strength()
             b += s.count;
         }
     }
-    float v = ((float)a * 3.0f + (float)b) * g_k0_02 + 0.4f;
+    float v = ((float)a * 3.0f + (float)b) * g_k002 + 0.4f;
     if (v < 0.0f) {
         return 0.0f;
     }
@@ -662,8 +662,6 @@ int EventVec::size() const
 
 
 // ---- STL helper instances of the 0xc-byte open-list element and the 0x5c-byte event record --------------------------------
-extern float g_gk0_05a;                              // 0x549d74
-extern float g_gk0_03;                               // 0x549d70
 
 // @ 0x4b24b0
 // std::uninitialized_fill_n(dst, count, *val): the original takes the pointer and count by value (they are advanced in
@@ -2316,9 +2314,8 @@ void Party::leave_battle()
 
 
 // ---- the world-map path finder and the nav drivers ----------------------------------------------------------------------
-extern float g_half;        // 0x549d70 = 0.5f
+extern const float g_half;        // 0x549d70 = 0.5f
 extern float g_105;         // 0x59364c = 10.5f
-extern float g_10;          // 0x549d74 = 10.0f
 extern float g_005;         // 0x54b4d0 = 0.05f
 extern float g_vis;         // 0x54a6f0 = 0.01f
 

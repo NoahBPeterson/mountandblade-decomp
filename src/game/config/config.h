@@ -27,7 +27,6 @@
 #include "../../include/renderer.h"            // g_render 0xa17910 (dev at +0x618 = 0xa17f28)
 extern int g_edit_key;                              // 0x5e28d0 first value of the line being edited
 extern int g_edit_value;                            // 0x5e28d4 second value of the line being edited
-extern "C" const char g_eq_sep[];                   // 0x593160 " = "
 #include "../../include/clock_table.h"   // g_ticks (the clock table)
 extern const char g_eol[];                          // 0x54b118 ""
 

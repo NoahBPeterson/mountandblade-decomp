@@ -84,7 +84,7 @@ struct Cfg30 {                                      // the object at game+0x30
 };
 
 // ---- globals and callees of other translation units ----------------------------------------------------------------
-extern const float g_rate_marker;       // 0x590cd0  marker decay per second
+extern const float g_k002;       // 0x590cd0  marker decay per second
 
 #include "../game_globals.h"      // g_module_settings.disable_food_slot, g_module_settings.player_wounded_treshold (canonical)
 void set_clock_step(int* clock, float step);            // 0x461420

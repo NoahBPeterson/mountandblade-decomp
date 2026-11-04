@@ -1113,7 +1113,7 @@ inline void identity_pos(float* m) { rgl::identity_pos((rgl::matrix*)m); }      
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
 extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
-extern const float g_590cd0;                    // 0x590cd0  0.02f
+extern const float g_k002;                    // 0x590cd0  0.02f
 
 } // namespace c49deb0
 

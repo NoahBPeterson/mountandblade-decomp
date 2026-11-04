@@ -25,8 +25,6 @@ struct renderer;
 namespace orig {
 extern const float g_zero;                 // 0x549ca8
 extern const float k_0_9f;                 // 0x549d6c
-extern const float g_half;                 // 0x549d70
-extern const float g_ten;                  // 0x549d74
 extern const float k_1_5708f;              // 0x54a534
 extern const char g_rgl_name[];                        // 0x54b048
 extern const float k_0_4f;                 // 0x54b3b8
@@ -54,7 +52,6 @@ extern const float k_1_25f;                // 0x590c80
 extern const float k_0_0005f;              // 0x590d7c
 extern const float k_3_5f;                 // 0x590d8c
 extern const float k_0_014f;               // 0x590f7c
-extern const float k_0_23f;                // 0x590e68
 extern const float k_1_7f;                 // 0x590fa4
 extern const float k_75f;                  // 0x5910fc
 extern const float k_0_98f;                // 0x5911d8

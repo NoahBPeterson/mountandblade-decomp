@@ -7,9 +7,21 @@
 extern float g_one;                        // 0x549cdc 1.0f
 extern float g_hundred;                    // 0x54ab28 100.0f
 extern const float g_chunk_scale;          // 0x549d68 0.3f
+extern const float g_half;                 // 0x549d70 0.5f
+extern const float g_ten;                  // 0x549d74 10.0f
 extern const float g_half_ratio;           // 0x549d78 -0.5f
 extern const float g_k039;                 // 0x54b3b0 0.39f
 extern const float g_rand_k;               // 0x54a6bc 1.0f / 0x3dc9 (rand() % 0x3dc9 scale)
+extern const float g_54b3b4;               // 0x54b3b4 0.8f
+extern const float g_hilite_dim;           // 0x54b4d0 0.05f
+extern const float g_quarter;              // 0x54b868 0.25f
+extern const float g_f590b38;              // 0x590b38 8.0f
+extern const float g_k002;                 // 0x590cd0 0.02f
+extern const float g_k0_23;                // 0x590e68 0.23f
+extern const float g_f59190c;              // 0x59190c 0.92f
+extern const float g_590bb8;               // 0x590bb8 0.07f
+extern const float g_rot_step;             // 0x590c60 0.005f
+extern const float g_f590c74;              // 0x590c74 0.08f
 extern const float g_k065;                 // 0x590b6c 0.65f
 extern const float g_ratio_b;              // 0x597fe8 -2.1f
 extern const float g_ratio_a;              // 0x597fec 0.525f

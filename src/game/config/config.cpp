@@ -503,8 +503,8 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
 
     if (!detailed) {
         // 0x4bb65d: both finds happen first, then the loop runs while the page still has a " = " from `first`
-        first = page->find(tstring(g_eq_sep), 0) + 3;
-        int key_end = sel_text.find(tstring(g_eq_sep), 0) + 3;   // the previous text's values (0x4bb6a1: find on sel_text)
+        first = page->find(tstring(" = "), 0) + 3;
+        int key_end = sel_text.find(tstring(" = "), 0) + 3;   // the previous text's values (0x4bb6a1: find on sel_text)
         while (first >= 3) {
             quote = ',';
             int k = page->find(quote, first);
@@ -528,8 +528,8 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
                 cf.crTextColor = 0xff;
                 SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
             }
-            first = page->find(tstring(g_eq_sep), first) + 3;
-            key_end = sel_text.find(tstring(g_eq_sep), key_end) + 3;
+            first = page->find(tstring(" = "), first) + 3;
+            key_end = sel_text.find(tstring(" = "), key_end) + 3;
         }
     }
 

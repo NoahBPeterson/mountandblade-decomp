@@ -31,6 +31,7 @@
 //                            operator delete when the deleting flag's low bit is set.
 // flags /O2 /MT /Gy /TP
 #include "../../include/image_addrs.h"
+#include "../float_consts.h"      // g_half, g_ten, g_k0_23 (the C_549D70 / C_549D74 / C_590E68 constants below)
 #include <new>
 #include <string.h>
 #include <math.h>
@@ -90,8 +91,8 @@ extern float g_map_max_y;                            // 0x5aa11c  map max y ( 50
 extern char g_world0[0x28];                     // the strategy world whose +0x28 cell table 0x470f40 reads
 
 // the by-name float constants (the originals live in the read-only pools noted here)
-#define C_549D74 (orig::g_ten)             // 10.0
-#define C_549D70 (orig::g_half)             // 0.5
+#define C_549D74 (g_ten)             // 10.0
+#define C_549D70 (g_half)             // 0.5
 #define C_549CDC (1.0f)             // 1.0
 #define C_549CA8 (orig::g_zero)             // 0.0
 #define C_549D7C (orig::k_0_1f)             // 0.1
@@ -103,7 +104,7 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_590D8C (orig::k_3_5f)             // 3.5
 #define C_590AF0 (orig::k_9_8f)             // 9.8
 #define C_590F7C (orig::k_0_014f)             // 0.014
-#define C_590E68 (orig::k_0_23f)             // 0.23
+#define C_590E68 (g_k0_23)             // 0.23
 #define C_54B4D0 (orig::k_0_05f)             // 0.05
 #define C_54B3B8 (orig::k_0_4f)             // 0.4
 #define C_590C74 (orig::k_0_08f)             // 0.08

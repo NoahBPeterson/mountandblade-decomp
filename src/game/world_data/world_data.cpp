@@ -1713,7 +1713,7 @@ void GameW::quest_done(int _idx)
             tstring _val(*(const tstring*)(_e + 0x40));
             char _buf[0x200];
             {
-                tstring _fmt(s_ui_quest_completed_value);
+                tstring _fmt("ui_quest_completed_value");
                 char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
                 char* _r = (char*)g_strtable.lookup(_fmt) + 4;
                 if (*(char**)_r != 0)
@@ -1743,7 +1743,7 @@ void GameW::quest_succeeded(int _idx)
     tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
     char _buf[0x200];
     {
-        tstring _fmt(s_ui_quest_succeeded_value);
+        tstring _fmt("ui_quest_succeeded_value");
         char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
         char* _r = (char*)g_strtable.lookup(_fmt) + 4;
         if (*(char**)_r != 0)
@@ -1767,7 +1767,7 @@ void GameW::quest_failed(int _idx)
     tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
     char _buf[0x200];
     {
-        tstring _fmt(s_ui_quest_failed_value);
+        tstring _fmt("ui_quest_failed_value");
         char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
         char* _r = (char*)g_strtable.lookup(_fmt) + 4;
         if (*(char**)_r != 0)

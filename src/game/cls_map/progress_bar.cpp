@@ -99,7 +99,7 @@ template class std::vector<loading_config>;
 
 // ---- 0x4e43e0: gui_manager::draw_string (add one line of text to the loading screen's text mesh) -----------------------------------
 // the lines are kept (line_wrap / line_height / line_arg at +0xcd0 / +0xd20 / +0xe60) so that gui_manager::rebuild (0x4da900) can replay them
-extern const float g_pad_out;                   // 0x590cd0
+extern const float g_k002;                   // 0x590cd0
 
 // @ 0x4e43e0
 void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
@@ -150,8 +150,8 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     float h = hi.y - lo.y;
     float sz[2];
     float at[2];
-    sz[0] = w + g_pad_out;
-    sz[1] = h + g_pad_out;
+    sz[0] = w + g_k002;
+    sz[1] = h + g_k002;
     at[0] = lo.x - 0.01f;
     at[1] = lo.y - 0.01f;
     self->set_rect(at, sz);
@@ -757,7 +757,7 @@ void ItemC::create2()
 namespace rgl { struct mat3; }
 
 int g_pending;                                              // 0x5e2a14
-extern char g_pending_text[];                   // 0x5e25b0
+char g_pending_text[128];                        // 0x5e25b0 (.bss: the message the next MsgLog::update adds; g_pending says it is there)
 
 // the 12-float basis + three scalars the scene build hands to mesh::render
 struct RenderXform {

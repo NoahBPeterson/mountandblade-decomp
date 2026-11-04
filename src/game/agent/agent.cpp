@@ -12,6 +12,7 @@
 #include <new>
 #include <algorithm>
 #include "./agent.h"
+#include "../float_consts.h"   // the shared float constants this module defines (declared once, here, so a conflicting type is an error)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
 #include "../../include/quaternion.h"
@@ -34,15 +35,27 @@ extern int g_propkind_count;                                // 0x5e29e0
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 
 extern const float g_chunk_scale = 0.3f;     // 0x549d68
+extern const float g_half = 0.5f;           // 0x549d70
+extern const float g_ten = 10.0f;           // 0x549d74
 extern const float g_half_ratio = -0.5f;     // 0x549d78
 extern const float g_k039 = 0.39f;           // 0x54b3b0
+extern const float g_54b3b4 = 0.8f;          // 0x54b3b4
+extern const float g_hilite_dim = 0.05f;     // 0x54b4d0
+extern const float g_quarter = 0.25f;        // 0x54b868
 extern const float g_rand_k = 1.0f / 0x3dc9; // 0x54a6bc
+extern const float g_f590b38 = 8.0f;         // 0x590b38
+extern const float g_590bb8 = 0.07f;         // 0x590bb8
 extern const float g_k065 = 0.65f;           // 0x590b6c
+extern const float g_rot_step = 0.005f;      // 0x590c60
+extern const float g_f590c74 = 0.08f;        // 0x590c74
+extern const float g_k002 = 0.02f;           // 0x590cd0
+extern const float g_k0_23 = 0.23f;          // 0x590e68
+extern const float g_f59190c = 0.92f;        // 0x59190c
 extern const float g_ratio_b = -2.1f;        // 0x597fe8
 extern const float g_ratio_a = 0.525f;       // 0x597fec
 extern const float g_row_unit = 0.088f;      // 0x599ae8 (the height of one row of the 3-column item grid)
-static const int g_value_max = 64;   // upper bound of a placed object's value (0x435860), passed by address
-const int g_tier_dist[11] = { 60, 100, 140, 180, 220, 260, 300, 340, 380, 420, 460 };   // 0x590a70
+extern const int g_value_max = 64;   // 0x590a9c upper bound of a placed object's value (0x435860), passed by address
+extern const int g_tier_dist[11] = { 60, 100, 140, 180, 220, 260, 300, 340, 380, 420, 460 };   // 0x590a70
 
 
 // inline helpers: the original compiled them into the callers (no out-of-line copies in this object)

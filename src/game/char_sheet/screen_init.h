@@ -40,8 +40,8 @@ struct Rect {                                   // the 0x10-byte region copied i
 #define g_strtab  g_strtable
 
 #include "../../include/renderer.h"
-extern float g_590bb8;                          // 0x590bb8
-extern float g_54b3b4;                          // 0x54b3b4
+extern const float g_590bb8;                        // 0x590bb8
+extern const float g_54b3b4;                        // 0x54b3b4
 
 // ---- callees -------------------------------------------------------------------------------------------
 // (stop_all 0x494310, clone 0x41c6d0, make_short_button 0x4e5570, new_medium_button 0x4dce70, make_hint 0x4dada0, ctor_4ed630: cs_common.h / cs_res.h)
