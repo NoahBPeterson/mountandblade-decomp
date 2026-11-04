@@ -172,9 +172,7 @@ struct SourceScreen : ScreenBase {          // vtables 0x5961f0 / 0x596214: +0x3
 
 
 
-extern int g_a735c4;                        // 0xa735c4
 
-extern int g_a7333c;                        // 0xa7333c
 extern int* g_menu_data;                    // 0xa739c0
 extern float g_k59c48c;                     // 0x59c48c (weight ramp constant)
 extern float g_half;                        // 0x549d70 (0.5f)

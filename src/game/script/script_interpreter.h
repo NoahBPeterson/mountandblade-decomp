@@ -628,15 +628,12 @@ __forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
 __forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
 __forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
 
-extern int g_siege_attack;              // 0xa73438 (store_defender_count 0x4ae36e)
-
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
 
 #include "../map_flags.h"   // g_map_flags.f8 = 0x5e2924 (jump_to_menu 0x4ac3a0)
 struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
 
-extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a2ad0)
 
 
 // ---- the mission (g_mission, 0x5e292c; Mission in agent.h) --------------------------------------------------------

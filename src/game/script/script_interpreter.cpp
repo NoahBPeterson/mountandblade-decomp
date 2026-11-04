@@ -1349,7 +1349,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         result = mission()->hero_down();
         break;
     case op::set_party_battle_mode:
-        g_party_battle_mode = 1;
+        g_mission_ctx.f2c8 = 1;   // set_party_battle_mode 0x4a2ad0
         break;
     case op::set_camera_follow_party:
         if (check_party((int)params[0])) {
@@ -4581,7 +4581,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 SET_LV((__int64)m->count_agents(1));
             else if (m->mode == 0)
                 SET_LV((__int64)m->count_agents(0));
-            else if (g_siege_attack)
+            else if (g_mission_ctx.side)
                 SET_LV((__int64)m->count_agents(0));
             else
                 SET_LV((__int64)m->count_agents(1));
@@ -4594,7 +4594,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 SET_LV((__int64)m->count_agents(0));
             else if (m->mode == 0)
                 SET_LV((__int64)m->count_agents(1));
-            else if (g_siege_attack)
+            else if (g_mission_ctx.side)
                 SET_LV((__int64)m->count_agents(1));
             else
                 SET_LV((__int64)m->count_agents(0));

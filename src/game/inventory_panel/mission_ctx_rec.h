@@ -50,8 +50,10 @@ struct MissionCtx {
     char pad280[0x2c0 - 0x280];
     int scene_counter;                                           // +0x2c0
     int passage_menu;                                   // +0x2c4 passage menu (set_passage_menu 0x4a55f3; 0 or less: no menu to close)
-    char f2c8;                                          // +0x2c8
-    char pad2c9[3];
+    union {
+    char f2c8;                                          // +0x2c8 party battle mode (script op set_party_battle_mode 0x4a2ad0 stores a byte)
+    int f2c8_word;                                      // +0x2c8 the same word (the world map's frame sets it as a dword)
+    };
 
     void init();                                        // 0x4be742 (MetaMission::init, entered through the WinLicense marker at 0x4be730)
     void setup_entry(struct MenuEntry* e);              // 0x531600
@@ -71,6 +73,6 @@ struct MissionCtx {
     void reset_ids(int id);                             // 0x5169e0 (ret 4)
     void select_side(int side);                         // 0x492750 (ret 4; world_data.cpp)
 };
-extern MissionCtx g_mission_ctx;                        // 0xa73300
+extern MissionCtx g_mission_ctx;                        // 0xa73300 (defined in inventory_panel/mission_ctx.cpp)
 
 #endif

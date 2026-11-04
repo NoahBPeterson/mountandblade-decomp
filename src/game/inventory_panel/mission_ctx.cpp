@@ -38,12 +38,12 @@
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_mouse_dx;                                // 0x5d70a4
 float g_mouse_dy;                                // 0x5d70a8
+MissionCtx g_mission_ctx;                        // 0xa73300 (.bss, 0x2cc bytes; initialised by static_init_547e40 through MissionCtx::init)
 
 
 #define SCENE ((MissionV*)g_mission)
 
 extern MsgLog g_msglog;                                 // 0x5d7080
-extern int g_a73438;                                    // 0xa73438 (page index)
 
 void autosave_notice();                                 // 0x514830
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (cdecl)
@@ -123,7 +123,6 @@ extern UiKeyState g_keys;                                 // 0xa73730
 
 
 
-extern int g_a735c8;            // 0xa735c8
 extern float g_view_a;          // 0x5d75d8
 extern float g_view_b;          // 0x5d75dc
 extern const float g_ten;           // 0x549d74  10.0f
@@ -184,7 +183,7 @@ void MapFlags::commit(char* out)
             g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 2);
         }
         else if (key == 0x40) {
-            int p = *(int*)(((char*)orig::g_a73304) - g_a73438 * 4);
+            int p = (&g_mission_ctx.ids[1])[-g_mission_ctx.side];
             g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 4);
         }
     }
@@ -889,7 +888,7 @@ void CampaignScreen::frame_update(float dt)
         g_map_flags.f4 = party->f88;
     } else {
         g_mission_ctx.frame(-1);
-        g_a735c8 = 1;
+        g_mission_ctx.f2c8_word = 1;
         party = PARTIES->get(GD_I(0x78));
         g_map_flags.f8 = -1;
         g_map_flags.f4 = party->f88;
