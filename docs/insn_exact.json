@@ -8118,7 +8118,7 @@
   },
   "00502cc0": {
    "verdict": "DIFF",
-   "symbol": "?open_party_window@PartyScreen@@QAEXXZ",
+   "symbol": "?init_screen@PartyScreen@@UAEXXZ",
    "insns": 806,
    "ours": 595,
    "unverified": 0,

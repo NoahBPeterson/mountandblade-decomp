@@ -17,6 +17,7 @@
 #include <vector>
 #include "../options_panel/hud.h"
 #include "../screen_records.h"          // MenuEntry, Rec118 / Rec34 (the mission start menus)
+#include "../party_screen_class.h"      // PartyScreen: the party exchange window (slot 3 is update 0x531800)
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
@@ -46,11 +47,6 @@ struct Map10007 {
 };
 struct SoundCtl {
     char emit_event(int id, int a, int b);   // 0x435790 (agent/agent.h)
-};
-struct PartyScreen {
-    void refresh_selection();   // 0x5063e0
-    void refresh_party_members(int);   // 0x503ed0
-    void refresh_morale();   // 0x503a50
 };
 struct note_window {
     void build(int a, int b);   // 0x50a1c0 (ret 8)
@@ -130,7 +126,7 @@ struct TargetW {                            // a scroll target (a list widget): 
     ValueSource* src;                       // +0x484 (hud.h: the value source behind the widget)
 };
 
-typedef C4c3160 XferWin;       // the party exchange window: the record of rgl/mesh2/rec_tables.h (slot 3 is update 0x531800)
+typedef PartyScreen XferWin;       // the party exchange window is the party screen (party_screen_class.h; slot 3 is update 0x531800)
 
 // ---- the screens with raw layouts -------------------------------------------------------------------------------------
 struct ChoiceList : MissionUi {                // a choice list (was ListWidget; not agent5's 0x4a8-byte ListWidget, ctor 0x49deb0, whose +0x188 holds a scene): current index +0x1cc into the arrays at +0x19c / +0x1ac

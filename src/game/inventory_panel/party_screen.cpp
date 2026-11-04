@@ -81,7 +81,7 @@ static MissionUi* button(PartyScreen* self, MissionUi* parent, const char* label
 }
 
 // @ 0x502cc0
-void PartyScreen::open_party_window()
+void PartyScreen::init_screen()
 {
     g_gui_root.reset();
     skills_list = 0;
@@ -191,21 +191,21 @@ void PartyScreen::open_party_window()
     sel_row = -1;
     sel_type = -1;
     sel_slot = -1;
-    int kind = mode;
+    int kind = w04;
     f8cc = 0;
 
     if (kind == 0 || kind == 5) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 0; show_wounded[1] = 0;
-        other_party = GD_I(0x7c);
+        w10 = GD_I(0x7c);
     }
     else if (kind == 1 || kind == 6 || kind == 7) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 1; show_wounded[1] = 1;
         int x = GD_I(0x13b00);
-        other_party = (x > 0) ? x : GD_I(0x7c);
+        w10 = (x > 0) ? x : GD_I(0x7c);
     }
     else if (kind == 2) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 0; show_wounded[1] = 0;
-        other_party = GD_I(0x7c);
+        w10 = GD_I(0x7c);
         PartyMgr* pm = PARTIES;
         Party* p = pm->get(GD_I(0x7c));
         p->nstacks = 0;
@@ -213,7 +213,7 @@ void PartyScreen::open_party_window()
     else if (kind == 3) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 1; show_wounded[1] = 0;
         int pid = GD_I(0x13a30);
-        other_party = pid;
+        w10 = pid;
         PartyMgr* pm = PARTIES;
         if (!pm->is_live(pid))
             mb_error("mercenary_source_party not set");
@@ -221,11 +221,11 @@ void PartyScreen::open_party_window()
     else if (kind == 4) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 1; show_wounded[1] = 1;
         int x = GD_I(0x13b00);
-        other_party = (x > 0) ? x : GD_I(0x7c);
+        w10 = (x > 0) ? x : GD_I(0x7c);
     }
 
     setup_party(0);
-    if (mode == 0 || mode == 5) {
+    if (w04 == 0 || w04 == 5) {
         f8c8 = 1;
         setup_skills();
     } else {
@@ -249,9 +249,9 @@ void PartyScreen::read(int which)
     int mainp = g_game->f78;
     int owner = g_game->player;
     if (which != 0) {
-        mainp = other_party;
-        if (mode == 3 || mode == 2)
-            owner = other_owner;
+        mainp = w10;
+        if (w04 == 3 || w04 == 2)
+            owner = w14;
         else
             owner = *(int*)((char*)PARTIES->get(mainp) + 0xac);
     }
@@ -385,12 +385,12 @@ static __forceinline void push_colour(MissionUi* w, const char* key)
 // @ 0x503ed0
 void PartyScreen::refresh_party_members(int type)
 {
-    if ((mode == 0 || mode == 5) && type == 1)
+    if ((w04 == 0 || w04 == 5) && type == 1)
         return;
 
     int party_id = g_game->f78;
     if (type != 0)
-        party_id = other_party;
+        party_id = w10;
 
     // wipe the two rows of this half
     for (int i = 0; i < 64; i++) {
@@ -784,8 +784,8 @@ void PartyScreen::setup_party(int side)
         PSO(members_base[side])->add_child(choose_prisoners);
 
         // the two captions depend on what kind of party is shown
-        if (mode == 1 || mode == 6 || mode == 7) {
-            int           idx = ((Map10007*)&g_game->parties)->lookup(other_party);
+        if (w04 == 1 || w04 == 6 || w04 == 7) {
+            int           idx = ((Map10007*)&g_game->parties)->lookup(w10);
             Party* rec = (Party*)((char*)g_game->parties.pages._Myfirst[idx >> 4]
                                                 + (idx & 0xf) * 0x5ac8);
             // Party::display_name inlined (0x505949): the ids, else the string-table entry, else the name (+0xc)
@@ -802,7 +802,7 @@ void PartyScreen::setup_party(int side)
             PSO(choose_companions)->set_text(caption_pos, name);
             tstring empty("");
             PSO(choose_prisoners)->set_text(caption_pos, &empty);
-        } else if (mode == 2 || mode == 3) {
+        } else if (w04 == 2 || w04 == 3) {
             // each caption string dies before the next is built (0x505886)
             {
                 tstring empty("");
@@ -1049,21 +1049,21 @@ void PartyScreen::refresh_selection()
 
     if (sel_row == -1 || sel_type == -1 || sel_slot == -1)
         return;                                     // nothing selected (0x5064f3..0x506515 -> 0x5072f6)
-    int p1 = sel_type != 0 ? g_game->f78 : other_party;     // the party a moved stack goes to
+    int p1 = sel_type != 0 ? g_game->f78 : w10;     // the party a moved stack goes to
     int slot_idx = slots[sel_type][sel_slot][sel_row];      // (sel_slot*2 + sel_type) << 6
-    int p2 = sel_type != 0 ? other_party : g_game->f78;     // the party the selected stack is in
+    int p2 = sel_type != 0 ? w10 : g_game->f78;     // the party the selected stack is in
     Stack stk = PARTIES->get(p2)->stacks[slot_idx];
     if (stk.troop < 0)
         return;                                     // an empty stack slot (0x506586 -> 0x5072e2)
     TroopRec* rec = g_game->chars + stk.troop;
     show_selected_character(stk.troop, sel_slot);   // (0x5065a0 pushes sel_slot)
     bool action = false;
-    if (mode == 0) {
+    if (w04 == 0) {
         if (sel_row != -1 && !(sel_row == 0 && sel_slot == 0))
             PSO(talk_btn)->enable();
     }
 
-    int cmd = mode;
+    int cmd = w04;
     if (cmd == 0 || cmd == 5) {
         tstring k(sel_type == 0 ? "ui_disband" : (stk.flags & 1) != 0 ? "ui_take_prisoner" : "ui_take_back");
         label = *g_strtable.lookup(k);
@@ -1072,8 +1072,8 @@ void PartyScreen::refresh_selection()
     } else if (cmd == 1 || cmd == 6 || cmd == 7) {
         tstring k(sel_type == 0 ? "ui_give" : "ui_take");
         label = *g_strtable.lookup(k);
-        if (sel_row != 0 || sel_slot != 0 || mode == 6) {
-            if ((sel_type == 0 && sel_slot == 0) || mode != 7)      // 0x5068b8..0x5068d4
+        if (sel_row != 0 || sel_slot != 0 || w04 == 6) {
+            if ((sel_type == 0 && sel_slot == 0) || w04 != 7)      // 0x5068b8..0x5068d4
                 action = true;
         }
     } else if (cmd == 2) {
@@ -1139,11 +1139,11 @@ void PartyScreen::refresh_selection()
         }
     }
 
-    if (((rec->flags32 & 0x10) == 0 || sel_type != 0 || mode == 6) && (rec->flags32 & 0x10000000) == 0 && action) {
+    if (((rec->flags32 & 0x10) == 0 || sel_type != 0 || w04 == 6) && (rec->flags32 & 0x10000000) == 0 && action) {
         PSO(action_btn)->enable();
         locked = 0;
     } else {
-        action = false;                             // 0x506adb: the later `mode == 2 && action` reads the cleared flag
+        action = false;                             // 0x506adb: the later `w04 == 2 && action` reads the cleared flag
     }
 
     tstring caption(label);                         // a copy (0x506b08), alive to the end
@@ -1152,7 +1152,7 @@ void PartyScreen::refresh_selection()
     char cost_buf[512];                             // esp+0x2b0
     sprintf(cost_buf, "");
     if (stk.troop == g_game->player || (stk.flags & 1) != 0) {
-        if (mode == 2 && action) {
+        if (w04 == 2 && action) {
             int v;
             {
                 tstring k("ui_price");
@@ -1167,7 +1167,7 @@ void PartyScreen::refresh_selection()
             put_text(cost_panel, cost_buf);
         }
     } else {
-        if (sel_type == 1 && mode == 3) {
+        if (sel_type == 1 && w04 == 3) {
             tstring k("ui_joining_cost_weekly_wage");
             const char* fmt = g_strtable.lookup(k)->c_str();
             sprintf(cost_buf, fmt, GV->sl_party_price(stk.troop), GV->sl_party_value(stk.troop));
@@ -1287,7 +1287,7 @@ void PartyScreen::refresh_selection()
         tstring u(upgrade_buf);
         PSO(upgrade_panel)->set_text(size, &u);
     }
-    if (mode == 3) {
+    if (w04 == 3) {
         if (sel_type == 0) {
             PSO(action_btn)->disable();
             locked = 1;

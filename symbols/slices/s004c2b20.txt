@@ -13,7 +13,7 @@
 004c30c0 ??_GC4c3050@@UAEPAXI@Z  # ICF-folded deleting dtor for C4c3050 (vtable slot)
 004c30e0 ??1C4c3050@@UAE@XZ  # dtor, 6 tstrings +0xbc..+0x6c reverse, +0x5c, then base +0x1c
 004c3120 ??_GRec118@@UAEPAXI@Z  # deleting dtor: tstring 0x42bc40 at +0x84 and the base's at +0x1c, base vtable 0x5947d8 restored (class vtable 0x595804, tstrings at +0x1c/+0x84)
-004c3160 ??0C4c3160@@QAE@XZ  # ctor, vtable 0x595870, 0x80 x 0x20-byte slots at +0x8e8
+004c3160 ??0PartyScreen@@QAE@XZ  # ctor, vtable 0x595870, 0x80 x 0x20-byte slots at +0x8e8
 004c31c0 ??0C4c31c0@@QAE@XZ  # ctor, vtable 0x595924, 9 x 0x30 pairs at +0x2c, tstring +0x224
 004c3220 ??_GC4c31c0@@UAEPAXI@Z  # deleting dtor for C4c31c0 (vtable slot)
 004c3240 ??1C4c31c0@@UAE@XZ  # dtor, +0x224 then 9 pairs reverse, then base +0x1c
@@ -27,6 +27,6 @@
 005947d8 ??_7C4c2da8@@6B@  # base vtable stored by every ctor in this slice before the own vtable00595740 ??_7ResultWindow@@6B@  # ctor 0x4c2c50
 00595798 ??_7C4c2fb0@@6B@  # ctor 0x4c2fb0
 005957bc ??_7C4c3050@@6B@  # ctor 0x4c3050
-00595870 ??_7C4c3160@@6B@  # ctor 0x4c3160
+00595870 ??_7PartyScreen@@6B@  # ctor 0x4c3160
 00595924 ??_7C4c31c0@@6B@  # ctor 0x4c31c0
 00595a20 ??_7C4c3290@@6B@  # ctor 0x4c3290

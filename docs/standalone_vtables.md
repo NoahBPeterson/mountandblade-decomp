@@ -73,7 +73,7 @@ void Rec34::reset_screen()     { g_gui.f1709 = 1; }
 
 `game/screen_records.h` holds the head_rec records, one class each, shared by every TU that holds one of their members
 (`MB_ZERO_TAIL`, the opaque `RecX` creation types and the C4c / Rec* classes). Rec1208 lives in `game/conv_screen.h`, ItemRec /
-ItemRec2 in `game/triggers/item_rec.h`, C4c3160 + `Slot20` in screen_records.h, the old views are `typedef`s of the record
+ItemRec2 in `game/triggers/item_rec.h`, PartyScreen (ex C4c3160) in party_screen_class.h, the old views are `typedef`s of the record
 (`OptionsScreen`/`OptionsWin`/`MeetingWindow`/`XferWin`/`LogScreen`/`quest_window`/`ConvScreen`) where one view was the
 whole record. Their overrides are defined in the TU of the original function (`// @ 0xADDR`), their destructors are the
 compiler's (`~X()` for the part the original calls out of line, implicit `??_GX`; the plain records need none: the
@@ -84,7 +84,7 @@ handler; the parameter is the frame time, a handler that forwards its address, a
 Done (slot 1 + 2 + 3 unless noted): C4c2fb0, C4c3050, C4c31c0, C4c3290, Rec38 (debrief report / leave), Rec44 (mission window),
 Rec34 (debrief), Rec118 (meeting window / mission start menu), Rec3c (done window), Rec454 (quest log), Rec48 (import /
 export window), Rec58 (game log), Rec1208 (conversation), Rec1bc (key bindings), Recd8 (options), Recf0 (video options),
-ItemRec (main menu), ItemRec2 (escape menu; slot 2 EscapeMenu::create, slot 3 buttons), C4c3160 slot 3, TerrainPage / FaceGen slot 1.
+ItemRec (main menu), ItemRec2 (escape menu; slot 2 EscapeMenu::create, slot 3 buttons), PartyScreen slot 3, TerrainPage / FaceGen slot 1.
 
 Lessons that cost time:
 
@@ -105,7 +105,7 @@ Lessons that cost time:
   `slot_empty_1`, slot 2 `slot_empty_2` (0x500ad0, the window maker), slot 3 `scale_3` (0x50fe20, the trade engine's per-frame
   step) and slot 7 are its own virtuals; InventoryPanel's methods (inventory_panel/inventory_panel.cpp, built with the GameData
   header) are its members, so there is no forwarding stub left for this record.
-* C4c3160 slot 2 `PartyScreen::open_party_window` 0x500ad0.. (party_screen.cpp, a 1,300-line view with its own helpers).
+* C4c3160 is PartyScreen now (game/party_screen_class.h; slot 2 `init_screen` 0x502cc0, slot 3 `frame_update` 0x531800): no stub left.
 * mission_items: ItemA / ItemB / ItemC / ItemD / MissionBlocker. Their deleting destructor in the original is 0x4ce930, the
   ItemRec one: ItemA..C start with the same `owned_block` at +0x30 as ItemRec (their `f34 f38 f3c` are its begin/end/cap), so
   the item family has a shared base class (head_rec + owned_block + clock / stamp), ItemRec / ItemRec2 / ItemA..C derive from

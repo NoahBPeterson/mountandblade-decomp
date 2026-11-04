@@ -7,10 +7,8 @@
 // argument unchanged.
 #include "../../rgl/mesh2/rec_tables.h"
 #include "../strat/gui_manager.h"     // g_gui
+#include "../party_screen_class.h"   // PartyScreen
 
-struct PartyScreen {
-    void open_party_window();
-};
 struct XferWin {
     void update(int);
 };
@@ -19,9 +17,8 @@ struct XferWin {
 void C4c2fb0::reset_screen() { g_gui.reset(); }
 void C4c3290::reset_screen() { g_gui.reset(); }
 
-// C4c3160
-void C4c3160::reset_screen() { g_gui.reset(); }
-void C4c3160::init_screen() { ((PartyScreen*)this)->open_party_window(); }
+// PartyScreen (game/party_screen_class.h)
+void PartyScreen::reset_screen() { g_gui.reset(); }
 
 void C4c31c0::reset_screen() { g_gui.reset(); }
 

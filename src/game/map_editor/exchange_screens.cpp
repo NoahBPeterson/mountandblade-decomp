@@ -130,7 +130,7 @@ void Rec34::frame_update(float)
 }
 
 // @ 0x531800
-void C4c3160::frame_update(float)
+void PartyScreen::frame_update(float)
 {
     int extra = 0;
     int slot;
@@ -165,10 +165,10 @@ void C4c3160::frame_update(float)
     int action;
     char commit_out[4];
 
-    if (f94 != 0 && f94->f_f4 < f90->f_f4) {
+    if (skills_list != 0 && ((TargetW*)skills_list)->f_f4 < ((TargetW*)skills_base)->f_f4) {
         if (g_gui.mouse[0] < 0.5f) {
-            f94->src->on_value_changed((float)g_mission_clock);
-            f94->src->set_key_flags(0x10000);
+            ((TargetW*)skills_list)->src->on_value_changed((float)g_mission_clock);
+            ((TargetW*)skills_list)->src->set_key_flags(0x10000);
             goto after_scroll;
         }
     } else {
@@ -194,10 +194,10 @@ void C4c3160::frame_update(float)
     }
 
 after_scroll:
-    if (f8e4 >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x2c] &&
+    if (sel_row >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x2c] &&
         !g_keyboard.prev[0x2d] && g_cfg.cheat_mode && g_trial_mode) {
-        slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
-        pid = f8dc != 0 ? w10 : g_game->f78;
+        slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
+        pid = sel_type != 0 ? w10 : g_game->f78;
         // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
         Party* p = (Party*)((Scene*)(void*)party_mgr())->get(pid);   // 0x51ee50
         p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
@@ -210,22 +210,22 @@ after_scroll:
     for (r = 0; r < rows; r++) {
         for (c = 0; c < 2; c++) {
             for (i = 0; i < 64; i++) {
-                if (grid[r][c][i]->clear_mask(0x10000))
+                if (buttons[r * 2 + c][i]->clear_mask(0x10000))
                     set_selection(r, c, i);
             }
         }
     }
 
-    if (w50->clear_mask(0x10000)) {
-        slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
-        pid = f8dc != 0 ? w10 : g_game->f78;
-        cmp_party = f8dc != 0 ? g_game->f78 : w10;
+    if (action_btn->clear_mask(0x10000)) {
+        slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
+        pid = sel_type != 0 ? w10 : g_game->f78;
+        cmp_party = sel_type != 0 ? g_game->f78 : w10;
         count = 1;
         if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
             count = party_index(pid)->stacks[slot].count;
         flag = 0;
         for (i = 0; i < count; i++) {
-            if (w50->f104 & 3)
+            if (action_btn->f104 & 3)
                 break;
             w14 = party_index(pid)->stacks[slot].troop;
             v = 0;
@@ -258,11 +258,11 @@ after_scroll:
         ((PartyScreen*)(void*)this)->refresh_morale();
     }
 
-    c48 = w48->clear_mask(0x10000);
-    c4c = w4c->clear_mask(0x10000);
+    c48 = upgrade1->clear_mask(0x10000);
+    c4c = upgrade2->clear_mask(0x10000);
     if (c48 || c4c) {
-        slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
-        pid = f8dc != 0 ? w10 : g_game->f78;
+        slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
+        pid = sel_type != 0 ? w10 : g_game->f78;
         sel = &party_index(pid)->stacks[slot];
         tsel = &g_game->troops[sel->troop];
         found = 0;
@@ -347,7 +347,7 @@ overflow_path:
         if (c4c)
             base = troop_f54(tsel);
         for (int k = 0; k < limit; k++) {
-            if (f3908)
+            if (locked)
                 break;
             sel->f14--;
             PartyX* p = party_index(pid);
@@ -388,18 +388,18 @@ tail:
         ((PartyScreen*)(void*)this)->refresh_morale();
     }
 
-    c54 = w54->clear_mask(0x10000);
-    c58 = w58->clear_mask(0x10000);
+    c54 = move_up->clear_mask(0x10000);
+    c58 = move_down->clear_mask(0x10000);
     if (c54 || c58) {
         int d = c54 ? -1 : 1;
         swap_rows(d);
-        set_selection(f8dc, f8e0, f8e4 + d);
+        set_selection(sel_type, sel_slot, sel_row + d);
         ((PartyScreen*)(void*)this)->refresh_party_members(0);
         ((PartyScreen*)(void*)this)->refresh_selection();
     }
 
-    if (!w30->clear_mask(0x10000) && (g_keyboard.down[0x1] != 0 || g_keyboard.prev[0x1] == 0)) {
-        if (w34->clear_mask(0x10000)) {
+    if (!done_btn->clear_mask(0x10000) && (g_keyboard.down[0x1] != 0 || g_keyboard.prev[0x1] == 0)) {
+        if (reset_btn->clear_mask(0x10000)) {
             apply(0);
             apply(1);
             clear_selection();
@@ -409,11 +409,11 @@ tail:
             ((PartyScreen*)(void*)this)->refresh_morale();
             return;
         }
-        if (!w44->clear_mask(0x10000))
+        if (!talk_btn->clear_mask(0x10000))
             return;                             // nothing pressed: stay on the screen (0x532384 -> the epilogue)
-        if (f8e4 < 0)
+        if (sel_row < 0)
             return;
-        get_cell(f8dc, f8e0, f8e4, &a, &b);
+        get_cell(sel_type, sel_slot, sel_row, &a, &b);
         action = 0xd;
         if (party_index(a)->stacks[b].flags & 1)
             action = 0xe;
@@ -436,29 +436,29 @@ close_menu:
 }
 
 // @ 0x5324d0
-void C4c3160::clear_selection()
+void PartyScreen::clear_selection()
 {
-    if (f8e4 != -1) {
-        int idx = (f8e0 + f8dc * 2) * 0x40 + f8e4;
-        MissionUi* w = ((MissionUi**)grid)[idx];
+    if (sel_row != -1) {
+        int idx = (sel_slot + sel_type * 2) * 0x40 + sel_row;
+        MissionUi* w = ((MissionUi**)buttons)[idx];
         w->set15c(0);
     }
-    f8e4 = -1;
-    f8e0 = -1;
-    f8dc = -1;
+    sel_row = -1;
+    sel_slot = -1;
+    sel_type = -1;
 }
 
 // @ 0x532520
-void C4c3160::get_cell(int a, int b, int c, int* main, int* cell)
+void PartyScreen::get_cell(int a, int b, int c, int* main, int* cell)
 {
-    *cell = sel_slots[(b + a * 2) * 0x40 + c];
+    *cell = ((int*)slots)[(b + a * 2) * 0x40 + c];
     *main = g_game->f78;
     if (a != 0)
         *main = w10;
 }
 
 // @ 0x532560
-void C4c3160::move_men(int amount)
+void PartyScreen::move_men(int amount)
 {
     g_game->troops[g_game->player].f3b4 += amount;
     g_game->troops[w14].f3b4 -= amount;
@@ -468,7 +468,7 @@ struct Row { int v[8]; };
 typedef char assert_row[sizeof(Row) == 0x20 ? 1 : -1];
 
 // @ 0x5325b0
-void C4c3160::apply(int which)
+void PartyScreen::apply(int which)
 {
     GameData* g = g_game;
     int mainp = g->f78;
@@ -505,11 +505,11 @@ void C4c3160::apply(int which)
 }
 
 // @ 0x532740
-void C4c3160::swap_rows(int which)
+void PartyScreen::swap_rows(int which)
 {
-    int slot = sel_slots[(f8e0 + f8dc * 2) * 0x40 + f8e4];
+    int slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
     int owner = g_game->f78;
-    if (f8dc != 0)
+    if (sel_type != 0)
         owner = w10;
     PartyX* p = party_index(owner);
 
@@ -529,7 +529,7 @@ void C4c3160::swap_rows(int which)
 }
 
 // @ 0x532830
-void C4c3160::stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed)
+void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed)
 {
     int* table;
     Row local;
@@ -648,14 +648,14 @@ void GameDataX::update_party_sprites()
 
 
 // @ 0x533020
-void C4c3160::set_selection(int a, int b, int c)
+void PartyScreen::set_selection(int a, int b, int c)
 {
     clear_selection();
-    f8dc = a;
-    f8e0 = b;
-    f8e4 = c;
+    sel_type = a;
+    sel_slot = b;
+    sel_row = c;
     if (c != -1) {
-        MissionUi* w = ((MissionUi**)grid)[(b + a * 2) * 0x40 + c];
+        MissionUi* w = ((MissionUi**)buttons)[(b + a * 2) * 0x40 + c];
         w->set15c(1);
     }
     ((PartyScreen*)(void*)this)->refresh_selection();

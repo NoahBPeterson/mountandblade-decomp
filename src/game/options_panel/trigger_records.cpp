@@ -23,7 +23,7 @@ void init_mission_trigger_records()
     slot_as<Rec38>(9) = new Rec38;
     slot_as<Rec44>(10) = new Rec44;
     slot_as<Rec34>(11) = new Rec34;
-    slot_as<C4c3160>(12) = new C4c3160;
+    slot_as<PartyScreen>(12) = new PartyScreen;
     slot_as<Rec454>(13) = new Rec454;
     slot_as<MissionBlocker>(14) = new MissionBlocker;
     slot_as<CharSheet>(15) = new CharSheet;

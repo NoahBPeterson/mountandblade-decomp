@@ -344,49 +344,4 @@ struct Rec58 : head_rec { MB_ZERO_TAIL(Rec58)   // vtable 0x5959fc (the game-log
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
-struct Slot20 {              // 0x20 bytes
-    int a, b, c, d, e, f, g, h;
-};
-struct TargetW;
-struct C4c3160 : head_rec {  // vtable 0x595870 (the party exchange window: slot 2 party_screen.cpp 0x50xxxx, slot 3 map_editor/exchange_screens.cpp 0x531800)
-    char pad2c[4];
-    MissionUi* w30;                            // +0x30
-    MissionUi* w34;                            // +0x34
-    char pad38[0x44 - 0x38];
-    MissionUi* w44;                            // +0x44
-    MissionUi* w48;                            // +0x48
-    MissionUi* w4c;                            // +0x4c
-    MissionUi* w50;                            // +0x50
-    MissionUi* w54;                            // +0x54
-    MissionUi* w58;                            // +0x58
-    char pad5c[0x90 - 0x5c];
-    TargetW* f90;                           // +0x90
-    TargetW* f94;                           // +0x94
-    char pad98[0xb8 - 0x98];
-    MissionUi* grid[2][2][64];                 // +0xb8
-    char pad4b8[0x4c8 - 0x4b8];
-    int sel_slots[256];                     // +0x4c8
-    int f8c8;                               // +0x8c8
-    char pad8cc[0x8dc - 0x8cc];
-    int f8dc;                               // +0x8dc
-    int f8e0;                               // +0x8e0
-    int f8e4;                               // +0x8e4
-    Slot20 slots[0x80];                     // +0x8e8
-    char pad18e8[0x3908 - 0x18e8];
-    char f3908;                             // +0x3908
-    char pad3909[0x3910 - 0x3909];
-    C4c3160();               // 0x4c3160
-    virtual void reset_screen();
-    virtual void init_screen();
-    virtual void frame_update(float);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    __declspec(noinline) void clear_selection();                 // 0x5324d0
-    __declspec(noinline) void get_cell(int a, int b, int c, int* main, int* cell);   // 0x532520
-    __declspec(noinline) void move_men(int amount);              // 0x532560
-    __declspec(noinline) void apply(int which);                  // 0x5325b0
-    __declspec(noinline) void swap_rows(int which);              // 0x532740
-    __declspec(noinline) void stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed);   // 0x532830 (ret 0x14)
-    __declspec(noinline) void set_selection(int a, int b, int c);   // 0x533020 (ret 0xc)
-};
-
 #endif

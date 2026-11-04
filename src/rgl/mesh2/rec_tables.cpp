@@ -8,6 +8,7 @@
 #include "../../game/music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../../game/config/config_block.h"
 #include "./rec_tables.h"
+#include "../../game/party_screen_class.h"   // PartyScreen (0x4c3160)
 #include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
@@ -162,17 +163,17 @@ C4c3050::~C4c3050()                                 // the deleting destructor i
 }                                                   // t5c, then the base: the compiler's
 
 // @ 0x4c3160
-C4c3160::C4c3160()
+PartyScreen::PartyScreen()
 {
-    Slot20* s = slots;
+    PsRow* s = &rows[0][0];
     for (int i = 0; i < 0x80; i++, s++) {
-        s->a = 0;
-        s->b = -1;
-        s->c = 0;
-        s->f = 0;
-        s->d = 0;
-        s->e = 0;
-        s->g = 0;
+        s->v[0] = 0;
+        s->v[1] = -1;
+        s->v[2] = 0;
+        s->v[5] = 0;
+        s->v[3] = 0;
+        s->v[4] = 0;
+        s->v[6] = 0;
     }
 }
 

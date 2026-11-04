@@ -56,7 +56,7 @@ struct C4c2d10 {
     C4c2d10();               // 0x4c2d10
 };
 
-// C4c3160 (vtable 0x595870, the party exchange window) is declared in game/screen_records.h
+// PartyScreen (ex C4c3160, vtable 0x595870, the party exchange window) is declared in game/party_screen_class.h
 
 // 0x18-byte entry of the block read by 0x4c2dd0 (tstring, two ints): config.h's clip_slot (same layout; its constructor
 // 0x4be720 is out of line, the array new goes through the vector constructor iterator). rec_tables.cpp includes config.h.

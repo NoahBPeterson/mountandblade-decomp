@@ -12,7 +12,7 @@
 004c30c0 ??_GC4c3050@@UAEPAXI@Z
 004c30e0 ??1C4c3050@@UAE@XZ
 004c3120 ??_GRec118@@UAEPAXI@Z
-004c3160 ??0C4c3160@@QAE@XZ
+004c3160 ??0PartyScreen@@QAE@XZ
 004c31c0 ??0C4c31c0@@QAE@XZ
 004c3220 ??_GC4c31c0@@UAEPAXI@Z
 004c3240 ??1C4c31c0@@UAE@XZ
@@ -42,7 +42,7 @@
 00595740 ??_7ResultWindow@@6B@  # ctor 0x4c2c50
 00595798 ??_7C4c2fb0@@6B@  # ctor 0x4c2fb0
 005957bc ??_7C4c3050@@6B@  # ctor 0x4c3050
-00595870 ??_7C4c3160@@6B@  # ctor 0x4c3160
+00595870 ??_7PartyScreen@@6B@  # ctor 0x4c3160
 00595924 ??_7C4c31c0@@6B@  # ctor 0x4c31c0
 00595a20 ??_7C4c3290@@6B@  # ctor 0x4c3290
 0042bbd0 ?ctor@tstring_ctor@@QAEXXZ  # tstring::tstring(), called on raw storage
