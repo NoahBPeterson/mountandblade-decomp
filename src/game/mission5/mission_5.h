@@ -1151,7 +1151,8 @@ extern float g_0;                                             // 0x549ca8 (0.0f)
 extern float g_1;                                             // 0x549cdc (1.0f)
 extern const float g_aim_range_tbl[14];                         // 0x59390c (lo/hi pairs)
 
-float __cdecl signed_angle(void* a, void* b);                 // 0x4381e0
+struct vec2;
+float __cdecl signed_angle(const vec2* a, const vec2* b);                 // 0x4381e0
 
 inline PartyMgr_s29130* party_mgr_s29130() { return (PartyMgr_s29130*)((char*)g_game_s29130 + 0xf8); }
 inline Troop_s29130* troop_tbl_s29130() { return *(Troop_s29130**)((char*)g_game_s29130 + 0x13a00); }

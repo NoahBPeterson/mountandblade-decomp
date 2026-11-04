@@ -5,6 +5,7 @@
 #ifndef GAME_FLOAT_CONSTS_H
 #define GAME_FLOAT_CONSTS_H
 extern float g_one;                        // 0x549cdc 1.0f
+extern float g_hundred;                    // 0x54ab28 100.0f
 extern const float g_chunk_scale;          // 0x549d68 0.3f
 extern const float g_half_ratio;           // 0x549d78 -0.5f
 extern const float g_k039;                 // 0x54b3b0 0.39f

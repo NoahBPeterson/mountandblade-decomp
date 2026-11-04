@@ -1625,7 +1625,7 @@ void MissionHud_s29130::update_marks()
     float target[7] = {0, 0, 0, 0, 0, 0, 0};
 
     ItemRef_s29130 pair = a->slot_pair(0);
-    float aim = signed_angle(a->blk60, &a->facing);
+    float aim = signed_angle((const vec2*)a->blk60, (const vec2*)&a->facing);
 
     if (pair.item >= 0) {
         bool other = false;

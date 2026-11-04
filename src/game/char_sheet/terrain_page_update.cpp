@@ -1,4 +1,5 @@
 #include "./terrain_page_update.h"
+#include "../float_consts.h"
 #include "../terrain_a/terrain.h"      // g_terrain 0xa76630 (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -77,7 +78,7 @@ void TerrainPage::update(float dt)
         camera_y = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(z_slider)) {
-        camera_z = z_slider->get168() * g_0_01 + g_ten;
+        camera_z = z_slider->get168() * g_hundred + g_ten;
         refresh_hex();
     } else if (page_changed(fog_slider)) {
         fog = fog_slider->get168();
