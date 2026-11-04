@@ -6,11 +6,15 @@
 #define CHAR_SHEET_CS_COMMON_H
 struct tstring;                                                     // (complete in the includer: game/tstring.h, or terrain_page.h's own view)
 
+#ifdef CS_REAL_FACEGEN                                             // (the rgl_math.h universe: the real widget classes; the rgl_mesh.h universe cannot take mission_ui.h)
+#include "../ui/ui_widgets.h"                                      // MissionUi, MissionPanel, UiB, UiD: the real classes
+#else
 struct UiD {                                                        // ui/ui_widgets.h: the progress bar / slider
     UiD();                                                          // 0x48b890
     float value();                                                  // 0x48b930
     void set_value(float x);                                        // 0x48baa0
 };
+#endif
 #include "../window_mgr.h"                                    // WindowMgrW g_windows (0xa73980): the one definition
 struct FaceRace {                                                   // terrain_b
     void relax(int index, float* values);                           // 0x4735e0
@@ -56,12 +60,14 @@ struct world {                                                      // the scene
 #include <new>
 #include "../world_data/raw_place.h"
 namespace rgl { struct mesh; }                                     // (the set_track pointer argument; ui/mission_ui.h has the full class)
+#ifndef CS_REAL_FACEGEN
 struct MissionUi {                                                  // ui/mission_ui.h
     MissionUi();                                                    // 0x48ae20
     void render(rgl::scene* s, float* v, int a, int b);             // 0x488720
     void set_track(int i, rgl::mesh* p);                            // 0x488ad0 (vtable slot +0x80)
     void set_fog(const float* ref, const float* lo, const float* hi);   // 0x488cd0 (facegen_win 0x4f1460 calls it on the 0x344-byte preview scene)
 };
+#endif
 struct ContainerW {                                                 // world_data/world_data.h
     void* construct();                                              // 0x4931a0
 };
@@ -161,9 +167,11 @@ WidgetB* __cdecl make_slider(void* parent, const tstring* name);    // 0x4f5fb0 
 void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, float z);    // 0x4f5df0 (editor_ui)
 void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, float z);   // 0x4f5ed0 (editor_ui)
 WidgetC* __cdecl make_editor_list(void* parent, const tstring* name, int scroll);   // 0x4f62f0 (editor_ui)
+#ifndef CS_REAL_FACEGEN
 struct MissionPanel {                                               // ui/mission_ui.h
     void draw();                                                    // 0x488d50
 };
+#endif
 struct gui_obj;
 struct gui_manager {                                                // strat/gui_manager.h (the object at 0x5d7080)
     char pad00[0x10];

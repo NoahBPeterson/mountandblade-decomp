@@ -44,11 +44,6 @@ extern MsgLog g_msglog;                                 // 0x5d7080
 // ---- UI widget (vtable family 0x597050; s004f49d0 / s004dada0) ------------------------------------------
 #include "../ui_widget.h"                 // Widget (the UI widget interface)
 typedef Widget UiVt;                    // the slice's name for it
-struct UiB : Widget {                   // the slider widget (ui/ui_widgets.h; vtable 0x591fb0, 0x188 bytes): its slot +0x38 is the base's get168
-    char pad04[0x168 - 4];
-    float value168;                     // +0x168 what slot +0x38 returns
-    char pad16c[0x188 - 0x16c];
-};
 struct Ui { UiVt* vt; };
 struct World;
 

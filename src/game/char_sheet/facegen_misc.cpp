@@ -57,9 +57,9 @@ void FaceGen::refresh()
 {
     int n = g_anim.skins[skin].n_elems - 1;
     for (int i = 0; i < n; i++)
-        g_anim.weights[i] = deform_rows[i]->get_float();
-    f360 = sl_age->get_float();
-    f364 = sl_hair_color->get_float();
+        g_anim.weights[i] = deform_rows[i]->get168();
+    f360 = sl_age->get168();
+    f364 = sl_hair_color->get168();
     ent->clear();
     int flags = *(int*)(g_game->chars_c + troop * 0x508 + 0x30) & 0xf;
     int zero = 0;
