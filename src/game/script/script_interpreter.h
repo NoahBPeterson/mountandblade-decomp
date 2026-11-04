@@ -180,7 +180,6 @@ extern int g_animation_count;           // 0xa7662c (0x49d4b0)
 // ---- message log and text log (report 0x49cc60) -----------------------------------------------------------------
 // the message log object (MsgLog, src/include/msg_log.h)
 extern MsgLog g_msglog;                // 0x5d7080
-extern char g_log[];                // 0x5a9f60 the text log stream (a stream_base; slot 10 = w_cstr)
 
 // ---- conversations and the window manager -------------------------------------------------------------------------
 #include "../dialog_mgr.h"                  // DialogMgr g_dialogs (0x8ed50c8)

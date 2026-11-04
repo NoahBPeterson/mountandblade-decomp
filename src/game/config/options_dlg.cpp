@@ -221,7 +221,7 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
 }
 
 // @ 0x4b96d0
-// (the log object is reached through its address, not g_log: cl would devirtualise a call on the extern object)
+// (the log object is reached through a stream_base reference: cl would devirtualise a call on the extern object itself)
 void __cdecl open_keys_key(PHKEY out)
 {
     DWORD disp;
@@ -229,7 +229,7 @@ void __cdecl open_keys_key(PHKEY out)
     if (disp != 1) {
         return;
     }
-    ((log_stream*)&orig::g_log)->w_cstr("Creating new Registry Key");
+    ((stream_base&)g_log).w_cstr("Creating new Registry Key");
 }
 
 // @ 0x4b9720

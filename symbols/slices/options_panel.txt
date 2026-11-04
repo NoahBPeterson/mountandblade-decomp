@@ -7,7 +7,7 @@
 004d7e50  options_panel::draw_faction_report  ?draw_faction_report@options_panel@@QAEXXZ
 004d8000  options_panel::import_export  ?scale_3@Rec48@@UAEXM@Z
 0054a740 ??_7outfile_a@@6B@  # vtable of the export file base class (stored by its inline ctor in 0x4d8000)
-00595618 ??_7outfile_b@@6B@  # vtable of the middle class whose dtor closes the file (slot 26 at 0x595680)
+00595618 ??_7log_stream@@6B@  # vtable of the middle class whose dtor closes the file (slot 26 at 0x595680)
 00595990 ??_7outfile@@6B@  # vtable of the most-derived export file object
 004d86d0  char_export_write  ?char_export_write@@YAXPAUstream_text@@@Z
 004d8c20 FUN_004d8c20  # character-import text reader (called from the character/save loader; per-key tstring compares)

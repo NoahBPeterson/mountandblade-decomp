@@ -88,13 +88,7 @@ struct CD3DApplication {
     virtual long MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x403120 (dxframework/d3dapp.h)
 };
 
-struct Output {
-    virtual void o0(); virtual void o1(); virtual void o2(); virtual void o3();
-    virtual void o4(); virtual void o5(); virtual void o6(); virtual void o7();
-    virtual void o8(); virtual void o9();
-    virtual void print(const char* s);  // +0x28
-};
-extern Output g_log;                 // 0x5a9f60
+#include "../../rgl/stream.h"                   // g_log (log_stream)
 
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
@@ -338,6 +332,6 @@ void C4c3290::scale_3(float)
     ((Widget*)bar)->set_value((float)step * 0.14285715f);
     if (finished) {
         g_main_menu.set_state(4);
-        ((Output*)&orig::g_log)->print("Finished All...\n");
+        ((stream_base&)g_log).w_cstr("Finished All...\n");
     }
 }

@@ -53,7 +53,7 @@ struct stream_base {
     virtual int flush();                                   // 26 0x408020 (returns 0; ICF-shared)
 };
 
-// The typed slots of the classes that declare all of them (log_stream, gui_manager.h).
+// The typed slots of the classes that declare all of them.
 #define STREAM_SLOTS \
     virtual stream_base& w_stream(stream_base* o); \
     virtual stream_base& w_float(float* v); \
@@ -77,7 +77,7 @@ struct stream_base {
     virtual stream_base& r_tstr(rgl::string* v); \
     virtual stream_base& slot22(void* v);
 
-// File-backed writers keep their fields in an intermediate class (log_stream, gui_manager.h).
+// File-backed writers keep their fields in an intermediate class.
 struct file_writer_base : stream_base {
     FILE* fp;                                  // +0x30
     char failed;                               // +0x34
@@ -117,6 +117,24 @@ struct text_stream : file_writer_base {
     int close();                               // 0x415370
     bool open_read_text(const char* path);     // 0x415d60
 };
+
+// The engine's text log (global g_log at 0x5a9f60; vtable 0x595618): a text_stream whose flush (slot 26, 0x42cc10) writes the
+// unflushed tail of the buffer, and whose destructor closes the file. The export file (options_panel.h's outfile) derives from it.
+struct log_stream : text_stream {
+    log_stream() {}
+    virtual int flush();                                            // 0x42cc10 (gui_manager.cpp)
+    void shut()
+    {
+        if (is_open) {
+            if (flush() == 0)
+                fclose(fp);
+            failed = 1;
+            is_open = 0;
+        }
+    }
+    ~log_stream() { shut(); }
+};
+extern log_stream g_log;            // 0x5a9f60
 
 // The text reader chain (vtable 0x54a890): text_stream's slots, folded by the original's linker, each class with its own
 // copy. This class has a user-declared empty destructor (0x417310); the loaders that build readers on their stack inline it

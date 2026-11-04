@@ -236,8 +236,8 @@ void SceneFile::load(stream_base* s, int id)
             s414.reset();
             s->r_stream(&s414);
         } else {
-            LogHub* hub = &g_log;
-            hub->get("WARNING unable to find ground_paint_saved_magic for sco file")->put(&name);
+            stream_base& hub = g_log;
+            hub.w_cstr("WARNING unable to find ground_paint_saved_magic for sco file").w_tstr((const rgl::string*)&name);
         }
     }
     loaded = 1;

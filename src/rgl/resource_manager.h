@@ -15,7 +15,6 @@
 struct rgl_config { void save(FILE* f); };     // 0x415fb0
 
 
-extern text_stream g_log;                      // 0x5a9f60 (the engine's text log)
 
 // reads a key array, then flips each quaternion so neighbours have a non-negative dot product
 stream_base* read_continuous_quats(stream_base* s, key_array* a);     // 0x417e50

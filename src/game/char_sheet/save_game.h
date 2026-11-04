@@ -17,13 +17,8 @@
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 
-struct log_stream {
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-    virtual void s8(); virtual void s9();
-    virtual void w_cstr(const char* s);                 // +0x28
-};
-#define LOG(s) ((log_stream*)&orig::g_log)->w_cstr(s)          // 0x5a9f60 (virtual call through the object's vptr)
+#include "../../rgl/stream.h"
+#define LOG(s) ((stream_base&)g_log).w_cstr(s)                 // 0x5a9f60 (virtual call through a stream_base reference)
 
 bool print_and_remove(const char* path);                // 0x539023
 int  rename_file(char* from, const char* to);           // 0x538ff5

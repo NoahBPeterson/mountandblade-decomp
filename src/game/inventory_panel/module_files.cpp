@@ -181,14 +181,6 @@ extern PresentationTable g_presentations;            // 0xa75f2c
 extern ScriptTable g_scripts;                        // 0xa75eb0
 extern MeshTable g_meshes;                           // 0x8ed4f58
 
-// logging sink (0x5a9f60): w_cstr is vtable slot 10 (+0x28).
-struct LogSink {
-    virtual void l0(); virtual void l1(); virtual void l2(); virtual void l3(); virtual void l4();
-    virtual void l5(); virtual void l6(); virtual void l7(); virtual void l8(); virtual void l9();
-    virtual void w_cstr(const char* s);              // slot 10 -> vtable +0x28
-};
-extern LogSink g_log;                                // 0x5a9f60
-
 // ---------------------------------------------------------------- module state
 
 
@@ -229,7 +221,7 @@ void load_module_files()
     tstring str1;                // +0x14
     tstring str2;                // +0x24
     int version;                 // +0x0c
-    LogSink& log = g_log;        // reached through a reference: the log calls stay virtual
+    stream_base& log = g_log;        // reached through a reference: the log calls stay virtual
 
     // sounds.txt
     tstream3 s_sounds;

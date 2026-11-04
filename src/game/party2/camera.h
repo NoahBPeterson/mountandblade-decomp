@@ -19,10 +19,7 @@ extern int g_lineno;                                // 0x5e2598  script line num
 // src/game/script/script_interpreter.cpp's definition, as for check_party (0x49d160).
 int __fastcall size(void* p);             // 0x40f010 (count = (last-first)>>2)
 
-// ---- text log stream (views of the canonical stream_base / text_stream of src/rgl/stream.h, which cannot be included with match/include/rgl.h) ----
-// text log stream at 0x5a9f60 (see s00418a70): slot 10 (+0x28) is w_cstr
-#include "../log_stream.h"
-extern LogStream g_log;                        // 0x5a9f60
+#include "../../rgl/stream.h"                // g_log (log_stream, 0x5a9f60)
 
 // keyboard state: g_keyboard.down (held) and g_keyboard.prev (the previous frame's snapshot)
 

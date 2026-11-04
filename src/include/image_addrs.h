@@ -24,7 +24,6 @@ struct options_record;
 struct ptype;
 struct renderer;
 struct resmgr;
-struct text_stream;
 
 namespace orig {
 extern const float g_one;                  // 0x549cdc
@@ -85,7 +84,6 @@ extern const float k_0_00105f;             // 0x59c268
 extern unsigned __int64 g_bit[];                             // 0x5a8e68
 extern const char str_m[];                             // 0x5a9c3c
 extern const char str_mount_and_blade[];               // 0x5a9c54
-extern text_stream g_log;                  // 0x5a9f60
 
 
 extern options_record g_options;           // 0x5aa008

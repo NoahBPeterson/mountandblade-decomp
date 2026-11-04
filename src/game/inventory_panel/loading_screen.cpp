@@ -4,7 +4,6 @@
 #include "../config/config_block.h"
 
 #include "../tstring.h"
-#include "../music_player.h"   // music_player (g_music 0xa73a10), MusicTrack
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -22,11 +21,30 @@ struct Src {
     virtual void out_vec(float* p);     // +0x54
 };
 
+// one 0x20 byte record of the module table
+struct Rec {
+    int f0;                             // +0
+    int f4;                             // +4
+    int f8;                             // +8
+    int fc;                             // +0xc
+    float f10;                          // +0x10
+    float f14;                          // +0x14
+    float f18;                          // +0x18
+    float f1c;                          // +0x1c
+    __declspec(noinline) void read(Src* src);   // 0x50f840
+};
 
+struct MusicTable {
+    char pad0[4];
+    int count;                          // +4
+    Rec rec[0x100];                     // +8
+    int idx[0x100];                     // +0x2008
+    void build(Src* src);               // 0x50f7e0
+};
 
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
-#include "../../rgl/mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
+#include "../rgl_mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../game_globals.h"
 using rgl::vector4;
@@ -37,27 +55,27 @@ struct resmgr {                                       // rgl/core/resmgr.h (the 
     int load_all(int check_exists, rgl::string* root);   // 0x41c540
 };
 extern resmgr g_res;                    // 0x5d6fa0
-// rgl::mesh::build_panel is declared with float* arguments by rgl/mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
+// rgl::mesh::build_panel is declared with float* arguments by rgl_mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
 struct PanelMesh {
     void build_panel(const float* a, const float* b, const float* c, const float* d, int* color);   // 0x4de3e0 (game/cls_map)
 };
 
 // ---------------------------------------------------------------- 0x50f7e0
 // @ 0x50f7e0
-void music_player::build(Src* src)
+void MusicTable::build(Src* src)
 {
-    src->out_int(&track_count);
-    if (track_count > 0x100)
-        track_count = 0x100;
-    for (int i = 0; i < track_count; i++) {
-        tracks[i].read(src);
-        start[i] = 0;
+    src->out_int(&count);
+    if (count > 0x100)
+        count = 0x100;
+    for (int i = 0; i < count; i++) {
+        rec[i].read(src);
+        idx[i] = 0;
     }
 }
 
 // ---------------------------------------------------------------- 0x50f840
 // @ 0x50f840
-void MusicTrack::read(Src* src)
+void Rec::read(Src* src)
 {
     src->out_vec(&f10);
     src->out_int(&f0);
@@ -229,29 +247,7 @@ void parse_module_info();                            // 0x4c05b0
 void load_data_files();                                    // 0x4d0c20 (options_panel/module_load.cpp)
 void load_module_files();                                    // 0x50d5e0 (inventory_panel/module_files.cpp)
 
-// message logger (0x5a9f60): the text sink is the virtual `operator<<(const char*)` at +0x28.
-struct logger {
-    virtual void v00();                              // +0x00
-    virtual void v04();                              // +0x04
-    virtual void v08();                              // +0x08
-    virtual void v0c();                              // +0x0c
-    virtual void v10();                              // +0x10
-    virtual void v14();                              // +0x14
-    virtual void v18();                              // +0x18
-    virtual void v1c();                              // +0x1c
-    virtual void v20();                              // +0x20
-    virtual void v24();                              // +0x24
-    // cl 13.10 lays an overload set out in *reverse* declaration order, occupying the slots of the
-    // first-declared member: so the string sink lands back on slot 10 (+0x28) as in the original.
-    virtual logger& operator<<(float v);             // +0x30
-    virtual logger& operator<<(int v);               // +0x2c
-    virtual logger& operator<<(const char* s);       // +0x28
-};
-extern logger g_log;                              // 0x5a9f60
-
-// the text stream used to read music.txt (vtable 0x54ac88, 0x38 bytes, `failed` at +0x34): rgl/stream.h's tstream3, whose constructor and
-// destructor (0x4172d0, 0x417310) are called out of line here
-#include "../../rgl/stream.h"
+#include "../../rgl/stream.h"                   // g_log (log_stream), tstream3 (the music.txt reader)
 
 struct Table2;                                       // built by MusicTable::build below (0x50f7e0)
 
@@ -288,7 +284,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         FILE* f = fopen(path.c_str(), "r");
         if (f) {
             g_module_info.load(f);
-            f44 = (int)((char*)g_module_info.count + 5);   // the table's count (g_module_info.count)
+            f44 = (int)((char*)g_module_info.count + 5);   // 0xa44238 = g_module_info.count
             fclose(f);
         } else {
             mb_error("Unable to find module info file");
@@ -303,13 +299,13 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 3) {
         if (!g_cfg.disable_music && !g_cfg.disable_sound) {
-            g_log << "Loading Music...\n";
+            ((stream_base&)g_log).w_cstr("Loading Music...\n");
             tstream3 ts;
             {
                 tstring name(g_module_path);
                 { tstring m("music.txt"); name.append(m); }
                 if (ts.open_read_text(name.c_str())) {
-                    g_music.build((Src*)&ts);
+                    ((MusicTable*)&g_music_situation)->build((Src*)&ts);
                     ts.failed = 1;
                 } else {
                     mb_error("Unable to find module music file");
@@ -329,9 +325,9 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         { tstring key("ui_loading_textures"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 7) {
-        g_log << "Loading Textures...\n";
+        ((stream_base&)g_log).w_cstr("Loading Textures...\n");
         g_res.load_all(g_module_settings.scan_module_textures, (rgl::string*)&g_module_path);
-        g_log << "Finished Loading Textures...\n";
+        ((stream_base&)g_log).w_cstr("Finished Loading Textures...\n");
         { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else {

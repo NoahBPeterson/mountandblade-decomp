@@ -51,12 +51,7 @@ using rgl::mesh;
 extern char  g_error_flag;          // 0x5d7070 (mb_error 0x42cc80)
 extern int   g_gui_counter;         // 0x5d7074 (bump_counter 0x42cb70)
 
-// Text log stream (global at 0x5a9f60): a file writer whose flush (slot 26) is 0x42cc10.
-struct log_stream : file_writer_base {
-    STREAM_SLOTS
-    virtual int flush();                        // 0x42cc10
-};
-extern log_stream g_log;            // 0x5a9f60
+// g_log (0x5a9f60) is log_stream, src/rgl/stream.h.
 
 void bump_counter();                            // 0x42cb70
 void mb_warning(const char* fmt, ...);          // 0x42cb80  vsnprintf + MessageBoxA "RGL WARNING"

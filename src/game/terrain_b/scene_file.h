@@ -13,14 +13,6 @@ struct RecVector : std::vector<PlacedObj> {
 };
 
 #include "../../include/logger.h"   // Logger (shared with rgl/scene/render_scene.cpp)
-struct LogHub {
-    virtual void h0(); virtual void h1(); virtual void h2(); virtual void h3();
-    virtual void h4(); virtual void h5(); virtual void h6(); virtual void h7();
-    virtual void h8(); virtual void h9();
-    virtual Logger* get(const char* msg);       // +0x28
-};
-extern LogHub g_log;                            // 0x5a9f60
-
 // The scene record (0x494 bytes, table at GameData::levels / game+0x13a50; vtable 0x590904, dtor 0x431e10): the scenes.txt fields
 // (mission5/game_2.cpp read_file 0x524d60, ctor 0x5248e0), the .sco file's prop records at +0x104 with the two embedded streams
 // at +0x414 / +0x444 and a loaded flag at +0x78 (terrain_b/mission.cpp load 0x479000). ONE definition for src/game: terrain_b

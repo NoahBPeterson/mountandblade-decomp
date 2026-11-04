@@ -58,26 +58,11 @@ bool mb_file_exists(const char* path);                              // 0x415120
 // the character file is read into the shared ini table (0x2c-byte entries: key +0, value +0x1c; ctor 0x4c1be0, load 0x4bd630, dtor 0x4be920)
 #include "../ini_file.h"
 
-// the export file object: the text log's classes. 0x595618 is text_stream (vtable 0x54a7d0 level: text_stream2's slots) with the log file's
-// flush (slot 26, 0x42cc10) and a destructor that closes the file; 0x595990 (outfile) is the same with the read slots
+// the export file object: the text log's classes. 0x595618 is log_stream (src/rgl/stream.h, g_log's class); 0x595990 (outfile) is the same with the read slots
 // returning *this. Slot 10 (+0x28) writes a text line (0x4d86d0).
 #include "../../rgl/stream.h"
-struct outfile_b : text_stream {
-    outfile_b() {}
-    virtual int flush();                                            // 0x42cc10
-    void shut()
-    {
-        if (is_open) {
-            if (flush() == 0)
-                fclose(fp);
-            failed = 1;
-            is_open = 0;
-        }
-    }
-    ~outfile_b() { shut(); }
-};
 // 0x595990 (outfile): the log stream's table, 27 slots like the others
-struct outfile : outfile_b {
+struct outfile : log_stream {
     outfile(const char* p) { ((tstring&)name).assign(p); }
     virtual stream_base& r_float(float* v);                         // 0x415870
     virtual stream_base& r_bool(char* v);                           // 0x415870

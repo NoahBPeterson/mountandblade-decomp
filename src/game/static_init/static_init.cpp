@@ -63,7 +63,7 @@ struct SoundMgr;
 extern SoundMgr g_sound_mgr;   // 0x5aa128 the sound player (defined in agent_fx_sound.cpp; no constructor, only the destructor registered below)
 extern void* g_vt_54a7d0[]; // 0x54a7d0 the debug text log's vtable
 extern void* g_vt_595990[]; // 0x595990 outfile's vtable
-extern void* g_vt_595618[]; // 0x595618 outfile_b's vtable (its base)
+extern void* g_vt_595618[]; // 0x595618 log_stream's vtable (its base)
 extern FILE* g_5a9f90;      // 0x5a9f90 the log's FILE
 
 // ---- callees --------------------------------------------------------------------------------------------------

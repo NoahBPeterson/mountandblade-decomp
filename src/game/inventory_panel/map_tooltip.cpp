@@ -20,7 +20,6 @@ struct gui_manager {                                    // game/strat/gui_manage
 };
 extern gui_manager g_gui;                               // 0x5d7080
 
-#include "../log_stream.h"                       // LogStream: the engine text log at 0x5a9f60 (slot 10 = w_cstr)
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 struct FlagBlock { void apply(void* p); };              // 0x513710 (thiscall on 0x5e291c, ret 4)
 
