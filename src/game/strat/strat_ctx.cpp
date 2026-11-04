@@ -84,14 +84,14 @@ void rgl::strategic_entity::shadow_tick()
         f.build_planes();
         f28c->fr = f;
         f28c->target = p288->tex[0];
-        if (fx) fx->draw(f28c, &local, &f144);
+        if (fx) fx->render(f28c, &local, &f144);
         rgl::entity::render(f28c, &ri);
         if (f298 >= 0) {
             rgl::entity* o = owner->find_entity(f298);
             if (o != 0 && o->type_id() == 9) {
                 rgl::strategic_entity* e = static_cast<rgl::strategic_entity*>(o);
                 if (e->fx != 0)
-                    e->fx->draw(f28c, &e->local, &f144);
+                    e->fx->render(f28c, &e->local, &f144);
             }
         }
     }

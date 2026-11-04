@@ -2470,12 +2470,12 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
 // ---- Mission::spawn_prop: instantiate scene-prop record props[*idx] as a world entity (meshes, collision shape, 3D sounds) ----
 // views of tables of other objects (offsets read here): g_ptypes entries 0x48 bytes at +0x1c, count at +0x18; g_propkinds records
 // flags +0x10, meshes +0x40, shape +0x50, sounds +0x6c; ItemKind sounds +0x228
-struct Rec20Entry { tstring name; char pad10[0x20 - 0x10]; res_shape* shape; char pad24[0x48 - 0x24]; };   // +0x20 the body resource
+struct Rec20Entry { tstring name; char pad10[0x20 - 0x10]; body_part* shape; char pad24[0x48 - 0x24]; };   // +0x20 the body resource
 struct Rec20V { char pad0[0x18]; int count; Rec20Entry* entries; };
 static inline Rec20V& r20(int i) { return *(Rec20V*)&g_ptypes[i]; }
 static inline unsigned r78_flags(Rec78* r) { return *(unsigned*)((char*)r + 0x10); }
 static inline std::vector<rgl::mesh*>& r78_meshes(Rec78* r) { return *(std::vector<rgl::mesh*>*)((char*)r + 0x40); }
-static inline res_shape* r78_shape(Rec78* r) { return *(res_shape**)((char*)r + 0x50); }
+static inline body_part* r78_shape(Rec78* r) { return *(body_part**)((char*)r + 0x50); }
 static inline SoundSet& rsnd(Rec78* r) { return *(SoundSet*)((char*)r + 0x6c); }
 static inline SoundSet& isnd(ItemKind* k) { return *(SoundSet*)((char*)k + 0x228); }
 
@@ -2497,7 +2497,7 @@ void Mission::spawn_prop(int* idx, int* id)
     PlacedObj* r = (PlacedObj*)&props[*idx];
     r->m18 = r->m98;
     MeshVec meshes;
-    res_shape* shape_res = 0;
+    body_part* shape_res = 0;
     tstring name;
     tstring s2("0");
     int tbl = -1;
@@ -2521,7 +2521,7 @@ void Mission::spawn_prop(int* idx, int* id)
         int ti = find_in_table20(&r->name);
         r->value = r->value % r20(ti).count;
         name = r20(ti).entries[r->value].name;
-        res_shape* rs = r20(ti).entries[r->value].shape;
+        body_part* rs = r20(ti).entries[r->value].shape;
         if (rs)
             shape_res = rs;
     } else if (t == 7) {
@@ -2561,7 +2561,7 @@ after:
             meshes = *(const std::vector<rgl::mesh*>*)&found;
         }
     if (s2.differs("0") && s2.len != 0)
-        shape_res = (res_shape*)g_resmgr.get_object60(s2);
+        shape_res = (body_part*)g_resmgr.get_object60(s2);
 
     if (r->kind == 7) {
         r->id = find_item(&r->name);
@@ -2570,7 +2570,7 @@ after:
         for (unsigned i = 0; first != 0 && i < (unsigned)(meshes._Mylast - first); i++)
             e->add_extra(first[i]->clone());
         if (shape_res)
-            e->shape = ((shape_resource*)shape_res)->clone_shape();
+            e->shape = shape_res->clone_shape();
         e->local = r->m98;
         e->type = 0xc;
         e->id = *idx;
@@ -2605,8 +2605,8 @@ after:
         if (shape_res) {
             if (r->kind == 3 || r->kind == 5 ||
                 (r->kind == 0 && tbl >= 0 && ((r78_flags(&g_propkinds[tbl]) & 0xff) == 5 || (r78_flags(&g_propkinds[tbl]) & 0xff) == 10)))
-                e->shape = ((body_res*)shape_res)->copy_shape();
-            shape_base* sh = ((shape_resource*)shape_res)->clone_shape();
+                e->shape = shape_res->copy_shape();
+            shape_base* sh = shape_res->clone_shape();
             int v = 8;
             if (r->kind == 0 && tbl >= 0) {
                 unsigned fl = r78_flags(&g_propkinds[tbl]);

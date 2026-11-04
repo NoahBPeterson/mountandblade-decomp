@@ -1,6 +1,6 @@
 // shape_load.cpp (0x4285e0..0x428820): the shape resource's deep copy by shape type, and the load slots of the
 // strategic and skeleton entities. Migrated from slice s00428240 (0x4285e0, 0x4286d0, 0x4286e0).
-// Boundary: start 0x4285e0 (entity::load 0x4284e0 calls shape_resource::clone_shape forward: high); end 0x428820
+// Boundary: start 0x4285e0 (entity::load 0x4284e0 calls body_part::clone_shape forward: high); end 0x428820
 // (skeleton_entity::load calls the FxDef constructor 0x428820 and FxDef::init 0x4288c0 forward: high).
 #include <vector>
 #include <new>
@@ -30,7 +30,7 @@
 using namespace rgl;
 
 // @ 0x4285e0
-shape_base* shape_resource::clone_shape()
+shape_base* body_part::clone_shape()
 {
     shape_base* r;
     if (shape->shape_type() == 0) {

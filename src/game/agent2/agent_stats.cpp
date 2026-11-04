@@ -652,7 +652,7 @@ E1c8* __cdecl uninit_copy1c8(E1c8* f, E1c8* l, E1c8* d, allocE1c8& al, ptr_tag t
 // ---- level and navigation-mesh queries -----------------------------------------------------------------------------------------------
 // clone a body's shape (dispatch on shape_type)
 // @ 0x439100
-shape_base* body_res::copy_shape()
+shape_base* body_part::copy_shape()
 {
     shape_base* r;                                      // (uninitialised when the type is unknown)
     if (shape->shape_type() == 0) {

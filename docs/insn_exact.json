@@ -874,7 +874,7 @@
   },
   "004285e0": {
    "verdict": "DIFF",
-   "symbol": "?clone_shape@shape_resource@@QAEPAUshape_base@@XZ",
+   "symbol": "?clone_shape@body_part@@QAEPAUshape_base@@XZ",
    "insns": 101,
    "ours": 100,
    "unverified": 0,

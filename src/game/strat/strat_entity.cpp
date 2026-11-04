@@ -30,7 +30,7 @@ void rgl::strategic_entity::render(rgl::scene* sc, rgl::render_info* out)
 {
     if (f140) {
         if (fx)
-            fx->draw(sc, &local, &f144);
+            fx->render(sc, &local, &f144);
         rgl::entity::render(sc, out);
         if ((sc->mask & 1) && (mode & 3) && g_options.i28) {
             Light* l = owner->first_dir_light();

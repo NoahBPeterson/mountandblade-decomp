@@ -134,6 +134,8 @@ struct body_part : named_object {
     // inline body; deleting destructor 0x4177b0
     virtual ~body_part() { delete shape; }
     virtual int type();                        // 0x4171f0
+    shape_base* clone_shape();                 // 0x4285e0 (rgl/scene/shape_load.cpp: a copy of the shape by type; an entity loads its shape through it)
+    shape_base* copy_shape();                  // 0x439100 (game/agent2/agent_stats.cpp: the same dispatch, the game's own copy)
 };
 
 // ---- key arrays ------------------------------------------------------------------------------------------

@@ -775,8 +775,8 @@ void ObjectList::read(stream_base* s)
         if (buf.equals("0")) {
             entries[i].shape = 0;
         } else {
-            entries[i].shape = (mesh*)g_resmgr.get_object60(buf);
-            entries[i].body = body_copy_shape(entries[i].shape);
+            entries[i].shape = (body_part*)g_resmgr.get_object60(buf);
+            entries[i].body = entries[i].shape->copy_shape();
         }
     }
 }
@@ -832,11 +832,11 @@ void MissionObj::read(stream_base* s)
     }
     s->r_tstr(&t1);
     if (t1.len > 1) {
-        shape = (mesh*)g_resmgr.get_object60(t1);
-        body = body_copy_shape(shape);
+        shape = (body_part*)g_resmgr.get_object60(t1);
+        body = shape->copy_shape();
         vector4 b;
-        vmax(&mx, &mx, body->get_bounds_max(&b));
-        vmin(&mn, &mn, body->get_bounds_min(&b));
+        vmax(&mx, &mx, body->get_max(&b));
+        vmin(&mn, &mn, body->get_min(&b));
         v58 = vector4((mn.x + mx.x) * HALF, (mn.y + mx.y) * HALF, (mn.z + mx.z) * HALF);   // w: the temporary's unset lane
         radius = center_dist(mx, v58);
     }

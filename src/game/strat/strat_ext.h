@@ -45,7 +45,7 @@ using rgl::scene;
 
 
 struct Psys { };                                         // (update 0x414960 is rgl::psys::update below)
-struct FxDef { void draw(scene* sc, const matrix* m, const float* p); };   // 0x428ff0 (provisional)
+#include "../../include/fx.h"                          // FxDef (render 0x428ff0)
 
 // ---- the collision capsule built on the stack by update_ground_cache (vtable 0x54a540, size 0x64): src/include/shape.h.
 // Its base constructor is the out-of-line 0x407ff0 here (capsule(capsule::outline_init())).

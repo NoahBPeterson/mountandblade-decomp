@@ -7,12 +7,12 @@
 #define GAME_PTYPE_H
 #include "./tstring.h"
 
-struct res_shape;
+struct body_part;
 struct AnimBox {                                // 0x48 (one frame / element of a type)
     char pad0[0x14];
     void** meshes;                              // +0x14 the frame's mesh list (char_sheet dust.cpp 0x4f3e10: dmesh**)
     char pad18[0x20 - 0x18];
-    res_shape* res;                             // +0x20 (terrain_b 0x479da0)
+    body_part* res;                             // +0x20 (terrain_b 0x479da0)
     char pad24[4];
     float mn[3];                                // +0x28
     float pad34;

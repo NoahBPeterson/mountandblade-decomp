@@ -27,8 +27,6 @@ struct entity;
 
 }
 struct shape_base;
-struct shape_resource { shape_base* clone_shape(); };    // 0x4285e0 (the body resource of a prop: res_shape.h's res_shape)
-struct body_res { shape_base* copy_shape(); };           // 0x439100 (agent2/agent_stats.cpp)
 struct shape_base;
 
 struct StratEnt;
@@ -140,8 +138,8 @@ struct MeshVec : std::vector<rgl::mesh*> {
     __forceinline void push_back(rgl::mesh* const& x);                      // 0x4119d0 (std::vector<rgl::scene*>::push_back; defined in the .cpp)
 };
 
-// the body resource of a prop (0x44c210): src/game/res_shape.h (shared with terrain_b)
-#include "../res_shape.h"
+// the body resource of a prop (0x44c210) is rgl's body_part (clone_shape 0x4285e0, copy_shape 0x439100)
+#include "../../rgl/resource.h"
 
 // a list of sound events (count + array of 0x30-byte records): ItemKind +0x228, Rec78 +0x6c (0x44c210)
 struct SoundSet {

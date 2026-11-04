@@ -3,7 +3,7 @@
 // s00427900 (0x427d80..0x428220), s00428240 (0x428240, 0x428440, 0x4284e0).
 // Boundary: start 0x427d80 is the TU map's (class change collision_entity | skeleton_entity, low; the previous
 // functions are the rigid-body base's and belong to the physics objects); end 0x4285e0 (entity::load calls
-// shape_resource::clone_shape 0x4285e0 forward: high).
+// body_part::clone_shape 0x4285e0 forward: high).
 #include <vector>
 #include <new>
 #include "../rgl_string.h"
@@ -165,7 +165,7 @@ void entity::load(stream_base* s)
     string name;
     s->r_tstr(&name);
     if (!(name.equals("none")))
-        shape = ((shape_resource*)g_resmgr.get_object60(name))->clone_shape();
+        shape = ((body_part*)g_resmgr.get_object60(name))->clone_shape();
     r_matrix(*s, &local);
     int n;
     s->r_int(&n);

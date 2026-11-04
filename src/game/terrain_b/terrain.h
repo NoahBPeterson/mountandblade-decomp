@@ -15,7 +15,7 @@ struct DustEntry {                              // 0xa0 bytes (0x47a460)
     float x, y, z;
     char pad0c[0xa0 - 0x0c];
 };
-struct res_shape;
+struct body_part;
 struct SpawnEntry {                             // 0xa0 bytes: one prop spawn (0x479da0)
     int type;                                   // +0x00 index into g_ptypes
     char pad4[0x10];

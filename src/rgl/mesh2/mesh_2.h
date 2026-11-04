@@ -229,18 +229,7 @@ void __fastcall fix_skeletons(std::vector<RegSkeleton>* list);               // 
 // 0x4cdfd0..0x4ce680: the scene object tables
 // ============================================================================================================
 // (`mesh` is the opaque loaded-mesh class; gui_manager.h declares a sized stand-in)
-struct shape_res {                                              // the body shape 0x439100 returns
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
-    virtual void v4(); virtual void v5(); virtual void v6(); virtual void v7();
-    virtual void v8(); virtual void v9();
-    virtual vector4* get_bounds_min(vector4* out);              // 10 (+0x28)
-    virtual vector4* get_bounds_max(vector4* out);              // 11 (+0x2c)
-};
-struct shape_base;
-struct body_res {
-    shape_base* copy_shape();   // 0x439100 (game/agent2/agent_stats.h; thiscall: mesh -> body shape)
-};
-inline shape_res* body_copy_shape(mesh* m) { return (shape_res*)((body_res*)m)->copy_shape(); }
+#include "../resource.h"                                    // body_part (the body resource: shape at +0x18, copy_shape 0x439100), shape_base
 inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { node->calc_bounds(mn, mx); }   // 0x438d80
 void vmin(vector4* r, const vector4* a, const vector4* b);  // 0x40af80
 void vmax(vector4* r, const vector4* a, const vector4* b);  // 0x40b080
@@ -256,8 +245,8 @@ struct game_vec {                                               // the 12-byte r
 struct shape_entry {                                            // 0x48 bytes
     tstring name;                                               // +0x00
     mesh_vector nodes;                                          // +0x10
-    mesh* shape;                                                // +0x20 (0 when the name is "0")
-    shape_res* body;                                            // +0x24 (body_copy_shape(shape))
+    body_part* shape;                                           // +0x20 (0 when the name is "0")
+    shape_base* body;                                           // +0x24 (shape->copy_shape())
     vector4 mn;                                                 // +0x28 (1e7f, merged with 0x438d80 bounds)
     vector4 mx;                                                 // +0x38 (-1e7f, merged with 0x438d80 bounds)
     shape_entry() : shape(0), body(0) {}
@@ -283,8 +272,8 @@ struct MissionObj {
     int f38;                                                    // +0x38
     int f3c;                                                    // +0x3c
     mesh_vector nodes_;                                         // +0x40 (mesh list; begin at +0x44)
-    mesh* shape;                                                // +0x50
-    shape_res* body;                                            // +0x54
+    body_part* shape;                                           // +0x50
+    shape_base* body;                                           // +0x54
     vector4 v58;                                                // +0x58 (0,0,0; centre in read())
     float radius;                                               // +0x68 (0.1f)
     game_vec v70;                                               // +0x6c (12 bytes)

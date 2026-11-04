@@ -493,7 +493,7 @@ void Terrain::spawn_bodies(SpawnSet* r)
         ptype* ty = &g_ptypes[e->type];
         int c = e->counter % ty->nframes;
         e->counter = c;
-        res_shape* rs = ty->boxes[c].res;
+        body_part* rs = ty->boxes[c].res;
         if (rs) {
             shape_base* o = rs->clone_shape();
             o->transform(&e->m);
@@ -528,21 +528,21 @@ void Mission::rebuild_nav(int which, int)
     Level494* sl = g_game->levels + which;
     Level494* cs = g_game->levels + f5df4;
     NavData* core_ = 0;
-    res_shape* r = 0;
+    body_part* r = 0;
     vector4 hi, lo;
     if (sl->flags & 0x100) {
         lo = vector4(terrain.min_x - 1.0f, terrain.min_y - 1.0f, 0.0f);
         hi = vector4(terrain.max_x + 1.0f, terrain.max_y + 1.0f, 0.0f);
     } else {
         core_ = (NavData*)new NavCore;   // 0x478150 (NavData() is the same constructor, ICF-folded)
-        r = (res_shape*)g_resmgr.get_object60(cs->name44);
+        r = (body_part*)g_resmgr.get_object60(cs->name44);
         if (r == 0) {
             tstring* nm = &cs->name44;
             mb_error("Unable to find body %s", nm->c_str());
         }
-        r->sh->get_max(&hi);
+        r->shape->get_max(&hi);
         hi = vector4(hi.x + 1.0f, hi.y + 1.0f, 0.0f);
-        r->sh->get_min(&lo);
+        r->shape->get_min(&lo);
         lo = vector4(lo.x - 1.0f, lo.y - 1.0f, 0.0f);
     }
     int lod1 = LOG2UP((hi.x - lo.x) * (1.0f / 3.0f));

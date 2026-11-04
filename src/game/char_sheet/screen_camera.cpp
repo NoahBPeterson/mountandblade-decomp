@@ -154,7 +154,7 @@ void CampaignScreen::camera_update(float dt)
         }
     }
     unsigned fog = pack_color((const vector4*)g_game->fog_color);
-    ((envelope*)g_script.level)->set_fade(&fogdist, (const int*)&fog);
+    g_script.level->set_fade(&fogdist, (const int*)&fog);   // 0x4624c0
 
     // --- frustum planes, the frame into this+0x238, then the widget's label matrix and the scene ---
     memcpy((char*)this + 0x238, &frame, 0x40);

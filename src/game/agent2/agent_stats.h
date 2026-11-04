@@ -15,12 +15,7 @@ unsigned __stdcall hash_string(const tstring* s);               // 0x433bb0
 #include "../../include/shape.h"
 bool in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0 (cdecl)
 
-// a body resource: the shape at +0x18 is cloned by type (0x439100)
-struct body_res {
-    char pad0[0x18];
-    shape_base* shape;                                  // +0x18
-    shape_base* copy_shape();                           // 0x439100
-};
+#include "../../rgl/resource.h"                          // body_part: clone_shape 0x4285e0 / copy_shape 0x439100
 
 // ---- physics set (src/game/agent/phys_set.h has the full class): the two members in this object -----------------
 struct NewtonBody; struct NewtonWorld; struct NewtonCollision; struct NewtonRagDollBone;

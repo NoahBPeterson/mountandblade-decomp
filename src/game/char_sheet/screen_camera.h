@@ -132,11 +132,6 @@ bool __stdcall ground_height(rgl::world* lv, const float* p, float* out);   // 0
 
 // 0x41e4f0: rgl::frustum::build_planes (src/include/frustum.h), thiscall on the frustum, no arguments
 
-// 0x4624c0: thiscall on the envelope (ecx = g_scene both times), two stack args
-struct envelope {
-    void set_fade(const float* dist, const int* color);   // 0x4624c0
-};
-
 // (scene() 0x429740 and ~scene() 0x41f4e0 are rgl/mesh.h's, the widget base constructor 0x48ae20 is MissionUi's, its destructor 0x487c00 Buffer's: cs_common.h)
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
