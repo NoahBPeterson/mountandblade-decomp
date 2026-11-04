@@ -21,9 +21,9 @@
 
 // Tail (0x10 bytes, dtor 0x42d390) is src/include/rec_dtors.h
 
-struct Rec18 {                                      // 0x18-byte record with a tstring-style dtor
-    char pad[0x18];
-    ~Rec18();                                       // 0x42bc40
+struct Rec18 {                                      // 0x18-byte record: a string and two words
+    tstring name;
+    int f10, f14;
 };
 
 

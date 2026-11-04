@@ -19,6 +19,7 @@
 #include "./d3dsettings.h"
 #include "./d3dapp.h"
 #include "./d3dutil.h"
+#include "../game/tstring.h"          // tstring: the two strings of the record below
 
 //-----------------------------------------------------------------------------
 // Global access to the app (needed for the global WndProc())
@@ -393,15 +394,9 @@ void __stdcall vector_destructor_iterator( void* p, unsigned size, int n, void (
 // `vector deleting destructor' (??_E) of a 0x34-byte game record (two strings and an
 // array pointer); its only caller is 0x4d3731. The record type and the delete[] that
 // instantiates the helper belong to game code; this TU only has to contain the COMDAT.
-struct MBStringRec {                // 0x10 bytes (provisional)
-    int pad0;
-    char* p;
-    int pad8[2];
-    ~MBStringRec();                 // 0x42bc40
-};
 struct MBRecord34 {                 // 0x34 bytes (provisional)
-    MBStringRec a;                  // +0x00
-    MBStringRec b;                  // +0x10
+    tstring a;                       // +0x00
+    tstring b;                       // +0x10
     int gap[4];                     // +0x20
     char* arr;                      // +0x30
     ~MBRecord34() { if (arr) delete[] arr; }
