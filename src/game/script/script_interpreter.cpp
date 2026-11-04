@@ -242,7 +242,7 @@ __declspec(noinline) char __fastcall check_mesh(const int& value)
     char buf[512];
     int v = value;
     char r = 1;
-    if (v < 0 || v >= g_mesh_count) {
+    if (v < 0 || v >= g_meshes.count) {
         sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Mesh ID: %d", g_cur_opcode, v);
         report(buf);
         r = 0;
@@ -3783,7 +3783,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::set_background_mesh:
         // only while a game menu is up
         if (check_mesh((int)params[0]) && check_menu(game()->current_menu))
-            game()->background_mesh = g_meshes[(int)params[0]].name;
+            game()->background_mesh = ((MeshRec*)g_meshes.records)[(int)params[0]].name;
         break;
     case op::set_game_menu_tableau_mesh:
         // (set_game_menu_tableau_mesh, <tableau_material_id>, <value>, <position_register_no>)

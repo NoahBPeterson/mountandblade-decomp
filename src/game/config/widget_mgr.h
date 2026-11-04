@@ -78,13 +78,8 @@ struct resmgr_gui : resource_manager {
 // a 2-float vector with a constructor, for temporaries passed by pointer
 // V2 (a vec2 with constructors) is in ../../include/vec.h
 
-// ---- the editor's scene table: 0x48-byte records, placed(i) -> mesh (0x499050, another object) ---------------
-struct scene_tbl {
-    void* recs;                                 // +0
-    rgl::mesh* placed(int index);               // 0x499050
-};
-extern scene_tbl g_meshes;                       // 0x8ed4f58
-extern scene_tbl g_scene;                       // 0x8ed4f58  // old name of g_meshes, removed after the names merge
+// ---- the mesh table g_meshes (0x8ed4f58): 0x48-byte records, placed(i) -> mesh (0x499050, another object) ---------------
+#include "../../include/mesh_table.h"      // MeshTable, g_meshes
 
 // ---- widget classes (vtable addresses in the comments); the button family (UiA, MediumButton, XyzButton, UiA) is in ../ui/ui_widgets.h ----
 // The list container a drop-down opens (NodeA, vtable 0x592848) and the container it derives from are in ../ui/container.h.

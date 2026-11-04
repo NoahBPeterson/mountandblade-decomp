@@ -154,9 +154,7 @@ struct MapLoader {
 #include "../../include/prsnt_table.h"           // PresentationTable, g_presentations (0xa75f2c)
 struct RefRecord;
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
-struct MeshTable { char pad; };                      // 0x8ed4f58
-struct elem48_holder;
-void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s);   // 0x4c3fb0 (MeshTable::load: rgl/mesh2/rec_tables.cpp)
+#include "../../include/mesh_table.h"           // MeshTable, g_meshes (0x8ed4f58)
 struct Block {
     void read(stream_base* s, int version);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; ret 8, the file version is the second argument)
 };
@@ -166,7 +164,6 @@ struct csv_row {
 };
 
 extern TableauTable g_tableaus;                       // 0xa75f40
-extern MeshTable g_meshes;                           // 0x8ed4f58
 
 // ---------------------------------------------------------------- module state
 
@@ -324,7 +321,7 @@ void load_module_files()
     // meshes.txt
     tstream3 s_meshes;
     open_module_file(s_meshes, "meshes.txt");
-    load_elem48_array((elem48_holder*)&g_meshes, 0, (stream_base*)&s_meshes);
+    g_meshes.load((stream_base*)&s_meshes);
     s_meshes.failed = 1;
     log.w_cstr("Loading item kinds...\n");
 

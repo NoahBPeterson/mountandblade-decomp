@@ -10,6 +10,7 @@
 #include "./rec_tables.h"
 #include "../../game/party_screen_class.h"   // PartyScreen (0x4c3160)
 #include "../../game/string_table.h"      // StringTable g_strings (0xa75ea0)
+#include "../../include/mesh_table.h"      // MeshTable g_meshes (0x8ed4f58)
 #include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
@@ -467,30 +468,31 @@ void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al)
 // A tstring at +0 and one at +0x14; 0x4bdf60 fills them from the stream after the records themselves.
 
 // @ 0x4c3f60
-// vector<elem48>::~vector(): destroys the elements back to front through the count stored before the array,
-// frees the block and clears the caller's pointer.
-void __fastcall destroy_elem48_array(elem48** pv)
+// the atexit destructor of g_meshes (the original's stub 0x5483e0 calls this): destroys the elements back to front through
+// the count stored before the array, frees the block and clears the pointer.
+MeshTable g_meshes;                                     // 0x8ed4f58 (.bss; constructed by the compiler: rec_table::rec_table 0x4be520)
+
+MeshTable::~MeshTable()
 {
-    if (*pv != 0) {
-        delete[] *pv;
-        *pv = 0;
+    if (records != 0) {
+        delete[] (elem48*)records;
+        records = 0;
     }
 }
 
 // @ 0x4c3fb0
-// Loader (ret 4) of an object whose array member at +0 holds 0x48-byte entries and whose count sits at +4:
-// reads the count, destroys and rebuilds the array (both tstrings of every element), then initializes each
-// element from the stream.
-void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s)
+// Loader (ret 4) of the mesh table: reads the count, destroys and rebuilds the array (both tstrings of every element), then
+// initializes each element from the stream.
+void MeshTable::load(stream_base* s)
 {
-    s->r_int(&self->count);
-    if (self->arr) {
-        delete[] self->arr;
-        self->arr = 0;
+    s->r_int(&count);
+    if (records) {
+        delete[] (elem48*)records;
+        records = 0;
     }
-    self->arr = new elem48[self->count];
-    for (int i = 0; i < self->count; i++)
-        ((prsnt_record*)&self->arr[i])->save(*s);   // prsnt_record is the 0x48-byte record (tstring +0, tstring +0x14); 0x4bdf60
+    records = new elem48[count];
+    for (int i = 0; i < count; i++)
+        ((prsnt_record*)&((elem48*)records)[i])->save(*s);   // prsnt_record is the 0x48-byte record (tstring +0, tstring +0x14); 0x4bdf60
 }
 
 // ---- the 0x1c034-byte scene file object (last member ends at +0x1c034) -----------------------------

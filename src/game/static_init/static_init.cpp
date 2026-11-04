@@ -52,7 +52,7 @@ extern char g_a739f8[];     // 0xa739f8
 extern char g_a75f40[];     // 0xa75f40 the tableaus
 extern char g_a76628[];     // 0xa76628
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
-extern char g_8ed4f58[];    // 0x8ed4f58 the meshes
+#include "../../include/mesh_table.h"   // MeshTable g_meshes (0x8ed4f58)
 
 extern char g_8ee3c48[];    // 0x8ee3c48 the application
 struct SoundMgr;
@@ -68,18 +68,15 @@ struct tstring11 { TStrRec a[11]; };            // a table of 11 such records, c
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct ini_file { ini_file(); };                    // 0x4c1be0
-struct rec_table { rec_table(); };                  // 0x4be520
 struct GameApp { GameApp(); };                      // 0x4d3ec0
 struct Tail2 { ~Tail2(); };                         // 0x4c4d10
 struct TwoVec { ~TwoVec(); };                       // 0x4da9c0
 struct TriggerEntryVec { void dtor(); };            // 0x4c2200
 struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct BigArray { void destroy(); };                // 0x4eb810
-struct elem48;
 struct Core;
 void __fastcall fn_4c2ea0(void* keys);              // 0x4c2ea0
 void* __fastcall conv_zero_node(void* p);           // 0x4c8c20
-void __fastcall destroy_elem48_array(elem48** p);   // 0x4c3f60
 void __fastcall core_dtor(Core* c);                 // 0x4bed90
 void __fastcall nameholder_dtor(void* p);           // 0x4316b0 (NameHolder::~NameHolder)
 void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (__fastcall* dtor)(void*));   // 0x401830
@@ -104,7 +101,7 @@ void __cdecl static_dtor_548210() {}
 // @ 0x548250
 void __cdecl static_dtor_548250()
 {
-    char* p = g_8ed4f58;
+    char* p = (char*)&g_meshes;                 // the ground types end where the mesh table begins
     for (int n = 0xb; n; n--) {
         p -= 0x20;
         ((TStrRec*)p)->~TStrRec();
@@ -128,8 +125,6 @@ void __cdecl static_dtor_5482b0()
 }
 // @ 0x548340
 void __cdecl static_dtor_548340() { ((TriggerEntryVec*)g_a76628)->dtor(); }
-// @ 0x5483e0
-void __cdecl static_dtor_5483e0() { destroy_elem48_array((elem48**)g_8ed4f58); }
 // @ 0x548410
 void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 // @ 0x548460
@@ -203,8 +198,6 @@ void __cdecl static_init_547fe0()
     new (g_8ed4df8) tstring11;
     atexit(static_dtor_548250);
 }
-// @ 0x548010
-void __cdecl static_init_548010() { new (g_8ed4f58) rec_table; atexit(static_dtor_5483e0); }
 // @ 0x548030
 void __cdecl static_init_548030() { atexit(static_dtor_548510); }
 // @ 0x548110
@@ -220,7 +213,7 @@ init_fn g_static_init_table[] = {
     static_init_547e40,
     static_init_547e90, static_init_547ec0,
     static_init_547f50, static_init_547fa0, static_init_547fb0,
-    static_init_547fe0, static_init_548010, static_init_548030,
+    static_init_547fe0, static_init_548030,
     static_init_548110,
 };
 #pragma data_seg()

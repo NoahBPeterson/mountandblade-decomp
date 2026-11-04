@@ -162,7 +162,7 @@ inline int fbits(float f) { return *(int*)&f; }
 
 // ---- counters and small tables (bounds of the validators) -----------------------------------------------------
 #include "../../include/prsnt_table.h"   // g_presentations (0xa75f2c): .count is the bound of check_presentation 0x49cd50
-extern int g_mesh_count;                // 0x8ed4f5c (check_mesh)
+#include "../../include/mesh_table.h"       // g_meshes (0x8ed4f58): .count is the bound of check_mesh
 extern int g_menu_count;                // 0x5e29b4 (check_menu 0x49ce90)
 // mission templates (0x58-byte records at 0x5e2a00) and their 0x4c-byte entry points
 #include "../mode_rec.h"             // MissionTemplate (the 0x58-byte records at 0x5e2a00) and SpawnRec (its 0x4c-byte entries): the one definition
@@ -631,8 +631,7 @@ __forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
 
 #include "../map_flags.h"   // g_map_flags.f8 = 0x5e2924 (jump_to_menu 0x4ac3a0)
-struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
-extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
+struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };   // a 0x48-byte record of g_meshes.records (set_background_mesh)
 
 
 

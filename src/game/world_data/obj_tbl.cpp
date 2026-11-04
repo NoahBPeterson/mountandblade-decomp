@@ -35,9 +35,9 @@ struct MeshWidgetVt {
 };
 
 // @ 0x499050
-rgl::mesh* scene_tbl::placed(int index)
+rgl::mesh* MeshTable::placed(int index)
 {
-    SceneRec48* recs = (SceneRec48*)this->recs;
+    SceneRec48* recs = (SceneRec48*)records;
     MeshY* m = (MeshY*)((gui_mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&recs[index].name))->clone();
     if (recs[index].flags & 1)
         m->f214 += 0x2000;

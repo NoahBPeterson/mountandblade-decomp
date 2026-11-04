@@ -217,10 +217,6 @@ struct elem48 {
     char pad24[0x24];
     // initialised from the stream by prsnt_record::save (0x4bdf60, config.h): the same 0x48-byte record (two tstrings at +0 / +0x14)
 };
-struct elem48_holder {
-    elem48* arr;     // +0 (array new, count in front)
-    int count;       // +4
-};
 
 
 #include "../../include/dialog_rec.h"      // DialogRec (vdel 0x4609d0: the vector deleting destructor): the shared dialog record

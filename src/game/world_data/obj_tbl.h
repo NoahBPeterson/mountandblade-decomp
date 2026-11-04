@@ -1,4 +1,4 @@
-// obj_tbl.h: the editor's scene-record table (scene_tbl, 0x499050), the tableau table spawners (TableauTbl, tableau.h) and the
+// obj_tbl.h: the editor's scene-record table (MeshTable::placed, 0x499050), the tableau table spawners (TableauTbl, tableau.h) and the
 // mesh-widget factories (WidgetMgrW, widget_mgr_w.h) of translation unit 87 (obj_tbl) of the TU map: resource record -> mesh ->
 // entity helpers. Names provisional; offsets cite the function that proves them.
 #ifndef GAME_WORLD_DATA_OBJ_TBL_H

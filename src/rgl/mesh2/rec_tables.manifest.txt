@@ -24,8 +24,8 @@
 ../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_4@@YAXPADIPBXAAUAlloc4@@Uptr_tag@@@Z  004c3e10  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_2c@@YAPAXPAD00AAUAlloc2c@@@Z  004c3e80  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_4_range@@YAPAXPAD00AAUAlloc4@@@Z  004c3ef0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?destroy_elem48_array@@YIXPAPAUelem48@@@Z  004c3f60  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?load_elem48_array@@YIXPAUelem48_holder@@HPAUstream_base@@@Z  004c3fb0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??1MeshTable@@QAE@XZ  004c3f60  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?load@MeshTable@@QAEXPAUstream_base@@@Z  004c3fb0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??1DialogMgr@@QAE@XZ  004c4090  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?load@music_set@@QAEXPAUstream_base@@HPBUtstring@@@Z  004c4340  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??1StringTable@@QAE@XZ  004c4640  /O2 /MT /Gy /TP
