@@ -270,17 +270,15 @@ void walkb0(recb0* begin, recb0* end, void* arg)
 // operator= inline): its insert (0x4ccef0) stays out of line, as the original keeps it.
 struct R44 { int v[11]; };
 namespace std { template<> vector<R44>::iterator vector<R44>::insert(vector<R44>::iterator _P, const R44& _X); }   // 0x4ccef0
-// block_copier (rgl/mesh2/gui_edit.h): the fill helper 0x4c5010 takes (first, n, src, copier); the original pushes a fifth,
-// unread word (the empty iterator-tag argument of std::_Uninit_fill_n), which the 4-parameter definition cannot express
-struct block_copier;
-void __cdecl uninit_fill_n(void* first, unsigned n, const void* src, block_copier* cop);   // 0x4c5010
+#include "../../rgl/mesh2/gui_edit.h"   // block_copier, uninit_fill_n 0x4c5010 (its fifth argument is the empty iterator tag)
 
 // @ 0x4cefe0
 void vec44::push_back(char* v)
 {
     int n = size();
     if (begin && (unsigned)n < capacity()) {
-        uninit_fill_n(end, 1, v, (block_copier*)(void*)this);
+        ptr_tag tag;
+        uninit_fill_n(end, 1, v, (block_copier*)(void*)this, tag);
         end += 0x2c;
         return;
     }

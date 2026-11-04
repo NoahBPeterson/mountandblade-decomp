@@ -378,6 +378,7 @@ struct MapDialog;
 #include "../../include/ptr_tag.h"      // ptr_tag: std::_Nonscalar_ptr_iterator_tag (empty, passed by value)
 struct tstring_alloc;
 tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag);       // 0x524cd0 (game/mission5/game_2.h)
+void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier* cop, ptr_tag);   // 0x4c5010 (gui_edit.cpp)
 
 struct MapDialog {
     char pad0[0x8];
