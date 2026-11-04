@@ -598,5 +598,35 @@
    "reached through tables": 192944,
    "library data": 55158
   }
+ },
+ "2026-11-03T20:18:49-06:00": {
+  "data_labels": 166,
+  "aliases": 374,
+  "traps": 274,
+  "redirects": 330,
+  "vtable_slots_rewritten": 5,
+  "vptr_stores_moved": 515,
+  "vtbl_externs": 19,
+  "placeholder_virtuals": 2,
+  "forwarding_stubs": 32,
+  "data_definitions": 181,
+  "when": "2026-11-03T20:18:49-06:00",
+  "commit": "a47df21d",
+  "build": "merge_v5",
+  "label": "g_log + cache",
+  "items": {
+   "defined in source": 187,
+   "generated from source": 2058,
+   "borrowed from image": 66,
+   "reached through tables": 620,
+   "library data": 466
+  },
+  "bytes": {
+   "defined in source": 143721980,
+   "generated from source": 309000,
+   "borrowed from image": 15884,
+   "reached through tables": 192944,
+   "library data": 55158
+  }
  }
 }
