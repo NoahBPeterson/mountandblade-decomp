@@ -17,7 +17,8 @@ immediate), or that our resolution map names, starts an item; an item extends to
 pointer tables in the data reach (runs of 4+ pointers: the pages of a pool) starts its own items.
 An address that game code uses but that our resolution map does not name (a field offset into a global, such as
 label+4) is taken as part of the item before it. Sizes are therefore approximate: an item absorbs any padding and
-any unreferenced data up to the next start.
+any unreferenced data up to the next start. An item our source defines is the exception: it is exactly its symbol's real
+size, read from the defining object file; storage past that is classed by its own uses.
 
 Classes, per item:
   defined in source       our source defines a global at this address (a named definition the resolver mapped)
@@ -65,11 +66,33 @@ def game_functions():
     return st["starts"], st["game"]
 
 
+def _object_sizes(rsp):
+    """{(object stem without hash, name): size} of the data symbols the objects of a link (the build's objs.rsp) define: the
+    compiler's own sizes, read from the object files (data_size_audit.coff_symbols: the distance to the next symbol of the
+    section in that object, or to the section's end), not the link map's distance to whatever symbol follows."""
+    import data_size_audit as A
+    out = {}
+    for line in open(rsp, errors="replace"):
+        path = line.strip().strip('"')
+        if path.lower().startswith("z:"):
+            path = path[2:].replace("\\", "/")
+        if not os.path.exists(path):
+            continue
+        stem = re.sub(r"_[0-9a-f]{12}$", "", os.path.basename(path)[:-4])
+        for name, sizes in A.coff_symbols(path).items():
+            out[(stem, name)] = max(sizes)
+    return out
+
+
 def link_map_symbols(map_path):
     """{mangled name: (size, module)} for the data symbols of a link map (tools/relink/build.py --out DIR/mb_standalone.map).
     The module is the object file's stem without its content hash (mesh_start_2dbc0c289283.obj -> mesh_start), i.e. the
-    source module that defines the symbol; the size is the distance to the next symbol of the same segment (None for the
-    last one), so it includes alignment padding but never the next object."""
+    source module that defines the symbol. The size is the symbol's real size: what the defining object file says (see
+    _object_sizes; the build's objs.rsp beside the map names the objects). Only without that file is it the distance to the
+    next symbol of the same segment in the link, which absorbs whatever unnamed storage follows (TiXmlBase::entity, 60 bytes,
+    counted as 2,880); None for the last one then."""
+    rsp = os.path.join(os.path.dirname(os.path.abspath(map_path)), "objs.rsp")
+    real = _object_sizes(rsp) if os.path.exists(rsp) else {}
     row = re.compile(r"\s*(\w{4}):(\w{8})\s+(\S+)\s+[0-9a-f]{8}\s+(?:f\s+)?(?:i\s+)?(\S+)\.obj")
     ents = collections.defaultdict(list)
     for line in open(map_path, errors="replace"):
@@ -80,6 +103,9 @@ def link_map_symbols(map_path):
     for seg, lst in ents.items():
         offs = sorted({o for o, _n, _m in lst})
         for o, n, mod in lst:
+            if (mod, n) in real:
+                out[n] = (max(real[(mod, n)], out.get(n, (0, 0))[0] or 0), mod)
+                continue
             i = bisect.bisect_right(offs, o)
             sz = max(offs[i] - o, out.get(n, (0, 0))[0] or 0) if i < len(offs) else out.get(n, (None, 0))[0]
             out[n] = (sz, mod)
@@ -171,7 +197,7 @@ def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None):
             continue
         items.append([v, nxt, cls])
     if syms:
-        items = _absorb(items, named, syms, section_of)
+        items = _absorb(items, named, syms, section_of, uses)
     return items, uses, named
 
 
@@ -181,9 +207,12 @@ def drop_dead(items):
     return [it for it in items if not any(lo <= it[0] and it[1] <= hi for lo, hi, _why in DEAD_RANGES)]
 
 
-def _absorb(items, named, syms, section_of):
-    """An item our source defines spans its symbol's whole size (the link map's), not just up to the next use: the
-    items that start inside it are part of it (one that sticks out past the end keeps its tail). [start, end, class]."""
+def _absorb(items, named, syms, section_of, uses):
+    """An item our source defines spans its symbol's real size (syms, from the defining object file), not just up to the next
+    use: the items that start inside it are part of it (one that sticks out past the end keeps its tail). One that is
+    larger than the symbol (the span up to the next use also held storage no definition of ours covers: a field the code
+    reaches that no symbol names, the next original object) is cut at the symbol's end and the rest is classed by what
+    uses it: borrowed from image if game code does, library data, else reached through tables. [start, end, class]."""
     out, cover = [], 0
     for s, e, c in items:
         if s < cover:
@@ -195,6 +224,14 @@ def _absorb(items, named, syms, section_of):
             if ext > e - s:
                 e = min(s + ext, section_of(s)[2])
                 cover = max(cover, e)
+            elif 0 < ext < e - s:
+                cut = s + ext
+                out.append([s, cut, c])
+                inner = [a for a in uses if cut <= a < e]
+                owners = set().union(*(uses[a] for a in inner)) if inner else set()
+                out.append([cut, e, "borrowed from image" if "game" in owners else "library data" if owners
+                            else "reached through tables"])
+                continue
         out.append([s, e, c])
     return out
 
