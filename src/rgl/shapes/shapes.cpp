@@ -571,8 +571,8 @@ void capsule_sphere_contact(capsule* a, sphere* b, int max, contact* out, int* c
             normalize_ext(A, B);
             contact c;
             c.normal = A;
-            volatile float zr = A.z * b->radius;                 // the original spills this product through a float slot
-            c.point = vector4(A.x * b->radius + b->center.x, A.y * b->radius + b->center.y, zr + b->center.z);
+            vector4 pr(A.x * b->radius, A.y * b->radius, A.z * b->radius);
+            c.point = vector4(pr.x + b->center.x, pr.y + b->center.y, pr.z + b->center.z);
             c.point.w = B.w;
             c.depth = depth;
             out[n - 1] = c;
@@ -640,11 +640,11 @@ void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* coun
 
     vector4 nn;
     nn = vector4(-n.x, -n.y, -n.z);
-    volatile bool outside = false;
+    bool outside = false;
     bool hit = true;
     vector4 pt;
-    volatile float zr = nn.z * dist;
-    pt = vector4(nn.x * dist + b->center.x, nn.y * dist + b->center.y, zr + b->center.z);
+    vector4 pr(nn.x * dist, nn.y * dist, nn.z * dist);
+    pt = vector4(pr.x + b->center.x, pr.y + b->center.y, pr.z + b->center.z);
     float depth = b->radius - dist;
     int cnt = a->count;
     int i = 0;
@@ -844,7 +844,6 @@ __declspec(noinline) void __cdecl vmax(vector4* out, const vector4* a, const vec
 //    components first and spill z; a bare float expression does not.
 //  - pax..pbz are plain floats: cl keeps the first of each triple in an x87 register across the cross product.
 //  - cross_i / normalize_i are the bodies of rgl::cross(a,b) (0x407dc0) and vector4::normalize() (0x407d60) inlined.
-//  - pp1 is volatile only to keep it out of ebp (the original reloads it from its stack home).
 static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 {
     return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
@@ -866,10 +865,8 @@ void polygon_capsule_contact(face* poly, capsule* cap, int max, contact* out, in
 {
     vector4 v[4];
     v[0] = poly->w[0]; v[1] = poly->w[1]; v[2] = poly->w[2]; v[3] = poly->w[3];
-    const vector4* pp0 = &cap->p0;
-    vector4 p0 = *pp0;
-    const vector4* volatile pp1 = &cap->p1;
-    vector4 p1 = *pp1;
+    vector4 p0 = cap->p0;
+    vector4 p1 = cap->p1;
     vector4 d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
     vector4 t0(p0.x - v[0].x, p0.y - v[0].y, p0.z - v[0].z);
     float s0 = t0.x * poly->normal.x + (t0.y * poly->normal.y + t0.z * poly->normal.z);
@@ -945,34 +942,34 @@ void polygon_capsule_contact(face* poly, capsule* cap, int max, contact* out, in
         if (s0 >= 0.0f && s1 > 0.0f) {
             if (s0 < s1) {
                 vector4 tt(s0 * poly->normal.x, s0 * poly->normal.y, s0 * poly->normal.z);
-                ep = vector4(pp0->x - tt.x, pp0->y - tt.y, pp0->z - tt.z);
+                ep = vector4(cap->p0.x - tt.x, cap->p0.y - tt.y, cap->p0.z - tt.z);
             } else {
-                const vector4* q1 = pp1;
+                const vector4* q1 = &cap->p1;
                 vector4 tt(s1 * poly->normal.x, s1 * poly->normal.y, s1 * poly->normal.z);
                 ep = vector4(q1->x - tt.x, q1->y - tt.y, q1->z - tt.z);
             }
         } else if (s0 < 0.0f && s1 < 0.0f) {
             if (s0 > s1) {
                 vector4 tt(s0 * poly->normal.x, s0 * poly->normal.y, s0 * poly->normal.z);
-                ep = vector4(pp0->x - tt.x, pp0->y - tt.y, pp0->z - tt.z);
+                ep = vector4(cap->p0.x - tt.x, cap->p0.y - tt.y, cap->p0.z - tt.z);
             } else {
-                const vector4* q1 = pp1;
+                const vector4* q1 = &cap->p1;
                 vector4 tt(s1 * poly->normal.x, s1 * poly->normal.y, s1 * poly->normal.z);
                 ep = vector4(q1->x - tt.x, q1->y - tt.y, q1->z - tt.z);
             }
         } else {
-            const vector4* q1 = pp1;
-            vector4 dir(q1->x - pp0->x, q1->y - pp0->y, q1->z - pp0->z);
+            const vector4* q1 = &cap->p1;
+            vector4 dir(q1->x - cap->p0.x, q1->y - cap->p0.y, q1->z - cap->p0.z);
             ((vec4_ext&)dir).normalize();
-            vector4 dv(poly->w[0].x - pp0->x, poly->w[0].y - pp0->y, poly->w[0].z - pp0->z);
+            vector4 dv(poly->w[0].x - cap->p0.x, poly->w[0].y - cap->p0.y, poly->w[0].z - cap->p0.z);
             float k = dir.x * poly->normal.x + (dir.y * poly->normal.y + dir.z * poly->normal.z);
             if (k == 0.0f) {
-                vector4 sm(q1->x + pp0->x, q1->y + pp0->y, q1->z + pp0->z);
+                vector4 sm(q1->x + cap->p0.x, q1->y + cap->p0.y, q1->z + cap->p0.z);
                 ep = vector4(sm.x * 0.5f, sm.y * 0.5f, sm.z * 0.5f);
             } else {
                 k = (dv.x * poly->normal.x + (dv.y * poly->normal.y + dv.z * poly->normal.z)) / k;
                 vector4 st(dir.x * k, dir.y * k, dir.z * k);
-                ep = vector4(st.x + pp0->x, st.y + pp0->y, st.z + pp0->z);
+                ep = vector4(st.x + cap->p0.x, st.y + cap->p0.y, st.z + cap->p0.z);
             }
         }
     }

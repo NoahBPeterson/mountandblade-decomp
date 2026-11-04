@@ -292,9 +292,9 @@ void dynamic_entity::integrate(float t)
 void dynamic_entity::collide()
 {
     grid_shape* found[0x2000];
-    volatile int count;                 // volatile: the original re-reads the count after every on_shape call
+    int count;
     int use3d = 1;
-    ((world_q*)owner)->query_shapes(this, found, (int*)&count, &use3d, 0x8106);
+    ((world_q*)owner)->query_shapes(this, found, &count, &use3d, 0x8106);
     for (int i = 0; i < count; i++)
         on_shape(found[i]);
     std::vector<entity*> others;

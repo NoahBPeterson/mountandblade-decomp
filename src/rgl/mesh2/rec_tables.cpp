@@ -411,7 +411,7 @@ void options_record::load()
 // std::_Uninit_fill_n(first, n, val, alloc) for 0x204-byte elements; the try/catch(...) { destroy; throw; } of the
 // STL is kept (cl without /EH still builds the frame for an explicit try); the elements are trivial so the
 // catch path is a bare rethrow (funclet 0x4c3df7).
-void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al)
+void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al, ptr_tag)
 {
     char* first = dst;
     try {
@@ -424,7 +424,7 @@ void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al)
 
 // @ 0x4c3e10
 // _Uninit_fill_n for 4-byte elements (funclet 0x4c3e74).
-void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al)
+void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al, ptr_tag)
 {
     char* first = dst;
     try {

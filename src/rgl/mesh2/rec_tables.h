@@ -15,6 +15,7 @@
 #include "../../game/tstring.h"
 #include "../rgl_math.h"
 #include "../stream.h"
+#include "../../include/ptr_tag.h"
 #include "../../game/strat/gui_manager.h"     // g_log (log_stream)
 #include "../../game/ini_file.h"               // ini_file (find 0x4bd5a0), g_game_vars
 #include "./mesh2_common.h"
@@ -267,5 +268,5 @@ struct music_set {
 
 void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al); // 0x4c3ef0
 void* copy_uninit_2c(char* first, char* last, char* dst, Alloc2c& al); // 0x4c3e80
-void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al); // 0x4c3e10
+void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al, ptr_tag tag); // 0x4c3e10
 #endif

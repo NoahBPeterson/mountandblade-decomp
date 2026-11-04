@@ -282,7 +282,7 @@ void* __fastcall elem60_vector_delete(elem60* self, void*, unsigned flags)
 // @ 0x4c5010
 // Fills `n` 0x2c-byte records with the value `src` through 0x4c1b20 (the record copy); `cop` is the record
 // that owns the copies. The loop is wrapped in the EH frame that guards the copy.
-void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier* cop)
+void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier* cop, ptr_tag)
 {
     try {
         while (n > 0) {
@@ -1025,21 +1025,23 @@ void MapDialog::clear_objects()
 
 // The helpers below are cdecl and the definitions have no tag parameter; the original pushes its slot (here the fifth argument
 // repeats z), so each call goes to the definition's own declaration through the five-parameter type of the original's call.
-void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al);                  // 0x4c3d90 (rec_tables.cpp)
+void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al, ptr_tag tag);                  // 0x4c3d90 (rec_tables.cpp)
 struct blk204;
 char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* al, ptr_tag tag);    // 0x4c1b60 (game/triggers/trigger_vec.cpp)
 
 // @ 0x4c6eb0
 MapRecord* MapDialog::insert_a(MapRecord* arr, int index, int z)
 {
-    ((void (__cdecl*)(char*, unsigned, const void*, Alloc204&, int))copy_uninit_204)((char*)arr, (unsigned)index, *(const void* volatile*)&z, *(Alloc204*)this, z);
+    ptr_tag tag;
+    copy_uninit_204((char*)arr, (unsigned)index, (const void*)z, *(Alloc204*)this, tag);
     return (MapRecord*)((char*)arr + index * 0x204);
 }
 
 // @ 0x4c6ee0
 int* MapDialog::insert_b(int* arr, int index, int z)
 {
-    ((void (__cdecl*)(char*, unsigned, const void*, Alloc4&, int))copy_uninit_4)((char*)arr, (unsigned)index, *(const void* volatile*)&z, *(Alloc4*)this, z);
+    ptr_tag tag;
+    copy_uninit_4((char*)arr, (unsigned)index, (const void*)z, *(Alloc4*)this, tag);
     return &arr[index];
 }
 
@@ -1608,7 +1610,8 @@ void Terrain::conv_build_scene()
 // @ 0x4c8810
 edit_vert* edit_vec::ufill(edit_vert* dst, int n, const edit_vert* src)
 {
-    ((void (__cdecl*)(void*, size_t, const void*, block_copier*, const void*))uninit_fill_n)(dst, (unsigned)n, *(const void* volatile*)&src, (block_copier*)this, src);
+    ptr_tag tag;
+    uninit_fill_n(dst, (unsigned)n, src, (block_copier*)this, tag);
     return dst + n;
 }
 

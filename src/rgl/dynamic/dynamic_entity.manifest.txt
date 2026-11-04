@@ -7,7 +7,6 @@
 ../src/rgl/dynamic/dynamic_entity.cpp  ?update@dynamic_entity@rgl@@UAEXM@Z  00425730  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?add_torque@dynamic_entity@rgl@@UAEXPBUvector4@2@@Z  004258e0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?add_torque_at@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  00425920  /O2 /MT /Gy /TP
-../src/rgl/dynamic/dynamic_entity.cpp  ?collide@dynamic_entity@rgl@@UAEXXZ  004263d0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?query_shapes@world_q@rgl@@QAEXPAUentity@2@PAPAUgrid_shape@@PAH2I@Z  00426490  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?box_overlap3@@YAHPBUvector4@rgl@@000@Z  00426690  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?box_overlap2@@YAHPBUvector4@rgl@@000@Z  00426700  /O2 /MT /Gy /TP
