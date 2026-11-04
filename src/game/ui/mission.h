@@ -31,14 +31,6 @@ struct CombatRec {
     char pad144[0x16c - 0x144];
 };
 
-// combatant-origin id pairs, indexed by combatant (0x48ac50, 0x48ac90). The slices lumped these two accessors into `Mission`;
-// `this` is an array of {a, b} pairs, not the mission object (whose +0 is the scene pointer).
-struct OriginPairs {
-    struct Pair { int a, b; } slots[1];
-    bool is_down(int i);                 // 0x48ac50
-    bool clicked(int i);            // 0x48ac90
-};
-
 // ---- the view: three 16-int vectors and a render-target factory --------------------------------------------
 struct ViewObj {                            // interface at +0x1b4 (virtual 23 = +0x5c)
     virtual void d0(); virtual void d1(); virtual void d2(); virtual void d3(); virtual void d4();

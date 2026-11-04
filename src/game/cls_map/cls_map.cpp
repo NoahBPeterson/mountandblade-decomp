@@ -2493,7 +2493,7 @@ void Rec1bc::init_screen()
         iv = 0xfff0f0f0;
         vt(tb)->d38(&iv);
         tstring t;
-        ((OptionsMenu*)this)->key_name(i, &t);
+        g_game_keys.key_name(i, &t);
         MissionUi* b = make_hint(quad, t, 0.86f, c, 0.12f, 0.03f);
         key_values[i] = b;
         iv = 0x10;
@@ -2520,13 +2520,13 @@ void Rec1bc::init_screen()
     void* q = (void*)quad;
     g_gui_dirty = 1;
     ADD_ROOT_REF(q);
-    g_game_keys.copy_slots();
+    g_game_keys.backup();
     f1b4 = 0;
     ((KeysPage*)this)->refresh();
 }
 
 // @ 0x4e2cb0
-void OptionsMenu::copy_slots()
+void GameKeys::backup()
 {
     // 37 pairs of dwords at this+0 (the first key word included, as in the original) are copied to this+0x128
     int* p = (int*)this + 1;

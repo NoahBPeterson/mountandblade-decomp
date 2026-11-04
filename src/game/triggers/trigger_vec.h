@@ -37,11 +37,8 @@ float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (
 #include "../inventory_panel/mission_ctx_rec.h"      // MissionCtx (0xa73300): init is the meta mission's (0x4be742)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
-// ---- script-code table (0x4a ints, every second one named: 0x4be7c0, also called as a bare function by rgl/mesh2) ---
-struct code_table {
-    int v[0x4a];
-    void init();            // 0x4be7c0
-};
+// ---- the default key bindings (GameKeys::set_defaults 0x4be7c0: game/game_keys.h) -------------------------------------
+#include "../game_keys.h"
 
 // ---- vectors and copy helpers (0x4be950..0x4beb70) -----------------------------------------------------------------
 // std::vector-shaped counted arrays (allocator word at +0, begin +4, end +8): element counts for 0x50 / 0x1f8 / 0xb0 byte elements

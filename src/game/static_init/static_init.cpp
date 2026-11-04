@@ -42,8 +42,6 @@ extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
 
 extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
 
-extern char g_a73730[];     // 0xa73730 the game keys (0x4a dwords)
-extern char g_a7374c[];     // 0xa7374c (the key records' end)
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 #include "../../include/mesh_table.h"   // MeshTable g_meshes (0x8ed4f58)
 
@@ -58,7 +56,6 @@ struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct ini_file { ini_file(); };                    // 0x4c1be0
 struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct BigArray { void destroy(); };                // 0x4eb810
-void __fastcall fn_4c2ea0(void* keys);              // 0x4c2ea0
 void __fastcall nameholder_dtor(void* p);           // 0x4316b0 (NameHolder::~NameHolder)
 void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (__fastcall* dtor)(void*));   // 0x401830
 
@@ -69,8 +66,6 @@ void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (_
 void __cdecl static_dtor_548140() { ((gui_manager*)g_5d7080)->~gui_manager(); }
 // @ 0x548200
 void __cdecl static_dtor_548200() {}
-// @ 0x548210
-void __cdecl static_dtor_548210() {}
 // @ 0x548250
 void __cdecl static_dtor_548250()
 {
@@ -102,13 +97,6 @@ void __cdecl static_init_547b50()
 }
 // @ 0x547e40
 void __cdecl static_init_547e40() { g_mission_ctx.init(); atexit(static_dtor_548200); }
-// @ 0x547e90
-void __cdecl static_init_547e90()
-{
-    memset(g_a73730, 0xff, 0x4a * 4);
-    fn_4c2ea0(g_a73730);
-    atexit(static_dtor_548210);
-}
 // @ 0x547fb0
 void __cdecl static_init_547fb0() { atexit(static_dtor_548410); }
 // @ 0x547fe0
@@ -128,7 +116,6 @@ init_fn g_static_init_table[] = {
     
     static_init_547b50,
     static_init_547e40,
-    static_init_547e90,
     static_init_547fb0,
     static_init_547fe0, static_init_548030,
 };

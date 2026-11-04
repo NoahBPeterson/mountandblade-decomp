@@ -440,8 +440,6 @@ int find_listener_agent()
 #define g_strtable_s261e0 g_strtable
 #undef g_gui_s261e0
 #define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
-#undef g_keytable_s261e0
-#define g_keytable_s261e0 (*(KeyTable_s261e0*)g_game_keys)
 #undef g_keyready_s261e0
 #define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
 #undef g_mission_s261e0
@@ -585,28 +583,28 @@ void MissionBlocker::frame_update(float dt)
     // ---- mission-editor key block ------------------------------------------------------------------
     if (g_mission_s261e0->local_id >= 0) {
         if (((int*)((char*)&g_keyboard + 0xc))[29] == 0 && ((int*)((char*)&g_keyboard + 0xc))[157] == 0) {
-            if (g_keytable_s261e0.clicked(0x15)) {
+            if (g_game_keys.clicked(0x15)) {
                 f2a0 = 0;
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x16)) {
+            } else if (g_game_keys.clicked(0x16)) {
                 f2a0 = 1;
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x17)) {
+            } else if (g_game_keys.clicked(0x17)) {
                 f2a0 = 2;
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x1a)) {
+            } else if (g_game_keys.clicked(0x1a)) {
                 f2a0 = 5;
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x1b)) {
+            } else if (g_game_keys.clicked(0x1b)) {
                 f2a0 = 6;
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x1c)) {
+            } else if (g_game_keys.clicked(0x1c)) {
                 f2a0 = 7;
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x1d)) {
+            } else if (g_game_keys.clicked(0x1d)) {
                 f2a0 = 8;
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x18)) {
+            } else if (g_game_keys.clicked(0x18)) {
                 if (g_mission_s261e0->f6674 == 0) {
                     f2a0 = 4;
                     g_mission_s261e0->f6674 = 1;
@@ -615,7 +613,7 @@ void MissionBlocker::frame_update(float dt)
                     g_mission_s261e0->f6674 = 0;
                 }
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x1e)) {
+            } else if (g_game_keys.clicked(0x1e)) {
                 if (g_mission_s261e0->f666c == 0) {
                     f2a0 = 9;
                     g_mission_s261e0->f666c = 1;
@@ -624,7 +622,7 @@ void MissionBlocker::frame_update(float dt)
                     g_mission_s261e0->f666c = 0;
                 }
                 ((Screen_s2ae70*)this)->order_tick();
-            } else if (g_keytable_s261e0.clicked(0x19)) {
+            } else if (g_game_keys.clicked(0x19)) {
                 if (g_mission_s261e0->f6670 == 0) {
                     f2a0 = 0xc;
                     g_mission_s261e0->f6670 = 1;
@@ -635,8 +633,8 @@ void MissionBlocker::frame_update(float dt)
                 ((Screen_s2ae70*)this)->order_tick();
             }
         }
-        if (g_keytable_s261e0.clicked(0x1f) || g_keytable_s261e0.clicked(0x20) || g_keytable_s261e0.clicked(0x21) ||
-            g_keytable_s261e0.clicked(0x22) || g_keytable_s261e0.clicked(0x23)) {
+        if (g_game_keys.clicked(0x1f) || g_game_keys.clicked(0x20) || g_game_keys.clicked(0x21) ||
+            g_game_keys.clicked(0x22) || g_game_keys.clicked(0x23)) {
             bool mod = (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157] || ((int*)((char*)&g_keyboard + 0xc))[42] || ((int*)((char*)&g_keyboard + 0xc))[54]);
             bool b3 = false;
             if (mod) {
@@ -650,7 +648,7 @@ void MissionBlocker::frame_update(float dt)
                 kind = 7;
             char* base = (char*)g_mission_s261e0 + 0x527c + kind * 0x16c;
 
-            if (g_keytable_s261e0.clicked(0x23)) {
+            if (g_game_keys.clicked(0x23)) {
                 bool changed = false;
                 int* p = (int*)(base + 0x4c);
                 for (int m = 3; m != 0; m--) {                // the original counts down (cl unrolls an up-counting constant loop)
@@ -669,7 +667,7 @@ void MissionBlocker::frame_update(float dt)
                         q = (int*)((char*)q + 0x6c);
                     }
                 }
-            } else if (g_keytable_s261e0.clicked(0x1f)) {
+            } else if (g_game_keys.clicked(0x1f)) {
                 int* q = (int*)(base + 0x4c);
                 for (int m = 3; m != 0; m--) {
                     *q = 1;
@@ -684,11 +682,11 @@ void MissionBlocker::frame_update(float dt)
                     }
                 }
                 int idx = 0;
-                if (g_keytable_s261e0.clicked(0x20))
+                if (g_game_keys.clicked(0x20))
                     idx = 0;
-                else if (g_keytable_s261e0.clicked(0x21))
+                else if (g_game_keys.clicked(0x21))
                     idx = 1;
-                else if (g_keytable_s261e0.clicked(0x22))
+                else if (g_game_keys.clicked(0x22))
                     idx = 2;
                 *(int*)(base + 0x4c + idx * 0x6c) = 1;
             }
@@ -737,7 +735,7 @@ void MissionBlocker::frame_update(float dt)
     flag13 = 0;
     val14 = -1;
     if (g_mission_s261e0->local_id >= 0) {
-        if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 4 && f2d4 != 0) {
+        if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 4 && f2d4 != 0) {
             int v = *(int*)((char*)g_game_s261e0->f13a50 + 0x7c +
                             (g_mission_s261e0->f5df4 * 0x125 + f2cc) * 4);
             if (v == 100000)
@@ -746,9 +744,9 @@ void MissionBlocker::frame_update(float dt)
                 g_game_s261e0->f13af4 = v;
                 g_game_s261e0->f13af8 = 0;
             }
-        } else if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 1 && f2d4 != 0) {
+        } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 1 && f2d4 != 0) {
             g_mission_s261e0->f6620 = f2cc;
-        } else if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 7 && f2d4 != 0) {
+        } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 7 && f2d4 != 0) {
             int off = f2cc * 0x1c8;
             int pair[2];
             pair[0] = *(int*)((char*)g_mission_s261e0->f668c + off + 0x18c);
@@ -757,7 +755,7 @@ void MissionBlocker::frame_update(float dt)
                 g_mission_s261e0->release_item(f2cc);
                 update_equipment();
             }
-        } else if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 5 && f2d4 != 0) {
+        } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 5 && f2d4 != 0) {
             int v = *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a0);
             if (v < *(int*)((char*)g_game_s261e0->f13a50 + g_mission_s261e0->f5df4 * 0x494 + 0x100) && 0 <= v)
                 val14 = *(int*)((char*)g_game_s261e0->f13a50 + 0xc0 +
@@ -765,7 +763,7 @@ void MissionBlocker::frame_update(float dt)
             else
                 val14 = -1;
             flag13 = 1;
-        } else if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 6 && f2d4 != 0) {
+        } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 6 && f2d4 != 0) {
             int idx = *(int*)((char*)g_mission_s261e0->f668c + f2cc * 0x1c8 + 0x1a0);
             g_game_s261e0->f13af8 = idx;
             char* obj = *(char**)((char*)g_mission_templates + g_mission_ctx.passage_menu * 0x60 + 0x58);
@@ -773,7 +771,7 @@ void MissionBlocker::frame_update(float dt)
                 ->play(0x10);
         }
 
-        if (any_pressed_s261e0(g_keys_73b0, 2)) {
+        if (any_pressed_s261e0(g_game_keys.entry[16], 2)) {
             g_script.trigger_result.store0 = 0;
             g_script.trigger_result.store1 = 0;
             int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
@@ -796,7 +794,7 @@ void MissionBlocker::frame_update(float dt)
         b6 = false;
     }
 
-    if (any_pressed_s261e0(g_keys_7388, 2) && ((int*)((char*)&g_keyboard + 0xc))[56] == 0 && ((int*)((char*)&g_keyboard + 0xc))[184] == 0) {
+    if (any_pressed_s261e0(g_game_keys.entry[11], 2) && ((int*)((char*)&g_keyboard + 0xc))[56] == 0 && ((int*)((char*)&g_keyboard + 0xc))[184] == 0) {
         g_script.trigger_result.store0 = 0;
         g_script.trigger_result.store1 = 0;
         ((SoundBank_s261e0*)rec_base_s261e0(g_mission_s261e0->cur_rec))->update_all(-0x15);
@@ -816,11 +814,11 @@ void MissionBlocker::frame_update(float dt)
     // ---- "leave area" / agent selection ------------------------------------------------------------
     if ((g_mission_s261e0->f6528 & 1) == 0) {
         int flags20 = *(int*)((char*)g_mission_templates + g_mission_s261e0->cur_rec * 0x58 + 0x20);
-        if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 8 &&
+        if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 8 &&
             (((flags20 >> 1) & 1) == 0 || g_mission_s261e0->f6524 > 0)) {
             f2dc = 0;
         } else if (((flags20 >> 1) & 1) != 0 && g_mission_s261e0->local_id >= 0 &&
-                   g_keytable_s261e0.clicked(4) && f2c8 == 8) {
+                   g_game_keys.clicked(4) && f2c8 == 8) {
             AgentTable_s261e0* table = (AgentTable_s261e0*)((char*)g_mission_s261e0 + 4);
             float best = 10000.0f;
             unsigned id = (unsigned)table->first_used();
@@ -837,7 +835,7 @@ void MissionBlocker::frame_update(float dt)
                 }
                 table->next_used(&id);
             }
-            if (g_keytable_s261e0.clicked(4) && f2c8 == 8) {
+            if (g_game_keys.clicked(4) && f2c8 == 8) {
                 if (best > 8.0f) {
                     f2dc = -1;
                     // 0x527591: ecx = [0xa73980] (the dialog box the menu points to), unlike set_state/open (ecx = 0xa73980)
@@ -854,7 +852,7 @@ void MissionBlocker::frame_update(float dt)
             }
         }
     } else {
-        if (any_pressed_s261e0(g_keys_7350, 2) && f2c8 == 8)
+        if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 8)
             f2dc = 0;
     }
 
@@ -913,7 +911,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (any_pressed_s261e0(g_keys_73a8, 2) && g_mission_s261e0->local_id >= 0 && g_game_s261e0->b18 == 0) {
+        if (any_pressed_s261e0(g_game_keys.entry[15], 2) && g_mission_s261e0->local_id >= 0 && g_game_s261e0->b18 == 0) {
             grow_health = 1;
             char* rec = (char*)g_game_s261e0->chars;
             int v = (unsigned char)rec[0x7a] & 0xf;
@@ -931,7 +929,7 @@ void MissionBlocker::frame_update(float dt)
 
         {
             int flags20 = *(int*)((char*)g_mission_templates + g_mission_s261e0->cur_rec * 0x58 + 0x20);
-            if (any_pressed_s261e0(g_keys_73b8, 2) && g_game_s261e0->b18 == 0 &&
+            if (any_pressed_s261e0(g_game_keys.entry[17], 2) && g_game_s261e0->b18 == 0 &&
                 (((flags20 >> 1) & 1) == 0)) {
                 slot_as<Widget_s261e0>(12)->f18 = 0xe;
                 slot_as<Widget_s261e0>(12)->f4 = 5;
@@ -940,7 +938,7 @@ void MissionBlocker::frame_update(float dt)
             }
         }
 
-        if (any_pressed_s261e0(g_keys_73c0, 2) && g_game_s261e0->b18 == 0) {
+        if (any_pressed_s261e0(g_game_keys.entry[18], 2) && g_game_s261e0->b18 == 0) {
             if (g_module_settings.show_quest_notes == 0) {
                 slot_as<Widget_s261e0>(13)->f18 = 0xe;
                 slot_as<Widget_s261e0>(13)->f4 = 0;
@@ -954,7 +952,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (any_pressed_s261e0(g_keys_73c8, 2) && g_game_s261e0->b18 == 0) {
+        if (any_pressed_s261e0(g_game_keys.entry[19], 2) && g_game_s261e0->b18 == 0) {
             slot_as<Widget_s261e0>(25)->f18 = 0xe;
             slot_as<Widget_s261e0>(25)->f4 = 0;
             g_windows.set_state(0x19);
@@ -973,7 +971,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (g_game_s261e0->b18 == 0 && g_keytable_s261e0.clicked(0x24)) {
+        if (g_game_s261e0->b18 == 0 && g_game_keys.clicked(0x24)) {
             if (!g_mission_s261e0->mode_flag1() && g_game_s261e0->b18 == 0) {
                 quick_save_msg();
             } else {
@@ -1287,8 +1285,6 @@ void ResourceOwner_s27c90::release()
 #define g_mission_s284a0 (*(Mission_s284a0**)&g_mission)
 #undef g_game_s284a0
 #define g_game_s284a0 (*(Game_s284a0**)&g_game)
-#undef g_keys_s284a0
-#define g_keys_s284a0 (*(KeyTable_s284a0*)g_game_keys)
 #undef g_key_names_s284a0
 #define g_key_names_s284a0 (*(KeyNames_s284a0*)&g_keyboard)
 #undef AGENT
@@ -1386,8 +1382,8 @@ void ViewCtrl_s284a0::update(float dt)
         ((MatrixExt_s284a0*)&m)->rotate_fu(&pitch);
 
         a = AGENT(g_mission_s284a0->selected);
-        bool looking = ((*(int*)((char*)&g_game_keys + 0x68)) >= 0 && ((int*)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x68))] != 0);
-        if (((*(int*)((char*)&g_game_keys + 0x6c)) < 0 || ((int*)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x6c))] == 0) && !looking)
+        bool looking = (g_game_keys.entry[13][0] >= 0 && ((int*)((char*)&g_keyboard + 0xc))[g_game_keys.entry[13][0]] != 0);
+        if ((g_game_keys.entry[13][1] < 0 || ((int*)((char*)&g_keyboard + 0xc))[g_game_keys.entry[13][1]] == 0) && !looking)
             a->dir55d8 = m.f;
     }
 
@@ -1403,67 +1399,67 @@ void ViewCtrl_s284a0::update(float dt)
     if (!g_game_s284a0->f1a090) {
         if (g_keyboard.down[42] == 0)
             a->in_flags = 0x200000;
-        if (g_keys_s284a0.clicked(5))
+        if (g_game_keys.clicked(5))
             a->in_flags |= 0x100000;
 
         if (a->mount_id < 0) {
-            if (g_keys_s284a0.is_down(0))
+            if (g_game_keys.is_down(0))
                 a->in_flags |= 1;
-            else if (g_keys_s284a0.is_down(1))
+            else if (g_game_keys.is_down(1))
                 a->in_flags |= 2;
-            if (g_keys_s284a0.is_down(3))
+            if (g_game_keys.is_down(3))
                 a->in_flags |= 4;
-            else if (g_keys_s284a0.is_down(2))
+            else if (g_game_keys.is_down(2))
                 a->in_flags |= 8;
-            if (g_keys_s284a0.clicked(4) && mode == 2 && aim_valid != 0) {
+            if (g_game_keys.clicked(4) && mode == 2 && aim_valid != 0) {
                 a->in_flags |= 0x20000;
                 a->target_id = target;
             }
         } else {
-            if (g_keys_s284a0.clicked(0))
+            if (g_game_keys.clicked(0))
                 a->in_flags |= 0x80000;
-            if (g_keys_s284a0.is_down(0))
+            if (g_game_keys.is_down(0))
                 a->in_flags |= 0x10;
-            else if (g_keys_s284a0.is_down(1))
+            else if (g_game_keys.is_down(1))
                 a->in_flags |= 0x20;
-            if (g_keys_s284a0.is_down(3))
+            if (g_game_keys.is_down(3))
                 a->in_flags |= 0x40;
-            else if (g_keys_s284a0.is_down(2))
+            else if (g_game_keys.is_down(2))
                 a->in_flags |= 0x80;
-            if (g_keys_s284a0.clicked(4) && mode == 3)
+            if (g_game_keys.clicked(4) && mode == 3)
                 a->in_flags |= 0x10000;
             if (g_key_names_s284a0.is_ready(0x24) && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0))
                 a->in_flags |= 0x40000;
         }
 
         if (g_presentation == 0 || (flags44 & 1)) {
-            if (g_keys_s284a0.is_down(6))
+            if (g_game_keys.is_down(6))
                 a->in_flags |= 0x100;
-            if (g_keys_s284a0.clicked(6))
+            if (g_game_keys.clicked(6))
                 a->in_flags |= 0x400;
-            if (g_keys_s284a0.is_down(7))
+            if (g_game_keys.is_down(7))
                 a->in_flags |= 0x200;
         }
 
-        if (g_keys_s284a0.clicked(8)) {
+        if (g_game_keys.clicked(8)) {
             a->cycle_slot(0);
-        } else if (g_keys_s284a0.clicked(9)) {
+        } else if (g_game_keys.clicked(9)) {
             a->cycle_slot(1);
-        } else if (g_keys_s284a0.clicked(10)) {
+        } else if (g_game_keys.clicked(10)) {
             a->wield_a = -1;
             a->on_wield_reset();
         }
     }
 
-    if (g_keys_s284a0.clicked(0xe)) {
+    if (g_game_keys.clicked(0xe)) {
         g_game_s284a0->f139e4 = (g_game_s284a0->f139e4 == 0);
         update_equipment();
     }
     AGENT(g_mission_s284a0->selected)->f55d4 = (g_game_s284a0->f139e4 != 0);
 
     // ---- field of view ------------------------------------------------------------------------------
-    bool zoom_key = (g_a73790 >= 0 && ((int*)((char*)&g_keyboard + 0xc))[g_a73790] != 0);
-    if ((g_a73794 >= 0 && ((int*)((char*)&g_keyboard + 0xc))[g_a73794] != 0) || zoom_key)
+    bool zoom_key = (g_game_keys.entry[12][0] >= 0 && ((int*)((char*)&g_keyboard + 0xc))[g_game_keys.entry[12][0]] != 0);
+    if ((g_game_keys.entry[12][1] >= 0 && ((int*)((char*)&g_keyboard + 0xc))[g_game_keys.entry[12][1]] != 0) || zoom_key)
         fov = fov - dt * 350.0f;
     else
         fov = fov + dt * 350.0f;
@@ -1597,8 +1593,8 @@ void MissionBlocker::update_marks()
 
     if (pair.item >= 0) {
         bool other = false;
-        if ((*(int*)((char*)&g_game_keys + 0x68)) >= 0 && ((void**)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x68))]) other = true;
-        if (((*(int*)((char*)&g_game_keys + 0x6c)) < 0 || ((void**)((char*)&g_keyboard + 0xc))[(*(int*)((char*)&g_game_keys + 0x6c))] == 0) && !other) {
+        if (g_game_keys.entry[13][0] >= 0 && ((void**)((char*)&g_keyboard + 0xc))[g_game_keys.entry[13][0]]) other = true;
+        if ((g_game_keys.entry[13][1] < 0 || ((void**)((char*)&g_keyboard + 0xc))[g_game_keys.entry[13][1]] == 0) && !other) {
             int type = g_items_s29130[pair.item].type & 0xff;
             if ((type == 8 || type == 9 || type == 10 || type == 16 || type == 17) && g_options.i64) {
                 if (!cur_agent_s29130()->f100_is_0x48_and_charged()) {

@@ -93,12 +93,12 @@ void Blk2dd0::read(stream_base* s)
 
 // The key-binding file: a bin_reader built inline on the stack (vtable 0x54ae48; the original inlines its
 // constructor 0x417c50), the name made per-user by user_path, read with the file readers' shared open 0x415290.
-// 0x25 bindings of two ints each, or the default table (code_table::init) when the file is missing or wrong.
+// 0x25 bindings of two ints each, or the default table (GameKeys::set_defaults) when the file is missing or wrong.
 static void user_path(char* name);                  // below (a local copy; its argument travels in ESI)
-struct code_table { void init(); };                 // 0x4be7c0 (game/triggers/trigger_vec.cpp)
+#include "../../game/game_keys.h"                  // GameKeys (0xa73730): load 0x4c2ea0, set_defaults 0x4be7c0 (game/triggers/trigger_vec.cpp)
 
 // @ 0x4c2ea0
-void __fastcall fn_4c2ea0(void* self)
+void GameKeys::load()
 {
     WL_MARKER(12)
     bin_reader r;
@@ -107,14 +107,14 @@ void __fastcall fn_4c2ea0(void* self)
     user_path(path);
     ((text_file*)&r)->open_read(path);
     if (r.failed) {
-        ((code_table*)self)->init();
+        set_defaults();
     } else {
         int n = 0;
         r.r_int(&n);
         if (n != 0x25) {
-            ((code_table*)self)->init();
+            set_defaults();
         } else {
-            int* d = (int*)self;
+            int* d = &entry[0][0];
             for (int i = 0; i < 0x25; i++)
                 for (int j = 0; j < 2; j++)
                     r.r_int(d++);

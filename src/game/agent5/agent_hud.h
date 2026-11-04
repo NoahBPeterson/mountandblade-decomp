@@ -108,10 +108,7 @@ static __forceinline Agent* agent_by_id(unsigned id)
 }
 
 // ---- camera globals and engine objects the camera tick uses -------------------------------------------------------------
-struct OriginPairs {                                              // the key table at 0xa73730 (ui/mission.h)
-    bool is_down(int key);                                           // 0x48ac50 (ret 4)
-};
-extern OriginPairs g_game_keys;                                         // 0xa73730
+#include "../game_keys.h"                                      // GameKeys g_game_keys (0xa73730)
 
 
 extern float g_screen_a;                                          // 0x5d75dc

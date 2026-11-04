@@ -68,7 +68,6 @@ struct Mission3 {                                                            // 
     void clear_done();                                                      // 0x4676c0
 };
 struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
-struct OriginPairs { bool is_down(int i); bool clicked(int i); };            // 0x48ac50 / 0x48ac90 (ui/mission_ui.cpp)
 struct Sel { void set_vec(const int* a, const int* b, const int* c); };     // 0x4898e0 (ui/mission_ui.cpp)
 struct NamedSelRec { void set_name(const tstring* s); void set_sel(const int* src); };   // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
 struct Named16 { void set(const tstring* s); };                              // 0x489ab0 (ui/mission_ui.cpp)
@@ -181,8 +180,6 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 // ---- input ---------------------------------------------------------------------------------------------------------
 #include "../key_names.h"             // Keyboard g_keyboard (0xa170c8)
 #include "../game_keys.h"            // GameKeys g_game_keys (0xa73730)
-__forceinline char GameKeys::is_down(int key) { return ((OriginPairs*)this)->is_down(key); }   // 0x48ac50 (thiscall, ret 4)
-__forceinline char GameKeys::clicked(int key) { return ((OriginPairs*)this)->clicked(key); }   // 0x48ac90
 
 // the window/screen stack is g_windows.dq (a deque of screen ids; 0x10 = conversation)
 

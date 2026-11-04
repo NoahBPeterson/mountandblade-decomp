@@ -731,23 +731,23 @@ void ItemA::frame_update(float)
     unsigned __int64 k = *(unsigned __int64*)(rec + 0x20);
 
 #define CTRL ((k & 0x200) == 0 && (k & 0x100) != 0)
-    if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x10)) {
+    if (CTRL && g_game_keys.clicked(0x10)) {
         slot_as<MenuItem>(8)->f18 = 0x17;
         slot_as<MenuItem>(8)->f4 = 0;
         g_windows.set_state(8);
     }
-    else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x11)) {
+    else if (CTRL && g_game_keys.clicked(0x11)) {
         slot_as<MenuItem>(12)->f18 = 0x17;
         slot_as<MenuItem>(12)->f4 = 0;
         g_windows.set_state(0xc);
     }
-    else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0xf)) {
+    else if (CTRL && g_game_keys.clicked(0xf)) {
         slot_as<MenuItem>(15)->f18 = 0x17;
         slot_as<MenuItem>(15)->f4 = 0;
         slot_as<MenuItem>(15)->f14 = g_game->player;
         g_windows.set_state(0xf);
     }
-    else if (CTRL && ((OriginPairs*)&g_game_keys)->clicked(0x12)) {
+    else if (CTRL && g_game_keys.clicked(0x12)) {
         if (g_module_settings.show_quest_notes == 0) {
             slot_as<MenuItem>(13)->f18 = 0x17;
             slot_as<MenuItem>(13)->f4 = 0;
@@ -759,7 +759,7 @@ void ItemA::frame_update(float)
             g_windows.set_state(0x1a);
         }
     }
-    else if ((k & 0x200) == 0 && ((OriginPairs*)&g_game_keys)->clicked(0x13)) {
+    else if ((k & 0x200) == 0 && g_game_keys.clicked(0x13)) {
         slot_as<MenuItem>(25)->f18 = 0x17;
         slot_as<MenuItem>(25)->f4 = 0;
         g_windows.set_state(0x19);

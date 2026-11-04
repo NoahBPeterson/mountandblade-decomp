@@ -1,4 +1,4 @@
-../src/game/triggers/trigger_vec.cpp  ?init@code_table@@QAEXXZ  004be7c0  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ?set_defaults@GameKeys@@QAEXXZ  004be7c0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ??1ini_file@@QAE@XZ  004be920  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?size@vec_e50@@QBEHXZ  004be950  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?size@vec_e1f8@@QBEHXZ  004be970  /O2 /MT /Gy /TP

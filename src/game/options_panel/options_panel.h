@@ -71,10 +71,10 @@ struct GameIo : Game {
     void import_apply(ini_file* table);                             // 0x4d8c20 (ret 4)
 };
 
-// the options panel (offsets read by 0x4d7370 .. 0x4d9260). The first 0x38 bytes are the control-key table of the
-// page (four bindable keys at +0, +8, +0x10, +0x18, each followed by its button word).
+// the options panel (offsets read by 0x4d7d90 .. 0x4d9260). (The control-key table is GameKeys, game/game_keys.h: key_name 0x4d7370 and
+// key_binding_name 0x4d7d10 are its members.)
 struct options_panel {
-    int  key_menu;                                                  // +0x00
+    char pad00[4];                                                  // +0x00
     int  menu_open;                                                 // +0x04
     int  key_prev;                                                  // +0x08
     char pad0c[4];                                                  // +0x0c
@@ -93,8 +93,6 @@ struct options_panel {
     int  export_pending;                                            // +0x40
     int  import_pending;                                            // +0x44
 
-    void key_name(int which, tstring* out);                         // 0x4d7370
-    void key_binding_name(int slot, tstring* out, int* translated);  // 0x4d7d10
     __declspec(noinline) void update_cursor();                      // 0x4d7de0
     __declspec(noinline) void refresh_texts();                      // 0x4d7e00
     __declspec(noinline) void draw_faction_report();                // 0x4d7e50

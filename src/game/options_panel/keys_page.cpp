@@ -8,7 +8,7 @@
 //   0x4d7000  writes the pairs to controls.dat through an inline bin_writer
 //   0x4d7120  captions the 7 column headers and the 0x25 key rows and refreshes the two buttons
 //   0x4d7270  lays out one key row of the table (scale from the text width, position, text)
-// All names provisional. The page is called KeysPage and its key table ControlKeyTable here (the slice called them
+// All names provisional. The page is called KeysPage and its key table GameKeys here (the slice called them
 // VideoPage and KeyTable, which are other classes: video_page.cpp, src/include/key_table.h).
 //
 // Rewritten 2026-10-22 from the disassembly: the earlier version used a widget vtable 0x44 bytes off, the
@@ -41,6 +41,7 @@ using rgl::vector4;
 
 // ---- symbols -----------------------------------------------------------------------------------------
 #include "../window_mgr.h"                         // g_windows (0xa73980)
+#include "../game_keys.h"                         // GameKeys g_game_keys (0xa73730)
 // 0xa170c8: the keyboard state; is_bound(n) is 0x487900.
 #include "../key_names.h"
 #include "../../rgl/options.h"   // g_options 0x5aa008
@@ -102,28 +103,14 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 // the file writer's ctor is inline here (0x4d7000 stores both vtables), out of line in resource_manager.cpp
 inline bin_writer::bin_writer() {}
 
-// ---- the key table (0xa73730) -------------------------------------------------------------------------
-// 0x25 rows of two dwords: {bound key, button}; +0x128 holds the "original" copy of the pairs.
-struct ControlKeyTable {
-    int entry[0x25][2];                                     // +0x00
-    int original[0x25][2];                                  // +0x128
-    void forget(int index, int button);                     // 0x4d6f90
-    __declspec(noinline) void restore();                    // 0x4d6fd0 (kept as a call by 0x4d6e50)
-    void save();                                            // 0x4d7000
-};
-// The key table object is also seen by three other classes, all defined in other TUs of the module group (same 0x128 bytes of
-// {key, button} pairs): trigger_vec.h's code_table (init 0x4be7c0 fills v[0..0x4a)), options_panel.h's options_panel (key_name
-// 0x4d7370 and key_binding_name 0x4d7d10 read the pairs through key_menu.. at +0), and mesh_slot/slot.cpp's Slot (0x487900
-// is_ready, called on the keyboard 0xa170c8). Their headers do not fit this TU's, so the members are repeated under the class names.
-struct code_table {
-    int v[0x4a];
-    void init();   // 0x4be7c0
-};
-struct options_panel {
-    void key_name(int which, tstring* out);                               // 0x4d7370
-    void key_binding_name(int slot, tstring* out, int* translated);       // 0x4d7d10
-};
-extern ControlKeyTable g_game_keys;                                                // 0xa73730
+// ---- the key table (0xa73730: game/game_keys.h) -----------------------------------------------------------
+// the one global of the table: the original constructs it in the static initializer 0x547e90 (every code -1, then load() 0x4c2ea0)
+GameKeys g_game_keys;                                                              // 0xa73730
+GameKeys::GameKeys()
+{
+    memset(entry, 0xff, sizeof entry);
+    load();
+}
 
 // ---- the page ----------------------------------------------------------------------------------------
 // The page is read from both ends: the two button objects sit at +0x30 (apply / restore) and the widget
@@ -257,7 +244,7 @@ void Rec1bc::frame_update(float)
             if (W(slot_buttons[i])->clear_mask(0x10000))
                 f1b8 = i;
         if (W(f38)->clear_mask(0x10000)) {
-            ((code_table*)(void*)&g_game_keys)->init();
+            g_game_keys.set_defaults();
             f1b4 = 1;
             ((KeysPage*)this)->refresh();
         }
@@ -276,7 +263,7 @@ void Rec1bc::frame_update(float)
 }
 
 // @ 0x4d6f90
-void ControlKeyTable::forget(int index, int button)
+void GameKeys::forget(int index, int button)
 {
     int* p = (int*)entry;
     int loop = 0x25;
@@ -293,7 +280,7 @@ void ControlKeyTable::forget(int index, int button)
 }
 
 // @ 0x4d7000
-void ControlKeyTable::save()
+void GameKeys::save()
 {
     bin_writer w;
     char path[0x104];
@@ -323,7 +310,7 @@ void ControlKeyTable::save()
 }
 
 // @ 0x4d6fd0
-void ControlKeyTable::restore()
+void GameKeys::restore()
 {
     for (int i = 0; i < 0x25; i++) {
         entry[i][0] = original[i][0];
@@ -341,14 +328,14 @@ void KeysPage::refresh()
     KeysPageView* p = head(this);
     for (int k = 0; k < 7; k++) {
         tstring text;
-        ((options_panel*)(void*)&g_game_keys)->key_name(k, &text);
+        g_game_keys.key_name(k, &text);
         { char r[8]; p->captions[k]->set_text((float*)r, &(text)); }
     }
 
     for (int i = 0; i < 0x25; i++) {
         char assigned;
         tstring text;
-        ((options_panel*)(void*)&g_game_keys)->key_binding_name(i, &text, (int*)&assigned);   // stores one byte
+        g_game_keys.key_binding_name(i, &text, (int*)&assigned);   // stores one byte
         layout_row(p->keys[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
         unsigned colour = 0xffff2200;
         if (!assigned)

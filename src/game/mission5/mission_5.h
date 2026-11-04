@@ -37,12 +37,11 @@ extern MissionTemplate* g_mission_templates;     // 0x5e2a00
 
 #include "../str_table.h"   // StrTable g_strtable (0x5e2a18): the one definition
 extern char g_gui[]; // 0x5d7080
-extern char g_game_keys[]; // 0xa73730
+#include "../game_keys.h"           // GameKeys g_game_keys (0xa73730)
 #include "../slot.h"                        // Slot, g_keyboard (0xa170c8)
 #include "../window_mgr.h"   // g_windows (0xa73980): the window manager, slot_as<T>(i) its screens, dq the id stack
 #include "../map_flags.h"      // MapFlags, g_map_flags (0x5e291c): the one definition
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): the one definition
-extern char g_game_keys[]; // 0xa73730
 #include "../placed_obj.h"
 #include "../../include/shape.h"
 #include "../std_vec_out_of_line.h"
@@ -288,7 +287,6 @@ struct DialogMgr_s26130 {
 // ======================================================= slice s005261e0: classes, globals, helpers
 #define g_strtable_s261e0 g_strtable
 #define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
-#define g_keytable_s261e0 (*(KeyTable_s261e0*)g_game_keys)
 #define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
 #define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #define g_game_s261e0 (*(GameData_s261e0**)&g_game)
@@ -330,9 +328,6 @@ struct MsgLog_s261e0 {
 // -----------------------------------------------------------------------------------------------------
 // key tables: two 256-entry int arrays at 0xa170d4 (down) and 0xa174d4 (up); 0x480 apart.
 
-struct KeyTable_s261e0 {
-    __forceinline char clicked(int key);                                 // 0x48ac90 (thiscall, ret 4)
-};
 
 
 struct KeyReady_s261e0 {
@@ -341,13 +336,6 @@ struct KeyReady_s261e0 {
 
 
 // 2-entry binding arrays of the mission-editor actions
-#define g_keys_7350 ((int*)(g_game_keys + 0x20))              // 0xa73730 + 0x20: the two bindings of one action
-#define g_keys_7388 ((int*)(g_game_keys + 0x58))              // 0xa73730 + 0x58: the two bindings of one action
-#define g_keys_73a8 ((int*)(g_game_keys + 0x78))              // 0xa73730 + 0x78: the two bindings of one action
-#define g_keys_73b0 ((int*)(g_game_keys + 0x80))              // 0xa73730 + 0x80: the two bindings of one action
-#define g_keys_73b8 ((int*)(g_game_keys + 0x88))              // 0xa73730 + 0x88: the two bindings of one action
-#define g_keys_73c0 ((int*)(g_game_keys + 0x90))              // 0xa73730 + 0x90: the two bindings of one action
-#define g_keys_73c8 ((int*)(g_game_keys + 0x98))              // 0xa73730 + 0x98: the two bindings of one action
 
 // -----------------------------------------------------------------------------------------------------
 // agents / mission / game data
@@ -729,7 +717,6 @@ struct MissionHdr_s27c90 {
 #define g_items_s284a0 (*(ItemKind_s284a0**)&g_items)
 #define g_mission_s284a0 (*(Mission_s284a0**)&g_mission)
 #define g_game_s284a0 (*(Game_s284a0**)&g_game)
-#define g_keys_s284a0 (*(KeyTable_s284a0*)g_game_keys)
 #define g_key_names_s284a0 (*(KeyNames_s284a0*)&g_keyboard)
 // Slice s005284a0: the mission player-view / aim controller's per-frame update (0x5284a0, 8192 bytes).
 //
@@ -876,10 +863,6 @@ struct MatrixExt_s284a0 {
 };
 
 // ---- key tables -------------------------------------------------------------------------------------
-struct KeyTable_s284a0 {                                       // 0xa73730
-    __forceinline char clicked(int key);                      // 0x48ac90 (ret 4)
-    __forceinline char is_down(int key);                           // 0x48ac50 (ret 4)
-};
 
 struct KeyNames_s284a0 {                                       // 0xa170c8
     __forceinline char is_ready(int action);                             // 0x487900 (ret 4)
@@ -887,8 +870,6 @@ struct KeyNames_s284a0 {                                       // 0xa170c8
 
 
 // ---- globals ----------------------------------------------------------------------------------------
-#define g_a73790 (*(int*)(g_game_keys + 0x60))           // 0xa73790
-#define g_a73794 (*(int*)(g_game_keys + 0x64))           // 0xa73794
 #include "../../include/fx.h"
 #include "../../rgl/resource_manager.h"
 
@@ -1805,7 +1786,7 @@ struct level {
 struct RecZSubB {
     RecZSubB* init();   // 0x4353a0
 };
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionSource; struct MsgLog; struct NamedRec; struct OriginPairs; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct gui_manager; struct gui_obj; struct gui_view; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionSource; struct MsgLog; struct NamedRec; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct gui_manager; struct gui_obj; struct gui_view; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -1881,10 +1862,6 @@ struct MsgLog {
     void add(tstring, int);   // 0x452c00
     void flush();   // 0x4f1390
 };
-struct OriginPairs {
-    bool clicked(int);   // 0x48ac90
-    bool is_down(int);   // 0x48ac50
-};
 struct Party {
     int skill_level(int);   // 0x4b2370
     void add_xp_to_stack(int, int);   // 0x4b1d80
@@ -1945,8 +1922,6 @@ __forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((Shape*)
 __forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_spikes((rgl::mesh*)a0); }
 __forceinline void Mission_s257f0::camera_to(rgl::matrix* a0, float& a1) { ((Mission*)this)->camera_to((rgl::matrix const*)a0, (float const*)&a1); }
 __forceinline void BrushElem_s2c2b0::clear() { ((Elem_s2ce00*)this)->clear(); }
-__forceinline char KeyTable_s261e0::clicked(int a0) { return (char)((OriginPairs*)this)->clicked(a0); }
-__forceinline char KeyTable_s284a0::clicked(int a0) { return (char)((OriginPairs*)this)->clicked(a0); }
 __forceinline void Scene_s29ec0::collect(int a0, SceneEntity_s29ec0** a1, int* a2) { ((Picker*)this)->collect((unsigned)a0, (Pickable**)a1, a2); }
 __forceinline void Flags5e291c_s261e0::commit(char* a0) { ((MapFlags*)this)->commit(a0); }
 __forceinline Entity_s2ae70* World_s2ae70::create_entity(int a0) { return (Entity_s2ae70*)((rgl::world*)this)->create_entity(a0); }
@@ -1969,7 +1944,6 @@ __forceinline int PartyMgr_s29130::index_of(unsigned a0) { return ((Map10007*)th
 __forceinline int PartyMgr_s29840::index_of(unsigned a0) { return ((Map10007*)this)->lookup(a0); }
 __forceinline void Src_s261e0::init(int a0, int a1) { ((BlockOwner*)this)->init((ContainerBase*)a0, a1); }
 __forceinline void shape_base_s2b5c0::intersect(rgl::vector4* a0, rgl::vector4 const* a1, rgl::vector4 const* a2) { ((PlaneTrace*)this)->intersect(a0, a1, a2); }
-__forceinline char KeyTable_s284a0::is_down(int a0) { return (char)((OriginPairs*)this)->is_down(a0); }
 __forceinline bool Agent_s261e0::is_enemy(Agent_s261e0 const* a0) const { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
 __forceinline bool Agent_s284a0::is_enemy(Agent_s284a0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
 __forceinline bool Agent_s29ec0::is_enemy(Agent_s29ec0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }

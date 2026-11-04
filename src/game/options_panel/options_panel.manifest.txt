@@ -1,5 +1,5 @@
 ../src/game/options_panel/options_panel.cpp  ?key_name@Slot@@QAE?AUtstring@@H@Z  004d7610  /O2 /MT /Gy /TP
-../src/game/options_panel/options_panel.cpp  ?key_binding_name@options_panel@@QAEXHPAUtstring@@PAH@Z  004d7d10  /O2 /MT /Gy /TP
+../src/game/options_panel/options_panel.cpp  ?key_binding_name@GameKeys@@QAEXHPAUtstring@@PAH@Z  004d7d10  /O2 /MT /Gy /TP
 ../src/game/options_panel/options_panel.cpp  ?frame_update@Rec3c@@UAEXM@Z  004d7d90  /O2 /MT /Gy /TP
 ../src/game/options_panel/options_panel.cpp  ?update_cursor@options_panel@@QAEXXZ  004d7de0  /O2 /MT /Gy /TP
 ../src/game/options_panel/options_panel.cpp  ?refresh_texts@options_panel@@QAEXXZ  004d7e00  /O2 /MT /Gy /TP

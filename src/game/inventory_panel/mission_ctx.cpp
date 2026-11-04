@@ -76,7 +76,7 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 #include "../ui/named_rec.h"                            // NamedRec: setup 0x48a3a0 (ret 8)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../slot.h"
-struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
+#include "../game_keys.h"                              // GameKeys g_game_keys (0xa73730): clicked 0x48ac90
 #include "../key_names.h"
 #include "../../rgl/stream.h"                           // text_stream g_debug_log (0x5a9f30): slot 10 (+0x28, w_cstr) prints one line
 #include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
@@ -117,7 +117,6 @@ struct PartyV : Party {
 };
 void quick_save_msg();                                  // 0x516a70
 extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x87 args)
-extern UiKeyState g_keys;                                 // 0xa73730
 #include "../game_globals.h"      // g_module_settings.show_quest_notes (canonical)
 
 
@@ -749,7 +748,7 @@ void CampaignScreen::frame_update(float dt)
     flag = 1;
     if (GD_F(0x13ad0) > 0.0f)
         flag = 0;
-    if (GD_C(0x18) == 0 && g_keys.down(0x24))
+    if (GD_C(0x18) == 0 && g_game_keys.clicked(0x24))
         quick_save_msg();
     if (GD_I(0x1a208) >= 0) {
         g_script.param1 = GD_I(0x1a208);
@@ -788,7 +787,7 @@ void CampaignScreen::frame_update(float dt)
         return;
     }
     if (flag) {
-        if (PSO(f50)->clicked_on(0x10000) || g_keys.down(0x12)) {
+        if (PSO(f50)->clicked_on(0x10000) || g_game_keys.clicked(0x12)) {
             if (g_module_settings.show_quest_notes != 0) {
                 slot_as<MenuWidget>(26)->f18 = 7;
                 GD_I(0x13b08) = 4;
@@ -901,26 +900,26 @@ void CampaignScreen::frame_update(float dt)
 
 no_party:
     if (flag) {
-        if (PSO(f40)->clicked_on(0x10000) || g_keys.down(0x10)) {
+        if (PSO(f40)->clicked_on(0x10000) || g_game_keys.clicked(0x10)) {
             slot_as<MenuWidget>(8)->f18 = 7;
             slot_as<MenuWidget>(8)->f4 = 0;
             g_windows.set_state(8);
             return;
         }
-        if (PSO(f3c)->clicked_on(0x10000) || g_keys.down(0x11)) {
+        if (PSO(f3c)->clicked_on(0x10000) || g_game_keys.clicked(0x11)) {
             slot_as<MenuWidget>(12)->f18 = 7;
             slot_as<MenuWidget>(12)->f4 = 0;
             g_windows.set_state(0xc);
             return;
         }
-        if (PSO(f44)->clicked_on(0x10000) || g_keys.down(0xf)) {
+        if (PSO(f44)->clicked_on(0x10000) || g_game_keys.clicked(0xf)) {
             slot_as<MenuWidget>(15)->f18 = 7;
             slot_as<MenuWidget>(15)->f4 = 0;
             slot_as<MenuWidget>(15)->f14 = GD_I(0x8c);
             g_windows.set_state(0xf);
             return;
         }
-        if (g_keys.down(0x13)) {
+        if (g_game_keys.clicked(0x13)) {
             slot_as<MenuWidget>(25)->f18 = 7;
             slot_as<MenuWidget>(25)->f4 = 0;
             g_windows.set_state(0x19);
@@ -1005,32 +1004,32 @@ void CampaignScreen::camera_move(float dt)
     mat2 m(&src[0][0], &src[1][0]);
     m.rotate_2x2(-yaw);
 
-    bool b = g_game_keys.bind[4] >= 0 && g_keyboard.down[g_game_keys.bind[4]] != 0;
-    if ((g_game_keys.bind[5] >= 0 && g_keyboard.down[g_game_keys.bind[5]] != 0) || b) {
+    bool b = g_game_keys.entry[2][0] >= 0 && g_keyboard.down[g_game_keys.entry[2][0]] != 0;
+    if ((g_game_keys.entry[2][1] >= 0 && g_keyboard.down[g_game_keys.entry[2][1]] != 0) || b) {
         float h = height + 10.0f;
         x -= m.m[0] * h * dt;
         z -= m.m[1] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_game_keys.bind[6] >= 0 && g_keyboard.down[g_game_keys.bind[6]] != 0;
-    if ((g_game_keys.bind[7] >= 0 && g_keyboard.down[g_game_keys.bind[7]] != 0) || b) {
+    b = g_game_keys.entry[3][0] >= 0 && g_keyboard.down[g_game_keys.entry[3][0]] != 0;
+    if ((g_game_keys.entry[3][1] >= 0 && g_keyboard.down[g_game_keys.entry[3][1]] != 0) || b) {
         float h = height + 10.0f;
         x += m.m[0] * h * dt;
         z += m.m[1] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_game_keys.bind[0] >= 0 && g_keyboard.down[g_game_keys.bind[0]] != 0;
-    if ((g_game_keys.bind[1] >= 0 && g_keyboard.down[g_game_keys.bind[1]] != 0) || b) {
+    b = g_game_keys.entry[0][0] >= 0 && g_keyboard.down[g_game_keys.entry[0][0]] != 0;
+    if ((g_game_keys.entry[0][1] >= 0 && g_keyboard.down[g_game_keys.entry[0][1]] != 0) || b) {
         float h = height + 10.0f;
         x += m.m[2] * h * dt;
         z += m.m[3] * h * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_game_keys.bind[2] >= 0 && g_keyboard.down[g_game_keys.bind[2]] != 0;
-    if ((g_game_keys.bind[3] >= 0 && g_keyboard.down[g_game_keys.bind[3]] != 0) || b) {
+    b = g_game_keys.entry[1][0] >= 0 && g_keyboard.down[g_game_keys.entry[1][0]] != 0;
+    if ((g_game_keys.entry[1][1] >= 0 && g_keyboard.down[g_game_keys.entry[1][1]] != 0) || b) {
         float h = height + 10.0f;
         x -= m.m[2] * h * dt;
         z -= m.m[3] * h * dt;

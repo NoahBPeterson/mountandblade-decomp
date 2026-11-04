@@ -161,11 +161,7 @@ struct TickScreen : ScreenBase {            // vtable 0x595a08
 extern float g_k59c48c;                     // 0x59c48c (weight ramp constant)
 extern float g_half;                        // 0x549d70 (0.5f)
 extern float g_033;                         // 0x54b894 (0.33f)
-struct KeyDown {};                          // the key state object at 0xa73730: OriginPairs
-struct OriginPairs {
-    bool clicked(int key);   // 0x48ac90 (ret 4)
-};
-extern KeyDown g_game_keys;                    // 0xa73730
+#include "../game_keys.h"                    // GameKeys g_game_keys (0xa73730)
 #define STR_TABLE (&g_strtable)     // the localized string table (str_table.h)
 
 #endif // GAME_MAP_EDITOR_PARTY_SCREEN_H

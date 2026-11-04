@@ -21,11 +21,12 @@
 #include "../skill_cap.h"
 #include "../game_globals.h"                   // g_level_xp (0x5937c8)
 #include "../../rgl/text_stream.h"
+#include "../game_keys.h"   // GameKeys: key_name 0x4d7370, key_binding_name 0x4d7d10
 // 0x432510: clamp *v into [*lo, *hi) and return it.
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);
 
 // @ 0x4d7370
-void options_panel::key_name(int which, tstring* out)
+void GameKeys::key_name(int which, tstring* out)
 {
     switch (which) {
     case 6:
@@ -38,32 +39,32 @@ void options_panel::key_name(int which, tstring* out)
         *out = g_keyboard.key_name(0x4a);                           // Numpad +
         return;
     case 0:
-        if (key_menu < 0) {
+        if (entry[0][0] < 0) {
             *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
             return;
         }
-        *out = g_keyboard.key_name(key_menu);
+        *out = g_keyboard.key_name(entry[0][0]);
         return;
     case 1:
-        if (key_prev < 0) {
+        if (entry[1][0] < 0) {
             *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
             return;
         }
-        *out = g_keyboard.key_name(key_prev);
+        *out = g_keyboard.key_name(entry[1][0]);
         return;
     case 2:
-        if (key_select < 0) {
+        if (entry[2][0] < 0) {
             *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
             return;
         }
-        *out = g_keyboard.key_name(key_select);
+        *out = g_keyboard.key_name(entry[2][0]);
         return;
     case 3:
-        if (key_next < 0) {
+        if (entry[3][0] < 0) {
             *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
             return;
         }
-        *out = g_keyboard.key_name(key_next);
+        *out = g_keyboard.key_name(entry[3][0]);
         return;
     }
 }
@@ -186,9 +187,9 @@ tstring Slot::key_name(int key)
 }
 
 // @ 0x4d7d10
-void options_panel::key_binding_name(int slot, tstring* out, int* translated)
+void GameKeys::key_binding_name(int slot, tstring* out, int* translated)
 {
-    const int key = (&key_menu)[slot * 2];
+    const int key = entry[slot][0];
     if (key < 0) {
         {
             tstring no_key("ui_no_key_assigned");                   // 0x59687c

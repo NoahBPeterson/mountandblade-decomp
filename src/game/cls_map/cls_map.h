@@ -76,7 +76,7 @@ struct EditMesh {
     bool on_selection_changed();   // 0x4d4b80
 };
 // the options-screen pages (options_panel/keys_page.cpp, quest_page.cpp, options_panel.cpp): the screens below are those objects; members only
-struct options_panel { void key_name(int which, tstring* out); void draw_faction_report(); };      // 0x4d7370 / 0x4d7e50
+struct options_panel { void draw_faction_report(); };      // 0x4d7e50
 struct KeysPage { void refresh(); void update_perf(); void set_enabled_text(MissionUi* w); };        // 0x4d7120 / 0x4d6b80 / 0x4d6dd0
 struct QuestPage {
     void update_difficulty();   // 0x4d6300
@@ -288,7 +288,8 @@ std::vector<tstring> list_modes();                // 0x4cf100 (options_panel/con
 typedef Recf0 OptionsWin;      // the record of screen_records.h (vtable class); its members live there
 extern int g_use_shaders;        // 0x5e28fc
 
-// ---- 0x4e25a0..0x4e3780: the key-binding page of the options menu (global at 0xa73730; the key table and the page share it) -----------
+#include "../game_keys.h"                    // GameKeys g_game_keys (0xa73730)
+// ---- 0x4e25a0..0x4e3780: the key-binding page of the options menu (the table it edits is GameKeys) -----------
 struct OptionsMenu {
     int f00;                                    // +0x00 (first key word; copy_slots 0x4e2cb0 copies it with the rest)
     int f04, f08, f0c, f10, f14, f18, f1c, f20, f24, f28;   // +0x04
@@ -310,12 +311,9 @@ struct OptionsMenu {
     char pad1b5[3];
     int f1b8;                                   // +0x1b8 the row being assigned, -1 for none
     void init();                                // 0x4e25a0
-    void copy_slots();                          // 0x4e2cb0
     void refresh() { ((KeysPage*)this)->refresh(); }                           // 0x4d7120 (thiscall; options_panel/keys_page.cpp)
-    void key_name(int i, tstring* out) { ((options_panel*)this)->key_name(i, out); }    // 0x4d7370 (thiscall, ret 8; options_panel/options_panel.cpp)
     tstring key_text(int i);                    // 0x4e2ce0 (returns a tstring: hidden out pointer, ret 8)
     tstring slot_text(int i);                   // 0x4e2ea0 (same convention)
 };
-extern OptionsMenu g_game_keys;                      // 0xa73730
 
 #endif // GAME_CLS_MAP_CLS_MAP_H

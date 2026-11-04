@@ -125,9 +125,10 @@ void MissionCtx::init()
 }
 
 // @ 0x4be7c0
-void code_table::init()
+void GameKeys::set_defaults()
 {
-    memset(v, -1, sizeof(v));
+    int* v = &entry[0][0];
+    memset(v, -1, sizeof entry);
     v[0x00 / 4] = 0x11; v[0x08 / 4] = 0x1f; v[0x10 / 4] = 0x1e;
     v[0x18 / 4] = 0x20; v[0x20 / 4] = 0x21; v[0x28 / 4] = 0x39;
     v[0x30 / 4] = 0xe0; v[0x38 / 4] = 0xe1; v[0x40 / 4] = 0xee;

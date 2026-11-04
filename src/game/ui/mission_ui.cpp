@@ -42,6 +42,7 @@
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../shared_vars.h"
 #include "../key_names.h"
+#include "../game_keys.h"   // GameKeys::is_down 0x48ac50, clicked 0x48ac90
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (.bss, no initialiser; sizes from the code) ----
@@ -1507,26 +1508,26 @@ int Mission::hold_fire_order(int i)
 }
 
 // @ 0x48ac50
-bool OriginPairs::is_down(int i)
+bool GameKeys::is_down(int i)
 {
     bool r = false;
-    int a = slots[i].a;
+    int a = entry[i][0];
     if (a >= 0 && g_keyboard.down[a] != 0)
         r = true;
-    int b = slots[i].b;
+    int b = entry[i][1];
     if (b >= 0 && g_keyboard.down[b] != 0)
         r = true;
     return r;
 }
 
 // @ 0x48ac90
-bool OriginPairs::clicked(int i)
+bool GameKeys::clicked(int i)
 {
     bool r = false;
-    int a = slots[i].a;
+    int a = entry[i][0];
     if (a >= 0 && g_keyboard.down[a] != 0 && g_keyboard.prev[a] == 0)
         r = true;
-    int b = slots[i].b;
+    int b = entry[i][1];
     if (b >= 0 && g_keyboard.down[b] != 0 && g_keyboard.prev[b] == 0)
         r = true;
     return r;
