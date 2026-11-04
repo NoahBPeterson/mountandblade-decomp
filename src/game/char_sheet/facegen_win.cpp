@@ -9,6 +9,7 @@
 #include "../std_vec_insert_n.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_a/terrain.h"      // Terrain, g_terrain
 #include "../config/widget_mgr.h"      // DropDown (append 0x493400)
+#include "../config/ui_widgets_c.h"      // UiE
 #include "./cs_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // the scene entity's slot 4 (+0x10), called once its mesh list is filled
@@ -109,16 +110,7 @@ void TerrainPage::init_screen()
         float y = t + 0.06f;
         layer_boxes[i] = board_button(panel, "randomize", 0.38f, y, 0.03f, "medium_button_down", "medium_button", 3.7f);
 
-        char* e = (char*)new_widget_base(0x188);    // 0x48ae20
-        if (e) {
-            *(int*)(e + 0x178) = 0;
-            *(e + 0x121) = 0;
-            *(void**)e = vtbl_592208;
-            *(e + 0x180) = 0;
-            *(e + 0x181) = 0;
-            *(int*)(e + 0x184) = 0x1c;
-        }
-        bit_fields[i] = (MissionUi*)e;
+        bit_fields[i] = new UiE(0);                 // the inlined constructor (config/ui_widgets_c.h)
         { tvec2 p = { 0.1f, y }; bit_fields[i]->move_a((const float*)&p); }
         { tvec2 s = { 0.225f, 0.025f }; bit_fields[i]->set_xy((const float*)&s); }
         mesh* up = board_mesh("party_button");
