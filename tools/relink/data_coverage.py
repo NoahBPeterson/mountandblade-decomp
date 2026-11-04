@@ -27,6 +27,9 @@ Classes, per item:
   borrowed from image     game code uses it, our source only declares it (extern) or names it nowhere
   reached through tables  no instruction uses it; a pointer table in the data does (the pages of a pool)
   library data            used only by the static CRT/C++ library (linked from libcmt/libcpmt, not decompiled)
+  unnamed bss             .bss after a source-defined object's real end that no instruction and no pointer reaches: nothing
+                          is copied (bss is zero-filled), but no name of ours covers it either (a field reached through a base
+                          register, or the next original object)
 Not an item: data the glue does not copy (glue.py DEAD_RANGES: the original's CRT tables, strings only the original's
 own pointer tables reached, the dead activation library); it is reported as "not copied (dead)".
 The import address table is excluded.
@@ -54,7 +57,8 @@ CRUTCHES = (("data_labels", "glue", r"data labels (\d+)"), ("aliases", "glue", r
             ("placeholder_virtuals", "vtable_gate", r"(\d+) placeholder virtuals"),
             ("forwarding_stubs", "vtable_gate", r"(\d+) slots bound by forwarding stubs"),
             ("data_definitions", "data", r"(\d+) data definitions at original addresses"))
-CLASSES = ("defined in source", "generated from source", "borrowed from image", "reached through tables", "library data")
+CLASSES = ("defined in source", "generated from source", "borrowed from image", "reached through tables", "library data",
+           "unnamed bss")
 GLUE_MODULES = ("mb_data",)          # the glue's object: the original's bytes laid out under labels, never a definition
 GENERATED = ("??_C@", "__real@", "__int64@", "__xmm@", "__mask@", "??_7", "??_R", "$SG")
 
@@ -238,7 +242,7 @@ def _absorb(items, named, syms, section_of, uses):
                 inner = [a for a in uses if cut <= a < e]
                 owners = set().union(*(uses[a] for a in inner)) if inner else set()
                 out.append([cut, e, "borrowed from image" if "game" in owners else "library data" if owners
-                            else "reached through tables"])
+                            else "unnamed bss" if section_of(cut)[0].startswith(".bss") else "reached through tables"])
                 continue
         out.append([s, e, c])
     return out
