@@ -191,9 +191,7 @@ void FaceGen::init_screen()
     }
 
     // ---- face body, world and wind tracks ----------------------------------------------------------
-    face_body* b = (face_body*)::operator new(0x358);
-    if (b)
-        ctor_4ed630((MapWidget*)b);   // 0x4ed630
+    face_body* b = new MapWidget;   // 0x4ed630
     body = b;
     float lo[4];
     lo[0] = -80.0f;

@@ -126,7 +126,6 @@ template<class V, class T> __forceinline void push_back_inline(V& c, T* const& v
 
 struct Camera;                                                      // party2/camera_class.h: the 0x4a8-byte view / editor list object (ctor 0x49deb0)
 struct MapWidget;
-MapWidget* __fastcall ctor_4ed630(MapWidget* self);                 // 0x4ed630 (the 3D view widget's constructor; MapWidget() of map_widget.h names it)
 MissionUi* __cdecl new_key_label(void* parent, const tstring* name, const tstring* text);   // 0x4f5d20 (editor_ui)
 void __cdecl label_refresh(MissionUi* w, tstring name);             // 0x4e4c70 (progress_bar: sets a freshly built widget up from its ini keys)
 UiD* __cdecl make_scrollbar(void* parent, const tstring* name); // 0x4f6160 (editor_ui)

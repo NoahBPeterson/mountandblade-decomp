@@ -1,13 +1,13 @@
 #ifndef RENDER_SHAPE_H
 #define RENDER_SHAPE_H
-// Slice s004ed6f0: the render context `GuiCtx` (global object at 0x5d7080).
-//   0x4ed6f0  GuiCtx::render_shape_frame - grid cell extents from the frame size, then one render of the extent
+// Slice s004ed6f0: the 3D view widget MapWidget (src/game/map_widget.h).
+//   0x4ed6f0  MapWidget::render - grid cell extents from the frame size, then one render of the extent
 //             (with the caller's clock value +1) and the follow pass.
 // Class and member names are provisional.
 #include <math.h>
 #include <vector>
 #include "../../rgl/rgl_math.h"
-#include "./cs_common.h"
+#include "../../rgl/scene/world.h"
 
 using rgl::vector4;
 
@@ -30,15 +30,8 @@ extern float g_div;                     // 0x5d7594  1/radius
 // ---- the render context (`this` = the global at 0x5d7080) ---------------------------------------------------
 #include "../view_rect.h"                    // ViewRect
 
-#include "./gui_ctx.h"                // GuiCtx (was Ctx), Vec1c
+#include "../map_widget.h"
 #include "../ui_globals.h"      // UI / core globals
 #include "../float_consts.h"
-
-struct RenderScene {                    // the scene object at GuiCtx+0x178 (renamed from Scene: party/game.h Scene is the party manager at game+0xf8)
-    char pad000[0xb8];
-    Vec1c fb8;                          // +0xb8 (copied into GuiCtx+0x310)
-    // (render_scene 0x429890 renders the +0x17c extent: rgl::world::render_scene, cs_common.h)
-};
-
 
 #endif

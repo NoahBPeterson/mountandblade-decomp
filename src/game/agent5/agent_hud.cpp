@@ -309,10 +309,7 @@ void MissionHud::refresh()
     status_group->add_child(ui_font_bg);
     frame->kids.push_back(status_group);
 
-    {
-        void* mem = operator new(sizeof(MapWidget));
-        name_widget = mem ? ctor_4ed630((MapWidget*)mem) : 0;
-    }
+    name_widget = new MapWidget;
     name_widget->world = g_mission->scene;
     {
         v[0] = 0.0f;

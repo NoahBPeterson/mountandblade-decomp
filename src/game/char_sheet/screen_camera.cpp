@@ -173,27 +173,11 @@ void CampaignScreen::camera_update(float dt)
     }
 }
 
-MapWidget* __fastcall ctor_4ed630(MapWidget* w);   // 0x4ed630 (ecx = object)
-
 // @ 0x4ed630
-MapWidget* __fastcall ctor_4ed630(MapWidget* w)
+MapWidget::MapWidget() throw()
 {
-    ((MissionUi*)w)->MissionUi::MissionUi();   // 0x48ae20
-    *(void**)w = (void*)vtbl_598698;
-    w->scene3d.scene::scene();   // 0x429740
-    w->scene3d.f16a = 1;
-    *(vector2*)((char*)w + 0xe0) = vector2(0.0f, 0.0f);
-    *(vector2*)((char*)w + 0xf0) = vector2(1.0f, 0.75f);
-    w->scene3d.flags = 0x200;
-    return w;
-}
-// @ 0x4ed6b0
-void* __fastcall dtor_4ed6b0(MapWidget* w, int, unsigned flags)
-{
-    *(void**)w = (void*)vtbl_598698;
-    w->scene3d.scene::~scene();   // 0x41f4e0
-    ((Buffer*)w)->Buffer::~Buffer();   // 0x487c00
-    if (flags & 1)
-        operator delete(w);
-    return w;
+    scene3d.f16a = 1;
+    *(vector2*)&fE0 = vector2(0.0f, 0.0f);
+    *(vector2*)&screen[0] = vector2(1.0f, 0.75f);
+    scene3d.flags = 0x200;
 }

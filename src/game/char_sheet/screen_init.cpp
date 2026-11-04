@@ -110,11 +110,7 @@ void CampaignScreen::init_screen()
         f60->b122 = 1;                               // 0x4ec93c: +0x122
     }
 
-    MapWidget* map = (MapWidget*)operator new(0x358);
-    if (map != 0)
-        ctor_4ed630(map);
-    else
-        map = 0;
+    MapWidget* map = new MapWidget;
     f30 = map;
     map->world = (void*)g_script.level;
     memcpy(&map->scene3d.fr, &cam, 0x120);

@@ -197,7 +197,6 @@ inline NodeA* new_frame_widget()
     return w;
 }
 #include "../map_widget.h"                                      // MapWidget: the 3D view widget (ctor 0x4ed630, vptr 0x598698, size 0x358)
-MapWidget* __fastcall ctor_4ed630(MapWidget* p);                  // 0x4ed630 (ecx = the object; returns it)
 
 
 // ---- the mission HUD screen ---------------------------------------------------------------------------------------------

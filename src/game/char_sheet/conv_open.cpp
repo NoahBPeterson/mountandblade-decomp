@@ -173,11 +173,7 @@ void Rec1208::init_screen()
     // embedded camera (at this+0x34) and its +0x178 points at the current mission
     float pos[2] = { 0.500085f, 0.290000f };
     float sz[2] = { 0.289000f, 0.452998f };
-    ViewWindow* vw = (ViewWindow*)::operator new(0x358);
-    if (vw)
-        ctor_4ed630((MapWidget*)vw);   // MapWidget::MapWidget is declared at 0x4ed630; the definition is this fastcall constructor
-    else
-        vw = 0;
+    ViewWindow* vw = new MapWidget;
     window = vw;
     {
         *(void**)((char*)vw + 0x178) = *(void**)g_mission;
