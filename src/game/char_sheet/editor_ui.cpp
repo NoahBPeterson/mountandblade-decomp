@@ -63,7 +63,7 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
         tstring down("left_arrow_down");
         tstring up("left_arrow");
         tstring empty("");
-        b = make_medium_button(parent, &empty, a2, a3, x, &up, &down, a5, z, 0.085f);
+        b = new_sized_button((MissionUi*)parent, empty, *(float*)&a2, *(float*)&a3, x, up, down, *(float*)&a5, z, 0.085f);   // 0x4dcc50
     }
     mesh* m;
     {
@@ -83,7 +83,7 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
         tstring down("right_arrow_down");
         tstring up("right_arrow");
         tstring empty("");
-        b = make_medium_button(parent, &empty, a2, a3, x, &up, &down, a5, z, 0.085f);
+        b = new_sized_button((MissionUi*)parent, empty, *(float*)&a2, *(float*)&a3, x, up, down, *(float*)&a5, z, 0.085f);   // 0x4dcc50
     }
     mesh* m;
     {

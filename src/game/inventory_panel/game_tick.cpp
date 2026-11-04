@@ -505,7 +505,7 @@ void GameG::update_cursor(float dt)
                 }
             }
         }
-        mgr->next_party_id((unsigned*)&id);
+        mgr->next_party_id((int*)&id);
     }
 
     int i = pool.first();
@@ -546,7 +546,7 @@ void GameG::update_weather()
         if (id == (unsigned)main_party
             || (*(unsigned __int64*)&party_at(mgr, ((Map10007*)mgr)->lookup((int)id))->flags_lo & 0x80100) == 0)
             party_at(mgr, ((Map10007*)mgr)->lookup((int)id))->tick_stats();
-        mgr->next_party_id((unsigned*)&id);
+        mgr->next_party_id((int*)&id);
     }
 
     __int64 cur = g_ticks[f13b18];
@@ -848,7 +848,7 @@ void GameG::update_tracks()
 // @ 0x518d70
 void GameG::train_troops()
 {
-    for (unsigned id = parties.first_party_id(); id < parties.n_parties; parties.next_party_id(&id))
+    for (unsigned id = parties.first_party_id(); id < parties.n_parties; parties.next_party_id((int*)&id))
         party_at(&parties, ((Map10007*)&parties)->lookup(id))->dirty = 1;
 
     Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(f78));

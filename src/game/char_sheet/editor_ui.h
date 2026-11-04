@@ -49,8 +49,6 @@ struct Font {
     void load(const char* path);   // 0x4d9aa0 (the original hands it a tstring)
 };
 #include "../render_batch.h"                        // render_batch, g_batch (0x5fe898): init_formats 0x4bc5b0 starts the engine
-void* make_medium_button(void* parent, const tstring* text, int a2, int a3, float a4,
-                         const tstring* up, const tstring* down, int a5, float a6, float k);  // 0x4dcc50
 
 
 // ---- globals ---------------------------------------------------------------------------------------

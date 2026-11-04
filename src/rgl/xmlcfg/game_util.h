@@ -101,9 +101,6 @@ bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   /
 
 // ---- message ring, height field, scene object ---------------------------------------------------------------------
 #include "../../include/msg_log.h"             // MsgLog (one definition for src/game and src/rgl; push 0x4334b0 is defined in game_util.cpp)
-struct HeightFieldX : HeightField {         // agent.h's HeightField has cols, w, h, cell
-    void sample(float x, float y, float* out_h, int* out_id);   // 0x433510
-};
 struct Obj3 {                               // scene object with a placement block
     char pad0[0xe8];
     unsigned flags;                         // +0xe8 (bit 0: pending, bit 1: timed)

@@ -1829,7 +1829,7 @@ void GameData::save_language_files(bool translated)
                     write_row(f, parties.get_party(i)->key, *v);
                 }
             }
-            parties.next_party_id(&i);
+            parties.next_party_id((int*)&i);
         }
         fclose(f);
     }

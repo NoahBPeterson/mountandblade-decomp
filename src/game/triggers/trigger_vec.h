@@ -32,6 +32,7 @@ float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (
 // rec_tables.h (g_log), so this is its declaration of the three members the module loader calls (resmgr.cpp 0x4195e0 / 0x419640 / 0x41e150).
 // g_resmgr_full of resmgr.h is the same object as resource.h's g_resmgr.
 struct resmgr {
+    int restore(ID3DXEffect* fx);                                   // 0x419580 (device reset: textures, effects)
     int invalidate();                                               // 0x4195e0 (device lost)
     void linearise_meshes();                                        // 0x419640
     void load_pack(const rgl::string& name, int user);              // 0x41e150
@@ -96,7 +97,6 @@ struct options;
 extern options g_options;                   // 0x5aa008 (rgl/resource_manager.h clashes with the log declarations here)
 extern ini_file g_module_info;          // 0xa18238 module_info.txt table (count member)
 extern ini_file g_game_vars;            // 0xa44240 game_variables.txt table
-// g_resmgr_x: the view of g_resmgr (0x5d6fa0) declared in config.h
 extern int g_compatible_module_version;      // 0x5e29b8
 extern int g_module_version;                 // 0x5e29c0
 extern float g_map_min_x;                    // 0x5aa120

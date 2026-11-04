@@ -711,7 +711,7 @@ void PartyScreen::setup_party(int side)
             float h     = ini_float_scan(k_h);
             float x     = ini_float_scan(k_x);
             buttons[side * 2 + page][i] =
-                new_member_button(members_page[side][page], k_empty, x, 0, h,
+                (MissionUi*)new_sized_button(members_page[side][page], k_empty, x, 0.0f, h,
                                   tstring("party_member_button"),
                                   tstring("party_member_button_pressed"),
                                   ratio, ev, 0.085f);

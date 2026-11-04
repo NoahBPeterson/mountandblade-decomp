@@ -61,7 +61,8 @@ extern void* g_vt_595618[]; // 0x595618 log_stream's vtable (its base)
 extern FILE* g_5a9f90;      // 0x5a9f90 the log's FILE
 
 // ---- callees --------------------------------------------------------------------------------------------------
-struct TStrRec { TStrRec(); ~TStrRec(); char rec[0x20]; };   // 0x42bbd0, 0x42bc40; sized as the 0x20-byte table record the string heads
+#include "../tstring.h"                       // tstring::tstring 0x42bbd0, ~tstring 0x42bc40
+struct TStrRec : tstring { char rest[0x10]; };   // the 0x20-byte table record the string heads
 struct tstring11 { TStrRec a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
@@ -85,8 +86,8 @@ void __cdecl static_dtor_548140() { ((gui_manager*)g_5d7080)->~gui_manager(); }
 // @ 0x548170
 void __cdecl static_dtor_548170()
 {
-    ((TStrRec*)(g_5a9f30 + 0x20))->~TStrRec();
-    ((TStrRec*)(g_5a9f30 + 0x4))->~TStrRec();
+    ((tstring*)(g_5a9f30 + 0x20))->~tstring();
+    ((tstring*)(g_5a9f30 + 0x4))->~tstring();
 }
 // @ 0x548200
 void __cdecl static_dtor_548200() {}
@@ -98,7 +99,7 @@ void __cdecl static_dtor_548250()
     char* p = (char*)&g_meshes;                 // the ground types end where the mesh table begins
     for (int n = 0xb; n; n--) {
         p -= 0x20;
-        ((TStrRec*)p)->~TStrRec();
+        ((tstring*)p)->~tstring();
     }
 }
 // @ 0x5482b0   the log stream's destructor: back to the base vtable, close the file if it is open, then the strings
@@ -112,8 +113,8 @@ void __cdecl static_dtor_5482b0()
         g_5a9f60[0x34] = 1;
         g_5a9f60[0x35] = 0;
     }
-    ((TStrRec*)(g_5a9f60 + 0x20))->~TStrRec();
-    ((TStrRec*)(g_5a9f60 + 0x4))->~TStrRec();
+    ((tstring*)(g_5a9f60 + 0x20))->~tstring();
+    ((tstring*)(g_5a9f60 + 0x4))->~tstring();
 }
 // @ 0x548410
 void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }

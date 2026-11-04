@@ -283,7 +283,6 @@ struct PartyMgr {                           // 0x138e0 bytes, embedded in the ga
     Party* get(int id);                     // 0x51ee50 (thiscall, ret 4)
     Party* get_party(unsigned id) { int idx = index_of(id); return (Party*)((char*)pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
     void next_party_id(int* id);            // 0x460ca0
-    void next_party_id(unsigned* id);       // 0x460ca0
     int first_party_id();                   // 0x460d20
     bool is_live(int id);                   // 0x4903e0 (thiscall, ret 4: id names a live party) (src/game/party2)
 };

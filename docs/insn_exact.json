@@ -1094,7 +1094,7 @@
   },
   "00433510": {
    "verdict": "DIFF",
-   "symbol": "?sample@HeightFieldX@@QAEXMMPAMPAH@Z",
+   "symbol": "?sample@HeightField@@QAEXMMPAMPAH@Z",
    "insns": 154,
    "ours": 154,
    "unverified": 0,

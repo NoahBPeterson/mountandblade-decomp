@@ -44,13 +44,10 @@ extern "C" double atof(const char* s);                       // 0x537352
 // (each constructor on its own line inside its class: the resolution tools read a '// 0x' annotation in the class's scope)
 // widget helper functions
 void label_refresh(MissionUi* w, tstring name);                       // 0x4e4c70
-extern "C" MissionUi* make_short_button(MissionUi* parent, tstring* text,
-                                     float x, float y, float h);            // 0x4e5570
-extern "C" MissionUi* make_map_button(MissionUi* parent, tstring* text,
-                                   float x, float y, float h);              // 0x4dcbd0
-extern "C" UiD* make_scrollbar(MissionUi* parent, const tstring* name);           // 0x4f6160
-extern "C" MissionUi* make_scroll2(MissionUi* parent, const tstring* name,
-                                UiD* other);                            // 0x4f62f0
+UiA* make_short_button(MissionUi* parent, const tstring* text, float x, float y, float h);   // 0x4e5570
+UiA* new_long_button(MissionUi* parent, const tstring* text, float x, float y, float h);     // 0x4dcbd0
+UiD* make_scrollbar(void* parent, const tstring* name);                                      // 0x4f6160
+Camera* make_editor_list(void* parent, const tstring* name, int child);                      // 0x4f62f0
 
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct mnode {                                       // game/agent2/agent_types.h: the font object's bounds are mnode::calc_bounds
@@ -334,7 +331,7 @@ void note_window::build(int page_, int arg_)
         label_refresh(this->btn_back, tstring("note_b_back"));
         this->btn_forward = make_short_button(panel, tr_obj("ui_forward"), 0.0f, 0.0f, small_h);
         label_refresh(this->btn_forward, tstring("note_b_forward"));
-        this->btn_map = make_map_button(panel, tr_obj("ui_display_on_map"), 0.0f, 0.0f, small_h);
+        this->btn_map = new_long_button(panel, tr_obj("ui_display_on_map"), 0.0f, 0.0f, small_h);
         label_refresh(this->btn_map, tstring("note_b_map_follow"));
         this->btn_map->hide();
     }
@@ -837,8 +834,8 @@ void note_window::build(int page_, int arg_)
     }
     {
         tstring sc_keys("note_sc_keys");
-        this->keys_scroll = make_scroll2(this->keys_panel, &sc_keys,
-                                         keys_scroll_base);                 // 0x4f62f0
+        this->keys_scroll = make_editor_list(this->keys_panel, &sc_keys,
+                                         (int)keys_scroll_base);                 // 0x4f62f0
     }
 
     {
@@ -871,8 +868,8 @@ void note_window::build(int page_, int arg_)
     }
     {
         tstring sc_data("note_sc_data");
-        this->data_scroll = make_scroll2(this->data_panel, &sc_data,
-                                         data_scroll_base);                 // 0x4f62f0
+        this->data_scroll = make_editor_list(this->data_panel, &sc_data,
+                                         (int)data_scroll_base);                 // 0x4f62f0
     }
 
     {

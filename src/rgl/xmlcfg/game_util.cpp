@@ -499,7 +499,7 @@ void MsgLog::push(const tstring& s, int v)
 
 static inline int ifloor(float f) { return (int)(f > 0.0f ? f : f - 0.99999988f); }
 // @ 0x433510
-void HeightFieldX::sample(float x, float y, float* out_h, int* out_id)
+void HeightField::sample(float x, float y, float* out_h, int* out_id)
 {
     float inv = 1.0f / cell;
     float t[2];

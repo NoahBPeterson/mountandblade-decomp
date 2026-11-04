@@ -78,7 +78,7 @@ extern void* g_windows[];                       // 0xa73980 (the window manager:
 struct WindowOpener {                           // the window manager (world_data.h WindowMgrW)
     void open(int window);                      // 0x494260 (ret 4)
 };
-MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
+UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 
 // the scrolling item list is Camera (constructor 0x49deb0, size 0x4a8): the flags word is Object's; +0x484 (follow[1]) the scroll bar, +0x490 (target) the page it scrolls (the same page is its one child)

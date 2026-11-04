@@ -51,9 +51,8 @@ static __forceinline MissionUi* make_editor_list(MissionUi* p, const tstring* n,
 { return (MissionUi*)make_editor_list((void*)p, n, (int)sc); }
 static __forceinline UiD* make_scrollbar(MissionUi* p, const tstring* n)
 { return make_scrollbar((void*)p, n); }
-MissionUi* __cdecl new_member_button(MissionUi* parent, const tstring& name, float x, int zero, float h,
-                                     const tstring& text, const tstring& pressed, float width_ratio,
-                                     float height, float ratio);                              // 0x4dcc50
+UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
+                      const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 static __forceinline void __fastcall quarter_update(MissionUi* w) { ((Camera*)w)->draw(); }   // 0x488d50
 int skill_level(int member, int skill);            // 0x437b20 (GameData::skill_level, called here with the global as an argument)
 

@@ -1147,13 +1147,13 @@ HRESULT GameApp::RestoreDeviceObjects()
             mb_error("Unable to compile the effect file.");
     }
     g_batch.init_shaders();
-    g_resmgr_x.restore(g_effect);
+    g_resmgr_full.restore(g_effect);
     if (g_render.dev)
         g_render.dev->ShowCursor(((unsigned char)g_gui.f560));
     IDirect3DTexture9* tex;
     {
         tstring name("cursor");
-        tex = *g_resmgr_x.get_texture(name)->d3d_tex;
+        tex = *g_resmgr.get_texture(name)->d3d_tex;
     }
     IDirect3DSurface9* surf;
     tex->GetSurfaceLevel(0, &surf);

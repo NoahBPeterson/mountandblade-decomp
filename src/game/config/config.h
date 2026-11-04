@@ -95,19 +95,7 @@ void __fastcall release_input_devices(Slot* self);  // 0x4bc3d0
 
 // ---- the render batch's buffer table (0x4bc540..0x4bd0c0): dev_buffer / buffer_pair
 #include "../dev_buffer.h"
-struct shader_res;
-struct resource_manager_x {                         // the resource manager (0x5d6fa0), shader lookup only (calls added for src/game/triggers)
-    shader_res* get_shader(const tstring& name);    // 0x418b30
-    struct texture* get_texture(const tstring& name);   // 0x418870 (rgl/resource.h texture; its d3d_tex at +0x40)
-    int  reload_textures();                         // 0x418da0
-    void reset_effect_sets();                       // 0x418fb0
-    int  restore(ID3DXEffect* fx);                  // 0x419580 (device reset: textures, effects)
-    int  invalidate();                              // 0x4195e0 (device lost)
-    void linearise_meshes();                        // 0x419640 (called "finalize" by module_info.txt's loader)
-    void load_pack(const tstring& name, int user);  // 0x41e150
-};
 #include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0 (the one declaration)
-#define g_resmgr_x (*(resource_manager_x*)&g_resmgr)   // the 0x5d6fa0 object seen through the shader / texture view above
 #include "../render_batch.h"                   // render_batch (shared with terrain_b)
 #include "../../include/render_flags.h"
 struct font_details {                               // 0x1c: the staged glyph record Font::load 0x4d9aa0 copies into the

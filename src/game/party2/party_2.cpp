@@ -1271,7 +1271,7 @@ void Party::collect_targets(int* out, int* max, int* count)
         if ((g_script.trigger_result.store1 | g_script.trigger_result.store0) != 0)
             out[(*count)++] = (int)id;
     next:
-        parties()->next_party_id(&id);
+        parties()->next_party_id((int*)&id);
     }
 }
 

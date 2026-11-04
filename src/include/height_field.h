@@ -7,8 +7,7 @@
 //                 h left uninitialised).
 //   HeightField : cols +0 (0x436da0, 0x471b30, 0x4785e0), x0/y0 +4/+8 world origin of the tile grid (0x436da0),
 //                 w/h +0x14/+0x18 (highest column / row index: 0x462420, 0x4785e0), cell +0x1c cell size (0x436da0;
-//                 terrain_b 0x4785e0 calls it scale). sample 0x433510 is defined by HeightFieldX
-//                 (src/rgl/xmlcfg/game_util.h) under its own name.
+//                 terrain_b 0x4785e0 calls it scale). sample 0x433510 is defined in rgl/xmlcfg/game_util.cpp
 // Needs rgl::vector4 (rgl_base.h picks the module's own declaration).
 #ifndef MB_HEIGHT_FIELD_H
 #define MB_HEIGHT_FIELD_H

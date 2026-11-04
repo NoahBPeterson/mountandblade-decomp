@@ -157,18 +157,16 @@ void char_window::fill_skills()
 using rgl::mesh;
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 
-void* alloc_53545e(unsigned size);                      // 0x53545e  operator new
-struct ctor_obj { void ctor(); };                       // 0x48ae20  base ctor (thiscall)
-inline void ctor_48ae20(void* p) { ((ctor_obj*)p)->ctor(); }
+#include <new>
 extern char g_vt_591d58[];                              // 0x591d58
 extern float g_590d94;                                  // 0x590d94 (0.6f)
 
 // @ 0x509770
 UiA* make_button(ContainerBase* parent, const tstring* text, float x, float y, int n, float s)
 {
-    UiA* b = (UiA*)alloc_53545e(0x188);
+    UiA* b = (UiA*)::operator new(0x188);
     if (b != 0) {
-        ctor_48ae20(b);
+        new (b) MissionUi;   // 0x48ae20
         *(int*)((char*)b + 0x178) = 0;
         *((char*)b + 0x121) = 0;
         *(void**)b = (void*)g_vt_591d58;
