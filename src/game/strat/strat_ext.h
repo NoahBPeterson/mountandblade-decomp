@@ -25,8 +25,6 @@ using rgl::frustum;
 
 #define OFFSET_CHECK3(T, m, off) typedef char T##_##m##_at3_##off[(offsetof(T, m) == (off)) ? 1 : -1]
 
-struct StratEnt;
-struct MeshEnt;
 
 // the mesh, scene and resource classes are the shared ones (src/rgl/mesh.h, resource.h)
 #include "../../include/vec.h"

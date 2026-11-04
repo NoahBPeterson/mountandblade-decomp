@@ -165,7 +165,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         *(float*)((char*)e + 0xed8) = 0.3f;
         float f = 3.1f;
         a->set_fbc(&f);
-        a->fc0 = 2.1f;
+        a->shadow_radius = 2.1f;
         a->vc4 = vector4(0.0f, 0.0f, 1.3f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
     } else {
         // ---- the character's weapon ---------------------------------------------------------------
@@ -375,7 +375,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         float f = 3.1f;
         a->set_fbc(&f);
-        a->fc0 = 1.1f;
+        a->shadow_radius = 1.1f;
         a->vc4 = vector4(0.0f, 0.0f, 1.1f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
     }
 

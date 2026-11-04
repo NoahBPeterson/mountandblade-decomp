@@ -35,7 +35,7 @@ vector4 rgl::world::get_ambient()
 // @ 0x42b790
 // Renders the shadow-map view of the entity into its 128x128 shadow render target (created on first use):
 // an orthographic camera along the main light, then the entity and its linked entity are drawn into it.
-void StratEnt::shadow_tick()
+void rgl::strategic_entity::shadow_tick()
 {
     if (p288 == 0) {
         p288 = g_resmgr.get_shadow_skin(0x80, 0x80, 0x1c, 0);
@@ -46,50 +46,53 @@ void StratEnt::shadow_tick()
         p288->flags = 0x108;
         p288->tex[0]->flags = 0x300000;
     }
-    if (sc28c == 0) {
-        sc28c = new scene;                 // the ctor 0x429740 is rgl::scene's
-        sc28c->mask = 0x2000;
-        sc28c->f0 = 1;
-        sc28c->f4 = 1;
-        sc28c->f8 = 0x7e;
-        sc28c->fc = 0x7e;
-        sc28c->f10 = 0;
-        sc28c->f14 = 1.0f;
-        sc28c->f18 = 0;
-        sc28c->f1c = 0;
-        sc28c->f20 = 0x80;
-        sc28c->f24 = 0x80;
-        sc28c->f28 = 0;
-        sc28c->f2c = 1.0f;
-        sc28c->f1a5 = 1;
-        sc28c->f164 = 1;
-        sc28c->flags = 0x2101;
-        sc28c->f190 = 0;
+    if (f28c == 0) {
+        f28c = new scene;                 // the ctor 0x429740 is rgl::scene's
+        f28c->mask = 0x2000;
+        f28c->f0 = 1;
+        f28c->f4 = 1;
+        f28c->f8 = 0x7e;
+        f28c->fc = 0x7e;
+        f28c->f10 = 0;
+        f28c->f14 = 1.0f;
+        f28c->f18 = 0;
+        f28c->f1c = 0;
+        f28c->f20 = 0x80;
+        f28c->f24 = 0x80;
+        f28c->f28 = 0;
+        f28c->f2c = 1.0f;
+        f28c->f1a5 = 1;
+        f28c->f164 = 1;
+        f28c->flags = 0x2101;
+        f28c->f190 = 0;
     }
     if (p288 != 0 && p288->tex[0]->loaded != 0) {
         frustum f;
         render_info ri;
         matrix m;
         vector4 amb;
-        f.farz = radius * 5.0f;
+        f.farz = shadow_radius * 5.0f;
         f.perspective = 0;
         f.nearz = 0.01f;
-        f.right = radius;
-        f.left = -radius;
-        f.top = radius;
-        f.bottom = -radius;
+        f.right = shadow_radius;
+        f.left = -shadow_radius;
+        f.top = shadow_radius;
+        f.bottom = -shadow_radius;
         f.build_planes();
         build_shadow_frame(&m, &amb);
         f.m = m;
         f.build_planes();
-        sc28c->fr = f;
-        sc28c->target = p288->tex[0];
-        if (fx) fx->draw(sc28c, &pos, &f144);
-        ((rgl::entity*)this)->rgl::entity::render(sc28c, &ri);
+        f28c->fr = f;
+        f28c->target = p288->tex[0];
+        if (fx) fx->draw(f28c, &local, &f144);
+        rgl::entity::render(f28c, &ri);
         if (f298 >= 0) {
-            StratEnt* e = (StratEnt*)ctx->find_entity(f298);
-            if (e != 0 && e->type() == 9 && e->fx != 0)
-                e->fx->draw(sc28c, &e->pos, &f144);
+            rgl::entity* o = owner->find_entity(f298);
+            if (o != 0 && o->type_id() == 9) {
+                rgl::strategic_entity* e = static_cast<rgl::strategic_entity*>(o);
+                if (e->fx != 0)
+                    e->fx->draw(f28c, &e->local, &f144);
+            }
         }
     }
 }

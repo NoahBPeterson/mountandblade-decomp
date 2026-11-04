@@ -304,8 +304,8 @@ entity::~entity()
 {
     if (shape) delete shape;
     entity::clear();
-    if (p138) { delete p138; p138 = 0; }
-    if (p13c) { delete p13c; p13c = 0; }
+    if (shadow_a) { delete shadow_a; shadow_a = 0; }
+    if (shadow_b) { delete shadow_b; shadow_b = 0; }
 }
 // 0x4214e0 is the compiler-generated scalar deleting destructor ??_Gentity (calls ~entity above, then operator
 // delete if bit 0 of the flag is set); it has no source of its own.
@@ -393,7 +393,7 @@ strategic_entity::strategic_entity()
     last_pos = vector4(-10000.0f, -10000.0f, -10000.0f);
     f16c = 0;
     fx = 0;
-    f274 = 0;
+    nids = 0;
     p288 = 0;
     f28c = 0;
     f290 = 0;
@@ -401,7 +401,7 @@ strategic_entity::strategic_entity()
     radius = 0.0f;
     f170 = 0;
     f31c = 0;
-    f278 = -100000000.0f;
+    shadow_pos.x = -100000000.0f;
     f298 = -1;
     f294 = 1.0f;
     f2ec = 1;

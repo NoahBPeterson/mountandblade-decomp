@@ -9,7 +9,7 @@ it to index an array whose extent is fixed by the FUNCTION's own code or by the 
     polygon_capsule_contact 0x40b0f0. `corpus > 4` walks off a 4-entry local array into other frame
     slots, whose contents are a function of the frame layout (orig 0xd8 vs ours 0xc4) - not of the code.
   * `GFace::n` (+0) indexes `GFace::idx[4]` and drives the `vtx[3][4]` local of
-    StratEnt::create_shadow_mesh 0x42b080. `n == 0` leaves `vtx` uninitialised (0xCCCCCCCC ids reach
+    strategic_entity::create_shadow_mesh 0x42b080. `n == 0` leaves `vtx` uninitialised (0xCCCCCCCC ids reach
     Psys::add_rec2 0x411920, whose heap result is a stale-stack block).
   * `Terrain::w` / `h` (+0x278 / +0x27c) are the last cell indices of the declared `cell[251][251]`
     (+0x288) that Terrain::sample 0x465af0 indexes; soup dims put the corner pointers far outside the
@@ -53,7 +53,7 @@ NSLOTS = POOL_SIZE // SLOT
 # header so that a reviewer can check it against the source. A missing/changed declaration falls back to the
 # explicit constant and, failing that, disables that invariant (a wrong bound must never excuse a mismatch).
 
-_HEADERS = ("src/include/shape.h", "src/game/strat/strat_entity.h", "src/game/terrain_a/terrain.h",
+_HEADERS = ("src/include/shape.h", "src/game/strat/strat_entity.h", "src/rgl/scene/scene_entity.h", "src/game/terrain_a/terrain.h",
             "src/include/dialog_rec.h")
 _decl_cache = {}
 
@@ -183,13 +183,13 @@ FACE_INV = Invariant("face::count", "the local v[4] walk of a face (shape.h: vec
                      _face_count, [(1, FACE_CAP)]) if FACE_CAP and 1 <= FACE_CAP else None
 
 
-# -- GFace::n of the ground faces the entity's id list names: StratEnt::create_shadow_mesh 0x42b080 walks
+# -- GFace::n of the ground faces the entity's id list names: strategic_entity::create_shadow_mesh 0x42b080 walks
 #    `ctx->ground->faces[ids[i]]` for `i < nids` and indexes `GFace::idx[4]` + the local vtx[3][4] by
 #    `face->n`. n outside 3..4 leaves vtx uninitialised (and n == 0 divides by zero); nids itself is an
 #    index into the declared `ids[64]` (+0x174), so a well-formed entity has 0 <= nids <= 64.
 
 GFACE_CAP = declared_array_len("GFace", "idx", default=4)
-IDS_CAP = declared_array_len("StratEnt", "ids", default=64)
+IDS_CAP = declared_array_len("strategic_entity", "ids", default=64)
 
 
 def _ground_face(gen, inp):
@@ -226,7 +226,7 @@ def _ground_face_counts(gen, inp):
 
 
 GFACE_INV = Invariant("GFace::n",
-                      "the GFace::idx[4] / vtx[3][4] walk of the ground faces named by StratEnt::ids[64] "
+                      "the GFace::idx[4] / vtx[3][4] walk of the ground faces named by strategic_entity::ids[64] "
                       "(strat_entity.h: GFace{int n; int idx[4]}, ids +0x174, nids +0x274)",
                       _ground_face_counts, [(3, GFACE_CAP)]) if GFACE_CAP and 3 <= GFACE_CAP else None
 
@@ -241,10 +241,10 @@ def _strat_nids(gen, inp):
         return
     nids = _dword(gen, inp, th + 0x274)
     if nids is not None:
-        yield "StratEnt::nids", nids, 0, IDS_CAP
+        yield "strategic_entity::nids", nids, 0, IDS_CAP
 
 
-NIDS_INV = Invariant("StratEnt::nids", "the declared ids[64] (+0x174) the id list indexes",
+NIDS_INV = Invariant("strategic_entity::nids", "the declared ids[64] (+0x174) the id list indexes",
                      _strat_nids, [(0, IDS_CAP)])
 
 

@@ -39,13 +39,13 @@ entity::entity()
     fbc = 0;
     vc4 = vector4(0.0f, 0.0f, 0.0f);
     f10 = 0;
-    p138 = 0;
-    p13c = 0;
+    shadow_a = 0;
+    shadow_b = 0;
     f141 = 0;
     f142 = 0;
     scale = vector4(1.0f, 1.0f, 1.0f);
     f140 = 1;
-    fc0 = 0.01f;
+    shadow_radius = 0.01f;
     fc = -1;
     f144 = 1.0f;
 }

@@ -38,7 +38,7 @@ void rgl::strategic_entity::render(rgl::scene* sc, rgl::render_info* out)
                 bool a = f160 * f294 > 0.05f;
                 bool b = f164 * f294 > 0.05f;
                 if (a || b)
-                    ((StratEnt*)this)->update_shadows(sc, a, b);
+                    update_shadows(sc, a, b);
             }
         }
         for (std::vector<rgl::psys*>::iterator p = emitters.begin(); p != emitters.end(); ++p)
@@ -63,15 +63,15 @@ Light* rgl::world::first_dir_light()
 }
 
 // @ 0x42a1f0
-void StratEnt::update_shadows(scene* sc, bool a, bool b)
+void rgl::strategic_entity::update_shadows(scene* sc, bool a, bool b)
 {
-    float dx = pos.o.x - last_pos.x;
-    float dy = pos.o.y - last_pos.y;
-    float dz = pos.o.z - last_pos.z;
+    float dx = local.o.x - shadow_pos.x;
+    float dy = local.o.y - shadow_pos.y;
+    float dz = local.o.z - shadow_pos.z;
     float dist = (float)sqrt(dx * dx + (dz * dz + dy * dy));
-    if (dist > radius * 0.2f) {
+    if (dist > shadow_radius * 0.2f) {
         update_ground_cache();
-        last_pos = pos.o;
+        shadow_pos = local.o;
     }
     if ((float)(g_ticks[f2a0] - t2a8) * 1e-05f >= -0.0001f) {
         if (a)
@@ -107,17 +107,17 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
 }
 
 // @ 0x42a480
-void StratEnt::update_ground_cache()
+void rgl::strategic_entity::update_ground_cache()
 {
     matrix m;
     vector4 amb;
     build_shadow_frame(&m, &amb);
-    float reach = radius * 3.0f;
+    float reach = shadow_radius * 3.0f;
     capsule cap((capsule::outline_init()));
-    cap.p0 = tp(pos, off);
+    cap.p0 = tp(local, vc4);
     vector4 t(m.u.x * reach, m.u.y * reach, m.u.z * reach);
     cap.p1 = vector4(cap.p0.x - t.x, cap.p0.y - t.y, cap.p0.z - t.z);
-    cap.radius = radius * 1.1f;
+    cap.radius = shadow_radius * 1.1f;
     vector4 tmp;
     const vector4* mn = cap.get_min(&tmp);
     vector4 bmin(mn->x - 0.1f, mn->y - 0.1f, mn->z - 0.1f);
@@ -125,7 +125,7 @@ void StratEnt::update_ground_cache()
     vector4 bmax(mx->x + 0.1f, mx->y + 0.1f, mx->z + 0.1f);
     shape_base* found[0x2000];
     int nfound;
-    ctx->query_box(&bmin.x, &bmax.x, 0x104, found, &nfound);
+    owner->query_box(&bmin.x, &bmax.x, 0x104, found, &nfound);
     nids = 0;
     for (int i = 0; i < nfound; i++) {
         if (nids >= 0x40)
@@ -133,20 +133,20 @@ void StratEnt::update_ground_cache()
         int id = *(int*)((char*)found[i] + 4);
         if (id < 0)
             continue;
-        NavCell* face = &ctx->ground->cells[id];
+        NavCell* face = &owner->ground->cells[id];
         vector4 nu(-m.u.x, -m.u.y, -m.u.z);
         const float* nn = &face->trans.x;
         if (!(nu.x * nn[0] + (nu.y * nn[1] + nu.z * nn[2]) < 0.0f))   // 0x42a720: the z and y terms are summed first
             continue;
         if (shape_contact_count(&cap, found[i], 0, 0) == 0)
             continue;
-        face = &ctx->ground->cells[*(int*)((char*)found[i] + 4)];
+        face = &owner->ground->cells[*(int*)((char*)found[i] + 4)];
         vector4 c[4];
         for (int k = 0; k < face->npts; k++) {
-            NavVert* gv = &ctx->ground->verts[face->ids[k]];
+            NavVert* gv = &owner->ground->verts[face->ids[k]];
             vector4 v = gv->p;
             c[k] = m.transform_point_to_local(v);
-            float inv = 0.5f / radius;
+            float inv = 0.5f / shadow_radius;
             c[k].x = inv * c[k].x;
             c[k].y = inv * c[k].y;
             c[k].z = inv * c[k].z;
@@ -184,13 +184,13 @@ static inline vector4 crossv(const vector4& a, const vector4& b)
 }
 
 // @ 0x42aaf0
-void StratEnt::build_shadow_frame(matrix* m, vector4* amb)
+void rgl::strategic_entity::build_shadow_frame(matrix* m, vector4* amb)
 {
     vector4* o = &m->o;
-    *o = pos.o;
-    *o = tp(pos, off);
+    *o = local.o;
+    *o = tp(local, vc4);
     vector4 d;
-    ctx->sample_lights(&pos.o, &d, amb);
+    owner->sample_lights(&local.o, &d, amb);
     if (d.z > -0.1f) d.z = -0.1f;
     vector4* u = &m->u;
     vector4* f = &m->f;
@@ -201,9 +201,9 @@ void StratEnt::build_shadow_frame(matrix* m, vector4* amb)
     *f = crossv(*u, m->s);
     f->normalize();
     vector4 t;
-    t.x = radius * u->x;
-    t.y = u->y * radius;
-    t.z = u->z * radius;
+    t.x = shadow_radius * u->x;
+    t.y = u->y * shadow_radius;
+    t.z = u->z * shadow_radius;
     o->x = t.x + o->x;
     o->y = t.y + o->y;
     o->z = t.z + o->z;
@@ -285,7 +285,7 @@ int rgl::mesh::add_vertex_rec(int index, const vertex60& v)
 // Builds (or refills) the shadow decal mesh from the ground faces under the entity: one vertex per
 // ground vertex lifted along its normal, with texture coordinates projected on the shadow camera and an
 // alpha that falls off with the distance from the entity; 1..3 sample vertices per ground vertex.
-void StratEnt::create_shadow_mesh(mesh** slot, char flag)
+void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
 {
     int vtx[3][4];
     vector4 amb;
@@ -320,7 +320,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         (*slot)->slots[0].f4 = 1;
     }
     ((rgl::mesh*)*slot)->clear_geometry();
-    vector4 a2 = ctx->get_ambient();
+    vector4 a2 = owner->get_ambient();
     nt = 1;
     s0 = ((a2.z + a2.y) + a2.x) * 0.35f;
     if (f15c > 0.5f) {
@@ -338,11 +338,11 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         off[2] = vec2c(0.00546875f, -0.005078125f);
     }
     for (i = 0; i < nids; i++) {
-        face = &ctx->ground->cells[ids[i]];
+        face = &owner->ground->cells[ids[i]];
         for (j = 0; j < face->npts; j++) {
-            k = radius * 0.03f;
-            p = ctx->ground->verts[face->ids[j]].p;
-            n = &ctx->ground->verts[face->ids[j]].n;
+            k = shadow_radius * 0.03f;
+            p = owner->ground->verts[face->ids[j]].p;
+            n = &owner->ground->verts[face->ids[j]].n;
             dy = k * n->y;
             dz = k * n->z;
             p.x = k * n->x + p.x;
@@ -350,7 +350,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             p.z = p.z + dz;
             pi = ((rgl::mesh*)*slot)->add_point(&p);
             pt[j] = pi;
-            ir = 1.0f / radius;
+            ir = 1.0f / shadow_radius;
             ik = ir * 0.5f;
             // 0x42b363: the offsets from the frame origin stay unrounded in x87 registers; each dot product is stored
             // as a float (0x68 / 0x6c) before it is scaled by ik
@@ -367,7 +367,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             }
             u = u + 0.5f;
             v = v + 0.5f;
-            shade = ctx->ground->verts[face->ids[j]].level;
+            shade = owner->ground->verts[face->ids[j]].level;
             c = shade / (s0 + shade);
             if (c < 0.0f) c = 0.0f;
             else if (c > 0.75f) c = 0.75f;
@@ -377,9 +377,9 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
                 c = (3.0f - (float)sqrt(9.0f - (c - 0.01f) * 12.0f)) * 0.125f;
             }
             // 0x42b4bd: the original adds the squares as (z + x) + y (x87 stack order), not (z + y) + x
-            float ex = p.x - pos.o.x;
-            float ey = p.y - pos.o.y;
-            float ez = p.z - pos.o.z;
+            float ex = p.x - local.o.x;
+            float ey = p.y - local.o.y;
+            float ez = p.z - local.o.z;
             a = (float)sqrt((ex * ex + ez * ez) + ey * ey) * ir * 1.3333334f - 3.8f;
             if (a < 0.2f) a = 0.2f;
             else if (a >= 1.0f) a = 1.0f;

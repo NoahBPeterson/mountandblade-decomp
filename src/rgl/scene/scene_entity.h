@@ -15,6 +15,7 @@
 #include "./emitter.h"
 
 struct FxDef;                   // fx.h (global, like FxElem)
+struct skin;                    // ../resource.h (global)
 
 namespace rgl {
 
@@ -44,7 +45,6 @@ struct item_obj {
     virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
     virtual void set_frame(const matrix* m);                    // 8 (+0x20)
 };
-struct dtor_obj { virtual ~dtor_obj(); };                       // anything deleted through slot 0
 
 struct entity {
     virtual ~entity();                                          // 0x4213f0 (body; scalar deleting dtor ??_Gentity is 0x4214e0, slot 0)
@@ -82,14 +82,14 @@ struct entity {
     vector4 v9c;                // 0x9c  (StrategicEntity::update stores shape->get_a())
     vector4 vac;                // 0xac
     float fbc;                  // 0xbc  radius (recalc 0x41ffe0)
-    float fc0;                  // 0xc0
+    float shadow_radius;        // 0xc0  the radius the strategic entity's shadow code works with (0.01 from the constructor)
     vector4 vc4;                // 0xc4  box centre in the local frame (recalc)
     aabb box;                   // 0xd4  (0x34 bytes)
     std::vector<lod_mesh2*> lods;   // 0x108
     std::vector<mesh*> meshes;      // 0x118
     std::vector<item_obj*> items;   // 0x128 attached entities (StrategicEntity::update 0x421b70)
-    dtor_obj* p138;             // 0x138 owned objects, deleted by ~entity 0x4213f0
-    dtor_obj* p13c;             // 0x13c
+    mesh* shadow_a;             // 0x138 the ground-shadow decal meshes (strategic_entity::update_shadows), deleted by ~entity 0x4213f0
+    mesh* shadow_b;             // 0x13c
     char f140, f141, f142;      // 0x140 visible, dirty flags
     float f144;                 // 0x144 lod distance (passed by address to the lod select)
     unsigned mode;              // 0x148
@@ -151,14 +151,13 @@ struct static_entity : entity {                                 // vtable 0x54b7
 // the strategic entity (vtable 0x54b5d0, 0x320 bytes, ctor 0x421720): a mesh entity that carries an effect definition
 // and a list of emitters. Offsets: ctor 0x421720 (the stores), update 0x421b70, dtor 0x428120, render 0x42a090.
 struct strategic_entity : entity {
-    int f15c;                   // 0x15c
-    float f160, f164;           // 0x160, 0x164
+    float f15c;                 // 0x15c shadow sample quality (update_shadows 0x42a1f0: -1/(f15c*25); create_shadow_mesh 0x42b080: sample count)
+    float f160, f164;           // 0x160, 0x164 shadow strengths (render 0x42a090, create_shadow_mesh)
     int f168, f16c, f170;       // 0x168, 0x16c, 0x170
-    int ids[64];                // 0x174 (StratEnt::update_ground_cache 0x42a480)
-    int f274;                   // 0x274
-    float f278;                 // 0x278 (-1e8)
-    char pad27c[0x288 - 0x27c];
-    void* p288;                 // 0x288 resource released through the manager
+    int ids[64];                // 0x174 ground faces under the entity (update_ground_cache 0x42a480 stores, create_shadow_mesh 0x42b080 reads)
+    int nids;                   // 0x274
+    vector4 shadow_pos;         // 0x278 where the ground cache was last built (x = -1e8 from the constructor)
+    skin* p288;                 // 0x288 the shadow-map render target (released through the manager)
     scene* f28c;                // 0x28c shadow scene (deleted by the dtor 0x428120)
     int* f290;                  // 0x290 plain array
     float f294;                 // 0x294
@@ -194,6 +193,13 @@ struct strategic_entity : entity {
     virtual void clear_emitters();                              // 26: 0x421b00
     virtual int find_emitter(int tag);                          // 27: 0x421a50
     virtual void add_shape(item_obj* o);                        // 28: 0x424100 (world_grid.cpp: keep the shape, tag it, register it with the world)
+
+    // the ground shadow (src/game/strat/strat_entity.cpp, strat_ctx.cpp)
+    void build_shadow_frame(matrix* m, vector4* amb);           // 0x42aaf0
+    void update_ground_cache();                                 // 0x42a480
+    void update_shadows(scene* sc, bool a, bool b);             // 0x42a1f0
+    void create_shadow_mesh(mesh** slot, char flag);            // 0x42b080
+    void shadow_tick();                                         // 0x42b790
 };
 
 // the rigid body entity (vtable 0x54b668, 0x1d8 bytes) is defined in ../dynamic/dynamic_entity.h (collision_entity's

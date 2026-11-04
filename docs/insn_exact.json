@@ -914,7 +914,7 @@
   },
   "0042a1f0": {
    "verdict": "DIFF",
-   "symbol": "?update_shadows@StratEnt@@QAEXPAUscene@rgl@@_N1@Z",
+   "symbol": "?update_shadows@strategic_entity@rgl@@QAEXPAUscene@2@_N1@Z",
    "insns": 168,
    "ours": 166,
    "unverified": 0,
@@ -924,7 +924,7 @@
   },
   "0042a480": {
    "verdict": "DIFF",
-   "symbol": "?update_ground_cache@StratEnt@@QAEXXZ",
+   "symbol": "?update_ground_cache@strategic_entity@rgl@@QAEXXZ",
    "insns": 377,
    "ours": 374,
    "unverified": 0,
@@ -944,7 +944,7 @@
   },
   "0042aaf0": {
    "verdict": "DIFF",
-   "symbol": "?build_shadow_frame@StratEnt@@QAEXPAUmatrix@rgl@@PAUvector4@3@@Z",
+   "symbol": "?build_shadow_frame@strategic_entity@rgl@@QAEXPAUmatrix@2@PAUvector4@2@@Z",
    "insns": 185,
    "ours": 185,
    "unverified": 0,
@@ -954,7 +954,7 @@
   },
   "0042b080": {
    "verdict": "DIFF",
-   "symbol": "?create_shadow_mesh@StratEnt@@QAEXPAPAUmesh@rgl@@D@Z",
+   "symbol": "?create_shadow_mesh@strategic_entity@rgl@@QAEXPAPAUmesh@2@D@Z",
    "insns": 422,
    "ours": 422,
    "unverified": 0,
