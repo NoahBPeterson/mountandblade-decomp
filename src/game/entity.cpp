@@ -17,7 +17,7 @@
 #include "./entity.h"
 #include "./world_data/thiscall_free.h"   // CALL_STDCALL_ON
 struct named_object;
-void __stdcall clear_f14(named_object* o);   // 0x4175f0 (the resource manager's release, a free stdcall function; mem_stream.cpp)
+#include "../rgl/resource.h"              // resmgr g_resmgr (0x5d6fa0), clear_f14 0x4175f0 (the resource manager's release, a free stdcall function; mem_stream.cpp)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../include/mat4.h"
 #include "../include/fx.h"
@@ -113,7 +113,7 @@ template void vec<mface>::clear();
 rgl::scene::~scene()
 {
     if (handle != 0) {
-        CALL_STDCALL_ON(clear_f14, &rgl::g_resmgr, handle);   // 0x4175f0 (the resource manager in ecx)
+        CALL_STDCALL_ON(clear_f14, &g_resmgr, handle);   // 0x4175f0 (the resource manager in ecx)
         handle = 0;
     }
     scene* c = child;

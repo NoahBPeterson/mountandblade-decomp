@@ -67,7 +67,7 @@ struct NodeA;
 struct NodeVec { void push_back(NodeA* const& n); };   // 0x49b120 (widget_node.cpp): "make this window the active root"; takes the address of a pointer to the window
 struct Map10007 { int lookup(unsigned id); };   // 0x48ad00 (ui/mission.h): the party table of the game object (Game::scene) starts with this 0x2717-entry table
 struct FieldPanel { void update(); };           // 0x48d470 (mission_ui2/mission_3.cpp): lays the list out
-#include "../res_mgr.h"                      // res_manager(): the resource manager at 0x5d6fa0
+#include "../res_mgr.h"                      // g_resmgr: the resource manager at 0x5d6fa0
 struct UiD;
 UiD* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
 void __cdecl label_refresh(MissionUi* w, tstring name);                // 0x4e4c70 (cdecl, the name by value; cls_map/progress_bar.cpp)
@@ -127,7 +127,7 @@ void PartyWindow::init_screen()
     }
     {
         tstring n("inventory_window_b");
-        rgl::mesh* m = ((rgl::mesh*)res_manager().get_object(&n))->clone();
+        rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
         win->set_track(0, m);
     }
 
@@ -137,7 +137,7 @@ void PartyWindow::init_screen()
         label_refresh(bg, tstring("inv_i_equipment_pangel_bg"));
         {
             tstring n("inventory_equipment_panel");
-            bg->set_mesh(0, ((rgl::mesh*)res_manager().get_object(&n))->clone());
+            bg->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
         }
         container->add_child(bg);
     }
@@ -150,7 +150,7 @@ void PartyWindow::init_screen()
         label_refresh(h, tstring(buf));
         {
             tstring n("inventory_window_hinge");
-            h->set_mesh(0, ((rgl::mesh*)res_manager().get_object(&n))->clone());
+            h->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
         }
         container->add_child(h);
     }

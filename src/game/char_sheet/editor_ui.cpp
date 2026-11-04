@@ -68,7 +68,7 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
     mesh* m;
     {
         tstring hl("left_arrow_hl");
-        m = (mesh*)((rgl::mesh*)res_manager().get_object(&hl))->clone();
+        m = (mesh*)((rgl::mesh*)g_resmgr.get_object(&hl))->clone();
     }
     m->scale(x / z);
     ((MissionUi*)b)->set_track(3, m);
@@ -88,7 +88,7 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
     mesh* m;
     {
         tstring hl("right_arrow_hl");
-        m = (mesh*)((rgl::mesh*)res_manager().get_object(&hl))->clone();
+        m = (mesh*)((rgl::mesh*)g_resmgr.get_object(&hl))->clone();
     }
     m->scale(x / z);
     ((MissionUi*)b)->set_track(3, m);
@@ -141,13 +141,13 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
     mesh* m1;
     {
         tstring n("scrollbar");
-        m1 = res_manager().get_object(&n)->clone();
+        m1 = g_resmgr.get_object(&n)->clone();
     }                                           // the name dies before the colour is set (0x4f6160: ~tstring, then set_color)
     m1->set_color(col);
     mesh* m2;
     {
         tstring n("scrollbar_handle");
-        m2 = res_manager().get_object(&n)->clone();
+        m2 = g_resmgr.get_object(&n)->clone();
     }                                           // the name dies before the colour is set (0x4f6160: ~tstring, then set_color)
     m2->set_color(col);
     w->set_track(0, m1);
@@ -262,29 +262,29 @@ HRESULT GameApp::OneTimeSceneInit()
     }
     g_log.autoflush = ok;
     g_log.w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
-    g_5d705c = g_module_path;
+    g_resmgr.root = g_module_path;
     bool b = g_cfg.enable_edit_mode != 0;
-    g_5d706c = b;
-    g_5d706d = b;
+    g_resmgr.editor_cc = b;
+    g_resmgr.editor_cd = b;
     {
         tstring n("core_shaders");
-        res_manager().load_pack(n, 0);
+        g_resmgr.load_pack(n, 0);
     }
     {
         tstring n("core_textures");
-        res_manager().load_pack(n, 0);
+        g_resmgr.load_pack(n, 0);
     }
     {
         tstring n("core_materials");
-        res_manager().load_pack(n, 0);
+        g_resmgr.load_pack(n, 0);
     }
     {
         tstring n("core_ui_meshes");
-        res_manager().load_pack(n, 0);
+        g_resmgr.load_pack(n, 0);
     }
     {
         tstring n("core_pictures");
-        res_manager().load_pack(n, 0);
+        g_resmgr.load_pack(n, 0);
     }
     g_strtable.load(&g_module_path);
     {

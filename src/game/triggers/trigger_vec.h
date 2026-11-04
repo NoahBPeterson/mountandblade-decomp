@@ -28,16 +28,6 @@ float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (
 #include "../shadow_map.h"
 #include "../../include/ptr_tag.h"
 #include "../shared_vars.h"
-// The resource manager (object 0x5d6fa0) as rgl/core/resmgr.h's `resmgr` defines it; that header cannot be included next to
-// rec_tables.h (g_log), so this is its declaration of the three members the module loader calls (resmgr.cpp 0x4195e0 / 0x419640 / 0x41e150).
-// g_resmgr_full of resmgr.h is the same object as resource.h's g_resmgr.
-struct resmgr {
-    int restore(ID3DXEffect* fx);                                   // 0x419580 (device reset: textures, effects)
-    int invalidate();                                               // 0x4195e0 (device lost)
-    void linearise_meshes();                                        // 0x419640
-    void load_pack(const rgl::string& name, int user);              // 0x41e150
-};
-#define g_resmgr_full (*(resmgr*)&g_resmgr)
 #include "../render_batch.h"
 
 // ---- the options dialog's persistent values (0x4bf170 reads them, 0x4bee10 writes them back) -------------------------

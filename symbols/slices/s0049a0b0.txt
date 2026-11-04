@@ -1,6 +1,6 @@
 0048ae20 ??0panel@@QAE@XZ  # base widget ("panel") ctor, called first by the inlined cls_e ctor
 0053545e ??2@YAPAXI@Z  # operator new (the 0x188-byte allocation)
-005d6fa0 ?g_resmgr@rgl@@3Uresmgr@1@A  # resource manager global
+005d6fa0 ?g_resmgr@@3Uresmgr@@A  # resource manager global
 00419540 ?get_object@resmgr@rgl@@QAEPAUmesh@2@ABUmstr@2@@Z  # resmgr::get_object(const mstr&) -> mesh*
 0041c6d0 ?clone@mesh@rgl@@QAEPAU12@XZ  # mesh::clone()
 0042bbe0 ??0mstr@rgl@@QAE@PBD@Z  # mstr(const char*)

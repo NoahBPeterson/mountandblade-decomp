@@ -764,7 +764,7 @@ void ObjectList::read(stream_base* s)
         vector4 big(10000000.0f, 10000000.0f, 10000000.0f);
         vector4 neg(-10000000.0f, -10000000.0f, -10000000.0f);
         s->r_tstr(&entries[i].name);
-        entries[i].nodes.assign(as_mesh_vector(((resmgr*)&g_resmgr)->find_meshes(&entries[i].name)));
+        entries[i].nodes.assign(as_mesh_vector(g_resmgr.find_meshes(&entries[i].name)));
         entries[i].mn = big;
         entries[i].mx = neg;
         for (unsigned j = 0; j < entries[i].nodev().size(); j++) {
@@ -817,7 +817,7 @@ void MissionObj::read(stream_base* s)
     tstring t1;
     s->r_tstr(&t0);
     if (t0.len > 1 && t0.differs(g_none)) {
-        std::vector<rgl::mesh*> nodes = ((resmgr*)&g_resmgr)->find_meshes(&t0);
+        std::vector<rgl::mesh*> nodes = g_resmgr.find_meshes(&t0);
         vec_assign_43f0a0(&nodes_, &as_mesh_vector(nodes));
         unsigned j = 0;
         while (1) {

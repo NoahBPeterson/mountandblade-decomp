@@ -48,17 +48,7 @@ struct lod_mesh_ms : rgl::lod_mesh {
 struct scene_ms2 : rgl::scene {
 };
 
-// resource-manager members this TU calls (the lookups of src/rgl/resource.h plus the ones core/resmgr.h defines)
-// The manager's own class is `resmgr` (src/rgl/core/resmgr.h, global 0x5d6fa0), which cannot be included next to resource.h: only the members
-// this TU calls are declared, under that name (the definitions' signatures: rgl::string keys, the lod group as `lod_group`).
-// (resmgr: rgl/scene/scene.h declares these members: find_meshes 0x41b960, make_lod_mesh 0x41ca60, get_lod_mesh 0x41cdc0, get_render_target 0x41b7d0, get_texture 0x41c400, get_shadow_skin 0x41c420)
-#define g_resmgr_c ((::resmgr*)&g_resmgr)
-// (a tstring is an rgl::string, and the lod group is the rgl::lod_mesh2 record of the callers)
-struct resmgr_ms : resource_manager {
-    rgl::lod_mesh2* make_lod_mesh(const tstring& pat, bool copy) { return (rgl::lod_mesh2*)((::resmgr*)this)->make_lod_mesh(pat, copy); }   // 0x41ca60
-    rgl::lod_mesh2* get_lod_mesh(const tstring& name) { return (rgl::lod_mesh2*)((::resmgr*)this)->get_lod_mesh(name); }                 // 0x41cdc0
-};
-#define g_rms (*(resmgr_ms*)&g_resmgr)
+#include "../../rgl/resource.h"   // resmgr g_resmgr (0x5d6fa0): find_meshes 0x41b960, make_lod_mesh 0x41ca60, get_lod_mesh 0x41cdc0, get_render_target 0x41b7d0, get_texture 0x41c400, get_shadow_skin 0x41c420
 
 // ---- the lod mesh and its lists: members defined here -------------------------------------------------------------
 #include "../lod_mesh_x.h"             // mesh_list_x / lod_mesh_x (shared with terrain_a/misc.h)

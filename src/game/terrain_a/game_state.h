@@ -61,17 +61,6 @@ struct ShSkin {                                 // render target resource return
     char pad34[0x48 - 0x34];
     ShTexRes* refs[5];                          // +0x48 (0x463e10, 0x464070, 0x4640d0)
 };
-struct ShResMgr {                               // global resource manager at 0x5d6fa0 (calls only; layout in src/rgl/resource.h)
-    // get_shadow_skin (0x41c420) is resmgr::get_shadow_skin (rgl/core/resmgr.h) and resolve_shader (0x418e90) is
-    // resource_manager::resolve_shader (rgl/resource.h): the same object; game_state.cpp calls them through those classes
-    void release(void* p);                      // 0x4175f0 (declared for the call shape only: the definition is the stdcall clear_f14, see below)
-};
-// 0x4175f0 is rgl/mem_stream.cpp's stdcall clear_f14(named_object*), which ignores ecx; the original loads ecx = the manager before the call.
-// The call goes to that symbol through the member type of the original's call (ecx = object, one stack argument).
-struct named_object;
-void __stdcall clear_f14(named_object* r);      // 0x4175f0
-union ReleaseFn { void (ShResMgr::*as_member)(void*); void (__stdcall *clear_f14)(named_object*); };
-extern ShResMgr g_shadow_resmgr;                // 0x5d6fa0
 
 
 
@@ -79,7 +68,6 @@ extern ShResMgr g_shadow_resmgr;                // 0x5d6fa0
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../rgl/options.h"   // canonical: g_options.i7c (0x5aa084)
 #include "../../rgl/resource.h"   // g_resmgr (0x5d6fa0)
-#define g_resmgr_sh (*(ShResMgr*)&g_resmgr)       // ShResMgr: the calls game_state.cpp makes on the resource manager (a view of resource.h's g_resmgr)
 
 #include "../shadow_map.h"                    // ShadowMap (shared with terrain_b)
 #include "../../include/render_flags.h"

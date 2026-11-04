@@ -7,7 +7,7 @@
 #include <math.h>
 #include "../../rgl/rgl_math.h"
 #include "./cs_common.h"                                // widget constructors, make_* / label_refresh / new_button ..., FaceGenome, TextPart
-#include "../res_mgr.h"                                 // res_manager()
+#include "../res_mgr.h"                                 // g_resmgr
 #include "../../rgl/mesh.h"                           // rgl::mesh::clone 0x41c6d0
 
 #define MB_NOTHROW throw()

@@ -250,7 +250,7 @@ struct RecPool {                                                // an object wit
 // `new Event[16]`, which is where the vector deleting destructor in the vtable is emitted. The party pages are `new Party[16]` (PartyMgrW::grow).
 #include "../mission_ui2/stat_panel_x.h"
 #include "./thiscall_free.h"
-#include "../../rgl/resource.h"                               // resource_manager g_resmgr 0x5d6fa0
+#include "../../rgl/resource.h"                               // resmgr g_resmgr 0x5d6fa0
 struct ResSlot {                                                // a resource slot of the cache group (0x493df0, 0x493e90)
     char pad0[0x5c];
     int f5c;                                                    // +0x5c

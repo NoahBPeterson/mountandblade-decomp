@@ -91,7 +91,7 @@ struct ItemName {
 static __forceinline lod_mesh2* make_item_lod(ItemRef* r, int modifier)
 {
     ItemName name(r, modifier);
-    return g_rms.make_lod_mesh(name.get(), false);
+    return (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(name.get(), false);
 }
 
 // tear down one owned lod record: the name, the five lists (which delete the meshes they own) and the block itself.
@@ -155,7 +155,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         // one full-expression: the name is a temporary built straight into make_lod_mesh's argument (0x48254d:
         // tstring(const char*) on [esp+0x38], no copy) and destroyed after the push (0x48256e); a named `nm`
         // initialised from the conditional was a copy of a temporary (an extra 0x80-byte buffer and destructor)
-        vpush_i(a->fx->groups, g_rms.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
+        vpush_i(a->fx->groups, (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
                    ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
                    : tstring("Error: Invalid item"), false));
         float* e = (float*)a->fx->elems;
@@ -288,35 +288,35 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 ItemName nmh(b, b->m4 >> 24);
                 tstring& nm = nmh.get();
                 nm.buf[nm.len - 1] = 'L';
-                ap[17] = g_rms.make_lod_mesh(nm, false);
+                ap[17] = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(nm, false);
 
                 tstring lx(nm);
                 lx.push_back('x');
-                if (g_rms.find_v20(lx)) {
+                if (g_resmgr.find_mesh(lx)) {
                     if (g_use_shaders == 0) {
-                        lod_mesh2* Lx = g_rms.make_lod_mesh(lx, false);
+                        lod_mesh2* Lx = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(lx, false);
                         ap[19] = Lx;
                         ELEM(12)->add_group((int)Lx);
                     } else {
                         unsigned col = 0xffffffff;
-                        ((lod2_a*)*out_body)->append(g_rms.get_lod_mesh(lx), 12,
+                        ((lod2_a*)*out_body)->append((rgl::lod_mesh2*)g_resmgr.get_lod_mesh(lx), 12,
                                             (matrix*)((char*)a->fx->elems + 0x1654), &col);
                     }
                 }
 
                 nm.buf[nm.len - 1] = 'R';
-                ap[18] = g_rms.make_lod_mesh(nm, false);
+                ap[18] = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(nm, false);
 
                 tstring rx(nm);
                 rx.push_back('x');
-                if (g_rms.find_v20(rx)) {
+                if (g_resmgr.find_mesh(rx)) {
                     if (g_use_shaders == 0) {
-                        lod_mesh2* Rx = g_rms.make_lod_mesh(rx, false);
+                        lod_mesh2* Rx = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(rx, false);
                         ap[20] = Rx;
                         ELEM(17)->add_group((int)Rx);
                     } else {
                         unsigned col = 0xffffffff;
-                        ((lod2_a*)*out_body)->append(g_rms.get_lod_mesh(rx), 17,
+                        ((lod2_a*)*out_body)->append((rgl::lod_mesh2*)g_resmgr.get_lod_mesh(rx), 17,
                                             (matrix*)((char*)a->fx->elems + 0x1fa0), &col);
                     }
                 }
@@ -332,7 +332,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         // ---- default trousers when nothing covers the legs ---------------------------------------
         if (!legs_covered) {
-            lod_mesh2* tr2 = g_rms.make_lod_mesh(tstring("def_trousers"), false);
+            lod_mesh2* tr2 = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(tstring("def_trousers"), false);
             vpush_i(a->fx->groups, tr2);
         }
 
@@ -354,9 +354,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 ItemName nmh(bd, bd->m4 >> 24);
                 tstring& nm = nmh.get();
                 if (nm.buf[nm.len - 1] == 'L') {
-                    lod_mesh2* L = g_rms.get_lod_mesh(nm);
+                    lod_mesh2* L = (rgl::lod_mesh2*)g_resmgr.get_lod_mesh(nm);
                     nm.buf[nm.len - 1] = 'R';
-                    lod_mesh2* R = g_rms.get_lod_mesh(nm);
+                    lod_mesh2* R = (rgl::lod_mesh2*)g_resmgr.get_lod_mesh(nm);
                     int b1 = 2, b2 = 5;
                     if ((g_items[bd->item].type_flags & 0xf00) != 0) {
                         b1 = -1;
@@ -367,7 +367,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     col = 0xffffffff;
                     ((lod2_a*)*out_body)->append(R, b2, (matrix*)((char*)a->fx->elems + 4 + b2 * 0x1dc), &col);
                 } else {
-                    lod_mesh2* c = ((lod2_a*)g_rms.get_lod_mesh(nm))->clone();
+                    lod_mesh2* c = ((lod2_a*)g_resmgr.get_lod_mesh(nm))->clone();
                     ((IdHolder*)a->fx)->add((int)c);
                 }
             }

@@ -69,7 +69,7 @@ struct IDev9 {
 #include "../gui_mgr.h"
 extern GuiManager g_gui;        // 0x5d7080
 
-#include "../../rgl/resource.h"                  // resource_manager g_resmgr (0x5d6fa0)
+#include "../../rgl/resource.h"                  // resmgr g_resmgr (0x5d6fa0)
 
 #include "../slot.h"                    // Slot, g_keyboard (0xa170c8)
 

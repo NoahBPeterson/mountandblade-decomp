@@ -5,7 +5,7 @@
 004931d0 ??0cls_d@@QAE@XZ  # drop-down (0x1d0) ctor: external call, installs its own vtable
 00499050 ?placed@scene_tbl@@QAEPAUmesh@rgl@@H@Z  # scene_tbl::placed(index) -> mesh (slice s00499050)
 8ed4f58 ?g_scene@@3Uscene_tbl@@A  # scene table global used by the factories (address beyond the image sections)
-005d6fa0 ?g_resmgr@rgl@@3Uresmgr@1@A  # resource manager global
+005d6fa0 ?g_resmgr@@3Uresmgr@@A  # resource manager global
 00419540 ?get_object@resmgr@rgl@@QAEPAUmesh@2@ABUmstr@2@@Z  # resmgr::get_object(const mstr&) -> mesh*
 0041c6d0 ?clone@mesh@rgl@@QAEPAU12@XZ  # mesh::clone()
 0042bbe0 ??0mstr@rgl@@QAE@PBD@Z  # mstr(const char*)

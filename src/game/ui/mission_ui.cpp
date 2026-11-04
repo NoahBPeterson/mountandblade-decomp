@@ -989,7 +989,7 @@ void MissionView::quarter()
 void* MissionView::make(int* p)
 {
     quarter();
-    char* o = (char*)g_alloc.get_shadow_skin(v18[2], v18[3], 0x15, 1);
+    char* o = (char*)g_resmgr.get_shadow_skin(v18[2], v18[3], 0x15, 1);
     *(int*)(o + 0x64) = 0;
     *(int*)(o + 0x60) = *p;
     *(int*)(*(int*)(o + 0x48) + 0x4c) = 0;

@@ -271,16 +271,6 @@ extern SoundMgr g_sound_mgr;                            // 0x5aa128
 
 extern "C" void __stdcall FSOUND_StopSound(int id);                      // 0x5342a6 (FSOUND_StopSound@4)
 
-struct resmgr { texture* get_texture(int w, int h, int fmt);      // 0x41c400 (rgl/core/resmgr.cpp)
-                rgl::mesh* get_object(const rgl::string* name); };   // 0x419540
-struct named_object;
-void __stdcall clear_f14(named_object* r);                // 0x4175f0 (rgl/mem_stream.cpp: clears field +0x14)
-struct resmgr_tab : resmgr_gui {                        // the resource manager (0x5d6fa0) as the tableau code uses it
-    texture* get_texture(int w, int h, int fmt) { return ((::resmgr*)this)->get_texture(w, h, fmt); }       // 0x41c400
-    void release(void* p) { clear_f14((named_object*)p); }                                                    // 0x4175f0
-};
-#define g_resmgr_tab (*(resmgr_tab*)&g_resmgr)
-
 // ---- callees of other objects, declared with the argument lists the call sites push (see MIGRATION.md) ----------------------
 inline void adjust_heap(OpenItem* first, int hole, int len, OpenItem value, HeapGt comp)         // 0x438b10 (_Adjust_heap)
 {

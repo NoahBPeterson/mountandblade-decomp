@@ -610,7 +610,7 @@ void Mission::start_setup()
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
     Entity* sun = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
-    Mesh* sm = (Mesh*)((resmgr*)&g_resmgr)->get_object(&g_env_rows[at<int>(0x660c)].name)->clone();
+    Mesh* sm = (Mesh*)g_resmgr.get_object(&g_env_rows[at<int>(0x660c)].name)->clone();
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {
@@ -862,7 +862,7 @@ void Mission::start_setup()
         }
         {
             tstring nm("sun");
-            at<Mesh*>(0x65c8) = (Mesh*)((resmgr*)&g_resmgr)->get_object(&nm)->clone();
+            at<Mesh*>(0x65c8) = (Mesh*)g_resmgr.get_object(&nm)->clone();
         }
         at<Mesh*>(0x65c8)->at<int>(0x114) = 1;
         at<Mesh*>(0x65c8)->at<int>(0x140) = 1;
@@ -889,7 +889,7 @@ void Mission::start_setup()
     }
     {
         tstring nm("edit_cursor");
-        at<Mesh*>(0x65d4) = (Mesh*)((resmgr*)&g_resmgr)->get_object(&nm)->clone();
+        at<Mesh*>(0x65d4) = (Mesh*)g_resmgr.get_object(&nm)->clone();
     }
     {
         Entity* e2 = at<Entity*>(0x65d0);

@@ -41,7 +41,7 @@ struct FxRec {
     rgl::mat4 m;                // 0x0c local frame
     char pad2[0xdc - 0x4c];
 };
-// the resource object returned by resource_manager::get_object70 (0x418cf0)
+// the resource object returned by resmgr::get_object70 (0x418cf0)
 struct FxRes {
     char pad[0x18];
     int count;                  // 0x18

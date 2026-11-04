@@ -1019,8 +1019,6 @@ refresh:
 #define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_ptypes)
 #undef g_map_points_s2fe40
 #define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_propkinds)
-#undef g_resmgr_s2fe40
-#define g_resmgr_s2fe40 (*(resmgr_s2fe40*)&g_resmgr)
 // @ 0x52fe40 ---------------------------------------------------------------------------------------------
 void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3, float* vec, char* f4)
 {
@@ -1205,7 +1203,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
 
 done:
     if (name.len > 0) {
-        std::vector<rgl::mesh*> tmp = ((resmgr*)&g_resmgr_s2fe40)->find_meshes(&name);
+        std::vector<rgl::mesh*> tmp = g_resmgr.find_meshes(&name);
         *out = tmp;
     }
 }

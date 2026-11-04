@@ -68,7 +68,7 @@ static float scan_float(const char* name)
 
 #include "./cs_common.h"                                 // label_refresh, make_*, gui_manager ...
 #include "./cs_mat.h"                                    // identity3 0x40cd60
-#include "../res_mgr.h"                                 // res_manager()
+#include "../res_mgr.h"                                 // g_resmgr
 #include "../../rgl/mesh.h"                           // rgl::mesh::clone 0x41c6d0
 // the engine's UI manager singleton (0x5d7080); 0x42d1b0 (gui_manager::reset) / 0x49b120 (NodeVec::push_back) are its methods.
 struct gui_manager_s;

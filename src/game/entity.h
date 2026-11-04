@@ -49,12 +49,6 @@ struct mesh {
     int id;                     // +0x1a8                             0x41f2a0
 };
 
-// ---- resource manager (global object 0x5d6fa0) --------------------------------------------------------
-struct resmgr {
-    void release(int handle);                               // 0x4175f0
-};
-extern resmgr g_resmgr;                                     // 0x5d6fa0
-
 #include "../include/poly.h"                               // Poly: anything deleted through vtable slot 0
 struct Obj { virtual ~Obj(); int owner; int id; };          // element of std::vector<Obj*> (0x41f720, 0x41fa00)
 

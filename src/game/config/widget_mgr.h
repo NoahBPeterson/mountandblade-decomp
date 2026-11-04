@@ -62,11 +62,7 @@ struct WVt {
 // ---- rgl::mesh (shared header) ----
 #include "../../rgl/mesh.h"      // rgl::mesh::set_color 0x47af30
 
-// the resource manager object (0x5d6fa0; resource.h's `resource_manager` is a partial view of it)
-struct resmgr_gui : resource_manager {
-    rgl::mesh* get_object(const rgl::string* name);     // 0x419540 (a mesh resource by name; callers clone it)
-};
-#define g_resmgr_full (*(resmgr_gui*)&g_resmgr)
+#include "../../rgl/resource.h"                    // resmgr g_resmgr (0x5d6fa0): get_object 0x419540 (a mesh resource by name; callers clone it)
 
 // a 2-float vector with a constructor, for temporaries passed by pointer
 // V2 (a vec2 with constructors) is in ../../include/vec.h

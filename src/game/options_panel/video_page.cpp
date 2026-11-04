@@ -49,7 +49,7 @@ static inline void w_set_default(MissionUi* w) { char r[8]; w->get_xy((float*)r)
 // ---- other pages / objects ---------------------------------------------------------------------------
 struct Game;                                                                // 0x5e2930
 
-// 0x5d6fa0: the graphics resource manager (rebuild its two halves): rgl/resource.h's resource_manager, g_resmgr.
+// 0x5d6fa0: the graphics resource manager: rgl/resource.h's resmgr, g_resmgr.
 #include "../../rgl/resource.h"
 // 0x5a9f98: the render config (write-out helper 0x415fb0): rgl/resource_manager.h's rgl_config, repeated here (that header's
 // g_log clashes with this TU's). The member is the one the dialog's `save` of config_dialog.cpp calls too.

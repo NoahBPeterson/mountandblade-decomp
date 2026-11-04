@@ -29,6 +29,7 @@
 #include "../../include/fx.h"          // FxDef (the effect definition of a scene entity)
 #include "../../include/dialog_rec.h"
 #include "../../rgl/mesh.h"
+#include "../../rgl/resource.h"             // resmgr g_resmgr (0x5d6fa0)
 #include "../../include/party.h"
 #include "../terrain_b/terrain_b.h"
 #include "./camera.h"
@@ -129,7 +130,6 @@ using rgl::vector4;
 // ---- shared engine types -------------------------------------------------------------------------
 using rgl::mesh;
 
-struct resmgr { void* lookup(const tstring& name) { return ((::resource_manager*)this)->get_material(name); } };   // 0x418a70
 struct Fadeable { void fade_scale(vector4 v); };                    // 0x47af30
 
 struct R8 { int a, b; };                        // an 8-byte returned rect (2 floats)
@@ -770,7 +770,7 @@ void MissionAgents::add_order_arrow(int id)
             if (e->flags & 0x400) {
                 ((Mission*)g_game)->label_text(e->label, nm, 1, (int)h, &scale);
                 tstring mat_name("map_legend_outline");
-                Sprite* mat = (Sprite*)((::resource_manager*)&::g_resmgr)->get_material(mat_name);
+                Sprite* mat = (Sprite*)g_resmgr.get_material(mat_name);
                 Sprite* old = ((RefSlot*)e->label)->sprite;
                 if (old) old->refs--;
                 ((RefSlot*)e->label)->sprite = mat;

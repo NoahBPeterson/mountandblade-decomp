@@ -68,10 +68,6 @@ Mission* g_mission;                                         // 0x5e292c the miss
 extern const int g_nav_param = 2;                  // 0x59132c (rdata)
 
 using rgl::mat3;
-// resource-manager members this object calls that rgl/resource.h does not declare (no new fields)
-struct resmgr : resource_manager {
-    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (hidden return pointer)
-};
 struct lod_group {
     char data[0xe0];
     lod_group();   // 0x41c2a0 (the interior record's constructor: tmesh() is the same code)
@@ -725,7 +721,7 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
     Level494* es = &g_game->levels[which];
     MeshVec meshes;
-    meshes = ((resmgr*)&g_resmgr)->find_meshes(&es->name34);
+    meshes = g_resmgr.find_meshes(&es->name34);
     if (meshes.size() == 0)
         mb_error("Error unable to find interior mesh %s", es->name34.c_str());
     Entity* e = scene->create_entity(9);

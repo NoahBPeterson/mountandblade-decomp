@@ -34,10 +34,6 @@ float g_ramp_gamma = 0.45454544f;                   // 0x5a9bfc (1 / 2.2: gamma 
 using rgl::vector4;
 using rgl::matrix;
 
-struct resmgr {
-    skin* get_shadow_skin(int w, int h, int fmt, int f34);   // 0x41c420 (rgl/core/resmgr.h, which clashes with resource.h)
-};
-
 // @ 0x4636d0
 ArrSet::ArrSet(const ArrSet& o)
 {
@@ -174,13 +170,13 @@ void ShadowMap::release_all()
     if (target2) {
         ReleaseFn r2;
         r2.clear_f14 = clear_f14;
-        (g_shadow_resmgr.*r2.as_member)(target2);
+        (g_resmgr.*r2.as_member)(target2);
         target2 = 0;
     }
     if (target) {
         ReleaseFn r1;
         r1.clear_f14 = clear_f14;
-        (g_shadow_resmgr.*r1.as_member)(target);
+        (g_resmgr.*r1.as_member)(target);
         target = 0;
     }
 }
@@ -235,13 +231,13 @@ void ShadowMap::create_target(ShSkin** slot)
 {
     if (*slot == 0) {
         if (g_render.use_hw_shadow)
-            *slot = (ShSkin*)((resmgr*)&g_shadow_resmgr)->get_shadow_skin(w, h, 0x6f, 0);
+            *slot = (ShSkin*)g_resmgr.get_shadow_skin(w, h, 0x6f, 0);
         else
-            *slot = (ShSkin*)((resmgr*)&g_shadow_resmgr)->get_shadow_skin(w, h, 0x72, 0);
+            *slot = (ShSkin*)g_resmgr.get_shadow_skin(w, h, 0x72, 0);
         if (*slot != 0) {
             (*slot)->file.assign("shadow_shader");
             ShSkin* sk = *slot;
-            sk->shader = (int)((resource_manager*)&g_shadow_resmgr)->resolve_shader(sk->file);   // 0x418e90
+            sk->shader = (int)g_resmgr.resolve_shader(sk->file);   // 0x418e90
             (*slot)->id = 0x108;
             (*slot)->refs[0]->f24 = 0x300000;
         }

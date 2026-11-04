@@ -20,7 +20,7 @@
 // ---- objects of other translation units ----------------------------------------------------------------
 #include "../ini_file.h"                   // ini_file, g_game_vars (0xa44240)
 
-#include "../res_mgr.h"                    // res_manager(): the resource manager 0x5d6fa0 (get_object 0x419540)
+#include "../res_mgr.h"                    // g_resmgr: the resource manager 0x5d6fa0 (get_object 0x419540)
 #include "../world_data/tableau.h"           // TableauTbl g_tableaus 0xa75f40
 namespace rgl { struct mesh; }
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (ret 0): the mesh of an item reference (the definition, agent5/agent_hud.cpp, returns rgl::mesh*)

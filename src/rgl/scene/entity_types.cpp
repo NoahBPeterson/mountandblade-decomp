@@ -121,7 +121,7 @@ strategic_entity::~strategic_entity()
         f290 = 0;
     }
     if (p288 != 0) {
-        CALL_STDCALL_ON(clear_f14, &resmgr(), p288);   // 0x4175f0 (the resource manager in ecx)
+        CALL_STDCALL_ON(clear_f14, &g_resmgr, p288);   // 0x4175f0 (the resource manager in ecx)
         p288 = 0;
     }
     for (unsigned i = 0; i < emitters.size(); i++) {
@@ -172,7 +172,7 @@ void entity::load(stream_base* s)
         if (!(nm.equals("none")))
         {
             mesh*& slot = *(meshes.begin() + i);
-            slot = ((rgl::mesh*)resmgr().get_object(&nm))->clone();
+            slot = ((rgl::mesh*)g_resmgr.get_object(&nm))->clone();
         }
     }
 }

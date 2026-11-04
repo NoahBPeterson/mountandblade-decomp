@@ -207,9 +207,9 @@ UiA* make_button(ContainerBase* parent, const tstring* text, float x, float y, i
         hl.append(sfx);
     }
 
-    b->set_mesh(2, res_manager().get_object(&up)->clone());
-    b->set_mesh(1, res_manager().get_object(&down)->clone());
-    b->set_mesh(3, res_manager().get_object(&hl)->clone());
+    b->set_mesh(2, g_resmgr.get_object(&up)->clone());
+    b->set_mesh(1, g_resmgr.get_object(&down)->clone());
+    b->set_mesh(3, g_resmgr.get_object(&hl)->clone());
 
     {
         float sz = s * 0.6f;

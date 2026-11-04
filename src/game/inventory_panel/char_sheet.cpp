@@ -40,7 +40,7 @@ extern "C" int _fltused = 0;
 #include "../../include/game_data.h"
 
 #include "../../rgl/mesh.h"                       // rgl::mesh (clone 0x41c6d0)
-#include "../res_mgr.h"                        // res_manager(): the resource manager 0x5d6fa0
+#include "../res_mgr.h"                        // g_resmgr: the resource manager 0x5d6fa0
 
 #include "../gui_mgr.h"
 extern GuiManager g_gui;                        // 0x5d7080
@@ -172,7 +172,7 @@ void CharSheet::init_screen()
         rgl::mesh* mesh;
         {
             tstring n("character_window");
-            mesh = res_manager().get_object(&n)->clone();
+            mesh = g_resmgr.get_object(&n)->clone();
         }
         w->set_mesh(0, mesh);
     }
@@ -406,12 +406,12 @@ void CharSheet::init_screen()
         rgl::mesh* up;
         {
             tstring k("party_button");
-            up = res_manager().get_object(&k)->clone();
+            up = g_resmgr.get_object(&k)->clone();
         }
         rgl::mesh* down;
         {
             tstring k("party_button_down");
-            down = res_manager().get_object(&k)->clone();
+            down = g_resmgr.get_object(&k)->clone();
         }
         up->scale(0.6666667f);
         down->scale(0.6666667f);

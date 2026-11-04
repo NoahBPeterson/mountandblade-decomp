@@ -34,8 +34,7 @@ namespace rgl { vector4 unpack_color(const unsigned* c); }      // 0x40e4e0 (sha
 extern char vtbl_591fb0[];                                     // 0x591fb0 (UiB's vtable: the slider widget)
 // mission_ui2's FieldPanel::update (0x48d470), what the outer HUD's refresh calls
 struct FieldPanel { void update(); };
-// the resource manager's mesh lookup (0x419540, resmgr::get_object of rgl/core/resmgr.h; widget_mgr.h calls its view resmgr_gui)
-struct resmgr { rgl::mesh* get_object(const rgl::string* name); };
+#include "../../rgl/resource.h"                           // resmgr g_resmgr (0x5d6fa0): get_object 0x419540
 
 // 0x432540: floor, then "> 0.5 rounds up" (inlined here)
 static inline int round_float(float* p)

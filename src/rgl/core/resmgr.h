@@ -3,10 +3,8 @@
 // manager's full layout, the skeleton animation record, the LOD group, the mesh members the shared mesh header
 // lacks. Names provisional.
 //
-// The resource manager object at 0x5d6fa0 is one object seen through two classes: `resource_manager`
-// (../resource.h, 0x417bb0..0x419190: lookups and device maintenance, a partial layout) and `resmgr` (here:
-// the full layout; registration, serialisation, loading, destruction). `resmgr` calls the first class's
-// members through base() and never redefines them.
+// The resource manager object at 0x5d6fa0 is `resmgr` (../resource.h): lookups and device maintenance are defined in
+// ../resource_manager.cpp (0x417bb0..0x419190), registration, serialisation, loading and destruction in resmgr.cpp.
 //
 // Header gaps worked around locally (the shared headers are not ours to edit; see MIGRATION.md):
 //   - rgl::mesh (../particles/mesh_obj.h) has no compute_bounds (0x419300), linearise_vertex_colors (0x419360),
@@ -37,31 +35,10 @@ struct named_object_x : named_object {
     virtual void save(stream_base* s);
 };
 
-// 12-byte key array that owns both arrays (resource.h's key_array, plus constructor and destructor; the
-// constructor stores n first, as skel_anim's inlined copy 0x41b4e0 does)
-struct vec_array : key_array {
-    vec_array() { n = 0; data = 0; keys = 0; }
-    ~vec_array()                                                        // 0x4196a0 (the body of allocator::destroy)
-    {
-        if (data)
-            delete[] data;
-        if (keys)
-            delete[] keys;
-    }
-};
-
 // skeleton model: resource.h's frame_set read through its real field types
 struct frame_x : frame_set {
     int& nbones() { return f18; }
     Bone*& bones() { return *(Bone**)&f1c; }
-};
-
-// vtable 0x54b24c, 0x34 bytes, type() 8: skeleton animation (ctor 0x41b4e0, dtor 0x41b520, deleting 0x41bed0)
-struct skel_anim : named_object {
-    std::vector<vec_array> keys;               // +0x18 (first at +0x1c)
-    vec_array tail;                            // +0x28
-    skel_anim();                               // 0x41b4e0
-    virtual int type();                        // 0x48b4a0 (8)
 };
 
 // ---- meshes ------------------------------------------------------------------------------------------------
@@ -91,48 +68,7 @@ struct lod_group {
 // (0x417c90) and of the text stream class 0x54a890 and the readers' constructors are inlined there (stream_inline.h).
 #include "../stream_inline.h"
 
-// ---- the resource manager (global object at 0x5d6fa0) -----------------------------------------------------------------
-// Full layout, from the constructor 0x41b000, add 0x41ba90, save 0x419a30 and the destructor 0x419e90.
-struct resmgr {
-    char f0;                                   // +0x00
-    unsigned c4, c8, cc;                       // +0x04 id counters for textures, shaders, materials (1..1000)
-    std::vector<lod_group*> lods;              // +0x10 LOD groups (make_lod_mesh 0x41ca60)
-    std::vector<rgl::mesh*> meshes;            // +0x20 type 1
-    std::vector<texture*> textures;            // +0x30 type 2
-    std::vector<material*> shaders;            // +0x40 type 4
-    std::vector<skin*> materials;              // +0x50 type 3
-    std::vector<body_part*> bodies;            // +0x60 type 6
-    std::vector<frame_set*> skeletons;         // +0x70 type 7
-    std::vector<skel_anim*> anims;             // +0x80 type 8
-    std::vector<effect_set*> effects;          // +0x90 (technique sets of the shader files)
-    std::list<named_object*> blocks;           // +0xa0 the array blocks to delete[] (one per loaded record group)
-    std::vector<named_object*> all;            // +0xac every registered resource
-    rgl::string cur;                           // +0xbc resource root
-    char padcc[2];                             // +0xcc
-    char meshes_ready;                         // +0xce (set once by linearise_meshes)
-
-    resmgr();                                  // 0x41b000
-    ~resmgr();                                 // 0x419e90
-    resource_manager& base() { return *(resource_manager*)this; }
-    rgl::mesh* get_object(const rgl::string* name);                    // 0x419540
-    int restore(ID3DXEffect* fx);                                      // 0x419580 (device reset: textures, effects)
-    int invalidate();                                                  // 0x4195e0 (device lost)
-    void linearise_meshes();                                           // 0x419640
-    void save(stream_base* s);                                         // 0x419a30
-    void add(named_object* r);                                         // 0x41ba90
-    texture* get_render_target(int w, int h, int fmt, int ext, int f34);   // 0x41b7d0
-    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);    // 0x41b960
-    effect_set* get_small(tstring name);                                 // 0x41bf40
-    void load_shaders();                                               // 0x41c000
-    texture* get_texture(int w, int h, int fmt);                       // 0x41c400
-    skin* get_shadow_skin(int w, int h, int fmt, int f34);             // 0x41c420
-    int load_all(int check_exists, rgl::string* root);                 // 0x41c540
-    lod_group* make_lod_mesh(const rgl::string& pat, bool copy);       // 0x41ca60
-    lod_group* get_lod_mesh(const rgl::string& name);                  // 0x41cdc0
-    stream_base* load_stream(stream_base* s);                          // 0x41db20
-    void load_pack(const rgl::string& name, int user);                 // 0x41e150
-};
-extern resmgr g_resmgr_full;                                           // 0x5d6fa0 (g_resmgr of resource.h)
+// (the resource manager class itself, `resmgr`, is ../resource.h's: one class, the lookups and the loader are both its members)
 
 // ---- serialisers (cdecl) -------------------------------------------------------------------------------------
 stream_base* save_elem14(stream_base* s, rgl::bone_influence* e);      // 0x419190

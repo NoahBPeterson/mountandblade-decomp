@@ -32,11 +32,7 @@ struct Src {
 using rgl::vector4;
 using rgl::mesh;
 
-struct resmgr {                                       // rgl/core/resmgr.h (the object at 0x5d6fa0; this module's mesh class is rgl_mesh.h's: res_mgr.h's real mesh changes the codegen)
-    mesh* get_object(const rgl::string* name);      // 0x419540
-    int load_all(int check_exists, rgl::string* root);   // 0x41c540
-};
-extern resmgr g_res;                    // 0x5d6fa0
+#include "../../rgl/resource.h"                   // resmgr g_resmgr (0x5d6fa0): get_object 0x419540, load_all 0x41c540
 // rgl::mesh::build_panel is declared with float* arguments by rgl/mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
 struct PanelMesh {
     void build_panel(const float* a, const float* b, const float* c, const float* d, int* color);   // 0x4de3e0 (game/cls_map)
@@ -132,7 +128,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_a");
-        f1210 = g_res.get_object(&n)->clone();
+        f1210 = g_resmgr.get_object(&n)->clone();
     }
     {
         vector4 c;
@@ -144,7 +140,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_b");
-        f1214 = g_res.get_object(&n)->clone();
+        f1214 = g_resmgr.get_object(&n)->clone();
     }
     {
         vector4 c;
@@ -156,7 +152,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_c");
-        f1218 = g_res.get_object(&n)->clone();
+        f1218 = g_resmgr.get_object(&n)->clone();
     }
     {
         vector4 c;
@@ -168,7 +164,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_d");
-        f121c = g_res.get_object(&n)->clone();
+        f121c = g_resmgr.get_object(&n)->clone();
     }
     {
         vector4 c;
@@ -309,7 +305,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 7) {
         ((stream_base&)g_log).w_cstr("Loading Textures...\n");
-        g_res.load_all(g_module_settings.scan_module_textures, &g_module_path);
+        g_resmgr.load_all(g_module_settings.scan_module_textures, &g_module_path);
         ((stream_base&)g_log).w_cstr("Finished Loading Textures...\n");
         { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;

@@ -18,12 +18,8 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/resource.h"      // resmgr g_resmgr (0x5d6fa0)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
-
-// canonical owner of a callee (a member-only stub under the defining name; the link needs it in the mangled name)
-struct resmgr {
-    rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (rgl/core/resmgr.cpp)
-};
 
 // @ 0x499830
 int widget_mgr::create_game_button_overlay(int id)
@@ -43,7 +39,7 @@ int widget_mgr::create_game_button_overlay(int id)
         rgl::mesh* m;
         {
             rgl::string n("medium_button");
-            m = ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone();
+            m = ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone();
         }
         m->scale(0.5555556f);
         vt(w)->d32(2, m);
@@ -52,7 +48,7 @@ int widget_mgr::create_game_button_overlay(int id)
         rgl::mesh* m;
         {
             rgl::string n("medium_button_down");
-            m = ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone();
+            m = ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone();
         }
         m->scale(0.5555556f);
         vt(w)->d32(1, m);
@@ -128,17 +124,17 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
 
         {
             rgl::string n("progressbar");
-            vt(w)->d32(0, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
+            vt(w)->d32(0, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
         }
         ((rgl::mesh*)w->tracks[0])->set_color(sc);
 
         {
             rgl::string n("handle_hor");
-            vt(w)->d32(2, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
+            vt(w)->d32(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
         }
         {
             rgl::string n("progressbar_handle");
-            w->src = ((resmgr*)&g_resmgr_full)->get_object(&n);
+            w->src = g_resmgr.get_object(&n);
         }
         w->v198 = sc;
     }
@@ -175,7 +171,7 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop");
-        vt(w)->d32(2, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
+        vt(w)->d32(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -184,7 +180,7 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop_clicked");
-        vt(w)->d32(1, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
+        vt(w)->d32(1, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -193,7 +189,7 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop_hl");
-        vt(w)->d32(3, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
+        vt(w)->d32(3, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -202,15 +198,15 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop_child");
-        w->m1a4 = ((resmgr*)&g_resmgr_full)->get_object(&n);
+        w->m1a4 = g_resmgr.get_object(&n);
     }
     {
         rgl::string n("button_drop_child_clicked");
-        w->m1a0 = ((resmgr*)&g_resmgr_full)->get_object(&n);
+        w->m1a0 = g_resmgr.get_object(&n);
     }
     {
         rgl::string n("button_drop_child_hl");
-        w->m1a8 = ((resmgr*)&g_resmgr_full)->get_object(&n);
+        w->m1a8 = g_resmgr.get_object(&n);
     }
 
     vt(w)->d03();
@@ -261,7 +257,7 @@ int widget_mgr::create_text_box_overlay()
 
     {
         rgl::string n("party_button");
-        vt(w)->d32(2, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
+        vt(w)->d32(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
@@ -270,7 +266,7 @@ int widget_mgr::create_text_box_overlay()
 
     {
         rgl::string n("party_button_down");
-        vt(w)->d32(1, ((rgl::mesh*)(((resmgr*)&g_resmgr_full)->get_object(&n)))->clone());
+        vt(w)->d32(1, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
@@ -421,7 +417,7 @@ void MissionUi::get_xy(float* out)
         rgl::mesh* m = new rgl::mesh;
         {
             tstring s("ui_font");
-            *(void**)((char*)m + 0x2c) = g_resmgr_full.get_material(s);
+            *(void**)((char*)m + 0x2c) = g_resmgr.get_material(s);
         }
         set_mesh(4, m);
     }

@@ -74,9 +74,6 @@ struct ItemKind {                                           // include/item_kind
     tstring mesh_name_for(int bit);                         // 0x433bf0
     rgl::mesh* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0 (returns the rgl::mesh that is the mesh)
 };
-struct resmgr {
-    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960 (rgl/core/resmgr.h)
-};
 struct Vec3; namespace rgl { struct matrix; } typedef rgl::matrix pos;
 void vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);     // 0x432830 (cdecl)
 namespace rgl { struct mat3; }
@@ -695,7 +692,6 @@ struct MapEditor_s2f250 {
 #define g_items_s2fe40 (*(Item_s2fe40**)&g_items)
 #define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_ptypes)
 #define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_propkinds)
-#define g_resmgr_s2fe40 (*(resmgr_s2fe40*)&g_resmgr)
 // Slice s0052fe40: the mission view's per-frame camera update and the mesh_s2fe40-name
 // chooser used by the level/object browser.
 //   0x52fe40  View::apply: integrate the look axes into the eye position, build the
@@ -765,10 +761,6 @@ struct MapPoint_s2fe40 {
 int find_in_table78(const tstring* name);               // 0x4352a0
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 
-// ---- resource manager (0x5d6fa0) -----------------------------------------------------------------------
-struct resmgr_s2fe40 {
-    __forceinline std::vector<rgl::mesh*> find_meshes(const tstring* name) { return ((resmgr*)this)->find_meshes(name); }   // 0x41b960
-};
 
 
 // ---- the object the mesh_s2fe40 chooser reads (offsets from this disassembly) --------------------------------

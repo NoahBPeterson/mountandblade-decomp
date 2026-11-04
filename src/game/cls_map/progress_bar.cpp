@@ -1290,13 +1290,6 @@ struct MsLod {
     char pad3c[0x84 - 0x3c];
     int has;                                    // +0x84
 };
-struct MapResMgr {                              // the resource manager's lod / object getters (the object is g_resmgr)
-    MsLod* get_lod_mesh(const tstring* name) { return (MsLod*)((::resmgr*)this)->get_lod_mesh(*name); }       // 0x41cdc0
-    void* get_material(const tstring& name) { return ((resource_manager*)this)->get_material(name); }      // 0x418a70
-    void* get_object70(const tstring* name) { return ((resource_manager*)this)->get_object70(*name); }       // 0x418cf0
-};
-#define MAP_RESMGR ((MapResMgr*)&g_resmgr)
-
 // the scene stream is the engine's stream_base (src/rgl/stream.h): the original calls its read slots through the vtable
 // (r_float +0x38, r_uint +0x40, r_int +0x4c, r_tstr +0x54)
 #include "../../rgl/stream.h"
@@ -1413,17 +1406,17 @@ void MapSceneRec::read(MsStream* s)
     stream_str(s, &tag);
     stream_u(s, &f10);
     stream_str(s, &name);
-    lod14 = MAP_RESMGR->get_lod_mesh(&name);
+    lod14 = (MsLod*)g_resmgr.get_lod_mesh(name);
     stream_str(s, &name);
-    lod20 = MAP_RESMGR->get_lod_mesh(&name);
+    lod20 = (MsLod*)g_resmgr.get_lod_mesh(name);
     name.buf[name.len - 1] = (name.buf[name.len - 1] != 'l') ? 'R' : 'r';
-    lod24 = MAP_RESMGR->get_lod_mesh(&name);
+    lod24 = (MsLod*)g_resmgr.get_lod_mesh(name);
     stream_str(s, &name);
-    lod18 = MAP_RESMGR->get_lod_mesh(&name);
+    lod18 = (MsLod*)g_resmgr.get_lod_mesh(name);
     name.buf[name.len - 1] = (name.buf[name.len - 1] != 'l') ? 'R' : 'r';
-    lod1c = MAP_RESMGR->get_lod_mesh(&name);
+    lod1c = (MsLod*)g_resmgr.get_lod_mesh(name);
     stream_str(s, &name28);
-    lod38 = MAP_RESMGR->get_lod_mesh(&name28);
+    lod38 = (MsLod*)g_resmgr.get_lod_mesh(name28);
     if (lod38->has == 0)
         mb_error("Unable to find face mesh: %s", name28.c_str());
 
@@ -1465,7 +1458,7 @@ void MapSceneRec::read(MsStream* s)
         tstring nm;
         stream_str(s, &nm);
         if (i < 0x40)
-            cols[i] = MAP_RESMGR->get_lod_mesh(&nm);
+            cols[i] = (MsLod*)g_resmgr.get_lod_mesh(nm);
     }
     if (ncol > 0x40)
         ncol = 0x40;
@@ -1493,7 +1486,7 @@ void MapSceneRec::read(MsStream* s)
     }
     for (int i = 0; i < nmat; i++) {
         stream_str(s, &mats[i].name);
-        mats[i].res14 = MAP_RESMGR->get_lod_mesh(&mats[i].name);
+        mats[i].res14 = (MsLod*)g_resmgr.get_lod_mesh(mats[i].name);
         if (lod38->has == 0)                                        // the original tests [+0x38], not the material
             mb_error("Unable to find beard mesh: %s", mats[i].name.c_str());
         ((TroopMgr*)this)->copy_troop(&matrecs[i], (const MeshGroupRec*)mats[i].res14);   // 0x473570
@@ -1519,10 +1512,10 @@ void MapSceneRec::read(MsStream* s)
     for (int i = 0; i < ncell; i++) {
         MissionRec2* c = (MissionRec2*)&cells[i];
         stream_str(s, &c->name);
-        c->mat10 = MAP_RESMGR->get_material(c->name);                // 0x418a70
+        c->mat10 = g_resmgr.get_material(c->name);                // 0x418a70
         {
             tstring lod(".LOD");
-            c->mat14 = MAP_RESMGR->get_material(c->name + lod);     // 0x42c840, 0x418a70
+            c->mat14 = g_resmgr.get_material(c->name + lod);     // 0x42c840, 0x418a70
         }
         stream_u(s, &c->color18);
         if (g_use_shaders) {
@@ -1576,7 +1569,7 @@ void MapSceneRec::read(MsStream* s)
 
     tstring objname;
     stream_str(s, &objname);
-    obj1e8 = MAP_RESMGR->get_object70(&objname);                    // 0x418cf0
+    obj1e8 = g_resmgr.get_object70(objname);                    // 0x418cf0
     stream_f(s, &f1ec);
     stream_i(s, &f1f0);
     stream_i(s, &f1f4);

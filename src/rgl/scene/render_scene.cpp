@@ -246,7 +246,7 @@ void world::render_scene(scene* sc, bool reflect)
         sc->refl->f169 = 1;
         sc->refl->f16a = 0;
         sc->refl->fr = f;
-        sc->rt = resmgr().get_render_target(0x100, 0x100, 0x16, 1, 0);
+        sc->rt = g_resmgr.get_render_target(0x100, 0x100, 0x16, 1, 0);
         if (sc->rt == 0)
             return;
         sc->rt->flags = 0x300000;

@@ -34,10 +34,7 @@ struct int1 { int a; };
 struct alloc_int1 {
     void construct(int1* p, const int1& v);   // 0x436d80
 };
-// rgl/core/resmgr.h's resmgr (the object at 0x5d6fa0), declared here: that header's g_log clashes with gui_manager.h's
-struct resmgr {
-    int load_all(int check_exists, rgl::string* root);   // 0x41c540
-};
+#include "../resource.h"      // resmgr g_resmgr (0x5d6fa0)
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 
@@ -326,7 +323,7 @@ HRESULT GameApp::InitDeviceObjects()
         int v10 = (int)game_var_float(k10);
         g_batch.init_decls(&v10, &v9, &v8, &v7, &v6, &v5, &v4, &v3, &v2, &v1);
     }
-    ((resmgr*)&orig::g_resmgr_obj)->load_all(1, &g_module_path);
+    g_resmgr.load_all(1, &g_module_path);
     g_keyboard.init_devices(m_hWndFocus);
     return 0;
 }

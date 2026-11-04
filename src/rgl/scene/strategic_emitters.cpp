@@ -103,7 +103,7 @@ void strategic_entity::update(float dt)
         }
     }
     if (p288 && f31c && !f170) {
-        CALL_STDCALL_ON(clear_f14, &resmgr(), p288);   // 0x4175f0 (the resource manager in ecx)
+        CALL_STDCALL_ON(clear_f14, &g_resmgr, p288);   // 0x4175f0 (the resource manager in ecx)
         p288 = 0;
     }
     f31c = 0;

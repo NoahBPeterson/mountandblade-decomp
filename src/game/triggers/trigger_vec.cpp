@@ -851,11 +851,11 @@ void parse_module_info()
         }
         if (msg.equals("load_resource")) {
             ((stream_base&)g_log).w_cstr("Loading Resource ").w_tstr(&val).w_cstr("\n");
-            g_resmgr_full.load_pack(val, 0);
+            g_resmgr.load_pack(val, 0);
         }
         else if (msg.equals("load_mod_resource") || msg.equals("load_module_resource")) {
             ((stream_base&)g_log).w_cstr("Loading Module Resource ").w_tstr(&val).w_cstr("\n");
-            g_resmgr_full.load_pack(val, 1);
+            g_resmgr.load_pack(val, 1);
         }
         else if (msg.equals("time_multiplier")) {
             g_module_settings.time_multiplier = (float)atof(val.c_str());
@@ -1092,7 +1092,7 @@ void parse_module_info()
         else if (msg.len > 1)      // (0x4c16d4: cmp [msg.len], 1; not the entry count)
             ((stream_base&)g_log).w_cstr("Unrecognized Module_info directive = ").w_tstr(&msg).w_cstr(". Skipping.\n");
     }
-    g_resmgr_full.linearise_meshes();
+    g_resmgr.linearise_meshes();
 }
 
 // ---- shader and device-object handlers (virtual overrides of the application object, vtable 0x5948e0) ------------------
@@ -1147,7 +1147,7 @@ HRESULT GameApp::RestoreDeviceObjects()
             mb_error("Unable to compile the effect file.");
     }
     g_batch.init_shaders();
-    g_resmgr_full.restore(g_effect);
+    g_resmgr.restore(g_effect);
     if (g_render.dev)
         g_render.dev->ShowCursor(((unsigned char)g_gui.f560));
     IDirect3DTexture9* tex;
@@ -1186,7 +1186,7 @@ HRESULT GameApp::InvalidateDeviceObjects()
 HRESULT GameApp::DeleteDeviceObjects()
 {
     font->DeleteDeviceObjects();
-    g_resmgr_full.invalidate();
+    g_resmgr.invalidate();
     g_batch.release_decls();
     return 0;
 }

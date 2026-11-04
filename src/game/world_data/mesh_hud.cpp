@@ -50,13 +50,13 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
     }
     {
         tstring n("slider_hor");
-        rgl::mesh* m = (rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&n);
+        rgl::mesh* m = (rgl::mesh*)g_resmgr.get_object(&n);
         void* object = m->clone();
         w->set_track(0, (rgl::mesh*)object);
     }
     {
         tstring n("handle_hor");
-        rgl::mesh* m = (rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&n);
+        rgl::mesh* m = (rgl::mesh*)g_resmgr.get_object(&n);
         void* object = m->clone();
         w->set_track(2, (rgl::mesh*)object);
     }
@@ -811,9 +811,9 @@ void HudOuter::scroll_refresh(vector4* arg)
 
     vector4 scale(0.5f, arg->y * 1.5576323f, 1.0f);
     // the names are temporaries: each dies right after its clone (0x498534, 0x49858a)
-    rgl::mesh* a = ((rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&tstring("scrollbar")))->clone();
+    rgl::mesh* a = ((rgl::mesh*)g_resmgr.get_object(&tstring("scrollbar")))->clone();
     a->set_color(scale);
-    rgl::mesh* b = ((rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&tstring("scrollbar_handle")))->clone();
+    rgl::mesh* b = ((rgl::mesh*)g_resmgr.get_object(&tstring("scrollbar_handle")))->clone();
     b->set_color(scale);
     bar->set_track(0, a);
     bar->set_track(2, b);

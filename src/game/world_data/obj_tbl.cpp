@@ -38,7 +38,7 @@ struct MeshWidgetVt {
 rgl::mesh* MeshTable::placed(int index)
 {
     SceneRec48* recs = (SceneRec48*)records;
-    MeshY* m = (MeshY*)((rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object(&recs[index].name))->clone();
+    MeshY* m = (MeshY*)((rgl::mesh*)g_resmgr.get_object(&recs[index].name))->clone();
     if (recs[index].flags & 1)
         m->f214 += 0x2000;
     vector4 pos;
@@ -145,7 +145,7 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 {
     TableauWorld* w = worlds[worlds.size() - 1];
     TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
-    MeshY* m = (MeshY*)((MeshX*)((rgl::mesh*)((resmgr*)(void*)&g_resmgr_full)->get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
+    MeshY* m = (MeshY*)((MeshX*)((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
     ((Poser*)(void*)e)->add_extra((int)m);

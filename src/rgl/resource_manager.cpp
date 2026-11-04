@@ -28,6 +28,7 @@
 #include "../include/renderer.h"      // g_render 0xa17910 (dev = g_render.dev 0xa17f28)
 #include "../game/config/config_block.h"   // Config g_cfg (0x5a9f98; saved through rgl_config::save)
 #include "./resource_manager.h"
+#include "./mesh.h"                  // rgl::mesh: the element type of the manager's mesh list
 #include "../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -380,37 +381,37 @@ done:
 // ---- resource manager ----------------------------------------------------------------------------
 // The engine's "find by name" idiom: the found pointer is tested before the end of the list.
 // @ 0x418870
-texture* resource_manager::get_texture(const rgl::string& name)
+texture* resmgr::get_texture(const rgl::string& name)
 {
     texture* r = 0;
-    texture** it;
+    std::vector<texture*>::iterator it;
     rgl::string t = name + ".dds";
-    it = textures.first;
-    while (r == 0 && it != textures.last) {
+    it = textures.begin();
+    while (r == 0 && it != textures.end()) {
         if ((*it)->name.equals(t))
             r = *it;
         ++it;
     }
     if (r == 0) {
         t = name;
-        it = textures.first;
-        while (r == 0 && it != textures.last) {
+        it = textures.begin();
+        while (r == 0 && it != textures.end()) {
             if ((*it)->name.equals(t))
                 r = *it;
             ++it;
         }
         if (r == 0) {
             t = name + ".jpg";
-            it = textures.first;
-            while (r == 0 && it != textures.last) {
+            it = textures.begin();
+            while (r == 0 && it != textures.end()) {
                 if ((*it)->name.equals(t))
                     r = *it;
                 ++it;
             }
             if (r == 0) {
                 t = name + ".tga";
-                it = textures.first;
-                while (r == 0 && it != textures.last) {
+                it = textures.begin();
+                while (r == 0 && it != textures.end()) {
                     if ((*it)->name.equals(t))
                         r = *it;
                     ++it;
@@ -424,11 +425,11 @@ texture* resource_manager::get_texture(const rgl::string& name)
 }
 
 // @ 0x418a70
-skin* resource_manager::get_material(const rgl::string& name)
+skin* resmgr::get_material(const rgl::string& name)
 {
     skin* r = 0;
-    skin** it = materials.first;
-    while (r == 0 && it != materials.last) {
+    std::vector<skin*>::iterator it = materials.begin();
+    while (r == 0 && it != materials.end()) {
         if ((*it)->name.equals(name))
             r = *it;
         ++it;
@@ -440,17 +441,17 @@ skin* resource_manager::get_material(const rgl::string& name)
             rgl::string d("default");
             return get_material(d);
         }
-        return materials.first[0];
+        return *materials.begin();
     }
     return r;
 }
 
 // @ 0x418b30
-material* resource_manager::get_shader(const rgl::string& name)
+material* resmgr::get_shader(const rgl::string& name)
 {
     material* r = 0;
-    material** it = shaders.first;
-    while (r == 0 && it != shaders.last) {
+    std::vector<material*>::iterator it = shaders.begin();
+    while (r == 0 && it != shaders.end()) {
         if ((*it)->name.equals(name))
             r = *it;
         ++it;
@@ -461,11 +462,11 @@ material* resource_manager::get_shader(const rgl::string& name)
 }
 
 // @ 0x418b90
-effect_set* resource_manager::find_effect(const rgl::string& name)
+effect_set* resmgr::find_effect(const rgl::string& name)
 {
     effect_set* r = 0;
-    effect_set** it = effects.first;
-    while (r == 0 && it != effects.last) {
+    std::vector<effect_set*>::iterator it = effects.begin();
+    while (r == 0 && it != effects.end()) {
         if ((*it)->name.equals(name))
             r = *it;
         ++it;
@@ -474,12 +475,12 @@ effect_set* resource_manager::find_effect(const rgl::string& name)
 }
 
 // @ 0x418bd0
-named_object* resource_manager::find_v20(const rgl::string& name)
+rgl::mesh* resmgr::find_mesh(const rgl::string& name)
 {
     bool found = false;
-    named_object* r = 0;
-    named_object** it = v20.first;
-    while (!found && it != v20.last) {
+    rgl::mesh* r = 0;
+    std::vector<rgl::mesh*>::iterator it = meshes.begin();
+    while (!found && it != meshes.end()) {
         if ((*it)->name.equals(name)) {
             r = *it;
             found = true;
@@ -490,12 +491,12 @@ named_object* resource_manager::find_v20(const rgl::string& name)
 }
 
 // @ 0x418c10
-named_object* resource_manager::get_object60(const rgl::string& name)
+named_object* resmgr::get_object60(const rgl::string& name)
 {
     bool found = false;
     named_object* r = 0;
-    named_object** it = v60.first;
-    while (!found && it != v60.last) {
+    std::vector<body_part*>::iterator it = bodies.begin();
+    while (!found && it != bodies.end()) {
         if ((*it)->name.equals(name)) {
             r = *it;
             found = true;
@@ -508,12 +509,12 @@ named_object* resource_manager::get_object60(const rgl::string& name)
 }
 
 // @ 0x418c80
-named_object* resource_manager::get_skeleton_anim(const rgl::string& name)
+named_object* resmgr::get_skeleton_anim(const rgl::string& name)
 {
     bool found = false;
     named_object* r = 0;
-    named_object** it = skel_anims.first;
-    while (!found && it != skel_anims.last) {
+    std::vector<skel_anim*>::iterator it = anims.begin();
+    while (!found && it != anims.end()) {
         if ((*it)->name.equals(name)) {
             r = *it;
             found = true;
@@ -526,12 +527,12 @@ named_object* resource_manager::get_skeleton_anim(const rgl::string& name)
 }
 
 // @ 0x418cf0
-named_object* resource_manager::get_object70(const rgl::string& name)
+named_object* resmgr::get_object70(const rgl::string& name)
 {
     bool found = false;
     named_object* r = 0;
-    named_object** it = v70.first;
-    while (!found && it != v70.last) {
+    std::vector<frame_set*>::iterator it = skeletons.begin();
+    while (!found && it != skeletons.end()) {
         if ((*it)->name.equals(name)) {
             r = *it;
             found = true;
@@ -544,9 +545,9 @@ named_object* resource_manager::get_object70(const rgl::string& name)
 }
 
 // @ 0x418d60
-int resource_manager::load_textures()
+int resmgr::load_textures()
 {
-    for (texture** it = textures.first; it != textures.last; ++it) {
+    for (std::vector<texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
         if ((*it)->kind == 0)
             (*it)->load(1, &root);
     }
@@ -554,13 +555,13 @@ int resource_manager::load_textures()
 }
 
 // @ 0x418da0
-int resource_manager::reload_textures()
+int resmgr::reload_textures()
 {
-    for (texture** it = textures.first; it != textures.last; ++it) {
+    for (std::vector<texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
         if ((*it)->loaded && ((*it)->kind == 1 || (*it)->kind == 2))
             (*it)->unload();
     }
-    for (effect_set** it = effects.first; it != effects.last; ++it) {
+    for (std::vector<effect_set*>::iterator it = effects.begin(); it != effects.end(); ++it) {
         effect_set* e = *it;
         for (int i = 0; i < 4; i++)
             e->h[i] = 0;
@@ -570,9 +571,9 @@ int resource_manager::reload_textures()
 }
 
 // @ 0x418e10
-int resource_manager::unload_textures()
+int resmgr::unload_textures()
 {
-    for (texture** it = textures.first; it != textures.last; ++it) {
+    for (std::vector<texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
         if ((*it)->kind == 0)
             (*it)->unload();
     }
@@ -580,18 +581,19 @@ int resource_manager::unload_textures()
 }
 
 // @ 0x418e40
-void resource_manager::release_pixel_shaders()
+void resmgr::release_pixel_shaders()
 {
-    for (material** it = shaders.first; it != shaders.last; ++it) {
-        if (((*it)->flags20 & 0x10000000) && g_use_shaders == 0 && (*it)->ps)
-            (*it)->ps->Release();
+    for (std::vector<material*>::iterator it = shaders.begin(); it != shaders.end(); ++it) {
+        material* m = *it;
+        if ((m->flags20 & 0x10000000) && g_use_shaders == 0 && m->ps)
+            m->ps->Release();
     }
 }
 
 // @ 0x418e90
 // Picks the best usable shader: the named one if the hardware supports it, else the first supported alternative,
 // else the recursively resolved alternatives; falls back to the default shader.
-material* resource_manager::resolve_shader(const rgl::string& name)
+material* resmgr::resolve_shader(const rgl::string& name)
 {
     material* shader = get_shader(name);
     material* best;
@@ -634,10 +636,10 @@ material* resource_manager::resolve_shader(const rgl::string& name)
 }
 
 // @ 0x418fb0
-void resource_manager::reset_effect_sets()
+void resmgr::reset_effect_sets()
 {
     if (g_use_shaders) {
-        for (effect_set** it = effects.first; it != effects.last; ++it) {
+        for (std::vector<effect_set*>::iterator it = effects.begin(); it != effects.end(); ++it) {
             effect_set* e = *it;
             for (int i = 0; i < 4; i++)
                 e->h[i] = 0;
@@ -647,10 +649,10 @@ void resource_manager::reset_effect_sets()
 }
 
 // @ 0x418ff0
-void resource_manager::resolve_effect_sets(ID3DXEffect* fx)
+void resmgr::resolve_effect_sets(ID3DXEffect* fx)
 {
     if (g_use_shaders) {
-        for (effect_set** it = effects.first; it != effects.last; ++it)
+        for (std::vector<effect_set*>::iterator it = effects.begin(); it != effects.end(); ++it)
             (*it)->resolve(fx);
     }
 }

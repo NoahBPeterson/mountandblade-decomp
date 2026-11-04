@@ -79,7 +79,7 @@ void Mission::refresh_agent(Agent* a)
 
 static __forceinline rgl::mesh* res_clone(const tstring& n)
 {
-    return g_resmgr_full.get_object(&n)->clone();
+    return g_resmgr.get_object(&n)->clone();
 }
 
 // @ 0x4f7f00
@@ -273,7 +273,7 @@ void MissionBlocker::init_screen()
     }
     {
         tstring n("ui_font");
-        ui_font->tracks[4]->res = g_resmgr_full.base().get_material(n);
+        ui_font->tracks[4]->res = g_resmgr.get_material(n);
     }
     {
         unsigned col = 0xffffffff;
@@ -296,7 +296,7 @@ void MissionBlocker::init_screen()
     }
     {
         tstring n("ui_font_background");
-        ui_font_bg->tracks[4]->res = g_resmgr_full.base().get_material(n);
+        ui_font_bg->tracks[4]->res = g_resmgr.get_material(n);
     }
     {
         unsigned col = 0xff000000;
@@ -772,11 +772,11 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     {
         tstring name("sample_flare");
         matrix id;
-        fm->append_skinned(g_resmgr_full.get_object(&name), (const rgl::mat4*)identity_pos((pos*)&id), -1, -1, 0);
+        fm->append_skinned(g_resmgr.get_object(&name), (const rgl::mat4*)identity_pos((pos*)&id), -1, -1, 0);
     }
     {
         tstring name("flare");
-        fm->res = g_resmgr_full.base().get_material(name);
+        fm->res = g_resmgr.get_material(name);
     }
     float k = dir.y * eye->u.y + dir.z * eye->u.z + dir.x * eye->u.x - 0.3f;
     k = k * 1.4285715f;
@@ -917,7 +917,7 @@ void MissionBlocker::update_status()
         {
             tstring name("status_health_bar");
             const rgl::mat4* m = (const rgl::mat4*)identity_pos((pos*)&frame);
-            rgl::mesh* obj = g_resmgr_full.get_object(&name);
+            rgl::mesh* obj = g_resmgr.get_object(&name);
             health_mesh->append_skinned(obj, m, -1, -1, 0);
         }
         vector4 col((float)shown_health / ag->max_health, 1.0f, 1.0f);
@@ -984,7 +984,7 @@ void MissionBlocker::update_status()
                     shadow_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
                     {
                         tstring shadow("ui_item_shadow");
-                        shadow_mesh->res = g_resmgr_full.base().get_material(shadow);
+                        shadow_mesh->res = g_resmgr.get_material(shadow);
                     }
                     ((rgl::mesh*)shadow_mesh)->set_bone_index(-1);
                     shadow_mesh->color = 0xff777777;
@@ -1031,7 +1031,7 @@ void MissionBlocker::update_status()
             rgl::mesh* cl;
             {
                 tstring icon(nm);
-                rgl::mesh* obj = g_resmgr_full.get_object(&icon);
+                rgl::mesh* obj = g_resmgr.get_object(&icon);
                 cl = obj->clone();
             }
             shield_icon->set_track(0, cl);
@@ -1085,7 +1085,7 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         // built in place into the local (0x4fbaa7 passes the local as the hidden return pointer); assigning a
         // temporary would copy it into a second buffer, one extra 4-byte allocation the original never makes. The
         // name temporary dies at the end of the statement (0x4fbab0).
-        std::vector<rgl::mesh*> objects = g_resmgr_full.find_meshes(as_rgl_string(((ItemRef*)ref)->mesh_name()));
+        std::vector<rgl::mesh*> objects = g_resmgr.find_meshes(as_rgl_string(((ItemRef*)ref)->mesh_name()));
         if (objects.empty()) {
             {
                 tstring name = ((ItemRef*)ref)->mesh_name();
@@ -1258,7 +1258,7 @@ void ItemA::init_screen()
 
     if (ok) {
         if (((tstring*)((char*)g_game + 0x1a210))->differs("none")) {
-            rgl::mesh* src = g_resmgr_full.get_object((const rgl::string*)((char*)g_game + 0x1a210));
+            rgl::mesh* src = g_resmgr.get_object((const rgl::string*)((char*)g_game + 0x1a210));
             if (src) {
                 rgl::mesh* m = src->clone();
                 rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
@@ -1379,7 +1379,7 @@ void ItemA::init_screen()
         ((ScreenOps*)this)->begin();
         ((BlockOwner*)((char*)this + 0x30))->init(win, GAME_AT(int, 0xac));
         if (f40 < 0)
-            frame()->set_mesh(0, g_resmgr_full.get_object(&tstring("meeting_window"))->clone());
+            frame()->set_mesh(0, g_resmgr.get_object(&tstring("meeting_window"))->clone());
     }
     g_gui_dirty = 1;
     {
@@ -1682,7 +1682,7 @@ void MWidget::get_xy(float* result)
         rgl::mesh* m = new rgl::mesh;
         {
             tstring n("ui_font");           // destroyed before add_image_a (0x4fd544)
-            m->res = g_resmgr_full.base().get_material(n);
+            m->res = g_resmgr.get_material(n);
         }
         this->set_mesh(4, m);
     }

@@ -1498,7 +1498,7 @@ void Block::free_materials()
         mats()[i]->owned = 0;                           // the block no longer owns the material
         ReleaseFn rel;
         rel.clear_f14 = clear_f14;
-        (g_res_manager.*rel.as_member)(mats()[i]);
+        (g_resmgr.*rel.as_member)(mats()[i]);
     }
     tidy3((char*)this + 0x58);
     *(int*)((char*)this + 0x64) = 0;
@@ -1532,7 +1532,7 @@ void Block::read_terrain(stream_base* stream)
     }
     if (name.len > 1) {
         if (name.differs("none"))
-            *(void**)((char*)this + 0x64) = ((resource_manager*)&g_res_manager)->get_material(name);
+            *(void**)((char*)this + 0x64) = g_resmgr.get_material(name);
     }
 }
 

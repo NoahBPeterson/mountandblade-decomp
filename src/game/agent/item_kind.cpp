@@ -46,7 +46,7 @@ rgl::mesh* ItemKind::mesh_for(unsigned __int64 cls, int bit)
         i++;
     } while (i < n);
     if (bit == -1) return 0;
-    return (rgl::mesh*)res_manager().get_object(&meshes[bit].name);
+    return (rgl::mesh*)g_resmgr.get_object(&meshes[bit].name);
 }
 // @ 0x433d90
 bool ItemKind::is_ranged()

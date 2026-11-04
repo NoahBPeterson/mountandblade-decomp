@@ -37,7 +37,7 @@ static __forceinline void board_text(MissionUi* parent, const char* text, float 
 static __forceinline mesh* board_mesh(const char* name)
 {
     tstring n(name);
-    return res_manager().get_object(&n)->clone();   // 0x419540, 0x41c6d0
+    return g_resmgr.get_object(&n)->clone();   // 0x419540, 0x41c6d0
 }
 
 // @ 0x4f1460
@@ -197,7 +197,7 @@ void TerrainPage::init_screen()
     EntityV* ent = (EntityV*)((rgl::world*)(void*)world)->create_entity(9);   // 0x428440
     {
         tstring n("prtcl_drop");
-        mesh* m = res_manager().get_object(&n)->clone();
+        mesh* m = g_resmgr.get_object(&n)->clone();
         ((std::vector<int>*)((char*)ent + 0x118))->push_back((int)m);   // _Insert_n 0x410610
         ent->refresh();
     }

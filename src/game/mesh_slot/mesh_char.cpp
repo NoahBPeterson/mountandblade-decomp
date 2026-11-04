@@ -13,10 +13,7 @@ using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
-// the resource manager as this TU calls it: `resmgr` (mesh_slot.h) for the lookups of core/resmgr.h, the resource_manager of src/rgl/resource.h
-// for resolve_shader (0x418e90); 0x4175f0 is the free stdcall clear_f14 of rgl/mem_stream.cpp (the folded release(res), which ignores ecx)
-#define g_rm (*(::resmgr*)&g_resmgr)
-void __stdcall clear_f14(named_object* r);                                 // 0x4175f0
+// 0x4175f0 is the free stdcall clear_f14 of rgl/mem_stream.cpp (the folded release(res), which ignores ecx; resource.h)
 
 extern MsgLog g_gui;                          // 0x5d7080 (MsgLog::add 0x452c00, ret 0x14, is the message log's own member)
 
@@ -184,9 +181,9 @@ NOINL void ShadowMapP::build_hw()
     if (target2 == 0) {
         if (g_render.use_hw_shadow) {
             SC.f190 = 0xffffff;
-            target2 = (ShSkin*)g_rm.get_render_target(w, h, 0x50, 1, 0);
+            target2 = (ShSkin*)g_resmgr.get_render_target(w, h, 0x50, 1, 0);
         } else {
-            target2 = (ShSkin*)g_rm.get_texture(w, h, 0x50);
+            target2 = (ShSkin*)g_resmgr.get_texture(w, h, 0x50);
             SC.f190 = -1;
         }
     }
@@ -210,7 +207,7 @@ NOINL void ShadowMapP::build_sw()
     g_batch.render(0);
     SC.reset();
     if (g_use_shaders == 0 && (*(int*)((char*)&g_options + 0x2c)) != 0 && target == 0) {
-        target = (ShSkin*)g_rm.get_shadow_skin(w, h, 0x1c, 0);
+        target = (ShSkin*)g_resmgr.get_shadow_skin(w, h, 0x1c, 0);
         if (target != 0) {
             target->file.assign("shadow_shader");
             target->shader = (int)g_resmgr.resolve_shader(target->file);      // 0x418e90
@@ -219,7 +216,7 @@ NOINL void ShadowMapP::build_sw()
         }
     }
     if (target2 == 0)
-        target2 = (ShSkin*)g_rm.get_texture(w, h, 0x50);
+        target2 = (ShSkin*)g_resmgr.get_texture(w, h, 0x50);
     SC.flags |= 0x301;
     SC.f190 = 0;
     if (target != 0 && target->refs[0] != 0 && ((texture*)target->refs[0])->loaded) {

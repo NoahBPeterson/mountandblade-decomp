@@ -2,7 +2,7 @@
 00468050 ??$_Copy_opt@PAUArrSet@@PAU1@@std@@YAPAUArrSet@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Copy_opt<ArrSet*> (terrain_b.cpp copy_arrset)
 004727a0 ??$_Destroy_range@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@YAXPAUArrSet@@0AAV?$allocator@UArrSet@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Destroy_range<ArrSet>
 00463760 ??1ArrSet@@QAE@XZ  # ArrSet::~ArrSet
-005d6fa0 ?g_resmgr@@3Uresource_manager@@A  # the resource manager global (shared resource.h spelling)
+005d6fa0 ?g_resmgr@@3Uresmgr@@A  # the resource manager global (shared resource.h spelling)
 08ed5098 ?g_emit_id@@3PAHA  # ambient emitter ids (emit.h)
 08ed50b4 ?g_fog_id_a@@3HA
 08ed50b8 ?g_fog_id_b@@3HA

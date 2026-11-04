@@ -16,7 +16,7 @@
 #include <vector>
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
-#include "../res_mgr.h"                                        // res_manager(): get_object 0x419540, find_meshes 0x41b960; resource_manager g_resmgr: get_material 0x418a70, get_object60 0x418c10
+#include "../res_mgr.h"                                        // g_resmgr: get_object 0x419540, find_meshes 0x41b960; resource_manager g_resmgr: get_material 0x418a70, get_object60 0x418c10
 #include <stdlib.h>
 #include "../dialog_mgr.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
@@ -2426,14 +2426,14 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     // the ammo item's own mesh (0x44bf04.. read the fourth)
     if ((g_items[launcher->item].type_flags & 0xff) == 10) {
         tstring tn = launcher->mesh_name();
-        m = (rgl::mesh*)res_manager().get_object(&tn);
+        m = (rgl::mesh*)g_resmgr.get_object(&tn);
     } else {
         m = 0;
         if (ammo->item >= 0 && ammo->item < g_item_kind_count)
             m = g_items[ammo->item].mesh_for(0x2000000000000000ui64, ((signed char*)ammo)[7]);
         if (!m) {
             tstring name("flying_missile");
-            m = (rgl::mesh*)res_manager().get_object(&name);
+            m = (rgl::mesh*)g_resmgr.get_object(&name);
         }
     }
     if (m) {
@@ -2557,7 +2557,7 @@ void Mission::spawn_prop(int* idx, int* id)
 after:
     if (name.len > 0)
         {
-            std::vector<rgl::mesh*> found = res_manager().find_meshes(&name);
+            std::vector<rgl::mesh*> found = g_resmgr.find_meshes(&name);
             meshes = *(const std::vector<rgl::mesh*>*)&found;
         }
     if (s2.differs("0") && s2.len != 0)
@@ -3418,7 +3418,7 @@ static inline tstring item_mesh_name(ItemKind* items, const ItemRef& r)
         return items[r.item].mesh_name_for((int)r.m4 >> 24);
     return tstring("Error: Invalid item");
 }
-static __forceinline rgl::mesh* get_obj(const tstring& n) { return (rgl::mesh*)res_manager().get_object(&n); }
+static __forceinline rgl::mesh* get_obj(const tstring& n) { return (rgl::mesh*)g_resmgr.get_object(&n); }
 static __forceinline mesh* build_ranged(int i, ItemRef r)
 {
     mesh* result = 0;

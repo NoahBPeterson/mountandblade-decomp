@@ -23,7 +23,6 @@ struct main_menu;
 struct options_record;
 struct ptype;
 struct renderer;
-struct resmgr;
 
 namespace orig {
 extern const float g_zero;                 // 0x549ca8
@@ -113,7 +112,6 @@ extern options_record g_options;           // 0x5aa008
 extern SoundMgr g_sound_mgr;               // 0x5aa128
 
 extern Config g_launcher_cfg;              // 0x5aa0a8
-extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern ptype* g_ptypes;                    // 0x5e28f8
 extern MapFlags g_map_flags;               // 0x5e291c

@@ -8,6 +8,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <vector>
+#include <list>
 #include "./rgl_string.h"
 #include "./rgl_math.h"
 #include "./stream.h"
@@ -165,31 +166,59 @@ struct frame_set : named_object {
     virtual int type();                        // 0x49df30
 };
 
-// ---- resource manager (global at 0x5d6fa0) --------------------------------------------------------------
-// std::vector-shaped list of resource pointers (16 bytes: allocator, first, last, end).
-template<class T> struct res_list {
-    int alloc;
-    T** first;
-    T** last;
-    T** end;
+// 12-byte key array that owns both arrays (resource.h's key_array, plus constructor and destructor; the
+// constructor stores n first, as skel_anim's inlined copy 0x41b4e0 does)
+struct vec_array : key_array {
+    vec_array() { n = 0; data = 0; keys = 0; }
+    ~vec_array()                                                        // 0x4196a0 (the body of allocator::destroy)
+    {
+        if (data)
+            delete[] data;
+        if (keys)
+            delete[] keys;
+    }
 };
-struct resource_manager {
-    int pad[8];
-    res_list<named_object> v20;                // +0x20
-    res_list<texture> textures;                // +0x30
-    res_list<material> shaders;                // +0x40
-    res_list<skin> materials;                  // +0x50
-    res_list<named_object> v60;                // +0x60
-    res_list<named_object> v70;                // +0x70
-    res_list<named_object> skel_anims;         // +0x80
-    res_list<effect_set> effects;              // +0x90
-    char pad_a0[0xbc - 0xa0];
-    rgl::string root;                          // +0xbc
+
+// vtable 0x54b24c, 0x34 bytes, type() 8: skeleton animation (ctor 0x41b4e0, dtor 0x41b520, deleting 0x41bed0)
+struct skel_anim : named_object {
+    std::vector<vec_array> keys;               // +0x18 (first at +0x1c)
+    vec_array tail;                            // +0x28
+    skel_anim();                               // 0x41b4e0
+    virtual int type();                        // 0x48b4a0 (8)
+};
+
+// ---- the resource manager (global at 0x5d6fa0; defined in core/resmgr.cpp, constructed by the compiler) -----------------------
+// ONE class: the lookups and device maintenance (resource_manager.cpp, 0x418870..0x419190) and the registration, serialisation,
+// loading and destruction (core/resmgr.cpp, 0x419540..0x41e46f) are its members. Layout from the constructor 0x41b000, add
+// 0x41ba90, save 0x419a30 and the destructor 0x419e90. Every list is a std::vector of the resource pointers.
+struct lod_group;                              // core/resmgr.h (0xe0 bytes, ctor 0x41c2a0)
+namespace rgl { struct mesh; }
+struct resmgr {
+    char f0;                                   // +0x00
+    unsigned c4, c8, cc;                       // +0x04 id counters for textures, shaders, materials (1..1000)
+    std::vector<lod_group*> lods;              // +0x10 LOD groups (make_lod_mesh 0x41ca60)
+    std::vector<rgl::mesh*> meshes;            // +0x20 type 1
+    std::vector<texture*> textures;            // +0x30 type 2
+    std::vector<material*> shaders;            // +0x40 type 4
+    std::vector<skin*> materials;              // +0x50 type 3
+    std::vector<body_part*> bodies;            // +0x60 type 6
+    std::vector<frame_set*> skeletons;         // +0x70 type 7
+    std::vector<skel_anim*> anims;             // +0x80 type 8
+    std::vector<effect_set*> effects;          // +0x90 (technique sets of the shader files)
+    std::list<named_object*> blocks;           // +0xa0 the array blocks to delete[] (one per loaded record group)
+    std::vector<named_object*> all;            // +0xac every registered resource
+    rgl::string root;                          // +0xbc resource root
+    char editor_cc, editor_cd;                 // +0xcc, +0xcd (both set from enable_edit_mode by the editor start, game/char_sheet/editor_ui.cpp)
+    char meshes_ready;                         // +0xce (set once by linearise_meshes)
+
+    resmgr();                                  // 0x41b000
+    ~resmgr();                                 // 0x419e90
+    // resource_manager.cpp
     texture* get_texture(const rgl::string& name);             // 0x418870
     skin* get_material(const rgl::string& name);               // 0x418a70
     material* get_shader(const rgl::string& name);             // 0x418b30
     effect_set* find_effect(const rgl::string& name);          // 0x418b90
-    named_object* find_v20(const rgl::string& name);           // 0x418bd0
+    rgl::mesh* find_mesh(const rgl::string& name);          // 0x418bd0
     named_object* get_object60(const rgl::string& name);       // 0x418c10
     named_object* get_skeleton_anim(const rgl::string& name);  // 0x418c80
     named_object* get_object70(const rgl::string& name);       // 0x418cf0
@@ -200,7 +229,30 @@ struct resource_manager {
     material* resolve_shader(const rgl::string& name);         // 0x418e90
     void reset_effect_sets();                                  // 0x418fb0
     void resolve_effect_sets(ID3DXEffect* fx);                 // 0x418ff0
+    // core/resmgr.cpp
+    rgl::mesh* get_object(const rgl::string* name);                    // 0x419540
+    int restore(ID3DXEffect* fx);                                      // 0x419580 (device reset: textures, effects)
+    int invalidate();                                                  // 0x4195e0 (device lost)
+    void linearise_meshes();                                           // 0x419640
+    void save(stream_base* s);                                         // 0x419a30
+    void add(named_object* r);                                         // 0x41ba90
+    texture* get_render_target(int w, int h, int fmt, int ext, int f34);   // 0x41b7d0
+    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);    // 0x41b960
+    effect_set* get_small(rgl::string name);                           // 0x41bf40
+    void load_shaders();                                               // 0x41c000
+    texture* get_texture(int w, int h, int fmt);                       // 0x41c400
+    skin* get_shadow_skin(int w, int h, int fmt, int f34);             // 0x41c420
+    int load_all(int check_exists, rgl::string* root);                 // 0x41c540
+    lod_group* make_lod_mesh(const rgl::string& pat, bool copy);       // 0x41ca60
+    lod_group* get_lod_mesh(const rgl::string& name);                  // 0x41cdc0
+    stream_base* load_stream(stream_base* s);                          // 0x41db20
+    void load_pack(const rgl::string& name, int user);                 // 0x41e150
 };
-extern resource_manager g_resmgr;              // 0x5d6fa0
+extern resmgr g_resmgr;                        // 0x5d6fa0
+
+// 0x4175f0 is rgl/mem_stream.cpp's stdcall clear_f14(named_object*), which ignores ecx (the original's linker folded the resource
+// manager's release(res) into it); the callers that hold the manager in ecx call it through the member type of the original's call
+void __stdcall clear_f14(named_object* r);               // 0x4175f0
+union ReleaseFn { void (resmgr::*as_member)(void*); void (__stdcall *clear_f14)(named_object*); };
 
 #endif

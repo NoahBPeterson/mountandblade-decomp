@@ -12,7 +12,7 @@
 // composite's copy constructor is out of line at 0x433470 (game_util.cpp); the body copy 0x4285e0 expands it inline
 __forceinline composite::composite(const composite& o) { ((composite*)this)->copy_from(&o); }
 
-// the object resource_manager::get_object60 returns: a name and a shape (what an entity loads at +0x98)
+// the object resmgr::get_object60 returns: a name and a shape (what an entity loads at +0x98)
 struct shape_resource : named_object {
     shape_base* shape;                                          // 0x18 (== body_part::shape)
     shape_base* clone_shape();                                  // 0x4285e0

@@ -22,7 +22,6 @@
 #include "../float_consts.h"
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
-extern char g_5d6fa0[];     // 0x5d6fa0 the resource manager
 extern char g_5d7080[];     // 0x5d7080 the gui manager
 
 
@@ -64,7 +63,6 @@ extern FILE* g_5a9f90;      // 0x5a9f90 the log's FILE
 #include "../tstring.h"                       // tstring::tstring 0x42bbd0, ~tstring 0x42bc40
 struct TStrRec : tstring { char rest[0x10]; };   // the 0x20-byte table record the string heads
 struct tstring11 { TStrRec a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
-struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct ini_file { ini_file(); };                    // 0x4c1be0
 struct Tail2 { ~Tail2(); };                         // 0x4c4d10
@@ -79,8 +77,6 @@ void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (_
 #define AT(type, p, off) (*(type*)((char*)(p) + (off)))
 
 // ---- destructors (atexit) -------------------------------------------------------------------------------------
-// @ 0x548130
-void __cdecl static_dtor_548130() { ((resmgr*)g_5d6fa0)->~resmgr(); }
 // @ 0x548140
 void __cdecl static_dtor_548140() { ((gui_manager*)g_5d7080)->~gui_manager(); }
 // @ 0x548170
@@ -126,8 +122,6 @@ void __cdecl static_dtor_548500() { ((TwoVec*)g_a75f40)->~TwoVec(); }
 void __cdecl static_dtor_548510() { ((BigArray*)&g_anim.skins_alloc)->destroy(); }   // the skin vector at 0x8ed4f78
 
 // ---- initializers, in the original table order -----------------------------------------------------------------
-// @ 0x5479a0
-void __cdecl static_init_5479a0() { new (g_5d6fa0) resmgr; atexit(static_dtor_548130); }
 // @ 0x5479c0
 void __cdecl static_init_5479c0() { new (g_5d7080) gui_manager; atexit(static_dtor_548140); }
 // @ 0x547aa0   the debug text log: its two strings, flags, and vtable
@@ -194,7 +188,7 @@ void __cdecl static_init_548030() { atexit(static_dtor_548510); }
 typedef void (__cdecl* init_fn)();
 #pragma data_seg(".CRT$XCU")
 init_fn g_static_init_table[] = {
-    static_init_5479a0, static_init_5479c0, 
+    static_init_5479c0,
     
     static_init_547aa0, static_init_547ae0, static_init_547b50,
     static_init_547e40,

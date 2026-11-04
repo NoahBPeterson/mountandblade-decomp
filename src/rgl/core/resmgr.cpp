@@ -47,6 +47,7 @@ using namespace rgl;
 
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+resmgr g_resmgr;                                    // 0x5d6fa0 (the resource manager; constructed by the compiler: resmgr::resmgr 0x41b000)
 int g_mesh_npts;                                    // 0x5e2998 (point count of the mesh being read)
 unsigned __int64 g_bit[64] = {  // 0x5a8e68 (g_bit[i] == 1 << i; the table of single-bit masks)
     0x1ui64, 0x2ui64, 0x4ui64, 0x8ui64,
@@ -165,7 +166,7 @@ stream_base* save_keyframes(stream_base* s, keyframes* k)
 // @ 0x419540
 mesh* resmgr::get_object(const rgl::string* name)
 {
-    mesh* r = (mesh*)base().find_v20(*name);
+    mesh* r = find_mesh(*name);
     if (!r)
         mb_error("get_object failed for: %s", name->c_str());
     return r;
@@ -196,7 +197,7 @@ int resmgr::invalidate()
         r->h[3] = 0;
         r->resolved = 0;
     }
-    base().release_pixel_shaders();
+    release_pixel_shaders();
     return 0;
 }
 
@@ -643,9 +644,9 @@ void resmgr::add(named_object* r)
 }
 
 // @ 0x41bf40
-effect_set* resmgr::get_small(tstring name)
+effect_set* resmgr::get_small(rgl::string name)
 {
-    effect_set* r = base().find_effect(name);
+    effect_set* r = find_effect(name);
     if (r == 0) {
         r = new effect_set[1];
         r->name = name;
@@ -757,7 +758,7 @@ skin* resmgr::get_shadow_skin(int w, int h, int fmt, int f34)
         r = new skin[1];
         r->name.assign("");
         r->shader_name.assign("shadowmap_shader");
-        r->tex[0] = g_resmgr_full.get_render_target(w, h, fmt, 1, f34);
+        r->tex[0] = g_resmgr.get_render_target(w, h, fmt, 1, f34);
         blocks.push_back(r);
         add(r);
         r->f14 = 1;
@@ -775,7 +776,7 @@ int resmgr::load_all(int check_exists, rgl::string* root)
     load_shaders();
     for (std::vector<skin*>::iterator it3 = materials.begin(); it3 != materials.end(); ++it3) {
         skin* sk = *it3;
-        sk->shader = g_resmgr_full.base().resolve_shader(sk->shader_name);
+        sk->shader = g_resmgr.resolve_shader(sk->shader_name);
     }
     return 0;
 }
@@ -1206,7 +1207,7 @@ void resmgr::load_pack(const rgl::string& name, int user)
 {
     rgl::string dir;
     if (user) {
-        dir = cur;
+        dir = root;
         tstring r_str("Resource\\");
         dir.append(r_str);
     } else {

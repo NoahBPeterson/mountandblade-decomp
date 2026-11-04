@@ -38,7 +38,7 @@ vector4 Ctx::ambient()
 void StratEnt::shadow_tick()
 {
     if (p288 == 0) {
-        p288 = ((resmgr*)&g_resmgr)->get_shadow_skin(0x80, 0x80, 0x1c, 0);
+        p288 = g_resmgr.get_shadow_skin(0x80, 0x80, 0x1c, 0);
         if (p288 == 0) return;
         p288->shader_name.assign("shadow_shader");
         skin* sk = p288;

@@ -122,12 +122,12 @@ void scene_step(int material)
         int w = rec->w;
         if (w < 0x201)
             w = 0x200;
-        texture* t = g_resmgr_tab.get_texture(w, h, 0x50);
+        texture* t = g_resmgr.get_texture(w, h, 0x50);
         if (t != 0)
             sc.f15c = (int)t;
         bool ok = g_batch.render(&sc);
         if (t != 0)
-            g_resmgr_tab.release(t);
+            clear_f14((named_object*)t);
         if (ok)
             break;
     }
@@ -2728,7 +2728,7 @@ void Party::update_flags()
     rgl::mesh* m2 = 0;
     int rider = f94;
     PartyTypeDef* d = (PartyTypeDef*)((char*)g_map_icons + def);
-    rgl::mesh* m = ((MeshRes*)((::resmgr*)&g_resmgr_full)->get_object(&d->name))->copy_of();
+    rgl::mesh* m = ((MeshRes*)g_resmgr.get_object(&d->name))->copy_of();
     float a = d->scale;
     SCALE_ROWS(m, a);
     GDP(rgl::mesh*, 0x1a200) = m;
@@ -2737,7 +2737,7 @@ void Party::update_flags()
     d->frames.update(-0x46);
     if (rider > 0) {
         PartyTypeDef* r = (PartyTypeDef*)((char*)g_map_icons + (unsigned)rider * 0x48);
-        m2 = ((MeshRes*)((::resmgr*)&g_resmgr_full)->get_object(&r->name))->clone();
+        m2 = ((MeshRes*)g_resmgr.get_object(&r->name))->clone();
         m2->translate(&d->pos);
         if (!(flags_lo & 0x400)) {
             float b = r->scale;

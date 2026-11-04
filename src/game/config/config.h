@@ -95,7 +95,7 @@ void __fastcall release_input_devices(Slot* self);  // 0x4bc3d0
 
 // ---- the render batch's buffer table (0x4bc540..0x4bd0c0): dev_buffer / buffer_pair
 #include "../dev_buffer.h"
-#include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0 (the one declaration)
+#include "../../rgl/resource.h"          // resmgr g_resmgr 0x5d6fa0 (the one declaration)
 #include "../render_batch.h"                   // render_batch (shared with terrain_b)
 #include "../../include/render_flags.h"
 struct font_details {                               // 0x1c: the staged glyph record Font::load 0x4d9aa0 copies into the

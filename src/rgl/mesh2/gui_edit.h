@@ -504,17 +504,7 @@ inline const char* text(const char* key)
 // ============================================================================================================
 // 0x4c7ee0..0x4c83a0: record array deleter and the mesh block reader
 // ============================================================================================================
-// the resource manager (global at 0x5d6fa0)
-struct res_manager {
-    void* get_material(const tstring& name);            // 0x418a70
-    void release(void* res);                            // 0x4175f0 (the call shape only: the definition is the stdcall clear_f14, see below)
-};
-// 0x4175f0 is rgl/mem_stream.cpp's stdcall clear_f14(named_object*), which ignores ecx; the original loads ecx = the manager before the call:
-// the call goes to that symbol through the member type of the original's call
-struct named_object;
-void __stdcall clear_f14(named_object* r);              // 0x4175f0
-union ReleaseFn { void (res_manager::*as_member)(void*); void (__stdcall *clear_f14)(named_object*); };
-extern res_manager g_res_manager;                       // 0x5d6fa0
+#include "../resource.h"                                // resmgr g_resmgr (0x5d6fa0), clear_f14, ReleaseFn
 
 // the array's elements are 0x78 bytes: +0x00 the pointer to the element's name, +0x18 the owner, +0x28 the
 // cleared sub-object, +0x48/+0x4c/+0x50 three owned pointers, and the element's 16-byte name string sits at

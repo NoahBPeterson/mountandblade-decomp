@@ -1439,7 +1439,6 @@ struct Screen_s29ec0 {
 };
 
 // ======================================================= slice s0052ae70: classes, globals, helpers
-#define g_resmgr_s2ae70 (*(resmgr_s2ae70*)&g_resmgr)
 #define g_gui_s2ae70 (*(gui_manager_s2ae70*)g_gui)
 #define g_strtable_s2ae70 g_strtable
 #define g_mission_s2ae70 (*(Mission_s2ae70**)&g_mission)
@@ -1459,12 +1458,8 @@ struct Screen_s29ec0 {
 // ---- engine string (0x10 bytes, ctor 0x42bbe0, dtor 0x42bc40) ------------------------------------------
 
 
-// ---- resolved material_s2ae70 / resource manager (0x5d6fa0) ---------------------------------------------------
+// ---- resolved material_s2ae70 ---------------------------------------------------
 struct material_s2ae70;
-struct resmgr_s2ae70 {
-    __forceinline material_s2ae70* get_material(tstring* name);              // 0x418a70 (thiscall, ret 4)
-};
-
 
 // ---- gui manager (0x5d7080) ----------------------------------------------------------------------------
 struct gui_manager_s2ae70 {
@@ -2007,7 +2002,6 @@ __forceinline void Mission_s29130::fn_529840(int a0) { ((Mission_s29840*)this)->
 __forceinline void Mission_s261e0::fn_529d80() { ((Mission_s29840*)this)->fn_529d80(); }
 __forceinline void Mission_s261e0::frame(float a0, char a1) { ((MissionG*)this)->frame(a0, (bool)a1); }
 __forceinline Party_s29840* PartyMgr_s29840::get(int a0) { return (Party_s29840*)((Scene*)this)->get(a0); }
-__forceinline material_s2ae70* resmgr_s2ae70::get_material(tstring* a0) { return (material_s2ae70*)((resource_manager*)this)->get_material(*(rgl::string const*)a0); }
 __forceinline int PartyMgr_s29130::index_of(unsigned a0) { return ((Map10007*)this)->lookup(a0); }
 __forceinline int PartyMgr_s29840::index_of(unsigned a0) { return ((Map10007*)this)->lookup(a0); }
 __forceinline void Src_s261e0::init(int a0, int a1) { ((BlockOwner*)this)->init((ContainerBase*)a0, a1); }

@@ -48,13 +48,7 @@ struct ViewObj {                            // interface at +0x1b4 (virtual 23 =
     virtual void d20(); virtual void d21(); virtual void d22();
     virtual void slot23(void* src, void* dst);
 };
-// The resource manager object (0x5d6fa0, ECX = &g_alloc): the shadow-map render target factory is resmgr::get_shadow_skin (rgl/core/resmgr.h)
-struct skin;
-struct resmgr {
-    skin* get_shadow_skin(int w, int h, int fmt, int f34);   // 0x41c420
-};
-
-extern resmgr g_alloc;                       // 0x5d6fa0
+#include "../../rgl/resource.h"             // resmgr g_resmgr (0x5d6fa0): get_shadow_skin 0x41c420 builds the shadow-map render target
 
 struct Blob16 { int a, b, c, d; };
 struct Prop {

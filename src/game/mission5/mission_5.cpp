@@ -2249,8 +2249,6 @@ no_selection:
 }
 
 // ======================================================= slice s0052ae70: functions
-#undef g_resmgr_s2ae70
-#define g_resmgr_s2ae70 (*(resmgr_s2ae70*)&g_resmgr)
 #undef g_gui_s2ae70
 #define g_gui_s2ae70 (*(gui_manager_s2ae70*)g_gui)
 #undef g_strtable_s2ae70
@@ -2271,7 +2269,7 @@ void Screen_s2ae70::init_order_markers()
 
         {
             tstring name("vertex_color_blend_mat");
-            f6730->res = g_resmgr_s2ae70.get_material(&name);
+            f6730->res = (material_s2ae70*)g_resmgr.get_material(name);
         }
         f6734->res = f6730->res;
         f672c->res = f6730->res;
@@ -2296,7 +2294,7 @@ void Screen_s2ae70::init_order_markers()
         f673c = (rgl::mesh_s2ae70*)new rgl::mesh;
         {
             tstring name("vertex_color_blend_mat");
-            f673c->res = g_resmgr_s2ae70.get_material(&name);
+            f673c->res = (material_s2ae70*)g_resmgr.get_material(name);
         }
         f6740->add_extra(f673c);
 
