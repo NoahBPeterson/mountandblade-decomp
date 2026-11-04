@@ -69,8 +69,8 @@ void Mission::refresh_agent(Agent* a)
     int zero = 0;
     for (int p = 0; p < 0x16; p++)
         look[p] = zero;
-    build_appearance(a->body, a->f10, a->troop, *(int*)((char*)a + 0x94), &a->f8c, look, (int*)((char*)a + 0x240),
-                     (int*)((char*)a + 0x194), (int*)((char*)a + 0x1a4), (int*)((char*)a + 0x1a8), (int*)a->pairs, a->f8);
+    build_appearance((rgl::strategic_entity*)a->body, a->f10, a->troop, *(int*)((char*)a + 0x94), &a->f8c, (rgl::lod_mesh2**)look, (int*)((char*)a + 0x240),
+                     (rgl::lod_mesh2**)((char*)a + 0x194), (int*)((char*)a + 0x1a4), (rgl::lod_mesh2**)((char*)a + 0x1a8), (EquipSet*)a->pairs, a->f8);
     setup_item_meshes((SkelBodyV*)a->body, a->f10, a->troop, (char*)look, (int)&a->f130, (ItemRef*)a->pairs, a->f8);
     a->f24c = a->equipment_value();
     a->set_slot(0, 0x14);

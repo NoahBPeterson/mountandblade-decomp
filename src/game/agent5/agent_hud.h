@@ -68,9 +68,8 @@ struct SceneObject;
 // ---- the mission object's agent (re)initialisation callees ------------------------------------------------------------
 struct AgentEq;                                                   // terrain_a/misc.h (not included: it pulls the other rgl world)
 void __stdcall AgentEq_pick_slots(AgentEq* a);                    // 0x46b2d0 (ret 4)
-// 0x482240 (cdecl, 12 arguments): the agent's appearance lods; 0x47cfe0 (cdecl, 7 arguments): the equipment bodies
-void __cdecl build_appearance(AgentBody* b, int kind, int troop, int f94, ItemRef* f8c, int* look, int* f240, int* f194,
-                              int* f1a4, int* f1a8, int* items, int id);       // 0x482240
+// 0x482240 (cdecl, 12 arguments): the agent's appearance lods (mesh_slot/mesh_build.h); 0x47cfe0 (cdecl, 7 arguments): the equipment bodies
+#include "../mesh_slot/mesh_build.h"   // build_appearance (0x482240)
 // 0x47cfe0 is setup_item_meshes (below): the equipment bodies
 
 // ---- globals and engine objects the HUD code uses ---------------------------------------------------------------------

@@ -214,8 +214,6 @@ struct node_groups {
 };
 struct AgentEq;                          // terrain_a/misc.h: the agent's equipment slots as 0x46b2d0 sees them
 void __stdcall AgentEq_pick_slots(AgentEq* a);      // 0x46b2d0 (ret 4)
-void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* inv, void* f240, void* f194,
-                      void* f1a4, void* f1a8, void* slots, int id);   // 0x482240 (__stdcall, ret 0x34)
 #include "./mesh_build.h"          // setup_item_meshes (0x47cfe0)
 #include "../skill_cap.h"
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
@@ -308,8 +306,8 @@ NOINL void Mission::spawn(AgentS* a)
         e->shape = shp;
     }
     AgentEq_pick_slots((AgentEq*)a);
-    agent_equip_fill(e, a->kind, a->troop, a->f94, &a->item_a, &a->inv[0], &a->f240, &a->f194, &a->f1a4,
-                     &a->f1a8, &a->slots[0], a->id);
+    build_appearance((rgl::strategic_entity*)e, a->kind, a->troop, a->f94, (ItemRef*)&a->item_a, (rgl::lod_mesh2**)&a->inv[0], (int*)&a->f240,
+                     (rgl::lod_mesh2**)&a->f194, (int*)&a->f1a4, (rgl::lod_mesh2**)&a->f1a8, (EquipSet*)&a->slots[0], a->id);   // 0x482240
     setup_item_meshes((SkelBodyV*)e, a->kind, a->troop, &a->inv[0], (int)&a->f130, (ItemRef*)&a->slots[0], a->id);
     a->f24c = a->equipment_value();
     this->post_spawn((MAgent*)a);
