@@ -13,6 +13,7 @@
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
+#include "../render_batch.h"   // g_batch (0x5fe898): counter 0x418828
 #include "../terrain_a/terrain.h"   // Terrain, g_terrain (0xa76630)
 #include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
 #include "../game_globals.h"      // g_bit (0x5a8e68)
@@ -123,7 +124,6 @@ extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x
 extern tstring g_scratch;                               // 0xa70464
 extern UiKeyState g_keys;                                 // 0xa73730
 extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
-extern int g_psys_scene;            // 0xa170c0
 #include "../game_globals.h"      // g_module_settings.show_quest_notes (canonical)
 
 
@@ -711,7 +711,7 @@ void Screen::frame_update(float dt)
     char flag;                                      // 1 while the map is idle
     bool start;
 
-    if (g_shadow_map.target != 0 && ((ShadowMapP*)g_shadow_map.target)->f48[0x50 / 4] != g_psys_scene
+    if (g_shadow_map.target != 0 && ((ShadowMapP*)g_shadow_map.target)->f48[0x50 / 4] != g_batch.counter
         && (int)g_shadow_map.cam == (int)g_level && g_use_shaders != 0)
         ((ShadowMapP*)g_shadow_map.target)->render();
 

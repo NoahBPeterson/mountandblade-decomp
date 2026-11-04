@@ -185,7 +185,7 @@ int SaveLoadUi::run()
         g_editor.RestoreDeviceObjects();
     }
     ++g_5e28c8;
-    ++g_a16c58;
+    ++g_batch.frame;
     ((Core*)(void*)this)->update_view_rect();   // 0x4bace0 (the Core object is g_app_obj 0x8ee3c48)
 
     Viewport vp;
@@ -198,7 +198,7 @@ int SaveLoadUi::run()
     ((PanelCall7)(*(void***)panel)[0xac / 4])(panel, 0, 0, 2, 0x302010, 1.0f, 0);
 
     g_msglog.build_scene();
-    ((RenderPass*)&g_renderer)->render(0);   // 0x47e520
+    g_batch.render(0);   // 0x47e520
 
     if (g_cfg.show_framerate != 0) {
         void* w = *(void**)((char*)this + 0xf8);

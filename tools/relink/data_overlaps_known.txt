@@ -19,7 +19,6 @@
 005d7080 005d878c  # g_5d7080 (0xb350 bytes) holds ?g_loaded_sound_count@@3HA, g_loaded_sound_count
 005d7080 005d8798  # g_5d7080 (0xb350 bytes) holds ?g_5d8798@@3HA, g_5d8798
 005e291c 005e2920  # ?g_map_flags@@3UMapFlags@@A (0xc bytes) holds f8
-005fe898 00a170c0  # g_5fe898 (0x41882c bytes) holds ?g_psys_scene@@3HA, g_psys_scene
 00a70440 00a70458  # g_a70440 (0x2c50 bytes) holds ?g_trigger_result@@3TTriggerResult@@A, g_trigger_result
 00a70440 00a70470  # g_a70440 (0x2c50 bytes) holds ?g_num_valid@@3HA, g_num_valid
 00a70440 00a70480  # g_a70440 (0x2c50 bytes) holds ?g_list_a70480@@3UList8@@A, g_list_a70480

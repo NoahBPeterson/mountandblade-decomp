@@ -77,9 +77,7 @@ struct Font {
     Font();   // 0x4d99d0 (FontDef's constructor)
     void load(const char* path);   // 0x4d9aa0 (the original hands it a tstring)
 };
-struct render_batch {
-    void init_formats();   // 0x4bc5b0 (terrain_b/render_batch.h; the object at 0x5fe898 the start-up sequence initialises)
-};
+#include "../render_batch.h"                        // render_batch, g_batch (0x5fe898): init_formats 0x4bc5b0 starts the engine
 void* make_medium_button(void* parent, const tstring* text, int a2, int a3, float a4,
                          const tstring* up, const tstring* down, int a5, float a6, float k);  // 0x4dcc50
 

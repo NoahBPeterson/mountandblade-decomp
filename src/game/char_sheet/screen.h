@@ -47,15 +47,6 @@ void __cdecl __CxxThrowException(void* p, void* info);  // 0x5368e6
 #define _AddressOfReturnAddress() ((void*)((char*)&_AddressOfReturnAddress_ + 4))
 int _AddressOfReturnAddress_;
 
-// 0x98-byte "hint" element of the six vector tables (ctor 0x4cd720).
-struct Obj720 {                         // (the slice's Hint)
-    char pad0[0x3c];
-    tstring name;                       // +0x3c
-    char pad4c[0x98 - 0x4c];
-    Obj720();                           // 0x4cd720
-};
-typedef Obj720 Hint;
-
 // 0x20-byte row of the screen's unit list.
 struct UiRow {
     tstring name;                       // +0
@@ -100,13 +91,6 @@ void __fastcall RowModel::erase_all(int unused)   // 0x4d10f0
 #include "../../include/vec_table.h"     // vec_table (8 bytes: data, count; ctor 0x417cb0). It was a 0x260-byte stand-in here.
 #include "../../include/clock_table.h"
 #include "../ui_globals.h"      // UI / core globals
-
-// a matrix-array entry of the screen: 3 identity rows + a 4th scale vector (0x40 bytes).
-struct xform {
-    mat3 m;                             // +0 (identity3 output, 0x40cd60: 12 dwords)
-    vector4 ex;                         // +0x30
-};
-#define MAT_XFORM(d) ((xform*)((char*)*(xform**)((char*)this + 0x4183d4) + (d)))
 
 struct Timer {
     float elapsed() const;   // 0x432c10 (seconds since the record was touched; include/timer.h)
@@ -181,7 +165,6 @@ struct GuiScreen {
 
     // (wheel_step 0x4c52f0 and clear_selection 0x4c5330 are gui_view's, post 0x4e6510 is MsgLog::update: cs_common.h / msg_log.h)
 
-    GuiScreen();                                               // 0x4ebea0
     void process(int param);                                // 0x4ebfd0
 };
 

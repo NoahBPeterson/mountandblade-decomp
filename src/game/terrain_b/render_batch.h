@@ -1,5 +1,5 @@
-// render_batch.h: the shader-path scene renderer's object (render_batch, a ~4 MB object of which only the touched
-// fields are modelled) and the render-side views it reads: the per-scene constants block (scene), the sky/fog
+// render_batch.h: the render-side records the shader-path scene renderer (render_batch::render_scene, the class of
+// src/game/render_batch.h) reads: the per-scene constants block (scene), the sky/fog
 // block (sky_t), lights, the view frustum, the render-state cache (renderer, global object 0xa17910) and the
 // material / mesh-part / texture records. Every offset is read or written by render_batch::render_scene (0x46e590,
 // render_batch.cpp); the other users of these records (src/game/renderer.h, src/rgl/scene/*.h) declare their own

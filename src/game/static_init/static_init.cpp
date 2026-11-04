@@ -38,7 +38,6 @@ extern float g_5a9f20;      // 0x5a9f20
 extern float g_5a9f28[2];   // 0x5a9f28 (defined in cls_map.cpp: {x, y})
 extern char g_5a9f30[];     // 0x5a9f30 the debug text log (vtable, two strings)
 extern char g_5a9f60[];     // 0x5a9f60 the log file stream (vtable, two strings, flags, FILE*)
-extern char g_5fe898[];     // 0x5fe898
 
 
 
@@ -73,8 +72,6 @@ struct TStrRec { TStrRec(); ~TStrRec(); char rec[0x20]; };   // 0x42bbd0, 0x42bc
 struct tstring11 { TStrRec a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
 struct resmgr { resmgr(); ~resmgr(); };             // 0x41b000, 0x419e90
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
-struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
-struct big_holder { void release(); };              // 0x4ca830
 struct ini_file { ini_file(); };                    // 0x4c1be0
 struct model_a { model_a(); };                      // 0x4d3580
 struct big_obj { void release(); };                 // 0x4cb9e0
@@ -174,8 +171,6 @@ void __cdecl static_dtor_548400() { ((RefList*)g_a75f2c)->retire(); }
 void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 // @ 0x548460
 void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
-// @ 0x548480
-void __cdecl static_dtor_548480() { ((big_holder*)g_5fe898)->release(); }
 // @ 0x5484a0
 void __cdecl static_dtor_5484a0() { ((big_obj*)g_a70440)->release(); }
 // @ 0x548500
@@ -212,8 +207,6 @@ void __cdecl static_init_547ae0()
     AT(void*, g_5a9f60, 0) = g_vt_595990;
     atexit(static_dtor_5482b0);
 }
-// @ 0x547b30
-void __cdecl static_init_547b30() { new (g_5fe898) GuiScreen; atexit(static_dtor_548480); }
 // @ 0x547b50   input state: both tick snapshots, the key table, the axes
 void __cdecl static_init_547b50()
 {
@@ -274,7 +267,7 @@ typedef void (__cdecl* init_fn)();
 init_fn g_static_init_table[] = {
     static_init_5479a0, static_init_5479c0, 
     
-    static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
+    static_init_547aa0, static_init_547ae0, static_init_547b50,
     static_init_547e20, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,

@@ -22,7 +22,6 @@ struct ini_file;
 struct main_menu;
 struct options_record;
 struct ptype;
-struct render_batch;
 struct renderer;
 struct resmgr;
 struct text_stream;
@@ -130,13 +129,11 @@ extern MapFlags g_map_flags;               // 0x5e291c
 extern int g_trial_mode;                   // 0x5e29c4
 extern int g_propkind_count;               // 0x5e29e0
 extern StrTable g_strtable;                // 0x5e2a18
-extern render_batch g_batch;               // 0x5fe898
 
 
 
 
 extern int g_ptype_count;                  // 0x5e29e8
-extern render_batch g_batch;               // 0x5fe898
 extern InputSet g_input_a;                 // 0xa170c8
 extern renderer g_render;                  // 0xa17910
 

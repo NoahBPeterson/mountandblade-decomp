@@ -4,12 +4,14 @@
 // vector4 is only forward-declared: it is rgl::vector4 of rgl_math.h or of match/include/rgl.h depending on the includer.
 #ifndef MB_VEC_TABLE_H
 #define MB_VEC_TABLE_H
+#include <new>
 namespace rgl { struct vector4; }
 
 struct vec_table {
     rgl::vector4* data;                        // +0
     int count;                                 // +4
     vec_table();                               // 0x417cb0
+    ~vec_table() { operator delete[](data); }
 };
 
 #endif // MB_VEC_TABLE_H

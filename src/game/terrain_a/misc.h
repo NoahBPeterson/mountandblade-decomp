@@ -247,22 +247,7 @@ struct RenderScene {                            // the render scene (rgl::scene,
     void apply_state();                         // 0x46ca50
 };
 
-// ---- vertex / index buffer uploader (0x46d060) -------------------------------------------------------------------------
-struct GeomBuffer {
-    int kind;                                   // 0x00: 0 = vertex buffer, 1 = index buffer
-    int stride;                                 // 0x04: bytes per element (2 for indices)
-    IDirect3DVertexBuffer9* vb;                 // 0x08
-    unsigned fmt;                               // 0x0c: vertex field flags (see mesh::fill_vertices)
-    int cursor;                                 // 0x10: elements already used
-    int gen;                                    // 0x14: rebuild generation
-    tstring name;                               // 0x18
-    int capacity;                               // 0x28: elements
-    int pad2c;
-    int is_dynamic;                             // 0x30
-    std::vector<rgl::mesh*> meshes;             // 0x34
-    IDirect3DIndexBuffer9* ib;                  // 0x44
-    int upload(void* scratch, void* tag);       // 0x46d060
-};
+// (the vertex / index buffer uploader 0x46d060 is dev_buffer::upload, src/game/dev_buffer.h)
 extern char g_scene_dirty;                    // 0x5e2938 (set when a buffer must be recreated larger)
 
 // ---- shadow-view draw pass (0x46d8c0) ------------------------------------------------------------------------------------
@@ -293,27 +278,7 @@ struct view_t {
     flag_obj* p1b0;
     std::vector<mesh_entry> ents;                    // 0x1b4
 };
-struct vb_slot {                                // 0x4c bytes
-    char pad0[4];
-    UINT stride;                                // 4
-    IDirect3DVertexBuffer9* vb;                 // 8
-    char padc[0x48 - 0xc];
-    IDirect3DVertexDeclaration9* decl;          // 0x48
-};
-struct drawer {
-    char pad0[0x14];
-    vb_slot vbs[10];                            // 0x14
-    char pad30c[0x3b4 - 0x30c];
-    int cur_a;                                  // 0x3b4
-    int cur_ib;                                 // 0x3b8
-    int cur_b;                                  // 0x3bc
-    char pad3c0[0x4183c8 - 0x3c0];
-    material* cur_mat;                          // 0x4183c8
-    int f4183cc;
-    skin* cur_part;                             // 0x4183d0
-    IDirect3DIndexBuffer9* ib(int i) { return *(IDirect3DIndexBuffer9**)((char*)this + 0x350 + i * 0x4c); }
-    void draw(view_t* v);                       // 0x46d8c0
-};
+// (the shadow-view draw 0x46d8c0 is render_batch::draw, src/game/render_batch.h)
 extern unsigned g_stage_arg[6];                 // 0x5a9c00 D3DTA_* by 3-bit code
 
 #endif // TERRAIN_A_MISC_H

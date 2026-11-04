@@ -8,8 +8,6 @@
 ../src/rgl/mesh2/gui_edit.cpp  ??1Terrain@@QAE@XZ  004c4ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  004c4f40  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?uninit_fill_n@@YAXPAXIPBXPAUblock_copier@@@Z  004c5010  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?clear_vec38@editor@@QAEXXZ  004c5110  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?free_items@editor@@QAEXXZ  004c5150  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?set_view@gui_view@@QAEXPBM@Z  004c5190  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?wheel_step@gui_view@@QAEXH@Z  004c52f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?calc_vertex_mode@graph_obj@@QAEXH@Z  004c54f0  /O2 /MT /Gy /TP

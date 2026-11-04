@@ -284,9 +284,9 @@ void render_batch::render_scene(scene* sc)
     }
 
     // ---- per-mesh loop --------------------------------------------------------------------------------------
-    AT(int, this, 0x4183d0) = 0;
-    AT(int, this, 0x4183c8) = 0;
-    AT(int, this, 0x4183cc) = 0;
+    cur_part = 0;
+    cur_mat = 0;
+    cur_tech = 0;
     std::vector<item_ref>::iterator it = scene_items(sc).begin();
     if (it != scene_items(sc).end()) {
         do {
@@ -296,7 +296,7 @@ void render_batch::render_scene(scene* sc)
             int fb = item->slots[0].f0;
             if (cur_vf_a != fa || cur_vf_b != fb) {
                 cur_vf_a = fa;
-                dev_buffer* v = &((dev_buffer*)vf)[fa + fb * 2];
+                dev_buffer* v = &vf[fb].bufs[fa];
                 cur_vf_b = fb;
                 g_render.dev->SetVertexDeclaration(v->decl);
                 g_render.dev->SetStreamSource(0, v->vb, 0, v->elem_size);
@@ -305,7 +305,7 @@ void render_batch::render_scene(scene* sc)
             int ibk = src->slots[1].f4;
             if (cur_ib != ibk) {
                 cur_ib = ibk;
-                g_render.dev->SetIndices(AT(IDirect3DIndexBuffer9*, this, ibk * 0x4c + 0x350));
+                g_render.dev->SetIndices(ib.bufs[ibk].ib);
             }
             material* mat;
             if (sc->f162 || sc->f164) {
@@ -313,14 +313,14 @@ void render_batch::render_scene(scene* sc)
                 material* pm = part->shader;
                 if (sc->f164) {
                     if ((int)pm->flags20 < 0)
-                        mat = AT(material*, this, 0x418824);
+                        mat = sh3;
                     else
-                        mat = AT(material*, this, 0x418820);
+                        mat = sh2;
                 } else {
                     if ((int)pm->flags20 < 0)
-                        mat = AT(material*, this, 0x41881c);
+                        mat = sh1;
                     else
-                        mat = AT(material*, this, 0x418818);
+                        mat = sh0;
                 }
                 texture* t = part->tex[0];
                 if (t) {
@@ -332,8 +332,8 @@ void render_batch::render_scene(scene* sc)
                 }
             } else {
                 skin_calls* part = (skin_calls*)item->res;
-                if (AT(skin_calls*, this, 0x4183d0) != part) {
-                    AT(skin_calls*, this, 0x4183d0) = part;
+                if ((skin_calls*)cur_part != part) {
+                    cur_part = (skin*)part;
                     if (scene_sky(sc) && scene_sky(sc)->fog_meshes && !(part->flags & 1)) {
                         if (g_render.b505 != 1) {
                             g_render.b505 = 1;
@@ -474,8 +474,8 @@ void render_batch::render_scene(scene* sc)
             }
 
             // ---- material / technique ----
-            if (AT(material*, this, 0x4183c8) != mat) {
-                AT(material*, this, 0x4183c8) = mat;
+            if (cur_mat != mat) {
+                cur_mat = mat;
                 int v = 0;
                 if ((mat->flags20 & 0x1000) && g_options.i7c != 2) {
                     v = 3;
@@ -485,10 +485,10 @@ void render_batch::render_scene(scene* sc)
                     }
                 }
                 D3DXHANDLE tech = mat_techs(mat)->tech[v];
-                if (AT(D3DXHANDLE, this, 0x4183cc) != tech) {
+                if (cur_tech != tech) {
                     g_effect->EndPass();
                     g_effect->End();
-                    AT(D3DXHANDLE, this, 0x4183cc) = tech;
+                    cur_tech = tech;
                     g_effect->SetTechnique(tech);
                     UINT passes;
                     g_effect->Begin(&passes, 7);
@@ -566,7 +566,7 @@ void render_batch::render_scene(scene* sc)
                 wv = wv * proj;
                 g_effect->SetMatrixTranspose("matWorldViewProj", &wv);
             }
-            if (AT(material*, this, 0x4183c8)->flags20 & 0x80000000) {
+            if (cur_mat->flags20 & 0x80000000) {
                 mesh* im = it->m;
                 if (im->p220) {
                     void* bo = (void*)im->f224;
@@ -576,12 +576,12 @@ void render_batch::render_scene(scene* sc)
                     }
                     g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)im->p220, im->f228);
                 } else {
-                    vec_arr* d = (vec_arr*)((char*)this + 0x4183d8);
+                    vec_arr* d = (vec_arr*)&bone_origins;
                     if (g_render.bone_origin_cache != d) {
                         g_render.bone_origin_cache = d;
                         g_effect->SetVectorArray("matBoneOriginArray", d->data, d->count);
                     }
-                    g_effect->SetMatrixTransposeArray("matWorldArray", AT(D3DXMATRIX*, this, 0x4183d4), 0x20);
+                    g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)world_mats, 0x20);
                 }
             }
             {

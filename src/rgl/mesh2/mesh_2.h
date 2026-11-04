@@ -26,68 +26,7 @@
 using rgl::vector4;
 using rgl::matrix;
 
-// ============================================================================================================
-// 0x4ca720..0x4ca830: language table release and the 0xb0-byte record range
-// ============================================================================================================
-// a 0x4c-byte record: a tstring at +0x18 and a (alloc, first, last) vector triple at +0x38. Its out-of-line
-// destructor is 0x4c5110 (editor::clear_vec38 in gui_edit.cpp).
-struct item {
-    char d0[0x18];
-    tstring name;                                // +0x18
-    char d28[0x10];
-    void* v0;                                    // +0x38
-    void* v1;                                    // +0x3c
-    void* v2;                                    // +0x40
-    char d44[8];                                 // +0x44 .. +0x4c
-    ~item();                                     // 0x4c5110
-};
-
-// two items: destroying a row destroys its `items[2]` array through __eh_vector_destructor_iterator
-// (0x401830) with the out-of-line ~item.
-struct row {
-    item items[2];                               // +0x00, +0x4c
-};
-
-// the last pair is destroyed with an out-of-line call instead (0x4c5150).
-struct rec {
-    item a;                                      // +0x00
-    item b;                                      // +0x4c
-    // free_items is editor::free_items (0x4c5150, rgl/mesh2/gui_edit.h): rec is the same item pair
-};
-
-void free_items(void* p, int n);             // 0x4c5150
-void free_items(void* p);                   // 0x4c5150
-// the CRT __eh_vector_destructor_iterator (0x401830, ret 0x10): destroys `n` elements of `size` bytes
-// from p onwards, backwards, invoking the out-of-line destructor `d` (thiscall, element in ecx).
-void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (__fastcall* d)(void*));  // 0x401830 (dxframework/d3dapp.h)
-// 0x4c5110 (same as ~item) is editor::clear_vec38 (gui_edit.cpp); its address is taken through a pointer to member (union below)
 #include "../../include/crt.h"   // canonical: operator delete[] (0x53570d)
-
-struct mesh_sub {                                // rgl::mesh (0x260 bytes), dtor 0x4127f0
-    ~mesh_sub();                                 // 0x4127f0
-    char d[0x260];
-};
-struct scene_sub {                               // rgl::scene, dtor 0x41f4e0
-    ~scene_sub();                                // 0x41f4e0
-    char d[0x100];
-};
-
-struct big_holder {
-    void release();                              // 0x4ca830
-    char pad0[0x14];
-    row rows[5];                                 // +0x14 .. +0x30c (5 * 0x98)
-    rec tail;                                    // +0x30c .. +0x3a4
-    char pad3a4[4];
-    void* v3a8;                                  // +0x3a8 (freed if non-null, then cleared)
-    void* v3ac;                                  // +0x3ac
-    void* v3b0;                                  // +0x3b0
-    char pad3b4[0x4183d4 - 0x3b4];
-    void* px_d4;                                 // +0x4183d4 (delete[])
-    void* px_d8;                                 // +0x4183d8 (delete[])
-    int   pad_dc;                                // +0x4183dc
-    mesh_sub m;                                  // +0x4183e0
-    scene_sub s;                                 // +0x418640
-};
 
 // ============================================================================================================
 // 0x4cb610..0x4cbc80: the big editor record's releasers and vector helpers
@@ -207,40 +146,6 @@ struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared 
 struct nonscalar_tag {};
 // 0x4ca7e0: std::_Destroy_range for the 0xb0-byte record E176 (frees +0x20, then destroys the string at +0), defined in this object
 
-
-// two game constructors the linker placed between the vector members
-struct U4c {                                // 0x4c repeated sub-object
-    int a;                                  // 0x00
-    int p04;                                // 0x04 (uninitialised)
-    int p08;                                // 0x08 (uninitialised)
-    int p0c;                                // 0x0c (uninitialised)
-    int d;                                  // 0x10
-    int e;                                  // 0x14
-    tstring s;                              // 0x18
-    int f0;                                 // 0x28
-    int f1;                                 // 0x2c
-    int g;                                  // 0x30
-    int p34;                                // 0x34 (uninitialised)
-    int h0;                                 // 0x38
-    int h1;                                 // 0x3c
-    int h2;                                 // 0x40
-    int p44;                                // 0x44 (uninitialised)
-    int i1;                                 // 0x48
-    U4c() {
-        h0 = 0; h1 = 0; h2 = 0;
-        a = -1;
-        g = 1;
-        f0 = 0; f1 = 0;
-        d = 0; e = 1;
-        i1 = 0;
-        s.assign("unknown buffer pair");    // 0x59607c
-    }
-};
-
-struct Obj720 {
-    U4c u[2];
-    Obj720();                               // 0x4cd720
-};
 
 struct vec4f {
     float x, y, z, w;

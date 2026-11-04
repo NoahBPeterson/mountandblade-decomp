@@ -23,10 +23,6 @@ std::vector<RegSkeleton> g_skeletons;                           // 0xa180e8 (con
 struct PolyMesh {
     void build_adjacency();   // 0x470920 (game/terrain_b/poly_mesh.h): graph_obj is the same object
 };
-struct editor {
-    void free_items();   // 0x4c5150 / 0x4c5110 (rgl/mesh2/gui_edit.h)
-    void clear_vec38();   // 0x4c5110
-};
 struct CellGrid {
     ~CellGrid();   // 0x475d50 (game/terrain_b): the grid's destructor body, called without the delete
 };
@@ -98,27 +94,6 @@ void StrTable::release_strings()
         p->myend = 0;
         n--;
     } while (n != 0);
-}
-
-// @ 0x4ca830
-void big_holder::release()
-{
-    operator delete[](px_d4);
-    s.~scene_sub();
-    m.~mesh_sub();
-    operator delete[](px_d8);
-    if (v3a8)
-        operator delete(v3a8);
-    v3a8 = 0;
-    v3ac = 0;
-    v3b0 = 0;
-    ((editor*)&tail)->free_items();   // rec is the editor's item pair (0x4c5150)
-    // the callback is editor::clear_vec38 (thiscall = fastcall for one argument): a single-inheritance pointer to member is
-    // its address (cl 13.10 has no other way to name a member's address as a plain function pointer)
-    union { void (editor::*m)(); void (__fastcall* f)(void*); } cb;
-    cb.m = &editor::clear_vec38;
-    for (int i = 4; i >= 0; i--)
-        vector_destructor_iterator(&rows[i], 0x4c, 2, cb.f);
 }
 
 // @ 0x4ca8c0
@@ -603,13 +578,6 @@ void __fastcall erase_110(void* self, int, void* first, void* last)
 {
     std::_Nonscalar_ptr_iterator_tag tag;
     std::_Destroy_range((E176*)first, (E176*)last, *(std::allocator<E176>*)self, tag);   // 0x4ca7e0
-}
-
-// @ 0x4cd720
-Obj720::Obj720()
-{
-    u[0].g = 0;
-    u[1].g = 1;
 }
 
 // @ 0x4cd7a0

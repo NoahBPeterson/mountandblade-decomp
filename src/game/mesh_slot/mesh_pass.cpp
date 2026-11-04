@@ -5,7 +5,7 @@
 #include "../../include/msg_log.h"
 #include "../../include/renderer.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../dev_buffer.h"    // buffer_pair (restore_all 0x4623c0): the canonical class of the device buffer pairs
+#include "../render_batch.h"  // render_batch (render 0x47e520), buffer_pair (restore_all 0x4623c0): the canonical classes of the batch and its device buffers
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -26,55 +26,7 @@ struct RenderScene {
     void apply_state();   // 0x46ca50 (terrain_a/misc.h: the render scene, rgl::scene seen by the setup code)
 };
 struct view_t;
-struct drawer {
-    void draw(view_t* v);   // 0x46d8c0 (terrain_a/misc.h: the fixed-function drawer)
-};
-struct GeomBuffer {
-    int upload(void* scratch, void* tag);   // 0x46d060 (terrain_a/misc.h: vertex / index buffer uploader)
-};
-struct render_batch {
-    void render_scene(rgl::scene* sc);   // 0x46e590 (terrain_b.cpp; game/render_batch.h declares the scene parameter as another type)
-};
-
-// ---- the registry object's render pass ---------------------------------------------------------------------------
-// A 0x4c-byte device buffer record seen by its per-record item list (+0x34) and the uploader 0x46d060.
-struct bucket_ms {
-    char pad0[0x34];
-    std::vector<int> v;                         // +0x34
-    char pad44[0x4c - 0x44];
-    int upload(void* geom, int count) { return ((GeomBuffer*)this)->upload(geom, (void*)count); }     // 0x46d060 (the record is a GeomBuffer)
-};
-struct geompair_ms {                            // 0x98 (src/game/dev_buffer.h's buffer_pair)
-    bucket_ms b[2];
-    void restore_all() { ((buffer_pair*)this)->restore_all(); }     // 0x4623c0
-};
-
-
-// The object at 0x5fe898 as this pass sees it: scene_registry (src/rgl/mesh.h) is its small view (scenes at +0x3a4),
-// render_batch (src/game/render_batch.h) the one the batch renderer's setup code sees (vertex records at +0x14).
-// The queue of scenes of the pass is at +0x3a4 here.
-struct RenderPass {
-    char pad0[0x14];
-    geompair_ms bp[5];                          // +0x14 five 0x98-byte pairs (one per vertex format)
-    geompair_ms bp5;                            // +0x30c the index pair
-    std::vector<int> v3a4;                      // +0x3a4 scenes queued for the next pass (scene_registry::scenes)
-    int f3b4;                                   // +0x3b4
-    int f3b8;                                   // +0x3b8
-    char pad3bc[0x3c0 - 0x3bc];
-    char geom3c0[0x4183c0 - 0x3c0];             // +0x3c0 the geometry-buffer arena
-    int f4183c0;                                // +0x4183c0
-    int f4183c4;                                // +0x4183c4
-    int f4183c8;                                // +0x4183c8
-    int f4183cc;                                // +0x4183cc
-    int f4183d0;                                // +0x4183d0
-    char pad4183d4[0x418828 - 0x4183d4];
-    int f418828;                                // +0x418828 (render_batch::counter)
-
-    bool render(int pass);                      // 0x47e520
-    void register_scene(scene* o) { ((scene_registry*)this)->register_scene(o); }     // 0x412040 (scene_registry::register_scene, src/rgl/mesh.h)
-    void render_scene(scene* o) { ((render_batch*)this)->render_scene(o); }           // 0x46e590 (render_batch::render_scene)
-    void draw(scene* o) { ((drawer*)this)->draw((view_t*)o); }                        // 0x46d8c0 (the fixed-function drawer)
-};
+// ---- the batch renderer's render pass (render_batch::render, src/game/render_batch.h) --------------------------------------------------
 
 // 0x46ca50: the per-frame Direct3D setup of a scene (src/game/terrain_a: RenderScene::apply_state)
 struct scene_ms : scene {
@@ -84,25 +36,25 @@ struct scene_ms : scene {
 static __forceinline E8 mk_e8(int a, int b) { E8 e; e.a = a; e.b = b; return e; }
 
 // @ 0x47e520
-bool RenderPass::render(int pass)
+bool render_batch::render(rgl::scene* only)
 {
     for (int i = 0; i < 5; i++)
-        bp[i].restore_all();
-    bp5.restore_all();
+        vf[i].restore_all();
+    ib.restore_all();
 
-    std::vector<int> tmp;
-    if (pass == 0)
-        tmp = v3a4;
+    std::vector<rgl::scene*> tmp;
+    if (only == 0)
+        tmp = scenes;
     else
-        tmp.push_back(pass);
+        tmp.push_back(only);
 
-    f4183c8 = 0;
-    f4183d0 = 0;
+    cur_mat = 0;
+    cur_part = 0;
     g_render.reset_state();
 
 #define SC(p) ((scene_ms*)(p))
 #define Q(p) (*(std::vector<E8>*)&SC(p)->queue)
-    for (std::vector<int>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
+    for (std::vector<rgl::scene*>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
         for (unsigned i = 0; i < SC(*it)->cache.size(); i++) {
             ((mesh*)SC(*it)->cache[i])->slots[0].f4 = 1;
             ((mesh*)SC(*it)->cache[i])->slots[1].f4 = 1;
@@ -119,7 +71,7 @@ again:
         gfx_restore();
     }
 
-    for (std::vector<int>::iterator c = tmp.begin(); c != tmp.end(); ++c) {
+    for (std::vector<rgl::scene*>::iterator c = tmp.begin(); c != tmp.end(); ++c) {
         for (std::vector<E8>::iterator r = Q(*c).begin(); r != Q(*c).end(); ++r) {
             mesh* x = (mesh*)r->a;
             for (int k = 0; k < 3; k++)
@@ -133,25 +85,23 @@ again:
     }
 
     for (int i = 0; i < 5; i++) {
-        bp[i].b[0].v.resize(0);
-        bp[i].b[1].v.resize(0);
+        vf[i].bufs[0].meshes.resize(0);
+        vf[i].bufs[1].meshes.resize(0);
     }
-    bp5.b[0].v.resize(0);
-    bp5.b[1].v.resize(0);
+    ib.bufs[0].meshes.resize(0);
+    ib.bufs[1].meshes.resize(0);
 
     {
-        bucket_ms* buckets10 = &bp5.b[0];
-        bucket_ms* buckets0 = &bp[0].b[0];
-        for (std::vector<int>::iterator f = tmp.begin(); f != tmp.end(); ++f) {
+        for (std::vector<rgl::scene*>::iterator f = tmp.begin(); f != tmp.end(); ++f) {
             for (std::vector<E8>::iterator r = Q(*f).begin(); r != Q(*f).end(); ++r) {
                 mesh* x = (mesh*)r->a;
                 mesh* rec2 = x->local_a0 ? x : x->parent;
                 if (rec2->slots[1].f29 == 0) {
-                    buckets10[rec2->slots[1].f4].v.push_back((int)rec2);
+                    ib.bufs[rec2->slots[1].f4].meshes.push_back(rec2);
                     rec2->slots[1].f29 = 1;
                 }
                 if (((mesh*)r->a)->slots[0].f29 == 0) {
-                    buckets0[((mesh*)r->a)->slots[0].f4 + ((mesh*)r->a)->slots[0].f0 * 2].v.push_back(r->a);
+                    vf[((mesh*)r->a)->slots[0].f0].bufs[((mesh*)r->a)->slots[0].f4].meshes.push_back((mesh*)r->a);
                     ((mesh*)r->a)->slots[0].f29 = 1;
                 }
             }
@@ -160,13 +110,13 @@ again:
 
     for (int i = 0; i < 5; i++)
         for (int j = 0; j < 2; j++)
-            if (bp[i].b[j].upload(geom3c0, f4183c0) == (int)0xfff3ebc3)
+            if (vf[i].bufs[j].upload(scratch, (void*)frame) == (int)0xfff3ebc3)
                 goto again;
     for (int j = 0; j < 2; j++)
-        if (bp5.b[j].upload(geom3c0, f4183c0) == (int)0xfff3ebc3)
+        if (ib.bufs[j].upload(scratch, (void*)frame) == (int)0xfff3ebc3)
             goto again;
 
-    for (std::vector<int>::iterator s = tmp.begin(); s != tmp.end(); ++s) {
+    for (std::vector<rgl::scene*>::iterator s = tmp.begin(); s != tmp.end(); ++s) {
         if (SC(*s)->flags & 1)
             continue;
         for (unsigned k = 0; k < Q(*s).size(); k++) {
@@ -185,14 +135,14 @@ again:
         mb_error("GetRenderTarget failed");
     if (g_render.dev->GetDepthStencilSurface(&ds) < 0)
         mb_error("GetDepthStencilSurface failed");
-    f3b4 = -1;
-    f3b8 = -1;
+    cur_vf_a = -1;
+    cur_ib = -1;
 
     // ebx / ebp of the original: the previous pass's colour target (starts at &g_render) and depth target (starts at 0);
     // a scene only re-begins the scene when either differs from the previous one's (0x47eb32 / 0x47eb3a)
     texture* last_tex = (texture*)&g_render;
     int ds_changed = 0;                     // the last pass's depth target (0x47ecad: ebp = o->f15c): only a flag
-    for (std::vector<int>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
+    for (std::vector<rgl::scene*>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
         scene_ms* o = SC(*d);
         if (o->target != last_tex || o->f15c != ds_changed) {
             if (g_render.pad504)
@@ -206,7 +156,7 @@ again:
                 IDirect3DSurface9* surf = t->kind == 1 ? t->level0 : t->surface;
                 if (g_render.dev->SetRenderTarget(0, surf) < 0)
                     mb_error("Unable to set render target texture! Try turning off shadows");
-                o->target->f50 = f418828;
+                o->target->f50 = counter;
             } else {
                 g_render.dev->SetRenderTarget(0, rt);
             }
@@ -233,7 +183,7 @@ again:
         if (g_use_shaders)
             render_scene(o);
         else
-            draw(o);
+            draw((view_t*)o);
     }
 
     if (last_tex)
@@ -251,7 +201,7 @@ again:
         g_render.dev->EndScene();
     g_render.pad504 = 0;
 
-    for (std::vector<int>::iterator e = tmp.begin(); e != tmp.end(); ++e) {
+    for (std::vector<rgl::scene*>::iterator e = tmp.begin(); e != tmp.end(); ++e) {
         scene_ms* o = SC(*e);
         Q(*e).clear();
         o->registered = 0;
@@ -259,8 +209,8 @@ again:
             ((mesh_ext*)o->cache[i])->clear_geometry();
     }
 
-    if (pass == 0)
-        v3a4.resize(0);
+    if (only == 0)
+        scenes.resize(0);
     for (int i = 0; i < 3; i++)
         g_render.dev->SetTexture(i, 0);
     return true;

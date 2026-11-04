@@ -13,6 +13,7 @@
 #include "../resource.h"
 #include "./scene_math.h"
 #include "./frustum.h"
+#include "../../game/render_batch.h"   // g_batch (0x5fe898): register_scene 0x412040
 #include "./scene.h"
 #include "./emitter.h"
 #include "./scene_entity.h"
@@ -187,7 +188,7 @@ void world::render_scene(scene* sc, bool reflect)
     sc->owner = this;
     sc->ambient = ambient;
     sc->fr.build_planes();
-    g_scene_registry.register_scene(sc);
+    g_batch.register_scene(sc);
     for (unsigned i = 0; i < meshes.size(); i++)
         ((mesh_ext*)meshes[i])->clear_geometry();
     render_info info;

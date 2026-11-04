@@ -161,15 +161,6 @@ template<class T> struct vec {
 struct world;
 
 
-struct scene_registry {          // global object 0x5fe898
-    char pad0[0x3a4];
-    std::vector<scene*> scenes;  // 0x3a4
-    void register_scene(scene* s);                  // 0x412040
-    void add_mesh(scene* s, mesh* m);               // 0x412100
-    bool render(scene* sc);                         // 0x47e520 (src/game/party2: render the scene into its target; false = try again)
-};
-extern scene_registry g_scene_registry;             // 0x5fe898  // old name of g_batch, removed after the names merge
-
 struct mesh_list {               // 16 bytes: std::vector<mesh*>
     std::vector<mesh*> v;
     void render_all(scene* sc, const matrix& m);    // 0x413ac0

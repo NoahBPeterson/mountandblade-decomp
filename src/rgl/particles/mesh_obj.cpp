@@ -26,6 +26,7 @@
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../scene/emitter.h"      // psys (update 0x414960)
+#include "../../game/render_batch.h"   // render_batch (register_scene 0x412040, add_mesh 0x412100), g_batch (0x5fe898)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/clock_table.h"
 
@@ -34,6 +35,9 @@ int rgl::g_vert_budget = 30;                      // 0x5a9c34 base vertex budget
 
 
 using namespace rgl;
+
+// ---- data this module owns ----
+render_batch g_batch;                               // 0x5fe898 (the batch renderer: 0x418830 bytes; constructed by render_batch::render_batch 0x4ebea0 (config.cpp), destroyed by ~render_batch 0x4ca830)
 
 // ---- render-state setters (global object 0xa17910) ----------------------------------------------------------------
 // @ 0x40e940
@@ -278,7 +282,7 @@ void mesh::build_skin()
 
 // ---- the scene queue -------------------------------------------------------------------------------------------------
 // @ 0x412040
-void scene_registry::register_scene(scene* e)
+void render_batch::register_scene(scene* e)
 {
     if (!e->registered && e->active) {
         if (e->flags & 0x1000) {
@@ -298,7 +302,7 @@ void scene_registry::register_scene(scene* e)
 }
 
 // @ 0x412100
-void scene_registry::add_mesh(scene* e, mesh* m)
+void render_batch::add_mesh(scene* e, mesh* m)
 {
     if (!e->registered && e->active)
         register_scene(e);
@@ -739,7 +743,7 @@ int mesh::render(scene* sc, const matrix& frame)
             if (f & 0x40000000) slots[1].f4 = 0;
             else if (f & 0x80000000) slots[1].f4 = 1;
             m194 = frame * m_cc;
-            g_scene_registry.add_mesh(sc, this);
+            g_batch.add_mesh(sc, this);
         }
     }
 done:
