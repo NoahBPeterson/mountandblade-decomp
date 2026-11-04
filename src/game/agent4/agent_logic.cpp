@@ -2426,14 +2426,14 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     // the ammo item's own mesh (0x44bf04.. read the fourth)
     if ((g_items[launcher->item].type_flags & 0xff) == 10) {
         tstring tn = launcher->mesh_name();
-        m = (res_obj*)res_manager().get_object((const rgl::string*)&tn);
+        m = (res_obj*)res_manager().get_object(&tn);
     } else {
         m = 0;
         if (ammo->item >= 0 && ammo->item < g_item_kind_count)
             m = g_items[ammo->item].mesh_for(0x2000000000000000ui64, ((signed char*)ammo)[7]);
         if (!m) {
             tstring name("flying_missile");
-            m = (res_obj*)res_manager().get_object((const rgl::string*)&name);
+            m = (res_obj*)res_manager().get_object(&name);
         }
     }
     if (m) {
@@ -2557,11 +2557,11 @@ void Mission::spawn_prop(int* idx, int* id)
 after:
     if (name.len > 0)
         {
-            std::vector<rgl::mesh*> found = res_manager().find_meshes((const rgl::string*)&name);
+            std::vector<rgl::mesh*> found = res_manager().find_meshes(&name);
             meshes = *(const std::vector<res_obj*>*)&found;
         }
     if (s2.differs("0") && s2.len != 0)
-        shape_res = (res_shape*)g_resmgr.get_object60(*(const rgl::string*)&s2);
+        shape_res = (res_shape*)g_resmgr.get_object60(s2);
 
     if (r->kind == 7) {
         r->id = find_item(&r->name);
@@ -3418,7 +3418,7 @@ static inline tstring item_mesh_name(ItemKind* items, const ItemRef& r)
         return items[r.item].mesh_name_for((int)r.m4 >> 24);
     return tstring("Error: Invalid item");
 }
-static __forceinline res_obj* get_obj(const tstring& n) { return (res_obj*)res_manager().get_object((const rgl::string*)&n); }
+static __forceinline res_obj* get_obj(const tstring& n) { return (res_obj*)res_manager().get_object(&n); }
 static __forceinline mesh* build_ranged(int i, ItemRef r)
 {
     mesh* result = 0;
@@ -4244,7 +4244,7 @@ static __forceinline char* skel_rec_inl(Skeleton* sk, int i)
     return sk->recs + i * 0x1dc + 0x84;
 }
 static __forceinline tstring* lk(const tstring& k) { return g_strtable.lookup(&k); }
-static __forceinline skin* get_mat(const tstring& n) { return g_resmgr.get_material(*(const rgl::string*)&n); }
+static __forceinline skin* get_mat(const tstring& n) { return g_resmgr.get_material(n); }
 
 // @ 0x4529e0
 void Agent::drop_held()

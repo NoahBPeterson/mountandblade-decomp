@@ -1160,19 +1160,19 @@ void render_batch::init_shaders()
     counter++;
     {
         tstring name("render_to_depth_shader");
-        sh0 = g_resmgr.get_shader((rgl::string&)name);
+        sh0 = g_resmgr.get_shader(name);
     }
     {
         tstring name("render_to_depth_skin_shader");
-        sh1 = g_resmgr.get_shader((rgl::string&)name);
+        sh1 = g_resmgr.get_shader(name);
     }
     {
         tstring name("render_character_shadow");
-        sh2 = g_resmgr.get_shader((rgl::string&)name);
+        sh2 = g_resmgr.get_shader(name);
     }
     {
         tstring name("render_character_shadow_with_skin");
-        sh3 = g_resmgr.get_shader((rgl::string&)name);
+        sh3 = g_resmgr.get_shader(name);
     }
 }
 
@@ -1539,7 +1539,7 @@ void* psys_record::read(stream_base& a, char* o)
     RF(a, o + 0x0c);
     tstring tmp;
     RS(a, &tmp);
-    *(void**)o = g_resmgr.get_skeleton_anim((rgl::string&)tmp);
+    *(void**)o = g_resmgr.get_skeleton_anim(tmp);
     stream_base& s = RI(RI(a, o + 0x10), o + 0x14).r_uint((unsigned*)(o + 0x08)).r_uint((unsigned*)(o + 0x18));
     int* q = (int*)(o + 0x2c);
     RF(RF(RF(s, q), q + 1), q + 2);
@@ -1804,13 +1804,13 @@ void rec20::read(stream_base* s)
     RI(*s, &f1c);
     tstring tmp;
     RS(*s, &tmp);
-    mat = g_resmgr.get_material((rgl::string&)tmp);
+    mat = g_resmgr.get_material(tmp);
     s->r_float(&f18);
     mat2 = 0;
     tstring tmp2;
     RS(*s, &tmp2);
     if (tmp2.differs("none"))
-        mat2 = g_resmgr.get_material((rgl::string&)tmp2);
+        mat2 = g_resmgr.get_material(tmp2);
 }
 
 // @ 0x4be6b0

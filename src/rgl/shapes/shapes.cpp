@@ -1384,10 +1384,10 @@ void composite::load(stream_base* s)
     bodies = new shape_base*[count];
     for (int i = 0; i < count; i++) {
         s->r_tstr(&name);
-        if (name == "sphere") bodies[i] = new sphere;
-        else if (name == "capsule") bodies[i] = new capsule;
-        else if (name == "face") bodies[i] = new face;
-        else if (name == "manifold") bodies[i] = new manifold;
+        if (name.equals("sphere")) bodies[i] = new sphere;
+        else if (name.equals("capsule")) bodies[i] = new capsule;
+        else if (name.equals("face")) bodies[i] = new face;
+        else if (name.equals("manifold")) bodies[i] = new manifold;
         else mb_error("unrecognized body  %s \n", ((string_view_&)name).get());
         bodies[i]->load(s);
     }

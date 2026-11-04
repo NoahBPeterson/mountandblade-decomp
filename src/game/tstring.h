@@ -39,7 +39,7 @@ struct tstring {
     void capitalize();                          // 0x42c060
     int  find(const char& c, int start) const;  // 0x42c080
     int  rfind(const char& c, int start, int end) const;  // 0x42c0b0
-    bool range_equals(const int& start, const int& end, const tstring& o) const;   // 0x42c160
+    char range_equals(const int& start, const int& end, const tstring& o) const;   // 0x42c160
     void append(const tstring& o);              // 0x42c1e0
     bool has_token();                           // 0x42c230
     void get_token(char* out, int* n);          // 0x42c270

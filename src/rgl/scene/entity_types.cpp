@@ -160,7 +160,7 @@ void entity::load(stream_base* s)
 {
     string name;
     s->r_tstr(&name);
-    if (!(name == "none"))
+    if (!(name.equals("none")))
         shape = (coll_shape*)((shape_resource*)g_resmgr.get_object60(name))->clone_shape();
     r_matrix(*s, &local);
     int n;
@@ -169,7 +169,7 @@ void entity::load(stream_base* s)
     for (int i = 0; i < n; i++) {
         string nm;
         s->r_tstr(&nm);
-        if (!(nm == "none"))
+        if (!(nm.equals("none")))
         {
             mesh*& slot = *(meshes.begin() + i);
             slot = ((mesh_x*)resmgr().get_object(&nm))->clone();

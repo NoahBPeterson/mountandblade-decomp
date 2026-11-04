@@ -1205,7 +1205,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
 
 done:
     if (name.len > 0) {
-        std::vector<rgl::mesh*> tmp = ((resmgr*)&g_resmgr_s2fe40)->find_meshes((const rgl::string*)&name);
+        std::vector<rgl::mesh*> tmp = ((resmgr*)&g_resmgr_s2fe40)->find_meshes(&name);
         *out = tmp;
     }
 }

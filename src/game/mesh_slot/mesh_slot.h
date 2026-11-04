@@ -55,8 +55,8 @@ struct scene_ms2 : rgl::scene {
 #define g_resmgr_c ((::resmgr*)&g_resmgr)
 // (a tstring is an rgl::string, and the lod group is the rgl::lod_mesh2 record of the callers)
 struct resmgr_ms : resource_manager {
-    rgl::lod_mesh2* make_lod_mesh(const tstring& pat, bool copy) { return (rgl::lod_mesh2*)((::resmgr*)this)->make_lod_mesh((const rgl::string&)pat, copy); }   // 0x41ca60
-    rgl::lod_mesh2* get_lod_mesh(const tstring& name) { return (rgl::lod_mesh2*)((::resmgr*)this)->get_lod_mesh((const rgl::string&)name); }                 // 0x41cdc0
+    rgl::lod_mesh2* make_lod_mesh(const tstring& pat, bool copy) { return (rgl::lod_mesh2*)((::resmgr*)this)->make_lod_mesh(pat, copy); }   // 0x41ca60
+    rgl::lod_mesh2* get_lod_mesh(const tstring& name) { return (rgl::lod_mesh2*)((::resmgr*)this)->get_lod_mesh(name); }                 // 0x41cdc0
 };
 #define g_rms (*(resmgr_ms*)&g_resmgr)
 

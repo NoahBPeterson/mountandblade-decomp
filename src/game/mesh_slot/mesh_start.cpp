@@ -171,9 +171,9 @@ struct Psys {
     void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
 };
 struct ResMgr {
-    Mesh* get_object(const tstring& name) { return (Mesh*)((::resmgr*)this)->get_object((const rgl::string*)&name); }     // 0x419540
+    Mesh* get_object(const tstring& name) { return (Mesh*)((::resmgr*)this)->get_object(&name); }     // 0x419540
     Mesh* get_object(void* name) { return (Mesh*)((::resmgr*)this)->get_object((const rgl::string*)name); }
-    void* get_material(tstring* name) { return ((resource_manager*)this)->get_material(*(const rgl::string*)name); }   // 0x418a70
+    void* get_material(tstring* name) { return ((resource_manager*)this)->get_material(*name); }   // 0x418a70
 };
 extern ResMgr g_resmgr;                                      // 0x5d6fa0
 
@@ -624,7 +624,7 @@ void Mission::start_setup()
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
     Entity* sun = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
-    Mesh* sm = g_resmgr.get_object((rgl::string*)&g_env_rows[at<int>(0x660c)].name) ->clone();
+    Mesh* sm = g_resmgr.get_object(&g_env_rows[at<int>(0x660c)].name) ->clone();
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {

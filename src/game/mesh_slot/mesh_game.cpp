@@ -312,7 +312,7 @@ NOINL void MissionG::spawn(AgentS* a)
     } else if (a->kind == 1) {
         {
             tstring name("skel_horse");
-            e->skel->init((FxRes*)g_resmgr.get_object70(*(rgl::string*)&name));
+            e->skel->init((FxRes*)g_resmgr.get_object70(name));
         }
         if ((mem = operator new(0x64)) != 0) {
             vector4 b(0.0f, 0.8f, 0.8f);

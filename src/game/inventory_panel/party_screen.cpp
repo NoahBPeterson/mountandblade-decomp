@@ -112,7 +112,7 @@ void PartyScreen::init_screen()
 
     {
         tstring key("party_window_b");
-        ResMesh* m = (ResMesh*)res_manager().get_object((const rgl::string*)&key);
+        ResMesh* m = (ResMesh*)res_manager().get_object(&key);
         ResMesh* c = m->clone();
         PSO(win)->add_image(0, c);
     }
@@ -871,7 +871,7 @@ void PartyScreen::setup_skills()
             if (!shown(ms))
                 continue;
             y += t_y_a;
-            for (int k = 0; &g_skill_tbl[k].name < (tstring*)&g_module_name; k++) {
+            for (int k = 0; &g_skill_tbl[k].name < &g_module_name; k++) {
                 if (((g_skill_tbl[k].attr >> 4) & 1) == 0)
                     continue;
                 int best = 0;
@@ -926,7 +926,7 @@ void PartyScreen::setup_skills()
             }
             y -= t_y_a;
 
-            for (int k = 0; &g_skill_tbl[k].name < (tstring*)&g_module_name; k++) {
+            for (int k = 0; &g_skill_tbl[k].name < &g_module_name; k++) {
                 SkillRec* se = &g_skill_tbl[k];
                 if (((se->attr >> 4) & 1) == 0)
                     continue;

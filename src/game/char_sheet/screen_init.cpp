@@ -75,7 +75,7 @@ void CampaignScreen::init_screen()
         rgl::mesh* bar_mesh;
         {
             tstring map_bar("map_bar");
-            bar_mesh = ((mesh_x*)res_manager().get_object((const rgl::string*)&map_bar))->clone();
+            bar_mesh = ((mesh_x*)res_manager().get_object(&map_bar))->clone();
         }                                           // the key string dies before set_mesh (0x4ec681 dtor, then 0x4ec6.. call 0x488aa0)
         buttons->set_mesh(0, bar_mesh);
     }
@@ -149,7 +149,7 @@ void CampaignScreen::init_screen()
     {
         tstring name("ui_paused");
         struct { int a, b; } ret;                    // set_text's 8-byte result: its own slot, not the key string
-        f54->set_text((float*)&ret, &(*(const tstring*)g_strtab.lookup(name)));
+        f54->set_text((float*)&ret, &(*g_strtab.lookup(name)));
     }
     overlay->kids.push_back(*(MissionUi**)&f54);
 
@@ -179,7 +179,7 @@ void CampaignScreen::init_screen()
     {
         tstring name("ui_click_left_button_to_cancel_wait");
         struct { int a, b; } ret;                    // set_text's 8-byte result: its own slot, not the key string
-        f58->set_text((float*)&ret, &(*(const tstring*)g_strtab.lookup(name)));
+        f58->set_text((float*)&ret, &(*g_strtab.lookup(name)));
     }
     overlay->kids.push_back(*(MissionUi**)&f58);
 

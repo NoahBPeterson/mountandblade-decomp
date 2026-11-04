@@ -164,14 +164,14 @@ void Rec1208::refresh(int sel, int* out)
             mesh_x* bm;
             {
                 tstring name("dlg_button");
-                bm = ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
+                bm = ((mesh_x*)res_manager().get_object(&name))->clone();
             }
             rgl::vector4 col(1.0f, q, 1.0f);             // w is left uninitialised, as in the original
             bm->set_color(col);
             buttons[i]->set_track(2, bm);
             {
                 tstring name("dlg_button_down");
-                bm = ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
+                bm = ((mesh_x*)res_manager().get_object(&name))->clone();
             }
             rgl::vector4 col2(1.0f, q, 1.0f);
             bm->set_color(col2);

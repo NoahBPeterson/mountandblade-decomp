@@ -137,7 +137,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     body->f34 = 2;
     {
         tstring nm("agent_name");
-        body->res = g_resmgr.get_material(*(rgl::string*)&nm);
+        body->res = g_resmgr.get_material(nm);
     }
     body->mask = 1;
 
@@ -292,7 +292,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
                 tstring lx(nm);
                 lx.push_back('x');
-                if (g_rms.find_v20(*(rgl::string*)&lx)) {
+                if (g_rms.find_v20(lx)) {
                     if (g_use_shaders == 0) {
                         lod_mesh2* Lx = g_rms.make_lod_mesh(lx, false);
                         ap[19] = Lx;
@@ -309,7 +309,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
                 tstring rx(nm);
                 rx.push_back('x');
-                if (g_rms.find_v20(*(rgl::string*)&rx)) {
+                if (g_rms.find_v20(rx)) {
                     if (g_use_shaders == 0) {
                         lod_mesh2* Rx = g_rms.make_lod_mesh(rx, false);
                         ap[20] = Rx;

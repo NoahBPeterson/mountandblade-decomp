@@ -80,7 +80,7 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
         if (b) {
             create_shadow_mesh(&shadow_b, 0);
             tstring name("shadow_default");
-            shadow_b->res = g_resmgr.get_material(*(const rgl::string*)&name);
+            shadow_b->res = g_resmgr.get_material(name);
         }
     }
     if (a) {
@@ -93,7 +93,7 @@ void StratEnt::update_shadows(scene* sc, bool a, bool b)
                     shadow_a->res = p288;
                 } else {
                     tstring name("shadow_default");
-                    shadow_a->res = g_resmgr.get_material(*(const rgl::string*)&name);
+                    shadow_a->res = g_resmgr.get_material(name);
                 }
             }
         }
@@ -315,7 +315,7 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
         *slot = (mesh*)new rgl::mesh;
         {
             tstring name("shadow_default");
-            (*slot)->res = g_resmgr.get_material(*(const rgl::string*)&name);
+            (*slot)->res = g_resmgr.get_material(name);
         }
         (*slot)->slots[1].f4 = 1;
         (*slot)->slots[0].f4 = 1;

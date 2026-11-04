@@ -59,7 +59,7 @@ static inline float fmax_(float a, float b) { return b > a ? b : a; }
 void TerrainDescEntry::read(stream_base* s, Dims* d)
 {
     s->r_int(&type);
-    s->r_tstr((rgl::string*)&name);
+    s->r_tstr(&name);
     int idx = -1;
     int i = 0;
     int p = (int)g_ground_types;
@@ -2888,7 +2888,7 @@ void RenderScene::apply_state()
         if (type == 1)                                                                             \
             ls = &lg.w_cstr("Out of " KIND_WORD " index buffer memory. Needed = ");                \
         else                                                                                       \
-            ls = &lg.w_tstr((rgl::string*)&name).w_cstr(KIND_V_WORD);                              \
+            ls = &lg.w_tstr(&name).w_cstr(KIND_V_WORD);                              \
         int needed = total;\
         ls = &ls->w_int(&needed);                                                                   \
         ls = &ls->w_cstr("Available:");                                                            \

@@ -129,7 +129,7 @@ using rgl::vector4;
 // ---- shared engine types -------------------------------------------------------------------------
 using rgl::mesh;
 
-struct resmgr { void* lookup(const tstring& name) { return ((::resource_manager*)this)->get_material(*(const rgl::string*)&name); } };   // 0x418a70
+struct resmgr { void* lookup(const tstring& name) { return ((::resource_manager*)this)->get_material(name); } };   // 0x418a70
 struct Fadeable { void fade_scale(vector4 v); };                    // 0x47af30
 
 struct R8 { int a, b; };                        // an 8-byte returned rect (2 floats)
@@ -394,8 +394,8 @@ using rgl::mesh;
 struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out); };  // 0x442650
 
 struct ResMgr {
-    void*  get_material(const tstring& name) { return ((::resource_manager*)this)->get_material(*(const rgl::string*)&name); }       // 0x418a70
-    mesh*  get_object(tstring* name) { return ((::resmgr*)this)->get_object((const rgl::string*)name); }                      // 0x419540 (ret 4)
+    void*  get_material(const tstring& name) { return ((::resource_manager*)this)->get_material(name); }       // 0x418a70
+    mesh*  get_object(tstring* name) { return ((::resmgr*)this)->get_object(name); }                      // 0x419540 (ret 4)
 };
 extern ResMgr g_resmgr;                             // 0x5d6fa0
 
@@ -726,7 +726,7 @@ struct Mission {
 struct ResMgr {   // 0x418a70: the original builds a tstring from the literal first (0x42bbe0), passes it, frees it
     Sprite* material(const char* name) {
         tstring tmp(name);
-        Sprite* r = (Sprite*)((::resource_manager*)this)->get_material(*(const rgl::string*)&tmp);
+        Sprite* r = (Sprite*)((::resource_manager*)this)->get_material(tmp);
         return r;
     }
 };
@@ -779,7 +779,7 @@ void MissionAgents::add_order_arrow(int id)
                 // the found tstring* (or the record's own name tstring at +0xc) goes straight to label_text
                 const tstring* f = 0;
                 if (e->flag1c == 0)
-                    f = (const tstring*)g_strtable.find(&e->text);
+                    f = g_strtable.find(&e->text);
                 nm = f ? f : &e->name;
             }
             if (e->flags & 0x400) {
@@ -1715,7 +1715,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     ::ItemRef items[10];
     int count;
     if (party < 0) {
-        def->init((FxRes*)::g_resmgr.get_object70(*(const rgl::string*)&tstring("skel_horse")));
+        def->init((FxRes*)::g_resmgr.get_object70(tstring("skel_horse")));
         count = 1;
     } else {
         unsigned t = (unsigned)::g_game->chars[party].flags & 0xf;

@@ -299,7 +299,7 @@ void ControlKeyTable::save()
     char path[0x104];
     sprintf(path, "controls.dat");
     user_path(path);
-    ((tstring*)&w.name)->assign(path);   // 0x42bcb0 (bin_writer::name is an rgl::string, the same object)
+    (&w.name)->assign(path);   // 0x42bcb0 (bin_writer::name is an rgl::string, the same object)
     w.is_open = 0;
     w.fp = fopen(path, "wb");
     if (w.fp) {

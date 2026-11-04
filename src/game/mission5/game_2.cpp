@@ -206,7 +206,7 @@ void Game::build_scene()
     ((Poser*)self->track_entity)->add_extra((int)self->map_track);
 
     rgl::entity* obj = (rgl::entity*)((rgl::world*)world)->create_entity(9);
-    self->map_obj = ((mesh_x*)((resmgr*)&g_resmgr)->get_object((const rgl::string*)&g_env_rows->name))->clone();
+    self->map_obj = ((mesh_x*)((resmgr*)&g_resmgr)->get_object(&g_env_rows->name))->clone();
     self->map_obj->scale(60.0f);
     self->map_obj->mask = 0xfffeffff;
     ((Poser*)obj)->add_extra((int)self->map_obj);
@@ -216,7 +216,7 @@ void Game::build_scene()
 
     self->compass = (rgl::entity*)((rgl::world*)world)->create_entity(9);
     RStr compass_name("compass");
-    rgl::mesh* mc = ((mesh_x*)((resmgr*)&g_resmgr)->get_object((const rgl::string*)&compass_name))->clone();
+    rgl::mesh* mc = ((mesh_x*)((resmgr*)&g_resmgr)->get_object(&compass_name))->clone();
     mc->scale(0.28f);
     ((Poser*)self->compass)->add_extra((int)mc);
 
@@ -409,22 +409,22 @@ void Game::build_map_trees()
     for (int i = 0; i < g_module_settings.tree_types[0]; i++) {
         tmp->assign("map_tree_");                                    // 0x59c0d8
         tmp->push_back((char)('a' + i));
-        map_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
+        map_arr[i] = ((resmgr*)&g_resmgr)->get_object(tmp);
     }
     for (int i = 0; i < g_module_settings.tree_types[1]; i++) {
         tmp->assign("snow_tree_");                                   // 0x59c0cc
         tmp->push_back((char)('a' + i));
-        snow_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
+        snow_arr[i] = ((resmgr*)&g_resmgr)->get_object(tmp);
     }
     for (int i = 0; i < g_module_settings.tree_types[2]; i++) {
         tmp->assign("steppe_tree_");                                 // 0x59c0bc
         tmp->push_back((char)('a' + i));
-        steppe_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
+        steppe_arr[i] = ((resmgr*)&g_resmgr)->get_object(tmp);
     }
     for (int i = 0; i < g_module_settings.tree_types[3]; i++) {
         tmp->assign("desert_tree_");                                 // 0x59c0ac
         tmp->push_back((char)('a' + i));
-        desert_arr[i] = ((resmgr*)&g_resmgr)->get_object((const rgl::string*)tmp);
+        desert_arr[i] = ((resmgr*)&g_resmgr)->get_object(tmp);
     }
 
     // ---- G: grid dimensions and cell entities -----------------------------
@@ -781,7 +781,7 @@ void Game::build_map_trees()
             } else {
                 char name_buf[0x40];
                 tstring* name = new (name_buf) tstring("map_trees");           // 0x42bbe0 / 0x59c070
-                *(void**)((char*)cellmesh + 0x2c) = g_resmgr.get_material(*(const rgl::string*)name); // 0x418a70
+                *(void**)((char*)cellmesh + 0x2c) = g_resmgr.get_material(*name); // 0x418a70
                 name->~tstring();                                               // 0x42bc40
                 ((NibbleObj*)cellmesh)->set_nibble(2);                     // 0x523360
                 *(int*)((char*)cellmesh + 0x10c) = 0x1ffff;

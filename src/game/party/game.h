@@ -31,7 +31,7 @@ extern GameData* g_game;                    // 0x5e2930
 #include "../../include/fx.h"            // g_ticks 0x5e2948
 
 inline tstring& troop_name(Troop* t) { return *(tstring*)t; }      // the name is the first member (0x51c720)
-inline rgl::string* rs(tstring* t) { return (rgl::string*)t; }     // the stream's tstring slot takes rgl::string*
+inline rgl::string* rs(tstring* t) { return t; }     // the stream's tstring slot takes rgl::string*
 
 // ---- small members with inline constructors (their store order is the constructor's) -----------------------
 struct Zero3 {                              // +0x38  0x51cfa0 (three zero stores)

@@ -608,7 +608,7 @@ void __fastcall fix_skeletons(std::vector<RegSkeleton>* list)
 {
     for (unsigned i = 0; i < list->size(); i++) {
         RegSkeleton* sk = &(*list)[i];
-        SkelRes* res = (SkelRes*)g_resmgr.get_object70(*(const rgl::string*)&sk->model);
+        SkelRes* res = (SkelRes*)g_resmgr.get_object70(sk->model);
         if (res != 0) {
 #define DST(j) ((SkelBone*)(res->bones + (j) * 0xdc))
             for (unsigned j = 0; j < sk->bones.size() && (int)j < res->count; j++) {
@@ -623,7 +623,7 @@ void __fastcall fix_skeletons(std::vector<RegSkeleton>* list)
             }
 #undef DST
         } else {
-            ((stream_base&)g_log).w_cstr("Fixing skeletons: Unable to find skeleton model:").w_tstr((const rgl::string*)&sk->model);
+            ((stream_base&)g_log).w_cstr("Fixing skeletons: Unable to find skeleton model:").w_tstr(&sk->model);
         }
     }
 }
@@ -756,15 +756,15 @@ static inline void merge_max(vector4& d, const vector4& v) { keep_max(d.x, v.x);
 void ObjectList::read(stream_base* s)
 {
     tstring buf;
-    s->r_tstr((rgl::string*)&name);
+    s->r_tstr(&name);
     s->r_u64((unsigned __int64*)&f10);
     s->r_int(&count);
     entries = new shape_entry[count];
     for (int i = 0; i < count; i++) {
         vector4 big(10000000.0f, 10000000.0f, 10000000.0f);
         vector4 neg(-10000000.0f, -10000000.0f, -10000000.0f);
-        s->r_tstr((rgl::string*)&entries[i].name);
-        entries[i].nodes.assign(as_mesh_vector(((resmgr*)&g_resmgr)->find_meshes((const rgl::string*)&entries[i].name)));
+        s->r_tstr(&entries[i].name);
+        entries[i].nodes.assign(as_mesh_vector(((resmgr*)&g_resmgr)->find_meshes(&entries[i].name)));
         entries[i].mn = big;
         entries[i].mx = neg;
         for (unsigned j = 0; j < entries[i].nodev().size(); j++) {
@@ -773,11 +773,11 @@ void ObjectList::read(stream_base* s)
             merge_min(entries[i].mn, a);
             merge_max(entries[i].mx, b);
         }
-        s->r_tstr((rgl::string*)&buf);
+        s->r_tstr(&buf);
         if (buf.equals("0")) {
             entries[i].shape = 0;
         } else {
-            entries[i].shape = (mesh*)g_resmgr.get_object60(*(const rgl::string*)&buf);
+            entries[i].shape = (mesh*)g_resmgr.get_object60(buf);
             entries[i].body = body_copy_shape(entries[i].shape);
         }
     }
@@ -810,14 +810,14 @@ void MissionObj::read(stream_base* s)
     char buf[0x200];
     vector4 mn(10000.0f, 10000.0f, 10000.0f);
     vector4 mx(-10000.0f, -10000.0f, -10000.0f);
-    s->r_tstr((rgl::string*)&name);
+    s->r_tstr(&name);
     s->r_int(&f10);
     s->r_int(&f14);
     tstring t0;
     tstring t1;
-    s->r_tstr((rgl::string*)&t0);
+    s->r_tstr(&t0);
     if (t0.len > 1 && t0.differs(g_none)) {
-        std::vector<rgl::mesh*> nodes = ((resmgr*)&g_resmgr)->find_meshes((const rgl::string*)&t0);
+        std::vector<rgl::mesh*> nodes = ((resmgr*)&g_resmgr)->find_meshes(&t0);
         vec_assign_43f0a0(&nodes_, &as_mesh_vector(nodes));
         unsigned j = 0;
         while (1) {
@@ -832,9 +832,9 @@ void MissionObj::read(stream_base* s)
         v58 = vector4((mn.x + mx.x) * HALF, (mn.y + mx.y) * HALF, (mn.z + mx.z) * HALF);   // w: the temporary's unset lane
         radius = center_dist(mx, v58);
     }
-    s->r_tstr((rgl::string*)&t1);
+    s->r_tstr(&t1);
     if (t1.len > 1) {
-        shape = (mesh*)g_resmgr.get_object60(*(const rgl::string*)&t1);
+        shape = (mesh*)g_resmgr.get_object60(t1);
         body = body_copy_shape(shape);
         vector4 b;
         vmax(&mx, &mx, body->get_bounds_max(&b));

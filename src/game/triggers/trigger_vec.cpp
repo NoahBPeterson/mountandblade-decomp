@@ -611,7 +611,7 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
         } else {
             int n = (int)file_length(f);
             tstring text;
-            ((rgl::string*)&text)->read_from(f, n);       // rgl::string is tstring (same 16 bytes): rgl_string.h read_from 0x4151e0
+            (&text)->read_from(f, n);       // rgl::string is tstring (same 16 bytes): rgl_string.h read_from 0x4151e0
             fclose(f);
             HWND combo = GetDlgItem(h, 0x4bb);
             SendMessageA(combo, CB_RESETCONTENT, 0, 0);
@@ -684,7 +684,7 @@ INT_PTR Core::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lPara
                     }
                     int n = (int)file_length(f);
                     tstring text;
-                    ((rgl::string*)&text)->read_from(f, n);       // rgl::string is tstring (same 16 bytes): rgl_string.h read_from 0x4151e0
+                    (&text)->read_from(f, n);       // rgl::string is tstring (same 16 bytes): rgl_string.h read_from 0x4151e0
                     fclose(f);
                     // strip the comment lines ("#" up to the next line feed), last to first
                     int end = text.len - 1;       // (0x4bfc55: the string's length, not the file's: the text-mode read drops the CRs)
@@ -871,12 +871,12 @@ void parse_module_info()
             val = g_module_info.entries[i].value;
         }
         if (msg.equals("load_resource")) {
-            ((stream_base&)g_log).w_cstr("Loading Resource ").w_tstr((rgl::string*)&val).w_cstr("\n");
-            g_resmgr_full.load_pack((const rgl::string&)val, 0);
+            ((stream_base&)g_log).w_cstr("Loading Resource ").w_tstr(&val).w_cstr("\n");
+            g_resmgr_full.load_pack(val, 0);
         }
         else if (msg.equals("load_mod_resource") || msg.equals("load_module_resource")) {
-            ((stream_base&)g_log).w_cstr("Loading Module Resource ").w_tstr((rgl::string*)&val).w_cstr("\n");
-            g_resmgr_full.load_pack((const rgl::string&)val, 1);
+            ((stream_base&)g_log).w_cstr("Loading Module Resource ").w_tstr(&val).w_cstr("\n");
+            g_resmgr_full.load_pack(val, 1);
         }
         else if (msg.equals("time_multiplier")) {
             g_module_settings.time_multiplier = (float)atof(val.c_str());
@@ -1062,7 +1062,7 @@ void parse_module_info()
         }
         else if (msg.equals("module_name")) {
             g_module_settings.module_name = val;
-            ((stream_base&)g_log).w_cstr("Module_name = ").w_tstr((rgl::string*)&g_module_settings.module_name).w_cstr("\n");
+            ((stream_base&)g_log).w_cstr("Module_name = ").w_tstr(&g_module_settings.module_name).w_cstr("\n");
         }
         else if (msg.equals("num_hints")) {
             g_module_settings.num_hints = atoi(val.c_str());
@@ -1111,7 +1111,7 @@ void parse_module_info()
             g_module_settings.works_with_version_max = atoi(val.c_str());
         }
         else if (msg.len > 1)      // (0x4c16d4: cmp [msg.len], 1; not the entry count)
-            ((stream_base&)g_log).w_cstr("Unrecognized Module_info directive = ").w_tstr((rgl::string*)&msg).w_cstr(". Skipping.\n");
+            ((stream_base&)g_log).w_cstr("Unrecognized Module_info directive = ").w_tstr(&msg).w_cstr(". Skipping.\n");
     }
     g_resmgr_full.linearise_meshes();
 }
@@ -1375,7 +1375,7 @@ void MapIcon::read(stream_base& s)
     char buf[0x200];
     s.r_tstr((rgl::string*)this);
     s.r_int(&flags);
-    s.r_tstr((rgl::string*)&mesh);
+    s.r_tstr(&mesh);
     s.r_float(&f24);
     s.r_int(&f28);
     s.r_float(&f2c);
@@ -1466,11 +1466,11 @@ void MissionTemplate::read(stream_base& s)
 {
     char buf[0x200];
     s.r_tstr((rgl::string*)this);
-    s.r_tstr((rgl::string*)&f10);
+    s.r_tstr(&f10);
     s.r_int(&f20);
     s.r_int(&f3c);
     tstring* disp = &display;
-    s.r_tstr((rgl::string*)disp);
+    s.r_tstr(disp);
     s.r_int(&n_spawns);
     spawns = (SpawnRec*)new char[n_spawns * 0x4c];
     for (int i = 0; i < n_spawns; i++)
@@ -1505,11 +1505,11 @@ DialogMgr::DialogMgr()
 void MenuRec::read(stream_base& s)
 {
     char buf[0x200];
-    s.r_tstr((rgl::string*)&id);
+    s.r_tstr(&id);
     s.r_i64(&flags);
-    s.r_tstr((rgl::string*)&text);
+    s.r_tstr(&text);
     text.underscores_to_spaces();
-    s.r_tstr((rgl::string*)&mesh);
+    s.r_tstr(&mesh);
     ops.read(&s);
     _snprintf(buf, 0x200, "Game menu %s", id.c_str());
     {

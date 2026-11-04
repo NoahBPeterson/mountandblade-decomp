@@ -1,5 +1,5 @@
 ../src/rgl/scene/entity_base.cpp  ??0entity@rgl@@QAE@XZ  0041fba0  /O2 /MT /Gy /TP
-../src/rgl/scene/entity_base.cpp  ?type_name@entity@rgl@@UAE?AUstring@2@XZ  0041fcb0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_base.cpp  ?type_name@entity@rgl@@UAE?AUtstring@@XZ  0041fcb0  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_base.cpp  ?sync@entity@rgl@@UAEXXZ  0041fcd0  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_base.cpp  ?get_radius@entity@rgl@@UAEMXZ  0041fd80  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_base.cpp  ?set_fbc@entity@rgl@@UAEXPBM@Z  0041fd90  /O2 /MT /Gy /TP

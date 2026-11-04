@@ -351,7 +351,7 @@ struct resmgr;       // get_object 0x419540: declared by rgl/scene/scene.h (resm
 // destructor are not defined anywhere: tstring's, 0x42bbe0 / 0x42bc40, are)
 struct RStr : tstring {
     RStr(const char* s) : tstring(s) {}
-    operator const rgl::string&() const { return *(const rgl::string*)this; }
+    operator const rgl::string&() const { return *this; }
 };
 #include "../env_row.h"                                      // EnvRow, g_env_rows (0x5e28f4)
 

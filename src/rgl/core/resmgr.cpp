@@ -459,7 +459,7 @@ stream_base* read_frame_set(stream_base* s, frame_x* m)
         m->table.data[i].w = 0.0f;
     }
     m->table.count = m->nbones();
-    if (m->name == "skel_horse") {
+    if (m->name.equals("skel_horse")) {
         m->f28 = BIT(0) | BIT(1) | BIT(2) | BIT(3) | BIT(8) | BIT(9) | BIT(10) | BIT(11) | BIT(12) | BIT(13) | BIT(14) | BIT(15) | BIT(16) | BIT(17) | BIT(18) | BIT(19) | BIT(20) | BIT(21) | BIT(22) | BIT(23) | BIT(24) | BIT(25) | BIT(26) | BIT(27);
         m->f2c = m->f28 | BIT(4) | BIT(5) | BIT(6) | BIT(7);
         m->f30 = m->f2c;
@@ -493,15 +493,15 @@ stream_base* read_body(stream_base* s, body_part* b)
     rgl::string kind;
     s->r_tstr(&b->name);
     s->r_tstr(&kind);
-    if (kind == "composite")
+    if (kind.equals("composite"))
         b->shape = new composite(shape_base::inline_init());
-    else if (kind == "sphere")
+    else if (kind.equals("sphere"))
         b->shape = new sphere;
-    else if (kind == "capsule")
+    else if (kind.equals("capsule"))
         b->shape = new capsule;
-    else if (kind == "face")
+    else if (kind.equals("face"))
         b->shape = new face;
-    else if (kind == "manifold")
+    else if (kind.equals("manifold"))
         b->shape = new manifold;
     else
         mb_error("unrecognized body part %s \n", kind.c_str());
@@ -565,7 +565,7 @@ std::vector<mesh*> resmgr::find_meshes(const rgl::string* prefix)
     int from;
     for (std::vector<mesh*>::iterator it = meshes.begin(); it != meshes.end(); ++it) {
         from = 0;
-        if (!((tstring*)&(*it)->name)->range_equals(from, to, *(const tstring*)prefix))
+        if (!(*it)->name.range_equals(from, to, *prefix))
             continue;
         if (to != (*it)->name.len) {
             const char* p = (*it)->name.buf + to;
@@ -643,7 +643,7 @@ void resmgr::add(named_object* r)
 }
 
 // @ 0x41bf40
-effect_set* resmgr::get_small(str_x name)
+effect_set* resmgr::get_small(tstring name)
 {
     effect_set* r = base().find_effect(name);
     if (r == 0) {
@@ -825,7 +825,7 @@ lod_group* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
     for (std::vector<mesh*>::iterator it = meshes.begin(); it != meshes.end(); ++it) {
         int level;
         a = level = 0;
-        if (!((tstring*)&(*it)->name)->range_equals(a, pos, *(const tstring*)&pat))
+        if (!(*it)->name.range_equals(a, pos, pat))
             continue;
         if (pos != (*it)->name.len) {
             const char* p = (*it)->name.buf + pos;
@@ -1114,8 +1114,8 @@ stream_base* resmgr::load_stream(stream_base* s)
     rgl::string tok2;
     int n;
     s->r_tstr(&tok);
-    while (tok != "end") {
-        if (tok == "texture") {
+    while (tok.differs("end")) {
+        if (tok.equals("texture")) {
             s->r_int(&n);
             if (n != 0) {
                 texture* t = new texture[n];
@@ -1126,7 +1126,7 @@ stream_base* resmgr::load_stream(stream_base* s)
                     add(&t[i]);
                 }
             }
-        } else if (tok == "shader") {
+        } else if (tok.equals("shader")) {
             s->r_int(&n);
             if (n != 0) {
                 material* m = new material[n];
@@ -1136,7 +1136,7 @@ stream_base* resmgr::load_stream(stream_base* s)
                     add(&m[i]);
                 }
             }
-        } else if (tok == "material") {
+        } else if (tok.equals("material")) {
             s->r_int(&n);
             if (n != 0) {
                 skin* k = new skin[n];
@@ -1146,7 +1146,7 @@ stream_base* resmgr::load_stream(stream_base* s)
                     add(&k[i]);
                 }
             }
-        } else if (tok == "mesh") {
+        } else if (tok.equals("mesh")) {
             s->r_int(&n);
             if (n != 0) {
                 mesh* m = new mesh[n];
@@ -1156,7 +1156,7 @@ stream_base* resmgr::load_stream(stream_base* s)
                     add(&m[i]);
                 }
             }
-        } else if (tok == "body") {
+        } else if (tok.equals("body")) {
             s->r_int(&n);
             if (n != 0) {
                 body_part* b = new body_part[n];
@@ -1166,7 +1166,7 @@ stream_base* resmgr::load_stream(stream_base* s)
                     add(&b[i]);
                 }
             }
-        } else if (tok == "skeleton") {
+        } else if (tok.equals("skeleton")) {
             s->r_int(&n);
             if (n != 0) {
                 frame_set* f = new frame_set[n];
@@ -1176,7 +1176,7 @@ stream_base* resmgr::load_stream(stream_base* s)
                     add(&f[i]);
                 }
             }
-        } else if (tok == "skeleton_anim") {
+        } else if (tok.equals("skeleton_anim")) {
             s->r_int(&n);
             if (n != 0) {
                 skel_anim* a = new skel_anim[n];
@@ -1197,7 +1197,7 @@ stream_base* resmgr::load_stream(stream_base* s)
 static __forceinline rgl::string mkpath(const rgl::string& dir, const rgl::string& name, const char* ext)
 {
     tstring ext_str(ext);
-    const rgl::string& e = (const rgl::string&)ext_str;
+    const rgl::string& e = ext_str;
     return dir + name + e;
 }
 
@@ -1208,10 +1208,10 @@ void resmgr::load_pack(const rgl::string& name, int user)
     if (user) {
         dir = cur;
         tstring r_str("Resource\\");
-        dir.append((const rgl::string&)r_str);
+        dir.append(r_str);
     } else {
         tstring r_str("CommonRes\\");
-        dir.append((const rgl::string&)r_str);
+        dir.append(r_str);
     }
     rgl::string trf = mkpath(dir, name, ".trf");
     rgl::string brf = mkpath(dir, name, ".brf");

@@ -436,7 +436,7 @@ skin* resource_manager::get_material(const rgl::string& name)
     if (r == 0) {
         stream_base& log = g_log;
         log.w_cstr("WARNING: Unable to find material ").w_tstr(&name).w_cstr("\n");
-        if (name != "default") {
+        if (name.differs("default")) {
             rgl::string d("default");
             return get_material(d);
         }
@@ -680,7 +680,7 @@ void skin::load(stream_base* s)
     s->r_tstr(&shader_name);
     for (int i = 0; i < 5; i++) {
         s->r_tstr(&tmp);
-        if (tmp == "none")
+        if (tmp.equals("none"))
             tex[i] = 0;
         else
             tex[i] = g_resmgr.get_texture(tmp);

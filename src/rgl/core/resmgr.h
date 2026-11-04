@@ -1,7 +1,7 @@
 // resmgr.h: what src/rgl/core/resmgr.cpp (0x419190..0x41e46f) defines or needs besides the shared headers
 // (../stream.h, ../resource.h, ../resource_manager.h, ../particles/mesh_obj.h, ./resource_io.h): the resource
 // manager's full layout, the skeleton animation record, the LOD group, the mesh members the shared mesh header
-// lacks, and the string members the shared string header lacks. Names provisional.
+// lacks. Names provisional.
 //
 // The resource manager object at 0x5d6fa0 is one object seen through two classes: `resource_manager`
 // (../resource.h, 0x417bb0..0x419190: lookups and device maintenance, a partial layout) and `resmgr` (here:
@@ -9,8 +9,6 @@
 // members through base() and never redefines them.
 //
 // Header gaps worked around locally (the shared headers are not ours to edit; see MIGRATION.md):
-//   - rgl::string (../rgl_string.h) has no copy constructor (0x42c110) and no range_equals/match (0x42c160):
-//     they are tstring's (src/game/tstring.h), which `str_x` derives from.
 //   - rgl::mesh (../particles/mesh_obj.h) has no compute_bounds (0x419300), linearise_vertex_colors (0x419360),
 //     compute_tangents (0x41ce80) or clone (0x41c6d0): `mesh_x` adds them. Its vertex60 names the first
 //     vector `pos` and the one at +0x30 `normal`; the stream carries the normal at +0 (the working normal,
@@ -24,21 +22,12 @@
 #include <vector>
 #include <list>
 #include "../rgl_string.h"
-#define range_equals range_equals_hdr(const int& a, const int& b, const tstring& c) const; char range_equals   // 0x42c160 returns char; tstring.h says bool (as strat/tstring.cpp)
 #include "../../game/tstring.h"   // tstring: the class that defines the string members the resource manager calls (rgl::string is the same 16-byte object)
-#undef range_equals
 #include "../rgl_math.h"
 #include "../stream.h"
 #include "../resource.h"
 #include "../resource_manager.h"
 #include "./resource_io.h"            // Bone, skeleton, stage_io, material_io, globals; includes ../particles/mesh_obj.h
-
-// ---- string members the shared header lacks ----------------------------------------------------------------
-struct str_x : tstring {                                           // the string passed by value to get_small: tstring's constructors (0x42bbd0, 0x42c110)
-    str_x() {}
-    str_x(const rgl::string& o) : tstring((const tstring&)o) {}  // 0x42c110 (copy constructor)
-    operator const rgl::string&() const { return *(const rgl::string*)this; }
-};
 
 // ---- resources ------------------------------------------------------------------------------------------------
 // slots 2 and 3 of the resource root's vtable: the stream serialisers (material, skin; mesh/body are saved by
@@ -133,7 +122,7 @@ struct resmgr {
     void add(named_object* r);                                         // 0x41ba90
     texture* get_render_target(int w, int h, int fmt, int ext, int f34);   // 0x41b7d0
     std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);    // 0x41b960
-    effect_set* get_small(str_x name);                                 // 0x41bf40
+    effect_set* get_small(tstring name);                                 // 0x41bf40
     void load_shaders();                                               // 0x41c000
     texture* get_texture(int w, int h, int fmt);                       // 0x41c400
     skin* get_shadow_skin(int w, int h, int fmt, int f34);             // 0x41c420

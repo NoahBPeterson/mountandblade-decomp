@@ -152,8 +152,8 @@ void load_data_files()
     if (!((text_stream*)&ts1)->open_read_text("Data\\item_modifiers.txt"))
         mb_error("Unable to open %s", "Data\\item_modifiers.txt");
     for (item_mod* m = g_item_mods; m < &g_item_mods[43]; m++) {
-        ts1.r_tstr((rgl::string*)&m->key);
-        ts1.r_tstr((rgl::string*)&m->name);
+        ts1.r_tstr(&m->key);
+        ts1.r_tstr(&m->name);
         m->name.underscores_to_spaces();
         ts1.r_float(&m->price);
         ts1.r_float(&m->rarity);

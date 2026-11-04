@@ -146,7 +146,7 @@ void PartyWindow::init_screen()
     }
     {
         tstring n("inventory_window_b");
-        ResMesh* m = ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone();
+        ResMesh* m = ((ResMesh*)res_manager().get_object(&n))->clone();
         win->set_track(0, m);
     }
 
@@ -156,7 +156,7 @@ void PartyWindow::init_screen()
         label_refresh(bg, tstring("inv_i_equipment_pangel_bg"));
         {
             tstring n("inventory_equipment_panel");
-            bg->set_mesh(0, ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone());
+            bg->set_mesh(0, ((ResMesh*)res_manager().get_object(&n))->clone());
         }
         container->add_child(bg);
     }
@@ -169,7 +169,7 @@ void PartyWindow::init_screen()
         label_refresh(h, tstring(buf));
         {
             tstring n("inventory_window_hinge");
-            h->set_mesh(0, ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone());
+            h->set_mesh(0, ((ResMesh*)res_manager().get_object(&n))->clone());
         }
         container->add_child(h);
     }

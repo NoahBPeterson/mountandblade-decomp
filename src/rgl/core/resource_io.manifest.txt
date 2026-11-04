@@ -15,7 +15,7 @@
 ../src/rgl/core/resource_io.cpp  ?noise_hash@@YAIH@Z  00415f70  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?save@rgl_config@@QAEXPAU_iobuf@@@Z  00415fb0  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?w_skeleton@@YAAAUstream_base@@AAU1@PAUskeleton@@@Z  00416490  /O2 /MT /Gy /TP
-../src/rgl/core/resource_io.cpp  ?load@texture@@QAEHHPAUstring@rgl@@@Z  00416540  /O2 /MT /Gy /TP
+../src/rgl/core/resource_io.cpp  ?load@texture@@QAEHHPAUtstring@@@Z  00416540  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?unload@texture@@QAEHXZ  004167c0  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ??0material@@QAE@XZ  00416830  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ??1material@@UAE@XZ  004168f0  /O2 /MT /Gy /TP

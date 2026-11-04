@@ -247,7 +247,7 @@ void gui_manager::add_label(const tstring* text, float h, int color)
     }
     {
         tstring name("ui_font");
-        o56c->res = g_resmgr.get_material(*(const rgl::string*)&name);
+        o56c->res = g_resmgr.get_material(name);
     }
     {
         float out[2];
@@ -303,6 +303,6 @@ void gui_manager::set_quad(const float* origin, const float* size)
     m570.slots[0].f28 = 1;
     {
         tstring name("matte");
-        m570.res = g_resmgr.get_material(*(const rgl::string*)&name);
+        m570.res = g_resmgr.get_material(name);
     }
 }

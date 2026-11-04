@@ -205,7 +205,7 @@ stream_base& text_stream::w_i64(__int64* v)
         s.push_back((char)(digits[n - 1] + '0'));
         n--;
     }
-    w_tstr((const rgl::string*)&s);
+    w_tstr(&s);
     if (autoflush)
         flush();
     return *this;
@@ -230,7 +230,7 @@ stream_base& text_stream::w_u64(unsigned __int64* v)
         s.push_back((char)(digits[n - 1] + '0'));
         n--;
     }
-    w_tstr((const rgl::string*)&s);
+    w_tstr(&s);
     if (autoflush)
         flush();
     return *this;
@@ -389,7 +389,7 @@ stream_base& text_stream2::w_i64(__int64* v)
         s.push_back((char)(digits[n - 1] + '0'));
         n--;
     }
-    w_tstr((const rgl::string*)&s);
+    w_tstr(&s);
     if (autoflush)
         flush();
     return *this;
@@ -413,7 +413,7 @@ stream_base& text_stream2::w_u64(unsigned __int64* v)
         s.push_back((char)(digits[n - 1] + '0'));
         n--;
     }
-    w_tstr((const rgl::string*)&s);
+    w_tstr(&s);
     if (autoflush)
         flush();
     return *this;

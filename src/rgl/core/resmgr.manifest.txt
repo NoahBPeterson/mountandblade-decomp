@@ -5,7 +5,7 @@
 ../src/rgl/core/resmgr.cpp  ?forget@mesh_owner@@QAEXXZ  00419470  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?save_keyframes@@YAPAUstream_base@@PAU1@PAUkeyframes@rgl@@@Z  004194c0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?_Ufill@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@IAEPAUidx_weight@rgl@@PAU34@IABU34@@Z  00419510  /O2  /MT  /Gy  /TP
-../src/rgl/core/resmgr.cpp  ?get_object@resmgr@@QAEPAUmesh@rgl@@PBUstring@3@@Z  00419540  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?get_object@resmgr@@QAEPAUmesh@rgl@@PBUtstring@@@Z  00419540  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?restore@resmgr@@QAEHPAUID3DXEffect@@@Z  00419580  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?linearise_meshes@resmgr@@QAEXXZ  00419640  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ??$_Ucopy@Vconst_iterator@?$vector@PAUnamed_object@@V?$allocator@PAUnamed_object@@@std@@@std@@@?$vector@PAUnamed_object@@V?$allocator@PAUnamed_object@@@std@@@std@@IAEPAPAUnamed_object@@Vconst_iterator@01@0PAPAU2@@Z  00419680  /O2  /MT  /Gy  /TP
@@ -42,7 +42,7 @@
 ../src/rgl/core/resmgr.cpp  ??$fill@PAUbone_influence@rgl@@U12@@std@@YAXPAUbone_influence@rgl@@0ABU12@@Z  0041b7a0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?add@resmgr@@QAEXPAUnamed_object@@@Z  0041ba90  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ??_Eskel_anim@@UAEPAXI@Z  0041bed0  /O2  /MT  /Gy  /TP
-../src/rgl/core/resmgr.cpp  ?get_small@resmgr@@QAEPAUeffect_set@@Ustr_x@@@Z  0041bf40  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?get_small@resmgr@@QAEPAUeffect_set@@Utstring@@@Z  0041bf40  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?load_shaders@resmgr@@QAEXXZ  0041c000  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?read_skel_anim@@YAPAUstream_base@@PAU1@PAUskel_anim@@@Z  0041c060  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?read_bone_influence@@YAPAUstream_base@@PAU1@PAUbone_influence@rgl@@@Z  0041c110  /O2  /MT  /Gy  /TP
@@ -51,14 +51,14 @@
 ../src/rgl/core/resmgr.cpp  ?read_keyframes@@YAPAUstream_base@@PAU1@PAUkeyframes@rgl@@@Z  0041c340  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?get_texture@resmgr@@QAEPAUtexture@@HHH@Z  0041c400  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?get_shadow_skin@resmgr@@QAEPAUskin@@HHHH@Z  0041c420  /O2  /MT  /Gy  /TP
-../src/rgl/core/resmgr.cpp  ?load_all@resmgr@@QAEHHPAUstring@rgl@@@Z  0041c540  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?load_all@resmgr@@QAEHHPAUtstring@@@Z  0041c540  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ??$_Uninit_fill_n@PAUbone_influence@rgl@@IU12@V?$allocator@Ubone_influence@rgl@@@std@@@std@@YAXPAUbone_influence@rgl@@IABU12@AAV?$allocator@Ubone_influence@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0041c5c0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?erase@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0041c650  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?_Ufill@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@IAEPAUbone_influence@rgl@@PAU34@IABU34@@Z  0041c6a0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?clone@mesh_x@@QAEPAU1@XZ  0041c6d0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?_Insert_n@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@IAEXViterator@12@IABUbone_influence@rgl@@@Z  0041c760  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?resize@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@QAEXIUbone_influence@rgl@@@Z  0041cd10  /O2  /MT  /Gy  /TP
-../src/rgl/core/resmgr.cpp  ?get_lod_mesh@resmgr@@QAEPAUlod_group@@ABUstring@rgl@@@Z  0041cdc0  /O2  /MT  /Gy  /TP
-../src/rgl/core/resmgr.cpp  ?load_pack@resmgr@@QAEXABUstring@rgl@@H@Z  0041e150  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?get_lod_mesh@resmgr@@QAEPAUlod_group@@ABUtstring@@@Z  0041cdc0  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?load_pack@resmgr@@QAEXABUtstring@@H@Z  0041e150  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?load_stream@resmgr@@QAEPAUstream_base@@PAU2@@Z  0041db20  /O2 /MT /Gy /TP
 ../src/rgl/core/resmgr.cpp  ?get_render_target@resmgr@@QAEPAUtexture@@HHHHH@Z  0041b7d0  /O2 /MT /Gy /TP

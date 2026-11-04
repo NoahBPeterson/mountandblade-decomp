@@ -39,7 +39,7 @@ void FaceGen::init_screen()
     o->set_xy(f2);
     {
         tstring n("face_gen_window");
-        rgl::mesh* m = res_manager().get_object((const rgl::string*)&n);
+        rgl::mesh* m = res_manager().get_object(&n);
         mesh_x* c = ((mesh_x*)m)->clone();
         o->set_track(0, (rgl::mesh*)c);
     }

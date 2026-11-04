@@ -110,7 +110,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
         else if (variant > variant_count - 1)
             variant = variant_count - 1;
 
-        (*out_c)->lists[0].v[0]->res = g_resmgr.get_material(*(rgl::string*)&names_a[variant]);
+        (*out_c)->lists[0].v[0]->res = g_resmgr.get_material(names_a[variant]);
         (*out_c)->lists[0].v[0]->color = color;
         (*out_c)->lists[0].v[0]->f40 = color2;
         if ((*out_c)->count > 1) {
@@ -124,7 +124,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
 
     if (*out_b != 0 && set >= 0 && v >= 0) {
         tstring name(names_b[v]);
-        (*out_b)->lists[0].v[0]->res = g_resmgr.get_material(*(rgl::string*)&name);
+        (*out_b)->lists[0].v[0]->res = g_resmgr.get_material(name);
         (*out_b)->lists[0].v[0]->color = color;
         (*out_b)->lists[0].v[0]->f40 = color2;
         if ((*out_b)->count > 1) {
@@ -213,7 +213,7 @@ NOINL void ShadowMapP::build_sw()
         target = (ShSkin*)g_rm.get_shadow_skin(w, h, 0x1c, 0);
         if (target != 0) {
             target->file.assign("shadow_shader");
-            target->shader = (int)g_resmgr.resolve_shader(*(rgl::string*)&target->file);      // 0x418e90
+            target->shader = (int)g_resmgr.resolve_shader(target->file);      // 0x418e90
             target->id = 0x108;
             target->refs[0]->f24 = 0x300000;
         }

@@ -63,7 +63,7 @@ bool mb_file_exists(const char* path);                              // 0x415120
 #include "../../rgl/stream.h"
 // 0x595990 (outfile): the log stream's table, 27 slots like the others
 struct outfile : log_stream {
-    outfile(const char* p) { ((tstring&)name).assign(p); }
+    outfile(const char* p) { name.assign(p); }
     virtual stream_base& r_float(float* v);                         // 0x415870
     virtual stream_base& r_bool(char* v);                           // 0x415870
     virtual stream_base& r_uint(unsigned* v);                       // 0x415870

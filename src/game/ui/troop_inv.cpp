@@ -295,7 +295,7 @@ void PlacedObj::read(stream_base* s, int version)
     rgl::matrix* m = &m18;
     r3(r_rotation(*s, m), &m->o.x);
     m98 = *m;
-    s->r_tstr((rgl::string*)&name);
+    s->r_tstr(&name);
     f1bc() = 100.0f;
     if (kind == 0) {
         if (name.len < 4 || name.buf[0] != 's' || name.buf[1] != 'p' || name.buf[2] != 'r' || name.buf[3] != '_') {

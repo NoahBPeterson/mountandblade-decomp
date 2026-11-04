@@ -1071,7 +1071,7 @@ void GameData_s27c90::save_scene(int idx)
     tstring path = scene_path(idx);
     bin_writer w;
     const char* p = module_path(path.c_str());
-    ((tstring*)&w.name)->assign(p);
+    (&w.name)->assign(p);
     w.is_open = 0;
     w.fp = fopen(p, "wb");
     if (w.fp) {
@@ -1129,7 +1129,7 @@ void SceneObj_s27c90::save(stream_base* s)
     int tmp;
     s->w_int(&tmp);
     w_matrix(*s, (rgl::matrix*)&mat[0]);
-    s->w_tstr((const rgl::string*)&name);
+    s->w_tstr(&name);
     s->w_int(&f1a0);
     s->w_int(&f1a4);
     float* p = &f158;
@@ -1169,7 +1169,7 @@ void GridSet_s27c90::save(stream_base* s)
 void Grid_s27c90::save(stream_base* s, int* dims)
 {
     s->w_int(&type);
-    s->w_tstr((const rgl::string*)&name);
+    s->w_tstr(&name);
     if (data == 0) {
         int zero = 0;
         s->w_int(&zero);

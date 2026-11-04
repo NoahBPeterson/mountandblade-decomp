@@ -21,9 +21,9 @@
 ../src/rgl/mem_stream.cpp  ?w_cstr@mem_stream@@UAEAAUstream_base@@PBD@Z  00417990  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ?w_int@mem_stream@@UAEAAUstream_base@@PAH@Z  004179e0  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ?w_i64@mem_stream@@UAEAAUstream_base@@PA_J@Z  00417a00  /O2 /MT /Gy /TP
-../src/rgl/mem_stream.cpp  ?w_tstr@mem_stream@@UAEAAUstream_base@@PBUstring@rgl@@@Z  00417a20  /O2 /MT /Gy /TP
+../src/rgl/mem_stream.cpp  ?w_tstr@mem_stream@@UAEAAUstream_base@@PBUtstring@@@Z  00417a20  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ?w_byte@mem_stream@@UAEAAUstream_base@@PAE@Z  00417a70  /O2 /MT /Gy /TP
-../src/rgl/mem_stream.cpp  ?r_tstr@mem_stream@@UAEAAUstream_base@@PAUstring@rgl@@@Z  00417a90  /O2 /MT /Gy /TP
+../src/rgl/mem_stream.cpp  ?r_tstr@mem_stream@@UAEAAUstream_base@@PAUtstring@@@Z  00417a90  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ?r_byte@mem_stream@@UAEAAUstream_base@@PAD@Z  00417af0  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ?r_int@mem_stream@@UAEAAUstream_base@@PAH@Z  00417b10  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ?r_i64@mem_stream@@UAEAAUstream_base@@PA_J@Z  00417b30  /O2 /MT /Gy /TP

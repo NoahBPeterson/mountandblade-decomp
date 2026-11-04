@@ -241,7 +241,7 @@ void ShadowMap::create_target(ShSkin** slot)
         if (*slot != 0) {
             (*slot)->file.assign("shadow_shader");
             ShSkin* sk = *slot;
-            sk->shader = (int)((resource_manager*)&g_shadow_resmgr)->resolve_shader(*(const rgl::string*)&sk->file);   // 0x418e90
+            sk->shader = (int)((resource_manager*)&g_shadow_resmgr)->resolve_shader(sk->file);   // 0x418e90
             (*slot)->id = 0x108;
             (*slot)->refs[0]->f24 = 0x300000;
         }

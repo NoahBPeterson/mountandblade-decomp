@@ -27,7 +27,8 @@
 #include "./rgl_base.h"
 #include "./mat4.h"
 
-namespace rgl { struct string; }
+struct tstring;
+namespace rgl { typedef ::tstring string; }
 struct stream_base;
 
 struct shape_base {

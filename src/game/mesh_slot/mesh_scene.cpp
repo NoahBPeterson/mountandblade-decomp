@@ -67,7 +67,7 @@ void Terrain::build_entity()
 {
     if (tail.len < 4)
         return;
-    meshes = g_resmgr_c->find_meshes((const rgl::string*)&tail);
+    meshes = g_resmgr_c->find_meshes(&tail);
 
     vector4 center;
     center.x = wx - 10.0f;
@@ -215,7 +215,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 t == 2 || t == 3 || t == 4 || t == 7) {
                 {
                     tstring name = item_mesh_name(kind, ir.item, ir.m4);
-                    *p = (int)g_resmgr_c->make_lod_mesh((const rgl::string&)name, false);
+                    *p = (int)g_resmgr_c->make_lod_mesh(name, false);
                 }
                 ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
@@ -231,7 +231,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                     snd->update(-0x32);                    // 0x48add0
                 }
             } else if (t == 5 || t == 6) {
-                *p = (int)g_resmgr_c->make_lod_mesh((const rgl::string&)ir.mesh_name(), false);
+                *p = (int)g_resmgr_c->make_lod_mesh(ir.mesh_name(), false);
                 if ((char)kind->type_flags == 6) {
                     matrix mtx;
                     identity_pos(&mtx);
@@ -248,7 +248,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 ((unsigned)kind->type_flags & 0xff) != 7 && ((unsigned)kind->type_flags & 0xff) != 9) {
                 tstring name = ir.mesh_name(0x3000000000000000ull);
                 if (name.len > 1) {
-                    lod_mesh* m = (lod_mesh*)g_resmgr_c->make_lod_mesh((const rgl::string&)name, false);
+                    lod_mesh* m = (lod_mesh*)g_resmgr_c->make_lod_mesh(name, false);
                     matrix carry;
                     int bone, other;
                     kind->get_carry_pos((pos2*)&carry, &bone, &other);

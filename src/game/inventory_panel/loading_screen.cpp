@@ -132,7 +132,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_a");
-        f1210 = g_res.get_object((const rgl::string*)&n)->clone();
+        f1210 = g_res.get_object(&n)->clone();
     }
     {
         vector4 c;
@@ -144,7 +144,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_b");
-        f1214 = g_res.get_object((const rgl::string*)&n)->clone();
+        f1214 = g_res.get_object(&n)->clone();
     }
     {
         vector4 c;
@@ -156,7 +156,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_c");
-        f1218 = g_res.get_object((const rgl::string*)&n)->clone();
+        f1218 = g_res.get_object(&n)->clone();
     }
     {
         vector4 c;
@@ -168,7 +168,7 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_d");
-        f121c = g_res.get_object((const rgl::string*)&n)->clone();
+        f121c = g_res.get_object(&n)->clone();
     }
     {
         vector4 c;
@@ -310,7 +310,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 7) {
         ((stream_base&)g_log).w_cstr("Loading Textures...\n");
-        g_res.load_all(g_module_settings.scan_module_textures, (rgl::string*)&g_module_path);
+        g_res.load_all(g_module_settings.scan_module_textures, &g_module_path);
         ((stream_base&)g_log).w_cstr("Finished Loading Textures...\n");
         { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;

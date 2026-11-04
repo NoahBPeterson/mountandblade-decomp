@@ -132,7 +132,7 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     }
     {
         tstring font("ui_font");
-        ((rgl::mesh*)self->o568)->res = g_resmgr.get_material(*(rgl::string*)&font);
+        ((rgl::mesh*)self->o568)->res = g_resmgr.get_material(font);
     }
     rgl::vector4 lo, hi;
     float out[2];
@@ -1291,9 +1291,9 @@ struct MsLod {
     int has;                                    // +0x84
 };
 struct MapResMgr {                              // the resource manager's lod / object getters (the object is g_resmgr)
-    MsLod* get_lod_mesh(const tstring* name) { return (MsLod*)((::resmgr*)this)->get_lod_mesh(*(const rgl::string*)name); }       // 0x41cdc0
-    void* get_material(const tstring& name) { return ((resource_manager*)this)->get_material(*(const rgl::string*)&name); }      // 0x418a70
-    void* get_object70(const tstring* name) { return ((resource_manager*)this)->get_object70(*(const rgl::string*)name); }       // 0x418cf0
+    MsLod* get_lod_mesh(const tstring* name) { return (MsLod*)((::resmgr*)this)->get_lod_mesh(*name); }       // 0x41cdc0
+    void* get_material(const tstring& name) { return ((resource_manager*)this)->get_material(name); }      // 0x418a70
+    void* get_object70(const tstring* name) { return ((resource_manager*)this)->get_object70(*name); }       // 0x418cf0
 };
 #define MAP_RESMGR ((MapResMgr*)&g_resmgr)
 
@@ -1304,7 +1304,7 @@ struct MsStream : stream_base {};
 inline void stream_f(MsStream* s, float* v) { s->r_float(v); }
 inline void stream_u(MsStream* s, unsigned* v) { s->r_uint(v); }
 inline void stream_i(MsStream* s, int* v) { s->r_int(v); }
-inline void stream_str(MsStream* s, tstring* v) { s->r_tstr((rgl::string*)v); }
+inline void stream_str(MsStream* s, tstring* v) { s->r_tstr(v); }
 
 // 0x477880 is std::vector<ArrSet>::resize (src/game/arr_set.h; fill value ArrSet()), 0x473570 TroopMgr::copy_troop(ArrSet* dst,
 // MeshGroupRec* r) (terrain_b/terrain_b.cpp, called on the record itself). 0x4ccf60 is std::vector<E516>::resize and 0x4cbb10

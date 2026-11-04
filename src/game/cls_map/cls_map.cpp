@@ -961,7 +961,7 @@ void FrameGui::set_rect(const float* a, const float* b)
     quad.dirty = 1;
     {
         tstring n("matte");
-        quad.material = g_resmgr.get_material(*(rgl::string*)&n);
+        quad.material = g_resmgr.get_material(n);
     }
     corner[0]->uv_x = (a[0] - corner[0]->c22c) - 0.003f;
     corner[0]->uv_y = (sy - corner[0]->c240) + 0.003f;
@@ -1676,7 +1676,7 @@ rgl::mesh* make_background(float* v, int color)
     }
     {
         tstring t("background");
-        m->res = g_resmgr.get_material(*(rgl::string*)&t);
+        m->res = g_resmgr.get_material(t);
     }
 
     float a[2];

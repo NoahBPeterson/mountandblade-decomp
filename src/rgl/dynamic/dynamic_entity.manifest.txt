@@ -1,5 +1,5 @@
 ../src/rgl/dynamic/dynamic_entity.cpp  ??0dynamic_entity@rgl@@QAE@XZ  00425370  /O2 /MT /Gy /TP
-../src/rgl/dynamic/dynamic_entity.cpp  ?type_name@dynamic_entity@rgl@@UAE?AUstring@2@XZ  00425490  /O2 /MT /Gy /TP
+../src/rgl/dynamic/dynamic_entity.cpp  ?type_name@dynamic_entity@rgl@@UAE?AUtstring@@XZ  00425490  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?awake@dynamic_entity@rgl@@UAE_NXZ  004254b0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?point_velocity@dynamic_entity@rgl@@UAEPAUvector4@2@PAU32@PBU32@@Z  004254c0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?apply_impulse@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  00425550  /O2 /MT /Gy /TP

@@ -767,7 +767,7 @@ int find_in_table78(const tstring* name);               // 0x4352a0
 
 // ---- resource manager (0x5d6fa0) -----------------------------------------------------------------------
 struct resmgr_s2fe40 {
-    __forceinline std::vector<rgl::mesh*> find_meshes(const tstring* name) { return ((resmgr*)this)->find_meshes((const rgl::string*)name); }   // 0x41b960
+    __forceinline std::vector<rgl::mesh*> find_meshes(const tstring* name) { return ((resmgr*)this)->find_meshes(name); }   // 0x41b960
 };
 
 

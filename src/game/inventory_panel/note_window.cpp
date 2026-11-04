@@ -291,7 +291,7 @@ void note_window::build(int page_, int arg_)
     }
     {
         tstring key("note_window");
-        rgl::mesh* item = res_manager().get_object((const rgl::string*)&key);       // 0x419540
+        rgl::mesh* item = res_manager().get_object(&key);       // 0x419540
         panel->set_track(0, ((mesh_x*)item)->clone());   // 0x41c6d0
     }
 

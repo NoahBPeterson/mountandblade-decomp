@@ -11,12 +11,7 @@
 #include <string.h>
 #include <new>     // declares operator new[]/delete[]: without it cl 13.10 calls the scalar operators (the original calls 0x535482/0x53570d)
 
-// ../tstring.h says range_equals (0x42c160) returns bool, but it returns `char` (mangled ...QBEDABH0ABU1@@Z: D);
-// the declaration is rewritten through a macro while the header is included, so the class stays defined in ONE
-// header. (tstring::split 0x42c9b0 used to be injected the same way; the header declares it now.)
-#define range_equals range_equals_hdr(const int& a, const int& b, const tstring& c) const; char range_equals
 #include "../tstring.h"
-#undef range_equals
 
 int   g_str_grow_add;    // 0x5a8e60
 float g_str_grow_mul;    // 0x5a8e64

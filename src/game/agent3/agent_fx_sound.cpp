@@ -158,7 +158,7 @@ void EmitTable::setup(Emit* e, int idx, const vector4* pos)
     if (idx < 0 || idx >= count)
         return;
     EmitDef* d = &defs[idx];
-    res_obj* r = (res_obj*)res_manager().get_object((const rgl::string*)&d->name);
+    res_obj* r = (res_obj*)res_manager().get_object(&d->name);
     if (r == 0)
         return;
     e->init();

@@ -88,8 +88,8 @@ void rec34_table::load(stream_base& s)
     tstring a;
     tstring b;
     int dummy;
-    s.r_tstr((rgl::string*)&a);
-    s.r_tstr((rgl::string*)&b);
+    s.r_tstr(&a);
+    s.r_tstr(&b);
     s.r_int(&dummy);
     s.r_int(&count);
     if (records != 0) {
@@ -1511,7 +1511,7 @@ void Block::read_terrain(stream_base* stream)
     this->free_materials();
     stream->r_tstr((rgl::string*)((char*)this + 0x00));
     stream->r_int((int*)((char*)this + 0x14));
-    stream->r_tstr((rgl::string*)&name);
+    stream->r_tstr(&name);
     stream->r_int((int*)((char*)this + 0x18));
     stream->r_int((int*)((char*)this + 0x1c));
     stream->r_float((float*)((char*)this + 0x28));
@@ -1532,7 +1532,7 @@ void Block::read_terrain(stream_base* stream)
     }
     if (name.len > 1) {
         if (name.differs("none"))
-            *(void**)((char*)this + 0x64) = ((resource_manager*)&g_res_manager)->get_material(*(const rgl::string*)&name);
+            *(void**)((char*)this + 0x64) = ((resource_manager*)&g_res_manager)->get_material(name);
     }
 }
 

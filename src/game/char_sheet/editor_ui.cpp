@@ -67,7 +67,7 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
     mesh* m;
     {
         tstring hl("left_arrow_hl");
-        m = (mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&hl))->clone();
+        m = (mesh*)((mesh_x*)res_manager().get_object(&hl))->clone();
     }
     m->scale(x / z);
     ((MissionUi*)b)->set_track(3, m);
@@ -87,7 +87,7 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
     mesh* m;
     {
         tstring hl("right_arrow_hl");
-        m = (mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&hl))->clone();
+        m = (mesh*)((mesh_x*)res_manager().get_object(&hl))->clone();
     }
     m->scale(x / z);
     ((MissionUi*)b)->set_track(3, m);
@@ -140,13 +140,13 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
     mesh* m1;
     {
         tstring n("scrollbar");
-        m1 = res_manager().get_object((const rgl::string*)&n)->clone();
+        m1 = res_manager().get_object(&n)->clone();
     }                                           // the name dies before the colour is set (0x4f6160: ~tstring, then set_color)
     m1->set_color(col);
     mesh* m2;
     {
         tstring n("scrollbar_handle");
-        m2 = res_manager().get_object((const rgl::string*)&n)->clone();
+        m2 = res_manager().get_object(&n)->clone();
     }                                           // the name dies before the colour is set (0x4f6160: ~tstring, then set_color)
     m2->set_color(col);
     w->set_track(0, m1);
@@ -267,23 +267,23 @@ int __cdecl engine_init()
     g_5d706d = b;
     {
         tstring n("core_shaders");
-        res_manager().load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack(n, 0);
     }
     {
         tstring n("core_textures");
-        res_manager().load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack(n, 0);
     }
     {
         tstring n("core_materials");
-        res_manager().load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack(n, 0);
     }
     {
         tstring n("core_ui_meshes");
-        res_manager().load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack(n, 0);
     }
     {
         tstring n("core_pictures");
-        res_manager().load_pack((const rgl::string&)n, 0);
+        res_manager().load_pack(n, 0);
     }
     g_strtable.load(&g_module_path);
     {

@@ -173,7 +173,7 @@ void CharSheet::init_screen()
         rgl::mesh* mesh;
         {
             tstring n("character_window");
-            mesh = res_manager().get_object((const rgl::string*)&n)->clone();
+            mesh = res_manager().get_object(&n)->clone();
         }
         w->set_mesh(0, mesh);
     }
@@ -407,12 +407,12 @@ void CharSheet::init_screen()
         rgl::mesh* up;
         {
             tstring k("party_button");
-            up = res_manager().get_object((const rgl::string*)&k)->clone();
+            up = res_manager().get_object(&k)->clone();
         }
         rgl::mesh* down;
         {
             tstring k("party_button_down");
-            down = res_manager().get_object((const rgl::string*)&k)->clone();
+            down = res_manager().get_object(&k)->clone();
         }
         up->scale(0.6666667f);
         down->scale(0.6666667f);

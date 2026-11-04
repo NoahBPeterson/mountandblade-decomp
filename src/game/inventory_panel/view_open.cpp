@@ -227,7 +227,7 @@ void char_window::open_view()
             label_refresh(a, tstring("char_i_character_shadow"));
             {
                 tstring nm("character_window_shadow");
-                mesh* m = res_manager().get_object((const rgl::string*)&nm);
+                mesh* m = res_manager().get_object(&nm);
                 m = m->clone();
                 a->set_mesh(0, m);
             }

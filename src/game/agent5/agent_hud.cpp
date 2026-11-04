@@ -79,7 +79,7 @@ void Mission::refresh_agent(Agent* a)
 
 static __forceinline rgl::mesh* res_clone(const tstring& n)
 {
-    return g_resmgr_full.get_object((const rgl::string*)&n)->clone();
+    return g_resmgr_full.get_object(&n)->clone();
 }
 
 // @ 0x4f7f00
@@ -273,7 +273,7 @@ void MissionBlocker::init_screen()
     }
     {
         tstring n("ui_font");
-        ui_font->tracks[4]->res = g_resmgr_full.base().get_material(*(rgl::string*)&n);
+        ui_font->tracks[4]->res = g_resmgr_full.base().get_material(n);
     }
     {
         unsigned col = 0xffffffff;
@@ -296,7 +296,7 @@ void MissionBlocker::init_screen()
     }
     {
         tstring n("ui_font_background");
-        ui_font_bg->tracks[4]->res = g_resmgr_full.base().get_material(*(rgl::string*)&n);
+        ui_font_bg->tracks[4]->res = g_resmgr_full.base().get_material(n);
     }
     {
         unsigned col = 0xff000000;
@@ -772,11 +772,11 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     {
         tstring name("sample_flare");
         matrix id;
-        fm->append_skinned(g_resmgr_full.get_object((const rgl::string*)&name), (const rgl::mat4*)identity_pos((pos*)&id), -1, -1, 0);
+        fm->append_skinned(g_resmgr_full.get_object(&name), (const rgl::mat4*)identity_pos((pos*)&id), -1, -1, 0);
     }
     {
         tstring name("flare");
-        fm->res = g_resmgr_full.base().get_material(*(rgl::string*)&name);
+        fm->res = g_resmgr_full.base().get_material(name);
     }
     float k = dir.y * eye->u.y + dir.z * eye->u.z + dir.x * eye->u.x - 0.3f;
     k = k * 1.4285715f;
@@ -917,7 +917,7 @@ void MissionBlocker::update_status()
         {
             tstring name("status_health_bar");
             const rgl::mat4* m = (const rgl::mat4*)identity_pos((pos*)&frame);
-            rgl::mesh* obj = g_resmgr_full.get_object((const rgl::string*)&name);
+            rgl::mesh* obj = g_resmgr_full.get_object(&name);
             health_mesh->append_skinned(obj, m, -1, -1, 0);
         }
         vector4 col((float)shown_health / ag->max_health, 1.0f, 1.0f);
@@ -984,7 +984,7 @@ void MissionBlocker::update_status()
                     shadow_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
                     {
                         tstring shadow("ui_item_shadow");
-                        shadow_mesh->res = g_resmgr_full.base().get_material(*(rgl::string*)&shadow);
+                        shadow_mesh->res = g_resmgr_full.base().get_material(shadow);
                     }
                     ((mesh_x*)shadow_mesh)->set_bone_index(-1);
                     shadow_mesh->color = 0xff777777;
@@ -1031,7 +1031,7 @@ void MissionBlocker::update_status()
             rgl::mesh* cl;
             {
                 tstring icon(nm);
-                rgl::mesh* obj = g_resmgr_full.get_object((const rgl::string*)&icon);
+                rgl::mesh* obj = g_resmgr_full.get_object(&icon);
                 cl = obj->clone();
             }
             shield_icon->set_track(0, cl);
@@ -1071,7 +1071,7 @@ void rgl::mesh::set_offset(const vector4& pos)
     ((mesh_x*)this)->compute_bounds();
 }
 
-static __forceinline const rgl::string* as_rgl_string(const tstring& t) { return (const rgl::string*)&t; }
+static __forceinline const rgl::string* as_rgl_string(const tstring& t) { return &t; }
 
 // @ 0x4fba40 -------------------------------------------------------------------------------
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
@@ -1379,7 +1379,7 @@ void ItemA::init_screen()
         ((ScreenOps*)this)->begin();
         ((BlockOwner*)((char*)this + 0x30))->init(win, GAME_AT(int, 0xac));
         if (f40 < 0)
-            frame()->set_mesh(0, g_resmgr_full.get_object((const rgl::string*)&tstring("meeting_window"))->clone());
+            frame()->set_mesh(0, g_resmgr_full.get_object(&tstring("meeting_window"))->clone());
     }
     g_gui_dirty = 1;
     {
@@ -1682,7 +1682,7 @@ void MWidget::get_xy(float* result)
         rgl::mesh* m = new rgl::mesh;
         {
             tstring n("ui_font");           // destroyed before add_image_a (0x4fd544)
-            m->res = g_resmgr_full.base().get_material(*(rgl::string*)&n);
+            m->res = g_resmgr_full.base().get_material(n);
         }
         this->set_mesh(4, m);
     }

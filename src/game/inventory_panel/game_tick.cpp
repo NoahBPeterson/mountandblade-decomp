@@ -790,12 +790,12 @@ void GameG::update_tracks()
     rgl::mesh* track;
     {
         tstring n("track");
-        track = res_manager().get_object((const rgl::string*)&n);
+        track = res_manager().get_object(&n);
     }
     rgl::mesh* battle;
     {
         tstring n("battle_track");
-        battle = res_manager().get_object((const rgl::string*)&n);
+        battle = res_manager().get_object(&n);
     }
 
     float denom = (float)party_at(&parties, ((Map10007*)&parties)->lookup(f78))->skill_level(0x10) + 8.0f;

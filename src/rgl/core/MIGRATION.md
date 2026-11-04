@@ -62,8 +62,7 @@ edited. Layouts: Bone from 0x41b0c0 (ctor), 0x41b180 (read_frame_set) and 0x4164
 0x419e90; skel_anim from 0x41b4e0, 0x41c060; lod_group from 0x41c2a0, 0x41ca60; grid fields from 0x41ed00.
 
 Header conflicts and gaps (worked around locally, to be absorbed upstream):
-1. `rgl::string` (rgl_string.h) lacks the copy constructor (0x42c110) and `range_equals` (0x42c160); `read_from` (0x4151e0) is
-   header-inline in the original (resource_io.cpp inlines it in `open_read_text` through a static copy). -> `str_x`.
+1. (resolved: rgl::string is now a typedef of tstring, which has the copy constructor and range_equals.)
 2. resource.h: `stage_t` has no load/save, `material` no `create_shaders` (0x416c00), `texture()` is declared out of line though the
    original expands it inline in `new texture[n]` (defined `inline` in resmgr.cpp), `key_array` has no constructor/destructor
    (`vec_array` derives it), `frame_set` keeps bone count/array as ints (f18/f1c) and its destructor (defined in resmgr.cpp, also deleting

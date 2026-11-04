@@ -132,7 +132,7 @@ void Terrain::create_water(void** out)
 
     {
         tstring name("river");
-        m->res = g_resmgr.get_material(*(rgl::string*)&name);
+        m->res = g_resmgr.get_material(name);
     }
     matrix id;
     identity3((mat3*)&id);

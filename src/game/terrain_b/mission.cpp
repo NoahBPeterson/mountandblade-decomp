@@ -79,7 +79,7 @@ struct lod_group {
     char data[0xe0];
     lod_group();   // 0x41c2a0 (the interior record's constructor: tmesh() is the same code)
 };
-static __forceinline const rgl::string& rs(const tstring& t) { return (const rgl::string&)t; }   // tstring is the 16-byte string the engine's code constructs
+static __forceinline const rgl::string& rs(const tstring& t) { return t; }   // tstring is the 16-byte string the engine's code constructs
 template<> void std::vector<PlacedObj>::resize(size_t);   // 0x477ea0 (terrain_b.cpp)
 // vector<int>::_Insert_n (0x410610) and vector<rgl::Obj*>::_Insert_n (0x41f720) are the instances the pointer vectors share (rgl/particles
 // and rgl/scene): declared here, never instantiated; the views reach them through classes that make the protected member public
@@ -236,7 +236,7 @@ void SceneFile::load(stream_base* s, int id)
             s->r_stream(&s414);
         } else {
             stream_base& hub = g_log;
-            hub.w_cstr("WARNING unable to find ground_paint_saved_magic for sco file").w_tstr((const rgl::string*)&name);
+            hub.w_cstr("WARNING unable to find ground_paint_saved_magic for sco file").w_tstr(&name);
         }
     }
     loaded = 1;
@@ -544,7 +544,7 @@ void Mission::rebuild_nav(int which, int)
         hi = V2(terrain.max_x + 1.0f, terrain.max_y + 1.0f);
     } else {
         core_ = (NavData*)new NavCore;   // 0x478150 (NavData() is the same constructor, ICF-folded)
-        r = (res_shape*)g_resmgr.get_object60(*(rgl::string*)&cs->name44);
+        r = (res_shape*)g_resmgr.get_object60(cs->name44);
         if (r == 0) {
             tstring* nm = &cs->name44;
             mb_error("Unable to find body %s", nm->c_str());
@@ -728,7 +728,7 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
     Level494* es = &g_game->levels[which];
     MeshVec meshes;
-    meshes = ((resmgr*)&g_resmgr)->find_meshes((const rgl::string*)&es->name34);
+    meshes = ((resmgr*)&g_resmgr)->find_meshes(&es->name34);
     if (meshes.size() == 0)
         mb_error("Error unable to find interior mesh %s", es->name34.c_str());
     Entity* e = scene->create_entity(9);

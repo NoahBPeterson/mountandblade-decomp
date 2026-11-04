@@ -209,9 +209,9 @@ UiA* make_button(ContainerBase* parent, const tstring* text, float x, float y, i
         hl.append(sfx);
     }
 
-    b->set_mesh(2, res_manager().get_object((const rgl::string*)&up)->clone());
-    b->set_mesh(1, res_manager().get_object((const rgl::string*)&down)->clone());
-    b->set_mesh(3, res_manager().get_object((const rgl::string*)&hl)->clone());
+    b->set_mesh(2, res_manager().get_object(&up)->clone());
+    b->set_mesh(1, res_manager().get_object(&down)->clone());
+    b->set_mesh(3, res_manager().get_object(&hl)->clone());
 
     {
         float sz = s * 0.6f;

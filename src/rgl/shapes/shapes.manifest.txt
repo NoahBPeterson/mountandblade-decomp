@@ -21,7 +21,7 @@
 ../src/rgl/shapes/shapes.cpp  ?get_min@shape_base@@UAEPAUvector4@rgl@@PAU23@@Z  00408050  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?set_m8@shape_base@@UAEXH@Z  00408070  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?or_m8@shape_base@@UAEXH@Z  00408080  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?type_name@sphere@@UBE?AUstring@rgl@@XZ  00408090  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?type_name@sphere@@UBE?AUtstring@@XZ  00408090  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?copy_from@sphere@@UAEXPBU1@@Z  004080b0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?draw@sphere@@UAEXXZ  00408110  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?translate@renderer@@QAEXABUvector4@rgl@@@Z  00408170  /O2 /MT /Gy /TP
@@ -37,7 +37,7 @@
 ../src/rgl/shapes/shapes.cpp  ?get_min@sphere@@UAEPAUvector4@rgl@@PAU23@@Z  004085a0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?get_max@sphere@@UAEPAUvector4@rgl@@PAU23@@Z  004085d0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0capsule@@QAE@XZ  00408600  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?type_name@capsule@@UBE?AUstring@rgl@@XZ  00408630  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?type_name@capsule@@UBE?AUtstring@@XZ  00408630  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?create_new@capsule@@UAEPAU1@XZ  00408650  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?copy_from@capsule@@UAEXPBU1@@Z  00408690  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?scale@capsule@@UAEXPBM@Z  00408720  /O2 /MT /Gy /TP
@@ -45,7 +45,7 @@
 ../src/rgl/shapes/shapes.cpp  ?load@capsule@@UAEXPAUstream_base@@@Z  00408870  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?save@capsule@@UAEXPAUstream_base@@@Z  00408910  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0face@@QAE@XZ  00408980  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?type_name@face@@UBE?AUstring@rgl@@XZ  004089c0  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?type_name@face@@UBE?AUtstring@@XZ  004089c0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?copy_from@face@@UAEXPBU1@@Z  004089e0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?load@face@@UAEXPAUstream_base@@@Z  00408d60  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?save@face@@UAEXPAUstream_base@@@Z  00408dd0  /O2 /MT /Gy /TP
@@ -76,7 +76,7 @@
 ../src/rgl/shapes/shapes.cpp  ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBDI@Z  0040c450  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z  0040c540  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ??0manifold@@QAE@XZ  0040c670  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?type_name@manifold@@UBE?AUstring@rgl@@XZ  0040c6c0  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?type_name@manifold@@UBE?AUtstring@@XZ  0040c6c0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?save@manifold@@UAEXPAUstream_base@@@Z  0040c6e0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?scale@manifold@@UAEXPBM@Z  0040c820  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?transform@manifold@@UAEXPBUmatrix@rgl@@@Z  0040c880  /O2 /MT /Gy /TP
@@ -90,7 +90,7 @@
 ../src/rgl/shapes/shapes.cpp  ?identity3@rgl@@YAPAUmat3@1@PAU21@@Z  0040cd60  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?clone@composite@@UAEPAUshape_base@@XZ  0040ce10  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?copy_from@composite@@UAEXPBUshape_base@@@Z  0040ce50  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?type_name@composite@@UBE?AUstring@rgl@@XZ  0040ceb0  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?type_name@composite@@UBE?AUtstring@@XZ  0040ceb0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?save@composite@@UAEXPAUstream_base@@@Z  0040ced0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?draw@composite@@UAEXXZ  0040cfb0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?scale@composite@@UAEXPBM@Z  0040cfe0  /O2 /MT /Gy /TP

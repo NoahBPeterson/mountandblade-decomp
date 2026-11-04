@@ -78,7 +78,7 @@ struct Entry18 : clip_slot {
 // @ 0x4c2dd0
 void Blk2dd0::read(stream_base* s)
 {
-    s->r_tstr((rgl::string*)&s0);
+    s->r_tstr(&s0);
     s0.underscores_to_spaces();
     s->r_int(&count);
     if (count != 0)
@@ -328,7 +328,7 @@ int __fastcall renderer_setup(GameAppView* self)
         int v10 = (int)game_var_float(k10);
         g_batch.init_decls(&v10, &v9, &v8, &v7, &v6, &v5, &v4, &v3, &v2, &v1);
     }
-    ((resmgr*)&orig::g_resmgr_obj)->load_all(1, (rgl::string*)&g_module_path);
+    ((resmgr*)&orig::g_resmgr_obj)->load_all(1, &g_module_path);
     g_keyboard.init_devices(self->hwnd);
     return 0;
 }
@@ -575,7 +575,7 @@ void music_set::load(stream_base* s, int load_samples, const tstring* dir)
     tstring name;
     for (int i = 0; i < count; i++) {
         int level;
-        s->r_tstr((rgl::string*)&name).r_int(&level);
+        s->r_tstr(&name).r_int(&level);
         recs[i].sample = 0;
         if (load_samples != 0 && g_cfg.disable_sound == 0) {
             sprintf(buf, "%sSounds\\%s", dir->c_str(), name.c_str());
@@ -630,8 +630,8 @@ void StringTable::load1(stream_base* s)
     }
     strings = new Str[count];
     for (int i = 0; i < count; i++) {
-        s->r_tstr((rgl::string*)&strings[i].key);
-        s->r_tstr((rgl::string*)&strings[i].name);
+        s->r_tstr(&strings[i].key);
+        s->r_tstr(&strings[i].name);
         strings[i].name.underscores_to_spaces();
     }
 }
@@ -647,8 +647,8 @@ void StringTable::load2(stream_base* s)
     }
     quick = new Str[quick_count];
     for (int i = 0; i < quick_count; i++) {
-        s->r_tstr((rgl::string*)&quick[i].key);
-        s->r_tstr((rgl::string*)&quick[i].name);
+        s->r_tstr(&quick[i].key);
+        s->r_tstr(&quick[i].name);
         quick[i].name.underscores_to_spaces();
     }
 }
