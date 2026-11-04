@@ -277,8 +277,8 @@ struct head_cam : head_rec {
     float   f2b8;              // +0x2b8
     head_cam();
     virtual void vfunc();
-    void write_stream(w_stream* w);
-    void read_stream(w_stream* r);
+    virtual void write_stream(w_stream* w);
+    virtual void read_stream(w_stream* r);
 };
 
 

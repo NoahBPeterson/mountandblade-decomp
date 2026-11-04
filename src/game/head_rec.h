@@ -16,8 +16,8 @@
 //   slot 3  0x408030  scale_3(float)  `ret 4` - takes its argument (the frame time) and returns (shape_base::scale)
 //   slot 4  0x477b70  slot_empty_4()       the same empty function (MissionBlocker overrides it with
 //                                          MissionParams::init, 0x4cea10)
-//   slot 5  0x408030  scale_5(const float*)  `ret 4` (the same function as slot 3)
-//   slot 6  0x408030  scale_6(const float*)  `ret 4` (the same function as slot 3)
+//   slot 5  0x408030  write_stream(w_stream*)  `ret 4` (the same function as slot 3)
+//   slot 6  0x408030  read_stream(w_stream*)  `ret 4` (the same function as slot 3)
 //   slot 7  0x5363c8  pure_7() = 0          __purecall: the base declares this one pure and EVERY derived class
 //                                          overrides it (0x48b170, or 0x4280e0 `return 0` in four of the record classes)
 //   slot 8  0x48b170  always_true()        `mov al,1; ret` (MissionUi::always1; MissionBlocker overrides it with
@@ -35,6 +35,7 @@
 #include "./tstring.h"
 
 // 0x4c6e00 (src/rgl/mesh2/gui_edit.cpp): resets the current module screen. Most derived records put it in slot 1.
+struct w_stream;                // rgl/mesh2/head_rec.h: the serializer slots 5 / 6 take
 void reset_gui();
 
 struct head_rec {
@@ -43,8 +44,8 @@ struct head_rec {
     virtual void slot_empty_2() {}                                  // slot 2  0x477b70 (the same function)
     virtual void scale_3(float) {}                           // slot 3  0x408030 (ret 4)
     virtual void slot_empty_4() {}                                  // slot 4  0x477b70 (the same function)
-    virtual void scale_5(const float*) {}                           // slot 5  0x408030 (the same function)
-    virtual void scale_6(const float*) {}                           // slot 6  0x408030 (the same function)
+    virtual void write_stream(w_stream*) {}                        // slot 5  0x408030 (the same function)
+    virtual void read_stream(w_stream*) {}                        // slot 6  0x408030 (the same function)
     // slot 7: pure here (the base table 0x5947d8 holds __purecall there); EVERY derived class overrides it - 0x48b170
     // (`return 1`) in most, 0x4280e0 (`return 0`) in ResultWindow, C4c3050, Rec34 and Rec38.
     virtual char pure_7() = 0;                                      // slot 7: __purecall; every derived class overrides it

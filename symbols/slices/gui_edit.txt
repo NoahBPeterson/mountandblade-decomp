@@ -1,7 +1,7 @@
 004c48d0 ?load@rec34_list@@QAIXAAUstream_base@@@Z
 004c49f0 ??0head_cam@@QAE@XZ
-004c4b70 ?write_stream@head_cam@@QAEXPAUw_stream@@@Z
-004c4c00 ?read_stream@head_cam@@QAEXPAUw_stream@@@Z
+004c4b70 ?write_stream@head_cam@@UAEXPAUw_stream@@@Z
+004c4c00 ?read_stream@head_cam@@UAEXPAUw_stream@@@Z
 004c4c90 ??_Ghead_rec@@UAEPAXI@Z
 004c4cc0 ??0head_obj2@@QAE@XZ
 004c4d10 ??1Tail2@@QAE@XZ

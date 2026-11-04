@@ -50,11 +50,9 @@ struct head_cam : head_rec {
     virtual void slot_empty_2();
     virtual void scale_3(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    virtual void scale_5(const float*);
-    virtual void scale_6(const float*);
+    virtual void write_stream(w_stream* w);     // slot 5  0x4c4b70
+    virtual void read_stream(w_stream* r);      // slot 6  0x4c4c00
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
-    void write_stream(w_stream* w);     // 0x4c4b70
-    void read_stream(w_stream* r);      // 0x4c4c00
 };
 
 // The second head object of 0x4c4cc0 (vtable 0x595c20, frustum at +0x2ec).

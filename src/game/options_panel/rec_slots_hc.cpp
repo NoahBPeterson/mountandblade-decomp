@@ -24,8 +24,6 @@ struct CharSheet {
 void head_cam::slot_empty_1() { g_gui.reset(); }
 void head_cam::slot_empty_2() { ((Screen*)this)->init_screen(); }
 void head_cam::scale_3(float a) { ((Screen*)this)->frame_update(a); }
-void head_cam::scale_5(const float* a) { write_stream((w_stream*)a); }
-void head_cam::scale_6(const float* a) { read_stream((w_stream*)a); }
 
 // head_obj2
 void head_obj2::slot_empty_1() { ((rec_2e4*)this)->release(); }
