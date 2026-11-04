@@ -6,5 +6,5 @@
 004240d0 ?find@ObjVec@@QBEHPAUObj@@@Z  # ObjVec::find (defined on ObjVecF in this slice, to keep remove()'s call out of line)
 00424010 ?insert@ObjVec@@QAE?AUIter@1@U21@ABQAUObj@@@Z  # std::vector<Obj*>::insert(iterator, const value&) (this slice)
 00424740 ?resize@V36@@QAEXIUVert@@@Z  # std::vector<E36>::resize (this slice)
-00424cc0 ?resize@V136@@QAEXIUGroup@@@Z  # std::vector<E136>::resize (s00424830)
+00424cc0 ?resize@V136@@QAEXIUground_g136@@@Z  # std::vector<E136>::resize (s00424830)
 00424650 ?face_normal_x@@YAPAUvector4@rgl@@PAU12@PBU12@11@Z  # face_normal, caller's view with an explicit out-parameter (defined as ?face_normal@@YA?AUvector4@rgl@@PBU12@00@Z)

@@ -144,7 +144,7 @@ void ObjVec::remove(Obj* o)
 struct Vert { vector4 p; vector4 n; int f20; };
 
 // group record (E136): up to four corners
-struct Group {
+struct ground_g136 {
     int n;                      // +0
     int vidx[4];                // +4   first vertex index per corner
     char pad14[0x10];
@@ -157,7 +157,7 @@ struct Group {
     int f68, f6c, f70;          // +0x68 (0)
     vector4 c;                  // +0x74 sum of the corner positions
     int f84;                    // +0x84 (0)
-    Group();                    // 0x4246f0
+    ground_g136();                    // 0x4246f0
 };
 // vector<E36> / vector<E136> stand-ins (resize stays out of line)
 struct V36 {
@@ -168,10 +168,10 @@ struct V36 {
 };
 struct V136 {
     char pad0[4];
-    Group *first, *last, *end;
+    ground_g136 *first, *last, *end;
     unsigned size() const { return first == 0 ? 0 : last - first; }
-    void resize(unsigned n, Group v);                           // 0x424cc0
-    struct iter { Group* p; iter operator+(int off) const; };   // 0x424720 (out of line)
+    void resize(unsigned n, ground_g136 v);                           // 0x424cc0
+    struct iter { ground_g136* p; iter operator+(int off) const; };   // 0x424720 (out of line)
     iter begin() const { iter r; r.p = first; return r; }
 };
 // @ 0x424720
@@ -224,7 +224,7 @@ int Store::add(int n, const vector4* pts)
         sum.z += pts[i].z;
     }
     unsigned idx = groups.size();
-    Group g;
+    ground_g136 g;
     groups.resize(idx + 1, g);
     groups.first[idx].n = n;
     groups.first[idx].c = sum;
@@ -240,7 +240,7 @@ int Store::add(int n, const vector4* pts)
 }
 
 // @ 0x4246f0
-Group::Group()
+ground_g136::ground_g136()
 {
     f24 = 0;
     f6c = 0;
