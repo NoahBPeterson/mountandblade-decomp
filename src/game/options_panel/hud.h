@@ -33,8 +33,6 @@ extern float g_char_scale;                          // 0x590d7c
 
 // the strings the mission items write and the numbers their sounds depend on
 #include "../dialog_manager.h"   // canonical: g_script (0xa70440)
-extern __int64 g_spawn_lo;                          // 0xa70448
-extern __int64 g_spawn_hi;                          // 0xa70450
 
 extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 #include "../../include/crt.h"   // canonical: ftol2 (0x535a64)

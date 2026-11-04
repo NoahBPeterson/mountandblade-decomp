@@ -12,6 +12,7 @@
 #include "../../include/msg_log.h"
 #include "../shared_vars.h"
 #include "../key_names.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_box_x;                                // 0x5d8778
@@ -199,9 +200,9 @@ void MapPanel::update_target()
     vector4 fp = farp;
 
     // ---- 0x519517: clip against the world's z range ------------------------------------------------
-    if (((::world*)g_level)->wmap) {
-        float zmin = ((::world*)g_level)->wmap->zmin;
-        float zmax = ((::world*)g_level)->wmap->zmax;
+    if (((::world*)g_script.level)->wmap) {
+        float zmin = ((::world*)g_script.level)->wmap->zmin;
+        float zmax = ((::world*)g_script.level)->wmap->zmax;
         if (np.z < zmin) {
             float t = fabsf((zmin - np.z) / dir.z);
             np.x += dir.x * t; np.y += dir.y * t; np.z += dir.z * t;
@@ -239,7 +240,7 @@ void MapPanel::update_target()
     int       best  = -1;
     shape_base* hits[0x2000];                  // the sweep is told 0x110, but the slot is 0x2000 wide
     int       count;
-    ((level*)g_level)->query_segment(seg_a, seg_b, 0x110, hits, &count);   // 0x439870
+    ((level*)g_script.level)->query_segment(seg_a, seg_b, 0x110, hits, &count);   // 0x439870
 
     vector4 bestpt;
     for (int i = 0; i < count; i++) {
@@ -262,14 +263,14 @@ void MapPanel::update_target()
     int rec_mask  = -1;
     if (best >= 0) {
         rec_index = hits[best]->m4;
-        rec_mask  = (int)((::world*)g_level)->wmap->recs[rec_index].mask;
+        rec_mask  = (int)((::world*)g_script.level)->wmap->recs[rec_index].mask;
     }
 
     // ---- 0x519829: party agents under the cursor ---------------------------------------------------
     shape_base* bestobj = 0;
     shape_base* agents[0x2000];                // Picker::collect does not bound *count, so the size matters
     int       acount;
-    ((::world*)g_level)->collect(9, agents, &acount);
+    ((::world*)g_script.level)->collect(9, agents, &acount);
     bestd += 1.0f;
 
     for (int i = 0; i < acount; i++) {
@@ -370,7 +371,7 @@ void MapPanel::update_target()
             bool go = true;
             if (g_keyboard.down[0x1d] && g_cfg.cheat_mode) {
                 *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-            } else if (!((RiderTable*)((::world*)g_level)->wmap)->shares(rec_index,
+            } else if (!((RiderTable*)((::world*)g_script.level)->wmap)->shares(rec_index,
                                                *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
                 go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
             }

@@ -21,6 +21,9 @@
 #include "../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../include/script_state.h"   // ScriptState g_script (0xa70440): the one definition is here, with the {token} expander
+
+ScriptState g_script;                                      // 0xa70440 (.bss) the script interpreter's state object, constructed by ScriptState::ScriptState (0x4d3580)
 
 // @ 0x460160
 tstring ScriptState::expand_token(const tstring& tok_)

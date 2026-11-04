@@ -64,6 +64,7 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../../include/render_flags.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 using rgl::vector4;
 using rgl::matrix;
@@ -847,14 +848,14 @@ void GameData::blend(float* out, float x, float y)
     float r1 = wn.y + t * s1;
     float r2 = wn.z + s2 * t;
     float r3 = wn.w + t * s3;
-    if (g_level == 0)
+    if (g_script.level == 0)
         t = 1.0f;
     else {
         // ground_height reads p[0] and p[1]: the original passes &x (0x471163) and the callee reads the y beside it.
         // cl treats y as dead after the loop and reused its home (for t, a spill, even a pointer to y), so p[1]
         // read garbage and ours faulted where the original returned. A real pair gives the callee the same x, y.
         float p[2] = { x, y };
-        ground_height((CellGrid*)g_level, p, &t);
+        ground_height((CellGrid*)g_script.level, p, &t);
     }
     out[0] = r0 - t * 10.0f;
     out[1] = r1;

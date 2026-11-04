@@ -23,10 +23,7 @@ extern int g_5e2930_dummy;
 // (expand 0x4606d0, thiscall, ret 8: hidden return + token). Those headers declare g_game and friends in other types than this TU's, so the
 // member is repeated under the class name.
 #include "../str_table.h"                                       // StrTable g_strtable (0x5e2a18)
-struct ScriptState {
-    tstring expand(const tstring& in);                          // 0x4606d0
-};
-extern ScriptState g_script;                                    // 0xa70440
+#include "../../include/script_state.h"                      // ScriptState g_script (0xa70440): expand 0x4606d0
 
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 void conv_clear(void* p);                                    // 0x4c8bf0 (releases an owned block)

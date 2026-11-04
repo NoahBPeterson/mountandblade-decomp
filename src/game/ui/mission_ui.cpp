@@ -40,6 +40,7 @@
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../shared_vars.h"
 #include "../key_names.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (.bss, no initialiser; sizes from the code) ----
 
@@ -1243,10 +1244,10 @@ void __stdcall sl_item_set_all(float v)
 int GameData::sl_party_value(int party)
 {
     if (party >= 0) {
-        g_trigger_result.store0 = 0;
-        g_trigger_result.store1 = 0;
+        g_script.trigger_result.store0 = 0;
+        g_script.trigger_result.store1 = 0;
         if (emit_event(7, party, cur_party) != 0)
-            return g_trigger_result.store0;
+            return g_script.trigger_result.store0;
         Troop* r = &troops[party];
         if (((__int64)r->flags30 & 0x10) != 0)
             return 0;
@@ -1260,10 +1261,10 @@ int GameData::sl_party_price(int party)
 {
     if (party < 0)
         return 0;
-    g_trigger_result.store0 = 0;
-    g_trigger_result.store1 = 0;
+    g_script.trigger_result.store0 = 0;
+    g_script.trigger_result.store1 = 0;
     if (emit_event(9, party, cur_party))
-        return g_trigger_result.store0;
+        return g_script.trigger_result.store0;
     int v = sl_party_value(party);
     return (int)((float)v * 5.0f + 2.0f);
 }

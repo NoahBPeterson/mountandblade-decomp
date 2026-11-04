@@ -31,6 +31,5 @@ struct NavGraph {
     void score_triggers(int* a, int* b, int* c);                // 0x51dac0 (ret 0xc)
     float trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c);                         // 0x51db70 (ret 0x14)
 };
-extern NavGraph* g_nav;                     // 0xa732b8 (the map object; also +0x44/+0x54 are handed to the scene constructor)
 
 #endif // GAME_PARTY_NAV_GRAPH_H

@@ -25,6 +25,7 @@
 #include "../key_names.h"
 #include "../game_globals.h"
 #include "../../include/render_flags.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-clock step (seconds); [0] is the frame step
@@ -87,9 +88,6 @@ struct Cfg30 {                                      // the object at game+0x30
 extern float    g_step;                 // 0x5a9c20  frame step (seconds)
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
 
-extern int g_page_rows;                              // 0xa73298
-extern int g_page_cols;                              // 0xa73294
-extern char g_map_pages[];                                // 0xa73094  host grid (array of cell pointers)
 #include "../game_globals.h"      // g_module_settings.disable_food_slot, g_module_settings.player_wounded_treshold (canonical)
 extern MsgLog g_msglog;                                 // 0x5d7080
 void set_clock_step(int* clock, float step);            // 0x461420
@@ -231,7 +229,7 @@ void GameG::tick(float dt)
         }
     }
 
-    ((World*)g_level)->step(g_step);
+    ((World*)g_script.level)->step(g_step);
 
     if (g_cfg.cheat_mode && g_keyboard.down[0x14] && !g_keyboard.prev[0x14] && g_keyboard.down[0x1d])
         f95 = !f95;
@@ -262,27 +260,27 @@ void GameG::resume_strings(tstring* a, tstring* b)
 // @ 0x517140
 void GameG::update_markers()
 {
-    for (unsigned i = 0; i < (unsigned)g_mat_vec[0].count(); i++) {
-        g_mat_vec[0].at<Marker>(i)->f1f8 -= g_step_tbl[0] * 0.02f;
-        g_mat_vec[0].at<Marker>(i)->f208 = g_mat_vec[0].at<Marker>(i)->f1f8;
+    for (unsigned i = 0; i < (unsigned)g_script.mat_type0.count(); i++) {
+        g_script.mat_type0.at<Marker>(i)->f1f8 -= g_step_tbl[0] * 0.02f;
+        g_script.mat_type0.at<Marker>(i)->f208 = g_script.mat_type0.at<Marker>(i)->f1f8;
     }
-    for (unsigned i = 0; i < (unsigned)g_mat_vec[2].count(); i++) {
-        g_mat_vec[2].at<Marker>(i)->f1f4 += g_step * g_module_settings.map_sea_speed_x * 3.0f;
-        g_mat_vec[2].at<Marker>(i)->f1f8 += g_step * g_module_settings.map_sea_speed_y * 3.0f;
-        g_mat_vec[2].at<Marker>(i)->f204 = g_mat_vec[2].at<Marker>(i)->f1f4;
-        g_mat_vec[2].at<Marker>(i)->f208 = g_mat_vec[2].at<Marker>(i)->f1f8;
+    for (unsigned i = 0; i < (unsigned)g_script.mat_sea.count(); i++) {
+        g_script.mat_sea.at<Marker>(i)->f1f4 += g_step * g_module_settings.map_sea_speed_x * 3.0f;
+        g_script.mat_sea.at<Marker>(i)->f1f8 += g_step * g_module_settings.map_sea_speed_y * 3.0f;
+        g_script.mat_sea.at<Marker>(i)->f204 = g_script.mat_sea.at<Marker>(i)->f1f4;
+        g_script.mat_sea.at<Marker>(i)->f208 = g_script.mat_sea.at<Marker>(i)->f1f8;
     }
-    for (unsigned i = 0; i < (unsigned)g_mat_vec[3].count(); i++) {
-        g_mat_vec[3].at<Marker>(i)->f1f4 -= g_step * g_module_settings.map_sea_speed_x * 2.0f;
-        g_mat_vec[3].at<Marker>(i)->f1f8 -= g_step * g_module_settings.map_sea_speed_y * 2.0f;
-        g_mat_vec[3].at<Marker>(i)->f204 = g_mat_vec[3].at<Marker>(i)->f1f4;
-        g_mat_vec[3].at<Marker>(i)->f208 = g_mat_vec[3].at<Marker>(i)->f1f8;
+    for (unsigned i = 0; i < (unsigned)g_script.mat_sea2.count(); i++) {
+        g_script.mat_sea2.at<Marker>(i)->f1f4 -= g_step * g_module_settings.map_sea_speed_x * 2.0f;
+        g_script.mat_sea2.at<Marker>(i)->f1f8 -= g_step * g_module_settings.map_sea_speed_y * 2.0f;
+        g_script.mat_sea2.at<Marker>(i)->f204 = g_script.mat_sea2.at<Marker>(i)->f1f4;
+        g_script.mat_sea2.at<Marker>(i)->f208 = g_script.mat_sea2.at<Marker>(i)->f1f8;
     }
-    for (unsigned i = 0; i < (unsigned)g_mat_vec[1].count(); i++) {
-        g_mat_vec[1].at<Marker>(i)->f1f4 += g_step * g_module_settings.map_river_speed_x;
-        g_mat_vec[1].at<Marker>(i)->f1f8 += g_step * g_module_settings.map_river_speed_y;
-        g_mat_vec[1].at<Marker>(i)->f204 = g_mat_vec[1].at<Marker>(i)->f1f4;
-        g_mat_vec[1].at<Marker>(i)->f208 = g_mat_vec[1].at<Marker>(i)->f1f8;
+    for (unsigned i = 0; i < (unsigned)g_script.mat_river.count(); i++) {
+        g_script.mat_river.at<Marker>(i)->f1f4 += g_step * g_module_settings.map_river_speed_x;
+        g_script.mat_river.at<Marker>(i)->f1f8 += g_step * g_module_settings.map_river_speed_y;
+        g_script.mat_river.at<Marker>(i)->f204 = g_script.mat_river.at<Marker>(i)->f1f4;
+        g_script.mat_river.at<Marker>(i)->f208 = g_script.mat_river.at<Marker>(i)->f1f8;
     }
 }
 
@@ -330,14 +328,14 @@ void GameG::update_colors()
                             (float)pow(color_base.y, GAMMA),
                             (float)pow(color_base.z, GAMMA));
         target_obj->v.w = 1.0f;                      // the original copies the sun's w lane here
-        ((World*)g_level)->color = rgl::vector4((float)pow(color_sky.x, GAMMA),
+        ((World*)g_script.level)->color = rgl::vector4((float)pow(color_sky.x, GAMMA),
                                  (float)pow(color_sky.y, GAMMA),
                                  (float)pow(color_sky.z, GAMMA));
     } else {
         target_obj->v = color_base;
-        ((World*)g_level)->color = color_sky;
+        ((World*)g_script.level)->color = color_sky;
     }
-    ((World*)g_level)->color.w = 1.0f;                         // +0x74 is the scene alpha
+    ((World*)g_script.level)->color.w = 1.0f;                         // +0x74 is the scene alpha
 }
 
 // @ 0x5176e0
@@ -391,21 +389,19 @@ rgl::vector4* GameG::fog_color(rgl::vector4* out)
 void GameG::set_grid_color(unsigned* c)
 {
     int i = 0;
-    if (g_page_rows > 0) {
-        int* row = (int*)g_map_pages;
+    if (g_script.page_rows > 0) {
         do {
             int j = 0;
-            if (g_page_cols > 0) {
+            if (g_script.page_cols > 0) {
                 do {
-                    GridModel** pp = (GridModel**)(row + j * 8);
+                    GridModel** pp = (GridModel**)&g_script.map_cell[j * 8 + i];
                     for (ColorEnt** e = (*pp)->ents; e < (*pp)->ents_end; e++)
                         (*e)->color = *c;
                     j++;
-                } while (j < g_page_cols);
+                } while (j < g_script.page_cols);
             }
             i++;
-            row = (int*)((char*)row + 4);
-        } while (i < g_page_rows);
+        } while (i < g_script.page_rows);
     }
 }
 
@@ -458,10 +454,10 @@ void GameG::update_cursor(float dt)
                 float dist = (float)sqrt(dx * dx + dy * dy);
                 if ((flags & 0x4000) == 0) {
                     if (dist <= radius && dist <= p->strength() * radius) {
-                        g_trigger_result.store1 = 0;
-                        g_trigger_result.store0 = 1;
+                        g_script.trigger_result.store1 = 0;
+                        g_script.trigger_result.store0 = 1;
                         emit_event(0x19, main_party, (int)cur);
-                        if ((g_trigger_result.store0 | g_trigger_result.store1) != 0) {
+                        if ((g_script.trigger_result.store0 | g_script.trigger_result.store1) != 0) {
                             float f = p->alpha + dt * 30.0f;
                             p->alpha = f;
                             if (f > 1.0f || f < -100.0f)

@@ -28,7 +28,6 @@ extern GameData* g_game;                    // 0x5e2930
 // the second element of the clock table g_ticks (ui_common.h, 0x5e2948) as two dwords: the original reads and
 // writes the halves separately (0x51cfa0 copies lo then hi; 0x51dbd0 stores them from the loaded value)
 #include "../../include/fx.h"            // g_ticks 0x5e2948
-extern char g_new_game_done;                // 0xa73090 (0x51d2b0 returns at once when set; 0x51c720 step 6 sets it)
 
 inline tstring& troop_name(Troop* t) { return *(tstring*)t; }      // the name is the first member (0x51c720)
 inline rgl::string* rs(tstring* t) { return (rgl::string*)t; }     // the stream's tstring slot takes rgl::string*

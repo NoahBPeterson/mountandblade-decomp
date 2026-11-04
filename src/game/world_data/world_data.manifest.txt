@@ -31,7 +31,7 @@
 ../src/game/world_data/world_data.cpp  ?add_child@ContainerBase@@UAEXPAUMissionUi@@@Z  00493a30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?reserve@I64VecW@@QAEXPAH@Z  00493c40  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set@SlotArray@@QAEXABHAB_J@Z  00493d70  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?set40@SlotHolder40@@QAEXHH@Z  00493db0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?set_var@ScriptState@@QAEXHH@Z  00493db0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?find_or_create@E68W@@QAEPAXPAH@Z  00493df0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?purge@E68W@@QAEXXZ  00493e90  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?purge_all@Vec68W@@QAEXXZ  00493f30  /O2 /MT /Gy /TP

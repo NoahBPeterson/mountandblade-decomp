@@ -27,10 +27,10 @@
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/game_recs.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_5a75f60;                                       // 0xa75f60 (.bss) set by the tableau render callback, read by the tableau button
-rgl::vector4 g_event_pos;                            // 0xa708c0 (.bss) where the party's map event happened (emit_event 0x14 reads it)
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../rgl/options.h"
@@ -474,9 +474,9 @@ float Party::speed_factor()
 // @ 0x4b2120
 void Party::set_speed_from_stat()
 {
-    (*(__int64*)((char*)&g_script + 0x18)) = 100;
+    g_script.trigger_result.value = 100;
     g_game->emit_event(0x1a, id, 0);
-    f8b0 = (float)(*(__int64*)((char*)&g_script + 0x18)) * 0.01f;
+    f8b0 = (float)g_script.trigger_result.value * 0.01f;
 }
 
 // @ 0x4b2180
@@ -525,7 +525,7 @@ ItemIter ItemArray::at(int idx)
 int Party::max_members()
 {
     if (g_game->emit_event(0x11, id, 0)) {
-        return (int)(*(__int64*)((char*)&g_script + 0x18));
+        return (int)g_script.trigger_result.value;
     }
     int item = stacks[0].troop;
     int bonus = g_game->troops[item].f64;
@@ -536,7 +536,7 @@ int Party::max_members()
 int Party::max_prisoners()
 {
     if (g_game->emit_event(0x12, id, 0)) {
-        return (int)(*(__int64*)((char*)&g_script + 0x18));
+        return (int)g_script.trigger_result.value;
     }
     return g_game->skill_level(stacks[0].troop, 2) * g_module_settings.skill_prisoner_management_bonus;
 }
@@ -1050,7 +1050,7 @@ void Party::clear_map_flag()
         return;
     }
     if (model != 0) {
-        ((rgl::world*)g_level)->remove_entity(((int*)model)[2]);
+        ((rgl::world*)g_script.level)->remove_entity(((int*)model)[2]);
     }
     unsigned __int64 flags = *(unsigned __int64*)&flags_lo | 0x100;
     model = 0;
@@ -1266,10 +1266,10 @@ void Party::collect_targets(int* out, int* max, int* count)
             if (!(len < p->strength() * radius))
                 goto next;
         }
-        (*(int*)((char*)&g_script + 0x18)) = 1;
-        (*(int*)((char*)&g_script + 0x1c)) = 0;
+        g_script.trigger_result.store0 = 1;
+        g_script.trigger_result.store1 = 0;
         g_game->emit_event(0x19, this->id, (int)id);
-        if (((*(int*)((char*)&g_script + 0x1c)) | (*(int*)((char*)&g_script + 0x18))) != 0)
+        if ((g_script.trigger_result.store1 | g_script.trigger_result.store0) != 0)
             out[(*count)++] = (int)id;
     next:
         parties()->next_party_id(&id);
@@ -1365,7 +1365,7 @@ void Party::plan_order()
                 give_up = true;
             }
             if (a) {
-                NavData* w = ((CellGrid*)g_level)->core;
+                NavData* w = ((CellGrid*)g_script.level)->core;
                 if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                     unsigned k2 = nav_recs()[a->m4].mask();
                     if (flags_lo & 0x200) {
@@ -1466,7 +1466,7 @@ chase:
             give_up = true;
         }
         if (a) {
-            NavData* w = ((CellGrid*)g_level)->core;
+            NavData* w = ((CellGrid*)g_script.level)->core;
             if (((RiderTable*)w)->shares(a->m4, mesh->m4)) {
                 unsigned k2 = nav_recs()[a->m4].mask();
                 if (flags_lo & 0x200) {
@@ -1523,7 +1523,7 @@ void Party::step_route()
         float ndx = pos.x - d.x;
         float ndy = pos.y - d.y;
         float dist = ndx * ndx + ndy * ndy;
-        if (dist < lim && ((CellGrid*)g_level)->core->can_move(cur, pos.x, pos.y, goal, &d.x, 0, tries))
+        if (dist < lim && ((CellGrid*)g_script.level)->core->can_move(cur, pos.x, pos.y, goal, &d.x, 0, tries))
             cursor = i + 1;
     }
     if (cursor < n) {
@@ -2089,8 +2089,6 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
 
 
 // ---- battle records: detach, commit, per-frame visuals -------------------------------------------------------------------
-struct ScriptState;
-extern ScriptState g_script;                // 0xa70440
 struct MissionCtx;
 extern MissionCtx g_mission_ctx;            // 0xa73300
 
@@ -2247,7 +2245,7 @@ void BattleRec::detach()
 tail:
     {
         BattleObj* o = obj;
-        ((rgl::world*)g_level)->remove_entity(o->id);
+        ((rgl::world*)g_script.level)->remove_entity(o->id);
         obj = 0;
 
         unsigned rid = rec_id;
@@ -2263,11 +2261,11 @@ void BattleRec::commit()
     unsigned list1[128], list2[128];
     int n1 = 0, n2 = 0;                       // signed counts, zeroed before the calls (jle/jl loops in the original)
 
-    (*(__int64*)((char*)&g_script + 8)) = party_b;
-    (*(__int64*)((char*)&g_script + 0x10)) = party_a;
-    (*(__int64*)((char*)&g_script + 0x18)) = 0;
+    g_script.param1 = party_b;
+    g_script.param2 = party_a;
+    g_script.trigger_result.value = 0;
     ((TimerList*)((char*)g_game + 0x139f4))->update(-5);
-    if ((*(__int64*)((char*)&g_script + 0x18)) == 0)
+    if (g_script.trigger_result.value == 0)
         g_game->emit_event(2, party_b, party_a);
 
     g_game->list_members(party_a, list1, (unsigned*)&n1);
@@ -2297,7 +2295,7 @@ void BattleRec::commit()
         }
     }
 
-    if ((*(__int64*)((char*)&g_script + 0x18)) != 0) {
+    if (g_script.trigger_result.value != 0) {
         detach();
         g_game->emit_event(0x1b, party_b, party_a);
     }
@@ -2572,7 +2570,7 @@ bool Party::start_path(int from, float tx, float ty)
     int mask_req = 0;
     int mask_ban = 0;
     char mine = (id == g_game->f78);
-    bool ok = ((CellGrid*)g_level)->core->find_path(mesh->m4, from, path, detail, &npath, &visited, &from,
+    bool ok = ((CellGrid*)g_script.level)->core->find_path(mesh->m4, from, path, detail, &npath, &visited, &from,
                                       (unsigned*)&mask_req, (unsigned*)&mask_ban, &mine);
     goal_x = tx;
     goal_y = ty;
@@ -2683,7 +2681,7 @@ void Party::update_nav()
                 float p4[4];
                 p4[0] = detail[cur * 4 + 4];                 // 0x4b77ac: +0x197c + cur * 16
                 p4[1] = detail[cur * 4 + 5];                 // 0x4b77b3: +0x1980 + cur * 16
-                if (!((CellGrid*)g_level)->core->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
+                if (!((CellGrid*)g_script.level)->core->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
                     break;
                 cursor = cur + 1;
                 progress++;
@@ -2737,7 +2735,7 @@ void Party::update_flags()
     SCALE_ROWS(m, a);
     GDP(rgl::mesh*, 0x1a200) = m;
     GDP(int, 0x1a1fc) = 0;
-    (*(__int64*)((char*)&g_script + 8)) = id;
+    g_script.param1 = id;
     d->frames.update(-0x46);
     if (rider > 0) {
         PartyTypeDef* r = (PartyTypeDef*)((char*)g_map_icons + (unsigned)rider * 0x48);
@@ -2759,7 +2757,7 @@ void Party::update_flags()
         }
         GDP(rgl::mesh*, 0x1a200) = m2;
         GDP(int, 0x1a1fc) = 0;
-        (*(__int64*)((char*)&g_script + 8)) = id;
+        g_script.param1 = id;
         r->frames.update(-0x46);
     }
     if (e59ec == 0) {
@@ -2822,12 +2820,12 @@ void Party::update_hud_text()
 {
     if (dirty) {
         f8ac = march_time(this);
-        (*(int*)((char*)&g_script + 0x18)) = 100;
-        (*(int*)((char*)&g_script + 0x1c)) = 0;
+        g_script.trigger_result.store0 = 100;
+        g_script.trigger_result.store1 = 0;
         g_game->emit_event(0x1a, id, 0);
         dirty = 0;
         f8b5 = 1;
-        f8b0 = (float)(*(__int64*)&(*(int*)((char*)&g_script + 0x18))) * 0.01f;
+        f8b0 = (float)g_script.trigger_result.value * 0.01f;
     }
     if (!f8b5)
         return;
@@ -3005,15 +3003,15 @@ void Party::tick(float dt)
     face* node = g_game->find_at(&pq.x);
     if (node != 0) {
         unsigned animfield = nav_recs()[node->m4].mask();
-        bool adjacent = ((RiderTable*)((CellGrid*)g_level)->core)->shares(node->m4, mesh->m4) != 0;
+        bool adjacent = ((RiderTable*)((CellGrid*)g_script.level)->core)->shares(node->m4, mesh->m4) != 0;
         bool commit = false;
         if (flags_lo & 0x200) {
             if ((char)terrain_is_road(animfield)) {
                 commit = true;
             } else if (animfield != 0xf && id == g_game->f78 && 0.05f < GDP(Timer, 0x13a90).elapsed()) {
-                g_event_pos.x = pq.x;
-                g_event_pos.y = pq.y;
-                g_event_pos.z = 0.0f;
+                g_script.pos[0].o.x = pq.x;
+                g_script.pos[0].o.y = pq.y;
+                g_script.pos[0].o.z = 0.0f;
                 g_game->emit_event(0x14, 0, 0);
                 GDP(Timer, 0x13a90).start = g_ticks[GDP(Timer, 0x13a90).clock];
                 kind = 0;
@@ -3187,9 +3185,9 @@ void Party::tick(float dt)
     int v = e2->in_use();
     if (!(v > 0))
         return;
-    float sx = *(float*)((char*)g_level + 0x31c) - pos.x;
-    float sy = *(float*)((char*)g_level + 0x320) - pos.y;
-    float sz = *(float*)((char*)g_level + 0x324) - pos.z;
+    float sx = *(float*)((char*)g_script.level + 0x31c) - pos.x;
+    float sy = *(float*)((char*)g_script.level + 0x320) - pos.y;
+    float sz = *(float*)((char*)g_script.level + 0x324) - pos.z;
     float dd = sz * sz + sy * sy + sx * sx;      // 0x4b8ea4: z squared first, then y, then x (float sums are order-sensitive)
     if (!(dd < 2000.0f))
         return;

@@ -37,12 +37,12 @@
 
 #include "../game_globals.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 struct PartyModelV { virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c(); virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c(); virtual void v20(); virtual void v24(); virtual void v28(); virtual void v2c(); virtual void v30(); virtual void v34(); virtual void v38(); virtual void v3c(); virtual void v40(); virtual void v44(); virtual void v48(); virtual void v4c(); virtual void v50(); virtual void v54(); virtual void v58(); virtual void v5c(); virtual void v60(); virtual void v64(); virtual void release(); };   // the party's map model: slot +0x68 (0x48d7e0)
 extern unsigned __int64 g_bit[];                // 0x5a8e68 g_bit[i] == 1 << i
 extern int g_item_kind_count;                   // 0x5e29d4 (item_kind.h)
 
 // custom-ABI helpers and other-object callees
-extern char g_script[]; // 0xa70440
 
 // @ 0x48c330
 void Party::remove_slot(int index)
@@ -101,9 +101,9 @@ int material_type()
 // @ 0x48c470
 tstring GameData::event_string(int id)
 {
-    (*(tstring*)((char*)&g_script + 0x24)).assign("");
+    g_script.result_string.assign("");
     emit_event(0xf, id / 0x18, id);
-    return (*(tstring*)((char*)&g_script + 0x24));
+    return g_script.result_string;
 }
 
 // @ 0x48c4c0
@@ -588,11 +588,11 @@ __int64 SlotArray::get(const int& slot)
 }
 
 // @ 0x48d690
-int Cont690::get(unsigned index)
+int ScriptState::get_var(unsigned index)
 {
     Pair690 r;
-    if ((int)index >= 0 && base != 0 && index < (unsigned)((end - base) >> 3))
-        r = *(Pair690*)(base + index * 8);
+    if ((int)index >= 0 && vars._Myfirst != 0 && index < (unsigned)(vars._Mylast - vars._Myfirst))
+        r = *(Pair690*)(vars._Myfirst + index);
     else {
         r.a = 0;
         r.b = 0;
@@ -870,8 +870,8 @@ void widget_mgr::set_limits(int idx, int lo, int hi)
 {
     if (OW(idx)->type() != 2 && OW(idx)->type() != 3)
         return;
-    OW(idx)->lo16c = (float)lo / (*(int*)((char*)&g_script + 0x20));
-    OW(idx)->hi170 = (float)hi / (*(int*)((char*)&g_script + 0x20));
+    OW(idx)->lo16c = (float)lo / g_script.fixed_point_multiplier;
+    OW(idx)->hi170 = (float)hi / g_script.fixed_point_multiplier;
     if (OW(idx)->v168 < OW(idx)->lo16c) {
         OW(idx)->v168 = OW(idx)->lo16c;
         return;

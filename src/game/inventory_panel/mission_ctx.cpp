@@ -33,6 +33,7 @@
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../shared_vars.h"
 #include "../game_keys.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_mouse_dx;                                // 0x5d70a4
@@ -119,9 +120,7 @@ struct PartyV : Party {
 };
 void quick_save_msg();                                  // 0x516a70
 extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x87 args)
-extern tstring g_scratch;                               // 0xa70464
 extern UiKeyState g_keys;                                 // 0xa73730
-extern __int64 g_a70448;                                // 0xa70448 (the 64-bit clock the map last played)
 #include "../game_globals.h"      // g_module_settings.show_quest_notes (canonical)
 
 
@@ -710,7 +709,7 @@ void Screen::frame_update(float dt)
     bool start;
 
     if (g_shadow_map.target != 0 && ((ShadowMapP*)g_shadow_map.target)->f48[0x50 / 4] != g_batch.counter
-        && (int)g_shadow_map.cam == (int)g_level && g_use_shaders != 0)
+        && (int)g_shadow_map.cam == (int)g_script.level && g_use_shaders != 0)
         ((ShadowMapP*)g_shadow_map.target)->render();
 
     cam.perspective = 1;
@@ -744,10 +743,10 @@ void Screen::frame_update(float dt)
                        tstring("ui_midnight")));
 
     int hi = (int)t;
-    g_scratch.assign("");
+    g_script.result_string.assign("");
     ((SoundCtl*)g_game)->emit_event(0xf, hi / 24, hi);
     {
-        tstring tmp(g_scratch);
+        tstring tmp(g_script.result_string);
         PSO(f60)->set_text(sz, &tmp);
     }
 
@@ -757,7 +756,7 @@ void Screen::frame_update(float dt)
     if (GD_C(0x18) == 0 && g_keys.down(0x24))
         quick_save_msg();
     if (GD_I(0x1a208) >= 0) {
-        g_a70448 = GD_I(0x1a208);
+        g_script.param1 = GD_I(0x1a208);
         ((ItemSound*)((char*)g_game + 0x139f4))->play(-8);
         GD_I(0x1a208) = -1;
     }

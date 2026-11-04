@@ -10,6 +10,7 @@
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 
 #include "../key_names.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // @ 0x4ece20
 void Screen::camera_update(float dt)
@@ -137,7 +138,7 @@ void Screen::camera_update(float dt)
     frame.o.z = frame.u.z * f2b8 + frame.o.z;
     // the ground probe point under the eye (3-component constructor: w is never written)
     vector4 h(frame.o.x - frame.u.x * 0.5f, frame.o.y - frame.u.y * 0.5f, frame.o.z - frame.u.z * 0.5f);
-    ground_height((CellGrid*)g_level, (const float*)&h, &q);
+    ground_height((CellGrid*)g_script.level, (const float*)&h, &q);
     q = q + 0.5f;
     if (frame.o.z < q)
         frame.o.z = q;
@@ -154,14 +155,14 @@ void Screen::camera_update(float dt)
         }
     }
     unsigned fog = pack_color((const vector4*)g_game->fog_color);
-    ((envelope*)g_level)->set_fade(&fogdist, (const int*)&fog);
+    ((envelope*)g_script.level)->set_fade(&fogdist, (const int*)&fog);
 
     // --- frustum planes, the frame into this+0x238, then the widget's label matrix and the scene ---
     memcpy((char*)this + 0x238, &frame, 0x40);
     ((frustum*)((char*)this + 0x170))->build_planes();
     MapWidget* w = f30;
     memcpy((char*)w + 0x1ac, (char*)this + 0x170, 0x120);
-    WorldCam* sc = (WorldCam*)g_level;
+    WorldCam* sc = (WorldCam*)g_script.level;
     sc->f30c = vector4(-frame.u.x, -frame.u.y, -frame.u.z);   // w never written (3-component constructor)
     sc->f31c = frame.o;
     if (!g_cfg.disable_sound) {

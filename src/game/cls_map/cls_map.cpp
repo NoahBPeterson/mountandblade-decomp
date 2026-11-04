@@ -24,6 +24,7 @@
 #include "../../tinyxml/tinyxml.h"
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../shared_vars.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 struct OptionsDlg {
     void choose_dx_settings(Config* cfg, bool overwrite);   // 0x4b9b90 (config/options_dlg.h pulls winsock2.h: member-only stub)
 };
@@ -2785,7 +2786,6 @@ tstring OptionsMenu::slot_text(int i)
 // The original contains two 18-byte WinLicense instrumentation records (EB 10 'WL  ' ... 'WL  ') that cl 13.10 cannot emit.
 extern float g_meeting_y0;                      // 0x591d44 (0.63f)
 extern float g_meeting_dy;                      // 0x54b8b4 (0.03f)
-extern tstring g_meeting_name;                  // 0xa70464 (the text the game fills per row)
 
 // @ 0x4e3780
 void Rec48::slot_empty_2()
@@ -2848,12 +2848,12 @@ void Rec48::slot_empty_2()
         vt(panel)->d41(out, &none);
     }
     for (int i = 0; i < 10; i++) {
-        g_meeting_name.assign("");
+        g_script.result_string.assign("");
         ((SoundCtl*)g_game)->emit_event(0xe, i, 0);
         float pos[2];
         pos[0] = 0.0f;
         pos[1] = 0.63f - (float)i * 0.03f;
-        vt(panel)->d43(&g_meeting_name, pos);
+        vt(panel)->d43(&g_script.result_string, pos);
     }
     vt(bg)->d50(panel);
 }

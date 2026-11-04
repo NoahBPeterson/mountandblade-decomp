@@ -20,6 +20,7 @@
 #include "../party/game.h"
 #include "../party/externs.h"
 #include "../tstring.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 void __fastcall tstring_ctor(tstring* p);                      // 0x42bbd0 (tstring::tstring as the vector-constructor callback)
 #include "../../rgl/rgl_string.h"
 #include "../../rgl/scene/scene.h"
@@ -37,16 +38,6 @@ void __fastcall tstring_ctor(tstring* p);                      // 0x42bbd0 (tstr
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 SkillRec g_skill_tbl[42];                                   // 0x8ee3100 (constructed and destroyed by the compiler; skills.txt: description, name, key, attribute, rank limit)
-char g_map_pages[0x200];                            // 0xa73094 page grid of the map
-int g_page_cols;                                    // 0xa73294
-int g_page_rows;                                    // 0xa73298
-float g_minx;                                       // 0xa7329c
-float g_miny;                                       // 0xa732a0
-float g_maxx;                                       // 0xa732a4
-float g_maxy;                                       // 0xa732a8
-float g_sizex;                                      // 0xa732ac
-float g_sizey;                                      // 0xa732b0
-RawVec g_mat_vec[4];                                // 0xa732bc
 
 
 
@@ -93,14 +84,14 @@ stream_base* read_map(stream_base* s, MapStore* map);           // 0x520c00
 // @ 0x520b20
 void Game::build_map()
 {
-    if (!g_new_game_done) {
-        g_nav = (NavGraph*)new NavCore();
+    if (!g_script.new_game_done) {
+        g_script.nav = (NavGraph*)new NavCore();
         tstream3 s;
         const char* path = MODULE_PATH("map.txt");
         if (!OPEN_READ_TEXT(s, path))
             mb_error("Unable to open %s", path);
         if (!s.failed) {
-            read_map(&s, (MapStore*)g_nav);
+            read_map(&s, (MapStore*)g_script.nav);
             s.failed = 1;
         }
     }
@@ -148,17 +139,16 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
 void Game::build_scene()
 {
     GameMapView* self = (GameMapView*)this;
-    CellGrid* world = (CellGrid*)g_level;
-    if (g_new_game_done) {
-        for (int i = 0; i < g_page_rows; i++) {
-            char* row = g_map_pages + i * 4;
-            for (int j = 0; j < g_page_cols; j++) {
-                char* cell = row + j * 0x20;
-                void* p = *(void**)cell;
+    CellGrid* world = (CellGrid*)g_script.level;
+    if (g_script.new_game_done) {
+        for (int i = 0; i < g_script.page_rows; i++) {
+            for (int j = 0; j < g_script.page_cols; j++) {
+                rgl::entity*& cell = g_script.map_cell[j * 8 + i];
+                rgl::entity* p = cell;
                 if (p) {
-                    ((::world*)world)->erase_entity((rgl::entity*)p);
-                    *(void**)(cell + 0x100) = *(void**)cell;
-                    *(void**)cell = 0;
+                    ((::world*)world)->erase_entity(p);
+                    g_script.map_saved[j * 8 + i] = cell;
+                    cell = 0;
                 }
             }
         }
@@ -230,16 +220,14 @@ void Game::build_scene()
     mc->scale(0.28f);
     ((Poser*)self->compass)->add_extra((int)mc);
 
-    if (!g_new_game_done) {
+    if (!g_script.new_game_done) {
         build_map_trees();
     } else {
-        for (int i = 0; i < g_page_rows; i++) {
-            char* row = g_map_pages + i * 4;
-            for (int j = 0; j < g_page_cols; j++) {
-                char* cell = row + j * 0x20;
-                *(void**)cell = *(void**)(cell + 0x100);
-                *(void**)(cell + 0x100) = 0;
-                ((rgl::world*)world)->add_pending(*(rgl::entity**)cell);
+        for (int i = 0; i < g_script.page_rows; i++) {
+            for (int j = 0; j < g_script.page_cols; j++) {
+                g_script.map_cell[j * 8 + i] = g_script.map_saved[j * 8 + i];
+                g_script.map_saved[j * 8 + i] = 0;
+                ((rgl::world*)world)->add_pending(g_script.map_cell[j * 8 + i]);
             }
         }
     }
@@ -304,14 +292,15 @@ struct MapObjView {
 void Game::build_map_trees()
 {
     GameMapView* self = (GameMapView*)this;
-    MapNav* mgr = (MapNav*)((CellGrid*)g_level)->core;
+    MapNav* mgr = (MapNav*)((CellGrid*)g_script.level)->core;
 
     // ---- A: reset the four per-material mesh vectors -----------------------
+    RawVec* lists[4] = { &g_script.mat_type0, &g_script.mat_river, &g_script.mat_sea, &g_script.mat_sea2 };
     for (int v = 0; v < 4; v++) {
-        if (g_mat_vec[v].first) ::operator delete(g_mat_vec[v].first);        // 0x535712
-        g_mat_vec[v].first = 0;
-        g_mat_vec[v].last = 0;
-        g_mat_vec[v].end = 0;
+        if (lists[v]->first) ::operator delete(lists[v]->first);        // 0x535712
+        lists[v]->first = 0;
+        lists[v]->last = 0;
+        lists[v]->end = 0;
     }
 
     void* cam = self->wind;                                                   // +0x139dc
@@ -327,8 +316,8 @@ void Game::build_map_trees()
 
     // [esp+0x150] / [esp+0x120]: the lighting vectors the fixed-function vertex colour uses (0x5214f1..0x521546)
     float lightL[4], lightM[4];
-    memcpy(lightL, (char*)g_level + 0x68, 16);
-    memcpy(lightM, (char*)(*(void**)(*(char**)((char*)g_level + 0xbc))) + 4, 16);
+    memcpy(lightL, (char*)g_script.level + 0x68, 16);
+    memcpy(lightM, (char*)(*(void**)(*(char**)((char*)g_script.level + 0xbc))) + 4, 16);
 
     int npts = (int)(((char*)mgr->pts_end - (char*)mgr->pts) / 0x24);
 
@@ -370,8 +359,8 @@ void Game::build_map_trees()
     }
 
     // ---- D: bbox + aggregate masks ----------------------------------------
-    g_maxx = -100000.0f; g_minx = 100000.0f;
-    g_miny = 100000.0f;  g_maxy = -100000.0f;
+    g_script.maxx = -100000.0f; g_script.minx = 100000.0f;
+    g_script.miny = 100000.0f;  g_script.maxy = -100000.0f;
     unsigned u33 = ((unsigned*)((char*)&g_bit + 0x0))[16] | ((unsigned*)((char*)&g_bit + 0x0))[14];
     unsigned u36 = ((unsigned*)((char*)&g_bit + 0x0))[6] | ((unsigned*)((char*)&g_bit + 0x0))[2] | ((unsigned*)((char*)&g_bit + 0x0))[8] | ((unsigned*)((char*)&g_bit + 0x0))[10] | ((unsigned*)((char*)&g_bit + 0x0))[22]
                  | ((unsigned*)((char*)&g_bit + 0x0))[18] | ((unsigned*)((char*)&g_bit + 0x0))[24] | ((unsigned*)((char*)&g_bit + 0x0))[26] | ((unsigned*)((char*)&g_bit + 0x0))[20] | ((unsigned*)((char*)&g_bit + 0x0))[4];
@@ -381,10 +370,10 @@ void Game::build_map_trees()
 
     for (int i = 0; i < npts; i++) {
         MapNavVert* p = &mgr->pts[i];
-        if (p->x < g_minx) g_minx = p->x;
-        if (g_maxx < p->x) g_maxx = p->x;
-        if (p->y < g_miny) g_miny = p->y;
-        if (g_maxy < p->y) g_maxy = p->y;
+        if (p->x < g_script.minx) g_script.minx = p->x;
+        if (g_script.maxx < p->x) g_script.maxx = p->x;
+        if (p->y < g_script.miny) g_script.miny = p->y;
+        if (g_script.maxy < p->y) g_script.maxy = p->y;
         if (((u19 & (unsigned)flags[i]) != 0) && ((u36 & (unsigned)flags[i]) != 0))
             dist[i] = 0.0f;
     }
@@ -396,8 +385,8 @@ void Game::build_map_trees()
             MapEdge* ed = &mgr->edges[e];
             int a = ed->a, b = ed->b;
             // 0x5218d7: the edge endpoints are read from g_nav's vertex vector (map.txt's store, +4), not mgr->pts
-            const float* pa = (const float*)((char*)((MapStore*)g_nav)->first + a * 0x24);
-            const float* pb = (const float*)((char*)((MapStore*)g_nav)->first + b * 0x24);
+            const float* pa = (const float*)((char*)((MapStore*)g_script.nav)->first + a * 0x24);
+            const float* pb = (const float*)((char*)((MapStore*)g_script.nav)->first + b * 0x24);
             float dx = pa[0] - pb[0];
             float dy = pa[1] - pb[1];
             float dz = pa[2] - pb[2];
@@ -439,33 +428,33 @@ void Game::build_map_trees()
     }
 
     // ---- G: grid dimensions and cell entities -----------------------------
-    g_sizex = g_maxx - g_minx;
-    g_sizey = g_maxy - g_miny;
-    float stepx = (g_sizex + 5.0f) * 0.125f;                                 // (rdata constants)
-    float stepy = (g_sizey + 5.0f) * 0.125f;
-    g_page_cols = (int)ceil(g_sizex / stepx);                                // ceil 0x535ae0, __ftol2 0x535a64
-    g_page_rows = (int)ceil(g_sizey / stepy);
-    if (g_page_cols > 8) mb_error("Map size too big in x axis!");            // 0x59c090
-    if (g_page_rows > 8) mb_error("Map size too big in x axis!");
+    g_script.sizex = g_script.maxx - g_script.minx;
+    g_script.sizey = g_script.maxy - g_script.miny;
+    float stepx = (g_script.sizex + 5.0f) * 0.125f;                                 // (rdata constants)
+    float stepy = (g_script.sizey + 5.0f) * 0.125f;
+    g_script.page_cols = (int)ceil(g_script.sizex / stepx);                                // ceil 0x535ae0, __ftol2 0x535a64
+    g_script.page_rows = (int)ceil(g_script.sizey / stepy);
+    if (g_script.page_cols > 8) mb_error("Map size too big in x axis!");            // 0x59c090
+    if (g_script.page_rows > 8) mb_error("Map size too big in x axis!");
 
-    for (int row = 0; row < g_page_rows; row++) {
-        for (int col = 0; col < g_page_cols; col++) {
-            void* ent = ((rgl::world*)g_level)->create_entity(9);                // 0x428440
-            ((void**)g_map_pages)[col * 8 + row] = ent;
+    for (int row = 0; row < g_script.page_rows; row++) {
+        for (int col = 0; col < g_script.page_cols; col++) {
+            void* ent = ((rgl::world*)g_script.level)->create_entity(9);                // 0x428440
+            g_script.map_cell[col * 8 + row] = (rgl::entity*)ent;
             int zero = 0;                                                    // 0x521c83: the original passes &0
             ((MapObjView*)ent)->set_flag18(&zero);                           // slot +0x18
         }
     }
 
     // ---- H: per-cell geometry ---------------------------------------------
-    for (int col = 0; col < g_page_cols; col++) {
-        float x0 = (float)col * stepx + g_minx;
-        float x1 = (float)(col + 1) * stepx + g_minx;
-        for (int row = 0; row < g_page_rows; row++) {
-            float y0 = (float)row * stepy + g_miny;
-            float y1 = (float)(row + 1) * stepy + g_miny;
+    for (int col = 0; col < g_script.page_cols; col++) {
+        float x0 = (float)col * stepx + g_script.minx;
+        float x1 = (float)(col + 1) * stepx + g_script.minx;
+        for (int row = 0; row < g_script.page_rows; row++) {
+            float y0 = (float)row * stepy + g_script.miny;
+            float y1 = (float)(row + 1) * stepy + g_script.miny;
             int ci = col * 8 + row;
-            void* cell = ((void**)g_map_pages)[ci];
+            void* cell = g_script.map_cell[ci];
 
             void* cellmesh = new rgl::mesh();                                   // 0x412a90
             float ccx = (x1 + x0) * 0.5f;                                       // [esp+0x100]/[0x104]: the cell centre
@@ -771,10 +760,10 @@ void Game::build_map_trees()
                     ((MapObjView*)cell)->finalize();                         // 0x52308a: call [vt+0x10]
 
                     RawVec* mv = 0;
-                    if (mt == 0)       mv = &g_mat_vec[0];
-                    else if (mt == 8)  mv = &g_mat_vec[1];
-                    else if (mt == 0x16) mv = &g_mat_vec[2];
-                    else if (mt == 0x17) mv = &g_mat_vec[3];
+                    if (mt == 0)       mv = &g_script.mat_type0;
+                    else if (mt == 8)  mv = &g_script.mat_river;
+                    else if (mt == 0x16) mv = &g_script.mat_sea;
+                    else if (mt == 0x17) mv = &g_script.mat_sea2;
                     if (mv) {
                         if (mv->first == 0 || mv->end <= mv->last)
                             ((int_stdvec*)mv)->insert_n((int*)mv->last, 1, *(int*)&m);
@@ -937,12 +926,12 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
 // @ 0x523630
 void __stdcall scan_arrays(void* p, int unused)
 {
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_level)->core)->a_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->a_size(); i++)
         *(int*)((char*)p + 0xc3500) = (int)0xcb189680;
     volatile char buf[100000];
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_level)->core)->b_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->b_size(); i++)
         buf[i] = 0;
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_level)->core)->b_size(); i++)
+    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((CellGrid*)g_script.level)->core)->b_size(); i++)
         ;
 }
 

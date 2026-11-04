@@ -4,6 +4,7 @@
 // csv row and the scene object readers. Migrated from slices s004ca550 (0x4ca600..0x4ca9b0), s004caa40, s004cb3a0,
 // s004cbcd0, s004cc680, s004cd010, s004cd850 and s004cdfd0 (up to 0x4ce680; 0x4ce720 onward is the next object).
 #include "./mesh_2.h"
+#include "../../include/script_state.h"   // ScriptState: ~ScriptState 0x4cb9e0 (g_script 0xa70440)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
@@ -465,30 +466,39 @@ void graph_obj::remove_face(int i)
     clean();
 }
 
-// @ 0x4cb9e0
-void big_obj::release()
+static inline void tidy_list(RawVec& v)
 {
-    res_rec* r = p2e74;
-    if (r) {
-        ((CellGrid*)r)->~CellGrid();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
-        operator delete(r);
+    if (v.first)
+        operator delete(v.first);
+    v.first = 0;
+    v.last = 0;
+    v.end = 0;
+}
+
+// @ 0x4cb9e0
+ScriptState::~ScriptState()
+{
+    if (level) {
+        ((CellGrid*)level)->~CellGrid();   // 0x475d50: the grid destructor, called before the delete
+        operator delete(level);
     }
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            if (slots[i * 8 + j]) {
-                slots[i * 8 + j]->release(1);
-                slots[i * 8 + j] = 0;
+            if (map_saved[i * 8 + j]) {
+                ((gadget*)map_saved[i * 8 + j])->release(1);
+                map_saved[i * 8 + j] = 0;
             }
         }
     }
-    tidy(&vec2eb0);
-    tidy(&vec2ea0);
-    tidy(&vec2e90);
-    tidy(&vec2e80);
-    for (int i = 0x7f; i >= 0; i--)
-        names[i].~tstring();
-    tidy(&vec44);
-    ts24.~tstring();
+    tidy_list(mat_sea2);
+    tidy_list(mat_sea);
+    tidy_list(mat_river);
+    tidy_list(mat_type0);
+    if (vars._Myfirst)
+        operator delete(vars._Myfirst);
+    vars._Myfirst = 0;
+    vars._Mylast = 0;
+    vars._Myend = 0;
 }
 
 // @ 0x4cbb90

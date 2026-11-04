@@ -89,7 +89,7 @@ static __forceinline void vpush(IntVec* v, const int& x) { void (IntVec::*f)(con
 struct mface;
 template <class T> struct vec { void clear(); };                     // the growable array whose clear() frees the block (rgl/mesh.h, entity.h): only clear() 0x41f4b0 is called
 static __forceinline void vclear(void* v) { void (vec<mface>::*f)() = &vec<mface>::clear; ((vec<mface>*)v->*f)(); }
-struct RawVec { int alloc; int* first; int* last; int* end; };      // a local vector<int>, zeroed
+struct PickedVec { int alloc; int* first; int* last; int* end; };      // a local vector<int>, zeroed
 #define GAME_VEC ((IntVec*)((char*)g_game_ed + 0x1a1b8))              // the selected terrain indices (sel_array is its first at +0x1a1bc)
 #define EDIT_OBJ ((char*)g_editor + 0x6698)
 INT_PTR __stdcall options_dlg_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
@@ -364,7 +364,7 @@ command:
             HWND c = GetDlgItem(hDlg, 0x438);
             int sel[1024];
             int cnt = (int)SendMessageA(c, LB_GETSELITEMS, 0x400, (LPARAM)sel);
-            RawVec picked = { 0, 0, 0, 0 };                       // the indices the list box reports (a local vector<int>)
+            PickedVec picked = { 0, 0, 0, 0 };                       // the indices the list box reports (a local vector<int>)
             g_game_ed->sel_index = -1;
             for (int i = 0; i < cnt; i++) {
                 int v = (int)SendMessageA(c, LB_GETITEMDATA, sel[i], 0);

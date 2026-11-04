@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <new>
 #include "./party_window.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 
 // ---- data this module owns (docs/standalone_data.md) ----
@@ -453,9 +454,9 @@ MB_NOINLINE ResMesh* PartyWindow::make_mesh(ItemRef* item, float* scale, int t)
         g_game_G->f1a204 = -10000;
         g_game_G->f1a200 = (int)m;
         g_game_G->f1a1fc = 0;
-        (*(SpawnSliders*)((char*)&g_script + 8)).lo = -1;
-        (*(SpawnSliders*)((char*)&g_script + 8)).hi = -1;
-        (*(SpawnSliders*)((char*)&g_script + 8)).pos = t;
+        g_script.param1_lo = -1;
+        g_script.param1_hi = -1;
+        g_script.param2 = t;
         item_sound(&g_items[item->item])->play(-0x32);
     }
     return m;

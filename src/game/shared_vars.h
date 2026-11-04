@@ -32,9 +32,6 @@ extern int g_map_icon_count; // 0x5e29f4
 extern int g_mission_template_count; // 0x5e2a04
 // Set by hud.cpp, cleared by world_app, test-and-set latch in mission_ctx.cpp.
 extern char g_saved; // 0x5e2a08
-// The script engine's trigger result: set_trigger_result (0x4ac3f2) stores one 64-bit value, the event dispatch (GameData::emit_event / sl_query)
-// reads and clears it as two dwords.
-union TriggerResult { __int64 value; struct { int store0; int store1; }; };
-extern TriggerResult g_trigger_result; // 0xa70458 (the script object's +0x18)
+#include "../include/script_state.h"   // TriggerResult, g_script.trigger_result (0xa70458)
 
 #endif // GAME_SHARED_VARS_H

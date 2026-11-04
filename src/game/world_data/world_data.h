@@ -231,10 +231,6 @@ struct I64VecOp {                                               // the same vect
     E8* _Myend;
     void reserve(int* newsize);                                 // 0x493c40
 };
-struct SlotHolder40 {                                           // an object with the 8-byte vector at +0x40 (0x493db0)
-    char pad0[0x40];
-    void set40(int idx, int val);                               // 0x493db0 (thiscall, ret 8)
-};
 
 struct IntVecW {                                                // std::vector<int> with the leading allocator dword (game/int_vec.h IntVec)
     int pad0;

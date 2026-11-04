@@ -41,12 +41,6 @@ inline float item_f208(ItemKind* k) { return *(float*)((char*)k + 0x208); }     
 inline ItemSound* item_sound(ItemKind* k) { return (ItemSound*)((char*)k + 0x228); }   // 0x502b80
 
 extern int g_equip_page;                    // 0xa75f68 (negative: nothing selected)  0x5024e0
-struct SpawnSliders {                       // 0xa70448: reset by 0x502b80
-    int lo, hi;                             // 0xa70448, 0xa7044c
-    __int64 pos;                            // 0xa70450 (lo word = troop, hi word = its sign)
-};
-struct ScriptState;
-extern ScriptState g_script;                // 0xa70440 (dialog_manager.h; its g_game clashes with game.h)
 
 // ---- widgets -------------------------------------------------------------------------------------------
 struct UiWindow : MissionUi {               // 0x188 bytes, constructor 0x4931a0

@@ -316,7 +316,7 @@ void MissionSource::pick(int* arg)
     {
         __int64 now = g_ticks[slot];
         __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
-        g_spawn_lo = (__int64)(int)((double)d * 1000.0f * 1e-5f);
+        g_script.param1 = (__int64)(int)((double)d * 1000.0f * 1e-5f);
         play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
         t = (float)(fmod((double)g_ticks[0] * 1e-5f, 1.0) * 40.0f
                     + 100.0f);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
@@ -370,13 +370,13 @@ void MissionSource::pick(int* arg)
                 ((mesh_node*)begin[i]->nodes[n])->set_time(&t);
         }
         if (begin[i]->changed(0x10000)) {
-            g_spawn_lo = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
+            g_script.param1 = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
             int k = begin[i]->kind();
             if (k == 2 || k == 3) {
-                g_spawn_hi = (__int64)(int)begin[i]->get_float();
+                g_script.param2 = (__int64)(int)begin[i]->get_float();
                 play_family_sound(family, -0x3e);
             } else if (k == 5) {
-                g_spawn_hi = (__int64)begin[i]->get_value();
+                g_script.param2 = (__int64)begin[i]->get_value();
                 play_family_sound(family, -0x3e);
             } else if (k == 6) {
                 g_script.str[0] = begin[i]->name;
@@ -384,16 +384,16 @@ void MissionSource::pick(int* arg)
             } else if (k != 8 || begin[i]->f184 != 1) {
                 play_family_sound(family, -0x3e);
             } else {
-                g_spawn_hi = begin[i]->f180 != 0;
+                g_script.param2 = begin[i]->f180 != 0;
                 play_family_sound(family, -0x3e);
             }
         } else if (begin[i]->changed(2)) {
-            g_spawn_hi = 0;
-            g_spawn_lo = i;
+            g_script.param2 = 0;
+            g_script.param1 = i;
             play_family_sound(family, -0x3f);
         } else if (begin[i]->changed(4)) {
-            g_spawn_hi = 1;
-            g_spawn_lo = i;
+            g_script.param2 = 1;
+            g_script.param1 = i;
             play_family_sound(family, -0x3f);
         }
     }

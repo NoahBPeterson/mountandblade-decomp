@@ -7,15 +7,9 @@
 #include "../../include/dialog_rec.h"
 #include "../game_globals.h"      // canonical g_script_error
 #include "../../include/game_data.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 struct ScriptReg { unsigned lo; int hi; };          // one 64-bit script register (the interpreter reads / writes the halves separately)
-extern ScriptReg g_registers[0x80];                 // 0xa70490 the script registers (reg_0 .. reg_127; defined in camera.cpp)
-struct VarTable {
-    int get(int id);                                // 0x48d690
-    void set40(int id, int v);                        // 0x493db0
-};
-struct ScriptState;
-extern ScriptState g_script;                        // 0xa70440 (seen through VarTable below)
 #include "../config/config_block.h"           // Config g_cfg (0x5a9f98)
 extern int g_cur_opcode;                            // 0x5e25a0
 extern int g_cur_param;                             // 0x5e2590

@@ -9,6 +9,7 @@
 
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)
@@ -20,7 +21,7 @@ int GameData::save_state(OutStream* out)
     out->w_raw((char*)this + 0xb4);
     WL_MARKER(13)
     write_clock(out);
-    g_list_a70480.write8(out);
+    g_script.vars.write8(out);
     ((Rec78Tag*)((char*)this + 0x139e8))->write(out);
     ((Rec30Tag*)((char*)this + 0x139f4))->write(out);
     write_list138(out);

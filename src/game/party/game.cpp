@@ -35,14 +35,11 @@
 #include "../map_flags.h"                                     // MapFlags (0x5e291c): the one definition
 #include "../window_mgr.h"                                 // g_windows (0xa73980; screen slot 15 = 0xa739bc: +0x14 cleared; slot 23 = 0xa739dc: +0x18 set)
 #include "../../include/level_global.h"                     // g_level (0xa732b4)
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_save_kind;                                            // 0x5e29bc (.bss) kind of the loaded save header
 int g_a75eb8;                                               // 0xa75eb8 (.bss) extra-triggers argument of load_game_data
-char g_new_game_done;                                       // 0xa73090 (.bss) set by step 6 of 0x51c720; 0x51d2b0 returns at once when set
-NavGraph* g_nav;                                            // 0xa732b8 (.bss) the map object
-rgl::world* g_level;                                        // 0xa732b4 (.bss) the current level / scene (built by Game::build_level)
-List8 g_list_a70480;                                        // 0xa70480 (.bss) vector of 8-byte elements, saved after the clock
 
 #include "../inventory_panel/mission_ctx_rec.h"          // MissionCtx (0xa73300): init is 0x4be742, entered through 0x4be730
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -190,7 +187,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         log_stream_ptr()->w_cstr("init_meta_mission complete.\n");
         if (w04 != 2 && w04 != 3) {
             g_game_G->build_scene();             // 0x520d60
-            g_new_game_done = 1;
+            g_script.new_game_done = 1;
         }
         log_stream_ptr()->w_cstr("launch complete.\n");
         *counter = *counter + 1;
@@ -412,27 +409,27 @@ void Game::init_map()
     struct Tri { int a, b, c; };
     Tri t;
 
-    if (g_new_game_done != 0)
+    if (g_script.new_game_done != 0)
         return;
-    ((MapReset*)g_nav)->run();
+    ((MapReset*)g_script.nav)->run();
     void* mem = operator new(0x344);
     if (mem != 0) {
         t.b = 5;
         t.c = 5;
         t.a = 0;
-        g_level = (rgl::world*)((SceneInit*)mem)->Init((int)g_nav + 0x44, (int)g_nav + 0x54, &t.c, &t.b, &t.a);
+        g_script.level = (rgl::world*)((SceneInit*)mem)->Init((int)g_script.nav + 0x44, (int)g_script.nav + 0x54, &t.c, &t.b, &t.a);
     } else {
-        g_level = 0;
+        g_script.level = 0;
     }
     t.c = 1;
     t.b = 0;
     t.a = 7;
-    g_nav->score_triggers(&t.a, &t.b, &t.c);
+    g_script.nav->score_triggers(&t.a, &t.b, &t.c);
     t.c = 7;
     t.b = 0;
     t.a = 7;
-    g_nav->solve(&t.a, &t.b, &t.c);
-    ((MapBuild*)g_level)->build((int)g_nav);
+    g_script.nav->solve(&t.a, &t.b, &t.c);
+    ((MapBuild*)g_script.level)->build((int)g_script.nav);
 }
 
 // @ 0x51d3a0
@@ -671,7 +668,7 @@ void Game::load_state(stream_base* s)
     s->r_int(&f4);
     s->r_int(&fb4);
     load_clock(s);
-    g_list_a70480.read(s);
+    g_script.vars.read(s);
     triggers.read(s);
     simple.read(s);
     load_quests(s);

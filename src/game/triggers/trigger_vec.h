@@ -119,8 +119,6 @@ extern "C" int   __stdcall FSOUND_Stream_Play(int channel, void* stream);   // 0
 extern "C" int   __stdcall FSOUND_Stream_GetLengthMs(void* stream);     // 0x53430c
 extern "C" int   __stdcall FSOUND_Stream_GetTime(void* stream);         // 0x534306
 extern "C" short __stdcall FSOUND_Stream_Close(void* stream);          // 0x5342e2 (config.cpp: FSOUND_Stream_Close)
-struct ScriptState;
-extern ScriptState g_script;                // 0xa70440 (dialog_manager.h clashes with game.h)
 // ---- record vectors (0x4c1c20..0x4c23f0) ------------------------------------------------------------------------------------
 #include "../../include/vec.h"   // V2: 8-byte vector with an empty user ctor: arrays of it go through the compiler's array-ctor helper
 typedef tstring mstr;       // a tstring as a MouseRec member: its ctor / dtor are the outlined 0x42bbd0 / 0x42bc40

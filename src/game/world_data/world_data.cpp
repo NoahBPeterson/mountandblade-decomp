@@ -38,6 +38,7 @@
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 struct Presentation;
 extern Presentation* g_presentation;                        // 0x5e299c
 
@@ -70,7 +71,7 @@ void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
             FaceId* g = (FaceId*)find_at(&out->x);
             if (g != 0) {
                 gi = g->m4;
-                ok = ((RiderTable*)((LevelRef*)g_level)->obj)->shares(first, gi) != 0;
+                ok = ((RiderTable*)((LevelRef*)g_script.level)->obj)->shares(first, gi) != 0;
             }
         }
     }
@@ -95,7 +96,7 @@ char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
         FaceId* f = (FaceId*)find_at(&out->x);
         if (f == 0)
             continue;
-        int kind = *(int*)(((LevelRef*)g_level)->obj->kinds + f->m4 * 0x88 + 0x24);
+        int kind = *(int*)(((LevelRef*)g_script.level)->obj->kinds + f->m4 * 0x88 + 0x24);
         int low = kind & 7;
         if (any)
             ok = low == 0 || kind == 7;
@@ -1578,9 +1579,9 @@ void SlotArray::set(const int& slot, const __int64& value)
 }
 
 // @ 0x493db0
-void SlotHolder40::set40(int _idx, int _val)
+void ScriptState::set_var(int _idx, int _val)
 {
-    I64VecW* _p = (I64VecW*)((char*)this + 0x40);
+    I64VecW* _p = (I64VecW*)&vars;
     int _n = _idx + 1;
     _p->reserve(&_n);
     (*(std::vector<__int64>*)_p)[_idx] = _val;

@@ -29,6 +29,7 @@
 #include "../screen_records.h"       // Recd8: the options screen record (slot 3 is update_settings 0x4d5f20)
 #include "../party/game.h"
 #include "../../include/game_recs.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 using rgl::vector4;
 
@@ -105,7 +106,6 @@ struct localized {
 
 
 // 0xa70464: the caption the game object's text helper writes into before it is shown.
-extern tstring g_quest_text;                        // 0xa70464
 
 // 0x435790 (thiscall on the game, ret 0xc): SoundCtl of agent/agent.h, the game object's event emitter (the header cannot be
 // included here).
@@ -136,10 +136,10 @@ void QuestPage::fill()
         tstring key("ui_given_on_date");
         Game* g = g_game_G;
         int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
-        g_quest_text.assign("");
+        g_script.result_string.assign("");
         ((SoundCtl*)g)->emit_event(0xf, days / 24, days);
         {
-            tstring formatted(g_quest_text);
+            tstring formatted(g_script.result_string);
             const char* arg = formatted.buf ? formatted.buf : (const char*)&formatted.buf;
             tstring* e = g_strtable.lookup(key);
             mb_snprintf(buf, 0x200, e->buf ? e->buf : (const char*)&e->buf, arg);

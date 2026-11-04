@@ -63,7 +63,6 @@ extern int g_propkind_count;                                // 0x5e29e0
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-TriggerResult g_trigger_result;   // 0xa70458
 Presentation* g_presentation;                               // 0x5e299c the running presentation
 
 
@@ -609,7 +608,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_result_string:
         if (check_string_arg(types[0], (int)params[0]))
-            g_result_string = g_script.expand(g_strings.get_string((int)params[0], types[0]));
+            g_script.result_string = g_script.expand(g_strings.get_string((int)params[0], types[0]));
         break;
     case op::key_is_down:
         if (IN_RANGE(params[0], 0, 0x100))
@@ -3901,13 +3900,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         game()->menu_option_disabled = 1;
         break;
     case op::store_trigger_param_1:
-        set_lvalue(locals, g_trigger_param_1);
+        set_lvalue(locals, g_script.param1);
         break;
     case op::store_trigger_param_2:
-        set_lvalue(locals, g_trigger_param_2);
+        set_lvalue(locals, g_script.param2);
         break;
     case op::set_trigger_result:
-        g_trigger_result.value = params[0];
+        g_script.trigger_result.value = params[0];
         break;
 
     // ---- arithmetic (64-bit; fixed point by g_fixed_point_multiplier) ------------------------------------------

@@ -10,6 +10,7 @@
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 #include "../../include/msg_log.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 unsigned char g_mt_inited;                         // 0x5e2a09
@@ -222,7 +223,6 @@ struct SkelBodyV;                        // 0x47cfe0 (mesh_scene.cpp) names the 
 void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* inv, void* f240, void* f194,
                       void* f1a4, void* f1a8, void* slots, int id);   // 0x482240 (__stdcall, ret 0x34)
 void setup_item_meshes(SkelBodyV* body, int kind, int troop, char* inv, int f130, ItemRef* slots, int id);  // 0x47cfe0 (cdecl)
-extern char g_script[]; // 0xa70440
 #include "../skill_cap.h"
 extern char g_gui[]; // 0x5d7080
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
@@ -369,7 +369,7 @@ int MissionG::create(const matrix* m, const ItemStackG* it, int troop)
     a->f240 = ((ItemStack2*)it)->value();
     a->f244 = ((ItemStack2*)it)->value();
     a->f248 = ((ItemStack2*)it)->value();
-    *(long long*)&(*(int*)((char*)&g_script + 0x8)) = own;
+    g_script.param1 = own;
     struct SndBody { int num; SndSlotS* slots; };
     SndBody* p = (SndBody*)((char*)g_mission_templates + this->mode * 0x58 + 0x4c);
     for (int i = 0; i < p->num; i++)
@@ -492,7 +492,7 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
             }
         }
     }
-    *(long long*)&(*(int*)((char*)&g_script + 0x8)) = own;
+    g_script.param1 = own;
     SpawnSetG* p = (SpawnSetG*)((char*)g_mission_templates + this->mode * 0x58);
     for (int i = 0; i < p->num; i++)
         p->slots[i].update(-25);

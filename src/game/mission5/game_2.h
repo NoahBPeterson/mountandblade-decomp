@@ -300,15 +300,6 @@ namespace c49bea0 { struct MissionAgents { void add_order_arrow(int id); }; }   
 namespace c49b630 { struct Mission { void spawn_battle_icon(unsigned id); }; }              // 0x49bbb0 (party2/camera.cpp)
 struct SoundCtl { char emit_event(int id, int a, int b); };                               // 0x435790 (agent/agent.h)
 struct E92;
-extern char g_map_pages[];           // 0xa73094 page grid of the map (cell = 0x20 bytes per column, 4 per row)
-extern int  g_page_cols;             // 0xa73294
-extern int  g_page_rows;             // 0xa73298
-extern float g_minx;                 // 0xa7329c
-extern float g_miny;                 // 0xa732a0
-extern float g_maxx;                 // 0xa732a4
-extern float g_maxy;                 // 0xa732a8
-extern float g_sizex;                // 0xa732ac
-extern float g_sizey;                // 0xa732b0
 #include "../game_globals.h"   // canonical g_module_settings.map_tree_types (0xa1815c), g_module_settings.map_sea_direction (0xa18144), g_module_settings.map_river_direction (0xa18150)
 // the slices read these as ints (g_module_settings.map_sea_direction/river_direction are floats, same words)
 #define g_map_tree_types_a ((int*)&g_module_settings.map_tree_types)                  // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert

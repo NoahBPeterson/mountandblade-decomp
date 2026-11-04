@@ -7,6 +7,7 @@
 #include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../../include/render_flags.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 namespace rgl { struct mat3; }
 rgl::mat3* __cdecl identity3(rgl::mat3* out);     // 0x40cd60 (rgl/shapes/shapes.cpp: the global function; fills the 3x3 and returns out)
@@ -45,7 +46,6 @@ struct lod2_a : lod_mesh2 {                      // the 0xe0-byte lod record
 EChar* append_mesh(int colour, int kind, void** ap, void** a, void** b, char carried, int* out);   // 0x481c40 (mesh_terrain.cpp)
 extern int g_item_kind_count;                         // g_item_kind_count 0x5e29d4
 extern float g_lod_scale;                        // 0x54b890 (0.95)
-extern char g_script[]; // 0xa70440
 
 // the player-visible fields of the agent body: a strategic entity (vtable 0x54b5d0) whose effect definition (+0x304) holds
 // the skeleton elements; slot 6 of its vtable is set_fbc (the "anim" argument of the slice)
@@ -269,8 +269,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     *(int*)(((char*)g_game) + 0x1a204) = 5;
                     *(int*)(((char*)g_game) + 0x1a1fc) = (int)hl;
                     *(int*)(((char*)g_game) + 0x1a200) = 0;
-                    (*(__int64*)((char*)&g_script + 0x8)) = hit_troop;
-                    (*(__int64*)((char*)&g_script + 0x10)) = troop;
+                    g_script.param1 = hit_troop;
+                    g_script.param2 = troop;
                     ((TimerList*)((char*)&g_items[h->item] + 0x228))->update(-50);      // 0x48add0 (the item's sound holder)
                 }
                 vpush_i(a->fx->groups, hl);
