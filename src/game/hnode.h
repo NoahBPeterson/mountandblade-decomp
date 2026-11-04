@@ -1,7 +1,7 @@
 // hnode.h: the 12-byte open-list node of the navigation-mesh search (face id, cost so far, priority) and its
 // min-heap comparator. ONE definition for src/game: agent2/agent_stats.cpp (adjust_heap_node 0x438b10, the
 // load-order copy constructor below) and agent4/agent_think.cpp (find_path 0x444c50, reachable 0x4452f0, which
-// push hnode(face, g, f) and pop through NavMesh::open, nav_mesh.h). The slices of agent2 called the fields a, b,
+// push hnode(face, g, f) and pop through PolyMesh::open, terrain_b/poly_mesh.h). The slices of agent2 called the fields a, b,
 // key; the ones of agent4 id, g, f (same words). agent4 (find_path / reachable) needs the implicit copy: only
 // agent2/agent_types.h defines HNODE_LOAD_ORDER_COPY.
 #ifndef GAME_HNODE_H

@@ -7,8 +7,8 @@
 // field); the rest of every object is padding. Names provisional.
 //
 // The classes shared with the other agent modules are one definition each in src/game: Agent / AgentBody / AgentTable /
-// Threat (agent_obj.h), ItemRef (item_ref.h), Mission / TeamRec (mission.h), PlacedObj / IfaceB / Quad (placed_obj.h), NavMesh
-// (nav_mesh.h), SkillCap (skill_cap.h); this header includes them. Curve (src/game/agent/curve.h) is the 0xd8-byte Channel here.
+// Threat (agent_obj.h), ItemRef (item_ref.h), Mission / TeamRec (mission.h), PlacedObj / IfaceB / Quad (placed_obj.h), PolyMesh
+// (terrain_b/poly_mesh.h), SkillCap (skill_cap.h); this header includes them. Curve (src/game/agent/curve.h) is the 0xd8-byte Channel here.
 #ifndef AGENT2_AGENT_TYPES_H
 #define AGENT2_AGENT_TYPES_H
 #define HNODE_LOAD_ORDER_COPY                    // hnode.h: agent_stats.cpp 0x438b10 needs the user-written copy (before mission.h pulls hnode.h in)
@@ -46,8 +46,8 @@ float __cdecl fmin_ref(const float* a, const float* b);         // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);         // 0x4324d0
 void __cdecl noise_gradient(float scale, const float* in, float* out);   // 0x414ae0
 
-// ---- the navigation mesh: src/game/nav_mesh.h ----
-#include "../nav_mesh.h"
+// ---- the navigation mesh: src/game/terrain_b/poly_mesh.h ----
+#include "../terrain_b/poly_mesh.h"
 
 // ---- the level (scene: first field of the mission object) -----------------------------------------------------
 #include "../cell.h"                                  // cell: one grid cell (0x34 bytes; collect_masked 0x4396b0, collect_point 0x439780)
@@ -69,7 +69,7 @@ struct level {
     char pad2c[0x64 - 0x2c];
     HeightField* hf;                                    // 0x64
     char pad68[0xb4 - 0x68];
-    NavMesh* nav;                                       // 0xb4
+    PolyMesh* nav;                                       // 0xb4
     int lights_alloc;                                   // 0xb8 (std::vector<Light*>: allocator, first, last, end)
     Light** lights_first;                               // 0xbc
     Light** lights_last;                                // 0xc0
@@ -124,7 +124,7 @@ float __cdecl hit_chance(int* who, Agent* a);           // 0x438cb0
 // ---- STL instantiation helpers (VC7.1 <vector>/<memory>/<algorithm> code the linker kept from this object) ------
 #include "../../include/ptr_tag.h"
 #include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
-#include "../hnode.h"                             // hnode / node_gt (shared with agent4: NavMesh::open)
+#include "../hnode.h"                             // hnode / node_gt (shared with agent4: PolyMesh::open)
 #include "../../include/clock_table.h"
 typedef PlacedObj E1c8;                                  // the 0x1c8-byte polymorphic record
 #include "../alloc_construct.h"   // alloc_tstring 0x436c90, alloc_E12 0x436cf0, alloc_int 0x436d80, uninit_copy_E12 0x436d10

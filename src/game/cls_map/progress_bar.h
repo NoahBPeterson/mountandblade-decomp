@@ -67,8 +67,7 @@ struct ShapeFace {                              // 0x64 bytes (0x4e75a0)
     char pad61[0x64 - 0x61];
 };
 // 0x4785e0 / 0x4705e0 are PolyMesh::build / compute_face_normals (terrain_b/poly_mesh.h): the polygon set below is that class; only the members are declared
-struct HeightField;
-struct PolyMesh { void build(HeightField* hf, int step); void compute_face_normals(); };
+#include "../terrain_b/poly_mesh.h"
 struct Shape {
     char pad0[0x1c];
     ShapePt* pts;                               // +0x1c (a std::vector's first; the allocator word is +0x18)

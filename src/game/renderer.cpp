@@ -391,14 +391,14 @@ void buffer_pair::restore_all()
 }
 
 // @ 0x462420
-void cell_rows::alloc(const int* dim)
+void HeightField::alloc(const int* dim)
 {
-    this->~cell_rows();
-    last = dim[0];
-    rows_n = dim[1];
-    rows = new HCell*[last + 1];
-    for (int i = 0; i <= last; i++)
-        rows[i] = new HCell[rows_n + 1];
+    this->~HeightField();
+    w = dim[0];
+    h = dim[1];
+    cols = new HCell*[w + 1];
+    for (int i = 0; i <= w; i++)
+        cols[i] = new HCell[h + 1];
 }
 
 // @ 0x4624c0

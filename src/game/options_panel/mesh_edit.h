@@ -37,7 +37,7 @@ struct NewEdge : MEdge {
 // The polygon / edge as the first two passes (0x4d1410, 0x4d1880) default-construct them: only the fields the
 // pass does not set itself are stored (the slice found this the shape of the original's stores).
 struct PartFace : MPoly {
-    PartFace() : MPoly(raw_t()) { f0 = 0; f5c = 0; f60 = 0; }
+    PartFace() : MPoly(raw_t()) { stamp = 0; f5c = 0; f60 = 0; }
 };
 struct PartEdge : MEdge {
     PartEdge() : MEdge(raw_t()) { flag = 0; nfaces = 0; crease[0] = 1.0f; crease[1] = 1.0f; }

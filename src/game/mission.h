@@ -19,7 +19,7 @@
 #include "../include/timer.h"
 #include "./tstring.h"
 #include "./terrain_desc.h"
-#include "./nav_mesh.h"
+#include "./terrain_b/poly_mesh.h"
 #include "./agent_obj.h"
 
 struct CellGrid;                                // terrain_b/cell_grid.h: the scene container terrain_b sees
@@ -161,8 +161,7 @@ struct Mission {
     char pad6668[0x6678 - 0x6668];
     std::vector<Agent*> dead;                   // +0x6678 (first at +0x667c; dead / culled list: 0x442dc0, terrain_b reset 0x479160)
     std::vector<PlacedObj> props;                  // +0x6688 (first at +0x668c) (0x472050)
-    NavMesh nav;                                // +0x6698 navigation mesh (agent2: 0x43cb30, 0x43dd70, 0x43df60)
-    char pad66d0[0x672c - 0x6698 - sizeof(NavMesh)];
+    PolyMesh nav;                                // +0x6698 navigation mesh (agent2: 0x43cb30, 0x43dd70, 0x43df60)
     int f672c;                                  // +0x672c
     int f6730;
     int f6734;

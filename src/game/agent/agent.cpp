@@ -954,7 +954,7 @@ void alloc_int::construct(int* p, const int& v) { new ((void*)p) int(v); }
 // @ 0x436da0
 bool HeightField::line_clear(const vector4* a, const vector4* b)
 {
-    const float* org = &x0;
+    const float* org = &bounds.x;
     vec2 lo = { org[0], org[1] };
     vec2 hi = lo;
     hi.x = (float)w * cell + hi.x;

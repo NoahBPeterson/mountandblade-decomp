@@ -13,6 +13,7 @@
 #include "./scene.h"
 #include "./emitter.h"
 #include "./scene_entity.h"
+#include "../../include/height_field.h"
 
 namespace rgl {
 
@@ -40,7 +41,6 @@ template<class T> struct pool {
 };
 
 struct ground_geom { ~ground_geom(); };                                    // 0x41f5d0 (four arrays)
-struct world_aux { ~world_aux(); };                                        // 0x41ecc0
 
 struct world {
     char pad0[8];
@@ -51,7 +51,7 @@ struct world {
     pool<cellnode> nodes;       // 0x2c
     pool<cellref> refs;         // 0x40 (free list at +0x50)
     std::vector<Obj*> objs;     // 0x54 owned objects (0x420a70 deletes them)
-    world_aux* p64;             // 0x64
+    HeightField* hf;            // 0x64 the cell table of the height field (dtor 0x41ecc0)
     vector4 ambient;            // 0x68
     entity* sky;                // 0x78 optional backdrop entity (rendered alone in the reflection pass; clear_ents 0x4207e0)
     std::vector<entity*> ents;  // 0x7c entities (first at 0x80)    remove_entity 0x41f0d0

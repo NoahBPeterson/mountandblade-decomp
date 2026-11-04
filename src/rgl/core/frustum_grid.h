@@ -1,16 +1,9 @@
 // frustum_grid.h: what src/rgl/core/frustum_grid.cpp (0x41e470..0x41ef1a) needs besides the scene headers
-// (../scene/frustum.h: plane, frustum; ../scene/world.h: world, world_aux, cell, cellref): views onto fields those
+// (../scene/frustum.h: plane, frustum; ../scene/world.h: world, cell, cellref): views onto fields those
 // headers keep as padding, and one small record type. Names provisional.
 #ifndef RGL_CORE_FRUSTUM_GRID_H
 #define RGL_CORE_FRUSTUM_GRID_H
 #include "../scene/world.h"
-
-// the row table of world_aux (0x41ecc0): `rows` at +0, `last` (index of the last row) at +0x14
-struct cell_rows_view {
-    float** rows;        // +0
-    int pad[4];
-    int last;            // +0x14
-};
 
 // the grid geometry world::to_cell (0x41ed00) reads from the world object: the cell counts are rgl::world's
 // nrows/ncols (+8, +0xc); the origin and the cell size are in its padding

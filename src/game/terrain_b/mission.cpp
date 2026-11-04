@@ -165,9 +165,9 @@ void CellGrid::build(PolyMesh* m)
     navmesh = m;
     if (m == 0)
         return;
-    for (unsigned i = 0; i < navmesh->c.faces.size(); i++) {
-        MPoly* r = &vat(navmesh->c.faces, i);
-        MVert* verts = &*navmesh->c.verts.begin();
+    for (unsigned i = 0; i < navmesh->faces.size(); i++) {
+        MPoly* r = &vat(navmesh->faces, i);
+        MVert* verts = &*navmesh->verts.begin();
         float lo[3] = { 1e6f, 1e6f, 0.0f };
         float maxy = -1e6f;
         float hi[3] = { -1e6f, maxy, 0.0f };

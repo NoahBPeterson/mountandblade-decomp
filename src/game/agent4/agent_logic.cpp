@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // File: agent_logic.cpp  (0x444c50..0x460160)
 //
-// Desc: the agent's logic object: the navigation-mesh path search (NavMesh::find_path, reachable), goal / path planning and
+// Desc: the agent's logic object: the navigation-mesh path search (PolyMesh::find_path, reachable), goal / path planning and
 //       class sounds, ammunition top-up (with the std::vector<E56> helpers the linker kept from this object), weapon-mode choice
 //       and attack start, the AI order executor (update_ai) and control update, slot cycling, missile / scene-prop spawns, the AI
 //       decision (choose_action), the idle timers and the agent's shot; the mesh editing members of rgl::mesh (add_quad,
@@ -40,7 +40,7 @@
 #include "../agent3/agent_combat.h"
 #include "../agent_obj.h"
 #include "../mission.h"
-#include "../nav_mesh.h"
+#include "../terrain_b/poly_mesh.h"
 #include "../font.h"
 #include "../placed_obj.h"
 #include "../str_table.h"
@@ -101,10 +101,10 @@ template<> void fill<E56*, E56>(E56*, E56*, const E56&);                        
 template<> E56* _Copy_backward_opt<E56*, E56*>(E56*, E56*, E56*, _Nonscalar_ptr_iterator_tag);                                       // 0x440a30
 }
 
-// ---- NavMesh::find_path: A*-style search over the navigation faces ---------------------------------------------------------
+// ---- PolyMesh::find_path: A*-style search over the navigation faces ---------------------------------------------------------
 
 // @ 0x444c50
-bool NavMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int* out_count, int* out_steps,
+bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int* out_count, int* out_steps,
                         const float* w0, const float* w1, const float* w2)
 {
     int chain[0x2004];
@@ -127,20 +127,20 @@ bool NavMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int*
         n = open.top();
         open.pop_inl();
         int cur = n.id;
-        for (int k = 0; k < faces[cur].nverts; k++) {
-            int nb = faces[cur].nbr_[k];
+        for (int k = 0; k < faces[cur].n; k++) {
+            int nb = faces[cur].nbr[k];
             if (nb != -1 && faces[nb].stamp <= stamp) {
                 float cost = 1.0f;
                 faces[nb].stamp = stamp + 1;
                 faces[nb].parent = cur;
-                NavEdge* e = &edges[faces[cur].edge_[k]];
-                float w = e->face == nb ? e->w_a : e->w_b;
+                MEdge* e = &edges[faces[cur].eid[k]];
+                float w = e->face[0] == nb ? e->crease[0] : e->crease[1];
                 if (w < 0.65f)
                     cost = (0.65f - w) * 20.0f + 1.0f;
                 if (w <= *w0)
                     cost = (1.0f - w) * 50.0f + cost;
-                vector4 dg = a_vsub(faces[to].c, faces[nb].c);
-                vector4 ds = a_vsub(faces[from].c, faces[nb].c);
+                vector4 dg = a_vsub(faces[to].centroid, faces[nb].centroid);
+                vector4 ds = a_vsub(faces[from].centroid, faces[nb].centroid);
                 float ls = ds.length();
                 float lg = dg.length();
                 cost = cost + n.g;
@@ -168,25 +168,25 @@ bool NavMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int*
         int cur = chain[len - 1 - i];
         out_faces[i] = cur;
         int k = 0;
-        for (int j = 0; j < faces[prev].nverts; j++) {
-            if (faces[prev].nbr_[j] == cur) {
+        for (int j = 0; j < faces[prev].n; j++) {
+            if (faces[prev].nbr[j] == cur) {
                 k = j;
                 break;
             }
         }
-        out_pos[i] = edges[faces[prev].edge_[k]].mid;
+        out_pos[i] = edges[faces[prev].eid[k]].mid;
         prev = out_faces[i];
     }
     for (int i = 1; i < *out_count; i++)
         out_pos[i - 1] = out_pos[i];
-    out_pos[*out_count - 1] = faces[out_faces[*out_count - 1]].c;
+    out_pos[*out_count - 1] = faces[out_faces[*out_count - 1]].centroid;
     return true;
 }
 
 
-// ---- NavMesh::reachable: can the goal face be reached within `max_steps` hops? -----------------------------------------------
+// ---- PolyMesh::reachable: can the goal face be reached within `max_steps` hops? -----------------------------------------------
 // @ 0x4452f0
-bool NavMesh::reachable(const int* from, const int* to, const int* max_steps)
+bool PolyMesh::reachable(const int* from, const int* to, const int* max_steps)
 {
     while (!open.empty())
         open.pop_inl();
@@ -205,13 +205,13 @@ bool NavMesh::reachable(const int* from, const int* to, const int* max_steps)
         open.pop_inl();
         if ((int)n.g <= *max_steps) {
             int cur = n.id;
-            for (int k = 0; k < faces[cur].nverts; k++) {
-                int nb = faces[cur].nbr_[k];
+            for (int k = 0; k < faces[cur].n; k++) {
+                int nb = faces[cur].nbr[k];
                 if (nb != -1 && faces[nb].stamp <= stamp) {
                     faces[nb].stamp = stamp + 1;
                     faces[nb].parent = cur;
-                    vector4 dg = a_vsub(faces[*to].c, faces[nb].c);
-                    vector4 ds = a_vsub(faces[*from].c, faces[nb].c);
+                    vector4 dg = a_vsub(faces[*to].centroid, faces[nb].centroid);
+                    vector4 ds = a_vsub(faces[*from].centroid, faces[nb].centroid);
                     float g = n.g + 1.0f;
                     float h = ((float)sqrt(dg.y * dg.y + dg.z * dg.z + dg.x * dg.x) / ds.length()) * 0.7f + 1.0f;
                     open.push(hnode(nb, g, h * g));
@@ -241,9 +241,9 @@ void Agent::pick_reachable_goal(const vector4* center, const float* radius, cons
             return;
         if (g_mission->nav.reachable(face, &goal_face, max_steps))
             return;
-        const NavFace& f = g_mission->nav.faces[*face];
+        const MPoly& f = g_mission->nav.faces[*face];
         float k = (float)(rand() % 0x3dc9) * 6.3223115e-06f + 0.7f;
-        c = a_vadd(a_vscale(k, a_vsub(c, f.c)), f.c);
+        c = a_vadd(a_vscale(k, a_vsub(c, f.centroid)), f.centroid);
         tries++;
     } while (tries < 8);
 }

@@ -199,21 +199,9 @@ struct Geom_t : NavCore {                           // 0x68
     void build() { ((PolyGeom*)this)->build(); }                    // 0x47ee60
     void compute_bounds() { ((PointSet*)this)->compute_bounds(); }  // 0x4704b0 (PointSet: poly_mesh.h)
 };
-// one table of 16-byte records per cell column: terrain_b's HeightField (src/include/height_field.h) with its allocator
-struct cell_rows {
-    void alloc(const int* dim);   // 0x462420 (renderer.h: the allocator of the HeightField)
-};
-struct cell_rows_t {                    // 0x20
-    int** rows;                         // 0x00 (h + 1 rows)
-    vector4 bounds;                     // 0x04
-    int h;                              // 0x14
-    int w;                              // 0x18
-    float scale;                        // 0x1c
-    void alloc(const int* nums) { ((cell_rows*)this)->alloc(nums); }       // 0x462420 (nums[0] = cells along x, nums[1] = along y)
-};
 struct world_t {                        // the scene object at Terrain+0xc3b0dc (CellGrid of terrain_b)
     char pad0[0x64];
-    cell_rows_t* cells;                 // 0x64 current cell-row table
+    HeightField* cells;                 // 0x64 current cell-row table
     void build_faces(Geom_t* g) { ((CellGrid*)this)->build_faces((NavData*)g); }       // 0x479980 (CellGrid::build_faces, terrain_b/cell_grid.h)
     void update_probes(int use_shaders) { ((CellGrid*)this)->update_probes(use_shaders); }      // 0x472ed0
 };
@@ -224,17 +212,17 @@ rgl::vector4 tri_normal(const rgl::vector4* tri);
 
 // @ 0x481570 -- re-tessellate every terrain quad into two triangles (four when the half-quad normals disagree), assigning
 // each touched corner cell a point in the new Geom and each quad a 0x88-byte element record with the final lighting, then
-// rebuild the world mesh, install a fresh cell_rows table and relight the scene
+// rebuild the world mesh, install a fresh HeightField and relight the scene
 void Terrain::tessellate()
 {
     Geom_t* g = new Geom_t;                 // the mesh being rebuilt: a local, as in the original ([esp+0x28])
 
-    cell_rows_t* rows = new cell_rows_t;
-    cell_rows_t* cr = rows;
+    HeightField* rows = new HeightField;
+    HeightField* cr = rows;
     if (rows) {
-        rows->scale = scale;
-        rows->rows = 0;
-        *(vector4*)&rows->bounds = *(vector4*)((char*)this + 0x843bcfc);
+        rows->cell = scale;
+        rows->cols = 0;
+        rows->bounds = *(vector4*)((char*)this + 0x843bcfc);
         rows->alloc(&w);
     }
 
@@ -243,7 +231,7 @@ void Terrain::tessellate()
             terrain_cell* c = &at(x, y);
             c->f14 = -1;
             int id = *(int*)&c->pz;                 // the height's bits (0x481630 reads cell+8)
-            rows->rows[x][y * 4] = id;              // the 16-byte row entries' first dword (0x48163e: [row + y*16])
+            *(int*)&rows->cols[x][y].h = id;              // the 16-byte row entries' first dword (0x48163e: [row + y*16])
         }
     }
 
@@ -281,7 +269,7 @@ void Terrain::tessellate()
                 nquad = 2;
                 for (int k = 0; k < 2; k++)
                     triangle_corners(x, y, k, &tri[k * 8], &tri[k * 8 + 2], &tri[k * 8 + 4]);
-                int* row = rows->rows[x];
+                int* row = (int*)rows->cols[x];
                 *(unsigned*)(row + y * 4 + 1) |= 1;
                 if (qp->diag)
                     *(unsigned*)(row + y * 4 + 1) |= 2;
@@ -335,7 +323,7 @@ void Terrain::tessellate()
                     rec.flags |= 0x4000;
                 g->elems().push_back(rec);
 
-                int* row = rows->rows[x];
+                int* row = (int*)rows->cols[x];
                 *(int*)((char*)row + y * 16 + 8 + qn * 4) = vbase;
                 if (nquad == 1)
                     *(int*)((char*)row + y * 16 + 12) = vbase;
@@ -347,15 +335,9 @@ void Terrain::tessellate()
     g->compute_bounds();
     ((world_t*)world)->build_faces(g);
 
-    cell_rows_t* old = ((world_t*)world)->cells;
-    if (old) {
-        if (old->rows) {
-            for (int i = 0; i <= old->h; i++)
-                delete[] old->rows[i];
-            delete[] old->rows;
-        }
+    HeightField* old = ((world_t*)world)->cells;
+    if (old)
         delete old;
-    }
     ((world_t*)world)->cells = cr;
     ((world_t*)world)->update_probes(g_use_shaders != 0);
 }

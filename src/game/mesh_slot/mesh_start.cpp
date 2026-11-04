@@ -111,16 +111,6 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v25(Emit* e);
     void add_extra(Mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
 };
-struct Streamer {                                            // level sub-object with a vtable (+0x414, +0x444)
-    virtual void v0();
-    virtual void v1();
-    virtual void v2(); virtual void v3(); virtual void v4(); virtual void v5(); virtual void v6();
-    virtual void v7(); virtual void v8(); virtual void v9(); virtual void v10(); virtual void v11();
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15(); virtual void v16();
-    virtual void v17(); virtual void v18(); virtual void v19(); virtual void v20(); virtual void v21();
-    virtual void v22();
-    virtual char v23();
-};
 struct PropObj {                                             // object at prop +0x1b4
     virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
     virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
@@ -131,7 +121,7 @@ struct PropObj {                                             // object at prop +
 };
 
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
-#include "../nav_mesh.h"
+#include "../terrain_b/poly_mesh.h"
 #include "../terrain_desc.h"
 #include "../terrain_a/terrain.h"                         // Terrain, g_terrain (0xa76630)
 
@@ -615,14 +605,14 @@ void Mission::start_setup()
     if (LV.flags.b8) {
         g_terrain.sun_ambient = at<rgl::world*>(0)->ambient;
         g_terrain.sun_diffuse = *(vector4*)(at<char*>(0x65b0) + 4);
-        Streamer* s414 = (Streamer*)((char*)lrec + 0x414);
+        stream_base* s414 = (stream_base*)((char*)lrec + 0x414);
         char flagc = 1;
-        s414->v1();
-        if (s414->v23() == 0) {
+        s414->rewind();
+        if (s414->at_end() == 0) {
             if (LV.flags.b8) {
-                Streamer* s2 = (Streamer*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494 + 0x414);
-                s2->v1();
-                at<TerrainDesc>(0x63d0).read((stream_base*)s2);
+                stream_base* s2 = (stream_base*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494 + 0x414);
+                s2->rewind();
+                at<TerrainDesc>(0x63d0).read(s2);
             }
             flagc = 0;
         }
@@ -630,20 +620,20 @@ void Mission::start_setup()
     } else {
         build_interior(at<int>(0x5df4), (rgl::mesh**)&at<Mesh*>(0x6340), &at<int>(0x633c));
     }
-    Streamer* s444 = (Streamer*)((char*)lrec + 0x444);
-    s444->v1();
-    NavMesh& nav = at<NavMesh>(0x6698);
+    stream_base* s444 = (stream_base*)((char*)lrec + 0x444);
+    s444->rewind();
+    PolyMesh& nav = at<PolyMesh>(0x6698);
     nav.load(s444);
-    ((PolyMesh*)&nav)->build_geometry();
+    nav.build_geometry();
     {
         LevelBits f2 = LV.flags;
         if (f2.b9 && f2.b8 && g_terrain.count_low_quads() > 10) {
-            nav.build(RAWAT(int, at<rgl::world*>(0), 0x64), 1);
-            ((PolyMesh*)&nav)->build_geometry();
-            ((PolyMesh*)&nav)->compute_edge_creases();
+            nav.build(at<rgl::world*>(0)->hf, 1);
+            nav.build_geometry();
+            nav.compute_edge_creases();
         }
     }
-    ((CellGrid*)at<rgl::world*>(0))->build((PolyMesh*)&nav);   // 0x478c50
+    ((CellGrid*)at<rgl::world*>(0))->build(&nav);   // 0x478c50
 
     // ---- light/frame table: 64 slots + 5 extra for a custom camera --------------------------
     SceneSlot* slots = &at<SceneSlot>(0x670);

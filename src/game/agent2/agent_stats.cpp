@@ -39,7 +39,7 @@
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../nav_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../terrain_b/poly_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -671,19 +671,19 @@ shape_base* body_res::copy_shape()
 }
 
 // @ 0x4391d0
-bool NavMesh::inside(const int* face, const float* p)
+bool PolyMesh::inside(const int* face, const float* p)
 {
-    NavFace* f = &faces[*face];
-    int n = f->nverts;
+    MPoly* f = &faces[*face];
+    int n = f->n;
     bool in = true;
     int i = 0;
     const int* vi = f->vert_p();
     do {
         if (i >= n) return in;
-        const NavPoint18* a = &verts[*vi];
+        const MVert* a = &verts[*vi];
         i++;
-        const NavPoint18* b = &verts[f->vert_p()[i % n]];
-        float e = b->x - a->x, f_ = b->y - a->y, g = p[0] - a->x, h = p[1] - a->y;
+        const MVert* b = &verts[f->vert_p()[i % n]];
+        float e = b->pos.x - a->pos.x, f_ = b->pos.y - a->pos.y, g = p[0] - a->pos.x, h = p[1] - a->pos.y;
         if (h * e - g * f_ < 0.0f)
             in = false;
         vi++;
@@ -692,21 +692,21 @@ bool NavMesh::inside(const int* face, const float* p)
 }
 
 // @ 0x439280
-float NavMesh::dist(const int* face, const float* p)
+float PolyMesh::dist(const int* face, const float* p)
 {
     float out = 0.0f;
-    NavFace* f = &faces[*face];
-    int n = f->nverts;
+    MPoly* f = &faces[*face];
+    int n = f->n;
     int i = 0;
     bool in = true;
     if (0 < n) {
         const int* vi = f->vert_p();
         do {
-            const NavPoint18* a = &verts[*vi];
+            const MVert* a = &verts[*vi];
             i++;
-            const NavPoint18* b = &verts[f->vert_p()[i % n]];
-            float dx = b->x - a->x;
-            float dy = b->y - a->y;
+            const MVert* b = &verts[f->vert_p()[i % n]];
+            float dx = b->pos.x - a->pos.x;
+            float dy = b->pos.y - a->pos.y;
             float len = (float)sqrt(dx * dx + dy * dy);
             float ux, uy;
             if (len > 0.0f) {
@@ -718,7 +718,7 @@ float NavMesh::dist(const int* face, const float* p)
                 uy = 1.0f;
             }
             float nx = uy, ny = -ux;
-            float d = (p[0] - a->x) * nx + (p[1] - a->y) * ny;
+            float d = (p[0] - a->pos.x) * nx + (p[1] - a->pos.y) * ny;
             if (!(d < 0.0f)) {
                 in = false;
                 if (out < d) out = d;
@@ -729,8 +729,8 @@ float NavMesh::dist(const int* face, const float* p)
     }
     out = 0.0f;
 have_out:
-    const NavPoint18* a0 = &verts[f->vert_p()[0]];
-    float dz = p[2] - (a0->z - ((p[0] - a0->x) * f->nx + (p[1] - a0->y) * f->ny) / f->nz);
+    const MVert* a0 = &verts[f->vert_p()[0]];
+    float dz = p[2] - (a0->pos.z - ((p[0] - a0->pos.x) * f->normal.x + (p[1] - a0->pos.y) * f->normal.y) / f->normal.z);
     if (-1.0f < dz && dz < 0.1f)
         dz = 0.0f;
     return (float)fabs(dz) + out;
@@ -738,7 +738,7 @@ have_out:
 
 // visit stamp: +3 per search, with a rollover reset of every face stamp past 1e9
 // @ 0x439410
-void NavMesh::next_stamp()
+void PolyMesh::next_stamp()
 {
     if (stamp > 1000000000) {
         for (unsigned i = 0; i < faces.size(); ++i)
@@ -750,7 +750,7 @@ void NavMesh::next_stamp()
 
 // walk across neighbouring faces along the segment from `from` to `to`
 // @ 0x439460
-bool NavMesh::trace(int face, vector4 from, int end_face, const float* to, int* max_steps)
+bool PolyMesh::trace(int face, vector4 from, int end_face, const float* to, int* max_steps)
 {
     float x = from.x, y = from.y, z = from.z;
     struct { int use_x; int found; int prev; int cur; int steps; } st;
@@ -771,20 +771,20 @@ bool NavMesh::trace(int face, vector4 from, int end_face, const float* to, int* 
         st.cur = face;
         while (st.cur != end_face && st.cur >= 0 && !done && st.steps < *max_steps) {
             ++st.steps;
-            NavFace* f = &faces[st.cur];
+            MPoly* f = &faces[st.cur];
             st.found = -1;
-            for (int i = 0; i < faces[st.cur].nverts; ++i) {
+            for (int i = 0; i < faces[st.cur].n; ++i) {
                 if (f->edge_p()[i] != st.prev) {
-                    const NavPoint18* a = &verts[f->vert_p()[i]];
-                    const NavPoint18* b = &verts[f->vert_p()[(i + 1) % f->nverts]];
-                    float ex = b->x - a->x;
-                    float ey = b->y - a->y;
-                    float t = ((x - a->x) * dy - (y - a->y) * dx) / (ex * dy - ey * dx);
+                    const MVert* a = &verts[f->vert_p()[i]];
+                    const MVert* b = &verts[f->vert_p()[(i + 1) % f->n]];
+                    float ex = b->pos.x - a->pos.x;
+                    float ey = b->pos.y - a->pos.y;
+                    float t = ((x - a->pos.x) * dy - (y - a->pos.y) * dx) / (ex * dy - ey * dx);
                     float s;
                     if (st.use_x)
-                        s = ((ex * t + a->x) - x) / dx;
+                        s = ((ex * t + a->pos.x) - x) / dx;
                     else
-                        s = ((ey * t + a->y) - y) / dy;
+                        s = ((ey * t + a->pos.y) - y) / dy;
                     if (0.1f <= t && t <= 0.9f && 0.0f <= s && s <= 1.0f)
                         st.found = i;
                 }
@@ -890,14 +890,14 @@ void level::query_segment(const float* a, const float* b, unsigned mask, shape_b
 void level::nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d)
 {
     if (nav != 0) {
-        for (int i = 0; i < nav->faces[*face].nverts; i++) {
+        for (int i = 0; i < nav->faces[*face].n; i++) {
             int nb = nav->faces[*face].nbr_p()[i];
             if (nb >= 0 && nav->faces[nb].stamp < nav->stamp) {
                 nav->faces[nb].stamp = nav->stamp;
                 if (nav->inside(&nb, p)) {
-                    const NavPoint18* v = &nav->verts[nav->faces[nb].vert_p()[0]];
-                    NavFace* f = &nav->faces[nb];
-                    float dz = (float)fabs(p[2] - (v->z - ((p[0] - v->x) * f->nx + (p[1] - v->y) * f->ny) / f->nz));
+                    const MVert* v = &nav->verts[nav->faces[nb].vert_p()[0]];
+                    MPoly* f = &nav->faces[nb];
+                    float dz = (float)fabs(p[2] - (v->pos.z - ((p[0] - v->pos.x) * f->normal.x + (p[1] - v->pos.y) * f->normal.y) / f->normal.z));
                     if (dz < 2.0f && dz < *best_d) {
                         *best = nb;
                         *best_d = dz;
@@ -914,7 +914,7 @@ void level::nav_search(const float* p, const int* face, const int* max_depth, in
 // @ 0x439a50
 int level::nearest_face(const float* p)
 {
-    NavMesh* m = nav;
+    PolyMesh* m = nav;
     int best = -1;
     float near_score = 0.0f;
     bool have = false;
@@ -925,9 +925,9 @@ int level::nearest_face(const float* p)
             int idx = i;
             float d = m->dist(&idx, p);
             if (d <= 0.0f) {
-                NavFace* f = &m->faces[i];
-                const NavPoint18* v = &m->verts[f->vert_p()[0]];
-                float dz = p[2] - (v->z - ((p[0] - v->x) * f->nx + (p[1] - v->y) * f->ny) / f->nz);
+                MPoly* f = &m->faces[i];
+                const MVert* v = &m->verts[f->vert_p()[0]];
+                float dz = p[2] - (v->pos.z - ((p[0] - v->pos.x) * f->normal.x + (p[1] - v->pos.y) * f->normal.y) / f->normal.z);
                 if (dz > -2.0f) {
                     dz = (float)fabs(dz);
                     if (!have || dz < best_dz) {
@@ -937,9 +937,9 @@ int level::nearest_face(const float* p)
                     }
                 }
             } else if (d < 10.0f) {
-                NavFace* f = &m->faces[i];
-                const NavPoint18* v = &m->verts[f->vert_p()[0]];
-                float dz = p[2] - (v->z - ((p[0] - v->x) * f->nx + (p[1] - v->y) * f->ny) / f->nz);
+                MPoly* f = &m->faces[i];
+                const MVert* v = &m->verts[f->vert_p()[0]];
+                float dz = p[2] - (v->pos.z - ((p[0] - v->pos.x) * f->normal.x + (p[1] - v->pos.y) * f->normal.y) / f->normal.z);
                 if (dz > -2.0f) {
                     float s = (10.0f - d) - (float)fabs(dz);
                     if (s > near_score) {

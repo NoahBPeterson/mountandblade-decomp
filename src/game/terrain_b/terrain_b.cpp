@@ -632,19 +632,19 @@ void PolyMesh::compute_face_normals()
 {
     vector4 t;                              // the normal before it is stored (its w lane is never written)
     vector4 b;
-    for (unsigned i = 0; i < c.faces.size(); i++) {
-        MPoly& f = vat(c.faces, i);
-        float ax = vat(c.verts, f.vid[2]).pos.x - vat(c.verts, f.vid[0]).pos.x;
-        float ay = vat(c.verts, f.vid[2]).pos.y - vat(c.verts, f.vid[0]).pos.y;
-        float az = vat(c.verts, f.vid[2]).pos.z - vat(c.verts, f.vid[0]).pos.z;
-        b.x = vat(c.verts, f.vid[1]).pos.x - vat(c.verts, f.vid[0]).pos.x;
-        b.y = vat(c.verts, f.vid[1]).pos.y - vat(c.verts, f.vid[0]).pos.y;
-        b.z = vat(c.verts, f.vid[1]).pos.z - vat(c.verts, f.vid[0]).pos.z;
+    for (unsigned i = 0; i < faces.size(); i++) {
+        MPoly& f = vat(faces, i);
+        float ax = vat(verts, f.vid[2]).pos.x - vat(verts, f.vid[0]).pos.x;
+        float ay = vat(verts, f.vid[2]).pos.y - vat(verts, f.vid[0]).pos.y;
+        float az = vat(verts, f.vid[2]).pos.z - vat(verts, f.vid[0]).pos.z;
+        b.x = vat(verts, f.vid[1]).pos.x - vat(verts, f.vid[0]).pos.x;
+        b.y = vat(verts, f.vid[1]).pos.y - vat(verts, f.vid[0]).pos.y;
+        b.z = vat(verts, f.vid[1]).pos.z - vat(verts, f.vid[0]).pos.z;
         t.x = b.y * az - b.z * ay;
         t.y = b.z * ax - az * b.x;
         t.z = ay * b.x - b.y * ax;
         f.normal = t;
-        MPoly& g = vat(c.faces, i);
+        MPoly& g = vat(faces, i);
         float len = g.normal.length();
         if (len > 1e-10f) {
             float inv = 1.0f / len;
@@ -661,10 +661,10 @@ void PolyMesh::compute_face_normals()
 void PolyMesh::compute_edge_creases()
 {
     vector4 d, s, n;                       // direction of the edge, projected part, perpendicular part
-    for (unsigned i = 0; i < c.edges.size(); i++) {
-        MEdge* e = &vat(c.edges, i);
-        MVert& a = vat(c.verts, e->v0);
-        MVert& b = vat(c.verts, e->v1);
+    for (unsigned i = 0; i < edges.size(); i++) {
+        MEdge* e = &vat(edges, i);
+        MVert& a = vat(verts, e->v0);
+        MVert& b = vat(verts, e->v1);
         d.x = b.pos.x - a.pos.x; d.y = b.pos.y - a.pos.y; d.z = b.pos.z - a.pos.z;
         float mz = e->mid.z;
         float len = d.length();
@@ -675,7 +675,7 @@ void PolyMesh::compute_edge_creases()
             d.x = 0.0f; d.y = 1.0f; d.z = 0.0f;
         }
         for (int j = 0; j < e->nfaces; j++) {
-            MPoly& f = vat(c.faces, e->face[j]);
+            MPoly& f = vat(faces, e->face[j]);
             if (f.centroid.z > mz) {
                 float k = (d.x * f.normal.x + (d.y * f.normal.y + d.z * f.normal.z)) * 0.2f;
                 s.x = d.x * k; s.y = d.y * k; s.z = d.z * k;
@@ -692,14 +692,14 @@ void PolyMesh::compute_edge_creases()
 // @ 0x470920
 void PolyMesh::build_adjacency()
 {
-    for (unsigned i = 0; i < c.edges.size(); i++)
-        vat(c.edges, i).nfaces = 0;
-    for (unsigned i = 0; i < c.faces.size(); i++) {
-        MPoly* f = &vat(c.faces, i);
+    for (unsigned i = 0; i < edges.size(); i++)
+        vat(edges, i).nfaces = 0;
+    for (unsigned i = 0; i < faces.size(); i++) {
+        MPoly* f = &vat(faces, i);
         for (int j = 0; j < f->n; j++) {
-            vat(c.edges, f->eid[j]).face[vat(c.edges, f->eid[j]).nfaces] = i;
-            vat(c.edges, vat(c.faces, i).eid[j]).nfaces++;
-            f = &vat(c.faces, i);
+            vat(edges, f->eid[j]).face[vat(edges, f->eid[j]).nfaces] = i;
+            vat(edges, vat(faces, i).eid[j]).nfaces++;
+            f = &vat(faces, i);
         }
     }
 }
@@ -708,34 +708,34 @@ void PolyMesh::build_adjacency()
 void PolyMesh::build_geometry()
 {
     ((MeshExt*)this)->build_adjacency();
-    for (unsigned i = 0; i < c.faces.size(); i++) {
-        MPoly* f = &vat(c.faces, i);
+    for (unsigned i = 0; i < faces.size(); i++) {
+        MPoly* f = &vat(faces, i);
         f->centroid = vector4(0.0f, 0.0f, 0.0f);
-        for (int j = 0; j < vat(c.faces, i).n; j++) {
-            MPoly& g = vat(c.faces, i);
-            MVert& v = vat(c.verts, g.vid[j]);
+        for (int j = 0; j < vat(faces, i).n; j++) {
+            MPoly& g = vat(faces, i);
+            MVert& v = vat(verts, g.vid[j]);
             g.centroid.x = g.centroid.x + v.pos.x;
             g.centroid.y = v.pos.y + g.centroid.y;
             g.centroid.z = v.pos.z + g.centroid.z;
-            vat(c.faces, i).nbr[j] = -1;
-            MPoly& h = vat(c.faces, i);
-            if (vat(c.edges, h.eid[j]).nfaces >= 2) {
-                if (vat(c.edges, h.eid[j]).face[0] == (int)i)
-                    h.nbr[j] = vat(c.edges, h.eid[j]).face[1];
-                else if (vat(c.edges, h.eid[j]).face[1] == (int)i)
-                    h.nbr[j] = vat(c.edges, h.eid[j]).face[0];
+            vat(faces, i).nbr[j] = -1;
+            MPoly& h = vat(faces, i);
+            if (vat(edges, h.eid[j]).nfaces >= 2) {
+                if (vat(edges, h.eid[j]).face[0] == (int)i)
+                    h.nbr[j] = vat(edges, h.eid[j]).face[1];
+                else if (vat(edges, h.eid[j]).face[1] == (int)i)
+                    h.nbr[j] = vat(edges, h.eid[j]).face[0];
             }
         }
-        MPoly& h = vat(c.faces, i);
+        MPoly& h = vat(faces, i);
         float s = 1.0f / (float)h.n;
         h.centroid.x = s * h.centroid.x;
         h.centroid.y = s * h.centroid.y;
         h.centroid.z = s * h.centroid.z;
     }
-    for (unsigned i = 0; i < c.edges.size(); i++) {
-        MEdge& e = vat(c.edges, i);
-        MVert& a = vat(c.verts, e.v0);
-        MVert& b = vat(c.verts, e.v1);
+    for (unsigned i = 0; i < edges.size(); i++) {
+        MEdge& e = vat(edges, i);
+        MVert& a = vat(verts, e.v0);
+        MVert& b = vat(verts, e.v1);
         e.mid = vector4((b.pos.x + a.pos.x) * 0.5f, (b.pos.y + a.pos.y) * 0.5f, (b.pos.z + a.pos.z) * 0.5f);
     }
     ((MeshExt*)this)->compute_face_normals();
@@ -2275,30 +2275,30 @@ void PolyMesh::load(stream_base* s)
     s->r_int(&n1);
     MVert v;
     v.flag = 0;
-    c.verts.resize(n1, v);
+    verts.resize(n1, v);
     for (int i = 0; i < n1; i++) {
-        MVert* p = &c.verts[i];
+        MVert* p = &verts[i];
         s->r_float(&p->pos.x).r_float(&p->pos.y).r_float(&p->pos.z);
     }
     s->r_int(&n2);
     MEdge e;
-    c.edges.resize(n2, e);
+    edges.resize(n2, e);
     for (int i = 0; i < n2; i++) {
-        s->r_int(&c.edges[i].nfaces);
-        s->r_int(&c.edges[i].v0);
-        s->r_int(&c.edges[i].v1);
-        s->r_int(&c.edges[i].face[0]);
-        s->r_int(&c.edges[i].face[1]);
+        s->r_int(&edges[i].nfaces);
+        s->r_int(&edges[i].v0);
+        s->r_int(&edges[i].v1);
+        s->r_int(&edges[i].face[0]);
+        s->r_int(&edges[i].face[1]);
     }
     s->r_int(&n3);
-    c.faces.resize(n3);
+    faces.resize(n3);
     for (int i = 0; i < n3; i++) {
-        s->r_int(&c.faces[i].n);
-        for (int j = 0; j < c.faces[i].n; j++)
-            s->r_int(&c.faces[i].vid[j]);
-        for (int j = 0; j < c.faces[i].n; j++)
-            s->r_int(&c.faces[i].eid[j]);
-        s->r_int(&c.faces[i].f5c);
+        s->r_int(&faces[i].n);
+        for (int j = 0; j < faces[i].n; j++)
+            s->r_int(&faces[i].vid[j]);
+        for (int j = 0; j < faces[i].n; j++)
+            s->r_int(&faces[i].eid[j]);
+        s->r_int(&faces[i].f5c);
     }
 }
 
@@ -2315,8 +2315,8 @@ int PolyMesh::add_edge(int a, int b)
     e.crease[0] = 1.0f;
     e.crease[1] = 1.0f;
     e.v1 = b;
-    c.edges.push_back(e);
-    return (int)c.edges.size() - 1;
+    edges.push_back(e);
+    return (int)edges.size() - 1;
 }
 
 // @ 0x4784d0
@@ -2326,13 +2326,13 @@ int PolyMesh::add_face(int n, int v0, int v1, int v2, int v3, int e0, int e1, in
     MPoly f(raw);
     f.n = n;
     f.vid[0] = v0; f.vid[1] = v1; f.vid[2] = v2; f.vid[3] = v3;
-    f.f0 = 0;
+    f.stamp = 0;
     f.eid[0] = e0; f.eid[1] = e1;
     f.f5c = 0;
     f.f60 = 0;
     f.eid[2] = e2; f.eid[3] = e3;
-    c.faces.push_back(f);
-    return (int)c.faces.size() - 1;
+    faces.push_back(f);
+    return (int)faces.size() - 1;
 }
 
 // @ 0x478580
@@ -2340,9 +2340,9 @@ void PolyMesh::clear()
 {
     MVert v;
     v.flag = 0;
-    c.verts.resize(0, v);
-    c.edges.resize(0);
-    c.faces.resize(0);
+    verts.resize(0, v);
+    edges.resize(0);
+    faces.resize(0);
 }
 
 // @ 0x4785e0
@@ -2358,7 +2358,7 @@ void PolyMesh::build(HeightField* hf, int step_)
             v.flag = 0;
             v.pos = vector4((float)(step * ix + 0xc) * hf->cell, (float)(step * iy + 0xc) * hf->cell,
                             hf->cols[step * ix + 0xc][step * iy + 0xc].h + 0.4f);
-            c.verts.push_back(v);
+            verts.push_back(v);
         }
     }
     for (int r = 0; r < ny; r++)

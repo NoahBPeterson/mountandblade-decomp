@@ -8,7 +8,11 @@
 #define TERRAIN_B_POLY_MESH_H
 #include <stddef.h>
 #include <vector>
+#include <queue>
+#include <algorithm>
+#include <functional>
 #include "../../rgl/rgl_math.h"
+#include "../hnode.h"
 
 using rgl::vector4;
 using rgl::matrix;
@@ -34,7 +38,8 @@ struct MEdge {
     int nfaces;                 // +0x10 (0x470920)
     char flag;                  // +0x14
     char pad15[3];
-    float crease[3];            // +0x18 per adjacent polygon (0x470750 writes crease[j])
+    float crease[3];            // +0x18 per adjacent polygon (0x470750 writes crease[j]); the path search reads crease[0] / crease[1]
+                                //       as the portal's clearance seen from face[0] / from the other side (0x444c50)
     vector4 mid;                // +0x24 midpoint (0x470a00)
     MEdge()
     {
@@ -50,10 +55,10 @@ struct MEdge {
 // 0x64-byte polygon (up to four corners). The default constructor is the E100() of vector<>::resize(n) (0x4775a0,
 // 0x477ca0): eight ints -100000 over vid/eid.
 struct MPoly {
-    int f0;                     // +0x00 (0x477ca0 zeroes)
-    int pad4;
-    vector4 centroid;           // +0x08 (0x470a00)
-    vector4 normal;             // +0x18 (0x4705e0)
+    int stamp;                  // +0x00 visit stamp of the path search, compared with PolyMesh::stamp (0x439900; 0x477ca0 zeroes)
+    int parent;                 // +0x04 face the search came from (0x444c50, 0x4452f0)
+    vector4 centroid;           // +0x08 (0x470a00; the search's face centre)
+    vector4 normal;             // +0x18 (0x4705e0; nz is the divisor of the height query)
     union {
         struct {
             int vid[4];         // +0x28 corner vertices (0x4705e0, 0x4784d0)
@@ -68,11 +73,15 @@ struct MPoly {
     char pad61[3];
     MPoly()
     {
-        f0 = 0; f5c = 0; f60 = 0; n = 0;
+        stamp = 0; f5c = 0; f60 = 0; n = 0;
         for (int i = 0; i < 8; i++)
             lim[i] = -100000;
     }
     MPoly(raw_t) {}
+    // the path search indexes these through plain pointers (cl unrolls the loops when it sees the array bound)
+    int* vert_p() { return (int*)((char*)this + 0x28); }
+    int* edge_p() { return (int*)((char*)this + 0x38); }
+    int* nbr_p() { return (int*)((char*)this + 0x4c); }
 };
 
 
@@ -90,11 +99,25 @@ struct NavCore {
 
 struct stream_base;
 
-// The mesh object: two header words, the container at +8 (verts +0x18, faces +0x28, edges +0x38) and the grid step.
+// ---- the open list of the path search (agent4/agent_logic.cpp 0x444c50, 0x4452f0): face id, cost so far (g), priority (f);
+// min-heap on f. pop() is expanded inline by the original (cl would not do that for the library member: pop_inl).
+struct PQ : std::priority_queue<hnode, std::vector<hnode>, node_gt> {
+    __forceinline void pop_inl()
+    {
+        std::pop_heap(c.begin(), c.end(), comp);
+        c.pop_back();
+    }
+};
+
+// The mesh object: the nav map of the mission scene (Mission +0x6698) and the mesh editor's polygon mesh. The visit stamp and
+// the search's open list, then the vertex / polygon / edge tables (+0x18 / +0x28 / +0x38) and the grid step.
 struct PolyMesh {
-    int pad0, pad4;
-    NavCore c;                                  // +8
-    char pad70[0x90 - 0x70];
+    int stamp;                                  // +0x00 current visit stamp (0x439410)
+    PQ open;                                    // +0x04 std::priority_queue (vector +4..0x13, comparator +0x14) (0x444c50)
+    std::vector<MVert> verts;                   // +0x18
+    std::vector<MPoly> faces;                   // +0x28
+    std::vector<MEdge> edges;                   // +0x38
+    char pad48[0x90 - 0x48];                    // (mesh editor / map-screen state; the nav map never reads it)
     int step;                                   // +0x90 (0x4785e0)
     void compute_face_normals();                // 0x4705e0
     void compute_edge_creases();                // 0x470750
@@ -105,6 +128,14 @@ struct PolyMesh {
     int add_face(int n, int v0, int v1, int v2, int v3, int e0, int e1, int e2, int e3);   // 0x4784d0
     void clear();                               // 0x478580
     void build(struct HeightField* hf, int step_);     // 0x4785e0
+    // ---- the navigation queries (agent2 / agent4) ----
+    bool inside(const int* face, const float* p);       // 0x4391d0 point inside the polygon (xy)
+    float dist(const int* face, const float* p);        // 0x439280 xy distance outside the polygon + |dz| to its plane
+    void next_stamp();                                  // 0x439410
+    bool trace(int face, vector4 from, int end_face, const float* to, int* max_steps);   // 0x439460 (vector4 by value)
+    bool find_path(int from, int to, int* out_faces, vector4* out_pos, int* out_count, int* out_steps,
+                   const float* w0, const float* w1, const float* w2);      // 0x444c50 (agent4/agent_logic.cpp)
+    bool reachable(const int* from, const int* to, const int* max_steps);   // 0x4452f0 (agent4/agent_logic.cpp)
 };
 
 // The same two functions seen from outside their object: their callers were compiled without the bodies, so cl must

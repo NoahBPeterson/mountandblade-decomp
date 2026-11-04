@@ -1318,7 +1318,7 @@
   },
   "004391d0": {
    "verdict": "DIFF",
-   "symbol": "?inside@NavMesh@@QAE_NPBHPBM@Z",
+   "symbol": "?inside@PolyMesh@@QAE_NPBHPBM@Z",
    "insns": 69,
    "ours": 71,
    "unverified": 0,
@@ -1328,7 +1328,7 @@
   },
   "00439280": {
    "verdict": "DIFF",
-   "symbol": "?dist@NavMesh@@QAEMPBHPBM@Z",
+   "symbol": "?dist@PolyMesh@@QAEMPBHPBM@Z",
    "insns": 130,
    "ours": 128,
    "unverified": 0,
@@ -1338,7 +1338,7 @@
   },
   "00439460": {
    "verdict": "DIFF",
-   "symbol": "?trace@NavMesh@@QAE_NHUvector4@rgl@@HPBMPAH@Z",
+   "symbol": "?trace@PolyMesh@@QAE_NHUvector4@rgl@@HPBMPAH@Z",
    "insns": 179,
    "ours": 181,
    "unverified": 0,
@@ -1838,7 +1838,7 @@
   },
   "00444c50": {
    "verdict": "DIFF",
-   "symbol": "?find_path@NavMesh@@QAE_NHHPAHPAUvector4@rgl@@00PBM22@Z",
+   "symbol": "?find_path@PolyMesh@@QAE_NHHPAHPAUvector4@rgl@@00PBM22@Z",
    "insns": 534,
    "ours": 534,
    "unverified": 6,

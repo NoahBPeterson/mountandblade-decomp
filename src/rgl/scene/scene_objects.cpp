@@ -292,9 +292,9 @@ void world::reset()
         ground = 0;
     }
     fb4 = 0;
-    if (p64) {
-        delete p64;
-        p64 = 0;
+    if (hf) {
+        delete hf;
+        hf = 0;
     }
     loaded = false;
 }

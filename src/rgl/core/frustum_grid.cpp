@@ -80,13 +80,12 @@ void frustum::build_planes()
 }
 
 // @ 0x41ecc0
-world_aux::~world_aux()
+HeightField::~HeightField()
 {
-    cell_rows_view* t = (cell_rows_view*)this;
-    if (t->rows) {
-        for (int i = 0; i <= t->last; i++)
-            delete[] t->rows[i];
-        delete[] t->rows;
+    if (cols) {
+        for (int i = 0; i <= w; i++)
+            delete[] cols[i];
+        delete[] cols;
     }
 }
 

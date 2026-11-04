@@ -1,4 +1,4 @@
-../src/game/agent4/agent_logic.cpp  ?reachable@NavMesh@@QAE_NPBH00@Z  004452f0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?reachable@PolyMesh@@QAE_NPBH00@Z  004452f0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ??$_Ucopy@PAUE56@@@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEPAUE56@@PAU2@00@Z  00445700  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?goal_near_for_class@Agent@@QAEXPBUvector4@rgl@@PBM@Z  00445850  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?play_class_sound@Agent@@QAEXPBH@Z  004459c0  /O2 /MT /Gy /TP

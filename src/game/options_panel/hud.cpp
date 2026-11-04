@@ -24,8 +24,8 @@ bool EditMesh::on_selection_changed()
 {
     int idx[4];
     int cur = 0;
-    for (unsigned i = 0; i < c.verts.size(); i++) {
-        if (c.verts[i].pad14 != 0) {
+    for (unsigned i = 0; i < verts.size(); i++) {
+        if (verts[i].pad14 != 0) {
             if (cur < 4)
                 idx[cur] = (int)i;
             cur++;
@@ -37,10 +37,10 @@ bool EditMesh::on_selection_changed()
         return false;
 
     OwnedIntVec found;
-    for (cur = 0; (unsigned)cur < c.faces.size(); cur++) {
-        int n = c.faces[cur].n;
+    for (cur = 0; (unsigned)cur < faces.size(); cur++) {
+        int n = faces[cur].n;
         int cnt = 0;
-        const int* p = c.faces[cur].vid;
+        const int* p = faces[cur].vid;
         for (int j = 0; j < n; j++) {
             int v = *p++;
             if (v == idx[0]) cnt++;
@@ -56,7 +56,7 @@ bool EditMesh::on_selection_changed()
 
     float nx = 0.0f, ny = 0.0f, nz = 0.0f;
     for (unsigned i = 0; i < found.size(); i++) {
-        MPoly& f = c.faces[found[i]];
+        MPoly& f = faces[found[i]];
         nx = nx + f.normal.x;
         ny = ny + f.normal.y;
         nz = nz + f.normal.z;
@@ -72,7 +72,7 @@ bool EditMesh::on_selection_changed()
         nx = 0.0f; ny = 1.0f; nz = 0.0f;
     }
 
-    const MVert* v = &c.verts[0];   // the original indexes from the first vertex (verts begin loaded once)
+    const MVert* v = &verts[0];   // the original indexes from the first vertex (verts begin loaded once)
     Vec4 a;
     a = Vec4(v[idx[1]].pos.x - v[idx[0]].pos.x, v[idx[1]].pos.y - v[idx[0]].pos.y, v[idx[1]].pos.z - v[idx[0]].pos.z);
     Vec4 b;
@@ -105,7 +105,7 @@ bool EditMesh::on_selection_changed()
         return false;
 
     char ok = 1;
-    unsigned nfaces = c.faces.size();
+    unsigned nfaces = faces.size();
     for (int i = 0; i < 3; i++) {
         if (cls[i] != 1)
             continue;
@@ -119,8 +119,8 @@ bool EditMesh::on_selection_changed()
                 tri[2] = idx[j + 1];
                 ok = add_triangle(tri);
                 if (!ok) {
-                    if (nfaces < c.faces.size()) {
-                        graph(this)->remove_face((int)c.faces.size() - 1);
+                    if (nfaces < faces.size()) {
+                        graph(this)->remove_face((int)faces.size() - 1);
                         build_adjacency();
                     }
                     return false;
@@ -136,8 +136,8 @@ bool EditMesh::on_selection_changed()
             sel = idx[2];
         else
             sel = idx[3];
-        for (unsigned i = 0; i < c.edges.size(); i++) {
-            MEdge& e = c.edges[i];
+        for (unsigned i = 0; i < edges.size(); i++) {
+            MEdge& e = edges[i];
             if ((e.v0 == idx[0] && e.v1 == sel) || (e.v1 == idx[0] && e.v0 == sel))
                 break;
         }
