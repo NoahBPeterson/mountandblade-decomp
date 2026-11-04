@@ -27,7 +27,7 @@
 #include "../view_state.h"
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
-#include "../config_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_globals.h"      // UI / core globals
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
