@@ -15,6 +15,7 @@
 #include "../tstring.h"
 #include "./ui_common.h"
 #include "./item_ref.h"
+#include "../../include/timer.h"
 #include "../../include/clock_table.h"   // g_ticks (elapsed() below)
 #include "../../rgl/mesh.h"
 
@@ -83,12 +84,7 @@ struct MissionUi {
     // that add it, each with its own function: UiC 0x497d10, UiD 0x498390, progress_bar 0x4e3fb0, NodeA 0x48ef40.
 
     // six (clock index, start stamp) track pairs; the clock index selects an entry of g_ticks
-    int clock0; __int64 t0;                 // +0x08 / +0x10  0x488560, 0x48ae20
-    int clock1; __int64 t1;                 // +0x18 / +0x20  0x4885a0
-    int clock2; __int64 t2;                 // +0x28 / +0x30  0x4885e0
-    int clock3; __int64 t3;                 // +0x38 / +0x40  0x488620
-    int clock4; __int64 t4;                 // +0x48 / +0x50  0x488660
-    int clock5; __int64 t5;                 // +0x58 / +0x60  0x4886c0
+    Timer tm[6];                            // +0x08 + 0x10*i (clock index, start stamp)  0x488560..0x4886c0, 0x48ae20
     float periodA, periodB, periodC, periodD, periodE, periodF;   // +0x68..+0x7c  0x488560..0x4886c0 (default -1.0: 0x48ae20)
     float f80, f84;                         // +0x80 0x4886c0
     float f88, f8c;                         // +0x88 0x488660
@@ -163,9 +159,7 @@ struct PairStack {
 struct TimerChild {
     float period;                           // +0x00 seconds between plays; < -1: play when round(period) == the request
     snd_channel ch;                         // +0x04
-    volatile int clock;                     // +0x20 index into g_ticks (re-read, never CSE'd: 0x488e90)
-    int pad24;
-    __int64 last;                           // +0x28 last play time
+    Timer last;                             // +0x20 clock index into g_ticks, +0x28 last play time (0x488e90)
     void tick(int idx);                     // 0x488e90
 };
 #include "./timer_list.h"                 // TimerList: count +0, items +4, update 0x48add0

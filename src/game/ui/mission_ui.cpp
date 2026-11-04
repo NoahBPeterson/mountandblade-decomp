@@ -58,14 +58,14 @@ static __forceinline int rnd(const float* p)
 
 struct Blob80 { int v[32]; };               // the party's 0x80-byte companion records (0x489540)
 
-extern "C" void _ReadWriteBarrier(void);    // compiler barrier (no code emitted): pins the period store ahead of the g_ticks load
+
+static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart (0x432bf0) as the callers inline it
 
 // @ 0x488560
 void MissionUi::set_a(float a, int b)
 {
     periodA = a;
-    _ReadWriteBarrier();
-    t0 = g_ticks[clock0];
+    restart_inl(tm[0]);
     valA = b;
     srcA = color14c;
     c0 = 1;
@@ -75,8 +75,7 @@ void MissionUi::set_a(float a, int b)
 void MissionUi::set_b(float a, int b)
 {
     periodB = a;
-    _ReadWriteBarrier();
-    t1 = g_ticks[clock1];
+    restart_inl(tm[1]);
     valB = b;
     srcB = color14c;
     c1 = 1;
@@ -86,8 +85,7 @@ void MissionUi::set_b(float a, int b)
 void MissionUi::set_c(float a, int b)
 {
     periodC = a;
-    _ReadWriteBarrier();
-    t2 = g_ticks[clock2];
+    restart_inl(tm[2]);
     valC = b;
     srcC = color150;
     c2 = 1;
@@ -97,8 +95,7 @@ void MissionUi::set_c(float a, int b)
 void MissionUi::set_d(float a, int b)
 {
     periodD = a;
-    _ReadWriteBarrier();
-    t3 = g_ticks[clock3];
+    restart_inl(tm[3]);
     valD = b;
     srcD = color150;
     c3 = 1;
@@ -108,8 +105,7 @@ void MissionUi::set_d(float a, int b)
 void MissionUi::set_e(float a, float* p)
 {
     periodE = a;
-    _ReadWriteBarrier();
-    t4 = g_ticks[clock4];
+    restart_inl(tm[4]);
     f88 = p[0];
     f8c = p[1];
     a8 = fD8;
@@ -121,8 +117,7 @@ void MissionUi::set_e(float a, float* p)
 void MissionUi::set_f(float a, float* p)
 {
     periodF = a;
-    _ReadWriteBarrier();
-    t5 = g_ticks[clock5];
+    restart_inl(tm[5]);
     f80 = p[0];
     f84 = p[1];
     a0 = fE0;
@@ -499,9 +494,9 @@ void TimerChild::tick(int idx)
             ((DialogBlock*)&ch)->emit(idx, 0, &zero, buf, (unsigned)-1);   // 0x4b09e0
         }
     } else {
-        long long d = g_ticks[clock] - last;
+        long long d = g_ticks[last.clock] - last.start;
         if (!((float)d * 1e-5f < period) && idx >= 0) {
-            last = g_ticks[clock];
+            restart_inl(last);
             ch.play(idx);
         }
     }
@@ -1317,41 +1312,13 @@ void Mission::get_frame(rgl::matrix* out)
         }
         float s = 1.0f - t;
         rgl::matrix m;
-        // each row is two scaled copies added lane by lane; the original rounds the y and z products to float
-        // (stack temporaries, modelled with volatile) while the x lane stays in the x87 register. The 4th lane of
-        // r is never written: the copy into the matrix carries a stale stack dword.
-        {
-            volatile float pay, paz, pby, pbz;
-            rgl::vector4 r;
-            float pax = frame_a.o.x * s; pay = frame_a.o.y * s; paz = frame_a.o.z * s;
-            float pbx = frame_b.o.x * t; pby = frame_b.o.y * t; pbz = frame_b.o.z * t;
-            r.x = pbx + pax; r.y = pby + pay; r.z = pbz + paz;
-            m.o = r;
-        }
-        {
-            volatile float pay, paz, pby, pbz;
-            rgl::vector4 r;
-            float pax = frame_a.f.x * s; pay = frame_a.f.y * s; paz = frame_a.f.z * s;
-            float pbx = frame_b.f.x * t; pby = frame_b.f.y * t; pbz = frame_b.f.z * t;
-            r.x = pbx + pax; r.y = pby + pay; r.z = pbz + paz;
-            m.f = r;
-        }
-        {
-            volatile float pay, paz, pby, pbz;
-            rgl::vector4 r;
-            float pax = frame_a.u.x * s; pay = frame_a.u.y * s; paz = frame_a.u.z * s;
-            float pbx = frame_b.u.x * t; pby = frame_b.u.y * t; pbz = frame_b.u.z * t;
-            r.x = pbx + pax; r.y = pby + pay; r.z = pbz + paz;
-            m.u = r;
-        }
-        {
-            volatile float pay, paz, pby, pbz;
-            rgl::vector4 r;
-            float pax = frame_a.s.x * s; pay = frame_a.s.y * s; paz = frame_a.s.z * s;
-            float pbx = frame_b.s.x * t; pby = frame_b.s.y * t; pbz = frame_b.s.z * t;
-            r.x = pbx + pax; r.y = pby + pay; r.z = pbz + paz;
-            m.s = r;
-        }
+        // each row is two scaled copies added lane by lane (the vector4 operators return their products through
+        // stack temporaries, which rounds them to float). The 4th lane of the sum is never written: the copy into
+        // the matrix carries a stale stack dword.
+        m.o = frame_b.o * t + frame_a.o * s;
+        m.f = frame_b.f * t + frame_a.f * s;
+        m.u = frame_b.u * t + frame_a.u * s;
+        m.s = frame_b.s * t + frame_a.s * s;
         m.orthonormalize();
         *out = m;
         return;
@@ -1627,12 +1594,12 @@ MissionUi::MissionUi()
     float c = 0.0f;
     float d = 1.0f;
 
-    clock0 = 0; t0 = g_ticks[0];
-    clock1 = 0; t1 = g_ticks[0];
-    clock2 = 0; t2 = g_ticks[0];
-    clock3 = 0; t3 = g_ticks[0];
-    clock4 = 0; t4 = g_ticks[0];
-    clock5 = 0; t5 = g_ticks[0];
+    tm[0].clock = 0; tm[0].start = g_ticks[0];
+    tm[1].clock = 0; tm[1].start = g_ticks[0];
+    tm[2].clock = 0; tm[2].start = g_ticks[0];
+    tm[3].clock = 0; tm[3].start = g_ticks[0];
+    tm[4].clock = 0; tm[4].start = g_ticks[0];
+    tm[5].clock = 0; tm[5].start = g_ticks[0];
     // name's tstring constructor runs implicitly (0x42bbd0)
     fE0 = 0; fE4 = 0; fE8 = 0; fEC = 0;
     f100 = 1;

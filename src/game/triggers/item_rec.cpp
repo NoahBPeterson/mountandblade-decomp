@@ -10,35 +10,30 @@
 
 // A compiler fence (no code): pins the store order of the base ctor's id store, the derived vptr store and
 // the zero/load stores, which cl 13.10 otherwise schedules differently from the original (docs/codegen.md 10.9).
-extern "C" void _ReadWriteBarrier(void);
 
 // @ 0x4ce870
-ItemRec::ItemRec()
+ItemRec::ItemRec() : head_rec(no_w04())
 {
-    _ReadWriteBarrier();
     w04 = 0;
     owned.begin = 0;
     owned.end = 0;
     owned.cap = 0;
-    clock = 0;
-    stamp = g_ticks[0];
-    _ReadWriteBarrier();
+    tm.clock = 0;
+    tm.start = g_ticks[0];
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
 }
 
 // @ 0x4ce8d0
-ItemRec2::ItemRec2()
+ItemRec2::ItemRec2() : head_rec(no_w04())
 {
-    _ReadWriteBarrier();
     w04 = 0;
     owned.begin = 0;
     owned.end = 0;
     owned.cap = 0;
-    clock = 0;
-    stamp = g_ticks[0];
-    _ReadWriteBarrier();
+    tm.clock = 0;
+    tm.start = g_ticks[0];
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;

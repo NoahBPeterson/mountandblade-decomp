@@ -17,6 +17,7 @@
 #ifndef GAME_TRIGGERS_ITEM_REC_H
 #define GAME_TRIGGERS_ITEM_REC_H
 #include "../head_rec.h"
+#include "../../include/timer.h"
 struct ContainerBase;
 struct MissionUi;
 
@@ -35,9 +36,7 @@ struct ItemRec : head_rec {                     // vtable 0x596124 (the main men
     owned_block owned;                          // +0x30
     int f40;                                    // +0x40 -1
     int pad44;
-    int clock;                                  // +0x48 clock index (0)
-    int pad4c;
-    __int64 stamp;                              // +0x50 g_ticks[0]
+    Timer tm;                                   // +0x48 clock index (0), +0x50 stamp g_ticks[0]
     float f58;                                  // +0x58 1.0f
     int f5c;                                    // +0x5c 0
     MissionUi* row_tutorial;                    // +0x60 the main menu's rows (frame_update 0x4d5290 tests their used flags)
@@ -64,9 +63,7 @@ struct ItemRec2 : head_rec {                    // vtable 0x596148 (the escape m
     owned_block owned;
     int f40;
     int pad44;
-    int clock;
-    int pad4c;
-    __int64 stamp;
+    Timer tm;                                   // +0x48
     float f58;
     int f5c;
     MissionUi* row0;                            // +0x60

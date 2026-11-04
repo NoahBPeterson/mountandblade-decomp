@@ -93,9 +93,7 @@ void __fastcall RowModel::erase_all(int unused)   // 0x4d10f0
 #include "../../include/clock_table.h"
 #include "../ui_globals.h"      // UI / core globals
 
-struct Timer {
-    float elapsed() const;   // 0x432c10 (seconds since the record was touched; include/timer.h)
-};
+#include "../../include/timer.h"   // Timer (elapsed 0x432c10: seconds since the record was touched)
 
 
 // 0x4babf0 is a file-local helper: cl's register convention for `static` functions hands it its out

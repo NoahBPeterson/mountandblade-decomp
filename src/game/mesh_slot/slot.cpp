@@ -235,12 +235,12 @@ extern const float g_zero;              // 0x549ca8 0.0f
 void MissionUi::animate(int)
 {
 
-    float e0 = (float)(g_ticks[clock0] - t0) * 1e-5f;
-    float e1 = (float)(g_ticks[clock1] - t1) * 1e-5f;
-    float e2 = (float)(g_ticks[clock2] - t2) * 1e-5f;
-    float e3 = (float)(g_ticks[clock3] - t3) * 1e-5f;
-    float e4 = (float)(g_ticks[clock4] - t4) * 1e-5f;
-    float e5 = (float)(g_ticks[clock5] - t5) * 1e-5f;
+    float e0 = (float)(g_ticks[tm[0].clock] - tm[0].start) * 1e-5f;
+    float e1 = (float)(g_ticks[tm[1].clock] - tm[1].start) * 1e-5f;
+    float e2 = (float)(g_ticks[tm[2].clock] - tm[2].start) * 1e-5f;
+    float e3 = (float)(g_ticks[tm[3].clock] - tm[3].start) * 1e-5f;
+    float e4 = (float)(g_ticks[tm[4].clock] - tm[4].start) * 1e-5f;
+    float e5 = (float)(g_ticks[tm[5].clock] - tm[5].start) * 1e-5f;
 
     bool changed = false;
 
@@ -249,12 +249,12 @@ void MissionUi::animate(int)
 
     // --- track E (+0x78): fade +0xa8/+0xac toward +0x88/+0x8c, hand the scaled pair to +0x6c
     if (e4 < periodE) {
-        // the original spills the fDC partial products as floats (rounded) and reloads them
-        volatile float q = e4 * f8c;
-        volatile float sp = (periodE - e4) * ac;
-        volatile float sum = sp + q;
+        float part[3];                          // the fDC partial products: stack floats (rounded), not x87 temporaries
+        part[0] = e4 * f8c;
+        part[1] = (periodE - e4) * ac;
         fD8 = (e4 * f88 + (periodE - e4) * a8) * (g_one / periodE);
-        fDC = sum * (g_one / periodE);
+        part[2] = part[1] + part[0];
+        fDC = part[2] * (g_one / periodE);
         pair[0] = fD8 * g_k002;
         pair[1] = fDC * g_k002;
         set_size(pair);

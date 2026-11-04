@@ -5,8 +5,8 @@
 //       by class and modifier bit, and the modifier-adjusted item stats of an (item, modifier) pair. Names
 //       provisional. Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP.
 //
-// Codegen levers found here: the snd_slot state/clock-index fields behave as volatile (the original re-reads them
-// and never CSEs g_ticks[clk]); `float secs = r * gap * c1; (int)(secs * c2)` keeps two multiplies where one
+// Codegen levers found here: the slot's three Timer members are reached through Timer& (Timer::restart inlined), which
+// keeps the stamp stores and clock-index loads in source order; `float secs = r * gap * c1; (int)(secs * c2)` keeps two multiplies where one
 // expression would be reassociated.
 //-----------------------------------------------------------------------------
 #include <stdlib.h>
@@ -17,36 +17,40 @@
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/clock_table.h"
 
+static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart (0x432bf0) as the callers inline it
+
+static __forceinline void set_delay_inl(Timer& t, float seconds) { t.start = g_ticks[t.clock] - (int)(seconds * 100000.0f); }     // Timer::set_delay (0x42cd20) as randomize inlines it
+
 // @ 0x4625d0
 void snd_slot::update(int arg)
 {
     if (state == 2) {
-        if (hold_time <= (float)(g_ticks[clk_hold] - t_hold) * 1e-5f) {
+        if (hold_time <= (float)(g_ticks[hold.clock] - hold.start) * 1e-5f) {
             state = 0;
-            t_gap = g_ticks[clk_gap];
+            restart_inl(gap);
         }
     }
     if (state == 0) {
         if (min_gap <= -0.1f) {
             if (round_float(&min_gap) == arg && first.play(arg)) {
                 second.play(arg);
-                t_hold = g_ticks[clk_hold];
+                restart_inl(hold);
                 state = 2;
                 return;
             }
         } else if (arg >= 0) {
-            if ((float)(g_ticks[clk_gap] - t_gap) * 1e-5f < min_gap) return;
-            t_gap = g_ticks[clk_gap];
+            if ((float)(g_ticks[gap.clock] - gap.start) * 1e-5f < min_gap) return;
+            restart_inl(gap);
             if (first.play(arg)) {
-                t_play = g_ticks[clk_play];
+                restart_inl(play);
                 state = 1;
             }
         }
     }
     if (state != 1) return;
-    if (!(play_time <= (float)(g_ticks[clk_play] - t_play) * 1e-5f)) return;
+    if (!(play_time <= (float)(g_ticks[play.clock] - play.start) * 1e-5f)) return;
     second.play(arg);
-    t_hold = g_ticks[clk_hold];
+    restart_inl(hold);
     state = 2;
 }
 
@@ -64,7 +68,7 @@ void snd_bank::randomize()
         snd_slot* s = &slots[i];
         int r = rand() % 15817;
         float secs = (float)r * s->min_gap * 6.32231167e-05f;
-        s->t_gap = g_ticks[s->clk_gap] - (int)(secs * 100000.0f);
+        set_delay_inl(s->gap, secs);
     }
 }
 

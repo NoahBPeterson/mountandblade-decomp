@@ -1946,9 +1946,7 @@ struct Shape {
     void build_spikes(rgl::mesh*);   // 0x4e65e0
     void polygon_to_mesh(rgl::mesh*);   // 0x4e75a0
 };
-struct Timer {
-    float elapsed() const;   // 0x432c10
-};
+#include "../../include/timer.h"   // Timer (elapsed 0x432c10)
 struct WindowMgrW {
     void open(int);   // 0x494260
     void set_state(int);   // 0x495700

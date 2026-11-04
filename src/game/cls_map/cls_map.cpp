@@ -1411,16 +1411,16 @@ UiA* build_row(ContainerBase* parent, const tstring* key, float x, float y, floa
     return p;
 }
 
+static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart (0x432bf0) as the callers inline it
+
 // @ 0x4dd9e0
 void BlockOwner::activate()
 {
     g_presentation = (Presentation*)this;
     if (index >= 0) {
         f14 = (*(MenuKindRec**)&g_presentations)[index].a;
-        int clk = timer.clock;
-        timer.start = g_ticks[clk];
-        int idx2 = *(volatile int*)(&index);
-        (*(MenuKindRec**)&g_presentations)[idx2].sound.play(-60);
+        restart_inl(timer);
+        (*(MenuKindRec**)&g_presentations)[index].sound.play(-60);
     } else {
         f14 = 0;
     }
