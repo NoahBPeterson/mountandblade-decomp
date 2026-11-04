@@ -498,6 +498,12 @@ def main():
 
     # trap gate: glue.py points the original's data at int3 traps for code we do not define. That is only acceptable
     # where nothing we link can reach the slot (tools/relink/trap_report.py has the proof; docs/standalone_traps.md)
+    import glue as GL
+    dead = [("literal %s" % l["value"]) for l in lits if GL.in_dead_range(int(l["value"], 16))]
+    dead += ["vtable %s" % o for e in rmap["vtables"].values() for o in e["orig"] if GL.in_dead_range(int(o, 16))]
+    if dead:
+        sys.exit("dead-range gate: %d references into original data the glue does not copy (glue.py DEAD_RANGES): %s" % (
+            len(dead), ", ".join(dead[:12])))
     import trap_report as TR
     ntraps, reach = TR.gate(os.path.join(out, "glue", "glue.json"), rmap, map_path, lits)
     if reach:

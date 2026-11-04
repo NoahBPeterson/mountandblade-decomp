@@ -45,6 +45,24 @@ DATA = (".data$mb", 0x5a8000, 0x5d7080)
 BSS = (".bss$mb", 0x5d7080, 0x8ee5b94)
 TEXT_LO, TEXT_HI = 0x401000, 0x548578
 IAT_LO, IAT_HI = 0x549000, 0x5494c8
+# Original data our exe replaces and never reads: not copied (left zero). The CRT initializer / terminator tables are
+# the .CRT$XCA..XCZ, XIA..XIZ, XPA..XPZ, XTA..XTZ ranges at the start of .data (0x5a8000..0x5a80f4: the game's
+# static_init stubs, then libcmt's own entries). Our exe runs the tables the linker builds from our objects (static_init.cpp's
+# .CRT$XCU) and libcmt's, whose __xc_a/__xi_a/... are libcmt symbols, so nothing of ours addresses the copy. build.py
+# and glue.py refuse to link when a data label, a pointer in the remaining copy, a literal address or a vtable root
+# reaches a dead range (check_dead_ranges), the way the trap gate does for traps.
+DEAD_RANGES = (
+    (0x5a8000, 0x5a80f4, "CRT initializer/terminator tables .CRT$XCA..XTZ"),
+)
+
+
+# dwords in the copy that equal a dead-range address by accident: 0x5d3ef4 sits inside a table of 16-bit entries
+# (80 00 4f 00 80 50 ...: bytes 0x5a 0x00 0x80 0x00 here), not a pointer
+NOT_POINTERS = (0x5d3ef4,)
+
+
+def in_dead_range(va):
+    return next((r for r in DEAD_RANGES if r[0] <= va < r[1]), None)
 
 
 
@@ -421,6 +439,16 @@ def main():
     secno[BSS[0]] = obj.section(BSS[0], SCN_BSS, None, BSS[2] - BSS[1])
     traps = {}
     trap_code = bytearray()
+    for lo, hi, _why in DEAD_RANGES:
+        sec = section_of(lo)
+        obj.sections[secno[sec[0]] - 1]["data"][lo - sec[1]:hi - sec[1]] = b"\0" * (hi - lo)
+    reach = []
+    for n, (sec, off) in sorted(labels.items()):
+        if in_dead_range(sec[1] + off):
+            reach.append("label %s at %08x" % (n, sec[1] + off))
+    for v, n in our_data.items():
+        if in_dead_range(v):
+            reach.append("definition %s at %08x" % (n, v))
     for sec in (RDATA, DATA):
         s = obj.sections[secno[sec[0]] - 1]
         data = s["data"]
@@ -431,6 +459,8 @@ def main():
                 continue
             v = struct.unpack_from("<I", data, off)[0]
             tsec = section_of(v)
+            if tsec and in_dead_range(v) and va_here not in NOT_POINTERS:
+                reach.append("pointer at %08x to %08x" % (va_here, v))
             if tsec:
                 if v in our_data:
                     struct.pack_into("<I", data, off, 0)
@@ -476,6 +506,9 @@ def main():
           % (len(unres), len(labels), len(aliases), len(report["unresolved"]), len(report["conflicts"])))
     print("pointers relocated: %s; traps for %d code addresses without a definition" % (report["pointers"], len(traps)))
     bad = 0
+    for r in reach:
+        print("DEAD RANGE REACHED: %s (glue.py DEAD_RANGES: the range is not copied)" % r)
+        bad = 1
     for n, vs in sorted(report["conflicts"].items()):
         print("CONFLICT: %s resolves to %s (fix the declaration or annotation that gives the wrong address)" % (n, ", ".join(vs)))
         bad = 1
