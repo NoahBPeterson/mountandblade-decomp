@@ -12,7 +12,8 @@
 #define MB_CAMERA_CLASS_H
 #include <stddef.h>
 #include "../../include/frustum.h"
-#include "../ui/container.h"          // ContainerBase: the view is a container (MissionUi + the child vector at +0x178)
+#include "../ui/container.h"
+#include "../ui/ui_widgets.h"            // UiD: the scroll bars the list widgets keep in follow[]          // ContainerBase: the view is a container (MissionUi + the child vector at +0x178)
 
 struct float2 {                                 // a 2-float vector (position/displacement)
     float x, y;
@@ -24,8 +25,8 @@ struct float2 {                                 // a 2-float vector (position/di
 struct Camera : ContainerBase {
     rgl::scene   scene;                         // +0x188  (0x429740 / 0x41f4e0)
     rgl::frustum fr;                            // +0x360  (0x41ef60)
-    MissionUi* follow[2];                       // +0x480  the two follow objects (the list widgets keep their scroll bar in follow[1], +0x484)
-    void*   follow_shape[2];                    // +0x488  their shapes
+    UiD*    follow[2];                          // +0x480  the two follow objects (scroll bars; the list widgets keep theirs in follow[1], +0x484)
+    int     slot_on[2];                         // +0x488  whether each is shown (draw 0x488d50 sets them, animate 0x49dfe0 reads them)
     ContainerBase* target;                      // +0x490  the object the view tracks (the list widgets keep their parent / row count here)
     float   shake_x;                            // +0x494
     float   shake_y;                            // +0x498
@@ -39,6 +40,7 @@ struct Camera : ContainerBase {
     virtual void on_child_moved(MissionUi* e);  // +0x5c 0x49df60
     virtual int kind();                         // +0xc0 0x49df30 (7)
     virtual unsigned mask(int a);               // +0xcc 0x49df40 (vtable slot 51)
+    void draw();                                // 0x488d50 (ui/mission_ui.cpp: shows or hides each scroll bar by the target's size, then repositions the target)
 };
 
 // compile-time layout check (VC7.1 has no static_assert)
@@ -46,7 +48,8 @@ struct Camera : ContainerBase {
 MB_CAMERA_ASSERT(scene_off, offsetof(Camera, scene) == 0x188);
 MB_CAMERA_ASSERT(frustum_off, offsetof(Camera, fr) == 0x360);
 MB_CAMERA_ASSERT(follow_off, offsetof(Camera, follow) == 0x480);
-MB_CAMERA_ASSERT(follow1_off, offsetof(Camera, follow) + sizeof(MissionUi*) == 0x484);
+MB_CAMERA_ASSERT(follow1_off, offsetof(Camera, follow) + sizeof(UiD*) == 0x484);
+MB_CAMERA_ASSERT(slot_on_off, offsetof(Camera, slot_on) == 0x488);
 MB_CAMERA_ASSERT(target_off, offsetof(Camera, target) == 0x490);
 MB_CAMERA_ASSERT(flags_off, offsetof(Camera, f104) == 0x104);
 MB_CAMERA_ASSERT(camera_size, sizeof(Camera) == 0x4a8);

@@ -6,7 +6,7 @@
 #define CHAR_SHEET_CS_COMMON_H
 struct tstring;                                                     // (complete in the includer: game/tstring.h, or terrain_page.h's own view)
 
-#include "../ui/ui_widgets.h"                                      // MissionUi, MissionPanel, UiB, UiD: the real classes
+#include "../ui/ui_widgets.h"                                      // MissionUi, Camera, UiB, UiD: the real classes
 #include "../window_mgr.h"                                    // WindowMgrW g_windows (0xa73980): the one definition
 struct FaceRace {                                                   // terrain_b
     void relax(int index, float* values);                           // 0x4735e0

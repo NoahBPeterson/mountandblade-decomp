@@ -383,50 +383,10 @@ struct GameScreen {                                               // the game me
 
 // ---- the game-log text widget and the map-text row renderer ------------------------------------------------------------------
 extern Font* g_font;                                              // 0x5e2934
-#include "../../include/vec_xlen.h"
-struct IntList {                                                  // a VC7.1 vector<int> (alloc slot, first, last, end) as the layout code fills it
-    int alloc;
-    int* first;
-    int* last;
-    int* end;
-    __declspec(noinline) bool buy(unsigned n);                                         // 0x4fd490 (ret 4: the allocation of the vector<int>'s first block)
-    void xlen() { VEC_XLEN_CALL(this); }                          // 0x43e2a0 (std::vector<int>::_Xlen, agent3/agent_combat.cpp)
-    void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }   // the inlined vector release of ~MWidget
-};
+#include "../ui/map_list.h"                                       // IntList, V4List, MapText, MWidget (the game-log list widget)
 // std::vector<int>::push_back called out of line (the original calls the instantiation 0x4fe0b0 where the library would expand it): through its member pointer
 typedef void (std::vector<int>::*VecIntPushBack)(const int&);
 #define VEC_INT_PUSH_BACK(list, val) do { VecIntPushBack pb_ = &std::vector<int>::push_back; (((std::vector<int>*)(list))->*pb_)(val); } while (0)
-struct V4List {                                                   // a VC7.1 vector<vector4>
-    int alloc;
-    vector4* first;
-    vector4* last;
-    vector4* end;
-    struct iterator { vector4* p; iterator() {} };
-    __declspec(noinline) void push_back(const vector4& v);       // 0x4fdff0 (ret 4; called out of line by 0x4fd700, which the optimizer would otherwise expand)
-    __declspec(noinline) iterator insert(iterator where, const vector4& val);          // 0x4fe060 (ret 0xc: the iterator comes back through the hidden pointer)
-    void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }
-};
-struct MapText { int a; float w; };                               // the 8-byte layout result (width, height)
-// The game-log / map-text list widget: vtable 0x5995c0, size 0x1d0 (the slices called it LogWidget and MWidget). It derives from MissionUi in
-// the original, but its destructor calls the base destructor body out of line (0x487c00) where a derived class of the canonical MissionUi would
-// inline the implicit one (the name string's destructor), so the base part is kept as an opaque block that is constructed by 0x48ae20.
-struct MWidget {
-    void* vptr;
-    char body[sizeof(MissionUi) - 4];                             // the MissionUi members (0x4..0x178)
-    MissionUi* U() { return (MissionUi*)this; }
-    V4List rects_a;                                               // +0x178 tag-open rectangles (0x4fd1d0 scans them; 0x4fd700 fills them)
-    V4List rects_b;                                               // +0x188
-    IntList list_c;                                               // +0x198 (0x4fd490 builds it; 0x4fd3d0 clears it)
-    IntList list_d;                                               // +0x1a8
-    IntList list_e;                                               // +0x1b8 the tag index of every rectangle of rects_a
-    int cur;                                                      // +0x1c8 selected spot (-1 = none)
-    int sel;                                                      // +0x1cc
-    MWidget();                                                    // 0x4fd150
-    char on_event(unsigned ev);                                   // 0x4fd1d0
-    void* destroy(unsigned flags);                                // 0x4fd3b0
-    ~MWidget();                                                   // 0x4fd3d0
-    MapText text_rect();                                          // 0x4fd4f0
-};
 #include "../ini_file.h"                                           // g_game_vars (0xa44240), ini_entry: the parameter table (the value text at +0x20)
 
 

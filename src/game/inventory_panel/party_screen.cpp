@@ -969,7 +969,7 @@ void PartyScreen::setup_skills()
     }
 
     // ---- the scroll list ----
-    MissionUi* sb;
+    UiD* sb;
     {
         tstring name("party_s_skills");
         sb = make_scrollbar(window, &name);
@@ -979,7 +979,7 @@ void PartyScreen::setup_skills()
         Camera* list = new_scroll_list();                  // 0x4a8, ctor 0x49deb0
         list->f104 |= 0x20;
         if (sb != 0)
-            list->follow[1] = (MissionUi*)sb;           // +0x484 the scroll bar
+            list->follow[1] = sb;           // +0x484 the scroll bar
         list->target = (ContainerBase*)skills_base;            // +0x490
         PSO(list)->add_child(skills_base);
         label_refresh(list, name);

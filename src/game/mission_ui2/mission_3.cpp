@@ -522,10 +522,10 @@ void FieldPanel::update()
     p[1] = v->f4;
     scene()->set_xy(p);
 
-    if (sqrt(f49c * f49c + f4a0 * f4a0) > 0.0f) {
+    if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f) {
         float q[2];                     // a copy of the stored size (0x48d4d4)
-        q[0] = f49c;
-        q[1] = f4a0;
+        q[0] = tail.x;
+        q[1] = tail.y;
         set_xy(q);
     } else {
         float q[2];                     // none stored: the scene's width, our height (0x48d4f6)

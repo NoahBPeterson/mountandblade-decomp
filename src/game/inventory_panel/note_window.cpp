@@ -37,14 +37,11 @@ extern "C" double atof(const char* s);                       // 0x537352
 #include "../res_mgr.h"                   // res_manager(): the resource manager 0x5d6fa0 (get_object 0x419540)
 #include "../../rgl/mesh_x.h"             // mesh_x::clone 0x41c6d0
 #include "../ui/container.h"             // NodeA (0x592848), text_box (0x597050)
+#include "../ui/map_list.h"              // MWidget (0x5995c0): the report and link lists
+#include "../party2/camera_class.h"      // Camera (draw 0x488d50)
 #include "../ui/ui_widgets.h"             // UiD (scroll bar slider, vtable 0x592140): make_scrollbar 0x4f6160 returns one
 
 // (each constructor on its own line inside its class: the resolution tools read a '// 0x' annotation in the class's scope)
-struct UiList : MissionUi {             // the list widget MWidget (agent5/agent_hud.h) is: the base, then its own members to 0x1d0
-    char pad178[0x1d0 - sizeof(MissionUi)];
-    UiList();                           // 0x4fd150 (MWidget::MWidget, src/game/agent5/agent_hud.cpp)
-};
-
 // widget helper functions
 void label_refresh(MissionUi* w, tstring name);                       // 0x4e4c70
 extern "C" MissionUi* make_short_button(MissionUi* parent, tstring* text,
@@ -303,7 +300,7 @@ void note_window::build(int page_, int arg_)
     label_refresh(this->picture, tstring("note_i_picture"));
 
     // ---- report text -----------------------------------------------------
-    this->report = new UiList;
+    this->report = new MWidget;
     {
         tstring empty("");
         float sz[2];
@@ -312,7 +309,7 @@ void note_window::build(int page_, int arg_)
     label_refresh(this->report, tstring("note_t_keys"));
 
     // ---- links list (made before the title: 0x50a34b / 0x50a3b3) ------------------------------------------------
-    this->links = new UiList;
+    this->links = new MWidget;
     {
         tstring empty("");
         float sz[2];
@@ -857,7 +854,7 @@ void note_window::build(int page_, int arg_)
                                                        : fld(this->keys_scroll, 0xf4);
         v[0] = fld(this->keys_scroll, 0xf0);
         this->keys_scroll->set_xy(v);
-        ((MissionPanel*)this->keys_scroll)->draw();       // 0x488d50
+        ((Camera*)this->keys_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->keys_scroll);
     }
 
@@ -891,7 +888,7 @@ void note_window::build(int page_, int arg_)
                                                        : fld(this->data_scroll, 0xf4);
         v[0] = fld(this->data_scroll, 0xf0);
         this->data_scroll->set_xy(v);
-        ((MissionPanel*)this->data_scroll)->draw();       // 0x488d50
+        ((Camera*)this->data_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->data_scroll);
     }
 

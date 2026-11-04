@@ -21,6 +21,7 @@ extern "C" int _fltused = 0;
 struct Entity;
 
 #include "../ui/container.h"                         // MissionUi, ContainerBase (the 0x188-byte element), NodeA (the 0x190-byte NodeA)
+#include "../party2/camera_class.h"      // Camera (draw 0x488d50)
 
 // the engine view frustum (0x120 bytes)
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)

@@ -76,8 +76,8 @@ void FieldPanel::relayout(const tstring* text)
     // here makes that second dword overwrite the saved frame (return address -> the state's float bit pattern).
     float v[4];
     scene()->view[0]->text_size(v, text);
-    if (sqrt(f4a0 * f4a0 + f49c * f49c) > 0.0f) {
-        scene()->view[0]->set_xy(&f49c);
+    if (sqrt(tail.y * tail.y + tail.x * tail.x) > 0.0f) {
+        scene()->view[0]->set_xy(&tail.x);
         scene()->view[0]->get_state(v);
         scene()->view[0]->set_xy(v);
         scene()->view[0]->f13c = v[1] - f144 * 0.63f - 0.001f;   // the text-metric f144 (0x48f0c0), not screen[3]

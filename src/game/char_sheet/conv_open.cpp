@@ -4,6 +4,7 @@
 #include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../party2/camera_class.h"      // Camera (draw 0x488d50)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
@@ -80,7 +81,7 @@ void Rec1208::slot_empty_2()
     MissionUi* reln = (MissionUi*)make_scrollbar(talk, &scroll_name);
     tstring list_name("conv_sc_choices");
     question = (MissionUi*)make_editor_list(ch, &list_name, (int)reln);
-    ((MissionPanel*)question)->draw();   // 0x488d50
+    ((Camera*)question)->draw();   // 0x488d50
     talk->add_child(question);
 
     MissionUi* input = (MissionUi*)new_widget_base(0x178);

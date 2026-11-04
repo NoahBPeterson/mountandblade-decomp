@@ -3,6 +3,7 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../party2/camera_class.h"      // Camera (draw 0x488d50)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
@@ -193,5 +194,5 @@ void Rec1208::refresh(int sel, int* out)
     else if (src->f170 < v)
         src->f168 = src->f170;
     (*(ConvScrollSrc**)((char*)question + 0x484))->set_key_flags(0x10000);
-    ((MissionPanel*)question)->draw();                   // 0x488d50
+    ((Camera*)question)->draw();                   // 0x488d50
 }

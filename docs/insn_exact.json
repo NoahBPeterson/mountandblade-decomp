@@ -7948,7 +7948,7 @@
   },
   "004fd1d0": {
    "verdict": "DIFF",
-   "symbol": "?on_event@MWidget@@QAEDI@Z",
+   "symbol": "?key@MWidget@@UAEDI@Z",
    "insns": 131,
    "ours": 133,
    "unverified": 0,
@@ -7958,7 +7958,7 @@
   },
   "004fd4f0": {
    "verdict": "DIFF",
-   "symbol": "?text_rect@MWidget@@QAE?AUMapText@@XZ",
+   "symbol": "?get_xy@MWidget@@UAEXPAM@Z",
    "insns": 143,
    "ours": 131,
    "unverified": 0,

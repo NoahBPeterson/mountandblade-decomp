@@ -28,7 +28,7 @@ using rgl::vector4;
 #include "../../rgl/mesh.h"
 using rgl::mesh;
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
-#include "./cs_common.h"                        // widget constructors, gui_manager, NodeVec, MissionPanel, new_medium_button, ...
+#include "./cs_common.h"                        // widget constructors, gui_manager, NodeVec, Camera, new_medium_button, ...
 
 void __cdecl mb_error(const char* fmt, ...);            // 0x42cc80
 #include "../../rgl/text_stream.h"                // mb_snprintf 0x415100

@@ -1228,7 +1228,7 @@ void Camera::animate(int)
     shake_y = target->screen[3];
     for (int i = 2; i != 0; i--) {
         int k = 2 - i;
-        if (follow[k] && follow_shape[k]) {
+        if (follow[k] && slot_on[k]) {
             float r = follow[k]->get168();
             (&shake_x)[k] = (target->screen[k] - target->screen[2 + k] - screen[k]) * r + target->screen[2 + k];
         }

@@ -129,7 +129,8 @@ int sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 // The definitions behind the helpers below live in other modules under their own declarations; the declarations here are
 // theirs (class stubs carry only the member this file calls), and the CharSheetWidget views reach them through casts.
-#include "../ui/container.h"                      // MissionUi (ctor 0x48ae20), MissionPanel (draw 0x488d50), ContainerBase
+#include "../ui/container.h"                      // MissionUi (ctor 0x48ae20), Camera (draw 0x488d50), ContainerBase
+#include "../party2/camera_class.h"      // Camera (draw 0x488d50)
 struct ContainerW {
     void* construct();   // 0x4931a0 (the list container's constructor body: world_data)
 };
@@ -137,7 +138,7 @@ struct UiA; struct Camera;
 
 static __forceinline void ctor_window(void* p) { ((ContainerW*)p)->construct(); }       // 0x4931a0
 static __forceinline void init_mission_ui(void* p) { new (p) MissionUi; }                // 0x48ae20
-static __forceinline void draw(CharSheetWidget* w) { ((MissionPanel*)w)->draw(); }     // 0x488d50
+static __forceinline void draw(CharSheetWidget* w) { ((Camera*)w)->draw(); }     // 0x488d50
 
 // ---- widget factories ----------------------------------------------------------------------------------
 UiA* make_short_button(MissionUi* parent, const tstring* caption, float a, float b, float h);  // 0x4e5570

@@ -1324,7 +1324,7 @@ void GameScreen::build()
 
     tree = new Camera;
     tree->f104 |= 0x20;
-    tree->follow[1] = (MissionUi*)flag;           // +0x484
+    tree->follow[1] = (UiD*)flag;           // +0x484
 
     GroupWidget* bar = new GroupWidget;
     v[0] = 0.0f;
@@ -1454,7 +1454,7 @@ void Rec58::build(bool show)
     v[0] = 0.915f;
     v[1] = 0.1f;
     UI(log)->set_pos(v);
-    tstring* text = &log->U()->name;
+    tstring* text = &log->name;
     text->assign("");
 
     if (show) {
@@ -1489,7 +1489,7 @@ void Rec58::build(bool show)
         UI(log)->set_text(out, text);
     }
 
-    float y = log->U()->screen[1] + 0.001f;
+    float y = log->screen[1] + 0.001f;
 
     bar = new TextGroupWidget;              // vptr 0x597050 (0x4fcb33)
     v[0] = 0.0f;
@@ -1586,8 +1586,6 @@ void* TStringArray::destroy(unsigned flags)
 // @ 0x4fd150
 MWidget::MWidget()
 {
-    ((MissionUi*)this)->MissionUi::MissionUi();
-    *(void**)this = (void*)vtbl_5995c0;
     rects_a.first = 0;
     rects_a.last = 0;
     rects_a.end = 0;
@@ -1605,7 +1603,7 @@ MWidget::MWidget()
 }
 
 // @ 0x4fd1d0
-char MWidget::on_event(unsigned ev)
+char MWidget::key(unsigned ev)
 {
     char r = 0;
     if ((ev & 7) != 0) {
@@ -1617,16 +1615,16 @@ char MWidget::on_event(unsigned ev)
         for (; ids != 0 && i < (unsigned)(list_e.last - ids); i++, off += 0x10) {
             vector4* a = (vector4*)((char*)rects_a.first + off);
             vector4* b = (vector4*)((char*)rects_b.first + off);
-            if (a->x + U()->fE0 <= g_gui.mouse[0])
-                if (U()->fE0 + b->x > g_gui.mouse[0])
-                    if (a->y + U()->fE4 <= g_gui.mouse[1])
-                        if (b->y + U()->fE4 > g_gui.mouse[1]) {
+            if (a->x + fE0 <= g_gui.mouse[0])
+                if (fE0 + b->x > g_gui.mouse[0])
+                    if (a->y + fE4 <= g_gui.mouse[1])
+                        if (b->y + fE4 > g_gui.mouse[1]) {
                             cur = list_e.first[i];
                             break;
                         }
         }
         if (cur != id[0])
-            U()->get_xy((float*)id);
+            get_xy((float*)id);
     } else if ((ev & 8) != 0) {
         int* ids = list_e.first;
         r = 1;
@@ -1634,40 +1632,29 @@ char MWidget::on_event(unsigned ev)
         for (; ids != 0 && i < (unsigned)(list_e.last - ids); i++, off += 0x10) {
             vector4* a = (vector4*)((char*)rects_a.first + off);
             vector4* b = (vector4*)((char*)rects_b.first + off);
-            if (U()->fE0 + a->x <= g_gui.mouse[0])
-                if (b->x + U()->fE0 > g_gui.mouse[0])
-                    if (a->y + U()->fE4 <= g_gui.mouse[1])
-                        if (b->y + U()->fE4 > g_gui.mouse[1]) {
-                            U()->set_key_flags(0x10000);
+            if (fE0 + a->x <= g_gui.mouse[0])
+                if (b->x + fE0 > g_gui.mouse[0])
+                    if (a->y + fE4 <= g_gui.mouse[1])
+                        if (b->y + fE4 > g_gui.mouse[1]) {
+                            set_key_flags(0x10000);
                             sel = i;
                             break;
                         }
         }
     }
-    U()->set_key_flags(ev);
-    U()->refresh();
+    set_key_flags(ev);
+    refresh();
     return r;
-}
-
-// @ 0x4fd3b0
-void* MWidget::destroy(unsigned flags)
-{
-    this->~MWidget();
-    if (flags & 1)
-        ::operator delete(this);
-    return this;
 }
 
 // @ 0x4fd3d0
 MWidget::~MWidget()
 {
-    *(void**)this = (void*)vtbl_5995c0;
     list_e.free_block();
     list_d.free_block();
     VEC_CLEAR(&list_c);
     rects_b.free_block();
     rects_a.free_block();
-    ((Buffer*)this)->Buffer::~Buffer();
 }
 
 // @ 0x4fd490
@@ -1690,20 +1677,19 @@ bool IntList::buy(unsigned n)
 }
 
 // @ 0x4fd4f0
-MapText MWidget::text_rect()
+void MWidget::get_xy(float* result)
 {
-    MissionUi* u = U();
+    MissionUi* u = this;
     if (u->tracks[4] == 0) {
         rgl::mesh* m = new rgl::mesh;
         {
             tstring n("ui_font");           // destroyed before add_image_a (0x4fd544)
             m->res = g_resmgr_full.base().get_material(*(rgl::string*)&n);
         }
-        UI(this)->add_image_a(4, m);
+        this->set_mesh(4, m);
     }
     u->tracks[4]->clear_geometry();
 
-    MapText out;
     vector4 rc;
     rc.x = u->f138;
     rc.y = u->f13c;
@@ -1711,12 +1697,11 @@ MapText MWidget::text_rect()
     unsigned col[3] = { 0xffff0000, 0xff0000ff, 0xff000000 };
     Font* f = (Font*)u->f124;
     if (f)
-        f->layout_map(&out, &u->name, &rc, &u->f140, u->tracks[4], &col[2], &col[1], &col[0], &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
+        f->layout_map(result, &u->name, &rc, &u->f140, u->tracks[4], &col[2], &col[1], &col[0], &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
     else
-        g_font->layout_map(&out, &u->name, &rc, &u->f140, u->tracks[4], &col[2], &col[1], &col[0], &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
+        g_font->layout_map(result, &u->name, &rc, &u->f140, u->tracks[4], &col[2], &col[1], &col[0], &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
     unsigned white = 0xffffffff;
     u->set_color(&white);                   // +0x98 (0x4fd6df)
-    return out;
 }
 
 // 0x487b00: UTF-8 decoder (another object in the original; cl gave it a custom register convention: text in EDI, &out_len in EDX, the buffer and

@@ -86,7 +86,7 @@ Camera* make_quest_list(ContainerBase* parent, const float* pos, const float* si
     cam->add_child(parent);
     cam->move_a(pos);
     cam->set_xy(size);
-    ((MissionPanel*)cam)->draw();   // 0x488d50
+    ((Camera*)cam)->draw();   // 0x488d50
     return cam;
 }
 

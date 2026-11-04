@@ -94,7 +94,7 @@ void FaceGen::init()
         tstring t2("face_sc_deform");
         ContainerBase* sl = (ContainerBase*)make_editor_list(deform, &t2, (int)sc);
         slider = sl;
-        ((MissionPanel*)sl)->draw();   // 0x488d50
+        ((Camera*)sl)->draw();   // 0x488d50
         push_item(ui, sl);
     }
     cam_btn = 0;

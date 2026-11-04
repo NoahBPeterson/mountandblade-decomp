@@ -254,6 +254,7 @@ void ItemD::scale_3(float a) { ((InputScreen*)this)->on_input(*(int*)&a); }
 // list: the widgets are ui_widget.h Widgets (the calls are the original's vtable offsets: hide +0xb0, enable +0xbc,
 // set_text +0xa4, show +0xb4, disable +0xb8, set_pos +0x58, set_scale +0x64).
 #include "../ui_widget.h"                                     // MissionUi / MissionUi (the widget interface, ctor 0x48ae20)
+#include "../party2/camera_class.h"      // Camera (draw 0x488d50)
 #include "../ui/snd_channel.h"                               // snd_channel: play 0x4875e0 (thiscall, ret 4)
 
 // the 0x60-byte menu record of g_menus (0x5e29b0): title key +0x10, 64-bit flags +0x20, the 0x68-byte entries at +0x54/+0x58
@@ -282,7 +283,7 @@ struct MissionUpdater {
     int ids[0x10];                                              // +0xa4
     char pade4[0x4];
     FieldPanel* scene;                                          // +0xe8 (0x4cec0d)
-    MissionPanel* group;                                        // +0xec (0x4cee0c)
+    Camera* group;                                        // +0xec (0x4cee0c)
     void update();                                              // 0x4ceb90
 };
 
@@ -338,7 +339,7 @@ void MissionUpdater::update()
     float sc[2];
     sc[0] = 0.75f;
     sc[1] = h;
-    group->host->set_xy(sc);
+    group->target->set_xy(sc);
     group->draw();
 }
 

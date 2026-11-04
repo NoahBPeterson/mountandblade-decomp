@@ -207,20 +207,20 @@ void PartyWindow::create()
 
         Camera* v;
         if (i == 0) {
-            MissionUi* sc = (MissionUi*)make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory1"));
+            UiD* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory1"));
             v = new Camera;
             v->f104 |= 0x20;
             if (sc != 0)
-                v->follow[1] = (MissionUi*)sc;
+                v->follow[1] = sc;
             v->target = (ContainerBase*)(size_t)nrows;
             SET_ROWS(v, nrows);
             label_refresh(v, tstring("inv_sc_inventory1_outer"));
         } else {
-            MissionUi* sc = (MissionUi*)make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
+            UiD* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
             v = new Camera;
             v->f104 |= 0x20;
             if (sc != 0)
-                v->follow[1] = (MissionUi*)sc;
+                v->follow[1] = sc;
             v->target = (ContainerBase*)(size_t)nrows;
             SET_ROWS(v, nrows);
             label_refresh(v, tstring("inv_sc_inventory2_outer"));

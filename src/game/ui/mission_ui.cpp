@@ -18,6 +18,7 @@
 #include "./ui_common.h"
 #include "./item_ref.h"
 #include "./troop_inv.h"
+#include "../party2/camera_class.h"   // Camera::draw 0x488d50
 #include "./party.h"
 #include "./mission_ui.h"
 #include "./ui_widgets.h"
@@ -443,18 +444,18 @@ void MissionUi::set_fog(const float* ref, const float* lo, const float* hi)
 }
 
 // @ 0x488d50
-void MissionPanel::draw()
+void Camera::draw()
 {
     for (int i = 0; i < 2; i++) {
         slot_on[i] = 0;
-        if (slots[i]) {
-            slots[i]->draw_begin();
-            float d = host->screen[i] - host->screen[2 + i];
+        if (follow[i]) {
+            follow[i]->hide();
+            float d = target->screen[i] - target->screen[2 + i];
             if (d > screen[i]) {
                 slot_on[i] = 1;
-                slots[i]->draw_end();
+                follow[i]->show();
                 if (slot_on[i] != 0)
-                    slots[i]->set_fill(screen[i] / d);
+                    follow[i]->update_children(screen[i] / d);
             }
         }
     }
@@ -462,7 +463,7 @@ void MissionPanel::draw()
         float xy[2];
         xy[0] = 0.0f;
         xy[1] = 0.0f;
-        host->move_a(xy);
+        target->move_a(xy);
     }
 }
 
