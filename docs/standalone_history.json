@@ -1432,5 +1432,37 @@
    "reached through tables": 42598,
    "library data": 56170
   }
+ },
+ "2026-11-04T12:04:24-06:00": {
+  "data_labels": 115,
+  "aliases": 209,
+  "source_aliases": 50,
+  "source_hacks": 4,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 0,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 7,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 184,
+  "when": "2026-11-04T12:04:24-06:00",
+  "commit": "3a82f60a",
+  "build": "merge_ms",
+  "label": "MeshTable, AnimSet",
+  "items": {
+   "defined in source": 189,
+   "generated from source": 1957,
+   "borrowed from image": 62,
+   "reached through tables": 74,
+   "library data": 525
+  },
+  "bytes": {
+   "defined in source": 128661382,
+   "generated from source": 304868,
+   "borrowed from image": 7700,
+   "reached through tables": 15069278,
+   "library data": 56170
+  }
  }
 }
