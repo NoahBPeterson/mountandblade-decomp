@@ -448,5 +448,35 @@
    "reached through tables": 2121208,
    "library data": 57058
   }
+ },
+ "2026-11-03T19:22:03-06:00": {
+  "data_labels": 210,
+  "aliases": 383,
+  "traps": 271,
+  "redirects": 327,
+  "vtable_slots_rewritten": 5,
+  "vptr_stores_moved": 519,
+  "vtbl_externs": 20,
+  "placeholder_virtuals": 2,
+  "forwarding_stubs": 32,
+  "data_definitions": 201,
+  "when": "2026-11-03T19:22:03-06:00",
+  "commit": "4eab11de",
+  "build": "out_mesh",
+  "label": "one mesh header",
+  "items": {
+   "defined in source": 207,
+   "generated from source": 2056,
+   "borrowed from image": 75,
+   "reached through tables": 622,
+   "library data": 466
+  },
+  "bytes": {
+   "defined in source": 139417512,
+   "generated from source": 308600,
+   "borrowed from image": 2392472,
+   "reached through tables": 2121208,
+   "library data": 55174
+  }
  }
 }
