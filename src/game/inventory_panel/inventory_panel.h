@@ -33,14 +33,8 @@ struct DragMesh {                                       // the mesh carried by t
 extern DragMesh* g_drag;                                // 0x5d75e4
 
 
-// The party window (src/game/party/party_window.h, the same object seen through the Game header: the two headers cannot be
-// included together) owns four of the methods this screen calls; only those are declared here.
-struct PartyWindow {
-    void money_label(int which);                                    // 0x501940 (ret 4)
-    void init_window();                                             // 0x5025a0
-    void add_strip_icon(char* slot, const tstring& name, int troop, int kind);   // 0x5024e0 (ret 0x10)
-    ResMesh* make_mesh(ItemRef* item, float* scale, int t);         // 0x502b80 (ret 0xc)
-};
+// The party window (src/game/party/party_window_class.h) is the same object: it owns four of the methods this screen calls.
+#include "../party/party_window_class.h"
 #pragma warning(disable:4715)
 struct InventoryPanel {
     int vptr;                                           // +0x00
@@ -85,7 +79,7 @@ struct InventoryPanel {
     __forceinline void money_label(void* arg) { ((PartyWindow*)this)->money_label((int)arg); }   // 0x501940 (ret 4)
     __forceinline void init_window() { ((PartyWindow*)this)->init_window(); }                     // 0x5025a0
     __forceinline void add_strip_icon(char* slot, const tstring& name, int troop, int kind)       // 0x5024e0 (ret 0x10)
-    { ((PartyWindow*)this)->add_strip_icon(slot, name, troop, kind); }
+    { ((PartyWindow*)this)->add_strip_icon((StripIcon**)slot, name, troop, kind); }
     void refresh_transaction(int unused);                           // 0x50fe20 (ret 4)
     void set_slot_flag(int page, int idx, unsigned mask, char on);  // 0x510850 (ret 0x10)
     void refresh_lists(int unused);                                 // 0x5108d0 (ret 4)

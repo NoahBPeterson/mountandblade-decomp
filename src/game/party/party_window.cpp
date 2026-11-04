@@ -183,7 +183,7 @@ void* PartyWindow::make_inventory_menu(int idx)
 
     int troop_idx = g_game_G->cur_troop;
     if (idx != 0)
-        troop_idx = troop;
+        troop_idx = w14;
     for (int i = 0; i < 10; i++) {
         if ((idx < 1 && g_module_settings.disable_food_slot == 0) || i != 9) {
             MissionUi* slot = make_slot(&EQUIP(troop_idx, i));
@@ -206,14 +206,14 @@ void* PartyWindow::make_inventory_menu(int idx)
 }
 
 // @ 0x5021b0
-char PartyWindow::mouse_event(unsigned mask)
+char PartyPanel::key(unsigned mask)
 {
     bool r = false;
     if (mask == 0x10) {
         r = true;
-        on_input(0x10000);
+        set_key_flags(0x10000);
     }
-    if (base_mouse_event(mask))
+    if (ContainerBase::key(mask))
         return true;
     return r;
 }
@@ -251,14 +251,14 @@ MissionUi* PartyWindow::make_slot(ItemRef* slot)
 }
 
 // @ 0x5022c0
-char PartyWindow::refresh_event(unsigned mask)
+char PartySlot::key(unsigned mask)
 {
     char r = 0;
     if (mask == 0x10) {
         r = 1;
-        on_input(0x10000);
+        set_key_flags(0x10000);
     }
-    on_input(mask);
+    set_key_flags(mask);
     refresh();
     return r;
 }
@@ -269,9 +269,9 @@ PartyPanel* PartyWindow::build_page(int page)
     Game* g = g_game_G;
     int t = g->cur_troop;
     if (page != 0)
-        t = troop;
+        t = w14;
     int n;
-    if (t == g->hero_troop && f4 == 0)
+    if (t == g->hero_troop && w04 == 0)
         n = 9;
     else
         n = g->troops[t].inv_count();
@@ -323,7 +323,7 @@ void PartyWindow::init_window()
         refresh_stash(i);
     refresh_armor(armor_labels[0], g_game_G->cur_troop);
     if (rows == 2)
-        refresh_armor(armor_labels[1], troop);
+        refresh_armor(armor_labels[1], w14);
 }
 
 // @ 0x502620
@@ -394,9 +394,9 @@ void PartyWindow::refresh_page(int page)
     Game* g = g_game_G;
     int t = g->cur_troop;
     if (page != 0)
-        t = troop;
+        t = w14;
     int count;
-    if (t == g->hero_troop && f4 == 0)
+    if (t == g->hero_troop && w04 == 0)
         count = 9;
     else
         count = g->troops[t].inv_count();
@@ -418,9 +418,9 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
         int t = g_game_G->cur_troop;
         if (page == 1) {
             if ((fl & 1) == 0)
-                t = troop;
+                t = w14;
         } else if ((fl & 1) != 0) {
-            t = troop;
+            t = w14;
         }
         volatile float sc = 0.088f;     // (volatile: make_mesh ignores its scale argument, which would otherwise drop this store)
         ResMesh* m = make_mesh(item, (float*)&sc, t);
@@ -438,7 +438,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
     }
     if (icon_a88 != 0 && flag != 0) {
         tstring n("inv_i_character2");
-        add_strip_icon(&icon_a88, n, troop, spec_ac4);
+        add_strip_icon(&icon_a88, n, w14, spec_ac4);
     }
 }
 
@@ -467,7 +467,7 @@ void PartyWindow::refresh_stash(int row)
 {
     int t = g_game_G->cur_troop;
     if (row != 0)
-        t = troop;
+        t = w14;
     for (int n = 0; n < 10; n++) {
         if (row_slot[row][n] != 0)
             place_slot((MissionUi*)row_slot[row][n], &EQUIP(t, n), n, row_state[row], row, 1);

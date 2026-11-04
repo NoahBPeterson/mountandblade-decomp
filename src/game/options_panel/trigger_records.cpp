@@ -1,4 +1,5 @@
 #include "./trigger_records.h"
+#include "../party/party_window_class.h"   // PartyWindow: the record at slot 8
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
@@ -18,7 +19,7 @@ void init_mission_trigger_records()
     slot_as<C4c2fb0>(3) = new C4c2fb0;
     slot_as<ItemRec2>(5) = new ItemRec2;
     slot_as<Rec118>(6) = new Rec118;
-    slot_as<Recacc>(8) = new Recacc;
+    slot_as<PartyWindow>(8) = new PartyWindow;
     slot_as<Rec38>(9) = new Rec38;
     slot_as<Rec44>(10) = new Rec44;
     slot_as<Rec34>(11) = new Rec34;

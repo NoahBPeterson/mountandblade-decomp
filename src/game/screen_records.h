@@ -168,15 +168,6 @@ struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
-struct Recacc : head_rec {   // vtable 0x595764
-    char body[0xaa0];
-    Recacc() { w04 = 0; }
-    virtual void slot_empty_1();
-    virtual void slot_empty_2();
-    virtual void scale_3(float);
-    virtual char pure_7() { return 1; }    // slot 7: 0x48b170
-    // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
-};
 struct Rec38 : head_rec { MB_ZERO_TAIL(Rec38)   // vtable 0x595828
     ContainerBase* win;       // +0x2c
     MissionUi* f30;           // +0x30

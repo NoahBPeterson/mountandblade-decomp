@@ -105,7 +105,7 @@ static __forceinline InvWindow* new_inv_window()
 }
 
 // @ 0x500ad0
-void PartyWindow::create()
+void PartyWindow::slot_empty_2()
 {
     spec_ac0 = 0;
     spec_ac4 = 0;
@@ -114,13 +114,13 @@ void PartyWindow::create()
         flags[1][k] = 0;
     }
 
-    if (f4 == 1) {
-        troop = g_game_G->f13af0;
-        if (troop <= 0)
-            troop = g_game_G->hero_troop;
-    } else if (f4 == 0) {
-        troop = g_game_G->hero_troop;
-        ItemRef* inv = g_game_G->troops[troop].inv;
+    if (w04 == 1) {
+        w14 = g_game_G->f13af0;
+        if (w14 <= 0)
+            w14 = g_game_G->hero_troop;
+    } else if (w04 == 0) {
+        w14 = g_game_G->hero_troop;
+        ItemRef* inv = g_game_G->troops[w14].inv;
         for (int k = 0; k < 0x60; k++)
             inv[k].item = -1;
     }
@@ -150,7 +150,7 @@ void PartyWindow::create()
         win->set_track(0, m);
     }
 
-    if (f4 == 4) {
+    if (w04 == 4) {
         MissionUi* bg = new MissionUi;
         equip_bg = bg;
         label_refresh(bg, tstring("inv_i_equipment_pangel_bg"));
@@ -179,23 +179,23 @@ void PartyWindow::create()
         container->set_text(out, &e);
     }
     add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game_G->cur_troop, spec_ac0);
-    if (f4 == 4)
-        add_strip_icon(&icon_a88, tstring("inv_i_character2"), troop, spec_ac4);
+    if (w04 == 4)
+        add_strip_icon(&icon_a88, tstring("inv_i_character2"), w14, spec_ac4);
 
     pages = 1;
     rows = 1;
-    if (f4 == 0 || f4 == 2 || f4 == 1 || f4 == 3)
+    if (w04 == 0 || w04 == 2 || w04 == 1 || w04 == 3)
         pages = 2;
-    if (f4 == 4)
+    if (w04 == 4)
         rows = 2;
 
     for (int i = 0; i < pages; i++) {
         page_widget[i] = build_page(i);
         int idx = g_game_G->cur_troop;
         if (i != 0)
-            idx = troop;
+            idx = w14;
         int n;
-        if (idx == g_game_G->hero_troop && f4 == 0)
+        if (idx == g_game_G->hero_troop && w04 == 0)
             n = 9;
         else
             n = g_game_G->troops[idx].inv_count();
@@ -244,7 +244,7 @@ void PartyWindow::create()
         else
             label_refresh(g, tstring("inv_t_gold2"));
         container->add_child(g);
-        if (f4 != 0 || idx != g_game_G->hero_troop)
+        if (w04 != 0 || idx != g_game_G->hero_troop)
             money_label(i);
 
         MissionUi* nm = new MissionUi;
@@ -259,14 +259,14 @@ void PartyWindow::create()
             nm->set_text(out, s);
         } else {
             label_refresh(nm, tstring("inv_t_name2"));
-            if (f4 == 2 || f4 == 4) {
-                Troop* t = &g_game_G->troops[troop];
+            if (w04 == 2 || w04 == 4) {
+                Troop* t = &g_game_G->troops[w14];
                 tstring* s = g_strtable.find(&t->key);
                 if (s == 0)
                     s = &t->name;
                 float out[2];
                 nm->set_text(out, s);
-            } else if (f4 == 0) {
+            } else if (w04 == 0) {
                 float out[2];
                 nm->set_text(out, g_strtable.lookup(&tstring("ui_dump")));
             }
@@ -302,7 +302,7 @@ void PartyWindow::create()
             a->move_a(&p.x);
         }
         container->add_child(a);
-        if (f4 == 4) {
+        if (w04 == 4) {
             MissionUi* a2 = new MissionUi;
             armor_labels[1][r] = a2;
             label_refresh(a2, tstring("inv_t_armor_base2"));
@@ -316,7 +316,7 @@ void PartyWindow::create()
     }
 
     f_abc = 0;
-    if (f4 == 2) {
+    if (w04 == 2) {
         // the player's party records (0x5ac8 bytes each, the scene's party table): the hero of the other side is on its list
         int n = 1;
         int off = 0x20;
@@ -343,7 +343,7 @@ void PartyWindow::create()
             slot = ((Map10007*)&g_game_G->scene)->lookup(party);
             pg = *(char***)((char*)&g_game_G->scene + 0x138d0);
             rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
-            if (troop == *(int*)(rec + 0xac + off))
+            if (w14 == *(int*)(rec + 0xac + off))
                 f_abc = 1;
             n++;
             off += 0x20;
@@ -357,7 +357,7 @@ void PartyWindow::create()
     }
     init_window();
 
-    if ((g_game_G->f13ae8 & 1) == 0 && f4 == 2 && g_cfg.skip_tutorial == 0) {
+    if ((g_game_G->f13ae8 & 1) == 0 && w04 == 2 && g_cfg.skip_tutorial == 0) {
         tstring t1("ui_tutorial_inventory");
         tstring t2("ui_tutorial");
         tstring* text = g_strtable.lookup(&t1);
@@ -378,7 +378,7 @@ void PartyWindow::money_label(int which)
 {
     int idx = g_game_G->cur_troop;
     if (which != 0)
-        idx = troop;
+        idx = w14;
     int money = g_game_G->troops[idx].f3b4;
 
     char buf[512];
