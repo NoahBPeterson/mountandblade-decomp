@@ -2102,5 +2102,39 @@
    "library data": 52618,
    "unnamed bss": 487
   }
+ },
+ "2026-11-04T17:47:23-06:00": {
+  "data_labels": 0,
+  "aliases": 88,
+  "source_aliases": 27,
+  "source_hacks": 0,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 0,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 185,
+  "when": "2026-11-04T17:47:23-06:00",
+  "commit": "c072d230",
+  "build": "b1",
+  "label": "alias table + 5 views",
+  "items": {
+   "defined in source": 187,
+   "generated from source": 2605,
+   "borrowed from image": 19,
+   "reached through tables": 51,
+   "library data": 429,
+   "unnamed bss": 14
+  },
+  "bytes": {
+   "defined in source": 143720006,
+   "generated from source": 324532,
+   "borrowed from image": 644,
+   "reached through tables": 415,
+   "library data": 52618,
+   "unnamed bss": 487
+  }
  }
 }
