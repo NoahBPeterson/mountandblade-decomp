@@ -10,7 +10,6 @@
 OFFSET_CHECK3(Light, dir, 0x44);
 OFFSET_CHECK3(Light, flags, 0x6c);
 
-struct Psys;
 
 // the point transform of a frame (0x408460), as callers inline it: rgl::tp (rgl/scene/scene_math.h)
 using rgl::tp;

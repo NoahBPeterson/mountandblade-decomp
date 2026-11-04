@@ -44,7 +44,6 @@ using rgl::scene;
 #include "../../include/clock_table.h"   // g_ticks (the clock table)
 
 
-struct Psys { };                                         // (update 0x414960 is rgl::psys::update below)
 #include "../../include/fx.h"                          // FxDef (render 0x428ff0)
 
 // ---- the collision capsule built on the stack by update_ground_cache (vtable 0x54a540, size 0x64): src/include/shape.h.
