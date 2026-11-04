@@ -73,38 +73,31 @@ void RagBone::load(TiXmlElement* e)
 // ---- the script interpreter's state object (g_script 0xa70440, include/script_state.h): constructor and reset ----------------------
 #include "../../include/script_state.h"
 
-extern "C" void _ReadWriteBarrier(void);   // compiler barrier (emits no code): pins the original's store order (docs/codegen.md 10.9)
+// the library's vector::_Tidy of a pointer triple: free the buffer if any, then zero first / last / end
+static __forceinline void tidy3(void** q)
+{
+    if (q[0])
+        operator delete(q[0]);
+    q[0] = 0;
+    q[1] = 0;
+    q[2] = 0;
+}
 
 // @ 0x4c80c0
 __declspec(noinline) void ScriptState::reset()
 {
     screenshot_count = 0;
-    _ReadWriteBarrier();
     next_track = -1;
-    _ReadWriteBarrier();
     next_track_options = 0;
-    _ReadWriteBarrier();
     cue_track = -1;
-    _ReadWriteBarrier();
     param1_lo = -100000;
-    _ReadWriteBarrier();
     param1_hi = -1;
-    _ReadWriteBarrier();
     param2_lo = -100000;
-    _ReadWriteBarrier();
     param2_hi = -1;
-    _ReadWriteBarrier();
     trigger_result.store0 = 0;
-    _ReadWriteBarrier();
     trigger_result.store1 = 0;
-    _ReadWriteBarrier();
     fixed_point_multiplier = 100;
-    _ReadWriteBarrier();
-    if (vars._Myfirst)
-        operator delete(vars._Myfirst);
-    vars._Myfirst = 0;
-    vars._Mylast = 0;
-    vars._Myend = 0;
+    tidy3((void**)&vars._Myfirst);
 }
 
 // @ 0x4d3580
