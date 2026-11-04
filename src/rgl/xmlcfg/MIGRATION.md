@@ -44,7 +44,7 @@ Possible inner splits (soft evidence, NOT applied): two call sites only match wh
 defined in the same file, i.e. when cl knows nothing about its register use:
 - `id_matches_dir` (0x4326d0) -> `group_base` (0x432130): with `group_base` visible the caller is 111 bytes off
   (`group_base_ext` declaration kept);
-- `AgentX::pick` (0x433040) -> `AgentX::fill_weights` (0x432f60): 217 bytes off when visible (`fill_weights_x` kept).
+- `Agent::pick` (0x433040) -> `Agent::fill_weights` (0x432f60): 217 bytes off when visible (`fill_weights_x` kept).
 In cl 13.10 a callee compiled earlier in the same object has its register use known, so these callees probably
 lie in earlier objects: a boundary in (0x432130, 0x4326d0] and one at 0x433040. Other "opaque" pairs in the
 region (is_neutral -> is_friend 0x4323a0, relative -> mul_t) are not opaque, so they share an object. The
@@ -96,7 +96,7 @@ agent.h's `Mission::relation`.
 
 Kept (needed for byte-exactness, all documented where used):
 - `group_base_ext` / `fill_weights_x` declaration-only aliases for two same-object-looking callees (above).
-- `__declspec(noinline)` on `AgentX::is_friend` (0x4323a0 is called, not inlined, from `is_neutral`; `is_enemy` is
+- `__declspec(noinline)` on `Agent::is_friend` (0x4323a0 is called, not inlined, from `is_neutral`; `is_enemy` is
   inlined) and on `rot3x::mul_t` (called from `relative`).
 - Constructors and `make_*_array` helpers in records.cpp that make cl emit the vtables and vector deleting
   destructors (`??_E`) of RecF/RecJ/RecR/RecY/RecZ; the helpers are not in the binary (the `??_E` symbols exist

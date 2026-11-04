@@ -2779,7 +2779,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int pa = mission()->player_agent;
             if (pa >= 0) {
                 AgentTable* t = &mission()->agents;
-                result = ((AgentX*)t->get(pa))->is_friend(t->get((int)params[0]));
+                result = t->get(pa)->is_friend(t->get((int)params[0]));
             }
         }
         break;
@@ -2794,7 +2794,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     result = t->get(pa)->is_enemy(t->get((int)params[0]));
                 } else {
                     AgentTable* t = &m->agents;
-                    result = ((AgentX*)t->get(pa))->is_friend(t->get((int)params[0]));
+                    result = t->get(pa)->is_friend(t->get((int)params[0]));
                 }
             }
         }

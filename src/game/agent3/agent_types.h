@@ -75,9 +75,7 @@ struct alloc_e56 {
 // call. Each says why the object is the one the definition works on.
 struct Map10007 { int lookup(unsigned id); };                       // 0x48ad00 (src/game/ui/mission.h): PartyMgr's first 0x138b8 bytes are this 0x2717-entry table
 struct AgentX {                                                     // src/rgl/xmlcfg/game_util.h: the agent record's team relation tests
-    bool is_friend(const Agent* o) const;                           // 0x4323a0
     bool f100_is_0x48_and_charged() const;                          // 0x432470
-    int is_neutral(const Agent* o) const;                           // 0x4323f0 (returns int; the callers test only al: (char) at the call)
 };
 struct Obj3 {
     void set_v184(const vector4* v);                                // 0x433740 (rgl/xmlcfg/game_util.cpp; Emit's code is the same function)

@@ -1748,6 +1748,7 @@ namespace rgl { struct entity; }
 
 struct ItemRef;
 struct Agent {
+    bool is_friend(Agent const*) const;   // 0x4323a0
     int pick_attack_dir(unsigned);   // 0x43f970
     unsigned pick_front();   // 0x43b9e0
     void cycle_slot(int);   // 0x44bc30
@@ -1762,7 +1763,6 @@ struct AgentTable {
 struct AgentX {
     bool f100_is_0x48_and_charged() const;   // 0x432470
     bool is_enemy(Agent const*) const;   // 0x432350
-    bool is_friend(Agent const*) const;   // 0x4323a0
     float speed_scale() const;   // 0x432450
 };
 struct BlockOwner {
@@ -1885,8 +1885,8 @@ __forceinline void shape_base_s2b5c0::intersect(rgl::vector4* a0, rgl::vector4 c
 __forceinline bool Agent_s261e0::is_enemy(Agent_s261e0 const* a0) const { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
 __forceinline bool Agent_s284a0::is_enemy(Agent_s284a0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
 __forceinline bool Agent_s29ec0::is_enemy(Agent_s29ec0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
-__forceinline bool Agent_s284a0::is_friend(Agent_s284a0* a0) { return ((AgentX*)this)->is_friend((Agent const*)a0); }
-__forceinline bool Agent_s29ec0::is_friend(Agent_s29ec0* a0) { return ((AgentX*)this)->is_friend((Agent const*)a0); }
+__forceinline bool Agent_s284a0::is_friend(Agent_s284a0* a0) { return ((Agent*)this)->is_friend((Agent const*)a0); }
+__forceinline bool Agent_s29ec0::is_friend(Agent_s29ec0* a0) { return ((Agent*)this)->is_friend((Agent const*)a0); }
 __forceinline char KeyNames_s284a0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
 __forceinline char KeyReady_s261e0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
 __forceinline int DialogMgr_s26130::listener() { return ((DialogMgr*)this)->listener(); }

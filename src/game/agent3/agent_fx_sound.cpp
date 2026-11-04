@@ -374,8 +374,8 @@ bool Agent::can_target(unsigned aid, unsigned flags, float maxdist, float* out_d
     Agent* o = &g_mission->agents.pages[aid >> 4][aid & 0xf];
     if (o->f14 == 1
         && (!(flags & 1) || !is_enemy(o))
-        && (!(flags & 2) || !((const AgentX*)this)->is_friend(o))
-        && (!(flags & 4) || !(char)((const AgentX*)this)->is_neutral(o))
+        && (!(flags & 2) || !is_friend(o))
+        && (!(flags & 4) || !(char)is_neutral(o))
         && (!(flags & 0x10) || o->f10 == 1)
         && (!(flags & 0x20) || o->f10 != 1)
         && (!(flags & 0x200) || o->id > id)
@@ -409,7 +409,7 @@ bool Agent::any_hostile_near()
             bool friendly = false;
             if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
                 friendly = m->rel_flat()[team * 0x5b + o->team] == 1;
-            if (!friendly && !(char)((const AgentX*)this)->is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
+            if (!friendly && !(char)is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
                 vector4 d;
                 d.x = o->pos.x - pos.x;
                 d.y = o->pos.y - pos.y;
@@ -440,7 +440,7 @@ void Agent::update_alarm()
             break;
         Agent** pg = g_mission->agents.pages._Myfirst;
         Agent* o = pg[i >> 4] + (i & 0xf);
-        if (o->f14 == 1 && !is_enemy(o) && !(char)((const AgentX*)this)->is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
+        if (o->f14 == 1 && !is_enemy(o) && !(char)is_neutral(o) && o->f10 != 1 && o->id != id && o->id != f2c) {
             vector4 d = o->pos - pos;
             if (!(10.0f < d.normalize()))
                 hit = (pg[i >> 4][i & 0xf].f2c4 & 1) != 0;

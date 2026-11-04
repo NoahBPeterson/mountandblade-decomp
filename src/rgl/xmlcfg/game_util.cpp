@@ -90,16 +90,16 @@ bool AgentX::is_enemy(const Agent* o) const
     return false;
 }
 // @ 0x4323a0
-bool AgentX::is_friend(const Agent* o) const
+__declspec(noinline) bool Agent::is_friend(const Agent* o) const
 {
     if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
         return g_mission->rel_flat()[team * 0x5b + o->team] == 1;
     return false;
 }
 // @ 0x4323f0
-int AgentX::is_neutral(const Agent* o) const
+int Agent::is_neutral(const Agent* o) const
 {
-    if (!is_enemy(o) && !is_friend(o)) return 1;
+    if (!((const AgentX*)this)->is_enemy(o) && !is_friend(o)) return 1;
     return 0;
 }
 // @ 0x432450
@@ -358,17 +358,19 @@ void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n)
     out->x = -t.x; out->y = -t.y; out->z = -t.z;
 }
 
+static Record* agent_recs(const Agent* a) { return *(Record**)a->f12c; }        // the actor's table of 0x30-byte records (+0x12c)
+static unsigned char agent_flags130(const Agent* a) { return *((const unsigned char*)a + 0x130); }   // +0x130 (0x432f60)
 // ---- weighted random pick among an actor's item records -------------------------------------------------
 // @ 0x432f60
-void AgentX::fill_weights(float* out, int idx, int rec)
+void Agent::fill_weights(float* out, int idx, int rec)
 {
     int best = -100;
-    for (int i = 0; i < recs()[rec].count; i++) {
-        unsigned fl = recs()[rec].items[i].flags;
+    for (int i = 0; i < agent_recs(this)[rec].count; i++) {
+        unsigned fl = agent_recs(this)[rec].items[i].flags;
         int score = 0;
-        if (fl & 0x1000000) score = (flags130() & 4) ? 2 : -10;
+        if (fl & 0x1000000) score = (agent_flags130(this) & 4) ? 2 : -10;
         if (fl & 0x2000000) {
-            if ((flags130() & 8) && f2c != -1) score += 2;
+            if ((agent_flags130(this) & 8) && f2c != -1) score += 2;
             else score -= 10;
         }
         if (score == best) {
@@ -384,7 +386,7 @@ void AgentX::fill_weights(float* out, int idx, int rec)
 }
 
 // @ 0x433040
-int AgentX::pick(int idx)
+int Agent::pick(int idx)
 {
     float w[64];
     float r;
@@ -392,10 +394,10 @@ int AgentX::pick(int idx)
     int rec = *(int*)((char*)this + 0xd8 + idx * 0x2c);
     total = 0.0f;
     int res = -1;
-    fill_weights_x(w, idx, rec);
-    for (int i = 0; i < recs()[rec].count; i++) total += w[i];
+    ((AgentX*)this)->fill_weights_x(w, idx, rec);
+    for (int i = 0; i < agent_recs(this)[rec].count; i++) total += w[i];
     r = (float)(rand() % 0x3dc9) * total * 6.322312e-05f;
-    int n = recs()[rec].count;
+    int n = agent_recs(this)[rec].count;
     float acc = 0.0f;
     for (int i = 0; i < n; i++) {
         acc += w[i];

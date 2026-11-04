@@ -83,7 +83,7 @@ struct ListHolder { void set_owner(void* owner); };                          // 
 struct mesh_inst { void set_part(mesh_part* p); };                           // 0x4620b0 (renderer.cpp)
 struct Obj3 { void reset_pending(int v); };                                  // 0x433810 (rgl/xmlcfg/game_util.cpp)
 struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
-struct AgentX { bool is_friend(const Agent* o) const; int agent_class() const; };   // 0x4323a0 / 0x433140 (rgl/xmlcfg/game_util.cpp)
+struct AgentX { int agent_class() const; };   // 0x433140 (rgl/xmlcfg/game_util.cpp)
 struct level { int nearest_face(const float* p); };                          // 0x439a50 (agent2/agent_stats.cpp)
 struct string_view_ { const char* get() const; };                            // 0x407c10 (rgl/shapes/shapes.cpp): the out-of-line c_str
 struct widget_mgr {                                                          // config/widget_mgr.cpp and the modules that add to it: the presentation's overlays

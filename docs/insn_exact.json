@@ -1064,7 +1064,7 @@
   },
   "00432f60": {
    "verdict": "DIFF",
-   "symbol": "?fill_weights@AgentX@@QAEXPAMHH@Z",
+   "symbol": "?fill_weights@Agent@@QAEXPAMHH@Z",
    "insns": 70,
    "ours": 69,
    "unverified": 0,

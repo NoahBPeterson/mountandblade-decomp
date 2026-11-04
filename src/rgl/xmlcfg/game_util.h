@@ -31,17 +31,14 @@ struct ActorItemRec { int pad0, pad4; unsigned flags; char pad_c[0x40 - 0xc]; };
 struct Record { char pad0[0x10]; ActorItemRec* items; int count; char pad18[0x30 - 0x18]; };   // 0x30, items +0x10, count +0x14
 #include "../../include/game_data.h"      // GameData / g_game 0x5e2930: the troop table at +0x13a00 (0x433140 reads the record's flags at +0x30; this module called the record ItemDef)
 
+// is_friend 0x4323a0, is_neutral 0x4323f0, fill_weights 0x432f60 and pick 0x433040 are members of Agent (agent_obj.h), defined in
+// game_util.cpp; AgentX keeps is_enemy (its body must be visible to is_neutral; Agent::is_enemy is the agent_logic.cpp copy), the
+// speed/charge/class members.
 struct AgentX : Agent {
-    Record* recs() const { return *(Record**)f12c; }        // the actor's table of 0x30-byte records (+0x12c)
-    unsigned char flags130() const { return *((const unsigned char*)this + 0x130); }   // +0x130 (0x432f60)
     bool is_enemy(const Agent* o) const;                    // 0x432350 (relation == -1)
-    __declspec(noinline) bool is_friend(const Agent* o) const;   // 0x4323a0 (relation == 1)
-    int is_neutral(const Agent* o) const;                   // 0x4323f0
     float speed_scale() const;                              // 0x432450
     bool f100_is_0x48_and_charged() const;                  // 0x432470 (state +0x100 == 0x48)
-    void fill_weights(float* out, int idx, int rec);        // 0x432f60 (idx unused)
-    void fill_weights_x(float* out, int idx, int rec);      // 0x432f60 (declaration only, see pick)
-    int pick(int idx);                                      // 0x433040
+    void fill_weights_x(float* out, int idx, int rec);      // 0x432f60 (declaration only, see Agent::pick; the definition is Agent::fill_weights)
     int agent_class() const;                                  // 0x433140
 };
 

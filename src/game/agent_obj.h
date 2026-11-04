@@ -437,11 +437,12 @@ struct Agent {                                          // 0x5928 bytes
 
     // ---- members of other objects (earlier / shared) ----
     inline bool f100_is_0x48_and_charged() const;            // 0x432470 inlined (defined in agent3/agent_types.h, which has Skeleton and Channel)
-    bool is_neutral(const Agent* o) const; // 0x4323f0
+    int is_neutral(const Agent* o) const;  // 0x4323f0 (returns int; the callers test only al: (char) at the call)
     bool is_enemy(const Agent* o) const;         // 0x432350 (game_util.cpp AgentX; relation == -1; script)
     bool is_friend(const Agent* o) const;        // 0x4323a0 (relation == 1)
     int id_matches_dir(int id, int dir);         // 0x4326d0 (ret 8; this unused)
     int pick(int slot);                // 0x433040 (earlier object)
+    void fill_weights(float* out, int idx, int rec);   // 0x432f60 (idx unused)
     int agent_class() const;                     // 0x433140 (game_util.cpp hand_kind)
 
     // ---- members: src/game/agent2 (agent_stats.cpp, agent_ai.cpp) ----

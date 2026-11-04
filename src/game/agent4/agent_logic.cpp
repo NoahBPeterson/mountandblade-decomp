@@ -6782,7 +6782,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                 char skip = missile == 0 ? hit_once : missile->spent;
                 if (skip == 0) {
                     int rd = o->f30;
-                    if (rd < 0 || !is_neutral(agent_by_id(rd))) {
+                    if (rd < 0 || !(char)is_neutral(agent_by_id(rd))) {
                         if (missile != 0 || (rd >= 0 && is_enemy(agent_by_id(rd)))) {
                             bool h = false;
                             vector4 hp;
