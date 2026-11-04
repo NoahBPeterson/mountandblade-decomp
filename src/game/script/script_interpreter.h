@@ -63,10 +63,6 @@ struct MissionW {                                                            // 
     unsigned find_agent_by_troop(int troop);                                // 0x4921b0
     void add_wind_effect(int a1, int a2);                                   // 0x4952f0
 };
-struct Mission3 {                                                            // terrain_a/misc.cpp
-    void add_amount(int idx, unsigned flags);                               // 0x4677a0
-    void clear_done();                                                      // 0x4676c0
-};
 struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
 struct Sel { void set_vec(const int* a, const int* b, const int* c); };     // 0x4898e0 (ui/mission_ui.cpp)
 struct NamedSelRec { void set_name(const tstring* s); void set_sel(const int* src); };   // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
@@ -680,11 +676,11 @@ struct MissionX {
     int pad67fc;
     MTimer time_speed_timer;            // +0x6800
     float time_speed_anim_time;         // +0x6810
-    // the interpreter's names for the functions of Mission (src/game/mission.h), MissionW (world_data.cpp), Mission3 (terrain_a) and the
+    // the interpreter's names for the functions of Mission (src/game/mission.h), MissionW (world_data.cpp) and the
     // camera.cpp classes that define these addresses; each forwards (inline) to the definition's class
     __forceinline char all_defeated(int team) { return ((MissionW*)this)->all_defeated(team); }                      // 0x4920e0 (thiscall, ret 4)
-    __forceinline void clear_done() { ((Mission3*)this)->clear_done(); }                                              // 0x4676c0
-    __forceinline void add_amount(int entry, int count) { ((Mission3*)this)->add_amount(entry, count); }              // 0x4677a0 (ret 8)
+    __forceinline void clear_done() { ((Mission*)this)->clear_done(); }                                              // 0x4676c0
+    __forceinline void add_amount(int entry, int count) { ((Mission*)this)->add_amount(entry, (unsigned)count); }              // 0x4677a0 (ret 8)
     __forceinline int team_count() { return ((Mission*)this)->team_count(); }                                         // 0x48a8b0
     __forceinline char hero_down() { return ((MissionW*)this)->hero_down(); }                                         // 0x492170
     __forceinline int last_team() { return ((Mission*)this)->last_team(); }                                           // 0x48a910 (ui/mission.h)

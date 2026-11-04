@@ -124,7 +124,7 @@ done:
         ((Chunk_s25160*)rec)->m_4464d0(0);
     }
 
-    g_big->m_483f60(*(int*)&code_f, 0);
+    ((Mission*)g_big)->frame(code_f, false);
 
     {
         if (*(int*)((char*)g_big + 0x5c) >= 0)

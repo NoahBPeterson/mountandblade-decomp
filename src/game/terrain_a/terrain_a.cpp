@@ -24,8 +24,7 @@
 extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_globals.h): g_bit[2] = 4 (size mask), g_bit[4] = 0x10 (type mask)
 unsigned g_river_mask_b = (unsigned)g_bit[2];               // 0x5e2584
 unsigned g_river_mask_a = (unsigned)g_bit[4];               // 0x5e2580
-struct Mission;
-extern Mission* g_mission;                                  // 0x5e292c
+#include "../mission.h"                                      // Mission, g_mission (0x5e292c)
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -1245,13 +1244,13 @@ int Terrain::count_low_quads()
 // ---- mission helpers --------------------------------------------------------------------------------------------
 
 // @ 0x4676c0
-void Mission3::clear_done()
+void Mission::clear_done()
 {
     for (int i = 0; i < 64; i++) done[i] = 0;
 }
 
 // @ 0x4676e0
-void Mission3::copy_slot(int i)
+void Mission::copy_slot(int i)
 {
     char* base = (char*)this + i * 0x130;       // slot i of the 0x130-byte records at +0x6b0 (cl keeps the +0x6b0 separate)
     *(m64*)(base + 0x6b0) = *(m64*)(base + 0x6f0);
@@ -1262,7 +1261,7 @@ void Mission3::copy_slot(int i)
 }
 
 // @ 0x467740
-float Mission3::speed_factor(float x)
+float Mission::speed_factor(float x)
 {
     float base = g_options.f74 * 2.5f + 0.833333f;
     float t = (x + 15.0f) * 0.06666667f;
@@ -1270,7 +1269,7 @@ float Mission3::speed_factor(float x)
 }
 
 // @ 0x4677a0
-void Mission3::add_amount(int idx, unsigned flags)
+void Mission::add_amount(int idx, unsigned flags)
 {
     unsigned mask = flags & 0xfffffff;
     char* rec = (char*)g_mission_templates[mode].recs + idx * 0x4c;
@@ -1287,9 +1286,9 @@ void Mission3::add_amount(int idx, unsigned flags)
         int v;
         if ((rf & 1) || ((rf & 0x40) && f6214 == 1) || ((rf & 0x80) && f6214 == 0)
             || (f6214 == 2 && (rf & 0x40) && f6218 == 0) || (f6214 == 2 && (rf & 0x80) && f6218 == 1))
-            v = -f6520;
+            v = -terrain.f150;
         else
-            v = f6520;
+            v = terrain.f150;
         float f = speed_factor((float)v) * (float)(int)mask;
         amount = round_float(&f);
         if ((int)amount <= 0) amount = 1;

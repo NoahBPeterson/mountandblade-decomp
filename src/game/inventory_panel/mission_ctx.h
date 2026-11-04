@@ -20,13 +20,9 @@ struct MenuWidget {
 };
 
 // the Mission object with the members of 0x5143f0 / 0x5144d0 (src/game/mission.h lacks them) and the offsets the start-up reads
-struct MissionG {
-    void frame(float dt, bool spawn);   // 0x483f60 (ret 8; game/mesh_slot mesh_game.cpp: Mission::frame's definition)
-};
 struct MissionV : Mission {
     void init(int tmpl, int a2, int a3, int a4, struct MissionCtx* ctx, int a6, int a7);   // 0x5143f0 (ret 0x18)
     __declspec(noinline) void init_scene();             // 0x5144d0
-    __forceinline void frame(float a, int b) { ((MissionG*)this)->frame(a, b != 0); }   // 0x483f60 (ret 8)
 };
 #define MI(m, off) (*(int*)((char*)(m) + (off)))
 

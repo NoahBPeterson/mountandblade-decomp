@@ -95,7 +95,7 @@ struct VObj_s25160 {
 struct Mgr513710_s25160 { void m(void* p); };                           // 0x513710
 struct Chunk_s25160 { void m_4464d0(int a); void m_4f8bc0(); };
 struct Troop_s25160 { void m_4630d0(int i); };
-struct Big5e292c_s25160 { void m_483f60(int a, int b); };
+struct Big5e292c_s25160 { };   // g_mission as the slice addresses it (frame 0x483f60 is Mission::frame)
 
 
 #define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
@@ -1743,7 +1743,7 @@ struct level {
 struct RecZSubB {
     RecZSubB* init();   // 0x4353a0
 };
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionSource; struct NamedRec; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -1808,9 +1808,7 @@ struct Mission {
     void camera_to(rgl::matrix const*, float const*);   // 0x4fa790
     int add_placed(const int*, const int*, const int*, rgl::matrix const*, int*);   // 0x44f870
     void refresh_agent(Agent*);   // 0x4f7e00
-};
-struct MissionG {
-    void frame(float, bool);   // 0x483f60
+    void frame(float, bool);   // 0x483f60 (mesh_slot/mesh_game.cpp)
 };
 struct MissionSource {
     void pick(int*);   // 0x4d5410
@@ -1876,7 +1874,7 @@ __forceinline int AgentTable_s284a0::first_used() { return ((AgentTable*)this)->
 __forceinline unsigned AgentTable_s29840::first_used() { return (unsigned)((AgentTable*)this)->first_used(); }
 __forceinline void Mission_s29130::fn_529840(int a0) { ((Mission_s29840*)this)->fn_529840(a0); }
 __forceinline void Mission_s261e0::fn_529d80() { ((Mission_s29840*)this)->fn_529d80(); }
-__forceinline void Mission_s261e0::frame(float a0, char a1) { ((MissionG*)this)->frame(a0, (bool)a1); }
+__forceinline void Mission_s261e0::frame(float a0, char a1) { ((Mission*)this)->frame(a0, (bool)a1); }
 __forceinline Party_s29840* PartyMgr_s29840::get(int a0) { return (Party_s29840*)((Scene*)this)->get(a0); }
 __forceinline int PartyMgr_s29130::index_of(unsigned a0) { return ((Map10007*)this)->lookup(a0); }
 __forceinline int PartyMgr_s29840::index_of(unsigned a0) { return ((Map10007*)this)->lookup(a0); }

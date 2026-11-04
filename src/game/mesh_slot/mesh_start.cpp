@@ -52,12 +52,6 @@ struct ShadowMapP {
     void render();   // 0x47fef0 (mesh_char.cpp)
 };
 struct PolyMesh { void build_geometry(); void compute_edge_creases(); };    // 0x470a00 / 0x470750 (terrain_b/poly_mesh.h)
-struct Mission3 {
-    void copy_slot(int i);   // 0x4676e0 (terrain_a/misc.h)
-};
-struct MissionG {
-    void run_spawns();   // 0x483eb0 (mesh_game.cpp)
-};
 struct level {
     void floor_at(const float* p, float* out_z, face** out_face);   // 0x439be0 (agent2/agent_types.h)
 };
@@ -956,7 +950,7 @@ void Mission::start_setup()
         s->D = s->B;
         s->start = g_ticks[s->clock];
         s->f120 = 0;
-        ((Mission3*)this)->copy_slot(k);
+        copy_slot(k);
     }
 
     // ---- party spawn counters, troops, mode records ----------------------------------------------
@@ -976,7 +970,7 @@ void Mission::start_setup()
     }
     for (int i = 0; i < mrec->nrecs; i++)
         add_amount(i, mrec->recs[i].f14);
-    ((MissionG*)this)->run_spawns();
+    run_spawns();
     char buf[0x50];
     sprintf(buf, "temper = %3.2f, humidity = %3.2f, height = %3.2f fog_far = %d",
             (double)at<float>(0x65f0), (double)at<float>(0x65f4), (double)at<float>(0x65f8), (int)at<float>(0x6610));

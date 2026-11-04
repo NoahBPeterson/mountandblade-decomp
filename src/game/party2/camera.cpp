@@ -62,9 +62,6 @@ extern Font* g_font;                                // 0x5e2934
 // the defining name (only their `// 0x...` callee is declared); the views forward to them with `this` cast, which compiles to the
 // same call. Each comment names the defining source.
 #include "../../include/vec_xlen.h"                                                // 0x43e2a0 std::vector<int>::_Xlen (agent3/agent_combat.cpp)
-struct Mission3 {
-    void add_amount(int idx, unsigned flags);   // 0x4677a0 terrain_a/terrain_a.cpp (ret 8)
-};
 struct MissionW {                                                                   // 0x492230 / 0x492350 world_data/world_data.cpp (ret 8)
     void set_weapon_order_1(int team, unsigned value);
     void set_weapon_order_2(int team, unsigned value);
@@ -102,10 +99,6 @@ namespace rgl { struct matrix; } typedef rgl::matrix pos;
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
 struct CarryBody; struct CarryRef; struct CarryCtx;
 void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
-struct MissionG {
-    int create(const rgl::matrix* m, const struct ItemStackG* it, int troop);   // 0x4836e0 mesh_slot/mesh_game.cpp (ret 0xc)
-    int spawn_full(const rgl::matrix* m, int troop, int a, int b, int c, int d, int e, int f, int cnt, int* arr);   // 0x483870 mesh_slot/mesh_game.cpp (ret 0x28)
-};
 
 
 // camera.h's views of the interpreter's callees forward to the defining classes
@@ -696,7 +689,7 @@ struct Mission {
     char pad666a[2];
     Unit units[1];                                  // +0x666c (0x130 each)
 
-    void add_amount(int a, int b) { ((Mission3*)this)->add_amount(a, (unsigned)b); }                 // 0x4677a0 (ret 8)
+    void add_amount(int a, unsigned b);                                                              // 0x4677a0 (terrain_a/terrain_a.cpp, ret 8)
     int label_text(Sprite* label, const tstring* name, int a, int b, const float* h)   // 0x49baa0 (ret 0x14)
     {
         ((::GameData*)this)->label_text((rgl::mesh*)label, name, (char)a, b, h);
@@ -1787,14 +1780,14 @@ int Mission::enter_trigger(int val, int ip)
         s.m4 = (s.m4 & 0xffffff) | (ip << 24);
         s.reduce(0);
     }
-    return ((MissionG*)this)->create((const rgl::matrix*)g_game->trigger_frame, (const ItemStackG*)&s, 1);
+    return create((const rgl::matrix*)g_game->trigger_frame, (const ItemStackG*)&s, 1);
 }
 
 // @ 0x49f9e0
 int Mission::exec_trigger(int val)
 {
     char out[0x20];
-    return ((MissionG*)this)->spawn_full((const rgl::matrix*)g_game->trigger_frame, val, -1, 0, 0, -1, 0, 0, 0, (int*)out);
+    return spawn_full((const rgl::matrix*)g_game->trigger_frame, val, -1, 0, 0, -1, 0, 0, 0, (int*)out);
 }
 
 // ======================================================================================

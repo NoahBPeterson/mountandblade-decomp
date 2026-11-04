@@ -365,9 +365,7 @@ inline SceneBase::SceneBase() { ((SceneBaseCtor*)this)->construct(); }
 struct SceneObject : SceneBase { rgl::frustum frustum; char tail[0x14]; };   // 0x4a0 total
 
 // Views of classes defined in other translation units, declared here under the defining class's name (their headers do not go with this
-// one): terrain_a's Mission3::speed_factor (0x467740, ignores this), terrain_b's
-// CellGrid::spawn_wind (0x478f30).
-struct Mission3 { float speed_factor(float x); };
+// one): terrain_b's CellGrid::spawn_wind (0x478f30).
 struct Wind;
 struct CellGrid {
     ~CellGrid();   // 0x475d50

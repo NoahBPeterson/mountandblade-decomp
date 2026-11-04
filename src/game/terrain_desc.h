@@ -21,7 +21,9 @@ struct TerrainDesc {
     int n_minus1;                               // +8 index of the leveling entry
     TerrainDescEntry layers[13];                // +0xc
     Dims dims;                                  // +0x144 / +0x148
-    char pad14c[0x158 - 0x14c];
+    char pad14c[0x150 - 0x14c];
+    int f150;                                   // +0x150 (Mission +0x6520: the view-speed input of Mission::add_amount, 0x4677a0)
+    char pad154[0x158 - 0x154];
     unsigned char f158;                         // +0x158 mission flag byte (Mission +0x6528; 0x448eb0 tests bit 0, 0x4556d0)
     char pad159[0x16c - 0x159];
     float min_x, min_y, max_x, max_y;           // +0x16c play-area rectangle (0x479e20)

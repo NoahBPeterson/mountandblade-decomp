@@ -19,10 +19,10 @@
 ../src/game/terrain_a/terrain_a.cpp  ?emit_by_type@Terrain@@QAEXHPBUmatrix@rgl@@PBUvector4@3@H@Z  00466d90  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?triangle_corners@Terrain@@QAEXHHHPAH00@Z  00466e20  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?count_low_quads@Terrain@@QAEHXZ  00467530  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?clear_done@Mission3@@QAEXXZ  004676c0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?copy_slot@Mission3@@QAEXH@Z  004676e0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?speed_factor@Mission3@@QAEMM@Z  00467740  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?add_amount@Mission3@@QAEXHI@Z  004677a0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?clear_done@Mission@@QAEXXZ  004676c0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?copy_slot@Mission@@QAEXH@Z  004676e0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?speed_factor@Mission@@QAEMM@Z  00467740  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?add_amount@Mission@@QAEXHI@Z  004677a0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?size@vec36@@QBEHXZ  00467ac0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?size@vec24@@QBEHXZ  00467ae0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?size@vec52@@QBEHXZ  00467b00  /O2 /MT /Gy /TP

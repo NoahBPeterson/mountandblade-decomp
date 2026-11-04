@@ -33,6 +33,8 @@ struct PlacedObj;                                  // the 0x1c8-byte prop record
 struct MAgent;                                  // terrain_b/agent_rec.h: the agent slot as the pool sees it
 struct RecJ;
 struct SpawnRec;
+struct AgentS;                                  // mesh_slot/mesh_game.cpp: the agent as the spawner sees it
+struct ItemStackG;                              // mesh_slot/mesh_game.cpp: the item stack a spawned agent carries
 struct Stack;
 struct EntFlag;
 namespace rgl { struct mesh; }
@@ -249,13 +251,19 @@ struct Mission {
     // ---- src/game/mesh_slot (mesh_start.cpp: Mission::start_setup addresses the object by displacement) ----
     template<class T> T& at(int off) { return *(T*)((char*)this + off); }
     void start_setup();                         // 0x484590 (the per-mission start-up sequence: level + mode, weather, sky/cloud/fog bits, sun, the 64-slot light table, props and spawns)
+    void clear_done();                          // 0x4676c0 (terrain_a: clears the spawn-done flags)
     void copy_slot(int k);                      // 0x4676e0 (terrain_a/misc.h: copies a mark slot)
+    float speed_factor(float x);                // 0x467740 (terrain_a; thiscall, ignores this)
     void add_amount(int i, unsigned n);         // 0x4677a0 (terrain_a: spawn-rule amount; the script calls it add_visitors)
     void reset_spawned(int id);                 // 0x4739f0 (terrain_b/terrain_b.cpp)
     void light_entities(rgl::mesh** list, int count);   // 0x47ce00 (mesh_slot/mesh_scene.cpp)
     void light_props();                         // 0x47ced0
+    void spawn(AgentS* a);                      // 0x4832b0 (mesh_slot/mesh_game.cpp: initialise one agent: skin mesh, capsule, equipment, corpse spawn)
+    int spawn_full(const rgl::matrix* m, int troop, int a, int b, int c, int d, int e, int f, int cnt, int* arr);   // 0x483870 (ret 0x28)
+    int create(const rgl::matrix* m, const ItemStackG* it, int troop);   // 0x4836e0 (ret 0xc)
+    bool spawn_one(int id);                     // 0x483de0
     void run_spawns();                          // 0x483eb0 (mesh_slot/mesh_game.cpp: up to 100 passes spawning every pending entry)
-    void frame(float dt, int spawn);            // 0x483f60 (mesh_game.cpp: the per-frame mission tick; start_setup calls it with (0.1, 1))
+    void frame(float dt, bool spawn);           // 0x483f60 (mesh_game.cpp: the per-frame mission tick; start_setup calls it with (0.1, 1))
     int place(const int* item);                 // 0x49b4b0 (party2/camera.cpp: ret 4; the result is add_placed's)
     int exec_trigger(int val);                  // 0x49f9e0 (party2/camera.cpp: ret 4; the result is spawn_full's)
     int enter_trigger(int val, int ip);         // 0x49f980 (party2/camera.cpp: ret 8)

@@ -23,36 +23,9 @@
 
 // ---- mission helper block (global 0x5e292c; the Mission object of src/game/ui/mission.h seen through 0x4676c0.. ) ----
 struct m64 { int d[16]; };                      // 64-byte block (a matrix)
-struct slot130 {                                // 0x130 bytes, array at mission+0x6b0
-    m64 a;                                      // 0x00
-    m64 b;                                      // 0x40
-    m64 c;                                      // 0x80
-    int f0c0, f0c4;                             // 0xc0 / 0xc4
-    char padc8[0xe8 - 0xc8];
-    int f0e8;                                   // 0xe8
-    char padec[0x130 - 0xec];
-};
 #include "../mode_rec.h"                      // ModeRec2, g_mission_templates 0x5e2a00 (+0x34 -> 0x4c-byte spawn rules)
 struct World3 { char pad0[0x13a00]; Troop* troops; char pad1[0x13a50 - 0x13a04]; int* tbl; };   // the world object 0x5e2930
 #include "../../include/game_data.h"   // canonical: g_game (0x5e2930)
-
-struct Mission3 {
-    char pad0[0x6b0];
-    slot130 slots[18];                          // 0x6b0 (0x4676e0)
-    char pad1c70[0x5df0 - 0x6b0 - sizeof(slot130) * 18];
-    int mode;                                   // 0x5df0 (0x4677a0)
-    int f5df4;                                  // 0x5df4
-    char pad5df8[0x6214 - 0x5df8];
-    int f6214, f6218;                           // 0x6214 / 0x6218
-    char pad621c[0x6520 - 0x621c];
-    int f6520;                                  // 0x6520
-    char pad6524[0x6824 - 0x6524];
-    char done[64];                              // 0x6824 (0x4676c0)
-    void clear_done();                          // 0x4676c0
-    void copy_slot(int i);                      // 0x4676e0
-    float speed_factor(float x);                // 0x467740 (thiscall, ignores this)
-    void add_amount(int idx, unsigned flags);   // 0x4677a0
-};
 
 struct RuleRec { int f0; unsigned flags; unsigned f8; };    // flags: 0x100/0x200/0x400 and 0x10000/0x20000/0x40000 (0x467940)
 struct CandRec { int f0; int troop; unsigned char f8; };

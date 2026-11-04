@@ -228,20 +228,11 @@ void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* 
 long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
 
 // the mission object as the spawner sees it
-struct MissionG : Mission {
-    void spawn(AgentS* a);                                  // 0x4832b0
-    int create(const matrix* m, const ItemStackG* it, int troop);   // 0x4836e0
-    NOINL bool spawn_one(int id);                           // 0x483de0
-    void run_spawns();                                      // 0x483eb0
-    NOINL int spawn_full(const matrix* m, int troop, int a, int b, int c, int d, int e, int f, int cnt, int* arr);  // 0x483870
-    void frame(float dt, bool spawn);                       // 0x483f60
-    // (pick_spawn 0x473a60 and post_spawn 0x47a0c0 are Mission's own members, game/mission.h)
-};
 #define POOL (*(PoolS<AgentS>*)&MAT(char, 4))
 
 // @ 0x4832b0 -- the shared "initialise one agent" routine: applies the troop's skin mesh, builds the collision capsule from
 // the record's scale, runs the equipment fillers and finishes with the corpse spawn
-NOINL void MissionG::spawn(AgentS* a)
+NOINL void Mission::spawn(AgentS* a)
 {
     if (a->kind == 0) {
         a->f12c = (int)&g_anim_set;
@@ -342,7 +333,7 @@ NOINL void MissionG::spawn(AgentS* a)
 }
 
 // @ 0x4836e0 -- hand out an id from the embedded pool, reset the record, fill the spawn fields and spawn it
-int MissionG::create(const matrix* m, const ItemStackG* it, int troop)
+int Mission::create(const matrix* m, const ItemStackG* it, int troop)
 {
     int own = POOL.alloc();
     AgentS* a = &POOL.pages[(unsigned)own >> 4][own & 0xf];
@@ -379,7 +370,7 @@ int MissionG::create(const matrix* m, const ItemStackG* it, int troop)
 // @ 0x483870 -- a 10-argument agent creator: allocates a record from the pool, resets it, fills the spawn fields from a matrix
 // and a wave record, applies the skin-based scale/height, runs spawn, then optionally creates a carried-item agent through
 // pick_slot_item + create and announces the wave on the ui queue
-NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a3, int a4, int a5, int a6, int cnt, int* arr)
+NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3, int a4, int a5, int a6, int cnt, int* arr)
 {
     int own = POOL.alloc();
     if (troop == *(int*)(((char*)g_game) + 0x8c)) {
@@ -499,7 +490,7 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
 }
 
 // @ 0x483de0 -- read a wave record through 0x473a60 and forward it to spawn_full, then store the record index on the agent
-NOINL bool MissionG::spawn_one(int id)
+NOINL bool Mission::spawn_one(int id)
 {
     int o7, o5, o3, o2, o6;
     int orig = id;
@@ -515,7 +506,7 @@ NOINL bool MissionG::spawn_one(int id)
 }
 
 // @ 0x483eb0 -- up to 100 passes over the current wave set, spawning every pending entry whose done flag is clear
-void MissionG::run_spawns()
+void Mission::run_spawns()
 {
     SpawnSetG* p = (SpawnSetG*)((char*)g_mission_templates + this->mode * 0x58);
     char done = 0;
@@ -605,7 +596,7 @@ extern "C" int rand();                 // 0x536a9f
 // @ 0x483f60 -- the per-frame mission tick: the shadow-object upkeep, the 100 kHz frame clock, the carried-item sweep, the
 // spawn pass, the wave sound slots, the prop pool (per-entry update + retire, list overflow cull), the prop tweens, three agent
 // passes (non-horses, horses, ticks), the mission timers/sky clock and finally world::step + the frame counter
-void MissionG::frame(float dt, bool spawn)
+void Mission::frame(float dt, bool spawn)
 {
     psys_rec* ps = (psys_rec*)g_shadow_map.target;
     bool scene_changed = ps != 0 && *(int*)(ps->scene + 0x50) != g_batch.counter;

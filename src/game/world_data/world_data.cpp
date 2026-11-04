@@ -786,7 +786,7 @@ int MissionW::count_agents(int idx)
     int n = teams[idx].relation[rr->team];
     int s = f6520();
     if (n < 0) s = -s;
-    float v = total * (1.0f / ((Mission3*)(void*)this)->speed_factor((float)s));
+    float v = total * (1.0f / speed_factor((float)s));
     double fl = floor(v);
     int res = (int)fl;
     if (v - fl > 0.5) res++;
