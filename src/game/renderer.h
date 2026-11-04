@@ -23,13 +23,7 @@ void mb_error(const char* fmt, ...);        // 0x42cc80
 #include "../include/renderer.h"                // renderer (shared: state cache here, debug drawer in src/rgl/shapes)
 
 // ---- material / mesh part ------------------------------------------------------------------------------
-struct material {
-    char pad00[0x20];
-    unsigned flags;                 // 0x20  bit 28: has a pixel shader, bit 29: shader set elsewhere   0x461f20
-    char pad24[0xbc - 0x24];
-    IDirect3DPixelShader9* ps;      // 0xbc                                       0x461f20
-    void bind_pixel_shader();       // 0x461f20
-};
+#include "../rgl/resource.h"           // material: flags20 (bits 28/29: pixel shader), ps +0xbc, bind_pixel_shader 0x461f20
 
 struct mat_rec { char pad00[0x20]; unsigned flags; };      // bit 5: specular   0x461f80
 struct mesh_part {

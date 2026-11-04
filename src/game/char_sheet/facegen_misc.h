@@ -10,7 +10,6 @@
 #include <math.h>
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/scene/scene_entity.h"   // rgl::entity / rgl::strategic_entity (the preview entity)
-#define CS_REAL_FACEGEN                                 // (this header defines FaceGen)
 #include "./cs_common.h"
 #include "./cs_mat.h"
 

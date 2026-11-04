@@ -250,8 +250,8 @@ void renderer::set_specular(const float* c)
 // @ 0x461f20
 void material::bind_pixel_shader()
 {
-    if (flags & 0x20000000) return;
-    if (flags & 0x10000000) {
+    if (flags20 & 0x20000000) return;
+    if (flags20 & 0x10000000) {
         IDirect3DPixelShader9* shader = ps;
         if (shader != g_render.cur_ps) {
             g_render.dev->SetPixelShader(shader);

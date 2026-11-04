@@ -2,6 +2,7 @@
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./editor_ui.h"
+#include "../ui/container.h"      // ContainerBase: add_child 0x493a30
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -16,17 +17,17 @@ extern Font* g_font;                                        // 0x5e2934
 int g_5e29a4;   // 0x5e29a4 trial-mode flag as engine_init copied it
 
 // @ 0x4f5d20
-WidgetA* __cdecl new_key_label(void* parent, const tstring* name, const tstring* text)
+MissionUi* __cdecl new_key_label(void* parent, const tstring* name, const tstring* text)
 {
-    WidgetA* w = (WidgetA*)::operator new(0x178);
+    MissionUi* w = (MissionUi*)::operator new(sizeof(MissionUi));
     if (w != 0)
-        w = (WidgetA*)new (w, raw_place()) MissionUi;   // 0x48ae20
+        w = new (w, raw_place()) MissionUi;   // 0x48ae20
     else
         w = 0;
-    label_refresh((MissionUi*)w, *text);
+    label_refresh(w, *text);
     float out[2];
-    w->set_text(out, *name);
-    ((Widget*)parent)->add_child(w);
+    w->set_text(out, name);
+    ((ContainerBase*)parent)->add_child(w);
     return w;
 }
 
@@ -92,27 +93,20 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
 }
 
 // @ 0x4f5fb0
-WidgetB* __cdecl make_slider(void* parent, const tstring* name)
+UiB* __cdecl make_slider(void* parent, const tstring* name)
 {
-    WidgetB* w = (WidgetB*)::operator new(0x188);
-    if (w != 0) {
-        new (w, raw_place()) MissionUi;   // 0x48ae20
-        *(void**)w = (void*)vtbl_591fb0;
-        w->f178 = 0;
-        w->f17c = 0.008f;
-        w->f168 = 1.0f;
-        w->f180 = 0;
-        w->f184 = 0;
-    } else {
+    UiB* w = (UiB*)::operator new(sizeof(UiB));
+    if (w != 0)
+        w = new (w, raw_place()) UiB;   // 0x48b4b0 (the base constructor 0x48ae20, the vptr 0x591fb0, the slider fields)
+    else
         w = 0;
-    }
-    label_refresh((MissionUi*)w, *name);
-    float h = *(float*)((char*)w + 0xf0);
+    label_refresh(w, *name);
+    float h = w->screen[0];
     {
         float size[2];
         size[0] = h * 0.25f;
         size[1] = h * 0.03f;
-        w->set_scale(size);
+        w->set_xy(size);
     }
     mesh* track = load_mesh("slider_hor");
     mesh* handle = load_mesh("handle_hor");
@@ -123,46 +117,39 @@ WidgetB* __cdecl make_slider(void* parent, const tstring* name)
     }
     w->set_track(0, track);
     w->set_track(2, handle);
-    ((Widget*)parent)->add_child(w);
+    ((ContainerBase*)parent)->add_child(w);
     return w;
 }
 
 // @ 0x4f6160
-WidgetB* __cdecl make_scrollbar(void* parent, const tstring* name)
+UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
 {
-    WidgetB* w = (WidgetB*)::operator new(0x188);
-    if (w != 0) {
-        new (w, raw_place()) MissionUi;   // 0x48ae20
-        *(void**)w = (void*)vtbl_UiD;
-        w->f178 = 0;
-        w->f17c = 0.1f;
-        w->f168 = 1.0f;
-        w->f180 = 0;
-        w->f184 = 0;
-    } else {
+    UiD* w = (UiD*)::operator new(sizeof(UiD));
+    if (w != 0)
+        w = new (w, raw_place()) UiD;   // 0x48b890 (the base constructor 0x48ae20, the vptr 0x592140, the scrollbar fields)
+    else
         w = 0;
-    }
-    label_refresh((MissionUi*)w, *name);
-    float a = *(float*)((char*)w + 0xf0) * 50.0f;
+    label_refresh(w, *name);
+    float a = w->screen[0] * 50.0f;
     w->f178 = 1;
-    float b = *(float*)((char*)w + 0xf4) * 1.5576323f;
+    float b = w->screen[1] * 1.5576323f;
     w->f17c = b * 0.31f;
     rgl::vector4 col(a, b, 1.0f);
     mesh* m1;
     {
         tstring n("scrollbar");
-        m1 = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&n))->clone();
+        m1 = res_manager().get_object((const rgl::string*)&n)->clone();
     }                                           // the name dies before the colour is set (0x4f6160: ~tstring, then set_color)
     m1->set_color(col);
     mesh* m2;
     {
         tstring n("scrollbar_handle");
-        m2 = (mesh*)((mesh_x*)g_alloc.get_object((const rgl::string*)&n))->clone();
+        m2 = res_manager().get_object((const rgl::string*)&n)->clone();
     }                                           // the name dies before the colour is set (0x4f6160: ~tstring, then set_color)
     m2->set_color(col);
     w->set_track(0, m1);
     w->set_track(2, m2);
-    ((Widget*)parent)->add_child(w);
+    ((ContainerBase*)parent)->add_child(w);
     return w;
 }
 

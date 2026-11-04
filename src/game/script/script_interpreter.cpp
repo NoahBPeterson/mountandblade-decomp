@@ -1453,7 +1453,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             game()->message_log.append(text);
             if (g_cfg.enable_edit_mode) {
                 text.push_back('\n');
-                ((stream_base*)g_log)->w_tstr(&text);
+                ((stream_base*)g_log)->w_tstr((const rgl::string*)&text);
             }
         }
         break;
@@ -1466,7 +1466,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_msglog.add(text, color);
             if (g_cfg.enable_edit_mode) {
                 text.push_back('\n');
-                ((stream_base*)g_log)->w_tstr(&text);
+                ((stream_base*)g_log)->w_tstr((const rgl::string*)&text);
             }
         }
         break;
