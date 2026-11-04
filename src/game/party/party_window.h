@@ -26,7 +26,7 @@
 #include "./externs.h"
 
 // ---- objects of other translation units ----------------------------------------------------------------
-#include "../config_table.h"               // ConfigEntry, ConfigTable, g_config, CONFIG_ENTRIES: the one definition
+#include "../ini_file.h"                   // ini_file, g_game_vars (0xa44240)
 
 #include "../res_mesh.h"               // ResMesh (was ResMesh), ResMgr, ObjTable: the one definition
 #include "../../rgl/resource.h"          // resource_manager g_resmgr 0x5d6fa0

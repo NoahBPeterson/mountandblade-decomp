@@ -16,7 +16,7 @@
 #include "../rgl_math.h"
 #include "../stream.h"
 #include "../../game/strat/gui_manager.h"     // g_log (log_stream)
-#include "../../game/ini_file.h"               // ini_file (canonical owner of find 0x4bd5a0; ini_file_x below is a view of g_game_vars)
+#include "../../game/ini_file.h"               // ini_file (find 0x4bd5a0), g_game_vars
 #include "./mesh2_common.h"
 #include "./head_rec.h"
 #include "../../game/result_window.h"
@@ -118,22 +118,7 @@ struct GameAppView {
 // batch at 0x5fe898 (init_decls) and the resource manager at 0x5d6fa0 (load_all) are config.h's InputSet,
 // render_batch.h's render_batch and rgl/core/resmgr.h's resmgr (included by rec_tables.cpp).
 
-// the ini table at 0xa44240 (0x2c-byte entries: key tstring +0, value tstring +0x1c); get_float is inline (header)
-struct ini_entry_x { tstring key; char pad10[0xc]; tstring value; };
-struct ini_file_x {
-    ini_entry_x entries[0x1000];                           // +0
-    int count;                                             // +0x2c000
-    // find is ini_file::find (0x4bd5a0, thiscall, ret 4): this is the same 0x2c004-byte table (ini_file.h), g_game_vars
-    float get_float(const tstring& key)
-    {
-        float ret = 0.0f;
-        int idx = ((ini_file*)this)->find(key);
-        if (idx >= 0)
-            ret = (float)atof(entries[idx].value.c_str());
-        return ret;
-    }
-};
-// g_game_vars (0xa44240) is declared by ini_file.h as an ini_file; rec_tables.cpp views it as ini_file_x for the inline get_float
+// g_game_vars (0xa44240) is ini_file.h's ini_file (entries of 0x2c bytes: key tstring +0, value tstring +0x1c)
 
 // 0x4c0520 is a cdecl function without parameters (game/triggers/trigger_vec.cpp); the original calls it with ecx = the renderer object, which
 // it ignores: rec_tables.cpp calls it through the fastcall type of that call

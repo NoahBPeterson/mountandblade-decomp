@@ -118,7 +118,7 @@ extern GuiManager g_gui;                        // 0x5d7080
 #include "../str_table.h"
 
 // settings table at 0xa44240: 0x2c-byte records, key tstring at +0, text pointer at +0x20
-#include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
+#include "../ini_file.h"                      // ini_file, g_game_vars (0xa44240)
 #include "../skill_cap.h"
 #include "../ui_globals.h"      // UI / core globals
 
@@ -203,9 +203,7 @@ struct char_window {
 // ---- settings access ------------------------------------------------------------------------------------
 static const char* config_text(int i)
 {
-    char* e = (char*)&g_game_vars + 0x1c + i * 0x2c;   // entry base; the text pointer is at +4
-    const char* v = *(const char**)(e + 4);
-    return v ? v : e + 4;
+    return g_game_vars.entries[i].value.c_str();   // the text pointer is at +4; null: the field itself holds the text
 }
 
 // the inlined key walk of the original: compare every record's key, stop at the first hit
@@ -213,7 +211,7 @@ static int config_index(const tstring& key)
 {
     int found = -1;
     for (int i = 0; i < g_game_vars.count && found == -1; i++) {
-        if (((tstring*)((char*)&g_game_vars + i * 0x2c))->equals(key))
+        if (g_game_vars.entries[i].key.equals(key))
             found = i;
     }
     return found;

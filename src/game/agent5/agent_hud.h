@@ -444,14 +444,7 @@ struct MWidget {
     ~MWidget();                                                   // 0x4fd3d0
     MapText text_rect();                                          // 0x4fd4f0
 };
-struct ParamEntry {                                               // 0x2c-byte record of the parameter table at 0xa44240 (the value text at +0x20)
-    tstring name;
-    char pad10[0x20 - 0x10];
-    char* value;                                                  // +0x20 (0xa4425c + 4 + index * 0x2c)
-    char pad24[0x2c - 0x24];
-};
-extern ParamEntry g_game_vars[];                                     // 0xa44240
-extern int g_param_count;                                         // 0xa70240
+#include "../ini_file.h"                                           // g_game_vars (0xa44240), ini_entry: the parameter table (the value text at +0x20)
 
 
 #include "../str_table.h"                                          // StrTable: lookup 0x43a1e0 (ret 4)

@@ -23,9 +23,7 @@ using rgl::vector4;
 
 // ---- strings / setting table ------------------------------------------------------------------------
 #include "../tstring.h"
-struct setting { int f0; char* value; char pad[0x2c - 8]; };   // string pointer +4 (null: field is the text)
-extern int g_n_settings;                                 // 0xa70240
-extern setting g_settings;                               // 0xa44240 (entry i at 0xa4425c + 0x2c*i)
+#include "../ini_file.h"                               // ini_file, g_game_vars (0xa44240; its count is 0xa70240)
 
 
 // lookup of one setting, 0.0f when the key is missing (the original inlines this seven times)
@@ -35,16 +33,16 @@ static float setting_float(const char* name)
     int idx = -1;
     int i = 0;
     do {
-        if (i >= g_n_settings)
+        if (i >= g_game_vars.count)
             break;
-        if (key.equals(((tstring*)((char*)&g_settings + 0x1c))[i]))
+        if (key.equals(g_game_vars.entries[i].value))
             idx = i;
         i++;
     } while (idx == -1);
     float r = 0.0f;
     if (idx >= 0) {
-        setting* e = (setting*)((char*)&g_settings + 0x1c) + idx;
-        r = (float)atof(e->value ? e->value : (char*)&e->value);
+        ini_entry* e = &g_game_vars.entries[idx];
+        r = (float)atof(e->value.c_str());
     }
     return r;
 }

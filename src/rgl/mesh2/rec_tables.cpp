@@ -268,6 +268,16 @@ void* elem58::vector_deleting_delete(unsigned flags)
         operator delete(this);
     return this;
 }
+// the inlined get_float of the original (find 0x4bd5a0, then atof of the entry's text), 0 when the key is absent
+static __forceinline float game_var_float(const tstring& key)
+{
+    float ret = 0.0f;
+    int idx = g_game_vars.find(key);
+    if (idx >= 0)
+        ret = (float)atof(g_game_vars.entries[idx].value.c_str());
+    return ret;
+}
+
 // @ 0x4c3510
 // GameApp::InitDeviceObjects: hands the font object the device, publishes the window size, queries the caps,
 // decides whether shaders can be used, then reads the ten buffer-size options into the renderer's buffer table.
@@ -294,25 +304,25 @@ int __fastcall renderer_setup(GameAppView* self)
     ((void (__fastcall*)(void*))load_game_variables)(self);
     {
         tstring k1("buffer_size_dx7_regular_ffp_dynamic");
-        int v1 = (int)((ini_file_x&)g_game_vars).get_float(k1);
+        int v1 = (int)game_var_float(k1);
         tstring k2("buffer_size_dx7_regular_ffp_static");
-        int v2 = (int)((ini_file_x&)g_game_vars).get_float(k2);
+        int v2 = (int)game_var_float(k2);
         tstring k3("buffer_size_normal_map_dynamic");
-        int v3 = (int)((ini_file_x&)g_game_vars).get_float(k3);
+        int v3 = (int)game_var_float(k3);
         tstring k4("buffer_size_normal_map_static");
-        int v4 = (int)((ini_file_x&)g_game_vars).get_float(k4);
+        int v4 = (int)game_var_float(k4);
         tstring k5("buffer_size_skinning_dynamic");
-        int v5 = (int)((ini_file_x&)g_game_vars).get_float(k5);
+        int v5 = (int)game_var_float(k5);
         tstring k6("buffer_size_skinning_static");
-        int v6 = (int)((ini_file_x&)g_game_vars).get_float(k6);
+        int v6 = (int)game_var_float(k6);
         tstring k7("buffer_size_regular_dynamic");
-        int v7 = (int)((ini_file_x&)g_game_vars).get_float(k7);
+        int v7 = (int)game_var_float(k7);
         tstring k8("buffer_size_regular_static");
-        int v8 = (int)((ini_file_x&)g_game_vars).get_float(k8);
+        int v8 = (int)game_var_float(k8);
         tstring k9("buffer_size_regular_ffp_dynamic");
-        int v9 = (int)((ini_file_x&)g_game_vars).get_float(k9);
+        int v9 = (int)game_var_float(k9);
         tstring k10("buffer_size_regular_ffp_static");
-        int v10 = (int)((ini_file_x&)g_game_vars).get_float(k10);
+        int v10 = (int)game_var_float(k10);
         g_batch.init_decls(&v10, &v9, &v8, &v7, &v6, &v5, &v4, &v3, &v2, &v1);
     }
     ((resmgr*)&orig::g_resmgr_obj)->load_all(1, (rgl::string*)&g_module_path);

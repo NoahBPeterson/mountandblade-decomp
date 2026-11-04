@@ -140,7 +140,6 @@ extern render_batch g_batch;               // 0x5fe898
 extern InputSet g_input_a;                 // 0xa170c8
 extern renderer g_render;                  // 0xa17910
 
-extern ini_file g_module_info;             // 0xa18238
 extern MissionCtx g_mission_ctx;           // 0xa73300
 extern int g_a73304[];                          // 0xa73304
 extern main_menu g_main_menu_obj;              // 0xa73980

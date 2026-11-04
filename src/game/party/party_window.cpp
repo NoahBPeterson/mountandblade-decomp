@@ -41,16 +41,14 @@ void __cdecl label_refresh(MissionUi* w, tstring name);      // 0x4e4c70 (cdecl,
 #define EQUIP(t, k) (g_game_G->troops[(t)].equip[(k)])
 #define INV(t, k) (g_game_G->troops[(t)].inv[(k)])
 
-struct ini_file;
-extern ini_file g_game_vars;                // 0xa44240 (viewed as the ConfigTable of config_table.h)
 // the config lookup every equipment key goes through: a missing key yields 0. The key is a temporary of the
 // caller's expression (it is destroyed after the value is stored).
 static __forceinline float cfg(const tstring& n)
 {
     float r = 0.0f;
-    int i = ((ConfigTable&)g_game_vars).find(n);
+    int i = g_game_vars.find(n);
     if (i >= 0)
-        r = (float)atof(CONFIG_ENTRIES[i].value ? CONFIG_ENTRIES[i].value : (char*)&CONFIG_ENTRIES[i].value);
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
     return r;
 }
 

@@ -44,7 +44,6 @@ typedef Widget UiWidget;                // the slice's name for it
 
 // the ini table at 0xa44240 (0x2c-byte entries, see s004bd170)
 #include "../ini_file.h"
-extern ini_file g_config;                           // 0xa44240
 
 // the character texture's text anchors for the level values; the original loads the pointer stored
 // in each global and prints it as a "%s" argument

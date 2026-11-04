@@ -5,6 +5,7 @@
 // (Core, ../config/core.h): their constructors / destructors are the only functions here, written against partial
 // views because mission.h / core.h declare neither (see MIGRATION.md).
 #include "../../include/image_addrs.h"
+#include "../ini_file.h"                      // ini_file, g_module_info (0xa18238)
 #include "../config/config_block.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <windows.h>
@@ -732,7 +733,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
             void* f = fopen(ini.c_str(), "r");
             if (f != 0) {
-                ((ini_file*)&orig::g_module_info)->load((FILE*)f);
+                g_module_info.load((FILE*)f);
                 fclose((FILE*)f);
             }
 

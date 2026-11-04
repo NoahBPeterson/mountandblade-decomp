@@ -25,7 +25,7 @@
 
 // settings table at 0xa44240: find() returns an entry index or -1; entries are 0x2c bytes from 0xa4425c
 // with the string pointer at +4 (a null pointer there means the field itself holds the text).
-#include "../config_table.h"                  // ConfigEntry, ConfigTable, g_config: the one definition
+#include "../ini_file.h"                      // ini_file, g_game_vars (0xa44240)
 extern "C" double atof(const char* s);              // 0x537352
 
 
@@ -36,10 +36,10 @@ extern "C" double atof(const char* s);              // 0x537352
 static __forceinline float config_float(const tstring& key)
 {
     float v = 0;
-    int i = g_config.find(key);
+    int i = g_game_vars.find(key);
     if (i >= 0) {                                        // a missing key has no text pointer: read the inline bytes
-        ConfigEntry* e = &CONFIG_ENTRIES[i];   // (same fallback as conv_open.h / char_sheet.cpp config_text)
-        v = (float)atof(e->value ? e->value : (char*)&e->value);
+        ini_entry* e = &g_game_vars.entries[i];   // (same fallback as conv_open.h / char_sheet.cpp config_text)
+        v = (float)atof(e->value.c_str());
     }
     return v;
 }

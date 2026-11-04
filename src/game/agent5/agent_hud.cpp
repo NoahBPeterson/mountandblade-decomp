@@ -1400,17 +1400,17 @@ static __forceinline float param_value(const char* key)
 {
     tstring k(key);
     int found = -1;
-    for (int i = 0; i < g_param_count; i++) {
-        if (g_game_vars[i].name.equals(k)) {
+    for (int i = 0; i < g_game_vars.count; i++) {
+        if (g_game_vars.entries[i].key.equals(k)) {
             found = i;
             break;
         }
     }
     float v = 0.0f;
     if (found >= 0) {
-        char* s = g_game_vars[found].value;
+        char* s = g_game_vars.entries[found].value.buf;
         if (s)
-            v = (float)atof(s ? s : (char*)&g_game_vars[found].value);
+            v = (float)atof(s ? s : (char*)&g_game_vars.entries[found].value.buf);
     }
     return v;
 }

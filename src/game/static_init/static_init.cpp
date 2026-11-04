@@ -45,10 +45,6 @@ extern char g_5fe898[];     // 0x5fe898
 
 
 extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
-extern char g_a18238[];     // 0xa18238 module.ini (ini file: 0x1000 entries of 0x2c)
-extern char g_a44238[];     // 0xa44238 (end of its entries)
-extern char g_a44240[];     // 0xa44240 the game config (ini file)
-extern char g_a70240[];     // 0xa70240 (end of its entries)
 
 struct ShadowMap;
 extern ShadowMap g_shadow_map;   // 0xa70248 (game_state.cpp)
@@ -124,26 +120,6 @@ void __cdecl static_dtor_548170()
 {
     ((TStrRec*)(g_5a9f30 + 0x20))->~TStrRec();
     ((TStrRec*)(g_5a9f30 + 0x4))->~TStrRec();
-}
-// @ 0x5481a0
-void __cdecl static_dtor_5481a0()
-{
-    char* p = g_a44238;
-    for (int n = 0x1000; n; n--) {
-        p -= 0x2c;
-        ((TStrRec*)(p + 0x1c))->~TStrRec();
-        ((TStrRec*)p)->~TStrRec();
-    }
-}
-// @ 0x5481d0
-void __cdecl static_dtor_5481d0()
-{
-    char* p = g_a70240;
-    for (int n = 0x1000; n; n--) {
-        p -= 0x2c;
-        ((TStrRec*)(p + 0x1c))->~TStrRec();
-        ((TStrRec*)p)->~TStrRec();
-    }
 }
 // @ 0x548200
 void __cdecl static_dtor_548200() {}
@@ -261,10 +237,6 @@ void __cdecl static_init_547b50()
     g_keyboard.axis[0] = 0;
     g_keyboard.axis[1] = 0;
 }
-// @ 0x547da0
-void __cdecl static_init_547da0() { new (g_a18238) ini_file; atexit(static_dtor_5481a0); }
-// @ 0x547dc0
-void __cdecl static_init_547dc0() { new (g_a44240) ini_file; atexit(static_dtor_5481d0); }
 // @ 0x547de0
 void __cdecl static_init_547de0()
 {
@@ -322,8 +294,7 @@ init_fn g_static_init_table[] = {
     static_init_5479a0, static_init_5479c0, 
     
     static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
-    static_init_547da0,
-    static_init_547dc0, static_init_547de0, static_init_547e20, static_init_547e40,
+    static_init_547de0, static_init_547e20, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,
     static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,

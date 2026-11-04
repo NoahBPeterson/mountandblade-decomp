@@ -48,9 +48,9 @@ typedef char chk_bg[offsetof(PartyWindow, equip_bg) == 0xac8 ? 1 : -1];
 static __forceinline float cfg(const tstring& n)
 {
     float r = 0.0f;
-    int i = g_config.find(n);
+    int i = g_game_vars.find(n);
     if (i >= 0)
-        r = (float)atof(CONFIG_ENTRIES[i].value ? CONFIG_ENTRIES[i].value : (char*)&CONFIG_ENTRIES[i].value);
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
     return r;
 }
 
