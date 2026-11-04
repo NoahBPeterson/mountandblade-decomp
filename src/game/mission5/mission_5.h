@@ -1365,7 +1365,6 @@ struct contact_s29ec0 {                                                // 0x20 b
     vector4 pos;                                                // 0x00
     vector4 point;                                              // 0x10
 };
-matrix* identity_pos(matrix* out);                              // 0x40cd00 (cdecl)
 
 // ---- level / scene -----------------------------------------------------------------------------------
 struct SceneEntity_s29ec0 {
@@ -1963,13 +1962,7 @@ struct GameData {
     int skill_level(int, int);   // 0x437b20
     tstring scene_path(int);   // 0x463950
 };
-struct ItemRef {
-    int item;
-    unsigned m4;
-    int max_amount() const;   // 0x434b70
-    int stat_1ec();   // 0x434c50
-    void name(char*);   // 0x512730
-};   // layout of src/game/item_ref.h ItemRef (8 bytes: item, m4); that header clashes with this file's g_items
+#include "../ui/item_ref.h"   // ItemRef, snd_bank, snd_slot
 struct Local {
     void read(stream_base&);   // 0x524f00
 };
@@ -2073,12 +2066,6 @@ struct world {
     void remove_entity(int);   // 0x41f0d0
 };
 }
-struct snd_bank {
-    void update_all(int);   // 0x462760
-};
-struct snd_slot {
-    void update(int);   // 0x4625d0
-};
 __forceinline void Gui_s2b5c0::add(tstring a0, int a1) { ((MsgLog*)this)->add(a0, a1); }
 __forceinline void MsgLog_s261e0::add(tstring a0, int a1) { ((MsgLog*)this)->add(a0, a1); }
 __forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((Poser*)this)->add_extra((int)a0); }

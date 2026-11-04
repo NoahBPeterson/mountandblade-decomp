@@ -268,16 +268,16 @@ void FaceGen::init()
     float p2[2];
     p2[0] = 0.05125f;                                  // 0x3d51eb85
     p2[1] = 0.266875f;                                 // 0x3e88a3d7
-    b->set_pos(p2);
+    b->move_a((float*)p2);
     float s2[2];
     s2[0] = 0.45875f;                                  // 0x3eeae148
     s2[1] = 0.44f;
-    b->set_scale(s2);
+    b->set_xy(s2);
     b->flags |= 0x300;
     b->clear_color = 0xff201815;
 
     // ---- the camera frustum (16:9 fit around the body) ---------------------------------------------
-    float ratio = b->size_y / b->size_x * g_fov_k;
+    float ratio = b->screen[1] / b->screen[0] * g_fov_k;
     float tanv = (float)tan(((double)0.30543262f));
     fr.perspective = 1;
     fr.nearz = 0.01f;

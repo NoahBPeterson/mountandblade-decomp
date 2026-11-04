@@ -1,5 +1,5 @@
 ../src/game/char_sheet/terrain_page.cpp  ?update@TerrainPage@@QAEXXZ  004f2730  /O2 /MT /Gy /TP
-../src/game/char_sheet/terrain_page.cpp  ?set_enabled_text@TerrainPage@@QAEXPAUWidget@@@Z  004f28a0  /O2 /MT /Gy /TP
+../src/game/char_sheet/terrain_page.cpp  ?set_enabled_text@TerrainPage@@QAEXPAUMissionUi@@@Z  004f28a0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/terrain_page.cpp  ?set_hex3_text@TerrainPage@@QAEXH@Z  004f28f0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/terrain_page.cpp  ?refresh_hex@TerrainPage@@QAEXXZ  004f2960  /O2 /MT /Gy /TP
 ../src/game/char_sheet/terrain_page.cpp  ?build_hex_text@Terrain@@QAEXAAUtstring@@@Z  004f29b0  /O2 /MT /Gy /TP

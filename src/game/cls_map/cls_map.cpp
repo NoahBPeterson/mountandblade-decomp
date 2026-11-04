@@ -1931,7 +1931,7 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 // Every widget of the original in order: the overlay window, its header logo, the three buttons (ui_controls / ui_video_options /
 // ui_done), the difficulty sliders and drop-downs, the 19 hint labels and the "ui_enabled" toggles, with the original callee
 // prototypes (make_hint 0x4dada0, new_medium_button 0x4dce70, make_slider 0x4dfd50, make_dropdown 0x4dfec0).
-#define set_enabled_text(o) ((KeysPage*)this)->set_enabled_text((Widget*)(o))   // 0x4d6dd0
+#define set_enabled_text(o) ((KeysPage*)this)->set_enabled_text((MissionUi*)(o))   // 0x4d6dd0
 #define update_perf(w) ((KeysPage*)(w))->update_perf()                          // 0x4d6b80
 #define COLOR_ENABLED 0xffdfcfbfu   // the ui colour word every label of the screen is tinted with (edi in the original)
 

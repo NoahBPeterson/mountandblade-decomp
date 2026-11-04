@@ -70,7 +70,7 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
         m = (mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&hl))->clone();
     }
     m->scale(x / z);
-    ((Widget*)b)->set_track(3, m);
+    ((MissionUi*)b)->set_track(3, m);
     return b;
 }
 
@@ -90,7 +90,7 @@ void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, fl
         m = (mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&hl))->clone();
     }
     m->scale(x / z);
-    ((Widget*)b)->set_track(3, m);
+    ((MissionUi*)b)->set_track(3, m);
     return b;
 }
 
@@ -167,7 +167,7 @@ Camera* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
     if (a3 != 0)
         w->follow[1] = (MissionUi*)a3;
     w->target = (ContainerBase*)parent;
-    ((Widget*)w)->add_child(parent);
+    w->add_child((MissionUi*)parent);
     label_refresh((MissionUi*)w, *name);
     return w;
 }

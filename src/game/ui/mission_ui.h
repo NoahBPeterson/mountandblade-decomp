@@ -52,16 +52,16 @@ struct MissionUi {
     virtual void set_d0(int v);                                 // +0x4c 0x488930
     virtual void set_d4(int v);                                 // +0x50 0x488940
     virtual void or_d4(int m);                                  // +0x54 0x488950
-    virtual void move_a(float* p);                              // +0x58 0x488970: position/offset pair (0x487c40)
+    virtual void move_a(const float* p);                           // +0x58 0x488970: position/offset pair (0x487c40)
     virtual void on_child_moved(MissionUi* src);       // +0x5c "child moved" notification, passed this (0x488970): `ret 4` (0x408030)
     virtual void on_moved();                     // +0x60 `ret` (0x477b70)
-    virtual void set_xy(float* p);                              // +0x64 0x4889b0 (0x488b50, 0x48b090)
-    virtual void move_f8(float* p);                             // +0x68 0x4889e0
+    virtual void set_xy(const float* p);                           // +0x64 0x4889b0 (0x488b50, 0x48b090)
+    virtual void move_f8(const float* p);                          // +0x68 0x4889e0
     virtual void set_size(const float* p);                      // +0x6c 0x48b090 (0x48b3a0)
-    virtual void set_offset(float* p);                          // +0x70 0x488a10 (0x48b3a0)
-    virtual void set148(float* p);                              // +0x74 0x488a40
-    virtual void or148(float* p);                               // +0x78 0x488a70
-    virtual void run(int a, int b);                             // +0x7c 0x488aa0
+    virtual void set_offset(const float* p);                       // +0x70 0x488a10 (0x48b3a0)
+    virtual void set148(const int* p);                           // +0x74 0x488a40
+    virtual void or148(const int* p);                            // +0x78 0x488a70
+    virtual void set_mesh(int slot, rgl::mesh* m);                           // +0x7c 0x488aa0
     virtual void set_track(int i, rgl::mesh* p);                // +0x80 0x488ad0 (0x488aa0)
     virtual void normalize_uv(rgl::mesh* src);   // +0x84 0x495fa0 (world_data/mesh_hud.cpp: rescales src's uv records into the rectangle screen[] holds; 0x488aa0)
     virtual void on_track_set(void* a);              // +0x88 `ret 4` (0x408030) (0x488ad0)

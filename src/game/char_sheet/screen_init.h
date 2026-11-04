@@ -17,9 +17,9 @@
 // ---- engine string (16 bytes, see s0042a1f0/tstring.h) --------------------------------------------------
 #include "../tstring.h"
 
-// ---- widgets and overlays (src/game/ui_widget.h, overlay.h, map_widget.h) -----------------------------------
+// ---- widgets and overlays (src/game/ui_widget.h, ui/container.h, map_widget.h) -----------------------------------
 #include "../ui_widget.h"
-#include "../overlay.h"
+#include "../ui/container.h"
 #include "../map_widget.h"
 #include "./cs_common.h"
 #include "../res_mgr.h"                                 // res_manager()
@@ -59,9 +59,9 @@ extern float g_549cdc;                          // 0x549cdc (1.0f)
 extern ShadowMap g_shadow_map;                                        // 0xa70248 (cs_common.h's view of the shadow-map object)
 #define g_psys ((char*)&g_shadow_map)                         // the shadow / particle system (ShadowMap, ShadowMapP: cs_common.h)
 
-static Widget* new_widget(int size)
+static MissionUi* new_widget(int size)
 {
-    return (Widget*)new_widget_base(size);   // operator new, then the widget base constructor 0x48ae20
+    return (MissionUi*)new_widget_base(size);   // operator new, then the widget base constructor 0x48ae20
 }
 
 #endif

@@ -22,7 +22,7 @@ void CharSheet::update_detail()
 {
     {
         tstring empty("");
-        { char r[8]; f_4b8->set_text(r, empty); }
+        { char r[8]; f_4b8->set_text((float*)r, &(empty)); }
     }
     f_434->hide();
     int row = f_2d4;
@@ -44,7 +44,7 @@ void CharSheet::update_detail()
         mb_snprintf(title, 0x400, s.c_str(), anchor);
         {
             tstring tt(title);
-            { char r[8]; f_4b8->set_text(r, tt); }
+            { char r[8]; f_4b8->set_text((float*)r, &(tt)); }
         }
         mb_snprintf(body, 0x200, tr(tstring("ui_current_level_value")), g_game->skill_level(f_14, id));
         {
@@ -54,7 +54,7 @@ void CharSheet::update_detail()
             float fx = g_game_vars.get_float(kx);
             tstring bt(body);
             vec2 xy = { fx, fy };
-            f_4b8->set_text_at(bt, (const float*)&xy);
+            f_4b8->layout_text_to(&(bt), (const float*)&xy);
         }
         mb_snprintf(body, 0x200, tr(tstring("ui_base_attribute_value")),
                     SKILL_ATTR(id) == 0 ? tr(tstring("ui_str"))
@@ -67,7 +67,7 @@ void CharSheet::update_detail()
             float fx = g_game_vars.get_float(kx);
             tstring bt(body);
             vec2 xy = { fx, fy };
-            f_4b8->set_text_at(bt, (const float*)&xy);
+            f_4b8->layout_text_to(&(bt), (const float*)&xy);
         }
         GameData* g = g_game;
         if (f_14 != g->player) {
@@ -98,7 +98,7 @@ void CharSheet::update_detail()
         }
         {
             tstring ht(body);
-            { char r[8]; f_434->set_text(r, ht); }
+            { char r[8]; f_434->set_text((float*)r, &(ht)); }
         }
         f_434->show();
         return;
@@ -123,7 +123,7 @@ void CharSheet::update_detail()
         mb_snprintf(title, 0x400, "%s: %s", body, attr);
         {
             tstring tt(title);
-            { char r[8]; f_4b8->set_text(r, tt); }
+            { char r[8]; f_4b8->set_text((float*)r, &(tt)); }
         }
         f_434->hide();
         return;
@@ -139,13 +139,13 @@ void CharSheet::update_detail()
             strcpy(title, tr(tstring("ui_explanation_charisma")));
         {
             tstring tt(title);
-            { char r[8]; f_4b8->set_text(r, tt); }
+            { char r[8]; f_4b8->set_text((float*)r, &(tt)); }
         }
         f_434->hide();
         return;
     }
     if (f_2d8 == 3) {                                       // face page
-        { char r[8]; f_4b8->set_text(r, *g_strtable.lookup(tstring("ui_edit_face"))); }
+        { char r[8]; f_4b8->set_text((float*)r, &(*g_strtable.lookup(tstring("ui_edit_face")))); }
         f_434->hide();
     }
 }

@@ -51,7 +51,7 @@ extern "C" int __cdecl sscanf(const char*, const char*, ...);               // 0
 //   0xa8  take (get_text)
 //   0xac  put (set_text with a position) -- a reference family of its own
 //   0xb0  show
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 
@@ -76,10 +76,10 @@ extern float g_half;                                        // 0x549d70 (0.5f)
 // the page: src/game/terrain_page.h (Paged, TerrainPage)
 #include "../terrain_page.h"
 
-static __forceinline bool page_changed(Widget* w) { return w->changed(0x10000) != 0; }
+static __forceinline bool page_changed(MissionUi* w) { return w->clear_mask(0x10000) != 0; }
 
 // the caption / visibility updates that follow a checkbox change (slice s004f25a0)
-void set_enabled_text(Widget* w);                           // 0x4f28a0
+void set_enabled_text(MissionUi* w);                           // 0x4f28a0
 void set_hex3_text(int i);                                  // 0x4f28f0
 void refresh_hex();                                         // 0x4f2960
 void sync_bits();                                           // 0x4f2ae0

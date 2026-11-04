@@ -29,7 +29,7 @@ void save_path(char* buf);                               // 0x4dd7b0
 int  open_write(void* stream, char* path);         // 0x415320
 
 // ---- widgets --------------------------------------------------------------------------------------------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
 
@@ -86,12 +86,12 @@ struct MapScreen {
     char         pad1c[0x30 - 0x1c];
     MissionSource source;                               // +0x30
     char         pad58[0x60 - 0x58];
-    Widget*      f60;                                   // +0x60
-    Widget*      f64;                                   // +0x64
-    Widget*      f68;                                   // +0x68
-    Widget*      f6c;                                   // +0x6c
-    Widget*      f70;                                   // +0x70
-    Widget*      f74;                                   // +0x74
+    MissionUi*      f60;                                   // +0x60
+    MissionUi*      f64;                                   // +0x64
+    MissionUi*      f68;                                   // +0x68
+    MissionUi*      f6c;                                   // +0x6c
+    MissionUi*      f70;                                   // +0x70
+    MissionUi*      f74;                                   // +0x74
     char         pad78[0x278 - 0x78];
     int          ncols;                                 // +0x278
     int          nrows;                                 // +0x27c

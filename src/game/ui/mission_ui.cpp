@@ -255,7 +255,7 @@ void MissionUi::or_d4(int m)
 // @ 0x488970
 // NOTE: 3 bytes differ from the original: identical instruction stream, but MSVC keeps `this`
 // in edx and p in eax where the original keeps `this` in eax and p in edx.
-void MissionUi::move_a(float* p)
+void MissionUi::move_a(const float* p)
 {
     fE8 = p[0];
     fEC = p[1];
@@ -269,7 +269,7 @@ void MissionUi::move_a(float* p)
 }
 
 // @ 0x4889b0
-void MissionUi::set_xy(float* p)
+void MissionUi::set_xy(const float* p)
 {
     screen[0] = p[0];
     screen[1] = p[1];
@@ -281,7 +281,7 @@ void MissionUi::set_xy(float* p)
 }
 
 // @ 0x4889e0
-void MissionUi::move_f8(float* p)
+void MissionUi::move_f8(const float* p)
 {
     screen[2] = p[0];
     screen[3] = p[1];
@@ -293,7 +293,7 @@ void MissionUi::move_f8(float* p)
 }
 
 // @ 0x488a10
-void MissionUi::set_offset(float* p)
+void MissionUi::set_offset(const float* p)
 {
     if (f148 & 1)
         f148 &= ~1u;
@@ -302,26 +302,26 @@ void MissionUi::set_offset(float* p)
 }
 
 // @ 0x488a40
-void MissionUi::set148(float* p)
+void MissionUi::set148(const int* p)
 {
-    f148 = *(unsigned*)p;
+    f148 = *p;
     float t[2];
     get_xy(t);
 }
 
 // @ 0x488a70
-void MissionUi::or148(float* p)
+void MissionUi::or148(const int* p)
 {
-    f148 |= *(unsigned*)p;
+    f148 |= *p;
     float t[2];
     get_xy(t);
 }
 
 // @ 0x488aa0
-void MissionUi::run(int a, int b)
+void MissionUi::set_mesh(int a, rgl::mesh* b)
 {
-    normalize_uv((rgl::mesh*)b);
-    set_track(a, (rgl::mesh*)b);
+    normalize_uv(b);
+    set_track(a, b);
 }
 
 // @ 0x488ad0

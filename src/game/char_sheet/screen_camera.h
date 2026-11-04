@@ -43,9 +43,9 @@ using rgl::mat4;
 // ---- the 16-byte engine string -------------------------------------------------------------------------
 #include "../tstring.h"
 
-// ---- widgets and overlays (src/game/ui_widget.h, overlay.h, map_widget.h) -----------------------------------
+// ---- widgets and overlays (src/game/ui_widget.h, ui/container.h, map_widget.h) -----------------------------------
 #include "../ui_widget.h"
-#include "../overlay.h"
+#include "../ui/container.h"
 #include "../map_widget.h"
 
 // ---- the render scene (0x1d8 bytes, ctor 0x429740; see s00428240/world.h) ------------------------------

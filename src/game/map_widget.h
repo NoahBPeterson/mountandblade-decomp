@@ -10,7 +10,7 @@
 #include "./ui_widget.h"
 #include "../include/frustum.h"
 
-struct MapWidget : WidgetObj {
+struct MapWidget : MissionUi {
     void* world;                                // +0x178 (screen_init: the current scene g_a732b4; face views: their World)
     char scene_pad[0x1ac - 0x17c];              // +0x17c the embedded scene (0x1d8 bytes, reaches +0x354)
     rgl::frustum view;                          // +0x1ac the scene's frustum (0x120 bytes)

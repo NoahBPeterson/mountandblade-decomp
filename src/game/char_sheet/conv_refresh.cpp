@@ -2,7 +2,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
@@ -87,13 +87,13 @@ void Rec1208::refresh(int sel, int* out)
         _snprintf(buf, 0x100, "%s:", troop_text(speaker_id));
         tstring name(buf);
         struct { int a, b; } ret;                        // set_text's 8-byte result slot (original [esp+0x30])
-        label_speaker->set_text(&ret, name);
+        label_speaker->set_text((float*)&ret, &(name));
     }
     {
         tstring text = g_dialogs.cur_text;                   // original: copy ctor from 0x8ee30f0
         struct { int a, b; } ret;
         tstring stripped = text.strip_tags();
-        label_text->set_text(&ret, stripped);
+        label_text->set_text((float*)&ret, &(stripped));
     }
     for (int i = 0; i < 0x400; i++)
         buttons[i]->hide();
@@ -122,7 +122,7 @@ void Rec1208::refresh(int sel, int* out)
             float v0, v1;
             if (limit < text_px && (flags & 0x80000)) {
                 flags = 0x100;
-                buttons[i]->set_flag((const int*)&flags);
+                buttons[i]->set148((const int*)&flags);
                 float r = text_px;
                 do {
                     r -= limit;
@@ -132,18 +132,18 @@ void Rec1208::refresh(int sel, int* out)
                 v1 = X - h;
             } else {
                 int flag = 0x10;
-                buttons[i]->set_flag(&flag);
+                buttons[i]->set148(&flag);
                 v0 = 0.0f;
                 v1 = size_y * 0.5f - h * 0.3f;
             }
             float sz[2];
             sz[0] = size_y * ratio;
             sz[1] = X;
-            buttons[i]->set_scale(sz);                   // +0x64
+            buttons[i]->set_xy(sz);                   // +0x64
             float p68[2];
             p68[0] = text_x;
             p68[1] = 0.0f;
-            buttons[i]->set_y(p68);                      // +0x68
+            buttons[i]->move_f8(p68);                      // +0x68
             acc = y_a + acc;
             float p6c[2];
             p6c[0] = h;
@@ -156,21 +156,21 @@ void Rec1208::refresh(int sel, int* out)
             float pp[2];
             pp[0] = x0;
             pp[1] = -acc;
-            buttons[i]->set_pos(pp);                     // +0x58
+            buttons[i]->move_a((float*)pp);                     // +0x58
             struct { int a, b; } ret;
-            buttons[i]->set_text(&ret, text);            // +0xa4
+            buttons[i]->set_text((float*)&ret, &(text));            // +0xa4
             float q = X / size_y;
-            base_mesh* bm;
+            mesh_x* bm;
             {
                 tstring name("dlg_button");
-                bm = (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
+                bm = ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
             }
             rgl::vector4 col(1.0f, q, 1.0f);             // w is left uninitialised, as in the original
             bm->set_color(col);
             buttons[i]->set_track(2, bm);
             {
                 tstring name("dlg_button_down");
-                bm = (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
+                bm = ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone();
             }
             rgl::vector4 col2(1.0f, q, 1.0f);
             bm->set_color(col2);
@@ -184,7 +184,7 @@ void Rec1208::refresh(int sel, int* out)
     float p[2];
     p[0] = 0.0f;
     p[1] = -m;
-    choice->set_y(p);                                    // +0x68 of the choices box (+0x18c)
+    choice->move_f8(p);                                    // +0x68 of the choices box (+0x18c)
     ConvScrollSrc* src = *(ConvScrollSrc**)((char*)question + 0x484);
     float v = (src->f170 - src->f16c) * (1000000.0f / (src->slot[src->idx] - src->step)) + src->f16c;
     src->f168 = v;

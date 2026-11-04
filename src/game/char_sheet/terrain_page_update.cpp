@@ -10,10 +10,10 @@ static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the ca
 
 // the original inlines set_enabled_text (0x4f28a0) and refresh_hex (0x4f2960) into the two "Enable terrain" branches
 // (they stay calls in the other branches); same behaviour, spelled out so the call sequence matches
-#define inline_enabled_text(w) do { if ((w)->get_value()) { char r[8]; (w)->set_text(r, tstring("Enabled")); } \
-    else { char r[8]; (w)->set_text(r, tstring("Disabled")); } } while (0)
+#define inline_enabled_text(w) do { if ((w)->get15c()) { float r[2]; tstring s_("Enabled"); (w)->set_text(r, &s_); } \
+    else { float r[2]; tstring s_("Disabled"); (w)->set_text(r, &s_); } } while (0)
 #define inline_refresh_hex() do { sync_bits(); tstring t_; g_terrain.build_hex_text(t_); \
-    { char r_[8]; hexbox->set_text(r_, t_); } } while (0)
+    { float r_[2]; hexbox->set_text(r_, &t_); } } while (0)
 
 // @ 0x4f2d70
 void TerrainPage::update(float dt)
@@ -26,12 +26,12 @@ void TerrainPage::update(float dt)
             sync_bits();
             tstring text;
             g_terrain.build_hex_text(text);
-            { char r[8]; hexbox->set_text(r, text); }
+            { float r[2]; hexbox->set_text(r, &text); }
         }
         if (page_changed(bit_fields[i])) {
             tstring text;
             sync_bits();
-            bit_fields[i]->get_text(&text);
+            bit_fields[i]->put(&text);
             int v;
             sscanf(text.c_str(), "%d", &v);
             int lo, hi;
@@ -46,53 +46,53 @@ void TerrainPage::update(float dt)
 
     // the two "Enable terrain" checkboxes also recaption themselves, so they form a chain of their own
     if (page_changed(terrain_box)) {
-        terrain_on = terrain_box->get_value();
+        terrain_on = terrain_box->get15c();
         inline_enabled_text(terrain_box);
         inline_refresh_hex();
         goto done;
     }
     if (page_changed(terraingen_box)) {
-        terraingen_on = terraingen_box->get_value();
+        terraingen_on = terraingen_box->get15c();
         inline_enabled_text(terraingen_box);
         inline_refresh_hex();
         goto done;
     }
 
     if (page_changed(water_box)) {
-        water_on = water_box->get_value();
+        water_on = water_box->get15c();
         set_enabled_text(water_box);
         refresh_hex();
     } else if (page_changed(river_box)) {
-        river_on = river_box->get_value();
+        river_on = river_box->get15c();
         set_enabled_text(river_box);
         refresh_hex();
     } else if (page_changed(x_slider)) {
         float zero = 0.0f;
-        float v = x_slider->get_float() * 700.0f + 140.0f;
+        float v = x_slider->get168() * 700.0f + 140.0f;
         camera_x = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(y_slider)) {
         float zero = 0.0f;
-        float v = y_slider->get_float() * 700.0f + 140.0f;
+        float v = y_slider->get168() * 700.0f + 140.0f;
         camera_y = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(z_slider)) {
-        camera_z = z_slider->get_float() * g_0_01 + g_ten;
+        camera_z = z_slider->get168() * g_0_01 + g_ten;
         refresh_hex();
     } else if (page_changed(fog_slider)) {
-        fog = fog_slider->get_float();
+        fog = fog_slider->get168();
         refresh_hex();
     } else if (page_changed(level_slider)) {
-        water_level = (int)(level_slider->get_float() * 100.0f);   // fmul; call __ftol2 (0x535a64)
+        water_level = (int)(level_slider->get168() * 100.0f);   // fmul; call __ftol2 (0x535a64)
         refresh_hex();
     } else if (page_changed(height_slider)) {
-        water_height = height_slider->get_float();
+        water_height = height_slider->get168();
         refresh_hex();
     } else if (page_changed(type_box)) {
-        terrain_type = g_region_types[type_box->get_value()];
+        terrain_type = g_region_types[type_box->get15c()];
         refresh_hex();
     } else if (page_changed(size_box)) {
-        map_size = size_box->get_value();
+        map_size = size_box->get15c();
         refresh_hex();
     } else if (page_changed(copy_btn)) {
         copy_clipboard();
@@ -140,7 +140,7 @@ done:
 void TerrainPage::copy_clipboard()
 {
     tstring s;
-    hexbox->get_text(&s);
+    hexbox->put(&s);
     if (OpenClipboard(0)) {
         // GMEM_MOVEABLE | GMEM_DDESHARE (0x2002); a failure just leaves the clipboard closed again
         HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, s.len + 1);

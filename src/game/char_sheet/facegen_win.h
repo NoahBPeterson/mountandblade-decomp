@@ -4,7 +4,7 @@
 // Slice s004f1460: the terrain-generator window (the "facegen_board" page) -- its initialiser (0x4f1460), the view
 // frustum set-up (0x4f25a0) and the terrain "region type" name table (0x4f2610). The window object is the terrain
 // page of terrain_page.h (TerrainPage: the same offsets; its update 0x4f2730 / refresh_hex 0x4f2960 run at the end of
-// init). Widget slots, the tstring helpers and the resource manager follow the verified neighbours (s0048add0,
+// init). MissionUi slots, the tstring helpers and the resource manager follow the verified neighbours (s0048add0,
 // s004dfd50, s004e05c0, s004dd830).
 #include "../../include/image_addrs.h"
 #include <windows.h>
@@ -19,6 +19,8 @@ using std::vector;
 // ---- engine types -----------------------------------------------------------------------------------
 // rgl::string: 16 bytes { pos, buf, cap, len }; ctor 0x42bbd0 zeroes the four words.
 #include "../tstring.h"
+#include "../head_rec.h"                                // head_rec: the screen records' base (the vptr at +0)
+#include "../ui/container.h"                            // NodeA, text_box
 #include "./cs_common.h"                                // new_container, MissionUi, gui_manager, NodeVec, CellGrid, new_sized_button, vtbl_*
 
 // cloned rgl mesh; only the members this slice reaches
@@ -33,28 +35,21 @@ struct tvec2 {
     float x, y;
 };
 
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
-typedef Widget UiWidget;                // the slice's name for it
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../map_widget.h"                // MapWidget (0x358 bytes, ctor 0x4ed630): the 3D preview
 #include "../terrain_page.h"              // TerrainPage: the same object (update 0x4f2730, refresh_hex 0x4f2960)
 #include "../int_vec.h"                   // IntVec (the entity's mesh list at +0x118: _Insert_n 0x410610)
 #include "../ui_globals.h"      // UI / core globals
 
-// the children vector of a container widget (+0x178: allocator slot, first, last, end), pushed onto as the original inlines it
-struct ChildList {
-    void* alloc;
-    Widget** first;
-    Widget** last;
-    Widget** end;
-};
-static __forceinline void push_child(ChildList* c, Widget* const& v)
+// a container widget's children vector (ContainerBase::kids), pushed onto as the original inlines it
+static __forceinline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
 {
-    unsigned n = c->first == 0 ? 0 : (unsigned)(c->last - c->first);
-    if (c->first != 0 && n < (unsigned)(c->end - c->first)) {
-        *c->last = v;
-        ++c->last;
+    unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
+    if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
+        *c._Mylast = v;
+        ++c._Mylast;
     } else {
-        ((SceneObjVec*)c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c->last), 1, (SceneObject* const&)v);   // 0x4927d0
+        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);   // 0x4927d0
     }
 }
 
@@ -64,7 +59,8 @@ struct v4raw {
 };
 
 // the terrain-generator window ("this"); TerrainPage (terrain_page.h) names the same offsets
-struct facegen_win : UiWidget {
+struct DropDown;
+struct facegen_win : head_rec {
     char pad04[0x2c - 4];
     int terrain_on, terraingen_on, water_on, river_on;      // +0x2c..+0x38 (cleared)
     float camera_x, camera_y, camera_z;                     // +0x3c / +0x40 (150) / +0x44 (100)
@@ -74,28 +70,28 @@ struct facegen_win : UiWidget {
     int layer_bits[3];                                      // +0x54 (rand() % 0x1b5781)
     int terrain_type;                                       // +0x60 (3)
     int map_size;                                           // +0x64 (0)
-    UiWidget* board;                                        // +0x68 the window (0x190, vptr 0x592848)
+    NodeA* board;                                            // +0x68 the window (0x190, vptr 0x592848)
     MapWidget* view;                                        // +0x6c the 3D preview (0x358)
     rgl::frustum cam;                                       // +0x70 (0x120 bytes; its frame's origin row is +0x168)
     v4raw view_pos;                                         // +0x190 eye position
     float yaw, pitch, zoom;                                 // +0x1a0 / +0x1a4 / +0x1a8
     CellGrid* scene;                                        // +0x1ac the preview scene (0x344, ctor 0x478ad0)
-    UiWidget* panel;                                        // +0x1b0 the board panel (0x188, vptr 0x597050)
-    UiWidget* key;                                          // +0x1b4 the hex code text
-    UiWidget* copy;                                         // +0x1b8
-    UiWidget* paste;                                        // +0x1bc
-    UiWidget* sliders[6];                                   // +0x1c0 size x / size y / hill height / valley / ruggedness / vegetation
+    text_box* panel;                                         // +0x1b0 the board panel (0x188, vptr 0x597050)
+    MissionUi* key;                                          // +0x1b4 the hex code text
+    MissionUi* copy;                                         // +0x1b8
+    MissionUi* paste;                                        // +0x1bc
+    MissionUi* sliders[6];                                   // +0x1c0 size x / size y / hill height / valley / ruggedness / vegetation
     char pad1d8[0x200 - 0x1d8];
-    UiWidget* seeds[3];                                     // +0x200 the seed edit boxes (0x188, vptr 0x592208)
-    UiWidget* randomize[3];                                 // +0x20c the "randomize" buttons
-    UiWidget* w218;                                         // +0x218 shade occluded
-    UiWidget* w21c;                                         // +0x21c disable grass
-    UiWidget* w220;                                         // +0x220 place river
-    UiWidget* w224;                                         // +0x224 deep water
-    UiWidget* region_type;                                  // +0x228
-    UiWidget* region_detail;                                // +0x22c
-    UiWidget* generate;                                     // +0x230
-    UiWidget* close;                                        // +0x234
+    MissionUi* seeds[3];                                     // +0x200 the seed edit boxes (0x188, vptr 0x592208)
+    MissionUi* randomize[3];                                 // +0x20c the "randomize" buttons
+    MissionUi* w218;                                         // +0x218 shade occluded
+    MissionUi* w21c;                                         // +0x21c disable grass
+    MissionUi* w220;                                         // +0x220 place river
+    MissionUi* w224;                                         // +0x224 deep water
+    DropDown* region_type;                                   // +0x228
+    DropDown* region_detail;                                 // +0x22c
+    MissionUi* generate;                                     // +0x230
+    MissionUi* close;                                        // +0x234
 
     void init();                                            // 0x4f1460
 };

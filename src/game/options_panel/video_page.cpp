@@ -31,20 +31,20 @@ extern "C" char* __cdecl _itoa(int, char*, int);                            // 0
 #include "../../include/crt.h"   // canonical: fclose (0x537168)
 
 // ---- controls ----------------------------------------------------------------------------------------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // sliders keep their value labels at +0x190: rows of 16 bytes, copied with the tstring copy ctor.
-static inline const tstring* value_label(Widget* w, int index)
+static inline const tstring* value_label(MissionUi* w, int index)
 {
     return (const tstring*)(*(char**)((char*)w + 0x190) + index * 0x10);
 }
 
 // 0x4d63b0 polls changed(+0x44) and reads the value through +0x30 on the same control.
-static inline int settings_value(Widget* w) { return w->get_value(); }
-static inline char w_changed(Widget* w, int f) { return w->changed(f); }
-static inline float w_float(Widget* w) { return w->get_float(); }
-static inline void w_set_text(Widget* w, const tstring& s) { char r[8]; w->set_text(r, s); }
-static inline void w_set_default(Widget* w) { char r[8]; w->get_xy(r); }
+static inline int settings_value(MissionUi* w) { return w->get15c(); }
+static inline char w_changed(MissionUi* w, int f) { return w->clear_mask(f); }
+static inline float w_float(MissionUi* w) { return w->get168(); }
+static inline void w_set_text(MissionUi* w, const tstring& s) { char r[8]; w->set_text((float*)r, &(s)); }
+static inline void w_set_default(MissionUi* w) { char r[8]; w->get_xy((float*)r); }
 
 // ---- other pages / objects ---------------------------------------------------------------------------
 struct Game;                                                                // 0x5e2930
@@ -80,13 +80,13 @@ struct VideoPage;
 // the keys page (keys_page.cpp) and this page share these two members: the page calls them on itself
 struct KeysPage {
     void update_perf();                                     // 0x4d6b80 (thiscall)
-    void set_enabled_text(Widget* w);                       // 0x4d6dd0 (thiscall, widget pushed)
+    void set_enabled_text(MissionUi* w);                       // 0x4d6dd0 (thiscall, widget pushed)
 };
 static inline void update_performance_caption(VideoPage* p)
 {
     ((KeysPage*)p)->update_perf();
 }
-static inline void set_enabled_text_local(Widget* w, void* page) { ((KeysPage*)page)->set_enabled_text(w); }
+static inline void set_enabled_text_local(MissionUi* w, void* page) { ((KeysPage*)page)->set_enabled_text(w); }
 
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index.
 static inline void set_quality(int v, int which)
@@ -101,32 +101,32 @@ struct VideoPage {
     char    pad00[0x18];
     int     option;                                         // +0x18 (the option the menu returns to)
     char    pad1c[0x30 - 0x1c];
-    Widget* w30;                                            // +0x30  apply / ok
-    Widget* w34;                                            // +0x34  monitor gamma
-    Widget* w38;                                            // +0x38  contrast
-    Widget* w3c;                                            // +0x3c  brightness (float)
-    Widget* w40;                                            // +0x40  percentage-style control (float)
-    Widget* w44;                                            // +0x44  percentage-style control (float)
-    Widget* w48;                                            // +0x48  quality (main)
-    Widget* w4c;                                            // +0x4c  quality (secondary)
-    Widget* w50;                                            // +0x50  performance / quality
-    Widget* w54;                                            // +0x54  water quality
-    Widget* w58;                                            // +0x58  texture detail
-    Widget* w5c;                                            // +0x5c  shadows count
-    Widget* w60;                                            // +0x60  DirectX / renderer
-    Widget* w64;                                            // +0x64
-    Widget* w68;                                            // +0x68
-    Widget* w6c;                                            // +0x6c
-    Widget* w70;                                            // +0x70
-    Widget* w74;                                            // +0x74
-    Widget* w78;                                            // +0x78
-    Widget* w7c;                                            // +0x7c
-    Widget* w80;                                            // +0x80  percentage-style caption
-    Widget* w84;                                            // +0x84
+    MissionUi* w30;                                            // +0x30  apply / ok
+    MissionUi* w34;                                            // +0x34  monitor gamma
+    MissionUi* w38;                                            // +0x38  contrast
+    MissionUi* w3c;                                            // +0x3c  brightness (float)
+    MissionUi* w40;                                            // +0x40  percentage-style control (float)
+    MissionUi* w44;                                            // +0x44  percentage-style control (float)
+    MissionUi* w48;                                            // +0x48  quality (main)
+    MissionUi* w4c;                                            // +0x4c  quality (secondary)
+    MissionUi* w50;                                            // +0x50  performance / quality
+    MissionUi* w54;                                            // +0x54  water quality
+    MissionUi* w58;                                            // +0x58  texture detail
+    MissionUi* w5c;                                            // +0x5c  shadows count
+    MissionUi* w60;                                            // +0x60  DirectX / renderer
+    MissionUi* w64;                                            // +0x64
+    MissionUi* w68;                                            // +0x68
+    MissionUi* w6c;                                            // +0x6c
+    MissionUi* w70;                                            // +0x70
+    MissionUi* w74;                                            // +0x74
+    MissionUi* w78;                                            // +0x78
+    MissionUi* w7c;                                            // +0x7c
+    MissionUi* w80;                                            // +0x80  percentage-style caption
+    MissionUi* w84;                                            // +0x84
     char    pad88[0x98 - 0x88];
-    Widget* w98;                                            // +0x98  gamma caption
-    Widget* w9c;                                            // +0x9c
-    Widget* wa0;                                            // +0xa0  percentage caption
+    MissionUi* w98;                                            // +0x98  gamma caption
+    MissionUi* w9c;                                            // +0x9c
+    MissionUi* wa0;                                            // +0xa0  percentage caption
     char    pad_a4[0xe8 - 0xa4];
     int     applied_value;                                  // +0xe8 (the value the config was written with)
     char    changed_config;                                 // +0xec (something was applied)
@@ -134,16 +134,16 @@ struct VideoPage {
 
 };
 
-#define W(x) ((Widget*)(void*)(x))
+#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d63b0
 void Recf0::scale_3(float)
 {
-    if (W(blood)->changed(0x10000)) {
+    if (W(blood)->clear_mask(0x10000)) {
         g_options.blood = settings_value(W(blood));
         update_performance_caption((VideoPage*)this);
     }
 
-    if (W(change)->changed(0x10000)) {
+    if (W(change)->clear_mask(0x10000)) {
         // switching the renderer: replace the two menu captions and always return to the main menu
         {
             tstring explanation("ui_change_directx_explanation");
@@ -159,60 +159,60 @@ void Recf0::scale_3(float)
         ((WindowMgrW*)(void*)&m)->open(0);
     }
 
-    if (W(quality[0])->changed(0x10000)) {
+    if (W(quality[0])->clear_mask(0x10000)) {
         g_options.char_detail = settings_value(W(quality[0]));
         set_enabled_text_local(W(quality[0]), this);
         update_performance_caption((VideoPage*)this);
     }
-    if (W(quality[1])->changed(0x10000)) {
+    if (W(quality[1])->clear_mask(0x10000)) {
         g_options.i28 = settings_value(W(quality[1]));
         set_enabled_text_local(W(quality[1]), this);
         update_performance_caption((VideoPage*)this);
     }
-    if (W(quality[2])->changed(0x10000)) {
+    if (W(quality[2])->clear_mask(0x10000)) {
         g_options.i2c = settings_value(W(quality[2]));
         set_enabled_text_local(W(quality[2]), this);
         f_ec = 1;
         update_performance_caption((VideoPage*)this);
     }
-    if (W(plant_shadows)->changed(0x10000)) {
+    if (W(plant_shadows)->clear_mask(0x10000)) {
         g_options.i7c = settings_value(W(plant_shadows));
         f_ec = 1;
         update_performance_caption((VideoPage*)this);
     }
-    if (W(quality[3])->changed(0x10000)) {
+    if (W(quality[3])->clear_mask(0x10000)) {
         g_options.i20 = settings_value(W(quality[3]));
         set_enabled_text_local(W(quality[3]), this);
         update_performance_caption((VideoPage*)this);
     }
-    if (W(quality[4])->changed(0x10000)) {
+    if (W(quality[4])->clear_mask(0x10000)) {
         g_options.i38 = settings_value(W(quality[4]));
         set_enabled_text_local(W(quality[4]), this);
         update_performance_caption((VideoPage*)this);
     }
-    if (W(quality[5])->changed(0x10000)) {
+    if (W(quality[5])->clear_mask(0x10000)) {
         g_cfg.fake_reflections = settings_value(W(quality[5]));
         set_enabled_text_local(W(quality[5]), this);
         f_ec = 1;
         update_performance_caption((VideoPage*)this);
     }
-    if (W(shadow_quality)->changed(0x10000)) {
+    if (W(shadow_quality)->clear_mask(0x10000)) {
         g_cfg.shadow_quality_req = 2 - settings_value(W(shadow_quality));
         f_ec = 1;
         update_performance_caption((VideoPage*)this);
     }
-    if (W(corpses)->changed(0x10000)) {
+    if (W(corpses)->clear_mask(0x10000)) {
         set_quality(5 - settings_value(W(corpses)), 0);
         update_performance_caption((VideoPage*)this);
     }
-    if (W(ragdolls)->changed(0x10000)) {
+    if (W(ragdolls)->clear_mask(0x10000)) {
         set_quality(5 - settings_value(W(ragdolls)), 1);
         update_performance_caption((VideoPage*)this);
     }
 
-    if (W(ui_scale)->changed(0x10000)) {
+    if (W(ui_scale)->clear_mask(0x10000)) {
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
-        float gamma = W(ui_scale)->get_float();
+        float gamma = W(ui_scale)->get168();
         g_options.scale_x = gamma;
         float inv = orig::g_one / gamma;
         vector4 v, vi;
@@ -231,12 +231,12 @@ void Recf0::scale_3(float)
             tstring k("ui_default");
             text = *g_strtable.lookup(k);
         }
-        { char r[8]; W(val_gamma)->set_text(r, text); }
-        { char r[8]; W(val_gamma)->get_xy(r); }
+        { char r[8]; W(val_gamma)->set_text((float*)r, &(text)); }
+        { char r[8]; W(val_gamma)->get_xy((float*)r); }
     }
 
-    if (W(ragdoll_limit)->changed(0x10000)) {
-        int pct = (int)W(ragdoll_limit)->get_float();
+    if (W(ragdoll_limit)->clear_mask(0x10000)) {
+        int pct = (int)W(ragdoll_limit)->get168();
         g_options.i34 = pct;
         char buf[0x40];
         {
@@ -246,23 +246,23 @@ void Recf0::scale_3(float)
         }
         {
             tstring text(buf);
-            { char r[8]; W(val_grass_density)->set_text(r, text); }
+            { char r[8]; W(val_grass_density)->set_text((float*)r, &(text)); }
         }
-        { char r[8]; W(val_grass_density)->get_xy(r); }
+        { char r[8]; W(val_grass_density)->get_xy((float*)r); }
         f_ec = 1;
         update_performance_caption((VideoPage*)this);
     }
 
-    if (W(y_scale)->changed(0x10000)) {
-        g_options.scale_y = W(y_scale)->get_float();
+    if (W(y_scale)->clear_mask(0x10000)) {
+        g_options.scale_y = W(y_scale)->get168();
         update_performance_caption((VideoPage*)this);
     }
-    if (W(z_scale)->changed(0x10000)) {
-        g_options.scale_z = W(z_scale)->get_float();
+    if (W(z_scale)->clear_mask(0x10000)) {
+        g_options.scale_z = W(z_scale)->get168();
         update_performance_caption((VideoPage*)this);
     }
-    if (W(days)->changed(0x10000)) {
-        int pct = (int)W(days)->get_float();
+    if (W(days)->clear_mask(0x10000)) {
+        int pct = (int)W(days)->get168();
         g_cfg.texture_detail = pct;
         char buf[0x40];
         {
@@ -272,13 +272,13 @@ void Recf0::scale_3(float)
         }
         {
             tstring text(buf);
-            { char r[8]; W(val_texture_detail)->set_text(r, text); }
+            { char r[8]; W(val_texture_detail)->set_text((float*)r, &(text)); }
         }
-        { char r[8]; W(val_texture_detail)->get_xy(r); }
+        { char r[8]; W(val_texture_detail)->get_xy((float*)r); }
         update_performance_caption((VideoPage*)this);
     }
 
-    if (W(resolution)->changed(0x10000)) {
+    if (W(resolution)->clear_mask(0x10000)) {
         // texture detail: "WxH" labels, split at the 'x' and taken as integers
         int idx = settings_value(W(resolution));
         tstring label(*value_label(W(resolution), idx));
@@ -296,7 +296,7 @@ void Recf0::scale_3(float)
         update_performance_caption((VideoPage*)this);
     }
 
-    if (W(done)->changed(0x10000)) {
+    if (W(done)->clear_mask(0x10000)) {
         f_ed = 1;
         if (day_saved != g_cfg.texture_detail) {
             g_resmgr.unload_textures();

@@ -37,11 +37,11 @@ struct world {                                                      // the scene
 };
 }
 
-// ---- widgets: the constructors that the char_sheet views (Widget / WidgetObj / Overlay / TextBox) stand for -------------------
-// ui_widget.h's Widget() and overlay.h's Overlay() are declarations of the constructors that the definitions name MissionUi::MissionUi
+// ---- widgets: the constructors that the char_sheet views (MissionUi / NodeA / text_box) stand for -------------------
+// ui_widget.h's MissionUi() and container.h's NodeA() are declarations of the constructors that the definitions name MissionUi::MissionUi
 // (0x48ae20) and ContainerW::construct (0x4931a0, which stores the container vptr 0x5924a0, clears +0x17c..+0x184 and returns this). An
 // object is built as the original does: operator new, that constructor in place, then the final vptr when the kind has its own
-// (Overlay 0x592848, TextBox 0x597050).
+// (NodeA 0x592848, text_box 0x597050).
 #include "../../include/image_addrs.h"
 #include <new>
 #include "../world_data/raw_place.h"
@@ -49,8 +49,8 @@ namespace rgl { struct mesh; }                                     // (the set_t
 struct ContainerW {                                                 // world_data/world_data.h
     void* construct();                                              // 0x4931a0
 };
-extern char vtbl_597050[];                                          // 0x597050 (TextBox, FaceBoard)
-extern char vtbl_592848[];                                          // 0x592848 (Overlay; the caller also clears the byte at +0x188)
+extern char vtbl_597050[];                                          // 0x597050 (text_box, FaceBoard)
+extern char vtbl_592848[];                                          // 0x592848 (NodeA; the caller also clears the byte at +0x188)
 static __forceinline void* new_widget_base(unsigned size)
 {
     void* p = ::operator new(size);
@@ -118,10 +118,10 @@ namespace std { template<> void vector<SceneObject*, allocator<SceneObject*> >::
 // a children vector's push_back as the original inlines it: with room, store at last; else _Insert_n(last, 1, &v) (0x4927d0)
 template<class V, class T> __forceinline void push_back_inline(V& c, T* const& v)
 {
-    if (c.first != 0 && (unsigned)(c.last - c.first) < (unsigned)(c.end - c.first))
-        *c.last++ = v;
+    if (c._Myfirst != 0 && (unsigned)(c._Mylast - c._Myfirst) < (unsigned)(c._Myend - c._Myfirst))
+        *c._Mylast++ = v;
     else
-        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c.last), 1, (SceneObject* const&)v);
+        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
 }
 
 struct Camera;                                                      // party2/camera_class.h: the 0x4a8-byte view / editor list object (ctor 0x49deb0)

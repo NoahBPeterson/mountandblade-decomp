@@ -6,7 +6,7 @@
 // start-up sequence (0x4f63c0) and the tail of a std::vector<T> implementation for a 0x20-byte record
 // (0x4f6360 insert-n, 0x4f65f0 construct-n with its catch funclet at 0x4f6658, 0x4f6680 destroy-range).
 //
-// Widget slot offsets (+0x58/+0x64/+0x6c/+0x70/+0x80/+0xa4/+0xc8), the tstring layout and the
+// MissionUi slot offsets (+0x58/+0x64/+0x6c/+0x70/+0x80/+0xa4/+0xc8), the tstring layout and the
 // resource-manager / language-table / log-stream globals follow the verified neighbouring slices
 // (s004dfd50, s004dc630, s004e05c0, s0049e780, s004bd990).  Names are provisional.
 #include <windows.h>
@@ -40,7 +40,7 @@ __forceinline mesh* load_mesh(const char* name)
 #include "../../rgl/stream.h"                     // text_stream: name, autoflush, fp, failed, is_open
 
 // ---- widgets ---------------------------------------------------------------------------------------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- helpers declared elsewhere --------------------------------------------------------------------
 #include "./cs_common.h"                        // label_refresh(MissionUi*, tstring) 0x4e4c70, MissionUi, make_scrollbar / make_editor_list

@@ -33,37 +33,26 @@ extern "C" double atof(const char* s);                       // 0x537352
 // widgets -- only the vtable slots touched by this function are named
 // ---------------------------------------------------------------------------
 
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../res_mgr.h"                   // res_manager(): the resource manager 0x5d6fa0 (get_object 0x419540)
 #include "../../rgl/mesh_x.h"             // mesh_x::clone 0x41c6d0
+#include "../ui/container.h"             // NodeA (0x592848), text_box (0x597050)
 #include "../ui/ui_widgets.h"             // UiD (scroll bar slider, vtable 0x592140): make_scrollbar 0x4f6160 returns one
 
 // (each constructor on its own line inside its class: the resolution tools read a '// 0x' annotation in the class's scope)
-struct NotePanel : Widget {
-    char pad[0x190 - 4];
-    NotePanel();                        // 0x4931a0
-};
-struct UiText2 : Widget {
-    char pad[0x178 - 4];
-    UiText2();                          // 0x48ae20
-};
-struct UiList : Widget {
-    char pad[0x1d0 - 4];
+struct UiList : MissionUi {             // the list widget MWidget (agent5/agent_hud.h) is: the base, then its own members to 0x1d0
+    char pad178[0x1d0 - sizeof(MissionUi)];
     UiList();                           // 0x4fd150 (MWidget::MWidget, src/game/agent5/agent_hud.cpp)
-};
-struct UiPanel2 : Widget {
-    char pad[0x188 - 4];
-    UiPanel2();                         // 0x50d0b0
 };
 
 // widget helper functions
-extern "C" void  label_refresh(Widget* w, tstring name);                       // 0x4e4c70
-extern "C" Widget* make_short_button(Widget* parent, tstring* text,
+extern "C" void  label_refresh(MissionUi* w, tstring name);                       // 0x4e4c70
+extern "C" MissionUi* make_short_button(MissionUi* parent, tstring* text,
                                      float x, float y, float h);            // 0x4e5570
-extern "C" Widget* make_map_button(Widget* parent, tstring* text,
+extern "C" MissionUi* make_map_button(MissionUi* parent, tstring* text,
                                    float x, float y, float h);              // 0x4dcbd0
-extern "C" UiD* make_scrollbar(Widget* parent, const tstring* name);           // 0x4f6160
-extern "C" Widget* make_scroll2(Widget* parent, const tstring* name,
+extern "C" UiD* make_scrollbar(MissionUi* parent, const tstring* name);           // 0x4f6160
+extern "C" MissionUi* make_scroll2(MissionUi* parent, const tstring* name,
                                 UiD* other);                            // 0x4f62f0
 
 #include "../party/widget_ops.h"            // WidgetOps: the one definition (relayout 0x488d50, visible 0x50cc60)
@@ -88,7 +77,7 @@ struct mnode {                                       // game/agent2/agent_types.
 
 struct TableauTbl {                                          // world_data/obj_tbl.h: the image table at 0xa75f40
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0
-    __forceinline void* make_mesh_from(void* rec, int* id) { return make_mesh_from((const int*)rec, (const void*)id); }
+    __forceinline rgl::mesh* make_mesh_from(void* rec, int* id) { return make_mesh_from((const int*)rec, (const void*)id); }
 };
 #define IMAGES ((TableauTbl*)&orig::g_tableaus)
 
@@ -222,25 +211,25 @@ struct note_window {
     char pad00[0x18];
     int  menu_id;              // +0x18
     char pad1c[0x2c - 0x1c];
-    Widget* panel;             // +0x2c
-    Widget* picture;           // +0x30
-    Widget* report;            // +0x34
-    Widget* title;             // +0x38
-    Widget* links;             // +0x3c
-    Widget* keys_panel;        // +0x40
-    Widget* data_panel;        // +0x44
-    Widget* keys_scroll;       // +0x48
-    Widget* data_scroll;       // +0x4c
-    Widget* btn_game_log;      // +0x50
-    Widget* btn_recent;        // +0x54
-    Widget* btn_troops;        // +0x58
-    Widget* btn_quests;        // +0x5c
-    Widget* btn_factions;      // +0x60
-    Widget* btn_locations;     // +0x64
-    Widget* btn_return;        // +0x68
-    Widget* btn_back;          // +0x6c
-    Widget* btn_forward;       // +0x70
-    Widget* btn_map;           // +0x74
+    NodeA* panel;                  // +0x2c
+    MissionUi* picture;           // +0x30
+    MissionUi* report;            // +0x34
+    MissionUi* title;             // +0x38
+    MissionUi* links;             // +0x3c
+    text_box* keys_panel;           // +0x40
+    text_box* data_panel;           // +0x44
+    MissionUi* keys_scroll;       // +0x48
+    MissionUi* data_scroll;       // +0x4c
+    MissionUi* btn_game_log;      // +0x50
+    MissionUi* btn_recent;        // +0x54
+    MissionUi* btn_troops;        // +0x58
+    MissionUi* btn_quests;        // +0x5c
+    MissionUi* btn_factions;      // +0x60
+    MissionUi* btn_locations;     // +0x64
+    MissionUi* btn_return;        // +0x68
+    MissionUi* btn_back;          // +0x6c
+    MissionUi* btn_forward;       // +0x70
+    MissionUi* btn_map;           // +0x74
     char   pad78[4];
     int*   back_beg;           // +0x7c
     int*   back_end;           // +0x80
@@ -292,18 +281,17 @@ void note_window::build(int page_, int arg_)
     GUI->reset();
 
     // ---- main panel ------------------------------------------------------
-    NotePanel* panel = new NotePanel;                // base constructor 0x4931a0, then the container's vtable and f188
-    *(void**)panel = (void*)vtbl_592848;                  // (0x50a20e; the same window class as agent_hud.h's FrameWidget)
-    *(char*)((char*)panel + 0x188) = 0;
+    NodeA* panel = new NodeA;                       // constructor 0x4931a0, then the container's vtable and f188 (0x50a20e)
+    panel->f188 = 0;
     this->panel = panel;
     {
         float v[2];
         v[0] = 0.0f;
         v[1] = 0.0f;
-        panel->set_pos(v);
+        panel->move_a(v);
         v[0] = 1.0f;
         v[1] = 0.75f;
-        panel->set_scale(v);
+        panel->set_xy(v);
     }
     {
         tstring key("note_window");
@@ -312,7 +300,7 @@ void note_window::build(int page_, int arg_)
     }
 
     // ---- title picture ---------------------------------------------------
-    this->picture = new UiText2;
+    this->picture = new MissionUi;
     label_refresh(this->picture, tstring("note_i_picture"));
 
     // ---- report text -----------------------------------------------------
@@ -320,7 +308,7 @@ void note_window::build(int page_, int arg_)
     {
         tstring empty("");
         float sz[2];
-        this->report->set_text(sz, empty);
+        this->report->set_text(sz, &empty);
     }
     label_refresh(this->report, tstring("note_t_keys"));
 
@@ -329,17 +317,17 @@ void note_window::build(int page_, int arg_)
     {
         tstring empty("");
         float sz[2];
-        this->links->set_text(sz, empty);
+        this->links->set_text(sz, &(empty));
     }
     label_refresh(this->links, tstring("note_t_data"));          // (it joins the data panel later, 0x50c5eb)
 
     // ---- report title: the one widget the main panel holds directly (0x50a3e8..0x50a41d) ----
-    this->title = new UiText2;
+    this->title = new MissionUi;
     label_refresh(this->title, tstring("note_t_title"));
     {
         tstring empty("");
         float sz[2];
-        this->title->set_text(sz, empty);
+        this->title->set_text(sz, &(empty));
     }
     panel->add_child(this->title);
 
@@ -360,20 +348,20 @@ void note_window::build(int page_, int arg_)
     // (the original takes the vector's size as (end - beg) >> 2 and indexes from beg: 0x50a588..0x50a5d0)
     unsigned back_n = (unsigned)((char*)this->back_end - (char*)this->back_beg) >> 2;
     if (this->back_beg == 0 || back_n == 0) {
-        this->btn_back->disable();
+        this->btn_back->flag2_set();
     } else {
         this->back_sel_a = this->back_beg[back_n - 2];
         this->back_sel_b = this->back_beg[back_n - 1];
-        this->btn_back->enable();
+        this->btn_back->flag2_clear();
     }
     // (the original takes the vector's size as (end - beg) >> 2 and indexes from beg: 0x50a588..0x50a5d0)
     unsigned fwd_n = (unsigned)((char*)this->fwd_end - (char*)this->fwd_beg) >> 2;
     if (this->fwd_beg == 0 || fwd_n == 0) {
-        this->btn_forward->disable();
+        this->btn_forward->flag2_set();
     } else {
         this->fwd_sel_a = this->fwd_beg[fwd_n - 2];
         this->fwd_sel_b = this->fwd_beg[fwd_n - 1];
-        this->btn_forward->enable();
+        this->btn_forward->flag2_clear();
     }
 
     // ---- page link key + candidate list ----------------------------------
@@ -393,7 +381,7 @@ void note_window::build(int page_, int arg_)
     case 0: {
         tstring line;
         tstring* t = tr_obj("ui_click_button_to_view_note");
-        x_cur = ((float*)this->links->set_text(sz1, *t))[1];    // the returned size (0x50a6d8), not sz1
+        x_cur = ((float*)this->links->set_text(sz1, &(*t)))[1];    // the returned size (0x50a6d8), not sz1
         break;
     }
 
@@ -430,13 +418,13 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            this->title->set_text(sz2, *troop_name(troop));
-            float* r = (float*)this->links->set_text(sz3, line);
+            this->title->set_text(sz2, &(*troop_name(troop)));
+            float* r = (float*)this->links->set_text(sz3, &(line));
             x_cur = r[1];
             line.clear();
             any = false;
         } else {
-                    float* r = (float*)this->links->set_text(sz4, *tr_obj("ui_click_button_to_view_note"));
+                    float* r = (float*)this->links->set_text(sz4, &(*tr_obj("ui_click_button_to_view_note")));
             x_cur = r[1];
         }
 
@@ -466,7 +454,7 @@ void note_window::build(int page_, int arg_)
         if (line.len > 0)
             line.erase(line.len - 1, 1);
         {
-            this->report->set_text(sz5, line);
+            this->report->set_text(sz5, &(line));
         }
         break;
     }
@@ -503,13 +491,13 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            this->title->set_text(sz6, *faction_name(fac));
-            float* r = (float*)this->links->set_text(sz7, line);
+            this->title->set_text(sz6, &(*faction_name(fac)));
+            float* r = (float*)this->links->set_text(sz7, &(line));
             x_cur = r[1];
             line.clear();
             any = false;
         } else {
-                    float* r = (float*)this->links->set_text(sz8, *tr_obj("ui_click_button_to_view_note"));
+                    float* r = (float*)this->links->set_text(sz8, &(*tr_obj("ui_click_button_to_view_note")));
             x_cur = r[1];
         }
 
@@ -538,7 +526,7 @@ void note_window::build(int page_, int arg_)
         if (line.len > 0)
             line.erase(line.len - 1, 1);
         {
-            this->report->set_text(sz9, line);
+            this->report->set_text(sz9, &(line));
         }
         break;
     }
@@ -579,13 +567,13 @@ void note_window::build(int page_, int arg_)
         if (line.len > 0) {
             if (this->menu_id == 7)
                 this->btn_map->show();
-            this->title->set_text(sz10, *party_name(base));
-            float* r = (float*)this->links->set_text(sz11, line);
+            this->title->set_text(sz10, &(*party_name(base)));
+            float* r = (float*)this->links->set_text(sz11, &(line));
             x_cur = r[1];
             line.clear();
             any = false;
         } else {
-                    float* r = (float*)this->links->set_text(sz12, *tr_obj("ui_click_button_to_view_note"));
+                    float* r = (float*)this->links->set_text(sz12, &(*tr_obj("ui_click_button_to_view_note")));
             x_cur = r[1];
         }
 
@@ -622,7 +610,7 @@ void note_window::build(int page_, int arg_)
         if (line.len > 0)
             line.erase(line.len - 1, 1);
         {
-            y_cur = ((float*)this->report->set_text(sz13, line))[1];
+            y_cur = ((float*)this->report->set_text(sz13, &line))[1];
         }
         break;
     }
@@ -660,13 +648,13 @@ void note_window::build(int page_, int arg_)
 
         if (line.len > 0) {
             tstring qt = quest_title(qi);
-            this->title->set_text(sz14, qt);
-            float* r = (float*)this->links->set_text(sz15, line);
+            this->title->set_text(sz14, &(qt));
+            float* r = (float*)this->links->set_text(sz15, &(line));
             x_cur = r[1];
             line.clear();
             any = false;
         } else {
-                    float* r = (float*)this->links->set_text(sz16, *tr_obj("ui_click_button_to_view_note"));
+                    float* r = (float*)this->links->set_text(sz16, &(*tr_obj("ui_click_button_to_view_note")));
             x_cur = r[1];
         }
 
@@ -695,7 +683,7 @@ void note_window::build(int page_, int arg_)
             line.erase(line.len - 1, 1);
         {
             float sz17[2];
-            y_cur = ((float*)this->report->set_text(sz17, line))[1];
+            y_cur = ((float*)this->report->set_text(sz17, &line))[1];
         }
         break;
     }
@@ -707,7 +695,7 @@ void note_window::build(int page_, int arg_)
     // ---- collect the back references -------------------------------------
     tstring other;              // +0x70   "other pages that link here"  (default-constructed after the switch, 0x50bc44)
     tstring link_text;          // +0xb0   scratch for the links widget  (0x50bc50)
-    this->links->get_text(&link_text);
+    this->links->put(&link_text);
     if (acc.len > 0) {
         for (int i = 0; i < WORLD->ntroops; i++) {
             char* rec = ((char*)WORLD->troops) + i * 0x508;
@@ -791,15 +779,15 @@ void note_window::build(int page_, int arg_)
     if (other.len > 0) {
         tstring t;
         float szT[2];
-        this->links->get_text(&t);
+        this->links->put(&t);
         if (t.equals(*tr_obj("ui_click_button_to_view_note"))) {
-            this->links->set_text(szT, *tr_obj("ui_this_page_contains_no_information"));
-            this->links->get_text(&t);
+            this->links->set_text(szT, &(*tr_obj("ui_this_page_contains_no_information")));
+            this->links->put(&t);
         }
         t.append(tstring("\n\n"));
         t.append(*tr_obj("ui_other_pages_that_link_here"));
         t.append(other);
-        float* r = (float*)this->links->set_text(szT, t);
+        float* r = (float*)this->links->set_text(szT, &(t));
         x_cur = r[1];
     }
 
@@ -807,17 +795,17 @@ void note_window::build(int page_, int arg_)
     // x_cur holds the links text height, y_cur the report's (0x50c405)
     x_cur += 0.001f;
     y_cur += 0.001f;
-    UiPanel2* keys = new UiPanel2;
+    text_box* keys = new text_box;
     this->keys_panel = keys;
     label_refresh(keys, tstring("note_bo_keys"));
     {
         float v[2];
         v[0] = fld(keys, 0xf0);
         v[1] = y_cur + fld(keys, 0xf4);
-        keys->set_scale(v);
+        keys->set_xy(v);
     }
 
-    UiPanel2* data = new UiPanel2;
+    text_box* data = new text_box;
     this->data_panel = data;
     label_refresh(data, tstring("note_bo_data"));
 
@@ -831,14 +819,14 @@ void note_window::build(int page_, int arg_)
         float v[2];
         v[0] = (fld(data, 0xf0) - w) * 0.5f - a[0];       // centred across the panel (0x50c568)
         v[1] = x_cur - b[1];
-        this->picture->set_pos(v);
+        this->picture->move_a((float*)v);
     }
 
     {
         float v[2];
         v[0] = fld(data, 0xf0);
         v[1] = x_cur + fld(data, 0xf4);
-        data->set_scale(v);
+        data->set_xy(v);
     }
 
     this->keys_panel->add_child(this->report);
@@ -864,12 +852,12 @@ void note_window::build(int page_, int arg_)
             h = 0.0f;
         v[0] = fld(this->keys_scroll, 0xe0);
         v[1] = h + fld(this->keys_scroll, 0xe4);
-        this->keys_scroll->set_pos(v);
+        this->keys_scroll->move_a((float*)v);
 
         v[1] = (y_cur <= fld(this->keys_scroll, 0xf4)) ? y_cur
                                                        : fld(this->keys_scroll, 0xf4);
         v[0] = fld(this->keys_scroll, 0xf0);
-        this->keys_scroll->set_scale(v);
+        this->keys_scroll->set_xy(v);
         ((MissionPanel*)this->keys_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->keys_scroll);
     }
@@ -898,12 +886,12 @@ void note_window::build(int page_, int arg_)
             h = 0.0f;
         v[0] = fld(this->data_scroll, 0xe0);
         v[1] = h + fld(this->data_scroll, 0xe4);
-        this->data_scroll->set_pos(v);
+        this->data_scroll->move_a((float*)v);
 
         v[1] = (x_cur <= fld(this->data_scroll, 0xf4)) ? x_cur
                                                        : fld(this->data_scroll, 0xf4);
         v[0] = fld(this->data_scroll, 0xf0);
-        this->data_scroll->set_scale(v);
+        this->data_scroll->set_xy(v);
         ((MissionPanel*)this->data_scroll)->draw();       // 0x488d50
         this->panel->add_child(this->data_scroll);
     }
@@ -939,20 +927,20 @@ void note_window::build(int page_, int arg_)
     // ---- highlight the active page button and disable it (0x50cbb8: slot 0xb8) ----
     switch (page_) {
     case 1:
-        this->btn_troops->activate(1);
-        this->btn_troops->disable();
+        this->btn_troops->set15c(1);
+        this->btn_troops->flag2_set();
         break;
     case 2:
-        this->btn_factions->activate(1);
-        this->btn_factions->disable();
+        this->btn_factions->set15c(1);
+        this->btn_factions->flag2_set();
         break;
     case 3:
-        this->btn_locations->activate(1);
-        this->btn_locations->disable();
+        this->btn_locations->set15c(1);
+        this->btn_locations->flag2_set();
         break;
     case 4:
-        this->btn_quests->activate(1);
-        this->btn_quests->disable();
+        this->btn_quests->set15c(1);
+        this->btn_quests->flag2_set();
         break;
     default:
         break;

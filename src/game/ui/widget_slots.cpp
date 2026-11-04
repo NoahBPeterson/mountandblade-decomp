@@ -60,8 +60,6 @@ int MissionUi::kind() { return 0; }
 // The container's key and refresh are copies of gui_window::mouse_event 0x42cf50 / wheel_focus 0x42cec0 (strat/gui_manager.cpp,
 // where the slices wrote them over the widget view); NodeA's key is gui_window::handle_event 0x42d170. The original's
 // slots hold those functions; our /OPT:ICF trial link folds the copies with them.
-extern float g_mouse_x;                     // 0x5d7094
-extern float g_mouse_y;                     // 0x5d7098
 
 char ContainerBase::key(unsigned mask)
 {
@@ -72,8 +70,8 @@ char ContainerBase::key(unsigned mask)
             MissionUi* c = *it;
             if ((c->f104 & 3) == 0) {
                 bool inside = false;
-                if (c->screen[2] + c->fE0 <= g_mouse_x && g_mouse_x < c->screen[0] + c->fE0 &&
-                    c->screen[3] + c->fE4 <= g_mouse_y && g_mouse_y < c->screen[1] + c->fE4)
+                if (c->screen[2] + c->fE0 <= g_gui.mouse[0] && g_gui.mouse[0] < c->screen[0] + c->fE0 &&
+                    c->screen[3] + c->fE4 <= g_gui.mouse[1] && g_gui.mouse[1] < c->screen[1] + c->fE4)
                     inside = true;
                 if (!(mask & 4) && inside) {
                     if (c->b121) {
@@ -93,8 +91,8 @@ char ContainerBase::key(unsigned mask)
             MissionUi* c = kids[i];
             r = 0;
             if ((c->f104 & 3) == 0) {
-                if (c->fE0 + c->screen[2] <= g_mouse_x && g_mouse_x < c->fE0 + c->screen[0] &&
-                    c->fE4 + c->screen[3] <= g_mouse_y && g_mouse_y < c->fE4 + c->screen[1])
+                if (c->fE0 + c->screen[2] <= g_gui.mouse[0] && g_gui.mouse[0] < c->fE0 + c->screen[0] &&
+                    c->fE4 + c->screen[3] <= g_gui.mouse[1] && g_gui.mouse[1] < c->fE4 + c->screen[1])
                     r = c->key(mask);
             }
         }

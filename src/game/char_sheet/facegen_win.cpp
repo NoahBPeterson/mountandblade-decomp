@@ -8,6 +8,7 @@
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../int_vec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_a/terrain.h"      // Terrain, g_terrain
+#include "../config/widget_mgr.h"      // DropDown (append 0x493400)
 #include "./cs_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // the scene entity's slot 4 (+0x10), called once its mesh list is filled
@@ -18,19 +19,19 @@ struct EntityV {
 
 // a "medium"/"short" button of the board panel (0x4dcc50 with the two skin names and the 3.7 / 3.0 text scale);
 // the three strings are built label first and die in reverse order, as the original's named temporaries do
-static __forceinline UiWidget* board_button(UiWidget* parent, const char* label, float x, float y, float h,
+static __forceinline MissionUi* board_button(MissionUi* parent, const char* label, float x, float y, float h,
                                             const char* down, const char* up, float scale)
 {
     tstring a(label);
     tstring d(down);
     tstring u(up);
-    return (UiWidget*)new_sized_button((MissionUi*)parent, a, x, y, h, u, d, scale, 0.072f, 0.085f);
+    return (MissionUi*)new_sized_button((MissionUi*)parent, a, x, y, h, u, d, scale, 0.072f, 0.085f);
 }
-static __forceinline void board_text(UiWidget* parent, const char* text, float x, float y)
+static __forceinline void board_text(MissionUi* parent, const char* text, float x, float y)
 {
     tstring s(text);
     tvec2 p = { x, y };
-    parent->set_text_at(s, (const float*)&p);   // +0xac
+    parent->layout_text_to(&s, (const float*)&p);   // +0xac
 }
 static __forceinline mesh* board_mesh(const char* name)
 {
@@ -61,21 +62,21 @@ void facegen_win::init()
 
     ((gui_manager*)(void*)g_gui)->reset();   // 0x42d1b0
 
-    UiWidget* w = (UiWidget*)new_container(0x190, vtbl_592848);
+    NodeA* w = (NodeA*)new_container(0x190, vtbl_592848);
     if (w)
-        *((char*)w + 0x188) = 0;
+        w->f188 = 0;
     board = w;
-    { tvec2 p = { 0.0f, 0.0f }; board->set_pos((const float*)&p); }
-    { tvec2 s = { 1.0f, 0.75f }; board->set_scale((const float*)&s); }
+    { tvec2 p = { 0.0f, 0.0f }; board->move_a((const float*)&p); }
+    { tvec2 s = { 1.0f, 0.75f }; board->set_xy((const float*)&s); }
     {
-        UiWidget* root = board;                     // (the original passes a stack copy)
+        MissionUi* root = board;                     // (the original passes a stack copy)
         g_gui_dirty = 1;
         ((NodeVec*)(void*)g_gui)->push_back((NodeA* const&)root);   // 0x49b120
     }
 
-    panel = (UiWidget*)new_container(0x188, vtbl_597050);
-    { tvec2 p = { 0.5f, 0.0f }; panel->set_pos((const float*)&p); }
-    { tvec2 s = { 0.5f, 0.75f }; panel->set_scale((const float*)&s); }
+    panel = (text_box*)new_container(0x188, vtbl_597050);
+    { tvec2 p = { 0.5f, 0.0f }; panel->move_a((const float*)&p); }
+    { tvec2 s = { 0.5f, 0.75f }; panel->set_xy((const float*)&s); }
     {
         mesh* m = board_mesh("facegen_board");
         panel->set_mesh(0, m);                      // +0x7c
@@ -83,10 +84,10 @@ void facegen_win::init()
     {
         tstring e("");
         char out[8];
-        panel->set_text(out, e);                    // +0xa4
+        panel->set_text((float*)out, &(e));                    // +0xa4
     }
     { tvec2 s = { 0.02f, 0.02f }; panel->set_size((const float*)&s); }
-    push_child((ChildList*)((char*)board + 0x178), panel);
+    push_child(board->kids, panel);
 
     board_text(panel, "Shade occluded:", 0.24f, 0.62f);
     w218 = board_button(panel, "disabled", 0.36f, 0.62f, 0.03f, "medium_button_down", "medium_button", 3.7f);
@@ -117,9 +118,9 @@ void facegen_win::init()
             *(e + 0x181) = 0;
             *(int*)(e + 0x184) = 0x1c;
         }
-        seeds[i] = (UiWidget*)e;
-        { tvec2 p = { 0.1f, y }; seeds[i]->set_pos((const float*)&p); }
-        { tvec2 s = { 0.225f, 0.025f }; seeds[i]->set_scale((const float*)&s); }
+        seeds[i] = (MissionUi*)e;
+        { tvec2 p = { 0.1f, y }; seeds[i]->move_a((const float*)&p); }
+        { tvec2 s = { 0.225f, 0.025f }; seeds[i]->set_xy((const float*)&s); }
         mesh* up = board_mesh("party_button");
         mesh* down = board_mesh("party_button_down");
         up->scale(0.41666669f);                     // 0x44f0c0
@@ -143,14 +144,14 @@ void facegen_win::init()
         }
         float t = (float)i * 0.04f;
         board_text(panel, name, 0.05f, t + 0.2f);
-        sliders[i] = (UiWidget*)make_slider((MissionUi*)panel, 0.23f, t + 0.19f, 1.0f);
+        sliders[i] = (MissionUi*)make_slider((MissionUi*)panel, 0.23f, t + 0.19f, 1.0f);
     }
 
     generate = board_button(panel, "Generate Terrain", 0.07f, 0.02f, 0.035f, "medium_button_down", "medium_button", 3.7f);
     close = board_button(panel, "Close", 0.33f, 0.01f, 0.028f, "medium_button_down", "medium_button", 3.7f);
     {
         tstring k("key");
-        key = (UiWidget*)make_hint((ContainerBase*)panel, k, 0.0f, 0.72f, 0.5f, 0.02f);   // 0x4dada0
+        key = (MissionUi*)make_hint((ContainerBase*)panel, k, 0.0f, 0.72f, 0.5f, 0.02f);   // 0x4dada0
     }
     { tvec2 s = { 0.02f, 0.02f }; key->set_size((const float*)&s); }
     copy = board_button(panel, "Copy", 0.1f, 0.685f, 0.025f, "short_button_down", "short_button", 3.0f);
@@ -160,22 +161,22 @@ void facegen_win::init()
 
     {
         tstring n("region type");
-        region_type = (UiWidget*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
+        region_type = make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
     }
     for (const int* r = g_region_types; r < g_region_types + 8; r++) {
         char buf[64];
         region_name(*r, buf);
         tstring s(buf);
-        region_type->add_child(&s);                 // +0xc8: the drop-down's add-item
+        region_type->append(&s);                    // +0xc8: the drop-down's add-item
     }
     {
         tstring n("region detail");
-        region_detail = (UiWidget*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.54f);
+        region_detail = make_dropdown((MissionUi*)panel, &n, 0.23f, 0.54f);
     }
-    { tstring s("2 meters"); region_detail->add_child(&s); }
-    { tstring s("3 meters"); region_detail->add_child(&s); }
-    { tstring s("4 meters"); region_detail->add_child(&s); }
-    { tstring s("5 meters"); region_detail->add_child(&s); }
+    { tstring s("2 meters"); region_detail->append(&s); }
+    { tstring s("3 meters"); region_detail->append(&s); }
+    { tstring s("4 meters"); region_detail->append(&s); }
+    { tstring s("5 meters"); region_detail->append(&s); }
 
     // the 3D preview: the view widget, its scene and camera
     view = new MapWidget;                           // 0x4ed630
@@ -195,13 +196,13 @@ void facegen_win::init()
         ((MissionUi*)(void*)scene)->set_fog(&start, &end, (const float*)&color);   // 0x488cd0
     }
     view->world = scene;
-    { tvec2 p = { 0.0f, 0.0f }; view->set_pos((const float*)&p); }
-    { tvec2 s = { 0.5f, 0.75f }; view->set_scale((const float*)&s); }
+    { tvec2 p = { 0.0f, 0.0f }; view->move_a((float*)(const float*)&p); }
+    { tvec2 s = { 0.5f, 0.75f }; view->set_xy((const float*)&s); }
     view->flags |= 0x100;
     view->clear_color = 0xff111133;
     cam.init(0.69813174f, 1.5f, 2.0f, 1000.0f);    // 0x4f25a0 (40 degrees)
     view->view = cam;
-    push_child((ChildList*)((char*)board + 0x178), view);
+    push_child(board->kids, view);
 
     EntityV* ent = (EntityV*)((rgl::world*)(void*)scene)->create_entity(9);   // 0x428440
     {

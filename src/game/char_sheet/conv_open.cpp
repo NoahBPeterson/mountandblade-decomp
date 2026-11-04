@@ -3,7 +3,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../overlay.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
@@ -13,19 +13,19 @@ void Rec1208::slot_empty_2()
 {
     ((gui_manager*)g_gui)->reset();   // 0x42d1b0 (g_gui is the gui_manager)
 
-    Panel* panel = (Panel*)new_container(0x190, vtbl_592848);
+    NodeA* panel = (NodeA*)new_container(0x190, vtbl_592848);
     if (panel)
         panel->f188 = 0;
     talk = panel;
     {
         float pos[2] = { 0.0f, 0.0f };
-        talk->set_pos(pos);
+        talk->move_a(pos);
         float sz[2] = { 1.0f, 0.75f };
-        talk->set_scale(sz);
+        talk->set_xy(sz);
     }
     {
         tstring name("conversation_window");
-        talk->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
+        talk->set_mesh(0, ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     {
         NodeA* v = (NodeA*)talk;
@@ -35,15 +35,15 @@ void Rec1208::slot_empty_2()
 
     float sentence_y_a = config_float("conv_sentence_y_a");
 
-    TextBox* bar = (TextBox*)new_container(0x188, vtbl_597050);
+    text_box* bar = (text_box*)new_container(0x188, vtbl_597050);
     bar_reln = bar;
     {
         tstring name("conv_bo_board");
         label_refresh((MissionUi*)bar, name);
     }
-    push_back_inline(talk->children, bar);
+    push_back_inline(talk->kids, bar);
 
-    Widget* line = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* line = (MissionUi*)new_widget_base(0x178);
     label_text = line;
     {
         tstring name("conv_t_partner");
@@ -51,7 +51,7 @@ void Rec1208::slot_empty_2()
     }
     bar->add_child(line);
 
-    Widget* speaker = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* speaker = (MissionUi*)new_widget_base(0x178);
     label_speaker = speaker;
     {
         tstring name("conv_t_utterer_name");
@@ -73,17 +73,17 @@ void Rec1208::slot_empty_2()
     {
         float zero = 0.0f;
         float v[2] = { zero, -sentence_y_a };
-        ch->set_y(v);
+        ch->move_f8(v);
     }
 
     tstring scroll_name("conv_s_choices");
-    Widget* reln = (Widget*)make_scrollbar(talk, &scroll_name);
+    MissionUi* reln = (MissionUi*)make_scrollbar(talk, &scroll_name);
     tstring list_name("conv_sc_choices");
-    question = (Widget*)make_editor_list(ch, &list_name, (int)reln);
+    question = (MissionUi*)make_editor_list(ch, &list_name, (int)reln);
     ((MissionPanel*)question)->draw();   // 0x488d50
     talk->add_child(question);
 
-    Widget* input = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* input = (MissionUi*)new_widget_base(0x178);
     input_label = input;
     {
         tstring name("conv_t_press_mouse");
@@ -92,68 +92,68 @@ void Rec1208::slot_empty_2()
     {
         tstring key("ui_press_left_mouse_button_to_continue");
         struct { int a, b; } ret;                        // set_text's 8-byte result (original [esp+0x10]); the looked-up string is the text
-        input->set_text(&ret, *g_strtable.lookup(key));
+        input->set_text((float*)&ret, &(*g_strtable.lookup(key)));
     }
     talk->add_child(input);
 
-    // the message window (+0x11e0): a TextBox at 0.03/0.3, 0.25/0.21, mesh "message_window"
-    TextBox* msg = (TextBox*)new_container(0x188, vtbl_597050);
+    // the message window (+0x11e0): a text_box at 0.03/0.3, 0.25/0.21, mesh "message_window"
+    text_box* msg = (text_box*)new_container(0x188, vtbl_597050);
     msg_window = msg;
     {
         float pos[2] = { 0.03f, 0.3f };
-        msg->set_pos(pos);
+        msg->move_a(pos);
         float sz[2] = { 0.25f, 0.21f };
-        msg->set_scale(sz);
+        msg->set_xy(sz);
     }
     {
         tstring name("message_window");
-        msg->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
+        msg->set_mesh(0, ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->hide();
 
-    Widget* rbar = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* rbar = (MissionUi*)new_widget_base(0x178);
     relation_bar = rbar;
     {
         float pos[2] = { 0.01f, 0.02f };
-        rbar->set_pos(pos);
+        rbar->move_a((float*)pos);
         float sz[2] = { 0.23f, 0.02f };
-        rbar->set_scale(sz);
+        rbar->set_xy(sz);
     }
     {
         tstring name("talk_relation_bar");
-        rbar->set_mesh(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
+        rbar->set_mesh(0, ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->add_child(rbar);
 
-    Widget* rptr = (WidgetObj*)new_widget_base(0x178);
+    MissionUi* rptr = (MissionUi*)new_widget_base(0x178);
     reln_pointer = rptr;
     {
         float pos[2] = { 0.1f, 0.02f };
-        rptr->set_pos(pos);
+        rptr->move_a((float*)pos);
         float sz[2] = { 0.03f, 0.03f };
-        rptr->set_scale(sz);
+        rptr->set_xy(sz);
     }
     {
         tstring name("talk_reln_pointer");
-        rptr->set_track(0, (base_mesh*)((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
+        rptr->set_track(0, ((mesh_x*)res_manager().get_object((const rgl::string*)&name))->clone());
     }
     msg->add_child(rptr);
 
     for (int i = 0; i < 5; i++) {
-        Widget* ln = (WidgetObj*)new_widget_base(0x178);
+        MissionUi* ln = (MissionUi*)new_widget_base(0x178);
         lines[i] = ln;
         float pos[2] = { 0.01f, 0.17f - (float)i * 0.03f };
-        ln->set_pos(pos);
+        ln->move_a((float*)pos);
         float sz[2] = { 0.23f, 0.03f };
-        ln->set_scale(sz);
+        ln->set_xy(sz);
         int flag = 4;
-        ln->set_flag(&flag);
+        ln->set148(&flag);
         float sc[2] = { 0.021f, 0.021f };
         ln->set_size(sc);
         msg->add_child(ln);
     }
 
-    talk->add_child((Widget*)msg);
+    talk->add_child((MissionUi*)msg);
 
     // the four trailing geometry settings use the explicit linear `equals` scan
     float sentence_x = scan_float("conv_sentence_x");
@@ -181,8 +181,8 @@ void Rec1208::slot_empty_2()
     {
         *(void**)((char*)vw + 0x178) = *(void**)g_mission;
         dword_copy(0x48, (char*)vw + 0x1ac, (char*)this + 0x34);
-        vw->set_pos(pos);
-        vw->set_scale(sz);
+        vw->move_a((float*)pos);
+        vw->set_xy(sz);
     }
 
     // the camera/frustum embedded in the screen at +0x34 (its +0xf8/+0x120 float4s and the projection fields)
@@ -217,7 +217,7 @@ void Rec1208::slot_empty_2()
     }
 
     // the talk panel's child vector gets the view window at +0x30 pushed directly (again via _Insert_n)
-    push_back_inline(talk->children, (Widget*)vw);
+    push_back_inline(talk->kids, (MissionUi*)vw);
     started = 1;
 
     n_lines = 0;

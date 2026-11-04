@@ -31,7 +31,7 @@ using rgl::vector4;
 #include "../tstring.h"
 
 // ---- controls ----------------------------------------------------------------------------------------------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
 #include "../terrain_a/terrain.h"                   // Terrain (g_terrain 0xa76630)

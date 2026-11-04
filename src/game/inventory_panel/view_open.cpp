@@ -22,9 +22,6 @@ extern "C" int _fltused = 0;
 // ---- engine string (16 bytes) ----------------------------------------------------------------------------
 #include "../tstring.h"
 
-struct MissionUi {
-    void set_fog(const float* a, const float* b, const float* c);   // 0x488cd0 (game/ui/mission_ui.h): World::set_fog is the same code
-};
 // ---- engine mesh -----------------------------------------------------------------------------------------
 #include "../../rgl/mesh.h"
 using rgl::mesh;
@@ -183,7 +180,7 @@ void char_window::open_view()
         b->flags |= 0x1200;
         b->clear_color = 0xff221815;
         // the camera frame: the body's aspect scaled by the global fov factor
-        float aspect = b->size_y / b->size_x * g_fov_k;
+        float aspect = b->screen[1] / b->screen[0] * g_fov_k;
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);
         frame mat;
         identity_pos((pos*)&mat);

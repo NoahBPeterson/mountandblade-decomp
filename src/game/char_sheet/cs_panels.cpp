@@ -19,7 +19,7 @@ const int g_level_xp[64] = {0, 0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297
         float pos[2];                                    \
         pos[0] = x;                                      \
         pos[1] = y;                                      \
-        W->set_text_at(t, pos);                         \
+        W->layout_text_to(&t, pos);                      \
     } while (0)
 
 // @ 0x4f0820
@@ -33,18 +33,18 @@ void CharSheet::refresh_panels()
     PostSlot out;
     {
         tstring t("");
-        level_at->set_text(&out, t);
+        level_at->set_text((float*)&out, &(t));
     }
     {
         tstring t("");
-        xp_bar->set_text(&out, t);
+        xp_bar->set_text((float*)&out, &(t));
     }
 
-    if (((SheetWidget*)f_4c4)->has_label == 0) {
+    if (((UiA*)f_4c4)->f181 == 0) {
         tstring* n = g_strtable.find(&c->key);
         if (n == 0) n = (tstring*)c;     // 0x4f08d6: mov eax, esi (the Troop itself, not its key at +0x20)
         tstring t(n->c_str());
-        f_4c4->set_text(&out, t);
+        f_4c4->set_text((float*)&out, &(t));
     }
 
     {
@@ -105,7 +105,7 @@ void CharSheet::refresh_panels()
                    stats[i]);
         {
             tstring t(line);
-            skill_pos[i]->set_text(&out, t);
+            skill_pos[i]->set_text((float*)&out, &(t));
         }
         if (c->attr_points > 0)
             skill_val[i]->show();

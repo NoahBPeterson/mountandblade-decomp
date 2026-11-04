@@ -243,7 +243,7 @@ struct GroupWidget : MissionUi {                                  // vtable 0x59
     ChildVec kids;                                                // +0x178
     GroupWidget() { *(void**)this = (void*)vtbl_5924a0; kids.first = 0; kids.last = 0; kids.end = 0; }
 };
-struct TextGroupWidget : GroupWidget {                            // the same 0x188-byte container with vtable 0x597050 (overlay.h's TextBox)
+struct TextGroupWidget : GroupWidget {                            // the same 0x188-byte container with vtable 0x597050 (container.h's text_box)
     TextGroupWidget() { *(void**)this = (void*)vtbl_597050; }
 };
 struct WindowBase : MissionUi {                                   // the 0x188-byte window base (party_window.h's UiWindow); its constructor body 0x4931a0 is ContainerW::construct

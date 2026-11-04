@@ -61,28 +61,28 @@ struct GameData {
 #include "../../rgl/resource_manager.h"   // canonical: g_options.f74 (0x5aa07c)
 
 // ---- control stub -----------------------------------------------------------------------------------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
-// The settings-tab view of the same controls that 0x4d5f20's polls go through (changed() is Widget's +0x44):
-// the integer value at +0x30 (Widget::get_value) and the float at +0x38 (Widget::get_float).
+// The settings-tab view of the same controls that 0x4d5f20's polls go through (changed() is MissionUi's +0x44):
+// the integer value at +0x30 (MissionUi::get_value) and the float at +0x38 (MissionUi::get_float).
 struct SettingsControl {
     virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
     virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
     virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
     virtual int  value();                   // +0x30
-    virtual void v0d();                     // +0x34 (Widget::set_value)
+    virtual void v0d();                     // +0x34 (MissionUi::set_value)
     virtual float float_value();            // +0x38 (returned in st0: 0x4d5f20 stores it with fstp)
 };
 
 // The integer a polled control returns (an int slot of the settings view).
-static inline int control_value(Widget* w)
+static inline int control_value(MissionUi* w)
 {
     int v = ((SettingsControl*)w)->value();
     return (int)(long)(void*)v;
 }
 
 // The float behind get_float (an x87 return: the caller stores st0, fstp dword [0x5aa010]).
-static inline float control_float(Widget* w)
+static inline float control_float(MissionUi* w)
 {
     return ((SettingsControl*)w)->float_value();
 }
@@ -113,7 +113,7 @@ struct SoundCtl {
     char emit_event(int id, int a, int b);   // 0x435790
 };
 // 0x4d6dd0: KeysPage::set_enabled_text (keys_page.cpp); the page calls it on itself.
-struct KeysPage { void set_enabled_text(Widget* w); };
+struct KeysPage { void set_enabled_text(MissionUi* w); };
 
 // @ 0x4d5ba0
 // The selected quest's record: the selection indexes the int table at this+0x4c.
@@ -125,10 +125,10 @@ void QuestPage::fill()
 
     {
         Pos2 at;                                 // passed unset to the first call
-        box1()->set_text(&at, QREC->title);
+        box1()->set_text((float*)&at, &(QREC->title));
         at.x = 0.0f;
         at.y = 0.43125f;
-        box1()->set_text_at(QREC->text, &at.x);
+        box1()->layout_text_to(&(QREC->text), &at.x);
     }
 
     // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
@@ -150,7 +150,7 @@ void QuestPage::fill()
         Pos2 at;
         at.x = 0.0f;
         at.y = 0.38125f;
-        box1()->set_text_at(text, &at.x);
+        box1()->layout_text_to(&(text), &at.x);
     }
 
     // "N days since given"
@@ -167,7 +167,7 @@ void QuestPage::fill()
         Pos2 at;
         at.x = 0.0f;
         at.y = 0.35f;
-        box1()->set_text_at(text, &at.x);
+        box1()->layout_text_to(&(text), &at.x);
     }
 
     // the description
@@ -176,7 +176,7 @@ void QuestPage::fill()
         at.x = 0.0f;
         at.y = 0.31875f;
         tstring desc(QREC->giver);
-        box1()->set_text_at(desc, &at.x);
+        box1()->layout_text_to(&(desc), &at.x);
     }
 
     // the progression number (second box) when the quest has one
@@ -189,7 +189,7 @@ void QuestPage::fill()
         {
             tstring text(buf);
             Pos2 at;
-            box2()->set_text(&at, text);
+            box2()->set_text((float*)&at, &(text));
         }
         box2()->show();   // slot +0xb4 (the slice called it enable)
     } else {
@@ -211,7 +211,7 @@ void QuestPage::update_days()
     char buf[0x40];
     sprintf(buf, "%d", n + 0x19);
     tstring text(buf);
-    w34->set_text(&fr, text);
+    w34->set_text((float*)&fr, &(text));
 }
 
 // @ 0x4d6300
@@ -232,92 +232,92 @@ void QuestPage::update_difficulty()
     {
         tstring text((const char*)&buf[0]);
         Pos2 slot;
-        wd4->set_text(&slot, text);
+        wd4->set_text((float*)&slot, &(text));
     }
 }
 
-#define W(x) ((Widget*)(void*)(x))
+#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d5f20
 void Recd8::scale_3(float)
 {
-    if (W(s7c)->changed(0x10000))
+    if (W(s7c)->clear_mask(0x10000))
         g_options.music_volume = control_float(W(s7c));
-    if (W(s80)->changed(0x10000))
+    if (W(s80)->clear_mask(0x10000))
         g_options.master_volume = control_float(W(s80));
-    if (W(s84)->changed(0x10000))
+    if (W(s84)->clear_mask(0x10000))
         g_options.exp_arg = control_float(W(s84));
-    if (W(sl78)->changed(0x10000)) {
+    if (W(sl78)->clear_mask(0x10000)) {
         g_options.f74 = control_float(W(sl78));
         update_difficulty();
         ((QuestPage*)(void*)this)->update_days();
     }
-    if (W(dd44)->changed(0x10000)) {
+    if (W(dd44)->clear_mask(0x10000)) {
         g_options.dmg_to_player = control_value(W(dd44));
         update_difficulty();
     }
-    if (W(dd48)->changed(0x10000)) {
+    if (W(dd48)->clear_mask(0x10000)) {
         g_options.dmg_to_friends = control_value(W(dd48));
         update_difficulty();
     }
-    if (W(dd4c)->changed(0x10000)) {
+    if (W(dd4c)->clear_mask(0x10000)) {
         g_options.difficulty = control_value(W(dd4c));
         update_difficulty();
     }
-    if (W(dd50)->changed(0x10000)) {
+    if (W(dd50)->clear_mask(0x10000)) {
         g_options.agent_count = control_value(W(dd50));
         update_difficulty();
     }
-    if (W(dd54)->changed(0x10000)) {
+    if (W(dd54)->clear_mask(0x10000)) {
         g_options.stick_mode = control_value(W(dd54));
         update_difficulty();
     }
-    if (W(dd58)->changed(0x10000)) {
+    if (W(dd58)->clear_mask(0x10000)) {
         g_options.ctl_mode = control_value(W(dd58));
         update_difficulty();
     }
-    if (W(b5c)->changed(0x10000)) {
+    if (W(b5c)->clear_mask(0x10000)) {
         g_options.i64 = control_value(W(b5c));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b5c));
     }
-    if (W(b60)->changed(0x10000)) {
+    if (W(b60)->clear_mask(0x10000)) {
         g_options.i68 = control_value(W(b60));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b60));
     }
-    if (W(b64)->changed(0x10000)) {
+    if (W(b64)->clear_mask(0x10000)) {
         g_options.fx_on = control_value(W(b64));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b64));
     }
-    if (W(b68)->changed(0x10000)) {
+    if (W(b68)->clear_mask(0x10000)) {
         g_options.damage_msgs = control_value(W(b68));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b68));
     }
-    if (W(b6c)->changed(0x10000)) {
+    if (W(b6c)->clear_mask(0x10000)) {
         g_options.shot_difficulty = control_value(W(b6c));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b6c));
     }
-    if (W(b70)->changed(0x10000)) {
+    if (W(b70)->clear_mask(0x10000)) {
         g_options.kill_msgs = control_value(W(b70));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b70));
     }
-    if (W(b74)->changed(0x10000)) {
+    if (W(b74)->clear_mask(0x10000)) {
         g_options.show_messages = control_value(W(b74));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b74));
     }
-    if (W(b88)->changed(0x10000)) {
+    if (W(b88)->clear_mask(0x10000)) {
         g_options.invert = control_value(W(b88));
         ((KeysPage*)(void*)this)->set_enabled_text(W(b88));
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)
-    if (W(b40)->changed(0x10000)) {
+    if (W(b40)->clear_mask(0x10000)) {
         g_main_menu.set_state(w18);
         return;
     }
-    if (W(b38)->changed(0x10000)) {
+    if (W(b38)->clear_mask(0x10000)) {
         slot_as<int>(20)[6] = 0x12;
         g_main_menu.set_state(0x14);
         return;
     }
-    if (W(b3c)->changed(0x10000)) {
+    if (W(b3c)->clear_mask(0x10000)) {
         slot_as<int>(19)[6] = 0x12;
         g_main_menu.set_state(0x13);
     }

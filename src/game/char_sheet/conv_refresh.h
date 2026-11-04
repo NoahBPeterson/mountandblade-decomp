@@ -7,7 +7,7 @@
 // repositions the choice box -- plus the agent appearance refresh 0x4f7e00 (calls the appearance builders
 // 0x482240 / 0x47cfe0 on the body, caches the equipment value, re-wields slots 0 and 1) and its caller
 // 0x4f7d70 (pick equipment, refresh the appearance, reset the wielded items).
-// Widget slots, tstring (0x42bbe0 ctor, 0x42bc40 dtor, 0x42c110 copy), the setting table (0xa44240, entries of
+// MissionUi slots, tstring (0x42bbe0 ctor, 0x42bc40 dtor, 0x42c110 copy), the setting table (0xa44240, entries of
 // 0x2c from 0xa4425c), the dialog manager accessors (s0045ff30) and the agent layout (s0045ff30) follow the
 // neighbouring slices.  Names are provisional.  Neither function is byte-exact yet: the notes in the comments
 // record what the original does (stack frame, call order, value flow) so the sources can be finished.
@@ -70,12 +70,11 @@ static const char* troop_text(int id)
 
 // ---- widget slots (see s004dfd50 / s004e05c0) -------------------------------------------------------
 // used slots: 0x58/0x64/0x68/0x6c/0x70 pos & scale, 0x74 flag, 0x80 track, 0xa4 text, 0xb0 advance, 0xb4 clear
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // the conversation screen (`this` of 0x4f73c0)
-#include "../conv_screen.h"                      // ConvScreen (full layout), base_mesh
+#include "../conv_screen.h"                      // ConvScreen (full layout)
 
-struct base_mesh;
 #include "./cs_common.h"
 #include "../res_mgr.h"                          // res_manager()
 #include "../../rgl/mesh_x.h"                    // mesh_x::clone 0x41c6d0

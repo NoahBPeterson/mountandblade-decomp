@@ -101,7 +101,7 @@ void FaceGen::refresh()
         sprintf(buf, "k=%s%s%s%s", keys[0], keys[1], keys[2], keys[3]);
         tstring text(buf);
         vector2 pos;
-        cam_btn->set_text(&pos, text);
+        cam_btn->set_text((float*)&pos, &(text));
     }
 }
 

@@ -4,12 +4,12 @@
 // (screen_init: init_screen 0x4ec4d0 and camera_mark_entities 0x4ecce0; screen_camera: camera_update 0x4ece20) and
 // inventory_panel (mission_ctx: frame_update 0x514d40, camera_move 0x515d80, 0x5191e0). The mission_ctx slice named the camera
 // state yaw / speed / height / x / z / vy / y (anonymous unions below keep those spellings next to the screen_camera ones) and
-// typed the widgets MissionUi*; the widgets are the Widget interface of src/game/ui_widget.h.
+// typed the widgets MissionUi*; the widgets are the MissionUi interface of src/game/ui_widget.h.
 // Needs rgl::frustum (src/include/frustum.h) and the includer's tstring.
 #ifndef MB_GAME_CAMPAIGN_SCREEN_H
 #define MB_GAME_CAMPAIGN_SCREEN_H
 #include "./ui_widget.h"
-#include "./overlay.h"
+#include "./ui/container.h"
 #include "./map_widget.h"
 #include "../include/frustum.h"
 
@@ -19,20 +19,20 @@ struct Screen {
     virtual void s08(int); virtual void s09(int);
     int f4;                                     // +0x4
     char pad8[0x2c - 8];
-    Overlay* overlay;                           // +0x2c   map bar
+    NodeA* overlay;                           // +0x2c   map bar
     MapWidget* f30;                             // +0x30   the map widget (the 3D panel)
-    Widget* f34;                                // +0x34   menu buttons
-    Widget* f38;                                // +0x38
-    Widget* f3c;                                // +0x3c   ui_party
-    Widget* f40;                                // +0x40   ui_inventory
-    Widget* f44;                                // +0x44   ui_character
+    MissionUi* f34;                                // +0x34   menu buttons
+    MissionUi* f38;                                // +0x38
+    MissionUi* f3c;                                // +0x3c   ui_party
+    MissionUi* f40;                                // +0x40   ui_inventory
+    MissionUi* f44;                                // +0x44   ui_character
     int f48;                                    // +0x48   ui_terrain quad (a widget pointer in mission_ctx)
-    Widget* f4c;                                // +0x4c   ui_camp
-    Widget* f50;                                // +0x50   ui_quests
-    Widget* f54;                                // +0x54   paused banner
-    Widget* f58;                                // +0x58   wait hint
-    WidgetObj* f5c;                             // +0x5c   first hint
-    WidgetObj* f60;                             // +0x60   second hint
+    MissionUi* f4c;                                // +0x4c   ui_camp
+    MissionUi* f50;                                // +0x50   ui_quests
+    MissionUi* f54;                                // +0x54   paused banner
+    MissionUi* f58;                                // +0x58   wait hint
+    MissionUi* f5c;                             // +0x5c   first hint
+    MissionUi* f60;                             // +0x60   second hint
     char f64;                                   // +0x64
     char pad65[0x170 - 0x65];
     rgl::frustum cam;                           // +0x170  the camera frustum (0x120 bytes; copied into the map widget at +0x1ac)

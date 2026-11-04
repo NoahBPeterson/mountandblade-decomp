@@ -36,7 +36,7 @@ using rgl::vector4;
 #include "../wret.h"
 
 // Slot offsets from the calls in this slice (0x4d6b80, 0x4d6dd0, 0x4d6e50, 0x4d7120, 0x4d7270).
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- symbols -----------------------------------------------------------------------------------------
 #include "../main_menu.h"                         // MainMenu (0xa73980): the one definition
@@ -131,14 +131,14 @@ struct KeysPageView {
     char    pad00[0x18];
     int     option;                                         // +0x18 (the option the menu returns to)
     char    pad1c[0x30 - 0x1c];
-    Widget* w30;                                            // +0x30  apply
-    Widget* w34;                                            // +0x34  cancel / restore
-    Widget* w38;                                            // +0x38  defaults
+    MissionUi* w30;                                            // +0x30  apply
+    MissionUi* w34;                                            // +0x34  cancel / restore
+    MissionUi* w38;                                            // +0x38  defaults
     char    pad3c[0xd0 - 0x3c];
-    Widget* keys[0x25];                                     // +0xd0  the key-assignment rows
-    Widget* w164;                                           // +0x164 the key-assignment overlay
+    MissionUi* keys[0x25];                                     // +0xd0  the key-assignment rows
+    MissionUi* w164;                                           // +0x164 the key-assignment overlay
     char    pad168[0x18c - 0x168];
-    Widget* captions[7];                                    // +0x18c the column headers
+    MissionUi* captions[7];                                    // +0x18c the column headers
     char    pad1a8[0x1b4 - 0x1a8];
     char    modified;                                       // +0x1b4
     char    pad1b5[0x1b8 - 0x1b5];
@@ -148,11 +148,11 @@ struct KeysPageView {
 #include "../screen_records.h"       // Rec1bc: the key-binding page record (slot 3 is update 0x4d6e50)
 struct KeysPage {
     char    pad00[0xe4];
-    Widget* perf_caption;                                   // +0xe4 the performance caption
+    MissionUi* perf_caption;                                   // +0xe4 the performance caption
     char    pad_e8[0x300];
 
     void update_perf();                                     // 0x4d6b80
-    void set_enabled_text(Widget* w);                       // 0x4d6dd0
+    void set_enabled_text(MissionUi* w);                       // 0x4d6dd0
     void refresh();                                         // 0x4d7120
 };
 
@@ -215,27 +215,27 @@ void KeysPage::update_perf()
     }
     {
         tstring text(buf);
-        { char r[8]; perf_caption->set_text(r, text); }
+        { char r[8]; perf_caption->set_text((float*)r, &(text)); }
     }
-    { char r[8]; perf_caption->get_xy(r); }
+    { char r[8]; perf_caption->get_xy((float*)r); }
 }
 
 // @ 0x4d6dd0
-void KeysPage::set_enabled_text(Widget* w)
+void KeysPage::set_enabled_text(MissionUi* w)
 {
-    if (w->get_value()) {
+    if (w->get15c()) {
         tstring key("ui_enabled");
-        { char r[8]; w->set_text(r, *g_strtable.lookup(key)); }
+        { char r[8]; w->set_text((float*)r, &(*g_strtable.lookup(key))); }
     } else {
         tstring key("ui_disabled");
-        { char r[8]; w->set_text(r, *g_strtable.lookup(key)); }
+        { char r[8]; w->set_text((float*)r, &(*g_strtable.lookup(key))); }
     }
 }
 
 // @ 0x4d6e50
 void Rec1bc::scale_3(float)
 {
-#define W(x) ((Widget*)(void*)(x))
+#define W(x) ((MissionUi*)(void*)(x))
     if (f1b8 >= 0) {
         W(f164)->show();
         int pressed = -1;
@@ -253,19 +253,19 @@ void Rec1bc::scale_3(float)
     } else {
         W(f164)->hide();
         for (int i = 0; i < 0x25; i++)
-            if (W(slot_buttons[i])->changed(0x10000))
+            if (W(slot_buttons[i])->clear_mask(0x10000))
                 f1b8 = i;
-        if (W(f38)->changed(0x10000)) {
+        if (W(f38)->clear_mask(0x10000)) {
             ((code_table*)(void*)&g_game_keys)->init();
             f1b4 = 1;
             ((KeysPage*)this)->refresh();
         }
-        if (W(f34)->changed(0x10000)) {
+        if (W(f34)->clear_mask(0x10000)) {
             g_game_keys.restore();
             f1b4 = 0;
             ((KeysPage*)this)->refresh();
         }
-        if (W(f30)->changed(0x10000)) {
+        if (W(f30)->clear_mask(0x10000)) {
             if (f1b4)
                 g_game_keys.save();
             g_main_menu.set_state(w18);
@@ -332,7 +332,7 @@ void ControlKeyTable::restore()
 
 // 0x4d7270: one key row: scale the row by the box (shrunk to fit the text width), position it, set the text.
 // The box is four float arguments (the caller pushes four immediates).
-void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, float bw);
+void layout_row(MissionUi* row, const tstring* text, float bx, float by, float bz, float bw);
 
 // @ 0x4d7120
 void KeysPage::refresh()
@@ -341,7 +341,7 @@ void KeysPage::refresh()
     for (int k = 0; k < 7; k++) {
         tstring text;
         ((options_panel*)(void*)&g_game_keys)->key_name(k, &text);
-        { char r[8]; p->captions[k]->set_text(r, text); }
+        { char r[8]; p->captions[k]->set_text((float*)r, &(text)); }
     }
 
     for (int i = 0; i < 0x25; i++) {
@@ -353,7 +353,7 @@ void KeysPage::refresh()
         if (!assigned)
             colour = 0xff000000;
         p->keys[i]->set_color(&colour);
-        p->keys[i]->activate(0);
+        p->keys[i]->set15c(0);
     }
 
     bool unassigned = false;
@@ -361,14 +361,14 @@ void KeysPage::refresh()
         if (g_game_keys.entry[i][0] == -1) unassigned = true;
     // 0x4d71e0: Done is greyed while any key is unbound (+0xb8), Undo only while nothing changed. Written when ui_widget.h
     // had the two slots swapped and not flipped with it, so Done was greyed with every key bound.
-    if (unassigned) p->w30->disable();
-    else            p->w30->enable();
-    if (p->modified) p->w34->enable();
-    else             p->w34->disable();
+    if (unassigned) p->w30->flag2_set();
+    else            p->w30->flag2_clear();
+    if (p->modified) p->w34->flag2_clear();
+    else             p->w34->flag2_set();
 }
 
 // @ 0x4d7270
-void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, float bw)
+void layout_row(MissionUi* row, const tstring* text, float bx, float by, float bz, float bw)
 {
     float s = bx * g_k065;
     int maxn = 0x800;
@@ -387,5 +387,5 @@ void layout_row(Widget* row, const tstring* text, float bx, float by, float bz, 
     pos.x = 0;
     pos.y = bx * 0.5f - s * g_chunk_scale;
     row->set_offset((const float*)&pos);
-    { char r[8]; row->set_text(r, *text); }
+    { char r[8]; row->set_text((float*)r, &(*text)); }
 }

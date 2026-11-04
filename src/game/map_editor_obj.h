@@ -2,7 +2,7 @@
 // the map editor's dialog class of that same object is MapEditorDialog, src/rgl/mesh2/gui_edit.h). ONE definition of the
 // slices' "MapEditor" for src/game/char_sheet (facegen_misc: the editor restart and the device-object handlers
 // 0x4c1a60 / 0x4c1940, called on the global) and src/game/inventory_panel (game_app: the dialog refreshers). The full
-// classes cannot be included next to these TUs' local universes (gui_edit.h's Game / Widget views clash), so the
+// classes cannot be included next to these TUs' local universes (gui_edit.h's Game / MissionUi views clash), so the
 // members the callers use are declared here, each at the address that proves it.
 #ifndef MB_GAME_MAP_EDITOR_OBJ_H
 #define MB_GAME_MAP_EDITOR_OBJ_H

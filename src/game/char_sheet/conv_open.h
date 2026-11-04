@@ -5,18 +5,18 @@
 // talk overlay (+0x2c), the board/bar (+0x180), the window (+0x30), the speaker and line labels, the question
 // (+0x188) and choice (+0x18c) boxes, the press label (+0x17c), 1024 body buttons (+0x190), the message
 // window (+0x11e0), the relation bar/pointer (+0x11e8/+0x11e4) and five sentence boxes (+0x11ec); then resets
-// the camera and re-targets the talk. Widget layouts/vcall slots, the tstring idioms, the config-table lookup
+// the camera and re-targets the talk. MissionUi layouts/vcall slots, the tstring idioms, the config-table lookup
 // and the ConvScreen offsets follow the neighbouring slice s004f73c0 (same `this`). The widget classes were
 // identified by disassembling each constructor this function calls and dumping its vtable. Names provisional.
 //
 // The widget vcall slots in the original are set_pos=+0x58, set_size=+0x64, set_y=+0x68, set_scale2=+0x6c,
 // set_flag=+0x74, set_mesh=+0x7c, set_track=+0x80, set_text=+0xa4, advance=+0xb0, add_child=+0xc8.
-// The `Widget` declaration below orders the filler slots so those land on the right offsets.
+// The `MissionUi` declaration below orders the filler slots so those land on the right offsets.
 //
 // Identified widget classes (all constructed through ::operator new + a ctor that stores the vtable):
-//   base Widget   0x178 bytes, ctor 0x48ae20, vtable 0x591c80
+//   base MissionUi   0x178 bytes, ctor 0x48ae20, vtable 0x591c80
 //   Panel         0x190 bytes, ctor 0x4931a0, vtable 0x592848, extra byte field +0x188
-//   TextBox       0x188 bytes, ctor 0x4931a0, vtable 0x597050, vector<Widget*> at +0x178
+//   text_box      0x188 bytes, ctor 0x4931a0, vtable 0x597050, vector<MissionUi*> at +0x178
 //   Choices       0x188 bytes, ctor 0x48ae20, vtable 0x5924a0, three ints +0x17c/+0x180/+0x184
 //   ViewWindow    0x358 bytes, ctor 0x4ed630, vtable 0x598698
 #include <windows.h>
@@ -66,7 +66,6 @@ static float scan_float(const char* name)
     return r;
 }
 
-struct base_mesh;
 #include "./cs_common.h"                                 // label_refresh, make_*, gui_manager ...
 #include "./cs_mat.h"                                    // identity3 0x40cd60
 #include "../res_mgr.h"                                 // res_manager()
@@ -78,23 +77,22 @@ extern gui_manager_s* g_gui;
 #include "../str_table.h"
 
 // ---- widget slots used here (s004f73c0 / s0042d360 gui.h) ----------------------------------------------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // ---- widget classes -------------------------------------------------------------------------------------
-#include "../overlay.h"                       // Overlay (the slice's Panel), TextBox
-typedef Overlay Panel;                         // the slice's name for it
+#include "../ui/container.h"                       // NodeA (the slice's Panel), text_box
 #include "../map_widget.h"                       // MapWidget (the slice's ViewWindow: ctor 0x4ed630, vtable 0x598698, 0x358 bytes)
 typedef MapWidget ViewWindow;
 
 // (label_refresh 0x4e4c70, make_scrollbar 0x4f6160, make_editor_list 0x4f62f0 are cs_common.h's)
 
 // factory helpers (parent is the last argument)
-Widget* make_body_button(Widget* parent, const tstring& a, const tstring& b, const tstring& c,
+MissionUi* make_body_button(MissionUi* parent, const tstring& a, const tstring& b, const tstring& c,
                          float x, float y, float w, float h, float f5, float f6,
                          float f7, float f8);                                // 0x4dcc50
 
 // ---- the conversation screen (`this` of 0x4f66e0, 0x4f73c0, 0x4f7d70) --------------------------------
-#include "../conv_screen.h"                      // ConvScreen, Choices, base_mesh
+#include "../conv_screen.h"                      // ConvScreen, Choices
 
 // ---- mission / agent list helpers ---------------------------------------------------------------------
 #include "../mission.h"
@@ -124,7 +122,7 @@ static void dword_copy(int n, void* dst, const void* src)
         d[i] = s[i];
 }
 
-// the vector<Widget*>::push_back used at the two call sites (0x4927d0 is the out-of-line _Insert_n)
+// the vector<MissionUi*>::push_back used at the two call sites (0x4927d0 is the out-of-line _Insert_n)
 
 // ========================================================================================================
 #endif

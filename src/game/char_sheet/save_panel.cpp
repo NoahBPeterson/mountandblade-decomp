@@ -41,10 +41,10 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
     }
 }
 
-// ---- widget virtual slots: the canonical Widget view (src/game/ui_widget.h): +0x2c activate (the cursor on/off),
+// ---- widget virtual slots: the canonical MissionUi view (src/game/ui_widget.h): +0x2c activate (the cursor on/off),
 // +0x44 changed (input test), +0xb8 disable, +0xbc enable (the harness types the widget pointers through its vtable)
 #include "../ui_widget.h"
-typedef Widget Control;
+typedef MissionUi Control;
 
 #include "../screen_records.h"       // C4c31c0: the save / load window (slot 3 is update 0x4ea290, select 0x4ea850)
 
@@ -86,11 +86,11 @@ void C4c31c0::scale_3(float)
     char pathbuf[0x200];
     char name[0x200];
     for (int i = 0; i < 9; i++) {
-        Widget* button = labels[i];
-        if (button && button->changed(0x10000))
+        MissionUi* button = labels[i];
+        if (button && button->clear_mask(0x10000))
             select(i);
     }
-    if (btn_done->changed(0x10000)) {
+    if (btn_done->clear_mask(0x10000)) {
         if (is_load) {
         *(int*)((char*)this + 0x220) = -1;
         tstring title("ui_set_save_file_name");
@@ -136,16 +136,16 @@ void C4c31c0::scale_3(float)
         }
         }
     }
-    if (btn_cancel->changed(0x10000)) {
+    if (btn_cancel->clear_mask(0x10000)) {
         g_main_menu.set_state(*(int*)((char*)this + 0x18));
         return;
     }
-    Widget* panel = btn_delete;
+    MissionUi* panel = btn_delete;
     // The original (verified by the byte-level reconstruction in match/slices/save_panel) reaches the delete
     // confirmation on the delete widget OR (a17420 set, a17820 clear, AND the panel's +0x104 bit 1 clear); the
     // remaining case is the save/remove path. Ours had that second test as an OR of the positive bit, which sent
     // the ordinary save/load click into the confirmation (equiv.py reported FAIL until this was ANDed).
-    if (panel->changed(0x10000) ||
+    if (panel->clear_mask(0x10000) ||
         (g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0 && ((*(unsigned char*)((char*)panel + 0x104) & 2) == 0)))
         goto confirm_delete;
     {
@@ -199,17 +199,17 @@ confirm_delete:
 void C4c31c0::select(int idx)
 {
     if (sel218 != -1)
-        labels[sel218]->activate(0);
+        labels[sel218]->set15c(0);
     sel218 = idx;
     if (sel218 != -1) {
-        labels[sel218]->activate(1);
-        btn_done->enable();
+        labels[sel218]->set15c(1);
+        btn_done->flag2_clear();
         if (*(int*)((char*)this + sel218 * 0x30 + 0x4c))
-            btn_delete->enable();
+            btn_delete->flag2_clear();
         else
-            btn_delete->disable();
+            btn_delete->flag2_set();
     } else {
-        btn_done->disable();
-        btn_delete->disable();
+        btn_done->flag2_set();
+        btn_delete->flag2_set();
     }
 }

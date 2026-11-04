@@ -40,7 +40,7 @@ static __forceinline const char* c_str(const tstring* s)
 // ---- screens: g_windows[30] (0xa73980) is the global screen table; the id stack at 0xa739f8 keeps
 //      the current screen id (a ring of 4-int blocks). ------------------------------------------------
 // ---- the engine widget interface: only the slots this slice dispatches ---------------------------------
-#include "../ui_widget.h"                 // Widget (the UI widget interface)
+#include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
 void __cdecl frame_hook(void);                               // 0x4ec460 (game/char_sheet/screen.cpp: the end-of-frame callback, a free function)
 
@@ -167,7 +167,7 @@ int GameApp::Update()
     }
 
     frame_hook();
-    slot_as<Widget>(current_screen_id())->update(dt);
+    slot_as<head_rec>(current_screen_id())->scale_3(dt);
 
     if (g_game) {
         // (0x50f057, the "hide" path, is reached whenever f1a090 is 0, on screen 0xe or not)
@@ -328,8 +328,8 @@ void C4c3290::scale_3(float)
     bool finished = advance(&step, &total, &text);
     const char* fmt = "%d";
     _snprintf(buf, 0x100, fmt, step);
-    ((Widget*)hint)->set_text(tmp, text);
-    ((Widget*)bar)->set_value((float)step * 0.14285715f);
+    ((MissionUi*)hint)->set_text((float*)tmp, &(text));
+    ((MissionUi*)bar)->set168((float)step * 0.14285715f);
     if (finished) {
         g_main_menu.set_state(4);
         ((stream_base&)g_log).w_cstr("Finished All...\n");

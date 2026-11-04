@@ -66,7 +66,7 @@ void CharSheet::update_skill_rows()
             }
             {
                 tstring str(num);
-                { char r[8]; label[i]->set_text(r, str); }
+                { char r[8]; label[i]->set_text((float*)r, &(str)); }
             }
             btn[i]->hide();
             {

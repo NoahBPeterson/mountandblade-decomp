@@ -1303,14 +1303,7 @@ void Camera::animate(int)
 }
 
 // @ 0x49e580  (scalar deleting destructor)
-void* Camera::destroy(unsigned flags)
-{
-    scene.~scene();
-    ContainerBase::~ContainerBase();
-    if (flags & 1)
-        ::operator delete(this);
-    return this;
-}
+// (the scalar deleting destructor of the implicit destructor is generated with the vtable, above)
 
 // @ 0x49e5b0
 // Place the view: size the scene viewport from the view box, rebuild the box frustum, install it as

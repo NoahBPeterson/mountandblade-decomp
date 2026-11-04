@@ -21,7 +21,7 @@ struct ContainerBase : MissionUi {
     virtual void animate(int p);                // +0x08 0x4908c0
     virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x490710 (ret 0x10)
     virtual void clear_c8();                    // +0x40 0x4906e0
-    virtual void move_a(float* p);              // +0x58 0x490570
+    virtual void move_a(const float* p);           // +0x58 0x490570
     virtual void on_child_moved(MissionUi* child);   // +0x5c 0x4905c0
     virtual void on_moved();                    // +0x60 0x4906b0
     virtual char key(unsigned mask);            // +0x8c 0x42cf50 (gui_window::mouse_event: the same body)
