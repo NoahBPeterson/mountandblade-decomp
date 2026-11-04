@@ -1643,7 +1643,6 @@ struct Group {                                                                  
     int count;                                                                    // +0x14
     char pad18[0x30 - 0x18];
 };
-extern Group* g_anims;                                                           // 0xa76628
 
 // The work area 0x49f3d0 shares with the appearance/agent builders. The member names are the frame offsets of
 // the original (local_bc .. local_54): `b8` is local_b8, `f60` is local_60, and `f74`/`f70` receive the mesh
@@ -1744,7 +1743,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
                 ((node_groups*)area.f70)->lists[i].cap_all(&dist);
         }
     }
-    Group* g = &g_anims[*group];
+    Group* g = &((Group*)g_anim_set.data)[*group];
     if (g->count > 0) {
         int* src = g->src;
         ((Skeleton*)e->skel)->start_anim(0, (Anim*)src[0], src[4], src[5]);

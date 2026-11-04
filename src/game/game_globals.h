@@ -9,7 +9,6 @@
 #include "./ui_globals.h"   // screen size, ui-dirty flag, mission clock, dev mode (a leaf header the UI modules include without the rest)
 
 struct MapIcon;
-struct AnimDefV;
 struct DialogMgr;   // dialog_manager.h
 
 // The table of single-bit masks (8-byte entries 1<<i) starts here;
@@ -104,8 +103,7 @@ extern float g_paused_time; // 0x5e2a0c
 // Number of scenes opened so far: each mission stamps its id at +0x5270 (hud.cpp, mission_ctx.cpp).
 // module_files.cpp loads presentations into it (0x4c6950);
 #include "../include/prsnt_table.h"   // PresentationTable g_presentations (0xa75f2c)
-// 0x30-byte animation definitions indexed by animation id (agent_logic.cpp g_anims[0x1a3]).
-extern AnimDefV* g_anims; // 0xa76628
+#include "../include/anim_set.h"   // AnimSet g_anim_set (0xa76628): the 0x30-byte animation definitions indexed by animation id
 // Count belonging to the skin table (script troop_set_type validates against it);
 // DialogMgr (dialog_manager.h, +0 count, +4 recs ...);
 extern DialogMgr g_dialogs; // 0x8ed50c8

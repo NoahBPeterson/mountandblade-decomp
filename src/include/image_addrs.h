@@ -7,7 +7,6 @@
 #include "render_flags.h"
 #include "../game/trial_mode.h"
 
-struct AnimDefV;
 struct Config;
 struct InputSet;
 struct ItemKind;
@@ -135,7 +134,6 @@ extern renderer g_render;                  // 0xa17910
 extern MissionCtx g_mission_ctx;           // 0xa73300
 extern main_menu g_main_menu_obj;              // 0xa73980
 extern TableauTbl g_tableaus;              // 0xa75f40
-extern AnimDefV g_anim_set;                // 0xa76628
 }  // namespace orig
 
 // vtables

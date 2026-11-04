@@ -148,12 +148,7 @@ struct MapIcon {            // module-file map icon record (0x4c20c0): name, fla
     GameVec triggers;       // +0x3c
     void read(stream_base& s);                  // 0x4c20c0 (ret 4)
 };
-struct TriggerEntryVec {
-    RecH* data;             // +0 (RecH: ../../rgl/xmlcfg/records.h, name +0, SubB pair +0x10 = records / count / flags / name, tail +0x2c)
-    int   count;            // +4 element count (read by resize 0x4c2250)
-    void dtor();                                // 0x4c2200
-};
-int __cdecl entry_vec_resize(stream_base* s, TriggerEntryVec* self);   // 0x4c2250 (cdecl: the stream is the first stack argument, the vector the second)
+#include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628: RecH records, count; ~AnimSet 0x4c2200, entry_vec_resize 0x4c2250)
 #include "../mode_rec.h"
 struct PresentationRec {    // module-file presentation (0x4c23f0)
     tstring name;           // +0x00

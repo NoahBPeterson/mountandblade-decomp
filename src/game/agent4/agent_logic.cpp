@@ -5771,9 +5771,9 @@ void Agent::update_controls(float dt)
 
 
 
+#include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628): .data is the array of 0x30-byte animation definitions
 struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c
-struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x457b40 reads it (agent_obj.h's AnimDef calls +0x10 `subs`)
-extern AnimDefV* g_anims;                           // 0xa76628
+struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };   // g_anim_set.data entry as 0x457b40 reads it (agent_obj.h's AnimDef calls +0x10 `subs`)
 void __stdcall log_message(const tstring* s, int seconds_bits);   // 0x453020 (ret 8; the second argument is the float 20.0f it is called with)
 #define itp_wooden_attack 0x00020000
 #define itcf_throw_stone 0x0000000000010000i64
@@ -6071,12 +6071,12 @@ void Agent::process_blow(int unused)
                     set_order(0, 0x1a3, 0x2000080, 1.0f);
                     int kind = 4;
                     play_hit_sound(&kind);
-                    plen = g_anims[0x1a3].info->length;
+                    plen = ((AnimDefV*)g_anim_set.data)[0x1a3].info->length;
                     if (f30 >= 0)
                         g_mission->agents.get(f30)->set_order(0, 0x122, 0x1000081, 1.0f);
                 } else {
                     set_order(0, 0x1a2, 0x2000080, 1.0f);
-                    plen = g_anims[0x1a2].info->length;
+                    plen = ((AnimDefV*)g_anim_set.data)[0x1a2].info->length;
                     int kind = 4;
                     play_hit_sound(&kind);
                     if (f30 >= 0)
@@ -6240,7 +6240,7 @@ void Agent::process_blow(int unused)
         body->skel->f68 = 1;
         float len = 0.5f;
         if (anim_a >= 0) {
-            len = g_anims[anim_a].info->length;
+            len = ((AnimDefV*)g_anim_set.data)[anim_a].info->length;
             if (len < 0.01f)
                 len = 0.5f;
         }
@@ -7862,7 +7862,7 @@ reset_pos:
 
 // ---- Agent::update, Agent::tick: the per-frame agent update ---------------------------------------------------------------------------
 struct SubV { char pad0[8]; unsigned flags; char padc[0x1c - 0xc]; float ev[4]; char pad2c[0x40 - 0x2c]; };   // 0x40 bytes: a part of an animation (flags: 0x100 footstep dust, 0x200 sound)
-struct AnimDefW { char pad0[0x10]; SubV* subs; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x45f660 reads it
+struct AnimDefW { char pad0[0x10]; SubV* subs; char pad14[0x30 - 0x14]; };   // g_anim_set.data entry as 0x45f660 reads it
 // @ 0x45f660
 void Agent::update(float dt)
 {
@@ -7892,8 +7892,8 @@ void Agent::update(float dt)
     float now = anim[1].scale;
     if (anim[1].cur >= 0 && anim[1].sub >= 0 && (((AnimDefW*)defs->defs)[anim[1].cur].subs[anim[1].sub].flags & 0x200)) {
         for (int k = 0; k < 4; k++) {
-            if (old <= ((AnimDefW*)g_anims)[anim[1].cur].subs[anim[1].sub].ev[k] &&
-                ((AnimDefW*)g_anims)[anim[1].cur].subs[anim[1].sub].ev[k] < now) {
+            if (old <= ((AnimDefW*)g_anim_set.data)[anim[1].cur].subs[anim[1].sub].ev[k] &&
+                ((AnimDefW*)g_anim_set.data)[anim[1].cur].subs[anim[1].sub].ev[k] < now) {
                 if (k == 0) {
                     float pitch;
                     switch (anim[1].cur) {
@@ -7937,8 +7937,8 @@ void Agent::update(float dt)
             int k = 0;
             int kind = 0;
             do {
-                if (f56e4 <= ((AnimDefW*)g_anims)[anim[0].cur].subs[anim[0].sub].ev[k] &&
-                    ((AnimDefW*)g_anims)[anim[0].cur].subs[anim[0].sub].ev[k] < f56e0) {
+                if (f56e4 <= ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] &&
+                    ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] < f56e0) {
                     if ((flags & 0x200) && k == 0) {
                         switch (anim[0].cur) {
                         case 0x11a:

@@ -73,7 +73,6 @@ Presentation* g_presentation;                               // 0x5e299c the runn
 
 
 
-int g_animation_count;                                      // 0xa7662c (0x49d4b0)
 
 int g_visitor_scene;                                        // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 float g_spawn_radius = 3.0f;                                // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
@@ -499,7 +498,7 @@ __declspec(noinline) char __fastcall check_animation(const int& value)
     char buf[512];
     int v = value;
     char r = 1;
-    if (v < 0 || v >= g_animation_count) {
+    if (v < 0 || v >= g_anim_set.count) {
         sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Animation ID: %d", g_cur_opcode, v);
         report(buf);
         r = 0;

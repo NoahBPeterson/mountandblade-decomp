@@ -171,7 +171,7 @@ extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
 
 #define g_scene_prop_count g_propkind_count    // 0x5e29e0: agent.h's 0x78-byte record table is the scene prop kinds
 
-extern int g_animation_count;           // 0xa7662c (0x49d4b0)
+#include "../../include/anim_set.h"       // g_anim_set (0xa76628): .count is the bound of check_animation 0x49d4b0
 
 // ---- message log and text log (report 0x49cc60) -----------------------------------------------------------------
 // the message log object (MsgLog, src/include/msg_log.h)

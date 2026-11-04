@@ -220,10 +220,8 @@ void script_dialog_proc()
 // skyboxes.txt of the module: a tstream3 text reader (vtable 0x54ac88; constructor 0x4172d0 inlined in the
 // original) over <module path> + the file name; an error box when it cannot be opened; then the sky box table
 // (0xa76628) reads itself from it (entry_vec_resize 0x4c2250).
-struct TriggerEntryVec;
-int entry_vec_resize(stream_base* s, TriggerEntryVec* v);   // 0x4c2250 (game/triggers/trigger_vec.cpp)
+#include "../../include/anim_set.h"      // AnimSet g_anim_set (0xa76628), entry_vec_resize 0x4c2250
 void mb_error(const char* fmt, ...);                // 0x42cc80
-extern char g_skyboxes[];                           // 0xa76628
 
 // @ 0x4c3350
 void load_skyboxes()
@@ -234,7 +232,7 @@ void load_skyboxes()
     const char* nm = path.buf ? path.buf : (const char*)&path.buf;
     if (!((text_stream*)&r)->open_read_text(nm))
         mb_error("Unable to open %s", nm);
-    entry_vec_resize(&r, (TriggerEntryVec*)g_skyboxes);
+    entry_vec_resize(&r, &g_anim_set);
     r.failed = 1;
 }
 // @ 0x4c3430

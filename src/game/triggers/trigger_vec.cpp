@@ -1403,7 +1403,9 @@ stream_base& read_entry(stream_base& s, RecH& e)
 }
 
 // @ 0x4c2200
-void TriggerEntryVec::dtor()
+AnimSet g_anim_set;                                     // 0xa76628 (.bss; no constructor: the compiler registers only the destructor)
+
+AnimSet::~AnimSet()
 {
     RecH* o = data;
     if (o == 0)
@@ -1433,10 +1435,10 @@ struct tstring_raw {
 #pragma comment(linker, "/alternatename:?build@tstring_raw@@QAEXXZ=??0tstring@@QAE@XZ")
 
 // @ 0x4c2250
-int __cdecl entry_vec_resize(stream_base* sp, TriggerEntryVec* self)
+int __cdecl entry_vec_resize(stream_base* sp, AnimSet* self)
 {
     stream_base& s = *sp;
-    TriggerEntryVec* t = self;
+    AnimSet* t = self;
     if (t->data != 0)
         ((RecH_vd*)t->data)->vecdel(3);    // 0x4315d0
     s.r_int(&t->count);
