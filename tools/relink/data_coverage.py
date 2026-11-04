@@ -41,6 +41,7 @@ SA_HIST = os.path.join(ROOT, "docs", "standalone_history.json")
 # still borrows from the original image (data_definitions is the one that should go up: source defining the
 # original's addresses by name)
 CRUTCHES = (("data_labels", "glue", r"data labels (\d+)"), ("aliases", "glue", r"aliases (\d+)"),
+            ("source_aliases", "source_aliases", r"(\d+) /alternatename directives"),
             ("traps", "traps", r"(\d+) trapped code addresses"),
             ("redirects", "glue", r"'code->trap': (\d+)"),
             ("vtable_slots_rewritten", "vtables", r"(\d+) slots rewritten"),
@@ -282,7 +283,10 @@ def crutch_counts(build_dir):
     """The crutch counts of one tools/relink/build.py output (its build.json step lines), None where a line is absent."""
     steps = json.load(open(os.path.join(build_dir, "build.json")))
     found = {k: re.search(pat, str(steps.get(step, ""))) for k, step, pat in CRUTCHES}
-    return {k: (int(m.group(1)) if m else None) for k, m in found.items()}
+    counts = {k: (int(m.group(1)) if m else None) for k, m in found.items()}
+    if counts["redirects"] is None and "pointers relocated" in str(steps.get("glue", "")):
+        counts["redirects"] = 0               # the glue prints the code->trap key only when it is non-zero
+    return counts
 
 
 def MAP_OF(resolve_map):

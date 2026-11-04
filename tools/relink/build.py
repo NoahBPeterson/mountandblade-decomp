@@ -504,6 +504,12 @@ def main():
     if unres or not os.path.exists(exe_path):
         sys.exit("link failed: %d unresolved (see %s)" % (len(unres), rel(os.path.join(out, "link.log"))))
     steps["link"] = "linked %d objects; %d duplicate definitions, each taken from its row's module" % (len(objs), len(dups))
+    # the other half of the aliases: /alternatename directives our own objects carry (#pragma comment(linker, ...) in
+    # source), which bind a name to a function under another name exactly as the glue's aliases do
+    glue_dir = os.path.abspath(os.path.join(out, "glue"))
+    src_alt = sum(open(o, "rb").read().count(b"/alternatename:") for o in objs
+                  if not os.path.abspath(o).startswith(glue_dir))
+    steps["source_aliases"] = "%d /alternatename directives in our objects (#pragma comment(linker) in source)" % src_alt
 
     # trap gate: glue.py points the original's data at int3 traps for code we do not define. That is only acceptable
     # where nothing we link can reach the slot (tools/relink/trap_report.py has the proof; docs/standalone_traps.md)

@@ -163,6 +163,7 @@ if dc:
 # Standalone independence: the crutches the relinked exe still leans on, per recorded build
 # (tools/relink/data_coverage.py --from-build DIR --record -> docs/standalone_history.json). (key, title, up is good)
 SA_COLS = (("data_labels", "Glue data labels", False), ("aliases", "Glue aliases", False),
+           ("source_aliases", "Aliases in source (/alternatename)", False),
            ("traps", "Traps (code addresses)", False), ("redirects", "Code pointers redirected to traps", False),
            ("vtable_slots_rewritten", "Vtable slots rewritten", False),
            ("vptr_stores_moved", "Vptr stores moved to the original's vtable", False),
@@ -953,14 +954,23 @@ def plot_standalone(path):
     SURFACE, INK, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e6e5e0"
     if not SA:
         sys.exit("no points in docs/standalone_history.json")
-    fig, axs = plt.subplots(3, 4, figsize=(16.0, 9.6), dpi=150)
+    ncol = 5
+    fig, axs = plt.subplots((len(SA_COLS) + ncol - 1) // ncol, ncol, figsize=(20.0, 12.5), dpi=150)
+    for ax in axs.flat[len(SA_COLS):]:
+        ax.set_visible(False)
+    lowest = set(axs.flat[max(len(SA_COLS) - ncol, 0):len(SA_COLS)])   # the lowest used panel of each column
     fig.patch.set_facecolor(SURFACE)
     xs = list(range(len(SA)))
     for ax, (key, title, good) in zip(axs.flat, SA_COLS):
         ys = [_sa_value(p, key) for p in SA]
         ax.set_facecolor(SURFACE)
         vals = [y for y in ys if y is not None]
-        if good:                               # work done: percent of the goal
+        if not vals:                           # a count newer than every recorded build
+            ax.set_title(title + "\n(not recorded yet)", fontsize=9, color=MUTED, loc="left")
+            ax.set_xticks([])
+            ax.set_yticks([])
+            continue
+        if good:                              # work done: percent of the goal
             sub, ok = "\u2191 goal 100%%: %.1f%% done" % vals[-1], True
         else:                                  # a crutch: down to zero; how much of it is gone since the first build
             gone = 100.0 * (vals[0] - vals[-1]) / vals[0] if vals[0] else 0.0
@@ -982,7 +992,7 @@ def plot_standalone(path):
         ax.annotate(fmt(pts[0][1]), pts[0], xytext=(0, 7), textcoords="offset points", ha="center", va="bottom",
                     fontsize=8, color=MUTED)
         ax.set_xticks(xs)
-        if ax in axs[-1]:                      # every panel shares the x axis: name the builds under the bottom row only
+        if ax in lowest:                      # every panel shares the x axis: name the builds under the lowest panel of each column
             ax.set_xticklabels([_sa_tick(p) for p in SA], fontsize=7, color=MUTED, rotation=55, ha="right",
                                rotation_mode="anchor")
         else:
@@ -997,7 +1007,7 @@ def plot_standalone(path):
              "Vermillion panels count a crutch (down is good); green panels count what our source defines (up is good).  "
              "Commits are the last one on main before the build finished, so a build from a branch may be off." % (
                  SA[0]["when"][:10], SA[-1]["when"][:10]), fontsize=8.2, color=MUTED)
-    fig.subplots_adjust(left=0.04, right=0.985, top=0.9, bottom=0.2, wspace=0.28, hspace=0.35)
+    fig.subplots_adjust(left=0.04, right=0.985, top=0.92, bottom=0.24, wspace=0.28, hspace=0.35)
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d builds)" % (os.path.relpath(path, ROOT), len(SA)))
 
