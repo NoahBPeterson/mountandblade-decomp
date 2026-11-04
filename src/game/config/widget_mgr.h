@@ -84,30 +84,37 @@ struct resmgr_gui : resource_manager {
 // ---- widget classes (vtable addresses in the comments); the button family (UiA, MediumButton, XyzButton, UiA) is in ../ui/ui_widgets.h ----
 // The list container a drop-down opens (NodeA, vtable 0x592848) and the container it derives from are in ../ui/container.h.
 
-struct DropDown : MissionUi {                   // ctor 0x4931d0 (installs its own vtable), size 0x1d0
-    char pad178[0x180 - 0x178];
+// the vector<tstring> of a drop-down's rows: its out-of-line _Tidy (0x42d390, protected: the member's destructor reaches it)
+namespace std { template<> void vector<tstring, allocator<tstring> >::_Tidy(); }   // 0x42d390
+struct RowVec : std::vector<tstring> { using std::vector<tstring>::_Tidy; };   // (the rows' _Tidy is protected: reset_tail 0x4933b0 calls it)
+struct DropDown : MissionUi {                   // ctor 0x4931d0, vtable 0x592570 (compiler-emitted), size 0x1d0
+    int f178;                                   // +0x178 list mode (0x4932a0)
+    int f17c;                                   // +0x17c
     char f180;                                  // +0x180 open (0x49aca0)
-    char pad181[0x188 - 0x181];
-    NodeA* f188;                         // +0x188 the open list container (0x49aca0)
-    char pad18c[4];
-    tstring* rows_first;                        // +0x190 std::vector of 16-byte text rows (0x49aca0, 0x49ad20)
-    tstring* rows_last;                         // +0x194
-    tstring* rows_end;                          // +0x198
-    char pad19c[4];
+    int f184;                                   // +0x184
+    NodeA* f188;                                // +0x188 the open list container (0x49aca0)
+    RowVec rows;                                // +0x18c the text rows (allocator word, first at +0x190; 0x49aca0, 0x49ad20, 0x493400)
+    int f19c;                                   // +0x19c
     rgl::mesh* m1a0;                            // +0x1a0 (0x499d90)
     rgl::mesh* m1a4;                            // +0x1a4
     rgl::mesh* m1a8;                            // +0x1a8
     int f1ac;                                   // +0x1ac
     float f1b0, f1b4, f1b8;                     // +0x1b0 row size, indent (0x49ad20)
     float f1bc, f1c0, f1c4, f1c8;               // +0x1bc child size / offset factors
-    int pad1cc;
-    DropDown();                                 // 0x4931d0
-    char on_event(unsigned ev);                 // 0x49aca0
-    NodeA* create();                     // 0x49ad20
-    // vtable 0x592570: the base's slots, then kind (0x493300: 5), slot 49 (0x4933b0) and the add-item slot 50 (0x493400)
-    virtual int kind();                         // +0xc0 0x493300
-    virtual void reset_tail();                  // +0xc4 0x4933b0
-    virtual void append(const tstring* name);   // +0xc8 0x493400 (ret 4): adds a row
+    int f1cc;                                   // +0x1cc
+    DropDown() throw();                         // 0x4931d0 (world_data.cpp)
+    // vtable 0x592570: MissionUi's slots, these overridden (the implicit destructor: its deleting form 0x4933d0 is the rows' _Tidy, ~MissionUi, then operator delete)
+    virtual bool is_active() { return true; }   // +0x04 0x48b170 (ICF-shared with every `return true`)
+    virtual void animate(int unused);           // +0x08 0x496d30 (world_data/mesh_hud.cpp: three meshes, two colour groups)
+    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x4932a0 (list mode switch, then MissionUi::render)
+    virtual void set15c(int v);                 // +0x2c 0x493310 (clamps the selected index, then set_text on its row)
+    virtual char key(unsigned ev);              // +0x8c 0x49aca0
+    virtual void hide() { b121 = 0; f104 |= 1; }          // +0xb0 0x48b1a0
+    virtual void flag2_set() { b121 = 0; f104 |= 2; }     // +0xb8 0x48b180
+    virtual int kind();                         // +0xc0 0x493300 (5)
+    virtual void reset_tail();                  // +0xc4 0x4933b0 (new slot 49)
+    virtual void append(const tstring* name);   // +0xc8 0x493400 (ret 4): adds a row (new slot 50)
+    NodeA* create();                            // 0x49ad20
 };
 
 // ---- widget items as set_size sees them ---------------------------------------------------------------------

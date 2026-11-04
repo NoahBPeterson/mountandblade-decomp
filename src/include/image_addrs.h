@@ -142,7 +142,6 @@ extern char vtbl_XyzButton[];                    // 0x591ee8
 extern char vtbl_591fb0[];                       // 0x591fb0
 extern char vtbl_UiD[];                          // 0x592140
 extern char vtbl_5924a0[];                       // 0x5924a0
-extern char vtbl_592570[];                       // 0x592570
 extern char vtbl_592644[];                       // 0x592644
 extern char vtbl_592848[];                       // 0x592848
 extern char vtbl_5947d8[];                       // 0x5947d8

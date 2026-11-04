@@ -52,7 +52,7 @@ struct Poser {
 rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);    // 0x495b20 (ret 4)
 
 // ---- the HUD bar widget (MissionUi-derived; the fields past +0x178 are the slider-like frame state) ---------------------------------
-// the animate overrides of the widget classes whose tables the audit does not cover (update_1, update_3); the others are their classes' own
+// the animate overrides of the widget classes whose tables the audit does not cover (update_1); the others are their classes' own
 // (UiB::animate 0x497880, UiC::animate 0x497e30, XyzButton::animate 0x4966b0, UiE::animate 0x4985f0)
 struct HudBar : MissionUi {
     gui_mesh* msh(int i) { return (gui_mesh*)tracks[i]; }
@@ -66,7 +66,6 @@ struct HudBar : MissionUi {
     void s38(unsigned* c) { set_color(c); }                     // vtable +0x98
     void s39(unsigned* c) { set_target(c); }                           // vtable +0x9c
 
-    void update_3(int arg);                                     // 0x496d30 (three meshes, two colour groups)
 };
 
 // The mesh overlay widget (vtable 0x5922e8, 0x178 bytes: MissionUi's members only): the placed-mesh and tableau overlays of

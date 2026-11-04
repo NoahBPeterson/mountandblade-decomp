@@ -7,7 +7,7 @@
 //       (push_back 0x49b120, insert 0x49b170; _Insert_n 0x49b1c0 follows in the next range).
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //
-// Boundary: DropDown::on_event (0x49aca0) calls create (0x49ad20) forward: the object starts at 0x49ad20 (high).
+// Boundary: DropDown::key (0x49aca0) calls create (0x49ad20) forward: the object starts at 0x49ad20 (high).
 // create -> push_back -> insert -> _Insert_n are further forward calls, but all four are the vector members
 // std::vector<NodeA*> (template COMDATs land after their first caller), not separate objects; see MIGRATION.md.
 //-----------------------------------------------------------------------------
@@ -45,8 +45,6 @@ struct NodeVec : std::vector<NodeA*> {
 };
 #define g_root_widgets (*(NodeVec*)&g_ui_sound)
 
-#define ROWS() (rows_first ? (unsigned)(rows_last - rows_first) : 0u)       // the row vector's size(), re-read at each use
-
 // @ 0x49ad20
 NodeA* DropDown::create()
 {
@@ -58,14 +56,14 @@ NodeA* DropDown::create()
 
     float pos[2];
     float nx = -(f1b8 * fD8);
-    float h = (float)ROWS() * wh[1];
+    float h = (float)rows.size() * wh[1];
     pos[0] = fE0 - nx;
     pos[1] = fE4 - h;
     vt(b)->d22(pos);
 
     float sz[2];
     sz[0] = wh[0];
-    sz[1] = (float)ROWS() * wh[1];
+    sz[1] = (float)rows.size() * wh[1];
     vt(b)->d25(sz);
 
     g_gui.pad1708 = 1;
@@ -74,7 +72,7 @@ NodeA* DropDown::create()
     vt(b)->d19(0x20000);
     vt(b)->d20(4);
 
-    for (unsigned u = 0; rows_first != 0 && u < (unsigned)(rows_last - rows_first); u++) {
+    for (unsigned u = 0; u < rows.size(); u++) {
         UiA* c = new UiA;
 
         float d[2];
@@ -102,7 +100,7 @@ NodeA* DropDown::create()
         ((gui_mesh*)c->tracks[3])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
 
         float e[2];
-        vt(c)->d41(e, rows_first + u);
+        vt(c)->d41(e, &rows[u]);
         vt(c)->d19(0x10000);
         vt(c)->d20(3);
         vt(b)->d50(c);

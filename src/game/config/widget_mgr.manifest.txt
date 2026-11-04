@@ -5,3 +5,4 @@
 ../src/game/config/widget_mgr.cpp  ?create_combo_button_overlay@widget_mgr@@QAEHXZ  00499d90  /O2 /MT /Gy /TP
 ../src/game/config/widget_mgr.cpp  ?create_text_box_overlay@widget_mgr@@QAEHXZ  0049a0b0  /O2 /MT /Gy /TP
 ../src/game/config/widget_mgr.cpp  ?set_area_size@widget_mgr@@QAEXHPBM@Z  0049ab80  /O2 /MT /Gy /TP
+../src/game/config/widget_mgr.cpp  ?key@DropDown@@UAEDI@Z  0049aca0  /O2 /MT /Gy /TP

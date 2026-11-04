@@ -1153,100 +1153,75 @@ void* ContainerW::construct()
 }
 
 // @ 0x4931d0
-DropDownW* DropDownW::construct()
+DropDown::DropDown() throw()
 {
-    char* self = (char*)this;
-    ((MissionUi*)(void*)this)->MissionUi::MissionUi();                    // 0x48ae20
-    *(int*)(self + 0x178) = 0;
-    *(char*)(self + 0x121) = 0;
-    *(void**)self = (void*)vtbl_592570;
-    *(int*)(self + 0x190) = 0;
-    *(int*)(self + 0x194) = 0;
-    *(int*)(self + 0x198) = 0;
-    *(char*)(self + 0x180) = 0;
-    *(int*)(self + 0x188) = 0;
-    *(int*)(self + 0x164) = 0;
-    *(int*)(self + 0x160) = 0;
-    {
-        FPair _p0 = { 0.2265f, 0.029f };
-        *(FPair*)(self + 0x1b0) = _p0;
-        FPair _p1 = { 0.018f, 0.018f };
-        *(FPair*)(self + 0x1bc) = _p1;
-        *(float*)(self + 0x1b8) = 0.0135f;
-        FPair _p2 = { 0.02f, 0.01f };
-        *(FPair*)(self + 0x1c4) = _p2;
-    }
-    return this;
+    f178 = 0;
+    b121 = 0;
+    f180 = 0;
+    f188 = 0;
+    f164 = 0;
+    f160 = 0;
+    f1b0 = 0.2265f;
+    f1b4 = 0.029f;
+    f1bc = 0.018f;
+    f1c0 = 0.018f;
+    f1b8 = 0.0135f;
+    f1c4 = 0.02f;
+    f1c8 = 0.01f;
 }
 
 // @ 0x4932a0
-void ListPanelW::set_mode()
+void DropDown::render(rgl::scene* sc, float* count, int c, int d)
 {
-    char* self = (char*)this;
-    if (*(char*)(self + 0x180) == 0)
-        *(int*)(self + 0x178) = 1;
+    if (f180 == 0)
+        f178 = 1;
     else
-        *(int*)(self + 0x178) = 0;
-    *(char*)(self + 0x11f) = 0;
-    if (*(int*)(self + 0x178) != 0) {
-        *(char*)(self + 0x11e) = 1;
-        *(char*)(self + 0x11d) = 0;
+        f178 = 0;
+    b11c[3] = 0;
+    if (f178 != 0) {
+        b11c[2] = 1;
+        b11c[1] = 0;
     } else {
-        *(char*)(self + 0x11e) = 0;
-        *(char*)(self + 0x11d) = 1;
+        b11c[2] = 0;
+        b11c[1] = 1;
     }
-    // the tail jump to MissionUi::render (0x488720, ret 0x10), which finishes with the frame the caller built: the same function
-    // through a member pointer type without parameters, so nothing is pushed here
-    (this->*(void (ListPanelW::*)())&MissionUi::render)();
+    MissionUi::render(sc, count, c, d);
 }
 
 // @ 0x493300
-int panel_count_493300()
+int DropDown::kind()
 {
     return 5;
 }
 
 // @ 0x493310
-void ListPanelW::set_index(int _v)
+void DropDown::set15c(int v)
 {
-    char* self = (char*)this;
-    Vec16W* _v16 = (Vec16W*)(self + 0x18c);
-    int _lo = *(int*)(self + 0x160);
-    *(int*)(self + 0x15c) = _v;
-    if (_v < _lo)
-        *(int*)(self + 0x15c) = _lo;
-    else if (_v > *(int*)(self + 0x164))
-        *(int*)(self + 0x15c) = *(int*)(self + 0x164);
+    int lo = f160;
+    v15c = v;
+    if (v < lo)
+        v15c = lo;
+    else if (v > f164)
+        v15c = f164;
 
-    int _cur = *(int*)(self + 0x15c);
-    if (_cur < _lo)
-        *(int*)(self + 0x15c) = _lo;
-    else if ((unsigned)_cur > _v16->size())
-        *(int*)(self + 0x15c) = _v16->size();
+    int cur = v15c;
+    if (cur < lo)
+        v15c = lo;
+    else if ((unsigned)cur > rows.size())
+        v15c = rows.size();
 
-    int _tmp[2];
-    ((PanelVt*)this)->v41(_tmp, (void*)((char*)_v16->_Myfirst + *(int*)(self + 0x15c) * 16));
+    float tmp[2];
+    set_text(tmp, &rows[v15c]);
 }
 
 // @ 0x4933b0
-void ListPanelW::reset_tail()
+void DropDown::reset_tail()
 {
-    char* self = (char*)this;
-    ((TailVec*)(self + 0x18c))->_Tidy();                        // 0x42d390
-    *(int*)(self + 0x164) = 0;
-    *(int*)(self + 0x15c) = 0;
+    rows._Tidy();                                               // 0x42d390
+    f164 = 0;
+    v15c = 0;
 }
 
-// @ 0x4933d0
-void* ListPanelW::destroy(unsigned _flags)
-{
-    char* self = (char*)this;
-    ((TailVec*)(self + 0x18c))->_Tidy();                        // 0x42d390
-    ((MissionUi*)(void*)self)->MissionUi::~MissionUi();                  // 0x487c00
-    if (_flags & 1)
-        ::operator delete(self);
-    return self;
-}
 
 // UTF-8 -> code points (0x487b00). The original uses cl's static register convention, so the arguments are ordered
 // to put the tstring in EDI and the count out-pointer in EDX.
@@ -1286,10 +1261,8 @@ static __declspec(noinline) void decode_utf8_487b00(int* _Out, const tstring* _s
 }
 
 // @ 0x493400
-void ListPanelW::append(const tstring* _name)
+void DropDown::append(const tstring* _name)
 {
-    char* self = (char*)this;
-    Vec16W* _v16 = (Vec16W*)(self + 0x18c);
     int _count;
     int _maxn = 0x800;
     int _buf[0x800];
@@ -1299,16 +1272,16 @@ void ListPanelW::append(const tstring* _name)
         _scale = 0.21f / _scale * 0.02f;
     else
         _scale = 0.02f;
-    if (_scale < *(float*)(self + 0x140)) {
+    if (_scale < f140) {
         float _pair[2];
         _pair[0] = _scale;
         _pair[1] = _scale;
-        ((PanelVt*)this)->v27(_pair);
+        set_size(_pair);
     }
-    ((std::vector<tstring>*)(void*)_v16)->push_back(*_name);   // 0x43f2a0
-    ++*(int*)(self + 0x164);
-    if (_v16->size() == 1)
-        ((PanelVt*)this)->v11((void*)0);
+    rows.push_back(*_name);   // 0x43f2a0
+    ++f164;
+    if (rows.size() == 1)
+        set15c(0);
 }
 
 // ==== 0x4934d0: the party record constructor and its page / hash management ========================================

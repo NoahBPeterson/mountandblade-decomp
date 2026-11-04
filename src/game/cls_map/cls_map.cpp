@@ -1840,14 +1840,10 @@ UiB* make_slider(MissionUi* parent, float x, float y, float k)
     return w;
 }
 
-// 0x4931d0 is the constructor body of the drop-down (world_data DropDownW::construct, returns this): member-only stub, called on the raw slot
-struct DropDownW { DropDownW* construct(); };
 // @ 0x4dfec0
 DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y)
 {
-    DropDown* b = (DropDown*)operator new(sizeof(DropDown));
-    if (b)
-        b = (DropDown*)((DropDownW*)b)->construct();
+    DropDown* b = new DropDown;
     {
         V2 pos(x + 0.0176f, y);
         vt(b)->d22(&pos);
@@ -2150,7 +2146,7 @@ void Recd8::init_screen()
 // blood and plant-shadow drop-downs, six toggle buttons (quality) and the shader-less tail that hides the gamma widgets.
 #define SL_MIN(w) (*(float*)((char*)(w) + 0x16c))   // slider range minimum (MissionUi +0x16c)
 #define SL_MAX(w) (*(float*)((char*)(w) + 0x170))   // slider range maximum
-static __forceinline int drop_count(DropDown* d) { return d->rows_first ? (int)(d->rows_last - d->rows_first) : 0; }
+static __forceinline int drop_count(DropDown* d) { return (int)d->rows.size(); }
 // the three calls every label gets: width (+0x74), colour (+0x98), mesh colour (+0x94), all with COLOR_ENABLED
 #define LABEL_STYLE(m, wd) \
     { int v_ = (wd); vt(m)->d29(&v_); } \

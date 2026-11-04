@@ -21,9 +21,10 @@
 ../src/game/world_data/world_data.cpp  ?world_free@GameW@@QAEXXZ  00492f40  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?resize@?$vector@_JV?$allocator@_J@std@@@std@@QAEXI_J@Z  00493090  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?push_back@?$deque@HV?$allocator@H@std@@@std@@QAEXABH@Z  00493120  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?panel_count_493300@@YAHXZ  00493300  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?reset_tail@ListPanelW@@QAEXXZ  004933b0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?destroy@ListPanelW@@QAEPAXI@Z  004933d0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?kind@DropDown@@UAEHXZ  00493300  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?set15c@DropDown@@UAEXH@Z  00493310  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?reset_tail@DropDown@@UAEXXZ  004933b0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??_GDropDown@@UAEPAXI@Z  004933d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?thunk_4936a0@PartyW@@QAEXXZ  004936a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?push_back@?$vector@PAUParty@@V?$allocator@PAUParty@@@std@@@std@@QAEXABQAUParty@@@Z  004936b0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?grow@PartyMgrW@@QAEPAU1@XZ  00493830  /O2 /MT /Gy /TP

@@ -364,7 +364,7 @@ alpha_done:
 }
 
 // @ 0x496d30
-void HudBar::update_3(int)
+void DropDown::animate(int)
 {
     float e0 = elapsed(0);
     float e1 = elapsed(1);
@@ -378,30 +378,30 @@ void HudBar::update_3(int)
         float k = 1.0f / dur(4);
         float x = (e4 * f88 + (dur(4) - e4) * a8) * k;
         float y = ((dur(4) - e4) * ac + e4 * f8c) * k;
-        msh(2)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(1)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        msh(3)->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((gui_mesh*)tracks[3])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
         float sy = y * 0.02f;
         rgl::vector4 v(sy, sy, 1.0f);
-        s27(&v);
+        set_size((float*)&v);
         v.x = sy;
         v.y = y * 0.013f;
-        s28(&v);
-        s03();
+        set_offset((float*)&v);
+        update_bounds();
         fD8 = x;
         fDC = y;
         dirty = 1;
     } else if (c4) {
-        msh(2)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(1)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        msh(3)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((gui_mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((gui_mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((gui_mesh*)tracks[3])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         float sy = f8c * 0.02f;
         rgl::vector4 w(sy, sy, 1.0f);
-        s27(&w);
+        set_size((float*)&w);
         w.x = f8c * 0.02f;
         w.y = f8c * 0.013f;
-        s28(&w);
-        s03();
+        set_offset((float*)&w);
+        update_bounds();
         c4 = 0;
         fD8 = f88;
         fDC = f8c;
@@ -456,12 +456,12 @@ void HudBar::update_3(int)
         v = (cb2().b * (dur(2) - e2) + ca2().b * e2) * (1.0f / dur(2));
         col += round_float(&v) << 16;
         col |= color150 & 0xff000000;
-        s39(&col);
+        set_target(&col);
         dirty = 1;
     } else if (c2) {
         unsigned col = (color150 ^ ca2().dword) & 0xffffff ^ color150;
         c2 = 0;
-        s39(&col);
+        set_target(&col);
         dirty = 1;
     }
 
@@ -470,13 +470,13 @@ void HudBar::update_3(int)
         float v = (ab2().a * (dur(3) - e3) + aa2().a * e3) * (1.0f / dur(3));
         col = round_float(&v) << 24;
         col |= color150 & 0xffffff;
-        s39(&col);
+        set_target(&col);
         dirty = 1;
     } else if (c3) {
         unsigned a = aa2().dword;
         unsigned col = (color150 ^ a) & 0xffffff ^ a;
         c3 = 0;
-        s39(&col);
+        set_target(&col);
         dirty = 1;
     }
 
@@ -485,15 +485,15 @@ void HudBar::update_3(int)
         rgl::vector4 v;
         v.x = (e5 * f80 + (dur(5) - e5) * a0) * k;
         v.y = ((dur(5) - e5) * a4 + e5 * f84) * k;
-        s22(&v);
+        move_a((float*)&v);
     } else if (c5) {
-        s22(&f80);
+        move_a((float*)&f80);
         c5 = 0;
     }
 
     if (dirty) {
         rgl::vector4 v;
-        s37(&v);
+        get_xy((float*)&v);
     }
 }
 

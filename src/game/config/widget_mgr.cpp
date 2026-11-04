@@ -7,7 +7,7 @@
 //       preset placement helpers (rescale a placed widget for a new size), and MissionUi's text layout wrapper.
 //       Names provisional. Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP.
 //
-// Boundary: DropDown::on_event (0x49aca0) calls DropDown::create (0x49ad20) forward, so the object ends before
+// Boundary: DropDown::key (0x49aca0) calls DropDown::create (0x49ad20) forward, so the object ends before
 // 0x49ad20 (see MIGRATION.md). The start (0x499830) is a class change only (obj_tbl|widget_mgr).
 //-----------------------------------------------------------------------------
 #include "./widget_mgr.h"
@@ -20,10 +20,7 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
-// canonical owners of two callees (member-only stubs under the defining name; the link needs it in the mangled name)
-struct DropDownW {
-    DropDownW* construct();   // 0x4931d0 (world_data/world_data.cpp: the drop-down's constructor body, returns this)
-};
+// canonical owner of a callee (a member-only stub under the defining name; the link needs it in the mangled name)
 struct resmgr {
     rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (rgl/core/resmgr.cpp)
 };
@@ -167,8 +164,7 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
 // @ 0x499d90
 int widget_mgr::create_combo_button_overlay()
 {
-    void* raw = operator new(sizeof(DropDown));
-    DropDown* w = raw ? (DropDown*)((DropDownW*)raw)->construct() : 0;
+    DropDown* w = new DropDown;
 
     {
         vec2 v;
@@ -448,20 +444,17 @@ void MissionUi::get_xy(float* out)
 }
 
 // @ 0x49aca0
-char DropDown::on_event(unsigned ev)
+char DropDown::key(unsigned ev)
 {
     char r = 0;
     if (ev == 0x10) {
         r = 1;
         f180 = 1;
-        if (rows_first != 0) {
-            int n = (int)(rows_last - rows_first);
-            if (n != 0) {
-                ::play_sound(&g_ui_sound);
-                NodeA* o = create();
-                f188 = o;
-                o->f158 = this;
-            }
+        if (rows.size() != 0) {
+            ::play_sound(&g_ui_sound);
+            NodeA* o = create();
+            f188 = o;
+            o->f158 = this;
         }
     } else if (ev == 0x10000) {
         f180 = 0;

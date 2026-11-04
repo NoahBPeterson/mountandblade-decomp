@@ -254,48 +254,8 @@ struct IntVecW {                                                // std::vector<i
 // struct RecQ : src/include/rec_dtors.h
 struct RecPoly { virtual ~RecPoly(); };                         // a scene record (game_data.h Level494 behind a vtable): virtual destructor in slot 0
 
-// ---- the container / list panels (MissionUi family) ---------------------------------------------------------------------------
-struct PanelVt {                                                // vtable slots the list panel reaches (slot n at +4n)
-    virtual void v00(void* p = 0); virtual void v01(void* p = 0); virtual void v02(void* p = 0); virtual void v03(void* p = 0);
-    virtual void v04(void* p = 0); virtual void v05(void* p = 0); virtual void v06(void* p = 0); virtual void v07(void* p = 0);
-    virtual void v08(void* p = 0); virtual void v09(void* p = 0); virtual void v10(void* p = 0);
-    virtual void v11(void* p = 0);                              // +0x2c (0x493400)
-    virtual void v12(void* p = 0); virtual void v13(void* p = 0); virtual void v14(void* p = 0); virtual void v15(void* p = 0);
-    virtual void v16(void* p = 0); virtual void v17(void* p = 0); virtual void v18(void* p = 0); virtual void v19(void* p = 0);
-    virtual void v20(void* p = 0); virtual void v21(void* p = 0); virtual void v22(void* p = 0); virtual void v23(void* p = 0);
-    virtual void v24(void* p = 0); virtual void v25(void* p = 0); virtual void v26(void* p = 0);
-    virtual void v27(void* p = 0);                              // +0x6c (0x493400)
-    virtual void v28(void* p = 0); virtual void v29(void* p = 0); virtual void v30(void* p = 0); virtual void v31(void* p = 0);
-    virtual void v32(void* p = 0); virtual void v33(void* p = 0); virtual void v34(void* p = 0); virtual void v35(void* p = 0);
-    virtual void v36(void* p = 0); virtual void v37(void* p = 0); virtual void v38(void* p = 0); virtual void v39(void* p = 0);
-    virtual void v40(void* p = 0);
-    virtual void v41(void* p = 0, void* q = 0);                 // +0xa4 (0x493310)
-};
 typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
-struct E16 { int a, b, c, d; };
-struct Vec16W {                                                 // the 16-byte-element vector at +0x18c (allocator word, then first/last/end)
-    int pad0;
-    E16* _Myfirst;
-    E16* _Mylast;
-    E16* _Myend;
-    unsigned size() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }
-};
-struct ListPanelW : MissionUi {                                 // the text list panel (vector of rows at +0x18c)
-    void set_mode();                                            // 0x4932a0
-    void set_index(int v);                                      // 0x493310 (ret 4)
-    void reset_tail();                                          // 0x4933b0
-    void* destroy(unsigned flags);                              // 0x4933d0 (scalar deleting destructor, ret 4)
-    void append(const tstring* name);                           // 0x493400 (ret 4)
-};
-struct DropDownW : DropDown {
-    DropDownW* construct();                                     // 0x4931d0 (the constructor body: returns this)
-};
-// the vector<tstring> at ListPanelW+0x18c: its out-of-line _Tidy (0x42d390, protected: reached through a derived class)
-namespace std { template<> void vector<tstring, allocator<tstring> >::_Tidy(); }   // 0x42d390
-struct TailVec : std::vector<tstring> { using std::vector<tstring>::_Tidy; };
-int panel_count_493300();                                       // 0x493300 (returns 5)
-extern char vtbl_5924a0[];                                      // 0x5924a0
-extern char vtbl_592570[];                                      // 0x592570
+extern char vtbl_5924a0[];                                     // 0x5924a0
 extern char vtbl_592644[];                                      // 0x592644
 
 struct PtrStack14 {                                             // an object with a pointer vector (no allocator word) at +0x14
