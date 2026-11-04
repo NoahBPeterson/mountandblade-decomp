@@ -121,3 +121,28 @@ Mac only (`MB_RC=0`) 760 s wall, 173 to 445 s per compile (the queue for a slot,
 0.3 to 2 s per compile (a few seconds with a cold store; the connect + auth + reserve handshake is ~25 ms over Tailscale). The 30
 objects were compared to the Mac-built ones with a COFF section/relocation/symbol comparison: 30 of 30 identical apart from the
 timestamp, `.file` and `.debug$S` path fields (also agent.cpp, curve.cpp, item_kind.cpp, facegen_win.cpp).
+
+## Smoke test on the laptop (`smoke.py --host win`)
+
+A second place to run `tools/relink/smoke.py` while the Mac's one game slot is taken. The laptop runs the build natively (no wine).
+
+    tools/relink/smoke.py --exe DIR/mb_standalone.exe --host win     # the laptop
+    tools/relink/smoke.py --exe DIR/mb_standalone.exe --host auto    # the Mac if no game runs there, else the laptop if free
+    ... --host win --save-ref                                        # store this run's menu as work/smoke/ref_menu_win.png
+
+Needs `MB_WORKER_SSH`, `MB_WORKER_SCP`, `MB_WORKER_HOST` (see Connection). Exit codes as on the Mac: 0 OK, 1 differs / failed,
+2 not configured, 3 busy (a game of ours is running on the laptop, or on both machines for `auto`; it is never killed).
+
+How it works:
+* The game is the Steam install `D:\SteamLibrary\steamapps\common\Mount and Blade`. The build is copied there as
+  `mb_standalone.exe` next to the original (as on the Mac) and deleted afterwards; nothing else in the install is touched.
+* A GUI process started from ssh lives in session 0 with no desktop. `smoke.py` creates a scheduled task `mb_smoke`
+  (`schtasks /create ... /sc once /ru <user> /it`, then `/run`), which runs `D:\mb\smoke\run.cmd` -> `winsmoke.ps1` in the logged-in
+  user's session (the user must be logged on, e.g. an RDP session). The task is ended and deleted at the end of every run, and
+  `D:\mb\smoke` is removed, so nothing persists.
+* `winsmoke.ps1` starts the exe (recording its PID), brings its window to the front and sends Return every 3 s until `rgl_log.txt`
+  shows loading started (the launcher's Play button is the default), waits for `Finished All`, then captures the window's client area
+  (`CopyFromScreen`) 8 s and 14 s later. Only that PID is ended.
+* `smoke.py` polls `D:\mb\smoke\out\status.txt` / `done`, copies the two PNGs back and scores them with the same function
+  (320x200 greyscale, threshold 12, better of two) against `work/smoke/ref_menu_win.png`. The Windows render differs from the Mac's
+  (resolution, window frame), so it has its own reference, made from a known-good build.
