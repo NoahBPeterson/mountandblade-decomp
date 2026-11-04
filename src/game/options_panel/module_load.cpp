@@ -11,7 +11,7 @@
 #include "../ptype.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-extern item_mod g_item_mods[43];                           // 0xa75f70 (constructed and destroyed by the compiler: two tstrings per record)
+item_mod g_item_mods[43];                                   // 0xa75f70 (constructed and destroyed by the compiler: two tstrings per record)
 
 
 // ---- string table (Data/strings.txt lookup, ctor 0x4230f0) ----

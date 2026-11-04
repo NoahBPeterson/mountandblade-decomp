@@ -27,7 +27,7 @@ void mb_error(const char* fmt, ...);                 // 0x42cc80
 #include "../../include/rec78.h"             // Rec78 (PropKind): g_propkinds 0x5e29dc
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-extern DialogMgr g_dialogs;                               // 0x8ed50c8 (constructed by the compiler: DialogMgr::DialogMgr 0x4c2470, ~DialogMgr 0x4c4090)
+DialogMgr g_dialogs;                                       // 0x8ed50c8 (constructed by the compiler: DialogMgr::DialogMgr 0x4c2470, ~DialogMgr 0x4c4090)
 extern tstring g_module_path;                              // 0x8ee3c28
 Rec78* g_propkinds;                                 // 0x5e29dc
 int g_menu_count;                                   // 0x5e29b4

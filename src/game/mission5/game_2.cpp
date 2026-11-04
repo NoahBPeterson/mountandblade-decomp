@@ -36,7 +36,7 @@ void __fastcall tstring_ctor(tstring* p);                      // 0x42bbd0 (tstr
 #include "../../include/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-extern SkillRec g_skill_tbl[42];                           // 0x8ee3100 (skills.txt: description, name, key, attribute, rank limit)
+SkillRec g_skill_tbl[42];                                   // 0x8ee3100 (constructed and destroyed by the compiler; skills.txt: description, name, key, attribute, rank limit)
 char g_map_pages[0x200];                            // 0xa73094 page grid of the map
 int g_page_cols;                                    // 0xa73294
 int g_page_rows;                                    // 0xa73298

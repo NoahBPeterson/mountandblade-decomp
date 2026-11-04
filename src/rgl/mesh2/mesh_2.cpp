@@ -14,7 +14,7 @@
 #include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-extern std::vector<RegSkeleton> g_skeletons;                    // 0xa180e8
+std::vector<RegSkeleton> g_skeletons;                           // 0xa180e8 (constructed and destroyed by the compiler)
 
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)

@@ -34,8 +34,6 @@ extern GameData* g_game;                         // 0x5e2930
 extern ItemKind* g_items;                        // 0x5e29d0
 extern MissionTemplate* g_mission_templates;     // 0x5e2a00
 #include "../dialog_mgr.h"           // DialogMgr g_dialogs (0x8ed50c8)
-extern int g_conversation_troop;   // 0x8ed50d4
-extern int g_encountered_party;    // 0x8ed50d8
 
 #include "../str_table.h"   // StrTable g_strtable (0x5e2a18): the one definition
 extern char g_gui[]; // 0x5d7080

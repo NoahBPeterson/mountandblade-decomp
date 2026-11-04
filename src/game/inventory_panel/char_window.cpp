@@ -129,7 +129,7 @@ void char_window::fill_skills()
 {
     int n = 0;
     int i = 0;
-    unsigned* se = &g_skill_tbl[0].attr;           // 0x8ee3140: the attribute word of record 0
+    unsigned* se = &g_skill_tbl[0].attr;           // the attribute word of record 0 (g_skill_tbl[0].attr)
     int* out = skill_ids;
     do {
         unsigned char c = (unsigned char)(*se >> 8);
