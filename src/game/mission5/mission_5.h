@@ -93,8 +93,6 @@ struct VObj_s25160 {
 };
 
 struct Mgr513710_s25160 { void m(void* p); };                           // 0x513710
-struct Chunk_s25160 { void m_4464d0(int a); void m_4f8bc0(); };
-struct Troop_s25160 { void m_4630d0(int i); };
 struct Big5e292c_s25160 { };   // g_mission as the slice addresses it (frame 0x483f60 is Mission::frame)
 
 
@@ -1748,6 +1746,8 @@ namespace rgl { struct entity; }
 
 struct ItemRef;
 struct Agent {
+    void start_attack(int kind);   // 0x4464d0
+    void hide();   // 0x4f8bc0
     bool is_friend(Agent const*) const;   // 0x4323a0
     int pick_attack_dir(unsigned);   // 0x43f970
     unsigned pick_front();   // 0x43b9e0

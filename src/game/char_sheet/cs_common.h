@@ -19,9 +19,6 @@ struct loading_config { char pad[0x1f8]; };                         // a SkinSet
 struct SoundCtl {                                                   // agent/agent.h; the game object's event emitter
     char emit_event(int id, int a, int b);                          // 0x435790
 };
-struct TroopEq {                                                    // terrain_a/misc.h
-    void auto_equip(int seed, int unused, char civilian, char no_helmet);   // 0x4687e0
-};
 
 namespace rgl {
 struct entity;

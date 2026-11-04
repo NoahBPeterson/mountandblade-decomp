@@ -138,6 +138,8 @@ struct Troop {
     void remove_gold(int amt); // 0x489340
     void set_alpha(int a);                  // 0x489370
     void unequip(int i);                    // 0x4630d0
+    void unequip_all();                     // 0x4687a0 (terrain_a/terrain_a.cpp)
+    void auto_equip(int seed, int unused, char civilian, char no_helmet);   // 0x4687e0 (terrain_a/terrain_a.cpp, ret 0x10: gives a troop the items its flags guarantee, then fills the rest)
     bool equip_best(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x463100
     float food_factor();                    // 0x4b21f0 (food consumption factor; heroes by +0x4e4, perks 0x18 / 0x19) (src/game/party2)
     // ---- src/game/mission_ui2 (method declarations only: no layout change) ----
@@ -157,7 +159,6 @@ struct TroopRec : Troop {
     tstring translated_plural();            // 0x4c6330
     tstring* plural_name();                 // 0x48d6d0
     // ---- src/game/mission5/troop_rec.cpp (method declarations only: no layout change) ----
-    void auto_equip(int a, int b, int c, int d);   // 0x4687e0 (ret 0x10)
     __declspec(noinline) void reset_items(int all);   // 0x51ff90 (re-initialises the item slots)
     __declspec(noinline) void apply_items();   // 0x520110
     __declspec(noinline) void level_up();   // 0x520270 (recomputes the two point budgets from the level, then spends them)

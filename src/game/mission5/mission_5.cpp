@@ -18,6 +18,7 @@
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./mission_5.h"
+#include "../../include/troop.h"   // Troop::unequip (0x4630d0)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
@@ -121,7 +122,7 @@ done:
         *(int*)(rec + 0x31c) = *(int*)((char*)g_big + 0x5c);
         *(int*)(rec + 0x533c) = 2;
         *(int*)(rec + 0x5338) = 0;
-        ((Chunk_s25160*)rec)->m_4464d0(0);
+        ((Agent*)rec)->start_attack(0);
     }
 
     ((Mission*)g_big)->frame(code_f, false);
@@ -130,7 +131,7 @@ done:
         if (*(int*)((char*)g_big + 0x5c) >= 0)
         {
             char* rec = REC_S25160(*(int*)((char*)g_big + 0x5c));
-            ((Chunk_s25160*)rec)->m_4f8bc0();
+            ((Agent*)rec)->hide();
             *(int*)(rec + 0x55d0) = 0;
         }
     }
@@ -179,7 +180,7 @@ done:
         if (!(flags & 0x10) || !(flags & 0x1000))   // 0x525568..0x525574: both bits set skips the loop
         {
             for (int i = 0; i < 0xa; ++i)
-                ((Troop_s25160*)rec)->m_4630d0(i);
+                ((Troop*)rec)->unequip(i);
         }
         char* t = slot_as<char>(8);
         *(int*)(t + 0x18) = 0x10;

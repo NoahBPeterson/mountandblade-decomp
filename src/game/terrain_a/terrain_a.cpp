@@ -1651,7 +1651,7 @@ int Rec468770::max_hit_points()
 // ---- troop auto-equip (built on Troop::add and Troop::equip_best, src/game/ui/troop_inv.cpp) ------------------------------------
 
 // @ 0x4687a0
-void TroopEq::unequip_all()
+void Troop::unequip_all()
 {
     ItemRef* p = equip;
     int n = 10;
@@ -1666,7 +1666,7 @@ void TroopEq::unequip_all()
 }
 
 // @ 0x4687e0
-void TroopEq::auto_equip(int seed, int unused, char civilian, char no_helmet)
+void Troop::auto_equip(int seed, int unused, char civilian, char no_helmet)
 {
     if ((flags30 & tf_inactive) == 0) {
         bool b7 = false, b8 = false, b1 = false, b2 = false, b5 = false, b6 = false, b3 = false, b4 = false, b9 = false, b10 = false;

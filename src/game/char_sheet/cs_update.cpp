@@ -151,7 +151,7 @@ void CharSheet::frame_update(float dt)
             f_42c->flag2_clear();
         if (f_42c->clear_mask(0x10000)) {
             f_2dc = -1;
-            ((TroopEq*)&g_game->chars[g_game->player])->auto_equip(-1, 0, 0, 0);
+            g_game->chars[g_game->player].auto_equip(-1, 0, 0, 0);
             slot_as<int>(29)[5] = w14;
             menu_choose(0x1d);
             return;

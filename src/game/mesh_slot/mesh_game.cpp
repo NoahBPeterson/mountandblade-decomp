@@ -10,6 +10,7 @@
 #include "../render_batch.h"   // g_batch (0x5fe898): counter 0x418828
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+#include "../../include/troop.h"   // Troop::auto_equip (0x4687e0)
 #include "../strat/gui_manager.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
@@ -187,13 +188,6 @@ struct ItemKindT {                      // the item-kind table entry the spawner
     float f1ec;                         // +0x1ec
     char pad1f0[8];
 };
-// 0x4687e0 is TroopEq::auto_equip (terrain_a/misc.h: the troop record seen by the auto-equip code); only the member is declared
-struct TroopEq {
-    void auto_equip(int seed, int unused, char civilian, char no_helmet);   // 0x4687e0
-};
-struct Inv {
-    void auto_equip(int a, int b, int c, int d) { ((TroopEq*)this)->auto_equip(a, b, (char)c, (char)d); }    // 0x4687e0 (thiscall, ret 0x14)
-};
 // an item reference (ItemRef, game/item_ref.h): 0x434df0 is ItemRef::stat_1e8, 0x434eb0 ItemRef::stat_200
 struct ItemStackG {
     unsigned a, b;
@@ -265,7 +259,7 @@ NOINL void Mission::spawn(AgentS* a)
         if (a->id != this->f5c) {
             unsigned long long f = *(unsigned long long*)&t->skin;
             if (!(f & 0x10) || !(f & 0x1000))
-                ((Inv*)t)->auto_equip(a->f94, 0x100e, (a->f56f0 >> 28) & 0xffffff01, (a->f56f0 >> 9) & 0xffffff01);
+                ((Troop*)t)->auto_equip(a->f94, 0x100e, (a->f56f0 >> 28) & 0xffffff01, (a->f56f0 >> 9) & 0xffffff01);
         }
     } else if (a->kind == 1) {
         a->f12c = (int)&g_anim_set;

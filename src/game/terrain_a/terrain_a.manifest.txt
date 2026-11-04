@@ -49,8 +49,8 @@
 ../src/game/terrain_a/terrain_a.cpp  ?apply_state@skin_x@@QAEXPBM@Z  004684d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?count@mesh@rgl@@QAEHH@Z  00468620  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?max_hit_points@Rec468770@@QAEHXZ  00468770  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?unequip_all@TroopEq@@QAEXXZ  004687a0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?auto_equip@TroopEq@@QAEXHHDD@Z  004687e0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?unequip_all@Troop@@QAEXXZ  004687a0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?auto_equip@Troop@@QAEXHHDD@Z  004687e0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?extend@ShadowMap@@QAEXPBUvector4@rgl@@@Z  00468c20  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?AgentEq_pick_slots@@YGXPAUAgentEq@@@Z  0046b2d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?fill56@@YAXPAUelem56@@0ABU1@@Z  0046b3a0  /O2 /MT /Gy /TP

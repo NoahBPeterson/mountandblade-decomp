@@ -123,10 +123,6 @@ enum {
     tf_guarantee_gloves = 0x00800000, tf_guarantee_horse = 0x01000000, tf_guarantee_shield = 0x02000000,
     tf_guarantee_ranged = 0x04000000
 };
-struct TroopEq : Troop {
-    void unequip_all();                         // 0x4687a0
-    void auto_equip(int seed, int unused, char civilian, char no_helmet);    // 0x4687e0
-};
 
 // ---- camera-relative view parameters (0x46b940) --------------------------------------------------------------------
 #include "../view_params.h"            // ViewParams (shared with terrain_b)
