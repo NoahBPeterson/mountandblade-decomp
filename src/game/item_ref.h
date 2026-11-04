@@ -36,7 +36,7 @@ struct ItemRef {
     void set_modifier(int k);           // 0x438bc0 (stores the modifier in the top byte, then reduce(0))
     void set_item(int item);            // 0x48c5a0 (ret 4)
     void randomize_modifier(float quality);   // 0x48c5c0 (ret 4)
-    void check_slots(int n);            // 0x489070 (sort helper: scans for the first empty pair; see mission_ui.cpp)
+    int check_slots(int n);             // 0x489070 (index of the first free entry among the first n, or n; see mission_ui.cpp)
     void sort_sel(int n);               // 0x489090 descending selection sort by (item, g_sort_val[mod * 5])
     void name(char* out);               // 0x512730 (src/game/inventory_panel: "ERROR: INVALID ITEM", or the translated name with its modifier format)
     void compact(int n);                // 0x48be00 (this = the first of n refs, n <= 0 means 0x60: moves the used refs to the front, then sort_sel)

@@ -161,14 +161,14 @@ void PartyMgrW::clear()
 }
 
 // @ 0x4903e0
-int PartyMgrW::is_live(unsigned id)
+int PartyMgr::is_live(int id)
 {
-    if (id < limit()) {
+    if ((unsigned)id < n_parties) {
         int i = ((Map10007*)(void*)this)->lookup(id);
         if (i >= 0)
-            return atu((unsigned)i)->type == 1;
+            return pages[(unsigned)i >> 4][i & 0xf].type == 1;
     }
-    return 0;
+    return false;
 }
 
 // ==== 0x490430: the scene entity a script trigger runs for ======================================================

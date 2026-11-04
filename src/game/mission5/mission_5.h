@@ -1682,7 +1682,7 @@ extern float g_098;                  // 0x5911d8  0.98f (scan threshold)
 extern double g_001;                 // 0x59c480  unused here (other slices)
 
 void* __cdecl operator new[](uint size);      // 0x535482  ??_U@YAPAXI@Z operator new[]
-unsigned __cdecl pack_color(const float* c);           // 0x40e440
+namespace rgl { struct vector4; unsigned pack_color(const vector4* c); }   // 0x40e440 (rgl/rgl_math.h)
 
 // ---------------------------------------------------------------------------------------------------
 // brush element record: 24 bytes. The array header (arg1) is {int count; ...}, element i starts at

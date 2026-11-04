@@ -1,7 +1,7 @@
 ../src/game/world_data/world_data.cpp  ?stack_dna@GameW@@QAEHIHHH@Z  004902a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?back@?$deque@HV?$allocator@H@std@@@std@@QAEAAHXZ  00490310  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?clear@PartyMgrW@@QAEXXZ  00490340  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?is_live@PartyMgrW@@QAEHI@Z  004903e0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?is_live@PartyMgr@@QAEHH@Z  004903e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?trigger_entity@@YIHH@Z  00490430  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??1ContainerBase@@UAE@XZ  00490520  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?on_moved@ContainerBase@@UAEXXZ  004906b0  /O2 /MT /Gy /TP

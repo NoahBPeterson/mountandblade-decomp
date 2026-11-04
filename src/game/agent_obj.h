@@ -447,7 +447,6 @@ struct Agent {                                          // 0x5928 bytes
 
     // ---- members: src/game/agent2 (agent_stats.cpp, agent_ai.cpp) ----
     void get_dir(vec2* out);                     // 0x4378f0
-    void get_dir(float* out);                    // 0x4378f0 (ret 4; agent3's view of the same function)
     inline void set_order(int slot, int id, unsigned prio, float rate);   // 0x4379c0
     bool has_weapon_for(int mode);               // 0x437f00
     float stamina_scale();                       // 0x438180

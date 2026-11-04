@@ -105,9 +105,6 @@ UiB* __cdecl make_slider(void* parent, const tstring* name);    // 0x4f5fb0 (edi
 void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, float z);    // 0x4f5df0 (editor_ui)
 void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, float z);   // 0x4f5ed0 (editor_ui)
 Camera* __cdecl make_editor_list(void* parent, const tstring* name, int scroll);   // 0x4f62f0 (editor_ui)
-struct PartyMgrW {                                                  // world_data/world_data.h: the party manager at game+0xf8
-    int is_live(unsigned id);                                       // 0x4903e0
-};
 struct Buffer {                                                     // world_data.h: the widget base
     virtual ~Buffer();                                              // 0x487c00
 };

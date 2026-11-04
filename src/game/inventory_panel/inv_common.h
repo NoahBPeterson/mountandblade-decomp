@@ -35,9 +35,6 @@ struct GameW {                                          // game/world_data: Game
     int token_lookup(int party, int a, int b, int c);   // 0x491f20 (ret 0x10)
     void list_members(unsigned id, int* out, int* n);   // 0x490fa0 (ret 0xc)
 };
-struct PartyMgrW {
-    int is_live(unsigned id);   // 0x4903e0 (game/world_data; ret 4)
-};
 
 // ---- the game data (g_game) with the members these modules call ----------------------------------------------------
 struct GameDataV : GameData {

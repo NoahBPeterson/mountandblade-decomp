@@ -40,7 +40,7 @@
 ../src/game/ui/mission_ui.cpp  ?tick@TimerChild@@QAEXH@Z  00488e90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?speed_scale@@YGMPBM0M@Z  00488ff0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?clear_slots@@YIXPAUItemRef@@@Z  00489060  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?check_slots@ItemRef@@QAEXH@Z  00489070  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?check_slots@ItemRef@@QAEHH@Z  00489070  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_flags_low@Troop@@QAEXH@Z  004892a0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?add_stat@Troop@@QAEXIH@Z  004892d0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_colors@Troop@@QAEXHH@Z  00489320  /O2 /MT /Gy /TP

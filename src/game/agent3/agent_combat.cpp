@@ -571,7 +571,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
         u.x = 0.0f;
         u.y = 1.0f;
     }
-    b->get_dir(&f.x);
+    b->get_dir((vec2*)&f.x);
     if (strike) {
         if (grp == 199 && f.y * u.y + f.x * u.x < -0.4f) {
             matrix m = b->body->m * *(const matrix*)b->body->skel->rec(12);

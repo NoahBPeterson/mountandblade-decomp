@@ -340,9 +340,6 @@ struct TroopX : TroopRec {
 void __fastcall clear_slots(ItemRef* items);  // 0x489060 (the 0x60 inventory entries of a troop)
 // ItemRef (src/game/item_ref.h) carries the script editors set_item / set_modifier / randomize_modifier
 inline ItemRef& IR(ItemRef& r) { return r; }
-struct ItemList {                       // this = the first ItemRef; -1 item = free
-    int check_slots(int count);          // 0x489070
-};
 float frand();                                      // 0x40e400 (0..1)
 int __cdecl rand_below(const int* n);               // 0x432580 (0 when *n < 2, else rand() % *n)
 float __cdecl fmin_ref(const float* a, const float* b);     // 0x4324b0 (game_util.h)

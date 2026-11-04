@@ -46,7 +46,6 @@ struct PartyMgrW : PartyMgr {
     Party* at(int idx) { return pages[idx >> 4] + (idx & 0xf); }
     Party* atu(unsigned idx) { return pages[idx >> 4] + (idx & 0xf); }
     Party* get_w(unsigned id) { int i = index_of(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
-    int is_live(unsigned id);                                   // 0x4903e0 (thiscall, ret 4)
     // PartyMgr::index_of(int) (include/party.h) is declared but not defined: the lookup 0x48ad00 is ui/mission.h's
     // Map10007::lookup(unsigned) (the id -> index hash table at the start of the manager), called as ((Map10007*)mgr)->lookup(id)
     void clear();                                               // 0x490340 (thiscall, ret 0)

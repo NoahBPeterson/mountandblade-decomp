@@ -2154,7 +2154,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (params[2] > 0 && check_troop((int)params[0]) && check_troop((int)params[1])) {
             i = troop((int)params[1])->inv_count();
             TroopX* t = troop((int)params[0]);
-            int dst = ((ItemList*)t->items)->check_slots(t->inv_count());
+            int dst = t->items[0].check_slots(t->inv_count());
             for (int k = 0; k < i; k++) {
                 TroopX* troops = game()->troops;
                 if (dst < troops[(int)params[0]].inv_count()) {

@@ -537,7 +537,7 @@ void __fastcall clear_slots(ItemRef* e)
 }
 
 // @ 0x489070
-void ItemRef::check_slots(int n)
+int ItemRef::check_slots(int n)
 {
     int i = 0;
     if (n > 0) {
@@ -547,6 +547,7 @@ void ItemRef::check_slots(int n)
             i++;
         } while (i < n);
     }
+    return i;
 }
 
 // @ 0x489090

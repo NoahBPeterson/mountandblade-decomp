@@ -37,10 +37,6 @@ struct coll_shape {
     virtual vector4 get_b();                                    // 11 (+0x2c)
 };
 
-// bounding box with the extend_box member of 0x4201b0 (entity::box at +0xd4, mesh::bounds at +0x22c)
-struct box_ext : aabb {
-    void extend_box(const aabb* b, const matrix* m);            // 0x4201b0
-};
 
 // items attached to an entity (entity::items, +0x128): placed by set_frame (slot 8) and registered with the world
 struct item_obj {
@@ -88,7 +84,7 @@ struct entity {
     float fbc;                  // 0xbc  radius (recalc 0x41ffe0)
     float fc0;                  // 0xc0
     vector4 vc4;                // 0xc4  box centre in the local frame (recalc)
-    box_ext box;                // 0xd4  (0x34 bytes)
+    aabb box;                   // 0xd4  (0x34 bytes)
     std::vector<lod_mesh2*> lods;   // 0x108
     std::vector<mesh*> meshes;      // 0x118
     std::vector<item_obj*> items;   // 0x128 attached entities (StrategicEntity::update 0x421b70)

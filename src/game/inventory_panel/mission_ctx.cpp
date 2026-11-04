@@ -278,7 +278,7 @@ void MissionCtx::update_parties()
         f40 = 0;
         GV->clear_hero_ammo(g_game->f78);
 
-        if (party[side] >= 0 && ((PartyMgrW*)&g_game->parties)->is_live(party[side])) {
+        if (party[side] >= 0 && g_game->parties.is_live(party[side])) {
             int n = 0;
 
             GV->clear_hero_ammo(party[side]);
@@ -288,7 +288,7 @@ void MissionCtx::update_parties()
             ((GameW*)g_game)->count_units(party[side], &n, &n, &n, &n);
         }
         if (f2c8 != 0) {
-            if (party[1 - side] >= 0 && ((PartyMgrW*)&g_game->parties)->is_live(party[1 - side])) {
+            if (party[1 - side] >= 0 && g_game->parties.is_live(party[1 - side])) {
                 int n = 0;
 
                 GV->clear_hero_ammo(party[1 - side]);
@@ -402,9 +402,9 @@ void MissionCtx::setup(unsigned flags, int delta)
         f1c = GV->gate_rating(g_game->f78, party[side], party[1 - side]) + n;
         PartyMgr* m = &g_game->parties;
         party_at(m, ((Map10007*)m)->lookup(g_game->f78))->sum_stat(0x110);
-        if (((PartyMgrW*)&g_game->parties)->is_live(party[side]))
+        if (g_game->parties.is_live(party[side]))
             party_at(&g_game->parties, ((Map10007*)&g_game->parties)->lookup(party[side]))->sum_stat(0x110);
-        if (mode == 4 && ((PartyMgrW*)&g_game->parties)->is_live(party[1 - side]))
+        if (mode == 4 && g_game->parties.is_live(party[1 - side]))
             g_game->parties.get(party[1 - side])->sum_stat(0x110);
         if (f1c > 6)
             f1c = 6;

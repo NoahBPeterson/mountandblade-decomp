@@ -3056,7 +3056,7 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
             out[1] = col[1] * k + amount * *(float*)(g_game_c + 0x1a0fc);
             out[2] = col[2] * k + amount * *(float*)(g_game_c + 0x1a100);
             out[3] = 1.0f;   // original copies an uninitialised slot here; it saturates alpha to 255
-            unsigned c = pack_color(out);
+            unsigned c = rgl::pack_color((const rgl::vector4*)out);
             E->put(cell, cell + 1, (int*)&c);
         }
     } else {
@@ -3099,7 +3099,7 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
             out[1] = col[1] * k + amount;
             out[2] = col[2] * k + amount;
             out[3] = 1.0f;   // original copies an uninitialised slot here; it saturates alpha to 255
-            unsigned c = pack_color(out);
+            unsigned c = rgl::pack_color((const rgl::vector4*)out);
             E->put(cell, cell + 1, (int*)&c);
         }
     }

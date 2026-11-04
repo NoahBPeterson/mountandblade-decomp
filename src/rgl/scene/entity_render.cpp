@@ -29,7 +29,7 @@ using namespace rgl;
 namespace rgl {
 
 // @ 0x4201b0
-void box_ext::extend_box(const aabb* b, const matrix* m)
+void aabb::extend_box(const aabb* b, const matrix* m)
 {
     if (b->min.x > b->max.x)
         return;
