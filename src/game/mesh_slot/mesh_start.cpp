@@ -83,11 +83,8 @@ void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, con
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 unsigned g_rand_seed;                               // 0x5d7078
 
-struct Rec1c8Vec {                                              // std::vector<PlacedObj> (allocator lane at +0)
-    int alloc; PlacedObj* first; PlacedObj* last; PlacedObj* end;
-    Rec1c8Vec& operator=(const Rec1c8Vec& o);                      // 0x477160
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-};
+#include <vector>
+template<> std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::vector<PlacedObj>& o);   // 0x477160 (terrain_b/terrain_b.cpp: the out-of-line instance)
 struct BodyRec { char b[0x24]; };
 struct BodyVec {
     int alloc; BodyRec* first; BodyRec* last; BodyRec* end;
@@ -411,9 +408,9 @@ void Mission::start_setup()
             at<int>(0x65ec) = 0;
     }
 
-    Rec1c8Vec& props = at<Rec1c8Vec>(0x6688);
+    std::vector<PlacedObj>& props = at<std::vector<PlacedObj> >(0x6688);
     at<int>(0x6608) = ptype;
-    props = *(Rec1c8Vec*)((char*)lrec + 0x104);
+    props = *(std::vector<PlacedObj>*)((char*)lrec + 0x104);
     for (unsigned i = 0; i < props.size(); i++) {
         PlacedObj* pe = at<PlacedObj*>(0x668c) + i;
         RAWAT(unsigned, pe, 0x14) = i;

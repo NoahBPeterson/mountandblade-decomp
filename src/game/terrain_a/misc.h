@@ -47,11 +47,8 @@ struct vec516 { int alloc; s516* first; s516* last; s516* end; int size() const;
 struct vec100 { alloc100 _Alval; particle100* first; particle100* last; particle100* end; particle100* _Ucopy(particle100* f, particle100* l, particle100* d); };   // 0x46c190
 
 struct elem56 { tstring name; int a[10]; };     // 0x38: fill 0x46b3a0, copy 0x468050, copy_backward 0x4680c0
-struct E1c8 {                                   // 0x1c8-byte polymorphic record (operator= 0x437d60)
-    virtual ~E1c8();
-    char body[0x1c8 - 4];
-    E1c8& operator=(const E1c8& o);             // 0x437d60
-};
+#include "../placed_obj.h"                    // PlacedObj: the 0x1c8-byte polymorphic record (operator= 0x437d60)
+typedef PlacedObj E1c8;
 
 // ---- timed transform tween of a scene prop (0x467c50) -------------------------------------------------------
 #include "../prop_ent.h"                 // PropEnt (the scene entity the prop drives; shared with mission_ui2)
