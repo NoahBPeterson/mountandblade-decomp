@@ -43,7 +43,7 @@ extern const float g_592754;            // 0x592754  0.31f
 // ---- the gui widget ------------------------------------------------------------------------------------------
 // The base supplies slots up to set_pos (+0x58) / set_size (+0x64); the concrete window classes insert their own
 // slots in between, so the later slots are reached through the raw vtable.
-#include "../widget.h"                        // widget (the 0x178-byte UI element; shared with facegen_init.h, view_open.cpp, widget_text.cpp, strat/gui_manager.h)
+#include "../ui/container.h"                   // MissionUi (the UI element)
 #include "../ui_globals.h"      // UI / core globals
 
 // slots addressed by byte offset: ((void**)self[0])[off / 4]

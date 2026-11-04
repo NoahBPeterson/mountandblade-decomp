@@ -16,6 +16,7 @@
 
 // ------------------------------------------------------------------ engine string (0x10 bytes) -----------
 #include "../tstring.h"
+#include "../ui/container.h"                          // MissionUi (flag1 0x50cc60), text_box (0x50d0b0)
 #include "../shared_vars.h"                             // g_show_party_ids_instead_of_names 0xa181b8
 
 namespace c49aca0 {                                                     // game/party2/camera.cpp
@@ -158,17 +159,14 @@ struct AccessStream {
 };
 
 // ------------------------------------------------------------------ the widget base ------------------------
-#include "../widget.h"                              // widget (the 0x178-byte base, vptr 0x591c80, ctor 0x48ae20, flag1 0x50cc60; shared)
-
-// @ 0x50cc60 widget::flag1
-unsigned widget::flag1() const
+// @ 0x50cc60 MissionUi::flag1
+unsigned MissionUi::flag1() const
 {
-    return flags & 1;
+    return f104 & 1;
 }
 
 // the text box (vtable 0x597050, size 0x188): ui/container.h's container with nothing added. Its slot 0 is the container's
 // destroying destructor (0x5021f0, the copy party_window.cpp's object holds).
-#include "../ui/container.h"
 
 // @ 0x50d0b0 text_box::text_box
 text_box::text_box()

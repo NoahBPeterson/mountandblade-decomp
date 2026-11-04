@@ -20,29 +20,7 @@ extern "C" int _fltused = 0;
 // ---- widgets ---------------------------------------------------------------------------------------------
 struct Entity;
 
-// the UI element base (0x178 bytes, ctor 0x48ae20): src/game/widget.h
-#include "../widget.h"
-
-// engine vector of UI elements: {lead, first, last, end}
-struct objvec {
-    int lead;                                           // +0x00
-    widget** first;                                     // +0x04
-    widget** last;                                      // +0x08
-    widget** end;                                       // +0x0c
-    // (insert_n 0x4927d0 is std::vector<SceneObject*>::_Insert_n, cs_common.h)
-};
-
-// the 0x188-byte UI element (ctor 0x4931a0; "deform"/"buttons" vptr 0x597050)
-struct elem : widget {
-    elem() MB_NOTHROW;                                  // 0x4931a0
-    objvec items;                                       // +0x178
-};
-
-// the 0x190-byte overlay window (vptr 0x592848, ctor 0x4931a0)
-struct overlay : elem {
-    unsigned char f188;                                 // +0x188
-    char pad189[0x190 - 0x189];
-};
+#include "../ui/container.h"                         // MissionUi, ContainerBase (the 0x188-byte element), NodeA (the 0x190-byte NodeA)
 
 // the engine view frustum (0x120 bytes)
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
@@ -57,7 +35,7 @@ struct FaceGen {
     char pad0[0x14];
     int troop;                                          // +0x14
     char pad18[0x2c - 0x18];
-    overlay* ui;                                        // +0x2c
+    NodeA* ui;                                        // +0x2c
     face_body* body;                                    // +0x30
     rgl::frustum fr;                                     // +0x34 (0x120 bytes)
     float v154[4];                                      // +0x154
@@ -68,28 +46,28 @@ struct FaceGen {
     char pad171[0x174 - 0x171];
     int skin;                                           // +0x174
     World* world;                                       // +0x178
-    elem* slider;                                       // +0x17c
-    elem* deform;                                       // +0x180
-    elem* buttons;                                      // +0x184
-    elem* cam_btn;                                      // +0x188
-    elem* deform_rows[0x30];                            // +0x18c (one row per deform key; 0x30 slots up to key_labels)
-    widget* key_labels[0x30];                           // +0x24c (up to b_next_beard)
-    widget* b_next_beard;                               // +0x30c
-    widget* b_next_hair;                                // +0x310
-    widget* b_next_face;                                // +0x314
-    widget* b_prev_beard;                               // +0x318
-    widget* b_prev_hair;                                // +0x31c
-    widget* b_prev_face;                                // +0x320
-    widget* t_change_beard;                             // +0x324
-    widget* t_change_hair;                              // +0x328
-    widget* t_change_face;                              // +0x32c
-    elem* sl_age;                                       // +0x330
-    elem* sl_hair_color;                                // +0x334
-    widget* t_age;                                      // +0x338
-    widget* t_hair_color;                               // +0x33c
-    widget* b_done;                                     // +0x340
-    widget* b_reset;                                    // +0x344
-    widget* b_randomize;                                // +0x348
+    ContainerBase* slider;                                       // +0x17c
+    ContainerBase* deform;                                       // +0x180
+    ContainerBase* buttons;                                      // +0x184
+    ContainerBase* cam_btn;                                      // +0x188
+    ContainerBase* deform_rows[0x30];                            // +0x18c (one row per deform key; 0x30 slots up to key_labels)
+    MissionUi* key_labels[0x30];                           // +0x24c (up to b_next_beard)
+    MissionUi* b_next_beard;                               // +0x30c
+    MissionUi* b_next_hair;                                // +0x310
+    MissionUi* b_next_face;                                // +0x314
+    MissionUi* b_prev_beard;                               // +0x318
+    MissionUi* b_prev_hair;                                // +0x31c
+    MissionUi* b_prev_face;                                // +0x320
+    MissionUi* t_change_beard;                             // +0x324
+    MissionUi* t_change_hair;                              // +0x328
+    MissionUi* t_change_face;                              // +0x32c
+    ContainerBase* sl_age;                                       // +0x330
+    ContainerBase* sl_hair_color;                                // +0x334
+    MissionUi* t_age;                                      // +0x338
+    MissionUi* t_hair_color;                               // +0x33c
+    MissionUi* b_done;                                     // +0x340
+    MissionUi* b_reset;                                    // +0x344
+    MissionUi* b_randomize;                                // +0x348
     Entity* ent;                                        // +0x34c
     int f350;                                           // +0x350
     int f354;                                           // +0x354
@@ -108,7 +86,7 @@ struct FaceGen {
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                 // 0x5d7080
 struct gui_mgr {
-    void set_window(widget** w);   // 0x49b120
+    void set_window(MissionUi** w);   // 0x49b120
 };
 extern gui_mgr g_gui;                                   // 0x5d7080
 #include "../str_table.h"   // 0x43a1e0
@@ -144,13 +122,9 @@ static void push_track(World::TrackVec& t, int v)
         *t.last++ = v;
 }
 
-static void push_item(elem* w, widget* o)
+static void push_item(ContainerBase* w, MissionUi* o)
 {
-    if (w->items.first == 0 ||
-        (unsigned)(w->items.last - w->items.first) >= (unsigned)(w->items.end - w->items.first))
-        ((SceneObjVec*)&w->items)->_Insert_n(SceneObjVec::iterator((SceneObject**)w->items.last), 1, (SceneObject* const&)o);   // 0x4927d0
-    else
-        *w->items.last++ = o;
+    w->kids.push_back(o);
 }
 
 static float config_float(const char* key)

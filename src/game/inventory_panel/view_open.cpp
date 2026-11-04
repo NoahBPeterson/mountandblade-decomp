@@ -29,18 +29,11 @@ using rgl::mesh;
 // ---- widgets ---------------------------------------------------------------------------------------------
 // 0x178-byte widget base (ctor 0x48ae20 installs vptr 0x591c80).  The slots used here are add_image (+0x7c),
 // add_image2 (+0x80) and add_child (+0xc8); the rest are placeholders that keep the offsets honest.
-#include "../widget.h"                                  // widget (shared with char_sheet and strat)
-
-// the 0x188 icon element (ctor 0x48b1c0 calls the widget base, then the caller installs vptr 0x591ee8)
-struct elem2 : widget {
-    char pad[0x188 - 0x178];
-    elem2() MB_NOTHROW;                                     // 0x48b1c0
-};
-
-extern char g_vt_591ee8[];                                  // 0x591ee8
+#include "../ui/container.h"                                 // MissionUi (the 0x178-byte widget base, ctor 0x48ae20), ContainerBase
+#include "../ui/ui_widgets.h"                                // XyzButton (the portrait icon, vtable 0x591ee8)
 
 // load the widget's "<name>_*" parameters from the ini table (0x4e4c70)
-void label_refresh(widget* w, tstring name);                    // 0x4e4c70 (tstring by value)
+void label_refresh(MissionUi* w, tstring name);                    // 0x4e4c70 (tstring by value)
 
 // ---- frustum (0x120 bytes) -------------------------------------------------------------------------------
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
@@ -103,7 +96,7 @@ struct char_window {
     char pad0[0x14];
     int  troop;                                             // +0x14 (troop record index)
     char pad18[0x2c - 0x18];
-    widget* ui;                                             // +0x2c
+    ContainerBase* ui;                                         // +0x2c
     char pad30[0x2dc - 0x30];
     int  f2dc;                                              // +0x2dc (-1 until the portrait is built)
     char pad2e0[0x2e4 - 0x2e0];
@@ -115,8 +108,8 @@ struct char_window {
     float f420;                                             // +0x420
     float f424;                                             // +0x424
     char pad428[0x4cc - 0x428];
-    elem2*  f4cc;                                           // +0x4cc
-    widget* f4d0;                                           // +0x4d0
+    XyzButton* f4cc;                                         // +0x4cc
+    MissionUi* f4d0;                                           // +0x4d0
     void open_view();                                       // 0x509980
 };
 
@@ -129,7 +122,7 @@ void char_window::open_view()
     if (g_a75f64 < 0) {
         // ---- 3D portrait: build the body, the world, the wind tracks and the camera ----
         face_body* b = new face_body;
-        label_refresh((widget*)b, tstring("char_i_character"));
+        label_refresh((MissionUi*)b, tstring("char_i_character"));
         if (world != 0) {
             world->destroy();                   // 0x475d50 (the CellGrid destructor body), then the free
             free(world);
@@ -213,7 +206,7 @@ void char_window::open_view()
         ang = 0.1f;
         m2.rotate_about_s(&ang);
         e->set_matrix(&m2);
-        ui->add_child((widget*)b);
+        ui->add_child(b);
         if (f2dc == -1) {
             // seed the body's face from the troop record and start the idle animation
             char* rec = g_game->chars_c + troop * 0x508;
@@ -236,29 +229,21 @@ void char_window::open_view()
     } else {
         // ---- flat fallback: a shadow image plus the empty character icon ----
         if (f2dc == -1) {
-            widget* a = new widget;
+            MissionUi* a = new MissionUi;
             f4d0 = a;
             label_refresh(a, tstring("char_i_character_shadow"));
             {
                 tstring nm("character_window_shadow");
                 mesh* m = res_manager().get_object((const rgl::string*)&nm);
                 m = m->clone();
-                a->add_item(0, m);
+                a->set_mesh(0, m);
             }
             ui->add_child(a);
-            // 0x509a4a: the original keeps the allocation in esi and discards the constructor's result (0x48b1c0), then
-            // installs the vtable inside the non-null arm
-            void* raw = operator new(sizeof(elem2));
-            elem2* c = 0;
-            if (raw) {
-                new (raw) elem2;
-                c = (elem2*)raw;
-                *(void**)c = (void*)g_vt_591ee8;
-            }
+            XyzButton* c = new XyzButton;                             // ctor 0x48b1c0, vptr 0x591ee8
             f4cc = c;
             label_refresh(c, tstring("char_i_character"));
             mesh* m2 = g_tableaus.make_mesh_from(&mode, &troop);
-            c->add_item2(0, m2);
+            c->set_track(0, m2);
             ui->add_child(c);
         }
     }

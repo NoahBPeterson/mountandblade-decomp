@@ -1,7 +1,7 @@
 004ee230 build             quest_window::build       ?build@quest_window@@QAIXXZ
 004ee840 refresh           quest_window::refresh     ?refresh@quest_window@@QAIXXZ
-004ee910 make_scrollbar    make_scrollbar            ?make_scrollbar@@YAPAUwidget@@PAU1@MMMM@Z
-004eea90 make_quest_list   make_quest_list           ?make_quest_list@@YAPAUwidget@@PAU1@PBM1H@Z
+004ee910 make_scrollbar    make_scrollbar            ?make_scrollbar@@YAPAUMissionUi@@PAU1@MMMM@Z
+004eea90 make_quest_list   make_quest_list           ?make_quest_list@@YAPAUCamera@@PAUContainerBase@@PBM1PAUUiD@@@Z
 005e2930 g_game            quest database base       (quest array pointer at +0x13a58, quest count at +0x13a5c; rows of 0x138 bytes)
 005e2a18 g_strtable        string table              lookup 0x43a1e0 (key pushed last, returns tstring*)
 005d6fa0 g_resmgr          resource manager          get_object 0x419540

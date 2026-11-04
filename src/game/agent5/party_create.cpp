@@ -85,10 +85,10 @@ MissionUi* new_sized_button(MissionUi* parent, const tstring& text, float a, flo
 // the scrolling item list is Camera (constructor 0x49deb0, size 0x4a8): the flags word is Object's; +0x484 (follow[1]) the scroll bar, +0x490 (target) the row count
 #include "../party2/camera_class.h"      // Camera: the scrolling item list
 // virtual +0xc8 of the list sets the row count (the widget base's slot at +0xc8 is add_child(child), which takes one stack word as well)
-#define SET_ROWS(w, n) WOPS(w)->add_child((void*)(size_t)(n))
+#define SET_ROWS(w, n) w->add_child((MissionUi*)(size_t)(n))
 
 // the window (constructor 0x4931a0, vptr 0x592848, size 0x190)
-struct InvWindow : UiWindow {
+struct InvWindow : ContainerBase {
     char f188;                                  // +0x188
     char pad189[7];
 private:
@@ -140,16 +140,16 @@ void PartyWindow::create()
     container = win;
     {
         Vec2 p(0.0f, 0.0f);
-        WOPS(win)->set_pos(&p.x);
+        win->move_a(&p.x);
     }
     {
         Vec2 s(1.0f, 0.75f);
-        WOPS(win)->set_scale(&s.x);
+        win->set_xy(&s.x);
     }
     {
         tstring n("inventory_window_b");
         ResMesh* m = ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone();
-        WOPS(win)->add_image(0, m);
+        win->set_track(0, m);
     }
 
     if (f4 == 4) {
@@ -158,9 +158,9 @@ void PartyWindow::create()
         label_refresh(bg, tstring("inv_i_equipment_pangel_bg"));
         {
             tstring n("inventory_equipment_panel");
-            WOPS(bg)->add_image_a(0, ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone());
+            bg->set_mesh(0, ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone());
         }
-        WOPS(container)->add_child(bg);
+        container->add_child(bg);
     }
 
     for (int k = 0; k < 4; k++) {
@@ -171,18 +171,18 @@ void PartyWindow::create()
         label_refresh(h, tstring(buf));
         {
             tstring n("inventory_window_hinge");
-            WOPS(h)->add_image_a(0, ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone());
+            h->set_mesh(0, ((ResMesh*)res_manager().get_object((const rgl::string*)&n))->clone());
         }
-        WOPS(container)->add_child(h);
+        container->add_child(h);
     }
     {
         tstring e("");
         float out[2];
-        WOPS(container)->set_text(out, &e);
+        container->set_text(out, &e);
     }
-    add_strip_icon((char*)&icon_a84, tstring("inv_i_character"), g_game_G->cur_troop, spec_ac0);
+    add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game_G->cur_troop, spec_ac0);
     if (f4 == 4)
-        add_strip_icon((char*)&icon_a88, tstring("inv_i_character2"), troop, spec_ac4);
+        add_strip_icon(&icon_a88, tstring("inv_i_character2"), troop, spec_ac4);
 
     pages = 1;
     rows = 1;
@@ -230,14 +230,14 @@ void PartyWindow::create()
         float m = rows_h < visible ? rows_h : visible;
         {
             Vec2 p(v->fE8, v->fEC - m);
-            WOPS(v)->set_pos(&p.x);
+            v->move_a(&p.x);
         }
         {
             Vec2 s(v->screen[0], m);
-            WOPS(v)->set_scale(&s.x);
+            v->set_xy(&s.x);
         }
         ((FieldPanel*)v)->update();
-        WOPS(container)->add_child(view[i]);
+        container->add_child(view[i]);
 
         MissionUi* g = new MissionUi;
         gold[i] = g;
@@ -245,7 +245,7 @@ void PartyWindow::create()
             label_refresh(g, tstring("inv_t_gold1"));
         else
             label_refresh(g, tstring("inv_t_gold2"));
-        WOPS(container)->add_child(g);
+        container->add_child(g);
         if (f4 != 0 || idx != g_game_G->hero_troop)
             money_label(i);
 
@@ -258,7 +258,7 @@ void PartyWindow::create()
             if (s == 0)
                 s = &t0->name;
             float out[2];
-            WOPS(nm)->set_text(out, s);
+            nm->set_text(out, s);
         } else {
             label_refresh(nm, tstring("inv_t_name2"));
             if (f4 == 2 || f4 == 4) {
@@ -267,13 +267,13 @@ void PartyWindow::create()
                 if (s == 0)
                     s = &t->name;
                 float out[2];
-                WOPS(nm)->set_text(out, s);
+                nm->set_text(out, s);
             } else if (f4 == 0) {
                 float out[2];
-                WOPS(nm)->set_text(out, g_strtable.lookup(&tstring("ui_dump")));
+                nm->set_text(out, g_strtable.lookup(&tstring("ui_dump")));
             }
         }
-        WOPS(container)->add_child(nm);
+        container->add_child(nm);
     }
     for (int i = 0; i < rows; i++)
         make_inventory_menu(i);
@@ -289,8 +289,8 @@ void PartyWindow::create()
         total_cost = tc;
         label_refresh(tc, tstring("inv_t_total_cost"));
         float out[2];
-        WOPS(tc)->set_text(out, g_strtable.lookup(&tstring("ui_no_cost")));
-        WOPS(container)->add_child(tc);
+        tc->set_text(out, g_strtable.lookup(&tstring("ui_no_cost")));
+        container->add_child(tc);
     }
 
     for (int r = 0; r < 4; r++) {
@@ -301,9 +301,9 @@ void PartyWindow::create()
         float ry = (float)r;
         {
             Vec2 p(a->fE8, a->fEC - step * ry);
-            WOPS(a)->set_pos(&p.x);
+            a->move_a(&p.x);
         }
-        WOPS(container)->add_child(a);
+        container->add_child(a);
         if (f4 == 4) {
             MissionUi* a2 = new MissionUi;
             armor_labels[1][r] = a2;
@@ -311,9 +311,9 @@ void PartyWindow::create()
             float step2 = cfg(tstring("inv_t_armor_y_a"));
             {
                 Vec2 p(a2->fE8, a2->fEC - step2 * ry);
-                WOPS(a2)->set_pos(&p.x);
+                a2->move_a(&p.x);
             }
-            WOPS(container)->add_child(a2);
+            container->add_child(a2);
         }
     }
 
@@ -391,6 +391,6 @@ void PartyWindow::money_label(int which)
     {
         tstring s(buf);
         float out[2];
-        WOPS(gold[which])->set_text(out, &s);
+        gold[which]->set_text(out, &s);
     }
 }

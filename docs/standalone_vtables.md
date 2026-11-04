@@ -167,8 +167,9 @@ MissionUi (0x591c80, 49 virtuals; ui/mission_ui.h)
   keeps 0x5021f0 as a function of its own for PartyPanel's table (0x599bf8, still hand-stored: party/party_window.h).
 * The `long` the audit printed for UiB / NodeA was `vtable_starts` taking a code immediate for the start of another table inside
   them; the audit now keeps the table whole when the pointer run is as long as ours.
-* Slots that the original points at a `gui_window` function (key / refresh of MissionUi and ContainerBase, NodeA::key) are
-  bodies in ui/widget_slots.cpp, copies of strat/gui_manager.cpp's; the ICF trial link folds them.
+* The functions the slices called `gui_window::refresh_all / wheel_step / wheel_focus / mouse_event / handle_event` (0x42cd60, 0x42ce50,
+  0x42cec0, 0x42cf50, 0x42d170) are the widget classes' own virtuals (`MissionUi::key / refresh`, `ContainerBase::refresh / key`,
+  `NodeA::key`), defined once in ui/widget_slots.cpp. `gui_window`, `widget` (widget.h) and `WidgetOps` no longer exist.
 
 ## Entity tail and agent record (lane V4): what the compiler does with derived deleting destructors
 

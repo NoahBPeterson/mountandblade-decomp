@@ -55,7 +55,6 @@ extern "C" UiD* make_scrollbar(MissionUi* parent, const tstring* name);         
 extern "C" MissionUi* make_scroll2(MissionUi* parent, const tstring* name,
                                 UiD* other);                            // 0x4f62f0
 
-#include "../party/widget_ops.h"            // WidgetOps: the one definition (relayout 0x488d50, visible 0x50cc60)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 struct mnode {                                       // game/agent2/agent_types.h: the font object's bounds are mnode::calc_bounds
     void calc_bounds(rgl::vector4* a, rgl::vector4* b);                // 0x438d80 (this = font object)
@@ -809,9 +808,9 @@ void note_window::build(int page_, int arg_)
     this->data_panel = data;
     label_refresh(data, tstring("note_bo_data"));
 
-    if (((WidgetOps*)this->picture)->flag1() == 0) {
+    if (this->picture->flag1() == 0) {
         float a[2], b[2];
-        ((mnode*)(*(void**)((char*)this->picture + 0x108)))->calc_bounds(a, b);
+        ((mnode*)this->picture->tracks[0])->calc_bounds(a, b);
         float h = b[1] - a[1];
         float w = b[0] - a[0];
         float border = cfg_float("note_image_border");

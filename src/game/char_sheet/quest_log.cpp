@@ -40,15 +40,14 @@ void __fastcall Rec454::refresh()
 }
 
 // @ 0x4ee910   (parent, x, y, h, w)
-widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
+UiD* make_scroll_track(ContainerBase* parent, float x, float y, float h, float w)
 {
-    widget* mem = (widget*)operator new(0x188);
-    widget* self = mem ? (widget*)new (mem, raw_place()) UiD : 0;
+    UiD* self = new UiD;
     float pos[2];
     pos[0] = x;
     pos[1] = y;
-    self->set_pos(pos);
-    *(int*)((char*)self + 0x178) = 1;
+    self->move_a(pos);
+    self->f178 = 1;
     // the size is the unscaled (h, w); the scaled pair is the meshes' colour (0x4ee965..0x4ee998: [esp+0x10] = h,
     // [esp+0x14] = w; h * g_590b70, w * g_592758 and 1.0 into the vector at [esp+0x20], whose w is never set)
     float size[2];
@@ -59,7 +58,7 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
     col.y = w * 1.5576323f;
     col.z = 1.0f;
     self->set_size(size);
-    *(float*)((char*)self + 0x17c) = col.y * 0.31f;
+    self->f17c = col.y * 0.31f;
     // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix) into a temporary
     // tstring(const char*) (0x42bbe0), destroyed right after the clone
     mesh* m1 = res_manager().get_object((const rgl::string*)&tstring("scrollbar"))->clone();
@@ -70,27 +69,25 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
     // the original calls vtable slot 0x80 = MissionUi::set_track(int i, mesh* p) with *both* arguments
     // (0x4eea5e: push edi/push 0/ecx=esi; 0x4eea6b: push ebx/push 2), which is why a one-argument call through a
     // cdecl cast handed the object over as the index (fault at [esi + edi*4 + 0x108]).
-    self->add_item2(0, m1);         // vtable +0x80 (set_track), called through the vtable as the original does
-    self->add_item2(2, m2);
+    self->set_track(0, m1);         // vtable +0x80
+    self->set_track(2, m2);
     parent->add_child(self);
     return self;
 }
 
 // @ 0x4eea90   (parent, pos, size, d)
-widget* make_quest_list(widget* parent, const float* pos, const float* size, int d)
+Camera* make_quest_list(ContainerBase* parent, const float* pos, const float* size, UiD* track)
 {
-    widget* mem = (widget*)operator new(0x4a8);
-    Camera* cam = mem ? new (mem, raw_place()) Camera : 0;    // 0x49deb0
+    Camera* cam = new Camera;    // 0x49deb0
     cam->f104 |= 0x20;
-    if (d)
-        cam->follow[1] = (MissionUi*)d;
-    cam->target = (ContainerBase*)parent;      // the owner, also handed to add_child (vtable +0xc8)
-    widget* self = (widget*)cam;
-    self->add_child(parent);
-    self->set_pos(pos);
-    self->set_size(size);
-    ((MissionPanel*)self)->draw();   // 0x488d50
-    return self;
+    if (track)
+        cam->follow[1] = track;
+    cam->target = parent;      // the owner, also handed to add_child (vtable +0xc8)
+    cam->add_child(parent);
+    cam->move_a(pos);
+    cam->set_xy(size);
+    ((MissionPanel*)cam)->draw();   // 0x488d50
+    return cam;
 }
 
 // @ 0x4ee230
@@ -98,75 +95,70 @@ void Rec454::slot_empty_2()
 {
     ((gui_manager*)&orig::g_gui_mgr)->reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
-    widget* win = (widget*)::operator new(0x190);
-    if (win) {
-        ((ContainerW*)win)->construct();     // 0x4931a0
-        *(void**)win = (void*)vtbl_592848;      // 0x4ee268
-        *((char*)win + 0x188) = 0;           // 0x4ee26e
-    }
+    NodeA* win = new NodeA;                 // 0x4931a0, vptr 0x592848 (0x4ee268)
+    if (win)
+        win->f188 = 0;                      // 0x4ee26e
     window = win;
     float pos[2];
     pos[0] = 0.0f;
     pos[1] = 0.0f;
-    win->set_pos(pos);
+    win->move_a(pos);
     float size[2];
     size[0] = 1.0f;
     size[1] = 0.75f;
-    win->set_size(size);
+    win->set_xy(size);
     mesh* bgm;
     {
         tstring bg("quests_window");   // 0x598810 (no "ui_" prefix); destroyed right after the clone
         bgm = res_manager().get_object((const rgl::string*)&bg)->clone();
     }
-    win->add_item(0, bgm);
+    win->set_mesh(0, bgm);
     g_gui_dirty = 1;
     ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)win);   // 0x49b120
 
     // the two panels behind the tabs
-    widget* p1 = (widget*)::operator new(0x178);
-    panel1 = p1 ? (widget*)new (p1, raw_place()) MissionUi : 0;
+    panel1 = new MissionUi;
     pos[0] = 0.58f;
     pos[1] = 0.21875f;
-    panel1->set_pos(pos);
+    panel1->move_a(pos);
     size[0] = 0.39f;
     size[1] = 0.3f;
-    panel1->set_size(size);
+    panel1->set_xy(size);
     int flags = 0x101;
-    panel1->set_flags(&flags);
+    panel1->set148(&flags);
     float tint[2];
     tint[0] = 0.025f;
     tint[1] = 0.025f;
-    panel1->set_color(tint);
+    panel1->set_size(tint);
     win->add_child(panel1);
 
-    widget* p2 = (widget*)::operator new(0x178);
-    panel2 = p2 ? (widget*)new (p2, raw_place()) MissionUi : 0;
-    panel2->set_pos(pos);
-    panel2->set_size(size);
+    panel2 = new MissionUi;
+    panel2->move_a(pos);
+    panel2->set_xy(size);
     flags = 0x10;
-    panel2->set_flags(&flags);
-    panel2->set_color(tint);
+    panel2->set148(&flags);
+    panel2->set_size(tint);
     win->add_child(panel2);
 
     // the three texts
     {
         tstring key("ui_done");
-        done = (widget*)new_medium_button((MissionUi*)win, g_strtable.lookup(key), 0.7f, 0.09f, 0.04f);
+        done = new_medium_button(win, g_strtable.lookup(key), 0.7f, 0.09f, 0.04f);
     }
     {
         tstring key("ui_active_quests");
-        active_tab = (widget*)new_medium_button((MissionUi*)win, g_strtable.lookup(key), 0.1f, 0.04f, 0.04f);
+        active_tab = new_medium_button(win, g_strtable.lookup(key), 0.1f, 0.04f, 0.04f);
     }
     {
         tstring key("ui_finished_quests");
-        finished_tab = (widget*)new_medium_button((MissionUi*)win, g_strtable.lookup(key), 0.28f, 0.04f, 0.04f);
+        finished_tab = new_medium_button(win, g_strtable.lookup(key), 0.28f, 0.04f, 0.04f);
     }
-    *(int*)((char*)active_tab + 0x184) = 1;
-    *(int*)((char*)finished_tab + 0x184) = 1;
+    active_tab->set_flag();
+    finished_tab->set_flag();
     if (w04 == 0)
-        active_tab->set_focus(1);     // 0x4ee532: push 1; call [vtbl+0x2c]
+        active_tab->set15c(1);     // 0x4ee532: push 1; call [vtbl+0x2c]
     else
-        finished_tab->set_focus(1);
+        finished_tab->set15c(1);
     f250 = -1;
     refresh();
 
@@ -174,23 +166,15 @@ void Rec454::slot_empty_2()
     float h = (float)count * 0.04f + 0.09f;
     if (h < 0.56f)     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
         h = 0.56f;
-    widget* fr = (widget*)::operator new(0x188);
-    if (fr) {
-        fr = (widget*)new (fr, raw_place()) MissionUi;
-        *(void**)fr = (void*)vtbl_5924a0;
-        *(int*)((char*)fr + 0x17c) = 0;
-        *(int*)((char*)fr + 0x180) = 0;
-        *(int*)((char*)fr + 0x184) = 0;
-    }
-    frame = fr;
+    frame = new ContainerBase;                  // vptr 0x5924a0
     pos[0] = 0.0f;
     pos[1] = 0.0f;
-    frame->set_pos(pos);
+    frame->move_a(pos);
     float fsize[2];
     fsize[0] = 0.32f;
     fsize[1] = h;
-    frame->set_size(fsize);
-    frame->add_item(0, make_background((float*)((char*)frame + 0xf0), (int)0xff000000));
+    frame->set_xy(fsize);
+    frame->set_mesh(0, make_background(frame->screen, (int)0xff000000));
 
     // one row per listed quest
     h -= 0.05f;     // 0x4ee623: fsub [0x54b4d0] (0.05) before the loop
@@ -203,45 +187,37 @@ void Rec454::slot_empty_2()
         } else {
             mb_snprintf(buf, 0x200, "%s", text.buf ? text.buf : (char*)&text);
         }
-        widget* row = (widget*)::operator new(0x188);
-        if (row) {
-            row = (widget*)new (row, raw_place()) MissionUi;
-            *(int*)((char*)row + 0x178) = 0;
-            *((char*)row + 0x121) = 0;
-            *(void**)row = (void*)vtbl_591d58;
-            *((char*)row + 0x180) = 0;
-            *(int*)((char*)row + 0x184) = 0;
-        }
+        UiA* row = new UiA;                     // vptr 0x591d58
         rows[i] = row;
         float rp[2];
         rp[0] = 0.01f;
         rp[1] = h - (float)i * 0.04f;
-        row->set_pos(rp);
+        row->move_a(rp);
         float rs[2];
         rs[0] = 0.3f;
         rs[1] = 0.04f;
-        row->set_size(rs);
+        row->set_xy(rs);
         {
             // set_text(out, text): `out` is the hidden pointer of the 8-byte result (never initialised, 0x4ee750),
             // text is a temporary tstring built from the formatted buffer and destroyed right after the call
             char ret[8];
             tstring shown(buf);
-            row->set_text((tstring*)ret, &shown);
+            row->set_text((float*)ret, &shown);
         }
-        int a = -1;
-        row->set_value_a(&a);
+        unsigned a = 0xffffffff;
+        row->set_color(&a);
         int b = -3941;     // 0xfffff09b
-        row->set_value_b(&b);
+        row->set_target(&b);
         frame->add_child(row);
     }
-    widget* track = make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f);
+    UiD* track = make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f);
     float lpos[2];
     lpos[0] = 0.1f;     // 0x4ee7ea..: pos = [esp+0x4c] (0.1, 0.11), size = [esp+0x44] (0.32, 0.58)
     lpos[1] = 0.11f;
     float lsize[2];
     lsize[0] = 0.32f;
     lsize[1] = 0.58f;
-    list = make_quest_list(frame, lpos, lsize, (int)track);
+    list = make_quest_list(frame, lpos, lsize, track);
     window->add_child(list);
 }
 

@@ -67,21 +67,6 @@ struct gui_timer {                  // 16 bytes: clock index, value (gui_manager
     void rewind() { t = g_ticks[clock] - 100000; }   // inline: one second in the past
 };
 
-// The UI element base is src/game/widget.h (shared with char_sheet / inventory_panel). The container classes (elem 0x188, overlay
-// 0x190: ctor 0x4931a0 zeroes +0x17c..+0x184) add the child vector at +0x178; the base vtable's slots 35 / 36 (refresh_all 0x42cd60,
-// wheel_step 0x42ce50) and the input dispatch of this file work on it (this view was named `widget` here).
-#include "../widget.h"
-struct gui_window : widget {
-    std::vector<widget*> children;              // +0x178 (mouse_event, wheel_focus)
-    char wants_redraw;                          // +0x188 (handle_event 0x42d170; the vector is 0x10 bytes)
-
-    void wheel_step();                          // 0x42ce50
-    void wheel_focus();                         // 0x42cec0
-    char mouse_event(unsigned mask);            // 0x42cf50
-    char handle_event(unsigned mask);           // 0x42d170
-    char refresh_all(unsigned mask);            // 0x42cd60
-};
-
 // ---- the UI root object (0xb350 bytes; global instance not seen yet). Layout from reset (0x42d1b0), the
 // ctor 0x42d5c0 and the dtor 0x42d3e0. ----
 struct gui_obj {                    // polymorphic child object (deleted through vtable slot 0)

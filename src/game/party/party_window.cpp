@@ -92,93 +92,93 @@ void* PartyWindow::make_inventory_menu(int idx)
     label_refresh((MissionUi*)panel, tstring("inv_im_equipment_menu"));
     {
         Vec2 v(f_1 + panel->fE0, panel->fE4);
-        WOPS(panel)->set_pos(&v.x);
+        panel->move_a(&v.x);
     }
     {
         tstring e("");
         float out[2];
-        WOPS(panel)->set_text(out, &e);
+        panel->set_text(out, &e);
     }
 
     {
         MissionUi* w = new MissionUi;
         {
             Vec2 v(pos[4].x - 0.044f, pos[4].y + 0.095f);
-            WOPS(w)->set_pos(&v.x);
+            w->move_a(&v.x);
         }
         {
             Vec2 v(0.088f, 0.04f);
-            WOPS(w)->set_scale(&v.x);
+            w->set_xy(&v.x);
         }
         {
-            unsigned f = 0x10;          // the option flags (+0x148), an integer
-            WOPS(w)->set_flags(&f);
+            int f = 0x10;          // the option flags (+0x148)
+            w->set148(&f);
         }
         {
             float out[2];
-            WOPS(w)->set_text(out, lookup(tstring("ui_outfit")));
+            w->set_text(out, lookup(tstring("ui_outfit")));
         }
-        WOPS(panel)->add_child(w);
+        panel->add_child(w);
     }
     {
         MissionUi* w = new MissionUi;
         {
             Vec2 v(pos[0].x, pos[0].y + 0.095f);
-            WOPS(w)->set_pos(&v.x);
+            w->move_a(&v.x);
         }
         {
             Vec2 v(0.088f, 0.04f);
-            WOPS(w)->set_scale(&v.x);
+            w->set_xy(&v.x);
         }
         {
-            unsigned f = 0x10;          // the option flags (+0x148), an integer
-            WOPS(w)->set_flags(&f);
+            int f = 0x10;          // the option flags (+0x148)
+            w->set148(&f);
         }
         {
             float out[2];
-            WOPS(w)->set_text(out, lookup(tstring("ui_arms")));
+            w->set_text(out, lookup(tstring("ui_arms")));
         }
-        WOPS(panel)->add_child(w);
+        panel->add_child(w);
     }
     {
         MissionUi* w = new MissionUi;
         {
             Vec2 v(pos[8].x, pos[8].y + 0.095f);
-            WOPS(w)->set_pos(&v.x);
+            w->move_a(&v.x);
         }
         {
             Vec2 v(0.088f, 0.04f);
-            WOPS(w)->set_scale(&v.x);
+            w->set_xy(&v.x);
         }
         {
-            unsigned f = 0x10;          // the option flags (+0x148), an integer
-            WOPS(w)->set_flags(&f);
+            int f = 0x10;          // the option flags (+0x148)
+            w->set148(&f);
         }
         {
             float out[2];
-            WOPS(w)->set_text(out, lookup(tstring("ui_horse")));
+            w->set_text(out, lookup(tstring("ui_horse")));
         }
-        WOPS(panel)->add_child(w);
+        panel->add_child(w);
     }
     if (idx == 0 && g_module_settings.disable_food_slot == 0) {
         MissionUi* w = new MissionUi;
         {
             Vec2 v(pos[9].x, pos[9].y + 0.095f);
-            WOPS(w)->set_pos(&v.x);
+            w->move_a(&v.x);
         }
         {
             Vec2 v(0.088f, 0.04f);
-            WOPS(w)->set_scale(&v.x);
+            w->set_xy(&v.x);
         }
         {
-            unsigned f = 0x10;          // the option flags (+0x148), an integer
-            WOPS(w)->set_flags(&f);
+            int f = 0x10;          // the option flags (+0x148)
+            w->set148(&f);
         }
         {
             float out[2];
-            WOPS(w)->set_text(out, lookup(tstring("ui_food")));
+            w->set_text(out, lookup(tstring("ui_food")));
         }
-        WOPS(panel)->add_child(w);
+        panel->add_child(w);
     }
 
     int troop_idx = g_game_G->cur_troop;
@@ -192,16 +192,16 @@ void* PartyWindow::make_inventory_menu(int idx)
                 slot->b11c[0] = 0;
             {
                 Vec2 v(pos[i].x, pos[i].y);
-                WOPS(slot)->set_pos(&v.x);
+                slot->move_a(&v.x);
             }
-            WOPS(panels[idx])->add_child(slot);
+            panels[idx]->add_child(slot);
             row_state[idx][i] = 2;
         } else {
             row_slot[idx][9] = 0;
             row_state[idx][9] = 0;
         }
     }
-    WOPS(container)->add_child(panels[idx]);
+    container->add_child(panels[idx]);
     return 0;
 }
 
@@ -241,11 +241,11 @@ MissionUi* PartyWindow::make_slot(ItemRef* slot)
         float v[2];
         v[0] = 0.088f;
         v[1] = 0.088f;
-        WOPS(w)->set_scale(v);
+        w->set_xy(v);
     }
     {
         tstring n("inv_slot");
-        WOPS(w)->add_image_a(0, g_resmgr_party.get_object(&n)->clone());
+        w->set_mesh(0, g_resmgr_party.get_object(&n)->clone());
     }
     return w;
 }
@@ -264,7 +264,7 @@ char PartyWindow::refresh_event(unsigned mask)
 }
 
 // @ 0x502320
-void* PartyWindow::build_page(int page)
+PartyPanel* PartyWindow::build_page(int page)
 {
     Game* g = g_game_G;
     int t = g->cur_troop;
@@ -277,10 +277,10 @@ void* PartyWindow::build_page(int page)
         n = g->troops[t].inv_count();
     float h = (float)((n + 2) / 3) * 0.088f;
     PartyPanel* p = new PartyPanel;
-    { Vec2 v(0.0f, 0.0f); WOPS(p)->set_pos(&v.x); }
-    { Vec2 v(0.264f, h); WOPS(p)->set_scale(&v.x); }
+    { Vec2 v(0.0f, 0.0f); p->move_a(&v.x); }
+    { Vec2 v(0.264f, h); p->set_xy(&v.x); }
     int col = 0, row;
-    void** wp;
+    MissionUi** wp;
     int i = 0;
     if (i < n) {            // the original tests n before it sets row and the slot pointer (0x502402)
         row = 1;
@@ -289,29 +289,29 @@ void* PartyWindow::build_page(int page)
             MissionUi* w = make_slot(&INV(t, i));
             Vec2 v((float)col * 0.088f, h - (float)row * 0.088f);
             *wp = w;
-            WOPS(w)->set_pos(&v.x);
+            w->move_a(&v.x);
             col++; if (col >= 3) { col = 0; row++; }
-            WOPS(p)->add_child(*wp);
-            wp[0xc0] = (void*)2; wp[0x180] = (void*)0x12fd1;
+            p->add_child(*wp);
+            flags[page][i] = 2; aux[page][i] = 0x12fd1;
         }
     }
     return p;
 }
 
 // @ 0x5024e0
-void PartyWindow::add_strip_icon(char* slot, const tstring& name, int troop, int kind)
+void PartyWindow::add_strip_icon(StripIcon** slot, const tstring& name, int troop, int kind)
 {
     int sel = g_equip_page;
     if (sel < 0)
         return;
-    if (*(void**)slot == 0) {
-        *(void**)slot = new StripIcon;
-        label_refresh(*(MissionUi**)slot, name);
-        WOPS(container)->add_child(*(void**)slot);
+    if (*slot == 0) {
+        *slot = new StripIcon;
+        label_refresh(*slot, name);
+        container->add_child(*slot);
     }
-    WOPS(*(void**)slot)->add_image(0, 0);
+    (*slot)->set_track(0, 0);
     int idx = *(volatile int*)&kind + troop * 4;
-    WOPS(*(void**)slot)->add_image(0, g_tableaus.make_mesh_from(&sel, &idx));
+    (*slot)->set_track(0, g_tableaus.make_mesh_from(&sel, &idx));
 }
 
 // @ 0x5025a0
@@ -327,7 +327,7 @@ void PartyWindow::init_window()
 }
 
 // @ 0x502620
-void PartyWindow::refresh_armor(void** labels, int t)
+void PartyWindow::refresh_armor(MissionUi** labels, int t)
 {
     int head = 0, body = 0;
     float enc = 0.0f;
@@ -360,7 +360,7 @@ void PartyWindow::refresh_armor(void** labels, int t)
     {
         tstring s(buf);
         float out[2];
-        WOPS(labels[0])->set_text(out, &s);
+        labels[0]->set_text(out, &s);
     }
     {
         sprintf(buf, lookup(tstring("ui_body_armor"))->c_str(), body);
@@ -368,7 +368,7 @@ void PartyWindow::refresh_armor(void** labels, int t)
     {
         tstring s(buf);
         float out[2];
-        WOPS(labels[1])->set_text(out, &s);
+        labels[1]->set_text(out, &s);
     }
     {
         sprintf(buf, lookup(tstring("ui_leg_armor"))->c_str(), legs);
@@ -376,7 +376,7 @@ void PartyWindow::refresh_armor(void** labels, int t)
     {
         tstring s(buf);
         float out[2];
-        WOPS(labels[2])->set_text(out, &s);
+        labels[2]->set_text(out, &s);
     }
     {
         sprintf(buf, lookup(tstring("ui_encumbrance"))->c_str(), enc);
@@ -384,7 +384,7 @@ void PartyWindow::refresh_armor(void** labels, int t)
     {
         tstring s(buf);
         float out[2];
-        WOPS(labels[3])->set_text(out, &s);
+        labels[3]->set_text(out, &s);
     }
 }
 
@@ -426,7 +426,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
         ResMesh* m = make_mesh(item, (float*)&sc, t);
         rgl::vector4 off(0.044f, 0.044f, 0.0f);
         ((rgl::mesh*)m)->translate(&off);        // ResMesh is the view of rgl::mesh (rgl/mesh.h)
-        WOPS(w)->add_image(2, m);
+        w->set_track(2, m);
         w->b11c[2] = 1;
         if (flag != 0 && idx < 9)
             w->b11c[0] = 1;
@@ -434,11 +434,11 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
     state[idx] &= ~2u;
     if (icon_a84 != 0 && flag != 0) {
         tstring n("inv_i_character");
-        add_strip_icon((char*)&icon_a84, n, g_game_G->cur_troop, spec_ac0);
+        add_strip_icon(&icon_a84, n, g_game_G->cur_troop, spec_ac0);
     }
     if (icon_a88 != 0 && flag != 0) {
         tstring n("inv_i_character2");
-        add_strip_icon((char*)&icon_a88, n, troop, spec_ac4);
+        add_strip_icon(&icon_a88, n, troop, spec_ac4);
     }
 }
 

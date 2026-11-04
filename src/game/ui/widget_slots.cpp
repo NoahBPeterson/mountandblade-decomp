@@ -28,14 +28,14 @@ bool MissionUi::is_active() { return false; }
 void MissionUi::on_child_moved(MissionUi* src) { (void)src; }
 void MissionUi::on_moved() {}
 void MissionUi::on_track_set(void* a) { (void)a; }
-// The original's slot holds 0x42cd60, gui_window::refresh_all (strat/gui_manager.cpp): the same body, folded by /OPT:ICF
+// 0x42cd60 (the slot the base and every widget that does not override it holds)
 char MissionUi::key(unsigned mask)
 {
     set_key_flags(mask);
     refresh();
     return 0;
 }
-// The original's slot holds 0x42ce50, gui_window::wheel_step: the same body, folded by /OPT:ICF
+// 0x42ce50
 void MissionUi::refresh()
 {
     if (fCC & fD0) {
@@ -57,10 +57,10 @@ int MissionUi::kind() { return 0; }
 // ---- UiD, vtable 0x592140 ------------------------------------------------------------------------------------
 
 // ---- ContainerBase, vtable 0x5924a0, and NodeA, vtable 0x592848 ----------------------------------------------
-// The container's key and refresh are copies of gui_window::mouse_event 0x42cf50 / wheel_focus 0x42cec0 (strat/gui_manager.cpp,
-// where the slices wrote them over the widget view); NodeA's key is gui_window::handle_event 0x42d170. The original's
-// slots hold those functions; our /OPT:ICF trial link folds the copies with them.
+// The container's key and refresh are 0x42cf50 and 0x42cec0, NodeA's key is 0x42d170 (the slices wrote them as gui_window::mouse_event /
+// wheel_focus / handle_event over a widget view; gui_window and its widget base are gone, these are the one definition).
 
+// @ 0x42cf50
 char ContainerBase::key(unsigned mask)
 {
     char r = 0;
@@ -104,18 +104,16 @@ char ContainerBase::key(unsigned mask)
 
 void ContainerBase::refresh()
 {
-#define FOCUS ((MissionUi*)f158)          // re-read at each use, as the member it is
-    if ((fCC & fD0) && (fD4 & 4) && FOCUS) {
+    if ((fCC & fD0) && (fD4 & 4) && f158) {
         unsigned top = (unsigned)-1;
         for (unsigned i = 0; i < kids.size(); i++) {
             if (kids[i]->test_c8(0x10000))
                 top = i;
         }
         if ((int)top >= 0)
-            FOCUS->set15c(top);
-        FOCUS->key(0x10000);
+            ((MissionUi*)f158)->set15c(top);
+        ((MissionUi*)f158)->key(0x10000);
     }
-#undef FOCUS
     MissionUi::refresh();
 }
 

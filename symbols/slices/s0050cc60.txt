@@ -1,7 +1,7 @@
 # slice s0050cc60 (batch ds1, entry 407) - editor helpers and five members of the engine's vector template.
 # The engine vector is VC7.1 std::vector with a stateful allocator, so the three pointers sit at +4/+8/+0xc
 # behind the allocator dword at +0.  Status column is the current chk/run_all verdict for the VA.
-0050cc60 ?flag1@widget@@QBEIXZ  # widget::flag1 (MATCH) - reads the +0x11c flag dword
+0050cc60 ?flag1@MissionUi@@QBEIXZ  # widget::flag1 (MATCH) - reads the +0x11c flag dword
 0050cc70 ?sort_list@@YGXPAUsel_list@@H@Z  # sort_list (nonmatching, 944 diff) - index-list sorter over a sel_list's (key,index) pairs
 0050d0b0 ??0text_box@@QAE@XZ  # text_box ctor (MATCH) - vtable 0x597050, base widget ctor 0x48ae20
 0050d0e0 ?add@sel_list@@QAEXH@Z  # sel_list::add (nonmatching, 4 diff) - appends one index
