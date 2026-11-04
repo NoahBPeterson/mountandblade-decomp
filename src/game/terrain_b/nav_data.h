@@ -33,7 +33,7 @@ struct NavData {                // 0x68 bytes
     NavData();                  // 0x478150 (same constructor as NavCore's, ICF-folded)
     ~NavData();                 // 0x41f5d0 (game/entity.cpp)
     // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----
-    bool shares(const int* a, const int* b);    // 0x48efa0 (other object)
+    int shares(const int& a, const int& b) const;   // 0x48efa0 (game/mission_ui2/mission_4.cpp, ret 8: do the cells a and b name a common rider; cells[i].ids[0x11..0x13] are its id / pair, the arguments are cell indices)
     bool can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max);   // 0x4b3420 (ret 0x1c)
     void reset();                               // 0x4b33c0 (new search generation: m64)
     bool find_path(int from, int to, int* path, float* detail, int* count, int* visited, int* guard,

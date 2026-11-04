@@ -94,17 +94,7 @@ struct EntVt {                                                  // vtable view o
 inline int& troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }   // +0x54 second upgrade troop (0x494e40)
 
 // ---- the game object (include/game_data.h GameData) -----------------------------------------------------------------
-// mission_4's RiderTable::shares (0x48efa0) is what the level object's face-sharing check calls
-struct RiderTable { int shares(const int& a, const int& b) const; };
-struct LevelObj {                                               // g_level->obj (CellGrid +0xb0)
-    char pad0[0x14];
-    char* kinds;                                                // +0x14 0x88-byte face records (+0x24: surface kind)
-    char pad18[0xb0 - 0x18];
-};
-struct LevelRef {
-    char pad0[0xb0];
-    LevelObj* obj;                                              // +0xb0 (0x490030)
-};
+// (the level object's face-sharing check is NavData::shares 0x48efa0, terrain_b/nav_data.h)
 struct FaceId {
     int m0;
     int m4;                                                     // +4 face index (-1: none)

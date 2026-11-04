@@ -10,21 +10,11 @@
 #include "../ui/mission_ui.h"
 #include "../../include/frustum.h"
 #include "./field_panel.h"
+#include "../terrain_b/nav_data.h"        // NavData::shares 0x48efa0 (the cells of the ground / nav data)
 
 // ---- 0x48ef40: the container widget's release is ContainerBase::update_children (ui/container.h) ----------------
 
-// ---- 0x48efa0: the rider rows (0x88 bytes each) of an object ---------------------------------------------------------------
-struct RiderRow {
-    char pad0[0x48];
-    int id;                                 // +0x48 the rider's id, or 0x5f5e0ff when the row is a pair
-    int a;                                  // +0x4c
-    int b;                                  // +0x50
-};
-struct RiderTable {
-    char pad0[0x14];
-    RiderRow* rows;                         // +0x14 array of 0x88-byte rows
-    int shares(const int& a, const int& b) const;   // 0x48efa0 (ret 8: do the two rows name a common rider; the arguments are row indices)
-};
+// ---- 0x48efa0: NavData::shares (terrain_b/nav_data.h) ----
 
 // ---- 0x48f450..0x48f5a0: the tableau on top of the stack of tableaus being rendered (TableauTbl::worlds, include/tableau_table.h) ----------
 struct TabCurrent {                         // the tableau on top of the stack

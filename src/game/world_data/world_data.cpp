@@ -72,7 +72,7 @@ void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
             FaceId* g = (FaceId*)find_at(&out->x);
             if (g != 0) {
                 gi = g->m4;
-                ok = ((RiderTable*)((LevelRef*)g_script.level)->obj)->shares(first, gi) != 0;
+                ok = g_script.level->ground->shares(first, gi) != 0;
             }
         }
     }
@@ -97,7 +97,7 @@ char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
         FaceId* f = (FaceId*)find_at(&out->x);
         if (f == 0)
             continue;
-        int kind = *(int*)(((LevelRef*)g_script.level)->obj->kinds + f->m4 * 0x88 + 0x24);
+        int kind = g_script.level->ground->cells[f->m4].ids[8];
         int low = kind & 7;
         if (any)
             ok = low == 0 || kind == 7;

@@ -46,21 +46,21 @@ void ContainerBase::update_children()
 }
 
 // @ 0x48efa0
-int RiderTable::shares(const int& a, const int& b) const
+int NavData::shares(const int& a, const int& b) const
 {
-    const RiderRow* ra = (const RiderRow*)(a * 0x88 + (int)rows);
-    int ai = ra->id;
+    const NavCell* ra = &cells[a];
+    int ai = ra->ids[0x11];
     int aj = -1;
     if (ai == 0x5f5e0ff) {
-        ai = ra->a;
-        aj = ra->b;
+        ai = ra->ids[0x12];
+        aj = ra->ids[0x13];
     }
-    const RiderRow* rb = (const RiderRow*)(b * 0x88 + (int)rows);
-    int bi = rb->id;
+    const NavCell* rb = &cells[b];
+    int bi = rb->ids[0x11];
     int bj = -2;
     if (bi == 0x5f5e0ff) {
-        int t = rb->b;
-        bi = rb->a;
+        int t = rb->ids[0x13];
+        bi = rb->ids[0x12];
         if (t >= 0)
             bj = t;
     }

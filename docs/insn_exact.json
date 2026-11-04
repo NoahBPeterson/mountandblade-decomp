@@ -4024,7 +4024,7 @@
   },
   "0048efa0": {
    "verdict": "DIFF",
-   "symbol": "?shares@RiderTable@@QBEHABH0@Z",
+   "symbol": "?shares@NavData@@QBEHABH0@Z",
    "insns": 46,
    "ours": 44,
    "unverified": 0,

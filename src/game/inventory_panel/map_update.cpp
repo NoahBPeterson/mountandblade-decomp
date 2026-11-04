@@ -93,9 +93,6 @@ struct camera_ray {
 struct MapPickScreen {
     void set_label(int id);   // 0x51a420 (inventory_panel/map_picker.cpp): the map panel's label owner
 };
-struct RiderTable {
-    int shares(const int& from, const int& to) const;   // 0x48efa0 (game/mission4)
-};
 
 static inline Party* party_at(GameData* g, int id)
 {
@@ -356,7 +353,7 @@ void MapPanel::update_target()
             bool go = true;
             if (g_keyboard.down[0x1d] && g_cfg.cheat_mode) {
                 *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
-            } else if (!((RiderTable*)g_script.level->ground)->shares(rec_index,
+            } else if (!g_script.level->ground->shares(rec_index,
                                                *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
                 go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
             }

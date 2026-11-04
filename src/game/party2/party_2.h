@@ -72,9 +72,6 @@ struct vec2x {
 struct mesh_node {
     void set_time(const float* t);   // 0x433190 (rgl/xmlcfg/game_util.cpp, ret 4)
 };
-struct RiderTable {
-    int shares(const int& a, const int& b) const;   // 0x48efa0 (mission_ui2/mission_4.cpp, ret 8)
-};
 #include "../../rgl/scene/world.h"          // rgl::world: step 0x427f40, render_scene 0x429890, remove_entity 0x41f0d0, create_entity 0x428440, reset 0x421390, ground (NavData)
 struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party / agent / scene pools, ret 4)
