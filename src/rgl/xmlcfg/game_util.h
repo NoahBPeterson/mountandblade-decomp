@@ -100,7 +100,7 @@ struct mesh_node {
 bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0
 
 // ---- message ring, height field, scene object ---------------------------------------------------------------------
-#include "../../include/msg_log.h"             // MsgLog (one definition for src/game and src/rgl; push 0x4334b0 is defined in game_util.cpp)
+#include "../../game/strat/gui_manager.h"             // gui_manager (push 0x4334b0 is defined in game_util.cpp)
 struct Obj3 {                               // scene object with a placement block
     char pad0[0xe8];
     unsigned flags;                         // +0xe8 (bit 0: pending, bit 1: timed)

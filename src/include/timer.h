@@ -6,7 +6,7 @@
 //   restart     0x432bf0: start = clock tick
 //   elapsed     0x432c10: (float)(ticks[clock] - start) * 1e-5f  (callers inline the arithmetic; the callable
 //                         copy is the out-of-line function of game_util.cpp)
-//   set_delay   0x42cd20 (ret 4), defined in src/game/strat/gui_manager.cpp as gui_timer::set_delay
+//   set_delay   0x42cd20 (ret 4), defined in src/game/strat/gui_manager.cpp
 // Not merged: terrain_b/agent_rec.h's Timer16 keeps the start tick as two dwords on purpose (the agent's view
 // sub-object is 0x5374 bytes long, so its timers are only 4-byte aligned; an __int64 member would pad them).
 #ifndef MB_TIMER_H

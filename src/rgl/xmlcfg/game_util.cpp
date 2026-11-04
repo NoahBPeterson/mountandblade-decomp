@@ -24,7 +24,7 @@
 #include "../../game/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../game/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../game/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/msg_log.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../game/strat/gui_manager.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../game/channel.h"      // (Channel: the 0xd8-byte animation record whose busy() 0x433840 ends this object)
 #include "../../game/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -419,12 +419,6 @@ int AgentX::agent_class() const
     return r;
 }
 
-namespace rgl {
-struct keyframes;
-struct mesh {
-    keyframes& get_kf();   // 0x40ec00
-};
-}
 // @ 0x433190
 void mesh_node::set_time(const float* t)
 {
@@ -487,7 +481,7 @@ float face::plane_z(const float* p) const
 composite::composite(const composite& o) : shape_base(inline_init()) { ((composite*)this)->copy_from(&o); }
 
 // @ 0x4334b0
-void MsgLog::push(const tstring& s, int v)
+void gui_manager::push(const tstring& s, int v)
 {
     if (enabled && ring.count < 32) {
         int idx = (ring.head + ring.count) % 32;

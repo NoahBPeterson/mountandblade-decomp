@@ -57,11 +57,9 @@ struct HeroEntry {
 struct SkillRows { MissionUi* w[5]; };
 
 // ---- world / UI services -----------------------------------------------------------------------------
-#include "../../include/msg_log.h"
-extern MsgLog g_msglog;                             // 0x5d7080
+#include "../strat/gui_manager.h"
 #include "../window_mgr.h"                         // g_windows (0xa73980)
 #include "../key_names.h"      // g_keyboard (0xa170c8)
-extern int g_world_time;                            // 0x5d8790 (compared as an int)
 #include "../ui_globals.h"      // UI / core globals
 #include "../trial_mode.h"
 

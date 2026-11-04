@@ -6,15 +6,6 @@
 #include "./mission_ui.h"
 #include "../../rgl/rgl_math.h"
 
-struct UiSoundHost {                           // the sound object used by the UI (global 0x5d7080)
-    char pad[0x170c];
-    int handle;                             // +0x170c the UI click sample    0x48b2d0
-};
-extern UiSoundHost g_ui_sound;                    // 0x5d7080
-void __fastcall play_sound(UiSoundHost* m);    // 0x48b2d0 (FSOUND_PlaySoundEx + volume from g_master_volume)
-extern float g_ui_target[2];                // 0x5d7094 slider target positions   0x48b5a0
-extern void* g_ui_active;                   // 0x5d7090 widget being dragged       0x48b5a0
-
 struct UiABase : MissionUi {                // the first half of the toggle button's constructor 0x48b1c0
     int f178;                               // +0x178 the state the render picks (0x48b320)
     float f17c;                             // +0x17c

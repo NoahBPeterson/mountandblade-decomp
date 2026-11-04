@@ -45,7 +45,6 @@ using rgl::matrix;
 // The linker folds identical bodies and the modules that define them name the class after another of their users; a call binds to the
 // defining declaration's symbol, so these are declared as that definition has them and the object is cast at the call. Each says why.
 struct NodeA;
-struct NodeVec { void push_back(NodeA* const& n); };               // 0x49b120 (widget_node.cpp): g_gui's "make this window the active root"; takes the address of a pointer to the window
 struct BlockOwner { void init(struct ContainerBase* c, int id); }; // 0x4dd920 (cls_map.cpp): MenuLayout::build
 #include "../mesh_slot/mesh_build.h"        // setup_item_meshes (0x47cfe0)
 // vec<mface>::clear 0x41f4b0 (entity.cpp; vec of rgl/mesh.h: the vector release shared by every record vector) is called out of line, through its member pointer
@@ -75,11 +74,9 @@ void __cdecl build_appearance(AgentBody* b, int kind, int troop, int f94, ItemRe
 // 0x47cfe0 is setup_item_meshes (below): the equipment bodies
 
 // ---- globals and engine objects the HUD code uses ---------------------------------------------------------------------
-#include "../gui_mgr.h"                                         // GuiManager: the gui manager at 0x5d7080
+#include "../strat/gui_manager.h"                                         // gui_manager: g_gui (0x5d7080)
 #include "../../include/render_flags.h"
 #include "../ui_globals.h"      // UI / core globals
-extern GuiManager g_gui;                                              // 0x5d7080
-extern char g_hud_flag;                                           // 0x5e212c (set to 1 by 0x4f7f00)
 extern char g_scene_dirty;                                          // 0x5e2938 (set with 5% probability by 0x4f7f00)
 extern int g_pending_action;                                            // 0x5a9f18 (set to -1)
 
@@ -111,8 +108,6 @@ static __forceinline Agent* agent_by_id(unsigned id)
 #include "../game_keys.h"                                      // GameKeys g_game_keys (0xa73730)
 
 
-extern float g_screen_a;                                          // 0x5d75dc
-extern float g_screen_b;                                          // 0x5d75d8
 float __cdecl fmax_ref(const float* a, const float* b);           // 0x4324d0 (the larger of the two)
 #include "../ui/ui_widgets.h"                                  // UiD
 #include "../party2/camera_class.h"                             // Camera (the list widget)

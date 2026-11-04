@@ -19,7 +19,7 @@
 #include "../agent/agent.h"
 #include "./script_opcodes.h"
 #include "../../include/vec.h"                  // Vec2
-#include "../../include/msg_log.h"             // MsgLog: the on-screen message log (add 0x452c00, push 0x4334b0)
+#include "../strat/gui_manager.h"             // MsgLog: the on-screen message log (add 0x452c00, push 0x4334b0)
 #include "../../include/sound_mgr.h"           // SoundMgr: play 0x442650
 #include "../ui_globals.h"      // UI / core globals
 
@@ -119,7 +119,6 @@ struct WidgetMgrW : widget_mgr {                                             // 
     int create_mesh_overlay_with_tableau(int a, int b, float c);            // 0x4996e0
     int create_slider_overlay(int vmin, int vmax);                          // 0x495970
 };
-namespace c49b630 { struct HudRoot { void set_font_mesh(const tstring* text, int color); }; }   // 0x49b630
 namespace c49bea0 { struct Mission { void check_slot(int id, unsigned bits); }; }   // 0x49c170
 namespace c49c2c0 { struct Mission { void order(int team, int order); }; }   // 0x49c2c0
 namespace c49e780 {
@@ -154,7 +153,6 @@ extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
 
 // ---- message log and text log (report 0x49cc60) -----------------------------------------------------------------
 // the message log object (MsgLog, src/include/msg_log.h)
-extern MsgLog g_msglog;                // 0x5d7080
 
 // ---- conversations and the window manager -------------------------------------------------------------------------
 #include "../dialog_mgr.h"                  // DialogMgr g_dialogs (0x8ed50c8)

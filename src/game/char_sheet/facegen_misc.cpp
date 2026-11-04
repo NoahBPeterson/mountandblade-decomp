@@ -5,7 +5,7 @@
 #include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../game_globals.h"      // g_limit_hair_colors, g_module_name ... (canonical global declarations)
 #include "../../rgl/stream.h"      // text_stream g_debug_log (0x5a9f30): its buf (+0x20 = 0x5a9f50) is the status text the save/load screen draws
-#include "../../include/msg_log.h"      // MsgLog::build_scene 0x4e6050 (listed directly: the resolution audit reads only the source's own includes)
+#include "../strat/gui_manager.h"      // MsgLog::build_scene 0x4e6050 (listed directly: the resolution audit reads only the source's own includes)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -183,20 +183,20 @@ HRESULT GameApp::Render()
 
     Viewport vp;
     vp.x = 0; vp.y = 0;
-    vp.w = g_screen_w; vp.h = g_screen_h;
+    vp.w = g_gui.screen_w; vp.h = g_gui.screen_h;
     vp.minz = 0.0f; vp.maxz = 1.0f;
     g_render.dev->SetViewport((D3DVIEWPORT9*)&vp);
 
     m_pd3dDevice->Clear(0, 0, 2, 0x302010, 1.0f, 0);
 
-    g_msglog.build_scene();
+    g_gui.build_scene();
     g_batch.render(0);   // 0x47e520
 
     if (g_cfg.show_framerate != 0) {
         if (m_pd3dDevice->BeginScene() >= 0) {
             Viewport vp2;
             vp2.x = 0; vp2.y = 0;
-            vp2.w = g_screen_w; vp2.h = g_screen_h;
+            vp2.w = g_gui.screen_w; vp2.h = g_gui.screen_h;
             vp2.minz = 0.0f; vp2.maxz = 1.0f;
             g_render.dev->SetViewport((D3DVIEWPORT9*)&vp2);
 
@@ -205,7 +205,7 @@ HRESULT GameApp::Render()
             if (g_cfg.debug_mode != 0 || g_cfg.enable_edit_mode != 0) {
                 Viewport vp3;
                 vp3.x = 0; vp3.y = 0;
-                vp3.w = g_screen_w; vp3.h = g_screen_h;
+                vp3.w = g_gui.screen_w; vp3.h = g_gui.screen_h;
                 vp3.minz = 0.0f; vp3.maxz = 1.0f;
                 g_render.dev->SetViewport((D3DVIEWPORT9*)&vp3);
 
@@ -286,5 +286,5 @@ void __cdecl menu_variables_loaded(char flag)
         return;
     int value = current_screen_id();
     g_windows.set_state(value);
-    g_msglog.add("Menu variables are loaded...", 0xffff0000);
+    g_gui.add("Menu variables are loaded...", 0xffff0000);
 }

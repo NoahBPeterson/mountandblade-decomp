@@ -26,6 +26,7 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 __forceinline bin_writer::bin_writer() {}   // inline here (resmgr.cpp load_pack calls the out-of-line 0x417c10)
 #include "../../rgl/mesh.h"
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 #include "../conv_screen.h"      // Rec1208 (ConvScreen): the conversation screen record, whose slot 3 is handle_event 0x525160
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
@@ -43,8 +44,6 @@ extern const float g_aim_range_tbl[14] = {-0.5f, 3.1415927f, -2.0f, 2.0f, -1.5f,
 #include "../ui_globals.h"      // UI / core globals
 
 // ======================================================= slice s00525160: functions
-#undef g_mgr
-#define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
 #undef g_513710
 #define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #undef g_big
@@ -54,9 +53,9 @@ extern const float g_aim_range_tbl[14] = {-0.5f, 3.1415927f, -2.0f, 2.0f, -1.5f,
 // @ 0x525160
 void Rec1208::frame_update(float code_f)
 {
-    g_mgr.update();
+    g_gui.flush();
 
-    if (g_mission_clock != 0)
+    if (g_gui.wheel != 0)
     {
         // camera/sky interpolation over the current site's passage table
         char* o = *(char**)(((char*)(void*)question) + 0x484);
@@ -64,7 +63,7 @@ void Rec1208::frame_update(float code_f)
         float v = (*(float*)(o + 0x168) - *(float*)(o + 0x16c))
                 / (*(float*)(o + 0x170) - *(float*)(o + 0x16c))
                 * (*pa - *(float*)(o + 0x17c))
-                + ((float)g_mission_clock / *pa * *(float*)(o + 0x17c))
+                + ((float)g_gui.wheel / *pa * *(float*)(o + 0x17c))
                   * 0.0005f;
         ((UiD*)o)->set_value(v);   // 0x48baa0: UiD::set_value, this = the object o (ecx is still o at the call)
         ((VObj_s25160*)o)->v18(0x10000);
@@ -73,9 +72,9 @@ void Rec1208::frame_update(float code_f)
     char* b = *(char**)&g_game;
     if (speaker_id == *(int*)(b + 0x8c) || *(int*)(b + 0x1a23c) == 0)
         goto hide;
-    if (!(((gui_manager*)g_gui)->mouse[0] < *(float*)(((char*)(void*)window) + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
+    if (!(g_gui.mouse[0] < *(float*)(((char*)(void*)window) + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
         goto hide;
-    if (!(*(float*)(((char*)(void*)window) + 0xe4) + 0.1f < ((gui_manager*)g_gui)->mouse[1]))
+    if (!(*(float*)(((char*)(void*)window) + 0xe4) + 0.1f < g_gui.mouse[1]))
         goto hide;
     {
         ((VObj_s25160*)(void*)msg_window)->v45();
@@ -438,8 +437,6 @@ int find_listener_agent()
 // ======================================================= slice s005261e0: functions
 #undef g_strtable_s261e0
 #define g_strtable_s261e0 g_strtable
-#undef g_gui_s261e0
-#define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
 #undef g_keyready_s261e0
 #define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
 #undef g_mission_s261e0
@@ -513,7 +510,7 @@ void MissionBlocker::frame_update(float dt)
         update_marks();
     }
     update_camera(sdt);
-    g_gui_s261e0.flush();
+    g_gui.flush();
 
     // ---- no-camera position save -------------------------------------------------------------------
     if (g_cfg.enable_edit_mode && (((int*)((char*)&g_keyboard + 0xc))[29] || ((int*)((char*)&g_keyboard + 0xc))[157]) && ((int*)((char*)&g_keyboard + 0xc))[18] && !((int*)((char*)&g_keyboard + 0x40c))[18]) {
@@ -699,14 +696,14 @@ void MissionBlocker::frame_update(float dt)
                 ap = (int*)((char*)ap + 0x6c);
             }
             if (all) {
-                g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_everyone_hear_me")), 0xffddee88);
+                g_gui.add(*g_strtable.lookup(tstring("ui_everyone_hear_me")), 0xffddee88);
             } else {
                 char label[512];
                 ((LabelSub_s261e0*)base)->make_label(label);
                 const char* fmt = g_strtable.lookup(tstring("ui_str_hear_me"))->c_str();
                 char buf[512];
                 sprintf(buf, fmt, label, buf);
-                g_gui_s261e0.add(tstring(buf), 0xffddee88);
+                g_gui.add(tstring(buf), 0xffddee88);
             }
         }
     }
@@ -722,11 +719,11 @@ void MissionBlocker::frame_update(float dt)
                 stamp_b = g_ticks[clock_b];
             }
             if (f2c8 == -1) {
-                g_gui_s261e0.set_o568(0, 1);
+                g_gui.set_overlay(0, 1);
                 float v[2];
                 v[0] = 0.5f;
                 v[1] = 0.5f;
-                g_gui_s261e0.set_view(v);
+                g_gui.set_view(v);
             }
         }
     }
@@ -846,7 +843,7 @@ void MissionBlocker::frame_update(float dt)
                         (int)&f2dc);
                     g_windows.open(0);
                 } else {
-                    g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_cant_retreat_there_are_enemies_nearby")),
+                    g_gui.add(*g_strtable.lookup(tstring("ui_cant_retreat_there_are_enemies_nearby")),
                               0xffff3344);
                 }
             }
@@ -866,7 +863,7 @@ void MissionBlocker::frame_update(float dt)
         if ((flags44 & 1) == 0) {
             if (g_render.dev != 0)
                 ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 1);
-            (*(unsigned char*)((char*)&g_gui + 0x560)) = 1;
+            g_gui.show_cursor = 1;
         }
     }
     if (g_presentation != 0) {
@@ -882,7 +879,7 @@ void MissionBlocker::frame_update(float dt)
             ((SrcVtbl_s261e0*)f5c)->v49();
             if (g_render.dev != 0)
                 ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 0);
-            (*(unsigned char*)((char*)&g_gui + 0x560)) = 0;
+            g_gui.show_cursor = 0;
             f324 = -1;
         }
     }
@@ -975,7 +972,7 @@ void MissionBlocker::frame_update(float dt)
             if (!g_mission_s261e0->mode_flag1() && g_game_s261e0->b18 == 0) {
                 quick_save_msg();
             } else {
-                g_gui_s261e0.add(*g_strtable.lookup(tstring("ui_cant_quick_save")), 0xffffffff);
+                g_gui.add(*g_strtable.lookup(tstring("ui_cant_quick_save")), 0xffffffff);
             }
             goto after;
         }
@@ -1335,13 +1332,13 @@ void ViewCtrl_s284a0::update(float dt)
     } else {
         look_x = 0.0f;
         look_y = 0.0f;
-        if ((*(float*)((char*)&g_gui + 0x14)) <= 0.01f)
+        if (g_gui.mouse[0] <= 0.01f)
             look_x = dt * -400.0f;
-        else if ((*(float*)((char*)&g_gui + 0x14)) >= 0.99f)
+        else if (g_gui.mouse[0] >= 0.99f)
             look_x = dt * 400.0f;
-        if ((*(float*)((char*)&g_gui + 0x18)) <= 0.01f)
+        if (g_gui.mouse[1] <= 0.01f)
             look_y = dt * 400.0f;
-        if ((*(float*)((char*)&g_gui + 0x18)) >= 0.74f)
+        if (g_gui.mouse[1] >= 0.74f)
             look_y = dt * -400.0f;
     }
 
@@ -1841,8 +1838,6 @@ void Mission_s29840::fn_529d80()
 }
 
 // ======================================================= slice s00529ec0: functions
-#undef g_gui_s29ec0
-#define g_gui_s29ec0 (*(gui_manager_s29ec0*)g_gui)
 #undef g_strtable_s29ec0
 #define g_strtable_s29ec0 g_strtable
 #undef g_items_s29ec0
@@ -1857,8 +1852,6 @@ void Mission_s29840::fn_529d80()
 #define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
 #undef g_areas_s29ec0
 #define g_areas_s29ec0 (*(Area_s29ec0**)&g_mission_templates)
-#undef g_panel_s29ec0
-#define g_panel_s29ec0 (*(hud_panel_s29ec0**)&(*(void**)((char*)&g_gui + 0x568)))
 // the length the original inlines in this function: x*x + z*z + y*y (0x52a2af, 0x52a337, 0x52a786)
 static inline float len_xzy_s29ec0(const vector4& v)
 {
@@ -2089,21 +2082,21 @@ no_selection:
     int color = -1;
     tstring action;
 
-    if (g_panel_s29ec0)
-        g_panel_s29ec0->reset(1);
-    (*(int*)((char*)&g_gui + 0x16e0)) = -1;
-    (*(int*)((char*)&g_gui + 0x16e4)) = 0xff101010;
+    if (g_gui.overlay)
+        delete g_gui.overlay;
+    g_gui.panel_color = -1;
+    g_gui.panel_bg = 0xff101010;
     for (int i = 0; i < 80; i++)
-        ((tstring*)((char*)&g_gui + 0x7d0))[i].assign("");
-    (*(int*)((char*)&g_gui + 0xfa4)) = 0;
-    (*(float*)((char*)&g_gui + 0xfa8)) = -0.03f;
-    (*(int*)((char*)&g_gui + 0xfa0)) = 0;
-    g_panel_s29ec0 = 0;
-    (*(int*)((char*)&g_gui + 0x1700)) = 0;
+        g_gui.lines[i].assign("");
+    g_gui.fa4 = 0;
+    g_gui.fa8 = -0.03f;
+    g_gui.fa0 = 0;
+    g_gui.overlay = 0;
+    g_gui.sel_ent = 0;
     float view[2];
     view[0] = 0.5f;
     view[1] = 0.23f;
-    g_gui_s29ec0.set_view(view);
+    g_gui.set_view(view);
 
     // ---- phase F: name the selection -----------------------------------------------------------------
     if (mode == 1) {
@@ -2201,11 +2194,11 @@ no_selection:
 
     // ---- phase G: draw -------------------------------------------------------------------------------
     if (name.len)
-        g_gui_s29ec0.draw_string(&name, 0.027f, (unsigned)color, 1);
+        g_gui.draw_string(&name, 0.027f, (unsigned)color, 1);
     if (action.len) {
         tstring sep(" ");
-        g_gui_s29ec0.draw_string(&sep, 0.01f, 0xffff9d10, 1);
-        g_gui_s29ec0.draw_string(&action, 0.035f, 0xffff9d10, 1);
+        g_gui.draw_string(&sep, 0.01f, 0xffff9d10, 1);
+        g_gui.draw_string(&action, 0.035f, 0xffff9d10, 1);
     }
 
     // ---- phase H: publish ----------------------------------------------------------------------------
@@ -2215,8 +2208,6 @@ no_selection:
 }
 
 // ======================================================= slice s0052ae70: functions
-#undef g_gui_s2ae70
-#define g_gui_s2ae70 (*(gui_manager_s2ae70*)g_gui)
 #undef g_strtable_s2ae70
 #define g_strtable_s2ae70 g_strtable
 #undef g_mission_s2ae70
@@ -2338,13 +2329,13 @@ void Screen_s2ae70::draw_order_menu()
         float view[2];
         view[0] = 0.5f;
         view[1] = 0.4f;
-        g_gui_s2ae70.set_o568(0, 1);
-        g_gui_s2ae70.set_view(view);
+        g_gui.set_overlay(0, 1);
+        g_gui.set_view(view);
     }
 
     {
         tstring s("ui_order_group");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.035f, 0xfff0e0d0, 1);
+        g_gui.draw_string(g_strtable.lookup(s), 0.035f, 0xfff0e0d0, 1);
     }
 
     unsigned base = (f29c == 1) ? 0xffffffff : 0xff50ff60;
@@ -2353,39 +2344,37 @@ void Screen_s2ae70::draw_order_menu()
     c = (f2a0 == 0) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_hold_position");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
+        g_gui.draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 1) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_follow");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
+        g_gui.draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 2) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_charge");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
+        g_gui.draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 3) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_mount");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
+        g_gui.draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 
     c = (f2a0 == 4) ? base : 0xffd0d0d0;
     {
         tstring s("ui_order_dismount");
-        ((gui_manager*)&g_gui_s2ae70)->draw_string(g_strtable.lookup(s), 0.03f, c, 1);
+        g_gui.draw_string(g_strtable.lookup(s), 0.03f, c, 1);
     }
 }
 
 // ======================================================= slice s0052b5c0: functions
 #undef g_strtable_s2b5c0
 #define g_strtable_s2b5c0 g_strtable
-#undef g_gui_s2b5c0
-#define g_gui_s2b5c0 (*(Gui_s2b5c0*)g_gui)
 #undef g_items_s2b5c0
 #define g_items_s2b5c0 (*(ItemKind_s2b5c0**)&g_items)
 #undef g_game_s2b5c0
@@ -2446,7 +2435,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
     }
 
     if (chosen < 0) {
-        ((MsgLog*)&g_gui_s2b5c0)->add(*g_strtable_s2b5c0.lookup(tstring("ui_unable_to_take")), -1);   // one copy of the table string (0x52b9dc); the Gui_ wrapper would add a second
+        g_gui.add(*g_strtable_s2b5c0.lookup(tstring("ui_unable_to_take")), -1);   // one copy of the table string (0x52b9dc); the Gui_ wrapper would add a second
         return false;
     }
 
@@ -2461,7 +2450,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
             tstring key("ui_picking_up");
             sprintf(buf, g_strtable_s2b5c0.lookup(key)->c_str(), newname);
         }
-        ((MsgLog*)&g_gui_s2b5c0)->add(tstring(buf), -1);
+        g_gui.add(tstring(buf), -1);
     } else {
         slot->name(oldname);
         order->name(newname);
@@ -2469,7 +2458,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
             tstring key("ui_dropping_picking_up");
             sprintf(buf, g_strtable_s2b5c0.lookup(key)->c_str(), oldname, newname);
         }
-        ((MsgLog*)&g_gui_s2b5c0)->add(tstring(buf), -1);
+        g_gui.add(tstring(buf), -1);
 
         unsigned k = g_items_s2b5c0[slot->id].kind & 0xff;
         bool place = false;
@@ -2577,9 +2566,9 @@ L_bbc5:
         }
     }
     if (this->f2cc == -1) {
-        g_gui_s2b5c0.set_o568(0, 1);
+        g_gui.set_overlay(0, 1);
         float v[2] = { 0.5f, 0.5f };
-        g_gui_s2b5c0.set_view(v);
+        g_gui.set_view(v);
     }
 }
 
@@ -2655,9 +2644,9 @@ L_bbc5:
         }
     }
     if (this->f2cc == -1) {
-        g_gui_s2b5c0.set_o568(0, 1);
+        g_gui.set_overlay(0, 1);
         float v[2] = { 0.5f, 0.5f };
-        g_gui_s2b5c0.set_view(v);
+        g_gui.set_view(v);
     }
 }
 

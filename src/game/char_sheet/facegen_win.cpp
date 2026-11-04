@@ -11,6 +11,7 @@
 #include "../config/widget_mgr.h"      // DropDown (append 0x493400)
 #include "../config/ui_widgets_c.h"      // UiE
 #include "./cs_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // the scene entity's slot 4 (+0x10), called once its mesh list is filled
 struct EntityV {
@@ -61,7 +62,7 @@ void TerrainPage::init_screen()
     terrain_type = 3;
     map_size = 0;
 
-    ((gui_manager*)(void*)g_gui)->reset();   // 0x42d1b0
+    g_gui.reset();   // 0x42d1b0
 
     NodeA* w = new NodeA(0);
     board = w;
@@ -69,8 +70,8 @@ void TerrainPage::init_screen()
     { tvec2 s = { 1.0f, 0.75f }; board->set_xy((const float*)&s); }
     {
         MissionUi* root = board;                     // (the original passes a stack copy)
-        g_gui_dirty = 1;
-        ((NodeVec*)(void*)g_gui)->push_back((NodeA* const&)root);   // 0x49b120
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)root);   // 0x49b120
     }
 
     panel = new text_box;

@@ -58,7 +58,6 @@ __declspec(noinline) void identity_2x2(float* m);          // 0x4f3be0 (the orig
 #include "../ui_globals.h"      // UI / core globals
 
 // the input flags the camera reads (0xa17xxx block; names provisional)
-extern gui_manager g_gui;                              // 0x5d7080 (cs_common.h view: the pointer position g_gui.mouse, 0x5d7094 / 0x5d7098)
 
 
 
@@ -66,6 +65,5 @@ extern gui_manager g_gui;                              // 0x5d7080 (cs_common.h 
 
 
 
-extern float g_look_y;                                     // 0x5d7094  vertical look axis compared with 0.5
 
 #endif

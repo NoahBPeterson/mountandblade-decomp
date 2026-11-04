@@ -84,7 +84,7 @@ static MissionUi* button(PartyScreen* self, MissionUi* parent, const char* label
 // @ 0x502cc0
 void PartyScreen::init_screen()
 {
-    g_gui_root.reset();
+    g_gui.reset();
     skills_list = 0;
     char_quad = 0;
     name_lbl = 0;
@@ -112,8 +112,8 @@ void PartyScreen::init_screen()
         rgl::mesh* c = m->clone();
         PSO(win)->add_image(0, c);
     }
-    g_gui_dirty = 1;
-    g_gui_root.add_root((MissionUi**)&window);
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)window);
 
     // buttons on the window
     done_btn = button(this, win, "ui_done", "party_b_done_h");

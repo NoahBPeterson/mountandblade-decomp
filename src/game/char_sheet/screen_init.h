@@ -34,13 +34,11 @@ struct Rect {                                   // the 0x10-byte region copied i
 };
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
-#include "../gui_mgr.h"
+#include "../strat/gui_manager.h"
 #include "../str_table.h"                      // StrTable (0x5e2a18; was StrTab here: find(name) was lookup 0x43a1e0)
 
-#define g_gui     (*(GuiManager*)&orig::g_gui_mgr)
 #define g_strtab  g_strtable
 
-extern char g_5e212c;                           // 0x5e212c
 #include "../../include/renderer.h"
 extern float g_590bb8;                          // 0x590bb8
 extern float g_54b3b4;                          // 0x54b3b4

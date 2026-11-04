@@ -235,8 +235,8 @@ void GameApp::update_view_rect()
         g_gui.view_x = 0;
         g_gui.view_y = 0;
     }
-    (*(int*)((char*)&g_gui + 0x548)) = m_d3dsdBackBuffer.Width;
-    (*(int*)((char*)&g_gui + 0x54c)) = m_d3dsdBackBuffer.Height;
+    g_gui.screen_w = m_d3dsdBackBuffer.Width;
+    g_gui.screen_h = m_d3dsdBackBuffer.Height;
 }
 
 // @ 0x4bad70
@@ -572,9 +572,9 @@ bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format)
     if (SUCCEEDED(g_render.dev->GetFrontBufferData(0, surface))) {
         if (g_app_obj.m_bWindowed) {
             rect.left = g_gui.view_x;
-            rect.right = g_gui.view_x + (*(int*)((char*)&g_gui + 0x548));
+            rect.right = g_gui.view_x + g_gui.screen_w;
             rect.top = g_gui.view_y;
-            rect.bottom = g_gui.view_y + (*(int*)((char*)&g_gui + 0x54c));
+            rect.bottom = g_gui.view_y + g_gui.screen_h;
             ok = SUCCEEDED(D3DXSaveSurfaceToFileA(file_name, format, surface, 0, &rect));
         } else {
             ok = SUCCEEDED(D3DXSaveSurfaceToFileA(file_name, format, surface, 0, 0));
@@ -1195,20 +1195,20 @@ font_details::font_details()
 
 // ---- ambient particle ring ----------------------------------------------------------------------------------------------
 // @ 0x4bd170
-void weather::update(void* pass, const float* depth)
+void gui_manager::render_log(rgl::scene* pass, const float* depth)
 {
     rgl::matrix m;
     identity_pos((pos*)&m);
-    float alpha = 0.2f - fade;
+    float alpha = 0.2f - total_h;
     m.o.x = 0.002f;
     m.o.z = *depth;
     for (int i = 0; i < 32; i++) {
         int idx = (i + cur + 32) % 32;
-        if (life[idx] < 10.0f) {
-            alpha += delta[idx];
+        if (age[idx] < 10.0f) {
+            alpha += height[idx];
             m.o.y = alpha;
-            unsigned col = colors[idx];
-            int a = (int)((1.0f - life[idx] * 0.1f) * 256.0f);
+            unsigned col = color[idx];
+            int a = (int)((1.0f - age[idx] * 0.1f) * 256.0f);
             if (a < 0)
                 a = 0;
             else if (a >= 255)
@@ -1218,10 +1218,10 @@ void weather::update(void* pass, const float* depth)
                 b = 0;
             else if (b >= 255)
                 b = 254;
-            first[idx].color = (a << 24) | (col & 0xffffff);
-            second[idx].color = ((b | 0xffffff00) << 8 | b) << 8 | b;
-            ((rgl::mesh*)&first[idx])->render((rgl::scene*)pass, m);       // 0x413750: a particle mesh is an rgl::mesh (0x260 bytes)
-            ((rgl::mesh*)&second[idx])->render((rgl::scene*)pass, m);
+            meshA[idx].color = (a << 24) | (col & 0xffffff);
+            meshB[idx].color = ((b | 0xffffff00) << 8 | b) << 8 | b;
+            meshA[idx].render(pass, m);       // 0x413750
+            meshB[idx].render(pass, m);
         }
     }
 }

@@ -42,8 +42,7 @@ extern "C" int _fltused = 0;
 #include "../../rgl/mesh.h"                       // rgl::mesh (clone 0x41c6d0)
 #include "../res_mgr.h"                        // g_resmgr: the resource manager 0x5d6fa0
 
-#include "../gui_mgr.h"
-extern GuiManager g_gui;                        // 0x5d7080
+#include "../strat/gui_manager.h"
 
 #include "../str_table.h"
 
@@ -177,9 +176,9 @@ void CharSheet::init_screen()
         w->set_mesh(0, mesh);
     }
 
-    NodeA* pw = window;
-    g_gui_dirty = 1;
-    g_gui.add_root(&pw);
+    MissionUi* pw = window;
+    g_gui.dirty = 1;
+    g_gui.objs.push_back(pw);
 
     // reset-changes button (this+0x430) and done button (this+0x42c)
     {

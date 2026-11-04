@@ -79,7 +79,7 @@ struct MapDialog { void set_object_target(int sel); };               // 0x4c6dc0
 struct MapEditorDialog { void refresh(); void update_object_type(); };   // 0x4c77c0 / 0x4c7bf0 (gui_edit.cpp): the dialog procedure's own object
 struct EditorApp { void refresh_dialog(); };                         // 0x4f6390 (editor_ui.cpp)
 struct CreateGameOptionsPage { void update_checks(); };              // 0x4bf640 (trigger_vec.cpp)
-struct gui_timer { void set_delay(float seconds); };                 // 0x42cd20 (gui_manager.cpp)
+#include "../../include/timer.h"                 // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
 struct ptr_vec { void pop_back_if(); };                              // 0x438bf0 (agent_stats.cpp)
 // the vector<int> members of the game object / scene (VC7.1 layout: allocator slot, first, last, end); size, push_back and the release are the library's
 // instantiations (mesh_obj.cpp 0x40f010, agent_combat.cpp 0x440b30, entity.cpp 0x41f4b0), called out of line through their member pointers
@@ -355,7 +355,7 @@ command:
             ((EditorApp*)this)->refresh_dialog();
             if (g_game_ed->sel_index >= 0) {
                 memcpy(g_game_ed->sel_copy, (char*)terrain(g_game_ed->sel_index) + 0x18, 0x40);
-                ((gui_timer*)((char*)g_game_ed + 0x1a150))->set_delay(-2.0f);
+                ((Timer*)((char*)g_game_ed + 0x1a150))->set_delay(-2.0f);
             }
             ((MapEditorDialog*)this)->refresh();
             return 1;

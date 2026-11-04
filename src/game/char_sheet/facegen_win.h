@@ -62,7 +62,6 @@ struct DropDown;
 typedef TerrainPage facegen_win;     // the window object is the terrain page (terrain_page.h): init is its slot 2
 
 // ---- helpers / globals ------------------------------------------------------------------------------
-extern char g_gui[];                                        // 0x5d7080 (the GUI root object)
 // (reset 0x42d1b0 is gui_manager::reset, gui_push 0x49b120 is NodeVec::push_back: cs_common.h)
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);    // 0x536f8f

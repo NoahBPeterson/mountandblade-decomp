@@ -23,7 +23,6 @@ inline int grid_count(float v)          // integer part (__ftol2 of floor), +1 w
 }
 
 // ---- globals ------------------------------------------------------------------------------------------------
-extern float g_div;                     // 0x5d7594  1/radius
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 

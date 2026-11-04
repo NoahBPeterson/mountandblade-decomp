@@ -130,41 +130,6 @@ struct E20b {                                   // 0x20 bytes: a name and a dele
     ~E20b() { if (p) delete[] p; }
 };
 
-// ---- 0x4dc350: the frame of the loading screen (a view of gui_manager) -----------------------------------------------
-// A mesh's position array (+0x74) holds 0x20-byte records (a vector4 pair); +0x2c is its material, +0x3c a colour / id word,
-// +0x138 a dirty flag; +0xfc / +0x100 are the uv corner this code moves. (A partial view of rgl::mesh.)
-struct rec32 { rgl::vector4 p; rgl::vector4 q; };
-struct FrameMesh {
-    char pad0[0x2c];
-    void* material;                             // +0x2c
-    char pad30[0x3c - 0x30];
-    int f3c;                                    // +0x3c
-    char pad40[0x74 - 0x40];
-    rec32* pos;                                 // +0x74
-    char pad78[0xfc - 0x78];
-    float uv_x;                                 // +0xfc
-    float uv_y;                                 // +0x100
-    char pad104[0x138 - 0x104];
-    char dirty;                                 // +0x138
-    char pad139[0x22c - 0x139];
-    float c22c, c230;                           // +0x22c, +0x230
-    char pad234[0x23c - 0x234];
-    float c23c, c240;                           // +0x23c, +0x240
-    char pad244[0x260 - 0x244];
-    void ensure_local();                        // 0x412ee0 (rgl::mesh::ensure_local: defined as the call of it in cls_map.cpp)
-};
-
-// A view of gui_manager (g_gui): the quad mfb0 at +0xfb0, the corner meshes o1210..o121c, the colour word f16e4.
-struct FrameGui {
-    char pad0[0xfb0];
-    FrameMesh quad;                             // +0xfb0
-    FrameMesh* corner[4];                       // +0x1210
-    char pad1220[0x16e4 - 0x1220];
-    int f16e4;                                  // +0x16e4
-    void set_rect(const float* a, const float* b);   // 0x4dc350 (ret 8)
-};
-
-
 struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic object: the deleting destructor
 
 // ---- 0x4daa10: the loading-screen object (a screen like the menus below: the overlay window at +0x2c, three child widgets) ----
@@ -181,17 +146,8 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 // The overlay window (vtable 0x592848, 0x190 bytes) is ui/container.h's NodeA: `new NodeA(0)` (the byte at +0x188 cleared).
 // the resource manager's get_object (0x419540) for tstring keys, and the UI globals
 // 0x419540 is resmgr::get_object (rgl/core/resmgr.h), which cannot be included next to resource.h: only the member is declared
-// 0x49b120 is NodeVec::push_back (config/widget_node.cpp: the UI root vector at the start of g_gui / g_ui_sound), not gui_manager::add_root:
-// only the member is declared under the defining class, the root window pointer is taken by NodeA* const&
-struct NodeVec {
-    void push_back(NodeA* const& x);   // 0x49b120
-};
-#define ADD_ROOT_REF(w) ((NodeVec*)&g_gui)->push_back((NodeA* const&)(w))   // a void* variable passed by reference as the original does
-#define ADD_ROOT(w) do { NodeA* root_ = (NodeA*)(w); ((NodeVec*)&g_gui)->push_back(root_); } while (0)
 #include "../../rgl/resource.h"                  // resmgr g_resmgr (0x5d6fa0): get_object 0x419540, get_lod_mesh 0x41cdc0
 inline rgl::mesh* res_get(const tstring& name) { return (rgl::mesh*)g_resmgr.get_object(&name); }
-extern gui_manager g_gui;                       // 0x5d7080
-extern unsigned char g_gui_dirty;               // 0x5d8788 (set to 1 whenever a window was installed; game_globals.h declares it, which clashes with this header's table views)
 
 // ---- 0x4dada0..0x4db660: the campaign diary screens (mission window, meeting window, "done" window) --------------------
 // The screen manager (`this` of 0x4db020..0x4db660, 0x4de1b0..): one of the screen objects, a window pointer table.

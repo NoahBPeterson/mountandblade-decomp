@@ -19,7 +19,7 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../ui/mission_ui.h"
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
@@ -68,32 +68,7 @@ struct tstring_buffer {
     void destroy() { get()->~tstring(); }
 };
 
-// the UI root object (0x5d7080)
-struct UiSoundHost;
 struct NodeA;
-struct NodeVec {
-    void push_back(NodeA* const& x);   // 0x49b120 (ret 4; game/cls_map widget_node)
-};
-void __fastcall play_sound(UiSoundHost* m);         // 0x48b2d0 (ui/ui_widgets.h)
-struct gui_view {
-    void set_view(const float* v);   // 0x4c5190 (rgl/mesh2/gui_edit.h): the same object as g_gui
-};
-// The UI root as these modules call it: every method forwards to the canonical class (gui_manager, gui_view, the click
-// sound), so the call sites keep their spelling and the linked symbol is the one the definition exports.
-struct GuiRoot {
-    char pad00[0x10];
-    void* ui_active;                                                                          // +0x10 gui_manager::ui_active (0x5d7090)
-    float mouse[2];                                                                           // +0x14 gui_manager::mouse (0x5d7094 / 0x5d7098)
-    __forceinline void reset() { ((gui_manager*)this)->reset(); }                                // 0x42d1b0
-    __forceinline void add_root(MissionUi** w) { ((NodeVec*)this)->push_back(*(NodeA* const*)w); }   // 0x49b120 (ret 4): NodeVec::push_back
-    __forceinline void play_sound() { ::play_sound((UiSoundHost*)this); }                     // 0x48b2d0
-    __forceinline void set_o564(int flag) { ((gui_manager*)this)->set_o564((gui_obj*)flag); }   // 0x42cd80 (ret 4)
-    __forceinline void set_o568(void* o, bool clear_lines) { ((gui_manager*)this)->set_o568((gui_obj*)o, clear_lines); }   // 0x42cdb0 (ret 8)
-    __forceinline void set_view(float* pt) { ((gui_view*)this)->set_view(pt); }                // 0x4c5190 (ret 4)
-    __forceinline void draw_string(const tstring* s, float y, int color, char b)               // 0x4e43e0 (ret 0x10)
-    { ((gui_manager*)this)->draw_string((tstring*)s, y, color, b); }
-};
-extern GuiRoot g_gui_root;                          // 0x5d7080
 
 // the main menu / screen manager (0xa73980)
 #include "../window_mgr.h"                         // g_windows (0xa73980)

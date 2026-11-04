@@ -5,7 +5,7 @@
 #ifndef GAME_MISSION_UI2_SLOT_API_H
 #define GAME_MISSION_UI2_SLOT_API_H
 #include "../tstring.h"
-#include "../../include/msg_log.h"     // MsgLog (push 0x4334b0)
+#include "../strat/gui_manager.h"     // gui_manager (push 0x4334b0)
 
 // A widget as the overlay animators see it: the animation slots of its vtable take (seconds, value).
 struct AnimVt {
@@ -52,7 +52,6 @@ struct PageTable98 {
 };
 
 // The message log (global 0x5d7080, the same object as the UI sound host g_ui_sound in ui_widgets.h) and the error reporter.
-extern MsgLog g_gui;                     // 0x5d7080
 void mb_error(const char* fmt, ...);        // 0x42cc80 (cdecl)
 
 #endif // GAME_MISSION_UI2_SLOT_API_H

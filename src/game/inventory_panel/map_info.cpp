@@ -52,18 +52,6 @@ struct PageTable98 {                         // lives at GameData+0xcc (the page
 typedef PageTable98 AgentPages;
 
 
-struct gui_obj;
-struct gui_manager {
-    void draw_string(tstring* s, float height, int arg, char wrap);        // 0x4e43e0 (ret 0x10; game/strat/gui_manager.h)
-    __forceinline void draw_string(const tstring& s, float arg, unsigned color, int centered)   // the callers' by-reference form
-    {
-        draw_string((tstring*)&s, arg, (int)color, (char)centered);
-    }
-    void set_o568(gui_obj* obj, bool on);                                  // 0x42cdb0
-};
-struct gui_view {
-    void set_view(const float* v);   // 0x4c5190 (rgl/mesh2/gui_edit.h): the same object as g_gui
-};
 struct MapWidget {
     void project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (inventory_panel/map_picker.cpp)
 };
@@ -76,6 +64,7 @@ int __stdcall draw_party_line(int id);                                    // 0x5
 
 #include "../str_table.h"
 #include "../skill_cap.h"
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // ---- layout guards (MSVC 13 has no static_assert: a mismatch is a negative array size) -------------
 // Sizes: every record's stride appears in the original as an `imul ..., <stride>` immediate.
@@ -95,7 +84,6 @@ typedef char assert_Panel_timer  [(offsetof(MapPanel, timer)        == 0x2cc)   
 typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     ? 1 : -1];
 
 // ------------------------------------------------------------------------------------- globals ------
-extern gui_manager g_gui;                    // 0x5d7080
 
 
 
@@ -173,7 +161,7 @@ void MapPanel::update(int type, int id)
     // ---- the same selection is still on screen and the cooldown has not elapsed -------------------
     if (type == g_sel_type && id == g_sel_id && timer < 1.0f) return;
 
-    g_gui.set_o568(0, true);
+    g_gui.set_overlay(0, true);
     timer = 0.0f;
 
     if (type != 0) {
@@ -206,8 +194,8 @@ void MapPanel::update(int type, int id)
                 if (g_module_settings.show_faction_color)
                     color = g_game->factions[party_by_id(agent)->faction].color;
                 if (c == 0) {
-                    g_panel_color = rel_color;          // 0x51af67: the relation colour (edi), not the faction override (esi)
-                    g_panel_bg    = rel < -0.001f ? 0xff200000u
+                    g_gui.panel_color = rel_color;          // 0x51af67: the relation colour (edi), not the faction override (esi)
+                    g_gui.panel_bg    = rel < -0.001f ? 0xff200000u
                                   : rel >  0.001f ? 0xff002000u : 0xff101010u;
                 }
 
@@ -381,7 +369,7 @@ void MapPanel::update(int type, int id)
         ((MapWidget*)view)->project((rgl::vector4*)xyv, (const rgl::vector4*)&pos);   // 0x51a690
         int* xy = (int*)xyv;
         int  screen[2] = { xy[0], xy[1] };
-        ((gui_view*)&g_gui)->set_view((const float*)screen);      // 0x4c5190
+        g_gui.set_view((const float*)screen);      // 0x4c5190
     }
 
     g_sel_type = type;

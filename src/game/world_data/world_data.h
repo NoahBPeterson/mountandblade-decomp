@@ -23,7 +23,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../include/vec.h"
 #include "../../include/game_data.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../config/widget_mgr.h"
 #include "../ui/mission.h"
 #include "../../include/rec_dtors.h"
@@ -280,9 +280,7 @@ struct GlobVec {                                                // the running p
 #include "../../include/sound_mgr.h"
 
 
-#define g_msglog (*(MsgLog*)&g_gui)                          // the on-screen message log view of the UI root g_gui (0x5d7080)
 #include "../config/config.h"                                  // g_cfg 0x5a9f98
-#include "../strat/gui_manager.h"                             // gui_manager g_gui 0x5d7080 (UI root: set_o568, reset, f560)
 #include "../../include/renderer.h"                              // g_render 0xa17910 (dev at +0x618 = 0xa17f28)
 struct RotRows { rgl::vector4 s, f, u; };                       // the rotation part of a frame (0x30 bytes)
 #include "../../include/mat4.h"                              // rgl::mat3

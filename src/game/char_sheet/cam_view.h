@@ -20,10 +20,8 @@ using rgl::mat3;
 #include "../key_names.h"
 
 // key state / settings globals
-extern gui_manager g_gui;                              // 0x5d7080 (cs_common.h view: the pointer position g_gui.mouse, 0x5d7094 / 0x5d7098)
 
 // globals of the face-generator update (0x4ea8e0)
-extern int g_world_time;                                // 0x5d8790
 extern float g_scroll;                                  // 0x590d7c
 
 #include "../../include/skin_set.h"              // SkinSet, g_anim.skins (shared with src/rgl/mesh2/gui_edit.h)

@@ -22,7 +22,6 @@
 #include "../float_consts.h"
 
 // ---- storage (labels in the original data, by address) ----------------------------------------------------------
-extern char g_5d7080[];     // 0x5d7080 the gui manager
 
 
 extern unsigned g_5e2464;   // 0x5e2464
@@ -52,7 +51,6 @@ extern SoundMgr g_sound_mgr;   // 0x5aa128 the sound player (defined in agent_fx
 #include "../tstring.h"                       // tstring::tstring 0x42bbd0, ~tstring 0x42bc40
 struct TStrRec : tstring { char rest[0x10]; };   // the 0x20-byte table record the string heads
 struct tstring11 { TStrRec a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
-struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct ini_file { ini_file(); };                    // 0x4c1be0
 struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct BigArray { void destroy(); };                // 0x4eb810
@@ -62,8 +60,6 @@ void __stdcall vector_destructor_iterator(void* a, unsigned size, int n, void (_
 #define AT(type, p, off) (*(type*)((char*)(p) + (off)))
 
 // ---- destructors (atexit) -------------------------------------------------------------------------------------
-// @ 0x548140
-void __cdecl static_dtor_548140() { ((gui_manager*)g_5d7080)->~gui_manager(); }
 // @ 0x548200
 void __cdecl static_dtor_548200() {}
 // @ 0x548250
@@ -81,8 +77,6 @@ void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 void __cdecl static_dtor_548510() { ((BigArray*)&g_anim.skins_alloc)->destroy(); }   // the skin vector at 0x8ed4f78
 
 // ---- initializers, in the original table order -----------------------------------------------------------------
-// @ 0x5479c0
-void __cdecl static_init_5479c0() { new (g_5d7080) gui_manager; atexit(static_dtor_548140); }
 // @ 0x547b50   input state: both tick snapshots, the key table, the axes
 void __cdecl static_init_547b50()
 {
@@ -112,8 +106,6 @@ void __cdecl static_init_548030() { atexit(static_dtor_548510); }
 typedef void (__cdecl* init_fn)();
 #pragma data_seg(".CRT$XCU")
 init_fn g_static_init_table[] = {
-    static_init_5479c0,
-    
     static_init_547b50,
     static_init_547e40,
     static_init_547fb0,

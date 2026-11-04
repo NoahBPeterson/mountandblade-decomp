@@ -44,6 +44,7 @@
 #include "../key_names.h"
 #include "../game_keys.h"   // GameKeys::is_down 0x48ac50, clicked 0x48ac90
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // ---- data this module owns (.bss, no initialiser; sizes from the code) ----
 
@@ -1705,7 +1706,7 @@ char UiA::key(unsigned p)
             goto tail;
         b = 1;
         if (!(f184 & 2) || v15c == 0) {
-            ::play_sound(&g_ui_sound);
+            g_gui.play_sound();
             f180 = (f180 == 0);
             set_key_flags(0x10000);
             v15c = (v15c == 0);
@@ -1715,7 +1716,7 @@ char UiA::key(unsigned p)
             goto clear;
         if (p & 0x10) {
             b = 1;
-            ::play_sound(&g_ui_sound);
+            g_gui.play_sound();
             f180 = 1;
             goto tail;
         }

@@ -5,6 +5,7 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_globals.h"      // UI / core globals
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 struct GameData;
 extern GameData* g_game;                                    // 0x5e2930
 
@@ -93,7 +94,7 @@ Camera* make_quest_list(ContainerBase* parent, const float* pos, const float* si
 // @ 0x4ee230
 void Rec454::init_screen()
 {
-    ((gui_manager*)&orig::g_gui_mgr)->reset();   // 0x42d1b0
+    g_gui.reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
     NodeA* win = new NodeA;                 // 0x4931a0, vptr 0x592848 (0x4ee268)
     if (win)
@@ -113,8 +114,8 @@ void Rec454::init_screen()
         bgm = g_resmgr.get_object(&bg)->clone();
     }
     win->set_mesh(0, bgm);
-    g_gui_dirty = 1;
-    ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)win);   // 0x49b120
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)win);   // 0x49b120
 
     // the two panels behind the tabs
     panel1 = new MissionUi;

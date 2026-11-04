@@ -18,7 +18,6 @@
 #include "../font.h"
 #include "../../include/e68.h"
 #include "../../include/vec_elems.h"
-#include "../../include/msg_log.h"
 #include "../../include/game_data.h"
 #include "../../rgl/mesh.h"
 
@@ -100,18 +99,14 @@ template class std::vector<loading_config>;
 
 // ---- 0x4e43e0: gui_manager::draw_string (add one line of text to the loading screen's text mesh) -----------------------------------
 // the lines are kept (line_wrap / line_height / line_arg at +0xcd0 / +0xd20 / +0xe60) so that gui_manager::rebuild (0x4da900) can replay them
-struct mnode {
-    void calc_bounds(rgl::vector4* mn, rgl::vector4* mx);   // 0x438d80 (thiscall, ret 8: the mesh's min / max corners; agent2/agent_stats.cpp)
-};
-struct gui_view { void set_view(const float* v); };                               // 0x4c5190 (thiscall, ret 4: the view state pair; rgl/mesh2/gui_edit.h)
 extern const float g_pad_out;                   // 0x590cd0
 
 // @ 0x4e43e0
 void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
 {
-    if (o568 == 0) {
+    if (overlay == 0) {
         rgl::mesh* m = new rgl::mesh;
-        set_o568((gui_obj*)m, true);
+        set_overlay(m, true);
     }
     if (fa0 >= 0x50)
         return;
@@ -133,14 +128,14 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     }
     {
         tstring font("ui_font");
-        ((rgl::mesh*)self->o568)->res = g_resmgr.get_material(font);
+        self->overlay->res = g_resmgr.get_material(font);
     }
     rgl::vector4 lo, hi;
     float out[2];
     float xmin = x - 1.0f;
     float xmax = x + 1.0f;
     float scale[2];
-    float& pen = (float&)self->f1700;
+    float& pen = (float&)self->sel_ent;
     rgl::vector4 pos(x, pen, 0.0f);                 // the pen position (x, pen, 0) (0x4e4503..0x4e4537)
     // pos never sets w: the original builds pos in the dead "ui_font" tstring's slot, so the glyph vertices get that
     // tstring's len (+0xc, which ~tstring leaves alone) = 7
@@ -148,9 +143,9 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     scale[0] = height;
     scale[1] = height;
     // the colour word is the caller's own `arg` slot (0x4e451b pushes its address)
-    g_font->layout_text(out, s, &pos, scale, self->o568, (int)&arg, &xmin, &xmax, flags);
+    g_font->layout_text(out, s, &pos, scale, self->overlay, (int)&arg, &xmin, &xmax, flags);
     pen = pen - height;                             // one line down (0x4e454a subtracts the height argument)
-    ((mnode*)self->o568)->calc_bounds(&lo, &hi);
+    self->overlay->calc_bounds(&lo, &hi);
     float w = hi.x - lo.x;                          // the laid-out text's bounds (0x4e4569: [esp+0x30] - [esp+0x20])
     float h = hi.y - lo.y;
     float sz[2];
@@ -159,11 +154,11 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     sz[1] = h + g_pad_out;
     at[0] = lo.x - 0.01f;
     at[1] = lo.y - 0.01f;
-    ((FrameGui*)self)->set_rect(at, sz);
-    int v[2];
-    v[0] = *(int*)((char*)self + 0x16e8);          // the view pair at +0x16e8 (0x4e45c0), not +0x16e0
-    v[1] = *(int*)((char*)self + 0x16ec);
-    ((gui_view*)self)->set_view((const float*)v);
+    self->set_rect(at, sz);
+    float v[2];
+    v[0] = self->vx;                               // the view pair at +0x16e8 (0x4e45c0), not +0x16e0
+    v[1] = self->vy;
+    self->set_view(v);
     float& widest = (float&)self->fa4;
     float& run = (float&)self->fa8;
     // a line no wider than the widest so far (or NaN) changes nothing; a wrapped one only widens; the layout is
@@ -324,8 +319,8 @@ void C4c31c0::init_screen()
 
     {
         void* root = window;
-        g_gui_dirty = 1;
-        ADD_ROOT_REF(root);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(root));
     }
 }
 
@@ -720,8 +715,8 @@ void ItemB::create()
     vt(win)->d25(u.v);
     block().init(win, *(int*)((char*)g_game + 0x13b04));
     u.root = win;
-    g_gui_dirty = 1;
-    ADD_ROOT_REF(u.root);
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)(u.root));
 }
 
 // @ 0x4e5e50
@@ -750,8 +745,8 @@ void ItemC::create2()
         vt(win)->d31(0, res_get(n)->clone());
     }
     void* root = win;
-    g_gui_dirty = 1;
-    ADD_ROOT_REF(root);
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)(root));
 }
 
 // ---- 0x4e5f50..0x4e6050: the std::vector<loading_config> / std::fill<RagModel> helpers the linker placed here ---------------------------
@@ -760,13 +755,6 @@ void ItemC::create2()
 
 // ---- 0x4e6050: gui_manager::build_scene ----------------------------------------------------------------------------------------------
 namespace rgl { struct mat3; }
-// the widget slot +0x28 of the polymorphic children (gui_manager::objs)
-struct GuiChild {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
-    virtual void v05(); virtual void v06(); virtual void v07(); virtual void v08(); virtual void v09();
-    virtual void build(rgl::scene* s, float* t, const float* pos, const float* size);   // +0x28
-};
-struct SceneWalk { void scene_walk(rgl::scene* s, float* t); };      // 0x4bd170 (thiscall, ret 8; this = the gui_manager)
 
 int g_pending;                                              // 0x5e2a14
 extern char g_pending_text[];                   // 0x5e25b0
@@ -782,24 +770,24 @@ struct RenderXform {
 // @ 0x4e6050
 void gui_manager::build_scene()
 {
-    rgl::scene* s1 = (rgl::scene*)&x44;
+    rgl::scene* s1 = &x44;
     s1->reset();                                // 0x428f30
 
-    float r = (float)*(int*)((char*)this + 0x54c) / *(int*)((char*)this + 0x548);
+    float r = (float)screen_h / screen_w;
     float sq = (float)sqrt(r);
-    *(float*)((char*)this + 0x55c) = sq;
-    *(float*)((char*)this + 0x558) = 1.0f / sq;
-    *(float*)((char*)this + 0xb028) = r * 1.3333333730697632f;
+    view_b = sq;
+    view_a = 1.0f / sq;
+    fov_k = r * 1.3333333730697632f;
 
-    if (*(char*)((char*)this + 0xb0ac))
-        *(int*)((char*)this + 0x1d0) |= 0x200;
+    if (hud_flag)
+        s1->flags |= 0x200;
 
-    *(int*)((char*)this + 0x4c) = *(int*)((char*)this + 0x548);
-    *(int*)((char*)this + 0x44) = 0;
-    *(int*)((char*)this + 0x48) = 0;
-    *(int*)((char*)this + 0x50) = *(int*)((char*)this + 0x54c);
-    *(int*)((char*)this + 0x54) = 0;
-    *(float*)((char*)this + 0x58) = 1.0f;
+    s1->f8 = screen_w;
+    s1->f0 = 0;
+    s1->f4 = 0;
+    s1->fc = screen_h;
+    s1->f10 = 0;
+    s1->f14 = 1.0f;
 
     rgl::frustum* fr = &y3f4;
     fr->perspective = 0;
@@ -822,25 +810,25 @@ void gui_manager::build_scene()
     m->o = o;
     fr->m = *m;
     fr->build_planes();
-    *(rgl::frustum*)((char*)this + 0x74) = *fr;
+    s1->fr = *fr;
 
-    rgl::scene* s2 = (rgl::scene*)&x21c;
+    rgl::scene* s2 = &x21c;
     s2->reset();                                // 0x428f30
-    *(int*)((char*)this + 0x228) = *(int*)((char*)this + 0x54c);
-    *(int*)((char*)this + 0x21c) = 0;
-    *(int*)((char*)this + 0x220) = 0;
-    *(int*)((char*)this + 0x224) = *(int*)((char*)this + 0x548);
-    *(int*)((char*)this + 0x22c) = 0;
-    *(float*)((char*)this + 0x230) = 1.0f;
-    *(rgl::frustum*)((char*)this + 0x24c) = *fr;
-    *(int*)((char*)this + 0x3a8) |= 0x1000;
+    s2->fc = screen_h;
+    s2->f0 = 0;
+    s2->f4 = 0;
+    s2->f8 = screen_w;
+    s2->f10 = 0;
+    s2->f14 = 1.0f;
+    s2->fr = *fr;
+    s2->flags |= 0x1000;
 
     float t = 0.0f;
     for (unsigned i = 0;; ++i) {
-        gui_obj** data = (gui_obj**)*(void***)((char*)this + 4);
+        MissionUi** data = objs._Myfirst;
         if (!data)
             break;
-        unsigned n = (unsigned)(*(gui_obj***)((char*)this + 8) - data);
+        unsigned n = (unsigned)(objs._Mylast - data);
         if (i >= n)
             break;
         float zero[2];
@@ -849,82 +837,82 @@ void gui_manager::build_scene()
         zero[1] = 0.0f;
         size[0] = 1.0f;
         size[1] = 0.75f;
-        ((GuiChild*)data[i])->build(s1, &t, zero, size);
+        data[i]->render(s1, &t, (int)zero, (int)size);
     }
     t += 1.0f;
-    ((SceneWalk*)this)->scene_walk(s2, &t);
+    render_log(s2, &t);
 
     float ident[12];
     RenderXform* x = (RenderXform*)mslot;
 
-    if (*(void**)((char*)this + 0x158c)) {
+    if (m1480.mask) {
         t += 1.0f;
         memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
         x->f38 = t;
         x->f30 = 0.5f;
         x->f34 = 0.65f;
-        ((rgl::mesh*)((char*)this + 0x1220))->render(s2, *(rgl::matrix*)x->m);   // 0x413750
-        ((rgl::mesh*)((char*)this + 0x1480))->render(s2, *(rgl::matrix*)x->m);
+        m1220.render(s2, *(rgl::matrix*)x->m);   // 0x413750
+        m1480.render(s2, *(rgl::matrix*)x->m);
     }
-    if (*(void**)((char*)this + 0x568)) {
+    if (overlay) {
         t += 1.0f;
         memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
-        float k = *(float*)((char*)this + 0x16f0);
+        float k = vs;
         for (int r = 0; r < 3; ++r) {
             x->m[r * 4 + 0] *= k;
             x->m[r * 4 + 1] *= k;
             x->m[r * 4 + 2] *= k;
         }
-        x->f30 = *(float*)((char*)this + 0x16e8);
-        x->f34 = *(float*)((char*)this + 0x16ec);
+        x->f30 = vx;
+        x->f34 = vy;
         x->f38 = t;
-        ((rgl::mesh*)((char*)this + 0xfb0))->render(s2, *(rgl::matrix*)x->m);
+        mfb0.render(s2, *(rgl::matrix*)x->m);
         for (int i = 0; i < 4; ++i)
-            (*(rgl::mesh**)((char*)this + 0x1210 + 4 * i))->render(s2, *(rgl::matrix*)x->m);
-        (*(rgl::mesh**)((char*)this + 0x568))->render(s2, *(rgl::matrix*)x->m);
+            corner[i]->render(s2, *(rgl::matrix*)x->m);
+        overlay->render(s2, *(rgl::matrix*)x->m);
     }
-    if (*(void**)((char*)this + 0x56c)) {
+    if (label_obj) {
         t += 1.0f;
         memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
-        x->f30 = *(float*)((char*)this + 0x16f8);
-        x->f34 = *(float*)((char*)this + 0x16fc);
+        x->f30 = box_x;
+        x->f34 = box_y;
         x->f38 = t;
-        ((rgl::mesh*)((char*)this + 0x570))->render(s2, *(rgl::matrix*)x->m);
-        (*(rgl::mesh**)((char*)this + 0x56c))->render(s2, *(rgl::matrix*)x->m);
+        m570.render(s2, *(rgl::matrix*)x->m);
+        label_obj->render(s2, *(rgl::matrix*)x->m);
     }
-    if (*(void**)((char*)this + 0x564)) {
+    if (drag) {
         t += 1.0f;
         memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
-        x->f30 = *(float*)((char*)this + 0x14);
-        x->f34 = *(float*)((char*)this + 0x18);
+        x->f30 = mouse[0];
+        x->f34 = mouse[1];
         x->f38 = t;
-        (*(rgl::mesh**)((char*)this + 0x564))->render(s2, *(rgl::matrix*)x->m);
+        drag->render(s2, *(rgl::matrix*)x->m);
     }
 }
 
 // ---- 0x4e64b0 / 0x4e6510: the message log's geometry reset and per-frame update ---------------------------------------------------------
 // @ 0x4e64b0
-void MsgLog::reset_geometry()
+void gui_manager::reset_geometry()
 {
     total_h = 0;
     cur = 0;
     for (int i = 0; i < 0x20; ++i) {
-        ((float*)age)[i] = 1000000.0f;
-        ((rgl::mesh*)text_buf)[i].clear_geometry();     // 0x428e80
-        ((rgl::mesh*)bg_buf)[i].clear_geometry();
+        age[i] = 1000000.0f;
+        meshA[i].clear_geometry();     // 0x428e80
+        meshB[i].clear_geometry();
         height[i] = 0.1f;
     }
 }
 
 // @ 0x4e6510
-void MsgLog::update(float dt)
+void gui_manager::update(float dt)
 {
     if (g_pending) {
         add(tstring(g_pending_text), -1);       // 0x452c00
         g_pending = 0;
     }
     for (int i = 0; i < 0x20; ++i)
-        ((float*)age)[i] += dt;
+        age[i] += dt;
     float v = total_h - dt * 0.1f;
     total_h = v;
     if (v < 0.0f)

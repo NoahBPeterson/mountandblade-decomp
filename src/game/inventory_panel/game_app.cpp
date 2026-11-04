@@ -17,8 +17,6 @@
 #include "../key_names.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-char g_5d75e0;                                  // 0x5d75e0
-int g_5d8798;                                   // 0x5d8798
 float g_8ee42f0;                                // 0x8ee42f0
 char g_saved;   // 0x5e2a08
 int g_counter;   // 0x5e28cc
@@ -66,8 +64,7 @@ struct IDev9 {
 #include "../editor_entity.h"
 
 // gui manager object (0x5d7080) and a few of its member functions
-#include "../gui_mgr.h"
-extern GuiManager g_gui;        // 0x5d7080
+#include "../strat/gui_manager.h"
 
 #include "../../rgl/resource.h"                  // resmgr g_resmgr (0x5d6fa0)
 
@@ -131,10 +128,10 @@ HRESULT GameApp::FrameMove()
     g_tick_dt[0] = t;   // (frame time step, scaled)
     g_ticks[0] += t;
     g_step_tbl[0] = dt;
-    g_5d8798 = last_key;
+    g_gui.f1718 = last_key;
     last_key = -1;
 
-    ((GuiScreen*)&g_gui)->process(*(int*)&dt);
+    g_gui.process(*(int*)&dt);
     ((Slot*)&g_keyboard)->update(dt);   // 0x487930
     g_music.tick();
     FSOUND_Update();
@@ -231,7 +228,7 @@ HRESULT GameApp::FrameMove()
         }
     }
 
-    m_bShowCursorWhenFullscreen = g_5d75e0;
+    m_bShowCursorWhenFullscreen = g_gui.show_cursor;
     if (g_saved) m_bQuitRequested = true;
     return 0;
 }

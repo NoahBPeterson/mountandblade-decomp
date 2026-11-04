@@ -4,16 +4,9 @@
 #include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../placed_obj.h"      // Mission::props is a vector<PlacedObj>: complete here so the harness types the scene vector
 #include "../shared_vars.h"
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-void* g_overlay;   // 0x5d75e8 (== the UI root's object at +0x568)
-tstring g_strs[0x50];   // 0x5d7850 the HUD line cache (0x5d7850 .. 0x5d7d50)
-int g_list0;   // 0x5d8020
-int g_list1;   // 0x5d8024
-float g_list2;   // 0x5d8028
-int g_sel_ent;   // 0x5d8780
-unsigned g_panel_color;   // 0x5d8760 name colour of the HUD line (-1 = white)
-unsigned g_panel_bg;   // 0x5d8764 background tint of the HUD line
 
 
 // @ 0x4ed8d0
@@ -24,9 +17,9 @@ void __fastcall pick_entity(GuiCtx* self)
     Mission* sc = g_mission;
     *(char*)(sc->f65dc + 0x140) = 0;
     if (g_game->f1a20c) {
-        ((gui_manager*)&orig::g_gui_mgr)->set_o568(0, true);   // 0x42cdb0
+        g_gui.set_overlay(0, true);   // 0x42cdb0
         vector2 pp(0.5f, 0.23f);
-        ((gui_view*)&orig::g_gui_mgr)->set_view((const float*)&pp);   // 0x4c5190
+        g_gui.set_view((const float*)&pp);   // 0x4c5190
         set_junk = 0;
         return;
     }
@@ -119,20 +112,20 @@ void __fastcall pick_entity(GuiCtx* self)
         i++;
     }
     self->f2cc = best_i;
-    if (g_overlay) {
-        ((OverlayItf*)g_overlay)->release(1);
+    if (g_gui.overlay) {
+        ((OverlayItf*)g_gui.overlay)->release(1);
     }
-    g_panel_color = -1;
-    g_panel_bg = 0xff101010;
-    g_overlay = 0;
-    for (tstring* s = g_strs; s < g_strs + ((0x5d7d50 - 0x5d7850) / 0x10); s++)
+    g_gui.panel_color = -1;
+    g_gui.panel_bg = 0xff101010;
+    g_gui.overlay = 0;
+    for (tstring* s = g_gui.lines; s < g_gui.lines + 0x50; s++)
         s->assign("");
-    g_list2 = -0.03f;
-    g_list0 = 0;
-    g_list1 = 0;
-    g_sel_ent = 0;
+    g_gui.fa8 = -0.03f;
+    g_gui.fa0 = 0;
+    g_gui.fa4 = 0;
+    g_gui.sel_ent = 0;
     vector2 pair(0.1f, 0.13f);
-    ((gui_view*)&orig::g_gui_mgr)->set_view((const float*)&pair);   // 0x4c5190
+    g_gui.set_view((const float*)&pair);   // 0x4c5190
     if (self->f2cc == -1) {
         self->f2c8 = -1;
         return;
@@ -185,9 +178,9 @@ void __fastcall pick_entity(GuiCtx* self)
         s_kind.assign("SHIELD");
         break;
     }
-    if (s_kind.len) ((gui_manager*)&orig::g_gui_mgr)->draw_string(&s_kind, 0.03f, color_a, 1);
-    if (s_info.len) ((gui_manager*)&orig::g_gui_mgr)->draw_string(&s_info, 0.027f, color_b, 1);
-    if (s_info2.len) ((gui_manager*)&orig::g_gui_mgr)->draw_string(&s_info2, 0.027f, color_b, 1);
+    if (s_kind.len) g_gui.draw_string(&s_kind, 0.03f, color_a, 1);
+    if (s_info.len) g_gui.draw_string(&s_info, 0.027f, color_b, 1);
+    if (s_info2.len) g_gui.draw_string(&s_info2, 0.027f, color_b, 1);
     memcpy((void*)(sc->f65dc + 0x58), &sel->mat[0], 64);
     select_entity((rgl::mesh*)sc->f65e0, (skin_owner*)sel, 0x80229933);   // 0x4ea0c0
     if (!self->f2f8 && !g_game->f1a20c)

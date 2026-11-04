@@ -27,8 +27,7 @@
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <stdlib.h>
 #include "./script_interpreter.h"
-#include "../../include/msg_log.h"          // MsgLog: the UI root view with the pointer position
-extern MsgLog g_gui;                          // 0x5d7080 (g_gui.mouse: 0x5d7094 / 0x5d7098)
+#include "../strat/gui_manager.h"          // gui_manager: g_gui
 // the shared headers it builds on (included again here so their address annotations are read with this file)
 #include "../dialog_manager.h"
 #include "../agent/agent.h"
@@ -155,7 +154,7 @@ static __declspec(noinline) void report(const char* msg)
 {
     char buf[1024];
     sprintf(buf, "%s; LINE NO: %d:", msg, g_lineno);
-    g_msglog.add(tstring(buf), 0xffff5555);
+    g_gui.add(tstring(buf), 0xffff5555);
     stream_base& lg = g_log;
     lg.w_cstr(buf);
     g_script_error = 1;
@@ -1439,7 +1438,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[1])
                 color = (int)params[1];
             tstring text = g_script.expand(g_strings.get_string((int)params[0], types[0]));
-            g_msglog.add(text, color);
+            g_gui.add(text, color);
             char num[32];      // 0x890..0x8b0 in the original frame
             _itoa(color, num, 10);
             GameX* g = game();
@@ -1462,7 +1461,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[1])
                 color = (int)params[1];
             tstring text = g_script.expand(g_strings.get_string((int)params[0], types[0]));
-            g_msglog.add(text, color);
+            g_gui.add(text, color);
             if (g_cfg.enable_edit_mode) {
                 text.push_back('\n');
                 ((stream_base&)g_log).w_tstr(&text);
@@ -1470,7 +1469,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::set_show_messages:
-        g_msglog.enabled = params[0] != 0;      // 0x4a30a0
+        g_gui.enabled = params[0] != 0;      // 0x4a30a0
         break;
     case op::add_troop_note_tableau_mesh:
         if (check_troop((int)params[0]) && warn_tableau((int)params[1]))
@@ -1587,10 +1586,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 color = (int)params[1];
             tstring text = g_strings.get_string((int)params[0], types[0]);   // a local: lives past set_font_mesh
             tstring msg = g_script.expand(text);
-            ((c49b630::HudRoot*)&g_msglog)->set_font_mesh(&msg, color);
+            g_gui.set_font_mesh(&msg, color);
         } else {
             tstring empty("");
-            ((c49b630::HudRoot*)&g_msglog)->set_font_mesh(&empty, (int)params[1]);
+            g_gui.set_font_mesh(&empty, (int)params[1]);
         }
         break;
 
@@ -1613,7 +1612,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             const char* arg0 = CS(party(g_dialogs.f10)->display_name());
             sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
         }
-        g_msglog.push(tstring(buf), -1);
+        g_gui.push(tstring(buf), -1);
         game()->transfer_stack(g_dialogs.f10, game()->main_party, 0);
         break;
     case op::party_join_as_prisoner:
@@ -1622,7 +1621,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             const char* arg0 = CS(party(g_dialogs.f10)->display_name());
             sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
         }
-        g_msglog.push(tstring(buf), -1);
+        g_gui.push(tstring(buf), -1);
         game()->transfer_stack(g_dialogs.f10, game()->main_party, 1);
         break;
     case op::troop_join:
@@ -1632,7 +1631,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 const char* arg0 = CS(troop((int)params[0])->display_name());
                 sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
             }
-            g_msglog.push(tstring(buf), -1);
+            g_gui.push(tstring(buf), -1);
             party(game()->main_party)->add_members((int)params[0], 1, 0, 0, 0);
         }
         break;
@@ -1643,7 +1642,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 const char* arg0 = CS(troop((int)params[0])->display_name());
                 sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
             }
-            g_msglog.push(tstring(buf), -1);
+            g_gui.push(tstring(buf), -1);
             party(game()->main_party)->add_members((int)params[0], 1, 1, 0, 0);
         }
         break;
@@ -1661,7 +1660,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     const char* arg0 = CS(troop((int)params[0])->display_name());
                     sprintf(buf, CS(g_ui_strings.lookup(key)), arg0);
                 }
-                g_msglog.push(tstring(buf), -1);
+                g_gui.push(tstring(buf), -1);
             }
         }
         break;
@@ -1676,7 +1675,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     int arg0 = party(game()->main_party)->stacks[k].count;
                     sprintf(buf, CS(g_ui_strings.lookup(key)), arg0, arg1);
                 }
-                g_msglog.push(tstring(buf), -1);
+                g_gui.push(tstring(buf), -1);
                 party(game()->main_party)->remove_stack(k, game()->stack_rows);
             }
         }
@@ -1696,7 +1695,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     const char* arg1 = CS(troop((int)params[0])->display_name());
                     sprintf(buf, CS(g_ui_strings.lookup(key)), params[1], arg1);
                 }
-            g_msglog.push(tstring(buf), -1);
+            g_gui.push(tstring(buf), -1);
         }
         break;
     case op::remove_troops_from_prisoners:
@@ -1844,14 +1843,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
                         const char* arg1 = CS(faction(imax_ref(&si_1, &si_0))->display_name());
                         sprintf(buf, CS(g_ui_strings.lookup(key)), arg1, old_rel, new_rel);
                     }
-                    g_msglog.push(tstring(buf), 0xff6fff28);
+                    g_gui.push(tstring(buf), 0xff6fff28);
                 } else if (old_rel > new_rel) {
                     {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
                         tstring key("ui_your_relations_with_value_has_deteriorated_from_number_to_number");
                         const char* arg1 = CS(faction(imax_ref(&si_1, &si_0))->display_name());
                         sprintf(buf, CS(g_ui_strings.lookup(key)), arg1, old_rel, new_rel);
                     }
-                    g_msglog.push(tstring(buf), 0xffff7028);
+                    g_gui.push(tstring(buf), 0xffff7028);
                 }
                 if (params[0] == 0)
                     game()->mark_kind((int)params[1]);
@@ -2065,7 +2064,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     const char* name = CS(item_kind((int)params[1])->display_name());
                     sprintf(buf, CS(g_ui_strings.lookup(key)), name);
                 }
-                g_msglog.push(tstring(buf), -1);
+                g_gui.push(tstring(buf), -1);
             }
         }
         break;
@@ -2111,7 +2110,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     const char* arg1 = CS(item_kind((int)params[1])->display_name());
                     sprintf(buf, CS(g_ui_strings.lookup(key)), (int)params[2], arg1);
                 }
-                g_msglog.push(tstring(buf), -1);
+                g_gui.push(tstring(buf), -1);
             }
         }
         break;
@@ -2125,7 +2124,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     const char* arg1 = CS(item_kind((int)params[1])->display_name());
                     sprintf(buf, CS(g_ui_strings.lookup(key)), (int)params[2], arg1);
                 }
-                g_msglog.push(tstring(buf), -1);
+                g_gui.push(tstring(buf), -1);
             }
         }
         break;

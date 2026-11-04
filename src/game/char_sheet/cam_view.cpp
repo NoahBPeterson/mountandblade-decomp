@@ -9,6 +9,7 @@
 #include "../window_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
 #include "../ui_globals.h"      // UI / core globals
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 struct GameData;
 extern GameData* g_game;                                    // 0x5e2930
 
@@ -73,12 +74,12 @@ void FaceGen::frame_update(float dt)
     }
 
     MissionUi* sl = *(MissionUi**)((char*)slider + 0x484);
-    if (g_mission_clock != 0) {
+    if (g_gui.wheel != 0) {
         float a = *(float*)((char*)sl + 0x168) - *(float*)((char*)sl + 0x16c);
         float b = *(float*)((char*)sl + 0x170) - *(float*)((char*)sl + 0x16c);
         float* arr = (float*)((char*)sl + *(int*)((char*)sl + 0x178) * 4 + 0xf0);
         float v = (a / b) * (arr[0] - *(float*)((char*)sl + 0x17c))
-                + ((float)g_mission_clock / arr[0]) * *(float*)((char*)sl + 0x17c) * 0.0005f;
+                + ((float)g_gui.wheel / arr[0]) * *(float*)((char*)sl + 0x17c) * 0.0005f;
         ((UiD*)(void*)sl)->set_value(v);
         sl->set_key_flags(0x10000);
     }

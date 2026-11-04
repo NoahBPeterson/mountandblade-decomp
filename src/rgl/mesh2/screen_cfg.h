@@ -41,7 +41,6 @@ struct dev_index {
     virtual void set_index(unsigned char i) = 0; // +0x30
 };
 
-extern gui_manager g_gui;                        // 0x5d7080
 #include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
 #include "../../game/key_names.h"      // g_keyboard (0xa170c8)
 

@@ -1150,7 +1150,7 @@ HRESULT GameApp::RestoreDeviceObjects()
     g_batch.init_shaders();
     g_resmgr.restore(g_effect);
     if (g_render.dev)
-        g_render.dev->ShowCursor(((unsigned char)g_gui.f560));
+        g_render.dev->ShowCursor(((unsigned char)g_gui.show_cursor));
     IDirect3DTexture9* tex;
     {
         tstring name("cursor");

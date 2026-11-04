@@ -4,5 +4,5 @@
 #define MSG_LOG_UI_H
 #include <windows.h>
 #include "../tstring.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #endif

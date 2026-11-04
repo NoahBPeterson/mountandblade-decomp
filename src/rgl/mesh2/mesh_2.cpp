@@ -37,14 +37,14 @@ static const float HALF = 0.5f;                                 // 0x549d70
 // @ 0x4ca600
 void WindowMgrW::apply()
 {
-    g_gui.set_o568(0, true);
+    g_gui.set_overlay(0, true);
     ((dev_item*)arr[dq.back()])->restore();
     dq.pop_back();
     if (!dq.empty()) {
         unsigned char v = ((dev_item*)arr[dq.back()])->index();
         if (g_render.dev)
             g_render.dev->ShowCursor(v);
-        g_gui.f560 = v;
+        g_gui.show_cursor = v;
     }
 }
 

@@ -21,7 +21,7 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../ui/ui_common.h"
 #include "../int_vec.h"
 #include "../str_table.h"
@@ -167,7 +167,7 @@ void PartyScreen::frame_update(float)
 
     if (skills_list != 0 && ((TargetW*)skills_list)->f_f4 < ((TargetW*)skills_base)->f_f4) {
         if (g_gui.mouse[0] < 0.5f) {
-            ((TargetW*)skills_list)->src->on_value_changed((float)g_mission_clock);
+            ((TargetW*)skills_list)->src->on_value_changed((float)g_gui.wheel);
             ((TargetW*)skills_list)->src->set_key_flags(0x10000);
             goto after_scroll;
         }
@@ -179,13 +179,13 @@ void PartyScreen::frame_update(float)
     slot = 0x26 + extra * 2;
     if (g_gui.mouse[1] < 0.33f)
         slot += 1;
-    if (g_mission_clock != 0) {
+    if (g_gui.wheel != 0) {
         TargetW** pt = &((TargetW**)this)[slot];
         ValueSource* s = (*pt)->src;
         float* pe = &s->slot[s->idx];
         float ratio = (s->f168 - s->f16c) / (s->f170 - s->f16c);
         float fv = (*pe - s->step) * ratio;
-        float t = (float)g_mission_clock / *pe;
+        float t = (float)g_gui.wheel / *pe;
         t = t * s->step;
         t = t * 0.0005f;
         fv += t;
@@ -667,7 +667,7 @@ static __forceinline float anim_value(ValueSource* vs)
     float a = F(vs, 0x168, float) - F(vs, 0x16c, float);
     float b = F(vs, 0x170, float) - F(vs, 0x16c, float);
     return (a / b) * (base[0] - F(vs, 0x17c, float))
-         + ((float)g_mission_clock / base[0]) * F(vs, 0x17c, float) * 0.0005f;
+         + ((float)g_gui.wheel / base[0]) * F(vs, 0x17c, float) * 0.0005f;
 }
 
 // the first term of anim_value alone (0x533bda..0x533c09: no clock term)
@@ -713,7 +713,7 @@ void ItemA::frame_update(float)
     char* rec = (char*)g_menus + *(int*)((char*)g_game + 0x13aec) * 0x60;
     int local = -1;
 
-    if (g_mission_clock != 0) {
+    if (g_gui.wheel != 0) {
         if (g_gui.mouse[1] < 0.3f) {
             ValueSource* vs = *(ValueSource**)((char*)F(this, 0xec, void*) + 0x484);
             vs->set_value(anim_value(vs));
@@ -923,7 +923,7 @@ void Rec58::frame_update(float)
     if (W(this, 0x44)->clear_mask(0x10000))
         ((LogScreen*)(void*)this)->build(0 != 0);
 
-    if (g_mission_clock != 0) {
+    if (g_gui.wheel != 0) {
         ValueSource* vs = *(ValueSource**)((char*)W(this, 0x38) + 0x484);
         vs->set_value(anim_value(vs));
         ValueSource* vs2 = *(ValueSource**)((char*)W(this, 0x38) + 0x484);
@@ -991,11 +991,11 @@ void ChoiceList::get3(int* a, int* b, int* c)
 // @ 0x533aa0
 void ItemD::frame_update(float)
 {
-    if (g_mission_clock != 0) {
+    if (g_gui.wheel != 0) {
         if (g_gui.mouse[0] < 0.7f
             && F(W(this, 0x4c), 0xf4, float) < F(W(this, 0x44), 0xf4, float)) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x4c) + 0x484);
-            vs->on_value_changed((float)g_mission_clock);
+            vs->on_value_changed((float)g_gui.wheel);
             ValueSource* vs2 = *(ValueSource**)((char*)W(this, 0x4c) + 0x484);
             vs2->set_key_flags(0x10000);
         } else {

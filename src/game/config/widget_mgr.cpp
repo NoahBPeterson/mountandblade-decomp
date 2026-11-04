@@ -20,6 +20,7 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/resource.h"      // resmgr g_resmgr (0x5d6fa0)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // @ 0x499830
 int widget_mgr::create_game_button_overlay(int id)
@@ -447,7 +448,7 @@ char DropDown::key(unsigned ev)
         r = 1;
         f180 = 1;
         if (rows.size() != 0) {
-            ::play_sound(&g_ui_sound);
+            g_gui.play_sound();
             NodeA* o = create();
             f188 = o;
             o->f158 = this;

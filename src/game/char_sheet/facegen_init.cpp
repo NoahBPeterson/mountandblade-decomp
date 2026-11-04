@@ -24,7 +24,7 @@ void FaceGen::init_screen()
     if (w14 >= 0)
         skin = *(int*)(g_game->chars_c + w14 * 0x508 + 0x30) & 0xf;
     int keys = g_anim.skins[skin].n_elems - 1;
-    ((gui_manager*)(void*)&g_msglog)->reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
+    g_gui.reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
     NodeA* o = new NodeA(0);
     ui = o;
@@ -43,8 +43,8 @@ void FaceGen::init_screen()
     }
     {
         MissionUi* w = ui;
-        g_gui_dirty = 1;
-        ((NodeVec*)(void*)&g_gui)->push_back((NodeA* const&)w);   // 0x49b120
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)w);   // 0x49b120
     }
     float deform_k = config_float("face_deform_key_h");
     float ab[2];
@@ -273,7 +273,7 @@ void FaceGen::init_screen()
     b->scene3d.f190 = 0xff201815;
 
     // ---- the camera frustum (16:9 fit around the body) ---------------------------------------------
-    float ratio = b->screen[1] / b->screen[0] * g_fov_k;
+    float ratio = b->screen[1] / b->screen[0] * g_gui.fov_k;
     float tanv = (float)tan(((double)0.30543262f));
     fr.perspective = 1;
     fr.nearz = 0.01f;

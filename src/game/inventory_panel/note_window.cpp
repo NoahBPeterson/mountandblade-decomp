@@ -59,8 +59,7 @@ struct mnode {                                       // game/agent2/agent_types.
 // globals
 // ---------------------------------------------------------------------------
 
-#include "../gui_mgr.h"
-#define GUI ((GuiManager*)&orig::g_gui_mgr)
+#include "../strat/gui_manager.h"
 
 #include "../str_table.h"                          // StrTable g_strtable (0x5e2a18): lookup 0x43a1e0, find 0x4c6010
 #define UITEXT (&g_strtable)
@@ -267,7 +266,7 @@ void note_window::build(int page_, int arg_)
 
     this->page = page_;
     this->arg = arg_;
-    GUI->reset();
+    g_gui.reset();
 
     // ---- main panel ------------------------------------------------------
     NodeA* panel = new NodeA;                       // constructor 0x4931a0, then the container's vtable and f188 (0x50a20e)
@@ -935,7 +934,7 @@ void note_window::build(int page_, int arg_)
         break;
     }
 
-    GUI->add(this->panel);
+    g_gui.objs.push_back(this->panel);
 
     if (any && selected >= 0)
         this->build(page_, selected);

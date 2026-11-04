@@ -41,8 +41,7 @@
 #include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
 #include "../ui/container.h"                 // ContainerBase (ui/mission_ui.h)
 #include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
-#include "../../include/msg_log.h"       // MsgLog (add 0x452c00, thiscall, ret 0x14)
-extern MsgLog g_gui;                    // 0x5d7080
+#include "../strat/gui_manager.h"       // gui_manager (set_font_mesh 0x49b630 is defined here)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
@@ -138,7 +137,6 @@ struct E16 { int a, b, c, d; };                 // one 16-byte text-row record
 // ---- external callees ----------------------------------------------------------------------------
 void __fastcall base_ctor_48ae20(void* o);      // 0x48ae20 (ecx = object)
 void __fastcall dtor_common(void* o);      // 0x490520 (ecx = object)
-void __fastcall play_sound(void* m);     // 0x48b2d0
 
 struct ptr_tag {};                               // empty class passed by value (one slot)
 struct NodeA;
@@ -288,7 +286,6 @@ struct UiA {
     int f184;                                   // +0x184
 };
 
-extern PVec g_gui;                           // 0x5d7080 (the container list)
 
 // ---- function definitions (in VA order) ----------------------------------------------------------
 
@@ -477,41 +474,6 @@ struct Mission {
     void spawn_battle_icon(unsigned id);                                    // 0x49bbb0
 };
 
-// the UI root object (global 0x5d7080, the same object the message log hangs off): the font mesh at +0x1480 and its "on" flag
-struct HudRoot {
-    char pad0[0x132c];
-    int font_on;                                    // +0x132c (font mesh active)
-    char pad1330[0x1480 - 0x1330];
-    rgl::mesh font;                                 // +0x1480 (0x260 bytes; its mask at +0x158c is the visible flag)
-    void set_font_mesh(const tstring* text, int arg);   // 0x49b630
-};
-
-// @ 0x49b630
-void HudRoot::set_font_mesh(const tstring* text, int arg)
-{
-    {
-        tstring name("ui_font");
-        font.res = (skin*)g_resmgr.get_material(name);
-    }
-    font.clear_geometry();
-    if (text->len <= 0) {
-        font.mask = 0;
-        font_on = 0;
-        return;
-    }
-    float   out[2];
-    vector4 pos;
-    float   scale[2];
-    float   xmin = -0.35f;
-    float   xmax = 0.35f;
-    arg = arg;
-    pos.x = -0.35f; pos.y = 0.0f; pos.z = 0.0f; pos.w = 0.0f;
-    scale[0] = 0.017f; scale[1] = 0.017f;
-    g_font->layout_text(out, text, &pos, scale, &font, (int)&arg, &xmin, &xmax, 0x100);
-    font.mask = 1;
-    font_on = 1;
-}
-
 // @ 0x49bbb0
 void Mission::spawn_battle_icon(unsigned id)
 {
@@ -568,6 +530,33 @@ void Mission::spawn_battle_icon(unsigned id)
 }
 
 } // namespace c49b630
+
+// @ 0x49b630
+void gui_manager::set_font_mesh(const tstring* text, int arg)
+{
+    {
+        tstring name("ui_font");
+        m1480.res = (skin*)g_resmgr.get_material(name);
+    }
+    m1480.clear_geometry();
+    if (text->len <= 0) {
+        m1480.mask = 0;
+        m1220.mask = 0;
+        return;
+    }
+    float   out[2];
+    vector4 pos;
+    float   scale[2];
+    float   xmin = -0.35f;
+    float   xmax = 0.35f;
+    arg = arg;
+    pos.x = -0.35f; pos.y = 0.0f; pos.z = 0.0f; pos.w = 0.0f;
+    scale[0] = 0.017f; scale[1] = 0.017f;
+    g_font->layout_text(out, text, &pos, scale, &m1480, (int)&arg, &xmin, &xmax, 0x100);
+    m1480.mask = 1;
+    m1220.mask = 1;
+}
+
 
 // ======================================================================================
 // slice s0049bea0 (namespace c49bea0)
@@ -1126,9 +1115,6 @@ extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> sec
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
 extern const float g_590cd0;                    // 0x590cd0  0.02f
 
-// int globals: the view's z/w scale factors (zero in the image, set at startup by the game).
-struct gui_manager;
-extern gui_manager g_gui;                   // 0x5d7080 (strat/gui_manager.h: +0x548 / +0x54c = the view width / height factors 0x5d75c8 / 0x5d75cc)
 } // namespace c49deb0
 
 // tick counters, 8 bytes each; timers index this array through their own key field.
@@ -1302,10 +1288,10 @@ struct V4 { float x, y, z, w; };
 void Camera::render(rgl::scene* a, float* pos, int c, int d)
 {
     scene.reset();
-    scene.f0 = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x548)) * fE0);
-    scene.f4 = (int)((0.75f - (fE4 + screen[1])) * (float)(*(int*)((char*)&c49deb0::g_gui + 0x54c)) * 1.3333334f);
-    scene.f8 = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x548)) * screen[0]);
-    scene.fc = (int)((float)(*(int*)((char*)&c49deb0::g_gui + 0x54c)) * screen[1] * 1.3333334f);
+    scene.f0 = (int)((float)g_gui.screen_w * fE0);
+    scene.f4 = (int)((0.75f - (fE4 + screen[1])) * (float)g_gui.screen_h * 1.3333334f);
+    scene.f8 = (int)((float)g_gui.screen_w * screen[0]);
+    scene.fc = (int)((float)g_gui.screen_h * screen[1] * 1.3333334f);
     scene.f14 = 1.0f;
     scene.f10 = 0;
     scene.flags |= 0x1000;

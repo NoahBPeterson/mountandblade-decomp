@@ -61,10 +61,7 @@ extern "C" int sprintf(char* dst, const char* fmt, ...);    // 0x536f8f
 // ---- objects of other translation units ---------------------------------------------------------------------
 // Callees declared under the name of the class or function that defines them (the modules that define them name the class after another of
 // their users, and the linker folds identical bodies); the object is cast at the call, each says why it is the one the definition works on.
-struct gui_manager { void reset(); };           // 0x42d1b0 (strat/gui_manager.cpp): the gui manager at 0x5d7080
-extern gui_manager g_gui;                       // 0x5d7080
 struct NodeA;
-struct NodeVec { void push_back(NodeA* const& n); };   // 0x49b120 (widget_node.cpp): "make this window the active root"; takes the address of a pointer to the window
 struct Map10007 { int lookup(unsigned id); };   // 0x48ad00 (ui/mission.h): the party table of the game object (Game::scene) starts with this 0x2717-entry table
 struct FieldPanel { void update(); };           // 0x48d470 (mission_ui2/mission_3.cpp): lays the list out
 #include "../res_mgr.h"                      // g_resmgr: the resource manager at 0x5d6fa0
@@ -80,6 +77,7 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
 
 // the scrolling item list is Camera (constructor 0x49deb0, size 0x4a8): the flags word is Object's; +0x484 (follow[1]) the scroll bar, +0x490 (target) the page it scrolls (the same page is its one child)
 #include "../party2/camera_class.h"      // Camera: the scrolling item list
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 
 // @ 0x500ad0
@@ -330,8 +328,8 @@ void PartyWindow::init_screen()
 
     {
         MissionUi* root = (MissionUi*)container;
-        g_gui_dirty = 1;
-        ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back(*(MissionUi**)&root);
     }
     init_window();
 

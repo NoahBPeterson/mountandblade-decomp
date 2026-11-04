@@ -6,7 +6,6 @@
 //       std::vector<tstring> / <vector4> helpers it instantiates. 0x42d820 starts the TinyXML objects (src/tinyxml).
 //       Functions in ascending address order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
-#define GM_RGL_NS                 // gui_manager.h: the scene / mesh stand-ins in namespace rgl (the defined symbols)
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +13,7 @@
 #include "../tstring.h"
 #include "../../rgl/stream.h"
 #include "./gui_manager.h"
+#include "../ui/mission_ui.h"                  // MissionUi: the root widgets reset deletes
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
@@ -22,6 +22,7 @@
 // ---- data this module owns (docs/standalone_data.md) ----
 char g_error_flag;                               // 0x5d7070 (.bss) set by mb_error before the message box
 int g_gui_counter;                               // 0x5d7074 (.bss) bumped by bump_counter
+gui_manager g_gui;                               // 0x5d7080 (.bss, 0xb350 bytes; built by the compiler's initialiser gui_manager::gui_manager, destroyed by its atexit)
 
 // @ 0x42cb70
 void bump_counter() { g_gui_counter++; }
@@ -85,29 +86,29 @@ void mb_error(const char* fmt, ...)
 }
 
 // @ 0x42cd20
-void gui_timer::set_delay(float seconds)
+void Timer::set_delay(float seconds)
 {
-    t = g_ticks[clock] - (int)(seconds * 100000.0f);
+    start = g_ticks[clock] - (int)(seconds * 100000.0f);
 }
 
 // @ 0x42cd80
-void gui_manager::set_o564(gui_obj* p)
+void gui_manager::set_drag(rgl::mesh* p)
 {
-    if (o564) {
-        delete o564;
-        o564 = p;
+    if (drag) {
+        delete drag;
+        drag = p;
         return;
     }
-    o564 = p;
+    drag = p;
 }
 
 // @ 0x42cdb0
-void gui_manager::set_o568(gui_obj* p, bool clear_lines)
+void gui_manager::set_overlay(rgl::mesh* p, bool clear_lines)
 {
-    if (o568) delete o568;
+    if (overlay) delete overlay;
     if (p == 0) {
-        f16e0 = -1;
-        f16e4 = 0xff101010;
+        panel_color = -1;
+        panel_bg = 0xff101010;
     }
     if (clear_lines) {
         for (int i = 0; i < 0x50; i++)
@@ -115,9 +116,9 @@ void gui_manager::set_o568(gui_obj* p, bool clear_lines)
         fa4 = 0;
         fa8 = -0.03f;
     }
-    o568 = p;
+    overlay = p;
     fa0 = 0;
-    f1700 = 0;
+    sel_ent = 0;
 }
 
 // 0x42cd60 MissionUi::key, 0x42ce50 MissionUi::refresh, 0x42cec0 ContainerBase::refresh, 0x42cf50 ContainerBase::key and
@@ -127,9 +128,9 @@ void gui_manager::set_o568(gui_obj* p, bool clear_lines)
 // @ 0x42d1b0
 void gui_manager::reset()
 {
-    f1714 = 1;
-    fb0ac = 0;
-    f514 = 0.75f;
+    enabled = 1;
+    hud_flag = 0;
+    aspect = 0.75f;
     ui_active = 0;
     t0.rewind();
     t1.rewind();
@@ -141,20 +142,20 @@ void gui_manager::reset()
         }
     }
     objs.erase(objs.begin(), objs.end());
-    if (o564) delete o564;
-    o564 = 0;
-    if (o568) delete o568;
-    f16e0 = -1;
-    f16e4 = 0xff101010;
+    if (drag) delete drag;
+    drag = 0;
+    if (overlay) delete overlay;
+    panel_color = -1;
+    panel_bg = 0xff101010;
     for (int i = 0; i < 0x50; i++)
         lines[i].assign("");
     fa4 = 0;
     fa8 = -0.03f;
     fa0 = 0;
-    o568 = 0;
-    f1700 = 0;
-    if (o56c) delete o56c;
-    o56c = 0;
+    overlay = 0;
+    sel_ent = 0;
+    if (label_obj) delete label_obj;
+    label_obj = 0;
     f1704 = 0;
     f1709 = 0;
     m1480.mask = 0;
@@ -162,19 +163,19 @@ void gui_manager::reset()
 }
 
 // 0x42d360 std::_Destroy(tstring*, tstring*) and 0x42d390 std::vector<tstring>::_Tidy: instantiated by ~gui_manager
-// (and by the dtor of its `strs` member).
+// (and by the dtor of its `history` member).
 
 // @ 0x42d3e0
 gui_manager::~gui_manager()
 {
     reset();
-    if (o564) { delete o564; o564 = 0; }
-    if (o568) { delete o568; o568 = 0; }
-    if (o56c) { delete o56c; o56c = 0; }
-    if (o1210) { delete o1210; o1210 = 0; }
-    if (o1214) { delete o1214; o1214 = 0; }
-    if (o1218) { delete o1218; o1218 = 0; }
-    if (o121c) { delete o121c; o121c = 0; }
+    if (drag) { delete drag; drag = 0; }
+    if (overlay) { delete overlay; overlay = 0; }
+    if (label_obj) { delete label_obj; label_obj = 0; }
+    if (corner[0]) { delete corner[0]; corner[0] = 0; }
+    if (corner[1]) { delete corner[1]; corner[1] = 0; }
+    if (corner[2]) { delete corner[2]; corner[2] = 0; }
+    if (corner[3]) { delete corner[3]; corner[3] = 0; }
 }
 
 // 0x42d570 std::vector<rgl::vector4>::_Buy (the only member of this instance the linker kept)
@@ -185,27 +186,29 @@ gui_manager::gui_manager()
 {
     WL_MARKER(12)
     reset();
-    f16e0 = f1718 = -1;
-    p24 = pair2(0, 0);
+    panel_color = f1718 = -1;
+    p24a = 0;
+    p24b = 0;
     mouse[0] = 0;
     mouse[1] = 0;
-    p2c = pair2(0, 0);
-    f560 = 1;
-    o564 = 0;
-    o568 = 0;
-    o56c = 0;
+    prev_mx = 0;
+    prev_my = 0;
+    show_cursor = 1;
+    drag = 0;
+    overlay = 0;
+    label_obj = 0;
     fa0 = 0;
     fa4 = 0;
     fa8 = -0.03f;
-    o1210 = 0;
-    o1214 = 0;
-    o1218 = 0;
-    o121c = 0;
-    f16e4 = 0xff101010;
+    corner[0] = 0;
+    corner[1] = 0;
+    corner[2] = 0;
+    corner[3] = 0;
+    panel_bg = 0xff101010;
     f1709 = 0;
     f170c = 0;
-    fb0ac = 0;
-    fb028 = 1.0f;
-    f1710 = 0;
+    hud_flag = 0;
+    fov_k = 1.0f;
+    wheel = 0;
     WL_MARKER(13)
 }

@@ -5,6 +5,7 @@
 #include "../map_widget.h"        // MapWidget: the preview widget whose frustum (+0x1ac) takes the camera
 #include "../key_names.h"
 #include "../../include/render_flags.h"
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 unsigned g_5e2464 = (unsigned)g_bit[2];                       // 0x5e2464 (no reader in this source; set at startup like its twin)
 unsigned g_5e2468 = (unsigned)g_bit[4];                       // 0x5e2468

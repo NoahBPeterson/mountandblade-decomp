@@ -126,7 +126,7 @@ struct C4c3050 : head_rec {
     MissionUi* rows[6];        // +0x38 the buttons
     int sel;                   // +0x50 the pressed button (-1 = none; the constructor sets it)
     int count;                 // +0x54 number of buttons (the constructor clears it)
-    char f58;                  // +0x58 (g_gui.f560 at the end of slot 2)
+    char f58;                  // +0x58 (g_gui.show_cursor at the end of slot 2)
     char pad59[3];
     tstring t5c;               // +0x5c
     char t6c[0x60];            // +0x6c the six button texts (tstrings 0x10 apart; built / destroyed by hand in the ctor / dtor)

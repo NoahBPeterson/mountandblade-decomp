@@ -1,9 +1,9 @@
 #include "./msg_log_ui.h"
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../../include/msg_log.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../strat/gui_manager.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4f13f0
-__declspec(noinline) void MsgLog::Ring::pop(tstring& out, int& index)
+__declspec(noinline) void gui_manager::Ring::pop(tstring& out, int& index)
 {
     if (count != 0) {
         out = names[head];
@@ -17,7 +17,7 @@ __declspec(noinline) void MsgLog::Ring::pop(tstring& out, int& index)
 }
 
 // @ 0x4f1390
-void MsgLog::flush()
+void gui_manager::flush()
 {
     tstring msg;
     int index;

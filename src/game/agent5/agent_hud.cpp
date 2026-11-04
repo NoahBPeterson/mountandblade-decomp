@@ -12,11 +12,10 @@
 #include "../../include/image_addrs.h"
 #include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../config/config_block.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"
-#include "../gui_mgr.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/mesh.h"
 #include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
 #include "../agent_obj.h"      // rgl::matrix::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
@@ -91,7 +90,7 @@ void MissionBlocker::init_screen()
     if ((float)(rand() % 15817) * 6.322312e-05f < 0.05f)
         g_scene_dirty = 1;
     g_gui.reset();
-    g_hud_flag = 1;
+    g_gui.hud_flag = 1;
     GAME_AT(int, 0x1a1b4) = -1;
     ((std::vector<int>*)((char*)g_game + 0x1a1b8))->resize(0, 0);
 
@@ -149,8 +148,8 @@ void MissionBlocker::init_screen()
     }
     {
         MissionUi* root = frame;
-        g_gui_dirty = 1;
-        ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back(*(MissionUi**)&root);
     }
     for (int i = 0; i < 3; i++) {
         MissionUi* wd = new MissionUi;
@@ -696,7 +695,7 @@ pass2:
         }
     }
     // the frustum
-    float aspect = g_screen_a / g_screen_b;
+    float aspect = g_gui.view_b / g_gui.view_a;
     fr.m = k;
     fr.build_planes();
     float v = (float)sqrt(1.0f / aspect);
@@ -844,7 +843,7 @@ struct ViewLight { char pad0[4]; AgentTable tbl; char pad1c[0x5c - 4 - sizeof(Ag
 // @ 0x4fb180
 void Mission::apply_sun_light(const vector4* pos, const float* scale)
 {
-    float px = (float)(g_screen_w + g_screen_h);
+    float px = (float)(g_gui.screen_w + g_gui.screen_h);
     float area = (px * 0.5f) * 0.00086956524f;
     float size_v = ((g_options.scale_y * 0.5f + 0.75f) * *scale) * area;
     float& size = *(float*)&scale;       // the original stores the result back into the (dead) parameter slot
@@ -1263,8 +1262,8 @@ void ItemA::init_screen()
             if (src) {
                 rgl::mesh* m = src->clone();
                 rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
-                if ((*(unsigned*)(rec + 0x20) & 0x1000) && 1.35f < g_screen_b / g_screen_a) {
-                    float f = 1.33f / (g_screen_b / g_screen_a);
+                if ((*(unsigned*)(rec + 0x20) & 0x1000) && 1.35f < g_gui.view_a / g_gui.view_b) {
+                    float f = 1.33f / (g_gui.view_a / g_gui.view_b);
                     vector4 c;
                     c.x = f; c.y = 1.0f; c.z = 1.0f; c.w = 1.0f;
                     m->set_color(c);
@@ -1382,10 +1381,10 @@ void ItemA::init_screen()
         if (f40 < 0)
             frame()->set_mesh(0, g_resmgr.get_object(&tstring("meeting_window"))->clone());
     }
-    g_gui_dirty = 1;
+    g_gui.dirty = 1;
     {
         MissionUi* root = frame();
-        ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
+        g_gui.objs.push_back(*(MissionUi**)&root);
     }
 }
 
@@ -1475,9 +1474,9 @@ void Rec58::build(bool show)
         if (arr)
             ((TStringArray*)arr)->destroy(3);
     } else {
-        int n = (int)g_msglog.lines.size() * 3;
+        int n = (int)g_gui.history.size() * 3;
         for (int i = 0; i < n; i += 3) {
-            text->append(g_msglog.lines[i / 3]);
+            text->append(g_gui.history[i / 3]);
             text->push_back('\n');
         }
         if (text->len > 0)
@@ -1546,10 +1545,10 @@ void Rec58::build(bool show)
     }
     active->flag2_set();
 
-    g_gui_dirty = 1;
+    g_gui.dirty = 1;
     {
         MissionUi* root = frame;
-        ((NodeVec*)&g_gui)->push_back(*(NodeA**)&root);
+        g_gui.objs.push_back(*(MissionUi**)&root);
     }
 
     // the slider's value follows the log's scroll state

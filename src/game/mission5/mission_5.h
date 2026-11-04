@@ -36,7 +36,6 @@ extern MissionTemplate* g_mission_templates;     // 0x5e2a00
 #include "../dialog_mgr.h"           // DialogMgr g_dialogs (0x8ed50c8)
 
 #include "../str_table.h"   // StrTable g_strtable (0x5e2a18): the one definition
-extern char g_gui[]; // 0x5d7080
 #include "../game_keys.h"           // GameKeys g_game_keys (0xa73730)
 #include "../slot.h"                        // Slot, g_keyboard (0xa170c8)
 #include "../window_mgr.h"   // g_windows (0xa73980): the window manager, slot_as<T>(i) its screens, dq the id stack
@@ -93,14 +92,12 @@ struct VObj_s25160 {
     virtual void v45();                                         // 0xb4
 };
 
-struct Mgr_s25160 { __forceinline void update(); };                                  // 0x4f1390
 struct Mgr513710_s25160 { void m(void* p); };                           // 0x513710
 struct Chunk_s25160 { void m_4464d0(int a); void m_4f8bc0(); };
 struct Troop_s25160 { void m_4630d0(int i); };
 struct Big5e292c_s25160 { void m_483f60(int a, int b); };
 
 
-#define g_mgr       (*(Mgr_s25160*)&orig::g_gui_mgr)
 #define g_513710    (*(Mgr513710_s25160*)&g_map_flags)
 #define g_big       (*(Big5e292c_s25160**)&g_mission)
 
@@ -286,7 +283,6 @@ struct DialogMgr_s26130 {
 
 // ======================================================= slice s005261e0: classes, globals, helpers
 #define g_strtable_s261e0 g_strtable
-#define g_gui_s261e0 (*(MsgLog_s261e0*)g_gui)
 #define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
 #define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #define g_game_s261e0 (*(GameData_s261e0**)&g_game)
@@ -316,13 +312,6 @@ struct DialogMgr_s26130 {
 
 // -----------------------------------------------------------------------------------------------------
 // message log (global object 0x5d7080) -- see s004f1390 / s004529e0
-struct MsgLog_s261e0 {
-    char pad0[0xb0b8];
-    __forceinline void add(tstring msg, int color);                   // 0x452c00 (ret 0x14)
-    __forceinline void flush();                                       // 0x4f1390
-    __forceinline void set_o568(int a, int b);                        // 0x42cdb0
-    __forceinline void set_view(float* v);                            // 0x4c5190
-};
 
 
 // -----------------------------------------------------------------------------------------------------
@@ -1165,7 +1154,6 @@ inline Troop_s29840* troop_tbl_s29840() { return *(Troop_s29840**)((char*)g_game
 __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add); // 0x529bc0 (ret 8)
 
 // ======================================================= slice s00529ec0: classes, globals, helpers
-#define g_gui_s29ec0 (*(gui_manager_s29ec0*)g_gui)
 #define g_strtable_s29ec0 g_strtable
 #define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
@@ -1173,7 +1161,6 @@ __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add); // 0x52
 #define g_mission_s29ec0 (*(Mission_s29ec0**)&g_mission)
 #define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
 #define g_areas_s29ec0 (*(Area_s29ec0**)&g_mission_templates)
-#define g_panel_s29ec0 (*(hud_panel_s29ec0**)&(*(void**)((char*)&g_gui + 0x568)))
 // Slice s00529ec0: the mission screen's interaction probe, Screen_s29ec0::f_529ec0 (0x529ec0, 4011 bytes).
 //
 // Every frame the screen asks "what is the local agent looking at?":
@@ -1203,18 +1190,6 @@ using rgl::matrix;
 
 // ---- engine string (0x10 bytes) ----------------------------------------------------------------------
 
-
-// ---- gui manager (0x5d7080) --------------------------------------------------------------------------
-struct gui_manager_s29ec0 {
-    __forceinline void set_view(const float* v);                              // 0x4c5190 (ret 4)
-    __forceinline void draw_string(const tstring* s, float y, unsigned color, int centered);  // 0x4e43e0 (ret 0x10)
-};
-
-
-// the HUD panel object stored in gui_manager_s29ec0+0x568 (0x5d75e8)
-struct hud_panel_s29ec0 {
-    virtual void reset(int on);                                 // slot 0
-};
 
 // ---- localisation tables (0x5e2a18) ------------------------------------------------------------------
 
@@ -1390,7 +1365,6 @@ struct Screen_s29ec0 {
 };
 
 // ======================================================= slice s0052ae70: classes, globals, helpers
-#define g_gui_s2ae70 (*(gui_manager_s2ae70*)g_gui)
 #define g_strtable_s2ae70 g_strtable
 #define g_mission_s2ae70 (*(Mission_s2ae70**)&g_mission)
 // Slice s0052ae70: the mission order markers.
@@ -1411,14 +1385,6 @@ struct Screen_s29ec0 {
 
 // ---- resolved material_s2ae70 ---------------------------------------------------
 struct material_s2ae70;
-
-// ---- gui manager (0x5d7080) ----------------------------------------------------------------------------
-struct gui_manager_s2ae70 {
-    __forceinline void set_o568(void* obj, int on);                   // 0x42cdb0
-    __forceinline void set_view(const float* v);                      // 0x4c5190
-    __forceinline void draw_string(const tstring* s, float y, unsigned color, int centered);   // 0x4e43e0
-};
-
 
 // ---- localisation table (0x5e2a18) ---------------------------------------------------------------------
 
@@ -1510,7 +1476,6 @@ struct Screen_s2ae70 {
 
 // ======================================================= slice s0052b5c0: classes, globals, helpers
 #define g_strtable_s2b5c0 g_strtable
-#define g_gui_s2b5c0 (*(Gui_s2b5c0*)g_gui)
 #define g_items_s2b5c0 (*(ItemKind_s2b5c0**)&g_items)
 #define g_game_s2b5c0 (*(CampaignGame_s2b5c0**)&g_game)
 #define g_mission_s2b5c0 (*(Mission_s2b5c0**)&g_mission)
@@ -1532,14 +1497,6 @@ using rgl::matrix;
 // ---- engine string (16 bytes) -------------------------------------------------------------------------
 
 
-
-
-// ---- gui / message log (one big object at 0x5d7080) ---------------------------------------------------
-struct Gui_s2b5c0 {
-    __forceinline void set_o568(void* obj, int on);                   // 0x42cdb0
-    __forceinline void set_view(const float* v);                      // 0x4c5190
-    __forceinline void add(tstring text, int flag);                   // 0x452c00
-};
 
 
 // ---- item kinds / order references --------------------------------------------------------------------
@@ -1786,7 +1743,7 @@ struct level {
 struct RecZSubB {
     RecZSubB* init();   // 0x4353a0
 };
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionSource; struct MsgLog; struct NamedRec; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct gui_manager; struct gui_obj; struct gui_view; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct Map10007; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionG; struct MissionSource; struct NamedRec; struct Party; struct PartyRecIO; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct RecZSubB; struct Scene; struct Shape; struct Slot; struct SlotChan; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -1858,10 +1815,6 @@ struct MissionG {
 struct MissionSource {
     void pick(int*);   // 0x4d5410
 };
-struct MsgLog {
-    void add(tstring, int);   // 0x452c00
-    void flush();   // 0x4f1390
-};
 struct Party {
     int skill_level(int);   // 0x4b2370
     void add_xp_to_stack(int, int);   // 0x4b1d80
@@ -1895,24 +1848,12 @@ struct Mission {
 struct camera_ray {
     void screen_to_world(rgl::vector4*, rgl::vector4*);   // 0x4bd2f0
 };
-struct gui_manager {
-    char pad00[0x10];
-    void* ui_active;   // +0x10 (strat/gui_manager.h)
-    float mouse[2];   // +0x14 the pointer position (0x5d7094 / 0x5d7098)
-    void draw_string(tstring*, float, int, char);   // 0x4e43e0
-    void set_o568(gui_obj*, bool);   // 0x42cdb0
-};
-struct gui_view {
-    void set_view(float const*);   // 0x4c5190
-};
 namespace rgl {
 struct world {
     rgl::entity* create_entity(int);   // 0x428440
     void remove_entity(int);   // 0x41f0d0
 };
 }
-__forceinline void Gui_s2b5c0::add(tstring a0, int a1) { ((MsgLog*)this)->add(a0, a1); }
-__forceinline void MsgLog_s261e0::add(tstring a0, int a1) { ((MsgLog*)this)->add(a0, a1); }
 __forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((Poser*)this)->add_extra((int)a0); }
 __forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((rgl::mesh*)this)->add_face(a0, a1, a2); }
 __forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return ((rgl::mesh*)this)->add_point(a0); }
@@ -1926,8 +1867,6 @@ __forceinline void Scene_s29ec0::collect(int a0, SceneEntity_s29ec0** a1, int* a
 __forceinline void Flags5e291c_s261e0::commit(char* a0) { ((MapFlags*)this)->commit(a0); }
 __forceinline Entity_s2ae70* World_s2ae70::create_entity(int a0) { return (Entity_s2ae70*)((rgl::world*)this)->create_entity(a0); }
 __forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot(a0); }
-__forceinline void gui_manager_s29ec0::draw_string(tstring const* a0, float a1, unsigned a2, int a3) { ((gui_manager*)this)->draw_string((tstring*)a0, a1, (int)a2, (char)a3); }
-__forceinline void gui_manager_s2ae70::draw_string(tstring const* a0, float a1, unsigned a2, int a3) { ((gui_manager*)this)->draw_string((tstring*)a0, a1, (int)a2, (char)a3); }
 __forceinline float MissionSub_s261e0::elapsed() const { return ((Timer*)this)->elapsed(); }
 __forceinline bool Agent_s29130::f100_is_0x48_and_charged() const { return ((AgentX*)this)->f100_is_0x48_and_charged(); }
 __forceinline int AgentTable_s257f0::first_used() { return ((AgentTable*)this)->first_used(); }
@@ -1935,7 +1874,6 @@ __forceinline int AgentTable_s26130::first_used() { return ((AgentTable*)this)->
 __forceinline int AgentTable_s261e0::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline int AgentTable_s284a0::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline unsigned AgentTable_s29840::first_used() { return (unsigned)((AgentTable*)this)->first_used(); }
-__forceinline void MsgLog_s261e0::flush() { ((MsgLog*)this)->flush(); }
 __forceinline void Mission_s29130::fn_529840(int a0) { ((Mission_s29840*)this)->fn_529840(a0); }
 __forceinline void Mission_s261e0::fn_529d80() { ((Mission_s29840*)this)->fn_529d80(); }
 __forceinline void Mission_s261e0::frame(float a0, char a1) { ((MissionG*)this)->frame(a0, (bool)a1); }
@@ -1984,13 +1922,6 @@ __forceinline void GameData_s261e0::save_scene(int a0) { ((GameData_s27c90*)this
 __forceinline void Mission_s261e0::save_scene_data() { ((Mission_s27c90*)this)->save_scene_data(); }
 __forceinline tstring GameData_s27c90::scene_path(int a0) { return ((GameData*)this)->scene_path(a0); }
 __forceinline void Camera_s2b5c0::screen_to_world(rgl::vector4* a0, rgl::vector4* a1) { ((camera_ray*)this)->screen_to_world(a0, a1); }
-__forceinline void Gui_s2b5c0::set_o568(void* a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
-__forceinline void MsgLog_s261e0::set_o568(int a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
-__forceinline void gui_manager_s2ae70::set_o568(void* a0, int a1) { ((gui_manager*)this)->set_o568((gui_obj*)a0, (bool)a1); }
-__forceinline void Gui_s2b5c0::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
-__forceinline void MsgLog_s261e0::set_view(float* a0) { ((gui_view*)this)->set_view((float const*)a0); }
-__forceinline void gui_manager_s29ec0::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
-__forceinline void gui_manager_s2ae70::set_view(float const* a0) { ((gui_view*)this)->set_view(a0); }
 __forceinline int GameData_s29ec0::skill_level(int a0, int a1) { return ((GameData*)this)->skill_level(a0, a1); }
 __forceinline int Party_s29840::skill_level(int a0) { return ((Party*)this)->skill_level(a0); }
 __forceinline int DialogMgr_s257f0::speaker() { return ((DialogMgr*)this)->speaker(); }
@@ -2015,7 +1946,6 @@ __forceinline int rgl::mesh_s2ae70::add_vertex(int a0, const vec2_s2ae70* a1, co
 __forceinline int Mission_s2b5c0::add_placed(const int* a0, const int* a1, const int* a2, const matrix* a3, int* a4) { return ((Mission*)this)->add_placed(a0, a1, a2, a3, a4); }
 __forceinline void Scene_s29ec0::query_segment(const float* a0, const float* a1, unsigned a2, shape_base_s29ec0** a3, int* a4) { ((level*)this)->query_segment(a0, a1, a2, (shape_base**)a3, a4); }
 __forceinline void Scene_s2b5c0::query_segment(const float* a0, const float* a1, unsigned a2, shape_base_s2b5c0** a3, int* a4) { ((level*)this)->query_segment(a0, a1, a2, (shape_base**)a3, a4); }
-__forceinline void Mgr_s25160::update() { ((MsgLog*)this)->flush(); }
 __forceinline void EmitSub_s261e0::play(int a0) { ((SlotChan*)this)->play(a0); }
 __forceinline void World_s27c90::remove_entity(int a0) { ((rgl::world*)this)->remove_entity(a0); }
 __forceinline void Mission_s2b5c0::pick_entity() { ::pick_entity((GuiCtx*)this); }

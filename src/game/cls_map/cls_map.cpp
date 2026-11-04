@@ -409,15 +409,15 @@ void gui_manager::rebuild()
 {
     int count = fa0;
     rgl::mesh* m = new rgl::mesh;
-    if (o568)
-        ((VDel*)o568)->del(1);
+    if (overlay)
+        delete overlay;
     if (m == 0) {
-        f16e0 = -1;
-        f16e4 = 0xff101010;
+        panel_color = -1;
+        panel_bg = 0xff101010;
     }
     fa0 = 0;
-    o568 = (gui_obj*)m;
-    f1700 = 0;
+    overlay = m;
+    sel_ent = 0;
     if (count > 0) {
         int i;
         for (i = 0; i < count; i++)
@@ -494,10 +494,10 @@ void C4c2fb0::init_screen()
         vt(text)->d29(&flag);
     }
 
-    g_gui_dirty = 1;
+    g_gui.dirty = 1;
     {
         void* root = overlay;
-        ADD_ROOT_REF(root);
+        g_gui.objs.push_back((MissionUi* const&)(root));
     }
 
     if (g_module_settings.num_hints != 0) {
@@ -764,8 +764,8 @@ void Rec44::init_screen()
         ((MissionScreen*)this)->fill_mission_grid();
     else if (g_mission_ctx.mode == 3 || g_mission_ctx.mode == 4 || g_mission_ctx.mode == 5)
         ((MissionScreen*)this)->fill_single_mission();
-    ADD_ROOT((void*)overlay);
-    g_gui_dirty = 1;
+    { MissionUi* root_ = (MissionUi*)overlay; g_gui.objs.push_back(root_); }
+    g_gui.dirty = 1;
 }
 
 // @ 0x4db1f0
@@ -800,8 +800,8 @@ void Rec118::init_screen()
         vt(c)->d25(g_5a9f28);
         vt(overlay)->d50(c);
     } while (j < 3);
-    ADD_ROOT((void*)overlay);
-    g_gui_dirty = 1;
+    { MissionUi* root_ = (MissionUi*)overlay; g_gui.objs.push_back(root_); }
+    g_gui.dirty = 1;
     ((MissionScreen*)this)->fill_mission_row(0);
     ((MissionScreen*)this)->fill_mission_row(1);
     ((MissionScreen*)this)->fill_mission_row(2);
@@ -898,8 +898,8 @@ void Rec3c::init_screen()
     }
     {
         void* self = overlay;
-        g_gui_dirty = 1;
-        ADD_ROOT_REF(self);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(self));
     }
     {
         tstring none("");
@@ -945,36 +945,34 @@ UiA* new_button(ContainerBase* o, const tstring& text, float px, float py, float
 }
 
 // ---- 0x4dc350: place the frame of the loading screen (a quad mesh at +0xfb0 and four corner meshes at +0x1210) --------
-// FrameMesh is a view of rgl::mesh: the call is rgl::mesh::ensure_local 0x412ee0
-inline void FrameMesh::ensure_local() { ((rgl::mesh*)this)->ensure_local(); }
 // @ 0x4dc350
-void FrameGui::set_rect(const float* a, const float* b)
+void gui_manager::set_rect(const float* a, const float* b)
 {
     float sy = b[1] + a[1];
     float sx = a[0] + b[0];
-    quad.ensure_local();
-    { rgl::vector4 v(a[0], a[1], 0.0f); rec32* r = quad.pos + 0; r->q = r->p = v; }
-    { rgl::vector4 v(sx, a[1], 0.0f); rec32* r = quad.pos + 1; r->q = r->p = v; }
-    { rgl::vector4 v(sx, sy, 0.0f); rec32* r = quad.pos + 2; r->q = r->p = v; }
-    { rgl::vector4 v(a[0], sy, 0.0f); rec32* r = quad.pos + 3; r->q = r->p = v; }
-    quad.f3c = f16e4;
-    quad.dirty = 1;
+    mfb0.ensure_local();
+    { rgl::vector4 v(a[0], a[1], 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 0; r->b = r->a = v; }
+    { rgl::vector4 v(sx, a[1], 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 1; r->b = r->a = v; }
+    { rgl::vector4 v(sx, sy, 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 2; r->b = r->a = v; }
+    { rgl::vector4 v(a[0], sy, 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 3; r->b = r->a = v; }
+    mfb0.color = panel_bg;
+    mfb0.slots[0].f28 = 1;
     {
         tstring n("matte");
-        quad.material = g_resmgr.get_material(n);
+        mfb0.res = (skin*)g_resmgr.get_material(n);
     }
-    corner[0]->uv_x = (a[0] - corner[0]->c22c) - 0.003f;
-    corner[0]->uv_y = (sy - corner[0]->c240) + 0.003f;
-    corner[1]->uv_x = (sx - corner[0]->c23c) + 0.003f;
-    corner[1]->uv_y = (sy - corner[0]->c240) + 0.003f;
-    corner[2]->uv_x = (sx - corner[0]->c23c) + 0.003f;
-    corner[2]->uv_y = (a[1] - corner[0]->c230) - 0.003f;
-    corner[3]->uv_x = (a[0] - corner[0]->c22c) - 0.003f;
-    corner[3]->uv_y = (a[1] - corner[0]->c230) - 0.003f;
-    corner[0]->f3c = -1;
-    corner[1]->f3c = -1;
-    corner[2]->f3c = -1;
-    corner[3]->f3c = -1;
+    corner[0]->m_cc.o.x = (a[0] - corner[0]->bounds.min.x) - 0.003f;
+    corner[0]->m_cc.o.y = (sy - corner[0]->bounds.max.y) + 0.003f;
+    corner[1]->m_cc.o.x = (sx - corner[0]->bounds.max.x) + 0.003f;
+    corner[1]->m_cc.o.y = (sy - corner[0]->bounds.max.y) + 0.003f;
+    corner[2]->m_cc.o.x = (sx - corner[0]->bounds.max.x) + 0.003f;
+    corner[2]->m_cc.o.y = (a[1] - corner[0]->bounds.min.y) - 0.003f;
+    corner[3]->m_cc.o.x = (a[0] - corner[0]->bounds.min.x) - 0.003f;
+    corner[3]->m_cc.o.y = (a[1] - corner[0]->bounds.min.y) - 0.003f;
+    corner[0]->color = -1;
+    corner[1]->color = -1;
+    corner[2]->color = -1;
+    corner[3]->color = -1;
 }
 
 // ---- 0x4dc630: the message (result) window ------------------------------------------------------------------------------
@@ -1092,10 +1090,10 @@ void ResultWindow::init_screen()
     }
     {
         void* self = win;
-        g_gui_dirty = 1;
-        ADD_ROOT_REF(self);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(self));
     }
-    f64 = g_gui.f560;
+    f64 = g_gui.show_cursor;
 }
 
 // @ 0x4dcbd0
@@ -1339,8 +1337,8 @@ void ItemRec::init_screen()
     }
 
     void* wv = win;
-    g_gui_dirty = 1;
-    ADD_ROOT_REF(wv);
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)(wv));
 }
 
 // @ 0x4dd7b0
@@ -1549,8 +1547,8 @@ void ItemRec2::init_screen()
         vt(win)->d31(0, res_get(n)->clone());
     }
     void* wv = win;
-    g_gui_dirty = 1;
-    ADD_ROOT_REF(wv);
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)(wv));
 }
 
 // @ 0x4ddf80
@@ -1608,9 +1606,9 @@ void C4c3050::init_screen()
     }
 
     void* wv = win;
-    g_gui_dirty = 1;
-    ADD_ROOT_REF(wv);
-    f58 = g_gui.f560;
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)(wv));
+    f58 = g_gui.show_cursor;
 }
 
 
@@ -1658,8 +1656,8 @@ void Rec38::init_screen()
     }
 
     void* wv = win;
-    g_gui_dirty = 1;
-    ADD_ROOT_REF(wv);
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)(wv));
 }
 
 // @ 0x4de320
@@ -1784,8 +1782,8 @@ void Rec34::init_screen()
 
     {
         void* wv = win;
-        g_gui_dirty = 1;
-        ADD_ROOT_REF(wv);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(wv));
     }
 }
 
@@ -2133,8 +2131,8 @@ void Recd8::init_screen()
 
     {
         void* w = root;
-        g_gui_dirty = 1;
-        ADD_ROOT_REF(w);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(w));
     }
     if (g_game)
         g_game->sl_update_avg();
@@ -2393,8 +2391,8 @@ void Recf0::init_screen()
 
     {
         void* w = window;
-        g_gui_dirty = 1;
-        ADD_ROOT_REF(w);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(w));
     }
     if (!g_use_shaders) {
         vt(ui_scale)->d44();
@@ -2518,8 +2516,8 @@ void Rec1bc::init_screen()
     iv = 0xfff0f0f0;
     vt(f1b0)->d38(&iv);
     void* q = (void*)quad;
-    g_gui_dirty = 1;
-    ADD_ROOT_REF(q);
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)(q));
     g_game_keys.backup();
     f1b4 = 0;
     ((KeysPage*)this)->refresh();
@@ -2802,8 +2800,8 @@ void Rec48::init_screen()
     vt(bg)->d31(0, m);
     {
         void* w = bg;
-        g_gui_dirty = 1;
-        ADD_ROOT_REF(w);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(w));
     }
     {
         WL_MARKER(12)
@@ -2904,8 +2902,8 @@ void C4c3290::init_screen()
     }
     {
         void* w = overlay;
-        g_gui_dirty = 1;
-        ADD_ROOT_REF(w);
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(w));
     }
     step = 0;
     total = 0;

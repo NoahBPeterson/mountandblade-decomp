@@ -9,14 +9,12 @@
 #include <windows.h>
 #include <math.h>
 #include "../../rgl/rgl_math.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../shared_vars.h"
 #include "../key_names.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-float g_box_x;                                // 0x5d8778
-float g_box_y;                                // 0x5d877c
 
 
 using rgl::vector4;
@@ -26,7 +24,6 @@ extern "C" int _fltused = 0;                 // static-CRT float marker
 
 // ---------------------------------------------------------------------------------- small engine types --
 #include "../tstring.h"
-#include "../strat/gui_manager.h"            // g_gui.mouse (0x5d7094 / 0x5d7098)
 
 #include "../str_table.h"
 #include "../world.h"                          // world (= Level): the scene object g_level points to
@@ -136,13 +133,13 @@ void MapPanel::update_target()
     // ---- 0x5191ee: party-label column hover ---------------------------------------------------------
     if (f2d5) {
         vector4 mn, mx;
-        g_label_obj->calc_bounds(&mn, &mx);
+        g_gui.label_obj->calc_bounds(&mn, &mx);
         // The original loads both box corners of an axis back to back (x,x,y,y); spelling the extents from the
         // expanded corners keeps that load order, which the resolution audit pairs by instruction shape.
-        float w  = (g_box_x + mx.x) - (g_box_x + mn.x);
-        float h  = (g_box_y + mx.y) - (g_box_y + mn.y);
-        float x0 = g_box_x + mn.x;
-        float y0 = g_box_y + mn.y;
+        float w  = (g_gui.box_x + mx.x) - (g_gui.box_x + mn.x);
+        float h  = (g_gui.box_y + mx.y) - (g_gui.box_y + mn.y);
+        float x0 = g_gui.box_x + mn.x;
+        float y0 = g_gui.box_y + mn.y;
         float dx = g_gui.mouse[0] - x0;
         float dy = g_gui.mouse[1] - y0;
         g_game->cur_label = -1;
@@ -410,11 +407,11 @@ void MapPanel::update_target()
         {
             tstring tmp("ui_target_lost");
             tstring* s = g_strtable.lookup(tmp);
-            if (g_msglog.enabled && g_msglog.ring.count < 0x20) {
-                int k = (g_msglog.ring.head + g_msglog.ring.count) % 0x20;
-                g_msglog.ring.names[k] = *s;
-                g_msglog.ring.vals[k]   = -1;
-                g_msglog.ring.count++;
+            if (g_gui.enabled && g_gui.ring.count < 0x20) {
+                int k = (g_gui.ring.head + g_gui.ring.count) % 0x20;
+                g_gui.ring.names[k] = *s;
+                g_gui.ring.vals[k]   = -1;
+                g_gui.ring.count++;
             }
         }
     }

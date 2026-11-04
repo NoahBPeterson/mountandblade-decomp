@@ -45,7 +45,7 @@
 #include "../placed_obj.h"
 #include "../str_table.h"
 #include "../mode_rec.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../../include/phys_set.h"
 #include "../../include/item_kind.h"
 #include "../../include/game_data.h"
@@ -1969,7 +1969,7 @@ set7:
                     float delay = (((frand() + 2.5f) * cl) * 35.0f) / (float)(g_game->troops[troop].fb0 + 0x23);
                     if (itype == itp_type_thrown)
                         delay = delay * 0.5f;
-                    ((gui_timer*)&ai_timer)->set_delay(-delay);
+                    ((Timer*)&ai_timer)->set_delay(-delay);
                     goto bb72;
                 }
                 if (r != 0) {
@@ -2005,7 +2005,7 @@ set7:
             {
                 int blocker;
                 if (fire_check(target, &blocker) == 1) {
-                    ((gui_timer*)&ai_timer)->set_delay(-0.3f);
+                    ((Timer*)&ai_timer)->set_delay(-0.3f);
                     combat_state = 3;
                     goto bb72;
                 }
@@ -2179,14 +2179,14 @@ melee:
                     if (b3f) {
                         {
                             float fr = frand();      // one rand call, doubled (0x44b4a0 fadd st0,st0)
-                            ((gui_timer*)&ai_timer2)->set_delay(-((fr + fr) + 1.3f));
+                            ((Timer*)&ai_timer2)->set_delay(-((fr + fr) + 1.3f));
                         }
                         combat_state = 7;
                     }
                     goto bb72;
                 }
                 if (b5a && !b3e && (frand() < wprof * 0.004f + 0.5f || f2c >= 0)) {
-                    ((gui_timer*)&ai_timer)->set_delay(0.0f);
+                    ((Timer*)&ai_timer)->set_delay(0.0f);
                     combat_state = 3;
                     goto bb72;
                 }
@@ -2213,7 +2213,7 @@ b53e:
 b508:
                         {
                             float fr = frand();      // one rand call, doubled (0x44b4a0 fadd st0,st0)
-                            ((gui_timer*)&ai_timer2)->set_delay(-((fr + fr) + 1.3f));
+                            ((Timer*)&ai_timer2)->set_delay(-((fr + fr) + 1.3f));
                         }
                         combat_state = 7;
                         goto bb72;
@@ -2222,7 +2222,7 @@ b508:
                 if (!b3f && !b3e && wk->is_melee() && (wk->type_flags & 0x4000) == 0 && ai_timer2.elapsed() > 0.0f &&
                     op0.item != -1 && g_items[op0.item].is_melee() && o->active != 0 && b58 &&
                     frand() < wprof * 0.01f + 0.1f) {
-                    ((gui_timer*)&ai_timer2)->set_delay(-(frand() * 0.5f + 0.6f));
+                    ((Timer*)&ai_timer2)->set_delay(-(frand() * 0.5f + 0.6f));
                     combat_state = 2;
                     goto bb72;
                 }
@@ -2240,7 +2240,7 @@ b508:
                 if (o->active != 0 || !(frand() < 0.9f))
                     goto bb72;
                 if (frand() < 0.4f) {
-                    ((gui_timer*)&ai_timer)->set_delay(-0.2f);
+                    ((Timer*)&ai_timer)->set_delay(-0.2f);
                     combat_state = 3;
                     goto bb72;
                 }
@@ -2258,7 +2258,7 @@ b508:
                     if (b5a) {
                         int sv = p.stat_1f0a();
                         int sk = g_game->troops[troop].fb0 + 0x28;
-                        ((gui_timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
+                        ((Timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
                         combat_state = 4;
                     } else if (ai_timer.elapsed() > 8.0f || reach0 * 4.0f < distL) {
                         f53bc = fl | 0x300;
@@ -2299,11 +2299,11 @@ b508:
                 f53bc = f53bc | 0x200;
                 if ((op0.item == -1 || g_items[op0.item].is_melee()) && o->active == 0) {
                     if (frand() < 0.4f) {
-                        ((gui_timer*)&ai_timer2)->set_delay(0.0f);
-                        ((gui_timer*)&ai_timer)->set_delay(-0.2f);
+                        ((Timer*)&ai_timer2)->set_delay(0.0f);
+                        ((Timer*)&ai_timer)->set_delay(-0.2f);
                         combat_state = 3;
                     } else {
-                        ((gui_timer*)&ai_timer2)->set_delay(0.0f);
+                        ((Timer*)&ai_timer2)->set_delay(0.0f);
                         combat_state = 0;
                     }
                 }
@@ -4230,7 +4230,6 @@ void Agent::refresh_carried(Missile* other)
 }
 
 // ---- Agent::drop_held, the text layout wrapper, the message log, the animator visibility switch, Agent::get_label_box -----------
-extern MsgLog g_gui;                                 // 0x5d7080
 extern Font* g_font;                                    // 0x5e2934
 // the animator's inline accessor of a bone record's world frame (brings the poses up to date first)
 static __forceinline char* skel_rec_inl(Skeleton* sk, int i)
@@ -4294,15 +4293,13 @@ rgl::vector4* Font::layout_clear(rgl::vector4* out_extent, const tstring* text, 
     layout_text((float*)out_extent, text, pos, scale, m, (int)a, b, c, flags);
     return out_extent;
 }
-#define TXT(i) (*(mesh*)(text_buf + (i) * 0x260))
-#define BGM(i) (*(mesh*)(bg_buf + (i) * 0x260))
 // @ 0x452c00
-void MsgLog::add(tstring msg, int color)
+void gui_manager::add(tstring msg, int color)
 {
     pos2 M;
     tstring S = msg.strip_tags();
-    while (lines.size() > 100)
-        lines.erase(lines.begin());
+    while (history.size() > 100)
+        history.erase(history.begin());
     if (enabled) {
         if (S.len > 0x50) {
             int a = 0, b = 0;
@@ -4330,25 +4327,25 @@ void MsgLog::add(tstring msg, int color)
             scale.y = 0.021f;                                  // 0x3cac0831 (0x452d7a)
             f08 = 0.8f;
             cur = (cur + 31) % 32;
-            ((rgl::mesh_ext*)&TXT(cur))->clear_geometry();
-            ((rgl::mesh_ext*)&BGM(cur))->clear_geometry();
+            ((rgl::mesh_ext*)&meshA[cur])->clear_geometry();
+            ((rgl::mesh_ext*)&meshB[cur])->clear_geometry();
             zero = 0;
             minus1 = -1;
             p.x = 0.02f;
             p.y = -0.03f;
             p.z = 0.0f;
-            g_font->layout_clear(&ext, &S, &p, (const float*)&scale, &TXT(cur), &minus1, (const float*)&zero, &f08, 0);
+            g_font->layout_clear(&ext, &S, &p, (const float*)&scale, &meshA[cur], &minus1, (const float*)&zero, &f08, 0);
             identity_pos((::pos*)&M);
-            BGM(cur).append_skinned(&TXT(cur), (mat4*)&M, -1, -1, 0);
+            meshB[cur].append_skinned(&meshA[cur], (mat4*)&M, -1, -1, 0);
             this->color[cur] = color;
             age[cur] = 0;
-            ((mnode*)&TXT(cur))->calc_bounds(&ext, &p);       // mnode (agent2/agent_types.h) is the mesh seen by its node lists
+            ((mnode*)&meshA[cur])->calc_bounds(&ext, &p);       // mnode (agent2/agent_types.h) is the mesh seen by its node lists
             height[cur] = p.y - ext.y;
             total_h += height[cur];
         }
-        TXT(cur).res = get_mat(tstring("ui_font"));
-        BGM(cur).res = get_mat(tstring("ui_font_background"));
-        lines.push_back(msg);
+        meshA[cur].res = get_mat(tstring("ui_font"));
+        meshB[cur].res = get_mat(tstring("ui_font_background"));
+        history.push_back(msg);
     }
 }
 
@@ -5642,7 +5639,7 @@ void Agent::update_controls(float dt)
                             int kind = 0x1d;
                             play_sound_var(&kind, &var);
                         }
-                        ((gui_timer*)&t5800)->set_delay(-2.0f);
+                        ((Timer*)&t5800)->set_delay(-2.0f);
                     }
                 } else if (vel_xy.y > 3.5f) {
                     flags3c = flags3c & 0xfffffffe;
@@ -5656,7 +5653,7 @@ void Agent::update_controls(float dt)
                         int kind = 0x21;
                         play_sound_var(&kind, &var);
                     }
-                    ((gui_timer*)&t5800)->set_delay(-4.0f);
+                    ((Timer*)&t5800)->set_delay(-4.0f);
                 }
             }
             if ((in_flags & 0x40000) && f10 != 0) {
@@ -5816,7 +5813,7 @@ static __declspec(noinline) void ui_weapon_class_name(int type, char* out)
 
 #define PB_IMPULSE() if (flags3c & 1) { \
         flags3c &= ~1u; \
-        ((gui_timer*)&t40)->set_delay(-0.6f); \
+        ((Timer*)&t40)->set_delay(-0.6f); \
         impulse.x = imp.x + impulse.x; \
         impulse.y = imp.y + impulse.y; \
         impulse.z = imp.z + impulse.z; \
@@ -6056,7 +6053,7 @@ void Agent::process_blow(int unused)
                 set_order(0, 0x1a4, 0x2000080, 1.0f);
                 int kind = 4;
                 play_hit_sound(&kind);
-                ((gui_timer*)&t40)->set_delay(-2.4f);
+                ((Timer*)&t40)->set_delay(-2.4f);
                 if (f30 >= 0) {
                     g_mission->agents.get(f30)->set_order(0, 0x123, 0x1000081, 1.0f);
                     vector4 z;
@@ -6064,7 +6061,7 @@ void Agent::process_blow(int unused)
                     z.y = 0.0f;
                     z.z = 0.0f;
                     g_mission->agents.get(f30)->impulse = z;
-                    ((gui_timer*)&g_mission->agents.get(f30)->t40)->set_delay(-2.4f);
+                    ((Timer*)&g_mission->agents.get(f30)->t40)->set_delay(-2.4f);
                 }
             } else {
                 if (frand() <= 1.0f) {
@@ -6085,7 +6082,7 @@ void Agent::process_blow(int unused)
                 if (plen < 0.01f)
                     plen = 1.0f;
             }
-            ((gui_timer*)&t5918)->set_delay(-plen);
+            ((Timer*)&t5918)->set_delay(-plen);
             if (f30 >= 0) {
                 g_mission->agents.get(f30)->f2c = -1;
                 f30 = -1;
@@ -6244,7 +6241,7 @@ void Agent::process_blow(int unused)
             if (len < 0.01f)
                 len = 0.5f;
         }
-        ((gui_timer*)&t5918)->set_delay(-len);
+        ((Timer*)&t5918)->set_delay(-len);
         hit_bone = last_blow().bone;
         hit_vec = last_blow().dir2;
         hit_vec.normalize();
@@ -6277,7 +6274,7 @@ void Agent::process_blow(int unused)
                 bf.x = h->vel_xy.y * body->m.f.x;
                 bf.y = body->m.f.y * h->vel_xy.y;
                 bf.z = body->m.f.z * h->vel_xy.y;
-                ((gui_timer*)&t40)->set_delay(-1.4f);
+                ((Timer*)&t40)->set_delay(-1.4f);
                 impulse = bf;
                 g_mission->agents.get(f2c)->f30 = -1;
                 f2c = -1;

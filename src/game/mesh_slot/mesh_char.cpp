@@ -4,7 +4,7 @@
 #include "./mesh_slot.h"
 #include "../terrain_a/game_state.h"
 #include "../terrain_b/scene_file.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../render_batch.h"                // render_batch, g_batch (0x5fe898): render 0x47e520
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/render_flags.h"
@@ -15,7 +15,6 @@ using namespace rgl;
 
 // 0x4175f0 is the free stdcall clear_f14 of rgl/mem_stream.cpp (the folded release(res), which ignores ecx; resource.h)
 
-extern MsgLog g_gui;                          // 0x5d7080 (MsgLog::add 0x452c00, ret 0x14, is the message log's own member)
 
 // EChar::collect lives next to its caller (the original's tail call)
 struct EChar_c : EChar {

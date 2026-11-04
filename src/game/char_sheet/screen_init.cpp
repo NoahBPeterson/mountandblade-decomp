@@ -1,7 +1,7 @@
 #include "../../include/image_addrs.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./screen_init.h"
-#include "../gui_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../strat/gui_manager.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -42,7 +42,7 @@ void CampaignScreen::init_screen()
 {
     g_gui.reset();
     g_game->f1a090 = 0;
-    g_5e212c = 1;
+    g_gui.hud_flag = 1;
     g_sound_mgr.stop_all();   // 0x494310
     g_game->f88 = 1;
     f2d4 = 0;
@@ -58,8 +58,8 @@ void CampaignScreen::init_screen()
     s0.x = 1.0f;
     s0.y = 0.75f;
     overlay->set_xy(&s0.x);
-    g_gui_dirty = 1;
-    ((NodeVec*)&orig::g_gui_mgr)->push_back((NodeA* const&)overlay);   // 0x49b120
+    g_gui.dirty = 1;
+    g_gui.objs.push_back((MissionUi* const&)overlay);   // 0x49b120
 
     text_box* buttons = new text_box;
     f34 = (MissionUi*)buttons;

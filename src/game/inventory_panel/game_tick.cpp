@@ -16,7 +16,7 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../../rgl/mesh.h"
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/config.h"
@@ -40,7 +40,7 @@ float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-cloc
 #define pool FLD(GamePool, 0xcc)
 #define f13a70 FLD(tstring, 0x13a70)
 #define resume_old FLD(tstring, 0x13a70)
-#define resume_timer FLD(gui_timer, 0x13a80)
+#define resume_timer FLD(Timer, 0x13a80)
 #define f13aa0 FLD(char, 0x13aa0)
 #define f13aa4 FLD(int, 0x13aa4)
 #define f13aa8 FLD(tstring, 0x13aa8)
@@ -65,7 +65,7 @@ float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-cloc
 #define f13b40 FLD(float, 0x13b40)
 #define f13b60 FLD(int, 0x13b60)
 #define speed FLD(float, 0x14058)
-#define msg_timer FLD(gui_timer, 0x1a298)
+#define msg_timer FLD(Timer, 0x1a298)
 #define game_ents FLD(ColorEnt**, 0x38)
 #define game_ents_end FLD(ColorEnt**, 0x3c)
 #define sun_ent FLD(ColorEnt*, 0x44)
@@ -87,7 +87,6 @@ struct Cfg30 {                                      // the object at game+0x30
 extern const float g_rate_marker;       // 0x590cd0  marker decay per second
 
 #include "../game_globals.h"      // g_module_settings.disable_food_slot, g_module_settings.player_wounded_treshold (canonical)
-extern MsgLog g_msglog;                                 // 0x5d7080
 void set_clock_step(int* clock, float step);            // 0x461420
 bool is_daytime();                                          // 0x435700 (true in the 4..20 h window; game/agent/agent.cpp)
 // GameW (inv_common.h): remove_party 0x4915d0 (game/world_data, GameData::remove_party)
@@ -161,11 +160,11 @@ void GameG::tick(float dt)
 
     if (g_module_settings.disable_food_slot == 0 &&
         ((Troop*)((char*)troops + player * 0x508))->equip[9].item == -1) {
-        float d = (g_ticks[msg_timer.clock] - msg_timer.t) * 1e-5f;
+        float d = (g_ticks[msg_timer.clock] - msg_timer.start) * 1e-5f;
         if (d > 1.0f) {
             msg_timer.set_delay(-2.0f);
             tstring msg("ui_party_has_nothing_to_eat");
-            g_msglog.add(*g_strtable.lookup(msg), 0xffdd4444);
+            g_gui.add(*g_strtable.lookup(msg), 0xffdd4444);
         }
     }
 
@@ -236,7 +235,7 @@ void GameG::tick(float dt)
     update_markers();
 
     if (f13aa0) {
-        float d = (g_ticks[resume_timer.clock] - resume_timer.t) * 1e-5f;
+        float d = (g_ticks[resume_timer.clock] - resume_timer.start) * 1e-5f;
         if (d >= 0.0f) {
             f13aa0 = 0;
             Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(cur_agent));
@@ -901,10 +900,10 @@ void GameG::train_troops()
     }
 
     if (total != 0) {
-        g_msglog.add(*g_strtable.lookup(tstring("ui_days_training_is_complete")), -1);
+        g_gui.add(*g_strtable.lookup(tstring("ui_days_training_is_complete")), -1);
         char buf[512];
         sprintf(buf, g_strtable.lookup(tstring("ui_total_experience_gained_through_training_number"))->c_str(), total);
-        g_msglog.add(tstring(buf), -1);
+        g_gui.add(tstring(buf), -1);
     }
 
     bool changed = false;
@@ -920,5 +919,5 @@ void GameG::train_troops()
         }
     }
     if (changed)
-        g_msglog.add(*g_strtable.lookup(tstring("ui_some_soldiers_are_ready_to_upgrade")), -1);
+        g_gui.add(*g_strtable.lookup(tstring("ui_some_soldiers_are_ready_to_upgrade")), -1);
 }

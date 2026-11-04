@@ -35,8 +35,7 @@ using rgl::mesh;
 #include "../str_table.h"
 #include "../key_names.h"
 #include "../str_table.h"                          // StrTable g_strtable (0x5e2a18)
-#include "../../include/msg_log.h"
-extern MsgLog g_msglog;                                 // 0x5d7080
+#include "../strat/gui_manager.h"
 
 bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format);  // 0x4bb9c0 (2-arg cdecl)
 void take_screenshot(void);
@@ -112,89 +111,6 @@ __declspec(noinline) static void screenshots_path(char* out)
 }
 
 using rgl::scene;
-
-// the active overlay (vtable slot +0x8c receives key codes, +0x40 resets it).
-struct CurObj;
-
-// one mouse-button record: the table index plus the last click position read from the pair table.
-struct ClickRec {
-    int idx;                            // +0x0 index into the 0x5e2948 float-pair table
-    int pad4;                           // +0x4
-    float x;                            // +0x8
-    float y;                            // +0xc
-    // (elapsed 0x432c10, seconds since the record was touched, is Timer's: cs_common.h)
-};
-
-struct GuiScreen {
-    void* vptr;                         // +0x00
-    CurObj** obj_first;                 // +0x04 (std::vector<CurObj*> first/last/end)
-    CurObj** obj_last;                  // +0x08
-    CurObj** obj_end;                   // +0x0c
-    CurObj* cur;                        // +0x10
-    float mx;                           // +0x14 cursor x (0..1)
-    float my;                           // +0x18 cursor y (0..1)
-    float dmx;                          // +0x1c dx this frame
-    float dmy;                          // +0x20 dy this frame
-    float ax;                           // +0x24 accumulated mouse offset x
-    float ay;                           // +0x28 accumulated mouse offset y
-    float prev_mx;                      // +0x2c cursor x before this frame
-    float prev_my;                      // +0x30 cursor y before this frame
-    int prev_cx;                        // +0x34 raw cursor x before GetCursorPos
-    int prev_cy;                        // +0x38 raw cursor y before GetCursorPos
-    char pad3c[0x3a8 - 0x3c];
-    char pad3a8[0x514 - 0x3a8];
-    float f514;                         // +0x514 vertical scale
-    ClickRec click3;                    // +0x518 (input offset 0xc: last left-click)
-    ClickRec click2;                    // +0x528 (input offset 0xd: last right-click)
-    ClickRec click1;                    // +0x538 (input offset 0xe: last middle-click)
-    int view_x;                         // +0x548
-    int view_h;                         // +0x54c
-    int view_y;                         // +0x550
-    int view_w;                         // +0x554
-    char pad558[0x1708 - 0x558];
-    char f1708;                         // +0x1708 (keyboard cursor mode: stop processing)
-    char f1709;                         // +0x1709
-    char pad170a[6];
-    int f1710;                          // +0x1710
-    int f1714;
-    int f1718;                          // +0x1718 (>0 and cur: send 0x1000)
-    char pad171c[0xb0b0 - 0x171c];
-    int cur_mx;                         // +0xb0b0 (GetCursorPos)
-    int cur_my;                         // +0xb0b4
-
-    // (wheel_step 0x4c52f0 and clear_selection 0x4c5330 are gui_view's, post 0x4e6510 is MsgLog::update: cs_common.h / msg_log.h)
-
-    void process(int param);                                // 0x4ebfd0
-};
-
-// the two inlined std::vector idioms, kept as free helpers so `this` stays in ESI.
-static __forceinline int vec_size(GuiScreen* s)
-{
-    return s->obj_first ? (int)(s->obj_last - s->obj_first) : 0;
-}
-static __forceinline CurObj* vec_back(GuiScreen* s)
-{
-    return s->obj_first[vec_size(s) - 1];
-}
-
-// every element of the GuiScreen::obj vector exposes the per-frame update at vtable slot +0x8.
-struct ScreenVT {
-    virtual void s0(int); virtual void s1(int); virtual void update(int);
-};
-
-struct CurObj {
-    virtual void c00(int); virtual void c01(int); virtual void c02(int); virtual void c03(int);
-    virtual void c04(int); virtual void c05(int); virtual void c06(int); virtual void c07(int);
-    virtual void c08(int); virtual void c09(int); virtual void c10(int); virtual void c11(int);
-    virtual void c12(int); virtual void c13(int); virtual void c14(int); virtual void c15(int);
-    virtual void load();                // +0x40 (slot 16)
-    virtual void c16(int); virtual void c17(int); virtual void c18(int); virtual void c19(int);
-    virtual void c20(int); virtual void c21(int); virtual void c22(int); virtual void c23(int);
-    virtual void c24(int); virtual void c25(int); virtual void c26(int); virtual void c27(int);
-    virtual void c28(int); virtual void c29(int); virtual void c30(int); virtual void c31(int);
-    virtual void c32(int); virtual void c33(int);
-    virtual void key(int code);         // +0x8c (slot 35)
-};
 
 struct GameMgr;
 

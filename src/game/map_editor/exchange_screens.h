@@ -22,7 +22,7 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../ui/ui_common.h"
 #include "../int_vec.h"
 #include "../str_table.h"
@@ -98,7 +98,6 @@ inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
 #include "../map_flags.h"                            // MapFlags, g_map_flags (0x5e291c): the one definition (defined in inventory_panel/mission_ctx.cpp)
 #include "../window_mgr.h"      // g_windows (0xa73980), slot_as<T>(i): the screens are its slots
 #include "../key_names.h"      // g_keyboard (0xa170c8)
-extern MsgLog g_gui;                             // 0x5d7080
 
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): setup_entry 0x531600, weight 0x5316f0
 

@@ -32,7 +32,7 @@ char UiD::key(unsigned p)
         if (p != 0x10)
             goto tail;
         b = 1;
-        ::play_sound(&g_ui_sound);
+        g_gui.play_sound();
         int i = f178;
         float t = g_gui.mouse[i];
         float v = value() + e[i];

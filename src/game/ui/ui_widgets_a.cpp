@@ -24,6 +24,7 @@
 
 // FMOD 3 imports (stdcall thunks in the image's import library)
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 extern "C" {
 int __stdcall FSOUND_PlaySoundEx(int channel, void* sample, void* dsp, int startpaused);   // 0x5342d6
 int __stdcall FSOUND_SetPaused(int channel, int paused);                                   // 0x5342ac
@@ -65,9 +66,9 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 }
 
 // @ 0x48b2d0
-void __fastcall play_sound(UiSoundHost* m)
+void gui_manager::play_sound()
 {
-    int ch = FSOUND_PlaySoundEx(-1, (void*)m->handle, 0, 1);
+    int ch = FSOUND_PlaySoundEx(-1, (void*)f170c, 0, 1);
     float v = g_options.master_volume * 155.0f;
     if (!(v > 0.0f))
         v -= 0.99999988f;

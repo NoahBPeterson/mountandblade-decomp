@@ -41,10 +41,10 @@ void __cdecl take_screenshot(void)
             s = g_strtable.lookup(key);
             sprintf(msg, s->buf ? s->buf : (char*)&s->buf, name);
         }
-        g_msglog.add(tstring(msg), -1);
+        g_gui.add(tstring(msg), -1);
     } else {
         tstring key("ui_screenshot_failed");
-        g_msglog.add(*g_strtable.lookup(key), -1);
+        g_gui.add(*g_strtable.lookup(key), -1);
     }
 }
 
@@ -90,47 +90,47 @@ UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dest, RowAlloc& al)
 // DirectInput (GetDeviceData, re-acquiring while the device is unacquired), maps the raw cursor into the
 // 0..1 view rectangle, then dispatches every record to the key-flag path (0x4c52f0) or the active
 // overlay (+0x8c), and finally fans the frame out to the screen vector, 0x4e6510 and 0x4c5330.
-void GuiScreen::process(int param)
+void gui_manager::process(int param)
 {
     DiObjectData buf[16];
     unsigned count;
     unsigned i;
     int acc0, acc1;
-    ClickRec* cr;
+    gui_timer* cr;
 
-    vec_back(this)->load();
+    objs.back()->clear_c8();
 
-    this->dmx = 0.0f;
-    this->dmy = 0.0f;
-    if (this->mx <= 0.01f) {
+    dmx = 0.0f;
+    dmy = 0.0f;
+    if (this->mouse[0] <= 0.01f) {
         if (g_keyboard.axis[0] < 0.0f) {
-            this->dmx = g_keyboard.axis[0];
-            this->ax = this->ax + g_keyboard.axis[0];
+            dmx = g_keyboard.axis[0];
+            this->mouse_dx = this->mouse_dx + g_keyboard.axis[0];
         }
     }
-    else if (this->mx >= 0.99f) {
+    else if (this->mouse[0] >= 0.99f) {
         if (g_keyboard.axis[0] > 0.0f) {
-            this->dmx = g_keyboard.axis[0];
-            this->ax = this->ax + g_keyboard.axis[0];
+            dmx = g_keyboard.axis[0];
+            this->mouse_dx = this->mouse_dx + g_keyboard.axis[0];
         }
     }
     else {
-        this->ax = 0.0f;
+        this->mouse_dx = 0.0f;
     }
-    if (this->my <= 0.01f) {
+    if (this->mouse[1] <= 0.01f) {
         if (g_keyboard.axis[1] > 0.0f) {
-            this->dmy = -g_keyboard.axis[1];
-            this->ay = this->ay - g_keyboard.axis[1];
+            dmy = -g_keyboard.axis[1];
+            this->mouse_dy = this->mouse_dy - g_keyboard.axis[1];
         }
     }
-    else if (this->my >= 0.74f) {
+    else if (this->mouse[1] >= 0.74f) {
         if (g_keyboard.axis[1] < 0.0f) {
-            this->dmy = -g_keyboard.axis[1];
-            this->ay = this->ay - g_keyboard.axis[1];
+            dmy = -g_keyboard.axis[1];
+            this->mouse_dy = this->mouse_dy - g_keyboard.axis[1];
         }
     }
     else {
-        this->ay = 0.0f;
+        this->mouse_dy = 0.0f;
     }
 
     count = 0x10;
@@ -141,31 +141,31 @@ void GuiScreen::process(int param)
         }
     }
 
-    this->prev_cx = this->cur_mx;
-    this->prev_cy = this->cur_my;
-    GetCursorPos((POINT*)&this->cur_mx);
-    this->prev_mx = this->mx;
-    this->mx = (float)(this->cur_mx - this->view_w) / (float)this->view_x;
-    this->prev_my = this->my;
-    this->my = (1.0f - (float)(this->cur_my - this->view_y) / (float)this->view_h) * this->f514;
+    this->warp_x = this->saved_x;
+    this->warp_y = this->saved_y;
+    GetCursorPos((POINT*)&this->saved_x);
+    this->prev_mx = this->mouse[0];
+    this->mouse[0] = (float)(this->saved_x - this->view_x) / (float)this->screen_w;
+    this->prev_my = this->mouse[1];
+    this->mouse[1] = (1.0f - (float)(this->saved_y - this->view_y) / (float)this->screen_h) * this->aspect;
 
-    if (this->cur) {
-        this->cur->key(1);
+    if (this->ui_active) {
+        this->ui_active->key(1);
     }
-    else if (vec_size(this)) {
-        vec_back(this)->key(1);
+    else if (objs.size()) {
+        objs.back()->key(1);
     }
 
     acc0 = 0;
     acc1 = 0;
-    this->f1710 = 0;
-    this->f1708 = 0;
+    this->wheel = 0;
+    this->dirty = 0;
 
     {
         unsigned* rec = (unsigned*)buf + 1;
         for (i = 0; i < count; i++, rec += 5) {
             unsigned type;
-            if (this->f1708)
+            if (this->dirty)
                 break;
             type = rec[-1];
             if (type == 0) {
@@ -177,15 +177,15 @@ void GuiScreen::process(int param)
                 continue;
             }
             if (type == 8) {
-                this->f1710 += (int)rec[0];
+                this->wheel += (int)rec[0];
                 continue;
             }
             if (acc0 || acc1) {
-                if (this->cur) {
-                    this->cur->key(1);
+                if (this->ui_active) {
+                    this->ui_active->key(1);
                 }
-                else if (vec_size(this)) {
-                    vec_back(this)->key(1);
+                else if (objs.size()) {
+                    objs.back()->key(1);
                 }
                 acc0 = 0;
                 acc1 = 0;
@@ -193,74 +193,71 @@ void GuiScreen::process(int param)
             switch (type) {
             case 0xc:
                 if ((char)rec[0] < 0) {
-                    ((gui_view*)(void*)this)->wheel_step(0x10);
-                    cr = &this->click3;
-                    if (((const Timer*)cr)->elapsed() < 0.4f) {
-                        ((gui_view*)(void*)this)->wheel_step(0x200);
+                    wheel_step(0x10);
+                    cr = &this->t0;
+                    if (cr->elapsed() < 0.4f) {
+                        wheel_step(0x200);
                     }
                     else {
-                        cr->x = ((float*)g_ticks)[cr->idx * 2];
-                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
+                        cr->start = g_ticks[cr->clock];
                     }
                 }
                 else {
-                    ((gui_view*)(void*)this)->wheel_step(8);
+                    wheel_step(8);
                 }
                 break;
             case 0xd:
                 if ((char)rec[0] < 0) {
-                    ((gui_view*)(void*)this)->wheel_step(0x40);
-                    cr = &this->click2;
-                    if (((const Timer*)cr)->elapsed() < 0.4f) {
-                        ((gui_view*)(void*)this)->wheel_step(0x400);
+                    wheel_step(0x40);
+                    cr = &this->t1;
+                    if (cr->elapsed() < 0.4f) {
+                        wheel_step(0x400);
                     }
                     else {
-                        cr->x = ((float*)g_ticks)[cr->idx * 2];
-                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
+                        cr->start = g_ticks[cr->clock];
                     }
                 }
                 else {
-                    ((gui_view*)(void*)this)->wheel_step(0x20);
+                    wheel_step(0x20);
                 }
                 break;
             case 0xe:
                 if ((char)rec[0] < 0) {
-                    ((gui_view*)(void*)this)->wheel_step(0x100);
-                    cr = &this->click1;
-                    if (((const Timer*)cr)->elapsed() < 0.4f) {
-                        ((gui_view*)(void*)this)->wheel_step(0x800);
+                    wheel_step(0x100);
+                    cr = &this->t2;
+                    if (cr->elapsed() < 0.4f) {
+                        wheel_step(0x800);
                     }
                     else {
-                        cr->x = ((float*)g_ticks)[cr->idx * 2];
-                        cr->y = ((float*)g_ticks)[cr->idx * 2 + 1];
+                        cr->start = g_ticks[cr->clock];
                     }
                 }
                 else {
-                    ((gui_view*)(void*)this)->wheel_step(0x80);
+                    wheel_step(0x80);
                 }
                 break;
             }
         }
     }
 
-    if (!this->f1708 && (acc0 || acc1)) {
-        if (this->cur) {
-            this->cur->key(1);
+    if (!this->dirty && (acc0 || acc1)) {
+        if (this->ui_active) {
+            this->ui_active->key(1);
         }
-        else if (vec_size(this)) {
-            vec_back(this)->key(1);
+        else if (objs.size()) {
+            objs.back()->key(1);
         }
     }
 
-    if (this->cur && this->f1718 > 0)
-        this->cur->key(0x1000);
+    if (this->ui_active && this->f1718 > 0)
+        this->ui_active->key(0x1000);
 
-    for (i = 0; i < (unsigned)vec_size(this); i++)
-        ((ScreenVT*)this->obj_first[i])->update(param);
+    for (i = 0; i < (unsigned)objs.size(); i++)
+        objs[i]->animate(param);
 
-    ((MsgLog*)(void*)this)->update(*(float*)&param);   // 0x4e6510
+    update(*(float*)&param);   // 0x4e6510
     if (this->f1709)
-        ((gui_view*)(void*)this)->clear_selection();   // 0x4c5330
+        clear_selection();   // 0x4c5330
 }
 
 // @ 0x4ec460

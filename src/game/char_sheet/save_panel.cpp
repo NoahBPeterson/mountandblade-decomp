@@ -49,8 +49,7 @@ typedef MissionUi Control;
 #include "../screen_records.h"       // C4c31c0: the save / load window (slot 3 is update 0x4ea290, select 0x4ea850)
 
 #include "../str_table.h"
-#include "../../include/msg_log.h"
-extern MsgLog g_msglog;                                         // 0x5d7080
+#include "../strat/gui_manager.h"
 void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
 
@@ -157,7 +156,7 @@ void C4c31c0::frame_update(float)
                         sel218 / 10, sel218 % 10);
             if (_rmdir(name) != 0) {
                 tstring err("ui_error_removing_file");
-                g_msglog.add(*g_strtable.lookup(err), 0xffff0000);
+                g_gui.add(*g_strtable.lookup(err), 0xffff0000);
             }
             g_windows.set_state(0x15);
             return;
@@ -167,7 +166,7 @@ void C4c31c0::frame_update(float)
         save_game(sel218, (tstring*)((char*)this + 0x224));
         ((tstring*)((char*)g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
         tstring ok("ui_game_saved");
-        g_msglog.add(*g_strtable.lookup(ok), -1);
+        g_gui.add(*g_strtable.lookup(ok), -1);
         g_windows.set_state(*(int*)((char*)this + 0x18));
         return;
     }

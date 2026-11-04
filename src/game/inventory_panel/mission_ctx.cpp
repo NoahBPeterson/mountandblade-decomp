@@ -26,7 +26,7 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui/container.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -36,14 +36,11 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-float g_mouse_dx;                                // 0x5d70a4
-float g_mouse_dy;                                // 0x5d70a8
 MissionCtx g_mission_ctx;                        // 0xa73300 (.bss, 0x2cc bytes; initialised by static_init_547e40 through MissionCtx::init)
 
 
 #define SCENE ((MissionV*)g_mission)
 
-extern MsgLog g_msglog;                                 // 0x5d7080
 
 void autosave_notice();                                 // 0x514830
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (cdecl)
@@ -122,8 +119,6 @@ extern "C" double __cdecl fmod(double, double);         // 0x536a6a (__CIfmod, x
 
 
 
-extern float g_view_a;          // 0x5d75d8
-extern float g_view_b;          // 0x5d75dc
 extern const float g_ten;           // 0x549d74  10.0f
 extern const float g_quarter;       // 0x54b868  0.25f
 
@@ -318,7 +313,7 @@ void MissionCtx::update_parties()
         if (count_hero_items() > f168) {
             tstring msg("ui_some_soldiers_are_ready_to_upgrade");
 
-            g_msglog.push(*g_strtable.lookup(msg), 0xffbbffbb);
+            g_gui.push(*g_strtable.lookup(msg), 0xffbbffbb);
         }
 
         party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->dirty = 1;
@@ -598,7 +593,7 @@ void autosave_notice()
         return;
     {
         tstring s("ui_autosaving");
-        g_msglog.add(*g_strtable.lookup(s), -1);
+        g_gui.add(*g_strtable.lookup(s), -1);
     }
     save_game(-1, 0);
 }
@@ -710,10 +705,10 @@ void CampaignScreen::frame_update(float dt)
     cam.perspective = 1;
     cam.nearz = 0.2f;
     cam.farz = 300.0f;
-    cam.left = g_view_a * -0.1f;
-    cam.right = g_view_a * 0.1f;
-    cam.bottom = g_view_b * -0.095f;
-    cam.top = g_view_b * 0.095f;
+    cam.left = g_gui.view_a * -0.1f;
+    cam.right = g_gui.view_a * 0.1f;
+    cam.bottom = g_gui.view_b * -0.095f;
+    cam.top = g_gui.view_b * 0.095f;
     cam.build_planes();
     f30->scene3d.fr = cam;
 
@@ -941,7 +936,7 @@ no_party:
         PSO(f54)->act_b4();
     else
         PSO(f54)->clear();
-    g_msglog.flush();
+    g_gui.flush();
     if (GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) != 0) {
         PSO(f58)->act_b4();
         if (g_keyboard.down[0xe0] == 0 && g_keyboard.prev[0xe0] != 0)
@@ -974,8 +969,8 @@ no_party:
     rgl::matrix m;
     rgl::identity_pos(&m);
     {
-        float vx = 0.0175f - g_view_a * 0.1975f;
-        float vy = 0.015f - g_view_b * 0.18f;
+        float vx = 0.0175f - g_gui.view_a * 0.1975f;
+        float vy = 0.015f - g_gui.view_b * 0.18f;
         rgl::vector4 v(vx, vy, -0.4f);
         rgl::vector4 p = ((pos*)&cam.m)->transform_point(v);
         m.o = p;
@@ -1045,11 +1040,11 @@ void CampaignScreen::camera_move(float dt)
     if (g_keyboard.down[0xe1] && !g_keyboard.prev[0xe1])
         f2d4 = 0;
 
-    float v = g_mouse_dx * 0.1f;
+    float v = g_gui.mouse_dx * 0.1f;
     if (!(v > -1.0f)) v = -1.0f;
     else if (v > 1.0f) v = 1.0f;
 
-    float w = g_mouse_dy * 0.1f;
+    float w = g_gui.mouse_dy * 0.1f;
     if (!(w > -2.0f)) w = -2.0f;
     else if (w > 2.0f) w = 2.0f;
 
@@ -1280,6 +1275,6 @@ void MissionCtx::reset_ids(int id)
 // @ 0x516a70
 void quick_save_msg()
 {
-    g_msglog.add(*g_strtable.lookup(tstring("ui_quick_saving")), -1);
+    g_gui.add(*g_strtable.lookup(tstring("ui_quick_saving")), -1);
     save_game(-1, 0);
 }

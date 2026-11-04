@@ -7,17 +7,6 @@
 
 namespace rgl { struct mesh; }
 
-extern float g_mouse_dx; // 0x5d70a4 mouse movement of the frame (scaled by 0.1 into the look speed)
-extern float g_mouse_dy; // 0x5d70a8
-extern void* g_overlay; // 0x5d75e8 (== the UI root's object at +0x568)
-extern rgl::mesh* g_label_obj; // 0x5d75ec the map label under the cursor
-extern tstring g_strs[0x50]; // 0x5d7850 the HUD line cache (0x5d7850 .. 0x5d7d50)
-extern int g_list0; // 0x5d8020
-extern int g_list1; // 0x5d8024
-extern float g_list2; // 0x5d8028
-extern unsigned g_panel_color; // 0x5d8760 name colour of the HUD line (-1 = white)
-extern unsigned g_panel_bg; // 0x5d8764 background tint of the HUD line
-extern int g_sel_ent; // 0x5d8780
 extern char g_5e2630; // 0x5e2630
 // 256-entry key table; two declarations (char[256], int[0x40]) of the same storage.
 extern char g_key_states[256]; // 0x5e27c8

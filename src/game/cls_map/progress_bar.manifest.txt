@@ -18,6 +18,6 @@
 ../src/game/cls_map/progress_bar.cpp  ?_Destroy@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@IAEXPAUloading_config@@0@Z  004e5f50  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ??$fill@PAURagModel@@U1@@std@@YAXPAURagModel@@0ABU1@@Z  004e5f80  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ??$_Uninit_fill_n@PAUloading_config@@IU1@V?$allocator@Uloading_config@@@std@@@std@@YAXPAUloading_config@@IABU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004e5fc0  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?reset_geometry@MsgLog@@QAEXXZ  004e64b0  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?update@MsgLog@@QAEXM@Z  004e6510  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?reset_geometry@gui_manager@@QAEXXZ  004e64b0  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?update@gui_manager@@QAEXM@Z  004e6510  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?update_children@progress_bar@@UAEXXZ  004e3fb0  /O2 /MT /Gy /TP

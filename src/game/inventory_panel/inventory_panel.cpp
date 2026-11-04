@@ -20,7 +20,7 @@
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 
 #define TROOP(i) (g_game->troops + (i))
 // the slot arrays are indexed with a 0xa1 (= 0x508 / 8) stride, exactly as the original does
@@ -34,16 +34,13 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-rgl::mesh* g_drag;                                // 0x5d75e4
 
 #define SOUNDMGR ((SoundMgr*)&orig::g_sound_mgr)                  // 0x5aa128
 
 // ---- globals and callees of other translation units -----------------------------------------------------------------
-extern MsgLog g_msglog;                                 // 0x5d7080
 
 
 
-extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 #include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp (canonical, defined in triggers/trigger_vec.cpp)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
@@ -78,16 +75,16 @@ struct SkillNames {                                     // a skill record seen f
 // @ 0x50fe20
 void PartyWindow::frame_update(float unused)
 {
-    g_msglog.flush();
+    g_gui.flush();
 
     int page = 0;
-    if (g_gui_root.mouse[0] < 0.5f && pages == 2)
+    if (g_gui.mouse[0] < 0.5f && pages == 2)
         page = 1;
 
-    if (g_mission_clock != 0) {
+    if (g_gui.wheel != 0) {
         UiD* bar = (UiD*)view[page]->follow[1];
         int stop = bar->f178;
-        bar->set_value((g_mission_clock / bar->e[stop]) * bar->f17c * 0.0005f +
+        bar->set_value((g_gui.wheel / bar->e[stop]) * bar->f17c * 0.0005f +
                        (bar->e[stop] - bar->f17c) *
                        ((bar->v168 - bar->f16c) / (bar->f170 - bar->f16c)));
         bar->set_key_flags(0x10000);
@@ -289,7 +286,7 @@ void PartyWindow::refresh_lists(int unused)
             MissionUi** w = widgets[page];
             for (int i = 0; i < count; i++)
                 if (w[i]->clear_mask(4))
-                    g_gui_root.set_o568(0, true);
+                    g_gui.set_overlay(0, true);
             for (int i = 0; i < count; i++)
                 if (w[i]->clear_mask(2) && locked == 0)
                     place_slot(w[i], &EQUIP(troop, i), page, i);
@@ -303,25 +300,25 @@ void PartyWindow::refresh_lists(int unused)
         MissionUi** w = row_slot[page];
         for (int i = 0; i < 10; i++)
             if (w[i] != 0 && w[i]->clear_mask(4) && locked == 0)
-                g_gui_root.set_o568(0, true);
+                g_gui.set_overlay(0, true);
         for (int i = 0; i < 10; i++)
             if (w[i] != 0 && w[i]->clear_mask(2) && locked == 0)
                 place_slot(w[i], &GRID(troop, i), 2, i);
     }
 
     if (locked != 0) {
-        void* o = g_overlay;
+        void* o = g_gui.overlay;
         if (o != 0)
             ((GuiObjV*)o)->d0(1);
-        g_panel_color = -1;
-        g_panel_bg = 0xff101010;
-        for (tstring* s = g_strs; s < g_strs + 0x50; s++)
+        g_gui.panel_color = -1;
+        g_gui.panel_bg = 0xff101010;
+        for (tstring* s = g_gui.lines; s < g_gui.lines + 0x50; s++)
             s->assign("");
-        g_list1 = 0;
-        g_list2 = -0.03f;
-        g_list0 = 0;
-        g_overlay = 0;
-        g_sel_ent = 0;
+        g_gui.fa4 = 0;
+        g_gui.fa8 = -0.03f;
+        g_gui.fa0 = 0;
+        g_gui.overlay = 0;
+        g_gui.sel_ent = 0;
     }
 
     for (int page = 0; page < pages; page++) {
@@ -412,14 +409,14 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
 {
     int zero = 0;
     ItemKind* it = &g_items[slot->item];
-    g_gui_root.set_o568(0, 1);
-    g_gui_root.set_view(pt);
+    g_gui.set_overlay(0, 1);
+    g_gui.set_view(pt);
 
     char buf[512];
     slot->name(buf);
     {
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.025f, 0xfff0e0d0, 1);
+        g_gui.draw_string(&s, 0.025f, 0xfff0e0d0, 1);
     }
 
     unsigned int flags = it->type_flags;
@@ -438,7 +435,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         }   // one destroy (an explicit ~tstring() plus the scope exit freed it twice)
         {
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.021f, 0xffc0b0e0, 1);
+            g_gui.draw_string(&s, 0.021f, 0xffc0b0e0, 1);
         }
     }
 
@@ -449,17 +446,17 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         int max = slot->max_amount();
         sprintf(buf, "(%d / %d)", max - (slot->m4 & 0xff), slot->max_amount());
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+        g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
     } else if (kind == 7) {
         int hp = slot->stat_1e8();
         sprintf(buf, "(%d / %d)", slot->m4 & 0xffff, hp);
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+        g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
     } else if (kind == 0xb && (it->type_flags & 0x2000000)) {
         int max = slot->max_amount();
         sprintf(buf, "(%d / %d)", max - (slot->m4 & 0xff), slot->max_amount());
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+        g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
     }
 
     if (page == 1) {
@@ -488,7 +485,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     }
     {
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.024f, 0xfffffdf0, 1);
+        g_gui.draw_string(&s, 0.024f, 0xfffffdf0, 1);
     }
 
     if (slot->item >= 0 && it->f208 > 1e-5f) {
@@ -496,7 +493,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         const tstring* v = g_strtable.lookup(tstring("ui_weight"));
         sprintf(buf, v->c_str(), (double)w);
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.011f, 0xffffffff, 1);
+        g_gui.draw_string(&s, 0.011f, 0xffffffff, 1);
     }
 
     kind = it->type_flags & 0xff;
@@ -505,19 +502,19 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_head_armor"));
             sprintf(buf, v->c_str(), slot->stat_1fc());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         if (slot->stat_200()) {
             const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_body_armor"));
             sprintf(buf, v->c_str(), slot->stat_200());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         if (slot->stat_204()) {
             const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_leg_armor"));
             sprintf(buf, v->c_str(), slot->stat_204());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
     }
 
@@ -544,7 +541,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             if (mask & 1) mask &= ~1;
             {
                 tstring s(buf);
-                g_gui_root.draw_string(&s, 0.024f, 0xffffb0a0, 1);
+                g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1);
             }
         }
         // thrust damage (type in flags2 at +0x214)
@@ -575,7 +572,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             if (mask & 0x40)  mask &= ~0x40;
             {
                 tstring s(buf);
-                g_gui_root.draw_string(&s, 0.024f, 0xffffb0a0, 1);
+                g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1);
             }
         }
         if (kind == 8 || kind == 9 || kind == 16 || kind == 17) {
@@ -589,13 +586,13 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             const tstring* p = g_strtable.lookup(tstring("ui_accuracy"));
             sprintf(buf, p->c_str(), v);
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffeebbfe, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffeebbfe, 1);
         }
         if (slot->stat_1f0a()) {
             const tstring* p = g_strtable.lookup(tstring("ui_speed_rating"));
             sprintf(buf, p->c_str(), slot->stat_1f0a());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
     } else if (kind == 5 || kind == 6 || kind == 0x12) {
         if (slot->stat_21x(1)) {
@@ -603,14 +600,14 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             int v = slot->stat_21x(1);
             sprintf(buf, p->c_str(), slot->stat_21x(1), v <= 0 ? ' ' : '+');
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffb0a0, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1);
         }
     } else if (kind == 7) {
         if (slot->stat_200()) {
             const tstring* p = g_strtable.lookup(tstring("ui_resistance"));
             sprintf(buf, p->c_str(), slot->stat_200());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         {
             const tstring* p = g_strtable.lookup(tstring("ui_size"));
@@ -619,20 +616,20 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         }
         {
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         if (slot->stat_1f0a()) {
             const tstring* p = g_strtable.lookup(tstring("ui_speed_rating"));
             sprintf(buf, p->c_str(), slot->stat_1f0a());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
     } else if (kind == 0xb && g_module_settings.disable_food_slot == 0 && slot->item >= 0 && it->f1fc > 0) {
         const tstring* p = g_strtable.lookup(tstring("ui_value_to_morale"));
         float v = slot->item < 0 ? 0.0f : (float)it->f1fc;
         sprintf(buf, p->c_str(), (double)(v * 0.02f));
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.024f, 0xffa0f0b0, 1);
+        g_gui.draw_string(&s, 0.024f, 0xffa0f0b0, 1);
     }
 
     kind = it->type_flags & 0xff;
@@ -644,7 +641,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         const tstring* p = g_strtable.lookup(tstring("ui_weapon_reach"));
         sprintf(buf, p->c_str(), n);
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+        g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
     }
 
     if (*(char*)&it->type_flags == 1) {
@@ -653,31 +650,31 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             const tstring* p = g_strtable.lookup(tstring("ui_armor"));
             sprintf(buf, p->c_str(), slot->stat_200());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffddddff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffddddff, 1);
         }
         {
             const tstring* p = g_strtable.lookup(tstring("ui_speed"));
             sprintf(buf, p->c_str(), slot->stat_1f4());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         {
             const tstring* p = g_strtable.lookup(tstring("ui_maneuver"));
             sprintf(buf, p->c_str(), slot->stat_1f0b());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         {
             const tstring* p = g_strtable.lookup(tstring("ui_charge"));
             sprintf(buf, p->c_str(), slot->stat_214());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
         {
             const tstring* p = g_strtable.lookup(tstring("ui_hit_points"));
             sprintf(buf, p->c_str(), slot->stat_1e8(), slot->stat_1e8());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, 0xffffffff, 1);
+            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
         }
     }
 
@@ -708,7 +705,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             const tstring* p = g_strtable.lookup(tstring("ui_requires_value_difficulty"));
             sprintf(buf, p->c_str(), need, slot->stat_1ec());
             tstring s(buf);
-            g_gui_root.draw_string(&s, 0.024f, color, 1);
+            g_gui.draw_string(&s, 0.024f, color, 1);
         }
     }
 
@@ -716,15 +713,15 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         const tstring* p = g_strtable.lookup(tstring("ui_bonus_against_shields"));
         sprintf(buf, p->c_str());
         tstring s(buf);
-        g_gui_root.draw_string(&s, 0.024f, 0xffbbff22, 1);
+        g_gui.draw_string(&s, 0.024f, 0xffbbff22, 1);
     }
     if (it->type_flags & 0x4000) {
         tstring k("ui_cant_be_used_to_block");
-        g_gui_root.draw_string(g_strtable.lookup(k), 0.024f, 0xffccbb33, 1);
+        g_gui.draw_string(g_strtable.lookup(k), 0.024f, 0xffccbb33, 1);
     }
     if (it->type_flags & 0x10100000) {
         tstring k("ui_cannot_be_used_on_horseback");
-        g_gui_root.draw_string(g_strtable.lookup(k), 0.024f, 0xffccbb33, 1);
+        g_gui.draw_string(g_strtable.lookup(k), 0.024f, 0xffccbb33, 1);
     }
 
     for (int i = 0; i < 8; i++) {
@@ -736,7 +733,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             unsigned int color = 0xffffffff;
             if (g_script.trigger_result.store0 != 0 || g_script.trigger_result.store1 != 0)
                 color = g_script.trigger_result.store0 | 0xff000000;
-            g_gui_root.draw_string(&g_script.result_string, 0.024f, color, 1);
+            g_gui.draw_string(&g_script.result_string, 0.024f, color, 1);
         }
     }
     (void)zero;
@@ -923,7 +920,7 @@ L_cd4:
     if (held.item == item->item && item->item >= 0 && ITYPE(item->item) == 0x12 &&
         (held.m4 & 0xff) != 0 && (item->m4 & 0xff) != 0) {
         // same stackable: pour as much as fits from the hand into the held stack
-        g_gui_root.play_sound();
+        g_gui.play_sound();
         int n = item->m4 & 0xff;
         int have = held.m4 & 0xff;
         int room = held.max_amount() - have;
@@ -934,13 +931,13 @@ L_cd4:
         if (held.max_amount() - (held.m4 & 0xff) > 0)
             return;
         held.item = -1;
-        g_gui_root.set_o564(0);
+        g_gui.set_drag(0);
         locked = 0;
         return;
     }
 L_de3:
     // pick the slot's contents up into the hand
-    g_gui_root.play_sound();
+    g_gui.play_sound();
     tmp = *item;
     fl = test_slot_flag(page, slot, 1);
     sv = (page < 2) ? (int)aux[page][slot] : (int)row_value[page - 2][slot];
@@ -982,8 +979,8 @@ L_f54:
     *item = held;
     or_slot_flag(page, slot);
     held.item = -1;
-    delete g_drag;
-    g_drag = 0;
+    delete g_gui.drag;
+    g_gui.drag = 0;
     locked = 0;
 L_f9d:
     // take the slot's contents into the hand
@@ -1004,8 +1001,8 @@ L_f9d:
         }
         rgl::mesh* m = make_mesh(&held, &hv, idx);
         m->scale(2.0f);
-        delete g_drag;
-        g_drag = m;
+        delete g_gui.drag;
+        g_gui.drag = m;
         locked = 1;
     }
     return;
@@ -1018,7 +1015,7 @@ L_304c:
     if (slot == 8 && ITYPE(held.item) == 1) {
         if (page == 2) {
             tstring key("ui_notification_riding_skill_not_enough");
-            g_msglog.add(*g_strtable.lookup(key), 0xffffddbb);
+            g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
             return;
         }
     } else if (slot >= 0 && slot < 4 &&
@@ -1028,7 +1025,7 @@ L_304c:
                 (g_items[held.item].type_flags & 0xff) == 16 || (g_items[held.item].type_flags & 0xff) == 17)) {
         if (page == 2) {
             tstring key("ui_notification_requirements_not_met");
-            g_msglog.add(*g_strtable.lookup(key), 0xffffddbb);
+            g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
             return;
         }
     } else if (((g_items[held.item].type_flags & 0xff) == 12 && slot == 4) ||
@@ -1037,7 +1034,7 @@ L_304c:
                ((g_items[held.item].type_flags & 0xff) == 14 && slot == 6)) {
         if (page == 2) {
             tstring key("ui_notification_requirements_not_met");
-            g_msglog.add(*g_strtable.lookup(key), 0xffffddbb);
+            g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
             return;
         }
     } else {
@@ -1048,7 +1045,7 @@ L_304c:
         sprintf(buf, g_strtable.lookup(key)->c_str(),
                 ((TroopRec*)((char*)g_game->chars + w14 * 0x508))->display_name()->c_str());
     }
-    g_msglog.add(tstring(buf), 0xffff7700);
+    g_gui.add(tstring(buf), 0xffff7700);
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -1175,10 +1172,10 @@ bool PartyWindow::try_place(ItemRef* item, int page, int slot)
     if (found) {
         if (page == 1) {
             tstring msg("ui_reclaim_your_sold_goods");
-            g_msglog.add(*g_strtable.lookup(msg), -1);
+            g_gui.add(*g_strtable.lookup(msg), -1);
         } else {
             tstring msg("ui_return_your_bought_goods");
-            g_msglog.add(*g_strtable.lookup(msg), -1);
+            g_gui.add(*g_strtable.lookup(msg), -1);
         }
     }
     return found;

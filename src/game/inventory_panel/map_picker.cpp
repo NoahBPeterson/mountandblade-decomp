@@ -24,8 +24,6 @@ void* operator new(unsigned size);      // 0x53545e
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_sel_label = -2;                         // 0x5aa3a8 (its label index)
 int g_sel_party = -1;                         // 0x5aa3ac (currently selected party id)
-int g_5d8784;                                   // 0x5d8784 (zeroed with the current label object)
-rgl::mesh* g_label_obj;                           // 0x5d75ec (current label object)
 
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
@@ -41,23 +39,6 @@ using rgl::mesh;
 
 // ---- globals --------------------------------------------------------------------------------------------
 
-
-// the GUI root singleton at 0x5d7080 (layout from s0042c9b0 / s0042d360)
-struct gui_manager {
-    char pad0[0x56c];
-    mesh* o56c;                     // +0x56c (the label mesh, allocated lazily)
-    mesh m570;                      // +0x570 (0x260-byte inline mesh)
-    char pad7d0[0x16f8 - 0x7d0];
-    float f16f8;                    // +0x16f8 (label x offset)
-    float f16fc;                    // +0x16fc (label y offset)
-    char pad1700[0x1704 - 0x1700];
-    float f1704;                    // +0x1704 (running vertical cursor)
-
-    void set_pos(const float* p);                               // 0x51a760
-    void add_label(const tstring* text, float h, int color);    // 0x51a880
-    void set_quad(const float* origin, const float* size);      // 0x51aa20
-};
-extern gui_manager g_gui;           // 0x5d7080
 
 // ---- game data ------------------------------------------------------------------------------------------
 
@@ -127,6 +108,7 @@ void Picker::collect(unsigned key, Pickable** out, int* count)
 // ---- 0x51a420 -------------------------------------------------------------------------------------------
 #include "../map_widget.h"                 // MapWidget (the slice's Camera: offsets +0xe0 rect, +0x1ac frustum, +0x274 its frame)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 struct MapPickScreen {
     char pad0[0x30];
@@ -150,10 +132,10 @@ void MapPickScreen::set_label(int id)
     g_sel_party = id;
     g_sel_label = g_game->cur_label;
     f2d0 = 0.0f;
-    if (g_label_obj)
-        delete g_label_obj;
-    g_label_obj = 0;
-    g_5d8784 = 0;
+    if (g_gui.label_obj)
+        delete g_gui.label_obj;
+    g_gui.label_obj = 0;
+    g_gui.f1704 = 0;
     if (id < 0)
         return;
 
@@ -214,40 +196,40 @@ void MapWidget::project(vector4* out, const vector4* in)
 // @ 0x51a760
 void gui_manager::set_pos(const float* p)
 {
-    f16f8 = p[0];
-    f16fc = p[1];
-    if (f16f8 > 0.95f)
-        f16f8 = 0.95f;
-    if (f16f8 < 0.05f)
-        f16f8 = 0.05f;
-    if (o56c == 0)
+    box_x = p[0];
+    box_y = p[1];
+    if (box_x > 0.95f)
+        box_x = 0.95f;
+    if (box_x < 0.05f)
+        box_x = 0.05f;
+    if (label_obj == 0)
         return;
     vector4 mn, mx;
-    o56c->calc_bounds(&mn, &mx);
-    if (mn.x + f16f8 < 0.011f)
-        f16f8 = 0.011f - mn.x;
-    else if (mx.x + f16f8 > 0.989f)
-        f16f8 = 0.989f - mx.x;
-    if (mn.y + f16fc < 0.011f)
-        f16fc = 0.011f - mn.y;
-    else if (mx.y + f16fc > 0.739f)
-        f16fc = 0.739f - mx.y;
+    label_obj->calc_bounds(&mn, &mx);
+    if (mn.x + box_x < 0.011f)
+        box_x = 0.011f - mn.x;
+    else if (mx.x + box_x > 0.989f)
+        box_x = 0.989f - mx.x;
+    if (mn.y + box_y < 0.011f)
+        box_y = 0.011f - mn.y;
+    else if (mx.y + box_y > 0.739f)
+        box_y = 0.739f - mx.y;
 }
 
 // ---- 0x51a880 -------------------------------------------------------------------------------------------
 // @ 0x51a880
 void gui_manager::add_label(const tstring* text, float h, int color)
 {
-    if (o56c == 0) {
+    if (label_obj == 0) {
         mesh* m = new mesh;
-        if (o56c != 0)
-            delete o56c;
-        o56c = m;
-        f1704 = 0.0f;
+        if (label_obj != 0)
+            delete label_obj;
+        label_obj = m;
+        cursor_y = 0.0f;
     }
     {
         tstring name("ui_font");
-        o56c->res = g_resmgr.get_material(name);
+        label_obj->res = g_resmgr.get_material(name);
     }
     {
         float out[2];
@@ -256,13 +238,13 @@ void gui_manager::add_label(const tstring* text, float h, int color)
         scale[1] = h;
         float xmin = -1.0f;
         float xmax = 1.0f;
-        vector4 pos(0.0f, f1704, 0.0f);
-        g_font->layout_text(out, text, &pos, scale, o56c, (int)&color, &xmin, &xmax, 0x10);
+        vector4 pos(0.0f, cursor_y, 0.0f);
+        g_font->layout_text(out, text, &pos, scale, label_obj, (int)&color, &xmin, &xmax, 0x10);
     }
-    f1704 -= h;
+    cursor_y -= h;
     {
         vector4 mn, mx;
-        o56c->calc_bounds(&mn, &mx);
+        label_obj->calc_bounds(&mn, &mx);
         float corner[2];
         float size[2];
         corner[0] = mn.x - 0.01f;
@@ -273,8 +255,8 @@ void gui_manager::add_label(const tstring* text, float h, int color)
     }
     {
         float p[2];
-        p[0] = f16f8;
-        p[1] = f16fc;
+        p[0] = box_x;
+        p[1] = box_y;
         set_pos(p);
     }
 }

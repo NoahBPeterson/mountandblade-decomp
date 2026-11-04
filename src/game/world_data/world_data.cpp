@@ -14,7 +14,7 @@
 #include "../../include/party.h"
 #include "../../include/troop.h"
 #include "../../include/game_recs.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../str_table.h"
 #include "../../include/vec.h"
 #include "../../include/game_data.h"
@@ -1642,7 +1642,7 @@ int WidgetMgrW::create_button_overlay(const tstring* text, unsigned flags)
 void WindowMgrW::open(int _idx)
 {
     char* self = (char*)this;
-    g_gui.set_o568(0, 1);
+    g_gui.set_overlay(0, 1);
     dq.push_back(_idx);
     arr[_idx]->s2();
 
@@ -1658,7 +1658,7 @@ void WindowMgrW::open(int _idx)
         PanelFn _fn = (PanelFn)(*(void***)g_render.dev)[12];
         _fn((void*)g_render.dev, (unsigned char)_bl);
     }
-    g_gui.f560 = (char)_bl;
+    g_gui.show_cursor = (char)_bl;
 }
 
 // ==== 0x4942f0, 0x494310: the sound player ================================================================================
@@ -1722,7 +1722,7 @@ void GameW::quest_done(int _idx)
             }
             {
                 tstring _txt(_buf);
-                g_msglog.push(_txt, 0xffd0f0c8);
+                g_gui.push(_txt, 0xffd0f0c8);
             }
             g_sound_mgr.play(g_sound_mgr.slot[3], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
         }
@@ -1752,7 +1752,7 @@ void GameW::quest_succeeded(int _idx)
     }
     {
         tstring _txt(_buf);
-        g_msglog.push(_txt, 0xff90ff28);
+        g_gui.push(_txt, 0xff90ff28);
     }
     g_sound_mgr.play(g_sound_mgr.slot[4], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
@@ -1776,7 +1776,7 @@ void GameW::quest_failed(int _idx)
     }
     {
         tstring _txt(_buf);
-        g_msglog.push(_txt, 0xffd02028);
+        g_gui.push(_txt, 0xffd02028);
     }
     g_sound_mgr.play(g_sound_mgr.slot[6], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
@@ -1786,11 +1786,11 @@ void GameW::quest_failed(int _idx)
 // the ring-buffer append inlined by this TU
 static __forceinline void log_add(const tstring& s)
 {
-    if (g_msglog.enabled && g_msglog.ring.count < 32) {
-        int idx = (g_msglog.ring.head + g_msglog.ring.count) % 32;
-        g_msglog.ring.names[idx] = s;
-        g_msglog.ring.vals[idx] = 0xffffffff;       // 0x494e0b stores -1
-        g_msglog.ring.count++;
+    if (g_gui.enabled && g_gui.ring.count < 32) {
+        int idx = (g_gui.ring.head + g_gui.ring.count) % 32;
+        g_gui.ring.names[idx] = s;
+        g_gui.ring.vals[idx] = 0xffffffff;       // 0x494e0b stores -1
+        g_gui.ring.count++;
     }
 }
 
@@ -1812,7 +1812,7 @@ void GameW::set_quest_concluded(int _idx)
     }
     {
         tstring _txt(_buf);
-        g_msglog.push(_txt, 0xffd02028);
+        g_gui.push(_txt, 0xffd02028);
     }
     g_sound_mgr.play(g_sound_mgr.slot[5], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
@@ -1836,7 +1836,7 @@ void GameW::set_quest_cancelled(int _idx)
     }
     {
         tstring _txt(_buf);
-        g_msglog.push(_txt, 0xffd02028);
+        g_gui.push(_txt, 0xffd02028);
     }
     g_sound_mgr.play(g_sound_mgr.slot[7], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
@@ -2172,7 +2172,7 @@ void WindowMgrW::set_state(int idx)
         g->fc = 0;
         g_presentation = 0;
     }
-    g_gui.set_o568(0, 1);
+    g_gui.set_overlay(0, 1);
     if (arr[idx]->s7()) {
         while (dq.size() != 0) {
             arr[dq.back()]->s1();

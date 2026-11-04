@@ -24,26 +24,23 @@
 
 #include "../strat/gui_manager.h"            // g_gui 0x5d7080
 
-// the UI root's widget vector sits at the start of the sound object (0x5d7080; handle at +0x170c). Its push_back
+// the UI root's widget vector (gui_manager::objs, at the start of the object at 0x5d7080). Its push_back
 // is the out-of-line instance the original calls (0x49b120): the wrapper keeps it from being inlined.
-struct NodeVec : std::vector<NodeA*> {
-    // @ 0x49b120
-    __declspec(noinline) void push_back(NodeA* const& x)                            // 0x49b120
-    {
-        if (size() < capacity())
-            _Mylast = _Ufill(_Mylast, 1, x);
-        else
-            insert(end(), x);
-    }
-    // @ 0x49b170
-    __declspec(noinline) iterator insert(iterator where, NodeA* const& x)           // 0x49b170 (std::vector::insert)
-    {
-        size_type off = size() == 0 ? 0 : where - begin();
-        _Insert_n(where, 1, x);                                                     // 0x49b1c0 (next range)
-        return begin() + off;
-    }
-};
-#define g_root_widgets (*(NodeVec*)&g_ui_sound)
+// @ 0x49b120
+__declspec(noinline) void WidgetVec::push_back(MissionUi* const& x)                 // 0x49b120
+{
+    if (size() < capacity())
+        _Mylast = _Ufill(_Mylast, 1, x);
+    else
+        insert(end(), x);
+}
+// @ 0x49b170
+__declspec(noinline) WidgetVec::iterator WidgetVec::insert(iterator where, MissionUi* const& x)   // 0x49b170 (std::vector::insert)
+{
+    size_type off = size() == 0 ? 0 : where - begin();
+    _Insert_n(where, 1, x);                                                     // 0x49b1c0 (next range)
+    return begin() + off;
+}
 
 // @ 0x49ad20
 NodeA* DropDown::create()
@@ -66,9 +63,9 @@ NodeA* DropDown::create()
     sz[1] = (float)rows.size() * wh[1];
     vt(b)->d25(sz);
 
-    g_gui.pad1708 = 1;
-    NodeA* tmp = b;
-    g_root_widgets.push_back(tmp);
+    g_gui.dirty = 1;
+    MissionUi* tmp = b;
+    g_gui.objs.push_back(tmp);
     vt(b)->d19(0x20000);
     vt(b)->d20(4);
 

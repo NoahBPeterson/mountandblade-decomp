@@ -25,7 +25,7 @@ void ItemRec2::frame_update(float arg)
             }
             if (row3 != 0 && W(row3)->clear_mask(0x10000)) {
                 save_game(-1, 0);
-                g_msglog.add(*g_strtable.lookup(tstring("ui_game_saved")), -1);
+                g_gui.add(*g_strtable.lookup(tstring("ui_game_saved")), -1);
                 g_windows.set_state(w18);
                 return;
             }
@@ -65,6 +65,7 @@ __forceinline bin_writer::bin_writer() {}   // inline here (resmgr.cpp load_pack
 #include "../../include/clock_table.h"
 
 #include <string>
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 std::string g_base64_chars("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0x40);   // 0x5aa380 the base64 alphabet (no reader in this source; built at startup)
 
 // @ 0x4e8980    int save_game(int version, tstring* name)
@@ -136,7 +137,7 @@ int save_game(int version, tstring* name)
                     WL_MARKER(0x0d)
                     if (!r) {
                         LOG("Savegame succeded...");
-                        g_msglog.add(*g_strtable.lookup(tstring("ui_game_saved_successfully")), -1);
+                        g_gui.add(*g_strtable.lookup(tstring("ui_game_saved_successfully")), -1);
                         goto done;
                     }
                 }
@@ -144,7 +145,7 @@ int save_game(int version, tstring* name)
         }
     }
     LOG("Savegame failed...");
-    g_msglog.add(tstring("Error: Unable to save game!!!!!"), 0xffff3333);
+    g_gui.add(tstring("Error: Unable to save game!!!!!"), 0xffff3333);
 done:
     return r;
 }

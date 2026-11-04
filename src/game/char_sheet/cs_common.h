@@ -111,20 +111,6 @@ UiB* __cdecl make_slider(void* parent, const tstring* name);    // 0x4f5fb0 (edi
 void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, float z);    // 0x4f5df0 (editor_ui)
 void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, float z);   // 0x4f5ed0 (editor_ui)
 Camera* __cdecl make_editor_list(void* parent, const tstring* name, int scroll);   // 0x4f62f0 (editor_ui)
-struct gui_obj;
-struct gui_manager {                                                // strat/gui_manager.h (the object at 0x5d7080)
-    char pad00[0x10];
-    void* ui_active;                                                // +0x10 the widget being dragged (g_ui_active 0x5d7090)
-    float mouse[2];                                                 // +0x14 the pointer position (0x5d7094 / 0x5d7098)
-    void reset();                                                   // 0x42d1b0
-    void draw_string(tstring* s, float size, int color, char b);    // 0x4e43e0 (ret 0xc)
-    void set_o568(gui_obj* o, bool reinit);                         // 0x42cdb0 (ret 8)
-};
-struct gui_view {                                                   // the same object, its view part
-    void set_view(const float* p);                                  // 0x4c5190
-    void wheel_step(int code);                                      // 0x4c52f0 (records a key in the hint tables)
-    void clear_selection();                                         // 0x4c5330
-};
 struct PartyMgrW {                                                  // world_data/world_data.h: the party manager at game+0xf8
     int is_live(unsigned id);                                       // 0x4903e0
 };
@@ -135,7 +121,4 @@ void __cdecl menu_variables_loaded(char flag);                      // 0x4ebb80 
 struct skin_owner;
 void __stdcall select_entity(rgl::mesh* m, skin_owner* o, unsigned flags);   // 0x4ea0c0 (a free stdcall function)
 struct NodeA;
-struct NodeVec {                                                    // widget_node: the gui manager's root list
-    void push_back(NodeA* const& n);                                // 0x49b120
-};
 #endif

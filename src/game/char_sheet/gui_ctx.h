@@ -41,7 +41,7 @@ struct GuiCtx {
     void* f568;                         // +0x568
     char pad56c[0x16e8 - 0x56c];
     float f16e8, f16ec, f16f0;          // +0x16e8
-    // (follow 0x488720 is MissionUi::render, draw_string 0x4e43e0 / set_o568 0x42cdb0 are gui_manager's, set_view 0x4c5190 is gui_view's,
+    // (follow 0x488720 is MissionUi::render, draw_string 0x4e43e0 / set_overlay 0x42cdb0 are gui_manager's, set_view 0x4c5190 is gui_view's,
     // select_entity 0x4ea0c0 is a free stdcall function: cs_common.h)
 };
 

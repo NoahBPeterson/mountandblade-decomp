@@ -104,26 +104,6 @@ struct font_details {                               // 0x1c: the staged glyph re
 };
 
 // ---- ambient particle ring and screen ray (0x4bd170, 0x4bd2f0) ---------------------------------------------------
-// `weather` is a view of the UI root (gui_manager.h): its meshA/meshB[32] at +0x1728/+0x6328 are `first`/`second`.
-struct part {                                       // one particle mesh (0x260 bytes)
-    char     pad0[0x3c];
-    unsigned color;                                 // +0x3c
-    char     pad40[0x260 - 0x40];
-    void render(void* pass, const rgl::matrix* m);  // 0x413750 (the definition is rgl::mesh::render, rgl/mesh.h: config.cpp calls that)
-};
-struct weather {
-    char     pad0[0x171c];
-    float    fade;                                  // +0x171c
-    int      cur;                                   // +0x1720
-    char     pad1[0x1728 - 0x1724];
-    part     first[32];                             // +0x1728
-    part     second[32];                            // +0x6328
-    float    life[32];                              // +0xaf28
-    float    delta[32];                             // +0xafa8
-    char     pad2[4];
-    unsigned colors[32];                            // +0xb02c
-    void update(void* pass, const float* depth);    // 0x4bd170
-};
 struct camera_ray {                                 // scene camera record
     char     pad0[0xe0];
     float    vx, vy;                                // +0xe0, +0xe4 viewport origin

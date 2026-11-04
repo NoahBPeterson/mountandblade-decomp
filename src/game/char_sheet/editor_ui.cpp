@@ -13,6 +13,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_trial_mode (listed directly: the audit reads only the source's own includes)
 #include "../config/core.h"      // GameApp: OneTimeSceneInit is vtable slot 4 of the application object
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 struct Font;
 extern Font* g_font;                                        // 0x5e2934
 
@@ -297,7 +298,7 @@ HRESULT GameApp::OneTimeSceneInit()
         tstring n("Data\\font_data.xml");
         g_font->load((const char*)&n);   // 0x4d9aa0
     }
-    ((GuiState*)&orig::g_gui_mgr)->init_widgets();
+    g_gui.reset();
     init_mission_trigger_records();
     g_5e29a4 = g_trial_mode;
     g_windows.set_state(2);

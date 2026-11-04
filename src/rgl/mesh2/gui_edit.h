@@ -108,46 +108,11 @@ struct editor {
 };
 
 // ============================================================================================================
-// 0x4c5190..0x4c5330: view state and child dispatch of the UI root at 0x5d7080. src/game/strat/gui_manager.h
-// declares the class but no names for +0x16e8..+0x16f4 (view x/y/scale) and +0x1708; these three methods are
-// declared on a layout-only view of it (offsets as in that header: objs +0, f10 +0x10, o568 +0x568, f1709).
+// 0x4c5190..0x4c5330: view state and child dispatch of the UI root (gui_manager::set_view / wheel_step /
+// clear_selection, src/game/strat/gui_manager.h)
 // ============================================================================================================
-struct gui_child {                               // polymorphic child (deleted through slot 0, events through slot 35)
-    virtual ~gui_child();                        // slot 0 (deleting dtor)
-    virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5();
-    virtual void s6(); virtual void s7(); virtual void s8(); virtual void s9(); virtual void s10();
-    virtual void s11(); virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19(); virtual void s20();
-    virtual void s21(); virtual void s22(); virtual void s23(); virtual void s24(); virtual void s25();
-    virtual void s26(); virtual void s27(); virtual void s28(); virtual void s29(); virtual void s30();
-    virtual void s31(); virtual void s32(); virtual void s33(); virtual void s34();
-    virtual char on_event(unsigned mask);        // slot 35 (0x8c)
-};
-
-struct mesh_bnd {};   // the scene node whose min/max corners come from mnode::calc_bounds (0x438d80, thiscall, ret 8)
 extern const float g_f95;                        // 0x54b890 = 0.95
 extern const float g_f05;                        // 0x54b4d0 = 0.05
-
-struct gui_view {
-    std::vector<gui_child*> kids;   // +0 (begin +4, end +8)
-    gui_child* active;       // +0x10
-    char d14[0x568 - 0x14];
-    mesh_bnd* o568;         // +0x568
-    char d56c[0x16e8 - 0x56c];
-    float fx;                // +0x16e8 view x (clamped to [0.05, 0.95])
-    float fy;                // +0x16ec view y
-    float fs;                // +0x16f0 view y scale
-    float f16f4;             // +0x16f4
-    char d16f8[0x1708 - 0x16f8];
-    char f1708;              // +0x1708
-    char f1709;              // +0x1709
-    char d170a[2];
-    int f170c;               // +0x170c
-
-    void set_view(const float* v);               // 0x4c5190
-    void wheel_step(int mask);                   // 0x4c52f0
-    void clear_selection();                      // 0x4c5330
-};
 
 
 // ============================================================================================================

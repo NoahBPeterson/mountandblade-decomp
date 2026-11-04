@@ -19,6 +19,7 @@
 #include "../stream.h"
 #include "../../game/tstring.h"
 #include "../../game/strat/gui_manager.h"
+using rgl::mesh;                 // the loaded-mesh class: rgl/mesh.h (gui_manager.h includes it)
 #include "./mesh2_common.h"
 #include "./graph_obj.h"
 #include "./screen_cfg.h"

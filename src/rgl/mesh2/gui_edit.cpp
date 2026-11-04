@@ -319,64 +319,64 @@ static inline void tidy3(void* base)
 }
 
 // @ 0x4c5190
-void gui_view::set_view(const float* v)
+void gui_manager::set_view(const float* v)
 {
     vector4 lo;
     vector4 hi;
-    fx = v[0];
-    fy = v[1];
-    fs = 1.0f;
-    if (fx > 0.95f)
-        fx = 0.95f;
-    if (fx < 0.05f)
-        fx = 0.05f;
-    if (!o568)
+    vx = v[0];
+    vy = v[1];
+    vs = 1.0f;
+    if (vx > 0.95f)
+        vx = 0.95f;
+    if (vx < 0.05f)
+        vx = 0.05f;
+    if (!overlay)
         return;
-    ((mnode*)o568)->calc_bounds(&lo, &hi);   // o568 is a scene node: mesh_bnd is a view of it, the callee 0x438d80 is mnode::calc_bounds
-    if (lo.x + fx < 0.011f) {
-        fx = 0.011f - lo.x;
-    } else if (hi.x + fx > 0.989f) {
-        fx = 0.989f - hi.x;
+    overlay->calc_bounds(&lo, &hi);   // 0x438d80
+    if (lo.x + vx < 0.011f) {
+        vx = 0.011f - lo.x;
+    } else if (hi.x + vx > 0.989f) {
+        vx = 0.989f - hi.x;
     }
-    if (lo.y + fy < 0.011f) {
-        fy = 0.011f - lo.y;
-    } else if (hi.y + fy > 0.739f) {
-        fy = 0.739f - hi.y;
+    if (lo.y + vy < 0.011f) {
+        vy = 0.011f - lo.y;
+    } else if (hi.y + vy > 0.739f) {
+        vy = 0.739f - hi.y;
     }
     if (hi.y - lo.y > 0.728f) {
         float s = 0.728f / (hi.y - lo.y);
-        fs = s;
-        fy = 0.011f - s * lo.y;
+        vs = s;
+        vy = 0.011f - s * lo.y;
     }
 }
 
 // Wheel step: forward the mask to the active child (+0x10), else to the last element of the child vector.
 // @ 0x4c52f0
-void gui_view::wheel_step(int mask)
+void gui_manager::wheel_step(int mask)
 {
-    if (active) {
-        active->on_event(mask);
-    } else if (!kids.empty()) {
-        kids[kids.size() - 1]->on_event(mask);
+    if (ui_active) {
+        ui_active->key(mask);
+    } else if (!objs.empty()) {
+        objs[objs.size() - 1]->key(mask);
     }
 }
 
 // @ 0x4c5330
-void gui_view::clear_selection()
+void gui_manager::clear_selection()
 {
-    f1708 = 1;
-    if (active) {
-        active->on_event(0x20000);
-    } else if (!kids.empty()) {
-        kids[kids.size() - 1]->on_event(0x20000);
+    dirty = 1;
+    if (ui_active) {
+        ui_active->key(0x20000);
+    } else if (!objs.empty()) {
+        objs[objs.size() - 1]->key(0x20000);
     }
-    if (kids[kids.size() - 1] != 0) {
-        delete kids[kids.size() - 1];
-        kids[kids.size() - 1] = 0;
+    if (objs[objs.size() - 1] != 0) {
+        delete objs[objs.size() - 1];
+        objs[objs.size() - 1] = 0;
     }
     f1709 = 0;
-    if (!kids.empty())
-        kids.pop_back();
+    if (!objs.empty())
+        objs.pop_back();
 }
 
 // @ 0x4c53f0

@@ -23,17 +23,17 @@ void CharSheet::frame_update(float dt)
 
     if (scene != 0)
         ((World*)scene)->step(dt);
-    g_msglog.flush();
+    g_gui.flush();
     if (f_4d4 != 0)
         f_430->show();
     else
         f_430->hide();
 
     if (f_4c8 != 0) {
-        if (g_mission_clock != 0) {
+        if (g_gui.wheel != 0) {
             ScrollHost* host = (ScrollHost*)f_4bc;
             UiDsv* bar = host->bar;
-            ((UiD*)(void*)bar)->set_value(((float)g_mission_clock / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
+            ((UiD*)(void*)bar)->set_value(((float)g_gui.wheel / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
                            (bar->stops[bar->f_178] - bar->f_17c) *
                                ((bar->f_168 - bar->f_16c) / (bar->f_170 - bar->f_16c)));
             ((MissionUi*)((ScrollHost*)f_4bc)->bar)->set_key_flags(0x10000);

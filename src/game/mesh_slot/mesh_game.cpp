@@ -10,7 +10,7 @@
 #include "../render_batch.h"   // g_batch (0x5fe898): counter 0x418828
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -224,7 +224,6 @@ void agent_equip_fill(EntityG* e, int kind, int troop, int f94, void* s0, void* 
                       void* f1a4, void* f1a8, void* slots, int id);   // 0x482240 (__stdcall, ret 0x34)
 #include "./mesh_build.h"          // setup_item_meshes (0x47cfe0)
 #include "../skill_cap.h"
-extern char g_gui[]; // 0x5d7080
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
 long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
 
@@ -484,11 +483,11 @@ NOINL int MissionG::spawn_full(const matrix* m, int troop, int a1, int a2, int a
         if (lit != 0) {
             tstring msg(lit);
             tstring* t2 = g_strtable.lookup(msg);
-            if (g_msglog.enabled && g_msglog.ring.count < 0x20) {
-                int k3 = (g_msglog.ring.head + g_msglog.ring.count) % 0x20;
-                g_msglog.ring.names[k3] = *t2;
-                g_msglog.ring.vals[k3] = -1;
-                g_msglog.ring.count++;
+            if (g_gui.enabled && g_gui.ring.count < 0x20) {
+                int k3 = (g_gui.ring.head + g_gui.ring.count) % 0x20;
+                g_gui.ring.names[k3] = *t2;
+                g_gui.ring.vals[k3] = -1;
+                g_gui.ring.count++;
             }
         }
     }

@@ -257,7 +257,7 @@ void MissionSource::pick(int* arg)
         t = (float)(fmod((double)g_ticks[0] * 1e-5f, 1.0) * 40.0f
                     + 100.0f);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
     }
-    if (g_mission_clock) {
+    if (g_gui.wheel) {
         float best_d = 1.0e5f;
         int best = -1;
         for (unsigned i = 0; i < (unsigned)size(); i++) {
@@ -292,7 +292,7 @@ void MissionSource::pick(int* arg)
         if (best >= 0) {
             int idx = best;
             ValueSource* u = item_value(begin[idx]);
-            u->on_value_changed((float)g_mission_clock);
+            u->on_value_changed((float)g_gui.wheel);
             ValueWidget* w = item_value(begin[best]);
             w->set_key_flags(0x10000);
         }
@@ -359,10 +359,10 @@ void Rec38::frame_update(float)
 // @ 0x4d5a20
 void Rec454::frame_update(float)
 {
-    if (g_mission_clock) {
+    if (g_gui.wheel) {
         ValueWidget* u = item_value((MissionUi*)(void*)list);
         float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
-        u->set_value((float)g_mission_clock / u->slot[u->idx] * u->step * 0.0005f + v);
+        u->set_value((float)g_gui.wheel / u->slot[u->idx] * u->step * 0.0005f + v);
         item_value((MissionUi*)(void*)list)->set_key_flags(0x10000);
     }
     for (int i = 0; i < count; i++) {

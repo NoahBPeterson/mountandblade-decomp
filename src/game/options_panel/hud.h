@@ -14,8 +14,7 @@
 // the widgets the menu options write back into are slots of the window manager (window_mgr.h): slot 3 (0xa7398c), 11 (0xa739ac),
 // 18 (0xa739c8), 21 (0xa739d4), 28 (0xa739f0); each is read as an int record: +0x4 = option index, +0x18 = a second index, +0x8c = value.
 #include "../window_mgr.h"
-#include "../../include/msg_log.h"
-extern MsgLog g_gui;                               // 0x5d7080 (the pointer position g_gui.mouse: 0x5d7094 / 0x5d7098)
+#include "../strat/gui_manager.h"
 #include "../shared_vars.h"                      // g_saved (0x5e2a08)
 
 struct MenuScreen {

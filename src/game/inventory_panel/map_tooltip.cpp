@@ -15,11 +15,6 @@
 #include "../str_table.h"
 #include "../shared_vars.h"
 
-struct gui_manager {                                    // game/strat/gui_manager.h (cannot be included next to this slice's types)
-    void draw_string(tstring* s, float height, int color, char wrap);   // 0x4e43e0 (ret 0x10)
-};
-extern gui_manager g_gui;                               // 0x5d7080
-
 #include "../window_mgr.h"                         // g_windows (0xa73980)
 struct FlagBlock { void apply(void* p); };              // 0x513710 (thiscall on 0x5e291c, ret 4)
 
@@ -45,6 +40,7 @@ struct PartyCellRec {                                        // 0xb0 bytes at 0x
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 
 // ---- the two points the distance test reads -----------------------------------------------------------

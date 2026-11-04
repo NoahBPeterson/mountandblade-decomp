@@ -1,23 +1,5 @@
 # data_size_audit.py: overlapping labels (OVERLAP in its docstring) that predate the check; the build gate fails on any other.
 # OUTER_VA INNER_VA  # outer name holds inner name. Fix one, then drop its line (data_size_audit.py --update-known).
-005d7080 005d70a4  # g_5d7080 (0xb350 bytes) holds ?g_mouse_dx@@3MA, g_mouse_dx
-005d7080 005d70a8  # g_5d7080 (0xb350 bytes) holds ?g_mouse_dy@@3MA, g_mouse_dy
-005d7080 005d75e0  # g_5d7080 (0xb350 bytes) holds ?g_5d75e0@@3DA, g_5d75e0
-005d7080 005d75e4  # g_5d7080 (0xb350 bytes) holds ?g_drag@@3PAUDragMesh@@A, g_drag
-005d7080 005d75e8  # g_5d7080 (0xb350 bytes) holds ?g_overlay@@3PAXA, g_overlay
-005d7080 005d75ec  # g_5d7080 (0xb350 bytes) holds ?g_label_obj@@3PAUmesh@rgl@@A, g_label_obj
-005d7080 005d7850  # g_5d7080 (0xb350 bytes) holds ?g_strs@@3PAUtstring@@A, g_strs
-005d7080 005d8020  # g_5d7080 (0xb350 bytes) holds ?g_list0@@3HA, g_list0
-005d7080 005d8024  # g_5d7080 (0xb350 bytes) holds ?g_list1@@3HA, g_list1
-005d7080 005d8028  # g_5d7080 (0xb350 bytes) holds ?g_list2@@3MA, g_list2
-005d7080 005d8760  # g_5d7080 (0xb350 bytes) holds ?g_panel_color@@3IA, g_panel_color
-005d7080 005d8764  # g_5d7080 (0xb350 bytes) holds ?g_panel_bg@@3IA, g_panel_bg
-005d7080 005d8778  # g_5d7080 (0xb350 bytes) holds ?g_box_x@@3MA, g_box_x
-005d7080 005d877c  # g_5d7080 (0xb350 bytes) holds ?g_box_y@@3MA, g_box_y
-005d7080 005d8780  # g_5d7080 (0xb350 bytes) holds ?g_sel_ent@@3HA, g_sel_ent
-005d7080 005d8784  # g_5d7080 (0xb350 bytes) holds ?g_5d8784@@3HA, g_5d8784
-005d7080 005d878c  # g_5d7080 (0xb350 bytes) holds ?g_loaded_sound_count@@3HA, g_loaded_sound_count
-005d7080 005d8798  # g_5d7080 (0xb350 bytes) holds ?g_5d8798@@3HA, g_5d8798
 005e291c 005e2920  # ?g_map_flags@@3UMapFlags@@A (0xc bytes) holds f8
 00a70440 00a70458  # g_a70440 (0x2c50 bytes) holds ?g_trigger_result@@3TTriggerResult@@A, g_trigger_result
 00a70440 00a70470  # g_a70440 (0x2c50 bytes) holds ?g_num_valid@@3HA, g_num_valid

@@ -14,8 +14,7 @@
 #include "../tstring.h"
 #include "../str_table.h"
 
-#include "../../include/msg_log.h"
-extern MsgLog g_msglog;                                 // 0x5d7080
+#include "../strat/gui_manager.h"
 
 #include "../../rgl/stream.h"
 #define LOG(s) ((stream_base&)g_log).w_cstr(s)                 // 0x5a9f60 (virtual call through a stream_base reference)

@@ -32,7 +32,6 @@ extern tstring g_module_path;                              // 0x8ee3c28
 Rec78* g_propkinds;                                 // 0x5e29dc
 int g_menu_count;                                   // 0x5e29b4
 int g_party_template_count;                        // 0x5e29fc
-int g_loaded_sound_count;                      // 0x5d878c
 char g_path[0x100];                            // 0x8ee41f0
 int g_map_icon_count;   // 0x5e29f4
 int g_mission_template_count;   // 0x5e2a04
@@ -152,6 +151,7 @@ struct RefRecord;
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
 #include "../../include/mesh_table.h"           // MeshTable, g_meshes (0x8ed4f58)
 #include "../../include/tableau_table.h"        // TableauTbl, g_tableaus (0xa75f40)
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 struct Block {
     void read(stream_base* s, int version);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; ret 8, the file version is the second argument)
 };
@@ -210,7 +210,7 @@ void load_module_files()
     in_sounds.r_tstr(RSTR(&str2));
     in_sounds.r_int(&version);
     ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_module_settings.scan_module_sounds, &g_module_path);
-    g_loaded_sound_count = *(int*)g_sound_mgr.defs;
+    g_gui.f170c = *(int*)g_sound_mgr.defs;
     s_sounds.failed = 1;
 
     // particle_systems.txt

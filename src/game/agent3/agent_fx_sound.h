@@ -103,8 +103,7 @@ extern const int g_xp_table[63];                        // 0x590974: experience 
 
 // ---- message log (object at 0x5d7080): enabled byte at +0x1714, 32-entry ring at +0xb0b8 ------------------------------------
 #include "../str_table.h"
-#include "../../include/msg_log.h"                 // MsgLog (one definition for src/game and src/rgl)
-extern MsgLog g_gui;                                 // 0x5d7080
+#include "../strat/gui_manager.h"                 // gui_manager: g_gui
 
 // ---- effect spawn (0x442ca0) ---------------------------------------------------------------------------------------------------
 #include "../env_row.h"                                 // EnvRow, g_env_rows (0x5e28f4)

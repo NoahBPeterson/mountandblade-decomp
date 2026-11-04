@@ -20,7 +20,7 @@ struct TimerList { void update(int id); };               // 0x48add0 (the sound-
 struct FireRay;
 struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)
 struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pending 0x433810)
-struct gui_timer { void set_delay(float seconds); };     // 0x42cd20 (strat/gui_manager.cpp; Timer::set_delay)
+#include "../../include/timer.h"                    // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
 // AnimRec::phase 0x4231f0: agent/curve.h
 struct mnode { void calc_bounds(rgl::vector4* mn, rgl::vector4* mx); };   // 0x438d80 (agent2/agent_stats.cpp)
 namespace rgl {

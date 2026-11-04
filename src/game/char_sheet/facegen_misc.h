@@ -26,13 +26,12 @@ using rgl::mat4;
 
 // ---- tstring --------------------------------------------------------------------------------------------
 #include "../tstring.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 
 // ---- save/load menu interfaces --------------------------------------------------------------------------
 #include "../../dxframework/d3dfont.h"               // CD3DFont (DrawText 0x404f00)
 #include "../render_batch.h"                           // render_batch, g_batch (0x5fe898): frame 0x4183c0, render 0x47e520
 #include "../config/core.h"                          // GameApp g_app_obj (0x8ee3c48): the editor restart and the device-object handlers
-extern MsgLog g_msglog;                                 // 0x5d7080
 
 // ---- UI widget (vtable family 0x597050; s004f49d0 / s004dada0) ------------------------------------------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)

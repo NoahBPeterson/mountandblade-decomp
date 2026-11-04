@@ -29,6 +29,7 @@ struct Src {
 #include "../../rgl/mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../game_globals.h"
+#include "../strat/gui_manager.h"
 using rgl::vector4;
 using rgl::mesh;
 
@@ -66,14 +67,10 @@ void MusicTrack::read(Src* src)
 }
 
 // ---------------------------------------------------------------- 0x50f8a0
-struct Frame570 {
-    char pad0[0x570];
-    void build_quad();
-};
 // @ 0x50f8a0
-void Frame570::build_quad()
+void gui_manager::build_quad()
 {
-    mesh* m = (mesh*)((char*)this + 0x570);
+    mesh* m = &m570;
     int color = 0xff000000;
     float uv1[2] = { 0.1f, 1.0f };
     float uv0[2] = { 0.0f, 0.0f };
@@ -89,15 +86,6 @@ void Frame570::build_quad()
 }
 
 // ---------------------------------------------------------------- 0x50f930
-struct LoadingMeshes {
-    char pad0[0x1210];
-    mesh* f1210;                        // +0x1210
-    mesh* f1214;                        // +0x1214
-    mesh* f1218;                        // +0x1218
-    mesh* f121c;                        // +0x121c
-    void build_frames();
-};
-
 static void set_frame_color(mesh* m)
 {
     vector4 c;
@@ -110,10 +98,10 @@ static void set_frame_color(mesh* m)
 }
 
 // @ 0x50f930
-void LoadingMeshes::build_frames()
+void gui_manager::build_frames()
 {
     {
-        mesh* m = (mesh*)((char*)this + 0xfb0);
+        mesh* m = &mfb0;
         int color = 0xa0ffffff;
         float uv1[2] = { 0.1f, 1.0f };
         float uv0[2] = { 0.0f, 0.0f };
@@ -128,51 +116,51 @@ void LoadingMeshes::build_frames()
 
     {
         tstring n("frame_corner_a");
-        f1210 = g_resmgr.get_object(&n)->clone();
+        corner[0] = g_resmgr.get_object(&n)->clone();
     }
     {
         vector4 c;
         c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
-        f1210->set_color(c);
+        corner[0]->set_color(c);
     }
-    f1210->compute_normals();
-    f1210->compute_bounds();
+    corner[0]->compute_normals();
+    corner[0]->compute_bounds();
 
     {
         tstring n("frame_corner_b");
-        f1214 = g_resmgr.get_object(&n)->clone();
+        corner[1] = g_resmgr.get_object(&n)->clone();
     }
     {
         vector4 c;
         c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
-        f1214->set_color(c);
+        corner[1]->set_color(c);
     }
-    f1214->compute_normals();
-    f1214->compute_bounds();
+    corner[1]->compute_normals();
+    corner[1]->compute_bounds();
 
     {
         tstring n("frame_corner_c");
-        f1218 = g_resmgr.get_object(&n)->clone();
+        corner[2] = g_resmgr.get_object(&n)->clone();
     }
     {
         vector4 c;
         c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
-        f1218->set_color(c);
+        corner[2]->set_color(c);
     }
-    f1218->compute_normals();
-    f1218->compute_bounds();
+    corner[2]->compute_normals();
+    corner[2]->compute_bounds();
 
     {
         tstring n("frame_corner_d");
-        f121c = g_resmgr.get_object(&n)->clone();
+        corner[3] = g_resmgr.get_object(&n)->clone();
     }
     {
         vector4 c;
         c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
-        f121c->set_color(c);
+        corner[3]->set_color(c);
     }
-    f121c->compute_normals();
-    f121c->compute_bounds();
+    corner[3]->compute_normals();
+    corner[3]->compute_bounds();
 }
 
 // ---------------------------------------------------------------- 0x50fbf0
@@ -238,8 +226,6 @@ struct Table2;                                       // built by MusicTable::bui
 void load_game_variables();                                      // 0x4c0520
 #include "../config/core.h"                       // GameApp g_app_obj (0x8ee3c48)
 
-#include "../gui_mgr.h"
-extern GuiManager g_gui;                                 // 0x5d7080
 
 
 
@@ -272,8 +258,8 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
         (*step)++;
     } else if (*step == 2) {
         parse_module_info();
-        ((LoadingMeshes*)&g_gui)->build_frames();   // 0x50f930: the gui object at 0x5d7080 holds the loading meshes
-        ((Frame570*)&g_gui)->build_quad();          // 0x50f8a0
+        g_gui.build_frames();   // 0x50f930: the gui object at 0x5d7080 holds the loading meshes
+        g_gui.build_quad();          // 0x50f8a0
         { tstring key("ui_loading_music"); text->assign(g_strtable.lookup(key)->c_str()); }
         (*step)++;
     } else if (*step == 3) {

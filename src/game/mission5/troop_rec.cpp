@@ -314,7 +314,7 @@ void SimpleTag::arm()
 {
     for (int i = 0; i < count; i++) {
         DelayItem* it = &((DelayItem*)array)[i];
-        ((gui_timer*)&it->timer)->set_delay(frand() * it->delay);
+        ((Timer*)&it->timer)->set_delay(frand() * it->delay);
     }
 }
 

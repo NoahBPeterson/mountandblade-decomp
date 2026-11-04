@@ -1,6 +1,7 @@
 #include "./render_shape.h"
 #include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // @ 0x4ed6f0
 void MapWidget::render(rgl::scene* sc, float* v, int b, int c)
@@ -9,10 +10,10 @@ void MapWidget::render(rgl::scene* sc, float* v, int b, int c)
         f354 = 0;
         return;
     }
-    scene3d.f0 = grid_count((float)g_screen_w * fE0);
-    scene3d.f4 = grid_count((g_one / g_div) * (g_div - (fE4 + screen[1])) * (float)g_screen_h);
-    scene3d.f8 = grid_count((float)g_screen_w * screen[0]);
-    scene3d.fc = grid_count((g_one / g_div) * (float)g_screen_h * screen[1]);
+    scene3d.f0 = grid_count((float)g_gui.screen_w * fE0);
+    scene3d.f4 = grid_count((g_one / g_gui.aspect) * (g_gui.aspect - (fE4 + screen[1])) * (float)g_gui.screen_h);
+    scene3d.f8 = grid_count((float)g_gui.screen_w * screen[0]);
+    scene3d.fc = grid_count((g_one / g_gui.aspect) * (float)g_gui.screen_h * screen[1]);
     scene3d.f1b0 = ((rgl::world*)world)->env;
     scene3d.f10 = 0;
     scene3d.f14 = 1.0f;

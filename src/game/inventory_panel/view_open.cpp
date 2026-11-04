@@ -78,7 +78,8 @@ int __cdecl clamp_index(const int* v, const int* lo, const int* hi);       // 0x
 // ---- the game singleton ----------------------------------------------------------------------------------
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 #include "../game_globals.h"      // canonical global declarations
-#include "../ui_globals.h"      // g_fov_k (0x5e20a8)
+#include "../ui_globals.h"
+#include "../strat/gui_manager.h"      // g_gui.fov_k (0x5e20a8)
 
 
 // ---- the character-sheet window --------------------------------------------------------------------------
@@ -163,7 +164,7 @@ void char_window::open_view()
         b->scene3d.flags |= 0x1200;
         b->scene3d.f190 = 0xff221815;
         // the camera frame: the body's aspect scaled by the global fov factor
-        float aspect = b->screen[1] / b->screen[0] * g_fov_k;
+        float aspect = b->screen[1] / b->screen[0] * g_gui.fov_k;
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);
         rgl::matrix mat;
         identity_pos((pos*)&mat);

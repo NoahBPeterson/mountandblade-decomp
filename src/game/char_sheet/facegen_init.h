@@ -37,12 +37,7 @@ typedef MapWidget face_body;
 #include "../engvec.h"                                 // engvec<T>
 
 // ---- globals ---------------------------------------------------------------------------------------------
-#include "../../include/msg_log.h"
-extern MsgLog g_msglog;                                 // 0x5d7080
-struct gui_mgr {
-    void set_window(MissionUi** w);   // 0x49b120
-};
-extern gui_mgr g_gui;                                   // 0x5d7080
+#include "../strat/gui_manager.h"
 #include "../str_table.h"   // 0x43a1e0
 #include "../ini_file.h"
 #include "../ui_globals.h"      // UI / core globals

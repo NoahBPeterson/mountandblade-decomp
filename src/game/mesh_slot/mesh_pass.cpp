@@ -2,7 +2,7 @@
 // (0x5fe898) and the polygon-topology rebuild of the terrain geometry. See MIGRATION.md.
 #include "./mesh_slot.h"
 #include "../../include/pod_elems.h"
-#include "../../include/msg_log.h"
+#include "../strat/gui_manager.h"
 #include "../../include/renderer.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../render_batch.h"  // render_batch (render 0x47e520), buffer_pair (restore_all 0x4623c0): the canonical classes of the batch and its device buffers
@@ -279,7 +279,6 @@ OFFSET_CHECK(PolyGeom, edges, 0x20);
 OFFSET_CHECK(PolyGeom, bmin, 0x44);
 OFFSET_CHECK(PolyGeom, bmax, 0x54);
 
-extern MsgLog g_gui;                                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
 
 // vector4::normalize(), inlined exactly as 0x407d60 does it (it returns the old length).
 static float __forceinline normalize_i(vector4& v)

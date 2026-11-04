@@ -8,11 +8,12 @@
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
+#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // @ 0x4f66e0
 void Rec1208::init_screen()
 {
-    ((gui_manager*)g_gui)->reset();   // 0x42d1b0 (g_gui is the gui_manager)
+    g_gui.reset();   // 0x42d1b0 (g_gui is the gui_manager)
 
     NodeA* panel = new NodeA(0);
     talk = panel;
@@ -27,9 +28,9 @@ void Rec1208::init_screen()
         talk->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
     }
     {
-        NodeA* v = (NodeA*)talk;
-        g_gui_dirty = 1;
-        ((NodeVec*)(void*)g_gui)->push_back(v);   // 0x49b120
+        MissionUi* v = (MissionUi*)talk;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back(v);   // 0x49b120
     }
 
     float sentence_y_a = config_float("conv_sentence_y_a");

@@ -211,8 +211,13 @@ compiles, builds (resolve_map alone 15 min under load) and run_all.
   another object's claimed range (`data_size_audit.py`, OVERLAP; `data_overlaps_known.txt` lists the 44 pairs main already
   had, which only shrink). Rule: an address that lies inside a bigger object is a member of its class when the class is
   reachable, else a label (`extern`, no definition) -- never a definition of its own.
-- Open (each is a many-module class unification like g_strtable): `g_gui` 0x5d7080 (gui_manager; 14 partial views incl. MsgLog,
-  GuiManager, GuiRoot, UiSoundHost), `g_windows` 0xa73980 (+ `g_wDC` = slot 23; WindowMgrW / main_menu / screen_cfg / raw
+- `g_gui` 0x5d7080 is ONE `gui_manager` (strat/gui_manager.h, sizeof 0xb350, every interior label a member: `screen_w`, `screen_h`,
+  `dirty` (g_gui_dirty), `wheel` (g_mission_clock), `fov_k`, `aspect` (g_div), `mouse_dx/dy`, `lines` (g_strs), `drag`, `overlay`, `label_obj`, ...),
+  defined once in strat/gui_manager.cpp and built by the compiler's initialiser; the message-log / screen-input / loading-mesh /
+  sound-host views are gone (static_init's 0x5479c0 / 0x548140 rows too). Because the compiler-made initialiser now sits in the
+  gui_manager module's .CRT$XCU, it runs before the static_init table's entries (the original ran it second, right after
+  resmgr 0x5479a0): the only inversion is gui before resmgr, and ~gui_manager now runs after ~resmgr (which clears the `res` of registered meshes; the exit-time deletes of unregistered ones read freed materials, not observed to fault in smoke). It goes away when resmgr becomes a compiler-constructed global too.
+- Open (each is a many-module class unification like g_strtable): `g_windows` 0xa73980 (+ `g_wDC` = slot 23; WindowMgrW / main_menu / screen_cfg / raw
   arrays; ctor = conv_zero_node 0x4c8c20, dtor Tail2 0x4c4d10 on the deque at +0x78), `g_terrain` 0xa76630 (nine `Terrain`
   partials, BitWords, DustTerrain, TerrainGen), the vtables 0x591fb0 / 0x592848 / 0x597050 / 0x598698 (vtable lane).
 ## 8. Lane D6 (agents / script / static_init / game roots): what was done, patterns, what is left
