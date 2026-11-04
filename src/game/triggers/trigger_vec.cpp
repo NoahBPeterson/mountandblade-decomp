@@ -26,6 +26,7 @@
 #include <richedit.h>
 #include "../config/core.h"
 #include "../config/config.h"
+#include "../emit.h"                 // EmitTable, g_emit_defs (0x8ed5090)
 #include "../party/game.h"
 #include "../../rgl/xmlcfg/records.h"     // (listed directly: the resolution audit scans only the source's own includes)
 #include "../inventory_panel/mission_ctx_rec.h"      // MissionCtx (init 0x4be730; the resolution audit reads the annotations of directly included headers)
@@ -1343,26 +1344,28 @@ void GameVec::stamp(int c)
 }
 
 // ---- particle-system record table (loaded_psys_table, seen through MouseRec for the inline destructor / constructor) ---------
+EmitTable g_emit_defs;                               // 0x8ed5090 (.bss; the compiler registers the destructor with atexit: ~EmitTable 0x4c1f20)
+
 // @ 0x4c1f20
-void loaded_psys_table::clear()
+EmitTable::~EmitTable()
 {
-    MouseRec* q = (MouseRec*)records;
+    MouseRec* q = (MouseRec*)defs;
     if (q != 0)
         delete[] q;
 }
 
 // @ 0x4c1f70
-void loaded_psys_table::resize(stream_base& s)
+void EmitTable::resize(stream_base& s)
 {
     s.r_int(&count);
-    MouseRec* o = (MouseRec*)records;
+    MouseRec* o = (MouseRec*)defs;
     if (o != 0) {
         delete[] o;
-        records = 0;
+        defs = 0;
     }
-    records = (psys_record*)new MouseRec[count];
+    defs = (EmitDef*)new MouseRec[count];
     for (int i = 0; i < count; i++)
-        records[i].load(s);
+        ((psys_record*)defs)[i].load(s);
     load_used();
 }
 

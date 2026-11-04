@@ -175,7 +175,6 @@ struct csv_row {
     csv_row();   // 0x4cdf20 (ItemKind::ItemKind: rgl/mesh2)
 };
 
-extern EmitTable g_emit_defs;                        // 0x8ed5090
 extern TableauTable g_tableaus;                       // 0xa75f40
 extern PresentationTable g_presentations;            // 0xa75f2c
 extern ScriptTable g_scripts;                        // 0xa75eb0
@@ -239,7 +238,7 @@ void load_module_files()
     in_particles.r_tstr(RSTR(&str1));
     in_particles.r_tstr(RSTR(&str2));
     in_particles.r_int(&version);
-    g_emit_defs.resize(&s_particles);
+    g_emit_defs.resize(*(stream_base*)&s_particles);
     s_particles.failed = 1;
 
     // skins.txt

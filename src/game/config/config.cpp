@@ -21,6 +21,7 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
+#include "../emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
 #include <richedit.h>
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // g_game 0x5e2930 (g_config is a view of it)
@@ -1512,7 +1513,7 @@ const char* g_script_names[] =   // 0x5a9ea0 (the 28 script-code names)
 };
 
 // @ 0x4bdb60
-void loaded_psys_table::load_used()
+void EmitTable::load_used()
 {
     for (int k = 0; k < 11; k++) {
         int found = -1;
@@ -1521,7 +1522,7 @@ void loaded_psys_table::load_used()
         while (found == -1) {
             if (i >= count)
                 break;
-            if (((tstring*)((char*)records + off))->equals(g_psys_names[k]))
+            if (((tstring*)((char*)defs + off))->equals(g_psys_names[k]))
                 found = i;
             ++i;
             off += 0xc0;

@@ -587,10 +587,10 @@ void Mission::post_spawn(MAgent* a)
         return;
     if ((g_game->levels[f5df4].flags & 1) == 0 && f6608 != 4) {
         if (fog_dense == 0) {
-            idx = g_emit_id[4];
+            idx = g_emit_defs.used[4];
             pos.z = 0.4f;
         } else if (fog_dense == 1) {
-            idx = g_emit_id[6];
+            idx = g_emit_defs.used[6];
         } else {
             goto layers;
         }
@@ -616,7 +616,7 @@ layers:
         pos.y = 0.15f;
         if (a->f10 == 1)
             pos.y = 0.65f;
-        idx = g_emit_id[7];
+        idx = g_emit_defs.used[7];
         owner = 0;
         Emit* e0 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e0) {
@@ -624,7 +624,7 @@ layers:
             a->f250->add_emitter(e0);
             a->f1b0 = (int)e0;
         }
-        idx = g_emit_id[8];
+        idx = g_emit_defs.used[8];
         owner = 0;
         Emit* e1 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e1) {
@@ -633,7 +633,7 @@ layers:
             a->f1b4 = (int)e1;
         }
         pos.y = pos.y + 0.6f;
-        idx = g_emit_id[9];
+        idx = g_emit_defs.used[9];
         owner = 0;
         Emit* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e2) {

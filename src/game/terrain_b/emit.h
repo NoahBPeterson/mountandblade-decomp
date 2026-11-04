@@ -6,11 +6,9 @@
 #include "../../rgl/rgl_math.h"
 
 #include "../emit.h"                  // Emit, EmitTable (shared with agent3)
-extern int g_emit_id[];                                 // 0x8ed5098 (ids of the ambient emitters: dense fog 4, thin 6)
 
 
 
-#include "../../include/emit_ids.h"
 
 
 

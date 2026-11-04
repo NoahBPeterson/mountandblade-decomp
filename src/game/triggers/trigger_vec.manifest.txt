@@ -32,8 +32,8 @@
 ../src/game/triggers/trigger_vec.cpp  ?stamp@TriggerVec@@QAEXH@Z  004c1d70  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ??0trigger_entry@@QAE@XZ  004c1de0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?stamp@GameVec@@QAEXH@Z  004c1ee0  /O2 /MT /Gy /TP
-../src/game/triggers/trigger_vec.cpp  ?clear@loaded_psys_table@@QAEXXZ  004c1f20  /O2 /MT /Gy /TP
-../src/game/triggers/trigger_vec.cpp  ?resize@loaded_psys_table@@QAEXAAUstream_base@@@Z  004c1f70  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ??1EmitTable@@QAE@XZ  004c1f20  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ?resize@EmitTable@@QAEXAAUstream_base@@@Z  004c1f70  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?read@MapIcon@@QAEXAAUstream_base@@@Z  004c20c0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?read@MissionTemplate@@QAEXAAUstream_base@@@Z  004c2300  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?read@PresentationRec@@QAEXAAUstream_base@@@Z  004c23f0  /O2 /MT /Gy /TP

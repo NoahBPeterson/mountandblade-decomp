@@ -87,13 +87,18 @@ struct Emit {                                           // particle emitter (0x1
     void set_v184(const rgl::vector4* v);               // 0x433740 (agent4: the velocity of an impact particle)
     void set_placement(const rgl::mat4* m, const rgl::vector4* a, const rgl::vector4* b, int c);   // 0x433770
 };
-struct EmitTable {
+struct stream_base;
+struct EmitTable {                                      // 0x34 bytes (g_emit_defs 0x8ed5090): the particle-system table, one object
     EmitDef* defs;                                      // +0
     int count;                                          // +4
-    int idx1, idx2;                                     // +8, +0xc the definition indices of the two scene emitters (mesh_slot/mesh_start.cpp 0x484590)
+    int used[11];                                       // +8 the definition index of each of the engine's 11 named effects (g_psys_names, load_used 0x4bdb60, -1 = missing):
+                                                        //    [0] / [1] the two scene emitters (mesh_slot/mesh_start.cpp 0x484590), [2] / [3] the default voice effects (agent_logic),
+                                                        //    [4] dense fog and the default effect agent_logic compares against, [6] thin fog, [7..9] the three ground fog layers
+    ~EmitTable();                                       // 0x4c1f20 (the atexit destructor; triggers/trigger_vec.cpp)
+    void load_used();                                   // 0x4bdb60 (config/config.cpp)
+    void resize(stream_base& s);                        // 0x4c1f70 (triggers/trigger_vec.cpp: reads the count and every record)
     void setup(Emit* e, int idx, const rgl::vector4* pos);                  // 0x4424c0
     Emit* spawn(int* idx, const rgl::vector4* pos, const int* owner);       // 0x479d20 (mission.cpp)
-    void resize(tstream3* s);                                                 // 0x4c1f70 (inventory_panel/module_files.cpp: the particle-system file loader)
 };
 extern EmitTable g_emit_defs;                           // 0x8ed5090
 #endif // GAME_EMIT_H

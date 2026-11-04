@@ -807,7 +807,7 @@ void Mission::start_setup()
         if (at<int>(0x6604) == 1) {
             mx.r[3].z = 6.0f;
             mx.r[3].y = 6.5f;
-            int ix = g_emit_defs.idx1;
+            int ix = g_emit_defs.used[0];
             if (ix >= 0 && ix < g_emit_defs.count) {
                 Emit* em = new Emit;
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.r[3]);
@@ -834,7 +834,7 @@ void Mission::start_setup()
         } else if (at<int>(0x6604) == 2) {
             mx.r[3].z = 6.0f;
             mx.r[3].y = 6.5f;
-            int ix = g_emit_defs.idx2;
+            int ix = g_emit_defs.used[1];
             if (ix >= 0 && ix < g_emit_defs.count) {
                 Emit* em = new Emit;
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.r[3]);

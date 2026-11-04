@@ -182,14 +182,6 @@ struct psys_record {                                // 0xc0 bytes
     static void* read(stream_base& a, char* o);     // 0x4bdc00 (cdecl (stream, record): reads into o, not this)
     void load_extras(stream_base& a);               // 0x4bdd50
 };
-struct loaded_psys_table {
-    psys_record* records;                           // +0x00
-    int count;                                      // +0x04
-    int used[11];                                   // +0x08
-    void load_used();                               // 0x4bdb60
-    void clear();                                   // 0x4c1f20 (src/game/triggers: deletes the record array)
-    void resize(stream_base& s);                    // 0x4c1f70 (reads the count and every record)
-};
 struct prsnt_record {                               // 0x24 bytes + extras
     tstring tex;                                    // +0x00
     int f10;                                        // +0x10

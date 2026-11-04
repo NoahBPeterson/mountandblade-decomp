@@ -66,7 +66,6 @@ extern int g_propkind_count;                                // 0x5e29e0
 unsigned g_input_mask;                                      // 0x5e2474
 
 #include "../../include/rec78.h"
-#include "../../include/emit_ids.h"
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
 struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
@@ -6381,9 +6380,9 @@ void Agent::process_blow(int unused)
         int e1 = g_anim_table.get_f1f0(vi);
         int e2 = g_anim_table.get_f1f4(vi);
         if (e1 == 0)
-            e1 = g_emit_id[2];
+            e1 = g_emit_defs.used[2];
         if (e2 == 0)
-            e2 = g_emit_id[3];
+            e2 = g_emit_defs.used[3];
         if (e1 >= 0) {
             Emit* em = g_mission->spawn_effect(e1, (const rgl::mat4*)&m2, (int)(ef + ef));
             float s = (ef + 10.0f) * 0.1f;
@@ -7864,7 +7863,6 @@ reset_pos:
 // ---- Agent::update, Agent::tick: the per-frame agent update ---------------------------------------------------------------------------
 struct SubV { char pad0[8]; unsigned flags; char padc[0x1c - 0xc]; float ev[4]; char pad2c[0x40 - 0x2c]; };   // 0x40 bytes: a part of an animation (flags: 0x100 footstep dust, 0x200 sound)
 struct AnimDefW { char pad0[0x10]; SubV* subs; char pad14[0x30 - 0x14]; };   // g_anims entry as 0x45f660 reads it
-int g_default_fx;                                           // 0x8ed50a8
 // @ 0x45f660
 void Agent::update(float dt)
 {
@@ -8009,7 +8007,7 @@ void Agent::update(float dt)
                                 float v = 0.0f;
                                 if (speed > 5.5f && fbc && (((shape_base*)fbc)->m8 & 0x4000))
                                     v = speed + 10.0f;
-                                if (fx1ac->idx != g_emit_id[4])
+                                if (fx1ac->idx != g_emit_defs.used[4])
                                     v = v * 3.0f;
                                 ((Obj3*)fx1ac)->reset_pending((int)(v * 0.15f));
                             }

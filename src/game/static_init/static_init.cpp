@@ -56,7 +56,6 @@ extern char g_a75f40[];     // 0xa75f40 the tableaus
 extern char g_a76628[];     // 0xa76628
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 extern char g_8ed4f58[];    // 0x8ed4f58 the meshes
-extern char g_8ed5090[];    // 0x8ed5090 the particle systems
 
 extern char g_8ee3c48[];    // 0x8ee3c48 the application
 struct SoundMgr;
@@ -80,7 +79,6 @@ struct TwoVec { ~TwoVec(); };                       // 0x4da9c0
 struct TriggerEntryVec { void dtor(); };            // 0x4c2200
 struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct BigArray { void destroy(); };                // 0x4eb810
-struct loaded_psys_table { void clear(); };         // 0x4c1f20
 struct tstring_pair;
 struct elem48;
 struct Core;
@@ -136,8 +134,6 @@ void __cdecl static_dtor_5482b0()
 }
 // @ 0x548340
 void __cdecl static_dtor_548340() { ((TriggerEntryVec*)g_a76628)->dtor(); }
-// @ 0x548350
-void __cdecl static_dtor_548350() { ((loaded_psys_table*)g_8ed5090)->clear(); }
 // @ 0x5483b0
 void __cdecl static_dtor_5483b0() { destroy_tstring_pairs((tstring_pair**)g_a75ea0); }
 // @ 0x5483c0
@@ -236,8 +232,6 @@ void __cdecl static_init_547fe0()
 void __cdecl static_init_548010() { new (g_8ed4f58) rec_table; atexit(static_dtor_5483e0); }
 // @ 0x548030
 void __cdecl static_init_548030() { atexit(static_dtor_548510); }
-// @ 0x548040
-void __cdecl static_init_548040() { atexit(static_dtor_548350); }
 // @ 0x548110
 void __cdecl static_init_548110() { new (g_8ee3c48) GameApp; atexit(static_dtor_5482a0); }
 
@@ -251,7 +245,7 @@ init_fn g_static_init_table[] = {
     static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,
-    static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,
+    static_init_547fe0, static_init_548010, static_init_548030,
     static_init_548110,
 };
 #pragma data_seg()
