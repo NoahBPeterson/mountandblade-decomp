@@ -31,6 +31,7 @@
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
 #include "./tableau.h"
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40): the table's members defined here
 #include "./widget_mgr_w.h"
 #include "../eff_obj.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -1051,16 +1052,16 @@ template void std::deque<int>::_Growmap(size_t);
 
 // ==== 0x492ee0: pop the last pointer of a vector, destroying the object ==========================================
 // @ 0x492ee0
-void PtrStack14::pop_back_delete()
+void TableauTbl::pop_back_delete()
 {
-    unsigned _n = size();
-    void* _Ptr = _Myfirst[_n - 1];
+    unsigned _n = worlds.size();
+    SceneObject* _Ptr = worlds[_n - 1];
     if (_Ptr != 0) {
         ((CellGrid*)_Ptr)->CellGrid::~CellGrid();                // 0x475d50
         ::operator delete(_Ptr);
     }
-    if (_Myfirst != 0 && size() != 0)
-        --_Mylast;
+    if (worlds._Myfirst != 0 && worlds.size() != 0)
+        --worlds._Mylast;
 }
 
 // ==== 0x492f40: the game object's destructor =======================================================================
@@ -1567,10 +1568,10 @@ void E68W::purge()
 }
 
 // @ 0x493f30
-void Vec68W::purge_all()
+void TableauTbl::purge_all()
 {
-    for (unsigned _i = 0; _i < (unsigned)(begin == 0 ? 0 : (end - begin)); ++_i)
-        ((E68W*)(begin + _i))->purge();
+    for (unsigned _i = 0; _i < (unsigned)recs.size(); ++_i)
+        ((E68W*)&recs[_i])->purge();
 }
 
 // ==== 0x493f80, 0x494020: tableau light nodes ============================================================================
@@ -1578,7 +1579,7 @@ void Vec68W::purge_all()
 void TableauTbl::add_point_light(const rgl::matrix* p, const rgl::vector4& c)
 {
     char* other = (char*)p;
-    int* _n = (int*)((NodeAlloc*)worlds[worlds.size() - 1])->node_478f30();
+    int* _n = (int*)((NodeAlloc*)(void*)worlds[worlds.size() - 1])->node_478f30();
     const int* _d = (const int*)&c;
     memcpy(_n + 1, _d, 0x10);
     _n[0] = 0;
@@ -1593,7 +1594,7 @@ void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 {
     char* other = (char*)p;
     int _g[4];
-    int* _n = (int*)((NodeAlloc*)worlds[worlds.size() - 1])->node_478f30();
+    int* _n = (int*)((NodeAlloc*)(void*)worlds[worlds.size() - 1])->node_478f30();
     const int* _d = (const int*)&c;
     memcpy(_n + 1, _d, 0x10);
     _n[0] = 2;
@@ -2150,11 +2151,11 @@ void EmitterCtl::add(int e)
 
 // ==== 0x495650: append a fresh scene object ====================================================================
 // @ 0x495650
-SceneObject* SceneList::push()
+SceneObject* TableauTbl::push()
 {
     SceneObject* o = new SceneObject;
-    v.push_back(o);
-    return v[v.size() - 1];
+    worlds.push_back(o);
+    return worlds[worlds.size() - 1];
 }
 
 // ==== 0x495700: leave the screen state, tear down the open-screen deque ==========================================

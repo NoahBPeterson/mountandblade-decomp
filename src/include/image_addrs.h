@@ -16,7 +16,6 @@ struct MissionCtx;
 struct ShadowMap;
 struct SoundMgr;
 struct StrTable;
-struct TableauTbl;
 struct gui_manager;
 struct ini_file;
 struct options_record;
@@ -129,7 +128,6 @@ extern InputSet g_input_a;                 // 0xa170c8
 extern renderer g_render;                  // 0xa17910
 
 extern MissionCtx g_mission_ctx;           // 0xa73300
-extern TableauTbl g_tableaus;              // 0xa75f40
 }  // namespace orig
 
 // vtables

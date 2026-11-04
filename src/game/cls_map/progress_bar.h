@@ -105,11 +105,7 @@ void __fastcall conv_map_codes(conv_rec* self);               // 0x4c84f0 (ecx =
 struct MapBlock : E68 {                         // the map block (0x68 bytes): its terrain reader
     void read_terrain(SlotReader* stream) { ((Block*)this)->read_terrain((stream_base*)stream); }      // 0x4c83a0
 };
-struct MapLoader {
-    std::vector<E68> blocks;                    // +0x00 (first at +4)
-    void conv_map_codes() { ::conv_map_codes((conv_rec*)this); }       // 0x4c84f0
-    void read(SlotReader* stream);              // 0x4e7a70 (ret 4)
-};
+// (the loader is the tableau table, include/tableau_table.h: the blocks are its records; TableauTbl::read 0x4e7a70, ret 4)
 
 // ---- 0x4e85d0 / 0x4e8720: the world-map screen's terrain build and per-frame mesh refresh -----------------------------------------------
 // A partial view of the MapScreen class of src/game/char_sheet/save_game.h (0x4e87d0 buttons, which that module owns; its header

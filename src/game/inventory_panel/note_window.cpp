@@ -68,11 +68,7 @@ struct mnode {                                       // game/agent2/agent_types.
 #include "../ini_file.h"
 #define CONFIG (&g_game_vars)
 
-struct TableauTbl {                                          // world_data/obj_tbl.h: the image table at 0xa75f40
-    rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0
-    __forceinline rgl::mesh* make_mesh_from(void* rec, int* id) { return make_mesh_from((const int*)rec, (const void*)id); }
-};
-#define IMAGES ((TableauTbl*)&orig::g_tableaus)
+#include "../../include/tableau_table.h"            // TableauTbl g_tableaus (0xa75f40)
 
 #include "../../include/game_data.h"             // GameData: the game object at 0x5e2930 (troops +0x13a00, factions +0x13a48, quests +0x13a58, parties +0xf8)
 #define WORLD g_game
@@ -384,7 +380,7 @@ void note_window::build(int page_, int arg_)
         char* troop = ((char*)WORLD->troops) + ti * 0x508;
         if (*(int*)(troop + 0x4a0) >= 0) {
             int id = ti;
-            this->picture->set_track(0, IMAGES->make_mesh_from(troop + 0x4a0, &id));
+            this->picture->set_track(0, g_tableaus.make_mesh_from((const int*)(troop + 0x4a0), &id));
             this->picture->show();
         }
         sprintf(buf, "<trp=%d>", ti);
@@ -458,7 +454,7 @@ void note_window::build(int page_, int arg_)
         char* fac = ((char*)WORLD->factions) + fi * 0x300;
         if (*(int*)(fac + 0x2fc) >= 0) {
             int id = fi;
-            this->picture->set_track(0, IMAGES->make_mesh_from(fac + 0x2fc, &id));
+            this->picture->set_track(0, g_tableaus.make_mesh_from((const int*)(fac + 0x2fc), &id));
             this->picture->show();
         }
         sprintf(buf, "<fac=%d>", fi);
@@ -530,7 +526,7 @@ void note_window::build(int page_, int arg_)
         void* party = WORLDMAP->get(pi);
         if (*(int*)((char*)party + 0x5aa8) >= 0) {
             int id = pi;
-            this->picture->set_track(0, IMAGES->make_mesh_from((char*)party + 0x5aa8, &id));
+            this->picture->set_track(0, g_tableaus.make_mesh_from((const int*)((char*)party + 0x5aa8), &id));
             this->picture->show();
         }
         sprintf(buf, "<p=%d>", pi);
@@ -614,7 +610,7 @@ void note_window::build(int page_, int arg_)
         char* quest = ((char*)WORLD->quests) + qi * 0x138;
         if (*(int*)(quest + 0x108) >= 0) {
             int id = qi;
-            this->picture->set_track(0, IMAGES->make_mesh_from(quest + 0x108, &id));
+            this->picture->set_track(0, g_tableaus.make_mesh_from((const int*)(quest + 0x108), &id));
             this->picture->show();
         }
         sprintf(buf, "<qst=%d>", qi);

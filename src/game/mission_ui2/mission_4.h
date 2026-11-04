@@ -26,23 +26,13 @@ struct RiderTable {
     int shares(const int& a, const int& b) const;   // 0x48efa0 (ret 8: do the two rows name a common rider; the arguments are row indices)
 };
 
-// ---- 0x48f450..0x48f5a0: the stack of tableaus being rendered (object 0xa75f40; TableauVec in script/script_interpreter.h) ----------
+// ---- 0x48f450..0x48f5a0: the tableau on top of the stack of tableaus being rendered (TableauTbl::worlds, include/tableau_table.h) ----------
 struct TabCurrent {                         // the tableau on top of the stack
     char pad0[0x36c];
     rgl::frustum fr;                        // +0x36c the camera (0x48f480, 0x48f4c0)
     int background;                         // +0x48c (0x48f570)
     float ambient[4];                       // +0x490 (0x48f5a0)
 };
-struct TableauStack {
-    char pad0[0x10];
-    std::vector<TabCurrent*> stack;         // +0x10 (allocator word, first at +0x14)
-    TabCurrent* current();                  // 0x48f450
-    void set_camera_position(const rgl::matrix* m);     // 0x48f480 (ret 4)
-    void set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_);   // 0x48f4c0 (ret 0x14)
-    void set_background_color(int c);       // 0x48f570 (ret 4)
-    void set_ambient_light(const float* c); // 0x48f5a0 (ret 4)
-};
-
 // ---- 0x48f5f0, 0x48f6b0: the widget slots the text and position setters call -----------------------------------------------------
 struct TxVt {
     virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();

@@ -6,6 +6,7 @@
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
+#include "../../include/tableau_table.h"   // TableauTbl::read 0x4e7a70 (the tableau table is the map loader)
 #include "./progress_bar.h"
 #include "../../include/prsnt_table.h"   // g_presentations (0xa75f2c): used[2] is the menu kind create2 builds
 #include "../terrain_a/terrain.h"   // Terrain::init_map (0x4e85d0), g_terrain
@@ -1190,7 +1191,7 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
 // ---- 0x4e7a70: the map loader's block-list reader ---------------------------------------------------------------------------------------------
 // (begins and ends with a WinLicense marker that cl cannot emit, see MIGRATION.md)
 // @ 0x4e7a70
-void MapLoader::read(SlotReader* stream)
+void TableauTbl::read(SlotReader* stream)
 {
     WL_MARKER(12)
     int n;
@@ -1201,14 +1202,14 @@ void MapLoader::read(SlotReader* stream)
     blank.m.n = 0;
     blank.m.c = 0;
     blank.t = 0;
-    blocks.resize(n, blank);                    // 0x4e40f0
+    recs.resize(n, blank);                    // 0x4e40f0
     WL_MARKER(13)
     for (int i = 0; i < n; i++) {
-        MapBlock* b = (MapBlock*)&blocks[0] + i;
+        MapBlock* b = (MapBlock*)&recs[0] + i;
         b->read_terrain(stream);                // 0x4c83a0
-        ((MapBlock*)&blocks[0] + i)->b0 = i;
+        ((MapBlock*)&recs[0] + i)->b0 = i;
     }
-    conv_map_codes();                              // 0x4c84f0
+    ::conv_map_codes((conv_rec*)this);             // 0x4c84f0
 }
 
 // ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------

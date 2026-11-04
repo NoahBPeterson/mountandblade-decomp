@@ -28,7 +28,5 @@
 00a70450 00a70470  # g_a70450 (0x40 bytes) holds ?g_num_valid@@3HA, g_num_valid
 00a70450 00a70480  # g_a70450 (0x40 bytes) holds ?g_list_a70480@@3UList8@@A, g_list_a70480
 00a70464 00a70470  # g_meeting_name (0x10 bytes) holds ?g_num_valid@@3HA, g_num_valid
-00a75f40 00a75f54  # g_a75f40 (0x24 bytes) holds ?g_world_list@c49f060@@3UPtrVec@1@A, g_world_list
-00a75f40 00a75f60  # g_a75f40 (0x24 bytes) holds ?g_5a75f60@@3HA, g_5a75f60
 00a75f70 00a75f90  # g_a75f70 (0x6b8 bytes) holds ?g_sort_val@@3PAUSortVal@@A, g_sort_val
 08ed4df8 08ed4e14  # ?g_ttypes@@3PAUttype@@A (0x160 bytes) holds ?g_x8ed4e14@@3PAEA, g_x8ed4e14

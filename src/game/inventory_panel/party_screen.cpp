@@ -6,6 +6,7 @@
 //       refresh and the character quad. "T regime" region (docs/tu_map.md): the file keeps the binary order.
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../../include/image_addrs.h"
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "./party_screen.h"
@@ -1313,7 +1314,7 @@ void PartyScreen::show_selected_character(int troop, int slot)
 
     int t = troop;
     troop = slot + troop * 2;
-    PSO(char_quad)->add_image(0, ((TableauTbl*)&g_tableaus)->make_mesh_from(&item, &troop));
+    PSO(char_quad)->add_image(0, g_tableaus.make_mesh_from(&item, &troop));
 
     TroopRec* rec = (TroopRec*)((char*)g_game->chars + t * 0x508);
     float size[2];

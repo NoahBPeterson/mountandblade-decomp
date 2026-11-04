@@ -5,6 +5,7 @@
 //       scene table, the tableau table's mesh/entity spawners, and the two mesh-widget factories. Translation unit 87
 //       (obj_tbl) of the TU map. Names provisional. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../../include/image_addrs.h"
 #include "./obj_tbl.h"
 #include "./mesh_hud.h"      // MeshWidget
@@ -71,10 +72,10 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
     vector4 b, a;
     vec2 uv1, uv0;
     unsigned color;
-    b.x = recs[i].f30;
-    b.y = recs[i].f34;
-    a.x = recs[i].f28;
-    a.y = recs[i].f2c;
+    b.x = ((TableauRec*)&recs[i])->f30;
+    b.y = ((TableauRec*)&recs[i])->f34;
+    a.x = ((TableauRec*)&recs[i])->f28;
+    a.y = ((TableauRec*)&recs[i])->f2c;
     color = 0xffffffff;
     uv1.x = 1.0f;
     uv1.y = 1.0f;
@@ -83,7 +84,7 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
     b.z = 0.0f;
     a.z = 0.0f;
     m->add_quad(&a, &b, &uv0, &uv1, &color);
-    skin* nr = TAB_ADD_SPAWNED(this, index, (const int*)from);   // 0x4b14b0
+    skin* nr = (skin*)add_spawned(index, (const int*)from);   // 0x4b14b0
     if (m->res)
         --*(int*)((char*)m->res + 0x64);
     m->res = nr;
@@ -95,7 +96,7 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
 // @ 0x4992b0
 void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl::vector4* scale)
 {
-    TableauWorld* w = worlds[worlds.size() - 1];
+    TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
     TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
     MeshY* m = (MeshY*)make_mesh_from(&index, &from);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
@@ -110,7 +111,7 @@ void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl:
 void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale,
                               const float* alpha, const unsigned* color)
 {
-    TableauWorld* w = worlds[worlds.size() - 1];
+    TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
     TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
     MeshY* m = (MeshY*)g_meshes.placed(index);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
@@ -143,7 +144,7 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
 // @ 0x499540
 void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float* scale)
 {
-    TableauWorld* w = worlds[worlds.size() - 1];
+    TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
     TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
     MeshY* m = (MeshY*)((MeshX*)((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
@@ -181,7 +182,7 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
     ((MeshWidgetVt*)w)->w29(&v);
     if (a >= 0) {
         MeshY* m = (MeshY*)g_meshes.placed(a);
-        skin* nr = TAB_ADD_SPAWNED(&g_tableaus, &b, (const int*)&c);   // 0x4b14b0
+        skin* nr = (skin*)g_tableaus.add_spawned(&b, (const int*)&c);   // 0x4b14b0
         if (m->res)
             --*(int*)((char*)m->res + 0x64);
         m->res = nr;

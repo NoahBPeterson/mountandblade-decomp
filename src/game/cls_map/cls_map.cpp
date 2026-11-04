@@ -7,6 +7,7 @@
 #include "../music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40)
 #include "../../include/prsnt_table.h"   // g_presentations (0xa75f2c): used[0..2] are the menu kinds
 #include "./progress_bar.h"
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
@@ -425,7 +426,10 @@ void gui_manager::rebuild()
 }
 
 // @ 0x4da9c0
-TwoVec::~TwoVec() {}
+// the atexit destructor of g_tableaus: the world stack (a scalar vector: freed and cleared), then the records (destroyed through
+// _Destroy_range<E68> 0x4cd570, freed and cleared)
+TableauTbl g_tableaus;                                          // 0xa75f40 (.bss; compiler-constructed)
+TableauTbl::~TableauTbl() {}
 
 // @ 0x4daa10   the loading screen: the overlay window, the logo, the hint line and one random hint text
 void C4c2fb0::init_screen()

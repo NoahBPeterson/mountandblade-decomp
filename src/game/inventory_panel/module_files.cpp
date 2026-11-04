@@ -146,15 +146,12 @@ struct AccessStream;
 struct mesh_scene {
     void read(AccessStream* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
 };
-struct TableauTable { char pad; };                   // 0xa75f40
 struct SlotReader;
-struct MapLoader {
-    void read(SlotReader* s);   // 0x4e7a70 (TableauTable::read)
-};
 #include "../../include/prsnt_table.h"           // PresentationTable, g_presentations (0xa75f2c)
 struct RefRecord;
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
 #include "../../include/mesh_table.h"           // MeshTable, g_meshes (0x8ed4f58)
+#include "../../include/tableau_table.h"        // TableauTbl, g_tableaus (0xa75f40)
 struct Block {
     void read(stream_base* s, int version);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; ret 8, the file version is the second argument)
 };
@@ -163,7 +160,6 @@ struct csv_row {
     csv_row();   // 0x4cdf20 (ItemKind::ItemKind: rgl/mesh2)
 };
 
-extern TableauTable g_tableaus;                       // 0xa75f40
 
 // ---------------------------------------------------------------- module state
 
@@ -270,7 +266,7 @@ void load_module_files()
     // tableau_materials.txt
     tstream3 s_tableau;
     open_module_file(s_tableau, "tableau_materials.txt");
-    ((MapLoader*)&g_tableaus)->read((SlotReader*)&s_tableau);
+    g_tableaus.read((SlotReader*)&s_tableau);
     s_tableau.failed = 1;
 
     // presentations.txt

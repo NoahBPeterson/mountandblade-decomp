@@ -229,14 +229,6 @@ struct RecPoly { virtual ~RecPoly(); };                         // a scene recor
 
 typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 
-struct PtrStack14 {                                             // an object with a pointer vector (no allocator word) at +0x14
-    char pad0[0x14];
-    void** _Myfirst;                                            // +0x14
-    void** _Mylast;                                             // +0x18
-    unsigned size() const { return (unsigned)(_Mylast - _Myfirst); }
-    void pop_back_delete();                                     // 0x492ee0
-};
-
 // ---- the party pool (0x98-byte records, pages of 16) and the cache group (E68 members) ----------------------------------------
 #include "../rec98.h"                                             // Rec98: the 0x98-byte pool record, constructor 0x48c210
 struct RecPool {                                                // an object with the free-id vector at +4 and the page vector at +0x14
@@ -262,10 +254,6 @@ struct E68W : E68 {
     void purge();                                               // 0x493e90 (thiscall, ret 0)
     void* find_or_create(int* key);                             // 0x493df0 (thiscall, ret 4)
 };
-struct Vec68W : Vec68 {
-    void purge_all();                                           // 0x493f30 (thiscall, ret 0)
-};
-
 struct ViewParams {
     ViewParams();   // 0x46b940
 };
@@ -377,11 +365,6 @@ struct SceneBase {
 };
 inline SceneBase::SceneBase() { ((SceneBaseCtor*)this)->construct(); }
 struct SceneObject : SceneBase { rgl::frustum frustum; char tail[0x14]; };   // 0x4a0 total
-struct SceneList {
-    char pad0[0x10];
-    std::vector<SceneObject*> v;                                // +0x10
-    SceneObject* push();                                        // 0x495650
-};
 
 // Views of classes defined in other translation units, declared here under the defining class's name (their headers do not go with this
 // one): terrain_a's Mission3::speed_factor (0x467740, ignores this), terrain_b's

@@ -72,19 +72,7 @@ struct E68W {
 struct PageTable98 {
     void* slot(unsigned index);   // 0x48ef20 (mission_ui2/slot_api.cpp, ret 4: the battle table's record by index)
 };
-struct TableauTbl {
-    rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (world_data/obj_tbl.cpp, ret 8)
-};
-struct PtrStack14 {
-    void pop_back_delete();   // 0x492ee0 (world_data.cpp)
-};
-struct Vec68W {
-    void purge_all();   // 0x493f30 (world_data.cpp)
-};
-struct SceneObject;
-struct SceneList {
-    SceneObject* push();   // 0x495650 (world_data.cpp: append a fresh world)
-};
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40)
 struct vec2x {
     void rotate_a(float ang);   // 0x432600 (rgl/xmlcfg/game_util.cpp)
 };
@@ -170,19 +158,6 @@ struct TabRec {                                         // a 0x68-byte tableau r
     TabSpawn* find_or_create(const int* key) { return (TabSpawn*)((E68W*)this)->find_or_create((int*)key); }    // 0x493df0 (ret 4: find or create the material)
 };
 struct TabWorld;                                        // a tableau's private world (0x495650 appends one)
-struct TabTable {                                       // the tableau object (global 0xa75f40)
-    int f0;                                             // +0
-    TabRec* recs;                                       // +4 (0x68-byte records)   0x4b14b0, 0x4b1160
-    char pad8[0x10 - 8];
-    std::vector<void*> worlds;                          // +0x10 (first at +0x14)
-    TabWorld* push() { return (TabWorld*)((SceneList*)this)->push(); }                 // 0x495650 (append a fresh world)
-    void purge_all() { ((Vec68W*)this)->purge_all(); }                                 // 0x493f30
-    void pop_back_delete() { ((PtrStack14*)this)->pop_back_delete(); }                 // 0x492ee0
-    rgl::mesh* make_mesh_from(const int* index, const void* from) { return ((TableauTbl*)this)->make_mesh_from(index, from); }   // 0x4991d0 (ret 8)
-    void add_spawned(const int* tableau, const int* instance);       // 0x4b14b0 (ret 8)
-};
-extern TabTable g_tableaus;                                  // 0xa75f40
-extern int g_5a75f60;                                   // 0xa75f60
 void scene_step(int material);                          // 0x4b1160 (the render callback stored in TabSpawn::step)
 
 struct TabFrustum : rgl::frustum {                      // the frustum plus the tableau's light state (0x134 bytes)

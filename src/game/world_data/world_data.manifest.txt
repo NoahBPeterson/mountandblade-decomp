@@ -35,7 +35,7 @@
 ../src/game/world_data/world_data.cpp  ?set_var@ScriptState@@QAEXHH@Z  00493db0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?find_or_create@E68W@@QAEPAXPAH@Z  00493df0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?purge@E68W@@QAEXXZ  00493e90  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?purge_all@Vec68W@@QAEXXZ  00493f30  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?purge_all@TableauTbl@@QAEXXZ  00493f30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_point_light@TableauTbl@@QAEXPBUmatrix@rgl@@ABUvector4@3@@Z  00493f80  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?play_ui@SoundMgr@@QAEXHI@Z  004942f0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?stop_all@SoundMgr@@QAEXXZ  00494310  /O2 /MT /Gy /TP
@@ -43,7 +43,7 @@
 ../src/game/world_data/world_data.cpp  ?switch_objective@GameW@@QAEXHH@Z  00494ad0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_random_experience@GameW@@QAEHH@Z  004952a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add@EmitterCtl@@QAEXH@Z  004955e0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?push@SceneList@@QAEPAUSceneObject@@XZ  00495650  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?push@TableauTbl@@QAEPAUSceneObject@@XZ  00495650  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_state@WindowMgrW@@QAEXH@Z  00495700  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?move_a@ContainerBase@@UAEXPBM@Z  00490570  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?quest_succeeded@GameW@@QAEXH@Z  00494560  /O2 /MT /Gy /TP

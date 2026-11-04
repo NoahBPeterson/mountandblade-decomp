@@ -33,7 +33,7 @@
 004e65e0 ?build_spikes@Shape@@QAEXPAUmesh@rgl@@@Z
 004e6a70 ?build_ribbons@Shape@@QAEXPAUmesh@rgl@@@Z
 004e75a0 ?polygon_to_mesh@Shape@@QAEXPAUmesh@rgl@@@Z
-004e7a70 ?read@MapLoader@@QAEXPAUSlotReader@@@Z
+004e7a70 ?read@TableauTbl@@QAEXPAUSlotReader@@@Z
 004e7b30 ?read@MapScene@@QAEXPAUmesh@rgl@@PAUMsStream@@@Z
 004e85d0 ?init@MapScreen@@QAEXPAX@Z
 004e8720 ?frame_step@MapScreen@@QAEXXZ

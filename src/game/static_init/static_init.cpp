@@ -45,7 +45,6 @@ extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
 
 extern char g_a73730[];     // 0xa73730 the game keys (0x4a dwords)
 extern char g_a7374c[];     // 0xa7374c (the key records' end)
-extern char g_a75f40[];     // 0xa75f40 the tableaus
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
 #include "../../include/mesh_table.h"   // MeshTable g_meshes (0x8ed4f58)
 
@@ -59,7 +58,6 @@ struct TStrRec : tstring { char rest[0x10]; };   // the 0x20-byte table record t
 struct tstring11 { TStrRec a[11]; };            // a table of 11 such records, constructed the way the compiler does a global array
 struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct ini_file { ini_file(); };                    // 0x4c1be0
-struct TwoVec { ~TwoVec(); };                       // 0x4da9c0
 struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct BigArray { void destroy(); };                // 0x4eb810
 void __fastcall fn_4c2ea0(void* keys);              // 0x4c2ea0
@@ -92,8 +90,6 @@ void __cdecl static_dtor_548250()
 }
 // @ 0x548410
 void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
-// @ 0x548500
-void __cdecl static_dtor_548500() { ((TwoVec*)g_a75f40)->~TwoVec(); }
 // @ 0x548510
 void __cdecl static_dtor_548510() { ((BigArray*)&g_anim.skins_alloc)->destroy(); }   // the skin vector at 0x8ed4f78
 
@@ -132,8 +128,6 @@ void __cdecl static_init_547e90()
     fn_4c2ea0(g_a73730);
     atexit(static_dtor_548210);
 }
-// @ 0x547f50
-void __cdecl static_init_547f50() { atexit(static_dtor_548500); }
 // @ 0x547fb0
 void __cdecl static_init_547fb0() { atexit(static_dtor_548410); }
 // @ 0x547fe0
@@ -154,7 +148,7 @@ init_fn g_static_init_table[] = {
     static_init_547aa0, static_init_547b50,
     static_init_547e40,
     static_init_547e90,
-    static_init_547f50, static_init_547fb0,
+    static_init_547fb0,
     static_init_547fe0, static_init_548030,
 };
 #pragma data_seg()

@@ -120,20 +120,6 @@ struct WidgetMgrW : widget_mgr {                                             // 
     int create_mesh_overlay_with_tableau(int a, int b, float c);            // 0x4996e0
     int create_slider_overlay(int vmin, int vmax);                          // 0x495970
 };
-struct TableauTbl {                                                          // world_data/tableau.h
-    void add_point_light(const rgl::matrix* p, const rgl::vector4& c);      // 0x493f80
-    void add_sun_light(const rgl::matrix* p, const rgl::vector4& c);        // 0x494020
-    void spawn(int index, int from, const rgl::matrix* frame, const rgl::vector4* scale);   // 0x4992b0
-    void spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale, const float* alpha, const unsigned* color);   // 0x499390
-    void spawn_scaled2(int index, const rgl::matrix* frame, const float* scale);   // 0x499540
-};
-struct TableauStack {                                                        // mission_ui2/mission_4.cpp
-    TabCurrent* current();                                                  // 0x48f450
-    void set_ambient_light(const float* c);                                 // 0x48f5a0
-    void set_background_color(int c);                                       // 0x48f570
-    void set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_);   // 0x48f4c0
-    void set_camera_position(const rgl::matrix* m);                         // 0x48f480
-};
 namespace c49b630 { struct HudRoot { void set_font_mesh(const tstring* text, int color); }; }   // 0x49b630
 namespace c49bea0 { struct Mission { void check_slot(int id, unsigned bits); }; }   // 0x49c170
 namespace c49c2c0 { struct Mission { void order(int team, int order); }; }   // 0x49c2c0
@@ -238,36 +224,15 @@ __forceinline rgl::matrix& script_pos(int i) { return (rgl::matrix&)g_script.pos
 #include <vector>
 template<> size_t std::vector<int, std::allocator<int> >::size() const;     // 0x40f010 (rgl/particles/mesh_obj.cpp: the out-of-line instance; only declared)
 
-// ---- tableaus (object 0xa75f40): vector of 0x68-byte records ----------------------------------------------------
-struct TableauVec {
-    int pad0;
-    char* first;                        // +4 (warn_tableau 0x49d360)
-    char* last;                         // +8
-    int padc;
-    std::vector<int> stack;             // +0x10 tableaus being rendered (cur_tableau_* 0x4aadca: none = no-op)
-    int alpha_mask;                     // +0x20 (cur_tableau_render_as_alpha_mask 0x4ab022)
-    int size() const { return (last - first) / 0x68; }
-    struct Current {                    // the state of the tableau being rendered
-        char pad0[0x344];
-        int override_flags;             // +0x344 (cur_tableau_set_override_flags 0x4ab6bf)
-        int num_override_items;         // +0x348
-        int override_items[1];          // +0x34c (no bound check in cur_tableau_add_override_item)
-    };
-    // the tableau table (TableauTbl / TableauStack / TabTable: the original's callers see the object under each of them)
-    __forceinline Current* current() { return (Current*)((TableauStack*)this)->current(); }                                                  // 0x48f450
-    __forceinline void spawn(int tableau, int value, const rgl::matrix* p, const rgl::vector4& scale) { ((TableauTbl*)this)->spawn(tableau, value, (const rgl::matrix*)p, &scale); }   // 0x4992b0 (ret 0x10)
-    void* add_spawned(const int* tableau, const int* instance_code);          // 0x4b14b0 (ret 8): returns the new object in EAX; the definition (TabTable::add_spawned, party2/party_2.cpp) is declared void, so this row stays unresolved
-    __forceinline void set_background_color(int color) { ((TableauStack*)this)->set_background_color(color); }                               // 0x48f570 (ret 4)
-    __forceinline void set_ambient_light(const rgl::vector4& c) { ((TableauStack*)this)->set_ambient_light((const float*)&c); }             // 0x48f5a0 (ret 4)
-    __forceinline void set_camera_position(const rgl::matrix* p) { ((TableauStack*)this)->set_camera_position((const rgl::matrix*)p); }             // 0x48f480 (ret 4)
-    __forceinline void set_camera_parameters(const bool* perspective, const float* w, const float* h, const float* near_,
-                                              const float* far_) { ((TableauStack*)this)->set_camera_parameters((const char*)perspective, w, h, near_, far_); }   // 0x48f4c0 (ret 0x14)
-    __forceinline void add_point_light(const rgl::matrix* p, const rgl::vector4& c) { ((TableauTbl*)this)->add_point_light((const rgl::matrix*)p, c); }   // 0x493f80 (ret 8)
-    __forceinline void add_sun_light(const rgl::matrix* p, const rgl::vector4& c) { ((TableauTbl*)this)->add_sun_light((const rgl::matrix*)p, c); }       // 0x494020 (ret 8)
-    __forceinline void spawn_scaled(int mesh, const rgl::matrix* p, const rgl::vector4& scale, const float* alpha, const int* color) { ((TableauTbl*)this)->spawn_scaled(mesh, (const rgl::matrix*)p, &scale, alpha, (const unsigned*)color); }   // 0x499390 (ret 0x14)
-    __forceinline void spawn_scaled2(int icon, const rgl::matrix* p, const float* scale) { ((TableauTbl*)this)->spawn_scaled2(icon, (const rgl::matrix*)p, scale); }   // 0x499540 (ret 0xc)
+// ---- tableaus (g_tableaus 0xa75f40, include/tableau_table.h) ----------------------------------------------------
+#include "../../include/tableau_table.h"
+struct TableauOverrides {               // the state of the tableau being rendered, as the cur_tableau_* operations see it
+    char pad0[0x344];
+    int override_flags;                 // +0x344 (cur_tableau_set_override_flags 0x4ab6bf)
+    int num_override_items;             // +0x348
+    int override_items[1];              // +0x34c (no bound check in cur_tableau_add_override_item)
 };
-extern TableauVec g_tableaus;           // 0xa75f40
+__forceinline TableauOverrides* tableau_overrides() { return (TableauOverrides*)g_tableaus.current(); }                                      // 0x48f450
 __forceinline void tableau_add_agent(int troop, int horse_item, const rgl::matrix* p, const int* animation, const int* instance) { c49f060::spawn_party_scene(troop, horse_item, (int*)p, (int*)animation, (int*)instance); }   // 0x49f3d0
 // the item / scene object of a trigger context (ti_on_init_item -50, scene prop -40, map icon -70)
 struct TriggerItem {

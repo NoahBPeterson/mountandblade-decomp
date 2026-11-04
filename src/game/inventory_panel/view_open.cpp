@@ -66,10 +66,7 @@ template<> void std::vector<named_object*, std::allocator<named_object*> >::push
 typedef MapWidget face_body;
 
 // ---- the object table and the resource manager -----------------------------------------------------------
-struct TableauTbl {                                             // the image table at 0xa75f40 (world_data/obj_tbl.h)
-    mesh* make_mesh_from(const int* def, const void* troop); // 0x4991d0
-};
-extern TableauTbl g_tableaus;                                    // 0xa75f40
+#include "../../include/tableau_table.h"            // TableauTbl g_tableaus (0xa75f40)
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 

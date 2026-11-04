@@ -1,4 +1,4 @@
-../src/game/party2/party_2.cpp  ?add_spawned@TabTable@@QAEXPBH0@Z  004b14b0  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?add_spawned@TableauTbl@@QAEPAUTabSpawn@@PBH0@Z  004b14b0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?create_image_button_overlay_with_tableau@widget_mgr@@QAEHHHH@Z  004b14f0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?max_stacks@Party@@QAEHXZ  004b1700  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?rotate_stacks@Party@@QAEXHH@Z  004b1710  /O2 /MT /Gy /TP

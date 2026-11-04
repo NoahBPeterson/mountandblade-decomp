@@ -1646,13 +1646,6 @@ struct World {
     int f34c;                                                                     // +0x34c
     SceneObj* create_entity(int kind) { return (SceneObj*)((rgl::world*)this)->create_entity(kind); }      // 0x428440 (ret 4)
 };
-struct PtrVec {                                                                   // a vector of pointers (begin/end)
-    void** begin;                                                                 // +0 (0xa75f54)
-    void** end;                                                                   // +4 (0xa75f58)
-    void** cap;                                                                   // +8 (0xa75f5c)
-    int size() { return (int)(end - begin); }
-};
-PtrVec g_world_list;                                                              // 0xa75f54 (.bss) the open worlds (its allocator word sits at 0xa75f50)
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
 inline __int64 pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
@@ -1667,9 +1660,9 @@ inline void place_scene_agents(SceneObj* e, ItemRef* items, void* b8) { ::place_
 // 0x4288c0, 0x46b9d0) live in other slices.
 void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
 {
-    if (g_world_list.begin == 0 || g_world_list.size() == 0)
+    if (g_tableaus.worlds._Myfirst == 0 || g_tableaus.worlds.size() == 0)
         return;
-    World* world = (World*)g_world_list.begin[g_world_list.size() - 1];
+    World* world = (World*)g_tableaus.worlds[g_tableaus.worlds.size() - 1];
 
     SceneObj* e = world->create_entity(9);
     memcpy(e->m, frame, 0x40);

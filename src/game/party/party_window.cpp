@@ -8,6 +8,7 @@
 //       __declspec(noinline), as the original calls them. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #define UIA_CTOR_OUT_OF_LINE   // add_strip_icon calls the constructor 0x48b1c0 (StripIcon is built out of line, then stores its vptr)
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../../include/image_addrs.h"
 #include <stdio.h>
 #include <stdlib.h>

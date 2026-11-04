@@ -8,6 +8,7 @@
 //       this object in source order, so the file keeps the binary order and the helpers that follow their
 //       caller are __declspec(noinline). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../../include/image_addrs.h"
 #include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../config/config_block.h"

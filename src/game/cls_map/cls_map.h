@@ -129,13 +129,6 @@ struct E20b {                                   // 0x20 bytes: a name and a dele
     OwnedRec48* p;                              // +0x1c
     ~E20b() { if (p) delete[] p; }
 };
-// a record with two vector members: a non-scalar vector at +0 and a scalar vector at +0x10. Its compiler-generated
-// destructor tears down the scalar member first, then the non-scalar one (0x4da9c0)
-struct TwoVec {
-    std::vector<E20b> v1;       // +0x00 (allocator, first +4, last +8, end +0xc)
-    std::vector<int>  v2;       // +0x10 (allocator, first +0x14, last +0x18, end +0x1c)
-    ~TwoVec();
-};
 
 // ---- 0x4dc350: the frame of the loading screen (a view of gui_manager) -----------------------------------------------
 // A mesh's position array (+0x74) holds 0x20-byte records (a vector4 pair); +0x2c is its material, +0x3c a colour / id word,

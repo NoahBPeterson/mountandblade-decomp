@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
 #include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../music_player.h"   // g_music (0xa73a10)
@@ -449,8 +450,8 @@ static __declspec(noinline) char warn_tableau(const int& value)
 {
     char buf[512];
     int id = value;
-    if (id >= 0 && g_tableaus.first != 0) {
-        if ((unsigned)id < (unsigned)g_tableaus.size())    // jb: unsigned, as the original
+    if (id >= 0 && g_tableaus.recs._Myfirst != 0) {
+        if ((unsigned)id < (unsigned)g_tableaus.recs.size())    // jb: unsigned, as the original
             return 1;
     }
     sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Tableau ID: %d", g_cur_opcode, id);
@@ -3423,7 +3424,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- tableaus -----------------------------------------------------------------------------------------------
     case op::cur_tableau_add_tableau_mesh:
         // (cur_tableau_add_tableau_mesh, <tableau_material_id>, <value>, <position_register_no>, [scale_fixed_point])
-        if (warn_tableau((int)params[0]) && check_register((int)params[2]) && g_tableaus.stack.size()) {
+        if (warn_tableau((int)params[0]) && check_register((int)params[2]) && g_tableaus.worlds.size()) {
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
             // temporary itself (C4238), as the original: no copy into a third vector
             rgl::vector4 a, b;
@@ -3437,7 +3438,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 x = y = z = (float)params[3];
                 scale = &(b.set(z, y, x) * s);
             }
-            g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), *scale);
+            g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), scale);
         }
         break;
     case op::cur_item_set_tableau_material:
@@ -3451,7 +3452,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 TriggerMeshObj* o = (TriggerMeshObj*)trigger_mesh_obj(-50);
                 if (o) {
                     int code = (int)params[1], tab = (int)params[0];
-                    o->set_part(g_tableaus.add_spawned(&tab, &code));
+                    o->set_part((mesh_part*)g_tableaus.add_spawned(&tab, &code));
                 }
             }
         }
@@ -3462,7 +3463,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             TriggerMeshObj* o = (TriggerMeshObj*)trigger_mesh_obj(-40);
             if (o) {
                 si_0 = (int)params[1], si_1 = (int)params[0];
-                o->set_part(g_tableaus.add_spawned(&si_1, &si_0));
+                o->set_part((mesh_part*)g_tableaus.add_spawned(&si_1, &si_0));
             }
         }
         break;
@@ -3472,49 +3473,49 @@ char Operation::execute(__int64* locals, int* context, int* error)
             TriggerMeshObj* o = (TriggerMeshObj*)trigger_mesh_obj(-70);
             if (o) {
                 si_0 = (int)params[1], si_1 = (int)params[0];
-                o->set_part(g_tableaus.add_spawned(&si_1, &si_0));
+                o->set_part((mesh_part*)g_tableaus.add_spawned(&si_1, &si_0));
             }
         }
         break;
     case op::cur_tableau_render_as_alpha_mask:
-        if (g_tableaus.stack.size())
+        if (g_tableaus.worlds.size())
             g_tableaus.alpha_mask = 1;
         break;
     case op::cur_tableau_set_background_color:
-        if (g_tableaus.stack.size())
+        if (g_tableaus.worlds.size())
             g_tableaus.set_background_color((int)params[0]);
         break;
     case op::cur_tableau_set_ambient_light:
         // the original divides each component by the int multiplier: a float local divisor gets rewritten as one
         // reciprocal and three multiplies (different rounding). Same in camera_parameters / point_light / sun_light
         // (cur_tableau_set_ambient_light, <red_fixed_point>, <green_fixed_point>, <blue_fixed_point>)
-        if (g_tableaus.stack.size()) {
+        if (g_tableaus.worlds.size()) {
             sf_0 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[1] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[0] / g_script.fixed_point_multiplier;
             sv_0;
-            g_tableaus.set_ambient_light(sv_0.set(sf_2, sf_1, sf_0));
+            g_tableaus.set_ambient_light((const float*)&sv_0.set(sf_2, sf_1, sf_0));
         }
         break;
     case op::cur_tableau_set_camera_position:
-        if (check_register((int)params[0]) && g_tableaus.stack.size())
+        if (check_register((int)params[0]) && g_tableaus.worlds.size())
             g_tableaus.set_camera_position(&script_pos((int)params[0]));
         break;
     case op::cur_tableau_set_camera_parameters:
         // (.., <is_perspective>, <camera_width_times_1000>, <camera_height_times_1000>, <camera_near_times_1000>,
         // <camera_far_times_1000>): fixed point in fact
-        if (g_tableaus.stack.size()) {
+        if (g_tableaus.worlds.size()) {
             sf_0 = (float)params[4] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_3 = (float)params[1] / g_script.fixed_point_multiplier;
             bool perspective = params[0] != 0;
-            g_tableaus.set_camera_parameters(&perspective, &sf_3, &sf_2, &sf_1, &sf_0);
+            g_tableaus.set_camera_parameters((const char*)&perspective, &sf_3, &sf_2, &sf_1, &sf_0);
         }
         break;
     case op::cur_tableau_add_point_light:
         // the position is operand 0 and the colour operands 1..3 (the header's <map_icon_id> is not read)
-        if (check_register((int)params[0]) && g_tableaus.stack.size()) {
+        if (check_register((int)params[0]) && g_tableaus.worlds.size()) {
             sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[1] / g_script.fixed_point_multiplier;
@@ -3523,7 +3524,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::cur_tableau_add_sun_light:
-        if (check_register((int)params[0]) && g_tableaus.stack.size()) {
+        if (check_register((int)params[0]) && g_tableaus.worlds.size()) {
             sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[1] / g_script.fixed_point_multiplier;
@@ -3533,7 +3534,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::cur_tableau_add_mesh:
         // (cur_tableau_add_mesh, <mesh_id>, <position_no>, <scale_fixed_point>, <alpha_fixed_point>)
-        if (check_mesh((int)params[0]) && check_register((int)params[1]) && g_tableaus.stack.size()) {
+        if (check_mesh((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size()) {
             int color = -1;
             float alpha;
             if (params[3] == 0)
@@ -3553,12 +3554,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 x = y = z = (float)params[2];
                 scale = &(b.set(z, y, x) * s);
             }
-            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
+            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), scale, &alpha, (const unsigned*)&color);
         }
         break;
     case op::cur_tableau_add_mesh_with_vertex_color:
         // (.., <mesh_id>, <position_no>, <scale_fixed_point>, <alpha_fixed_point>, <vertex_color>)
-        if (check_mesh((int)params[0]) && check_register((int)params[1]) && g_tableaus.stack.size()) {
+        if (check_mesh((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size()) {
             int color = (int)params[4];
             float alpha;
             if (params[3] == 0)
@@ -3578,12 +3579,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 x = y = z = (float)params[2];
                 scale = &(b.set(z, y, x) * s);
             }
-            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), *scale, &alpha, &color);
+            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), scale, &alpha, (const unsigned*)&color);
         }
         break;
     case op::cur_tableau_add_map_icon:
         // (cur_tableau_add_map_icon, <map_icon_id>, <position_no>, <scale_fixed_point>)
-        if (check_map_icon((int)params[0]) && check_register((int)params[1]) && g_tableaus.stack.size()) {
+        if (check_map_icon((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size()) {
             sf_0;
             if (params[2] == 0)
                 sf_0 = 1.0f;
@@ -3595,7 +3596,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::cur_tableau_add_troop:
         // (.., <troop_id>, <position_no>, <animation_id>, <instance_no>): instance <= 0 = no random face (heroes)
         if (check_troop((int)params[0]) && check_register((int)params[1]) && check_animation((int)params[2]) &&
-            g_tableaus.stack.size()) {
+            g_tableaus.worlds.size()) {
             si_0;
             if (params[3] > 0)
                 si_0 = (int)params[3];
@@ -3608,33 +3609,33 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::cur_tableau_add_horse:
         // (cur_tableau_add_horse, <item_id>, <position_no>, <animation_id>)
         if (check_item_kind((int)params[0]) && check_register((int)params[1]) && check_animation((int)params[2]) &&
-            g_tableaus.stack.size()) {
+            g_tableaus.worlds.size()) {
             si_0 = (int)params[2];
             si_1 = -1;
             tableau_add_agent(-1, (int)params[0], &script_pos((int)params[1]), &si_0, &si_1);
         }
         break;
     case op::cur_tableau_set_override_flags:
-        if (g_tableaus.stack.size())
-            g_tableaus.current()->override_flags = (int)params[0];
+        if (g_tableaus.worlds.size())
+            tableau_overrides()->override_flags = (int)params[0];
         break;
     case op::cur_tableau_clear_override_items:
-        if (g_tableaus.stack.size())
-            g_tableaus.current()->num_override_items = 0;
+        if (g_tableaus.worlds.size())
+            tableau_overrides()->num_override_items = 0;
         break;
     case op::cur_tableau_add_override_item:
         // no bound on the item count
-        if (g_tableaus.stack.size()) {
-            int n = g_tableaus.current()->num_override_items;
-            g_tableaus.current()->override_items[n] = (int)params[0];
-            ++g_tableaus.current()->num_override_items;
+        if (g_tableaus.worlds.size()) {
+            int n = tableau_overrides()->num_override_items;
+            tableau_overrides()->override_items[n] = (int)params[0];
+            ++tableau_overrides()->num_override_items;
         }
         break;
     case op::cur_tableau_add_mesh_with_scale_and_vertex_color:
         // (.., <mesh_id>, <position_no>, <scale_position_no>, <alpha_fixed_point>, <vertex_color>): the scale is the
         // origin of the second position, in fixed point
         if (check_mesh((int)params[0]) && check_register((int)params[1]) && check_register((int)params[2]) &&
-            g_tableaus.stack.size()) {
+            g_tableaus.worlds.size()) {
             si_0 = (int)params[4];
             sf_0;
             if (params[3] == 0)
@@ -3643,7 +3644,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_1 = 1.0f / g_script.fixed_point_multiplier;
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]),
-                                V(script_pos((int)params[2]).o) * sf_1, &sf_0, &si_0);
+                                &(V(script_pos((int)params[2]).o) * sf_1), &sf_0, (const unsigned*)&si_0);
         }
         break;
 

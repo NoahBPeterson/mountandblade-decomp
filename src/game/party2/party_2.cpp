@@ -13,6 +13,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding them
 #include "./party_2.h"
+#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_module_settings.seeing_range
@@ -29,8 +30,6 @@
 #include "../../include/game_recs.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
-// ---- data this module owns (docs/standalone_data.md) ----
-int g_5a75f60;                                       // 0xa75f60 (.bss) set by the tableau render callback, read by the tableau button
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../rgl/options.h"
@@ -46,8 +45,8 @@ void scene_step(int material)
     if (!m->target->enabled)
         return;
 
-    TabWorld* o = g_tableaus.push();
-    TabRec* rec = (TabRec*)((char*)g_tableaus.recs + m->rec * 0x68);
+    TabWorld* o = (TabWorld*)g_tableaus.push();
+    TabRec* rec = (TabRec*)&g_tableaus.recs[m->rec];
 
     rgl::scene sc;
     sc.mask = 0x2000;
@@ -69,7 +68,7 @@ void scene_step(int material)
     sc.f16a = 0;
 
     o->fr.flag = 0;
-    g_5a75f60 = 0;
+    g_tableaus.alpha_mask = 0;
     o->fr.mat4[0] = 1.0f;
     o->fr.mat4[1] = 1.0f;
     o->fr.mat4[2] = 1.0f;
@@ -111,7 +110,7 @@ void scene_step(int material)
 
     sc.target = (texture*)m->target;
     o->step(0.0f);
-    if (g_5a75f60 != 0)
+    if (g_tableaus.alpha_mask != 0)
         sc.f160 = 1;
 
     for (;;) {
@@ -137,13 +136,14 @@ void scene_step(int material)
 }
 
 // @ 0x4b14b0
-void TabTable::add_spawned(const int* tableau, const int* instance)
+TabSpawn* TableauTbl::add_spawned(const int* tableau, const int* instance)
 {
     purge_all();
-    TabRec* e = recs + *tableau;
+    TabRec* e = (TabRec*)&recs[*tableau];
     TabSpawn* r = e->find_or_create(instance);
     r->rec = *tableau;
     r->step = scene_step;
+    return r;
 }
 
 // @ 0x4b14f0
@@ -165,7 +165,7 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
     if (pos >= 0) {
         rgl::mesh* m = g_meshes.placed(pos);
         g_tableaus.purge_all();
-        TabRec* r = g_tableaus.recs + rec;
+        TabRec* r = (TabRec*)&g_tableaus.recs[rec];
         TabSpawn* e = r->find_or_create(&key);
         e->rec = rec;
         e->step = scene_step;
@@ -179,7 +179,7 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
 
         m = g_meshes.placed(pos);
         g_tableaus.purge_all();
-        r = g_tableaus.recs + rec;
+        r = (TabRec*)&g_tableaus.recs[rec];
         e = r->find_or_create(&key);
         e->rec = rec;
         e->step = scene_step;

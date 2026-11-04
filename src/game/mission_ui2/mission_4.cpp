@@ -21,6 +21,7 @@
 #include "../ui/container.h"
 #include "../config/widget_mgr.h"
 #include "./mission_4.h"
+#include "../../include/tableau_table.h"   // TableauTbl: the camera / colour setters of the tableau on top (0x48f450..0x48f5a0)
 #include "./field_panel.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../item_ref.h"
@@ -186,21 +187,21 @@ void Party::init()
 }
 
 // @ 0x48f450
-TabCurrent* TableauStack::current()
+TabCurrent* TableauTbl::current()
 {
-    return stack[stack.size() - 1];
+    return (TabCurrent*)worlds[worlds.size() - 1];
 }
 
 // @ 0x48f480
-void TableauStack::set_camera_position(const rgl::matrix* m)
+void TableauTbl::set_camera_position(const rgl::matrix* m)
 {
-    rgl::frustum* f = &stack[stack.size() - 1]->fr;
+    rgl::frustum* f = &((TabCurrent*)worlds[worlds.size() - 1])->fr;
     f->m = *m;
     f->build_planes();
 }
 
 // @ 0x48f4c0
-void TableauStack::set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_)
+void TableauTbl::set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_)
 {
     float fz = *far_;
     float nz = *near_;
@@ -208,7 +209,7 @@ void TableauStack::set_camera_parameters(const char* perspective, const float* w
     float fh2 = *h;
     float fw = *w;
     float fw2 = *w;
-    TabCurrent* c = stack[stack.size() - 1];
+    TabCurrent* c = (TabCurrent*)worlds[worlds.size() - 1];
     c->fr.perspective = *perspective;
     c->fr.left = fw * -0.5f;
     c->fr.right = fw2 * 0.5f;
@@ -220,15 +221,15 @@ void TableauStack::set_camera_parameters(const char* perspective, const float* w
 }
 
 // @ 0x48f570
-void TableauStack::set_background_color(int c)
+void TableauTbl::set_background_color(int c)
 {
-    stack[stack.size() - 1]->background = c;
+    ((TabCurrent*)worlds[worlds.size() - 1])->background = c;
 }
 
 // @ 0x48f5a0
-void TableauStack::set_ambient_light(const float* c)
+void TableauTbl::set_ambient_light(const float* c)
 {
-    TabCurrent* t = stack[stack.size() - 1];
+    TabCurrent* t = (TabCurrent*)worlds[worlds.size() - 1];
     float* d = t->ambient;
     d[0] = c[0];
     d[1] = c[1];

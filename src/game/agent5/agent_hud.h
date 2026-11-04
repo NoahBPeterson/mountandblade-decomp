@@ -180,10 +180,7 @@ int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x4325
 void __cdecl mb_warning(const char* fmt, ...);                    // 0x42cb80 (logs a warning)
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (the display mesh of an item, scaled to fit *scale)
 
-struct TableauTbl {                                            // the object table at 0xa75f40 (world_data/tableau.h: TableauTbl)
-    rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (ret 8)
-};
-extern TableauTbl g_tableaus;                                    // 0xa75f40
+#include "../../include/tableau_table.h"            // TableauTbl g_tableaus (0xa75f40)
 struct MenuLayout { char pad[1]; };                               // the part of the game screen at +0x30; its build (0x4dd920, ret 8) is BlockOwner::init above
 
 
