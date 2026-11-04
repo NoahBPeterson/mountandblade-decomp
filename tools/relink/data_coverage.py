@@ -309,6 +309,7 @@ def main():
     ap.add_argument("--json")
     ap.add_argument("--from-build", metavar="DIR")
     ap.add_argument("--record-data", action="store_true", help="with --from-build: also append to docs/data_history.json")
+    ap.add_argument("--label", help="with --record: what landed in this build, shown on the chart's x axis (e.g. 'terrain lane')")
     ap.add_argument("--commit", help="commit to record with --from-build (default: the last one on main before build.json was written)")
     a = ap.parse_args()
     os.chdir(ROOT)
@@ -337,7 +338,7 @@ def main():
         when = datetime.datetime.fromtimestamp(mt).astimezone()
         commit = a.commit or subprocess.run(["git", "-C", ROOT, "log", "-1", "--format=%h", "--before=" + when.isoformat(), "main"],
                                             capture_output=True, text=True).stdout.strip()
-    rep = {"when": when.isoformat(timespec="seconds"), "commit": commit,
+    rep = {"when": when.isoformat(timespec="seconds"), "commit": commit, "label": a.label,
            "items": {c: by[c][0] for c in CLASSES}, "bytes": {c: by[c][1] for c in CLASSES},
            "section_bytes": {k.split("$")[0]: v for k, v in per_sec.items()},
            "unreferenced_bytes": total - covered, "total_bytes": total}

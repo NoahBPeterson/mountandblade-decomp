@@ -26,7 +26,8 @@
    "borrowed from image": 126908024,
    "reached through tables": 17009720,
    "library data": 57058
-  }
+  },
+  "label": "baseline"
  },
  "2026-11-02T12:52:44-06:00": {
   "data_labels": 1412,
@@ -55,7 +56,8 @@
    "borrowed from image": 126908024,
    "reached through tables": 17009720,
    "library data": 57058
-  }
+  },
+  "label": "data audit"
  },
  "2026-11-02T16:51:20-06:00": {
   "data_labels": 1182,
@@ -84,7 +86,8 @@
    "borrowed from image": 126862907,
    "reached through tables": 17009720,
    "library data": 57058
-  }
+  },
+  "label": "D1"
  },
  "2026-11-02T20:25:20-06:00": {
   "data_labels": 708,
@@ -113,7 +116,8 @@
    "borrowed from image": 126856319,
    "reached through tables": 17005900,
    "library data": 57058
-  }
+  },
+  "label": "D1+D2+D4+D5"
  },
  "2026-11-03T00:03:29-06:00": {
   "data_labels": 707,
@@ -142,7 +146,8 @@
    "borrowed from image": 126857611,
    "reached through tables": 17005900,
    "library data": 57058
-  }
+  },
+  "label": "D2 fixed"
  },
  "2026-11-03T09:28:24-06:00": {
   "data_labels": 705,
@@ -171,7 +176,8 @@
    "borrowed from image": 126857611,
    "reached through tables": 17005900,
    "library data": 57058
-  }
+  },
+  "label": "V1 records"
  },
  "2026-11-03T09:59:10-06:00": {
   "data_labels": 705,
@@ -200,7 +206,8 @@
    "borrowed from image": 126857611,
    "reached through tables": 17005900,
    "library data": 57058
-  }
+  },
+  "label": "V2 streams"
  },
  "2026-11-03T10:34:23-06:00": {
   "data_labels": 705,
@@ -229,7 +236,8 @@
    "borrowed from image": 126857635,
    "reached through tables": 17005900,
    "library data": 57058
-  }
+  },
+  "label": "V4 virtuals"
  },
  "2026-11-03T11:32:46-06:00": {
   "data_labels": 706,
@@ -258,7 +266,8 @@
    "borrowed from image": 126857635,
    "reached through tables": 17005900,
    "library data": 57058
-  }
+  },
+  "label": "V3 widgets"
  },
  "2026-11-03T12:57:55-06:00": {
   "data_labels": 256,
@@ -287,7 +296,8 @@
    "borrowed from image": 126705656,
    "reached through tables": 17005900,
    "library data": 57058
-  }
+  },
+  "label": "D3+D6"
  },
  "2026-11-03T14:07:32-06:00": {
   "data_labels": 247,
@@ -316,7 +326,8 @@
    "borrowed from image": 126705656,
    "reached through tables": 17005900,
    "library data": 57058
-  }
+  },
+  "label": "views"
  },
  "2026-11-03T14:57:28-06:00": {
   "data_labels": 237,
@@ -345,7 +356,8 @@
    "borrowed from image": 2933280,
    "reached through tables": 17147880,
    "library data": 57058
-  }
+  },
+  "label": "terrain"
  },
  "2026-11-03T18:25:52-06:00": {
   "data_labels": 237,
@@ -374,6 +386,7 @@
    "borrowed from image": 2933276,
    "reached through tables": 2121208,
    "library data": 57058
-  }
+  },
+  "label": "FMOD/CRT"
  }
 }

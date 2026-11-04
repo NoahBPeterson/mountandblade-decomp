@@ -935,6 +935,11 @@ def treemap_data(path):
     print("\nwrote %s (%d items, %d module labels)" % (os.path.relpath(path, ROOT), n_items, placed))
 
 
+def _sa_tick(p):
+    """A recorded build's x-axis label: what landed (data_coverage.py --record --label) and when, e.g. 'terrain  11-03 14:57'."""
+    return "%s  %s %s" % (p.get("label") or p["commit"][:7], p["when"][5:10], p["when"][11:16])
+
+
 def plot_standalone(path):
     """The crutch counts of every build recorded in docs/standalone_history.json (tools/relink/data_coverage.py
     --from-build DIR --record), one small panel per count. Blue-green panels count what source now provides."""
@@ -966,19 +971,22 @@ def plot_standalone(path):
         ax.annotate(fmt(pts[0][1]), pts[0], xytext=(0, 7), textcoords="offset points", ha="center", va="bottom",
                     fontsize=8, color=MUTED)
         ax.set_xticks(xs)
-        ax.set_xticklabels([p["commit"][:7] for p in SA], fontsize=6.5, color=MUTED, rotation=60, ha="right",
-                           rotation_mode="anchor")
+        if ax in axs[-1]:                      # every panel shares the x axis: name the builds under the bottom row only
+            ax.set_xticklabels([_sa_tick(p) for p in SA], fontsize=7, color=MUTED, rotation=55, ha="right",
+                               rotation_mode="anchor")
+        else:
+            ax.set_xticklabels([])
         ax.tick_params(axis="y", labelsize=7, colors=MUTED)
         for sp in ("top", "right"):
             ax.spines[sp].set_visible(False)
     fig.suptitle("Standalone independence: what the relinked exe still borrows from the original image (%d recorded builds)" % len(SA),
                  x=0.012, ha="left", fontsize=12, color=INK)
-    fig.text(0.012, 0.012, "One point per recorded build (x = the build's commit, evenly spaced, oldest left; %s to %s); "
+    fig.text(0.012, 0.012, "One point per recorded build (x = what landed and when, evenly spaced, oldest left; %s to %s); "
              "tools/relink/data_coverage.py --from-build DIR --record adds one.  Axes start at 0; first and last value labelled.\n"
              "Vermillion panels count a crutch (down is good); green panels count what our source defines (up is good).  "
              "Commits are the last one on main before the build finished, so a build from a branch may be off." % (
                  SA[0]["when"][:10], SA[-1]["when"][:10]), fontsize=8.2, color=MUTED)
-    fig.subplots_adjust(left=0.04, right=0.985, top=0.9, bottom=0.14, wspace=0.28, hspace=0.75)
+    fig.subplots_adjust(left=0.04, right=0.985, top=0.9, bottom=0.2, wspace=0.28, hspace=0.35)
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d builds)" % (os.path.relpath(path, ROOT), len(SA)))
 
