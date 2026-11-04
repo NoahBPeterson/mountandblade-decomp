@@ -61,10 +61,10 @@ widget* make_scroll_track(widget* parent, float x, float y, float h, float w)
     *(float*)((char*)self + 0x17c) = col.y * 0.31f;
     // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix) into a temporary
     // tstring(const char*) (0x42bbe0), destroyed right after the clone
-    mesh* m1 = g_resmgr.get_object((const rgl::string*)&tstring("scrollbar"))->clone();
+    mesh* m1 = res_manager().get_object((const rgl::string*)&tstring("scrollbar"))->clone();
     m1->set_color(col);
     // 0x592734 = "scrollbar_handle", a temporary the same way
-    mesh* m2 = g_resmgr.get_object((const rgl::string*)&tstring("scrollbar_handle"))->clone();
+    mesh* m2 = res_manager().get_object((const rgl::string*)&tstring("scrollbar_handle"))->clone();
     m2->set_color(col);
     // the original calls vtable slot 0x80 = MissionUi::set_track(int i, mesh* p) with *both* arguments
     // (0x4eea5e: push edi/push 0/ecx=esi; 0x4eea6b: push ebx/push 2), which is why a one-argument call through a
@@ -114,7 +114,7 @@ void Rec454::slot_empty_2()
     mesh* bgm;
     {
         tstring bg("quests_window");   // 0x598810 (no "ui_" prefix); destroyed right after the clone
-        bgm = g_resmgr.get_object((const rgl::string*)&bg)->clone();
+        bgm = res_manager().get_object((const rgl::string*)&bg)->clone();
     }
     win->add_item(0, bgm);
     g_gui_dirty = 1;

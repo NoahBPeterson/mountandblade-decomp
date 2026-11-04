@@ -159,7 +159,6 @@ struct UiButton : UiWidget {
 
 using rgl::mesh;
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
-extern resmgr g_resmgr;                                 // 0x5d6fa0
 
 void* alloc_53545e(unsigned size);                      // 0x53545e  operator new
 struct ctor_obj { void ctor(); };                       // 0x48ae20  base ctor (thiscall)
@@ -213,9 +212,9 @@ UiButton* make_button(UiWidget* parent, const tstring* text, float x, float y, i
         hl.append(sfx);
     }
 
-    b->set_mesh(2, g_resmgr.get_object(up)->clone());
-    b->set_mesh(1, g_resmgr.get_object(down)->clone());
-    b->set_mesh(3, g_resmgr.get_object(hl)->clone());
+    b->set_mesh(2, res_manager().get_object((const rgl::string*)&up)->clone());
+    b->set_mesh(1, res_manager().get_object((const rgl::string*)&down)->clone());
+    b->set_mesh(3, res_manager().get_object((const rgl::string*)&hl)->clone());
 
     {
         float sz = s * 0.6f;

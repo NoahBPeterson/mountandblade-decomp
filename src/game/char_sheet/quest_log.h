@@ -25,7 +25,7 @@ using rgl::vector4;
 
 // ---- engine helpers -----------------------------------------------------------------------------------------
 #include "../tstring.h"
-#include "../rgl_mesh.h"
+#include "../../rgl/mesh.h"
 using rgl::mesh;
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 #include "./cs_common.h"                        // widget constructors, gui_manager, NodeVec, MissionPanel, new_medium_button, ...
@@ -33,7 +33,6 @@ using rgl::mesh;
 void __cdecl mb_error(const char* fmt, ...);            // 0x42cc80
 #include "../../rgl/text_stream.h"                // mb_snprintf 0x415100
 #include "../str_table.h"
-extern resmgr g_resmgr;
 
 // ---- constants ----------------------------------------------------------------------------------------------
 extern const float g_54b4d0;            // 0x54b4d0  0.05f

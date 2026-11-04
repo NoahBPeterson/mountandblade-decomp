@@ -38,16 +38,16 @@ vector4 Ctx::ambient()
 void StratEnt::shadow_tick()
 {
     if (p288 == 0) {
-        p288 = g_resmgr.get_shadow_skin(0x80, 0x80, 0x1c, 0);
+        p288 = ((resmgr*)&g_resmgr)->get_shadow_skin(0x80, 0x80, 0x1c, 0);
         if (p288 == 0) return;
-        p288->file.assign("shadow_shader");
+        p288->shader_name.assign("shadow_shader");
         skin* sk = p288;
-        sk->f30 = (int)((resource_manager*)&g_resmgr)->resolve_shader(*(const rgl::string*)&sk->file);
-        p288->id = 0x108;
-        p288->refs[0]->f24 = 0x300000;
+        sk->shader = g_resmgr.resolve_shader(sk->shader_name);
+        p288->flags = 0x108;
+        p288->tex[0]->flags = 0x300000;
     }
     if (sc28c == 0) {
-        sc28c = (scene*)new rgl::scene;                 // the ctor 0x429740 is rgl::scene's
+        sc28c = new scene;                 // the ctor 0x429740 is rgl::scene's
         sc28c->mask = 0x2000;
         sc28c->f0 = 1;
         sc28c->f4 = 1;
@@ -63,10 +63,10 @@ void StratEnt::shadow_tick()
         sc28c->f2c = 1.0f;
         sc28c->f1a5 = 1;
         sc28c->f164 = 1;
-        sc28c->f18c = 0x2101;
+        sc28c->flags = 0x2101;
         sc28c->f190 = 0;
     }
-    if (p288 != 0 && p288->refs[0]->loaded != 0) {
+    if (p288 != 0 && p288->tex[0]->loaded != 0) {
         frustum f;
         render_info ri;
         matrix m;
@@ -83,9 +83,9 @@ void StratEnt::shadow_tick()
         f.m = m;
         f.build_planes();
         sc28c->fr = f;
-        sc28c->target = p288->refs[0];
+        sc28c->target = p288->tex[0];
         if (fx) fx->draw(sc28c, &pos, &f144);
-        ((rgl::entity*)this)->rgl::entity::render((rgl::scene*)sc28c, &ri);
+        ((rgl::entity*)this)->rgl::entity::render(sc28c, &ri);
         if (f298 >= 0) {
             StratEnt* e = ctx->find_entity(f298);
             if (e != 0 && e->type() == 9 && e->fx != 0)

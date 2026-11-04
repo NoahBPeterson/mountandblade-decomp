@@ -109,8 +109,8 @@ typedef char chk_csw_b180[offsetof(CharSheetWidget, b180) == 0x180 ? 1 : -1];
 #include "../../include/game_data.h"
 
 #include "../res_mesh.h"                       // ResMesh (was Mesh), ResMgr: the one definition
-#include "../rgl_mesh.h"                       // rgl::mesh (clone 0x41c6d0)
-extern ResMgr g_resmgr;                         // 0x5d6fa0
+#include "../../rgl/mesh.h"                       // rgl::mesh (clone 0x41c6d0)
+#include "../res_mgr.h"                        // res_manager(): the resource manager 0x5d6fa0
 
 #include "../gui_mgr.h"
 extern GuiManager g_gui;                        // 0x5d7080
@@ -273,7 +273,7 @@ void CharSheet::init()
         void* mesh;
         {
             tstring n("character_window");
-            mesh = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
+            mesh = res_manager().get_object((const rgl::string*)&n)->clone();
         }
         w->set_mesh(0, mesh);
     }
@@ -571,12 +571,12 @@ void CharSheet::init()
         rgl::mesh* up;
         {
             tstring k("party_button");
-            up = ((rgl::mesh*)g_resmgr.get_object(&k))->clone();
+            up = res_manager().get_object((const rgl::string*)&k)->clone();
         }
         rgl::mesh* down;
         {
             tstring k("party_button_down");
-            down = ((rgl::mesh*)g_resmgr.get_object(&k))->clone();
+            down = res_manager().get_object((const rgl::string*)&k)->clone();
         }
         up->scale(0.6666667f);
         down->scale(0.6666667f);

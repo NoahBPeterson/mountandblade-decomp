@@ -23,7 +23,7 @@ using rgl::mat4;
 mat3* identity3(mat3* out);                             // 0x40cd60 (cdecl; returns out)
 
 struct vertex60;
-#include "../rgl_mesh.h"
+#include "../../rgl/mesh.h"
 using rgl::mesh;
 struct skin_rec {
     char pad0[4];                                       // +0: the record IS a mesh (0x4ea271 passes the record itself as append_skinned's other)

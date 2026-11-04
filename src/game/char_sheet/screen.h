@@ -27,7 +27,7 @@ using rgl::mat4;
 using rgl::mat3;
 // (identity3 0x40cd60: cs_mat.h)
 
-#include "../rgl_mesh.h"
+#include "../../rgl/mesh.h"
 using rgl::mesh;
 
 #include "../tstring.h"

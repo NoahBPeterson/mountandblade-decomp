@@ -22,7 +22,7 @@ using std::vector;
 #include "./cs_common.h"                                // new_container, MissionUi, gui_manager, NodeVec, CellGrid, new_sized_button, vtbl_*
 
 // cloned rgl mesh; only the members this slice reaches
-#include "../rgl_mesh.h"
+#include "../../rgl/mesh.h"
 using rgl::mesh;
 
 // resource manager object at 0x5d6fa0

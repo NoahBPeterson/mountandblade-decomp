@@ -70,8 +70,7 @@ struct IDev9 {
 #include "../gui_mgr.h"
 extern GuiManager g_gui;        // 0x5d7080
 
-#include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
-extern resmgr g_resmgr;                 // 0x5d6fa0
+#include "../../rgl/resource.h"                  // resource_manager g_resmgr (0x5d6fa0)
 
 #include "../slot.h"                    // Slot, g_keyboard (0xa170c8)
 
@@ -85,10 +84,6 @@ struct GuiScreen {
 };
 struct GuiCtx;
 void __fastcall pick_entity(GuiCtx* e);                // 0x4ed8d0 (game/char_sheet/pick_entity.cpp): EditorEntity::pick_entity
-struct ID3DXEffect;
-struct resource_manager {
-    void resolve_effect_sets(ID3DXEffect* fx);   // 0x418ff0 (rgl/resource.h)
-};
 struct MapEditorDialog {
     void update_object_type();   // 0x4c7bf0 / 0x4c7e20 (rgl/mesh2/gui_edit.h): the dialog of the application object
     void update_objects();   // 0x4c7e20
@@ -163,7 +158,7 @@ int GameApp::Update()
             } else {
                 g_gui.add(tstring("Effect file recompiled."), -1);
             }
-            ((resource_manager*)&g_resmgr)->resolve_effect_sets(g_effect);
+            g_resmgr.resolve_effect_sets(g_effect);
         }
     }
     if (g_cfg.enable_edit_mode) {

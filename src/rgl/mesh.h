@@ -105,6 +105,19 @@ struct mesh : named_object {
     __declspec(noinline) std::vector<skin_vert>& get60() { mesh* n = this; while (!n->local_a1) n = n->parent; return n->v60; }  // 0x40ec60
     // the call sites that expand one level of the parent-chain walk themselves (entity::render 0x420310)
     std::vector<point20>& get70_rec() { return local_a1 ? v70 : parent->get70(); }
+    std::vector<vertex60>& get50_rec() { return local_a1 ? v50 : parent->get50(); }
+    std::vector<face20>& get90_rec() { return local_a0 ? v90 : parent->get90(); }
+    std::vector<skin_vert>& get60_rec() { return local_a1 ? v60 : parent->get60(); }
+    // the out-of-line copies of the accessors (a call to 0x40eba0 .. 0x40ec60 instead of the expanded walk)
+    std::vector<point20>& get70_();                 // 0x40eba0
+    std::vector<vertex60>& get50_();                // 0x40ebd0
+    std::vector<face20>& get90_();                  // 0x40ec30
+    std::vector<skin_vert>& get60_();               // 0x40ec60
+    void compute_bounds();                          // 0x419300 (bounds of the points)
+    int add_vertex_rec(int index, const vertex60& v);   // add_vertex's form create_shadow_mesh 0x42b080 reaches: v50 grows by exactly ONE element per ground vertex (0x42b590 _Insert_n, 0x4106f0 _Ufill, 0x40ff60)
+    void append_plain(mesh* other, const mat4* m);  // 0x4520b0 (ret 8, tail of append_skinned)
+    void transform(mat4 m);                         // 0x44f3c0 (matrix by value, ret 0x40)
+    void build_panel(float* base, float* size, float* uv0, float* uv1, int* col);   // 0x4de3e0 (loading_screen.cpp: the frame quads)
     void ensure_local();                            // 0x412ee0
     int add_point(const vector4* p);                // 0x412f50
     int add_face(int a, int b, int c);              // 0x411920
@@ -214,8 +227,25 @@ struct lod_mesh {
     int cur;                     // 0x88
     matrix m8c;                  // 0x8c
     unsigned mask;               // 0xcc
+    char padd0[0x10];            // 0xd0: size 0xe0 (the name at 0xd0 is rgl/scene/scene.h's lod_mesh2; the constructor 0x41c2a0 is lod_group's, rgl/core/resmgr.h)
     void render(scene* sc, const matrix& m);        // 0x413b00
+    __forceinline bool ready() { return cur < count; }
 };
+
+// ---- layout checks (the sizes and offsets that every module's view of the mesh / scene / lod mesh has always had) ----
+#define RGL_MESH_AT(m, off) typedef char mesh_##m##_at_##off[(offsetof(mesh, m) == (off)) ? 1 : -1]
+RGL_MESH_AT(parent, 0x18);   RGL_MESH_AT(name2, 0x1c);   RGL_MESH_AT(res, 0x2c);     RGL_MESH_AT(flags, 0x30);
+RGL_MESH_AT(color, 0x3c);    RGL_MESH_AT(f48, 0x48);     RGL_MESH_AT(v50, 0x50);     RGL_MESH_AT(v60, 0x60);
+RGL_MESH_AT(v70, 0x70);      RGL_MESH_AT(v80, 0x80);     RGL_MESH_AT(v90, 0x90);     RGL_MESH_AT(local_a0, 0xa0);
+RGL_MESH_AT(kf, 0xa4);       RGL_MESH_AT(kids, 0xb0);    RGL_MESH_AT(p_c0, 0xc0);    RGL_MESH_AT(m_cc, 0xcc);
+RGL_MESH_AT(mask, 0x10c);    RGL_MESH_AT(slots, 0x110);  RGL_MESH_AT(m194, 0x194);   RGL_MESH_AT(m1d4, 0x1d4);
+RGL_MESH_AT(f214, 0x214);    RGL_MESH_AT(sortkey, 0x218); RGL_MESH_AT(p220, 0x220);  RGL_MESH_AT(bounds, 0x22c);
+typedef char mesh_size_check[(sizeof(mesh) == 0x260) ? 1 : -1];
+#define RGL_SCENE_AT(m, off) typedef char scene_##m##_at_##off[(offsetof(scene, m) == (off)) ? 1 : -1]
+RGL_SCENE_AT(fr, 0x30);      RGL_SCENE_AT(target, 0x150); RGL_SCENE_AT(list, 0x194);  RGL_SCENE_AT(mask, 0x1a8);
+RGL_SCENE_AT(queue, 0x1b4);  RGL_SCENE_AT(cache, 0x1c8);
+typedef char scene_size_check[(sizeof(scene) == 0x1d8) ? 1 : -1];
+typedef char lod_mesh_size_check[(sizeof(lod_mesh) == 0xe0) ? 1 : -1];
 
 extern int g_vert_budget;        // 0x5a9c34 base vertex budget of should_batch (provisional name)
 

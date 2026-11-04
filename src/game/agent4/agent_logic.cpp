@@ -13,12 +13,15 @@
 //       Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #define ANIM_SLOT_SET_OUT_OF_LINE       // 0x4378a0 is a real call here (the body is in agent2/agent_stats.cpp)
-// agent/item_kind.h (the agent module's header) declares a view `resmgr` of the resource manager whose members do not carry the defining
-// signatures (res_obj / tstring in place of rgl::mesh / rgl::string). Its name is changed while the headers are read so that the canonical
-// `resmgr` (rgl/core/resmgr.h: get_object 0x419540, find_meshes 0x41b960) and `resource_manager` (rgl/resource.h: get_material 0x418a70,
-// get_object60 0x418c10) can be declared below under their own names; g_resmgr is the one object 0x5d6fa0 and is cast to them.
+// The shared resource classes (rgl/resource.h's resource_manager g_resmgr: get_material 0x418a70, get_object60 0x418c10; rgl/core/resmgr.h's
+// resmgr: get_object 0x419540, find_meshes 0x41b960) are read first. agent/item_kind.h declares a view `resmgr` / `g_resmgr` whose members do
+// not carry the defining signatures (res_obj / tstring in place of rgl::mesh / rgl::string); its names are changed while the headers are read.
+#include <vector>
+#include "../../rgl/rgl_math.h"
+#include "../../rgl/mesh.h"
+#include "../../rgl/core/resmgr.h"                             // resmgr: get_object 0x419540, find_meshes 0x41b960; resource_manager g_resmgr: get_material 0x418a70, get_object60 0x418c10
 #define resmgr resmgr_agent_view
-#define g_resmgr g_resmgr_agent_view      // its `extern resmgr g_resmgr`: the defining declaration is `resource_manager g_resmgr` (rgl/resource.h), declared below
+#define g_resmgr g_resmgr_agent_view
 #include <stdlib.h>
 #include "../dialog_mgr.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
@@ -30,7 +33,6 @@
 #include <algorithm>
 #include "../../rgl/rgl_math.h"
 #include "./agent_logic.h"
-#include "../rgl_mesh.h"
 #include "../agent3/agent_types.h"
 #include "../agent3/agent_fx_sound.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -72,18 +74,8 @@ unsigned g_input_mask;                                      // 0x5e2474
 
 #undef resmgr
 #undef g_resmgr
-struct resmgr {                                                 // rgl/core/resmgr.h
-    rgl::mesh* get_object(const rgl::string* name);             // 0x419540
-    std::vector<rgl::mesh*> find_meshes(const rgl::string* prefix);   // 0x41b960
-};
-struct skin; struct named_object;
-struct resource_manager {                                       // rgl/resource.h
-    skin* get_material(const rgl::string& name);                // 0x418a70
-    named_object* get_object60(const rgl::string& name);        // 0x418c10
-};
-extern resource_manager g_resmgr;                               // 0x5d6fa0
 #define RESMGR ((resmgr*)&g_resmgr)
-#define RESOURCE_MANAGER ((resource_manager*)&g_resmgr)
+#define RESOURCE_MANAGER (&g_resmgr)
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
 struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
@@ -2501,7 +2493,6 @@ static inline SoundSet& isnd(ItemKind* k) { return *(SoundSet*)((char*)k + 0x228
 #define P_ENT(r) (*(SceneEnt**)&(r)->m1b4)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
 #define P_ENT2(r) (*(SceneEnt**)&(r)->m1b8)
 #define ents (*(EntVec*)((char*)this + 0x63c0))         // Mission +0x63c0: the entity list of the props
-static inline vector4 vmul(const float& s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
 // mesh of an item for the prop display class, null for an invalid item index (bounds check inlined)
 static inline res_obj* item_mesh(int item, int packed)
 {
@@ -3227,7 +3218,7 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
     if (bone + 1 > f228) f228 = bone + 1;
     std::vector<point20>& pts = other->get70();
     std::vector<vertex60>& vs = other->get50();
-    std::vector<elem30>& sk = other->get60();
+    std::vector<skin_vert>& sk = other->get60();
     vector4 p;
     for (unsigned i = 0; i < pts.size(); i++) {
         const vector4& q = pts[i].a;
@@ -3240,7 +3231,7 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
         if (v60.size() < v50.size())
             build_skin();
         for (unsigned i = 0; i < sk.size(); i++) {
-            elem30 e = sk[i];
+            skin_vert e = sk[i];
             v60.push_back(e);
         }
     } else {
@@ -3248,7 +3239,7 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
             if (v60.size() < v50.size())
                 build_skin();
             for (unsigned i = 0; i < vs.size(); i++) {
-                elem30 e;
+                skin_vert e;
                 e.w[0] = 1.0f; e.w[3] = 0.0f; e.w[2] = 0.0f; e.w[1] = 0.0f;
                 e.bone[0] = bone; e.bone[3] = 0; e.bone[2] = 0; e.bone[1] = 0;
                 e.bonef[0] = (float)bone; e.bonef[3] = 0; e.bonef[2] = 0; e.bonef[1] = 0;
@@ -3284,7 +3275,7 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
     }
     slots[0].f28 = 1;
     slots[1].f28 = 1;
-    ((rgl::box_ext*)&v22c)->extend_box(&other->v22c, (const rgl::matrix*)m);
+    bounds.extend_box(&other->bounds, m);
 }
 // @ 0x44f0c0
 void rgl::mesh::scale(float s)
@@ -3309,16 +3300,16 @@ void rgl::mesh::scale(float s)
     }
     char* dirty = &slots[0].f28;
     *dirty = 1;
-    v22c.min.x = s * v22c.min.x;
-    v22c.min.y = s * v22c.min.y;
-    v22c.min.z = s * v22c.min.z;
-    v22c.max.x = s * v22c.max.x;
-    v22c.max.y = s * v22c.max.y;
-    v22c.max.z = s * v22c.max.z;
-    v22c.center.x = s * v22c.center.x;
-    v22c.center.y = s * v22c.center.y;
-    v22c.center.z = s * v22c.center.z;
-    v22c.radius = s * v22c.radius;
+    bounds.min.x = s * bounds.min.x;
+    bounds.min.y = s * bounds.min.y;
+    bounds.min.z = s * bounds.min.z;
+    bounds.max.x = s * bounds.max.x;
+    bounds.max.y = s * bounds.max.y;
+    bounds.max.z = s * bounds.max.z;
+    bounds.center.x = s * bounds.center.x;
+    bounds.center.y = s * bounds.center.y;
+    bounds.center.z = s * bounds.center.z;
+    bounds.radius = s * bounds.radius;
 }
 // @ 0x44f240
 void rgl::mesh::translate(const vector4* d)
@@ -3344,15 +3335,15 @@ void rgl::mesh::translate(const vector4* d)
     }
     char* dirty = &slots[0].f28;
     *dirty = 1;
-    v22c.min.x = v22c.min.x + d->x;
-    v22c.min.y = v22c.min.y + d->y;
-    v22c.min.z = d->z + v22c.min.z;
-    v22c.max.x = v22c.max.x + d->x;
-    v22c.max.y = v22c.max.y + d->y;
-    v22c.max.z = v22c.max.z + d->z;
-    v22c.center.x = v22c.center.x + d->x;
-    v22c.center.y = v22c.center.y + d->y;
-    v22c.center.z = v22c.center.z + d->z;
+    bounds.min.x = bounds.min.x + d->x;
+    bounds.min.y = bounds.min.y + d->y;
+    bounds.min.z = d->z + bounds.min.z;
+    bounds.max.x = bounds.max.x + d->x;
+    bounds.max.y = bounds.max.y + d->y;
+    bounds.max.z = bounds.max.z + d->z;
+    bounds.center.x = bounds.center.x + d->x;
+    bounds.center.y = bounds.center.y + d->y;
+    bounds.center.z = bounds.center.z + d->z;
 }
 
 // ---- Font::draw_glyph, the carried ranged item mesh, add_placed, the Newton world ---------------------------------------------------
@@ -3426,7 +3417,7 @@ void Font::draw_glyph(int ch, const vector4* pos, const float* scale_, mesh* m, 
     a.y = (g->f14 * scale->y - h) + a.y;
     float w = (g->f8 - (*(float*)&g->key)) * scale->x;
     vector4 b(a.x + w, a.y + h, a.z);
-    m->add_quad(&a, &b, (const rgl::vec2*)&g->key, (const rgl::vec2*)&g->f8, (const unsigned*)arg);
+    m->add_quad(&a, &b, (const vec2*)&g->key, (const vec2*)&g->f8, (const unsigned*)arg);
 }
 
 // item flag field at ItemKind::flags: (flags & 0xff000) selects a visual class (module-system itp_* bits 12..19)
@@ -3866,7 +3857,7 @@ void dust_vertices(mesh* m, const mat4* xf, const float* center, const float* ra
             vector4 c;
             c = rgl::unpack_color(&(&*vs.begin())[i].color);
             float omt = 1.0f - s;
-            vector4 o = rgl::vadd(rgl::vscale(omt, c), rgl::vscale(s, *tint));
+            vector4 o = a_vadd(a_vscale(omt, c), a_vscale(s, *tint));
             o.w = c.w;
             (&*m->v50.begin())[i].color = rgl::pack_color(&o);
             dirty = true;
@@ -3912,7 +3903,7 @@ void Agent::apply_blood(const float* center, float amount)
                     for (unsigned j = 0; j < list.size(); j++) {
                         mesh** slot = &(&*list.begin())[j];
                         if (*slot) {
-                            rgl::mat4 xf = body->m;
+                            rgl::matrix xf = body->m;
                             if (cur == k) {
                                 xf = (&*L->lists[cur].v.begin())[j]->m194;
                             } else {
@@ -3920,7 +3911,7 @@ void Agent::apply_blood(const float* center, float amount)
                                 if (cl.size() != 0)
                                     xf = (*cl.begin())->m194;
                             }
-                            dust_vertices(*slot, &xf, center, &radius, &strength, &tint);
+                            dust_vertices(*slot, (const mat4*)&xf, center, &radius, &strength, &tint);
                         }
                     }
                 }
@@ -4264,7 +4255,7 @@ static __forceinline char* skel_rec_inl(Skeleton* sk, int i)
     return sk->recs + i * 0x1dc + 0x84;
 }
 static __forceinline tstring* lk(const tstring& k) { return g_strtable.lookup(&k); }
-static __forceinline void* get_mat(const tstring& n) { return (void*)RESOURCE_MANAGER->get_material(*(const rgl::string*)&n); }
+static __forceinline skin* get_mat(const tstring& n) { return RESOURCE_MANAGER->get_material(*(const rgl::string*)&n); }
 
 // @ 0x4529e0
 void Agent::drop_held()
@@ -4366,8 +4357,8 @@ void MsgLog::add(tstring msg, int color)
             height[cur] = p.y - ext.y;
             total_h += height[cur];
         }
-        TXT(cur).res = (rgl::res_t*)get_mat(tstring("ui_font"));
-        BGM(cur).res = (rgl::res_t*)get_mat(tstring("ui_font_background"));
+        TXT(cur).res = get_mat(tstring("ui_font"));
+        BGM(cur).res = get_mat(tstring("ui_font_background"));
         lines.push_back(msg);
     }
 }

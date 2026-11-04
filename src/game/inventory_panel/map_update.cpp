@@ -119,7 +119,7 @@ static inline Party* party_at(GameData* g, int id)
 
 // --------------------------------------------------------------------------------- view / panel -------
 
-#include "../rgl_mesh.h"                                           // rgl::mesh (calc_bounds 0x438d80)
+#include "../../rgl/mesh.h"                                           // rgl::mesh (calc_bounds 0x438d80)
 
 #include "map_panel.h"                      // MapPanel / MapView (shared with map_info.cpp)
 #include "../../include/level_global.h"      // g_level (0xa732b4)

@@ -29,11 +29,6 @@ rgl::mesh* g_label_obj;                           // 0x5d75ec (current label obj
 
 
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
-extern resmgr g_resmgr;                 // 0x5d6fa0
-struct skin;
-struct resource_manager {
-    skin* get_material(const rgl::string& name);   // 0x418a70 (rgl/resource.h): the same object as g_resmgr
-};
 
 #include "../font.h"
 extern Font* g_font;                    // 0x5e2934
@@ -41,7 +36,7 @@ extern Font* g_font;                    // 0x5e2934
 // ---- the 0x260-byte mesh instance (vtable 0x54a6f4, ctor 0x412a90) ---------------------------------------
 #include "../../include/mesh_prims.h"
 using rgl::point20;
-#include "../rgl_mesh.h"
+#include "../../rgl/mesh.h"
 using rgl::mesh;
 
 // ---- globals --------------------------------------------------------------------------------------------
@@ -261,7 +256,7 @@ void gui_manager::add_label(const tstring* text, float h, int color)
     }
     {
         tstring name("ui_font");
-        o56c->res = (rgl::res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
+        o56c->res = g_resmgr.get_material(*(const rgl::string*)&name);
     }
     {
         float out[2];
@@ -317,6 +312,6 @@ void gui_manager::set_quad(const float* origin, const float* size)
     m570.slots[0].f28 = 1;
     {
         tstring name("matte");
-        m570.res = (rgl::res_t*)((resource_manager*)&g_resmgr)->get_material(*(const rgl::string*)&name);
+        m570.res = g_resmgr.get_material(*(const rgl::string*)&name);
     }
 }
