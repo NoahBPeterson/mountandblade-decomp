@@ -296,7 +296,7 @@ void Recf0::frame_update(float)
             g_resmgr.unload_textures();
             g_resmgr.load_textures();
         }
-        void* f = mb_open_user_file("rgl_config.txt", (const char*)orig::g_rgl_name);
+        void* f = mb_open_user_file("rgl_config.txt", "w");
         ((rgl_config*)&g_cfg)->save((FILE*)f);
         fclose((FILE*)f);
         if (f_ec) {

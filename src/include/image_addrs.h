@@ -26,7 +26,6 @@ namespace orig {
 extern const float g_zero;                 // 0x549ca8
 extern const float k_0_9f;                 // 0x549d6c
 extern const float k_1_5708f;              // 0x54a534
-extern const char g_rgl_name[];                        // 0x54b048
 extern const float k_0_4f;                 // 0x54b3b8
 extern const float k_0_05f;                // 0x54b4d0
 extern const float k_1_5f;                 // 0x54b8b0
