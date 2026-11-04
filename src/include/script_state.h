@@ -13,7 +13,7 @@
 #include <stddef.h>
 #include "../game/tstring.h"
 #include "../game/list8.h"                  // List8 : I64Vec (std::vector<__int64> with the allocator word)
-#include "../game/int_vec.h"                // RawVec (std::vector<T*> triple with the allocator word)
+#include "./raw_vec.h"                      // RawVec (std::vector<T*> triple with the allocator word)
 #include "../rgl/rgl_math.h"                // rgl::matrix (the position registers)
 
 namespace rgl { struct world; struct entity; }
