@@ -966,7 +966,8 @@ def plot_standalone(path):
         ax.annotate(fmt(pts[0][1]), pts[0], xytext=(0, 7), textcoords="offset points", ha="center", va="bottom",
                     fontsize=8, color=MUTED)
         ax.set_xticks(xs)
-        ax.set_xticklabels([p["commit"][:7] for p in SA], fontsize=6.5, color=MUTED)
+        ax.set_xticklabels([p["commit"][:7] for p in SA], fontsize=6.5, color=MUTED, rotation=60, ha="right",
+                           rotation_mode="anchor")
         ax.tick_params(axis="y", labelsize=7, colors=MUTED)
         for sp in ("top", "right"):
             ax.spines[sp].set_visible(False)
@@ -977,7 +978,7 @@ def plot_standalone(path):
              "Vermillion panels count a crutch (down is good); green panels count what our source defines (up is good).  "
              "Commits are the last one on main before the build finished, so a build from a branch may be off." % (
                  SA[0]["when"][:10], SA[-1]["when"][:10]), fontsize=8.2, color=MUTED)
-    fig.subplots_adjust(left=0.04, right=0.985, top=0.9, bottom=0.12, wspace=0.28, hspace=0.5)
+    fig.subplots_adjust(left=0.04, right=0.985, top=0.9, bottom=0.14, wspace=0.28, hspace=0.75)
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d builds)" % (os.path.relpath(path, ROOT), len(SA)))
 
