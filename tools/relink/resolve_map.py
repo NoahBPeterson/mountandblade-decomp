@@ -70,16 +70,26 @@ def vtable_stores(coff, fsym, img, lo, hi):
 
 
 def one_module(job):
+    import time
+    t_start = time.time()
     src, flags, vas = job
     os.chdir(ROOT)
     import slice as S
     import resolve as R
     import equiv as E
     from coff import Coff
+    t0 = time.time()
+    first = not E._ctx
     ctx = E.context()
+    t_ctx = time.time() - t0
     img = ctx["img"]
     stem = os.path.basename(src)[:-4]
+    t0 = time.time()
+    cl0, key0 = S.TIMING["cl_s"], S.TIMING["key_s"]
     o, _ = S.compile_obj(src, flags)
+    t_compile = time.time() - t0
+    d_cl, d_key = S.TIMING["cl_s"] - cl0, S.TIMING["key_s"] - key0
+    t_resolve0 = time.time()
     if not o:
         return {"src": src, "error": "compile failed"}
     coff = Coff(o)
@@ -135,7 +145,114 @@ def one_module(job):
         if vs is not None and vs.defined:
             ours[vt] = (a, coff.section_of(vs).size // 4)
     return {"src": os.path.relpath(src, ROOT), "refs": refs, "defined": defined, "slots": slots, "errors": errors,
-            "vtables": ours, "statics": statics}
+            "vtables": ours, "statics": statics,
+            "timing": {"ctx": t_ctx, "compile": t_compile, "resolve": time.time() - t_resolve0, "total": time.time() - t_start,
+                       "cl_s": d_cl, "key_s": d_key, "first": first, "rows": len(vas)}}
+
+
+# ---- per-module result cache ------------------------------------------------------------------------------------
+# A module's resolver result is a function of: its object (obj_digest: sections, relocations, symbols, not the debug records: an unchanged module that
+# recompiled to the same code keeps its result), its rows, the text of its source and of the headers whose annotations the
+# resolver reads for it, and the resolver's environment: the resolver/harness code, the original image, symbols/, every
+# manifest (SymbolDB reads them all), and the annotation universe of all of src/ (the resolver's deep-symbols fallback;
+# line numbers excluded, they only reach the method text after the "(" that this tool drops).
+CACHE_DIR = os.environ.get("MB_RESOLVE_CACHE") or os.path.join(ROOT, "work", "relink", "resolve_cache")
+
+
+def _md5_files(h, paths):
+    for f in sorted(paths):
+        h.update(os.path.relpath(f, ROOT).encode() + b"\0")
+        try:
+            h.update(open(f, "rb").read())
+        except OSError:
+            h.update(b"<missing>")
+
+
+def resolver_env():
+    """Digest of everything the resolver reads that is not the module's own object or sources."""
+    import hashlib
+    import resolve as R
+    h = hashlib.md5(("resolve_map cache v1 %s\0" % (sys.version.split()[0],)).encode())
+    code = glob.glob(os.path.join(ROOT, "tools", "difftest", "*.py")) + glob.glob(os.path.join(ROOT, "tools", "matching", "*.py")) + \
+        [os.path.abspath(__file__)]
+    _md5_files(h, code)
+    data = glob.glob(os.path.join(ROOT, "symbols", "**", "*"), recursive=True) + \
+        glob.glob(os.path.join(ROOT, "match", "slices", "*", "manifest.txt")) + \
+        glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True) + \
+        [os.path.join(ROOT, "work", "mb.analysis.bin"), os.path.join(ROOT, "work", "oss", "crt_matches.csv")]
+    _md5_files(h, [f for f in data if os.path.isfile(f)])
+    files = glob.glob(os.path.join(ROOT, "src", "**", "*.h"), recursive=True) + \
+        glob.glob(os.path.join(ROOT, "src", "**", "*.cpp"), recursive=True)
+    ann = sorted(repr((i, sc, va, pt)) for i, sc, va, _loc, pt in R.source_annotations(files))
+    h.update("\n".join(ann).encode())
+    return h.hexdigest()
+
+
+def obj_parts(path):
+    """[(label, bytes)] of what an object means: its sections (name, flags, bytes, relocations) and symbols. Not the
+    header's timestamp, not .debug$S/.debug$T (they record the output path, which names the temp file and the machine
+    that compiled), not the .file records (the source path; its length shifts the physical symbol indices, so
+    relocations are listed with logical symbol numbers)."""
+    import struct
+    d = open(path, "rb").read()
+    _m, nsec, _ts, symptr, nsym, optsz, _ch = struct.unpack_from("<HHIIIHH", d, 0)
+    logical, i, n = {}, 0, 0
+    while i < nsym:
+        logical[i] = n
+        n += 1
+        i += 1 + d[symptr + 18 * i + 17]
+    strtab = symptr + 18 * nsym
+
+    def sec_name(o):
+        nm = d[o:o + 8]
+        if nm[:1] == b"/" and nm[1:].rstrip(b"\0").isdigit():            # a long section name lives in the string table
+            at = strtab + int(nm[1:].rstrip(b"\0"))
+            return d[at:d.index(b"\0", at)]
+        return nm.rstrip(b"\0")
+    out = [("header", d[:2] + struct.pack("<HI", nsec, n))]
+    skipped = set()
+    for i in range(nsec):
+        o = 20 + optsz + 40 * i
+        name = sec_name(o)
+        _vs, _va, size, rawptr, relptr, _lnp, nrel, _nln, flags = struct.unpack_from("<IIIIIIHHI", d, o + 8)
+        if name.startswith((b".debug$S", b".debug$T")):
+            skipped.add(i + 1)
+            out.append(("section %d %r" % (i, name), b""))
+            continue
+        out.append(("section %d %r" % (i, name), name + struct.pack("<I", flags) + (d[rawptr:rawptr + size] if rawptr and not flags & 0x80 else b"")))
+        out.append(("relocs %d" % i, b"".join(struct.pack("<IIH", *(lambda r: (r[0], logical.get(r[1], r[1]), r[2]))(struct.unpack_from("<IIH", d, relptr + 10 * r)))
+                                              for r in range(nrel))))
+    i = 0
+    while i < nsym:
+        o = symptr + 18 * i
+        naux = d[o + 17]
+        # C_FILE: the aux records spell the source path; a .debug$S/.debug$T section symbol's aux carries that section's size
+        # and checksum
+        skip = d[o + 16] == 0x67 or struct.unpack_from("<h", d, o + 12)[0] in skipped
+        rec = d[o:o + 17] if skip else d[o:o + 18 * (1 + naux)]
+        if d[o + 16] == 105 and naux:                 # a weak external: its aux names the default symbol by physical index
+            rec = d[o:o + 18] + struct.pack("<I", logical.get(struct.unpack_from("<I", d, o + 18)[0], 0)) + d[o + 22:o + 36]
+        out.append(("symbol %d" % logical[i], rec))
+        i += 1 + naux
+    out.append(("strtab", d[symptr + 18 * nsym:]))
+    return out
+
+
+def obj_digest(path):
+    import hashlib
+    h = hashlib.md5()
+    for _label, b in obj_parts(path):
+        h.update(b)
+    return h.hexdigest()
+
+
+def module_key(env, src, vas, obj):
+    import hashlib
+    import slice as S
+    h = hashlib.md5(env.encode())
+    h.update(os.path.relpath(src, ROOT).encode() + repr(vas).encode() + obj_digest(obj).encode())
+    _md5_files(h, [src] + glob.glob(os.path.join(os.path.dirname(src), "*.h")) + S.sibling_headers(src))
+    return h.hexdigest()
 
 
 def main():
@@ -144,9 +261,54 @@ def main():
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
     a = ap.parse_args()
     os.chdir(ROOT)
+    import time
+    t_wall = time.time()
     jobs = module_rows()
-    with multiprocessing.Pool(a.jobs) as pool:
-        results = pool.map(one_module, jobs, chunksize=1)
+    import pickle
+    import slice as S
+    t0 = time.time()
+    S.ensure_objs([(src, flags) for src, flags, _vas in jobs], jobs=a.jobs)        # misses: preprocess-keyed, batched compiles
+    t_compile = time.time() - t0
+    t0 = time.time()
+    use_cache = os.environ.get("MB_RESOLVE_CACHE_OFF") != "1"
+    env = resolver_env() if use_cache else None
+    keys, results, todo = [], [None] * len(jobs), []
+    for i, (src, flags, vas) in enumerate(jobs):
+        key = None
+        if use_cache:
+            o, _ = S.compile_obj(src, flags)
+            if o:
+                key = module_key(env, src, vas, o)
+                try:
+                    results[i] = pickle.load(open(os.path.join(CACHE_DIR, key + ".pkl"), "rb"))
+                    continue
+                except (OSError, EOFError, pickle.UnpicklingError):
+                    pass
+        keys.append(key)
+        todo.append(i)
+    t_keys = time.time() - t0
+    t0 = time.time()
+    if todo:
+        with multiprocessing.Pool(min(a.jobs, len(todo))) as pool:
+            got = pool.map(one_module, [jobs[i] for i in todo], chunksize=1)
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        for i, key, r in zip(todo, keys, got):
+            results[i] = r
+            if key and "error" not in r:
+                part = os.path.join(CACHE_DIR, "%s.%d.part" % (key, os.getpid()))
+                pickle.dump({k: v for k, v in r.items() if k != "timing"}, open(part, "wb"))
+                os.replace(part, os.path.join(CACHE_DIR, key + ".pkl"))
+    t_pool = time.time() - t0
+    if os.environ.get("MB_TIMING"):
+        ts = [r["timing"] for r in results if "timing" in r]
+        print("TIMING resolve_map: wall %.1fs = ensure_objs %.1fs + result-cache lookup %.1fs + resolving pool %.1fs; "
+              "%d of %d modules resolved (%d from the result cache); pool workers' summed time: compile_obj %.1fs (cl %.1fs, "
+              "key hashing %.1fs), resolver context %.1fs (%d workers built it), resolving rows %.1fs; this process: %s" % (
+                  time.time() - t_wall, t_compile, t_keys, t_pool, len(ts), len(results), len(results) - len(ts),
+                  sum(t["compile"] for t in ts), sum(t["cl_s"] for t in ts), sum(t["key_s"] for t in ts),
+                  sum(t["ctx"] for t in ts), sum(1 for t in ts if t["first"]), sum(t["resolve"] for t in ts),
+                  {k: round(v, 1) for k, v in S.TIMING.items()}), file=sys.stderr)
+        json.dump(ts, open(os.environ["MB_TIMING"], "w"))
     names = collections.defaultdict(lambda: collections.defaultdict(lambda: {"methods": set(), "rows": set(), "defined": False}))
     defs = {}
     statics = {}

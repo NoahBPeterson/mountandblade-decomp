@@ -36,7 +36,13 @@ PY = sys.executable
 
 
 def run(args):
+    import time
+    t0 = time.time()
     r = subprocess.run([PY] + args, cwd=ROOT, capture_output=True, text=True)
+    if os.environ.get("MB_TIMING"):
+        print("TIMING step %s: %.1fs" % (args[0], time.time() - t0), file=sys.stderr, flush=True)
+        if r.stderr:
+            print(r.stderr, end="", file=sys.stderr)
     if r.returncode:
         sys.exit("%s failed:\n%s%s" % (" ".join(args), r.stdout[-2000:], r.stderr[-2000:]))
     return r.stdout
@@ -503,7 +509,11 @@ def main():
     # every global linked after it), a label inside another object's range (a second owner of the same bytes) or two definitions for one original address (the glue aliases the address to one;
     # code that fills or reads the other never sees it). tools/relink/data_size_audit.py lists them.
     import data_size_audit as DA
+    import time as _t
+    _t0 = _t.time()
     under, dup_addrs, ndefs, over = DA.gate(rmap_path, map_path)
+    if os.environ.get("MB_TIMING"):
+        print("TIMING step data gate: %.1fs" % (_t.time() - _t0), file=sys.stderr, flush=True)
     if under or dup_addrs or over:
         sys.exit("data gate: %d undersized definitions (%s); %d original addresses with several storage locations (%s); "
                  "%d overlapping labels, a name inside another object's range (%s); see tools/relink/data_size_audit.py" % (

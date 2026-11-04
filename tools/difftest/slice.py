@@ -2,18 +2,20 @@
 
 Read-only with respect to match/: objects are compiled into work/difftest/obj/.
 """
-import glob, hashlib, os, re, subprocess, sys, threading
+import glob, hashlib, os, re, subprocess, sys, threading, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 
 from coff import Coff  # noqa: E402
-from winnative import CL, winpath  # noqa: E402  (cl.sh under wine on the Mac, cl.exe on Windows; wine / native paths)
+from winnative import CL, WIN, winpath  # noqa: E402  (cl.sh under wine on the Mac, cl.exe on Windows; wine / native paths)
 
 DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/TP"]  # cl 13.10; static CRT; /EHsc only where the original has EH frames
 INCLUDE = "/I" + winpath(os.path.join(ROOT, "match", "include"))
-OBJDIR = os.path.join(ROOT, "work", "difftest", "obj")
+OBJDIR = os.environ.get("MB_OBJDIR") or os.path.join(ROOT, "work", "difftest", "obj")
+# per-process timing of the compile layer (MB_TIMING reports it): key hashing, compiler runs, cache hits
+TIMING = {"key_s": 0.0, "cl_s": 0.0, "cl_runs": 0, "hits": 0, "misses": 0, "pp_s": 0.0, "pp_runs": 0, "pp_hits": 0}
 
 FLAG_RE = re.compile(r"(?<![\w/])(/(?:O[12dxyst]-?|Ob\d|Oi-?|Oy-?|M[DT]d?|Gy-?|EH\w+|TP|TC|arch:\w+|fp:\w+|GS-?|GR-?|Gz|Gr|Gd|Zp\d+|GF|Gs\d*|J|vc71))(?![\w:])")
 
@@ -292,29 +294,278 @@ def compile_key(src, flags):
     return h.hexdigest()
 
 
-def compile_obj(src, flags):
-    """Compile src with flags into work/difftest/obj (cached by source+headers+flags). -> (obj, log)."""
-    flags = resolve_include_flags(flags)
-    os.makedirs(OBJDIR, exist_ok=True)
-    obj = os.path.join(OBJDIR, "%s_%s.obj" % (os.path.basename(src).rsplit(".", 1)[0], compile_key(src, flags)[:12]))
+# Second-level cache (cache scheme "pp1"): compile_key is deliberately coarse (every header the TU can reach, every header
+# in its directory and in match/include), so one shared-header edit misses for nearly every module even when the edit
+# (a comment, a member nobody reaches) cannot change what the compiler sees. On a coarse miss the source is run through
+# `cl /EP` (same flags and include path), and the object is keyed by the preprocessed TEXT: a module whose
+# preprocessed output is unchanged reuses its object. The coarse name is hard-linked to the object afterwards, so the
+# next lookup is again one stat. Things the text does not carry stay in the key: the flags, the source's repo-relative
+# path (cl records the source name), the absolute path when the TU reaches an anonymous namespace (cl hashes it into
+# the mangled names); debug-info flags bypass the level (a /Z7 object embeds the header paths).
+PPDIR = os.environ.get("MB_PPDIR") or (OBJDIR.rstrip("/\\") + "_pp")         # objects named by preprocessed-text key
+PPMAP = os.path.join(PPDIR, "key")                                           # coarse compile_key -> preprocessed-text key
+PP_ENABLED = os.environ.get("MB_PP", "1") != "0"
+DEBUG_FLAGS = ("/Z7", "/Zi", "/ZI", "/Zd", "-Z7", "-Zi", "-ZI", "-Zd")
+
+
+def _pp_eligible(flags):
+    return PP_ENABLED and not any(f in DEBUG_FLAGS for f in flags)
+
+
+def _norm_flags(flags):
+    return " ".join(flags).replace(winpath(ROOT), "<ROOT>")
+
+
+def search_path(flags):
+    """cl's include search order for a compile through compile_obj: the /I flags, slice's own /I, then cl.sh's INCLUDE."""
+    from winnative import include_dirs
+    out = []
+    for f in list(flags) + [INCLUDE]:
+        if f[:2] in ("/I", "-I") and len(f) > 2:
+            p = f[2:]
+            if p[:2].upper() == "Z:":
+                p = p[2:]
+            out.append(p.replace("\\", "/") if not WIN else p)
+    return out + include_dirs()
+
+
+PP_MODE = os.environ.get("MB_PP_MODE", "py")      # py: ppkey.py (no compiler run) | cl: cl /EP (exact text, one wine run) | off
+
+
+def anon_path_matters(src):
+    """True when the TU reaches an anonymous namespace: cl mangles it with a hash of the source path, so the absolute path
+    stays in the key (the same test compile_key applies to the quoted-include closure)."""
+    for f in _quoted_includes(src):
+        try:
+            if re.search(rb"namespace\s*\{", open(f, "rb").read()):
+                return True
+        except OSError:
+            pass
+    return False
+
+
+def pp_key(src, flags, coarse=None):
+    """Key of what the compiler sees (see the block comment above): None when not eligible or not determinable (the
+    caller then compiles under the coarse key only). `flags` already through resolve_include_flags."""
+    if not _pp_eligible(flags) or PP_MODE == "off":
+        return None
+    if PP_MODE == "py":
+        import ppkey
+        ppkey.load_index(os.path.join(PPDIR, "idx"))
+        extra = (_norm_flags(flags) + "\0" + os.path.relpath(src, ROOT)).encode()
+        k = ppkey.closure_key(src, search_path(flags), ROOT, extra)
+        if k and anon_path_matters(src):
+            k = hashlib.md5((k + os.path.abspath(src)).encode()).hexdigest()
+        return k
+    coarse = coarse or compile_key(src, flags)
+    mp = os.path.join(PPMAP, coarse + ".txt")
+    try:
+        k = open(mp).read().strip()
+        if len(k) == 32:
+            return k
+    except OSError:
+        pass
+    t0 = time.time()
+    r = subprocess.run([CL, "/nologo", "/EP", *flags, INCLUDE, winpath(src)], capture_output=True)
+    TIMING["pp_s"] += time.time() - t0
+    TIMING["pp_runs"] += 1
+    if r.returncode or not r.stdout:
+        return None
+    return pp_key_from_text(src, flags, r.stdout, coarse)
+
+
+def pp_key_from_text(src, flags, text, coarse):
+    h = hashlib.md5(b"pp1\0")
+    h.update(text)
+    h.update(b"\0" + _norm_flags(flags).encode() + b"\0" + os.path.relpath(src, ROOT).encode())
+    if re.search(rb"namespace\s*\{", text):
+        h.update(b"\0" + os.path.abspath(src).encode())
+    k = h.hexdigest()
+    _write_map(coarse, k)
+    return k
+
+
+def _stem(src):
+    return os.path.basename(src).rsplit(".", 1)[0]
+
+
+def _link_coarse(ppobj, obj):
+    """Give the coarse name the same object (hard link; a copy where links fail)."""
     if os.path.exists(obj):
-        return obj, ""
-    # Unique temp per thread: six sweep workers compile the same module at once, and a shared "<obj>.part.obj"
-    # made one of them fail with FileNotFoundError on the rename (mesh_start, slot_api, mission_ctx rows).
-    tmp = "%s.%d.%d.part.obj" % (obj, os.getpid(), threading.get_ident())
-    r = subprocess.run([CL, "/nologo", "/c", *flags, INCLUDE, "/Fo" + winpath(tmp), winpath(src)],
-                       capture_output=True, text=True)
-    if r.returncode or not os.path.exists(tmp):
-        if os.path.exists(obj):
-            return obj, r.stdout[-500:]          # another worker finished the identical object first
-        return None, (r.stdout + r.stderr)[-3000:]
+        return
+    tmp = "%s.%d.%d.lnk" % (obj, os.getpid(), threading.get_ident())
+    try:
+        os.link(ppobj, tmp)
+    except OSError:
+        import shutil
+        shutil.copyfile(ppobj, tmp)
     try:
         os.replace(tmp, obj)
     except OSError:
-        if os.path.exists(obj):
-            return obj, r.stdout[-500:]
-        raise
+        if os.path.exists(tmp):
+            os.remove(tmp)
+
+
+def _write_map(coarse, k):
+    os.makedirs(PPMAP, exist_ok=True)
+    mp = os.path.join(PPMAP, coarse + ".txt")
+    tmp = "%s.%d.%d.part" % (mp, os.getpid(), threading.get_ident())
+    open(tmp, "w").write(k)
+    os.replace(tmp, mp)
+
+
+def register(src, flags, coarse, obj):
+    """An object found under its coarse name (compiled by this or an older tool) is also what the compiler makes of
+    the current preprocessed-text key: file it there once, so that after a header edit that leaves the text alone the
+    module finds it. A marker per coarse key (PPMAP) makes the next lookup a single stat."""
+    if not _pp_eligible(flags) or PP_MODE == "off" or os.path.exists(os.path.join(PPMAP, coarse + ".txt")):
+        return
+    ppk = pp_key(src, flags, coarse)
+    if not ppk:
+        return
+    os.makedirs(PPDIR, exist_ok=True)
+    _link_coarse(obj, pp_obj_path(src, ppk))          # (links the pp name to the coarse object)
+    _write_map(coarse, ppk)
+
+
+def pp_obj_path(src, ppk):
+    return os.path.join(PPDIR, "%s_%s.obj" % (_stem(src), ppk[:16]))
+
+
+def compile_obj(src, flags):
+    """Compile src with flags into work/difftest/obj (cached by source+headers+flags, then by preprocessed text). -> (obj, log)."""
+    flags = resolve_include_flags(flags)
+    os.makedirs(OBJDIR, exist_ok=True)
+    t0 = time.time()
+    coarse = compile_key(src, flags)
+    obj = os.path.join(OBJDIR, "%s_%s.obj" % (_stem(src), coarse[:12]))
+    TIMING["key_s"] += time.time() - t0
+    if os.path.exists(obj):
+        TIMING["hits"] += 1
+        register(src, flags, coarse, obj)
+        return obj, ""
+    ppk = pp_key(src, flags, coarse)
+    ppobj = None
+    if ppk:
+        os.makedirs(PPDIR, exist_ok=True)
+        ppobj = pp_obj_path(src, ppk)
+        if os.path.exists(ppobj):
+            TIMING["pp_hits"] += 1
+            _link_coarse(ppobj, obj)
+            return obj, ""
+    TIMING["misses"] += 1
+    target = ppobj or obj
+    # Unique temp per thread: six sweep workers compile the same module at once, and a shared "<obj>.part.obj"
+    # made one of them fail with FileNotFoundError on the rename (mesh_start, slot_api, mission_ctx rows).
+    tmp = "%s.%d.%d.part.obj" % (target, os.getpid(), threading.get_ident())
+    t0 = time.time()
+    r = subprocess.run([CL, "/nologo", "/c", *flags, INCLUDE, "/Fo" + winpath(tmp), winpath(src)],
+                       capture_output=True, text=True)
+    TIMING["cl_s"] += time.time() - t0
+    TIMING["cl_runs"] += 1
+    if r.returncode or not os.path.exists(tmp):
+        if os.path.exists(target):
+            if ppobj:
+                _link_coarse(ppobj, obj)
+            return obj if ppobj else target, r.stdout[-500:]      # another worker finished the identical object first
+        return None, (r.stdout + r.stderr)[-3000:]
+    try:
+        os.replace(tmp, target)
+    except OSError:
+        if not os.path.exists(target):
+            raise
+    if ppobj:
+        _link_coarse(ppobj, obj)
     return obj, r.stdout[-500:]
+
+
+# Sources per cl call in ensure_objs. Default 1: measured under wine (cl.exe started directly, no slot queue, same sources)
+# a call with 3 sources took 87.6 s against 9.1 + 8.7 + 31.0 s for three calls, so batching only removes parallelism; and
+# rcl.py (the laptop) refuses the /Fo<dir>\ form, so a batch is forced onto the Mac. MB_CL_BATCH=N turns it on.
+CL_BATCH = int(os.environ.get("MB_CL_BATCH") or 1)
+
+
+def ensure_objs(items, jobs=None, batch=None):
+    """Warm the object cache for many (src, flags) at once, so the per-module compile_obj calls that follow are hits.
+    Same keys and the same objects as compile_obj; the difference is orchestration: the coarse keys are hashed up
+    front, the misses are preprocessed (cl /EP) concurrently, the ones whose preprocessed text is unseen are compiled
+    in batches of `batch` sources per cl call (one wine process start per batch; the number of calls never drops
+    below `jobs` so the compile slots stay busy). A source the batch did not produce is left to compile_obj, which
+    reports the compiler's diagnostics. -> number of objects compiled."""
+    from concurrent.futures import ThreadPoolExecutor
+    jobs = jobs or os.cpu_count() or 4
+    batch = batch or CL_BATCH
+    os.makedirs(OBJDIR, exist_ok=True)
+    os.makedirs(PPDIR, exist_ok=True)
+
+    def coarse_of(item):
+        src, flags = item
+        flags = resolve_include_flags(flags)
+        c = compile_key(src, flags)
+        o = os.path.join(OBJDIR, "%s_%s.obj" % (_stem(src), c[:12]))
+        if os.path.exists(o):
+            register(src, flags, c, o)
+        return src, flags, c, o
+
+    with ThreadPoolExecutor(jobs) as ex:
+        keyed = list(ex.map(coarse_of, items))
+        miss = [k for k in keyed if not os.path.exists(k[3])]
+        TIMING["hits"] += len(keyed) - len(miss)
+        pps = list(ex.map(lambda k: pp_key(k[0], k[1], k[2]), miss))
+    todo = {}                                   # object to build -> (src, flags, coarse obj or None)
+    for (src, flags, _c, obj), ppk in zip(miss, pps):
+        if ppk:
+            target = pp_obj_path(src, ppk)
+            if os.path.exists(target):
+                TIMING["pp_hits"] += 1
+                _link_coarse(target, obj)
+                continue
+            todo.setdefault(target, (src, flags, obj))
+        else:
+            todo.setdefault(obj, (src, flags, None))
+    if not todo:
+        return 0
+    by_flags = {}
+    for target, (src, flags, coarse_obj) in todo.items():
+        by_flags.setdefault(tuple(flags), []).append((target, src, coarse_obj))
+    calls = []
+    for flags, group in by_flags.items():
+        size = max(1, min(batch, -(-len(group) // jobs)))
+        cur, stems = [], set()
+        for ent in group:
+            if len(cur) >= size or _stem(ent[1]) in stems:
+                calls.append((flags, cur))
+                cur, stems = [], set()
+            cur.append(ent)
+            stems.add(_stem(ent[1]))
+        if cur:
+            calls.append((flags, cur))
+
+    def run_call(call):
+        flags, ents = call
+        d = os.path.join(PPDIR, ".batch.%d.%d" % (os.getpid(), threading.get_ident()))
+        os.makedirs(d, exist_ok=True)
+        t0 = time.time()
+        subprocess.run([CL, "/nologo", "/c", *flags, INCLUDE, "/Fo" + winpath(d) + "\\", *[winpath(e[1]) for e in ents]],
+                       capture_output=True, text=True)
+        TIMING["cl_s"] += time.time() - t0
+        TIMING["cl_runs"] += 1
+        done = 0
+        for target, src, coarse_obj in ents:
+            got = os.path.join(d, _stem(src) + ".obj")
+            if os.path.exists(got):
+                os.replace(got, target)
+                if coarse_obj and target != coarse_obj:
+                    _link_coarse(target, coarse_obj)
+                TIMING["misses"] += 1
+                done += 1
+        for f in os.listdir(d):
+            os.remove(os.path.join(d, f))
+        os.rmdir(d)
+        return done
+
+    with ThreadPoolExecutor(jobs) as ex:
+        return sum(ex.map(run_call, calls))
 
 
 # ---------------------------------------------------------------- symbol lookup
