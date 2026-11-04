@@ -59,8 +59,10 @@ DEAD_RANGES = (
     # tables are defined in source now (their strings are our objects' literals), so the original's copies are never read.
     (0x54bbf4, 0x54bd74, "tinyxml error strings (TiXmlBase::errorString entries), 0x5a9070 in source"),
     (0x54bd7c, 0x54bd88, "tinyxml \"No error\""),
-    (0x54c1a8, 0x54c1b0, "tinyxml entity string \"&amp;\""),
+    (0x54c188, 0x54c1b0, "tinyxml entity strings (\"&apos;\", \"&quot;\", \"&gt;\", \"&lt;\", \"&amp;\"): TiXmlBase::entity (0x5a90b0) is in source"),
     (0x5a90ec, 0x5a9bd8, "name-pointer arrays (693 pointers to act_* / ground_* / tab_* strings) that no instruction and no pointer reaches"),
+    (0x58c458, 0x58c47c, "\"ground_leveling\" / \"ground_elevation\" strings only the original's name-pointer copies reached (g_name_leveling/g_name_elevation, the g_script_names tail); the source's own literals are used"),
+    (0x5a9ca4, 0x5a9f18, "the original's copies of g_snd_names (0x5a9ca8) and g_script_names (0x5a9ea0), defined in config.cpp; only the original's load_used code (0x4be270, 0x4be560) and the g_conv_names loop end read them"),
     (0x58d24c, 0x58d29c, "tab_game_* name strings"),
     (0x58d2d8, 0x59080c, "act_* / scene action name strings"),
     # the 2004 hardware-locked activation library (CVS ids actusr.c, sigver.c, actdat.c, hwinfo.c, hwenc.c): its code was
