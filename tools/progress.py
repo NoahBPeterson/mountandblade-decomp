@@ -194,9 +194,11 @@ if SA:
     print()
     print("Standalone independence (what the relinked exe still takes from the original image; build %s at commit %s, "
           "change since %s at %s):" % (a1["build"], a1["commit"], a0["build"], a0["commit"]))
-    srow = lambda title, key, good, f: [title + (" (up is good)" if good else ""), f % _sa_value(a1, key), f % _sa_value(a0, key),
-                                        ("%+d" % (_sa_value(a1, key) - _sa_value(a0, key))) if f == "%d"
-                                        else "%+.2f" % (_sa_value(a1, key) - _sa_value(a0, key))]
+    def srow(title, key, good, f):
+        # "First" is the first build that recorded the count (counts added later, e.g. source_aliases, start there)
+        b0 = next(p for p in SA if _sa_value(p, key) is not None)
+        v1, v0 = _sa_value(a1, key), _sa_value(b0, key)
+        return [title + (" (up is good)" if good else ""), f % v1, f % v0, ("%+d" if f == "%d" else "%+.2f") % (v1 - v0)]
     print(table(["Crutch", "Latest", "First", "Change"],
                 [srow(t, k, g, "%.2f" if k == "borrowed_mb" else "%d") for k, t, g in SA_COLS if _sa_value(a1, k) is not None]))
 
