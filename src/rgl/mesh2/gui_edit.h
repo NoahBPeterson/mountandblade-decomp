@@ -185,10 +185,6 @@ struct RefItem {                // 0x24-byte entry of the record array
     RefItem() { kf = 0; f18 = 0; f1c = 0; }   // the array-new expansion 0x4c6a20: tstring ctor, then these three
     ~RefItem() { ((RecGList*)&kf)->clear(); }   // 0x4317b0: the keyframe track array is a RecGList-style owner
 };
-struct RefList {                // the object whose record array sits at +0 (fill_records 0x4c6950 / retire 0x4c6900)
-    RefItem* records;           // +0
-    void retire();              // 0x4c6900
-};
 struct Pad98 {                  // a 0x98-byte record whose head is a string (see clear)
     tstring name;               // +0
     char pad10[0x98 - 0x10];
@@ -294,7 +290,6 @@ struct ItemPage {
 
     void reset();                               // 0x4c65d0
     void format(char* out);                     // 0x4c6620
-    void fill_records(RefRecord* rec);          // 0x4c6950 (declared void: the original sets no eax)
     void clear();                               // 0x4c6aa0
     void place(int e);                          // 0x4c6b30
 };

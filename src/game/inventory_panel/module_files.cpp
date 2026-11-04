@@ -151,11 +151,8 @@ struct SlotReader;
 struct MapLoader {
     void read(SlotReader* s);   // 0x4e7a70 (TableauTable::read)
 };
-struct PresentationTable { char pad; };              // 0xa75f2c
+#include "../../include/prsnt_table.h"           // PresentationTable, g_presentations (0xa75f2c)
 struct RefRecord;
-struct ItemPage {
-    void fill_records(RefRecord* s);         // 0x4c6950 (PresentationTable::fill_records: rgl/mesh2/gui_edit.h)
-};
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
 struct MeshTable { char pad; };                      // 0x8ed4f58
 struct elem48_holder;
@@ -169,7 +166,6 @@ struct csv_row {
 };
 
 extern TableauTable g_tableaus;                       // 0xa75f40
-extern PresentationTable g_presentations;            // 0xa75f2c
 extern MeshTable g_meshes;                           // 0x8ed4f58
 
 // ---------------------------------------------------------------- module state
@@ -283,7 +279,7 @@ void load_module_files()
     // presentations.txt
     tstream3 s_presentations;
     open_module_file(s_presentations, "presentations.txt");
-    ((ItemPage*)&g_presentations)->fill_records((RefRecord*)&s_presentations);
+    g_presentations.fill_records((RefRecord*)&s_presentations);
     s_presentations.failed = 1;
 
     // scripts.txt

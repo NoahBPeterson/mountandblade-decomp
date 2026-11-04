@@ -190,12 +190,7 @@ struct prsnt_record {                               // 0x24 bytes + extras
     void load_extras(stream_base& a);               // 0x4bddf0
     void save(stream_base& a);                      // 0x4bdf60
 };
-struct loaded_prsnt_table {
-    prsnt_record* records;
-    int count;
-    int used[3];
-    void load_used();                               // 0x4bdec0
-};
+#include "../../include/prsnt_table.h"           // PresentationTable (load_used 0x4bdec0)
 
 struct sound_def {                                  // a sound definition read by 0x4bdff0 (size unknown)
     tstring tex;                                    // +0x00

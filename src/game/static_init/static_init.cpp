@@ -49,7 +49,6 @@ extern char g_a73730[];     // 0xa73730 the game keys (0x4a dwords)
 extern char g_a7374c[];     // 0xa7374c (the key records' end)
 extern char g_a73980[];     // 0xa73980 the main menu
 extern char g_a739f8[];     // 0xa739f8
-extern char g_a75f2c[];     // 0xa75f2c the presentations
 extern char g_a75f40[];     // 0xa75f40 the tableaus
 extern char g_a76628[];     // 0xa76628
 extern char g_8ed4df8[];    // 0x8ed4df8 11 ground types of 0x20
@@ -72,7 +71,6 @@ struct ini_file { ini_file(); };                    // 0x4c1be0
 struct rec_table { rec_table(); };                  // 0x4be520
 struct GameApp { GameApp(); };                      // 0x4d3ec0
 struct Tail2 { ~Tail2(); };                         // 0x4c4d10
-struct RefList { void retire(); };                  // 0x4c6900
 struct TwoVec { ~TwoVec(); };                       // 0x4da9c0
 struct TriggerEntryVec { void dtor(); };            // 0x4c2200
 struct ItemPage { void clear(); };                  // 0x4c6aa0
@@ -132,8 +130,6 @@ void __cdecl static_dtor_5482b0()
 void __cdecl static_dtor_548340() { ((TriggerEntryVec*)g_a76628)->dtor(); }
 // @ 0x5483e0
 void __cdecl static_dtor_5483e0() { destroy_elem48_array((elem48**)g_8ed4f58); }
-// @ 0x548400
-void __cdecl static_dtor_548400() { ((RefList*)g_a75f2c)->retire(); }
 // @ 0x548410
 void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 // @ 0x548460
@@ -195,8 +191,6 @@ void __cdecl static_init_547e90()
 }
 // @ 0x547ec0
 void __cdecl static_init_547ec0() { conv_zero_node(g_a73980); atexit(static_dtor_548460); }
-// @ 0x547f30
-void __cdecl static_init_547f30() { new (g_a75f2c) rec_table; atexit(static_dtor_548400); }
 // @ 0x547f50
 void __cdecl static_init_547f50() { atexit(static_dtor_548500); }
 // @ 0x547fa0
@@ -225,7 +219,7 @@ init_fn g_static_init_table[] = {
     static_init_547aa0, static_init_547ae0, static_init_547b50,
     static_init_547e40,
     static_init_547e90, static_init_547ec0,
-    static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,
+    static_init_547f50, static_init_547fa0, static_init_547fb0,
     static_init_547fe0, static_init_548010, static_init_548030,
     static_init_548110,
 };

@@ -883,33 +883,35 @@ tstring RecC::translated()
 }
 
 // @ 0x4c6900
-void RefList::retire()
+// the atexit destructor of g_presentations (the original's stub 0x548400 calls this)
+PresentationTable g_presentations;                      // 0xa75f2c (.bss; constructed by the compiler: rec_table::rec_table 0x4be520)
+
+PresentationTable::~PresentationTable()
 {
     if (records) {
-        delete[] records;
+        delete[] (RefItem*)records;
         records = 0;
     }
 }
 
 // @ 0x4c6950
-void ItemPage::fill_records(RefRecord* rec)
+void PresentationTable::fill_records(RefRecord* rec)
 {
     tstring a, b;
     rec->v54(&a);
     rec->v54(&b);
     int version;
     rec->v4c(&version);                                  // the file's version word (unused)
-    rec->v4c((void*)((char*)this + 4));                  // the record count, +4
-    RefList* rl = (RefList*)this;
-    if (rl->records) {                                  // retire(), open-coded as in the original 0x4c69a5..0x4c69e2
-        delete[] rl->records;
-        rl->records = 0;
+    rec->v4c(&count);                                    // the record count, +4
+    if (records) {                                      // retire(), open-coded as in the original 0x4c69a5..0x4c69e2
+        delete[] (RefItem*)records;
+        records = 0;
     }
-    rl->records = new RefItem[*(int*)((char*)this + 4)];  // 0x4c69e9: the array-new expansion builds each entry
-    int n = *(int*)((char*)this + 4);
+    records = new RefItem[count];                       // 0x4c69e9: the array-new expansion builds each entry
+    int n = count;
     for (int i = 0; i < n; i++)
-        ((PresentationRec*)((char*)rl->records + i * 0x24))->read(*(stream_base*)rec);   // 0x4c23f0: a member call on the item, the stream as its argument
-    ((loaded_prsnt_table*)this)->load_used();           // 0x4bdec0: the presentation codes
+        ((PresentationRec*)((char*)records + i * 0x24))->read(*(stream_base*)rec);   // 0x4c23f0: a member call on the item, the stream as its argument
+    load_used();                                        // 0x4bdec0: the presentation codes
     // void: the original sets no eax, so its "return value" is whatever the last local destructor (tstring
     // 0x42bc40) leaves in eax, and no caller reads it (inventory_panel/module_files.cpp discards it).
 }

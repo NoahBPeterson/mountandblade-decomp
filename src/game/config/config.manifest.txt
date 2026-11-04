@@ -48,7 +48,7 @@
 ../src/game/config/config.cpp  ??0clip_slot@@QAE@XZ  004be720  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?init_decls@render_batch@@QAEHPAH000000000@Z  004bc830  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_used@EmitTable@@QAEXXZ  004bdb60  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?load_used@loaded_prsnt_table@@QAEXXZ  004bdec0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?load_used@PresentationTable@@QAEXXZ  004bdec0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_used@loaded_snd_table@@QAEXXZ  004be270  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0rec_table@@QAE@XZ  004be520  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??1dev_buffer@@QAE@XZ  004c5110  /O2 /MT /Gy /TP

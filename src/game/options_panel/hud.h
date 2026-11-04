@@ -50,7 +50,7 @@ struct MenuKind {                                   // 0x24 bytes (table at 0xa7
 #include "../game_globals.h"                        // g_presentations (0xa75f2c, canonical): its first dword points at the menu-kind table
 inline void play_family_sound(int family, int id)
 {
-    (*(MenuKind**)&g_presentations)[family].sound.update(id);   // element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14]
+    ((MenuKind*)g_presentations.records)[family].sound.update(id);   // element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14]
 }
 
 // ---- widgets -------------------------------------------------------------------------------------------

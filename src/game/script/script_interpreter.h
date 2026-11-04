@@ -161,7 +161,7 @@ inline int fbits(float f) { return *(int*)&f; }
 #include "./script_globals.h"   // g_cur_param, g_lineno, g_script_error, g_cur_opcode, g_or_latch (defined in script_interpreter.cpp)
 
 // ---- counters and small tables (bounds of the validators) -----------------------------------------------------
-extern int g_presentation_count;        // 0xa75f30 (check_presentation 0x49cd50)
+#include "../../include/prsnt_table.h"   // g_presentations (0xa75f2c): .count is the bound of check_presentation 0x49cd50
 extern int g_mesh_count;                // 0x8ed4f5c (check_mesh)
 extern int g_menu_count;                // 0x5e29b4 (check_menu 0x49ce90)
 // mission templates (0x58-byte records at 0x5e2a00) and their 0x4c-byte entry points

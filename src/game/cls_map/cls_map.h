@@ -263,7 +263,6 @@ struct MenuKindRec {
     int first;                                  // +0x20 background image id (0 = none)
 };
 #include "../game_globals.h"                  // g_presentations (0xa75f2c, canonical PresentationTable: the table of MenuKindRec)
-extern int g_menu_kind_count;                   // 0xa75f38
 // the menu block: a widget (vtable 0x5924a0, 0x188 bytes) that owns a vector (alloc +0x178, first +0x17c, last, end). The UiFrame of
 // ../party/party_window.h (destroying destructor 0x5021f0); that header conflicts with game_data.h on g_game, so this is its view here.
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
@@ -286,8 +285,7 @@ void save_path(char* out);                                              // 0x4dd
 
 #include "../screen_records.h"          // C4c3050: the message window record (slot 2 is the window maker 0x4ddf80)
 
-// globals of the menus
-extern int g_main_menu_kind;                    // 0xa75f34
+// globals of the menus: g_presentations.used[0] (prsnt_game_start) is the main menu kind
 
 
 // 0x4de3e0: builds a textured quad (four points, four vertices, two faces) in a mesh; a member of the mesh class

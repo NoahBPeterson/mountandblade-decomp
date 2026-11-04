@@ -1598,7 +1598,7 @@ void prsnt_record::load_extras(stream_base& a)
 }
 
 // @ 0x4bdec0
-void loaded_prsnt_table::load_used()
+void PresentationTable::load_used()
 {
     for (int k = 0; k < 3; k++) {
         int found = -1;

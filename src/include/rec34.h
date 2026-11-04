@@ -5,6 +5,7 @@
 #ifndef MB_REC34_H
 #define MB_REC34_H
 #include "./dialog_rec.h"       // DialogBlock, Elem, tstring
+#include "./rec_table.h"        // rec_table
 
 struct rec34 {                                      // 0x34 bytes
     int     f00;                                    // +0x00
@@ -14,11 +15,6 @@ struct rec34 {                                      // 0x34 bytes
     int read(stream_base* s);                       // 0x4be470
 };
 
-struct rec_table {                                  // {records, count} pair of the module-file tables (globals 0xa75eb0, 0xa75f2c, 0x8ed4f58)
-    void* records;                                  // +0
-    int   count;                                    // +4
-    rec_table();                                    // 0x4be520 (game/config/config.cpp; the original is bracketed by WinLicense marker records)
-};
 struct rec34_table : rec_table {                    // 0x7c bytes: g_scripts 0xa75eb0 (scripts.txt), records are rec34
     int    success;                                 // +0x08 how many records loaded (the extra-triggers argument of Game::load_game_data)
     int    used[28];                                // +0x0c the record index of each of the engine's 28 named scripts (g_script_names, -1 = missing)

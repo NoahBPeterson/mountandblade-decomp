@@ -7,6 +7,7 @@
 #include "../music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
+#include "../../include/prsnt_table.h"   // g_presentations (0xa75f2c): used[0..2] are the menu kinds
 #include "./progress_bar.h"
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
 #include "../config/config.h"
@@ -1331,7 +1332,7 @@ void ItemRec::init_screen()
     if (first_free == -1)
         vt(row_new_game)->d46();
 
-    block.init(win, g_main_menu_kind);
+    block.init(win, g_presentations.used[0]);
     if (block.index <= 0) {
         tstring k("load_window");
         vt(win)->d31(0, res_get(k)->clone());
@@ -1418,9 +1419,9 @@ void BlockOwner::activate()
 {
     g_presentation = (Presentation*)this;
     if (index >= 0) {
-        f14 = (*(MenuKindRec**)&g_presentations)[index].a;
+        f14 = ((MenuKindRec*)g_presentations.records)[index].a;
         restart_inl(timer);
-        (*(MenuKindRec**)&g_presentations)[index].sound.play(-60);
+        ((MenuKindRec*)g_presentations.records)[index].sound.play(-60);
     } else {
         f14 = 0;
     }
@@ -1436,7 +1437,7 @@ void BlockOwner::init(ContainerBase* parent, int which)
     vt(block)->d22(parent->e);
     vt(parent)->d50(block);
     index = which;
-    int n = (*(MenuKindRec**)&g_presentations)[which].first;
+    int n = ((MenuKindRec*)g_presentations.records)[which].first;
     if (n > 0)
         vt(block)->d31(0, g_meshes.placed(n));
     activate();
@@ -1542,7 +1543,7 @@ void ItemRec2::init_screen()
 
     vt(win)->d32(2, res_get(pic)->clone());
 
-    block.init(win, g_menu_kind_count);
+    block.init(win, g_presentations.used[1]);
     if (block.index < 0) {
         tstring n("load_window");
         vt(win)->d31(0, res_get(n)->clone());

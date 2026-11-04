@@ -7,6 +7,7 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
+#include "../../include/prsnt_table.h"   // g_presentations (0xa75f2c): used[2] is the menu kind create2 builds
 #include "../terrain_a/terrain.h"   // Terrain::init_map (0x4e85d0), g_terrain
 #include "../window_mgr.h"      // g_windows slot 21 (0xa739d4)
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
@@ -719,7 +720,6 @@ __declspec(noinline) int ini_file::hex_field(const tstring& key)
 }
 
 // ---- 0x4e5d80..0x4e5f50: the panel that wraps a menu block --------------------------------------------------------------------------------
-int g_menu_kind_sel;                                        // 0xa75f3c (the menu kind create2 builds; g_menu_kind_count is 0xa75f38)
 
 // @ 0x4e5d80 (a jump to 0x4e5d90; not reproducible from source, see the partial list)
 void ItemB::init_screen()
@@ -766,7 +766,7 @@ void ItemC::create2()
     v[0] = 1.002f;
     v[1] = 0.752f;
     vt(win)->d25(v);
-    block().init(win, g_menu_kind_sel);
+    block().init(win, g_presentations.used[2]);
     if (block().index < 0) {
         tstring n("load_window");
         vt(win)->d31(0, res_get(n)->clone());
