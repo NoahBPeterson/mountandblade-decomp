@@ -57,13 +57,6 @@ struct RecGList {
     RecG* items;        // +4
     void clear();   // 0x4317b0
 };
-// 0x34 bytes: a name at +4 and a pair at +0x18; vector deleting destructor 0x4318c0.
-struct RecK {
-    int head;
-    tstring name;       // +4
-    int pad;
-    SubA s;             // +0x18
-};
 
 // ---- from 0x431960 on --------------------------------------------------------------------------------------
 // Polymorphic owned object (only its virtual destructor is called): src/include/poly.h
@@ -77,16 +70,6 @@ struct Item {
 // out-of-line destructors of later objects, called on members
 #include "../../include/tail2.h"             // Tail2 (0x20 bytes, ~Tail2 0x4c4d10)
 
-struct Owner { Poly* p; ~Owner() { delete p; } };
-
-// 0x48 bytes: name, vector<int> at +0x10, owned polymorphic object at +0x24. Vector deleting dtor 0x431960.
-struct OwnedRec48 {
-    tstring name;               // +0
-    std::vector<int> v;         // +0x10
-    int pad20;
-    Owner owned;                // +0x24
-    char tail[0x20];
-};
 // 0x34 bytes: vector<int> at +0, list<int> at +0x10, vector<int> at +0x20. ~RecP 0x431ab0, ??_E 0x431d30.
 struct RecP {
     std::vector<int> a;         // +0

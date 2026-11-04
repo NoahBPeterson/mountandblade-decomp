@@ -38,10 +38,10 @@ struct recb0 { int pad[0xb0 / 4]; };       // E176 (stride 0xb0)
 // load/store runs) where cl 13.10 otherwise sinks them (docs/codegen.md 10.9).
 extern "C" void _ReadWriteBarrier(void);
 
-// The frustum sub-object at +0xf8 is built in the ctor body, not by a member ctor (the original calls 0x41ef60
-// after the first group of stores). Called through this declaration: same thiscall, no arguments.
-struct frustum_ctor { void ctor(); };   // 0x41ef60
-#define CONSTRUCT_FRUSTUM(p) (((frustum_ctor*)(p))->ctor())                                       // E50 / E68 / E176: the out-of-line copy assignments
+// The frustum sub-object at +0xf8 is built in the ctor body, not by a member ctor (the original calls rgl::frustum::frustum,
+// 0x41ef60, after the first group of stores): constructed on the raw bytes of the record.
+#include "../world_data/raw_place.h"
+#define CONSTRUCT_FRUSTUM(p) ((void)new ((void*)(p), raw_place()) rgl::frustum)                                       // E50 / E68 / E176: the out-of-line copy assignments
 
 // ---- 0x60-byte item base (vtbl 0x5947d8, id 99, tstring at +0x1c) ----------------------------------------
 // The family base is src/game/head_rec.h - the nine real slots of the image's table (see the table there), not

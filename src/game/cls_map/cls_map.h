@@ -125,15 +125,12 @@ void destroy_range_cfg(loading_config* first, loading_config* last, const loadin
 // ---- 0x4da840..0x4da9c0: element types of the global arrays the shutdown routine tears down ------------------------
 // RecA is deleted through its vector deleting destructor 0x431960 (flags 3)
 // 0x431960 is OwnedRec48's scalar vector deleting destructor (rgl/xmlcfg/records.cpp, thiscall, ret 4)
-struct OwnedRec48 {
-    void* vdel(unsigned flags);   // ??_EOwnedRec48 0x431960 (mangled as the destructor below)
-};
-struct DelA { void del3(int flags); };          // 0x431960
+#include "../../include/rec_dtors.h"      // OwnedRec48 (vector deleting destructor 0x431960)
 struct E20b {                                   // 0x20 bytes: a name and a deletable record at +0x1c (the slice's E20b)
     tstring s;                                  // +0x00
     char pad10[0xc];
-    DelA* p;                                    // +0x1c
-    ~E20b() { if (p) p->del3(3); }
+    OwnedRec48* p;                              // +0x1c
+    ~E20b() { if (p) delete[] p; }
 };
 // a record with two vector members: a non-scalar vector at +0 and a scalar vector at +0x10. Its compiler-generated
 // destructor tears down the scalar member first, then the non-scalar one (0x4da9c0)

@@ -18,6 +18,7 @@
 #include <string>
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../../include/clock_table.h"
+#include "../../include/rec_dtors.h"   // RecK (vector deleting destructor 0x4318c0)
 #include "../animator.h"       // Animator g_anim (0x8ed4f60)
 #include "../float_consts.h"
 
@@ -81,7 +82,6 @@ struct TriggerEntryVec { void dtor(); };            // 0x4c2200
 struct ItemPage { void clear(); };                  // 0x4c6aa0
 struct BigArray { void destroy(); };                // 0x4eb810
 struct loaded_psys_table { void clear(); };         // 0x4c1f20
-struct RecK { void* vec_del(unsigned flags); };     // 0x4318c0 (the vector deleting destructor)
 struct tstring_pair;
 struct elem48;
 struct Core;
@@ -156,7 +156,7 @@ void __cdecl static_dtor_5483c0()
 {
     RecK* r = AT(RecK*, g_a75eb0, 0);
     if (r) {
-        r->vec_del(3);
+        delete[] r;
         AT(RecK*, g_a75eb0, 0) = 0;
     }
 }

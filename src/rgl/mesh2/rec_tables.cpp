@@ -500,7 +500,7 @@ void __fastcall load_elem48_array(elem48_holder* self, int, stream_base* s)
 DialogMgr::~DialogMgr()
 {
     if (recs != 0)
-        recs->vdel(3);
+        delete[] recs;
 }
 
 // @ 0x4c4100
