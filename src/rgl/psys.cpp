@@ -68,7 +68,6 @@ mesh* mesh_pool::get_mesh(skin* r)
     return m;
 }
 
-static __forceinline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 
 static __forceinline float eval_curve(float t, const curve4& c)
 {

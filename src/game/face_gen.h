@@ -14,7 +14,7 @@
 #include "../include/frustum.h"
 namespace rgl { struct strategic_entity; }   // the preview entity (rgl/scene/scene_entity.h, included by the TUs that call into it)
 
-struct World;
+namespace rgl { struct world; }
 
 struct FaceGen : head_rec { MB_ZERO_TAIL(FaceGen)   // vtable 0x595c68
     NodeA* ui;                                          // +0x2c
@@ -26,7 +26,7 @@ struct FaceGen : head_rec { MB_ZERO_TAIL(FaceGen)   // vtable 0x595c68
     float zoom;                                         // +0x16c
     unsigned char follow;                               // +0x170 the mouse drags the camera
     int skin;                                           // +0x174
-    World* world;                                       // +0x178 the preview scene; reset_screen deletes it
+    rgl::world* world;                                       // +0x178 the preview scene; reset_screen deletes it
     ContainerBase* slider;                              // +0x17c
     ContainerBase* deform;                              // +0x180
     ContainerBase* buttons;                             // +0x184

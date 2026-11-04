@@ -36,7 +36,7 @@ using rgl::mat4;
 // ---- UI widget (vtable family 0x597050; s004f49d0 / s004dada0) ------------------------------------------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 struct Ui { MissionUi* vt; };
-struct World;
+namespace rgl { struct world; }
 
 #include "../map_widget.h"                 // MapWidget (the slice's face_body: the 0x358-byte camera body, ctor 0x4ed630)
 typedef MapWidget face_body;
@@ -44,7 +44,6 @@ typedef MapWidget face_body;
 // the preview entity: world::create_entity(9) makes a strategic_entity (vtable 0x54b5d0); refresh calls its
 // clear() (slot 19, +0x4c, 0x420960) and pushes LOD records onto lods (std::vector<lod_mesh2*> at +0x108) through
 // std::vector<named_object*>::push_back 0x41b750 (cs_common.h)
-typedef rgl::strategic_entity Entity;
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 
 // ---- skin record table (0x8ed4f7c, 0x1f8-byte records) -------------------------------------------------

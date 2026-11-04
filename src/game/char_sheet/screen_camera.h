@@ -126,8 +126,9 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl/mesh.h)
 
 struct envelope;                                            // the scene-envelope object 0x4624c0 works on
+bool __stdcall ground_height(CellGrid* lv, const float* p, float* out);   // 0x470f40 (terrain_b.cpp: a free stdcall, ret 0xc, returns bool; callers load no ecx)
 
-#include "../scene_world.h"                              // World::scene_query 0x470f40: thiscall on the world, two stack args, callee pops 8 bytes
+#include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 
 // 0x41e4f0: rgl::frustum::build_planes (src/include/frustum.h), thiscall on the frustum, no arguments
 

@@ -40,9 +40,6 @@ using rgl::mat3;
 struct skin; struct face; struct CellGrid; struct BodyRecC;
 namespace rgl {
 struct entity; struct scene;
-struct world {
-    entity* create_entity(int type_id);   // 0x428440 (src/rgl/scene/world.h)
-};
 unsigned __cdecl pack_color(const vector4* c);               // 0x40e440
 }
 struct Poser {
@@ -51,11 +48,9 @@ struct Poser {
 struct ShadowMapP {
     void render();   // 0x47fef0 (mesh_char.cpp)
 };
-struct PolyMesh { void build_geometry(); void compute_edge_creases(); };    // 0x470a00 / 0x470750 (terrain_b/poly_mesh.h)
-struct level {
-    void floor_at(const float* p, float* out_z, face** out_face);   // 0x439be0 (agent2/agent_types.h)
-};
+#include "../terrain_b/cell_grid.h"        // CellGrid (build 0x478c50), level (floor_at 0x439be0), PolyMesh (build_geometry 0x470a00, compute_edge_creases 0x470750)
 struct envelope {
+    void set_fade(const float* dist, const int* color);   // 0x4624c0 (renderer.cpp)
     void set_params(float a, float t, const int* b, const int* c);   // 0x462540 (renderer.cpp)
 };
 struct snd_slot {
@@ -66,11 +61,6 @@ struct snd_bank {
 };
 void __stdcall reset_spawned(int party_id);                  // 0x4739f0 (terrain_b/terrain_b.cpp: a free function)
 
-struct matrix {                                              // 4 rows; row 3 = position
-    vector4 r[4];
-    void orthonormalize() { ((rgl::matrix*)this)->orthonormalize(); }              // 0x407ef0 (rgl::matrix)
-    void rotate_sf(float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770
-};
 struct RectF { float x0, y0, x1, y1; };
 float __cdecl frand();                                       // 0x40e400
 void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
@@ -137,10 +127,10 @@ struct PropObj {                                             // object at prop +
     virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
     virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
     virtual void v20(); virtual void v21();
-    virtual void v22(const matrix* m, const vector4* p);
+    virtual void v22(const rgl::matrix* m, const vector4* p);
 };
 
-#include "../scene_world.h"                                    // World: the scene container (Mission +0): create_entity, set_fade, set_params, floor_at, f478c50
+#include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 #include "../nav_mesh.h"
 #include "../terrain_desc.h"
 #include "../terrain_a/terrain.h"                         // Terrain, g_terrain (0xa76630)
@@ -148,7 +138,7 @@ struct PropObj {                                             // object at prop +
 // ---- data this module owns ----
 Terrain g_terrain;                                  // 0xa76630 (the world-map terrain, used by Mission::start_setup: 0x845e7c8 bytes; constructed by Terrain::Terrain 0x4ce720)
 struct Psys {
-    void attach_camera(World* w) { ((ShadowMap*)this)->attach_camera((CellGrid*)w); }       // 0x4711e0
+    void attach_camera(rgl::world* w) { ((ShadowMap*)this)->attach_camera((CellGrid*)w); }       // 0x4711e0
     void extend(BodyRec* b) { ((ShadowMap*)this)->extend((const vector4*)b); }          // 0x468c20
     void fit_bounds() { ((ShadowMap*)this)->fit_bounds(); }                              // 0x463cc0
     void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
@@ -185,7 +175,7 @@ struct SceneObjs { char pad0[0x14]; SceneObjRec* first; SceneObjRec* last; };   
 struct Scene { char pad0[0xb0]; SceneObjs* objs; };
 
 struct SceneSlot {                                                // 0x130 bytes, 64 at Mission +0x670
-    matrix A, B, C, D;
+    rgl::matrix A, B, C, D;
     char pad100[0x10];
     int clock;                                               // +0x110
     int pad114;
@@ -595,12 +585,12 @@ void Mission::start_setup()
     // ---- fade, params, ambient, sun ---------------------------------------------------------
     rebuild_nav(at<int>(0x5df4), at<int>(0x5df0));
     at<int>(0x5274) = 0;
-    at<World*>(0)->set_fade(&at<float>(0x6614), (char*)&g_env_rows[at<int>(0x660c)].f44);
+    ((envelope*)at<rgl::world*>(0))->set_fade(&at<float>(0x6614), (const int*)&g_env_rows[at<int>(0x660c)].f44);   // 0x4624c0
     unsigned color = 0xff334455;
-    ((envelope*)at<World*>(0))->set_params(-5.0f, 10.0f, (const int*)&color, (const int*)&at<float>(0x654c));     // 0x462540
+    ((envelope*)at<rgl::world*>(0))->set_params(-5.0f, 10.0f, (const int*)&color, (const int*)&at<float>(0x654c));     // 0x462540
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
-    Entity* sun = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
+    Entity* sun = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
     Mesh* sm = (Mesh*)g_resmgr.get_object(&g_env_rows[at<int>(0x660c)].name)->clone();
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
@@ -615,15 +605,15 @@ void Mission::start_setup()
         int h = secs % 24;
         float angle = g_env_rows[at<int>(0x660c)].f14 * 0.0174532924f -
                       (float)(h - 12) * 0.0174532924f * 15.0;
-        sun->at<matrix>(0x58).rotate_sf(&angle);
+        sun->at<rgl::matrix>(0x58).rotate_about_u(&angle);
         angle = 1.0e8f;
         sun->v6(&angle);
     }
-    at<World*>(0)->sky = sun;
+    at<rgl::world*>(0)->sky = (rgl::entity*)sun;
 
     // ---- terrain generate / interior ----------------------------------------------------------
     if (LV.flags.b8) {
-        g_terrain.sun_ambient = at<World*>(0)->color;
+        g_terrain.sun_ambient = at<rgl::world*>(0)->ambient;
         g_terrain.sun_diffuse = *(vector4*)(at<char*>(0x65b0) + 4);
         Streamer* s414 = (Streamer*)((char*)lrec + 0x414);
         char flagc = 1;
@@ -636,7 +626,7 @@ void Mission::start_setup()
             }
             flagc = 0;
         }
-        g_terrain.generate((int)at<World*>(0), (int*)&at<TerrainDesc>(0x63d0), flagc);
+        g_terrain.generate((int)at<rgl::world*>(0), (int*)&at<TerrainDesc>(0x63d0), flagc);
     } else {
         build_interior(at<int>(0x5df4), (rgl::mesh**)&at<Mesh*>(0x6340), &at<int>(0x633c));
     }
@@ -648,12 +638,12 @@ void Mission::start_setup()
     {
         LevelBits f2 = LV.flags;
         if (f2.b9 && f2.b8 && g_terrain.count_low_quads() > 10) {
-            nav.build(RAWAT(int, at<World*>(0), 0x64), 1);
+            nav.build(RAWAT(int, at<rgl::world*>(0), 0x64), 1);
             ((PolyMesh*)&nav)->build_geometry();
             ((PolyMesh*)&nav)->compute_edge_creases();
         }
     }
-    at<World*>(0)->build(&nav);
+    ((CellGrid*)at<rgl::world*>(0))->build((PolyMesh*)&nav);   // 0x478c50
 
     // ---- light/frame table: 64 slots + 5 extra for a custom camera --------------------------
     SceneSlot* slots = &at<SceneSlot>(0x670);
@@ -668,7 +658,7 @@ void Mission::start_setup()
         *(mat3*)&slots[k].A = *identity3(&tmp);
         v.x = (float)(k % 8 + 1) + lofs.x;
         v.y = (float)(k / 8 + 1) + lofs.y;
-        slots[k].A.r[3] = v;
+        slots[k].A.o = v;
     }
 
     if (LV.flags.b10) {
@@ -689,12 +679,12 @@ void Mission::start_setup()
             v.z = 1000.0f;
             SceneSlot* sl = &slots[s];
             *(mat3*)&sl->A = *identity3(&tmp);
-            sl->A.r[3] = v;
+            sl->A.o = v;
             u.z = 0.0f;
             uf[1 - par] = 0.0f;
             if (s < 2) uf[par] = 1.0f;
             else uf[par] = -1.0f;
-            sl->A.r[1] = u;
+            sl->A.f = u;
             sl->A.orthonormalize();
             sl->B = sl->A;
         }
@@ -712,20 +702,20 @@ void Mission::start_setup()
         int sl = RAWAT(int, p, 0x1a0);
         if (RAWAT(int, p, 0x188) == 1 && sl >= 0 && sl < 0x40) {
             SceneSlot* s = &slots[sl];
-            s->A.r[3] = RAWAT(vector4, p, 0x48);
+            s->A.o = RAWAT(vector4, p, 0x48);
             *(mat3*)&s->A = RAWAT(mat3, p, 0x18);
             s->B = s->A;
             u.x = 0.0f; u.y = 0.0f; u.z = 1.0f;
-            s->B.r[2] = u;
-            v.x = s->B.r[2].z * s->B.r[1].y - s->B.r[2].y * s->B.r[1].z;
-            v.y = s->B.r[2].x * s->B.r[1].z - s->B.r[1].x * s->B.r[2].z;
-            v.z = s->B.r[1].x * s->B.r[2].y - s->B.r[2].x * s->B.r[1].y;
-            s->B.r[0] = v;
-            norm3(&s->B.r[0].x);
-            t20.x = s->B.r[2].y * s->B.r[0].z - s->B.r[0].y * s->B.r[2].z;
-            t20.y = s->B.r[0].x * s->B.r[2].z - s->B.r[2].x * s->B.r[0].z;
-            t20.z = s->B.r[0].y * s->B.r[2].x - s->B.r[0].x * s->B.r[2].y;
-            s->B.r[1] = t20;
+            s->B.u = u;
+            v.x = s->B.u.z * s->B.f.y - s->B.u.y * s->B.f.z;
+            v.y = s->B.u.x * s->B.f.z - s->B.f.x * s->B.u.z;
+            v.z = s->B.f.x * s->B.u.y - s->B.u.x * s->B.f.y;
+            s->B.s = v;
+            norm3(&s->B.s.x);
+            t20.x = s->B.u.y * s->B.s.z - s->B.s.y * s->B.u.z;
+            t20.y = s->B.s.x * s->B.u.z - s->B.u.x * s->B.s.z;
+            t20.z = s->B.s.y * s->B.u.x - s->B.s.x * s->B.u.y;
+            s->B.f = t20;
             s->C = s->B;
             s->D = s->B;
         }
@@ -743,7 +733,7 @@ void Mission::start_setup()
                     goto found;
             j = 0;
         found:
-            g_terrain.emit_by_type(j, (const rgl::matrix*)&RAWAT(matrix, p, 0x18), &RAWAT(vector4, p, 0x158), RAWAT(int, p, 0x1a0));
+            g_terrain.emit_by_type(j, (const rgl::matrix*)&RAWAT(rgl::matrix, p, 0x18), &RAWAT(vector4, p, 0x158), RAWAT(int, p, 0x1a0));
             pi++;
         } else {
             int foundv = -1;
@@ -768,26 +758,26 @@ void Mission::start_setup()
         EnvRow* sr = &g_env_rows[at<int>(0x660c)];
         u = *(vector4*)sr->base;
         float scale = (u.x * 3.0f + 1.0f) * 0.400000006f;
-        Entity* fx = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
+        Entity* fx = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
         at<Entity*>(0x65b8) = fx;
         u.x = 0.0f; u.y = 0.0f; u.z = 30.0f;
         fx->at<vector4>(0x88) = u;
         float far_clip = 1.0e7f;
         at<Entity*>(0x65b8)->v6(&far_clip);
-        matrix mx;
+        rgl::matrix mx;
         u.x = 0.0f; u.y = 0.0f; u.z = 0.0f;
-        *(mat3*)&mx.r[0] = *identity3(&tmp);
+        *(mat3*)&mx.s = *identity3(&tmp);
         t20.x = at<float>(0x6618) * 0.349999994f;
         t20.y = at<float>(0x661c) * 0.349999994f;
-        mx.r[3] = u;
+        mx.o = u;
         t20.z = -10.0f;
         if (at<int>(0x6604) == 1) {
-            mx.r[3].z = 6.0f;
-            mx.r[3].y = 6.5f;
+            mx.o.z = 6.0f;
+            mx.o.y = 6.5f;
             int ix = g_emit_defs.used[0];
             if (ix >= 0 && ix < g_emit_defs.count) {
                 Emit* em = new Emit;
-                g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.r[3]);
+                g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
                     float inv = 1.0f / RAWAT(float, em, 0x24);
                     u.x = t20.x * inv;
@@ -809,12 +799,12 @@ void Mission::start_setup()
                 }
             }
         } else if (at<int>(0x6604) == 2) {
-            mx.r[3].z = 6.0f;
-            mx.r[3].y = 6.5f;
+            mx.o.z = 6.0f;
+            mx.o.y = 6.5f;
             int ix = g_emit_defs.used[1];
             if (ix >= 0 && ix < g_emit_defs.count) {
                 Emit* em = new Emit;
-                g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.r[3]);
+                g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
                     RAWAT(vector4, em, 0xc4) = t20;
                     RAWAT(float, em, 0x3c) = scale * RAWAT(float, em, 0x3c);
@@ -837,7 +827,7 @@ void Mission::start_setup()
     at<int>(0x65c4) = 0;
     at<int>(0x65c8) = 0;
     if (!lrec->flags.b0 && (*(int*)((char*)&g_options + 0x20)) != 0) {
-        Entity* eb = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
+        Entity* eb = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
         at<Entity*>(0x65c0) = eb;
         float two = 2.0f;
         eb->v6(&two);
@@ -873,7 +863,7 @@ void Mission::start_setup()
 
     // ---- cursor / vertex-colour helper entities -------------------------------------------------
     at<int>(0x65d0) = 0;
-    at<Entity*>(0x65d0) = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
+    at<Entity*>(0x65d0) = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
     {
         float f290 = 290.5f;
         at<Entity*>(0x65d0)->v6(&f290);
@@ -895,7 +885,7 @@ void Mission::start_setup()
     }
     at<Entity*>(0x65d0)->add_extra(at<Mesh*>(0x65d8));
     at<int>(0x65dc) = 0;
-    at<Entity*>(0x65dc) = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
+    at<Entity*>(0x65dc) = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
     {
         float f33 = 33.5f;
         at<Entity*>(0x65dc)->v6(&f33);
@@ -906,7 +896,7 @@ void Mission::start_setup()
         at<Mesh*>(0x65e0)->at<void*>(0x2c) = g_resmgr.get_material(nm);
     }
     at<Entity*>(0x65dc)->add_extra(at<Mesh*>(0x65e0));
-    at<Entity*>(0x65e4) = (Entity*)((rgl::world*)at<World*>(0))->create_entity(9);
+    at<Entity*>(0x65e4) = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
     {
         float f33 = 33.5f;
         at<Entity*>(0x65e4)->v6(&f33);
@@ -929,20 +919,20 @@ void Mission::start_setup()
         s->face = 0;
         int n = 0;
         do {
-            ((level*)at<World*>(0))->floor_at(&s->B.r[3].x, &outY, (face**)&s->face);     // 0x439be0
+            ((level*)at<rgl::world*>(0))->floor_at(&s->B.o.x, &outY, (face**)&s->face);     // 0x439be0
             if (s->face == 0) {
-                s->B.r[3].x = (frand() - 0.5f) * 0.01f + s->B.r[3].x;
-                s->B.r[3].y = (frand() - 0.5f) * 0.01f + s->B.r[3].y;
+                s->B.o.x = (frand() - 0.5f) * 0.01f + s->B.o.x;
+                s->B.o.y = (frand() - 0.5f) * 0.01f + s->B.o.y;
                 n++;
                 if (n > 100) {
-                    s->B.r[3].x = (frand() - 0.5f) * 100.0f;
-                    s->B.r[3].y = (frand() - 0.5f) * 100.0f;
+                    s->B.o.x = (frand() - 0.5f) * 100.0f;
+                    s->B.o.y = (frand() - 0.5f) * 100.0f;
                     if (n > 10000)
-                        s->face = *RAWAT(void**, at<World*>(0), 0x58);
+                        s->face = *RAWAT(void**, at<rgl::world*>(0), 0x58);
                 }
             }
         } while (s->face == 0);
-        s->B.r[3].z = outY;
+        s->B.o.z = outY;
         s->C = s->B;
         s->D = s->B;
         s->start = g_ticks[s->clock];
@@ -983,11 +973,11 @@ void Mission::start_setup()
             v = at<vector4>(0x6598);
             v.x = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.x;
             v.y = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.y;
-            ((level*)at<World*>(0))->floor_at(&v.x, &outY, (face**)&sink);
+            ((level*)at<rgl::world*>(0))->floor_at(&v.x, &outY, (face**)&sink);
             v.z = outY;
             RAWAT(vector4, p, 0x48) = v;
             if (RAWAT(PropObj*, p, 0x1b4) != 0)
-                RAWAT(PropObj*, p, 0x1b4)->v22(&RAWAT(matrix, p, 0x18), &RAWAT(vector4, p, 0x158));
+                RAWAT(PropObj*, p, 0x1b4)->v22(&RAWAT(rgl::matrix, p, 0x18), &RAWAT(vector4, p, 0x158));
         }
     }
 
@@ -997,9 +987,9 @@ void Mission::start_setup()
         if (f3.b8) {
             g_terrain.destroy_water((int)&at<char>(0x63c0));
         } else if (!f3.b0 && g_use_shaders) {
-            ((Psys*)&g_shadow_map)->attach_camera(at<World*>(0));
-            for (unsigned i = 0; i < RAWAT(BodyVec*, at<World*>(0), 0xb0)->size(); i++)
-                ((Psys*)&g_shadow_map)->extend(&RAWAT(BodyVec*, at<World*>(0), 0xb0)->first[i]);
+            ((Psys*)&g_shadow_map)->attach_camera(at<rgl::world*>(0));
+            for (unsigned i = 0; i < RAWAT(BodyVec*, at<rgl::world*>(0), 0xb0)->size(); i++)
+                ((Psys*)&g_shadow_map)->extend(&RAWAT(BodyVec*, at<rgl::world*>(0), 0xb0)->first[i]);
             ((Psys*)&g_shadow_map)->fit_bounds();
             ((Psys*)&g_shadow_map)->render();
         }

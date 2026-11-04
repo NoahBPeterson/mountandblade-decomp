@@ -25,7 +25,7 @@ struct Entity;
 
 // the engine view frustum (0x120 bytes)
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
-struct World;
+namespace rgl { struct world; }
 
 // the 0x358-byte camera body (ctor 0x4ed630): widget + world link + frustum copy
 #include "../map_widget.h"                 // MapWidget (the slice's face_body)
@@ -54,7 +54,7 @@ struct TextPart {
 
 // ---- callees: label_refresh, make_slider / make_scrollbar / make_editor_list, new_key_label, make_*_arrow, new_button, new_sized_button,
 // clamp_index, TextPart::get_text are the definitions' own declarations (cs_common.h)
-#include "../scene_world.h"                              // World: the 0x344-byte scene (ctor 0x478ad0)
+#include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 
 // the 0x7c-byte wind track (ctor 0x461480)
 #include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)

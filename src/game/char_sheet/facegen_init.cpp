@@ -10,6 +10,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
+#include "../terrain_b/cell_grid.h"      // CellGrid (ctor 0x478ad0, dtor 0x475d50, spawn_wind 0x478f30): the one definition
 
 // @ 0x4f49d0
 void FaceGen::init_screen()
@@ -202,19 +203,19 @@ void FaceGen::init_screen()
     hi[2] = 0.0f;
     hi[3] = 0.0f;
     int zero = 0;
-    World* w = (World*)::operator new(sizeof(World));
+    rgl::world* w = (rgl::world*)::operator new(sizeof(rgl::world));
     if (w)
         new (w, raw_place()) CellGrid(lo, hi, &zero, &zero, &zero);   // 0x478ad0 (World::World names it)
     world = w;
-    w->color.x = 0.3f;
-    w->color.y = 0.3f;
-    w->color.z = 0.3f;
-    w->color.w = 1.0f;
+    w->ambient.x = 0.3f;
+    w->ambient.y = 0.3f;
+    w->ambient.z = 0.3f;
+    w->ambient.w = 1.0f;
     {
         wind* wd = (wind*)::operator new(sizeof(wind));
         if (wd)
             wd->init();   // 0x461480
-        w->tracks.push_back((int)wd);   // _Insert_n 0x410610 (scene_world.h)
+        w->lights.push_back((rgl::light*)wd);   // _Insert_n 0x410610
         wd->v04.x = 0.1f;
         wd->v04.y = 0.15f;
         wd->v04.z = 0.2f;
@@ -238,7 +239,7 @@ void FaceGen::init_screen()
         wind* wd = (wind*)::operator new(sizeof(wind));
         if (wd)
             wd->init();   // 0x461480
-        w->tracks.push_back((int)wd);   // _Insert_n 0x410610 (scene_world.h)
+        w->lights.push_back((rgl::light*)wd);   // _Insert_n 0x410610
         wd->v04.x = 1.0f;
         wd->v04.y = 1.0f;
         wd->v04.z = 1.0f;

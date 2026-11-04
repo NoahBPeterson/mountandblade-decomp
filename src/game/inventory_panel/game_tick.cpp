@@ -226,7 +226,7 @@ void GameG::tick(float dt)
         }
     }
 
-    ((World*)g_script.level)->step(g_step_tbl[0]);
+    ((rgl::world*)g_script.level)->step(g_step_tbl[0]);
 
     if (g_cfg.cheat_mode && g_keyboard.down[0x14] && !g_keyboard.prev[0x14] && g_keyboard.down[0x1d])
         f95 = !f95;
@@ -325,14 +325,14 @@ void GameG::update_colors()
                             (float)pow(color_base.y, GAMMA),
                             (float)pow(color_base.z, GAMMA));
         target_obj->v.w = 1.0f;                      // the original copies the sun's w lane here
-        ((World*)g_script.level)->color = rgl::vector4((float)pow(color_sky.x, GAMMA),
+        ((rgl::world*)g_script.level)->ambient = rgl::vector4((float)pow(color_sky.x, GAMMA),
                                  (float)pow(color_sky.y, GAMMA),
                                  (float)pow(color_sky.z, GAMMA));
     } else {
         target_obj->v = color_base;
-        ((World*)g_script.level)->color = color_sky;
+        ((rgl::world*)g_script.level)->ambient = color_sky;
     }
-    ((World*)g_script.level)->color.w = 1.0f;                         // +0x74 is the scene alpha
+    ((rgl::world*)g_script.level)->ambient.w = 1.0f;                         // +0x74 is the scene alpha
 }
 
 // @ 0x5176e0

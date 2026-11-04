@@ -6,6 +6,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../slot.h"
+#include "../terrain_b/cell_grid.h"      // CellGrid (ctor 0x478ad0, dtor 0x475d50, spawn_wind 0x478f30): the one definition
 
 static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the camera sliders; passed by address)
 
@@ -105,8 +106,8 @@ done:
         // "regenerate": reset the scene, arm the flash effect, rebuild the terrain and put the camera on it
         world->reset();                      // 0x421390 (rgl::world::reset)
         vector4 clear_colour(0.4f, 0.4f, 0.6f);
-        world->color = clear_colour;
-        world->color.w = 1.0f;
+        world->ambient = clear_colour;
+        world->ambient.w = 1.0f;
         EffObj* flash = (EffObj*)((CellGrid*)(void*)world)->spawn_wind();     // 0x478f30
         flash->pos = vector4(0.9f, 0.9f, 0.9f);
         flash->f14 = vector4(1.0f, 1.0f, 1.0f);

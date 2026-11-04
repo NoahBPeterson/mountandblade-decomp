@@ -12,6 +12,7 @@
 #include "../config/ui_widgets_c.h"      // UiE
 #include "./cs_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
+#include "../terrain_b/cell_grid.h"      // CellGrid (ctor 0x478ad0, dtor 0x475d50, spawn_wind 0x478f30): the one definition
 
 // the scene entity's slot 4 (+0x10), called once its mesh list is filled
 struct EntityV {
@@ -178,7 +179,7 @@ void TerrainPage::init_screen()
         int cells2 = 6;
         int flag = 0;
         void* p = operator new(0x344);
-        world = p ? (World*)new (p) CellGrid((const float*)&lo, (const float*)&hi, &cells, &cells2, &flag) : 0;   // 0x478ad0
+        world = p ? (rgl::world*)new (p) CellGrid((const float*)&lo, (const float*)&hi, &cells, &cells2, &flag) : 0;   // 0x478ad0
     }
     {
         float start = 500.0f;

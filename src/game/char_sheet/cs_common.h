@@ -17,16 +17,7 @@ struct FaceGenome {                                                 // terrain_b
 void __cdecl load_game_variables();                                 // 0x4c0520 (trigger_vec)
 struct loading_config { char pad[0x1f8]; };                         // a SkinSet / TextRow
 
-namespace rgl {
-struct entity;
-struct scene;
-struct vector4;
-struct mesh;
-struct world {                                                      // the scene World
-    entity* create_entity(int type);                                // 0x428440 (rgl/scene/entity_types.cpp)
-    void render_scene(scene* s, bool a);                            // 0x429890 (render_scene.cpp)
-};
-}
+#include "../../rgl/scene/world.h"                          // rgl::world (create_entity 0x428440, render_scene 0x429890, step, reset ...): the one definition
 
 // ---- widgets: MissionUi's constructor (0x48ae20) in place; the container kinds are ui/container.h's classes (`new NodeA`, `new text_box`) ----
 #include "../../include/image_addrs.h"
@@ -47,11 +38,7 @@ UiA* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, 
 MissionUi* __cdecl make_hint(ContainerBase* parent, const tstring& text, float a, float b, float c, float d);   // 0x4dada0 (cls_map)
 #include "../../include/sound_mgr.h"
 // the particle / shadow system g_psys (0xa70248)
-struct Wind;
-struct CellGrid {                                                   // the scene World (scene_world.h; mission)
-    CellGrid(const float* lo, const float* hi, const int* a, const int* b, const int* c);   // 0x478ad0
-    Wind* spawn_wind();                                             // 0x478f30
-};
+struct CellGrid;                                                    // terrain_b/cell_grid.h (a TU that calls into it includes that header)
 #include "../shadow_map.h"
 struct ShadowMapP {
     void render();                                                  // 0x47fef0

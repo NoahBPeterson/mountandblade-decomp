@@ -26,7 +26,7 @@ extern float g_scroll;                                  // 0x590d7c
 
 #include "../../include/skin_set.h"              // SkinSet, g_anim.skin_vec.first (shared with src/rgl/mesh2/gui_edit.h)
 
-#include "../scene_world.h"                              // World::step 0x427f40
+#include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 #include "../tstring.h"
 #include "../str_table.h"      // 0x43a1e0
 #include "../window_mgr.h"

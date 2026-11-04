@@ -18,7 +18,7 @@
 #include "./cs_common.h"
 
 // the strategy world stepped at the top of the frame (0x427f40)
-#include "../scene_world.h"                              // World::step 0x427f40
+#include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 
 // ---- a tstring as stored in the record tables (ctor 0x42bbe0) ----------------------------------------
 #include "../tstring.h"

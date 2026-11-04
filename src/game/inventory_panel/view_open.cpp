@@ -58,7 +58,8 @@ template<> void std::vector<named_object*, std::allocator<named_object*> >::push
 // ---- the world (0x344 bytes) -----------------------------------------------------------------------------
 #include "../engvec.h"                                     // engvec<T>
 
-#include "../scene_world.h"                                   // World: ctor 0x478ad0, set_visual 0x488cd0, destroy 0x475d50
+#include "../char_sheet/cs_common.h"
+#include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 
 // ---- the 0x358 portrait body (ctor 0x4ed630) -------------------------------------------------------------
 #include "../map_widget.h"                 // MapWidget (the slice's face_body)
@@ -80,6 +81,7 @@ int __cdecl clamp_index(const int* v, const int* lo, const int* hi);       // 0x
 #include "../game_globals.h"      // canonical global declarations
 #include "../ui_globals.h"
 #include "../strat/gui_manager.h"      // g_gui.fov_k (0x5e20a8)
+#include "../terrain_b/cell_grid.h"      // CellGrid (ctor 0x478ad0, dtor 0x475d50, spawn_wind 0x478f30): the one definition
 
 
 // ---- the character-sheet window --------------------------------------------------------------------------
@@ -91,7 +93,7 @@ struct char_window {
     char pad30[0x2dc - 0x30];
     int  f2dc;                                              // +0x2dc (-1 until the portrait is built)
     char pad2e0[0x2e4 - 0x2e0];
-    World* world;                                           // +0x2e4
+    rgl::world* world;                                           // +0x2e4
     char pad2e8[0x2ec - 0x2e8];
     rgl::frustum fr;                                         // +0x2ec (0x120; the frame sits at +0xc8)
     float rect[4];                                          // +0x40c
@@ -115,7 +117,7 @@ void char_window::open_view()
         face_body* b = new face_body;
         label_refresh((MissionUi*)b, tstring("char_i_character"));
         if (world != 0) {
-            world->destroy();                   // 0x475d50 (the CellGrid destructor body), then the free
+            ((CellGrid*)world)->~CellGrid();    // 0x475d50 (the CellGrid destructor body), then the free
             free(world);
             world = 0;
         }
@@ -128,12 +130,14 @@ void char_window::open_view()
         int zero = 0;
         int zero2 = 0;
         int zero3 = 0;
-        World* w = new World(lo, hi, &zero, &zero2, &zero3);
+        rgl::world* w = (rgl::world*)::operator new(sizeof(rgl::world));
+        if (w)
+            new (w, raw_place()) CellGrid(lo, hi, &zero, &zero2, &zero3);   // 0x478ad0
         world = w;
-        w->color.x = 0.23f;
-        w->color.y = 0.25f;
-        w->color.z = 0.27f;
-        w->color.w = 1.0f;
+        w->ambient.x = 0.23f;
+        w->ambient.y = 0.25f;
+        w->ambient.z = 0.27f;
+        w->ambient.w = 1.0f;
         {
             int   z2 = 0;
             float five = 5.0f;
@@ -142,7 +146,7 @@ void char_window::open_view()
         }
         {
             wind* wd = new wind;
-            w->tracks.push_back((int)wd);
+            w->lights.push_back((rgl::light*)wd);
             wd->v04 = rgl::vector4(0.1f, 0.15f, 0.2f);
             wd->v14 = rgl::vector4(0.1f, 0.15f, 0.2f);
             wd->v24 = rgl::vector4(-2.0f, -2.0f, 12.0f);
@@ -152,7 +156,7 @@ void char_window::open_view()
         }
         {
             wind* wd = new wind;
-            w->tracks.push_back((int)wd);
+            w->lights.push_back((rgl::light*)wd);
             wd->v04 = rgl::vector4(0.45f, 0.42f, 0.4f);
             wd->v14 = rgl::vector4(0.4f, 0.4f, 0.4f);
             wd->v24 = rgl::vector4(2.0f, 2.0f, 2.0f);
@@ -188,7 +192,7 @@ void char_window::open_view()
         f420 = -0.09f;
         f424 = 0.7f;
         b->scene3d.fr = fr;
-        Entity* e = w->create_entity(9);
+        Entity* e = (Entity*)w->create_entity(9);
         rgl::matrix m2;
         identity_pos((pos*)&m2);
         m2.o.y = -0.12f;

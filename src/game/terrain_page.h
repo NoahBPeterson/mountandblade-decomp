@@ -12,7 +12,7 @@
 #include "./ui_widget.h"
 #include "../include/frustum.h"
 
-struct World;                                               // the preview scene (each TU declares its own view of it)
+namespace rgl { struct world; }                             // the preview scene
 struct NodeA; struct text_box; struct MapWidget;
 
 struct TerrainPage : head_rec { MB_ZERO_TAIL(TerrainPage)   // vtable 0x595c44
@@ -36,7 +36,7 @@ struct TerrainPage : head_rec { MB_ZERO_TAIL(TerrainPage)   // vtable 0x595c44
     float   yaw;                                            // +0x1a0  camera heading
     float   pitch;                                          // +0x1a4  camera pitch (0.1..1.5)
     float   zoom;                                           // +0x1a8  camera zoom (1.5..400.5)
-    World*  world;                                          // +0x1ac  the preview scene (0x344, ctor 0x478ad0): the page drives it and reset_screen deletes it
+    rgl::world* world;                                          // +0x1ac  the preview scene (0x344, ctor 0x478ad0): the page drives it and reset_screen deletes it
     text_box* panel;                                        // +0x1b0  the board panel (0x188, vptr 0x597050)
     MissionUi* hexbox;                                         // +0x1b4  the hex terrain text field
     MissionUi* copy_btn;                                       // +0x1b8  copy terrain code

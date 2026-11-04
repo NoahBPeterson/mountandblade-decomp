@@ -38,7 +38,6 @@ using namespace rgl;
 #define QX(e) ((quaternion_x&)(e))
 
 // local stand-ins for the vector4 operators the effect code inlines (rgl_math.h declares them out of line)
-static inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 
 static inline float vnormalize(vector4& v)
 {
