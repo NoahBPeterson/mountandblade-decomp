@@ -231,7 +231,7 @@ void char_window::open_view()
         if (f2dc == -1) {
             MissionUi* a = new MissionUi;
             f4d0 = a;
-            label_refresh((MissionUi*)a, tstring("char_i_character_shadow"));
+            label_refresh(a, tstring("char_i_character_shadow"));
             {
                 tstring nm("character_window_shadow");
                 mesh* m = res_manager().get_object((const rgl::string*)&nm);
@@ -241,7 +241,7 @@ void char_window::open_view()
             ui->add_child(a);
             XyzButton* c = new XyzButton;                             // ctor 0x48b1c0, vptr 0x591ee8
             f4cc = c;
-            label_refresh((MissionUi*)c, tstring("char_i_character"));
+            label_refresh(c, tstring("char_i_character"));
             mesh* m2 = g_tableaus.make_mesh_from(&mode, &troop);
             c->set_track(0, m2);
             ui->add_child(c);
