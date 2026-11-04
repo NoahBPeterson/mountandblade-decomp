@@ -111,18 +111,6 @@ struct TextPart {
 // the 0x7c-byte wind track (ctor 0x461480)
 #include "../wind.h"                              // wind (shared with terrain_a/wind.cpp)
 
-// World::tracks (scene_world.h TrackVec) is a std::vector<int>: its push_back's out-of-line _Insert_n is vector<int>::_Insert_n (0x410610,
-// protected: reached through a derived class), not the TrackVec view's
-namespace std { template<> void vector<int, allocator<int> >::_Insert_n(iterator where, size_type n, const int& v); }   // 0x410610
-struct IntVecIns : std::vector<int> { using std::vector<int>::_Insert_n; };
-static void push_track(World::TrackVec& t, int v)
-{
-    if (t.first == 0 || (unsigned)(t.last - t.first) >= (unsigned)(t.end - t.first))
-        ((IntVecIns*)&t)->_Insert_n(IntVecIns::iterator(t.last), 1, v);
-    else
-        *t.last++ = v;
-}
-
 static void push_item(ContainerBase* w, MissionUi* o)
 {
     w->kids.push_back(o);

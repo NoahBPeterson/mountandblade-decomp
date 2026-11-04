@@ -43,6 +43,7 @@ int g_a75eb8;                                               // 0xa75eb8 (.bss) e
 #include "../inventory_panel/mission_ctx_rec.h"          // MissionCtx (0xa73300): init is 0x4be742, entered through 0x4be730
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
+template<> void std::vector<__int64>::resize(size_t, __int64);   // 0x493090 (world_data/world_data.cpp: the out-of-line instance, only declared)
 template<> void std::vector<int>::resize(size_t, int);       // 0x43f310 (agent3/agent_combat.cpp: the out-of-line instance, only declared)
 
 // @ 0x51c5a0
@@ -769,7 +770,7 @@ MB_NOINLINE void I64Vec::read(stream_base* s)
 {
     int n;
     s->r_int(&n);
-    resize((unsigned)n, 0);
+    ((std::vector<__int64>*)this)->resize((unsigned)n, 0);   // 0x493090
     for (int i = 0; i < n; i++)
         s->r_i64(&_Myfirst[i]);
 }

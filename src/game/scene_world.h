@@ -9,6 +9,7 @@
 #ifndef GAME_SCENE_WORLD_H
 #define GAME_SCENE_WORLD_H
 #include "../include/rgl_base.h"
+#include "./std_vec_insert_n.h"
 
 struct Entity;
 struct CellGrid;
@@ -20,20 +21,7 @@ struct World {
     rgl::vector4 color;                                     // +0x68 ambient colour (w = +0x74: the scene alpha)
     Entity* sky;                                            // +0x78 the optional backdrop entity (world::sky; mesh_start.cpp stores the sun here)
     char pad7c[0xb8 - 0x7c];
-    struct TrackVec {                                       // std::vector<wind*> (lead dword, then first / last / end)
-        int lead;                                           // +0x00
-        int* first;                                         // +0x04
-        int* last;                                          // +0x08
-        int* end;                                           // +0x0c
-        void _Insert_n(int* where, unsigned n, const int& val);   // 0x410610
-        void push_back(const int& v)
-        {
-            if (first == 0 || (unsigned)(last - first) >= (unsigned)(end - first))
-                _Insert_n(last, 1, v);
-            else
-                *last++ = v;
-        }
-    } tracks;                                               // +0xb8 (first at +0xbc)
+    std::vector<int> tracks;                                // +0xb8 std::vector<wind*> (first at +0xbc; the four-byte-element _Insert_n 0x410610 is shared)
     char padc8[0x1ac - 0xc8];
     int block[0x48];                                        // +0x1ac the 0x120-byte view block (copy of the terrain page's +0x70)
     char pad2cc[0x344 - 0x2cc];

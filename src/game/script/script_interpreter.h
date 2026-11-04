@@ -268,6 +268,8 @@ __forceinline Pos& script_pos(int i) { return (Pos&)g_script.pos[i]; }
 
 // std::vector<int> (VC7.1: allocator word, then first / last / end)
 #include "../int_vec.h"                 // IntVec (was IntVector here: size() 0x40f010)
+#include <vector>
+template<> size_t std::vector<int, std::allocator<int> >::size() const;     // 0x40f010 (rgl/particles/mesh_obj.cpp: the out-of-line instance; only declared)
 
 // ---- tableaus (object 0xa75f40): vector of 0x68-byte records ----------------------------------------------------
 struct TableauVec {
@@ -275,7 +277,7 @@ struct TableauVec {
     char* first;                        // +4 (warn_tableau 0x49d360)
     char* last;                         // +8
     int padc;
-    IntVec stack;                       // +0x10 tableaus being rendered (cur_tableau_* 0x4aadca: none = no-op)
+    std::vector<int> stack;             // +0x10 tableaus being rendered (cur_tableau_* 0x4aadca: none = no-op)
     int alpha_mask;                     // +0x20 (cur_tableau_render_as_alpha_mask 0x4ab022)
     int size() const { return (last - first) / 0x68; }
     struct Current {                    // the state of the tableau being rendered

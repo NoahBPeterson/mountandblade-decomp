@@ -6,7 +6,7 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_page.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../int_vec.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../std_vec_insert_n.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../terrain_a/terrain.h"      // Terrain, g_terrain
 #include "../config/widget_mgr.h"      // DropDown (append 0x493400)
 #include "./cs_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -208,7 +208,7 @@ void facegen_win::init()
     {
         tstring n("prtcl_drop");
         mesh* m = res_manager().get_object((const rgl::string*)&n)->clone();
-        ((IntVec*)((char*)ent + 0x118))->push_back_mesh((int)m);   // _Insert_n 0x410610
+        ((std::vector<int>*)((char*)ent + 0x118))->push_back((int)m);   // _Insert_n 0x410610
         ent->refresh();
     }
 

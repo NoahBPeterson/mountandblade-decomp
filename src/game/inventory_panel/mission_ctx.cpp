@@ -64,10 +64,8 @@ struct FrameTemp {                                      // init_scene's 0x1c8-by
     FramePlacement out;                                    // +0x50
     char pad90[0x1c8 - 0x90];
 };
-struct IVector {
-    void resize(unsigned n, int v);                     // 0x43f310 (ret 8; std::vector<int>::resize of agent3/agent_combat.cpp)
-};
-struct SceneSub { int dummy; void f(int v, PlacedObj o); };   // 0x4777c0 (ret 0x1cc: the 0x1c8 object by value, then the int)
+template<> void std::vector<int, std::allocator<int> >::resize(size_t, int);   // 0x43f310 (ret 8; agent3/agent_combat.cpp: the out-of-line instance, only declared)
+template<> void std::vector<PlacedObj, std::allocator<PlacedObj> >::resize(size_t, PlacedObj);   // 0x4777c0 (terrain_b/terrain_b.cpp; ret 0x1cc: the 0x1c8 object by value, then the count)
 int save_game(int id, tstring* name);                  // 0x4e8980
 #include "../dialog_mgr.h"                              // DialogMgr g_dialogs (0x8ed50c8)
 
@@ -510,7 +508,7 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
 void MissionV::init_scene()
 {
     *((char*)this + 0x6339) = 0;
-    ((SceneSub*)((char*)this + 0x6688))->f(0, PlacedObj());
+    ((std::vector<PlacedObj>*)((char*)this + 0x6688))->resize(0, PlacedObj());
     MI(this, 0x6528) = *(int*)((char*)g_mission_templates + mode * 0x58 + 0x20);
     *((char*)this + 0x6554) = 0;
     *((char*)this + 0x6555) = 1;
@@ -539,7 +537,7 @@ void MissionV::init_scene()
     *(FramePlacement*)((char*)this + 0x6624) = t.out;
     g_terrain.reset();
     g_sound_mgr.stop_all();
-    ((IVector*)((char*)this + 0x63c0))->resize(0, 0);
+    ((std::vector<int>*)((char*)this + 0x63c0))->resize(0, 0);
     *((char*)this + 0x6668) = 0;
     *((char*)this + 0x6669) = 0;
     MI(this, 0x666c) = 0;

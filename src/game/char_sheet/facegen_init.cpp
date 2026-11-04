@@ -218,7 +218,7 @@ void FaceGen::init()
         wind* wd = (wind*)::operator new(sizeof(wind));
         if (wd)
             wd->init();   // 0x461480
-        push_track(w->tracks, (int)wd);
+        w->tracks.push_back((int)wd);   // _Insert_n 0x410610 (scene_world.h)
         wd->v04.x = 0.1f;
         wd->v04.y = 0.15f;
         wd->v04.z = 0.2f;
@@ -242,7 +242,7 @@ void FaceGen::init()
         wind* wd = (wind*)::operator new(sizeof(wind));
         if (wd)
             wd->init();   // 0x461480
-        push_track(w->tracks, (int)wd);
+        w->tracks.push_back((int)wd);   // _Insert_n 0x410610 (scene_world.h)
         wd->v04.x = 1.0f;
         wd->v04.y = 1.0f;
         wd->v04.z = 1.0f;

@@ -108,7 +108,7 @@ struct BodyVec {
     int alloc; BodyRec* first; BodyRec* last; BodyRec* end;
     unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
 };
-#include "../int_vec.h"
+#include "../std_vec_insert_n.h"      // std::vector<int>::_Insert_n 0x410610 (the entity's mesh list at +0x118)
 
 struct Mesh : Raw {                                          // rgl::mesh, 0x260 bytes
     char b[0x260];
@@ -633,7 +633,7 @@ void Mission::start_setup()
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {
         int mi = (int)sm;
-        sun->at<IntVec>(0x118).push_back_mesh(mi);
+        sun->at<std::vector<int> >(0x118).push_back(mi);
     }
     sun->v4();
     {
@@ -875,7 +875,7 @@ void Mission::start_setup()
         {
             Entity* e2 = at<Entity*>(0x65c0);
             int mi = (int)at<Mesh*>(0x65c4);
-            e2->at<IntVec>(0x118).push_back_mesh(mi);
+            e2->at<std::vector<int> >(0x118).push_back(mi);
             e2->v4();
         }
         {
@@ -893,7 +893,7 @@ void Mission::start_setup()
         {
             Entity* e2 = at<Entity*>(0x65c0);
             int mi = (int)at<Mesh*>(0x65c8);
-            e2->at<IntVec>(0x118).push_back_mesh(mi);
+            e2->at<std::vector<int> >(0x118).push_back(mi);
             e2->v4();
         }
     }
@@ -912,7 +912,7 @@ void Mission::start_setup()
     {
         Entity* e2 = at<Entity*>(0x65d0);
         int mi = (int)at<Mesh*>(0x65d4);
-        e2->at<IntVec>(0x118).push_back_mesh(mi);
+        e2->at<std::vector<int> >(0x118).push_back(mi);
         e2->v4();
     }
     at<Mesh*>(0x65d8) = new Mesh;

@@ -15,17 +15,8 @@ struct IntVec {
     IntVec() { _Myfirst = 0; _Mylast = 0; _Myend = 0; }
     void resize(unsigned n, int v);                         // 0x43f310
     void insert_n(int* where, unsigned count, const int* val);   // 0x43e7b0
-    void _Insert_n(int* where, unsigned n, const int& v);   // 0x410610 (the std::vector<mesh*> instance of _Insert_n: mesh_slot/mesh_start.cpp pushes onto the entity's mesh list at +0x118 through it)
-    void push_back_mesh(const int& v)       // the body mesh_start.cpp 0x484590 inlines for those lists: size and capacity first, the fast store, else _Insert_n
-    {
-        unsigned sz = _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst);
-        unsigned cp = _Myfirst == 0 ? 0 : (unsigned)(_Myend - _Myfirst);
-        if (sz < cp) { *_Mylast = v; ++_Mylast; }
-        else _Insert_n(_Mylast, 1, v);
-    }
     // ---- out-of-line instances and inline helpers of the other modules (same layout: the object is std::vector<int>) ----
     int* fill_ptr(int* f, unsigned n, const int& x);        // 0x438c30 (agent2/agent_stats.cpp: the _Ufill instance; this is unused)
-    unsigned size() const;                  // 0x40f010 (the out-of-line instance the script interpreter calls)
     unsigned count() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }       // widget_text.cpp 0x50d0e0: the inline size
     unsigned capacity() const { return _Myfirst == 0 ? 0 : (unsigned)(_Myend - _Myfirst); }
     void insert_n_49b1c0(int* pos, unsigned n, const int* val);    // 0x49b1c0 (a second instance of insert_n, widget_text.cpp)

@@ -38,7 +38,7 @@ struct tvec2 {
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../map_widget.h"                // MapWidget (0x358 bytes, ctor 0x4ed630): the 3D preview
 #include "../terrain_page.h"              // TerrainPage: the same object (update 0x4f2730, refresh_hex 0x4f2960)
-#include "../int_vec.h"                   // IntVec (the entity's mesh list at +0x118: _Insert_n 0x410610)
+#include "../std_vec_insert_n.h"           // the entity's mesh list at +0x118: _Insert_n 0x410610
 #include "../ui_globals.h"      // UI / core globals
 
 // a container widget's children vector (ContainerBase::kids), pushed onto as the original inlines it

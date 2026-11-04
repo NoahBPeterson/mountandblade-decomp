@@ -2710,7 +2710,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         {
             int n = 0;
             if (check_party((int)params[1]))
-                n = ((IntVec&)party((int)params[1])->attached).size();
+                n = ((std::vector<int>&)party((int)params[1])->attached).size();
             SET_LV((__int64)n);
         }
         break;
@@ -2721,9 +2721,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (check_party((int)params[1])) {
                 PartyMgr* pm = &game()->parties;
                 int p = (int)params[1];
-                unsigned n = ((IntVec&)((PartyV*)pm->get(p))->attached).size();
+                unsigned n = ((std::vector<int>&)((PartyV*)pm->get(p))->attached).size();
                 if (params[2] < (__int64)n)
-                    v = ((IntVec&)((PartyV*)pm->get(p))->attached)._Myfirst[(int)params[2]];
+                    v = ((std::vector<int>&)((PartyV*)pm->get(p))->attached)[(int)params[2]];
             }
             SET_LV((__int64)v);
         }
