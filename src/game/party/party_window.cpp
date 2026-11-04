@@ -218,21 +218,8 @@ char PartyPanel::key(unsigned mask)
     return r;
 }
 
-// @ 0x5021f0
-// The container's destroying destructor as the party window's object holds it (the slot 0 of PartyPanel's table 0x599bf8 and of
-// text_box's 0x597050): the vector is freed through the pointer vector's out-of-line clear 0x41f4b0. PartyPanel stores the
-// original's table by hand (party_window.h), so this stays a function of its own.
-void* ContainerBase::destroy(unsigned flags)
-{
-    *(void**)this = (void*)vtbl_5924a0;
-    ContainerBase::update_children();
-    ((vec<mface>*)&kids)->clear();               // 0x41f4b0
-    ((WidgetDtor*)this)->base_dtor();
-    if (flags & 1)
-        ::operator delete(this);
-    return this;
-}
-
+// @ 0x5021f0 ??_GPartyPanel is the compiler's deleting destructor of PartyPanel (implicit; text_box's, slot 0 of 0x597050, is the
+// same code folded by ICF). Parked, see party_window.nonmatching.txt.
 // @ 0x502230
 MissionUi* PartyWindow::make_slot(ItemRef* slot)
 {

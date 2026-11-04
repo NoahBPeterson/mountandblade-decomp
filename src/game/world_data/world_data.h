@@ -91,10 +91,6 @@ struct EntVt {                                                  // vtable view o
 };
 
 // the container widget is ui/container.h's ContainerBase (its members are defined below, in world_data.cpp)
-// (view of the constructor body, kept for the sources that still build a container by calling it: 0x4931a0)
-struct ContainerW {
-    void* construct();                                          // 0x4931a0 (new (this) ContainerBase)
-};
 
 inline int& troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }   // +0x54 second upgrade troop (0x494e40)
 
@@ -232,7 +228,6 @@ struct IntVecW {                                                // std::vector<i
 struct RecPoly { virtual ~RecPoly(); };                         // a scene record (game_data.h Level494 behind a vtable): virtual destructor in slot 0
 
 typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
-extern char vtbl_5924a0[];                                     // 0x5924a0
 
 struct PtrStack14 {                                             // an object with a pointer vector (no allocator word) at +0x14
     char pad0[0x14];

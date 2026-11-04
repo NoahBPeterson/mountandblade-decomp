@@ -29,7 +29,6 @@
 ../src/game/cls_map/cls_map.cpp  ?new_medium_button@@YAPAUUiA@@PAUMissionUi@@PBUtstring@@MMM@Z  004dce70  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?scan_saves@@YAXHPAH0PBD@Z  004dd6e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?save_path@@YAXPAD@Z  004dd7b0  /O2 /MT /Gy /TP
-../src/game/cls_map/cls_map.cpp  ?init@BlockOwner@@QAEXPAUContainerBase@@H@Z  004dd920  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?activate@BlockOwner@@QAEXXZ  004dd9e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?copy_slots@OptionsMenu@@QAEXXZ  004e2cb0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?msg_proc_thunk@@YGHPAUHWND__@@IIJ@Z  004d9440  /O2 /MT /Gy /TP

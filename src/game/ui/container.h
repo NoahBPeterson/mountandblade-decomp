@@ -15,9 +15,8 @@
 
 struct ContainerBase : MissionUi {
     std::vector<MissionUi*> kids;               // +0x178 the child widgets (allocator word, first +0x17c, last +0x180, end +0x184)
-    ContainerBase() {}                          // 0x4931a0
+    ContainerBase();                            // 0x4931a0 (world_data.cpp)
     ~ContainerBase();                           // 0x490520 (the deleting destructor of this class is 0x490930)
-    void* destroy(unsigned flags);              // 0x5021f0, another destroying destructor of the class (party/party_window.cpp)
     virtual void animate(int p);                // +0x08 0x4908c0
     virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x490710 (ret 0x10)
     virtual void clear_c8();                    // +0x40 0x4906e0

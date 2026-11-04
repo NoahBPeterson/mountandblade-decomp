@@ -1145,11 +1145,9 @@ template void std::vector<__int64>::resize(size_t, __int64);
 template void std::deque<int>::push_back(const int&);
 
 // ==== 0x4931a0 .. 0x493400: the container / list panels =================================================================
-// the constructor body as the sources that build a container by hand call it (returns this)
-void* ContainerW::construct()
+// @ 0x4931a0
+ContainerBase::ContainerBase()
 {
-    new (this) ContainerBase;
-    return this;
 }
 
 // @ 0x4931d0
