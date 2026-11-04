@@ -218,13 +218,14 @@ bool EditMesh::add_triangle(int* tri)
     float d1x = vat(c.verts, tri[2]).pos.x - vat(c.verts, tri[0]).pos.x;
     float d1y = vat(c.verts, tri[2]).pos.y - vat(c.verts, tri[0]).pos.y;
     float d1z = vat(c.verts, tri[2]).pos.z - vat(c.verts, tri[0]).pos.z;
-    volatile float d2x = vat(c.verts, tri[1]).pos.x - vat(c.verts, tri[0]).pos.x;     // the original spills these three
-    volatile float d2y = vat(c.verts, tri[1]).pos.y - vat(c.verts, tri[0]).pos.y;     // and the first two cross
-    volatile float d2z = vat(c.verts, tri[1]).pos.z - vat(c.verts, tri[0]).pos.z;     // components as floats (rounded),
-    volatile float cx = d2y * d1z - d2z * d1y;                                        // while d1 and cz stay in x87 registers
-    volatile float cy = d2z * d1x - d2x * d1z;
-    float cz = d2x * d1y - d2y * d1x;
-    if (cz * nrm.z + cy * nrm.y + cx * nrm.x < 0.0f) {     // faces away from the neighbours' normal
+    Vec4 d2(vat(c.verts, tri[1]).pos.x - vat(c.verts, tri[0]).pos.x,       // vector locals live in memory as floats
+            vat(c.verts, tri[1]).pos.y - vat(c.verts, tri[0]).pos.y,
+            vat(c.verts, tri[1]).pos.z - vat(c.verts, tri[0]).pos.z);
+    Vec4 cr;
+    cr.x = d2.y * d1z - d2.z * d1y;
+    cr.y = d2.z * d1x - d2.x * d1z;
+    float cz = d2.x * d1y - d2.y * d1x;
+    if (cz * nrm.z + cr.y * nrm.y + cr.x * nrm.x < 0.0f) {     // faces away from the neighbours' normal
         int t = tri[0];
         tri[0] = tri[2];
         tri[2] = t;
@@ -346,10 +347,10 @@ bool EditMesh::split_marked_edge()
     int split = (int)c.edges.size();        // index the copy of the marked edge will get
     MVert v;
     v.flag = 0;
-    volatile float zsum = vat(c.verts, vat(c.edges, mark).v0).pos.z + vat(c.verts, vat(c.edges, mark).v1).pos.z;
     v.pos = vector4((vat(c.verts, vat(c.edges, mark).v0).pos.x + vat(c.verts, vat(c.edges, mark).v1).pos.x) * 0.5f,
                     (vat(c.verts, vat(c.edges, mark).v0).pos.y + vat(c.verts, vat(c.edges, mark).v1).pos.y) * 0.5f,
-                    zsum * 0.5f);
+                    vat(c.verts, vat(c.edges, mark).v0).pos.z + vat(c.verts, vat(c.edges, mark).v1).pos.z);
+    v.pos.z *= 0.5f;                        // the z sum is stored as a float first, then halved in place
     NewEdge ne(vat(c.edges, mark).v0, (int)c.verts.size());
     ne.flag = 1;
     c.edges.push_back(ne);

@@ -17,9 +17,8 @@ void CampaignScreen::camera_update(float dt)
 {
     // --- pan: the stick and yaw rates are integrated at 10x ---------------------------------------
     // the original shares dt*10 and spills the y increment as a float before adding it (x87 register pressure);
-    // the volatile temporary keeps that rounding, which an in-register sum does not
     float r = dt * 10.0f;
-    volatile float ry = r * f2c0;
+    float ry = r * f2c0;
     target.x = r * f2bc + target.x;
     target.y = ry + target.y;
     f2b0 = dt * f2c4 * 10.0f + f2b0;        // a literal: with the 0x549d74 global cl evaluates (10 * f2c4) * dt

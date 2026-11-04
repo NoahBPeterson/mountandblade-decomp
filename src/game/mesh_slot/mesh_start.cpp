@@ -319,7 +319,7 @@ void Mission::start_setup()
     int pid = RAWAT(int, g_game, 0x78);
     Party* pa = party_rec(pm, pid);
     ptype = RAWAT(int, party_rec(pm, pid), 0x5978);
-    volatile float temp[16];
+    float temp[16];
     temp[0] = 0.0f; temp[1] = 0.0f; temp[2] = 0.0f; temp[3] = 0.0f;
     temp[4] = 0.0f; temp[5] = 0.0f; temp[6] = 0.0f; temp[7] = 0.0f;
     temp[8] = 0.0f; temp[9] = 0.0f; temp[10] = 0.0f; temp[11] = 0.0f;
@@ -415,7 +415,7 @@ void Mission::start_setup()
             at<float>(0x6614) = amt * 0.00150000001f + at<float>(0x6614);
             if (at<int>(0x6604) == 2) {
                 at<float>(0x6610) = ff * 0.5f;
-                at<float>(0x6614) = *(volatile float*)&at<float>(0x6614) * 1.5f + amt * 0.00374999992f;
+                at<float>(0x6614) = at<float>(0x6614) * 1.5f + amt * 0.00374999992f;
             }
         }
     }

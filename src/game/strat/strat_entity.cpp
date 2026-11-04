@@ -358,8 +358,8 @@ void StratEnt::create_shadow_mesh(mesh** slot, char flag)
             double rx = p.x - fr.o.x;
             double ry = p.y - fr.o.y;
             double rz = p.z - fr.o.z;
-            volatile float ur = (float)(fr.s.x * rx + (fr.s.y * ry + fr.s.z * rz));
-            volatile float vr = (float)(fr.f.y * ry + (fr.f.x * rx + fr.f.z * rz));
+            float ur = (float)(fr.s.x * rx + (fr.s.y * ry + fr.s.z * rz));
+            float vr = (float)(fr.f.y * ry + (fr.f.x * rx + fr.f.z * rz));
             u = ur * ik;
             v = vr * ik;
             if (!flag) {

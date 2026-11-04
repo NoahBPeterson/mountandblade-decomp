@@ -51,7 +51,6 @@ extern MsgLog g_gui;                    // 0x5d7080
 #include "../../include/clock_table.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../../rgl/text_stream.h"
-extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 // ---- data this module owns (docs/standalone_data.md) ----
 
@@ -2042,7 +2041,6 @@ __int64 Elem::get_operand(__int64* locals, int* i, int* type)
     if (kind == 1) {
         if (p >= 0 && p < 0x80) {
             unsigned lo = g_script.reg_half[p].lo;
-            _ReadWriteBarrier();
             int hi = g_script.reg_half[p].hi;
             return (__int64)lo | ((__int64)hi << 32);
         }

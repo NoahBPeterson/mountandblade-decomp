@@ -14,7 +14,7 @@
 00472160  643  Mission::replace_mark: complete (762 vs 763 bytes). [equiv: WEAK, no mismatch, 172 valid, 11/14 edges]
 00472f90  1087  MAgent::reset (the slices called the class Agent/RecZ): complete (1500 vs 1482 bytes). [equiv: PASS, 400 valid, all edges]
 00473a60  1935  Mission::pick_spawn: complete (2200 vs 2174 bytes). [equiv: WEAK, no mismatch, 94/136 edges]
-00474e60  1699  Mission::update_team_stats: complete (2905 vs 2861 bytes). [equiv: WEAK, no mismatch, 163/172 edges]
+00474e60  2432  Mission::update_team_stats: complete (2905 vs 2861 bytes). [equiv: WEAK, no mismatch, 163/172 edges] [the former volatile tx is a vector4 temporary (d * s): equiv WEAK, 244 compared bit-identical, no mismatch]
 00475e50  26  ViewState::ViewState: complete; small diff, register allocation/scheduling not analysed. [equiv: PASS, 400 valid]
 004779b0  6  mesh_flip::flip_faces: complete; small diff, register allocation/scheduling not analysed. [equiv: PASS, 300 valid, all edges]
 00477a30  32  MAgent::MAgent: complete; small diff, register allocation/scheduling not analysed (the class is MAgent, not Agent: the other slices use ??_7Agent@@6B@ for the 0x590b84 PlacedObj vtable). [equiv: PASS, 400 valid]

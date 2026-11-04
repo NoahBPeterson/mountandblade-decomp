@@ -238,10 +238,10 @@ void ContainerBase::on_child_moved(MissionUi* p)
 {
     char* e = (char*)p;
     float n[2];
-    volatile float* ep = (volatile float*)(e + 0xe8);
-    n[0] = ep[0] + *(float*)((char*)this + 0xe0);
+    float* ep = (float*)(e + 0xe8);
+    n[0] = *(float*)((char*)this + 0xe0) + ep[0];
     *(int*)(e + 0xe0) = *(int*)&n[0];
-    n[1] = ep[1] + *(float*)((char*)this + 0xe4);
+    n[1] = *(float*)((char*)this + 0xe4) + ep[1];
     *(int*)(e + 0xe4) = *(int*)&n[1];
     p->on_moved();
     if (f104 & 0x100) {

@@ -1993,10 +1993,10 @@ void Mission::update_team_stats()
                                 if (len < 2.0f) len = 2.0f;
                                 else if (len > 400.0f) len = 400.0f;
                                 float s = 1.0f / len;
-                                volatile float tx = d.x * s;   // original spills this term to a
-                                v.x = v.x + tx;                // float slot, rounding it before the add
-                                v.y = v.y + d.y * s;
-                                v.z = v.z + d.z * s;
+                                vector4 sd = d * s;            // the scaled direction is a vector4 temporary (float slots, rounded)
+                                v.x = v.x + sd.x;
+                                v.y = v.y + sd.y;
+                                v.z = v.z + sd.z;
                             }
                         }
                         agent_pool(this).next_used(&i4);
