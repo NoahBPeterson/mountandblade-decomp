@@ -10,7 +10,6 @@
 // ---- binary stream: the shared stream_base (slots used: 13..21 read, 0..12 write)
 #include "../rgl/stream.h"
 
-void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 
 #include "./str_table.h"
 
@@ -24,5 +23,6 @@ void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 #include "../include/dialog_rec.h"
 
 #include "./dialog_mgr.h"                                    // DlgLine, DialogMgr (g_dialogs 0x8ed50c8)
+#include "../rgl/text_stream.h"
 
 #endif // GAME_DIALOG_MANAGER_H

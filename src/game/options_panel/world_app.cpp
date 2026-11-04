@@ -45,6 +45,7 @@ extern tstring g_module_path_copy;                                   // 0xa75e8c
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
 #include "./elem_calls.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/skinmagic.h"
 struct scalar4 { int v; };                          // e68.h: the 4-byte element of the hash bucket vector
 namespace std {
 template<> E176* _Copy_opt<E176*, E176*>(E176*, E176*, E176*, _Nonscalar_ptr_iterator_tag);   // 0x4cd620
@@ -601,7 +602,6 @@ long __cdecl    get_latest_version();                          // 0x4b9aa0
 void __fastcall unescape(tstring* s);                  // 0x4bac70
 void __cdecl    open_keys_key(HKEY* out);                         // 0x4b96d0
 void __cdecl    keys_write_value(HKEY* key, const char* name, const tstring* val);   // 0x4beb80
-int __stdcall   SkinDialog(HWND h, const char* s);       // 0x535446 (SkinMagic SetSingleDialogSkin: stdcall, the callers do not pop)
 
 #define STRTAB (&g_strtable)
 #define UI(s) STRTAB->lookup(tstring(s))
@@ -622,7 +622,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     }
     case 0x110: {                                           // WM_INITDIALOG
         hwnd = h;
-        SkinDialog(h, "MainFrame");
+        SetSingleDialogSkin(h, "MainFrame");
         ((ConfigDialog*)(void*)this)->init();
         if (f38c == 0) {
             ShowWindow(GetDlgItem(hwnd, 0x410), 0);

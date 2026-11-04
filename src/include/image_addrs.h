@@ -5,6 +5,7 @@
 #ifndef IMAGE_ADDRS_H
 #define IMAGE_ADDRS_H
 #include "render_flags.h"
+#include "../game/trial_mode.h"
 
 struct AnimDefV;
 struct Config;
@@ -26,7 +27,6 @@ struct renderer;
 struct resmgr;
 
 namespace orig {
-extern const float g_one;                  // 0x549cdc
 extern const float g_zero;                 // 0x549ca8
 extern const float k_0_9f;                 // 0x549d6c
 extern const float g_half;                 // 0x549d70
@@ -46,7 +46,6 @@ extern const float k_0_05f;                // 0x54b4d0
 extern const float k_1_1f;                 // 0x54b888
 extern const float k_0_03f;                // 0x54b8b4
 extern const float k_9_8f;                 // 0x590af0
-extern const float k_0_65f;                // 0x590b6c
 extern const float k_300f;                 // 0x590b20
 extern const float k_400f;                 // 0x590b58
 extern const float k_250f;                 // 0x590b60
@@ -118,13 +117,11 @@ extern Config g_launcher_cfg;              // 0x5aa0a8
 extern resmgr g_resmgr_obj;                    // 0x5d6fa0
 extern gui_manager g_gui_mgr;                  // 0x5d7080
 extern ptype* g_ptypes;                    // 0x5e28f8
-extern int g_use_shaders;                  // 0x5e28fc
 extern MapFlags g_map_flags;               // 0x5e291c
 extern Mission* g_mission;                 // 0x5e292c
 extern ItemKind* g_items;                  // 0x5e29d0
 extern int g_item_kind_count;              // 0x5e29d4
 extern MapFlags g_map_flags;               // 0x5e291c
-extern int g_trial_mode;                   // 0x5e29c4
 extern int g_propkind_count;               // 0x5e29e0
 extern StrTable g_strtable;                // 0x5e2a18
 

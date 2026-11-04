@@ -102,7 +102,7 @@ def annotations():
 
 def classify(mangled, pretty, ann, defined):
     n = mangled
-    if "Newton" in n[:16] or "FSOUND_" in n or "FMUSIC_" in n or "SkinMagic" in n:
+    if "Newton" in n[:16] or "FSOUND_" in n or "FMUSIC_" in n or "SkinMagic" in n or n.startswith(("_LoadSkinFile@", "_SetSingleDialogSkin@")):
         return "third-party"
     q = S.demangle_qual(n) if n.startswith("?") else n.lstrip("_").split("@")[0]
     base = (q or n).split("::")[-1]

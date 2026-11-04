@@ -22,7 +22,7 @@ struct WindowMgrW { void open(int n); };
 // ---- the skill table: 42 records of 0x44 bytes, name (tstring) first (0x8ee3110 .. 0x8ee3c38) ----
 #include "../skill_cap.h"
 #include "../game_globals.h"                   // g_level_xp (0x5937c8)
-void mb_snprintf(char* buf, unsigned int n, const char* fmt, ...);  // 0x415100
+#include "../../rgl/text_stream.h"
 // 0x432510: clamp *v into [*lo, *hi) and return it.
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);
 

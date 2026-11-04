@@ -35,6 +35,7 @@
 
 // 0x43a1e0 is StrTable::lookup (agent2/agent_stats.cpp), which takes its key by reference: the one class, game/str_table.h
 #include "../str_table.h"
+#include "../../rgl/text_stream.h"
 #define g_strtable_c g_strtable
 struct Map10007 {
     int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party pool, ret 4)
@@ -283,7 +284,6 @@ struct BlockOwner {
 UiA* build_row(ContainerBase* parent, const tstring* key, float x, float y, float w, float h);   // 0x4dd830
 __declspec(noinline) UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
-void mb_snprintf(char* dest, unsigned size, const char* fmt, ...);   // 0x415100
 void scan_saves(int ids, int* count, int* first, const char* prefix);   // 0x4dd6e0
 void save_path(char* out);                                              // 0x4dd7b0
 

@@ -20,7 +20,7 @@ using namespace rgl;
 #define vat rgl::vat
 
 int rand();                            // 0x536a9f rand()
-void seed_rng(unsigned s);              // 0x536a92 srand
+#include <stdlib.h>   // srand (0x536a92)
 extern unsigned __int64 g_bit[]; // 0x5a8e68
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 
@@ -405,7 +405,7 @@ void Terrain::generate(int seed, int* objs, char flag)
 
     unsigned cell = (flags14 & ((*(int*)((char*)&g_bit + 0x10)) - 1)) + 2;
     scale = (float)cell;
-    seed_rng(*(int*)this & ((*(int*)((char*)&g_bit + 0xf8)) - 1) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
+    srand(*(int*)this & ((*(int*)((char*)&g_bit + 0xf8)) - 1) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
     flag843bd75 = (char)((char)((*(int*)((char*)&g_bit + 0x8)) - 1) & (char)((unsigned)hword >> 31)) != 0;
     wx = (float)(unsigned)(hword & ((*(int*)((char*)&g_bit + 0x50)) - 1));                 // height band -> map extent
     wy = (float)(unsigned)(((unsigned)hword >> 10) & ((*(int*)((char*)&g_bit + 0x50)) - 1));
@@ -451,7 +451,7 @@ void Terrain::generate(int seed, int* objs, char flag)
     }
 
     generate_heights();
-    seed_rng(*(int*)((char*)this + 4) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
+    srand(*(int*)((char*)this + 4) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
 
     ((Terrain*)this)->make_river();
     ((Terrain*)this)->smooth_heights();
@@ -468,7 +468,7 @@ void Terrain::generate(int seed, int* objs, char flag)
             fill_desc_none((TerrainDesc*)objs);
     }
 
-    seed_rng(*(int*)((char*)this + 8) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
+    srand(*(int*)((char*)this + 8) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
 
     off_b[0] = (float)(rand() % 0x3dc9) * 0.063223116f;
     off_b[1] = (float)(rand() % 0x3dc9) * 0.063223116f;

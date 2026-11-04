@@ -28,7 +28,6 @@
 using rgl::vector4;
 
 // ---- engine entry points the slices declared (see mesh2_common.h for the allocator) -----------------------------
-__declspec(noreturn) void __stdcall __CxxThrowException(void* p, void* t);   // 0x5368e6
 void __stdcall mb_error_fmt(const char* fmt, ...);
 
 // ============================================================================================================

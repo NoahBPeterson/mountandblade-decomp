@@ -35,6 +35,8 @@ SDK_LIBS = [os.path.join(TC, "vc71tk", "lib"), os.path.join(TC, "vc9sp1", "WinSD
             os.path.join(ROOT, "work", "ext", "dxsdk_jun10", "DXSDK", "Lib", "x86")]
 OWN_IMPORTS = ("newton", "fmod", "skinmagic", "d3dx9_31")
 DLL_FILES = {"newton": "Newton.dll", "fmod": "fmod.dll", "skinmagic": "SkinMagic.dll", "d3dx9_31": "d3dx9_31.dll"}
+# argument bytes of the SkinMagic entry points the game calls (all stdcall; the DLL exports them undecorated)
+SKINMAGIC_ARGS = {"InitSkinMagicLib": 16, "ExitSkinMagicLib": 0, "LoadSkinFile": 4, "SetSingleDialogSkin": 8}
 
 RDATA = (".rdata$mb", 0x549000, 0x5a7d72)
 # The original's .data is one section: initialised bytes, then .bss from 0x5d7000. The linker places our copies of
@@ -323,6 +325,8 @@ def make_import_libs(img, out_dir, needed):
             elif dll == "skinmagic":
                 k = int(n[3:])
                 en = exports.get(k) or ("SkinMagic_ord%d" % k)
+                if en in SKINMAGIC_ARGS:                  # stdcall: the symbol is _Name@N, imported by ordinal
+                    en = "%s@%d" % (en, SKINMAGIC_ARGS[en])
                 lines.append("%s @%d NONAME" % (en, k))
                 decorated[dll + "!" + n] = "_" + en
             elif dll == "d3dx9_31":                    # stdcall, exported undecorated: _X@N imports "X"
@@ -458,7 +462,8 @@ def main():
         if va in iat_of:
             t = import_symbol(iat_of[va], True)
             if t:
-                aliases[s] = t
+                if t != s:          # the import library defines the name the code uses: nothing to alias
+                    aliases[s] = t
             else:
                 report["unresolved"][s] = "import %s with no library symbol" % iat_of[va]
             continue

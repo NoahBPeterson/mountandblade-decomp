@@ -40,6 +40,7 @@ struct OptionsDlg {
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+#include "../../include/skinmagic.h"
 struct Presentation;
 extern Presentation* g_presentation;                        // 0x5e299c
 
@@ -56,8 +57,6 @@ float g_5a9f28[2] = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} c
 
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
-extern "C" void __stdcall SkinMagic_Init(HINSTANCE, const char*, int, int);   // 0x535452 (ordinal 1)
-extern "C" void __stdcall SkinMagic_Load(const char*);                        // 0x53544c (ordinal 3)
 
 // ---- 0x4d92c0: the glyph hash table's operator[] ------------------------------------------------------------------
 // 0x43b210 is stdext::hash_map<int, HashVal>::lower_bound (agent2/agent_ai.cpp), shared by every int-keyed hash map (folded): the glyph table
@@ -118,7 +117,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }   // destroyed here, once (0x4d94dd); an explicit ~tstring() plus the scope exit freed the buffer twice
 
     LoadLibraryA("riched20.dll");
-    SkinMagic_Init(hInstance, "SCRIBBLE", 0, 0);
+    InitSkinMagicLib(hInstance, "SCRIBBLE", 0, 0);
 
     char skin_path[0x104];
     sprintf(skin_path, ".\\Skins\\mb_skin_%s.smf",
@@ -133,7 +132,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         FindClose(hfind);
         chosen = skin_path;
     }
-    SkinMagic_Load(chosen);
+    LoadSkinFile(chosen);
 
     WL_MARKER(12)
     int r = g_app_obj.init_d3d();
@@ -562,7 +561,6 @@ struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<i
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
 
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
-void crt_exit();                                        // 0x535458
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 #include "../menu_rec.h"           // MenuRec* g_menus (0x5e29b0)
 #include "../prop_kind.h"         // PropKind* g_propkinds (0x5e29dc)
@@ -633,7 +631,7 @@ int shutdown()
         f->map.head = 0;
         operator delete(f);
     }
-    crt_exit();
+    ExitSkinMagicLib();
     if (g_log_flag95) {
         if (g_log.flush() == 0)
             fclose(g_log_file);

@@ -51,7 +51,6 @@ typedef MissionUi Control;
 #include "../str_table.h"
 #include "../../include/msg_log.h"
 extern MsgLog g_msglog;                                         // 0x5d7080
-void mb_snprintf(char* out, unsigned size, const char* fmt, ...);  // 0x415100
 void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
 
@@ -63,6 +62,7 @@ extern char g_main_menu_obj[];                                  // 0xa73980
 #include "../main_menu.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../game_globals.h"      // canonical global declarations (g_module_name ...)
+#include "../../rgl/text_stream.h"
 struct GameData;
 extern GameData* g_game;                                    // 0x5e2930
 #define g_main_menu (*(main_menu*)g_main_menu_obj)

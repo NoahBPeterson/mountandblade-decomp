@@ -24,7 +24,6 @@ bool print_and_remove(const char* path);                // 0x539023
 int  rename_file(char* from, const char* to);           // 0x538ff5
 extern "C" void __cdecl crt_free(void* p);              // 0x537168
 extern "C" int _fltused = 0;
-void mb_snprintf(char* out, unsigned size, const char* fmt, ...);   // 0x415100
 void save_path(char* buf);                               // 0x4dd7b0
 int  open_write(void* stream, char* path);         // 0x415320
 
@@ -72,6 +71,7 @@ struct SaveCtx {
 // ---- the map screen -------------------------------------------------------------------------------------
 struct MapScreen;
 #include "../mission_source.h"
+#include "../../rgl/text_stream.h"
 struct MapMesh {
     char build(void* grid, int mode);                   // 0x4785e0 (ret 8)
     void polygon_to_mesh(int v);                                     // 0x4e75a0 (ret 4)

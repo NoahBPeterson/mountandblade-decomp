@@ -13,7 +13,6 @@
 #include <string.h>
 #include "../../rgl/rgl_math.h"
 
-extern "C" void __cdecl mb_snprintf(char*, unsigned, const char*, ...);    // 0x415100
 
 // ---- a tstring as stored in the record tables (ctor 0x42bbe0) ----------------------------------------
 #include "../tstring.h"
@@ -51,6 +50,7 @@ static const char* str_text(const tstring& key)
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../skill_cap.h"
+#include "../../rgl/text_stream.h"
 
 // 0x4f04f0: the proficiency group name of proficiency idx into buf (another slice)
 void weapon_class_caption(int idx, char* buf);           // 0x4f04f0

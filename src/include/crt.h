@@ -17,8 +17,6 @@ void __cdecl operator delete(void* p);                // 0x535712
 extern "C" int __cdecl _snprintf(char* buf, size_t count, const char* fmt, ...);   // 0x535717
 // card: __ftol2; the cdecl float round_top spelling is the same helper;
 extern "C" int __stdcall ftol2(double d);                      // 0x535a64
-// card: lib_crt::__CxxThrowException@8 -> C name _CxxThrowException;
-extern "C" __declspec(noreturn) void __stdcall __CxxThrowException(void* obj, void* info);   // 0x5368e6
 // card: lib_crt::rand; header src/include/crt.h is new (CRT/operator declarations are not de
 extern "C" int __cdecl rand(void);                             // 0x536a9f
 // card: floor (x87, 289 bytes);

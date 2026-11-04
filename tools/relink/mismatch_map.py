@@ -105,7 +105,7 @@ def main():
     srcs = {os.path.basename(p)[:-4]: p for p in glob.glob(os.path.join(ROOT, "src", "**", "*.cpp"), recursive=True)}
     rows = []
     for sym, callers in sorted(refs.items()):
-        if "Newton" in sym[:16] or "FSOUND_" in sym or "SkinMagic" in sym:
+        if "Newton" in sym[:16] or "FSOUND_" in sym or "SkinMagic" in sym or sym.startswith(("_LoadSkinFile@", "_SetSingleDialogSkin@")):
             continue
         q = S.demangle_qual(sym) if sym.startswith("?") else sym.lstrip("_").split("@")[0]
         base = (q or sym).split("::")[-1]

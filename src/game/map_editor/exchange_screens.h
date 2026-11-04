@@ -33,6 +33,7 @@
 #include "../party_x.h"                   // PartyX : Party: the one definition (map_editor and script)
 #include "../key_names.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../trial_mode.h"
 
 struct PartyMgrX : PartyMgr {};
 // the party-by-id getter 0x51ee50 (Scene::get(int), ret 4) and the other canonical classes the exchange screens call
@@ -176,7 +177,6 @@ struct SourceScreen : ScreenBase {          // vtables 0x5961f0 / 0x596214: +0x3
 
 
 
-extern int g_trial_mode;                    // 0x5e29c4
 extern int g_a735c4;                        // 0xa735c4
 
 extern int g_a7333c;                        // 0xa7333c

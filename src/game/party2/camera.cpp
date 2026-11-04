@@ -46,6 +46,7 @@
 #include "../animator.h"
 #include "../../include/clock_table.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
+#include "../../rgl/text_stream.h"
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 // ---- data this module owns (docs/standalone_data.md) ----
@@ -408,7 +409,6 @@ struct TickPair {                                   // g_ticks[i].lo + g_ticks[i
 };
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);        // 0x536f8f
-void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);  // 0x415100
 
 // ---- scene objects -------------------------------------------------------------------------------
 struct Shape { virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
@@ -1143,7 +1143,6 @@ using rgl::vector4;
 inline void identity_pos(float* m) { ::identity_pos((::pos*)m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
-extern const float g_549cdc;                    // 0x549cdc  1.0f
 extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
 extern const float g_590cd0;                    // 0x590cd0  0.02f
@@ -2108,7 +2107,6 @@ void Mission::exec_trigger(int val)
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/msg_log.h"
 extern MsgLog g_gui;                             // 0x5d7080 (MsgLog::add 0x452c00, thiscall, ret 0x14)
-void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);  // 0x415100
 
 // ---- shared log tail of 0x49b720 / 0x49b820 (inlined in both; the source of the original
 // likely had a static helper, but cl 13.10 inlines it at /O2 regardless of `noinline`) ----------

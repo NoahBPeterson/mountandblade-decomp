@@ -214,7 +214,7 @@ void Recf0::scale_3(float)
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
         float gamma = W(ui_scale)->get168();
         g_options.scale_x = gamma;
-        float inv = orig::g_one / gamma;
+        float inv = g_one / gamma;
         vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
         vi.x = vi.y = vi.z = vi.w = inv;
