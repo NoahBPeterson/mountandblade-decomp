@@ -6,7 +6,6 @@
 //       setter and the wind object. Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <stdlib.h>
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
 #include "./common.h"
 #include "./wind.h"
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -73,8 +72,8 @@ unsigned pack_signed_color(const float* c)
 // @ 0x461420
 void set_clock_step(int* clock, float step)
 {
-    g_ticks_dt[*clock] = (__int64)(step * 100000.0f);
-    g_ticks[*clock] += g_ticks_dt[*clock];
+    g_tick_dt[*clock] = (__int64)(step * 100000.0f);
+    g_ticks[*clock] += g_tick_dt[*clock];
     g_step_tbl[*clock] = step;
 }
 

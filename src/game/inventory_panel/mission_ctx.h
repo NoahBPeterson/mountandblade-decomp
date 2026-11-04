@@ -7,7 +7,6 @@
 #define GAME_INVENTORY_PANEL_MISSION_CTX_H
 #include "./inv_common.h"
 #include "../mission.h"
-#include "../meta_mission.h"                           // MetaMission: the object at 0xa73300 that g_mission_ctx views (init 0x4be742)
 #include "../main_menu.h"
 
 // a menu screen object: vtable (slot 4 = +0x10), state at +0x04, "highlight" counter at +0x18 (0x513710, 0x514d40)
@@ -66,7 +65,6 @@ struct Team {                                           // the team record seen 
 // the mission start-up object (global g_mission_ctx, 0xa73300): the one definition is mission_ctx_rec.h (no includes), so that
 // modules whose local views clash with inv_common.h can use the same class
 #include "./mission_ctx_rec.h"
-__forceinline void MissionCtx::select_side(int side) { ((BattleW*)this)->select_side(side); }   // 0x492750 (ret 4)
 
 struct rot2 { float m[4]; void rotate_2x2(float angle); };  // 0x4f3b40 (game/char_sheet/terrain_page_input: thiscall, ret 4)
 // a 2x2 matrix (0x516220)

@@ -63,7 +63,6 @@ struct MissionW {                                                            // 
     unsigned find_agent_by_troop(int troop);                                // 0x4921b0
     void add_wind_effect(int a1, int a2);                                   // 0x4952f0
 };
-struct BattleW { void select_side(int side); };                              // 0x492750 (world_data.cpp)
 struct WindowMgrW { void open(int window); void set_state(int state); };     // 0x494260 / 0x495700 (world_data.cpp)
 struct Mission3 {                                                            // terrain_a/misc.cpp
     void add_amount(int idx, unsigned flags);                               // 0x4677a0
@@ -323,8 +322,6 @@ int __fastcall trigger_mesh_obj(int context);                              // 0x
 
 
 
-extern int g_music_situation;           // 0xa73a10 (music_set_situation 0x4a174a)
-extern int g_music_culture;             // 0xa75e58 (music_set_culture 0x4a1755)
 // the scene entity of the object a trigger runs for (scene prop / agent triggers; 0 otherwise); +0x88 is its position
 int __fastcall trigger_entity(int context);                     // 0x490430
 
@@ -650,12 +647,7 @@ __forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
 
 extern int g_siege_attack;              // 0xa73438 (store_defender_count 0x4ae36e)
 
-struct MissionUiX {
-    char pad0[0x2c4];
-    int passage_menu;                    // +0x2c4 (set_passage_menu 0x4a55f3)
-    __forceinline void select_side(int side) { ((BattleW*)this)->select_side(side); }        // 0x492750 (thiscall, ret 4)
-};
-extern MissionUiX g_mission_ctx;         // 0xa73300
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
 
 #include "../map_flags.h"   // g_map_flags.f8 = 0x5e2924 (jump_to_menu 0x4ac3a0)
 struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };

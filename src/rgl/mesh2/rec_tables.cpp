@@ -5,6 +5,7 @@
 // 0x4c3050..0x4c48d0 is the "T regime" region (docs/tu_map.md): helpers sit right after their caller, so
 // the functions stay in binary order and the helpers defined after a caller are kept out of line.
 #include "../../include/image_addrs.h"
+#include "../../game/music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../../game/config/config_block.h"
 #include "./rec_tables.h"
 #include "../../game/ini_file.h"      // g_game_vars (listed directly: the resolution audit reads only the source's own includes)
@@ -505,20 +506,20 @@ DialogMgr::~DialogMgr()
 // @ 0x4c4100
 // Music tick: advances the current piece once its start is 0.5 s old, ends a fade after 5 s (or ramps the
 // volume down), turns the level into a 0..254 channel volume and hands it to FMOD when it changed.
-void __fastcall sound_engine::tick()
+void __fastcall music_player::tick()
 {
     if (g_cfg.disable_music != 0 || g_cfg.disable_sound != 0)
         return;
     if ((float)(g_ticks[t2418.clock] - t2418.start) * 1e-5f > 0.5f) {
-        ((music_player*)this)->advance_piece();   // the music player object; 0x4c25e0
+        advance_piece();   // the music player object; 0x4c25e0
         t2418.start = g_ticks[t2418.clock];
     }
     float vol = g_options.music_volume;
-    if (fading != 0) {
+    if (fading[0] != 0) {
         if ((float)(g_ticks[t2450.clock] - t2450.start) * 1e-5f > 5.0f) {
             vol = 0.0f;
-            ((music_player*)this)->stop(0);   // 0x4be0a0
-            fading = 0;
+            stop(0);   // 0x4be0a0
+            fading[0] = 0;
         } else {
             vol = (1.0f - clamp(t2450.elapsed() * 0.2f, 0.0f, 1.0f)) * vol;
         }
@@ -529,20 +530,20 @@ void __fastcall sound_engine::tick()
     int iv = (vol - fl <= 0.5f) ? n : n + 1;
     int idx;
     int level = (iv < 0) ? 0 : ((iv >= 255) ? 254 : iv);
-    if (w240c != 0) {
+    if (active[1] != 0) {
         float f = g_options.music_volume * 255.0f;
         int v = round_float(&f);
         if (v < 0)
             v = 0;
         else if (v >= 255)
             v = 254;
-        FSOUND_SetVolume(channel, v);
+        FSOUND_SetVolume(channel[1], v);
     }
-    idx = cur_index;
-    if (idx >= 0 && (level != last_volume || w240c != 0)) {
-        last_volume = level;
-        if (w240c != 0 && t2460.elapsed() > 5.0f)
-            w0 = 0;
+    idx = channel[0];
+    if (idx >= 0 && (level != volume[0] || active[1] != 0)) {
+        volume[0] = level;
+        if (active[1] != 0 && t2460.elapsed() > 5.0f)
+            situation = 0;
         FSOUND_SetVolume(idx, level);
     }
 }

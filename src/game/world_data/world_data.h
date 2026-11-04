@@ -209,24 +209,6 @@ struct MissionW : Mission {
     void set_weapon_order_2(int team, unsigned value);          // 0x492350 (ret 8)
 };
 
-// ---- the battle / order object (g_mission_ui 0xa73300): two party ids at +4 / +8, side, tier, rating ----------------------
-struct BattleW {
-    int ids[2];                                                 // +0x00 / +0x04 the two party ids (0x492470, 0x492750: indexed [sel * 4])
-    char pad8[0x10 - 0x08];
-    int flags;                                                  // +0x10
-    int mode;                                                   // +0x14
-    char pad18[4];
-    int rating;                                                 // +0x1c (0x492470)
-    char pad20[0x24 - 0x20];
-    int side;                                                   // +0x24
-    int tier;                                                   // +0x28
-    char pad2c[0x138 - 0x2c];
-    int sel;                                                    // +0x138
-    char pad13c[0x144 - 0x13c];
-    int f144;                                                   // +0x144
-    void refresh_rating();                                      // 0x492470
-    void select_side(int side);                                 // 0x492750 (ret 4)
-};
 
 
 // ---- vectors of 8-byte integers, 4-byte-integer vectors (VC7.1 layout: allocator word first) -----------------------------

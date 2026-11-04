@@ -44,7 +44,7 @@ NavGraph* g_nav;                                            // 0xa732b8 (.bss) t
 rgl::world* g_level;                                        // 0xa732b4 (.bss) the current level / scene (built by Game::build_level)
 List8 g_list_a70480;                                        // 0xa70480 (.bss) vector of 8-byte elements, saved after the clock
 
-#include "../meta_mission.h"                                 // MetaMission (0xa73300): the one definition (init 0x4be742, entered through 0x4be730)
+#include "../inventory_panel/mission_ctx_rec.h"          // MissionCtx (0xa73300): init is 0x4be742, entered through 0x4be730
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 template<> void std::vector<int>::resize(size_t, int);       // 0x43f310 (agent3/agent_combat.cpp: the out-of-line instance, only declared)
@@ -186,7 +186,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         return false;
     }
     if (step == 6) {
-        ((MetaMission*)&orig::g_mission_ctx)->init();
+        g_mission_ctx.init();
         log_stream_ptr()->w_cstr("init_meta_mission complete.\n");
         if (w04 != 2 && w04 != 3) {
             g_game_G->build_scene();             // 0x520d60

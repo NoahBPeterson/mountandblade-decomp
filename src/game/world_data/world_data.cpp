@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
 #include "./world_data.h"
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx (g_mission_ctx 0xa73300): refresh_rating, select_side
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../rec98.h"             // (listed directly: the resolution audit reads only the source's own includes)
@@ -911,11 +912,11 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
 
 // ==== 0x492470: the battle object's rating and side selection ====================================================
 // @ 0x492470
-void BattleW::refresh_rating()
+void MissionCtx::refresh_rating()
 {
     GameW* g = (GameW*)g_game;
     PartyMgrW* mgr = &g->pm();
-    PartyW* pp = mgr->at(((Map10007*)(void*)mgr)->lookup(ids[sel]));
+    PartyW* pp = mgr->at(((Map10007*)(void*)mgr)->lookup(ids[side]));
     int t = pp->sum_stat(0x10);
     if (t <= 3)
         tier = 0;
@@ -924,13 +925,13 @@ void BattleW::refresh_rating()
     else
         tier = (t > 0x32) + 2;
 
-    int s = sel;
+    int s = side;
     int r = g->gate_rating(g->f78, ids[s], ids[1 - s]);
-    rating = r;
+    f1c = r;
     if (r > 6)
-        rating = 6;
-    if (rating < -0x20)
-        rating = -0x20;
+        f1c = 6;
+    if (f1c < -0x20)
+        f1c = -0x20;
 }
 
 // ==== 0x492530: move all stacks of one party into another =========================================================
@@ -984,20 +985,20 @@ void GameW::transfer_stack(int a, int b, char flag)
 }
 
 // @ 0x492750
-void BattleW::select_side(int s)
+void MissionCtx::select_side(int s)
 {
     WL_MARKER(12)
     int m = mode;
     if (m != 4)
-        side = s;
+        f24 = s;
     if (ids[1 - s] >= 0) {
-        int fl = flags & ~0x10;
+        int fl = f10 & ~0x10;
         int flip = 1 - s;
-        sel = flip;
-        flags = fl;
+        side = flip;
+        f10 = fl;
         f144 = 1;
         if (m == 4 && flip == 1)
-            flags = fl | m;
+            f10 = fl | m;
         refresh_rating();
     }
     WL_MARKER(13)

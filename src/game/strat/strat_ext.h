@@ -44,7 +44,7 @@ using rgl::keyframes;
 using rgl::mesh;
 using rgl::scene;
 
-extern __int64 g_ticks[];                                // 0x5e2948 clock table (64-bit ticks, 1e-5 s)
+#include "../../include/clock_table.h"   // g_ticks (the clock table)
 
 
 struct Psys { };                                         // (update 0x414960 is rgl::psys::update below)

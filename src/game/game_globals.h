@@ -111,9 +111,7 @@ extern int g_page_cols; // 0xa73294
 // Row count of g_map_pages.
 extern int g_page_rows; // 0xa73298
 // Script op music_set_situation 0x4a174a writes it;
-extern int g_music_situation; // 0xa73a10
 // Number of scenes opened so far: each mission stamps its id at +0x5270 (hud.cpp, mission_ctx.cpp).
-extern int g_scene_counter; // 0xa735c0
 // module_files.cpp loads presentations into it (0x4c6950);
 extern PresentationTable g_presentations; // 0xa75f2c
 // 0x30-byte animation definitions indexed by animation id (agent_logic.cpp g_anims[0x1a3]).

@@ -4,10 +4,12 @@
 // view block) that terrain_a reads as a LightCam (game_state.h; same object, offsets 0x104..0x2bc).
 #ifndef GAME_SHADOW_MAP_H
 #define GAME_SHADOW_MAP_H
+#include <stddef.h>
 #include <windows.h>
 #include <d3d9.h>
 #include "../include/rgl_base.h"
 #include "../include/frustum.h"
+#include "../rgl/scene_rec.h"    // rgl::scene
 
 struct ShSkin;
 struct CellGrid;
@@ -15,20 +17,14 @@ struct LightCam;
 
 struct ShadowMap {
     ShSkin* target;                             // +0 (0x463b70)
-    char pad4[4];
+    int f4;                                     // +4
     ShSkin* target2;                            // +8 (0x463b70)
     IDirect3DSurface9* surf;                    // +0xc system-memory copy of the map (0x463b70, 0x4640d0)
     int w, h;                                   // +0x10 / +0x14 (0x463bc0)
-    int f18, f1c;                               // +0x18 / +0x1c (0x463e90)
-    int w2, h2;                                 // +0x20 / +0x24
-    int f28;                                    // +0x28
-    float f2c;                                  // +0x2c
-    char pad30[0x48 - 0x30];
-    rgl::frustum fr;                            // +0x48 copy of the light camera frustum (0x463e90)
-    char pad168[0x17a - 0x168];
-    char valid;                                 // +0x17a
-    char pad17b[0x1f0 - 0x17b];
+    rgl::scene scn;                             // +0x18 the render scene of the light's view (ctor 0x429740, dtor 0x41f4e0; setup 0x463e90 sets its viewport block, w2/h2 are its f20/f24)
     LightCam* cam;                              // +0x1f0 the light camera: terrain_b's CellGrid (attach_camera casts), seen as a LightCam in game_state.h
+    ShadowMap();                                // the inlined constructor in 0x547de0: the scene, then the four dwords and cam cleared
+    ~ShadowMap();                               // 0x548490: the scene's destructor
     void release_all();                         // 0x463b70
     void pick_size();                           // 0x463bc0
     rgl::vector4 to_unit(const rgl::vector4& p);    // 0x463c20
@@ -45,4 +41,5 @@ struct ShadowMap {
 };
 
 extern ShadowMap g_shadow_map; // 0xa70248
+typedef char shadow_map_layout_check[(offsetof(ShadowMap, scn) == 0x18 && offsetof(ShadowMap, cam) == 0x1f0 && sizeof(ShadowMap) == 0x1f4) ? 1 : -1];
 #endif // GAME_SHADOW_MAP_H

@@ -3,6 +3,7 @@
 // s004e05c0, s004e25a0, s004e2ea0 and s004e3780. T-regime region: helpers sit right after their first caller;
 // the ones the original does not inline are kept out of line (noinline) in binary order.
 #include "../../include/image_addrs.h"
+#include "../music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./cls_map.h"
 #include "./progress_bar.h"
@@ -1214,7 +1215,7 @@ void ItemRec::slot_empty_2()
     char version_digits[0x40];
     int count;
 
-    g_music_situation = 0x400000;
+    g_music.situation = 0x400000;
     g_gui.reset();
 
     { NEW_OVERLAY_WINDOW(p_) win = p_; }

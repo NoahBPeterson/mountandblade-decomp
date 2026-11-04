@@ -149,6 +149,21 @@ vector4 __stdcall wind_noise()
     return r;
 }
 
+// The compiler-generated initializer of g_shadow_map is 0x547de0 (the scene's constructor, then the four dwords and cam cleared) and its atexit
+// function 0x548490 (the scene's destructor); the table entry is the compiler's own.
+ShadowMap::ShadowMap()
+{
+    target = 0;
+    f4 = 0;
+    target2 = 0;
+    surf = 0;
+    cam = 0;
+}
+
+ShadowMap::~ShadowMap()
+{
+}
+
 // @ 0x463b70
 void ShadowMap::release_all()
 {
@@ -237,12 +252,12 @@ void ShadowMap::create_target(ShSkin** slot)
 void ShadowMap::setup()
 {
     pick_size();
-    w2 = w;
-    h2 = h;
-    f18 = 0;
-    f1c = 0;
-    f28 = 0;
-    f2c = 1.0f;
+    scn.f20 = w;
+    scn.f24 = h;
+    scn.f18 = 0;
+    scn.f1c = 0;
+    scn.f28 = 0;
+    scn.f2c = 1.0f;
     LightCam* c = cam;
     c->light = c->world;
     c = cam;
@@ -273,8 +288,8 @@ void ShadowMap::setup()
     f->nearz = 20.0f;
     f->farz = dz + 20.0f;
     f->build_planes();
-    fr = cam->fr;
-    valid = 1;
+    scn.fr = cam->fr;
+    scn.f162 = 1;
 }
 
 // @ 0x464070

@@ -2,7 +2,8 @@
 // wrapper, and the mission screen's button handler and mission-item callbacks (0x4d4b80..0x4d5ba0). Names
 // provisional.
 #include <windows.h>
-#include "../game_globals.h"   // g_scene_counter (canonical)
+#include "../game_globals.h"
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): scene_counter
 #include <math.h>
 #include <new>
 #include "./mesh_edit.h"
@@ -253,8 +254,8 @@ __declspec(noinline) void ValueSource::on_value_changed(float arg)
 // @ 0x4d5980
 void Rec44::scale_3(float)
 {
-    *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_scene_counter;
-    g_scene_counter = g_scene_counter + 1;
+    *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_mission_ctx.scene_counter;
+    g_mission_ctx.scene_counter = g_mission_ctx.scene_counter + 1;
     g_mission->start_setup();
     slot_as<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)
     slot_as<MenuScreen>(14)->f18 = w18;
@@ -317,7 +318,7 @@ void MissionSource::pick(int* arg)
         __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
         g_spawn_lo = (__int64)(int)((double)d * 1000.0f * 1e-5f);
         play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
-        t = (float)(fmod((double)*(__int64*)g_ticks_ * 1e-5f, 1.0) * 40.0f
+        t = (float)(fmod((double)g_ticks[0] * 1e-5f, 1.0) * 40.0f
                     + 100.0f);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
     }
     if (g_mission_clock) {

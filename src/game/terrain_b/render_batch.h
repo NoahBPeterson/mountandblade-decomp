@@ -23,7 +23,7 @@ using rgl::face20;
 using rgl::vertex60;
 
 // ---- globals ------------------------------------------------------------------------------------------------
-extern __int64 g_ticks[];                   // 0x5e2948 clock table (1e-5 s ticks)
+#include "../../include/clock_table.h"   // g_ticks (the clock table)
 
 
 

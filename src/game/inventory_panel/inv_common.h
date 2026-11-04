@@ -35,10 +35,6 @@ struct GameW {                                          // game/world_data: Game
     int token_lookup(int party, int a, int b, int c);   // 0x491f20 (ret 0x10)
     void list_members(unsigned id, int* out, int* n);   // 0x490fa0 (ret 0xc)
 };
-struct BattleW {                                        // game/world_data: the battle / order object (g_mission_ctx 0xa73300)
-    void refresh_rating();                              // 0x492470
-    void select_side(int side);                         // 0x492750 (ret 4)
-};
 namespace rgl { struct string; }
 struct resmgr {
     rgl::mesh* get_object(const rgl::string* name);   // 0x419540 (rgl/core/resmgr.h: the resource manager object 0x5d6fa0, g_resmgr_inv)

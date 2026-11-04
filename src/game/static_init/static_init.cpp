@@ -9,14 +9,14 @@
 // makes; the vtables it stores are the original's (their slots point at our functions after the glue relocates them).
 #include <new>
 #include "../slot.h"
-#include "../../include/data_views.h"   // views of names inside bigger objects (data_views.h)
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx, g_mission_ctx (0xa73300)
+#include "../music_player.h"   // music_player, g_music (0xa73a10)
 #include "../../include/ptr_tag.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
-#include "../last_scene.h"
 #include "../../include/clock_table.h"
 #include "../animator.h"       // Animator g_anim (0x8ed4f60)
 
@@ -46,17 +46,11 @@ extern char g_5fe898[];     // 0x5fe898
 
 extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
 
-struct ShadowMap;
-extern ShadowMap g_shadow_map;   // 0xa70248 (game_state.cpp)
 extern char g_a70440[];     // 0xa70440
-extern char g_a73300[];     // 0xa73300 the mission context
 extern char g_a73730[];     // 0xa73730 the game keys (0x4a dwords)
 extern char g_a7374c[];     // 0xa7374c (the key records' end)
 extern char g_a73980[];     // 0xa73980 the main menu
 extern char g_a739f8[];     // 0xa739f8
-extern char g_a73a10[];     // 0xa73a10 the music player
-extern char g_a75a28[];     // 0xa75a28 (end of 0x100 strings of 0x20)
-extern char g_a75e8c[];     // 0xa75e8c
 extern char g_a75ea0[];     // 0xa75ea0 the game strings
 extern char g_a75eb0[];     // 0xa75eb0 the scripts
 extern char g_a75f2c[];     // 0xa75f2c the presentations
@@ -82,11 +76,8 @@ struct gui_manager { gui_manager(); ~gui_manager(); };  // 0x42d5c0, 0x42d3e0
 struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
 struct big_holder { void release(); };              // 0x4ca830
 struct ini_file { ini_file(); };                    // 0x4c1be0
-namespace rgl { struct scene { scene(); ~scene(); }; }   // 0x429740, 0x41f4e0
 struct model_a { model_a(); };                      // 0x4d3580
 struct big_obj { void release(); };                 // 0x4cb9e0
-struct MetaMission { void init(); };                // 0x4be742 (entered through the marker at 0x4be730)
-struct music_player { music_player(); };            // 0x4c24c0
 struct rec_table { rec_table(); };                  // 0x4be520
 struct GameApp { GameApp(); };                      // 0x4d3ec0
 struct Tail2 { ~Tail2(); };                         // 0x4c4d10
@@ -153,8 +144,8 @@ void __cdecl static_dtor_5482b0()
 // @ 0x548310
 void __cdecl static_dtor_548310()
 {
-    ((TStrRec*)g_a75e8c)->~TStrRec();
-    char* p = g_a75a28;
+    ((TStrRec*)&g_music.root)->~TStrRec();
+    char* p = (char*)&g_music.start[4];   // the end of the 0x100 track name strings (+0x2018)
     for (int n = 0x100; n; n--) {
         p -= 0x20;
         ((TStrRec*)p)->~TStrRec();
@@ -185,8 +176,6 @@ void __cdecl static_dtor_548410() { ((ItemPage*)&g_sound_mgr)->clear(); }
 void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
 // @ 0x548480
 void __cdecl static_dtor_548480() { ((big_holder*)g_5fe898)->release(); }
-// @ 0x548490
-void __cdecl static_dtor_548490() { ((rgl::scene*)g_a70260)->~scene(); }
 // @ 0x5484a0
 void __cdecl static_dtor_5484a0() { ((big_obj*)g_a70440)->release(); }
 // @ 0x548500
@@ -237,18 +226,10 @@ void __cdecl static_init_547b50()
     g_keyboard.axis[0] = 0;
     g_keyboard.axis[1] = 0;
 }
-// @ 0x547de0
-void __cdecl static_init_547de0()
-{
-    new (g_a70260) rgl::scene;
-    AT(int, (char*)&g_shadow_map, 0) = 0;  AT(int, (char*)&g_shadow_map, 4) = 0;  AT(int, (char*)&g_shadow_map, 8) = 0;  AT(int, (char*)&g_shadow_map, 0xc) = 0;   // the inlined ShadowMap constructor (game_state.cpp defines the object)
-    g_a70438 = 0;
-    atexit(static_dtor_548490);
-}
 // @ 0x547e20
 void __cdecl static_init_547e20() { new (g_a70440) model_a; atexit(static_dtor_5484a0); }
 // @ 0x547e40
-void __cdecl static_init_547e40() { ((MetaMission*)g_a73300)->init(); atexit(static_dtor_548200); }
+void __cdecl static_init_547e40() { g_mission_ctx.init(); atexit(static_dtor_548200); }
 // @ 0x547e90
 void __cdecl static_init_547e90()
 {
@@ -259,7 +240,7 @@ void __cdecl static_init_547e90()
 // @ 0x547ec0
 void __cdecl static_init_547ec0() { conv_zero_node(g_a73980); atexit(static_dtor_548460); }
 // @ 0x547ee0
-void __cdecl static_init_547ee0() { new (g_a73a10) music_player; atexit(static_dtor_548310); }
+void __cdecl static_init_547ee0() { new (&g_music) music_player; atexit(static_dtor_548310); }
 // @ 0x547f00
 void __cdecl static_init_547f00() { atexit(static_dtor_5483b0); }
 // @ 0x547f10
@@ -294,7 +275,7 @@ init_fn g_static_init_table[] = {
     static_init_5479a0, static_init_5479c0, 
     
     static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
-    static_init_547de0, static_init_547e20, static_init_547e40,
+    static_init_547e20, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,
     static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,

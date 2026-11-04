@@ -9,6 +9,7 @@
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "./mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "./mission_ctx.h"
@@ -28,7 +29,6 @@
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../campaign_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../shared_vars.h"
-#include "../last_scene.h"
 #include "../game_keys.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -82,21 +82,12 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 struct UiKeyState { char down(int key); };                // 0x48ac90 (ret 4)
 #include "../key_names.h"
 #include "../../include/logger.h"                     // Logger g_debug_log (0x5a9f30): slot 10 (+0x28) prints one line
-// 0x516250 calls MetaMission::init (../meta_mission.h, included by mission_ctx.h: 0x4be742 of triggers/trigger_vec.cpp) through
-// its WinLicense entry marker 0x4be730 (jmp over the marker data to 0x4be742). The declaration below only gives the resolution
-// tools the original's call operand; the call is the canonical member.
-namespace marker_entry {
-struct MetaMission {
-    void init();                                        // 0x4be730
-};
-}
 #include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
 #include "../main_menu.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 // ---- data this module owns (.bss, no initialiser; sizes from the code) ----
-int g_scene_counter;                                // 0xa735c0
 
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 #include "../window_mgr.h"      // slot_as<T>(i)
@@ -241,7 +232,7 @@ void MapFlags::commit(char* out)
     }
     else if (key == 8) {
         g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
-        MI(g_mission, 0x5270) = g_scene_counter++;
+        MI(g_mission, 0x5270) = g_mission_ctx.scene_counter++;
         SCENE->start_setup();
         slot_as<MenuWidget>(14)->v4();
         slot_as<MenuWidget>(14)->f18 = 0x64;
@@ -450,7 +441,7 @@ void MissionCtx::setup(unsigned flags, int delta)
             ((GameW*)g_game)->count_units(party[1 - side], &l[7], &l[5], &l[3], &l[1]);
         }
         if (((signed char)f10 < 0 || f2c8 != 0) &&
-            ((flags & 0x2000000) || (d <= 0 && f2c4 <= 0))) {
+            ((flags & 0x2000000) || (d <= 0 && passage_menu <= 0))) {
             f164 = 0x143;
             f18 = 1;
             f20 = 1;
@@ -678,8 +669,8 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
 
     SCENE->init(1, 1, 0, 0, this, f24, 0);
     MI(g_mission, 0x6558) = a1;
-    MI(g_mission, 0x5270) = f2c0;
-    f2c0++;
+    MI(g_mission, 0x5270) = scene_counter;
+    scene_counter++;
     SCENE->start_setup();
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
@@ -695,8 +686,8 @@ void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
     f158 = a3;
     f15c = a4;
     SCENE->init(a2, a3, a4, f1c, this, f24, side);
-    MI(g_mission, 0x5270) = f2c0;
-    f2c0++;
+    MI(g_mission, 0x5270) = scene_counter;
+    scene_counter++;
     SCENE->start_setup();
     SCENE->frame(0.1f, 1);
     SCENE->frame(0.1f, 1);
@@ -721,7 +712,7 @@ void Screen::frame_update(float dt)
     bool start;
 
     if (g_shadow_map.target != 0 && ((ShadowMapP*)g_shadow_map.target)->f48[0x50 / 4] != g_psys_scene
-        && g_a70438 == (int)g_level && g_use_shaders != 0)
+        && (int)g_shadow_map.cam == (int)g_level && g_use_shaders != 0)
         ((ShadowMapP*)g_shadow_map.target)->render();
 
     cam.perspective = 1;
@@ -1100,7 +1091,7 @@ mat2::mat2(const float* a, const float* b)
 void MissionCtx::init_battle(int id_)
 {
     WL_MARKER(12)
-    ((MetaMission*)this)->init();           // 0x4be742 (called through its WinLicense entry 0x4be730)
+    init();           // 0x4be742 (called through its WinLicense entry 0x4be730)
     f08 = id_;
     unsigned urow = (id_ & 0xf) * 0x98;
     f40 = 1;
@@ -1138,7 +1129,7 @@ void MissionCtx::init_battle(int id_)
 void MissionCtx::frame(int tick)
 {
     WL_MARKER(12)
-    f2c4 = tick;
+    passage_menu = tick;
     if (f24 == 2 && tick <= 0) {
         unsigned aid = (unsigned)f08;                  // the page index is unsigned (shr edi,4 at 0x5163b9)
         char* rec = (char*)((char*)(*(char***)((char*)g_game + 0xe4))[aid >> 4] + (aid & 0xf) * 0x98);
@@ -1164,8 +1155,8 @@ void MissionCtx::frame(int tick)
         }
     }
     if (f144 != 0) {
-        ((BattleW*)this)->refresh_rating();
-        if (f2c4 < 1)
+        refresh_rating();
+        if (passage_menu < 1)
             f3c |= 1;
     }
     Party* p = party_by_id(g_game->f78);
@@ -1199,7 +1190,7 @@ int PartyV::data_ready()
 void MissionCtx::update_anim()
 {
     WL_MARKER(12)                                                   // 0x516705
-    f2c0 = 0;
+    scene_counter = 0;
     reset_ids(g_game->f78);
     reset_ids(party[0]);
     reset_ids(party[1]);

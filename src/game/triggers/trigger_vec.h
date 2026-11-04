@@ -43,7 +43,7 @@ struct resmgr {
 
 // ---- meta mission (global object at 0xa73300, 0x4be742: called as MetaMission::init; the original brackets it with an
 // 18-byte WinLicense marker pair at 0x4be730 / before 0x4be7c0) ---------------------------------------------------
-#include "../meta_mission.h"      // MetaMission (0xa73300): the one definition (triggers and party)
+#include "../inventory_panel/mission_ctx_rec.h"      // MissionCtx (0xa73300): init is the meta mission's (0x4be742)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- script-code table (0x4a ints, every second one named: 0x4be7c0, also called as a bare function by rgl/mesh2) ---

@@ -27,7 +27,7 @@
 #include "../config/config.h"
 #include "../party/game.h"
 #include "../../rgl/xmlcfg/records.h"     // (listed directly: the resolution audit scans only the source's own includes)
-#include "../meta_mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../inventory_panel/mission_ctx_rec.h"      // MissionCtx (init 0x4be730; the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/options.h"   // g_options 0x5aa008
@@ -96,30 +96,30 @@ float g_map_max_x = 50.0f;   // 0x5aa118
 void __cdecl operator delete[](void* p);                             // 0x53570d (operator delete[]; crt.h cannot be included here: its ftol2 clashes with the declaration in the included headers)
 
 // @ 0x4be730
-void MetaMission::init()
+void MissionCtx::init()
 {
     WL_MARKER(12)
-    f014 = 0;
+    mode = 0;
     f144 = 0;
-    f138 = 0;
-    f010 = 0;
-    f008 = -1;
-    f000 = -1;
-    f004 = -1;
+    side = 0;
+    f10 = 0;
+    f08 = -1;
+    ids[0] = -1;
+    ids[1] = -1;
     f13c = -1;
     f140 = -1;
-    f024 = 0;
-    f01c = 0;
-    f00c = -1;
+    f24 = 0;
+    f1c = 0;
+    f0c = -1;
     f154 = -1;
     f158 = -1;
     f15c = -1;
-    f03c = 0x400;
+    f3c = 0x400;
     f168 = 0;
-    f2c0 = 0;
-    f2c4 = 0;
+    scene_counter = 0;
+    passage_menu = 0;
     f2c8 = 0;
-    f040 = 0;
+    f40 = 0;
     WL_MARKER(13)
 }
 
@@ -1534,19 +1534,16 @@ music_player::music_player()
     WL_MARKER(12)
     for (int i = 0; i < 0x100; i++)
         ((tstring*)((char*)this + 0x18 + i * 0x20))->tstring::tstring();
-    TimedVal* t = (TimedVal*)&w[4];                 // +0x2418 / +0x2420
-    t->id = 0; t->t = g_ticks[0];
-    t = (TimedVal*)&w[18];                          // +0x2450 / +0x2458
-    t->id = 0; t->t = g_ticks[0];
-    t = (TimedVal*)&w[22];                          // +0x2460 / +0x2468
-    t->id = 0; t->t = g_ticks[0];
-    ((tstring*)((char*)this + 0x247c))->tstring::tstring();
-    ((int*)this)[1] = 0;
-    w[8] = 0;  w[0] = 0;  w[12] = -1;  w[2] = 0;  w[10] = -1;  w[14] = 1000;  w[26] = 0;
-    w[9] = 0;  w[1] = 0;  w[13] = -1;  w[3] = 0;  w[11] = -1;  w[15] = 1000;  w[27] = 0;
-    *(int*)this = 0;
-    w[16] = 0;
-    *((char*)this + 0x2478) = 0;
+    t2418.clock = 0; t2418.start = g_ticks[0];
+    t2450.clock = 0; t2450.start = g_ticks[0];
+    t2460.clock = 0; t2460.start = g_ticks[0];
+    ((tstring*)&root)->tstring::tstring();
+    track_count = 0;
+    stream[0] = 0;  active[0] = 0;  channel[0] = -1;  opened[0] = 0;  track[0] = -1;  volume[0] = 1000;  fading[0] = 0;
+    stream[1] = 0;  active[1] = 0;  channel[1] = -1;  opened[1] = 0;  track[1] = -1;  volume[1] = 1000;  fading[1] = 0;
+    situation = 0;
+    mask = 0;
+    new_piece = 0;
     WL_MARKER(13)
 }
 
@@ -1557,52 +1554,50 @@ music_player::music_player()
 void music_player::advance_piece()
 {
     char buf[0x200];
-    int& mode = *(int*)this;
-    int& count = ((int*)this)[1];
-    int& mask = w[16];
-    if (w[0] != 0 && w[2] == 0) {
-        int h = FSOUND_Stream_GetOpenState((void*)w[8]);
+    int& mode = situation;
+    int& count = track_count;
+    if (active[0] != 0 && opened[0] == 0) {
+        int h = FSOUND_Stream_GetOpenState(stream[0]);
         if (h == 0) {
-            w[2] = 1;
-            w[12] = FSOUND_Stream_Play(-1, (void*)w[8]);
+            opened[0] = 1;
+            channel[0] = FSOUND_Stream_Play(-1, stream[0]);
         } else if (h != -2) {
-            tstring* nm = (tstring*)((char*)this + 0x18 + 0x20 * w[10]);
+            tstring* nm = (tstring*)((char*)this + 0x18 + 0x20 * track[0]);
             sprintf(buf, "Error: Unable to load %s", nm->c_str());
             ((stream_base&)g_log).w_cstr(buf);
-            w[0] = 0;
+            active[0] = 0;
         }
-    } else if (w[0] != 0) {
-        int len = FSOUND_Stream_GetLengthMs((void*)w[8]);
-        int pos = FSOUND_Stream_GetTime((void*)w[8]);
+    } else if (active[0] != 0) {
+        int len = FSOUND_Stream_GetLengthMs(stream[0]);
+        int pos = FSOUND_Stream_GetTime(stream[0]);
         int a = (*(int*)((char*)&g_script + 0x34));
         int b = (*(int*)((char*)&g_script + 0x38));
-        if (a >= 0 && a == w[10] && b > 0) {
+        if (a >= 0 && a == track[0] && b > 0) {
             a = -1;
             (*(int*)((char*)&g_script + 0x34)) = a;
         }
         bool done = true;
         if (pos < len) {
-            int rec = 0x20 * w[10];
+            int rec = 0x20 * track[0];
             int fl = *(int*)((char*)this + rec + 8) & 0x100;
             if (fl != 0 || a < 0 || b != 2) {
                 done = false;
-                if (w[26] == 0 && fl == 0) {
+                if (fading[0] == 0 && fl == 0) {
                     if (mode == 0 || (*(int*)((char*)this + rec + 0xc) & mode) == 0
                         || (mask != 0 && (*(int*)((char*)this + rec + 0x14) & mask) == 0)
                         || (a >= 0 && b == 1)) {
-                        TimedVal* t = (TimedVal*)&w[18];
-                        t->t = g_ticks[w[18]];
-                        w[26] = 1;
-                        *((char*)this + 0x2478) = 1;
+                        t2450.start = g_ticks[t2450.clock];
+                        fading[0] = 1;
+                        new_piece = 1;
                     }
                 }
             }
         }
         if (done) {
-            FSOUND_Stream_Close((void*)w[8]);
-            w[8] = 0;
-            w[0] = 0;
-            w[12] = -1;
+            FSOUND_Stream_Close(stream[0]);
+            stream[0] = 0;
+            active[0] = 0;
+            channel[0] = -1;
         }
     } else if (g_options.music_volume > 0.02f) {
         bool forced = false;
@@ -1616,13 +1611,13 @@ void music_player::advance_piece()
                 sel = a;
         }
         if (sel < 0 && mode != 0) {
-            int cur = w[10];
+            int cur = track[0];
             if (cur >= 0 && (mode & *(int*)((char*)this + 0x20 * cur + 0xc)) != 0
                 && (mask == 0 || (mask & *(int*)((char*)this + 0x20 * cur + 0x14)) != 0))
                 best = cur;
             float sum = 0.0f;
             float now = (float)g_ticks[0] * 1e-5f + 1.0f;
-            const float* times = (const float*)((char*)this + 0x2008);
+            const float* times = start;
             int i = 0;
             if (count > 0) do {
                 if (i != best && mode != 0 && (TRACK(i, 8) & mode) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0))
@@ -1649,37 +1644,37 @@ void music_player::advance_piece()
             }
         }
         if (sel >= 0) {
-            if (forced || *((char*)this + 0x2478) != 0 || (TRACK(sel, 8) & 0x80) != 0
+            if (forced || new_piece != 0 || (TRACK(sel, 8) & 0x80) != 0
                 || frand() < 0.01f) {   // 0x4c29dc: frand() (0x40e400), compared with 0.01f (0x54a6f0)
                 int slot = 0;
-                *((char*)this + 0x2478) = 0;
+                new_piece = 0;
                 play(sel, &slot);
-                if ((TRACK(w[10], 8) & 0x100) != 0)
+                if ((TRACK(track[0], 8) & 0x100) != 0)
                     mode = 0;
             }
         }
     }
     // slot 1: the piece being faded
-    if (w[1] != 0 && w[3] == 0) {
-        int h = FSOUND_Stream_GetOpenState((void*)w[9]);
+    if (active[1] != 0 && opened[1] == 0) {
+        int h = FSOUND_Stream_GetOpenState(stream[1]);
         if (h == 0) {
-            w[3] = 1;
-            w[13] = FSOUND_Stream_Play(-1, (void*)w[9]);
-            *(__int64*)&w[24] = g_ticks[w[22]];
+            opened[1] = 1;
+            channel[1] = FSOUND_Stream_Play(-1, stream[1]);
+            t2460.start = g_ticks[t2460.clock];
         } else if (h != -2) {
-            tstring* nm = (tstring*)((char*)this + 0x18 + 0x20 * w[11]);
+            tstring* nm = (tstring*)((char*)this + 0x18 + 0x20 * track[1]);
             sprintf(buf, "Error: Unable to load %s", nm->c_str());
             ((stream_base&)g_log).w_cstr(buf);
-            w[1] = 0;
+            active[1] = 0;
         }
-    } else if (w[1] != 0) {
-        int len = FSOUND_Stream_GetLengthMs((void*)w[9]);
-        if (FSOUND_Stream_GetTime((void*)w[9]) < len)
+    } else if (active[1] != 0) {
+        int len = FSOUND_Stream_GetLengthMs(stream[1]);
+        if (FSOUND_Stream_GetTime(stream[1]) < len)
             return;
-        FSOUND_Stream_Close((void*)w[9]);
-        w[9] = 0;
-        w[1] = 0;
-        w[13] = -1;
+        FSOUND_Stream_Close(stream[1]);
+        stream[1] = 0;
+        active[1] = 0;
+        channel[1] = -1;
     } else if ((*(int*)((char*)&g_script + 0x3c)) >= 0) {
         if (g_options.music_volume > 0.02f) {
             int slot = 1;
