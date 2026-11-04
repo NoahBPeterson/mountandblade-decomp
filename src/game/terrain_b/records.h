@@ -76,11 +76,6 @@ template<> inline ArrSet* _Copy_opt<ArrSet*, ArrSet*>(ArrSet* f, ArrSet* l, ArrS
 }
 
 // ---- std::vector<ArrSet> helpers: the allocator-carrying wrappers around the earlier objects' algorithms ----------------
-struct alloc_arrset {
-    __declspec(noinline) void construct(ArrSet* p, const ArrSet& v);     // 0x46b6c0
-    __declspec(noinline) void construct_arrset(ArrSet* p, const ArrSet& v); // 0x46b6c0
-    void destroy(ArrSet* p) { p->~ArrSet(); }
-};
 
 // 0x46b750: terrain_a's instance is declared for rec136 / alloc_rec136 (the same 0x38-byte record) with std's own tag type;
 // 0x46c1d0 has no tag parameter (the caller still pushes its slot)
@@ -90,15 +85,15 @@ typedef ArrSet* (__cdecl *copy2_t)(ArrSet*, ArrSet*, ArrSet*, allocArr&, ptr_tag
 ArrSet* __cdecl copy_arrset(ArrSet* f, ArrSet* l, ArrSet* d, ptr_tag tag);                          // 0x468050
 struct vecArr : allocArr { ArrSet* first; ArrSet* last; ArrSet* end; ArrSet* ucopy(ArrSet* f, ArrSet* l, ArrSet* d); };    // 0x472630
 struct vecArr2 : allocArr { ArrSet* first; ArrSet* last; ArrSet* end; ArrSet* ucopy(ArrSet* f, ArrSet* l, ArrSet* d); };   // 0x474350
-struct vecArrS : alloc_arrset {
+struct vecArrS : allocArr {
     ArrSet* first; ArrSet* last; ArrSet* end;
     void destroy(ArrSet* f, ArrSet* l);                 // 0x475b60
     ArrSet* ufill(ArrSet* f, unsigned n, const ArrSet& v);   // 0x475b80
 };
 // The wrappers reach the object's own range algorithms through the same addresses, without seeing their bodies.
 void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last);     // 0x4727a0 (the definition has no allocator / tag parameters; the caller still pushes them)
-typedef void (__cdecl *destroy_arrsets_t)(ArrSet*, ArrSet*, alloc_arrset&, ptr_tag);
-void __cdecl uninit_fill_n_arrset(ArrSet* first, unsigned n, const ArrSet& val, alloc_arrset& al, ptr_tag tag);   // 0x4727e0
+typedef void (__cdecl *destroy_arrsets_t)(ArrSet*, ArrSet*, allocArr&, ptr_tag);
+void __cdecl uninit_fill_n_arrset(ArrSet* first, unsigned n, const ArrSet& val, allocArr& al, ptr_tag tag);   // 0x4727e0
 
 // ---- the 0x1c8-byte polymorphic record (vtable 0x590b84; copy ctor 0x437bb0, operator= 0x437d60, reset 0x4352f0) -----
 // The slices called it PlacedObj, MAgent, PropRec and PlacedObj (symbols/slices maps ??_7Agent@@, ??_7PlacedObj@@, ??_7PlacedObj@@).

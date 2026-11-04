@@ -436,7 +436,7 @@ void Agent::smooth_turn(float dt)
 
 // std::_Uninit_fill_n for 12-byte elements (catch funclet 0x4389c4: `throw;`)
 // @ 0x438960
-void __cdecl uninit_fill_n12(E12* f, unsigned n, const E12& v, allocE12& al, ptr_tag tag)
+void __cdecl uninit_fill_n12(E12* f, unsigned n, const E12& v, alloc_E12& al, ptr_tag tag)
 {
     E12* s = f;
     try {
@@ -474,7 +474,7 @@ tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, alloc_tstri
 
 // std::_Uninit_copy for 4-byte elements (catch funclet 0x438b06: `throw;`)
 // @ 0x438aa0
-int* __cdecl uninit_copy_int(int* f, int* l, int* d, allocint& al, ptr_tag tag)
+int* __cdecl uninit_copy_int(int* f, int* l, int* d, alloc_int& al, ptr_tag tag)
 {
     int* s = d;
     try {
@@ -545,7 +545,7 @@ void __cdecl fill1c8(E1c8* f, E1c8* l, const E1c8& v)
 // vector<E12>::_Ucopy -> _Uninit_copy(first, last, dest, allocator, _Ptr_cat(first, dest))
 inline ptr_tag ptr_cat(const E12*, const E12*) { ptr_tag t; return t; }
 // @ 0x438c90
-E12* vec12::ucopy(E12* a, E12* b, E12* c) { return uninit_copy12(a, b, c, this, ptr_cat(a, c)); }
+E12* vec12::ucopy(E12* a, E12* b, E12* c) { return uninit_copy_E12(a, b, c, *this, ptr_cat(a, c)); }
 
 // ---- ranged hit chance ---------------------------------------------------------------------------------------------------------
 // @ 0x438cb0

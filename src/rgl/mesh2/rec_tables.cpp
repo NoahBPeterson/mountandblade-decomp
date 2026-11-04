@@ -29,11 +29,7 @@
 int g_use_shaders;                                  // 0x5e28fc
 
 
-// agent.h's allocator tag of the one-int record (0x436d80); declared here to avoid that header
-struct int1 { int a; };
-struct alloc_int1 {
-    void construct(int1* p, const int1& v);   // 0x436d80
-};
+#include "../../game/alloc_construct.h"   // alloc_int 0x436d80
 #include "../resource.h"      // resmgr g_resmgr (0x5d6fa0)
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
@@ -424,7 +420,7 @@ void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al, ptr_tag)
     char* first = dst;
     try {
         for (; 0 < n; --n, dst += 4)
-            ((alloc_int1&)al).construct((int1*)dst, *(const int1*)arg);   // Alloc4 is the empty allocator tag; 0x436d80 is alloc_int1::construct (agent.h)
+            ((alloc_int&)al).construct((int*)dst, *(const int*)arg);   // Alloc4 is the empty allocator tag; 0x436d80 is alloc_int::construct (alloc_construct.h)
     } catch (...) {
         throw;
     }
@@ -451,7 +447,7 @@ void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al)
     char* dest0 = dst;
     try {
         for (; first != last; dst += 4, first += 4)
-            ((alloc_int1&)al).construct((int1*)dst, *(const int1*)first);   // 0x436d80, as above
+            ((alloc_int&)al).construct((int*)dst, *(const int*)first);   // 0x436d80, as above
     } catch (...) {
         throw;
     }

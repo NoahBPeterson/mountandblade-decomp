@@ -142,11 +142,9 @@ float __cdecl hit_chance(int* who, Agent* a);           // 0x438cb0
 #include "../hnode.h"                             // hnode / node_gt (shared with agent4: NavMesh::open)
 #include "../../include/clock_table.h"
 typedef PlacedObj E1c8;                                  // the 0x1c8-byte polymorphic record
-struct allocE12  { void construct(E12* p, const E12& v); };             // 0x436cf0
-#include "../alloc_construct.h"   // alloc_tstring 0x436c90
-struct allocint  { void construct(int* p, const int& v); };             // 0x436d80
+#include "../alloc_construct.h"   // alloc_tstring 0x436c90, alloc_E12 0x436cf0, alloc_int 0x436d80, uninit_copy_E12 0x436d10
 struct allocE1c8 { void construct(E1c8* p, const E1c8& v); };           // 0x439040
-struct vec12 : allocE12 {
+struct vec12 : alloc_E12 {
     E12* first; E12* last; E12* end;
     E12* ufill(E12* f, unsigned n, const E12& v);       // 0x43a4a0
     E12* ucopy(E12* a, E12* b, E12* c);                 // 0x438c90
@@ -156,7 +154,7 @@ struct vecstr : alloc_tstring {
     tstring* ucopy(tstring* f, tstring* l, tstring* d); // 0x43a4d0
     tstring* ufill(tstring* f, unsigned n, const tstring& v);   // 0x43b2b0
 };
-struct vecint : allocint { int* first; int* last; int* end; int* ucopy(int* f, int* l, int* d); };   // 0x43a4f0
+struct vecint : alloc_int { int* first; int* last; int* end; int* ucopy(int* f, int* l, int* d); };   // 0x43a4f0
 struct vecE1c8 : allocE1c8 {
     E1c8* first; E1c8* last; E1c8* end;
     E1c8* ucopy(E1c8* f, E1c8* l, E1c8* d);             // 0x43b2e0
@@ -168,17 +166,15 @@ struct vec1c8 {
     E1c8* at(int i);                                    // 0x438c10
 };
 #include "../int_vec.h"                                 // IntVec (was vec_int here: fill_ptr 0x438c30)
-// vector<E12>::_Ucopy -> std::_Uninit_copy over the 12-byte records of the next object (0x436d10, src/game/agent)
-E12* __cdecl uninit_copy12(E12* f, E12* l, E12* d, void* al, ptr_tag tag);
 // 0x4b2520 is defined (party2/party_2.cpp) as push_heap_elem over the 12-byte OpenItem record, which hnode mirrors (face, cost, priority)
 struct OpenItem { int node; float cost; float dist; OpenItem(const OpenItem& o) : node(o.node), cost(o.cost), dist(o.dist) {} };
 struct HeapGt { bool operator()(const OpenItem& a, const OpenItem& b) const { return a.dist > b.dist; } };
 void __cdecl push_heap_elem(OpenItem* first, int hole, int top, OpenItem val, HeapGt pred);   // 0x4b2520
 // the free functions of this object
-void __cdecl uninit_fill_n12(E12* f, unsigned n, const E12& v, allocE12& al, ptr_tag tag);                       // 0x438960
+void __cdecl uninit_fill_n12(E12* f, unsigned n, const E12& v, alloc_E12& al, ptr_tag tag);                       // 0x438960
 E1c8* __cdecl copy_backward1c8(E1c8* f, E1c8* l, E1c8* d);                                                       // 0x4389d0
 tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, alloc_tstring& al, ptr_tag tag);                 // 0x438a10
-int* __cdecl uninit_copy_int(int* f, int* l, int* d, allocint& al, ptr_tag tag);                                 // 0x438aa0
+int* __cdecl uninit_copy_int(int* f, int* l, int* d, alloc_int& al, ptr_tag tag);                                 // 0x438aa0
 void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, node_gt pred);                      // 0x438b10
 void __cdecl fill1c8(E1c8* f, E1c8* l, const E1c8& v);                                                           // 0x438c60
 void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag);             // 0x438f00

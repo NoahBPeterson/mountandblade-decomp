@@ -13,10 +13,10 @@
 ../src/game/agent2/agent_stats.cpp  ?clear_ammo@Agent@@QAEXH@Z  00438520  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?smooth_turn@Agent@@QAEXM@Z  00438860  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ??$remove_copy@Viterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@std@@V123@PAUshape_base@@@std@@YA?AViterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@0@V120@00ABQAUshape_base@@@Z  00438910  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?uninit_fill_n12@@YAXPAUE12@@IABU1@AAUallocE12@@Uptr_tag@@@Z  00438960  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?uninit_fill_n12@@YAXPAUE12@@IABU1@AAUalloc_E12@@Uptr_tag@@@Z  00438960  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?copy_backward1c8@@YAPAUPlacedObj@@PAU1@00@Z  004389d0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?uninit_copy_str@@YAPAUtstring@@PAU1@00AAUalloc_tstring@@Uptr_tag@@@Z  00438a10  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?uninit_copy_int@@YAPAHPAH00AAUallocint@@Uptr_tag@@@Z  00438aa0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?uninit_copy_int@@YAPAHPAH00AAUalloc_int@@Uptr_tag@@@Z  00438aa0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?adjust_heap_node@@YAXPAUhnode@@HHU1@Unode_gt@@@Z  00438b10  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?set_modifier@ItemRef@@QAEXH@Z  00438bc0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?pop_back_if@ptr_vec@@QAEXXZ  00438bf0  /O2 /MT /Gy /TP

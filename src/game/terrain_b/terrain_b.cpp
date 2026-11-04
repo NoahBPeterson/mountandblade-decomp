@@ -1255,7 +1255,7 @@ void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last)
 }
 
 // @ 0x4727e0
-void __cdecl uninit_fill_n_arrset(ArrSet* first, unsigned n, const ArrSet& val, alloc_arrset& al, ptr_tag tag)
+void __cdecl uninit_fill_n_arrset(ArrSet* first, unsigned n, const ArrSet& val, allocArr& al, ptr_tag tag)
 {
     ArrSet* next = first;
     try {

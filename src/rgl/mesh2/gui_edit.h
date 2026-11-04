@@ -90,8 +90,7 @@ struct block_copier {
 #include "../../include/item_mod.h"
 #include "../../game/skill_cap.h"
 struct item38 { char d[0x38]; };               // 0x38-byte record (tstring at +0x24)
-struct ArrSet;
-struct allocArr { void construct(ArrSet* p, const ArrSet& v); };   // 0x46b6c0 (game/terrain_a/terrain_a.cpp: thiscall ret 8; the allocator in ecx is unused)
+#include "../../game/arr_set.h"   // ArrSet, allocArr (0x46b6c0: game/terrain_a/terrain_a.cpp, thiscall ret 8; the allocator in ecx is unused)
 
 // The vertex-editor object: a tstring at +0x18, a cleared vector at +0x38, then two 0x4c-byte items
 // (tstring at item+0x18, vector at item+0x38) at +0x88 and +0xd4.

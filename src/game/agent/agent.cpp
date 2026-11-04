@@ -931,12 +931,12 @@ void alloc_rec36::construct(rec36* p, const rec36& v) { new ((void*)p) rec36(v);
 // @ 0x436cd0
 void alloc_rec136::construct(rec136* p, const rec136& v) { new ((void*)p) rec136(v); }
 // @ 0x436cf0
-void alloc_int3::construct(int3* p, const int3& v) { new ((void*)p) int3(v); }
+void alloc_E12::construct(E12* p, const E12& v) { new ((void*)p) E12(v); }
 
 // @ 0x436d10 (+ catch-all funclet 0x436d76: `throw;`)  std::_Uninit_copy (non-scalar tag)
-int3* uninit_copy_int3(const int3* first, const int3* last, int3* dest, alloc_int3& al)
+E12* uninit_copy_E12(const E12* first, const E12* last, E12* dest, alloc_E12& al, ptr_tag)
 {
-    int3* next = dest;
+    E12* next = dest;
     try {
         for (; first != last; ++dest, ++first)
             al.construct(dest, *first);
@@ -948,7 +948,7 @@ int3* uninit_copy_int3(const int3* first, const int3* last, int3* dest, alloc_in
     return dest;
 }
 // @ 0x436d80
-void alloc_int1::construct(int1* p, const int1& v) { new ((void*)p) int1(v); }
+void alloc_int::construct(int* p, const int& v) { new ((void*)p) int(v); }
 
 // @ 0x436da0
 bool HeightField::line_clear(const vector4* a, const vector4* b)

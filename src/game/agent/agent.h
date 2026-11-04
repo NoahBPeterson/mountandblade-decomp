@@ -121,14 +121,7 @@ struct Triple { int a, b, c; };
 
 // ---- STL instantiations of the object (std::allocator<T>::construct, std::_Uninit_copy), element types provisional
 #include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
-struct int3 { int a, b, c; };       // 12 bytes
-struct int1 { int a; };
-struct alloc_int3;
-#define AGENT_ALLOC(N, T) struct N { __declspec(noinline) void construct(T* p, const T& v); };
-#include "../alloc_construct.h"   // alloc_tstring / alloc_rec36 / alloc_rec136
-AGENT_ALLOC(alloc_int3, int3)
-AGENT_ALLOC(alloc_int1, int1)
-int3* uninit_copy_int3(const int3* first, const int3* last, int3* dest, alloc_int3& al);   // 0x436d10
+#include "../alloc_construct.h"   // alloc_tstring / alloc_rec36 / alloc_rec136 / alloc_E12 / alloc_int, uninit_copy_E12
 
 // ---- height field + 2-D grid walkers (0x436da0, 0x437290)
 #include "../../include/height_field.h"      // HCell, HeightField (line_clear 0x436da0)
