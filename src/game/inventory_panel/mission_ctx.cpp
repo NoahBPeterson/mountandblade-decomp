@@ -717,7 +717,7 @@ void Screen::frame_update(float dt)
     cam.bottom = g_view_b * -0.095f;
     cam.top = g_view_b * 0.095f;
     cam.build_planes();
-    f30->view = cam;
+    f30->scene3d.fr = cam;
 
     __int64 cur = g_ticks[GD_I(0x13b18)];
     __int64 ref = *(__int64*)((char*)g_game + 0x13b20);

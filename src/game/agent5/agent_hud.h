@@ -196,17 +196,7 @@ inline NodeA* new_frame_widget()
     w->f188 = 0;
     return w;
 }
-struct NameWidget : MissionUi {                                   // ctor 0x4ed630, vptr 0x598698, size 0x358
-    void* mission_scene;                                          // +0x178 (Mission::scene, stored by 0x4f7f00)
-    char pad17c[0x1ac - 0x17c];
-    char frustum[0x120];                                          // +0x1ac the copied camera frustum (0x4f7f00, 0x4f8c80)
-    char pad2cc[0x354 - 0x2cc];
-    char f354;                                                    // +0x354 (set when 0x5aa034 != 0)
-    char pad355[3];
-private:
-    NameWidget();                                                 // (never defined: the constructor 0x4ed630 is the fastcall function below)
-};
-struct MapWidget;                                                 // screen_camera.cpp's name for the class of the constructor 0x4ed630
+#include "../map_widget.h"                                      // MapWidget: the 3D view widget (ctor 0x4ed630, vptr 0x598698, size 0x358)
 MapWidget* __fastcall ctor_4ed630(MapWidget* p);                  // 0x4ed630 (ecx = the object; returns it)
 
 
@@ -218,7 +208,7 @@ struct MissionHud {
     char pad0[0x2c];
     NodeA* frame;                                           // +0x2c (0x4f7f00; the screen's root widget)
     char pad30[0x60 - 0x30];
-    NameWidget* name_widget;                                      // +0x60 (0x4f7f00; 0x4f8c80 copies the frustum into it)
+    MapWidget* name_widget;                                      // +0x60 (0x4f7f00; 0x4f8c80 copies the frustum into it)
     char pad64[4];
     MissionUi* crosshair[3];                                      // +0x68 (0x4f7f00: sized 0.5 x 0.375, meshes at +0xa0)
     MissionUi* arrow[4];                                          // +0x74 (0x4f7f00: meshes at +0xac)

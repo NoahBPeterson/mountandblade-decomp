@@ -198,10 +198,10 @@ void facegen_win::init()
     view->world = scene;
     { tvec2 p = { 0.0f, 0.0f }; view->move_a((float*)(const float*)&p); }
     { tvec2 s = { 0.5f, 0.75f }; view->set_xy((const float*)&s); }
-    view->flags |= 0x100;
-    view->clear_color = 0xff111133;
+    view->scene3d.flags |= 0x100;
+    view->scene3d.f190 = 0xff111133;
     cam.init(0.69813174f, 1.5f, 2.0f, 1000.0f);    // 0x4f25a0 (40 degrees)
-    view->view = cam;
+    view->scene3d.fr = cam;
     push_child(board->kids, view);
 
     EntityV* ent = (EntityV*)((rgl::world*)(void*)scene)->create_entity(9);   // 0x428440

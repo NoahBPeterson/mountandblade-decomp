@@ -161,7 +161,7 @@ void Screen::camera_update(float dt)
     memcpy((char*)this + 0x238, &frame, 0x40);
     ((frustum*)((char*)this + 0x170))->build_planes();
     MapWidget* w = f30;
-    memcpy((char*)w + 0x1ac, (char*)this + 0x170, 0x120);
+    memcpy(&w->scene3d.fr, (char*)this + 0x170, 0x120);
     WorldCam* sc = (WorldCam*)g_script.level;
     sc->f30c = vector4(-frame.u.x, -frame.u.y, -frame.u.z);   // w never written (3-component constructor)
     sc->f31c = frame.o;
@@ -180,18 +180,18 @@ MapWidget* __fastcall ctor_4ed630(MapWidget* w)
 {
     ((MissionUi*)w)->MissionUi::MissionUi();   // 0x48ae20
     *(void**)w = (void*)vtbl_598698;
-    ((scene*)w->scene_bytes())->scene::scene();   // 0x429740
-    *(char*)((char*)w + 0x2e6) = 1;
+    w->scene3d.scene::scene();   // 0x429740
+    w->scene3d.f16a = 1;
     *(vector2*)((char*)w + 0xe0) = vector2(0.0f, 0.0f);
     *(vector2*)((char*)w + 0xf0) = vector2(1.0f, 0.75f);
-    *(int*)((char*)w + 0x308) = 0x200;
+    w->scene3d.flags = 0x200;
     return w;
 }
 // @ 0x4ed6b0
 void* __fastcall dtor_4ed6b0(MapWidget* w, int, unsigned flags)
 {
     *(void**)w = (void*)vtbl_598698;
-    ((scene*)w->scene_bytes())->scene::~scene();   // 0x41f4e0
+    w->scene3d.scene::~scene();   // 0x41f4e0
     ((Buffer*)w)->Buffer::~Buffer();   // 0x487c00
     if (flags & 1)
         operator delete(w);

@@ -310,10 +310,10 @@ void MissionHud::refresh()
     frame->kids.push_back(status_group);
 
     {
-        void* mem = operator new(sizeof(NameWidget));
-        name_widget = mem ? (NameWidget*)ctor_4ed630((MapWidget*)mem) : 0;
+        void* mem = operator new(sizeof(MapWidget));
+        name_widget = mem ? ctor_4ed630((MapWidget*)mem) : 0;
     }
-    name_widget->mission_scene = g_mission->scene;
+    name_widget->world = g_mission->scene;
     {
         v[0] = 0.0f;
         v[1] = 0.0f;
@@ -336,7 +336,7 @@ void MissionHud::refresh()
         fr.top = r * 0.75f;
         fr.build_planes();
     }
-    *(rgl::frustum*)name_widget->frustum = fr;
+    name_widget->scene3d.fr = fr;
     frame->kids.push_back(name_widget);
 
     update_status();
@@ -706,7 +706,7 @@ pass2:
     v = v * zoomL * 0.86f;
     v = 102.0f < v ? 102.0f : v;
     fr.init(v * 0.017453292f, aspect, radius, 800.0f);
-    *(rgl::frustum*)name_widget->frustum = fr;
+    name_widget->scene3d.fr = fr;
     float far_plane = 97.0f / zoomL;
     g_mission->camera_to(&k, &far_plane);
 }

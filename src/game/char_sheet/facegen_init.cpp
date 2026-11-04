@@ -273,8 +273,8 @@ void FaceGen::init()
     s2[0] = 0.45875f;                                  // 0x3eeae148
     s2[1] = 0.44f;
     b->set_xy(s2);
-    b->flags |= 0x300;
-    b->clear_color = 0xff201815;
+    b->scene3d.flags |= 0x300;
+    b->scene3d.f190 = 0xff201815;
 
     // ---- the camera frustum (16:9 fit around the body) ---------------------------------------------
     float ratio = b->screen[1] / b->screen[0] * g_fov_k;
@@ -302,7 +302,7 @@ void FaceGen::init()
     f168 = -0.05f;
     f16c = 0.7f;
     f170 = 0;
-    b->view = fr;
+    b->scene3d.fr = fr;
 
     // ---- hook the face up to the troop's anim table ------------------------------------------------
     if (troop >= 0) {

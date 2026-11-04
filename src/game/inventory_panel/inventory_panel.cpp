@@ -1002,7 +1002,7 @@ L_f9d:
             if (fl != 0)
                 idx = w14;
         }
-        rgl::mesh* m = make_mesh(&held, (float*)&hv, idx);
+        rgl::mesh* m = make_mesh(&held, &hv, idx);
         m->scale(2.0f);
         delete g_drag;
         g_drag = m;

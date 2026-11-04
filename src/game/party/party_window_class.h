@@ -85,7 +85,7 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     void refresh_armor(MissionUi** labels, int troop);          // 0x502620 (ret 8)
     void refresh_page(int page);                                // 0x502920 (ret 4)
     void place_slot(MissionUi* w, ItemRef* item, int idx, int* state, int page, char flag);   // 0x5029f0 (ret 0x18)
-    rgl::mesh* make_mesh(ItemRef* item, float* scale, int troop); // 0x502b80 (ret 0xc)
+    rgl::mesh* make_mesh(ItemRef* item, void* unused, int troop); // 0x502b80 (ret 0xc; party_mesh.cpp)
     void refresh_stash(int row);                                // 0x502c30
 
     // 0x50fe20..0x513710 (inventory_panel/inventory_panel.cpp, built with the GameData header instead of party/game.h)

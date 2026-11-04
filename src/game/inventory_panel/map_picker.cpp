@@ -206,17 +206,17 @@ void MapPickScreen::set_label(int id)
 // @ 0x51a690
 void MapWidget::project(vector4* out, const vector4* in)
 {
-    vector4 p = view.m.transform_point_to_local(*in);
+    vector4 p = scene3d.fr.m.transform_point_to_local(*in);
     volatile float x, y;
-    if (view.perspective) {
-        x = -((1.0f / p.z) * view.nearz * p.x);
-        y = -((1.0f / p.z) * view.nearz * p.y);
+    if (scene3d.fr.perspective) {
+        x = -((1.0f / p.z) * scene3d.fr.nearz * p.x);
+        y = -((1.0f / p.z) * scene3d.fr.nearz * p.y);
     } else {
         x = p.x;
         y = p.y;
     }
-    out->x = ((x - view.left) * screen[0]) / (view.right - view.left) + fE0;
-    out->y = ((y - view.bottom) * screen[1]) / (view.top - view.bottom) + fE4;
+    out->x = ((x - scene3d.fr.left) * screen[0]) / (scene3d.fr.right - scene3d.fr.left) + fE0;
+    out->y = ((y - scene3d.fr.bottom) * screen[1]) / (scene3d.fr.top - scene3d.fr.bottom) + fE4;
 }
 
 // ---- 0x51a760 -------------------------------------------------------------------------------------------

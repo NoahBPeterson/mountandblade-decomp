@@ -47,7 +47,7 @@ The slice-era class names were wrong in several places and are renamed:
 | slice name | what it is |
 |---|---|
 | `Mission` (0x502cc0..0x507310) | the party / prisoner management screen: `PartyScreen` (NOT `game/mission.h` `Mission`) |
-| `InventoryPanel` / `SlotWindow` / `InvWindow` / `Panel` | one window object (= `PartyWindow`, `party/party_window.h`); `party_window.h` cannot be included together with `game_data.h` (both declare `g_game`), so `inventory_panel.h` has its own layout |
+| `InventoryPanel` / `SlotWindow` / `InvWindow` / `Panel` | one window object: `PartyWindow` (`party/party_window_class.h`, a head_rec; declared without either game header, so this directory's `inventory_panel.cpp` (GameData) and `party/party_window.cpp` (Game) share it). Its slot 3 is `scale_3` = 0x50fe20 |
 | `MissionCtx` / `Unit` / `MetaMission` / `BattleW` / `g_mission_ui` | the object at 0xa73300 (`MissionCtx`) |
 | `Scene` | the canonical `Mission` (`g_mission` 0x5e292c); `Team` = `TeamRec` seen 4 bytes earlier; `Sub3` = `ClassInfo` |
 | `Game` / `GameData` / `World` | `g_game` (0x5e2930) |
@@ -94,8 +94,7 @@ sequence, so they prove nothing either.
   item_kind,shape,game_recs}.h`, `game/mission.h`, `game/ui/mission_ui.h`, `game/config/config.h`.
 - **One pure addition**: `src/game/item_ref.h` gets `void name(char* out);   // 0x512730` (`ItemRef::name`, proved by
   the byte-exact function in `inventory_panel.cpp`). Nothing else in a canonical header was touched.
-- Not included, with the reason: `party/party_window.h` (the same window object as `InventoryPanel`; the two
-  headers disagree on `g_game`), `char_sheet/*.h` (partial / conflicting), the `Mission` of `mission.h` (not the
+- Not included, with the reason: `party/party_window.h` (the Game header disagrees with `game_data.h` on `g_game`; the window class itself is in `party/party_window_class.h`, which is included), `char_sheet/*.h` (partial / conflicting), the `Mission` of `mission.h` (not the
   party screen).
 - `rg "struct <Name>\b" src/` was run for `PartyScreen`, `InventoryPanel`, `MissionCtx`, `GameG`, `MenuWidget`: each is
   defined once, here. **Exception**: `Screen` (the world-map screen, `mission_ctx.h`, also redefined by the slice-copied

@@ -181,7 +181,7 @@ void Rec1208::slot_empty_2()
     window = vw;
     {
         *(void**)((char*)vw + 0x178) = *(void**)g_mission;
-        dword_copy(0x48, (char*)vw + 0x1ac, (char*)this + 0x34);
+        dword_copy(0x48, (char*)&vw->scene3d.fr, (char*)this + 0x34);
         vw->move_a((float*)pos);
         vw->set_xy(sz);
     }

@@ -163,8 +163,8 @@ void char_window::open_view()
             wd->v44 = rgl::vector4(0.6f, -1.0f, -2.0f);
         }
         b->world = w;
-        b->flags |= 0x1200;
-        b->clear_color = 0xff221815;
+        b->scene3d.flags |= 0x1200;
+        b->scene3d.f190 = 0xff221815;
         // the camera frame: the body's aspect scaled by the global fov factor
         float aspect = b->screen[1] / b->screen[0] * g_fov_k;
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);
@@ -189,7 +189,7 @@ void char_window::open_view()
         f41c = -0.3f;
         f420 = -0.09f;
         f424 = 0.7f;
-        b->view = fr;
+        b->scene3d.fr = fr;
         Entity* e = w->create_entity(9);
         rgl::matrix m2;
         identity_pos((pos*)&m2);

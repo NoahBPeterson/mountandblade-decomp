@@ -117,7 +117,7 @@ void Screen::init_screen()
         map = 0;
     f30 = map;
     map->world = (void*)g_script.level;
-    memcpy(&map->view, &cam, 0x120);
+    memcpy(&map->scene3d.fr, &cam, 0x120);
     vector2 mp;
     mp.x = 0.0f;
     mp.y = 0.04f;

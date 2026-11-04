@@ -103,9 +103,10 @@ Lessons that cost time:
 * Rec23c (terrain page) slot 2 `facegen_win::init` 0x4f1460, slot 3 `TerrainPage::update` 0x4f2d70; Rec428 (face generator)
   slots 2 / 3 `FaceGen::init` 0x4f49d0 and `CamView::update_model` 0x4ea8e0: two views with different names and widget types
   of one record (char_sheet/facegen_init.h and cam_view.h); merge their fields into Rec428, as was done for Rec58 / Rec454.
-* Recacc (party / inventory window) slots 2 / 3: `PartyWindow` (party/party_window.h, 36 placeholder virtuals) and
-  `InventoryPanel` (inventory_panel/inventory_panel.h) are two views of it; PartyWindow's placeholder virtuals have to go with
-  the merge.
+* Recacc (party / inventory window): done. `PartyWindow` (party/party_window_class.h) is the one class, a head_rec: slot 1
+  `slot_empty_1`, slot 2 `slot_empty_2` (0x500ad0, the window maker), slot 3 `scale_3` (0x50fe20, the trade engine's per-frame
+  step) and slot 7 are its own virtuals; InventoryPanel's methods (inventory_panel/inventory_panel.cpp, built with the GameData
+  header) are its members, so there is no forwarding stub left for this record.
 * C4c3160 slot 2 `PartyScreen::open_party_window` 0x500ad0.. (party_screen.cpp, a 1,300-line view with its own helpers).
 * mission_items: ItemA / ItemB / ItemC / ItemD / MissionBlocker. Their deleting destructor in the original is 0x4ce930, the
   ItemRec one: ItemA..C start with the same `owned_block` at +0x30 as ItemRec (their `f34 f38 f3c` are its begin/end/cap), so

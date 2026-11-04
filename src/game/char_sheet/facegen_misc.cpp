@@ -30,7 +30,7 @@ void FaceGen::update_view(int unused)
     rgl::frustum* f = &fr;
     *(mat4*)((char*)f + 0xc8) = m;
     f->build_planes();
-    body->view = *f;
+    body->scene3d.fr = *f;
 }
 
 // @ 0x4eb320

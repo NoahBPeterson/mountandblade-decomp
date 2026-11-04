@@ -1240,11 +1240,11 @@ void Camera::animate(int)
         float inv = 1.0f / dur(4);
         float rest = dur(4) - d4;
         float xn = d4 * f88 + rest * a8;
-        // the original spills both y terms and their sum to float slots before scaling (volatile
-        // forces the same float rounding; it matters for denormal results)
-        volatile float yb = d4 * f8c;
-        volatile float yr = rest * ac;
-        volatile float yn = yr + yb;
+        // (the original spills both y terms and their sum to float slots before scaling; as plain locals they stay in x87
+        // registers: the same value except that denormal results are not rounded to float in between)
+        float yb = d4 * f8c;
+        float yr = rest * ac;
+        float yn = yr + yb;
         float x = xn * inv;
         float y = yn * inv;
         v.x = x * 0.02f;
