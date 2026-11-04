@@ -959,5 +959,36 @@
    "reached through tables": 192944,
    "library data": 56014
   }
+ },
+ "2026-11-03T23:25:39-06:00": {
+  "data_labels": 155,
+  "aliases": 227,
+  "source_aliases": 69,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 14,
+  "placeholder_virtuals": 2,
+  "forwarding_stubs": 23,
+  "data_definitions": 181,
+  "when": "2026-11-03T23:25:39-06:00",
+  "commit": "d5567eff",
+  "build": "merge_tb",
+  "label": "dead activation lib not copied, head_rec stream slots",
+  "items": {
+   "defined in source": 185,
+   "generated from source": 2057,
+   "borrowed from image": 62,
+   "reached through tables": 47,
+   "library data": 501
+  },
+  "bytes": {
+   "defined in source": 143721724,
+   "generated from source": 309196,
+   "borrowed from image": 15088,
+   "reached through tables": 2220,
+   "library data": 55770
+  }
  }
 }
