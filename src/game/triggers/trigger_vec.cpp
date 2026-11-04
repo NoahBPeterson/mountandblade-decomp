@@ -20,6 +20,7 @@
 #include <new>
 #include "../../rgl/rgl_string.h"      // rgl::string::read_from (0x4151e0)
 #include "./trigger_vec.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../trigger_vecs.h"           // (listed directly: the resolution audit reads only the source's own includes)
 #include <richedit.h>
@@ -1574,11 +1575,11 @@ void music_player::advance_piece()
     } else if (w[0] != 0) {
         int len = FSOUND_Stream_GetLengthMs((void*)w[8]);
         int pos = FSOUND_Stream_GetTime((void*)w[8]);
-        int a = (*(int*)((char*)&g_script + 0x34));
-        int b = (*(int*)((char*)&g_script + 0x38));
+        int a = g_script.next_track;
+        int b = g_script.next_track_options;
         if (a >= 0 && a == w[10] && b > 0) {
             a = -1;
-            (*(int*)((char*)&g_script + 0x34)) = a;
+            g_script.next_track = a;
         }
         bool done = true;
         if (pos < len) {
@@ -1608,9 +1609,9 @@ void music_player::advance_piece()
         bool forced = false;
         int sel = -1;
         int best = -1;
-        int a = (*(int*)((char*)&g_script + 0x34));
+        int a = g_script.next_track;
         if (a >= 0) {
-            (*(int*)((char*)&g_script + 0x34)) = -1;
+            g_script.next_track = -1;
             forced = true;
             if (a != -1)
                 sel = a;
@@ -1680,11 +1681,11 @@ void music_player::advance_piece()
         w[9] = 0;
         w[1] = 0;
         w[13] = -1;
-    } else if ((*(int*)((char*)&g_script + 0x3c)) >= 0) {
+    } else if (g_script.cue_track >= 0) {
         if (g_options.music_volume > 0.02f) {
             int slot = 1;
-            play((*(int*)((char*)&g_script + 0x3c)), &slot);
+            play(g_script.cue_track, &slot);
         }
-        (*(int*)((char*)&g_script + 0x3c)) = -1;
+        g_script.cue_track = -1;
     }
 }

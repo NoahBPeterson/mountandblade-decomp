@@ -162,10 +162,10 @@ int GameData::skill_level(int agent, int skill)
 {
     unsigned w = chars[agent].nib[skill / 8];
     int lvl = (w >> (skill % 8 * 4)) & 0xf;
-    (*(int*)((char*)&g_script + 0x18)) = 0;
-    (*(int*)((char*)&g_script + 0x1c)) = 0;
+    g_script.trigger_result.store0 = 0;
+    g_script.trigger_result.store1 = 0;
     ((SoundCtl*)this)->emit_event(0x17, agent, skill);       // GameData is the SoundCtl view of agent/agent.h (the 0x435790 emitter)
-    lvl += (*(int*)((char*)&g_script + 0x18));
+    lvl += g_script.trigger_result.store0;
     if (lvl < 0)
         return 0;
     int cap = g_skill_tbl[skill].max_rank;

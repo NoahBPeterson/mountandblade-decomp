@@ -32,8 +32,8 @@
 #include "../../include/game_data.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 #include "../../include/clock_table.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
-extern char g_script[]; // 0xa70440
 
 // the animators fold the clock delta since the last start into the busy time: (g_ticks[clock] - stamp) * 1e-5 + seconds + 1
 #define ANIMATE(slot, value)                                                                      \
@@ -91,7 +91,7 @@ tstring NameTable::get_string(int index, int kind)
 {
     if (kind == 0) {
         if (index >= 0 && index < 0x80)
-            return ((tstring*)((char*)&g_script + 0x2450))[index];
+            return g_script.str[index];
         return tstring("Invalid String-register!");
     }
     if (kind == 0x16) {
@@ -110,7 +110,7 @@ tstring NameTable::get_string(int index, int kind)
 // @ 0x48e9e0
 tstring GameData::string_value(int index)
 {
-    (*(tstring*)((char*)&g_script + 0x24)).assign("");
+    g_script.result_string.assign("");
     if (!emit_event(0x10, index, 0)) {
         char buf[0x200];
         {
@@ -118,9 +118,9 @@ tstring GameData::string_value(int index)
             tstring* value = g_strtable.lookup(&key);
             sprintf(buf, value->c_str(), index);
         }
-        (*(tstring*)((char*)&g_script + 0x24)).assign(buf);
+        g_script.result_string.assign(buf);
     }
-    return (*(tstring*)((char*)&g_script + 0x24));
+    return g_script.result_string;
 }
 
 // @ 0x48ea80
@@ -135,9 +135,9 @@ face* GameData::find_at(const float* p)
     q[0] = p[0];
     q[1] = p[1];
     q[2] = 0;                                      // 0x48ea80 builds a 3-float point with z = 0
-    ((rgl::world*)g_level)->to_cell(q, idx);       // g_level (0xa732b4) is the rgl::world: world.h rows +0x28 = LevelGrid::cells
+    ((rgl::world*)g_script.level)->to_cell(q, idx);       // g_level (0xa732b4) is the rgl::world: world.h rows +0x28 = LevelGrid::cells
     flag = 0;
-    cell* c = &((LevelGrid*)g_level)->cells[idx[0]][idx[1]];
+    cell* c = &((LevelGrid*)g_script.level)->cells[idx[0]][idx[1]];
     c->collect_point(q, &flag, 0x100, cand, &count);
     for (int k = 0; k < count; k++) {
         shape_base* s = cand[k];

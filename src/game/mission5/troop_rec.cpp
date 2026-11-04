@@ -24,6 +24,7 @@
 #include "../../include/game_recs.h"
 #include "../mesh_slot/mesh_slot.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 
 // @ 0x51eb90
@@ -177,8 +178,6 @@ void PartyRecIO::read(stream_base* s, int flag)
     }
 }
 
-// the globals the start-up resets (the spawn / slider block at 0xa70440 and the free list behind it)
-extern int g_script;                                // 0xa70440
 extern void* g_windows[];                         // 0xa73980 (30 menu pointers)
 
 static inline int clamp_rank(int v)
@@ -192,22 +191,22 @@ void Game::start_new_game()
     tstring a;                                      // [esp+0x28] -- first parties.txt string
     tstring b;                                      // [esp+0x18] -- second parties.txt string
 
-    (*(int*)((char*)&g_script + 0x8)) = -100000;                           // 0xa70448
-    (*(int*)((char*)&g_script + 0x10)) = -100000;                             // 0xa70450
-    g_script = 0;                                   // 0xa70440
-    (*(int*)((char*)&g_script + 0x34)) = -1;                                  // 0xa70474
-    (*(int*)((char*)&g_script + 0x38)) = 0;                                   // 0xa70478
-    (*(int*)((char*)&g_script + 0x3c)) = -1;                                  // 0xa7047c
-    (*(int*)((char*)&g_script + 0xc)) = -1;                                // 0xa7044c
-    (*(int*)((char*)&g_script + 0x14)) = -1;                                  // 0xa70454
-    (*(int*)((char*)&g_script + 0x18)) = 0;                                   // 0xa70458
-    (*(int*)((char*)&g_script + 0x1c)) = 0;                                   // 0xa7045c
-    (*(int*)((char*)&g_script + 0x20)) = 100;                                 // 0xa70460
-    if ((*(void**)((char*)&g_script + 0x44)))
-        operator delete((*(void**)((char*)&g_script + 0x44)));
-    (*(void**)((char*)&g_script + 0x44)) = 0;
-    (*(void**)((char*)&g_script + 0x48)) = 0;
-    (*(void**)((char*)&g_script + 0x4c)) = 0;
+    g_script.param1_lo = -100000;                    // 0xa70448
+    g_script.param2_lo = -100000;                    // 0xa70450
+    g_script.screenshot_count = 0;                   // 0xa70440
+    g_script.next_track = -1;                        // 0xa70474
+    g_script.next_track_options = 0;                 // 0xa70478
+    g_script.cue_track = -1;                         // 0xa7047c
+    g_script.param1_hi = -1;                         // 0xa7044c
+    g_script.param2_hi = -1;                         // 0xa70454
+    g_script.trigger_result.store0 = 0;              // 0xa70458
+    g_script.trigger_result.store1 = 0;              // 0xa7045c
+    g_script.fixed_point_multiplier = 100;           // 0xa70460
+    if (g_script.vars._Myfirst)
+        operator delete(g_script.vars._Myfirst);
+    g_script.vars._Myfirst = 0;
+    g_script.vars._Mylast = 0;
+    g_script.vars._Myend = 0;
 
     g_ticks[1] = (__int64)600000.0f;
 

@@ -213,7 +213,6 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 
 // ---- string tables (object 0xa75ea0) ----------------------------------------------------------------------------
 #include "../string_table.h"           // StringTable (0xa75ea0): the one definition (script and inventory_panel/module_files)
-extern tstring g_result_string;         // 0xa70464 (set_result_string 0x49fce6)
 
 // ---- input ---------------------------------------------------------------------------------------------------------
 #include "../key_names.h"             // Keyboard g_keyboard (0xa170c8)
@@ -269,8 +268,8 @@ __forceinline float fmin_ref(const float& a, const float& b) { return fmin_ref(&
 // the out-of-line copy of <math.h>'s inline float ceil(float) the linker took from d3dfont.obj
 double __cdecl ceil_float_comdat(float x);                     // 0x404590 (src/dxframework/d3dfont.cpp)
 
-// ---- position registers: g_script + 0x450, 128 frames of 0x40 bytes ----------------------------------------------
-__forceinline Pos& script_pos(int i) { return ((Pos*)((char*)&g_script + 0x450))[i]; }
+// ---- position registers: g_script.pos, 128 frames of 0x40 bytes (rgl::matrix; Pos is this module's richer spelling of the same frame) ---
+__forceinline Pos& script_pos(int i) { return (Pos&)g_script.pos[i]; }
 
 
 // std::vector<int> (VC7.1: allocator word, then first / last / end)
@@ -660,8 +659,6 @@ extern MissionUiX g_mission_ctx;         // 0xa73300
 #include "../map_flags.h"   // g_map_flags.f8 = 0x5e2924 (jump_to_menu 0x4ac3a0)
 struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };
 extern MeshRec* g_meshes;               // 0x8ed4f58 (set_background_mesh)
-extern __int64 g_trigger_param_1;       // 0xa70448 (g_script +8)
-extern __int64 g_trigger_param_2;       // 0xa70450 (g_script +0x10)
 
 extern char g_party_battle_mode;         // 0xa735c8 (set_party_battle_mode 0x4a2ad0)
 

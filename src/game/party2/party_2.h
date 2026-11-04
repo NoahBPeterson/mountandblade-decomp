@@ -26,6 +26,7 @@
 #include "../../include/dialog_rec.h"
 #include "../../include/vec.h"
 #include "../hnode.h"     // hnode / node_gt: adjust_heap_node 0x438b10 (agent2/agent_stats.cpp) takes the open-list node and comparator under these names
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 using rgl::vector4;
 
@@ -39,8 +40,6 @@ using rgl::vector4;
 void mb_warning(const char* fmt, ...);                  // 0x42cb80 (logs a message)
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (printf-style log)
 float __cdecl frand();                                  // 0x40e400 (rand() % 15817 / 15817, in st0)
-struct ScriptState;
-extern ScriptState g_script;                // 0xa70440 (dialog_manager.h cannot be included here)
 
 // ---- the callees' own classes: member-only stubs under the name of the class that defines them (the link needs the defining owner in the
 // mangled name); the view classes below forward to them with `this` cast, which compiles to the same call ----------------------------
@@ -77,9 +76,6 @@ struct E68W {
 };
 struct PageTable98 {
     void* slot(unsigned index);   // 0x48ef20 (mission_ui2/slot_api.cpp, ret 4: the battle table's record by index)
-};
-struct Cont690 {
-    int get(unsigned index);   // 0x48d690 (mission_ui2/mission_3.cpp: the first dword of the record)
 };
 struct TableauTbl {
     rgl::mesh* make_mesh_from(const int* index, const void* from);   // 0x4991d0 (world_data/obj_tbl.cpp, ret 8)
@@ -273,7 +269,7 @@ struct NavRec : NavCell {
     float* pos() { return (float*)((char*)this + 0x74); }   // +0x74 x, y, z                         0x4b6b40
     float& limit() { return *(float*)((char*)this + 0x80); }// +0x80 keep distance of the node       0x4b6b40
 };
-inline NavRec* nav_recs() { return (NavRec*)((CellGrid*)g_level)->core->cells.first; }       // the record array (+0x14 of the nav data)
+inline NavRec* nav_recs() { return (NavRec*)((CellGrid*)g_script.level)->core->cells.first; }       // the record array (+0x14 of the nav data)
 
 #include "../battle_rec.h"            // BattleObj, BattleRec, BattleTable: the one definition (party2 and script)
 inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }

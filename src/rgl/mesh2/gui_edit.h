@@ -588,7 +588,6 @@ struct Block {
     void* material;                                     // +0x64
 
     std::vector<BlockMat*>& mats() { return *(std::vector<BlockMat*>*)((char*)this + 0x54); }   // allocator lane +0x54
-    void clear();                                       // 0x4c80c0
     void read(stream_base* stream, int version);        // 0x4c8110 (ret 8: the file version gates the triggers)
     void free_materials();                              // 0x4c8330
     void read_terrain(stream_base* stream);             // 0x4c83a0

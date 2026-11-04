@@ -1449,24 +1449,6 @@ rgl::vector4 graph_obj::normal(const int* e)
 
 
 
-// @ 0x4c80c0
-void Block::clear()
-{
-    int* p = (int*)this;
-    p[0] = 0;
-    p[0xd] = -1;
-    p[0xe] = 0;
-    p[0xf] = -1;
-    p[2] = 0xfffe7960;
-    p[3] = -1;
-    p[4] = 0xfffe7960;
-    p[5] = -1;
-    p[6] = 0;
-    p[7] = 0;
-    p[8] = 100;
-    tidy3(&p[0x11]);
-}
-
 // @ 0x4c8110
 void Block::read(stream_base* stream, int version)
 {

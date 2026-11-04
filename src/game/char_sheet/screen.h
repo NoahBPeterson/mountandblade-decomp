@@ -217,7 +217,6 @@ struct CurObj {
 struct GameMgr;
 
 // ---- globals --------------------------------------------------------------------------------------------
-extern int g_screenshots_counter;       // 0xa70440
 
 
 

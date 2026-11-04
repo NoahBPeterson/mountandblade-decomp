@@ -35,6 +35,7 @@
 #include "../key_names.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../slot.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 #define F(p, off, type) (*(type*)((char*)(p) + (off)))
 #define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
@@ -230,10 +231,10 @@ after_scroll:
             if (w04 == 3) {
                 v = g_game->sl_party_price(w14);
             } else if (w04 == 2 && w14 >= 0) {
-                g_trigger_result.store0 = 0;
-                g_trigger_result.store1 = 0;
+                g_script.trigger_result.store0 = 0;
+                g_script.trigger_result.store1 = 0;
                 bool ok = ((SoundCtl*)g_game)->emit_event(10, w14, g_game->f78);   // 0x435790
-                v = g_trigger_result.store0;
+                v = g_script.trigger_result.store0;
                 if (!ok)
                     v = GI(0x13a20);
             }

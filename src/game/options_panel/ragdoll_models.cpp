@@ -70,44 +70,53 @@ void RagBone::load(TiXmlElement* e)
     }
 }
 
-// Block (rgl/mesh2/gui_edit.h, the editor's map-object block): its clear() 0x4c80c0 is what this record's constructor calls on
-// itself; that header's types clash with this TU's, so the member is repeated under the class name.
-struct Block {
-    void clear();   // 0x4c80c0
-};
+// ---- the script interpreter's state object (g_script 0xa70440, include/script_state.h): constructor and reset ----------------------
+#include "../../include/script_state.h"
 
-// ---- 0x2ebc-byte model record (provisional layout from its ctor) -------------------------------------------
-struct model_a {
-    char pad0[0x24];
-    tstring name;                                   // 0x24
-    char pad34[0x40 - 0x34];
-    Bodyvec v40;                                    // 0x40 (begin +0x44)
-    char pad50[0x2450 - 0x50];
-    tstring names[128];                             // 0x2450
-    char f2c50;                                     // 0x2c50
-    char pad2c51[3];
-    int m1[64];                                     // 0x2c54
-    int m2[64];                                     // 0x2d54
-    char pad2e54[0x2e74 - 0x2e54];
-    int f2e74;                                      // 0x2e74
-    char pad2e78[4];
-    vec<int> v2e7c;                                 // 0x2e7c
-    vec<int> v2e8c;                                 // 0x2e8c
-    vec<int> v2e9c;                                 // 0x2e9c
-    vec<int> v2eac;                                 // 0x2eac
-    model_a();                                      // 0x4d3580
-};
+extern "C" void _ReadWriteBarrier(void);   // compiler barrier (emits no code): pins the original's store order (docs/codegen.md 10.9)
+
+// @ 0x4c80c0
+__declspec(noinline) void ScriptState::reset()
+{
+    screenshot_count = 0;
+    _ReadWriteBarrier();
+    next_track = -1;
+    _ReadWriteBarrier();
+    next_track_options = 0;
+    _ReadWriteBarrier();
+    cue_track = -1;
+    _ReadWriteBarrier();
+    param1_lo = -100000;
+    _ReadWriteBarrier();
+    param1_hi = -1;
+    _ReadWriteBarrier();
+    param2_lo = -100000;
+    _ReadWriteBarrier();
+    param2_hi = -1;
+    _ReadWriteBarrier();
+    trigger_result.store0 = 0;
+    _ReadWriteBarrier();
+    trigger_result.store1 = 0;
+    _ReadWriteBarrier();
+    fixed_point_multiplier = 100;
+    _ReadWriteBarrier();
+    if (vars._Myfirst)
+        operator delete(vars._Myfirst);
+    vars._Myfirst = 0;
+    vars._Mylast = 0;
+    vars._Myend = 0;
+}
 
 // @ 0x4d3580
-model_a::model_a()
+ScriptState::ScriptState()
 {
-    f2c50 = 0;
-    ((Block*)(void*)this)->clear();
-    f2e74 = 0;
+    new_game_done = 0;
+    reset();
+    level = 0;
     for (int i = 0; i < 8; i++)
         for (int j = 0; j < 8; j++) {
-            m2[i * 8 + j] = 0;
-            m1[i * 8 + j] = 0;
+            map_saved[i * 8 + j] = 0;
+            map_cell[i * 8 + j] = 0;
         }
 }
 

@@ -63,6 +63,7 @@
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 extern int g_propkind_count;                                // 0x5e29e0
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -2688,7 +2689,7 @@ done_shape:
             else
                 g_game->f1a200 = 0;
             g_game->f1a1fc = 0;
-            g_a70448 = *idx;
+            g_script.param1 = *idx;
             ss->play(-0x28);
         }
     } else if (ty == 2 || ty == 6 || ty == 7) {
@@ -2713,8 +2714,8 @@ done_shape:
                     g_game->f1a200 = 0;
             }
             g_game->f1a1fc = 0;
-            g_a70448 = *id;
-            g_a70450 = aid;
+            g_script.param1 = *id;
+            g_script.param2 = aid;
             ss->play(-0x32);
         }
     }
@@ -6517,7 +6518,6 @@ void Agent::process_blow(int unused)
 // ---- Agent::swing_trace: the melee swing / missile hit test ------------------------------------------------------------------------
 // AgentX::f100_is_0x48_and_charged 0x432470: declared in agent3/agent_types.h (agent3: out of line at the damage-doubling site; inlined as couching()); the agent calls it with an unused agent in ecx
 int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (agent2/agent_stats.cpp)
-extern rgl::matrix g_last_hit_frame;                // 0xa708d0
 static __forceinline int round_inl(const float& x)
 {
     float fl = (float)floor((double)x);
@@ -6894,8 +6894,8 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             char* kind = (char*)g_propkinds + pr->id * 0x78;
                             ((Placement*)g_game)->set_matrix(&pr->m18);
                             g_game->f1a1f0 = pi;
-                            g_a70448 = pi;
-                            g_a70450 = (__int64)dmg;
+                            g_script.param1 = pi;
+                            g_script.param2 = (__int64)dmg;
                             matrix frame;
                             frame.o = bB;
                             if (missile != 0) {
@@ -6918,7 +6918,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             } else {
                                 *(rgl::mat3*)&frame = *(const rgl::mat3*)&fr1;
                             }
-                            g_last_hit_frame = frame;
+                            g_script.pos[1] = frame;
                             ((SoundSet*)(kind + 0x6c))->play(-0x2a);
                             if ((prop_flags(kind) & 0x8000) != 0 && pr->hp() <= 0.0f)
                                 ((SoundSet*)(kind + 0x6c))->play(-0x2b);
@@ -7311,7 +7311,7 @@ void Agent::update_attack(float dt)
                 GameData* g = g_game;
                 g->f1a1fc = (int)slot_mesh[ftoi_helper(g->f1a204)];
             }
-            g_last_hit_frame = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
+            g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
             ((SoundSet*)((char*)ik + 0x228))->play(-0x33);
         } else if (S == 2) {
             if (ACT != f5620) {

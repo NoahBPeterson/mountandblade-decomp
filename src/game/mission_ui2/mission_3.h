@@ -53,12 +53,6 @@ struct ArrHolder {
     int lookup(int index, int arg);         // 0x48d5f0
 };
 struct Pair690 { int a; int b; };
-struct Cont690 {
-    char pad0[0x44];
-    char* base;                             // +0x44
-    char* end;                              // +0x48
-    int get(unsigned index);                // 0x48d690 (only the first dword is returned)
-};
 
 struct FieldGroup { int n; char pad[0x68]; };     // a 0x6c-byte force-group record: the member count first (0x48d940)
 // ---- 0x48d940: a force label ---------------------------------------------------------------------------------------------
@@ -134,6 +128,5 @@ struct OvNode {
     FieldShape* s4;                         // +0x118
 };
 
-extern char g_script[]; // 0xa70440
 
 #endif // GAME_MISSION_UI2_MISSION_3_H

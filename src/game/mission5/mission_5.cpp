@@ -22,6 +22,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/stream.h"
 #include "../../rgl/stream_inline.h"   // the file writer built on save_scene's stack: constructor inline
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 __forceinline bin_writer::bin_writer() {}   // inline here (resmgr.cpp load_pack calls the out-of-line 0x417c10)
 #include "../../rgl/mesh.h"
 #include "../conv_screen.h"      // Rec1208 (ConvScreen): the conversation screen record, whose slot 3 is handle_event 0x525160
@@ -804,12 +805,12 @@ void Screen_s261e0::tick(float dt)
         }
 
         if (any_pressed_s261e0(g_keys_73b0, 2)) {
-            (*(int*)((char*)&g_script + 0x18)) = 0;
-            (*(int*)((char*)&g_script + 0x1c)) = 0;
+            g_script.trigger_result.store0 = 0;
+            g_script.trigger_result.store1 = 0;
             int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
             for (int i = 0; i < *slots; i++)
                 ((SoundSlot_s261e0*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x16);
-            if (((*(int*)((char*)&g_script + 0x18)) | (*(int*)((char*)&g_script + 0x1c))) != 0)
+            if ((g_script.trigger_result.store0 | g_script.trigger_result.store1) != 0)
                 flag13 = 1;
         }
     }
@@ -827,16 +828,16 @@ void Screen_s261e0::tick(float dt)
     }
 
     if (any_pressed_s261e0(g_keys_7388, 2) && ((int*)((char*)&g_keyboard + 0xc))[56] == 0 && ((int*)((char*)&g_keyboard + 0xc))[184] == 0) {
-        (*(int*)((char*)&g_script + 0x18)) = 0;
-        (*(int*)((char*)&g_script + 0x1c)) = 0;
+        g_script.trigger_result.store0 = 0;
+        g_script.trigger_result.store1 = 0;
         ((SoundBank_s261e0*)rec_base_s261e0(g_mission_s261e0->cur_rec))->update_all(-0x15);
-        if (((*(int*)((char*)&g_script + 0x18)) | (*(int*)((char*)&g_script + 0x1c))) != 0)
+        if ((g_script.trigger_result.store0 | g_script.trigger_result.store1) != 0)
             b6 = false;
     }
 
     if (g_game_s261e0->f1a208 >= 0) {
         int v = g_game_s261e0->f1a208;
-        (*(__int64*)((char*)&g_script + 0x8)) = v;
+        g_script.param1 = v;
         int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
         for (int i = 0; i < *slots; i++)
             ((SoundSlot_s261e0*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-8);

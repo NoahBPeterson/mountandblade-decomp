@@ -48,7 +48,7 @@ struct IntVec {
 };
 
 // a std::vector<T*> triple kept as raw pointers (allocator dword at +0, then first / last / end): the freshly created physics record of
-// agent4 (PhysRecInit bones / bodies, zeroed in place, no cleanup) and the map scene's material lists g_mat_vec[4] (0xa732c0, 0xa732d0,
+// agent4 (PhysRecInit bones / bodies, zeroed in place, no cleanup) and the map scene's material lists g_script.mat_type0 .. mat_sea2 (0xa732c0, 0xa732d0,
 // 0xa732e0, 0xa732f0: stride 0x10) and the cells' mesh lists, which mission5 pushes onto through _Insert_n 0x410610 (this = the vector)
 struct RawVec {
     int pad;                                // +0 the allocator dword
@@ -59,7 +59,6 @@ struct RawVec {
     int count() const { return first ? (int)(last - first) : 0; }
     template <class T> T* at(unsigned i) const { return (T*)first[i]; }
 };
-extern RawVec g_mat_vec[4];             // 0xa732bc (the allocator dword of the first; its first / last / end are the 0xa732c0 / c4 / c8 the marker loops read; stride 0x10) the map scene material lists (sea, sea 2, river, ...)
 
 
 #endif // GAME_INT_VEC_H

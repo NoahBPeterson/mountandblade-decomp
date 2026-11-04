@@ -12,6 +12,7 @@
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/render_flags.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature
@@ -197,7 +198,6 @@ static inline tstring item_mesh_name(ItemKind* kind, int item, unsigned m4)
 // the active item; publishes the ids/sounds for the item drop code. cdecl; the 5th argument is unused.
 struct SkelHolder { char pad0[4]; FxElem* elems; };
 struct SkelBodyV { char pad0[0x304]; SkelHolder* skel; };
-extern char g_script[]; // 0xa70440
 void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int unused, ItemRef* items, int id)
 {
     if (flag != 0)
@@ -225,8 +225,8 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                     *(int*)(((char*)g_game) + 0x1a204) = i;
                     *(int*)(((char*)g_game) + 0x1a1fc) = *p;
                     *(int*)(((char*)g_game) + 0x1a200) = 0;
-                    (*(__int64*)((char*)&g_script + 0x8)) = id;
-                    (*(__int64*)((char*)&g_script + 0x10)) = troop;
+                    g_script.param1 = id;
+                    g_script.param2 = troop;
                     snd->update(-0x32);                    // 0x48add0
                 }
             } else if (t == 5 || t == 6) {

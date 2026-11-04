@@ -13,6 +13,7 @@
 #include "../shared_vars.h"
 #include "../last_scene.h"
 #include "../ui_globals.h"      // UI / core globals
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_a70438;   // 0xa70438
@@ -119,7 +120,7 @@ void Screen::init_screen()
     else
         map = 0;
     f30 = map;
-    map->world = (void*)g_level;
+    map->world = (void*)g_script.level;
     memcpy(&map->view, &cam, 0x120);
     vector2 mp;
     mp.x = 0.0f;
@@ -207,9 +208,9 @@ void Screen::init_screen()
     camera_mark_entities();
     camera_update(0.0f);                                   // 0x4ece20 (push ebx = 0)
 
-    if ((int)g_level != g_a70438 && g_use_shaders) {
-        ((ShadowMap*)g_psys)->attach_camera((CellGrid*)g_level);   // 0x4711e0
-        void* scene_objs = *(void**)((char*)g_level + 0xb0);
+    if ((int)g_script.level != g_a70438 && g_use_shaders) {
+        ((ShadowMap*)g_psys)->attach_camera((CellGrid*)g_script.level);   // 0x4711e0
+        void* scene_objs = *(void**)((char*)g_script.level + 0xb0);
         int count = (*(int*)((char*)scene_objs + 8) - *(int*)((char*)scene_objs + 4)) / 0x24;
         char* p = *(char**)((char*)scene_objs + 4);
         for (int i = 0; i < count; i++, p += 0x24) {

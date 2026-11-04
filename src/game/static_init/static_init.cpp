@@ -48,7 +48,6 @@ extern char g_a181f8[];     // 0xa181f8 the physics set (vector of E56)
 
 struct ShadowMap;
 extern ShadowMap g_shadow_map;   // 0xa70248 (game_state.cpp)
-extern char g_a70440[];     // 0xa70440
 extern char g_a73300[];     // 0xa73300 the mission context
 extern char g_a73730[];     // 0xa73730 the game keys (0x4a dwords)
 extern char g_a7374c[];     // 0xa7374c (the key records' end)
@@ -83,8 +82,6 @@ struct GuiScreen { GuiScreen(); };                  // 0x4ebea0
 struct big_holder { void release(); };              // 0x4ca830
 struct ini_file { ini_file(); };                    // 0x4c1be0
 namespace rgl { struct scene { scene(); ~scene(); }; }   // 0x429740, 0x41f4e0
-struct model_a { model_a(); };                      // 0x4d3580
-struct big_obj { void release(); };                 // 0x4cb9e0
 struct MetaMission { void init(); };                // 0x4be742 (entered through the marker at 0x4be730)
 struct music_player { music_player(); };            // 0x4c24c0
 struct rec_table { rec_table(); };                  // 0x4be520
@@ -187,8 +184,6 @@ void __cdecl static_dtor_548460() { ((Tail2*)g_a739f8)->~Tail2(); }
 void __cdecl static_dtor_548480() { ((big_holder*)g_5fe898)->release(); }
 // @ 0x548490
 void __cdecl static_dtor_548490() { ((rgl::scene*)g_a70260)->~scene(); }
-// @ 0x5484a0
-void __cdecl static_dtor_5484a0() { ((big_obj*)g_a70440)->release(); }
 // @ 0x548500
 void __cdecl static_dtor_548500() { ((TwoVec*)g_a75f40)->~TwoVec(); }
 // @ 0x548510
@@ -245,8 +240,6 @@ void __cdecl static_init_547de0()
     g_a70438 = 0;
     atexit(static_dtor_548490);
 }
-// @ 0x547e20
-void __cdecl static_init_547e20() { new (g_a70440) model_a; atexit(static_dtor_5484a0); }
 // @ 0x547e40
 void __cdecl static_init_547e40() { ((MetaMission*)g_a73300)->init(); atexit(static_dtor_548200); }
 // @ 0x547e90
@@ -294,7 +287,7 @@ init_fn g_static_init_table[] = {
     static_init_5479a0, static_init_5479c0, 
     
     static_init_547aa0, static_init_547ae0, static_init_547b30, static_init_547b50,
-    static_init_547de0, static_init_547e20, static_init_547e40,
+    static_init_547de0, static_init_547e40,
     static_init_547e90, static_init_547ec0, static_init_547ee0, static_init_547f00, static_init_547f10,
     static_init_547f30, static_init_547f50, static_init_547fa0, static_init_547fb0,
     static_init_547fe0, static_init_548010, static_init_548030, static_init_548040,

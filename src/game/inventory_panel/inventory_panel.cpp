@@ -28,9 +28,9 @@
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 #include "../shared_vars.h"
 #include "../key_names.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_num_valid;                                 // 0xa70470
 DragMesh* g_drag;                                // 0x5d75e4
 
 #define SOUNDMGR ((SoundMgr*)&orig::g_sound_mgr)                  // 0x5aa128
@@ -43,7 +43,6 @@ extern MsgLog g_msglog;                                 // 0x5d7080
 extern int   g_ui_tick;                                 // 0x5d8790 (integer tick counter)
 #include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp (canonical, defined in triggers/trigger_vec.cpp)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-extern tstring g_num;                                   // 0xa70464
 void mb_snprintf(char* buf, unsigned n, const char* fmt, ...);   // 0x415100
 int round_float(float* v);                              // 0x432540
 void item_events(int item_no, int* a, int* b, int* c);  // 0x4ef730
@@ -726,15 +725,15 @@ void InventoryPanel::place_slot_mesh(ItemRef* slot, float* pt, int page, int ind
     }
 
     for (int i = 0; i < 8; i++) {
-        g_trigger_result.store0 = 0;
-        g_trigger_result.store1 = 0;
-        g_num.assign("");
+        g_script.trigger_result.store0 = 0;
+        g_script.trigger_result.store1 = 0;
+        g_script.result_string.assign("");
         GV->emit_event4(0x13, slot->item, i, *(signed char*)((char*)slot + 7));
-        if (g_num_valid > 0) {
+        if (g_script.result_string.len > 0) {
             unsigned int color = 0xffffffff;
-            if (g_trigger_result.store0 != 0 || g_trigger_result.store1 != 0)
-                color = g_trigger_result.store0 | 0xff000000;
-            g_gui_root.draw_string(&g_num, 0.024f, color, 1);
+            if (g_script.trigger_result.store0 != 0 || g_script.trigger_result.store1 != 0)
+                color = g_script.trigger_result.store0 | 0xff000000;
+            g_gui_root.draw_string(&g_script.result_string, 0.024f, color, 1);
         }
     }
     (void)zero;
@@ -864,10 +863,10 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
     if (plain) {
         result = (int)value;
     } else {
-        g_trigger_result.value = 100;
+        g_script.trigger_result.value = 100;
         int mode = adjust ? 4 : 3;
         if (emit_event(mode, item->item, (int)value)) {
-            result = (int)((float)g_trigger_result.value * value * 0.01f);
+            result = (int)((float)g_script.trigger_result.value * value * 0.01f);
         } else {
             if (scaled)
                 value = value * g_items[item->item].f21c;

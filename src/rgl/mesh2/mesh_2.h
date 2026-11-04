@@ -135,44 +135,6 @@ struct list_node {
     void grow(unsigned n);                       // 0x4cb6f0
 };
 
-// the big record that owns a graph plus a few gadget slots
-struct big_obj {
-    void release();                              // 0x4cb9e0
-    char pad0[0x8];
-    void** vec08;                                // +0x08
-    void** vec08end;
-    void** vec08cap;
-    char pad14[0x10];
-    tstring ts24;                                // +0x24
-    char pad34[0x10];
-    void** vec44;                                // +0x44
-    void** vec44end;
-    void** vec44cap;
-    char pad50[0x2400];
-    tstring names[0x80];                         // +0x2450 .. +0x2c50
-    char pad2c50[0x104];
-    gadget* slots[64];                           // +0x2d54 .. +0x2e54 (8 rows of 8)
-    char pad2e54[0x20];
-    res_rec* p2e74;                              // +0x2e74
-    char pad2e78[0x8];
-    void** vec2e80;                              // +0x2e80
-    void** vec2e80end;
-    void** vec2e80cap;
-    char pad2e8c[0x4];
-    void** vec2e90;                              // +0x2e90
-    void** vec2e90end;
-    void** vec2e90cap;
-    char pad2e9c[0x4];
-    void** vec2ea0;                              // +0x2ea0
-    void** vec2ea0end;
-    void** vec2ea0cap;
-    char pad2eac[0x4];
-    void** vec2eb0;                              // +0x2eb0
-    void** vec2eb0end;
-    void** vec2eb0cap;
-    // the lib's vector::_Tidy (inlined): free the buffer if any, then zero the triple
-    void tidy(void* base) { void** q = (void**)base; if (q[0]) operator delete(q[0]); q[0] = 0; q[1] = 0; q[2] = 0; }
-};
 
 __declspec(noreturn) void vec_xlen();                                       // 0x43e2a0 (game/agent3/agent_combat.cpp)
 typedef __declspec(noreturn) void (__fastcall *XlenFn)(const void*);

@@ -549,7 +549,6 @@ extern int  g_pending_action;                                  // 0x5a9f18
 extern int  g_vert_budget;                                  // 0x5a9c34
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 #include "../../include/renderer.h"
-extern char g_script[]; // 0xa70440
 #define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
 struct Obj73300_s261e0 {                                        // g_mission_ctx (0xa73300)
     char pad0[0x3c];

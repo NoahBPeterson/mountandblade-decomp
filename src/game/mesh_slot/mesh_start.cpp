@@ -19,6 +19,7 @@
 #include <string.h>
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // ---------------------------------------------------------------------------
 // Local layouts (names provisional)
@@ -241,7 +242,6 @@ static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)((char*)m + 0x4c);
 extern SndRec*    g_env_rows;          // 0x5e28f4  sound slot records (0x4c bytes)
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../prop_kind.h"
-extern char g_script[]; // 0xa70440
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 extern unsigned __int64 g_bit[]; // 0x5a8e68
 
@@ -340,8 +340,8 @@ void Mission::start_setup()
     temp[12] = 0.0f; temp[13] = 0.0f; temp[14] = 0.0f; temp[15] = 0.0f;
     u = *(vector4*)&party_rec(pm, pid)->pos;
 
-    if (g_level != 0) {
-        for (unsigned p = (unsigned)((Scene*)g_level)->objs->first; p < (unsigned)((Scene*)g_level)->objs->last; p += 0x88) {
+    if (g_script.level != 0) {
+        for (unsigned p = (unsigned)((Scene*)g_script.level)->objs->first; p < (unsigned)((Scene*)g_script.level)->objs->last; p += 0x88) {
             float dx = *(float*)(p + 0x74) - u.x;
             float dy = *(float*)(p + 0x78) - u.y;
             float d2 = dy * dy + dx * dx;
@@ -453,7 +453,7 @@ void Mission::start_setup()
         RAWAT(unsigned, pe, 0x14) = i;
     }
 
-    (*(__int64*)((char*)&g_script + 0x8)) = ptype;
+    g_script.param1 = ptype;
 
     {
         SndBank* b = bank_of(&g_mission_templates[at<int>(0x5df0)]);

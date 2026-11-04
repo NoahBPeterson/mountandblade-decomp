@@ -10,6 +10,5 @@ struct Elem8 { int a, b; };
 struct List8 : I64Vec {                             // vector of 8-byte elements: the saved form of the records (write8)
     __declspec(noinline) void write8(OutStream* out);   // 0x4e94b0 (ret 4)
 };
-extern List8 g_list_a70480;                         // 0xa70480 (read by Game::load_state 0x51dbd0, written by GameData::save_state 0x4e8f10; defined in party/game.cpp)
 
 #endif // MB_GAME_LIST8_H

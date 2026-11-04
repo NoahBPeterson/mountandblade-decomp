@@ -6,6 +6,7 @@
 #include "../key_names.h"
 #include "../game_globals.h"      // canonical global declarations (g_module_name ...)
 #include "../ui_globals.h"      // UI / core globals
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // @ 0x4ebc10
 // Saves the next free screenshot file, then logs "ui_screenshot_taken_to_value" with the file name, or
@@ -24,10 +25,10 @@ void __cdecl take_screenshot(void)
     sprintf(name, "%s%s", dir, g_module_name.c_str());
     CreateDirectoryA(name, 0);
     for (;;) {
-        g_screenshots_counter++;
+        g_script.screenshot_count++;
         mb_snprintf(name, 0x200, "%s%s\\mb%d.bmp", dir,
                     g_module_name.c_str(),
-                    g_screenshots_counter);
+                    g_script.screenshot_count);
         h = FindFirstFileA(name, &fd);
         if (h == (HANDLE)-1)
             break;

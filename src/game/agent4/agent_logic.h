@@ -161,8 +161,6 @@ struct BoneW {
 void __cdecl rotate_scale_xy(rgl::vector4* out, const rgl::vector4* in, const float* angle, const rgl::vector4* scale);   // 0x436210 (the result is *out)
 void __cdecl rand_cone_dir(rgl::vector4* out, rgl::vector4 dir, float spread);   // 0x432c40
 
-extern __int64 g_a70448;                                // 0xa70448 (sound-event context)
-extern __int64 g_a70450;                                // 0xa70450
 
 // ---- the flying missile record (0xb0 bytes, src/game/missile.h: shared with terrain_a/misc.h)
 #include "../missile.h"

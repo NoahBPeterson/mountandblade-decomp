@@ -44,10 +44,10 @@
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../animator.h"
 #include "../../include/clock_table.h"
+#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 extern "C" void _ReadWriteBarrier(void); // compiler barrier (emits no code)
 
 // ---- data this module owns (docs/standalone_data.md) ----
-ScriptReg g_registers[0x80];                        // 0xa70490 (.bss) the script registers
 int g_emitter_count;                                // 0xa75eb4 (.bss) number of script emitters (g_scripts, party2/camera.h)
 
 extern Font* g_font;                                // 0x5e2934
@@ -76,9 +76,6 @@ struct ForceLabel {
 // level::nearest_face 0x439a50 (agent2/agent_stats.cpp): terrain_b/cell_grid.h
 struct PartyMgrW {
     int add_slot();   // 0x493960 world_data/world_data.cpp
-};
-struct SlotHolder40 {
-    void set40(int idx, int val);   // 0x493db0 world_data/world_data.cpp
 };
 struct HudOuter {
     void scroll_refresh(rgl::vector4* arg);   // 0x498420 world_data/mesh_hud.cpp
@@ -114,8 +111,6 @@ struct MissionG {
 template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 world_data/world_data.cpp (out-of-line instance: only declared)
 template<> size_t std::vector<int>::size() const;                                   // 0x40f010 rgl/particles/mesh_obj.cpp (out-of-line instance: only declared)
 __forceinline void ScriptStack::push(int line, int val) { ((PairStack*)this)->push(line, val); }                // 0x488e60
-__forceinline int VarTable::get(int id) { return ((Cont690*)this)->get((unsigned)id); }                          // 0x48d690
-__forceinline void VarTable::set40(int id, int v) { ((SlotHolder40*)this)->set40(id, v); }                       // 0x493db0
 
 // ======================================================================================
 // slice s0049aca0 (namespace c49aca0)
@@ -530,7 +525,7 @@ void HudRoot::set_font_mesh(const tstring* text, int arg)
 void Mission::spawn_battle_icon(unsigned id)
 {
     Rec98* rec = (Rec98*)((id & 0xf) * 0x98 + *(f0e0.begin() + (id >> 4)));
-    EntityFull* e = ((EntityHost*)g_level)->create_entity(9);
+    EntityFull* e = ((EntityHost*)g_script.level)->create_entity(9);
     rec->f50 = (int)e;
 
     Shape* shape;
@@ -745,7 +740,7 @@ extern ResMgr g_resmgr;                             // 0x5d6fa0
 // call 0x428440), not a virtual slot - the object at g_level is not polymorphic (its first dword is data).
 static OrderObj* order_create_entity(int type)
 {
-    return (OrderObj*)((rgl::world*)g_level)->create_entity(type);
+    return (OrderObj*)((rgl::world*)g_script.level)->create_entity(type);
 }
 
 // @ 0x49bea0
@@ -2430,8 +2425,8 @@ void Elem::set_lvalue(__int64* locals, const __int64& value)
             report("illegal register no.");
             return;
         } else {
-            g_registers[idx].lo = v[0];
-            g_registers[idx].hi = v[1];
+            g_script.reg_half[idx].lo = v[0];
+            g_script.reg_half[idx].hi = v[1];
             return;
         }
     } else if (kind == 2) {
@@ -2440,7 +2435,7 @@ void Elem::set_lvalue(__int64* locals, const __int64& value)
             report("illegal variable no.");
             return;
         } else {
-            (*(VarTable*)&g_script).set40(idx, v[0]);
+            g_script.set_var(idx, v[0]);
             return;
         }
     } else if (kind == 0x11) {
@@ -2476,9 +2471,9 @@ __int64 Elem::get_operand(__int64* locals, int* i, int* type)
         return ((__int64)(unsigned)k << 32) | (unsigned)p;
     if (kind == 1) {
         if (p >= 0 && p < 0x80) {
-            unsigned lo = g_registers[p].lo;
+            unsigned lo = g_script.reg_half[p].lo;
             _ReadWriteBarrier();
-            int hi = g_registers[p].hi;
+            int hi = g_script.reg_half[p].hi;
             return (__int64)lo | ((__int64)hi << 32);
         }
         sprintf(buf, "Invalid register no in operation = %d, param0 = %d param1 = %d", id, ((int*)vals)[0], ((int*)vals)[2]);
@@ -2487,7 +2482,7 @@ __int64 Elem::get_operand(__int64* locals, int* i, int* type)
     }
     if (kind == 2) {
         if (r == 0 && (unsigned)p < 0x10000u) {
-            int v = (*(VarTable*)&g_script).get(p);
+            int v = g_script.get_var(p);
             return (__int64)v;
         }
         sprintf(buf, "Invalid variable no in operation = %d, param0 = %d param1 = %d", id, ((int*)vals)[0], ((int*)vals)[2]);
