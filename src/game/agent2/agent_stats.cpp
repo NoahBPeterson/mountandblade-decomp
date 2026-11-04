@@ -8,6 +8,7 @@
 //       start, the physics set's two members and the light accumulator. Functions in ascending address order.
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
+#define PLACEDOBJ_CTOR_OUT_OF_LINE   // PlacedObj::PlacedObj is defined below (0x437830)
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,7 +74,7 @@ PlacedObj::PlacedObj(const PlacedObj& o)
     : IfaceB(o), m10(o.m10), m14(o.m14), m18(o.m18), m58(o.m58), m98(o.m98), md8(o.md8), m118(o.m118),
       v158(o.v158), m168(o.m168), f16c(o.f16c), q170(o.q170),
       m180(o.m180), m184(o.m184), kind(o.kind), id(o.id), name(o.name), value(o.value), m1a4(o.m1a4),
-      m1a8(o.m1a8), m1ac(o.m1ac), m1b0(o.m1b0), m1b4(o.m1b4), m1b8(o.m1b8), m1bc(o.m1bc), m1c0(o.m1c0),
+      m1a8(o.m1a8), m1ac(o.m1ac), m1b0(o.m1b0), ent(o.ent), m1b8(o.m1b8), m1bc(o.m1bc), m1c0(o.m1c0),
       m1c4(o.m1c4)
 {
 }
@@ -87,7 +88,7 @@ PlacedObj& PlacedObj::operator=(const PlacedObj& o)
     q170 = o.q170;
     m180 = o.m180; m184 = o.m184; kind = o.kind; id = o.id;
     name = o.name;
-    value = o.value; m1a4 = o.m1a4; m1a8 = o.m1a8; m1ac = o.m1ac; m1b0 = o.m1b0; m1b4 = o.m1b4;
+    value = o.value; m1a4 = o.m1a4; m1a8 = o.m1a8; m1ac = o.m1ac; m1b0 = o.m1b0; ent = o.ent;
     m1b8 = o.m1b8; m1bc = o.m1bc; m1c0 = o.m1c0; m1c4 = o.m1c4;
     return *this;
 }

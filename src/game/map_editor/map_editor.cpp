@@ -15,7 +15,7 @@
 #include "../../rgl/mesh2/gui_edit.h"
 #include "../../rgl/scene/world.h"
 #include "../../include/mat4.h"
-#include "../../include/rec1c8.h"
+#include "../placed_obj.h"
 #include "../../include/game_data.h"
 #include "../mission.h"
 #include "../placed_obj.h"
@@ -318,16 +318,16 @@ void MapMission::remove_prop(int index)
 }
 
 // @ 0x531470
-std::vector<Rec1c8>::iterator PropVec::erase(std::vector<Rec1c8>::iterator where)
+std::vector<PlacedObj>::iterator PropVec::erase(std::vector<PlacedObj>::iterator where)
 {
-    Rec1c8* p = where._Myptr;
-    Rec1c8* end = _Mylast;
-    Rec1c8* q = p + 1;
+    PlacedObj* p = where._Myptr;
+    PlacedObj* end = _Mylast;
+    PlacedObj* q = p + 1;
     for (; q != end; ++q)
         *p++ = *q;
     end = _Mylast;
     for (q = end - 1; q != end; ++q)
-        q->~Rec1c8();
+        q->~PlacedObj();
     --_Mylast;
     return where;
 }
@@ -336,7 +336,7 @@ std::vector<Rec1c8>::iterator PropVec::erase(std::vector<Rec1c8>::iterator where
 void MapEditorDialog::add_selected(rgl::mesh* target, const rgl::matrix* frame, void* rec, unsigned color)
 {
     PlacedObj* prop = (PlacedObj*)rec;
-    if (!prop->m1b4)
+    if (!prop->ent)
         return;
     char flip = 0;
     if (prop->v158.z * prop->v158.y * prop->v158.x < 0.0f)

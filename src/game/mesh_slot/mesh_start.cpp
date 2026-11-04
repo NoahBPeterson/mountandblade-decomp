@@ -24,7 +24,7 @@
 // Local layouts (names provisional)
 // ---------------------------------------------------------------------------
 struct Raw { template<class T> T& at(int o) { return *(T*)((char*)this + o); } };
-// the same displacement access for the shared classes (Rec1c8, Emit, Party), which have no Raw base
+// the same displacement access for the shared classes (PlacedObj, Emit, Party), which have no Raw base
 #define RAWAT(T, obj, off) (*(T*)((char*)(obj) + (off)))
 
 using rgl::vector4;                                          // the engine's vector (match/include/rgl.h); the slice's own copy clashed with the shared headers' using-declarations
@@ -91,14 +91,14 @@ void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, con
 
 #include "../tstring.h"
 
-#include "../../include/rec1c8.h"
+#include "../placed_obj.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 unsigned g_rand_seed;                               // 0x5d7078
 
-struct Rec1c8Vec {                                              // std::vector<Rec1c8> (allocator lane at +0)
-    int alloc; Rec1c8* first; Rec1c8* last; Rec1c8* end;
+struct Rec1c8Vec {                                              // std::vector<PlacedObj> (allocator lane at +0)
+    int alloc; PlacedObj* first; PlacedObj* last; PlacedObj* end;
     Rec1c8Vec& operator=(const Rec1c8Vec& o);                      // 0x477160
     unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
 };
@@ -449,7 +449,7 @@ void Mission::start_setup()
     at<int>(0x6608) = ptype;
     props = *(Rec1c8Vec*)((char*)lrec + 0x104);
     for (unsigned i = 0; i < props.size(); i++) {
-        Rec1c8* pe = at<Rec1c8*>(0x668c) + i;
+        PlacedObj* pe = at<PlacedObj*>(0x668c) + i;
         RAWAT(unsigned, pe, 0x14) = i;
     }
 
@@ -591,7 +591,7 @@ void Mission::start_setup()
 
     // ---- prop bounding box, two passes ------------------------------------------------------
     for (unsigned i = 0; i < props.size(); i++) {
-        Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
+        PlacedObj* p = &at<PlacedObj*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
             PropKind* k = &g_propkinds[RAWAT(int, p, 0x18c)];
             v.x = (RAWAT(float, p, 0x28) * k->f5c + RAWAT(float, p, 0x38) * k->fx60 +
@@ -610,7 +610,7 @@ void Mission::start_setup()
         }
     }
     for (unsigned i = 0; i < props.size(); i++) {
-        Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
+        PlacedObj* p = &at<PlacedObj*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
             PropKind* k = &g_propkinds[RAWAT(int, p, 0x18c)];
             v.x = (RAWAT(float, p, 0x38) * k->fx60 + RAWAT(float, p, 0x28) * k->f5c +
@@ -745,7 +745,7 @@ void Mission::start_setup()
 
     // ---- per-prop frame copy into the table ----------------------------------------------------
     for (unsigned i = 0; i < props.size(); i++) {
-        Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
+        PlacedObj* p = &at<PlacedObj*>(0x668c)[i];
         int sl = RAWAT(int, p, 0x1a0);
         if (RAWAT(int, p, 0x188) == 1 && sl >= 0 && sl < 0x40) {
             SceneSlot* s = &slots[sl];
@@ -771,7 +771,7 @@ void Mission::start_setup()
     // ---- prop ground / spawn pass --------------------------------------------------------------
     int pi;
     for (pi = 0; pi < (int)props.size(); ) {
-        Rec1c8* p = &at<Rec1c8*>(0x668c)[pi];
+        PlacedObj* p = &at<PlacedObj*>(0x668c)[pi];
         RAWAT(int, p, 0x1b4) = 0;
         if (g_cfg.enable_edit_mode == 0 && RAWAT(int, p, 0x188) == 4 && LV.flags.b8) {
             int j;
@@ -1013,7 +1013,7 @@ void Mission::start_setup()
 
     // ---- placed-prop jitter + ground snap ----------------------------------------------------------
     for (unsigned i = 0; i < props.size(); i++) {
-        Rec1c8* p = &at<Rec1c8*>(0x668c)[i];
+        PlacedObj* p = &at<PlacedObj*>(0x668c)[i];
         if (RAWAT(int, p, 0x188) == 0 && (g_propkinds[RAWAT(int, p, 0x18c)].flags & 0x1000)) {
             float outY;
             void* sink;

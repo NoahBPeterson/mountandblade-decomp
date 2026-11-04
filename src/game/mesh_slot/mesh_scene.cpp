@@ -157,7 +157,7 @@ void Mission::light_entities(mesh** list, int count)
 
 // @ 0x47ced0
 // Light every mesh of the entity of every placed object whose record is not in state 4.
-struct PropRecV {                                // the fields of Rec1c8 (src/include/rec1c8.h) this pass reads, as a plain record
+struct PropRecV {                                // the fields of PlacedObj (src/game/placed_obj.h) this pass reads, as a plain record
     char pad0[0x188];
     int destroyed;                               // 0x188
     char pad18c[0x1b4 - 0x18c];

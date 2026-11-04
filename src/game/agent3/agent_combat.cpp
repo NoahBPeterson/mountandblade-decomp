@@ -2,7 +2,7 @@
 // File: agent_combat.cpp  (0x43e190..0x441360)
 //
 // Desc: the game font's glyph metrics, the std::vector / std::deque instantiations the linker kept from this
-//       object (tstring, int, E12, E48, E56, Rec1c8, E32 elements), the skeleton accessors, the agent's aim
+//       object (tstring, int, E12, E48, E56, PlacedObj, E32 elements), the skeleton accessors, the agent's aim
 //       point and capsule hit test, the attack-direction / shoot / sound-id pickers, the "can this hit" test,
 //       the agent-table pool and the line-of-sight / fire-check scans. Functions in ascending address order
 //       (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
@@ -22,7 +22,7 @@
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/rec1c8.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../placed_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -130,7 +130,7 @@ template bool std::vector<int>::_Buy(size_t);
 // @ 0x43e7b0 (+ 0x43e910)
 template void std::vector<int>::_Insert_n(std::vector<int>::iterator, size_t, const int&);
 // @ 0x43ea00 (+ 0x43ebc9, 0x43ec91)
-template void std::vector<Rec1c8>::_Insert_n(std::vector<Rec1c8>::iterator, size_t, const Rec1c8&);
+template void std::vector<PlacedObj>::_Insert_n(std::vector<PlacedObj>::iterator, size_t, const PlacedObj&);
 // @ 0x43ed20 (+ 0x43edd9)
 template std::vector<int>::vector(const std::vector<int>&);
 // @ 0x43edf0 (+ 0x43ef97)
@@ -161,7 +161,7 @@ template std::vector<E48>::iterator std::vector<E48>::insert(std::vector<E48>::i
 // 0x4108b0 is vector<E48>::_Insert_n (an earlier object)
 template void std::vector<E48>::_Insert_n(std::vector<E48>::iterator, size_t, const E48&);
 // @ 0x43f410
-template std::vector<Rec1c8>::iterator std::vector<Rec1c8>::insert(std::vector<Rec1c8>::iterator, const Rec1c8&);
+template std::vector<PlacedObj>::iterator std::vector<PlacedObj>::insert(std::vector<PlacedObj>::iterator, const PlacedObj&);
 // @ 0x43f480
 template void std::vector<E56>::_Destroy(E56*, E56*);
 // @ 0x43f4a0
@@ -625,7 +625,7 @@ template void std::vector<E48>::push_back(const E48&);
 // @ 0x440b30
 template void std::vector<int>::push_back(const int&);
 // @ 0x440b80
-template void std::vector<Rec1c8>::push_back(const Rec1c8&);
+template void std::vector<PlacedObj>::push_back(const PlacedObj&);
 // @ 0x440c10
 template void std::vector<E12>::push_back(const E12&);
 

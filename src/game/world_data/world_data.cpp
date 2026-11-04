@@ -25,7 +25,7 @@
 #include "../mission.h"
 #include "../agent_obj.h"
 #include "../../include/rec_dtors.h"
-#include "../../include/rec1c8.h"
+#include "../placed_obj.h"
 #include "../../include/i64_vec.h"
 #include "../../include/e68.h"
 #include "../../include/mesh_parts.h"

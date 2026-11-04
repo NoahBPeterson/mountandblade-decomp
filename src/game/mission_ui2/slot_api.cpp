@@ -26,7 +26,7 @@
 #include "../../include/item_kind.h"
 #include "../../include/troop.h"
 #include "../../include/party.h"
-#include "../../include/rec1c8.h"
+#include "../placed_obj.h"
 #include "../../include/rec78.h"
 #include "../../include/shape.h"
 #include "../../include/game_data.h"
@@ -216,17 +216,17 @@ void GameData::add_inventory(int item, int amount)
 // @ 0x48ed60
 void Mission::retag_props(int from, int to)
 {
-    Rec1c8* base = props._Myfirst;
+    PlacedObj* base = props._Myfirst;
     if (!base)
         return;
     int n = (int)(((char*)props._Mylast - (char*)base) / 0x1c8);
     for (int i = 0; i < n; i++) {
-        Rec1c8* r = base + i;
-        if (r->destroyed)
+        PlacedObj* r = base + i;
+        if (r->kind)
             continue;
         if (!r->name.equals(g_propkinds[from].name))
             continue;
-        r->kind = to;
+        r->id = to;
         r->name = g_propkinds[to].name;
     }
 }
@@ -235,13 +235,13 @@ void Mission::retag_props(int from, int to)
 int Mission::count_props(int tag)
 {
     int count = 0;
-    Rec1c8* base = props._Myfirst;
+    PlacedObj* base = props._Myfirst;
     if (!base)
         return 0;
     unsigned n = (unsigned)(((char*)props._Mylast - (char*)base) / 0x1c8);
     for (unsigned i = 0; i < n; i++) {
-        Rec1c8* r = base + i;
-        if (!r->destroyed && r->kind == tag)
+        PlacedObj* r = base + i;
+        if (!r->kind && r->id == tag)
             count++;
     }
     return count;
@@ -251,13 +251,13 @@ int Mission::count_props(int tag)
 int Mission::find_prop(int tag, int nth)
 {
     int found = 0;
-    Rec1c8* base = props._Myfirst;
+    PlacedObj* base = props._Myfirst;
     if (!base)
         return -1;
     unsigned n = (unsigned)(((char*)props._Mylast - (char*)base) / 0x1c8);
     for (unsigned i = 0; i < n; i++) {
-        Rec1c8* r = base + i;
-        if (!r->destroyed && r->kind == tag) {
+        PlacedObj* r = base + i;
+        if (!r->kind && r->id == tag) {
             if (found == nth)
                 return i;
             found++;

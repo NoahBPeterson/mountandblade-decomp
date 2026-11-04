@@ -7,9 +7,9 @@
 #include "../../rgl/stream.h"
 #include "./records.h"
 
-// a std::vector<Rec1c8> whose one-argument resize stays out of line in the original (0x477ea0 in terrain_b.cpp)
+// a std::vector<PlacedObj> whose one-argument resize stays out of line in the original (0x477ea0 in terrain_b.cpp)
 // (resize(n) is the out-of-line instance of terrain_b.cpp, 0x477ea0: mission.cpp declares it as an explicit specialization)
-struct RecVector : std::vector<Rec1c8> {
+struct RecVector : std::vector<PlacedObj> {
 };
 
 #include "../../include/logger.h"   // Logger (shared with rgl/scene/render_scene.cpp)

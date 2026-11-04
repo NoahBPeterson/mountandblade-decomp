@@ -29,7 +29,7 @@
 #include "../../include/rec_dtors.h"
 #include "../../include/fx.h"        // FxElem (add_group 0x4423f0)
 #include "../mission.h"
-#include "../../include/rec1c8.h"
+#include "../placed_obj.h"
 
 #include "./raw_place.h"            // raw_place: constructing a canonical class in raw storage
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)

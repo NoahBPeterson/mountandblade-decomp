@@ -13,6 +13,7 @@
 // Boundary: starts at 0x525160 (Game::handle_event, a class change after the record readers of game_2.cpp); ends where the
 //       map editor starts (0x52cf60, class Mesh | Elem). The map's boundary 0x5249f0 is not kept (see game_2.cpp).
 //-----------------------------------------------------------------------------
+#define PLACEDOBJ_CTOR_OUT_OF_LINE   // fn_529d80 0x529d80 calls PlacedObj::PlacedObj (0x437830) for the resize(0) temporary
 #include "../../include/image_addrs.h"
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
@@ -1858,7 +1859,7 @@ void Mission_s29840::fn_529d80()
 {
     Scene_s29840* sc = (Scene_s29840*)(*(char**)((char*)g_game_s29840 + 0x13a50) + f5df4 * 0x494);
     for (unsigned i = 0; i < records.size(); i++) {
-        Rec1c8_s29840* r = &records[i];
+        PlacedObj* r = &records[i];
         if (r->m10 == 0 && r->m14 >= 0) {
             r->id = sc->recs[r->m14].id;
             r->name = sc->recs[r->m14].name;
@@ -1866,7 +1867,7 @@ void Mission_s29840::fn_529d80()
     }
     sc->recs.resize(0);
     for (unsigned i = 0; i < records.size(); i++) {
-        Rec1c8_s29840* r = &records[i];
+        PlacedObj* r = &records[i];
         if (r->m10 == 0) {
             sc->recs.push_back(*r);
             r->m14 = (int)sc->recs.size() - 1;
@@ -2010,9 +2011,9 @@ void Screen_s29ec0::f_529ec0()
                 second = r.out_length();   // 0x52a420: call 0x407c50 on the second vector as well
             }
         } else if (e->type == 0x0c) {
-            SceneProp_s29ec0* p = &m->props[e->id];
-            if (p->destroyed == 0) {
-                int kind = p->kind;
+            PlacedObj* p = &m->props[e->id];
+            if (p->kind == 0) {
+                int kind = p->id;
                 int flags = g_prop_kinds_s29ec0[kind].flags & 0xff;
                 if (flags == 5) {
                     mode = 5;
@@ -2027,8 +2028,8 @@ void Screen_s29ec0::f_529ec0()
                 } else {
                     keep = true;
                 }
-            } else if (p->destroyed == 5) {
-                if ((*(int*)((char*)&g_mission_ctx + 0x2c4)) <= 0 || p->obj < 0 || p->obj >= g_mapobjs_s29ec0[(*(int*)((char*)&g_mission_ctx + 0x2c4))].count) {
+            } else if (p->kind == 5) {
+                if ((*(int*)((char*)&g_mission_ctx + 0x2c4)) <= 0 || p->m1a4 < 0 || p->m1a4 >= g_mapobjs_s29ec0[(*(int*)((char*)&g_mission_ctx + 0x2c4))].count) {
                     keep = true;
                 } else {
                     mode = 6;
@@ -2036,7 +2037,7 @@ void Screen_s29ec0::f_529ec0()
                     best = len;
                     second = len;
                 }
-            } else if (p->destroyed == 6) {
+            } else if (p->kind == 6) {
                 mode = 7;
                 target = e->id;
                 best = len;
@@ -2189,9 +2190,9 @@ no_selection:
             }
         }
     } else if (mode == 5) {
-        SceneProp_s29ec0* p = &m->props[target];
+        PlacedObj* p = &m->props[target];
         char* rec = g_game_s29ec0->map_records + m->f5df4 * 0x494;
-        int inv = p->inv;
+        int inv = p->value;
         if (inv < *(int*)(rec + 0x100) && inv >= 0) {
             tstring k("ui_chest");
             name = *g_strtable_s29ec0.lookup(k);
@@ -2208,18 +2209,18 @@ no_selection:
             }
         }
     } else if (mode == 6) {
-        SceneProp_s29ec0* p = &m->props[target];
-        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[(*(int*)((char*)&g_mission_ctx + 0x2c4))].objs + p->obj * 0x68);
+        PlacedObj* p = &m->props[target];
+        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[(*(int*)((char*)&g_mission_ctx + 0x2c4))].objs + p->m1a4 * 0x68);
         name = *o->mesh_ptr();
         if (ok) {
             tstring k("ui_go");
             action = *g_strtable_s29ec0.lookup(k);
         }
     } else if (mode == 7) {
-        SceneProp_s29ec0* p = &m->props[target];
+        PlacedObj* p = &m->props[target];
         ItemRef_s29ec0 ref;
-        ref.item = p->kind;
-        ref.m4 = p->inv;
+        ref.item = p->id;
+        ref.m4 = p->value;
         char buf[0x40];
         ref.name(buf);
         name.assign(buf);

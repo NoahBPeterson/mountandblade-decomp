@@ -8,6 +8,7 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order; helpers that follow their caller are
 //       __declspec(noinline). Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#define PLACEDOBJ_CTOR_OUT_OF_LINE   // init_scene 0x5144d0 calls PlacedObj::PlacedObj (0x437830) for the by-value argument
 #include "../../include/image_addrs.h"
 #include "./mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
@@ -21,6 +22,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
 #include "../mission.h"
+#include "../placed_obj.h"      // PlacedObj: the by-value argument of SceneSub::f (constructor 0x437830)
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
@@ -54,10 +56,6 @@ extern MissionTemplate* g_mission_templates;                    // 0x5e2a00
 using rgl::mat3;
 mat3* identity3(mat3* m);                               // 0x40cd60 (cdecl)
 struct FramePlacement { mat3 m; int a, b, c, d; };      // 0x40 bytes (rotation + position; was Placement: agent/agent.h's Placement is the game-data view of 0x435650)
-struct PlacedObj {                                       // 0x1c8 bytes, ctor 0x437830 (passed BY VALUE to SceneSub::f)
-    char pad0[0x1c8];
-    PlacedObj();                                         // 0x437830
-};
 struct FrameTemp {                                      // init_scene's 0x1c8-byte frame scratch (never constructed)
     char pad0[0x10];
     int f10, f14, f18, f1c;                             // +0x10

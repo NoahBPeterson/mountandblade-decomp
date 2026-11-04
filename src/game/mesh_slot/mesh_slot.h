@@ -17,7 +17,7 @@
 #include "../arr_set.h"
 #include "../terrain_a/terrain.h"
 #include "../terrain_b/troop_mgr.h"
-#include "../../include/rec1c8.h"
+#include "../placed_obj.h"
 #include "../../include/timer.h"
 #include "../../include/shape.h"
 #include "../../include/item_kind.h"

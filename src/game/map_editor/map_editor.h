@@ -7,7 +7,7 @@
 //   Mission           src/game/mission.h (g_mission 0x5e292c); MapMission adds remove_prop and the typed views of
 //                     the ints at +0x65d0 / +0x65d8 / +0x65dc
 //   PlacedObj         src/game/placed_obj.h (the 0x1c8-byte record the map editor edits)
-//   Rec1c8            src/include/rec1c8.h (the same record as Mission::props holds it)
+//   PlacedObj            src/game/placed_obj.h (the same record as Mission::props holds it)
 #ifndef GAME_MAP_EDITOR_MAP_EDITOR_H
 #define GAME_MAP_EDITOR_MAP_EDITOR_H
 #include <windows.h>
@@ -17,7 +17,7 @@
 #include "../../rgl/scene/world.h"
 #include "../../include/mat4.h"
 #include "../../include/game_data.h"
-#include "../../include/rec1c8.h"
+#include "../placed_obj.h"
 #include "../mission.h"
 #include "../placed_obj.h"
 #include "../int_vec.h"      // IntVec: push_back with the inlined fast path and the library insert_n (0x43e7b0), as 0x5305b0 uses it
@@ -37,9 +37,9 @@ struct pos3 : rgl::matrix {
 };
 
 // ---- scene objects the editor touches through pointers ------------------------------------------------------------
-// the per-record scene object (PlacedObj +0x1b4, Rec1c8 +0x1b4) is an rgl::entity (src/rgl/scene/scene_entity.h): the frame
+// the per-record scene object (PlacedObj +0x1b4, PlacedObj +0x1b4) is an rgl::entity (src/rgl/scene/scene_entity.h): the frame
 // at +0x58 (local), the flags at +0x140 / +0x141, vtable slot 0x5c = set_local_scaled_dirty(matrix*, vector4*)
-inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->m1b4; }
+inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->ent; }
 
 // the current editor entity (0xa739b8)
 #include "../editor_entity.h"

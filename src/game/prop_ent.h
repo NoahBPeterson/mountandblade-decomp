@@ -1,4 +1,4 @@
-// prop_ent.h: the scene entity of a placed prop (a Rec1c8::ent; rgl::entity of src/rgl/scene/scene_entity.h seen through the parts
+// prop_ent.h: the scene entity of a placed prop (a PlacedObj::ent; rgl::entity of src/rgl/scene/scene_entity.h seen through the parts
 // the prop code uses): the vtable (slot 23 = set_local_scaled_dirty 0x41ff40 takes the new frame), and the two pointer vectors at
 // +0x108 (lods) and +0x118 (meshes). ONE definition for src/game: terrain_a (Prop::update 0x467c50 drives the frame) and
 // mission_ui2 (trigger_item 0x48cec0, trigger_mesh_obj 0x48cf40 read the first element of each vector) saw one half each.

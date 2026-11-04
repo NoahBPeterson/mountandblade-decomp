@@ -336,7 +336,7 @@ void PlacedObj::reset()
     value = 0;
     m1a4 = 0;
     m1b0 = 0;
-    m1b4 = 0;
+    ent = 0;
     m1b8 = 0;
     m168 = m14 = -1;
     rgl::mat4 ident;

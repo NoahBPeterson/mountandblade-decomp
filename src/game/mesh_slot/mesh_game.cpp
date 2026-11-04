@@ -573,7 +573,7 @@ struct PtrTableF {                      // the paged pointer table (count; the p
     void next_agent(unsigned* i) { ((Pool<MAgent>*)this)->next_used(i); }   // 0x43b160 (thiscall, ret 4)
 };
 typedef char assert_ptrtable[(sizeof(PtrTableF) == 0x20) ? 1 : -1];
-struct PropAnim {                       // the 0x1c8-byte prop tween record (Rec1c8)
+struct PropAnim {                       // the 0x1c8-byte prop tween record (PlacedObj)
     char pad0[0x1c8];
     void update(float dt) { union { float f; int i; } u; u.f = dt; ((Prop*)this)->update(u.i); }       // 0x467c50 (thiscall, ret 4): the original pushes dt's bits unconverted
 };

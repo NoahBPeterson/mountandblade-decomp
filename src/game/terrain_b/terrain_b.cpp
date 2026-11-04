@@ -15,7 +15,7 @@
 #include "./frustum.h"
 #include "./render_batch.h"
 #include "./poly_mesh.h"
-#include "../../include/rec1c8.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../placed_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "./cell_grid.h"
 #include "./cell_world.h"
 #include "./terrain.h"
@@ -1081,12 +1081,12 @@ void Mission::update_prop_flags()
         if (special)
             special->flag = (g_game->f1a20c == 0 && g_game->f1a090 != 0) ? 1 : 0;
         for (unsigned i = 0; i < props.size(); i++) {
-            Rec1c8& e = props[i];
-            if (e.destroyed == 0) {
-                if ((g_propkinds[e.kind].flags11 & 0x40) == 0)
+            PlacedObj& e = props[i];
+            if (e.kind == 0) {
+                if ((g_propkinds[e.id].flags11 & 0x40) == 0)
                     continue;
             } else {
-                if (e.destroyed != 1 && e.destroyed != 5)
+                if (e.kind != 1 && e.kind != 5)
                     continue;
             }
             {
@@ -1201,7 +1201,7 @@ MEdge* vec34::ufill(MEdge* f, unsigned n, const MEdge& v)
 template std::vector<MEdge>::iterator std::vector<MEdge>::erase(std::vector<MEdge>::iterator, std::vector<MEdge>::iterator);
 
 // @ 0x4725d0
-template std::vector<Rec1c8>::iterator std::vector<Rec1c8>::erase(std::vector<Rec1c8>::iterator, std::vector<Rec1c8>::iterator);
+template std::vector<PlacedObj>::iterator std::vector<PlacedObj>::erase(std::vector<PlacedObj>::iterator, std::vector<PlacedObj>::iterator);
 
 // @ 0x472630
 ArrSet* vecArr::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
@@ -2116,12 +2116,12 @@ template void std::_Stable_sort(It8, It8, int, std::_Temp_iterator<P8>&, Pred8);
 
 // ---- vector<> instantiations of the object's records (VC7.1) ---------------------------------------------------------
 // @ 0x476020 vector<E36x>::reserve (its catch(...) funclet follows at 0x476111), 0x476130 vector<E136>::reserve
-// (funclet 0x476225), 0x476240 vector<E36x>::insert, 0x4762b0 vector<E136>::insert, 0x476320 vector<Rec1c8>::_Buy.
+// (funclet 0x476225), 0x476240 vector<E36x>::insert, 0x4762b0 vector<E136>::insert, 0x476320 vector<PlacedObj>::_Buy.
 template void std::vector<E36x>::reserve(size_t);
 template void std::vector<E136>::reserve(size_t);
 template std::vector<E36x>::iterator std::vector<E36x>::insert(std::vector<E36x>::iterator, const E36x&);
 template std::vector<E136>::iterator std::vector<E136>::insert(std::vector<E136>::iterator, const E136&);
-template bool std::vector<Rec1c8>::_Buy(size_t);
+template bool std::vector<PlacedObj>::_Buy(size_t);
 
 // @ 0x476370 (+ 0x476515: catch funclet and cold branches)
 template void std::vector<MRow36>::_Insert_n(std::vector<MRow36>::iterator, size_t, const MRow36&);
@@ -2134,8 +2134,8 @@ template void std::vector<MEdge>::_Insert_n(std::vector<MEdge>::iterator, size_t
 // @ 0x476e60 (+ 0x47701d, 0x4770dc)
 template void std::vector<ArrSet>::_Insert_n(std::vector<ArrSet>::iterator, size_t, const ArrSet&);
 
-// 0x477160 vector<Rec1c8> assignment (no marker: a scope-less operator= annotation would capture every operator= callee)
-template std::vector<Rec1c8>& std::vector<Rec1c8>::operator=(const std::vector<Rec1c8>&);
+// 0x477160 vector<PlacedObj> assignment (no marker: a scope-less operator= annotation would capture every operator= callee)
+template std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::vector<PlacedObj>&);
 // @ 0x4772f0
 template void std::vector<E36x>::push_back(const E36x&);
 // @ 0x477380
@@ -2155,7 +2155,7 @@ template void std::vector<MEdge>::resize(size_t, MEdge);
 // @ 0x477750
 template std::vector<MEdge>::iterator std::vector<MEdge>::insert(std::vector<MEdge>::iterator, const MEdge&);
 // @ 0x4777c0
-template void std::vector<Rec1c8>::resize(size_t, Rec1c8);
+template void std::vector<PlacedObj>::resize(size_t, PlacedObj);
 // @ 0x477880
 template void std::vector<ArrSet>::resize(size_t, ArrSet);
 
@@ -2214,8 +2214,8 @@ template void std::vector<MPoly>::push_back(const MPoly&);
 template void std::vector<MEdge>::resize(size_t);
 // @ 0x477e10
 template void std::vector<MEdge>::push_back(const MEdge&);
-// @ 0x477ea0 resize(n) pads with Rec1c8() (the inlined constructor 0x437830)
-template void std::vector<Rec1c8>::resize(size_t);
+// @ 0x477ea0 resize(n) pads with PlacedObj() (the inlined constructor 0x437830)
+template void std::vector<PlacedObj>::resize(size_t);
 
 // ---- id pools ---------------------------------------------------------------------------------------------------
 // @ 0x477f00
