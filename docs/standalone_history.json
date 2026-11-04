@@ -838,5 +838,35 @@
    "reached through tables": 192944,
    "library data": 55422
   }
+ },
+ "2026-11-03T22:12:19-06:00": {
+  "data_labels": 162,
+  "aliases": 299,
+  "traps": 0,
+  "redirects": null,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 18,
+  "placeholder_virtuals": 2,
+  "forwarding_stubs": 32,
+  "data_definitions": 181,
+  "when": "2026-11-03T22:12:19-06:00",
+  "commit": "e3a7b448",
+  "build": "merge_w4",
+  "label": "widget classes one definition",
+  "items": {
+   "defined in source": 185,
+   "generated from source": 2056,
+   "borrowed from image": 65,
+   "reached through tables": 620,
+   "library data": 476
+  },
+  "bytes": {
+   "defined in source": 143722316,
+   "generated from source": 308600,
+   "borrowed from image": 15684,
+   "reached through tables": 192944,
+   "library data": 55422
+  }
  }
 }
