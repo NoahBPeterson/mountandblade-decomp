@@ -601,9 +601,6 @@ long __cdecl    get_latest_version();                          // 0x4b9aa0
 void __fastcall unescape(tstring* s);                  // 0x4bac70
 void __cdecl    open_keys_key(HKEY* out);                         // 0x4b96d0
 void __cdecl    keys_write_value(HKEY* key, const char* name, const tstring* val);   // 0x4beb80
-struct ini_file {
-    void load(FILE* f);   // config/config.h: the module.ini reader (0x4bd630)
-};
 int __stdcall   SkinDialog(HWND h, const char* s);       // 0x535446 (SkinMagic SetSingleDialogSkin: stdcall, the callers do not pop)
 
 #define STRTAB (&g_strtable)
