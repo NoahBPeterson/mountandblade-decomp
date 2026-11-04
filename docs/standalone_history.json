@@ -1626,5 +1626,39 @@
    "library data": 10424,
    "unnamed bss": 42135
   }
+ },
+ "2026-11-04T13:05:44-06:00": {
+  "data_labels": 95,
+  "aliases": 178,
+  "source_aliases": 27,
+  "source_hacks": 4,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 0,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 184,
+  "when": "2026-11-04T13:05:44-06:00",
+  "commit": "b6fb5224",
+  "build": "merge_sa",
+  "label": "source aliases 49 -> 27",
+  "items": {
+   "defined in source": 181,
+   "generated from source": 821,
+   "borrowed from image": 55,
+   "reached through tables": 10,
+   "library data": 212,
+   "unnamed bss": 20
+  },
+  "bytes": {
+   "defined in source": 143759672,
+   "generated from source": 281516,
+   "borrowed from image": 5488,
+   "reached through tables": 163,
+   "library data": 10424,
+   "unnamed bss": 42135
+  }
  }
 }
