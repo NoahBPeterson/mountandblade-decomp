@@ -54,7 +54,7 @@ def classify_new(insns, k):
             stores = True
         if i.mnemonic == "mov" and re.search(r"\[eax - 4\]", t):
             stores = True
-    return "cookie" if (size_plus4 or stores) else "plain"
+    return "cookie" if (size_plus4 and stores) else "cookie?" if (size_plus4 or stores) else "plain"
 
 
 def scan_range(md, code, base, sym_new, sym_del):
@@ -148,6 +148,16 @@ def main():
             print("%s %08x %s [%s]" % ("DIFF" if bad else "same", va, name, mod))
             print("    orig:", " ".join("%s:%s@%x" % (k, c, ad) for k, ad, c in theirs))
             print("    ours:", " ".join("%s:%s@%x" % (k, c, ad) for k, ad, c in mine))
+    # functions of ours with no original counterpart (helpers that exist to instantiate a deleting destructor, etc.)
+    seen = {ours_by_name.get(n) for (n, _m) in defined.values()}
+    rev = {v: n for n, v in ours_by_name.items()}
+    for j, ov in enumerate(ours_starts):
+        if ov in seen:
+            continue
+        end = ours_starts[j + 1] if j + 1 < len(ours_starts) else tlo + len(tdata)
+        mine = scan_range(md, tdata[ov - tlo:end - tlo], ov, stubs_new, stubs_del)
+        if mine:
+            print("OURS-ONLY %08x %s: %s" % (ov, rev.get(ov, ""), " ".join("%s:%s@%x" % (k, c, ad) for k, ad, c in mine)))
     covered = {r[0] for r in rows}
     for fn in sorted(orig):
         if fn not in covered:
