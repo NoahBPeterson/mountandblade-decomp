@@ -372,7 +372,7 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
 }
 
 // @ 0x47c1d0 -- mirror a mesh about x = 0: points with x > 0.001 get a reflected twin, vertices and faces follow.
-void EChar::build_mirror(mesh* m, int* remap, int* count, char flip)
+void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
 {
     if (!m->local_a0) {
         m->v90 = m->parent->v90;
@@ -489,16 +489,16 @@ void EChar::build_mirror(mesh* m, int* remap, int* count, char flip)
 }
 
 // @ 0x47c6b0 -- weighted bone-matrix blend of the rest points
-void EChar::blend(mesh* m, int unused, const float* weights)
+void Skin::blend(mesh* m, int unused, const float* weights)
 {
     m->ensure_local();
     for (int i = 0; i < (int)m->v70.size(); i++) {
         point20* p = &vat(m->v70, i);
-        for (int j = 0; j < bone_count; j++) {
-            bone34* b = &bones[j];
-            vector4* t = &b->trans[i];
+        for (int j = 0; j < n_face_keys; j++) {
+            FaceKey* b = &face_keys[j];
+            vector4* t = &((vector4*)b->delta)[i];
             if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
-                float w = (b->w1 - b->w0) * weights[j] + b->w0;
+                float w = (b->f28 - b->f24) * weights[j] + b->f24;
                 vector4 d;
                 d.x = w * t->x;
                 d.y = w * t->y;
@@ -515,7 +515,7 @@ void EChar::blend(mesh* m, int unused, const float* weights)
 }
 
 // @ 0x47c810 -- index-driven blend: `set` is an ArrSet, `*index` the slot whose point map selects the offsets
-void EChar::blend_indexed(mesh* m, void* set, int* index, const float* weights)
+void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
 {
     m->ensure_local();
     ArrSet* s = (ArrSet*)set;
@@ -524,12 +524,12 @@ void EChar::blend_indexed(mesh* m, void* set, int* index, const float* weights)
     unsigned i = 0;
     while (i < m->v70.size()) {
         point20* p = &vat(m->v70, i);
-        for (int j = 0; j < bone_count; j++) {
+        for (int j = 0; j < n_face_keys; j++) {
             int bi = s->arr[*index][i];
-            bone34* b = &bones[j];
-            vector4* t = &b->trans[bi];
+            FaceKey* b = &face_keys[j];
+            vector4* t = &((vector4*)b->delta)[bi];
             if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
-                float w = (b->w1 - b->w0) * weights[j] + b->w0;
+                float w = (b->f28 - b->f24) * weights[j] + b->f24;
                 vector4 d;
                 d.x = w * t->x;
                 if (p->a.x < 0.0f)

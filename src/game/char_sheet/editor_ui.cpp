@@ -185,14 +185,14 @@ struct NameVecRec {                             // 0x20 bytes: a name and a vect
 struct RecAlloc {};
 struct UiRow;
 void __stdcall destroy(UiRow* row);                          // 0x4ebdc0 (screen.cpp: a free stdcall function; the allocator is loaded into ecx first)
-// (the 0x1f8-byte row copier 0x4e5fc0 is std::_Uninit_fill_n<loading_config*,...>, editor_ui.h; the two instantiations were folded together by the linker)
+// (the 0x1f8-byte row copier 0x4e5fc0 is std::_Uninit_fill_n<Skin*,...>, editor_ui.h; the two instantiations were folded together by the linker)
 
 struct TextRowVec {
     TextRow* insert_n(TextRow* pos, unsigned n, const TextRow& v);
 };
 TextRow* TextRowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
 {
-    std::_Uninit_fill_n((loading_config*)pos, n, (const loading_config&)v, *(std::allocator<loading_config>*)this, std::_Nonscalar_ptr_iterator_tag());
+    std::_Uninit_fill_n((Skin*)pos, n, (const Skin&)v, *(std::allocator<Skin>*)this, std::_Nonscalar_ptr_iterator_tag());
     return pos + n;
 }
 

@@ -82,20 +82,17 @@ void progress_bar::update_children()
 
 // ---- 0x4e4060..0x4e4340: the std::vector members the linker placed here ----------------------------------------------------------
 // Whole-class explicit instantiations (as in cls_map.cpp): push_back<E50> 0x4e4060, resize<E68> 0x4e40f0, resize<E176> 0x4e41e0,
-// the RagModel helpers 0x4e42b0 / 0x4e42f0, the loading_config ones 0x4e4320 / 0x4e4340 (+ its unwinder 0x4e43b0, inside the COMDAT).
-// loading_config is the 0x1f8-byte model record of src/game/model_b.h (constructor 0x4d3640, destructor 0x4d3720, read 0x4e7b30):
-// the whole-class instantiation below also emits vector(n) / resize(n), which default-construct one; they reach the record's
-// constructor (0x4d3640, the one definition: options_panel/ragdoll_models.cpp) through this forwarder.
-#include "../model_b.h"
+// the RagModel helpers 0x4e42b0 / 0x4e42f0, the Skin ones 0x4e4320 / 0x4e4340 (+ its unwinder 0x4e43b0, inside the COMDAT).
+// Skin is the 0x1f8-byte skin record of src/include/skin.h (constructor 0x4d3640, destructor 0x4d3720, read 0x4e7b30): the
+// whole-class instantiation below also emits vector(n) / resize(n), which default-construct one (options_panel/ragdoll_models.cpp).
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
 #include "../../include/render_flags.h"
 #include "../ui_globals.h"      // UI / core globals
-inline loading_config::loading_config() { new ((void*)this) model_b; }
 template class std::vector<E50>;
 template class std::vector<E68>;
 template class std::vector<E176>;
 template class std::vector<RagModel>;
-template class std::vector<loading_config>;
+template class std::vector<Skin>;
 
 // ---- 0x4e43e0: gui_manager::draw_string (add one line of text to the loading screen's text mesh) -----------------------------------
 // the lines are kept (line_wrap / line_height / line_arg at +0xcd0 / +0xd20 / +0xe60) so that gui_manager::rebuild (0x4da900) can replay them
@@ -749,8 +746,8 @@ void ItemC::create2()
     g_gui.objs.push_back((MissionUi* const&)(root));
 }
 
-// ---- 0x4e5f50..0x4e6050: the std::vector<loading_config> / std::fill<RagModel> helpers the linker placed here ---------------------------
-// 0x4e5f50 = vector<loading_config>::_Destroy(first, last), 0x4e5f80 = std::fill<RagModel*, RagModel>, 0x4e5fc0 = _Uninit_fill_n<loading_config*>
+// ---- 0x4e5f50..0x4e6050: the std::vector<Skin> / std::fill<RagModel> helpers the linker placed here ---------------------------
+// 0x4e5f50 = vector<Skin>::_Destroy(first, last), 0x4e5f80 = std::fill<RagModel*, RagModel>, 0x4e5fc0 = _Uninit_fill_n<Skin*>
 // (its catch(...) funclet 0x4e602b is emitted inside the body's COMDAT): all emitted by the explicit instantiations above.
 
 // ---- 0x4e6050: gui_manager::build_scene ----------------------------------------------------------------------------------------------
@@ -1262,7 +1259,7 @@ void MapScreen::frame_step()
 }
 
 // ---- 0x4e7b30: the map scene's stream reader --------------------------------------------------------------------------------------------------------
-// model_b::read (src/game/model_b.h: the 0x1f8-byte model record; thiscall, the stream is the one argument, ret 4). It reads, in order,
+// Skin::read (src/include/skin.h: the 0x1f8-byte skin record; thiscall, the stream is the one argument, ret 4). It reads, in order,
 // the tag, one dword, three lod-mesh names (the second and third also looked up with the last character toggled: 'l' -> 'r', else 'R'),
 // the record's own resource (+0x28 / +0x38), the 0x34-byte pose list (ItemPage::place 0x4c6b30 fills each one), the column table (up to
 // 0x40 lod meshes, a 0x38-byte ArrSet each), the material table (0x18-byte entries, an ArrSet each), two string vectors, the 0xb0-byte
@@ -1271,14 +1268,8 @@ void mb_error(const char* fmt, ...);            // 0x42cc80
 #include "../../include/crt.h"   // canonical: operator new[] (0x535482)
 namespace rgl { vector4 unpack_color(const unsigned* argb); }       // 0x40e4e0 (cdecl, hidden return pointer: shapes.cpp)
 #include "../arr_set.h"
+#include "../../rgl/core/resmgr.h"           // lod_group (the lod mesh resource get_lod_mesh returns)
 
-// a lod-mesh resource (0x41cdc0's result): the mesh list at +0x38, +0x84 is 0 when the mesh is missing
-struct MsLod {
-    char pad0[0x38];
-    rgl::mesh** meshes;                         // +0x38
-    char pad3c[0x84 - 0x3c];
-    int has;                                    // +0x84
-};
 // the scene stream is the engine's stream_base (src/rgl/stream.h): the original calls its read slots through the vtable
 // (r_float +0x38, r_uint +0x40, r_int +0x4c, r_tstr +0x54)
 #include "../../rgl/stream.h"
@@ -1288,38 +1279,12 @@ inline void stream_u(MsStream* s, unsigned* v) { s->r_uint(v); }
 inline void stream_i(MsStream* s, int* v) { s->r_int(v); }
 inline void stream_str(MsStream* s, tstring* v) { s->r_tstr(v); }
 
-// 0x477880 is std::vector<ArrSet>::resize (src/game/arr_set.h; fill value ArrSet()), 0x473570 TroopMgr::copy_troop(ArrSet* dst,
-// MeshGroupRec* r) (terrain_b/terrain_b.cpp, called on the record itself). 0x4ccf60 is std::vector<E516>::resize and 0x4cbb10
+// 0x477880 is std::vector<ArrSet>::resize (src/game/arr_set.h; fill value ArrSet()), 0x473570 Skin::copy_troop (terrain_b/terrain_b.cpp)
+// and 0x4c6b30 Skin::place (rgl/mesh2/gui_edit.cpp). 0x4ccf60 is std::vector<Constraint>::resize and 0x4cbb10
 // std::vector<tstring>::resize (rgl/mesh2/mesh_2.cpp): the explicit specializations are only declared.
-struct MeshGroupRec;
-struct TroopMgr {
-    void copy_troop(ArrSet* dst, const MeshGroupRec* r);   // 0x473570
-};
-struct ItemPage {
-    void place(int e);                          // 0x4c6b30 (rgl/mesh2/gui_edit.cpp: fills pose e's +0x30 point block)
-};
 template<> void std::vector<ArrSet>::resize(size_t, ArrSet);     // 0x477880
-template<> void std::vector<E516>::resize(size_t, E516);         // 0x4ccf60
+template<> void std::vector<Constraint>::resize(size_t, Constraint);         // 0x4ccf60
 template<> void std::vector<tstring>::resize(size_t, tstring);   // 0x4cbb10
-
-// a 0x34-byte pose entry of the [0x40] array (ItemPage's PoseRec)
-struct lod_entry {
-    tstring f00;                                // +0x00 (underscores -> spaces)
-    tstring f10;                                // +0x10
-    int f20;                                    // +0x20
-    float f24;                                  // +0x24
-    float f28;                                  // +0x28
-    unsigned f2c;                               // +0x2c
-    void* vecs30;                               // +0x30: 0x10 bytes per point of the record's mesh
-};
-
-// a 0x18-byte material entry of the [0x44] array
-struct entry18 {                                // 0x18 bytes (0x4e7b30: mov [edi+0x14], 0 / add edi, 0x18; 0x47f650 reads +0x14)
-    tstring name;                               // +0x00
-    char pad10[4];                              // +0x10
-    MsLod* res14;                               // +0x14
-};
-typedef char entry18_size_check[sizeof(entry18) == 0x18 ? 1 : -1];
 
 // a 0xb0-byte cell of the [0x1bc] vector<E176>; MissionRec2 (0x4ce680) is its constructor
 struct MissionRec2 {
@@ -1333,173 +1298,127 @@ struct MissionRec2 {
     MissionRec2();                              // 0x4ce680
 };
 
-// a 0x204-byte face record of the [0x78] vector<E516>: an entry count (at most 0x3f) and 8-byte entries
-struct face204_uv { float f; int i; };
-struct face204 {
-    int count;                                  // +0x00
-    face204_uv uv[0x3f];                        // +0x04
-    int i1fc;                                   // +0x1fc
-    float f200;                                 // +0x200
-};
-
 // the front table the slot ids are looked up in (0x5aa130 count, 0x5aa134 entries of 0x98 bytes, the name at +0)
 #include "../../include/sound_mgr.h"   // canonical: g_sound_mgr.ngroups (0x5aa130)
 struct front_rec {
     tstring name;                               // +0x00
 };
 
-// the record (0x4e7b30's this): model_b of src/game/model_b.h, laid out by the offsets the reader uses
-struct MapSceneRec {
-    tstring tag;                                // +0x00
-    unsigned f10;                               // +0x10
-    MsLod* lod14;                               // +0x14
-    MsLod* lod18;                               // +0x18
-    MsLod* lod1c;                               // +0x1c
-    MsLod* lod20;                               // +0x20
-    MsLod* lod24;                               // +0x24
-    tstring name28;                             // +0x28
-    MsLod* lod38;                               // +0x38
-    int npose;                                  // +0x3c
-    lod_entry* entries;                         // +0x40
-    entry18* mats;                              // +0x44
-    std::vector<ArrSet> matrecs;                // +0x48
-    std::vector<ArrSet> colrecs;                // +0x58
-    std::vector<int> v68;                       // +0x68
-    std::vector<E516> faces;                    // +0x78
-    int nmat;                                   // +0x88
-    MsLod* cols[0x40];                          // +0x8c
-    int ncol;                                   // +0x18c
-    int ncell;                                  // +0x190
-    int n194;                                   // +0x194
-    int n198;                                   // +0x198
-    std::vector<tstring> v19c;                  // +0x19c
-    std::vector<tstring> v1ac;                  // +0x1ac
-    std::vector<E176> cells;                    // +0x1bc
-    int slot1cc[7];                             // +0x1cc (indexed by the stream int)
-    void* obj1e8;                               // +0x1e8
-    float f1ec;                                 // +0x1ec
-    int f1f0;                                   // +0x1f0
-    int f1f4;                                   // +0x1f4
-
-    void read(MsStream* s);                     // 0x4e7b30
-};
-typedef char MapSceneRec_size_check[sizeof(MapSceneRec) == 0x1f8 ? 1 : -1];
-
 // vector<E176>::resize (0x4e41e0) with its fill value built in place by MissionRec2() (the same 0xb0-byte record)
 typedef void (std::vector<MissionRec2>::*cell_resize_fn)(size_t, MissionRec2);
 
 // @ 0x4e7b30
-void MapSceneRec::read(MsStream* s)
+void Skin::read(MsStream* s)
 {
     tstring name;
-    stream_str(s, &tag);
-    stream_u(s, &f10);
+    stream_str(s, &id);
+    stream_u(s, &flags);
     stream_str(s, &name);
-    lod14 = (MsLod*)g_resmgr.get_lod_mesh(name);
+    body = g_resmgr.get_lod_mesh(name);
     stream_str(s, &name);
-    lod20 = (MsLod*)g_resmgr.get_lod_mesh(name);
+    calf_l = g_resmgr.get_lod_mesh(name);
     name.buf[name.len - 1] = (name.buf[name.len - 1] != 'l') ? 'R' : 'r';
-    lod24 = (MsLod*)g_resmgr.get_lod_mesh(name);
+    calf_r = g_resmgr.get_lod_mesh(name);
     stream_str(s, &name);
-    lod18 = (MsLod*)g_resmgr.get_lod_mesh(name);
+    hand_l = g_resmgr.get_lod_mesh(name);
     name.buf[name.len - 1] = (name.buf[name.len - 1] != 'l') ? 'R' : 'r';
-    lod1c = (MsLod*)g_resmgr.get_lod_mesh(name);
-    stream_str(s, &name28);
-    lod38 = (MsLod*)g_resmgr.get_lod_mesh(name28);
-    if (lod38->has == 0)
-        mb_error("Unable to find face mesh: %s", name28.c_str());
+    hand_r = g_resmgr.get_lod_mesh(name);
+    stream_str(s, &head_name);
+    head = g_resmgr.get_lod_mesh(head_name);
+    if (head->count == 0)
+        mb_error("Unable to find face mesh: %s", head_name.c_str());
 
     // the poses
-    stream_i(s, &npose);
+    stream_i(s, &n_face_keys);
     {
-        int n = npose;
-        lod_entry* e = (lod_entry*)operator new[](n * 0x34 + 4);
+        int n = n_face_keys;
+        FaceKey* e = (FaceKey*)operator new[](n * 0x34 + 4);
         if (e != 0) {
             *(int*)e = n;
-            e = (lod_entry*)((int*)e + 1);
-            lod_entry* q = e;
+            e = (FaceKey*)((int*)e + 1);
+            FaceKey* q = e;
             for (int i = n - 1; i >= 0; i--) {
-                new (&q->f00) tstring();
-                new (&q->f10) tstring();
-                q->vecs30 = 0;
+                new (&q->name) tstring();
+                new (&q->key) tstring();
+                q->delta = 0;
                 q++;
             }
         }
-        entries = e;
+        face_keys = e;
     }
-    for (int i = 0; i < npose; i++) {
-        lod_entry* q = &entries[i];
-        stream_str(s, &q->f10);
+    for (int i = 0; i < n_face_keys; i++) {
+        FaceKey* q = &face_keys[i];
+        stream_str(s, &q->key);
         stream_i(s, &q->f20);
         stream_u(s, &q->f2c);
         stream_f(s, &q->f24);
         stream_f(s, &q->f28);
-        stream_str(s, &q->f00);
-        q->f00.underscores_to_spaces();                             // 0x42bf80
-        std::vector<rgl::point20>& pts = lod38->meshes[0]->get70_rec();
-        entries[i].vecs30 = operator new[](pts.size() << 4);
-        ((ItemPage*)this)->place(i);                                // 0x4c6b30
+        stream_str(s, &q->name);
+        q->name.underscores_to_spaces();                             // 0x42bf80
+        std::vector<rgl::point20>& pts = head->lists[0][0]->get70_rec();
+        face_keys[i].delta = (float*)operator new[](pts.size() << 4);
+        place(i);                                // 0x4c6b30
     }
 
     // the columns
-    stream_i(s, &ncol);
-    for (int i = 0; i < ncol; i++) {
+    stream_i(s, &n_hair);
+    for (int i = 0; i < n_hair; i++) {
         tstring nm;
         stream_str(s, &nm);
         if (i < 0x40)
-            cols[i] = (MsLod*)g_resmgr.get_lod_mesh(nm);
+            hair_meshes[i] = g_resmgr.get_lod_mesh(nm);
     }
-    if (ncol > 0x40)
-        ncol = 0x40;
-    colrecs.resize(ncol, ArrSet());                                 // 0x477880
-    for (int i = 0; i < ncol; i++)
-        ((TroopMgr*)this)->copy_troop(&colrecs[i], (const MeshGroupRec*)cols[i]);   // 0x473570
+    if (n_hair > 0x40)
+        n_hair = 0x40;
+    hair_maps.resize(n_hair, ArrSet());                                 // 0x477880
+    for (int i = 0; i < n_hair; i++)
+        copy_troop(&hair_maps[i], hair_meshes[i]);   // 0x473570
 
     // the materials
-    stream_i(s, &nmat);
-    if (nmat != 0) {
-        int n = nmat;
-        entry18* m = (entry18*)operator new[](n * 0x18 + 4);
+    stream_i(s, &n_beard);
+    if (n_beard != 0) {
+        int n = n_beard;
+        BeardMesh* m = (BeardMesh*)operator new[](n * 0x18 + 4);
         if (m != 0) {
             *(int*)m = n;
-            m = (entry18*)((int*)m + 1);
-            entry18* q = m;
+            m = (BeardMesh*)((int*)m + 1);
+            BeardMesh* q = m;
             for (int i = n - 1; i >= 0; i--) {
                 new (&q->name) tstring();
-                q->res14 = 0;
+                q->mesh = 0;
                 q++;
             }
         }
-        mats = m;
-        matrecs.resize(nmat, ArrSet());                             // 0x477880
+        beard_meshes = m;
+        beard_maps.resize(n_beard, ArrSet());                             // 0x477880
     }
-    for (int i = 0; i < nmat; i++) {
-        stream_str(s, &mats[i].name);
-        mats[i].res14 = (MsLod*)g_resmgr.get_lod_mesh(mats[i].name);
-        if (lod38->has == 0)                                        // the original tests [+0x38], not the material
-            mb_error("Unable to find beard mesh: %s", mats[i].name.c_str());
-        ((TroopMgr*)this)->copy_troop(&matrecs[i], (const MeshGroupRec*)mats[i].res14);   // 0x473570
+    for (int i = 0; i < n_beard; i++) {
+        stream_str(s, &beard_meshes[i].name);
+        beard_meshes[i].mesh = g_resmgr.get_lod_mesh(beard_meshes[i].name);
+        if (head->count == 0)                                        // the original tests [+0x38], not the material
+            mb_error("Unable to find beard mesh: %s", beard_meshes[i].name.c_str());
+        copy_troop(&beard_maps[i], beard_meshes[i].mesh);   // 0x473570
     }
 
     // the two string tables
-    stream_i(s, &n194);
-    v19c.resize(n194, tstring());                                   // 0x4cbb10
-    for (int i = 0; i < n194; i++)
-        stream_str(s, &v19c[i]);
-    stream_i(s, &n198);
-    v1ac.resize(n198, tstring());                                   // 0x4cbb10
-    for (int i = 0; i < n198; i++)
-        stream_str(s, &v1ac[i]);
+    stream_i(s, &n_hair_tex);
+    hair_textures.resize(n_hair_tex, tstring());                                   // 0x4cbb10
+    for (int i = 0; i < n_hair_tex; i++)
+        stream_str(s, &hair_textures[i]);
+    stream_i(s, &n_beard_tex);
+    beard_textures.resize(n_beard_tex, tstring());                                   // 0x4cbb10
+    for (int i = 0; i < n_beard_tex; i++)
+        stream_str(s, &beard_textures[i]);
 
-    // the cells
-    stream_i(s, &ncell);
+    // the face_textures
+    stream_i(s, &n_face_tex);
     {
         cell_resize_fn fn = reinterpret_cast<cell_resize_fn>(
             static_cast<void (std::vector<E176>::*)(size_t, E176)>(&std::vector<E176>::resize));
-        (((std::vector<MissionRec2>*)(void*)&cells)->*fn)(ncell, MissionRec2());   // 0x4e41e0
+        (((std::vector<MissionRec2>*)(void*)&face_textures)->*fn)(n_face_tex, MissionRec2());   // 0x4e41e0
     }
-    for (int i = 0; i < ncell; i++) {
-        MissionRec2* c = (MissionRec2*)&cells[i];
+    for (int i = 0; i < n_face_tex; i++) {
+        MissionRec2* c = (MissionRec2*)&face_textures[i];
         stream_str(s, &c->name);
         c->mat10 = g_resmgr.get_material(c->name);                // 0x418a70
         {
@@ -1524,8 +1443,8 @@ void MapSceneRec::read(MsStream* s)
             tstring nm;
             stream_str(s, &nm);
             int found = -1;
-            for (unsigned t = 0; found == -1 && t < v19c.size(); t++) {
-                if (v19c[t].equals(nm)) {                           // 0x42bdd0
+            for (unsigned t = 0; found == -1 && t < hair_textures.size(); t++) {
+                if (hair_textures[t].equals(nm)) {                           // 0x42bdd0
                     found = t;
                     c->refs.push_back(found);                       // _Insert_n 0x43e7b0 when full
                 }
@@ -1552,35 +1471,35 @@ void MapSceneRec::read(MsStream* s)
                 if (((front_rec*)((char*)g_sound_mgr.groups + j * 0x98))->name.equals(nm))
                     found = j;
             }
-            slot1cc[id] = found;
+            voices.v[id] = found;
         }
     }
 
     tstring objname;
     stream_str(s, &objname);
-    obj1e8 = g_resmgr.get_object70(objname);                    // 0x418cf0
-    stream_f(s, &f1ec);
-    stream_i(s, &f1f0);
-    stream_i(s, &f1f4);
+    skeleton = g_resmgr.get_object70(objname);                    // 0x418cf0
+    stream_f(s, &scale);
+    stream_i(s, &blood1);
+    stream_i(s, &blood2);
 
     // the faces
     int nface;
     stream_i(s, &nface);
-    { E516 z; memset(&z, 0, sizeof z); faces.resize(nface, z); }    // 0x4ccf60
+    { Constraint z; memset(&z, 0, sizeof z); constraints.resize(nface, z); }    // 0x4ccf60
     for (int i = 0; i < nface; i++) {
-        face204* f = (face204*)&faces[i];
-        stream_f(s, &f->f200);
-        stream_i(s, &f->i1fc);
+        Constraint* f = &constraints[i];
+        stream_f(s, &f->limit);
+        stream_i(s, &f->mode);
         int k;
         stream_i(s, &k);
-        f->count = (k < 0x3f) ? k : 0x3f;
+        f->n = (k < 0x3f) ? k : 0x3f;
         for (int j = 0; j < k; j++) {
-            if (j < f->count) {
-                stream_f(s, &f->uv[j].f);
-                stream_i(s, &f->uv[j].i);
+            if (j < f->n) {
+                stream_f(s, &f->t[j].coef);
+                stream_i(s, &f->t[j].idx);
             } else {                                                // past 0x3f: read into entry 0
-                stream_f(s, &f->uv[0].f);
-                stream_i(s, &f->uv[0].i);
+                stream_f(s, &f->t[0].coef);
+                stream_i(s, &f->t[0].idx);
             }
         }
     }

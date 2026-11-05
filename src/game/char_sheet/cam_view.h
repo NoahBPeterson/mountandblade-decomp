@@ -24,7 +24,7 @@ using rgl::mat3;
 // globals of the face-generator update (0x4ea8e0)
 extern float g_scroll;                                  // 0x590d7c
 
-#include "../../include/skin_set.h"              // SkinSet, g_anim.skin_vec.first (shared with src/rgl/mesh2/gui_edit.h)
+#include "../../include/skin.h"                  // Skin, g_anim.skin_vec.first (shared with src/rgl/mesh2/gui_edit.h)
 
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 #include "../tstring.h"
@@ -58,7 +58,7 @@ struct Ctrl {
     // (set_value 0x48baa0 is UiD's: ((UiD*)ctrl)->set_value(v))
 };
 
-#define SKIN_INT(off) (*(int*)((char*)g_anim.skin_vec.first + g_anim.cur * 0x1f8 + (off)))
+#define SKIN_INT(field) (g_anim.skin_vec.first[g_anim.cur].field)
 #define g_dummy_mat_arr (g_anim.weights)
 
 #endif

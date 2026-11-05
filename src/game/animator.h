@@ -1,14 +1,14 @@
 // animator.h: the character-builder / animation state (global g_anim at 0x8ed4f60). ONE definition for mesh_slot
 // (mesh_char / mesh_terrain / mesh_appear), mission5 (troop_rec: reset), char_sheet (facegen_misc, facegen_init, cam_view)
 // and inventory_panel (view_open). The universes of those TUs differ (rgl_math.h / rgl.h), so this header names no engine
-// type: rgl::lod_mesh, EChar and SkinSet are forward declarations, and the PackedState it fills is defined here.
+// type: rgl::lod_mesh and Skin are forward declarations, and the PackedState it fills is defined here.
 // Offsets: 0x473800 set_anim_a, 0x4746e0 set_anim_b, 0x47fb10 collect (mesh_char.cpp), 0x4eb320 randomise and 0x4eb660
 // pack_state (facegen_misc.cpp), 0x520520 reset (mission5/troop_rec.cpp). The face-generator window (0x4eb270) writes the
 // first words from its sliders (set = skin-1, item = hair-1, variant = beard % div, material = colour).
 #ifndef MB_GAME_ANIMATOR_H
 #define MB_GAME_ANIMATOR_H
 #include <stddef.h>
-#include "../include/skin_set.h"   // SkinVec (the skin vector), SkinSet, EChar
+#include "../include/skin.h"   // SkinVec (the skin vector), Skin
 
 namespace rgl { struct lod_mesh; }
 
@@ -28,7 +28,7 @@ struct Animator {
     float time;                  // 0x12c
     void randomise();                            // 0x4eb320
     void collect(char flag, rgl::lod_mesh** a, rgl::lod_mesh** b, rgl::lod_mesh** c);   // 0x47fb10 (ret 0x10)
-    SkinSet* unpack(const unsigned __int64* key);       // 0x473800 (returns the race record, left in EAX)
+    Skin* unpack(const unsigned __int64* key);       // 0x473800 (returns the race record, left in EAX)
     void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
     void pack_state(PackedState* out);           // 0x4eb660 (ret 4; mission5 reset calls it as its closing step)
     void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)

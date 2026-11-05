@@ -7,17 +7,9 @@
 #include <stdlib.h>
 #include "../game/tstring.h"
 
-struct E516 { int v[0x81]; };        // 0x204-byte record
+#include "./constraint.h"             // Term, Constraint (the 0x204-byte morph constraint of a skin)
 struct R44 { int v[11]; };           // 0x2c trivial element
 struct b16 { int v[4]; };            // 0x10 POD block
-
-// 0x38-byte record: a tstring followed by five raw pointers that a user destructor frees.
-struct NamePtrs56 {
-    tstring s;
-    int mid[5];
-    void* q[5];
-    ~NamePtrs56() { for (int i = 0; i < 5; ++i) free(q[i]); }
-};
 
 struct E50 {                                // 0x50
     tstring s;                              // 0x00

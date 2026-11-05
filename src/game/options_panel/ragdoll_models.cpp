@@ -9,8 +9,16 @@
 
 using rgl::vector4;
 
-// ---- the engine's growable arrays: vec<T> (../model_b.h) -------------------------------------------------
-#include "../model_b.h"
+// ---- the engine's growable array: allocator slot, then begin / last / end (begin at +4); the ctor clears the pointers ---------
+template<class T> struct vec {
+    char al;                                        // +0
+    T* b;                                           // +4
+    T* e;                                           // +8
+    T* cap;                                         // +0xc
+    vec() : b(0), e(0), cap(0) {}
+    unsigned size() const { return b ? (unsigned)(e - b) : 0u; }
+    T& operator[](unsigned i) { return b[i]; }
+};
 
 // ---- ragdoll body record (0x2c bytes) ----------------------------------------------------------------------
 #include "../rag_body.h"                           // RagBody: ctor 0x4bc170, load 0x4bc1f0 (config.cpp)
@@ -113,14 +121,18 @@ ScriptState::ScriptState()
         }
 }
 
-// ---- 0x1f8+ record (provisional) --------------------------------------------------------------------------
+// ---- the skin record (src/include/skin.h) -----------------------------------------------------------------------
+#include "../arr_set.h"
+#include "../../include/vec_elems.h"
+#include "../../include/skin.h"
+
 // @ 0x4d3640
-model_b::model_b()
+Skin::Skin()
 {
-    f14 = 0; f18 = 0; f1c = 0; f20 = 0; f24 = 0;
-    f3c = 0; f40 = 0; f44 = 0;
-    f1e8 = 0; f1f0 = 0; f1f4 = 0;
-    f1ec = 1.0f;
+    body = 0; hand_l = 0; hand_r = 0; calf_l = 0; calf_r = 0;
+    n_face_keys = 0; face_keys = 0; beard_meshes = 0;
+    skeleton = 0; blood1 = 0; blood2 = 0;
+    scale = 1.0f;
     for (int i = 0; i < 7; i++)
-        neg[i] = -1;
+        voices.v[i] = -1;
 }

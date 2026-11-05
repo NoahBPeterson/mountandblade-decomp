@@ -87,34 +87,14 @@ struct TearObj {
     bool teardown();                            // 0x4d9e80
 };
 
-// ---- 0x4da410..0x4dc1c0: the loading-screen configuration record --------------------------------------------------
-// 0x1f8 bytes. Members (each a std::vector, copied by the out-of-line instantiations of src/rgl/mesh2: symbols/slices/mesh_2.txt):
-// operator= 0x4da410 (this module), copy constructor 0x4dc030 (implicit; this module emits it out of line).
-struct loading_config {
-    tstring s0;                     // +0x00
-    int v10, v14, v18, v1c, v20, v24;
-    tstring s28;                    // +0x28
-    int v38, v3c, v40, v44;
-    std::vector<NamePtrs56> r48;    // +0x48 (copy ctor 0x4cc750, operator= 0x4cca70)
-    std::vector<NamePtrs56> r58;    // +0x58
-    std::vector<NamePtrs56> r68;    // +0x68
-    std::vector<E516> r78;          // +0x78 (copy ctor 0x4cc830, operator= 0x4ccc00)
-    int v88;                        // +0x88
-    int r8c[0x40];                  // +0x8c (0x100 bytes)
-    int v18c, v190, v194, v198;     // +0x18c
-    std::vector<tstring> r19c;      // +0x19c (copy ctor 0x4cc680, operator= 0x4cc910)
-    std::vector<tstring> r1ac;      // +0x1ac
-    std::vector<E176> r1bc;         // +0x1bc (copy ctor 0x4da300, operator= 0x4d9840)
-    struct Ints7 { int v1cc, v1d0, v1d4, v1d8, v1dc, v1e0, v1e4; } t1cc;    // +0x1cc (the copy constructor copies these seven as one block: rep movsd)
-    int v1e8, v1ec, v1f0, v1f4;
-    loading_config();                                           // model_b::model_b (src/game/model_b.h: the same 0x1f8-byte record; progress_bar.cpp forwards to it)
-    ~loading_config();                                          // 0x4d3720 (model_b::~model_b)
-    loading_config& operator=(const loading_config& src);     // 0x4da410
-};
-loading_config* copy_loading_config(loading_config* self, const loading_config* o);   // forces the implicit copy constructor 0x4dc030
-loading_config* copy_configs_forward(loading_config* first, loading_config* last, loading_config* out);    // 0x4da880
-loading_config* copy_configs_backward(loading_config* first, loading_config* last, loading_config* out);   // 0x4da8c0
-void destroy_range_cfg(loading_config* first, loading_config* last, const loading_config* src);            // 0x4dc190
+// ---- 0x4da410..0x4dc1c0: the skin record's copy helpers ---------------------------------------------------------------
+// Skin (../../include/skin.h) is the 0x1f8-byte record: operator= 0x4da410 (this module), copy constructor 0x4dc030
+// (implicit; this module emits it out of line).
+#include "../../include/skin.h"
+Skin* copy_skin(Skin* self, const Skin* o);   // forces the implicit copy constructor 0x4dc030
+Skin* copy_configs_forward(Skin* first, Skin* last, Skin* out);    // 0x4da880
+Skin* copy_configs_backward(Skin* first, Skin* last, Skin* out);   // 0x4da8c0
+void destroy_range_cfg(Skin* first, Skin* last, const Skin* src);            // 0x4dc190
 
 // ---- 0x4da840..0x4da9c0: element types of the global arrays the shutdown routine tears down ------------------------
 // RecA is deleted through its vector deleting destructor 0x431960 (flags 3)

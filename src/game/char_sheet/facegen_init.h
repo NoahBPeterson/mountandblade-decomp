@@ -43,7 +43,7 @@ typedef MapWidget face_body;
 #include "../ui_globals.h"      // UI / core globals
 extern "C" double atof(const char* s);                  // 0x537352
 
-#include "../../include/skin_set.h"              // SkinSet, g_anim.skin_vec.first (shared with src/rgl/mesh2/gui_edit.h)
+#include "../../include/skin.h"                  // Skin, g_anim.skin_vec.first (shared with src/rgl/mesh2/gui_edit.h)
 #include "../../include/game_data.h"            // GameData (g_game): the one definition (was a Game view here)
 
 #include "../animator.h"                              // Animator, g_anim

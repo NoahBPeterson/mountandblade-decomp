@@ -22,6 +22,7 @@
 #include "../../include/timer.h"
 #include "../../include/item_kind.h"
 #include "../../include/game_recs.h"
+#include "../../include/vec_elems.h"
 #include "../mesh_slot/mesh_slot.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
@@ -625,17 +626,17 @@ void Animator::reset(void* a, void* b)
 
     variant = -1;
 
-    int base = *(int*)(cur * 0x1f8 + 0x1c0 + (int)skin_vec.chars);
-    int* q = (int*)(base + 0x1c + v * 0xb0);
-    int cnt = q[1];
-    int m = (q[2] - cnt) >> 2;
+    E176* tex = skin_vec.first[cur].face_textures._Myfirst;
+    std::vector<int>& q = tex[v].v;
+    int* cnt = q._Myfirst;
+    int m = (q._Mylast - cnt);
     if (cnt == 0 || m < 1) {
         r = rand();
         t = (float)(variant - s3) * ((float)(r % 15817) * 6.322311674011871e-05f);
         variant = s3 + round_float(&t);
     } else {
         int k = (m < 2) ? 0 : rand() % m;
-        variant = *(int*)(*(int*)(base + 0x20 + material * 0xb0) + k * 4);
+        variant = tex[material].v._Myfirst[k];
     }
 
     r = rand();

@@ -7,7 +7,7 @@
 ../src/dxframework/d3dapp.cpp  ?DisplayErrorMsg@CD3DApplication@@IAEJJK@Z  004014f0  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?vector_constructor_iterator@@YGXPAXIHP6IX0@Z@Z  00401800  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?vector_destructor_iterator@@YGXPAXIHP6IX0@Z@Z  00401830  /O2 /MT /Gy /TP
-../src/dxframework/d3dapp.cpp  ??_EMBRecord34@@QAEPAXI@Z  00401870  /O2 /MT /Gy /TP
+../src/dxframework/d3dapp.cpp  ??_EFaceKey@@QAEPAXI@Z  00401870  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ??0CD3DApplication@@QAE@XZ  00401910  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?ConfirmDevice@CD3DApplication@@MAEJPAU_D3DCAPS9@@KW4_D3DFORMAT@@1@Z  00401a20  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ??_GCD3DApplication@@UAEPAXI@Z  00401a30  /O2 /MT /Gy /TP

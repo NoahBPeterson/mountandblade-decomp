@@ -4,8 +4,8 @@
 ../src/game/cls_map/progress_bar.cpp  ?resize@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QAEXIUE176@@@Z  004e41e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ??$_Copy_backward_opt@PAURagModel@@PAU1@@std@@YAPAURagModel@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004e42b0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?construct@?$allocator@URagModel@@@std@@QAEXPAURagModel@@ABU3@@Z  004e42f0  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?construct@?$allocator@Uloading_config@@@std@@QAEXPAUloading_config@@ABU3@@Z  004e4320  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ??$_Uninit_copy@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@PAUloading_config@@V?$allocator@Uloading_config@@@3@@std@@YAPAUloading_config@@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@0@0PAU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004e4340  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?construct@?$allocator@USkin@@@std@@QAEXPAUSkin@@ABU3@@Z  004e4320  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ??$_Uninit_copy@Vconst_iterator@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@PAUSkin@@V?$allocator@USkin@@@3@@std@@YAPAUSkin@@Vconst_iterator@?$vector@USkin@@V?$allocator@USkin@@@std@@@0@0PAU1@AAV?$allocator@USkin@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004e4340  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?load@RagModel@@QAEXPAVTiXmlElement@@@Z  004e4690  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?get_hex@ini_file@@QAEHPAH@Z  004e51e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?get_float@ini_file@@QAEMPAH@Z  004e5230  /O2 /MT /Gy /TP
@@ -15,9 +15,9 @@
 ../src/game/cls_map/progress_bar.cpp  ?hex_field@ini_file@@QAEHABUtstring@@@Z  004e5d30  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?init_screen@ItemB@@UAEXXZ  004e5d80  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?init_screen@ItemC@@UAEXXZ  004e5e50  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?_Destroy@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@IAEXPAUloading_config@@0@Z  004e5f50  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?_Destroy@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@IAEXPAUSkin@@0@Z  004e5f50  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ??$fill@PAURagModel@@U1@@std@@YAXPAURagModel@@0ABU1@@Z  004e5f80  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ??$_Uninit_fill_n@PAUloading_config@@IU1@V?$allocator@Uloading_config@@@std@@@std@@YAXPAUloading_config@@IABU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004e5fc0  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ??$_Uninit_fill_n@PAUSkin@@IU1@V?$allocator@USkin@@@std@@@std@@YAXPAUSkin@@IABU1@AAV?$allocator@USkin@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004e5fc0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?reset_geometry@gui_manager@@QAEXXZ  004e64b0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?update@gui_manager@@QAEXM@Z  004e6510  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?update_children@progress_bar@@UAEXXZ  004e3fb0  /O2 /MT /Gy /TP

@@ -5,9 +5,9 @@
 //       vector<ui_cell>::push_back / insert / _Insert_n, the 4-byte-element _Uninit_fill_n / _Uninit_copy,
 //       vector<loading-screen config record>::_Insert_n and the row list's _Ucopy tail.
 //       Compiled with the real library headers (/EHsc, /Gz for the __thiscall members, see matching.md).
-//       CfgRec / RowRec stand for the loading_config (src/game/cls_map/cls_map.h) and UiRow
-//       (src/game/char_sheet/screen.h) records: those headers pull in a different rgl header world and a
-//       class with real members would inline its own copy constructors, so only the sizes and the
+//       Skin is the real skin record (src/include/skin.h); RowRec stands for UiRow
+//       (src/game/char_sheet/screen.h): that header pulls in a different rgl header world and a
+//       class with real members would inline its own copy constructors, so only its size and the
 //       out-of-line copy / assign / destroy entry points are modelled here (see MIGRATION.md).
 //-----------------------------------------------------------------------------
 #include <windows.h>
@@ -19,15 +19,12 @@
 #undef push_back       // windows.h's raster-op constant
 
 // ---- element types --------------------------------------------------------------------------------------
-struct loading_config {                         // src/game/cls_map/cls_map.h: the 0x1f8-byte record, whose copy constructor is the one 0x4dc030 defines
-    char pad[0x1f8];
-    loading_config(const loading_config& o);      // 0x4dc030
-};
-struct CfgRec : loading_config {                // 0x1f8 bytes (s004dbf7e / s004e40f0)
-    CfgRec(const CfgRec& o) : loading_config(o) {}   // 0x4dc030 (the inherited copy)
-    CfgRec& operator=(const CfgRec& o); // 0x4e4340
-    ~CfgRec();                                  // 0x4d3720
-};
+// Skin (src/include/skin.h) is the 0x1f8-byte skin record: its copy constructor is the implicit one (0x4dc030, emitted out of line),
+// operator= 0x4da410 (cls_map) and destructor 0x4d3720 (options_panel/world_app.cpp) are out of line too, so this
+// instantiation calls them as the original does.
+#include "../arr_set.h"
+#include "../../include/vec_elems.h"
+#include "../../include/skin.h"
 
 // 0x20 bytes, NOT 0x1c8: the UI row record is the engine string plus a 4-dword vector (s004ebc10;
 // copy ctor 0x4e42f0 copies the tstring and the vector). The size here decides the stride of every
@@ -48,7 +45,7 @@ struct ui_cell {
 };
 typedef std::vector<ui_cell> int_vec;           // 0x4fe0b0/0x4fe190/0x4fe1e0 are vector<ui_cell> (not vector<int>:
                                                 // the int instance fills inline and calls neither helper)
-typedef std::vector<CfgRec> cfg_vec;
+typedef std::vector<Skin> cfg_vec;
 typedef std::vector<RowRec> row_vec;
 
 // ---- the vectors the engine works on (globals here keep the instantiations reachable) -------------------
@@ -58,9 +55,9 @@ ui_cell* int_where;
 unsigned int_n;
 
 static cfg_vec cfg_v;
-CfgRec* cfg_where;
+Skin* cfg_where;
 unsigned cfg_n;
-const CfgRec* cfg_val;
+const Skin* cfg_val;
 
 static row_vec row_v;
 const RowRec* row_val;
@@ -127,9 +124,9 @@ ui_cell* __cdecl cell_copy(ui_cell* _First, ui_cell* _Last, ui_cell* _Dest,
     return _Dest;
 }
 
-// ---- the CfgRec helper ---------------------------------------------------------------------------
+// ---- the Skin helper ---------------------------------------------------------------------------
 
-// @ 0x4fe520  vector<CfgRec>::insert(where, count, val) -> _Insert_n
+// @ 0x4fe520  vector<Skin>::insert(where, count, val) -> _Insert_n
 void* __cdecl cfg_insert() throw()
 {
     cfg_v.insert(cfg_where, cfg_n, *cfg_val);

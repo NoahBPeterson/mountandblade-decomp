@@ -31,7 +31,9 @@
 #include "../missile.h"        // Missile: ammo_scale 0x467f80, settle 0x472650
 #include "../scene_ent.h"       // SceneEnt: the missile's entity
 #include "./face_gen.h"
-#include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin_set.h SkinSet::relax 0x4735e0
+#include "../../include/vec_elems.h"      // E176 (Skin::face_textures)
+#include "../../rgl/core/resmgr.h"      // lod_group (Skin::copy_troop reads the five mesh lists of a lod mesh resource)
+#include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin.h Skin::relax 0x4735e0
 #include "./tmesh.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
@@ -138,9 +140,9 @@ void Agent::set_slot(int idx, int value)
 }
 
 // @ 0x470db0
-void TroopMgr::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
+void Skin::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
 {
-    rgl::mesh* base = *ref->base;
+    rgl::mesh* base = head->lists[0][0];
     int nbase = base->v70.size();
     int n = obj->get70_rec().size();
     dst->cnt[idx] = n;
@@ -852,22 +854,22 @@ void MAgent::reset()
 }
 
 // @ 0x473570
-void TroopMgr::copy_troop(ArrSet* dst, const MeshGroupRec* r)
+void Skin::copy_troop(ArrSet* dst, const lod_group* r)
 {
     dst->name = r->name;
-    for (int i = 0; i < r->ngroups; i++) {
-        if (r->groups[i].size() != 0)
-            ((TroopMgrExt*)this)->apply_group(dst, i, (rgl::mesh*)r->groups[i][0]);
+    for (int i = 0; i < r->count; i++) {
+        if (r->lists[i].size() != 0)
+            ((SkinApplyExt*)this)->apply_group(dst, i, r->lists[i][0]);
     }
 }
 
 // @ 0x4735e0
-void SkinSet::relax(int skip, float* v)
+void Skin::relax(int skip, float* v)
 {
-    for (unsigned i = 0; i < (unsigned)size(); i++) {
+    for (unsigned i = 0; i < (unsigned)constraints.size(); i++) {
         bool done = false;
         for (int iter = 0; !done; iter++) {
-            Constraint* c = &first[i];
+            Constraint* c = &constraints[i];
             float sum = 0.0f;
             int free_n = 0;
             for (int j = 0; j < c->n; j++) {
@@ -900,25 +902,25 @@ void SkinSet::relax(int skip, float* v)
 }
 
 // @ 0x473800
-SkinSet* Animator::unpack(const unsigned __int64* key)
+Skin* Animator::unpack(const unsigned __int64* key)
 {
     item = ((unsigned)key[0] & ((unsigned)g_bit[6] - 1)) - 1;
     set = ((unsigned)(key[0] >> 6) & ((unsigned)g_bit[6] - 1)) - 1;
     material = (unsigned)(key[0] >> 12) & ((unsigned)g_bit[6] - 1);
     variant = (unsigned)(key[0] >> 18) & ((unsigned)g_bit[6] - 1);
-    SkinSet* r = &skin_vec.first[cur];
-    if (item >= r->n_b)
+    Skin* r = &skin_vec.first[cur];
+    if (item >= r->n_hair)
         item = -1;
-    if (set >= r->n_a)
+    if (set >= r->n_beard)
         set = -1;
-    if (material >= r->n_c)
+    if (material >= r->n_face_tex)
         material = 0;
-    if (variant >= r->n_d)
+    if (variant >= r->n_hair_tex)
         variant = 0;
     time = (float)(int)((unsigned)(key[0] >> 24) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
     scale = (float)(int)((unsigned)(key[0] >> 30) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
     int i = 0;
-    for (r = &skin_vec.first[cur]; i < r->n_elems; r = &skin_vec.first[cur]) {
+    for (r = &skin_vec.first[cur]; i < r->n_face_keys; r = &skin_vec.first[cur]) {
         int w = 1;
         int sh = i * 3;
         if (sh >= 63) {
@@ -1190,14 +1192,14 @@ void Animator::breed(const unsigned __int64* a, const unsigned __int64* b, int s
     set = lerp_int(s0, set);
     material = lerp_int(s5, material);
     variant = -1;
-    FaceHairRec* r = &skin_vec.first[cur].recs[material];
-    IntVec* v = &r->list;
+    E176* r = &skin_vec.first[cur].face_textures[material];
+    std::vector<int>* v = &r->v;
     int n;
-    if (v->_Myfirst == 0 || (n = (int)(v->_Mylast - v->_Myfirst)) <= 0) {
+    if (v->size() == 0 || (n = (int)v->size()) <= 0) {
         variant = lerp_int(s3, variant);
     } else {
         RAND();
-        variant = skin_vec.first[cur].recs[material].list._Myfirst[g_rand_seed % (unsigned)n];
+        variant = skin_vec.first[cur].face_textures[material].v[g_rand_seed % (unsigned)n];
     }
     scale = (float)(RAND() % 0x3dc9) * (scale - a0) * 6.322312e-05f + a0;
     time = (float)(RAND() % 0x3dc9) * (time - a1) * 6.322312e-05f + a1;

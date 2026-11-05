@@ -1,7 +1,7 @@
 {
  "when": "2026-11-04T12:07:20-06:00",
  "counts": {
-  "DIFF": 891,
+  "DIFF": 890,
   "FRAGMENT": 130,
   "INSN-EXACT": 36
  },
@@ -3158,7 +3158,7 @@
   },
   "0047c1d0": {
    "verdict": "DIFF",
-   "symbol": "?build_mirror@EChar@@QAEXPAUmesh@rgl@@PAH1D@Z",
+   "symbol": "?build_mirror@Skin@@QAEXPAUmesh@rgl@@PAH1D@Z",
    "insns": 364,
    "ours": 333,
    "unverified": 0,
@@ -3168,7 +3168,7 @@
   },
   "0047c6b0": {
    "verdict": "DIFF",
-   "symbol": "?blend@EChar@@QAEXPAUmesh@rgl@@HPBM@Z",
+   "symbol": "?blend@Skin@@QAEXPAUmesh@rgl@@HPBM@Z",
    "insns": 116,
    "ours": 114,
    "unverified": 0,
@@ -3178,7 +3178,7 @@
   },
   "0047c810": {
    "verdict": "DIFF",
-   "symbol": "?blend_indexed@EChar@@QAEXPAUmesh@rgl@@PAXPAHPBM@Z",
+   "symbol": "?blend_indexed@Skin@@QAEXPAUmesh@rgl@@PAXPAHPBM@Z",
    "insns": 137,
    "ours": 128,
    "unverified": 0,
@@ -3240,7 +3240,7 @@
   },
   "0047ddf0": {
    "verdict": "DIFF",
-   "symbol": "?blend_all@EChar@@QAEXPAUlod_mesh@rgl@@PAXPBM@Z",
+   "symbol": "?blend_all@Skin@@QAEXPAUlod_mesh@rgl@@PAXPBM@Z",
    "insns": 46,
    "ours": 44,
    "unverified": 0,
@@ -3250,7 +3250,7 @@
   },
   "0047de60": {
    "verdict": "DIFF",
-   "symbol": "?use_carry@EChar@@QAEXPAUlod_mesh@rgl@@PBM@Z",
+   "symbol": "?use_carry@Skin@@QAEXPAUlod_mesh@rgl@@PBM@Z",
    "insns": 111,
    "ours": 110,
    "unverified": 0,
@@ -3290,7 +3290,7 @@
   },
   "0047f650": {
    "verdict": "DIFF",
-   "symbol": "?collect@EChar_c@@QAEXPAPAUlod_mesh@rgl@@00PBMHHHHMM@Z",
+   "symbol": "?collect@Skin@@QAEXPAPAUlod_mesh@rgl@@00PBMHHHHMM@Z",
    "insns": 343,
    "ours": 346,
    "unverified": 0,
@@ -3350,7 +3350,7 @@
   },
   "00481c40": {
    "verdict": "DIFF",
-   "symbol": "?append_mesh@@YAPAUEChar@@HHPAPAX00DPAH@Z",
+   "symbol": "?append_mesh@@YAPAUSkin@@HHPAPAX00DPAH@Z",
    "insns": 55,
    "ours": 54,
    "unverified": 0,
@@ -6582,16 +6582,6 @@
    "why": "#151 4d3500/1d0 mov esi, eax | mov ecx, dword ptr [esp + 0x10]: operand kinds",
    "src": "src/game/options_panel/ragdoll_models.cpp"
   },
-  "004d3720": {
-   "verdict": "DIFF",
-   "symbol": "?destroy@Big@@QAEXXZ",
-   "insns": 126,
-   "ours": 114,
-   "unverified": 0,
-   "unresolved": [],
-   "why": "#7 4d372c/c push edi | je 0x15: mnemonic",
-   "src": "src/game/options_panel/world_app.cpp"
-  },
   "004d3880": {
    "verdict": "DIFF",
    "symbol": "?init@Big@@QAEPAU1@XZ",
@@ -7276,7 +7266,7 @@
   },
   "004e7b30": {
    "verdict": "DIFF",
-   "symbol": "?read@MapSceneRec@@QAEXPAUMsStream@@@Z",
+   "symbol": "?read@Skin@@QAEXPAUMsStream@@@Z",
    "insns": 851,
    "ours": 841,
    "unverified": 0,
@@ -7428,7 +7418,7 @@
   },
   "004eb860": {
    "verdict": "DIFF",
-   "symbol": "?erase@BigArray@@QAEXPAPAUSkinSet@@PAU2@1@Z",
+   "symbol": "?erase@BigArray@@QAEXPAPAUSkin@@PAU2@1@Z",
    "insns": 36,
    "ours": 38,
    "unverified": 0,
@@ -8290,7 +8280,7 @@
   },
   "0050d170": {
    "verdict": "DIFF",
-   "symbol": "?resize@vec_model@@QAEXIUmodel_b@@@Z",
+   "symbol": "?resize@vec_model@@QAEXIUSkin@@@Z",
    "insns": 75,
    "ours": 75,
    "unverified": 0,

@@ -12,6 +12,7 @@
 #define MB_CAMERA_TU
 #include "../../include/image_addrs.h"
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
+#include "../../include/skin.h"      // Skin (g_anim.skin_vec.first)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <new>
 #include <string.h>
@@ -1664,7 +1665,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     } else {
         unsigned t = (unsigned)::g_game->chars[party].flags & 0xf;
         def->init((FxRes*)(t < (unsigned)g_anim.char_count
-                              ? *(void**)((char*)((int*)g_anim.skin_vec.chars) + 0x1e8 + t * 0x1f8) : 0));
+                              ? (void*)g_anim.skin_vec.first[t].skeleton : 0));
         int level = ::g_game->chars[party].level48;
         for (int i = 0; i < 10; i++)
             *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,

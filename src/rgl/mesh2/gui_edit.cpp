@@ -27,7 +27,7 @@
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/skin.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/sound_mgr.h"      // SoundMgr g_sound_mgr (0x5aa128): defined here, with the destructor 0x4c6aa0
 // canonical declarations of the callees this module reaches through its layout views (definitions in other modules)
 #include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
@@ -922,14 +922,15 @@ SoundMgr g_sound_mgr;                                       // 0x5aa128 (.bss; t
 // @ 0x4c6b30
 // Morph-target pose: clears the target's per-point offsets, finds the key frame nearest to the record's key time and
 // stores (frame vertex - rest vertex) for every point.
-void ItemPage::place(int e)
+void Skin::place(int e)
 {
-    PMesh* m = *owner->mesh;
+    PMesh* m = *((POwner*)head)->mesh;
+    vector4* vecs = (vector4*)face_keys[e].delta;
     for (unsigned i = 0; i < m->npts(); i++) {
         vector4 z(0.0f, 0.0f, 0.0f);
-        poses[e].vecs[i] = z;
+        vecs[i] = z;
     }
-    float t = (float)poses[e].key;
+    float t = (float)face_keys[e].f20;
     int lo, hi;
     float frac;
     ((rgl::keyframes*)&m->kf)->find(&lo, &hi, &frac, &t);
@@ -940,7 +941,7 @@ void ItemPage::place(int e)
             const vector4& f = m->kf.frames[lo].v[i];
             const vector4& r = m->pts[i].a;
             vector4 d(f.x - r.x, f.y - r.y, f.z - r.z);
-            poses[e].vecs[i] = d;
+            vecs[i] = d;
         }
     }
 }
@@ -1747,7 +1748,7 @@ WindowMgrW g_windows;                                       // 0xa73980 (compile
 
 
 // The accessors below are shared by classes with the same field layout (identical code folded by the linker): 0x4c6080 is
-// PartyTemplate's for DialogRec / GameString / ModRec / QuickString / SkinElem (name +0, key +0x10), 0x4c62b0 MenuDoor's
+// PartyTemplate's for DialogRec / GameString / ModRec / QuickString / FaceKey (name +0, key +0x10), 0x4c62b0 MenuDoor's
 // for TroopRec / ItemKind, 0x4c6530 RecB's for Party, 0x4c6860 RecC's for FactionRec, 0x4c63f0 / 0x4c6330 / 0x4c6470 RecA's
 // for QuestRec (and translated_plural of TroopRec / ItemKind). The calls go to the class that defines the function.
 // @ 0x4c8ca0
@@ -1930,13 +1931,13 @@ void GameData::save_language_files(bool translated)
     {
         FILE* f = fopen("new_language\\skins.csv", "wt+");              // 0x595f2c
         for (unsigned i = 0; g_anim.skin_vec.first && i < (unsigned)(g_anim.skin_vec.last - g_anim.skin_vec.first); i++) {
-            for (int j = 0; j < g_anim.skin_vec.first[i].n_elems; j++) {
+            for (int j = 0; j < g_anim.skin_vec.first[i].n_face_keys; j++) {
                 if (translated) {
-                    tstring v = ((PartyTemplate*)&g_anim.skin_vec.first[i].elems[j])->translated();
-                    write_row(f, g_anim.skin_vec.first[i].elems[j].key, v);
+                    tstring v = ((PartyTemplate*)&g_anim.skin_vec.first[i].face_keys[j])->translated();
+                    write_row(f, g_anim.skin_vec.first[i].face_keys[j].key, v);
                 } else {
-                    write_row(f, g_anim.skin_vec.first[i].elems[j].key,
-                              *find_or(g_anim.skin_vec.first[i].elems[j].key, g_anim.skin_vec.first[i].elems[j].name));
+                    write_row(f, g_anim.skin_vec.first[i].face_keys[j].key,
+                              *find_or(g_anim.skin_vec.first[i].face_keys[j].key, g_anim.skin_vec.first[i].face_keys[j].name));
                 }
             }
         }

@@ -80,11 +80,12 @@ Workarounds (a view of the same object, because the canonical header cannot be u
   needs world (a)), `GameClock`, `SunBody`, `CamSlot`, `FrameNode`, `GuiMgr` (`g_gui` 0x5d7080), `UiVec`, `InputKeys`, and the widget classes of this region
   (`GroupWidget`, `WindowBase`, `FrameWidget`, `FlagWidget`, `ListWidget`, `NameWidget`, `MWidget`). `GameData` is used for g_game here,
   `Game` in `party_create`: three incompatible views of the object at 0x5e2930 (`GameData`, `World`, `Game`) exist in the tree.
-* `agent_vec.cpp`: `CfgRec` (0x1f8 bytes) and `RowRec` (0x1c8 bytes) stand for `loading_config` (`cls_map/cls_map.h`) and `UiRow` (`char_sheet/screen.h`). Their
-  headers pull in `match/include/rgl.h` (world (a)) and a record with real members would inline its own copy constructor, which the original keeps out of line
-  (0x4dc030, 0x4e4340, 0x4d3720, 0x4e42f0), so only sizes and the out-of-line entry points are modelled. This is a second *spelling* of those records under other names,
-  not a second definition of the class; if a later wave unifies the worlds they should be replaced by the canonical classes (the exact rows 0x4fe520 and 0x4fe840 then need
-  re-checking).
+* `agent_vec.cpp`: the 0x1f8-byte element is the real `Skin` (`src/include/skin.h`; it was `CfgRec` here, `loading_config`, `model_b`, `SkinSet`,
+  `MapSceneRec` and the destructor's `Big` elsewhere). Its copy constructor (0x4dc030, implicit), `operator=` (0x4da410) and destructor (0x4d3720) are out of
+  line in the original and stay out of line here, so `vector<Skin>::_Insert_n` (0x4fe520) is the library's own instantiation, byte-exact. `RowRec` (0x20 bytes)
+  still stands for `UiRow` (`char_sheet/screen.h`): that header pulls in `match/include/rgl.h` (world (a)) and a record with real members would inline its own
+  copy constructor, which the original keeps out of line (0x4e42f0), so only its size and the out-of-line entry point are modelled (the exact row 0x4fe840 needs
+  re-checking when the worlds are unified).
 * `editor_dialog.cpp`: `EditorGameView` / `EditorSceneView` / `EditorTerrainView` (the slice's `GameState`, `EditorWorld`, `Terrain`; the canonical `GameState`
   (`terrain_a/game_state.h`) and `Terrain` (`terrain_a/terrain.h`) cover other offsets of the same objects). `EditorPanel` keeps its name because the caller
   (`inventory_panel/widget_text.cpp`) declares `EditorPanel::terrain_dialog`.

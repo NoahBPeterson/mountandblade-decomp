@@ -7,8 +7,8 @@
 004e41e0 ?resize@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QAEXIUE176@@@Z
 004e42b0 ??$_Copy_backward_opt@PAURagModel@@PAU1@@std@@YAPAURagModel@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z
 004e42f0 ?construct@?$allocator@URagModel@@@std@@QAEXPAURagModel@@ABU3@@Z
-004e4320 ?construct@?$allocator@Uloading_config@@@std@@QAEXPAUloading_config@@ABU3@@Z
-004e4340 ??$_Uninit_copy@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@PAUloading_config@@V?$allocator@Uloading_config@@@3@@std@@YAPAUloading_config@@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@0@0PAU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
+004e4320 ?construct@?$allocator@USkin@@@std@@QAEXPAUSkin@@ABU3@@Z
+004e4340 ??$_Uninit_copy@Vconst_iterator@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@PAUSkin@@V?$allocator@USkin@@@3@@std@@YAPAUSkin@@Vconst_iterator@?$vector@USkin@@V?$allocator@USkin@@@std@@@0@0PAU1@AAV?$allocator@USkin@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
 004e43e0 ?draw_string@gui_manager@@QAEXPAUtstring@@MHD@Z
 004e4690 ?load@RagModel@@QAEXPAVTiXmlElement@@@Z
 004e4790 ?init_screen@C4c31c0@@UAEXXZ
@@ -24,9 +24,9 @@
 004e5d90 ?create@ItemB@@QAEXXZ
 004e5e50 ?init_screen@ItemC@@UAEXXZ
 004e5e60 ?create2@ItemC@@QAEXXZ
-004e5f50 ?_Destroy@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@IAEXPAUloading_config@@0@Z
+004e5f50 ?_Destroy@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@IAEXPAUSkin@@0@Z
 004e5f80 ??$fill@PAURagModel@@U1@@std@@YAXPAURagModel@@0ABU1@@Z
-004e5fc0 ??$_Uninit_fill_n@PAUloading_config@@IU1@V?$allocator@Uloading_config@@@std@@@std@@YAXPAUloading_config@@IABU1@AAV?$allocator@Uloading_config@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
+004e5fc0 ??$_Uninit_fill_n@PAUSkin@@IU1@V?$allocator@USkin@@@std@@@std@@YAXPAUSkin@@IABU1@AAV?$allocator@USkin@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z
 004e6050 ?build_scene@gui_manager@@QAEXXZ
 004e64b0 ?reset_geometry@MsgLog@@QAEXXZ
 004e6510 ?update@MsgLog@@QAEXM@Z

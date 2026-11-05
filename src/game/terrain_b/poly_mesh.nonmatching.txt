@@ -1,6 +1,6 @@
 00470a00  464  PolyMesh::build_geometry: complete (512 vs 489 bytes). [equiv: WEAK, no mismatch, 9/18 edges both builds]
 00470c00  24  rgl::world::build_light_frame: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/2 edges]
-00470db0  343  TroopMgr::apply_group: complete (394 vs 392 bytes). [equiv: WEAK, no mismatch, 19/20 edges]
+00470db0  343  Skin::apply_group: complete (394 vs 392 bytes). [equiv: WEAK, no mismatch, 19/20 edges]
 00470f40  34  ground_height: complete; small diff, register allocation/scheduling not analysed. [equiv: WEAK, no mismatch, 1/8 edges both builds]
 00471040  341  GameData::blend: complete (408 vs 329 bytes). [equiv: WEAK, no mismatch, 3/4 edges]
 004711e0  430  ShadowMap::attach_camera: complete (482 vs 446 bytes). [equiv: PASS, 234 valid, all edges]  [update: the original WinLicense markers are now emitted with WL_MARKER (src/include/wl_marker.h) at the original positions; any statement above that they are omitted or unwritable is stale, the remaining differences are codegen]

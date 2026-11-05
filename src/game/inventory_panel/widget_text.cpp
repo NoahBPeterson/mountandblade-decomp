@@ -101,15 +101,17 @@ void vec_named::_Xlen() const { throw std::length_error("vector<T> too long"); }
 
 
 // ------------------------------------------------------------------ the 0x1f8 model record ---------------
-#include "../model_b.h"
+#include "../arr_set.h"
+#include "../../include/vec_elems.h"
+#include "../../include/skin.h"                      // Skin: the 0x1f8-byte skin record
 
-struct vec_model {                                  // vector<model_b>
+struct vec_model {                                  // vector<Skin>
     void* alloc;                                    // +0
-    model_b* first;                                 // +4
-    model_b* last;                                  // +8
-    model_b* end;                                   // +0xc
+    Skin* first;                                 // +4
+    Skin* last;                                  // +8
+    Skin* end;                                   // +0xc
     unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    void resize(unsigned n, model_b val = model_b());   // 0x50d170
+    void resize(unsigned n, Skin val = Skin());   // 0x50d170
 };
 
 #include "../int_vec.h"                                 // IntVec (was vec_int here)
@@ -355,26 +357,24 @@ void vec_named::_Insert_n(named_vec* where, unsigned count, const named_vec& val
     }
 }
 
-// ------------------------------------------------------------------ vector<model_b> members ---------------
-// vec_model is the library's vector of 0x1f8-byte records: its growth path is std::vector<CfgRec>::_Insert_n (0x4fe520,
+// ------------------------------------------------------------------ vector<Skin> members ---------------
+// vec_model is the library's vector of 0x1f8-byte records: its growth path is std::vector<Skin>::_Insert_n (0x4fe520,
 // agent_vec.cpp's instance, protected: reached through a class that makes it public) and its shrink path is BigArray::erase
 // (0x4eb860, game/char_sheet/facegen_misc.cpp: erase(hidden result, first, last), thiscall)
-struct CfgRec { char b[0x1f8]; };
-template<> void std::vector<CfgRec>::_Insert_n(std::vector<CfgRec>::iterator, size_t, const CfgRec&);   // 0x4fe520
-struct vec_cfg_pub : std::vector<CfgRec> { using std::vector<CfgRec>::_Insert_n; };
-#include "../../include/skin_set.h"   // SkinVec (~SkinVec 0x4eb810)
+template<> void std::vector<Skin>::_Insert_n(std::vector<Skin>::iterator, size_t, const Skin&);   // 0x4fe520
+struct vec_cfg_pub : std::vector<Skin> { using std::vector<Skin>::_Insert_n; };
 struct BigArray {
-    void erase(SkinSet** out, SkinSet* first, SkinSet* last);           // 0x4eb860
+    void erase(Skin** out, Skin* first, Skin* last);           // 0x4eb860
 };
 
 // @ 0x50d170 vec_model::resize
-void vec_model::resize(unsigned n, model_b val)
+void vec_model::resize(unsigned n, Skin val)
 {
-    model_b* f = first;
+    Skin* f = first;
     if (size() < n)
-        ((vec_cfg_pub*)this)->_Insert_n(std::vector<CfgRec>::iterator((CfgRec*)last), n - size(), *(const CfgRec*)&val);
+        ((vec_cfg_pub*)this)->_Insert_n(std::vector<Skin>::iterator(last), n - size(), val);
     else if (n < size())
-        ((BigArray*)this)->erase((SkinSet**)&val, (SkinSet*)(f + n), (SkinSet*)last);
+        ((BigArray*)this)->erase((Skin**)&val, f + n, last);
 }
 
 // ------------------------------------------------------------------ the scene reader -----------------------
@@ -403,9 +403,9 @@ void mesh_scene::read(AccessStream* s)
     unsigned n = count;
     models.resize(n);
     for (int i = 0; i < count; i++) {
-        model_b* p = models.first + i;
+        Skin* p = models.first + i;
         AccessStream* in = s;
-        p->read(in);
+        p->read((MsStream*)in);
     }
     f8 = 0;
     f0 = -1;
@@ -417,6 +417,6 @@ void mesh_scene::read(AccessStream* s)
     f128 = 0.3f;
     for (int i = 0; i < 0x3f; i++)
         w[i] = 0.5f;
-    model_b* m = &models.first[f8];
-    ((SkinSet*)m)->relax(-1, w);   // 0x4735e0
+    Skin* m = &models.first[f8];
+    m->relax(-1, w);   // 0x4735e0
 }

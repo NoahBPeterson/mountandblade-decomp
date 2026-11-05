@@ -30,7 +30,17 @@ extern unsigned __int64 g_bit[]; // 0x5a8e68
 // light = f40, lum[] = w[].
 
 
-
+// 0x4746e0 / 0x473800 are FaceGenome::breed / unpack (terrain_b/face_gen.h), which g_anim_view (animator.h) sees as Animator members: the
+// stubs name the defining class (the header would bring the Animator's other layout)
+struct Skin;
+struct FaceGenome {
+    Skin* unpack(const unsigned __int64* key);   // 0x473800 (returns the race record, left in EAX)
+    void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
+};
+// 0x42ad60 is Ctx::sample_lights (strat/strat_entity.h): the scene object's light sampling
+struct Ctx {
+    void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60
+};
 
 // ---- 0x480db0 -------------------------------------------------------------------------------------------------------
 
@@ -332,11 +342,11 @@ void Terrain::tessellate()
 #define g_anim_view g_anim                              // 0x8ed4f60 (animator.h)
 
 // @ 0x481c40 -- append a character mesh to the world: select the character, set up the animator, collect the lod meshes
-// and return &g_anim.skin_vec.chars[g_anim.cur] with the mesh count written to *out
+// and return &g_anim.skin_vec.first[g_anim.cur] with the mesh count written to *out
 // the third argument receives the three lod meshes and the fourth / fifth are the face codes (0x481c75: unpack [esp+0x10],
 // 0x481cad: collect into [esp+0xc] +0/+4/+8); the old a/b/c order decoded the caller's output array and collected the
 // meshes over the troop's face code, leaving the head mesh null (crash in build_appearance when agents spawn)
-EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carried, int* out)
+Skin* append_mesh(int colour, int kind, void** c, void** a, void** b, char carried, int* out)
 {
     if (colour < 0)
         g_anim.cur = 0;
@@ -353,8 +363,8 @@ EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carr
         g_anim.item = -1;
     g_anim_view.collect(g_module_settings.limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
-    EChar* ec = &g_anim.skin_vec.chars[g_anim.cur];
-    int* rec = (int*)((char*)ec->mats + g_anim.material * 0xb0 + 0x18);
+    Skin* ec = &g_anim.skin_vec.first[g_anim.cur];
+    int* rec = (int*)((char*)&ec->face_textures[0] + g_anim.material * 0xb0 + 0x18);
     int* slot = out;
     *slot = *rec;
     return ec;

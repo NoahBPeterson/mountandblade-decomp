@@ -565,7 +565,7 @@ void lod_mesh_a::apply_anim_all(const float* t)
 // ---- 0x47ddf0 / 0x47de60 -------------------------------------------------------------------------------------------
 
 // @ 0x47ddf0
-void EChar::blend_all(lod_mesh* m, void* set, const float* w)
+void Skin::blend_all(lod_mesh* m, void* set, const float* w)
 {
     int i = 0;
     if (0 < m->count) {
@@ -591,26 +591,26 @@ template<class T> __forceinline void vpush_g(std::vector<T>& v, const T& x)
 }
 
 // @ 0x47de60
-void EChar::use_carry(lod_mesh* l, const float* w)
+void Skin::use_carry(lod_mesh* l, const float* w)
 {
-    std::vector<ArrSet>& v = arrsets;
+    std::vector<ArrSet>& v = head_maps;
     unsigned idx = (unsigned)-1;
     unsigned i = 0;
     unsigned off = 0;
     do {
         if (v._Myfirst == 0 || i >= (unsigned)v.size()) {
             idx = v.size();
-            arrsets.resize(arrsets.size() + 1);
-            ArrSet* e = &vat(arrsets, idx);
-            copy_troop(e, (const MeshGroupRec*)l);
+            head_maps.resize(head_maps.size() + 1);
+            ArrSet* e = &vat(head_maps, idx);
+            copy_troop(e, (const lod_group*)l);
             break;
         }
-        if (((ArrSet*)((char*)arrsets._Myfirst + off))->name.equals(*(tstring*)((char*)l + 0xd0)))
+        if (((ArrSet*)((char*)head_maps._Myfirst + off))->name.equals(*(tstring*)((char*)l + 0xd0)))
             idx = i;
         i++;
         off += 0x38;
     } while (idx == (unsigned)-1);
-    ArrSet* e2 = &vat(arrsets, idx);
+    ArrSet* e2 = &vat(head_maps, idx);
     blend_all(l, e2, w);
 }
 

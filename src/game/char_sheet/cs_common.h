@@ -8,8 +8,17 @@ struct tstring;                                                     // (complete
 
 #include "../ui/ui_widgets.h"                                      // MissionUi, Camera, UiB, UiD: the real classes
 #include "../window_mgr.h"                                    // WindowMgrW g_windows (0xa73980): the one definition
+#include "../../include/skin.h"                                      // Skin: the 0x1f8-byte skin record (relax 0x4735e0)
+struct FaceGenome {                                                 // terrain_b: the animator g_anim 0x8ed4f60 is one
+    Skin* unpack(const unsigned __int64* rec);                      // 0x473800
+};
 void __cdecl load_game_variables();                                 // 0x4c0520 (trigger_vec)
-struct loading_config { char pad[0x1f8]; };                         // a SkinSet / TextRow
+struct SoundCtl {                                                   // agent/agent.h; the game object's event emitter
+    char emit_event(int id, int a, int b);                          // 0x435790
+};
+struct TroopEq {                                                    // terrain_a/misc.h
+    void auto_equip(int seed, int unused, char civilian, char no_helmet);   // 0x4687e0
+};
 
 #include "../../rgl/scene/world.h"                          // rgl::world (create_entity 0x428440, render_scene 0x429890, step, reset ...): the one definition
 
@@ -46,12 +55,12 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
 #include <vector>
 #include <memory>
 namespace std {
-template<> loading_config* _Uninit_copy(vector<loading_config>::const_iterator first, vector<loading_config>::const_iterator last,
-                                         loading_config* dest, allocator<loading_config>& al, _Nonscalar_ptr_iterator_tag);   // 0x4e4340 (progress_bar)
-template<> void _Uninit_fill_n(loading_config* first, unsigned n, const loading_config& v, allocator<loading_config>& al,
+template<> Skin* _Uninit_copy(vector<Skin>::const_iterator first, vector<Skin>::const_iterator last,
+                                         Skin* dest, allocator<Skin>& al, _Nonscalar_ptr_iterator_tag);   // 0x4e4340 (progress_bar)
+template<> void _Uninit_fill_n(Skin* first, unsigned n, const Skin& v, allocator<Skin>& al,
                                _Nonscalar_ptr_iterator_tag);                                                                 // 0x4e5fc0 (progress_bar)
 }
-loading_config* __cdecl copy_configs_forward(loading_config* first, loading_config* last, loading_config* dest);   // 0x4da880 (cls_map; the original passes a dead fourth argument)
+Skin* __cdecl copy_configs_forward(Skin* first, Skin* last, Skin* dest);   // 0x4da880 (cls_map; the original passes a dead fourth argument)
 struct named_object;
 namespace std { template<> void vector<named_object*, allocator<named_object*> >::push_back(named_object* const& v); }   // 0x41b750 (resmgr)
 namespace std { template<> void vector<int, allocator<int> >::push_back(const int& x); }   // 0x440b30 (agent_combat)

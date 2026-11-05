@@ -16,11 +16,11 @@
 004da2d0 ?_Ufill@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IAEPAUE68@@PAU3@IABU3@@Z
 004da300 ??0?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QAE@ABV01@@Z
 004da3e0 ?_Ufill@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@IAEPAUE176@@PAU3@IABU3@@Z
-004da410 ??4loading_config@@QAEAAU0@ABU0@@Z
+004da410 ??4Skin@@QAEAAU0@ABU0@@Z
 004da5b0 ?shutdown@@YAHXZ
 004da840 ?clear@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAEXXZ
-004da880 ?copy_configs_forward@@YAPAUloading_config@@PAU1@00@Z
-004da8c0 ?copy_configs_backward@@YAPAUloading_config@@PAU1@00@Z
+004da880 ?copy_configs_forward@@YAPAUSkin@@PAU1@00@Z
+004da8c0 ?copy_configs_backward@@YAPAUSkin@@PAU1@00@Z
 004da900 ?rebuild@gui_manager@@QAEXXZ
 004da9c0 ??1TwoVec@@QAE@XZ
 004daa10 ?init_screen@C4c2fb0@@UAEXXZ
@@ -35,8 +35,8 @@
 004db960 ?insert@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAE?AViterator@12@V312@ABUE50@@@Z
 004db9d0 ?_Insert_n@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IAEXViterator@12@IABUE68@@@Z
 004dbcc0 ?_Insert_n@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@IAEXViterator@12@IABUE176@@@Z
-004dc030 ??0loading_config@@QAE@ABU0@@Z
-004dc190 ?destroy_range_cfg@@YAXPAUloading_config@@0PBU1@@Z
+004dc030 ??0Skin@@QAE@ABU0@@Z
+004dc190 ?destroy_range_cfg@@YAXPAUSkin@@0PBU1@@Z
 004dc1c0 ??4?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAEAAV01@ABV01@@Z
 004dc350 ?set_rect@FrameGui@@QAEXPBM0@Z
 004dc630 ?init@ResultWindow@@QAEXXZ

@@ -56,50 +56,12 @@ struct Geom_t;
 
 
 
-// ---- the character / troop mesh owner (0x1f8 bytes): TroopMgr (src/game/terrain_b/troop_mgr.h) is the same object seen
-// by terrain_b (0x470db0 apply_group, 0x473570 copy_troop); the fields past +0x3c are the ones this TU's functions read.
-struct bone34 {                  // 0x34 bytes (EChar::blend 0x47c6b0: weights at +0x24/+0x28, per-point offsets at +0x30)
-    char pad[0x24];
-    float w0;                    // 0x24
-    float w1;                    // 0x28
-    char pad2[4];
-    vector4* trans;              // 0x30
-};
-struct SetRec { char pad0[0x14]; rgl::lod_mesh* mesh; };       // 0x18-byte entry of EChar::sets; its lod mesh is at +0x14 (0x47f650)
-struct Blend { char b[0x38]; };                                 // 0x38-byte entries of the blend tables at +0x4c / +0x5c (0x47f650)
-struct EChar : TroopMgr {
-    int bone_count;              // 0x3c (0x47c6b0)
-    bone34* bones;               // 0x40 (0x47c6b0)
-    SetRec* sets;                // 0x44 (0x47f650)
-    char pad48[4];
-    Blend* blend_a;              // 0x4c (0x47f650)
-    char pad50[0xc];
-    Blend* blend_b;              // 0x5c (0x47f650)
-    char pad60[8];
-    std::vector<ArrSet> arrsets; // 0x68 (0x47de60)
-    char pad78[0x88 - 0x78];
-    int set_count;               // 0x88 (0x47f650)
-    rgl::lod_mesh* items[0x40];  // 0x8c
-    int item_count;              // 0x18c
-    int mat_count;               // 0x190
-    int variant_count;           // 0x194
-    int name_count;              // 0x198
-    char pad19c[4];
-    tstring* names_a;            // 0x1a0
-    char pad1a4[0xc];
-    tstring* names_b;            // 0x1b0
-    char pad1b4[0xc];
-    void* mats;                  // 0x1c0 (Ramp*, 0xb0 bytes each)
-    char pad1c4[0x1f8 - 0x1c4];
+// ---- the character / troop mesh owner is the skin record (src/include/skin.h, 0x1f8 bytes): the blend / mirror / collect members below
+// are defined in this module's TUs (mesh_ops.cpp, mesh_scene.cpp, mesh_char.cpp); apply_group / copy_troop are terrain_b's.
+#include "../../include/vec_elems.h"      // E176 (Skin::face_textures)
+#include "../../include/skin.h"
 
-    void blend(rgl::mesh* m, int unused, const float* weights);                 // 0x47c6b0
-    void blend_indexed(rgl::mesh* m, void* set, int* index, const float* weights);   // 0x47c810
-    void build_mirror(rgl::mesh* m, int* remap, int* count, char flip);         // 0x47c1d0 (ret 0x10, this in ecx)
-    void blend_all(rgl::lod_mesh* m, void* set, const float* weights);          // 0x47ddf0
-    void use_carry(rgl::lod_mesh* l, const float* weights);                     // 0x47de60
-};
-
-// the colour ramp / material record of the character owner (0xb0 bytes, ramp.h: Ramp; terrain_a/game_state.h includes it too)
+// the colour ramp / material record of the character owner's face textures (0xb0 bytes, ramp.h: Ramp, E176 of include/vec_elems.h; terrain_a/game_state.h includes it too)
 #include "../ramp.h"
 
 #include "../animator.h"       // Animator, g_anim (the animation state, global object at 0x8ed4f60)

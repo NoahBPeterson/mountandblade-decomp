@@ -17,15 +17,10 @@
 #include "../tstring.h"
 #include "../party/game.h"
 #include "../../include/rec_dtors.h"
+#include "../../include/skin.h"            // Skin (the destructor 0x4d3720 is defined here)
 #include "../config/core.h"                 // GameApp : CD3DApplication, the application object (defined below, g_app_obj)
 
 // std::vector<tstring> (_Tidy 0x42d390) is declared out of line in src/include/rec_dtors.h
-
-struct Rec18 {                                      // 0x18-byte record: a string and two words
-    tstring name;
-    int f10, f14;
-};
-
 
 // ---- callees -------------------------------------------------------------------------------------------
 tstring g_module_path;                                          // 0x8ee3c28 (constructed by the compiler: tstring::tstring 0x42bbd0)
@@ -46,8 +41,14 @@ template<> void allocator<E50>::destroy(E50*);   // 0x4cd6a0
 }
 // 0x4727a0 is terrain_b's destroy_arrsets (ArrSet is records.h's 0x38-byte record), defined with two parameters; the original calls
 // it as std::_Destroy_range(first, last, allocator&, tag) and the last two words are never read
-struct ArrSet;
-void destroy_arrsets(ArrSet* first, ArrSet* last);   // 0x4727a0
+#include "../arr_set.h"
+void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last);   // 0x4727a0
+namespace std {
+template<> inline void _Destroy_range<ArrSet, allocator<ArrSet> >(ArrSet* f, ArrSet* l, allocator<ArrSet>& al, _Nonscalar_ptr_iterator_tag t)   // 0x4727a0
+{
+    ((void (__cdecl*)(ArrSet*, ArrSet*, allocator<ArrSet>&, _Nonscalar_ptr_iterator_tag))destroy_arrsets)(f, l, al, t);
+}
+}
 void* hash_new_node(void* node, void* hint, void* key);                   // 0x4c4e50
 // 0x4c4e50 is rgl/mesh2/gui_edit.cpp's list_int_make_node: thiscall on the table's node list (ecx = this+4) with the
 // original's (node, hint, key); gui_edit defines it __fastcall with an unused edx word, declared here as it is defined.
@@ -59,55 +60,6 @@ void* __fastcall list_int_make_node(list_int* self, void* edx, void* node, void*
 #include "../config/config.h"
 #include "./growable_array.h"
 #include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
-
-// 0x34-byte element (two tstrings at +0 / +0x10, a heap pointer at +0x30); not the vtable-0x59584c Rec34 of trigger_records.h.
-// dxframework/d3dapp.cpp's MBRecord34: the original calls its vector deleting destructor 0x401870 (??_EMBRecord34, which has no
-// source spelling) with flags 3, as a plain call; the linker binds this view's symbol to it. A real `delete[]` here expands the
-// destructor loop inline instead (equiv.py then reports a call-trace FAIL: the orig's element destructors run through the
-// 0x401830 callback helper and are not traced), so this one directive stays.
-struct MBRecord34 {
-    char pad[0x34];
-    void* vecdel(unsigned flags);   // 0x401870
-};
-#pragma comment(linker, "/alternatename:?vecdel@MBRecord34@@QAEPAXI@Z=??_EMBRecord34@@QAEPAXI@Z")
-
-struct OwnedVec {                                      // allocator dword, begin/last/end
-    int  alloc;
-    int* first;
-    int* last;
-    int* end;
-    void clear(void* a) {
-        if (first) {
-            destroy_arrsets((ArrSet*)first, (ArrSet*)last);
-            operator delete(first);
-        }
-        first = 0; last = 0; end = 0;
-    }
-};
-struct PlainVec {                                      // trivial elements: only the buffer is freed
-    int  alloc;
-    void* first;
-    void* last;
-    void* end;
-    void clear(void* a) {
-        if (first) operator delete(first);
-        first = 0; last = 0; end = 0;
-    }
-};
-struct RowVec {                                      // 0xb0-byte rows, destroyed by 0x4ca7e0
-    int  alloc;
-    int* first;
-    int* last;
-    int* end;
-    void clear(void* a) {
-        if (first) {
-            std::_Nonscalar_ptr_iterator_tag tag;
-            std::_Destroy_range((E176*)first, (E176*)last, *(std::allocator<E176>*)(void*)this, tag);
-            operator delete(first);
-        }
-        first = 0; last = 0; end = 0;
-    }
-};
 
 // ---- globals -------------------------------------------------------------------------------------------
 #include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
@@ -126,17 +78,10 @@ struct Big {
     int  f010; int f014; int f018; int f01c;
     int  f020; int f024; int f028; int f02c;
     int  f030; int f034; int f038; int f03c;
-    MBRecord34* f040;                                // +0x40
-    Rec18* f044;                                    // +0x44
-    OwnedVec v48;                                       // +0x48
-    OwnedVec v58;                                       // +0x58
-    OwnedVec v68;                                       // +0x68
-    PlainVec v78;                                       // +0x78
-    char pad088[0x19c - 0x88];
-    std::vector<tstring> f19c;
-    std::vector<tstring> f1ac;
-    RowVec v1bc;                                      // +0x1bc
-    char pad1cc[0x670 - 0x1cc];
+    int  f040;                                       // +0x40
+    int  f044; int f048; int f04c; int f050; int f054;
+    int  f058;                                       // +0x58
+    char pad05c[0x670 - 0x5c];
     char blocks[0x40 * 0x130];                      // +0x670 .. +0x5270
     char pad5270[0x5de0 - 0x5270];
     int  f5de0;
@@ -176,7 +121,6 @@ struct Big {
     char done[0x40];                                // +0x6824 spawn-done flags (Mission::done, ../mission.h)
     char pad6864[4];                                // Mission's __int64 members round its size up to 8: new 0x6868 (0x4d4083)
     Big* init();                                    // 0x4d3880
-    void destroy();                                 // 0x4d3720
 };
 
 typedef char big_size_check[sizeof(Big) == 0x6868 ? 1 : -1];   // operator new(0x6868) at 0x4d4083
@@ -190,9 +134,9 @@ Big* Big::init()
     p->f004 = 0;
     p->f028 = 0; p->f02c = 0;
     p->f038 = 0; p->f03c = 0; p->f040 = 0;
-    p->v48.alloc = 0; p->v48.first = 0; p->v48.last = 0;
+    p->f048 = 0; p->f04c = 0; p->f050 = 0;
     p->f030 = 0;
-    p->v48.end = 0; p->v58.alloc = 0;
+    p->f054 = 0; p->f058 = 0;
     for (int i = 0; i < 0x40; i++)
         new (p->blocks + i * 0x130) C4c2d10;
 
@@ -236,25 +180,12 @@ Big* Big::init()
     return this;
 }
 
-// @ 0x4d3720
-void Big::destroy()
+// @ 0x4d3720  (the skin record's destructor: the face key and beard mesh arrays, then the members in reverse order)
+Skin::~Skin()
 {
-    if (f040)
-        f040->vecdel(3);
-    delete[] f044;
-
-    v1bc.clear(this);
-
-    f1ac.~vector();
-    f19c.~vector();
-
-    v78.clear(this);
-    v68.clear(this);
-    v58.clear(this);
-    v48.clear(this);
-
-    ((tstring*)&f028)->~tstring();
-    ((tstring*)this)->~tstring();
+    if (face_keys)
+        delete[] face_keys;
+    delete[] beard_meshes;
 }
 
 // @ 0x4d3a50

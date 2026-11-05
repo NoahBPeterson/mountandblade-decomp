@@ -4,7 +4,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/skin.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../engvec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -24,7 +24,7 @@ void FaceGen::init_screen()
     skin = 0;
     if (w14 >= 0)
         skin = *(int*)(g_game->chars_c + w14 * 0x508 + 0x30) & 0xf;
-    int keys = g_anim.skin_vec.first[skin].n_elems - 1;
+    int keys = g_anim.skin_vec.first[skin].n_face_keys - 1;
     g_gui.reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
     NodeA* o = new NodeA(0);
@@ -156,7 +156,7 @@ void FaceGen::init_screen()
         tstring* kv = g_strtable.lookup(v);
         t_hair_color = (MissionUi*)new_key_label(buttons, kv, &t);
     }
-    if (g_anim.skin_vec.first[skin].first_face == 0) {
+    if (g_anim.skin_vec.first[skin].n_beard == 0) {
         b_next_beard->hide();
         b_prev_beard->hide();
         t_change_beard->hide();

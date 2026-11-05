@@ -16,15 +16,10 @@ using namespace rgl;
 // 0x4175f0 is the free stdcall clear_f14 of rgl/mem_stream.cpp (the folded release(res), which ignores ecx; resource.h)
 
 
-// EChar::collect lives next to its caller (the original's tail call)
-struct EChar_c : EChar {
-    __declspec(noinline) void collect(lod_mesh** a, lod_mesh** b, lod_mesh** c,
-                                      const float* weights, int item, int set, int material,
-                                      int variant, float scale, float time);   // 0x47f650
-};
+// Skin::collect lives next to its caller (the original's tail call)
 
 // @ 0x47f650
-NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, const float* weights,
+NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, const float* weights,
                       int item, int set, int material, int variant, float scale, float time)
 {
     int remap[65536];
@@ -36,25 +31,25 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
     *out_b = 0;
     *out_c = 0;
 
-    if (set_count == 0)
+    if (n_beard == 0)
         set = -1;
     else if (set >= 0)
-        set %= set_count;
+        set %= n_beard;
 
-    material %= mat_count;
+    material %= n_face_tex;
 
     v = variant;
-    if (name_count == 0)
+    if (n_beard_tex == 0)
         v = -1;
-    if (variant_count == 0)
+    if (n_hair_tex == 0)
         variant = -1;
 
-    *out_a = ((lod_mesh_ms*)ref)->clone();      // the lod mesh is the +0x38 pointer itself (0x47f701: mov ecx,[edi+38h]), not its +0x38
+    *out_a = ((lod_mesh_ms*)head)->clone();      // the lod mesh is the +0x38 pointer itself (0x47f701: mov ecx,[edi+38h]), not its +0x38
 
-    if (set < 0 || set >= set_count) {
+    if (set < 0 || set >= n_beard) {
         set = -1;
     } else {
-        *out_b = ((lod_mesh_ms*)sets[set].mesh)->clone();
+        *out_b = ((lod_mesh_ms*)beard_meshes[set].mesh)->clone();
     }
 
     mesh* m = (*out_a)->lists[0].v[0];
@@ -68,7 +63,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
     blend(m, 0, weights);
 
     if (*out_b != 0) {
-        blend_all(*out_b, &blend_a[set], weights);
+        blend_all(*out_b, &beard_maps[set], weights);
         build_mirror((*out_b)->lists[0].v[0], remap, &color2, 0);
     }
 
@@ -85,7 +80,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
     color = -1;
     color2 = alpha | 0xffffff;
 
-    Ramp* mrecs = (Ramp*)mats;
+    Ramp* mrecs = (Ramp*)&face_textures[0];
     if (material >= 0) {
         m->res = mrecs[material].res0;
         if ((*out_a)->count > 1) {
@@ -95,18 +90,18 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
         color = mrecs[material].eval(&time);
     }
 
-    if (item >= 0 && item_count > 0 && variant_count > 0 && item < item_count && variant >= 0) {
-        *out_c = ((lod_mesh_ms*)items[item])->clone();
-        blend_all(*out_c, &blend_b[item], weights);
+    if (item >= 0 && n_hair > 0 && n_hair_tex > 0 && item < n_hair && variant >= 0) {
+        *out_c = ((lod_mesh_ms*)hair_meshes[item])->clone();
+        blend_all(*out_c, &hair_maps[item], weights);
     }
 
     if (*out_c != 0) {
         if (variant < 0)
             variant = 0;
-        else if (variant > variant_count - 1)
-            variant = variant_count - 1;
+        else if (variant > n_hair_tex - 1)
+            variant = n_hair_tex - 1;
 
-        (*out_c)->lists[0].v[0]->res = g_resmgr.get_material(names_a[variant]);
+        (*out_c)->lists[0].v[0]->res = g_resmgr.get_material(hair_textures[variant]);
         (*out_c)->lists[0].v[0]->color = color;
         (*out_c)->lists[0].v[0]->f40 = color2;
         if ((*out_c)->count > 1) {
@@ -119,7 +114,7 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
     }
 
     if (*out_b != 0 && set >= 0 && v >= 0) {
-        tstring name(names_b[v]);
+        tstring name(beard_textures[v]);
         (*out_b)->lists[0].v[0]->res = g_resmgr.get_material(name);
         (*out_b)->lists[0].v[0]->color = color;
         (*out_b)->lists[0].v[0]->f40 = color2;
@@ -136,16 +131,16 @@ NOINL void EChar_c::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c
 // @ 0x47fb10
 void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
 {
-    weights[skin_vec.chars[cur].bone_count - 1] = 1.0f;
+    weights[skin_vec.first[cur].n_face_keys - 1] = 1.0f;
 
     int v = variant;
     if (flag != 0) {
-        int* vals = ((Ramp*)skin_vec.chars[cur].mats)[material].vals;
-        unsigned n = vals ? ((Ramp*)skin_vec.chars[cur].mats)[material].vals_end - vals : 0;
+        int* vals = ((Ramp*)&skin_vec.first[cur].face_textures[0])[material].vals;
+        unsigned n = vals ? ((Ramp*)&skin_vec.first[cur].face_textures[0])[material].vals_end - vals : 0;
         v = vals[(unsigned)variant % n];
     }
 
-    ((EChar_c*)&skin_vec.chars[cur])->collect(a, b, c, weights, item, set, material, v, scale, time);
+    skin_vec.first[cur].collect(a, b, c, weights, item, set, material, v, scale, time);
 }
 
 // The binary reader on the stack: its constructor and destructor are expanded inline in the original (stream_inline.h);

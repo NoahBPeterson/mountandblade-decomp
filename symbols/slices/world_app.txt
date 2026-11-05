@@ -1,5 +1,5 @@
 # world_app: names carried over from symbols/slices/s004d3720.txt, s004d3ec0.txt, s004d4554.txt (the slices stay untouched until retired)
-004d3720 Big::destroy  # vecdel f040, delete[] f044 (0x18 stride), v1bc/v78/v68/v58/v48 clear, Tail dtors f1ac/f19c, tstring f028 and *this
+004d3720 ??1Skin@@QAE@XZ  # vecdel f040, delete[] f044 (0x18 stride), v1bc/v78/v68/v58/v48 clear, Tail dtors f1ac/f19c, tstring f028 and *this
 004d3880 Big::init  # 0x40 x 0x130 block ctors, repeated {2, g_5e2958, g_5e295c} triples, Sub63d0/Sub6698 init, tstring f6814 ctor
 004d3a50 restore_defaults  # clears game f1a090..f1a0c4, world node flags, and conditionally the UI change-question dialog
 004d3c00 hash_table::insert  # rehash walk with sentinel rotation, bucket fixups, key lookup, node copy/alloc, ret 8 {node, inserted}

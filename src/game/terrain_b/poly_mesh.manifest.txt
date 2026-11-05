@@ -20,9 +20,9 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?clamp_rec@PhysSet@@QAEXH@Z  00472c50  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?update@PhysSet@@QAEXM@Z  00472dc0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?update_probes@world@rgl@@QAEXI@Z  00472ed0  /O2 /MT /Gy /TP
-../src/game/terrain_b/poly_mesh.cpp  ?copy_troop@TroopMgr@@QAEXPAUArrSet@@PBUMeshGroupRec@@@Z  00473570  /O2 /MT /Gy /TP
-../src/game/terrain_b/poly_mesh.cpp  ?relax@SkinSet@@QAEXHPAM@Z  004735e0  /O2 /MT /Gy /TP
-../src/game/terrain_b/poly_mesh.cpp  ?unpack@Animator@@QAEPAUSkinSet@@PB_K@Z  00473800  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?copy_troop@Skin@@QAEXPAUArrSet@@PBUlod_group@@@Z  00473570  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?relax@Skin@@QAEXHPAM@Z  004735e0  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?unpack@Animator@@QAEPAUSkin@@PB_K@Z  00473800  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?refresh_cells@Terrain@@QAEXXZ  00473980  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?reset_spawned@@YGXH@Z  004739f0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?next_used@?$Pool@URecJ@@@@QAEXPAI@Z  00474300  /O2 /MT /Gy /TP

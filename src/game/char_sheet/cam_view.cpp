@@ -4,7 +4,7 @@
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/skin.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../window_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../key_names.h"
@@ -61,7 +61,7 @@ check_follow:
 // @ 0x4ea8e0
 void FaceGen::frame_update(float dt)
 {
-    int n = *(int*)((char*)g_anim.skin_vec.first + skin * 0x1f8 + 0x3c) - 1;
+    int n = g_anim.skin_vec.first[skin].n_face_keys - 1;
 
     if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x12] && !g_keyboard.prev[0x12]) {
         if (*(int*)((char*)g_game + 0x1a090) == 0) {
@@ -113,7 +113,7 @@ void FaceGen::frame_update(float dt)
         ContainerBase* row = deform_rows[i];
         if (row->clear_mask(0x10000)) {
             g_dummy_mat_arr[i] = row->get168();
-            SkinSet* set = (SkinSet*)((char*)g_anim.skin_vec.first + g_anim.cur * 0x1f8);
+            Skin* set = &g_anim.skin_vec.first[g_anim.cur];
             set->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 deform_rows[j]->set168(g_dummy_mat_arr[j]);
@@ -134,17 +134,17 @@ void FaceGen::frame_update(float dt)
         flag = 1;
     }
     if (b_prev_beard && b_prev_beard->clear_mask(0x10000)) {
-        int m = SKIN_INT(0x88);
+        int m = SKIN_INT(n_beard);
         f350 = (f350 + m) % (m + 1);
         flag = 1;
     }
     if (b_prev_hair->clear_mask(0x10000)) {
-        int m = SKIN_INT(0x18c);
+        int m = SKIN_INT(n_hair);
         f354 = (f354 + m) % (m + 1);
         flag = 1;
     }
     if (b_prev_face->clear_mask(0x10000)) {
-        int m = SKIN_INT(0x190);
+        int m = SKIN_INT(n_face_tex);
         f35c = (m - 1 + f35c) % m;
         flag = 1;
     }
@@ -156,7 +156,7 @@ void FaceGen::frame_update(float dt)
         g_anim.randomise();
         for (int i = 0; i < n; i++)
             deform_rows[i]->set168(g_dummy_mat_arr[i]);
-        int m = SKIN_INT(0x18c);
+        int m = SKIN_INT(n_hair);
         f354 = (m < 2 ? 0 : rand() % m) + 1;
         f350 = rand();
         f35c = rand();
@@ -168,16 +168,16 @@ void FaceGen::frame_update(float dt)
         float* p = g_dummy_mat_arr;
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
-        SkinSet* set = (SkinSet*)((char*)g_anim.skin_vec.first + g_anim.cur * 0x1f8);
+        Skin* set = &g_anim.skin_vec.first[g_anim.cur];
         set->relax(-1, g_dummy_mat_arr);
         flag = 1;
         for (int i = 0; i < n; i++)
             deform_rows[i]->set168(g_dummy_mat_arr[i]);
     }
 
-    f350 = f350 % (SKIN_INT(0x88) + 1);
-    f354 = f354 % (SKIN_INT(0x18c) + 1);
-    f35c = f35c % SKIN_INT(0x190);
+    f350 = f350 % (SKIN_INT(n_beard) + 1);
+    f354 = f354 % (SKIN_INT(n_hair) + 1);
+    f35c = f35c % SKIN_INT(n_face_tex);
 
     if (flag)
         refresh();

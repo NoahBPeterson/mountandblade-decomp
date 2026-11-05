@@ -70,7 +70,7 @@ keys_page / hud). In detail:
 - **module_load | mesh_edit at 0x4d1410**: class change (record loaders -> polygon-mesh editor).
 - **mesh_edit | ragdoll_models at 0x4d3330**: class change (`Mesh::add_quad` 0x4d2df0 is a mesh member; `RagBone::load` 0x4d3330 is
   the first TinyXML user).
-- **ragdoll_models | world_app at 0x4d3720**: class change (record constructors -> mission object `Big` / application object).
+- **ragdoll_models | world_app at 0x4d3720**: class change (record constructors -> skin record destructor 0x4d3720 `Skin::~Skin` and mission object `Big` / application object).
   0x4d3720 .. 0x4d4b80 is the start of the T regime (0x4d3e50 `TreeW::erase` is the first T row): the vector fill helpers
   0x4d49c0 / 0x4d4a50 / 0x4d4ae0 sit after their first caller (`Core::msg_proc`, which only calls them through the
   vector code of other TUs: no direct call; kept in binary order at the end of world_app.cpp).
@@ -90,7 +90,8 @@ Class-name unifications made while moving (aliases the slices used for one objec
 | `GameIo : Game` (two member functions of `Game`) | `game_data::char_export_write` (s004d86d0), `game_globals::export_character` / `import_apply` and `Game::import_char` (s004d7d10, s004d8c20) | 0x4d86d0 and 0x4d8c20 are called with `ecx = g_game` |
 | `outfile` / `outfile_a` / `outfile_b` | `stream_text` (s004d86d0) | slot 10 of the export file's vtable (+0x28) is the line writer |
 | `GameApp::GameApp()` 0x4d3ec0, `GameApp::msg_proc` 0x4d4140, `GameApp::config_proc` 0x4d0240 | `GameApp`, `Application` | merged: `GameApp : CD3DApplication` in ../config/core.h (+0x348 font, +0x390 module names, +0x590 mode; vtable 0x5948e0 the compiler's), defined here as `g_app_obj` |
-| `Big` (0x4d3720 / 0x4d3880) = `World` (0x4d51d0) = `Mission` | `Big`, `World`, `WorldBase` | the object `g_5e292c` = `g_mission` (../mission.h); not merged, see below |
+| `Big` (0x4d3880) = `World` (0x4d51d0) = `Mission` | `Big`, `World`, `WorldBase` | the object `g_5e292c` = `g_mission` (../mission.h); not merged, see below |
+| `Skin::~Skin` 0x4d3720 (the slice's `Big::destroy`) | `Big::destroy`, `model_b::~model_b`, `loading_config::~loading_config`, `CfgRec::~CfgRec`, `SkinSet::destroy` | not the mission object's: the destructor of the 0x1f8-byte skin record, `src/include/skin.h`; byte-exact, defined here |
 | `RagBone` | `Bone` (s004d2df0) | the ragdoll bone with mass and cone limits, not rgl's skeleton `Bone` (src/rgl/core/resource_io.h) |
 | `ControlKeyTable`, `KeysPage` | `KeyTable`, `VideoPage` (s004d6b80) | `KeyTable` is src/include/key_table.h's key-frame table, `VideoPage` is video_page.cpp's class |
 
@@ -118,8 +119,8 @@ in the .cpp. Layout offsets are cited per field or per function in the comments.
 ### Local views that duplicate a canonical class (not merged; to be folded in by whoever owns the class)
 
 - `Big` / `World` in world_app.cpp / hud.cpp are `Mission` (../mission.h). mission.h models the vectors at +0x48.. as nested
-  types (`AgentTable` at +4, `Pool<RecJ>` at +0x30, `NavMesh` at +0x6698) and has no constructor or destructor for 0x4d3880 /
-  0x4d3720; moving the two functions onto it needs the field mapping of `Pool`, `TerrainDesc` and the nine clock words.
+  types (`AgentTable` at +4, `Pool<RecJ>` at +0x30, `NavMesh` at +0x6698) and has no constructor for 0x4d3880;
+  moving it onto it needs the field mapping of `Pool`, `TerrainDesc` and the nine clock words.
 - `GameApp` in world_app.cpp is `Core` (../config/core.h). `Core` lacks `Core()` (0x4d3ec0), `msg_proc` (0x4d4140), the
   `+0x34c` word, the launcher flag `+0x350`, the module picture `+0x354`, the window `+0x364` and the module count `+0x38c`
   (all inside its `pad348` split; pure additions, offsets unchanged) and would have to lose the manual vptr store (0x5948e0).

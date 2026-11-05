@@ -18,6 +18,7 @@
 #include "../font.h"
 #include "../../include/e68.h"
 #include "../../include/vec_elems.h"
+#include "../arr_set.h"
 #include "../../include/ptr_tag.h"
 #include "../../include/game_data.h"
 #include "../../rgl/mesh2/mesh2_common.h"
@@ -327,52 +328,52 @@ bool TearObj::teardown()
     return on_selection_changed();
 }
 
-// ---- 0x4da410: loading_config::operator= ----------------------------------------------------------------------------
+// ---- 0x4da410: Skin::operator= ----------------------------------------------------------------------------
 // @ 0x4da410
-loading_config& loading_config::operator=(const loading_config& src)
+Skin& Skin::operator=(const Skin& src)
 {
-    s0 = src.s0;
-    v10 = src.v10;
-    v14 = src.v14;
-    v18 = src.v18;
-    v1c = src.v1c;
-    v20 = src.v20;
-    v24 = src.v24;
-    s28 = src.s28;
-    v38 = src.v38;
-    v3c = src.v3c;
-    v40 = src.v40;
-    v44 = src.v44;
-    r48 = src.r48;
-    r58 = src.r58;
-    r68 = src.r68;
-    r78 = src.r78;
-    v88 = src.v88;
+    id = src.id;
+    flags = src.flags;
+    body = src.body;
+    hand_l = src.hand_l;
+    hand_r = src.hand_r;
+    calf_l = src.calf_l;
+    calf_r = src.calf_r;
+    head_name = src.head_name;
+    head = src.head;
+    n_face_keys = src.n_face_keys;
+    face_keys = src.face_keys;
+    beard_meshes = src.beard_meshes;
+    beard_maps = src.beard_maps;
+    hair_maps = src.hair_maps;
+    head_maps = src.head_maps;
+    constraints = src.constraints;
+    n_beard = src.n_beard;
     for (int i = 0; i < 0x40; i++)
-        r8c[i] = src.r8c[i];
-    v18c = src.v18c;
-    v190 = src.v190;
-    v194 = src.v194;
-    v198 = src.v198;
-    r19c = src.r19c;
-    r1ac = src.r1ac;
-    r1bc = src.r1bc;
-    t1cc.v1cc = src.t1cc.v1cc;
-    t1cc.v1d0 = src.t1cc.v1d0;
-    t1cc.v1d4 = src.t1cc.v1d4;
-    t1cc.v1d8 = src.t1cc.v1d8;
-    t1cc.v1dc = src.t1cc.v1dc;
-    t1cc.v1e0 = src.t1cc.v1e0;
-    t1cc.v1e4 = src.t1cc.v1e4;
-    v1e8 = src.v1e8;
-    v1ec = src.v1ec;
-    v1f0 = src.v1f0;
-    v1f4 = src.v1f4;
+        hair_meshes[i] = src.hair_meshes[i];
+    n_hair = src.n_hair;
+    n_face_tex = src.n_face_tex;
+    n_hair_tex = src.n_hair_tex;
+    n_beard_tex = src.n_beard_tex;
+    hair_textures = src.hair_textures;
+    beard_textures = src.beard_textures;
+    face_textures = src.face_textures;
+    voices.v[0] = src.voices.v[0];
+    voices.v[1] = src.voices.v[1];
+    voices.v[2] = src.voices.v[2];
+    voices.v[3] = src.voices.v[3];
+    voices.v[4] = src.voices.v[4];
+    voices.v[5] = src.voices.v[5];
+    voices.v[6] = src.voices.v[6];
+    skeleton = src.skeleton;
+    scale = src.scale;
+    blood1 = src.blood1;
+    blood2 = src.blood2;
     return *this;
 }
 
 // @ 0x4da880
-loading_config* copy_configs_forward(loading_config* first, loading_config* last, loading_config* out)
+Skin* copy_configs_forward(Skin* first, Skin* last, Skin* out)
 {
     if (first != last) {
         do {
@@ -385,7 +386,7 @@ loading_config* copy_configs_forward(loading_config* first, loading_config* last
 }
 
 // @ 0x4da8c0
-loading_config* copy_configs_backward(loading_config* first, loading_config* last, loading_config* out)
+Skin* copy_configs_backward(Skin* first, Skin* last, Skin* out)
 {
     if (first != last) {
         do {
@@ -522,20 +523,20 @@ void C4c2fb0::init_screen()
 }
 
 // @ 0x4dc190
-void destroy_range_cfg(loading_config* first, loading_config* last, const loading_config* src)
+void destroy_range_cfg(Skin* first, Skin* last, const Skin* src)
 {
-    for (; first != last; first = (loading_config*)((char*)first + 0x1f8))
+    for (; first != last; ++first)
         *first = *src;
 }
 
 // the implicit copy constructor (0x4dc030) is emitted out of line; this wrapper forces its emission
-loading_config* copy_loading_config(loading_config* self, const loading_config* o)
+Skin* copy_skin(Skin* self, const Skin* o)
 {
-    new (self) loading_config(*o);
+    new (self) Skin(*o);
     return self;
 }
 
-// (the copy constructor itself, ??0loading_config@@QAE@ABU0@@Z at 0x4dc030, is the manifest row; no marker here: a
+// (the copy constructor itself, ??0Skin@@QAE@ABU0@@Z at 0x4dc030, is the manifest row; no marker here: a
 // marker with no definition after it binds to the next declaration)
 
 // ---- 0x4da5b0: the end-of-game shutdown routine -------------------------------------------------------------------

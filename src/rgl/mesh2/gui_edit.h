@@ -209,22 +209,12 @@ struct PMesh {
     unsigned npts() const { return pts ? (unsigned)(pts_end - pts) : 0; }
 };
 struct POwner { char pad0[0x38]; PMesh** mesh; };       // +0x38
-struct PoseRec {                // 0x34
-    char pad0[0x20];
-    int key;                    // +0x20 key time
-    char pad24[0xc];
-    vector4* vecs;              // +0x30
-};
 
 // the editor page: the message formatter and the buffers it owns
 struct ItemPage {
     tstring name;               // +0
     tstring text;               // +0x10
-    char pad20[0x38 - 0x20];
-    POwner* owner;              // +0x38 (place 0x4c6b30)
-    char pad3c[4];
-    PoseRec* poses;             // +0x40 (place)
-    char pad44[0x188 - 0x44];
+    char pad20[0x188 - 0x20];
     int kind;                   // +0x188
     int index;                  // +0x18c
     tstring field;              // +0x190
@@ -234,12 +224,11 @@ struct ItemPage {
 
     void reset();                               // 0x4c65d0
     void format(char* out);                     // 0x4c6620
-    void place(int e);                          // 0x4c6b30
 };
 
 #include "../../include/game_recs.h"       // PartyTemplate (translated 0x4c6080), QuestRec, FactionRec: the shared record classes
 #include "../../include/dialog_rec.h"      // DialogRec (translated 0x4c6080): the shared dialog record
-#include "../../include/skin_set.h"              // SkinSet, SkinElem, g_anim.skin_vec.first (shared with src/game/char_sheet)
+#include "../../include/skin.h"                  // Skin, FaceKey, g_anim.skin_vec.first (shared with src/game/char_sheet)
 struct ModRec {
     tstring name;                                                       // +0x00
     tstring key;                                                        // +0x10

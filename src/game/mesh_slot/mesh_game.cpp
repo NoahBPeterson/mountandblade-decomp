@@ -10,6 +10,7 @@
 #include "../../include/phys_set.h"     // PhysSet::update 0x472dc0
 #include "../render_batch.h"   // g_batch (0x5fe898): counter 0x418828
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/skin.h"      // Skin (g_anim.skin_vec.first)
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 #include "../../include/troop.h"   // Troop::auto_equip (0x4687e0)
 #include "../strat/gui_manager.h"
@@ -174,12 +175,6 @@ struct SpawnSetG {                      // the 0x58-byte per-set record at g_mis
     char pad54[4];
 };
 typedef char SpawnSetG_size_check[sizeof(SpawnSetG) == 0x58 ? 1 : -1];
-struct ItemKindT {                      // the item-kind table entry the spawner reads (((ItemKindT*)g_anim.skin_vec.chars) at 0x8ed4f7c, 0x1f8 bytes)
-    char pad0[0x1e8];
-    int f1e8;                           // +0x1e8
-    float f1ec;                         // +0x1ec
-    char pad1f0[8];
-};
 // an item reference (ItemRef, game/item_ref.h): 0x434df0 is ItemRef::stat_1e8, 0x434eb0 ItemRef::stat_200
 struct ItemStackG {
     unsigned a, b;
@@ -268,12 +263,12 @@ NOINL void Mission::spawn(AgentS* a)
         unsigned skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         int obj = 0;
         if (skin_i < (unsigned)g_anim.char_count)
-            obj = ((ItemKindT*)g_anim.skin_vec.chars)[skin_i].f1e8;
+            obj = (int)g_anim.skin_vec.first[skin_i].skeleton;
         e->skel->init((FxRes*)obj);
         skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         float h;
         if (skin_i < (unsigned)g_anim.char_count)
-            h = ((ItemKindT*)g_anim.skin_vec.chars)[skin_i].f1ec;
+            h = g_anim.skin_vec.first[skin_i].scale;
         else
             h = 1.0f;
         a->scale = h;

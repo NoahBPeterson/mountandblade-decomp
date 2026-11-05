@@ -2,7 +2,7 @@
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/skin_set.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/skin.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../game_globals.h"      // g_limit_hair_colors, g_module_name ... (canonical global declarations)
 #include "../../rgl/stream.h"      // text_stream g_debug_log (0x5a9f30): its buf (+0x20 = 0x5a9f50) is the status text the save/load screen draws
 #include "../strat/gui_manager.h"      // MsgLog::build_scene 0x4e6050 (listed directly: the resolution audit reads only the source's own includes)
@@ -49,14 +49,14 @@ void Animator::randomise()
     } while (n != 0);
     int r = rand() % 0x3dc9;
     time = (float)r * 6.322312e-05f;
-    SkinSet* base = (SkinSet*)((char*)skin_vec.first + cur * 0x1f8);
+    Skin* base = &skin_vec.first[cur];
     base->relax(-1, weights);
 }
 
 // @ 0x4eb3c0
 void FaceGen::refresh()
 {
-    int n = g_anim.skin_vec.first[skin].n_elems - 1;
+    int n = g_anim.skin_vec.first[skin].n_face_keys - 1;
     for (int i = 0; i < n; i++)
         g_anim.weights[i] = deform_rows[i]->get168();
     f360 = sl_age->get168();
@@ -70,7 +70,7 @@ void FaceGen::refresh()
     g_anim.material = f35c;
     g_anim.set = f350 - 1;
     g_anim.item = f354 - 1;
-    int r = f358 % g_anim.skin_vec.first[g_anim.cur].div;
+    int r = f358 % g_anim.skin_vec.first[g_anim.cur].n_hair_tex;
     g_anim.variant = r;
     g_anim.f10 = r;
     void *a, *b, *c;
@@ -106,13 +106,13 @@ void FaceGen::refresh()
     }
 }
 
-// ---- skin-record array helpers (0x4eb810 is ~SkinVec, include/skin_set.h; 0x4eb860 erase, used by the map editor) -------------------------------
+// ---- skin-record array helpers (0x4eb810 is ~SkinVec, include/skin.h; 0x4eb860 erase, used by the map editor) -------------------------------
 struct BigArray {
     char pad0[4];
-    SkinSet* begin;                                         // +4
-    SkinSet* end;                                           // +8
-    SkinSet* cap;                                           // +0xc
-    void erase(SkinSet** out, SkinSet* first, SkinSet* last);       // 0x4eb860
+    Skin* begin;                                         // +4
+    Skin* end;                                           // +8
+    Skin* cap;                                           // +0xc
+    void erase(Skin** out, Skin* first, Skin* last);       // 0x4eb860
 };
 // (array_copy_range 0x4da880 is copy_configs_forward, cs_common.h)
 
@@ -120,11 +120,11 @@ struct BigArray {
 SkinVec::~SkinVec()
 {
     if (first) {
-        SkinSet* p = first;
-        SkinSet* stop = last;
+        Skin* p = first;
+        Skin* stop = last;
         while (p != stop) {
-            p->destroy();
-            p = (SkinSet*)((char*)p + 0x1f8);
+            p->~Skin();
+            ++p;
         }
         operator delete(first);
     }
@@ -134,15 +134,15 @@ SkinVec::~SkinVec()
 }
 
 // @ 0x4eb860
-void BigArray::erase(SkinSet** out, SkinSet* first, SkinSet* last)
+void BigArray::erase(Skin** out, Skin* first, Skin* last)
 {
-    SkinSet** fp = &first;
+    Skin** fp = &first;
     if (*fp != last) {
-        SkinSet* p = (SkinSet*)copy_configs_forward((loading_config*)last, (loading_config*)this->end, (loading_config*)*fp);
-        SkinSet* e = this->end;
+        Skin* p = copy_configs_forward(last, this->end, *fp);
+        Skin* e = this->end;
         while (p != e) {
-            p->destroy();
-            p = (SkinSet*)((char*)p + 0x1f8);
+            p->~Skin();
+            ++p;
         }
         this->end = p;
     }
@@ -153,12 +153,12 @@ void BigArray::erase(SkinSet** out, SkinSet* first, SkinSet* last)
 struct Forwarder {
     void forward(int a, int b, int c);                  // 0x4eb8c0
 };
-// (func_4e4340 is std::_Uninit_copy<loading_config>, cs_common.h)
+// (func_4e4340 is std::_Uninit_copy<Skin>, cs_common.h)
 
 // @ 0x4eb8c0
 void Forwarder::forward(int a, int b, int c)
 {
-    std::_Uninit_copy(std::vector<loading_config>::const_iterator((loading_config*)a), std::vector<loading_config>::const_iterator((loading_config*)b), (loading_config*)c, *(std::allocator<loading_config>*)this, std::_Nonscalar_ptr_iterator_tag());   // 0x4e4340
+    std::_Uninit_copy(std::vector<Skin>::const_iterator((Skin*)a), std::vector<Skin>::const_iterator((Skin*)b), (Skin*)c, *(std::allocator<Skin>*)this, std::_Nonscalar_ptr_iterator_tag());   // 0x4e4340
 }
 
 // @ 0x4eb8e0 save-load UI entry (whole body reconstructed at 0x4eb8e0; 0x4eb8ed is its interior
@@ -254,7 +254,7 @@ void Animator::pack_state(PackedState* out)
     unsigned __int64* w = (unsigned __int64*)out;
     int bit = 0;
     float* v = weights;
-    for (int i = 0; i < ((SkinSet*)((char*)skin_vec.first + cur * 0x1f8))->n_elems; i++) {
+    for (int i = 0; i < skin_vec.first[cur].n_face_keys; i++) {
         int sh = bit;
         int wi = 1;
         if (sh >= 0x3f) {

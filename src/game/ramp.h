@@ -1,4 +1,4 @@
-// ramp.h: the colour-ramp / material record (0xb0 bytes; array MatRec* at EChar+0x1c0, character owner, mesh_slot) whose
+// ramp.h: the colour-ramp / material record (0xb0 bytes; vector<E176> at Skin+0x1bc, the skin record's face textures, mesh_slot) whose
 // tail is the ramp that Ramp::eval 0x463790 samples (n stops of three floats at +0x2c, count at +0xac). ONE definition for
 // src/game: terrain_a/game_state.h saw the ramp tail as `Ramp`, mesh_slot/mesh_slot.h the whole record as `MatRec`
 // (eval 0x463790 takes this = the record: its first field read is +0xac). No includes (skin is forward-declared).
