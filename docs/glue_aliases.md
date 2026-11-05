@@ -3,7 +3,7 @@
 Each row is a name that source declares and calls, bound by the glue to the function our source defines under another name
 at the same original address (`glue.json` "aliases"; tools/relink/glue.py). Regenerate with a faithful build.
 
-Total: 35.  ICF 10  TWIN 0  VIEW 14  OTHER 11
+Total: 29.  ICF 8  TWIN 0  VIEW 10  OTHER 11
 
 - ICF: identical-code folding in the original linker; two different classes / instantiations share one address. Honest, cannot reach zero.
 - TWIN: deliberate visibility twin (`_def` / `_x` / `_ext`, MeshExt, TroopExt, AgentX, allocN). Waiting on a separate decision.
@@ -12,12 +12,8 @@ Total: 35.  ICF 10  TWIN 0  VIEW 14  OTHER 11
 
 | alias (name source calls) | defined as | class | reason |
 |---|---|---|---|
-| `??1CfgRec@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in. The 0x1f8 record is also SkinSet (skin_set.h), MapSceneRec (progress_bar.cpp, which defines model_b::read) and widget_text.cpp's CfgRec; CfgRec (agent_vec.cpp, widget_text.cpp) additionally keeps vector<CfgRec>::_Insert_n 0x4fe520 and its call to 0x4e4340 opaque. One class needs all six merged in one pass (vec<int> / vector<NamePtrs56> / ArrSet element types, MBRecord34 / Rec18 pointers at +0x40 / +0x44) |
 | `??1Local@@QAE@XZ` | `?clear_vecs@graph_obj@@QAEXXZ` | OTHER | Local::~Local (game_2.h) declared; defined as graph_obj::clear_vecs in mesh_2 (0x4cb780): one object under two class names |
-| `??1loading_config@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in. The 0x1f8 record is also SkinSet (skin_set.h), MapSceneRec (progress_bar.cpp, which defines model_b::read) and widget_text.cpp's CfgRec; CfgRec (agent_vec.cpp, widget_text.cpp) additionally keeps vector<CfgRec>::_Insert_n 0x4fe520 and its call to 0x4e4340 opaque. One class needs all six merged in one pass (vec<int> / vector<NamePtrs56> / ArrSet element types, MBRecord34 / Rec18 pointers at +0x40 / +0x44) |
-| `??1model_b@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in. The 0x1f8 record is also SkinSet (skin_set.h), MapSceneRec (progress_bar.cpp, which defines model_b::read) and widget_text.cpp's CfgRec; CfgRec (agent_vec.cpp, widget_text.cpp) additionally keeps vector<CfgRec>::_Insert_n 0x4fe520 and its call to 0x4e4340 opaque. One class needs all six merged in one pass (vec<int> / vector<NamePtrs56> / ArrSet element types, MBRecord34 / Rec18 pointers at +0x40 / +0x44) |
 | `??1owned_block@@QAE@XZ` | `?conv_clear@@YIXPAPAX@Z` | OTHER | owned_block (item_rec.h) dtor is the free function conv_clear(void**) in gui_edit.cpp (0x4c8bf0) |
-| `??4CfgRec@@QAEAAU0@ABU0@@Z` | `??$_Uninit_copy@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@PAUload...` | ICF | CfgRec::operator= and vector<loading_config>::_Uninit_copy share 0x4e4340 (byte-identical bodies folded) |
 | `??4ptr_list@rgl@@QAEAAU01@ABU01@@Z` | `??4?$vector@HV?$allocator@H@std@@@std@@QAEAAV01@ABV01@@Z` | ICF | vector<T*>::operator= is one instance for all pointer element types (0x43f0a0); ptr_list derives from vector<void*> |
 | `??Hiter32@rgl@@QBE?AU01@H@Z` | `??Hiterator@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBE?AV012@H@Z` | VIEW | iter32 (scene.h) / contact_inl: hand-rolled iterators for std::vector<point20>::iterator::operator+ (0x40f880) |
 | `??Hiterator@contact_inl@@QBE?AU01@H@Z` | `??Hiterator@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBE?AV012@H@Z` | VIEW | iter32 (scene.h) / contact_inl: hand-rolled iterators for std::vector<point20>::iterator::operator+ (0x40f880) |
@@ -30,7 +26,6 @@ Total: 35.  ICF 10  TWIN 0  VIEW 14  OTHER 11
 | `?clear@Stack@@QAEXXZ` | `?reset@NamedSelRec@@QAEXXZ` | ICF | Stack::clear and NamedSelRec::reset are different classes with identical bytes (0x4893e0) |
 | `?ctor@tstring_ctor@@QAEXXZ` | `??0tstring@@QAE@XZ` | OTHER | tstring ctor spelled as tstring_ctor (fastcall free function / member) for vector-constructor callbacks and raw slots (0x42bbd0) |
 | `?destroy@RecI@@QAEPAXI@Z` | `??_ERecI@@QAEPAXI@Z` | OTHER | RecD / RecI scalar-deleting destructor spelled as a member (0x431480 / 0x431810) |
-| `?destroy@SkinSet@@QAEXXZ` | `?destroy@Big@@QAEXXZ` | ICF | SkinSet::destroy folded with the other 0x1f8-record destructor Big::destroy (0x4d3720) |
 | `?display_name@ItemKind@@QAEPAUtstring@@XZ` | `?display_name@TroopRec@@QAEPAUtstring@@XZ` | ICF | ItemKind::display_name and TroopRec::display_name are identical (0x43a480) |
 | `?erase@?$vec@Umface@@@@QAE?AUiter@1@U21@0@Z` | `?erase@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z` | VIEW | hand-rolled vec<mface>::erase for std::vector<point20>::erase (0x40fd40) |
 | `?first@TeamRec@@QAE?AUvector4@rgl@@XZ` | `?first@Sel@@QAEXPAH@Z` | OTHER | TeamRec::first returning vector4 vs Sel::first(int*): call-site declaration and definition disagree on signature |
@@ -40,7 +35,6 @@ Total: 35.  ICF 10  TWIN 0  VIEW 14  OTHER 11
 | `?is_night@GameData@@QAE_NXZ` | `?is_night@@YA_NXZ` | OTHER | GameData::is_night is called with ecx = g_game from most sites and bare (no ecx) from 0x4b25e9 / 0x4b3951: one original function used as method and as free function (0x435740), so the free-function definition stays |
 | `?lower_bound@GlyphMap@@QAEXPAPAUGlyphNode@@PBH@Z` | `?lower_bound@?$_Hash@V?$_Hmap_traits@HUHashVal@@V?$hash_compare@HU?$less@H@std@@@stdext@@V?$allocator@U?$pa...` | VIEW | GlyphMap (font.h) hand-rolled hash map vs HashTab / _Hash lookups |
 | `?push_back@mesh_ptr_vec@@QAEXABQAUmesh@rgl@@@Z` | `?push_back@?$vector@PAUscene@rgl@@V?$allocator@PAUscene@rgl@@@std@@@std@@QAEXABQAUscene@rgl@@@Z` | ICF | vector<T*>::push_back is one instance; mesh_ptr_vec : vector<mesh*> (0x4119d0) |
-| `?read@model_b@@QAEXPAX@Z` | `?read@MapSceneRec@@QAEXPAUMsStream@@@Z` | VIEW | model_b::read vs MapSceneRec::read: duplicate record type |
 | `?read_psys_rec@@YAPAXPAUstream_base@@PAD@Z` | `?read@psys_record@@SAPAXAAUstream_base@@PAD@Z` | OTHER | psys_record::read is a static member; trigger_vec.h declares it as the free function read_psys_rec (0x4bdc00) |
 | `?reset@Agent@@QAEXXZ` | `?reset@BigObj@@QAEXXZ` | ICF | Agent::reset and BigObj::reset are different classes with identical bytes (0x432080) |
 | `?scalar_delete@RecD@@QAEPAXI@Z` | `??_ERecD@@QAEPAXI@Z` | OTHER | RecD / RecI scalar-deleting destructor spelled as a member (0x431480 / 0x431810) |
