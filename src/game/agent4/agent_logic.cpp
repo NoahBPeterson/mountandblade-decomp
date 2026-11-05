@@ -41,7 +41,7 @@
 #include "../agent_obj.h"
 #include "../mission.h"
 #include "../terrain_b/poly_mesh.h"
-#include "../font.h"
+#include "../glyph_lookup.h"
 #include "../placed_obj.h"
 #include "../str_table.h"
 #include "../mode_rec.h"
@@ -3342,7 +3342,7 @@ static __forceinline const Glyph* font_get(Font* f, int c)
 {
     if (c >= 0x200) {
         GlyphNode* it;
-        f->map.lower_bound(&it, &c);
+        glyph_lower_bound(f->map, &it, c);
         if (it != f->map.head)
             return &it->val;
         return &f->dflt;

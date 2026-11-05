@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"
+#include "../glyph_lookup.h"      // glyph_lower_bound (0x43b210)
 #include "../../rgl/mesh.h"
 #include "../../rgl/scene/world.h"      // rgl::world (m30c / m31c: the light listener)
 #include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
@@ -1902,7 +1903,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         if (ch >= 0x200) {
                             GlyphNode* node;
                             int key = ch;
-                            map.lower_bound(&node, &key);
+                            glyph_lower_bound(map, &node, key);
                             if (node != map.head)
                                 g = &node->val;
                             else
@@ -1917,7 +1918,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         if (ch >= 0x200) {
                             GlyphNode* node;
                             int key = ch;
-                            map.lower_bound(&node, &key);
+                            glyph_lower_bound(map, &node, key);
                             if (node != map.head)
                                 g = &node->val;
                             else

@@ -17,9 +17,7 @@ struct Table1f8 {
 };
 // the int-keyed hash map the 0x43b210 lookup belongs to: stdext::hash_map<int, HashVal> (VC7.1 <hash_map>); the body
 // is the library's own _Hash::lower_bound, instantiated below (byte-exact with the library source)
-struct HashVal { int v; };
-typedef stdext::_Hash<stdext::_Hmap_traits<int, HashVal, stdext::hash_compare<int, std::less<int> >,
-                                          std::allocator<std::pair<const int, HashVal> >, false> > IntHashBase;
+#include "../glyph_hash.h"
 
 struct VecPtr3 {                                         // (first, last, end) of an engine vector
     void *first, *last, *end;

@@ -65,19 +65,18 @@ float g_5a9f28[2] = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} c
 // ---- 0x4d92c0: the glyph hash table's operator[] ------------------------------------------------------------------
 // 0x43b210 is stdext::hash_map<int, HashVal>::lower_bound (agent2/agent_ai.cpp), shared by every int-keyed hash map (folded): the glyph table
 // calls that instance. Its explicit specialization is only declared.
-struct HashVal { int v; };
-typedef stdext::_Hash<stdext::_Hmap_traits<int, HashVal, stdext::hash_compare<int, std::less<int> >,
-                                          std::allocator<std::pair<const int, HashVal> >, false> > IntHashBase;
-template<> IntHashBase::iterator IntHashBase::lower_bound(const int&);     // 0x43b210
+#include "../glyph_lookup.h"
+// the 4d3c00 insert is world_app.cpp's HashTab::insert (the glyph table is a hash table of that layout)
+struct HashTab { void insert(HOut* out, unsigned* key); };   // 0x4d3c00
 // @ 0x4d92c0
 Glyph* GlyphMap::at(const int& key)
 {
     GlyphNode* it;
-    *(IntHashBase::iterator*)&it = ((IntHashBase*)this)->lower_bound(key);
+    glyph_lower_bound(*this, &it, key);
     if (it == head) {
         HOut out;
         node_pair v = { key, Glyph() };
-        insert(&out, &v.key);
+        ((HashTab*)this)->insert(&out, (unsigned*)&v.key);
         return &out.node->val;
     }
     return &it->val;

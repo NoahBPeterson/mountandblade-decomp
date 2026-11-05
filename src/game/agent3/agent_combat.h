@@ -19,9 +19,7 @@
 
 // the font's glyph table (GlyphMap, font.h) is a stdext::hash_map<int, Glyph> whose lookup is the library's own
 // _Hash::lower_bound that src/game/agent2/agent_ai.cpp instantiates (0x43b210, with the mapped type its slice named HashVal)
-struct HashVal { int v; };
-typedef stdext::_Hash<stdext::_Hmap_traits<int, HashVal, stdext::hash_compare<int, std::less<int> >,
-                                          std::allocator<std::pair<const int, HashVal> >, false> > IntHashBase;
+#include "../glyph_hash.h"
 
 // Callees the original shares with another object through identical-code folding: the linker serves both with the one
 // function, whose definition is under the other class (declared here with the defining class's name, so the call binds

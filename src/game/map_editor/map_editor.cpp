@@ -20,6 +20,7 @@
 #include "../mission.h"
 #include "../placed_obj.h"
 #include "../int_vec.h"
+#include "../int_vec_insert.h"      // IntVec::insert_n (0x43e7b0): the library's _Insert_n
 #include "../key_names.h"
 #include "../window_mgr.h"
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
