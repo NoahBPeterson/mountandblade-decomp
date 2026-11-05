@@ -93,20 +93,18 @@ void TerrainPage::simulate(float dt)
 
 // @ 0x4f3b40
 // Rotate the 2x2 matrix m by `angle`: first row -> c*row0 + s*row1, second row -> c*row1 - s*row0.
-// The original keeps sin/cos in x87 registers, spills one float copy of the sine and the m[1]/m[3] products to the
-// stack (each rounded to float once) and leaves the m[0]/m[2] products and the m[2] sine product unrounded in registers.
-// cl 13.10 has no source form that spills exactly that set (a plain float local is never stored; the array / struct /
-// inline-helper shapes tried keep the sine copy in a register or round a different set), so the copy and the four
-// products are plain float locals (the row loads hoisted, which makes cl spill the products) and the values differ from
-// the original in the last bits where the products cancel.  The stores go through unsigned copies in the original's
-// order (the last one leaves the new m[2] in eax, which a caller may read).
+// The original keeps sin/cos in x87 registers, spills one float copy of the sine and the m[1]/m[3]
+// products to the stack: m[0]/m[2] therefore round their products once, m[1]/m[3] twice, and only
+// the m[2] sine product uses the unrounded register value.  The volatile temps reproduce exactly
+// that (the values are bit-identical to the original), and the stores go through unsigned copies in
+// the original's order (the last one leaves the new m[2] in eax, which a caller may read).
 void rot2::rotate_2x2(float angle)
 {
     float s = sinf(angle), c = cosf(angle);
-    float sr = s;                                           // the float32 copy of the sine
+    volatile float sr = s;                                  // the float32 copy the original spills
     float x = m[0], y = m[1], z = m[2], w = m[3];
-    float a = c * y, b = sr * w;                            // m[1] products
-    float d = c * w, e = sr * y;                            // m[3] products
+    volatile float a = c * y, b = sr * w;                   // m[1] products (spilled -> rounded)
+    volatile float d = c * w, e = sr * y;                   // m[3] products (spilled -> rounded)
     float r0 = c * x + sr * z;
     float r1 = a + b;
     float r2 = c * z - s * x;                               // the unrounded sine, as in the original
