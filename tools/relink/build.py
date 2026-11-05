@@ -717,6 +717,13 @@ def main():
                  "libcmt table dwords: %s" % (len(stray), "; ".join(stray[:10])))
     steps["dead_tables"] = "%d dwords of the original's EH / libcmt tables not copied (%d traps avoided); no object reachable from the linked image's %d relocations (%d outside the copy) holds one" % (
         len(dead_sorted), dw["seeds"], sum(len(v) for v in sites.values()), len(roots))
+    # data_values gate: the bytes each data definition of ours holds at load time against the original image's bytes at
+    # its address (a missing initialiser: `int g_str_grow_add;` was 0 where the original has 128). tools/relink/data_values.py
+    import data_values as DV
+    dvr = DV.compare(exe, bases, rmap, img, objs, DA.our_sizes(objs), DA.STATE["claims"], DA.STATE["defined"], sites, orig_of)
+    steps["data_values"] = "%d definitions compared, %d differ (%s), %d constructed at startup, not compared" % (
+        dvr["compared"], len(dvr["differ"]), ", ".join(e["name"] for e in dvr["differ"][:8]) + (" ..." if len(dvr["differ"]) > 8 else ""),
+        len(dvr["constructed"]))
     steps["literals"] = "%d literal image addresses rewritten; %d in dropped functions, %d without a target, %d not " \
                         "where expected" % (lit["patched"], len(lit["missing_function"]), len(lit["no_target"]),
                                             len(lit["changed"]))
@@ -735,13 +742,15 @@ def main():
                             "; %d deleting-destructor slots not the original's function; %d slots bound by forwarding stubs in source" % (
                                 len(vt.get("dtor_slots", [])), len(vt.get("thunk_slots", [])))
     steps["rsrc"] = run(["tools/relink/add_rsrc.py", exe_path]).strip()
-    json.dump(dict(steps, vtable_report=vt, literal_report=lit), open(os.path.join(out, "build.json"), "w"), indent=1)
+    json.dump(dict(steps, vtable_report=vt, literal_report=lit, data_values_report=dvr), open(os.path.join(out, "build.json"), "w"), indent=1)
     for k, v in steps.items():
         print("%-12s %s" % (k, v.splitlines()[-1] if v else ""))
     if a.strict_vtables and (vt["slots_differing"] or vt["skipped"] or vt["vptr_stores_redirected"]
                              or vt["vtbl_externs"] or vt["glue_bound_slots"] or vt.get("dtor_slots")):
         sys.exit("vtable gate: " + steps["vtable_gate"])
     print("-> %s" % rel(exe_path))
+    if dvr["differ"]:
+        sys.exit("data_values gate: %d data definitions start with other bytes than the original's (build.json data_values_report)" % len(dvr["differ"]))
     return 0
 
 
