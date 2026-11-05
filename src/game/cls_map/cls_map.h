@@ -189,12 +189,11 @@ UiA* new_medium_button(MissionUi* parent, const tstring* text, float a, float b,
 
 // ---- 0x4dcef0..0x4de6f0: the main menu, the in-game (escape) menu, the message menu and the debrief menu -------------------
 // the menu-kind record (stride 0x24; table g_menu_kinds 0xa75f2c): the menu's background image count and its sound holder
-struct SoundHolder { void play(int id); };      // 0x48add0 (ret 4: the sound holder is a TimerList, ../ui/mission_ui.h)
+#include "../ui/timer_list.h"                 // TimerList: the sound holder (update 0x48add0, ret 4)
 struct MenuKindRec {
     char pad0[0x10];
     int a;                                      // +0x10 (stored into the block owner's f14)
-    SoundHolder sound;                          // +0x14
-    char pad18[0x20 - 0x18];
+    TimerList sound;                            // +0x14
     int first;                                  // +0x20 background image id (0 = none)
 };
 #include "../game_globals.h"                  // g_presentations (0xa75f2c, canonical PresentationTable: the table of MenuKindRec)

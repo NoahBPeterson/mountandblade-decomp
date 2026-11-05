@@ -10,7 +10,9 @@
 // Needs nothing from rgl: the carry-frame helper (pos2, identity_pos) lives in src/game/agent/item_kind.h.
 #ifndef MB_ITEM_KIND_H
 #define MB_ITEM_KIND_H
+#include <vector>
 #include "../game/tstring.h"
+#include "../game/ui/timer_list.h"      // TimerList: the sound set at +0x228
 
 // item type ids (Module System header_items.py itp_type_*), stored in the low byte of ItemKind::type_flags
 enum {
@@ -42,11 +44,10 @@ struct ItemKind {                       // 0x238 bytes
     tstring name;                       // +0x00 (gui_edit.cpp: the record's name in the language export, 0x4c62b0)
     tstring plural;                     // +0x10 (0x4c6330)
     tstring key;                        // +0x20 (0x433bf0 fallback name, 0x434ad0 find_item compares it; 0x43a480 display name)
-    char l30[0x10];                     // +0x30 a std::vector of 8-byte elements (allocator word, first, last, end): char_sheet/save_state.cpp writes it (0x4e94b0 via write_vec8)
+    std::vector<__int64> l30;           // +0x30 a vector of 8-byte elements: char_sheet/save_state.cpp writes it (0x4e94b0 via write_vec8)
     char pad40[0x44 - 0x40];
     int mesh_count;                     // +0x44 (0x433bf0, 0x433cb0, 0x462820)
-    ItemMesh meshes[1];                 // +0x48 entries of 0x18 (0x433bf0, 0x433cb0, 0x462820)
-    char pad60[0x1c8 - 0x60];
+    ItemMesh meshes[16];                // +0x48 entries of 0x18 (0x433bf0, 0x433cb0, 0x462820)
     unsigned type_flags;                // +0x1c8 low byte = itp_type_* (0x433d90, 0x433dc0, 0x433df0, 0x4350c0, 0x462c80, 0x462da0)
     char pad1cc[4];
     unsigned __int64 flags;             // +0x1d0 itcf_* capability flags, 64 bit (0x433e40, 0x4362e0, 0x435520)
@@ -64,7 +65,8 @@ struct ItemKind {                       // 0x238 bytes
     float f21c;                         // +0x21c (set to 1.0 for every kind by 0x48a210)
     int f220;                           // +0x220 (0x48cc40: loot weight, times f224)
     float f224;                         // +0x224 (set for every kind by 0x48a250)
-    char pad228[0x238 - 0x228];         // +0x228 the item's sound sub-object (party_window.cpp item_sound)
+    TimerList sound;                    // +0x228 the item's sound set (party_window.cpp item_sound; update 0x48add0, ~TimerList 0x4317b0)
+    int f234;                           // +0x234
 
     ItemKind();                                             // 0x4cdf20 (inventory_panel/module_files.cpp: g_items = new ItemKind[count])
     ~ItemKind();                                            // 0x4c8a40

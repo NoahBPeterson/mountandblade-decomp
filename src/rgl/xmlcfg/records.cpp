@@ -25,7 +25,7 @@ RecD::~RecD() {}
 // @ 0x431480
 void delete_recd_array(RecD* p) { delete[] p; }
 // @ 0x431540
-void delete_recg_array(RecG* p) { delete[] p; }
+void delete_recg_array(TimerChild* p) { delete[] p; }
 // @ 0x4315d0
 void delete_rech_array(RecH* p) { delete[] p; }
 // @ 0x431660
@@ -46,7 +46,7 @@ RecJ* make_recj_array(int n) { return new RecJ[n]; }
 void delete_recj_array(RecJ* p) { delete[] p; }
 
 // @ 0x4317b0
-void RecGList::clear()
+TimerList::~TimerList()
 {
     if (items) {
         delete[] items;

@@ -29,7 +29,6 @@ int g_equip_page;                                    // 0xa75f68 (.bss) the equi
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../item_sound.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
@@ -445,7 +444,7 @@ MB_NOINLINE rgl::mesh* PartyWindow::make_mesh(ItemRef* item, void* unused, int t
         g_script.param1_lo = -1;
         g_script.param1_hi = -1;
         g_script.param2 = t;
-        item_sound(&g_items[item->item])->play(-0x32);
+        item_sound(&g_items[item->item])->update(-0x32);
     }
     return m;
 }

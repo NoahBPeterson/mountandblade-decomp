@@ -19,12 +19,9 @@
 // IfaceA / IfaceB (the polymorphic bases; vtables 0x5908ec and 0x5908f8, slots 1 and 2 the empty function 0x477b70) are in include/iface.h.
 #include "../../include/iface.h"        // IfaceB (shared; its constructor is inline, the vtable is emitted by the first user below)
 
-// 0x30 bytes, one pair at +4: vector deleting destructor 0x431540.
-struct RecG {
-    int head;
-    SubA s;             // +4
-    int tail[4];
-};
+// RecG, the 0x30-byte element with one pair at +4 (vector deleting destructor 0x431540), is the sound holder's TimerChild
+// (game/ui/timer_list.h: period, a DialogBlock channel, a Timer).
+#include "../../game/ui/timer_list.h"
 // 0x30 bytes: name at +0, pair at +0x10 with an unconditional delete[]: 0x4315d0.
 struct RecH {
     tstring name;       // +0
@@ -44,12 +41,6 @@ struct RecF : IfaceB {
     RecF();
 };
 #include "../../include/recj.h"        // RecJ (IfaceB-derived, 0xb0 bytes, vector deleting destructor 0x431750; shared)
-// Owner of a heap array of RecG: frees it and clears the pointer (0x4317b0).
-struct RecGList {
-    int head;
-    RecG* items;        // +4
-    void clear();   // 0x4317b0
-};
 
 // ---- from 0x431960 on --------------------------------------------------------------------------------------
 // Polymorphic owned object (only its virtual destructor is called): src/include/poly.h

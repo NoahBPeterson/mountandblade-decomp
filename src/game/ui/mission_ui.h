@@ -154,14 +154,7 @@ struct PairStack {
     void push(int a, int b);                // 0x488e60
 };
 
-// A timed voice: a period, one sound channel (0x1c bytes) and a clock; 0x30 bytes (0x488e90, 0x48add0).
-struct TimerChild {
-    float period;                           // +0x00 seconds between plays; < -1: play when round(period) == the request
-    DialogBlock ch;                           // +0x04
-    Timer last;                             // +0x20 clock index into g_ticks, +0x28 last play time (0x488e90)
-    void tick(int idx);                     // 0x488e90
-};
-#include "./timer_list.h"                 // TimerList: count +0, items +4, update 0x48add0
+#include "./timer_list.h"                 // TimerChild (tick 0x488e90), TimerList: count +0, items +4, update 0x48add0
 
 // free functions of the item-pair sort and the speed table
 int __fastcall sort_value(ItemRef* e);                              // 0x488f80

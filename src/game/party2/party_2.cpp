@@ -2697,7 +2697,6 @@ struct PartyTypeDef {                                // 0x48-byte map party type
     char pad28[4];
     vector4 pos;                                     // +0x2c translation of the rider mesh   0x4b7840
     TimerList frames;                                // +0x3c keyframe voices   0x4b7840
-    char pad44[4];
 };
 namespace rgl { vector4 unpack_color(const unsigned* argb); }   // 0x40e4e0 (cdecl, hidden return pointer: shapes.cpp)
 

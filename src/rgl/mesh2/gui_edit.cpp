@@ -806,7 +806,7 @@ void ItemPage::reset()
 {
     if (*(void**)((char*)this + 0x54))
         (*(RefRecord**)((char*)this + 0x54))->deleting_dtor(1);
-    ((RecGList*)((char*)this + 0x6c))->clear();   // 0x4317b0: frees the keyframe track array and clears the pointer
+    ((TimerList*)((char*)this + 0x6c))->~TimerList();   // 0x4317b0: frees the sound set's voices and clears the pointer
     if (*(void**)((char*)this + 0x44))
         operator delete(*(void**)((char*)this + 0x44));
     *(int*)((char*)this + 0x44) = 0;
@@ -1671,24 +1671,8 @@ void* __fastcall conv_item_array_dtor(conv_rec* self, int, unsigned char flags)
 }
 
 // @ 0x4c8a40
-void __fastcall conv_group_dtor(conv_rec* self)
+ItemKind::~ItemKind()
 {
-    char* p = (char*)self;
-    ((RecGList*)(p + 0x228))->clear();   // 0x4317b0
-    int i = 16;
-    char* q = p + 0x1c8;
-    do {
-        q -= 0x18;
-        ((tstring*)q)->~tstring();
-    } while (--i != 0);
-    if (*(void**)(p + 0x34) != 0)
-        operator delete(*(void**)(p + 0x34));
-    *(void**)(p + 0x34) = 0;
-    *(void**)(p + 0x38) = 0;
-    *(void**)(p + 0x3c) = 0;
-    ((tstring*)(p + 0x20))->~tstring();
-    ((tstring*)(p + 0x10))->~tstring();
-    ((tstring*)p)->~tstring();
 }
 
 // @ 0x4c8ab0

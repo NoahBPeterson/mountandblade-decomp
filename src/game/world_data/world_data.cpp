@@ -1068,9 +1068,7 @@ void TableauTbl::pop_back_delete()
 struct CursorObj {
     void reset();   // 0x492a20 (GameW::free_arrays)
 };
-struct RecGList {
-    void clear();   // 0x4317b0
-};
+#include "../ui/timer_list.h"                          // TimerList: ~TimerList 0x4317b0
 struct MapDialog {
     void clear_objects();   // 0x4c6e30 (rgl/mesh2/gui_edit.h)
 };
@@ -1118,7 +1116,7 @@ void GameW::world_free()
     *(void**)(self + 0x13a68) = 0;
     *(void**)(self + 0x13a6c) = 0;
 
-    ((RecGList*)(self + 0x139f4))->clear();                    // 0x4317b0
+    ((TimerList*)(self + 0x139f4))->~TimerList();                    // 0x4317b0
 
     if (*(void**)(self + 0x139ec) != 0)
         ((RecD*)*(void**)(self + 0x139ec))->scalar_delete(3);

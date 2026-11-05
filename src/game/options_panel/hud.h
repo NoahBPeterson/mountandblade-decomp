@@ -44,7 +44,7 @@ extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 struct MenuKind {                                   // 0x24 bytes (table at 0xa75f2c; cls_map.h MenuKindRec)
     char      pad0[0x14];
     TimerList sound;                                // +0x14
-    char      pad1c[0x24 - 0x1c];
+    int       f20;                                  // +0x20
 };
 #include "../game_globals.h"                        // g_presentations (0xa75f2c, canonical): its first dword points at the menu-kind table
 inline void play_family_sound(int family, int id)
@@ -89,7 +89,7 @@ typedef ValueSource ValueWidget;
 inline ValueWidget* item_value(MissionUi* it) { return *(ValueWidget**)((char*)(void*)it + 0x484); }
 
 // the item source (0x4d5410's `this`, Hud+0x30): an STL vector of MissionItem* at +0x4/+0x8/+0xc, the
-// item family at +0x10 (its sound is the family-th ItemSound), the current clock slot at +0x18 and the
+// item family at +0x10 (its sound is the family-th sound set (TimerList)), the current clock slot at +0x18 and the
 // 64-bit tick the slot was entered at (+0x20/+0x24).
 #include "../mission_source.h"                  // MissionSource (pick 0x4d5410)
 #include "../../include/clock_table.h"

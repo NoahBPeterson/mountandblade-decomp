@@ -20,7 +20,7 @@
 #include "../../game/tstring.h"
 #include "../../game/strat/gui_manager.h"
 #include "./mesh2_common.h"
-#include "../xmlcfg/records.h"            // RecK (vector delete 0x4318c0), RecGList (clear 0x4317b0)
+#include "../xmlcfg/records.h"            // RecK (vector delete 0x4318c0), TimerList (~TimerList 0x4317b0)
 #include "./head_rec.h"
 #include "./graph_obj.h"
 #include "./screen_cfg.h"
@@ -133,10 +133,8 @@ struct kf_node98 {              // 0x98-byte record with a keyframe track at +0x
 struct RefItem {                // 0x24-byte entry of the record array
     tstring name;               // +0
     void* refs;                 // +0x10 (left uninitialised by the array constructor)
-    void* kf;                   // +0x14 (an array of keyframes, freed with the item)
-    int f18, f1c, f20;          // +0x18, +0x1c, +0x20 (f20 left uninitialised)
-    RefItem() { kf = 0; f18 = 0; f1c = 0; }   // the array-new expansion 0x4c6a20: tstring ctor, then these three
-    ~RefItem() { ((RecGList*)&kf)->clear(); }   // 0x4317b0: the keyframe track array is a RecGList-style owner
+    TimerList kf;               // +0x14 (the sound holder: its TimerList() zeroes +0x14/+0x18/+0x1c in the array-new expansion 0x4c6a20; ~TimerList 0x4317b0)
+    int f20;                    // +0x20 (left uninitialised)
 };
 
 struct RefRecord {              // the source record: [0x4c] gives two strings, [0x54] two more
@@ -468,14 +466,13 @@ struct Rec78Tail {                                      // the sub-object at +0x
     char pad0c[4];
     RefRecord* owner;                                   // +0x10 (deleted through slot 0)
     char pad14[0x14];
-    char groups[4];                                     // +0x28 (record_array_clear)
-    char pad2c[8];
+    TimerList groups;                                   // +0x28 (the prop kind's sound set, 0xc bytes)
     ~Rec78Tail()
     {
         Rec78Buf* b = &buf;
         if (owner)
             owner->deleting_dtor(1);
-        ((RecGList*)groups)->clear();   // 0x4317b0 (thiscall)
+        groups.~TimerList();            // 0x4317b0 (thiscall)
         b->release();
     }
 };

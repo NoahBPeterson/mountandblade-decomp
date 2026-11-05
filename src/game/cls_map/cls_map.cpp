@@ -543,9 +543,7 @@ loading_config* copy_loading_config(loading_config* self, const loading_config* 
 struct GameDtor  { ~GameDtor(); };                      // 0x492f40 (the game object)
 struct WorldDtor { ~WorldDtor(); };                     // 0x4d51d0 (the mission object)
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
-struct S3c   { char pad[0xc]; ~S3c(); };                // 0xc bytes at +0x3c (dtor 0x4317b0)
-struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; S3c m3c; };   // 0x48 bytes
-struct Item238 { char pad[0x238]; ~Item238(); };        // dtor 0x4c8a40
+struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; TimerList m3c; };   // 0x48 bytes
 // the vector deleting destructors of the global record tables (rgl/mesh2/gui_edit.cpp, rec_tables.cpp): 0x4c4f40 elem60_vector_delete and
 // 0x4c7ee0 destroy_record_array / 0x4c8980 conv_item_array_dtor (fastcall: ecx = the table, flags on the stack), 0x4c3430 elem58's member
 struct elem60; struct conv_rec;
@@ -586,7 +584,7 @@ HRESULT GameApp::FinalCleanup()
         (*(void**)&g_mission) = 0;
     }
     if (g_items) {
-        delete[] (Item238*)g_items;
+        delete[] g_items;
     }
     if (g_menus) {
         elem60_vector_delete((elem60*)g_menus, 0, 3);              // ??_E, flags 3 (0x4c4f40)
@@ -1416,7 +1414,7 @@ void BlockOwner::activate()
     if (index >= 0) {
         f14 = ((MenuKindRec*)g_presentations.records)[index].a;
         restart_inl(timer);
-        ((MenuKindRec*)g_presentations.records)[index].sound.play(-60);
+        ((MenuKindRec*)g_presentations.records)[index].sound.update(-60);
     } else {
         f14 = 0;
     }

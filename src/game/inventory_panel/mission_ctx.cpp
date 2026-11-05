@@ -75,7 +75,7 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 #include "../game_keys.h"                              // GameKeys g_game_keys (0xa73730): clicked 0x48ac90
 #include "../key_names.h"
 #include "../../rgl/stream.h"                           // text_stream g_debug_log (0x5a9f30): slot 10 (+0x28, w_cstr) prints one line
-#include "../item_sound.h"                                    // ItemSound: the one definition (play 0x48add0)
+#include "../ui/timer_list.h"                                  // TimerList: the sound holder (update 0x48add0)
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -746,7 +746,7 @@ void CampaignScreen::frame_update(float dt)
         quick_save_msg();
     if (GD_I(0x1a208) >= 0) {
         g_script.param1 = GD_I(0x1a208);
-        ((ItemSound*)((char*)g_game + 0x139f4))->play(-8);
+        ((TimerList*)((char*)g_game + 0x139f4))->update(-8);
         GD_I(0x1a208) = -1;
     }
 
@@ -872,7 +872,7 @@ void CampaignScreen::frame_update(float dt)
     g_mission_ctx.init_battle(party->f88);
     GD_I(0x13aec) = 0;
     GD_I(0x13af8) = 0;
-    ((ItemSound*)((char*)g_game + 0x139f4))->play(-6);
+    ((TimerList*)((char*)g_game + 0x139f4))->update(-6);
     g_game->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
     if (GD_I(0x13aec) > 0) {
         g_mission_ctx.frame(GD_I(0x13aec));

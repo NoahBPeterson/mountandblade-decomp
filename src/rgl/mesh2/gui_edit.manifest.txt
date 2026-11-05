@@ -40,7 +40,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?erase_range@ptr_vec@@QAE?AUptr_iter@@PAH0@Z  004c88a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?loader_thread_body@@YGXXZ  004c8900  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_item_array_dtor@@YIPAXPAUconv_rec@@HE@Z  004c8980  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?conv_group_dtor@@YIXPAUconv_rec@@@Z  004c8a40  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ??1ItemKind@@QAE@XZ  004c8a40  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_sub_dtor@@YGXPAPAX@Z  004c8ab0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_list_dtor@@YIXPAUconv_rec@@@Z  004c8ba0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_clear@@YIXPAPAX@Z  004c8bf0  /O2 /MT /Gy /TP

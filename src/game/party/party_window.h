@@ -26,9 +26,8 @@ namespace rgl { struct mesh; }
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (ret 0): the mesh of an item reference (the definition, agent5/agent_hud.cpp, returns rgl::mesh*)
 
 void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, the name by value)
-#include "../item_sound.h"               // ItemSound (ItemKind +0x228): the one definition
 inline float item_f208(ItemKind* k) { return *(float*)((char*)k + 0x208); }       // +0x208 base armour value   0x502620
-inline ItemSound* item_sound(ItemKind* k) { return (ItemSound*)((char*)k + 0x228); }   // 0x502b80
+inline TimerList* item_sound(ItemKind* k) { return &k->sound; }   // 0x502b80
 
 extern int g_equip_page;                    // 0xa75f68 (negative: nothing selected)  0x5024e0
 

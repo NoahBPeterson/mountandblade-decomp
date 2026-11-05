@@ -2476,8 +2476,8 @@ static inline Rec20V& r20(int i) { return *(Rec20V*)&g_ptypes[i]; }
 static inline unsigned r78_flags(Rec78* r) { return *(unsigned*)((char*)r + 0x10); }
 static inline std::vector<rgl::mesh*>& r78_meshes(Rec78* r) { return *(std::vector<rgl::mesh*>*)((char*)r + 0x40); }
 static inline body_part* r78_shape(Rec78* r) { return *(body_part**)((char*)r + 0x50); }
-static inline SoundSet& rsnd(Rec78* r) { return *(SoundSet*)((char*)r + 0x6c); }
-static inline SoundSet& isnd(ItemKind* k) { return *(SoundSet*)((char*)k + 0x228); }
+static inline TimerList& rsnd(Rec78* r) { return *(TimerList*)((char*)r + 0x6c); }
+static inline TimerList& isnd(ItemKind* k) { return *(TimerList*)((char*)k + 0x228); }
 
 #define P_ENT(r) (*(SceneEnt**)&(r)->ent)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
 #define P_ENT2(r) (*(SceneEnt**)&(r)->m1b8)
@@ -2668,7 +2668,7 @@ done_shape:
     if (ty == 0) {
         int ri = r->id;
         if (ri >= 0 && ri < g_propkind_count && rsnd(&g_propkinds[ri]).count > 0) {
-            SoundSet* ss = &rsnd(&g_propkinds[ri]);
+            TimerList* ss = &rsnd(&g_propkinds[ri]);
             ((Placement*)g_game)->set_matrix(&r->m18);
             g_game->f1a1f0 = *idx;
             SceneEnt* en = P_ENT(r);
@@ -2678,12 +2678,12 @@ done_shape:
                 g_game->f1a200 = 0;
             g_game->f1a1fc = 0;
             g_script.param1 = *idx;
-            ss->play(-0x28);
+            ss->update(-0x28);
         }
     } else if (ty == 2 || ty == 6 || ty == 7) {
         int ri = r->id;
         if (ri >= 0 && ri < g_item_kind_count && isnd(&g_items[ri]).count > 0) {
-            SoundSet* ss = &isnd(&g_items[ri]);
+            TimerList* ss = &isnd(&g_items[ri]);
             int who = *id;
             int aid = -1;
             if (who >= 0)
@@ -2704,7 +2704,7 @@ done_shape:
             g_game->f1a1fc = 0;
             g_script.param1 = *id;
             g_script.param2 = aid;
-            ss->play(-0x32);
+            ss->update(-0x32);
         }
     }
     ((Agent*)r)->init_max_hp();
@@ -6904,9 +6904,9 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 *(rgl::mat3*)&frame = *(const rgl::mat3*)&fr1;
                             }
                             g_script.pos[1] = frame;
-                            ((SoundSet*)(kind + 0x6c))->play(-0x2a);
+                            ((TimerList*)(kind + 0x6c))->update(-0x2a);
                             if ((prop_flags(kind) & 0x8000) != 0 && pr->hp() <= 0.0f)
-                                ((SoundSet*)(kind + 0x6c))->play(-0x2b);
+                                ((TimerList*)(kind + 0x6c))->update(-0x2b);
                         }
                     }
                 }
@@ -7297,7 +7297,7 @@ void Agent::update_attack(float dt)
                 g->f1a1fc = (int)slot_mesh[ftoi_helper(g->f1a204)];
             }
             g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
-            ((SoundSet*)((char*)ik + 0x228))->play(-0x33);
+            ((TimerList*)((char*)ik + 0x228))->update(-0x33);
         } else if (S == 2) {
             if (ACT != f5620) {
                 active = 0;

@@ -16,7 +16,7 @@
 // reach them through these; each cites the evidence that the object is that class: same layout / the shared out-of-line code).
 struct Poser;                                            // agent3/agent_fx_sound.h: scene entity and lod mesh share add_extra 0x442110 / add_to_list 0x441ff0
 struct Table1f8 { int get_f1f0(unsigned i); int get_f1f4(unsigned i); };   // 0x43b100, 0x43b130 (agent2/agent_ai.cpp)
-struct TimerList { void update(int id); };               // 0x48add0 (the sound-event list of PropKind / ItemKind is walked by it)
+#include "../ui/timer_list.h"                           // TimerList: the sound-event list of PropKind / ItemKind (update 0x48add0)
 struct FireRay;
 struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)
 struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pending 0x433810)
@@ -141,11 +141,6 @@ struct MeshVec : std::vector<rgl::mesh*> {
 // the body resource of a prop (0x44c210) is rgl's body_part (clone_shape 0x4285e0, copy_shape 0x439100)
 #include "../../rgl/resource.h"
 
-// a list of sound events (count + array of 0x30-byte records): ItemKind +0x228, Rec78 +0x6c (0x44c210)
-struct SoundSet {
-    int count; char* items;
-    __forceinline void play(int id) { ((TimerList*)this)->update(id); }     // 0x48add0
-};
 
 // one 0x1dc-byte bone record of the animator (Skeleton::recs): the world frame at +0x84 (0x44e2b0)
 struct BoneW {

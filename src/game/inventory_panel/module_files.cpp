@@ -62,14 +62,7 @@ __forceinline stream_base& open_module_file(tstream3& s, const char* name)
 
 // ---------------------------------------------------------------- record types
 
-// One 12 byte vector-like container (three pointers); used as a sub-object of several records.
-struct Vec12 {
-    void* begin;                 // +0x00
-    void* end;                   // +0x04
-    void* cap;                   // +0x08
-    Vec12() { begin = end = cap = 0; }
-    ~Vec12();                                        // 0x4317b0
-};
+#include "../ui/timer_list.h"           // TimerList: the icon's trigger/sound list at +0x3c (~TimerList 0x4317b0)
 
 // scene_props.txt element (0x78 bytes): ctor 0x4ce2a0, read 0x4ce360, array-deleting
 // destructor 0x4c7ee0 (flag 3 = destroy the elements and free the cookie-prefixed block).
@@ -98,7 +91,7 @@ struct MapIcon {
     int f10;                     // +0x10
     tstring b;                   // +0x14
     char pad24[0x18];            // +0x24
-    Vec12 v;                     // +0x3c
+    TimerList v;                 // +0x3c
     MapIcon() {}
     void read(stream_base& s);                    // 0x4c20c0
 };
