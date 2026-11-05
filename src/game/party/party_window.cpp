@@ -7,6 +7,7 @@
 //       order and the helpers that follow their caller (refresh_page -> place_slot -> make_mesh) are
 //       __declspec(noinline), as the original calls them. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#define CONTAINER_DTOR_EXPANDED   // ??_GPartyPanel 0x5021f0, see ui/container.h
 #define UIA_CTOR_OUT_OF_LINE   // add_strip_icon calls the constructor 0x48b1c0 (StripIcon is built out of line, then stores its vptr)
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../../include/image_addrs.h"
@@ -219,7 +220,7 @@ char PartyPanel::key(unsigned mask)
 }
 
 // @ 0x5021f0 ??_GPartyPanel is the compiler's deleting destructor of PartyPanel (implicit; text_box's, slot 0 of 0x597050, is the
-// same code folded by ICF). Parked, see party_window.nonmatching.txt.
+// same code folded by ICF).
 // @ 0x502230
 MissionUi* PartyWindow::make_slot(ItemRef* slot)
 {
@@ -460,3 +461,5 @@ void PartyWindow::refresh_stash(int row)
             place_slot((MissionUi*)row_slot[row][n], &EQUIP(t, n), n, row_state[row], row, 1);
     }
 }
+
+#pragma inline_depth(2)   // for ??_GPartyPanel, generated at the end of the object

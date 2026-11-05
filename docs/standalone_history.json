@@ -2445,5 +2445,41 @@
    "library data": 52602,
    "unnamed bss": 491
   }
+ },
+ "2026-11-04T23:03:21-06:00": {
+  "data_labels": 0,
+  "aliases": 29,
+  "source_aliases": 13,
+  "source_hacks": 3,
+  "data_values_differ": 0,
+  "data_values_short": 0,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 0,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 0,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 186,
+  "when": "2026-11-04T23:03:21-06:00",
+  "commit": "HEAD",
+  "build": "m_vt",
+  "label": "PartyPanel/text_box slot 0 byte-exact (vtable slots 2 -> 0)",
+  "items": {
+   "defined in source": 188,
+   "generated from source": 2605,
+   "borrowed from image": 19,
+   "reached through tables": 51,
+   "library data": 429,
+   "unnamed bss": 15
+  },
+  "bytes": {
+   "defined in source": 143720030,
+   "generated from source": 324532,
+   "borrowed from image": 632,
+   "reached through tables": 415,
+   "library data": 52602,
+   "unnamed bss": 491
+  }
  }
 }

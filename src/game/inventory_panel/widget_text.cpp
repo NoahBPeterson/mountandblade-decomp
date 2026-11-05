@@ -16,6 +16,7 @@
 
 // ------------------------------------------------------------------ engine string (0x10 bytes) -----------
 #include "../tstring.h"
+#define CONTAINER_DTOR_EXPANDED   // ??_Gtext_box, slot 0 of 0x597050 (the code of 0x5021f0), see ui/container.h
 #include "../ui/container.h"                          // MissionUi (flag1 0x50cc60), text_box (0x50d0b0)
 #include "../shared_vars.h"                             // g_show_party_ids_instead_of_names 0xa181b8
 
@@ -420,3 +421,5 @@ void mesh_scene::read(AccessStream* s)
     Skin* m = &models.first[f8];
     m->relax(-1, w);   // 0x4735e0
 }
+
+#pragma inline_depth(2)   // for ??_Gtext_box, generated at the end of the object

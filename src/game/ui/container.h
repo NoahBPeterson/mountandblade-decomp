@@ -16,7 +16,13 @@
 struct ContainerBase : MissionUi {
     std::vector<MissionUi*> kids;               // +0x178 the child widgets (allocator word, first +0x17c, last +0x180, end +0x184)
     ContainerBase();                            // 0x4931a0 (world_data.cpp)
+#ifdef CONTAINER_DTOR_EXPANDED
+    // party_window.cpp, widget_text.cpp: their deleting destructors (PartyPanel, text_box, 0x5021f0) expand this destructor
+    // down to the vector's out-of-line _Tidy 0x41f4b0; every other object calls 0x490520.
+    __forceinline ~ContainerBase() { ContainerBase::update_children(); }
+#else
     ~ContainerBase();                           // 0x490520 (the deleting destructor of this class is 0x490930)
+#endif
     virtual void animate(int p);                // +0x08 0x4908c0
     virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x490710 (ret 0x10)
     virtual void clear_c8();                    // +0x40 0x4906e0
@@ -43,7 +49,7 @@ struct NodeA : ContainerBase {
 // The text box (vtable 0x597050, inventory_panel/widget_text.cpp): the container, nothing added; the screens that list text
 // rows build one per row.
 struct text_box : ContainerBase {
-    text_box();                                 // 0x50d0b0 (no destructor of its own: slot 0 is the container's deleting destructor)
+    text_box();                                 // 0x50d0b0 (no destructor of its own: slot 0 is the deleting destructor 0x5021f0, the same code as PartyPanel's)
 };
 
 #endif // GAME_UI_CONTAINER_H
