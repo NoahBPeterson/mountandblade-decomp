@@ -13,7 +13,7 @@ import argparse, collections, glob, json, os, re, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-PY = os.path.join(ROOT, ".venv", "bin", "python")
+PY = os.path.join(ROOT, ".venv", "Scripts", "python.exe") if sys.platform == "win32" else os.path.join(ROOT, ".venv", "bin", "python")
 EQ = os.path.join(ROOT, "tools", "difftest", "equiv.py")
 ROW = re.compile(r"^([0-9a-fA-F]{8})\s+\S+\s+(.*)$")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
