@@ -49,13 +49,8 @@ struct Wielder {
 int __cdecl clamp_index(const int* v, const int* lo, const int* hi);   // 0x432510 (earlier object)
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m);   // 0x435860
 
-// ---- RecZ sub-object initialiser (called by the RecZ ctor 0x477a30): three rows plus ids
-struct RecZSubB {
-    int m0, m4;
-    vector4 v8, v18, v28;
-    int m38, m3c, m40, m44, m48, m4c, m50, m54;
-    RecZSubB* init();                   // 0x4353a0 (returns this)
-};
+// ---- RecZ sub-object initialiser (called by the RecZ ctor 0x477a30): the blow record's Blow::init 0x4353a0
+#include "../blow.h"
 
 // ---- scene and mission ----------------------------------------------------------------------------------
 struct shape_base;

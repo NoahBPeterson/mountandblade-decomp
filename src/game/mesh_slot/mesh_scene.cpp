@@ -9,6 +9,7 @@
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
 #include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
+#include "../blow.h"                  // Blow: init 0x4353a0
 #include "../../include/sound_mgr.h"   // SoundMgr, g_sound_mgr 0x5aa128 (play 0x442650)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
@@ -24,17 +25,7 @@ using namespace rgl;
 struct Wielder {
     rgl::mesh* make_ranged_mesh();   // 0x44f6a0 (game/agent/agent.h: the carried-weapon holder, whose record the missile is)
 };
-struct RecZSubB {
-    RecZSubB* init();   // 0x4353a0 (game/agent/agent.h; blow.h calls it Blow: returns this)
-};
 namespace ms {
-// three-row placeholder record initialised by 0x4353a0
-struct Rows {
-    int m0, m4;
-    vector4 v8, v18, v28;
-    int m38, m3c, m40, m44, m48, m4c, m50, m54;
-    Rows* init() { return (Rows*)((RecZSubB*)this)->init(); }     // 0x4353a0 (returns this)
-};
 // the scene query for a swept capsule (0x472650, ecx = the missile)
 struct SceneQuery { int query(capsule* c); };
 }
@@ -376,11 +367,11 @@ void MissileU::update(float dt)
         qhit = (char)((ms::SceneQuery*)this)->query(&cap);
     }
     if (qhit == 0) {
-        ms::Rows rows;
-        rows.init();
+        Blow blow;
+        blow.init();                                   // 0x4353a0
         // shooter agent: mission->pages[shooter>>4] + (shooter&0xf)*0x5928
         Agent* a = (Agent*)(*(char**)(*(char**)((char*)g_mission + 0x1c) + (shooter >> 4) * 4) + (shooter & 0xf) * 0x5928);
-        int r = a->swing_trace(0, (Missile*)this, (Blow*)&rows, &this->hit);
+        int r = a->swing_trace(0, (Missile*)this, &blow, &this->hit);
         if (r >= 3) {
             pos = ent->local.o;
             qhit = 1;

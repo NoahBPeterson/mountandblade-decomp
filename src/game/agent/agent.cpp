@@ -356,22 +356,22 @@ void PlacedObj::reset()
     v158 = vector4(1.0f, 1.0f, 1.0f);
 }
 // @ 0x4353a0
-RecZSubB* RecZSubB::init()
+Blow* Blow::init()
 {
     vector4 zero(0.0f, 0.0f, 0.0f);
     vector4 unit(1.0f, 0.0f, 0.0f);
-    v8 = zero;
-    v18 = unit;
-    v28 = unit;
-    m0 = 0;
-    m4 = -1;
-    m38 = 0;
-    m3c = 0;
-    m48 = 0;
-    m4c = -1;
-    m54 = 0;
-    m40 = 0;
-    m44 = 0;
+    pos = zero;
+    dir = unit;
+    dir2 = unit;
+    flags = 0;
+    attacker = -1;
+    bone = 0;
+    dmg_in = 0;
+    kind = 0;
+    item = -1;
+    missile = 0;
+    dmg_out = 0;
+    absorbed = 0;
     return this;
 }
 

@@ -189,8 +189,7 @@ struct M4 { V4 s, f, u, o; };
 
 
 
-// ---- the blow record (0x58 bytes; agent/agent.h calls it RecZSubB with the fields m0..m54 and the initialiser 0x4353a0, which the
-// manifests bind by that name, so this is the second declaration of the same record, with the names the blow code uses) ----
+// ---- the blow record (0x58 bytes, initialiser 0x4353a0) ----
 #include "../blow.h"                                // Blow, HitInfo: the one definition (agent4 and script)
 
 // the per-agent text / label state (*(agent+0x190))

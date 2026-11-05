@@ -10,11 +10,7 @@
 
 #include "../view_state.h"           // tick, tk, Timer16, Vec4z, ViewBody, ViewState (shared with ui/troop_inv)
 struct Timed { int state; int pad; tick t; };       // 0x10: state (2 = idle) and the tick it was set
-// the sub-object at agent +0x563c (0x68 bytes) whose initialiser the constructor calls
-struct RecZSubB {
-    char b[0x68];
-    RecZSubB* init();          // 0x4353a0 (returns this)
-};
+#include "../blow.h"                 // Blow: the last blow at agent +0x563c, whose initialiser (0x4353a0) the constructor calls
 struct EmptySlot { virtual void slot(); };      // 0x477b70: the empty slot 1 / 2 of the IfaceB-style records
 
 // the object at agent +0x250 (the agent's scene-side body): its slot 25 (+0x64) takes an emitter to keep
@@ -152,7 +148,8 @@ struct MAgent : IfaceB {
     rgl::vector4 f5624;   // +0x5624
     int f5634;   // +0x5634
     int f5638;   // +0x5638
-    RecZSubB subB;   // +0x563c (0x477a30)
+    Blow subB;   // +0x563c (0x477a30)
+    rgl::vector4 f5694;   // +0x5694
     rgl::vector4 f56a4;   // +0x56a4
     rgl::vector4 f56b4;   // +0x56b4
     int f56c4;   // +0x56c4
