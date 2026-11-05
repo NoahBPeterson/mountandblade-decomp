@@ -2374,5 +2374,40 @@
    "library data": 52602,
    "unnamed bss": 487
   }
+ },
+ "2026-11-04T21:09:43-06:00": {
+  "data_labels": 0,
+  "aliases": 38,
+  "source_aliases": 14,
+  "source_hacks": 3,
+  "data_values_differ": 0,
+  "traps": 0,
+  "redirects": 0,
+  "vtable_slots_rewritten": 2,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 0,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 186,
+  "when": "2026-11-04T21:09:43-06:00",
+  "commit": "HEAD",
+  "build": "m_qb",
+  "label": "data_values gate, g_nbr[9], sound slots",
+  "items": {
+   "defined in source": 188,
+   "generated from source": 2605,
+   "borrowed from image": 19,
+   "reached through tables": 51,
+   "library data": 429,
+   "unnamed bss": 15
+  },
+  "bytes": {
+   "defined in source": 143720014,
+   "generated from source": 324532,
+   "borrowed from image": 632,
+   "reached through tables": 415,
+   "library data": 52618,
+   "unnamed bss": 491
+  }
  }
 }
