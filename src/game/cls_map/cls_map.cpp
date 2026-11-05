@@ -776,7 +776,7 @@ void Rec118::init_screen()
             vt(row[i])->d22(v);
         }
         {
-            float v[2] = { 0.6f, 0.05f };
+            float v[2] = { g_5a9f20, 0.05f };      // the global (0x4db326), not the literal
             vt(row[i])->d25(v);
         }
         {
