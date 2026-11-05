@@ -3,7 +3,7 @@
 Each row is a name that source declares and calls, bound by the glue to the function our source defines under another name
 at the same original address (`glue.json` "aliases"; tools/relink/glue.py). Regenerate with a faithful build.
 
-Total: 73.  ICF 10  TWIN 8  VIEW 43  OTHER 12
+Total: 51.  ICF 10  TWIN 8  VIEW 22  OTHER 11
 
 - ICF: identical-code folding in the original linker; two different classes / instantiations share one address. Honest, cannot reach zero.
 - TWIN: deliberate visibility twin (`_def` / `_x` / `_ext`, MeshExt, TroopExt, AgentX, allocN). Waiting on a separate decision.
@@ -12,22 +12,9 @@ Total: 73.  ICF 10  TWIN 8  VIEW 43  OTHER 12
 
 | alias (name source calls) | defined as | class | reason |
 |---|---|---|---|
-| `??0M28@@QAE@ABU0@@Z` | `??0DialogBlock@@QAE@ABU0@@Z` | VIEW | duplicate type: e68.h M28 vs config.cpp DialogBlock (copy ctor 0x4bd7a0) |
-| `??1CfgRec@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in |
-| `??1FactionFile@@QAE@XZ` | `??1RecT@@QAE@XZ` | VIEW | FactionFile (game_2.h) vs RecT (rec_dtors.h): two layouts of the 0x300 faction record, dtor 0x432010 |
 | `??1GameDtor@@QAE@XZ` | `?world_free@GameW@@QAEXXZ` | VIEW | GameDtor view (cls_map.cpp) of the game object whose dtor GameW::world_free defines (0x492f40) |
-| `??1Item238@@QAE@XZ` | `?conv_group_dtor@@YIXPAUconv_rec@@@Z` | VIEW | Item238 view (cls_map.cpp) of ItemKind, dtor 0x4c8a40 |
-| `??1ItemKind@@QAE@XZ` | `?conv_group_dtor@@YIXPAUconv_rec@@@Z` | OTHER | ItemKind::~ItemKind is declared in item_kind.h but defined as the free function conv_group_dtor(conv_rec*) in gui_edit.cpp |
 | `??1Local@@QAE@XZ` | `?clear_vecs@graph_obj@@QAEXXZ` | OTHER | Local::~Local (game_2.h) declared; defined as graph_obj::clear_vecs in mesh_2 (0x4cb780): one object under two class names |
-| `??1QuestFile@@QAE@XZ` | `??1RecQ@@QAE@XZ` | VIEW | QuestFile vs RecQ: two layouts of the 0x138 quest record, dtor 0x431b10 |
-| `??1S3c@@QAE@XZ` | `?clear@RecGList@@QAEXXZ` | VIEW | S3c / Vec12 are 0xc-byte views of RecGList (records.h), dtor 0x4317b0 |
-| `??1SceneFile@@UAE@XZ` | `??1RecY@@UAE@XZ` | VIEW | SceneFile vs RecY: two layouts of the 0x494 scene record, dtor 0x431e10 |
-| `??1Tail@@QAE@XZ` | `?_Tidy@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXXZ` | VIEW | Tail (rec_dtors.h) is a vector<tstring>-shaped view; the real class is std::vector<tstring>::_Tidy |
-| `??1TroopFile@@QAE@XZ` | `??1RecS@@QAE@XZ` | VIEW | TroopFile vs RecS: two layouts of the 0x508 troop record, dtor 0x431c40 |
-| `??1Vec12@@QAE@XZ` | `?clear@RecGList@@QAEXXZ` | VIEW | S3c / Vec12 are 0xc-byte views of RecGList (records.h), dtor 0x4317b0 |
 | `??1WorldDtor@@QAE@XZ` | `?destroy@Mission@@QAEXXZ` | VIEW | WorldDtor view (cls_map.cpp) of Mission, dtor 0x4d51d0 |
-| `??1loading_config@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in |
-| `??1model_b@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in |
 | `??1owned_block@@QAE@XZ` | `?conv_clear@@YIXPAPAX@Z` | OTHER | owned_block (item_rec.h) dtor is the free function conv_clear(void**) in gui_edit.cpp (0x4c8bf0) |
 | `??4CfgRec@@QAEAAU0@ABU0@@Z` | `??$_Uninit_copy@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@PAUload...` | ICF | CfgRec::operator= and vector<loading_config>::_Uninit_copy share 0x4e4340 (byte-identical bodies folded) |
 | `??4ptr_list@rgl@@QAEAAU01@ABU01@@Z` | `??4?$vector@HV?$allocator@H@std@@@std@@QAEAAV01@ABV01@@Z` | ICF | vector<T*>::operator= is one instance for all pointer element types (0x43f0a0); ptr_list derives from vector<void*> |
@@ -40,7 +27,6 @@ Total: 73.  ICF 10  TWIN 8  VIEW 43  OTHER 12
 | `?buy@?$vec@Uvector4@rgl@@@@QAE_NI@Z` | `?_Buy@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@IAE_NI@Z` | VIEW | hand-rolled vec<T> (mface / vector4) in place of std::vector, _Buy 0x4105c0 / 0x42d570 |
 | `?clear@?$vec@Umface@@@@QAEXXZ` | `?clear@?$vec@UNavVert@@@rgl@@QAEXXZ` | VIEW | hand-rolled vec<T> clear (0x41f4b0, shared with vec<NavVert>) |
 | `?clear@?$vec@Uvector4@rgl@@@@QAEXXZ` | `?clear@?$vec@UNavVert@@@rgl@@QAEXXZ` | VIEW | hand-rolled vec<T> clear (0x41f4b0, shared with vec<NavVert>) |
-| `?clear@ListInt@@QAEXXZ` | `?clear@list_int@@QAEXXZ` | VIEW | ListInt stub (cls_map.cpp) for list_int::clear (0x4c4d80) |
 | `?clear@Stack@@QAEXXZ` | `?reset@NamedSelRec@@QAEXXZ` | ICF | Stack::clear and NamedSelRec::reset are different classes with identical bytes (0x4893e0) |
 | `?compute_face_normals@MeshExt@@QAEXXZ` | `?compute_face_normals@PolyMesh@@QAEXXZ` | TWIN | visibility twin MeshExt vs PolyMesh |
 | `?construct@alloc100@@QAEXPAUparticle100@@ABU2@@Z` | `?construct@alloc100_def@@QAEXPAUparticle100@@ABU2@@Z` | TWIN | allocator visibility twin alloc100 / alloc100_def |
@@ -56,27 +42,19 @@ Total: 73.  ICF 10  TWIN 8  VIEW 43  OTHER 12
 | `?falloff@TroopExt@@QAEMMM@Z` | `?falloff@Troop@@QAEMMM@Z` | TWIN | visibility twin TroopExt::falloff / Troop::falloff |
 | `?fill_weights_x@AgentX@@QAEXPAMHH@Z` | `?fill_weights@Agent@@QAEXPAMHH@Z` | TWIN | visibility twin AgentX::fill_weights_x / Agent::fill_weights |
 | `?first@TeamRec@@QAE?AUvector4@rgl@@XZ` | `?first@Sel@@QAEXPAH@Z` | OTHER | TeamRec::first returning vector4 vs Sel::first(int*): call-site declaration and definition disagree on signature |
-| `?free_materials@block_base@@QAEXXZ` | `?free_materials@Block@@QAEXXZ` | VIEW | block_base (e68.h) vs Block (gui_edit.h): two classes for the mesh block, free_materials 0x4c8330 |
 | `?get@PartyMgr@@QAEPAUParty@@H@Z` | `?get@Scene@@QAEPAUPartyRecIO@@H@Z` | VIEW | PartyMgr (party.h) vs Scene / PartyRecIO views of the party table |
 | `?group_base_ext@@YAHH@Z` | `?group_base@@YAHH@Z` | TWIN | _ext twin group_base_ext / group_base |
 | `?grow@Scene@@QAEXXZ` | `?grow@PartyMgrW@@QAEPAU1@XZ` | VIEW | Scene view of the party manager PartyMgrW::grow (0x493830) |
 | `?identity_pos@rgl@@YA?AUframe_value@1@XZ` | `?identity_pos@rgl@@YAPAUmatrix@1@PAU21@@Z` | OTHER | second prototype of rgl::identity_pos (returns frame_value by hidden pointer vs matrix*), 0x40cd00 |
 | `?index_of@PartyMgr@@QAEHH@Z` | `?lookup@Map10007@@QAEHI@Z` | VIEW | PartyMgr / Scene views of Map10007 lookup (0x48ad00) |
 | `?index_of@Scene@@QAEHH@Z` | `?lookup@Map10007@@QAEHI@Z` | VIEW | PartyMgr / Scene views of Map10007 lookup (0x48ad00) |
-| `?init@Blow@@QAEPAU1@XZ` | `?init@RecZSubB@@QAEPAU1@XZ` | VIEW | Blow (blow.h) vs RecZSubB init: duplicate of the same embedded record |
 | `?init@Emit@@QAEXXZ` | `?init@psys@rgl@@QAEXXZ` | VIEW | Emit view of rgl::psys::init (0x420b40) |
 | `?insert@GlyphMap@@QAEXPAXPBH@Z` | `?insert@HashTab@@QAEXPAUHOut@@PAI@Z` | VIEW | GlyphMap (font.h) hand-rolled hash map vs HashTab / _Hash lookups |
 | `?insert_n@IntVec@@QAEXPAHIPBH@Z` | `?_Insert_n@?$vector@PAURecJ@@V?$allocator@PAURecJ@@@std@@@std@@IAEXViterator@12@IABQAURecJ@@@Z` | VIEW | IntVec (int_vec.h) is a vector<int> view; the instance is vector<RecJ*>::_Insert_n (0x43e7b0) |
 | `?is_night@GameData@@QAE_NXZ` | `?is_night@@YA_NXZ` | OTHER | GameData::is_night is called with ecx = g_game from most sites and bare (no ecx) from 0x4b25e9 / 0x4b3951: one original function used as method and as free function (0x435740), so the free-function definition stays |
-| `?load_extras@SpawnRec@@QAEXAAUstream_base@@@Z` | `?load_extras@psys_record@@QAEXAAUstream_base@@@Z` | VIEW | SpawnRec / prsnt_record views of psys_record::load_extras (0x4bdd50) |
 | `?lower_bound@GlyphMap@@QAEXPAPAUGlyphNode@@PBH@Z` | `?lower_bound@?$_Hash@V?$_Hmap_traits@HUHashVal@@V?$hash_compare@HU?$less@H@std@@@stdext@@V?$allocator@U?$pa...` | VIEW | GlyphMap (font.h) hand-rolled hash map vs HashTab / _Hash lookups |
-| `?play@DialogBlock@@QAEDH@Z` | `?play@SlotChan@@QAEXH@Z` | VIEW | DialogBlock / snd_channel views of SlotChan::play (0x4875e0) |
-| `?play@ItemSound@@QAEXH@Z` | `?update@TimerList@@QAEXH@Z` | VIEW | ItemSound / SoundHolder views of TimerList::update (0x48add0) |
-| `?play@SoundHolder@@QAEXH@Z` | `?update@TimerList@@QAEXH@Z` | VIEW | ItemSound / SoundHolder views of TimerList::update (0x48add0) |
-| `?play@snd_channel@@QAE_NH@Z` | `?play@SlotChan@@QAEXH@Z` | VIEW | DialogBlock / snd_channel views of SlotChan::play (0x4875e0) |
 | `?poly_ray@MeshImpl_s2da20@@QAEXABUvector4@rgl@@0AAIPAM@Z` | `?poly_ray@Mesh_s2da20@@QAEXABUvector4@rgl@@0AAIPAM@Z` | VIEW | MeshImpl_s2da20 (mesh_3.h) is a view of Mesh_s2da20 |
 | `?push_back@mesh_ptr_vec@@QAEXABQAUmesh@rgl@@@Z` | `?push_back@?$vector@PAUscene@rgl@@V?$allocator@PAUscene@rgl@@@std@@@std@@QAEXABQAUscene@rgl@@@Z` | ICF | vector<T*>::push_back is one instance; mesh_ptr_vec : vector<mesh*> (0x4119d0) |
-| `?query@SceneQuery@ms@@QAEHPAUcapsule@@@Z` | `?settle@MissileG@?A0xe028f417@@QAE_NPBD@Z` | VIEW | SceneQuery view of MissileG::settle |
 | `?read@model_b@@QAEXPAX@Z` | `?read@MapSceneRec@@QAEXPAUMsStream@@@Z` | VIEW | model_b::read vs MapSceneRec::read: duplicate record type |
 | `?read_psys_rec@@YAPAXPAUstream_base@@PAD@Z` | `?read@psys_record@@SAPAXAAUstream_base@@PAD@Z` | OTHER | psys_record::read is a static member; trigger_vec.h declares it as the free function read_psys_rec (0x4bdc00) |
 | `?reset@Agent@@QAEXXZ` | `?reset@BigObj@@QAEXXZ` | ICF | Agent::reset and BigObj::reset are different classes with identical bytes (0x432080) |
