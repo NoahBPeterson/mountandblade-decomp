@@ -555,7 +555,7 @@ struct elem58 {
 };
 void* __fastcall destroy_record_array(void* p, int unused, unsigned char flags);               // 0x4c7ee0
 void* __fastcall conv_item_array_dtor(conv_rec* self, int unused, unsigned char flags);        // 0x4c8980
-struct ListInt { void clear(); };                       // 0x4c4d80 (std::list<int>::clear)
+#include "../../include/list_int.h"                  // list_int::clear 0x4c4d80 (std::list<int>::clear)
 #include "../window_mgr.h"                                    // g_windows (0xa73980)
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
 
@@ -624,7 +624,7 @@ HRESULT GameApp::FinalCleanup()
         f->map.buckets._Myfirst = 0;
         f->map.buckets._Mylast = 0;
         f->map.buckets._Myend = 0;
-        ((ListInt*)&f->map.pad0[1])->clear();
+        ((list_int*)&f->map.pad0[1])->clear();
         operator delete(f->map.head);
         f->map.head = 0;
         operator delete(f);

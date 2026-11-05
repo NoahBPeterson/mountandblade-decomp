@@ -44,18 +44,7 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 #include "../../include/tail2.h"      // Tail2 (shared with rgl/xmlcfg/records.h)
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
-struct list_node_int {
-    list_node_int* next;
-    list_node_int* prev;
-    int value;
-};
-
-struct list_int {
-    list_node_int* head;   // +0
-    list_node_int* w04;    // +4  sentinel (self-linked when empty)
-    int            count;  // +8
-    void clear();          // 0x4c4d80
-};
+#include "../../include/list_int.h"   // list_node_int, list_int (clear 0x4c4d80)
 
 // 0x28-byte record carrying a string first.
 struct tstr28 {
