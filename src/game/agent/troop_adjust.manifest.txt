@@ -1,0 +1,3 @@
+../src/game/agent/troop_adjust.cpp  ?adjust@Troop@@QAEXHM@Z  00437770  /O2 /MT /Gy /TP
+../src/game/agent/troop_adjust.cpp  ??0RecJ@@QAE@XZ  004377d0  /O2 /MT /Gy /TP
+../src/game/agent/troop_adjust.cpp  ?slot1@RecJ@@UAEXXZ  00437810  /O2 /MT /Gy /TP

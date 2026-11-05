@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// File: agent.cpp  (0x434b20..0x437830)
+// File: agent.cpp  (0x434b20..0x437770)
 //
 // Desc: item references and their modifier-adjusted stats, the troop record's accessors, the agent's camera,
 //       steering and equipment queries, sound selection, key-frame sampling, the mission accessors and time of
@@ -1183,33 +1183,4 @@ float Troop::falloff(float dist, float k)
     if (dist > 650.0f) f *= 0.65f;
     if (dist > 700.0f) f *= 0.65f;
     return f * k + f * k + dist;
-}
-
-// The same function seen from outside this TU (cl must not assume the register use of the body above).
-#include "../troop_ext.h"      // TroopExt: the one definition (falloff 0x4375b0, set_attr 0x48be70)
-// @ 0x437770
-void Troop::adjust(int i, float k)
-{
-    float r = ((TroopExt*)this)->falloff(f80[i], k);
-    f80[i] = r;
-    if (r < 0.0f) {
-        f80[i] = 0.0f;
-        return;
-    }
-    if (r > 1000.0f)
-        f80[i] = 1000.0f;
-}
-
-// @ 0x4377d0
-RecJ::RecJ()
-{
-    slot1();
-}
-// @ 0x437810
-void RecJ::slot1()
-{
-    m50 = 0;
-    m98 = 0;
-    m88 = -1;
-    m80 = -1;
 }
