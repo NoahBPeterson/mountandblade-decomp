@@ -1216,7 +1216,7 @@ void ItemRec::init_screen()
     win = new NodeA(0);
 
     { V2 t_(-0.001f, -0.001f); vt(win)->d22(&t_); }
-    { V2 t_(1.003f, 0.753f); vt(win)->d25(&t_); }
+    { V2 t_(1.002f, 0.752f); vt(win)->d25(&t_); }
     int base_colour = 0xff442323;
     vt(win)->d38(&base_colour);
 

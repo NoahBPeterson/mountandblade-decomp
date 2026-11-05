@@ -104,7 +104,7 @@ done:
     if (page_changed(regen_btn)) {
         // "regenerate": reset the scene, arm the flash effect, rebuild the terrain and put the camera on it
         world->reset();                      // 0x421390 (rgl::world::reset)
-        vector4 clear_colour(0.4f, 0.4f, 0.6f);
+        vector4 clear_colour(0.2f, 0.2f, 0.3f);
         world->ambient = clear_colour;
         world->ambient.w = 1.0f;
         Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30

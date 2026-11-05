@@ -493,7 +493,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         const tstring* v = g_strtable.lookup(tstring("ui_weight"));
         sprintf(buf, v->c_str(), (double)w);
         tstring s(buf);
-        g_gui.draw_string(&s, 0.011f, 0xffffffff, 1);
+        g_gui.draw_string(&s, 0.022f, 0xffffffff, 1);
     }
 
     kind = it->type_flags & 0xff;

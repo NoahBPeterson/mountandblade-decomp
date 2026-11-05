@@ -701,7 +701,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         float li = arr[c->f14 * 9 + 8];
                         float r = li / (z + li);
                         if (!(r >= 0.0f)) r = 0.0f;
-                        else if (!(r <= 1.0f)) r = 1.0f;
+                        else if (!(r <= 0.75f)) r = 0.75f;
                         int ia = (int)(r * 255.0f);
                         edi = ia < 0 ? 0 : (ia < 0x100 ? ia : 0xff);
                     }

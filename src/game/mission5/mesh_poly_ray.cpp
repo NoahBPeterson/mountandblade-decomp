@@ -707,7 +707,7 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
 
     if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 &&
         g_keyboard.down[45] == 0 && g_keyboard.down[21] == 0 && g_keyboard.down[44] == 0) {
-        float s = g_one - angle * g_rot_step;
+        float s = g_one - angle * g_hilite_dim;
         vec[0] = vec[0] * s;
         vec[1] = vec[1] * s;
         vec[2] = vec[2] * s;
@@ -715,19 +715,19 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
         *f4 = 1;
     }
     if (g_keyboard.down[45] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_rot_step;
+        float s = g_one - angle * g_hilite_dim;
         vec[0] = vec[0] * s;
         *f3 = 1;
         *f4 = 1;
     }
     if (g_keyboard.down[21] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_rot_step;
+        float s = g_one - angle * g_hilite_dim;
         vec[1] = vec[1] * s;
         *f3 = 1;
         *f4 = 1;
     }
     if (g_keyboard.down[44] != 0 && g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float s = g_one - angle * g_rot_step;
+        float s = g_one - angle * g_hilite_dim;
         vec[2] = vec[2] * s;
         *f3 = 1;
         *f4 = 1;

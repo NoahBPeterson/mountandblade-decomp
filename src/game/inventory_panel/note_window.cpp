@@ -791,15 +791,15 @@ void note_window::build(int page_, int arg_)
     label_refresh(data, tstring("note_bo_data"));
 
     if (this->picture->flag1() == 0) {
-        float a[2], b[2];
-        ((rgl::mesh*)this->picture->tracks[0])->calc_bounds((rgl::vector4*)a, (rgl::vector4*)b);   // 0x438d80 (the font object)
-        float h = b[1] - a[1];
-        float w = b[0] - a[0];
+        rgl::vector4 a, b;                                // calc_bounds writes whole vectors
+        ((rgl::mesh*)this->picture->tracks[0])->calc_bounds(&a, &b);   // 0x438d80 (the font object)
+        float h = b.y - a.y;
+        float w = b.x - a.x;
         float border = cfg_float("note_image_border");
         x_cur = (h + border) + x_cur;                     // the picture sits above the links (0x50c54f)
         float v[2];
-        v[0] = (fld(data, 0xf0) - w) * 0.5f - a[0];       // centred across the panel (0x50c568)
-        v[1] = x_cur - b[1];
+        v[0] = (fld(data, 0xf0) - w) * 0.5f - a.x;       // centred across the panel (0x50c568)
+        v[1] = x_cur - b.y;
         this->picture->move_a((float*)v);
     }
 
