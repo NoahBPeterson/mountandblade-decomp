@@ -79,7 +79,7 @@ only in headers the cpp includes itself, not transitively.
 ## Tricks kept, tricks removed
 
 Kept (all needed for a byte-exact row, documented at the use):
-- **Opacity casts** (`((MeshExt*)this)->build_adjacency()`, `TroopMgrExt`, `TerrainExt`): a function defined earlier in the
+- **Opacity casts** (`TroopMgrExt`, `TerrainExt`; the `MeshExt` cast is gone: terrain_b.cpp ends at 0x470a00 and poly_mesh.cpp holds the callers of build_adjacency / compute_face_normals): a function defined earlier in the
   TU lets cl assume its register use or inline it; the original compiled some callees as opaque. These "Ext" view
   classes keep the call out of line.
 - `__declspec(noinline)` on helper wrappers whose original is a separate function (the allocator `construct`, the

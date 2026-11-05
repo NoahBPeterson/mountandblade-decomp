@@ -138,12 +138,4 @@ struct PolyMesh {
     bool reachable(const int* from, const int* to, const int* max_steps);   // 0x4452f0 (agent4/agent_logic.cpp)
 };
 
-// The same two functions seen from outside their object: their callers were compiled without the bodies, so cl must
-// not assume their register use (it would keep `this` in ecx across the calls).
-struct MeshExt {
-    void build_adjacency();                     // 0x470920
-    void compute_face_normals();                // 0x4705e0
-};
-
-
 #endif // TERRAIN_B_POLY_MESH_H
