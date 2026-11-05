@@ -94,7 +94,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
     curve4& s = *(curve4*)&curve[8];
     float& half_w = half.u;
     float& half_h = half.v;
-    float& brightness = fd8;
+    float& brightness = vd8.x;
     vec2* uv = (vec2*)quad;
     unsigned type = flags & 0xf00;
     if (type == 0x100) {

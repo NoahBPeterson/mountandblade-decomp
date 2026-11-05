@@ -31,7 +31,7 @@ struct float_pair {                      // two floats built through a stack tem
 };
 
 struct psys {
-    mesh* cache;                    // 0x00 (zeroed by init 0x420b40)
+    mesh* cache;                   // 0x00 (zeroed by init 0x420b40)
     skin* res;                      // 0x04
     union {
         int f8;                     // 0x08
@@ -44,18 +44,19 @@ struct psys {
     float_pair quad[4];                  // 0x80 corner uvs (0x413e50 passes them as vec2)
     int fa0;                        // 0xa0
     vector4 va4, vb4, vc4;          // 0xa4 x axis, 0xb4 z axis (the particle axis of 0x414960), 0xc4 gravity   0x420b40
-    float fd4, fd8, fdc, fe0;       // 0xd4..0xe0 (fd8 = brightness, 0x413e50)
-    int fe4;                        // 0xe4
+    float fd4;                      // 0xd4
+    vector4 vd8;                    // 0xd8 init sets x, y, z to 1 (x = brightness, 0x413e50); Mission::spawn_effect 0x442ca0 stores the camera-relative position of a follow-the-camera emitter here
     union {
         int fe8;                    // 0xe8 (1)
         unsigned flags;             // 0xe8 (mask 0xf00 selects how the frame is built; 0x413e50)
     };
-    int fec, ff0;                   // 0xec, 0xf0
+    float height;                   // 0xec height offset of a placed emitter (Mission::post_spawn 0x47a0c0)
+    int ff0;                        // 0xf0
     mat4 mf4, m134;                 // 0xf4, 0x134 (identity)
     vector4 v174;                   // 0x174
     vector4 v184;                   // 0x184 (0,0,1)
     float f194;                     // 0x194
-    int f198;                       // 0x198
+    float f198;                     // 0x198 (EmitDef::f24; Mission::start_setup 0x484590 / the impact particles of agent_logic scale it)
     int spawn_left;                 // 0x19c  0x41efd0 (<= 0 and no particles: the emitter is dead)
     int f1a0, f1a4;                 // 0x1a0, 0x1a4
     int tag;                        // 0x1a8 (id searched by find_emitter 0x421a50; init sets -1)

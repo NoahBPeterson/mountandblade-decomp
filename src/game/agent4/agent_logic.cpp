@@ -6381,24 +6381,24 @@ void Agent::process_blow(int unused)
         if (e2 == 0)
             e2 = g_emit_defs.used[3];
         if (e1 >= 0) {
-            Emit* em = g_mission->spawn_effect(e1, (const rgl::mat4*)&m2, (int)(ef + ef));
+            rgl::psys* em = g_mission->spawn_effect(e1, (const rgl::mat4*)&m2, (int)(ef + ef));
             float s = (ef + 10.0f) * 0.1f;
             vector4 v;
             v.x = s * g_emit_defs.defs[e1].b.x;
             v.y = s * g_emit_defs.defs[e1].b.y;
             v.z = s * g_emit_defs.defs[e1].b.z;
             ((Obj3*)em)->set_v184(&v);       // the emitter is a scene object with a placement block (game_util.h Obj3; the code is shared)
-            *(float*)&em->f198 = ef * *(float*)&g_emit_defs.defs[e1].f24;
+            em->f198 = ef * g_emit_defs.defs[e1].f24;
         }
         if (e2 >= 0) {
-            Emit* em = g_mission->spawn_effect(e2, (const rgl::mat4*)&m2, (int)(ef * 4.0f));
+            rgl::psys* em = g_mission->spawn_effect(e2, (const rgl::mat4*)&m2, (int)(ef * 4.0f));
             float s = (ef + 10.0f) * 0.1f;
             vector4 v;
             v.x = s * g_emit_defs.defs[e2].b.x;
             v.y = s * g_emit_defs.defs[e2].b.y;
             v.z = s * g_emit_defs.defs[e2].b.z;
             ((Obj3*)em)->set_v184(&v);       // the emitter is a scene object with a placement block (game_util.h Obj3; the code is shared)
-            *(float*)&em->f198 = ef * *(float*)&g_emit_defs.defs[e2].f24;
+            em->f198 = ef * g_emit_defs.defs[e2].f24;
         }
     }
 
@@ -7984,8 +7984,8 @@ void Agent::update(float dt)
                                 m.o.y = t.y;
                                 m.f.normalize();
                                 m.orthonormalize();
-                                *(rgl::matrix*)&fx1b0->local = m;
-                                *(rgl::matrix*)&fx1b4->local = m;
+                                fx1b0->m134 = m;
+                                fx1b4->m134 = m;
                                 float v;
                                 if (f10 == 1)
                                     v = speed * 10.0f + 20.0f;
@@ -7997,13 +7997,13 @@ void Agent::update(float dt)
                                 float uy = d.y * 0.7f;
                                 m.o.x = ux + m.o.x;
                                 m.o.y = m.o.y + uy;
-                                *(rgl::matrix*)&fx1b8->local = m;
+                                fx1b8->m134 = m;
                                 ((Obj3*)fx1b8)->reset_pending(1);
                             } else if (fx1ac && f10 == 1) {
                                 float v = 0.0f;
                                 if (speed > 5.5f && fbc && (((shape_base*)fbc)->m8 & 0x4000))
                                     v = speed + 10.0f;
-                                if (fx1ac->idx != g_emit_defs.used[4])
+                                if (fx1ac->tag != g_emit_defs.used[4])
                                     v = v * 3.0f;
                                 ((Obj3*)fx1ac)->reset_pending((int)(v * 0.15f));
                             }

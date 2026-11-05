@@ -2715,7 +2715,7 @@ void Party::update_flags()
         for (unsigned i = 0; deferred._Myfirst != 0 && i < (unsigned)(deferred._Mylast - deferred._Myfirst); i++) {
             vector4 p(0.0f, 0.0f, 0.0f);
             int idx = 0;
-            Emit* e = g_emit_defs.spawn(&deferred._Myfirst[i], &p, &idx);
+            rgl::psys* e = g_emit_defs.spawn(&deferred._Myfirst[i], &p, &idx);
             if (e)
                 model->add_emitter(e);
         }

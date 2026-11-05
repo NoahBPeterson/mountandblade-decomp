@@ -31,7 +31,7 @@ struct CamParams;
 struct NewtonBody;
 struct Missile;
 struct AgentFx;
-struct Emit;
+namespace rgl { struct psys; }
 struct ClassInfo;
 struct Blow;
 
@@ -151,10 +151,10 @@ struct Agent {                                          // 0x5928 bytes
     Meter* meters[4];                                   // +0x180 the HUD meters (set_slot 0x470d80 writes meters[idx]; the callers use 0 and 1)
     AgentFx* fxp;                    // +0x190 0x4543a0 (per-agent text / label state)
     char pad194[0x1ac - 0x194];
-    Emit* fx1ac;                    // +0x1ac 0x45f660
-    Emit* fx1b0;                    // +0x1b0 0x45f660
-    Emit* fx1b4;                    // +0x1b4 0x45f660
-    Emit* fx1b8;                    // +0x1b8 0x45f660
+    rgl::psys* fx1ac;                    // +0x1ac 0x45f660
+    rgl::psys* fx1b0;                    // +0x1b0 0x45f660
+    rgl::psys* fx1b4;                    // +0x1b4 0x45f660
+    rgl::psys* fx1b8;                    // +0x1b8 0x45f660
     union {
         int f1bc;                                       // +0x1bc (0x443870)
         int party;                                      //   alias: agent_get_party_id 0x4a8e64

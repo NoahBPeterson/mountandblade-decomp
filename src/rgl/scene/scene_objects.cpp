@@ -167,8 +167,8 @@ void psys::init()
     ff0 = 0;
     v184 = vector4(0.0f, 0.0f, 1.0f);
     f194 = 1.0f;
-    f198 = 0; spawn_left = 0; f1a0 = 0; f1a4 = 0;
-    fec = 0;
+    f198 = 0.0f; spawn_left = 0; f1a0 = 0; f1a4 = 0;
+    height = 0.0f;
     m134 = *(mat4*)identity_pos(&t1);
     mf4 = *(mat4*)identity_pos(&t1);
     v174 = vector4(0.0f, 0.0f, 0.0f);
@@ -195,7 +195,7 @@ void psys::init()
     f20 = 0.0f; f1c = 1.0f; f24 = 0.5f;
     f8 = 0;
     tag = -1; radius = 0.0f; f1b0 = 0; f1b4 = 0;
-    fd8 = 1.0f; fdc = 1.0f; fe0 = 1.0f;
+    vd8.x = 1.0f; vd8.y = 1.0f; vd8.z = 1.0f;
     particles.resize(0, e);
 }
 

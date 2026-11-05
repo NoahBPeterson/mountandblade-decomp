@@ -23,7 +23,7 @@
 
 namespace rgl { struct world; }                                // terrain_b/cell_grid.h: the scene container terrain_b sees
 
-struct Emit;
+namespace rgl { struct psys; }
 struct Light;
 struct PlacedObj;
 struct PlacedObj;                                  // the 0x1c8-byte prop record (terrain_b/records.h, agent3/agent_combat.h)
@@ -94,10 +94,10 @@ struct Mission {
     };
     int f60;                                    // +0x0060
     char pad64[0x1ac - 0x64];
-    Emit* fog;                                  // +0x01ac emitters spawned by the last post_spawn (0x47a0c0)
-    Emit* layer0;                               // +0x01b0
-    Emit* layer1;                               // +0x01b4
-    Emit* layer2;                               // +0x01b8
+    rgl::psys* fog;                                  // +0x01ac emitters spawned by the last post_spawn (0x47a0c0)
+    rgl::psys* layer0;                               // +0x01b0
+    rgl::psys* layer1;                               // +0x01b4
+    rgl::psys* layer2;                               // +0x01b8
     char pad1bc[0x6b0 - 0x1bc];
     MarkRec recs[1];                            // +0x06b0 (0x472160; more than one record)
     char pad7e0[0x5280 - 0x6b0 - sizeof(MarkRec)];
@@ -191,7 +191,7 @@ struct Mission {
         return false;
     }
     void queue_dead(Agent* a);                  // 0x442dc0 (agent_fx_sound.cpp)
-    Emit* spawn_effect(int idx, const rgl::mat4* m, int duration);   // 0x442ca0 (agent_fx_sound.cpp)
+    rgl::psys* spawn_effect(int idx, const rgl::mat4* m, int duration);   // 0x442ca0 (agent_fx_sound.cpp)
 
     // ---- agent4 (agent_think.cpp) ----
     int spawn_missile(const rgl::vector4* pos, const rgl::vector4* dir, ItemRef* launcher, ItemRef* ammo, unsigned shooter_id);   // 0x44be50

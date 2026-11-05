@@ -25,7 +25,7 @@
 // Local layouts (names provisional)
 // ---------------------------------------------------------------------------
 struct Raw { template<class T> T& at(int o) { return *(T*)((char*)this + o); } };
-// the same displacement access for the shared classes (PlacedObj, Emit, Party), which have no Raw base
+// the same displacement access for the shared classes (PlacedObj, Party), which have no Raw base
 #define RAWAT(T, obj, off) (*(T*)((char*)(obj) + (off)))
 
 using rgl::vector4;                                          // the engine's vector (match/include/rgl.h); the slice's own copy clashed with the shared headers' using-declarations
@@ -36,6 +36,7 @@ using rgl::mat3;
 // This slice carries its own views (Mesh, Entity, World, terrain_obj, Psys, ...) of objects whose classes live in other modules and cannot
 // be included here; the calls go to the members of the classes that define them, which are declared (members only) in this block.
 #include "../../rgl/mesh.h"          // rgl::mesh
+#include "../../rgl/particles/mesh_obj.h"   // before scene.h: rgl::emitter in full (scene/emitter.h declares only its update)
 #include "../../rgl/scene/scene.h"      // resmgr (res_manager()), resource_manager g_resmgr 0x5d6fa0
 struct skin; struct face; namespace rgl { struct world; } struct BodyRecC;
 namespace rgl {
@@ -104,7 +105,7 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15(); virtual void v16();
     virtual void v17(); virtual void v18(); virtual void v19(); virtual void v20(); virtual void v21();
     virtual void v22(); virtual void v23(); virtual void v24();
-    virtual void v25(Emit* e);
+    virtual void v25(rgl::psys* e);
     void add_extra(Mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
 };
 struct PropObj {                                             // object at prop +0x1b4
@@ -761,25 +762,26 @@ void Mission::start_setup()
             mx.o.y = 6.5f;
             int ix = g_emit_defs.used[0];
             if (ix >= 0 && ix < g_emit_defs.count) {
-                Emit* em = new Emit;
+                int owner0 = 0;
+                rgl::psys* em = new rgl::psys(owner0);
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
-                    float inv = 1.0f / RAWAT(float, em, 0x24);
+                    float inv = 1.0f / em->f24;
                     u.x = t20.x * inv;
                     u.y = t20.y * inv;
                     u.z = inv * -10.0f;
-                    RAWAT(vector4, em, 0x184) = u;
-                    RAWAT(vector4, em, 0xc4) = t20;
-                    RAWAT(vector4, em, 0xb4) = t20;
-                    norm3(&RAWAT(float, em, 0xb4));
-                    RAWAT(float, em, 0x198) = at<float>(0x6600) * RAWAT(float, em, 0x198);
-                    RAWAT(float, em, 0xa0) = 11.0f / (float)(10.0 / RAWAT(float, em, 0x24));
-                    RAWAT(float, em, 0x3c) = scale * RAWAT(float, em, 0x3c);
-                    RAWAT(float, em, 0x44) = scale * RAWAT(float, em, 0x44);
-                    RAWAT(float, em, 0x4c) = scale * RAWAT(float, em, 0x4c);
-                    RAWAT(float, em, 0x54) = scale * RAWAT(float, em, 0x54);
-                    RAWAT(float, em, 0x5c) = scale * RAWAT(float, em, 0x5c);
-                    RAWAT(float, em, 0x64) = scale * RAWAT(float, em, 0x64);
+                    em->v184 = u;
+                    em->vc4 = t20;
+                    em->vb4 = t20;
+                    norm3(&em->vb4.x);
+                    em->f198 = at<float>(0x6600) * em->f198;
+                    em->fa0 = 11.0f / (float)(10.0 / em->f24);
+                    em->curve[2].v = scale * em->curve[2].v;
+                    em->curve[3].v = scale * em->curve[3].v;
+                    em->curve[4].v = scale * em->curve[4].v;
+                    em->curve[5].v = scale * em->curve[5].v;
+                    em->curve[6].v = scale * em->curve[6].v;
+                    em->curve[7].v = scale * em->curve[7].v;
                     at<Entity*>(0x65b8)->v25(em);
                 }
             }
@@ -788,19 +790,20 @@ void Mission::start_setup()
             mx.o.y = 6.5f;
             int ix = g_emit_defs.used[1];
             if (ix >= 0 && ix < g_emit_defs.count) {
-                Emit* em = new Emit;
+                int owner0 = 0;
+                rgl::psys* em = new rgl::psys(owner0);
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
-                    RAWAT(vector4, em, 0xc4) = t20;
-                    RAWAT(float, em, 0x3c) = scale * RAWAT(float, em, 0x3c);
-                    RAWAT(float, em, 0x44) = scale * RAWAT(float, em, 0x44);
-                    RAWAT(float, em, 0x4c) = scale * RAWAT(float, em, 0x4c);
-                    RAWAT(float, em, 0x54) = scale * RAWAT(float, em, 0x54);
-                    RAWAT(float, em, 0x5c) = scale * RAWAT(float, em, 0x5c);
-                    RAWAT(float, em, 0x64) = scale * RAWAT(float, em, 0x64);
-                    RAWAT(vector4, em, 0xb4) = t20;
-                    norm3(&RAWAT(float, em, 0xb4));
-                    RAWAT(float, em, 0x198) = at<float>(0x6600) * RAWAT(float, em, 0x198);
+                    em->vc4 = t20;
+                    em->curve[2].v = scale * em->curve[2].v;
+                    em->curve[3].v = scale * em->curve[3].v;
+                    em->curve[4].v = scale * em->curve[4].v;
+                    em->curve[5].v = scale * em->curve[5].v;
+                    em->curve[6].v = scale * em->curve[6].v;
+                    em->curve[7].v = scale * em->curve[7].v;
+                    em->vb4 = t20;
+                    norm3(&em->vb4.x);
+                    em->f198 = at<float>(0x6600) * em->f198;
                     at<Entity*>(0x65b8)->v25(em);
                 }
             }

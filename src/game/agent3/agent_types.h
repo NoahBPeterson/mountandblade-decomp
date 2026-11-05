@@ -25,8 +25,6 @@ using rgl::matrix;
 #include "../../include/shape.h"
 extern shape_base* g_hit_shape;                         // 0x5e246c: last shape hit by trace_ray
 
-struct Emit;                                            // particle emitter (agent_fx_sound.h)
-
 struct node_groups; typedef node_groups Mesh;                              // the lod mesh hanging off the agent (agent_fx_sound.cpp 0x443aa0)
 
 // the scene (rgl world): first field of the mission object (src/rgl/scene/world.h)
@@ -77,9 +75,9 @@ struct AgentX {                                                     // src/rgl/x
     bool f100_is_0x48_and_charged() const;                          // 0x432470
 };
 struct Obj3 {
-    void set_v184(const vector4* v);                                // 0x433740 (rgl/xmlcfg/game_util.cpp; Emit's code is the same function)
+    void set_v184(const vector4* v);                                // 0x433740 (rgl/xmlcfg/game_util.cpp; the rgl::psys emitter's code)
     void reset_pending(int v);                                      // 0x433810
-    void set_placement(const matrix* m, const vector4* a, const vector4* b, int c);   // 0x433770 (game_util.h: scene object with a placement block; Emit's)
+    void set_placement(const matrix* m, const vector4* a, const vector4* b, int c);   // 0x433770 (game_util.h: scene object with a placement block: the rgl::psys emitter)
 };
 
 

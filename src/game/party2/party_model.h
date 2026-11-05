@@ -5,7 +5,7 @@
 #include "../../rgl/rgl_math.h"
 #include "../../include/ptr_vec.h"
 #include "../../rgl/mesh.h"
-struct Emit;
+namespace rgl { struct psys; }
 using rgl::vector4;
 
 struct Poser {
@@ -24,7 +24,7 @@ struct PartyModel {
     virtual void s13(); virtual void s14(); virtual void s15(); virtual void s16(); virtual void s17();
     virtual void set_mode(int mode);                    // +0x48   0x4b7840
     virtual void s19(); virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23(); virtual void s24();
-    virtual void add_emitter(Emit* e);                  // +0x64   0x4b7840
+    virtual void add_emitter(rgl::psys* e);                  // +0x64   0x4b7840
     char pad4[0x58 - 4];
     Rot3 basis;                                         // +0x58 orientation rows   0x4b80d0
     vector4 origin;                                     // +0x88 position (the sound source)   0x4b80d0

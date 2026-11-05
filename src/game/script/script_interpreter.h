@@ -30,7 +30,7 @@
 // DEFINES that address in the sources, declared here with that class's name and signature. The modules that define them name the
 // class after another of their users, and the linker folds identical bodies, so the view object is the object the definition works
 // on (cast at the forwarder). The namespaces cNNNNNN are the anonymous namespaces src/game/party2/camera.cpp wraps its local classes in.
-struct Emit; struct mesh_part; struct TabCurrent;
+struct mesh_part; struct TabCurrent;
 struct EmitterCtl { void add(int e); };                                      // 0x4955e0 (world_data.cpp): registers an emitter in a table
 struct GameW {                                                               // world_data.cpp: the game object's world operations
     bool can_transfer(unsigned id, int other, char flag);                   // 0x4918d0

@@ -1714,7 +1714,7 @@
   },
   "004424c0": {
    "verdict": "DIFF",
-   "symbol": "?setup@EmitTable@@QAEXPAUEmit@@HPBUvector4@rgl@@@Z",
+   "symbol": "?setup@EmitTable@@QAEXPAUpsys@rgl@@HPBUvector4@3@@Z",
    "insns": 114,
    "ours": 114,
    "unverified": 0,
@@ -1744,7 +1744,7 @@
   },
   "00442ca0": {
    "verdict": "DIFF",
-   "symbol": "?spawn_effect@Mission@@QAEPAUEmit@@HPBUmatrix@rgl@@H@Z",
+   "symbol": "?spawn_effect@Mission@@QAEPAUpsys@rgl@@HPBUmatrix@3@H@Z",
    "insns": 76,
    "ours": 76,
    "unverified": 0,

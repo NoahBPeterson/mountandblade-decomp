@@ -20,7 +20,6 @@
 #include "./game_data.h"
 #include "../mission.h"                           // Mission, TeamRec, ClassInfo, MarkRec, g_mission (one definition for src/game)
 
-struct Emit;
 struct SpawnSet;
 #include "../prop_kind.h"                  // PropKind (0x78 bytes; shared with mesh_slot/mesh_start.cpp)
 

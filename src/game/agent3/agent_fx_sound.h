@@ -71,7 +71,7 @@ struct PsysGroup;
 #include "../../include/fx.h"        // FxElem, FxDef, EnvRec (shared with src/rgl and entity.cpp)
 
 // ---- emitter setup from a definition table (0x4424c0) ---------------------------------------------------------------------
-#include "../emit.h"                  // Emit, EmitTable, EmitDef, EmitRes, rgl::mesh (shared with terrain_b)
+#include "../emit.h"                  // rgl::psys, EmitTable, EmitDef (shared with terrain_b)
 
 // ---- FMOD 3 imports (stdcall thunks into the import table; names from the import library) ---------------------------------
 extern "C" {

@@ -475,11 +475,11 @@ void rgl::world::build_faces(NavData* map)
 }
 
 // @ 0x479d20
-Emit* EmitTable::spawn(int* idx, const vector4* pos, const int* owner)
+rgl::psys* EmitTable::spawn(int* idx, const vector4* pos, const int* owner)
 {
     if (*idx < 0 || *idx >= count)
         return 0;
-    Emit* e = new Emit(owner);
+    rgl::psys* e = new rgl::psys(*owner);
     setup(e, *idx, pos);
     return e;
 }
@@ -586,16 +586,16 @@ void Mission::post_spawn(MAgent* a)
         }
         if (idx >= 0) {
             owner = 0;
-            Emit* e = g_emit_defs.spawn(&idx, &pos, &owner);
+            rgl::psys* e = g_emit_defs.spawn(&idx, &pos, &owner);
             if (e) {
                 a->f250->add_emitter(e);
                 a->f1ac = (int)e;
-                e->v3c.x *= sc.x;
-                e->v3c.z *= sc.x;
-                e->v4c.x *= sc.y;
-                e->v4c.z *= sc.y;
-                e->v5c.x *= sc.z;
-                e->v5c.z *= sc.z;
+                e->curve[2].v *= sc.x;       // the r / g / b curves' end values (curve4 r 0x38, g 0x48, b 0x58: v0 at +4, v1 at +0xc)
+                e->curve[3].v *= sc.x;
+                e->curve[4].v *= sc.y;
+                e->curve[5].v *= sc.y;
+                e->curve[6].v *= sc.z;
+                e->curve[7].v *= sc.z;
             }
         }
     }
@@ -608,7 +608,7 @@ layers:
             pos.y = 0.65f;
         idx = g_emit_defs.used[7];
         owner = 0;
-        Emit* e0 = g_emit_defs.spawn(&idx, &pos, &owner);
+        rgl::psys* e0 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e0) {
             e0->height = terrain.base_z;
             a->f250->add_emitter(e0);
@@ -616,7 +616,7 @@ layers:
         }
         idx = g_emit_defs.used[8];
         owner = 0;
-        Emit* e1 = g_emit_defs.spawn(&idx, &pos, &owner);
+        rgl::psys* e1 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e1) {
             e1->height = terrain.base_z + 0.05f;
             a->f250->add_emitter(e1);
@@ -625,7 +625,7 @@ layers:
         pos.y = pos.y + 0.6f;
         idx = g_emit_defs.used[9];
         owner = 0;
-        Emit* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
+        rgl::psys* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e2) {
             e2->height = terrain.base_z + 0.06f;
             a->f250->add_emitter(e2);

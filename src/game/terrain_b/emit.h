@@ -5,7 +5,7 @@
 #define TERRAIN_B_EMIT_H
 #include "../../rgl/rgl_math.h"
 
-#include "../emit.h"                  // Emit, EmitTable (shared with agent3)
+#include "../emit.h"                  // rgl::psys, EmitTable (shared with agent3)
 
 
 

@@ -152,7 +152,7 @@ void FxDef::attach_group(int idx, PsysGroup* g)
 
 // ---- emitter setup from a definition table ----------------------------------------------------------------------------------
 // @ 0x4424c0
-void EmitTable::setup(Emit* e, int idx, const vector4* pos)
+void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
 {
     if (idx < 0 || idx >= count)
         return;
@@ -161,24 +161,24 @@ void EmitTable::setup(Emit* e, int idx, const vector4* pos)
     if (r == 0)
         return;
     e->init();
-    e->idx = idx;
-    e->obj = r;
-    e->res = (EmitRes*)r->res;
+    e->tag = idx;
+    e->src = r;
+    e->res = r->res;
     e->flags = d->f10;
     e->f198 = d->f24;
     e->fa0 = d->f30;
     e->f24 = d->f34;
     vector4 g(0.0f, 0.0f, -9.8f);
-    e->gravity = g;
+    e->vc4 = g;
     e->fd4 = d->f38;
     e->f1c = d->f3c;
     e->f20 = d->f40;
     for (int k = 0; k < 2; k++) {
-        e->t[0][k] = d->t[0][k];
-        e->t[1][k] = d->t[1][k];
-        e->t[2][k] = d->t[2][k];
-        e->t[3][k] = d->t[3][k];
-        e->t[4][k] = d->t[4][k];
+        e->curve[0 + k] = d->t[0][k];
+        e->curve[2 + k] = d->t[1][k];
+        e->curve[4 + k] = d->t[2][k];
+        e->curve[6 + k] = d->t[3][k];
+        e->curve[8 + k] = d->t[4][k];
     }
     e->f1b0 = d->fb8;
     e->f1b4 = d->fbc;
@@ -328,12 +328,12 @@ void GameData::add_experience(int troop, int amount)
 
 // ---- spawning an effect emitter ---------------------------------------------------------------------------------------------------
 // @ 0x442ca0
-Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
+rgl::psys* Mission::spawn_effect(int idx, const mat4* m, int duration)
 {
-    Emit* e = (Emit*)((rgl::world*)scene)->alloc_emitter();
+    rgl::psys* e = ((rgl::world*)scene)->alloc_emitter();
     vector4 v(0.0f, 0.0f, 0.0f);
     g_emit_defs.setup(e, idx, &v);
-    e->world = *m * e->local;
+    e->mf4 = *m * e->m134;
     if (e->res != 0 && (e->res->flags & 0x40)) {
         EnvRow* c = &g_env_rows[cam];
         vector4 t;
@@ -343,10 +343,10 @@ Emit* Mission::spawn_effect(int idx, const mat4* m, int duration)
         v.x = t.x + c->base[0];
         v.y = t.y + c->base[1];
         v.z = t.z + c->base[2];
-        e->offs = v;
+        e->vd8 = v;
     }
     e->flags &= ~1u;
-    e->f19c = e->f1a0 = duration;
+    e->spawn_left = e->f1a0 = duration;
     e->f1a4 = 0;
     return e;
 }
