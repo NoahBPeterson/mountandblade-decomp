@@ -38,7 +38,7 @@ unsigned g_river_mask_a = (unsigned)g_bit[4];               // 0x5e2580
 
 
 
-const ivec2 g_nbr[8] = {{0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}};  // 0x591340 (rdata)
+const ivec2 g_nbr[9] = {{0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 0}};  // 0x591340 (rdata); entry 8 is the cell itself: order[0] = 8 in pick_triangle_types / accumulate_kinds reads it (the original's rdata has the zero pair there)
 const char* g_name_elevation = "ground_elevation";  // 0x5a9bf4
 const char* g_name_leveling = "ground_leveling";    // 0x5a9bf8
 

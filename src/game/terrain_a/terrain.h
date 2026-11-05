@@ -23,7 +23,7 @@ namespace rgl { struct world; }                                // terrain_b/cell
 namespace rgl { struct entity; }                // rgl/scene/scene_entity.h: scene entity (dust cell objects)
 struct SpawnSet;                                // terrain_b/terrain.h
 struct ivec2 { int dx, dy; };
-extern const ivec2 g_nbr[8];                         // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
+extern const ivec2 g_nbr[9];                         // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
 
 // ---- tables ---------------------------------------------------------------------------------------------------
 // ground type record (table of 11 at 0x8ed4df8, 0x20 bytes each): name, then the values copied into a layer (include/ground_type.h)
