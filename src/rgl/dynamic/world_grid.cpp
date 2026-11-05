@@ -44,10 +44,10 @@ void rgl::world::add_item(shape_base* e)
 // @ 0x423c80
 void rgl::world::relocate(shape_base* o)
 {
-    float tmp[3];
+    vector4 tmp;
     int2 nlo, nhi;
-    to_cell((const float*)o->get_min((vector4*)tmp), &nlo.x);
-    to_cell((const float*)o->get_max((vector4*)tmp), &nhi.x);
+    to_cell((const float*)o->get_min(&tmp), &nlo.x);
+    to_cell((const float*)o->get_max(&tmp), &nhi.x);
     if (nlo.x == o->min_x && nlo.y == o->min_y && nhi.x == o->max_x && nhi.y == o->max_y)
         return;
     const int2* lo = (const int2*)&o->min_x;
