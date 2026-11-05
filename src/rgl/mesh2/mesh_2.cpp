@@ -762,12 +762,12 @@ void ObjectList::read(stream_base* s)
         vector4 big(10000000.0f, 10000000.0f, 10000000.0f);
         vector4 neg(-10000000.0f, -10000000.0f, -10000000.0f);
         s->r_tstr(&entries[i].name);
-        entries[i].nodes.assign(as_mesh_vector(g_resmgr.find_meshes(&entries[i].name)));
+        entries[i].nodes = g_resmgr.find_meshes(&entries[i].name);
         entries[i].mn = big;
         entries[i].mx = neg;
-        for (unsigned j = 0; j < entries[i].nodev().size(); j++) {
+        for (unsigned j = 0; j < entries[i].nodes.size(); j++) {
             vector4 a, b;
-            mesh_node_bounds(entries[i].nodev()[j], &a, &b);
+            mesh_node_bounds(entries[i].nodes[j], &a, &b);
             merge_min(entries[i].mn, a);
             merge_max(entries[i].mx, b);
         }
@@ -816,13 +816,13 @@ void MissionObj::read(stream_base* s)
     s->r_tstr(&t0);
     if (t0.len > 1 && t0.differs(g_none)) {
         std::vector<rgl::mesh*> nodes = g_resmgr.find_meshes(&t0);
-        vec_assign_43f0a0(&nodes_, &as_mesh_vector(nodes));
+        nodes_ = nodes;
         unsigned j = 0;
         while (1) {
-            if (nodes_.begin == 0 || (nodes_.end - nodes_.begin) <= (int)j)
+            if (nodes_.size() <= j)
                 break;
             vector4 a, b;
-            mesh_node_bounds(nodes_.begin[j], &a, &b);
+            mesh_node_bounds(nodes_[j], &a, &b);
             vmax(&mx, &mx, &b);
             vmin(&mn, &mn, &a);
             j++;

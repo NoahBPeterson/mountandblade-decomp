@@ -524,7 +524,7 @@ void ptr_vec::pop_back_if()
 }
 
 // @ 0x438c10
-E1c8* vec1c8::at(int i) { return first + i; }
+template PlacedObj& std::vector<PlacedObj>::operator[](size_t);
 
 // @ 0x438c30
 int* IntVec::fill_ptr(int* f, unsigned n, const int& x)

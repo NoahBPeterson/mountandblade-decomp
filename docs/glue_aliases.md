@@ -3,7 +3,7 @@
 Each row is a name that source declares and calls, bound by the glue to the function our source defines under another name
 at the same original address (`glue.json` "aliases"; tools/relink/glue.py). Regenerate with a faithful build.
 
-Total: 88.  ICF 10  TWIN 8  VIEW 58  OTHER 12
+Total: 81.  ICF 10  TWIN 8  VIEW 51  OTHER 12
 
 - ICF: identical-code folding in the original linker; two different classes / instantiations share one address. Honest, cannot reach zero.
 - TWIN: deliberate visibility twin (`_def` / `_x` / `_ext`, MeshExt, TroopExt, AgentX, allocN). Waiting on a separate decision.
@@ -31,15 +31,11 @@ Total: 88.  ICF 10  TWIN 8  VIEW 58  OTHER 12
 | `??1owned_block@@QAE@XZ` | `?conv_clear@@YIXPAPAX@Z` | OTHER | owned_block (item_rec.h) dtor is the free function conv_clear(void**) in gui_edit.cpp (0x4c8bf0) |
 | `??4CfgRec@@QAEAAU0@ABU0@@Z` | `??$_Uninit_copy@Vconst_iterator@?$vector@Uloading_config@@V?$allocator@Uloading_config@@@std@@@std@@PAUload...` | ICF | CfgRec::operator= and vector<loading_config>::_Uninit_copy share 0x4e4340 (byte-identical bodies folded) |
 | `??4ptr_list@rgl@@QAEAAU01@ABU01@@Z` | `??4?$vector@HV?$allocator@H@std@@@std@@QAEAAV01@ABV01@@Z` | ICF | vector<T*>::operator= is one instance for all pointer element types (0x43f0a0); ptr_list derives from vector<void*> |
-| `??Dvec4@@QBE?AU0@ABM@Z` | `??Dvector4@rgl@@QBE?AU01@ABM@Z` | VIEW | script_interpreter.h vec4 : rgl::vector4 re-declares operator* (0x407cd0) |
 | `??Hiter32@rgl@@QBE?AU01@H@Z` | `??Hiterator@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBE?AV012@H@Z` | VIEW | iter32 (scene.h) / contact_inl: hand-rolled iterators for std::vector<point20>::iterator::operator+ (0x40f880) |
 | `??Hiterator@contact_inl@@QBE?AU01@H@Z` | `??Hiterator@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBE?AV012@H@Z` | VIEW | iter32 (scene.h) / contact_inl: hand-rolled iterators for std::vector<point20>::iterator::operator+ (0x40f880) |
-| `??Yvec4@@QAEXABUvector4@rgl@@@Z` | `?add@vec3@@QAEXABU1@@Z` | VIEW | script_interpreter.h vec4 re-declares rgl::vec3::add (0x40e420) |
 | `?RecD_dtor@@YIXPAX@Z` | `??1RecD@@QAE@XZ` | OTHER | fastcall free-function spelling of RecD::~RecD (0x431440) for a vector-constructor callback |
 | `?_Uninit_fill_n@std@@YAXPAUidx_weight@rgl@@IABU23@AAV?$allocator@Uidx_weight@rgl@@@1@U_Nonscalar_ptr_iterator_tag@1@@Z` | `??$_Uninit_fill_n@PAUE8@@IU1@V?$allocator@UE8@@@std@@@std@@YAXPAUE8@@IABU1@AAV?$allocator@UE8@@@0@U_Nonscal...` | ICF | vector<idx_weight>::_Uninit_fill_n and the E8 instance are identical (0x418150) |
 | `?apply@MapEditorDialog@@QAEXAA_NAAUvector4@rgl@@0AAUmat3@3@01AAD@Z` | `?apply@ViewCtrl_s2fe40@@QAEXPADPAM01010@Z` | VIEW | MapEditorDialog (mesh_3.h) is a view of ViewCtrl_s2fe40 |
-| `?assign@mesh_vector@@QAEXABU1@@Z` | `??4?$vector@HV?$allocator@H@std@@@std@@QAEAAV01@ABV01@@Z` | VIEW | hand-rolled mesh_vector (mesh_2.h) in place of std::vector, assign 0x43f0a0 |
-| `?at@PropVec@@QAEPAUPropInst@@H@Z` | `?at@vec1c8@@QAEPAUPlacedObj@@H@Z` | VIEW | PropVec / vec1c8 / PlacedObj: two classes for the placed-object vector (0x438c10) |
 | `?build_adjacency@MeshExt@@QAEXXZ` | `?build_adjacency@PolyMesh@@QAEXXZ` | TWIN | visibility twin MeshExt vs PolyMesh |
 | `?buy@?$vec@Umface@@@@QAE_NI@Z` | `?_Buy@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@IAE_NI@Z` | VIEW | hand-rolled vec<T> (mface / vector4) in place of std::vector, _Buy 0x4105c0 / 0x42d570 |
 | `?buy@?$vec@Uvector4@rgl@@@@QAE_NI@Z` | `?_Buy@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@IAE_NI@Z` | VIEW | hand-rolled vec<T> (mface / vector4) in place of std::vector, _Buy 0x4105c0 / 0x42d570 |
@@ -76,7 +72,6 @@ Total: 88.  ICF 10  TWIN 8  VIEW 58  OTHER 12
 | `?is_night@GameData@@QAE_NXZ` | `?is_night@@YA_NXZ` | OTHER | GameData::is_night is called with ecx = g_game from most sites and bare (no ecx) from 0x4b25e9 / 0x4b3951: one original function used as method and as free function (0x435740), so the free-function definition stays |
 | `?load_extras@SpawnRec@@QAEXAAUstream_base@@@Z` | `?load_extras@psys_record@@QAEXAAUstream_base@@@Z` | VIEW | SpawnRec / prsnt_record views of psys_record::load_extras (0x4bdd50) |
 | `?lower_bound@GlyphMap@@QAEXPAPAUGlyphNode@@PBH@Z` | `?lower_bound@?$_Hash@V?$_Hmap_traits@HUHashVal@@V?$hash_compare@HU?$less@H@std@@@stdext@@V?$allocator@U?$pa...` | VIEW | GlyphMap (font.h) hand-rolled hash map vs HashTab / _Hash lookups |
-| `?next_used@?$Pool@UMAgent@@@@QAEXPAI@Z` | `?next_used@AgentTable@@QAEXPAI@Z` | VIEW | Pool<MAgent> view of AgentTable::next_used (0x43b160) |
 | `?play@DialogBlock@@QAEDH@Z` | `?play@SlotChan@@QAEXH@Z` | VIEW | DialogBlock / snd_channel views of SlotChan::play (0x4875e0) |
 | `?play@ItemSound@@QAEXH@Z` | `?update@TimerList@@QAEXH@Z` | VIEW | ItemSound / SoundHolder views of TimerList::update (0x48add0) |
 | `?play@SoundHolder@@QAEXH@Z` | `?update@TimerList@@QAEXH@Z` | VIEW | ItemSound / SoundHolder views of TimerList::update (0x48add0) |
@@ -87,8 +82,6 @@ Total: 88.  ICF 10  TWIN 8  VIEW 58  OTHER 12
 | `?read@model_b@@QAEXPAX@Z` | `?read@MapSceneRec@@QAEXPAUMsStream@@@Z` | VIEW | model_b::read vs MapSceneRec::read: duplicate record type |
 | `?read_psys_rec@@YAPAXPAUstream_base@@PAD@Z` | `?read@psys_record@@SAPAXAAUstream_base@@PAD@Z` | OTHER | psys_record::read is a static member; trigger_vec.h declares it as the free function read_psys_rec (0x4bdc00) |
 | `?reset@Agent@@QAEXXZ` | `?reset@BigObj@@QAEXXZ` | ICF | Agent::reset and BigObj::reset are different classes with identical bytes (0x432080) |
-| `?rotate_2x2@Mat2_s2fe40@@QAEXM@Z` | `?rotate_2x2@rot2@@QAEXM@Z` | VIEW | Mat2_s2fe40 / mat2_s2cf60 duplicate the 2x2 rotation rot2 |
-| `?rotate_2x2@mat2_s2cf60@@QAEXM@Z` | `?rotate_2x2@rot2@@QAEXM@Z` | VIEW | Mat2_s2fe40 / mat2_s2cf60 duplicate the 2x2 rotation rot2 |
 | `?run@MapReset@@QAEXXZ` | `?compute_bounds@PointSet@@QAEXXZ` | VIEW | MapReset view of PointSet::compute_bounds (0x4704b0) |
 | `?scalar_delete@RecD@@QAEPAXI@Z` | `??_ERecD@@QAEPAXI@Z` | OTHER | RecD / RecI scalar-deleting destructor spelled as a member (0x431480 / 0x431810) |
 | `?set_fade@MapModel@@QAEXPBM@Z` | `?set_fade@PartyModel@@QAEXPBM@Z` | VIEW | MapModel view of PartyModel::set_fade (0x4b1800) |

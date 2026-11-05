@@ -177,17 +177,9 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 // the window/screen stack is g_windows.dq (a deque of screen ids; 0x10 = conversation)
 
 // ---- vectors and frames ----------------------------------------------------------------------------------------------
-// vec4: the vector4 members rgl.h does not declare
-struct vec4 : rgl::vector4 {
-    __forceinline vec4& operator=(const rgl::vector4& v) { *(rgl::vector4*)this = v; return *this; }   // inlined in execute(): the original copies the four floats in place
-    __forceinline vec4& set(const float& x_, const float& y_, const float& z_) { rgl::vector4::set(x_, y_, z_); return *this; }   // 0x407c30 (rgl::vector4::set)
-    vec4 operator*(const float& s) const;                       // 0x407cd0 (hidden return)
-    void operator+=(const rgl::vector4& o);                     // 0x40e420 (thiscall, ret 4)
-    __forceinline void rotate_b(float angle) { ((vec2x*)this)->rotate_b(angle); }   // 0x4327f0 (x / y about the z axis)
-};
-inline vec4& V(rgl::vector4& v) { return (vec4&)v; }
-struct Rot { vec4 s, f, u; };                                   // the rotation part of a frame
-__forceinline Rot identity3() { Rot r; identity3((rgl::mat3*)&r); return r; }      // (the interpreter's by-value spelling)
+// the interpreter's helper over the rgl vector type (0x4327f0 rotates x / y about the z axis)
+inline void rotate_b(rgl::vector4& v, float angle) { ((vec2x*)&v)->rotate_b(angle); }
+__forceinline rgl::mat3 identity3() { rgl::mat3 r; identity3((rgl::mat3*)&r); return r; }      // (the interpreter's by-value spelling)
 __forceinline rgl::matrix identity_frame() { rgl::matrix p; identity_pos((pos*)&p); return p; }    // (the interpreter's by-value spelling; item_kind.h: identity_pos)
 float __cdecl clamp(const float* v, const float* lo, const float* hi);    // 0x40e3d0
 // by-reference spellings of the clamp helpers: the helpers take pointers (agent.h / game_util.h declare them so; the original passes
@@ -583,6 +575,8 @@ struct PropInst {                       // 0x1c8-byte scene prop instance
     __forceinline void animate_to(const rgl::matrix* p, const float* seconds, const float* a3) { ((MissionView*)this)->setup((void*)p, (int*)seconds, (int*)a3); }   // 0x4897a0 (ret 0xc)
 };
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
+namespace std { template<> PlacedObj& vector<PlacedObj, allocator<PlacedObj> >::operator[](size_t); }   // 0x438c10 (agent2/agent_stats.cpp: the out-of-line instance)
+inline PropInst* prop_at(PropVec& v, int id) { return (PropInst*)&v[id]; }   // the script's view of the record; operator[] stays out of line (thiscall, ret 4)
 // the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)
 struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
 // TeamRec (0x16c bytes at mission +0x5280): src/game/mission.h

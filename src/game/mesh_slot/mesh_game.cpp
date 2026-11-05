@@ -552,7 +552,7 @@ struct PtrTableF {                      // the paged pointer table (count; the p
     char pad1c[4];
     // the iterators are the pool's own members (ecx = the table, not the record)
     void next_prop(unsigned* i) { ((Pool<RecJ>*)this)->next_used(i); }      // 0x474300 (thiscall, ret 4)
-    void next_agent(unsigned* i) { ((Pool<MAgent>*)this)->next_used(i); }   // 0x43b160 (thiscall, ret 4)
+    void next_agent(unsigned* i) { ((AgentTable*)this)->next_used(i); }   // 0x43b160 (AgentTable::next_used) (thiscall, ret 4)
 };
 typedef char assert_ptrtable[(sizeof(PtrTableF) == 0x20) ? 1 : -1];
 struct PropAnim {                       // the 0x1c8-byte prop tween record (PlacedObj)

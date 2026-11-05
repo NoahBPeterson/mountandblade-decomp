@@ -115,10 +115,6 @@ struct vecE1c8 : allocE1c8 {
     E1c8* ufill(E1c8* f, unsigned n, const E1c8& v);    // 0x43db60
 };
 #include "../../include/ptr_vec.h"
-struct vec1c8 {
-    int al; E1c8* first; E1c8* last; E1c8* end;
-    E1c8* at(int i);                                    // 0x438c10
-};
 #include "../int_vec.h"                                 // IntVec (was vec_int here: fill_ptr 0x438c30)
 // 0x4b2520 is defined (party2/party_2.cpp) as push_heap_elem over the 12-byte OpenItem record, which hnode mirrors (face, cost, priority)
 struct OpenItem { int node; float cost; float dist; OpenItem(const OpenItem& o) : node(o.node), cost(o.cost), dist(o.dist) {} };

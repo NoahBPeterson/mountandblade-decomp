@@ -157,26 +157,10 @@ struct SkelBone {                                               // the resource 
     vector4 vbc;                                                // +0xbc
     std::vector<R44> vcc;                                       // +0xcc (source +0x40)
 };
-// The 0x10-byte "vector" these records carry: a leading word followed by the usual begin/end/cap trio
-// (0x43f0a0 is the assignment, reading _Myfirst at +4 and _Mylast at +8).
-struct mesh_vector {
-    void* f0;                                                   // +0x00
-    mesh** begin;                                               // +0x04
-    mesh** end;                                                 // +0x08
-    mesh** cap;                                                 // +0x0c
-    mesh_vector() : begin(0), end(0), cap(0) {}                 // zeroes the trio, leaves f0
-    unsigned size() const { return begin ? (unsigned)(end - begin) : 0; }
-    void assign(const mesh_vector& o);                          // 0x43f0a0 (vector<scalar4>::operator=, thiscall ret 4)
-};
-// the by-value result of find_meshes: the temporary's inline destructor frees the buffer and zeroes the trio
-struct mesh_vector_tmp : mesh_vector {
-    ~mesh_vector_tmp() { if (begin) operator delete(begin); begin = 0; end = 0; cap = 0; }
-};
-
 struct named_object;
 namespace rgl { struct mesh; }
 #include "../resource.h"   // resmgr (global at 0x5d6fa0): the one class; find_meshes 0x41b960 (hidden return pointer first, ret 8)
-inline const mesh_vector& as_mesh_vector(const std::vector<rgl::mesh*>& v) { return *(const mesh_vector*)&v; }   // the same 0x10 bytes (allocator word, first, last, end)
+namespace std { template<> vector<rgl::mesh*, allocator<rgl::mesh*> >& vector<rgl::mesh*, allocator<rgl::mesh*> >::operator=(const vector<rgl::mesh*, allocator<rgl::mesh*> >&); }   // 0x43f0a0 (the out-of-line copy-assignment; the linker folded every pointer vector's onto vector<int>'s)
 
 // the 0x18-byte alternative-text record: its implicit ctor only builds the leading tstring
 struct alt_rec {
@@ -244,13 +228,12 @@ struct game_vec {                                               // the 12-byte r
 // 0x4cdfd0 fills a heap block: a header dword (count) followed by `count` records of 0x48 bytes.
 struct shape_entry {                                            // 0x48 bytes
     tstring name;                                               // +0x00
-    mesh_vector nodes;                                          // +0x10
+    std::vector<rgl::mesh*> nodes;                              // +0x10 (std::vector: allocator word, first, last, end)
     body_part* shape;                                           // +0x20 (0 when the name is "0")
     shape_base* body;                                           // +0x24 (shape->copy_shape())
     vector4 mn;                                                 // +0x28 (1e7f, merged with 0x438d80 bounds)
     vector4 mx;                                                 // +0x38 (-1e7f, merged with 0x438d80 bounds)
     shape_entry() : shape(0), body(0) {}
-    std::vector<mesh*>& nodev() { return *(std::vector<mesh*>*)&nodes; }   // the vector view (allocator lane at +0x10)
 };
 
 struct ObjectList {                                             // "0x4cdfd0's class"
@@ -271,7 +254,7 @@ struct MissionObj {
     vector4 frame;                                              // +0x28 (1,1,1; .w = 1.0f)
     int f38;                                                    // +0x38
     int f3c;                                                    // +0x3c
-    mesh_vector nodes_;                                         // +0x40 (mesh list; begin at +0x44)
+    std::vector<rgl::mesh*> nodes_;                                         // +0x40 (mesh list; begin at +0x44)
     body_part* shape;                                           // +0x50
     shape_base* body;                                           // +0x54
     vector4 v58;                                                // +0x58 (0,0,0; centre in read())
@@ -305,7 +288,6 @@ struct MissionRec2 {
     MissionRec2();                                              // 0x4ce680
 };
 
-inline void vec_assign_43f0a0(mesh_vector* self, const mesh_vector* other) { self->assign(*other); }
 
 
 

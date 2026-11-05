@@ -38,8 +38,6 @@ int __cdecl rand_below(const int* n);           // 0x432580 (0 when *n < 2, else
 inline Pool<MAgent>& agent_pool(Mission* m) { return *(Pool<MAgent>*)&m->agents; }
 inline Pool<RecJ>& pool_j(Mission* m) { return *(Pool<RecJ>*)m->poolJ; }
 
-template<> void Pool<MAgent>::next_used(unsigned* i);    // 0x43b160 (the agent table's iterator, in another object)
-
 #define MISSION_OFFSET_CHECK(m, off) typedef char Mission_##m##_at[(offsetof(Mission, m) == (off)) ? 1 : -1]
 MISSION_OFFSET_CHECK(agents, 0x4);
 MISSION_OFFSET_CHECK(poolJ, 0x30);

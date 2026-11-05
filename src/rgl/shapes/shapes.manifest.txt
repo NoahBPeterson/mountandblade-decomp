@@ -114,7 +114,7 @@
 ../src/rgl/shapes/shapes.cpp  ??$uninit_fill_n@Umface@@@@YAXPAUmface@@IABU0@AAV?$allocator@Umface@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z  0040e350  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?clamp@@YAMPBM00@Z  0040e3d0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?frand@@YAMXZ  0040e400  /O2 /MT /Gy /TP
-../src/rgl/shapes/shapes.cpp  ?add@vec3@@QAEXABU1@@Z  0040e420  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ??Yvector4@rgl@@QAEXABU01@@Z  0040e420  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?pack_color@rgl@@YAIPBUvector4@1@@Z  0040e440  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?unpack_color@rgl@@YA?AUvector4@1@PBI@Z  0040e4e0  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?rotate_about_s@matrix@rgl@@QAEXPBM@Z  0040e570  /O2 /MT /Gy /TP

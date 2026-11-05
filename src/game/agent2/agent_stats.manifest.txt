@@ -20,7 +20,7 @@
 ../src/game/agent2/agent_stats.cpp  ?adjust_heap_node@@YAXPAUhnode@@HHU1@Unode_gt@@@Z  00438b10  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?set_modifier@ItemRef@@QAEXH@Z  00438bc0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?pop_back_if@ptr_vec@@QAEXXZ  00438bf0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?at@vec1c8@@QAEPAUPlacedObj@@H@Z  00438c10  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ??A?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@QAEAAUPlacedObj@@I@Z  00438c10  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?fill_ptr@IntVec@@QAEPAHPAHIABH@Z  00438c30  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?fill1c8@@YAXPAUPlacedObj@@0ABU1@@Z  00438c60  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?ucopy@vec12@@QAEPAUE12@@PAU2@00@Z  00438c90  /O2 /MT /Gy /TP

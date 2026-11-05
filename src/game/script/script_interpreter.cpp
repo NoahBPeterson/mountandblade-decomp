@@ -555,7 +555,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     int si_0, si_1;
     unsigned su_0;
     float sf_0, sf_1, sf_2, sf_3;
-    vec4 sv_0;
+    rgl::vector4 sv_0;
     vector4 sv4_0;
     switch (opcode) {
 
@@ -1050,7 +1050,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::position_copy_rotation:
         if (check_register((int)params[0]) && check_register((int)params[1]))
-            *(Rot*)&script_pos((int)params[0]) = *(Rot*)&script_pos((int)params[1]);
+            *(rgl::mat3*)&script_pos((int)params[0]) = *(rgl::mat3*)&script_pos((int)params[1]);
         break;
     case op::position_copy_origin:
         if (check_register((int)params[0]) && check_register((int)params[1]))
@@ -1063,7 +1063,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[2])
                 script_pos((int)params[0]).o.x += sf_0;
             else
-                V(script_pos((int)params[0]).o) += sf_0 * script_pos((int)params[0]).s;
+                script_pos((int)params[0]).o += sf_0 * script_pos((int)params[0]).s;
         }
         break;
     case op::position_move_y:
@@ -1072,7 +1072,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[2])
                 script_pos((int)params[0]).o.y += sf_0;
             else
-                V(script_pos((int)params[0]).o) += sf_0 * script_pos((int)params[0]).f;
+                script_pos((int)params[0]).o += sf_0 * script_pos((int)params[0]).f;
         }
         break;
     case op::position_move_z:
@@ -1081,7 +1081,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[2])
                 script_pos((int)params[0]).o.z += d;
             else
-                V(script_pos((int)params[0]).o) += d * script_pos((int)params[0]).u;
+                script_pos((int)params[0]).o += d * script_pos((int)params[0]).u;
         }
         break;
     case op::position_rotate_x:
@@ -1102,9 +1102,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_0 = (float)params[1] * 0.017453292f;
             if (params[2]) {
                 rgl::matrix& p = script_pos((int)params[0]);
-                V(p.s).rotate_b(sf_0);
-                V(p.f).rotate_b(sf_0);
-                V(p.u).rotate_b(sf_0);
+                rotate_b(p.s, sf_0);
+                rotate_b(p.f, sf_0);
+                rotate_b(p.u, sf_0);
             } else
                 script_pos((int)params[0]).rotate_about_u(&sf_0);
         }
@@ -2384,7 +2384,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_position:
         if (check_register((int)params[0]) && check_party((int)params[1])) {
-            *(Rot*)&script_pos((int)params[0]) = identity3();
+            *(rgl::mat3*)&script_pos((int)params[0]) = identity3();
             script_pos((int)params[0]).o = party_pos(party((int)params[1]));
         }
         break;
@@ -2801,7 +2801,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::agent_get_look_position:
         if (check_register((int)params[0]) && warn_agent((int)params[1])) {
-            *(Rot*)&script_pos((int)params[0]) = identity3();
+            *(rgl::mat3*)&script_pos((int)params[0]) = identity3();
             rgl::matrix* dst = &script_pos((int)params[0]);
             AgentTable* t = &mission()->agents;
             int a = (int)params[1];
@@ -2819,7 +2819,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (t->get(a)->body)
                 script_pos((int)params[0]) = (rgl::matrix&)t->get(a)->body->m;      // the body frame (+0x58)
             else {
-                *(Rot*)&script_pos((int)params[0]) = identity3();
+                *(rgl::mat3*)&script_pos((int)params[0]) = identity3();
                 script_pos((int)params[0]).o = t->get(a)->pos;
             }
         }
@@ -3108,7 +3108,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             rgl::vector4* p = &script_pos((int)params[2]).o;
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
             si_0 = m->scene->nearest_face((const float*)p);
-            vec4 off;
+            rgl::vector4 off;
             TEAM_SEL(m, (int)params[0])->set_vec((const int*)p, &si_0, (const int*)&off.set(sf_2, sf_1, sf_0));
             mission()->unselect_team((int)params[0]);
         }
@@ -3196,11 +3196,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::prop_instance_get_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            script_pos((int)params[0]) = mission()->props.at((int)params[1])->frame;
+            script_pos((int)params[0]) = prop_at(mission()->props, (int)params[1])->frame;
         break;
     case op::prop_instance_get_starting_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            script_pos((int)params[0]) = mission()->props.at((int)params[1])->start_frame;
+            script_pos((int)params[0]) = prop_at(mission()->props, (int)params[1])->start_frame;
         break;
     case op::prop_instance_get_scale:
         // the scale as the diagonal of an otherwise identity frame
@@ -3209,21 +3209,21 @@ char Operation::execute(__int64* locals, int* context, int* error)
             *dst = identity_frame();
             PropVec* pv = &mission()->props;
             int k = (int)params[1];
-            dst->s.x = pv->at(k)->scale_x;
-            dst->f.y = pv->at(k)->scale_y;
-            dst->u.z = pv->at(k)->scale_z;
+            dst->s.x = prop_at(*pv, k)->scale_x;
+            dst->f.y = prop_at(*pv, k)->scale_y;
+            dst->u.z = prop_at(*pv, k)->scale_z;
         }
         break;
     case op::prop_instance_set_position:
         if (warn_scene_prop_instance((int)params[0]) && check_register((int)params[1]) && g_mission)
-            mission()->props.at((int)params[0])->set_position(&script_pos((int)params[1]));
+            prop_at(mission()->props, (int)params[0])->set_position(&script_pos((int)params[1]));
         break;
     case op::prop_instance_animate_to_position:
         // (prop_instance_animate_to_position, <scene_prop_id>, position, <duration-in-1/100-seconds>)
         if (warn_scene_prop_instance((int)params[0]) && check_register((int)params[1]) && g_mission) {
             sf_0 = 0;
             sf_1 = (float)params[2] * 0.01f;
-            mission()->props.at((int)params[0])->animate_to(&script_pos((int)params[1]), &sf_1, &sf_0);
+            prop_at(mission()->props, (int)params[0])->animate_to(&script_pos((int)params[1]), &sf_1, &sf_0);
         }
         break;
     case op::replace_scene_props:
@@ -3517,7 +3517,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[1] / g_script.fixed_point_multiplier;
-            vec4 c;
+            rgl::vector4 c;
             g_tableaus.add_point_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
         break;
@@ -3526,7 +3526,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[1] / g_script.fixed_point_multiplier;
-            vec4 c;
+            rgl::vector4 c;
             g_tableaus.add_sun_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
         break;
@@ -3642,7 +3642,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_1 = 1.0f / g_script.fixed_point_multiplier;
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]),
-                                &(V(script_pos((int)params[2]).o) * sf_1), &sf_0, (const unsigned*)&si_0);
+                                &(script_pos((int)params[2]).o * sf_1), &sf_0, (const unsigned*)&si_0);
         }
         break;
 

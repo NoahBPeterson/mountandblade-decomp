@@ -207,10 +207,7 @@ __forceinline void rotate_sf(const float& angle);             // 0x40e770  side/
 };
 __forceinline void identity3(mat3_s2cf60* m) { identity3((rgl::mat3*)m); }      // 0x40cd60 (cdecl)
 
-struct mat2_s2cf60 {                                       // 2x2 rotation matrix, 0x10 bytes
-    float m[4];
-void rotate_2x2(float angle);                       // 0x4f3b40 (thiscall, ret 4: the original passes the matrix in ecx; the definition in char_sheet/terrain_page_input.cpp declares it cdecl, so this one stays a view)
-};
+#include "../../include/rot2.h"                               // rot2: the 2x2 rotation matrix, rotate_2x2 0x4f3b40
 
 // ---- per-key input state ----------------------------------------------------------------------
 // Three 0x400-byte tables of per-scan-code ints at 0xa17000 / 0xa17400 / 0xa17800: held state,
@@ -779,16 +776,6 @@ struct Matrix12_s2fe40 {
     __forceinline void rotate_sf(const float* angle) { ((matrix*)this)->rotate_about_u(angle); }     // 0x40e770
 };
 __forceinline Matrix12_s2fe40* identity3(Matrix12_s2fe40* out) { return (Matrix12_s2fe40*)identity3((rgl::mat3*)out); }     // 0x40cd60
-
-struct Mat2_s2fe40 {
-    float m[4];
-    void rotate_2x2(float angle);                           // 0x4f3b40 (thiscall, ret 4; see mat2_s2cf60)
-};
-struct vector2_s2fe40 {
-    float x, y;
-    vector2_s2fe40() {}
-    vector2_s2fe40(float a, float b) : x(a), y(b) {}
-};
 
 // ---- the view object (`this`; +0x268 yaw, layout from s005284a0) --------------------------------------
 struct ViewCtrl_s2fe40 {

@@ -35,7 +35,6 @@ struct vec3 {
     float x, y, z;
     vec3() {}
     vec3(float a, float b, float c) { x = a; y = b; z = c; }
-    void add(const vec3& o);                     // 0x40e420
 };
 
 struct Vec3 {

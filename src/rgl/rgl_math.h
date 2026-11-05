@@ -30,6 +30,7 @@ struct vector4 {
     vector4 operator*(const float& s) const { return vector4(x * s, y * s, z * s); }           // 0x407cd0
 #endif
     vector4 operator+(const vector4& o) const { return vector4(x + o.x, y + o.y, z + o.z); }   // w left unset
+    void operator+=(const vector4& o);                                      // 0x40e420 (thiscall, ret 4; defined in shapes/shapes.cpp)
     float normalize();          // returns the old length; (0,1,0) if <= 1e-10  0x407d60
 };
 

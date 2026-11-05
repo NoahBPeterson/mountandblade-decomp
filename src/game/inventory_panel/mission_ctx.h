@@ -62,7 +62,7 @@ struct Team {                                           // the team record seen 
 // modules whose local views clash with inv_common.h can use the same class
 #include "./mission_ctx_rec.h"
 
-struct rot2 { float m[4]; void rotate_2x2(float angle); };  // 0x4f3b40 (game/char_sheet/terrain_page_input: thiscall, ret 4)
+#include "../../include/rot2.h"   // rot2: rotate_2x2 0x4f3b40 (game/char_sheet/terrain_page_input: thiscall, ret 4)
 // a 2x2 matrix (0x516220)
 struct mat2 {
     float m[4];

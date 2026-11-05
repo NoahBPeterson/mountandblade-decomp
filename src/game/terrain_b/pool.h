@@ -11,7 +11,7 @@ template<class T> struct Pool {
     std::vector<T*> pages;                      // +0x14 (first at +0x18; record i is pages[i >> 4][i & 15])
     int serial;                                 // +0x24
     bool valid(int i) { return i < next_id; }
-    void next_used(unsigned* i);                // 0x474300 (RecJ); the MAgent instance is declared in mission.h (0x43b160)
+    void next_used(unsigned* i);                // 0x474300 (RecJ); the agent table's iterator 0x43b160 is AgentTable::next_used (agent_obj.h)
     __forceinline unsigned first_used()         // 0x43b1b0 (inlined here)
     {
         unsigned i = 0;

@@ -1509,7 +1509,7 @@ float frand()
     return (float)(rand() % 15817) * (1.0f / 15817.0f);
 }
 // @ 0x40e420
-void vec3::add(const vec3& o)
+void rgl::vector4::operator+=(const rgl::vector4& o)
 {
     x = o.x + x;
     y = o.y + y;

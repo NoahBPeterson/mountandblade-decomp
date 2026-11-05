@@ -1903,7 +1903,7 @@ void Mission::update_team_stats()
                     teams[tid].cls[cl].sum.z = a.f50.z + teams[tid].cls[cl].sum.z;
                 }
             }
-            agent_pool(this).next_used(&i);
+            agents.next_used(&i);
         }
 
         for (t = 0; t < 8; t++) {
@@ -1935,7 +1935,7 @@ void Mission::update_team_stats()
                             tm_.leader = i2;
                         }
                     }
-                    agent_pool(this).next_used(&i2);
+                    agents.next_used(&i2);
                 }
             }
         }
@@ -1964,7 +1964,7 @@ void Mission::update_team_stats()
                         else if (tid == 0) a.view.v50e8.y = -0.7f;
                     }
                 }
-                agent_pool(this).next_used(&i3);
+                agents.next_used(&i3);
             }
         }
 
@@ -1997,7 +1997,7 @@ void Mission::update_team_stats()
                                 v.z = v.z + sd.z;
                             }
                         }
-                        agent_pool(this).next_used(&i4);
+                        agents.next_used(&i4);
                     }
                     v.z = 0.0f;
                     if (v.length() > 1e-11f) {
@@ -2017,7 +2017,7 @@ void Mission::update_team_stats()
             unsigned i5 = agent_pool(this).first_used();
             while (i5 < (unsigned)agent_pool(this).next_id) {
                 AGENT(this, i5).f55e8 = 0;
-                agent_pool(this).next_used(&i5);
+                agents.next_used(&i5);
             }
         }
         {
@@ -2026,7 +2026,7 @@ void Mission::update_team_stats()
                 int o = AGENT(this, i6).view.target;
                 if (o >= 0 && o < agent_pool(this).next_id && AGENT(this, o).f4 != 0)
                     AGENT(this, o).f55e8++;
-                agent_pool(this).next_used(&i6);
+                agents.next_used(&i6);
             }
         }
     }
@@ -2051,7 +2051,7 @@ void Mission::update_team_counts()
         MAgent& a = agent_pool(this).pages[i >> 4][i & 0xf];
         if (a.f10 == 0 && a.team >= 0 && a.team < 8)
             counts[a.team][a.f14]++;
-        agent_pool(this).next_used(&i);
+        agents.next_used(&i);
     }
     for (int t = 0; t < 8; t++) {
         for (int j = 0; j < 6; j++)

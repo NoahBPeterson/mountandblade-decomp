@@ -102,8 +102,8 @@ void MapEditor_s2cf60::update()
     // --- free drag: rotate the two 2x2 basis blocks by the editor's angle, then move the terrain
     //     along the rotated step ------------------------------------------------------------------
     if (g_keyboard.down[34] != 0) {
-        mat2_s2cf60 keep  = {{1.0f, 0.0f, 0.0f, 1.0f}};   // the original initialises a second identity block
-        mat2_s2cf60 basis = {{1.0f, 0.0f, 0.0f, 1.0f}};
+        rot2 keep  = {{1.0f, 0.0f, 0.0f, 1.0f}};   // the original initialises a second identity block
+        rot2 basis = {{1.0f, 0.0f, 0.0f, 1.0f}};
         basis.rotate_2x2(this->angle);
         float a = ((*(float*)((char*)&g_keyboard + 0x80c)) * dt) * 0.01;
         float b = ((*(float*)((char*)&g_keyboard + 0x810)) * dt) * 0.01;
@@ -1032,21 +1032,21 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
     *f2 = 0;
     *f3 = 0;
 
-    vector2_s2fe40 m[2];
+    rot2 m;
 
     if (g_keyboard.down[34] != 0) {
-        vector2_s2fe40 a = vector2_s2fe40(1.0f, 0.0f);
-        vector2_s2fe40 b = vector2_s2fe40(0.0f, 1.0f);
-        m[0] = a;
-        m[1] = b;
-        ((Mat2_s2fe40*)&m[0])->rotate_2x2(yaw);
+        m.m[0] = 1.0f;
+        m.m[1] = 0.0f;
+        m.m[2] = 0.0f;
+        m.m[3] = 1.0f;
+        m.rotate_2x2(yaw);
 
         float dx = (*(float*)((char*)&g_keyboard + 0x80c)) * k * 0.01;
-        pos[0] += m[0].x * dx;
-        pos[1] += m[0].y * dx;
+        pos[0] += m.m[0] * dx;
+        pos[1] += m.m[1] * dx;
         float dy = (*(float*)((char*)&g_keyboard + 0x810)) * k * 0.01;
-        pos[0] -= m[1].x * dy;
-        pos[1] -= m[1].y * dy;
+        pos[0] -= m.m[2] * dy;
+        pos[1] -= m.m[3] * dy;
         *f1 = 1;
         *f4 = 1;
     }
@@ -1128,7 +1128,7 @@ void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3
         vec[0] = 1.0f;
         vec[1] = 1.0f;
         vec[2] = 1.0f;
-        vec[3] = m[1].y;
+        vec[3] = m.m[3];
         *f3 = 1;
         *f4 = 1;
     }
