@@ -292,3 +292,73 @@ stream_base& mem_stream::r_stream(stream_base* o)
     }
     return *this;
 }
+
+// ---- the scene record's in-memory stream (bin_stream): the same slots, folded with mem_stream's by the original's linker ------
+stream_base& bin_stream::w_stream(stream_base* o)
+{
+    int n = o->buf.len - o->buf.pos;
+    TS(buf).write(&n, 4);
+    if (n > 0) {
+        const char* p;
+        if (o->buf.buf)
+            p = o->buf.pos + o->buf.buf;
+        else
+            p = (const char*)&o->buf.buf;
+        TS(buf).write(p, n);
+    }
+    return *this;
+}
+stream_base& bin_stream::w_cstr(const char* s)
+{
+    int n = strlen(s);
+    TS(buf).write(&n, 4);
+    TS(buf).write(s, n);
+    return *this;
+}
+stream_base& bin_stream::w_int(int* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_stream::w_i64(__int64* v) { TS(buf).write(v, 8); return *this; }
+stream_base& bin_stream::w_tstr(const rgl::string* s)
+{
+    int n = s->len;
+    TS(buf).write(&n, 4);
+    TS(buf).write(s->c_str(), n);
+    return *this;
+}
+stream_base& bin_stream::w_byte(unsigned char* v) { TS(buf).write(v, 1); return *this; }
+stream_base& bin_stream::r_tstr(rgl::string* v)
+{
+    int n;
+    r_int(&n);
+    v->assign("");
+    for (int i = 0; i < n; i++) {
+        char c;
+        TS(buf).read(&c, 1);
+        TS(*v).push_back(c);
+    }
+    return *this;
+}
+stream_base& bin_stream::r_byte(char* v) { TS(buf).read(v, 1); return *this; }
+stream_base& bin_stream::r_int(int* v) { TS(buf).read(v, 4); return *this; }
+stream_base& bin_stream::r_i64(__int64* v) { TS(buf).read(v, 8); return *this; }
+stream_base& bin_stream::w_float(float* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_stream::w_bool(char* v) { TS(buf).write(v, 1); return *this; }
+stream_base& bin_stream::w_u64(unsigned __int64* v) { TS(buf).write(v, 8); return *this; }
+stream_base& bin_stream::w_uint(unsigned* v) { TS(buf).write(v, 4); return *this; }
+stream_base& bin_stream::r_float(float* v) { TS(buf).read(v, 4); return *this; }
+stream_base& bin_stream::r_bool(char* v) { TS(buf).read(v, 1); return *this; }
+stream_base& bin_stream::r_u64(unsigned __int64* v) { TS(buf).read(v, 8); return *this; }
+stream_base& bin_stream::r_uint(unsigned* v) { TS(buf).read(v, 4); return *this; }
+stream_base& bin_stream::slot12(void* v) { return *this; }
+stream_base& bin_stream::slot22(void* v) { return *this; }
+stream_base& bin_stream::r_stream(stream_base* o)
+{
+    int n;
+    r_int(&n);
+    o->reset();
+    for (int i = 0; i < n; i++) {
+        char c;
+        TS(buf).read(&c, 1);
+        TS(o->buf).push_back(c);
+    }
+    return *this;
+}

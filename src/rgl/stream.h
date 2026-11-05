@@ -241,6 +241,14 @@ struct mem_stream : stream_base {
     ~mem_stream();                             // 0x417c90 (stream_inline.h: the inline copy)
 };
 
+// The in-memory stream of the scene record (vtable 0x54acf8; only the scene record's constructor 0x5248e0 builds one): mem_stream's
+// slots, each class with its own copy (/OPT:ICF folds them), but no user-declared destructor anywhere in its chain, so the
+// record's destructor leaves no vtable store behind (mem_stream's inline destructor would).
+struct bin_stream : stream_base {
+    STREAM_SLOTS
+    __forceinline bin_stream() {}
+};
+
 // The binary file reader's constructor level (no virtuals of its own, see text_reader_base).
 struct bin_reader_base : mem_stream {
     FILE* fp;                                  // +0x30

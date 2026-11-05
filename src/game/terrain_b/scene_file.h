@@ -18,9 +18,9 @@ struct RecVector : std::vector<PlacedObj> {
 // (named Scene before; collided with party/game.h's Scene) and mission5 (the full record) each saw one half of it; GameData's
 // Level494 (src/include/game_data.h) is the same record seen without the vtable.
 // the embedded file stream of the scene record (0x30 bytes: vptr, name, state, autoflush, flushed, buf; inline ctor)
-// vtable 0x54acf8: mem_stream's table, nothing overridden; the destructors of the scene record inline the user-declared mem_stream one
+// vtable 0x54acf8: bin_stream's (rgl/stream.h): mem_stream's slots without its user-declared destructor, so the scene record's destructor stores no vptr for it
 #include "../../rgl/stream_inline.h"
-struct file_stream_s : mem_stream {
+struct file_stream_s : bin_stream {
     file_stream_s() { state = 0; }
 };
 #include "../item_ref.h"           // ItemRef (the +0x114 pairs)
@@ -44,7 +44,7 @@ struct SceneFile : IfaceB {
     int ints314[0x40];                                          // +0x314
     file_stream_s s414;                                         // +0x414 ground-paint block (0x479000)
     file_stream_s s444;                                         // +0x444 terrain block
-    std::vector<tstring> v474;                                  // +0x474
+    std::vector<__int64> v474;                                  // +0x474 vector of 8-byte elements (char_sheet/save_state.cpp writes it with List8::write8 0x4e94b0)
     tstring f484;                                               // +0x484
     SceneFile();                                                // 0x5248e0
     virtual ~SceneFile();                                       // 0x431e10

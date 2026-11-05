@@ -72,12 +72,7 @@ TroopFile::~TroopFile() {}
 // @ 0x431d30
 void delete_recp_array(RecP* p) { delete[] p; }
 
-RecY::RecY() {}
-// @ 0x431e10
-RecY::~RecY() {}
-RecY* make_recy_array(int n) { return new RecY[n]; }
-// @ 0x431ec0
-void delete_recy_array(RecY* p) { delete[] p; }
+// 0x431e10 / 0x431ec0 are ~SceneFile and its vector deleting destructor (game/mission5/game_2.cpp: the compiler emits them with the constructor 0x5248e0)
 
 // 0x431f40 is the vector deleting destructor of the mission agent, MAgent (vtable 0x591848); the compiler emits it with MAgent's vtable
 // in game/terrain_b/terrain_b.cpp (MAgent::MAgent), where its row is.

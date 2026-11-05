@@ -64,30 +64,7 @@ struct RecP {
     ~RecP();
 };
 // (the 0x5ac8-byte IfaceA-derived record is Party, include/party.h: its ~Party 0x431b90 and vector deleting destructor 0x431cb0 are emitted with its constructor in game/world_data)
-// IfaceB-derived, 0x494 bytes, own vtable 0x590904. ~RecY 0x431e10, vector deleting dtor 0x431ec0.
-struct RecY : IfaceB {
-    tstring n0;                     // +0x10
-    tstring n1;                     // +0x20
-    char pad30[4];
-    tstring n2;                     // +0x34
-    tstring n3;                     // +0x44
-    char pad54[0x68 - 0x54];
-    tstring n4;                     // +0x68
-    char pad78[0x104 - 0x78];
-    std::vector<Item> items;        // +0x104
-    char pad114[0x418 - 0x114];
-    tstring n5;                     // +0x418
-    char pad428[0xc];
-    tstring n6;                     // +0x434
-    char pad444[4];
-    tstring n7;                     // +0x448
-    char pad458[0xc];
-    tstring n8;                     // +0x464
-    std::vector<int> v;             // +0x474
-    tstring n9;                     // +0x484
-    RecY();
-    virtual ~RecY();
-};
+// (the 0x494-byte IfaceB-derived scene record, vtable 0x590904, is SceneFile, game/terrain_b/scene_file.h: its ~SceneFile 0x431e10 and vector deleting destructor 0x431ec0 are emitted with its constructor 0x5248e0, in game/mission5/game_2.cpp)
 // 0x5340-byte object: the reset at 0x432080 clears five fields (offsets as stored there).
 struct BigObj {
     char pad[0x5340];

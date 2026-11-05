@@ -1250,6 +1250,9 @@ SceneFile::SceneFile()
     }
 }
 
+// @ 0x431e10
+SceneFile::~SceneFile() {}
+
 // @ 0x5249f0
 FactionFile::FactionFile()
 {

@@ -2,7 +2,7 @@
 // builders (map.txt, the tree meshes of the campaign map), the module-file loader Game::load_game_data (factions.txt,
 // skills.txt, troops.txt, scenes.txt, quests.txt, triggers.txt, simple_triggers.txt) and the record constructors / readers
 // it calls. The shared classes are used where they exist (Game: src/game/party/game.h; the Data\*.txt record classes are
-// the destructor-side classes of src/rgl/xmlcfg/records.h: RecS = troop, RecQ = quest, RecT = faction, RecY = scene);
+// the destructor-side classes of src/rgl/xmlcfg/records.h: RecS = troop, RecQ = quest, RecT = faction; the scene record's destructor is SceneFile's own);
 // this header adds only views of their padding (named ...View) and the classes that exist nowhere else. Offsets cite the
 // function that proves them.
 #ifndef MISSION5_GAME_2_H
