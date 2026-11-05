@@ -290,19 +290,6 @@ struct MeshData_s2da20 {
     int selected;                       // 0x7c
 };
 
-// The ray casters are declared only: at /O2 cl 13.10 summarises the body of a callee defined
-// earlier or later in the same TU and then hoists the loop-invariant vector reads out of the
-// picking loops below, which the original build (separate TU) could not do.  Calling through
-// this opaque view keeps the loops byte-identical.
-struct MeshImpl_s2da20 : MeshData_s2da20 {
-    void vert_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
-                  float* a, float* b);                          // 0x52dae0
-    void edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
-                  float* a, float* b);                          // 0x52dcc0
-    void poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
-                  float* dist);                                 // 0x52dfd0
-};
-
 namespace rgl {
 __forceinline void vec3_sub(vector4& out, const vector4& a, const vector4& b)   // 0x432830: out = a - b (xyz)
 { ::vec3_sub((Vec3*)&out, (const Vec3*)&a, (const Vec3*)&b); }

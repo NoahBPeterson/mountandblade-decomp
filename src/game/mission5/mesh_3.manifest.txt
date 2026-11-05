@@ -1,3 +1,1 @@
 ../src/game/mission5/mesh_3.cpp  ?pick_vert@Mesh_s2da20@@QAEIABUvector4@rgl@@0@Z  0052da20  /O2 /MT /Gy /TP
-../src/game/mission5/mesh_3.cpp  ?pick_edge@Mesh_s2da20@@QAEIABUvector4@rgl@@0@Z  0052dc00  /O2 /MT /Gy /TP
-../src/game/mission5/mesh_3.cpp  ?pick_poly@Mesh_s2da20@@QAEIABUvector4@rgl@@0@Z  0052df40  /O2 /MT /Gy /TP
