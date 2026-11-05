@@ -14,6 +14,7 @@
 #include <algorithm>
 #pragma intrinsic(sin, cos, fabs)
 #include "game_util.h"
+#include "key_groups.h"      // group_base: defined in key_groups.cpp (another object in the original)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
 #include "../../include/quaternion.h"
@@ -39,45 +40,6 @@ extern "C" {
 __declspec(dllimport) void __cdecl NewtonBodyGetMassMatrix(const NewtonBody* body, float* mass, float* ixx, float* iyy, float* izz);   // 0x549298
 __declspec(dllimport) void __cdecl NewtonBodyAddForce(const NewtonBody* body, const float* force);       // 0x54929c
 __declspec(dllimport) void __cdecl NewtonBodyAddTorque(const NewtonBody* body, const float* torque);     // 0x5492a0
-}
-
-// ---- control-id groups -------------------------------------------------------------------------------------------
-// Key-code test: false for the first code of each triple group_base() returns, 0xc7 + 3k.
-// @ 0x4320b0
-int __cdecl not_group_base(int x)
-{
-    int r = 1;
-    if (x == 0xc7 || x == 0xca || x == 0xcd || x == 0xd0 || x == 0xd3 || x == 0xd6 || x == 0xd9 ||
-        x == 0xdc || x == 0xdf || x == 0xe2 || x == 0xe5 || x == 0xe8 || x == 0xeb)
-        r = 0;
-    return r;
-}
-
-// Key codes in the Module System's header_triggers numbering: key_home 0xc7, key_up 0xc8, key_page_up 0xc9,
-// key_left 0xcb, key_right 0xcd, key_end 0xcf, key_down 0xd0, key_page_down 0xd1, key_insert 0xd2, key_delete 0xd3,
-// mouse buttons 0xe0..0xe7.
-// @ 0x432130
-int __cdecl group_base(int id)
-{
-    int r = -1;
-    if (id == 0xc7 || id == 0xc8 || id == 0xc9) {
-        r = 0xc7;
-    } else {
-        if (id == 0x97 || id == 0x98 || id == 0x99) return 0x97;
-        if (id == 0xca || id == 0xcb || id == 0xcc) return 0xca;
-        if (id == 0xcd || id == 0xce || id == 0xcf) return 0xcd;
-        if (id == 0xd0 || id == 0xd1 || id == 0xd2) return 0xd0;
-        if (id == 0xd3 || id == 0xd4 || id == 0xd5) return 0xd3;
-        if (id == 0xd6 || id == 0xd7 || id == 0xd8) return 0xd6;
-        if (id == 0xd9 || id == 0xda || id == 0xdb) return 0xd9;
-        if (id == 0xdc || id == 0xdd || id == 0xde) return 0xdc;
-        if (id == 0xdf || id == 0xe0 || id == 0xe1) return 0xdf;
-        if (id == 0xe2 || id == 0xe3 || id == 0xe4) return 0xe2;
-        if (id == 0xe5 || id == 0xe6 || id == 0xe7) return 0xe5;
-        if (id == 0xe8 || id == 0xe9 || id == 0xea) return 0xe8;
-        if (id == 0xeb || id == 0xec || id == 0xed) return 0xeb;
-    }
-    return r;
 }
 
 // ---- team relations ---------------------------------------------------------------------------------
@@ -175,13 +137,11 @@ int __stdcall in_id_set(int id)
     return r;
 }
 
-// The same function, declared (not visible as a definition) so cl does not assume its register use.
-int __cdecl group_base_ext(int id);   // 0x432130
 // @ 0x4326d0
 int __stdcall id_matches_dir(int id, int dir)
 {
     int res = 0;
-    int g = group_base_ext(id);
+    int g = group_base(id);
     if (g == 0xc7) {
         res = 1;
     } else if (g == 0xd9 || g == 0xcd || g == 0xe5) {

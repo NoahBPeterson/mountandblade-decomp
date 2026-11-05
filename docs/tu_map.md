@@ -116,3 +116,13 @@ function counts from the slice bookkeeping.
 (The framework, 0x401000..0x407c10, is already migrated: src/dxframework.)
 
 Totals over the game code: 1870 byte-exact, 1029 nonmatching, 332 partial, 50 missing, 1 not in a slice.
+
+## Visibility-twin splits (TU boundaries proved by codegen plus address evidence)
+
+A callee that the original's caller saw only as a declaration (a "visibility twin") proves the two lived in different
+objects: with the real callee visible, cl 13.10 uses its recorded register info and the caller no longer matches. The
+split is accepted only when the callee group is also a contiguous address block that ends where the callers begin.
+
+| new module | callee group (VA) | callers | codegen evidence | address evidence |
+|---|---|---|---|---|
+| `src/rgl/xmlcfg/key_groups.cpp` | `not_group_base` 0x4320b0, `group_base` 0x432130..0x432350 | `id_matches_dir` 0x4326d0 (game_util.cpp) | real `group_base` visible: `id_matches_dir` DIFF 109 bytes; declaration-only: exact | the block opens game_util's range and ends at 0x432350, where `AgentX::is_enemy` starts (its body must be visible to `is_neutral` 0x4323f0, so it is in the caller's object); the boundary is the one address 0x432350, no function interleaves |

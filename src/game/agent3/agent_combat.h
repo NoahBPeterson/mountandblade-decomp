@@ -58,7 +58,6 @@ float __cdecl accel_factor(const float* a, const float* b, const float* c);   //
 
 
 
-int __cdecl group_base(int id);                         // 0x432130
-int __cdecl not_group_base(int id);                     // 0x4320b0
+#include "../../rgl/xmlcfg/key_groups.h"                // group_base 0x432130, not_group_base 0x4320b0
 
 #endif // AGENT3_COMBAT_H

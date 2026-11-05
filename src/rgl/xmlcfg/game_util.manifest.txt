@@ -1,5 +1,3 @@
-../src/rgl/xmlcfg/game_util.cpp  ?not_group_base@@YAHH@Z  004320b0  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/game_util.cpp  ?group_base@@YAHH@Z  00432130  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?is_enemy@AgentX@@QBE_NPBUAgent@@@Z  00432350  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?is_friend@Agent@@QBE_NPBU1@@Z  004323a0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?is_neutral@Agent@@QBEHPBU1@@Z  004323f0  /O2 /MT /Gy /TP

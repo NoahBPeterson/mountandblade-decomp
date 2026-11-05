@@ -15,8 +15,7 @@
 #include "../../game/agent/agent.h"
 
 // ---- key-code groups (ids 0x97.., 0xc7..0xed come in triples; Module System header_triggers key_* numbering) ----
-int __cdecl not_group_base(int x);          // 0x4320b0 false for the first code of each triple group_base() returns
-int __cdecl group_base(int id);             // 0x432130 first id of the triple, -1 otherwise
+// not_group_base 0x4320b0 and group_base 0x432130: key_groups.h
 int __stdcall in_id_set(int id);            // 0x432640
 int __stdcall id_matches_dir(int id, int dir);   // 0x4326d0 (dir 0..3 = the four arrow-key groups)
 

@@ -1,0 +1,2 @@
+../src/rgl/xmlcfg/key_groups.cpp  ?not_group_base@@YAHH@Z  004320b0  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/key_groups.cpp  ?group_base@@YAHH@Z  00432130  /O2 /MT /Gy /TP
