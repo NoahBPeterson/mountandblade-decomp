@@ -3,7 +3,7 @@
 Each row is a name that source declares and calls, bound by the glue to the function our source defines under another name
 at the same original address (`glue.json` "aliases"; tools/relink/glue.py). Regenerate with a faithful build.
 
-Total: 22.  ICF 8  TWIN 0  VIEW 10  OTHER 4
+Total: 12.  ICF 8  TWIN 0  VIEW 0  OTHER 4
 
 - ICF: identical-code folding in the original linker; two different classes / instantiations share one address. Honest, cannot reach zero.
 - TWIN: deliberate visibility twin (`_def` / `_x` / `_ext`, MeshExt, TroopExt, AgentX, allocN). Waiting on a separate decision.
@@ -19,9 +19,6 @@ Total: 22.  ICF 8  TWIN 0  VIEW 10  OTHER 4
 | `?destroy@RecI@@QAEPAXI@Z` | `??_ERecI@@QAEPAXI@Z` | OTHER | RecD / RecI scalar-deleting destructor spelled as a member (0x431480 / 0x431810) |
 | `?display_name@ItemKind@@QAEPAUtstring@@XZ` | `?display_name@TroopRec@@QAEPAUtstring@@XZ` | ICF | ItemKind::display_name and TroopRec::display_name are identical (0x43a480) |
 | `?identity_pos@rgl@@YA?AUframe_value@1@XZ` | `?identity_pos@rgl@@YAPAUmatrix@1@PAU21@@Z` | OTHER | second prototype of rgl::identity_pos (returns frame_value by hidden pointer vs matrix*), 0x40cd00 |
-| `?insert@GlyphMap@@QAEXPAXPBH@Z` | `?insert@HashTab@@QAEXPAUHOut@@PAI@Z` | VIEW | GlyphMap (font.h) hand-rolled hash map vs HashTab / _Hash lookups |
-| `?insert_n@IntVec@@QAEXPAHIPBH@Z` | `?_Insert_n@?$vector@PAURecJ@@V?$allocator@PAURecJ@@@std@@@std@@IAEXViterator@12@IABQAURecJ@@@Z` | VIEW | IntVec (int_vec.h) is a vector<int> view; the instance is vector<RecJ*>::_Insert_n (0x43e7b0) |
-| `?lower_bound@GlyphMap@@QAEXPAPAUGlyphNode@@PBH@Z` | `?lower_bound@?$_Hash@V?$_Hmap_traits@HUHashVal@@V?$hash_compare@HU?$less@H@std@@@stdext@@V?$allocator@U?$pa...` | VIEW | GlyphMap (font.h) hand-rolled hash map vs HashTab / _Hash lookups |
 | `?push_back@mesh_ptr_vec@@QAEXABQAUmesh@rgl@@@Z` | `?push_back@?$vector@PAUscene@rgl@@V?$allocator@PAUscene@rgl@@@std@@@std@@QAEXABQAUscene@rgl@@@Z` | ICF | vector<T*>::push_back is one instance; mesh_ptr_vec : vector<mesh*> (0x4119d0) |
 | `?reset@Agent@@QAEXXZ` | `?reset@BigObj@@QAEXXZ` | ICF | Agent::reset and BigObj::reset are different classes with identical bytes (0x432080) |
 | `?scalar_delete@RecD@@QAEPAXI@Z` | `??_ERecD@@QAEPAXI@Z` | OTHER | RecD / RecI scalar-deleting destructor spelled as a member (0x431480 / 0x431810) |
