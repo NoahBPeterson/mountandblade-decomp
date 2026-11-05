@@ -69,6 +69,7 @@ __forceinline stream_base& open_module_file(tstream3& s, const char* name)
 struct MissionObj {
     char data[0x78];
     MissionObj();                                      // 0x4ce2a0
+    ~MissionObj() {}                                   // user-declared: `new MissionObj[n]` stores the element count in front (0x50da3a), which 0x4c7ee0 reads back
     void read(stream_base* s);                       // 0x4ce360
 };
 // the array-deleting destructors of the four record arrays, as the definitions declare them (the loader calls them with the
