@@ -15,6 +15,8 @@ import argparse, multiprocessing, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import heavy                                    # machine-wide worker-pool gate (heavy.py)
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 
 STRUCT_RE = re.compile(r"^(struct|class)\s+(?:__declspec\([^)]*\)\s*)?([A-Za-z_]\w*)\s*(?::[^{;]*)?\{")
@@ -131,7 +133,7 @@ def main():
             seen.add(f)
             entries += [(n, m, o, os.path.relpath(f, ROOT), l) for n, m, o, l in structs(f)]
         jobs.append((src, flags, entries))
-    with multiprocessing.Pool(a.jobs) as pool:
+    with multiprocessing.Pool(heavy.pool_jobs(a.jobs)) as pool:
         results = [r for rs in pool.map(check_one, jobs, chunksize=1) for r in rs]
     bad = [(e, act) for e, act, st in results if st == "bad"]
     unchecked = [e for e, _a, st in results if st == "unchecked"]

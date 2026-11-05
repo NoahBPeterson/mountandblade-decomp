@@ -22,6 +22,8 @@ import argparse, collections, difflib, json, multiprocessing, os, re, struct, sy
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import heavy                                    # machine-wide worker-pool gate (heavy.py)
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 RMAP = os.path.join(ROOT, "work", "relink", "standalone", "resolve_map.json")
@@ -370,7 +372,7 @@ def main():
                     exact.add(int(p[2], 16))
         jobs.append((src, flags, vas, exact if not a.all else set()))
     if a.jobs > 1 and len(jobs) > 1:
-        with multiprocessing.Pool(a.jobs) as pool:
+        with multiprocessing.Pool(heavy.pool_jobs(a.jobs)) as pool:
             rows = [r for rs in pool.map(one_module, jobs, chunksize=1) for r in rs]
     else:
         rows = [r for j in jobs for r in one_module(j)]

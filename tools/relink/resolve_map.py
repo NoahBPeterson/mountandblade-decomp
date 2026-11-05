@@ -17,6 +17,8 @@ import argparse, collections, glob, json, multiprocessing, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import heavy                                    # machine-wide worker-pool gate (heavy.py)
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 
 ROW_RE = re.compile(r"[0-9a-fA-F]{8}")
@@ -289,7 +291,7 @@ def main():
     t_keys = time.time() - t0
     t0 = time.time()
     if todo:
-        with multiprocessing.Pool(min(a.jobs, len(todo))) as pool:
+        with multiprocessing.Pool(heavy.pool_jobs(min(a.jobs, len(todo)))) as pool:
             got = pool.map(one_module, [jobs[i] for i in todo], chunksize=1)
         os.makedirs(CACHE_DIR, exist_ok=True)
         for i, key, r in zip(todo, keys, got):

@@ -33,6 +33,8 @@ import argparse, collections, json, multiprocessing, os, re, struct, subprocess,
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import heavy                                    # machine-wide worker-pool gate (heavy.py)
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -199,7 +201,7 @@ def claimed_sizes(jobs_n):
             seen.add(f)
             entries += [(n, a, os.path.relpath(f, ROOT), l) for n, a, l in decls(f)]
         jobs.append((src, flags, entries))
-    with multiprocessing.Pool(jobs_n) as pool:
+    with multiprocessing.Pool(heavy.pool_jobs(jobs_n)) as pool:
         res = [r for rs in pool.map(probe_one, jobs, chunksize=1) for r in rs]
     claims = collections.defaultdict(list)           # address -> [(size, name, file:line)]
     for name, addr, f, line, size in res:
