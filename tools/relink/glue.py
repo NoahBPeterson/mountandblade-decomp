@@ -8,20 +8,14 @@ Reads the last trial link's unresolved symbols (work/relink/link.log) and the re
 (work/relink/resolve_map.json: the original address the equivalence harness gives every symbol a module references),
 and writes:
 
-  mb_data.obj     the original image's .rdata, initialised .data and .bss, as three sections of one object, with
-                  a label for every unresolved data symbol at its original offset (so code that indexes from one
-                  global into its neighbours, as the original does, still lands where it did). The image has no base
-                  relocations, so pointers inside the data are found by value: a 4-aligned dword that is the
-                  address of a function start, or of anything in the data sections, and is not part of a string.
-                  Data pointers become section-relative relocations; code pointers point at the function our
-                  source defines at that address, the library function at that address (symbols/lib_names.txt),
-                  or else a trap (int 3, one per missing address, listed in glue.json).
   aliases         /alternatename directives (link 7.10 ignores one whose left side is a template name, ??$...:
-                  such a call must name the definition in source) (in mb_data.obj's .drectve) for every unresolved symbol whose address
+                  such a call must name the definition in source) (mb_glue.obj's .drectve) for every unresolved symbol whose address
                   is a function our source defines under another name or signature, a CRT function, or an import.
   imports/*.lib   import libraries for the DLLs the game ships without one (Newton, FMOD 3, SkinMagic, d3dx9_31),
                   made with link /lib from the original's import names, decorated as the DLL exports them.
   glue.json       what was done, and every symbol left unresolved, with the reason.
+
+A symbol that resolves to the original's data with no definition in our source stops the build: the exe holds no copy of that data.
 """
 import argparse, bisect, collections, json, os, re, struct, subprocess, sys
 
@@ -38,23 +32,17 @@ DLL_FILES = {"newton": "Newton.dll", "fmod": "fmod.dll", "skinmagic": "SkinMagic
 # argument bytes of the SkinMagic entry points the game calls (all stdcall; the DLL exports them undecorated)
 SKINMAGIC_ARGS = {"InitSkinMagicLib": 16, "ExitSkinMagicLib": 0, "LoadSkinFile": 4, "SetSingleDialogSkin": 8}
 
-# MB_COPY_GUARD=1 (a diagnostic build, tools/relink/guard_copy.py): the copy gets PE sections of its own, so they can be made no-access.
-_G = os.environ.get("MB_COPY_GUARD")
-RDATA = (".mbro" if _G else ".rdata$mb", 0x549000, 0x5a7d72)
+# The original's data sections, by address: resolve_map names, the data_values gate and data_coverage.py compare against them.
+RDATA = (".rdata", 0x549000, 0x5a7d72)
 # The original's .data is one section: initialised bytes, then .bss from 0x5d7000. The linker places our copies of
 # the two apart, so the cut between them must not fall inside an object: the resource manager at 0x5d6fa0 is 0xe0
 # bytes and straddles 0x5d7000 (its tail landed on DXUtil_Timer's statics). The copy of the initialised part
 # therefore runs on to 0x5d7080, where the next object (the gui manager, g_gui) starts; those 0x80 bytes are zeros.
-DATA = (".mbrw" if _G else ".data$mb", 0x5a8000, 0x5d7080)
-BSS = (".mbzi" if _G else ".bss$mb", 0x5d7080, 0x8ee5b94)
+DATA = (".data", 0x5a8000, 0x5d7080)
+BSS = (".bss", 0x5d7080, 0x8ee5b94)
 TEXT_LO, TEXT_HI = 0x401000, 0x548578
 IAT_LO, IAT_HI = 0x549000, 0x5494c8
-# Original data our exe replaces and never reads: not copied (left zero). The CRT initializer / terminator tables are
-# the .CRT$XCA..XCZ, XIA..XIZ, XPA..XPZ, XTA..XTZ ranges at the start of .data (0x5a8000..0x5a80f4: the game's
-# static_init stubs, then libcmt's own entries). Our exe runs the tables the linker builds from our objects (static_init.cpp's
-# .CRT$XCU) and libcmt's, whose __xc_a/__xi_a/... are libcmt symbols, so nothing of ours addresses the copy. build.py
-# and glue.py refuse to link when a data label, a pointer in the remaining copy, a literal address or a vtable root
-# reaches a dead range (check_dead_ranges), the way the trap gate does for traps.
+# Original data that no live code reads, which data_coverage.py leaves out of its counts.
 DEAD_RANGES = (
     (0x5a8000, 0x5a80f4, "CRT initializer/terminator tables .CRT$XCA..XTZ"),
     # strings and tables only the original's own pointer tables reached (data_coverage.py "reached through tables"). The
@@ -72,93 +60,6 @@ DEAD_RANGES = (
     # name strings up to 0x5d5cf4 that the original's EH tables reached
     (0x5aa3b8, 0x5d5cb0, "activation library data (code dropped by /OPT:REF); the RTTI type descriptors after it stay"),
 )
-
-# The original's copy of an object our source defines: the exe uses our definition, so the copy's bytes are never read
-# (a pointer to the object is relocated to ours, a name at its address is an alias of ours). Not copied (left zero), which
-# also drops the pointers it holds from what the dead-range gate checks. Sizes are the source declarations' (the data gate
-# proves each definition is at least as large as what the original's code addresses).
-SUPERSEDED = (
-    (0x5a9070, 0x5a90b0, "TiXmlBase::errorString[16] (tinyxmlparser.cpp)"),
-    (0x5a90b0, 0x5a90ec, "TiXmlBase::entity[5] (tinyxmlparser.cpp)"),
-    (0x5a9bf4, 0x5a9bfc, "g_name_elevation, g_name_leveling (terrain_a.cpp)"),
-    (0x5a9c98, 0x5a9ca4, "g_conv_names[3] (gui_edit.cpp)"),
-)
-
-
-# Dead tables found by content, inside windows. Their records are interleaved with live data (the ctype table, month
-# names, error strings), so a window is not zeroed whole; the dwords that are dead are:
-#   - a seed: a dword that points at original code we do not define (what would become a trap) and lies in a window.
-#     Those are the cleanup / catch funclets of the original's C++ EH maps and libcmt's locale / stdio code, whose
-#     functions our build recompiles (cl emits its own maps; our __ehhandler thunks name ours) or takes from libcmt.lib;
-#   - a referrer: a dword in a window that points at (or up to 20 bytes before) a dead dword, i.e. the try-block /
-#     handler-array / unwind-map / FuncInfo pointer chain that leads to a seed. Only the original's own __ehhandler
-#     immediates (code we do not link) reach the head of such a chain.
-# The windows are the three groups of the trap classification (docs/standalone_traps.md).
-DEAD_WINDOWS = (
-    (0x59c6d8, 0x59cf24, "libcmt EH / locale funclet tables (.rdata)"),
-    (0x5a0898, 0x5a60f4, "FuncInfo / unwind / try / catch maps of recompiled functions (.rdata)"),
-    (0x5d12a8, 0x5d12ac, "libcmt static (.data)"),
-    (0x5d5cf8, 0x5d6160, "libcmt statics (.data)"),
-)
-TYPE_INFO_VFTABLE = 0x59ca6c    # the original's type_info vftable (libcmt typinfo.obj); the glue binds libcmt's
-CHAIN_REACH = 0x14           # a chain pointer may address a record up to 20 bytes before its dead dword
-
-
-def in_window(va):
-    return any(lo <= va < hi for lo, hi, _w in DEAD_WINDOWS)
-
-
-def object_end(start, starts, runs=None):
-    """End of the object that begins at `start`: the next referenced / labelled address (the way trap_report.py
-    delimits objects), at least 4 bytes; inside a run of code pointers (a vtable's slots; `runs` is a sorted list of
-    [start, bytes]) it ends where the run does."""
-    i = bisect.bisect_right(starts, start)
-    end = max(start + 4, starts[i]) if i < len(starts) else start + 4
-    if runs:
-        j = bisect.bisect_right(runs, [start, 1 << 32]) - 1
-        if j >= 0 and start < runs[j][0] + runs[j][1]:
-            end = min(end, runs[j][0] + runs[j][1])
-    return end
-
-
-def dead_in(lo, hi, dead_sorted):
-    """The dead dwords inside [lo, hi)."""
-    i = bisect.bisect_left(dead_sorted, lo)
-    out = []
-    while i < len(dead_sorted) and dead_sorted[i] < hi:
-        out.append(dead_sorted[i])
-        i += 1
-    return out
-
-
-def ranges_of(dead_sorted):
-    out = []
-    for w in dead_sorted:
-        if out and out[-1][1] == w:
-            out[-1][1] = w + 4
-        else:
-            out.append([w, w + 4])
-    return out
-
-
-# dwords in the copy that equal a dead-range address by accident: 0x5d3ef4 sits inside a table of 16-bit entries
-# (80 00 4f 00 80 50 ...: bytes 0x5a 0x00 0x80 0x00 here), not a pointer; 0x5d60fc holds 0x5ba2e8 inside the CRT's
-# 16-bit character-class tables (... a2cf a2e4 001a a2e5 a2e8 005b ...); 0x5a67c8 holds 0x5d0000 across the end of
-# "NewtonRagDollBegin" and the start of the next import name; 0x5a1958 is the 4 bytes of the string "./\" (2e 2f 5c 00)
-NOT_POINTERS = (0x5d3ef4, 0x5d60fc, 0x5a67c8, 0x5a1958)
-
-
-def in_superseded(va):
-    return next((r for r in SUPERSEDED if r[0] <= va < r[1]), None)
-
-
-def in_dead_range(va):
-    return next((r for r in DEAD_RANGES if r[0] <= va < r[1]), None)
-
-
-
-
-# ------------------------------------------------------------------ archives
 
 def archive_symbols(path):
     """Public symbol names of a COFF archive (first linker member)."""
@@ -274,21 +175,6 @@ def unresolved_symbols(log):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from trial_link import parse_unresolved
     return set(parse_unresolved(log))
-
-
-def string_mask(b):
-    """Byte positions inside a printable run of 4+ characters ended by NUL (C strings). A string starts on a 4-byte
-    boundary or right after a NUL: the tail of a float before a vtable (0.01f = 0a d7 23 3c, then 0x417730 =
-    30 77 41 00 reads "#<0wA") is not one."""
-    mask = bytearray(len(b))
-    for m in re.finditer(rb"[\x20-\x7e\t\r\n]{4,}(?=\0)", b):
-        st = m.start()
-        while st % 4 and b[st - 1] != 0:
-            st += 1                                      # skip a non-string prefix up to the next boundary
-        if m.end() - st < 4:
-            continue                                     # (a pointer from a boundary is 3 bytes and its 00)
-        mask[st:m.end()] = b"\1" * (m.end() - st)
-    return mask
 
 
 def call_conv(name):
@@ -446,9 +332,9 @@ def main():
         return ("__imp_" + dec) if data else dec
 
     obj = Obj()
-    report = {"labels": 0, "aliases": {}, "unresolved": {}, "traps": {}, "conflicts": {}, "pointers": collections.Counter()}
+    report = {"labels": [], "aliases": {}, "unresolved": {}, "traps": {}, "conflicts": {}}
     aliases = {}
-    labels = {}       # name -> (section, offset)
+    labels = {}       # name -> original data address, with no definition of ours: an error below
 
     def code_target(va):
         for _ in range(4):       # a library jump stub (jmp rel32) stands for its target: 0x535712 -> _free
@@ -504,8 +390,7 @@ def main():
             if va in our_data and our_data[va] != s:
                 aliases[s] = our_data[va]
             else:
-                sec = section_of(va)
-                labels[s] = (sec, va - sec[1])
+                labels[s] = va
             continue
         if TEXT_LO <= va < TEXT_HI:
             t, kind = code_target(va)
@@ -523,152 +408,18 @@ def main():
             continue
         report["unresolved"][s] = "address %08x outside the image sections" % va
 
-    # sections
-    secno = {}
-    for sec in (RDATA, DATA):
-        data = bytearray(img.read(sec[1], sec[2] - sec[1]))
-        if len(data) < sec[2] - sec[1]:
-            data += b"\0" * (sec[2] - sec[1] - len(data))
-        secno[sec[0]] = obj.section(sec[0], SCN_DATA_R if sec is RDATA else SCN_DATA_RW, data)
-    secno[BSS[0]] = obj.section(BSS[0], SCN_BSS, None, BSS[2] - BSS[1])
-    traps = {}
-    trap_code = bytearray()
-    for lo, hi, _why in DEAD_RANGES:
-        sec = section_of(lo)
-        obj.sections[secno[sec[0]] - 1]["data"][lo - sec[1]:hi - sec[1]] = b"\0" * (hi - lo)
-    for lo, hi, _why in SUPERSEDED:
-        sec = section_of(lo)
-        obj.sections[secno[sec[0]] - 1]["data"][lo - sec[1]:hi - sec[1]] = b"\0" * (hi - lo)
-    reach = []
-    for n, (sec, off) in sorted(labels.items()):
-        r = in_superseded(sec[1] + off)
-        if r:
-            reach.append("label %s at %08x inside the superseded copy of %s" % (n, sec[1] + off, r[2]))
-        if in_dead_range(sec[1] + off):
-            reach.append("label %s at %08x" % (n, sec[1] + off))
-    for v, n in our_data.items():
-        if in_dead_range(v):
-            reach.append("definition %s at %08x" % (n, v))
-    # dead tables found by content (DEAD_WINDOWS): seeds, then the chain of dwords that lead to them
-    words = {}
-    in_string, str_starts = set(), set()
-    for sec in (RDATA, DATA):
-        data = obj.sections[secno[sec[0]] - 1]["data"]
-        mask = string_mask(bytes(data))
-        for i, m in enumerate(mask):
-            if m:
-                in_string.add(sec[1] + i)
-                if i == 0 or not mask[i - 1]:
-                    str_starts.add(sec[1] + i)
-        for off in range(0, len(data) - 3, 4):
-            va_here = sec[1] + off
-            if not (IAT_LO <= va_here < IAT_HI or any(mask[off:off + 4])):
-                words[va_here] = struct.unpack_from("<I", data, off)[0]
-    dead = {w for w, v in words.items() if in_window(w) and TEXT_LO <= v < TEXT_HI and v in img.start_set
-            and code_target(v)[0] is None}
-    nseeds = len(dead)
-    # a pointer into a C string (weekday names at 0x5a1640, a message at 0x5a1654) is not a link in an EH chain
-    # and the first dword of a record of these tables is a small count / index, -1 (an unwind entry's toState) or the
-    # FuncInfo magic: a pointer to "Sun\0" (0x6e7553) or to the first word of a function-pointer table is not a link
-    heads = dict(words)
-    def head_ok(v):
-        h = heads.get(v)
-        return h is not None and (h < 0x100 or h == 0xffffffff or h == 0x19930520)
-    refs_in = lambda v: v % 4 == 0 and v not in in_string and head_ok(v) and any(v + k in dead for k in range(0, CHAIN_REACH + 1, 4))
-    funcinfos = [w for w, v in words.items() if v == 0x19930520 and in_window(w)]   # FuncInfo: magic, 6 more fields
-    todo = True
-    while todo:
-        todo = False
-        for fi in funcinfos:
-            span = [fi + 4 * i for i in range(7)]
-            if any(x in dead for x in span) and not all(x in dead for x in span):
-                dead.update(x for x in span if x in words)       # a FuncInfo whose chain is dead is dead whole
-                todo = True
-        for w, v in words.items():
-            if w not in dead and in_window(w) and w not in NOT_POINTERS and refs_in(v):
-                dead.add(w)
-                todo = True
-    for w in dead:
-        sec = section_of(w)
-        struct.pack_into("<I", obj.sections[secno[sec[0]] - 1]["data"], w - sec[1], 0)
-        words[w] = 0
-    dead_sorted = sorted(dead)
-    starts = set(v for w, v in words.items() if RDATA[1] <= v < DATA[2]) | set(sec[1] + off for sec, off in labels.values()) | set(our_data) | str_starts
-    starts = sorted(starts)
-    runs = []                   # maximal runs of code pointers: [start, bytes] (vtables and function-pointer tables)
-    for w in sorted(heads):
-        if TEXT_LO <= heads[w] < TEXT_HI:
-            if runs and runs[-1][0] + runs[-1][1] == w:
-                runs[-1][1] += 4
-            else:
-                runs.append([w, 4])
-    report["dead_words"] = {"runs": runs, "seeds": nseeds, "dwords": len(dead), "ranges": [[lo, hi] for lo, hi in ranges_of(dead_sorted)],
-                            "starts": starts}
-    for sec in (RDATA, DATA):
-        s = obj.sections[secno[sec[0]] - 1]
-        data = s["data"]
-        mask = string_mask(bytes(data))
-        for off in range(0, len(data) - 3, 4):
-            va_here = sec[1] + off
-            if IAT_LO <= va_here < IAT_HI or any(mask[off:off + 4]):
-                continue
-            v = struct.unpack_from("<I", data, off)[0]
-            tsec = section_of(v)
-            if tsec and in_dead_range(v) and va_here not in NOT_POINTERS:
-                reach.append("pointer at %08x to %08x" % (va_here, v))
-            if v == TYPE_INFO_VFTABLE:
-                # the pVFTable of a copied _TypeDescriptor (.?AVexception@@, .?AVbad_alloc@std@@ ...): libcmt's own
-                # type_info vftable, not the copy of the original's (whose slot is a trapped destructor)
-                struct.pack_into("<I", data, off, 0)
-                s["relocs"].append((off, "??_7type_info@@6B@"))
-                report["pointers"]["type_info_vftable"] += 1
-            elif tsec:
-                if v in our_data:
-                    struct.pack_into("<I", data, off, 0)
-                    s["relocs"].append((off, our_data[v]))
-                    obj.add_sym(our_data[v], 0, 0)
-                    report["pointers"]["data->ours"] += 1
-                else:
-                    struct.pack_into("<I", data, off, v - tsec[1])
-                    s["relocs"].append((off, "$sec%d" % secno[tsec[0]]))
-                    report["pointers"]["data"] += 1
-            elif TEXT_LO <= v < TEXT_HI and v in img.start_set:
-                t, kind = code_target(v)
-                if t is None:
-                    if v not in traps:
-                        traps[v] = len(trap_code)
-                        trap_code += b"\xcc" * 4
-                    t, kind = "_mb_trap_%08x" % v, "trap"
-                struct.pack_into("<I", data, off, 0)
-                s["relocs"].append((off, t))
-                report["pointers"]["code->" + kind] += 1
-    tsec = obj.section(".text$mbtrap", SCN_CODE, bytes(trap_code or b"\xcc"))
-    for v, o in traps.items():
-        obj.add_sym("_mb_trap_%08x" % v, o, tsec, 0x20)
-    for name, (sec, off) in sorted(labels.items()):
-        obj.add_sym(name, off, secno[sec[0]])
-    for sec, base in ((RDATA, "_mb_rdata_base"), (DATA, "_mb_data_base"), (BSS, "_mb_bss_base")):
-        obj.add_sym(base, 0, secno[sec[0]])       # where each copied section lands (build.py's literal fix-up)
-    # every relocation target that is not a section or a label is an external
-    for s in obj.sections:
-        for _off, t in s["relocs"]:
-            if not t.startswith("$sec"):
-                obj.add_sym(t, 0, 0, 0x20 if not t.startswith("?g_") else 0)
     drectve = " ".join("/alternatename:%s=%s" % kv for kv in sorted(aliases.items())) + " "
     obj.section(".drectve", SCN_INFO, drectve.encode("latin-1"))
-    obj.write(os.path.join(a.out, "mb_data.obj"))
-    report["labels"] = len(labels)
+    obj.write(os.path.join(a.out, "mb_glue.obj"))
+    report["labels"] = sorted(labels)
     report["aliases"] = aliases
     report["conv_mismatch"] = conv_mismatches(aliases)
-    report["traps"] = {"%08x" % v: "int 3 at _mb_trap_%08x" % v for v in sorted(traps)}
-    report["pointers"] = dict(report["pointers"])
     json.dump(report, open(os.path.join(a.out, "glue.json"), "w"), indent=1)
     print("unresolved in: %d; data labels %d, aliases %d, left unresolved %d, conflicts %d"
           % (len(unres), len(labels), len(aliases), len(report["unresolved"]), len(report["conflicts"])))
-    print("pointers relocated: %s; traps for %d code addresses without a definition" % (report["pointers"], len(traps)))
     bad = 0
-    for r in reach:
-        print("DEAD RANGE REACHED: %s (glue.py DEAD_RANGES: the range is not copied)" % r)
+    for n in sorted(labels):
+        print("ORIGINAL DATA REFERENCED: %s at %08x has no definition in source" % (n, labels[n]))
         bad = 1
     for n, vs in sorted(report["conflicts"].items()):
         print("CONFLICT: %s resolves to %s (fix the declaration or annotation that gives the wrong address)" % (n, ", ".join(vs)))

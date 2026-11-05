@@ -51,8 +51,8 @@ def objects():
 
 def link(objs, out_dir, glue=None, extra=(), name="trial.exe", icf=True):
     libs = LIBS
-    if glue:        # tools/relink/glue.py: the original's data, aliases, and import libraries for the shipped DLLs
-        objs = objs + [os.path.join(glue, "mb_data.obj")]
+    if glue:        # tools/relink/glue.py: aliases and import libraries for the shipped DLLs
+        objs = objs + [os.path.join(glue, "mb_glue.obj")]
         own = sorted(glob.glob(os.path.join(glue, "imports", "*.lib")))
         libs = [l for l in LIBS if l != "d3dx9.lib"] + [winpath(l) for l in own]
     rsp = os.path.join(out_dir, "objs.rsp")

@@ -6,7 +6,7 @@ usage: build.py [--out work/relink/standalone] [--keep-going]
 Steps (each tool's docstring has the details):
   1. resolve_map.py   the original address of every symbol our modules reference
   2. trial_link.py    link our objects alone, to list what is unresolved
-  3. glue.py          mb_data.obj (the original's data, labels, aliases) and the import libraries
+  3. glue.py          mb_glue.obj (aliases) and the import libraries
   4. link             our objects + glue -> mb_standalone.exe, with a /MAP and /OPT:NOICF (every function keeps
                       its own address, so the fix-ups below find the one they look for)
   5. vtable fix-up    see below
@@ -289,18 +289,10 @@ def fix_vtables(exe, symmap, rmap, img, lib_names, icf_map):
     # Only the absolute-address fixups the linker recorded (/FIXED:NO keeps the .reloc table) are references to a
     # vtable. A byte search for the address also matched displacement/immediate bytes that merely look like it: in one
     # build Agent::update's `lea eax, [eax+ecx+0x55d0]` (08 d0 55 00) was rewritten because UiC's vtable sat at 0x55d008.
-    base = symmap.get("_mb_rdata_base")
-    t0, tn, tp = exe.secs[0]
-    fixups = exe.reloc_sites()
+    if redirect:
+        sys.exit("vtable gate: %d vtables would need the original's table, which the exe no longer holds: %s" % (
+            len(redirect), ", ".join(why[o][0] for o in redirect)[:400]))
     moved = 0
-    for ours, ova in redirect.items():
-        new = struct.pack("<I", base + ova - RDATA[1])
-        for va in fixups.get(ours, ()):
-            if t0 <= va < t0 + tn:
-                o = tp + va - t0
-                exe.d[o:o + 4] = new
-                moved += 1
-                report.setdefault("moved_by_vtable", {}).setdefault(why[ours][0], [why[ours][1], 0])[1] += 1
     report["vptr_stores_redirected"] = moved
     return report
 
@@ -317,10 +309,8 @@ def read_map_by_object(path):
 
 def fix_literals(exe, symmap, rmap, img, lib_names, by_obj={}):
     """Rewrite the original addresses our source writes as literal numbers (tools/relink/literal_addrs.py): a data
-    address to the same place in the copied data (or to our own definition of that global), a code address to our
-    function at that address. Each site is checked first: the linked bytes must still hold the original value."""
+    address to our own definition of that global, a code address to our function at that address. Each site is checked first: the linked bytes must still hold the original value."""
     import literal_addrs as L
-    from glue import RDATA, DATA, BSS
     defined_at = {int(k, 16): v[0] for k, v in rmap["defined_at"].items()}
     static_at = {int(k, 16): tuple(v) for k, v in rmap.get("static_at", {}).items()}
     our_data = {}
@@ -328,8 +318,6 @@ def fix_literals(exe, symmap, rmap, img, lib_names, by_obj={}):
         for va, e in d.items():
             if e["defined"] and not n.startswith(("??_C@", "__real@", "??_7", "??_R", "?_")):
                 our_data.setdefault(int(va, 16), n)
-    bases = {sec: symmap.get(name) for sec, name in ((RDATA, "_mb_rdata_base"), (DATA, "_mb_data_base"),
-                                                    (BSS, "_mb_bss_base"))}
     rep = {"patched": 0, "missing_function": [], "no_target": [], "changed": []}
     for st in L.scan():
         v = int(st["value"], 16)
@@ -345,10 +333,7 @@ def fix_literals(exe, symmap, rmap, img, lib_names, by_obj={}):
         if v in our_data and our_data[v] in symmap:
             new = symmap[our_data[v]]
         else:
-            for sec, b in bases.items():
-                if sec[1] <= v < sec[2] and b is not None:
-                    new = b + v - sec[1]
-            if new is None and v in img.start_set:
+            if v in img.start_set:
                 name = defined_at.get(v) or lib_names.get(v)
                 new = symmap.get(name) if name else None
                 if new is None and v in static_at:              # a static: the row owner's copy
@@ -538,7 +523,8 @@ def main():
                      ", ".join(sorted({s["src"] for s in lits} | {p for p, _i, _v in text_lits} | set(L.FAILED))[:12])))
     keep = sorted({defined_at[int(st["value"], 16)] for st in lits if int(st["value"], 16) in defined_at})
     # the original's stack (reserve = commit = 0x3e8480): mesh::build_skin alone has a 1 MB frame
-    link_extra = ["/MAP:" + T.winpath(map_path), "/STACK:0x3e8480,0x3e8480", "/FIXED:NO"] + ["/INCLUDE:" + k for k in keep]
+    # /SAFESEH:NO: the original has no load config; with every object SafeSEH-capable the linker would add one
+    link_extra = ["/MAP:" + T.winpath(map_path), "/STACK:0x3e8480,0x3e8480", "/FIXED:NO", "/SAFESEH:NO"] + ["/INCLUDE:" + k for k in keep]
     steps["keep"] = "%d functions reached only through literal addresses kept (/INCLUDE)" % len(keep)
     log = T.link(objs, out, os.path.join(out, "glue"), extra=link_extra, name="mb_standalone.exe", icf=a.icf)
     # A symbol two objects define (a view header's inline copy, or an out-of-line forwarder, next to the row's own
@@ -591,33 +577,6 @@ def main():
                     n_hacks += bool(hack.search(code))
     steps["source_hacks"] = "%d source lines with volatile or _ReadWriteBarrier" % n_hacks
 
-    # trap gate: glue.py points the original's data at int3 traps for code we do not define. That is only acceptable
-    # where nothing we link can reach the slot (tools/relink/trap_report.py has the proof; docs/standalone_traps.md)
-    import glue as GL
-    dead = [("literal %s" % l["value"]) for l in lits if GL.in_dead_range(int(l["value"], 16))]
-    dead += ["vtable %s" % o for e in rmap["vtables"].values() for o in e["orig"] if GL.in_dead_range(int(o, 16))]
-    gj0 = json.load(open(os.path.join(out, "glue", "glue.json")))
-    dw = gj0["dead_words"]
-    dead_sorted = [w for lo, hi in dw["ranges"] for w in range(lo, hi, 4)]
-    runs = dw["runs"]
-    for l in lits:        # a literal address names an object: it reaches every dead dword inside it
-        v = int(l["value"], 16)
-        if GL.dead_in(v, GL.object_end(v, dw["starts"], runs), dead_sorted):
-            dead.append("literal %s spans dead EH / libcmt table dwords" % l["value"])
-    for e in rmap["vtables"].values():
-        for o in e["orig"]:
-            if GL.dead_in(int(o, 16), int(o, 16) + 4 * e["slots"], dead_sorted):
-                dead.append("vtable %s spans dead EH / libcmt table dwords" % o)
-    if dead:
-        sys.exit("dead-range gate: %d references into original data the glue does not copy (glue.py DEAD_RANGES): %s" % (
-            len(dead), ", ".join(dead[:12])))
-    import trap_report as TR
-    ntraps, reach = TR.gate(os.path.join(out, "glue", "glue.json"), rmap, map_path, lits)
-    if reach:
-        sys.exit("trap gate: %d of %d trapped code addresses are reachable from our code (%s); define them (see "
-                 "docs/standalone_traps.md, trap_report.py)" % (len(reach), ntraps, ", ".join(e["va"] for e in reach[:12])))
-    steps["traps"] = "%d trapped code addresses, all proven unreachable (no data label, literal or vtable reaches them)" % ntraps
-
     # data gate: a definition smaller than the original object (a 4-byte `char* t[1]` for a 0x160-byte table overlaps
     # every global linked after it), a label inside another object's range (a second owner of the same bytes) or two definitions for one original address (the glue aliases the address to one;
     # code that fills or reads the other never sees it). tools/relink/data_size_audit.py lists them.
@@ -667,60 +626,12 @@ def main():
     vt = fix_vtables(exe, read_map(map_path), rmap, img, lib_names, read_map(icf_map_path))
     lit = fix_literals(exe, read_map(map_path), rmap, img, lib_names, read_map_by_object(map_path))
     exe.save()
-    # post-link proof for the dead EH / libcmt tables: every absolute address in the linked image is a base relocation
-    # (/FIXED:NO); none may point into the copied sections at an object that holds a dead dword. Covers our code, our
-    # data, the libraries and the copy itself, after the vtable and literal fix-ups.
     bases = read_map(map_path)
     sites = exe.reloc_sites()
-    cb = {nm: bases[nm] for nm in ("_mb_rdata_base", "_mb_data_base")}
-    spans = [(cb["_mb_rdata_base"], GL.RDATA), (cb["_mb_data_base"], GL.DATA)]
-
-    def orig_of(a):         # linked address inside the copy -> the original's address
-        for b, sec in spans:
-            if b <= a < b + sec[2] - sec[1]:
-                return a - b + sec[1]
-        return None
-
-    edges, roots = [], []           # (orig source, orig target) inside the copy; (linked source, orig target) from outside
-    for tgt, at in sites.items():
-        ot = orig_of(tgt)
-        if ot is None:
-            continue
-        for ra in at:
-            os_ = orig_of(ra)
-            if os_ is None:
-                roots.append((ra, ot))
-            else:
-                edges.append((os_, ot))
-    edges.sort()
-    esrc = [e[0] for e in edges]
-    # every object the linked image can reach in the copy: from each relocation outside it (code, our data, the
-    # libraries), then along the copy's own relocations. An object is [its address, the next referenced address) or
-    # the run of code pointers it starts; it may not contain a dead dword.
-    seen, stray, work = {}, [], [(t, "%08x" % ra) for ra, t in roots]
-    while work:
-        t, via = work.pop()
-        if t in seen:
-            continue
-        end = GL.object_end(t, dw["starts"], runs)
-        seen[t] = via
-        hit = GL.dead_in(t, end, dead_sorted)
-        if hit:
-            stray.append("%08x (from %s) holds dead dword %08x" % (t, via, hit[0]))
-            continue
-        i = bisect.bisect_left(esrc, t)
-        while i < len(edges) and edges[i][0] < end:
-            work.append((edges[i][1], via))
-            i += 1
-    if stray:
-        sys.exit("dead-range gate (linked exe): %d objects reachable through the linked image's relocations hold dead EH / "
-                 "libcmt table dwords: %s" % (len(stray), "; ".join(stray[:10])))
-    steps["dead_tables"] = "%d dwords of the original's EH / libcmt tables not copied (%d traps avoided); no object reachable from the linked image's %d relocations (%d outside the copy) holds one" % (
-        len(dead_sorted), dw["seeds"], sum(len(v) for v in sites.values()), len(roots))
     # data_values gate: the bytes each data definition of ours holds at load time against the original image's bytes at
     # its address (a missing initialiser: `int g_str_grow_add;` was 0 where the original has 128). tools/relink/data_values.py
     import data_values as DV
-    dvr = DV.compare(exe, bases, rmap, img, objs, DA.our_sizes(objs), DA.STATE["claims"], DA.STATE["defined"], sites, orig_of,
+    dvr = DV.compare(exe, bases, rmap, img, objs, DA.our_sizes(objs), DA.STATE["claims"], DA.STATE["defined"], sites, lambda a: None,
                      DV.orig_extents(img, rmap), DV.reviewed_short())
 
     def few(es):
@@ -755,6 +666,9 @@ def main():
                              or vt["vtbl_externs"] or vt["glue_bound_slots"] or vt.get("dtor_slots")):
         sys.exit("vtable gate: " + steps["vtable_gate"])
     print("-> %s" % rel(exe_path))
+    if lit["no_target"]:
+        sys.exit("literal gate: %d original addresses in source have no definition of ours: %s" % (
+            len(lit["no_target"]), ", ".join(lit["no_target"][:12])))
     if dvr["differ"] or dvr["short"]:
         sys.exit("data_values gate: %d data definitions start with other bytes than the original's, %d are shorter than the "
                  "original object they stand for (build.json data_values_report)" % (len(dvr["differ"]), len(dvr["short"])))

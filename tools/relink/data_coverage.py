@@ -61,7 +61,7 @@ CRUTCHES = (("data_labels", "glue", r"data labels (\d+)"), ("aliases", "glue", r
             ("data_definitions", "data", r"(\d+) data definitions at original addresses"))
 CLASSES = ("defined in source", "generated from source", "borrowed from image", "reached through tables", "library data",
            "unnamed bss")
-GLUE_MODULES = ("mb_data",)          # the glue's object: the original's bytes laid out under labels, never a definition
+GLUE_MODULES = ("mb_glue",)          # the glue's object: aliases, never a definition
 GENERATED = ("??_C@", "__real@", "__int64@", "__xmm@", "__mask@", "??_7", "??_R", "$SG")
 
 

@@ -1,5 +1,8 @@
 # Recreating the original's static data in source (standalone link)
 
+> **Done.** The exe no longer holds a copy of the original's data (`no-data-copy` branch, 2026-11-05). `glue.py` stops the build
+> if a symbol resolves to original data with no definition in our source. The rest of this file records how the data moved.
+
 Goal: `tools/relink/glue.py` must stop copying the original's `.rdata/.data/.bss` into `mb_data.obj`. Every data
 label the link still needs from that copy is a failure. This file is how a datum goes from "label in the copy" to
 "definition in our source". Pilot module: `cls_map` (66 labels, see the end).
