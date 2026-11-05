@@ -3879,8 +3879,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (g_game) {
             // `delete game()` spelled out: the original calls ~GameX (0x492f40) and operator delete in place, where cl
             // (inline budget spent) would call the scalar deleting destructor out of line
-            GameX* g = game();
-            g->dtor();
+            GameData* g = g_game;
+            g->world_free();
             operator delete(g);
             g_game = 0;
         }

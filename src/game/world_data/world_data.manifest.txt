@@ -15,10 +15,10 @@
 ../src/game/world_data/world_data.cpp  ?set_weapon_order_1@MissionW@@QAEXHI@Z  00492230  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_weapon_order_2@MissionW@@QAEXHI@Z  00492350  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?_Insert_n@?$vector@PAUSceneObject@@V?$allocator@PAUSceneObject@@@std@@@std@@IAEXViterator@12@IABQAUSceneObject@@@Z  004927d0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?free_arrays@GameW@@QAEXXZ  00492a20  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?free_arrays@GameData@@QAEXXZ  00492a20  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?_Insert_n@?$vector@_JV?$allocator@_J@std@@@std@@IAEXViterator@12@IAB_J@Z  00492b30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?_Growmap@?$deque@HV?$allocator@H@std@@@std@@IAEXI@Z  00492d80  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?world_free@GameW@@QAEXXZ  00492f40  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?world_free@GameData@@QAEXXZ  00492f40  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?resize@?$vector@_JV?$allocator@_J@std@@@std@@QAEXI_J@Z  00493090  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?push_back@?$deque@HV?$allocator@H@std@@@std@@QAEXABH@Z  00493120  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?kind@DropDown@@UAEHXZ  00493300  /O2 /MT /Gy /TP

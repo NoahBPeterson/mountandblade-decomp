@@ -100,7 +100,6 @@ struct GameW : GameData {
     int& encountered_a() { return WD_FLD(int, 0x13a0c); }       // +0x13a0c (0x494ad0)
     int& encountered_b() { return WD_FLD(int, 0x13a10); }       // +0x13a10
     char& objectives_on() { return WD_FLD(char, 0x13a18); }     // +0x13a18 (0x494ad0)
-    char& scene_open() { return WD_FLD(char, 0x1a05c); }        // +0x1a05c (0x492a20, 0x492f40)
     int& cur_party_idx() { return WD_FLD(int, 0x1a1f0); }       // +0x1a1f0 (0x490430)
     unsigned& cur_agent_idx() { return WD_FLD(unsigned, 0x1a1f4); }   // +0x1a1f4
     int& free_slot() { return WD_FLD(int, 0x1a204); }           // +0x1a204 (0x4904a0)
@@ -125,8 +124,6 @@ struct GameW : GameData {
     void set_pos(float x, float y, int id, float radius);       // 0x491e50 (ret 0x10)
     int token_lookup(int a, int b, int c, int d);               // 0x491f20 (ret 0x10)
     void transfer_stack(int a, int b, char flag);               // 0x492530 (ret 0xc)
-    void free_arrays();                                         // 0x492a20 (ret 0)
-    void world_free();                                          // 0x492f40 (ret 0)
     void quest_done(int quest);                                 // 0x494410 (ret 4)
     void quest_succeeded(int quest);                            // 0x494560 (ret 4)
     void quest_failed(int quest);                               // 0x494680 (ret 4)

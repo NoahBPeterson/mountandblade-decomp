@@ -1009,10 +1009,10 @@ template void std::vector<SceneObject*>::_Insert_n(std::vector<SceneObject*>::it
 
 // ==== 0x492a20: free the game object's record arrays =============================================================
 // @ 0x492a20
-void GameW::free_arrays()
+void GameData::free_arrays()
 {
     TroopFile* s = *(TroopFile**)&troops;
-    scene_open() = 0;
+    scene_open = 0;
     if (s != 0) {
         delete[] s;
         troops = 0;
@@ -1069,10 +1069,10 @@ struct MapDialog {
     void clear_objects();   // 0x4c6e30 (rgl/mesh2/gui_edit.h)
 };
 // @ 0x492f40
-void GameW::world_free()
+void GameData::world_free()
 {
     char* self = (char*)this;
-    if (scene_open() != 0)
+    if (scene_open != 0)
         free_arrays();
 
     {
@@ -1117,7 +1117,7 @@ void GameW::world_free()
     if (*(void**)(self + 0x139ec) != 0)
         ((RecD*)*(void**)(self + 0x139ec))->scalar_delete(3);
 
-    pm().clear();
+    parties.clear();
     ((MapDialog*)(self + 0xcc))->clear_objects();
     ((tstring*)(self + 0xb8))->~tstring();
 

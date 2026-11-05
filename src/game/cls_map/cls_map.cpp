@@ -540,8 +540,6 @@ loading_config* copy_loading_config(loading_config* self, const loading_config* 
 
 // ---- 0x4da5b0: the end-of-game shutdown routine -------------------------------------------------------------------
 // Views of foreign classes, reduced to the destructor / element sizes this routine needs.
-struct GameDtor  { ~GameDtor(); };                      // 0x492f40 (the game object)
-struct WorldDtor { ~WorldDtor(); };                     // 0x4d51d0 (the mission object)
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
 struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; TimerList m3c; };   // 0x48 bytes
 // the vector deleting destructors of the global record tables (rgl/mesh2/gui_edit.cpp, rec_tables.cpp): 0x4c4f40 elem60_vector_delete and
@@ -576,11 +574,15 @@ HRESULT GameApp::FinalCleanup()
     ((text_stream*)&g_log)->text_stream::w_cstr("Saving options...");     // 0x4153a0 (the log is a text_stream: called directly)
     g_options.save();
     if (((void*)g_game)) {
-        delete (GameDtor*)((void*)g_game);
+        GameData* g = g_game;
+        g->world_free();                // 0x492f40
+        operator delete(g);
         (*(void**)&g_game) = 0;
     }
     if (((void*)g_mission)) {
-        delete (WorldDtor*)((void*)g_mission);
+        Mission* w = g_mission;
+        w->destroy();                   // 0x4d51d0
+        operator delete(w);
         (*(void**)&g_mission) = 0;
     }
     if (g_items) {

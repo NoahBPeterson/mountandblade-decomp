@@ -48,7 +48,7 @@ void ItemRec2::frame_update(float arg)
         save_game(-1, 0);
     if (g_game) {
         GameData* g = g_game;
-        ((GameW*)g)->world_free();   // 0x492f40
+        g->world_free();   // 0x492f40
         operator delete(g);
         g_game = 0;
     }

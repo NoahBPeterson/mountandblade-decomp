@@ -482,7 +482,6 @@ struct GameX {
     // thiscall on the game object: the interpreter's names for the functions of GameData (include/game_data.h), GameW (world_data.cpp) and
     // the other classes that define these addresses; each forwards (inline) to the definition's class
     ~GameX();                                                               // 0x492f40
-    void dtor();                                                            // 0x492f40 (~GameX called directly: an explicit g->~GameX() goes through the scalar deleting destructor)
     __forceinline void set_names(int line, const tstring& text) { ((GameData*)this)->set_names(line, &text); }                         // 0x48a380 (ret 8)
     __forceinline char can_transfer(int joiner, int host, char flip_prisoners) { return ((GameW*)this)->can_transfer(joiner, host, flip_prisoners); }   // 0x4918d0 (ret 0xc)
     __forceinline void sl_update_avg() { ((GameData*)this)->sl_update_avg(); }                                                         // 0x48a000

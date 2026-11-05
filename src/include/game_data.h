@@ -231,7 +231,9 @@ struct GameData {
     float trigger_frame[16];                    // +0x14014 the trigger frame (a rgl::matrix: the spawn / placement frame of the script's trigger block; party2/camera.cpp 0x49b4b0, 0x49f980)
     char pad14054[0x1405c - 0x14054];
     int tbl[64][32];                            // +0x1405c (0x473a60)
-    char pad1605c[0x1a060 - 0x1605c];
+    char pad1605c[0x1a05c - 0x1605c];
+    char scene_open;                            // +0x1a05c the scene arrays are allocated (free_arrays 0x492a20 clears it, world_free 0x492f40 tests it)
+    char pad1a05d[0x1a060 - 0x1a05d];
     int f1a060;                                 // +0x1a060 script dialog requested (inventory_panel/game_app.cpp)
     int f1a064;                                 // +0x1a064 script dialog shown
     int f1a068;                                 // +0x1a068
@@ -274,7 +276,8 @@ struct GameData {
     // ---- char_sheet/save_game.cpp, save_state.cpp (the save-game serialiser; the stream is the binary writer OutStream) ----
     void load_header(SaveCtx* h);               // 0x4e8e70 (ret 4)
     int save_state(OutStream* out);             // 0x4e8f10
-    void world_free();                          // 0x492f40
+    void free_arrays();                         // 0x492a20 (deletes the troop, level, faction and quest arrays)
+    void world_free();                          // 0x492f40 (the destructor body of the game object: the caller deletes the storage)
     __declspec(noinline) int  write_clock(OutStream* out);               // 0x4e9190
     __declspec(noinline) void write_vec5c(OutStream* out);               // 0x4e93f0
     __declspec(noinline) void write_list138(OutStream* out);             // 0x4e9550
