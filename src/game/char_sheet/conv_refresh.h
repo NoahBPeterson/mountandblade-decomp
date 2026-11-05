@@ -35,7 +35,7 @@ static float setting_float(const char* name)
     do {
         if (i >= g_game_vars.count)
             break;
-        if (key.equals(g_game_vars.entries[i].value))
+        if (g_game_vars.entries[i].key.equals(key))
             idx = i;
         i++;
     } while (idx == -1);

@@ -169,7 +169,7 @@ void Rec1208::init_screen()
 
     // +0x30: a 0x358-byte view-window object (ctor 0x4ed630); its +0x1ac receives a copy of the screen's
     // embedded camera (at this+0x34) and its +0x178 points at the current mission
-    float pos[2] = { 0.500085f, 0.290000f };
+    float pos[2] = { 0.008f, 0.29f };
     float sz[2] = { 0.289000f, 0.452998f };
     ViewWindow* vw = new MapWidget;
     window = vw;
