@@ -25,7 +25,8 @@
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./physics.h"
-#include "./missile.h"
+#include "../missile.h"                   // Missile (shared with agent4 / terrain_a): settle 0x472650 is defined in poly_mesh.cpp
+#include "../scene_ent.h"                 // SceneEnt (the missile's entity)
 #include "./face_gen.h"
 
 // ---- small inline vector helpers of the object's float code (3-component results; the 4th lane is left alone) ------

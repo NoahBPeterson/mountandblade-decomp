@@ -28,7 +28,8 @@
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./physics.h"
-#include "./missile.h"
+#include "../missile.h"        // Missile: ammo_scale 0x467f80, settle 0x472650
+#include "../scene_ent.h"       // SceneEnt: the missile's entity
 #include "./face_gen.h"
 #include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin_set.h SkinSet::relax 0x4735e0
 #include "./tmesh.h"
@@ -577,20 +578,20 @@ ArrSet* vecArr::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
     return (ArrSet*)uninit_copy_arrset((rec136*)f, (rec136*)l, (rec136*)d, (alloc_rec136&)*this, t);
 }
 
-// (0x467f80: a copy of the other object's function, kept in this object so cl knows its register use)
-float MissileG::ammo_scale()
+// @ 0x467f80
+float Missile::ammo_scale()
 {
-    if (ammo_item >= 0)
-        return (float)g_items[ammo_item].weight * 0.01f;
+    if (ammo.item >= 0)
+        return (float)g_items[ammo.item].weight * 0.01f;
     return 0.8f;
 }
 // @ 0x472650
-bool MissileG::settle(const char* arg)
+bool Missile::settle(const capsule* c)
 {
-    const QueryPt* q = (const QueryPt*)arg;
     bool r = false;
     HeightField* hf = g_mission->scene->hf;
     if (hf) {
+        const rgl::vector4* q = &c->p1;
         float h;
         int id;
         hf->sample(q->x, q->y, &h, &id);
@@ -601,11 +602,11 @@ bool MissileG::settle(const char* arg)
                 vector4 pl = gf->trans;
                 vector4 n;
                 n.x = -pl.x; n.y = -pl.y; n.z = -pl.z;
-                float t = (ammo_scale() + 0.02f) - ((h - q->z) * pl.z) / dot3(n, dir);
-                vector4 d(t * dir.x, t * dir.y, t * dir.z);
-                vector4* p = &pos;
+                float t = (ammo_scale() + 0.02f) - ((h - q->z) * pl.z) / dot3(n, p40);
+                vector4 d(t * p40.x, t * p40.y, t * p40.z);
+                vector4* p = &p20;
                 p->x += d.x; p->y += d.y; p->z += d.z;
-                vector4* hp = &owner->hit;
+                vector4* hp = &ent->local.o;
                 *hp = *p;
             }
         }

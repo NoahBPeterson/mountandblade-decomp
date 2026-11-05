@@ -26,8 +26,6 @@ struct Wielder {
     rgl::mesh* make_ranged_mesh();   // 0x44f6a0 (game/agent/agent.h: the carried-weapon holder, whose record the missile is)
 };
 namespace ms {
-// the scene query for a swept capsule (0x472650, ecx = the missile)
-struct SceneQuery { int query(capsule* c); };
 }
 struct mesh_node {
     void set_time(const float* t);   // 0x433190 (rgl/xmlcfg/game_util.cpp: sets the morph time)
@@ -254,6 +252,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
     } while (i < 4);
 }
 
+#include "../missile.h"   // Missile: settle 0x472650
 // ---- the projectile (0x47d320, 0x47d3e0) --------------------------------------------------------------------------
 // The flying projectile record as its own update sees it. src/game/terrain_a/misc.h declares the same pool record
 // (Missile) with only the members terrain_a reads and cannot be included next to game/mission.h (it declares g_mission
@@ -364,7 +363,7 @@ void MissileU::update(float dt)
 
     {
         capsule cap(0.01f, &pb, &pa);
-        qhit = (char)((ms::SceneQuery*)this)->query(&cap);
+        qhit = (char)((Missile*)this)->settle(&cap);
     }
     if (qhit == 0) {
         Blow blow;

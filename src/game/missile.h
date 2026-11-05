@@ -39,7 +39,8 @@ struct Missile {
     char pada8[0xb0 - 0xa8];
     void init();                                        // 0x467fb0
     void ray(capsule* out);                    // 0x46b410 (ret 4)
-    float ammo_scale();                                 // 0x467f80 (the carried item's length * 0.01)
+    float ammo_scale();                                 // 0x467f80 (the carried item's weight * 0.01; terrain_b/poly_mesh.cpp)
+    bool settle(const capsule* c);                      // 0x472650 (terrain_b/poly_mesh.cpp: puts the missile on the ground under the swept capsule's end point)
 };
 typedef char missile_size_check[(sizeof(Missile) == 0xb0) ? 1 : -1];
 

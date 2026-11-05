@@ -1412,15 +1412,7 @@ void Prop::update(int unused)
 
 // ---- missile -----------------------------------------------------------------------------------------------------------
 
-// the item record's field at +0x20c (the shared ItemKind has no name for it)
-static inline int item_f20c(int i) { return *(int*)((char*)&g_items[i] + 0x20c); }
-// @ 0x467f80
-float Missile::ammo_scale()
-{
-    if (ammo.item >= 0)
-        return (float)item_f20c(ammo.item) * 0.01f;
-    return 0.8f;
-}
+// 0x467f80 is Missile::ammo_scale (terrain_b/poly_mesh.cpp: the ground correction 0x472650 calls it, so it is compiled where cl sees its registers)
 
 // @ 0x467fb0
 void Missile::init()
