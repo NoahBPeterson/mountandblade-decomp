@@ -47,7 +47,5 @@ void __stdcall clear_f14(named_object* o);                      // 0x4175f0 (the
 // std::vector<point20>::operator[] const stays out of line in entity::render (0x40fb80), like the original
 namespace std {
 template<> const rgl::point20& vector<rgl::point20, allocator<rgl::point20> >::operator[](size_t) const;
-// ... and so does iterator::operator+ (0x40f880, a COMDAT in mesh_obj.cpp)
-template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::point20, allocator<rgl::point20> >::iterator::operator+(int) const;
 }
 #endif

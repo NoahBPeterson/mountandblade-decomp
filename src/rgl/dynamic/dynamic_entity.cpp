@@ -16,6 +16,10 @@
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
+// std::vector<point20>::iterator::operator+ stays out of line (0x40f880, a COMDAT in mesh_obj.cpp), like the original's callers here
+namespace std {
+template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::point20, allocator<rgl::point20> >::iterator::operator+(int) const;
+}
 using namespace rgl;
 
 void sort_range(std::vector<entity*>::iterator first, std::vector<entity*>::iterator last, int ideal);          // 0x426a30
