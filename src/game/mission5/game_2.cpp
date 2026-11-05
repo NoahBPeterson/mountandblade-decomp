@@ -1209,7 +1209,6 @@ TroopFile::TroopFile()
 {
     for (int i = 0; i < 0x60; ++i)
         ((int*)pairs)[i * 2] = -1;
-    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))tstring_ctor);
     f4a0 = -1;
     for (int i = 0; i < 10; ++i) {
         p10[i].item = -1;
@@ -1234,11 +1233,7 @@ TroopFile::TroopFile()
 // @ 0x524860
 QuestFile::QuestFile()
 {
-    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))tstring_ctor);
     f108 = -1;
-    f12c = 0;
-    f130 = 0;
-    f134 = 0;
     f50 = 0;
     f64 = 0;
     f11c = 0;
@@ -1258,7 +1253,6 @@ SceneFile::SceneFile()
 // @ 0x5249f0
 FactionFile::FactionFile()
 {
-    vector_constructor_iterator(names_raw, 0x10, 8, (void (__fastcall*)(void*))tstring_ctor);
     f2fc = -1;
     f230 = 0;
     b10 = 0;
@@ -1305,20 +1299,20 @@ void tstring_vec::reserve(unsigned n)
     tstring* p = (tstring*)::operator new(n * 0x10);
     try {
         ptr_tag t;
-        uninit_copy_str(first, last, p, *this, t);
+        uninit_copy_str(_Myfirst, _Mylast, p, *(tstring_alloc*)this, t);
     }
     catch (...) {
         ::operator delete(p);
         throw;
     }
-    unsigned s = first == 0 ? 0 : (unsigned)(last - first);
-    if (first) {
-        ((tstring_stdvec*)this)->destroy_range(first, last);
-        ::operator delete(first);
+    unsigned s = _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst);
+    if (_Myfirst) {
+        _Destroy(_Myfirst, _Mylast);
+        ::operator delete(_Myfirst);
     }
-    end = p + n;
-    last = p + s;
-    first = p;
+    _Myend = p + n;
+    _Mylast = p + s;
+    _Myfirst = p;
 }
 
 // @ 0x524cd0

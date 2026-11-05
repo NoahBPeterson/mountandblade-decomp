@@ -14,10 +14,10 @@
 ../src/rgl/xmlcfg/records.cpp  ?_Destroy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXPAUItem@@0@Z  00431a30  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ?_Tidy@?$vector@UItem@@V?$allocator@UItem@@@std@@@std@@IAEXXZ  00431a60  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1RecP@@QAE@XZ  00431ab0  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??1RecQ@@QAE@XZ  00431b10  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??1RecS@@QAE@XZ  00431c40  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/records.cpp  ??1QuestFile@@QAE@XZ  00431b10  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/records.cpp  ??1TroopFile@@QAE@XZ  00431c40  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_ERecP@@QAEPAXI@Z  00431d30  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1RecY@@UAE@XZ  00431e10  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_ERecY@@UAEPAXI@Z  00431ec0  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??1RecT@@QAE@XZ  00432010  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/records.cpp  ??1FactionFile@@QAE@XZ  00432010  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ?reset@BigObj@@QAEXXZ  00432080  /O2 /MT /Gy /TP

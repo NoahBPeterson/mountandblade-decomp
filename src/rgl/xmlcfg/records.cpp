@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 #include <new>      // declares operator delete[]: without it cl 13.10 frees arrays with plain operator delete
 #include "records.h"
+#include "../../game/mission5/data_files.h"   // TroopFile / QuestFile / FactionFile (~TroopFile 0x431c40, ~QuestFile 0x431b10, ~FactionFile 0x432010)
 #include "../../include/poly.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/rec_dtors.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -63,11 +64,11 @@ void delete_reca_array(OwnedRec48* p) { delete[] p; }
 // @ 0x431ab0
 RecP::~RecP() {}
 // @ 0x431b10
-RecQ::~RecQ() {}
+QuestFile::~QuestFile() {}
 
 // 0x431b90 / 0x431cb0 are ~Party and its vector deleting destructor (game/world_data/world_data.cpp: the compiler emits them with the constructor 0x4934d0)
 // @ 0x431c40
-RecS::~RecS() {}
+TroopFile::~TroopFile() {}
 // @ 0x431d30
 void delete_recp_array(RecP* p) { delete[] p; }
 
@@ -82,7 +83,7 @@ void delete_recy_array(RecY* p) { delete[] p; }
 // in game/terrain_b/terrain_b.cpp (MAgent::MAgent), where its row is.
 
 // @ 0x432010
-RecT::~RecT() {}
+FactionFile::~FactionFile() {}
 
 // @ 0x432080
 void BigObj::reset()

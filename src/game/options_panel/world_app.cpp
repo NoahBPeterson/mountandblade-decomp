@@ -19,7 +19,7 @@
 #include "../../include/rec_dtors.h"
 #include "../config/core.h"                 // GameApp : CD3DApplication, the application object (defined below, g_app_obj)
 
-// Tail (0x10 bytes, dtor 0x42d390) is src/include/rec_dtors.h
+// std::vector<tstring> (_Tidy 0x42d390) is declared out of line in src/include/rec_dtors.h
 
 struct Rec18 {                                      // 0x18-byte record: a string and two words
     tstring name;
@@ -133,8 +133,8 @@ struct Big {
     OwnedVec v68;                                       // +0x68
     PlainVec v78;                                       // +0x78
     char pad088[0x19c - 0x88];
-    Tail f19c;
-    Tail f1ac;
+    std::vector<tstring> f19c;
+    std::vector<tstring> f1ac;
     RowVec v1bc;                                      // +0x1bc
     char pad1cc[0x670 - 0x1cc];
     char blocks[0x40 * 0x130];                      // +0x670 .. +0x5270
@@ -245,8 +245,8 @@ void Big::destroy()
 
     v1bc.clear(this);
 
-    f1ac.~Tail();
-    f19c.~Tail();
+    f1ac.~vector();
+    f19c.~vector();
 
     v78.clear(this);
     v68.clear(this);

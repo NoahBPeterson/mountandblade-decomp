@@ -39,48 +39,14 @@ void __cdecl mb_error(const char* fmt, ...);        // 0x42cc80
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 #include "../../include/render_flags.h"
-// The out-of-line instances of std::vector<tstring> / std::vector<int> that other objects define (agent_combat.cpp 0x43e310 and 0x43e2a0,
-// gui_manager 0x42d360, mesh_obj.cpp 0x410610) are called through their std:: names: an explicit specialization declared without a
-// definition makes every use a call. The accessors below reach the protected members from the hand-written vector views.
-namespace std {
-template<> void vector<tstring, allocator<tstring> >::_Insert_n(vector<tstring, allocator<tstring> >::iterator, size_t, const tstring&);   // 0x43e310
-template<> void vector<tstring, allocator<tstring> >::_Destroy(tstring*, tstring*);                                                        // 0x42d360
-}
+// The out-of-line instances of std::vector<int> that other objects define (agent_combat.cpp 0x43e2a0, mesh_obj.cpp 0x410610) are called
+// through their std:: names (an explicit specialization declared without a definition makes every use a call); the vector<tstring> ones
+// (0x43e310, 0x42d360, 0x42d390) are declared in data_files.h.
+#include "./data_files.h"             // TroopFile, QuestFile, FactionFile, tstring_vec
 #include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
 #include "../alloc_construct.h"   // alloc_tstring 0x436c90
-struct tstring_stdvec : std::vector<tstring> {
-    __forceinline void destroy_range(tstring* f, tstring* l) { _Destroy(f, l); }
-    __forceinline void insert_n(tstring* p, size_t n, const tstring& v) { _Insert_n(iterator(p), n, v); }
-};
-struct tstring_alloc {
-    int pad;                                        // +0 allocator subobject
-};
-void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
-tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag);       // 0x524cd0
 void __stdcall vector_constructor_iterator(void* dst, unsigned size, int count, void (__fastcall *ctorfn)(void*));        // 0x401800
 
-struct tstring_vec : tstring_alloc {
-    tstring* first;                                 // +4
-    tstring* last;                                  // +8
-    tstring* end;                                   // +0xc
-    tstring_vec() : first(0), last(0), end(0) {}
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
-    tstring* last_pos() const { return last; }
-    void reserve(unsigned n);                                   // 0x524bc0
-    void push_back(const tstring& v)
-    {
-        if (size() < capacity()) {
-            ptr_tag t;
-            tstring* p = last;
-            uninit_fill_n_str(p, 1, v, *(alloc_tstring*)this, t);
-            last = p + 1;
-        } else {
-            tstring* pos = last_pos();
-            ((tstring_stdvec*)this)->insert_n(pos, 1, v);
-        }
-    }
-};
 
 // ---- the data tables and their globals ---------------------------------------------------------------------------
 #include "../str_table.h"       // StrTable g_strtable (0x5e2a18): find 0x4c6010
@@ -119,85 +85,7 @@ typedef char SimpleTrigger_size_check[sizeof(SimpleTrigger) == 0x30 ? 1 : -1];
 #include "../skill_cap.h"
 stream_base& __cdecl read_skill(stream_base& s, SkillRec& r);     // 0x5243c0
 
-// ---- the Data\*.txt record classes (full layouts; records.h's RecS / RecQ / RecT / RecY are the destructor-side views of the
-// same records: padded, without constructors, RecS / RecT with the wrong size, RecY without the embedded streams) ---------
-struct TroopFile {                  // troops.txt record (0x508 bytes); dtor 0x431c40
-    tstring f0;                     // 0x000
-    tstring f10;                    // 0x010
-    tstring f20;                    // 0x020
-    unsigned __int64 u30;           // 0x030
-    int f38;                        // 0x038
-    int f3c;
-    int f40;
-    int f44;
-    int f48;
-    int f4c;
-    int f50;
-    int f54;
-    int f58[4];                     // 0x058
-    unsigned f68[6];                // 0x068
-    float f80[7];                   // 0x080
-    int f9c;                        // 0x09c
-    float fa0;                      // 0x0a0
-    int fa4;
-    int fa8;
-    int fac;
-    int fb0;
-    ItemRef pairs[0x60];               // 0x0b4 .. 0x3b3
-    int f3b4;                       // 0x3b4
-    int f3b8;                       // 0x3b8
-    unsigned __int64 u3c0[4];       // 0x3c0
-    unsigned __int64 u3e0[4];       // 0x3e0
-    char pad400[0x20];              // 0x400
-    char names_raw[0x80];           // 0x420 tstring[8]
-    int f4a0;                       // 0x4a0
-    ItemRef p10[10];                   // 0x4a4
-    tstring_vec v;                  // 0x4f4
-    TroopFile();                    // 0x524710
-    ~TroopFile();                   // 0x431c40
-    void read_file(stream_base& s); // 0x524420
-};
-struct QuestFile {                  // quests.txt record (0x138 bytes); dtor 0x431b10
-    tstring f0, f10, f20, f30, f40; // 0x000 .. 0x040
-    int f50;                        // 0x050
-    tstring f54;                    // 0x054
-    int f64;                        // 0x064
-    char pad68[0x20];               // 0x068
-    char names_raw[0x80];           // 0x088 tstring[8]
-    int f108;                       // 0x108
-    char pad10c[0xc];
-    int f118;                       // 0x118
-    int f11c;                       // 0x11c
-    char pad120[0xc];
-    int f12c;                       // 0x12c
-    int f130;                       // 0x130
-    int f134;                       // 0x134
-    QuestFile();                    // 0x524860
-    ~QuestFile();                   // 0x431b10
-    void read_file(stream_base& s); // 0x524690
-    tstring* raw_title();        // 0x48d750
-};
-struct FactionFile {                // factions.txt record (0x300 bytes); dtor 0x432010
-    tstring name;                   // 0x000
-    char b10;                       // 0x010
-    char pad11[3];
-    tstring f14;                    // 0x014
-    int f24;                        // 0x024
-    unsigned color;                 // 0x028
-    float arr[0x80];                // 0x02c .. 0x22b
-    int f22c;                       // 0x22c
-    int f230;                       // 0x230
-    tstring_vec v;                  // 0x234
-    float f244;                     // 0x244
-    float f248;                     // 0x248
-    tstring_vec v2;                 // 0x24c
-    char pad25c[0x20];              // 0x25c
-    char names_raw[0x80];           // 0x27c tstring[8]
-    int f2fc;                       // 0x2fc
-    FactionFile();                  // 0x5249f0
-    ~FactionFile();                 // 0x432010
-    void read_file(stream_base& s, int count);   // 0x524a70
-};
+// ---- the Data\*.txt record classes: TroopFile / QuestFile / FactionFile are data_files.h's; SceneFile (terrain_b/scene_file.h) below ---------
 // the scene record's embedded passage / site writer stream (vtable slots 3, 7 and 8 of stream_base)
 struct V0 { int a, b, c; char pad[0xc]; };                      // 0x18
 struct V1 { int p0, p1, p2, p3, p4; char pad[0x20]; };          // 0x34

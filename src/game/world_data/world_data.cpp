@@ -28,6 +28,7 @@
 #include "../placed_obj.h"
 #include "../../include/i64_vec.h"
 #include "../../include/e68.h"
+#include "../mission5/data_files.h"                      // TroopFile / QuestFile / FactionFile: the record arrays free_arrays deletes
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
 #include "../../rgl/scene/world.h"      // rgl::world (ctor 0x478ad0, dtor 0x475d50, init 0x478830, spawn_wind 0x478f30)
@@ -1015,7 +1016,7 @@ template void std::vector<SceneObject*>::_Insert_n(std::vector<SceneObject*>::it
 // @ 0x492a20
 void GameW::free_arrays()
 {
-    RecS* s = *(RecS**)&troops;
+    TroopFile* s = *(TroopFile**)&troops;
     scene_open() = 0;
     if (s != 0) {
         delete[] s;
@@ -1028,13 +1029,13 @@ void GameW::free_arrays()
         levels = 0;
     }
 
-    RecT* t = *(RecT**)&factions;
+    FactionFile* t = *(FactionFile**)&factions;
     if (t != 0) {
         delete[] t;
         factions = 0;
     }
 
-    RecQ* q = *(RecQ**)&quests;
+    QuestFile* q = *(QuestFile**)&quests;
     if (q != 0) {
         delete[] q;
         quests = 0;
