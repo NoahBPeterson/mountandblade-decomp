@@ -89,6 +89,7 @@ from coff import Coff                              # noqa: E402
 DEFAULT_INPUTS = 400
 DEFAULT_PLATEAU = 150      # --plateau: inputs in a row without new coverage before a row stops early
 DEFAULT_K = 200
+FULL_COVERAGE_MIN_VALID = 20   # --stop-full-coverage: fewest valid inputs a row may stop on
 DEFAULT_C = 60.0                  # legacy --gate insns only
 DEFAULT_BUDGET = 10_000_000
 START_BUDGET = 100_000
@@ -6687,6 +6688,12 @@ def _test_function(sid, va, opts, log=print):
                 break
             if i >= opts.inputs and not (steer and corpus and edges_missing(runner) and steer.has_work()):
                 break               # past --inputs only while steering still has uncovered branches to try
+            if getattr(opts, "stop_full_coverage", False) and valid >= FULL_COVERAGE_MIN_VALID and not edges_missing(runner):
+                # every edge of both builds has run and compared: stop here instead of running --min-valid inputs.
+                # Recorded in the JSON, so a PASS that stopped this way can be told from one with the full input count.
+                out["stopped_full_coverage"] = "all edges covered after %d inputs, %d valid" % (i, valid)
+                opts.min_valid = min(opts.min_valid, valid)
+                break
             if time.time() > deadline:
                 out["stopped_early"] = "time limit %ds after %d inputs" % (opts.time_limit, i)
                 break
@@ -7414,6 +7421,8 @@ def parse_args(argv=None):
     ap.add_argument("--start-budget", type=int, default=START_BUDGET,
                     help="initial cap; raised to --budget if one of the first %d capped inputs finishes under it" % BUDGET_PROBES)
     ap.add_argument("--time-limit", type=int, default=180, help="seconds per function")
+    ap.add_argument("--stop-full-coverage", action="store_true",
+                    help="stop as soon as every edge of both builds has run on at least %d valid inputs; the row can PASS below --min-valid (for rows too slow to finish; the JSON records stopped_full_coverage)" % FULL_COVERAGE_MIN_VALID)
     ap.add_argument("--run-seconds", type=float, default=0,
                     help="wall-clock cap per original run (ours: 4x). Default 0 = off: a wall-clock stop depends on "
                          "machine load, so with it on, any row that hits it reports no verdict (only --inputs and "
