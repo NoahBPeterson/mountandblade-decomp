@@ -58,7 +58,7 @@ UiD* make_scroll_track(ContainerBase* parent, float x, float y, float h, float w
     col.x = h * 50.0f;
     col.y = w * 1.5576323f;
     col.z = 1.0f;
-    self->set_size(size);
+    self->set_xy(size);             // vtable +0x64 (0x4ee99c), not set_size +0x6c
     self->f17c = col.y * 0.31f;
     // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix) into a temporary
     // tstring(const char*) (0x42bbe0), destroyed right after the clone
