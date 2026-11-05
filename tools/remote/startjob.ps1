@@ -19,10 +19,14 @@ while ($true) {
     if ((Running-Jobs) -lt $cap) { break }
     Start-Sleep -Seconds 10
 }
-$env:PYTHONHASHSEED = "0"; $env:PYTHONUTF8 = "1"
 $log = "$jobs\$Name.log"
-$p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c $Cmd > `"$log`" 2>&1" -WorkingDirectory "D:\mb\repo" -WindowStyle Hidden -PassThru
+# WMI starts the job outside this ssh session: sshd kills what the session started (Start-Process) when it disconnects.
+# A process WMI creates does not inherit this environment, so the variables are set on its command line.
+$line = "cmd.exe /c `"set PYTHONHASHSEED=0&& set PYTHONUTF8=1&& $Cmd > `"$log`" 2>&1`""
+$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine=$line; CurrentDirectory="D:\mb\repo"}
+if ($r.ReturnValue -ne 0) { throw "Win32_Process.Create failed: $($r.ReturnValue)" }
+$p = Get-Process -Id $r.ProcessId
 $p.PriorityClass = "Idle"
-Set-Content -Path "$jobs\$Name.pid" -Value $p.Id
-"started $Name pid $($p.Id) (cap $cap)"
-if ($Wait) { $p.WaitForExit(); "exit $($p.ExitCode)" }
+Set-Content -Path "$jobs\$Name.pid" -Value $r.ProcessId
+"started $Name pid $($r.ProcessId) (cap $cap)"
+if ($Wait) { $p.WaitForExit(); "finished" }
