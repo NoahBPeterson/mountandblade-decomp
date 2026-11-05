@@ -227,8 +227,7 @@ def make_import_libs(img, out_dir, needed):
         dll, name = full.split("!", 1)
         if dll in OWN_IMPORTS:
             by_dll[dll].append(name)
-    decorated = {}
-    env = dict(os.environ, WINEPREFIX=os.environ.get("CL_WINEPREFIX") or os.path.join(TC, "wineprefix-mb"), WINEDEBUG="-all")
+    decorated, libs = {}, {}
     for dll, names in sorted(by_dll.items()):
         exports = {}
         if dll == "skinmagic":
@@ -256,7 +255,16 @@ def make_import_libs(img, out_dir, needed):
             else:                                       # Newton: cdecl, exported undecorated
                 lines.append(n)
                 decorated[dll + "!" + n] = "_" + n
-        dname = DLL_FILES[dll]
+        libs[dll] = {"file": DLL_FILES[dll], "exports": lines, "name_types": patch}
+    write_import_libs(libs, out_dir)
+    return decorated, libs
+
+
+def write_import_libs(libs, out_dir):
+    """Make the import libraries from {dll: {file, exports (.def lines), name_types (symbol -> import name type)}}."""
+    env = dict(os.environ, WINEPREFIX=os.environ.get("CL_WINEPREFIX") or os.path.join(TC, "wineprefix-mb"), WINEDEBUG="-all")
+    for dll, e in sorted(libs.items()):
+        dname, lines, patch = e["file"], e["exports"], e["name_types"]
         deff = os.path.join(out_dir, dll + ".def")
         open(deff, "w").write("LIBRARY %s\nEXPORTS\n%s\n" % (dname, "\n".join("  " + l for l in lines)))
         lib = os.path.join(out_dir, dll + ".lib")
@@ -265,7 +273,6 @@ def make_import_libs(img, out_dir, needed):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if patch:
             patch_import_names(lib, patch)
-    return decorated
 
 
 def patch_import_names(lib, patch):
@@ -286,13 +293,34 @@ def patch_import_names(lib, patch):
     open(lib, "wb").write(d)
 
 
+def write_glue_obj(aliases, out_dir):
+    obj = Obj()
+    drectve = " ".join("/alternatename:%s=%s" % kv for kv in sorted(aliases.items())) + " "
+    obj.section(".drectve", SCN_INFO, drectve.encode("latin-1"))
+    obj.write(os.path.join(out_dir, "mb_glue.obj"))
+
+
+def from_inputs(path, out_dir):
+    """The glue of a build without the original exe: the same object and import libraries, from the checked-in names."""
+    inp = json.load(open(path))
+    os.makedirs(os.path.join(out_dir, "imports"), exist_ok=True)
+    write_import_libs(inp["import_libs"], os.path.join(out_dir, "imports"))
+    write_glue_obj(inp["aliases"], out_dir)
+    json.dump({"aliases": inp["aliases"], "import_libs": inp["import_libs"]}, open(os.path.join(out_dir, "glue.json"), "w"), indent=1)
+    print("from %s: aliases %d, import libraries %d" % (os.path.relpath(path, ROOT), len(inp["aliases"]), len(inp["import_libs"])))
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "relink", "glue"))
     ap.add_argument("--log", default=os.path.join(ROOT, "work", "relink", "link.log"), help="a trial link's log (without --glue)")
     ap.add_argument("--map", default=os.path.join(ROOT, "work", "relink", "resolve_map.json"))
+    ap.add_argument("--inputs", help="symbols/link_inputs.json: make the glue from this file alone, without the original exe")
     a = ap.parse_args()
     os.chdir(ROOT)
+    if a.inputs:
+        return from_inputs(a.inputs, a.out)
     import resolve as R
     img = R.Image()
     db = R.SymbolDB(img)
@@ -314,7 +342,7 @@ def main():
             lib_names.setdefault(int(p[0], 16), p[1][9:])
     runtime = lib_index({"libcmt.lib", "libcpmt.lib"})
     system = lib_index(None)
-    imp_dec = make_import_libs(img, os.path.join(a.out, "imports"), unres)
+    imp_dec, import_libs = make_import_libs(img, os.path.join(a.out, "imports"), unres)
     thunk_of = {v: k for k, v in img.thunks().items()}          # thunk VA -> import name
     iat_of = {va: full for va, full in img.imports.items()}     # IAT VA -> dll!name
 
@@ -408,11 +436,10 @@ def main():
             continue
         report["unresolved"][s] = "address %08x outside the image sections" % va
 
-    drectve = " ".join("/alternatename:%s=%s" % kv for kv in sorted(aliases.items())) + " "
-    obj.section(".drectve", SCN_INFO, drectve.encode("latin-1"))
-    obj.write(os.path.join(a.out, "mb_glue.obj"))
+    write_glue_obj(aliases, a.out)
     report["labels"] = sorted(labels)
     report["aliases"] = aliases
+    report["import_libs"] = import_libs
     report["conv_mismatch"] = conv_mismatches(aliases)
     json.dump(report, open(os.path.join(a.out, "glue.json"), "w"), indent=1)
     print("unresolved in: %d; data labels %d, aliases %d, left unresolved %d, conflicts %d"

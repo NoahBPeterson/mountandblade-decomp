@@ -38,6 +38,15 @@ symbol-less compiler fragments (byte-checked inside their COMDAT / not matching)
 
 See [`docs/PLAN.md`](docs/PLAN.md) for the plan and [`docs/matching.md`](docs/matching.md) for the workflow.
 
+## Building without the original exe
+```sh
+.venv/bin/python tools/relink/build.py --no-original --game-exe "$MB/mount&blade.exe"
+```
+This needs the toolchain and your own installed game, which supplies the exe's resources (dialogs, icons, version info). It
+compiles `src/`, takes link order, aliases and import names from `symbols/link_inputs.json`, and holds no bytes of the original.
+No gate runs in this mode. `build.py --faithful` still needs `work/mb.analysis.bin`: it checks the build against the original and
+reports `link_inputs STALE` when a source change needs `--write-inputs`. The `--no-original` build is the faithful one (no patches).
+
 ## Setup
 ```sh
 uv sync   # .venv from pyproject.toml + uv.lock (pinned: unicorn/capstone versions affect equiv results)
