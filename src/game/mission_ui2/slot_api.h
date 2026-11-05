@@ -22,13 +22,6 @@ struct AnimVt {
 // The level (global 0xa732b4) is the engine's rgl::world (src/rgl/scene/world.h): the grid of collision cells at +0x28 and the point locator.
 #include "../../rgl/scene/world.h"
 
-// A table of pages of 0x98-byte records: pages at +0x18 (16 records per page).
-struct PageTable98 {
-    char pad0[0x18];
-    void** pages;                           // +0x18
-    void* slot(unsigned index);             // 0x48ef20
-};
-
 // The message log (global 0x5d7080, the same object as the UI sound host g_ui_sound in ui_widgets.h) and the error reporter.
 void mb_error(const char* fmt, ...);        // 0x42cc80 (cdecl)
 

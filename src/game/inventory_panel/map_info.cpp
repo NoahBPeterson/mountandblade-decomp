@@ -44,12 +44,7 @@ struct FactionRec;
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../rgl/text_stream.h"
 
-struct PageTable98 {                         // lives at GameData+0xcc (the page table slot_api.cpp defines slot() for)
-    char      pad00[0x18];
-    void**    pages;                         // +0x18  (GameData+0xe4)
-    void* slot(unsigned idx);             // 0x48ef20
-};
-typedef PageTable98 AgentPages;
+#include "../battle_rec.h"                   // BattleTable (GameData+0xcc; get 0x48ef20)
 
 
 struct MapWidget {
@@ -66,7 +61,6 @@ int __stdcall draw_party_line(int id);                                    // 0x5
 // ---- layout guards (MSVC 13 has no static_assert: a mismatch is a negative array size) -------------
 // Sizes: every record's stride appears in the original as an `imul ..., <stride>` immediate.
 typedef char assert_Faction_300  [(sizeof(FactionRec)    == 0x300)   ? 1 : -1];
-typedef char assert_AgentPages   [(sizeof(AgentPages) == 0x1c)    ? 1 : -1];
 // Field offsets: taken straight from the original's displacements (see the header comment).
 typedef char assert_Faction_f10  [(offsetof(FactionRec, f10)    == 0x10)    ? 1 : -1];
 typedef char assert_Faction_key  [(offsetof(FactionRec, key)    == 0x14)    ? 1 : -1];
@@ -75,7 +69,6 @@ typedef char assert_Faction_color[(offsetof(FactionRec, color)  == 0x28)    ? 1 
 typedef char assert_Faction_rel  [(offsetof(FactionRec, rel)    == 0x2c)    ? 1 : -1];
 typedef char assert_Rec98_a      [(offsetof(Rec98, f54)      == 0x54)    ? 1 : -1];
 typedef char assert_Rec98_b      [(offsetof(Rec98, f58)      == 0x58)    ? 1 : -1];
-typedef char assert_AgPages_ptr  [(offsetof(AgentPages, pages)   == 0x18)    ? 1 : -1];
 typedef char assert_Panel_view   [(offsetof(MapPanel, view)         == 0x30)    ? 1 : -1];
 typedef char assert_Panel_timer  [(offsetof(MapPanel, timer)        == 0x2cc)   ? 1 : -1];
 typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     ? 1 : -1];
@@ -94,7 +87,7 @@ static Party* party_by_id(int id)
 {
     return party_at(&g_game->parties, g_game->parties.index_of(id));
 }
-static AgentPages* agents_of() { return (AgentPages*)((char*)g_game + 0xcc); }   // GameData +0xcc (0x48ef20 is its slot())
+static BattleTable* agents_of() { return (BattleTable*)((char*)g_game + 0xcc); }   // GameData +0xcc (0x48ef20 is its get())
 static Rec98* agent_at(int idx)
 {
     return (Rec98*)g_game->agent_pages[idx >> 4] + (idx & 0xf);
@@ -298,7 +291,7 @@ void MapPanel::update(int type, int id)
                     case 7: {
                         int a = rec->battle;
                         if (a >= 0) {
-                            Rec98* slot = (Rec98*)agents_of()->slot(a);         // 0x48ef20
+                            Rec98* slot = (Rec98*)agents_of()->get(a);         // 0x48ef20
                             int other = (slot->f54 == agent) ? slot->f58 : slot->f54;
                             if (other >= 0) {
                                 label = *g_strtable.lookup(tstring("ui_fighting_against"));

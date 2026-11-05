@@ -37,7 +37,7 @@ struct GamePool {
     char** pages;                       // +0x18 (page = 16 records of 0x98 bytes)
     void next(int* index);              // 0x517960
     int first();                        // 0x5179b0
-    // slot (0x48ef20) is PageTable98::slot (game/slot_api), called through a cast in game_tick.cpp
+    // get (0x48ef20) is BattleTable::get (mission_ui2/slot_api.cpp), called through a cast in game_tick.cpp
 };
 
 // a tracking record of the party-track ribbons (0x5c bytes, vector at game+0x13a60): src/game/rec5c.h

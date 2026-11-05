@@ -58,7 +58,6 @@ Total: 81.  ICF 10  TWIN 8  VIEW 51  OTHER 12
 | `?fill_weights_x@AgentX@@QAEXPAMHH@Z` | `?fill_weights@Agent@@QAEXPAMHH@Z` | TWIN | visibility twin AgentX::fill_weights_x / Agent::fill_weights |
 | `?first@TeamRec@@QAE?AUvector4@rgl@@XZ` | `?first@Sel@@QAEXPAH@Z` | OTHER | TeamRec::first returning vector4 vs Sel::first(int*): call-site declaration and definition disagree on signature |
 | `?free_materials@block_base@@QAEXXZ` | `?free_materials@Block@@QAEXXZ` | VIEW | block_base (e68.h) vs Block (gui_edit.h): two classes for the mesh block, free_materials 0x4c8330 |
-| `?get@BattleTable@@QAEPAUBattleRec@@I@Z` | `?slot@PageTable98@@QAEPAXI@Z` | VIEW | BattleTable (battle_rec.h) vs PageTable98: two views of the table at game+0xcc |
 | `?get@PartyMgr@@QAEPAUParty@@H@Z` | `?get@Scene@@QAEPAUPartyRecIO@@H@Z` | VIEW | PartyMgr (party.h) vs Scene / PartyRecIO views of the party table |
 | `?group_base_ext@@YAHH@Z` | `?group_base@@YAHH@Z` | TWIN | _ext twin group_base_ext / group_base |
 | `?grow@Scene@@QAEXXZ` | `?grow@PartyMgrW@@QAEPAU1@XZ` | VIEW | Scene view of the party manager PartyMgrW::grow (0x493830) |

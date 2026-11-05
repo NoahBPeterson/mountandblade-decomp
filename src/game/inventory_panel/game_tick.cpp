@@ -91,9 +91,6 @@ extern const float g_k002;       // 0x590cd0  marker decay per second
 void set_clock_step(int* clock, float step);            // 0x461420
 bool is_daytime();                                          // 0x435700 (true in the 4..20 h window; game/agent/agent.cpp)
 // GameW (inv_common.h): remove_party 0x4915d0 (game/world_data, GameData::remove_party)
-struct PageTable98 {
-    void* slot(unsigned idx);   // 0x48ef20 (game/slot_api)
-};
 #include "../res_mgr.h"                         // g_resmgr: get_object 0x419540 (rgl/core/resmgr.h)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 #define GAMMA (0.45454543828964233f)                    // 0x5a9f1c  1 / 2.2 (the compiler's rounding)
@@ -222,7 +219,7 @@ void GameG::tick(float dt)
         GamePool* gp = &pool;
         int idx = gp->first();
         while ((unsigned)idx < (unsigned)gp->count) {
-            ((BattleRec*)((PageTable98*)gp)->slot(idx))->update_nav_anim(*(int*)&speed);   // 0x4b71e0 (battle_rec.h; the argument is unused by the callee)
+            ((BattleTable*)gp)->get(idx)->update_nav_anim(*(int*)&speed);   // 0x4b71e0 (battle_rec.h; the argument is unused by the callee)
             gp->next(&idx);
         }
     }

@@ -4014,7 +4014,7 @@
   },
   "0048ef20": {
    "verdict": "DIFF",
-   "symbol": "?slot@PageTable98@@QAEPAXI@Z",
+   "symbol": "?get@BattleTable@@QAEPAUBattleRec@@I@Z",
    "insns": 9,
    "ours": 8,
    "unverified": 0,

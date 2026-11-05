@@ -18,6 +18,7 @@
 #include "../ui/mission_ui.h"
 #include "../config/widget_mgr.h"
 #include "./slot_api.h"
+#include "../battle_rec.h"      // BattleTable::get 0x48ef20
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../mission.h"
 #include "../item_ref.h"
@@ -267,8 +268,8 @@ int Mission::find_prop(int tag, int nth)
 }
 
 // @ 0x48ef20
-void* PageTable98::slot(unsigned index)
+BattleRec* BattleTable::get(unsigned index)
 {
-    void** page = &pages[index >> 4];
-    return (char*)*page + (index & 0xf) * 0x98;
+    BattleRec** page = &pages[index >> 4];
+    return *page + (index & 0xf);
 }
