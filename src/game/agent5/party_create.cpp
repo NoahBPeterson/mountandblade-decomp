@@ -62,7 +62,6 @@ extern "C" int sprintf(char* dst, const char* fmt, ...);    // 0x536f8f
 // Callees declared under the name of the class or function that defines them (the modules that define them name the class after another of
 // their users, and the linker folds identical bodies); the object is cast at the call, each says why it is the one the definition works on.
 struct NodeA;
-struct FieldPanel { void update(); };           // 0x48d470 (mission_ui2/mission_3.cpp): lays the list out
 #include "../res_mgr.h"                      // g_resmgr: the resource manager at 0x5d6fa0
 struct UiD;
 UiD* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
@@ -209,7 +208,7 @@ void PartyWindow::init_screen()
             Vec2 s(v->screen[0], m);
             v->set_xy(&s.x);
         }
-        ((FieldPanel*)v)->update();
+        v->draw();                                       // 0x488d50
         container->add_child(view[i]);
 
         MissionUi* g = new MissionUi;
@@ -256,7 +255,7 @@ void PartyWindow::init_screen()
         tstring* label = g_strtable.lookup(tstring("ui_return"));
         leave = new_sized_button((MissionUi*)container, *label, 0.0f, 0.0f, y, tstring("short_button"), tstring("short_button_down"), 3.0f, 0.072f, 0.085f);
     }
-    label_refresh((MissionUi*)leave, tstring("inv_b_leave_h"));
+    label_refresh((MissionUi*)leave, tstring("inv_b_leave"));
     {
         MissionUi* tc = new MissionUi;
         total_cost = tc;

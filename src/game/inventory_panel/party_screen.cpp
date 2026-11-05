@@ -669,7 +669,7 @@ void PartyScreen::setup_party(int side)
         label_refresh(members_base[0], tstring("party_bo_party1"));
         if (g_game->skill_level(g_game->player, 2) == 0) {
             prisoner_mgmt = new MissionUi;
-            label_refresh(prisoner_mgmt, tstring("party_t_prisoner_mgmt"));
+            label_refresh(prisoner_mgmt, tstring("party_t_prisoner_management"));
             PSO(prisoner_mgmt)->set_text(
                 caption_pos, g_strtable.lookup(tstring("ui_need_to_learn_prisoner_management")));
             PSO(members_base[0])->add_child(prisoner_mgmt);
@@ -863,7 +863,7 @@ void PartyScreen::setup_skills()
             if (!shown(ms))
                 continue;
             y += t_y_a;
-            for (int k = 0; &g_skill_tbl[k].name < &g_module_name; k++) {
+            for (int k = 0; &g_skill_tbl[k].name < &g_skill_tbl[42].name; k++) {
                 if (((g_skill_tbl[k].attr >> 4) & 1) == 0)
                     continue;
                 int best = 0;
@@ -918,7 +918,7 @@ void PartyScreen::setup_skills()
             }
             y -= t_y_a;
 
-            for (int k = 0; &g_skill_tbl[k].name < &g_module_name; k++) {
+            for (int k = 0; &g_skill_tbl[k].name < &g_skill_tbl[42].name; k++) {
                 SkillRec* se = &g_skill_tbl[k];
                 if (((se->attr >> 4) & 1) == 0)
                     continue;
