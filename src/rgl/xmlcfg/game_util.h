@@ -28,6 +28,7 @@ struct SkelX {                              // what the +0x304 pointer of the bo
 };
 struct ActorItemRec { int pad0, pad4; unsigned flags; char pad_c[0x40 - 0xc]; };     // 0x40 bytes, flags at +8 (0x432f60)
 struct Record { char pad0[0x10]; ActorItemRec* items; int count; char pad18[0x30 - 0x18]; };   // 0x30, items +0x10, count +0x14
+inline Record* agent_recs(const Agent* a) { return *(Record**)a->f12c; }        // the actor's table of 0x30-byte records (+0x12c; fill_weights 0x432f60, pick 0x433040)
 #include "../../include/game_data.h"      // GameData / g_game 0x5e2930: the troop table at +0x13a00 (0x433140 reads the record's flags at +0x30; this module called the record ItemDef)
 
 // is_friend 0x4323a0, is_neutral 0x4323f0, fill_weights 0x432f60 and pick 0x433040 are members of Agent (agent_obj.h), defined in
@@ -37,7 +38,6 @@ struct AgentX : Agent {
     bool is_enemy(const Agent* o) const;                    // 0x432350 (relation == -1)
     float speed_scale() const;                              // 0x432450
     bool f100_is_0x48_and_charged() const;                  // 0x432470 (state +0x100 == 0x48)
-    void fill_weights_x(float* out, int idx, int rec);      // 0x432f60 (declaration only, see Agent::pick; the definition is Agent::fill_weights)
     int agent_class() const;                                  // 0x433140
 };
 
