@@ -173,7 +173,7 @@ void CharSheet::init_screen()
             tstring n("character_window");
             mesh = g_resmgr.get_object(&n)->clone();
         }
-        w->set_mesh(0, mesh);
+        w->set_track(0, mesh);
     }
 
     MissionUi* pw = window;
@@ -376,8 +376,8 @@ void CharSheet::init_screen()
         }
 
         if (g_display_wp[i] == 0) {
-            row->show();
-            plus1c->show();
+            row->hide();
+            plus1c->hide();
         }
     }
 
@@ -414,8 +414,8 @@ void CharSheet::init_screen()
         }
         up->scale(0.6666667f);
         down->scale(0.6666667f);
-        name->set_mesh(2, up);
-        name->set_mesh(1, down);
+        name->set_track(2, up);
+        name->set_track(1, down);
     }
 
     {
@@ -497,7 +497,7 @@ void CharSheet::init_screen()
         f52c = 0;
     if (mode != -1) {
         f52c = 0;
-        stats->show();
+        stats->hide();
     }
     prev = 0;
     next = 0;
@@ -544,7 +544,7 @@ void CharSheet::init_screen()
     }
     label_refresh(explanation, tstring("char_t_explanation"));
     skill_desc->add_child(explanation);
-    explanation->show();
+    explanation->hide();
 
     // ---- the layout passes -------------------------------------------------------------------------
     ((char_window*)this)->open_view();
