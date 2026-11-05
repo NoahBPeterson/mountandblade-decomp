@@ -38,13 +38,15 @@ DLL_FILES = {"newton": "Newton.dll", "fmod": "fmod.dll", "skinmagic": "SkinMagic
 # argument bytes of the SkinMagic entry points the game calls (all stdcall; the DLL exports them undecorated)
 SKINMAGIC_ARGS = {"InitSkinMagicLib": 16, "ExitSkinMagicLib": 0, "LoadSkinFile": 4, "SetSingleDialogSkin": 8}
 
-RDATA = (".rdata$mb", 0x549000, 0x5a7d72)
+# MB_COPY_GUARD=1 (a diagnostic build, tools/relink/guard_copy.py): the copy gets PE sections of its own, so they can be made no-access.
+_G = os.environ.get("MB_COPY_GUARD")
+RDATA = (".mbro" if _G else ".rdata$mb", 0x549000, 0x5a7d72)
 # The original's .data is one section: initialised bytes, then .bss from 0x5d7000. The linker places our copies of
 # the two apart, so the cut between them must not fall inside an object: the resource manager at 0x5d6fa0 is 0xe0
 # bytes and straddles 0x5d7000 (its tail landed on DXUtil_Timer's statics). The copy of the initialised part
 # therefore runs on to 0x5d7080, where the next object (the gui manager, g_gui) starts; those 0x80 bytes are zeros.
-DATA = (".data$mb", 0x5a8000, 0x5d7080)
-BSS = (".bss$mb", 0x5d7080, 0x8ee5b94)
+DATA = (".mbrw" if _G else ".data$mb", 0x5a8000, 0x5d7080)
+BSS = (".mbzi" if _G else ".bss$mb", 0x5d7080, 0x8ee5b94)
 TEXT_LO, TEXT_HI = 0x401000, 0x548578
 IAT_LO, IAT_HI = 0x549000, 0x5494c8
 # Original data our exe replaces and never reads: not copied (left zero). The CRT initializer / terminator tables are
