@@ -745,6 +745,7 @@ DATA_CATS = (("defined in source", "Defined in source: a named global at the ori
              ("generated from source", "Generated from source: string literals, constants, vtables", "#009E73"),  # bluish green
              ("borrowed from image", "BORROWED from the original image (the crutch)", "#D55E00"),                # vermillion
              ("reached through tables", "Reached only through pointer tables (the pages of a pool)", "#CC79A7"), # reddish purple
+             ("unnamed bss", "Unnamed .bss: storage the code reaches that no definition of ours covers", "#F0E442"), # yellow
              ("library data", "Library data: static CRT/C++, linked from libcmt", "#8FB1C8"))
 
 
