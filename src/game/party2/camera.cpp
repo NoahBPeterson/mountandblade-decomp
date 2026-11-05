@@ -1757,7 +1757,7 @@ bool GameData::deploy_party(int a, int b)
         attach_flip = 1;
         Party* p1 = parties.get_party(la);
         Party* p2 = parties.get_party(b);
-        attach_center(this, (p1->pos.x + p2->pos.x) * 0.5f, (p2->pos.y + p1->pos.y) * 0.5f, b, a);
+        attach_center(this, (p1->pos.x + p2->pos.x) * 0.5f, (p2->pos.y + p1->pos.y) * 0.5f, b, la);
         return 1;
     }
     Party* p1 = parties.get_party(a);

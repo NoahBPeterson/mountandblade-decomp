@@ -872,15 +872,15 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
                 value = value * g_items[item->item].f21c;
             int row = *(int*)((char*)troops + idx * 0x508 + 0x4c);
             float tf = *(float*)((char*)factions + row * 0x300 + 0x2c);
+            // a bad relation weighs 3x, a good one 0.5x (0x512be7..0x512c75)
             if (tf < -1.0f)
                 tf = -1.0f * 3.0f;
-            else {
-                if (tf > 1.0f)
-                    tf = 1.0f;
-                else if (tf < 0.0f)
-                    tf *= 3.0f;
+            else if (tf > 1.0f)
+                tf = 1.0f * 0.5f;
+            else if (tf < 0.0f)
+                tf *= 3.0f;
+            else
                 tf *= 0.5f;
-            }
             tf = (1.0f - tf) * f + 1.0f;
             if (adjust)
                 tf = 1.0f / tf;
