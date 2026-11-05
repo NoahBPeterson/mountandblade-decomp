@@ -28,7 +28,6 @@
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./physics.h"
-#include "./missile.h"
 #include "./face_gen.h"
 #include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin_set.h SkinSet::relax 0x4735e0
 #include "./tmesh.h"
