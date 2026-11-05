@@ -1,0 +1,12 @@
+# data_values.py: short objects (our definition is smaller than the original's extent, and an indexed operand, an address
+# push or a table pointer can address bytes past our end) that were checked by hand: the tail is another object of the
+# original, not elements our array is missing. The build gate fails on every other short object, so the list only
+# shrinks. `ADDR  # why`, one per line. (g_nbr was a real one: its index 8 entry {0,0} was missing; fixed to [9].)
+00590940  # g_gait_walk[3]: the band loop of 0x4556d0 walks bands while spd > hi / < lo; band 2 ends at hi = 10000.08, so band 3 (3.0f, then the int 8192 at 0x59095c that 0x4520d0 pushes) is never read
+00590a9c  # g_value_max: one int, passed by address to clamp_index(v, &lo, &hi) (0x432510) which reads *hi only; the floats after it (0.952, 0.952, 0.15) are other constants nothing addresses
+00590aac  # g_range_tbl[6]: indexed by Agent::variant (0..5, one {lo, hi} per mount type); the int 8 after it is another constant
+005938c8  # g_weapon_xp[11]: indexed by skill_level() 0..10 (0x4f07b7); 4, 0.1f, 64 after it are other constants
+0059390c  # g_aim_range_tbl[14]: indexed by 2 * mount type (0..5) and entries 12, 13 (0x59393c); 20.0f at 0x593944 is another constant
+005e23d0  # TiXmlString::nullrep_: Rep {size = 0, capacity = 0, str[0] = 0}, compared by address only (0x42d822 ...); the zero bytes after it are the next bss object
+005e293c  # g_effect: one ID3DXEffect*, its address passed to D3DXCreateEffect as the out pointer (0x4c1859)
+005e29d4  # g_item_kind_count: one int, its address passed as an out pointer (0x4e9798, 0x50e46f)

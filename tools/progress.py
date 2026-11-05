@@ -166,6 +166,7 @@ SA_COLS = (("data_labels", "Glue data labels", False), ("aliases", "Glue aliases
            ("source_aliases", "Aliases in source (/alternatename)", False),
            ("source_hacks", "volatile / _ReadWriteBarrier lines in source", False),
            ("data_values_differ", "Data definitions whose initial bytes differ from the original's", False),
+           ("data_values_short", "Data definitions shorter than the original object they stand for", False),
            ("traps", "Traps (code addresses)", False), ("redirects", "Code pointers redirected to traps", False),
            ("vtable_slots_rewritten", "Vtable slots rewritten", False),
            ("vptr_stores_moved", "Vptr stores moved to the original's vtable", False),

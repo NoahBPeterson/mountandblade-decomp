@@ -50,6 +50,7 @@ CRUTCHES = (("data_labels", "glue", r"data labels (\d+)"), ("aliases", "glue", r
             ("source_aliases", "source_aliases", r"(\d+) /alternatename directives"),
             ("source_hacks", "source_hacks", r"(\d+) source lines with volatile"),
             ("data_values_differ", "data_values", r"\d+ definitions compared, (\d+) differ"),
+            ("data_values_short", "data_values", r"(\d+) short objects"),
             ("traps", "traps", r"(\d+) trapped code addresses"),
             ("redirects", "glue", r"'code->trap': (\d+)"),
             ("vtable_slots_rewritten", "vtables", r"(\d+) slots rewritten"),
@@ -118,12 +119,16 @@ def link_map_symbols(map_path):
     return out
 
 
-def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None):
+def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None, bounds_out=None, refs_out=None):
     """[[start, end, class]] items of the static data (see the module docstring), plus the instruction uses
     {address: {'game'|'lib'}} and the names {address: [defined, [names]]}. gen_data.py reuses this.
     first_user, when given, is filled with {address: the lowest-addressed game function that uses it}; users, with
     {address: set of the game functions that use it}. syms ({name: (size, module)} from link_map_symbols): an item
-    that our source defines takes the defined symbol's whole extent, absorbing the items inside it."""
+    that our source defines takes the defined symbol's whole extent, absorbing the items inside it. bounds_out, when given,
+    is filled with every address that starts something in the original (used, named or pointed to by a table), before the
+    unnamed uses are folded into the item before them. refs_out, when given, is filled with {address: set of 'direct' (a
+    register-free memory operand), 'indexed' (a memory operand with a register) or 'imm' (the address as a value: push,
+    mov reg, offset, lea)} for every use of any alignment."""
     import capstone
     from glue import RDATA, DATA, BSS, IAT_LO, IAT_HI, section_of
     lo_all, hi_all = RDATA[1], BSS[2]
@@ -145,6 +150,8 @@ def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None):
                 mem = t.startswith("[")
                 for h in re.findall(r"0x([0-9a-f]+)", t):
                     v = int(h, 16)
+                    if refs_out is not None and in_data(v):
+                        refs_out.setdefault(v, set()).add(("direct" if re.fullmatch(r"\[0x[0-9a-f]+\]", t) else "indexed") if mem else "imm")
                     # library immediates into .bss are constants (strlen's 0x01010100 masks), not addresses
                     if in_data(v) and (mem or (v % 4 == 0 and (owner == "game" or section_of(v) is not BSS))):
                         uses[v].add(owner)
@@ -192,6 +199,8 @@ def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None):
         return "reached through tables"
 
     bounds = sorted(set(uses) | set(named) | tabled)
+    if bounds_out is not None:
+        bounds_out[:] = bounds
     items = []                       # [start, end, class]
     for i, v in enumerate(bounds):
         sec = section_of(v)

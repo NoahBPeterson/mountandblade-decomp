@@ -720,10 +720,16 @@ def main():
     # data_values gate: the bytes each data definition of ours holds at load time against the original image's bytes at
     # its address (a missing initialiser: `int g_str_grow_add;` was 0 where the original has 128). tools/relink/data_values.py
     import data_values as DV
-    dvr = DV.compare(exe, bases, rmap, img, objs, DA.our_sizes(objs), DA.STATE["claims"], DA.STATE["defined"], sites, orig_of)
-    steps["data_values"] = "%d definitions compared, %d differ (%s), %d constructed at startup, not compared" % (
-        dvr["compared"], len(dvr["differ"]), ", ".join(e["name"] for e in dvr["differ"][:8]) + (" ..." if len(dvr["differ"]) > 8 else ""),
-        len(dvr["constructed"]))
+    dvr = DV.compare(exe, bases, rmap, img, objs, DA.our_sizes(objs), DA.STATE["claims"], DA.STATE["defined"], sites, orig_of,
+                     DV.orig_extents(img, rmap), DV.reviewed_short())
+
+    def few(es):
+        return ", ".join(e["name"] for e in es[:8]) + (" ..." if len(es) > 8 else "")
+    steps["data_values"] = "%d definitions compared, %d differ (%s), %d short objects (%s), %d constructed at startup (%d of them " \
+                           "compared outside the initialiser's stores); %d further tails reviewed as other objects, %d tails no code " \
+                           "can reach (scalars read through their own register-free operands)" % (
+        dvr["compared"], len(dvr["differ"]), few(dvr["differ"]), len(dvr["short"]), few(dvr["short"]),
+        len(dvr["constructed"]), dvr["partly_compared"], len(dvr["short_reviewed"]), len(dvr["unreachable_tail"]))
     steps["literals"] = "%d literal image addresses rewritten; %d in dropped functions, %d without a target, %d not " \
                         "where expected" % (lit["patched"], len(lit["missing_function"]), len(lit["no_target"]),
                                             len(lit["changed"]))
@@ -749,8 +755,9 @@ def main():
                              or vt["vtbl_externs"] or vt["glue_bound_slots"] or vt.get("dtor_slots")):
         sys.exit("vtable gate: " + steps["vtable_gate"])
     print("-> %s" % rel(exe_path))
-    if dvr["differ"]:
-        sys.exit("data_values gate: %d data definitions start with other bytes than the original's (build.json data_values_report)" % len(dvr["differ"]))
+    if dvr["differ"] or dvr["short"]:
+        sys.exit("data_values gate: %d data definitions start with other bytes than the original's, %d are shorter than the "
+                 "original object they stand for (build.json data_values_report)" % (len(dvr["differ"]), len(dvr["short"])))
     return 0
 
 
