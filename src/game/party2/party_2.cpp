@@ -2518,7 +2518,7 @@ void BattleRec::update_nav_anim(int)
     if (type == 1) {
         if (opacity > 0.5f && GDP(char, 0x95) == 0) {
             if (anim.elapsed() > 10.5f) {
-                sound = g_sound_mgr.play(g_sound_mgr.slot[109], 0, obj->pos, 1.0f, 0);
+                sound = g_sound_mgr.play(g_sound_mgr.slot[99], 0, obj->pos, 1.0f, 0);
                 anim.start = g_ticks[anim.clock];
             }
         }
