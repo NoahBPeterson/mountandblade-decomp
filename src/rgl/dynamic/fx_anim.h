@@ -123,28 +123,4 @@ struct FxAnim : FxDef {
 __declspec(noinline) void slerp(quaternion* out, const quaternion* a, const quaternion* b, const float* t);      // 0x4238c0
 __declspec(noinline) void nlerp(quaternion* out, const quaternion* a, const quaternion* b, const float* t);      // 0x4239c0
 
-// ---- "ext" twins: the functions of this object as their callers saw them -------------------------------------------
-// The callers of these functions were compiled without knowledge of the callee (cl 13.10 keeps the callee's register
-// use and side effects when the callee is compiled first in the same object, and the callers then differ in register
-// choice; the same effect as in src/rgl/shapes/shapes.h). Each twin is only declared; fx_anim.cpp binds its symbol to
-// the real function with /alternatename, so the link has one function per address. The `// 0x...` annotations give
-// the resolver the address.
-struct quaternion_x : quaternion {
-    quaternion& set(const float& x_, const float& y_, const float& z_, const float& w_);   // 0x422db0
-    void add(const quaternion& o);                                                         // 0x422de0
-    quaternion operator+(const quaternion& o) const;                                       // 0x422e10
-    void normalize();                                                                      // 0x422e40
-    quaternion mul(const quaternion& o) const;                                             // 0x422eb0
-    quaternion mul_conj(const quaternion& o) const;                                        // 0x422f60
-    float dot(const quaternion& o) const;                                                  // 0x423010
-    bool dot_negative(const quaternion& o) const;                                          // 0x423040
-};
-void quat_to_matrix_x(rgl::matrix* m, const quaternion* q);                                // 0x423080
-void quat_to_axis_angle_x(rgl::vector4* axis, float* angle, const quaternion* q);          // 0x423160
-struct FxAnim_x : FxAnim {
-    rgl::vector4 key_value(int i);                          // 0x423300
-    quaternion bone_quat(int i, int j, int k);              // 0x423540 (value, by-value return)
-    quaternion parent_quat(int i, int k);                   // 0x423b60 (chain, by-value return)
-};
-
 #endif
