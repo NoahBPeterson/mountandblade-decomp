@@ -31,6 +31,7 @@ struct SoundMgr {                                       // the sound player (g_s
     rgl::matrix frame;                                  // +0x10 the listener frame (s, f, u rows; the position o is at +0x40)
     int slot[(0x248 - 0x50) / 4];                       // +0x50 group index by sound id (the game's named sounds: slot[0x11] = pain, slot[1] = level up)
     std::vector<int> channels;                          // +0x248 looping channels
+    SoundMgr();                                         // (rgl/mesh2/gui_edit.cpp) the original image holds slot[125] (+0x244) = 32 before any code runs
     ~SoundMgr();                                        // 0x4c6aa0 (rgl/mesh2/gui_edit.cpp): frees defs and groups; channels by its member destructor
     int play(int idx, int flags, const float* pos, float freq, int* out_id);   // 0x442650 (ret 0x14)
     int play_slot(int n, int flags, const float* pos, float freq, int* out_id);   // 0x4428a0 (ret 0x14; agent5/agent_hud called it start)

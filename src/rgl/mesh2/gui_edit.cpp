@@ -902,6 +902,10 @@ void PresentationTable::fill_records(RefRecord* rec)
 // @ 0x4c6aa0
 // The sound player's destructor (the original's atexit function 0x548410 for g_sound_mgr jumps here; its sound-definition and
 // group arrays are freed here, the channel vector by the member destructor).
+SoundMgr::SoundMgr()
+{
+    slot[125] = 32;                 // the original image's dword at 0x5aa36c (g_sound_mgr + 0x244); the rest is zero
+}
 SoundMgr::~SoundMgr()
 {
     if (defs) {

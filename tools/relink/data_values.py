@@ -153,5 +153,6 @@ def compare(exe, symmap, rmap, img, objs, ours, claims, defined, sites, orig_of)
                     i += 1
             if bad:
                 res["differ"].append(dict(va="%08x" % va, name=n, size=size, linked="%08x" % at, offsets=bad[:16],
-                                          ours=mine[:min(size, 64)].hex(), original=theirs[:min(size, 64)].hex()))
+                                          ours_at_offsets=[mine[o:o + 4].hex() for o in bad[:16]],
+                                          original_at_offsets=[theirs[o:o + 4].hex() for o in bad[:16]]))
     return res
