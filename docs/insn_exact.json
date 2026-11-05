@@ -9636,7 +9636,7 @@
   },
   "0052fe40": {
    "verdict": "DIFF",
-   "symbol": "?apply@ViewCtrl_s2fe40@@QAEXPADPAM01010@Z",
+   "symbol": "?apply@MapEditorDialog@@QAEXAA_NAAUvector4@rgl@@0AAUmat3@3@01AAD@Z",
    "insns": 346,
    "ours": 338,
    "unverified": 0,

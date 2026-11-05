@@ -916,8 +916,8 @@ void MapEditor_s2f250::update()
     vector4 off(0.0f, 0.0f, g_game_s2f250->f1a0ac);
     mat3_s2f250 m3 = *(mat3_s2f250*)&g_map_s2f250->object->frame;
     vector4 col = g_game_s2f250->color;
-    char fA, fB, fC;
-    this->apply(&fA, &off, &fB, &m3, &fC, &col, &this->f2f8);
+    bool fA, fB, fC;
+    ((MapEditorDialog*)this)->apply(fA, off, fB, *(rgl::mat3*)&m3, fC, col, this->f2f8);
 
     if (fA)
         g_game_s2f250->f1a0ac = off.z;
@@ -1019,8 +1019,16 @@ refresh:
 #undef g_map_points_s2fe40
 #define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_propkinds)
 // @ 0x52fe40 ---------------------------------------------------------------------------------------------
-void ViewCtrl_s2fe40::apply(char* f1, float* pos, char* f2, float* out, char* f3, float* vec, char* f4)
+void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag)
 {
+    bool* f1 = &moved;
+    float* pos = &pos_v.x;
+    bool* f2 = &rotated;
+    float* out = (float*)&frame;
+    bool* f3 = &drag;
+    float* vec = &dir.x;
+    char* f4 = &flag;
+    float yaw = *(float*)((char*)this + 0x268);
     float k = 0.6f;
     if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0)
         k = 0.6f * 0.1;

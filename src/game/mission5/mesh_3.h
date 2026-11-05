@@ -53,6 +53,7 @@ struct CreateGameOptionsPage {
 struct MapEditorDialog {                                    // rgl/mesh2/gui_edit.cpp
     void update_objects();                                  // 0x4c7e20
     void refresh();                                         // 0x4c77c0
+    void apply(bool& moved, rgl::vector4& pos, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag);   // 0x52fe40 (ret 0x1c; the view yaw is at +0x268)
 };
 struct Mission_s2b5c0 {
     void find_position(char* ok, rgl::vector4* pos);        // 0x52bdb0 (mission_5.cpp)
@@ -680,7 +681,6 @@ struct MapEditor_s2f250 {
     int f31c;                                   // +0x31c  selected variant
     int f320;                                   // +0x320  previous variant
     __forceinline void find_position(char* ok, vector4* pos) { ((Mission_s2b5c0*)this)->find_position(ok, pos); } // 0x52bdb0
-    __forceinline void apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out); // 0x52fe40 (ViewCtrl_s2fe40::apply)
     void update();                              // 0x52f250
 };
 
@@ -777,13 +777,6 @@ struct Matrix12_s2fe40 {
 };
 __forceinline Matrix12_s2fe40* identity3(Matrix12_s2fe40* out) { return (Matrix12_s2fe40*)identity3((rgl::mat3*)out); }     // 0x40cd60
 
-// ---- the view object (`this`; +0x268 yaw, layout from s005284a0) --------------------------------------
-struct ViewCtrl_s2fe40 {
-    char pad0[0x268];
-    float yaw;                                          // +0x268
-
-    void apply(char* f1, float* pos, char* f2, float* out, char* f3, float* vec, char* f4);
-};
 
 // rotate one width-2 row of the view matrix (the original inlines this three times)
 static void rotate_pair_s2fe40(float* p, float c, float s)
@@ -795,8 +788,6 @@ static void rotate_pair_s2fe40(float* p, float c, float s)
 
 
 // ---- forwarders: the views reach the functions other objects define through the classes that define them -------------------------------
-inline void MapEditor_s2f250::apply(char* a, vector4* off, char* b, mat3_s2f250* frame, char* c, vector4* col, char* out)
-{ ((ViewCtrl_s2fe40*)this)->apply(a, (float*)off, b, (float*)frame, c, (float*)col, out); }
 __forceinline mesh_s2f250* mesh_s2f250::clone() { return (mesh_s2f250*)((rgl::mesh*)this)->clone(); }
 __forceinline void mesh_s2f250::set_color(vector4 c) { ((rgl::mesh*)this)->set_color(c); }
 __forceinline void Map_s2f250::init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m)
