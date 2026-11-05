@@ -13,8 +13,8 @@
 
 #include "../tstring.h"
 
-int   g_str_grow_add;    // 0x5a8e60
-float g_str_grow_mul;    // 0x5a8e64
+int   g_str_grow_add = 128;    // 0x5a8e60 (image value 0x80: growth step)
+float g_str_grow_mul = 2.0f;    // 0x5a8e64 (image value 2.0: growth factor)
 
 // @ 0x42bac0
 // NONMATCHING (17 bytes): same instructions, `this`/new-size registers swapped (ebx/ebp)
