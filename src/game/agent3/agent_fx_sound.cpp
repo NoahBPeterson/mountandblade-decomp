@@ -24,6 +24,7 @@
 #include "../emit.h"
 #include "../anim_slot.h"
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent/curve.h"    // Curve::set_rec_phase 0x433b20
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../strat/gui_manager.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -917,7 +918,7 @@ void Agent::on_wield_changed()
             goto skip;
     }
     anim[1].rate = 1.0f;
-    body->skel->set_rec_phase(1, 0.0f);
+    ((Curve*)body->skel)->set_rec_phase(1, 0.0f);   // 0x433b20
     {
         int c0 = wield[0];
         if (c0 >= 0 && pairs[c0].item >= 0)

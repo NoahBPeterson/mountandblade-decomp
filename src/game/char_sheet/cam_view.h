@@ -15,7 +15,7 @@ using rgl::mat4;
 using rgl::mat3;
 
 #include "./cs_common.h"
-#include "./cs_mat.h"                                // identity_pos, UiD, WindowMgrW, FaceRace
+#include "./cs_mat.h"                                // identity_pos, UiD, WindowMgrW
 #include "../face_gen.h"                              // FaceGen: the face-generator window record (the per-frame update 0x4ea8e0 is its slot 3)
 #include "../key_names.h"
 

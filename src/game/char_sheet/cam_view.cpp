@@ -114,7 +114,7 @@ void FaceGen::frame_update(float dt)
         if (row->clear_mask(0x10000)) {
             g_dummy_mat_arr[i] = row->get168();
             SkinSet* set = (SkinSet*)((char*)g_anim.skin_vec.first + g_anim.cur * 0x1f8);
-            ((FaceRace*)set)->relax(i, g_dummy_mat_arr);
+            set->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 deform_rows[j]->set168(g_dummy_mat_arr[j]);
             flag = 1;
@@ -169,7 +169,7 @@ void FaceGen::frame_update(float dt)
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
         SkinSet* set = (SkinSet*)((char*)g_anim.skin_vec.first + g_anim.cur * 0x1f8);
-        ((FaceRace*)set)->relax(-1, g_dummy_mat_arr);
+        set->relax(-1, g_dummy_mat_arr);
         flag = 1;
         for (int i = 0; i < n; i++)
             deform_rows[i]->set168(g_dummy_mat_arr[i]);

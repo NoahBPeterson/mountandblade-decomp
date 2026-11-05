@@ -30,13 +30,6 @@ extern unsigned __int64 g_bit[]; // 0x5a8e68
 // light = f40, lum[] = w[].
 
 
-// 0x4746e0 / 0x473800 are FaceGenome::breed / unpack (terrain_b/face_gen.h), which g_anim_view (animator.h) sees as Animator members: the
-// stubs name the defining class (the header would bring the Animator's other layout)
-struct FaceRace;
-struct FaceGenome {
-    FaceRace* unpack(const unsigned __int64* key);   // 0x473800 (returns the race record, left in EAX)
-    void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
-};
 
 
 // ---- 0x480db0 -------------------------------------------------------------------------------------------------------
@@ -353,9 +346,9 @@ EChar* append_mesh(int colour, int kind, void** c, void** a, void** b, char carr
         g_anim.cur = colour;
 
     if (kind == -1)
-        ((FaceGenome*)&g_anim_view)->unpack((const unsigned __int64*)a);        // 0x473800
+        g_anim_view.unpack((const unsigned __int64*)a);        // 0x473800
     else
-        ((FaceGenome*)&g_anim_view)->breed((const unsigned __int64*)a, (const unsigned __int64*)b, kind);     // 0x4746e0
+        g_anim_view.breed((const unsigned __int64*)a, (const unsigned __int64*)b, kind);     // 0x4746e0
     if (carried)
         g_anim.item = -1;
     g_anim_view.collect(g_module_settings.limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));

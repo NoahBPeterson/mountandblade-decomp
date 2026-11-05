@@ -50,7 +50,7 @@ void Animator::randomise()
     int r = rand() % 0x3dc9;
     time = (float)r * 6.322312e-05f;
     SkinSet* base = (SkinSet*)((char*)skin_vec.first + cur * 0x1f8);
-    ((FaceRace*)base)->relax(-1, weights);
+    base->relax(-1, weights);
 }
 
 // @ 0x4eb3c0

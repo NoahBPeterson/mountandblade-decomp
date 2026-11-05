@@ -28,8 +28,8 @@ struct Animator {
     float time;                  // 0x12c
     void randomise();                            // 0x4eb320
     void collect(char flag, rgl::lod_mesh** a, rgl::lod_mesh** b, rgl::lod_mesh** c);   // 0x47fb10 (ret 0x10)
-    void unpack(void* a);                    // 0x473800
-    void breed(void* a, void* b, int kind); // 0x4746e0
+    SkinSet* unpack(const unsigned __int64* key);       // 0x473800 (returns the race record, left in EAX)
+    void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
     void pack_state(PackedState* out);           // 0x4eb660 (ret 4; mission5 reset calls it as its closing step)
     void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
 };

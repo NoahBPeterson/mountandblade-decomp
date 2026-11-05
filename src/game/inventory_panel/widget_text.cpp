@@ -369,9 +369,6 @@ struct vec_cfg_pub : std::vector<CfgRec> { using std::vector<CfgRec>::_Insert_n;
 struct BigArray {
     void erase(SkinSet** out, SkinSet* first, SkinSet* last);           // 0x4eb860
 };
-struct FaceRace {
-    void relax(int mode, float* w);   // 0x4735e0 (game/terrain_b)
-};
 
 // @ 0x50d170 vec_model::resize
 void vec_model::resize(unsigned n, model_b val)
@@ -424,5 +421,5 @@ void mesh_scene::read(AccessStream* s)
     for (int i = 0; i < 0x3f; i++)
         w[i] = 0.5f;
     model_b* m = &models.first[f8];
-    ((FaceRace*)m)->relax(-1, w);   // 0x4735e0
+    ((SkinSet*)m)->relax(-1, w);   // 0x4735e0
 }

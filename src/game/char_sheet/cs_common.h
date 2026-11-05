@@ -8,12 +8,6 @@ struct tstring;                                                     // (complete
 
 #include "../ui/ui_widgets.h"                                      // MissionUi, Camera, UiB, UiD: the real classes
 #include "../window_mgr.h"                                    // WindowMgrW g_windows (0xa73980): the one definition
-struct FaceRace {                                                   // terrain_b
-    void relax(int index, float* values);                           // 0x4735e0
-};
-struct FaceGenome {                                                 // terrain_b: the animator g_anim 0x8ed4f60 is one
-    FaceRace* unpack(const unsigned __int64* rec);                  // 0x473800
-};
 void __cdecl load_game_variables();                                 // 0x4c0520 (trigger_vec)
 struct loading_config { char pad[0x1f8]; };                         // a SkinSet / TextRow
 

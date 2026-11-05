@@ -602,7 +602,7 @@ void TroopRec::raise_stats()
 // @ 0x520520
 void Animator::reset(void* a, void* b)
 {
-    unpack(a);
+    unpack((const unsigned __int64*)a);
     int s3 = variant;
     float s128 = scale;
     float s12c = time;
@@ -618,7 +618,7 @@ void Animator::reset(void* a, void* b)
         pf += 9;
     }
 
-    unpack(b);
+    unpack((const unsigned __int64*)b);
 
     int r = rand();
     float t = (float)(item - s1) * ((float)(r % 15817) * 6.322311674011871e-05f);

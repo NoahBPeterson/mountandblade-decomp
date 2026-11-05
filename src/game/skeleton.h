@@ -73,7 +73,6 @@ struct Skeleton {
     char pad69[3];
     float rvx, rvy, rvz;                                // +0x6c root velocity, body-local (0x44fc60)
     void update_poses2();                                      // 0x422130
-    void update_poses();                                // 0x422080
     void ensure_updated();                              // 0x43e740
     char* rec(int i);                                   // 0x43f260 (animator record i, brought up to date first; matrix at +0x84)
     void set_visible(char on);                          // 0x452f80 (agent4/agent_update.cpp: on the first show re-skins every psys and lod group)
@@ -84,7 +83,6 @@ struct Skeleton {
     void all_shapes(shape_base** out, int* count);      // 0x43a130
     void reset_rec(int i);                              // 0x4339d0
     float rec_shaped_phase(int i);                             // 0x433ac0
-    void set_rec_phase(int i, float p);                 // 0x433b20 (0x444370)
 };
 
 // ---- the display mesh's node lists (0x438f90, 0x439000) ----------------------------------------------------------

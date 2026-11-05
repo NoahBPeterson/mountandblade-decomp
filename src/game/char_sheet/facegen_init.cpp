@@ -303,7 +303,7 @@ void FaceGen::init_screen()
         int sk = *(int*)(rec + 0x30) & 0xf;
         int flags = 0;
         g_anim.cur = clamp_index(&sk, &flags, &g_anim.char_count);   // 0x432510
-        ((FaceGenome*)&g_anim)->unpack((const unsigned __int64*)(rec + 0x3c0));   // 0x473800
+        g_anim.unpack((const unsigned __int64*)(rec + 0x3c0));   // 0x473800
         f354 = *(int*)((char*)&g_anim + 0x04);
         f350 = *(int*)((char*)&g_anim + 0x00);
         f35c = *(int*)((char*)&g_anim + 0x14);

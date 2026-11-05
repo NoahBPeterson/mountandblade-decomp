@@ -30,6 +30,7 @@
 #include "./physics.h"
 #include "./missile.h"
 #include "./face_gen.h"
+#include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin_set.h SkinSet::relax 0x4735e0
 #include "./tmesh.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
@@ -1493,7 +1494,7 @@ void TroopMgr::copy_troop(ArrSet* dst, const MeshGroupRec* r)
 }
 
 // @ 0x4735e0
-void FaceRace::relax(int skip, float* v)
+void SkinSet::relax(int skip, float* v)
 {
     for (unsigned i = 0; i < (unsigned)size(); i++) {
         bool done = false;
@@ -1531,32 +1532,32 @@ void FaceRace::relax(int skip, float* v)
 }
 
 // @ 0x473800
-FaceRace* FaceGenome::unpack(const unsigned __int64* key)
+SkinSet* Animator::unpack(const unsigned __int64* key)
 {
-    pick_b = ((unsigned)key[0] & ((unsigned)g_bit[6] - 1)) - 1;
-    pick_a = ((unsigned)(key[0] >> 6) & ((unsigned)g_bit[6] - 1)) - 1;
-    pick_c = (unsigned)(key[0] >> 12) & ((unsigned)g_bit[6] - 1);
-    pick_d = (unsigned)(key[0] >> 18) & ((unsigned)g_bit[6] - 1);
-    FaceRace* r = &races[race];
-    if (pick_b >= r->n_b)
-        pick_b = -1;
-    if (pick_a >= r->n_a)
-        pick_a = -1;
-    if (pick_c >= r->n_c)
-        pick_c = 0;
-    if (pick_d >= r->n_d)
-        pick_d = 0;
-    age = (float)(int)((unsigned)(key[0] >> 24) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
-    weight = (float)(int)((unsigned)(key[0] >> 30) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
+    item = ((unsigned)key[0] & ((unsigned)g_bit[6] - 1)) - 1;
+    set = ((unsigned)(key[0] >> 6) & ((unsigned)g_bit[6] - 1)) - 1;
+    material = (unsigned)(key[0] >> 12) & ((unsigned)g_bit[6] - 1);
+    variant = (unsigned)(key[0] >> 18) & ((unsigned)g_bit[6] - 1);
+    SkinSet* r = &skin_vec.first[cur];
+    if (item >= r->n_b)
+        item = -1;
+    if (set >= r->n_a)
+        set = -1;
+    if (material >= r->n_c)
+        material = 0;
+    if (variant >= r->n_d)
+        variant = 0;
+    time = (float)(int)((unsigned)(key[0] >> 24) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
+    scale = (float)(int)((unsigned)(key[0] >> 30) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
     int i = 0;
-    for (r = &races[race]; i < r->nmorph; r = &races[race]) {
+    for (r = &skin_vec.first[cur]; i < r->n_elems; r = &skin_vec.first[cur]) {
         int w = 1;
         int sh = i * 3;
         if (sh >= 63) {
             w = 2;
             sh -= 63;
         }
-        morph[i] = (float)(int)((unsigned)(key[w] >> sh) & ((unsigned)g_bit[3] - 1)) * 0.14285715f;
+        weights[i] = (float)(int)((unsigned)(key[w] >> sh) & ((unsigned)g_bit[3] - 1)) * 0.14285715f;
         i++;
     }
     return r;
@@ -1800,42 +1801,42 @@ static __forceinline int lerp_int(int a, const int& b)
     float t = RND01() * (b - a); return a + round_int(t);
 }
 
-#define MIX(k) { RAND(); float lo = save[i + k]; morph[i + k] = (morph[i + k] - lo) * ((float)(RAND() % 0x3dc9) * 0.00012644623f) * 0.5f + lo; }
+#define MIX(k) { RAND(); float lo = save[i + k]; weights[i + k] = (weights[i + k] - lo) * ((float)(RAND() % 0x3dc9) * 0.00012644623f) * 0.5f + lo; }
 
 // @ 0x4746e0
-void FaceGenome::breed(const unsigned __int64* a, const unsigned __int64* b, int seed)
+void Animator::breed(const unsigned __int64* a, const unsigned __int64* b, int seed)
 {
     g_rand_seed = (seed + 0x8a767) * 0x1ddcf5f + 0x2f784719;
-    ((FaceGenExt*)this)->unpack(a);
-    int s3 = pick_d; float a0 = weight; float a1 = age;
-    int s1 = pick_b; int s0 = pick_a; int s5 = pick_c;
+    unpack(a);
+    int s3 = variant; float a0 = scale; float a1 = time;
+    int s1 = item; int s0 = set; int s5 = material;
     float save[63];
     int i;
     for (i = 0; i < 63; i += 9) {
-        save[i] = morph[i]; save[i+1] = morph[i+1]; save[i+2] = morph[i+2];
-        save[i+3] = morph[i+3]; save[i+4] = morph[i+4]; save[i+5] = morph[i+5];
-        save[i+6] = morph[i+6]; save[i+7] = morph[i+7]; save[i+8] = morph[i+8];
+        save[i] = weights[i]; save[i+1] = weights[i+1]; save[i+2] = weights[i+2];
+        save[i+3] = weights[i+3]; save[i+4] = weights[i+4]; save[i+5] = weights[i+5];
+        save[i+6] = weights[i+6]; save[i+7] = weights[i+7]; save[i+8] = weights[i+8];
     }
-    ((FaceGenExt*)this)->unpack(b);
-    pick_b = lerp_int(s1, pick_b);
-    pick_a = lerp_int(s0, pick_a);
-    pick_c = lerp_int(s5, pick_c);
-    pick_d = -1;
-    FaceHairRec* r = &races[race].recs[pick_c];
+    unpack(b);
+    item = lerp_int(s1, item);
+    set = lerp_int(s0, set);
+    material = lerp_int(s5, material);
+    variant = -1;
+    FaceHairRec* r = &skin_vec.first[cur].recs[material];
     IntVec* v = &r->list;
     int n;
     if (v->_Myfirst == 0 || (n = (int)(v->_Mylast - v->_Myfirst)) <= 0) {
-        pick_d = lerp_int(s3, pick_d);
+        variant = lerp_int(s3, variant);
     } else {
         RAND();
-        pick_d = races[race].recs[pick_c].list._Myfirst[g_rand_seed % (unsigned)n];
+        variant = skin_vec.first[cur].recs[material].list._Myfirst[g_rand_seed % (unsigned)n];
     }
-    weight = (float)(RAND() % 0x3dc9) * (weight - a0) * 6.322312e-05f + a0;
-    age = (float)(RAND() % 0x3dc9) * (age - a1) * 6.322312e-05f + a1;
+    scale = (float)(RAND() % 0x3dc9) * (scale - a0) * 6.322312e-05f + a0;
+    time = (float)(RAND() % 0x3dc9) * (time - a1) * 6.322312e-05f + a1;
     for (i = 0; i < 63; i += 9) {
         MIX(0) MIX(1) MIX(2) MIX(3) MIX(4) MIX(5) MIX(6) MIX(7) MIX(8)
     }
-    ((FaceRaceExt*)&races[race])->relax(-1, morph);
+    skin_vec.first[cur].relax(-1, weights);
 }
 
 // inline vector4 arithmetic as the game's header implements it: 3-component results, leaving the fourth lane

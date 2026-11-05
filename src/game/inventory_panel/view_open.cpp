@@ -208,7 +208,7 @@ void char_window::open_view()
             int skin = *(int*)(rec + 0x30) & 0xf;
             int flags = 0;
             g_anim.cur = clamp_index(&skin, &flags, &g_anim.char_count);
-            g_anim.unpack(rec + 0x3c0);
+            g_anim.unpack((const unsigned __int64*)(rec + 0x3c0));
             void* ra = 0;
             void* rb = 0;
             void* rc = 0;

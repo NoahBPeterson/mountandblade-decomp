@@ -3079,14 +3079,14 @@ void Agent::shoot()
 
     Skeleton* an = body->skel;
     if (!an->done) {
-        if (an->has_poses) an->update_poses(); else ((FxAnim*)an)->update_poses2();
+        if (an->has_poses) ((FxAnim*)an)->update_poses(); else ((FxAnim*)an)->update_poses2();
     }
     BoneW* bones = (BoneW*)an->recs;
     const rgl::matrix* W = &bones[9].world;
     vector4 P(W->o.x * 0.65f, W->o.y * 0.65f, W->o.z * 0.65f);
     an = body->skel;
     if (!an->done) {
-        if (an->has_poses) an->update_poses(); else ((FxAnim*)an)->update_poses2();
+        if (an->has_poses) ((FxAnim*)an)->update_poses(); else ((FxAnim*)an)->update_poses2();
     }
     const vector4* o19 = &((BoneW*)an->recs)[19].world.o;
     const rgl::matrix* m = &body->m;
@@ -4236,7 +4236,7 @@ static __forceinline char* skel_rec_inl(Skeleton* sk, int i)
 {
     if (!sk->done) {
         if (sk->has_poses)
-            sk->update_poses();
+            ((FxAnim*)sk)->update_poses();
         else
             ((FxAnim*)sk)->update_poses2();
     }
@@ -4356,7 +4356,7 @@ void Skeleton::set_visible(char on)
         if (on) {
             if (!done) {
                 if (has_poses)
-                    update_poses();
+                    ((FxAnim*)this)->update_poses();
                 else
                     ((FxAnim*)this)->update_poses2();
             }
@@ -6955,7 +6955,7 @@ void Agent::update_attack(float dt)
     Skeleton* sk = body->skel;
     if (!sk->done) {
         if (sk->has_poses)
-            sk->update_poses();
+            ((FxAnim*)sk)->update_poses();
         else
             ((FxAnim*)sk)->update_poses2();
     }
