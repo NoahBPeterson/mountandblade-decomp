@@ -298,7 +298,7 @@ HRESULT GameApp::OneTimeSceneInit()
         tstring n("Data\\font_data.xml");
         g_font->load((const char*)&n);   // 0x4d9aa0
     }
-    g_gui.reset();
+    g_gui.reset_geometry();   // 0x4f658d calls 0x4e64b0 (the message log's 32+32 meshes), not gui_manager::reset 0x42d1b0
     init_mission_trigger_records();
     g_5e29a4 = g_trial_mode;
     g_windows.set_state(2);
