@@ -401,7 +401,6 @@ MB_NOINLINE Scene::Scene() : list(0)
 }
 
 // the map objects reached through globals
-struct MapReset { void run(); };                                            // 0x4704b0 (this = g_nav)
 
 // @ 0x51d2b0
 void Game::init_map()
@@ -411,7 +410,7 @@ void Game::init_map()
 
     if (g_script.new_game_done != 0)
         return;
-    ((MapReset*)g_script.nav)->run();
+    ((NavData*)g_script.nav)->compute_bounds();   // 0x4704b0
     void* mem = operator new(sizeof(rgl::world));
     if (mem != 0) {
         t.b = 5;

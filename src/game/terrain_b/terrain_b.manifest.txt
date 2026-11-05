@@ -1,5 +1,5 @@
-../src/game/terrain_b/terrain_b.cpp  ?compute_bounds@PointSet@@QAEXXZ  004704b0  /O2 /MT /Gy /TP
-../src/game/terrain_b/terrain_b.cpp  ?set_slot@MeterBar@@QAEXHH@Z  00470d80  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?compute_bounds@NavData@@QAEXXZ  004704b0  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?set_slot@Agent@@QAEXHH@Z  00470d80  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?sun_visibility@Terrain@@QAEMPBM@Z  00471a30  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?light_all@Terrain@@QAEXPAUparticle_list@@_N@Z  00472020  /O2 /MT /Gy /TP
 ../src/game/terrain_b/terrain_b.cpp  ?free_values@?$pool@Ucellnode@rgl@@@rgl@@QAEXXZ  00472460  /O2 /MT /Gy /TP

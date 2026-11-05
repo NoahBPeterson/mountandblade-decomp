@@ -9,10 +9,5 @@
 
 // a HUD element table: one widget pointer per slot at +0x180
 struct Meter { void set_value(float* v); };          // 0x439000 (thiscall, ret 4; ICF-folded with node_groups::cap_all)
-struct MeterBar {
-    char pad0[0x180];
-    Meter* slots[16];                                // 0x180
-    void set_slot(int idx, int value);               // 0x470d80
-};
 
 #endif // TERRAIN_B_SHADOW_MAP_H

@@ -605,22 +605,22 @@ void render_batch::render_scene(scene* sc)
 }
 
 // @ 0x4704b0
-void PointSet::compute_bounds()
+void NavData::compute_bounds()
 {
-    if (pts.size()) {
-        bmin = pts[0].pos;
-        bmax = pts[0].pos;
+    if (verts.size()) {
+        e44 = verts[0].p;
+        f54 = verts[0].p;
     }
-    for (unsigned i = 0; i < pts.size(); i++) {
-        // pointers taken inside the loop: cl then re-reads pts.begin after every store
-        vector4* mn = &bmin;
-        vector4* mx = &bmax;
-        if (mn->x > vat(pts, i).pos.x) mn->x = vat(pts, i).pos.x;
-        if (mx->x < vat(pts, i).pos.x) mx->x = vat(pts, i).pos.x;
-        if (mn->y > vat(pts, i).pos.y) mn->y = vat(pts, i).pos.y;
-        if (mx->y < vat(pts, i).pos.y) mx->y = vat(pts, i).pos.y;
-        if (mn->z > vat(pts, i).pos.z) mn->z = vat(pts, i).pos.z;
-        if (mx->z < vat(pts, i).pos.z) mx->z = vat(pts, i).pos.z;
+    for (unsigned i = 0; i < verts.size(); i++) {
+        // pointers taken inside the loop: cl then re-reads verts.first after every store
+        rgl::vector4* mn = &e44;
+        rgl::vector4* mx = &f54;
+        if (mn->x > verts[i].p.x) mn->x = verts[i].p.x;
+        if (mx->x < verts[i].p.x) mx->x = verts[i].p.x;
+        if (mn->y > verts[i].p.y) mn->y = verts[i].p.y;
+        if (mx->y < verts[i].p.y) mx->y = verts[i].p.y;
+        if (mn->z > verts[i].p.z) mn->z = verts[i].p.z;
+        if (mx->z < verts[i].p.z) mx->z = verts[i].p.z;
     }
 }
 
@@ -759,9 +759,9 @@ void rgl::world::build_light_frame(matrix* m, vector4* amb)
 }
 
 // @ 0x470d80
-void MeterBar::set_slot(int idx, int value)
+void Agent::set_slot(int idx, int value)
 {
-    Meter* m = slots[idx];
+    Meter* m = meters[idx];
     if (m) {
         float v = (float)value;
         m->set_value(&v);

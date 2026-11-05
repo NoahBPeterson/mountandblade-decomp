@@ -43,9 +43,6 @@ float __cdecl frand();                                  // 0x40e400 (rand() % 15
 
 // ---- the callees' own classes: member-only stubs under the name of the class that defines them (the link needs the defining owner in the
 // mangled name); the view classes below forward to them with `this` cast, which compiles to the same call ----------------------------
-struct Poser {
-    void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.cpp, ret 4)
-};
 #include "../../include/ptr_vec.h"
 #include "../../rgl/mesh.h"      // rgl::mesh::clone 0x41c6d0 (the canonical class)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
@@ -156,39 +153,7 @@ struct TabWorld : rgl::world {                            // a tableau world: th
 
 // ---- map-party visuals ---------------------------------------------------------------------------------------------
 // ---- the map party's model (an rgl entity of type 9) and the meshes it carries ---------------------------------------------
-struct Rot3 {                                           // the three rows of a frame (side, forward, up)
-    vector4 s, f, u;
-    void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770 (ret 4: rows s and f about u)
-};
-inline Rot3* identity3(Rot3* out) { return (Rot3*)rgl::identity3((rgl::mat3*)out); }
-// the party's map model (Party::model, an rgl entity of type 9): the slots, fields and members the update code uses
-struct PartyModel {
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5();
-    virtual void set_color(const float* shade);         // +0x18   0x4b7840
-    virtual void s7(); virtual void s8(); virtual void s9(); virtual void s10(); virtual void s11(); virtual void s12();
-    virtual void s13(); virtual void s14(); virtual void s15(); virtual void s16(); virtual void s17();
-    virtual void set_mode(int mode);                    // +0x48   0x4b7840
-    virtual void s19(); virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23(); virtual void s24();
-    virtual void add_emitter(Emit* e);                  // +0x64   0x4b7840
-    char pad4[0x58 - 4];
-    Rot3 basis;                                         // +0x58 orientation rows   0x4b80d0
-    vector4 origin;                                     // +0x88 position (the sound source)   0x4b80d0
-    char pad98[0xc0 - 0x98];
-    float f_c0;                                         // +0xc0   0x4b7840
-    vector4 color;                                      // +0xc4   0x4b7840
-    char padd4[0x118 - 0xd4];
-    ptr_vec ents;                                       // +0x118 std::vector<rgl::mesh*> (first at +0x11c)   0x4b7840, 0x4b80d0
-    char pad128[0x140 - 0x128];
-    char visible;                                       // +0x140   0x4b80d0
-    char pad141[0x15c - 0x141];
-    float f15c;                                         // +0x15c  0x4b1800
-    float f160;                                         // +0x160
-    float f164;                                         // +0x164
-    char pad168[0x294 - 0x168];
-    float f294;                                         // +0x294  0x4b7840, 0x4b80d0
-    void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra((int)m); }       // 0x442110 (ret 4)
-    void set_fade(const float* p);                      // 0x4b1800 (ret 4)
-};
+#include "./party_model.h"                             // Rot3, PartyModel (the map party's model), Poser
 // a std::vector of 0x5c-byte records (allocator word, first, last, end)
 struct EventVec {
     int al;

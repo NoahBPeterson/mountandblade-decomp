@@ -31,6 +31,7 @@ struct NavData {                // 0x68 bytes
     rgl::vector4 f54;           // +0x54
     int m64;                    // +0x64
     NavData();                  // 0x478150 (same constructor as NavCore's, ICF-folded)
+    void compute_bounds();      // 0x4704b0 (the bounding box e44 / f54 of the vertices)
     ~NavData();                 // 0x41f5d0 (game/entity.cpp)
     // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----
     int shares(const int& a, const int& b) const;   // 0x48efa0 (game/mission_ui2/mission_4.cpp, ret 8: do the cells a and b name a common rider; cells[i].ids[0x11..0x13] are its id / pair, the arguments are cell indices)

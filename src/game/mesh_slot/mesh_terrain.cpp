@@ -194,7 +194,7 @@ struct Geom_t : NavCore {                           // 0x68
     std::vector<geom_pt>& pts() { return *(std::vector<geom_pt>*)this; }              // 0x00 (reserve 0x476020 / push_back 0x4772f0 on Geom+0, tessellate)
     std::vector<geom_elem>& elems() { return *(std::vector<geom_elem>*)((char*)this + 0x10); }   // 0x10 (reserve 0x476130 / push_back 0x477380 on Geom+0x10)
     void build() { ((PolyGeom*)this)->build(); }                    // 0x47ee60
-    void compute_bounds() { ((PointSet*)this)->compute_bounds(); }  // 0x4704b0 (PointSet: poly_mesh.h)
+    void compute_bounds() { ((NavData*)this)->compute_bounds(); }  // 0x4704b0 (NavData: nav_data.h)
 };
 
 

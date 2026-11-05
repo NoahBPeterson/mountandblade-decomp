@@ -71,7 +71,6 @@ struct Marker {
 };
 #include "../int_vec.h"            // RawVec g_mat_vec[4] (0xa732c0..): the marker lists are g_mat_vec[0] (a), [1] (d), [2] (b), [3] (c)
 
-struct MapModel { void set_fade(const float* v); };   // 0x4b1800 (the map entity at Party+0x59c0: PartyModel::set_fade, party2/party_2.h)
 // the objects at game+0x139e8 (snd_bank::update_all 0x462760, ui/item_ref.h) and game+0x139f4 (TimerList::update 0x48add0,
 // ui/timer_list.h) are called through those classes
 #include "../ui/item_ref.h"

@@ -24,7 +24,7 @@
 
 using rgl::vector4;
 
-struct Skeleton;
+struct Skeleton; struct Meter;
 struct node_groups;
 struct shape_base;
 struct CamParams;
@@ -148,7 +148,7 @@ struct Agent {                                          // 0x5928 bytes
         node_groups* C[4];                              //   alias: ammo / holster display
     };
     node_groups* slot_mesh4;                            // +0x17c (hide 0x4f8bc0 / show 0x4f8c20)
-    char pad180[0x190 - 0x180];
+    Meter* meters[4];                                   // +0x180 the HUD meters (set_slot 0x470d80 writes meters[idx]; the callers use 0 and 1)
     AgentFx* fxp;                    // +0x190 0x4543a0 (per-agent text / label state)
     char pad194[0x1ac - 0x194];
     Emit* fx1ac;                    // +0x1ac 0x45f660

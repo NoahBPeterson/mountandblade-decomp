@@ -26,6 +26,7 @@
 #include "../game_globals.h"
 #include "../../include/render_flags.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
+#include "../party2/party_model.h"   // PartyModel::set_fade 0x4b1800 (Party::model)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-clock step (seconds); [0] is the frame step
@@ -497,7 +498,7 @@ void GameG::update_cursor(float dt)
                 }
                 if (f95 == 0) {
                     float v = (p->alpha < 0.01f) ? 0.0f : 1.0f;
-                    ((MapModel*)p->model)->set_fade(&v);
+                    p->model->set_fade(&v);
                 } else {
                     p->alpha = 1.0f;
                     p->f6c = 1;

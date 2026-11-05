@@ -145,16 +145,5 @@ struct MeshExt {
     void compute_face_normals();                // 0x4705e0
 };
 
-struct Pt24 { vector4 pos; char pad[0x14]; };   // 0x24 bytes: position + attributes
-
-// A point array with its bounding box (a different class from PolyMesh: the box at 0x44 would overlap the edge array's
-// end pointer at 0x38).
-struct PointSet {
-    std::vector<Pt24> pts;      // +0x00 (first at +0x04)
-    char pad10[0x44 - 0x10];
-    vector4 bmin;               // +0x44
-    vector4 bmax;               // +0x54
-    void compute_bounds();      // 0x4704b0
-};
 
 #endif // TERRAIN_B_POLY_MESH_H
