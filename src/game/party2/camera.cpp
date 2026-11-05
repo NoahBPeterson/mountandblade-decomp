@@ -762,7 +762,7 @@ void MissionAgents::add_order_arrow(int id)
     }
     o->mode = id;
     o->fade = 1;
-    if (!(o->param() > 0.0f)) {
+    if (o->param() < 0.9f) {
         id = 0x3f666666;                            // the original reuses the argument slot for the 0.9f
         o->set_param((const float*)&id);
     }

@@ -205,7 +205,7 @@ void MapPanel::update(int type, int id)
                         if (g_module_settings.show_faction_color)
                             mcol = g_game->factions[party_by_id(m)->faction].color;
                         if (party_by_id(m)->flags & 0x40000)
-                            mcol = mrel < -0.01f ? 0xff22aaffu : 0xffaa22ddu;
+                            mcol = mrel < -0.01f ? 0xffaa22ddu : 0xff22aaffu;
 
                         int extra = 0, wounded = 0, size = 0;
                         g_game->party_counts(m, &size, &wounded, &extra);    // 0x51be60: arg2 = troops, arg3 = wounded, arg4 = prisoners (the "+ N")
