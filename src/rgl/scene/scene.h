@@ -18,12 +18,6 @@ struct world;
 inline int mesh_render(mesh* m, scene* sc, const matrix& frame) { return m->render(sc, frame); }
 
 // std::vector<point20>::iterator and operator[] const stay out of line in entity::render
-struct iter32 {
-    point20* _Ptr;
-    iter32() {}
-    iter32(point20* p) : _Ptr(p) {}
-    iter32 operator+(int off) const;                            // 0x40f880
-};
 // (the out-of-line operator[] const of the point vector, 0x40fb80, is std::vector<point20>::operator[]: declared below, outside rgl)
 
 // five lists of child meshes owned by an LOD record; the destructor deletes every child
@@ -53,5 +47,7 @@ void __stdcall clear_f14(named_object* o);                      // 0x4175f0 (the
 // std::vector<point20>::operator[] const stays out of line in entity::render (0x40fb80), like the original
 namespace std {
 template<> const rgl::point20& vector<rgl::point20, allocator<rgl::point20> >::operator[](size_t) const;
+// ... and so does iterator::operator+ (0x40f880, a COMDAT in mesh_obj.cpp)
+template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::point20, allocator<rgl::point20> >::iterator::operator+(int) const;
 }
 #endif

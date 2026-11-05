@@ -1415,25 +1415,13 @@ template<class T> __forceinline T* vec<T>::ufill(T* p, unsigned count, const T& 
     return p + count;
 }
 
-// the mface erase lives in a later object
-template<> vec<mface>::iter vec<mface>::erase(iter f, iter l);                            // 0x40fd40
-
 // std::vector::resize(n, val)
 template<class T> __declspec(noinline) void vec<T>::resize(unsigned n, T val)
 {
     if (size() < n)
         insert_n(end_(), n - size(), val);
     else if (n < size())
-        erase(begin() + n, end_());
-}
-// std::vector::erase(first, last)
-template<class T> __declspec(noinline) typename vec<T>::iter vec<T>::erase(iter f, iter l)
-{
-    if (f.cur != l.cur) {
-        T* p = copy_range(l.cur, last, f.cur);
-        last = p;
-    }
-    return f;
+        erase_tail(n);
 }
 // std::vector::_Insert_n
 template<class T> __declspec(noinline) void vec<T>::insert_n(iter where_, unsigned count, const T& val)

@@ -68,7 +68,7 @@ void entity::render(scene* sc, render_info* info)
                 if (meshes[i]->res->shader->flags20 & 0x100) {
                     if (meshes[i]->get70_rec().size() > 0) {
                         info->valid = 1;
-                        const vector4& p0 = (iter32(&*meshes[i]->get70_rec().begin()) + 0)._Ptr->a;
+                        const vector4& p0 = (meshes[i]->get70_rec().begin() + 0)._Myptr->a;
                         info->depth = ((const pos&)local).transform_point(((const pos&)meshes[i]->m_cc).transform_point(p0)).z;
                     }
                 }

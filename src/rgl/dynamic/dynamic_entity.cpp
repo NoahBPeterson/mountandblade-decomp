@@ -690,12 +690,8 @@ void contact_ops::_Insert_n(Contact* _Where, size_type _Count, const Contact& _V
 // The std::vector<Contact> members as collide_shape has them: push_back and insert expanded inline, the fill through the
 // out-of-line 0x427ca0 and the insertion through 0x427590 (the real members, contact_ops'
 struct contact_inl : contact_ops {
-    struct iterator {
-        Contact* _Ptr;
-        iterator() {}
-        iterator(Contact* p) : _Ptr(p) {}
-        iterator operator+(int off) const;                          // 0x40f880
-    };
+    // iterator::operator+ is std::vector<point20>::iterator's (0x40f880; the Contact and point20 records are the same size, so the original has one instance)
+    typedef std::vector<point20>::iterator piter;
     iterator begin() { return iterator(first); }
     iterator end_() { return iterator(last); }
     Contact* _Ufill(Contact* p, size_type n, const Contact& v) { std::_Uninitialized_fill_n(p, n, v, *(std::allocator<Contact>*)this); return p + n; }   // the out-of-line 0x427ca0
@@ -703,7 +699,7 @@ struct contact_inl : contact_ops {
     {
         size_type _Off = size() == 0 ? 0 : _Where._Ptr - first;
         _Insert_n(_Where._Ptr, (size_type)1, _Val);
-        return begin() + _Off;
+        return iterator((Contact*)(piter((point20*)first) + (int)_Off)._Myptr);
     }
     __forceinline void push_back(const Contact& _Val)
     {

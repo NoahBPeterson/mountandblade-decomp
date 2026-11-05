@@ -72,6 +72,15 @@ void shape_contacts(shape_base* a, shape_base* b, int max, contact* out, int* co
 // Written out so that each out-of-line member can be pinned: clear() (0x41f4b0), _Buy (0x42d570 / 0x4105c0)
 // and _Xlen (0x43e2a0) live in other objects.
 #include "../../include/vec_xlen.h"
+#include "../../include/mesh_prims.h"
+// vec<mface> (32-byte records) uses the point20 vector's out-of-line members: the original has one instance for both
+template<class T> struct vec_real { typedef T type; };
+template<> struct vec_real<mface> { typedef rgl::point20 type; };
+namespace std {
+template<> bool vector<rgl::point20, allocator<rgl::point20> >::_Buy(size_t);             // 0x4105c0
+template<> bool vector<rgl::vector4, allocator<rgl::vector4> >::_Buy(size_t);             // 0x42d570
+template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::point20, allocator<rgl::point20> >::erase(iterator, iterator);   // 0x40fd40
+}
 template<class T> T* uninit_copy(T* first, T* last, T* dest, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);
 template<class T> void uninit_fill_n(T* first, unsigned count, const T& val, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);
 template<class T> struct vec {
@@ -98,15 +107,33 @@ template<class T> struct vec {
     __forceinline T* ucopy_in(T* f, T* l, T* p);
     iter end_() { return iter(last); }
     vec& operator=(const vec& r);
-    void clear();                                       // 0x41f4b0
-    bool buy(unsigned n);                               // 0x42d570 (vector4), 0x4105c0 (mface)
+    // the growable array's release of its block (0x41f4b0 is the same code under rgl::vec<NavVert>::clear), out of line
+    __declspec(noinline) void clear() { if (first != 0) operator delete(first); first = 0; last = 0; end = 0; }
+    // std::vector<point20 / vector4>::_Buy, out of line: 0x4105c0 (mface) / 0x42d570 (vector4)
+    template<class V> struct buy_view : std::vector<V> { bool buy(unsigned n) { return _Buy(n); } };
+    __forceinline bool buy(unsigned n) { return ((buy_view<typename vec_real<T>::type>*)this)->buy(n); }
     __forceinline void xlen() const { VEC_XLEN(this); } // 0x43e2a0: throws length_error
     void resize(unsigned n) { resize(n, T()); }
     void resize(unsigned n, T val);                     // 0x40db80 (vector4), 0x40dff0 (mface)
-    iter erase(iter f, iter l);                         // 0x40dbf0 (vector4), 0x40fd40 (mface)
+    __forceinline void erase_tail(unsigned n) { erase(begin() + n, end_()); }
+    // std::vector::erase(first, last)
+    __declspec(noinline) iter erase(iter f, iter l)
+    {
+        if (f.cur != l.cur) {
+            T* p = copy_range(l.cur, last, f.cur);
+            last = p;
+        }
+        return f;
+    }
+    // (0x40dbf0 on vector4; the mface one is the point20 instance 0x40fd40)
     void insert_n(iter where, unsigned count, const T& val);   // 0x40dc50 (vector4), 0x40e060 (mface)
     T* ufill(T* p, unsigned count, const T& val);
 };
+template<> __forceinline void vec<mface>::erase_tail(unsigned n)       // std::vector<point20>::erase 0x40fd40 (out of line)
+{
+    typedef std::vector<rgl::point20> V;
+    ((V*)this)->erase(V::iterator((rgl::point20*)first + n), V::iterator((rgl::point20*)last));
+}
 
 
 // vtable 0x54a5f4, 0x50 bytes: a triangle/polygon mesh
