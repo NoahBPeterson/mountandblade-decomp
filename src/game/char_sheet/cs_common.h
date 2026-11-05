@@ -56,9 +56,6 @@ struct named_object;
 namespace std { template<> void vector<named_object*, allocator<named_object*> >::push_back(named_object* const& v); }   // 0x41b750 (resmgr)
 namespace std { template<> void vector<int, allocator<int> >::push_back(const int& x); }   // 0x440b30 (agent_combat)
 namespace std { template<> vector<int, allocator<int> >& vector<int, allocator<int> >::operator=(const vector<int, allocator<int> >& x); }   // 0x43f0a0 (agent_combat)
-struct Map10007 {                                                   // ui/mission.h: the id hash table that opens the party manager
-    int lookup(unsigned id);                                        // 0x48ad00
-};
 struct SceneObject;
 struct RagModel;
 namespace std { template<> void allocator<RagModel>::construct(RagModel* p, const RagModel& v); }   // 0x4e42f0 (progress_bar)

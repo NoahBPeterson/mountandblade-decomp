@@ -232,12 +232,12 @@ void Game::build_scene()
 
     ((rgl::world*)world)->step(0.0f);
 
-    unsigned id = (unsigned)((PartyMgr*)&scene)->first_party_id();
-    if (id < (unsigned)scene.f138dc) {
+    unsigned id = (unsigned)scene.first_party_id();
+    if (id < (unsigned)scene.n_parties) {
         do {
             ((c49bea0::MissionAgents*)self)->add_order_arrow((int)id);
-            ((PartyMgr*)&scene)->next_party_id((int*)&id);
-        } while (id < (unsigned)scene.f138dc);
+            scene.next_party_id((int*)&id);
+        } while (id < (unsigned)scene.n_parties);
     }
     log_stream_ptr()->w_cstr("parties added.\n");
 

@@ -1,7 +1,7 @@
 ../src/game/party/game.cpp  ?init@Game@@QAEXABUtstring@@HD@Z  0051cc10  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?buy@TrackVec@@QAE_NI@Z  0051d1c0  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ??0SpriteTable@@QAE@XZ  0051d220  /O2 /MT /Gy /TP
-../src/game/party/game.cpp  ??0Scene@@QAE@XZ  0051d250  /O2 /MT /Gy /TP
+../src/game/party/game.cpp  ??0PartyMgr@@QAE@XZ  0051d250  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?init_map@Game@@QAEXXZ  0051d2b0  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?read@TriggerTag@@QAEXPAUstream_base@@@Z  0051dd60  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?read@TriggerRec@@QAEXPAUstream_base@@@Z  0051ddc0  /O2 /MT /Gy /TP

@@ -116,8 +116,8 @@ int GameW::stack_dna(unsigned id, int group, int f14, int f18)
 {
     int v = -1;
     if ((int)id >= 0) {
-        PartyMgrW* m = &pm();
-        int i = ((Map10007*)(void*)m)->lookup(id);
+        PartyMgr* m = &pm();
+        int i = m->lookup(id);
         v = m->at(i)->stacks[group].troop;
     }
     return v * 0x1bf + (int)id * 0x7bb7 + f14 + 0x45db + f18;
@@ -132,8 +132,12 @@ template int& std::deque<int>::back();
 // ==== 0x490340: the party manager's page list ==================================================================
 // A page is a `new Party[16]` block (cookie word in front); the original frees it through the array deleting
 // destructor of the party record (virtual slot 0 with flag 3), or plain operator delete[] when the cookie is 0.
+// _Tidy is protected: reached through a derived class (the same device as SceneObjVec / int_stdvec)
+struct PartyVecTidy : std::vector<Party*> { using std::vector<Party*>::_Tidy; };
+struct IntVecTidy : std::vector<int> { using std::vector<int>::_Tidy; };
+
 // @ 0x490340
-void PartyMgrW::clear()
+void PartyMgr::clear()
 {
     Party** i = pages._Myfirst;
     while (i < pages._Mylast) {
@@ -148,24 +152,15 @@ void PartyMgrW::clear()
         *i = 0;
         i++;
     }
-    if (pages._Myfirst != 0)
-        operator delete(pages._Myfirst);
-    pages._Myfirst = 0;
-    pages._Mylast = 0;
-    pages._Myend = 0;
-    void** base = (void**)((char*)this + 0x138c0);
-    if (*base != 0)
-        operator delete(*base);
-    base[0] = 0;
-    base[1] = 0;
-    base[2] = 0;
+    ((PartyVecTidy&)pages)._Tidy();
+    ((IntVecTidy&)free_ids)._Tidy();
 }
 
 // @ 0x4903e0
 int PartyMgr::is_live(int id)
 {
     if ((unsigned)id < n_parties) {
-        int i = ((Map10007*)(void*)this)->lookup(id);
+        int i = this->lookup(id);
         if (i >= 0)
             return pages[(unsigned)i >> 4][i & 0xf].type == 1;
     }
@@ -347,11 +342,11 @@ void ContainerBase::animate(int p)
 // @ 0x490990
 void GameW::mark_kind(int kind)
 {
-    PartyMgrW* m = &pm();
+    PartyMgr* m = &pm();
     unsigned i = m->first_party_id();
     while (i < parties.n_parties) {
-        if (m->at(((Map10007*)(void*)m)->lookup(i))->faction == kind)
-            m->at(((Map10007*)(void*)m)->lookup(i))->f8b5 = 1;
+        if (m->at(m->lookup(i))->faction == kind)
+            m->at(m->lookup(i))->f8b5 = 1;
         m->next_party_id((int*)&i);
     }
 }
@@ -360,24 +355,24 @@ void GameW::mark_kind(int kind)
 // @ 0x490a30
 void GameW::detach_party(unsigned id)
 {
-    PartyMgrW* m = &pm();
-    if (id >= m->limit())
+    PartyMgr* m = &pm();
+    if (id >= m->n_parties)
         return;
-    int i = ((Map10007*)(void*)m)->lookup(id);
+    int i = m->lookup(id);
     if (i < 0)
         return;
     if (m->atu((unsigned)i)->type != 1)
         return;
-    if (m->at(((Map10007*)(void*)m)->lookup(id))->attached_to < 0)
+    if (m->at(m->lookup(id))->attached_to < 0)
         return;
     bool done = false;
-    unsigned* dst = (unsigned*)m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->attached_to))->attached._Myfirst;
+    unsigned* dst = (unsigned*)m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached._Myfirst;
     unsigned* cur = dst + 1;
     do {
-        if ((int*)dst >= m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->attached_to))->attached._Mylast)
+        if ((int*)dst >= m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached._Mylast)
             break;
         if (*dst == id) {
-            std::vector<int>& l = m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->attached_to))->attached;
+            std::vector<int>& l = m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached;
             memmove(dst, cur, (int)(l._Mylast - (int*)cur) * 4);
             --l._Mylast;
             done = true;
@@ -385,58 +380,58 @@ void GameW::detach_party(unsigned id)
         dst++;
         cur++;
     } while (!done);
-    m->at(((Map10007*)(void*)m)->lookup(m->at(((Map10007*)(void*)m)->lookup(id))->attached_to))->dirty = 1;
-    m->at(((Map10007*)(void*)m)->lookup(id))->f8cc = 0;
-    m->at(((Map10007*)(void*)m)->lookup(id))->dirty = 1;
-    m->at(((Map10007*)(void*)m)->lookup(id))->attached_to = -1;
+    m->at(m->lookup(m->at(m->lookup(id))->attached_to))->dirty = 1;
+    m->at(m->lookup(id))->f8cc = 0;
+    m->at(m->lookup(id))->dirty = 1;
+    m->at(m->lookup(id))->attached_to = -1;
 }
 
 // ==== 0x490ce0: total a party's stacks (and its followers') into counters ========================================
 // @ 0x490ce0
 void GameData::count_units(unsigned id, int* a, int* b, int* c, int* d)
 {
-    PartyMgrW* m = (PartyMgrW*)&parties;
-    if (id >= m->limit())
+    PartyMgr* m = &parties;
+    if (id >= m->n_parties)
         return;
-    int i = ((Map10007*)(void*)m)->lookup(id);
+    int i = m->lookup(id);
     if (i < 0)
         return;
     if (m->atu((unsigned)i)->type != 1)
         return;
-    if (m->at(((Map10007*)(void*)m)->lookup(id))->nstacks > 0) {
+    if (m->at(m->lookup(id))->nstacks > 0) {
         int k = 0;
         int n = 0;
         do {
-            if ((*(unsigned char*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xb0 + k) & 1) != 0) {
-                *c += *(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xa8 + k);
+            if ((*(unsigned char*)((char*)m->at(m->lookup(id)) + 0xb0 + k) & 1) != 0) {
+                *c += *(int*)((char*)m->at(m->lookup(id)) + 0xa8 + k);
             } else {
-                *a += *(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xa8 + k);
-                int troop = *(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xac + k);
+                *a += *(int*)((char*)m->at(m->lookup(id)) + 0xa8 + k);
+                int troop = *(int*)((char*)m->at(m->lookup(id)) + 0xac + k);
                 if ((troops[troop].flags30 & 0x10) == 0) {
-                    *b = *b + *(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xb8 + k);
+                    *b = *b + *(int*)((char*)m->at(m->lookup(id)) + 0xb8 + k);
                 } else {
                     *d = *d + 1;
-                    if (agent_low(*(int*)((char*)m->at(((Map10007*)(void*)m)->lookup(id)) + 0xac + k))) {
+                    if (agent_low(*(int*)((char*)m->at(m->lookup(id)) + 0xac + k))) {
                         *b = *b + 1;
                     }
                 }
             }
             n++;
             k += 0x20;
-        } while (n < m->at(((Map10007*)(void*)m)->lookup(id))->nstacks);
+        } while (n < m->at(m->lookup(id))->nstacks);
     }
-    for (unsigned j = 0; j < m->at(((Map10007*)(void*)m)->lookup(id))->attached.size(); j++)
-        count_units(m->at(((Map10007*)(void*)m)->lookup(id))->attached[j], a, b, c, d);
+    for (unsigned j = 0; j < m->at(m->lookup(id))->attached.size(); j++)
+        count_units(m->at(m->lookup(id))->attached[j], a, b, c, d);
 }
 
 // ==== 0x490fa0: a party and, recursively, its followers ===========================================================
 // @ 0x490fa0
 void GameData::list_members(unsigned id, int* out, int* n)
 {
-    PartyMgrW* m = (PartyMgrW*)&parties;
-    if (id >= m->limit())
+    PartyMgr* m = &parties;
+    if (id >= m->n_parties)
         return;
-    int i = ((Map10007*)(void*)m)->lookup(id);
+    int i = m->lookup(id);
     if (i < 0)
         return;
     if (m->atu((unsigned)i)->type != 1)
@@ -445,18 +440,18 @@ void GameData::list_members(unsigned id, int* out, int* n)
         return;
     out[*n] = (int)id;
     (*n)++;
-    for (unsigned j = 0; j < m->at(((Map10007*)(void*)m)->lookup(id))->attached.size(); j++)
-        list_members(m->at(((Map10007*)(void*)m)->lookup(id))->attached[j], out, n);
+    for (unsigned j = 0; j < m->at(m->lookup(id))->attached.size(); j++)
+        list_members(m->at(m->lookup(id))->attached[j], out, n);
 }
 
 // ==== 0x4910a0: casualties of a battle: turn some of a party's troops into prisoners / dead =====================
 // @ 0x4910a0
 void GameW::recruit(int id, int count, Party* dest)
 {
-    PartyMgrW* m = &pm();
-    if ((unsigned)id >= m->limit())
+    PartyMgr* m = &pm();
+    if ((unsigned)id >= m->n_parties)
         return;
-    int idx = ((Map10007*)(void*)m)->lookup(id);
+    int idx = m->lookup(id);
     if (idx < 0)
         return;
     if (m->atu(idx)->type != 1)
@@ -471,7 +466,7 @@ void GameW::recruit(int id, int count, Party* dest)
         dest->nstacks = 0;
     int total = a - b;
 
-    idx = ((Map10007*)(void*)m)->lookup(id);
+    idx = m->lookup(id);
     Party* p = m->at(idx);
     if (p->stacks[0].troop == player && !agent_low(player))
         total--;
@@ -492,7 +487,7 @@ void GameW::recruit(int id, int count, Party* dest)
             do {
                 if (j >= n)
                     break;
-                int mi = ((Map10007*)(void*)m)->lookup(members[j]);
+                int mi = m->lookup(members[j]);
                 Party* mp = m->at(mi);
                 int sum = mp->sum_stat(0x134);
                 base += sum;
@@ -545,9 +540,9 @@ void GameW::handout(Party* p, int id)
     int cum[128];
     int total = 0;
     list_members(id, members, &n);
-    PartyMgrW* m = &pm();
+    PartyMgr* m = &pm();
     for (int i = 0; i < n; i++) {
-        total += m->at(((Map10007*)(void*)m)->lookup(members[i]))->sum_stat(0x100);
+        total += m->at(m->lookup(members[i]))->sum_stat(0x100);
         cum[i] = total;
     }
     if (total == 0)
@@ -564,7 +559,7 @@ void GameW::handout(Party* p, int id)
             int k = 0;
             while (k < n && pick >= cum[k])
                 k++;
-            m->at(((Map10007*)(void*)m)->lookup(members[k]))->add_members(p->stacks[i].troop, 1, p->stacks[i].flags, 0, 0);
+            m->at(m->lookup(members[k]))->add_members(p->stacks[i].troop, 1, p->stacks[i].flags, 0, 0);
         }
     }
 }
@@ -575,14 +570,14 @@ void GameW::remove_party(int id)
 {
     if ((unsigned)id >= parties.n_parties)
         return;
-    PartyMgrW* m = &pm();
-    int idx = ((Map10007*)(void*)m)->lookup(id);
+    PartyMgr* m = &pm();
+    int idx = m->lookup(id);
     if (idx < 0)
         return;
     if (m->atu(idx)->type != 1)
         return;
 
-    idx = ((Map10007*)(void*)m)->lookup(id);
+    idx = m->lookup(id);
     Party* p = m->at(idx);
     if (p->attached_to >= 0) {
         if (m->is_live(p->attached_to))
@@ -593,14 +588,14 @@ void GameW::remove_party(int id)
         for (unsigned k = 0; p->attached._Myfirst != 0 && k < (unsigned)(p->attached._Mylast - p->attached._Myfirst); k++) {
             if ((unsigned)p->attached._Myfirst[k] >= parties.n_parties)
                 continue;
-            int j = ((Map10007*)(void*)m)->lookup(p->attached._Myfirst[k]);
+            int j = m->lookup(p->attached._Myfirst[k]);
             if (j < 0)
                 continue;
             if (m->atu(j)->type != 1)
                 continue;
-            m->at(((Map10007*)(void*)m)->lookup(p->attached._Myfirst[k]))->attached_to = -1;
-            m->at(((Map10007*)(void*)m)->lookup(p->attached._Myfirst[k]))->f8cc = 0;
-            m->at(((Map10007*)(void*)m)->lookup(p->attached._Myfirst[k]))->dirty = 1;
+            m->at(m->lookup(p->attached._Myfirst[k]))->attached_to = -1;
+            m->at(m->lookup(p->attached._Myfirst[k]))->f8cc = 0;
+            m->at(m->lookup(p->attached._Myfirst[k]))->dirty = 1;
         }
         if (p->attached._Myfirst != 0)
             operator delete(p->attached._Myfirst);
@@ -612,14 +607,14 @@ void GameW::remove_party(int id)
         g_party_templates[p->owner].num_destroyed += 1;
     p->clear_map_flag();
 
-    idx = ((Map10007*)(void*)m)->lookup(id);
+    idx = m->lookup(id);
     if (idx >= 0 && idx < parties.count)
         m->at(idx)->type = 2;
 
     unsigned cur = m->first_party_id();
     if (cur < parties.n_parties) {
         do {
-            Party* q = m->at(((Map10007*)(void*)m)->lookup(cur));
+            Party* q = m->at(m->lookup(cur));
             if (q->target == id) {
                 q->action = 0;
                 q->target = -1;
@@ -637,15 +632,15 @@ void GameW::remove_party(int id)
 // @ 0x4918d0
 bool GameW::can_transfer(unsigned id, int other, char flag)
 {
-    PartyMgrW* mgr = &pm();
+    PartyMgr* mgr = &pm();
     if (id >= parties.n_parties) return false;
-    int idx = ((Map10007*)(void*)mgr)->lookup(id);
+    int idx = mgr->lookup(id);
     if (idx < 0) return false;
     if (mgr->atu((unsigned)idx)->type != 1) return false;
     if (!mgr->is_live(other)) return false;
-    int ia = ((Map10007*)(void*)mgr)->lookup(id);
+    int ia = mgr->lookup(id);
     Party* a = mgr->at(ia);
-    int ib = ((Map10007*)(void*)mgr)->lookup(other);
+    int ib = mgr->lookup(other);
     Party* b = mgr->at(ib);
     if (b->flags_lo & 0x100000) {
         if (!flag) {
@@ -689,10 +684,10 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
 // ==== 0x491b20: rating of a party against an opponent ===============================================================
 // @ 0x491b20
 int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
-    PartyMgrW* mgr = &pm();
+    PartyMgr* mgr = &pm();
     int a = 0, b = 0, c = 0, d = 0;
     if (p2 < parties.n_parties) {
-        int i = ((Map10007*)(void*)mgr)->lookup(p2);
+        int i = mgr->lookup(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             count_units(p2, &a, &b, &c, &d);
         }
@@ -700,9 +695,9 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     float f1 = (float)(a - b);
     float f2 = 0.0f;
     if (p1 < parties.n_parties) {
-        int i = ((Map10007*)(void*)mgr)->lookup(p1);
+        int i = mgr->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            int j = ((Map10007*)(void*)mgr)->lookup(p1);
+            int j = mgr->lookup(p1);
             f2 = (float)mgr->at(j)->sum_stat(0x110);
         }
     }
@@ -724,16 +719,16 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     int r = (int)fl;
     if (!(prod - fl <= 0.5f)) r++;
     if (p1 < parties.n_parties) {
-        int i = ((Map10007*)(void*)mgr)->lookup(p1);
+        int i = mgr->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            int j = ((Map10007*)(void*)mgr)->lookup(p1);
+            int j = mgr->lookup(p1);
             r += mgr->atu((unsigned)j)->skill_level(0xf) / 2;
         }
     }
     if (p2 < parties.n_parties) {
-        int i = ((Map10007*)(void*)mgr)->lookup(p2);
+        int i = mgr->lookup(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            int j = ((Map10007*)(void*)mgr)->lookup(p2);  // the original looks the party up again here (2nd call 0x48ad00)
+            int j = mgr->lookup(p2);  // the original looks the party up again here (2nd call 0x48ad00)
             r -= mgr->atu((unsigned)j)->skill_level(0xf) / 2;
         }
     }
@@ -745,17 +740,17 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
 // ==== 0x491e50: put a party near a point =============================================================================
 // @ 0x491e50
 void GameW::set_pos(float x, float y, int id, float radius) {
-    PartyMgrW* m = &pm();
+    PartyMgr* m = &pm();
     random_position_around(Vec2(x, y), radius, (Vec2*)&x);
     if ((unsigned)id >= parties.n_parties) return;
-    int i = ((Map10007*)(void*)m)->lookup(id);
+    int i = m->lookup(id);
     if (i < 0) return;
     if (m->atu((unsigned)i)->type != 1) return;
-    i = ((Map10007*)(void*)m)->lookup(id);
+    i = m->lookup(id);
     Party* p = m->at(i);
     p->pos.x = x;
     p->pos.y = y;
-    i = ((Map10007*)(void*)m)->lookup(id);
+    i = m->lookup(id);
     m->at(i)->place_on_map();
 }
 
@@ -918,8 +913,8 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
 void MissionCtx::refresh_rating()
 {
     GameW* g = (GameW*)g_game;
-    PartyMgrW* mgr = &g->pm();
-    Party* pp = mgr->at(((Map10007*)(void*)mgr)->lookup(ids[side]));
+    PartyMgr* mgr = &g->pm();
+    Party* pp = mgr->at(mgr->lookup(ids[side]));
     int t = pp->sum_stat(0x10);
     if (t <= 3)
         tier = 0;
@@ -942,9 +937,9 @@ void MissionCtx::refresh_rating()
 void GameW::transfer_stack(int a, int b, char flag)
 {
     WL_MARKER(12)
-    PartyMgrW* mgr = &pm();
-    Party* pa = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
-    Party* pb = mgr->at(((Map10007*)(void*)mgr)->lookup(b));
+    PartyMgr* mgr = &pm();
+    Party* pa = mgr->at(mgr->lookup(a));
+    Party* pb = mgr->at(mgr->lookup(b));
     int* wstacks = &tbl[0][0];
     for (int k = 0; k < pa->nstacks; k++) {
         Stack* s = &pa->stacks[k];
@@ -974,7 +969,7 @@ void GameW::transfer_stack(int a, int b, char flag)
                 } else {
                     v = -1;
                     if (a >= 0) {
-                        Party* px = mgr->at(((Map10007*)(void*)mgr)->lookup(a));
+                        Party* px = mgr->at(mgr->lookup(a));
                         v = px->stacks[k].troop;
                     }
                     v = v * 0x1bf + 0x45db + a * 0x7bb7 + j;
@@ -1358,41 +1353,40 @@ unsigned RecPool::alloc_record()
 }
 
 // @ 0x493830
-PartyMgrW* PartyMgrW::grow()
+PartyMgr* PartyMgr::grow()
 {
     Party* blk = new Party[16];
     pages.push_back(blk);
 
     for (int i = 0; i < 0x10; ++i) {
         blk[i].type = 0;
-        free_ids().push_back(count + i);
+        free_ids.push_back(count + i);
     }
     count += 0x10;
     return this;
 }
 
 // @ 0x493960
-int PartyMgrW::add_slot()
+int PartyMgr::add_slot()
 {
-    MapEntry* tab = (MapEntry*)this;                                                  // the id -> index hash table at the start
 
-    if (free_ids().size() <= 0)
+    if (free_ids.size() <= 0)
         grow();
 
-    unsigned idx = free_ids().back();
-    free_ids().pop_back();
+    unsigned idx = free_ids.back();
+    free_ids.pop_back();
 
     Party* p = pages[idx >> 4] + (idx & 0xf);
     p->type = 1;
-    p->id = limit();
+    p->id = n_parties;
 
-    int h = limit();
+    int h = n_parties;
     int slot = h % 0x2717;
     while (tab[slot].key != (unsigned)-1)
         slot = (slot + 0x4f) % 0x2717;
     tab[slot].key = h;
     tab[slot].value = idx;
-    ++limit();
+    ++n_parties;
     return p->id;
 }
 
@@ -1840,15 +1834,15 @@ void GameW::set_quest_cancelled(int _idx)
 // @ 0x4949d0
 void GameW::set_objective(int party, int value)
 {
-    PartyMgrW* m = &pm();
-    Party* pp = m->at(((Map10007*)(void*)m)->lookup(party));
+    PartyMgr* m = &pm();
+    Party* pp = m->at(m->lookup(party));
     if (pp->attached_to >= 0)
         detach_party(party);
-    Party* pp2 = m->at(((Map10007*)(void*)m)->lookup(party));
+    Party* pp2 = m->at(m->lookup(party));
     pp2->attached_to = value;
-    Party* pv = m->at(((Map10007*)(void*)m)->lookup(value));
+    Party* pv = m->at(m->lookup(value));
     pv->attached.push_back(party);
-    m->at(((Map10007*)(void*)m)->lookup(value))->dirty = 1;
+    m->at(m->lookup(value))->dirty = 1;
 }
 
 // @ 0x494ad0
@@ -1879,13 +1873,13 @@ void GameW::share_experience(int party, float amount)
 {
     if (party >= parties.n_parties)
         return;
-    PartyMgrW* pm_ = &pm();
-    int idx = ((Map10007*)(void*)pm_)->lookup(party);
+    PartyMgr* pm_ = &pm();
+    int idx = pm_->lookup(party);
     if (idx < 0)
         return;
     if (pm_->pages[idx >> 4][idx & 15].type != 1)
         return;
-    Party* p = pm_->at(((Map10007*)(void*)pm_)->lookup(party));
+    Party* p = pm_->at(pm_->lookup(party));
     int total = 0;
     int i = 0;
     for (; i < p->nstacks; i++) {
@@ -1939,13 +1933,13 @@ void GameW::award_experience(int party, float amount, int mode)
 {
     if ((unsigned)party >= parties.n_parties)
         return;
-    PartyMgrW& m2 = pm();
-    int idx = ((Map10007*)(void*)&m2)->lookup(party);
+    PartyMgr& m2 = pm();
+    int idx = m2.lookup(party);
     if (idx < 0)
         return;
     if (m2.atu((unsigned)idx)->type != 1)
         return;
-    idx = ((Map10007*)(void*)&m2)->lookup(party);                      // the original looks the party up a second time
+    idx = m2.lookup(party);                      // the original looks the party up a second time
     Party* p = &((Party*)(m2.pages[idx >> 4]))[idx & 15];
     int m = mode != 0 ? mode - 1 : rand() % 2;
 
@@ -2182,8 +2176,8 @@ void GameW::spread_party_experience(int amount)
 {
     WL_MARKER(12)
     GameData::add_experience(player, amount);
-    PartyMgrW* m = &pm();
-    Party* p = m->at(((Map10007*)(void*)m)->lookup(f78));
+    PartyMgr* m = &pm();
+    Party* p = m->at(m->lookup(f78));
     int live = 0;
     for (int i = 0; i < p->nstacks; i++) {
         if (p->stacks[i].flags & 1)

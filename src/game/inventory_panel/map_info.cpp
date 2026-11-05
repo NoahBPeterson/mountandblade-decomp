@@ -85,7 +85,7 @@ static Party* party_at(PartyMgr* mgr, int idx)
 }
 static Party* party_by_id(int id)
 {
-    return party_at(&g_game->parties, g_game->parties.index_of(id));
+    return party_at(&g_game->parties, g_game->parties.lookup(id));
 }
 static BattleTable* agents_of() { return (BattleTable*)((char*)g_game + 0xcc); }   // GameData +0xcc (0x48ef20 is its get())
 static Rec98* agent_at(int idx)

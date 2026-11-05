@@ -28,24 +28,23 @@
 
 
 // @ 0x51eb90
-void Scene::read(stream_base* s, int flag)
+void PartyMgr::read(stream_base* s, int flag)
 {
-    SceneView* v = (SceneView*)this;
-    this->clear();
+    this->reset_ids();
     int n;
     s->r_int(&n);
     int last;
     s->r_int(&last);
-    while (v->count < n) {
+    while (count < n) {
         this->grow();
-        if (v->free_ids._Myfirst)
-            operator delete(v->free_ids._Myfirst);
-        v->free_ids._Myfirst = 0;
-        v->free_ids._Mylast = 0;
-        v->free_ids._Myend = 0;
+        if (free_ids._Myfirst)
+            operator delete(free_ids._Myfirst);
+        free_ids._Myfirst = 0;
+        free_ids._Mylast = 0;
+        free_ids._Myend = 0;
     }
     for (int i = 0; i < n; i++) {
-        char* rec = (char*)v->pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x5ac8;
+        Party* rec = (Party*)((char*)pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x5ac8);
         int live;
         s->r_int(&live);
         if (live != 0) {
@@ -53,128 +52,119 @@ void Scene::read(stream_base* s, int flag)
             s->r_int(&index);
             int id;
             s->r_int(&id);
-            *(int*)(rec + 4) = 1;
+            rec->type = 1;
             int key = id % 0x2717;
-            if (v->cells[key * 2] != -1) {
+            if (tab[key].key != -1) {
                 do {
                     key = (key + 0x4f) % 0x2717;
-                } while (v->cells[key * 2] != -1);
+                } while (tab[key].key != -1);
             }
-            v->cells[key * 2 + 1] = index;
-            v->cells[key * 2] = id;
-            *(int*)(rec + 8) = id;
-            ((PartyRecIO*)rec)->read(s, flag);
+            tab[key].value = index;
+            tab[key].key = id;
+            rec->id = id;
+            rec->read(s, flag);
         } else {
-            *(int*)(rec + 4) = 0;
+            rec->type = 0;
         }
     }
-    IntVec* ids = &v->free_ids;
-    if (ids->_Myfirst)
-        operator delete(ids->_Myfirst);
-    ids->_Myfirst = 0;
-    ids->_Mylast = 0;
-    ids->_Myend = 0;
-    for (int i = 0; i < v->count; i++) {
-        char* rec = (char*)v->pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x5ac8;
-        if (*(int*)(rec + 4) != 1)
-            ids->push_back(i);
+    if (free_ids._Myfirst)
+        operator delete(free_ids._Myfirst);
+    free_ids._Myfirst = 0;
+    free_ids._Mylast = 0;
+    free_ids._Myend = 0;
+    for (int i = 0; i < count; i++) {
+        Party* rec = (Party*)((char*)pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x5ac8);
+        if (rec->type != 1)
+            free_ids.push_back(i);
     }
-    v->f138dc = last;
+    n_parties = last;
 }
 
 // @ 0x51eda0
-void Scene::clear()
+void PartyMgr::reset_ids()
 {
-    SceneView* v = (SceneView*)this;
     for (int i = 0; i < 0x2717; i++) {
-        v->cells[i * 2] = -1;
-        v->cells[i * 2 + 1] = -1;
+        tab[i].key = -1;
+        tab[i].value = -1;
     }
-    ((std::vector<int>*)&v->free_ids)->resize(0, 0);
-    for (int i = 0; i < v->count; i++) {
-        *(int*)((char*)this->get(i) + 4) = 0;
-        v->free_ids.push_back(i);
+    free_ids.resize(0, 0);
+    for (int i = 0; i < count; i++) {
+        this->get(i)->type = 0;
+        free_ids.push_back(i);
     }
-    v->f138dc = 0;
+    n_parties = 0;
 }
 
 // @ 0x51ee50
-PartyRecIO* Scene::get(int id)
+Party* PartyMgr::get(int id)
 {
-    SceneView* v = (SceneView*)this;
-    int k = this->index_of(id);
-    return (PartyRecIO*)((k & 0xf) * 0x5ac8 + (int)v->pages._Myfirst[k >> 4]);
+    int k = this->lookup(id);
+    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages._Myfirst[k >> 4]);
 }
 
 // @ 0x51ee80
-void PartyRecIO::read(stream_base* s, int flag)
+void Party::read(stream_base* s, int flag)
 {
-    s->r_tstr((rgl::string*)(data + 0x20));
-    s->r_tstr((rgl::string*)(data + 0xc));
-    ((tstring*)(data + 0xc))->underscores_to_spaces();          // 0x42bf80
-    s->r_u64((unsigned __int64*)(data + 0xa0));
-    s->r_int((int*)(data + 0x90));
-    s->r_int((int*)(data + 0x8c));
-    s->r_int((int*)(data + 0x70));
-    s->r_int((int*)(data + 0x74));
-    s->r_int((int*)(data + 0x8e4));
-    s->r_int((int*)(data + 0x918));
-    s->r_int((int*)(data + 0x8e8));
-    s->r_int((int*)(data + 0x91c));
-    int* p = (int*)(data + 0x8ec);
-    stream_base* rs = &s->r_float((float*)p);
-    rs->r_float((float*)++p);
-    p = (int*)(data + 0x924);
-    rs = &s->r_float((float*)p);
-    rs->r_float((float*)++p);
-    p = (int*)(data + 0x30);
-    rs = &s->r_float((float*)p);
-    rs = &rs->r_float((float*)(p + 1));
-    rs->r_float((float*)(p + 2));
-    s->r_int((int*)(data + 0x8a8));
-    char* e = data + 0xa8;
-    for (int i = 0; i < *(int*)(data + 0x8a8); i++, e += 0x20) {
-        s->r_int((int*)(e + 4));
-        s->r_int((int*)e);
-        s->r_int((int*)(e + 0x10));
-        s->r_int((int*)(e + 8));
+    s->r_tstr((rgl::string*)&key);
+    s->r_tstr((rgl::string*)&name);
+    name.underscores_to_spaces();          // 0x42bf80
+    s->r_u64(&flags);
+    s->r_int(&f90);
+    s->r_int(&owner);
+    s->r_int(&f70);
+    s->r_int((int*)&f74);
+    s->r_int(&state);
+    s->r_int(&action);
+    s->r_int(&state_target);
+    s->r_int(&target);
+    stream_base* rs = &s->r_float(&ai_target_x);
+    rs->r_float(&ai_target_y);
+    rs = &s->r_float(&order_pos.x);
+    rs->r_float(&order_pos.y);
+    rs = &s->r_float(&pos.x);
+    rs = &rs->r_float(&pos.y);
+    rs->r_float(&pos.z);
+    s->r_int(&nstacks);
+    for (int i = 0; i < nstacks; i++) {
+        s->r_int(&stacks[i].troop);
+        s->r_int(&stacks[i].count);
+        s->r_int(&stacks[i].wounded);
+        s->r_int(&stacks[i].flags);
     }
-    s->r_float((float*)(data + 0x50));
+    s->r_float(&angle);
     if (flag > 0) {
-        s->r_bool(data + 0x1c);
-        s->r_tstr((rgl::string*)(data + 0x54));
-        p = (int*)(data + 0x7c);
-        rs = &s->r_float((float*)p);
-        rs = &rs->r_float((float*)(data + 0x80));
-        rs->r_float((float*)(data + 0x84));
-        s->r_float((float*)(data + 0x8f4));
-        s->r_float((float*)(data + 0x958));
-        s->r_int((int*)(data + 0x6c));
-        s->r_float((float*)(data + 0x78));
-        s->r_i64((__int64*)(data + 0x5ab8));
-        s->r_int((int*)(data + 0x94));
-        s->r_int((int*)(data + 0x8c8));
-        s->r_bool(data + 0x8cc);
+        s->r_bool((char*)&this->flag);
+        s->r_tstr((rgl::string*)&extra_text);
+        rs = &s->r_float(&f7c);
+        rs = &rs->r_float(&zoom);
+        rs->r_float(&f84);
+        s->r_float(&f8f4);
+        s->r_float(&f958);
+        s->r_int(&f6c);
+        s->r_float(&f78);
+        s->r_i64(&ignore_timer.start);
+        s->r_int(&f94);
+        s->r_int(&f8c8);
+        s->r_bool(&f8cc);
         int n1;
         s->r_int(&n1);
-        ((std::vector<int>*)(data + 0x8b8))->resize(n1, 0);
+        attached.resize(n1, 0);
         for (int i = 0; i < n1; i++)
-            s->r_int(*(int**)(data + 0x8bc) + i);
+            s->r_int(attached._Myfirst + i);
         int n2;
         s->r_int(&n2);
-        ((std::vector<int>*)(data + 0x59f4))->resize(n2, 0);
+        deferred.resize(n2, 0);
         for (int i = 0; i < n2; i++)
-            s->r_int(*(int**)(data + 0x59f8) + i);
-        data[0x5a04] = 1;
-        read_soa(s, (SoaBlock*)(data + 0x5a08));
+            s->r_int(deferred._Myfirst + i);
+        f5a04 = 1;
+        read_soa(s, (SoaBlock*)note_times);
         int n3;
         s->r_int(&n3);
-        I64Vec* slots = (I64Vec*)(data + 0x59d8);
-        ((std::vector<__int64>*)slots)->resize(n3, 0);
+        slots.resize(n3, 0);
         for (int i = 0; i < n3; i++)
-            s->r_i64(slots->_Myfirst + i);
+            s->r_i64(slots._Myfirst + i);
     } else {
-        *(float*)(data + 0x78) = (float)*(unsigned char*)(data + 0xa6) * 0.033333335f;
+        f78 = (float)(unsigned char)flags_lo7[6] * 0.033333335f;
     }
 }
 
@@ -245,9 +235,9 @@ void Game::start_new_game()
         stream.failed = 1;                          // set after the scene is read (0x51f3ba), not before
     }
 
-    int slot = scene.index_of(f78);
-    char* pr = ((SceneView*)&scene)->pages._Myfirst[slot >> 4] + (slot & 0xf) * 0x5ac8;
-    *(int*)(pr + 0x74) = 0x80;
+    int slot = scene.lookup(f78);
+    Party* pr = (Party*)((char*)scene.pages._Myfirst[slot >> 4] + (slot & 0xf) * 0x5ac8);
+    pr->f74 = 0x80;
 
     if (g_party_template_count > 0) {
         for (int i = 0; i < g_party_template_count; i++) {

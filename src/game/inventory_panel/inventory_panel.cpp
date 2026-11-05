@@ -838,7 +838,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
         return 0;
 
     PartyMgr* pool = &parties;
-    int pi = ((Map10007*)pool)->lookup(f78);
+    int pi = pool->lookup(f78);
     Party* p = party_at(pool, pi);
     int skill = p->skill_level(0);
     float f = (1.0f - (float)skill * 0.06f) * 1.25f;

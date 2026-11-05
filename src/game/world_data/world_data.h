@@ -41,19 +41,6 @@
 #define WD_FLD(T, off) (*(T*)((char*)this + (off)))
 
 // ---- the party manager embedded in the game object at +0xf8 (include/party.h PartyMgr) --------------------------------
-struct PartyMgrW : PartyMgr {
-    unsigned& limit() { return WD_FLD(unsigned, 0x138dc); }     // +0x138dc id bound (PartyMgr::n_parties)
-    Party* at(int idx) { return pages[idx >> 4] + (idx & 0xf); }
-    Party* atu(unsigned idx) { return pages[idx >> 4] + (idx & 0xf); }
-    Party* get_w(unsigned id) { int i = index_of(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
-    // PartyMgr::index_of(int) (include/party.h) is declared but not defined: the lookup 0x48ad00 is ui/mission.h's
-    // Map10007::lookup(unsigned) (the id -> index hash table at the start of the manager), called as ((Map10007*)mgr)->lookup(id)
-    void clear();                                               // 0x490340 (thiscall, ret 0)
-    std::vector<int>& free_ids() { return WD_FLD(std::vector<int>, 0x138bc); }   // +0x138bc free party indices (first at +0x138c0)
-    PartyMgrW* grow();                                          // 0x493830 (thiscall, ret 0)
-    int add_slot();                                             // 0x493960 (thiscall, ret 0: the new party's id)
-    int alloc_id();                                             // 0x493700 (the 0x98-byte record pool; see RecPool)
-};
 
 
 // ---- virtual views ------------------------------------------------------------------------------------------------
@@ -117,8 +104,8 @@ struct GameW : GameData {
     int& cur_party_idx() { return WD_FLD(int, 0x1a1f0); }       // +0x1a1f0 (0x490430)
     unsigned& cur_agent_idx() { return WD_FLD(unsigned, 0x1a1f4); }   // +0x1a1f4
     int& free_slot() { return WD_FLD(int, 0x1a204); }           // +0x1a204 (0x4904a0)
-        PartyMgrW& pm() { return *(PartyMgrW*)&parties; }
-    Party* party(int id) { PartyMgrW& m = pm(); return m.at(m.index_of(id)); }
+        PartyMgr& pm() { return parties; }
+    Party* party(int id) { PartyMgr& m = pm(); return m.at(m.lookup(id)); }
 
     // find_at 0x48ea80, agent_low 0x4638f0 and add_experience 0x4428c0 are GameData's own (include/game_data.h). add_experience is
     // void there, but add_random_experience (0x4952a0, a byte-exact row returning int) returns the callee's eax: that one call

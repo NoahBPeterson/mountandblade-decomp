@@ -68,9 +68,6 @@ struct GroundItem {                          // 0x5c  fleet entry
 
 
 // the party-id hash table at the head of PartyMgr (game/ui/mission.h's Map10007; PartyMgr::index_of is the same function, 0x48ad00)
-struct Map10007 {
-    int lookup(unsigned id);   // 0x48ad00
-};
 struct PlaneTrace {
     void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0 (inventory_panel/map_picker.cpp)
 };
@@ -84,7 +81,7 @@ struct MapPickScreen {
 
 static inline Party* party_at(GameData* g, int id)
 {
-    int i = ((Map10007*)&g->parties)->lookup(id);
+    int i = g->parties.lookup(id);
     return g->parties.pages[i >> 4] + (i & 0xf);
 }
 

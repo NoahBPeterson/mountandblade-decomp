@@ -75,9 +75,6 @@ struct ForceLabel {
     void make_label(char* out);   // 0x48d940 mission_ui2/mission_3.cpp
 };
 // level::nearest_face 0x439a50 (agent2/agent_stats.cpp): terrain_b/cell_grid.h
-struct PartyMgrW {
-    int add_slot();   // 0x493960 world_data/world_data.cpp
-};
 struct HudOuter {
     void scroll_refresh(rgl::vector4* arg);   // 0x498420 world_data/mesh_hud.cpp
 };
@@ -1497,7 +1494,7 @@ int GameData::attach_party_center(const float* pt, int a, int b)
 int GameData::add_sprite(float x, float y, int tmpl)
 {
     PartyTemplate* tr = &g_party_templates[tmpl];       // 0x5e29f8 + 0xb0 * tmpl
-    int id = ((PartyMgrW*)&parties)->add_slot();         // 0x493960
+    int id = parties.add_slot();         // 0x493960
     parties.get_party(id)->init();                       // 0x48f180
     parties.get_party(id)->template_id = tmpl;
     parties.get_party(id)->pos.x = x;
@@ -1905,7 +1902,7 @@ static __declspec(noinline) bool check_party(int* id)
     int v = *id;
     PartyMgr* pm = &g_game->parties;
     if ((unsigned)v < pm->n_parties) {
-        int r = ((Map10007*)pm)->lookup(v);
+        int r = pm->lookup(v);
         if (r >= 0) {
             Party* base = pm->pages._Myfirst[r >> 4];
             if (base[r & 0xf].type == 1)

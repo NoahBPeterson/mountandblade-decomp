@@ -37,9 +37,6 @@
 #include "../str_table.h"
 #include "../../rgl/text_stream.h"
 #define g_strtable_c g_strtable
-struct Map10007 {
-    int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party pool, ret 4)
-};
 
 // ---- 0x4d92c0..0x4d9450: the glyph hash table's helpers ---------------------------------------------------
 // result of GlyphMap::insert (0x4d3c00): the node and whether it was new

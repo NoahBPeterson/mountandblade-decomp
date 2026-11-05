@@ -3,6 +3,7 @@
 #include "../../include/image_addrs.h"
 #include "../../include/anim_set.h"      // AnimSet g_anim_set (0xa76628)
 #include "./mesh_slot.h"
+#include "../../include/game_data.h"   // GameData (parties, f78), PartyMgr
 #include "../terrain_b/mission.h"
 #include "../terrain_b/pool.h"          // Pool<RecJ>::next_used 0x474300
 #include "../../include/fx.h"           // FxDef (the skeleton of an agent entity: ctor 0x428820, init 0x4288c0, set_env_count 0x46b9d0, f5c)
@@ -118,15 +119,6 @@ template<class T> struct PoolS {
 };
 
 // ---- the objects behind the game pointer ---------------------------------------------------------------------------
-// 0x48ad00 is Map10007::lookup (ui/mission.h, ui/mission_ui.cpp: the id -> record index hash at the start of the pool object)
-struct Map10007 {
-    int lookup(unsigned id);   // 0x48ad00
-};
-struct PartyMgrS {                      // the object at g_game+0xf8 (index_of 0x48ad00)
-    char pad0[0x138d0];
-    char** page_table;                  // +0x138d0
-    int index_of(int id) { return ((Map10007*)this)->lookup(id); }     // 0x48ad00 (thiscall, ret 4)
-};
 struct Skeleton96 {                     // the 0x5ac8-byte character record of the party page table
     char pad0[0x80];
     float f80;                          // +0x80
@@ -231,11 +223,11 @@ NOINL void Mission::spawn(AgentS* a)
         a->f110 = 7;
         TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop];
         if (*(unsigned long long*)&t->skin & 0x10) {
-            PartyMgrS* pm = (PartyMgrS*)(((char*)g_game) + 0xf8);
+            PartyMgr* pm = &g_game->parties;
             int n = 1;
             do {
-                int idx = pm->index_of(*(int*)(((char*)g_game) + 0x78));
-                char* page = ((char**)pm->page_table)[idx >> 4];
+                int idx = pm->lookup(g_game->f78);
+                char* page = (char*)pm->pages._Myfirst[idx >> 4];
                 Skeleton96* rec = (Skeleton96*)(page + (idx & 0xf) * 0x5ac8);
                 int cnt = rec->count;
                 int found = 0, i = 0;
@@ -397,9 +389,9 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     } else {
         a->f5724 = h;
         if (a1 == *(int*)(((char*)g_game) + 0x78)) {
-            PartyMgrS* pm = (PartyMgrS*)(((char*)g_game) + 0xf8);
-            Skeleton96* rec = (Skeleton96*)(pm->page_table[pm->index_of(a1) >> 4]);
-            int idx = pm->index_of(a1) & 0xf;
+            PartyMgr* pm = &g_game->parties;
+            Skeleton96* rec = (Skeleton96*)(pm->pages._Myfirst[pm->lookup(a1) >> 4]);
+            int idx = pm->lookup(a1) & 0xf;
             if (rec[idx].f80 > 0.5f) {
                 a->f5724 = (1.5f - rec[idx].f80) * h;
             }

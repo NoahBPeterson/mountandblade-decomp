@@ -19,6 +19,7 @@
 #include "../../rgl/stream.h"
 #include "../ui/ui_common.h"
 #include "../ui/troop_inv.h"
+#include "../../include/party.h"      // PartyMgr (Game::scene)
 #include "../ui/map_list.h"             // IntList (the scene's page vector, +0x138cc)
 
 // the one global g_game (0x5e2930) is declared by include/game_data.h as GameData*: this header's class Game is the same object (see above)
@@ -181,25 +182,16 @@ struct SpriteRec {                          // 0x98 bytes
     char pad74[0x98 - 0x74];
     __declspec(noinline) void read(stream_base* s, int arg);   // 0x51e970 (ret 8)
 };
-// 0x43e760 is std::vector<int>::_Buy (agent3/agent_combat.cpp), which the folded pointer vectors share; its explicit specialization is only
-// declared, and VecIntBuy (never constructed) reaches the protected member.
-template<> bool std::vector<int, std::allocator<int> >::_Buy(size_t);      // 0x43e760
-struct VecIntBuy : std::vector<int> { bool buy(unsigned n) { return _Buy(n); } };
-struct PtrVec {                             // std::vector<char*> (the page list)
-    int pad0;
-    char** _Myfirst;                        // +4
-    char** _Mylast;                         // +8
-    char** _Myend;                          // +0xc
-    PtrVec() { _Buy(0); }
-    bool _Buy(unsigned n) { return ((VecIntBuy*)this)->buy(n); }     // 0x43e760 (std::vector<int>::_Buy, shared by every pointer vector)
-};
+// 0x43e760 is the _Buy instance every pointer vector shares (identical bodies, folded by the linker); the explicit specialization is only
+// declared, so constructing the page list is a call to it, as in the original.
+template<> bool std::vector<char*, std::allocator<char*> >::_Buy(size_t);      // 0x43e760
 struct RecPool {
     unsigned alloc_record();   // 0x493700 (world_data/world_data.h)
 };
 struct SpriteTable {
     int count;                              // +0     0x51e840
     IntVec free_ids;                        // +4     0x51e840 (pad +4, first +8, last +0xc, end +0x10)
-    PtrVec pages;                           // +0x14  0x51d220 (_Buy(0)); its _Myfirst (+0x18) is read by 0x51e840 / 0x51ea10
+    std::vector<char*> pages;               // +0x14  0x51d220 (_Buy(0)); its _Myfirst (+0x18) is read by 0x51e840 / 0x51ea10
     int f24, f28;                           // +0x24  0x51e840 (r_int at +0x24)
     SpriteTable();                          // 0x51d220
     void alloc_id() { ((RecPool*)this)->alloc_record(); }      // 0x493700 (RecPool::alloc_record, world_data/world_data.h: the same pool object; ret 0, no result)
@@ -208,23 +200,7 @@ struct SpriteTable {
     SpriteRec* at(int i) { return (SpriteRec*)(pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x98); }
 };
 
-// ---- the scene object (Game +0xf8, up to +0x139e4): only what the constructor 0x51d250 touches ------------------
-struct Scene {
-    int cells[0x2717 * 2];                  // +0       0x51d250 (pairs of -1)
-    int f138b8;                             // +0x138b8 0x51d250
-    char pad138bc[4];
-    Zero3 f138c0;                           // +0x138c0 0x51d250
-    IntList list;                           // +0x138cc
-    int f138dc, f138e0;                     // +0x138dc 0x51d250
-    char pad138e4[0x138ec - 0x138e4];
-    Scene();                                // 0x51d250
-    // ---- src/game/mission5/troop_rec.cpp (method declarations only: no layout change) ----
-    int index_of(int id);                     // 0x48ad00 (ret 4: id -> record index through the hash at +0)
-    void grow();                        // 0x493830 (grows the party table by one page of 16 records)
-    __declspec(noinline) void clear();      // 0x51eda0
-    __declspec(noinline) void read(stream_base* s, int flag);   // 0x51eb90 (ret 8)
-    __declspec(noinline) struct PartyRecIO* get(int id);        // 0x51ee50 (ret 4)
-};
+// the party manager embedded at Game +0xf8 is PartyMgr (include/party.h): its constructor is 0x51d250 (below), read 0x51eb90, reset_ids 0x51eda0, get 0x51ee50
 
 // ---- the game object -----------------------------------------------------------------------------------
 struct Game {
@@ -261,7 +237,7 @@ struct Game {
     tstring nameb8;                          // +0xb8  0x51cfa0
     int fc8;                                 // +0xc8  0x51cc80
     SpriteTable sprites;                     // +0xcc  0x51cfa0 (ctor 0x51d220), 0x51dbd0 (read)
-    Scene scene;                             // +0xf8  0x51cfa0 (ctor 0x51d250), 0x51eaa0
+    PartyMgr scene;                           // +0xf8  0x51cfa0 (ctor 0x51d250), 0x51eaa0
     int f139e4;                              // +0x139e4  0x51cc80
     TriggerTag triggers;                     // +0x139e8  0x51cfa0, 0x51dbd0
     SimpleTag simple;                        // +0x139f4  0x51cfa0, 0x51dbd0

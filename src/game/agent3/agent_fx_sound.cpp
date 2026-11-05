@@ -298,11 +298,11 @@ void GameData::add_experience(int troop, int amount)
             }
         } else {
             PartyMgr* pm = &parties;
-            int p = ((Map10007*)pm)->lookup(f78);
+            int p = pm->lookup(f78);
             int i = 0;
             if (pm->pages._Myfirst[p >> 4][p & 0xf].count > 0) {
                 do {
-                    int q = ((Map10007*)pm)->lookup(f78);
+                    int q = pm->lookup(f78);
                     if (pm->pages._Myfirst[q >> 4][q & 0xf].stacks[i].troop == troop) {
                         {
                             tstring key("ui_value_has_advanced_to_level_number");
@@ -317,7 +317,7 @@ void GameData::add_experience(int troop, int amount)
                         }
                     }
                     i++;
-                    int r = ((Map10007*)pm)->lookup(f78);
+                    int r = pm->lookup(f78);
                     if (!(i < pm->pages._Myfirst[r >> 4][r & 0xf].count))
                         break;
                 } while (1);

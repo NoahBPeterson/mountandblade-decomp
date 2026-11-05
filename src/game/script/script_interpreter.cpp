@@ -374,7 +374,7 @@ static __declspec(noinline) char check_party(const int& value)
     PartyMgr* t = &g_game->parties;
     unsigned id = value;
     if (id < (unsigned)t->deflt) {
-        int idx = t->index_of(id);
+        int idx = t->lookup(id);
         if (idx >= 0) {
             if (t->pages[idx >> 4][idx & 0xf].type == 1)
                 return 1;

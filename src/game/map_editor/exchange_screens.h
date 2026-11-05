@@ -37,15 +37,7 @@
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../trial_mode.h"
 
-struct PartyMgrX : PartyMgr {};
-// the party-by-id getter 0x51ee50 (Scene::get(int), ret 4) and the other canonical classes the exchange screens call
-struct PartyRecIO;
-struct Scene {
-    PartyRecIO* get(int id);   // 0x51ee50 (the party manager's by-id getter)
-};
-struct Map10007 {
-    int lookup(unsigned id);   // 0x48ad00 (ui/mission.h: the id hash table that opens the party manager)
-};
+// the canonical classes the exchange screens call
 struct note_window {
     void build(int a, int b);   // 0x50a1c0 (ret 8)
 };
@@ -57,10 +49,10 @@ namespace std {
 template<> void vector<int, allocator<int> >::resize(size_type n, int x);     // 0x43f310
 }
 
-inline PartyMgrX* party_mgr() { return (PartyMgrX*)&g_game->parties; }
+inline PartyMgr* party_mgr() { return &g_game->parties; }
 
 // the party at index `id` of the manager (PartyMgr::pages is a std::vector<Party*>: operator[] gives the original's lea + load)
-inline PartyX* party_at(PartyMgrX* m, int id)
+inline PartyX* party_at(PartyMgr* m, int id)
 {
     Party* page = m->pages[id >> 4];
     return (PartyX*)&page[id & 0xf];
@@ -68,16 +60,16 @@ inline PartyX* party_at(PartyMgrX* m, int id)
 
 inline PartyX* party_index(int id)
 {
-    PartyMgrX* m = party_mgr();
-    int idx = ((Map10007*)(void*)m)->lookup(id);   // 0x48ad00
+    PartyMgr* m = party_mgr();
+    int idx = m->lookup(id);   // 0x48ad00
     return party_at(m, idx);
 }
 
 // the same lookup through a game-data pointer that is not g_game (update_party_sprites runs with this = the game data)
 inline PartyX* party_index(GameData* g, int id)
 {
-    PartyMgrX* m = (PartyMgrX*)&g->parties;
-    int idx = ((Map10007*)(void*)m)->lookup(id);   // 0x48ad00
+    PartyMgr* m = &g->parties;
+    int idx = m->lookup(id);   // 0x48ad00
     return party_at(m, idx);
 }
 

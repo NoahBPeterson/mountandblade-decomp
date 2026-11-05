@@ -327,7 +327,7 @@ void PartyScreen::refresh_morale()
 static Party* get_party(int id)
 {
     PartyMgr* m = &g_game->parties;
-    int i = ((Map10007*)m)->lookup(id);
+    int i = m->lookup(id);
     return &m->pages._Myfirst[i >> 4][i & 0xf];
 }
 
@@ -639,7 +639,7 @@ int GameDataV::weekly_cost()
     if (sl_query(8, 0, 0))
         return g_script.trigger_result.store0;
 
-    int id = ((Map10007*)&parties)->lookup(f78);
+    int id = parties.lookup(f78);
     int* blk = (int*)parties.pages._Myfirst[id >> 4];
     char* rec = (char*)blk + (id & 0xf) * 0x5ac8;
     int cnt = *(int*)(rec + 0x8a8);
@@ -777,7 +777,7 @@ void PartyScreen::setup_party(int side)
 
         // the two captions depend on what kind of party is shown
         if (w04 == 1 || w04 == 6 || w04 == 7) {
-            int           idx = ((Map10007*)&g_game->parties)->lookup(w10);
+            int           idx = g_game->parties.lookup(w10);
             Party* rec = (Party*)((char*)g_game->parties.pages._Myfirst[idx >> 4]
                                                 + (idx & 0xf) * 0x5ac8);
             // Party::display_name inlined (0x505949): the ids, else the string-table entry, else the name (+0xc)
@@ -844,7 +844,7 @@ void PartyScreen::setup_skills()
 
     // ---- the party this page shows and its members ----
     GameData* g = g_game;
-    int idx = ((Map10007*)&g->parties)->lookup(g->f78);
+    int idx = g->parties.lookup(g->f78);
     Party* members = (Party*)((char*)g->parties.pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8);
     int count = members->nstacks;
 

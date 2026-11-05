@@ -67,9 +67,6 @@ struct mesh_node {
     void set_time(const float* t);   // 0x433190 (rgl/xmlcfg/game_util.cpp, ret 4)
 };
 #include "../../rgl/scene/world.h"          // rgl::world: step 0x427f40, render_scene 0x429890, remove_entity 0x41f0d0, create_entity 0x428440, reset 0x421390, ground (NavData)
-struct Map10007 {
-    int lookup(unsigned id);   // 0x48ad00 (ui/mission_ui.cpp: the id -> index table of the party / agent / scene pools, ret 4)
-};
 
 // ---- 0x5c-byte records and their helpers (vector<E92>: the game's event / track records) ------------------------------
 struct E92 { int v[23]; ~E92() {} };                    // 0x5c: event record (events vector at GameData +0x13a60; party/game.h TrackRec); the empty destructor keeps _Tidy's loop
@@ -179,7 +176,7 @@ inline NavRec* nav_recs() { return (NavRec*)((rgl::world*)g_script.level)->groun
 inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }
 inline BattleRec* battle_get(unsigned i) { return battles()->get(i); }     // 0x48ef20
 inline Party* party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4))); }
-inline Party* party_of(PartyMgr* m, int id) { return party_at(m, ((Map10007*)m)->lookup(id)); }
+inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->lookup(id)); }
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 extern SoundMgr g_sound_mgr;                            // 0x5aa128

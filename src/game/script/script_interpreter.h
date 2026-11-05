@@ -403,8 +403,8 @@ struct GameX {
     char padb4[0xc8 - 0xb4];
     int next_window;                    // +0xc8 window to switch to (0xf = presentation; start_presentation 0x4a20d5)
     BattleTable battles;                // +0xcc (party_set_next_battle_simulation_time 0x4a8172)
-    PartyMgr parties;                   // +0xf8 .. +0x139d8 (PartyMgr, dialog_manager.h)
-    char pad139d8[0x13a00 - 0x139d8];
+    PartyMgr parties;                   // +0xf8 .. +0x139e4 (PartyMgr, include/party.h)
+    char pad139e4[0x13a00 - 0x139e4];
     TroopX* troops;                     // +0x13a00
     int num_troops;                     // +0x13a04 (check_troop 0x49cee0)
     char pad13a08[0x13a0c - 0x13a08];
@@ -539,7 +539,7 @@ struct GameX {
     __forceinline void handout(PartyV* party, int root) { ((GameW*)this)->handout(party, root); }                             // 0x491430 (ret 8)
 };
 SI_ASSERT(game_troops, offsetof(GameX, troops) == 0x13a00);
-SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139d8 - 0xf8);
+SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139e4 - 0xf8);
 SI_ASSERT(game_cloud, offsetof(GameX, cloud_amount) == 0x13b3c);
 SI_ASSERT(game_log, offsetof(GameX, message_log) == 0x13b50);
 SI_ASSERT(game_menu, offsetof(GameX, context_menu_values) == 0x13eec);

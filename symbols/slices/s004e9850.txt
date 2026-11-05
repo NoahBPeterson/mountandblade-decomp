@@ -7,9 +7,9 @@ Range: 0x4e9850 .. 0x4ea1c0 (9 functions)
 004e99a0  cPairs96::write(OutStream*)             thiscall, MATCH
 004e99d0  Table::write_table(OutStream*)          thiscall, MATCH
 004e9ab0  Entry::write(OutStream*)                thiscall, MATCH
-004e9b50  OutRecList::write_missions(OutStream*)  receiver = GameRecord + 0xf8's owner; RecList at this+0xf8
-004e9c50  RecList::write_table(OutStream*)        thiscall; count +0x138b8, pages +0x138d0, f138dc +0x138dc
-004e9d10  Rec5ac8::write(OutStream*)              thiscall; the 0x5ac8-byte record
+004e9b50  OutRecList::write_missions(OutStream*)  receiver = GameRecord + 0xf8's owner; PartyMgr at this+0xf8
+004e9c50  PartyMgr::write_table(OutStream*)        thiscall; count +0x138b8, pages +0x138d0, f138dc +0x138dc
+004e9d10  Party::write(OutStream*)              thiscall; the 0x5ac8-byte record
 004e9fe0  RecList::flush_ids()                    thiscall, ret 0
 004ea030  RecList::id_remove(int id)              thiscall, ret 4
 
@@ -58,7 +58,7 @@ Codegen findings
   The thiscall member form gave the exact `sub esp,8 / push ebx / mov ebp,ecx` prologue.
 * flush_ids / id_remove are RecList members. id_remove's receiver (ecx) is the *set* at +0x138bc --
   its probe indexes `[ecx+edx*8]` -- and it adds 0x138bc to ecx only for the tail call to int_remove.
-* Chain-vs-linear: Rec5ac8::write is mostly an `out->w(...)` sequence, but several runs ARE method chains
+* Chain-vs-linear: Party::write is mostly an `out->w(...)` sequence, but several runs ARE method chains
   in the original -- write them as `out->wA(x).wB(y)` (dot-chaining on the `OutStream&` returns) rather
   than storing the `OutStream*` in a local. Storing it spills to `mov ebx,eax` (2 bytes each) and breaks
   0x4e9850. The inlined int-vector writer must loop as

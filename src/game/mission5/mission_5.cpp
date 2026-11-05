@@ -1682,9 +1682,9 @@ void MissionCtx::refresh_markers()
 // @ 0x529670
 void MissionCtx::reset_party_heroes(int party_id)
 {
-    PartyMgr_s29130* mgr = party_mgr_s29130();
-    int idx = mgr->index_of(party_id);
-    Party_s29130* party = &mgr->pages[idx >> 4][idx & 0xf];
+    PartyMgr* mgr = party_mgr_s29130();
+    int idx = mgr->lookup(party_id);
+    Party* party = &mgr->pages[idx >> 4][idx & 0xf];
 
     int n = 0;
     int i = 0;
@@ -1730,7 +1730,7 @@ void Mission_s29840::fn_529840(int)
                 t = &troop_tbl_s29840()[a->troop];
                 if (t->flags & 0x10) {
                     t->f_a0 = a->f5724;
-                    Party_s29840* p = party_mgr_s29840()->at(party_mgr_s29840()->index_of(a->f1bc));
+                    Party* p = party_mgr_s29840()->at(party_mgr_s29840()->lookup(a->f1bc));
                     int skill = p->skill_level(9);
                     float v = a->f571c - a->f5724;
                     if (v < 0.0f) v = 0.0f;
@@ -1747,7 +1747,7 @@ void Mission_s29840::fn_529840(int)
                 if (t->flags & 0x10) {
                     t->f_a0 = a->f5724;
                     if (a->troop == g_game_s29840->cur_troop) {
-                        Party_s29840* p = party_mgr_s29840()->at(party_mgr_s29840()->index_of(g_game_s29840->cur_party));
+                        Party* p = party_mgr_s29840()->at(party_mgr_s29840()->lookup(g_game_s29840->cur_party));
                         int skill = p->skill_level(9);
                         float v = a->f571c - a->f5724;
                         if (v < 0.0f) v = 0.0f;
@@ -1783,7 +1783,7 @@ __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add)
 // @ 0x529c30
 void Mission_s29840::fn_529c30(int* hist, int party_id, int slot, int value, int flag)
 {
-    Party_s29840* p = party_mgr_s29840()->at(party_mgr_s29840()->index_of(party_id));
+    Party* p = party_mgr_s29840()->at(party_mgr_s29840()->lookup(party_id));
     int count = p->stacks[slot].count;
     int* h = hist + slot * 32;
     int found = -1;
@@ -1807,7 +1807,7 @@ void Mission_s29840::fn_529d00(Agent_s29840* a)
     if (a->f1bc >= 0) {
         int slot = a->f1c0;
         if (slot >= 0) {
-            Party_s29840* p = (Party_s29840*)((Scene*)party_mgr_s29840())->get(a->f1bc);
+            Party* p = party_mgr_s29840()->get(a->f1bc);
             int* v = (int*)p->stacks + slot * 8 + 4;
             (*v)++;
         }

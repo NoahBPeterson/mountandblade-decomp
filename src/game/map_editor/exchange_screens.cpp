@@ -199,7 +199,7 @@ after_scroll:
         slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
         pid = sel_type != 0 ? w10 : g_game->f78;
         // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
-        Party* p = (Party*)((Scene*)(void*)party_mgr())->get(pid);   // 0x51ee50
+        Party* p = party_mgr()->get(pid);   // 0x51ee50
         p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
         ((PartyScreen*)(void*)this)->refresh_selection();
     }
@@ -534,10 +534,10 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
     int* table;
     Row local;
     int dummy[8];
-    PartyMgrX* m = party_mgr();
-    local = *(Row*)((char*)party_at(m, ((Map10007*)(void*)m)->lookup(party_id)) + 0xa8 + slot * 0x20);
+    PartyMgr* m = party_mgr();
+    local = *(Row*)((char*)party_at(m, m->lookup(party_id)) + 0xa8 + slot * 0x20);
 
-    *was_present = *(int*)((char*)party_at(m, ((Map10007*)(void*)m)->lookup(party_id)) + 0xa8 + slot * 0x20 + 0xc) > 0;
+    *was_present = *(int*)((char*)party_at(m, m->lookup(party_id)) + 0xa8 + slot * 0x20 + 0xc) > 0;
     if (*was_present)
         (*(int*)((char*)party_index(party_id) + 0xa8 + slot * 0x20 + 0xc))--;
     bool had = *(int*)((char*)party_index(party_id) + 0xa8 + slot * 0x20 + 0x10) > 0;
@@ -600,7 +600,7 @@ void PartyX::compact()
 void GameDataX::update_party_sprites()
 {
     WL_MARKER(12)
-    PartyMgrX* mgr = (PartyMgrX*)&parties;
+    PartyMgr* mgr = &parties;
     PartyX* p = party_index(this, *(int*)((char*)this + 0x7c));
     if (((Party*)p)->sum_stat(0x10) != 0) {
         PartyX* q = party_index(this, *(int*)((char*)this + 0x78));

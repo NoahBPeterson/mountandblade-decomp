@@ -1,6 +1,6 @@
 ../src/game/world_data/world_data.cpp  ?stack_dna@GameW@@QAEHIHHH@Z  004902a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?back@?$deque@HV?$allocator@H@std@@@std@@QAEAAHXZ  00490310  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?clear@PartyMgrW@@QAEXXZ  00490340  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?clear@PartyMgr@@QAEXXZ  00490340  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?is_live@PartyMgr@@QAEHH@Z  004903e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?trigger_entity@@YIHH@Z  00490430  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??1ContainerBase@@UAE@XZ  00490520  /O2 /MT /Gy /TP
@@ -27,8 +27,8 @@
 ../src/game/world_data/world_data.cpp  ??_GDropDown@@UAEPAXI@Z  004933d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?slot1@Party@@UAEXXZ  004936a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?push_back@?$vector@PAUParty@@V?$allocator@PAUParty@@@std@@@std@@QAEXABQAUParty@@@Z  004936b0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?grow@PartyMgrW@@QAEPAU1@XZ  00493830  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?add_slot@PartyMgrW@@QAEHXZ  00493960  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?grow@PartyMgr@@QAEPAU1@XZ  00493830  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?add_slot@PartyMgr@@QAEHXZ  00493960  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_child@ContainerBase@@UAEXPAUMissionUi@@@Z  00493a30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?reserve@I64VecW@@QAEXPAH@Z  00493c40  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set@SlotArray@@QAEXABHAB_J@Z  00493d70  /O2 /MT /Gy /TP

@@ -182,8 +182,8 @@ void CampaignScreen::init_screen()
     overlay->kids.push_back(*(MissionUi**)&f58);
 
     {
-        PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
-        int rec = ((Map10007*)(void*)mgr)->lookup(g_game->side_party);   // 0x48ad00
+        PartyMgr* mgr = &g_game->parties;
+        int rec = mgr->lookup(g_game->side_party);   // 0x48ad00
         Rect* r = (Rect*)(party_bytes(mgr, rec) + 0x30);   // pages[rec >> 4] + (rec & 0xf) * 0x5ac8 (0x4ecbc8), not mgr + the table address
         *(Rect*)((char*)this + 0x290) = *r;
     }
@@ -215,15 +215,15 @@ void CampaignScreen::init_screen()
 void CampaignScreen::camera_mark_entities()
 {
     g_game->f13acc = (f2b8 * g_590bb8 + 1.0f) * g_54b3b4;
-    PartyMgr* mgr = (PartyMgr*)((char*)g_game + 0xf8);
+    PartyMgr* mgr = &g_game->parties;
     for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id((int*)&id)) {
-        int idx = ((Map10007*)(void*)mgr)->lookup(id);
+        int idx = mgr->lookup(id);
         if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
-            idx = ((Map10007*)(void*)mgr)->lookup(id);
+            idx = mgr->lookup(id);
             if (*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x400) {
-                idx = ((Map10007*)(void*)mgr)->lookup(id);
+                idx = mgr->lookup(id);
                 if (!(*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x80000)) {
-                    idx = ((Map10007*)(void*)mgr)->lookup(id);
+                    idx = mgr->lookup(id);
                     party_bytes(mgr, idx)[0x8b5] = 1;
                 }
             }

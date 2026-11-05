@@ -96,7 +96,7 @@ struct GameG : GameDataV {
     Party* player_party()
     {
         PartyMgr* mgr = &parties;
-        int i = ((Map10007*)mgr)->lookup(f78);
+        int i = mgr->lookup(f78);
         Party** pp = mgr->pages._Myfirst + (i >> 4);
         return *pp + (i & 0xf);
     }

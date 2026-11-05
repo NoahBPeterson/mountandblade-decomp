@@ -17,7 +17,7 @@ inline Party* party_at(PartyMgr* m, int k)
 {
     return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4)));
 }
-inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->index_of(id)); }
+inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->lookup(id)); }
 #define PARTY(id) party_of(&parties, id)
 
 // @ 0x48fd60

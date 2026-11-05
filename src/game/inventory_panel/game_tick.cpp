@@ -166,7 +166,7 @@ void GameG::tick(float dt)
         }
     }
 
-    party_at(&parties, ((Map10007*)&parties)->lookup(cur_agent))->dirty = 1;
+    party_at(&parties, parties.lookup(cur_agent))->dirty = 1;
 
     {
         int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f);
@@ -206,7 +206,7 @@ void GameG::tick(float dt)
 
     int id = parties.first_party_id();
     while ((unsigned)id < parties.n_parties) {
-        Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(id));
+        Party* p = party_at(&parties, parties.lookup(id));
         p->tick(speed);
         if (p->action == 8 && (*(__int64*)&p->flags_lo & 0x20000))
             target = id;
@@ -236,7 +236,7 @@ void GameG::tick(float dt)
         float d = (g_ticks[resume_timer.clock] - resume_timer.start) * 1e-5f;
         if (d >= 0.0f) {
             f13aa0 = 0;
-            Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(cur_agent));
+            Party* p = party_at(&parties, parties.lookup(cur_agent));
             *(__int64*)&p->flags_lo &= ~(__int64)0x100;
             tstring s("");
             resume_strings(&s, &resume_old);
@@ -433,17 +433,17 @@ void GameG::update_cursor(float dt)
 {
     PartyMgr* mgr = &parties;
 
-    party_at(mgr, ((Map10007*)mgr)->lookup(main_party))->f6c = 1;
-    float radius = party_at(mgr, ((Map10007*)mgr)->lookup(main_party))->map_speed();
+    party_at(mgr, mgr->lookup(main_party))->f6c = 1;
+    float radius = party_at(mgr, mgr->lookup(main_party))->map_speed();
 
     unsigned id = (unsigned)mgr->first_party_id();
     while (id < mgr->n_parties) {
         unsigned cur = id;
-        Party* p = party_at(mgr, ((Map10007*)mgr)->lookup((int)id));
+        Party* p = party_at(mgr, mgr->lookup((int)id));
         if (cur != (unsigned)main_party && p->f8c8 < 0) {
             unsigned __int64 flags = *(unsigned __int64*)&p->flags_lo;
             if ((flags & 0x1000100) == 0 && p->model != 0) {
-                Party* mp = party_at(mgr, ((Map10007*)mgr)->lookup(main_party));
+                Party* mp = party_at(mgr, mgr->lookup(main_party));
                 float dx = p->pos.x - mp->pos.x;
                 float dy = p->pos.y - mp->pos.y;
                 float dist = (float)sqrt(dx * dx + dy * dy);
@@ -511,7 +511,7 @@ void GameG::update_cursor(float dt)
         if (f95 != 0) {
             r->opacity = 1.0f;
         } else {
-            Party* mp = party_at(mgr, ((Map10007*)mgr)->lookup(main_party));
+            Party* mp = party_at(mgr, mgr->lookup(main_party));
             float dx = r->x - mp->pos.x;
             float dy = r->y - mp->pos.y;
             float dist = (float)sqrt(dx * dx + dy * dy);
@@ -541,8 +541,8 @@ void GameG::update_weather()
     unsigned id = (unsigned)mgr->first_party_id();
     while (id < mgr->n_parties) {
         if (id == (unsigned)main_party
-            || (*(unsigned __int64*)&party_at(mgr, ((Map10007*)mgr)->lookup((int)id))->flags_lo & 0x80100) == 0)
-            party_at(mgr, ((Map10007*)mgr)->lookup((int)id))->tick_stats();
+            || (*(unsigned __int64*)&party_at(mgr, mgr->lookup((int)id))->flags_lo & 0x80100) == 0)
+            party_at(mgr, mgr->lookup((int)id))->tick_stats();
         mgr->next_party_id((int*)&id);
     }
 
@@ -795,7 +795,7 @@ void GameG::update_tracks()
         battle = g_resmgr.get_object(&n);
     }
 
-    float denom = (float)party_at(&parties, ((Map10007*)&parties)->lookup(f78))->skill_level(0x10) + 8.0f;
+    float denom = (float)party_at(&parties, parties.lookup(f78))->skill_level(0x10) + 8.0f;
 
     for (Rec5c* p = events._Myfirst; p < events._Mylast; ++p) {
         if (!f95 && !(p->flags & 0x20000000))
@@ -830,7 +830,7 @@ void GameG::update_tracks()
         }
 
         unsigned col = rgl::pack_color(&c);
-        if (party_at(&parties, ((Map10007*)&parties)->lookup(f78))->skill_level(0x10) < 2)
+        if (party_at(&parties, parties.lookup(f78))->skill_level(0x10) < 2)
             col = 0xffa8a8a8;
         col |= 0xff000000;
 
@@ -846,9 +846,9 @@ void GameG::update_tracks()
 void GameG::train_troops()
 {
     for (unsigned id = parties.first_party_id(); id < parties.n_parties; parties.next_party_id((int*)&id))
-        party_at(&parties, ((Map10007*)&parties)->lookup(id))->dirty = 1;
+        party_at(&parties, parties.lookup(id))->dirty = 1;
 
-    Party* p = party_at(&parties, ((Map10007*)&parties)->lookup(f78));
+    Party* p = party_at(&parties, parties.lookup(f78));
 
     int gain[64];
     for (int i = 0; i < p->nstacks; i++)

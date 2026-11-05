@@ -118,9 +118,6 @@ struct PsOpsW : PsFill {                            // the same widget, slot +0x
 
 // ---- helpers every module here uses -------------------------------------------------------------------------------
 // PartyMgr::index_of is the party-id hash lookup 0x48ad00 (game/ui/mission.h: Map10007::lookup)
-struct Map10007 {
-    int lookup(unsigned id);   // 0x48ad00
-};
 // the party record behind a page-table index (PartyMgr::pages, pages of 16 records of 0x5ac8 bytes)
 static inline Party* party_at(PartyMgr* m, int idx)
 {
@@ -130,7 +127,7 @@ static inline Party* party_at(PartyMgr* m, int idx)
 static inline Party* party_index(int id)
 {
     PartyMgr* m = &g_game->parties;
-    return party_at(m, ((Map10007*)m)->lookup(id));
+    return party_at(m, m->lookup(id));
 }
 #define PARTIES (&g_game->parties)
 

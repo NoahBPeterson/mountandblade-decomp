@@ -1225,7 +1225,7 @@ void Party::collect_targets(int* out, int* max, int* count)
     while (id < (unsigned)parties()->deflt) {
         if (*count >= *max)
             return;
-        int idx = ((Map10007*)parties())->lookup((unsigned)id);
+        int idx = parties()->lookup(id);
         Party* p = &parties()->pages[idx >> 4][idx & 0xf];
         if (p->f8c8 >= 0)
             goto next;
@@ -1625,13 +1625,13 @@ void GameData::refresh_party(unsigned id)
     PartyMgr* m = &parties;
     if (id >= parties.n_parties)
         return;
-    int idx = ((Map10007*)m)->lookup(id);
+    int idx = m->lookup(id);
     if (idx < 0)
         return;
     Party** pp = &m->pages[(unsigned)idx >> 4];
     if ((*pp)[idx & 0xf].type != 1)
         return;
-    int j = ((Map10007*)m)->lookup(id);
+    int j = m->lookup(id);
     Party** pq = &m->pages[j >> 4];
     Party* p = &(*pq)[j & 0xf];
     for (int i = 0; i < p->nstacks; i++) {
@@ -1655,12 +1655,12 @@ float GameData::party_value(unsigned id)
     float total = 0.0f;
     if (id >= parties.n_parties)
         return total;
-    int idx = ((Map10007*)&parties)->lookup(id);
+    int idx = parties.lookup(id);
     if (idx < 0)
         return total;
     if (parties.pages[idx >> 4][idx & 0xf].type != 1)
         return total;
-    int j = ((Map10007*)&parties)->lookup(id);
+    int j = parties.lookup(id);
     Party* p = &parties.pages[j >> 4][j & 0xf];
     for (int i = 0; i < p->nstacks; i++) {
         Stack& s = p->stacks[i];
@@ -1677,11 +1677,11 @@ float GameData::party_value(unsigned id)
         }
     }
     for (int i = 0;; i++) {
-        int idx2 = ((Map10007*)&parties)->lookup(id);
+        int idx2 = parties.lookup(id);
         Party* q = &parties.pages[idx2 >> 4][idx2 & 0xf];
         if (q->attached._Myfirst == 0 || (unsigned)(q->attached._Mylast - q->attached._Myfirst) <= (unsigned)i)
             break;
-        int idx3 = ((Map10007*)&parties)->lookup(id);
+        int idx3 = parties.lookup(id);
         int copy = parties.pages[idx3 >> 4][idx3 & 0xf].attached._Myfirst[i];
         total = party_value(copy) + total;
     }
@@ -1734,7 +1734,7 @@ void Party::think()
         }
         for (int i = 0; i < n; i++) {
             int tid = ids[i];
-            int pi = ((Map10007*)&g_game->parties)->lookup(tid);
+            int pi = g_game->parties.lookup(tid);
             Party* p = (Party*)((char*)g_game->parties.pages[pi >> 4]
                                 + (pi & 0xf) * sizeof(Party));
             float rel = g_game->relation(id, tid);
@@ -1752,7 +1752,7 @@ void Party::think()
                     other = (unsigned)b->party_a;
                 int oi = -1;
                 if (other < g_game->parties.n_parties)
-                    oi = ((Map10007*)&g_game->parties)->lookup((int)other);
+                    oi = g_game->parties.lookup((int)other);
                 if (oi >= 0) {
                     Party* op = (Party*)((char*)g_game->parties.pages[oi >> 4]
                                          + (oi & 0xf) * sizeof(Party));
@@ -1784,7 +1784,7 @@ void Party::think()
 
         for (int i = 0; i < n; i++) {
             int tid = ids[i];
-            int pi = ((Map10007*)&g_game->parties)->lookup(tid);
+            int pi = g_game->parties.lookup(tid);
             Party* p = (Party*)((char*)g_game->parties.pages[pi >> 4]
                                 + (pi & 0xf) * sizeof(Party));
             float adj = near_v[i] - accum[i] * 0.9f;
@@ -1890,16 +1890,16 @@ void Party::think()
     if (state == 4) {
         unsigned pid = (unsigned)state_target;
         if (pid < g_game->parties.n_parties) {
-            int oi = ((Map10007*)&g_game->parties)->lookup((int)pid);
+            int oi = g_game->parties.lookup((int)pid);
             if (oi >= 0) {
                 Party* pp = (Party*)((char*)g_game->parties.pages[oi >> 4]
                                      + (oi & 0xf) * sizeof(Party));
                 if (pp->type == 1) {
-                    int oi2 = ((Map10007*)&g_game->parties)->lookup((int)pid);
+                    int oi2 = g_game->parties.lookup((int)pid);
                     Party* pp2 = (Party*)((char*)g_game->parties.pages[oi2 >> 4]
                                           + (oi2 & 0xf) * sizeof(Party));
                     if (pp2->f8c8 < 0 && (pp2->flags_lo & 0x1080100) == 0) {
-                        int oi3 = ((Map10007*)&g_game->parties)->lookup((int)pid);
+                        int oi3 = g_game->parties.lookup((int)pid);
                         Party* pp3 = (Party*)((char*)g_game->parties.pages[oi3 >> 4]
                                               + (oi3 & 0xf) * sizeof(Party));
                         pending_bad = pp3->action == 8;
@@ -2063,7 +2063,7 @@ void GameData::push_event(const int* pos, unsigned nation)
 void GameData::push_party_event(int party, const int* pos, const float* src)
 {
     PartyMgr* pm = &parties;
-    int idx = ((Map10007*)pm)->lookup(party);
+    int idx = pm->lookup(party);
     Party* p = pm->pages._Myfirst[idx >> 4] + (idx & 0xf);
     event_rec r;
     r.p = *(const Pos4i*)pos;
@@ -2109,7 +2109,7 @@ void BattleRec::detach()
         int i, j, k, m;
 
         if (pm->is_live(party_a)) {
-            i = ((Map10007*)pm)->lookup(party_a);
+            i = pm->lookup(party_a);
             Party* q = pm->pages[i >> 4] + (i & 15);
             q->action = 0;
             q->interval = 0.4f;
@@ -2119,10 +2119,10 @@ void BattleRec::detach()
 
             for (k = (q->attached._Myfirst ? (int)(q->attached._Mylast - q->attached._Myfirst) : 0) - 1; k >= 0; k--) {
                 int mid = q->attached._Myfirst[k];
-                j = ((Map10007*)pm)->lookup(mid);
+                j = pm->lookup(mid);
                 if ((pm->pages[j >> 4] + (j & 15))->f8cc) {
                     ((GameW*)g_game)->detach_party(mid);
-                    m = ((Map10007*)pm)->lookup(q->attached._Myfirst[k]);
+                    m = pm->lookup(q->attached._Myfirst[k]);
                     (pm->pages[m >> 4] + (m & 15))->action = 0;
                 }
             }
@@ -2131,9 +2131,9 @@ void BattleRec::detach()
         {
             unsigned uid = party_b;
             if (uid < g_game->parties.n_parties) {
-                j = ((Map10007*)pm)->lookup(uid);
+                j = pm->lookup(uid);
                 if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                    i = ((Map10007*)pm)->lookup(party_b);
+                    i = pm->lookup(party_b);
                     Party* q = pm->pages[i >> 4] + (i & 15);
                     q->action = 0;
                     q->interval = 0.1f;
@@ -2152,10 +2152,10 @@ void BattleRec::detach()
 
                     for (k = (q->attached._Myfirst ? (int)(q->attached._Mylast - q->attached._Myfirst) : 0) - 1; k >= 0; k--) {
                         int mid = q->attached._Myfirst[k];
-                        j = ((Map10007*)pm)->lookup(mid);
+                        j = pm->lookup(mid);
                         if ((pm->pages[j >> 4] + (j & 15))->f8cc) {
                             ((GameW*)g_game)->detach_party(mid);
-                            m = ((Map10007*)pm)->lookup(q->attached._Myfirst[k]);
+                            m = pm->lookup(q->attached._Myfirst[k]);
                             (pm->pages[m >> 4] + (m & 15))->action = 0;
                         }
                     }
@@ -2173,7 +2173,7 @@ void BattleRec::detach()
 
         {
             int cur_id = g_game->f78;
-            i = ((Map10007*)pm)->lookup(cur_id);
+            i = pm->lookup(cur_id);
             Party* cur = pm->pages[i >> 4] + (i & 15);
             int st = (*(int*)((char*)&g_mission_ctx + 0x138));
             char is1, is2;
@@ -2190,9 +2190,9 @@ void BattleRec::detach()
             for (i = 0; i < n2; i++) {
                 unsigned id = list2[i];
                 if (id < g_game->parties.n_parties) {
-                    j = ((Map10007*)pm)->lookup(id);
+                    j = pm->lookup(id);
                     if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                        j = ((Map10007*)pm)->lookup(id);
+                        j = pm->lookup(id);
                         Party* p = pm->pages[j >> 4] + (j & 15);
                         if ((p->flags_lo & 0x400) == 0) {
                             m = 0;
@@ -2215,9 +2215,9 @@ void BattleRec::detach()
             for (i = 0; i < n1; i++) {
                 unsigned id = list1[i];
                 if (id < g_game->parties.n_parties) {
-                    j = ((Map10007*)pm)->lookup(id);
+                    j = pm->lookup(id);
                     if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                        j = ((Map10007*)pm)->lookup(id);
+                        j = pm->lookup(id);
                         Party* p = pm->pages[j >> 4] + (j & 15);
                         if ((p->flags_lo & 0x400) == 0) {
                             m = 0;
@@ -2271,10 +2271,10 @@ void BattleRec::commit()
     for (int i = 0; i < n2; i++) {
         unsigned id = list2[i];
         if (id < g_game->parties.n_parties) {
-            int j = ((Map10007*)&g_game->parties)->lookup(id);
+            int j = g_game->parties.lookup(id);
             if (j >= 0 && (g_game->parties.pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
                 g_game->refresh_party(id);
-                int m = ((Map10007*)&g_game->parties)->lookup(list2[i]);
+                int m = g_game->parties.lookup(list2[i]);
                 (g_game->parties.pages[m >> 4] + (m & 15))->dirty = 1;
             }
         }
@@ -2283,10 +2283,10 @@ void BattleRec::commit()
     for (int i = 0; i < n1; i++) {
         unsigned id = list1[i];
         if (id < g_game->parties.n_parties) {
-            int j = ((Map10007*)&g_game->parties)->lookup(id);
+            int j = g_game->parties.lookup(id);
             if (j >= 0 && (g_game->parties.pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
                 g_game->refresh_party(id);
-                int m = ((Map10007*)&g_game->parties)->lookup(list1[i]);
+                int m = g_game->parties.lookup(list1[i]);
                 (g_game->parties.pages[m >> 4] + (m & 15))->dirty = 1;
             }
         }

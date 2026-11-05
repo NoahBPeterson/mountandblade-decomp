@@ -73,7 +73,6 @@ struct alloc_e56 {
 // Callees whose definitions are under another class name (identical code folding, or the module that defines them names the
 // class differently); declared with the defining class's name so the call binds its symbol, and the object is cast at the
 // call. Each says why the object is the one the definition works on.
-struct Map10007 { int lookup(unsigned id); };                       // 0x48ad00 (src/game/ui/mission.h): PartyMgr's first 0x138b8 bytes are this 0x2717-entry table
 struct AgentX {                                                     // src/rgl/xmlcfg/game_util.h: the agent record's team relation tests
     bool f100_is_0x48_and_charged() const;                          // 0x432470
 };

@@ -62,7 +62,6 @@ extern "C" int sprintf(char* dst, const char* fmt, ...);    // 0x536f8f
 // Callees declared under the name of the class or function that defines them (the modules that define them name the class after another of
 // their users, and the linker folds identical bodies); the object is cast at the call, each says why it is the one the definition works on.
 struct NodeA;
-struct Map10007 { int lookup(unsigned id); };   // 0x48ad00 (ui/mission.h): the party table of the game object (Game::scene) starts with this 0x2717-entry table
 struct FieldPanel { void update(); };           // 0x48d470 (mission_ui2/mission_3.cpp): lays the list out
 #include "../res_mgr.h"                      // g_resmgr: the resource manager at 0x5d6fa0
 struct UiD;
@@ -298,7 +297,7 @@ void PartyWindow::init_screen()
         int off = 0x20;
         for (;;) {
             int party = g_game_G->f78;
-            int slot = ((Map10007*)&g_game_G->scene)->lookup(party);
+            int slot = g_game_G->scene.lookup(party);
             char** pg = *(char***)((char*)&g_game_G->scene + 0x138d0);
             char* rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             int count = *(int*)(rec + 0x8a8);
@@ -316,7 +315,7 @@ void PartyWindow::init_screen()
             }
             if (n >= c)
                 break;
-            slot = ((Map10007*)&g_game_G->scene)->lookup(party);
+            slot = g_game_G->scene.lookup(party);
             pg = *(char***)((char*)&g_game_G->scene + 0x138d0);
             rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             if (w14 == *(int*)(rec + 0xac + off))

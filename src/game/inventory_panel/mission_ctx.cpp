@@ -131,7 +131,7 @@ extern const float g_half;          // 0x549d70  0.5f
 static Party* party_by_id(int id)
 {
     PartyMgr* mgr = &g_game->parties;
-    int idx = ((Map10007*)mgr)->lookup(id);
+    int idx = mgr->lookup(id);
     return (Party*)((char*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8);
 }
 
@@ -306,8 +306,8 @@ void MissionCtx::update_parties()
 
         PartyMgr* pm = &g_game->parties;
 
-        party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->f88 = -1;
-        party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->action = 0;
+        party_at(pm, pm->lookup(g_game->f78))->f88 = -1;
+        party_at(pm, pm->lookup(g_game->f78))->action = 0;
 
         if (count_hero_items() > f168) {
             tstring msg("ui_some_soldiers_are_ready_to_upgrade");
@@ -315,7 +315,7 @@ void MissionCtx::update_parties()
             g_gui.push(*g_strtable.lookup(msg), 0xffbbffbb);
         }
 
-        party_at(pm, ((Map10007*)pm)->lookup(g_game->f78))->dirty = 1;
+        party_at(pm, pm->lookup(g_game->f78))->dirty = 1;
     }
     WL_MARKER(13)
 }
@@ -325,7 +325,7 @@ int count_hero_items()
 {
     GameData* g = g_game;
     PartyMgr* m = &g->parties;
-    Party* p = party_at(m, ((Map10007*)m)->lookup(g->f78));
+    Party* p = party_at(m, m->lookup(g->f78));
     int n = 0;
     int i = 0;
     Stack* s = p->stacks;
@@ -352,9 +352,9 @@ void GameDataV::clear_hero_ammo(unsigned id)
     GameDataV* g = this;
     PartyMgr* m = &g->parties;
     if (id < m->n_parties) {
-        int idx = ((Map10007*)m)->lookup(id);
+        int idx = m->lookup(id);
         if (idx >= 0 && party_at(m, idx)->type == 1) {
-            Party* p = party_at(m, ((Map10007*)m)->lookup(id));
+            Party* p = party_at(m, m->lookup(id));
             for (int i = 0; i < p->nstacks; i++) {
                 if ((g->troops[p->stacks[i].troop].flags32 & 0x10) != 0 && p->stacks[i].f10 != 0)
                     p->stacks[i].f10 = 0;
@@ -401,16 +401,16 @@ void MissionCtx::setup(unsigned flags, int delta)
             n = 8 - n;
         f1c = GV->gate_rating(g_game->f78, party[side], party[1 - side]) + n;
         PartyMgr* m = &g_game->parties;
-        party_at(m, ((Map10007*)m)->lookup(g_game->f78))->sum_stat(0x110);
+        party_at(m, m->lookup(g_game->f78))->sum_stat(0x110);
         if (g_game->parties.is_live(party[side]))
-            party_at(&g_game->parties, ((Map10007*)&g_game->parties)->lookup(party[side]))->sum_stat(0x110);
+            party_at(&g_game->parties, g_game->parties.lookup(party[side]))->sum_stat(0x110);
         if (mode == 4 && g_game->parties.is_live(party[1 - side]))
             g_game->parties.get(party[1 - side])->sum_stat(0x110);
         if (f1c > 6)
             f1c = 6;
         f27c = f1c - old;
         int i = 0;
-        while (i < party_at(&g_game->parties, ((Map10007*)&g_game->parties)->lookup(g_game->f78))->nstacks)
+        while (i < party_at(&g_game->parties, g_game->parties.lookup(g_game->f78))->nstacks)
             i++;
         int l[8];
         l[0] = 0;
@@ -614,7 +614,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     *(int*)(t + 0x7ac) = 1;
 
     PartyMgr* m = &g_game->parties;
-    Party* p = party_at(m, ((Map10007*)m)->lookup(g_game->f78));
+    Party* p = party_at(m, m->lookup(g_game->f78));
     if (1 < p->nstacks) {
         int n = 1;
         int oi = 0x5b8;
@@ -634,22 +634,22 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     }
 
     if (a3 > 0 && a3 != g_game->f78) {
-        if (1 < party_at(m, ((Map10007*)m)->lookup(a3))->nstacks) {
+        if (1 < party_at(m, m->lookup(a3))->nstacks) {
             int oi = 0x630;
             int of = 0x7ec;
             int n = 1;
             // do-while (0x514b4b jl 0x514a68): the party is looked up again for the flag test, for the stored troop and
             // for the loop condition, but not before the first iteration
             do {
-                int item = party_at(m, ((Map10007*)m)->lookup(a3))->stacks[n].troop;
+                int item = party_at(m, m->lookup(a3))->stacks[n].troop;
                 if ((g_game->troops[item].flags32 & 0x10) != 0) {
-                    *(int*)(t + oi) = party_at(m, ((Map10007*)m)->lookup(a3))->stacks[n].troop;
+                    *(int*)(t + oi) = party_at(m, m->lookup(a3))->stacks[n].troop;
                     *(int*)(t + of) = 1;
                     oi += 8;
                     of += 4;
                 }
                 n++;
-            } while (n < party_at(m, ((Map10007*)m)->lookup(a3))->nstacks);
+            } while (n < party_at(m, m->lookup(a3))->nstacks);
         }
     }
 
@@ -685,7 +685,7 @@ void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
 void MissionCtx::start_mission()
 {
     int id = party[side];
-    Party* p = party_at(&g_game->parties, ((Map10007*)&g_game->parties)->lookup(id));
+    Party* p = party_at(&g_game->parties, g_game->parties.lookup(id));
     int v = GV->token_lookup(id, 0, 0, 0);
     build_hero_table(p->stacks[0].troop, v, id, 1);
 }
@@ -1190,7 +1190,7 @@ void MissionCtx::update_anim()
     if (party[0] >= 0) {
         GameData* g = g_game;
         PartyMgr* m = &g->parties;
-        Party* p = party_at(m, ((Map10007*)m)->lookup(party[0]));
+        Party* p = party_at(m, m->lookup(party[0]));
         int slot = p->stacks[0].troop;
         if (slot >= 0) {
             Troop* t = &g->troops[slot];
@@ -1237,7 +1237,7 @@ void GameDataV::reset_trade_ids()
 void GameDataV::fill_ids(int* out, int id)
 {
     PartyMgr* m = &parties;
-    Party* rec = party_at(m, ((Map10007*)m)->lookup(id));
+    Party* rec = party_at(m, m->lookup(id));
     if (rec->nstacks <= 0)
         return;
     int* base = out;
@@ -1260,7 +1260,7 @@ void MissionCtx::reset_ids(int id)
     if (id == -1)
         return;
     PartyMgr* m = &g_game->parties;
-    Party* rec = party_at(m, ((Map10007*)m)->lookup(id));
+    Party* rec = party_at(m, m->lookup(id));
     for (int i = 0; i < rec->nstacks; i++) {
         int slot = *(int*)((char*)rec + 0xac + i * 0x20);
         Troop* t = (Troop*)((char*)g_game->troops + slot * 0x508);

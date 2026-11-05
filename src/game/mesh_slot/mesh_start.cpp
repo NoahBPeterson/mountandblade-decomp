@@ -233,7 +233,7 @@ static inline int ifloor(float x)
 
 static inline Party* party_rec(PartyMgr* pm, int id)
 {
-    int i = pm->index_of(id);
+    int i = pm->lookup(id);
     Party*& pg = pm->pages[i >> 4];
     return (Party*)((char*)pg + (i & 0xf) * 0x5ac8);
 }
@@ -267,8 +267,7 @@ void Mission::start_setup()
         g_game->load_scene(at<int>(0x5df4));
 
     // ---- camera party + neighbour temperature accumulation ---------------------------------
-    PartyMgr* pm = (PartyMgr*)(RAWAT(char*, g_game, 0xf8));
-    pm = (PartyMgr*)((char*)g_game + 0xf8);
+    PartyMgr* pm = &g_game->parties;
     int pid = RAWAT(int, g_game, 0x78);
     Party* pa = party_rec(pm, pid);
     ptype = RAWAT(int, party_rec(pm, pid), 0x5978);
@@ -427,7 +426,7 @@ void Mission::start_setup()
         g_terrain.parse(*(const tstring*)((char*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494) + 0x68));
         GameData* gg = g_game;
         if (((LevelRaw*)(RAWAT(char*, gg, 0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
-            PartyMgr* pm2 = (PartyMgr*)((char*)gg + 0xf8);
+            PartyMgr* pm2 = &gg->parties;
             int pid2 = RAWAT(int, gg, 0x78);
             int x = (int)party_rec(pm2, pid2)->pos.x;
             int y = (int)party_rec(pm2, pid2)->pos.y;

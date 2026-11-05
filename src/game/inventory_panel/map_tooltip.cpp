@@ -69,7 +69,7 @@ void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
     *wounded = 0;
     if (id >= (unsigned)parties.n_parties)
         return;
-    int idx = parties.index_of(id);
+    int idx = parties.lookup(id);
     if (idx < 0)
         return;
     Party* p = (Party*)((char*)parties.pages._Myfirst[(unsigned)idx >> 4] + (idx & 0xf) * 0x5ac8);

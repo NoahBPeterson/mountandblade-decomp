@@ -20,6 +20,7 @@
 
 // ---- the writer / the 8-byte vector / the troop record (the slices' GameRecord) --------------------------
 #include "../out_stream.h"
+#include "../../include/party.h"                 // PartyMgr, Party (write_table, flush_ids, id_remove, write)
 #include "../list8.h"
 #include "../../include/troop.h"
 
@@ -72,84 +73,6 @@ struct Table {
 };
 #pragma pack(pop)
 
-// ---- the id table of 0x4e9b50 (stride 0x5ac8) -----------------------------------------------------------
-#pragma pack(push, 4)
-struct Rec5ac8 {
-    int      f00;                                   // +0x00
-    int      type;                                  // +0x04 (1 = live, 2 = dropped, 0 = free)
-    int      id;                                    // +0x08
-    char     pad0c[0x1c - 0x0c];
-    int      f1c;                                   // +0x1c (int4)
-    char     f20[4];                                // +0x20 (struct)
-    char     pad24[0x30 - 0x24];
-    int      f30, f34, f38;                         // +0x30 (three ints)
-    char     pad3c[0x50 - 0x3c];
-    int      f50;                                   // +0x50
-    char     f54[4];                                // +0x54 (struct)
-    char     pad58[0x6c - 0x58];
-    int      f6c;                                   // +0x6c (raw)
-    char     pad70[0x74 - 0x70];
-    int      f74;                                   // +0x74 (raw)
-    int      f78;                                   // +0x78
-    int      f7c, f80, f84;                         // +0x7c (three ints)
-    char     pad88[0x8c - 0x88];
-    int      f8c;                                   // +0x8c (raw)
-    int      f90;                                   // +0x90 (raw)
-    int      f94;                                   // +0x94 (raw)
-    char     pad98[0xa0 - 0x98];
-    int      fa0;                                   // +0xa0
-    char     pada4[0x8a8 - 0xa4];
-    int      f8a8;                                  // +0x8a8 (count of the 0x20-byte entries at +0xa8)
-    char     pad8ac[0x8bc - 0x8ac];
-    List4    f8bc;                                  // +0x8bc
-    int      f8c8;                                  // +0x8c8 (raw)
-    int      f8cc;                                  // +0x8cc (int4)
-    char     pad8d0[0x8e4 - 0x8d0];
-    int      f8e4;                                  // +0x8e4 (raw)
-    int      f8e8;                                  // +0x8e8 (raw)
-    int      f8ec, f8f0;                            // +0x8ec
-    int      f8f4;                                  // +0x8f4
-    char     pad8f8[0x918 - 0x8f8];
-    int      f918;                                  // +0x918 (raw)
-    int      f91c;                                  // +0x91c (raw)
-    char     pad920[0x924 - 0x920];
-    int      f924, f928;                            // +0x924
-    char     pad92c[0x958 - 0x92c];
-    int      f958;                                  // +0x958
-    char     pad95c[0x59d8 - 0x95c];
-    List8    f59d8;                                 // +0x59d8 (vector of 8-byte elements, 0x10 bytes with the allocator word)
-    char     pad59e8[0x59f8 - 0x59e8];
-    List4    f59f8;                                 // +0x59f8 (vector of ints)
-    char     pad5a04[0x5a08 - 0x5a04];
-    char     f5a08[0xb0];                           // +0x5a08 (the struct-of-arrays block)
-    int      f5ab8;                                 // +0x5ab8
-    char     pad5abc[0x5ac8 - 0x5abc];
-    void write(OutStream* out);                     // 0x4e9d10 (ret 4)
-};
-
-// (Slot20, the 0x20-byte slot of Rec3910, is defined once in src/rgl/mesh2/rec_tables.h; nothing here uses it)
-typedef int Quad[4];                                // the 4-int runs written at +0x8ec and +0x924
-#pragma pack(pop)
-
-#pragma pack(push, 4)
-struct RecList {                                    // the record list of the GameRecord object at +0xf8
-    char     pad00[0x78];
-    int      f78;                                   // +0x78 (the id whose record is walked)
-    char     pad7c[0x138b8 - 0x7c];
-    int      count;                                 // +0x138b8
-    char     pad13bc[0x138cc - 0x138bc];
-    std::vector<Rec5ac8*> pages;                    // +0x138cc (VC7.1 vector: allocator word, then first/last/end) (index >> 4 -> page of 16 records)
-    int      f138dc;                                // +0x138dc
-    char     pad13e0[0x14050 - 0x13e0];
-    int      f14050[3];
-    int      f1405c[0x20];
-    int  index_of(int id);                          // 0x48ad00 (ret 4)
-    void write_table(OutStream* out);               // 0x4e9c50 (ret 4)
-    void flush_ids();                               // 0x4e9fe0 (ret 0)
-    void id_remove(int id);                         // 0x4ea030 (ret 4)
-};
-#pragma pack(pop)
-
 // ---- the object 0x4e9b50 actually receives (GameRecord + 0xf8) -------------------------------------------
 // Its tail overlaps the Game object's own data: the record array at Game+0x13a00 sits at this-0x1c0.
 #pragma pack(push, 4)
@@ -177,25 +100,17 @@ int        id_lookup(void* map, int id);            // 0x48ad00 (ret 4)
 #include "../int_vec.h"
 
 
-static const int kRecSize = sizeof(Rec5ac8);
-// the int-vector writer the original inlines at +0x8bc and +0x59f8: the count, then each int
-static __forceinline void write_vec4(List4* v, OutStream* out)
+// the int-vector writer the original inlines at +0x8b8 and +0x59f4: the count, then each int
+static __forceinline void write_vec4(std::vector<int>& v, OutStream* out)
 {
     int n;
-    if (!v->begin)
+    if (!v._Myfirst)
         n = 0;
     else
-        n = (int)(v->end - v->begin);
+        n = (int)(v._Mylast - v._Myfirst);
     out->w_count(&n);
-    for (unsigned i = 0; i < (!v->begin ? 0u : (unsigned)(v->end - v->begin)); i++)
-        out->w_raw(&v->begin[i]);
-}
-
-// the record behind the id table. Page P's +0 word is where page P+1 lives, so walking hoists the page
-// pointer and leans on the index's scale factor.
-static Rec5ac8* rec_at(RecList* l, int i)
-{
-    return &l->pages[(unsigned)i >> 4][i & 0xf];
+    for (unsigned i = 0; i < (!v._Myfirst ? 0u : (unsigned)(v._Mylast - v._Myfirst)); i++)
+        out->w_raw(&v._Myfirst[i]);
 }
 
 #endif

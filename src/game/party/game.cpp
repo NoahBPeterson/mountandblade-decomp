@@ -38,6 +38,7 @@
 #include "../../include/level_global.h"                     // g_level (0xa732b4)
 #include "../../include/rec34.h"                 // g_scripts (0xa75eb0): .success is the extra-triggers argument of load_game_data
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
+template<> bool std::vector<Party*, std::allocator<Party*> >::_Buy(size_t);   // 0x43e760 (the _Buy instance every pointer vector shares, agent3/agent_combat.cpp: the party manager's page list is built by a call to it)
 
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_save_kind;                                            // 0x5e29bc (.bss) kind of the loaded save header
@@ -387,16 +388,16 @@ MB_NOINLINE SpriteTable::SpriteTable()
 }
 
 // @ 0x51d250
-MB_NOINLINE Scene::Scene() : list(0)
+MB_NOINLINE PartyMgr::PartyMgr()
 {
     int i = 0;
     do {
-        cells[i * 2] = -1;
-        cells[i * 2 + 1] = -1;
+        tab[i].key = -1;
+        tab[i].value = -1;
         i++;
     } while (i < 0x2717);
-    f138b8 = 0;
-    f138dc = 0;
+    count = 0;
+    n_parties = 0;
     f138e0 = 0;
 }
 
@@ -1032,14 +1033,13 @@ MB_NOINLINE void SpriteTable::clear()
 void Game::load_scene_parties(stream_base* s)
 {
     scene.read(s, 1);
-    int idx = scene.index_of(f78);
-    char** pages = (char**)scene.list.first;
-    char* rec = pages[idx >> 4] + (idx & 0xf) * 0x5ac8;
-    for (int i = 0; i < *(int*)(rec + 0x8a8); i++) {
-        char* e = rec + 0xc0 + i * 0x20;
-        if ((troops[*(int*)(e - 0x14)].flags30 & 0x10) == 0) {
-            s->r_float((float*)e);
-            s->r_int((int*)(e - 4));
+    int idx = scene.lookup(f78);
+    Party* rec = (Party*)((char*)scene.pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8);
+    for (int i = 0; i < rec->nstacks; i++) {
+        Stack* e = &rec->stacks[i];
+        if ((troops[e->troop].flags30 & 0x10) == 0) {
+            s->r_float((float*)&e->f18);
+            s->r_int(&e->f14);
             for (int k = 0; k < 0x20; k++)
                 s->r_int((int*)(scene_parties + i * 0x80) + k);
         }

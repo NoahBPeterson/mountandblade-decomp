@@ -100,8 +100,7 @@ struct Sel {
 
 
 // ---- containers -------------------------------------------------------------------------------------------
-struct MapEntry { unsigned key; int value; };
-struct Map10007 { MapEntry tab[0x2717]; int lookup(unsigned id); };   // 0x48ad00
+#include "../../include/map10007.h"                        // MapEntry, Map10007 (lookup 0x48ad00, mission_ui.cpp)
 #include "../../include/e68.h"                               // E68 (0x68 bytes; shared with rgl/mesh2/mesh_2.h)
 struct Vec68 { char pad4[4]; E68* begin; E68* end; int count(); };    // 0x48ace0
 void fill8(int* first, int* last, const int* val);          // 0x48ad70

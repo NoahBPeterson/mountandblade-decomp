@@ -946,7 +946,7 @@ void __stdcall reset_spawned(int party_id)
 {
     if (party_id != -1) {
         PartyMgr* pm = &g_game->parties;
-        int i = pm->index_of(party_id);
+        int i = pm->lookup(party_id);
         Party* p = &pm->pages[i >> 4][i & 15];
         for (int k = 0; k < p->nstacks; k++)
             p->stacks[k].spawned = 0;
@@ -963,7 +963,7 @@ inline bool agent_low_inl(int idx)
 inline Party* get_party(int id)
 {
     PartyMgr* pm = &g_game->parties;
-    int i = pm->index_of(id);
+    int i = pm->lookup(id);
     return &pm->pages[i >> 4][i & 15];
 }
 // @ 0x473a60

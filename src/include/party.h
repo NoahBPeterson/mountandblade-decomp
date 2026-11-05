@@ -11,7 +11,11 @@
 #include "./timer.h"
 #include "./iface.h"
 #include "../game/slot_array.h"
+#include "./map10007.h"
 namespace rgl { struct mesh; }
+struct stream_base;
+struct OutStream;
+struct Party;
 struct PartyV4 { float x, y, z, w; };       // a plain 4-float vector (no constructors: the party record is built by memory copies)
 
 struct Stack {                              // 0x20 bytes, array at party+0xa8
@@ -69,7 +73,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
         float zoom;                         // +0x80 0x4b2c00 (zoom easing), 0x4b5c30
         int f80;                            // +0x80 (script 0x4a4a76)
     };
-    char pad84[0x88 - 0x84];
+    float f84;                          // +0x84 (read 0x51ee80)
     union {
         int f88;                            // +0x88 battle record index, -1 = none   0x4b1fa0, 0x4b3910, 0x4b4a00
         int battle;                         // +0x88 (script 0x4a814d)
@@ -231,6 +235,8 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int sum_stat(int what);                 // 0x4b1cf0 (thiscall, ret 4)
     tstring translated();                   // 0x4c6530
     int first_flagged();                    // 0x463190 (index of the first prisoner stack, else the count)
+    __declspec(noinline) void read(stream_base* s, int flag);   // 0x51ee80 (ret 8: the save-game reader)
+    void write(OutStream* out);             // 0x4e9d10 (ret 4: the save-game writer, src/game/char_sheet/save_records.cpp)
     void set_id(int v);                     // 0x489420
     float scale();                          // 0x489460
     int sum_all();                          // 0x489490
@@ -282,24 +288,37 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     void tick(float dt);                    // 0x4b80d0 (ret 4)
 };
 
-struct PartyMgr {                           // 0x138e0 bytes, embedded in the game data at +0xf8
-    char pad0[0x138b8];
-    int count;                              // +0x138b8   0x460ca0
-    char pad138bc[0x138cc - 0x138bc];
+struct PartyMgr : Map10007 {                // 0x138ec bytes, embedded in the game data at +0xf8 (Game::scene); the id hash is the base
+    int count;                              // +0x138b8   0x460ca0 (records allocated: pages * 16)
+    std::vector<int> free_ids;              // +0x138bc   indices of the unused records (first at +0x138c0)
     std::vector<Party*> pages;              // +0x138cc (first at +0x138d0; index >> 4 -> page of 16). A std::vector: terrain_b's reset_spawned 0x4739f0 indexes it
                                             // through operator[] (lea + load); the raw readers (dialog_manager, agent3, gui_edit) use pages._Myfirst[...]
     union {
         int deflt;                          // +0x138dc   0x460ca0, 0x460de0
-        unsigned n_parties;                 // +0x138dc (GameData+0x139d4)   0x4c8ca0
+        unsigned n_parties;                 // +0x138dc (GameData+0x139d4)   0x4c8ca0, 0x493960 (the next id)
     };
-    int index_of(int id);                   // 0x48ad00 (thiscall, ret 4)
-    Party* get(int id);                     // 0x51ee50 (thiscall, ret 4)
-    Party* get_party(unsigned id) { int idx = index_of(id); return (Party*)((char*)pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
+    int f138e0;                             // +0x138e0   0x51d250
+    int f138e4, f138e8;                     // +0x138e4 (not touched by the constructor)
+    PartyMgr();                             // 0x51d250 (src/game/party/game.cpp)
+    __declspec(noinline) Party* get(int id);   // 0x51ee50 (thiscall, ret 4)
+    Party* at(int idx) { return pages[idx >> 4] + (idx & 0xf); }
+    Party* atu(unsigned idx) { return pages[idx >> 4] + (idx & 0xf); }
+    Party* get_party(unsigned id) { int idx = lookup(id); return (Party*)((char*)pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
+    Party* get_w(unsigned id) { int i = lookup(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
+    void clear();                           // 0x490340 (frees the pages and the free list; world_data)
+    PartyMgr* grow();                       // 0x493830 (adds a page of 16 records; world_data)
+    int add_slot();                         // 0x493960 (the new party's id; world_data)
+    __declspec(noinline) void read(stream_base* s, int flag);   // 0x51eb90 (ret 8; src/game/mission5/troop_rec.cpp)
+    void write_table(OutStream* out);       // 0x4e9c50 (ret 4: the live records, src/game/char_sheet/save_records.cpp)
+    void flush_ids();                       // 0x4e9fe0 (drops the records whose type is 2)
+    void id_remove(int id);                 // 0x4ea030 (ret 4: removes the id from the hash, frees the record)
+    __declspec(noinline) void reset_ids();  // 0x51eda0 (empties the id hash, frees every record)
     void next_party_id(int* id);            // 0x460ca0
     int first_party_id();                   // 0x460d20
     int is_live(int id);                    // 0x4903e0 (thiscall, ret 4: id names a live party) (src/game/party2)
 };
 
 typedef char mb_party_size_chk[sizeof(Party) == 0x5ac8 ? 1 : -1];
+typedef char mb_partymgr_size_chk[sizeof(PartyMgr) == 0x138ec ? 1 : -1];
 
 #endif // MB_PARTY_H

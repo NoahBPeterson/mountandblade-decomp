@@ -7338,7 +7338,7 @@
   },
   "004e9d10": {
    "verdict": "INSN-EXACT",
-   "symbol": "?write@Rec5ac8@@QAEXPAUOutStream@@@Z",
+   "symbol": "?write@Party@@QAEXPAUOutStream@@@Z",
    "insns": 277,
    "ours": 277,
    "unverified": 0,
@@ -7348,7 +7348,7 @@
   },
   "004ea030": {
    "verdict": "DIFF",
-   "symbol": "?id_remove@RecList@@QAEXH@Z",
+   "symbol": "?id_remove@PartyMgr@@QAEXH@Z",
    "insns": 46,
    "ours": 46,
    "unverified": 0,
@@ -9012,7 +9012,7 @@
   },
   "0051eb90": {
    "verdict": "DIFF",
-   "symbol": "?read@Scene@@QAEXPAUstream_base@@H@Z",
+   "symbol": "?read@PartyMgr@@QAEXPAUstream_base@@H@Z",
    "insns": 173,
    "ours": 170,
    "unverified": 0,
@@ -9022,7 +9022,7 @@
   },
   "0051eda0": {
    "verdict": "DIFF",
-   "symbol": "?clear@Scene@@QAEXXZ",
+   "symbol": "?reset_ids@PartyMgr@@QAEXXZ",
    "insns": 69,
    "ours": 68,
    "unverified": 0,
@@ -9032,7 +9032,7 @@
   },
   "0051ee50": {
    "verdict": "DIFF",
-   "symbol": "?get@Scene@@QAEPAUPartyRecIO@@H@Z",
+   "symbol": "?get@PartyMgr@@QAEPAUParty@@H@Z",
    "insns": 14,
    "ours": 13,
    "unverified": 0,
@@ -9042,7 +9042,7 @@
   },
   "0051ee80": {
    "verdict": "DIFF",
-   "symbol": "?read@PartyRecIO@@QAEXPAUstream_base@@H@Z",
+   "symbol": "?read@Party@@QAEXPAUstream_base@@H@Z",
    "insns": 307,
    "ours": 307,
    "unverified": 0,

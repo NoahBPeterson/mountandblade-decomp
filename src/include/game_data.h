@@ -89,8 +89,7 @@ struct GameData {
     char padcc[0xe4 - 0xcc];                    // +0xcc a paged table of 0x98-byte scene records (16 per page); its API is 0x48ef20 slot() (map_info.cpp), see party2/camera.cpp (BattleTable)
     void** agent_pages;                         // +0xe4 its page table: first pointer of the vector at +0xe0 (map_update.cpp 0x5191e0, map_info.cpp 0x48ef20, camera.cpp)
     char pade8[0xf8 - 0xe8];
-    PartyMgr parties;                           // +0xf8 .. +0x139d8 (gui_edit.cpp called it `pm`)
-    char pad139d8[0x139e4 - 0x139d8];
+    PartyMgr parties;                           // +0xf8 .. +0x139e4 (gui_edit.cpp called it `pm`)
     int f139e4;                                 // +0x139e4 (0x443aa0)
     char pad139e8[0x13a00 - 0x139e8];
     union {

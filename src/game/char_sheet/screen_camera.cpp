@@ -81,7 +81,7 @@ void CampaignScreen::camera_update(float dt)
     if (g_game->f88) {
         if (g_game->parties.is_live(g_game->selected)) {
             // get_party (include/party.h) expanded: the id's dense index is Map10007::lookup (0x48ad00), then the page arithmetic
-            int pidx = ((Map10007*)(void*)&g_game->parties)->lookup(g_game->selected);
+            int pidx = g_game->parties.lookup(g_game->selected);
             Party* p = (Party*)((char*)g_game->parties.pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);
             vector4 rect = *(vector4*)&p->pos;
             rect.z = rect.z + C_549CDC;

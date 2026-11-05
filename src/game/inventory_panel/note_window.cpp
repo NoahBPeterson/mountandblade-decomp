@@ -70,10 +70,7 @@ Camera* make_editor_list(void* parent, const tstring* name, int child);         
 
 // map-party accessors (this = world + 0xf8: the party manager, include/party.h; the slice called it WorldMap)
 #include "../../include/party.h"
-#define WORLDMAP ((PartyMgr*)((char*)WORLD + 0xf8))
-struct Map10007 {
-    int lookup(unsigned id);   // 0x48ad00 (game/ui/mission.h): the party-id hash at the head of the manager (PartyMgr::index_of)
-};
+#define WORLDMAP (&WORLD->parties)
 
 
 // ---------------------------------------------------------------------------
@@ -528,7 +525,7 @@ void note_window::build(int page_, int arg_)
         acc.assign(buf);
 
         tstring line;
-        int idx = ((Map10007*)WORLDMAP)->lookup(pi);
+        int idx = WORLDMAP->lookup(pi);
         char* base = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x5ac8;
         char* ids  = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x16b2 * 4;
         for (int k = 0; k < 8; k++) {
@@ -565,7 +562,7 @@ void note_window::build(int page_, int arg_)
         {
             int v = WORLDMAP->first_party_id();
             while (v < (int)WORLD->parties.n_parties) {
-                int vi = ((Map10007*)WORLDMAP)->lookup(v);
+                int vi = WORLDMAP->lookup(v);
                 char* prec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
                 for (int k = 0; k < 8; k++) {
                     if (*(int*)(prec + 0x5a34 + k * 0x10) > 0) {
@@ -582,7 +579,7 @@ void note_window::build(int page_, int arg_)
             int v = vec[i];
             if (selected < 0)
                 selected = v;
-            int vi = ((Map10007*)WORLDMAP)->lookup(v);
+            int vi = WORLDMAP->lookup(v);
             char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
             const char* nm = ts_chars(party_name(rec));
             if (v == arg_)
@@ -720,7 +717,7 @@ void note_window::build(int page_, int arg_)
         {
             int v = WORLDMAP->first_party_id();
             while (v < (int)WORLD->parties.n_parties) {
-                int vi = ((Map10007*)WORLDMAP)->lookup(v);
+                int vi = WORLDMAP->lookup(v);
                 char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
                 for (int k = 0; k < 8; k++) {
                     if (*(int*)(rec + 0x5a34 + k * 0x10) <= 0)

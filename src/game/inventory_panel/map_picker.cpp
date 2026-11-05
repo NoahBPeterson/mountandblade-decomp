@@ -133,7 +133,7 @@ void MapPickScreen::set_label(int id)
         return;
 
     PartyMgr* pool = &g_game->parties;
-    int idx = pool->index_of(id);
+    int idx = pool->lookup(id);
     char* rec = (char*)g_game->parties.pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8;
     vector4 pos = *(vector4*)(rec + 0x30);
 
@@ -142,12 +142,12 @@ void MapPickScreen::set_label(int id)
         float rel = g_game->relation(id, g_game->f78);
         color = g_game->color_of(rel, 1);
     } else {
-        int idx2 = pool->index_of(id);
+        int idx2 = pool->lookup(id);
         char* rec2 = (char*)g_game->parties.pages._Myfirst[idx2 >> 4] + (idx2 & 0xf) * 0x5ac8;
         color = *(unsigned*)((char*)g_game->factions + *(int*)(rec2 + 0x70) * 0x300 + 0x28);
     }
 
-    int idx3 = pool->index_of(id);
+    int idx3 = pool->lookup(id);
     char* rec3 = (char*)g_game->parties.pages._Myfirst[idx3 >> 4] + (idx3 & 0xf) * 0x5ac8;
     const tstring* name;
     if (g_module_settings.show_party_ids_instead_of_names)

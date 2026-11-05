@@ -816,7 +816,7 @@ void MissionScreen::fill_mission_row(int side)
         id = g_mission_ctx.ids[1 - g_mission_ctx.side];
     if (id == -1)
         return;
-    int pidx = ((Map10007*)&g_game->parties)->lookup(id);
+    int pidx = g_game->parties.lookup(id);
     Party* party = (Party*)((char*)g_game->parties.pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);      // PartyMgr::get_party with the lookup 0x48ad00 under its defining class
 
     float v[2];
@@ -1631,7 +1631,7 @@ void Rec38::init_screen()
     vt(win)->d31(0, make_background(v + 2, -1));
 
     PartyMgr* party = &g_game->parties;
-    int h = ((Map10007*)party)->lookup(w10);
+    int h = party->lookup(w10);
     Party** page = party->pages._Myfirst;
     char* rec = (char*)((h & 0xf) * 0x5ac8 + (char*)page[h >> 4]);
     const tstring* text;

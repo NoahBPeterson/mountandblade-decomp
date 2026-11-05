@@ -303,7 +303,7 @@ void DialogMgr::refresh_text()
 // @ 0x460ca0
 void PartyMgr::next_party_id(int* id)
 {
-    unsigned i = index_of(*id) + 1;
+    unsigned i = lookup(*id) + 1;
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
