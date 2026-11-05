@@ -2589,5 +2589,41 @@
    "library data": 52618,
    "unnamed bss": 491
   }
+ },
+ "2026-11-05T11:00:21-06:00": {
+  "data_labels": 0,
+  "aliases": 8,
+  "source_aliases": 13,
+  "source_hacks": 3,
+  "data_values_differ": 0,
+  "data_values_short": 0,
+  "traps": null,
+  "redirects": null,
+  "vtable_slots_rewritten": 0,
+  "vptr_stores_moved": 0,
+  "vtbl_externs": 0,
+  "placeholder_virtuals": 0,
+  "forwarding_stubs": 0,
+  "data_definitions": 185,
+  "when": "2026-11-05T11:00:21-06:00",
+  "commit": "HEAD",
+  "build": "m_sw2",
+  "label": "data copy removed, sweep fixes",
+  "items": {
+   "defined in source": 189,
+   "generated from source": 2608,
+   "borrowed from image": 20,
+   "reached through tables": 52,
+   "library data": 522,
+   "unnamed bss": 15
+  },
+  "bytes": {
+   "defined in source": 143716378,
+   "generated from source": 324536,
+   "borrowed from image": 660,
+   "reached through tables": 479,
+   "library data": 56158,
+   "unnamed bss": 491
+  }
  }
 }
