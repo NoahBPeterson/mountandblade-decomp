@@ -36,9 +36,6 @@ bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, ch
 struct alloc24 { void construct(elem24* p, const elem24& v); void destroy(elem24* p) { p->~elem24(); } };            // 0x468130
 struct alloc100 { void construct(particle100* p, const particle100& v); void destroy(particle100* p) { p->~particle100(); } };   // 0x468170
 struct alloc52 { void construct(elem52* p, const elem52& v); void destroy(elem52* p) { p->~elem52(); } };            // 0x468190
-struct alloc24_def { void construct(elem24* p, const elem24& v); };        // 0x468130 (the definition)
-struct alloc100_def { void construct(particle100* p, const particle100& v); };   // 0x468170
-struct alloc52_def { void construct(elem52* p, const elem52& v); };        // 0x468190
 
 struct vec36 { alloc_rec36 _Alval; rec36* first; rec36* last; rec36* end; int size() const; rec36* _Ucopy(rec36* f, rec36* l, rec36* d); };         // 0x467ac0 / 0x46c150
 struct vec24 { alloc24 _Alval; elem24* first; elem24* last; elem24* end; int size() const; elem24* _Ucopy(elem24* f, elem24* l, elem24* d); };   // 0x467ae0 / 0x46c170
