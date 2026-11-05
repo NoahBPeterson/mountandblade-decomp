@@ -18,6 +18,7 @@ CX = os.path.expanduser("~/Applications/CrossOver.app/Contents/SharedSupport/Cro
 # The copy's name in the game folder: our build runs as mb_standalone.exe; any other --exe (the original image,
 # work/hybrid/mb.base.exe) runs as mb_original.exe, so the original never sits under our build's name.
 NAME = "mb_standalone"
+MAP = os.path.join(ROOT, "work", "relink", "standalone", "mb_standalone.map")   # main() points this at the map beside --exe
 GAMEDIR = r"C:\Program Files (x86)\Steam\steamapps\common\Mount and Blade" + "\\"
 WINPATH = GAMEDIR + NAME + ".exe"
 
@@ -64,6 +65,9 @@ def main():
     ap.add_argument("--attach", action="store_true", help="launch nothing: attach to the game already running (without "
                     "a debugger, e.g. started with --nodebug), report every thread's position, and leave it running")
     a = ap.parse_args()
+    global MAP
+    if os.path.exists(os.path.splitext(a.exe)[0] + ".map"):
+        MAP = os.path.splitext(a.exe)[0] + ".map"
     global NAME, WINPATH
     if os.path.basename(a.exe) != "mb_standalone.exe":
         NAME = "mb_original"
@@ -158,7 +162,7 @@ def symbol_address(s):
         return int(s, 16)
     except ValueError:
         import build
-        return build.read_map(os.path.join(ROOT, "work", "relink", "standalone", "mb_standalone.map"))[s]
+        return build.read_map(MAP)[s]
 
 
 def press_play(limit):
@@ -258,7 +262,7 @@ def report_text(text, hung=False):
                     if 0x401000 <= v < 0x560000:
                         walk.append((int(mm[1], 16) + 4 * i, v))
         bt = re.findall(r"^\s*=?>?\s*\d+ 0x0*([0-9a-f]+) in " + NAME, blk, re.M)
-        names = subprocess.run([sys.executable, tool, eip] + bt + ["%x" % v for _a, v in walk[:60]],
+        names = subprocess.run([sys.executable, tool, "--map", MAP, eip] + bt + ["%x" % v for _a, v in walk[:60]],
                                capture_output=True, text=True).stdout.splitlines()
         regs = re.search(r"EAX:.*\n.*ESI:.*", blk)
         print("thread at %s" % names[0] if names else eip)
