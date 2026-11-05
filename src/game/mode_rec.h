@@ -26,11 +26,11 @@ struct SpawnRec {                               // 0x4c bytes: a mission spawn r
         struct { int f0c, f10, f14, f18; };     // +0x0c (mesh_slot/mesh_start.cpp 0x484590 reads f14, f18)
     };
     int f1c;                                    // +0x1c
-    char pad20[4];
+    int f20;                                    // +0x20
     int num_override_items;                     // +0x24 (script 0x4aa7d0 family)
     int override_items[8];                      // +0x28
     int pad48;
-    void load_extras(stream_base& s);           // 0x4bdd50 (triggers/trigger_vec.cpp, the mission_templates loader; config.cpp declares it on psys_record)
+    void load_extras(stream_base& s);           // 0x4bdd50 (config/config.cpp; the mission_templates loader, triggers/trigger_vec.cpp, calls it)
 };
 struct MissionTemplate {                        // 0x58 bytes: a mission mode / template
     tstring name;                               // +0x00 (0x4c2300)

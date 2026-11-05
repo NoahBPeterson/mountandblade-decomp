@@ -22,6 +22,7 @@
 #include <new>
 #include "./config.h"
 #include "../emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
+#include "../mode_rec.h"             // SpawnRec::load_extras 0x4bdd50
 #include <richedit.h>
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // g_game 0x5e2930 (g_config is a view of it)
@@ -1559,24 +1560,24 @@ void* psys_record::read(stream_base& a, char* o)
 }
 
 // @ 0x4bdd50
-void psys_record::load_extras(stream_base& a)
+void SpawnRec::load_extras(stream_base& a)
 {
     int i;
-    RI(a, (char*)this + 0x00);
-    if (*(int*)((char*)this + 0x00) < 0)
-        *(int*)((char*)this + 0x00) = 0;
-    else if (*(int*)((char*)this + 0x00) > 0x40)
-        *(int*)((char*)this + 0x00) = 0x40;
-    RI(a, (char*)this + 0x04);
-    RI(a, (char*)this + 0x08);
-    RI(a, (char*)this + 0x20);
-    RI(a, (char*)this + 0x14);
-    int* n = (int*)((char*)this + 0x24);
+    RI(a, &id);
+    if (id < 0)
+        id = 0;
+    else if (id > 0x40)
+        id = 0x40;
+    RI(a, &flags);
+    RI(a, &flags2);
+    RI(a, &f20);
+    RI(a, &f14);
+    int* n = &num_override_items;
     RI(a, n);
     if (*n > 8)
         mb_error("Too many item overrides: %d (max: %d)", *n, 8);
     for (i = 0; i < *n; i++)
-        RI(a, (char*)this + 0x28 + 4 * i);
+        RI(a, &override_items[i]);
 }
 
 // @ 0x4bddf0

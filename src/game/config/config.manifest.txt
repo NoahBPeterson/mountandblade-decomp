@@ -32,7 +32,7 @@
 ../src/game/config/config.cpp  ??0DialogBlock@@QAE@ABU0@@Z  004bd7a0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@trigger_rec@@QAEXAAUstream_base@@PBDH@Z  004bd830  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@trigger_entry@@QAEXAAUstream_base@@PBDH@Z  004bd910  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?load_extras@psys_record@@QAEXAAUstream_base@@@Z  004bdd50  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?load_extras@SpawnRec@@QAEXAAUstream_base@@@Z  004bdd50  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_extras@prsnt_record@@QAEXAAUstream_base@@@Z  004bddf0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?save@prsnt_record@@QAEXAAUstream_base@@@Z  004bdf60  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?save@sound_def@@QAEXAAUstream_base@@@Z  004bdff0  /O2 /MT /Gy /TP
