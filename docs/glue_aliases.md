@@ -3,7 +3,7 @@
 Each row is a name that source declares and calls, bound by the glue to the function our source defines under another name
 at the same original address (`glue.json` "aliases"; tools/relink/glue.py). Regenerate with a faithful build.
 
-Total: 81.  ICF 10  TWIN 8  VIEW 51  OTHER 12
+Total: 73.  ICF 10  TWIN 8  VIEW 43  OTHER 12
 
 - ICF: identical-code folding in the original linker; two different classes / instantiations share one address. Honest, cannot reach zero.
 - TWIN: deliberate visibility twin (`_def` / `_x` / `_ext`, MeshExt, TroopExt, AgentX, allocN). Waiting on a separate decision.
@@ -35,7 +35,6 @@ Total: 81.  ICF 10  TWIN 8  VIEW 51  OTHER 12
 | `??Hiterator@contact_inl@@QBE?AU01@H@Z` | `??Hiterator@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBE?AV012@H@Z` | VIEW | iter32 (scene.h) / contact_inl: hand-rolled iterators for std::vector<point20>::iterator::operator+ (0x40f880) |
 | `?RecD_dtor@@YIXPAX@Z` | `??1RecD@@QAE@XZ` | OTHER | fastcall free-function spelling of RecD::~RecD (0x431440) for a vector-constructor callback |
 | `?_Uninit_fill_n@std@@YAXPAUidx_weight@rgl@@IABU23@AAV?$allocator@Uidx_weight@rgl@@@1@U_Nonscalar_ptr_iterator_tag@1@@Z` | `??$_Uninit_fill_n@PAUE8@@IU1@V?$allocator@UE8@@@std@@@std@@YAXPAUE8@@IABU1@AAV?$allocator@UE8@@@0@U_Nonscal...` | ICF | vector<idx_weight>::_Uninit_fill_n and the E8 instance are identical (0x418150) |
-| `?apply@MapEditorDialog@@QAEXAA_NAAUvector4@rgl@@0AAUmat3@3@01AAD@Z` | `?apply@ViewCtrl_s2fe40@@QAEXPADPAM01010@Z` | VIEW | MapEditorDialog (mesh_3.h) is a view of ViewCtrl_s2fe40 |
 | `?build_adjacency@MeshExt@@QAEXXZ` | `?build_adjacency@PolyMesh@@QAEXXZ` | TWIN | visibility twin MeshExt vs PolyMesh |
 | `?buy@?$vec@Umface@@@@QAE_NI@Z` | `?_Buy@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@IAE_NI@Z` | VIEW | hand-rolled vec<T> (mface / vector4) in place of std::vector, _Buy 0x4105c0 / 0x42d570 |
 | `?buy@?$vec@Uvector4@rgl@@@@QAE_NI@Z` | `?_Buy@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@IAE_NI@Z` | VIEW | hand-rolled vec<T> (mface / vector4) in place of std::vector, _Buy 0x4105c0 / 0x42d570 |
@@ -81,14 +80,8 @@ Total: 81.  ICF 10  TWIN 8  VIEW 51  OTHER 12
 | `?read@model_b@@QAEXPAX@Z` | `?read@MapSceneRec@@QAEXPAUMsStream@@@Z` | VIEW | model_b::read vs MapSceneRec::read: duplicate record type |
 | `?read_psys_rec@@YAPAXPAUstream_base@@PAD@Z` | `?read@psys_record@@SAPAXAAUstream_base@@PAD@Z` | OTHER | psys_record::read is a static member; trigger_vec.h declares it as the free function read_psys_rec (0x4bdc00) |
 | `?reset@Agent@@QAEXXZ` | `?reset@BigObj@@QAEXXZ` | ICF | Agent::reset and BigObj::reset are different classes with identical bytes (0x432080) |
-| `?run@MapReset@@QAEXXZ` | `?compute_bounds@PointSet@@QAEXXZ` | VIEW | MapReset view of PointSet::compute_bounds (0x4704b0) |
 | `?scalar_delete@RecD@@QAEPAXI@Z` | `??_ERecD@@QAEPAXI@Z` | OTHER | RecD / RecI scalar-deleting destructor spelled as a member (0x431480 / 0x431810) |
-| `?set_fade@MapModel@@QAEXPBM@Z` | `?set_fade@PartyModel@@QAEXPBM@Z` | VIEW | MapModel view of PartyModel::set_fade (0x4b1800) |
-| `?set_rec_phase@Skeleton@@QAEXHM@Z` | `?set_rec_phase@Curve@@QAEXHM@Z` | VIEW | Skeleton view of Curve::set_rec_phase (0x433b20) |
-| `?set_slot@Agent@@QAEXHH@Z` | `?set_slot@MeterBar@@QAEXHH@Z` | VIEW | Agent view of MeterBar::set_slot (0x470d80) |
 | `?set_value@Meter@@QAEXPAM@Z` | `?cap_all@node_groups@@QAEXPBM@Z` | ICF | Meter::set_value and node_groups::cap_all are identical (0x439000) |
 | `?tstring_ctor@@YIXPAUtstring@@@Z` | `??0tstring@@QAE@XZ` | OTHER | tstring ctor spelled as tstring_ctor (fastcall free function / member) for vector-constructor callbacks and raw slots (0x42bbd0) |
 | `?uninit_fill_ptrs@@YAXPAPAUMissionUi@@IPBQAU1@PAX@Z` | `??$_Uninit_fill_n@HIH@std@@YAXPAHIABHAAV?$allocator@H@0@U_Scalar_ptr_iterator_tag@0@@Z` | ICF | pointer-element _Uninit_fill_n shares the int instance (0x40f8a0) |
-| `?unpack@Animator@@QAEXPAX@Z` | `?unpack@FaceGenome@@QAEPAUFaceRace@@PB_K@Z` | VIEW | Animator view of FaceGenome::unpack (0x473800) |
-| `?update_poses@Skeleton@@QAEXXZ` | `?update_poses@FxAnim@@QAEXXZ` | VIEW | Skeleton view of FxAnim::update_poses (0x422080) |
 | `?vert_ray@MeshImpl_s2da20@@QAEXABUvector4@rgl@@0AAIPAM2@Z` | `?vert_ray@Mesh_s2da20@@QAEXABUvector4@rgl@@0AAIPAM2@Z` | VIEW | MeshImpl_s2da20 (mesh_3.h) is a view of Mesh_s2da20 |
