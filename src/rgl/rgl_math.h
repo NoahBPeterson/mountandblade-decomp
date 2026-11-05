@@ -88,7 +88,8 @@ typedef matrix mat4;
 mat3* __cdecl identity3(mat3* out);                                         // 0x40cd60 (cdecl; returns out; defined in shapes/shapes.cpp)
 matrix* __cdecl identity_pos(matrix* out);                                  // 0x40cd00 (cdecl; returns out)
 struct frame_value : matrix {};                                              // a frame with a base class: cl 13.10 builds such a temporary in place (a plain matrix is copied once more)
-frame_value identity_pos();                                                  // 0x40cd00 (the hidden-return-pointer spelling of the same function: renderer::set_view's temporaries)
+typedef frame_value (__cdecl* identity_value_fn)();                          // identity_pos seen through its hidden return pointer: renderer::set_view's temporaries
+#define IDENTITY_VALUE() (((rgl::identity_value_fn)(rgl::matrix* (__cdecl*)(rgl::matrix*))rgl::identity_pos)())
 
 // packed ARGB <-> float colour (cdecl)
 unsigned pack_color(const vector4* c);                                      // 0x40e440

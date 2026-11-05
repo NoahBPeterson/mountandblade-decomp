@@ -150,12 +150,8 @@ struct options_record {
 };
 
 // ---- element type of the 0x58-byte arrays (0x4c3430) ------------------------------------------------------------
-#include "../../include/rec_dtors.h"                  // RecD (scalar_delete 0x431480 = ??_ERecD, ret 4), shared with rgl/xmlcfg/records.h
+#include "../../include/rec_dtors.h"                  // RecD (scalar_delete), shared with rgl/xmlcfg/records.h
 void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (__fastcall* d)(void*));  // 0x401830 (d3dapp.h)
-// 0x431440 is ~RecD (thiscall, the record in ecx). C++ cannot take a destructor's address, so the callback of the inlined
-// vector delete (elem58::vector_deleting_delete) is declared as the equivalent fastcall function; its symbol is not
-// ??1RecD (see docs of the relink report: delete[] would call ??_ERecD instead of expanding the loop).
-void __fastcall RecD_dtor(void* p);                   // 0x431440
 
 // 0x58-byte element: { tstring s0, tstring s10, tstring s24, void* p34, .., RecD* p50 }.
 struct elem58 {

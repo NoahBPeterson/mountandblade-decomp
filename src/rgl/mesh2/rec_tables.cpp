@@ -227,6 +227,9 @@ void load_skyboxes()
     entry_vec_resize(&r, &g_anim_set);
     r.failed = 1;
 }
+// C++ cannot take a destructor's address, so the callback of the vector delete below is this fastcall function: the record
+// arrives in ecx, and it forwards to ~RecD 0x431440 (records.cpp; the body is not visible here, so this stays a jump).
+static void __fastcall RecD_dtor(void* p) { ((RecD*)p)->~RecD(); }
 // @ 0x4c3430
 void* elem58::vector_deleting_delete(unsigned flags)
 {

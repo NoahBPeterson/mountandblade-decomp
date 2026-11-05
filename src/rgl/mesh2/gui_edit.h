@@ -39,7 +39,7 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 // ============================================================================================================
 // 0x4c4d10..0x4c5074: the Tail2 record, std::list<int> helpers, the world object destructor, element deleters
 // ============================================================================================================
-#include "../../include/rec_dtors.h"    // RecI (destroy 0x431810 = ??_ERecI deleting destructor), shared with rgl/xmlcfg/records.h
+#include "../../include/rec_dtors.h"    // RecI (destroy), shared with rgl/xmlcfg/records.h
 
 #include "../../include/tail2.h"      // Tail2 (shared with rgl/xmlcfg/records.h)
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)

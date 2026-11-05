@@ -46,8 +46,8 @@ static inline void to_d3d(D3DMATRIX* out, const mat4& m)
 // @ 0x461630
 void renderer::set_view(const mat4* p)
 {
-    to_d3d(&view, rgl::identity_pos());
-    to_d3d((D3DMATRIX*)&cur, rgl::identity_pos());
+    to_d3d(&view, IDENTITY_VALUE());
+    to_d3d((D3DMATRIX*)&cur, IDENTITY_VALUE());
     sp = 0;
     rgl::rot3 r;
     r.s.x = 1.0f; r.s.y = 0.0f; r.s.z = 0.0f;
@@ -55,7 +55,7 @@ void renderer::set_view(const mat4* p)
     r.u.x = 0.0f; r.u.y = 0.0f; r.u.z = 1.0f;
     {
         mat4 rel;
-        rel = p->relative(rgl::identity_pos());
+        rel = p->relative(IDENTITY_VALUE());
         to_d3d(&view, mat4_ro(r, vector4(0.0f, 0.0f, 0.0f)) * rel);
     }
     dev->SetTransform(D3DTS_VIEW, &view);

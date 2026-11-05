@@ -23,8 +23,8 @@ template void std::vector<Item>::_Tidy();                       // 0x431a60
 
 // @ 0x431440
 RecD::~RecD() {}
-// @ 0x431480
-void delete_recd_array(RecD* p) { delete[] p; }
+// @ 0x431480 (??_ERecD)
+void* RecD::scalar_delete(unsigned flags) { return __vecDelDtor(flags); }
 // @ 0x431540
 void delete_recg_array(TimerChild* p) { delete[] p; }
 // @ 0x4315d0
@@ -55,7 +55,7 @@ TimerList::~TimerList()
     }
 }
 // @ 0x431810
-void delete_reci_array(RecI* p) { delete[] p; }
+void* RecI::destroy(unsigned flags) { return __vecDelDtor(flags); }
 // @ 0x4318c0
 void delete_reck_array(RecK* p) { delete[] p; }
 

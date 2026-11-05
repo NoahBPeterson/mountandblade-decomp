@@ -32,7 +32,7 @@ struct RecD {
     SubA s2;            // +0x2c
     int tail[12];
     ~RecD();   // 0x431440
-    void* scalar_delete(unsigned flags);        // 0x431480 (??_ERecD, ret 4): rec_tables.cpp (elem58) and world_data.cpp call it by address; `delete[]` there changes the registers of the matched functions
+    void* scalar_delete(unsigned flags);        // forwards to ??_ERecD 0x431480 (records.cpp): rec_tables.cpp (elem58) and world_data.cpp call it because `delete[]` there changes the registers of the matched functions
 };
 // 0x68 bytes: three names, two pairs. ~RecI 0x431660, vector deleting destructor 0x431810.
 struct RecI {
@@ -40,7 +40,7 @@ struct RecI {
     SubA s1;            // +0x30
     SubA s2;            // +0x4c
     ~RecI();
-    void* destroy(unsigned flags);              // 0x431810 (??_ERecI): gui_edit.cpp (elem60), same reason
+    void* destroy(unsigned flags);              // forwards to ??_ERecI 0x431810 (records.cpp): gui_edit.cpp (elem60), same reason
 };
 
 // 0x34 bytes: a name at +4 and a pair at +0x18; vector deleting destructor 0x4318c0.
