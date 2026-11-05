@@ -644,6 +644,6 @@ extern int g_menu_count;                                                   // 0x
 // the text log is written through its virtual w_cstr slot (+0x28), as the call sites do
 inline stream_base& log_cstr(const char* s) { return ((stream_base&)g_log).w_cstr(s); }
 
-void __fastcall conv_clear(void** self); // 0x4c8bf0
+#include "../../include/owned_block.h"   // owned_block (destructor 0x4c8bf0)
 void __fastcall conv_map_codes(conv_rec* self); // 0x4c84f0
 #endif

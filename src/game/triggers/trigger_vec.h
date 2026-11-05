@@ -95,7 +95,6 @@ extern int g_missile_damage_speed_power_int; // 0x5e29c8 (provisional)
 HRESULT build_shader();                                                     // 0x4c17c0
 HRESULT gfx_restore();                                                      // 0x4c1b00
 char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a, ptr_tag tag); // 0x4c1b60 (catch funclet 0x4c1bcc)
-void* __cdecl read_psys_rec(stream_base* s, char* o);                       // 0x4bdc00 (cdecl; config.h declares it as the static member psys_record::read)
 
 // ---- FMOD stream calls of the music monitor (0x4c25e0), stdcall thunks into fmod.dll -----------------------------------------
 extern "C" int   __stdcall FSOUND_Stream_GetOpenState(void* stream);    // 0x534318 (0 ready, -2 still loading)

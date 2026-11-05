@@ -457,6 +457,8 @@ bool is_daytime()
 }
 // @ 0x435740
 bool is_night() { return !is_daytime(); }
+// @ 0x435740 (the member spelling most callers use: identical code, one address in the original)
+bool GameData::is_night() { return !is_daytime(); }
 // @ 0x435790
 char GameData::emit_event(int id, int a, int b)
 {

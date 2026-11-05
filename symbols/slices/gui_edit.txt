@@ -88,7 +88,7 @@
 004c8ab0 ?conv_sub_dtor@@YGXPAPAX@Z
 004c8af0 ?remove_node@graph_obj@@QAEXH@Z
 004c8ba0 ?conv_list_dtor@@YIXPAUconv_rec@@@Z
-004c8bf0 ?conv_clear@@YIXPAPAX@Z
+004c8bf0 ??1owned_block@@QAE@XZ
 004c8c20 ?conv_zero_node@@YIPAXPAX@Z
 004c8ca0 ?save_language_files@GameData@@QAEX_N@Z
 004ca550 ?refresh@screen_text@@QAEXH@Z

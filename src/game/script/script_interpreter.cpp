@@ -3128,7 +3128,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->select_class((int)params[1], (int)params[2]);
             MissionX* m = mission();
             int t = (int)params[1];
-            script_pos((int)params[0]).o = ((TeamRec*)TEAM_SEL(m, t))->first();
+            script_pos((int)params[0]).o = TEAM_SEL(m, t)->first();
             m->unselect_team(t);
         }
         break;

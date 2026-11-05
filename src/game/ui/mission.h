@@ -93,7 +93,7 @@ struct SelRec {
 struct Sel {
     SelRec rec[3];
     void set_v(int v);                                      // 0x489860
-    void first(int* out);                                   // 0x489890
+    rgl::vector4 first();                                   // 0x489890 (ret 4: hidden return, returns the pointer in eax)
     void set_vec(const int* a, const int* b, const int* c); // 0x4898e0
     void bump(int d);                                       // 0x4899e0
 };

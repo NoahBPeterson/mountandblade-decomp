@@ -60,7 +60,6 @@ struct TeamRec {                                // 0x16c bytes
     int relation[8];                            // +0x148 relation to team b: -1 hostile, 1 friend (0x43b300, 0x435b90, 0x4a9d5d)
     int pad168;
     void set_vec(const rgl::vector4* p, const int* face, const rgl::vector4& offset);   // 0x4898e0 (ret 0xc)
-    rgl::vector4 first();              // 0x489890 (ret 4: hidden return)
 };
 typedef char TeamRec_size_check[sizeof(TeamRec) == 0x16c ? 1 : -1];
 

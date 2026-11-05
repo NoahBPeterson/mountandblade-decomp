@@ -26,7 +26,6 @@ extern int g_5e2930_dummy;
 #include "../../include/script_state.h"                      // ScriptState g_script (0xa70440): expand 0x4606d0
 
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
-void conv_clear(void* p);                                    // 0x4c8bf0 (releases an owned block)
 
 // opaque record types used by the loops at the end of the slice
 struct rec50 { int pad[0x50 / 4]; };       // E50 (stride 0x50)

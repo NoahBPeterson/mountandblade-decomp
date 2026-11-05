@@ -1726,15 +1726,14 @@ void __fastcall conv_list_dtor(conv_rec* self)
 }
 
 // @ 0x4c8bf0
-void __fastcall conv_clear(void** self)
+owned_block::~owned_block()
 {
     g_presentation = 0;
-    void** v = &self[1];
-    if (v[0] != 0)
-        operator delete(v[0]);
-    v[0] = 0;
-    v[1] = 0;
-    v[2] = 0;
+    if (begin != 0)
+        operator delete(begin);
+    begin = 0;
+    end = 0;
+    cap = 0;
 }
 
 // @ 0x4c8c20

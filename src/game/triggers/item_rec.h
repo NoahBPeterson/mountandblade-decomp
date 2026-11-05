@@ -22,14 +22,7 @@ struct ContainerBase;
 struct MissionUi;
 
 
-// The owned block at +0x30 (three pointers, cleared by the constructors, released by the destructor).
-struct owned_block {
-    int f0;                                     // ItemRec+0x30 (never initialised)
-    void* begin;                                // ItemRec+0x34 0x4ce870
-    void* end;                                  // ItemRec+0x38
-    void* cap;                                  // ItemRec+0x3c
-    ~owned_block();                             // 0x4c8bf0 (src/rgl/mesh2/gui_edit.cpp conv_clear: releases the block)
-};
+#include "../../include/owned_block.h"      // owned_block at +0x30
 
 struct ItemRec : head_rec {                     // vtable 0x596124 (the main menu)
     ContainerBase* win;                         // +0x2c the window

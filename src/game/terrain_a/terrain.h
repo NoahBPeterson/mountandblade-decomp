@@ -154,10 +154,9 @@ struct layer_set {                              // set of sco layers handed to l
 // ---- the object -----------------------------------------------------------------------------------------------------
 // Constructs the name tstring of each of the 15 layer records (+0x18 + 0x28 * i, 0x4ce720) when it is the FIRST member of
 // Terrain (offset 0 == the Terrain's this), so that these constructions precede the member constructions as in the original.
-void __fastcall tstring_ctor(tstring* p);       // 0x42bbd0 (tstring::tstring, called on raw slots; no placement-new null test)
 struct LayerNames {
     ~LayerNames() { char* p = (char*)this + 0x270; int n = 15; do { p -= 0x28; ((tstring*)p)->~tstring(); } while (--n); }   // back to front, as an array destructor
-    LayerNames() { for (int i = 0; i < 15; i++) tstring_ctor((tstring*)((char*)this + 0x18 + i * 0x28)); }
+    LayerNames() { for (int i = 0; i < 15; i++) ((tstring*)((char*)this + 0x18 + i * 0x28))->tstring::tstring();   /* 0x42bbd0, on raw slots: no placement-new null test */ }
 };
 
 struct Terrain : LayerNames {                   // LayerNames is an empty first base: its constructor builds the layer names before any member

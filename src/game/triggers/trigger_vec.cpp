@@ -1378,7 +1378,7 @@ stream_base& read_entry(stream_base& s, RecH& e)
     s.r_int(&e.s.a);
     e.s.ptr = (int*)new char[e.s.a << 6];
     for (int i = 0; i < e.s.a; i++)
-        read_psys_rec(&s, (char*)e.s.ptr + i * 0x40);
+        psys_record::read(s, (char*)e.s.ptr + i * 0x40);
     if (e.s.b & 0xff000000)
         e.tail = (unsigned char)((unsigned)e.s.b >> 24);
     return s;

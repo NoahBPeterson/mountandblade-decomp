@@ -883,28 +883,17 @@ void Sel::set_v(int v)
 }
 
 // @ 0x489890
-void Sel::first(int* out)
+rgl::vector4 Sel::first()
 {
     int i = 0;
     int* p = &rec[0].present;
     do {
-        if (*p != 0) {
-            int k = i * 0x6c;
-            Blob16* a = (Blob16*)((char*)this + k + 0x18);
-            Blob16* o = (Blob16*)out;
-            o->a = a->a;
-            o->b = a->b;
-            o->c = a->c;
-            o->d = a->d;
-            return;
-        }
+        if (*p != 0)
+            return *(rgl::vector4*)((char*)this + i * 0x6c + 0x18);
         i++;
         p += 0x1b;
     } while (i < 3);
-    Blob16* zo = (Blob16*)out;
-    zo->a = 0;
-    zo->b = 0;
-    zo->c = 0;
+    return rgl::vector4(0.0f, 0.0f, 0.0f);
 }
 
 // @ 0x4898e0

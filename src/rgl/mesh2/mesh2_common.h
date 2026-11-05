@@ -12,10 +12,8 @@
 // The UI string table (global at 0x5e2a18): 0xdf3 hash buckets of tstring vectors, keys in one half and the
 // translations in the other (find 0x4c6010 returns the translation of `key`, or null).
 // Constructs a tstring in place on raw storage. The standard placement new puts a null test in front of the
-// call that the original does not have, so the constructor is called through this declaration (0x42bbd0,
-// thiscall, no arguments; the resolver reads the address from the comment).
-struct tstring_ctor { void ctor(); };   // 0x42bbd0
-#define CONSTRUCT_TSTRING(p) (((tstring_ctor*)(p))->ctor())
+// call that the original does not have, so the constructor (0x42bbd0) is called explicitly.
+#define CONSTRUCT_TSTRING(p) (((tstring*)(p))->tstring::tstring())
 
 #include "../../game/str_table.h"   // StrTable (the translation table, was LangTables here): g_strtable 0x5e2a18, ctor 0x4cda20, load 0x4cda90, find 0x4c6010
 typedef StrBucket lang_bucket;

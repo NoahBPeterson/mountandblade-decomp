@@ -22,7 +22,6 @@
 #include "../party/externs.h"
 #include "../tstring.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-void __fastcall tstring_ctor(tstring* p);                      // 0x42bbd0 (tstring::tstring as the vector-constructor callback)
 #include "../../rgl/rgl_string.h"
 #include "../../rgl/scene/scene.h"
 #include "../../rgl/stream.h"
