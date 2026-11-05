@@ -3,7 +3,7 @@
 Each row is a name that source declares and calls, bound by the glue to the function our source defines under another name
 at the same original address (`glue.json` "aliases"; tools/relink/glue.py). Regenerate with a faithful build.
 
-Total: 45.  ICF 10  TWIN 0  VIEW 24  OTHER 11
+Total: 38.  ICF 10  TWIN 0  VIEW 17  OTHER 11
 
 - ICF: identical-code folding in the original linker; two different classes / instantiations share one address. Honest, cannot reach zero.
 - TWIN: deliberate visibility twin (`_def` / `_x` / `_ext`, MeshExt, TroopExt, AgentX, allocN). Waiting on a separate decision.
@@ -13,10 +13,8 @@ Total: 45.  ICF 10  TWIN 0  VIEW 24  OTHER 11
 | alias (name source calls) | defined as | class | reason |
 |---|---|---|---|
 | `??1CfgRec@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in. The 0x1f8 record is also SkinSet (skin_set.h), MapSceneRec (progress_bar.cpp, which defines model_b::read) and widget_text.cpp's CfgRec; CfgRec (agent_vec.cpp, widget_text.cpp) additionally keeps vector<CfgRec>::_Insert_n 0x4fe520 and its call to 0x4e4340 opaque. One class needs all six merged in one pass (vec<int> / vector<NamePtrs56> / ArrSet element types, MBRecord34 / Rec18 pointers at +0x40 / +0x44) |
-| `??1GameDtor@@QAE@XZ` | `?world_free@GameW@@QAEXXZ` | VIEW | GameDtor view (cls_map.cpp) of the game object whose dtor GameW::world_free defines (0x492f40) |
 | `??1Local@@QAE@XZ` | `?clear_vecs@graph_obj@@QAEXXZ` | OTHER | Local::~Local (game_2.h) declared; defined as graph_obj::clear_vecs in mesh_2 (0x4cb780): one object under two class names |
 | `??1SceneFile@@UAE@XZ` | `??1RecY@@UAE@XZ` | VIEW | SceneFile vs RecY: two layouts of the 0x494 scene record, dtor 0x431e10. Not mergeable yet: the scene record has a virtual destructor, so ??_E 0x431ec0 is emitted with the vtable in the TU that defines the constructor (game_2.cpp, 0x5248e0), not in records.cpp's range; and the embedded mem_stream members make the implicit ~SceneFile 97 bytes longer than the original |
-| `??1WorldDtor@@QAE@XZ` | `?destroy@Mission@@QAEXXZ` | VIEW | WorldDtor view (cls_map.cpp) of Mission, dtor 0x4d51d0 |
 | `??1loading_config@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in. The 0x1f8 record is also SkinSet (skin_set.h), MapSceneRec (progress_bar.cpp, which defines model_b::read) and widget_text.cpp's CfgRec; CfgRec (agent_vec.cpp, widget_text.cpp) additionally keeps vector<CfgRec>::_Insert_n 0x4fe520 and its call to 0x4e4340 opaque. One class needs all six merged in one pass (vec<int> / vector<NamePtrs56> / ArrSet element types, MBRecord34 / Rec18 pointers at +0x40 / +0x44) |
 | `??1model_b@@QAE@XZ` | `?destroy@Big@@QAEXXZ` | VIEW | CfgRec derives from loading_config, itself a re-declaration of the model record model_b.h (0x1f8, dtor 0x4d3720); Big is the world_app.cpp stand-in. The 0x1f8 record is also SkinSet (skin_set.h), MapSceneRec (progress_bar.cpp, which defines model_b::read) and widget_text.cpp's CfgRec; CfgRec (agent_vec.cpp, widget_text.cpp) additionally keeps vector<CfgRec>::_Insert_n 0x4fe520 and its call to 0x4e4340 opaque. One class needs all six merged in one pass (vec<int> / vector<NamePtrs56> / ArrSet element types, MBRecord34 / Rec18 pointers at +0x40 / +0x44) |
 | `??1owned_block@@QAE@XZ` | `?conv_clear@@YIXPAPAX@Z` | OTHER | owned_block (item_rec.h) dtor is the free function conv_clear(void**) in gui_edit.cpp (0x4c8bf0) |
@@ -35,14 +33,9 @@ Total: 45.  ICF 10  TWIN 0  VIEW 24  OTHER 11
 | `?destroy@RecI@@QAEPAXI@Z` | `??_ERecI@@QAEPAXI@Z` | OTHER | RecD / RecI scalar-deleting destructor spelled as a member (0x431480 / 0x431810) |
 | `?destroy@SkinSet@@QAEXXZ` | `?destroy@Big@@QAEXXZ` | ICF | SkinSet::destroy folded with the other 0x1f8-record destructor Big::destroy (0x4d3720) |
 | `?display_name@ItemKind@@QAEPAUtstring@@XZ` | `?display_name@TroopRec@@QAEPAUtstring@@XZ` | ICF | ItemKind::display_name and TroopRec::display_name are identical (0x43a480) |
-| `?dtor@GameX@@QAEXXZ` | `?world_free@GameW@@QAEXXZ` | VIEW | GameX view (script_interpreter.h) of the game object, dtor 0x492f40 |
 | `?erase@?$vec@Umface@@@@QAE?AUiter@1@U21@0@Z` | `?erase@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z` | VIEW | hand-rolled vec<mface>::erase for std::vector<point20>::erase (0x40fd40) |
 | `?first@TeamRec@@QAE?AUvector4@rgl@@XZ` | `?first@Sel@@QAEXPAH@Z` | OTHER | TeamRec::first returning vector4 vs Sel::first(int*): call-site declaration and definition disagree on signature |
-| `?get@PartyMgr@@QAEPAUParty@@H@Z` | `?get@Scene@@QAEPAUPartyRecIO@@H@Z` | VIEW | PartyMgr (party.h) vs Scene / PartyRecIO views of the party table |
-| `?grow@Scene@@QAEXXZ` | `?grow@PartyMgrW@@QAEPAU1@XZ` | VIEW | Scene view of the party manager PartyMgrW::grow (0x493830) |
 | `?identity_pos@rgl@@YA?AUframe_value@1@XZ` | `?identity_pos@rgl@@YAPAUmatrix@1@PAU21@@Z` | OTHER | second prototype of rgl::identity_pos (returns frame_value by hidden pointer vs matrix*), 0x40cd00 |
-| `?index_of@PartyMgr@@QAEHH@Z` | `?lookup@Map10007@@QAEHI@Z` | VIEW | PartyMgr / Scene views of Map10007 lookup (0x48ad00) |
-| `?index_of@Scene@@QAEHH@Z` | `?lookup@Map10007@@QAEHI@Z` | VIEW | PartyMgr / Scene views of Map10007 lookup (0x48ad00) |
 | `?init@Emit@@QAEXXZ` | `?init@psys@rgl@@QAEXXZ` | VIEW | Emit view of rgl::psys::init (0x420b40) |
 | `?insert@GlyphMap@@QAEXPAXPBH@Z` | `?insert@HashTab@@QAEXPAUHOut@@PAI@Z` | VIEW | GlyphMap (font.h) hand-rolled hash map vs HashTab / _Hash lookups |
 | `?insert_n@IntVec@@QAEXPAHIPBH@Z` | `?_Insert_n@?$vector@PAURecJ@@V?$allocator@PAURecJ@@@std@@@std@@IAEXViterator@12@IABQAURecJ@@@Z` | VIEW | IntVec (int_vec.h) is a vector<int> view; the instance is vector<RecJ*>::_Insert_n (0x43e7b0) |
