@@ -122,7 +122,7 @@ struct world : cell_grid {
     void add_shape(shape_base* s);                              // 0x4252c0
     void collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<unsigned>* out);   // 0x442180 (game/agent3/agent_fx_sound.cpp: the entities whose box meets the query box)
     void erase_entity(entity* e);                               // 0x41f450 (game/entity.cpp)
-    void collect(unsigned key, entity** out, int* count);       // 0x51a3a0 (game/inventory_panel/map_picker.cpp: the entities whose type_id() bit-mask contains the key)
+    void collect(unsigned key, entity** out, int* count);       // 0x51a3a0 (game/inventory_panel/map_panel.cpp: the entities whose type_id() bit-mask contains the key)
     void light_mesh(mesh* m, const matrix* frame, unsigned flags);   // 0x47b7b0 (game/mesh_slot/mesh_ops.cpp: bakes the scene lights into a mesh's vertex colours)
     void query_shapes(entity* e, shape_base** out, int* count, int* use3d, unsigned mask);   // 0x426490 (rgl/dynamic/dynamic_entity.cpp)
     void query_entities(entity* e, unsigned mask, bool ordered, std::vector<entity*>* out);  // 0x426750

@@ -550,13 +550,13 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "map_info 0051abd0": {
+  "map_panel 0051abd0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "map_picker 0051a420": {
+  "map_panel 0051a420": {
     "args": [
       "--party-table"
     ],
@@ -568,7 +568,7 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "map_update 005191e0": {
+  "map_panel 005191e0": {
     "args": [
       "--party-table"
     ],

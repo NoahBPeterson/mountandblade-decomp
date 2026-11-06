@@ -460,7 +460,6 @@ static __forceinline vector4 hv_mulv(const vector4& a, float s) { return vector4
 struct HvS { double v; __forceinline HvS(double s) : v(s) {} };
 static __forceinline vector4 hv_m6(const vector4& a, HvS s) { return vector4(a.x * s.v, a.y * s.v, a.z * s.v); }
 // a scale by double: the float lanes load first, the scale stays live on the x87 stack and is dropped by fstp st(0)
-static __forceinline vector4 hv_md(const vector4& a, double s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 hv_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 hv_neg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
 static __forceinline void hv_add_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
@@ -480,6 +479,7 @@ static __forceinline void rot_f(matrix& m, const float& a) { m.rotate_about_f(&a
 static __forceinline float clamp_v(const float& x, const float& lo, const float& hi) { return clamp(&x, &lo, &hi); }
 static __forceinline float fmax_v(const float& a, const float& b) { return fmax_ref(&a, &b); }
 
+static inline float timer_secs(const Timer* t) { return (float)(g_ticks[t->clock] - t->start) * 1e-5f; }   // Timer::elapsed written inline
 #define gcam GAME_AT(vector4, 0x1a1a4)
 #define geye GAME_AT(vector4, 0x1a13c)
 // @ 0x4f8c80
@@ -777,6 +777,7 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
 #undef gcam
 #undef geye
 
+static __forceinline float dot3(const vector4& a, const vector4& b) { return a.y * b.y + a.z * b.z + a.x * b.x; }
 // @ 0x4fa790
 void Mission::camera_to(const matrix* eye, const float* far_plane)
 {
@@ -809,7 +810,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
 #define CL01(E) ((E) < 0.0f ? 0.0f : ((E) >= 1.0f ? 1.0f : (E)))
     if (f65c0) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
     float tod = g_game->time_of_day();
-    vector4 dir = g_env_rows[cam_row].get_dir((int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24, hud_day(tod));
+    vector4 dir = g_env_rows[cam_row].get_dir((int)timer_secs((const Timer*)&g_game->f13b18) % 24, hud_day(tod));
     flare->pos.o = eye->o - dir * 500.0f;
     flare->pos.f = dir;
     flare->pos.u = vector4(0.0f, 0.0f, 1.0f);
@@ -842,17 +843,17 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     }
     float sc2;
     {
-        float k = (dir.y * eye->u.y + dir.z * eye->u.z + dir.x * eye->u.x - 0.3f) * 1.4285715f;
+        float k = (dot3(dir, eye->u) - 0.3f) * 1.4285715f;
         k = CL01(k);
         sc2 = k * k;
     }
-    float in = cl01(1.0f - 150.0f / flare_gain) * g_env_rows[cam_row].size * flare_amt * sc2;
+    float in = sc2 * (cl01(1.0f - 150.0f / flare_gain) * g_env_rows[cam_row].size * flare_amt);
     {
         vector4 col(in * 1.1f, in, in * 0.8f);
         fm->color = rgl::pack_color(&col);
     }
     fm->color |= 0xff000000;
-    fm->scale((sc2 * sc2 * 5.0f + 2.0f) * g_env_rows[cam_row].size * 50.0f);
+    { float a = sc2*sc2; fm->scale((a * 5.0f + 2.0f) * g_env_rows[cam_row].size * 50.0f); }
     }
 #undef flare
 #undef fm
@@ -884,7 +885,7 @@ bool ShadowMap::sample(const vector4* p, float* out)
     int px = (int)fp.x;
     int zero_y = 0;
     int py = (int)fp.y;
-    float depth = clip.z - 0.001f;
+    float depth = clip.z - 0.001f; float*& oref = out;
     for (int i = 0; i < 9; i++) {
         int xv = tx[i] + px;
         int yv = ty[i] + py;
@@ -894,7 +895,7 @@ bool ShadowMap::sample(const vector4* p, float* out)
         if (!(a < depth))
             *out += w[i];
     }
-    *out = *out * 0.13513514f;
+    *oref = *oref * 0.13513514f;
     return ret;
 }
 
@@ -982,7 +983,6 @@ void MissionBlocker::update_status()
         health_mesh->set_color(col);
     }
 
-    {
     // shield: slot_pair(0) says whether the agent has one; best_ammo then gives (max, ?, ?) and the (cur, flags) pair
     int la = -1, lb = -1, lc;
     ItemRef pair = ag->slot_pair(0);
@@ -992,7 +992,7 @@ void MissionBlocker::update_status()
         res = ag->best_ammo(-1, &la, &lb, &lc);
     if (la != shield_max || res.item != shield_cur) {
         shield_max = la;
-        char buf[512];
+        { char buf[512];
         float tsz[2];
         sprintf(buf, "%d", la);
         {
@@ -1019,11 +1019,12 @@ void MissionBlocker::update_status()
                 ui_font->set_color(&c);
             }
         }
+        }
         if (res.item != shield_cur) {
             shield_mesh->clear_geometry();
             shadow_mesh->clear_geometry();
             if (res.item >= 0) {
-                rgl::mesh* piece = item_mesh_v(&res, 0.055f);
+                float piece_scale = 0.055f; rgl::mesh* piece = make_item_mesh(&res, &piece_scale);
                 if (piece) {
                     offset_v(piece, 0.0005f);
                     identity3((rgl::mat3*)&frame);
@@ -1050,8 +1051,6 @@ void MissionBlocker::update_status()
             shield_cur = res.item;
             shield_aux = res.m4;
         }
-    }
-
     }
 
     // ammo count: (count, capacity) from weapon_info
@@ -1120,7 +1119,7 @@ static __forceinline const rgl::string* as_rgl_string(const tstring& t) { return
 
 // @ 0x4fba40 -------------------------------------------------------------------------------
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
-{
+{ const float*& scr = scale;
     rgl::mesh* result;
     matrix m;
     if (ref->item >= 0 && ref->item < g_item_kind_count &&
@@ -1179,14 +1178,15 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
     }
     result->set_part(m);
 
+    float extent, size; vector4 c; {
     vector4 bmin, bmax;
     result->calc_bounds(&bmin, &bmax);
 
     vector4 sum = hv_add(bmin, bmax);
-    vector4 c = hv_mulv(sum, 0.5f);
+    c.x = sum.x * 0.5f; c.y = sum.y * 0.5f; c.z = sum.z * 0.5f;
 
     unsigned t2 = g_items[ref->item].type_flags & 0xff;
-    float size = 1.0f;
+    size = 1.0f;
     if (t2 == 2 || t2 == 3 || t2 == 4) {
         size = (float)g_items[ref->item].weight * 0.00625f + 0.3f;
         if (size < 0.5f)
@@ -1195,11 +1195,11 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
             size = 1.0f;
     }
 
-    float extent = fmax_i(bmax.x - bmin.x, bmax.y - bmin.y);
+    extent = fmax_i(bmax.x - bmin.x, bmax.y - bmin.y); }
 
-    vector4 tr = hv_neg(c);
-    result->translate(&tr);
-    result->scale(((*scale / extent) * size) * 0.95f);
+    { vector4 tr = hv_neg(c);
+    result->translate(&tr); }
+    result->scale(((*scr / extent) * size) * 0.95f);
     result->darken_vertices();
     return result;
 }
@@ -1350,12 +1350,10 @@ void ItemA::init_screen()
     for (int i = 0; i < 16; i++) {
         UiA* child = new UiA;
         kids[i] = child;
-        unsigned c9 = 0xff55ff50;
-        kids[i]->set_target(&c9);
+        { unsigned c = 0xff55ff50; kids[i]->set_target(&c); }
         float pos[2] = { 0.64f, 0.04f };
         kids[i]->set_xy(pos);
-        c9 = color;
-        kids[i]->set_color(&c9);
+        { unsigned c = color; kids[i]->set_color(&c); }
         kids[i]->hide();
         value->add_child(kids[i]);
     }

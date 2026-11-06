@@ -1398,7 +1398,6 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
 {
     *out_dir = vector4(0.0f, 0.0f, 0.0f);
     *out_col = vector4(0.0f, 0.0f, 0.0f);
-    vector4*& oc = out_col;
     Light** it = lights._Myfirst;
     if (it < lights._Mylast) {
         unsigned skip_dir = flags & 2;
@@ -1441,9 +1440,9 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
                     float cr = s * l->color.x;
                     float cg = s * l->color.y;
                     float cb = s * l->color.z;
-                    oc->x = cr + oc->x;
-                    oc->y = cg + oc->y;
-                    oc->z = cb + oc->z;
+                    out_col->x = cr + out_col->x;
+                    out_col->y = cg + out_col->y;
+                    out_col->z = cb + out_col->z;
                     l = *it;
                     float br = (l->color.z + l->color.y) + l->color.x;
                     float ax = (d.x * k) * t;

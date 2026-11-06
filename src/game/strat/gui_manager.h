@@ -85,7 +85,7 @@ struct gui_manager {
     rgl::mesh m1480;                // +0x1480 (reset clears its mask +0x10c): the font mesh
     unsigned panel_color, panel_bg; // +0x16e0, +0x16e4  g_panel_color / g_panel_bg: reset, set_overlay
     float vx, vy, vs, f16f4;        // +0x16e8  set_view 0x4c5190: the view x (clamped to [0.05, 0.95]), y, y scale; +0x16f4
-    float box_x, box_y;             // +0x16f8, +0x16fc  g_box_x / g_box_y (the map label's offset, map_update.cpp)
+    float box_x, box_y;             // +0x16f8, +0x16fc  g_box_x / g_box_y (the map label's offset, map_panel.cpp)
     int sel_ent;                    // +0x1700  g_sel_ent
     union {
         int f1704;                  // +0x1704  g_5d8784 (zeroed with the label object)
@@ -160,7 +160,7 @@ struct gui_manager {
     void set_rect(const float* a, const float* b);      // 0x4dc350 (ret 8; src/game/cls_map/cls_map.cpp: place the loading screen's frame)
     void build_frames();            // 0x50f930 (src/game/inventory_panel/loading_screen.cpp)
     void build_quad();              // 0x50f8a0
-    void set_pos(const float* p);                       // 0x51a760 (src/game/inventory_panel/map_picker.cpp)
+    void set_pos(const float* p);                       // 0x51a760 (src/game/inventory_panel/map_panel.cpp)
     void add_label(const tstring* text, float h, int color);   // 0x51a880
     void set_quad(const float* origin, const float* size);     // 0x51aa20
     void play_sound();              // 0x48b2d0 (src/game/ui/ui_widgets_a.cpp: FSOUND_PlaySoundEx on f170c + volume from g_master_volume)

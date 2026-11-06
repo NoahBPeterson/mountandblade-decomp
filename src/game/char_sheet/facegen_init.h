@@ -24,6 +24,7 @@ struct Entity;
 #include "../party2/camera_class.h"      // Camera (draw 0x488d50)
 
 // the engine view frustum (0x120 bytes)
+#include "../std_vec_insert_n.h"
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
 namespace rgl { struct world; }
 
@@ -59,21 +60,31 @@ struct TextPart {
 // the 0x7c-byte wind track (ctor 0x461480)
 #include "../light.h"                             // Light (shared with terrain_a/wind.cpp)
 
-static void push_item(ContainerBase* w, MissionUi* o)
+// the game-variable lookups: the first site calls find (0x4bd5a0), the others expand it in place
+static __forceinline float config_float_called(const char* key)
 {
-    w->kids.push_back(o);
-}
-
-static float config_float(const char* key)
-{
-    float f = 0.0f;
     tstring t(key);
+    float f = 0.0f;
     int idx = g_game_vars.find(t);
-    if (idx >= 0) {
-        // the original: add eax, 0xa4425c / mov ecx, [eax+4] -> the value tstring's buf (entry +0x20), or the
-        // inline bytes at &buf when it is null; not the entry's +0x1c dword
+    if (idx >= 0)
         f = (float)atof(g_game_vars.entries[idx].value.c_str());
-    }
+    return f;
+}
+static inline int find_var(ini_file& ini, const tstring& key)
+{
+    int r = -1;
+    for (int i = 0; r == -1 && i < ini.count; i++)
+        if (ini.entries[i].key.equals(key))
+            r = i;
+    return r;
+}
+static __forceinline float config_float(const char* key)
+{
+    tstring t(key);
+    float f = 0.0f;
+    int idx = find_var(g_game_vars, t);
+    if (idx >= 0)
+        f = (float)atof(g_game_vars.entries[idx].value.c_str());
     return f;
 }
 

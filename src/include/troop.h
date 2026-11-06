@@ -49,7 +49,7 @@ struct Troop {
     };
     union {
         unsigned nib[6];                    // +0x68 packed 4-bit skill levels, 8 per word (0x4351a0, 0x437b20); nib[3] bits 12..15 = a skill tier (0x4375b0)
-        unsigned char nib_b[24];            // +0x68 the same bytes (inventory_panel/map_info.cpp 0x51abd0 reads the byte at +0x7a)
+        unsigned char nib_b[24];            // +0x68 the same bytes (inventory_panel/map_panel.cpp 0x51abd0 reads the byte at +0x7a)
     };
     union {
         float stat[12];                     // +0x80 attribute accumulators (clamped to 0..1000 by add_stat)   0x462c00, 0x4892d0

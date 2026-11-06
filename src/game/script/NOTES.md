@@ -13,8 +13,8 @@ Files:
 | `script_interpreter.cpp` | one original translation unit, bodies in address order: party2/camera.cpp was merged in (panel views, GameData members, order code, validators, operand accessors, Camera, sprites, `Operation::execute`, the block runner) |
 | `script_interpreter.h` | every record, global and callee the interpreter touches (views of the shared headers, see below) |
 | `script_opcodes.h` | `namespace op`: every header_operations.py name as an enum value, plus the flag bits `op::neg` (0x80000000) and `op::this_or_next` (0x40000000) |
-| `script_interpreter.manifest.txt` | byte-exact rows (36: 13 from camera, 23 from here) |
-| `script_interpreter.nonmatching.txt` | `execute` and 24 other rows: complete, not byte-exact |
+| `script_interpreter.manifest.txt` | byte-exact rows (38: 13 from camera, 25 from here) |
+| `script_interpreter.nonmatching.txt` | `execute` and 22 other rows: complete, not byte-exact |
 | `PROGRESS.md` | cases done per opcode range (591 / 591) |
 
 Build: `/O2 /MT /Gy /TP`, no `/EH`, nothing else. It compiles without warnings.
@@ -171,12 +171,20 @@ below params were found: one slot used only by `add_companion_party`, whose forw
    `result = 0` tails all jump to `ge`'s block in the original, which needs every other tail in `if (ok) result=1; else result=0;` form;
    by-value `__forceinline` wrappers spill their arguments (call the real signature, as map_get_*_position does now); RHS-first assignment
    (`ASSIGN_MAT`, `ASSIGN_STR`).
-   Open, the next thing to crack: `result` is very likely address-taken in the original (`char* rr_ = &result;`: `main_party_has_troop` then loops like the original, except
-   `mov edx,[k]; inc edx; ...; mov [k],edx` against cl's `inc dword ptr [k]`; every spelling of the increment tried folds, and a `volatile` counter restores the chain but
-   not the loop). With rr_ today: 245 identical, first regression at party_is_in_any_town, right after hero_can_join and troops_can_join. Those four cases open with
-   `mov edx,esi; push edx; lea ecx,[eax+0xf8]; lea edi,[eax+0xf8]`, an uneliminated copy and an un-CSEd lea, and that missing temporary rotates what follows. Tried without success:
-   by-value and by-reference inline wrappers, `party(game()->main_party)`, a `main` assigned inside the argument, `m` after the call. The second load in the same case is
-   `mov eax,[G]; mov ecx,[eax+0x78]; push ecx; lea ecx,[eax+0xf8]`, which suggests the first site is the same expression with its load CSEd into a copy.
+   **Settled in the 2026-11-06 round.** `result` is address-taken in the original (`char* result_addr = &result;` here): a char store through an address-taken local may alias, so `main_party_has_troop` reloads `num_stacks` and keeps `i` in memory.
+   Its counter is the function's `i` (slot 0x28, also the operand loop's). The `mov edx,[i]; inc edx; ...; mov [i],edx` that looked like a fold problem was rotation: `inc dword ptr` came from the rotated state, and the case is identical once the wrapper fix below is in. No spelling of the increment was needed.
+   The 68 cases lost whenever that loop was right were compensation between wrong cases, not a real cost.
+   **Levers found, by yield:**
+   - A `__forceinline` forwarder or accessor evaluates `this` and pointer expressions into temporaries *before* the call's arguments, which rotates scratch registers. `((GameW*)g_game)->can_transfer(g_dialogs.f10, ((GameX*)g_game)->main_party, 0)` made party_can_join, party_can_join_as_prisoner (with the original's `push 1; jmp` cross-jump) and party_can_join_party exact.
+     So execute now calls game and presentation methods directly (77 sites), and `game()`, `troop()`, `faction()`, `quest()`, `scene()` are macros for the length of execute only (`#undef` right after it). Measured and rejected: macros for `mission()` (loses 35), `party()` (loses 1), `script_pos()` (loses 15); removing PartyV's no-argument forwarders (loses 2); direct calls on `mission()` (neutral).
+   - A callee the original sees: esi/ebx survive the call. `Troop::inv_count` + `Troop::nibble` (+7) and `Mission::team_count` (+1) are now visible duplicates. `vec2x::rotate_b`, made visible, keeps the angle and index in eax/edx across the call where the original has esi/edi, so it stays opaque. That is a usable test: **callee-saved registers across a call suggest opaque, caller-saved ones visible**.
+   - Use the real container operation. `warn_scene_prop_instance` matched at once with `value >= mission()->props.size()`, after the hand-written `_Mylast - _Myfirst` spellings had rotated it.
+   - A `||` group places a shared tail where separate `if`s don't, and re-testing `f & 0x40` rather than `a` stops jump threading (`check_slot` 0x49c170).
+   - A base pointer read through a reference (`rgl::matrix& p`) gives `add esi,IMM`; a local index gives the original's `shl esi,6; lea ecx,[esi+IMM]` (position_rotate_z). position_get_rotation_around_z takes `rgl::vector4& f = script_pos(i).f`.
+   - `ASSIGN_MAT` gives the "copy into pos[p0]" hub the original jumps to (715, 716, 1850, 1851).
+   `hero_can_join` and `troops_can_join` are still open, but no longer look like the key to the chain: changing the temporaries there did not move the following case's registers. Evidence for the next attempt: `lea rN,[eax+0xf8]; lea rM,[eax+0xf8]` occurs **six times in .text up to 0x54a000**, all in these four cases and party_get_free_companions/prisoners_capacity (1633, 1634), and `mov r,callee-saved; push r` only in these four within execute.
+   All six follow one order: get (fresh) + max_stacks, get (cached pointer) + first_flagged, get (fresh `g_game`) + sum_head, get (cached pointer) + max_members. The cached `parties` pointer survives the opaque max_stacks, so it looks like a source variable, yet the first call's `this` doesn't merge with it. Tried without success: about 20 spellings (wrappers on GameX/PartyMgr, reference and pointer locals, assignment inside the argument, address-taken `main`, one-expression forms, first_flagged first). In one expression cl evaluates first_flagged first, as the original does at 0x4aca11 (a different case).
+   Also open: storing clamp_index's result straight to an absolute address (`g_mission_ctx.f1c`, `g_or_latch`, `g_script.reg[0]`) gives set_battle_advantage private slots, where a store through `g_game` shares 0x10/0x20/0x24. The original stores to the absolute address and shares. Block scope and the negative constant were tested and aren't the cause. Those three private dwords sit just below `types`, whose offset (0xbc here, 0xb4 there) contributes to set_result_string and its family staying at "S"/"R".
 1. **Frame layout**: 0x1ee8 against 0x1ec0, 0x28 to lose. Low slots agree with the original from 0x10 to params at 0x2c except `opcode`. Still private here and low there:
    `set_battle_advantage` (same source as `party_set_morale`, which packs; cause unknown), `spawn_item`'s ItemRef (visible `set_modifier` alone does not help), the
    `cur_tableau_add_*` and `cur_*_set_tableau_*` temporaries, `prop_instance_animate_to_position`, `race_completed_by_player`. The validator temporary leaves slot 0x10 at case 1993 in the original and about 2100 here.

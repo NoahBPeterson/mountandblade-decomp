@@ -48,6 +48,40 @@ static __forceinline void v_neg(vector4& r, const float* d) { r.x = -d[0]; r.y =
 
 // Bodies the original's object saw (header inlines left out of line; row owner terrain_a.cpp 0x4644e0): an object whose
 // address only reaches a visible body does not escape (docs/codegen.md section 7)
+namespace rgl {
+static inline unsigned min255(unsigned v) { return v < 255 ? v : 255; }
+inline __declspec(noinline) unsigned pack_color(const vector4* c)
+{
+    unsigned a = (unsigned)(c->w * 256.0f);
+    unsigned r = (unsigned)(c->x * 256.0f);
+    unsigned g = (unsigned)(c->y * 256.0f);
+    unsigned b = (unsigned)(c->z * 256.0f);
+    return (((min255(a) << 8 | min255(r)) << 8) | min255(g)) << 8 | min255(b);
+}
+inline __declspec(noinline) vector4 unpack_color(const unsigned* c)
+{
+    vector4 v;
+    const unsigned char* b = (const unsigned char*)c;
+    v.w = b[3] * (1.0f / 255.0f);
+    v.x = b[2] * (1.0f / 255.0f);
+    v.y = b[1] * (1.0f / 255.0f);
+    v.z = (*c & 0xff) * (1.0f / 255.0f);
+    return v;
+}
+}
+inline __declspec(noinline) unsigned pack_signed_color(const float* c)
+{
+    unsigned a = (unsigned)(c[3] * 128.0f + 128.0);
+    unsigned r = (unsigned)(c[0] * 128.0f + 128.0);
+    unsigned g = (unsigned)(c[1] * 128.0f + 128.0);
+    unsigned b = (unsigned)(c[2] * 128.0f + 128.0);
+    unsigned ca = 255;
+    if (a < 256) ca = a;
+    unsigned cr = r < 256 ? r : 255;
+    unsigned cg = g < 256 ? g : 255;
+    unsigned cb = b < 256 ? b : 255;
+    return (((ca << 8 | cr) << 8) | cg) << 8 | cb;
+}
 static __forceinline vec2 cell_v2(float x, float y) { vec2 r; r.x = x; r.y = y; return r; }
 static __forceinline void cell_set_weight(terrain_cell* c, const float& v) { c->w[0] = v; c->f90 = v; }
 inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
@@ -331,8 +365,6 @@ struct HF : HeightField {
 
 // light-slot table at terrain+0x258; the cell lum[] entries are only used for slots flagged in 0x8ed4e14
 
-static __forceinline HCell& hc(HeightField* hf, int x, int y) { return hf->cols[x][y]; }
-static __forceinline HCell& hc2(HeightField* hf, const int& x, const int& y) { return hf->cols[x][y]; }
 // @ 0x481570 -- re-tessellate every terrain quad into two triangles (four when the half-quad normals disagree), assigning
 // each touched corner cell a point in the new Geom and each quad a 0x88-byte element record with the final lighting, then
 // rebuild the world mesh, install a fresh HeightField and relight the scene
@@ -655,7 +687,7 @@ void Terrain::regenerate_water(void** out, bool mode)
 // the light term table written by create_water (ground array of the scene, 9 floats per record, light at +0x20).
 // The mesh of chunk (x, y) lives in arr3[layer * 25 + x * 5 + y] (arr2[x * 5 + y] for layer 15); it is rebuilt from the cells
 // whose x/y fall inside the chunk, then registered with the chunk's scene entity ents[x * 5 + y].
-static __forceinline int round_i(float v)       // fl = floor(v); i = (int)fl; if (v - fl > 0.5) i++
+static __forceinline int round_i(const float& v)       // fl = floor(v); i = (int)fl; if (v - fl > 0.5) i++
 {
     float fl = (float)floor(v);
     int i = (int)fl;
@@ -665,7 +697,7 @@ static __forceinline unsigned clamp255(int i)
 {
     return i < 0 ? 0 : (i >= 0x100 ? 0xff : i);
 }
-static __forceinline unsigned round_clamp255(float v)
+static __forceinline unsigned round_clamp255(const float& v)
 {
     return clamp255(round_i(v));
 }
@@ -673,7 +705,7 @@ struct vec_i4 { int pad; int* first; int* last; int* end; };    // std::vector<i
 // the inline vector helpers this function expands
 static __forceinline void v_normalize(vector4& v)
 {
-    float len = (float)sqrt(v.z * v.z + v.y * v.y + v.x * v.x);
+    float len = (float)sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
     if (len > 1e-10f) {
         float inv = 1.0f / len;
         v.x = v.x * inv;
@@ -710,19 +742,6 @@ static __forceinline void v_max(vector4& a, const vector4& p)
     v = a.y; if (!(v > p.y)) v = p.y; a.y = v;
     v = a.z; if (!(v > p.z)) v = p.z; a.z = v;
 }
-struct Vec2m : Vec2 { Vec2m() {} Vec2m(float a, float b) : Vec2(a, b) {} Vec2m operator*(float s) const { return Vec2m(x * s, y * s); } };
-static __forceinline Vec2 v2mul(const Vec2& a, float s) { return Vec2(a.x * s, a.y * s); }
-static __forceinline Vec2 v2mul2(const Vec2& a, float s) { Vec2 q; q.x = a.x * s; q.y = a.y * s; return q; }
-static __forceinline Vec2 to2a(const vector4& v) { Vec2 r; r.x = v.x; r.y = v.y; return r; }
-static __forceinline Vec2 to2b(const vector4& v) { return Vec2(v.x, v.y); }
-static __forceinline Vec2 to2c(const vector4& v) { Vec2 r; *(int*)&r.x = *(int*)&v.x; *(int*)&r.y = *(int*)&v.y; return r; }
-static __forceinline Vec2 to2d(const vector4& v) { return *(const Vec2*)&v; }
-static __forceinline Vec2 v2mulv(Vec2 a, float s) { return Vec2(a.x * s, a.y * s); }
-static __forceinline Vec2 v2mulw(float s, Vec2 a) { return Vec2(a.x * s, a.y * s); }
-static __forceinline float lv1(const NavVert& v) { return v.level; }
-static __forceinline float lv2(const NavVert* v) { float l = v->level; return l; }
-static __forceinline const NavVert& lv3(NavData* n, int i) { return n->verts[i]; }
-static __forceinline const NavVert& lv4(rgl::world* w, int i) { NavVert& r = w->ground->verts[i]; return r; }
 // @ 0x47ff60
 void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
 {
@@ -747,17 +766,18 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
         m->res = 0;
     }
 
-    for (int y = 0; y <= h; y++)
-        for (int x = 0; x <= w; x++)
-            cells[x * 251 + y].f10 = -1;
+    int yi, xi;
+    for (yi = 0; yi <= h; yi++)
+        for (xi = 0; xi <= w; xi++)
+            cells[xi * 251 + yi].f10 = -1;
 
-    for (int yi = 0; yi < h; yi++) {
-        for (int xi = 0; xi < w; xi++) {
+    for (yi = 0; yi < h; yi++) {
+        for (xi = 0; xi < w; xi++) {
             if (xi < block * cx || (cx != nx - 1 && xi >= (cx + 1) * block) || yi < block * cy ||
                 (cy != ny - 1 && yi >= (cy + 1) * block))
                 continue;
             for (int flip = 0; flip < 2; flip++) {
-                int tri[3][2];
+                int tri[4][2];
                 triangle_corners(xi, yi, flip, tri[0], tri[1], tri[2]);
                 char vis[3];
                 for (int k = 0; k < 3; k++) {
@@ -790,19 +810,19 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     if (c->f10 != -1)
                         continue;
                     int pt = m->add_point((const vector4*)c);
-                    unsigned balpha = 0xff;          // blend alpha
+                    unsigned col;
                     unsigned edi = 0xff;             // the cell colour level
+                    unsigned balpha = 0xff;          // blend alpha
                     Vec2 uv;
+                    float f;
                     if (layerno < 15) {
-                        float f;
                         if (blend < 0) {
                             f = c->w[layerno];
                         } else {
                             f = (1.0f - c->w[blend]) * c->w[layerno] + c->w[blend];
                             balpha = round_clamp255(c->w[blend] * 255.0f);
                         }
-                        f = f * c->f90 * 255.0f;
-                        edi = round_clamp255(f);
+                        edi = round_clamp255(f * c->f90 * 255.0f);
                         float s = *(float*)&layer[layerno].f14;
                         Vec2 t(c->px * 0.025f, c->py * 0.025f);
                         uv = Vec2(t.x * s, t.y * s);
@@ -820,7 +840,6 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         rgb.y *= tc.y;
                         rgb.z *= tc.z;
                     }
-                    unsigned col;
                     if (g_use_shaders == 0) {
                         if (m->res == 0 || (m->res->shader->stages[0].b & 0x1f) != 0x18) {
                             if (layerno < 15) {
@@ -902,9 +921,12 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
         vector4 c = sun_ambient;
         m->color = pack_color(&c);
     }
-    m->slots[1].f28 = 1;
-    m->slots[0].f28 = 1;
-    m->f214 = layerno + 11;
+    char& a = m->slots[1].f28;
+    a = 1;
+    char& b = m->slots[0].f28;
+    b = 1;
+    int& key = m->f214;
+    key = layerno + 11;
 
     rgl::entity* e = (rgl::entity*)ents[cx * 5 + cy];
     std::vector<rgl::mesh*>& em = e->meshes;

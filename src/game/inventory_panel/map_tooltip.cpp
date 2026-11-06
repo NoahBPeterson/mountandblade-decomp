@@ -41,6 +41,7 @@ struct PartyCellRec {                                        // 0xb0 bytes at 0x
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
+#include "map_panel.h"
 
 
 // ---- the two points the distance test reads -----------------------------------------------------------
@@ -106,9 +107,10 @@ void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
     }
 }
 
+static inline int clamp_i(int v, int a, int b) { if (v < a) v = a; else if (v > b) v = b; return v; }
 #pragma warning(disable:4715)     // draw_party_line returns draw_string's eax on its last path
 // @ 0x51c090
-int __stdcall draw_party_line(int index)
+int MapPanel::draw_party_line(int index)
 {
     PartyMgr& pm = g_game->parties;
     int skill = pm.get_w(g_game->main_party)->skill_level(0x10);
@@ -125,14 +127,11 @@ int __stdcall draw_party_line(int index)
     char buf[512];
     if (skill > 1) {
         int hours = (int)info->f14;
+        int lo, hi;
         int step = (2 - skill) * 2;
-        int div = hours / 3 + step;
-        if (div < 1)
-            div = 1;
-        else if (div > 10)
-            div = 10;
-        int lo = (hours / div) * div;
-        int hi = div + lo - 1;
+        int div = clamp_i(hours / 3 + step, 1, 10);
+        lo = (hours / div) * div;
+        hi = lo + div - 1;
         if (lo < 1)
             lo = 1;
         else if (lo > 0x20)
@@ -159,13 +158,10 @@ int __stdcall draw_party_line(int index)
         }
 
         int size = info->flags & 0xff;
-        int div2 = size / 3 + step;
-        if (div2 < 1)
-            div2 = 1;
-        else if (div2 > 10)
-            div2 = 10;
-        int lo2 = (size / div2) * div2;
-        int hi2 = div2 + lo2 - 1;
+        int lo2, hi2;
+        int div2 = clamp_i(size / 3 + step, 1, 10);
+        lo2 = (size / div2) * div2;
+        hi2 = lo2 + div2 - 1;
         if (lo2 <= 0)
             lo2 = 1;
         if (hi2 <= 0)

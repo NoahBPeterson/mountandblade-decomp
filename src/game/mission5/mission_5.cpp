@@ -501,9 +501,9 @@ void MissionBlocker::frame_update(float dt)
     float sdt = dt;
 
     // ---- key toggles (slow-motion / pause) ----------------------------------------------------------
-    if (g_cfg.cheat_mode && (g_keyboard.down[29] || g_keyboard.down[157]) && g_keyboard.down[67] && !g_keyboard.prev[67])
+    if (g_cfg.cheat_mode != 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) && g_keyboard.down[67] != 0 && g_keyboard.prev[67] == 0)
         f2e1 = (unsigned char)!f2e1;
-    if (g_cfg.cheat_mode && (g_keyboard.down[29] || g_keyboard.down[157]) && g_keyboard.down[87] && !g_keyboard.prev[87])
+    if (g_cfg.cheat_mode != 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) && g_keyboard.down[87] != 0 && g_keyboard.prev[87] == 0)
         f2e0 = (unsigned char)!f2e0;
     if (f2e0)
         sdt = 0.0f;
@@ -519,7 +519,7 @@ void MissionBlocker::frame_update(float dt)
             if (r >= 1.0f) {
                 g_mission_s261e0->f67f4 = g_mission_s261e0->f67f8;
                 sdt = sdt * g_mission_s261e0->f67f4;
-                g_mission_s261e0->f6810 = 0.0f;
+                *(int*)&g_mission_s261e0->f6810 = 0;
             } else {
                 sdt = (r * g_mission_s261e0->f67f8 + (1.0f - r) * g_mission_s261e0->f67f4) * sdt;
             }
@@ -824,12 +824,11 @@ restore:
         }
 
         if (any_pressed_s261e0(g_game_keys.entry[16], 2)) {
-            g_script.trigger_result.store0 = 0;
-            g_script.trigger_result.store1 = 0;
+            g_script.trigger_result.value = 0;
             int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
             for (int i = 0; i < *slots; i++)
                 ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x16);
-            if ((g_script.trigger_result.store0 | g_script.trigger_result.store1) != 0)
+            if (g_script.trigger_result.value != 0)
                 flag13 = 1;
         }
     }
@@ -847,10 +846,9 @@ restore:
     }
 
     if (any_pressed_s261e0(g_game_keys.entry[11], 2) && g_keyboard.down[56] == 0 && g_keyboard.down[184] == 0) {
-        g_script.trigger_result.store0 = 0;
-        g_script.trigger_result.store1 = 0;
+        g_script.trigger_result.value = 0;
         ((snd_bank*)rec_base_s261e0(g_mission_s261e0->cur_rec))->update_all(-0x15);
-        if ((g_script.trigger_result.store0 | g_script.trigger_result.store1) != 0)
+        if (g_script.trigger_result.value != 0)
             b6 = false;
     }
 

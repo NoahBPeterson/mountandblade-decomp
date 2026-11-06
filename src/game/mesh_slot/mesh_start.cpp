@@ -106,6 +106,7 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(rgl::psys* e);
     void add_extra(Mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
+    void add_mesh(Mesh* m) { int mi = (int)m; at<std::vector<int> >(0x118).push_back(mi); v4(); }
 };
 struct PropObj {                                             // object at prop +0x1b4
     virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
@@ -690,8 +691,6 @@ void Mission::start_setup()
     } while (++k < 0x40);
     }
 
-    {
-    int pi;
     if (LV.flags.b10) {
         at<int>(0x5278) = 5;
         int par = rand() % 2;
@@ -722,6 +721,8 @@ void Mission::start_setup()
 
         }
     }
+    {
+    int pi;
     if (LV.flags.b8) {
         at<float>(0x653c) = at<float>(0x653c) + 24.0f;
         at<float>(0x6540) = at<float>(0x6540) + 24.0f;
@@ -879,10 +880,7 @@ void Mission::start_setup()
         RAWAT(int, at<Mesh*>(0x65c4), 0x114) = 1;
         RAWAT(int, at<Mesh*>(0x65c4), 0x140) = 1;
         {
-            Entity* e2 = at<Entity*>(0x65c0);
-            int mi = (int)at<Mesh*>(0x65c4);
-            RAWAT(std::vector<int>, e2, 0x118).push_back(mi);
-            e2->v4();
+            at<Entity*>(0x65c0)->add_mesh(at<Mesh*>(0x65c4));
         {
             tstring nm("sun");
             at<Mesh*>(0x65c8) = (Mesh*)g_resmgr.get_object(&nm)->clone();
@@ -901,13 +899,7 @@ void Mission::start_setup()
         RAWAT(unsigned, at<Mesh*>(0x65c8), 0x10c) &= 0xfffeffff;
         at<Mesh*>(0x65c8)->scale(50.0f);
         {
-            Entity* e2 = at<Entity*>(0x65c0);
-            int mi = (int)at<Mesh*>(0x65c8);
-
-
-
-            RAWAT(std::vector<int>, e2, 0x118).push_back(mi);
-            e2->v4();
+            at<Entity*>(0x65c0)->add_mesh(at<Mesh*>(0x65c8));
         }
     }
 
@@ -923,10 +915,7 @@ void Mission::start_setup()
         at<Mesh*>(0x65d4) = (Mesh*)g_resmgr.get_object(&nm)->clone();
     }
     {
-        Entity* e2 = at<Entity*>(0x65d0);
-        int mi = (int)at<Mesh*>(0x65d4);
-        RAWAT(std::vector<int>, e2, 0x118).push_back(mi);
-        e2->v4();
+        at<Entity*>(0x65d0)->add_mesh(at<Mesh*>(0x65d4));
     }
     at<Mesh*>(0x65d8) = (Mesh*)new rgl::mesh;
     {
@@ -965,8 +954,9 @@ void Mission::start_setup()
     at<char>(0x6338) = 0;
     for (int k = 0; k < 0x40; k++) {
         float outY;
-        Timer* tm = &SLOT(k).timer;
-        void** fp = &SLOT(k).face;
+        SceneSlot* sl = &SLOT(k);
+        Timer* tm = &sl->timer;
+        void** fp = &sl->face;
         *fp = 0;
         int n = 0;
         do {

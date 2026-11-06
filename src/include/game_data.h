@@ -57,7 +57,7 @@ struct GameData {
     };
     char pad7c[0x84 - 0x7c];
     union {
-        int sel_party;                          // +0x84 the party selected on the map (inventory_panel/map_update.cpp 0x5191e0, map_info.cpp 0x51abd0; char_sheet/screen_camera.cpp 0x4ece20 follows it)
+        int sel_party;                          // +0x84 the party selected on the map (inventory_panel/map_panel.cpp 0x5191e0, 0x51abd0; 0x51abd0; char_sheet/screen_camera.cpp 0x4ece20 follows it)
         int selected;
     };
     union {
@@ -72,7 +72,7 @@ struct GameData {
         int cur_troop;                          // +0x8c   ui/mission_ui.cpp 0x48a080, 0x489c50
     };
     char pad90[0x95 - 0x90];
-    char f95;                                   // +0x95 (inventory_panel/map_update.cpp 0x5191e0)
+    char f95;                                   // +0x95 (inventory_panel/map_panel.cpp 0x5191e0)
     char pad96[0x98 - 0x96];
     int cnt_killed;                    // +0x98 0x457b40 (kills of the player)
     int cnt_killed_friend;                    // +0x9c 0x457b40
@@ -86,8 +86,8 @@ struct GameData {
         int fc8;                                // +0xc8   0x460620, 0x460d80
         int mode;                               // +0xc8 screen mode (0x12 = party screen)   ui/mission_ui.cpp 0x48add0
     };
-    char padcc[0xe4 - 0xcc];                    // +0xcc a paged table of 0x98-byte scene records (16 per page); its API is 0x48ef20 slot() (map_info.cpp), see party2/camera.cpp (BattleTable)
-    void** agent_pages;                         // +0xe4 its page table: first pointer of the vector at +0xe0 (map_update.cpp 0x5191e0, map_info.cpp 0x48ef20, camera.cpp)
+    char padcc[0xe4 - 0xcc];                    // +0xcc a paged table of 0x98-byte scene records (16 per page); its API is 0x48ef20 slot() (map_panel.cpp), see party2/camera.cpp (BattleTable)
+    void** agent_pages;                         // +0xe4 its page table: first pointer of the vector at +0xe0 (map_panel.cpp 0x5191e0, 0x51abd0; 0x48ef20, camera.cpp)
     char pade8[0xf8 - 0xe8];
     PartyMgr parties;                           // +0xf8 .. +0x139e4 (gui_edit.cpp called it `pm`)
     int f139e4;                                 // +0x139e4 (0x443aa0)
@@ -144,12 +144,12 @@ struct GameData {
     };
     char pad13a60x[4];                          // +0x13a60 allocator word of the event / fleet vector
     union {
-        char* fleet;                            // +0x13a64 first of the 0x5c-byte fleet / battle records (std::vector first; map_update.cpp 0x5191e0, map_info.cpp 0x51abd0, map_tooltip.cpp 0x51c090; party2 push_event 0x4b5fe0)
+        char* fleet;                            // +0x13a64 first of the 0x5c-byte fleet / battle records (std::vector first; map_panel.cpp 0x5191e0, 0x51abd0; 0x51abd0, map_panel.cpp 0x51c090; party2 push_event 0x4b5fe0)
         char* f13a64;                           // (char_sheet/save_state.cpp write_vec5c 0x4e93f0)
         PartyInfo* party_info;                  // (inventory_panel/map_tooltip.cpp)
     };
     union {
-        char* fleet_end;                        // +0x13a68 its last (map_update.cpp)
+        char* fleet_end;                        // +0x13a68 its last (map_panel.cpp)
         char* f13a68;
     };
     char pad13a6c[0x13a70 - 0x13a6c];
@@ -223,10 +223,10 @@ struct GameData {
     int f13b60;                                 // +0x13b60 (char_sheet/save_state.cpp)
     float val[4][4];                            // +0x13b64 four wind anchors: four weights / values each (0x471040)
     float pos[4][2];                            // +0x13ba4 their xy positions
-    int n_labels;                               // +0x13bc4 (inventory_panel/map_update.cpp 0x5191e0, map_picker.cpp)
+    int n_labels;                               // +0x13bc4 (inventory_panel/map_panel.cpp 0x5191e0, 0x51abd0;)
     int cur_label;                              // +0x13bc8
     tstring labels[50];                         // +0x13bcc the map label texts (0x10 each)
-    int label_target[64];                       // +0x13eec the party id of each label (map_update.cpp)
+    int label_target[64];                       // +0x13eec the party id of each label (map_panel.cpp)
     char pad13fec[0x14014 - 0x13fec];
     float trigger_frame[16];                    // +0x14014 the trigger frame (a rgl::matrix: the spawn / placement frame of the script's trigger block; party2/camera.cpp 0x49b4b0, 0x49f980)
     char pad14054[0x1405c - 0x14054];
@@ -290,7 +290,7 @@ struct GameData {
     char emit_event(int id, int a, int b);      // 0x435790 (ret 0xc)
     void set_matrix(const rgl::matrix* m);      // 0x435650 (agent4: sound-event context frame)
     void add_experience(int troop, int amount); // 0x4428c0 (ret 8) (agent_fx_sound.cpp)
-    void party_counts(unsigned id, int* num, int* num2, int* prisoners);   // 0x51be60 (inventory_panel/map_tooltip.cpp, called by map_info.cpp 0x51abd0 as (id, &size, &wounded, &prisoners))
+    void party_counts(unsigned id, int* num, int* num2, int* prisoners);   // 0x51be60 (inventory_panel/map_tooltip.cpp, called by map_panel.cpp 0x51abd0 as (id, &size, &wounded, &prisoners))
     bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4: the hit points of troop idx are below the agent-low threshold)
     tstring scene_path(int idx);                // 0x463950 (ret 8: hidden return)
     const char* module_path(const char* sub);   // 0x4639d0

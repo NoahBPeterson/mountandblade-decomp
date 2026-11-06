@@ -1,8 +1,5 @@
-// map_panel.h: the campaign map screen object (MapPanel) and its view (MapView at MapPanel+0x30) as map_info.cpp (0x51abd0 update,
-// 0x51c090 select) and map_update.cpp (0x5191e0 update_target) see them. One definition: both views put the view pointer at +0x30,
-// declare the same update 0x51abd0 and read disjoint members (the two timers are two different floats: +0x2cc is the redraw
-// cooldown 0x51abd0 resets, +0x2d0 the label fade timer 0x51a420 resets -- map_picker.cpp's `MapScreen` / `Camera` are the same
-// two classes under other names: set_label 0x51a420 and project 0x51a690 = to_screen).
+// map_panel.h: the campaign map screen object (MapPanel) and its view (MapView at MapPanel+0x30) as map_panel.cpp sees them.
+// The two timers are two different floats: +0x2cc is the redraw cooldown 0x51abd0 resets, +0x2d0 the label fade timer 0x51a420 resets.
 #ifndef GAME_INVENTORY_PANEL_MAP_PANEL_H
 #define GAME_INVENTORY_PANEL_MAP_PANEL_H
 namespace rgl { struct vector4; }
@@ -30,5 +27,7 @@ struct MapPanel {
     int       f2d8;                          // +0x2d8  currently picked party id
     void update(int type, int id);           // 0x51abd0
     void update_target();                    // 0x5191e0
+    void set_label(int id);                  // 0x51a420 ret 4
+    int  draw_party_line(int index);         // 0x51c090 ret 4
 };
 #endif

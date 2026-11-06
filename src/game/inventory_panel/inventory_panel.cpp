@@ -72,6 +72,7 @@ struct SkillNames {                                     // a skill record seen f
 #include "../slot.h"
 #include "../skill_cap.h"
 #include "../ui_globals.h"      // UI / core globals
+#include "../float_consts.h"     // g_one
 
 // @ 0x50fe20
 void PartyWindow::frame_update(float unused)
@@ -424,279 +425,197 @@ void PartyWindow::place_slot(MissionUi* w, ItemRef* slot, int page, int index)
 }
 
 
+static __forceinline float item_weight(const ItemRef* r) { return r->item < 0 ? 0.0f : g_items[r->item].f208; }
+static __forceinline int item_food(const ItemRef* r) { return r->item < 0 ? 0 : g_items[r->item].f1fc; }
+static __forceinline int item_accuracy(const ItemRef* r)
+{
+    if (r->item < 0)
+        return 100;
+    int v = g_items[r->item].f204;
+    if (v == 0)
+        v = 99;
+    return v;
+}
+static __forceinline int slot_aux(PartyWindow* w, int page, int index)
+{
+    return page < 2 ? w->aux[page][index] : w->row_value[page - 2][index];
+}
+static __forceinline int cap_100(int v) { return v > 100 ? 100 : v; }
+static __forceinline int round_near(float* p)
+{
+    float fl = (float)floor((double)*p);
+    int i = (int)fl;
+    return (*p - fl <= 0.5f) ? i : i + 1;
+}
+
 // @ 0x510fa0
 // ------------------------------------------------------------------------------------------------------------
 void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
 {
-    int zero = 0;
     ItemKind* it = &g_items[slot->item];
     g_gui.set_overlay(0, 1);
     g_gui.set_view(pt);
 
     char buf[512];
     slot->name(buf);
-    {
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.025f, 0xfff0e0d0, 1);
-    }
+    { tstring s(buf); g_gui.draw_string(&s, 0.025f, 0xfff0e0d0, 1); }
 
+    {
     unsigned int flags = it->type_flags;
     unsigned int kind = flags & 0xff;
     if (kind == 2 || kind == 3 || kind == 4) {
-        const char* key;
-        if (kind == 4)
-            key = (flags & 0x200000) ? "ui_polearm_no_shield" : "ui_polearm";
-        else if (kind == 3)
-            key = (flags & 0x200000) ? "ui_two_handed" : "ui_two_handed_one_handed";
-        else
-            key = "ui_one_handed";
-        {
-            tstring k(key);
-            sprintf(buf, "%s", g_strtable.lookup(k)->c_str());
-        }   // one destroy (an explicit ~tstring() plus the scope exit freed it twice)
-        {
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.021f, 0xffc0b0e0, 1);
-        }
+        if (kind == 4) {
+            if (flags & 0x200000)
+                sprintf(buf, g_strtable.lookup("ui_polearm_no_shield")->c_str());
+            else
+                sprintf(buf, g_strtable.lookup("ui_polearm")->c_str());
+        } else if (kind == 3) {
+            if (flags & 0x200000)
+                sprintf(buf, g_strtable.lookup("ui_two_handed")->c_str());
+            else
+                sprintf(buf, g_strtable.lookup("ui_two_handed_one_handed")->c_str());
+        } else
+            sprintf(buf, g_strtable.lookup("ui_one_handed")->c_str());
+        { tstring s(buf); g_gui.draw_string(&s, 0.021f, 0xffc0b0e0, 1); }
+    }
+
     }
 
     char buyable = test_slot_flag(page, index, 1);
 
-    kind = it->type_flags & 0xff;
-    if (kind == 10 || kind == 5 || kind == 6 || kind == 0x12) {
-        int max = slot->max_amount();
-        sprintf(buf, "(%d / %d)", max - (slot->m4 & 0xff), slot->max_amount());
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-    } else if (kind == 7) {
-        int hp = slot->stat_1e8();
-        sprintf(buf, "(%d / %d)", slot->m4 & 0xffff, hp);
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-    } else if (kind == 0xb && (it->type_flags & 0x2000000)) {
-        int max = slot->max_amount();
-        sprintf(buf, "(%d / %d)", max - (slot->m4 & 0xff), slot->max_amount());
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-    }
-
-    if (page == 1) {
-        if (buyable) {
-            sprintf(buf, "%s", g_strtable.lookup(tstring("ui_reclaim_price"))->c_str(),
-                     aux[1][index]);
-        } else {
-            const tstring* v = g_strtable.lookup(tstring("ui_buying_price"));
-            int p = compute_price((int*)slot, 1);
-            sprintf(buf, v->c_str(), p);
-        }
-    } else {
-        if (buyable) {
-            int p;
-            if (page < 2)
-                p = aux[page][index];
-            else
-                p = row_value[page - 2][index];
-            const tstring* v = g_strtable.lookup(tstring("ui_return_price"));
-            sprintf(buf, v->c_str(), p);
-        } else {
-            int p = compute_price((int*)slot, 0);
-            const tstring* v = g_strtable.lookup(tstring("ui_sell_price"));
-            sprintf(buf, v->c_str(), p);
-        }
-    }
     {
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.024f, 0xfffffdf0, 1);
+    unsigned int flags = it->type_flags;
+    unsigned int kind = flags & 0xff;
+    if (kind == 10 || kind == 5 || kind == 6 || kind == 0x12) {
+        int amt = slot->m4 & 0xff;
+        int cur = slot->max_amount() - amt;
+        sprintf(buf, "(%d / %d)", cur, slot->max_amount());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
+    } else if (kind == 7) {
+        sprintf(buf, "(%d / %d)", slot->m4 & 0xffff, slot->stat_1e8());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
+    } else if (kind == 0xb && (flags & 0x2000000)) {
+        int amt = slot->m4 & 0xff;
+        int cur = slot->max_amount() - amt;
+        sprintf(buf, "(%d / %d)", cur, slot->max_amount());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
     }
 
-    if (slot->item >= 0 && it->f208 > 1e-5f) {
-        float w = slot->item < 0 ? 0.0f : it->f208;
-        const tstring* v = g_strtable.lookup(tstring("ui_weight"));
-        sprintf(buf, v->c_str(), (double)w);
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.022f, 0xffffffff, 1);
+    }
+    if (page != 1) {
+        if (buyable)
+            sprintf(buf, g_strtable.lookup("ui_return_price")->c_str(), slot_aux(this, page, index));
+        else
+            sprintf(buf, g_strtable.lookup("ui_sell_price")->c_str(), compute_price((int*)slot, 0));
+    } else {
+        if (buyable)
+            sprintf(buf, g_strtable.lookup("ui_reclaim_price")->c_str(), slot_aux(this, 1, index));
+        else
+            sprintf(buf, g_strtable.lookup("ui_buying_price")->c_str(), compute_price((int*)slot, 1));
+    }
+    { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xfffffdf0, 1); }
+
+    if (item_weight(slot) > 1e-5f) {
+        sprintf(buf, g_strtable.lookup("ui_weight")->c_str(), (double)item_weight(slot));
+        { tstring s(buf); g_gui.draw_string(&s, 0.022f, 0xffffffff, 1); }
     }
 
-    kind = it->type_flags & 0xff;
+    {
+    unsigned int kind = it->type_flags & 0xff;
     if (kind == 12 || kind == 13 || kind == 14 || kind == 15) {
         if (slot->stat_1fc()) {
-            const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_head_armor"));
-            sprintf(buf, v->c_str(), slot->stat_1fc());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
+            sprintf(buf, g_strtable.lookup("ui_plus_value_to_head_armor")->c_str(), slot->stat_1fc());
+            { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
         }
         if (slot->stat_200()) {
-            const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_body_armor"));
-            sprintf(buf, v->c_str(), slot->stat_200());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
+            sprintf(buf, g_strtable.lookup("ui_plus_value_to_body_armor")->c_str(), slot->stat_200());
+            { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
         }
         if (slot->stat_204()) {
-            const tstring* v = g_strtable.lookup(tstring("ui_plus_value_to_leg_armor"));
-            sprintf(buf, v->c_str(), slot->stat_204());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
+            sprintf(buf, g_strtable.lookup("ui_plus_value_to_leg_armor")->c_str(), slot->stat_204());
+            { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
         }
     }
 
-    kind = it->type_flags & 0xff;
+    }
+    {
+    unsigned int kind = it->type_flags & 0xff;
     if (kind == 8 || kind == 9 || kind == 10 || kind == 16 || kind == 17 ||
         kind == 2 || kind == 3 || kind == 4) {
-        // swing damage (type in flags2 at +0x218)
-        int mask = 0;
         if (slot->stat_21x(0)) {
-            unsigned int t = (it->f218 >> 8) & 3;
-            const char* key;
-            if (t == 0)      { key = "ui_cut_short";    mask = 1; }
-            else if (t == 1) { key = "ui_pierce_short"; mask = 2; }
-            else             { key = "ui_blunt_short";  mask = 4; }
-            const tstring* v;
-            {
-                tstring k(key);
-                v = g_strtable.lookup(k);
-            }
-            const tstring* dmg = g_strtable.lookup(tstring("ui_swing"));
-            sprintf(buf, dmg->c_str(), slot->stat_21x(0), v->c_str());
-            if (mask & 4) mask &= ~4;
-            if (mask & 2) mask &= ~2;
-            if (mask & 1) mask &= ~1;
-            {
-                tstring s(buf);
-                g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1);
-            }
+            int t = ((int)it->f218 >> 8) & 3;
+            sprintf(buf, g_strtable.lookup("ui_swing")->c_str(), slot->stat_21x(0),
+                    t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
+                           : t == 1 ? g_strtable.lookup("ui_pierce_short")->c_str()
+                                    : g_strtable.lookup("ui_blunt_short")->c_str());
+            { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1); }
         }
-        // thrust damage (type in flags2 at +0x214)
         if (slot->stat_21x(1)) {
-            unsigned int t = (it->f214 >> 8) & 3;
-            const char* key;
-            const char* fmtkey;
-            if (kind == 8 || kind == 9 || kind == 10 || kind == 16 || kind == 17) {
-                fmtkey = "ui_damage";
-                if (t == 0)      { key = "ui_cut_short";    mask = 8; }
-                else if (t == 1) { key = "ui_pierce_short"; mask = 0x10; }
-                else             { key = "ui_blunt_short";  mask = 0x20; }
+            int t = ((int)it->f214 >> 8) & 3;
+            unsigned int kind = it->type_flags & 0xff;
+            bool direct = kind == 8 || kind == 9 || kind == 10 || kind == 16 || kind == 17;
+            if (direct) {
+                sprintf(buf, g_strtable.lookup("ui_damage")->c_str(), slot->stat_21x(1),
+                        t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
+                               : t == 1 ? g_strtable.lookup("ui_pierce_short")->c_str()
+                                        : g_strtable.lookup("ui_blunt_short")->c_str());
             } else {
-                fmtkey = "ui_thrust";
-                if (t == 0)      { key = "ui_cut_short";    mask = 0x40; }
-                else if (t == 1) { key = "ui_pierce_short"; mask = 0x80; }
-                else             { key = "ui_blunt_short";  mask = 0x100; }
+                sprintf(buf, g_strtable.lookup("ui_thrust")->c_str(), slot->stat_21x(1),
+                        t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
+                               : t == 1 ? g_strtable.lookup("ui_pierce_short")->c_str()
+                                        : g_strtable.lookup("ui_blunt_short")->c_str());
             }
-            const tstring* v;
-            {
-                tstring k(key);
-                v = g_strtable.lookup(k);
-            }
-            const tstring* dmg = g_strtable.lookup(tstring(fmtkey));
-            sprintf(buf, dmg->c_str(), slot->stat_21x(1), v->c_str());
-            if (mask & 0x100) mask &= ~0x100;
-            if (mask & 0x80)  mask &= ~0x80;
-            if (mask & 0x40)  mask &= ~0x40;
-            {
-                tstring s(buf);
-                g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1);
-            }
+            { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1); }
         }
+        unsigned int kind = it->type_flags & 0xff;
         if (kind == 8 || kind == 9 || kind == 16 || kind == 17) {
-            int v = 100;
-            if (slot->item >= 0) {
-                v = it->f204;
-                if (v == 0)
-                    v = 99;
-            }
-            if (v > 100) v = 100;
-            const tstring* p = g_strtable.lookup(tstring("ui_accuracy"));
-            sprintf(buf, p->c_str(), v);
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffeebbfe, 1);
+            int v = item_accuracy(slot);
+            sprintf(buf, g_strtable.lookup("ui_accuracy")->c_str(), cap_100(v));
+            { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffeebbfe, 1); }
         }
         if (slot->stat_1f0a()) {
-            const tstring* p = g_strtable.lookup(tstring("ui_speed_rating"));
-            sprintf(buf, p->c_str(), slot->stat_1f0a());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
+            sprintf(buf, g_strtable.lookup("ui_speed_rating")->c_str(), slot->stat_1f0a());
+            { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
         }
     } else if (kind == 5 || kind == 6 || kind == 0x12) {
         if (slot->stat_21x(1)) {
-            const tstring* p = g_strtable.lookup(tstring("ui_value_to_damage"));
-            int v = slot->stat_21x(1);
-            sprintf(buf, p->c_str(), slot->stat_21x(1), v <= 0 ? ' ' : '+');
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1);
+            sprintf(buf, g_strtable.lookup("ui_value_to_damage")->c_str(), slot->stat_21x(1) > 0 ? '+' : ' ', slot->stat_21x(1));
+            { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1); }
         }
     } else if (kind == 7) {
-        if (slot->stat_200()) {
-            const tstring* p = g_strtable.lookup(tstring("ui_resistance"));
-            sprintf(buf, p->c_str(), slot->stat_200());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-        }
-        {
-            const tstring* p = g_strtable.lookup(tstring("ui_size"));
-            int v = (int)((float)it->weight * 1.0f);
-            sprintf(buf, p->c_str(), v);
-        }
-        {
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-        }
-        if (slot->stat_1f0a()) {
-            const tstring* p = g_strtable.lookup(tstring("ui_speed_rating"));
-            sprintf(buf, p->c_str(), slot->stat_1f0a());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-        }
-    } else if (kind == 0xb && g_module_settings.disable_food_slot == 0 && slot->item >= 0 && it->f1fc > 0) {
-        const tstring* p = g_strtable.lookup(tstring("ui_value_to_morale"));
-        float v = slot->item < 0 ? 0.0f : (float)it->f1fc;
-        sprintf(buf, p->c_str(), (double)(v * 0.02f));
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.024f, 0xffa0f0b0, 1);
+        sprintf(buf, g_strtable.lookup("ui_resistance")->c_str(), slot->stat_200());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
+        sprintf(buf, g_strtable.lookup("ui_size")->c_str(), (int)((float)it->weight * g_one));
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
+        sprintf(buf, g_strtable.lookup("ui_speed_rating")->c_str(), slot->stat_1f0a());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
+    } else if (kind == 0xb && g_module_settings.disable_food_slot == 0 && item_food(slot) > 0) {
+        sprintf(buf, g_strtable.lookup("ui_value_to_morale")->c_str(), (double)((float)item_food(slot) * 0.02f));
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffa0f0b0, 1); }
     }
 
-    kind = it->type_flags & 0xff;
+    }
+    {
+    unsigned int kind = it->type_flags & 0xff;
     if (kind == 2 || kind == 3 || kind == 4) {
-        float reach = (float)it->weight * 1.0f;
-        int n = (int)floor(reach);
-        if (reach - (float)n > 0.5f)
-            n++;
-        const tstring* p = g_strtable.lookup(tstring("ui_weapon_reach"));
-        sprintf(buf, p->c_str(), n);
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
+        float reach = (float)it->weight * g_one;
+        sprintf(buf, g_strtable.lookup("ui_weapon_reach")->c_str(), round_near(&reach));
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
     }
 
+    }
     if (*(char*)&it->type_flags == 1) {
         g_game->skill_level(g_game->player, 0x18);
-        {
-            const tstring* p = g_strtable.lookup(tstring("ui_armor"));
-            sprintf(buf, p->c_str(), slot->stat_200());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffddddff, 1);
-        }
-        {
-            const tstring* p = g_strtable.lookup(tstring("ui_speed"));
-            sprintf(buf, p->c_str(), slot->stat_1f4());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-        }
-        {
-            const tstring* p = g_strtable.lookup(tstring("ui_maneuver"));
-            sprintf(buf, p->c_str(), slot->stat_1f0b());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-        }
-        {
-            const tstring* p = g_strtable.lookup(tstring("ui_charge"));
-            sprintf(buf, p->c_str(), slot->stat_214());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-        }
-        {
-            const tstring* p = g_strtable.lookup(tstring("ui_hit_points"));
-            sprintf(buf, p->c_str(), slot->stat_1e8(), slot->stat_1e8());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, 0xffffffff, 1);
-        }
+        sprintf(buf, g_strtable.lookup("ui_armor")->c_str(), slot->stat_200());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffddddff, 1); }
+        sprintf(buf, g_strtable.lookup("ui_speed")->c_str(), slot->stat_1f4());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
+        sprintf(buf, g_strtable.lookup("ui_maneuver")->c_str(), slot->stat_1f0b());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
+        sprintf(buf, g_strtable.lookup("ui_charge")->c_str(), slot->stat_214());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
+        sprintf(buf, g_strtable.lookup("ui_hit_points")->c_str(), slot->stat_1e8(), slot->stat_1e8());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
     }
 
     if (slot->stat_1ec()) {
@@ -710,54 +629,40 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         item_events(slot->item, &a, &b, &c);
         if (a >= 0) {
             attribute_name(a, need);
-        } else {
-            if (b < 0) {
-                if (c >= 0)
-                    weapon_class_caption(c, need);
-            } else {
-                SkillNames* sk = (SkillNames*)&g_skill_tbl[b];
-                const tstring* name = g_strtable.find(&sk->f20);
-                if (!name)
-                    name = &sk->f10;
-                sprintf(need, "%s", name->c_str());
-            }
+        } else if (b >= 0) {
+            SkillNames* sk = (SkillNames*)&g_skill_tbl[b];
+            const tstring* name = g_strtable.find(&sk->f20);
+            if (!name)
+                name = &sk->f10;
+            sprintf(need, name->c_str());
+        } else if (c >= 0) {
+            weapon_class_caption(c, need);
         }
-        {
-            const tstring* p = g_strtable.lookup(tstring("ui_requires_value_difficulty"));
-            sprintf(buf, p->c_str(), need, slot->stat_1ec());
-            tstring s(buf);
-            g_gui.draw_string(&s, 0.024f, color, 1);
-        }
+        sprintf(buf, g_strtable.lookup("ui_requires_value_difficulty")->c_str(), need, slot->stat_1ec());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, color, 1); }
     }
 
     if (it->type_flags & 0x4000000) {
-        const tstring* p = g_strtable.lookup(tstring("ui_bonus_against_shields"));
-        sprintf(buf, p->c_str());
-        tstring s(buf);
-        g_gui.draw_string(&s, 0.024f, 0xffbbff22, 1);
+        sprintf(buf, g_strtable.lookup("ui_bonus_against_shields")->c_str());
+        { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffbbff22, 1); }
     }
-    if (it->type_flags & 0x4000) {
-        tstring k("ui_cant_be_used_to_block");
-        g_gui.draw_string(g_strtable.lookup(k), 0.024f, 0xffccbb33, 1);
-    }
-    if (it->type_flags & 0x10100000) {
-        tstring k("ui_cannot_be_used_on_horseback");
-        g_gui.draw_string(g_strtable.lookup(k), 0.024f, 0xffccbb33, 1);
-    }
+    if (it->type_flags & 0x4000)
+        g_gui.draw_string(g_strtable.lookup("ui_cant_be_used_to_block"), 0.024f, 0xffccbb33, 1);
+    if (it->type_flags & 0x10100000)
+        g_gui.draw_string(g_strtable.lookup("ui_cannot_be_used_on_horseback"), 0.024f, 0xffccbb33, 1);
 
-    for (int i = 0; i < 8; i++) {
+    g_trial_mode = aux[0][0]; for (int i = 0; i < 8; i++) {
         g_script.trigger_result.store0 = 0;
         g_script.trigger_result.store1 = 0;
         g_script.result_string.assign("");
         GV->emit_event4(0x13, slot->item, i, *(signed char*)((char*)slot + 7));
         if (g_script.result_string.len > 0) {
             unsigned int color = 0xffffffff;
-            if (g_script.trigger_result.store0 != 0 || g_script.trigger_result.store1 != 0)
-                color = g_script.trigger_result.store0 | 0xff000000;
+            if (g_script.trigger_result.value != 0)
+                color = (unsigned int)g_script.trigger_result.value | 0xff000000;
             g_gui.draw_string(&g_script.result_string, 0.024f, color, 1);
         }
     }
-    (void)zero;
 }
 
 

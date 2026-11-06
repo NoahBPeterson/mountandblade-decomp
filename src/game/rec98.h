@@ -1,7 +1,7 @@
 // rec98.h: the 0x98-byte record of the pool whose pages of 16 sit at GameData+0xe4 (the map battle / event records).
 // One definition for the views world_data/world_data.h (RecPool::alloc_record 0x493700: the pool bookkeeping words,
 // constructor 0x48c210), party2/camera.cpp (Mission::spawn_battle_icon 0x49bbb0, bind_host 0x4b2770),
-// inventory_panel/mission_ctx.cpp (the map screen's party pick, 0x514d40) and inventory_panel/map_info.cpp (the panel
+// inventory_panel/mission_ctx.cpp (the map screen's party pick, 0x514d40) and inventory_panel/map_panel.cpp (the panel
 // text; there the slice called it MapAgent: AgentPages::slot is 0x48ef20 on GameData+0xcc). Same class by:
 //   * every view indexes it as pages[id >> 4] + (id & 0xf) * 0x98 over the page table at GameData+0xe4 (0x493700 builds the
 //     pages with `new Rec98[16]`, 0x49bbb0 / 0x514d40 / 0x51abd0 read them back);

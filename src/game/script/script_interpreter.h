@@ -572,7 +572,7 @@ struct PropInst {                       // 0x1c8-byte scene prop instance
 };
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
 namespace std { template<> PlacedObj& vector<PlacedObj, allocator<PlacedObj> >::operator[](size_t); }   // 0x438c10 (agent2/agent_stats.cpp: the out-of-line instance)
-inline PropInst* prop_at(PropVec& v, int id) { return (PropInst*)&v[id]; }   // the script's view of the record; operator[] stays out of line (thiscall, ret 4)
+__forceinline PropInst* prop_at(PropVec& v, int id) { return (PropInst*)&v[id]; }   // the script's view of the record; operator[] stays out of line (thiscall, ret 4)
 // the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)
 struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
 // TeamRec (0x16c bytes at mission +0x5280): src/game/mission.h

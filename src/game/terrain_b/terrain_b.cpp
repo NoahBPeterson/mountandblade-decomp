@@ -71,7 +71,6 @@ using rgl::matrix;
 // @ 0x46e590
 void render_batch::render_scene(scene* sc)
 {
-    int f164 = sc->f164;
     vector4 light_diffuse[10];
     for (int i = 0; i < 10; i++) {
         light_diffuse[i].x = 0.0f;
@@ -81,72 +80,71 @@ void render_batch::render_scene(scene* sc)
     }
     bool sun_shadow = false;
     vec3 light_pos[10];
-    if (!sc->f162 && f164 == 0) {
+    if (!sc->f162 && sc->f164 == 0) {
         sky_t* sky = scene_sky(sc);
         if (sky) {
             bool lt = sc->fr.m.o.z < sky->height;
             if (sc->f169)
                 lt = !lt;
-            vector4 fog_col;
             if (lt) {
                 unsigned c = sky->fog_color_a;
-                fog_col = unpack_color(&c);
+                vector4 fog_col = unpack_color(&c);
                 fog_col.w = 1.0f;
                 g_effect->SetFloat("fFogStart", sky->fog_start_a);
                 g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_a);
                 g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_a);
+                g_effect->SetVector("vFogColor", (D3DXVECTOR4*)&fog_col);
             } else {
                 unsigned c = sky->fog_color_b;
-                fog_col = unpack_color(&c);
+                vector4 fog_col = unpack_color(&c);
                 fog_col.w = 1.0f;
                 g_effect->SetFloat("fFogStart", sky->fog_start_b);
                 g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_b);
                 g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_b);
+                g_effect->SetVector("vFogColor", (D3DXVECTOR4*)&fog_col);
             }
-            g_effect->SetVector("vFogColor", (D3DXVECTOR4*)&fog_col);
 
             vec3 sky_dir;
             sky_dir.x = 0.0f; sky_dir.y = 0.0f; sky_dir.z = -1.0f;
             vector4 sky_col;
             sky_col.x = 0.0f; sky_col.y = 0.0f; sky_col.z = 0.0f; sky_col.w = 1.0f;
-            float pc[4];
-            pc[0] = 0.01f; pc[1] = 0.01f; pc[2] = 0.01f;
+            vector4 pc(0.01f, 0.01f, 0.01f);
             bool found = false;
             int npoint = 0;
             for (unsigned i = 1; i < scene_lights(sc).size(); i++) {
-                light* l = scene_lights(sc)[i];
-                if (l->type == 2) {
+                if (scene_lights(sc)[i]->type == 2) {
                     if (!found) {
-                        sky_col = l->diffuse;
+                        sky_col = scene_lights(sc)[i]->diffuse;
                         sky_col.w = 1.0f;
                         sky_dir = scene_lights(sc)[i]->sun_dir;
                         found = true;
                     }
                 } else {
                     npoint++;
-                    pc[0] += l->diffuse.x;
-                    pc[1] += l->diffuse.y;
-                    pc[2] += l->diffuse.z;
+                    const vector4& d = scene_lights(sc)[i]->diffuse;
+                    pc.x += d.x;
+                    pc.y += d.y;
+                    pc.z += d.z;
                 }
             }
             if (npoint) {
-                pc[3] = 1.0f;
-                float m = pc[1] > pc[2] ? pc[1] : pc[2];
-                if (pc[0] > m)
-                    m = pc[0];
-                float inv = 1.0f / m;
-                pc[0] *= inv;
-                pc[1] *= inv;
-                pc[2] *= inv;
+                pc.w = 1.0f;
+                float m = pc.y > pc.z ? pc.y : pc.z;
+                if (pc.x > m)
+                    m = pc.x;
+                m = 1.0f / m;
+                pc.x *= m;
+                pc.y *= m;
+                pc.z *= m;
             }
-            g_effect->SetValue("vPointLightColor", pc, 16);
+            g_effect->SetValue("vPointLightColor", &pc, 16);
             g_effect->SetValue("vSkyLightDir", &sky_dir, 12);
             g_effect->SetValue("vSkyLightColor", &sky_col, 16);
 
             int n = 0;
             for (unsigned i = 0; i < scene_lights(sc).size() && n < 10; i++) {
                 if (scene_lights(sc)[i]->type == 0) {
-                    light_diffuse[n] = scene_lights(sc)[i]->sample();
+                    light_diffuse[n] = ((Light*)scene_lights(sc)[i])->sample();
                     light_diffuse[n].w = 1.0f;
                     light_pos[n] = scene_lights(sc)[i]->position;
                     n++;
@@ -172,17 +170,17 @@ void render_batch::render_scene(scene* sc)
             g_effect->SetValue("vSunDir", &sun_dir, 12);
             g_effect->SetValue("vSunColor", &sun_col, 16);
 
-            texture* st = scene_sky(sc)->shadow;
-            if (st) {
-                IDirect3DBaseTexture9* t = tex_current(st, 0.0f);
+            if (scene_sky(sc)->shadow) {
+                IDirect3DBaseTexture9* t = tex_current(scene_sky(sc)->shadow, 0.0f);
                 g_effect->SetTexture("shadowmap_texture", t);
                 D3DXMATRIX proj = scene_sky(sc)->shadow_cam.projection();
                 D3DXMATRIX view = scene_sky(sc)->shadow_cam.view_matrix();
-                D3DXMATRIX svp = view * proj * D3DXMATRIX(0.5f, 0.0f, 0.0f, 0.0f,
-                                                         0.0f, -0.5f, 0.0f, 0.0f,
-                                                         0.0f, 0.0f, 1.0f, 0.0f,
-                                                         0.5f / (float)scene_sky(sc)->shadow->width + 0.5f,
-                                                         0.5f / (float)scene_sky(sc)->shadow->height + 0.5f, 0.0f, 1.0f);
+                D3DMATRIX bias = { 0.5f, 0.0f, 0.0f, 0.0f,
+                                   0.0f, -0.5f, 0.0f, 0.0f,
+                                   0.0f, 0.0f, 1.0f, 0.0f,
+                                   0.5f / (float)scene_sky(sc)->shadow->width + 0.5f,
+                                   0.5f / (float)scene_sky(sc)->shadow->height + 0.5f, 0.0f, 1.0f };
+                D3DXMATRIX svp = view * proj * *(D3DXMATRIX*)&bias;
                 g_effect->SetMatrixTranspose("matSunViewProj", &svp);
             }
         } else {
@@ -194,7 +192,7 @@ void render_batch::render_scene(scene* sc)
             g_effect->SetValue("vSunColor", &sun_col, 16);
         }
     } else {
-        if (f164) {
+        if (sc->f164) {
             if (g_render.b54b) {
                 g_render.b54b = 0;
                 g_render.dev->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
@@ -235,8 +233,8 @@ void render_batch::render_scene(scene* sc)
     frame4 a;
     a.rot = *(rot3*)&sc->fr.m;
     a.rot.s.x *= 0.5f; a.rot.s.y *= 0.5f; a.rot.s.z *= 0.5f;
-    a.rot.f.x *= 0.5f; a.rot.f.y *= 0.5f; a.rot.f.z *= 0.5f; a.rot.f.w *= 0.5f;
-    a.rot.u.y *= 0.5f; a.rot.u.z *= 0.5f; a.rot.u.w *= 0.5f;
+    a.rot.f.x *= 0.5f; a.rot.f.y *= 0.5f; a.rot.f.z *= 0.5f;
+    a.rot.u.x *= 0.5f; a.rot.u.y *= 0.5f; a.rot.u.z *= 0.5f;
     a.o = vector4(0.5f, 0.5f, 0.5f);
     {
         frame4 b;
@@ -263,7 +261,7 @@ void render_batch::render_scene(scene* sc)
     g_effect->SetMatrixTranspose("matViewProj", &viewproj);
 
     float tv = (float)(g_ticks[2] % 1000000000) * 1e-5f;
-    if (tv != g_render.time_var) {
+    if (g_render.time_var != tv) {
         g_render.time_var = tv;
         g_effect->SetFloat("time_var", tv);
     }
@@ -275,10 +273,11 @@ void render_batch::render_scene(scene* sc)
         D3DXMatrixTranspose(&inv, &inv);
         D3DXPLANE pl2;
         D3DXPlaneTransform(&pl2, &pl, &inv);
-        D3DXMatrixInverse(&inv, 0, &proj);
-        D3DXMatrixTranspose(&inv, &inv);
+        D3DXMATRIX inv2;
+        D3DXMatrixInverse(&inv2, 0, &proj);
+        D3DXMatrixTranspose(&inv2, &inv2);
         D3DXPLANE pl3;
-        D3DXPlaneTransform(&pl3, &pl2, &inv);
+        D3DXPlaneTransform(&pl3, &pl2, &inv2);
         g_render.dev->SetClipPlane(0, (const float*)&pl3);
         g_render.dev->SetRenderState(D3DRS_CLIPPLANEENABLE, 1);
     }
@@ -287,21 +286,19 @@ void render_batch::render_scene(scene* sc)
     cur_part = 0;
     cur_mat = 0;
     cur_tech = 0;
-    std::vector<item_ref>::iterator it = scene_items(sc).begin();
-    if (it != scene_items(sc).end()) {
-        do {
-            mesh* item = it->m;
+    for (std::vector<item_ref>::iterator it = scene_items(sc).begin(); it != scene_items(sc).end(); ++it) {
+        {
             bool tex_ok = true;
-            int fa = item->slots[0].f4;
-            int fb = item->slots[0].f0;
+            int fa = it->m->slots[0].f4;
+            int fb = it->m->slots[0].f0;
             if (cur_vf_a != fa || cur_vf_b != fb) {
                 cur_vf_a = fa;
-                dev_buffer* v = &vf[fb].bufs[fa];
                 cur_vf_b = fb;
-                g_render.dev->SetVertexDeclaration(v->decl);
-                g_render.dev->SetStreamSource(0, v->vb, 0, v->elem_size);
+                dev_buffer& v = vf[fb].bufs[fa];
+                g_render.dev->SetVertexDeclaration(v.decl);
+                g_render.dev->SetStreamSource(0, v.vb, 0, v.elem_size);
             }
-            mesh* src = item->local_a0 ? item : item->parent;
+            mesh* src = it->m->local_a0 ? it->m : it->m->parent;
             int ibk = src->slots[1].f4;
             if (cur_ib != ibk) {
                 cur_ib = ibk;
@@ -310,14 +307,13 @@ void render_batch::render_scene(scene* sc)
             material* mat;
             if (sc->f162 || sc->f164) {
                 skin_calls* part = (skin_calls*)it->m->res;
-                material* pm = part->shader;
                 if (sc->f164) {
-                    if ((int)pm->flags20 < 0)
+                    if (part->shader->flags20 & 0x80000000)
                         mat = sh3;
                     else
                         mat = sh2;
                 } else {
-                    if ((int)pm->flags20 < 0)
+                    if (part->shader->flags20 & 0x80000000)
                         mat = sh1;
                     else
                         mat = sh0;
@@ -331,7 +327,7 @@ void render_batch::render_scene(scene* sc)
                     }
                 }
             } else {
-                skin_calls* part = (skin_calls*)item->res;
+                skin_calls* part = (skin_calls*)it->m->res;
                 if ((skin_calls*)cur_part != part) {
                     cur_part = (skin*)part;
                     if (scene_sky(sc) && scene_sky(sc)->fog_meshes && !(part->flags & 1)) {
@@ -455,21 +451,26 @@ void render_batch::render_scene(scene* sc)
                     g_render.light_count = nsel;
                     g_effect->SetInt("iLightPointCount", nsel);
                 }
-                mesh* im = it->m;
-                if (g_render.tex_factor != im->color) {
-                    g_render.tex_factor = im->color;
-                    vector4 c = rgl::unpack_color(&g_render.tex_factor);
-                    g_effect->SetVector("vMaterialColor", (D3DXVECTOR4*)&c);
+                {
+                    const unsigned& col = it->m->color;
+                    if (g_render.tex_factor != col) {
+                        g_render.tex_factor = col;
+                        vector4 c = rgl::unpack_color(&g_render.tex_factor);
+                        g_effect->SetVector("vMaterialColor", (D3DXVECTOR4*)&c);
+                    }
                 }
-                if (g_render.tex_factor2 != (unsigned)im->f40) {
-                    g_render.tex_factor2 = im->f40;
-                    vector4 c = rgl::unpack_color(&g_render.tex_factor2);
-                    g_effect->SetVector("vMaterialColor2", (D3DXVECTOR4*)&c);
+                {
+                    const int& col = it->m->f40;
+                    if (g_render.tex_factor2 != (unsigned)col) {
+                        g_render.tex_factor2 = col;
+                        vector4 c = rgl::unpack_color(&g_render.tex_factor2);
+                        g_effect->SetVector("vMaterialColor2", (D3DXVECTOR4*)&c);
+                    }
                 }
-                ((mi_ops*)im)->setup_material();
-                if (!tex_ok)
-                    goto next_item;
+                ((mi_ops*)it->m)->setup_material();
             }
+            if (!tex_ok)
+                goto next_item;
 
             // ---- material / technique ----
             if (cur_mat != mat) {
@@ -496,15 +497,14 @@ void render_batch::render_scene(scene* sc)
 
             // ---- per-mesh constants ----
             {
-                mesh* im = it->m;
-                if (im->m1d4.u.x != g_render.tex_off[0] || im->m1d4.u.y != g_render.tex_off[1]) {
-                    g_render.tex_off[0] = im->m1d4.u.x;
-                    g_render.tex_off[1] = im->m1d4.u.y;
+                const vector4& uv = it->m->m1d4.u;
+                if (g_render.tex_off[0] != uv.x || g_render.tex_off[1] != uv.y) {
+                    g_render.tex_off[0] = uv.x;
+                    g_render.tex_off[1] = uv.y;
                     g_effect->SetVector("texture_offset", (D3DXVECTOR4*)g_render.tex_off);
                 }
-                im = it->m;
                 int cull = g_render.cull_setting;
-                if (im->f4c) {
+                if (it->m->f4c) {
                     if (cull == 3)
                         cull = 2;
                     else if (cull == 2)
@@ -516,27 +516,26 @@ void render_batch::render_scene(scene* sc)
                 }
             }
             {
-                mesh* im = it->m;
                 D3DXMATRIX world;
-                if (im->f34 == 0) {
-                    skin* ip = im->res;
+                if (it->m->f34 == 0) {
+                    skin* ip = it->m->res;
                     if (ip->flags & 0x20000) {
-                        *(rot3*)&world = *(rot3*)&im->m194;
+                        *(rot3*)&world = *(rot3*)&it->m->m194;
                         ((frame4*)&world)->o = sc->fr.m.o;
                         world._43 *= 0.75f;
                     } else {
-                        world = *(D3DXMATRIX*)&im->m194;
+                        world = *(D3DXMATRIX*)&it->m->m194;
                     }
-                } else if (im->f34 == 1) {
+                } else if (it->m->f34 == 1) {
                     frame4 w;
-                    w.o = im->m194.o;
-                    w.rot.u = im->m194.u;
+                    w.o = it->m->m194.o;
+                    w.rot.u = it->m->m194.u;
                     w.rot.s = sc->fr.m.s;
                     w.rot.f = cross_i(w.rot.u, w.rot.s);
                     float len = (float)sqrt(w.rot.u.z * w.rot.u.z + w.rot.u.y * w.rot.u.y + w.rot.u.x * w.rot.u.x);
                     if (len > 1e-10f) {
-                        float inv = 1.0f / len;
-                        w.rot.u.x *= inv; w.rot.u.y *= inv; w.rot.u.z *= inv;
+                        len = 1.0f / len;
+                        w.rot.u.x *= len; w.rot.u.y *= len; w.rot.u.z *= len;
                     } else {
                         w.rot.u.x = 0.0f; w.rot.u.y = 1.0f; w.rot.u.z = 0.0f;
                     }
@@ -544,7 +543,7 @@ void render_batch::render_scene(scene* sc)
                     world = *(D3DXMATRIX*)&w;
                 } else {
                     frame4 w;
-                    w.o = im->m194.o;
+                    w.o = it->m->m194.o;
                     w.rot.s = sc->fr.m.s;
                     w.rot.f = sc->fr.m.f;
                     w.rot.u = sc->fr.m.u;
@@ -565,14 +564,13 @@ void render_batch::render_scene(scene* sc)
                 g_effect->SetMatrixTranspose("matWorldViewProj", &wv);
             }
             if (cur_mat->flags20 & 0x80000000) {
-                mesh* im = it->m;
-                if (im->p220) {
-                    void* bo = (void*)im->f224;
+                if (it->m->p220) {
+                    void* bo = (void*)it->m->f224;
                     if (g_render.bone_origin_cache != bo) {
                         g_render.bone_origin_cache = bo;
                         g_effect->SetVectorArray("matBoneOriginArray", ((vec_arr*)bo)->data, ((vec_arr*)bo)->count);
                     }
-                    g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)im->p220, im->f228);
+                    g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)it->m->p220, it->m->f228);
                 } else {
                     vec_arr* d = (vec_arr*)&bone_origins;
                     if (g_render.bone_origin_cache != d) {
@@ -590,15 +588,15 @@ void render_batch::render_scene(scene* sc)
             g_effect->CommitChanges();
             {
                 std::vector<face20>& faces = src->local_a0 ? src->v90 : ((mesh_calls*)src->parent)->get90_();
-                int nface3 = (int)faces.size() * 3;
+                int nface = (int)faces.size();
                 mesh* im = it->m;
                 std::vector<vertex60>& verts = im->local_a1 ? im->v50 : ((mesh_calls*)im->parent)->get50_();
                 int nvert = (int)verts.size();
-                g_render.dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, im->slots[0].f8, 0, nvert, src->slots[1].f8, nface3 / 3);
+                g_render.dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, im->slots[0].f8, 0, nvert, src->slots[1].f8, nface * 3 / 3);
             }
           next_item:
-            ++it;
-        } while (it != scene_items(sc).end());
+            ;
+        }
     }
     g_effect->EndPass();
     g_effect->End();

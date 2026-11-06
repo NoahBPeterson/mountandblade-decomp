@@ -1416,6 +1416,11 @@ site, trace it back to the function's first temporary (section 6.5).
 These are not absolute: a reference local flipped SIB order on 0x4c1e10, and an inline helper with reference parameters moved
 `fld/fmul` order on 0x414960, so try one of those before giving up.
 
+- **A ternary keeps a rounded int in a register (`terrain_render` 0x46baf0).** `int k = !(density-fl<=0.5f) ? k0+1 : k0` stayed in a register where `if (...) k++` homed it in memory. In the same row, `float p[2]` for a pair of products gave the original's shape: both products, then subtract, then spill.
+- **Re-deriving a reference per call can flip commutative x87 loads (0x46ad50).** Load order follows when the operand's IL appears. `quad(x,y).nrm[flip]` at each call cut the wrong fld/fadd lanes from 6 to 3.
+- **A constant store written first keeps its register live (0x4686a0).** `f40 = 1.0f; f0 = 0;` ahead of the -1 stores put -1 in esi; cl sinks those two stores back to the original's order.
+- **Index every element read through the same base (0x46d8c0).** `v->lights[i]` for all three reads, with a local `ls` kept only for the size test, gave `mov edx,ecx` and `lea edx,[edx+esi*4]`.
+
 ## 15. Not source-controllable, or without a known lever
 
 Record the function as complete and move on after two rounds without a diff drop.
