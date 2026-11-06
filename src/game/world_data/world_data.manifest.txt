@@ -70,3 +70,4 @@
 ../src/game/world_data/world_data.cpp  ?spread_party_experience@GameW@@QAEXH@Z  004957d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_pos@GameW@@QAEXMMHM@Z  00491e50  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?append@DropDown@@UAEXPBUtstring@@@Z  00493400  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?mark_kind@GameW@@QAEXH@Z  00490990  /O2 /MT /Gy /TP

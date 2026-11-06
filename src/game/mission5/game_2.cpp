@@ -328,7 +328,7 @@ struct map_v2 {                                                     // the two-f
     float x, y;
     map_v2() {}
     map_v2(float a, float b) : x(a), y(b) {}
-    float length() const { return (float)sqrt(x * x + y * y); }
+    float length() const { float l = x * x; l += y * y; return (float)sqrt(l); }
 };
 static inline float map_len(const rgl::vector4& v) { float l = v.x * v.x; l += v.z * v.z; l += v.y * v.y; return (float)sqrt(l); }
 static inline map_v2 map_xy(const rgl::vector4& p) { return map_v2(p.x, p.y); }
@@ -338,7 +338,6 @@ static inline int map_add_vertex(rgl::mesh* m, int index, const vec2& uv, const 
 }
 static inline void map_add(rgl::vector4& a, const rgl::vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
 static inline void map_scale(rgl::vector4& v, float k) { v.x *= k; v.y *= k; v.z *= k; }
-static inline void map_mul(rgl::vector4& v, const float& k) { v.x *= k; v.y *= k; v.z *= k; }
 struct map_ground {                                                 // NavData with its edge vector typed
     rgl::vec<NavVert> verts;
     rgl::vec<NavCell> cells;
@@ -1200,6 +1199,8 @@ void Game::load_game_data(int extra_triggers)
     *(map_v2*)&c[22] = map_v2(100.0f, 50.0f);            // record 5 tail
 }
 
+static inline void clear_ref(ItemRef& r) { r.item = -1; r.m4 = 0; }
+static inline void r_float2(stream_base& s, float* v) { s.r_float(v).r_float(v + 1); }
 // the engine's fast float floor: bias non-positive values by (1 - 2^-24), then truncate
 static int ftoi_floor(float t)
 {
@@ -1252,20 +1253,20 @@ void TroopFile::read_file(stream_base& s)
         s.r_int(pa);
         s.r_int(pa + 1);
     }
-    for (int i = 0; i < 10; ++i) {
-        p10[i].item = -1;
-        p10[i].m4 = 0;
-    }
+    for (int i = 0; i < 10; ++i)
+        clear_ref(p10[i]);
     for (int i = 0; i < 4; ++i)
         s.r_int(&f58[i]);
 
     s.r_int(&n);
-    if (n < 1)
+    if (n <= 0)
         n = 1;
-    fb0 = n;
-    int base = g_level_xp[n];
-    float t = (float)(rand() % 0x3dc9) * (float)(g_level_xp[n + 1] - base) * (1.0f / 0x3dc9);
-    f9c = base + ftoi_floor(t);
+    int lv = n;
+    fb0 = lv;
+    int base = g_level_xp[lv];
+    float t = (float)(rand() % 0x3dc9) * (float)(g_level_xp[lv + 1] - base) * (1.0f / 0x3dc9);
+    base += ftoi_floor(t);
+    f9c = base;
 
     for (int i = 0; i < 7; ++i) {
         int v;
@@ -1275,12 +1276,13 @@ void TroopFile::read_file(stream_base& s)
     for (int i = 0; i < 6; ++i)
         s.r_uint(&f68[i]);
 
+    int str = f58[0];
     int b = (f68[4] >> 16) & 0xf;
     if (b < 0)
         b = 0;
-    if (b > (*(int*)((char*)&g_skill_tbl + 0x9c4)))
+    else if (b > (*(int*)((char*)&g_skill_tbl + 0x9c4)))
         b = (*(int*)((char*)&g_skill_tbl + 0x9c4));
-    fa0 = (float)(f58[0] + 0x23 + b * 2);
+    fa0 = (float)(str + 0x23 + b * 2);
 
     for (int i = 0; i < 4; ++i)
         s.r_u64(&u3c0[i]);
@@ -1390,17 +1392,20 @@ void FactionFile::read_file(stream_base& s, int count)
     }
 }
 
+typedef std::vector<tstring>::iterator rv_it;
+static inline ptr_tag rv_cat(rv_it, tstring*) { ptr_tag c; return c; }
+static inline tstring* rv_uninit(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return uninit_copy_str(&*f, &*l, d, al, rv_cat(f, d)); }
+static inline tstring* rv_ucopy(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return rv_uninit(f, l, d, al); }
 // @ 0x524bc0
 void tstring_vec::reserve(unsigned n)
 {
     if (n > 0x0fffffff)
-        VEC_XLEN_CALL(this);
+        VEC_XLEN(this);
     if (capacity() >= n)
         return;
     tstring* p = (tstring*)::operator new(n * 0x10);
     try {
-        ptr_tag t;
-        uninit_copy_str(_Myfirst, _Mylast, p, *(tstring_alloc*)this, t);
+        rv_ucopy(begin(), end(), p, *(tstring_alloc*)this);
     }
     catch (...) {
         ::operator delete(p);
@@ -1450,8 +1455,8 @@ void SceneFile::read_file(stream_base& s)
     s.r_int(&f30);
     s.r_tstr(RSTR(&f34));
     s.r_tstr(RSTR(&f44));
-    s.r_float(&f54).r_float(&f58);
-    s.r_float(&f5c).r_float(&f60);
+    r_float2(s, &f54);
+    r_float2(s, &f5c);
     s.r_float(&f64);
     s.r_tstr(RSTR(&f68));
     s.r_int(&fbc);
@@ -1468,18 +1473,31 @@ void SceneFile::read_file(stream_base& s)
     tmp.read(s444);
 }
 
+struct LocalVecs {                                                  // Local's three record vectors
+    char pad0[0x18];
+    std::vector<V0> v0;                                             // +0x18
+    std::vector<Rec64> v2;                                          // +0x28
+    std::vector<V1> v1;                                             // +0x38
+};
 // @ 0x524f00
 void Local::read(stream_base& s)
 {
-    int n0 = (int)size0();
-    s.w_uint((unsigned*)&n0);
-    for (unsigned i = 0; i < size0(); ++i)
-        s.w_float((float*)&v0_first[i].a).w_float((float*)&v0_first[i].b).w_float((float*)&v0_first[i].c);
+    LocalVecs& L = *(LocalVecs*)this;
+    {
+        int n = (int)L.v0.size();
+        s.w_uint((unsigned*)&n);
+    }
+    for (unsigned i = 0; i < L.v0.size(); ++i) {
+        V0& e = L.v0[i];
+        s.w_float((float*)&e.a).w_float((float*)&e.b).w_float((float*)&e.c);
+    }
 
-    int n1 = (int)size1();
-    s.w_uint((unsigned*)&n1);
-    for (unsigned i = 0; i < size1(); ++i) {
-        V1& e = v1_first[i];
+    {
+        int n = (int)L.v1.size();
+        s.w_uint((unsigned*)&n);
+    }
+    for (unsigned i = 0; i < L.v1.size(); ++i) {
+        V1& e = L.v1[i];
         s.w_int(&e.p4);
         s.w_int(&e.p0);
         s.w_int(&e.p1);
@@ -1487,10 +1505,12 @@ void Local::read(stream_base& s)
         s.w_int(&e.p3);
     }
 
-    int n2 = (int)size2();
-    s.w_uint((unsigned*)&n2);
-    for (unsigned i = 0; i < size2(); ++i) {
-        Rec64& e = v2_first[i];
+    {
+        int n = (int)L.v2.size();
+        s.w_uint((unsigned*)&n);
+    }
+    for (unsigned i = 0; i < L.v2.size(); ++i) {
+        Rec64& e = L.v2[i];
         s.w_int(&e.n);
         for (int k = 0; k < e.n; ++k)
             s.w_int(&e.a[k]);

@@ -148,3 +148,19 @@ a real call (0x4378a0) except in the two functions where the original inlines it
   and rows where the positional resolution audit cannot pair the symbols of a function that is not byte-exact).
 - Regression of the shared header changes: every manifest under src/game, src/rgl/xmlcfg and src/rgl/shapes whose sources
   include one of the changed headers (59 manifests) re-run: all byte-exact as before; `compile_all` on all of `src/`.
+
+## 0x43a280..0x460160 merged into agent_logic.cpp
+
+The tail of agent_stats.cpp (from 0x43a280), agent_ai.cpp, agent_combat.cpp, agent/phys_set.cpp and agent_fx_sound.cpp are now one file with agent_logic.cpp, in address
+order (docs/original_tus.md A1). agent_stats.cpp keeps 0x437830..0x43a280. Measured with work/match/bm4agm_* on 182 rows: exact 104 -> 107, none lost, diff bytes 97,672 -> 95,863.
+
+- Dropped: the duplicate bodies (play_hit_sound, play_sound_var, update_quiver, pick_sound_ids, next_used, first_used, vnorm, cross3, vsub, ui_weapon_class_name; the copy at
+  the function's own address stayed), the scaffolding ui_weapon_class_name_user and ui_other2, the specializations this file instantiates (vector<int>::push_back,
+  _Destroy_range<E56>, fill<E56>, _Copy_backward_opt<E56>).
+- Shims merged: KeyHolder (agent/agent.h; agent_stats.cpp includes it), Table1f8 (agent2/agent_ai.h; agent_logic.h includes it), alloc_e56 (agent3/agent_types.h).
+- `HNODE_LOAD_ORDER_COPY` is now defined by agent_stats.cpp only: 0x438b10 needs it on, find_path and reachable need it off.
+- `ANIM_SLOT_SET_OUT_OF_LINE` is on for the whole file; on_wield_changed 0x444370 writes AnimSlot::set out at two sites (aset_fx).
+- `STD_VECTOR_INT_INSTANTIATED_HERE` and `INT_HASH_LOWER_BOUND_INSTANTIATED_HERE` switch off the two std_vec_out_of_line.h declarations (resize, operator=) and the glyph_lookup.h
+  one in this file. `vector<int>::_Insert_n` stays declared only: a visible body took 0x44c210 from 808 to 619 identical instructions. The instance at 0x43e7b0 is the folded vector<RecJ*> one.
+- agent_fx_sound.h is included at its section, not at the top: its itcf_* macros are __int64, and 0x43fd10's section has an int enum of the same names.
+- RGL_VECTOR4_OPS_OUT_OF_LINE is gone (it was on for agent_fx_sound only). update_alarm 0x443140 now inlines the operator- the original calls at 0x407ca0: same arithmetic, no behaviour change.

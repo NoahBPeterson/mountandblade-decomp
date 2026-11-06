@@ -10,12 +10,12 @@
 #include "../item_ref.h"
 #include "../../rgl/rgl_math.h"   // first: rgl_base.h would otherwise pull rgl_math.h in before agent/item_kind.h includes rgl.h
 #include "../../include/rgl_base.h"
+#include "../agent2/agent_ai.h"                       // Table1f8 (0x43b100, 0x43b130)
 
 // ---- canonical declarations -----------------------------------------------------------------------------------------------
 // Members this module calls that other objects define, under the defining classes' names (the views below and the call sites in the .cpp
 // reach them through these; each cites the evidence that the object is that class: same layout / the shared out-of-line code).
 struct Poser;                                            // agent3/agent_fx_sound.h: scene entity and lod mesh share add_extra 0x442110 / add_to_list 0x441ff0
-struct Table1f8 { int get_f1f0(unsigned i); int get_f1f4(unsigned i); };   // 0x43b100, 0x43b130 (agent2/agent_ai.cpp)
 #include "../ui/timer_list.h"                           // TimerList: the sound-event list of PropKind / ItemKind (update 0x48add0)
 struct FireRay;
 struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)

@@ -249,7 +249,7 @@ struct note_window {
 };
 
 // The party notes use get_party (raw page read) except the find() in the back-reference scan, which uses get_w
-// (vector::operator[]: `lea; mov`, 0x50c0xx). get_w costs more inside the compiler even where both emit the same code: with
+// (vector::operator[]: `lea; mov`, 0x50bfe2). get_w costs more inside the compiler even where both emit the same code: with
 // get_w everywhere the troop scan's operand order flips (0x50bca6: `lea ecx,[eax+edi]`, original `lea ecx,[edi+esi]`).
 // @ 0x50a1c0
 void note_window::build(int page_, int arg_)

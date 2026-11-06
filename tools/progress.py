@@ -367,7 +367,9 @@ def plot_history(path):
         saved = sorted((datetime.datetime.fromisoformat(p["when"]), p) for p in hist.values())
 
         def exact_at(t, key):
-            prior = [p for w, p in saved if w <= t and p.get(key) is not None]
+            # the --plot point written just after a sweep belongs to it (they are seconds apart)
+            lim = t + datetime.timedelta(minutes=5)
+            prior = [p for w, p in saved if w <= lim and p.get(key) is not None]
             return prior[-1][key] if prior else (saved[0][1].get(key, 0.0) if saved else 0.0)
         for ax, suffix, total, title in ((grid[1][0], "", G, "All game functions, by evidence"),
                                          (grid[1][1], "_sz", B, "... by code size")):

@@ -1,4 +1,4 @@
-// agent_types.h: the classes shared by agent_stats.cpp (0x437830..0x43b100) and agent_ai.cpp (0x43b100..0x43e190): the
+// agent_types.h: the classes shared by agent_stats.cpp (0x437830..0x43a280) and agent4/agent_logic.cpp (0x43a280..0x460160): the
 // 0x1c8-byte placed-object record (PlacedObj), the mission agent (Agent, 0x5928 bytes) with its combat-stat, aiming,
 // target-picking, input-polling, animation and path-goal members, the mission object, the game data, the level
 // (scene) and the navigation mesh, the animation controller (Skeleton, Channel) and the small std::vector /
@@ -11,7 +11,6 @@
 // (terrain_b/poly_mesh.h), SkillCap (skill_cap.h); this header includes them. Curve (src/game/agent/curve.h) is the 0xd8-byte Channel here.
 #ifndef AGENT2_AGENT_TYPES_H
 #define AGENT2_AGENT_TYPES_H
-#define HNODE_LOAD_ORDER_COPY                    // hnode.h: agent_stats.cpp 0x438b10 needs the user-written copy (before mission.h pulls hnode.h in)
 #include <stddef.h>
 #include <math.h>
 #include <vector>
@@ -56,7 +55,6 @@ void __cdecl noise_gradient(float scale, const float* in, float* out);   // 0x41
 // ---- animation: the animator at body+0x304 (Skeleton), its channels (Curve in src/game/agent/curve.h) ---------------
 #include "../../include/key_table.h"                    // KeyTable: the 12-byte track element (vals, keys, count); sample 0x436ae0
 typedef KeyTable Elem12;                                // 12-byte element of an animation's track list
-struct KeyHolder { vector4 sample(int key); };          // 0x436b90 (agent/agent.h): the animation's own key frames at +0x28
 struct Anim {                                           // object with a list of 12-byte tracks at +0x1c (0x439fc0)
     char pad0[0x18];
     std::vector<Elem12> elems;                          // 0x18 (first at 0x1c)

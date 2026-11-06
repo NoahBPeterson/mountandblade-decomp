@@ -1,4 +1,4 @@
-// agent_ai.h: the classes only agent_ai.cpp (0x43b100..0x43e190) needs beyond agent_types.h: the 0x1f8-byte record
+// agent_ai.h: the classes only the 0x43b100..0x43e190 part of agent4/agent_logic.cpp needs beyond agent_types.h: the 0x1f8-byte record
 // table, the int-keyed hash map whose lookup lives here and the two-vector record destroyed at the end.
 // Offsets are the ones read by a function of this module (the address is cited). Names provisional.
 #ifndef AGENT2_AGENT_AI_H
@@ -37,8 +37,5 @@ struct VecPair2 {                                        // two vectors at +0x10
 
 
 void deque_xlen();                                                                                               // 0x43e0e0
-struct alloc_e56 {                                       // std::allocator<E56>: the E56 record (agent3/agent_types.h) as a VecPair2 here
-    void destroy(VecPair2* p);                           // 0x43e150 (thiscall; the allocator itself is unused)
-};
 
 #endif // AGENT2_AGENT_AI_H

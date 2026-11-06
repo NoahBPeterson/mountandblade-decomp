@@ -40,14 +40,3 @@
 ../src/game/agent2/agent_stats.cpp  ?start_anim@Skeleton@@QAEXHPAUAnim@@HH@Z  00439fc0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?all_shapes@Skeleton@@QAEXPAPAUshape_base@@PAH@Z  0043a130  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?lookup@StrTable@@QAEPAUtstring@@ABU2@@Z  0043a1e0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?ui_weapon_class_name@@YAXHPAD@Z  0043a280  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?display_name@TroopRec@@QAEPAUtstring@@XZ  0043a480  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?ufill@vec12@@QAEPAUE12@@PAU2@IABU2@@Z  0043a4a0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?ucopy@vecstr@@QAEPAUtstring@@PAU2@00@Z  0043a4d0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?ucopy@vecint@@QAEPAHPAH00@Z  0043a4f0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?release_body@Agent@@QAEXXZ  0043a6f0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?none_sleeping@PhysSet@@QAE_NH@Z  0043a8a0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?rebuild_static_body@PhysSet@@QAEXH@Z  0043a900  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?start_channel@Agent@@QAEXHPAUSubAnim@@PAIPAM@Z  0043a980  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?uninit_fill_n1c8@@YAXPAUPlacedObj@@IABU1@AAUallocE1c8@@Uptr_tag@@@Z  0043ab50  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?locate_near@world@rgl@@QAEHPBUvector4@2@PAH1@Z  0043abf0  /O2 /MT /Gy /TP

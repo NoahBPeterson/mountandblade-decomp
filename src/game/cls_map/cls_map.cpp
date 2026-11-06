@@ -222,17 +222,32 @@ template class std::vector<int>;
 
 // ---- 0x4d99d0: Font::Font (a real constructor: eax = this) ---------------------------------------------------------
 // The glyph table is a list (sentinel at +0x4c from list_int_buynode) plus a bucket vector of 9 copies of the sentinel.
+#include "../../include/list_int.h"                  // list_int::clear 0x4c4d80 (std::list<int>::clear)
+// the glyph's own constructor (two zeroed float pairs through temporaries, then three zeroed fields)
+struct FloatPair0 { float x, y; __forceinline FloatPair0() { const float z = 0.0f; x = z; y = z; } __forceinline FloatPair0(const FloatPair0& o) { x = o.x; y = o.y; } };
+static __forceinline void glyph_init(Glyph& g)
+{
+    *(FloatPair0*)&g.f0 = FloatPair0();
+    *(FloatPair0*)&g.f8 = FloatPair0();
+    g.f10 = 0.0f;
+    g.f14 = 0.0f;
+    g.f18 = 0.0f;
+}
+struct EmptyTag {};
 // @ 0x4d99d0
 Font::Font()
 {
-    dflt = Glyph();
-    map.head = (GlyphNode*)list_int_buynode((list_int*)&map.pad0[1]);
-    map.count = 0;
-    new (&map.buckets) std::vector<int>(9, (int)map.head);
+    glyph_init(dflt);
+    EmptyTag tag;
+    *(EmptyTag*)&map.pad0[0] = tag;                 // the hash map's empty comparator (a one-byte copy)
+    list_int* l = (list_int*)&map.pad0[1];
+    l->w04 = (list_node_int*)list_int_buynode(l);
+    l->count = 0;
+    map.buckets.std::vector<int>::vector(9, (int)map.head);
     map.i20 = 1;
     map.i24 = 1;
     for (int i = 0; i < 0x200; i++)
-        ascii[i] = Glyph();
+        glyph_init(ascii[i]);
 }
 
 // ---- 0x4d9aa0: the font definition loader (TinyXML) ---------------------------------------------------------------
@@ -560,24 +575,28 @@ struct E24;
 E24* g_5e2928;                                          // 0x5e2928 (the array shutdown() deletes)
 extern Font* g_font;                                // 0x5e2934
 
+inline void del_game(GameData* p) { p->world_free(); operator delete(p); }    // the destructor and delete, as the original expands them
+inline void del_mission(Mission* p) { p->destroy(); operator delete(p); }
+inline void del_list(list_int& l) { l.clear(); operator delete(l.w04); l.w04 = 0; }
+// the font's inlined destructor: the bucket vector, then the list (sentinel at +0x4c)
+inline void del_glyphs(GlyphMap& m)
+{
+    if (m.buckets._Myfirst)
+        operator delete(m.buckets._Myfirst);
+    m.buckets._Myfirst = 0;
+    m.buckets._Mylast = 0;
+    m.buckets._Myend = 0;
+    del_list(*(list_int*)&m.pad0[1]);
+}
+inline void del_font(Font* p) { del_glyphs(p->map); operator delete(p); }
 // @ 0x4da5b0
 HRESULT GameApp::FinalCleanup()
 {
     FSOUND_Close();
-    ((text_stream*)&g_log)->text_stream::w_cstr("Saving options...");     // 0x4153a0 (the log is a text_stream: called directly)
+    ((text_stream*)&g_log)->w_cstr("Saving options...");     // slot 10 (0x4153a0)
     g_options.save();
-    if (((void*)g_game)) {
-        GameData* g = g_game;
-        g->world_free();                // 0x492f40
-        operator delete(g);
-        (*(void**)&g_game) = 0;
-    }
-    if (((void*)g_mission)) {
-        Mission* w = g_mission;
-        w->destroy();                   // 0x4d51d0
-        operator delete(w);
-        (*(void**)&g_mission) = 0;
-    }
+    if (g_game) { del_game(g_game); (*(void**)&g_game) = 0; }
+    if (g_mission) { del_mission(g_mission); (*(void**)&g_mission) = 0; }
     if (g_items) {
         delete[] g_items;
     }
@@ -609,26 +628,10 @@ HRESULT GameApp::FinalCleanup()
         delete g_windows.arr[i];
         g_windows.arr[i] = 0;
     }
-    if (g_font) {
-        // the font's inlined destructor: the bucket vector, then the list (sentinel at +0x4c)
-        Font* f = g_font;
-        if (f->map.buckets._Myfirst)
-            operator delete(f->map.buckets._Myfirst);
-        f->map.buckets._Myfirst = 0;
-        f->map.buckets._Mylast = 0;
-        f->map.buckets._Myend = 0;
-        ((list_int*)&f->map.pad0[1])->clear();
-        operator delete(f->map.head);
-        f->map.head = 0;
-        operator delete(f);
-    }
+    if (g_font)
+        del_font(g_font);
     ExitSkinMagicLib();
-    if (g_log.is_open) {
-        if (g_log.flush() == 0)
-            fclose(g_log.fp);
-        g_log.failed = 1;
-        g_log.is_open = 0;
-    }
+    ((log_stream*)&g_log)->shut();
     return 0;
 }
 
@@ -933,12 +936,9 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
         float sv[2] = { v, v };
         vt(p)->d27(sv);
     }
-    {
-        // the text's y offset uses the text size (0x4dcda2 stores v over the mesh scale's slot [esp+0xc], read at
-        // 0x4dce1f whether or not the text was shrunk), not the mesh scale s
-        float pv[2] = { 0.0f, c * 0.5f - v * 0.3f };
-        vt(p)->d28(pv);
-    }
+    // the text's y offset uses the text size (0x4dcda2 stores v over the mesh scale's slot, read at 0x4dce1f whether or not the text was shrunk), not the mesh scale s
+    float pv[2] = { 0.0f, c * 0.5f - v * 0.3f };
+    vt(p)->d28(pv);
     { struct { int a, b; } ret; vt(p)->d41(&ret, (void*)&text); }
     vt(parent)->d50(p);
     return p;

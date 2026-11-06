@@ -222,7 +222,7 @@
     ],
     "why": "strip_tags scans for '<' ... '>' pairs; the typed strings' alphabet (a-z0-9_) never contains them and the length field (+0xc) is independent of the buffer, so the loop body was never entered (14/40 edges). --text-chars adds markup characters to the generated strings, the hint keeps len within the buffer. Nothing is discarded."
   },
-  "agent_ai 0043b4d0": {
+  "agent_logic 0043b4d0": {
     "args": [
       "--hint",
       "this+50=0,3e800000@0.9",
@@ -454,7 +454,7 @@
     ],
     "why": "Party::update_nav switches on the order kind (+0x5998: 1, 2, 3), the moving flag (+0x5980) and the re-path flag (+0x5988); random ints are almost never 1/2/3, so the kind-2/3 branches, start_path success and the can_move advance loop were never entered (37/58 edges). Soft hints only, nothing is discarded: 52/57 edges, 80.6% insns, 476 valid inputs, 0 mismatches."
   },
-  "agent_fx_sound 004428c0": {
+  "agent_logic 004428c0": {
     "args": [
       "--party-table"
     ],
@@ -805,7 +805,7 @@
     ],
     "why": "--item-table: item-type branches need g_items records of each type; the hints point the agent's slot item ids (this+0x1d0..) and slot indices (this+0x22c..) into the table; --party-table because the row reads g_game"
   },
-  "agent_fx_sound 00443aa0": {
+  "agent_logic 00443aa0": {
     "args": [
       "--item-table=0.6",
       "--hint",
@@ -931,7 +931,7 @@
     ],
     "why": "the static vector's first/last at 0xa180ec must be non-null to reach the destroy loop"
   },
-  "agent_fx_sound 00443730": {
+  "agent_logic 00443730": {
     "args": [
       "--rand-seeded"
     ],
@@ -1052,7 +1052,7 @@
     ],
     "why": "a config-table entry for party_b_member_h (key 0x59a1fc, value \"1\") and a 2.1 width reach the clamp"
   },
-  "agent_combat 0043e190": {
+  "agent_logic 0043e190": {
     "args": [
       "--hint",
       "arg0=3e8@1",

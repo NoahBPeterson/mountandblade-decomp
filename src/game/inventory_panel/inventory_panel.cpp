@@ -296,11 +296,11 @@ static __forceinline void close_tooltip(gui_manager* g)
     g->panel_bg = 0xff101010;
     for (int i = 0; i < 0x50; i++)
         g->lines[i].assign("");
-    g->fa4 = 0;
+    *(float*)&g->fa4 = 0.0f;      // the two immediates here: float zeros, the integer zeros come from ebx (0x510b2a, 0x510b47)
     g->fa8 = -0.03f;
     g->fa0 = 0;
     g->overlay = 0;
-    g->sel_ent = 0;
+    *(float*)&g->sel_ent = 0.0f;
 }
 
 // @ 0x5108d0
@@ -338,71 +338,69 @@ void PartyWindow::refresh_lists(int unused)
     if (locked != 0)
         close_tooltip(&g_gui);
 
+    int i;
     for (int page = 0; page < pages; page++) {
-        if (!page_widget[page]->clear_mask(0x10000))
-            continue;
-        int troop = g_game->player;
-        if (page != 0)
-            troop = w14;
-        int count;
-        if (troop == GD_I(0x90) && w04 == 0)
-            count = 9;
-        else
-            count = TROOP(troop)->inv_count();
-        if (count <= 0)
-            continue;
-        for (int i = 0; i < count; i++) {
-            if (!widgets[page][i]->clear_mask(0x10000))
-                continue;
-            int idx = i;
-            if (locked != 0 && page != 0) {
-                int r = TROOP(troop)->find_free();
-                if (!(troop == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
-                    idx = r;
-            }
-            transfer_slot(&EQUIP(troop, idx), page, idx);
-            place_slot(widgets[page][i], &EQUIP(troop, i), page, i);
-            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
-                locked != 0 && pages == 2) {
-                int other = g_game->player;
-                if (page == 0)
-                    other = w14;
-                int r = TROOP(other)->find_free();
-                if (!(other == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
-                    transfer_slot(&EQUIP(other, r), 1 - page, r);
+        if (page_widget[page]->clear_mask(0x10000)) {
+            int troop = g_game->player;
+            if (page != 0)
+                troop = w14;
+            int count;
+            if (troop == GD_I(0x90) && w04 == 0)
+                count = 9;
+            else
+                count = TROOP(troop)->inv_count();
+            for (i = 0; i < count; i++) {
+                if (widgets[page][i]->clear_mask(0x10000)) {
+                    int idx = i;
+                    if (locked != 0 && page != 0) {
+                        int r = TROOP(troop)->find_free();
+                        if (!(troop == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
+                            idx = r;
+                    }
+                    transfer_slot(&EQUIP(troop, idx), page, idx);
+                    place_slot(widgets[page][i], &EQUIP(troop, i), page, i);
+                    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
+                        locked != 0 && pages == 2) {
+                        int other = g_game->player;
+                        if (page == 0)
+                            other = w14;
+                        Troop* base = g_game->troops;
+                        int r = base[other].find_free();
+                        if (!(other == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
+                            transfer_slot(&((ItemRef*)((char*)base + 0xb4))[other * 0xa1 + r], 1 - page, r);
+                    }
+                }
             }
         }
     }
 
     for (int page = 0; page < rows; page++) {
-        if (!panels[page]->clear_mask(0x10000))
-            continue;
-        for (int i = 0; i < 10; i++) {
-            if (row_slot[page][i] == 0)
-                continue;
-            if (!row_slot[page][i]->clear_mask(0x10000))
-                continue;
-            int troop = g_game->player;
-            if (page != 0)
-                troop = w14;
-            transfer_slot(&GRID(troop, i), page + 2, i);
-            place_slot(row_slot[page][i], &GRID(troop, i), 2, i);
-            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
-                locked != 0 && rows == 2 && page == 1) {
-                int t = g_game->player;
-                Troop* base = g_game->troops;
-                Troop* tr = base + t;
-                int idx = -1;
-                bool found = false;
-                int count = tr->inv_count();
-                for (int k = 0; !found && k < count; k++) {
-                    if (tr->inv[k].item == -1) {
-                        idx = k;
-                        found = true;
+        if (panels[page]->clear_mask(0x10000)) {
+            for (i = 0; i < 10; i++) {
+                if (row_slot[page][i] != 0 && row_slot[page][i]->clear_mask(0x10000)) {
+                    int troop = g_game->player;
+                    if (page != 0)
+                        troop = w14;
+                    transfer_slot(&GRID(troop, i), page + 2, i);
+                    place_slot(row_slot[page][i], &GRID(troop, i), 2, i);
+                    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
+                        locked != 0 && rows == 2 && page == 1) {
+                        int t = g_game->player;
+                        Troop* base = g_game->troops;
+                        Troop* tr = base + t;
+                        int idx = -1;
+                        bool found = false;
+                        int count = tr->inv_count();
+                        for (int k = 0; !found && k < count; k++) {
+                            if (tr->inv[k].item == -1) {
+                                idx = k;
+                                found = true;
+                            }
+                        }
+                        if (idx >= 0)
+                            transfer_slot(&((ItemRef*)((char*)base + 0xb4))[t * 0xa1 + idx], 0, idx);
                     }
                 }
-                if (idx >= 0)
-                    transfer_slot(&((ItemRef*)((char*)base + 0xb4))[t * 0xa1 + idx], 0, idx);
             }
         }
     }
@@ -443,6 +441,14 @@ static __forceinline int round_near(float* p)
     float fl = (float)floor((double)*p);
     int i = (int)fl;
     return (*p - fl <= 0.5f) ? i : i + 1;
+}
+
+// a string's text through a named local: cl keeps the copy, so the pierce/blunt arms of place_slot_mesh's ternaries end
+// in `mov ebp,eax` (0x511ae8) and the temporaries' flag is reloaded after the diamond
+static inline const char* text_of(const tstring* s)
+{
+    const char* text = s->c_str();
+    return text;
 }
 
 // @ 0x510fa0
@@ -543,8 +549,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             int t = ((int)it->f218 >> 8) & 3;
             sprintf(buf, g_strtable.lookup("ui_swing")->c_str(), slot->stat_21x(0),
                     t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
-                           : t == 1 ? g_strtable.lookup("ui_pierce_short")->c_str()
-                                    : g_strtable.lookup("ui_blunt_short")->c_str());
+                           : text_of(t == 1 ? g_strtable.lookup("ui_pierce_short") : g_strtable.lookup("ui_blunt_short")));
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1); }
         }
         if (slot->stat_21x(1)) {
@@ -554,13 +559,11 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             if (direct) {
                 sprintf(buf, g_strtable.lookup("ui_damage")->c_str(), slot->stat_21x(1),
                         t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
-                               : t == 1 ? g_strtable.lookup("ui_pierce_short")->c_str()
-                                        : g_strtable.lookup("ui_blunt_short")->c_str());
+                           : text_of(t == 1 ? g_strtable.lookup("ui_pierce_short") : g_strtable.lookup("ui_blunt_short")));
             } else {
                 sprintf(buf, g_strtable.lookup("ui_thrust")->c_str(), slot->stat_21x(1),
                         t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
-                               : t == 1 ? g_strtable.lookup("ui_pierce_short")->c_str()
-                                        : g_strtable.lookup("ui_blunt_short")->c_str());
+                           : text_of(t == 1 ? g_strtable.lookup("ui_pierce_short") : g_strtable.lookup("ui_blunt_short")));
             }
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1); }
         }
@@ -616,9 +619,8 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     }
 
     if (slot->stat_1ec()) {
-        int color = 0xffee4444;
-        int have = ((Troop*)((char*)g_game->troops + g_game->player * 0x508))->slot_value(slot->item);
-        if (have >= slot->stat_1ec())
+        unsigned color = 0xffee4444;
+        if (((Troop*)((char*)g_game->troops + g_game->player * 0x508))->slot_value(slot->item) >= slot->stat_1ec())
             color = 0xff66ff44;
 
         char need[512];
@@ -1111,93 +1113,91 @@ void MapFlags::commit(char* out)
     int key = g_mission_ctx.pop_key();
     *out = 1;
 
+    if (key != 1 && key != 2 && key != 0x40 && key != 0x20) {
+        if (key == 0x10) {
+            slot_as<MenuWidget>(11)->f4 = 0;
+            if (g_mission_ctx.f20 != 0)
+                slot_as<MenuWidget>(11)->f4 = 2;
+            slot_as<MenuWidget>(11)->f18 = 0x64;
+            slot_as<MenuWidget>(11)->f4 = 0;
+            return g_windows.open(0xb);
+        }
+        else if (key == 0x80) {
+            slot_as<MenuWidget>(8)->f4 = 1;
+            slot_as<MenuWidget>(8)->f18 = 0x64;
+            return g_windows.set_state(8);
+        }
+        else if (key == 0x100) {
+            slot_as<MenuWidget>(12)->f4 = 4;
+            slot_as<MenuWidget>(12)->f18 = 0x64;
+            return g_windows.set_state(0xc);
+        }
+        else if (key == 4) {
+            g_mission_ctx.pick_template();
+            slot_as<MenuWidget>(10)->f18 = 0x64;
+            return g_windows.set_state(0xa);
+        }
+        else if (key == 0x800) {
+            g_mission_ctx.start_battle(GD_I(0x13af0), GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
+            slot_as<MenuWidget>(16)->f18 = 0x64;
+            return g_windows.set_state(0x10);
+        }
+        else if (key == 0x1000) {
+            slot_as<MenuWidget>(27)->f18 = 0x64;
+            return g_windows.set_state(0x1b);
+        }
+        else if (key == 0x2000) {
+            slot_as<MenuWidget>(26)->f18 = 0x64;
+            return g_windows.set_state(0x1a);
+        }
+        else if (key == 8) {
+            g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
+            MI(g_mission, 0x5270) = g_mission_ctx.scene_counter++;
+            SCENE->start_setup();
+            slot_as<MenuWidget>(14)->v4();
+            slot_as<MenuWidget>(14)->f18 = 0x64;
+            return g_windows.set_state(0xe);
+        }
+        else if (key == 0x200) {
+            g_mission_ctx.update_parties();
+            autosave_notice();
+            return g_windows.set_state(7);
+        }
+        else if (key == 0x400 && f8 <= 0) {
+            slot_as<MenuWidget>(6)->f18 = 0x64;
+            return g_windows.set_state(6);
+        }
+        else if (g_game->fc8 == 1) {
+            g_game->fc8 = 0;
+            g_mission_ctx.update_parties();
+            autosave_notice();
+            return g_windows.set_state(7);
+        }
+        else if (f8 > 0) {
+            f2 = 1;
+            slot_as<MenuWidget>(23)->v4();
+            slot_as<MenuWidget>(23)->f18 = 0x64;
+            return g_windows.set_state(0x17);
+        }
+        else {
+            slot_as<MenuWidget>(6)->f18 = 0x64;
+            return g_windows.set_state(6);
+        }
+    }
     if (key == 1) {
         f1 = 1;
         g_mission_ctx.start_mission();
     }
-    else if (key == 2 || key == 0x40 || key == 0x20) {
-        if (key == 2) {
-            g_mission_ctx.build_hero_table(g_mission_ctx.f140, -1, -1, 3);
-        }
-        else if (key == 0x40) {
-            int p = (&g_mission_ctx.ids[1])[-g_mission_ctx.side];
-            PartyMgr* pm = &g_game->parties;
-            g_mission_ctx.build_hero_table(*(int*)((char*)pm->get(p) + 0xac), -1, p, 4);
-        }
-        else {
-            int p = g_mission_ctx.f13c;
-            PartyMgr* pm = &g_game->parties;
-            g_mission_ctx.build_hero_table(*(int*)((char*)pm->get(p) + 0xac), -1, p, 2);
-        }
+    else if (key == 2) {
+        g_mission_ctx.build_hero_table(g_mission_ctx.f140, -1, -1, 3);
     }
-    else if (key == 0x10) {
-        slot_as<MenuWidget>(11)->f4 = 0;
-        if (g_mission_ctx.f20 != 0)
-            slot_as<MenuWidget>(11)->f4 = 2;
-        slot_as<MenuWidget>(11)->f18 = 0x64;
-        slot_as<MenuWidget>(11)->f4 = 0;
-        return g_windows.open(0xb);
+    else if (key == 0x20) {
+        int p = g_mission_ctx.f13c;
+        g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 2);
     }
-    else if (key == 0x80) {
-        slot_as<MenuWidget>(8)->f4 = 1;
-        slot_as<MenuWidget>(8)->f18 = 0x64;
-        return g_windows.set_state(8);
-    }
-    else if (key == 0x100) {
-        slot_as<MenuWidget>(12)->f4 = 4;
-        slot_as<MenuWidget>(12)->f18 = 0x64;
-        return g_windows.set_state(0xc);
-    }
-    else if (key == 4) {
-        g_mission_ctx.pick_template();
-        slot_as<MenuWidget>(10)->f18 = 0x64;
-        return g_windows.set_state(0xa);
-    }
-    else if (key == 0x800) {
-        g_mission_ctx.start_battle(GD_I(0x13af0), GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
-        slot_as<MenuWidget>(16)->f18 = 0x64;
-        return g_windows.set_state(0x10);
-    }
-    else if (key == 0x1000) {
-        slot_as<MenuWidget>(27)->f18 = 0x64;
-        return g_windows.set_state(0x1b);
-    }
-    else if (key == 0x2000) {
-        slot_as<MenuWidget>(26)->f18 = 0x64;
-        return g_windows.set_state(0x1a);
-    }
-    else if (key == 8) {
-        g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
-        MI(g_mission, 0x5270) = g_mission_ctx.scene_counter++;
-        SCENE->start_setup();
-        slot_as<MenuWidget>(14)->v4();
-        slot_as<MenuWidget>(14)->f18 = 0x64;
-        return g_windows.set_state(0xe);
-    }
-    else if (key == 0x200) {
-        g_mission_ctx.update_parties();
-        autosave_notice();
-        return g_windows.set_state(7);
-    }
-    else if (key == 0x400 && f8 <= 0) {
-        slot_as<MenuWidget>(6)->f18 = 0x64;
-        return g_windows.set_state(6);
-    }
-    else if (g_game->fc8 == 1) {
-        g_game->fc8 = 0;
-        g_mission_ctx.update_parties();
-        autosave_notice();
-        return g_windows.set_state(7);
-    }
-    else if (f8 <= 0) {
-        slot_as<MenuWidget>(6)->f18 = 0x64;
-        return g_windows.set_state(6);
-    }
-    else {
-        f2 = 1;
-        slot_as<MenuWidget>(23)->v4();
-        slot_as<MenuWidget>(23)->f18 = 0x64;
-        return g_windows.set_state(0x17);
+    else if (key == 0x40) {
+        int p = (&g_mission_ctx.ids[1])[-g_mission_ctx.side];
+        g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 4);
     }
 
     slot_as<MenuWidget>(16)->f18 = 0x64;

@@ -329,107 +329,100 @@ void C4c31c0::init_screen()
 // @ 0x4e4c70
 void label_refresh(MissionUi* self, tstring key)
 {
+    float v[2];
     tstring name = key + tstring("_text_color");
     int idx = g_game_vars.find(name);
     if (idx >= 0) {
         int c = g_game_vars.get_hex(&idx);
         vt(self)->d38(&c);
     }
-    name = key + tstring("_highlight_text_color");
+    { name = key + tstring("_highlight_text_color"); }
     idx = g_game_vars.find(name);
     if (idx >= 0) {
         int c = g_game_vars.get_hex(&idx);
         vt(self)->d39(&c);
     }
     {
-        float v[2];
-        int idx_x, idx_y;
         bool any = false;
         v[0] = 0.0f;
         v[1] = 0.0f;
-        name = key + tstring("_position_x");
-        idx_x = g_game_vars.find(name);
-        if (idx_x >= 0) {
-            v[0] = g_game_vars.get_float(&idx_x);
+        { name = key + tstring("_position_x"); }
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v[0] = g_game_vars.get_float(&idx);
             any = true;
         }
-        name = key + tstring("_position_y");
-        idx_y = g_game_vars.find(name);
-        if (idx_y >= 0) {
-            v[1] = g_game_vars.get_float(&idx_y);
+        { name = key + tstring("_position_y"); }
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v[1] = g_game_vars.get_float(&idx);
             any = true;                                     // 0x4e4e38: a found y also triggers the call
         }
         if (any)
             vt(self)->d22(v);
     }
     {
-        float v[2];
-        int idx_x, idx_y;
         bool any = false;
         v[0] = 0.0f;
         v[1] = 0.0f;
-        name = key + tstring("_size_x");
-        idx_x = g_game_vars.find(name);
-        if (idx_x >= 0) {
-            v[0] = g_game_vars.get_float(&idx_x);
+        { name = key + tstring("_size_x"); }
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v[0] = g_game_vars.get_float(&idx);
             any = true;
         }
-        name = key + tstring("_size_y");
-        idx_y = g_game_vars.find(name);
-        if (idx_y >= 0) {
-            v[1] = g_game_vars.get_float(&idx_y);
+        { name = key + tstring("_size_y"); }
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v[1] = g_game_vars.get_float(&idx);
             any = true;                                     // 0x4e4e38: a found y also triggers the call
         }
         if (any)
             vt(self)->d25(v);
     }
     {
-        float v[2];
-        int idx_x, idx_y;
         bool any = false;
         v[0] = 0.0f;
         v[1] = 0.0f;
-        name = key + tstring("_text_size_x");
-        idx_x = g_game_vars.find(name);
-        if (idx_x >= 0) {
-            v[0] = g_game_vars.get_float(&idx_x);
+        { name = key + tstring("_text_size_x"); }
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v[0] = g_game_vars.get_float(&idx);
             any = true;
         }
-        name = key + tstring("_text_size_y");
-        idx_y = g_game_vars.find(name);
-        if (idx_y >= 0) {
-            v[1] = g_game_vars.get_float(&idx_y);
+        { name = key + tstring("_text_size_y"); }
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v[1] = g_game_vars.get_float(&idx);
             any = true;                                     // 0x4e4e38: a found y also triggers the call
         }
         if (any)
             vt(self)->d27(v);
     }
     {
-        float v[2];
-        int idx_x, idx_y;
         bool any = false;
         v[0] = 0.0f;
         v[1] = 0.0f;
-        name = key + tstring("_text_position_x");
-        idx_x = g_game_vars.find(name);
-        if (idx_x >= 0) {
-            v[0] = g_game_vars.get_float(&idx_x);
+        { name = key + tstring("_text_position_x"); }
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v[0] = g_game_vars.get_float(&idx);
             any = true;
         }
-        name = key + tstring("_text_position_y");
-        idx_y = g_game_vars.find(name);
-        if (idx_y >= 0) {
-            v[1] = g_game_vars.get_float(&idx_y);
+        { name = key + tstring("_text_position_y"); }
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v[1] = g_game_vars.get_float(&idx);
             any = true;                                     // 0x4e4e38: a found y also triggers the call
         }
         if (any)
             vt(self)->d28(v);
     }
-    name = key + tstring("_text_flags");
+    { name = key + tstring("_text_flags"); }
     idx = g_game_vars.find(name);
     if (idx >= 0) {
-        int f = g_game_vars.get_hex(&idx);
-        vt(self)->d29(&f);
+        int c = g_game_vars.get_hex(&idx);
+        vt(self)->d29(&c);
     }
 }
 
@@ -571,10 +564,7 @@ static __forceinline float config_float_key(const tstring& n)
     int i = g_game_vars.find(n);
     float r = 0.0f;
     if (i >= 0) {
-        char* v = g_game_vars.entries[i].value.buf;
-        if (!v)
-            v = (char*)&g_game_vars.entries[i].value.buf;
-        r = (float)atof(v);
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
     }
     return r;
 }
@@ -586,10 +576,7 @@ static __forceinline float config_float(const char* name)
     int i = g_game_vars.find(n);
     float r = 0.0f;
     if (i >= 0) {
-        char* v = g_game_vars.entries[i].value.buf;
-        if (!v)
-            v = (char*)&g_game_vars.entries[i].value.buf;
-        r = (float)atof(v);
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
     }
     return r;
 }
@@ -985,9 +972,9 @@ void Shape::build_spikes(rgl::mesh* owner)
         l0.y = w * 0.0154f;
         l0.z = w * 0.2f;
         ring[0] = xf_inl(m, l0);
-        ring[1] = xf_inl(m, rgl::vector4(w * -0.0602f, w * -0.148f, w * -0.0666f));
-        ring[2] = xf_inl(m, rgl::vector4(w * -0.0602f, w * 0.1786f, w * -0.0666f));
-        ring[3] = xf_inl(m, rgl::vector4(w * 0.2226f, w * 0.0154f, w * -0.0666f));
+        ring[1] = xf_inl(m, rgl::vector4(w * -0.060200002f, w * -0.148f, w * -0.0666f));
+        ring[2] = xf_inl(m, rgl::vector4(w * -0.060200002f, w * 0.1786f, w * -0.0666f));
+        ring[3] = xf_inl(m, rgl::vector4(w * 0.222600013f, w * 0.0154f, w * -0.0666f));
 
         int idx[4];
         int k = 0;
@@ -1312,11 +1299,11 @@ void Skin::read(MsStream* s)
     body = g_resmgr.get_lod_mesh(name);
     stream_str(s, &name);
     calf_l = g_resmgr.get_lod_mesh(name);
-    name.buf[name.len - 1] = (name.buf[name.len - 1] == 'l') ? 'r' : 'R';
+    { int n = name.len; name.buf[n - 1] = (name.buf[n - 1] == 'l') ? 'r' : 'R'; }
     calf_r = g_resmgr.get_lod_mesh(name);
     stream_str(s, &name);
     hand_l = g_resmgr.get_lod_mesh(name);
-    name.buf[name.len - 1] = (name.buf[name.len - 1] == 'l') ? 'r' : 'R';
+    { int n = name.len; name.buf[n - 1] = (name.buf[n - 1] == 'l') ? 'r' : 'R'; }
     hand_r = g_resmgr.get_lod_mesh(name);
     stream_str(s, &head_name);
     head = g_resmgr.get_lod_mesh(head_name);
@@ -1387,27 +1374,27 @@ void Skin::read(MsStream* s)
         (((std::vector<MissionRec2>*)(void*)&face_textures)->*fn)(n, MissionRec2());   // 0x4e41e0
     }
     for (int i = 0; i < n_face_tex; i++) {
-        MissionRec2* c = (MissionRec2*)&face_textures[i];
-        stream_str(s, &c->name);
-        c->mat10 = g_resmgr.get_material(c->name);                // 0x418a70
+        stream_str(s, &((MissionRec2&)face_textures[i]).name);
+        ((MissionRec2&)face_textures[i]).mat10 = g_resmgr.get_material(((MissionRec2&)face_textures[i]).name);                // 0x418a70
         {
             tstring lod(".LOD");
-            c->mat14 = g_resmgr.get_material(c->name + lod);     // 0x42c840, 0x418a70
+            ((MissionRec2&)face_textures[i]).mat14 = g_resmgr.get_material(((MissionRec2&)face_textures[i]).name + lod);     // 0x42c840, 0x418a70
         }
-        stream_u(s, &c->color18);
+        stream_u(s, &((MissionRec2&)face_textures[i]).color18);
         if (g_use_shaders) {
-            rgl::vector4 col = rgl::unpack_color(&c->color18);
+            unsigned& color = ((MissionRec2&)face_textures[i]).color18;
+            rgl::vector4 col = rgl::unpack_color(&color);
             col.x *= col.x;
             col.y *= col.y;
             col.z *= col.z;
-            c->color18 = rgl::pack_color(&col);                     // 0x40e440
+            color = rgl::pack_color(&col);                     // 0x40e440
         }
         int nref;
         stream_i(s, &nref);
         int ntile;
         stream_i(s, &ntile);
         if (ntile >= 2)
-            c->n_ac = ntile;
+            ((MissionRec2&)face_textures[i]).n_ac = ntile;
         for (int j = 0; j < nref; j++) {
             tstring nm;
             stream_str(s, &nm);
@@ -1415,14 +1402,15 @@ void Skin::read(MsStream* s)
             for (unsigned t = 0; found == -1 && t < hair_textures.size(); t++) {
                 if (hair_textures[t].equals(nm)) {                           // 0x42bdd0
                     found = t;
-                    c->refs.push_back(found);                       // _Insert_n 0x43e7b0 when full
+                    ((MissionRec2&)face_textures[i]).refs.push_back(found);                       // _Insert_n 0x43e7b0 when full
                 }
             }
         }
         for (int j = 0; j < ntile; j++) {
             unsigned argb;
             stream_u(s, &argb);
-            c->tiles[j] = rgl::unpack_color(&argb);
+            rgl::vector4 t = rgl::unpack_color(&argb);
+            ((MissionRec2&)face_textures[i]).tiles[j] = t;
         }
     }
 
@@ -1456,19 +1444,18 @@ void Skin::read(MsStream* s)
     stream_i(s, &nface);
     { Constraint z; memset(&z, 0, sizeof z); constraints.resize(nface, z); }    // 0x4ccf60
     for (int i = 0; i < nface; i++) {
-        Constraint* f = &constraints[i];
-        stream_f(s, &f->limit);
-        stream_i(s, &f->mode);
+        stream_f(s, &constraints[i].limit);
+        stream_i(s, &constraints[i].mode);
         int k;
         stream_i(s, &k);
-        f->n = (k < 0x3f) ? k : 0x3f;
+        constraints[i].n = (k < 0x3f) ? k : 0x3f;
         for (int j = 0; j < k; j++) {
-            if (j < f->n) {
-                stream_f(s, &f->t[j].coef);
-                stream_i(s, &f->t[j].idx);
+            if (j < constraints[i].n) {
+                stream_f(s, &constraints[i].t[j].coef);
+                stream_i(s, &constraints[i].t[j].idx);
             } else {                                                // past 0x3f: read into entry 0
-                stream_f(s, &f->t[0].coef);
-                stream_i(s, &f->t[0].idx);
+                stream_f(s, &constraints[i].t[0].coef);
+                stream_i(s, &constraints[i].t[0].idx);
             }
         }
     }

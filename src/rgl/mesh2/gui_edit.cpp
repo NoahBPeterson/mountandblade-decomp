@@ -181,42 +181,37 @@ void list_int::clear()
 }
 
 // @ 0x4c4dc0
-// std::list<int>::_Buynode: allocates a 0x28-byte node and links it to itself on both sides.
+// std::list::_Buynode() of a list with 0x20-byte values: allocates a 0x28-byte node and links it to itself on both sides.
 void* __fastcall list_int_buynode(list_int* self)
 {
+    std::allocator<list_node_int*> al;
     list_node_int* node = (list_node_int*)operator new(0x28);
-    if (node != 0)
-        node->next = node;
-    if ((list_node_int*)((char*)node + 4) != 0)
-        node->prev = node;
+    int linkcnt = 0;
+    try {
+        al.construct(&node->next, node);
+        ++linkcnt;
+        al.construct(&node->prev, node);
+    } catch (...) {
+        if (0 < linkcnt)
+            al.destroy(&node->next);
+        operator delete(node);
+        throw;
+    }
     return node;
-}
-
-// @ 0x4c4e2f
-// EH funclet of 0x4c4dc0: frees the node under construction and rethrows.
-void list_int_buynode_funclet(list_node_int* node)
-{
-    operator delete(node);
-    throw;
 }
 
 // @ 0x4c4e50
-// std::list<int> node constructor allocator (ret 0xc): allocates a 0x28-byte node and initialises it through
-// 0x4be9c0 with the three arguments of the caller.
+// std::list::_Buynode(next, prev, value) of the same list (ret 0xc): the node's constructor is 0x4be9c0.
 void* __fastcall list_int_make_node(list_int* self, void*, void* a, void* b, void* c)
 {
     void* node = operator new(0x28);
-    if (node != 0)
+    try {
         new (node) clip_pair(a, b, (const int*)c);
+    } catch (...) {
+        operator delete(node);
+        throw;
+    }
     return node;
-}
-
-// @ 0x4c4ebd
-// EH funclet of 0x4c4e50: frees the node under construction and rethrows.
-void list_int_make_node_funclet(void* node)
-{
-    operator delete(node);
-    throw;
 }
 
 // @ 0x4c4ee0
@@ -279,20 +274,18 @@ void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier*
     }
 }
 
-// @ 0x4c5074
-// EH funclet of 0x4c5010.
-void fill_records_funclet()
-{
-    throw;
-}
-
 // @ 0x4c5080
 // copy-construct a range of 0x38-byte records (the original's auto-object range ctor; its catch funclet 0x4c50ea is part of it). Arguments: first, last, dst (esi = [ebp+8], [ebp+0xc] end, edi = [ebp+0x10]); the 4th is the record ctor's context.
 item38* copy_range38(const item38* first, const item38* last, item38* dst, editor* self)
 {
-    for (; first != last; first++) {
-        ((allocArr*)self)->construct((ArrSet*)dst, *(const ArrSet*)first);   // item38 is the 0x38-byte ArrSet (terrain_a.cpp 0x46b6c0)
-        dst++;
+    item38* next = dst;
+    try {
+        for (; first != last; dst++, first++)
+            ((allocArr*)self)->construct((ArrSet*)dst, *(const ArrSet*)first);   // item38 is the 0x38-byte ArrSet (terrain_
+    } catch (...) {
+        for (; next != dst; next++)
+            ((ArrSet*)next)->~ArrSet();
+        throw;
     }
     return dst;
 }
@@ -371,28 +364,24 @@ void gui_manager::clear_selection()
 // @ 0x4c53f0
 void graph_obj::select_mode(int mode, char on)
 {
-    int i, n;
     if (on)
-        cur = nodes ? (int)(nodes_end - nodes) - 1 : -1;
+        cur = nodev().size() - 1;
     else
         cur = -1;
     if (mode == 0) {
-        n = nodes ? (int)(nodes_end - nodes) : 0;
-        for (i = 0; (unsigned)i < (unsigned)n; i++)
-            nodes[i].used = on;
+        for (unsigned i = 0; i < nodev().size(); i++)
+            nodev()[i].used = on;
     } else if (mode == 1) {
-        n = edges ? (int)(edges_end - edges) : 0;
-        for (i = 0; (unsigned)i < (unsigned)n; i++)
-            edges[i].sel = on;
+        for (unsigned i = 0; i < edgev().size(); i++)
+            edgev()[i].sel = on;
     } else if (mode == 2) {
-        n = faces ? (int)(faces_end - faces) : 0;
-        for (i = 0; (unsigned)i < (unsigned)n; i++)
-            faces[i].used = on;
+        for (unsigned i = 0; i < facev().size(); i++)
+            facev()[i].used = on;
     }
 }
 
 // @ 0x4c54f0
-void graph_obj::calc_vertex_mode(int mode)
+inline __declspec(noinline) void graph_obj::calc_vertex_mode(int mode)
 {
     for (unsigned i = 0; i < nodev().size(); i++)
         nodev()[i].flag = 0;
@@ -415,7 +404,7 @@ void graph_obj::calc_vertex_mode(int mode)
 }
 
 // @ 0x4c5670
-void graph_obj::calc_edge_mode(int mode)
+inline __declspec(noinline) void graph_obj::calc_edge_mode(int mode)
 {
     for (unsigned i = 0; i < edgev().size(); i++)
         edgev()[i].flag = 0;
@@ -436,18 +425,17 @@ void graph_obj::calc_edge_mode(int mode)
 }
 
 // @ 0x4c57d0
-void graph_obj::swap_face_vertices(int a, int b)
+inline __declspec(noinline) void graph_obj::swap_face_vertices(int a, int b)
 {
-    for (unsigned i = 0; i < edges_n(); i++) {
-        edge& e = edges[i];
-        if (e.a == a)
-            e.a = b;
-        else if (e.a == b)
-            e.a = a;
-        if (e.b == a)
-            e.b = b;
-        else if (e.b == b)
-            e.b = a;
+    for (unsigned i = 0; i < edgev().size(); i++) {
+        if (edgev()[i].a == a)
+            edgev()[i].a = b;
+        else if (edgev()[i].a == b)
+            edgev()[i].a = a;
+        if (edgev()[i].b == a)
+            edgev()[i].b = b;
+        else if (edgev()[i].b == b)
+            edgev()[i].b = a;
     }
 }
 
@@ -495,9 +483,8 @@ void graph_obj::remove_vertex_from_polys(int v)
 // @ 0x4c59c0
 void graph_obj::remove_vertex_from_edges(int v)
 {
-    for (unsigned i = 0; i < edges_n(); i++) {
-        edge* e = edges + i;
-        if (e->a == v || e->b == v) {
+    for (unsigned i = 0; i < edgev().size(); i++) {
+        if (edgev()[i].a == v || edgev()[i].b == v) {
             remove_edge(i);
             i--;
         }
@@ -508,26 +495,22 @@ void graph_obj::remove_vertex_from_edges(int v)
 void graph_obj::update_vertex_mode()
 {
     cur = -1;
-    int n = nodes_n();
-    for (int i = 0; i < n; i++)
-        nodes[i].used = 0;
+    for (unsigned i = 0; i < nodev().size(); i++)
+        nodev()[i].used = 0;
     if (mode == 1) {
-        int ne = edges ? (int)(edges_end - edges) : 0;
-        for (int i = 0; i < ne; i++) {
-            if (edges[i].sel) {
-                nodes[edges[i].a].used = 1;
-                nodes[edges[i].b].used = 1;
-                cur = edges[i].b;
+        for (unsigned i = 0; i < edgev().size(); i++) {
+            if (edgev()[i].sel) {
+                nodev()[edgev()[i].a].used = 1;
+                nodev()[edgev()[i].b].used = 1;
+                cur = edgev()[i].b;
             }
         }
     } else {
-        int np = faces ? (int)(faces_end - faces) : 0;
-        for (int i = 0; i < np; i++) {
-            graph_face* p = &faces[i];
-            if (p->used) {
-                for (int k = 0; k < p->count; k++) {
-                    nodes[p->verts[k]].used = 1;
-                    cur = p->verts[k];
+        for (unsigned i = 0; i < facev().size(); i++) {
+            if (facev()[i].used) {
+                for (int k = 0; k < facev()[i].count; k++) {
+                    nodev()[facev()[i].verts[k]].used = 1;
+                    cur = facev()[i].verts[k];
                 }
             }
         }
@@ -538,21 +521,18 @@ void graph_obj::update_vertex_mode()
 void graph_obj::update_edge_mode()
 {
     cur = -1;
-    int ne = edges_n();
-    for (int i = 0; i < ne; i++)
-        edges[i].sel = 0;
+    for (unsigned i = 0; i < edgev().size(); i++)
+        edgev()[i].sel = 0;
     if (mode == 0) {
-        for (int i = 0; i < ne; i++) {
-            if (nodes[edges[i].a].used || nodes[edges[i].b].used)
-                edges[i].sel = 1;
+        for (unsigned i = 0; i < edgev().size(); i++) {
+            if (nodev()[edgev()[i].a].used || nodev()[edgev()[i].b].used)
+                edgev()[i].sel = 1;
         }
     } else {
-        int np = faces ? (int)(faces_end - faces) : 0;
-        for (int i = 0; i < np; i++) {
-            graph_face* p = &faces[i];
-            if (p->used) {
-                for (int k = 0; k < p->count; k++)
-                    edges[p->ends[k]].sel = 1;
+        for (unsigned i = 0; i < facev().size(); i++) {
+            if (facev()[i].used) {
+                for (int k = 0; k < facev()[i].count; k++)
+                    edgev()[facev()[i].ends[k]].sel = 1;
             }
         }
     }
@@ -584,32 +564,28 @@ void graph_obj::refresh_selection()
 {
     if (mode == 0) {
         calc_vertex_mode(mode);
-        int ne = edges ? (int)(edges_end - edges) : 0;
-        for (int i = 0; i < ne; i++) {
-            if (nodes[edges[i].a].flag) {
-                nodes[edges[i].b].used = 1;
-                cur = edges[i].b;
+        for (unsigned i = 0; i < edgev().size(); i++) {
+            if (nodev()[edgev()[i].a].flag) {
+                nodev()[edgev()[i].b].used = 1;
+                cur = edgev()[i].b;
             }
-            if (nodes[edges[i].b].flag) {
-                nodes[edges[i].a].used = 1;
-                cur = edges[i].a;
+            if (nodev()[edgev()[i].b].flag) {
+                nodev()[edgev()[i].a].used = 1;
+                cur = edgev()[i].a;
             }
         }
     } else if (mode == 1) {
         calc_vertex_mode(mode);
-        int ne = edges ? (int)(edges_end - edges) : 0;
-        for (int i = 0; i < ne; i++) {
-            if (nodes[edges[i].a].flag || nodes[edges[i].b].flag)
-                edges[i].sel = 1;
+        for (unsigned i = 0; i < edgev().size(); i++) {
+            if (nodev()[edgev()[i].a].flag || nodev()[edgev()[i].b].flag)
+                edgev()[i].sel = 1;
         }
     } else {
         calc_edge_mode(mode);
-        int np = faces ? (int)(faces_end - faces) : 0;
-        for (int i = 0; i < np; i++) {
-            graph_face* p = &faces[i];
-            for (int k = 0; k < p->count; k++)
-                if (edges[p->ends[k]].flag)
-                    p->used = 1;
+        for (unsigned i = 0; i < facev().size(); i++) {
+            for (int k = 0; k < facev()[i].count; k++)
+                if (edgev()[facev()[i].ends[k]].flag)
+                    facev()[i].used = 1;
         }
     }
 }
@@ -620,17 +596,15 @@ void graph_obj::refresh_selection()
 void graph_obj::find_triangle(const int* e, int* a, int* b)
 {
     int ei = *e;
-    graph_face* f = &faces[edges[ei].f0];
     int idx = -1;
-    for (int k = 0; k < f->count; k++) {
-        if (ei == f->ends[k]) {
+    for (int k = 0; k < facev()[edgev()[ei].f0].count; k++) {
+        if (ei == facev()[edgev()[ei].f0].ends[k]) {
             idx = k;
             break;
         }
     }
-    *a = f->verts[idx];
-    graph_face* g = &faces[edges[*e].f0];
-    *b = g->verts[(idx + 1) % g->count];
+    *a = facev()[edgev()[ei].f0].verts[idx];
+    *b = facev()[edgev()[*e].f0].verts[(idx + 1) % facev()[edgev()[*e].f0].count];
 }
 
 // @ 0x4c6010
@@ -640,10 +614,10 @@ tstring* StrTable::find(const tstring* key)
 {
     unsigned h = hash_string(key);
     lang_bucket* b = &keys[h];
-    int n = b->myfirst == 0 ? 0 : (int)(b->mylast - b->myfirst);
+    int n = (int)b->v().size();
     for (int i = 0; i < n; i++) {
-        if (b->myfirst[i].equals(*key))
-            return vals[h].myfirst + i;
+        if (b->v()[i].equals(*key))
+            return &vals[h].v()[i];
     }
     return 0;
 }
@@ -823,7 +797,8 @@ void ItemPage::format(char* out)
             return;
         }
         tstring key("ui_plant_plantname");
-        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&g_ptypes[index].name.buf));
+        const char* name = g_ptypes[index].name.c_str();
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), name);
     } else if (kind == 2 || kind == 6) {
         if (index < 0 || index >= g_item_kind_count) {
             _snprintf(out, 0x80, "INVALID ITEM");
@@ -882,9 +857,8 @@ void PresentationTable::fill_records(RefRecord* rec)
         records = 0;
     }
     records = new RefItem[count];                       // 0x4c69e9: the array-new expansion builds each entry
-    int n = count;
-    for (int i = 0; i < n; i++)
-        ((PresentationRec*)((char*)records + i * 0x24))->read(*(stream_base*)rec);   // 0x4c23f0: a member call on the item, the stream as its argument
+    for (int i = 0; i < count; i++)
+        ((PresentationRec*)&((RefItem*)records)[i])->read(*(stream_base*)rec);   // 0x4c23f0: a member call on the item
     load_used();                                        // 0x4bdec0: the presentation codes
     // void: the original sets no eax, so its "return value" is whatever the last local destructor (tstring
     // 0x42bc40) leaves in eax, and no caller reads it (inventory_panel/module_files.cpp discards it).
@@ -973,9 +947,10 @@ tstring MenuDoor::translated_door()
 // @ 0x4c6dc0
 void MapDialog::set_object_target(int n)
 {
-    MapRecord* o = &records[n];
-    if (o->target)
+    if (records[n].target) {
+        MapRecord* o = &records[n];
         o->target->set_name(&o->mesh_name, &o->view);
+    }
 }
 
 // @ 0x4c6e00
@@ -1027,13 +1002,15 @@ int* MapDialog::insert_b(int* arr, int index, int z)
 // @ 0x4c6f10
 void MapDialog::place_a(MapRecord* arr, int index, int z)
 {
-    ((void* (__cdecl*)(char*, char*, char*, Alloc2c&, int))copy_uninit_2c)((char*)arr, (char*)index, (char*)z, *(Alloc2c*)this, z);
+    ptr_tag tag;
+    ((void* (__cdecl*)(char*, char*, char*, Alloc2c&, ptr_tag))copy_uninit_2c)((char*)arr, (char*)index, (char*)z, *(Alloc2c*)this, tag);
 }
 
 // @ 0x4c6f30
 void MapDialog::place_b(MapRecord* arr, int index, int z)
 {
-    ((void* (__cdecl*)(char*, char*, char*, Alloc4&, int))copy_uninit_4_range)((char*)arr, (char*)index, (char*)z, *(Alloc4*)this, z);
+    ptr_tag tag;
+    ((void* (__cdecl*)(char*, char*, char*, Alloc4&, ptr_tag))copy_uninit_4_range)((char*)arr, (char*)index, (char*)z, *(Alloc4*)this, tag);
 }
 
 // @ 0x4c6f50
@@ -1046,7 +1023,8 @@ void MapDialog::place_c(MapRecord* arr, int index, int z)
 // @ 0x4c6f70
 void MapDialog::place_d(MapRecord* arr, int index, int z)
 {
-    ((char* (__cdecl*)(blk204*, blk204*, char*, Alloc204*, int))uninit_copy_204)((blk204*)arr, (blk204*)index, (char*)z, (Alloc204*)this, z);
+    ptr_tag tag;
+    ((char* (__cdecl*)(blk204*, blk204*, char*, Alloc204*, ptr_tag))uninit_copy_204)((blk204*)arr, (blk204*)index, (char*)z, (Alloc204*)this, tag);
 }
 
 // @ 0x4c6f90
@@ -1056,8 +1034,8 @@ void MapDialog::refresh_list(char use_sel)
     if (!hWnd)
         return;
     SendMessageA(hWnd, 0x14b, 0, 0);                    // 0x184
-    int count = list->get_count();
-    for (int i = 0; i < count; ++i) {
+    unsigned count = list->get_count();
+    for (unsigned i = 0; i < count; ++i) {
         int kind;
         if (use_sel) {
             kind = g_launcher_cfg.display_bits;
@@ -1082,20 +1060,22 @@ void MapDialog::refresh_list(char use_sel)
                 tstring tmp(buf);
                 char c = ' ';
                 int p = tmp.find(c, 0);
-                tstring sub = tmp.substr(p + 1, p + 3);
-                kind = atoi(sub.buf ? sub.buf : (char*)&sub.buf);
+                kind = atoi(tmp.substr(p + 1, p + 3).c_str());
             }
         }
         int data = 0x16 + (kind == 0x10);
+        bool missing;
         {
             tstring off("ui_off");
-            tstring* r = ((StrTable&)g_strtable).lookup(off);
-            if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)(r->buf ? r->buf : (char*)&r->buf)) < 0) {   // LB_GETTEXT
-                tstring off2("ui_off");
-                tstring* r2 = ((StrTable&)g_strtable).lookup(off2);
-                int idx = SendMessageA(hWnd, 0x14a, 0, (LPARAM)(r2->buf ? r2->buf : (char*)&r2->buf));  // 0x180
-                SendMessageA(hWnd, 0x151, idx, 1);                                          // 0x19a
+            missing = SendMessageA(hWnd, 0x14c, 0, (LPARAM)((StrTable&)g_strtable).lookup(off)->c_str()) < 0;   // LB_GETTEXT
+        }
+        if (missing) {
+            int idx;
+            {
+                tstring off("ui_off");
+                idx = SendMessageA(hWnd, 0x14a, 0, (LPARAM)((StrTable&)g_strtable).lookup(off)->c_str());  // 0x180
             }
+            SendMessageA(hWnd, 0x151, idx, 1);                                          // 0x19a
         }
         int flag;
         if (list->get_sel(i, 1, data, 0, 2, &flag) >= 0) {
@@ -1115,14 +1095,16 @@ void MapDialog::refresh_list(char use_sel)
             }
         }
     }
-    int cur = 0;
-    if (use_sel) {
-        if (g_launcher_cfg.antialiasing == 2)
-            cur = 1;
-        else if (g_launcher_cfg.antialiasing == 4)
-            cur = 2;
+    if (!use_sel) {
+        SendMessageA(hWnd, 0x14e, 0, 0);
+    } else {
+        switch (g_launcher_cfg.antialiasing) {
+        case 1: SendMessageA(hWnd, 0x14e, 0, 0); break;
+        case 2: SendMessageA(hWnd, 0x14e, 1, 0); break;
+        case 4: SendMessageA(hWnd, 0x14e, 2, 0); break;
+        default: SendMessageA(hWnd, 0x14e, 0, 0); break;
+        }
     }
-    SendMessageA(hWnd, 0x14e, cur, 0);                  // 0x186
 }
 
 // @ 0x4c7290
@@ -1221,7 +1203,7 @@ void MapEditorDialog::refresh()
     char buf[0x80];
     float matrix[0x10];
     char name[0x80];
-    int entry_no = 0;
+    int entry_no;
     int mode;
 
     if (((Frame*)g_game)->object_index) {
@@ -1229,9 +1211,9 @@ void MapEditorDialog::refresh()
         matrix[14] += ((Frame*)g_game)->keep;
         pos = *(vector4*)((char*)((Frame*)g_game) + 0x1a09c);
         mode = ((Frame*)g_game)->mode;
+        entry_no = 0;
         var_no = 0;
         sprintf(name, "New Object");
-        entry_no = 0;
     } else if (((Frame*)g_game)->record >= 0) {
         r = ((Map*)g_mission)->records + ((Frame*)g_game)->record;
         entry_no = r->entry_no;
@@ -1281,6 +1263,15 @@ void MapEditorDialog::refresh()
     SetDlgItemTextA(hwnd, 0x48d, buf);
 }
 
+// The record's name through the translation table, or the record's own name (the first member): each record class's
+// inline accessor, written once.
+template <class R>
+inline const tstring* rec_name(R* r)
+{
+    const tstring* p = g_strtable.find(&r->key);
+    return p ? p : &r->name;
+}
+
 // @ 0x4c7bf0
 void MapEditorDialog::update_object_type()
 {
@@ -1288,43 +1279,33 @@ void MapEditorDialog::update_object_type()
         return;
     HWND type = GetDlgItem(hwnd, 0x431);
     HWND list = GetDlgItem(hwnd, 0x433);
-    int type_sel = SendMessageA(type, 0x147, 0, 0);
-    int list_type = SendMessageA(type, WM_USER_LIST, type_sel, 0);
+    int list_type = SendMessageA(type, WM_USER_LIST, SendMessageA(type, 0x147, 0, 0), 0);
     SendMessageA(list, 0x184, 0, 0);
     if (!list_type) {
-        int count = g_propkind_count;
-        for (int i = 0, off = 0; i < count; i++, off += 0x78) {
-            char* e = (char*)((char*)g_propkinds + off);
+        for (int i = 0; i < g_propkind_count; i++) {
             // the substring is a temporary of the add-string call (destroyed once, right after it: 0x4c7caa)
-            int item = SendMessageA(list, 0x180, 0, (LPARAM)((tstring*)e)->substr(4, *(int*)(e + 0xc)).c_str());
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)((Rec78*)g_propkinds)[i].name.substr(4, ((Rec78*)g_propkinds)[i].name.len).c_str());
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 2) {
-        int count = g_item_kind_count;
-        for (int i = 0, off = 0; i < count; i++, off += 0x238) {
-            char* rec = (char*)(*(int*)&g_items + off);
-            tstring* text = g_strtable.find((tstring*)(rec + 0x20));     // the translation of the key at +0x20,
-            if (!text)
-                text = (tstring*)rec;                                   // else the record's name at +0 (0x4c7cfa)
-            int item = SendMessageA(list, 0x180, 0, (LPARAM)text->c_str());
+        for (int i = 0; i < g_item_kind_count; i++) {
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)rec_name(&g_items[i])->c_str());
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 4) {
-        int count = g_ptype_count;
-        for (int i = 0, off = 0; i < count; i++, off += 0x20) {
-            tstring* s = (tstring*)((char*)g_ptypes + off);          // the 0x20-byte record starts with its name (0x4c7d76 reads its buf at +4)
-            int item = SendMessageA(list, 0x180, 0, (LPARAM)s->c_str());
+        for (int i = 0; i < g_ptype_count; i++) {
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)cs(&g_ptypes[i].name.buf));
             SendMessageA(list, 0x19a, item, i);
         }
-    } else if (list_type == 5) {
-        SendMessageA(list, 0x180, 0, (LPARAM)"Passage");
-        SendMessageA(list, 0x19a, 0, 0);
     } else if (list_type == 1) {
         SendMessageA(list, 0x180, 0, (LPARAM)"Entry Point");
         SendMessageA(list, 0x19a, 0, 0);
+    } else if (list_type == 5) {
+        SendMessageA(list, 0x180, 0, (LPARAM)"Passage");
+        SendMessageA(list, 0x19a, 0, 0);
     }
     SendMessageA(list, 0x186, 0, 0);
-    // the selection's item data (LB_GETITEMDATA of LB_GETCURSEL, 0x4c7de2..0x4c7df7): the object index stored by 0x19a
+    // the selection's item data (LB_GETITEMDATA of LB_GETCURSEL, 0x4c7de2..0x4c7df7): the object index stored
     ((Frame*)g_game)->sel = SendMessageA(list, 0x199, SendMessageA(list, 0x188, 0, 0), 0);
     ((Frame*)g_game)->mode = list_type;
 }
@@ -1336,7 +1317,7 @@ void MapEditorDialog::update_objects()
         return;
     HWND list = GetDlgItem(hwnd, 0x438);
     SendMessageA(list, 0x184, 0, 0);
-    for (int i = 0; (unsigned)i < (((Map*)g_mission)->records ? (unsigned)(((Map*)g_mission)->records_end - ((Map*)g_mission)->records) : 0); i++) {
+    for (unsigned i = 0; i < (*(std::vector<MapRecord>*)((char*)g_mission + 0x6688)).size(); i++) {
         char name[128];
         ((ItemPage*)&(*(std::vector<MapRecord>*)((char*)g_mission + 0x6688))[i])->format(name);
         int item = SendMessageA(list, 0x180, 0, (LPARAM)name);
@@ -1344,25 +1325,20 @@ void MapEditorDialog::update_objects()
     }
 }
 
-// The tail of a Rec78 as the array destructor runs it: the owner in the body, then the members in reverse order
-// (the sound set, then the buffer).
-struct Rec78Block {
-    char* p;
-    char* e;
-    char* c;
-    ~Rec78Block() { if (p) operator delete(p); p = 0; e = 0; c = 0; }
+// the whole record as its array destructor runs it (the same layout as module_files.cpp's prop record, whose
+// compiler-generated `delete[]` is this function: symbols/slices/gui_edit.txt names it ??_EMissionObj)
+struct Rec78Owner {
+    virtual ~Rec78Owner();              // slot 0
 };
-struct Rec78Members {
-    Rec78Block buf;                     // +0x44
-    char pad0c[4];
-    RefRecord* owner;                   // +0x54 (deleted through slot 0)
-    char pad14[0x14];
+struct Rec78Whole {
+    tstring name;                       // +0x00
+    char pad10[0x30];                   // +0x10
+    std::vector<char> buf;              // +0x40
+    char pad50[4];
+    Rec78Owner* owner;                  // +0x54
+    char pad58[0x14];
     TimerList groups;                   // +0x6c
-    ~Rec78Members()
-    {
-        if (owner)
-            owner->deleting_dtor(1);
-    }
+    ~Rec78Whole() { delete owner; }
 };
 
 // @ 0x4c7ee0
@@ -1370,14 +1346,9 @@ void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
 {
     if (flags & 2) {
         int n = *((int*)p - 1);
-        Rec78* cur = (Rec78*)p + n;
-        Rec78Members* tail = (Rec78Members*)((char*)cur + 0x44);
-        while (--n >= 0) {
-            --cur;
-            tail = (Rec78Members*)((char*)tail - 0x78);
-            tail->~Rec78Members();
-            cur->name.~tstring();
-        }
+        Rec78Whole* cur = (Rec78Whole*)p + n;
+        while (--n >= 0)
+            (--cur)->~Rec78Whole();
         if (flags & 1)
             operator delete[]((char*)p - 4);
         return (char*)p - 4;
@@ -1393,20 +1364,12 @@ void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
 void graph_obj::update_terrain(int idx, const float* d)
 {
     calc_vertex_mode(idx);
-    for (unsigned i = 0, off = 0;; i++, off += 0x18) {
-        char* base = *(char**)((char*)this + 0x1c);
-        if (!base)
-            break;
-        // 0x4c7fc5 compares the index with the element count unsigned (jae), so a negative count never ends the loop
-        unsigned count = (unsigned)((*(char**)((char*)this + 0x20) - base) / 0x18);
-        if (i >= count)
-            break;
-        float* p = (float*)(*(char**)((char*)this + 0x1c) + off);
-        // 0x4c7fd2 tests the dword (test ecx,ecx): -0.0f counts as set
-        if (((int*)p)[5] != 0) {
-            p[0] += d[0];
-            p[1] += d[1];
-            p[2] += d[2];
+    for (unsigned i = 0; i < nodev().size(); i++) {
+        if (nodev()[i].flag) {
+            node& n = nodev()[i];
+            n.x += d[0];
+            n.y += d[1];
+            n.z += d[2];
         }
     }
 }
@@ -1449,8 +1412,7 @@ void Block::read(stream_base* stream, int version)
     stream->r_int((int*)((char*)this + 0x44));
     if (*(int*)((char*)this + 0x44) > 0x10)
         mb_error("Error too many variation on mesh %s", ((tstring*)((char*)this + 0x00))->c_str());
-    int n = *(int*)((char*)this + 0x44);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < *(int*)((char*)this + 0x44); i++) {
         char* v = (char*)this + 0x58 + i * 0x18;
         stream->r_tstr((rgl::string*)(v - 0x10));
         stream->r_i64((__int64*)v);                                 // slot +0x48
@@ -1531,32 +1493,30 @@ void E68::read_terrain(stream_base* stream)
 
 
 
+// one of the layout's 0x68-byte tableau entries, as the code mapper reads it (the name is first)
+struct ConvCode {
+    tstring name;
+    char pad10[0x58];
+};
+
 // @ 0x4c84f0
 void __fastcall conv_map_codes(conv_rec* self)
 {
     WL_MARKER(12)
-    char* p = (char*)self;
-    const char** names = g_conv_names;
-    int* out = (int*)(p + 0x24);
-    do {
-        ConvItem16* begin = *(ConvItem16**)(p + 4);
-        ConvItem16* end = *(ConvItem16**)(p + 8);
-        const char* nm = *names;
+    for (int k = 0; k < 3; k++) {
         int found = -1;
         unsigned i = 0;
         do {
-            if (begin == 0 || i >= (unsigned)((int)((char*)end - (char*)begin) / 0x68)) {
-                log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(nm).w_cstr("\n");
+            if (i >= ((std::vector<ConvCode>*)self)->size()) {
+                log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(g_conv_names[k]).w_cstr("\n");
                 break;
             }
-            if (((ConvItem16*)((char*)begin + i * 0x68))->name.equals(nm))
+            if ((*(std::vector<ConvCode>*)self)[i].name.equals(g_conv_names[k]))
                 found = i;
             i++;
         } while (found == -1);
-        *out = found;
-        out++;
-        names++;
-    } while (names < g_conv_names + 3);
+        ((int*)((char*)self + 0x24))[k] = found;
+    }
     WL_MARKER(13)
 }
 
@@ -1576,17 +1536,15 @@ void __fastcall conv_free_one(conv_rec* self)
 // @ 0x4c8630
 void Terrain::conv_build_scene()
 {
-    world_root* wr = (world_root*)world;
     for (int gy = 0; gy <= h; gy++) {
         for (int x = 0; x <= w; x++) {
-            int* codes = wr->codes->cols[x];
-            terrain_cell& c = this->cell[x][gy];
-            codes[gy * 4] = *(int*)&c.pz;                      // the tableau code rides in the cell's z lane
-            if (c.f14 >= 0)
-                wr->sub->verts[c.f14].pos = *(vector4*)&c;     // f14: scene vertex index (< 0 = none)
+            ((world_root*)world)->codes->cols[x][gy * 4] = *(int*)&cell[x][gy].pz;   // the tableau code rides in the cell's z lane
+            int vi = cell[x][gy].f14;
+            if (vi >= 0)
+                ((world_root*)world)->sub->verts[vi].pos = *(vector4*)&cell[x][gy];
         }
     }
-    world_sub* sub = wr->sub;
+    world_sub* sub = ((world_root*)world)->sub;
     for (unsigned k = 0; k < sub->items.size(); k++) {
         scene_obj* r = sub->items[k].obj;
         if (r) {
@@ -1612,19 +1570,8 @@ edit_vert* edit_vec::ufill(edit_vert* dst, int n, const edit_vert* src)
 }
 
 // @ 0x4c8840
-tstr_iter tstr_vec::erase_range(tstring* first, tstring* lastp)
-{
-    if (first != lastp) {
-        tstring* end = std::_Copy_opt<tstring*, tstring*>(lastp, last, first,
-            *(std::_Nonscalar_ptr_iterator_tag*)&lastp);
-        for (tstring* it = end; it != last; it++)
-            it->~tstring();
-        last = end;
-    }
-    tstr_iter r;
-    r.p = first;
-    return r;
-}
+// std::vector<tstring>::erase itself: the row is this instantiation (mesh_2.cpp's calls go to it too).
+template std::vector<tstring>::iterator std::vector<tstring>::erase(std::vector<tstring>::iterator, std::vector<tstring>::iterator);
 
 // @ 0x4c88a0
 ptr_iter ptr_vec::erase_range(int* first, int* last)
@@ -1647,7 +1594,8 @@ ptr_iter ptr_vec::erase_range(int* first, int* last)
 // @ 0x4c88e0
 void item38_vec::copy_range(const item38* first, const item38* last, item38* dst)
 {
-    ((item38* (__cdecl*)(const item38*, const item38*, item38*, editor*, item38*))copy_range38)(first, last, dst, (editor*)this, dst);
+    ptr_tag tag;
+    ((item38* (__cdecl*)(const item38*, const item38*, item38*, editor*, ptr_tag))copy_range38)(first, last, dst, (editor*)this, tag);
 }
 
 // @ 0x4c8900
@@ -1705,16 +1653,13 @@ void __stdcall conv_sub_dtor(void** p)
 // Moves the last node over node `idx`, renames the last node's references and drops it.
 void graph_obj::remove_node(int idx)
 {
-    int last = (int)nodes_n() - 1;
+    int last = (int)nodev().size() - 1;
     if (idx != last) {
-        nodes[idx] = nodes[last];
+        nodev()[idx] = nodev()[last];
         swap_face_vertices(last, idx);
         swap_poly_colors(last, idx);
     }
-    if (nodes) {
-        if (nodes_n() != 0)
-            nodes_end--;
-    }
+    nodev().pop_back();
     remove_vertex_from_edges(last);
 }
 
@@ -1760,15 +1705,6 @@ WindowMgrW g_windows;                                       // 0xa73980 (compile
 // PartyTemplate's for DialogRec / GameString / ModRec / QuickString / FaceKey (name +0, key +0x10), 0x4c62b0 MenuDoor's
 // for TroopRec / ItemKind, 0x4c6530 RecB's for Party, 0x4c6860 RecC's for FactionRec, 0x4c63f0 / 0x4c6330 / 0x4c6470 RecA's
 // for QuestRec (and translated_plural of TroopRec / ItemKind). The calls go to the class that defines the function.
-// The record's name through the translation table, or the record's own name (the first member): each record class's
-// inline accessor, written once.
-template <class R>
-inline const tstring* rec_name(R* r)
-{
-    const tstring* p = g_strtable.find(&r->key);
-    return p ? p : &r->name;
-}
-
 // the same for the records with an id and a text (dialogs, menus)
 template <class R>
 inline const tstring* id_text(R* r)

@@ -71,6 +71,7 @@ def context():
             ks = {int(re.search(r"\[(\d+)\]$", u[1])[1]) for u in uses}
             if len(ks) == 1:
                 slot_of[n] = "v:+%#x" % (4 * ks.pop())
+        va_slot = {name_va[n]: k for n, k in slot_of.items() if n in name_va}
         md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
         md.detail = True
         img = R.Image()
@@ -84,7 +85,7 @@ def context():
         # stack at 0xa739fc is the stack at 0xa739f8; a loop that stops at entry 6 of an 11-entry table is not the
         # table's end, which the next global starts)
         starts = sorted({int(va, 16) for d in rm["names"].values() for va in d if 0x5a8000 <= int(va, 16) < 0x8ee5b94})
-        _ctx.update(img=img, rm=rm, name_va=name_va, md=md, slot_of=slot_of, same=same, starts=starts)
+        _ctx.update(img=img, rm=rm, name_va=name_va, md=md, slot_of=slot_of, va_slot=va_slot, same=same, starts=starts)
     return _ctx
 
 
@@ -120,7 +121,8 @@ def orig_calls(va):
             if b[0] != 0xE9 or t in img.start_set and False:
                 break
             t = (t + 5 + struct.unpack_from("<i", b, 1)[0]) & 0xFFFFFFFF
-        return "f:%08x" % t
+        # our_calls writes a direct call to a method with a known slot as that slot; say the same here
+        return c["va_slot"].get(t) or "f:%08x" % t
 
     out, data, fields = [], [], set()
     for ins in md.disasm(img.read(lo, hi - lo), lo):
@@ -190,7 +192,14 @@ def our_calls(coff, sym):
                 imp = c["img"].imports.get(struct.unpack_from("<I", b, 2)[0])
                 if imp:
                     return "imp:" + bare(imp)
-        return "f:%08x" % va if va else "n:" + n
+        if va:                                       # a jmp stub is its target, as orig_calls resolves it
+            for _ in range(4):
+                b = c["img"].read(va, 5)
+                if b[0] != 0xE9:
+                    break
+                va = (va + 5 + struct.unpack_from("<i", b, 1)[0]) & 0xFFFFFFFF
+            return c["va_slot"].get(va) or "f:%08x" % va
+        return "n:" + n
 
     out, data, fields = [], [], set()
     for ins in md.disasm(sec.data[a:b], a):

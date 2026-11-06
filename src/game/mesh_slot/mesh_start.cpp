@@ -192,10 +192,11 @@ extern unsigned __int64 g_bit[]; // 0x5a8e68
 
 static inline unsigned lcg(unsigned x) { return (x * 0x1c13 - 0xd098556) * 0x1105; }
 
-static inline void put(unsigned& dst, const unsigned& mask, int shift, const int& val)
+static inline void put(unsigned& dst, const unsigned mask, int shift, const int& val)
 {
     unsigned v = (unsigned)val <= mask ? (unsigned)val : mask;
-    dst = (dst & ~(mask << shift)) | (v << shift);
+    unsigned& d = dst;
+    d = (d & ~(mask << shift)) | (v << shift);
 }
 
 static inline void cross2(vector4& o, const vector4& a, const vector4& b)
@@ -241,7 +242,8 @@ static inline int ifloor(float x)
 static inline Party* party_rec(PartyMgr* pm, int id)
 {
     int i = pm->lookup(id);
-    return &pm->pages[i >> 4][i & 15];
+    Party* const& page = pm->pages[i >> 4];
+    return page + (i & 15);
 }
 
 #define RECT(i) (((float*)this)[0x194f + (i)])
@@ -280,19 +282,17 @@ void Mission::start_setup()
     float temp[16];
     std::vector<PlacedObj>& props = at<std::vector<PlacedObj> >(0x6688);
     {
-    vector4 u;
     int ptype;
     ptype = RAWAT(int, party_rec(pm, pid), 0x5978);
 
     for (int t = 0; t < 16; t++) temp[t] = 0.0f;
-    u = *(vector4*)&party_rec(pm, pid)->pos;
+    {
+    vector4 ppos = *(vector4*)&party_rec(pm, pid)->pos;
 
     if (g_script.level != 0) {
-        SceneObjs* so = ((Scene*)g_script.level)->objs;
-        unsigned pe = (unsigned)so->last;
-        for (unsigned p = (unsigned)so->first; p < pe; p += 0x88) {
-            float dx = *(float*)(p + 0x74) - u.x;
-            float dy = *(float*)(p + 0x78) - u.y;
+        for (unsigned p = (unsigned)((Scene*)g_script.level)->objs->first; p < (unsigned)((Scene*)g_script.level)->objs->last; p += 0x88) {
+            float dx = *(float*)(p + 0x74) - ppos.x;
+            float dy = *(float*)(p + 0x78) - ppos.y;
             float d2 = dy * dy + dx * dx;
             if (d2 < 1.0f)
                 d2 = 1.0f;
@@ -307,6 +307,11 @@ void Mission::start_setup()
     } else {
         for (int t = 0; t < 16; t++) temp[t] = 0.2f;
     }
+    }
+    {
+    vector4 u;
+    {
+    float temper, humidity, fo;
 
     WL_MARKER(5)
     // ---- day time, anchor blend, weather ---------------------------------------------------
@@ -314,7 +319,7 @@ void Mission::start_setup()
     g_game->blend(&u.x, pa->pos.x, pa->pos.y);
     WL_MARKER(0xc)
 
-    float temper = temp[0] * 0.1f + (temp[8] * 0.01f + (temp[3] * 0.001f + (temp[11] * 0.002f +
+    temper = temp[0] * 0.1f + (temp[8] * 0.01f + (temp[3] * 0.001f + (temp[11] * 0.002f +
                    (temp[4] * 0.005f + (temp[12] * 0.01f + (temp[1] * 0.003f + (temp[9] * 0.005f +
                    (temp[2] * 0.0005f + temp[10] * 0.0015f))))))));
     if (temper < 0.0f) temper = 0.0f;
@@ -332,9 +337,9 @@ void Mission::start_setup()
         in = v;
     }
     noise_fractal(72.0f, 0.7f, 4, 0, &in.x, &out.x);
-    float fo = (out.z + out.y + out.x) * 5.0f;
+    fo = (out.z + out.y + out.x) * 5.0f;
 
-    float humidity = clamp01(((f14
+    humidity = clamp01(((f14
  + f14) + 0.5f) * temper + (RND() * 6.32231167e-05f) * 0.0500000007f);
     at<float>(0x65f4) = humidity;
     at<int>(0x65f8) = RAWAT(int, pa, 0x38);
@@ -346,17 +351,14 @@ void Mission::start_setup()
 
     at<int>(0x65fc) = iround(((temper + 1.5f) * RAWAT(float, g_game, 0x13b3c)) * 1.5f);
 
-    float fog = ((RAWAT(float, g_game, 0x13b3c) + 0.3f) * (temper + 0.5f)) * RAWAT(float, g_game, 0x13b40) *
+    at<float>(0x6614) = ((RAWAT(float, g_game, 0x13b3c) + 0.3f) * (temper + 0.5f)) * RAWAT(float, g_game, 0x13b40) *
                 RAWAT(float, g_game, 0x13b40) * 0.00800000038f + 9.99999975e-05f;
-    at<float>(0x6614) = fog;
     if (RAWAT(float, g_game, 0x13b40) > 0.899999976f) {
-        fog = fog * 1.29999995f + 0.0259999987f;
-        at<float>(0x6614) = fog;
+        at<float>(0x6614) = at<float>(0x6614) * 1.29999995f + 0.0259999987f;
         if (RAWAT(float, g_game, 0x13b40) > 0.939999998f) {
-            fog = fog * 1.20000005f + 0.0240000002f;
-            at<float>(0x6614) = fog;
+            at<float>(0x6614) = at<float>(0x6614) * 1.20000005f + 0.0240000002f;
             if (RAWAT(float, g_game, 0x13b40) > 0.980000019f)
-                at<float>(0x6614) = fog + 0.00999999978f;
+                at<float>(0x6614) = at<float>(0x6614) + 0.00999999978f;
         }
     }
 
@@ -387,6 +389,7 @@ void Mission::start_setup()
     if (at<float>(0x6610) < 60.0f) at<float>(0x6610) = 60.0f;
     if (at<float>(0x6614) > 0.150000006f) at<float>(0x6614) = 0.150000006f;
 
+    }
     WL_MARKER(0xd)
     {
         void* o = RAWAT(void*, pa, 0x5974);
@@ -443,9 +446,8 @@ void Mission::start_setup()
         GameData* gg = g_game;
         if (((LevelRaw*)(RAWAT(char*, gg, 0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
             PartyMgr* pm2 = &gg->parties;
-            int pid2 = RAWAT(int, gg, 0x78);
-            int x = (int)party_rec(pm2, pid2)->pos.x;
-            int y = (int)party_rec(pm2, pid2)->pos.y;
+            int x = (int)party_rec(pm2, RAWAT(int, gg, 0x78))->pos.x;
+            int y = (int)party_rec(pm2, RAWAT(int, gg, 0x78))->pos.y;
             int parity = at<int>(0x5270) % 3;
             int fr = RAWAT(int, gg, 4);
             int a = fr * 0x1b0b + parity + y * 0x230b + x * 17;
@@ -598,6 +600,8 @@ void Mission::start_setup()
     }
     }
 
+    }
+    {
     // ---- fade, params, ambient, sun ---------------------------------------------------------
     rebuild_nav(at<int>(0x5df4), at<int>(0x5df0));
     {
@@ -669,7 +673,9 @@ void Mission::start_setup()
     // ---- light/frame table: 64 slots + 5 extra for a custom camera --------------------------
     at<int>(0x5278) = 0x40;
     at<int>(0x5274) = 0;
-    u.x = 0.0f; u.y = 0.0f;
+    {
+    vector4 c0;
+    c0.x = 0.0f; c0.y = 0.0f;
     {
     vec2 ext = { at<float>(0x6544) - at<float>(0x653c), at<float>(0x6548) - at<float>(0x6540) };
     vec2 mid;
@@ -677,7 +683,7 @@ void Mission::start_setup()
     mid.y = ext.y * 0.5f;
     mid.x = mid.x + at<float>(0x653c);
     mid.y = mid.y + at<float>(0x6540);
-    if (lrec->flags.b8) *(vec2*)&u = mid;
+    if (lrec->flags.b8) *(vec2*)&c0 = mid;
 
     }
     {
@@ -687,10 +693,11 @@ void Mission::start_setup()
         mat3 tmp;
         *(mat3*)&SLOT(k).A = *identity3(&tmp);
         vec2 g = { (float)(k % 8 + 1), (float)(k / 8 + 1) };
-        v.x = g.x + u.x;
-        v.y = g.y + u.y;
+        v.x = g.x + c0.x;
+        v.y = g.y + c0.y;
         SLOT(k).A.o = v;
     } while (++k < 0x40);
+    }
     }
 
     if (LV.flags.b10) {
@@ -713,11 +720,12 @@ void Mission::start_setup()
 
             *(mat3*)a = *identity3(&tmp);
             a->o = v;
-            u.z = 0.0f;
-            lane(u, 1 - par) = 0.0f;
-            if (s < 2) lane(u, par) = 1.0f;
-            else lane(u, par) = -1.0f;
-            a->f = u;
+            vector4 fwd;
+            fwd.z = 0.0f;
+            lane(fwd, 1 - par) = 0.0f;
+            if (s < 2) lane(fwd, par) = 1.0f;
+            else lane(fwd, par) = -1.0f;
+            a->f = fwd;
             a->orthonormalize();
             sl->B = *a;
 
@@ -743,9 +751,10 @@ void Mission::start_setup()
                 SLOT(sl).A.o = RAWAT(vector4, p, 0x48);
                 *(mat3*)&SLOT(sl).A = RAWAT(mat3, &PROP(ip), 0x18);
                 SLOT(sl).B = SLOT(sl).A;
-                u.x = 0.0f; u.y = 0.0f; u.z = 1.0f;
+                vector4 yup;
+                yup.x = 0.0f; yup.y = 0.0f; yup.z = 1.0f;
                 vector4* up = &SLOT(sl).B.u;
-                *up = u;
+                *up = yup;
                 vector4* sd = &SLOT(sl).B.s;
                 v.x = up->z * SLOT(sl).B.f.y - up->y * SLOT(sl).B.f.z;
                 v.y = SLOT(sl).B.f.z * up->x - SLOT(sl).B.f.x * up->z;
@@ -796,41 +805,37 @@ void Mission::start_setup()
 
     // ---- scene effect object (rain / snow emitter) ---------------------------------------------
     if ((*(int*)((char*)&g_options + 0x20)) != 0 && !lrec->flags.b0 && at<int>(0x6604) > 0) {
-        vector4 t20;
-        u = *(vector4*)g_env_rows
+        vector4 sky = *(vector4*)g_env_rows
 [at<int>(0x660c)].base;
-        float scale = (u.x * 3.0f + 1.0f) * 0.400000006f;
+        float scale = (sky.x * 3.0f + 1.0f) * 0.400000006f;
         Entity* fx = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
         at<Entity*>(0x65b8) = fx;
-        u.x = 0.0f; u.y = 0.0f; u.z = 30.0f;
-        fx->at<vector4>(0x88) = u;
+        fx->at<vector4>(0x88) = vector4(0.0f, 0.0f, 30.0f);
         {
         float far_clip = 1.0e7f;
         at<Entity*>(0x65b8)->v6(&far_clip);
         }
+        vector4 t20;
+        vector4 zero(0.0f, 0.0f, 0.0f);
         rgl::matrix mx;
-        u.x = 0.0f; u.y = 0.0f; u.z = 0.0f;
         mat3 tmp;
         *(mat3*)&mx.s = *identity3(&tmp);
         t20.x = at<float>(0x6618) * 0.349999994f;
         t20.y = at<float>(0x661c) * 0.349999994f;
-        mx.o = u;
+        mx.o = zero;
         t20.z = -10.0f;
         int ix;
         if (at<int>(0x6604) == 1) {
             mx.o.z = 6.0f;
             mx.o.y = 6.5f;
             ix = g_emit_defs.used[0];
-            if (ix >= 0 && ix < g_emit_defs.count) {
+            if (g_emit_defs.used[0] >= 0 && g_emit_defs.used[0] < g_emit_defs.count) {
                 int owner0 = 0;
                 rgl::psys* em = new rgl::psys(owner0);
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
                     float inv = 1.0f / em->f24;
-                    u.x = t20.x * inv;
-                    u.y = t20.y * inv;
-                    u.z = inv * -10.0f;
-                    em->v184 = u;
+                    em->v184 = vector4(t20.x * inv, t20.y * inv, inv * -10.0f);
                     em->vc4 = t20;
                     em->vb4 = t20;
                     norm3(&em->vb4.x);
@@ -845,8 +850,7 @@ void Mission::start_setup()
             mx.o.z = 6.0f;
             mx.o.y = 6.5f;
             ix = g_emit_defs.used[1];
-
-            if (ix >= 0 && ix < g_emit_defs.count) {
+            if (g_emit_defs.used[1] >= 0 && g_emit_defs.used[1] < g_emit_defs.count) {
                 int owner0 = 0;
                 rgl::psys* em = new rgl::psys(owner0);
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
@@ -863,6 +867,7 @@ void Mission::start_setup()
         }
     }
 
+    }
     }
     }
     // ---- intro billboard (sun mesh) ---
@@ -893,7 +898,7 @@ void Mission::start_setup()
         float c = (1.0f - 150.0f / (at<float>(0x6610) + 150.0f)) * g_env_rows[at<int>(0x660c)].size * 0.899999976f;
         {
         vector4 u;
-        u.x = u.y = u.z = c;
+        u.x = c; u.y = c; u.z = c;
         RAWAT(unsigned, at<Mesh*>(0x65c8), 0x3c) = rgl::pack_color(&u);
         }
 

@@ -201,81 +201,86 @@ void MapPanel::update_target()
     }
 
     // ---- 0x519496: screen ray ----------------------------------------------------------------------
-    vector4 nearp, farp;                                  // nearp -> S+0x40, farp -> S+0x1c
-    ((camera_ray*)view)->screen_to_world(&nearp, &farp);   // 0x4bd2f0
-
+    // Slots read off the original: the hover box mn/mx above share farp/bestpt (S+0x1c) and nearp (S+0x40); dir shares hp (S+0x2c);
+    // the block scopes below are what lets those lifetimes overlay.
+    {
+    vector4 nearp, np, fp;
     vector4 dir;
-    dir.x = farp.x - nearp.x;
-    dir.y = farp.y - nearp.y;
-    dir.z = farp.z - nearp.z;
-    dir.normalize();
+    {
+        {
+            vector4 farp;
+            ((camera_ray*)view)->screen_to_world(&nearp, &farp);   // 0x4bd2f0
+            dir.x = farp.x - nearp.x;
+            dir.y = farp.y - nearp.y;
+            dir.z = farp.z - nearp.z;
+            np = nearp;
+            fp = farp;
+            dir.normalize();
+        }
 
-    vector4 np = nearp;
-    vector4 fp = farp;
-
-    // ---- 0x519517: clip against the world's z range ------------------------------------------------
-    if (g_script.level->ground) {
-        float zmin = g_script.level->ground->e44.z;
-        float zmax = g_script.level->ground->f54.z;
-        if (np.z < zmin) {
-            float t = fabsf((zmin - np.z) / dir.z);
-            np.x += dir.x * t; np.y += dir.y * t; np.z += dir.z * t;
-        }
-        if (fp.z < zmin) {
-            float t = fabsf((zmin - fp.z) / dir.z);
-            fp.x -= dir.x * t; fp.y -= dir.y * t; fp.z -= dir.z * t;
-        }
-        if (np.z > zmax) {
-            float t = fabsf((np.z - zmax) / dir.z);
-            np.x += dir.x * t; np.y += dir.y * t; np.z += dir.z * t;
-        }
-        if (fp.z > zmax) {
-            float t = fabsf((fp.z - zmax) / dir.z);
-            fp.x -= dir.x * t; fp.y -= dir.y * t; fp.z -= dir.z * t;
+        // ---- 0x519517: clip against the world's z range --------------------------------------------
+        if (g_script.level->ground) {
+            if (np.z < g_script.level->ground->e44.z) {
+                float t = fabsf((g_script.level->ground->e44.z - np.z) / dir.z);
+                vector4 m = dir * t;
+                np.x += m.x; np.y += m.y; np.z += m.z;
+            }
+            if (fp.z < g_script.level->ground->e44.z) {
+                float t = fabsf((g_script.level->ground->e44.z - fp.z) / dir.z);
+                vector4 m = dir * t;
+                fp.x -= m.x; fp.y -= m.y; fp.z -= m.z;
+            }
+            if (np.z > g_script.level->ground->f54.z) {
+                float t = fabsf((np.z - g_script.level->ground->f54.z) / dir.z);
+                vector4 m = dir * t;
+                np.x += m.x; np.y += m.y; np.z += m.z;
+            }
+            if (fp.z > g_script.level->ground->f54.z) {
+                float t = fabsf((fp.z - g_script.level->ground->f54.z) / dir.z);
+                vector4 m = dir * t;
+                fp.x -= m.x; fp.y -= m.y; fp.z -= m.z;
+            }
         }
     }
 
     // ---- 0x51969b: thin capsule around the clipped segment -----------------------------------------
+    {
     capsule cap(0.0f, &np, &fp);
-    matrix mtx;
-    cap.capsule::transform((const pos*)identity_pos(&mtx));
-
-    // The sweep endpoints are built component-wise and only x/y of each are ever written; the third
-    // lane is whatever the stack slot already held (reproduced verbatim -- see the notes).
-    float seg_a[3];
-    seg_a[0] = np.x;
-    seg_a[1] = np.y;
-    float seg_b[3];
-    seg_b[0] = fp.x;
-    seg_b[1] = fp.y;
+    {
+        matrix mtx;
+        cap.capsule::transform((const pos*)identity_pos(&mtx));
+    }
 
     // ---- 0x519720: shapes under the cursor ---------------------------------------------------------
     float     bestd = 1000000.0f;
     int       best  = -1;
     shape_base* hits[0x2000];                  // the sweep is told 0x110, but the slot is 0x2000 wide
-    int       count;
-    g_script.level->query_segment(seg_a, seg_b, 0x110, hits, &count);   // 0x439870
-
     vector4 bestpt;
-    for (int i = 0; i < count; i++) {
-        shape_base* o = hits[i];
-        if (o->shape_type() != 2) continue;
-        if (!shape_contact_count(o, &cap, 0, 0)) continue;
-        vector4 hp;
-        ((PlaneTrace*)o)->intersect(&hp, &np, &fp);   // 0x51a2d0 (the face's intersect is the same code)
-        float ddx = hp.x - nearp.x;
-        float ddy = hp.y - nearp.y;
-        float ddz = hp.z - nearp.z;
-        float d = sqrtf(ddz * ddz + ddy * ddy + ddx * ddx);   // the original sums z*z + y*y first, then x*x
-        if (!(d < bestd)) continue;
-        bestd  = d;
-        bestpt = hp;
-        best   = i;
+    {
+        vector2 seg_a(np.x, np.y);             // the sweep's rectangle corners: x and y only
+        vector2 seg_b(fp.x, fp.y);
+        int count;
+        g_script.level->query_segment((const float*)&seg_a, (const float*)&seg_b, 0x110, hits, &count);   // 0x439870
+
+        for (int i = 0; i < count; i++) {
+            if (hits[i]->shape_type() != 2) continue;
+            shape_base* o = hits[i];
+            if (!shape_contact_count(o, &cap, 0, 0)) continue;
+            ((PlaneTrace*)o)->intersect(&dir, &np, &fp);   // 0x51a2d0 (the face's intersect is the same code)
+            float ddx = dir.x - nearp.x;
+            float ddy = dir.y - nearp.y;
+            float ddz = dir.z - nearp.z;
+            float d = sqrtf(ddz * ddz + ddy * ddy + ddx * ddx);   // the original sums z*z + y*y first, then x*x
+            if (!(d < bestd)) continue;
+            bestd  = d;
+            bestpt = dir;
+            best   = i;
+        }
     }
 
     int rec_index = -1;
     int rec_mask  = -1;
-    if (best >= 0) {
+    if (best != -1) {
         rec_index = hits[best]->m4;
         rec_mask  = (int)g_script.level->ground->cells[rec_index].ids[8];
     }
@@ -288,20 +293,22 @@ void MapPanel::update_target()
     bestd += 1.0f;
 
     for (int i = 0; i < acount; i++) {
-        rgl::strategic_entity* o = static_cast<rgl::strategic_entity*>(agents[i]);   // collect(9): the entities of type 9
-        if (!o->f140) continue;
-        if (!o->shape) continue;
-        if (!shape_contact_count(o->shape, &cap, 0, 0)) continue;
+        rgl::strategic_entity*& ref = (rgl::strategic_entity*&)agents[i];   // collect(9): the entities of type 9
+        if (!ref->f140) continue;
+        if (!ref->shape) continue;
+        if (!shape_contact_count(ref->shape, &cap, 0, 0)) continue;
+        rgl::strategic_entity* o = ref;
         float ddx = nearp.x - o->local.o.x;
         float ddy = nearp.y - o->local.o.y;
         float ddz = nearp.z - o->local.o.z;
         float d = sqrtf(ddz * ddz + ddy * ddy + ddx * ddx);   // the original sums z*z + y*y first, then x*x
-        if (o->map_kind == 1) {
+        int kind = o->map_kind;
+        if (kind == 1) {
             d -= 0.4f;
             if (o->game_id == g_game->f78) d += 0.35f;
         }
         if (!(d < bestd)) continue;
-        if (o->map_kind == 1 && (party_at(g_game, o->game_id)->flags_lo & 0x80100)) continue;
+        if (kind == 1 && (party_at(g_game, o->game_id)->flags_lo & 0x80100)) continue;
         bestd   = d;
         bestobj = o;
     }
@@ -356,13 +363,16 @@ void MapPanel::update_target()
         if (bestobj) {
             int kind = bestobj->map_kind;
             if (kind == 1) {
-                if (bestobj->game_id != g_game->f78) {
+                int id = bestobj->game_id;
+                int me = g_game->f78;
+                if (id != me) {
                     // 0x519c9e..0x519cd5: both arms are the same store (the `0x400` flags test survives
                     // only as a dead select); reproduced verbatim.
-                    if (party_at(g_game, bestobj->game_id)->flags_lo & 0x400)
-                        party_at(g_game, g_game->f78)->action = 4;
+                    PartyMgr& pm = g_game->parties;
+                    if (pm.get_w(id)->flags_lo & 0x400)
+                        pm.get_w(me)->action = 4;
                     else
-                        party_at(g_game, g_game->f78)->action = 4;
+                        pm.get_w(me)->action = 4;
                     party_at(g_game, g_game->f78)->target = bestobj->game_id;
                     party_at(g_game, g_game->f78)->reissue_order();
                 }
@@ -370,15 +380,13 @@ void MapPanel::update_target()
                 int id = bestobj->game_id;
                 AgentRec* rec = ((AgentRec**)g_game->agent_pages)[(unsigned)id >> 4] + (id & 0xf)   /* 0x519d57: shr */;
                 if (rec->kind == 1) {
-                    Party* pl = party_at(g_game, g_game->f78);
-                    pl->action = 4;
-                    pl->target = rec->party;
-                    pl->reissue_order();
+                    party_at(g_game, g_game->f78)->action = 4;
+                    party_at(g_game, g_game->f78)->target = rec->party;
+                    party_at(g_game, g_game->f78)->reissue_order();
                 } else if (rec->kind == 2) {
-                    Party* pl = party_at(g_game, g_game->f78);
-                    pl->action = 9;
-                    pl->target = id;
-                    pl->reissue_order();
+                    party_at(g_game, g_game->f78)->action = 9;
+                    party_at(g_game, g_game->f78)->target = bestobj->game_id;
+                    party_at(g_game, g_game->f78)->reissue_order();
                 }
             }
         } else if (best >= 0) {
@@ -391,33 +399,38 @@ void MapPanel::update_target()
             }
             if (go) {
                 party_at(g_game, g_game->f78)->action = 6;
-                {
-                    Party* pl = party_at(g_game, g_game->f78);
-                    pl->order_pos.x = bestpt.x;
-                    pl->order_pos.y = bestpt.y;
-                }
+                vector2 xy(bestpt.x, bestpt.y);
+                Party* pl = party_at(g_game, g_game->f78);
+                pl->order_pos.x = xy.x;
+                pl->order_pos.y = xy.y;
                 party_at(g_game, g_game->f78)->reissue_order();
             }
         }
     }
 
-    // ---- 0x519fe8: drop the order if the target vanished -------------------------------------------
-    if (party_at(g_game, g_game->f78)->action != 4) return;
-    if (party_at(g_game, g_game->f78)->target < 0) return;
-
-    // Each access re-runs the party lookup (0x48ad00), exactly as the original does: alpha test 0x51a099, then
-    // f8c8 0x51a0f3 (fresh lookup), flags reuse that pointer; the body re-looks-up the player (target), the
-    // target (position) and the player (store).
-    bool lost = party_at(g_game, party_at(g_game, g_game->f78)->target)->alpha < 0.01f;
-    if (!lost) {
-        Party* tgt = party_at(g_game, party_at(g_game, g_game->f78)->target);
-        lost = tgt->f8c8 >= 0 || (tgt->flags_lo & 0x1080100) != 0;
     }
-    if (lost) {
-        party_at(g_game, g_game->f78)->action = 6;
-        int tid = party_at(g_game, g_game->f78)->target;
-        Party* src = party_at(g_game, tid);
-        Party* dst = party_at(g_game, g_game->f78);
+    }
+
+    // ---- 0x519fe8: drop the order if the target vanished -------------------------------------------
+    GameData* g = g_game;
+    {
+        int me = g->f78;
+        PartyMgr& pm = g->parties;
+        if (pm.get_w(me)->action != 4) return;
+        if (pm.get_w(me)->target < 0) return;
+        // Each access re-runs the party lookup (0x48ad00), exactly as the original does.
+        if (!(pm.get_w(pm.get_w(me)->target)->alpha < 0.01f)) {
+            Party* tgt = pm.get_w(pm.get_w(me)->target);
+            if (tgt->f8c8 < 0 && !(tgt->flags_lo & 0x1080100))
+                goto reissue;
+        }
+        pm.get_w(me)->action = 6;
+    }
+    {
+        int me = g_game->f78;
+        PartyMgr& pm = g_game->parties;
+        Party* src = pm.get_w(pm.get_w(me)->target);
+        Party* dst = pm.get_w(me);
         dst->order_pos.x = src->pos.x;
         dst->order_pos.y = src->pos.y;
         party_at(g_game, g_game->f78)->reissue_order();
@@ -432,9 +445,10 @@ void MapPanel::update_target()
                 g_gui.ring.count++;
             }
         }
+        g = g_game;
     }
-
-    party_at(g_game, g_game->f78)->reissue_order();
+reissue:
+    party_at(g, g->f78)->reissue_order();
 }
 
 // @ 0x51a2d0
@@ -495,24 +509,23 @@ void MapPanel::set_label(int id)
     if (g_gui.label_obj)
         delete g_gui.label_obj;
     g_gui.label_obj = 0;
-    g_gui.f1704 = 0;
+    g_gui.cursor_y = 0.0f;
     if (id < 0)
         return;
 
     g = g_game;
-    vector4 pos = *(vector4*)&g->parties.get_party(id)->pos;
+    vector4 pos = *(vector4*)&g->parties.get_w(id)->pos;
 
     unsigned color;
-    if (g_module_settings.show_faction_color == 0) {
-        float rel = g->relation(id, g->f78);
-        color = g->color_of(rel, 1);
+    if (g_module_settings.show_faction_color) {
+        color = g->factions[g->parties.get_w(id)->faction].color;
     } else {
+        float rel = g->relation(id, g->f78);
+        color = g_game->color_of(rel, 1);
         g = g_game;
-        color = g_game->factions[g->parties.get_party(id)->faction].color;
     }
 
-    g = g_game;
-    Party* rec3 = g->parties.get_party(id);
+    Party* rec3 = g->parties.get_w(id);
     const tstring* name;
     if (g_module_settings.show_party_ids_instead_of_names)
         name = &rec3->key;
@@ -595,12 +608,12 @@ void gui_manager::add_label(const tstring* text, float h, int color)
     }
     {
         float out[2];
+        float xmax = 1.0f;
+        float xmin = -1.0f;
         int col = color;
         float scale[2];
         scale[0] = h;
         scale[1] = h;
-        float xmin = -1.0f;
-        float xmax = 1.0f;
         vector4 pos(0.0f, cursor_y, 0.0f);
         g_font->layout_text(out, text, &pos, scale, label_obj, (int)&col, &xmin, &xmax, 0x10);
     }
@@ -674,6 +687,7 @@ static int first_enemy_stack(Party* r)
 
 // party lookup with the id by const reference: a by-value id takes one more scratch pick and rotates what follows (0x51b87e, 0x51b930)
 static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return (Party*)((char*)m->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
+struct screen_pt { float x, y; screen_pt(float a, float b) : x(a), y(b) {} };   // set_view's by-reference argument temporary: stores it after the argument's lea (0x51bdda)
 struct FleetRec { rgl::vector4 pos; char pad10[0x5c - 0x10]; };   // the 0x5c-byte fleet / battle record: only its position is read here
 
 // -----------------------------------------------------------------------------------------------------
@@ -714,9 +728,8 @@ void MapPanel::update(int type, int id)
                 int agent = id;               // [esp+0x14]  battle side shown in the current column
                 char buf[0x100];
                 if (ncols > 1) {
-                    PartyMgr& mg = g_game->parties;
                     GameData* g = g_game;
-                    int b = mg.get_party(agent)->battle;
+                    int b = g->parties.get_party(agent)->battle;
                     Rec98* slot = (Rec98*)g->agent_pages[(unsigned)b >> 4] + (b & 0xf);
                     if (c == 0) agent = slot->f58;
                     else agent = slot->f54;
@@ -916,10 +929,7 @@ void MapPanel::update(int type, int id)
         {
             float out[2];                  // eight bytes: it shares [esp+0x60] with rec, the garrison index and the capital-battle temporary
             rgl::vector4* o = ((MapWidget*)view)->project((rgl::vector4*)out, &pos);
-            float screen[2];
-            screen[0] = o->x;
-            screen[1] = o->y;
-        g_gui.set_view(screen);      // 0x4c5190
+            g_gui.set_view((const float*)&screen_pt(o->x, o->y));      // 0x4c5190
         }
     }
 

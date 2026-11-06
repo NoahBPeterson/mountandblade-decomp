@@ -7,13 +7,10 @@
 004c4d10 ??1Tail2@@QAE@XZ
 004c4d80 ?clear@list_int@@QAEXXZ
 004c4dc0 ?list_int_buynode@@YIPAXPAUlist_int@@@Z
-004c4e2f ?list_int_buynode_funclet@@YAXPAUlist_node_int@@@Z
 004c4e50 ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z
-004c4ebd ?list_int_make_node_funclet@@YAXPAX@Z
 004c4ee0 ??1Terrain@@QAE@XZ
 004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z
 004c5010 ?uninit_fill_n@@YAXPAXIPBXPAUblock_copier@@@Z
-004c5074 ?fill_records_funclet@@YAXXZ
 004c5080 ?copy_range38@@YAPAUitem38@@PBU1@0PAU1@PAUeditor@@@Z
 004c5110 ?clear_vec38@editor@@QAEXXZ
 004c5150 ?free_items@editor@@QAEXXZ
@@ -78,7 +75,7 @@
 004c85e0 ?conv_free_one@@YIXPAUconv_rec@@@Z
 004c8630 ?conv_build_scene@@YIXPAUconv_rec@@@Z
 004c8810 ?ufill@edit_vec@@QAEPAUedit_vert@@PAU2@HPBU2@@Z
-004c8840 ?erase_range@tstr_vec@@QAE?AUtstr_iter@@PAUtstring@@0@Z
+004c8840 ?erase@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAE?AViterator@12@V312@0@Z
 004c88a0 ?erase_range@ptr_vec@@QAE?AUptr_iter@@PAH0@Z
 004c88e0 ?copy_range@item38_vec@@QAEXPAUitem38@@PBU2@1@Z
 004c8900 ?loader_thread_body@@YGXXZ
@@ -113,3 +110,6 @@
 004317b0 ?clear_groups@conv_rec@@QAEXXZ  # release of the 16 variation tracks
 004c8330 ?reset_groups@conv_rec@@QAEXXZ  # block material release
 005fe888 ?g_skin_name@@3Utstring@@A  # the skin name tstring (buf at 0x5fe88c)
+004c7ee0 ??_EMissionObj@@QAEPAXI@Z
+004c4f40 ??_EMenuRecArr@@QAEPAXI@Z
+004c8980 ??_EPartyTplRec@@QAEPAXI@Z

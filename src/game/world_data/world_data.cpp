@@ -336,6 +336,17 @@ void ContainerBase::animate(int p)
 }
 
 // ==== 0x490990: mark the parties of one kind dirty ===============================================================
+// PartyMgr::next_party_id (the row is owned elsewhere): a visible duplicate. mark_kind's loop counter stays in a register once cl can see that the callee does not keep its address.
+__declspec(noinline) void PartyMgr::next_party_id(int* id)
+{
+    unsigned i = lookup(*id) + 1;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        *id = deflt;
+    else
+        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+}
 // @ 0x490990
 void GameW::mark_kind(int kind)
 {

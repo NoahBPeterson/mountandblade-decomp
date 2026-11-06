@@ -598,15 +598,6 @@ template<> tstring* _Copy_opt<tstring*, tstring*>(tstring*, tstring*, tstring*, 
 void __fastcall conv_free_one(conv_rec* self);            // 0x4c85e0
 
 
-// vector<tstring>::erase (0x4c8840): end pointer at +8
-struct tstr_iter { tstring* p; };
-struct tstr_vec {
-    char pad0[8];
-    tstring* last;                                           // +8
-    tstr_iter erase_range(tstring* first, tstring* last);   // 0x4c8840 (thiscall, ret 0xc, hidden return)
-};
-
-
 #include "../../include/ptr_vec.h"
 
 // the 0x38-byte record vector the copy helper belongs to

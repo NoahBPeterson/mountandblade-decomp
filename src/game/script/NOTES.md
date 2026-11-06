@@ -172,7 +172,7 @@ Calling `create_text_overlay` / `create_button_overlay` directly (without the `P
 Measured in a scratch merge (`work/match/bm4o2_merge.py`, `bm4o2_patch.py`). Not applied: the modules stay separate. Baseline 328 identical, frame 0x1ee8.
 | merged with this file | execute | other rows |
 |---|---|---|
-| world_data, mesh_hud, obj_tbl, widget_mgr, widget_node | 352, frame 0x1ed8 | exact lost: 0x490a30, 0x490fa0, 0x491e50, 0x494020; 9 world_data rows worse; 0x499050 +3, 0x49ad20 +29 |
+| world_data, mesh_hud, obj_tbl, widget_mgr, widget_node | 352, frame 0x1ed8 | exact lost: 0x490a30, 0x490fa0, 0x491e50, 0x494020; 6 more world_data rows worse, 3 better; 0x499050 +3, 0x49ad20 +29 |
 | same without world_data | 352, frame 0x1ed8 | no exact row lost; 0x499050 +3, 0x49ad20 +29, 0x49bbb0 -22 |
 | mesh_hud only | 328, frame 0x1ee8 | no gain |
 | obj_tbl only | 352, frame 0x1ed8 | all of the gain |

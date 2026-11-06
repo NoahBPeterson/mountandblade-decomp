@@ -573,24 +573,35 @@ void MissionCtx::start_mission()
     build_hero_table(p->stacks[0].troop, v, id, 1);
 }
 
+static inline Rec98* rec98_at(std::vector<Rec98*>::iterator pages, unsigned idx)
+{
+    Rec98* page = *(pages + (idx >> 4));
+    return page + (idx & 0xf);
+}
+static inline bool shadow_stale(void* target) { return ((ShadowMapP*)target)->f48[0x50 / 4] != g_batch.counter; }
+static inline void set_map_view(rgl::frustum& c, float left, float right, float bottom, float top)
+{
+    c.perspective = 1;
+    c.nearz = 0.2f;
+    c.farz = 300.0f;
+    c.left = left;
+    c.right = right;
+    c.bottom = bottom;
+    c.top = top;
+}
+
 // @ 0x514d40 ---------------------------------------------------------------------------------------
 void CampaignScreen::frame_update(float dt)
 {
     float t = 0.0f;                                 // game hours since the clock's reference tick
     char flag;                                      // 1 while the map is idle
-    bool start;
+    int start;
 
-    if (g_shadow_map.target != 0 && ((ShadowMapP*)g_shadow_map.target)->f48[0x50 / 4] != g_batch.counter
+    if (g_shadow_map.target != 0 && shadow_stale(g_shadow_map.target)
         && (int)g_shadow_map.cam == (int)g_script.level && g_use_shaders != 0)
-        ((ShadowMapP*)g_shadow_map.target)->render();
+        ((ShadowMapP*)&g_shadow_map)->render();
 
-    cam.perspective = 1;
-    cam.nearz = 0.2f;
-    cam.farz = 300.0f;
-    cam.left = g_gui.view_a * -0.1f;
-    cam.right = g_gui.view_a * 0.1f;
-    cam.bottom = g_gui.view_b * -0.095f;
-    cam.top = g_gui.view_b * 0.095f;
+    set_map_view(cam, g_gui.view_a * -0.1f, g_gui.view_a * 0.1f, g_gui.view_b * -0.095f, g_gui.view_b * 0.095f);
     cam.build_planes();
     f30->scene3d.fr = cam;
 
@@ -601,18 +612,18 @@ void CampaignScreen::frame_update(float dt)
     float hour = (float)fmod((double)t, 24.0);
 
     float sz[2];
-    PSO(f5c)->set_text(sz, lookup_ref(
-        hour < 1.0f  ? tstring("ui_midnight") :
-        hour < 4.0f  ? tstring("ui_late_night") :
-        hour < 6.0f  ? tstring("ui_dawn") :
-        hour < 8.0f  ? tstring("ui_early_morning") :
-        hour < 11.0f ? tstring("ui_morning") :
-        hour < 13.0f ? tstring("ui_noon") :
-        hour < 16.0f ? tstring("ui_afternoon") :
-        hour < 18.0f ? tstring("ui_late_afternoon") :
-        hour < 20.0f ? tstring("ui_dusk") :
-        hour < 23.0f ? tstring("ui_evening") :
-                       tstring("ui_midnight")));
+    PSO(f5c)->set_text(sz,
+        hour < 1.0f  ? g_strtable.lookup("ui_midnight") :
+        hour < 4.0f  ? g_strtable.lookup("ui_late_night") :
+        hour < 6.0f  ? g_strtable.lookup("ui_dawn") :
+        hour < 8.0f  ? g_strtable.lookup("ui_early_morning") :
+        hour < 11.0f ? g_strtable.lookup("ui_morning") :
+        hour < 13.0f ? g_strtable.lookup("ui_noon") :
+        hour < 16.0f ? g_strtable.lookup("ui_afternoon") :
+        hour < 18.0f ? g_strtable.lookup("ui_late_afternoon") :
+        hour < 20.0f ? g_strtable.lookup("ui_dusk") :
+        hour < 23.0f ? g_strtable.lookup("ui_evening") :
+                       g_strtable.lookup("ui_midnight"));
 
     int hi = (int)t;
     g_script.result_string.assign("");
@@ -679,44 +690,39 @@ void CampaignScreen::frame_update(float dt)
         }
     }
 
+    GameData* g = g_game;
     if (f64 != 0) {
+        WL_MARKER(12)
         if (g_saved == 0)
             save_game(-1, 0);
         g_saved = 1;
+        WL_MARKER(13)
         return;
     }
-    if (GD_C(0x13ac8) != 0) {
-        g_windows.box()->setup((tstring*)((char*)g_game + 0x13ab8), (tstring*)((char*)g_game + 0x13aa8));
+    if (*((char*)g + 0x13ac8) != 0) {
+        g_windows.box()->setup((tstring*)((char*)g + 0x13ab8), (tstring*)((char*)g + 0x13aa8));
         g_windows.open(0);
         GD_C(0x13ac8) = 0;
         return;
     }
-    if (GD_C(0x13a3c) != 0) {
-        GD_C(0x13a3c) = 0;
+    if (*((char*)g + 0x13a3c) != 0) {
+        *((char*)g + 0x13a3c) = 0;
         g_mission_ctx.build_hero_table(GD_I(0x13a44), -1, -1, GD_I(0x13a40));
         slot_as<MenuWidget>(16)->f18 = 7;
         g_windows.set_state(0x10);
         return;
     }
 
-    int fpid = GD_I(0x78);
-    Party* party = PARTIES->get(fpid);
-    if (party->f88 < 0)
-        goto no_party;
-    party = PARTIES->get(fpid);
     {
-        char** pages = *(char***)((char*)g_game + 0xe4);
-        unsigned idx = (unsigned)party->f88;
-        Rec98* node = (Rec98*)(pages[idx >> 4] + (idx & 0xf) * 0x98);
-        if (node->f10 != 1)
-            goto no_party;
-    }
-    party = PARTIES->get(fpid);
-    {
-        char** pages = *(char***)((char*)g_game + 0xe4);
-        unsigned idx = (unsigned)party->f88;
-        Rec98* node = (Rec98*)(pages[idx >> 4] + (idx & 0xf) * 0x98);
-        start = true;
+    int fpid = g->f78;
+    PartyMgr* pm = &g->parties;
+    if (pm->get(fpid)->f88 >= 0) {
+    unsigned idx1 = pm->get(fpid)->f88;
+    std::vector<Rec98*>::iterator pages = ((std::vector<Rec98*>*)((char*)g + 0xe0))->begin();
+    if (rec98_at(pages, idx1)->f10 == 1) {
+        Rec98* node = rec98_at(pages, pm->get(fpid)->f88);
+        WL_MARKER(12)
+        start = 1;
         if (node->f54 == GD_I(0x78)) {
             GD_I(0x13a0c) = node->f58;
             GD_I(0x13a10) = -100000;
@@ -727,45 +733,41 @@ void CampaignScreen::frame_update(float dt)
             GD_I(0x13a0c) = node->f58;
             GD_I(0x13a10) = node->f54;
         }
-    }
-    if (g_game->troops[g_game->player].level <= 6 || g_trial_mode != 0) {
-        if (1 - (int)(t * -0.041666667f) > 30) {
-            if (g_trial_mode == 0) {
-                tstring a("ui_explanation_time_limit");
-                tstring b("ui_time_limit_reached");
-                g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
-                g_windows.open(g_trial_mode);
-                f64 = 1;
-                start = false;
-            }
+        int trial = g_trial_mode;
+        if (g_game->troops[g_game->player].level > 6 && trial == 0) {
+            tstring a("ui_explanation_level_limit");
+            tstring b("ui_level_limit_reached");
+            g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
+            g_windows.open(trial);
+            f64 = 1;
+            start = 0;
+        } else if (1 - (int)(t * -0.041666667f) > 30 && trial == 0) {
+            tstring a("ui_explanation_time_limit");
+            tstring b("ui_time_limit_reached");
+            g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
+            g_windows.open(trial);
+            f64 = 1;
+            start = 0;
         }
-    } else {
-        tstring a("ui_explanation_level_limit");
-        tstring b("ui_level_limit_reached");
-        g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
-        g_windows.open(g_trial_mode);
-        f64 = 1;
-        start = false;
-    }
+        WL_MARKER(13)
 
-    if (!start)
-        return;
+        if (!start)
+            return;
 
-    party = PARTIES->get(GD_I(0x78));
-    g_mission_ctx.init_battle(party->f88);
+    g_mission_ctx.init_battle(PARTIES->get(GD_I(0x78))->f88);
     GD_I(0x13aec) = 0;
     GD_I(0x13af8) = 0;
     ((TimerList*)((char*)g_game + 0x139f4))->update(-6);
     g_game->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
     if (GD_I(0x13aec) > 0) {
         g_mission_ctx.frame(GD_I(0x13aec));
-        party = PARTIES->get(GD_I(0x78));
+        Party* party = PARTIES->get(GD_I(0x78));
         g_map_flags.f8 = GD_I(0x13aec);
         g_map_flags.f4 = party->f88;
     } else {
         g_mission_ctx.frame(-1);
         g_mission_ctx.f2c8_word = 1;
-        party = PARTIES->get(GD_I(0x78));
+        Party* party = PARTIES->get(GD_I(0x78));
         g_map_flags.f8 = -1;
         g_map_flags.f4 = party->f88;
     }
@@ -774,13 +776,17 @@ void CampaignScreen::frame_update(float dt)
     g_map_flags.f2 = 0;
     g_map_flags.commit(&flag);
     return;
+    }
+    }
+    }
 
-no_party:
     if (flag) {
         if (PSO(f40)->clicked_on(0x10000) || g_game_keys.clicked(0x10)) {
+            WL_MARKER(4)
             slot_as<MenuWidget>(8)->f18 = 7;
             slot_as<MenuWidget>(8)->f4 = 0;
             g_windows.set_state(8);
+            WL_MARKER(5)
             return;
         }
         if (PSO(f3c)->clicked_on(0x10000) || g_game_keys.clicked(0x11)) {
@@ -803,8 +809,8 @@ no_party:
             return;
         }
         if (f4c != 0 && PSO(f4c)->clicked_on(0x10000)) {
-            Party* p = PARTIES->get(GD_I(0x78));
-            GV->attach_party_center(&p->pos.x, GD_I(0x78), GD_I(0x80));
+            GameDataV* gv = GV;
+            gv->attach_party_center(&gv->parties.get(gv->f78)->pos.x, gv->f78, *(int*)((char*)gv + 0x80));
             return;
         }
     }
@@ -835,38 +841,42 @@ no_party:
         f2d0 += dt;
         GD_I(0x13aa4) = 0;
         {
-            int bpid = GD_I(0x78);
-            if (PARTIES->get(bpid)->action == 4 || PARTIES->get(bpid)->action == 1
-                || PARTIES->get(bpid)->action == 6 || PARTIES->get(bpid)->action == 9)
-                GD_I(0x13aa4) = 1;
+            GameData* gb = g_game;
+            int bpid = gb->f78;
+            PartyMgr* bpm = &gb->parties;
+            if (bpm->get(bpid)->action == 4 || bpm->get(bpid)->action == 1
+                || bpm->get(bpid)->action == 6 || bpm->get(bpid)->action == 9)
+                *(int*)((char*)gb + 0x13aa4) = 1;
         }
         if (g_keyboard.down[57] != 0) {
-            PARTIES->get(GD_I(0x78))->action = 0;
+            GameData* gk = g_game;
+            gk->parties.get(gk->f78)->action = 0;
             PARTIES->get(GD_I(0x78))->reissue_order();
             GD_I(0x13aa4) = 2;
         }
     }
 
-    ((GameG*)GV)->tick(dt);
+    GameG* tg = (GameG*)GV;
+    tg->tick(dt);
     rgl::matrix m;
     rgl::identity_pos(&m);
     {
         float vx = 0.0175f - g_gui.view_a * 0.1975f;
         float vy = 0.015f - g_gui.view_b * 0.18f;
         rgl::vector4 v(vx, vy, -0.4f);
-        rgl::vector4 p = ((pos*)&cam.m)->transform_point(v);
-        m.o = p;
+        m.o = ((pos*)&cam.m)->transform_point(v);
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
 
-    if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.is_ready(0x12))
+    if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && (char)g_keyboard.is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
 
     if (GD_I(0x1a090) != 0) {
         char buf[0x200];
         int bpid = GD_I(0x78);
+        PartyMgr* bpm = PARTIES;
         sprintf(buf, "Position: %3.2f, %3.2f ;",
-                (double)PARTIES->get(bpid)->pos.x, (double)PARTIES->get(bpid)->pos.y);
+                (double)bpm->get(bpid)->pos.x, (double)bpm->get(bpid)->pos.y);
         text_stream& log = g_debug_log;     // reached through a reference: the calls stay virtual (+0x28), as in the original
         log.w_cstr(";-------------------;");
         log.w_cstr(buf);
