@@ -1324,7 +1324,7 @@ void ViewCtrl_s284a0::update(float dt)
     if (!g_game_s284a0->f1a090) {
         if (g_presentation == 0 || (flags44 & 1)) {
             if (g_mission->f5c >= 0) {
-                Agent* a = &agr_s284a0(g_mission->f5c);
+                Agent_s284a0* a = (Agent_s284a0*)&agr_s284a0(g_mission->f5c);
                 ItemRef_s284a0 w0 = a->slot_pair(0);
                 ItemRef_s284a0 w1 = a->slot_pair(1);
                 bool hand0;
@@ -1334,9 +1334,9 @@ void ViewCtrl_s284a0::update(float dt)
                     int t = g_items_s284a0[w0.item].type_flags & 0xff;
                     hand0 = (t == 2 || t == 3 || t == 4);
                 }
-                if (((hand0 && a->active == 1 && g_options.ctl_mode > 0 && a->anim[1].cur == a->snd_a) ||
-                     (w1.item < 0 && a->f5610 > 0 && g_options.stick_mode > 0 && a->anim[1].cur == a->f5614)) &&
-                    a->anim[1].scale < 0.6f)
+                if (((hand0 && a->f560c == 1 && g_options.ctl_mode > 0 && a->f100 == a->f55ec) ||
+                     (w1.item < 0 && a->f5610 > 0 && g_options.stick_mode > 0 && a->f100 == a->f5614)) &&
+                    a->f118 < 0.6f)
                     k *= 0.1f;
             }
         }
@@ -1384,7 +1384,7 @@ void ViewCtrl_s284a0::update(float dt)
         return;
 
     // ---- build the view frame and hand its forward row to the local agent ----------------------------
-    Agent* a = &agr_s284a0(g_mission->f5c);
+    Agent_s284a0* a = (Agent_s284a0*)&agr_s284a0(g_mission->f5c);
     {
         matrix m;
         identity3((rgl::mat3*)&m);
@@ -1395,12 +1395,12 @@ void ViewCtrl_s284a0::update(float dt)
         if (g_game_keys.entry[13][0] >= 0 && g_keyboard.down[g_game_keys.entry[13][0]] != 0)
             looking = true;
         if ((g_game_keys.entry[13][1] < 0 || g_keyboard.down[g_game_keys.entry[13][1]] == 0) && !looking)
-            (*(vector4*)&a->fx) = m.f;
+            a->dir55d8 = m.f;
     }
 
     if (snap < 5) {
-        const vector4& d = a->vel;
-        (*(vector4*)&a->fx) = d;
+        const vector4& d = a->dir;
+        a->dir55d8 = d;
         float nx = -d.x;
         float ang = (float)atan2(nx, d.y);
         int n = snap + 1;
@@ -1417,7 +1417,7 @@ void ViewCtrl_s284a0::update(float dt)
         if (g_game_keys.clicked(5))
             a->in_flags |= 0x100000;
 
-        if (a->f2c >= 0) {
+        if (a->mount_id >= 0) {
             if (g_game_keys.clicked(0))
                 a->in_flags |= 0x80000;
             if (g_game_keys.is_down(0))
@@ -1443,7 +1443,7 @@ void ViewCtrl_s284a0::update(float dt)
                 a->in_flags |= 8;
             if (g_game_keys.clicked(4) && mode == 2 && aim_valid != 0) {
                 a->in_flags |= 0x20000;
-                a->target = target;
+                a->target_id = target;
             }
         }
 
@@ -1461,7 +1461,7 @@ void ViewCtrl_s284a0::update(float dt)
         } else if (g_game_keys.clicked(9)) {
             a->cycle_slot(1);
         } else if (g_game_keys.clicked(10)) {
-            a->wield[0] = -1;
+            a->wield_a = -1;
             a->on_wield_reset();
         }
     }
@@ -2900,7 +2900,7 @@ __declspec(noinline) void Terrain::clear_brushed()
 #undef g_game_c
 #define g_game_c ((char*)g_game)
 // the element's lazy value block: read with a default, store with the allocate-on-positive rule (expanded at every use)
-static inline float elem_get_s2c2b0(BrushElem_s2c2b0* E, const int* c)
+static __forceinline float elem_get_s2c2b0(BrushElem_s2c2b0* E, const int* c)
 {
     float r = 0.0f;
     if (E->v)

@@ -154,6 +154,34 @@ Other callees whose bodies this object sees, as duplicates of the canonical defi
 Tool: `work/match/bm4o1_c.py --real lo hi` lists real slots (push-adjusted) per case on both sides, `--vs` the low slots per case. That is how the two stray dwords
 below params were found: one slot used only by `add_companion_party`, whose forwarder passed three floats where the original passes a by-value `vector4` (ret 0x14).
 
+## What keeps a temporary private (the frame)
+
+Rule, measured: **a local whose address reaches a callee cl cannot see keeps a private frame slot**, because cl assumes the callee may keep the pointer. Visible callees let it pack, and the rule follows chains: the whole chain has to be visible. The frame is exact at 0x1ec0 with these (all duplicates of the canonical rows, above execute in script_interpreter.cpp):
+- `TableauTbl::spawn_scaled`, `spawn_scaled2` (+24 identical cases, frame -0x10), and `rgl::unpack_color`, which `spawn_scaled` passes the colour pointer to.
+- `MissionView::setup`: prop_instance_animate_to_position's duration and zero.
+- `ItemRef::set_modifier`, `reduce`, `stat_1e8` and `Mission::place` -> `add_placed` -> `init_placed`: spawn_item's ItemRef. Any one link opaque keeps it private.
+So when a slot is private here and low in the original, look down the callee chain for an opaque function. The older open item about set_battle_advantage's private slots no longer shows up in the slot lists.
+Removing each of the 47 `noinline` bodies above execute was re-measured with the frame right: none gains (most lose 1 to 300 cases).
+
+High frame order: tstring temporaries are laid out in two interleaved rising sequences by case, and the sequences are shifted against the original (case 60: 0x390 and 0x640 there, 0x310 and 0x5c0 here). Temporaries added before execute in the file do not move them, so the order is decided inside the function. Several cases have more slots in the original (question_box 11 against 6, set_relation 6 against 4, dialog_box 5 against 4), which is the likely cause. Tool: `work/match/bm4o2_c.py --perc lo hi` prints slots per case.
+
+Calling `create_text_overlay` / `create_button_overlay` directly (without the `Presentation` forwarders) gives the original's argument order (flags pushed first) but rotates later cases: 360 identical, 418 ignoring slots and registers. Not applied; it is probably right once the rotation above it is fixed.
+
+## Merge test (docs/original_tus.md A2), 2026-11-06
+
+Measured in a scratch merge (`work/match/bm4o2_merge.py`, `bm4o2_patch.py`). Not applied: the modules stay separate. Baseline 328 identical, frame 0x1ee8.
+| merged with this file | execute | other rows |
+|---|---|---|
+| world_data, mesh_hud, obj_tbl, widget_mgr, widget_node | 352, frame 0x1ed8 | exact lost: 0x490a30, 0x490fa0, 0x491e50, 0x494020; 9 world_data rows worse; 0x499050 +3, 0x49ad20 +29 |
+| same without world_data | 352, frame 0x1ed8 | no exact row lost; 0x499050 +3, 0x49ad20 +29, 0x49bbb0 -22 |
+| mesh_hud only | 328, frame 0x1ee8 | no gain |
+| obj_tbl only | 352, frame 0x1ed8 | all of the gain |
+- The whole gain is `spawn_scaled` and `spawn_scaled2` being visible, and that is available without a merge (see above).
+- Against world_data: 0x490a30, 0x490fa0 and 0x491e50 need `Map10007::lookup` opaque, and execute needs it visible (123 identical without it). One object cannot have both; the body's position in the file does not matter. 0x494020 was lost to `RGL_VECTOR4_OPS_OUT_OF_LINE`, which this file defines and which world_data needs off.
+- Against widget_node: 0x49ad46 calls the ContainerBase constructor out of line where Camera::Camera expands it; that is the +29. It agrees with the forward call 0x49aca0 -> 0x49ad20.
+- Still unexplained: `agent_of` 0x4904a0 taking EAX with execute as its only caller.
+- Visible bodies do not prove a shared object: `PartyMgr::get` 0x51ee50 and `lookup` 0x48ad00 are visible here and far outside this range, so they look like header inlines.
+
 ## Open problems
 
 0. Scratch registers: **cause found.** The rotation starts at the first temporary: `mov ecx,[edi]` for `g_cur_opcode = id` in the original,
@@ -185,7 +213,7 @@ below params were found: one slot used only by `add_companion_party`, whose forw
    `hero_can_join` and `troops_can_join` are still open, but no longer look like the key to the chain: changing the temporaries there did not move the following case's registers. Evidence for the next attempt: `lea rN,[eax+0xf8]; lea rM,[eax+0xf8]` occurs **six times in .text up to 0x54a000**, all in these four cases and party_get_free_companions/prisoners_capacity (1633, 1634), and `mov r,callee-saved; push r` only in these four within execute.
    All six follow one order: get (fresh) + max_stacks, get (cached pointer) + first_flagged, get (fresh `g_game`) + sum_head, get (cached pointer) + max_members. The cached `parties` pointer survives the opaque max_stacks, so it looks like a source variable, yet the first call's `this` doesn't merge with it. Tried without success: about 20 spellings (wrappers on GameX/PartyMgr, reference and pointer locals, assignment inside the argument, address-taken `main`, one-expression forms, first_flagged first). In one expression cl evaluates first_flagged first, as the original does at 0x4aca11 (a different case).
    Also open: storing clamp_index's result straight to an absolute address (`g_mission_ctx.f1c`, `g_or_latch`, `g_script.reg[0]`) gives set_battle_advantage private slots, where a store through `g_game` shares 0x10/0x20/0x24. The original stores to the absolute address and shares. Block scope and the negative constant were tested and aren't the cause. Those three private dwords sit just below `types`, whose offset (0xbc here, 0xb4 there) contributes to set_result_string and its family staying at "S"/"R".
-1. **Frame layout**: 0x1ee8 against 0x1ec0, 0x28 to lose. Low slots agree with the original from 0x10 to params at 0x2c except `opcode`. Still private here and low there:
+1. **Frame layout**: size solved (0x1ec0, see above). What follows is the earlier list of private slots, kept for history:
    `set_battle_advantage` (same source as `party_set_morale`, which packs; cause unknown), `spawn_item`'s ItemRef (visible `set_modifier` alone does not help), the
    `cur_tableau_add_*` and `cur_*_set_tableau_*` temporaries, `prop_instance_animate_to_position`, `race_completed_by_player`. The validator temporary leaves slot 0x10 at case 1993 in the original and about 2100 here.
    Dropping cases only removes their own slots: no sign of a cumulative packing limit on this source.

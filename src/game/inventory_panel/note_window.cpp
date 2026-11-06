@@ -248,6 +248,9 @@ struct note_window {
     void build(int page, int arg);              // 0x50a1c0
 };
 
+// The party notes use get_party (raw page read) except the find() in the back-reference scan, which uses get_w
+// (vector::operator[]: `lea; mov`, 0x50c0xx). get_w costs more inside the compiler even where both emit the same code: with
+// get_w everywhere the troop scan's operand order flips (0x50bca6: `lea ecx,[eax+edi]`, original `lea ecx,[edi+esi]`).
 // @ 0x50a1c0
 void note_window::build(int page_, int arg_)
 {
@@ -484,11 +487,11 @@ void note_window::build(int page_, int arg_)
 
         tstring line;
         for (int k = 0; k < 8; k++) {
-            if (WORLDMAP->get_w(arg_)->notes[k].len > 0) {
+            if (WORLDMAP->get_party(arg_)->notes[k].len > 0) {
                 if (line.len > 0)
                     line.append("\n\n");
-                line.append(WORLDMAP->get_w(arg_)->notes[k]);
-                if (WORLDMAP->get_w(arg_)->note_times[k] >= 0) {
+                line.append(WORLDMAP->get_party(arg_)->notes[k]);
+                if (WORLDMAP->get_party(arg_)->note_times[k] >= 0) {
                     if (WORLDMAP->get(arg_)->note_times[k] < WORLD->string_count) {
                         sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLDMAP->get(arg_)->note_times[k]);
                         line.append(buf2);
@@ -502,7 +505,7 @@ void note_window::build(int page_, int arg_)
         if (line.len > 0) {
             if (this->menu_id == 7)
                 this->btn_map->show();
-            TEXTSET(this->title, party_name((char*)WORLDMAP->get_w(arg_)));
+            TEXTSET(this->title, party_name((char*)WORLDMAP->get_party(arg_)));
             x_cur = TEXTSET(this->links, &line).y;
             line.clear();
             any = false;
@@ -515,7 +518,7 @@ void note_window::build(int page_, int arg_)
             int p = WORLDMAP->first_party_id();
             while ((unsigned)p < WORLD->parties.n_parties) {
                 for (int k = 0; k < 8; k++) {
-                    if (WORLDMAP->get_w(p)->notes[k].len > 0) {
+                    if (WORLDMAP->get_party(p)->notes[k].len > 0) {
                         vec.push_back(p);
                         break;
                     }
@@ -530,9 +533,9 @@ void note_window::build(int page_, int arg_)
             if (selected < 0)
                 selected = v;
             if (v == arg_)
-                sprintf(buf2, "%s\n", party_name((char*)WORLDMAP->get_w(v))->c_str());
+                sprintf(buf2, "%s\n", party_name((char*)WORLDMAP->get_party(v))->c_str());
             else
-                sprintf(buf2, "<p=%d>%s</>\n", v, party_name((char*)WORLDMAP->get_w(v))->c_str());
+                sprintf(buf2, "<p=%d>%s</>\n", v, party_name((char*)WORLDMAP->get_party(v))->c_str());
             line.append(buf2);
         }
         if (line.len > 0)
@@ -641,8 +644,8 @@ void note_window::build(int page_, int arg_)
             int p = WORLDMAP->first_party_id();
             while ((unsigned)p < WORLD->parties.n_parties) {
                 for (int k = 0; k < 8; k++) {
-                    if (WORLDMAP->get_w(p)->notes[k].len > 0 && WORLDMAP->get_w(p)->notes[k].find(acc, 0) >= 0) {
-                        sprintf(buf2, "<p=%d>%s</>", p, party_name((char*)WORLDMAP->get_w(p))->c_str());
+                    if (WORLDMAP->get_party(p)->notes[k].len > 0 && WORLDMAP->get_w(p)->notes[k].find(acc, 0) >= 0) {
+                        sprintf(buf2, "<p=%d>%s</>", p, party_name((char*)WORLDMAP->get_party(p))->c_str());
                         if (link_text.find(buf2, 0) < 0) {
                             if (other.len > 0)
                                 other.append(", ");

@@ -1,1 +1,1 @@
-# no byte-exact function in this module (see note_window.nonmatching.txt)
+../src/game/inventory_panel/note_window.cpp  ?build@note_window@@QAEXHH@Z  0050a1c0  /O2 /MT /Gy /TP

@@ -714,8 +714,9 @@ void MapPanel::update(int type, int id)
                 int agent = id;               // [esp+0x14]  battle side shown in the current column
                 char buf[0x100];
                 if (ncols > 1) {
+                    PartyMgr& mg = g_game->parties;
                     GameData* g = g_game;
-                    int b = g->parties.get_party(agent)->battle;
+                    int b = mg.get_party(agent)->battle;
                     Rec98* slot = (Rec98*)g->agent_pages[(unsigned)b >> 4] + (b & 0xf);
                     if (c == 0) agent = slot->f58;
                     else agent = slot->f54;

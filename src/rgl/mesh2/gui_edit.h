@@ -116,7 +116,15 @@ struct RefRecord;                                                // below
 #include "../../game/ptype.h"             // ptype (the 0x20-byte ground spec), g_ptypes 0x5e28f8, g_ptype_count 0x5e29e8
 
 #include "../../include/item_kind.h"       // ItemKind (name / plural / key at +0 / +0x10 / +0x20), g_items 0x5e29d0
-inline const tstring* ItemKind::plural_name() { return suffix_or(key, "_pl", plural); }
+inline const tstring* ItemKind::plural_name()
+{
+    const tstring* r;
+    {
+        tstring prefix("_pl");
+        r = g_strtable.find(&(key + prefix));
+    }
+    return r ? r : &plural;
+}
 extern int g_item_kind_count;                           // 0x5e29d4
 
 // a mesh's keyframe track (a 0x24-byte record's +0x14 points at an array of these)
@@ -612,7 +620,15 @@ struct item38_vec {
 // ============================================================================================================
 // 0x4c8ca0: GameData::save_language_files and the records it walks
 // ============================================================================================================
-inline const tstring* QuestRec::text_name() { return suffix_or(key, "_text", desc); }
+inline const tstring* QuestRec::text_name()
+{
+    const tstring* r;
+    {
+        tstring prefix("_text");
+        r = g_strtable.find(&(key + prefix));
+    }
+    return r ? r : &desc;
+}
 
 extern int g_party_template_count;                                         // 0x5e29fc
 #include "../../game/menu_rec.h"   // MenuRec* g_menus (0x5e29b0)

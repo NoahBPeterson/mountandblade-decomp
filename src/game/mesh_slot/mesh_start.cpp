@@ -288,7 +288,9 @@ void Mission::start_setup()
     u = *(vector4*)&party_rec(pm, pid)->pos;
 
     if (g_script.level != 0) {
-        for (unsigned p = (unsigned)((Scene*)g_script.level)->objs->first; p < (unsigned)((Scene*)g_script.level)->objs->last; p += 0x88) {
+        SceneObjs* so = ((Scene*)g_script.level)->objs;
+        unsigned pe = (unsigned)so->last;
+        for (unsigned p = (unsigned)so->first; p < pe; p += 0x88) {
             float dx = *(float*)(p + 0x74) - u.x;
             float dy = *(float*)(p + 0x78) - u.y;
             float d2 = dy * dy + dx * dx;

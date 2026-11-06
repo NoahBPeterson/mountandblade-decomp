@@ -5,12 +5,16 @@
 #ifndef GAME_STD_VEC_OUT_OF_LINE_H
 #define GAME_STD_VEC_OUT_OF_LINE_H
 #include <vector>
-template<> void std::vector<int, std::allocator<int> >::resize(size_t, int);                  // 0x43f310 (agent3/agent_combat.cpp)
+#ifndef STD_VECTOR_INT_INSTANTIATED_HERE     // agent4/agent_logic.cpp instantiates these two itself
+template<> void std::vector<int, std::allocator<int> >::resize(size_t, int);                  // 0x43f310 (agent4/agent_logic.cpp)
+#endif
 template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, __int64);      // 0x493090 (world_data/world_data.cpp)
 template<> void std::vector<int, std::allocator<int> >::_Insert_n(std::vector<int, std::allocator<int> >::iterator, size_t, const int&);   // 0x410610 (rgl/particles/mesh_obj.cpp; also the vector<T*> instance)
 // the protected _Insert_n of a std::vector<int>, for the pointer-vector views that call the shared instance
 struct int_stdvec : std::vector<int> {
     __forceinline void insert_n(int* p, size_t n, const int& v) { _Insert_n(iterator(p), n, v); }
 };
-template<> std::vector<int, std::allocator<int> >& std::vector<int, std::allocator<int> >::operator=(const std::vector<int, std::allocator<int> >&);   // 0x43f0a0 (agent3/agent_combat.cpp)
+#ifndef STD_VECTOR_INT_INSTANTIATED_HERE
+template<> std::vector<int, std::allocator<int> >& std::vector<int, std::allocator<int> >::operator=(const std::vector<int, std::allocator<int> >&);   // 0x43f0a0 (agent4/agent_logic.cpp)
+#endif
 #endif

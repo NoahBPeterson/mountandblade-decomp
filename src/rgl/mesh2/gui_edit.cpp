@@ -1766,7 +1766,86 @@ template <class R>
 inline const tstring* rec_name(R* r)
 {
     const tstring* p = g_strtable.find(&r->key);
-    return p ? p : (const tstring*)r;
+    return p ? p : &r->name;
+}
+
+// the same for the records with an id and a text (dialogs, menus)
+template <class R>
+inline const tstring* id_text(R* r)
+{
+    const tstring* p = g_strtable.find(&r->id);
+    return p ? p : &r->text;
+}
+
+inline Skin& skin_at(SkinVec& v, unsigned i) { return *(v.first + i); }
+
+// the door text of a menu item: key + "_door" through the translation table, or the item's own text
+inline const tstring* door_text(MenuDoor* d)
+{
+    const tstring* r;
+    {
+        tstring suffix("_door");
+        r = g_strtable.find(&(d->key + suffix));
+    }
+    return r ? r : &d->text;
+}
+
+inline const tstring* faction_name(FactionRec* r)
+{
+    if (r->flag)
+        return &r->name;
+    const tstring* q = g_strtable.find(&r->key);
+    return q ? q : &r->name;
+}
+
+inline const tstring* party_name(Party* r)
+{
+    if (g_module_settings.show_party_ids_instead_of_names)
+        return &r->key;
+    if (r->flag)
+        return &r->name;
+    const tstring* p = g_strtable.find(&r->key);
+    return p ? p : &r->name;
+}
+
+// The party accessors, visible here as header inlines in the original (the same definitions as ui/mission_ui.cpp and
+// dialog_manager.cpp; the row owners win the link). The id stays in a register across lookup only if cl sees it can't change.
+inline int Map10007::lookup(unsigned id)
+{
+    if (id < 0x2717)
+        return tab[id].value;
+    int h = id % 0x2717;
+    int n = 0;
+    if (tab[h].key != id) {
+        do {
+            if (n >= 1000)
+                return -1;
+            h = (h + 0x4f) % 0x2717;
+            n++;
+        } while (tab[h].key != id);
+    }
+    if (n < 1000)
+        return tab[h].value;
+    return -1;
+}
+__declspec(noinline) void PartyMgr::next_party_id(int* id)
+{
+    unsigned i = lookup(*id) + 1;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        *id = deflt;
+    else
+        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+}
+__declspec(noinline) int PartyMgr::first_party_id()
+{
+    unsigned i = 0;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        return deflt;
+    return pages._Myfirst[i >> 4][i & 0xf].id;
 }
 
 // @ 0x4c8ca0
@@ -1792,23 +1871,15 @@ void GameData::save_language_files(bool translated)
         fclose(f);
     }
 
-    if (parties.n_parties != 0) {
+    if (parties.n_parties > 0) {
         FILE* f = fopen("new_language\\parties.csv", "wt+");            // 0x596034
         unsigned i = parties.first_party_id();
         while (i < parties.n_parties) {
-            if (parties.get_party(i)->owner <= 0 && i != (unsigned)party_id_78) {
+            if (parties.get_w(i)->owner <= 0 && i != (unsigned)party_id_78) {
                 if (translated) {
-                    write_row(f, parties.get_party(i)->key, ((RecB*)parties.get_party(i))->translated());
+                    write_row(f, parties.get_w(i)->key, ((RecB*)parties.get_w(i))->translated());
                 } else {
-                    Party* p = parties.get_party(i);
-                    const tstring* v;
-                    if (g_module_settings.show_party_ids_instead_of_names)
-                        v = &p->key;
-                    else if (p->flag)
-                        v = &p->name;
-                    else
-                        v = rec_name(p);
-                    write_row(f, parties.get_party(i)->key, *v);
+                    write_row(f, parties.get_w(i)->key, *party_name(parties.get_w(i)));
                 }
             }
             parties.next_party_id((int*)&i);
@@ -1820,13 +1891,9 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\factions.csv", "wt+");           // 0x596018
         for (int i = 0; i < n_factions; i++) {
             if (translated) {
-                tstring v = ((RecC*)&factions[i])->translated();
-                write_row(f, factions[i].key, v);
+                write_row(f, factions[i].key, ((RecC*)&factions[i])->translated());
             } else {
-                const tstring* v = &factions[i].name;
-                if (!factions[i].flag)
-                    v = rec_name(&factions[i]);
-                write_row(f, factions[i].key, *v);
+                write_row(f, factions[i].key, *faction_name(&factions[i]));
             }
         }
         fclose(f);
@@ -1837,8 +1904,7 @@ void GameData::save_language_files(bool translated)
         for (int i = 0; i < g_item_kind_count; i++) {
             if (translated) {
                 {
-                    tstring v = ((MenuDoor*)&g_items[i])->translated(); // dies before the suffix is built
-                    write_row(f, g_items[i].key, v);
+                    write_row(f, g_items[i].key, ((MenuDoor*)&g_items[i])->translated());
                 }
                 tstring suffix("_pl");
                 write_row(f, g_items[i].key + suffix, ((RecA*)&g_items[i])->translated_plural());
@@ -1854,12 +1920,11 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\item_modifiers.csv", "wt+");     // 0x595fdc
-        for (ModRec* r = (ModRec*)g_item_mods; r < (ModRec*)g_item_mods + 43; r++) {
+        for (int i = 0; i < 43; i++) {
             if (translated) {
-                tstring v = ((PartyTemplate*)r)->translated();
-                write_row(f, r->key, v);
+                write_row(f, ((ModRec*)g_item_mods)[i].key, ((PartyTemplate*)&((ModRec*)g_item_mods)[i])->translated());
             } else {
-                write_row(f, r->key, *rec_name(r));
+                write_row(f, ((ModRec*)g_item_mods)[i].key, *rec_name(&((ModRec*)g_item_mods)[i]));
             }
         }
         fclose(f);
@@ -1869,8 +1934,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\party_templates.csv", "wt+");    // 0x595fb8
         for (int i = 0; i < g_party_template_count; i++) {
             if (translated) {
-                tstring v = g_party_templates[i].translated();
-                write_row(f, g_party_templates[i].key, v);
+                write_row(f, g_party_templates[i].key, g_party_templates[i].translated());
             } else {
                 write_row(f, g_party_templates[i].key,
                           *rec_name(&g_party_templates[i]));
@@ -1883,8 +1947,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\game_strings.csv", "wt+");       // 0x595f98
         for (int i = 0; i < g_strings.count; i++) {
             if (translated) {
-                tstring v = ((PartyTemplate*)&g_strings.strings[i])->translated();
-                write_row(f, g_strings.strings[i].key, v);
+                write_row(f, g_strings.strings[i].key, ((PartyTemplate*)&g_strings.strings[i])->translated());
             } else {
                 write_row(f, g_strings.strings[i].key,
                           *rec_name(&g_strings.strings[i]));
@@ -1897,8 +1960,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\quick_strings.csv", "wt+");      // 0x595f78
         for (int i = 0; i < g_strings.quick_count; i++) {
             if (translated) {
-                tstring v = ((PartyTemplate*)&g_strings.quick[i])->translated();
-                write_row(f, g_strings.quick[i].key, v);
+                write_row(f, g_strings.quick[i].key, ((PartyTemplate*)&g_strings.quick[i])->translated());
             } else {
                 write_row(f, g_strings.quick[i].key,
                           *rec_name(&g_strings.quick[i]));
@@ -1912,8 +1974,7 @@ void GameData::save_language_files(bool translated)
         for (int i = 0; i < n_quests; i++) {
             if (translated) {
                 {
-                    tstring v = ((RecA*)&quests[i])->translated();      // dies before the suffix is built
-                    write_row(f, quests[i].key, v);
+                    write_row(f, quests[i].key, ((RecA*)&quests[i])->translated());
                 }
                 tstring suffix("_text");                                // 0x5923b4
                 write_row(f, quests[i].key + suffix, ((RecA*)&quests[i])->translated_text());
@@ -1934,11 +1995,9 @@ void GameData::save_language_files(bool translated)
                     goto next_dialog;
             }
             if (translated) {
-                tstring v = ((PartyTemplate*)&g_dialogs.recs[i])->translated();
-                write_row(f, g_dialogs.recs[i].id, v);
+                write_row(f, g_dialogs.recs[i].id, ((PartyTemplate*)&g_dialogs.recs[i])->translated());
             } else {
-                write_row(f, g_dialogs.recs[i].id,
-                          *find_or(g_dialogs.recs[i].id, g_dialogs.recs[i].text));
+                write_row(f, g_dialogs.recs[i].id, *id_text(&g_dialogs.recs[i]));
             }
         next_dialog:
             ;
@@ -1948,11 +2007,11 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\skins.csv", "wt+");              // 0x595f2c
-        for (unsigned i = 0; g_anim.skin_vec.first && i < (unsigned)(g_anim.skin_vec.last - g_anim.skin_vec.first); i++) {
+        for (unsigned i = 0; i < (unsigned)(g_anim.skin_vec.first ? g_anim.skin_vec.last - g_anim.skin_vec.first : 0); i++) {
             for (int j = 0; j < g_anim.skin_vec.first[i].n_face_keys; j++) {
                 if (translated) {
-                    tstring v = ((PartyTemplate*)&g_anim.skin_vec.first[i].face_keys[j])->translated();
-                    write_row(f, g_anim.skin_vec.first[i].face_keys[j].key, v);
+                    Skin& s = skin_at(g_anim.skin_vec, i);
+                    write_row(f, skin_at(g_anim.skin_vec, i).face_keys[j].key, ((PartyTemplate*)&s.face_keys[j])->translated());
                 } else {
                     write_row(f, g_anim.skin_vec.first[i].face_keys[j].key,
                               *rec_name(&g_anim.skin_vec.first[i].face_keys[j]));
@@ -1964,18 +2023,17 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\skills.csv", "wt+");             // 0x595f14
-        for (SkillRec* r = g_skill_tbl; r < g_skill_tbl + 42; r++) {
+        for (int i = 0; i < 42; i++) {
             if (translated) {
                 {
-                    tstring v = r->translated();                        // dies before the suffix is built
-                    write_row(f, r->key, v);
+                    write_row(f, g_skill_tbl[i].key, g_skill_tbl[i].translated());
                 }
                 tstring suffix("_desc");                                // 0x595ca4
-                write_row(f, r->key + suffix, r->translated_desc());
+                write_row(f, g_skill_tbl[i].key + suffix, g_skill_tbl[i].translated_desc());
             } else {
-                write_row(f, r->key, *rec_name(r));
+                write_row(f, g_skill_tbl[i].key, *rec_name(&g_skill_tbl[i]));
                 tstring suffix("_desc");                                // built before desc_name() runs, as in the original
-                write_row(f, r->key + suffix, *r->desc_name());
+                write_row(f, g_skill_tbl[i].key + suffix, *g_skill_tbl[i].desc_name());
             }
         }
         fclose(f);
@@ -1984,29 +2042,20 @@ void GameData::save_language_files(bool translated)
     {
         FILE* f = fopen("new_language\\game_menus.csv", "wt+");         // 0x595ef8
         for (int i = 0; i < g_menu_count; i++) {
-            write_row(f, g_menus[i].id, *find_or(g_menus[i].id, g_menus[i].text));
+            write_row(f, g_menus[i].id, *id_text(&g_menus[i]));
             for (int j = 0; j < g_menus[i].count; j++) {
                 if (translated) {
-                    tstring v = ((MenuDoor*)g_menus[i].items)[j].translated();
-                    write_row(f, ((MenuDoor*)g_menus[i].items)[j].key, v);
-                    tstring suffix("_door");                            // 0x595d64
-                    tstring lookup = ((MenuDoor*)g_menus[i].items)[j].key + suffix;
-                    const tstring* p = g_strtable.find(&lookup);
-                    if (!p)
-                        p = &((MenuDoor*)g_menus[i].items)[j].text;
-                    if (p->len > 2) {
-                        tstring suffix2("_door");
-                        tstring v2 = ((MenuDoor*)g_menus[i].items)[j].translated_door();
-                        write_row(f, ((MenuDoor*)g_menus[i].items)[j].key + suffix2, v2);
+                    write_row(f, ((MenuDoor*)g_menus[i].items)[j].key, ((MenuDoor*)g_menus[i].items)[j].translated());
+                    if (door_text(&((MenuDoor*)g_menus[i].items)[j])->len > 2) {
+                        tstring suffix("_door");                        // 0x595d64
+                        write_row(f, ((MenuDoor*)g_menus[i].items)[j].key + suffix, ((MenuDoor*)g_menus[i].items)[j].translated_door());
                     }
                 } else {
-                    write_row(f, ((MenuDoor*)g_menus[i].items)[j].key,
-                              *rec_name(&((MenuDoor*)g_menus[i].items)[j]));
-                    const tstring* p = suffix_or(((MenuDoor*)g_menus[i].items)[j].key, "_door",
-                                                 ((MenuDoor*)g_menus[i].items)[j].text);
-                    if (p->len > 2)
-                        write_row(f, ((MenuDoor*)g_menus[i].items)[j].key + tstring("_door"),
-                                  *suffix_or(((MenuDoor*)g_menus[i].items)[j].key, "_door", ((MenuDoor*)g_menus[i].items)[j].text));
+                    write_row(f, ((MenuDoor*)g_menus[i].items)[j].key, *rec_name(&((MenuDoor*)g_menus[i].items)[j]));
+                    if (door_text(&((MenuDoor*)g_menus[i].items)[j])->len > 2) {
+                        tstring suffix("_door");
+                        write_row(f, ((MenuDoor*)g_menus[i].items)[j].key + suffix, *door_text(&((MenuDoor*)g_menus[i].items)[j]));
+                    }
                 }
             }
         }

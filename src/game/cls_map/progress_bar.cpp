@@ -927,86 +927,11 @@ void gui_manager::update(float dt)
 // a local frame (identity_pos) and four points are placed in that frame; four triangles then close them into a tetrahedron. Width and
 // colour come from the shape's mode (+0x78) and the record flag; the owner's two dirty flags (+0x138 / +0x164) are set once at the end.
 
-// @ 0x4e65e0
-void Shape::build_spikes(rgl::mesh* owner)
-{
-    owner->clear_geometry();                                    // 0x428e80
-
-    rgl::matrix m;                                              // the frame, ES+0x18
-    identity_pos(&m);                                           // 0x40cd00
-
-    int off = 0;
-    for (unsigned i = 0;; ++i, off += 0x18) {
-        if (i >= pts.size())
-            break;
-        ShapePt* e = &pts[i];
-
-        float w;
-        unsigned color;
-        if (mode == 0) {
-            if (e->flag != 0) {
-                w = 2.0f;
-                color = 0xaaff5555u;
-            } else {
-                w = 1.4f;
-                color = 0xaa4455ddu;
-            }
-        } else {
-            w = 1.0f;
-            color = 0x77555577u;
-        }
-
-        m.o = e->pos;                                           // the record is the origin of the frame
-
-        // the four spikes, in the frame's local coordinates
-        rgl::vector4 p0, p1, p2, p3;
-        p0.x = m.s.x * (w * 0.034f) + m.f.x * (w * 0.0154f) + m.u.x * (w * 0.2f) + m.o.x;
-        p0.y = m.s.y * (w * 0.034f) + m.f.y * (w * 0.0154f) + m.u.y * (w * 0.2f) + m.o.y;
-        p0.z = m.s.z * (w * 0.034f) + m.f.z * (w * 0.0154f) + m.u.z * (w * 0.2f) + m.o.z;
-        p1.x = m.s.x * (w * -0.0602f) + m.f.x * (w * -0.148f) + m.u.x * (w * -0.0666f) + m.o.x;
-        p1.y = m.s.y * (w * -0.0602f) + m.f.y * (w * -0.148f) + m.u.y * (w * -0.0666f) + m.o.y;
-        p1.z = m.s.z * (w * -0.0602f) + m.f.z * (w * -0.148f) + m.u.z * (w * -0.0666f) + m.o.z;
-        p2.x = m.s.x * (w * -0.0602f) + m.f.x * (w * 0.1786f) + m.u.x * (w * -0.0666f) + m.o.x;
-        p2.y = m.s.y * (w * -0.0602f) + m.f.y * (w * 0.1786f) + m.u.y * (w * -0.0666f) + m.o.y;
-        p2.z = m.s.z * (w * -0.0602f) + m.f.z * (w * 0.1786f) + m.u.z * (w * -0.0666f) + m.o.z;
-        p3.x = m.s.x * (w * 0.2226f) + m.f.x * (w * 0.0154f) + m.u.x * (w * -0.0666f) + m.o.x;
-        p3.y = m.s.y * (w * 0.2226f) + m.f.y * (w * 0.0154f) + m.u.y * (w * -0.0666f) + m.o.y;
-        p3.z = m.s.z * (w * 0.2226f) + m.f.z * (w * 0.0154f) + m.u.z * (w * -0.0666f) + m.o.z;
-
-        rgl::vector4 ring[4];
-        ring[0] = p0;
-        ring[1] = p1;
-        ring[2] = p2;
-        ring[3] = p3;
-
-        int idx[4];
-        vec2 uv;
-        uv.x = 0.0f;
-        uv.y = 0.0f;
-        rgl::vector4 up(0.0f, 0.0f, 1.0f);
-        int zero = 0;
-        for (int k = 0; k < 4; ++k) {
-            int p = owner->add_point(&ring[k]);
-            idx[k] = owner->add_vertex(p, &uv, &color, &up, &zero);
-        }
-        owner->add_face(idx[0], idx[1], idx[3]);
-        owner->add_face(idx[0], idx[3], idx[2]);
-        owner->add_face(idx[0], idx[2], idx[1]);
-        owner->add_face(idx[1], idx[2], idx[3]);
-    }
-
-    *((char*)owner + 0x164) = 1;
-    *((char*)owner + 0x138) = 1;
-}
-
-// ---- 0x4e6a70: Shape::build_ribbons -----------------------------------------------------------------------------------------------------------
-// Walks the shape's 0x34-byte segment records and, for each, adds two rows of four points offset along the segment normal, then stitches
-// them with add_face (the segment's two end points come from the point records).
 static __forceinline rgl::vector4 xf_inl(const rgl::matrix& m, const rgl::vector4& p)
 {
-    return rgl::vector4(m.s.x * p.x + m.f.x * p.y + m.u.x * p.z + m.o.x,
-                        m.s.y * p.x + m.f.y * p.y + m.u.y * p.z + m.o.y,
-                        m.s.z * p.x + m.f.z * p.y + m.u.z * p.z + m.o.z);
+    return rgl::vector4(m.o.x + m.s.x * p.x + m.f.x * p.y + m.u.x * p.z,
+                        m.o.y + m.s.y * p.x + m.f.y * p.y + m.u.y * p.z,
+                        m.o.z + m.s.z * p.x + m.f.z * p.y + m.u.z * p.z);
 }
 static __forceinline float normalize_inl(rgl::vector4& v)
 {
@@ -1027,6 +952,68 @@ static __forceinline rgl::vector4 cross_inl(const rgl::vector4& a, const rgl::ve
     return rgl::vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 }
 
+// @ 0x4e65e0
+void Shape::build_spikes(rgl::mesh* owner)
+{
+    owner->clear_geometry();                                    // 0x428e80
+
+    rgl::matrix m;                                              // the frame
+    identity_pos(&m);                                           // 0x40cd00
+
+    for (unsigned i = 0; i < pts.size(); ++i) {
+        ShapePt& e = pts[i];
+
+        float w;
+        unsigned color;
+        if (mode == 0 && e.flag != 0) {
+            w = 2.0f;
+            color = 0xaaff5555u;
+        } else if (mode == 0) {
+            w = 1.4f;
+            color = 0xaa4455ddu;
+        } else {
+            w = 1.0f;
+            color = 0x77555577u;
+        }
+
+        m.o = e.pos;                                            // the record is the origin of the frame
+
+        // the four spikes, in the frame's local coordinates
+        rgl::vector4 ring[4];
+        rgl::vector4 l0;
+        l0.x = w * 0.034f;
+        l0.y = w * 0.0154f;
+        l0.z = w * 0.2f;
+        ring[0] = xf_inl(m, l0);
+        ring[1] = xf_inl(m, rgl::vector4(w * -0.0602f, w * -0.148f, w * -0.0666f));
+        ring[2] = xf_inl(m, rgl::vector4(w * -0.0602f, w * 0.1786f, w * -0.0666f));
+        ring[3] = xf_inl(m, rgl::vector4(w * 0.2226f, w * 0.0154f, w * -0.0666f));
+
+        int idx[4];
+        int k = 0;
+        int zero = 0;
+        unsigned c = color;
+        rgl::vector4 up(0.0f, 0.0f, 1.0f);
+        vec2 uv;
+        uv.x = 0.0f;
+        uv.y = 0.0f;
+        for (; k < 4; ++k) {
+            int p = owner->add_point(&ring[k]);
+            idx[k] = owner->add_vertex(p, &uv, &c, &up, &zero);
+        }
+        owner->add_face(idx[0], idx[1], idx[3]);
+        owner->add_face(idx[0], idx[3], idx[2]);
+        owner->add_face(idx[0], idx[2], idx[1]);
+        owner->add_face(idx[1], idx[2], idx[3]);
+    }
+
+    *((char*)owner + 0x164) = 1;
+    *((char*)owner + 0x138) = 1;
+}
+
+// ---- 0x4e6a70: Shape::build_ribbons -----------------------------------------------------------------------------------------------------------
+// Walks the shape's 0x34-byte segment records and, for each, adds two rows of four points offset along the segment normal, then stitches
+// them with add_face (the segment's two end points come from the point records).
 // @ 0x4e6a70
 void Shape::build_ribbons(rgl::mesh* owner)
 {
@@ -1047,7 +1034,7 @@ void Shape::build_ribbons(rgl::mesh* owner)
         }
         const rgl::vector4& p0 = pts[e.a].pos;
         const rgl::vector4& p1 = pts[e.b].pos;
-        rgl::vector4 d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
+        rgl::vector4 d = p1 - p0;
         float len = normalize_inl(d);
         rgl::matrix m;
         m.o = p0;
@@ -1062,16 +1049,17 @@ void Shape::build_ribbons(rgl::mesh* owner)
         v[2] = xf_inl(m, rgl::vector4(w * 0.07f, w * 0.0f, w * -0.2f)) + m.f * 0.3f;
         v[3] = xf_inl(m, rgl::vector4(w * 0.0f, w * 0.0f, w * 0.08f)) + m.f * (len - 0.3f);
         v[4] = xf_inl(m, rgl::vector4(w * -0.07f, w * 0.0f, w * -0.2f)) + m.f * (len - 0.3f);
+        int k = 0;
+        int zero = 0;
         v[5] = xf_inl(m, rgl::vector4(w * 0.07f, w * 0.0f, w * -0.2f)) + m.f * (len - 0.3f);
 
         int idx[6];
+        unsigned c = color;
+        rgl::vector4 nn(0.0f, 0.0f, 1.0f);
         vec2 uv;
         uv.x = 0.0f;
         uv.y = 0.0f;
-        int zero = 0;
-        unsigned c = color;
-        rgl::vector4 nn(0.0f, 0.0f, 1.0f);
-        for (int k = 0; k < 6; k++) {
+        for (; k < 6; k++) {
             int p = owner->add_point(&v[k]);
             idx[k] = owner->add_vertex(p, &uv, &c, &nn, &zero);
         }
@@ -1094,40 +1082,27 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
 {
     out->clear_geometry();
     unsigned index = 0;
-    int off = 0;
     while (index < faces.size()) {
         ShapeFace* f = &faces[index];
         int size = f->count;
         int k;
-        float cx = 0.0f, cy = 0.0f, cz = 0.0f;
+        rgl::vector4 ctr(0.0f, 0.0f, 0.0f);
         for (k = 0; k < size; k++) {
             const rgl::vector4& p = pts[f->idx[k]].pos;
-            cx += p.x;
-            cy += p.y;
-            cz += p.z;
+            ctr.x += p.x;
+            ctr.y += p.y;
+            ctr.z += p.z;
         }
         float inv = 1.0f / (float)size;
-        cx = cx * inv;
-        cy = cy * inv;
-        cz = cz * inv;
+        ctr.x *= inv;
+        ctr.y *= inv;
+        ctr.z *= inv;
         rgl::vector4 corners[4];
         for (k = 0; k < size; k++) {
             const rgl::vector4& p = pts[f->idx[k]].pos;
-            float dx = cx - p.x;
-            float dy = cy - p.y;
-            float dz = cz - p.z;
-            float len = (float)sqrt(dz * dz + dy * dy + dx * dx);
-            if (len > 1e-10f) {
-                inv = 1.0f / len;
-                dx = dx * inv;
-                dy = dy * inv;
-                dz = dz * inv;
-            } else {
-                dx = 0.0f;
-                dy = 1.0f;
-                dz = 0.0f;
-            }
-            corners[k] = rgl::vector4(dx * 0.1f + p.x, dy * 0.1f + p.y, dz * 0.1f + p.z);
+            rgl::vector4 d = ctr - p;
+            normalize_inl(d);
+            corners[k] = d * 0.1f + p;
         }
         rgl::vector4 normal;
         normal = tri_normal(corners);
@@ -1172,7 +1147,6 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
             out->add_face(verts[0], verts[3], verts[2]);
         }
         index++;
-        off += 0x64;
     }
     *((char*)out + 0x164) = 1;
     *((char*)out + 0x138) = 1;
@@ -1325,6 +1299,9 @@ struct FaceKeyExt {
     float* delta;
     FaceKeyExt() : delta(0) {}
 };
+struct BeardMeshNew : BeardMesh {           // the constructor BeardMesh should have (src/include/skin.h has none)
+    BeardMeshNew() { mesh = 0; }
+};
 // @ 0x4e7b30
 void Skin::read(MsStream* s)
 {
@@ -1373,27 +1350,15 @@ void Skin::read(MsStream* s)
     }
     if (n_hair > 0x40)
         n_hair = 0x40;
-    hair_maps.resize(n_hair, ArrSet());                                 // 0x477880
+    hair_maps.resize(n_hair);                                           // 0x477880
     for (int i = 0; i < n_hair; i++)
         copy_troop(&hair_maps[i], hair_meshes[i]);   // 0x473570
 
     // the materials
     stream_i(s, &n_beard);
     if (n_beard != 0) {
-        int n = n_beard;
-        BeardMesh* m = (BeardMesh*)operator new[](n * 0x18 + 4);
-        if (m != 0) {
-            *(int*)m = n;
-            m = (BeardMesh*)((int*)m + 1);
-            BeardMesh* q = m;
-            for (int i = n - 1; i >= 0; i--) {
-                new (&q->name) tstring();
-                q->mesh = 0;
-                q++;
-            }
-        }
-        beard_meshes = m;
-        beard_maps.resize(n_beard, ArrSet());                             // 0x477880
+        beard_meshes = (BeardMesh*)new BeardMeshNew[n_beard];
+        beard_maps.resize(n_beard);                                       // 0x477880
     }
     for (int i = 0; i < n_beard; i++) {
         stream_str(s, &beard_meshes[i].name);
@@ -1405,11 +1370,11 @@ void Skin::read(MsStream* s)
 
     // the two string tables
     stream_i(s, &n_hair_tex);
-    hair_textures.resize(n_hair_tex, tstring());                                   // 0x4cbb10
+    hair_textures.resize(n_hair_tex);                                              // 0x4cbb10
     for (int i = 0; i < n_hair_tex; i++)
         stream_str(s, &hair_textures[i]);
     stream_i(s, &n_beard_tex);
-    beard_textures.resize(n_beard_tex, tstring());                                   // 0x4cbb10
+    beard_textures.resize(n_beard_tex);                                              // 0x4cbb10
     for (int i = 0; i < n_beard_tex; i++)
         stream_str(s, &beard_textures[i]);
 
@@ -1418,7 +1383,8 @@ void Skin::read(MsStream* s)
     {
         cell_resize_fn fn = reinterpret_cast<cell_resize_fn>(
             static_cast<void (std::vector<E176>::*)(size_t, E176)>(&std::vector<E176>::resize));
-        (((std::vector<MissionRec2>*)(void*)&face_textures)->*fn)(n_face_tex, MissionRec2());   // 0x4e41e0
+        size_t n = n_face_tex;
+        (((std::vector<MissionRec2>*)(void*)&face_textures)->*fn)(n, MissionRec2());   // 0x4e41e0
     }
     for (int i = 0; i < n_face_tex; i++) {
         MissionRec2* c = (MissionRec2*)&face_textures[i];

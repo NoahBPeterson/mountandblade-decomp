@@ -2742,10 +2742,10 @@ int GameData::attach_party_center(const float* pt, int a, int b)
         count_units(b, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
         battle_rec(this, id)->f78 += d[0];
     }
-    parties.get_party(a)->action = 7;
-    parties.get_party(b)->action = 7;
-    parties.get_party(a)->f88 = id;
-    parties.get_party(b)->f88 = id;
+    parties.get_w(a)->action = 7;
+    parties.get_w(b)->action = 7;
+    parties.get_w(a)->f88 = id;
+    parties.get_w(b)->f88 = id;
     ((c49b630::Mission*)this)->spawn_battle_icon(id);          // 0x49bbb0
     return id;
 }
@@ -2757,16 +2757,16 @@ int GameData::add_sprite(float x, float y, int tmpl)
 {
     PartyTemplate* tr = &g_party_templates[tmpl];       // 0x5e29f8 + 0xb0 * tmpl
     int id = parties.add_slot();         // 0x493960
-    parties.get_party(id)->init();                       // 0x48f180
-    parties.get_party(id)->template_id = tmpl;
-    parties.get_party(id)->pos.x = x;
-    parties.get_party(id)->pos.y = y;
-    parties.get_party(id)->dirx = 1.0f;
-    parties.get_party(id)->diry = 0;
+    parties.get_w(id)->init();                       // 0x48f180
+    parties.get_w(id)->template_id = tmpl;
+    parties.get_w(id)->pos.x = x;
+    parties.get_w(id)->pos.y = y;
+    parties.get_w(id)->dirx = 1.0f;
+    parties.get_w(id)->diry = 0;
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
     float c = (float)cos(ang);
     float s = (float)sin(ang);
-    Party* ro = parties.get_party(id);
+    Party* ro = parties.get_w(id);
     float oy = ro->diry;
     float ox = ro->dirx;
     ro->diry = c * oy + s * ox;
@@ -2774,17 +2774,17 @@ int GameData::add_sprite(float x, float y, int tmpl)
     tstring* n = g_strtable.find(&tr->key);     // 0x4c6010
     if (n == 0)
         n = &tr->name;
-    parties.get_party(id)->name = *n;
-    parties.get_party(id)->flag = 1;
-    parties.get_party(id)->key = tr->key;
-    parties.get_party(id)->flags_hi = tr->f24;
-    parties.get_party(id)->flags_lo = tr->f20;
-    parties.get_party(id)->f90 = tr->f28;
-    parties.get_party(id)->f70 = tr->f2c;
-    parties.get_party(id)->f74 = tr->f30;
-    parties.get_party(id)->state = 2;
-    parties.get_party(id)->ai_target_x = x;
-    parties.get_party(id)->ai_target_y = y;
+    parties.get_w(id)->name = *n;
+    parties.get_w(id)->flag = 1;
+    parties.get_w(id)->key = tr->key;
+    parties.get_w(id)->flags_hi = tr->f24;
+    parties.get_w(id)->flags_lo = tr->f20;
+    parties.get_w(id)->f90 = tr->f28;
+    parties.get_w(id)->f70 = tr->f2c;
+    parties.get_w(id)->f74 = tr->f30;
+    parties.get_w(id)->state = 2;
+    parties.get_w(id)->ai_target_x = x;
+    parties.get_w(id)->ai_target_y = y;
     add_template(id, tmpl, 0);                            // 0x48fbd0
     ((c49bea0::MissionAgents*)this)->add_order_arrow(id);  // 0x49bea0
     tr->num_created += 1;
@@ -2800,10 +2800,11 @@ int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
     tstring* n = g_strtable.find(&chars[troop].key);     // 0x4c6010
     if (n == 0)
         n = &chars[troop].key;
-    parties.get_party(id)->name = *n;
-    parties.get_party(id)->flag = 1;
-    parties.get_party(id)->f70 = chars[troop].faction;
-    parties.get_party(id)->add_members((int)n, 1, 0, 0, 0);            // 0x48c840
+    parties.get_w(id)->name = *n;
+    parties.get_w(id)->flag = 1;
+    Party* p = parties.get_w(id);
+    p->f70 = chars[troop].faction;
+    p->add_members((int)n, 1, 0, 0, 0);            // 0x48c840
     return id;
 }
 
@@ -2983,22 +2984,22 @@ static __forceinline void attach_center(GameData* g, float x, float y, int a, in
 bool GameData::deploy_party(int a, int b)
 {
     int lead = battle_root(b);
-    if (parties.get_party(lead)->f88 >= 0) {
+    if (parties.get_w(lead)->f88 >= 0) {
         if (a == party_id_78) {
-            attach_party = agent_rec(this, parties.get_party(lead)->f88)->f58;
-            attach_scene = agent_rec(this, parties.get_party(lead)->f88)->f54;
+            attach_party = agent_rec(this, parties.get_w(lead)->f88)->f58;
+            attach_scene = agent_rec(this, parties.get_w(lead)->f88)->f54;
             attach_flip = 0;
-            parties.get_party(a)->f88 = parties.get_party(lead)->f88;
+            parties.get_w(a)->f88 = parties.get_w(lead)->f88;
             return 1;
         }
-        Rec98* nd = agent_rec(this, parties.get_party(lead)->f88);
+        Rec98* nd = agent_rec(this, parties.get_w(lead)->f88);
         int x = nd->f58;
         if (x == lead)
             x = nd->f54;
         if (relation(x, a) < -0.01f)
             return 0;
         ((GameW*)this)->set_objective(a, x);
-        parties.get_party(a)->f8cc = 1;
+        parties.get(a)->f8cc = 1;
         return 1;
     }
     if (a == party_id_78) {
@@ -3006,8 +3007,8 @@ bool GameData::deploy_party(int a, int b)
         attach_party = lead;
         attach_scene = -100000;
         attach_flip = 0;
-        ::Party* pl = parties.get_party(lead);
-        Party* pa = parties.get_party(a);
+        ::Party* pl = parties.get_w(lead);
+        Party* pa = parties.get_w(a);
         attach_center(this, (pa->pos.x + pl->pos.x) * 0.5f, (pl->pos.y + pa->pos.y) * 0.5f, a, lead);
         return 1;
     }
@@ -3018,13 +3019,13 @@ bool GameData::deploy_party(int a, int b)
         attach_party = la;
         attach_scene = -100000;
         attach_flip = 1;
-        Party* p1 = parties.get_party(la);
-        Party* p2 = parties.get_party(b);
+        Party* p1 = parties.get(la);
+        Party* p2 = parties.get(b);
         attach_center(this, (p1->pos.x + p2->pos.x) * 0.5f, (p2->pos.y + p1->pos.y) * 0.5f, b, la);
         return 1;
     }
-    Party* p1 = parties.get_party(a);
-    Party* p2 = parties.get_party(lead);
+    Party* p1 = parties.get(a);
+    Party* p2 = parties.get(lead);
     attach_center(this, (p2->pos.x + p1->pos.x) * 0.5f, (p2->pos.y + p1->pos.y) * 0.5f, a, lead);
     return 1;
 }

@@ -274,6 +274,55 @@ __declspec(noinline) void Game::release_orders()
     }
 }
 
+// Bodies the original's object saw (header inlines left out of line; row owners shapes.cpp 0x40e440, 0x40e770 and psys.cpp 0x413c50):
+// an object whose address only reaches a visible body doesn't escape (docs/codegen.md section 7)
+namespace rgl {
+static inline unsigned min255(unsigned v) { return v < 255 ? v : 255; }
+inline __declspec(noinline) unsigned pack_color(const vector4* c)
+{
+    unsigned a = (unsigned)(c->w * 256.0f);
+    unsigned r = (unsigned)(c->x * 256.0f);
+    unsigned g = (unsigned)(c->y * 256.0f);
+    unsigned b = (unsigned)(c->z * 256.0f);
+    return (((min255(a) << 8 | min255(r)) << 8) | min255(g)) << 8 | min255(b);
+}
+static __forceinline vector4 ru_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
+static __forceinline vector4 ru_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 ru_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+inline __declspec(noinline) void matrix::rotate_about_u(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 ns, nf;
+    ns = ru_add(ru_mul(s, cos((double)*angle)), ru_mul(f, sn));
+    nf = ru_sub(ru_mul(f, cos((double)*angle)), ru_mul(s, sn));
+    s = ns;
+    f = nf;
+}
+inline __declspec(noinline) int mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
+{
+    ensure_local();
+    int n = (int)v50.size();
+    v50.resize(n + 1);
+    (&*v50.begin())[n].index = index;
+    (&*v50.begin())[n].uv = *uv;
+    (&*v50.begin())[n].color = *color;
+    (&*v50.begin())[n].f5c = *f5c;
+    vertex60* vv = v50._Myfirst + n;
+    vv->normal = *pos;
+    vv->pos = *pos;
+    return n;
+}
+inline __declspec(noinline) int mesh::add_point(const vector4* p)
+{
+    ensure_local();
+    int n = (int)v70.size();
+    v70.resize(n + 1);
+    v70[n].a = *p;
+    v70[n].b = *p;
+    return n;
+}
+}
+
 // ---- helpers of the campaign map's tree builder (above its marker) ---------------------------------------------------
 struct map_v2 {                                                     // the two-float value the map's bounds are assigned from
     float x, y;
@@ -289,6 +338,7 @@ static inline int map_add_vertex(rgl::mesh* m, int index, const vec2& uv, const 
 }
 static inline void map_add(rgl::vector4& a, const rgl::vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
 static inline void map_scale(rgl::vector4& v, float k) { v.x *= k; v.y *= k; v.z *= k; }
+static inline void map_mul(rgl::vector4& v, const float& k) { v.x *= k; v.y *= k; v.z *= k; }
 struct map_ground {                                                 // NavData with its edge vector typed
     rgl::vec<NavVert> verts;
     rgl::vec<NavCell> cells;
@@ -320,8 +370,10 @@ void Game::build_map_trees()
     ((rgl::vec<void*>&)g_script.mat_sea).clear();
     ((rgl::vec<void*>&)g_script.mat_sea2).clear();
 
-    float sea_ang = g_module_settings.map_sea_direction * 3.1415927f * 0.0055555557f;                         // deg -> rad
-    float river_ang = g_module_settings.map_river_direction * 3.1415927f * 0.0055555557f;
+    float sea_ang = g_module_settings.map_sea_direction * 3.1415927f;                       // deg -> rad
+    sea_ang *= 0.0055555557f;
+    float river_ang = g_module_settings.map_river_direction * 3.1415927f;
+    river_ang *= 0.0055555557f;
 
     // the lighting vectors the fixed-function vertex colour uses
     rgl::vector4 lightL, lightM;
@@ -362,12 +414,16 @@ void Game::build_map_trees()
         NavCell& c = ground->cells[i];
         for (int k = 0; k <= 9; k++) {
             int kind = c.ids[8] & 7;
-            if (c.ids[8] == 8)
-                kind = c.ids[8];
-            else if (c.ids[8] == 9)
-                kind = c.ids[8];
-            else if (c.ids[8] == 0xf)
-                kind = 0;
+            int t = c.ids[8];
+            if (t == 8)
+                kind = t;
+            else {
+                int t2 = c.ids[8];
+                if (t2 == 9)
+                    kind = t2;
+                else if (t2 == 0xf)
+                    kind = 0;
+            }
             if (kind == k) {
                 unsigned mask = (unsigned)g_bit[k];
                 for (int j = 0; j < c.npts; j++) {
@@ -514,8 +570,7 @@ void Game::build_map_trees()
                     int nf[3];
                     for (int j = 0; j < nd.npts; j++)
                         nf[j] = fr.flags[nd.ids[j]];
-                    int f0 = nf[0], f2 = nf[2], f1 = nf[1];
-
+                    
                     // ---- material / node-type filter ----
                     {
                         if (mt == 0) {
@@ -527,7 +582,11 @@ void Game::build_map_trees()
                                 goto emit;
                             if (nd.ids[8] != 0)
                                 goto no_emit;
-                            if ((water & f0) != 0 || (water & f1) != 0 || (water & f2) != 0)
+                            if ((water & nf[0]) != 0)
+                                goto emit;
+                            if ((water & nf[1]) != 0)
+                                goto emit;
+                            if ((water & nf[2]) != 0)
                                 goto emit;
                             goto no_emit;
                         } else if (mt == 0x15) {
@@ -542,13 +601,13 @@ void Game::build_map_trees()
                             if (mt == 9) {
                                 if (nd.ids[8] == 8 || nd.ids[8] == 0)
                                     goto no_emit;
-                                if ((wood & f0) == 0 && (wood & f1) == 0 && (wood & f2) == 0)
+                                if ((wood & nf[0]) == 0 && (wood & nf[1]) == 0 && (wood & nf[2]) == 0)
                                     goto no_emit;
                                 goto emit;
                             } else {
                                 if (nd.ids[8] == 8 || nd.ids[8] == 7 || nd.ids[8] == 0)
                                     goto no_emit;
-                                if ((umask & f0) == 0 && (umask & f1) == 0 && (umask & f2) == 0)
+                                if ((umask & nf[0]) == 0 && (umask & nf[1]) == 0 && (umask & nf[2]) == 0)
                                     goto no_emit;
                                 goto emit;
                             }
@@ -596,9 +655,9 @@ void Game::build_map_trees()
                                         float len = map_len(d);
                                         if (len > 1e-10f) {
                                             float inv = 1.0f / len;
-                                            d.x *= inv;
-                                            d.y = inv * d.y;
-                                            d.z = inv * d.z;
+                                            d.x = d.x * inv;
+                                            d.y = d.y * inv;
+                                            d.z = d.z * inv;
                                         } else {
                                             d.x = 0.0f;
                                             d.y = 1.0f;
@@ -616,9 +675,9 @@ void Game::build_map_trees()
                                         }
                                     }
                                     float inv = 1.0f / (float)ncnt;
-                                    sum.x *= inv;
-                                    sum.y = inv * sum.y;
-                                    sum.z = inv * sum.z;
+                                    sum.x = sum.x * inv;
+                                    sum.y = sum.y * inv;
+                                    sum.z = sum.z * inv;
                                     p = sum;
                                 }
                                 p.z += 0.03f;

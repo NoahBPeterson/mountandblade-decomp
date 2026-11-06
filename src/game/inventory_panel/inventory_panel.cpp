@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// File: inventory_panel.cpp  (0x50fe20..0x513710)
+// File: inventory_panel.cpp  (0x50fe20..0x513b10)
 //
 // Desc: the inventory / trade screen's window object: the per-frame step (scroll-bar follow, trial-mode money, character
 //       strip clicks, the pending trade value and its pay / receive / dump questions), the slot state and value tables,
@@ -73,6 +73,10 @@ struct SkillNames {                                     // a skill record seen f
 #include "../skill_cap.h"
 #include "../ui_globals.h"      // UI / core globals
 #include "../float_consts.h"     // g_one
+#include "./mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
+#include "./mission_ctx.h"       // MenuWidget, MissionV, MI
+#define SCENE ((MissionV*)g_mission)
+void autosave_notice();                                 // 0x514830
 
 // the translated name of a record, else the record's own name (0x5102d2, 0x510604: the record itself, not its key)
 template <class T> static __forceinline const char* shown_name(T* rec)
@@ -1079,3 +1083,123 @@ done:
     return found;
 }
 
+
+// @ 0x513710
+void MapFlags::commit(char* out)
+{
+    if (f0 != 0)
+        f0 = 0;
+
+    if (f1 != 0) {
+        if (f8 <= 0 && g_game->fb0 == 0)
+            g_game->fb0 |= 1;
+        int& fb0 = g_game->fb0;
+        if (fb0 != 0) {
+            g_mission_ctx.setup(fb0, 0);
+            fb0 = 0;
+        }
+        f1 = 0;
+    }
+
+    int& a8 = GD_I(0xa8);
+    if (a8 != 0) {
+        g_mission_ctx.setup(a8, 0);
+        a8 = 0;
+    }
+    GD_I(0xa8) = 0;
+
+    int key = g_mission_ctx.pop_key();
+    *out = 1;
+
+    if (key == 1) {
+        f1 = 1;
+        g_mission_ctx.start_mission();
+    }
+    else if (key == 2 || key == 0x40 || key == 0x20) {
+        if (key == 2) {
+            g_mission_ctx.build_hero_table(g_mission_ctx.f140, -1, -1, 3);
+        }
+        else if (key == 0x40) {
+            int p = (&g_mission_ctx.ids[1])[-g_mission_ctx.side];
+            PartyMgr* pm = &g_game->parties;
+            g_mission_ctx.build_hero_table(*(int*)((char*)pm->get(p) + 0xac), -1, p, 4);
+        }
+        else {
+            int p = g_mission_ctx.f13c;
+            PartyMgr* pm = &g_game->parties;
+            g_mission_ctx.build_hero_table(*(int*)((char*)pm->get(p) + 0xac), -1, p, 2);
+        }
+    }
+    else if (key == 0x10) {
+        slot_as<MenuWidget>(11)->f4 = 0;
+        if (g_mission_ctx.f20 != 0)
+            slot_as<MenuWidget>(11)->f4 = 2;
+        slot_as<MenuWidget>(11)->f18 = 0x64;
+        slot_as<MenuWidget>(11)->f4 = 0;
+        return g_windows.open(0xb);
+    }
+    else if (key == 0x80) {
+        slot_as<MenuWidget>(8)->f4 = 1;
+        slot_as<MenuWidget>(8)->f18 = 0x64;
+        return g_windows.set_state(8);
+    }
+    else if (key == 0x100) {
+        slot_as<MenuWidget>(12)->f4 = 4;
+        slot_as<MenuWidget>(12)->f18 = 0x64;
+        return g_windows.set_state(0xc);
+    }
+    else if (key == 4) {
+        g_mission_ctx.pick_template();
+        slot_as<MenuWidget>(10)->f18 = 0x64;
+        return g_windows.set_state(0xa);
+    }
+    else if (key == 0x800) {
+        g_mission_ctx.start_battle(GD_I(0x13af0), GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
+        slot_as<MenuWidget>(16)->f18 = 0x64;
+        return g_windows.set_state(0x10);
+    }
+    else if (key == 0x1000) {
+        slot_as<MenuWidget>(27)->f18 = 0x64;
+        return g_windows.set_state(0x1b);
+    }
+    else if (key == 0x2000) {
+        slot_as<MenuWidget>(26)->f18 = 0x64;
+        return g_windows.set_state(0x1a);
+    }
+    else if (key == 8) {
+        g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
+        MI(g_mission, 0x5270) = g_mission_ctx.scene_counter++;
+        SCENE->start_setup();
+        slot_as<MenuWidget>(14)->v4();
+        slot_as<MenuWidget>(14)->f18 = 0x64;
+        return g_windows.set_state(0xe);
+    }
+    else if (key == 0x200) {
+        g_mission_ctx.update_parties();
+        autosave_notice();
+        return g_windows.set_state(7);
+    }
+    else if (key == 0x400 && f8 <= 0) {
+        slot_as<MenuWidget>(6)->f18 = 0x64;
+        return g_windows.set_state(6);
+    }
+    else if (g_game->fc8 == 1) {
+        g_game->fc8 = 0;
+        g_mission_ctx.update_parties();
+        autosave_notice();
+        return g_windows.set_state(7);
+    }
+    else if (f8 <= 0) {
+        slot_as<MenuWidget>(6)->f18 = 0x64;
+        return g_windows.set_state(6);
+    }
+    else {
+        f2 = 1;
+        slot_as<MenuWidget>(23)->v4();
+        slot_as<MenuWidget>(23)->f18 = 0x64;
+        return g_windows.set_state(0x17);
+    }
+
+    slot_as<MenuWidget>(16)->f18 = 0x64;
+    return g_windows.set_state(0x10);
+}

@@ -587,16 +587,26 @@ Still unknown: the original contains these same constructs and doesn't fold.
      conflicts where sibling blocks `{f2} {name}` don't.
   4. A function-scope object that escapes stays live to the end of the function. A later local can only share with it if it was block-scoped.
   5. Slots order by the total post-optimisation uses of the merged group, descending from esp, not each local's own uses, so which group a
-     late local joins can flip the order. Ties go to the first-referenced local.
-  6. Declaration order is irrelevant. In a probe of 14 equal-sized cases, more uses gave a lower address and a tie went to the first
-     referenced. Folded references add no use.
+     late local joins can flip the order. Ties: see the solved rule below.
+  6. Declaration order is irrelevant. In a probe of 14 equal-sized cases, more uses gave a lower address. Folded references add no use.
   7. A dead parameter's home is overlaid by a block-scoped copy, and the first free home wins.
   8. Partly overlapping slots mean separate locals: a 20-byte `z[5]` was really `uv[2]` plus `pos[3]`.
   Method: map every slot from the original with push depth removed, write one local per observed slot, then fix the scopes.
-- **Probed further on M&B `agent_hud`:** small frames sort by size ascending then uses descending; large frames by `floor(1000*uses/size)` descending, low
-  address first. The switch came between 128 and 132 total bytes of locals, in one probe. Locals with disjoint lifetimes merge into a group first: its uses are
-  summed and its size is the largest member's (inferred from 0x4fb350). Ties come from an unstable quicksort, and that tie order isn't solved, so slots can't yet
-  be predicted exactly.
+- **The slot order, solved for locals that all conflict (probes of 150 random functions per run on `agent_hud`'s behalf):**
+  1. **Base order:** size ascending, then uses descending, with ties going to the local whose *last* reference comes earliest in evaluation order. Call
+     arguments evaluate right to left. This held on 150 of 150 equal-size functions and 28 of 28 small mixed-size frames. First reference and declaration
+     order scored only 5 to 16 of 150.
+  2. **Large frames:** take the base order as the starting array, then run a K&R quicksort: swap the middle element to the left, partition with strict
+     `key(a[i]) > key(pivot)`, recurse. The descending key is `1000*uses/size`, where uses counts every reference in the listing. This matched 122 of 122
+     frames on one seed and 111 of 111 frames of 144 bytes or more on another. Seeding from any other order, or Hoare partitioning, scored 20 to 33 of 122,
+     which is likely why earlier models failed on mixed keys.
+  3. **The switch** is in the 128 to 143 total-bytes bucket; the 128 bucket fit the large model on all 3 cases and the small model on 2. Floored and exact
+     ratios gave identical results, so the probes don't tell them apart.
+  4. **Not tested:** locals with disjoint lifetimes. Inferred from 0x4fb350 only: they merge into a group first, with uses summed and the largest member's size.
+  In real functions, slot swaps that looked like ties usually turned out to be structure: a scope or an escape fixed them in `ItemA`, `update_status`,
+  `camera_to` and `Rec58::build`.
+- **A temporary's destructor after the store** means the temporary lived in the same full expression or block as the assignment. Moving a helper inline took
+  `Rec58::build` from 400 to 521 identical, because callee-saved pushes sink only when the code above allows it, so a helper's shape can move every stack offset.
 - **Order by size.** In one function the locals sorted by size ascending, then by
   declaration; shrinking an array (`char q1[0x105]`) was the only way to move it
   below another.

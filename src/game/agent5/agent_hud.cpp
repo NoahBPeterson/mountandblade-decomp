@@ -1825,7 +1825,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                             VEC_INT_PUSH_BACK(codes, code);
                         }
                         char eq = '=';
-                        int value = atol(name.substr(name.find(eq, 0) + 1, name.len).c_str());
+                        int value = atoi(name.substr(name.find(eq, 0) + 1, name.len).c_str());
                         ints_push(codes, value);
                         rects_a->push_back(pos);
                         ints_push(tags, tag_index);
