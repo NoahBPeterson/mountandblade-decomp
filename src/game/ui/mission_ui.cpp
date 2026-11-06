@@ -1192,14 +1192,14 @@ int GameData::template_count(int party, int cell, float)
 }
 
 // @ 0x48a210
-void sl_item_flag_all()
+void GameData::sl_item_flag_all()
 {
     for (int i = 0; i < g_item_kind_count; i++)
         g_items[i].f21c = 1.0f;
 }
 
 // @ 0x48a250
-void __stdcall sl_item_set_all(float v)
+void GameData::sl_item_set_all(float v)
 {
     for (int i = 0; i < g_item_kind_count; i++)
         g_items[i].f224 = v;
@@ -1266,7 +1266,7 @@ void NamedRec::setup2(const tstring* a, const tstring* b, const tstring* c, int 
 static __forceinline CombatRec* ui_rec(Mission* m, int i) { return (CombatRec*)((char*)m + 0x527c + i * 0x16c); }
 
 // @ 0x48a420
-void Mission::get_frame(rgl::matrix* out)
+rgl::matrix Mission::get_frame()
 {
     if (blend_time > 0.0f) {
         float t = (g_ticks[origin] - start) * 1e-5f;
@@ -1276,8 +1276,7 @@ void Mission::get_frame(rgl::matrix* out)
                     (atan((float)blend_n * 1.5707964f) * 2.0f) + 0.5f;
         }
         if (t >= 1.0f) {
-            *out = frame_b;
-            return;
+            return frame_b;
         }
         float s = 1.0f - t;
         rgl::matrix m;
@@ -1289,10 +1288,9 @@ void Mission::get_frame(rgl::matrix* out)
         m.u = frame_b.u * t + frame_a.u * s;
         m.s = frame_b.s * t + frame_a.s * s;
         m.orthonormalize();
-        *out = m;
-        return;
+        return m;
     }
-    *out = frame_a;
+    return frame_a;
 }
 
 // @ 0x48a740

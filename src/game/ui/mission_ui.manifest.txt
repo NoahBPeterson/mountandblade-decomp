@@ -68,8 +68,8 @@
 ../src/game/ui/mission_ui.cpp  ?get_name@GameData@@QAE?AUtstring@@XZ  00489c30  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sl_roll_other@GameData@@QAEHHH@Z  00489ee0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sl_value_factor@GameData@@QAEHXZ  00489f40  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?sl_item_flag_all@@YAXXZ  0048a210  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?sl_item_set_all@@YGXM@Z  0048a250  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?sl_item_flag_all@GameData@@QAEXXZ  0048a210  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?sl_item_set_all@GameData@@QAEXM@Z  0048a250  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sl_party_price@GameData@@QAEHH@Z  0048a320  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_names@GameData@@QAEXHPBUtstring@@@Z  0048a380  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?setup@NamedRec@@QAEXPBUtstring@@0@Z  0048a3a0  /O2 /MT /Gy /TP

@@ -327,6 +327,8 @@ struct GameData {
     int sl_value_factor();                      // 0x489f40 (truncated to int)
     void sl_update_avg();                       // 0x48a000
     int sl_pick_chain(int leader, char lancer); // 0x48a080 (walks the +0x50 link chain from leader)
+    void sl_item_flag_all();                    // 0x48a210 (no use of this: the callers load ecx with g_game)
+    void sl_item_set_all(float v);              // 0x48a250 (likewise)
     int sl_party_value(int party);              // 0x48a290
     int sl_party_price(int party);              // 0x48a320
     void set_names(int slot, const tstring* a); // 0x48a380

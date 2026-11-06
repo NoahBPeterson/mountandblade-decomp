@@ -3144,21 +3144,23 @@ static __forceinline const tstring& str_ref(const tstring& s) { return s; }
 // buf: 0x920..0xb20 in the original frame (single-use temporaries fill the rest up to the link buffers at 0xd20)
 // In execute the accessors expand in place: the original writes g_game->troops[id] directly, so the expression is evaluated where it stands,
 // after a call's arguments (a function, even __forceinline, computes the pointer into a temporary first and that rotates the scratch registers).
-#ifdef SI_TRUE_ABI
-// the original's 0x4904a0 takes the context in EAX: a static of this object (execute is its only caller). See NOTES.md.
-static __declspec(noinline) int trigger_item_mesh_s(int c)
+// @ 0x4904a0
+// the context comes in EAX: cl's register convention for a static, so this is a static of this object (execute is its only caller)
+static __declspec(noinline) int trigger_item_mesh(int c)
 {
-    GameX* g = (GameX*)g_game;
-    if (trigger_entity(c) == 0)
-        return -1;
-    if (c != -0x32 && c != -0x33)
-        return -1;
-    if (*(int*)((char*)g + 0x1a204) < 0)
-        return -1;
-    return trigger_entity(*(int*)((char*)g + 0x1a1f4));   // scratch body: measures the call sites only
+    int r = -1;
+    if (trigger_entity(c) && (c == -0x32 || c == -0x33)) {
+        int slot = *(int*)((char*)g_game + 0x1a204);
+        if (slot >= 0) {
+            unsigned idx = *(unsigned*)((char*)g_game + 0x1a1f4);
+            int off = (idx & 0xf) * 0xb25 + slot;
+            int id = *(int*)((char*)g_mission->agents.pages[idx >> 4] + off * 8 + 0x1d0);
+            if (id >= 0)
+                r = g_items[id].ammo_skill();
+        }
+    }
+    return r;
 }
-#define trigger_item_mesh trigger_item_mesh_s
-#endif
 #define game() ((GameX*)g_game)
 #define CS(s) (((const string_view_*)(s))->get())
 #define troop(id) (&((GameX*)g_game)->troops[id])
@@ -4247,7 +4249,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
 
     // ---- prices, joining and leaving -----------------------------------------------------------------------------
     case op::reset_price_rates:
-        game()->sl_item_flag_all();
+        ((GameData*)g_game)->sl_item_flag_all();
         break;
     case op::set_price_rate_for_item:
         if (check_item_kind((int)params[0]))
@@ -4598,7 +4600,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         int v = (int)params[0];
         if (!v)
             v = 100;
-        game()->sl_item_set_all((float)v * 0.01f);
+        ((GameData*)g_game)->sl_item_set_all((float)v * 0.01f);
         break;
     }
     case op::set_item_probability_in_merchandise:
@@ -6335,7 +6337,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             MissionX* m = mission();
             m->cam_mode = clamp_index((int)params[0], 0, 2);
             if (mission()->cam_mode == 0 && params[1] > 0) {
-                mission()->cam_target_frame = mission()->get_frame();
+                mission()->cam_target_frame = ((Mission*)mission())->get_frame();
                 mission()->cam_target_aperture = mission()->blend_param();
                 mission()->cam_anim_time = (float)params[1] * 0.001f;
                 mission()->cam_timer.restart();
@@ -6369,7 +6371,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::mission_cam_get_position:
         if (g_mission && check_register((int)params[0]))
-            script_pos((int)params[0]) = mission()->get_frame();
+            script_pos((int)params[0]) = ((Mission*)mission())->get_frame();
         break;
     case op::mission_cam_set_position:
         if (g_mission && check_register((int)params[0])) {
@@ -6380,7 +6382,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_position:
         // (.., <position_register_no>, <duration-in-1/1000-seconds>, <value>) # value 0: linear velocity
         if (g_mission && check_register((int)params[0]) && params[1] > 0) {
-            mission()->cam_frame = mission()->get_frame();
+            mission()->cam_frame = ((Mission*)mission())->get_frame();
             mission()->cam_target_frame = script_pos((int)params[0]);
             MissionX* m = mission();
             m->cam_target_aperture = m->blend_param();
@@ -6406,7 +6408,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_aparture:
         // (mission_cam_animate_to_aparture, <value>, <duration-in-1/1000-seconds>, <value>)
         if (g_mission && params[1] > 0) {
-            mission()->cam_frame = mission()->get_frame();
+            mission()->cam_frame = ((Mission*)mission())->get_frame();
             mission()->cam_target_frame = mission()->cam_frame;
             MissionX* m = mission();
             m->cam_aperture = m->blend_param();
@@ -6419,7 +6421,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_position_and_aparture:
         // (.., <position_register_no>, <value>, <duration-in-1/1000-seconds>, <value>)
         if (g_mission && check_register((int)params[0]) && params[2] > 0) {
-            mission()->cam_frame = mission()->get_frame();
+            mission()->cam_frame = ((Mission*)mission())->get_frame();
             mission()->cam_target_frame = script_pos((int)params[0]);
             MissionX* m = mission();
             m->cam_aperture = m->blend_param();
@@ -6997,7 +6999,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         SET_LV((__int64)game()->note_time);
         break;
     case op::is_currently_night:
-        result = game()->is_night();
+        result = ((GameData*)g_game)->is_night();
         break;
 
     case op::store_distance_to_party_from_party:

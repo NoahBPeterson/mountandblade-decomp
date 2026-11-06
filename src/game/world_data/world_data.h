@@ -88,7 +88,6 @@ struct FaceId {
 };
 
 int __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
-int trigger_item_mesh(int context);                             // 0x4904a0 (context in EAX in the original: a static function with a register convention)
 
 #include "../../include/game_recs.h"   // PartyTemplate* g_party_templates (0x5e29f8)
 extern float g_k15;                                             // 0x590da0 (15.0f)

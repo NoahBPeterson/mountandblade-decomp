@@ -37,7 +37,5 @@ struct Named16 {                            // 16-byte name + flag (0x489ab0)
     void set(const tstring* s);             // 0x489ab0
 };
 
-void sl_item_flag_all();                        // 0x48a210
-void __stdcall sl_item_set_all(float v);        // 0x48a250
 
 #endif // GAME_UI_WORLD_H

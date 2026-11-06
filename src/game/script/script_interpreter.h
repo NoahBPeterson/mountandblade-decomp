@@ -71,8 +71,6 @@ struct NamedSelRec { void set_name(const tstring* s); void set_sel(const int* sr
 struct Named16 { void set(const tstring* s); };                              // 0x489ab0 (ui/mission_ui.cpp)
 struct MissionView { void setup(void* src, int* b, int* c); void set(void* src); };   // 0x4897a0 / 0x489820 (ui/mission_ui.cpp)
 #include "../ui/mission_ui.h"
-void sl_item_flag_all();                                                       // 0x48a210 (ui/mission_ui.cpp; ui/world.h declares the same)
-void __stdcall sl_item_set_all(float v);                                       // 0x48a250
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
 struct ArrHolder { int lookup(int index, int arg); };                        // 0x48d5f0 (mission_ui2/mission_3.cpp)
@@ -487,12 +485,6 @@ struct GameX {
     __forceinline void spread_party_experience(int xp) { ((GameW*)this)->spread_party_experience(xp); }                               // 0x4957d0 (ret 4)
     __forceinline int spawn_around(float x, float y, int party_template, float radius) { return ((GameData*)this)->spawn_around(x, y, party_template, radius); }   // 0x49f020 (ret 0x10): the new party's id
     __forceinline tstring event_string(int seconds) { return ((GameData*)this)->event_string(seconds); }                               // 0x48c470 (ret 8: hidden return)
-#ifdef SI_TRUE_ABI
-    void sl_item_flag_all();                    // 0x48a210 is a thiscall member with an unused this in the original (mov ecx,g_game at the call)
-    void sl_item_set_all(float rate);           // 0x48a250 likewise (ret 4)
-#else
-    __forceinline void sl_item_flag_all() { ::sl_item_flag_all(); }                                                                    // 0x48a210
-#endif
     __forceinline void transfer_stack(int from, int to, char as_prisoners) { ((GameW*)this)->transfer_stack(from, to, as_prisoners); }   // 0x492530 (ret 0xc)
     __forceinline int remove_troops(int party, int troop, int count, char prisoners, int a5) { return ((GameData*)this)->remove_troops(party, troop, count, prisoners, a5); }   // 0x48f9f0 (ret 0x14: count removed)
     __forceinline void remove_party(int party) { ((GameW*)this)->remove_party(party); }                                               // 0x4915d0 (ret 4)
@@ -505,9 +497,6 @@ struct GameX {
     __forceinline void set_quest_cancelled(int quest) { ((GameW*)this)->set_quest_cancelled(quest); }                                  // 0x4948c0
     __forceinline void set_quest_concluded(int quest) { ((GameW*)this)->set_quest_concluded(quest); }                                  // 0x4947a0 (the original pushes one word at the call site and the callee pops 4)
     __forceinline void deploy_party(int party, int other) { ((GameData*)this)->deploy_party(party, other); }                  // 0x49f060 (ret 8)
-#ifndef SI_TRUE_ABI
-    __forceinline void sl_item_set_all(float rate) { ::sl_item_set_all(rate); }                                                        // 0x48a250 (ret 4)
-#endif
     __forceinline char agent_low(int troop) { return ((GameData*)this)->agent_low(troop); }                                            // 0x4638f0 (ret 4)
     __forceinline void init_slots(int troop, int value) { ((GameData*)this)->init_slots(troop, value); }                               // 0x48c4c0 (ret 8)
     __forceinline void spawn_items(int item_type, int value, int troop) { ((GameData*)this)->spawn_items(item_type, value, troop); }   // 0x48cc40 (ret 0xc)
@@ -609,9 +598,6 @@ struct SceneEntity {
     int pad308;
     PSys** particle_systems;            // +0x30c
 };
-// the item mesh of the trigger's agent (contexts -50 / -51), -1 otherwise. The original passes the context in
-// EAX (a static of the s004902a0 object, agent_of); declared here as a plain call.
-int trigger_item_mesh(int context);     // 0x4904a0
 #include "../emit.h"                 // EmitTable, g_emit_defs (0x8ed5090): the particle-system table (terrain_b/mission.cpp)
 
 struct MTimer {                         // clock index + start (Timer in src/rgl/xmlcfg/game_util.h)
@@ -691,12 +677,6 @@ struct MissionX {
     __forceinline int find_prop(int prop, int n) { return ((Mission*)this)->find_prop(prop, n); }                     // 0x48ee90 (ret 8: -1 = none)
     __forceinline void retag_props(int old_prop, int new_prop) { ((Mission*)this)->retag_props(old_prop, new_prop); } // 0x48ed60 (ret 8)
     __forceinline void start_clock(int a1) { ((Mission*)this)->start_clock(a1); }                                     // 0x48a860 (ret 4)
-#ifdef SI_TRUE_ABI
-    rgl::matrix get_frame();                    // 0x48a420 returns by value in the original (see NOTES.md, SI_TRUE_ABI)
-#else
-    __forceinline rgl::matrix get_frame() { rgl::matrix f; ((Mission*)this)->get_frame((rgl::matrix*)&f); return f; }
-#endif
-                 // 0x48a420 (ret 4: hidden return; ui/mission.h get_frame)
     __forceinline float blend_param() { return ((Mission*)this)->blend_param(); }                                     // 0x48a740 (blend_param)
     __forceinline float blend2_param() { return ((Mission*)this)->blend2_param(); }                                   // 0x48a7d0 (blend2_param)
     __forceinline int find_agent_by_troop(int troop) { return ((MissionW*)this)->find_agent_by_troop(troop); }        // 0x4921b0 (ret 4)

@@ -36,3 +36,4 @@
 ../src/game/script/script_interpreter.cpp  ?run_line@DialogBlock@@QAEDHPAHH@Z  004b0940  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?warn_scene_prop_instance@@YADABH@Z  0049d290  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?check_slot@Mission@c49bea0@@QAEXHI@Z  0049c170  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?trigger_item_mesh@@YAHH@Z  004904a0  /O2 /MT /Gy /TP

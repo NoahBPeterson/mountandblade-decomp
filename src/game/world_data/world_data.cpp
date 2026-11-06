@@ -181,24 +181,6 @@ int __fastcall trigger_entity(int c)
     return v;
 }
 
-// @ 0x4904a0
-int trigger_item_mesh(int c)
-{
-    GameW* g = (GameW*)g_game;
-    if (trigger_entity(c) == 0)
-        return -1;
-    if (c != -0x32 && c != -0x33)
-        return -1;
-    if (g->free_slot() < 0)
-        return -1;
-    unsigned idx = g->cur_agent_idx();
-    int off = (idx & 0xf) * 0xb25 + g->free_slot();
-    int id = *(int*)((char*)g_mission->agents.pages[idx >> 4] + off * 8 + 0x1d0);
-    if (id < 0)
-        return -1;
-    return g_items[id].ammo_skill();
-}
-
 struct named_object;
 void __stdcall clear_f14(named_object* o);                      // 0x4175f0 (the resource manager's clear_f14; named_object is rgl/resource.h's)
 

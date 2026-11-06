@@ -215,7 +215,7 @@ struct Mission {
 
     // ---- ui (mission_ui.cpp) ----
     TeamRec* rec(int i) { return (TeamRec*)((char*)this + 0x5280 + i * 0x16c); }   // team i's record, addressed as the ui accessors do
-    void get_frame(rgl::matrix* out);           // 0x48a420
+    rgl::matrix get_frame();                    // 0x48a420
     float blend_param();                        // 0x48a740
     float blend2_param();                       // 0x48a7d0
     void start_clock(int v);                    // 0x48a860
