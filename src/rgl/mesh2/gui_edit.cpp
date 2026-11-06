@@ -792,13 +792,13 @@ void ItemPage::format(char* out)
         tstring key("ui_passage_menu_item_passagename");
         _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), text_ptr2);
     } else if (kind == 4) {
-        if (index < 0 || index >= g_ptype_count) {
+        if (index >= 0 && index < g_ptype_count) {
+            tstring key("ui_plant_plantname");
+            const char* name = g_ptypes[index].name.c_str();
+            _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), name);
+        } else {
             _snprintf(out, 0x80, "INVALID PLANT");
-            return;
         }
-        tstring key("ui_plant_plantname");
-        const char* name = g_ptypes[index].name.c_str();
-        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), name);
     } else if (kind == 2 || kind == 6) {
         if (index < 0 || index >= g_item_kind_count) {
             _snprintf(out, 0x80, "INVALID ITEM");

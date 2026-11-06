@@ -406,7 +406,7 @@ void Terrain::tessellate()
 
             int ncorner = 4;
             int nquad = 1;
-            if (nrm[1].y * nrm[0].y + nrm[1].z * nrm[0].z + nrm[1].x * nrm[0].x > 0.999f) {      // summed y, z, x as at 0x4817f9
+            if (nrm[0].x * nrm[1].x + nrm[0].z * nrm[1].z + nrm[0].y * nrm[1].y > 0.999f) {      // cl sums these right to left: y, z, x as at 0x4817f9
                 tri[0][0][0] = x;     tri[0][0][1] = y;
                 tri[0][1][0] = x + 1; tri[0][1][1] = y;
                 tri[0][2][0] = x + 1; tri[0][2][1] = y + 1;
@@ -830,8 +830,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         vector4 pu = g_shadow_map.to_unit(*(const vector4*)c);
                         uv = *(Vec2*)&pu;
                     }
-                    vector4 rgb;
-                    rgb.x = 1.0f; rgb.y = 1.0f; rgb.z = 1.0f;
+                    vector4 rgb(1.0f, 1.0f, 1.0f);     // the constructor, not field stores: rgb.x * tc.x then loads rgb first (0x480553)
                     if (layerno > 0 && layerno < 15) {
                         vector4 tmp;
                         rgb = *ground_color(&tmp, (const float*)c);
@@ -868,7 +867,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             cv.z = v_dot(Ld, fr.u);
                             cv.w = 1.0f;
                             float avg = ((sun_diffuse.x + sun_diffuse.z) + sun_diffuse.y) * 0.33333334f;
-                            float s = avg * (c->f40 + 0.02f);
+                            double s = avg * (c->f40 + 0.02f);     // a double: kept to the end, fstp st(0) at 0x480959
                             cv.x *= s;
                             cv.y *= s;
                             cv.z *= s;
@@ -883,6 +882,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         col = 0x810;
                         NavVert& nv = world->ground->verts[c->f14];
                         float a = nv.level;
+                        nv.level = a;                  // emits no store, but leaves the dead lea at 0x480a09
                         float r = a / (z + a);
                         if (r < 0.0f) r = 0.0f;
                         else if (r > 0.75f) r = 0.75f;
@@ -893,10 +893,10 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     unsigned fg = col;
                     if (blend >= 0)
                         fg = (col & 0xffffff) | (balpha << 24);
-                    unsigned cw = col;
                     int f5c = col;
+                    unsigned cw = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
-                    m->v50[c->f10].f58 = fg;
+                    { vertex60& v = m->v50[c->f10]; v.f58 = col; v.f58 = fg; }     // two uses at folding time: add eax,edx at 0x480ad0
                     { vertex60& v = m->v50[c->f10]; v.f48 = *(int*)&uv.x; *(int*)&v.f4c = *(int*)&uv.y; }
                 }
                 m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
@@ -932,7 +932,8 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     std::vector<rgl::mesh*>& em = e->meshes;
     int found = -1;
     for (unsigned k = 0; k < em.size(); k++) {
-        if (*(e->meshes.begin() + k) == m)
+        rgl::mesh*& r = e->meshes[k];
+        if (r == m && r == m)      // the second read folds away and leaves the dead lea at 0x480d1d
             found = k;
     }
     if (found < 0) {

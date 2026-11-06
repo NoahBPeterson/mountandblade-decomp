@@ -884,38 +884,43 @@ void CampaignScreen::frame_update(float dt)
     }
 }
 
+struct Vec2f { float x, y; Vec2f() {} Vec2f(float a, float b) : x(a), y(b) {} const float* ptr() const { return &x; } };
+static inline Vec2f operator*(const Vec2f& a, const float& s) { return Vec2f(a.x * s, a.y * s); }
 // @ 0x515d80
 void CampaignScreen::camera_move(float dt)
 {
-    float src[2][2] = { { 1.0f, 0.0f }, { 0.0f, 1.0f } };   // the identity: a = {1,0} at [esp+0xc], b = {0,1} at [esp+4] (0x515d94)
-    mat2 m(&src[0][0], &src[1][0]);
+    mat2 m(Vec2f(1.0f, 0.0f).ptr(), Vec2f(0.0f, 1.0f).ptr());   // the identity: a = {1,0} at [esp+0xc], b = {0,1} at [esp+4] (0x515d94)
     m.rotate_2x2(-yaw);
 
-    bool b = g_game_keys.entry[2][0] >= 0 && g_keyboard.down[g_game_keys.entry[2][0]] != 0;
+    bool b = false; if (g_game_keys.entry[2][0] >= 0 && g_keyboard.down[g_game_keys.entry[2][0]] != 0) b = true;
     if ((g_game_keys.entry[2][1] >= 0 && g_keyboard.down[g_game_keys.entry[2][1]] != 0) || b) {
-        x -= m.m[0] * (height + 10.0f) * dt;
-        z -= m.m[1] * (height + 10.0f) * dt;
+        Vec2f d = ((Vec2f*)m.m)[0] * (height + 10.0f) * dt;
+        x -= d.x;
+        z -= d.y;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_game_keys.entry[3][0] >= 0 && g_keyboard.down[g_game_keys.entry[3][0]] != 0;
+    b = false; if (g_game_keys.entry[3][0] >= 0 && g_keyboard.down[g_game_keys.entry[3][0]] != 0) b = true;
     if ((g_game_keys.entry[3][1] >= 0 && g_keyboard.down[g_game_keys.entry[3][1]] != 0) || b) {
-        x += m.m[0] * (height + 10.0f) * dt;
-        z += m.m[1] * (height + 10.0f) * dt;
+        Vec2f d = ((Vec2f*)m.m)[0] * (height + 10.0f) * dt;
+        x = d.x + x;
+        z = d.y + z;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_game_keys.entry[0][0] >= 0 && g_keyboard.down[g_game_keys.entry[0][0]] != 0;
+    b = false; if (g_game_keys.entry[0][0] >= 0 && g_keyboard.down[g_game_keys.entry[0][0]] != 0) b = true;
     if ((g_game_keys.entry[0][1] >= 0 && g_keyboard.down[g_game_keys.entry[0][1]] != 0) || b) {
-        x += m.m[2] * (height + 10.0f) * dt;
-        z += m.m[3] * (height + 10.0f) * dt;
+        Vec2f d = ((Vec2f*)m.m)[1] * (height + 10.0f) * dt;
+        x = d.x + x;
+        z = d.y + z;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
-    b = g_game_keys.entry[1][0] >= 0 && g_keyboard.down[g_game_keys.entry[1][0]] != 0;
+    b = false; if (g_game_keys.entry[1][0] >= 0 && g_keyboard.down[g_game_keys.entry[1][0]] != 0) b = true;
     if ((g_game_keys.entry[1][1] >= 0 && g_keyboard.down[g_game_keys.entry[1][1]] != 0) || b) {
-        x -= m.m[2] * (height + 10.0f) * dt;
-        z -= m.m[3] * (height + 10.0f) * dt;
+        Vec2f d = ((Vec2f*)m.m)[1] * (height + 10.0f) * dt;
+        x -= d.x;
+        z -= d.y;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
@@ -929,11 +934,11 @@ void CampaignScreen::camera_move(float dt)
         f2d4 = 0;
 
     float v = g_gui.mouse_dx * 0.1f;
-    if (!(v > -1.0f)) v = -1.0f;
+    if (v < -1.0f) v = -1.0f;
     else if (v > 1.0f) v = 1.0f;
 
     float w = g_gui.mouse_dy * 0.1f;
-    if (!(w > -2.0f)) w = -2.0f;
+    if (w < -2.0f) w = -2.0f;
     else if (w > 2.0f) w = 2.0f;
 
     if (g_keyboard.axis[0] != 0.0f)
@@ -941,7 +946,8 @@ void CampaignScreen::camera_move(float dt)
 
     vy = v * dt + vy;
     if (g_keyboard.down[0xe1]) {
-        vy = expf(4.0f * g_options.exp_arg) * 0.03f * g_keyboard.axis[0] * dt + vy;
+        float wheel = expf(4.0f * g_options.exp_arg) * 0.03f;
+        vy = wheel * g_keyboard.axis[0] * dt + vy;
     }
 
     if (w != 0.0f || g_keyboard.axis[2] != 0.0f) {
@@ -962,35 +968,38 @@ __declspec(noinline) mat2::mat2(const float* a, const float* b)
     m[3] = b[1];
 }
 
+// the scene record behind an id, through the vector at game+0xe0 (materialised page address, 0x5162b0)
+static __forceinline Rec98& node_of(unsigned id)
+{
+    std::vector<Rec98*>& pages = *(std::vector<Rec98*>*)((char*)g_game + 0xe0);
+    return pages[id >> 4][id & 0xf];
+}
+static __forceinline Rec98& node2(unsigned id) { std::vector<Rec98*>& pages = *(std::vector<Rec98*>*)((char*)g_game + 0xe0); Rec98* p = pages[id >> 4]; return p[id & 0xf]; }
 // @ 0x516250
 void MissionCtx::init_battle(int id_)
 {
     WL_MARKER(12)
     init();           // 0x4be742 (called through its WinLicense entry 0x4be730)
     f08 = id_;
-    unsigned urow = (id_ & 0xf) * 0x98;
     f40 = 1;
     side = 0;
     f144 = 1;
     f10 = 1;
     mode = 3;
 
-    char* pages = *(char**)((char*)g_game + 0xe4);
-    char* rec = *(char**)(pages + ((unsigned)id_ >> 4) * 4);
-    rec = (char*)((char*)rec + urow);
-    if (g_game->f78 == *(int*)((char*)rec + 0x54)) {
-        party[0] = *(int*)((char*)rec + 0x58);
+    if (g_game->f78 == node_of(id_).f54) {
+        party[0] = node_of(id_).f58;
         party[1] = -1;
         f24 = 1;
         f144 = 1;
-    } else if (g_game->f78 == *(int*)((char*)rec + 0x58)) {
-        party[0] = *(int*)((char*)rec + 0x54);
+    } else if (g_game->f78 == node_of(id_).f58) {
+        party[0] = node2(id_).f54;
         party[1] = -1;
         f24 = 0;
         f144 = 1;
-    } else if (*(int*)((char*)rec + 0x10) == 1) {
-        party[0] = *(int*)((char*)rec + 0x58);
-        party[1] = *(int*)((char*)rec + 0x54);
+    } else if (node_of(id_).f10 == 1) {
+        party[0] = node_of(id_).f58;
+        party[1] = node2(id_).f54;
         f10 = 0x11;
         f144 = 0;
         f24 = 2;

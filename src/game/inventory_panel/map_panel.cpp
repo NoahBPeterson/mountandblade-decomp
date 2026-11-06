@@ -106,7 +106,8 @@ struct PlaneTrace {
 };
 
 // 0x407f70, owned by rgl/shapes/shapes.cpp. The original saw this body when compiling project: `in` does not escape, which
-// fixes update's pos copy schedule (the original's was a header inline, emitted with its first user).
+// fixes update's pos copy schedule. Not a rgl_math.h inline: visible there (plain or noinline), it breaks terrain_render's
+// ShadowMap::extend 0x468c20 (64 bytes), which needs the body opaque, so this TU keeps its local copy.
 inline __declspec(noinline) vector4 rgl::matrix::transform_point_to_local(const vector4& p) const
 {
     vector4 d(p.x - o.x, p.y - o.y, p.z - o.z);
@@ -262,7 +263,8 @@ void MapPanel::update_target()
         int count;
         g_script.level->query_segment((const float*)&seg_a, (const float*)&seg_b, 0x110, hits, &count);   // 0x439870
 
-        for (int i = 0; i < count; i++) {
+        int n = count;
+        for (int i = 0; i < n; i++) {
             if (hits[i]->shape_type() != 2) continue;
             shape_base* o = hits[i];
             if (!shape_contact_count(o, &cap, 0, 0)) continue;
@@ -687,7 +689,6 @@ static int first_enemy_stack(Party* r)
 
 // party lookup with the id by const reference: a by-value id takes one more scratch pick and rotates what follows (0x51b87e, 0x51b930)
 static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return (Party*)((char*)m->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
-struct screen_pt { float x, y; screen_pt(float a, float b) : x(a), y(b) {} };   // set_view's by-reference argument temporary: stores it after the argument's lea (0x51bdda)
 struct FleetRec { rgl::vector4 pos; char pad10[0x5c - 0x10]; };   // the 0x5c-byte fleet / battle record: only its position is read here
 
 // -----------------------------------------------------------------------------------------------------
@@ -929,7 +930,7 @@ void MapPanel::update(int type, int id)
         {
             float out[2];                  // eight bytes: it shares [esp+0x60] with rec, the garrison index and the capital-battle temporary
             rgl::vector4* o = ((MapWidget*)view)->project((rgl::vector4*)out, &pos);
-            g_gui.set_view((const float*)&screen_pt(o->x, o->y));      // 0x4c5190
+            g_gui.set_view((const float*)&vector2(o->x, o->y));      // 0x4c5190: a by-reference temporary, stored after the argument's lea (0x51bdda)
         }
     }
 

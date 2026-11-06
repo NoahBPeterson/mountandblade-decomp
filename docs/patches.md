@@ -62,6 +62,13 @@ pipeline, the progress counts or the gates' view of our source.
   devfast` (same import slot). The output directory is still named after the sets you ask for, so a plain build still
   lands in work/relink/standalone.
 
+- `guards`: checks the original doesn't have, kept out of `src/` so those rows can byte-match. **Changes behaviour on
+  purpose**, only where the original reads out of bounds. **Linked by default** in the play build; `--faithful` and
+  `--no-default-patches` leave it out.
+  - `build_chain_guards.cpp` replaces `ChainGraph::build_chain` (0x5234e0): `cur < 0` stops the walk and a neighbour `v < 0`
+    is skipped (they faulted at 0x49d47a). Not yet known whether the original can reach those reads; a `--faithful` build
+    run through a world map answers it (see the file's header).
+
 ### Measuring the perf sets (runtime, under CrossOver)
 
     uv run python tools/relink/build.py --patches perf --out <dir A>                         # BRF/stream/add patches
@@ -76,7 +83,7 @@ lines are background, `GAME` lines are first-play stalls), and with the profile 
 
 ## Variant builds
 
-**Default since 2026-11-02:** a plain `build.py` is the play build: `/arch:SSE2` plus the default patch sets (perf_sound).
+**Default since 2026-11-02:** a plain `build.py` is the play build: `/arch:SSE2` plus the default patch sets (perf_sound, guards).
 Module loading under CrossOver went from 11.7 s to 4.0 s (x87 math is ~3x slower under Rosetta; mesh_x::compute_tangents
 was 77% of it). `build.py --faithful` builds the x87 reconstruction with no patches, as the byte-exact and equivalence
 checks compile it: use that for independence/runtime checks of the faithful code.

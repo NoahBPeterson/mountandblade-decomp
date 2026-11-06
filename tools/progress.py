@@ -333,16 +333,20 @@ def plot_history(path):
     for ax, (title, ke, kc, km) in zip(axes, (("Share of functions", "exact", "comp", "mig"),
                                               ("Share of code size", "exact_sz", "comp_sz", "mig_sz"))):
         ax.set_facecolor(SURFACE)
-        for key, color, label in ((kc, ORANGE, "Compilable (byte-exact + equivalent)"), (ke, BLUE, "Byte-exact"),
-                                  (km, AQUA, "Migrated into src/ modules")):
+        # `mig` is migrated AND counted in `comp` (migrated = S["migrated"] & done), so once the migration finished it
+        # only repeats `comp` and hid it: draw it just where the two differ, and don't call it the migrated share today.
+        for key, color, label in ((km, AQUA, "Moved into src/ (migration phase only)"),
+                                  (kc, ORANGE, "Byte-exact + equivalence PASS"), (ke, BLUE, "Byte-exact")):
             val = (lambda p, key=key: p.get(key, 0.0)) if key == km else (lambda p, key=key: p.get(key))
-            xs = [t for t, p in pts if val(p) is not None]
-            ys = [val(p) for t, p in pts if val(p) is not None]
-            if not xs:
+            use = [(t, val(p)) for t, p in pts if val(p) is not None
+                   and (key != km or p.get(kc) is None or val(p) < p[kc] - 0.05)]
+            if not use:
                 continue
+            xs, ys = zip(*use)
             ax.plot(xs, ys, color=color, lw=2, marker="o", ms=4, label=label, solid_capstyle="round")
-            ax.annotate("%.1f%%" % ys[-1], (xs[-1], ys[-1]), xytext=(6, 0), textcoords="offset points",
-                        va="center", fontsize=9, color=INK)
+            if key != km:
+                ax.annotate("%.1f%%" % ys[-1], (xs[-1], ys[-1]), xytext=(6, 0), textcoords="offset points",
+                            va="center", fontsize=9, color=INK)
         ax.set_ylim(0, ymax)
         style(ax, title, [t for t, _ in pts])
     axes[1].tick_params(labelleft=False)
@@ -403,8 +407,9 @@ def plot_history(path):
                  x=0.01, ha="left", fontsize=12, color=INK)
     fig.text(0.01, 0.01, "One point per committed docs/STATUS.md and one per --plot run. "
              "Equivalent = complete compilable source whose equivalence sweep PASSed (no mismatch on the same random\n"
-             "inputs); weak / untestable / FAIL rows are failures here. Migrated = moved from match/slices "
-             "into one .cpp per original translation unit (0%% before the first migration).%s" %
+             "inputs); weak / untestable / FAIL rows are failures here. Before the drop on Oct 27 the orange line counted any row "
+             "with compilable source,\nso that 100%% plateau is not the same measure. Moved into src/ = moved from match/slices "
+             "into one .cpp per original translation unit.%s" %
              ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax) +
              ("\nVerdicts: one point per full equivalence sweep (tools/difftest/verdicts.py); a sweep tests the original and "
               "our function\non the same random inputs under emulation. The first point also counted pre-migration slice rows."

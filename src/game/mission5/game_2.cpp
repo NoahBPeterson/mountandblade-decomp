@@ -964,8 +964,6 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
     int next;
     *count = 0;
     do {
-        if (cur < 0)                    // the neighbour lists can carry -1; rec at f14 - 0x88 faults (0x49d47a)
-            return;
         Rec88* rec = (Rec88*)((char*)this->f14 + cur * 0x88);
         int n = rec->count;
         int found = -1;
@@ -974,10 +972,6 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
         int* nb = (int*)((char*)rec + 0x14);
         do {
             int v = *nb;
-            if (v < 0) {                // same for a neighbour id: node at f24 - 0x24 faulted with v = -1
-                nb++;
-                continue;
-            }
             Node24* node = (Node24*)((char*)this->f24 + v * 0x24);
             if (node->f00 > 1 && node->f04 != prev && node->f08 != prev
                 && (node->f0c == target || node->f10 == target))
@@ -988,7 +982,6 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
             return;
         Node24* node = (Node24*)((char*)this->f24 + found * 0x24);
         next = (node->f04 == cur) ? node->f08 : node->f04;
-        // (no early-out on next < 0: the original appends first; the loop-top cur < 0 guard stops the walk)
         int c = *count;
         bool dup = false;
         if (node->f0c == target) {

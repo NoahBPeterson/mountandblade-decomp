@@ -4488,8 +4488,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     }
     case op::faction_set_name:
         if (check_faction((int)params[0]) && check_string_arg((int)params[1], types[1]))
-            { tstring text = g_strings.get_string((int)params[1], types[1]); tstring nm = g_script.expand(text);
-              ((Named16*)faction((int)params[0]))->set(&nm); }
+            ((Named16*)faction((int)params[0]))->set(&g_script.expand(g_strings.get_string((int)params[1], types[1])));
         break;
     case op::faction_set_color:
         if (check_faction((int)params[0])) {

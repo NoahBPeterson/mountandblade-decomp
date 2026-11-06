@@ -446,8 +446,9 @@ void Mission::start_setup()
         GameData* gg = g_game;
         if (((LevelRaw*)(RAWAT(char*, gg, 0x13a50) + at<int>(0x5df4) * 0x494))->flags.b9) {
             PartyMgr* pm2 = &gg->parties;
-            int x = (int)party_rec(pm2, RAWAT(int, gg, 0x78))->pos.x;
-            int y = (int)party_rec(pm2, RAWAT(int, gg, 0x78))->pos.y;
+            int pid2 = RAWAT(int, gg, 0x78);
+            int x = (int)party_rec(pm2, pid2)->pos.x;
+            int y = (int)party_rec(pm2, pid2)->pos.y;
             int parity = at<int>(0x5270) % 3;
             int fr = RAWAT(int, gg, 4);
             int a = fr * 0x1b0b + parity + y * 0x230b + x * 17;

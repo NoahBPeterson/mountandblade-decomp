@@ -370,8 +370,8 @@ def patch_objects(sets, rmap):
 
 
 # linked unless --no-default-patches: lazy FMOD sample loading (start-up without the ~58 s of sample loads; user, 2026-11-02:
-# "the default unless we're testing sounds")
-DEFAULT_PATCHES = ["perf_sound"]
+# "the default unless we're testing sounds"); guards: checks the original lacks, moved out of src/ so the row can byte-match
+DEFAULT_PATCHES = ["perf_sound", "guards"]
 # the play build compiles with SSE2: under Rosetta the x87 code runs ~3x slower (module load 11.7 s -> 4.0 s, 2026-11-02);
 # floats differ only in the low bits. --faithful builds the x87 reconstruction as compiled for the checks
 DEFAULT_CFLAGS = "/arch:SSE2"
@@ -499,10 +499,11 @@ def main():
     if a.faithful:
         a.no_default_patches = True
     default_cflags = "" if a.faithful or a.cflags else DEFAULT_CFLAGS
-    # the default sets replace no function of the reconstruction (perf_sound only swaps our own fmod import slots),
-    # so they do not change which code the build runs; the output directory is named after the requested sets only
-    # (devfast's no_sound_samples swaps the same FSOUND_Sample_Load slot: never both)
-    defaults = [] if a.no_default_patches or "devfast" in a.patches else [p for p in DEFAULT_PATCHES if p not in a.patches]
+    # the output directory is named after the requested sets only. perf_sound only swaps our own fmod import slots;
+    # guards replaces functions, only to add bounds checks. --faithful links neither
+    # (devfast's no_sound_samples swaps the same FSOUND_Sample_Load slot as perf_sound: never both)
+    defaults = [] if a.no_default_patches else [p for p in DEFAULT_PATCHES if p not in a.patches
+                                                and not (p == "perf_sound" and "devfast" in a.patches)]
     if a.cflags:
         os.environ["MB_EXTRA_CFLAGS"] = a.cflags                # trial_link.objects() and the pre-link subprocess read it
     if (a.patches or a.cflags) and a.out == ap.get_default("out"):
