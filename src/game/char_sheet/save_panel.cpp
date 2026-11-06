@@ -7,7 +7,7 @@
 // @ 0x4ea0c0
 void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
 {
-    ((rgl::mesh*)m)->clear_geometry();   // 0x428e80
+    m->clear_geometry();   // 0x428e80
     if (!o->skins)
         return;
     float prod = o->f160;
@@ -25,14 +25,14 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
         // the original (0x4ea147..0x4ea241) multiplies a full mat4 (rows from identity3, origin zeroed): 0x40e870 reads the
         // left operand's origin (+0x30..+0x38), so it must be zero, not the stack bytes after a bare mat3
         mat4 id;
+        vector4 zero(0.0f, 0.0f, 0.0f);
         *(mat3*)&id = *identity3(&tmp);
-        id.o.x = 0.0f; id.o.y = 0.0f; id.o.z = 0.0f;
+        id.o = zero;
         id.s.x *= o->f158; id.s.y *= o->f158; id.s.z *= o->f158;
         id.f.x *= o->f15c; id.f.y *= o->f15c; id.f.z *= o->f15c;
         id.u.x *= o->f160; id.u.y *= o->f160; id.u.z *= o->f160;
-        skin_rec* rec = o->skins->begin[i];
-        mat4 M = id * rec->mat;
-        m->append_skinned((mesh*)rec, &M, -1, color, flip);
+        mat4 M = id * ((mesh*)o->skins->begin[i])->m_cc;
+        m->append_skinned((mesh*)o->skins->begin[i], &M, -1, color, flip);
     }
 }
 

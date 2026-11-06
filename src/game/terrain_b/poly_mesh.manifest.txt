@@ -78,3 +78,5 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?clear@PolyMesh@@QAEXXZ  00478580  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ??_EMAgent@@UAEPAXI@Z  00431f40  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ??0MAgent@@QAE@XZ  00477a30  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?attach_camera@ShadowMap@@QAEXPAUworld@rgl@@@Z  004711e0  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?apply_group@Skin@@QAEXPAUArrSet@@HPAUmesh@rgl@@@Z  00470db0  /O2 /MT /Gy /TP

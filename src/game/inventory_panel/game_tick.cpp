@@ -105,6 +105,12 @@ static void blend_color(rgl::vector4& dst, const rgl::vector4& src, float t, flo
     dst = r;
 }
 
+// party page lookup, direct form: page slot loads the record base
+static Party* raw_party(PartyMgr* m, int idx)
+{
+    return (Party*)m->pages._Myfirst[idx >> 4] + (idx & 0xf);
+}
+
 // the iterator helper on a bare base pointer
 static Rec5c* rec_at(Rec5c* base, int idx)
 {
@@ -428,17 +434,17 @@ void GameG::update_cursor(float dt)
 {
     PartyMgr* mgr = &parties;
 
-    party_at(mgr, mgr->lookup(main_party))->f6c = 1;
-    float radius = party_at(mgr, mgr->lookup(main_party))->map_speed();
+    raw_party(mgr, mgr->lookup(main_party))->f6c = 1;
+    float radius = raw_party(mgr, mgr->lookup(main_party))->map_speed();
 
     unsigned id = (unsigned)mgr->first_party_id();
     while (id < mgr->n_parties) {
         unsigned cur = id;
-        Party* p = party_at(mgr, mgr->lookup((int)id));
+        Party* p = raw_party(mgr, mgr->lookup(id));
         if (cur != (unsigned)main_party && p->f8c8 < 0) {
             unsigned __int64 flags = *(unsigned __int64*)&p->flags_lo;
             if ((flags & 0x1000100) == 0 && p->model != 0) {
-                Party* mp = party_at(mgr, mgr->lookup(main_party));
+                Party* mp = raw_party(mgr, mgr->lookup(main_party));
                 float dx = p->pos.x - mp->pos.x;
                 float dy = p->pos.y - mp->pos.y;
                 float dist = (float)sqrt(dx * dx + dy * dy);
@@ -506,7 +512,7 @@ void GameG::update_cursor(float dt)
         if (f95 != 0) {
             r->opacity = 1.0f;
         } else {
-            Party* mp = party_at(mgr, mgr->lookup(main_party));
+            Party* mp = raw_party(mgr, mgr->lookup(main_party));
             float dx = r->x - mp->pos.x;
             float dy = r->y - mp->pos.y;
             float dist = (float)sqrt(dx * dx + dy * dy);
@@ -627,7 +633,7 @@ void GameG::weekly_report(bool)
         tstring key("ui_party_morale_is_low");
         body.append(*g_strtable.lookup(key));
         float f = 0.3f - p->f7c;
-        if (f < factor1)
+        if (factor1 > f)
             f = factor1;
         factor1 = f * 0.2f;
     }
@@ -845,6 +851,8 @@ void GameG::train_troops()
 
     Party* p = party_at(&parties, parties.lookup(f78));
 
+    GameG* self = this;
+
     int gain[64];
     for (int i = 0; i < p->nstacks; i++)
         gain[i] = 0;
@@ -856,7 +864,7 @@ void GameG::train_troops()
         Stack& s = p->stacks[i];
         if (s.flags & 1)
             continue;
-        if (!(troops[s.troop].flags30 & 0x10))
+        if (!(self->troops[s.troop].flags30 & 0x10))
             continue;
         if (s.troop == player ? troops[s.troop].hp < g_module_settings.player_wounded_treshold : troops[s.troop].hp < g_module_settings.hero_wounded_treshold)
             continue;

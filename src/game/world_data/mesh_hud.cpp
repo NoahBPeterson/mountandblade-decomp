@@ -364,13 +364,13 @@ alpha_done:
 // @ 0x496d30
 void DropDown::animate(int)
 {
+    unsigned char dirty = 0;
     float e0 = elapsed(0);
     float e1 = elapsed(1);
     float e2 = elapsed(2);
     float e3 = elapsed(3);
     float e4 = elapsed(4);
     float e5 = elapsed(5);
-    unsigned char dirty = 0;
 
     if (e4 < dur(4)) {
         float k = 1.0f / dur(4);
@@ -501,6 +501,7 @@ void UiB::animate(int)
     float t1 = elapsed(1);
     float t4 = elapsed(4);
     float t5 = elapsed(5);
+    unsigned char zero = 0;
 
     if (t4 < dur(4)) {
         float k = 1.0f / dur(4);
@@ -517,7 +518,7 @@ void UiB::animate(int)
         fDC = y;
     } else if (c4) {
         rgl::vector4 v(f88 / fD8, f8c / fDC, 1.0f);
-        c4 = 0;
+        c4 = zero;
         ((rgl::mesh*)tracks[0])->set_color(v);
         ((rgl::mesh*)tracks[2])->set_color(v);
         update_bounds();
@@ -789,17 +790,22 @@ void UiD::update_children(float arg)
 // @ 0x498420
 void HudOuter::scroll_refresh(vector4* arg)
 {
-    ScrollVt* t = *scroll->target;
-    t->t25(arg);
-    t->t27((char*)t + 0x140);
+    (*scroll->target)->t25(arg);              // 0x49843e: the target is reloaded for the second call (0x498441)
+    (*scroll->target)->t27((char*)*scroll->target + 0x140);
 
     f49c = arg->x;
     f4a0 = arg->y;
 
-    vector4 v1;
-    v1.x = 0.01f;
-    v1.y = arg->y;
-    bar->set_xy(&v1.x);
+    vector4 scale;
+    {
+        vector4 v1;
+        v1.x = 0.01f;
+        v1.y = arg->y;
+        scale.x = 0.5f;
+        scale.y = arg->y * 1.5576323f;
+        scale.z = 1.0f;
+        bar->set_xy(&v1.x);
+    }
     bar->f17c = (float)(arg->y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
 
     delete bar->tracks[0];
@@ -807,7 +813,6 @@ void HudOuter::scroll_refresh(vector4* arg)
     delete bar->tracks[2];
     bar->tracks[2] = 0;
 
-    vector4 scale(0.5f, arg->y * 1.5576323f, 1.0f);
     // the names are temporaries: each dies right after its clone (0x498534, 0x49858a)
     rgl::mesh* a = ((rgl::mesh*)g_resmgr.get_object(&tstring("scrollbar")))->clone();
     a->set_color(scale);

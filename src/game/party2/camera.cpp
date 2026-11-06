@@ -540,8 +540,7 @@ void gui_manager::set_font_mesh(const tstring* text, int arg)
     float   scale[2];
     float   xmin = -0.35f;
     float   xmax = 0.35f;
-    arg = arg;
-    pos.x = -0.35f; pos.y = 0.0f; pos.z = 0.0f; pos.w = 0.0f;
+    pos.x = -0.35f; pos.y = 0.0f; pos.z = 0.0f;
     scale[0] = 0.017f; scale[1] = 0.017f;
     g_font->layout_text(out, text, &pos, scale, &m1480, (int)&arg, &xmin, &xmax, 0x100);
     m1480.mask = 1;
@@ -893,7 +892,7 @@ inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf)
 struct TickPair { int a; int b; };
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 
-static Agent* agent_by_id(Mission* m, int id) {
+static Agent* agent_by_id(Mission* m, unsigned id) {
     void** dir = m->agent_pages;
     return (Agent*)((char*)dir[id >> 4] + (id & 0xf) * 0x5928);
 }
@@ -910,71 +909,61 @@ void Mission::order(int index, int order) {
     char ordstr[0x200];                 // this+0x38: the localised order caption
     char ordtxt[0x200];                 // this+0x238: the leader's order text
     char msg[0x200];                    // this+0x438: the composed log line
-    Leader* L = &leaders[index];
 
     ordstr[0] = 0;
 
-    switch (order) {
-    case 0: {                                   // hold this position
-        if (L->agent_id == -1)
-            break;                              // still informs and re-seeds the group (0x49c2fe -> 0x49cafa)
-        Agent* a = agent_by_id(this, L->agent_id);
-        vector4 zero = { 0, 0, 0, 0 };
-        int f = a->update_nav_face();
-        set_vec(L, &a->pos, &f, &zero);
-        if (L->sub[0].mode) L->sub[0].state = 1;
-        if (L->sub[1].mode) L->sub[1].state = 1;
-        if (L->sub[2].mode) L->sub[2].state = 1;
-        strcpy(ordstr, order_string("ui_hold_this_position_e_"));
-        break;
-    }
-    case 1: {                                   // follow me
-        if (L->agent_id == -1)
-            break;                              // still informs and re-seeds the group (0x49c3e5 -> 0x49cafa)
-        if (L->sub[0].mode) L->sub[0].state = 2;
-        if (L->sub[1].mode) L->sub[1].state = 2;
-        if (L->sub[2].mode) L->sub[2].state = 2;
-        Agent* a = agent_by_id(this, L->agent_id);
-        int f = a->update_nav_face();
-        set_vec(L, &a->pos, &f, &a->alt);
-        strcpy(ordstr, order_string("ui_follow_me_e_"));
-        break;
-    }
-    case 2: {                                   // charge
+    if (order == 0) {                           // hold this position
+        Leader* L = &leaders[index];
+        if (L->agent_id != -1) {
+            int f = agent_by_id(this, L->agent_id)->update_nav_face();
+            vector4 zero = { 0, 0, 0 };
+            set_vec(L, &agent_by_id(this, L->agent_id)->pos, &f, &zero);
+            if (L->sub[0].mode) L->sub[0].state = 1;
+            if (L->sub[1].mode) L->sub[1].state = 1;
+            if (L->sub[2].mode) L->sub[2].state = 1;
+            strcpy(ordstr, order_string("ui_hold_this_position_e_"));
+        }
+    } else if (order == 1) {                    // follow me
+        Leader* L = &leaders[index];
+        if (L->agent_id != -1) {
+            if (L->sub[0].mode) L->sub[0].state = 2;
+            if (L->sub[1].mode) L->sub[1].state = 2;
+            if (L->sub[2].mode) L->sub[2].state = 2;
+            int f = agent_by_id(this, L->agent_id)->update_nav_face();
+            set_vec(L, &agent_by_id(this, L->agent_id)->pos, &f,
+                    &agent_by_id(this, L->agent_id)->alt);
+            strcpy(ordstr, order_string("ui_follow_me_e_"));
+        }
+    } else if (order == 2) {                    // charge
+        Leader* L = &leaders[index];
         if (L->sub[0].mode) L->sub[0].state = 0;
         if (L->sub[1].mode) L->sub[1].state = 0;
         if (L->sub[2].mode) L->sub[2].state = 0;
         strcpy(ordstr, order_string("ui_charge_e_"));
-        break;
-    }
-    case 11: {                                  // stand ground
+    } else if (order == 11) {                   // stand ground
+        Leader* L = &leaders[index];
         if (L->sub[0].mode) L->sub[0].state = 3;
         if (L->sub[1].mode) L->sub[1].state = 3;
         if (L->sub[2].mode) L->sub[2].state = 3;
         strcpy(ordstr, order_string("ui_stand_ground_e_"));
-        break;
-    }
-    case 3: {                                   // mount horses
+    } else if (order == 3) {                    // mount horses
+        Leader* L = &leaders[index];
         set_v(L, 1);
         strcpy(ordstr, order_string("ui_mount_horses_e_"));
-        break;
-    }
-    case 4: {                                   // dismount
+    } else if (order == 4) {                    // dismount
+        Leader* L = &leaders[index];
         set_v(L, 2);
         strcpy(ordstr, order_string("ui_dismount_e_"));
-        break;
-    }
-    case 7: {                                   // stand closer
+    } else if (order == 7) {                    // stand closer
+        Leader* L = &leaders[index];
         bump(L, -1);
         strcpy(ordstr, order_string("ui_stand_closer_e_"));
-        break;
-    }
-    case 8: {                                   // spread out
+    } else if (order == 8) {                    // spread out
+        Leader* L = &leaders[index];
         bump(L, 1);
         strcpy(ordstr, order_string("ui_spread_out_e_"));
-        break;
-    }
-    case 5: {                                   // advance
+    } else if (order == 5) {                    // advance
+        Leader* L = &leaders[index];
         for (int k = 0; k < 3; ++k) {
             SubOrder* s = &L->sub[k];
             if (s->mode == 0)
@@ -998,9 +987,8 @@ void Mission::order(int index, int order) {
             s->state = 1;
         }
         strcpy(ordstr, order_string("ui_advance_e_"));
-        break;
-    }
-    case 6: {                                   // fall back
+    } else if (order == 6) {                    // fall back
+        Leader* L = &leaders[index];
         for (int k = 0; k < 3; ++k) {
             SubOrder* s = &L->sub[k];
             if (s->mode == 0)
@@ -1024,30 +1012,18 @@ void Mission::order(int index, int order) {
             s->state = 1;
         }
         strcpy(ordstr, order_string("ui_fall_back_e_"));
-        break;
-    }
-    case 9: {                                   // use blunt weapons
+    } else if (order == 9) {                    // use blunt weapons
         set_weapon_order_1(index, 1);
         strcpy(ordstr, order_string("ui_use_blunt_weapons_e_"));
-        break;
-    }
-    case 10: {                                  // use any weapon
+    } else if (order == 10) {                   // use any weapon
         set_weapon_order_1(index, 0);
         strcpy(ordstr, order_string("ui_use_any_weapon_e_"));
-        break;
-    }
-    case 12: {                                  // hold fire
+    } else if (order == 12) {                   // hold fire
         set_weapon_order_2(index, 1);
         strcpy(ordstr, order_string("ui_hold_fire_e_"));
-        break;
-    }
-    case 13: {                                  // fire at will
+    } else if (order == 13) {                   // fire at will
         set_weapon_order_2(index, 0);
         strcpy(ordstr, order_string("ui_fire_at_will_e_"));
-        break;
-    }
-    default:                                    // an unknown order still informs (empty caption) and re-seeds
-        break;
     }
 
     // inform the local agent, but only about its own order group
@@ -1057,7 +1033,7 @@ void Mission::order(int index, int order) {
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            make_label(L, ordtxt);
+            make_label(&leaders[index], ordtxt);
             sprintf(msg, ordstr, ordtxt);
             tstring line(msg);                  // copied into the by-value argument (0x42c110), destroyed after the call
             g_gui.add(line, 0xfffffefb);
@@ -1391,17 +1367,16 @@ int View::create_text_overlay(int arg, int flags)
         o = base_ctor(o);                                // 0x48ae20
     else
         o = 0;
-    float2 p;
-    p.x = 0;
-    p.y = 0;
-    o->set_pos(&p);                                      // +0x58
+    float2 v;
+    v.x = 0;
+    v.y = 0;
+    o->set_pos(&v);                                      // +0x58
     int attr = (flags & 0x381c) | 0x700;
     o->set_attr(&attr);                                  // +0x74
-    float2 r;
-    r.x = 0.9f;
-    r.y = 0.75f;
-    o->set_rot(&r);                                      // +0x64
-    o->attach((void*)&r, (void*)arg);                    // +0xa4 (the original passes &r first, then arg)
+    v.x = 0.9f;
+    v.y = 0.75f;
+    o->set_rot(&v);                                      // +0x64
+    o->attach((void*)&v, (void*)arg);                    // +0xa4 (the original passes &r first, then arg)
     if (flags & 0x2000) {
         scene_obj* ps = (scene_obj*)operator new(0x188);
         if (ps)
@@ -1409,10 +1384,9 @@ int View::create_text_overlay(int arg, int flags)
         else
             ps = 0;
         *(int*)((char*)ps + 0x178) = 1;
-        float2 z;
-        z.x = 0;
-        z.y = 0;
-        ps->set_pos(&z);                                 // +0x58
+        v.x = 0;
+        v.y = 0;
+        ps->set_pos(&v);                                 // +0x58
         this->list->add_child(ps);                       // +0xc8
         scene_obj* cam = (scene_obj*)operator new(0x4a8);
         if (cam)
@@ -1422,22 +1396,19 @@ int View::create_text_overlay(int arg, int flags)
         *(int*)((char*)cam + 0x104) |= 0x20;
         *(scene_obj**)((char*)cam + 0x484) = ps;
         scene_obj* grp = (scene_obj*)new ContainerBase;
-        float2 z2;
-        z2.x = 0;
-        z2.y = 0;
-        grp->set_pos(&z2);                               // +0x58
+        v.x = 0;
+        v.y = 0;
+        grp->set_pos(&v);                                // +0x58
         grp->set_rot((float2*)((char*)o + 0xf0));        // +0x64
         grp->add_child(o);                               // +0xc8
         *(scene_obj**)((char*)cam + 0x490) = grp;
         cam->add_child(grp);                             // +0xc8
-        float2 z3;
-        z3.x = 0;
-        z3.y = 0;
-        cam->set_pos(&z3);                               // +0x58
-        float2 cp;
-        cp.x = *(float*)((char*)o + 0xf0);
-        cp.y = 0.1f;
-        ((scene_api*)cam)->set_pos(&cp);                 // 0x498420
+        v.x = 0;
+        v.y = 0;
+        cam->set_pos(&v);                                // +0x58
+        v.x = *(float*)((char*)o + 0xf0);
+        v.y = 0.1f;
+        ((scene_api*)cam)->set_pos(&v);                  // 0x498420
         this->list->add_child(cam);                      // +0xc8
         scene_obj* t = cam;
         push((void**)&t);                                // 0x4936b0
@@ -1547,13 +1518,14 @@ int GameData::create_companion_party(int troop, float x, float y, float z)
     return id;
 }
 
+struct GameWpx { void n(float x, float y, float radius, float* out); };   // 0x490030 (the pair-as-two-floats view of GameW::random_position_around)
+
 // @ 0x49f020
 // Pick a position around (x, y) (x and y are adjusted in place) and add a party of template `tmpl` there.
 int GameData::spawn_around(float x, float y, int tmpl, float radius)
 {
-    Vec2 p(x, y);
-    ((GameW*)this)->random_position_around(p, radius, &p);                                   // 0x490030
-    return add_sprite(p.x, p.y, tmpl);                         // 0x49ebd0
+    ((GameWpx*)this)->n(x, y, radius, &x);                     // 0x490030
+    return add_sprite(((float*)&x)[0], ((float*)&x)[1], tmpl); // 0x49ebd0
 }
 
 // ======================================================================================

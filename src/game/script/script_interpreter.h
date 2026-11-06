@@ -178,7 +178,7 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 
 // ---- vectors and frames ----------------------------------------------------------------------------------------------
 // the interpreter's helper over the rgl vector type (0x4327f0 rotates x / y about the z axis)
-inline void rotate_b(rgl::vector4& v, float angle) { ((vec2x*)&v)->rotate_b(angle); }
+__forceinline void rotate_b(rgl::vector4& v, float angle) { ((vec2x*)&v)->rotate_b(angle); }
 __forceinline rgl::mat3 identity3() { rgl::mat3 r; identity3((rgl::mat3*)&r); return r; }      // (the interpreter's by-value spelling)
 __forceinline rgl::matrix identity_frame() { rgl::matrix p; identity_pos((pos*)&p); return p; }    // (the interpreter's by-value spelling; item_kind.h: identity_pos)
 float __cdecl clamp(const float* v, const float* lo, const float* hi);    // 0x40e3d0

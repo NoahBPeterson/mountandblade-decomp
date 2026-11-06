@@ -4,3 +4,4 @@
 ../src/game/mission5/troop_rec.cpp  ?raise_stats@TroopRec@@QAEXXZ  005204d0  /O2 /MT /Gy /TP
 ../src/game/mission5/troop_rec.cpp  ?reset_ids@PartyMgr@@QAEXXZ  0051eda0  /O2 /MT /Gy /TP
 ../src/game/mission5/troop_rec.cpp  ?raise_skills@TroopRec@@QAEXXZ  00520420  /O2 /MT /Gy /TP
+../src/game/mission5/troop_rec.cpp  ?get@PartyMgr@@QAEPAUParty@@H@Z  0051ee50  /O2 /MT /Gy /TP

@@ -302,25 +302,95 @@ HRESULT GameApp::InitDeviceObjects()
     ((void (__fastcall*)(void*))load_game_variables)(this);
     {
         tstring k1("buffer_size_dx7_regular_ffp_dynamic");
-        int v1 = (int)game_var_float(k1);
+        int v1;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k1);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v1 = (int)f;
+        }
         tstring k2("buffer_size_dx7_regular_ffp_static");
-        int v2 = (int)game_var_float(k2);
+        int v2;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k2);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v2 = (int)f;
+        }
         tstring k3("buffer_size_normal_map_dynamic");
-        int v3 = (int)game_var_float(k3);
+        int v3;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k3);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v3 = (int)f;
+        }
         tstring k4("buffer_size_normal_map_static");
-        int v4 = (int)game_var_float(k4);
+        int v4;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k4);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v4 = (int)f;
+        }
         tstring k5("buffer_size_skinning_dynamic");
-        int v5 = (int)game_var_float(k5);
+        int v5;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k5);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v5 = (int)f;
+        }
         tstring k6("buffer_size_skinning_static");
-        int v6 = (int)game_var_float(k6);
+        int v6;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k6);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v6 = (int)f;
+        }
         tstring k7("buffer_size_regular_dynamic");
-        int v7 = (int)game_var_float(k7);
+        int v7;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k7);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v7 = (int)f;
+        }
         tstring k8("buffer_size_regular_static");
-        int v8 = (int)game_var_float(k8);
+        int v8;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k8);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v8 = (int)f;
+        }
         tstring k9("buffer_size_regular_ffp_dynamic");
-        int v9 = (int)game_var_float(k9);
+        int v9;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k9);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v9 = (int)f;
+        }
         tstring k10("buffer_size_regular_ffp_static");
-        int v10 = (int)game_var_float(k10);
+        int v10;
+        {
+            float f = 0.0f;
+            int idx = g_game_vars.find(k10);
+            if (idx >= 0)
+                f = (float)atof(g_game_vars.entries[idx].value.c_str());
+            v10 = (int)f;
+        }
         g_batch.init_decls(&v10, &v9, &v8, &v7, &v6, &v5, &v4, &v3, &v2, &v1);
     }
     g_resmgr.load_all(1, &g_module_path);
@@ -627,9 +697,10 @@ void StringTable::load1(stream_base* s)
     }
     strings = new Str[count];
     for (int i = 0; i < count; i++) {
-        s->r_tstr(&strings[i].key);
-        s->r_tstr(&strings[i].name);
-        strings[i].name.underscores_to_spaces();
+        Str* p = &strings[i];
+        s->r_tstr(&p->key);
+        s->r_tstr(&p->name);
+        p->name.underscores_to_spaces();
     }
 }
 
@@ -644,9 +715,10 @@ void StringTable::load2(stream_base* s)
     }
     quick = new Str[quick_count];
     for (int i = 0; i < quick_count; i++) {
-        s->r_tstr(&quick[i].key);
-        s->r_tstr(&quick[i].name);
-        quick[i].name.underscores_to_spaces();
+        Str* p = &quick[i];
+        s->r_tstr(&p->key);
+        s->r_tstr(&p->name);
+        p->name.underscores_to_spaces();
     }
 }
 

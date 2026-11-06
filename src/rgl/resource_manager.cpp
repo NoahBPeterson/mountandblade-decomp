@@ -597,10 +597,13 @@ material* resmgr::resolve_shader(const rgl::string& name)
 {
     material* shader = get_shader(name);
     material* best;
-    if (g_use_shaders)
-        best = get_shader(rgl::string("def_shader"));
-    else
-        best = get_shader(rgl::string("def_shader_ffp"));
+    if (g_use_shaders) {
+        rgl::string s("def_shader");
+        best = get_shader(s);
+    } else {
+        rgl::string s("def_shader_ffp");
+        best = get_shader(s);
+    }
     if (best == 0)
         mb_error("Unable to Find default shader!");
     if (shader->supported())

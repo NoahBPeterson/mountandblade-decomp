@@ -971,6 +971,8 @@ void render_batch::init_formats()
     cur_ib = -1;
     cur_vf_b = -1;
     int n = (g_cfg.render_buffer_size << 18) / 0x44;
+    int n3 = n * 3;
+    int n2 = n / 2;
     for (int i = 0; i < 10; i++)
         vf[i / 2].bufs[i % 2].type = 0;
     dev_buffer* p = &vf[0].bufs[0];
@@ -1011,8 +1013,8 @@ void render_batch::init_formats()
     }
     ib.bufs[0].type = 1;
     ib.bufs[1].type = 1;
-    ib.bufs[0].count = n * 3 * 8;
-    ib.bufs[1].count = n / 2 * 8;
+    ib.bufs[0].count = n3 << 3;
+    ib.bufs[1].count = n2 << 3;
     WL_MARKER(13)
 }
 
@@ -1205,8 +1207,7 @@ font_details::font_details()
 // @ 0x4bd170
 void gui_manager::render_log(rgl::scene* pass, const float* depth)
 {
-    rgl::matrix m;
-    identity_pos((pos*)&m);
+    rgl::matrix m = IDENTITY_VALUE();
     float alpha = 0.2f - total_h;
     m.o.x = 0.002f;
     m.o.z = *depth;
@@ -1221,12 +1222,12 @@ void gui_manager::render_log(rgl::scene* pass, const float* depth)
                 a = 0;
             else if (a >= 255)
                 a = 254;
+            meshA[idx].color = (a << 24) | (col & 0xffffff);
             int b = (int)((unsigned)(255 - a) * 2 / 3);
             if (b < 0)
                 b = 0;
             else if (b >= 255)
                 b = 254;
-            meshA[idx].color = (a << 24) | (col & 0xffffff);
             meshB[idx].color = ((b | 0xffffff00) << 8 | b) << 8 | b;
             meshA[idx].render(pass, m);       // 0x413750
             meshB[idx].render(pass, m);
@@ -1283,7 +1284,17 @@ void ini_file::parse_line(const char* line, tstring& key, tstring& value)
     int i = 0;
     key.clear();
     value.clear();
-    int len = (int)strlen(line);
+
+    char ch;
+    const char* p = line;
+    for (;;) {
+        ch = *p;
+        p++;
+        if (ch == 0) {
+            break;
+        }
+    }
+    int len = (int)(p - (line + 1));
     int state = 0;
     for (; i < len; i++) {
         char c = line[i];
@@ -1695,25 +1706,24 @@ void music_player::stop(int i)
 void music_player::play(int rec, int* slot)
 {
     char path[1024];
-    int index = *slot;
-    track[index] = rec;
-    music_res* r = (music_res*)((char*)this + 0x20 * track[index]);
+    track[*slot] = rec;
+    music_res* r = (music_res*)((char*)this + 0x20 * track[*slot]);
     const char* s = r->name;
     if (r->flags & 0x10000000) {
+        if (!s) s = (const char*)r + 0x1c;
         const char* dir = root.buf;
         if (!dir) dir = (const char*)&root.buf;
-        if (!s) s = (const char*)r + 0x1c;
         sprintf(path, "%sMusic\\%s", dir, s);
     } else {
         if (!s) s = (const char*)r + 0x1c;
         sprintf(path, "music\\%s", s);
     }
-    stream[index] = FSOUND_Stream_Open(path, (r->flags & 0x40) ? 0x1000002 : 0x1000000, 0, 0);
-    active[index] = 1;
-    opened[index] = 0;
-    volume[index] = 10000;
-    fading[index] = 0;
-    start[track[index]] = (float)g_ticks[0] * 1e-05f;
+    stream[*slot] = FSOUND_Stream_Open(path, (((music_res*)((char*)this + 0x20 * track[*slot]))->flags & 0x40) ? 0x1000002 : 0x1000000, 0, 0);
+    active[*slot] = 1;
+    opened[*slot] = 0;
+    volume[*slot] = 10000;
+    fading[*slot] = 0;
+    start[track[*slot]] = (float)g_ticks[0] * 1e-05f;
 }
 
 // @ 0x4be200

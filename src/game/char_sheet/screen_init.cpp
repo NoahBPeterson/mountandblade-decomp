@@ -34,7 +34,7 @@ static inline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
 // the 0x5ac8-byte record of dense index idx (page table at PartyMgr +0x138d0), as the original indexes it
 static char* party_bytes(PartyMgr* mgr, int idx)
 {
-    return (char*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8;
+    return (char*)mgr->pages[idx >> 4] + (idx & 0xf) * 0x5ac8;
 }
 
 // @ 0x4ec4d0
@@ -214,17 +214,22 @@ void CampaignScreen::init_screen()
 // @ 0x4ecce0
 void CampaignScreen::camera_mark_entities()
 {
-    g_game->f13acc = (f2b8 * g_590bb8 + 1.0f) * g_54b3b4;
-    PartyMgr* mgr = &g_game->parties;
-    for (unsigned id = (unsigned)mgr->first_party_id(); id < (unsigned)g_game->parties.n_parties; mgr->next_party_id((int*)&id)) {
-        int idx = mgr->lookup(id);
+    extern float g_one;   // 0x549cdc (float_consts.h; declared here, the shared header is not ours to edit)
+    g_game->f13acc = (f2b8 * g_590bb8 + g_one) * g_54b3b4;
+    GameData* game = g_game;
+    PartyMgr* mgr = &game->parties;
+    for (int id = mgr->first_party_id(); id < game->parties.n_parties; mgr->next_party_id((int*)&id)) {
+        int cur = id;
+        int idx = mgr->lookup(cur);
         if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
-            idx = mgr->lookup(id);
+            idx = mgr->lookup(cur);
             if (*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x400) {
-                idx = mgr->lookup(id);
+                idx = mgr->lookup(cur);
                 if (!(*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x80000)) {
-                    idx = mgr->lookup(id);
+                    idx = mgr->lookup(cur);
                     party_bytes(mgr, idx)[0x8b5] = 1;
+                    game = g_game;
+                    mgr = &game->parties;
                 }
             }
         }

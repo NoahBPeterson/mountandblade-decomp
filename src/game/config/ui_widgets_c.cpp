@@ -172,13 +172,14 @@ void UiE::render(rgl::scene* a, float* b, int c, int d)
         f178 = 0;
     else
         f178 = 1;
-    b11c[3] = 0;
     if (f178 != 0) {
+        b11c[3] = 0;
         b11c[2] = 1;
         b11c[1] = 0;
         MissionUi::render(a, b, c, d);
         return;
     }
+    b11c[3] = 0;
     b11c[2] = 0;
     b11c[1] = 1;
     MissionUi::render(a, b, c, d);

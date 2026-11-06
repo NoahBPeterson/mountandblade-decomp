@@ -65,9 +65,11 @@ def mac(token, nonce, who):
 
 
 def unwine(p):
-    """'Z:\\a\\b' -> '/a/b' (None if p is not a Z: path)."""
+    """'Z:\\a\\b' -> '/a/b'; a relative path resolves against the cwd, as wine would (None for any other drive or root)."""
     if p[:2].upper() == "Z:":
         return os.path.normpath(p[2:].replace("\\", "/"))
+    if p and p[0] not in "/\\" and p[1:2] != ":":
+        return os.path.abspath(p.replace("\\", "/"))
     return None
 
 

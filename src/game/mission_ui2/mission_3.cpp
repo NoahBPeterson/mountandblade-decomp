@@ -462,9 +462,10 @@ static __forceinline float fmin2(float a, float b) { return (a < b) ? a : b; }
 // @ 0x48d020
 void MissionUi::update_bounds()
 {
+    bool has = ((FieldShape*)tracks[0]) != 0;
     FieldV2 mx(0.0f, 0.0f);
     FieldV2 mn(999999.0f, 999999.0f);
-    if (((FieldShape*)tracks[0])) {
+    if (has) {
         ((FieldShape*)tracks[0])->compute_bounds();
         mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[0])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[0])->bounds.max.y));
         mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[0])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[0])->bounds.min.y));

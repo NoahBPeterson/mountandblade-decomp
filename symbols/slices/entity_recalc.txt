@@ -1,0 +1,1 @@
+0041fee0 ?scale_rows@smat@rgl@@QAEXPBUvector4@2@@Z  # multiplies the three basis rows by k.x, k.y, k.z

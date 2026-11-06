@@ -33,30 +33,27 @@ void TerrainPage::frame_update(float dt)
             tstring text;
             sync_bits();
             bit_fields[i]->put(&text);
-            int v;
+            unsigned v;
             sscanf(text.c_str(), "%d", &v);
-            int lo, hi;
-            if (i == 0)      { lo = 0x00; hi = 0x1e; }
-            else if (i == 1) { lo = 0x20; hi = 0x3e; }
-            else             { lo = 0x40; hi = 0x5e; }
-            g_terrain.set_bits(lo, hi, v);
+            if (i == 0)      g_terrain.set_bits(0x00, 0x1e, v);
+            else if (i == 1) g_terrain.set_bits(0x20, 0x3e, v);
+            else             g_terrain.set_bits(0x40, 0x5e, v);
             read_fields();
             this->update();         // 0x4f2730: refresh every widget from the page fields
         }
     }
 
-    // the two "Enable terrain" checkboxes also recaption themselves, so they form a chain of their own
+    // the two "Enable terrain" checkboxes share one recaption path, so the merge runs it once
+    MissionUi* w;
     if (page_changed(terrain_box)) {
         terrain_on = terrain_box->get15c();
-        inline_enabled_text(terrain_box);
-        inline_refresh_hex();
-        goto done;
+        w = terrain_box;
+        goto enabled;
     }
     if (page_changed(terraingen_box)) {
         terraingen_on = terraingen_box->get15c();
-        inline_enabled_text(terraingen_box);
-        inline_refresh_hex();
-        goto done;
+        w = terraingen_box;
+        goto enabled;
     }
 
     if (page_changed(water_box)) {
@@ -100,32 +97,50 @@ void TerrainPage::frame_update(float dt)
     } else if (page_changed(paste_btn)) {
         paste_clipboard();
     }
+    goto done;
+enabled:
+    inline_enabled_text(w);
+    inline_refresh_hex();
 done:
     if (page_changed(regen_btn)) {
         // "regenerate": reset the scene, arm the flash effect, rebuild the terrain and put the camera on it
         world->reset();                      // 0x421390 (rgl::world::reset)
+        const float one = 1.0f;
         vector4 clear_colour(0.2f, 0.2f, 0.3f);
         world->ambient = clear_colour;
-        world->ambient.w = 1.0f;
+        world->ambient.w = one;
         Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30
         flash->color = vector4(0.9f, 0.9f, 0.9f);
-        flash->base_color = vector4(1.0f, 1.0f, 1.0f);
+        flash->base_color.x = 1.0f;
+        flash->base_color.y = 1.0f;
+        flash->base_color.z = 1.0f;
         flash->pos = vector4(-1000.0f, -1000.0f, 1000.0f);
         flash->type = 2;
         flash->range = 20.0f;
         vector4 dir(1.0f, 1.0f, -1.0f);
         flash->dir = dir;
-        flash->dir.normalize();                     // inlined in the original (0x407d60 body: (0,1,0) when the length is <= 1e-10)
+        {
+            // normalize, inlined (the original is 0x407d60's body but with `1.0f / len`)
+            float len = flash->dir.length();
+            if (len > 1e-10f) {
+                float inv = 1.0f / len;
+                flash->dir.x *= inv;
+                flash->dir.y *= inv;
+                flash->dir.z *= inv;
+            } else {
+                flash->dir = vector4(0.0f, 1.0f, 0.0f);
+            }
+        }
         sync_bits();
         g_terrain.generate((int)world, (int*)0, 0);   // 0x481d10
         void* water_out;                            // 0x482170 stores the new water mesh here; the original never reads it back
         g_terrain.regenerate_water(&water_out, 0);   // 0x482170
         int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
-        owner[0] = 0; owner[1] = 0; owner[2] = 0; owner[3] = 0;
+        owner[1] = 0; owner[2] = 0; owner[3] = 0;
         g_terrain.destroy_water((int)owner);   // 0x4814a0
         float x = camera_x * 0.5f;
-        view_pos.x = x;
         float y = camera_y * 0.5f;
+        view_pos.x = x;
         view_pos.y = y;
         if (owner[1] != 0)
             free((void*)owner[1]);

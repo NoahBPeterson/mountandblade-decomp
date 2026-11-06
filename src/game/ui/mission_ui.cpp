@@ -146,14 +146,8 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
             tracks[4]->color = (b121 && is_active()) ? color150 : color14c;
     }
     rgl::identity_pos((rgl::matrix*)xf);
-    float pos[4];                   // (fE0, fE4, *t) and an unset 4th word, copied whole into the position row
-    pos[0] = fE0;
-    pos[1] = fE4;
-    pos[2] = *t;
-    xf[12] = pos[0];
-    xf[13] = pos[1];
-    xf[14] = pos[2];
-    xf[15] = pos[3];
+    float pos[3] = { fE0, fE4, *t };    // an unset 4th word follows, copied whole into the position row
+    *(rgl::vector4*)(xf + 12) = *(rgl::vector4*)pos;
     for (int i = 0; i < 5; i++)
     {
         if (!tracks[i])
@@ -164,8 +158,8 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
                 ;
             else
             {
-                xf[14] = *t + 1.0f;
-                *t = xf[14];
+                *t = *t + 1.0f;
+                xf[14] = *t;
                 tracks[3]->render(a, *(rgl::matrix*)xf);
                 continue;
             }
@@ -177,8 +171,8 @@ void MissionUi::render(rgl::scene* a, float* t, int, int)
         }
         if (!b11c[i])
             continue;
-        xf[14] = *t + 1.0f;
-        *t = xf[14];
+        *t = *t + 1.0f;
+        xf[14] = *t;
         tracks[i]->render(a, *(rgl::matrix*)xf);
     }
 }
@@ -1055,7 +1049,7 @@ int GameData::sl_take(int group, int item, int want, char extras)
     Troop* t = &troops[group];
     int n = t->inv_count();
     for (int i = 0; i < n; i++) {
-        if (want <= 0)
+        if (want == 0)
             break;
         ItemRef* p = (ItemRef*)((char*)troops + 0xb4) + group * 0xa1 + i;
         if (p->item == item) {
@@ -1066,10 +1060,11 @@ int GameData::sl_take(int group, int item, int want, char extras)
     }
     if (extras) {
         int i = 0;
+        ItemRef* base = (ItemRef*)((char*)troops + 0x4a4);
         while (i < 10) {
-            if (want <= 0)
+            if (want == 0)
                 break;
-            ItemRef* p = (ItemRef*)((char*)troops + 0x4a4) + group * 0xa1 + i;
+            ItemRef* p = base + group * 0xa1 + i;
             if (p->item == item) {
                 total += sort_value(p);
                 p->item = -1;
@@ -1094,9 +1089,9 @@ int GameData::sl_roll_party(int lo, int hi)
         if (tries >= 1000)
             return found;
         found = sl_rand(hi - lo) + lo;
-        QuestRec* pi = sl_quest(quests, found);
         tries++;
-        if (!sl_bit(pi->flags2, 1) || sl_bit(pi->flags, 8))
+        QuestRec& pi = quests[found];
+        if (!sl_bit(pi.flags2, 1) || sl_bit(pi.flags, 8))
             found = -1;
     } while (found == -1);
     return found;
@@ -1189,12 +1184,11 @@ int GameData::template_count(int party, int cell, float)
     int roll = rand() % 0x3dc9;
     int lo = range_lo;
     int hi = range_hi;
-    char* c = base + cell * 0x10;
-    int span = *(int*)(c + 0x48) - *(int*)(c + 0x44);
+    int span = *(int*)(base + cell * 0x10 + 0x48) - *(int*)(base + cell * 0x10 + 0x44);
     float f = (float)(hi - lo) * ((float)roll * 6.322312e-05f);
     f = (f + lo) * span;
     f = f * 0.01f;
-    return *(int*)(c + 0x44) + rnd(&f);
+    return *(int*)(base + cell * 0x10 + 0x44) + rnd(&f);
 }
 
 // @ 0x48a210

@@ -72,7 +72,7 @@ struct TriggerStmt {                // the 0x2c-byte statement of a simple trigg
     int n;                          // +4
     char flag;                      // +8
     char pad9[0x2c - 9];
-    void init(int op, int idx);     // 0x524360 (ret 8)
+    __declspec(noinline) void init(int op, int idx);     // 0x524360 (ret 8)
 };
 typedef char TriggerStmt_size_check[sizeof(TriggerStmt) == 0x2c ? 1 : -1];
 struct SimpleTrigger {              // 0x30 bytes: SimpleRec of game.h
@@ -83,7 +83,7 @@ typedef char SimpleTrigger_size_check[sizeof(SimpleTrigger) == 0x30 ? 1 : -1];
 
 // skills.txt record: SkillRec (include/skill_rec.h), table g_skill_tbl 0x8ee3100
 #include "../skill_cap.h"
-stream_base& __cdecl read_skill(stream_base& s, SkillRec& r);     // 0x5243c0
+__declspec(noinline) stream_base& __cdecl read_skill(stream_base& s, SkillRec& r);     // 0x5243c0
 
 // ---- the Data\*.txt record classes: TroopFile / QuestFile / FactionFile are data_files.h's; SceneFile (terrain_b/scene_file.h) below ---------
 // the scene record's embedded passage / site writer stream (vtable slots 3, 7 and 8 of stream_base)
@@ -170,10 +170,7 @@ struct GameMapView {
     char   pad0[0x2c];
     rgl::mesh* map_track;            // +0x2c  0x520d60
     rgl::entity* track_entity;       // +0x30
-    char   pad34[4];
-    void** ents;                     // +0x38  std::vector<mesh*> (first, last, end; 0x5213d0)
-    void** ents_last;                // +0x3c
-    void** ents_end;                 // +0x40
+    std::vector<rgl::mesh*> ents;    // +0x34  std::vector<mesh*> (0x5213d0)
     rgl::mesh* map_obj;              // +0x44
     rgl::vector4 fog1;               // +0x48
     rgl::vector4 fog2;               // +0x58
@@ -182,6 +179,9 @@ struct GameMapView {
     Light* wind;                     // +0x139dc (the fog / sun object; +0x44 = its direction)
     char   pad139e0[0x1a2a8 - 0x139e0];
     rgl::entity* compass;            // +0x1a2a8
+    // the map builder's members whose bodies never read `this`: the call sites load ecx (0x5217a2, 0x522ffe), both end in ret N
+    __declspec(noinline) void scan_arrays(void* a, void* b);                              // 0x523630
+    __declspec(noinline) skin* terrain_material(int type);                                // 0x523390
 };
 struct GameG { rgl::vector4* sun_color(rgl::vector4* out); rgl::vector4* fog_color(rgl::vector4* out); };   // 0x5176e0, 0x517820 (inventory_panel/game_tick.h: the game object)
 namespace c49bea0 { struct MissionAgents { void add_order_arrow(int id); }; }     // 0x49bea0 (ret 4: one int arg; party2/camera.cpp)
@@ -193,17 +193,15 @@ struct E92;
 #define g_map_sea_direction_i (*(int*)&g_module_settings.map_sea_direction)
 #define g_map_river_direction_i (*(int*)&g_module_settings.map_river_direction)
 extern unsigned __int64 g_bit[]; // 0x5a8e68
-void __stdcall scan_arrays(void* p, int unused); // 0x523630
 void     noise_fractal(float a, float b, int c, int d, const float* in, float* out); // 0x414fc0
 int      rand();                                                               // 0x536a9f
-skin* __stdcall terrain_material(int type); // 0x523390
 
 // ---- 0x523360..0x523630: the nibble setter, the terrain material table, the chain builder, the array scan ---------------
 struct FlagNode { char pad[0x1c]; unsigned f1c; };              // +0x1c: bits 24..27 are a 4-bit colour / alpha nibble
 struct NibbleObj {
     char pad[0x2c];
     FlagNode* f2c;                                              // +0x2c
-    void set_nibble(int v);                                     // 0x523360 (thiscall, ret 4)
+    __declspec(noinline) void set_nibble(int v);                                     // 0x523360 (thiscall, ret 4)
 };
 struct Rec88 { int count; char pad4[0x14 - 4]; int nb[1]; char pad18[0x88 - 0x18]; };
 typedef char Rec88_size_check[sizeof(Rec88) == 0x88 ? 1 : -1];    // the 0x88-byte graph node (NavCell): neighbour ids at +0x14

@@ -97,27 +97,30 @@ void char_window::init(const tstring& n, int a, const char* b, const char* c,
 // @ 0x5094a0
 void char_window::load_troop()
 {
-    f508 = TROOP_FIELD(troop, 0xa4);
-    f50c = TROOP_FIELD(troop, 0xa8);
-    f510 = TROOP_FIELD(troop, 0xac);
-    f504 = TROOP_FIELD(troop, 0xa0);
-    f4d8 = TROOP_FIELD(troop, 0x58);
-    f4dc = TROOP_FIELD(troop, 0x5c);
-    f4e0 = TROOP_FIELD(troop, 0x60);
-    f4e4 = TROOP_FIELD(troop, 0x64);
-    f514 = TROOP_FIELD(troop, 0x68);
-    f518 = TROOP_FIELD(troop, 0x6c);
-    f51c = TROOP_FIELD(troop, 0x70);
-    f520 = TROOP_FIELD(troop, 0x74);
-    f524 = TROOP_FIELD(troop, 0x78);
-    f528 = TROOP_FIELD(troop, 0x7c);
-    f4e8 = TROOP_FIELD(troop, 0x80);
-    f4ec = TROOP_FIELD(troop, 0x84);
-    f4f0 = TROOP_FIELD(troop, 0x88);
-    f4f4 = TROOP_FIELD(troop, 0x8c);
-    f4f8 = TROOP_FIELD(troop, 0x90);
-    f4fc = TROOP_FIELD(troop, 0x94);
-    f500 = TROOP_FIELD(troop, 0x98);
+    int a = troop;
+    f508 = TROOP_FIELD(a, 0xa4);
+    f50c = TROOP_FIELD(a, 0xa8);
+    f510 = TROOP_FIELD(a, 0xac);
+    f504 = TROOP_FIELD(a, 0xa0);
+    int b = troop;
+    f4d8 = TROOP_FIELD(b, 0x58);
+    int& t = troop;
+    f4dc = TROOP_FIELD(t, 0x5c);
+    f4e0 = TROOP_FIELD(t, 0x60);
+    f4e4 = TROOP_FIELD(t, 0x64);
+    f514 = TROOP_FIELD(t, 0x68);
+    f518 = TROOP_FIELD(t, 0x6c);
+    f51c = TROOP_FIELD(t, 0x70);
+    f520 = TROOP_FIELD(t, 0x74);
+    f524 = TROOP_FIELD(t, 0x78);
+    f528 = TROOP_FIELD(t, 0x7c);
+    f4e8 = TROOP_FIELD(t, 0x80);
+    f4ec = TROOP_FIELD(t, 0x84);
+    f4f0 = TROOP_FIELD(t, 0x88);
+    f4f4 = TROOP_FIELD(t, 0x8c);
+    f4f8 = TROOP_FIELD(t, 0x90);
+    f4fc = TROOP_FIELD(t, 0x94);
+    f500 = TROOP_FIELD(t, 0x98);
 }
 
 // ---------------------------------------------------------------------------------------------------------

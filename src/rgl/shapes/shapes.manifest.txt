@@ -123,3 +123,4 @@
 ../src/rgl/shapes/shapes.cpp  ??Dmatrix@rgl@@QBE?AU01@ABU01@@Z  0040e870  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?transform@sphere@@UAEXPBUmatrix@rgl@@@Z  00408420  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?apply@renderer@@QAEXPBUmatrix@rgl@@@Z  0040a870  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?rot3@matrix@rgl@@QBE?AUmat3@2@ABU12@@Z  0040a920  /O2 /MT /Gy /TP

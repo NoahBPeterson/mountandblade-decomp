@@ -17,9 +17,9 @@
 // Text values. The original builds the texts it hands to set_text from 16-byte globals (0xa70464 and the
 // string-table entries), copying with 0x42bcb0 (tstring::operator=); localized::text() is that copy.
 //
-// State of the row: every path and call of `fill` is reconstructed, but its frame (0x220 + ebx/esi/edi with
-// the prologue emitted right after the game test and no epilogue on the early-out) could not be reproduced
-// from any source shape tried here, so it is recorded in nonmatching.txt rather than manifest.txt.
+// State of the row: `fill` is byte-exact. The days line computes `days` from g_game_G directly and then
+// names the same pointer in a local `g` (cl folds the two loads into one, which puts g_game in ebx and
+// days in edi); "now" is the standalone __int64 at 0x5e2950, not g_ticks[1].
 #include "../../include/image_addrs.h"
 #include <windows.h>
 #include "../../rgl/rgl_math.h"
@@ -41,6 +41,9 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
 #include "../../include/crt.h"   // canonical: floor (0x536b10)
 
 struct Pos2 { float x, y; };    // 8-byte position slot; the original passes an unset 8-byte stack slot
+
+// 0x5e2950: the current time stamp (the second entry of the clock table, read as one __int64).
+// (g_ticks[0], declared in fx.h)
 
 // 0x489f40 (thiscall on the game object): the game's difficulty rating (percent). GameData (include/game_data.h) cannot be
 // included next to party/game.h, so the member is repeated under the class name.
@@ -130,8 +133,8 @@ void QuestPage::fill()
     // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
     {
         tstring key("ui_given_on_date");
+        int days = (int)(g_game_G->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
         Game* g = g_game_G;
-        int days = (int)(g->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
         g_script.result_string.assign("");
         ((GameData*)g)->emit_event(0xf, days / 24, days);
         {
@@ -155,7 +158,7 @@ void QuestPage::fill()
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
         int given = (int)(QREC->f11c * (1.0f / 24));
-        int now = (int)(g_ticks[1] * 4.1666667e-07f);
+        int now = (int)(g_ticks[0] * 4.1666667e-07f);
         mb_snprintf(buf, 0x200, fmt, now - given);
     }
     {

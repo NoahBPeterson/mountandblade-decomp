@@ -72,21 +72,19 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
     int i = 0;
     if (n > 0) {
         do {
-            if (*out_len >= *maxn)
+            int cnt = *out_len;
+            if (cnt >= *maxn)
                 break;
             unsigned char c = s->buf[i];
             int ch;
             if (c >= 0xf0 && c < 0xf5) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = (((((q[0] & 7) << 6) | (q[1] & 0x3f)) << 6 | (q[2] & 0x3f)) << 6) | (q[3] & 0x3f);
+                ch = ((((((unsigned char)s->buf[i] & 7) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6 | ((unsigned char)s->buf[i+2] & 0x3f)) << 6) | ((unsigned char)s->buf[i+3] & 0x3f);
                 i += 4;
             } else if (c >= 0xe0 && c < 0xf0) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = ((((q[0] & 0xf) << 6) | (q[1] & 0x3f)) << 6) | (q[2] & 0x3f);
+                ch = (((((unsigned char)s->buf[i] & 0xf) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6) | ((unsigned char)s->buf[i+2] & 0x3f);
                 i += 3;
             } else if (c >= 0xc2 && c < 0xe0) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = (((q[0] & 0x1f) << 6) | (q[1] & 0x3f));
+                ch = ((((unsigned char)s->buf[i] & 0x1f) << 6) | ((unsigned char)s->buf[i+1] & 0x3f));
                 i += 2;
             } else {
                 i++;
@@ -94,8 +92,8 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
                     continue;
                 ch = (signed char)c;
             }
-            buf[*out_len] = ch;
-            (*out_len)++;
+            buf[cnt] = ch;
+            *out_len = cnt + 1;
         } while (i < n);
     }
 }
@@ -160,28 +158,26 @@ void KeysPage::update_perf()
     limit = g_options.i40;
     if (limit >= 5) limit = 5;
     perf += limit;
-    char high = g_render.use_hw_shadow;
     perf += g_options.i34 * 0.1f;
-    int shadows = g_use_shaders;
     perf += g_options.scale_y * 10.0f;
 
     if (g_options.i2c) {
         if (g_cfg.shadow_quality_req >= 2)
             perf += 3.0f;
-        if (shadows) {
-            if (high) perf *= 1.1f;
-            else                  perf *= 1.25f;
+        if (g_use_shaders) {
+            if (g_render.use_hw_shadow) perf *= 1.1f;
+            else                        perf *= 1.25f;
         } else {
             perf += 4.0f;
         }
     }
     if (g_options.i7c == 2) {
-        if (shadows) {
-            if (high) perf *= 1.1f;
-            else                  perf *= 1.2f;
+        if (g_use_shaders) {
+            if (g_render.use_hw_shadow) perf *= 1.1f;
+            else                        perf *= 1.2f;
         }
     }
-    if (shadows)
+    if (g_use_shaders)
         perf *= (1 - g_cfg.fake_reflections) * g_k065 + g_one;
     perf *= g_options.i38 * 0.03f + 1.0;
     perf *= g_cfg.texture_detail + 400.0f;
@@ -194,7 +190,7 @@ void KeysPage::update_perf()
     perf *= h + 250.0f;
     perf *= 0.0011764705f;
 
-    char buf[0x104];
+    char buf[0x100];
     {
         tstring key("ui_estimated_performance");
         tstring* e = g_strtable.lookup(key);
@@ -320,9 +316,9 @@ void layout_row(MissionUi* row, const tstring* text, float bx, float by, float b
 
 static inline void row_colour(MissionUi* row, char assigned)
 {
-    unsigned colour = 0xffff2200;
-    if (!assigned)
-        colour = 0xff000000;
+    unsigned colour = 0xff000000;
+    if (assigned)
+        colour = 0xffff2200;
     row->set_color(&colour);
 }
 
@@ -360,15 +356,15 @@ void KeysPage::refresh()
 void layout_row(MissionUi* row, const tstring* text, float bx, float by, float bz, float bw)
 {
     float s = bx * g_k065;
-    int maxn = 0x800;
     int len;
+    int maxn = 0x800;
+    vector2 scale;
     int buf[0x800];
     decode_utf8(text, &len, buf, &maxn);
     float tw = len * s * g_k039;
     float room = bx * by - bx / bz * bw;
     if (tw > room)
         s *= room / tw;
-    vector2 scale;
     scale.x = s;
     scale.y = s;
     row->set_size((const float*)&scale);

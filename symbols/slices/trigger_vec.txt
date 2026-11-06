@@ -3,3 +3,5 @@
 08ee3fc4 ?g_dlg_options@@3PAXA  # the options dialog window, written by options_dlg_proc 0x4bf5f0
 08ee3c38 ?g_module_name@@3Utstring@@A  # the selected module name (0x4c0520 appends it to "Modules\")
 005aa010 ?g_music_volume@@3MA  # music volume (rec_tables.h declares it; the music monitor 0x4c25e0 reads it)
+004c03b0 ?folder_dlg_proc@@YGHPAUHWND__@@IIJ@Z  # the module-folder dialog procedure: WM_COMMAND stores the folder, WM_INITDIALOG fills it (byte-exact; menu callback)
+004c24c0 ??0music_player@@QAE@XZ  # music_player::music_player: static ctor of g_music 0xa73a10 (byte-exact; a compiler symbol name)

@@ -39,6 +39,7 @@
 
 #include "../key_names.h"
 #include "../../include/render_flags.h"
+#include "../../include/wl_marker.h"
 #pragma intrinsic(tan, atan2, atan, sqrt)
 
 // ---- the mission's agent (re)initialisation ------------------------------------------------------------------
@@ -79,6 +80,18 @@ void Mission::refresh_agent(Agent* a)
     a->set_slot(1, 0x14);
 }
 
+// new NodeA calls ContainerBase's constructor 0x4931a0 while new ContainerBase expands it in place (0x4f7f00, 0x4fbfa0, ...). One
+// definition cannot give both, so the expanded form needs a second, inline constructor in ui/container.h (reported to the orchestrator).
+#ifdef CONTAINER_HAS_INL_CTOR
+#define NEW_CONTAINER new ContainerBase(ContainerBase::inl_tag())
+#else
+#define NEW_CONTAINER new ContainerBase
+#endif
+static __forceinline NodeA* hud_frame() { return new NodeA(0); }
+// ContainerBase::ContainerBase stays out of line: new NodeA calls 0x4931a0, but new ContainerBase expands it (0x4f7f00, 0x4fbfa0). One definition cannot give both; see the note in agent_hud.nonmatching.txt.
+inline UiD::UiD() { f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
+static __forceinline void t_back(Timer& t) { t.start = g_ticks[t.clock] - 10000000; }
+
 static __forceinline rgl::mesh* res_clone(const tstring& n)
 {
     return g_resmgr.get_object(&n)->clone();
@@ -87,7 +100,6 @@ static __forceinline rgl::mesh* res_clone(const tstring& n)
 // @ 0x4f7f00
 void MissionBlocker::init_screen()
 {
-    float v[2];
     f2fc = 0;
     if ((float)(rand() % 15817) * 6.322312e-05f < 0.05f)
         g_scene_dirty = 1;
@@ -114,14 +126,16 @@ void MissionBlocker::init_screen()
             int id = g_mission->player_id;
             if (id >= 0) {
                 Agent* a = agent_raw(id);
-                a->health += (float)(h - status_height);
+                float& hp = a->health;
+                hp += (float)(h - status_height);
                 agent_raw(g_mission->player_id)->max_health = (float)h;
             }
         }
     }
 
-    timer_b.start = g_ticks[timer_b.clock] - 10000000u;
-    timer_a.start = g_ticks[timer_a.clock] - 10000000u;
+    WL_MARKER(12)
+    t_back(timer_b);
+    t_back(timer_a);
     f2c8 = -1;
     f2d4 = 0;
     f2e4 = 0;
@@ -138,15 +152,10 @@ void MissionBlocker::init_screen()
     ammo_stage = -1;
     GAME_AT(int, 0x1a090) = 0;
 
-    NodeA* fw = new_frame_widget();
-    frame = fw;
+    frame = hud_frame();
     {
-        v[0] = 0.0f;
-        v[1] = 0.0f;
-        fw->move_a(v);
-        v[0] = 1.0f;
-        v[1] = 0.75f;
-        fw->set_xy(v);
+        { float v[2]; v[0] = 0.0f; v[1] = 0.0f; frame->move_a(v); }
+        { float v[2]; v[0] = 1.0f; v[1] = 0.75f; frame->set_xy(v); }
     }
     {
         MissionUi* root = frame;
@@ -154,52 +163,37 @@ void MissionBlocker::init_screen()
         g_gui.objs.push_back(*(MissionUi**)&root);
     }
     for (int i = 0; i < 3; i++) {
-        MissionUi* wd = new MissionUi;
-        w[i] = wd;
+        w[i] = new MissionUi;
+        { float v[2]; v[0] = 0.5f; v[1] = 0.375f; w[i]->move_a(v); }
         {
-            v[0] = 0.5f;
-        v[1] = 0.375f;
-            wd->move_a(v);
+            { float v[2]; v[0] = 0.03f; v[1] = 0.04f; w[i]->set_xy(v); }
         }
         {
-            v[0] = 0.03f;
-        v[1] = 0.04f;
-            w[i]->set_xy(v);
+            tstring n(i == 0 ? "crosshair_up" : (i == 1 ? "crosshair_left" : "crosshair_right"));
+            marks[i] = res_clone(n);
         }
-        marks[i] = res_clone(tstring(i == 0 ? "crosshair_up" : (i == 1 ? "crosshair_left" : "crosshair_right")));
         w[i]->set_track(0, marks[i]);
         frame->add_child(w[i]);
     }
+    WL_MARKER(13)
     for (int i = 0; i < 4; i++) {
-        MissionUi* wd = new MissionUi;
-        w[3 + i] = wd;
+        w[3 + i] = new MissionUi;
+        { float v[2]; v[0] = 0.5f; v[1] = 0.35f; w[3 + i]->move_a(v); }
         {
-            v[0] = 0.5f;
-        v[1] = 0.35f;
-            wd->move_a(v);
+            { float v[2]; v[0] = 0.03f; v[1] = 0.04f; w[3 + i]->set_xy(v); }
         }
         {
-            v[0] = 0.03f;
-        v[1] = 0.04f;
-            w[3 + i]->set_xy(v);
+            tstring n(i == 0 ? "arrow_up" : (i == 1 ? "arrow_right" : (i == 2 ? "arrow_down" : "arrow_left")));
+            marks[3 + i] = res_clone(n);
         }
-        marks[3 + i] = res_clone(tstring(i == 0 ? "arrow_up" : (i == 1 ? "arrow_right" : (i == 2 ? "arrow_down" : "arrow_left"))));
         w[3 + i]->set_track(0, marks[3 + i]);
         frame->add_child(w[3 + i]);
     }
     {
-        v[0] = 0.5f;
-        v[1] = 0.45f;
-        w[3 + 0]->move_a(v);
-        v[0] = 0.65f;
-        v[1] = 0.35f;
-        w[3 + 1]->move_a(v);
-        v[0] = 0.5f;
-        v[1] = 0.3f;
-        w[3 + 2]->move_a(v);
-        v[0] = 0.35f;
-        v[1] = 0.35f;
-        w[3 + 3]->move_a(v);
+        { float v[2]; v[0] = 0.5f; v[1] = 0.45f; w[3 + 0]->move_a(v); }
+        { float v[2]; v[0] = 0.65f; v[1] = 0.35f; w[3 + 1]->move_a(v); }
+        { float v[2]; v[0] = 0.5f; v[1] = 0.3f; w[3 + 2]->move_a(v); }
+        { float v[2]; v[0] = 0.35f; v[1] = 0.35f; w[3 + 3]->move_a(v); }
     }
     color[0] = 0.0f;
     color[1] = 0.0f;
@@ -210,40 +204,35 @@ void MissionBlocker::init_screen()
     color[6] = 0.0f;
 
     // the status background group, its health bar and bar, the two text widgets and the shield icon
-    status_group = new ContainerBase;
+    status_group = NEW_CONTAINER;
     {
-        v[0] = 0.876249969f;
-        v[1] = 0.0243749972f;
-        status_group->move_a(v);
-        v[0] = 0.17f;
-        v[1] = 0.1175f;
-        status_group->set_xy(v);
+        { float v[2]; v[0] = 0.876249969f; v[1] = 0.0243749972f; status_group->move_a(v); }
+        { float v[2]; v[0] = 0.17f; v[1] = 0.1175f; status_group->set_xy(v); }
     }
     {
-        rgl::mesh* m = res_clone(tstring("status_background"));
+        rgl::mesh* m;
+        {
+            tstring n("status_background");
+            m = res_clone(n);
+        }
         status_group->set_track(0, m);
     }
     health_bar = new MissionUi;
     {
-        v[0] = 0.0f;
-        v[1] = 0.0f;
-        health_bar->move_a(v);
-        v[0] = 0.106500007f;
-        v[1] = 0.00500000035f;
-        health_bar->set_xy(v);
+        { float v[2]; v[0] = 0.0f; v[1] = 0.0f; health_bar->move_a(v); }
+        { float v[2]; v[0] = 0.106500007f; v[1] = 0.00500000035f; health_bar->set_xy(v); }
     }
     {
-        health_mesh = res_clone(tstring("status_health_bar"));
+        {
+            tstring n("status_health_bar");
+            health_mesh = res_clone(n);
+        }
         health_bar->set_track(0, health_mesh);
     }
     status_bar = new MissionUi;
     {
-        v[0] = 0.0725000203f;
-        v[1] = 0.05075f;
-        status_bar->move_a(v);
-        v[0] = 0.0400000028f;
-        v[1] = 0.05f;
-        status_bar->set_xy(v);
+        { float v[2]; v[0] = 0.0725000203f; v[1] = 0.05075f; status_bar->move_a(v); }
+        { float v[2]; v[0] = 0.0400000028f; v[1] = 0.05f; status_bar->set_xy(v); }
     }
     shadow_mesh = new rgl::mesh;
     status_bar->set_track(0, shadow_mesh);
@@ -251,27 +240,18 @@ void MissionBlocker::init_screen()
     status_bar->set_track(2, shield_mesh);
     shield_icon = new MissionUi;
     {
-        v[0] = 0.0249999985f;
-        v[1] = 0.0500000082f;
-        shield_icon->move_a(v);
-        v[0] = 0.05f;
-        v[1] = 0.0600000024f;
-        shield_icon->set_xy(v);
+        { float v[2]; v[0] = 0.0249999985f; v[1] = 0.0500000082f; shield_icon->move_a(v); }
+        { float v[2]; v[0] = 0.05f; v[1] = 0.0600000024f; shield_icon->set_xy(v); }
     }
     ui_font = new MissionUi;
     {
-        v[0] = 0.0718750283f;
-        v[1] = 0.045f;
-        ui_font->move_a(v);
-        v[0] = 0.120000005f;
-        v[1] = 0.024f;
-        ui_font->set_xy(v);
-        int two = 2;
-        ui_font->set148(&two);
+        { float v[2]; v[0] = 0.0718750283f; v[1] = 0.045f; ui_font->move_a(v); }
+        { float v[2]; v[0] = 0.120000005f; v[1] = 0.024f; ui_font->set_xy(v); }
+        { int two = 2; ui_font->set148(&two); }
     }
     {
         tstring n("0");
-                ui_font->set_text(v, &n);
+                float out[2]; ui_font->set_text(out, &n);
     }
     {
         tstring n("ui_font");
@@ -283,18 +263,13 @@ void MissionBlocker::init_screen()
     }
     ui_font_bg = new MissionUi;
     {
-        v[0] = 0.0718750283f;
-        v[1] = 0.045f;
-        ui_font_bg->move_a(v);
-        v[0] = 0.120000005f;
-        v[1] = 0.024f;
-        ui_font_bg->set_xy(v);
-        int two = 2;
-        ui_font_bg->set148(&two);
+        { float v[2]; v[0] = 0.0718750283f; v[1] = 0.045f; ui_font_bg->move_a(v); }
+        { float v[2]; v[0] = 0.120000005f; v[1] = 0.024f; ui_font_bg->set_xy(v); }
+        { int two = 2; ui_font_bg->set148(&two); }
     }
     {
         tstring n("0");
-                ui_font_bg->set_text(v, &n);
+                float out[2]; ui_font_bg->set_text(out, &n);
     }
     {
         tstring n("ui_font_background");
@@ -314,28 +289,28 @@ void MissionBlocker::init_screen()
     name_widget = new MapWidget;
     name_widget->world = g_mission->scene;
     {
-        v[0] = 0.0f;
-        v[1] = 0.0f;
-        name_widget->move_a(v);
-        v[0] = 1.0f;
-        v[1] = 0.75f;
-        name_widget->set_xy(v);
+        { float v[2]; v[0] = 0.0f; v[1] = 0.0f; name_widget->move_a(v); }
+        { float v[2]; v[0] = 1.0f; v[1] = 0.75f; name_widget->set_xy(v); }
     }
     if (g_options.i2c)
         name_widget->f354 = 1;
     {
-        double t = tan(0.8726646304130554);
-        fr.perspective = 1;
-        fr.nearz = 0.1f;
-        fr.farz = 800.0f;
-        fr.left = (float)-(0.1f * t);
-        float r = (float)(t * 0.1f);
-        fr.right = r;
-        fr.bottom = (float)(0.1f * t * -0.75f);
-        fr.top = r * 0.75f;
-        fr.build_planes();
+        rgl::frustum* f = &fr;
+        float t = (float)tan(0.8726646304130554);
+        f->perspective = 1;
+        f->nearz = 0.1f;
+        f->farz = 800.0f;
+        float b = 0.1f * t;
+        f->left = -b;
+        float r = t;
+        r = r * 0.1f;
+        float& rr = r;
+        f->right = rr;
+        f->bottom = b * -0.75f;
+        f->top = rr * 0.75f;
+        f->build_planes();
+        name_widget->scene3d.fr = *f;
     }
-    name_widget->scene3d.fr = fr;
     frame->kids.push_back(name_widget);
 
     update_status();
@@ -354,7 +329,10 @@ void MissionBlocker::init_screen()
     {
         int id = g_mission->player_id;
         if (id >= 0)
-            yaw = (float)atan2(-agent_raw(id)->vel.x, agent_raw(id)->vel.y);
+        {
+            const vector4& vel = agent_raw(id)->vel;
+            yaw = (float)atan2(-vel.x, vel.y);
+        }
         else
             yaw = 0.0f;
     }
@@ -394,15 +372,113 @@ void Agent::show()
     if (slot_mesh4) ((rgl::lod_mesh*)slot_mesh4)->mask = 0x2000;
 }
 
+// Bodies the original's object saw (header inlines left out of line). cl uses them to keep globals across the call, and an
+// object whose address reaches a visible body shares its stack slot (docs/codegen.md section 7). The owner of each row is
+// shapes.cpp / game_util.cpp; the build links those.
+inline __declspec(noinline) float rgl::vector4::normalize()
+{
+    float len = (float)sqrt(x * x + y * y + z * z);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+}
+static __forceinline vector4 vis_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
+static __forceinline vector4 vis_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 vis_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+inline __declspec(noinline) void rgl::matrix::rotate_about_s(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 nf, nu;
+    nf = vis_add(vis_mul(f, cos((double)*angle)), vis_mul(u, sn));
+    nu = vis_sub(vis_mul(u, cos((double)*angle)), vis_mul(f, sn));
+    u = nu;
+    f = nf;
+}
+inline __declspec(noinline) void rgl::matrix::rotate_about_f(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 ns, nu;
+    ns = vis_sub(vis_mul(s, cos((double)*angle)), vis_mul(u, sn));
+    nu = vis_add(vis_mul(u, cos((double)*angle)), vis_mul(s, sn));
+    s = ns;
+    u = nu;
+}
+inline __declspec(noinline) float __cdecl clamp(const float* x, const float* lo, const float* hi)
+{
+    return *x < *lo ? *lo : (*x >= *hi ? *hi : *x);
+}
+inline __declspec(noinline) float __cdecl fmax_ref(const float* a, const float* b) { return *a > *b ? *a : *b; }
+inline __declspec(noinline) rgl::mat3* __cdecl rgl::identity3(rgl::mat3* out)
+{
+    vector4 a(1.0f, 0.0f, 0.0f), b(0.0f, 1.0f, 0.0f), c(0.0f, 0.0f, 1.0f);
+    out->s = a;
+    out->f = b;
+    out->u = c;
+    return out;
+}
+inline __declspec(noinline) matrix* __cdecl rgl::identity_pos(matrix* out)
+{
+    vector4 o(0.0f, 0.0f, 0.0f);
+    rgl::mat3 m;
+    *(rgl::mat3*)out = *identity3(&m);
+    out->o = o;
+    return out;
+}
+inline __declspec(noinline) float rgl::vector4::out_length() const { return length(); }
+inline __declspec(noinline) vector4 rgl::matrix::rot(const vector4& p) const
+{
+    return vector4(p.x * s.x + (f.x * p.y + u.x * p.z),
+                   f.y * p.y + (s.y * p.x + u.y * p.z),
+                   f.z * p.y + (s.z * p.x + u.z * p.z));
+}
+inline __declspec(noinline) rgl::mat3 rgl::matrix::rot3(const matrix& m) const { return rgl::mat3(this->rot(m.s), this->rot(m.f), this->rot(m.u)); }
+inline __declspec(noinline) matrix rgl::matrix::operator*(const matrix& m) const
+{
+    struct { rgl::mat3 r; vector4 o; } t;
+    t.o = transform_point_inl(m.o);
+    t.r = rot3(m);
+    return *(matrix*)&t;
+}
+inline vector4 rgl::cross(const vector4& a, const vector4& b) { return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+inline __declspec(noinline) capsule::capsule(float r, const vector4* a, const vector4* b) : shape_base(inline_init())
+{
+    radius = r;
+    l0 = *a;
+    l1 = *b;
+    p0 = l0;
+    p1 = l1;
+}
 // Inline vector helpers as the original's TU had them (scalar by const reference: one float store per use).
 // The fourth lane of every result is left unset (the original copies whole vector4s with an unset w).
+static __forceinline vector4 hv_scaled(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
+static __forceinline void hv_addr(vector4& a, const vector4& b) { a.x = b.x + a.x; a.y = b.y + a.y; a.z = b.z + a.z; }
 static __forceinline vector4 hv_mulv(const vector4& a, float s) { return vector4(a.x * s, a.y * s, a.z * s); }
+struct HvS { float v; __forceinline HvS(float s) : v(s) {} };
+static __forceinline vector4 hv_m6(const vector4& a, HvS s) { return vector4(a.x * s.v, a.y * s.v, a.z * s.v); }
 static __forceinline vector4 hv_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 hv_neg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
 static __forceinline void hv_add_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
 static __forceinline void hv_sub_to(vector4& a, const vector4& b) { a.x = a.x - b.x; a.y = a.y - b.y; a.z = a.z - b.z; }
 #define AG(i) agent_by_id(i)
+static __forceinline void hv_add_mix(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = b.y + a.y; a.z = b.z + a.z; }
+static __forceinline void hv_view(rgl::frustum& f, const matrix& m) { f.m = m; f.build_planes(); }
+static __forceinline float clamp_i(const float& x, const float& lo, const float& hi) { return x < lo ? lo : (x >= hi ? hi : x); }
+static __forceinline void hv_sub_of(vector4& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; }
+static __forceinline void cam_to(const matrix* e, const float& far_plane) { g_mission->camera_to(e, &far_plane); }
+static __forceinline bool hud_day(float t) { return 4.0f <= t && t < 20.0f; }
+static __forceinline float cl01(const float& e) { return e < 0.0f ? 0.0f : (e >= 1.0f ? 1.0f : e); }
+static __forceinline void rot_s(matrix& m, const float& a) { m.rotate_about_s(&a); }
+static __forceinline void rot_u(matrix& m, const float& a) { m.rotate_about_u(&a); }
+static __forceinline void rot_f(matrix& m, const float& a) { m.rotate_about_f(&a); }
+static __forceinline float clamp_v(const float& x, const float& lo, const float& hi) { return clamp(&x, &lo, &hi); }
+static __forceinline float fmax_v(const float& a, const float& b) { return fmax_ref(&a, &b); }
 
+#define gcam GAME_AT(vector4, 0x1a1a4)
+#define geye GAME_AT(vector4, 0x1a13c)
 // @ 0x4f8c80
 void MissionBlocker::update_camera(float dt)
 {
@@ -421,12 +497,10 @@ void MissionBlocker::update_camera(float dt)
     if (GAME_AT(int, 0x1a090) != 0) {
         if ((float)(g_ticks[GAME_AT(int, 0x1a150)] - GAME_AT(__int64, 0x1a158)) * 1e-5f < 0.0f) {
             vector4 c;
-            vector4& gcam = GAME_AT(vector4, 0x1a1a4);
-            vector4& geye = GAME_AT(vector4, 0x1a13c);
             c.x = gcam.x - geye.x;
             c.y = gcam.y - geye.y;
             c.z = gcam.z - geye.z;
-            vector4 a = hv_add(geye, (c * ((1.0f - dt) * c.normalize())));
+            vector4 a = hv_add(hv_m6(c, (1.0f - dt) * c.normalize()), geye);
             float ya = atan2(-(-c.x), -c.y);
             if (yaw > 6.2831855f)
                 yaw = yaw - 6.2831855f;
@@ -447,10 +521,8 @@ void MissionBlocker::update_camera(float dt)
     }
     if (GAME_AT(int, 0x1a090) != 0) {
         // free camera: keys move the game's camera position along the camera's own axes
-        float ang, t, u;
-        vector4& gcam = GAME_AT(vector4, 0x1a1a4);
-        ang = 1.5707964f;
-        k.rotate_about_s(&ang);
+        float t, u;
+        rot_s(k, 1.5707964f);
         k.rotate_about_f(&yaw);
         k.rotate_about_s(&pitch);
         k.rotate_about_f(&f284);
@@ -501,11 +573,9 @@ void MissionBlocker::update_camera(float dt)
     } else if (CAMSLOT.rec != 0) {
         // the scripted camera slot: cur -> sway over value seconds
         if (CAMSLOT.value > 0.0f) {
-            float el = (float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f;
-            float t = el / CAMSLOT.value;
+            float t = ((float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f) / CAMSLOT.value;
             if (CAMSLOT.num > 0) {
-                float nn = (float)CAMSLOT.num;
-                t = atan((t - 0.5f) * nn * 3.1415927f) / (atan(nn * 1.5707964f) * 2.0f) + 0.5f;
+                t = atan((t - 0.5f) * (float)CAMSLOT.num * 3.1415927f) / (atan((float)CAMSLOT.num * 1.5707964f) * 2.0f) + 0.5f;
             }
             if (t >= 1.0f) {
                 CAMSLOT.cur = CAMSLOT.sway;
@@ -517,12 +587,11 @@ void MissionBlocker::update_camera(float dt)
                 zoomL = CAMSLOT.zoom_to;
                 CAMSLOT.value = 0.0f;
             } else {
-                float u = 1.0f - t;
-                k.o = hv_add((CAMSLOT.sway.o * t), (CAMSLOT.cur.o * u));
-                k.u = hv_neg(hv_add((CAMSLOT.sway.f * t), (CAMSLOT.cur.f * u)));
-                k.f = hv_add((CAMSLOT.sway.u * t), (CAMSLOT.cur.u * u));
-                k.s = hv_add((CAMSLOT.sway.s * t), (CAMSLOT.cur.s * u));
-                zoomL = CAMSLOT.zoom_to * t + CAMSLOT.zoom_cur * u;
+k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
+                k.u = hv_neg(hv_add(hv_mulv(CAMSLOT.sway.f, t), hv_mulv(CAMSLOT.cur.f, 1.0f - t)));
+                k.f = hv_add(hv_mulv(CAMSLOT.sway.u, t), hv_mulv(CAMSLOT.cur.u, 1.0f - t));
+                k.s = hv_add(hv_mulv(CAMSLOT.sway.s, t), hv_mulv(CAMSLOT.cur.s, 1.0f - t));
+                zoomL = CAMSLOT.zoom_cur * (1.0f - t) + CAMSLOT.zoom_to * t;
             }
         } else {
             k.u = hv_neg(CAMSLOT.cur.f);
@@ -532,21 +601,15 @@ void MissionBlocker::update_camera(float dt)
             zoomL = CAMSLOT.zoom_cur;
         }
         if (CAMSLOT.agent >= 0) {
-            if (CAMSLOT.attached != 0) {
+            if (CAMSLOT.attached != 0)
                 *(matrix*)&k = AG(CAMSLOT.agent)->body->m * k;
-                k.orthonormalize();
-                goto pass2;
-            }
-            vector4* bo = &AG(CAMSLOT.agent)->body->m.o;
-            k.o.x = bo->x + k.o.x;
-            k.o.y = bo->y + k.o.y;
-            k.o.z = bo->z + k.o.z;
+            else
+                hv_addr(k.o, AG(CAMSLOT.agent)->body->m.o);
         }
         k.orthonormalize();
     } else {
-      int id = g_mission->player_id;
-      if (id >= 0) {
-        if (g_game->f139e4 != 0 && AG(g_mission->player_id)->f10 == 0) {
+      {
+        if (g_mission->player_id >= 0 && g_game->f139e4 != 0 && AG(g_mission->player_id)->f10 == 0) {
             // spectating: look through the agent this one is bound to
             Agent* ag = AG(g_mission->player_id);
             AgentBody* body = AG(g_mission->player_id)->body;
@@ -555,65 +618,56 @@ void MissionBlocker::update_camera(float dt)
                 yaw = dt * *(float*)((char*)AG(ag->f2c) + 0x56e8) + yaw;
             sk = (Skeleton*)body->skel;
             if ((ag->defs->defs[ag->anim[0].cur].flags & 0x100000) != 0) {
-                float ang;
                 if (!sk->ready)
                     sk->ensure_updated();
                 *(matrix*)&k = body->m * *(matrix*)(sk->recs + 0x1140);
-                ang = 3.1415927f;
-                k.rotate_about_f(&ang);
+                rot_f(k, 3.1415927f);
                 hv_add_to(k.o, (k.f * 0.15f));
             } else {
-                float lo = 0.0f, hi = 1.0f, ang, radial;
-                vector4 c, n;
                 if (!sk->ready)
                     sk->ensure_updated();
-                n = *(vector4*)(sk->recs + 0x1170);
-                c.x = n.x - lag.x;
-                c.y = n.y - lag.y;
-                c.z = n.z - lag.z;
-                radial = c.out_length() * dt * 200.0f;
-                hv_add_to(lag, (c * (clamp(&radial, &lo, &hi))));
-                k.o = body->m.transform_point(lag);
-                ang = 1.5707964f;
-                k.rotate_about_s(&ang);
+                vector4 n = *(vector4*)(sk->recs + 0x1170);
+                vector4 c = n - lag;
+                hv_add_to(lag, hv_m6(c, clamp_v(c.out_length() * dt * 200.0f, 0.0f, 1.0f)));
+                vector4 tp = body->m.transform_point(lag);
+                k.o = tp;
+                rot_s(k, 1.5707964f);
                 k.rotate_about_f(&yaw);
                 k.rotate_about_s(&pitch);
                 hv_add_to(k.o, hv_add((k.f * 0.15f), (k.u * 0.11f)));
             }
-        } else if (id >= 0) {
+        } else if (g_mission->player_id >= 0) {
             // third person: the player's own agent
             Agent* ag = AG(g_mission->player_id);
-            float ang, d;
             if (g_game_keys.is_down(0xd)) {
-                float fa = 0.8f, fb = 0.5f;
+                float fa = 0.8f;
+                float fb = 0.5f;
                 if (AG(g_mission->player_id)->f2c >= 0) {
-                    fb = 1.0f;
                     fa = 1.1f;
+                    fb = 1.0f;
                 }
                 f280 = (fa - f280) * dt * 3.0f + f280;
                 f27c = (fb - f27c) * dt * 3.0f + f27c;
             } else {
+                float h;
                 if (AG(g_mission->player_id)->f2c >= 0) {
                     f27c = (0.1f - f27c) * dt + f27c;
-                    d = 2.4f;
+                    h = 2.4f;
                 } else {
                     f27c = (0.0f - f27c) * dt + f27c;
-                    d = 1.65f;
+                    h = 1.65f;
                 }
-                f280 = (d - f280) * dt + f280;
+                f280 = (h - f280) * dt + f280;
             }
             head = ag->pos;
-            head.z = head.z + f280;
-            ang = 1.5707964f;
-            head.x = head.x + ag->v98.x;
-            head.y = ag->v98.y + head.y;
-            head.z = ag->v98.z + head.z;
-            k.rotate_about_s(&ang);
+            head.z += f280;
+            hv_add_mix(head, ag->v98);
+            rot_s(k, 1.5707964f);
             k.rotate_about_f(&yaw);
             k.rotate_about_s(&pitch);
             k.rotate_about_f(&f284);
             k.o = head;
-            d = (pitch < -3.0f ? -3.0f : (pitch < 3.0f ? pitch : 3.0f)) * 0.0f + f278 + f27c;
+            float d = clamp_i(pitch, -3.0f, 3.0f) * 0.0f + f278 + f27c;
             hv_add_to(k.o, (k.u * d));
             hv_add_to(k.o, ((k.f * 0.37f) * d));
             if (GAME_AT(int, 0x1a090) == 0) {
@@ -622,13 +676,19 @@ void MissionBlocker::update_camera(float dt)
                 contact ct;
                 int count, i;
                 float t;
+                vector4 q, c;
+                char capbuf[sizeof(capsule)];
+                capsule& cap = *(capsule*)capbuf;
+                {
                 vector4 p0 = k.o;
-                vector4 q = (k.o - (k.u * d));
-                vector4 c = (q - p0);
+                hv_sub_of(q, k.o, (k.u * d));
+                hv_sub_of(c, q, p0);
                 c.normalize();
                 vector4 a = (p0 - (c * 0.4f));
-                capsule cap(1e-5f, &q, &a);
+                cap.capsule::capsule(1e-5f, &q, &a);
                 g_mission->scene->query_segment(&p0.x, &q.x, 0x110, list, &count);
+                }
+                float d2 = d;
                 t = 1000.0f;
                 for (i = 0; i < count; i++) {
                     if (list[i]->shape_type() == 2 && shape_contact_count(list[i], &cap, 1, &ct) != 0) {
@@ -637,34 +697,29 @@ void MissionBlocker::update_camera(float dt)
                         float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
                         float dot = n.z * c.z + n.y * c.y + n.x * c.x;
                         if (dot > 0.0f && dist < t) {
-                            float lo = 0.1f;
                             t = dist;
-                            d = dist - (radius * 2.5f / fmax_ref(&dot, &lo) + 0.6f);
-                            if (d < 0.25f)
-                                d = 0.25f;
+                            d2 = dist - (radius * 2.5f / fmax_v(dot, 0.1f) + 0.6f);
+                            if (d2 < 0.25f)
+                                d2 = 0.25f;
                         }
                     }
                 }
-                f2ec = (d - f2ec) * dt * 11.0f + f2ec;
-                k.o = hv_add((k.u * f2ec), q);
+                f2ec = (d2 - f2ec) * dt * 11.0f + f2ec;
+                { vector4 r = hv_scaled(k.u, f2ec); k.o = vector4(r.x + q.x, r.y + q.y, r.z + q.z); }
             }
         }
       }
     }
-pass2:
     if (CAMSLOT.rec == 0) {
         if (CAMSLOT.value > 0.0f) {
-            float el = (float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f;
-            float t = el / CAMSLOT.value;
+            float t = ((float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f) / CAMSLOT.value;
             if (CAMSLOT.num > 0) {
-                float nn = (float)CAMSLOT.num;
-                t = atan((t - 0.5f) * nn * 3.1415927f) / (atan(nn * 1.5707964f) * 2.0f) + 0.5f;
+                t = atan((t - 0.5f) * (float)CAMSLOT.num * 3.1415927f) / (atan((float)CAMSLOT.num * 1.5707964f) * 2.0f) + 0.5f;
             }
             if (t >= 1.0f) {
                 CAMSLOT.value = 0.0f;
             } else {
                 matrix m;
-                float u;
                 m.u = hv_neg(CAMSLOT.sway.f);
                 m.f = CAMSLOT.sway.u;
                 m.s = CAMSLOT.sway.s;
@@ -679,12 +734,11 @@ pass2:
                         m.o.z = m.o.z + bo->z;
                     }
                 }
-                u = 1.0f - t;
-                k.o = hv_add((k.o * t), (m.o * u));
-                k.u = hv_add((k.u * t), (m.u * u));
-                k.f = hv_add((k.f * t), (m.f * u));
-                k.s = hv_add((k.s * t), (m.s * u));
-                zoomL = u * CAMSLOT.zoom_to + t * zoomL;
+                k.o = hv_add(hv_mulv(k.o, t), hv_scaled(m.o, 1.0f - t));
+                k.u = hv_add(hv_mulv(k.u, t), hv_scaled(m.u, 1.0f - t));
+                k.f = hv_add(hv_mulv(k.f, t), hv_scaled(m.f, 1.0f - t));
+                k.s = hv_add(hv_mulv(k.s, t), hv_scaled(m.s, 1.0f - t));
+                zoomL = (1.0f - t) * CAMSLOT.zoom_to + t * zoomL;
             }
             k.orthonormalize();
         }
@@ -698,107 +752,103 @@ pass2:
     }
     // the frustum
     float aspect = g_gui.view_b / g_gui.view_a;
-    fr.m = k;
-    fr.build_planes();
+    hv_view(fr, k);
     float v = (float)sqrt(1.0f / aspect);
     v = 1.17f < v ? 1.17f : v;
     v = v * zoomL * 0.86f;
     v = 102.0f < v ? 102.0f : v;
     fr.init(v * 0.017453292f, aspect, radius, 800.0f);
     name_widget->scene3d.fr = fr;
-    float far_plane = 97.0f / zoomL;
-    g_mission->camera_to(&k, &far_plane);
+    cam_to(&k, 97.0f / zoomL);
 }
 
 #define flare_amt (*(float*)&f65cc)
 #define flare_gain f6610
 #define cam_row cam
 
+#undef gcam
+#undef geye
+
 // @ 0x4fa790
 void Mission::camera_to(const matrix* eye, const float* far_plane)
 {
     view = *(const rgl::matrix*)eye;
     apply_sun_light(&eye->o, far_plane);
-    rgl::world* sc = (rgl::world*)scene;
-    sc->m30c = vector4(-eye->u.x, -eye->u.y, -eye->u.z);
-    sc->m31c = eye->o;
+    ((rgl::world*)scene)->m30c = hv_neg(eye->u);
+    ((rgl::world*)scene)->m31c = eye->o;
     matrix lis = *eye;
-    vector4 back(lis.u.x * 0.4f, lis.u.y * 0.4f, lis.u.z * 0.4f);
-    lis.o.x = lis.o.x - back.x;
-    lis.o.y = lis.o.y - back.y;
-    lis.o.z = lis.o.z - back.z;
+    hv_sub_to(lis.o, lis.u * 0.4f);
     if (g_cfg.disable_sound == 0) {
         g_sound_mgr.frame = lis;
         // FMOD is y-up: y and z swap (0x4fa887..0x4fa8ae push f.x, f.z, f.y, u.x, u.z, u.y)
         FSOUND_3D_Listener_SetAttributes(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y, g_sound_mgr.frame.u.x,
                                          g_sound_mgr.frame.u.z, g_sound_mgr.frame.u.y);
     }
-    FrameNode* sun = (FrameNode*)f65b8;
-    if (sun) {
+#define sun ((FrameNode*)f65b8)
+    if (f65b8) {
         sun->pos.o = eye->o;
-        sun->pos.f = vector4(-eye->u.x, -eye->u.y, -eye->u.z);
+        sun->pos.f = hv_neg(eye->u);
         sun->pos.u = vector4(0.0f, 0.0f, 1.0f);
         sun->pos.s = cross(sun->pos.f, sun->pos.u);
         sun->pos.s.normalize();
         sun->pos.f = cross(sun->pos.u, sun->pos.s);
+#undef sun
         if (f6664 < 0 && fog_dense == 1)
             f6664 = g_sound_mgr.play_slot(8, 3, &g_sound_mgr.frame.o.x, 1.0f, 0);
     }
-    FrameNode* flare = (FrameNode*)f65c0;
-    if (flare) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
-    float tod = time_of_day();
-    bool day = tod >= 4.0f && tod < 20.0f;
-    int step = (int)((g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f);
-    vector4 dir = g_env_rows[cam_row].get_dir(step % 24, day);
-    flare->pos.o = vector4(eye->o.x - dir.x * 500.0f, eye->o.y - dir.y * 500.0f, eye->o.z - dir.z * 500.0f);
+#define flare ((FrameNode*)f65c0)
+#define fm ((rgl::mesh*)f65c4)
+#define CL01(E) ((E) < 0.0f ? 0.0f : ((E) >= 1.0f ? 1.0f : (E)))
+    if (f65c0) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
+    float tod = g_game->time_of_day();
+    vector4 dir = g_env_rows[cam_row].get_dir((int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24, hud_day(tod));
+    flare->pos.o = eye->o - dir * 500.0f;
     flare->pos.f = dir;
     flare->pos.u = vector4(0.0f, 0.0f, 1.0f);
     flare->pos.orthonormalize();
     float vis;
-    if (g_shadow_map.sample(&eye->o, &vis)) {
-        vis = vis + vis;
-        flare_amt = (vis - flare_amt) * g_step_tbl[2] * 10.0f + flare_amt;
-    } else {
-        vector4 to(eye->o.x - dir.x * 500.0f, eye->o.y - dir.y * 500.0f, eye->o.z - dir.z * 500.0f);
-        if (((rgl::world*)scene)->trace_ray(&eye->o.x, &to.x, 500.0f, 0, 0))
-            flare_amt = flare_amt + g_step_tbl[2] * 3.5f;
+    if (!g_shadow_map.sample(&eye->o, &vis)) {
+        vector4 to = eye->o - dir * 500.0f;
+        int hit = ((rgl::world*)scene)->trace_ray(&eye->o.x, &to.x, 500.0f, 0, 0);
+        if (hit)
+            flare_amt = g_step_tbl[2] * 3.5f + flare_amt;
         else
             flare_amt = flare_amt - g_step_tbl[2] * 3.5f;
+        flare_amt = cl01(flare_amt);
+    } else {
+        vis += vis;
+        flare_amt = (vis - flare_amt) * g_step_tbl[2] * 10.0f + flare_amt;
+        flare_amt = cl01(flare_amt);
     }
-    if (flare_amt < 0.0f)
-        flare_amt = 0.0f;
-    else if (flare_amt >= 1.0f)
-        flare_amt = 1.0f;
-    rgl::mesh* fm = (rgl::mesh*)f65c4;
     fm->clear_geometry();
     {
         tstring name("sample_flare");
         matrix id;
-        fm->append_skinned(g_resmgr.get_object(&name), (const rgl::mat4*)identity_pos((pos*)&id), -1, -1, 0);
+        const rgl::mat4* idm = (const rgl::mat4*)identity_pos((pos*)&id);
+        rgl::mesh* src = g_resmgr.get_object(&name);
+        fm->append_skinned(src, idm, -1, -1, 0);
     }
     {
         tstring name("flare");
         fm->res = g_resmgr.get_material(name);
     }
-    float k = dir.y * eye->u.y + dir.z * eye->u.z + dir.x * eye->u.x - 0.3f;
-    k = k * 1.4285715f;
-    if (k < 0.0f)
-        k = 0.0f;
-    else if (k >= 1.0f)
-        k = 1.0f;
-    float sc2 = k * k;
-    float d = 1.0f - 150.0f / flare_gain;
-    if (d < 0.0f)
-        d = 0.0f;
-    else if (d >= 1.0f)
-        d = 1.0f;
-    float size = g_env_rows[cam_row].size;
-    float in = d * size * flare_amt * sc2;
-    vector4 col(in * 1.1f, in, in * 0.8f);
-    fm->color = rgl::pack_color(&col);
-    fm->color |= 0xff000000;
-    fm->scale((sc2 * sc2 * 5.0f + 2.0f) * size * 50.0f);
+    float sc2;
+    {
+        float k = (dir.y * eye->u.y + dir.z * eye->u.z + dir.x * eye->u.x - 0.3f) * 1.4285715f;
+        k = CL01(k);
+        sc2 = k * k;
     }
+    float in = cl01(1.0f - 150.0f / flare_gain) * g_env_rows[cam_row].size * flare_amt * sc2;
+    {
+        vector4 col(in * 1.1f, in, in * 0.8f);
+        fm->color = rgl::pack_color(&col);
+    }
+    fm->color |= 0xff000000;
+    fm->scale((sc2 * sc2 * 5.0f + 2.0f) * g_env_rows[cam_row].size * 50.0f);
+    }
+#undef flare
+#undef fm
+#undef CL01
     if (g_game->levels[f5df4].flags & 0x100)
         g_terrain.update_particles(eye);
 }
@@ -899,13 +949,16 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
 }
 
 
+static __forceinline rgl::mesh* item_mesh_v(const ItemRef* r, const float& s) { return make_item_mesh(r, &s); }
+static __forceinline void set_col3(MissionUi* p, int n) { unsigned c = 0xffffffff; if (n <= 0) c = 0xffb02020; p->set_color(&c); }
+static __forceinline void offset_v(rgl::mesh* m, const float& v) { m->set_offset(*(const vector4*)&v); }
 // @ 0x4fb350
 void MissionBlocker::update_status()
 {
     int id = g_mission->player_id;
     if (id < 0)
         return;
-    Agent* ag = agent_raw(id);
+    Agent* ag = agent_by_id(id);
     if (GAME_AT(int, 0x1a20c))
         status_group->hide();
     else
@@ -925,12 +978,12 @@ void MissionBlocker::update_status()
         health_mesh->set_color(col);
     }
 
+    {
     // shield: slot_pair(0) says whether the agent has one; best_ammo then gives (max, ?, ?) and the (cur, flags) pair
-    ItemRef pair;
     int la = -1, lb = -1, lc;
+    ItemRef pair = ag->slot_pair(0);
     ItemRef res;
     res.item = -1;
-    pair = ag->slot_pair(0);
     if (pair.item >= 0)
         res = ag->best_ammo(-1, &la, &lb, &lc);
     if (la != shield_max || res.item != shield_cur) {
@@ -954,31 +1007,23 @@ void MissionBlocker::update_status()
             status_bar->show();
             ui_font->show();
             ui_font_bg->show();
-            unsigned color = 0xffffffff;
-            if (shield_max <= 0)
-                color = 0xffb02020;
-            ui_font->set_color(&color);
+            set_col3(ui_font, shield_max);
         }
         if (res.item != shield_cur) {
             shield_mesh->clear_geometry();
             shadow_mesh->clear_geometry();
             if (res.item >= 0) {
-                vector4 at;
-                at.x = 0.055f;
-                rgl::mesh* piece = make_item_mesh(&res, &at.x);
+                rgl::mesh* piece = item_mesh_v(&res, 0.055f);
                 if (piece) {
-                    float v;
-                    v = 0.0005f;
-                    piece->set_offset(*(const vector4*)&v);
+                    offset_v(piece, 0.0005f);
                     identity3((rgl::mat3*)&frame);
-                    float ang = -1.45f;
-                    ((rgl::matrix*)&frame)->rotate_about_u(&ang);
+                    rot_u((rgl::matrix&)frame, -1.45f);
                     piece->set_part(frame);
                     identity_pos((pos*)&frame);
                     frame.o.z -= 10.0f;
                     shield_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
-                    shield_mesh->res = piece->res;
                     frame.o.x += 0.0012f;
+                    shield_mesh->res = piece->res;
                     frame.o.y -= 0.001f;
                     frame.o.z -= 10.0f;
                     piece->scale(1.05f);
@@ -997,11 +1042,12 @@ void MissionBlocker::update_status()
         }
     }
 
+    }
+
     // ammo count: (count, capacity) from weapon_info
-    ItemRef ammo_pair;
     unsigned lo = -1;
     int hi = -1;
-    ammo_pair = ag->slot_pair(1);
+    ItemRef ammo_pair = ag->slot_pair(1);
     if (ammo_pair.item >= 0)
         ag->weapon_info(-1, &lo, &hi);
     if ((int)lo != ammo_count) {
@@ -1012,28 +1058,28 @@ void MissionBlocker::update_status()
             return;
         }
         int stage = (int)((float)(int)lo * 5.0f / (float)hi + 0.999f);
-        if (stage != ammo_stage) {
+        if (ammo_stage != stage) {
             ammo_stage = stage;
             if (stage <= 0) {
                 shield_icon->hide();
                 return;
             }
-            const char* nm;
-            if (stage == 1)
-                nm = "status_shield_20";
-            else if (stage == 2)
-                nm = "status_shield_40";
-            else if (stage == 3)
-                nm = "status_shield_60";
-            else if (stage == 4)
-                nm = "status_shield_80";
-            else
-                nm = "status_shield_100";
             rgl::mesh* cl;
-            {
-                tstring icon(nm);
-                rgl::mesh* obj = g_resmgr.get_object(&icon);
-                cl = obj->clone();
+            if (stage == 1) {
+                tstring icon("status_shield_20");
+                cl = res_clone(icon);
+            } else if (stage == 2) {
+                tstring icon("status_shield_40");
+                cl = res_clone(icon);
+            } else if (stage == 3) {
+                tstring icon("status_shield_60");
+                cl = res_clone(icon);
+            } else if (stage == 4) {
+                tstring icon("status_shield_80");
+                cl = res_clone(icon);
+            } else {
+                tstring icon("status_shield_100");
+                cl = res_clone(icon);
             }
             shield_icon->set_track(0, cl);
             shield_icon->show();
@@ -1041,8 +1087,6 @@ void MissionBlocker::update_status()
     }
 }
 
-
-static __forceinline vector4 hv_scaled(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 
 static __forceinline vector4 hv_scaled2(const float& s, const vector4& a) { return vector4(s * a.x, s * a.y, s * a.z); }
 
@@ -1204,10 +1248,10 @@ void rgl::mesh::darken_vertices()
     slots[0].f28 = 1;
 }
 
+struct HudF2 { float x, y; __forceinline HudF2(float a, float b) : x(a), y(b) {} };
 // @ 0x4fbfa0
 void ItemA::init_screen()
 {
-    float v[2];
     g_gui.reset();
     g_sound_mgr.stop_all();
 
@@ -1227,23 +1271,15 @@ void ItemA::init_screen()
     for (int i = 0; i < 16; i++)
         kids[i] = 0;
 
-    win = (ContainerBase*)new_frame_widget();
-    v[0] = -0.001f;
-    v[1] = -0.001f;
-    frame()->move_a(v);
-    v[0] = 1.002f;
-    v[1] = 0.752f;
-    frame()->set_xy(v);
+    win = hud_frame();
+    { float v[2]; v[0] = -0.001f; v[1] = -0.001f; frame()->move_a(v); }
+    { float v[2]; v[0] = 1.002f; v[1] = 0.752f; frame()->set_xy(v); }
 
     GAME_AT(int, 0xac) = -1;
 
     fill = new MissionUi;
-    v[0] = 0.1f;
-    v[1] = 0.1f;
-    fill->move_a(v);
-    v[0] = 1e-05f;
-    v[1] = 1e-05f;
-    fill->set_xy(v);
+    { float v[2]; v[0] = 0.1f; v[1] = 0.1f; fill->move_a(v); }
+    { float v[2]; v[0] = 1e-05f; v[1] = 1e-05f; fill->set_xy(v); }
     fill->hide();
     frame()->add_child(fill);
 
@@ -1253,14 +1289,15 @@ void ItemA::init_screen()
             if (src) {
                 rgl::mesh* m = src->clone();
                 rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
-                if ((*(unsigned*)(rec + 0x20) & 0x1000) && 1.35f < g_gui.view_a / g_gui.view_b) {
-                    float f = 1.33f / (g_gui.view_a / g_gui.view_b);
-                    vector4 c;
-                    c.x = f; c.y = 1.0f; c.z = 1.0f; c.w = 1.0f;
-                    m->set_color(c);
-                    vector4 tr;
-                    tr.x = 1.0f - f; tr.y = 0.0f; tr.z = 0.0f; tr.w = 0.0f;
-                    m->translate(&tr);
+                if ((*(__int64*)(rec + 0x20) & 0x1000) != 0) {
+                    float ar = g_gui.view_a / g_gui.view_b;
+                    if (ar > 1.35f) {
+                        float f = 1.33f / ar;
+                        vector4 c(f, 1.0f, 1.0f);
+                        m->set_color(c);
+                        vector4 tr(1.0f - f, 0.0f, 0.0f);
+                        m->translate(&tr);
+                    }
                 }
                 frame()->set_track(2, m);
             }
@@ -1270,9 +1307,7 @@ void ItemA::init_screen()
             if (GAME_AT(float, 0x1a230) != 1.0f)
                 m->scale(GAME_AT(float, 0x1a230));
             fill->set_track(0, m);
-            v[0] = GAME_AT(float, 0x1a228);
-            v[1] = GAME_AT(float, 0x1a22c);
-            fill->move_a(v);
+            { float v[2]; v[0] = GAME_AT(float, 0x1a228); v[1] = GAME_AT(float, 0x1a22c); fill->move_a(v); }
             fill->show();
         }
     }
@@ -1284,16 +1319,12 @@ void ItemA::init_screen()
     count = 0;
 
     panel = new MissionUi;
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    panel->move_a(v);
+    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; panel->move_a(v); }
     {
         int two = 0x710;
         panel->set148(&two);
     }
-    v[0] = 1.0f;
-    v[1] = 0.75f;
-    panel->set_xy(v);
+    { float v[2]; v[0] = 1.0f; v[1] = 0.75f; panel->set_xy(v); }
     {
         unsigned c = color;
         panel->set_color(&c);
@@ -1306,49 +1337,36 @@ void ItemA::init_screen()
 
     UiD* flag = new UiD;
     flag->f178 = 1;
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    flag->move_a(v);
+    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; flag->move_a(v); }
     frame()->add_child(flag);
 
     tree = new Camera;
     tree->f104 |= 0x20;
     tree->follow[1] = (UiD*)flag;           // +0x484
 
-    ContainerBase* bar = new ContainerBase;
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    bar->move_a(v);
+    ContainerBase* bar = NEW_CONTAINER;
+    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; bar->move_a(v); }
     bar->set_xy(&panel->screen[0]);
     bar->add_child(panel);
     tree->target = (ContainerBase*)bar;                // +0x490
     tree->add_child(bar);
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    tree->move_a(v);
-    v[0] = 0.01f;
-    v[1] = 0.38f;
-    tree->move_a(v);
-    ((FieldPanel*)tree)->update();
-    v[0] = 0.65f;
-    v[1] = 0.31f;
-    ((HudOuter*)tree)->scroll_refresh((vector4*)v);
+    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; tree->move_a(v); }
+    {
+        float v[2];
+        Camera* t = tree;
+        v[0] = 0.01f;
+        v[1] = 0.38f;
+        t->move_a(v);
+        ((FieldPanel*)t)->update();
+    }
+    { float v[2]; v[0] = 0.65f; v[1] = 0.31f; ((HudOuter*)tree)->scroll_refresh((vector4*)v); }
     frame()->add_child(tree);
 
-    ContainerBase* value = new ContainerBase;
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    value->move_a(v);
-    v[0] = 0.75f;
-    v[1] = 0.36f;
-    value->set_xy(v);
+    ContainerBase* value = NEW_CONTAINER;
+    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; value->move_a(v); }
+    { float v[2]; v[0] = 0.75f; v[1] = 0.36f; value->set_xy(v); }
     UiD* track_made = make_scroll_track(win, 0.7f, 0.02f, 0.01f, 0.36f);
-    Camera* made;
-    {
-        float a[2] = { 0.01f, 0.02f };
-        float b[2] = { 0.75f, 0.36f };
-        made = make_quest_list((ContainerBase*)value, a, b, track_made);
-    }
+    Camera* made = make_quest_list((ContainerBase*)value, (const float*)&HudF2(0.01f, 0.02f), (const float*)&HudF2(0.75f, 0.36f), track_made);
     slider = made;
     frame()->add_child(made);
 
@@ -1370,11 +1388,14 @@ void ItemA::init_screen()
         ((ScreenOps*)this)->begin();
         ((BlockOwner*)((char*)this + 0x30))->init(win, GAME_AT(int, 0xac));
         if (f40 < 0)
-            frame()->set_mesh(0, g_resmgr.get_object(&tstring("meeting_window"))->clone());
+        {
+            tstring n("meeting_window");
+            win->set_mesh(0, res_clone(n));
+        }
     }
-    g_gui.dirty = 1;
     {
         MissionUi* root = frame();
+        g_gui.dirty = 1;
         g_gui.objs.push_back(*(MissionUi**)&root);
     }
 }
@@ -1390,13 +1411,13 @@ static __forceinline float param_value(const char* key)
 {
     tstring k(key);
     int found = -1;
-    for (int i = 0; i < g_game_vars.count; i++) {
-        if (g_game_vars.entries[i].key.equals(k)) {
-            found = i;
-            break;
-        }
-    }
     float v = 0.0f;
+    for (int i = 0; found == -1; i++) {
+        if (i >= g_game_vars.count)
+            break;
+        if (g_game_vars.entries[i].key.equals(k))
+            found = i;
+    }
     if (found >= 0) {
         char* s = g_game_vars.entries[found].value.buf;
         if (s)
@@ -1410,83 +1431,70 @@ static MissionUi* make_tab(NodeA* frame, const char* name, float x, float y, flo
     return (MissionUi*)make_short_button(frame, g_strtable.lookup(tstring(name)), x, y, h);
 }
 
+static __forceinline int hist_n() { if (g_gui.history.begin() == 0) return 0; return (int)g_gui.history.size(); }
 // @ 0x4fc820
 void Rec58::build(bool show)
 {
-    float v[2];
     g_gui.reset();
 
-    frame = new_frame_widget();
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    frame->move_a(v);
-    v[0] = 1.0f;
-    v[1] = 0.75f;
-    frame->set_xy(v);
-    frame->set_track(0, res_clone(tstring("game_log_window")));
+    frame = hud_frame();
+    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; frame->move_a(v); }
+    { float v[2]; v[0] = 1.0f; v[1] = 0.75f; frame->set_xy(v); }
+    {
+        tstring n("game_log_window");
+        frame->set_track(0, res_clone(n));
+    }
 
     log = new MWidget;
     {
         int c700 = 0x700;
         log->set148(&c700);
     }
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    log->move_a(v);
-    v[0] = 0.02f;
-    v[1] = 0.02f;
-    log->set_size(v);
+    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; log->move_a(v); }
+    { float v[2]; v[0] = 0.02f; v[1] = 0.02f; log->set_size(v); }
     {
         unsigned c = 0xff000000;
         log->set_color(&c);
     }
-    v[0] = 0.915f;
-    v[1] = 0.1f;
-    log->set_xy(v);
-    tstring* text = &log->name;
-    text->assign("");
+    { float v[2]; v[0] = 0.915f; v[1] = 0.1f; log->set_xy(v); }
+    log->name.assign("");
 
+    int count;
     if (show) {
         char delim = '|';
-        int count;
         tstring* arr = ((tstring*)((char*)g_game + 0x13b50))->split(delim, count);
         if (count > 2) {
             int start = count - 300;
-            if (start < 0)
-                start = 0;
+            start = start < 0 ? 0 : start;
             for (int i = start; i < count; i += 3) {
-                text->append(arr[i]);
-                text->push_back('\t');
-                text->append(arr[i + 2]);
-                text->push_back('\n');
+                log->name.append(arr[i]);
+                log->name.push_back('\t');
+                log->name.append(arr[i + 2]);
+                log->name.push_back('\n');
             }
-            text->erase(text->len - 1, 1);
+            log->name.erase(log->name.len - 1, 1);
         }
         if (arr)
             ((TStringArray*)arr)->destroy(3);
     } else {
-        int n = (int)g_gui.history.size() * 3;
-        for (int i = 0; i < n; i += 3) {
-            text->append(g_gui.history[i / 3]);
-            text->push_back('\n');
+        count = (int)g_gui.history.size() * 3;
+        for (int i = 0; i < count; i += 3) {
+            log->name.append(g_gui.history[i / 3]);
+            log->name.push_back('\n');
         }
-        if (text->len > 0)
-            text->erase(text->len - 1, 1);
+        if (log->name.len > 0)
+            log->name.erase(log->name.len - 1, 1);
     }
     {
         float out[2];
-        log->set_text(out, text);
+        log->set_text(out, &log->name);
     }
 
     float y = log->screen[1] + 0.001f;
 
     bar = new text_box;              // vptr 0x597050 (0x4fcb33)
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    bar->move_a(v);
-    v[0] = 0.915f;
-    v[1] = y;
-    bar->set_xy(v);
+    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; bar->move_a(v); }
+    { float v[2]; v[0] = 0.915f; v[1] = y; bar->set_xy(v); }
     bar->add_child(log);
 
     UiD* track = make_scroll_track((ContainerBase*)frame, 0.95f, 0.08f, 0.02f, 0.64f);
@@ -1778,42 +1786,43 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
     }
 
     int y = 0;
-    char in_tag = 0;
-    char tag = 0;
+    bool in_tag = false;
+    bool tag = false;
     int tag_start = 0;
     int tag_index = -1;
-    if (total > 0) {
+    int n = total;
+    if (n > 0) {
         int align_left = flags & 4;
         float inv_adv = 1.0f / sc[0];
         int search;
         do {
             search = y;
             float run_w = 0.0f;
-            char first = 1;
+            bool first = true;
             for (;;) {
-                char stop = 0;
+                bool stop = false;
                 int i = search;
-                for (; i < total; i++) {
+                for (; i < n; i++) {
                     int ch = buf[i];
                     if (ch == 0x20 || ch == 10 || ch == 9) {
-                        if (i < total) {
+                        if (i < n) {
                             if (buf[i] == 10)
-                                stop = 1;
+                                stop = true;
                             i++;
                         }
                         break;
                     }
                 }
                 int wend = i;
-                float w = measure(buf, total, &y, &wend) * sc[0];
+                float w = measure(buf, n, &y, &wend) * sc[0];
                 if (first || w <= *xmax - *xmin) {
                     run_w = w;
-                    search = wend;
+                    search = i;
                 } else
-                    stop = 1;
-                if (search >= total)
-                    stop = 1;
-                first = 0;
+                    stop = true;
+                if (search >= n)
+                    stop = true;
+                first = false;
                 if (stop)
                     break;
             }
@@ -1856,21 +1865,21 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         ints_push(codes, value);
                         rects_a->push_back(pos);
                         ints_push(tags, tag_index);
-                        tag = 0;
+                        tag = false;
                     } else {                                      // the closing tag: the span's end rectangle
                         vector4 t;
                         t.x = pos.x;
                         t.y = font_scale * scale[1] * line_spacing * 0.9f + pos.y;
                         t.z = pos.z;
                         rects_b->push_back(t);
-                        tag = 0;
+                        tag = false;
                     }
                     continue;
                 }
 
                 int ch = buf[i2];
                 if (ch == 0x3c) {                                 // '<'
-                    tag = 1;
+                    tag = true;
                     tag_start = i2;
                 } else if (ch != 10) {
                     if (ch == 9) {
@@ -1929,7 +1938,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
             pos.x = *xmin;
             y = search;
             pos.y -= row;
-        } while (search < total);
+        } while (search < n);
     }
 
     m->compute_normals();

@@ -65,10 +65,6 @@ void MissionBlocker::reset_screen() { g_gui.reset(); }
 // @ 0x4cea10
 void MissionBlocker::slot_empty_4()
 {
-    fr.m.o = vector4(0.0f, 0.0f, 10.0f);
-    head = vector4(0.0f, 0.0f, 10.0f);
-    f278 = 1.1f;
-    f2ec = 1.1f;
     f324 = -1;
     f2e1 = 0;
     f2e0 = 0;
@@ -76,6 +72,10 @@ void MissionBlocker::slot_empty_4()
     grow_health = 0;
     f29c = 0;
     f2a0 = -1;
+    fr.m.o = vector4(0, 0, 10);
+    head = vector4(0, 0, 10);
+    f278 = 1.1f;
+    f2ec = 1.1f;
     zoom = 97.0f;
     yaw = 0.0f;
     pitch = -0.1f;
@@ -185,9 +185,8 @@ void ItemA::s_last()
     tstring* t = g_strtable.find((tstring*)((char*)g + 0x10));
     if (t == 0)
         t = (tstring*)g;
-    tstring& title = *(tstring*)((char*)g_game + 0xb8);                // the game's current menu title (assign 0x42bc50)
-    title = g_script.expand(*t);
-    { tstring stripped = title.strip_tags(); ((FieldPanel*)tree)->relayout(&stripped); }
+    *(tstring*)((char*)g_game + 0xb8) = g_script.expand(*t);           // the game's current menu title (assign 0x42bc50)
+    ((FieldPanel*)tree)->relayout(&((tstring*)((char*)g_game + 0xb8))->strip_tags());
     for (int k = 0; k < 16; k++) {
         kids[k]->hide();
         kids[k]->flag2_clear();
@@ -211,22 +210,29 @@ void ItemA::s_last()
             count++;
         }
     }
-    float f = (float)count * 0.04f;                             // 0x54ab1c
-    if (!(f > 0.24f))                                           // 0x5961bc
-        f = 0.24f;
-    for (int k = 0; k < count; k++) {
-        float pos[2];
-        pos[0] = 0.325f - kids[k]->screen[0] * 0.5f;    // 0x5961b8, 0x549d70
-        pos[1] = f - (float)(k + 1) * 0.04f;
-        kids[k]->move_a((float*)pos);
+    {
+        float f0 = (float)count * 0.04f;                        // 0x54ab1c
+        float f;
+        if (f0 > 0.24f)                                         // 0x5961bc
+            f = f0;
+        else
+            f = 0.24f;
+        for (int k = 0; k < count; k++) {
+            float pos[2];
+            pos[0] = 0.325f - kids[k]->screen[0] * 0.5f;    // 0x5961b8, 0x549d70
+            pos[1] = f - (float)(k + 1) * 0.04f;
+            kids[k]->move_a((float*)pos);
+        }
     }
-    float h = (float)count * 0.04f;
-    if (!(h > 0.24f))
-        h = 0.24f;
-    float sc[2];
-    sc[0] = 0.75f;
-    sc[1] = h;
-    slider->target->set_xy(sc);
+    {
+        float h = (float)count * 0.04f;
+        if (!(h > 0.24f))
+            h = 0.24f;
+        float sc[2];
+        sc[0] = 0.75f;
+        sc[1] = h;
+        slider->target->set_xy(sc);
+    }
     slider->draw();
 }
 

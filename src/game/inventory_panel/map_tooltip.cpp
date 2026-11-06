@@ -61,32 +61,46 @@ bool __fastcall dist_is_zero(DistObj* o)
     return sqrt(d) == 0.0f;
 }
 
+static inline Party* party_get(PartyMgr& m, unsigned id)
+{
+    int idx = m.lookup(id);
+    Party* page = m.pages[idx >> 4];
+    return (Party*)((char*)page + (idx & 0xf) * 0x5ac8);
+}
+// the original folds the page into the scaled index at some call sites (troop test) but materialises it at
+// others; keeping the page in a local forces the materialised form, this form lets cl fold it
+static inline Party* party_get_flat(PartyMgr& m, unsigned id)
+{
+    int idx = m.lookup(id);
+    return (Party*)((char*)m.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
+}
+
 // @ 0x51be60
 void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
 {
     *num = 0;
     *num2 = 0;
     *wounded = 0;
-    if (id >= (unsigned)parties.n_parties)
+    PartyMgr& pm = parties;
+    if (id >= (unsigned)pm.n_parties)
         return;
-    int idx = parties.lookup(id);
-    if (idx < 0)
+    unsigned idx = pm.lookup(id);
+    if ((int)idx < 0)
         return;
-    Party* p = (Party*)((char*)parties.pages._Myfirst[(unsigned)idx >> 4] + (idx & 0xf) * 0x5ac8);
+    Party* p = (Party*)((char*)pm.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
     if (p->type != 1)
         return;
-    for (int i = 0; i < parties.get_party(id)->nstacks; i++) {
-        if (parties.get_party(id)->stacks[i].flags & 1) {
-            *wounded += parties.get_party(id)->stacks[i].count;
+    for (int i = 0; i < party_get(pm, id)->nstacks; i++) {
+        if (party_get(pm, id)->stacks[i].flags & 1) {
+            *wounded += party_get(pm, id)->stacks[i].count;
         } else {
-            int t = parties.get_party(id)->stacks[i].troop;
-            if (troops[t].flags30s & 0x10) {
+            if (troops[party_get(pm, id)->stacks[i].troop].flags30s & 0x10) {
                 (*num)++;
-                if (agent_low(parties.get_party(id)->stacks[i].troop))
+                if (agent_low(party_get_flat(pm, id)->stacks[i].troop))
                     (*num2)++;
             } else {
-                *num += parties.get_party(id)->stacks[i].count;
-                *num2 += parties.get_party(id)->stacks[i].wounded;
+                *num += party_get(pm, id)->stacks[i].count;
+                *num2 += party_get(pm, id)->stacks[i].wounded;
             }
         }
     }
@@ -96,7 +110,8 @@ void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
 // @ 0x51c090
 int __stdcall draw_party_line(int index)
 {
-    int skill = g_game->parties.get_party(g_game->main_party)->skill_level(0x10);
+    PartyMgr& pm = g_game->parties;
+    int skill = pm.get_w(g_game->main_party)->skill_level(0x10);
     PartyInfo* info = &g_game->party_info[index];
     int flags = info->flags;
     if (flags & 0x10000000) {
@@ -106,6 +121,7 @@ int __stdcall draw_party_line(int index)
         tstring k("ui_tracks");
         g_gui.draw_string(g_strtable.lookup(k), 0.02f, 0xfff0e0d0, 1);
     }
+    GameData* g = g_game;
 
     char buf[512];
     if (skill > 1) {
@@ -117,7 +133,7 @@ int __stdcall draw_party_line(int index)
         else if (div > 10)
             div = 10;
         int lo = (hours / div) * div;
-        int hi = div - 1 + lo;
+        int hi = lo + div - 1;
         if (lo < 1)
             lo = 1;
         else if (lo > 0x20)
@@ -127,7 +143,7 @@ int __stdcall draw_party_line(int index)
         else if (hi > 0x20)
             hi = 0x20;
         if (lo == hi) {
-            if (lo < 2) {
+            if (lo <= 1) {
                 tstring k("ui_1_hour");
                 sprintf(buf, g_strtable.lookup(k)->c_str());
             } else {
@@ -150,7 +166,7 @@ int __stdcall draw_party_line(int index)
         else if (div2 > 10)
             div2 = 10;
         int lo2 = (size / div2) * div2;
-        int hi2 = div2 - 1 + lo2;
+        int hi2 = lo2 + div2 - 1;
         if (lo2 <= 0)
             lo2 = 1;
         if (hi2 <= 0)
@@ -196,17 +212,18 @@ int __stdcall draw_party_line(int index)
                 } else if (skill == 9) {
                     if (n % 7 >= 6)
                         return n / 7;
-                }
+                } else if (skill < 10)
+                    return f;
                 {
-                    PartyCellRec* r = (PartyCellRec*)&g_party_templates[n];
+                    PartyTemplate& r = g_party_templates[n];
                     unsigned color;
                     if (g_module_settings.show_faction_color != 0)
-                        color = *(unsigned*)&g_game->rel[r->f2c * 0xc0 + 0xa];
+                        color = *(unsigned*)&g_game->rel[r.f2c * 0xc0 + 0xa];
                     else
-                        color = g_game->color_of(g_game->rel[r->f2c * 0xc0 + 0xb], 1);   // 0x4b1930
-                    const tstring* name = g_strtable.find((const tstring*)((char*)r + 0x10));
+                        color = g_game->color_of(g_game->rel[r.f2c * 0xc0 + 0xb], 1);   // 0x4b1930
+                    const tstring* name = g_strtable.find(&r.key);
                     if (name == 0)
-                        name = (const tstring*)r;
+                        name = &r.name;
                     g_gui.draw_string((tstring*)name, 0.025f, color, 1);   // the function ends here: eax stays draw_string's result (the original returns it)
                 }
             }

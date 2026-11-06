@@ -288,27 +288,11 @@ int rgl::mesh::add_vertex_rec(int index, const vertex60& v)
 void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
 {
     int vtx[3][4];
-    vector4 amb;
-    int pt[4];
     matrix fr;
-    float ir;
-    int nt;
-    float ik;
-    int j;
-    int pi;
-    vector4 p;
-    int i;
-    vec2 off[3];
+    vector4 amb;
     float s0;
     unsigned col;
-    float u, v;
-    vec2 uv;
-    int f5c;
-    int q;
-    NavCell* face;
-    const vector4* n;
-    float k, dx, dy, dz, shade, c, dx2, dy2, dz2, a, t;
-    int al;
+    int i, j, q, nt;
     build_shadow_frame(&fr, &amb);
     if (*slot == 0) {
         *slot = (mesh*)new rgl::mesh;
@@ -321,89 +305,93 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
     }
     ((rgl::mesh*)*slot)->clear_geometry();
     vector4 a2 = owner->get_ambient();
+    s0 = ((a2.y + a2.z) + a2.x) * 0.35f;
     nt = 1;
-    s0 = ((a2.z + a2.y) + a2.x) * 0.35f;
     if (f15c > 0.5f) {
         nt = 2;
         if (f15c > 0.7f) nt = 3;
     }
-    if (nt == 1) {
-        off[0] = vec2c(0.0f, 0.0f);
-    } else if (nt == 2) {
-        off[0] = vec2c(-0.004296875f, 0.0046875f);
-        off[1] = vec2c(0.00390625f, -0.004296875f);
-    } else {
-        off[0] = vec2c(0.00078125f, 0.00546875f);
-        off[1] = vec2c(-0.005078125f, -0.00546875f);
-        off[2] = vec2c(0.00546875f, -0.005078125f);
-    }
-    for (i = 0; i < nids; i++) {
-        face = &owner->ground->cells[ids[i]];
-        for (j = 0; j < face->npts; j++) {
-            k = shadow_radius * 0.03f;
-            p = owner->ground->verts[face->ids[j]].p;
-            n = &owner->ground->verts[face->ids[j]].n;
-            dy = k * n->y;
-            dz = k * n->z;
-            p.x = k * n->x + p.x;
-            p.y = p.y + dy;
-            p.z = p.z + dz;
-            pi = ((rgl::mesh*)*slot)->add_point(&p);
-            pt[j] = pi;
-            ir = 1.0f / shadow_radius;
-            ik = ir * 0.5f;
-            // 0x42b363: the offsets from the frame origin stay unrounded in x87 registers; each dot product is stored
-            // as a float (0x68 / 0x6c) before it is scaled by ik
-            double rx = p.x - fr.o.x;
-            double ry = p.y - fr.o.y;
-            double rz = p.z - fr.o.z;
-            float ur = (float)(fr.s.x * rx + (fr.s.y * ry + fr.s.z * rz));
-            float vr = (float)(fr.f.y * ry + (fr.f.x * rx + fr.f.z * rz));
-            u = ur * ik;
-            v = vr * ik;
-            if (!flag) {
-                u = u * 1.5f;
-                v = v * 1.5f;
-            }
-            u = u + 0.5f;
-            v = v + 0.5f;
-            shade = owner->ground->verts[face->ids[j]].level;
-            c = shade / (s0 + shade);
-            if (c < 0.0f) c = 0.0f;
-            else if (c > 0.75f) c = 0.75f;
-            if (nt == 2) {
-                c = 1.0f - (float)sqrt(1.0f - c);
-            } else if (nt == 3) {
-                c = (3.0f - (float)sqrt(9.0f - (c - 0.01f) * 12.0f)) * 0.125f;
-            }
-            // 0x42b4bd: the original adds the squares as (z + x) + y (x87 stack order), not (z + y) + x
-            float ex = p.x - local.o.x;
-            float ey = p.y - local.o.y;
-            float ez = p.z - local.o.z;
-            a = (float)sqrt((ex * ex + ez * ez) + ey * ey) * ir * 1.3333334f - 3.8f;
-            if (a < 0.2f) a = 0.2f;
-            else if (a >= 1.0f) a = 1.0f;
-            t = c * (1.0f - a) * f294;
-            if (flag)
-                t = t * f160;
-            else
-                t = t * f164 * 0.9f;
-            al = (int)(t * 256.0f);
-            if (al < 0) al = 0;
-            else if (al >= 0x100) al = 0xff;
-            col = (al << 24) | 0xffffff;
-            // 0x42b5a0: one mesh::add_vertex (0x413c50) per sample, each with its own uv (u + off[q].x, v + off[q].y),
-            // the shared colour, the vertex normal as position and f5c = 0
-            for (q = 0; q < nt; q++) {
-                uv = vec2c(u + off[q].x, v + off[q].y);
-                f5c = 0;
-                vtx[q][j] = ((rgl::mesh*)*slot)->add_vertex(pi, &uv, &col, n, &f5c);
-            }
+    {
+        vec2 off[3];
+        switch (nt) {
+        case 1:
+            off[0] = vec2c(0.0f, 0.0f);
+            break;
+        case 2:
+            off[0] = vec2c(-0.004296875f, 0.0046875f);
+            off[1] = vec2c(0.00390625f, -0.004296875f);
+            break;
+        default:
+            off[0] = vec2c(0.00078125f, 0.00546875f);
+            off[1] = vec2c(-0.005078125f, -0.00546875f);
+            off[2] = vec2c(0.00546875f, -0.005078125f);
+            break;
         }
-        for (q = 0; q < nt; q++) {
-            ((rgl::mesh*)*slot)->add_face(vtx[q][1], vtx[q][2], vtx[q][0]);
-            if (face->npts > 3)
-                ((rgl::mesh*)*slot)->add_face(vtx[q][0], vtx[q][2], vtx[q][3]);
+        for (i = 0; i < nids; i++) {
+            NavCell* face = &owner->ground->cells[ids[i]];
+            int pt[4];
+            for (j = 0; j < face->npts; j++) {
+                float k = shadow_radius * 0.03f;
+                vector4 p = owner->ground->verts[face->ids[j]].p;
+                const vector4* n = &owner->ground->verts[face->ids[j]].n;
+                p.x = k * n->x + p.x;
+                p.y = p.y + k * n->y;
+                p.z = p.z + k * n->z;
+                int pi = ((rgl::mesh*)*slot)->add_point(&p);
+                pt[j] = pi;
+                // 0x42b363: the offsets from the frame origin stay unrounded in x87 registers
+                double rx = p.x - fr.o.x;
+                double ry = p.y - fr.o.y;
+                double rz = p.z - fr.o.z;
+                float ur = (float)(fr.s.x * rx + (fr.s.y * ry + fr.s.z * rz));
+                float vr = (float)(fr.f.y * ry + (fr.f.x * rx + fr.f.z * rz));
+                float ik = 1.0f / shadow_radius * 0.5f;
+                float u = ur * ik;
+                float v = vr * ik;
+                if (!flag) {
+                    u = u * 1.5f;
+                    v = v * 1.5f;
+                }
+                u = u + 0.5f;
+                v = v + 0.5f;
+                float shade = owner->ground->verts[face->ids[j]].level;
+                float c = shade / (s0 + shade);
+                if (c < 0.0f) c = 0.0f;
+                else if (c > 0.75f) c = 0.75f;
+                if (nt == 2) {
+                    c = 1.0f - (float)sqrt(1.0f - c);
+                } else if (nt == 3) {
+                    c = (3.0f - (float)sqrt(9.0f - (c - 0.01f) * 12.0f)) * 0.125f;
+                }
+                // 0x42b4bd: the original adds the squares as (z + x) + y (x87 stack order), not (z + y) + x
+                float ex = p.x - local.o.x;
+                float ey = p.y - local.o.y;
+                float ez = p.z - local.o.z;
+                float a = (float)sqrt((ex * ex + ez * ez) + ey * ey) / shadow_radius * 1.3333334f - 3.8f;
+                if (a < 0.2f) a = 0.2f;
+                else if (a >= 1.0f) a = 1.0f;
+                float t = c * (1.0f - a) * f294;
+                if (flag)
+                    t = t * f160;
+                else
+                    t = t * f164 * 0.9f;
+                int al = (int)(t * 256.0f);
+                if (al < 0) al = 0;
+                else if (al >= 0x100) al = 0xff;
+                col = (al << 24) | 0xffffff;
+                // 0x42b5a0: one mesh::add_vertex (0x413c50) per sample, each with its own uv (u + off[q].x, v + off[q].y),
+                // the shared colour, the vertex normal as position and f5c = 0
+                for (q = 0; q < nt; q++) {
+                    vec2 uv = vec2c(u + off[q].x, v + off[q].y);
+                    int f5c = 0;
+                    vtx[q][j] = ((rgl::mesh*)*slot)->add_vertex(pi, &uv, &col, n, &f5c);
+                }
+            }
+            for (q = 0; q < nt; q++) {
+                ((rgl::mesh*)*slot)->add_face(vtx[q][1], vtx[q][2], vtx[q][0]);
+                if (face->npts > 3)
+                    ((rgl::mesh*)*slot)->add_face(vtx[q][0], vtx[q][2], vtx[q][3]);
+            }
         }
     }
     (*slot)->slots[0].f28 = 1;

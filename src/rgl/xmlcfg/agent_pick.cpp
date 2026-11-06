@@ -137,8 +137,8 @@ static inline int ifloor(float f) { return (int)(f > 0.0f ? f : f - 0.99999988f)
 // @ 0x433510
 void HeightField::sample(float x, float y, float* out_h, int* out_id)
 {
-    float inv = 1.0f / cell;
     float t[2];
+    float inv = 1.0f / cell;
     t[0] = x * inv;
     t[1] = y * inv;
     int ix = ifloor(t[0]);
@@ -149,9 +149,9 @@ void HeightField::sample(float x, float y, float* out_h, int* out_id)
     else { int r = h - 1; if (iy < h) r = iy; iy = r; }
     float fu = (float)fmod((double)t[0], 1.0);
     float fv = (float)fmod((double)t[1], 1.0);
+    *out_id = cols[ix][iy].id;
     HCell** pc = &cols[ix];
-    *out_id = pc[0][iy].id;
-    HCell* a = &pc[0][iy];
+    HCell* a = pc[0] + iy;
     if (a->flags & 2) {
         if (fu > fv) {
             *out_h = (a->h - pc[1][iy].h) * (1.0f - fu) + (pc[1][iy + 1].h - pc[1][iy].h) * fv + pc[1][iy].h;
@@ -165,7 +165,7 @@ void HeightField::sample(float x, float y, float* out_h, int* out_id)
         }
         *out_h = (pc[1][iy].h - pc[1][iy + 1].h) * (1.0f - fv) + (a[1].h - pc[1][iy + 1].h) * (1.0f - fu) + pc[1][iy + 1].h;
     }
-    if (pc[0][iy].flags & 1) *out_id = pc[0][iy].id2;
+    if (cols[ix][iy].flags & 1) *out_id = cols[ix][iy].id2;
 }
 
 // @ 0x4336d0

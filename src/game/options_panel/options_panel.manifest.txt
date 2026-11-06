@@ -1,3 +1,4 @@
+../src/game/options_panel/options_panel.cpp  ?key_name@GameKeys@@QAEXHPAUtstring@@@Z  004d7370  /O2 /MT /Gy /TP
 ../src/game/options_panel/options_panel.cpp  ?key_name@Slot@@QAE?AUtstring@@H@Z  004d7610  /O2 /MT /Gy /TP
 ../src/game/options_panel/options_panel.cpp  ?key_binding_name@GameKeys@@QAEXHPAUtstring@@PAH@Z  004d7d10  /O2 /MT /Gy /TP
 ../src/game/options_panel/options_panel.cpp  ?frame_update@Rec3c@@UAEXM@Z  004d7d90  /O2 /MT /Gy /TP

@@ -430,9 +430,7 @@ bool material::supported()
 {
     bool ok = true;
     unsigned shdr = flags20 & 0x20000000;
-    if (shdr != 0 && !g_use_shaders)
-        ok = false;
-    if (shdr == 0 && g_use_shaders)
+    if ((shdr != 0 && !g_use_shaders) || ((flags20 & 0x20000000) == 0 && g_use_shaders))
         ok = false;
     if ((flags1c & 0x1000) && (g_render.caps.PixelShaderVersion < 0xffff0101 || !g_cfg.use_pixel_shaders))
         ok = false;

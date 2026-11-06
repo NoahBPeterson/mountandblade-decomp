@@ -2,3 +2,4 @@
 ../src/game/inventory_panel/loading_screen.cpp  ?build@music_player@@QAEXPAUSrc@@@Z  0050f7e0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/loading_screen.cpp  ?read@MusicTrack@@QAEXPAUSrc@@@Z  0050f840  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/loading_screen.cpp  ?build_quad@gui_manager@@QAEXXZ  0050f8a0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/loading_screen.cpp  ?add@Entries@@QAEXABUTrackEntry@@@Z  0050fbf0  /O2 /MT /Gy /TP

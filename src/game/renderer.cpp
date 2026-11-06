@@ -377,7 +377,7 @@ void buffer_pair::restore_all()
 {
     for (int i = 0; i < 2; i++) {
         dev_buffer& b = bufs[i];
-        if (b.loaded < b.count) {
+        if (bufs[i].loaded < bufs[i].count) {
             if (b.loaded != 0) {
                 if (b.type == 1)
                     b.ib->Release();

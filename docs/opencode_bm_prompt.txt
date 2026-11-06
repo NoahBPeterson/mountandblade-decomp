@@ -13,13 +13,14 @@ For each row:
 2. The usual causes: the original source had more structure than ours. Look for inline helpers that were flattened, argument temporaries, block scopes, destructors, references, real STL calls, a declared type or signature that is wrong, a different evaluation order, a missing or extra local.
 3. Change only that function, then re-measure. Budget: at most 5 rounds on one row, then move on. Don't try permutations blindly.
 4. When it reaches 0 differences: .venv/bin/python tools/matching/chk.py {MODULE}.cpp <va> prints a manifest row. Add that row to {MODULE}.manifest.txt and remove the va's line from {MODULE}.nonmatching.txt.
-5. If it doesn't reach 0, restore that function's original text exactly. Only a full match is kept. Don't record a new distance.
+5. If it doesn't reach 0 but insn_align shows fewer differences than when you started on that row, keep the closer version. Before the first edit to a row, write that function's text unchanged to work/match/ds_{OBJ}_<va>.prev.txt so it can be restored. Update the row's line in {MODULE}.nonmatching.txt with the new distance. If the distance didn't fall, restore the previous text exactly. Do not run tools/difftest/equiv.py: the orchestrator checks kept versions on another machine after this wave and restores any that fail, so the behaviour must really be the same. The goal is still byte-exact: keeping a closer version is only a step toward it.
 
 After each match, and at the end: .venv/bin/python tools/matching/run_all.py --manifest {MODULE}.manifest.txt
 It must report every row of the module byte-exact. If a change broke another row, undo that change.
 
 Rules:
 - A change must preserve the function's behaviour. A byte match proves that apart from relocations, so check you call the same function and use the same global as the original. Field offsets and callee addresses in the alignment output must agree.
+- Never write a literal image address in code (a vtable, global or function as a number, such as (void*)0x5924a0). The build must not depend on the original exe, and a gate rejects it. Use the real class, global or function, declared locally if needed; an address belongs only in a comment.
 - Never edit a header. If a function needs a shared-header change, leave the row and report what it needs.
 - Never change a call so that it uses a different calling convention from the callee's definition.
 - No inline asm, no per-function pragma tricks, no volatile added to force a result: nothing that could not have been in the original source.

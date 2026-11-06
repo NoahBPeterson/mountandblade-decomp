@@ -674,9 +674,9 @@ void Agent::update_equipment_display()
                 A[i]->vis = 0;
                 if (itype(ik) == itp_type_shield) {
                     Mesh* m = A[i];
-                    float limit = 300.0f;
                     int k = 0;
                     if (0 < m->nlists) {
+                        float limit = 300.0f;
                         do {
                             m->lists[k].cap_all(&limit);
                             k++;
@@ -690,9 +690,9 @@ void Agent::update_equipment_display()
             if (C[i] != 0) {
                 C[i]->vis = 0;
                 Mesh* m = C[i];
-                float limit = 0.0f;
                 int k = 0;
                 if (0 < m->nlists) {
+                    float limit = 0.0f;
                     do {
                         m->lists[k].cap_all(&limit);
                         k++;

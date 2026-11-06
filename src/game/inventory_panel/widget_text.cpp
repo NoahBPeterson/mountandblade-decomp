@@ -133,8 +133,8 @@ static __forceinline void destroy_named_t(named_vec* first, named_vec* last, voi
 { ((void (__cdecl*)(named_vec*, named_vec*, void*, junk_tag))destroy_range)(first, last, self, tag); }
 static __forceinline void* uninit_copy(void* first, void* last, void* dst, void* self, junk_tag tag)   // 0x4ebe10
 { return ((void* (__cdecl*)(void*, void*, void*, void*, junk_tag))append_rows)(first, last, dst, self, tag); }
-static __forceinline void uninit_fill5(void* dst, unsigned n, const void* val, void* self, const void* val2)   // 0x4f65f0
-{ ((void (__cdecl*)(void*, unsigned, const void*, void*, const void*))uninit_fill)(dst, n, val, self, val2); }
+static __forceinline void uninit_fill5(void* dst, unsigned n, const void* val, void* self, junk_tag tag)   // 0x4f65f0
+{ ((void (__cdecl*)(void*, unsigned, const void*, void*, junk_tag))uninit_fill)(dst, n, val, self, tag); }
 struct RagModel;                                                  // cls_map/progress_bar.cpp: the 0x20-byte record the instances below were made for
 namespace std {   // the library instances of progress_bar.cpp (the folded helpers of 0x50d260)
 template<> void fill<RagModel*, RagModel>(RagModel*, RagModel*, const RagModel&);                                               // 0x4e5f80
@@ -194,7 +194,8 @@ void sel_list::add(int val)
         *p = val;
         v._Mylast = p + 1;
     } else {
-        ((c49aca0::PVec*)&v)->_Insert_n((c49aca0::NodeA**)v._Mylast, 1, *(c49aca0::NodeA* const*)&val);   // 0x49b1c0
+        int pv = val;
+        ((c49aca0::PVec*)&v)->_Insert_n((c49aca0::NodeA**)v._Mylast, 1, *(c49aca0::NodeA* const*)&pv);   // 0x49b1c0
     }
 }
 
@@ -256,29 +257,53 @@ static inline void swap_index(sel_list* l, unsigned i, unsigned j)
     l->v._Myfirst[j] = t;
 }
 
+struct int_alloc : std::allocator<int> { int state; };
+typedef std::vector<int, int_alloc> idx_vec;
+struct idx4 { int v; };
+struct sel_vec : IntVec {
+    idx4& operator[](unsigned i) { return *(idx4*)&(*(idx_vec*)this)[i]; }
+};
+
 // @ 0x50cc70 sel_list::sort
 void __stdcall sort_list(sel_list* l, int mode)
 {
-    for (unsigned i = 0; i < l->v.count(); i++) {
-        for (unsigned j = i + 1; j < l->v.count(); j++) {
+    sel_vec& v = *(sel_vec*)&l->v;
+    for (unsigned i = 0; i < v.count(); i++) {
+        for (unsigned j = i + 1; j < v.count(); j++) {
             switch (mode) {
             case 1:
-                if (strcmp(name_of_1(l->v._Myfirst[i]), name_of_1(l->v._Myfirst[j])) > 0)
-                    swap_index(l, i, j);
+                if (strcmp(name_of_1(v[i].v), name_of_1(v[j].v)) > 0) {
+                    int t = v[i].v;
+                    v[i].v = v[j].v;
+                    v[j].v = t;
+                }
                 break;
             case 2:
-                if (strcmp(name_of_2(l->v._Myfirst[i]), name_of_2(l->v._Myfirst[j])) > 0)
-                    swap_index(l, i, j);
+                if (strcmp(name_of_2(v[i].v), name_of_2(v[j].v)) > 0) {
+                    int t = v[i].v;
+                    v[i].v = v[j].v;
+                    v[j].v = t;
+                }
                 break;
             case 3:
-                if (strcmp(name_of_3(l->v._Myfirst[i]), name_of_3(l->v._Myfirst[j])) > 0)
-                    swap_index(l, i, j);
+                if (strcmp(name_of_3(v[i].v), name_of_3(v[j].v)) > 0) {
+                    int t = v[i].v;
+                    v[i].v = v[j].v;
+                    v[j].v = t;
+                }
                 break;
-            case 4:
-                if (strcmp(name_of_4(l->v._Myfirst[i]).strip_tags().c_str(),
-                           name_of_4(l->v._Myfirst[j]).strip_tags().c_str()) > 0)
-                    swap_index(l, i, j);
+            case 4: {
+                const tstring* si = &name_of_4(v[i].v);
+                const tstring* sj = &name_of_4(v[j].v);
+                tstring a = si->strip_tags();
+                tstring b = sj->strip_tags();
+                if (strcmp(a.c_str(), b.c_str()) > 0) {
+                    int t = v[i].v;
+                    v[i].v = v[j].v;
+                    v[j].v = t;
+                }
                 break;
+            }
             }
         }
     }
@@ -297,8 +322,7 @@ LRESULT __stdcall dialog_thunk(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam
 // @ 0x50d140 vec_named::_Ufill
 named_vec* vec_named::_Ufill(named_vec* ptr, unsigned n, const named_vec& val)
 {
-    const named_vec* q = &val;
-    uninit_fill5(ptr, n, q, this, &val);
+    uninit_fill5(ptr, n, &val, this, junk_tag());
     return ptr + n;
 }
 

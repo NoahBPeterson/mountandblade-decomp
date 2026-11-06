@@ -565,20 +565,20 @@ int Agent::update_nav_face()
 
 // Weapon-kind groups of the movement animation table (kind 9; 0 and 7; 1..6; everything else).
 #define PICK(k9, k07, k16, kx, m9, m07, m16, mx, shared) \
-    if (kind == 9) { \
+    if (weapon_kind == 9) { \
         if (mode == 2) return m9; \
         return (mode != 1 ? -16 : 0) + k9; \
     } \
-    if (kind == 0 || kind == 7) { \
+    if (weapon_kind == 0 || weapon_kind == 7) { \
         if (mode != 2) return (mode != 1 ? -16 : 0) + k07; \
-    } else { \
-        if (kind != 1 && kind != 4 && kind != 2 && kind != 5 && kind != 3 && kind != 6) { \
-            if (mode == 2) return mx; \
-            return (mode != 1 ? -16 : 0) + kx; \
-        } \
-        if (mode != 2) return (mode != 1 ? -16 : 0) + k16; \
+        return m07; \
     } \
-    return shared;
+    if (weapon_kind == 1 || weapon_kind == 4 || weapon_kind == 2 || weapon_kind == 5 || weapon_kind == 3 || weapon_kind == 6) { \
+        if (mode == 2) return shared; \
+        return (mode != 1 ? -16 : 0) + k16; \
+    } \
+    if (mode == 2) return mx; \
+    return (mode != 1 ? -16 : 0) + kx;
 
 // @ 0x43cc30
 int Agent::move_anim(int mode)
@@ -594,17 +594,15 @@ int Agent::move_anim(int mode)
     if (d.x * vel.x + d.y * vel.y + d.z * vel.z > 0.0f) {
         AgentBody* b = body;
         if (move_z * b->m.s.z + move_y * b->m.s.y + move_x * b->m.s.x > 0.5f) {
-            int kind = weapon_kind;
             PICK(0xff, 0x107, 0x10b, 0x103, 0x10f, 0x116, 0x116, 0x113, 0x116)
         }
-        if (!(-b->m.s.z * move_z + -b->m.s.y * move_y + -b->m.s.x * move_x > 0.5f)) {
-            int kind = weapon_kind;
+        if (-b->m.s.z * move_z + -b->m.s.y * move_y + -b->m.s.x * move_x > 0.5f) {
+            PICK(0xfe, 0x106, 0x10a, 0x102, 0x10e, 0x115, 0x115, 0x112, 0x115)
+        }
+        {
             PICK(0x100, 0x108, 0x10c, 0x104, 0x110, 0x117, 0x117, 0x114, 0x117)
         }
-        int kind = weapon_kind;
-        PICK(0xfe, 0x106, 0x10a, 0x102, 0x10e, 0x115, 0x115, 0x112, 0x115)
     }
-    int kind = weapon_kind;
     PICK(0x101, 0x109, 0x10d, 0x105, 0x111, 0x118, 0x118, 0x118, 0x118)
 }
 

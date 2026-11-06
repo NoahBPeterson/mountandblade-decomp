@@ -32,6 +32,10 @@ static __forceinline int rnd(const float* p)
 // the original calls both with `this` kept in a callee-saved register, as for a callee outside the translation unit, and cl
 // assumes the register use of a callee defined earlier in the file (and inlines part of it). Declared by item_ref.h / troop.h.
 
+// the original's add_attr saw only a declaration of set_attr (a different TU), so cl keeps `this` in a
+// callee-saved register across the call; a stand-in class reproduces that (mapped in symbols/slices/stat_panel_x.txt)
+struct TroopX { void set_attr(int idx, int val); };
+
 // the attribute words (+0x58) and the packed skill words (+0x68) as the setters index them
 #define ATTR(t) ((int*)&(t)->f58[0])
 #define F7A(t) (((unsigned char*)(t))[0x7a])
@@ -59,7 +63,7 @@ void Troop::add_attr(int idx, int delta)
                     hp -= 1.0f;
             }
             int sv = ATTR(this)[idx] + step;
-            set_attr(idx, sv);
+            ((TroopX*)this)->set_attr(idx, sv);
         }
     } while (--n);
 }

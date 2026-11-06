@@ -15,3 +15,6 @@
 ../src/game/mission5/mission_5.cpp  ?put@Elem_s2ce00@@QAEXPAH00@Z  0052ce70  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?tick@MissionCtx@@QAEXXZ  005295a0  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?clamp_cell@Terrain@@QAEPAHPAH0@Z  0052cef0  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?release_item@Mission_s27c90@@QAEXH@Z  00528410  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?frame_update@Rec1208@@UAEXM@Z  00525160  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?init_order_markers@Screen_s2ae70@@QAEXXZ  0052ae70  /O2 /MT /Gy /TP

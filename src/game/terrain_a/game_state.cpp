@@ -67,9 +67,11 @@ unsigned Ramp::eval(float* t)
     x = (float)(n - 1) * x;
     float fl = (float)floor(x);
     int i = (int)(fl + 0.1f);
+    float frac = x - fl;
+    float f = 1.0f - frac;
     float hi[3], lo[3];
-    hi[0] = (x - fl) * stops[i + 1].c[0]; hi[1] = (x - fl) * stops[i + 1].c[1]; hi[2] = (x - fl) * stops[i + 1].c[2];
-    lo[0] = (1.0f - (x - fl)) * stops[i].c[0]; lo[1] = (1.0f - (x - fl)) * stops[i].c[1]; lo[2] = (1.0f - (x - fl)) * stops[i].c[2];
+    hi[0] = frac * stops[i + 1].c[0]; hi[1] = frac * stops[i + 1].c[1]; hi[2] = frac * stops[i + 1].c[2];
+    lo[0] = f * stops[i].c[0]; lo[1] = f * stops[i].c[1]; lo[2] = f * stops[i].c[2];
     vector4 c;
     c.x = lo[0] + hi[0];
     c.y = lo[1] + hi[1];
@@ -219,13 +221,16 @@ void ShadowMap::fit_bounds()
 {
     WL_MARKER(12)
     LightCam* c = cam;
-    c->center = vector4((c->vmax.x + c->vmin.x) * 0.5f, (c->vmin.y + c->vmax.y) * 0.5f, (c->vmin.z + c->vmax.z) * 0.5f);
+    vector4 ctr((c->vmin.x + c->vmax.x) * 0.5f, (c->vmax.y + c->vmin.y) * 0.5f, (c->vmax.z + c->vmin.z) * 0.5f);
+    c->center = ctr;
     c = cam;
-    c->wcenter = vector4((c->world.f.x * c->center.y + c->world.u.x * c->center.z) + c->center.x * c->world.s.x + c->world.o.x,
-                         (c->world.s.y * c->center.x + c->world.u.y * c->center.z) + c->world.f.y * c->center.y + c->world.o.y,
-                         (c->world.s.z * c->center.x + c->world.u.z * c->center.z) + c->world.f.z * c->center.y + c->world.o.z);
+    vector4 wc((c->world.u.x * c->center.z + c->world.f.x * c->center.y) + c->world.s.x * c->center.x + c->world.o.x,
+               (c->world.u.y * c->center.z + c->world.s.y * c->center.x) + c->world.f.y * c->center.y + c->world.o.y,
+               (c->world.u.z * c->center.z + c->world.s.z * c->center.x) + c->world.f.z * c->center.y + c->world.o.z);
+    c->wcenter = wc;
     c = cam;
-    c->size = vector4(c->vmax.x - c->vmin.x, c->vmax.y - c->vmin.y, c->vmax.z - c->vmin.z);
+    vector4 sz(c->vmax.x - c->vmin.x, c->vmax.y - c->vmin.y, c->vmax.z - c->vmin.z);
+    c->size = sz;
     WL_MARKER(13)
 }
 

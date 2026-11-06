@@ -35,6 +35,7 @@
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../party/nav_graph.h"      // g_nav (0xa732b8)
 #include "../../include/render_flags.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 SkillRec g_skill_tbl[42];                                   // 0x8ee3100 (constructed and destroyed by the compiler; skills.txt: description, name, key, attribute, rank limit)
@@ -130,47 +131,58 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
     return s;
 }
 
+static inline int map_first_sprite(SpriteTable& t)
+{
+    int i;
+    for (i = 0; i < t.count; i++)
+        if (*(int*)((char*)t.pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x98 + 4) != 0)
+            break;
+    return i;
+}
+static inline void map_set_fbc(rgl::entity* e, const float& f) { e->set_fbc(&f); }
+
 // @ 0x520d60
 void Game::build_scene()
 {
     GameMapView* self = (GameMapView*)this;
-    rgl::world* world = (rgl::world*)g_script.level;
+    WL_MARKER(12)
     if (g_script.new_game_done) {
         for (int i = 0; i < g_script.page_rows; i++) {
             for (int j = 0; j < g_script.page_cols; j++) {
-                rgl::entity*& cell = g_script.map_cell[j * 8 + i];
-                rgl::entity* p = cell;
-                if (p) {
-                    ((rgl::world*)world)->erase_entity(p);
-                    g_script.map_saved[j * 8 + i] = cell;
-                    cell = 0;
+                if (g_script.map_cell[j * 8 + i]) {
+                    g_script.level->erase_entity(g_script.map_cell[j * 8 + i]);
+                    g_script.map_saved[j * 8 + i] = g_script.map_cell[j * 8 + i];
+                    g_script.map_cell[j * 8 + i] = 0;
                 }
             }
         }
-        ((rgl::world*)world)->clear_ents();
+        g_script.level->clear_ents();
     }
     log_stream_ptr()->w_cstr("map mesh built.\n");
-    rgl::vector4 tmp;
-    self->fog1 = *((GameG*)self)->sun_color(&tmp);
+    {
+        rgl::vector4 tmp;
+        self->fog1 = *((GameG*)self)->sun_color(&tmp);
+    }
     log_stream_ptr()->w_cstr("get_ideal_sun_color.\n");
-    self->fog2 = *((GameG*)self)->fog_color(&tmp);
+    {
+        rgl::vector4 tmp;
+        self->fog2 = *((GameG*)self)->fog_color(&tmp);
+    }
     log_stream_ptr()->w_cstr("get_ideal_fog_color.\n");
     self->fog1 = rgl::vector4(0.5f, 0.48f, 0.47f);
     self->fog2 = rgl::vector4(0.8f, 0.8f, 0.8f);
     self->fog3 = rgl::vector4(0.35f, 0.37f, 0.4f);
-    world->ambient = rgl::vector4(0.35f, 0.37f, 0.4f);
-    world->ambient.w = 1.0f;
-
-    Light* w = new Light;                                         // the 0x7c-byte wind object (constructor 0x461480)
     {
-        std::vector<Light*>& wv = world->lights;
-        if (wv.size() < wv.capacity()) {
-            Light** p = wv._Mylast;
-            *p = w;
-            wv._Mylast = p + 1;
-        } else {
-            wv.insert(wv.end(), w);
-        }
+        rgl::world* wd = g_script.level;
+        wd->ambient = rgl::vector4(0.35f, 0.37f, 0.4f);
+        wd->ambient.w = 1.0f;
+    }
+
+    Light* w;
+    {
+        rgl::world* world = g_script.level;
+        w = new Light;                                         // the 0x7c-byte wind object (constructor 0x461480)
+        world->lights.push_back(w);
     }
     self->wind = w;
     self->wind->type = 2;
@@ -178,38 +190,36 @@ void Game::build_scene()
     self->wind->range = 30000.0f;
     self->wind->pos = rgl::vector4(700.0f, 200.0f, 900.0f);
     self->wind->dir = rgl::vector4(-0.8f, -0.6f, -1.0f);
-    float len = self->wind->dir.length();
+    rgl::vector4& dr = self->wind->dir;
+    float len = dr.length();
     if (len > 1e-10f) {
         float inv = 1.0f / len;
-        self->wind->dir.x = self->wind->dir.x * inv;
-        self->wind->dir.y = self->wind->dir.y * inv;
-        self->wind->dir.z = self->wind->dir.z * inv;
+        dr.x = dr.x * inv;
+        dr.y = dr.y * inv;
+        dr.z = dr.z * inv;
     } else {
-        self->wind->dir.x = 0.0f;
-        self->wind->dir.y = 1.0f;
-        self->wind->dir.z = 0.0f;
+        dr.x = 0.0f;
+        dr.y = 1.0f;
+        dr.z = 0.0f;
     }
 
-    rgl::entity* track = (rgl::entity*)((rgl::world*)world)->create_entity(9);
-    self->track_entity = track;
-    float d = 1000000.0f;
-    track->set_fbc(&d);
+    self->track_entity = (rgl::entity*)g_script.level->create_entity(9);
+    map_set_fbc(self->track_entity, 1000000.0f);
     self->map_track = new rgl::mesh();
     self->map_track->res = g_resmgr.get_material(RStr("map_track"));
     ((Poser*)self->track_entity)->add_extra((int)self->map_track);
+    WL_MARKER(13)
 
-    rgl::entity* obj = (rgl::entity*)((rgl::world*)world)->create_entity(9);
+    rgl::entity* obj = (rgl::entity*)g_script.level->create_entity(9);
     self->map_obj = ((rgl::mesh*)g_resmgr.get_object(&g_env_rows->name))->clone();
     self->map_obj->scale(60.0f);
     self->map_obj->mask = 0xfffeffff;
     ((Poser*)obj)->add_extra((int)self->map_obj);
-    d = 100000000.0f;
-    obj->set_fbc(&d);
-    world->sky = (rgl::entity*)obj;
+    map_set_fbc(obj, 100000000.0f);
+    g_script.level->sky = (rgl::entity*)obj;
 
-    self->compass = (rgl::entity*)((rgl::world*)world)->create_entity(9);
-    RStr compass_name("compass");
-    rgl::mesh* mc = ((rgl::mesh*)g_resmgr.get_object(&compass_name))->clone();
+    self->compass = (rgl::entity*)g_script.level->create_entity(9);
+    rgl::mesh* mc = ((rgl::mesh*)g_resmgr.get_object(&RStr("compass")))->clone();
     mc->scale(0.28f);
     ((Poser*)self->compass)->add_extra((int)mc);
 
@@ -220,35 +230,28 @@ void Game::build_scene()
             for (int j = 0; j < g_script.page_cols; j++) {
                 g_script.map_cell[j * 8 + i] = g_script.map_saved[j * 8 + i];
                 g_script.map_saved[j * 8 + i] = 0;
-                ((rgl::world*)world)->add_pending(g_script.map_cell[j * 8 + i]);
+                g_script.level->add_pending(g_script.map_cell[j * 8 + i]);
             }
         }
     }
 
-    ((rgl::world*)world)->step(0.0f);
+    g_script.level->step(0.0f);
 
-    unsigned id = (unsigned)scene.first_party_id();
-    if (id < (unsigned)scene.n_parties) {
-        do {
+    {
+        unsigned id = (unsigned)scene.first_party_id();
+        while (id < (unsigned)scene.n_parties) {
             ((c49bea0::MissionAgents*)self)->add_order_arrow((int)id);
             scene.next_party_id((int*)&id);
-        } while (id < (unsigned)scene.n_parties);
+        }
     }
     log_stream_ptr()->w_cstr("parties added.\n");
 
-    int idx = 0;
-    if (sprites.count > 0) {
-        do {
-            if (*(int*)((char*)sprites.pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x98 + 4) != 0)
-                break;
-            idx++;
-        } while (idx < sprites.count);
-    }
-    if (idx < sprites.count) {
-        do {
-            ((c49b630::Mission*)self)->spawn_battle_icon((unsigned)idx);
-            ((GamePool*)&sprites)->next(&idx);
-        } while (idx < sprites.count);
+    {
+        unsigned idx = map_first_sprite(sprites);
+        while (idx < (unsigned)sprites.count) {
+            ((c49b630::Mission*)self)->spawn_battle_icon(idx);
+            ((GamePool*)&sprites)->next((int*)&idx);
+        }
     }
     release_orders();
     more_start();
@@ -270,549 +273,563 @@ __declspec(noinline) void Game::release_orders()
     }
 }
 
-// The rgl object prefix build_map_trees drives: every slot is a *thiscall* (the original does `mov ecx, obj;
-// push arg; call [vt+N]`). Calling these through a cdecl function-pointer cast (what this file used to do) leaves
-// `this` = the vtable pointer, so the callee writes into .rdata: 0x521c90 / 0x52308a / 0x5231d7.
-struct MapObjView {
-    virtual void del(unsigned flags);              // +0x00 scalar deleting destructor, ret 4 (the original pushes 1)
-    virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void finalize();                       // +0x10 the cell's finalize after a mesh was appended
-    virtual void v14();
-    virtual void set_flag18(const int* flag);      // +0x18 the entity: the original passes &zero, not 0
+// ---- helpers of the campaign map's tree builder (above its marker) ---------------------------------------------------
+struct map_v2 {                                                     // the two-float value the map's bounds are assigned from
+    float x, y;
+    map_v2() {}
+    map_v2(float a, float b) : x(a), y(b) {}
+    float length() const { return (float)sqrt(x * x + y * y); }
 };
+static inline float map_len(const rgl::vector4& v) { float l = v.x * v.x; l += v.z * v.z; l += v.y * v.y; return (float)sqrt(l); }
+static inline map_v2 map_xy(const rgl::vector4& p) { return map_v2(p.x, p.y); }
+static inline int map_add_vertex(rgl::mesh* m, int index, const vec2& uv, const unsigned& color, const rgl::vector4& n, const int& f5c)
+{
+    return m->add_vertex(index, &uv, &color, &n, &f5c);
+}
+static inline void map_add(rgl::vector4& a, const rgl::vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
+static inline void map_scale(rgl::vector4& v, float k) { v.x *= k; v.y *= k; v.z *= k; }
+struct map_ground {                                                 // NavData with its edge vector typed
+    rgl::vec<NavVert> verts;
+    rgl::vec<NavCell> cells;
+    rgl::vec<MapEdge> edges;
+    unsigned ncells() const { return cells.first == 0 ? 0 : (unsigned)(cells.last - cells.first); }
+};
+struct map_arrays {                                                 // per-point tables of the map builder
+    float dist[100000];
+    int   vert[100000];
+    float scan_b[2][100000];
+    int   flags[100000];
+    float scan_a[2][100000];
+};
+struct map_frame : rgl::matrix {                                    // a frame from a rotation and an origin
+    map_frame(const rgl::mat3& r, const rgl::vector4& p) { *(rgl::mat3*)this = r; o = p; }
+};
+// the cell's mesh list and its recalculation (the same steps as Poser::add_extra 0x442110, expanded here)
+static inline void add_cell_mesh(rgl::entity* e, rgl::mesh* m)
+{
+    e->meshes.push_back(m);
+    e->recalc();
+}
 
 // @ 0x5213d0
 void Game::build_map_trees()
 {
-    GameMapView* self = (GameMapView*)this;
-    MapNav* mgr = (MapNav*)((rgl::world*)g_script.level)->ground;
+    ((rgl::vec<void*>&)g_script.mat_type0).clear();
+    ((rgl::vec<void*>&)g_script.mat_river).clear();
+    ((rgl::vec<void*>&)g_script.mat_sea).clear();
+    ((rgl::vec<void*>&)g_script.mat_sea2).clear();
 
-    // ---- A: reset the four per-material mesh vectors -----------------------
-    RawVec* lists[4] = { &g_script.mat_type0, &g_script.mat_river, &g_script.mat_sea, &g_script.mat_sea2 };
-    for (int v = 0; v < 4; v++) {
-        if (lists[v]->first) ::operator delete(lists[v]->first);        // 0x535712
-        lists[v]->first = 0;
-        lists[v]->last = 0;
-        lists[v]->end = 0;
+    float sea_ang = g_module_settings.map_sea_direction * 3.1415927f * 0.0055555557f;                         // deg -> rad
+    float river_ang = g_module_settings.map_river_direction * 3.1415927f * 0.0055555557f;
+
+    // the lighting vectors the fixed-function vertex colour uses
+    rgl::vector4 lightL, lightM;
+    unsigned i;
+    {
+        const rgl::vector4& sun_dir = ((GameMapView*)this)->wind->dir;
+        rgl::vector4 dir;
+        dir.x = -sun_dir.x;
+        dir.y = -sun_dir.y;
+        dir.z = -sun_dir.z;
+        dir.normalize();                                                 // 0x407d60
+
+        lightL = g_script.level->ambient;
+        lightM = g_script.level->lights[0]->color;
+
+        // ---- per-point view dot --------------------------------------------
+        for (i = 0; i < g_script.level->ground->verts.size(); i++) {
+            NavVert& v = g_script.level->ground->verts[i];
+            float s = v.n.y * dir.y;
+            s += v.n.z * dir.z;
+            s += v.n.x * dir.x;
+            v.level = s;
+            if (g_use_shaders != 0)
+                v.level = s * s;
+        }
     }
 
-    void* cam = self->wind;                                                   // +0x139dc
-    // 0x521473..0x5214ba: the two map directions are floats (fld, not fild); ang_a [esp+0xe8], ang_b [esp+0x11c]
-    float ang_a = g_module_settings.map_sea_direction * 3.1415927f * 0.0055555557f;                         // deg -> rad
-    float ang_b = g_module_settings.map_river_direction * 3.1415927f * 0.0055555557f;
+    // ---- per-point flags and distance ----------------------------------
+    // 100000 entries each; the exe reserves 4 MB of stack (/STACK:0x3e8480), the same as the relink.
+    map_arrays fr;
 
-    rgl::vector4 dir;
-    dir.x = -*(float*)((char*)cam + 0x44);
-    dir.y = -*(float*)((char*)cam + 0x48);
-    dir.z = -*(float*)((char*)cam + 0x4c);
-    dir.normalize();                                                 // 0x407d60
-
-    // [esp+0x150] / [esp+0x120]: the lighting vectors the fixed-function vertex colour uses (0x5214f1..0x521546)
-    float lightL[4], lightM[4];
-    memcpy(lightL, (char*)g_script.level + 0x68, 16);
-    memcpy(lightM, (char*)(*(void**)(*(char**)((char*)g_script.level + 0xbc))) + 4, 16);
-
-    int npts = (int)(((char*)mgr->pts_end - (char*)mgr->pts) / 0x24);
-
-    // ---- B: per-point view dot --------------------------------------------
-    for (int i = 0; i < npts; i++) {
-        MapNavVert* p = &mgr->pts[i];
-        float s = dir.y * p->ny + dir.z * p->nz;                      // 0x521581: (y + z) + x, the x87 order
-        s = s + dir.x * p->nx;
-        p->s = s;
-        if (g_use_shaders != 0) p->s = s * s;
+    NavData* ground = g_script.level->ground;
+    for (i = 0; i < ground->verts.size(); i++) {
+        fr.flags[i] = 0;
+        fr.dist[i] = 1000.0f;
     }
-
-    // ---- C: per-point flags and distance ----------------------------------
-    // The original keeps these three on its stack, 100000 entries each (dist [esp+0x900], vert [esp+0x62380], flags
-    // [esp+0x187300]); the exe reserves 4 MB of stack (/STACK:0x3e8480), the same as the relink.
-    int   flags[100000];
-    float dist[100000];
-    int   vert[100000];
-    // scan_arrays (0x523630) does NOT index this buffer by element: it writes one dword at buffer+0xc3500 (a fixed
-    // offset, 0xcb189680), so the original's buffer is the ~0xc3540-byte block at [esp+0xc3e00], not npts ints. Sizing
-    // it by npts wrote past the end of a 125 KB allocation on a 31 307-point map (page fault at 0x49c86d).
-    char*  scratch = new char[0xc3600];                                      // [esp+0xc3e00]
-    for (int i = 0; i < npts; i++) { flags[i] = 0; dist[i] = 1000.0f; }
-
-    int nnodes = (int)(((char*)mgr->nodes_end - (char*)mgr->nodes) / 0x88);
-    for (int i = 0; i < nnodes; i++) {
-        MapNode* nd = &mgr->nodes[i];
-        unsigned nt = (unsigned)nd->type;
-        for (unsigned k = 0; k < 10; k++) {
-            unsigned u;
-            if (nt == 8)                     u = 8;
-            else if (nd->type == 9)          u = 9;
-            else { u = nt & 7; if (nd->type == 0xf) u = 0; }
-            if (u == k) {
-                unsigned mask = ((unsigned*)((char*)&g_bit + 0x0))[k * 2];
-                for (int j = 0; j < nd->count; j++) flags[nd->idx[j]] |= mask;
+    for (i = 0; i < ground->cells.size(); i++) {
+        NavCell& c = ground->cells[i];
+        for (int k = 0; k <= 9; k++) {
+            int kind = c.ids[8] & 7;
+            if (c.ids[8] == 8)
+                kind = c.ids[8];
+            else if (c.ids[8] == 9)
+                kind = c.ids[8];
+            else if (c.ids[8] == 0xf)
+                kind = 0;
+            if (kind == k) {
+                unsigned mask = (unsigned)g_bit[k];
+                for (int j = 0; j < c.npts; j++) {
+                    int& f = fr.flags[c.ids[j]];
+                    f |= mask;
+                }
             }
         }
     }
 
-    // ---- D: bbox + aggregate masks ----------------------------------------
-    g_script.maxx = -100000.0f; g_script.minx = 100000.0f;
-    g_script.miny = 100000.0f;  g_script.maxy = -100000.0f;
-    unsigned u33 = ((unsigned*)((char*)&g_bit + 0x0))[16] | ((unsigned*)((char*)&g_bit + 0x0))[14];
-    unsigned u36 = ((unsigned*)((char*)&g_bit + 0x0))[6] | ((unsigned*)((char*)&g_bit + 0x0))[2] | ((unsigned*)((char*)&g_bit + 0x0))[8] | ((unsigned*)((char*)&g_bit + 0x0))[10] | ((unsigned*)((char*)&g_bit + 0x0))[22]
-                 | ((unsigned*)((char*)&g_bit + 0x0))[18] | ((unsigned*)((char*)&g_bit + 0x0))[24] | ((unsigned*)((char*)&g_bit + 0x0))[26] | ((unsigned*)((char*)&g_bit + 0x0))[20] | ((unsigned*)((char*)&g_bit + 0x0))[4];
-    unsigned u19 = ((unsigned*)((char*)&g_bit + 0x0))[0];
-    unsigned u20 = ((unsigned*)((char*)&g_bit + 0x0))[18];
-    scan_arrays((void*)((char*)scratch + 0x40), (int)scratch);        // 0x523630 (stdcall: the buffer, then a value it ignores)
+    // ---- bbox + aggregate masks ----------------------------------------
+    *(map_v2*)&g_script.minx = map_v2(100000.0f, 100000.0f);
+    *(map_v2*)&g_script.maxx = map_v2(-100000.0f, -100000.0f);
+    unsigned water = (unsigned)(g_bit[8] | g_bit[7]);
+    unsigned land = (unsigned)(g_bit[4] | g_bit[5] | g_bit[11] | g_bit[9] | g_bit[12] | g_bit[13] | g_bit[10] | g_bit[2] | g_bit[3] | g_bit[1]);
+    unsigned sea = (unsigned)g_bit[0];
+    unsigned wood = (unsigned)g_bit[9];
+    ((GameMapView*)this)->scan_arrays(fr.scan_a, fr.scan_b);
 
-    for (int i = 0; i < npts; i++) {
-        MapNavVert* p = &mgr->pts[i];
-        if (p->x < g_script.minx) g_script.minx = p->x;
-        if (g_script.maxx < p->x) g_script.maxx = p->x;
-        if (p->y < g_script.miny) g_script.miny = p->y;
-        if (g_script.maxy < p->y) g_script.maxy = p->y;
-        if (((u19 & (unsigned)flags[i]) != 0) && ((u36 & (unsigned)flags[i]) != 0))
-            dist[i] = 0.0f;
+    for (i = 0; i < g_script.level->ground->verts.size(); i++) {
+        rgl::vector4& p = g_script.level->ground->verts[i].p;
+        if (p.x < g_script.minx) g_script.minx = p.x;
+        if (p.x > g_script.maxx) g_script.maxx = p.x;
+        if (p.y < g_script.miny) g_script.miny = p.y;
+        if (p.y > g_script.maxy) g_script.maxy = p.y;
+        if ((sea & fr.flags[i]) != 0 && (land & fr.flags[i]) != 0)
+            fr.dist[i] = 0.0f;
     }
 
-    // ---- E: ten relaxation passes over the edges --------------------------
-    int nedges = (int)(((char*)mgr->edges_end - (char*)mgr->edges) / 0x24);
+    // ---- ten relaxation passes over the edges --------------------------
+    map_ground* g2 = (map_ground*)g_script.level->ground;
     for (int pass = 10; pass != 0; pass--) {
-        for (int e = 0; e < nedges; e++) {
-            MapEdge* ed = &mgr->edges[e];
-            int a = ed->a, b = ed->b;
-            // 0x5218d7: the edge endpoints are read from g_nav's vertex vector (map.txt's store, +4), not mgr->pts
-            const float* pa = (const float*)((char*)((MapStore*)g_script.nav)->verts._Myfirst + a * 0x24);
-            const float* pb = (const float*)((char*)((MapStore*)g_script.nav)->verts._Myfirst + b * 0x24);
-            float dx = pa[0] - pb[0];
-            float dy = pa[1] - pb[1];
-            float dz = pa[2] - pb[2];
-            float len = sqrtf(dy * dy + (dz * dz + dx * dx));
-            if (len + dist[b] < dist[a])      dist[a] = len + dist[b];
-            else if (len + dist[a] < dist[b]) dist[b] = len + dist[a];
+        for (i = 0; i < g2->edges.size(); i++) {
+            int a = g2->edges[i].a;
+            int b = g2->edges[i].b;
+            // the edge endpoints are read from g_nav's vertex vector (map.txt's store), not the ground's
+            NavVert* nv = ((NavData*)g_script.nav)->verts.first;
+            float len = map_len(nv[a].p - nv[b].p);
+            float& da = fr.dist[a];
+            float& db = fr.dist[b];
+            float t = len + db;
+            if (t < da)
+                da = t;
+            else {
+                t = len + da;
+                if (t < db)
+                    db = t;
+            }
         }
     }
 
-    // ---- F: material-name tables ------------------------------------------
-    char tmp_buf[0x40];
-    tstring* tmp = (tstring*)tmp_buf;
-    new (tmp) tstring();                                                        // 0x42bbd0
-    void* map_arr[0x40];    for (int i = 0; i < 0x40; i++) map_arr[i] = 0;
-    void* snow_arr[0x40];   for (int i = 0; i < 0x40; i++) snow_arr[i] = 0;
-    void* steppe_arr[0x40]; for (int i = 0; i < 0x40; i++) steppe_arr[i] = 0;
-    void* desert_arr[0x40]; for (int i = 0; i < 0x40; i++) desert_arr[i] = 0;
-    for (int i = 0; i < 4; i++) if (g_module_settings.tree_types[i] > 0x40) g_module_settings.tree_types[i] = 0x40;
+    // ---- material-name tables ------------------------------------------
+    tstring tmp;
+    rgl::mesh* map_arr[0x40];
+    rgl::mesh* snow_arr[0x40];
+    rgl::mesh* steppe_arr[0x40];
+    rgl::mesh* desert_arr[0x40];
+    memset(desert_arr, 0, sizeof(desert_arr));
+    memset(steppe_arr, 0, sizeof(steppe_arr));
+    memset(snow_arr, 0, sizeof(snow_arr));
+    memset(map_arr, 0, sizeof(map_arr));
+    if (g_module_settings.tree_types[0] > 0x40) g_module_settings.tree_types[0] = 0x40;
+    if (g_module_settings.tree_types[1] > 0x40) g_module_settings.tree_types[1] = 0x40;
+    if (g_module_settings.tree_types[2] > 0x40) g_module_settings.tree_types[2] = 0x40;
+    if (g_module_settings.tree_types[3] > 0x40) g_module_settings.tree_types[3] = 0x40;
 
-    for (int i = 0; i < g_module_settings.tree_types[0]; i++) {
-        tmp->assign("map_tree_");                                    // 0x59c0d8
-        tmp->push_back((char)('a' + i));
-        map_arr[i] = g_resmgr.get_object(tmp);
+    int n;
+    for (n = 0; n < g_module_settings.tree_types[0]; n++) {
+        tmp.assign("map_tree_");
+        tmp.push_back((char)((unsigned char)n + 'a'));
+        map_arr[n] = g_resmgr.get_object(&tmp);
     }
-    for (int i = 0; i < g_module_settings.tree_types[1]; i++) {
-        tmp->assign("snow_tree_");                                   // 0x59c0cc
-        tmp->push_back((char)('a' + i));
-        snow_arr[i] = g_resmgr.get_object(tmp);
+    for (n = 0; n < g_module_settings.tree_types[1]; n++) {
+        tmp.assign("snow_tree_");
+        tmp.push_back((char)((unsigned char)n + 'a'));
+        snow_arr[n] = g_resmgr.get_object(&tmp);
     }
-    for (int i = 0; i < g_module_settings.tree_types[2]; i++) {
-        tmp->assign("steppe_tree_");                                 // 0x59c0bc
-        tmp->push_back((char)('a' + i));
-        steppe_arr[i] = g_resmgr.get_object(tmp);
+    for (n = 0; n < g_module_settings.tree_types[2]; n++) {
+        tmp.assign("steppe_tree_");
+        tmp.push_back((char)((unsigned char)n + 'a'));
+        steppe_arr[n] = g_resmgr.get_object(&tmp);
     }
-    for (int i = 0; i < g_module_settings.tree_types[3]; i++) {
-        tmp->assign("desert_tree_");                                 // 0x59c0ac
-        tmp->push_back((char)('a' + i));
-        desert_arr[i] = g_resmgr.get_object(tmp);
+    for (n = 0; n < g_module_settings.tree_types[3]; n++) {
+        tmp.assign("desert_tree_");
+        tmp.push_back((char)((unsigned char)n + 'a'));
+        desert_arr[n] = g_resmgr.get_object(&tmp);
     }
 
-    // ---- G: grid dimensions and cell entities -----------------------------
-    g_script.sizex = g_script.maxx - g_script.minx;
-    g_script.sizey = g_script.maxy - g_script.miny;
-    float stepx = (g_script.sizex + 5.0f) * 0.125f;                                 // (rdata constants)
-    float stepy = (g_script.sizey + 5.0f) * 0.125f;
-    g_script.page_cols = (int)ceil(g_script.sizex / stepx);                                // ceil 0x535ae0, __ftol2 0x535a64
-    g_script.page_rows = (int)ceil(g_script.sizey / stepy);
-    if (g_script.page_cols > 8) mb_error("Map size too big in x axis!");            // 0x59c090
+    // ---- grid dimensions and cell entities -----------------------------
+    *(map_v2*)&g_script.sizex = map_v2(g_script.maxx - g_script.minx, g_script.maxy - g_script.miny);
+    map_v2 step((g_script.sizex + 5.0f) * 0.125f, (g_script.sizey + 5.0f) * 0.125f);
+    g_script.page_cols = (int)ceil(g_script.sizex / step.x);
+    g_script.page_rows = (int)ceil(g_script.sizey / step.y);
+    if (g_script.page_cols > 8) mb_error("Map size too big in x axis!");
     if (g_script.page_rows > 8) mb_error("Map size too big in x axis!");
 
-    for (int row = 0; row < g_script.page_rows; row++) {
-        for (int col = 0; col < g_script.page_cols; col++) {
-            void* ent = ((rgl::world*)g_script.level)->create_entity(9);                // 0x428440
-            g_script.map_cell[col * 8 + row] = (rgl::entity*)ent;
-            int zero = 0;                                                    // 0x521c83: the original passes &0
-            ((MapObjView*)ent)->set_flag18(&zero);                           // slot +0x18
+    int row, col;
+    for (row = 0; row < g_script.page_rows; row++) {
+        for (col = 0; col < g_script.page_cols; col++) {
+            rgl::entity* e = (rgl::entity*)g_script.level->create_entity(9);
+            g_script.map_cell[col * 8 + row] = e;
+            float zero = 0.0f;
+            e->set_fbc(&zero);
         }
     }
 
-    // ---- H: per-cell geometry ---------------------------------------------
-    for (int col = 0; col < g_script.page_cols; col++) {
-        float x0 = (float)col * stepx + g_script.minx;
-        float x1 = (float)(col + 1) * stepx + g_script.minx;
-        for (int row = 0; row < g_script.page_rows; row++) {
-            float y0 = (float)row * stepy + g_script.miny;
-            float y1 = (float)(row + 1) * stepy + g_script.miny;
-            int ci = col * 8 + row;
-            void* cell = g_script.map_cell[ci];
+    // ---- per-cell geometry ---------------------------------------------
+    for (col = 0; col < g_script.page_cols; col++) {
+        map_v2 lo, hi;
+        lo.x = (float)col * step.x + g_script.minx;
+        hi.x = (float)(col + 1) * step.x + g_script.minx;
+        for (row = 0; row < g_script.page_rows; row++) {
+            lo.y = (float)row * step.y + g_script.miny;
+            hi.y = (float)(row + 1) * step.y + g_script.miny;
 
-            void* cellmesh = new rgl::mesh();                                   // 0x412a90
-            float ccx = (x1 + x0) * 0.5f;                                       // [esp+0x100]/[0x104]: the cell centre
-            float ccy = (y1 + y0) * 0.5f;
+            rgl::mesh* cellmesh = new rgl::mesh();
+            rgl::vector4 center;
+            *(map_v2*)&center = map_v2((hi.x + lo.x) * 0.5f, (hi.y + lo.y) * 0.5f);
+            center.z = 0.0f;
+            int ci = col * 8 + row;
 
             for (int mi = 0; mi < 0xd; mi++) {
-                int mt;
+                int mt = mi;
                 if (mi == 10)      mt = 0x15;
                 else if (mi == 11) mt = 0x16;
                 else if (mi == 12) mt = 0x17;
-                else               mt = mi;
-                unsigned umask = ((unsigned*)((char*)&g_bit + 0x0))[mi * 2];
+                unsigned umask = (unsigned)g_bit[mi];
 
-                void* m = new rgl::mesh();
+                rgl::mesh* m = new rgl::mesh();
+                g_script.map_cell[ci]->local.o = center;
 
-                // cell centre (written every material iteration in the original)
-                *(float*)((char*)cell + 0x88) = ccx;
-                *(float*)((char*)cell + 0x8c) = ccy;
-                *(int*)((char*)cell + 0x90) = row;                              // 0x521d08: the row index, as an int
-                *(int*)((char*)cell + 0x94) = 0;
+                for (i = 0; i < g_script.level->ground->verts.size(); i++)
+                    fr.vert[i] = -1;
 
-                for (int i = 0; i < npts; i++) vert[i] = -1;
-
-                for (int ni = 0; ni < nnodes; ni++) {
-                    MapNode* nd = &mgr->nodes[ni];
-                    MapNavVert* p0 = &mgr->pts[nd->idx[0]];
-                    if (!(x0 <= p0->x && p0->x < x1 && y0 <= p0->y && p0->y < y1))
+                for (int ni = 0; ; ni++) {
+                    map_ground* g = (map_ground*)g_script.level->ground;
+                    if ((unsigned)ni >= g->ncells())
+                        break;
+                    NavCell& nd = g_script.level->ground->cells[ni];
+                    const rgl::vector4& p0 = g->verts[nd.ids[0]].p;
+                    if (!(lo.x <= p0.x && p0.x < hi.x && lo.y <= p0.y && p0.y < hi.y))
                         continue;
 
-                    int nf[8];
-                    for (int j = 0; j < nd->count && j < 8; j++) nf[j] = flags[nd->idx[j]];
+                    int nf[3];
+                    for (int j = 0; j < nd.npts; j++)
+                        nf[j] = fr.flags[nd.ids[j]];
+                    int f0 = nf[0], f2 = nf[2], f1 = nf[1];
 
-                    // --- material / node-type filter (0x5220xx) ---
-                    bool emit = false;
+                    // ---- material / node-type filter ----
+                    bool add = false;
                     if (mt == 0) {
-                        emit = !(nd->type != 0 && nd->type != 0xf);
+                        if (nd.ids[8] == 0 || nd.ids[8] == 0xf)
+                            add = true;
                     } else if (mt == 8) {
-                        int t = nd->type;
-                        if (t == 8 || t == 7)      emit = true;
-                        else if (t != 0)           emit = false;
-                        else emit = !((u33 & nf[0]) == 0 && (u33 & nf[1]) == 0 && (u33 & nf[2]) == 0);
+                        if (nd.ids[8] == 8 || nd.ids[8] == 7)
+                            add = true;
+                        else if (nd.ids[8] == 0 && ((water & f0) != 0 || (water & f1) != 0 || (water & f2) != 0))
+                            add = true;
                     } else if (mt == 0x15) {
-                        int t = nd->type;
-                        if (t > 0 && t != 8 && t != 0xf && t != 7 && t != 1)
-                            emit = (dist[nd->idx[0]] < 1.51f) || (dist[nd->idx[1]] < 1.51f)
-                                || (dist[nd->idx[2]] < 1.51f);
+                        if (nd.ids[8] > 0 && nd.ids[8] != 8 && nd.ids[8] != 0xf && nd.ids[8] != 7 && nd.ids[8] != 1
+                            && (fr.dist[nd.ids[0]] < 1.51f || fr.dist[nd.ids[1]] < 1.51f || fr.dist[nd.ids[2]] < 1.51f))
+                            add = true;
                     } else if (mt == 0x16 || mt == 0x17) {
-                        if (nd->type == 0)
-                            emit = (dist[nd->idx[0]] < 0.01f) || (dist[nd->idx[1]] < 0.01f)
-                                || (dist[nd->idx[2]] < 0.01f);
+                        if (nd.ids[8] == 0 && (fr.dist[nd.ids[0]] < 0.01f || fr.dist[nd.ids[1]] < 0.01f || fr.dist[nd.ids[2]] < 0.01f))
+                            add = true;
                     } else if (mt != 7 && mt != 0xf) {
-                        unsigned u18;
-                        int t = nd->type;
-                        // 0x522099: types 8 and 0 (and 7 unless mt == 9) are skipped outright; every other type is
-                        // emitted only when the material's mask hits one of the first three vertices' flags
-                        if (mt == 9) { u18 = u20;   emit = (t != 8 && t != 0); }
-                        else         { u18 = umask; emit = (t != 8 && t != 7 && t != 0); }
-                        if (emit && (u18 & nf[0]) == 0 && (u18 & nf[1]) == 0 && (u18 & nf[2]) == 0)
-                            emit = false;
-                    }
-
-                    // --- geometry emission (LAB_0052213f) ---
-                    if (emit) {
-                        for (int k = 0; k < nd->count; k++) {
-                            int pi = nd->idx[k];
-                            if (vert[pi] != -1) continue;
-                            float px = mgr->pts[pi].x;
-                            float py = mgr->pts[pi].y;
-                            float pz = mgr->pts[pi].z;
-
-                            float pw = *(float*)((char*)&mgr->pts[pi] + 0xc);          // [esp+0x60]: the 4th float of the vertex
-
-                            if (mt == 0x17) {
-                                if ((u19 & (unsigned)flags[pi]) != 0 && (u36 & (unsigned)flags[pi]) != 0) {
-                                    pz += 0.01f;                                       // 0x52246b (0x54a6f0)
-                                } else {
-                                    int nlist[64]; int ncnt = 0;
-                                    ((ChainGraph*)mgr)->build_chain(pi, ni, nlist, &ncnt);   // 0x5234e0 (target vertex, start node)
-                                    for (int a = 0; a < ncnt; ) {
-                                        int p2 = nlist[a];
-                                        if ((u19 & (unsigned)flags[p2]) == 0
-                                         || (u36 & (unsigned)flags[p2]) == 0)
-                                            nlist[a] = nlist[--ncnt];
-                                        else a++;
-                                    }
-                                    if (ncnt > 0) {
-                                        float sx = 0.0f, sy = 0.0f, sz = 0.0f;
-                                        for (int a = 0; a < ncnt; a++) {
-                                            int p2 = nlist[a];
-                                            float dx = px - mgr->pts[p2].x;
-                                            float dy = py - mgr->pts[p2].y;
-                                            float dz = pz - mgr->pts[p2].z;
-                                            float d = sqrtf(dy * dy + (dz * dz + dx * dx));
-                                            float nx_, ny_, nz_;
-                                            if (d > 1e-10f) { float inv = 1.0f / d; nx_ = dx * inv; ny_ = inv * dy; nz_ = inv * dz; }
-                                            else            { nx_ = 0.0f; ny_ = 1.0f; nz_ = 0.0f; }
-                                            float qx = px, qy = py, qz = pz;
-                                            if (d > 0.25f) {
-                                                qx = nx_ * 0.25f + mgr->pts[p2].x;
-                                                qy = ny_ * 0.25f + mgr->pts[p2].y;
-                                                qz = nz_ * 0.25f + mgr->pts[p2].z;
-                                            }
-                                            sx += qx; sy += qy; sz += qz;
-                                        }
-                                        float inv = 1.0f / (float)ncnt;
-                                        px = sx * inv;
-                                        py = inv * sy;
-                                        pz = sz * inv;
-                                    }
-                                    pz += 0.03f;                                       // 0x52245f (0x54b8b4)
-                                }
-                            }
-
-                            // add_point takes (px - cell centre x, py - cell centre y, pz, w)       0x522481..0x5224b4
-                            float prec[4];
-                            prec[0] = px - ccx; prec[1] = py - ccy; prec[2] = pz; prec[3] = 0.0f;
-                            int pidx = ((rgl::mesh*)m)->add_point((const rgl::vector4*)prec);     // 0x412f50
-
-                            // ---- per-material orientation + fractal noise ----------
-                            float uu = px * 0.1f;                                 // 0x549d7c
-                            float vv = py * 0.1f;
-
-                            float npt[4] = { px, py, pz, pw };                    // the noise input is the point itself (0x5225..)
-                            float out6[8];
-                            if (mt == 0) {
-                                float l = sqrtf(px * px + py * py);
-                                float nx_, ny_;
-                                if (l > 0.0f) { float inv = 1.0f / l; nx_ = px * inv; ny_ = inv * py; }
-                                else          { nx_ = 0.0f; ny_ = 1.0f; }
-                                vv = l * 0.1f;                                    // 0x522552: fxch st2 / fmul 0.1 / fstp [0x18]
-                                uu = (float)(atan2((double)-nx_, (double)ny_) * 10.0);   // fchs; fpatan; fmul 10.0 (0x549d74)
-                            } else if (mt == 8 || mt == 0x16 || mt == 0x17) {
-                                // rotate the uv seed pair by the map angle (mt 8: river [esp+0x11c]; foam: sea [esp+0xe8]), then
-                                // add the noise sampled at the point
-                                float ang = (mt == 8) ? ang_b : ang_a;
-                                double sa = sin((double)ang), ca = cos((double)ang);
-                                float Au = (float)(ca * uu - sa * vv);
-                                float Av = (float)(sa * uu + ca * vv);
-                                noise_fractal(6.0f, 0.7f, 3, 0, npt, out6);         // 0x414fc0
-                                if (mt == 8) {
-                                    uu = (Au + out6[0] * 0.5f) * 0.4f;               // 0x549d70 / 0x54b3b8
-                                    vv = (out6[1] * 0.5f + Av) * 0.4f;
-                                } else if (mt == 0x16) {
-                                    uu = (Au + out6[0] * 0.7f) * 2.3f;               // 0x54b3c8 / 0x591a0c
-                                    vv = (out6[1] * 0.7f + Av) * 2.3f;
-                                } else {
-                                    uu = (Au + out6[0] * 0.3f) * 5.3f;               // 0x549d68 / 0x59c088
-                                    vv = (out6[1] * 0.3f + Av) * 5.3f;
-                                }
-                            } else if (mt == 2) {
-                                uu *= 0.6f; vv *= 0.6f;                       // 0x590d94
-                            }
-
-                            // common per-vertex scale: clamp(point.s*1.3 + 0.1, 1.0)
-                            float sc = mgr->pts[pi].s * 1.3f + 0.1f;          // 0x590d90, 0x549d7c
-                            if (sc > 1.0f) sc = 1.0f;                         // 0x549cdc
-
-                            // --- three fractal passes at the point (0x5227ac..0x5228a2); only out[0] of each is used ---
-                            float na[4], nb[8], nc[4], nd2[8], ne[4], nf_[8];
-                            na[0] = px; na[1] = py; na[2] = 6810.0f; na[3] = 0.0f;   // 0x45d4d000
-                            noise_fractal(9.0f, 0.6f, 4, 0, na, nb);          // 0x41100000 / 0x3f19999a
-                            float g0 = nb[0] * 0.5f;                          // 0x549d70
-                            nc[0] = px; nc[1] = py; nc[2] = 2917.0f; nc[3] = 0.0f;   // 0x45365000
-                            noise_fractal(7.0f, 0.6f, 4, 0, nc, nd2);         // 0x40e00000
-                            float h0 = nd2[0] * 2.1f;                         // 0x590d74
-                            ne[0] = px; ne[1] = py; ne[2] = -917.0f; ne[3] = 0.0f;   // 0xc4654000
-                            noise_fractal(4.0f, 0.6f, 4, 0, ne, nf_);         // 0x40800000
-
-                            // --- colour (0x5228a3) ----------------------------------
-                            float cr = (g0 + 0.86f) * sc;                    // 0x59944c
-                            float cg = (h0 + 0.89f) * sc;                    // 0x59c084
-                            float cb = (nf_[0] * 0.6f + 0.87f) * sc;         // 0x590d94 / 0x59c080
-                            float ca_ = 1.0f;
-
-                            if (g_use_shaders == 0) {
-                                // the fixed-function lighting factor per channel (0x5228f6)
-                                float k = mgr->pts[pi].s;
-                                float la = lightM[0] * k * 1.1f + lightL[0];     // 0x54b888
-                                float lb = lightM[1] * k * 1.1f + lightL[1];
-                                float lc = lightM[2] * k * 1.1f + lightL[2];
-                                cr *= la; cg *= lb; cb *= lc;
-                            }
-
-                            bool force_sqrt = false;
-                            float dpi = dist[pi];
-                            if (mt == 0) {                                    // 0x5229c3
-                                float sd = sqrtf(dpi);
-                                if (!(sd < 5.0f)) sd = 5.0f;                 // (g_aim_range_tbl[12])
-                                float f = (g_use_shaders == 0) ? (8.0f - sd) * 0.125f      // 0x590b38 / 0x54b8a0
-                                                               : (6.0f - sd) * 0.16666667f; // 0x590b34 / 0x59c07c
-                                cr *= f; cg *= f; cb *= f;
-                                force_sqrt = (g_use_shaders == 0);
-                            } else if (mt == 8) {                             // 0x522a5d
-                                if ((u33 & (unsigned)flags[pi]) == 0) ca_ = 0.0f;
-                                cr *= 0.7f; cg *= 0.7f; cb *= 0.7f;          // 0x54b3c8
-                            } else if (mt == 0x15) {                          // 0x522a98
-                                if (dpi > 0.01f) { cr *= 0.85f; cg *= 0.85f; cb *= 0.85f; }   // 0x54a6f0 / 0x590c5c
-                                float a = 1.0f - dpi * 0.6666667f;           // 0x590aec
-                                ca_ = (a > 0.0f) ? a : 0.0f;
-                                if (nd->type == 0 && dpi > 0.01f) ca_ = 0.0f;
-                            } else if (mt == 0x16 || mt == 0x17) {            // 0x522b48
-                                if (dpi > 0.01f)                              ca_ = 0.0f;
-                                else if ((u33 & (unsigned)flags[pi]) == 0)   ca_ = 1.0f;
-                                else                                          ca_ = 0.0f;
-                            } else {                                          // 0x522b92
-                                if ((umask & (unsigned)flags[pi]) == 0) ca_ = 0.0f;
-                                if (mt == 4) { cr = cg = cb = 0.9f; }        // 0x3f666666
-                                else if ((u33 & (unsigned)flags[pi]) != 0) {
-                                    cr *= 0.65f; cg *= 0.85f; cb *= 0.7f;    // 0x590b6c / 0x590c5c / 0x54b3c8
-                                }
-                            }
-
-                            if (g_use_shaders == 0 || force_sqrt) { cr = sqrtf(cr); cg = sqrtf(cg); cb = sqrtf(cb); }
-
-                            float uv[2] = { uu, vv };
-                            float col_rec[4] = { cr, cg, cb, ca_ };
-                            unsigned col_ = rgl::pack_color((const rgl::vector4*)col_rec);     // 0x40e440
-                            int f5c_ = 0;                                                  // add_vertex dereferences this
-                            // the position argument is the vertex's normal (pts[pi] + 0x10), not the point
-                            vert[pi] = ((rgl::mesh*)m)->add_vertex(pidx, (const vec2*)uv, &col_, (const rgl::vector4*)&mgr->pts[pi].nx, &f5c_);  // 0x413c50
-                        }
-                        ((rgl::mesh*)m)->add_face(vert[nd->idx[0]], vert[nd->idx[1]], vert[nd->idx[2]]); // 0x411920
-                    }
-
-                    // --- tree-mesh selection, material 0 only (LAB_00522cb4) ---
-                    if (mi == 0) {
-                        void* chosen = 0;
-                        int t = nd->type;
-                        if (t == 0xb) {
-                        lab_cdb:
-                            if (t == 0xc) goto lab_ce0;
-                            if (t == 10) {
-                                chosen = steppe_arr[0];
-                                if (g_module_settings.tree_types[2] > 1) chosen = steppe_arr[rand() % g_module_settings.tree_types[2]];
-                            } else if (t == 0xd) {
-                                chosen = desert_arr[0];
-                                if (g_module_settings.tree_types[3] > 1) chosen = desert_arr[rand() % g_module_settings.tree_types[3]];
-                            } else {
-                                chosen = (g_module_settings.tree_types[0] < 2) ? map_arr[0]
-                                       : map_arr[rand() % g_module_settings.tree_types[0]];
-                            }
+                        if (mt == 9) {
+                            if (nd.ids[8] != 8 && nd.ids[8] != 0 && ((wood & f0) != 0 || (wood & f1) != 0 || (wood & f2) != 0))
+                                add = true;
                         } else {
-                            if (t != 0xc) {
-                                if (t != 10 && t != 0xd) goto lab_fc7;
-                                goto lab_cdb;
-                            }
-                        lab_ce0:
-                            chosen = snow_arr[0];
-                            if (g_module_settings.tree_types[1] > 1) chosen = snow_arr[rand() % g_module_settings.tree_types[1]];
+                            if (nd.ids[8] != 8 && nd.ids[8] != 7 && nd.ids[8] != 0 && ((umask & f0) != 0 || (umask & f1) != 0 || (umask & f2) != 0))
+                                add = true;
                         }
-                        if (chosen != 0) {
-                            float mat[16];
-                            identity3((rgl::mat3*)mat);                        // 0x40cd60
-                            for (int q = 12; q < 16; q++) mat[q] = 0.0f;
-                            float ang = (float)(rand() % 0x3dc9) * 0.00039724255f;          // 0x522e1e (0x54a6e0)
-                            ((rgl::matrix*)mat)->rotate_about_u(&ang);     // 0x40e770
-                            // a random point of the node's first three vertices (0x522e80): weights t = r * 6.3223e-5 + 0.2
-                            float tsx = 0.0f, tsy = 0.0f, tsz = 0.0f, tw = 0.0f;
-                            for (int q = 0; q < 3; q++) {
-                                float t = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 0.2f;   // 0x54a6bc / 0x54a6e4
-                                const MapNavVert* tp = &mgr->pts[nd->idx[q]];
-                                tsx = t * tp->x + tsx;
-                                tsy = t * tp->y + tsy;
-                                tsz = t * tp->z + tsz;
-                                tw = t + tw;
+                    }
+                    if (!add)
+                        goto no_emit;
+                    rgl::world* w = g_script.level;
+                    for (int k = 0; k < nd.npts; k++) {
+                        int& id = nd.ids[k];
+                        if (fr.vert[id] != -1)
+                            continue;
+                        rgl::vector4 p = w->ground->verts[id].p;
+                        const rgl::vector4& normal = w->ground->verts[id].n;
+
+                        if (mt == 0x17) {
+                            if ((sea & fr.flags[id]) == 0 || (land & fr.flags[id]) == 0) {
+                                int chain[128];
+                                int ncnt;
+                                ((ChainGraph*)w->ground)->build_chain(id, ni, chain, &ncnt);   // 0x5234e0 (target vertex, start node)
+                                int a = 0;
+                                while (a < ncnt) {
+                                    int f = fr.flags[chain[a]];
+                                    if ((sea & f) != 0 && (land & f) != 0)
+                                        a++;
+                                    else
+                                    {
+                                        chain[a] = chain[ncnt - 1];
+                                        ncnt--;
+                                    }
+                                }
+                                if (ncnt > 0) {
+                                    rgl::vector4 sum(0.0f, 0.0f, 0.0f);
+                                    for (a = 0; a < ncnt; a++) {
+                                        const rgl::vector4& q = g_script.level->ground->verts[chain[a]].p;
+                                        rgl::vector4 d = p - q;
+                                        float len = map_len(d);
+                                        if (len > 1e-10f) {
+                                            float inv = 1.0f / len;
+                                            d.x *= inv;
+                                            d.y = inv * d.y;
+                                            d.z = inv * d.z;
+                                        } else {
+                                            d.x = 0.0f;
+                                            d.y = 1.0f;
+                                            d.z = 0.0f;
+                                        }
+                                        if (len > 0.25f) {
+                                            rgl::vector4 r = q + d * 0.25f;
+                                            sum.x += r.x;
+                                            sum.y += r.y;
+                                            sum.z += r.z;
+                                        } else {
+                                            sum.x += p.x;
+                                            sum.y += p.y;
+                                            sum.z += p.z;
+                                        }
+                                    }
+                                    float inv = 1.0f / (float)ncnt;
+                                    sum.x *= inv;
+                                    sum.y = inv * sum.y;
+                                    sum.z = inv * sum.z;
+                                    p = sum;
+                                }
+                                p.z += 0.03f;
+                            } else {
+                                p.z += 0.01f;
                             }
-                            float tinv = 1.0f / tw;
-                            tsx *= tinv; tsy *= tinv; tsz = tsz * tinv;
-                            mat[12] = tsx - ccx;                              // 0x522f50..0x522fb2: translation (m[12..14])
-                            mat[13] = tsy - ccy;
-                            mat[14] = tsz;
-                            ((rgl::mesh*)cellmesh)->append_skinned((rgl::mesh*)chosen, (const rgl::mat4*)mat, -1, 0xffffffff, 0); // 0x44eb00
                         }
-                    lab_fc7: ;
+
+                        rgl::vector4 rel(p.x - center.x, p.y - center.y, p.z);
+                        int pidx = m->add_point(&rel);
+
+                        // ---- per-material uv ----------
+                        vec2 uv;
+                        uv.x = p.x * 0.1f;
+                        uv.y = p.y * 0.1f;
+                        if (mt == 0) {
+                            map_v2 q = *(const map_v2*)&p;
+                            float l = q.length();
+                            float nx_, ny_;
+                            if (l > 0.0f) {
+                                float inv = 1.0f / l;
+                                nx_ = q.x * inv;
+                                ny_ = inv * q.y;
+                            } else {
+                                nx_ = 0.0f;
+                                ny_ = 1.0f;
+                            }
+                            uv.y = l * 0.1f;
+                            uv.x = (float)atan2((double)-nx_, (double)ny_) * 10.0f;
+                        } else if (mt == 8) {
+                            float ca = (float)cos(river_ang), sa = (float)sin(river_ang);
+                            rgl::vector4 nz;
+                            float rx = ca * uv.x - sa * uv.y;
+                            uv.y = ca * uv.y + sa * uv.x;
+                            noise_fractal(6.0f, 0.7f, 3, 0, (const float*)&p, (float*)&nz);
+                            rgl::vector4 t = nz * 0.5f;
+                            uv.x = t.x + rx;
+                            uv.y = t.y + uv.y;
+                            uv.x *= 0.4f;
+                            uv.y *= 0.4f;
+                        } else if (mt == 0x16) {
+                            float ca = (float)cos(sea_ang), sa = (float)sin(sea_ang);
+                            rgl::vector4 nz;
+                            float rx = ca * uv.x - sa * uv.y;
+                            uv.y = ca * uv.y + sa * uv.x;
+                            noise_fractal(6.0f, 0.7f, 3, 0, (const float*)&p, (float*)&nz);
+                            rgl::vector4 t = nz * 0.7f;
+                            uv.x = rx + t.x;
+                            uv.y = t.y + uv.y;
+                            uv.x *= 2.3f;
+                            uv.y *= 2.3f;
+                        } else if (mt == 0x17) {
+                            float ca = (float)cos(sea_ang), sa = (float)sin(sea_ang);
+                            rgl::vector4 nz;
+                            float rx = ca * uv.x - sa * uv.y;
+                            uv.y = ca * uv.y + sa * uv.x;
+                            noise_fractal(6.0f, 0.7f, 3, 0, (const float*)&p, (float*)&nz);
+                            rgl::vector4 t = nz * 0.3f;
+                            uv.x = rx + t.x;
+                            uv.y = t.y + uv.y;
+                            uv.x *= 5.3f;
+                            uv.y *= 5.3f;
+                        } else if (mt == 2) {
+                            uv.x *= 0.6f;
+                            uv.y *= 0.6f;
+                        }
+
+                        // common per-vertex scale: clamp(point.level * 1.3 + 0.1, 1.0)
+                        float sc = g_script.level->ground->verts[id].level * 1.3f + 0.1f;
+                        if (sc > 1.0f)
+                            sc = 1.0f;
+
+                        // three fractal passes at the point; only out.x of each is used
+                        rgl::vector4 no;
+                        noise_fractal(9.0f, 0.6f, 4, 0, (const float*)&rgl::vector4(p.x, p.y, 6810.0f), (float*)&no);
+                        float g0 = no.x * 0.5f;
+                        noise_fractal(7.0f, 0.6f, 4, 0, (const float*)&rgl::vector4(p.x, p.y, 2917.0f), (float*)&no);
+                        float h0 = no.x * 2.1f;
+                        noise_fractal(4.0f, 0.6f, 4, 0, (const float*)&rgl::vector4(p.x, p.y, -917.0f), (float*)&no);
+
+                        // ---- colour ----
+                        rgl::vector4 c;
+                        c.x = (g0 + 0.86f) * sc;
+                        c.y = (h0 + 0.89f) * sc;
+                        c.z = (no.x * 0.6f + 0.87f) * sc;
+                        if (g_use_shaders == 0) {
+                            // the fixed-function lighting factor per channel
+                            rgl::vector4 lit = lightL + lightM * g_script.level->ground->verts[id].level * 1.1f;
+                            c.x *= lit.x;
+                            c.y *= lit.y;
+                            c.z *= lit.z;
+                        }
+                        c.w = 1.0f;
+
+                        if (mi == 0) {
+                            float& dd = fr.dist[id];
+                            float sd = (float)sqrt(dd);
+                            if (g_use_shaders != 0) {
+                                if (!(sd < 5.0f)) sd = 5.0f;
+                                map_scale(c, (6.0f - sd) * 0.16666667f);
+                            } else {
+                                if (!(sd < 5.0f)) sd = 5.0f;
+                                map_scale(c, (8.0f - sd) * 0.125f);
+                            }
+                        } else if (mt == 8) {
+                            if ((nf[k] & water) == 0)
+                                c.w = 0.0f;
+                            c.x *= 0.7f;
+                            c.y *= 0.7f;
+                            c.z *= 0.7f;
+                        } else if (mt == 0x15) {
+                            const float& dd = fr.dist[id];
+                            if (dd > 0.01f) {
+                                c.x *= 0.85f;
+                                c.y *= 0.85f;
+                                c.z *= 0.85f;
+                            }
+                            float al = 1.0f - dd * 0.6666667f;
+                            if (al > 0.0f)
+                                c.w = al;
+                            else
+                                c.w = 0.0f;
+                            if (nd.ids[8] == 0 && dd > 0.01f)
+                                c.w = 0.0f;
+                        } else if (mt == 0x16 || mt == 0x17) {
+                            if (fr.dist[id] > 0.01f)
+                                c.w = 0.0f;
+                            else
+                                c.w = (water & fr.flags[id]) != 0 ? 0.0f : 1.0f;
+                        } else {
+                            unsigned fl = nf[k];
+                            if ((fl & umask) == 0)
+                                c.w = 0.0f;
+                            if (mt == 4) {
+                                c.x = 0.9f;
+                                c.y = 0.9f;
+                                c.z = 0.9f;
+                            } else if ((fl & water) != 0) {
+                                c.x *= 0.65f;
+                                c.y *= 0.85f;
+                                c.z *= 0.7f;
+                            }
+                        }
+
+                        if (g_use_shaders == 0) {
+                            c.x = (float)sqrt(c.x);
+                            c.y = (float)sqrt(c.y);
+                            c.z = (float)sqrt(c.z);
+                        }
+
+                        fr.vert[id] = map_add_vertex(m, pidx, uv, rgl::pack_color(&c), normal, 0);
+                        w = g_script.level;
+                    }
+                    m->add_face(fr.vert[nd.ids[0]], fr.vert[nd.ids[1]], fr.vert[nd.ids[2]]);
+
+                no_emit:
+                    // ---- tree-mesh selection, material 0 only ----
+                    if (mi == 0) {
+                        int t = nd.ids[8];
+                        if (t == 0xb || t == 0xc || t == 10 || t == 0xd) {
+                            rgl::mesh* chosen;
+                            if (t == 0xc) {
+                                chosen = snow_arr[g_module_settings.tree_types[1] <= 1 ? 0 : rand() % g_module_settings.tree_types[1]];
+                            } else if (t == 10) {
+                                chosen = steppe_arr[g_module_settings.tree_types[2] <= 1 ? 0 : rand() % g_module_settings.tree_types[2]];
+                            } else if (t == 0xd) {
+                                chosen = desert_arr[g_module_settings.tree_types[3] <= 1 ? 0 : rand() % g_module_settings.tree_types[3]];
+                            } else {
+                                chosen = map_arr[g_module_settings.tree_types[0] <= 1 ? 0 : rand() % g_module_settings.tree_types[0]];
+                            }
+                            if (chosen != 0) {
+                                rgl::mat3 rot;
+                                rgl::matrix frame = map_frame(*rgl::identity3(&rot), rgl::vector4(0.0f, 0.0f, 0.0f));
+                                float ang = (float)(rand() % 0x3dc9) * 0.00039724255f;
+                                frame.rotate_about_u(&ang);
+                                // a random point of the node's first three vertices: weights t = r * 6.3223e-5 + 0.2
+                                rgl::vector4 s(0.0f, 0.0f, 0.0f);
+                                float tw = 0.0f;
+                                for (int q = 0; q < 3; q++) {
+                                    float w = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 0.2f;
+                                    const rgl::vector4& tp = g_script.level->ground->verts[nd.ids[q]].p;
+                                    map_add(s, tp * w);
+                                    tw += w;
+                                }
+                                float tinv = 1.0f / tw;
+                                s.x *= tinv;
+                                s.y *= tinv;
+                                s.z *= tinv;
+                                rgl::vector4 ofs;
+                                ofs.x = s.x - center.x;
+                                ofs.y = s.y - center.y;
+                                ofs.z = s.z;
+                                frame.o = ofs;
+                                cellmesh->append_skinned(chosen, &frame, -1, 0xffffffff, 0); // 0x44eb00
+                            }
+                        }
                     }
                 }
 
-                // --- finalize the per-material mesh (0x522ecf) ---
-                if (!m) {
-                    // nothing
-                } else if (*(void**)((char*)m + 0x94) == 0
-                        || (*(void**)((char*)m + 0x98) == *(void**)((char*)m + 0x94))) {
-                    ((MapObjView*)m)->del(1);                                // 0x5231d7: push 1, call [vt]
+                // ---- finalize the per-material mesh ----
+                if (m->v90.size() != 0) {
+                    m->res = ((GameMapView*)this)->terrain_material(mt);
+                    ((NibbleObj*)m)->set_nibble(mi - 6);
+                    m->mask = 0x17fff;
+                    m->compute_bounds();
+                    add_cell_mesh(g_script.map_cell[ci], m);
+                    if (mt == 0)
+                        ((std::vector<rgl::mesh*>&)g_script.mat_type0).push_back(m);
+                    else if (mt == 8)
+                        ((std::vector<rgl::mesh*>&)g_script.mat_river).push_back(m);
+                    else if (mt == 0x16)
+                        ((std::vector<rgl::mesh*>&)g_script.mat_sea).push_back(m);
+                    else if (mt == 0x17)
+                        ((std::vector<rgl::mesh*>&)g_script.mat_sea2).push_back(m);
                 } else {
-                    *(void**)((char*)m + 0x2c) = terrain_material(mt);     // 0x523390
-                    ((NibbleObj*)m)->set_nibble(mi - 6);                // 0x523360 (add eax,-6 on the loop index)
-                    *(int*)((char*)m + 0x10c) = 0x17fff;
-                    ((rgl::mesh*)m)->compute_bounds();                     // 0x419300
-
-                    RawVec cv;
-                    cv.first = *(void***)((char*)cell + 0x11c);
-                    cv.last  = *(void***)((char*)cell + 0x120);
-                    cv.end   = *(void***)((char*)cell + 0x124);
-                    if (cv.first == 0 || cv.end <= cv.last) {
-                        ((int_stdvec*)&cv)->insert_n((int*)cv.last, 1, *(int*)&m);      // 0x410610
-                        *(void***)((char*)cell + 0x11c) = cv.first;
-                        *(void***)((char*)cell + 0x120) = cv.last;
-                        *(void***)((char*)cell + 0x124) = cv.end;
-                    } else {
-                        *cv.last = m;
-                        *(void***)((char*)cell + 0x120) = cv.last + 1;
-                    }
-                    ((MapObjView*)cell)->finalize();                         // 0x52308a: call [vt+0x10]
-
-                    RawVec* mv = 0;
-                    if (mt == 0)       mv = &g_script.mat_type0;
-                    else if (mt == 8)  mv = &g_script.mat_river;
-                    else if (mt == 0x16) mv = &g_script.mat_sea;
-                    else if (mt == 0x17) mv = &g_script.mat_sea2;
-                    if (mv) {
-                        if (mv->first == 0 || mv->end <= mv->last)
-                            ((int_stdvec*)mv)->insert_n((int*)mv->last, 1, *(int*)&m);
-                        else { *mv->last = m; mv->last++; }
-                    }
+                    delete m;
                 }
             }
 
-            // --- finalize the cell mesh (0x522f7e) ---
-            if (!cellmesh) {
-                // nothing
-            } else if (*(void**)((char*)cellmesh + 0x94) == 0
-                    || (*(void**)((char*)cellmesh + 0x98) == *(void**)((char*)cellmesh + 0x94))) {
-                ((MapObjView*)cellmesh)->del(1);                              // scalar deleting destructor
+            // ---- finalize the cell mesh ----
+            if (cellmesh->v90.size() != 0) {
+                cellmesh->res = g_resmgr.get_material(RStr("map_trees"));
+                ((NibbleObj*)cellmesh)->set_nibble(2);
+                cellmesh->mask = 0x1ffff;
+                cellmesh->compute_bounds();
+                add_cell_mesh(g_script.map_cell[ci], cellmesh);
+                ((GameMapView*)this)->ents.push_back(cellmesh);
             } else {
-                char name_buf[0x40];
-                tstring* name = new (name_buf) tstring("map_trees");           // 0x42bbe0 / 0x59c070
-                *(void**)((char*)cellmesh + 0x2c) = g_resmgr.get_material(*name); // 0x418a70
-                name->~tstring();                                               // 0x42bc40
-                ((NibbleObj*)cellmesh)->set_nibble(2);                     // 0x523360
-                *(int*)((char*)cellmesh + 0x10c) = 0x1ffff;
-                ((rgl::mesh*)cellmesh)->compute_bounds();                  // 0x419300
-
-                RawVec cv;
-                cv.first = *(void***)((char*)cell + 0x11c);
-                cv.last  = *(void***)((char*)cell + 0x120);
-                cv.end   = *(void***)((char*)cell + 0x124);
-                if (cv.first == 0 || cv.end <= cv.last) {
-                    ((int_stdvec*)&cv)->insert_n((int*)cv.last, 1, *(int*)&cellmesh);
-                    *(void***)((char*)cell + 0x11c) = cv.first;
-                    *(void***)((char*)cell + 0x120) = cv.last;
-                    *(void***)((char*)cell + 0x124) = cv.end;
-                } else {
-                    *cv.last = cellmesh;
-                    *(void***)((char*)cell + 0x120) = cv.last + 1;
-                }
-                ((MapObjView*)cell)->finalize();
-
-                RawVec ev;
-                ev.first = self->ents;
-                ev.last  = self->ents_last;
-                ev.end   = self->ents_end;
-                if (ev.first == 0 || ev.end <= ev.last) {
-                    ((int_stdvec*)&ev)->insert_n((int*)ev.last, 1, *(int*)&cellmesh);
-                    self->ents = ev.first; self->ents_last = ev.last; self->ents_end = ev.end;
-                } else {
-                    *ev.last = cellmesh;
-                    self->ents_last = ev.last + 1;
-                }
+                delete cellmesh;
             }
         }
     }
-
-    tmp->~tstring();                                                            // 0x42bc40
-
-    delete[] scratch;
 }
 
 
@@ -828,7 +845,7 @@ void NibbleObj::set_nibble(int v)
 }
 
 // @ 0x523390
-skin* __stdcall terrain_material(int type)
+skin* GameMapView::terrain_material(int type)
 {
     if (type == 0)
         return g_resmgr.get_material(RStr("map_ocean"));
@@ -917,14 +934,15 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
 }
 
 // @ 0x523630
-void __stdcall scan_arrays(void* p, int unused)
+void GameMapView::scan_arrays(void* p, void* unused)
 {
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((rgl::world*)g_script.level)->ground)->a_size(); i++)
-        *(int*)((char*)p + 0xc3500) = (int)0xcb189680;
+    unsigned i;
+    for (i = 0; i < g_script.level->ground->verts.size(); i++)
+        *(volatile int*)((char*)p + 0xc3500) = (int)0xcb189680;
     char buf[100000];
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((rgl::world*)g_script.level)->ground)->b_size(); i++)
+    for (i = 0; i < g_script.level->ground->cells.size(); i++)
         buf[i] = 0;
-    for (unsigned i = 0; i < (unsigned)((SceneArrays*)((rgl::world*)g_script.level)->ground)->b_size(); i++)
+    for (i = 0; i < g_script.level->ground->cells.size(); i++)
         ;
 }
 
@@ -948,14 +966,15 @@ void Game::load_game_data(int extra_triggers)
     in_factions.r_tstr(RSTR(&str2));
     int version;
     in_factions.r_int(&version);
-    in_factions.r_int(&nfactions);
-    if (nfactions > 0x80)
-        mb_error("Too Many Factions: %d (Max should be %d)", nfactions, 0x80);
+    int& nf = nfactions;
+    in_factions.r_int(&nf);
+    if (nf > 0x80)
+        mb_error("Too Many Factions: %d (Max should be %d)", nf, 0x80);
     delete[] (FactionFile*)factions;
     factions = 0;
-    factions = (Faction*)new FactionFile[nfactions];
-    for (int i = 0; i < nfactions; i++)
-        ((FactionFile*)factions)[i].read_file(s_factions, nfactions);
+    factions = (Faction*)new FactionFile[nf];
+    for (int i = 0; i < nf; i++)
+        ((FactionFile*)factions)[i].read_file(in_factions, nf);
     s_factions.failed = 1;
 
     // ---- skills.txt -------------------------------------------------------------------------------------
@@ -965,11 +984,12 @@ void Game::load_game_data(int extra_triggers)
         if (!OPEN_READ_TEXT(s_skills, path))
             mb_error("Unable to open %s", path);
     }
+    stream_base& in_skills = s_skills;
     int skill_count;
-    s_skills.r_int(&skill_count);
+    in_skills.r_int(&skill_count);
     int i;
-    for (i = 0; i < skill_count && i < 42; i++)
-        read_skill(s_skills, g_skill_tbl[i]);
+    for (i = 0; i < (skill_count > 42 ? 42 : skill_count); i++)
+        read_skill(in_skills, g_skill_tbl[i]);
     for (; i < 42; i++) {
         g_skill_tbl[i].max_rank = 0;
         g_skill_tbl[i].cap = 0;
@@ -991,15 +1011,17 @@ void Game::load_game_data(int extra_triggers)
         if (!OPEN_READ_TEXT(s_troops, path))
             mb_error("Unable to open %s", path);
     }
-    s_troops.r_tstr(RSTR(&str1));
-    s_troops.r_tstr(RSTR(&str2));
-    s_troops.r_int(&version);
-    s_troops.r_int(&ntroops);
+    stream_base& in_troops = s_troops;
+    in_troops.r_tstr(RSTR(&str1));
+    in_troops.r_tstr(RSTR(&str2));
+    in_troops.r_int(&version);
+    int& c_troops = ntroops;
+    in_troops.r_int(&c_troops);
     delete[] (TroopFile*)troops;
     troops = 0;
-    troops = (Troop*)new TroopFile[ntroops];
+    troops = (Troop*)new TroopFile[c_troops];
     for (int j = 0; j < ntroops; j++)
-        ((TroopFile*)troops)[j].read_file(s_troops);
+        ((TroopFile*)troops)[j].read_file(in_troops);
     s_troops.failed = 1;
 
     // ---- scenes.txt -------------------------------------------------------------------------------------
@@ -1009,15 +1031,17 @@ void Game::load_game_data(int extra_triggers)
         if (!OPEN_READ_TEXT(s_scenes, path))
             mb_error("Unable to open %s", path);
     }
-    s_scenes.r_tstr(RSTR(&str1));
-    s_scenes.r_tstr(RSTR(&str2));
-    s_scenes.r_int(&version);
-    s_scenes.r_int(&nparties);
+    stream_base& in_scenes = s_scenes;
+    in_scenes.r_tstr(RSTR(&str1));
+    in_scenes.r_tstr(RSTR(&str2));
+    in_scenes.r_int(&version);
+    int& c_scenes = nparties;
+    in_scenes.r_int(&c_scenes);
     delete[] (SceneFile*)parties;
     parties = 0;
-    parties = (char*)new SceneFile[nparties];
+    parties = (char*)new SceneFile[c_scenes];
     for (int k = 0; k < nparties; k++)
-        ((SceneFile*)parties)[k].read_file(s_scenes);
+        ((SceneFile*)parties)[k].read_file(in_scenes);
     s_scenes.failed = 1;
 
     // ---- quests.txt -------------------------------------------------------------------------------------
@@ -1027,15 +1051,17 @@ void Game::load_game_data(int extra_triggers)
         if (!OPEN_READ_TEXT(s_quests, path))
             mb_error("Unable to open %s", path);
     }
-    s_quests.r_tstr(RSTR(&str1));
-    s_quests.r_tstr(RSTR(&str2));
-    s_quests.r_int(&version);
-    s_quests.r_int(&nquests);
+    stream_base& in_quests = s_quests;
+    in_quests.r_tstr(RSTR(&str1));
+    in_quests.r_tstr(RSTR(&str2));
+    in_quests.r_int(&version);
+    int& c_quests = nquests;
+    in_quests.r_int(&c_quests);
     delete[] (QuestFile*)quests;
     quests = 0;
-    quests = (QuestRec*)new QuestFile[nquests];
+    quests = (QuestRec*)new QuestFile[c_quests];
     for (int n = 0; n < nquests; n++)
-        ((QuestFile*)quests)[n].read_file(s_quests);
+        ((QuestFile*)quests)[n].read_file(in_quests);
     s_quests.failed = 1;
 
     // ---- triggers.txt -----------------------------------------------------------------------------------
@@ -1045,10 +1071,11 @@ void Game::load_game_data(int extra_triggers)
         if (!OPEN_READ_TEXT(s_triggers, path))
             mb_error("Unable to open %s", path);
     }
-    s_triggers.r_tstr(RSTR(&str1));
-    s_triggers.r_tstr(RSTR(&str2));
-    s_triggers.r_int(&version);
-    ((TriggerVec*)&triggers)->resize(s_triggers, "Game Triggers");
+    stream_base& in_triggers = s_triggers;
+    in_triggers.r_tstr(RSTR(&str1));
+    in_triggers.r_tstr(RSTR(&str2));
+    in_triggers.r_int(&version);
+    ((TriggerVec*)&triggers)->resize(in_triggers, "Game Triggers");
     s_triggers.failed = 1;
 
     // ---- simple_triggers.txt ----------------------------------------------------------------------------
@@ -1058,43 +1085,38 @@ void Game::load_game_data(int extra_triggers)
         if (!OPEN_READ_TEXT(s_simple, path))
             mb_error("Unable to open %s", path);
     }
-    s_simple.r_tstr(RSTR(&str1));
-    s_simple.r_tstr(RSTR(&str2));
-    s_simple.r_int(&version);
-    int first = ((GameVec*)&simple)->resize(s_simple, "Simple trigger", extra_triggers);
+    stream_base& in_simple = s_simple;
+    in_simple.r_tstr(RSTR(&str1));
+    in_simple.r_tstr(RSTR(&str2));
+    in_simple.r_int(&version);
+    int first = ((GameVec*)&simple)->resize(in_simple, "Simple trigger", extra_triggers);
     s_simple.failed = 1;
 
     // one extra simple trigger per script emitter whose delay is non-negative
-    if (g_scripts.count > 0) {
-        rec34* e = (rec34*)g_scripts.records;
+    for (int idx = 0; idx < g_scripts.count; idx++) {
         int off = first * 0x30;
-        int idx = 0;
-        do {
-            if (e->f14 >= 0.0f) {
-                SimpleTrigger* rec = (SimpleTrigger*)((char*)simple.array + off);
-                rec->f0 = *(int*)&e->f14;
-                rec->stmt.init(1, idx);
-                off += 0x30;
-            }
-            idx++;
-            e = (rec34*)((char*)e + 0x34);
-        } while (idx < g_scripts.count);
+        if (((rec34*)g_scripts.records)[idx].f14 >= 0.0f) {
+            SimpleTrigger* rec = (SimpleTrigger*)((char*)simple.array + off);
+            rec->f0 = *(int*)&((rec34*)g_scripts.records)[idx].f14;
+            rec->stmt.init(1, idx);
+            first++;
+        }
     }
 
     // ---- combat parameter records (six records of four floats at +0x13b64) ------------------------------
     float* c = (float*)recs;
-    c[2] = 3.0f;      c[3] = 3.0f;                       // record 0 tail
-    c[16] = -100.0f;  c[17] = -50.0f;                    // record 4 head
-    c[6] = 5.0f;      c[7] = 1.0f;                       // record 1 tail
-    c[18] = 100.0f;   c[19] = -50.0f;                    // record 4 tail
-    c[10] = 1.0f;     c[11] = -3.0f;                     // record 2 tail
-    c[20] = -100.0f;  c[21] = 50.0f;                     // record 5 head
-    c[14] = -5.0f;    c[15] = -3.0f;                     // record 3 tail
-    c[22] = 100.0f;   c[23] = 50.0f;                     // record 5 tail
+    *(map_v2*)&c[2] = map_v2(3.0f, 3.0f);                // record 0 tail
+    *(map_v2*)&c[16] = map_v2(-100.0f, -50.0f);          // record 4 head
+    *(map_v2*)&c[6] = map_v2(5.0f, 1.0f);                // record 1 tail
+    *(map_v2*)&c[18] = map_v2(100.0f, -50.0f);           // record 4 tail
+    *(map_v2*)&c[10] = map_v2(1.0f, -3.0f);              // record 2 tail
+    *(map_v2*)&c[20] = map_v2(-100.0f, 50.0f);           // record 5 head
+    *(map_v2*)&c[14] = map_v2(-5.0f, -3.0f);             // record 3 tail
     c[0] = 23.0f;     c[1] = 0.2f;                       // record 0 head
     c[4] = 15.0f;     c[5] = 0.1f;                       // record 1 head
     c[8] = 11.0f;     c[9] = 0.9f;                       // record 2 head
     c[12] = 3.0f;     c[13] = 0.3f;                      // record 3 head
+    *(map_v2*)&c[22] = map_v2(100.0f, 50.0f);            // record 5 tail
 }
 
 // the engine's fast float floor: bias non-positive values by (1 - 2^-24), then truncate
@@ -1186,7 +1208,7 @@ void TroopFile::read_file(stream_base& s)
 }
 
 // @ 0x524690
-void QuestFile::read_file(stream_base& s)
+__declspec(noinline) void QuestFile::read_file(stream_base& s)
 {
     s.r_tstr(RSTR(&f54));
     s.r_tstr(RSTR(&f0));

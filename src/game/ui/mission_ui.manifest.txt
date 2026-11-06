@@ -102,6 +102,8 @@
 ../src/game/ui/mission_ui.cpp  ?kind@UiA@@UAEHXZ  0048b1f0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?key@UiA@@UAEDI@Z  0048b200  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ??_GMissionUi@@UAEPAXI@Z  00502300  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?sl_roll_party@GameData@@QAEHHH@Z  00489e70  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?render@MissionUi@@UAEXPAUscene@rgl@@PAMHH@Z  00488720  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?first@Sel@@QAE?AUvector4@rgl@@XZ  00489890  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?setup@MissionView@@QAEXPAXPAH1@Z  004897a0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?remove_row@Party@@QAEPAHPAHH0@Z  00489540  /O2 /MT /Gy /TP

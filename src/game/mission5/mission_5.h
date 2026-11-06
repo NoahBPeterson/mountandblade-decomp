@@ -199,7 +199,7 @@ struct DialogMgr_s257f0 {
 };
 
 
-int find_listener_agent();                          // 0x526130 (defined in slice s00526130)
+                          // 0x526130 (defined in slice s00526130)
 
 
 // ---- the view object (only the members this function touches) --------------------------------------------
@@ -213,6 +213,8 @@ struct ViewObj_s257f0 {
     float blend;                                    // +0x11d4
     char started;                                   // +0x11d8
     __declspec(noinline) void update();                                  // 0x5257f0
+    int find_speaker_agent();                                            // 0x526070 (thiscall: the callers load ecx)
+    int find_listener_agent();                                           // 0x526130
 };
 
 struct vec3_s257f0 {
@@ -330,7 +332,9 @@ struct KeyReady_s261e0 {
 struct Agent_s261e0;
 struct AgentTable_s261e0 {
     int  count;                                         // +0
-    char pad4[0x0c];
+    char pad4[0x10];
+    std::vector<Agent_s261e0*> pages;                   // +0x14 (first at +0x18; id >> 4 -> page of 16 agents)
+    __forceinline Agent_s261e0* at(unsigned id);
     __forceinline int  first_used();                                  // 0x43b1b0
     __forceinline void next_used(unsigned* i);                        // 0x43b160 (ret 4)
 };
@@ -345,6 +349,7 @@ struct Agent_s261e0 {
     int  f88;                                           // +0x88
     char pad8c[0x1c4 - 0x8c];
     int  f1c4;                                          // +0x1c4 (kind)
+    char pad1c8[0x5928 - 0x1c8];
     __forceinline bool is_enemy(const Agent_s261e0* o) const;                // 0x432350 (ret 4)
 };
 
@@ -532,10 +537,31 @@ static __forceinline bool any_pressed_s261e0(const int* keys, int n)
     return r;
 }
 
-static __forceinline Agent_s261e0* page_agent_s261e0(int id)
+__forceinline Agent_s261e0* AgentTable_s261e0::at(unsigned id) { return pages[id >> 4] + (id & 0xf); }
+static __forceinline Agent_s261e0* page_agent_s261e0(Mission_s261e0* m, unsigned id)
 {
-    char** pages = *(char***)((char*)g_mission_s261e0 + 0x1c);
-    return (Agent_s261e0*)(pages[id >> 4] + (id & 0xf) * 0x5928);
+    return ((AgentTable_s261e0*)((char*)m + 4))->at(id);
+}
+
+// one 0x1c8-byte per-item record of the mission's vector at +0x6688
+struct MissionItem_s261e0 {
+    char pad0[0x18c];
+    int  f18c;                                          // +0x18c
+    char pad190[0x1a0 - 0x190];
+    int  f1a0;                                          // +0x1a0
+    int  f1a4;                                          // +0x1a4
+    char pad1a8[0x1c8 - 0x1a8];
+};
+static __forceinline std::vector<MissionItem_s261e0>& item_vec_s261e0()
+{
+    return *(std::vector<MissionItem_s261e0>*)((char*)g_mission_s261e0 + 0x6688);
+}
+
+// the mission template's bit 1 (flags at +0x20; shr; test r8,1)
+static inline bool template_bit1_s261e0(int id)
+{
+    unsigned f = *(unsigned*)((char*)g_mission_templates + id * 0x58 + 0x20);
+    return ((f >> 1) & 1) != 0;
 }
 
 static __forceinline int* rec_base_s261e0(int id)
@@ -751,7 +777,7 @@ struct AgentTable_s284a0 {
     Agent_s284a0** pages;                                      // +0x18 (first page pointer; mission+0x1c)
     __forceinline void next_used(unsigned* i);                        // 0x43b160
     __forceinline int first_used();                                   // 0x43b1b0
-    Agent_s284a0* get(unsigned id);                            // 0x43b1f0
+    __forceinline Agent_s284a0* get(unsigned id);              // 0x43b1f0
 };
 
 struct Agent_s284a0 {                                          // 0x5928 bytes
@@ -1413,6 +1439,7 @@ struct Screen_s2ae70 {
     Entity_s2ae70*    f6740;                                   // +0x6740
 
     __declspec(noinline) void init_order_markers();                          // 0x52ae70
+ __forceinline int vtx(int p, const rgl::vec2_s2ae70& uv, const unsigned& color, const rgl::vector4& n, const int& zero);
     __declspec(noinline) void order_tick();                                  // 0x52b300
     void draw_order_menu();                             // 0x52b3c0
 };
@@ -1690,6 +1717,7 @@ struct Agent {
     ItemRef slot_pair(int) const;   // 0x432790
 };
 struct AgentTable {
+    struct Agent* get(unsigned id);   // 0x43b1f0
     int first_used();   // 0x43b1b0
     void next_used(unsigned*);   // 0x43b160
 };
@@ -1783,6 +1811,7 @@ __forceinline void Flags5e291c_s261e0::commit(char* a0) { ((MapFlags*)this)->com
 
 __forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot(a0); }
 __forceinline float MissionSub_s261e0::elapsed() const { return ((Timer*)this)->elapsed(); }
+__forceinline Agent_s284a0* AgentTable_s284a0::get(unsigned id) { return (Agent_s284a0*)((AgentTable*)this)->get(id); }
 __forceinline bool Agent_s29130::f100_is_0x48_and_charged() const { return ((AgentX*)this)->f100_is_0x48_and_charged(); }
 __forceinline int AgentTable_s257f0::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline int AgentTable_s26130::first_used() { return ((AgentTable*)this)->first_used(); }

@@ -141,7 +141,8 @@ def main():
     ap.add_argument("--filter")
     ap.add_argument("--out", default="work/near_miss.json")
     a = ap.parse_args()
-    img = E.context()["img"]
+    import resolve as R
+    img = R.Image()
     todo = {s: v for s, v in rows().items() if not a.filter or a.filter in s}
     out = {}
     with ThreadPoolExecutor(a.jobs) as ex:

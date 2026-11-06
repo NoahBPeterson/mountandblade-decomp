@@ -48,12 +48,19 @@ void aabb::extend_box(const aabb* b, const matrix* m)
         c[6][0] = b->min.x; c[6][1] = b->max.y; c[6][2] = b->max.z;
         c[7][0] = b->max.x; c[7][1] = b->max.y; c[7][2] = b->max.z;
         for (int i = 0; i < 8; i++) {
-            float* q = c[i];
             vector4 p;
-            p.x = q[1] * m->f.x + q[2] * m->u.x + q[0] * m->s.x + m->o.x;
-            p.y = m->u.y * q[2] + q[0] * m->s.y + q[1] * m->f.y + m->o.y;
-            float t = m->s.z * q[0] + q[1] * m->f.z;   // the temporary keeps the (x, y) pair summed first
-            p.z = t + q[2] * m->u.z + m->o.z;
+            float x = c[i][1] * m->f.x;
+            x = x + c[i][2] * m->u.x;
+            x = x + c[i][0] * m->s.x;
+            p.x = x + m->o.x;
+            float y = c[i][2] * m->u.y;
+            y = y + c[i][0] * m->s.y;
+            y = y + c[i][1] * m->f.y;
+            p.y = y + m->o.y;
+            float z = m->s.z * c[i][0];
+            z = z + c[i][1] * m->f.z;
+            z = z + c[i][2] * m->u.z;
+            p.z = z + m->o.z;
             extend(&p);
         }
     }

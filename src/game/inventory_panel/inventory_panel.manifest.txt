@@ -7,3 +7,4 @@
 ../src/game/inventory_panel/inventory_panel.cpp  ?compute@PartyWindow@@QAEXPAHH@Z  00512960  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?set_slot_value@PartyWindow@@QAEXHHH@Z  005132e0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?or_slot_flag@PartyWindow@@QAEXHH@Z  00513320  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?add_cost@PartyWindow@@QAEXH@Z  00513360  /O2 /MT /Gy /TP

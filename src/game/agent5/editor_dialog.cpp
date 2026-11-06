@@ -89,14 +89,13 @@ struct PickedVec { int alloc; int* first; int* last; int* end; };      // a loca
 #define EDIT_OBJ ((char*)g_editor + 0x6698)
 INT_PTR __stdcall options_dlg_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
 
+struct SelFrame { int v[16]; };                     // a terrain's frame (+0x18..+0x58)
+struct MeshFlag { char pad[0x4c]; int flag; };     // a terrain mesh (flag at +0x4c, toggled by the mirror buttons)
 struct EditorGameView {
     char pad0[0x1a094];
     unsigned mode;          // +0x1a094  0..4: active transform mode (0 = default/brush)
     int   rt_flag;          // +0x1a098  "scale everything" toggle
-    float rt_x;             // +0x1a09c
-    float rt_y;             // +0x1a0a0
-    float rt_z;             // +0x1a0a4
-    float rt_w;             // +0x1a0a8
+    rgl::vector4 rt;        // +0x1a09c
     int   rt_extra;         // +0x1a0ac
     char  pad1a0b0[0x1a0bc - 0x1a0b0];
     int   combo_sel;        // +0x1a0bc
@@ -107,31 +106,40 @@ struct EditorGameView {
     float mx, my, mz;       // +0x1a0d4  slider 1: [mode 1], [mode 2], [default]
     float sx, sy, sz;       // +0x1a0e0  slider 2
     float tx, ty, tz;       // +0x1a0ec  slider 3
-    float col_r, col_g, col_b, col_a;   // +0x1a0f8
+    rgl::vector4 col;       // +0x1a0f8
     int   axis;             // +0x1a108  0/1/2 (radio buttons 0x474..0x476)
-    int   sel_copy[16];     // +0x1a10c  copy of a terrain's +0x18..+0x58
-    char  pad1a14c[0x1a1b4 - 0x1a14c];
+    SelFrame sel_copy;      // +0x1a10c  copy of a terrain's +0x18..+0x58
+    char  pad1a14c[0x1a150 - 0x1a14c];
+    Timer timer;            // +0x1a150
+    char  pad1a158[0x1a1a4 - 0x1a150 - sizeof(Timer)];
+    rgl::vector4 quad;      // +0x1a1a4
     int   sel_index;        // +0x1a1b4  selected terrain (-1 = none)
-    int   sel_alloc;        // +0x1a1b8  (GAME_VEC: the vector<int> of the selected terrains starts here)
-    int*  sel_array;        // +0x1a1bc  selected terrain indices, sel_count() long
-    char  pad1a1c0[0x1a1cc - 0x1a1c0];
+    IntVec sel;             // +0x1a1b8  the selected terrain indices
+    char  pad1a1c8[0x1a1cc - 0x1a1b8 - sizeof(IntVec)];
     int   dirty;            // +0x1a1cc
     unsigned sub_mode;      // +0x1a1d0
 };
 // the layout the original addresses (ours had lost three gaps: combo_sel, flag_c8.. and sel_index.. were 12, 20 and 0x48 bytes early)
 typedef char EditorGameView_check[offsetof(EditorGameView, combo_sel) == 0x1a0bc && offsetof(EditorGameView, flag_c8) == 0x1a0c8
     && offsetof(EditorGameView, mx) == 0x1a0d4 && offsetof(EditorGameView, axis) == 0x1a108 && offsetof(EditorGameView, sel_copy) == 0x1a10c
-    && offsetof(EditorGameView, sel_index) == 0x1a1b4 && offsetof(EditorGameView, sel_array) == 0x1a1bc
+    && offsetof(EditorGameView, sel_index) == 0x1a1b4 && offsetof(EditorGameView, sel) == 0x1a1b8
     && offsetof(EditorGameView, dirty) == 0x1a1cc && offsetof(EditorGameView, sub_mode) == 0x1a1d0 ? 1 : -1];
 
+struct EditorMeshObj {                // the object a terrain / the edit scene holds: its meshes
+    char  pad0[0x118];
+    std::vector<MeshFlag*> meshes;    // +0x118
+};
+
 struct EditorTerrainView {            // 0x1c8 bytes
-    char  pad0[0x158];
+    char  pad0[0x18];
+    SelFrame frame;         // +0x18
+    char  pad58[0x158 - 0x58];
     float rx, ry, rz;       // +0x158  scale components
     char  pad164[0x1a0 - 0x164];
     unsigned field_1a0;     // +0x1a0
     unsigned field_1a4;     // +0x1a4
     char  pad1a8[0x1b4 - 0x1a8];
-    int   obj;              // +0x1b4
+    EditorMeshObj* obj;     // +0x1b4
     char  pad1b8[0x1c8 - 0x1b8];
 };
 
@@ -140,661 +148,621 @@ struct EditorSceneView {
     int   brush_count;      // +0x63d0
     char  pad63d4[0x63ec - 0x63d4];
     int   brush_first;      // +0x63ec  brush_count records, 0x18 apart (index at +0)
-    char  pad63f0[0x668c - 0x63f0];
-    EditorTerrainView* world;         // +0x668c  array of 0x1c8-byte terrain objects
-    char  pad6690[0x6710 - 0x6690];
+    char  pad63f0[0x651c - 0x63f0];
+    int   object_kind;      // +0x651c
+    char  pad6520[0x65e4 - 0x6520];
+    EditorMeshObj* edit_obj;  // +0x65e4
+    char  pad65e8[0x6688 - 0x65e8];
+    std::vector<EditorTerrainView> world;   // +0x6688 (first at +0x668c)  the 0x1c8-byte terrain objects
+    char  pad6698[0x6710 - 0x6688 - sizeof(std::vector<EditorTerrainView>)];
     int   sel_count2;       // +0x6710
     char  pad6714[0x6744 - 0x6714];
     char  need_redraw[3];   // +0x6744..0x6746  per-sub-mode redraw flags
 };
 
-static inline EditorTerrainView* terrain(int i) { return (EditorTerrainView*)((char*)g_editor->world + i * 0x1c8); }
-
 #include "../config/core.h"       // GameApp (hinstance = +0x358, m_hMapEditorDlg = +0x374)
 
 // @ 0x4fe860
 LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (msg == WM_COMMAND) {
-        goto command;
-    }
-    if (msg <= WM_COMMAND) {
-        if (msg == WM_NOTIFY) {
-            switch (wParam & 0xffff) {
-            case 0x472: {
-                LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_GETPOS, 0, 0);
-                float f = (float)v;
-                double d;
-                if (g_game_ed->mode == 2) {
-                    g_game_ed->my = f;
-                    d = (double)g_game_ed->my;
-                } else if (g_game_ed->mode == 1) {
-                    g_game_ed->mx = f;
-                    d = (double)g_game_ed->mx;
-                } else {
-                    g_game_ed->mz = f;
-                    d = (double)g_game_ed->mz;
-                }
-                char buf[512];
-                sprintf(buf, "%1.0f", d);
-                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
-                return 0;
-            }
-            case 0x473: {
-                LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_GETPOS, 0, 0);
-                float f = (float)v * 0.01f;
-                double d;
-                if (g_game_ed->mode == 2) {
-                    g_game_ed->sy = f;
-                    d = (double)g_game_ed->sy;
-                } else if (g_game_ed->mode == 1) {
-                    g_game_ed->sx = f;
-                    d = (double)g_game_ed->sx;
-                } else {
-                    g_game_ed->sz = f;
-                    d = (double)g_game_ed->sz;
-                }
-                char buf[512];
-                sprintf(buf, "%1.2f", d);
-                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
-                return 0;
-            }
-            case 0x477: {
-                LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_GETPOS, 0, 0);
-                float f = (float)v * 0.01f;
-                double d;
-                if (g_game_ed->mode == 2) {
-                    g_game_ed->ty = f;
-                    d = (double)g_game_ed->ty;
-                } else if (g_game_ed->mode == 1) {
-                    g_game_ed->tx = f;
-                    d = (double)g_game_ed->tx;
-                } else {
-                    g_game_ed->tz = f;
-                    d = (double)g_game_ed->tz;
-                }
-                char buf[512];
-                sprintf(buf, "%1.2f", d);
-                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
-                return 0;
-            }
-            case 0x4c8:
-            case 0x4c9:
-            case 0x4ca: {
-                int r = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_GETPOS, 0, 0);
-                int g = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_GETPOS, 0, 0);
-                int b = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_GETPOS, 0, 0);
-                char num[64];
-                char text[64];
-                _itoa(r, num, 10);
-                GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
-                if (strcmp(num, text) != 0)
-                    SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, num);
-                _itoa(g, num, 10);
-                GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
-                if (strcmp(num, text) != 0)
-                    SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, num);
-                _itoa(b, num, 10);
-                GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
-                if (strcmp(num, text) != 0)
-                    SetDlgItemTextA(m_hMapEditorDlg, 0x4ce, num);
-                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4cb), 0x443, 0,
-                             (LPARAM)(((b & 0xff) << 16) | (r & 0xff) | ((g & 0xff) << 8)));      // colour in lParam (0x4fee47..0x4fee79)
-                g_game_ed->col_r = (float)r * g_color_unit;
-                g_game_ed->col_g = (float)g * g_color_unit;
-                g_game_ed->col_b = (float)b * g_color_unit;
-                g_game_ed->col_a = 0.0f;
-                return 0;
-            }
-            }
-        }
-        if (msg != WM_INITDIALOG)
-            return 0;
+    switch (msg) {
+    case WM_INITDIALOG: {
         m_hMapEditorDlg = hDlg;
         ((CreateGameOptionsPage*)this)->update_checks();
         HWND objs = GetDlgItem(hDlg, 0x46e);                          // looked up once (0x4fe8ba, kept in ebx)
         SendMessageA(objs, CB_RESETCONTENT, 0, 0);                    // 0x46e is a combo box (0x4fe8c8)
-        CheckRadioButton(hDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
+        CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
         // the three sliders' ranges (no redraw) and positions from the current values (0x4fe8ff..0x4fe9d7)
-        SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETRANGE, FALSE, MAKELONG(1, 100));
-        SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETRANGE, FALSE, MAKELONG(0, 100));
-        SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETRANGE, FALSE, MAKELONG(1, 100));
-        SendMessageA(GetDlgItem(hDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->sx * g_hundred));
-        SendMessageA(GetDlgItem(hDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->tx * g_hundred));
-        SendMessageA(GetDlgItem(hDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game_ed->mx);
-        SendMessageA(GetDlgItem(hDlg, 0x4c8), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
-        SendMessageA(GetDlgItem(hDlg, 0x4c9), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
-        SendMessageA(GetDlgItem(hDlg, 0x4ca), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
-        g_game_ed->col_r = g_one;
-        g_game_ed->col_g = g_one;
-        g_game_ed->col_b = g_one;
-        g_game_ed->col_a = 0.0f;
-        SendMessageA(GetDlgItem(hDlg, 0x4c8), TBM_SETPOS, TRUE, 255);
-        SendMessageA(GetDlgItem(hDlg, 0x4c9), TBM_SETPOS, TRUE, 255);
-        SendMessageA(GetDlgItem(hDlg, 0x4ca), TBM_SETPOS, TRUE, 255);
-        int n = 0;
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETRANGE, FALSE, MAKELONG(1, 100));
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETRANGE, FALSE, MAKELONG(0, 100));
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETRANGE, FALSE, MAKELONG(1, 100));
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->sx * 100.0f));
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->tx * 100.0f));
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game_ed->mx);
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_SETRANGE, FALSE, MAKELONG(0, 255));
+        g_game_ed->col = rgl::vector4(1.0f, 1.0f, 1.0f);
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_SETPOS, TRUE, 255);
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_SETPOS, TRUE, 255);
+        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_SETPOS, TRUE, 255);
         for (int i = 0; i < g_editor->brush_count - 2; i++) {
             int j = *(int*)((char*)g_editor + i * 0x18 + 0x63ec);
             if (j >= 0) {
                 // name table: 0x20-byte records at 0x8ed4df8 starting with a tstring: its c_str() (buf at +4, NULL ->
                 // the address of that buf field, 0x4feb0a)
-                const char* name = g_ground_types[j].name.c_str();
-                WPARAM idx = SendMessageA(objs, CB_ADDSTRING, 0, (LPARAM)name);
-                SendMessageA(objs, CB_SETITEMDATA, idx, n);
+                WPARAM idx = SendMessageA(objs, CB_ADDSTRING, 0, (LPARAM)g_ground_types[j].name.c_str());
+                SendMessageA(objs, CB_SETITEMDATA, idx, i);
             }
-            n++;
         }
         SendMessageA(objs, CB_SETCURSEL, 0, 0);
         HWND combo = GetDlgItem(hDlg, 0x431);
         SendMessageA(combo, CB_RESETCONTENT, 0, 0);
-        if (combo == 0)
-            return 1;
-        WPARAM idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Scene Props");
-        SendMessageA(combo, CB_SETITEMDATA, idx, 0);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Entry Point");
-        SendMessageA(combo, CB_SETITEMDATA, idx, 1);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Item Kinds");
-        SendMessageA(combo, CB_SETITEMDATA, idx, 2);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Plants");
-        SendMessageA(combo, CB_SETITEMDATA, idx, 4);
-        idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Passage");
-        SendMessageA(combo, CB_SETITEMDATA, idx, 5);
-        *(int*)((char*)g_editor + 0x651c) = 0;                        // the object kind resets to the first entry (0x4fec16)
-        SendMessageA(combo, CB_SETCURSEL, 0, 0);
-        ((MapEditorDialog*)this)->update_object_type();
-        return 1;
-    }
-    // above WM_COMMAND only WM_MOUSEMOVE is handled (0x500920: 1 for it, 0 for anything else)
-    return msg == WM_MOUSEMOVE;
-command:
-    // WM_COMMAND: LOWORD(wParam) is the control, HIWORD(wParam) the notification code (0x4ff24c reads both from
-    // wParam; every case below tested HIWORD(lParam), the control's window handle)
-    switch (wParam & 0xffff) {
-    case 2:
-        restore_defaults();
-        ShowWindow(m_hMapEditorDlg, SW_HIDE);
-        return 1;
-    case 0x433:
-        if (HIWORD(wParam) != 2) {
-            GetDlgItem(m_hMapEditorDlg, 0x431);                 // looked up and not used (0x4ff323)
-            HWND c = GetDlgItem(m_hMapEditorDlg, 0x433);        // the object list is a list box: LB_ messages (0x4ff347)
-            g_game_ed->combo_sel = (int)SendMessageA(c, LB_GETITEMDATA, SendMessageA(c, LB_GETCURSEL, 0, 0), 0);
+        if (combo) {
+            WPARAM idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Scene Props");
+            SendMessageA(combo, CB_SETITEMDATA, idx, 0);
+            idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Entry Point");
+            SendMessageA(combo, CB_SETITEMDATA, idx, 1);
+            idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Item Kinds");
+            SendMessageA(combo, CB_SETITEMDATA, idx, 2);
+            idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Plants");
+            SendMessageA(combo, CB_SETITEMDATA, idx, 4);
+            idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Passage");
+            SendMessageA(combo, CB_SETITEMDATA, idx, 5);
+            g_editor->object_kind = 0;                                // the object kind resets to the first entry (0x4fec16)
+            SendMessageA(combo, CB_SETCURSEL, 0, 0);
+            ((MapEditorDialog*)this)->update_object_type();
             return 1;
         }
-        g_game_ed->flag_c8 = 1;
-        return 1;
-    case 0x434: {
-        LRESULT v = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x434), BM_GETCHECK, 0, 0);
-        g_game_ed->rt_flag = (v == 1);
-        g_game_ed->rt_x = g_one;
-        g_game_ed->rt_y = g_one;
-        g_game_ed->rt_z = g_one;
-        g_game_ed->rt_w = 0.0f;
-        g_game_ed->rt_extra = 0;
-        if (g_game_ed->rt_flag == 0)
-            ((MapEditorDialog*)this)->refresh();
-        return 1;
+        break;
     }
-    case 0x438: {
-        int code = (short)HIWORD(wParam);
-        if (code == 2) {
-            HWND c = GetDlgItem(hDlg, 0x438);
-            LRESULT cnt = SendMessageA(c, LB_GETCOUNT, 0, 0);
-            for (int i = 0; i < (int)cnt; i++)
-                if (g_game_ed->sel_index != (int)SendMessageA(c, LB_GETITEMDATA, i, 0))
-                    SendMessageA(c, LB_SETSEL, 0, i);
-            GAME_VEC->resize(0, 0);
-            if (g_game_ed->sel_index >= 0)
-                vpush(GAME_VEC, g_game_ed->sel_index);
-            ((EditorApp*)this)->refresh_dialog();
-            if (g_game_ed->sel_index >= 0) {
-                memcpy(g_game_ed->sel_copy, (char*)terrain(g_game_ed->sel_index) + 0x18, 0x40);
-                ((Timer*)((char*)g_game_ed + 0x1a150))->set_delay(-2.0f);
+    case WM_NOTIFY:
+        switch (LOWORD(wParam)) {
+        case 0x4c8:
+        case 0x4c9:
+        case 0x4ca: {
+            int r = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_GETPOS, 0, 0);
+            int g = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_GETPOS, 0, 0);
+            int b = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_GETPOS, 0, 0);
+            char num[64];
+            char text[64];
+            _itoa(r, num, 10);
+            GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
+            if (strcmp(num, text) != 0)
+                SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, num);
+            _itoa(g, num, 10);
+            GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
+            if (strcmp(num, text) != 0)
+                SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, num);
+            _itoa(b, num, 10);
+            GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
+            if (strcmp(num, text) != 0)
+                SetDlgItemTextA(m_hMapEditorDlg, 0x4ce, num);
+            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4cb), 0x443, 0, RGB(r, g, b));      // colour in lParam (0x4fee47..0x4fee79)
+            rgl::vector4 c;
+            c.x = (float)r * g_color_unit;
+            c.y = (float)g * g_color_unit;
+            c.z = (float)b * g_color_unit;
+            g_game_ed->col = c;
+            return 0;
+        }
+        case 0x473: {
+            char buf[512];
+            if (g_game_ed->mode == 2) {
+                g_game_ed->sy = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_GETPOS, 0, 0) * 0.01f;
+                sprintf(buf, "%1.2f", (double)g_game_ed->sy);
+            } else if (g_game_ed->mode == 1) {
+                g_game_ed->sx = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_GETPOS, 0, 0) * 0.01f;
+                sprintf(buf, "%1.2f", (double)g_game_ed->sx);
+            } else {
+                g_game_ed->sz = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_GETPOS, 0, 0) * 0.01f;
+                sprintf(buf, "%1.2f", (double)g_game_ed->sz);
             }
-            ((MapEditorDialog*)this)->refresh();
-            return 1;
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
+            break;
         }
-        if (code == 1 || code == 3) {
-            HWND c = GetDlgItem(hDlg, 0x438);
-            int sel[1024];
-            int cnt = (int)SendMessageA(c, LB_GETSELITEMS, 0x400, (LPARAM)sel);
-            PickedVec picked = { 0, 0, 0, 0 };                       // the indices the list box reports (a local vector<int>)
-            g_game_ed->sel_index = -1;
-            for (int i = 0; i < cnt; i++) {
-                int v = (int)SendMessageA(c, LB_GETITEMDATA, sel[i], 0);
-                if (v >= 0) {
-                    vpush((IntVec*)&picked, v);
-                    int found = 0;
-                    for (unsigned k = 0; k < vsize(GAME_VEC); k++) {
-                        if (g_game_ed->sel_array[k] == v) {
-                            found = 1;
-                            break;
+        case 0x477: {
+            char buf[512];
+            if (g_game_ed->mode == 2) {
+                g_game_ed->ty = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_GETPOS, 0, 0) * 0.01f;
+                sprintf(buf, "%1.2f", (double)g_game_ed->ty);
+            } else if (g_game_ed->mode == 1) {
+                g_game_ed->tx = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_GETPOS, 0, 0) * 0.01f;
+                sprintf(buf, "%1.2f", (double)g_game_ed->tx);
+            } else {
+                g_game_ed->tz = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_GETPOS, 0, 0) * 0.01f;
+                sprintf(buf, "%1.2f", (double)g_game_ed->tz);
+            }
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
+            break;
+        }
+        case 0x472: {
+            char buf[512];
+            if (g_game_ed->mode == 2) {
+                g_game_ed->my = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_GETPOS, 0, 0);
+                sprintf(buf, "%1.0f", (double)g_game_ed->my);
+            } else if (g_game_ed->mode == 1) {
+                g_game_ed->mx = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_GETPOS, 0, 0);
+                sprintf(buf, "%1.0f", (double)g_game_ed->mx);
+            } else {
+                g_game_ed->mz = (float)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_GETPOS, 0, 0);
+                sprintf(buf, "%1.0f", (double)g_game_ed->mz);
+            }
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
+            break;
+        }
+        }
+        return 0;
+    case WM_COMMAND:
+        // WM_COMMAND: LOWORD(wParam) is the control, HIWORD(wParam) the notification code (0x4ff24c reads both from
+        // wParam; every case below tested HIWORD(lParam), the control's window handle)
+        {
+        int id = LOWORD(wParam);
+        switch (id) {
+        case 0x431:
+            if (HIWORD(wParam) == 1) {
+                ((MapEditorDialog*)this)->update_object_type();
+                return 1;
+            }
+            break;
+        case 2:
+            restore_defaults();
+            ShowWindow(m_hMapEditorDlg, SW_HIDE);
+            return 1;
+        case 0x433:
+            if (HIWORD(wParam) == 2) {
+                g_game_ed->flag_c8 = 1;
+                return 1;
+            } else {
+                GetDlgItem(m_hMapEditorDlg, 0x431);                 // looked up and not used (0x4ff323)
+                HWND c = GetDlgItem(m_hMapEditorDlg, 0x433);        // the object list is a list box: LB_ messages (0x4ff347)
+                g_game_ed->combo_sel = (int)SendMessageA(c, LB_GETITEMDATA, SendMessageA(c, LB_GETCURSEL, 0, 0), 0);
+                return 1;
+            }
+        case 0x438: {
+            WORD code = HIWORD(wParam);
+            if (code == 2) {
+                HWND c = GetDlgItem(hDlg, 0x438);
+                int cnt = (int)SendMessageA(c, LB_GETCOUNT, 0, 0);
+                for (int i = 0; i < cnt; i++)
+                    if (g_game_ed->sel_index != (int)SendMessageA(c, LB_GETITEMDATA, i, 0))
+                        SendMessageA(c, LB_SETSEL, 0, i);
+                g_game_ed->sel.resize(0);
+                if (g_game_ed->sel_index >= 0)
+                    g_game_ed->sel.push_back(g_game_ed->sel_index);
+                ((EditorApp*)this)->refresh_dialog();
+                if (g_game_ed->sel_index >= 0) {
+                    g_game_ed->sel_copy = g_editor->world[g_game_ed->sel_index].frame;
+                    g_game_ed->timer.set_delay(-2.0f);
+                }
+                ((MapEditorDialog*)this)->refresh();
+                return 1;
+            }
+            if (code == 1 || code == 3) {
+                HWND c = GetDlgItem(hDlg, 0x438);
+                int sel[1024];
+                int cnt = (int)SendMessageA(c, LB_GETSELITEMS, 0x400, (LPARAM)sel);
+                g_game_ed->sel_index = -1;
+                IntVec picked;                                        // the indices the list box reports
+                for (int i = 0; i < cnt; i++) {
+                    int v = (int)SendMessageA(c, LB_GETITEMDATA, sel[i], 0);
+                    if (v >= 0) {
+                        picked.push_back(v);
+                        bool found = false;
+                        for (unsigned k = 0; k < g_game_ed->sel.size(); k++) {
+                            if (g_game_ed->sel[k] == v) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            g_game_ed->sel.push_back(v);
+                            g_game_ed->sel_index = v;
                         }
                     }
-                    if (!found) {
-                        vpush(GAME_VEC, v);
-                        g_game_ed->sel_index = v;
+                }
+                if (picked.size() != g_game_ed->sel.size()) {
+                    // drop the selected indices the list box no longer reports (swap with the last, pop)
+                    for (unsigned k = 0; k < g_game_ed->sel.size(); k++) {
+                        volatile bool kept = false;
+                        for (unsigned j = 0; j < picked.size(); j++)
+                            if (g_game_ed->sel[k] == picked[j])
+                                kept = true;
+                        if (!kept) {
+                            g_game_ed->sel[k] = g_game_ed->sel[g_game_ed->sel.size() - 1];
+                            g_game_ed->sel.pop_back();
+                            k--;
+                        }
                     }
                 }
-            }
-            unsigned picked_n = picked.first == 0 ? 0 : (unsigned)(picked.last - picked.first);
-            if (picked_n != vsize(GAME_VEC)) {
-                // drop the selected indices the list box no longer reports (swap with the last, pop)
-                for (unsigned k = 0; k < vsize(GAME_VEC); k++) {
-                    bool kept = false;
-                    for (unsigned j = 0; picked.first != 0 && j < (unsigned)(picked.last - picked.first); j++)
-                        if (g_game_ed->sel_array[k] == picked.first[j])
-                            kept = true;
-                    if (!kept) {
-                        g_game_ed->sel_array[k] = g_game_ed->sel_array[vsize(GAME_VEC) - 1];
-                        ((ptr_vec*)GAME_VEC)->pop_back_if();
-                        k--;
-                    }
-                }
-            }
-            if (g_game_ed->sel_index == -1 && vsize(GAME_VEC) != 0)
-                g_game_ed->sel_index = g_game_ed->sel_array[vsize(GAME_VEC) - 1];
-            ((EditorApp*)this)->refresh_dialog();
-            vclear(&picked);
-        }
-        return 1;
-    }
-    case 0x43a:
-        if (HIWORD(wParam) != 0x200)
-            return 1;
-        {
-            BOOL ok;
-            UINT v = GetDlgItemInt(m_hMapEditorDlg, 0x43a, &ok, FALSE);
-            if (ok != 0 && g_game_ed->sel_index >= 0 && v < 0x40) {
-                terrain(g_game_ed->sel_index)->field_1a0 = v;
-                g_game_ed->dirty = 1;
+                if (g_game_ed->sel_index == -1 && g_game_ed->sel.size() > 0)
+                    g_game_ed->sel_index = g_game_ed->sel[g_game_ed->sel.size() - 1];
+                ((EditorApp*)this)->refresh_dialog();
                 return 1;
             }
-            SetDlgItemTextA(m_hMapEditorDlg, 0x43a, "");
+            break;
         }
-        return 1;
-    case 0x43b:
-        if (HIWORD(wParam) != 0x200)
-            return 1;
-        {
-            BOOL ok;
-            UINT v = GetDlgItemInt(m_hMapEditorDlg, 0x43b, &ok, FALSE);
-            if (ok != 0 && g_game_ed->sel_index >= 0 && v < 0x40) {
-                terrain(g_game_ed->sel_index)->field_1a4 = v;
-                g_game_ed->dirty = 1;
+        case 0x434:
+            { int v = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x434), BM_GETCHECK, 0, 0); g_game_ed->rt_flag = v == BST_CHECKED; }
+            g_game_ed->rt = rgl::vector4(1.0f, 1.0f, 1.0f);
+            g_game_ed->rt_extra = 0;
+            if (g_game_ed->rt_flag == 0) {
+                ((MapEditorDialog*)this)->refresh();
                 return 1;
             }
-            SetDlgItemTextA(m_hMapEditorDlg, 0x43a, "");
-        }
-        return 1;
-    case 0x453:
-        g_game_ed->opt_cc = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x453), BM_GETCHECK, 0, 0) == 1;
-        return 1;
-    case 0x454:
-        g_game_ed->opt_d0 = SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x454), BM_GETCHECK, 0, 0) == 1;
-        return 1;
-    case 0x431:
-        if (HIWORD(wParam) != 1)
-            return 1;
-        ((MapEditorDialog*)this)->update_object_type();
-        return 1;
-    case 0x46d:
-        if (HIWORD(wParam) != 0)
-            return 1;
-        g_game_ed->mode = 2;
-        ((CreateGameOptionsPage*)this)->update_checks();
-        {
-            float v1 = g_game_ed->my, v2 = g_game_ed->sy, v3 = g_game_ed->ty;
-            char buf[512];
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
-            sprintf(buf, "%1.0f", (double)v1);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
-            sprintf(buf, "%1.2f", (double)v2);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
-            sprintf(buf, "%1.2f", (double)v3);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
-        }
-        return 1;
-    case 0x46f:
-        if (HIWORD(wParam) != 0)
-            return 1;
-        g_game_ed->mode = 0;
-        ((CreateGameOptionsPage*)this)->update_checks();
-        return 1;
-    case 0x470:
-        if (HIWORD(wParam) != 0)
-            return 1;
-        g_game_ed->mode = 1;
-        ((CreateGameOptionsPage*)this)->update_checks();
-        {
-            float v1 = g_game_ed->mx, v2 = g_game_ed->sx, v3 = g_game_ed->tx;
-            char buf[512];
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
-            sprintf(buf, "%1.0f", (double)v1);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
-            sprintf(buf, "%1.2f", (double)v2);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
-            sprintf(buf, "%1.2f", (double)v3);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
-        }
-        return 1;
-    case 0x471:
-        if (HIWORD(wParam) != 0)
-            return 1;
-        g_game_ed->mode = 3;
-        ((CreateGameOptionsPage*)this)->update_checks();
-        {
-            float v1 = g_game_ed->mz, v2 = g_game_ed->sz, v3 = g_game_ed->tz;
-            char buf[512];
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)(v1));
-            sprintf(buf, "%1.0f", (double)v1);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(v2 * g_hundred));
-            sprintf(buf, "%1.2f", (double)v2);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
-            SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(v3 * g_hundred));
-            sprintf(buf, "%1.2f", (double)v3);
-            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
-        }
-        return 1;
-    case 0x474:
-        g_game_ed->axis = 0;
-        CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
-        return 1;
-    case 0x475:
-        g_game_ed->axis = 1;
-        CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
-        return 1;
-    case 0x476:
-        g_game_ed->axis = 2;
-        CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
-        return 1;
-    case 0x489:
-        DialogBoxParamA(hinstance, (LPCSTR)0xde, m_hMapEditorDlg, options_dlg_proc, 0);
-        return 1;
-    case 0x491:
-    case 0x492:
-    case 0x493:
-        if (HIWORD(wParam) != 0)
-            return 1;
-        if (g_game_ed->sel_index < 1 && g_game_ed->rt_flag == 0)
-            return 1;
-        {
-            float fx = g_one;
-            float fy = g_one;
-            float fz = g_one;
-            if ((short)wParam == 0x491)
-                fx = -g_one;
-            else if ((short)wParam == 0x492)
-                fy = -g_one;
-            else if ((short)wParam == 0x493)
-                fz = -g_one;
-            if (g_game_ed->rt_flag) {
-                float ox = g_game_ed->rt_x;
-                float oy = g_game_ed->rt_y;
-                float oz = g_game_ed->rt_z;
-                float ow = g_game_ed->rt_w;
-                g_game_ed->rt_x = fx * g_game_ed->rt_x;
-                g_game_ed->rt_y = fy * g_game_ed->rt_y;
-                g_game_ed->rt_z = fz * g_game_ed->rt_z;
-                char* so = *(char**)((char*)g_editor + 0x65e4);                   // the edit scene's mesh list: vector at +0x118
-                if (vsize((IntVec*)(so + 0x118)) == 0)
+            break;
+        case 0x43a:
+            if (HIWORD(wParam) == 0x200) {
+                BOOL ok;
+                UINT v = GetDlgItemInt(m_hMapEditorDlg, 0x43a, &ok, FALSE);
+                if (ok != 0 && g_game_ed->sel_index >= 0 && v < 0x40) {
+                    g_editor->world[g_game_ed->sel_index].field_1a0 = v;
+                    g_game_ed->dirty = 1;
                     return 1;
-                float invx = g_one / ox;
-                float invy = g_one / oy;
-                float invz = g_one / oz;
-                int i = 0;
-                do {
-                    rgl::vector4 inv;
-                    inv.x = invx;
-                    inv.y = invy;
-                    inv.z = invz;
-                    inv.w = ow;
-                    ((rgl::mesh**)*(void**)(so + 0x11c))[i]->set_color(inv);
-                    ((rgl::mesh**)*(void**)(so + 0x11c))[i]->set_color(*(rgl::vector4*)&g_game_ed->rt_x);
-                    i++;
-                } while (i < (int)vsize((IntVec*)(so + 0x118)));
+                }
+                SetDlgItemTextA(m_hMapEditorDlg, 0x43a, "");
                 return 1;
             }
-            EditorTerrainView* t = terrain(g_game_ed->sel_index);
-            t->rx = fx * t->rx;
-            t->ry = fy * t->ry;
-            t->rz = fz * t->rz;
-            for (int i = 0; i < (int)vsize((IntVec*)(terrain(g_game_ed->sel_index)->obj + 0x118)); i++) {
-                EditorTerrainView* ti = terrain(g_game_ed->sel_index);
-                *(int*)(*(int*)(*(int*)(ti->obj + 0x11c) + i * 4) + 0x4c) =
-                    1 - *(int*)(*(int*)(*(int*)(ti->obj + 0x11c) + i * 4) + 0x4c);
+            break;
+        case 0x46d:
+            if (HIWORD(wParam) == 0) {
+                g_game_ed->mode = 2;
+                ((CreateGameOptionsPage*)this)->update_checks();
+                char buf[128];
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game_ed->my);
+                sprintf(buf, "%1.0f", (double)g_game_ed->my);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->sy * 100.0f));
+                sprintf(buf, "%1.2f", (double)g_game_ed->sy);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->ty * 100.0f));
+                sprintf(buf, "%1.2f", (double)g_game_ed->ty);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
+                return 1;
             }
-            ((MapDialog*)g_editor)->set_object_target(g_game_ed->sel_index);
-            g_game_ed->dirty = 1;
-        }
-        return 1;
-    case 0x494:
-        if (MessageBoxA(m_hMapEditorDlg, "Are you sure?", "Warning", 1) != 1)
+            break;
+        case 0x43b:
+            if (HIWORD(wParam) == 0x200) {
+                BOOL ok;
+                UINT v = GetDlgItemInt(m_hMapEditorDlg, 0x43b, &ok, FALSE);
+                if (ok != 0 && g_game_ed->sel_index >= 0 && v < 0x40) {
+                    g_editor->world[g_game_ed->sel_index].field_1a4 = v;
+                    g_game_ed->dirty = 1;
+                    return 1;
+                }
+                SetDlgItemTextA(m_hMapEditorDlg, 0x43a, "");
+                return 1;
+            }
+            break;
+        case 0x453:
+            { int v = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x453), BM_GETCHECK, 0, 0); g_game_ed->opt_cc = v == BST_CHECKED; }
             return 1;
-        ((MapScreen*)g_editor)->frame_step();
-        return 1;
-    case 0x46e:
-        if (HIWORD(wParam) != 1)
+        case 0x454:
+            { int v = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x454), BM_GETCHECK, 0, 0); g_game_ed->opt_d0 = v == BST_CHECKED; }
             return 1;
-        {
-            HWND lst = GetDlgItem(m_hMapEditorDlg, 0x46e);
-            *(int*)((char*)g_editor + 0x651c) = (int)SendMessageA(lst, CB_GETITEMDATA,
-                                                  SendMessageA(lst, CB_GETCURSEL, 0, 0), 0);
-        }
-        return 1;
-    case 0x497:
-        if (HIWORD(wParam) != 0)
+        case 0x46e:
+            if (HIWORD(wParam) == 1) {
+                HWND lst = GetDlgItem(m_hMapEditorDlg, 0x46e);
+                g_editor->object_kind = (int)SendMessageA(lst, CB_GETITEMDATA, SendMessageA(lst, CB_GETCURSEL, 0, 0), 0);
+                return 1;
+            }
+            break;
+        case 0x475:
+            g_game_ed->axis = 1;
+            CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
+            break;
+        case 0x474:
+            g_game_ed->axis = 0;
+            CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
+            break;
+        case 0x476:
+            g_game_ed->axis = 2;
+            CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
+            break;
+        case 0x470:
+            if (HIWORD(wParam) == 0) {
+                g_game_ed->mode = 1;
+                ((CreateGameOptionsPage*)this)->update_checks();
+                char buf[128];
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game_ed->mx);
+                sprintf(buf, "%1.0f", (double)g_game_ed->mx);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->sx * 100.0f));
+                sprintf(buf, "%1.2f", (double)g_game_ed->sx);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->tx * 100.0f));
+                sprintf(buf, "%1.2f", (double)g_game_ed->tx);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
+                return 1;
+            }
+            break;
+        case 0x471:
+            if (HIWORD(wParam) == 0) {
+                g_game_ed->mode = 3;
+                ((CreateGameOptionsPage*)this)->update_checks();
+                char buf[128];
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game_ed->mz);
+                sprintf(buf, "%1.0f", (double)g_game_ed->mz);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x47f), buf);
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x473), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->sz * 100.0f));
+                sprintf(buf, "%1.2f", (double)g_game_ed->sz);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x480), buf);
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x477), TBM_SETPOS, TRUE, (LPARAM)(int)(g_game_ed->tz * 100.0f));
+                sprintf(buf, "%1.2f", (double)g_game_ed->tz);
+                SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x482), buf);
+                return 1;
+            }
+            break;
+        case 0x46f:
+            if (HIWORD(wParam) == 0) {
+                g_game_ed->mode = 0;
+                ((CreateGameOptionsPage*)this)->update_checks();
+                return 1;
+            }
+            break;
+        case 0x489:
+            DialogBoxParamA(hinstance, (LPCSTR)0xde, m_hMapEditorDlg, options_dlg_proc, 0);
             return 1;
-        g_game_ed->sub_mode = 0;
-        ((CreateGameOptionsPage*)this)->update_checks();
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x498:
-        if (HIWORD(wParam) == 0) {
-            g_game_ed->sub_mode = 1;
+        case 0x494:
+            if (MessageBoxA(m_hMapEditorDlg, "Are you sure?", "Warning", 1) == 1) {
+                ((MapScreen*)g_editor)->frame_step();
+                return 1;
+            }
+            break;
+        case 0x491:
+        case 0x492:
+        case 0x493:
+            if (HIWORD(wParam) == 0 && (g_game_ed->sel_index > 0 || g_game_ed->rt_flag != 0)) {
+                float fx = 1.0f;
+                float fy = 1.0f;
+                float fz = 1.0f;
+                if ((short)wParam == 0x491)
+                    fx = -1.0f;
+                else if ((short)wParam == 0x492)
+                    fy = -1.0f;
+                else if ((short)wParam == 0x493)
+                    fz = -1.0f;
+                if (g_game_ed->rt_flag) {
+                    rgl::vector4 old = g_game_ed->rt;
+                    g_game_ed->rt.x = fx * g_game_ed->rt.x;
+                    g_game_ed->rt.y = fy * g_game_ed->rt.y;
+                    g_game_ed->rt.z = fz * g_game_ed->rt.z;
+                    for (unsigned i = 0; i < g_editor->edit_obj->meshes.size(); i++) {
+                        rgl::vector4 inv(1.0f / old.x, 1.0f / old.y, 1.0f / old.z);
+                        ((rgl::mesh*)g_editor->edit_obj->meshes[i])->set_color(inv);
+                        ((rgl::mesh*)g_editor->edit_obj->meshes[i])->set_color(g_game_ed->rt);
+                    }
+                    return 1;
+                }
+                g_editor->world[g_game_ed->sel_index].rx = fx * g_editor->world[g_game_ed->sel_index].rx;
+                g_editor->world[g_game_ed->sel_index].ry = fy * g_editor->world[g_game_ed->sel_index].ry;
+                g_editor->world[g_game_ed->sel_index].rz = fz * g_editor->world[g_game_ed->sel_index].rz;
+                for (unsigned i = 0; i < g_editor->world[g_game_ed->sel_index].obj->meshes.size(); i++) {
+                    g_editor->world[g_game_ed->sel_index].obj->meshes[i]->flag = 1 - g_editor->world[g_game_ed->sel_index].obj->meshes[i]->flag;
+                }
+                ((MapDialog*)g_editor)->set_object_target(g_game_ed->sel_index);
+                g_game_ed->dirty = 1;
+                return 1;
+            }
+            break;
+        case 0x497:
+            if (HIWORD(wParam) == 0) {
+                g_game_ed->sub_mode = 0;
+                ((CreateGameOptionsPage*)this)->update_checks();
+                g_editor->need_redraw[0] = 1;
+                g_editor->need_redraw[1] = 1;
+                g_editor->need_redraw[2] = 1;
+                return 1;
+            }
+            break;
+        case 0x4af:
+            if (MessageBoxA(m_hMapEditorDlg, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
+                g_terrain.init_map((char*)g_editor + 0x63d0);
+                g_game_ed->dirty = 1;
+                g_terrain.conv_build_scene();
+                return 1;
+            }
+            break;
+        case 0x49a:
+            if (HIWORD(wParam) == 0) {
+                g_game_ed->mode = 4;
+                ((CreateGameOptionsPage*)this)->update_checks();
+                return 1;
+            }
+            break;
+        case 0x499:
+            if (HIWORD(wParam) == 0) {
+                g_game_ed->sub_mode = 2;
+                ((CreateGameOptionsPage*)this)->update_checks();
+                g_editor->need_redraw[0] = 1;
+                g_editor->need_redraw[1] = 1;
+                g_editor->need_redraw[2] = 1;
+                return 1;
+            }
+            break;
+        case 0x498:
+            if (HIWORD(wParam) == 0) {
+                g_game_ed->sub_mode = 1;
+                ((CreateGameOptionsPage*)this)->update_checks();
+                g_editor->need_redraw[0] = 1;                   // joins the redraw tail after the dirty store (0x5005f0)
+                g_editor->need_redraw[1] = 1;
+                g_editor->need_redraw[2] = 1;
+                return 1;
+            }
+            break;
+        case 0x4a5:
+            ((graph_obj*)EDIT_OBJ)->update_vertex_mode();
+            g_game_ed->sub_mode = 0;
             ((CreateGameOptionsPage*)this)->update_checks();
-            g_editor->need_redraw[0] = 1;                   // joins the redraw tail after the dirty store (0x5005f0)
+            g_editor->need_redraw[0] = 1;
             g_editor->need_redraw[1] = 1;
             g_editor->need_redraw[2] = 1;
-        }
-        return 1;
-    case 0x499:
-        if (HIWORD(wParam) == 0) {
+            return 1;
+        case 0x4a3:
+            ((graph_obj*)EDIT_OBJ)->update_edge_mode();
+            g_game_ed->sub_mode = 1;
+            ((CreateGameOptionsPage*)this)->update_checks();
+            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[1] = 1;
+            g_editor->need_redraw[2] = 1;
+            return 1;
+        case 0x4a4:
+            ((graph_obj*)EDIT_OBJ)->update_poly_mode();
             g_game_ed->sub_mode = 2;
             ((CreateGameOptionsPage*)this)->update_checks();
             g_editor->need_redraw[0] = 1;
             g_editor->need_redraw[1] = 1;
             g_editor->need_redraw[2] = 1;
-        }
-        return 1;
-    case 0x49a:
-        if (HIWORD(wParam) == 0) {
-            g_game_ed->mode = 4;
-            ((CreateGameOptionsPage*)this)->update_checks();
-        }
-        return 1;
-    case 0x49b:
-        ((EditMesh*)EDIT_OBJ)->build_second_pass();
-        g_game_ed->dirty = 1;
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x49d:
-        if (!((graph_obj*)EDIT_OBJ)->split_edge(-1)) {
+            return 1;
+        case 0x49b:
+            ((EditMesh*)EDIT_OBJ)->build_second_pass();
+            g_game_ed->dirty = 1;
+            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[1] = 1;
+            g_editor->need_redraw[2] = 1;
+            return 1;
+        case 0x4aa:
+            if (!((TearObj*)EDIT_OBJ)->teardown()) {
+                MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 3 or 4 vertices (or edges that has 3 or 4 different edges) that are not a member of the same face and that are not members of any edges with 2 faces.", "Warning", 0);
+                return 1;
+            }
+            g_game_ed->dirty = 1;
+            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[1] = 1;
+            g_editor->need_redraw[2] = 1;
+            return 1;
+        case 0x4a7:
+            if (!((EditMesh*)EDIT_OBJ)->build_first_pass()) {
+                MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of a face and do not have any edge neighborhood.", "Warning", 0);
+                return 1;
+            }
+            g_game_ed->dirty = 1;
+            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[1] = 1;
+            g_editor->need_redraw[2] = 1;
+            return 1;
+        case 0x4a6:
+            ((graph_obj*)EDIT_OBJ)->refresh_selection();
+            g_editor->need_redraw[g_game_ed->sub_mode] = 1;
+            return 1;
+        case 0x4ad:
+            if (!((EditMesh*)EDIT_OBJ)->split_marked_edge()) {
+                MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
+                return 1;
+            }
+            g_game_ed->dirty = 1;
+            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[1] = 1;
+            g_editor->need_redraw[2] = 1;
+            return 1;
+        case 0x4a8:
+            ((EditMesh*)EDIT_OBJ)->finish();
+            g_game_ed->dirty = 1;
+            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[1] = 1;
+            g_editor->need_redraw[2] = 1;
+            return 1;
+        case 0x49d:
+            if (((graph_obj*)EDIT_OBJ)->split_edge(-1)) {
+                g_game_ed->dirty = 1;
+                g_editor->need_redraw[0] = 1;
+                g_editor->need_redraw[1] = 1;
+                g_editor->need_redraw[2] = 1;
+                return 1;
+            }
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge that has a neighborhood of 2 triangular faces.", "Warning", 0);
             return 1;
-        }
-        g_game_ed->dirty = 1;
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4a3:
-        ((graph_obj*)EDIT_OBJ)->update_edge_mode();
-        g_game_ed->sub_mode = 1;
-        ((CreateGameOptionsPage*)this)->update_checks();
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4a4:
-        ((graph_obj*)EDIT_OBJ)->update_poly_mode();
-        g_game_ed->sub_mode = 2;
-        ((CreateGameOptionsPage*)this)->update_checks();
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4a5:
-        ((graph_obj*)EDIT_OBJ)->update_vertex_mode();
-        g_game_ed->sub_mode = 0;
-        ((CreateGameOptionsPage*)this)->update_checks();
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4a6:
-        ((graph_obj*)EDIT_OBJ)->refresh_selection();
-        g_editor->need_redraw[g_game_ed->sub_mode] = 1;
-        return 1;
-    case 0x4a7:
-        if (!((EditMesh*)EDIT_OBJ)->build_first_pass()) {
-            MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of a face and do not have any edge neighborhood.", "Warning", 0);
-            return 1;
-        }
-        g_game_ed->dirty = 1;
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4a8:
-        ((EditMesh*)EDIT_OBJ)->finish();
-        g_game_ed->dirty = 1;
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4aa:
-        if (!((TearObj*)EDIT_OBJ)->teardown()) {
-            MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 3 or 4 vertices (or edges that has 3 or 4 different edges) that are not a member of the same face and that are not members of any edges with 2 faces.", "Warning", 0);
-            return 1;
-        }
-        g_game_ed->dirty = 1;
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4ac:
-        if (!((graph_obj*)EDIT_OBJ)->combine()) {
-            if (g_editor->sel_count2 != 0)
-                MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
-            else
-                MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of the same edge or that are members of any edge having a neighborhood to only one face.", "Warning", 0);
-            return 1;
-        }
-        g_game_ed->dirty = 1;
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4ad:
-        if (!((EditMesh*)EDIT_OBJ)->split_marked_edge()) {
-            MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
-            return 1;
-        }
-        g_game_ed->dirty = 1;
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4ae:
-        ((EditMesh*)EDIT_OBJ)->add_quad((rgl::vector4*)((char*)g_game_ed + 0x1a1a4));
-        g_game_ed->dirty = 1;
-        g_editor->need_redraw[0] = 1;
-        g_editor->need_redraw[1] = 1;
-        g_editor->need_redraw[2] = 1;
-        return 1;
-    case 0x4af:
-        if (MessageBoxA(m_hMapEditorDlg, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
-            g_terrain.init_map((char*)g_editor + 0x63d0);
+        case 0x4ac:
+            if (!((graph_obj*)EDIT_OBJ)->combine()) {
+                if (g_editor->sel_count2 == 0)
+                    MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of the same edge or that are members of any edge having a neighborhood to only one face.", "Warning", 0);
+                else
+                    MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
+                return 1;
+            }
             g_game_ed->dirty = 1;
-            g_terrain.conv_build_scene();
-        }
-        return 1;
-    case 0x4cd: {
-        if (HIWORD(wParam) != 0x400)
+            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[1] = 1;
+            g_editor->need_redraw[2] = 1;
             return 1;
-        char text[0x40];
-        long v;
-        GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
-        // the edit text is rewritten only when the value had to be corrected (empty, negative or above 255: 0x50078c);
-        // an in-range value goes straight to the trackbar (0x5007b3)
-        bool fix = true;
-        if (text[0] == 0)
-            v = 0;
-        else {
-            v = atol(text);
-            if (v > 0xff)
-                v = 0xff;
-            else if (v < 0)
-                v = 0;
-            else
-                fix = false;
-        }
-        if (fix) {
-            _itoa(v, text, 10);
-            SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text);
-        }
-        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_SETPOS, TRUE, (LPARAM)v);
-        return 1;
-    }
-    case 0x4cf: {
-        if (HIWORD(wParam) != 0x400)
+        case 0x4ae:
+            ((EditMesh*)EDIT_OBJ)->add_quad(&g_game_ed->quad);
+            g_game_ed->dirty = 1;
+            g_editor->need_redraw[0] = 1;
+            g_editor->need_redraw[1] = 1;
+            g_editor->need_redraw[2] = 1;
             return 1;
-        char text[0x40];
-        long v;
-        GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
-        // the edit text is rewritten only when the value had to be corrected (empty, negative or above 255: 0x50078c);
-        // an in-range value goes straight to the trackbar (0x5007b3)
-        bool fix = true;
-        if (text[0] == 0)
-            v = 0;
-        else {
-            v = atol(text);
-            if (v > 0xff)
-                v = 0xff;
-            else if (v < 0)
-                v = 0;
-            else
-                fix = false;
+        case 0x4cd:
+            if (HIWORD(wParam) == 0x400) {
+                char text[0x40];
+                GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
+                int v;
+                // the edit text is rewritten only when the value had to be corrected (empty, negative or above 255: 0x50078c);
+                // an in-range value goes straight to the trackbar (0x5007b3)
+                bool fix = true;
+                if (text[0] == 0)
+                    v = 0;
+                else {
+                    v = atol(text);
+                    if (v > 0xff)
+                        v = 0xff;
+                    else if (v < 0)
+                        v = 0;
+                    else
+                        fix = false;
+                }
+                if (fix) {
+                    _itoa(v, text, 10);
+                    SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text);
+                }
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_SETPOS, TRUE, (LPARAM)v);
+                return 1;
+            }
+            break;
+        case 0x4cf:
+            if (HIWORD(wParam) == 0x400) {
+                char text[0x40];
+                GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
+                int v;
+                bool fix = true;
+                if (text[0] == 0)
+                    v = 0;
+                else {
+                    v = atol(text);
+                    if (v > 0xff)
+                        v = 0xff;
+                    else if (v < 0)
+                        v = 0;
+                    else
+                        fix = false;
+                }
+                if (fix) {
+                    _itoa(v, text, 10);
+                    SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text);
+                }
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_SETPOS, TRUE, (LPARAM)v);
+                return 1;
+            }
+            break;
+        case 0x4ce:
+            if (HIWORD(wParam) == 0x400) {
+                char text[0x40];
+                GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
+                int v;
+                if (text[0] == 0 || (v = atol(text)) < 0)
+                    v = 0;
+                else if (v > 0xff)
+                    v = 0xff;
+                SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_SETPOS, TRUE, (LPARAM)v);
+                return 1;
+            }
+            break;
         }
-        if (fix) {
-            _itoa(v, text, 10);
-            SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text);
         }
-        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_SETPOS, TRUE, (LPARAM)v);
-        return 1;
+        break;
+    case WM_MOUSEMOVE:
+        break;
+    default:
+        return 0;
     }
-    case 0x4ce: {
-        if (HIWORD(wParam) != 0x400)
-            return 1;
-        char text[0x40];
-        long v;
-        GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
-        if (text[0] == 0 || (v = atol(text)) < 0)
-            v = 0;
-        else if (v > 0xff)
-            v = 0xff;
-        SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_SETPOS, TRUE, (LPARAM)v);
-        return 1;
-    }
-    }
-    return 1;                                   // an unhandled command id (0x4ffb92)
+    return 1;
 }

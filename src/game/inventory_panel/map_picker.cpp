@@ -9,6 +9,7 @@
 // Names and field names are provisional; every offset is read off the disassembly.
 #include <vector>
 #include "../../rgl/rgl_math.h"
+#include "../../include/vec.h"
 
 using rgl::vector4;
 using rgl::matrix;
@@ -172,17 +173,21 @@ void MapPickScreen::set_label(int id)
 // @ 0x51a690
 void MapWidget::project(vector4* out, const vector4* in)
 {
+    vector2 xy;
     vector4 p = scene3d.fr.m.transform_point_to_local(*in);
-    float x, y;
     if (scene3d.fr.perspective) {
-        x = -((1.0f / p.z) * scene3d.fr.nearz * p.x);
-        y = -((1.0f / p.z) * scene3d.fr.nearz * p.y);
+        float invz = 1.0f / p.z;
+        float invz2 = invz;
+        xy.x = -((invz * scene3d.fr.nearz) * p.x);
+        xy.y = -((invz2 * scene3d.fr.nearz) * p.y);
     } else {
-        x = p.x;
-        y = p.y;
+        xy = *(vector2*)&p;
     }
-    out->x = ((x - scene3d.fr.left) * screen[0]) / (scene3d.fr.right - scene3d.fr.left) + fE0;
-    out->y = ((y - scene3d.fr.bottom) * screen[1]) / (scene3d.fr.top - scene3d.fr.bottom) + fE4;
+    xy.x = ((xy.x - scene3d.fr.left) * screen[0]) / (scene3d.fr.right - scene3d.fr.left);
+    xy.y = ((xy.y - scene3d.fr.bottom) * screen[1]) / (scene3d.fr.top - scene3d.fr.bottom);
+    xy.x += fE0;
+    xy.y += fE4;
+    *(vector2*)out = xy;
 }
 
 // ---- 0x51a760 -------------------------------------------------------------------------------------------
@@ -265,16 +270,20 @@ void gui_manager::set_quad(const float* origin, const float* size)
     v.x = origin[0];
     v.y = origin[1];
     v.z = 0.0f;
-    m570.v70[0].a = m570.v70[0].b = v;
+    m570.v70[0].a = v;
+    m570.v70[0].b = v;
     v.x = sx;
     v.y = origin[1];
-    m570.v70[1].a = m570.v70[1].b = v;
+    m570.v70[1].a = v;
+    m570.v70[1].b = v;
     v.x = sx;
     v.y = sy;
-    m570.v70[2].a = m570.v70[2].b = v;
+    m570.v70[2].a = v;
+    m570.v70[2].b = v;
     v.x = origin[0];
     v.y = sy;
-    m570.v70[3].a = m570.v70[3].b = v;
+    m570.v70[3].a = v;
+    m570.v70[3].b = v;
     m570.slots[0].f28 = 1;
     {
         tstring name("matte");

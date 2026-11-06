@@ -9,3 +9,5 @@
 ../src/game/options_panel/mission_items.cpp  ??0ItemC@@QAE@XZ  004cef80  /O2 /MT /Gy /TP
 ../src/game/options_panel/mission_items.cpp  ?push_back@vec44@@QAEXPAD@Z  004cefe0  /O2 /MT /Gy /TP
 ../src/game/options_panel/mission_items.cpp  ??0MissionBlocker@@QAE@XZ  004ce960  /O2 /MT /Gy /TP
+../src/game/options_panel/mission_items.cpp  ?slot_empty_4@MissionBlocker@@UAEXXZ  004cea10  /O2 /MT /Gy /TP
+../src/game/options_panel/mission_items.cpp  ?s_last@ItemA@@UAEXXZ  004ceb90  /O2 /MT /Gy /TP

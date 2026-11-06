@@ -11,6 +11,7 @@
 #include "../tstring.h"
 #include "../slot.h"
 #include "../ui/mission_ui.h"
+#include "../view_state.h"
 
 
 #define NOINL __declspec(noinline)     // keeps the definition's name visible to tools/difftest/slice.py's marker scan
@@ -96,7 +97,7 @@ int Slot::read_keys()
 int Slot::read_state()
 {
     if (state) {
-        int buf[5] = {0};
+        int buf[5] = {};
         if (((SomeIface*)state)->Read(0x14, buf) < 0) {
             if (((SomeIface*)state)->GetStatus() == 0x8007001e) {
                 while (((SomeIface*)state)->GetStatus() == 0x8007001e)
@@ -138,19 +139,20 @@ int Slot::is_ready(int i)
 // @ 0x487930
 void Slot::update(float dt)
 {
-    memcpy(prev, down, sizeof(down));
+    bool ch = false;
+    memcpy(prev, down, sizeof down);
     read_keys();
     read_state();
-    bool ch = false;
     float f = 1.0f - dt * 0.14f;
     if (0.2f > f)
         f = 0.2f;
-    f818 *= f;
+    float g = f818 * f;
+    f818 = g;
     if (0.2f > f)
         f = 0.2f;
     f81c *= f;
     if (axis[0] != 0.0f || axis[1] != 0.0f) {
-        f818 = f818 * 0.5f + axis[0];
+        f818 = g * 0.5f + axis[0];
         f81c = f81c * 0.5f + axis[1];
     }
     for (int i = 0; i < 0x100; i++) {
@@ -159,9 +161,10 @@ void Slot::update(float dt)
     }
     if (ch)
         t828 = g_ticks[clock820] + 80000;
-    b840 = 0;
+    char& b = b840;
+    b = 0;
     if ((float)(g_ticks[clock820] - t828) * 0.00001f > 0.0f) {
-        b840 = 1;
+        b = 1;
         t828 = g_ticks[clock820] + 15000;
     }
 }
@@ -217,6 +220,7 @@ MissionUi::~MissionUi()
     }
 }
 
+
 // ---- the animated effect (0x150-byte object, vtable of 40 slots): 0x487c40 ----------------------------------------------
 extern "C" double floor(double v);     // 0x536b10 CRT floor (x87 double arg on the stack)
 
@@ -238,14 +242,16 @@ extern const float g_zero;              // 0x549ca8 0.0f
 void MissionUi::animate(int)
 {
 
+    bool changed = false;
+
+    // the six tracks re-read the 64-bit tick distance through the dword view (tick), so one folded
+    // template helper (mov/push/sbb)/fild shapes every pair the same way
     float e0 = (float)(g_ticks[tm[0].clock] - tm[0].start) * 1e-5f;
     float e1 = (float)(g_ticks[tm[1].clock] - tm[1].start) * 1e-5f;
     float e2 = (float)(g_ticks[tm[2].clock] - tm[2].start) * 1e-5f;
     float e3 = (float)(g_ticks[tm[3].clock] - tm[3].start) * 1e-5f;
     float e4 = (float)(g_ticks[tm[4].clock] - tm[4].start) * 1e-5f;
     float e5 = (float)(g_ticks[tm[5].clock] - tm[5].start) * 1e-5f;
-
-    bool changed = false;
 
     float pair[2];                              // the +0x58/+0x6c argument pair (reused by E and F)
     unsigned col;                               // packed colour word for +0x98/+0x9c

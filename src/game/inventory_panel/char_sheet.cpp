@@ -111,10 +111,10 @@ static const char* config_text(int i)
 }
 
 // the inlined key walk of the original: compare every record's key, stop at the first hit
-static int config_index(const tstring& key)
+static __forceinline int config_index(const tstring& key)
 {
     int found = -1;
-    for (int i = 0; i < g_game_vars.count && found == -1; i++) {
+    for (int i = 0; found == -1 && i < g_game_vars.count; i++) {
         if (g_game_vars.entries[i].key.equals(key))
             found = i;
     }
@@ -131,7 +131,7 @@ static float config_float(const tstring& key)
 }
 
 // the same, through the inlined walk
-static float config_float_walk(const tstring& key)
+static __forceinline float config_float_walk(const tstring& key)
 {
     float v = 0;
     int i = config_index(key);
@@ -139,11 +139,69 @@ static float config_float_walk(const tstring& key)
     return v;
 }
 
+// registers a top-level window with the gui
+static inline void gui_add(MissionUi* w)
+{
+    g_gui.dirty = 1;
+    g_gui.objs.push_back(w);
+}
+
+// the "+" buttons take their caption by reference in the callers' source
+static __forceinline UiA* make_button(ContainerBase* parent, const tstring& text, float x, float y, int flag, float sy)
+{
+    return make_button(parent, &text, x, y, flag, sy);
+}
+
+// the widget virtual's result (the text size) is ignored
+static __forceinline void set_caption(MissionUi* w, const tstring& text)
+{
+    float out[2];
+    w->set_text(out, &text);
+}
+
+static __forceinline UiD* make_scrollbar(void* parent, const tstring& key)
+{
+    return make_scrollbar(parent, &key);
+}
+
+static __forceinline Camera* make_editor_list(void* parent, const tstring& key, int child)
+{
+    return make_editor_list(parent, &key, child);
+}
+
+static __forceinline void set_color_v(MissionUi* w, const unsigned& c)
+{
+    w->set_color((unsigned*)&c);
+}
+
+static __forceinline float scaled(float k, float sp)
+{
+    return sp * k;
+}
+
+// a "%x" colour value, through the inlined walk
+static __forceinline unsigned config_hex_walk(const tstring& key)
+{
+    unsigned v = 0;
+    int i = config_index(key);
+    if (i >= 0) sscanf(config_text(i), "%x", &v);
+    return v;
+}
+
+// the statistics / next / previous buttons: 0x4dcc50 with the button meshes spelled out
+static __forceinline UiA* medium_button_h(MissionUi* parent, const tstring& text, float h)
+{
+    return new_sized_button(parent, text, 0, 0, h, "medium_button", "medium_button_down", 3.7f, 0.072f, 0.085f);
+}
+
+static __forceinline UiA* short_button_h(MissionUi* parent, const tstring& text, float h)
+{
+    return new_sized_button(parent, text, 0, 0, h, "short_button", "short_button_down", 3.0f, 0.072f, 0.085f);
+}
+
 // @ 0x507400
 void CharSheet::init_screen()
 {
-    int i;
-
     if (w04 == 0)
         w14 = g_game->player;
     if (w08 == 0) {
@@ -155,47 +213,23 @@ void CharSheet::init_screen()
     stats = 0;
 
     // the panel: 0x190-byte container, vtable 0x592848, "character_window" mesh
-    NodeA* w = new NodeA;
-    w->f188 = 0;
-    window = w;
-
-    vector2 v;
-    v.x = 0.0f;
-    v.y = 0.0f;
-    w->move_a(&v.x);
-    v.x = 1.0f;
-    v.y = 0.75f;
-    w->set_xy(&v.x);
-
+    window = new NodeA((char)0);
+    window->move_a((const float*)&vector2(0.0f, 0.0f));
+    window->set_xy((const float*)&vector2(1.0f, 0.75f));
+    rgl::mesh* mesh;
     {
-        rgl::mesh* mesh;
-        {
-            tstring n("character_window");
-            mesh = g_resmgr.get_object(&n)->clone();
-        }
-        w->set_track(0, mesh);
+        tstring n("character_window");
+        mesh = g_resmgr.get_object(&n)->clone();
     }
+    window->set_track(0, mesh);
 
-    MissionUi* pw = window;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back(pw);
+    gui_add(window);
 
     // reset-changes button (this+0x430) and done button (this+0x42c)
-    {
-        tstring ka("char_b_reset_h");
-        tstring kb("ui_reset_changes");
-        float h = config_float(ka);
-        reset = new_medium_button(window, g_strtable.lookup(kb), 0, 0, h);
-    }
-    label_refresh(reset, tstring("char_b_reset"));
-
-    {
-        tstring ka("char_b_done_h");
-        tstring kb("ui_done");
-        float h = config_float(ka);
-        done = make_short_button(window, g_strtable.lookup(kb), 0, 0, h);
-    }
-    label_refresh(done, tstring("char_b_done"));
+    reset = new_medium_button(window, g_strtable.lookup("ui_reset_changes"), 0, 0, config_float("char_b_reset_h"));
+    label_refresh(reset, "char_b_reset");
+    done = make_short_button(window, g_strtable.lookup("ui_done"), 0, 0, config_float("char_b_done_h"));
+    label_refresh(done, "char_b_done");
 
     ((char_window*)this)->fill_skills();
 
@@ -203,239 +237,153 @@ void CharSheet::init_screen()
     f2d4 = -1;
     f2d8 = 0;
 
-    float skills_y = config_float(tstring("char_b_skills_y_a"));
+    float skills_y = config_float("char_b_skills_y_a");
 
     // do the configured skill column offsets apply to this character?
-    float skills_x;
-    {
-        tstring kn("char_num_skills");
-        if (num_skills <= g_game_vars.get_int(kn)) {
-            tstring kx("char_b_skills_x_a");
-            skills_x = g_game_vars.get_float(kx);
-        } else {
-            skills_x = 0.0f;
-        }
-    }
+    float skills_x = num_skills <= g_game_vars.get_int("char_num_skills")
+        ? g_game_vars.get_float("char_b_skills_x_a") : 0.0f;
 
     // ---- the skill column -------------------------------------------------------------------------
-    text_box* sk = new text_box;
-    skills = sk;
-    label_refresh(sk, tstring("char_bo_skills"));
+    skills = new text_box;
+    label_refresh(skills, "char_bo_skills");
+    skills->set_xy((const float*)&vector2(skills->screen[0], ((float)num_skills + 0.5f) * skills_y));
 
-    v.x = sk->screen[0];
-    v.y = ((float)num_skills + 0.5f) * skills_y;
-    sk->set_xy(&v.x);
+    for (int i = 0; i < num_skills; i++) {
+        skill_row[i] = new UiA;
+        label_refresh(skill_row[i], "char_b_skills_base");
 
-    if (num_skills > 0) {
-        for (i = 0; i < num_skills; i++) {
-            UiA* row = new UiA;
-            skill_row[i] = row;
-            label_refresh(row, tstring("char_b_skills_base"));
+        float rowy = (float)((num_skills < g_game_vars.get_int("char_num_skills")
+                              ? g_game_vars.get_int("char_num_skills") - num_skills : 0) + i)
+                     * skills_y + skill_row[i]->fEC;
+        skill_row[i]->move_a((const float*)&vector2(skill_row[i]->fE8, rowy));
+        skill_row[i]->set_xy((const float*)&vector2(config_float_walk("char_b_skills_w") + skills_x, skills_y));
 
-            int extra;
-            {
-                tstring kn("char_num_skills");
-                if (num_skills < g_game_vars.get_int(kn)) {
-                    tstring kn2("char_num_skills");
-                    extra = g_game_vars.get_int(kn2) - num_skills;
-                } else {
-                    extra = 0;
-                }
-            }
-
-            float rowy = (float)(extra + i) * skills_y + row->fEC;
-            v.x = row->fE8;
-            v.y = rowy;
-            row->move_a(&v.x);
-
-            float colw = config_float_walk(tstring("char_b_skills_w"));
-            v.x = colw + skills_x;
-            v.y = skills_y;
-            row->set_xy(&v.x);
-
-            int idx = skill_id[i];                   // fill_skills' list of active skills (0x5079f8: [&skill_row[i] + 0x1f8])
-            char* base = (char*)g_skill_tbl + idx * 0x44;
+        {
+            char* base = (char*)g_skill_tbl + skill_id[i] * 0x44;
             tstring* nm = g_strtable.find((tstring*)(base + 0x20));
             if (nm == 0)
                 nm = (tstring*)(base + 0x10);
-            vector2 tx;
-            row->set_text(&tx.x, nm);
-
-            sk->add_child(row);
-
-            float levels_w = config_float_walk(tstring("char_b_skill_levels_w"));
-            float levels_x = config_float_walk(tstring("char_b_skill_levels_x"));
-            tstring empty("");
-            // 0x507b6e: the level label goes only into this->label[i] (= [&skill_row[i] + 0xa8]), not into the row
-            label[i] = make_hint(sk, empty, levels_x + skills_x, rowy,
-                                     levels_w, skills_y);
-            label[i]->set_color(&row->color14c);                     // +0xd8: the per-row rank text update_skill_rows recolours
-   // 0x507b9f pushes the row class's vptr+0x14c (an address, not a colour); row->color is the same byte the original reads
-
-            float inc_h = config_float_walk(tstring("char_b_skill_increment_h_a"));
-            float inc_y = config_float_walk(tstring("char_b_skill_increment_y_a"));
-            float inc_x = config_float_walk(tstring("char_b_skill_increment_x"));
-            tstring plus("+");
-            // 0x507d69: [&skill_row[i] + 0x150] = this->btn[i]; the row object itself is not written
-            UiA* plus150 = make_button(sk, &plus, inc_x + skills_x, inc_y + rowy,
-                                     1, skills_y - inc_h);
-            btn[i] = plus150;
-
-            float ts_x = config_float_walk(tstring("char_b_skill_increment_t_s"));
-            float ts_y = config_float_walk(tstring("char_b_skill_increment_t_s"));
-            vector2 ts;
-            ts.x = ts_y;
-            ts.y = ts_x;
-            plus150->set_size(&ts.x);
-            plus150->set_text(&tx.x, &plus);
-                                 // +0x180: the per-row upgrade button it shows/hides
-
+            float tx[2];
+            skill_row[i]->set_text(tx, nm);
         }
+
+        skills->add_child(skill_row[i]);
+
+        // 0x507b6e: the level label goes only into this->label[i] (= [&skill_row[i] + 0xa8]), not into the row
+        label[i] = make_hint(skills, "", config_float_walk("char_b_skill_levels_x") + skills_x, rowy,
+                             config_float_walk("char_b_skill_levels_w"), skills_y);
+        // 0x507b9f pushes the row class's vptr+0x14c (an address, not a colour); row->color is the same byte the original reads
+        label[i]->set_color(&skill_row[i]->color14c);
+
+        // 0x507d69: [&skill_row[i] + 0x150] = this->btn[i]; the row object itself is not written
+        btn[i] = make_button(skills, "+", config_float_walk("char_b_skill_increment_x") + skills_x,
+                             config_float_walk("char_b_skill_increment_y_a") + rowy, 1,
+                             skills_y - config_float_walk("char_b_skill_increment_h_a"));
+        btn[i]->set_size((const float*)&vector2(config_float_walk("char_b_skill_increment_t_s"),
+                                  config_float_walk("char_b_skill_increment_t_s")));
+        set_caption(btn[i], "+");
     }
 
     // the framed "skills" outer panel
     update_skill_rows();
-    UiD* inner;
-    {
-        tstring ks("char_s_skills");
-        inner = make_scrollbar(window, &ks);
-    }
-    {
-        tstring ko("char_sc_skills_outer");
-        skills_outer = make_editor_list(sk, &ko, (int)inner);
-    }
+    UiD* inner = make_scrollbar(window, "char_s_skills");
+    skills_outer = make_editor_list(skills, "char_sc_skills_outer", (int)inner);
     skills_outer->draw();
     window->add_child(skills_outer);
 
     // ---- the three column headings -----------------------------------------------------------------
+    weapon_title = new MissionUi;
+    label_refresh(weapon_title, "char_t_weapon_proficiencies_title");
     {
-        MissionUi* t = new MissionUi;
-        weapon_title = t;
-    }
-    label_refresh(weapon_title, tstring("char_t_weapon_proficiencies_title"));
-    {
-        vector2 tx;
-        weapon_title->set_text(&tx.x, g_strtable.lookup(tstring("ui_weapon_proficiencies")));
+        float tx[2];
+        weapon_title->set_text(tx, g_strtable.lookup("ui_weapon_proficiencies"));
     }
     window->add_child(weapon_title);
 
+    attrib_title = new MissionUi;
+    label_refresh(attrib_title, "char_t_attributes_title");
     {
-        MissionUi* t = new MissionUi;
-        attrib_title = t;
-    }
-    label_refresh(attrib_title, tstring("char_t_attributes_title"));
-    {
-        vector2 tx;
-        attrib_title->set_text(&tx.x, g_strtable.lookup(tstring("ui_attributes")));
+        float tx[2];
+        attrib_title->set_text(tx, g_strtable.lookup("ui_attributes"));
     }
     window->add_child(attrib_title);
 
+    skill_title = new MissionUi;
+    label_refresh(skill_title, "char_t_skills_title");
     {
-        MissionUi* t = new MissionUi;
-        skill_title = t;
-    }
-    label_refresh(skill_title, tstring("char_t_skills_title"));
-    {
-        vector2 tx;
-        skill_title->set_text(&tx.x, g_strtable.lookup(tstring("ui_skills")));
+        float tx[2];
+        skill_title->set_text(tx, g_strtable.lookup("ui_skills"));
     }
     window->add_child(skill_title);
 
     // ---- the seven weapon-proficiency rows ----------------------------------------------------------
-    for (i = 0; i < 7; i++) {
-        UiA* row = new UiA;
-        weapon_row[i] = row;
-        label_refresh(row, tstring("char_b_weapon_proficiencies_base"));
+    for (int j = 0; j < 7; j++) {
+        weapon_row[j] = new UiA;
+        label_refresh(weapon_row[j], "char_b_weapon_proficiencies_base");
 
-        float spacing = config_float_walk(tstring("char_b_weapon_proficiencies_y_a"));
-        v.x = row->fE8;
-        v.y = row->fEC - (float)i * spacing;
-        row->move_a(&v.x);
-
-        window->add_child(row);
-
-        float inc_h = config_float_walk(tstring("char_b_weapon_proficiency_increment_h"));
-        float inc_y = config_float_walk(tstring("char_b_weapon_proficiency_increment_y"));
-        float inc_ya = config_float_walk(tstring("char_b_weapon_proficiency_increment_y_a"));
-        float inc_x = config_float_walk(tstring("char_b_weapon_proficiency_increment_x"));
-        tstring plus("+");
-        // 0x50845e: [&weapon_row[i] + 0x1c] = this->rows[i]; the row object itself is not written
-        UiA* plus1c = make_button(window, &plus, inc_x, inc_y - inc_ya * (float)i,
-                                1, inc_h);      // 0x50844e: x = increment_x, y = increment_y - increment_y_a * i
-
-        float ts_x = config_float_walk(tstring("char_b_weapon_proficiency_increment_t_s"));
-        float ts_y = config_float_walk(tstring("char_b_weapon_proficiency_increment_t_s"));
-        vector2 ts;
-        ts.x = ts_y;
-        ts.y = ts_x;
-        rows[i] = plus1c;
-        plus1c->set_size(&ts.x);
+        float fj;
         {
-            vector2 tx;
-            plus1c->set_text(&tx.x, &plus);
+            tstring k("char_b_weapon_proficiencies_y_a");
+            float sp = config_float_walk(k);
+            fj = (float)j;
+            weapon_row[j]->move_a((const float*)&vector2(weapon_row[j]->fE8, weapon_row[j]->fEC - sp * fj));
         }
+        window->add_child(weapon_row[j]);
 
-        if (g_display_wp[i] == 0) {
-            row->hide();
-            plus1c->hide();
+        // 0x50845e: [&weapon_row[j] + 0x1c] = this->rows[j]; the row object itself is not written
+        rows[j] = make_button(window, "+", config_float_walk("char_b_weapon_proficiency_increment_x"),
+                              config_float_walk("char_b_weapon_proficiency_increment_y")
+                              - config_float_walk("char_b_weapon_proficiency_increment_y_a") * fj,
+                              1, config_float_walk("char_b_weapon_proficiency_increment_h"));
+        rows[j]->set_size((const float*)&vector2(config_float_walk("char_b_weapon_proficiency_increment_t_s"),
+                                   config_float_walk("char_b_weapon_proficiency_increment_t_s")));
+        set_caption(rows[j], "+");
+
+        if (g_display_wp[j] == 0) {
+            weapon_row[j]->hide();
+            rows[j]->hide();
         }
     }
 
     // ---- the attributes / general-info columns -----------------------------------------------------
-    {
-        text_box* a = new text_box;
-        attribs = a;
-    }
-    label_refresh(attribs, tstring("char_bo_attribs"));
-
-    {
-        text_box* g = new text_box;
-        general = g;
-    }
-    label_refresh(general, tstring("char_bo_general_info"));
+    attribs = new text_box;
+    label_refresh(attribs, "char_bo_attribs");
+    general = new text_box;
+    label_refresh(general, "char_bo_general_info");
 
     // the character-name button
-    {
-        UiE* n = new UiE(0);
-        name = n;
-    }
-    label_refresh(name, tstring("char_tb_character_name"));
+    name = new UiE(0);
+    label_refresh(name, "char_tb_character_name");
 
+    rgl::mesh* up;
     {
-        rgl::mesh* up;
-        {
-            tstring k("party_button");
-            up = g_resmgr.get_object(&k)->clone();
-        }
-        rgl::mesh* down;
-        {
-            tstring k("party_button_down");
-            down = g_resmgr.get_object(&k)->clone();
-        }
-        up->scale(0.6666667f);
-        down->scale(0.6666667f);
-        name->set_track(2, up);
-        name->set_track(1, down);
+        tstring k("party_button");
+        up = g_resmgr.get_object(&k)->clone();
     }
+    rgl::mesh* down;
+    {
+        tstring k("party_button_down");
+        down = g_resmgr.get_object(&k)->clone();
+    }
+    up->scale(0.6666667f);
+    down->scale(0.6666667f);
+    name->set_track(2, up);
+    name->set_track(1, down);
 
     {
         char* rec = (char*)g_game->chars + (unsigned)w14 * 0x508;
         tstring* nm = g_strtable.find((tstring*)(rec + 0x20));
         if (nm == 0)
             nm = (tstring*)rec;
-        vector2 tx;
-        name->set_text(&tx.x, nm);
+        float tx[2];
+        name->set_text(tx, nm);
     }
 
     if (w14 == 0 && ((tstring*)g_game->chars)->equals("")) {
         name->f181 = 1;
-        unsigned col = 0;
-        int idx = config_index(tstring("char_tb_character_name_t_c"));
-        if (idx >= 0)
-            sscanf(config_text(idx), "%x", &col);
-        name->set_color(&col);
-        vector2 tx;
-        name->set_text(&tx.x, g_strtable.lookup(tstring("ui_enter_name_here")));
+        set_color_v(name, config_hex_walk("char_tb_character_name_t_c"));
+        float tx[2];
+        name->set_text(tx, g_strtable.lookup("ui_enter_name_here"));
     } else {
         name->f181 = 0;
     }
@@ -445,52 +393,26 @@ void CharSheet::init_screen()
     window->add_child(general);
 
     // ---- the four attribute rows -------------------------------------------------------------------
-    for (i = 0; i < 4; i++) {
-        UiA* row = new UiA;
-        attrib_row[i] = row;
-        skill_pos[i] = row;                 // +0x45c-8: refresh_panels sets each attribute row's text
-        label_refresh(row, tstring("char_b_attribs_base"));
+    for (int k = 0; k < 4; k++) {
+        attrib_row[k] = new UiA;
+        label_refresh(attrib_row[k], "char_b_attribs_base");
 
-        float spacing = config_float_walk(tstring("char_b_attribs_y_a"));
-        float rowy = row->fEC - (float)i * spacing;
-        v.x = row->fE8;
-        v.y = rowy;
-        row->move_a(&v.x);
+        float rowy = attrib_row[k]->fEC - (float)k * config_float_walk("char_b_attribs_y_a");
+        attrib_row[k]->move_a((const float*)&vector2(attrib_row[k]->fE8, rowy));
+        attribs->add_child(attrib_row[k]);
 
-        attribs->add_child(row);
-
-        float inc_h = config_float_walk(tstring("char_b_attrib_increment_h"));
-        float inc_ya = config_float_walk(tstring("char_b_attrib_increment_y_a"));
-        float inc_x = config_float_walk(tstring("char_b_attrib_increment_x"));
-        tstring plus("+");
-        // [&attrib_row[i] + 0x10] = this->skill_val[i]; the row object itself is not written
-        UiA* plus10 = make_button(attribs, &plus, inc_x, rowy - inc_ya, 1, inc_h);
-        skill_val[i] = plus10;         // +0x45c: refresh_panels shows/hides the '+' per attribute
-
-        float ts_x = config_float_walk(tstring("char_b_attrib_increment_t_s"));
-        float ts_y = config_float_walk(tstring("char_b_attrib_increment_t_s"));
-        vector2 ts;
-        ts.x = ts_y;
-        ts.y = ts_x;
-        plus10->set_size(&ts.x);
-        {
-            vector2 tx;
-            plus10->set_text(&tx.x, &plus);
-        }
+        // [&attrib_row[k] + 0x10] = this->skill_val[k]; the row object itself is not written
+        skill_val[k] = make_button(attribs, "+", config_float_walk("char_b_attrib_increment_x"),
+                                   rowy - config_float_walk("char_b_attrib_increment_y_a"),
+                                   1, config_float_walk("char_b_attrib_increment_h"));
+        skill_val[k]->set_size((const float*)&vector2(config_float_walk("char_b_attrib_increment_t_s"),
+                                        config_float_walk("char_b_attrib_increment_t_s")));
+        set_caption(skill_val[k], "+");
     }
 
     // ---- statistics / next / previous --------------------------------------------------------------
-    {
-        tstring kh("char_b_stats_h");
-        tstring kc("ui_statistics");
-        float h = config_float_walk(kh);
-        tstring* cap = g_strtable.lookup(kc);
-        tstring normal("medium_button");
-        tstring pressed("medium_button_down");
-        stats = new_sized_button(window, *cap, 0, 0, h, normal, pressed,
-                                   3.7f, 0.072f, 0.085f);
-    }
-    label_refresh(stats, tstring("char_b_stats"));
+    stats = medium_button_h(window, *g_strtable.lookup("ui_statistics"), config_float_walk("char_b_stats_h"));
+    label_refresh(stats, "char_b_stats");
 
     f52c = 1;
     if (g_cfg.enable_edit_mode == 0 && w14 != g_game->player)
@@ -503,46 +425,19 @@ void CharSheet::init_screen()
     next = 0;
 
     if (g_cfg.enable_edit_mode != 0 && mode == -1) {
-        {
-            tstring kh("char_b_next_h");
-            tstring kc("ui_next");
-            float h = config_float_walk(kh);
-            tstring* cap = g_strtable.lookup(kc);
-            tstring normal("short_button");
-            tstring pressed("short_button_down");
-            next = new_sized_button(window, *cap, 0, 0, h, normal, pressed,
-                                      3.0f, 0.072f, 0.085f);
-        }
-        label_refresh(next, tstring("char_b_next"));
-    }
-
-    if (g_cfg.enable_edit_mode != 0 && mode == -1) {
-        {
-            tstring kh("char_b_prev_h");
-            tstring kc("ui_prev");
-            float h = config_float_walk(kh);
-            tstring* cap = g_strtable.lookup(kc);
-            tstring normal("short_button");
-            tstring pressed("short_button_down");
-            prev = new_sized_button(window, *cap, 0, 0, h, normal, pressed,
-                                      3.0f, 0.072f, 0.085f);
-        }
-        label_refresh(prev, tstring("char_b_prev"));
+        next = short_button_h(window, *g_strtable.lookup("ui_next"), config_float_walk("char_b_next_h"));
+        label_refresh(next, "char_b_next");
+        prev = short_button_h(window, *g_strtable.lookup("ui_prev"), config_float_walk("char_b_prev_h"));
+        label_refresh(prev, "char_b_prev");
     }
 
     // ---- the skill-description panel ---------------------------------------------------------------
-    {
-        text_box* d = new text_box;
-        skill_desc = d;
-    }
-    label_refresh(skill_desc, tstring("char_bo_skill_desc"));
+    skill_desc = new text_box;
+    label_refresh(skill_desc, "char_bo_skill_desc");
     window->add_child(skill_desc);
 
-    {
-        MissionUi* e = new MissionUi;
-        explanation = e;
-    }
-    label_refresh(explanation, tstring("char_t_explanation"));
+    explanation = new MissionUi;
+    label_refresh(explanation, "char_t_explanation");
     skill_desc->add_child(explanation);
     explanation->hide();
 

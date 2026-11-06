@@ -102,15 +102,14 @@ void MapEditorDialog::update()
             if (picked == ed_selected(g_game)) {
                 for (unsigned i = 0; i < ed_sel_list(g_game).size(); i++)
                     if (ed_sel_list(g_game)[i] == ed_selected(g_game)) {
-                        ed_sel_list(g_game)[i] = ed_sel_list(g_game).back();
+                        ed_sel_list(g_game)[i] = ed_sel_list(g_game)[ed_sel_list(g_game).size() - 1];
                         ed_sel_list(g_game).pop_back();
                     }
-                if (ed_sel_list(g_game).size() == 0)
-                    ed_selected(g_game) = -1;
+                if (ed_sel_list(g_game).size() > 0)
+                    ed_selected(g_game) = ed_sel_list(g_game)[ed_sel_list(g_game).size() - 1];
                 else
-                    ed_selected(g_game) = ed_sel_list(g_game).back();
-                f2f9 = 1;
-                picked = ed_selected(g_game);
+                    ed_selected(g_game) = -1;
+                f2f9 = 1;                picked = ed_selected(g_game);
                 goto refresh_list;
             }
 
@@ -133,13 +132,12 @@ add_current:
             ed_selected(g_game) = picked;
             for (unsigned i = 0; i < ed_sel_list(g_game).size(); i++)
                 if (ed_sel_list(g_game)[i] == ed_selected(g_game)) {
-                    ed_sel_list(g_game)[i] = ed_sel_list(g_game).back();
+                    ed_sel_list(g_game)[i] = ed_sel_list(g_game)[ed_sel_list(g_game).size() - 1];
                     ed_sel_list(g_game).pop_back();
                 }
             push_back_ref((IntVec&)ed_sel_list(g_game), ed_selected(g_game));
             f2f9 = 1;
         }
-
 refresh_list:
         ed_dirty_1c8(g_game) = 1;
         ((MapEditorDialog*)&g_app_obj)->refresh();
@@ -160,12 +158,16 @@ refresh_list:
 
     // 3. the editor camera frame
     {
-        vector4 dir(-cam_x, -cam_y, -cam_z);
+        vector4 dir;
+        dir.x = 0.0f; dir.y = 0.0f; dir.z = 0.0f;
         pos3 m;
         rgl::mat3 idtmp;
         *(rgl::mat3*)&m = *rgl::identity3(&idtmp);
+        m.o = dir;
+        dir.x = -cam_x; dir.y = -cam_y; dir.z = -cam_z;
         m.o = ed_pos(g_game);
-        cross3(m.s, dir, m.u);
+        m.f = dir;
+        cross3(m.s, m.f, m.u);
         normalize_vec(m.s);
         cross3(m.f, m.u, m.s);
         normalize_vec(m.f);
@@ -199,7 +201,7 @@ refresh_list:
             int idx = -1;
             for (unsigned i = 0; i < ed_sel_list(g_game).size(); i++)
                 if (ed_sel_list(g_game)[i] > max) { max = ed_sel_list(g_game)[i]; idx = i; }
-            ed_sel_list(g_game)[idx] = ed_sel_list(g_game).back();
+            ed_sel_list(g_game)[idx] = ed_sel_list(g_game)[ed_sel_list(g_game).size() - 1];
             ed_sel_list(g_game).pop_back();
             g_map_mission()->remove_prop(max);
         }
@@ -289,13 +291,14 @@ refresh_list:
 // @ 0x531380
 void pos3::move_forward(const float& k)
 {
+    vector4& dst = o;        // the original adds through a reference to o (it fences where cl schedules the parameter load)
     vector4 d;
     d.x = f.x * k;
     d.y = f.y * k;
     d.z = f.z * k;
-    o.x += d.x;
-    o.y += d.y;
-    o.z += d.z;
+    dst.x += d.x;
+    dst.y += d.y;
+    dst.z += d.z;
 }
 
 // @ 0x5313c0

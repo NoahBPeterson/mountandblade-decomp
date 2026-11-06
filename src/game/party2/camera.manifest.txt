@@ -10,3 +10,4 @@
 ../src/game/party2/camera.cpp  ?exec_trigger@Mission@@QAEHH@Z  0049f9e0  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?run_line@DialogBlock@@QAEDHPAHH@Z  004b0940  /O2 /MT /Gy /TP
 ../src/game/party2/camera.cpp  ?link@DialogBlock@@QAEXXZ  0049dd30  /O2 /MT /Gy /TP
+../src/game/party2/camera.cpp  ?spawn_around@GameData@@QAEHMMHM@Z  0049f020  /O2 /MT /Gy /TP

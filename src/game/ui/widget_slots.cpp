@@ -88,12 +88,10 @@ char ContainerBase::key(unsigned mask)
         }
     } else {
         for (int i = (int)kids.size() - 1; i >= 0 && !r; i--) {
-            MissionUi* c = kids[i];
-            r = 0;
-            if ((c->f104 & 3) == 0) {
-                if (c->fE0 + c->screen[2] <= g_gui.mouse[0] && g_gui.mouse[0] < c->fE0 + c->screen[0] &&
-                    c->fE4 + c->screen[3] <= g_gui.mouse[1] && g_gui.mouse[1] < c->fE4 + c->screen[1])
-                    r = c->key(mask);
+            if ((kids[i]->f104 & 3) == 0) {
+                if (kids[i]->screen[2] + kids[i]->fE0 <= g_gui.mouse[0] && g_gui.mouse[0] < kids[i]->screen[0] + kids[i]->fE0 &&
+                    kids[i]->screen[3] + kids[i]->fE4 <= g_gui.mouse[1] && g_gui.mouse[1] < kids[i]->screen[1] + kids[i]->fE4)
+                    r = kids[i]->key(mask);
             }
         }
     }

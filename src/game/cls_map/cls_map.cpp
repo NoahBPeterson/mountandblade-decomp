@@ -117,26 +117,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     LoadLibraryA("riched20.dll");
     InitSkinMagicLib(hInstance, "SCRIBBLE", 0, 0);
 
-    char skin_path[0x104];
+    char skin_path[0x80];
     sprintf(skin_path, ".\\Skins\\mb_skin_%s.smf",
             g_strtable.language.buf ? g_strtable.language.buf : (char*)&g_strtable.language.buf);
 
     WIN32_FIND_DATAA fd;
     HANDLE hfind = FindFirstFileA(skin_path, &fd);
-    const char* chosen;
-    if (hfind == INVALID_HANDLE_VALUE) {
-        chosen = ".\\Skins\\mb_skin_int.smf";
-    } else {
+    if (hfind != INVALID_HANDLE_VALUE) {
         FindClose(hfind);
-        chosen = skin_path;
+        LoadSkinFile(skin_path);
+    } else {
+        LoadSkinFile(".\\Skins\\mb_skin_int.smf");
     }
-    LoadSkinFile(chosen);
 
     WL_MARKER(12)
-    int r = g_app_obj.init_d3d();
-    if (r < 0)
+    if (g_app_obj.init_d3d() < 0)
         return 0;
-
+    else {
     WL_MARKER(13)
     INT_PTR dlg = DialogBoxParamA(hInstance, MAKEINTRESOURCEA(0xaa), NULL, (DLGPROC)msg_proc_thunk, 0);
     if (dlg != 0x410)
@@ -150,9 +147,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     ((options_record*)&g_options)->load();
     ((OptionsDlg*)&g_app_obj)->choose_dx_settings(&g_cfg, false);
 
-    DWORD_PTR proc_mask = 0, sys_mask = 0;
+    DWORD_PTR proc_mask, sys_mask;
     GetProcessAffinityMask(GetCurrentProcess(), &proc_mask, &sys_mask);
-    (void)sys_mask;     // 0x4d9613 tests [esp+0x1c], the PROCESS mask (2nd out-parameter), not the system mask
     if (g_cfg.force_single_threading == 0 && proc_mask > 1) {
         g_mt_inited = 1;
         InitializeCriticalSection(&g_mt_cs);
@@ -160,9 +156,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         _beginthread((void (__cdecl*)(void*))loader_thread_body, 0x40000, NULL);
     }
 
-    g_app_obj.m_bStartFullscreen = (g_cfg.start_windowed == 0);
     g_app_obj.m_fMinFrameTime = 1.0f / (float)g_cfg.max_framerate;
-
+    g_app_obj.m_bStartFullscreen = (g_cfg.start_windowed == 0);
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
     memset(&si, 0, sizeof(si));
@@ -205,19 +200,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
-    r = g_app_obj.Create(hInstance);
-    if (r < 0)
+    if (g_app_obj.Create(hInstance) < 0)
         return 0;
 
     SetActiveWindow(g_app_obj.m_hWnd);
     SetForegroundWindow(g_app_obj.m_hWnd);
     UpdateWindow(g_app_obj.m_hWnd);
 
-    r = g_app_obj.Create3DEnvironment((int)hInstance);
-    if (r < 0)
+    if (g_app_obj.Create3DEnvironment((int)hInstance) < 0)
         return 0;
 
     return g_app_obj.Run();
+    }
 }
 
 // ---- 0x4d9840: std::vector<E176>::operator= (explicit instantiation of the whole class, as the slice did) ----------
@@ -732,18 +726,27 @@ void gui_manager::set_rect(const float* a, const float* b)
 // ---- 0x4dc630: the message (result) window ------------------------------------------------------------------------------
 // the long / medium button makers sit after init(); the shared maker 0x4dcc50 follows (T regime: kept out of line)
 
+// one float setting by a key string the caller owns (a temporary that lives to the end of the caller's full expression)
+static __forceinline float config_float_key(const tstring& n, float r)
+{
+    int i = g_game_vars.find(n);
+    if (i >= 0)
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
+    return r;
+}
+struct uv_pair { float u, v; uv_pair(float a, float b) { u = a; v = b; } };   // a pair field assigned whole from a two-float value
 // @ 0x4dc630
 void ResultWindow::init_screen()
 {
-    float mv[4];
     if (w04 == 0) {
         tstring key("ui_ok");
         s78 = *g_strtable_c.lookup(key);
     }
     win = new NodeA(0);
-    mv[0] = 0.25f; mv[1] = 0.2f; mv[2] = 0.5f; mv[3] = 0.44f;
-    vt(win)->d22(mv);
-    vt(win)->d25(&mv[2]);
+    V2 a(0.25f, 0.2f);
+    V2 b(0.5f, 0.44f);
+    vt(win)->d22(&a);
+    vt(win)->d25(&b);
     rgl::mesh* m;
     {
         tstring name("message_window");
@@ -791,16 +794,10 @@ void ResultWindow::init_screen()
         b40 = new_medium_button(win, &s88, 0.15f, 0.03f, 0.045f);
         box38 = new UiE;
         {
-            float y = 0.0f;
             tstring ky("yn_tb_name_y");
-            int iy = g_game_vars.find(ky);
-            if (iy >= 0)
-                y = (float)atof(g_game_vars.entries[iy].value.c_str());
-            float x = 0.0f;
+            float y = config_float_key(ky, 0.0f);
             tstring kx("yn_tb_name_x");
-            int ix = g_game_vars.find(kx);
-            if (ix >= 0)
-                x = (float)atof(g_game_vars.entries[ix].value.c_str());
+            float x = config_float_key(kx, 0.0f);
             float v[2] = { x, y };
             vt(box38)->d22(v);
         }
@@ -961,7 +958,6 @@ UiA* new_medium_button(MissionUi* parent, const tstring* text, float a, float b,
 // @ 0x4dcef0
 void ItemRec::init_screen()
 {
-    BlockOwner& block = *(BlockOwner*)&owned;       // the +0x30 sub-object (index, timer, menu block) as the block owner sees it
     char text[0x200];
     int ids[9];
     char version_digits[0x40];
@@ -974,8 +970,7 @@ void ItemRec::init_screen()
 
     { V2 t_(-0.001f, -0.001f); vt(win)->d22(&t_); }
     { V2 t_(1.002f, 0.752f); vt(win)->d25(&t_); }
-    int base_colour = 0xff442323;
-    vt(win)->d38(&base_colour);
+    { int c = 0xff442323; vt(win)->d38(&c); }
 
     int r = g_module_settings.main_menu_font_color_red;
     r = r < 0 ? 0 : (r >= 0xff ? 0xfe : r);
@@ -984,8 +979,6 @@ void ItemRec::init_screen()
     int b = g_module_settings.main_menu_font_color_blue;
     b = b < 0 ? 0 : (b >= 0xff ? 0xfe : b);
     int colour = ((((unsigned)r | 0xffffff00u) << 8) | (unsigned)g) << 8 | (unsigned)b;
-    int down = (int)0xffffdd00;
-    int tp = 0;
 
     float step = g_module_settings.enable_quick_battles ? 0.06f : 0.08f;
 
@@ -1009,9 +1002,9 @@ void ItemRec::init_screen()
             tstring k("ui_custom_battle");
             row_custom = build_row(win, g_strtable_c.lookup(k), 0.33f, step + step + 0.08f, 0.6f, 0.05f);
         }
-        vt(row_custom)->d38(&colour);
-        vt(row_custom)->d39(&down);
-        vt(row_custom)->d29(&tp);
+        { int c = colour; vt(row_custom)->d38(&c); }
+        { int c = 0xffffdd00; vt(row_custom)->d39(&c); }
+        { int c = 0; vt(row_custom)->d29(&c); }
     } else {
         row_custom = 0;
     }
@@ -1028,27 +1021,26 @@ void ItemRec::init_screen()
         row_credits = build_row(win, g_strtable_c.lookup(k), 0.33f, 0.08f, 0.5f, 0.05f);
     }
 
-    vt(row_tutorial)->d38(&colour);
-    vt(row_new_game)->d38(&colour);
-    vt(row_restore)->d38(&colour);
-    vt(row_options)->d38(&colour);
-    vt(row_credits)->d38(&colour);
-    vt(row_exit)->d38(&colour);
+    { int c = colour; vt(row_tutorial)->d38(&c); }
+    { int c = colour; vt(row_new_game)->d38(&c); }
+    { int c = colour; vt(row_restore)->d38(&c); }
+    { int c = colour; vt(row_options)->d38(&c); }
+    { int c = colour; vt(row_credits)->d38(&c); }
+    { int c = colour; vt(row_exit)->d38(&c); }
 
-    vt(row_tutorial)->d39(&down);
-    vt(row_new_game)->d39(&down);
-    vt(row_restore)->d39(&down);
-    vt(row_options)->d39(&down);
-    vt(row_credits)->d39(&down);
-    vt(row_exit)->d39(&down);
+    { int c = 0xffffdd00; vt(row_tutorial)->d39(&c); }
+    { int c = 0xffffdd00; vt(row_new_game)->d39(&c); }
+    { int c = 0xffffdd00; vt(row_restore)->d39(&c); }
+    { int c = 0xffffdd00; vt(row_options)->d39(&c); }
+    { int c = 0xffffdd00; vt(row_credits)->d39(&c); }
+    { int c = 0xffffdd00; vt(row_exit)->d39(&c); }
 
-    vt(row_tutorial)->d29(&tp);
-    vt(row_new_game)->d29(&tp);
-    vt(row_restore)->d29(&tp);
-    vt(row_options)->d29(&tp);
-    vt(row_credits)->d29(&tp);
-    tp = 8;
-    vt(row_exit)->d29(&tp);
+    { int c = 0; vt(row_tutorial)->d29(&c); }
+    { int c = 0; vt(row_new_game)->d29(&c); }
+    { int c = 0; vt(row_restore)->d29(&c); }
+    { int c = 0; vt(row_options)->d29(&c); }
+    { int c = 0; vt(row_credits)->d29(&c); }
+    { int c = 8; vt(row_exit)->d29(&c); }
 
     logo = new MissionUi;
     { V2 t_(0.2f, 0.55f); vt(logo)->d22(&t_); }
@@ -1077,22 +1069,24 @@ void ItemRec::init_screen()
         tstring t(text);
         version = make_hint(win, t, 0.67f, 0.5f, 0.3f, 0.04f);
     }
-    vt(version)->d38(&colour);
+    { int c = colour; vt(version)->d38(&c); }
 
     const char* prefix = g_module_name.c_str();
     scan_saves((int)ids, &count, &first_free, prefix);
     if (first_free == -1)
         vt(row_new_game)->d46();
 
-    block.init(win, g_presentations.used[0]);
-    if (block.index <= 0) {
+    ((BlockOwner*)&owned)->init(win, g_presentations.used[0]);
+    if (((BlockOwner*)&owned)->index <= 0) {
         tstring k("load_window");
         vt(win)->d31(0, res_get(k)->clone());
     }
 
-    void* wv = win;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)(wv));
+    {
+        void* wv = win;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(wv));
+    }
 }
 
 // @ 0x4dd7b0
@@ -1112,7 +1106,8 @@ void scan_saves(int ids, int* count, int* first, const char* prefix)
 {
     char buf[0x104];
     char file[0x200];
-    *count = 0;
+    int*& n = count;
+    *n = 0;
     *first = -1;
     unsigned i = 0;
     do {
@@ -1122,8 +1117,8 @@ void scan_saves(int ids, int* count, int* first, const char* prefix)
         FILE* f = fopen(file, "r");
         if (f) {
             fclose(f);
-            *(int*)(ids + *count * 4) = i;
-            *count = *count + 1;
+            *(int*)(ids + *n * 4) = i;
+            *n = *n + 1;
         } else if (*first == -1) {
             *first = i;
         }
@@ -1198,22 +1193,22 @@ void BlockOwner::init(ContainerBase* parent, int which)
 // @ 0x4dda40
 void ItemRec2::init_screen()
 {
-    BlockOwner& block = *(BlockOwner*)&owned;
     g_gui.reset();
-    ContainerBase* w = new NodeA(0);
-    win = w;
+    win = new NodeA(0);
 
-    float v[2];
-    v[0] = -0.001f;
-    v[1] = -0.001f;
-    vt(win)->d22(v);
-
-    v[0] = 1.002f;                              // 0x4ddaa4: 0x3f804189
-    v[1] = 0.752f;                              // 0x3f408312
-    vt(win)->d25(v);
-
-    int no = -1;
-    vt(win)->d38(&no);
+    {
+        float v[2];
+        v[0] = -0.001f;
+        v[1] = -0.001f;
+        vt(win)->d22(v);
+    }
+    {
+        float v[2];
+        v[0] = 1.002f;                              // 0x4ddaa4: 0x3f804189
+        v[1] = 0.752f;                              // 0x3f408312
+        vt(win)->d25(v);
+    }
+    { int no = -1; vt(win)->d38(&no); }
 
     int r = g_module_settings.main_menu_font_color_red;
     r = r < 0 ? 0 : (r >= 0xff ? 0xfe : r);
@@ -1225,21 +1220,21 @@ void ItemRec2::init_screen()
 
     {
         tstring k("ui_return_to_game");
-        row0 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.42f, 0.4f, 0.05f);
+        row0 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.42f, 0.4f, 0.05f);
     }
     {
         tstring k("ui_options");
-        row2 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.36f, 0.4f, 0.05f);
+        row2 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.36f, 0.4f, 0.05f);
     }
     {
         tstring k("ui_save_and_exit");
-        row1 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.29f, 0.4f, 0.05f);
+        row1 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.29f, 0.4f, 0.05f);
     }
     if (((char*)g_game)[0x18] != 0)
         vt(row1)->d46();
-    vt(row0)->d38(&color);
-    vt(row2)->d38(&color);
-    vt(row1)->d38(&color);
+    { int c = color; vt(row0)->d38(&c); }
+    { int c = color; vt(row2)->d38(&c); }
+    { int c = color; vt(row1)->d38(&c); }
     row3 = 0;
     row4 = 0;
     row5 = 0;
@@ -1247,41 +1242,43 @@ void ItemRec2::init_screen()
     if (*(int*)((char*)g_game + 0xb4) != 0) {
         {
             tstring k("ui_save");
-            row3 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.22f, 0.4f, 0.05f);
+            row3 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.22f, 0.4f, 0.05f);
         }
-        vt(row3)->d38(&color);
+        { int c = color; vt(row3)->d38(&c); }
         {
             tstring k("ui_save_as");
-            row4 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.15f, 0.4f, 0.05f);
+            row4 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.15f, 0.4f, 0.05f);
         }
-        vt(row4)->d38(&color);
+        { int c = color; vt(row4)->d38(&c); }
         {
             tstring k("ui_quit_without_saving");
-            row5 = build_row(w, g_strtable_c.lookup(k), 0.1f, 0.08f, 0.4f, 0.05f);
+            row5 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.08f, 0.4f, 0.05f);
         }
-        vt(row5)->d38(&color);
+        { int c = color; vt(row5)->d38(&c); }
         if (((char*)g_game)[0x18] != 0) {
             vt(row3)->d46();
             vt(row4)->d46();
         }
     }
 
-    MissionUi* lg = new MissionUi;
-    logo = lg;
-
-    v[0] = 0.3f;
-    v[1] = 0.6f;
-    vt(lg)->d22(v);
-
-    v[0] = 0.4f;
-    v[1] = 0.1f;
-    vt(lg)->d25(v);
-
+    logo = new MissionUi;
+    {
+        float v[2];
+        v[0] = 0.3f;
+        v[1] = 0.6f;
+        vt(logo)->d22(v);
+    }
+    {
+        float v[2];
+        v[0] = 0.4f;
+        v[1] = 0.1f;
+        vt(logo)->d25(v);
+    }
     {
         tstring n("warrider_logo");
-        vt(lg)->d31(0, res_get(n)->clone());
+        vt(logo)->d31(0, res_get(n)->clone());
     }
-    vt(win)->d50(lg);
+    vt(win)->d50(logo);
 
     int pick = rand() % 0x3dc9;
     float f = (float)pick * (1.0f / 0x3dc9);
@@ -1295,14 +1292,16 @@ void ItemRec2::init_screen()
 
     vt(win)->d32(2, res_get(pic)->clone());
 
-    block.init(win, g_presentations.used[1]);
-    if (block.index < 0) {
+    ((BlockOwner*)&owned)->init(win, g_presentations.used[1]);
+    if (((BlockOwner*)&owned)->index < 0) {
         tstring n("load_window");
         vt(win)->d31(0, res_get(n)->clone());
     }
-    void* wv = win;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)(wv));
+    {
+        void* wv = win;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(wv));
+    }
 }
 
 // @ 0x4ddf80
@@ -1549,15 +1548,6 @@ static __forceinline rgl::mesh* load_mesh(const char* name)
     return res_get(n)->clone();
 }
 
-// one float setting by a key string the caller owns (a temporary that lives to the end of the caller's full expression)
-static __forceinline float config_float_key(const tstring& n)
-{
-    int i = g_game_vars.find(n);
-    float r = 0.0f;
-    if (i >= 0)
-        r = (float)atof(g_game_vars.entries[i].value.c_str());
-    return r;
-}
 static __forceinline V2* v2_ref(const V2& v) { return (V2*)&v; }
 
 // read one float setting of the option table, `def` when the key is missing (the original always passes 0.0f)
@@ -1635,39 +1625,51 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         b->m1a8 = res_get(n);
     }
 
-    // one full expression: both key strings live until d25 returns (the original destroys them after the call)
-    vt(b)->d25(v2_ref(V2(config_float_key(tstring("combobox_button_size_x")),
-                         config_float_key(tstring("combobox_button_size_y")))));
+    {
+        tstring ky("combobox_button_size_y");
+        float y = config_float_key(ky, 0.0f);
+        tstring kx("combobox_button_size_x");
+        float x = config_float_key(kx, 0.0f);
+        V2 v(x, y);
+        vt(b)->d25(&v);
+    }
 
-    b->f1b0 = config_float("combobox_child_button_size_x", 0.0f);
-    b->f1b4 = config_float("combobox_child_button_size_y", 0.0f);
-    b->f1b8 = config_float("combobox_child_button_position_x", 0.0f);
+    b->f1b0 = config_float_key("combobox_child_button_size_x", 0.0f);
+    b->f1b4 = config_float_key("combobox_child_button_size_y", 0.0f);
+    b->f1b8 = config_float_key("combobox_child_button_position_x", 0.0f);
 
     {
-        V2 ts(config_float_key(tstring("combobox_child_button_text_size_x")),     // both keys live to the end of the declaration
-              config_float_key(tstring("combobox_child_button_text_size_y")));
-        b->f1bc = ts.x;
-        b->f1c0 = ts.y;
+        tstring ky("combobox_child_button_text_size_y");
+        float y = config_float_key(ky, 0.0f);
+        tstring kx("combobox_child_button_text_size_x");
+        float x = config_float_key(kx, 0.0f);
+        *(uv_pair*)&b->f1bc = uv_pair(x, y);
+    }
+    {
+        tstring ky("combobox_child_button_text_position_y");
+        float y = config_float_key(ky, 0.0f);
+        tstring kx("combobox_child_button_text_position_x");
+        float x = config_float_key(kx, 0.0f);
+        *(uv_pair*)&b->f1c4 = uv_pair(x, y);
     }
 
     {
-        V2 tp(config_float_key(tstring("combobox_child_button_text_position_x")),     // both keys live to the end of the declaration
-              config_float_key(tstring("combobox_child_button_text_position_y")));
-        b->f1c4 = tp.x;
-        b->f1c8 = tp.y;
-    }
-
-    {
-        float text_size = config_float("combobox_text_size", 0.0f);
+        float text_size = config_float_key("combobox_text_size", 0.0f);
         V2 tsize(text_size, text_size);
         vt(b)->d27(&tsize);
     }
 
-    vt(b)->d28(v2_ref(V2(config_float_key(tstring("combobox_text_position_x")),
-                         config_float_key(tstring("combobox_text_position_y")))));
+    {
+        tstring ky("combobox_text_position_y");
+        float y = config_float_key(ky, 0.0f);
+        tstring kx("combobox_text_position_x");
+        float x = config_float_key(kx, 0.0f);
+        V2 v(x, y);
+        vt(b)->d28(&v);
+    }
 
     {
-        rgl::vector4 out;
+        V2 out;
         vt(b)->d41(&out, (void*)name);
     }
     vt(parent)->d50(b);
@@ -1703,8 +1705,8 @@ void Recd8::init_screen()
         vt(root)->d41(o_, &k);
     }
     {
-        unsigned c = COLOR_ENABLED;
-        vt(root)->d38(&c);
+        unsigned c[2]; c[0] = COLOR_ENABLED;
+        vt(root)->d38(c);
     }
     {
         rgl::mesh* m;
@@ -1727,8 +1729,7 @@ void Recd8::init_screen()
     }
     {
         tstring k("warrider_logo");
-        rgl::mesh* m = res_get(k)->clone();
-        vt(header)->d31(0, m);
+        vt(header)->d31(0, res_get(k)->clone());
     }
     vt(root)->d50(header);
     { tstring k("ui_controls"); b38 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.1f, 0.07f, 0.05f); }
@@ -1776,80 +1777,62 @@ void Recd8::init_screen()
     sl78 = make_slider((MissionUi*)root, 0.67f, 0.405f, 1.0f);
     vt(sl78)->d13(g_options.f74);
     { tstring k(""); h34 = make_hint((ContainerBase*)root, k, 0.93f, 0.4f, 0.05f, 0.035f); }
-    { unsigned c = 0xffffffff; vt(h34)->d38(&c); }
+    { unsigned c[2]; c[0] = 0xffffffff; vt(h34)->d38(c); }
     ((QuestPage*)this)->update_days();
     { tstring k("ui_music_volume"); h8c = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.6f, 0.16f, 0.035f); }
-    { int v = 4; vt(h8c)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(h8c)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(h8c)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(h8c)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(h8c)->d38(c); vt(h8c)->d37(c); }
     { tstring k("ui_sound_volume"); h90 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.55f, 0.16f, 0.035f); }
-    { int v = 4; vt(h90)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(h90)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(h90)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(h90)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(h90)->d38(c); vt(h90)->d37(c); }
     { tstring k("ui_mouse_sensitivity"); h94 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.45f, 0.16f, 0.035f); }
-    { int v = 4; vt(h94)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(h94)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(h94)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(h94)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(h94)->d38(c); vt(h94)->d37(c); }
     { tstring k("ui_invert_mouse_y_axis"); h98 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.4f, 0.16f, 0.035f); }
-    { int v = 4; vt(h98)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(h98)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(h98)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(h98)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(h98)->d38(c); vt(h98)->d37(c); }
     { tstring k("ui_control_block_direction"); h9c = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.3f, 0.16f, 0.035f); }
-    { int v = 4; vt(h9c)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(h9c)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(h9c)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(h9c)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(h9c)->d38(c); vt(h9c)->d37(c); }
     { tstring k("ui_control_attack_direction"); ha0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.25f, 0.16f, 0.035f); }
-    { int v = 4; vt(ha0)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(ha0)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(ha0)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(ha0)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(ha0)->d38(c); vt(ha0)->d37(c); }
     { tstring k("ui_damage_to_player"); ha4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.6f, 0.16f, 0.035f); }
-    { int v = 4; vt(ha4)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(ha4)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(ha4)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(ha4)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(ha4)->d38(c); vt(ha4)->d37(c); }
     { tstring k("ui_damage_to_friends"); ha8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.55f, 0.16f, 0.035f); }
-    { int v = 4; vt(ha8)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(ha8)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(ha8)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(ha8)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(ha8)->d38(c); vt(ha8)->d37(c); }
     { tstring k("ui_combat_ai"); hac = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.5f, 0.16f, 0.035f); }
-    { int v = 4; vt(hac)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hac)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hac)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hac)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hac)->d38(c); vt(hac)->d37(c); }
     { tstring k("ui_combat_speed"); hb0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.45f, 0.16f, 0.035f); }
-    { int v = 4; vt(hb0)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hb0)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hb0)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hb0)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hb0)->d38(c); vt(hb0)->d37(c); }
     { tstring k("ui_battle_size"); hb4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.4f, 0.12f, 0.035f); }
-    { int v = 4; vt(hb4)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hb4)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hb4)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hb4)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hb4)->d38(c); vt(hb4)->d37(c); }
     { tstring k("ui_show_attack_direction"); hb8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.34f, 0.3f, 0.035f); }
-    { int v = 4; vt(hb8)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hb8)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hb8)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hb8)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hb8)->d38(c); vt(hb8)->d37(c); }
     { tstring k("ui_show_targeting_reticule"); hbc = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.3f, 0.3f, 0.035f); }
-    { int v = 4; vt(hbc)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hbc)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hbc)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hbc)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hbc)->d38(c); vt(hbc)->d37(c); }
     { tstring k("ui_show_names_of_friendly_troops"); hc0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.26f, 0.3f, 0.035f); }
-    { int v = 4; vt(hc0)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hc0)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hc0)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hc0)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hc0)->d38(c); vt(hc0)->d37(c); }
     { tstring k("ui_report_damage"); hc4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.22f, 0.3f, 0.035f); }
-    { int v = 4; vt(hc4)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hc4)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hc4)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hc4)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hc4)->d38(c); vt(hc4)->d37(c); }
     { tstring k("ui_report_shot_difficulty"); hc8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.18f, 0.3f, 0.035f); }
-    { int v = 4; vt(hc8)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hc8)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hc8)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hc8)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hc8)->d38(c); vt(hc8)->d37(c); }
     { tstring k("ui_report_casualties"); hcc = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.14f, 0.3f, 0.035f); }
-    { int v = 4; vt(hcc)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hcc)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hcc)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hcc)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hcc)->d38(c); vt(hcc)->d37(c); }
     { tstring k("ui_report_experience"); hd0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.1f, 0.3f, 0.035f); }
-    { int v = 4; vt(hd0)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hd0)->d38(&c); }
-    { unsigned c = COLOR_ENABLED; vt(hd0)->d37(&c); }
+    { int v[2]; v[0] = 4; vt(hd0)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hd0)->d38(c); vt(hd0)->d37(c); }
     { tstring k("ui_enabled"); b60 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.345f, 0.035f); }
     ((UiA*)b60)->f184 = 1;
     vt(b60)->d11(g_options.i68);
@@ -1879,8 +1862,8 @@ void Recd8::init_screen()
     vt(b74)->d11(g_options.show_messages);
     set_enabled_text(b74);
     { tstring k(""); hd4 = make_hint((ContainerBase*)root, k, 0.34f, 0.03f, 0.3f, 0.04f); }
-    { int v = 4; vt(hd4)->d29(&v); }
-    { unsigned c = COLOR_ENABLED; vt(hd4)->d38(&c); }
+    { int v[2]; v[0] = 4; vt(hd4)->d29(v); }
+    { unsigned c[2]; c[0] = COLOR_ENABLED; vt(hd4)->d38(c); }
     update_difficulty();
 
     {
@@ -1902,18 +1885,33 @@ void Recd8::init_screen()
 #define SL_MIN(w) (*(float*)((char*)(w) + 0x16c))   // slider range minimum (MissionUi +0x16c)
 #define SL_MAX(w) (*(float*)((char*)(w) + 0x170))   // slider range maximum
 static __forceinline int drop_count(DropDown* d) { return (int)d->rows.size(); }
+// the vector<tstring> destructor is expanded in place here (the shared headers declare the specialization for the callers that use 0x42d390)
+namespace std {
+template<> __forceinline void vector<tstring, allocator<tstring> >::_Tidy()
+{
+    if (_Myfirst != 0) {
+        tstring* first = _Myfirst;
+        tstring* last = _Mylast;
+        for (tstring* p = first; p != last; ++p)
+            p->~tstring();
+        operator delete(first);
+    }
+}
+}
+// the medium button of the toggle rows: inline, so window and text are loaded before the two mesh-name temporaries are built
+static __forceinline UiA* new_medium_button_i(MissionUi* parent, const tstring& text, float a, float b, float c)
+{
+    return new_sized_button(parent, text, a, b, c, "medium_button", "medium_button_down", 3.7f, 0.072f, 0.085f);
+}
 // the three calls every label gets: width (+0x74), colour (+0x98), mesh colour (+0x94), all with COLOR_ENABLED
 #define LABEL_STYLE(m, wd) \
-    { int v_ = (wd); vt(m)->d29(&v_); } \
-    { unsigned c_ = COLOR_ENABLED; vt(m)->d38(&c_); } \
-    { unsigned c_ = COLOR_ENABLED; vt(m)->d37(&c_); }
+    { int v_[2]; v_[0] = (wd); vt(m)->d29(v_); v_[0] = COLOR_ENABLED; vt(m)->d38(v_); vt(m)->d37(v_); }
 #define LABEL(m, key, x, y, w, h) \
     { tstring k_(key); m = make_hint(window, *g_strtable_c.lookup(k_), x, y, w, h); } \
     LABEL_STYLE(m, 4)
 // a toggle button: "ui_enabled" text, the two button textures, flag 1, the current value of an option, then the "enabled"/"disabled" caption
 #define QBTN(m, y, getval) \
-    { tstring k_("ui_enabled"); tstring* t_ = g_strtable_c.lookup(k_); tstring d_("medium_button_down"); tstring u_("medium_button"); \
-      m = new_sized_button((MissionUi*)window, *t_, 0.52f, y, 0.035f, u_, d_, 3.7f, 0.072f, 0.085f); } \
+    { tstring k_("ui_enabled"); m = new_medium_button_i((MissionUi*)window, *g_strtable_c.lookup(k_), 0.52f, y, 0.035f); } \
     ((UiA*)m)->f184 = 1; \
     vt(m)->d11(getval); \
     set_enabled_text(m);
@@ -1944,8 +1942,9 @@ void Recf0::init_screen()
         vt(window)->d41(o_, &k);
     }
     {
-        unsigned c = COLOR_ENABLED;
-        vt(window)->d38(&c);
+        unsigned c[2];
+        c[0] = COLOR_ENABLED;
+        vt(window)->d38(c);
     }
     {
         rgl::mesh* m;
@@ -1970,9 +1969,9 @@ void Recf0::init_screen()
     // the first label starts as the gamma text, then d41 replaces it with the DirectX version
     val_vertex_shaders = make_hint(window, gamma_text, 0.52f, 0.7f, 0.3f, 0.035f);
     {
-        int v = 4;
-        vt(val_vertex_shaders)->d29(&v);
         unsigned c[2];
+        c[0] = 4;
+        vt(val_vertex_shaders)->d29(c);
         c[0] = COLOR_ENABLED;
         vt(val_vertex_shaders)->d38(c);
         {
@@ -1993,6 +1992,8 @@ void Recf0::init_screen()
             tstring k("ui_percentage_value");
             sprintf(buf, g_strtable_c.lookup(k)->c_str(), g_cfg.texture_detail);
         }
+    }
+    {
         tstring t(buf);
         val_texture_detail = make_hint(window, t, 0.823f, 0.535f, 0.3f, 0.035f);
     }
@@ -2003,6 +2004,8 @@ void Recf0::init_screen()
             tstring k("ui_percentage_value");
             sprintf(buf, g_strtable_c.lookup(k)->c_str(), g_options.i34);
         }
+    }
+    {
         tstring t(buf);
         val_grass_density = make_hint(window, t, 0.823f, 0.495f, 0.3f, 0.035f);
     }
@@ -2030,47 +2033,52 @@ void Recf0::init_screen()
 
     { tstring k("ui_change"); change = new_medium_button((MissionUi*)window, g_strtable_c.lookup(k), 0.65f, 0.705f, 0.035f); }
 
-    {   // resolution
-        { tstring k("Resolution"); resolution = make_dropdown((MissionUi*)window, &k, 0.52f, 0.665f); }
-        // The original passes 3-argument vector4 temporaries (w never set, 0x4e1751 / 0x4e1797 / 0x4e17dd copy the temp's
-        // unwritten 4th float); set_color 0x47af30 reads only x, y, z
-        ((rgl::mesh*)resolution->tracks[2])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
-        ((rgl::mesh*)resolution->tracks[1])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
-        ((rgl::mesh*)resolution->tracks[3])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f));
+    // resolution
+    { tstring k("Resolution"); resolution = make_dropdown((MissionUi*)window, &k, 0.52f, 0.665f); }
+    // The original passes 3-argument vector4 temporaries (w never set, 0x4e1751 / 0x4e1797 / 0x4e17dd copy the temp's
+    // unwritten 4th float); set_color 0x47af30 reads only x, y, z
+    { ((rgl::mesh*)resolution->tracks[2])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f)); }
+    { ((rgl::mesh*)resolution->tracks[1])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f)); }
+    { ((rgl::mesh*)resolution->tracks[3])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f)); }
+    {
         float sc[2];
         sc[0] = 0.0139999995f;   // 0x3c656041 (0.014f would be 0x3c656042)
         sc[1] = 0.0139999995f;
         vt(resolution)->d27(sc);
+    }
+    {
+        float sc[2];
         sc[0] = 0.0139999995f;
         sc[1] = 0.00805f;
         vt(resolution)->d28(sc);
-        vt(resolution)->d03();
-        resolution->fD8 = 0.7f;
-        resolution->fDC = 0.7f;
-        resolution->e[0] -= 0.00528f;
-        resolution->e[1] -= 0.00528f;
-
-        std::vector<tstring> modes = list_modes();
-        for (int i = (int)modes.size() - 1; i >= 0; i--) {
-            DisplayMode& m = *(DisplayMode*)&modes[i];
-            bool ok = false;
-            if (g_cfg.display_bits == 16)
-                ok = m.name.find(tstring("16 bits"), 0) >= 0;
-            if (!ok)
-                ok = m.name.find(tstring("32 bits"), 0) >= 0;
-            if (ok) {
-                vt(resolution)->d50(&m.name);
-                char mb[0x80];
-                sprintf(mb, "%dx%d", g_cfg.display_width, g_cfg.display_height);
-                ok = m.name.find(tstring(mb), 0) >= 0;
-                if (ok)
-                    vt(resolution)->d11(drop_count(resolution) - 1);
-            }
-        }
-        DD_ITEM(resolution, "ui_use_desktop_resolution2")
-        if (g_cfg.display_width == 0)
-            vt(resolution)->d11(drop_count(resolution) - 1);
     }
+    vt(resolution)->d03();
+    { *(uv_pair*)&resolution->fD8 = uv_pair(0.7f, 0.7f); }
+    {
+        DropDown* r = resolution;
+        *(uv_pair*)&r->e[0] = uv_pair(r->e[0] - 0.00528f, r->e[1] - 0.00528f);
+    }
+
+    {
+    std::vector<tstring> modes = list_modes();
+    tstring* names = &modes[0];
+    for (int i = (int)modes.size() - 1; i >= 0; i--) {
+        tstring& mn = names[i];
+        bool ok = g_cfg.display_bits == 16 && mn.find("16 bits", 0) >= 0;
+        if (!ok)
+            ok = mn.find("32 bits", 0) >= 0;
+        if (ok) {
+            vt(resolution)->d50(&mn);
+            char mb[0x80];
+            sprintf(mb, "%dx%d", g_cfg.display_width, g_cfg.display_height);
+            ok = mn.find(mb, 0) >= 0;
+            if (ok)
+                vt(resolution)->d11(drop_count(resolution) - 1);
+        }
+    }
+    DD_ITEM(resolution, "ui_use_desktop_resolution2")
+    if (g_cfg.display_width == 0)
+        vt(resolution)->d11(drop_count(resolution) - 1);
 
     ui_scale = make_slider((MissionUi*)window, 0.56f, 0.625f, 1.0f);
     SL_MIN(ui_scale) = 1.5f;
@@ -2153,6 +2161,7 @@ void Recf0::init_screen()
         vt(lbl_gamma)->d44();
         vt(val_gamma)->d44();
     }
+    }
 }
 
 // ---- 0x4e25a0: the key-binding page -----------------------------------------------------------------------------------------------
@@ -2162,18 +2171,22 @@ void Rec1bc::init_screen()
     f1b8 = -1;
     g_gui.reset();
     quad = new NodeA(0);
-    float f2[2];
-    f2[0] = -0.001f;
-    f2[1] = -0.001f;
-    vt(quad)->d22(f2);
-    f2[0] = 1.002f;
-    f2[1] = 0.752f;
-    vt(quad)->d25(f2);
-    int v = -1;
-    vt(quad)->d38(&v);
     {
-        tstring name("options_window");
-        rgl::mesh* c = res_get(name)->clone();
+        float f2[2];
+        f2[0] = -0.001f;
+        f2[1] = -0.001f;
+        vt(quad)->d22(f2);
+        f2[0] = 1.002f;
+        f2[1] = 0.752f;
+        vt(quad)->d25(f2);
+    }
+    { int v = -1; vt(quad)->d38(&v); }
+    {
+        rgl::mesh* c;
+        {
+            tstring name("options_window");
+            c = res_get(name)->clone();
+        }
         vt(quad)->d31(0, c);
     }
     {
@@ -2193,92 +2206,73 @@ void Rec1bc::init_screen()
         f164 = make_hint(quad, *g_strtable_c.lookup(t), 0.75f, 0.25f, 0.2f, 0.06f);
     }
     vt(f164)->d44();
-    int iv;
     {
         tstring t("ui_battle_controls");
         f168 = make_hint(quad, *g_strtable_c.lookup(t), 0.25f, 0.705f, 0.3f, 0.04f);
     }
-    iv = 0x10;
-    vt(f168)->d29(&iv);
-    iv = -1;
-    vt(f168)->d38(&iv);
+    { int iv = 0x10; vt(f168)->d29(&iv); }
+    { int iv = -1; vt(f168)->d38(&iv); }
     {
         tstring t("ui_map_controls");
         f16c = make_hint(quad, *g_strtable_c.lookup(t), 0.7f, 0.705f, 0.3f, 0.04f);
     }
-    iv = 0x10;
-    vt(f16c)->d29(&iv);
-    iv = -1;
-    vt(f16c)->d38(&iv);
+    { int iv = 0x10; vt(f16c)->d29(&iv); }
+    { int iv = -1; vt(f16c)->d38(&iv); }
     {
         tstring t("ui_general_controls");
         f1a8 = make_hint(quad, *g_strtable_c.lookup(t), 0.7f, 0.355f, 0.3f, 0.04f);
     }
-    iv = 0x10;
-    vt(f1a8)->d29(&iv);
-    iv = -1;
-    vt(f1a8)->d38(&iv);
+    { int iv = 0x10; vt(f1a8)->d29(&iv); }
+    { int iv = -1; vt(f1a8)->d38(&iv); }
     for (int i = 0; i < 0x25; i++) {
         float x = 0.01f;
-        float c = 0.677f - (float)(i % 0x13) * 0.037f;
+        float c = 0.677f - (float)(int)((unsigned)i % 0x13) * 0.037f;
         if (i >= 0x13)
             x = 0.35f;
-        MissionUi* tb = make_hint(quad, ((OptionsMenu*)this)->slot_text(i), x, c, 0.185f, 0.03f);
-        slots[i] = tb;
-        iv = 8;
-        vt(tb)->d29(&iv);
-        iv = 0xfff0f0f0;
-        vt(tb)->d38(&iv);
-        tstring txt("          ");
-        tstring up("medium_button");
-        tstring down("medium_button_down");
-        MissionUi* b = new_sized_button(quad, txt, x + 0.195f, c + 0.005f, 0.034f, up, down, 3.7f, 0.072f, 0.085f);
-        slot_buttons[i] = b;
-        ((UiA*)b)->f184 |= 1;
+        slots[i] = make_hint(quad, ((OptionsMenu*)&g_game_keys)->slot_text(i), x, c, 0.185f, 0.03f);
+        { int iv = 8; vt(slots[i])->d29(&iv); }
+        { int iv = 0xfff0f0f0; vt(slots[i])->d38(&iv); }
+        {
+            tstring txt("          ");
+            slot_buttons[i] = new_medium_button_i(quad, txt, x + 0.195f, c + 0.005f, 0.034f);
+        }
+        ((UiA*)slot_buttons[i])->f184 |= 1;
     }
-    for (int i = 0; i < 7; i++) {
-        float c = 0.677f - (float)i * 0.037f;
-        MissionUi* tb = make_hint(quad, ((OptionsMenu*)this)->key_text(i), 0.72f, c, 0.13f, 0.03f);
-        captions[i] = tb;
-        iv = 8;
-        vt(tb)->d29(&iv);
-        iv = 0xfff0f0f0;
-        vt(tb)->d38(&iv);
+    for (int j = 0; j < 7; j++) {
+        float c = 0.677f - (float)j * 0.037f;
+        captions[j] = make_hint(quad, ((OptionsMenu*)&g_game_keys)->key_text(j), 0.72f, c, 0.13f, 0.03f);
+        { int iv = 8; vt(captions[j])->d29(&iv); }
+        { int iv = 0xfff0f0f0; vt(captions[j])->d38(&iv); }
         tstring t;
-        g_game_keys.key_name(i, &t);
-        MissionUi* b = make_hint(quad, t, 0.86f, c, 0.12f, 0.03f);
-        key_values[i] = b;
-        iv = 0x10;
-        vt(b)->d29(&iv);
-        iv = 0xfff0f0f0;
-        vt(b)->d38(&iv);
+        g_game_keys.key_name(j, &t);
+        key_values[j] = make_hint(quad, t, 0.86f, c, 0.12f, 0.03f);
+        { int iv = 0x10; vt(key_values[j])->d29(&iv); }
+        { int iv = 0xfff0f0f0; vt(key_values[j])->d38(&iv); }
     }
     {
         tstring t("ui_take_screenshot");
         f1ac = make_hint(quad, *g_strtable_c.lookup(t), 0.72f, 0.327f, 0.13f, 0.03f);
     }
-    iv = 8;
-    vt(f1ac)->d29(&iv);
-    iv = 0xfff0f0f0;
-    vt(f1ac)->d38(&iv);
+    { int iv = 8; vt(f1ac)->d29(&iv); }
+    { int iv = 0xfff0f0f0; vt(f1ac)->d38(&iv); }
     {
         tstring s("Ctrl + Insert");
         f1b0 = make_hint(quad, s, 0.86f, 0.327f, 0.12f, 0.03f);
     }
-    iv = 0x10;
-    vt(f1b0)->d29(&iv);
-    iv = 0xfff0f0f0;
-    vt(f1b0)->d38(&iv);
-    void* q = (void*)quad;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)(q));
+    { int iv = 0x10; vt(f1b0)->d29(&iv); }
+    { int iv = 0xfff0f0f0; vt(f1b0)->d38(&iv); }
+    {
+        void* q = (void*)quad;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(q));
+    }
     g_game_keys.backup();
     f1b4 = 0;
     ((KeysPage*)this)->refresh();
 }
 
 // @ 0x4e2cb0
-void GameKeys::backup()
+__declspec(noinline) void GameKeys::backup()
 {
     // 37 pairs of dwords at this+0 (the first key word included, as in the original) are copied to this+0x128
     int* p = (int*)this + 1;
@@ -2296,41 +2290,27 @@ tstring OptionsMenu::key_text(int i)
 {
     tstring r("unknown");
     switch (i) {
-    case 0: {
-        tstring k("ui_move_forward");
-        r = *g_strtable_c.lookup(k);
+    case 0:
+        r = *g_strtable_c.lookup("ui_move_forward");
         break;
-    }
-    case 1: {
-        tstring k("ui_move_backward");
-        r = *g_strtable_c.lookup(k);
+    case 1:
+        r = *g_strtable_c.lookup("ui_move_backward");
         break;
-    }
-    case 2: {
-        tstring k("ui_move_left");
-        r = *g_strtable_c.lookup(k);
+    case 2:
+        r = *g_strtable_c.lookup("ui_move_left");
         break;
-    }
-    case 3: {
-        tstring k("ui_move_right");
-        r = *g_strtable_c.lookup(k);
+    case 3:
+        r = *g_strtable_c.lookup("ui_move_right");
         break;
-    }
-    case 4: {
-        tstring k("ui_zoom_in");
-        r = *g_strtable_c.lookup(k);
+    case 4:
+        r = *g_strtable_c.lookup("ui_zoom_in");
         break;
-    }
-    case 5: {
-        tstring k("ui_zoom_out");
-        r = *g_strtable_c.lookup(k);
+    case 5:
+        r = *g_strtable_c.lookup("ui_zoom_out");
         break;
-    }
-    case 6: {
-        tstring k("ui_wait");
-        r = *g_strtable_c.lookup(k);
+    case 6:
+        r = *g_strtable_c.lookup("ui_wait");
         break;
-    }
     }
     return r;
 }
@@ -2340,191 +2320,117 @@ tstring OptionsMenu::slot_text(int i)
 {
     tstring r("unknown");
     switch (i) {
-    case 0: {
-        tstring k("ui_move_forward");
-        r = *g_strtable_c.lookup(k);
+    case 0:
+        r = *g_strtable_c.lookup("ui_move_forward");
         break;
-    }
-    case 1: {
-        tstring k("ui_move_backward");
-        r = *g_strtable_c.lookup(k);
+    case 1:
+        r = *g_strtable_c.lookup("ui_move_backward");
         break;
-    }
-    case 2: {
-        tstring k("ui_move_left");
-        r = *g_strtable_c.lookup(k);
+    case 2:
+        r = *g_strtable_c.lookup("ui_move_left");
         break;
-    }
-    case 3: {
-        tstring k("ui_move_right");
-        r = *g_strtable_c.lookup(k);
+    case 3:
+        r = *g_strtable_c.lookup("ui_move_right");
         break;
-    }
-    case 4: {
-        tstring k("ui_action");
-        r = *g_strtable_c.lookup(k);
+    case 4:
+        r = *g_strtable_c.lookup("ui_action");
         break;
-    }
-    case 5: {
-        tstring k("ui_jump");
-        r = *g_strtable_c.lookup(k);
+    case 5:
+        r = *g_strtable_c.lookup("ui_jump");
         break;
-    }
-    case 6: {
-        tstring k("ui_attack");
-        r = *g_strtable_c.lookup(k);
+    case 6:
+        r = *g_strtable_c.lookup("ui_attack");
         break;
-    }
-    case 7: {
-        tstring k("ui_defend");
-        r = *g_strtable_c.lookup(k);
+    case 7:
+        r = *g_strtable_c.lookup("ui_defend");
         break;
-    }
-    case 8: {
-        tstring k("ui_equip_next_weapon");
-        r = *g_strtable_c.lookup(k);
+    case 8:
+        r = *g_strtable_c.lookup("ui_equip_next_weapon");
         break;
-    }
-    case 9: {
-        tstring k("ui_equip_next_shield");
-        r = *g_strtable_c.lookup(k);
+    case 9:
+        r = *g_strtable_c.lookup("ui_equip_next_shield");
         break;
-    }
-    case 10: {
-        tstring k("ui_sheath_weapon");
-        r = *g_strtable_c.lookup(k);
+    case 10:
+        r = *g_strtable_c.lookup("ui_sheath_weapon");
         break;
-    }
-    case 11: {
-        tstring k("ui_leave_location_retreat");
-        r = *g_strtable_c.lookup(k);
+    case 15:
+        r = *g_strtable_c.lookup("ui_character_window");
         break;
-    }
-    case 12: {
-        tstring k("ui_zoom");
-        r = *g_strtable_c.lookup(k);
+    case 16:
+        r = *g_strtable_c.lookup("ui_inventory_window");
         break;
-    }
-    case 13: {
-        tstring k("ui_view_outfit");
-        r = *g_strtable_c.lookup(k);
+    case 17:
+        r = *g_strtable_c.lookup("ui_party_window");
         break;
-    }
-    case 14: {
-        tstring k("ui_toggle_first_person_view");
-        r = *g_strtable_c.lookup(k);
+    case 18:
+        r = *g_strtable_c.lookup("ui_quests_window");
         break;
-    }
-    case 15: {
-        tstring k("ui_character_window");
-        r = *g_strtable_c.lookup(k);
+    case 19:
+        r = *g_strtable_c.lookup("ui_game_log_window");
         break;
-    }
-    case 16: {
-        tstring k("ui_inventory_window");
-        r = *g_strtable_c.lookup(k);
+    case 11:
+        r = *g_strtable_c.lookup("ui_leave_location_retreat");
         break;
-    }
-    case 17: {
-        tstring k("ui_party_window");
-        r = *g_strtable_c.lookup(k);
+    case 12:
+        r = *g_strtable_c.lookup("ui_zoom");
         break;
-    }
-    case 18: {
-        tstring k("ui_quests_window");
-        r = *g_strtable_c.lookup(k);
+    case 13:
+        r = *g_strtable_c.lookup("ui_view_outfit");
         break;
-    }
-    case 19: {
-        tstring k("ui_game_log_window");
-        r = *g_strtable_c.lookup(k);
+    case 14:
+        r = *g_strtable_c.lookup("ui_toggle_first_person_view");
         break;
-    }
-    case 20: {
-        tstring k("ui_view_orders");
-        r = *g_strtable_c.lookup(k);
+    case 20:
+        r = *g_strtable_c.lookup("ui_view_orders");
         break;
-    }
-    case 21: {
-        tstring k("ui_order_hold");
-        r = *g_strtable_c.lookup(k);
+    case 21:
+        r = *g_strtable_c.lookup("ui_order_hold");
         break;
-    }
-    case 22: {
-        tstring k("ui_order_follow");
-        r = *g_strtable_c.lookup(k);
+    case 22:
+        r = *g_strtable_c.lookup("ui_order_follow");
         break;
-    }
-    case 23: {
-        tstring k("ui_order_charge");
-        r = *g_strtable_c.lookup(k);
+    case 23:
+        r = *g_strtable_c.lookup("ui_order_charge");
         break;
-    }
-    case 24: {
-        tstring k("ui_order_dismount_toggle");
-        r = *g_strtable_c.lookup(k);
+    case 24:
+        r = *g_strtable_c.lookup("ui_order_dismount_toggle");
         break;
-    }
-    case 25: {
-        tstring k("ui_order_hold_fire_toggle");
-        r = *g_strtable_c.lookup(k);
+    case 26:
+        r = *g_strtable_c.lookup("ui_order_advance");
         break;
-    }
-    case 26: {
-        tstring k("ui_order_advance");
-        r = *g_strtable_c.lookup(k);
+    case 27:
+        r = *g_strtable_c.lookup("ui_order_fall_back");
         break;
-    }
-    case 27: {
-        tstring k("ui_order_fall_back");
-        r = *g_strtable_c.lookup(k);
+    case 28:
+        r = *g_strtable_c.lookup("ui_order_stand_closer");
         break;
-    }
-    case 28: {
-        tstring k("ui_order_stand_closer");
-        r = *g_strtable_c.lookup(k);
+    case 29:
+        r = *g_strtable_c.lookup("ui_order_spread_out");
         break;
-    }
-    case 29: {
-        tstring k("ui_order_spread_out");
-        r = *g_strtable_c.lookup(k);
+    case 30:
+        r = *g_strtable_c.lookup("ui_order_blunt_weapons_toggle");
         break;
-    }
-    case 30: {
-        tstring k("ui_order_blunt_weapons_toggle");
-        r = *g_strtable_c.lookup(k);
+    case 25:
+        r = *g_strtable_c.lookup("ui_order_hold_fire_toggle");
         break;
-    }
-    case 31: {
-        tstring k("ui_everyone_control");
-        r = *g_strtable_c.lookup(k);
+    case 31:
+        r = *g_strtable_c.lookup("ui_everyone_control");
         break;
-    }
-    case 32: {
-        tstring k("ui_infantry_control");
-        r = *g_strtable_c.lookup(k);
+    case 33:
+        r = *g_strtable_c.lookup("ui_archers_control");
         break;
-    }
-    case 33: {
-        tstring k("ui_archers_control");
-        r = *g_strtable_c.lookup(k);
+    case 32:
+        r = *g_strtable_c.lookup("ui_infantry_control");
         break;
-    }
-    case 34: {
-        tstring k("ui_cavalry_control");
-        r = *g_strtable_c.lookup(k);
+    case 34:
+        r = *g_strtable_c.lookup("ui_cavalry_control");
         break;
-    }
-    case 35: {
-        tstring k("ui_others_control");
-        r = *g_strtable_c.lookup(k);
+    case 35:
+        r = *g_strtable_c.lookup("ui_others_control");
         break;
-    }
-    case 36: {
-        tstring k("ui_quick_save");
-        r = *g_strtable_c.lookup(k);
+    case 36:
+        r = *g_strtable_c.lookup("ui_quick_save");
         break;
-    }
     }
     return r;
 }

@@ -87,7 +87,7 @@ void Terrain::emit_cell(int x, int y)
                 nr += src->get70()->size();
                 no += src->get90()->size();
             }
-            i++;
+            p++;
         } while (--n);
     }
     vec32* v70 = &cell_at(this, x, y)->list[0]->f70;

@@ -12,11 +12,26 @@
 //-----------------------------------------------------------------------------
 #include <windows.h>
 #include <new>
+
+#undef push_back       // windows.h's raster-op constant
+
+// the 4-byte element of the 0x4fe0b0 vector: a class (so _Ptr_cat is non-scalar and the fills go through
+// _Uninit_fill_n 0x4fe120 / _Uninit_copy 0x4fe4b0, which push_back and _Insert_n call), trivially copyable
+struct ui_cell {
+    int v;
+};
+
+// The original keeps the 4-byte element's fill/copy helpers out of line: declare them before <memory> is
+// parsed so every use is a call to the out-of-line instance (0x4fe120 / 0x4fe4b0).
+#include <xmemory>
+namespace std {
+void _Uninit_fill_n(ui_cell*, unsigned, const ui_cell&, allocator<ui_cell>&, _Nonscalar_ptr_iterator_tag);
+ui_cell* _Uninit_copy(ui_cell*, ui_cell*, ui_cell*, allocator<ui_cell>&, _Nonscalar_ptr_iterator_tag);
+}
+
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
-
-#undef push_back       // windows.h's raster-op constant
 
 // ---- element types --------------------------------------------------------------------------------------
 // Skin (src/include/skin.h) is the 0x1f8-byte skin record: its copy constructor is the implicit one (0x4dc030, emitted out of line),
@@ -38,15 +53,18 @@ struct RowRec {
     RowRec(const RowRec& o);                              // 0x4e42f0
 };
 
-// the 4-byte element of the 0x4fe0b0 vector: a class (so _Ptr_cat is non-scalar and the fills go through
-// _Uninit_fill_n 0x4fe120 / _Uninit_copy 0x4fe4b0, which push_back and _Insert_n call), trivially copyable
-struct ui_cell {
-    int v;
-};
 typedef std::vector<ui_cell> int_vec;           // 0x4fe0b0/0x4fe190/0x4fe1e0 are vector<ui_cell> (not vector<int>:
                                                 // the int instance fills inline and calls neither helper)
 typedef std::vector<Skin> cfg_vec;
 typedef std::vector<RowRec> row_vec;
+
+// insert is out of line in the original: declare the specialization before the vector is instantiated so
+// push_back's slow path is a call, then define it below.
+template<> __declspec(noinline) std::vector<ui_cell>::iterator std::vector<ui_cell>::insert(std::vector<ui_cell>::iterator, const ui_cell&);
+
+// _Insert_n is out of line too: declare the specialization before the insert body above is instantiated so
+// the inline insert/fill helpers expand into it rather than the header template being instantiated here.
+template<> void std::vector<ui_cell>::_Insert_n(std::vector<ui_cell>::iterator, std::vector<ui_cell>::size_type, const ui_cell&);
 
 // ---- the vectors the engine works on (globals here keep the instantiations reachable) -------------------
 static int_vec int_v;
@@ -71,22 +89,101 @@ void* __cdecl int_push_back() throw()
     return 0;
 }
 
-template std::vector<ui_cell>::iterator std::vector<ui_cell>::insert(std::vector<ui_cell>::iterator, const ui_cell&);
 // @ 0x4fe0b0  vector<ui_cell>::push_back (out of line)
 template void std::vector<ui_cell>::push_back(const ui_cell&);
 
-// @ 0x4fe190  vector<int>::insert(iterator, const int&) -- reached through insert(end, count, val) below
+// @ 0x4fe190  vector<ui_cell>::insert(iterator, const ui_cell&)
+template<> __declspec(noinline) std::vector<ui_cell>::iterator std::vector<ui_cell>::insert(
+    std::vector<ui_cell>::iterator _Where, const ui_cell& _Val)
+{
+    size_type _Off = size() == 0 ? 0 : _Where - begin();
+    _Insert_n(_Where, (size_type)1, _Val);
+    return begin() + _Off;
+}
+
+// reached through insert(end, count, val) below
 void* __cdecl int_insert() throw()
 {
     int_v.insert(int_where, *int_x);
     return 0;
 }
 
-// @ 0x4fe1e0  vector<int>::_Insert_n (via the count overload)
+// reached through insert(where, count, val)
 void* __cdecl int_insert_n() throw()
 {
     int_v.insert(int_where, int_n, *int_x);
     return 0;
+}
+
+// @ 0x4fe1e0  vector<ui_cell>::_Insert_n (via the count overload)
+template<> void std::vector<ui_cell>::_Insert_n(
+    std::vector<ui_cell>::iterator _Where, std::vector<ui_cell>::size_type _Count,
+    const ui_cell& _Val)
+{
+    ui_cell _Tmp = _Val;
+    size_type _Capacity = capacity();
+
+    if (_Count == 0)
+        ;
+    else if (max_size() - size() < _Count)
+        _Xlen();
+    else if (_Capacity < size() + _Count)
+        {
+        _Capacity = max_size() - _Capacity / 2 < _Capacity
+            ? 0 : _Capacity + _Capacity / 2;
+        if (_Capacity < size() + _Count)
+            _Capacity = size() + _Count;
+        ui_cell* _Newvec = this->_Alval.allocate(_Capacity);
+        ui_cell* _Ptr = _Newvec;
+
+        _TRY_BEGIN
+        _Ptr = _Uninit_copy(_Myfirst, _ITER_BASE(_Where), _Newvec, this->_Alval,
+            _Nonscalar_ptr_iterator_tag());
+        _Uninit_fill_n(_Ptr, _Count, _Tmp, this->_Alval,
+            _Nonscalar_ptr_iterator_tag());
+        _Ptr += _Count;
+        _Uninit_copy(_ITER_BASE(_Where), _Mylast, _Ptr, this->_Alval,
+            _Nonscalar_ptr_iterator_tag());
+        _CATCH_ALL
+        _Destroy(_Newvec, _Ptr);
+        this->_Alval.deallocate(_Newvec, _Capacity);
+        _RERAISE;
+        _CATCH_END
+
+        _Count += size();
+        if (_Myfirst != 0)
+            {
+            _Destroy(_Myfirst, _Mylast);
+            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+            }
+        _Myend = _Newvec + _Capacity;
+        _Mylast = _Newvec + _Count;
+        _Myfirst = _Newvec;
+        }
+    else if ((size_type)(_Mylast - _ITER_BASE(_Where)) < _Count)
+        {
+        _Uninit_copy(_ITER_BASE(_Where), _Mylast,
+            _ITER_BASE(_Where) + _Count, this->_Alval, _Nonscalar_ptr_iterator_tag());
+
+        _TRY_BEGIN
+        _Uninit_fill_n(_Mylast, _Count - (_Mylast - _ITER_BASE(_Where)),
+            _Tmp, this->_Alval, _Nonscalar_ptr_iterator_tag());
+        _CATCH_ALL
+        _Destroy(_ITER_BASE(_Where) + _Count, _Mylast + _Count);
+        _RERAISE;
+        _CATCH_END
+
+        _Mylast += _Count;
+        fill(_ITER_BASE(_Where), _Mylast - _Count, _Tmp);
+        }
+    else
+        {
+        ui_cell* _Oldend = _Mylast;
+        _Mylast = _Uninit_copy(_Oldend - _Count, _Oldend, _Mylast, this->_Alval,
+            _Nonscalar_ptr_iterator_tag());
+        copy_backward(_ITER_BASE(_Where), _Oldend - _Count, _Oldend);
+        fill(_ITER_BASE(_Where), _ITER_BASE(_Where) + _Count, _Tmp);
+        }
 }
 
 // ---- the 4-byte non-scalar element fill ------------------------------------------------------------------

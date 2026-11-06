@@ -1,2 +1,3 @@
 ../src/rgl/scene/entity_recalc.cpp  ?set_local_scaled_dirty@entity@rgl@@UAEXPBUmatrix@2@PBUvector4@2@@Z  0041ff40  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_recalc.cpp  ?recalc@entity@rgl@@UAEXXZ  0041ffe0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_recalc.cpp  ?scale_rows@smat@rgl@@QAEXPBUvector4@2@@Z  0041fee0  /O2 /MT /Gy /TP

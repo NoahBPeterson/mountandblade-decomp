@@ -1272,6 +1272,29 @@ Added by the third round (59 matched, including two functions 109 and 144 instru
 - **`shr` against `sar` on a page index means an unsigned parameter to the inline accessor** (`atu`, not `at`, 0x513eb0).
 - **An instruction scheduled after a guard can be a variable assigned inside the loop,** not initialised at its declaration (0x491430).
 - **An explicit specialization of `_Insert_n` changes callers that expand `push_back` inline,** so those files can't include it (0x51eda0).
+- **The number of separate locals decides the frame more than any statement does.** Merging each label's width and colour into one
+  `{ int v[2]; ... }` took 0x4e05c0 from 2006 to 2147 identical instructions in one step. Separate per-call locals did the opposite on
+  0x4dda40 and 0x4dcef0, which needed `{ int c = ...; }` per call. Try both.
+- **A function-scope object gets a separate slot from earlier temporaries.** Putting it and the rest of the function in a nested block
+  lets them share (0x4e05c0). A slot's size drives the frame: `float out[2]`, not vector4.
+- **`and esp,-8` with no doubles means an 8-byte array local:** `int v[2]` used as a single int reproduces the prologue (0x4de6f0, 0x4e05c0).
+- **Implicit temporaries order differently from explicit ones.** An inline helper with `const tstring&` parameters built from literals loads
+  the arguments first, then constructs the temporaries; `lookup("key")` differs from `lookup(tstring("key"))`.
+- **Switch cases must be written in the original's body order,** read from the jump table and literals (0x4e2ea0 matched once fixed).
+- **Whole-value pair assignment reproduces store-then-reload through a stack slot:** `*(uv_pair*)&f = uv_pair(a, b)` (0x4dfec0).
+- **Out-of-line callee bodies must be visible.** A local whose address only goes to an opaque callee keeps a private slot: making
+  normalize and set_time visible took 0x4b80d0's frame from 0x90 to 0x78, and visible callees set Operation::execute's global register map.
+- **Vector arithmetic through operators with temporaries reproduces the fstp/mov spill shape,** and a member reached through a reference or
+  accessor gives the `edi=&pos` register shape (0x448eb0).
+- **A biased IV displacement (`mov edx,0x14` with accesses at -4/0/+4) can be a small inner loop cl unrolled:** `for (j<3) *out++ = (&f.a)[j]`
+  (0x46c920). An IV biased to a field outside any such loop comes from a materialised reference to that field (`const float& cy = at(x,y).py`, 0x469a70).
+- **Const-reference inline helpers change allocation across a whole function:** `rand_n(const int&)` with an early return took 0x46bc70 from 238 to 324
+  identical. A by-value `int` is the wrong shape.
+- **`mov eax,[g]; dec eax` kept as a dword rather than narrowed:** bind the mask, `const unsigned& m = g - 1`.
+- **Compare orientation is cheap to get right:** `sc > 0.0f` against `0.0f < sc` changes the x87 shape (0x468fc0 gained about 100 identical).
+- **A memory accumulator in a dead parameter's slot, also passed by address, is a block-scoped address-taken local** (0x46d060).
+- **Other small shapes.** `val <= mask ? val : mask` gives `jbe`; a right-nested sum `t + (a + b)` preserves fld order; by-value `fmin2(a, b)` helpers give
+  `fst/fcomp st(1)`; `do { } while (++k < N)` keeps signed `%` and `/`, where `for` lets cl prove k non-negative (0x484590).
 
 Rows that resisted all of these, so stop early: SIB base/index order (`[ebx+ecx]` against `[ecx+ebx]`) and `fld/fmul`
 operand order, callee-saved or scratch register rotation alone, one instruction scheduled a slot away with no structural

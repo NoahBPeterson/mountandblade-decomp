@@ -1321,9 +1321,9 @@ bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, ch
         return false;
     if (ok && (fl & 0x70000)) {
         Troop* t = &(*(World3**)&g_game)->troops[b->troop];
+        char x5 = 0;
+        char x4 = 0;
         bool x3 = false;
-        bool x5 = false;
-        bool x4 = false;
         if ((t->flags30 & 0x1000000) && (a->f8 & 0x100) == 0) {
             x5 = true;
         } else if ((t->flags30 & 0x4000000)) {

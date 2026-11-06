@@ -7,3 +7,4 @@
 ../src/game/mission_ui2/slot_api.cpp  ?resolve@Str@StringTable@@QAEPAUtstring@@XZ  0048e8d0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/slot_api.cpp  ?get_string@StringTable@@QAE?AUtstring@@HH@Z  0048e8f0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/slot_api.cpp  ?string_value@GameData@@QAE?AUtstring@@H@Z  0048e9e0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?get@BattleTable@@QAEPAUBattleRec@@I@Z  0048ef20  /O2 /MT /Gy /TP

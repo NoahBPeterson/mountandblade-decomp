@@ -195,11 +195,10 @@ void Rec138::write(OutStream* out)
 struct Soa8 { int v[8]; char s[8][16]; int blk[1]; };
 OutStream* write_soa(OutStream* out, char* base)
 {
-    Soa8* b = (Soa8*)base;
-    int* blk = b->blk;
     for (int i = 0; i < 8; i++) {
-        out->w_struct(b->s[i]);
-        out->w_raw(&b->v[i]);
+        int* blk = (int*)(base + 0xa0);
+        out->w_struct(base + 0x20 + i * 0x10);
+        out->w_raw((int*)(base + i * 4));
         out->w_raw(blk);
     }
     return out;

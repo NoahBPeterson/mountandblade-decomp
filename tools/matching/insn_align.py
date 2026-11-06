@@ -17,7 +17,8 @@ if "--flags" in args:
     i = args.index("--flags"); flags = args[i + 1].split(); del args[i:i + 2]
 src, va = args[0], int(args[1], 16)
 want = args[2] if len(args) > 2 else None
-img = E.context()["img"]
+import resolve as R
+img = R.Image()     # only the bytes and extents: E.context() also builds a 300 MB symbol database and machine
 obj, log = S.compile_obj(src, flags)
 if not obj:
     sys.exit("compile failed: " + (log or "")[-400:])

@@ -1,0 +1,2 @@
+0050fc60 ?load@SkeletonBody@@QAEXABUtstring@@@Z  # SkeletonBody::load(const tstring&): <Skeletons> child elements -> a 0x20-byte record per element (add 0x50fbf0), each read by RagModel::load 0x4e4690
+004e4690 ?load@RagModel@@QAEXPAVTiXmlElement@@@Z  # the row record's loader (defined in game/cls_map/progress_bar.cpp; the row record the vector stores is its class)

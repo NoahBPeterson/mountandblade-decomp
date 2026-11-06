@@ -41,3 +41,4 @@
 ../src/game/terrain_a/terrain_render.cpp  ?apply@lod_mesh_x@@QAEXPBUmatrix@rgl@@@Z  0046c9f0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?apply_state@RenderScene@@QAEXXZ  0046ca50  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?test@ShadowMap@@QAE_NIPAM@Z  00468c80  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?fill_indices@mesh@rgl@@QAEXPAG@Z  0046c920  /O2 /MT /Gy /TP

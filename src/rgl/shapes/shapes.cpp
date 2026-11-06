@@ -363,10 +363,10 @@ void face::transform(const pos* m)
     for (int i = 0; i < count; i++) {
         const matrix& mm = *m;
         const vector4& s = mm.s, &f = mm.f, &u = mm.u, &o = mm.o;
-        const vector4& p = v[i];
-        w[i] = vector4((s.x * p.x + f.x * p.y) + u.x * p.z + o.x,
-                       (s.y * p.x + f.y * p.y) + u.y * p.z + o.y,
-                       (f.z * p.y + s.z * p.x) + u.z * p.z + o.z);
+        const float* p = &v[i].y;
+        w[i] = vector4((s.x * p[-1] + f.x * p[0]) + u.x * p[1] + o.x,
+                       (s.y * p[-1] + f.y * p[0]) + u.y * p[1] + o.y,
+                       (f.z * p[0] + s.z * p[-1]) + u.z * p[1] + o.z);
     }
     vector4 e1 = vsub(w[2], w[1]);
     vector4 e0 = vsub(w[1], w[0]);
@@ -507,21 +507,20 @@ void segment_closest_points(const vector4* a0, const vector4* a1, const vector4*
         if (lo > len) {
             *outA = *a1;
             if (swapped) pick = b1;
+            *outB = *pick;
+        } else if (hi < 0.0f) {
+            *outA = *a0;
+            if (!swapped) pick = b1;
+            *outB = *pick;
         } else {
-            if (hi < 0.0f) {
-                *outA = *a0;
-                if (!swapped) pick = b1;
-            } else {
-                if (lo > 0.0f) {
-                    if (swapped) pick = b1;
-                } else if (!swapped) pick = b1;
-                *outB = *pick;
-                float dot = m.u.x * nrx + m.u.y * nry + m.u.z * nrz;
-                *outA = *outB - m.u * dot;
-                return;
-            }
+            if (lo > 0.0f) {
+                if (swapped) pick = b1;
+            } else if (!swapped) pick = b1;
+            *outB = *pick;
+            float dot = m.u.x * nrx + m.u.y * nry + m.u.z * nrz;
+            *outA = *outB - m.u * dot;
+            return;
         }
-        *outB = *pick;
     } else {
         float sn = (b * c - e * rd1) / denom;
         float tn = (sn * b + c) / e;
@@ -578,11 +577,13 @@ float capsule_sphere_gap(capsule* a, sphere* b)
     normalize(dir, d);
     vector4 v(b->center.x - a->p0.x, b->center.y - a->p0.y, b->center.z - a->p0.z);
     float t = v.x * dir.x + (v.y * dir.y + v.z * dir.z);
-    vector4 c;
-    if (t < 0.0f) c = a->p0;
-    else if ((float)sqrt(d.x * d.x + (d.y * d.y + d.z * d.z)) < t) c = a->p1;
-    else c = vector4(dir.x * t + a->p0.x, dir.y * t + a->p0.y, dir.z * t + a->p0.z);
-    float ex = c.x - b->center.x, ey = c.y - b->center.y, ez = c.z - b->center.z;
+    if (t < 0.0f) d = a->p0;
+    else if ((float)sqrt(d.x * d.x + (d.y * d.y + d.z * d.z)) < t) d = a->p1;
+    else {
+        vector4 dt(dir.x * t, dir.y * t, dir.z * t);
+        d.x = dt.x + a->p0.x; d.y = dt.y + a->p0.y; d.z = dt.z + a->p0.z;
+    }
+    float ex = d.x - b->center.x, ey = d.y - b->center.y, ez = d.z - b->center.z;
     return (float)sqrt(ex * ex + (ey * ey + ez * ez)) - (a->radius + b->radius);
 }
 
@@ -699,9 +700,8 @@ void capsule::draw()
     m.s = f;
     m.f = e;
     m.u = d;
-    float sx = p1.x + p0.x, sy = p1.y + p0.y, sz = p1.z + p0.z;
-    vector4 mid;
-    mid.x = sx * 0.5f; mid.y = sy * 0.5f; mid.z = sz * 0.5f;
+    vector4 mid(p1.x + p0.x, p1.y + p0.y, p1.z + p0.z);
+    mid.x *= 0.5f; mid.y *= 0.5f; mid.z *= 0.5f;
     m.o = mid;
     g_render.stack[g_render.sp] = g_render.cur;
     g_render.sp = g_render.sp + 1;
@@ -725,7 +725,7 @@ void renderer::apply(const matrix* m)
 // @ 0x40a920
 mat3 matrix::rot3(const matrix& m) const { return mat3(this->rot(m.s), this->rot(m.f), this->rot(m.u)); }
 // @ 0x40a9c0
-vector4 matrix::rot(const vector4& p) const
+inline vector4 matrix::rot(const vector4& p) const
 {
     return vector4(p.x * s.x + (f.x * p.y + u.x * p.z),
                    f.y * p.y + (s.y * p.x + u.y * p.z),

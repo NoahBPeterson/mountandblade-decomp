@@ -1032,37 +1032,47 @@ void Shape::build_ribbons(rgl::mesh* owner)
         const rgl::vector4& p0 = pts[e->a].pos;
         const rgl::vector4& p1 = pts[e->b].pos;
         rgl::vector4 d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
-        float len = d.normalize();
-        // perp = d x (0,0,1) normalised inline (the fallback sets only y = 1, z = 0); n = perp x d (the side vector)
-        float qx = d.y - 0.0f * d.z;
-        float qy = 0.0f * d.z - d.x;
-        float qz = 0.0f * d.x - 0.0f * d.y;
-        float ql = (float)sqrt(qx * qx + qy * qy + qz * qz);
-        if (ql > 1e-10f) {
-            float qi = 1.0f / ql;
-            qx = qx * qi;
-            qy = qy * qi;
-            qz = qz * qi;
+        float len = d.length();
+        if (len > 1e-10f) {
+            float inv = 1.0f / len;
+            d.x *= inv; d.y *= inv; d.z *= inv;
         } else {
-            qy = 1.0f;
-            qz = 0.0f;
+            d.x = 0.0f; d.y = 1.0f; d.z = 0.0f;
         }
-        rgl::vector4 perp(qx, qy, qz);
-        rgl::vector4 n(qy * d.z - qz * d.y, qz * d.x - qx * d.z, qx * d.y - qy * d.x);
+        // perp = d x (0,0,1) normalised (normalize leaves (0,1,0) if the length is tiny); n = perp x d (the side vector)
+        rgl::vector4 perp(d.y - 0.0f * d.z, 0.0f * d.z - d.x, 0.0f * d.x - 0.0f * d.y);
+        float plen = perp.length();
+        if (plen > 1e-10f) {
+            float pinv = 1.0f / plen;
+            perp.x *= pinv; perp.y *= pinv; perp.z *= pinv;
+        } else {
+            perp.x = 0.0f; perp.y = 1.0f; perp.z = 0.0f;
+        }
+        rgl::vector4 n(perp.y * d.z - perp.z * d.y, perp.z * d.x - perp.x * d.z, perp.x * d.y - perp.y * d.x);
         // Six vertices around the segment's start point p0: perp * pa + n * nb + d * along, where the 3 at the start end are
         // pushed 0.3 along d and the 3 at the far end (len - 0.3 along d) are the arrow tail (all offsets scale with the width w).
-        static const float kPerp[3] = { 0.0f, -0.07f, 0.07f };
-        static const float kN[3] = { 0.08f, -0.2f, -0.2f };
         float near_d = 0.3f, far_d = len - 0.3f;
+        float pa0 = w * 0.0f, pa1 = w * -0.07f, pa2 = w * 0.07f;
+        float nb0 = w * 0.08f, nb1 = w * -0.2f, nb2 = w * -0.2f;
         rgl::vector4 v[6];
-        for (int k = 0; k < 6; k++) {
-            float pa = w * kPerp[k % 3];
-            float nb = w * kN[k % 3];
-            float al = (k < 3) ? near_d : far_d;
-            v[k].x = p0.x + perp.x * pa + n.x * nb + d.x * al;
-            v[k].y = p0.y + perp.y * pa + n.y * nb + d.y * al;
-            v[k].z = p0.z + perp.z * pa + n.z * nb + d.z * al;
-        }
+        v[0].x = p0.x + perp.x * pa0 + n.x * nb0 + d.x * pa0 + d.x * near_d;
+        v[0].y = p0.y + perp.y * pa0 + n.y * nb0 + d.y * pa0 + d.y * near_d;
+        v[0].z = p0.z + perp.z * pa0 + n.z * nb0 + d.z * pa0 + d.z * near_d;
+        v[1].x = p0.x + perp.x * pa1 + n.x * nb1 + d.x * pa0 + d.x * near_d;
+        v[1].y = p0.y + perp.y * pa1 + n.y * nb1 + d.y * pa0 + d.y * near_d;
+        v[1].z = p0.z + perp.z * pa1 + n.z * nb1 + d.z * pa0 + d.z * near_d;
+        v[2].x = p0.x + perp.x * pa2 + n.x * nb1 + d.x * pa0 + d.x * near_d;
+        v[2].y = p0.y + perp.y * pa2 + n.y * nb1 + d.y * pa0 + d.y * near_d;
+        v[2].z = p0.z + perp.z * pa2 + n.z * nb1 + d.z * pa0 + d.z * near_d;
+        v[3].x = p0.x + perp.x * pa0 + n.x * nb0 + d.x * pa0 + d.x * far_d;
+        v[3].y = p0.y + perp.y * pa0 + n.y * nb0 + d.y * pa0 + d.y * far_d;
+        v[3].z = p0.z + perp.z * pa0 + n.z * nb0 + d.z * pa0 + d.z * far_d;
+        v[4].x = p0.x + perp.x * pa1 + n.x * nb1 + d.x * pa0 + d.x * far_d;
+        v[4].y = p0.y + perp.y * pa1 + n.y * nb1 + d.y * pa0 + d.y * far_d;
+        v[4].z = p0.z + perp.z * pa1 + n.z * nb1 + d.z * pa0 + d.z * far_d;
+        v[5].x = p0.x + perp.x * pa2 + n.x * nb2 + d.x * pa0 + d.x * far_d;
+        v[5].y = p0.y + perp.y * pa2 + n.y * nb2 + d.y * pa0 + d.y * far_d;
+        v[5].z = p0.z + perp.z * pa2 + n.z * nb2 + d.z * pa0 + d.z * far_d;
 
         int idx[6];
         vec2 uv;
@@ -1159,8 +1169,8 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
         for (k = 0; k < f->count; k++) {
             int zero = 0;
             vec2 uv;
-        uv.x = 0.0f;
-        uv.y = 0.0f;
+            uv.x = 0.0f;
+            uv.y = 0.0f;
             rgl::vector4 nn(0.0f, 0.0f, 1.0f);
             points[k] = out->add_point(&corners[k]);
             verts[k] = out->add_vertex(points[k], &uv, &color, &nn, &zero);
@@ -1313,6 +1323,18 @@ struct front_rec {
 // vector<E176>::resize (0x4e41e0) with its fill value built in place by MissionRec2() (the same 0xb0-byte record)
 typedef void (std::vector<MissionRec2>::*cell_resize_fn)(size_t, MissionRec2);
 
+// the original's FaceKey carries a default constructor that only zeroes +0x30; the shared header here declares none,
+// so this local twin restores the new[] cookie + ctor loop codegen
+struct FaceKeyExt {
+    tstring name;
+    tstring key;
+    int f20;
+    float f24;
+    float f28;
+    unsigned f2c;
+    float* delta;
+    FaceKeyExt() : delta(0) {}
+};
 // @ 0x4e7b30
 void Skin::read(MsStream* s)
 {
@@ -1323,11 +1345,11 @@ void Skin::read(MsStream* s)
     body = g_resmgr.get_lod_mesh(name);
     stream_str(s, &name);
     calf_l = g_resmgr.get_lod_mesh(name);
-    name.buf[name.len - 1] = (name.buf[name.len - 1] != 'l') ? 'R' : 'r';
+    name.buf[name.len - 1] = (name.buf[name.len - 1] == 'l') ? 'r' : 'R';
     calf_r = g_resmgr.get_lod_mesh(name);
     stream_str(s, &name);
     hand_l = g_resmgr.get_lod_mesh(name);
-    name.buf[name.len - 1] = (name.buf[name.len - 1] != 'l') ? 'R' : 'r';
+    name.buf[name.len - 1] = (name.buf[name.len - 1] == 'l') ? 'r' : 'R';
     hand_r = g_resmgr.get_lod_mesh(name);
     stream_str(s, &head_name);
     head = g_resmgr.get_lod_mesh(head_name);
@@ -1336,22 +1358,7 @@ void Skin::read(MsStream* s)
 
     // the poses
     stream_i(s, &n_face_keys);
-    {
-        int n = n_face_keys;
-        FaceKey* e = (FaceKey*)operator new[](n * 0x34 + 4);
-        if (e != 0) {
-            *(int*)e = n;
-            e = (FaceKey*)((int*)e + 1);
-            FaceKey* q = e;
-            for (int i = n - 1; i >= 0; i--) {
-                new (&q->name) tstring();
-                new (&q->key) tstring();
-                q->delta = 0;
-                q++;
-            }
-        }
-        face_keys = e;
-    }
+    face_keys = (FaceKey*)new FaceKeyExt[n_face_keys];
     for (int i = 0; i < n_face_keys; i++) {
         FaceKey* q = &face_keys[i];
         stream_str(s, &q->key);

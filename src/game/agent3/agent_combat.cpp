@@ -213,7 +213,7 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
             if (j >= sd->items[i].caps.size())
                 break;
             const CapDef& d = sd->items[i].caps[j];
-            c.l0 = smul(scale, d.a);
+            c.l0 = vmul(d.a, scale);
             c.l1 = vmul(d.b, scale);
             c.radius = d.r * scale;
             Skeleton* sk = body->skel;
@@ -223,8 +223,7 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
                 else
                     ((FxAnim*)sk)->update_poses2();
             }
-            matrix tm = body->m * *(matrix*)(sk->recs + i * 0x1dc + 0x84);
-            c.transform((const ::pos*)&tm);
+            c.transform((const ::pos*)&(body->m * *(matrix*)(sk->recs + i * 0x1dc + 0x84)));
             contact ct;
             if (shape_contact_count(&c, other, 1, &ct)) {
                 *out_point = ct.point;

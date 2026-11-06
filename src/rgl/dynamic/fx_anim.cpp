@@ -20,6 +20,13 @@
 
 using namespace rgl;
 
+// FxAnim::value (0x423540) really returns its quaternion by value (the mangled name is
+// ?bone_quat@FxAnim_x@@QAE?AUquaternion@@HHH@Z); the header spells it with an out-parameter. This local view
+// gives the call its original signature so cl allocates the hidden return slot the way the original did.
+struct FxAnimQ : FxAnim {
+    __declspec(noinline) quaternion qvalue(int i, int j, int k);   // 0x423540
+};
+
 // local stand-ins for the vector4 operators the effect code inlines (rgl_math.h declares them out of line)
 
 static inline float vnormalize(vector4& v)
@@ -118,7 +125,8 @@ void FxAnim::update_poses2()
                     quaternion acc(0.0f, 0.0f, 0.0f, 0.0f);
                     for (int j = 0; j < 2; j++) {
                         if (RC[r].wt[j] > 0.001f) {
-                            quaternion c; value(&c, r, j, b);
+                            quaternion c;
+                            c = ((FxAnimQ*)this)->qvalue(r, j, b);
                             const float* pw = &RC[r].wt[j];
                             quaternion t(c.x * *pw, c.y * *pw, c.z * *pw, c.w * *pw);
                             acc.add(t);
@@ -141,7 +149,8 @@ void FxAnim::update_poses2()
                     q = quaternion(0.0f, 0.0f, 0.0f, 0.0f);
                     for (int j = 0; j < 2; j++) {
                         if (RC[r].wt[j] > 0.001f) {
-                            quaternion c; value(&c, r, j, b);
+                            quaternion c;
+                            c = ((FxAnimQ*)this)->qvalue(r, j, b);
                             const float* pw = &RC[r].wt[j];
                             quaternion t(c.x * *pw, c.y * *pw, c.z * *pw, c.w * *pw);
                             q.add(t);

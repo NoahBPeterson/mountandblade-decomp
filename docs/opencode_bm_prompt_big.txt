@@ -1,0 +1,29 @@
+You are making decompiled C++ from Mount & Blade 1.011 (32-bit x86, built with MSVC 7.1, cl 13.10) compile to the original machine code byte for byte. Repo root: /Users/noahpeterson/Documents/Projects/mountandblade-decomp. Run every command from there, with relative paths.
+
+Your module: {MODULE}.cpp. Nothing else may be edited apart from its {MODULE}.manifest.txt, {MODULE}.nonmatching.txt, symbols/slices/{OBJ}.txt, and scratch files named work/match/ds_{OBJ}_*. Other workers are editing other modules at the same time.
+
+The source already exists and is close. Do not rewrite it; find what differs. Rows, largest first, as "<va> <size in bytes> <instructions from a match> <name>":
+{ROWS}
+
+Setup, once: read docs/matching.md, then section 14A of docs/codegen.md, "Near misses: the source had more structure than ours" (rg -n "^## 14A|^## 15" docs/codegen.md gives the line range), which lists the patterns that have worked. Use rg, not grep.
+
+For each row:
+1. Measure: .venv/bin/python tools/matching/insn_align.py {MODULE}.cpp 0x<va> --show
+   It aligns the original against ours. Reason about the first real difference; one early structural error often shifts registers through the rest of a function.
+2. The usual causes: the original source had more structure than ours. Look for inline helpers that were flattened, argument temporaries, block scopes, destructors, references, real STL calls, a declared type or signature that is wrong, a different evaluation order, a missing or extra local.
+3. Change only that function, then re-measure. Budget: these are large functions, so keep going for as long as the distance keeps falling, up to about 50 rounds on one row; move on after 8 rounds without progress. Don't try permutations blindly.
+4. When it reaches 0 differences: .venv/bin/python tools/matching/chk.py {MODULE}.cpp <va> prints a manifest row. Add that row to {MODULE}.manifest.txt and remove the va's line from {MODULE}.nonmatching.txt.
+5. If it doesn't reach 0 but insn_align shows fewer differences than when you started on that row, keep the closer version. Before the first edit to a row, write that function's text unchanged to work/match/ds_{OBJ}_<va>.prev.txt so it can be restored. Update the row's line in {MODULE}.nonmatching.txt with the new distance. If the distance didn't fall, restore the previous text exactly. Do not run tools/difftest/equiv.py: the orchestrator checks kept versions on another machine after this wave and restores any that fail, so the behaviour must really be the same. The goal is still byte-exact: keeping a closer version is only a step toward it.
+
+After each match, and at the end: .venv/bin/python tools/matching/run_all.py --manifest {MODULE}.manifest.txt
+It must report every row of the module byte-exact. If a change broke another row, undo that change.
+
+Rules:
+- A change must preserve the function's behaviour. A byte match proves that apart from relocations, so check you call the same function and use the same global as the original. Field offsets and callee addresses in the alignment output must agree.
+- Never write a literal image address in code (a vtable, global or function as a number, such as (void*)0x5924a0). The build must not depend on the original exe, and a gate rejects it. Use the real class, global or function, declared locally if needed; an address belongs only in a comment.
+- Never edit a header. If a function needs a shared-header change, leave the row and report what it needs.
+- Never change a call so that it uses a different calling convention from the callee's definition.
+- No inline asm, no per-function pragma tricks, no volatile added to force a result: nothing that could not have been in the original source.
+- Never run git, tools/relink/*, the game, opencode, or any broker script. Never start subagents or tasks. Never read anything outside the repo. Don't use network tools. No bare python with stdin scripts, no shell background jobs with &. Use the edit tool for source changes, not sed -i. Keep output short: cut long tool output with head when you don't need it.
+
+When finished, reply with one line per row: "<va> MATCH" or "<va> no: <what still differs, in a few words>"; then at most 3 lines on shared-header needs and anything that looks like a real bug in the existing source. The very last line must be: WAVE-DONE

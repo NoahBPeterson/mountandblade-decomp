@@ -40,28 +40,28 @@ void GameKeys::key_name(int which, tstring* out)
         return;
     case 0:
         if (entry[0][0] < 0) {
-            *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
+            *out = *g_strtable.lookup(UI_NO_KEY_ASSIGNED);
             return;
         }
         *out = g_keyboard.key_name(entry[0][0]);
         return;
     case 1:
         if (entry[1][0] < 0) {
-            *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
+            *out = *g_strtable.lookup(UI_NO_KEY_ASSIGNED);
             return;
         }
         *out = g_keyboard.key_name(entry[1][0]);
         return;
     case 2:
         if (entry[2][0] < 0) {
-            *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
+            *out = *g_strtable.lookup(UI_NO_KEY_ASSIGNED);
             return;
         }
         *out = g_keyboard.key_name(entry[2][0]);
         return;
     case 3:
         if (entry[3][0] < 0) {
-            *out = *g_strtable.lookup(tstring(UI_NO_KEY_ASSIGNED));
+            *out = *g_strtable.lookup(UI_NO_KEY_ASSIGNED);
             return;
         }
         *out = g_keyboard.key_name(entry[3][0]);
@@ -70,7 +70,7 @@ void GameKeys::key_name(int which, tstring* out)
 }
 
 // @ 0x4d7610
-tstring Slot::key_name(int key)
+__declspec(noinline) tstring Slot::key_name(int key)
 {
     tstring s("unknown");                                           // 0x596b9c
     switch (key) {
@@ -495,9 +495,11 @@ void GameIo::import_apply(ini_file* imp)
     tstring key;
     tstring value;
     for (int i = 0; i < imp->count; i++) {
-        ini_entry* e = &imp->entries[i];
-        key = e->key;
-        value = e->value;
+        if (i >= 0 && i < imp->count) {
+            ini_entry* e = &imp->entries[i];
+            key = e->key;
+            value = e->value;
+        }
 
         if (key.equals("name")) {
             value.underscores_to_spaces();

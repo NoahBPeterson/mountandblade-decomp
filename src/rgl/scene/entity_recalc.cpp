@@ -32,9 +32,10 @@ void smat::scale_rows(const vector4* k)
     s.x = k->x * s.x;
     s.y = s.y * k->x;
     s.z = s.z * k->x;
-    f.x = f.x * k->y;
-    f.y = k->y * f.y;
-    f.z = k->y * f.z;
+    vector4& fr = f;
+    fr.x = k->y * fr.x;
+    fr.y = k->y * fr.y;
+    fr.z = k->y * fr.z;
     u.x = k->z * u.x;
     u.y = u.y * k->z;
     u.z = u.z * k->z;

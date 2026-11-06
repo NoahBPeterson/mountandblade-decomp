@@ -49,6 +49,7 @@ int g_save_kind;                                            // 0x5e29bc (.bss) k
 template<> void std::vector<__int64>::resize(size_t, __int64);   // 0x493090 (world_data/world_data.cpp: the out-of-line instance, only declared)
 template<> void std::vector<int>::resize(size_t, int);       // 0x43f310 (agent3/agent_combat.cpp: the out-of-line instance, only declared)
 
+
 // @ 0x51c5a0
 void C4c2fb0::frame_update(float)
 {
@@ -348,6 +349,7 @@ void Game::reset()
 Game::Game()
     : timer13a80(1), timer13a90(1), timer13b18(1), timer1a150(0), timer1a298(1)
 {
+    WL_MARKER(12)
     f1a05c = 0;
     reset();
     f1a060 = 0;
@@ -358,6 +360,7 @@ Game::Game()
     troops = 0;
     parties = 0;
     quests = 0;
+    WL_MARKER(13)
 }
 
 // @ 0x51d1c0
@@ -661,11 +664,13 @@ MB_NOINLINE float NavGraph::trigger_score(int row, int idx, unsigned a, unsigned
 void Game::load_state(stream_base* s)
 {
     unsigned __int64 tick;
+    WL_MARKER(12)
     s->r_u64(&tick);
-    ((int*)g_ticks)[3] = *((int*)&tick + 1);              // g_ticks[1] high word (0x5e2954)
     ((int*)g_ticks)[2] = *(int*)&tick;
+    ((int*)g_ticks)[3] = *((int*)&tick + 1);             // g_ticks[1] high word (0x5e2954)
     s->r_int(&f4);
     s->r_int(&fb4);
+    WL_MARKER(13)
     load_clock(s);
     g_script.vars.read(s);
     triggers.read(s);
@@ -676,7 +681,9 @@ void Game::load_state(stream_base* s)
     load_tracks(s);
     load_party_templates(s);
     load_scene_parties(s);
+    WL_MARKER(12)
     sprites.read(s, 0);
+    WL_MARKER(13)
     load_troops(s);
     load_items(s);
     s->r_u64((unsigned __int64*)((char*)&troops[cur_troop] + 0x3c0));
@@ -1022,7 +1029,6 @@ MB_NOINLINE void SpriteTable::clear()
         free_ids.push_back(i);
     }
 }
-
 // @ 0x51eaa0
 // The scene's party record of Game::f78 (0x5ac8-byte records, 16 per page; the page table is the first pointer of
 // scene.list, +0x138d0): its count at +0x8a8, entries of 0x20 bytes from +0xc0 (troop id at -0x14, a float at +0,
@@ -1030,9 +1036,10 @@ MB_NOINLINE void SpriteTable::clear()
 // The slices read slot 0x38 as r_int and 0x4c as r_raw; they are r_float and r_int (stream_base slots 14 and 19).
 void Game::load_scene_parties(stream_base* s)
 {
-    scene.read(s, 1);
-    int idx = scene.lookup(f78);
-    Party* rec = (Party*)((char*)scene.pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8);
+    PartyMgr& sc = scene;
+    sc.read(s, 1);
+    int idx = sc.lookup(f78);
+    Party* rec = (Party*)((char*)sc.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
     for (int i = 0; i < rec->nstacks; i++) {
         Stack* e = &rec->stacks[i];
         if ((troops[e->troop].flags30 & 0x10) == 0) {

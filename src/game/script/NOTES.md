@@ -121,8 +121,8 @@ Conflicts worked around locally:
   text with integer case labels, `progress.py` regenerates PROGRESS.md, `build.sh` compiles and runs chk).
   The equivalence harness was not run on `execute` (70 KB, custom-register callees, the presentation /
   tableau / mission objects); this reading is the check.
-- `chk.py src/game/script/script_interpreter.cpp 0x49fa10`: 69100 vs 69416 bytes, 46168 differing bytes.
-  `run_all.py --manifest src/game/script/script_interpreter.manifest.txt`: 5 / 5 byte-exact.
+- `chk.py src/game/script/script_interpreter.cpp 0x49fa10`: 69856 vs 69416 bytes, 46702 differing bytes (positional; see insn_align).
+  `run_all.py --manifest src/game/script/script_interpreter.manifest.txt`: 23 / 23 byte-exact.
 - Resolution audit (resaudit.py's `audit()` driven by `work/match/scratch_si_resaudit.py`, with
   `work/match/scratch_si_symbols.txt` for the globals above the annotation range, see open problems):
   the five byte-exact rows agree completely. `execute`: 280 references agree, 46 unverified (strings, our own
@@ -133,8 +133,30 @@ Conflicts worked around locally:
   the UI lookup) or an addressing-form difference (`pos[i].f` as `0xa708a0 + i*64` vs `0xa70890 + 16`). No
   wrong callee or global was found.
 
+## What the object can see (the key to the register map)
+
+The original compiled `execute` with several callee bodies visible, and that decides which operand dwords stay in
+registers. A call to a callee cl can see and that calls nothing opaque does not kill `params` (whose address escapes
+through `set_lvalue`), so values survive it. Visible here, as duplicates of the canonical definitions (build.py takes
+each from its row's module): `get_operand`, `Map10007::lookup` (`inline`, or `check_party` sees its register use and stops
+matching), `PartyMgr::get`, `PartyMgr::is_live`, `next_party_id`, `Party::max_stacks/first_flagged/count_tail/sum_*`,
+`TableauTbl::current`, `AgentTable::get/next_used`, `min_int`. They are defined after the validators.
+`set_lvalue` must stay opaque: with its body visible `locals` leaves ebp and `params` no longer reloads after a call.
+`first_flagged`, `count_tail` and `is_live` are each required (removing one loses about 30 identical cases). Tried and not
+kept: `Troop::is_hero` (worse), the vector4 operators (neutral, fewer same-size cases).
+
+Measured by a scratch per-case comparison on `work/match/`: compile, compare each jump-table target's instructions with
+relocations masked. Selecting the cases by bisection (compile with only cases [a,b)) is what found `assign`'s
+`&params[1]` as the point where the cached set changes.
+
 ## Open problems
 
+0. Scratch registers: `ge`/`eq`/`gt` load into ecx/edx/eax in the original and eax/ecx/edx here, and many cases show that
+   same rotation. It does not respond to the prologue's spelling, to extra temporaries, or to extra blocks in earlier cases,
+   so it is not a running count. It also decides which `set_lvalue` tails are identical, hence the tail merging (cases
+   +-21/22 bytes; 131 calls here, 147 in the original).
+   Pure visible callees can be reordered: `stacks - first_flagged()` calls first_flagged first here (hero_can_join,
+   troops_can_join), the original calls max_stacks first.
 1. **Frame layout** (the bulk of the byte diff). The original packs nearly all temporaries and block locals
    into a handful of slots (validator argument temps at esp+0x10 or 0x18, the set_lvalue value at 0x18,
    clamp/`vector4::set` arguments at 0x10/0x20/0x24/0x28 reusing the dead `opcode` and `i` slots) and keeps

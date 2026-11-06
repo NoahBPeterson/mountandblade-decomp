@@ -13,6 +13,7 @@
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding them
 #include "./party_2.h"
+#include "../../include/wl_marker.h"
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
@@ -879,38 +880,61 @@ extern float g_k0_1;                                 // 0x54b8b0  0.1f
 extern float g_k_item_weight;                        // 0x593640  per-item weight of the equipped grid item
 struct options;
 extern options g_options;                   // 0x5aa008
-#define g_clamp_max g_skill_tbl[36].cap          // 0x8ee3ac4
+#define g_clamp_max g_skill_tbl[36].max_rank     // 0x8ee3ac4
 
+// the body of ItemRef::max_amount (0x434b70), which the original inlined at two of the three call sites here
+static __forceinline int item_max(const ItemRef* s)
+{
+    if (s->item < 0)
+        return 0;
+    int cap = g_items[s->item].f210;
+    if (cap != 0 && (s->m4 & 0xff000000) == 0x2a000000) {
+        float x = (float)cap * 0.13f;
+        float r = (float)floor(x);
+        int n = (int)r;
+        int v = x - r <= 0.5f ? n : n + 1;
+        if (v < 1)
+            v = 1;
+        cap += v;
+    }
+    return cap;
+}
+// the body of Troop's max_hit_points (0x468770), inlined here
+static inline int max_hit_points(Troop* t)
+{
+    int base = t->lvl58;
+    int v = ((unsigned char*)t)[0x7a] & 0xf;
+    if (v < 0)
+        v = 0;
+    else if (v > g_clamp_max)
+        v = g_clamp_max;
+    return base + v * 2 + 0x23;
+}
 // @ 0x4b2c00
 void Party::tick_stats()
 {
     float speed = (float)skill_level(0xb) * 0.2f + 1.0f;
-    if (id == g_game->f78 && GDP(float, 0x13ad0) > 0.0f && GDP(int, 0x13ad4) != 0) {
+    GameData* g = g_game;
+    if (id == g->f78 && g->f13ad0f > 0.0f && g->f13ad4 != 0) {
         speed = speed + speed;
     } else if (f88 > 0) {
         speed = speed * 0.0f;
-    } else if (f8c8 >= 0 && party_of(&g_game->parties, f8c8)->f88 > 0) {
+    } else if (f8c8 >= 0 && party_of(&g->parties, f8c8)->f88 > 0) {
         speed = speed * 0.0f;
     }
 
     // food growth / stack decay over the party's troop stacks
     for (int i = 0; i < nstacks; i++) {
-        int troop = stacks[i].troop;
-        Troop* ch = &g_game->troops[troop];
+        Troop* ch = &g->troops[stacks[i].troop];
         if (ch->flags30 & 0x10) {
-            int level = ((unsigned char*)ch)[0x7a] & 0xf;
-            if (level < 0) {
-                level = 0;
-            } else if (level > g_clamp_max) {
-                level = g_clamp_max;
-            }
-            float limit = (float)(ch->lvl58 + level * 2 + 0x23);
+            float limit = (float)max_hit_points(ch);
             if (ch->hp < limit) {
                 float add = ((float)(rand() % 15817) * g_rand_k + 0.5f) * 0.5f * speed;
-                if (troop == g_game->player) {
+                if (stacks[i].troop == g_game->player) {
                     add = add * (3 - (*(int*)((char*)&g_options + 0x4c)));
                 }
                 ch->hp = add + ch->hp;
+                g = g_game;
             }
             if (ch->hp > limit) {
                 ch->hp = limit;
@@ -923,16 +947,17 @@ void Party::tick_stats()
                     stacks[i].wounded--;
                 }
             } while (--n);
+            g = g_game;
         }
     }
 
-    if (id != g_game->f78) {
+    if (id != g->f78) {
         return;
     }
 
     // main party: zoom easing, the first record's item slot decay, morale
     if (g_module_settings.disable_food_slot == 0) {
-        if (GDP(float, 0x13ad0) > 0.0f && GDP(int, 0x13ad4) != 0) {
+        if (g->f13ad0f > 0.0f && g->f13ad4 != 0) {
             zoom = zoom - 0.03f;
             if (zoom < 0.0f) {
                 zoom = 0.0f;
@@ -940,10 +965,8 @@ void Party::tick_stats()
                 zoom = 1.0f;
             }
         } else {
-            ItemRef* slot = &g_game->troops->equip[9];
-            if (slot->item < 0) {
-                zoom = zoom + 0.03f;
-            } else {
+            ItemRef* slot = &g->troops->equip[9];
+            if (slot->item >= 0) {
                 float chance = (float)sum_stat(0x10) * 0.02f;
                 if (zoom > 0.1f) {
                     chance = chance * 3.0f;
@@ -953,42 +976,13 @@ void Party::tick_stats()
                         break;
                     }
                     int count = (slot->m4 & 0xff) + 1;
-                    int cap = g_items[slot->item].f210;
-                    if (cap != 0 && (slot->m4 & 0xff000000) == 0x2a000000) {
-                        float x = (float)cap * 0.13f;
-                        double r = floor(x);
-                        int n = (int)r;
-                        if (x - r > 0.5f) {
-                            n = n + 1;
-                        }
-                        if (n < 1) {
-                            n = 1;
-                        }
-                        cap += n;
-                    }
-                    if (count > cap) {
+                    if (count > item_max(slot)) {
                         count = slot->max_amount();
                     }
                     *(unsigned char*)&slot->m4 = 0;
                     slot->m4 = slot->m4 | count;
-                    int cap2 = 0;
-                    if (slot->item >= 0) {
-                        int k2 = g_items[slot->item].f210;
-                        cap2 = k2;
-                        if (k2 != 0 && (slot->m4 & 0xff000000) == 0x2a000000) {
-                            float x2 = (float)k2 * 0.13f;
-                            double r2 = floor(x2);
-                            int m = (int)r2;
-                            if (x2 - r2 > 0.5f) {
-                                m = m + 1;
-                            }
-                            if (m < 1) {
-                                m = 1;
-                            }
-                            cap2 += m;
-                        }
-                    }
-                    if (cap2 - (int)(slot->m4 & 0xff) <= 0) {
+                    int left = item_max(slot) - (int)(slot->m4 & 0xff);
+                    if (left <= 0) {
                         slot->item = -1;
                     }
                     chance = chance - 1.0f;
@@ -997,13 +991,17 @@ void Party::tick_stats()
                 if (zoom > 0.1f) {
                     zoom = zoom - 0.1f;
                 }
+            } else {
+                zoom = zoom + 0.03f;
             }
             if (zoom > 0.1f) {
                 f7c = f7c - 0.002f;
             }
-            int item = g_game->troops->equip[9].item;
-            int value = 0;
-            if (item >= 0) {
+            int item = slot->item;
+            int value;
+            if (item < 0) {
+                value = 0;
+            } else {
                 value = g_items[item].f1fc;
             }
             f7c = (float)value * 7.999999e-06f + f7c;
@@ -1021,8 +1019,10 @@ void Party::tick_stats()
     }
 
     // the player's item grid decay
-    Troop* pc = &g_game->troops[g_game->player];
-    float grid_chance = (float)party_of(&g_game->parties, g_game->f78)->skill_level(0xb) * 0.001f;
+    g = g_game;
+    Troop* pc = &g->troops[g->player];
+    PartyMgr* m = &g->parties;
+    float grid_chance = (float)m->at(m->lookup(g->f78))->skill_level(0xb) * 0.001f;
     if (!(GDP(float, 0x13ad0) > 0.0f)) {
         grid_chance = grid_chance * 1.5f;
     }
@@ -1032,8 +1032,10 @@ void Party::tick_stats()
             && *(unsigned char*)&g_items[g->item].type_flags == 1
             && (g->m4 & 0xff000000) == 0x1e000000
             && (float)(rand() % 15817) * g_rand_k < grid_chance) {
+            WL_MARKER(12);
             *((unsigned char*)g + 7) = 0;
             g->reduce(0);
+            WL_MARKER(13);
         }
     }
 }
@@ -1296,61 +1298,155 @@ void Party::reissue_order()
 int __cdecl terrain_is_road(unsigned kind);              // 0x489390 (is-farm/road terrain kind)
 int __cdecl terrain_is_water(unsigned kind);             // 0x4893b0 (is-water terrain kind)
 
+static __forceinline bool party_flag(const Party* o, int mask) { return (o->flags & mask) != 0; }
+static __forceinline Vec2 v2_mul(const vec2& v, float k) { return Vec2(v.x * k, v.y * k); }
 // @ 0x4b3ce0
 // Act on the current map order: finish a move, chase a party or an agent, or sample a random walkable spot around the
 // current position and hand it to set_order_face as a new order.
 void Party::plan_order()
 {
-    if (action == 0) {
-        goto done;
-    }
-    if (action == 7) {
-        goto done;
-    }
-    if (action == 8) {
-    done:
+    int act = action;
+    if (act == 0 || act == 7 || act == 8) {
         kind = 0;
         moving = 0;
         f5988 = 0;
         return;
     }
 
-    if (action == 2 || action == 3) {
-        f900 = ((int*)g_ticks)[f8f8 * 2];
-        f904 = ((int*)g_ticks)[f8f8 * 2 + 1];
-        vec2r to;
-        if (action == 3 && target >= 0 && parties()->is_live(target)) {
-            Party* p = parties()->get(target);
-            to.x = p->pos.x;
-            to.y = p->pos.y;
+    if (act != 2 && act != 3) {
+        if (act == 9)
+            return;
+        if (act == 6) {
+            float dx = order_pos.x - pos.x;
+            float dy = order_pos.y - pos.y;
+            if (sqrtf(dy * dy + dx * dx) < 0.01f)
+                action = 0;
+            return;
+        }
+
+        int t = target;
+        int* tp = &target;
+        if (target >= 0 && (act == 4 || act == 1)) {
+            PartyMgr* m = &g_game->parties;
+            if (!m->is_live(t))
+                goto fail;
+            if (party_flag(m->get(t), 0x400))
+                return;
+            set_order_party(tp);
+            return;
+        }
+        if (t >= 0 && act == 10) {
+            if (!g_game->parties.is_live(t))
+                goto fail;
+            set_order_agent(tp);
+            return;
+        }
+        if (act != 5 && act != 11)
+            return;
+        {
+            PartyMgr* m = &g_game->parties;
+            if (!m->is_live(t))
+                goto fail;
+
+            vec2r fwd;
+            fwd.x = 0.0f;
+            fwd.y = 1.0f;
+            ((vec2x*)&fwd)->rotate_a(angle);
+            Party* q = m->get(t);
+            vec2 o = *(vec2*)&q->pos;
+            vec2r d;
+            d.x = o.x - pos.x;
+            d.y = o.y - pos.y;
+            d.normalize();
+            {
+                Vec2 a(fwd.x * 0.85f, fwd.y * 0.85f);
+                Vec2 b(-d.x, -d.y);
+                d.x = a.x + b.x;
+                d.y = a.y + b.y;
+            }
+            if (d.y * d.y + d.x * d.x < 1e-13f) {
+                Vec2 u(1.0f, 0.0f);
+                *(Vec2*)&fwd = u;
+                *(vec2*)&d = *(vec2*)&fwd;
+            }
+            d.normalize();
+
+            bool give_up = false;
+            int tries = 0;
+            float spread = 0.6f;
+            for (;;) {
+                ((vec2x*)&d)->rotate_a((frand() - 0.5f) * spread);
+                float len = speed_factor() * (interval + interval + 0.5f);
+                len = len + len;
+                Vec2 s = v2_mul(d, len);
+                fwd.x = s.x + pos.x;
+                fwd.y = s.y + pos.y;
+                face* a = g_game->find_at(&fwd.x);
+                tries++;
+                spread += 0.4f;
+                if (tries > 6) {
+                    kind = 0;
+                    moving = 0;
+                    f5988 = 0;
+                    give_up = true;
+                }
+                if (a) {
+                    NavData* w = ((rgl::world*)g_script.level)->ground;
+                    int& cell = a->m4;
+                    if (w->shares(cell, mesh->m4)) {
+                        unsigned __int64 fl = flags & 0x200;
+                        if (fl && (char)terrain_is_road(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask())) {
+                            set_order_face((int*)&fwd, a);
+                            return;
+                        }
+                        if (!fl && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask())) {
+                            set_order_face((int*)&fwd, a);
+                            return;
+                        }
+                    }
+                }
+                if (give_up)
+                    return;
+            }
+        }
+fail:
+        action = 0;
+        return;
+    }
+
+    {
+        clk8f8.restamp();
+        vec2 to;
+        int t;
+        PartyMgr* m;
+        if (action == 3 && (t = target) >= 0 && (m = &g_game->parties)->is_live(t)) {
+            to = *(vec2*)&m->get(t)->pos;
         } else {
-            to.x = order_pos.x;
-            to.y = order_pos.y;
+            to = *(vec2*)&order_pos;
         }
         bool give_up = false;
         int tries = 0;
         float spread = 0.6f;
-        vec2r p;
-        vec2 delta = {to.x - pos.x, to.y - pos.y};
+        vec2 delta;
+        delta.x = to.x - pos.x;
+        delta.y = to.y - pos.y;
         for (;;) {
-            int r = rand() % 15817;
-            float ang = ((float)r * 6.322312e-05f - 0.5f) * spread * 3.1415927f;
+            vec2 h = *(vec2*)&dirx;
+            float ang = ((float)(rand() % 15817) * 6.322312e-05f - 0.5f) * spread * 3.1415927f;
             float c = cosf(ang);
             float s = sinf(ang);
-            float rx = c * dirx - s * diry;
-            float ry = c * diry + s * dirx;
-            r = rand() % 15817;
-            float m = (float)r * 0.00012644623f + 1.0f;
-            float len = speed_factor() * m;
-            vec2 w = {rx * len, ry * len};
-            p.x = w.x + pos.x;
-            p.y = w.y + pos.y;
-            r = rand() % 15817;
-            float k = (float)r / f8f4 * 6.322312e-05f;
-            vec2 e = {delta.x * k, delta.y * k};
-            p.x = e.x + p.x;
-            p.y = e.y + p.y;
-            face* a = g_game->find_at(&p.x);
+            float hx = c * h.x - s * h.y;
+            h.y = c * h.y + s * h.x;
+            float m2 = (float)(rand() % 15817) * 0.00012644623f + 1.0f;
+            float len = speed_factor() * m2;
+            Vec2 w(hx * len, h.y * len);
+            to.x = w.x + pos.x;
+            to.y = w.y + pos.y;
+            float k = (float)(rand() % 15817) / f8f4 * 6.322312e-05f;
+            Vec2 e(delta.x * k, delta.y * k);
+            to.x = e.x + to.x;
+            to.y = e.y + to.y;
+            face* a = g_game->find_at(&to.x);
             tries++;
             spread += 0.4f;
             if (tries > 6) {
@@ -1360,16 +1456,19 @@ void Party::plan_order()
                 give_up = true;
             }
             if (a) {
-                NavData* w = ((rgl::world*)g_script.level)->ground;
-                if (w->shares(a->m4, mesh->m4)) {
-                    unsigned k2 = nav_recs()[a->m4].mask();
-                    if (flags_lo & 0x200) {
-                        if (k2 == 7 || (k2 & 7) == 0) {
-                            set_order_face((int*)&p, a);
+                NavData* g = ((rgl::world*)g_script.level)->ground;
+                int& cell = a->m4;
+                if (g->shares(cell, mesh->m4)) {
+                    unsigned __int64 fl = flags & 0x200;
+                    if (fl) {
+                        unsigned k2 = ((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask();
+                        if ((k2 & 7) == 0 || k2 == 7) {
+                            set_order_face((int*)&to, a);
                             return;
                         }
-                    } else if ((char)terrain_is_water(k2)) {
-                        set_order_face((int*)&p, a);
+                    }
+                    if (!fl && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask())) {
+                        set_order_face((int*)&to, a);
                         return;
                     }
                 }
@@ -1377,106 +1476,6 @@ void Party::plan_order()
             if (give_up)
                 return;
         }
-    }
-
-    if (action == 6) {
-        float dx = order_pos.x - pos.x;
-        float dy = order_pos.y - pos.y;
-        if (sqrtf(dx * dx + dy * dy) < 0.01f) {
-            action = 0;
-            return;
-        }
-    }
-    if (action == 9) {
-        return;
-    }
-
-    int t = target;
-    if (t >= 0) {
-        if (action == 4 || action == 1) {
-            if (parties()->is_live(t)) {
-                if (parties()->get(t)->flags_lo & 0x400)
-                    return;
-                set_order_party(&target);
-                return;
-            }
-            action = 0;
-            return;
-        }
-        if (action == 10) {
-            if (parties()->is_live(t)) {
-                set_order_agent(&target);
-                return;
-            }
-            action = 0;
-            return;
-        }
-    }
-    if (action == 5 || action == 11) {
-        if (parties()->is_live(t)) {
-            goto chase;
-        }
-        action = 0;
-        return;
-    }
-    return;
-
-chase:
-    vec2r dir;
-    dir.x = 0.0f;
-    dir.y = 1.0f;
-    dir.rotate_a(angle);
-    Party* q = parties()->get(t);
-    vec2r d;
-    d.x = q->pos.x - pos.x;
-    d.y = q->pos.y - pos.y;
-    d.normalize();
-    vec2r v;
-    v.x = dir.x * 0.85f - d.x;
-    v.y = dir.y * 0.85f - d.y;
-    if (v.x * v.x + v.y * v.y < 1e-13f) {
-        v.x = 1.0f;
-        v.y = 0.0f;
-    }
-    v.normalize();
-
-    bool give_up = false;
-    int tries = 0;
-    float spread = 0.6f;
-    vec2r p;
-    for (;;) {
-        float ang = (frand() - 0.5f) * spread;
-        v.rotate_a(ang);
-        float len = (interval + interval + 0.5f) * speed_factor();
-        len = len + len;
-        p.x = v.x * len + pos.x;
-        p.y = v.y * len + pos.y;
-        face* a = g_game->find_at(&p.x);
-        tries++;
-        spread += 0.4f;
-        if (tries > 6) {
-            kind = 0;
-            moving = 0;
-            f5988 = 0;
-            give_up = true;
-        }
-        if (a) {
-            NavData* w = ((rgl::world*)g_script.level)->ground;
-            if (w->shares(a->m4, mesh->m4)) {
-                unsigned k2 = nav_recs()[a->m4].mask();
-                if (flags_lo & 0x200) {
-                    if ((char)terrain_is_road(k2)) {
-                        set_order_face((int*)&p, a);
-                        return;
-                    }
-                } else if ((char)terrain_is_water(k2)) {
-                    set_order_face((int*)&p, a);
-                    return;
-                }
-            }
-        }
-        if (give_up)
-            return;
     }
 }
 
@@ -1693,6 +1692,38 @@ void* ElemCopier::fill_n_events(void* dst, int count, const void* val)
     return (char*)dst + count * 0x5c;
 }
 
+inline float vec2::normalize()
+{
+    float len = (float)sqrt(y * y + x * x);
+    if (len > 0.0f) {
+        float inv = 1.0f / len;
+        x = inv * x;
+        y = inv * y;
+    } else {
+        x = 0.0f;
+        y = 1.0f;
+    }
+    return len;
+}
+static inline float fmin1(float v)
+{
+    if (v < 1.0f)
+        v = 1.0f;
+    return v;
+}
+static inline float fclamp(float v, float lo, float hi)
+{
+    if (v < lo)
+        v = lo;
+    else if (v > hi)
+        v = hi;
+    return v;
+}
+static __forceinline BattleRec* battle_page(unsigned t)
+{
+    std::vector<BattleRec*>& pages = *(std::vector<BattleRec*>*)((char*)g_game + 0xe0);
+    return pages[t >> 4] + (t & 0xf);
+}
 // @ 0x4b4a00
 // The party's map AI step: gather the nearby parties (0x4b3910), score each one from troop strength, relation and distance,
 // then either commit a new order (action / target) or fall back to the pending one (state, +0x8e4).
@@ -1702,7 +1733,7 @@ void Party::think()
         return;
     if (f88 != -1)
         return;
-    if (flags_lo & 0x400)
+    if (flags & 0x400)
         return;
 
     int ids[32];
@@ -1711,8 +1742,8 @@ void Party::think()
     collect_targets(ids, &maxn, &n);
 
     float base = g_game->party_value(id);
-    float hi = base + 0.1f;
     float lo = 0.0f;
+    float hi = base + 0.1f;
     set_speed_from_stat();
 
     float near_v[32];
@@ -1723,19 +1754,19 @@ void Party::think()
     int ckind[32];
     char friendly[32];
 
-    if (n > 0) {
-        for (int i = 0; i < n; i++) {
+    {
+        for (int i = 0; i < n; i++)
             accum[i] = 0.0f;
-            adj_v[i] = 0.0f;
-            ckind[i] = 0;
-            score[i] = 0.0f;
-        }
+    }
+    {
+        int me = id;
+        PartyMgr* m = &g_game->parties;
         for (int i = 0; i < n; i++) {
+            score[i] = 0.0f;
+            ckind[i] = 0;
             int tid = ids[i];
-            int pi = g_game->parties.lookup(tid);
-            Party* p = (Party*)((char*)g_game->parties.pages[pi >> 4]
-                                + (pi & 0xf) * sizeof(Party));
-            float rel = g_game->relation(id, tid);
+            Party* p = m->at(m->lookup(tid));
+            float rel = g_game->relation(me, tid);
             rel_v[i] = rel;
             float v = g_game->party_value(tid);
             near_v[i] = v;
@@ -1743,25 +1774,22 @@ void Party::think()
             friendly[i] = 1;
             int sub = p->f88;
             if (sub >= 0) {
-                BattleRec* b = (BattleRec*)((char*)battles()->pages[sub >> 4]
-                                            + (sub & 0xf) * 0x98);
+                BattleRec* b = battle_page(sub);
                 unsigned other = b->party_b;
                 if (other == (unsigned)tid)
                     other = (unsigned)b->party_a;
-                int oi = -1;
-                if (other < g_game->parties.n_parties)
-                    oi = g_game->parties.lookup((int)other);
-                if (oi >= 0) {
-                    Party* op = (Party*)((char*)g_game->parties.pages[oi >> 4]
-                                         + (oi & 0xf) * sizeof(Party));
-                    if (op->type == 1) {
-                        float ov = g_game->party_value(other);
+                if (other < m->n_parties) {
+                    int oi = m->lookup(other);
+                    if (oi >= 0 && m->atu(oi)->type == 1) {
+                        GameData* g = g_game;
+                        float ov = g->party_value(other);
                         float a = v - ov * 0.9f;
-                        if (a < 1.0f)
-                            a = 1.0f;
                         adj_v[i] = a;
+                        if (adj_v[i] < 1.0f)
+                            adj_v[i] = 1.0f;
+                        Party* op = m->at(m->lookup(other));
                         accum[i] = ov + accum[i];
-                        friendly[i] = ((float*)g_game->factions)[op->f70 * 0xc0 + f70 + 0xb] >= 0.0f;
+                        friendly[i] = ((float*)g->factions)[op->f70 * 0xc0 + f70 + 0xb] >= 0.0f ? 1 : 0;
                     }
                 }
             }
@@ -1772,82 +1800,73 @@ void Party::think()
                     hi = v + hi;
             }
         }
+    }
 
-        float frac = lo / hi;
-        float inv = 1.0f / frac;
+    float frac = lo / hi;
+    int i = 0;
+    if (n > 0) {
         unsigned a74 = f74;
-        float hi_nib = (float)((int)a74 >> 4 & 0xf);
+        int nib = a74 & 0xf;
+        int hi4 = (int)a74 >> 4 & 0xf;
+        PartyMgr* m = &g_game->parties;
+        float hi_nib = (float)hi4;
         float prod = f8b0 * f8ac;
         float prod2 = prod + 0.05f;
-
-        for (int i = 0; i < n; i++) {
+        do {
             int tid = ids[i];
-            int pi = g_game->parties.lookup(tid);
-            Party* p = (Party*)((char*)g_game->parties.pages[pi >> 4]
-                                + (pi & 0xf) * sizeof(Party));
-            float adj = near_v[i] - accum[i] * 0.9f;
-            if (adj < 1.0f)
-                adj = 1.0f;
-            float mod = (a74 & 0xf) == 0 ? 1.0f : (float)(a74 & 0xf) * 0.125f;
-            mod = mod * ((base / adj) * inv);
+            Party* p = m->at(m->lookup(tid));
+            float x = base / fmin1(near_v[i] - accum[i] * 0.9f) * (1.0f / frac);
+            float mod = (nib != 0 ? (float)nib * 0.125f : 1.0f) * x;
             if (mod < 0.2f)
                 mod = 0.2f;
             else if (mod > 5.0f)
                 mod = 5.0f;
 
-            float ax = p->pos.x - pos.x;
-            float ay = p->pos.y - pos.y;
-            float dist = (float)sqrt(ay * ay + ax * ax);
-            if (dist > 0.0f) {
-                ax = ax * (1.0f / dist);
-                ay = ay * (1.0f / dist);
-            } else {
-                ax = 0.0f;
-                ay = 1.0f;
-            }
+            PartyV4* tp = &m->at(m->lookup(tid))->pos;
+            vec2 d;
+            d.x = tp->x - pos.x;
+            d.y = tp->y - pos.y;
+            float dist = d.normalize();
             float invd = 3.0f / dist;
             if (invd < 0.6f)
                 invd = 0.6f;
             else if (invd > 2.0f)
                 invd = 2.0f;
 
-            float scale = prod / (p->f8ac * p->f8b0);
-            if (scale < 0.5f)
-                scale = 0.5f;
-            else if (scale > 1.1f)
-                scale = 1.1f;
+            float scale = fclamp(prod / (m->at(m->lookup(tid))->f8ac * m->at(m->lookup(tid))->f8b0), 0.5f, 1.1f);
 
-            float sc = (((-rel_v[i] * hi_nib) * scale) * invd) * mod * 0.125f;
+            float sc = hi_nib * -rel_v[i] * scale * invd * mod * 0.125f;
             if (rel_v[i] < 0.0f) {
-                float s = (a74 & 0x100) ? 1.0f : 0.0f;
-                float alt = (((s * p->f78) * scale) * invd) * mod;
-                if (sc < alt)
+                float s = 0.0f;
+                if (a74 & 0x100)
+                    s = 1.0f;
+                float alt = s * p->f78 * scale * invd * mod;
+                if (alt > sc)
                     sc = alt;
             }
             if (near_v[i] * 3.0f < accum[i]) {
-                sc = (near_v[i] / accum[i]) * sc;
-                sc = sc + sc;
+                float t = near_v[i] / accum[i] * sc;
+                sc = t + t;
             }
 
-            float freq = (a74 & 0xf) == 0 ? 1.0f : (float)(a74 & 0xf) * 0.125f;
+            float freq = nib != 0 ? (float)nib * 0.125f : 1.0f;
             if (mod < 1.0f / freq || !friendly[i]) {
                 sc = 0.0f;
-            } else if ((unsigned)tid == (unsigned)g_game->f78) {
-                __int64 d = g_ticks[ignore_timer.clock] - (__int64)((unsigned*)&ignore_timer.start)[0];
-                d -= (__int64)((unsigned*)&ignore_timer.start)[1] << 32;
-                if ((double)d * 1e-05 < 0.0)
-                    sc = 0.0f;
+            } else if (tid == g_game->f78 && (float)(g_ticks[ignore_timer.clock] - ignore_timer.start) * 1e-05f < 0.0f) {
+                sc = 0.0f;
             }
 
-            if (prod2 < p->f8ac * p->f8b0 && sc > 0.01f && p->f88 < 0) {
-                float ang = p->angle;
-                float s = (float)sin(ang);
+            if (m->at(m->lookup(tid))->f8ac * m->at(m->lookup(tid))->f8b0 > prod2 && sc > 0.01f && p->f88 < 0) {
+                float ang = m->at(m->lookup(tid))->angle;
                 float c = (float)cos(ang);
-                if (0.8f < (s * 0.0f + c) * ay + (c * 0.0f - s) * ax)
+                float s = (float)sin(ang);
+                float fx = c * 0.0f - s;
+                float fy = s * 0.0f + c;
+                if (fy * d.y + fx * d.x > 0.8f)
                     sc = sc * 0.1f;
             }
 
-            if (score[i] < sc) {
+            if (sc > score[i]) {
                 score[i] = sc;
                 ckind[i] = 4;
             }
@@ -1855,18 +1874,18 @@ void Party::think()
             float alt2 = 0.0f;
             if (rel_v[i] < -0.01f && mod < 1.0f
                 && (float)((int)p->f74 >> 4 & 0xf) * 0.125f > 0.0f
-                && (p->flags_lo & 0x400) == 0 && p->f88 < 0 && p->f8c8 < 0)
-                alt2 = ((1.0f - rel_v[i]) * invd) / (mod * mod) - 1.0f;
-            if (score[i] < alt2) {
+                && !(p->flags & 0x400) && p->f88 < 0 && p->f8c8 < 0)
+                alt2 = (1.0f - rel_v[i]) * invd / (mod * mod) - 1.0f;
+            if (alt2 > score[i]) {
                 score[i] = alt2;
                 ckind[i] = 5;
             }
-        }
+        } while (++i < n);
     }
 
     float best = -10.0f;
     int bi = -1;
-    for (int i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
         if (best < score[i]) {
             best = score[i];
             bi = i;
@@ -1874,59 +1893,32 @@ void Party::think()
     }
     best = best * f958;
 
-    int r = rand();
-    float rnd = (float)(r % 0x3dc9) * 3.1611557e-06f + 0.15f;
+    float rnd = (float)(rand() % 0x3dc9) * 3.1611557e-06f + 0.15f;
 
-    if (bi != -1 && !(best < rnd) && !(flags_lo & 0x10000)) {
-        action = ckind[bi];
-        target = ids[bi];
-        reissue_order();
-        return;
-    }
+    if (bi == -1 || best < rnd || (flags & 0x10000))
+        goto pending;
+commit:
+    if (bi == -1)
+        goto stay;
+    action = ckind[bi];
+    target = ids[bi];
+    reissue_order();
+    return;
 
-    bool pending_bad = false;
+pending:
     if (state == 4) {
+        PartyMgr* m = &g_game->parties;
         unsigned pid = (unsigned)state_target;
-        if (pid < g_game->parties.n_parties) {
-            int oi = g_game->parties.lookup((int)pid);
-            if (oi >= 0) {
-                Party* pp = (Party*)((char*)g_game->parties.pages[oi >> 4]
-                                     + (oi & 0xf) * sizeof(Party));
-                if (pp->type == 1) {
-                    int oi2 = g_game->parties.lookup((int)pid);
-                    Party* pp2 = (Party*)((char*)g_game->parties.pages[oi2 >> 4]
-                                          + (oi2 & 0xf) * sizeof(Party));
-                    if (pp2->f8c8 < 0 && (pp2->flags_lo & 0x1080100) == 0) {
-                        int oi3 = g_game->parties.lookup((int)pid);
-                        Party* pp3 = (Party*)((char*)g_game->parties.pages[oi3 >> 4]
-                                              + (oi3 & 0xf) * sizeof(Party));
-                        pending_bad = pp3->action == 8;
-                    } else {
-                        pending_bad = true;
-                    }
-                } else {
-                    pending_bad = true;
-                }
-            } else {
-                pending_bad = true;
-            }
-        } else {
-            pending_bad = true;
-        }
-    }
-
-    if (state == 4 && pending_bad) {
-        if (bi != -1) {
-            action = ckind[bi];
-            target = ids[bi];
-            reissue_order();
-            return;
-        }
-        action = 2;
-        f924 = *(int*)((char*)this + 0x30);
-        f928 = *(int*)((char*)this + 0x34);
-        reissue_order();
-        return;
+        if (pid >= m->n_parties)
+            goto commit;
+        int oi = m->lookup(pid);
+        if (oi < 0 || m->atu(oi)->type != 1)
+            goto commit;
+        Party* q = m->at(m->lookup(pid));
+        if (q->f8c8 >= 0 || (q->flags & 0x1080100))
+            goto commit;
+        if (m->at(m->lookup(pid))->action == 8)
+            goto commit;
     }
 
     action = state;
@@ -1934,13 +1926,18 @@ void Party::think()
     f924 = state_f8ec;
     f928 = state_f8f0;
     if (action == 2 || action == 3) {
-        int q = rand();
-        if ((float)(q % 0x3dc9) * 6.322312e-05f < 0.25f) {
+        if ((float)(rand() % 0x3dc9) * 6.322312e-05f < 0.25f) {
             action = 0;
             reissue_order();
             return;
         }
     }
+    goto done;
+stay:
+    action = 2;
+    f924 = *(int*)((char*)this + 0x30);
+    f928 = *(int*)((char*)this + 0x34);
+done:
     reissue_order();
 }
 
@@ -2087,77 +2084,78 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
 struct MissionCtx;
 extern MissionCtx g_mission_ctx;            // 0xa73300
 
+// helpers of BattleRec::detach (0x4b6180)
+static __forceinline void detach_attached(Party* q)
+{
+    for (int k = (int)q->attached.size() - 1; k >= 0; k--) {
+        int& mid = q->attached[k];
+        if (g_game->parties.get_w(mid)->f8cc) {
+            ((GameW*)g_game)->detach_party(mid);
+            g_game->parties.get_w(q->attached[k])->action = 0;
+        }
+    }
+}
+static __forceinline bool party_valid(PartyMgr* m, unsigned id)
+{
+    if (id < m->n_parties) {
+        int i = m->lookup(id);
+        if (i >= 0 && m->atu(i)->type == 1)
+            return true;
+    }
+    return false;
+}
+static __forceinline int party_troops(const Party* p)
+{
+    int sum = 0;
+    for (int t = 0; t < p->nstacks; t++) {
+        int c = p->stacks[t].count;
+        if (c < 0)
+            c = 0;
+        sum += c;
+    }
+    return sum;
+}
 // @ 0x4b6180
 // Unwind a battle record: both sides leave their battle state (animation stamp, speed, attached parties), the losses are
 // reported, empty parties are removed (counting the kills for the player's side) and the record is released.
 void BattleRec::detach()
 {
-    unsigned list1[128], list2[128];
-    int n1 = 0, n2 = 0;                       // zeroed before the list_members calls (0x4b6180: local counts cleared first)
-    int total = 0;
-
-    if (type != 1)
-        goto tail;
-
-    g_game->list_members(party_a, (int*)list1, &n1);
-    g_game->list_members(party_b, (int*)list2, &n2);
-
-    {
-        PartyMgr* pm = &g_game->parties;
-        int i, j, k, m;
-
-        if (pm->is_live(party_a)) {
-            i = pm->lookup(party_a);
-            Party* q = pm->pages[i >> 4] + (i & 15);
-            q->action = 0;
-            q->interval = 0.4f;
-            q->clk8d0.start = g_ticks[q->clk8d0.clock];
-            q->f88 = -1;
-            total = q->sum_stat(0x10);
-
-            for (k = (q->attached._Myfirst ? (int)(q->attached._Mylast - q->attached._Myfirst) : 0) - 1; k >= 0; k--) {
-                int mid = q->attached._Myfirst[k];
-                j = pm->lookup(mid);
-                if ((pm->pages[j >> 4] + (j & 15))->f8cc) {
-                    ((GameW*)g_game)->detach_party(mid);
-                    m = pm->lookup(q->attached._Myfirst[k]);
-                    (pm->pages[m >> 4] + (m & 15))->action = 0;
-                }
+    if (type == 1) {
+        unsigned list1[128], list2[128];
+        int n1 = 0;
+        g_game->list_members(party_a, (int*)list1, &n1);
+        int n2 = 0;
+        g_game->list_members(party_b, (int*)list2, &n2);
+        int total = 0;
+        {
+            PartyMgr* m = &g_game->parties;
+            int a = party_a;
+            if (m->is_live(a)) {
+                Party* q = m->at(m->lookup(a));
+                q->action = 0;
+                q->interval = 0.4f;
+                q->clk8d0.restamp();
+                q->f88 = -1;
+                total = q->sum_stat(0x10);
+                detach_attached(q);
             }
         }
-
         {
-            unsigned uid = party_b;
-            if (uid < g_game->parties.n_parties) {
-                j = pm->lookup(uid);
-                if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                    i = pm->lookup(party_b);
-                    Party* q = pm->pages[i >> 4] + (i & 15);
-                    q->action = 0;
-                    q->interval = 0.1f;
-                    q->clk8d0.start = g_ticks[q->clk8d0.clock];
-                    q->f88 = -1;
-
-                    m = 0;
-                    if (q->nstacks > 0) {
-                        for (int t = 0; t < q->nstacks; t++) {
-                            int c = q->stacks[t].count;
-                            if (((q->stacks[t].flags & 1) == 0) && c >= 0)
-                                m += c;
-                        }
-                    }
-                    total += m;
-
-                    for (k = (q->attached._Myfirst ? (int)(q->attached._Mylast - q->attached._Myfirst) : 0) - 1; k >= 0; k--) {
-                        int mid = q->attached._Myfirst[k];
-                        j = pm->lookup(mid);
-                        if ((pm->pages[j >> 4] + (j & 15))->f8cc) {
-                            ((GameW*)g_game)->detach_party(mid);
-                            m = pm->lookup(q->attached._Myfirst[k]);
-                            (pm->pages[m >> 4] + (m & 15))->action = 0;
-                        }
-                    }
+            PartyMgr* m = &g_game->parties;
+            unsigned b = party_b;
+            if (party_valid(m, b)) {
+                Party* q = m->at(m->lookup(b));
+                q->action = 0;
+                q->interval = 0.1f;
+                q->clk8d0.restamp();
+                q->f88 = -1;
+                int sum = 0;
+                for (int t = 0; t < q->nstacks; t++) {
+                    Stack& s = q->stacks[t];
+                    sum += (s.flags & 1) == 0 && s.count >= 0 ? s.count : 0;
                 }
+                total += sum;
+                detach_attached(q);
             }
         }
 
@@ -2169,13 +2167,12 @@ void BattleRec::detach()
             g_game->push_event((const int*)v, height);
         }
 
+        char is1, is2;
         {
             int cur_id = g_game->f78;
-            i = pm->lookup(cur_id);
-            Party* cur = pm->pages[i >> 4] + (i & 15);
+            PartyMgr* m = &g_game->parties;
+            Party* cur = m->at(m->lookup(cur_id));
             int st = (*(int*)((char*)&g_mission_ctx + 0x138));
-            char is1, is2;
-
             if (party_a == cur_id || (cur->f88 == rec_id && st == 0))
                 is1 = 1;
             else
@@ -2184,70 +2181,41 @@ void BattleRec::detach()
                 is2 = 1;
             else
                 is2 = 0;
+        }
 
-            for (i = 0; i < n2; i++) {
-                unsigned id = list2[i];
-                if (id < g_game->parties.n_parties) {
-                    j = pm->lookup(id);
-                    if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                        j = pm->lookup(id);
-                        Party* p = pm->pages[j >> 4] + (j & 15);
-                        if ((p->flags_lo & 0x400) == 0) {
-                            m = 0;
-                            for (int t = 0; t < p->nstacks; t++) {
-                                int c = p->stacks[t].count;
-                                if (c < 0)
-                                    c = 0;
-                                m += c;
-                            }
-                            if (m <= 0) {
-                                if (is1 && p->owner >= 0)
-                                    g_party_templates[p->owner].num_destroyed_by_player++;
-                                ((GameW*)g_game)->remove_party(list2[i]);
-                            }
-                        }
-                    }
+        for (int i = 0; i < n2; i++) {
+            PartyMgr* m = &g_game->parties;
+            unsigned id = list2[i];
+            if (party_valid(m, id)) {
+                Party* p = m->at(m->lookup(id));
+                if (!(p->flags & 0x400) && party_troops(p) <= 0) {
+                    if (is1 && p->owner >= 0)
+                        g_party_templates[p->owner].num_destroyed_by_player++;
+                    ((GameW*)g_game)->remove_party(list2[i]);
                 }
             }
+        }
 
-            for (i = 0; i < n1; i++) {
-                unsigned id = list1[i];
-                if (id < g_game->parties.n_parties) {
-                    j = pm->lookup(id);
-                    if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                        j = pm->lookup(id);
-                        Party* p = pm->pages[j >> 4] + (j & 15);
-                        if ((p->flags_lo & 0x400) == 0) {
-                            m = 0;
-                            for (int t = 0; t < p->nstacks; t++) {
-                                int c = p->stacks[t].count;
-                                if (c < 0)
-                                    c = 0;
-                                m += c;
-                            }
-                            if (m <= 0) {
-                                if (is2 && p->owner >= 0)
-                                    g_party_templates[p->owner].num_destroyed_by_player++;
-                                ((GameW*)g_game)->remove_party(list1[i]);
-                            }
-                        }
-                    }
+        for (int i = 0; i < n1; i++) {
+            PartyMgr* m = &g_game->parties;
+            unsigned id = list1[i];
+            if (party_valid(m, id)) {
+                Party* p = m->at(m->lookup(id));
+                if (!(p->flags & 0x400) && party_troops(p) <= 0) {
+                    if (is2 && p->owner >= 0)
+                        g_party_templates[p->owner].num_destroyed_by_player++;
+                    ((GameW*)g_game)->remove_party(list1[i]);
                 }
             }
         }
     }
 
-tail:
-    {
-        BattleObj* o = obj;
-        ((rgl::world*)g_script.level)->remove_entity(o->id);
-        obj = 0;
-
-        unsigned rid = rec_id;
-        char* page = (char*)battles()->pages[rid >> 4];
-        *(int*)(page + (rid & 15) * 0x98 + 4) = 0;
-        battles()->free_ids.push_back(rid);
-    }
+    ((rgl::world*)g_script.level)->remove_entity(obj->id);
+    obj = 0;
+    int rid = rec_id;
+    BattleTable* t = battles();
+    t->pages[(unsigned)rid >> 4][rid & 0xf].live = 0;
+    t->free_ids.push_back(rid);
 }
 
 // @ 0x4b6870
@@ -2321,6 +2289,40 @@ struct DetailVert { char pad0[0x14]; float x, y, z, w; };   // the 0x24-byte det
 #define OPEN_BEGIN (*(OpenItem**)&v30.first)         // the open list: a vector<E12> at +0x30 (allocator word, first, last, end)
 #define OPEN_END (*(OpenItem**)&v30.last)
 
+// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<E12> plus its comparator at +0x40)
+struct QComp { char c; };
+struct OpenQ {
+    std::vector<E12> c;
+    QComp comp;
+    __forceinline bool empty() const { return c.empty(); }
+    __forceinline void pop_back() { c.pop_back(); }
+    __forceinline OpenItem* begin_() { return (OpenItem*)&*c.begin(); }
+    __forceinline OpenItem* end_() { return (OpenItem*)&*c.end(); }
+    OpenItem*& first() { return *(OpenItem**)((char*)this + 4); }
+};
+static __forceinline void pq_drain(OpenItem* first, OpenItem* last, QComp pred)
+{
+    if (1 < last - first) {
+        OpenItem val = *(last - 1);
+        *(last - 1) = *first;
+        adjust_heap(first, 0, (int)(last - 1 - first), val, *(HeapGt*)&pred);
+    }
+}
+static __forceinline rgl::vector4 v4_sub(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+static __forceinline float v4_len_zyx(const rgl::vector4& v) { return (float)sqrt(v.z * v.z + v.y * v.y + v.x * v.x); }
+static __forceinline int edge_index(const NavRec& r, int id)
+{
+    int idx = 0;
+    int cnt = r.npts;
+    for (int j = 0; j < cnt; j++) {
+        if (((NavRec&)r).targets()[j] == id) {
+            idx = j;
+            break;
+        }
+    }
+    return idx;
+}
+
 // @ 0x4b6b40
 // A* over the map's 0x88-byte formation records; fills the record-id chain, the per-node positions and the stall limit of
 // the target node.
@@ -2328,181 +2330,137 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
                        unsigned* mask_req, unsigned* mask_ban, char* avoid)
 {
     (void)guard;
-    HeapGt hg;
+    OpenQ* q = (OpenQ*)&v30;
 
     // drain whatever the previous search left on the open list
-    if (OPEN_BEGIN != 0) {
-        for (;;) {
-            int n = (int)(OPEN_END - OPEN_BEGIN);
-            if (n == 0)
-                break;
-            if (n > 1) {
-                OpenItem last = OPEN_END[-1];
-                OPEN_END[-1] = OPEN_BEGIN[0];
-                adjust_heap(OPEN_BEGIN, 0, n - 1, last, hg);
-            }
-            if (OPEN_BEGIN != 0) {
-                n = (int)(OPEN_END - OPEN_BEGIN);
-                if (n != 0)
-                    OPEN_END -= 1;
-            }
-        }
+    while (!q->empty()) {
+        pq_drain(q->begin_(), q->end_(), q->comp);
+        q->pop_back();
     }
 
     reset();
 
-    RECS[from].gen() = m64 + 1;
-    RECS[from].parent() = from;
-    {
-        OpenItem root;
-        root.node = from;
-        root.cost = 0.0f;
-        root.dist = 0.0f;
-        ((std::vector<E12>*)&v30)->push_back(*(const E12*)&root);
-    }
-    push_back_elem(OPEN_BEGIN, OPEN_END, *(HeapGt*)&m40);
+    int so = from * 0x88;
+    *(int*)((char*)RECS + so + 0x6c) = m64 + 1;
+    *(int*)((char*)RECS + so + 0x70) = from;
+    OpenItem cur;
+    cur.node = from;
+    cur.cost = 0.0f;
+    cur.dist = 0.0f;
+    ((std::vector<E12>*)&v30)->push_back(*(const E12*)&cur);
+    push_back_elem(q->begin_(), q->end_(), *(HeapGt*)&q->comp);
     *visited = 0;
     float best = 0.0f;
     float limit = 10000.0f;
     if (*avoid != 0)
         limit = 1e6f;
-    int so = from * 0x88;
+    int to0 = to * 0x88;
 
-    float last_dist = 0.0f;                          // the loop tests the dist of the element popped by the previous round (0 at the start)
-    // the search ends once the target is reached: the original re-tests its stamp after every expanded node
-    // (0x4b6fd6), not just once before the loop
-    while (RECS[to].gen() <= m64) {
+    while (*(int*)((char*)RECS + to0 + 0x6c) <= m64 && !q->empty() && cur.dist < limit) {
+        *visited = *visited + 1;
+        cur = *(OpenItem*)v30.first;
         {
-            if (OPEN_BEGIN == 0)
-                break;
-            if ((int)(OPEN_END - OPEN_BEGIN) == 0)
-                break;
-            if (!(last_dist < limit))
-                break;
+            QComp hg = q->comp;
+            OpenItem* first = q->begin_();
+            OpenItem* lastp = q->end_();
+            if ((int)(lastp - first) > 1)
+                pop_heap_elem(first, lastp - 1, lastp - 1, lastp[-1], *(HeapGt*)&hg, 0);
+        }
+        q->pop_back();
 
-            *visited = *visited + 1;
-            OpenItem cur = OPEN_BEGIN[0];
-            last_dist = cur.dist;
-            if ((int)(OPEN_END - OPEN_BEGIN) > 1) {
-                OpenItem last = OPEN_END[-1];
-                pop_heap_elem(OPEN_BEGIN, OPEN_END - 1, OPEN_END - 1, last, hg, 0);
-            }
-            if ((int)(OPEN_END - OPEN_BEGIN) != 0)
-                OPEN_END -= 1;
+        int sn = cur.node * 0x88;
+        int nb = 0;
+        if (*(int*)((char*)RECS + sn) > 0) {
+            int nidx = cur.node * 0x22;
+            int off = nidx * 4 + 0x28;
+            do {
+                int nbr = *(int*)((char*)RECS + off);
+                if (nbr != -1) {
+                    int sb = nbr * 0x88;
+                    if (*(int*)((char*)RECS + sb + 0x6c) <= m64) {
+                        *(int*)((char*)RECS + sb + 0x6c) = m64 + 1;
+                        *(int*)((char*)RECS + sb + 0x70) = cur.node;
 
-            int node = cur.node;
-            int sn = node * 0x88;
-            int nidx = node * 0x22;
-            int nb = 0;
-            if (RECS[node].npts > 0) {
-                int off = sn + 0x28;
-                do {
-                    int nbr = *(int*)((char*)RECS + off);
-                    if (nbr != -1) {
-                        int sb = nbr * 0x88;
-                        if (RECS[nbr].gen() <= m64) {
-                            RECS[nbr].gen() = m64 + 1;
-                            RECS[nbr].parent() = node;
+                        unsigned fl = *(unsigned*)((char*)RECS + sb + 0x24);
+                        float cost = *(float*)((char*)RECS + (nidx + nb) * 4 + 0x38);
+                        if ((*mask_req & fl) != *mask_req)
+                            cost += 10000.0f;
+                        if ((*mask_ban & fl) != 0)
+                            cost += 10000.0f;
 
-                            unsigned fl = *(unsigned*)((char*)RECS + sb + 0x24);
-                            float cost = *(float*)((char*)RECS + (nidx + nb) * 4 + 0x38);
-                            if ((*mask_req & fl) != *mask_req)
-                                cost += 10000.0f;
-                            if ((*mask_ban & fl) != 0)
-                                cost += 10000.0f;
+                        rgl::vector4& pb = *(rgl::vector4*)((char*)RECS + sb + 0x74);
+                        rgl::vector4 dt = v4_sub(*(rgl::vector4*)((char*)RECS + to0 + 0x74), pb);
+                        rgl::vector4 df = v4_sub(*(rgl::vector4*)((char*)RECS + so + 0x74), pb);
+                        float d_from = v4_len_zyx(df);
+                        float d_to = v4_len_zyx(dt);
 
-                            float* pb = (float*)((char*)RECS + sb + 0x74);
-                            float tz = *(float*)((char*)RECS + to * 0x88 + 0x7c) - pb[2];
-                            float ty = *(float*)((char*)RECS + to * 0x88 + 0x78) - pb[1];
-                            float tx = *(float*)((char*)RECS + to * 0x88 + 0x74) - pb[0];
-                            float fz = *(float*)((char*)RECS + so + 0x7c) - pb[2];
-                            float fy = *(float*)((char*)RECS + so + 0x78) - pb[1];
-                            float fx = *(float*)((char*)RECS + so + 0x74) - pb[0];
-                            float d_from = (float)sqrt(fx * fx + (fy * fy + fz * fz));
-                            float d_to = (float)sqrt(tx * tx + (ty * ty + tz * tz));
+                        cost += cur.cost;
+                        if (cur.cost > best)
+                            best = cur.cost;
 
-                            cost += cur.cost;
-                            if (best < cur.cost)
-                                best = cur.cost;
-
-                            OpenItem add;
-                            add.node = nbr;
-                            add.cost = cost;
-                            add.dist = (d_to / d_from + 1.0f) * cost;
-                            ((std::vector<E12>*)&v30)->push_back(*(const E12*)&add);
-                            if (OPEN_BEGIN != OPEN_END && (int)(OPEN_END - 1 - OPEN_BEGIN) > 0) {
-                                OpenItem last = OPEN_END[-1];
-                                push_heap_elem(OPEN_BEGIN, (int)(OPEN_END - 1 - OPEN_BEGIN), 0, last, hg);
+                        OpenItem add;
+                        add.node = nbr;
+                        add.cost = cost;
+                        add.dist = (d_to / d_from + 1.0f) * cost;
+                        ((std::vector<E12>*)&v30)->push_back(*(const E12*)&add);
+                        {
+                            QComp hg = q->comp;
+                            OpenItem* first = q->begin_();
+                            OpenItem* lastp = q->end_();
+                            if (first != lastp) {
+                                lastp--;
+                                int n = (int)(lastp - first);
+                                if (n > 0)
+                                    push_heap_elem(first, n, 0, *lastp, *(HeapGt*)&hg);
                             }
                         }
                     }
-                    off += 4;
-                    nb++;
-                } while (nb < RECS[node].npts);
-            }
-            RECS[node].gen() = m64 + 2;
+                }
+                off += 4;
+                nb++;
+            } while (nb < *(int*)((char*)RECS + sn));
         }
+        *(int*)((char*)RECS + sn + 0x6c) = m64 + 2;
     }
 
-    if (RECS[to].gen() <= m64) {
+    if (*(int*)((char*)RECS + to0 + 0x6c) <= m64) {
         *count = 0;
         return 0;
     }
 
-    char reachable = best < 10000.0f;
+    char reachable = 1;
+    if (!(best < 10000.0f))
+        reachable = 0;
 
-    int chain[0x2001];                               // the original writes chain[0x2000] too (into its saved edi)
+    int chain[0x2004];                               // frame 0x8070: the array ends 0x10 past chain[0x2000], which the original also writes
     int k = 0;
-    int cur = to;
-    while (cur != from && k < 0x2000) {
-        chain[k++] = cur;
-        cur = RECS[cur].parent();
+    for (int c = to; c != from; c = RECS[c].parent()) {
+        if (k >= 0x2000)
+            break;
+        chain[k++] = c;
     }
     chain[k++] = from;
-    int m = k;
-    if (k > 0x400)
-        m = 0x400;
+    int m = k < 0x400 ? k : 0x400;
     *count = m;
 
-    if (m > 0) {
-        int prev = from;                             // the edge is looked up on the previous step's record
-        for (int i = 0; i < m; i++) {
-            int id = chain[k - 1 - i];
-            path[i] = id;
-            int cnt = RECS[prev].npts;
-            int idx = 0;                              // 0 when the edge is not found
-            for (int j = 0; j < cnt; j++) {
-                if (RECS[prev].targets()[j] == id) {
-                    idx = j;
-                    break;
-                }
-            }
-            int v = RECS[prev].agents()[idx];
-            prev = path[i];
-            DetailVert* vv = &((DetailVert*)v20.first)[v];
-            detail[i * 4 + 0] = vv->x;
-            detail[i * 4 + 1] = vv->y;
-            detail[i * 4 + 2] = vv->z;
-            detail[i * 4 + 3] = vv->w;
-        }
+    int prev = from;                             // the edge is looked up on the previous step's record
+    rgl::vector4* out = (rgl::vector4*)detail;
+    int* pc = &chain[k - 1];
+    for (int i = 0; i < *count; i++) {
+        int id = *pc;
+        path[i] = id;
+        NavRec& r = RECS[prev];
+        int v = ((int*)&r)[prev * 0 + edge_index(r, id) + 5];
+        *out = *(rgl::vector4*)&((DetailVert*)v20.first)[v].x;
+        out++;
+        prev = path[i];
+        pc--;
     }
 
-    for (int i = 1; i < *count; i++) {
-        detail[i * 4 - 4] = detail[i * 4 + 0];
-        detail[i * 4 - 3] = detail[i * 4 + 1];
-        detail[i * 4 - 2] = detail[i * 4 + 2];
-        detail[i * 4 - 1] = detail[i * 4 + 3];
-    }
-    {
-        int lastid = path[*count - 1];
-        float* e = (float*)((char*)RECS + lastid * 0x88 + 0x74);
-        float* o = detail + *count * 4 - 4;
-        o[0] = e[0];
-        o[1] = e[1];
-        o[2] = e[2];
-        o[3] = *(float*)((char*)RECS + lastid * 0x88 + 0x80);
-    }
-    return reachable ? 1 : 0;
+    for (int i = 1; i < *count; i++)
+        ((rgl::vector4*)detail)[i - 1] = ((rgl::vector4*)detail)[i];
+    ((rgl::vector4*)detail)[*count - 1] = *(rgl::vector4*)((char*)RECS + path[*count - 1] * 0x88 + 0x74);
+    return reachable != 0;
 }
 
 // @ 0x4b71e0
@@ -2703,6 +2661,15 @@ namespace rgl { vector4 unpack_color(const unsigned* argb); }   // 0x40e4e0 (cde
     (m)->m_cc.f.x *= (a); (m)->m_cc.f.y *= (a); (m)->m_cc.f.z *= (a); \
     (m)->m_cc.u.x *= (a); (m)->m_cc.u.y *= (a); (m)->m_cc.u.z *= (a)
 
+// helpers of Party::update_flags (0x4b7840)
+#define ICON_DEF(i) (&((PartyTypeDef*)g_map_icons)[i])
+#define MODEL_ENTS(m) (*(std::vector<rgl::mesh*>*)&(m)->ents)
+static __forceinline void rows_scale(Rot3& r, const vector4& v)
+{
+    r.s.x = v.x * r.s.x; r.s.y = v.x * r.s.y; r.s.z = v.x * r.s.z;
+    r.f.x = v.y * r.f.x; r.f.y = v.y * r.f.y; r.f.z = v.y * r.f.z;
+    r.u.x = v.z * r.u.x; r.u.y = v.z * r.u.y; r.u.z = v.z * r.u.z;
+}
 // @ 0x4b7840
 // Build the party's two model meshes (the party type's body and, for a rider, the rider mesh) from the type table, swap them
 // into the model's mesh list and set the model's fade and colour state.
@@ -2710,101 +2677,96 @@ void Party::update_flags()
 {
     if (f5a04) {
         f5a04 = 0;
-        for (unsigned i = 0; deferred._Myfirst != 0 && i < (unsigned)(deferred._Mylast - deferred._Myfirst); i++) {
+        for (unsigned i = 0; i < deferred.size(); i++) {
             vector4 p(0.0f, 0.0f, 0.0f);
             int idx = 0;
-            rgl::psys* e = g_emit_defs.spawn(&deferred._Myfirst[i], &p, &idx);
+            rgl::psys* e = g_emit_defs.spawn(&deferred[i], &p, &idx);
             if (e)
                 model->add_emitter(e);
         }
     }
-    unsigned def = (flags_lo & 0xff) * 0x48;
+    float arg;
+    unsigned def = flags_lo & 0xff;
     rgl::mesh* m2 = 0;
     int rider = f94;
-    PartyTypeDef* d = (PartyTypeDef*)((char*)g_map_icons + def);
-    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&d->name))->copy_of();
-    float a = d->scale;
-    SCALE_ROWS(m, a);
+    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
+    rows_scale(*(Rot3*)&m->m_cc, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     GDP(rgl::mesh*, 0x1a200) = m;
     GDP(int, 0x1a1fc) = 0;
     g_script.param1 = id;
-    d->frames.update(-0x46);
+    ICON_DEF(def)->frames.update(-0x46);
     if (rider > 0) {
-        PartyTypeDef* r = (PartyTypeDef*)((char*)g_map_icons + (unsigned)rider * 0x48);
-        m2 = ((rgl::mesh*)g_resmgr.get_object(&r->name))->clone();
-        m2->translate(&d->pos);
-        if (!(flags_lo & 0x400)) {
-            float b = r->scale;
-            SCALE_ROWS(m2, b);
+        unsigned rdef = (unsigned)rider;
+        m2 = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(rdef)->name))->clone();
+        m2->translate(&ICON_DEF(def)->pos);
+        if (!(flags & 0x400)) {
+            rows_scale(*(Rot3*)&m2->m_cc, vector4(ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale));
         } else {
             Rot3 dm;
             identity3(&dm);
-            float ang = 1.5707964f;
-            dm.rotate_about_u(&ang);
-            ang = -angle;
-            dm.rotate_about_u(&ang);
-            *(Rot3*)&m2->m_cc = dm;
-            float c = r->scale * 1.5f;
-            SCALE_ROWS(m2, c);
+            arg = 1.5707964f;
+            dm.rotate_about_u(&arg);
+            arg = -angle;
+            dm.rotate_about_u(&arg);
+            Rot3& rc = *(Rot3*)&m2->m_cc;
+            rc = dm;
+            rows_scale(rc, vector4(ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f));
         }
         GDP(rgl::mesh*, 0x1a200) = m2;
         GDP(int, 0x1a1fc) = 0;
         g_script.param1 = id;
-        r->frames.update(-0x46);
+        ICON_DEF(rdef)->frames.update(-0x46);
     }
-    if (e59ec == 0) {
-        model->add_extra(m);
-    } else {
-        for (unsigned i = 0; model->ents.first != 0 &&
-                          i < (unsigned)((rgl::mesh**)model->ents.last - (rgl::mesh**)model->ents.first); i++) {
-            rgl::mesh** et = (rgl::mesh**)model->ents.first;
-            if (et[i] == e59ec) {
-                if (et[i])
-                    delete et[i];
-                et[i] = m;
+    if (e59ec != 0) {
+        for (unsigned i = 0; i < MODEL_ENTS(model).size(); i++) {
+            if (MODEL_ENTS(model)[i] == e59ec) {
+                rgl::mesh* old = MODEL_ENTS(model)[i];
+                if (old)
+                    delete old;
+                MODEL_ENTS(model)[i] = m;
             }
         }
-    }
-    if (e59f0 == 0) {
-        if (m2)
-            model->add_extra(m2);
     } else {
-        for (unsigned i = 0; model->ents.first != 0 &&
-                          i < (unsigned)((rgl::mesh**)model->ents.last - (rgl::mesh**)model->ents.first); i++) {
-            rgl::mesh** et = (rgl::mesh**)model->ents.first;
-            if (et[i] == e59f0) {
-                if (et[i])
-                    delete et[i];
+        model->add_extra(m);
+    }
+    if (e59f0 != 0) {
+        for (unsigned i = 0; i < MODEL_ENTS(model).size(); i++) {
+            if (MODEL_ENTS(model)[i] == e59f0) {
+                rgl::mesh* old = MODEL_ENTS(model)[i];
+                if (old)
+                    delete old;
                 if (m2) {
-                    ((rgl::mesh**)model->ents.first)[i] = m2;
+                    MODEL_ENTS(model)[i] = m2;
                 } else {
-                    unsigned n = (unsigned)((rgl::mesh**)model->ents.last - (rgl::mesh**)model->ents.first);
-                    ((rgl::mesh**)model->ents.first)[i] = ((rgl::mesh**)model->ents.first)[n - 1];
-                    model->ents.last = (int*)((rgl::mesh**)model->ents.last - 1);
+                    MODEL_ENTS(model)[i] = MODEL_ENTS(model)[MODEL_ENTS(model).size() - 1];
+                    MODEL_ENTS(model).pop_back();
                 }
             }
         }
+    } else {
+        if (m2)
+            model->add_extra(m2);
     }
     e59ec = m;
     e59f0 = m2;
-    if (d->f10 & 1) {
+    if (ICON_DEF(def)->f10 & 1) {
         model->set_mode(0);
     } else {
         model->set_mode(2);
-        float one = 1.0f;
-        model->set_fade(&one);
-        model->f_c0 = d->scale * 3.0f;
+        arg = 1.0f;
+        model->set_fade(&arg);
+        model->f_c0 = ICON_DEF(def)->scale * 3.0f;
         model->f294 = 0.5f;
     }
-    unsigned mask = (flags_lo & 0x400) ? 0x1ffff : 0xffff;
+    unsigned mask = (flags & 0x400) ? 0x1ffff : 0xffff;
     m->mask = mask;
     if (m2)
         m2->mask = mask;
     // The original assigns a (0, 0, 0.5) temporary (3-argument vector4 constructor: w left unset); the w lane it copies
     // (0x4b7e11 [esp+0x2c] -> 0x4b7e24) is never read: the entity's +0xc4 is the box centre, whose consumers use x, y, z.
     model->color = vector4(0.0f, 0.0f, 0.5f);
-    float shade = 0.95f;
-    model->set_color(&shade);
+    arg = 0.95f;
+    model->set_color(&arg);
 }
 
 // @ 0x4b7e50
@@ -2875,6 +2837,58 @@ void Party::update_hud_text()
 
 // ---- the party's per-tick update ---------------------------------------------------------------------------------------------
 
+// header inlines of the engine's vectors that cl left out of line in the original (bodies visible here, so a local whose
+// address only goes to them can share its frame slot; the copies live at 0x4367c0 and 0x407d60)
+namespace rgl {
+inline float vector4::normalize()
+{
+    float len = length();
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+}
+}
+// the morph-time setter (0x433190, rgl/xmlcfg/agent_pick.cpp): out of line, but its body was visible to the original's callers
+struct SetTimeKeys { void* frames; int* times; int count; };
+inline void mesh_node::set_time(const float* t)
+{
+    rgl::mesh* m = (rgl::mesh*)this;
+    SetTimeKeys& k = m->local_a1 ? *(SetTimeKeys*)&m->kf : *(SetTimeKeys*)&m->parent->get_kf();
+    if (k.count > 0) {
+        if (*t > (float)k.times[k.count - 1]) m->c8 = (float)k.times[k.count - 1];
+        else m->c8 = *t;
+    }
+}
+// helpers of Party::tick (0x4b80d0)
+struct IconRow { char pad0[0x28]; int sound; char pad2c[0x48 - 0x2c]; };
+static inline float plane_dist(const vec2& a, const rgl::vector4& b)
+{
+    float dx = a.x - b.x;
+    float dy = a.y - b.y;
+    return sqrtf(dy * dy + dx * dx);
+}
+static inline void push_trail_event(GameData* g, int id, const rgl::vector4& pos, const float& heading)
+{
+    g->push_party_event(id, (const int*)&pos, &heading);
+}
+static __forceinline rgl::vector4 v4_half(const rgl::vector4& v) { return rgl::vector4(v.x * 0.5f, v.y * 0.5f, v.z * 0.5f); }
+static __forceinline rgl::vector4 v4_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline NavRec& nav_cell(int i) { return (*(std::vector<NavRec>*)&((rgl::world*)g_script.level)->ground->cells)[i]; }
+struct GDTimer { char pad[0x13a90]; Timer t; };
+static inline rgl::vector4 v2_to3d(const vec2& v) { return rgl::vector4(v.x, v.y, 0.0f); }
+static __forceinline bool mesh_used(const rgl::mesh* m)
+{
+    if (m->parent)
+        return m->parent->kf.count > 0;
+    return m->kf.count > 0;
+}
+static inline void clamp_low0(float& v) { if (v < 0.0f) v = 0.0f; }
+static inline Vec2 v2_scale(const float& s, const float* v) { return Vec2(s * v[0], s * v[1]); }
+
 // @ 0x4b80d0
 // The per-tick update of a map party: periodic re-planning, steering towards the destination, the nav-mesh probe at the
 // candidate position, the order state machine (chase a party, reach a site, wait next to a party), the party-event trail on
@@ -2882,310 +2896,304 @@ void Party::update_hud_text()
 void Party::tick(float dt)
 {
     // ---- early outs ---------------------------------------------------------------------------------------
-    if (flags_lo & 0x100) {
-        model->visible = 0;
-        return;
-    }
-    if ((id == g_game->f78 && GDP(float, 0x13ad0) > 0.0f && GDP(int, 0x13ad4) != 0) || f8c8 >= 0) {
-        model->visible = 0;
-        return;
-    }
-
-    // ---- periodic re-planning (never for the camera party) ------------------------------------------------
-    if (!(flags_lo & 0x400)) {
-        if (id != g_game->f78) {
-            if (interval <= clk8d0.elapsed()) {
-                f598c = 0;
-                think();
-                clk8d0.start = g_ticks[clk8d0.clock];
-                float nv = frand() * 0.15f + 0.25f;
-                interval = nv;
-                if (action == 0xb)
-                    interval = nv * 0.1f;
-                t934 = 0.0f;
+    GameData* g;
+    int cur, me0;
+    if (!(flags & 0x100) && (g = g_game, me0 = id, cur = g->f78, !(me0 == cur && g->f13ad0f > 0.0f && g->f13ad4 != 0)) && f8c8 < 0) {
+        // ---- periodic re-planning (never for the camera party) --------------------------------------------
+        if (!(flags & 0x400)) {
+            if (me0 != cur) {
+                Timer& t = clk8d0;
+                if (t.elapsed() >= interval) {
+                    f598c = 0;
+                    think();
+                    t.restamp();
+                    interval = frand() * 0.15f + 0.25f;
+                    if (action == 0xb)
+                        interval = interval * 0.1f;
+                    t934 = 0.0f;
+                }
+            }
+            if ((float)(g_ticks[idx938] - t940) * 1e-05f > t934) {
+                plan_order();
+                clk948.set_delay(0.1f);
+                clk938.restamp();
+                t934 = (frand() + 1.0f) * 0.1f;
+                if (f597c < 5.0f)
+                    f597c = f597c + 0.5f;
+            }
+            if ((float)(g_ticks[clk948.clock] - clk948.start) * 1e-05f > 0.05f || id == g_game->f78) {
+                update_nav();
+                clk948.restamp();
+            }
+            if (moving == 0 && kind == 2) {
+                int oid = tgt_id;
+                PartyMgr* m = &g_game->parties;
+                if (m->is_live(oid)) {
+                    Party* o = m->get(oid);
+                    dest_x = o->pos.x;
+                    dest_y = o->pos.y;
+                }
             }
         }
-        float d1 = (float)(g_ticks[idx938] - t940) * 1e-05f;
-        if (t934 < d1) {
-            plan_order();
-            clk948.set_delay(0.1f);
-            t940 = g_ticks[idx938];
-            t934 = (frand() + 1.0f) * 0.1f;
-            if (f597c < 5.0f)
-                f597c = f597c + 0.5f;
+
+        // ---- movement -------------------------------------------------------------------------------------
+        model->visible = 1;
+        if (action == 8) {
+            model->visible = 0;
+            return;
         }
-        float d2 = (float)(g_ticks[clk948.clock] - clk948.start) * 1e-05f;
-        if (d2 > 0.05f || id == g_game->f78) {
-            update_nav();
-            clk948.start = g_ticks[clk948.clock];
-        }
+        update_hud_text();
+
+        rgl::vector4& p = *(rgl::vector4*)&pos;
+        bool moved;
+        {
+        vec2 dir;
+        dir.x = dest_x - p.x;
+        dir.y = dest_y - p.y;
+        float dist = dir.normalize();
+        moved = false;
+        float speed = speed_factor();
+        float step = speed * dt;
+
         if (moving == 0 && kind == 2) {
-            int oid = tgt_id;
-            if (g_game->parties.is_live(oid)) {
-                Party* o = g_game->parties.get(oid);
-                dest_x = o->pos.x;
-                dest_y = o->pos.y;
+            if (dist - radius * 1.2f < step) {
+                step = dist - radius * 1.2f;
+                if (step < 0.0f)
+                    step = 0.0f;
+                dist = dist - radius * 1.2f;
+                if (dist < 0.0f)
+                    goto probe;
+            }
+        } else {
+            if (dist < step)
+                step = dist;
+        }
+
+        if (dist > 0.0f) {
+            vec2& hd = *(vec2*)&dirx;
+            hd = dir;
+            dir.x = dirx - oldx;
+            dir.y = diry - oldy;
+            dir.normalize();
+            float want = (float)atan2(-dir.x, dir.y);
+            if (angle > 6.2831855f)
+                angle = (float)fmod(angle, 6.2831855f);
+            else if (angle < 0.0f)
+                angle = 6.2831855f - (float)fmod(-angle, 6.2831855f);
+            if (want > 6.2831855f)
+                want = want - 6.2831855f;
+            else if (want < 0.0f)
+                want = want + 6.2831855f;
+            float diff = want - angle;
+            if (diff > 3.1415927f)
+                diff = -(6.2831855f - diff);
+            if (diff < -3.1415927f)
+                diff = diff + 6.2831855f;
+            float k = dt * 50.0f;
+            if (k > 1.0f)
+                k = 1.0f;
+            moved = true;
+            angle = k * diff + angle;
+        }
+
+probe:
+        // ---- nav-mesh probe at the candidate position -----------------------------------------------------
+        {
+            Vec2 ds = v2_scale(step, &dirx);
+            Vec2 next(ds.x + p.x, ds.y + p.y);
+            *(Vec2*)&dir = next;
+            face* node = g_game->find_at(&dir.x);
+            if (node != 0) {
+                unsigned mask = nav_cell(node->m4).mask();
+                bool ok = ((rgl::world*)g_script.level)->ground->shares(node->m4, mesh->m4);
+                if (flags & 0x200) {
+                    if ((char)terrain_is_road(mask)) {
+                        ok = true;
+                    } else if (mask != 0xf && id == g_game->f78 && ((GDTimer*)g_game)->t.elapsed() > 0.05f) {
+                        rgl::vector4 ev = v2_to3d(dir);
+                        g_script.pos[0].o = ev;
+                        g_game->emit_event(0x14, 0, 0);
+                        ((GDTimer*)g_game)->t.restamp();
+                        kind = 0;
+                        moving = 0;
+                        f5988 = 0;
+                    }
+                }
+                if (ok) {
+                    *(Vec2*)&p = next;
+                    mesh = node;
+                    map_mask = nav_cell(node->m4).mask();
+                    pos.z = node->plane_z(&pos.x);
+                } else {
+                    f597c = 0;
+                    if (f598c == 0)
+                        f5988 = 1;
+                }
             }
         }
-    }
 
-    // ---- movement -----------------------------------------------------------------------------------------
-    model->visible = 1;
-    if (action == 8) {
-        model->visible = 0;
+        }
+
+        // ---- action state machine -------------------------------------------------------------------------
+        {
+            int act = action;
+            int t;
+            PartyMgr* m;
+            if (action == 4 && (t = target) >= 0 && (m = &g_game->parties)->is_live(t) &&
+                !party_flag(m->get(t), 0x100) &&
+                m->get(t)->action != 8 && dt > 0.0f) {
+                vec2 o = *(vec2*)&m->get(t)->pos;
+                float d = plane_dist(o, p);
+                if (d < m->get(t)->radius + radius) {
+                    int me = id;
+                    int him = t;
+                    if (me == g_game->f78 && !party_flag(m->get(t), 0x400) && m->get(t)->f88 < 0 &&
+                        m->get(t)->action == 4 && m->get(t)->target == me) {
+                        him = me;
+                    } else {
+                        t = me;
+                    }
+                    g_game->deploy_party(t, him);
+                    Party* o4 = g_game->parties.get(target);
+                    o4->kind = 0;
+                    o4->moving = 0;
+                    o4->f5988 = 0;
+                    kind = 0;
+                    moving = 0;
+                    f5988 = 0;
+                }
+                goto acted;
+            }
+            if (act == 9) {
+                t = target;
+                vec2 o = *(vec2*)&battle_page(t)->x2;
+                float d = plane_dist(o, p);
+                if (d < *(float*)((char*)(*(std::vector<char*>*)((char*)g_game + 0xe0))[(unsigned)t >> 4] + (t & 0xf) * 0x98 + 0x40) + radius) {
+                    BattleRec* n = ((BattleTable*)((char*)g_game + 0xcc))->get(t);
+                    p.x = n->x1;
+                    p.y = n->y1;
+                    pos.z = ((BattleTable*)((char*)g_game + 0xcc))->get(t)->z;
+                    mesh = ((BattleTable*)((char*)g_game + 0xcc))->get(t)->face1;
+                    flags |= 0x200ui64;
+                    ((BattleTable*)((char*)g_game + 0xcc))->get(t)->detach();
+                    action = 0;
+                    kind = 0;
+                    moving = 0;
+                    f5988 = 0;
+                    update_flags();
+                }
+                goto acted;
+            }
+            if (act == 1) {
+                if ((t = target) >= 0 && (m = &g_game->parties)->is_live(t)) {
+                    vec2 o = *(vec2*)&m->get(t)->pos;
+                    float d = plane_dist(o, p);
+                    if (d < m->get(t)->radius + radius) {
+                        if (id == g_game->f78) {
+                            action = 8;
+                            kind = 0;
+                            moving = 0;
+                            f5988 = 0;
+                        } else {
+                            action = 8;
+                            kind = 0;
+                            moving = 0;
+                            f5988 = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+acted:
+        // ---- party-event trail on large moves -------------------------------------------------------------
+        {
+            rgl::vector4 delta;
+            delta.x = p.x - trail.x;
+            delta.y = p.y - trail.y;
+            delta.z = p.z - trail.z;
+            if (delta.normalize() > trail_len && !(flags & 0x200) && map_mask != 7) {
+                rgl::vector4 mid = v4_add(v4_half(p), v4_half(*(rgl::vector4*)&trail));
+                float ang = (float)atan2(-delta.x, delta.y);
+                g_game->push_party_event(id, (const int*)&mid, &ang);
+                float r1 = frand();
+                float rs = frand() + r1;
+                *(rgl::vector4*)&trail = p;
+                trail_len = rs * 0.7f + 0.5f;
+            }
+        }
+
+        // ---- model refresh --------------------------------------------------------------------------------
+        {
+            Rot3 m;
+            model->basis = *identity3(&m);
+        }
+        model->basis.rotate_about_u(&angle);
+        model->origin = p;
+
+        unsigned color;
+        if (id == g_game->f78) {
+            if (flags & 0x1000000)
+                color = 0x88ffffffu;
+            else
+                color = 0xffffffffu;
+        } else {
+            rgl::vector4 c(1.0f, 1.0f, 1.0f);
+            c.w = alpha;
+            color = rgl::pack_color(&c);
+            model->visible = alpha > 0.01f ? 1 : 0;
+            model->f294 = alpha * 0.5f;
+        }
+        for (unsigned i = 0; i < MODEL_ENTS(model).size(); i++) {
+            if (MODEL_ENTS(model)[i] != 0)
+                MODEL_ENTS(model)[i]->color = color;
+        }
+        if (!model->visible)
+            return;
+        if (e59ec != 0)
+            *(int*)((char*)e59ec + 0x114) = 0;
+        if (e59f0 != 0)
+            *(int*)((char*)e59f0 + 0x114) = 0;
+
+        // ---- the party's first action mesh ----------------------------------------------------------------
+        rgl::mesh* e1 = e59ec;
+        float tm;
+        if (!moved) {
+            if (e1 != 0 && e1->in_use()) {
+                tm = 1.0f;
+                ((mesh_node*)e1)->set_time(&tm);
+            }
+        } else {
+            if (e1 != 0 && e1->in_use()) {
+                tm = (float)fmod((double)(((float)g_ticks[0] * 1e-05f + (float)id) * 2.3f), 1.0) * 40.0f + 100.0f;
+                ((mesh_node*)e1)->set_time(&tm);
+                *(int*)((char*)e59ec + 0x114) = 1;
+                Timer& t = clk908;
+                if (t.elapsed() > 0.5f && dt > 0.0f) {
+                    t.restamp();
+                    int snd = ((IconRow*)g_map_icons)[flags_lo & 0xff].sound;
+                    if (snd != 0)
+                        g_sound_mgr.play(snd, 0, (const float*)&model->origin, 1.0f, 0);
+                }
+            }
+        }
+
+        // ---- the party's second action mesh ---------------------------------------------------------------
+        rgl::mesh* e2 = e59f0;
+        if (e2 == 0 || !mesh_used(e2))
+            return;
+        float sx = *(float*)((char*)g_script.level + 0x31c) - p.x;
+        float sy = *(float*)((char*)g_script.level + 0x320) - p.y;
+        float sz = *(float*)((char*)g_script.level + 0x324) - p.z;
+        float dd = sz * sz + sy * sy + sx * sx;      // 0x4b8ea4: z squared first, then y, then x (float sums are order-sensitive)
+        if (!(dd < 2000.0f))
+            return;
+        tm = (float)fmod((double)((float)id * 0.05f + (float)g_ticks[0] * 1e-05f), 1.0) * 40.0f + 100.0f;
+        ((mesh_node*)e2)->set_time(&tm);
+        *(int*)((char*)e59f0 + 0x114) = 1;
         return;
     }
-    update_hud_text();
-
-    vec2 dir2;
-    dir2.x = dest_x - pos.x;
-    dir2.y = dest_y - pos.y;
-    float dist = dir2.normalize();
-    bool moved = false;
-    float step = speed_factor() * dt;
-
-    bool skip_heading = false;
-    if (moving == 0 && kind == 2) {
-        float lim = dist - radius * 1.2f;
-        if (lim < step) {
-            step = lim;
-            if (lim < 0.0f)
-                step = 0.0f;
-            dist = lim;
-            if (lim < 0.0f)
-                skip_heading = true;
-        }
-    } else {
-        if (dist < step)
-            step = dist;
-    }
-
-    if (!skip_heading && dist > 0.0f) {
-        dirx = dir2.x;
-        diry = dir2.y;
-        vec2 t;
-        t.x = dirx - oldx;
-        t.y = diry - oldy;
-        t.normalize();
-        float want = (float)atan2(-t.x, t.y);
-        if (angle > 6.2831855f)
-            angle = (float)fmod(angle, 6.2831855f);
-        else if (angle < 0.0f)
-            angle = 6.2831855f - (float)fmod(-angle, 6.2831855f);
-        if (want > 6.2831855f)
-            want = want - 6.2831855f;
-        else if (want < 0.0f)
-            want = want + 6.2831855f;
-        float diff = want - angle;
-        if (diff > 3.1415927f)
-            diff = -(6.2831855f - diff);
-        if (diff < -3.1415927f)
-            diff = diff + 6.2831855f;
-        float k = dt * 50.0f;
-        if (k > 1.0f)
-            k = 1.0f;
-        moved = true;
-        angle = k * diff + angle;
-    }
-
-    // ---- nav-mesh probe at the candidate position ---------------------------------------------------------
-    vec2r pq;                                   // find_at reads two consecutive floats
-    pq.x = step * dirx + pos.x;
-    pq.y = step * diry + pos.y;
-    face* node = g_game->find_at(&pq.x);
-    if (node != 0) {
-        unsigned animfield = nav_recs()[node->m4].mask();
-        bool adjacent = ((rgl::world*)g_script.level)->ground->shares(node->m4, mesh->m4) != 0;
-        bool commit = false;
-        if (flags_lo & 0x200) {
-            if ((char)terrain_is_road(animfield)) {
-                commit = true;
-            } else if (animfield != 0xf && id == g_game->f78 && 0.05f < GDP(Timer, 0x13a90).elapsed()) {
-                g_script.pos[0].o.x = pq.x;
-                g_script.pos[0].o.y = pq.y;
-                g_script.pos[0].o.z = 0.0f;
-                g_game->emit_event(0x14, 0, 0);
-                GDP(Timer, 0x13a90).start = g_ticks[GDP(Timer, 0x13a90).clock];
-                kind = 0;
-                moving = 0;
-                f5988 = 0;
-            }
-        }
-        if (!commit) {
-            if (adjacent) {
-                commit = true;
-            } else {
-                f597c = 0;
-                if (f598c == 0)
-                    f5988 = 1;
-            }
-        }
-        if (commit) {
-            pos.x = pq.x;
-            pos.y = pq.y;
-            mesh = node;
-            map_mask = animfield;
-            pos.z = node->plane_z(&pos.x);
-        }
-    }
-
-    // ---- action state machine -----------------------------------------------------------------------------
-    if (action == 4 && target >= 0 && g_game->parties.is_live(target) &&
-        !(g_game->parties.get(target)->flags_lo & 0x100) &&
-        g_game->parties.get(target)->action != 8 && dt > 0.0f) {
-        Party* o = g_game->parties.get(target);
-        float ox = o->pos.x;
-        float oy = o->pos.y;
-        float ax = ox - pos.x;
-        float ay = oy - pos.y;
-        float ad = sqrtf(ax * ax + ay * ay);
-        Party* o2 = g_game->parties.get(target);
-        if (ad < o2->radius + radius) {
-            Party* o3 = g_game->parties.get(target);
-            if (id == g_game->f78 && !(o3->flags_lo & 0x400) && o3->f88 < 0 &&
-                o3->action == 4 && o3->target == id) {
-                g_game->deploy_party(target, id);
-            } else {
-                g_game->deploy_party(id, target);
-            }
-            Party* o4 = g_game->parties.get(target);
-            o4->kind = 0;
-            o4->moving = 0;
-            o4->f5988 = 0;
-            kind = 0;
-            moving = 0;
-            f5988 = 0;
-        }
-    } else if (action == 9) {
-        int cell = target;
-        char* page = *(char**)((char*)g_game + 0xe4 + (cell >> 4) * 4);
-        char* rec = page + (cell & 0xf) * 0x98;
-        float cx = *(float*)(rec + 0x2c);
-        float cy = *(float*)(rec + 0x30);
-        float ax = cx - pos.x;
-        float ay = cy - pos.y;
-        float ad = sqrtf(ax * ax + ay * ay);
-        float cr = *(float*)(rec + 0x40);
-        if (ad < cr + radius) {
-            BattleRec* n = battle_get(cell);
-            pos.x = n->x1;
-            pos.y = n->y1;
-            pos.z = battle_get(cell)->z;
-            mesh = battle_get(cell)->face1;
-            flags_lo |= 0x200;
-            battle_get(cell)->detach();
-            action = 0;
-            kind = 0;
-            moving = 0;
-            f5988 = 0;
-            update_flags();
-        }
-    } else if (action == 1) {
-        if (target >= 0 && g_game->parties.is_live(target)) {
-            Party* o = g_game->parties.get(target);
-            float ox = o->pos.x;
-            float oy = o->pos.y;
-            float ax = ox - pos.x;
-            float ay = oy - pos.y;
-            float ad = sqrtf(ax * ax + ay * ay);
-            Party* o2 = g_game->parties.get(target);
-            if (ad < o2->radius + radius) {
-                action = 8;
-                kind = 0;
-                moving = 0;
-                f5988 = 0;
-            }
-        }
-    }
-
-    // ---- party-event trail on large moves -----------------------------------------------------------------
-    {
-        vector4 delta;
-        delta.x = pos.x - trail.x;
-        delta.y = pos.y - trail.y;
-        delta.z = pos.z - trail.z;
-        float mlen = delta.normalize();
-        if (mlen > trail_len && !(flags_lo & 0x200) && map_mask != 7) {
-            float midx = pos.x * 0.5f + trail.x * 0.5f;
-            float midy = pos.y * 0.5f + trail.y * 0.5f;
-            float midz = pos.z * 0.5f + trail.z * 0.5f;
-            float ang = (float)atan2(-delta.x, delta.y);
-            vector4 mid(midx, midy, midz);
-            g_game->push_party_event(id, (const int*)&mid, &ang);
-            float r1 = frand();
-            float r2 = frand();
-            trail.x = pos.x;
-            trail.y = pos.y;
-            trail.z = pos.z;
-            trail.w = pos.w;
-            trail_len = (r2 + r1) * 0.7f + 0.5f;
-        }
-    }
-
-    // ---- model refresh ------------------------------------------------------------------------------------
-    Rot3 m;
-    identity3(&m);
-    model->basis = m;
-    model->basis.rotate_about_u(&angle);
-    model->origin = *(vector4*)&pos.x;
-
-    unsigned color;
-    if (id == g_game->f78) {
-        color = (flags_lo & 0x1000000) ? 0x88ffffffu : 0xffffffffu;
-    } else {
-        vector4 c(1.0f, 1.0f, 1.0f);
-        c.w = alpha;
-        color = rgl::pack_color(&c);
-        model->visible = (alpha > 0.01f);
-        model->f294 = alpha * 0.5f;
-    }
-    for (int i = 0; i < (int)((rgl::mesh**)model->ents.last - (rgl::mesh**)model->ents.first); i++)
-        if (((rgl::mesh**)model->ents.first)[i] != 0)
-            ((rgl::mesh**)model->ents.first)[i]->color = color;
-    if (!model->visible)
-        return;
-    if (e59ec != 0)
-        *(int*)((char*)e59ec + 0x114) = 0;
-    if (e59f0 != 0)
-        *(int*)((char*)e59f0 + 0x114) = 0;
-
-    // ---- the party's first action mesh -------------------------------------------------------------------
-    rgl::mesh* e1 = e59ec;
-    if (!moved) {
-        if (e1 != 0 && e1->in_use()) {
-            float one = 1.0f;
-            ((mesh_node*)e1)->set_time(&one);
-        }
-    } else {
-        if (e1 != 0 && e1->in_use()) {
-            float ph = (float)fmod(((double)g_ticks[0] * 1e-05f + (double)id) * 2.3f, 1.0) * 40.0f + 100.0f;
-            ((mesh_node*)e1)->set_time(&ph);
-            *(int*)((char*)e59ec + 0x114) = 1;
-            if (clk908.elapsed() > 0.5f && dt > 0.0f) {
-                clk908.start = g_ticks[clk908.clock];
-                int snd = *(int*)((char*)g_map_icons + (flags_lo & 0xff) * 0x48 + 0x28);
-                if (snd != 0)
-                    g_sound_mgr.play(snd, 0, (const float*)&model->origin, 1.0f, 0);
-            }
-        }
-    }
-
-    // ---- the party's second action mesh -------------------------------------------------------------------
-    rgl::mesh* e2 = e59f0;
-    if (e2 == 0)
-        return;
-    int v = e2->in_use();
-    if (!(v > 0))
-        return;
-    float sx = *(float*)((char*)g_script.level + 0x31c) - pos.x;
-    float sy = *(float*)((char*)g_script.level + 0x320) - pos.y;
-    float sz = *(float*)((char*)g_script.level + 0x324) - pos.z;
-    float dd = sz * sz + sy * sy + sx * sx;      // 0x4b8ea4: z squared first, then y, then x (float sums are order-sensitive)
-    if (!(dd < 2000.0f))
-        return;
-    float ph2 = (float)fmod((double)id * 0.05f + (double)g_ticks[0] * 1e-05f, 1.0) * 40.0f + 100.0f;
-    ((mesh_node*)e2)->set_time(&ph2);
-    *(int*)((char*)e59f0 + 0x114) = 1;
+    model->visible = 0;
 }
 
 // ==== END ====

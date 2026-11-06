@@ -187,14 +187,18 @@ void PartyScreen::frame_update(float)
 
 after_scroll:
     if (sel_row >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x2c] &&
-        !g_keyboard.prev[0x2d] && g_cfg.cheat_mode && g_trial_mode) {
-        slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
-        pid = sel_type != 0 ? w10 : g_game->f78;
-        // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
-        Party* p = party_mgr()->get(pid);   // 0x51ee50
-        p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
-        ((PartyScreen*)(void*)this)->refresh_selection();
+        !g_keyboard.prev[0x2d] && g_cfg.cheat_mode) {
+        WL_MARKER(12)
+        if (g_trial_mode) {
+            slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
+            pid = sel_type != 0 ? w10 : g_game->f78;
+            // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
+            Party* p = party_mgr()->get(pid);   // 0x51ee50
+            p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
+            ((PartyScreen*)(void*)this)->refresh_selection();
+        }
     }
+    WL_MARKER(13)
 
     rows = 2;
     if (w04 == 0 || w04 == 5)
@@ -523,21 +527,22 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
     int* table;
     Row local;
     int dummy[8];
-    PartyMgr* m = party_mgr();
-    local = *(Row*)((char*)party_at(m, m->lookup(party_id)) + 0xa8 + slot * 0x20);
+    int off = slot * 0x20;
+    int pid = party_id;
+    local = *(Row*)((char*)party_index(pid) + 0xa8 + off);
 
-    *was_present = *(int*)((char*)party_at(m, m->lookup(party_id)) + 0xa8 + slot * 0x20 + 0xc) > 0;
+    *was_present = *(int*)((char*)party_index(pid) + 0xa8 + off + 0xc) > 0;
     if (*was_present)
-        (*(int*)((char*)party_index(party_id) + 0xa8 + slot * 0x20 + 0xc))--;
-    bool had = *(int*)((char*)party_index(party_id) + 0xa8 + slot * 0x20 + 0x10) > 0;
+        (*(int*)((char*)party_index(pid) + 0xa8 + off + 0xc))--;
+    bool had = *(int*)((char*)party_index(pid) + 0xa8 + off + 0x10) > 0;
     if (had)
-        (*(int*)((char*)party_index(party_id) + 0xa8 + slot * 0x20 + 0x10))--;
+        (*(int*)((char*)party_index(pid) + 0xa8 + off + 0x10))--;
     *removed = 0;
-    (*(int*)((char*)party_index(party_id) + 0xa8 + slot * 0x20))--;
-    if (*(int*)((char*)party_index(party_id) + 0xa8 + slot * 0x20) < 1) {        *removed = 1;
-        table = (party_id == g_game->f78)
+    (*(int*)((char*)party_index(pid) + 0xa8 + off))--;
+    if (*(int*)((char*)party_index(pid) + 0xa8 + off) < 1) {        *removed = 1;
+        table = (pid == g_game->f78)
               ? (int*)((char*)g_game + 0x1405c) : 0;
-        party_index(party_id)->remove_row(dummy, slot, table);
+        party_index(pid)->remove_row(dummy, slot, table);
     }
 
     int found = ((Party*)party_index(dst_id))->find_or_add(local.v[1], local.v[2], 1);
@@ -678,7 +683,7 @@ static __forceinline void set_anim(TickScreen* s, int push_off, int resize_off)
     ((std::vector<int>*)v)->push_back(F(s, 0xa8, int));   // 0x440b30
     ((std::vector<int>*)v)->push_back(F(s, 0xac, int));
     OutIntVec* d = V(s, resize_off);
-    unsigned n = d->_Myfirst ? (unsigned)(d->_Mylast - d->_Myfirst) : 0;
+    unsigned n = d->_Myfirst == 0 ? 0 : (unsigned)(d->_Mylast - d->_Myfirst);
     ((std::vector<int>*)d)->resize(n - 2, 0);   // 0x43f310
 }
 
@@ -986,7 +991,7 @@ void ItemD::frame_update(float)
 {
     if (g_gui.wheel != 0) {
         if (g_gui.mouse[0] < 0.7f
-            && F(W(this, 0x4c), 0xf4, float) < F(W(this, 0x44), 0xf4, float)) {
+            && F(W(this, 0x44), 0xf4, float) > F(W(this, 0x4c), 0xf4, float)) {
             ValueSource* vs = *(ValueSource**)((char*)W(this, 0x4c) + 0x484);
             vs->on_value_changed((float)g_gui.wheel);
             ValueSource* vs2 = *(ValueSource**)((char*)W(this, 0x4c) + 0x484);

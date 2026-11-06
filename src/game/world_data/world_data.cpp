@@ -738,16 +738,15 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
 // ==== 0x491e50: put a party near a point =============================================================================
 // @ 0x491e50
 void GameW::set_pos(float x, float y, int id, float radius) {
+    random_position_around(x, y, radius, &x);
     PartyMgr* m = &pm();
-    random_position_around(Vec2(x, y), radius, (Vec2*)&x);
-    if ((unsigned)id >= parties.n_parties) return;
+    if ((unsigned)id >= m->n_parties) return;
     int i = m->lookup(id);
     if (i < 0) return;
     if (m->atu((unsigned)i)->type != 1) return;
     i = m->lookup(id);
     Party* p = m->at(i);
-    p->pos.x = x;
-    p->pos.y = y;
+    *(Vec2*)&p->pos = *(Vec2*)&x;
     i = m->lookup(id);
     m->at(i)->place_on_map();
 }
@@ -1219,28 +1218,26 @@ void DropDown::reset_tail()
 
 // UTF-8 -> code points (0x487b00). The original uses cl's static register convention, so the arguments are ordered
 // to put the tstring in EDI and the count out-pointer in EDX.
-static __declspec(noinline) void decode_utf8_487b00(int* _Out, const tstring* _s, int* _Buf, const int* _Maxn)
+static __declspec(noinline) void decode_utf8_487b00(const tstring* _s, int* _Out, int* _Buf, const int* _Maxn)
 {
     *_Out = 0;
     int _n = _s->len;
     int _i = 0;
     if (_n > 0) {
         do {
-            if (*_Out >= *_Maxn)
+            int _cnt = *_Out;
+            if (_cnt >= *_Maxn)
                 break;
             unsigned char _c = _s->buf[_i];
             int _ch;
             if (_c >= 0xf0 && _c < 0xf5) {
-                const unsigned char* _q = (const unsigned char*)_s->buf + _i;
-                _ch = (((((_q[0] & 7) << 6) | (_q[1] & 0x3f)) << 6 | (_q[2] & 0x3f)) << 6) | (_q[3] & 0x3f);
+                _ch = ((((((unsigned char)_s->buf[_i] & 7) << 6) | ((unsigned char)_s->buf[_i+1] & 0x3f)) << 6 | ((unsigned char)_s->buf[_i+2] & 0x3f)) << 6) | ((unsigned char)_s->buf[_i+3] & 0x3f);
                 _i += 4;
             } else if (_c >= 0xe0 && _c < 0xf0) {
-                const unsigned char* _q = (const unsigned char*)_s->buf + _i;
-                _ch = ((((_q[0] & 0xf) << 6) | (_q[1] & 0x3f)) << 6) | (_q[2] & 0x3f);
+                _ch = (((((unsigned char)_s->buf[_i] & 0xf) << 6) | ((unsigned char)_s->buf[_i+1] & 0x3f)) << 6) | ((unsigned char)_s->buf[_i+2] & 0x3f);
                 _i += 3;
             } else if (_c >= 0xc2 && _c < 0xe0) {
-                const unsigned char* _q = (const unsigned char*)_s->buf + _i;
-                _ch = ((_q[0] & 0x1f) << 6) | (_q[1] & 0x3f);
+                _ch = ((((unsigned char)_s->buf[_i] & 0x1f) << 6) | ((unsigned char)_s->buf[_i+1] & 0x3f));
                 _i += 2;
             } else {
                 _i++;
@@ -1248,8 +1245,8 @@ static __declspec(noinline) void decode_utf8_487b00(int* _Out, const tstring* _s
                     continue;
                 _ch = (signed char)_c;
             }
-            _Buf[*_Out] = _ch;
-            (*_Out)++;
+            _Buf[_cnt] = _ch;
+            *_Out = _cnt + 1;
         } while (_i < _n);
     }
 }
@@ -1261,7 +1258,7 @@ void DropDown::append(const tstring* _name)
     int _count;
     int _maxn = 0x800;
     int _buf[0x800];
-    decode_utf8_487b00(&_count, _name, _buf, &_maxn);
+    decode_utf8_487b00(_name, &_count, _buf, &_maxn);
     float _w = (float)_count * 0.0077999993f;
     if (_w > 0.21f)
         _scale = 0.21f / _w * 0.02f;
@@ -1404,18 +1401,20 @@ SceneBaseCtor* SceneBaseCtor::construct()
     char* self = (char*)this;
 
     {
-        void* _n0 = ((ListInt*)(self + 0x2c))->_Buynode();
-        *(void**)(self + 0x30) = _n0;
-        *(int*)(self + 0x34) = 0;
-        *(int*)(self + 0x38) = 0x400;
-        *(int*)(self + 0x3c) = 0;
+        char* l0 = self + 0x2c;
+        void* _n0 = ((ListInt*)l0)->_Buynode();
+        *(void**)(l0 + 4) = _n0;
+        *(int*)(l0 + 8) = 0;
+        *(int*)(l0 + 0xc) = 0x400;
+        *(int*)(l0 + 0x10) = 0;
     }
     {
-        void* _n1 = ((ListInt*)(self + 0x40))->_Buynode();
-        *(void**)(self + 0x44) = _n1;
-        *(int*)(self + 0x48) = 0;
-        *(int*)(self + 0x4c) = 0x400;
-        *(int*)(self + 0x50) = 0;
+        char* l1 = self + 0x40;
+        void* _n1 = ((ListInt*)l1)->_Buynode();
+        *(void**)(l1 + 4) = _n1;
+        *(int*)(l1 + 8) = 0;
+        *(int*)(l1 + 0xc) = 0x400;
+        *(int*)(l1 + 0x10) = 0;
     }
 
     *(int*)(self + 0x58) = 0;

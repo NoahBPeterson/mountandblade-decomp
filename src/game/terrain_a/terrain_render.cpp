@@ -414,12 +414,43 @@ static __forceinline void vnorm(vec2& v)
     }
 }
 
+static inline vec2 v2_mul(const vec2& a, const float& s) { vec2 r; r.x = a.x * s; r.y = a.y * s; return r; }
+static __forceinline float v2_normalize(vec2& v)
+{
+    float l = (float)sqrt(v.y * v.y + v.x * v.x);
+    if (l > 0.0f) {
+        l = 1.0f / l;
+        v.x = v.x * l;
+        v.y = v.y * l;
+    } else {
+        v.x = 0.0f;
+        v.y = 1.0f;
+    }
+    return l;
+}
+static inline int rand_n(const int& n) { if (n <= 1) return 0; return rand() % n; }
+static inline int pos0(const int& v) { return v < 0 ? 0 : v; }
+static inline unsigned bit_field(const unsigned& word, const int& lo, const int& width) { const unsigned& m = (unsigned)g_bit[width] - 1; return (word >> lo) & m; }
+static __forceinline void v2_normalized(vec2& u, float x, float y)
+{
+    float l = (float)sqrt(x * x + y * y);
+    if (l > 0.0f) {
+        l = 1.0f / l;
+        u.x = l * x;
+        u.y = l * y;
+    } else {
+        u.x = 0.0f;
+        u.y = 1.0f;
+    }
+}
+
 // @ 0x468fc0
 void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int* steps, float* minz, float w1, float w2, int unused, char record)
 {
     *minz = 10000.0f;
     ivec2 pos = *(const ivec2*)from;
     *steps = 0;
+    float sc[8];
     vec2 g;
     float gx = (float)(to[0] - pos.dx);
     float gy = (float)(to[1] - pos.dy);
@@ -438,7 +469,7 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
         nd[k].y = (float)g_nbr[k].dy;
         vnorm(nd[k]);
     }
-    unsigned bitmask = 1 << bit;
+    unsigned bitmask = 1 << *(const int*)&bit;   // the original reads the whole pushed dword (the parameter is really an int)
     terrain_cell* cur = &at(pos.dx, pos.dy);
     cur->flags |= bitmask;
     if (record) {
@@ -450,61 +481,55 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
     }
     bool blocked = false;
     for (;;) {
-        unsigned fl = flags;
+        float lvl = (float)bit_field(flags, 7, 7);
         float tx = (float)(to[0] - pos.dx);
+        float ty = (float)(to[1] - pos.dy);
         int w = this->w;
         int h = this->h;
-        float ty = (float)(to[1] - pos.dy);
-        float sc[8];
         for (int k = 0; k < 8; k++) {
             int nx = g_nbr[k].dx + pos.dx;
             int ny = g_nbr[k].dy + pos.dy;
             sc[k] = 0.0f;
-            float tl = (float)sqrt(tx * tx + ty * ty);
-            float ux, uy;
-            if (tl > 0.0f) {
-                tl = 1.0f / tl;
-                ux = tl * tx;
-                uy = tl * ty;
-            } else {
-                ux = 0.0f;
-                uy = 1.0f;
-            }
-            int a = ny - h + 20;
-            int b = nx - w + 20;
-            int pen = (a < 0 ? 0 : a) + (20 - ny < 0 ? 0 : 20 - ny) + (b < 0 ? 0 : b) + (20 - nx < 0 ? 0 : 20 - nx);
+            vec2 u;
+            v2_normalized(u, tx, ty);
+            int ex = nx - w + 20;
+            int ey = ny - h + 20;
+            int bx = 20 - nx;
+            int by = 20 - ny;
             float edge = 0.0f;
+            int pen = pos0(bx) + pos0(ex) + pos0(by) + pos0(ey);
             if (pen > 0 &&
-                ((nx < 21 && nd[k].x <= 0.0f) || (ny < 21 && nd[k].y <= 0.0f) ||
-                 (w - 20 <= nx && 0.0f <= nd[k].x) || (h - 20 <= ny && 0.0f <= nd[k].y))) {
+                ((nx <= 20 && nd[k].x <= 0.0f) || (ny <= 20 && nd[k].y <= 0.0f) ||
+                 (nx >= w - 20 && nd[k].x >= 0.0f) || (ny >= h - 20 && nd[k].y >= 0.0f))) {
                 edge = (float)pen;
                 if (edge < 0.0f) edge = 0.0f;
-                else if (24.0f <= edge) edge = 24.0f;
+                else if (edge >= 24.0f) edge = 24.0f;
                 edge = edge * -0.04f;
             }
-            if (nx < 0 || w < nx || ny < 0 || h < ny) {
-                sc[k] = ((g.x * nd[k].x + g.y * nd[k].y) + 1.0f) * 0.5f;
-            } else {
-                terrain_cell* n = &at(nx, ny);
-                if ((bitmask & n->flags) == 0) {
-                    float dz = ((cur->pz - n->pz) * w2) * 3.0f;
-                    if (dz < 0.0f)
-                        dz = (0.25f - (float)((fl >> 7) & (((unsigned*)g_bit)[14] - 1)) * 0.0022f) * dz;
-                    sc[k] = (((((uy * nd[k].y + ux * nd[k].x) + 0.7f) * 0.5f) * 0.65f + dz) +
-                             (((g.y * nd[k].y + g.x * nd[k].x) + 0.7f) * 0.5f) * w1) + edge;
-                } else {
-                    if (n->order < *steps - 30)
+            if (nx >= 0 && nx <= w && ny >= 0 && ny <= h) {
+                int ni = nx * 251 + ny;
+                if ((cells[ni].flags & bitmask) != 0) {
+                    if (cells[ni].order < *steps - 30)
                         blocked = true;
                     sc[k] = -1.0f;
+                } else {
+                    float du = (u.y * nd[k].y + u.x * nd[k].x + 0.7f) * 0.5f;
+                    float dg = (g.y * nd[k].y + g.x * nd[k].x + 0.7f) * 0.5f * w1;
+                    float dz = ((cur->pz - cells[ni].pz) * w2) * 3.0f;
+                    if (dz < 0.0f)
+                        dz = (0.25f - lvl * 0.0022f) * dz;
+                    sc[k] = du * 0.65f + dz + dg + edge;
                 }
+            } else {
+                sc[k] = ((g.y * nd[k].y + g.x * nd[k].x) + 1.0f) * 0.5f;
             }
         }
-#define CUBE(i) if (0.0f < sc[i]) sc[i] = (sc[i] * sc[i]) * sc[i];
+#define CUBE(i) if (sc[i] > 0.0f) sc[i] = (sc[i] * sc[i]) * sc[i];
         CUBE(0) CUBE(1) CUBE(2) CUBE(3) CUBE(4) CUBE(5) CUBE(6) CUBE(7)
 #undef CUBE
         float total = 0.0f;
-#define ADD0(i) if (0.0f < sc[i]) total = sc[i];
-#define ADD(i) if (0.0f < sc[i]) total = sc[i] + total;
+#define ADD0(i) if (sc[i] > 0.0f) total = sc[i];
+#define ADD(i) if (sc[i] > 0.0f) total = total + sc[i];
         ADD0(0) ADD(1) ADD(2) ADD(3) ADD(4) ADD(5) ADD(6) ADD(7)
 #undef ADD
 #undef ADD0
@@ -512,37 +537,38 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
         int pick = -1;
         float roll = ((float)(r % 0x3dc9) * total) * 6.322312e-05f;
         float acc = 0.0f;
-        if (0.0f < sc[0]) {
-            acc = sc[0];
+        if (sc[0] > 0.0f) {
             if (0.0f <= roll && roll < sc[0]) pick = 0;
+            acc = sc[0];
         }
-#define SEL(i) if (0.0f < sc[i]) { if (acc <= roll && roll < sc[i] + acc) pick = i; acc = acc + sc[i]; }
+#define SEL(i) if (sc[i] > 0.0f) { if (acc <= roll && roll < sc[i] + acc) pick = i; acc = acc + sc[i]; }
         SEL(1) SEL(2) SEL(3) SEL(4) SEL(5) SEL(6)
 #undef SEL
-        if (0.0f < sc[7] && acc <= roll && roll < sc[7] + acc)
+        if (sc[7] > 0.0f && acc <= roll && roll < sc[7] + acc)
             pick = 7;
         else if (pick == -1)
             return;
-        pos.dx = g_nbr[pick].dx + pos.dx;
-        if (pos.dx < 3) return;
-        if (this->w - 3 < pos.dx) return;
-        pos.dy = g_nbr[pick].dy + pos.dy;
-        if (pos.dy < 3) return;
-        if (this->h - 3 < pos.dy) return;
+        int px = g_nbr[pick].dx + pos.dx;
+        if (px < 3) return;
+        if (px > this->w - 3) return;
+        int py = g_nbr[pick].dy + pos.dy;
+        if (py < 3) return;
+        if (py > this->h - 3) return;
         if (sc[pick] < 0.0f) return;
-        float mx = g.x * 0.9f + nd[pick].x * 0.1f;
-        float my = g.y * 0.9f + nd[pick].y * 0.1f;
-        g.y = sqrtf(mx * mx + my * my);
-        if (g.y > 0.0f) {
-            g.y = 1.0f / g.y;
-            g.x = mx * g.y;
-            g.y = my * g.y;
-        } else {
-            g.x = 0.0f;
-            g.y = 1.0f;
+        {
+            const vec2& n = nd[pick];
+            pos.dx = px;
+            pos.dy = py;
+            float ax = n.x * 0.1f, ay = n.y * 0.1f;
+            float bx = g.x * 0.9f, by = g.y * 0.9f;
+            vec2 t;
+            t.x = bx + ax;
+            t.y = by + ay;
+            g = t;
         }
+        v2_normalize(g);
         (*steps)++;
-        cur = &at(pos.dx, pos.dy);
+        cur = &at(px, py);
         cur->flags |= bitmask;
         cur->order = *steps;
         if (record) {
@@ -563,11 +589,12 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
 
 static const int kStride = 251;
 
+
 // @ 0x469a70
-void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
+inline void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
 {
-    int order[9];
-    unsigned n;
+    int order[8];
+    int n;
     if (mode == 1) {
         n = 4;
         order[0] = 2; order[1] = 4; order[2] = 5; order[3] = 6;
@@ -577,44 +604,46 @@ void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
     }
     static int seen_dummy;
     int seen[kStride * kStride];
-    for (int y = 0; y <= this->h; y++)
-        for (int x = 0; x <= this->w; x++)
+    int y, x;
+    for (y = 0; y <= this->h; y++)
+        for (x = 0; x <= this->w; x++)
             seen[x * kStride + y] = 0;
-    for (int y = 0; y <= this->h; y++) {
-        for (int x = 0; x <= this->w; x++) {
+    for (y = 0; y <= this->h; y++) {
+        for (x = 0; x <= this->w; x++) {
             terrain_cell& c = at(x, y);
+            const float& cy = at(x, y).py;
             int cnt = 0;
             vec2 dsum, rsum;
             dsum.x = 0.0f; dsum.y = 0.0f; rsum.x = 0.0f; rsum.y = 0.0f;
-            for (unsigned k = 0; k < n; k++) {
+            for (int k = 0; k < n; k++) {
                 int nx = g_nbr[order[k]].dx + x;
                 int ny = g_nbr[order[k]].dy + y;
                 if (nx >= 0 && nx <= this->w && ny >= 0 && ny <= this->h) {
-                    terrain_cell& d = at(nx, ny);
-                    if ((mask & d.flags) != 0) {
+#define D cells[di]
+                    int di = nx * 251 + ny;
+                    if ((mask & D.flags) != 0) {
                         cnt++;
                         float e[2], r[2], q[2];
-                        e[0] = c.px - d.px; e[1] = c.py - d.py;
+                        e[0] = c.px - D.px; e[1] = cy - D.py;
                         e[0] *= 0.3f; e[1] *= 0.3f;
-                        r[0] = e[0] * d.dir.y - e[1] * d.dir.x;
-                        r[1] = e[1] * d.dir.y + e[0] * d.dir.x;
-                        q[0] = r[0] + d.disp.x;
-                        q[1] = r[1] + d.disp.y;
+                        r[0] = e[0] * D.dir.y - e[1] * D.dir.x;
+                        float t1 = e[0] * D.dir.x;
+                        r[1] = t1 + e[1] * D.dir.y;
+                        q[0] = r[0] + D.disp.x;
+                        q[1] = r[1] + D.disp.y;
                         dsum.x = q[0] + dsum.x;
                         dsum.y = q[1] + dsum.y;
-                        rsum.x = rsum.x + d.dir.x;
-                        rsum.y = rsum.y + d.dir.y;
+                        rsum.x = rsum.x + D.dir.x;
+                        rsum.y = rsum.y + D.dir.y;
                     }
+#undef D
                 }
             }
-            if (cnt > 0 || (mark != 0 && cnt != 0)) {
+            if (cnt >= 1 || (mark != 0 && cnt != 0)) {
                 seen[x * kStride + y] = 1;
-                float inv = 1.0f / (float)cnt;
-                vec2 nd1, nd2;
-                nd1.x = dsum.x * inv; nd1.y = dsum.y * inv;
-                c.disp = nd1;
-                nd2.x = rsum.x * inv; nd2.y = rsum.y * inv;
-                c.dir = nd2;
+                const float& inv = 1.0f / (float)cnt;
+                c.disp = v2_mul(dsum, inv);
+                c.dir = v2_mul(rsum, inv);
                 float l = (float)sqrt(c.dir.y * c.dir.y + c.dir.x * c.dir.x);
                 if (l > 0.0f) {
                     l = 1.0f / l;
@@ -628,8 +657,8 @@ void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
         }
     }
     if (mark != 0) {
-        for (int y = 0; y <= this->h; y++)
-            for (int x = 0; x <= this->w; x++)
+        for (y = 0; y <= this->h; y++)
+            for (x = 0; x <= this->w; x++)
                 if (seen[x * kStride + y] != 0)
                     at(x, y).flags |= mark;
     }
@@ -673,9 +702,8 @@ static __forceinline void t_normalize(rgl::vector4& v)
 void Terrain::spawn_particles(particle_list* list, int unused)
 {
     list->count = 0;
-    unsigned lv = (flags >> 0x15) & (((unsigned*)g_bit)[14] - 1);
-    float lv_scale = (float)lv * 0.01f;
-    unsigned sel = (flags14 >> 2) & (((unsigned*)g_bit)[4] - 1);
+    float lv_scale = (float)bit_field(flags, 0x15, 7) * 0.01f;
+    unsigned sel = bit_field(flags14, 2, 2);
     int maxn = (int)(scale * scale * 0.8f);
     float k1 = (float)pow(scale, 1.7f) * 0.3f;
     float k2 = (float)g_options.i34 * 0.02f;
@@ -687,22 +715,21 @@ void Terrain::spawn_particles(particle_list* list, int unused)
             for (int t = 0; t < 2; t++) {
                 q.slot[t] = -1;
                 if (list->nsrc != 0 && (q.tri[t] == 2 || q.tri[t] == 1) && list->count < 0x40000) {
-                    float fx = (float)x;
-                    float fy = (float)y;
                     for (int j = 0; j < list->nsrc; j++) {
-                        scatter_src& s = list->src[j];
-                        int kind = s.kind;
+                        int kind = list->src[j].kind;
                         float p[3];
-                        p[0] = fx + s.v.x;
-                        p[1] = fy + s.v.y;
-                        p[2] = s.v.z;
+                        vec2 cell;
+                        cell.x = (float)x;
+                        cell.y = (float)y;
+                        p[0] = cell.x + list->src[j].v.x;
+                        p[1] = cell.y + list->src[j].v.y;
+                        p[2] = list->src[j].v.z;
                         float nz[3];
-                        noise_fractal(s.freq, 0.6f, 3, 0, p, nz);
+                        noise_fractal(list->src[j].freq, 0.6f, 3, 0, p, nz);
                         float v = (nz[2] + nz[1]) + nz[0];
                         if (!(v < 0.5f)) v = 0.5f;
-                        ptype* pt = &g_ptypes[kind];
-                        float rate = ((v - s.thresh) * s.rate) * k1;
-                        if ((pt->flags & 0x80000) == 0) {
+                        float rate = ((v - list->src[j].thresh) * list->src[j].rate) * k1;
+                        if ((g_ptypes[kind].flags & (__int64)0x80000) == 0) {
                             rate = rate * lv_scale;
                         } else {
                             rate = rate * k2;
@@ -711,8 +738,8 @@ void Terrain::spawn_particles(particle_list* list, int unused)
                         int n = 0;
                         if (RND() < rate) {
                             do {
-                                if (maxn <= n) break;
-                                if (!(RND() < q.f34) && (pt->flags & 0x80000) != 0) break;
+                                if (n >= maxn) break;
+                                if (!(RND() < q.f34) && (g_ptypes[kind].flags & (__int64)0x80000) != 0) break;
                                 rate = rate - 1.0f;
                                 TerrainParticle* e = &list->items[list->count];
                                 e->type = kind;
@@ -721,10 +748,7 @@ void Terrain::spawn_particles(particle_list* list, int unused)
                                 e->nmesh = 0;
                                 e->f0c = t;
                                 n++;
-                                int a = 0;
-                                if (1 < pt->nframes)
-                                    a = rand() % pt->nframes;
-                                e->anim = a;
+                                e->anim = rand_n(g_ptypes[kind].nframes);
                                 mat3 id;
                                 rgl::matrix m;
                                 {
@@ -735,9 +759,9 @@ void Terrain::spawn_particles(particle_list* list, int unused)
                                 int* ca = &cr[0]; int* cb = &cr[2]; int* cc = &cr[4];
                                 triangle_corners(x, y, t, ca, cb, cc);
                                 rand(); rand(); rand();
-                                const rgl::vector4& PA = (const rgl::vector4&)at(ca[0], ca[1]);
-                                const rgl::vector4& PB = (const rgl::vector4&)at(cb[0], cb[1]);
                                 const rgl::vector4& PC = (const rgl::vector4&)at(cc[0], cc[1]);
+                                const rgl::vector4& PB = (const rgl::vector4&)at(cb[0], cb[1]);
+                                const rgl::vector4& PA = (const rgl::vector4&)at(ca[0], ca[1]);
                                 m.o = t_add(t_add((PA * 0.3333f), (PB * 0.3333f)), (PC * 0.3333f));
                                 float r1 = RND();
                                 rgl::vector4 d1 = ((PA - m.o) * r1);
@@ -746,7 +770,7 @@ void Terrain::spawn_particles(particle_list* list, int unused)
                                 float r3 = RND();
                                 rgl::vector4 d3 = ((PC - m.o) * r3);
                                 m.o = t_add(t_add(t_add(d2, d1), d3), m.o);
-                                if ((pt->flags & 0x40000) != 0) {
+                                if ((g_ptypes[kind].flags & (__int64)0x40000) != 0) {
                                     m.u = q.nrm[t];
                                     m.f = t_cross(m.u, m.s);
                                     t_normalize(m.f);
@@ -770,38 +794,37 @@ void Terrain::spawn_particles(particle_list* list, int unused)
 }
 
 
+static inline void add_to(v4* v, const vector4& q) { v->x = v->x + q.x; v->y = v->y + q.y; v->z = v->z + q.z; }
+
 // @ 0x46ad50
 void Terrain::compute_normals()
 {
     int x, y, flip;
-    vector4 tri[3];
     int ab[6];
     vector4 n;
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
             for (flip = 0; flip < 2; flip++) {
                 triangle_corners(x, y, flip, &ab[0], &ab[2], &ab[4]);
-                tri[0] = at(ab[0], ab[1]).P();
-                tri[1] = at(ab[2], ab[3]).P();
-                tri[2] = at(ab[4], ab[5]).P();
+                vector4 tri[3] = { at(ab[0], ab[1]).P(), at(ab[2], ab[3]).P(), at(ab[4], ab[5]).P() };
                 quad(x, y).nrm[flip] = *((vector4* (__cdecl*)(vector4*, const vector4*))tri_normal)(&n, tri);   // 0x4612d0: cdecl, hidden result pointer = &n, returned in eax
             }
         }
     }
     for (y = 0; y <= h; y++) {
-        n.x = 0.0f; n.y = 0.0f; n.z = 0.0f;
-        for (x = 0; x <= w; x++)
+        for (x = 0; x <= w; x++) {
+            n.x = 0.0f; n.y = 0.0f; n.z = 0.0f;
             at(x, y).N() = n;
+        }
     }
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
             for (flip = 0; flip < 2; flip++) {
                 triangle_corners(x, y, flip, &ab[0], &ab[2], &ab[4]);
                 const vector4& q = quad(x, y).nrm[flip];
-                vector4* v;
-                v = &at(ab[0], ab[1]).N(); v->x = q.x + v->x; v->y = q.y + v->y; v->z = q.z + v->z;
-                v = &at(ab[2], ab[3]).N(); v->x = q.x + v->x; v->y = q.y + v->y; v->z = q.z + v->z;
-                v = &at(ab[4], ab[5]).N(); v->x = q.x + v->x; v->y = q.y + v->y; v->z = q.z + v->z;
+                add_to(&at(ab[0], ab[1]).nrm, q);
+                add_to(&at(ab[2], ab[3]).nrm, q);
+                add_to(&at(ab[4], ab[5]).nrm, q);
             }
         }
     }
@@ -1037,108 +1060,81 @@ void Terrain::seed_brushes(float size, float density, float scale)
 
 #define RAND01() ((float)(rand() % 15817) * 6.3223117e-05f)
 
+static inline unsigned river_both() { unsigned b = g_river_mask_b; unsigned a = g_river_mask_a; return a | b; }
+static inline unsigned char f4_flag(const unsigned& v) { const unsigned& m = (unsigned)(g_bit + 1)[0] - 1; return (unsigned char)((v >> 31) & m); }
+
 // @ 0x46bc70
 void Terrain::make_river()
 {
-    int a[2];
-    int b[2];
+    ivec2 a, b;
     int steps;
     float minz;
-    a[1] = 0;
+    a.dy = 0;
+    a.dx = 0;
     bool ok = false;
     if (flag843bd75) {
         int tries = 0;
-        int bx = 0;
         do {
-            if (3 < tries) break;
-            int bestx = 0, besty = 0;
+            if (tries >= 4) break;
+            ivec2 best;
+            best.dx = 0;
+            best.dy = 0;
             float bestv = -10000.0f;
             int k = 20;
             do {
                 int px, py;
                 if (RAND01() < 0.5f) {
-                    px = rand() % 4 + 3;
+                    px = rand_n(4) + 3;
                     if (RAND01() < 0.5f) px = w - px;
-                    int t = h - 3;
-                    if (t < 2) py = 3;
-                    else py = rand() % t + 3;
+                    py = rand_n(h - 3) + 3;
                 } else {
-                    int t = w - 3;
-                    if (t < 2) px = 3;
-                    else px = rand() % t + 3;
-                    py = rand() % 4 + 3;
+                    px = rand_n(w - 3) + 3;
+                    py = rand_n(4) + 3;
                     if (RAND01() < 0.5f) py = h - py;
                 }
-                float v = noise_at(bx, a[1]);
-                if (bestv < v) {
+                float v = noise_at(a.dx, a.dy);
+                if (v > bestv) {
                     bestv = v;
-                    bestx = px;
-                    besty = py;
+                    best.dx = px;
+                    best.dy = py;
                 }
             } while (--k != 0);
-            a[0] = bestx;
-            a[1] = besty;
+            a = best;
             int n = 0;
             bool is_far = false;
             do {
-                if (is_far) goto trace;
-                int ex, ey;
+                if (is_far) break;
                 if (RAND01() < 0.5f) {
-                    ex = 0;
-                    b[0] = 0;
-                    if (RAND01() < 0.5f) {
-                        ex = w + 1;
-                        b[0] = ex;
-                    }
-                    int t = h + 1;
-                    if (t < 2) {
-                        ey = 0;
-                        b[1] = 0;
-                    } else {
-                        ey = rand() % t;
-                        b[1] = ey;
-                    }
+                    b.dx = 0;
+                    if (RAND01() < 0.5f) b.dx = w + 1;
+                    b.dy = rand_n(h + 1);
                 } else {
-                    ey = 0;
-                    b[1] = 0;
-                    if (RAND01() < 0.5f) {
-                        ey = h + 1;
-                        b[1] = ey;
-                    }
-                    int t = w + 1;
-                    if (t < 2) {
-                        ex = 0;
-                        b[0] = 0;
-                    } else {
-                        ex = rand() % t;
-                        b[0] = ex;
-                    }
+                    b.dy = 0;
+                    if (RAND01() < 0.5f) b.dy = h + 1;
+                    b.dx = rand_n(w + 1);
                 }
-                ex = ex - bestx;
+                int ex = b.dx - best.dx;
                 if (ex < 0) ex = -ex;
-                ey = ey - besty;
+                int ey = b.dy - best.dy;
                 if (ey < 0) ey = -ey;
-                if ((float)(w + h) * 0.7f < (float)(ey + ex)) is_far = true;
+                if ((float)(ey + ex) > (float)(w + h) * 0.7f) is_far = true;
                 n++;
             } while (n < 50);
             if (is_far) {
-            trace:
-                trace_path(a, b, 2, &steps, &minz, 1.5f, 0.9f, 0, 1);
+                trace_path(&a.dx, &b.dx, 2, &steps, &minz, 1.5f, 0.9f, 0, 1);
                 if (minz < 3.5f) ok = true;
-                else clear_flags(g_river_mask_a | g_river_mask_b);
+                else clear_flags(river_both());
                 tries++;
             }
-            bx = a[0];
         } while (!ok);
     }
-    int r = rand();
-    n284 = r % 3;
-    if (2.1f < scale && 1 < r % 3) n284 = 1;
-    if (3.1f < scale) n284 = 0;
-    if ((unsigned char)(((int*)g_bit)[2] - 1) & (unsigned char)((unsigned)f4 >> 31)) n284 = 0;
+    n284 = rand() % 3;
+    if (scale > 2.1f && n284 > 1) n284 = 1;
+    if (scale > 3.1f) n284 = 0;
+    if (f4_flag(f4)) n284 = 0;
     if (ok) {
         unsigned mb = g_river_mask_b;
-        unsigned both = g_river_mask_a | mb;
+        unsigned both = river_both();
         spread_flow(mb, 1, both);
         for (int i = 0; i < n284; i++)
             spread_flow(mb, 2, both);
@@ -1146,7 +1142,7 @@ void Terrain::make_river()
         spread_flow(mb, 2, ma);
         spread_flow(ma, 2, ma);
         float v = -1.3f;
-        if ((unsigned char)(((int*)g_bit)[2] - 1) & (unsigned char)((unsigned)f4 >> 31)) v = -2.3f;
+        if (f4_flag(f4)) v = -2.3f;
         set_cells(2, v);
         smooth_cells(2, 0.5f);
     }
@@ -1259,9 +1255,8 @@ void rgl::mesh::fill_indices(unsigned short* out)
 {
     std::vector<rgl::face20>& fs = local_a0 ? v90 : parent->get90();
     for (unsigned i = 0; i < fs.size(); i++) {
-        *out++ = (unsigned short)fs[i].a;
-        *out++ = (unsigned short)fs[i].b;
-        *out++ = (unsigned short)fs[i].c;
+        for (int j = 0; j < 3; j++)
+            *out++ = (unsigned short)(&fs[i].a)[j];
     }
 }
 
@@ -1459,8 +1454,7 @@ void RenderScene::apply_state()
             ls = &lg.w_cstr("Out of " KIND_WORD " index buffer memory. Needed = ");                \
         else                                                                                       \
             ls = &lg.w_tstr(&name).w_cstr(KIND_V_WORD);                              \
-        int needed = total;\
-        ls = &ls->w_int(&needed);                                                                   \
+        ls = &ls->w_int(&total);                                                                    \
         ls = &ls->w_cstr("Available:");                                                            \
         ls = &ls->w_int(pcap);                                                                \
         ls->w_cstr("\n");                                                                          \
@@ -1497,10 +1491,8 @@ int dev_buffer::upload(void* scratch, void* tag)
     it = meshes.begin();
     if (!is_dynamic) {
         int need = 0;
-        int off = type * sizeof(rgl::slot);
         for (; it != meshes.end(); ++it) {
-            rgl::slot& s = *(rgl::slot*)((char*)&(*it)->slots[0] + off);
-            if (generation != s.fc || s.f28 != 0 || s.f14 != s.f4)
+            if ((*it)->slots[type].fc != generation || (*it)->slots[type].f28 != 0 || (*it)->slots[type].f14 != (*it)->slots[type].f4)
                 need += ((rgl::mesh*)*it)->count(type);
         }
         if (need == 0)
@@ -1562,11 +1554,13 @@ int dev_buffer::upload(void* scratch, void* tag)
         }
         generation++;
         base = 0;
-        int total = 0;
-        for (it = meshes.begin(); it != meshes.end(); ++it)
-            total += ((rgl::mesh*)*it)->count(type);
-        if (total > *pcap)
-            LOG_GROW("Static", ":Out of Static vertex buffer memory. Needed = ");
+        {
+            int total = 0;
+            for (it = meshes.begin(); it != meshes.end(); ++it)
+                total += ((rgl::mesh*)*it)->count(type);
+            if (total > *pcap)
+                LOG_GROW("Static", ":Out of Static vertex buffer memory. Needed = ");
+        }
         if (type == 1) {
             if (ib->Lock(0, 0, (void**)&locked, D3DLOCK_DISCARD) < 0)
                 mb_error("unable to lock index buffer");
@@ -1605,12 +1599,14 @@ int dev_buffer::upload(void* scratch, void* tag)
         cursor = base;
         return 0;
     }
-    int total = 0;
-    for (; it != meshes.end(); ++it)
-        total += ((rgl::mesh*)*it)->count(type);
     int* pcap = &count;
-    if (total > count)
-        LOG_GROW("dynamic", ":Out of dynamic vertex buffer memory. Needed = ");
+    {
+        int total = 0;
+        for (; it != meshes.end(); ++it)
+            total += ((rgl::mesh*)*it)->count(type);
+        if (total > count)
+            LOG_GROW("dynamic", ":Out of dynamic vertex buffer memory. Needed = ");
+    }
     if (type == 1) {
         if (ib->Lock(0, 0, (void**)&locked, D3DLOCK_DISCARD) < 0)
             mb_error("unable to lock index buffer");
@@ -1659,6 +1655,16 @@ int dev_buffer::upload(void* scratch, void* tag)
 static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 {
     return vector4(a.z * b.y - b.z * a.y, b.z * a.x - a.z * b.x, a.y * b.x - b.y * a.x);
+}
+
+static inline void set_w(matrix& m) { m.s.w = 0.0f; m.f.w = 0.0f; m.u.w = 0.0f; m.o.w = 1.0f; }
+static inline float len3(const vector4& v) { return (float)sqrt(v.y * v.y + v.z * v.z + v.x * v.x); }
+static inline void enable_light(int i, char on)
+{
+    if (g_render.light_on[i] != on) {
+        g_render.light_on[i] = on;
+        g_render.dev->LightEnable(i, on);
+    }
 }
 
 // @ 0x46d8c0
@@ -1718,14 +1724,15 @@ void render_batch::draw(view_t* v)
     M.u.x *= 0.5f; M.u.y *= 0.5f; M.u.z *= 0.5f;
     matrix A;
     identity_pos((pos*)&A);                      // pos adds no data to rgl::matrix
-    float ang = 1.5707964f;
-    A.rotate_about_s(&ang);
+    {
+        float ang = 1.5707964f;
+        A.rotate_about_s(&ang);
+    }
     M = A * M;
     cur_part = 0;
     cur_mat = 0;
-    M.s.w = 0.0f; M.f.w = 0.0f; M.u.w = 0.0f; M.o.w = 1.0f;
-
     mesh_entry* p = v->ents._Myfirst;
+    set_w(M);
     if (p == v->ents._Mylast) return;
     do {
         skin_x* part = (skin_x*)p->m->res;
@@ -1734,8 +1741,9 @@ void render_batch::draw(view_t* v)
         if (cur_vf_a != b || cur_vf_b != a) {
             cur_vf_a = b;
             cur_vf_b = a;
-            g_render.dev->SetVertexDeclaration(vf[a].bufs[b].decl);
-            g_render.dev->SetStreamSource(0, vf[a].bufs[b].vb, 0, vf[a].bufs[b].elem_size);
+            dev_buffer& d = vf[a].bufs[b];
+            g_render.dev->SetVertexDeclaration(d.decl);
+            g_render.dev->SetStreamSource(0, d.vb, 0, d.elem_size);
         }
         rgl::mesh* node = p->m->local_a0 ? p->m : p->m->parent;
         int ibi = node->slots[1].f4;
@@ -1743,8 +1751,7 @@ void render_batch::draw(view_t* v)
             cur_ib = ibi;
             g_render.dev->SetIndices(ib.bufs[ibi].ib);
         }
-        if (!v->b162) {
-            if (v->f164) goto L_state;
+        if (!v->b162 && !v->f164) {
             if (part != cur_part) {
                 cur_part = part;
                 part->apply_state((const float*)&p->m->f48);
@@ -1771,32 +1778,14 @@ void render_batch::draw(view_t* v)
                     g_render.b506 = 1;
                     g_render.dev->SetRenderState(D3DRS_LIGHTING, 1);
                 }
-                unsigned i = 0;
-                light_t** b;
-                while ((b = v->lights._Myfirst, b != 0) && i < (unsigned)(v->lights._Mylast - b) && (int)i < 0x40) {
-                    light_t** pl = &b[i];
-                    if ((*pl)->type == 2) {
-                        if (g_render.light_on[i] != 1) {
-                            g_render.light_on[i] = 1;
-                            g_render.dev->LightEnable(i, 1);
-                        }
-                        i = i + 1;
+                for (int i = 0; i < v->lights.size() && i < 0x40; i++) {
+                    if (v->lights[i]->type == 2) {
+                        enable_light(i, 1);
                     } else {
-                        light_t* l = *pl;
-                        vector4 d = (l->pos - p->m->m194.o);
-                        if (d.length() - p->m->f44 < (*pl)->range) {
-                            if (g_render.light_on[i] != 1) {
-                                g_render.light_on[i] = 1;
-                                g_render.dev->LightEnable(i, 1);
-                            }
-                            i = i + 1;
-                        } else {
-                            if (g_render.light_on[i]) {
-                                g_render.light_on[i] = 0;
-                                g_render.dev->LightEnable(i, 0);
-                            }
-                            i = i + 1;
-                        }
+                        if (len3(v->lights[i]->pos - p->m->m194.o) - p->m->f44 < v->lights[i]->range)
+                            enable_light(i, 1);
+                        else
+                            enable_light(i, 0);
                     }
                 }
             } else {
@@ -1813,7 +1802,6 @@ void render_batch::draw(view_t* v)
                 g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
         } else {
             if (v->f164) {
-L_state:
                 if (g_render.stage_alpha[0] != 0xa2) {
                     g_render.stage_alpha[0] = 0xa2;
                     g_render.dev->SetTextureStageState(0, D3DTSS_ALPHAOP, 2);
@@ -1909,7 +1897,7 @@ L_state:
             B.s = v->rot.s; B.f = v->rot.f; B.u = v->rot.u;
             A = B;
         }
-        A.s.w = 0.0f; A.f.w = 0.0f; A.u.w = 0.0f; A.o.w = 1.0f;
+        set_w(A);
         g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&A);
 
         std::vector<rgl::face20>& fv = node->local_a0 ? node->v90 : node->parent->get90();

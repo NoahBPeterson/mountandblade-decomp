@@ -55,12 +55,12 @@ void CharSheet::update_skill_rows()
             sprintf(num, "%d", rank);
             {
                 unsigned color;
-                if (rank <= cap) {
+                if (rank > cap) {
+                    color = 0xff009900;
+                } else {
                     color = 0xff990000;
                     if (rank >= cap)
                         color = 0xff000000;
-                } else {
-                    color = 0xff009900;
                 }
                 label[i]->set_color(&color);
             }

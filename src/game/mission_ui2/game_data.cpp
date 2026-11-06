@@ -23,14 +23,15 @@ inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->lookup(id));
 // @ 0x48fd60
 void GameData::fill_parties(int party, Party* dest)
 {
+    int id = party;
     int i;
-    for (i = 0; i < PARTY(party)->nstacks; i++) {
-        dest->add_members(PARTY(party)->stacks[i].troop, PARTY(party)->stacks[i].count,
-                          PARTY(party)->stacks[i].flags, PARTY(party)->stacks[i].wounded, 0);
+    for (i = 0; i < PARTY(id)->nstacks; i++) {
+        dest->add_members(PARTY(id)->stacks[i].troop, PARTY(id)->stacks[i].count,
+                          PARTY(id)->stacks[i].flags, PARTY(id)->stacks[i].wounded, 0);
     }
     unsigned j;
-    for (j = 0; j < PARTY(party)->attached.size(); j++)
-        fill_parties(PARTY(party)->attached._Myfirst[j], dest);
+    for (j = 0; j < PARTY(id)->attached.size(); j++)
+        fill_parties(PARTY(id)->attached[j], dest);
 }
 
 // @ 0x48ff70

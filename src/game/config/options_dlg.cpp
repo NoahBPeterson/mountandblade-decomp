@@ -81,9 +81,14 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
     if (*p == '/' && p[1] == '/')
         p += 2;
     char* start = p;
-    while (isalpha(*p) || isdigit(*p) || *p == '-' || *p == '.' ||
-           *p == ':')
+    char c = *p;
+    while (isalpha(c) || isdigit(c) || c == '-' || c == '.' ||
+           c == ':') {
+        if (*p == 0)
+            break;
         p++;
+        c = *p;
+    }
     *p = '\0';
     lstrcpynA(host, start, host_n);
     lstrcpynA(path, url + (p - s), path_n);
@@ -100,12 +105,12 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
 {
     http_result* out = (http_result*)out_;
     char scheme[20];
-    char host[256];
+    char req[1024];
     char path[1024];
+    char host[256];
+    char buf[512];
     long port;
     parse_url(url, scheme, 20, host, 256, path, 1024, &port);
-    char req[4096];
-    char buf[4096];
     if (memcmp(scheme, "HTTP", 5) != 0)
         return 1;
     WSADATA wsa;
@@ -145,10 +150,9 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     sock_send_str(sock, kUserAgent);
     strcat(req, kUserAgent);
     if (post_len != 0) {
-        char clen[256];
-        wsprintfA(clen, "Content-Length: %ld\r\n", post_len);
-        sock_send_str(sock, clen);
-        strcat(req, clen);
+        wsprintfA(buf, "Content-Length: %ld\r\n", post_len);
+        sock_send_str(sock, buf);
+        strcat(req, buf);
     }
     sock_send_str(sock, "Host: ");
     strcat(req, "Host: ");
@@ -276,7 +280,7 @@ extern const GUID CLSID_DxDiagProvider = { 0xa65b8071, 0x3bfe, 0x4213, { 0x9a, 0
 // 0x4b9a30: reads a DXDiag container property (as a wide string) into a char buffer. The callee itself passes the
 // property name (0x593a94, "szDisplayMemoryEnglish") to GetProp; the original also carries a fourth (unused)
 // stack argument, which the mangled symbol records as int.
-long __stdcall container_prop_string_impl(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap);
+__declspec(noinline) long __stdcall container_prop_string_impl(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap);
 
 
 
@@ -391,9 +395,9 @@ void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
     mem.dwAvailVirtual = 0;
     GlobalMemoryStatus(&mem);
 
+    IDxDiagContainer* root = 0;
     IDxDiagContainer* devices = 0;
     IDxDiagContainer* display = 0;
-    IDxDiagContainer* root = 0;
     IDxDiagProvider* provider = 0;
     DXDIAG_INIT_PARAMS params;
     WCHAR name[0x100];
@@ -446,21 +450,20 @@ void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
                 cfg->texture_detail = 0x50;
                 cfg->shadowmap_quality = 1;
             }
-        } else {
-            s.equals("256.0 MB");
+        } else if (s.equals("256.0 MB")) {
             if (overwrite) {
                 cfg->texture_detail = 0x64;
                 cfg->shadowmap_quality = 1;
             }
         }
     } while (0);
-    if (display) {
-        display->Release();
-        display = 0;
-    }
     if (devices) {
         devices->Release();
         devices = 0;
+    }
+    if (display) {
+        display->Release();
+        display = 0;
     }
     if (root) {
         root->Release();

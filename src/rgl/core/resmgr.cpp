@@ -124,7 +124,7 @@ void rgl::mesh::linearise_vertex_colors()
         int n = (int)v50.size();
         for (int i = 0; i < n; i++) {
             vertex60& v = v50[i];
-            vector4 c = rgl::unpack_color(&v.color);
+            vector4 c = rgl::unpack_color(&v50[i].color);
             c.x = (float)pow(c.x, 2.2f);
             c.y = (float)pow(c.y, 2.2f);
             c.z = (float)pow(c.z, 2.2f);
@@ -1041,6 +1041,7 @@ stream_base* read_mesh(stream_base* s, mesh* m)
     int nbi;
     int nverts;
     int nfaces;
+    int i;
 
     s->r_tstr(&m->name);
     s->r_int((int*)&m->flags);
@@ -1052,7 +1053,7 @@ stream_base* read_mesh(stream_base* s, mesh* m)
     s->r_int(&npts);
     point20 pv;
     m->v70.resize(npts, pv);
-    for (int i = 0; i < npts; i++) {
+    for (i = 0; i < npts; i++) {
         point20* p = &m->v70[i];
         s->r_float(&p->a.x).r_float(&p->a.y).r_float(&p->a.z);
         m->v70[i].b = m->v70[i].a;
@@ -1060,7 +1061,7 @@ stream_base* read_mesh(stream_base* s, mesh* m)
 
     s->r_int(&nbi);
     m->v80.resize(nbi);
-    for (int i = 0; i < nbi; i++)
+    for (i = 0; i < nbi; i++)
         read_bone_influence(s, &vat(m->v80, i));
     g_mesh_npts = npts;
     read_keyframes(s, &m->kf);
@@ -1068,25 +1069,27 @@ stream_base* read_mesh(stream_base* s, mesh* m)
     s->r_int(&nverts);
     vertex60 vv;
     m->v50.resize(nverts, vv);
-    for (int i = 0; i < nverts; i++) {
-        s->r_int(&m->v50[i].index);
-        s->r_uint(&m->v50[i].color);
-        m->v50[i].f5c = 0;
-        vertex60* v = &m->v50[i];
+    for (i = 0; i < nverts; i++) {
+        s->r_int(&vat(m->v50, i).index);
+        s->r_uint(&vat(m->v50, i).color);
+        vat(m->v50, i).f5c = 0;
+        vertex60* v = &vat(m->v50, i);
         s->r_float(&v->pos.x).r_float(&v->pos.y).r_float(&v->pos.z);
-        m->v50[i].normal = m->v50[i].pos;
-        m->v50[i].f58 = m->v50[i].color;
+        vat(m->v50, i).normal = vat(m->v50, i).pos;
+        vat(m->v50, i).f58 = vat(m->v50, i).color;
         for (int j = 0; j < 2; j++) {
-            float* f = &m->v50[i].uv.x + j * 2;
+            float* f = &vat(m->v50, i).uv.x + j * 2;
             s->r_float(f).r_float(f + 1);
         }
     }
 
     s->r_int(&nfaces);
     face20 fv;
-    m->v90.resize(nfaces, fv);
-    for (int i = 0; i < nfaces; i++) {
-        int* q = &vat(m->v90, i).a;
+    std::vector<face20>& vf = m->v90;
+    vf.resize(nfaces, fv);
+    for (i = 0; i < nfaces; i++) {
+        face20* f = m->v90._Myfirst + i;
+        int* q = &f->a;
         for (int j = 0; j < 3; j++)
             s->r_int(q++);
     }
@@ -1094,7 +1097,7 @@ stream_base* read_mesh(stream_base* s, mesh* m)
     ((rgl::mesh*)m)->compute_tangents();
 
     m->f228 = 0;
-    for (int i = 0; i < nbi; i++) {
+    for (i = 0; i < nbi; i++) {
         if (vat(m->v80, i).bone + 1 > m->f228)
             m->f228 = vat(m->v80, i).bone + 1;
     }

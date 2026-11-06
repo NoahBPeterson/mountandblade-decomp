@@ -76,8 +76,9 @@ void world::step(float dt)
         ents.push_back(*it);
     }
     ents2.resize(0, 0);
+    float d = dt;
     for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it)
-        (*it)->update(dt);
+        (*it)->update(d);
     for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {
         if ((*it)->awake()) {
             release_links(*it);
@@ -85,7 +86,7 @@ void world::step(float dt)
         }
     }
     for (psys** it = emitters._Myfirst; it < emitters._Mylast; ++it)
-        ((emitter*)*it)->update(&dt, (*it)->mf4);
+        ((emitter*)*it)->update(&d, (*it)->mf4);
     partition_items();
     for (int* it = removed._Myfirst; it < removed._Mylast; ++it)
         remove_entity(*it);

@@ -170,8 +170,9 @@ struct TrackEntry {
 
 // 0x4f65f0 (game/editor_ui.cpp) is cdecl and its definition has no trailing parameter; the original pushes the value's address once more
 struct NameVecRec; struct RecAlloc;
+struct Tag { };
 void __cdecl uninit_fill(NameVecRec* dst, unsigned n, const NameVecRec& val, RecAlloc* al);   // 0x4f65f0
-typedef void (__cdecl *uninit_fill_t)(NameVecRec*, unsigned, const NameVecRec&, RecAlloc*, const void*);
+typedef void (__cdecl *uninit_fill_t)(NameVecRec*, unsigned, const NameVecRec&, RecAlloc*, Tag);
 struct named_vec;
 struct vec_named {
     void _Insert_n(named_vec* where, unsigned n, const named_vec& val);   // 0x50d260 (inventory_panel/widget_text.cpp): Entries is the same 0x20-byte-element vector
@@ -191,8 +192,10 @@ struct Entries {
 void Entries::add(const TrackEntry& val)
 {
     if (size() < capacity()) {
-        ((uninit_fill_t)uninit_fill)((NameVecRec*)last, 1, *(const NameVecRec*)&val, (RecAlloc*)this, &val);
-        last++;
+        TrackEntry* p = last;
+        Tag tag;
+        ((uninit_fill_t)uninit_fill)((NameVecRec*)p, 1, (const NameVecRec&)val, (RecAlloc*)this, tag);
+        last = p + 1;
     } else {
         ((vec_named*)this)->_Insert_n((named_vec*)last, 1, (const named_vec&)val);
     }

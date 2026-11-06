@@ -298,10 +298,11 @@ float Agent::attack_speed()
     float f = 1.0f;
     float base = 10.0f;
     ItemRef cur = cur_pair();
-    if (cur.item >= 0) {
-        ItemKind* ik = &g_items[cur.item];
-        base = (float)ik->f1f4;
-        unsigned type = ik->type_flags & 0xff;
+    if (cur.item < 0)
+        goto done;
+    {
+        base = (float)g_items[cur.item].f1f4;
+        unsigned type = g_items[cur.item].type_flags & 0xff;
         if (type == 8) {
             int lvl = g_game->skill_level(troop, 0x21);
             int v = cur.stat_1ec() + 4;
@@ -319,6 +320,7 @@ float Agent::attack_speed()
             if (g_mission->fog_dense == 1) f = 0.75f;
         }
     }
+done:
     return (float)sqrt(f) * base * 1.2f;
 }
 
@@ -576,7 +578,8 @@ float __cdecl hit_chance(int* who, Agent* a)
     int s2 = item_rank(idx);
     float p = (float)(s2 * s1) * 0.0001f;
     if (!(p < g_one)) p = g_one;
-    return p * v;
+    float r = p * v;
+    return r;
 }
 
 // ---- mesh instance helpers --------------------------------------------------------------------------------------------------------
@@ -679,17 +682,17 @@ shape_base* body_part::copy_shape()
 bool PolyMesh::inside(const int* face, const float* p)
 {
     MPoly* f = &faces[*face];
-    int n = f->n;
     bool in = true;
     int i = 0;
     const int* vi = f->vert_p();
     do {
-        if (i >= n) return in;
+        if (i >= f->n) return in;
         const MVert* a = &verts[*vi];
         i++;
-        const MVert* b = &verts[f->vert_p()[i % n]];
-        float e = b->pos.x - a->pos.x, f_ = b->pos.y - a->pos.y, g = p[0] - a->pos.x, h = p[1] - a->pos.y;
-        if (h * e - g * f_ < 0.0f)
+        const MVert* b = &verts[f->vert_p()[i % f->n]];
+        V2 d(b->pos.x - a->pos.x, b->pos.y - a->pos.y);
+        V2 q(p[0] - a->pos.x, p[1] - a->pos.y);
+        if (d.x * q.y - d.y * q.x < 0.0f)
             in = false;
         vi++;
     } while (in);
@@ -723,7 +726,7 @@ float PolyMesh::dist(const int* face, const float* p)
                 uy = 1.0f;
             }
             float nx = uy, ny = -ux;
-            float d = (p[0] - a->pos.x) * nx + (p[1] - a->pos.y) * ny;
+            float d = (p[1] - a->pos.y) * ny + (p[0] - a->pos.x) * nx;
             if (!(d < 0.0f)) {
                 in = false;
                 if (out < d) out = d;
@@ -1222,21 +1225,26 @@ void Agent::hand_pos(vector4* out)
     }
     if (f2c != -1) k *= 1.6f;
     *out = r->pos;
-    float nx = (r->dir.x * f5344) * k + out->x;
+    float px = r->dir.x * f5344;
+    float py = r->dir.y * f5344;
+    float nx = px * k + out->x;
+    float ny = py * k + out->y;
     out->x = nx;
-    float ny = (r->dir.y * f5344) * k + out->y;
     out->y = ny;
     if (left) {
         out->x = nx - k * r->dir.x;
         out->y = ny - k * r->dir.y;
     }
-    float t8 = (dy * f5340) * k;
+    float pdy = dy * f5340;
+    float pndx = ndx * f5340;
+    float t8 = pdy * k;
     float x2 = t8 + out->x;
     out->x = x2;
-    float y2 = (ndx * f5340) * k + out->y;
+    float y2 = pndx * k + out->y;
     out->y = y2;
-    float t4 = (k * 0.1f) * f534c;
-    out->x = x2 + (k * 0.1f) * f5348;
+    float kk = k * 0.1f;
+    float t4 = kk * f534c;
+    out->x = x2 + kk * f5348;
     out->y = y2 + t4;
     float height = x2;
     face* hit;

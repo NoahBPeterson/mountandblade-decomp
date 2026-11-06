@@ -84,7 +84,16 @@ float g_spawn_radius = 3.0f;                                // 0x5a9c18 (set_spa
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_cur_param;                                 // 0x5e2590 (.bss)
 int g_lineno;                                    // 0x5e2598 (.bss) line of the statement being run
-int g_script_error;                              // 0x5e259c (.bss) set by report(); copied to *error at the end of execute
+// 0x5e259c (.bss) set by report(); copied to *error at the end of execute. Every reference in the original is inside this
+// translation unit's address range (0x49cc60..0x4b10d7): it is a file static there, which is what lets cl sink the store below
+// the `id` loads in execute() (a static whose address is never taken cannot alias *this) and so sets execute's whole scratch
+// register rotation. SI_ERR_STATIC selects that form; it needs the users in party2/camera.cpp in this object first (see NOTES.md).
+#ifdef SI_ERR_STATIC
+static int si_script_error;
+#define g_script_error si_script_error
+#else
+int g_script_error;
+#endif
 int g_cur_opcode;                                // 0x5e25a0 (.bss) opcode word of the statement being run
 int g_or_latch;                                  // 0x5e25a4 (.bss) this_or_next chain already satisfied
 #include "../ui_globals.h"      // UI / core globals
@@ -123,6 +132,7 @@ __declspec(noinline) __int64 __cdecl round_i64(const float* p)
 }
 __declspec(noinline) rgl::vector4& rgl::vector4::set(const float& x_, const float& y_, const float& z_) { x = x_; y = y_; z = z_; return *this; }
 __declspec(noinline) rgl::vector4 rgl::vector4::operator*(const float& s) const { return rgl::vector4(x * s, y * s, z * s); }
+inline __declspec(noinline) rgl::vector4 rgl::operator*(const float& s, const rgl::vector4& v) { return rgl::vector4(s * v.x, s * v.y, s * v.z); }
 
 __declspec(noinline) int __cdecl imax_ref(const int* a, const int* b) { return *a > *b ? *a : *b; }
 __declspec(noinline) float __cdecl fmin_ref(const float* a, const float* b) { return *a < *b ? *a : *b; }
@@ -205,8 +215,8 @@ static __declspec(noinline) char check_presentation(const int& value)
 static __declspec(noinline) char check_string_arg(const int& type, const int& value)
 {
     char buf[512];
-    int t = type;
     char r = 1;
+    int t = type;
     if (t == 3) {
         int v = value;
         if (v < 0 || v >= g_strings.count) {
@@ -214,14 +224,16 @@ static __declspec(noinline) char check_string_arg(const int& type, const int& va
             report(buf);
             r = 0;
         }
-    } else if (t == 0x16) {
+    }
+    if (t == 0x16) {
         int v = value;
         if (v < 0 || v >= g_strings.quick_count) {
             sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Quick String ID: %d", g_cur_opcode, v);
             report(buf);
             r = 0;
         }
-    } else if (t == 0) {
+    }
+    if (t == 0) {
         int v = value;
         if (v < 0 || v >= 0x80) {
             sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid String Register ID: %d", g_cur_opcode, v);
@@ -491,6 +503,274 @@ static __declspec(noinline) char check_animation(const int& value)
     return r;
 }
 
+__declspec(noinline) int Party::first_flagged()
+{
+    int r = 0;
+    int i = 0;
+    if (0 < nstacks) {
+        Stack* p = stacks;
+        do {
+            if ((p->flags & 1) != 0)
+                return r;
+            r++;
+            i++;
+            p++;
+        } while (i < nstacks);
+    }
+    return r;
+}
+__declspec(noinline) int Party::count_tail()
+{
+    int n = nstacks;
+    int lead = 0;
+    int i = 0;
+    if (n > 0) {
+        char* q = (char*)stacks + 8;
+        do {
+            if (*q & 1)
+                break;
+            lead++;
+            i++;
+            q += 0x20;
+        } while (i < n);
+    }
+    return n - lead;
+}
+__declspec(noinline) int Party::sum_head()
+{
+    int s = 0;
+    int i = 0;
+    int n = nstacks;
+    if (n > 0) {
+        Stack* p = stacks;
+        do {
+            if (p->flags & 1)
+                return s;
+            s += p->count;
+            i++;
+            p++;
+        } while (i < n);
+    }
+    return s;
+}
+__declspec(noinline) int Party::sum_flagged()
+{
+    int s = 0;
+    int n = nstacks;
+    if (n > 0) {
+        Stack* p = stacks;
+        do {
+            if (p->flags & 1)
+                s += p->count;
+            p++;
+        } while (--n);
+    }
+    return s;
+}
+__declspec(noinline) int Party::sum_all()
+{
+    int s = 0;
+    int n = nstacks;
+    if (n > 0) {
+        Stack* p = stacks;
+        do {
+            s += p->count;
+            p++;
+        } while (--n);
+    }
+    return s;
+}
+__declspec(noinline) int PartyMgr::is_live(int id)
+{
+    if ((unsigned)id < n_parties) {
+        int i = this->lookup(id);
+        if (i >= 0)
+            return pages[(unsigned)i >> 4][i & 0xf].type == 1;
+    }
+    return false;
+}
+__declspec(noinline) TabCurrent* TableauTbl::current()
+{
+    return (TabCurrent*)worlds[worlds.size() - 1];
+}
+__declspec(noinline) void PartyMgr::next_party_id(int* id)
+{
+    unsigned i = lookup(*id) + 1;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        *id = deflt;
+    else
+        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+}
+__declspec(noinline) void AgentTable::next_used(unsigned* i)
+{
+    ++*i;
+    while ((int)*i < count) {
+        unsigned v = *i;
+        if (pages[v >> 4][v & 0xf].used != 0) break;
+        ++*i;
+    }
+}
+__declspec(noinline) Agent* AgentTable::get(unsigned id)
+{
+    return &pages[id >> 4][id & 0xf];
+}
+__declspec(noinline) int min_int(const int& a, const int& b) { return a < b ? a : b; }
+// more callees whose bodies the object sees: their by-pointer arguments share the low frame slots
+struct TabCurrent { char pad0[0x36c]; rgl::frustum fr; int background; float ambient[4]; };   // as mission_ui2/mission_4.h
+static __forceinline vector4 vis_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
+static __forceinline vector4 vis_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 vis_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+__declspec(noinline) void rgl::matrix::rotate_about_s(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 nf, nu;
+    nf = vis_add(vis_mul(f, cos((double)*angle)), vis_mul(u, sn));
+    nu = vis_sub(vis_mul(u, cos((double)*angle)), vis_mul(f, sn));
+    u = nu;
+    f = nf;
+}
+__declspec(noinline) void rgl::matrix::rotate_about_f(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 ns, nu;
+    ns = vis_sub(vis_mul(s, cos((double)*angle)), vis_mul(u, sn));
+    nu = vis_add(vis_mul(u, cos((double)*angle)), vis_mul(s, sn));
+    s = ns;
+    u = nu;
+}
+__declspec(noinline) void rgl::matrix::rotate_about_u(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 ns, nf;
+    ns = vis_add(vis_mul(s, cos((double)*angle)), vis_mul(f, sn));
+    nf = vis_sub(vis_mul(f, cos((double)*angle)), vis_mul(s, sn));
+    s = ns;
+    f = nf;
+}
+__declspec(noinline) void Sel::set_vec(const int* a, const int* b, const int* c)
+{
+    struct B { int d[4]; };
+    struct R { char p0[0x18]; B a; B c; int b; char p3c[0x4c - 0x3c]; int present; char p50[0x6c - 0x50]; };
+    R* rec = (R*)this;
+    if (rec[0].present) { rec[0].a = *(const B*)a; rec[0].b = *b; rec[0].c = *(const B*)c; }
+    if (rec[1].present) { rec[1].a = *(const B*)a; rec[1].b = *b; rec[1].c = *(const B*)c; }
+    if (rec[2].present) { rec[2].a = *(const B*)a; rec[2].b = *b; rec[2].c = *(const B*)c; }
+}
+__declspec(noinline) void rgl::world::set_fog(const float* ref, const float* rate, const int* color)
+{
+    view.fog_dirty = 1;
+    view.fog_ref = *ref;
+    view.fog_rate = *rate;
+    view.fog_color = *color;
+    float f = (1.0f / view.fog_rate) * 3.0f;
+    if (f < 0.001f) {
+        view.fog_blend = 0.001f;
+        return;
+    }
+    if (f >= 0.95f) {
+        view.fog_blend = 0.95f;
+        return;
+    }
+    view.fog_blend = f;
+}
+__declspec(noinline) rgl::psys* EmitTable::spawn(int* idx, const vector4* pos, const int* owner)
+{
+    if (*idx < 0 || *idx >= count)
+        return 0;
+    rgl::psys* e = new rgl::psys(*owner);
+    setup(e, *idx, pos);
+    return e;
+}
+__declspec(noinline) void TableauTbl::set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_)
+{
+    float fz = *far_;
+    float nz = *near_;
+    float fh = *h;
+    float fh2 = *h;
+    float fw = *w;
+    float fw2 = *w;
+    TabCurrent* c = (TabCurrent*)worlds[worlds.size() - 1];
+    c->fr.perspective = *perspective;
+    c->fr.left = fw * -0.5f;
+    c->fr.right = fw2 * 0.5f;
+    c->fr.top = fh * 0.5f;
+    c->fr.bottom = fh2 * -0.5f;
+    c->fr.nearz = nz;
+    c->fr.farz = fz;
+    c->fr.build_planes();
+}
+// PartyMgr::get and the id lookup: visible here too, as header inlines in the original. cl then knows the calls keep the
+// operands in registers (esi = params[0] low, ebx = params[1] low across PartyMgr::get, 0x49fb9f..).
+inline int Map10007::lookup(unsigned id)
+{
+    if (id < 0x2717)
+        return tab[id].value;
+    int h = id % 0x2717;
+    int n = 0;
+    if (tab[h].key != id) {
+        do {
+            if (n >= 1000)
+                return -1;
+            h = (h + 0x4f) % 0x2717;
+            n++;
+        } while (tab[h].key != id);
+    }
+    if (n < 1000)
+        return tab[h].value;
+    return -1;
+}
+__declspec(noinline) Party* PartyMgr::get(int id)
+{
+    int k = this->lookup(id);
+    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages._Myfirst[k >> 4]);
+}
+// get_operand is visible too: cl knows it only reads *i, so i stays in a register across the call (0x49fac5)
+__declspec(noinline) __int64 Elem::get_operand(__int64* locals, int* i, int* type)
+{
+    char buf[512];
+    int idx = *i;
+    int p = ((int*)vals)[idx * 2];
+    int k = ((int*)vals)[idx * 2 + 1];
+    if (k < 0 || (k == 0 && (unsigned)p < 0x80000000u)) {
+        *type = 0;
+        return ((__int64)(unsigned)k << 32) | (unsigned)p;
+    }
+    int kind = ((unsigned)k >> 24) & 0x7f;
+    *type = kind;
+    int r = k & 0xffffff;
+    if (kind == 0)
+        return ((__int64)(unsigned)k << 32) | (unsigned)p;
+    if (kind == 1) {
+        if (p >= 0 && p < 0x80) {
+            unsigned lo = g_script.reg_half[p].lo;
+            int hi = g_script.reg_half[p].hi;
+            return (__int64)lo | ((__int64)hi << 32);
+        }
+        sprintf(buf, "Invalid register no in operation = %d, param0 = %d param1 = %d", id, ((int*)vals)[0], ((int*)vals)[2]);
+        report(buf);
+        return 0;
+    }
+    if (kind == 2) {
+        if (r == 0 && (unsigned)p < 0x10000u) {
+            int v = g_script.get_var(p);
+            return (__int64)v;
+        }
+        sprintf(buf, "Invalid variable no in operation = %d, param0 = %d param1 = %d", id, ((int*)vals)[0], ((int*)vals)[2]);
+        report(buf);
+        return 0;
+    }
+    if (kind == 0x11) {
+        if (r == 0 && (unsigned)p < 0x80u)
+            return locals[p];
+        sprintf(buf, "Invalid local variable no in operation = %d, param0 = %d param1 = %d", id, ((int*)vals)[0], ((int*)vals)[2]);
+        report(buf);
+        return 0;
+    }
+    return ((__int64)(unsigned)r << 32) | (unsigned)p;
+}
+
 // ==== the interpreter ===========================================================================================
 
 // 64-bit operand range test as the original spells it: lo <= v < hi on the full 64-bit value
@@ -498,6 +778,15 @@ static __declspec(noinline) char check_animation(const int& value)
 // team t's class selector (Sel 0x489890 / 0x4898e0): the original addresses it at the team record - 4
 // (mission +0x527c + t*0x16c), so that its rec[k] fields land on cls[k] (present +0x4c = cls.use, the vector +0x18 = cls.pos)
 #define TEAM_SEL(m, t) ((Sel*)((char*)&(m)->teams[t] - 4))
+// identity3 (0x40cd60) seen through its hidden return pointer, as IDENTITY_VALUE does for identity_pos (the copy reads the returned pointer)
+struct mat3_value : rgl::mat3 {};
+typedef mat3_value (__cdecl* identity3_value_fn)();
+#define IDENTITY3_VALUE() (((identity3_value_fn)(rgl::mat3* (__cdecl*)(rgl::mat3*))rgl::identity3)())
+// d = s with s evaluated first (the original calls the identity function, then computes the destination register)
+static __forceinline const rgl::matrix& mat_ref(const rgl::matrix& m) { return m; }
+static __forceinline const rgl::mat3& mat3_ref(const rgl::mat3& m) { return m; }
+#define ASSIGN_MAT(d, s) do { const rgl::matrix* m_; (m_ = &mat_ref(s), (d) = *m_); } while (0)
+#define ASSIGN_MAT3(d, s) do { const rgl::mat3* m_; (m_ = &mat3_ref(s), (d) = *m_); } while (0)
 #define SLOT_OK(v) IN_RANGE(v, 0, 0x100000)
 // store a value into the lvalue operand through one named temporary (the original's single 64-bit slot at
 // esp+0x18: a by-value temporary per call site would get a frame slot of its own)
@@ -516,12 +805,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
 {
     char buf[0x200];
     __int64 lv_;
+    g_script_error = 0;
     g_cur_opcode = id;
     unsigned op_word = id;
+    char result = 1;
     unsigned neg = op_word & op::neg;
     unsigned or_next = op_word & op::this_or_next;
-    g_script_error = 0;
-    char result = 1;
     if (g_or_latch) {
         if (!or_next)
             g_or_latch = 0;
@@ -537,25 +826,32 @@ char Operation::execute(__int64* locals, int* context, int* error)
     for (i = 0; i < n; i++)
         params[i] = get_operand(locals, &i, &types[i]);
 
-    int si_0, si_1;
-    unsigned su_0;
-    float sf_0, sf_1, sf_2, sf_3;
-    rgl::vector4 sv_0;
-    vector4 sv4_0;
     switch (opcode) {
 
     // ---- conditions: comparisons --------------------------------------------------------------------------
     case op::ge:
-        result = params[0] >= params[1];
+        if (params[0] >= params[1])
+            result = 1;
+        else
+            result = 0;
         break;
     case op::eq:
-        result = params[0] == params[1];
+        if (params[0] == params[1])
+            result = 1;
+        else
+            result = 0;
         break;
     case op::gt:
-        result = params[0] > params[1];
+        if (params[0] > params[1])
+            result = 1;
+        else
+            result = 0;
         break;
     case op::is_between:
-        result = params[0] >= params[1] && params[0] < params[2];
+        if (params[1] <= params[0] && params[0] < params[2])
+            result = 1;
+        else
+            result = 0;
         break;
 
     case op::entering_town: {
@@ -611,12 +907,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
             result = g_game_keys.clicked((int)params[0]);
         break;
     case op::mouse_get_position:
+    { float sf_0; vector4 sv4_0;
         if (check_register((int)params[0])) {
             sf_0 = 0;
             sv4_0;
             script_pos((int)params[0]).o = sv4_0.set(g_gui.mouse[0], g_gui.mouse[1], sf_0);
         }
         break;
+    }
     case op::get_global_cloud_amount:
         SET_LV((__int64)(int)(game()->cloud_amount * 100.0));
         break;
@@ -638,13 +936,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             if (params[0] == 0) {
                 int main = game()->main_party;
-                // named in the original's call order (cl evaluates the right operand first)
-                int stacks = party(main)->max_stacks(), members;
-                if (stacks - party(main)->first_flagged() < 1 ||
-                    ((members = party(game()->main_party)->sum_head()), members >= party(main)->max_members()))
-                    result = 0;
-                else
+                PartyMgr* m = &game()->parties;
+                int stacks = party(main)->max_stacks();
+                int members;
+                if (stacks - ((PartyV*)m->get(main))->first_flagged() >= 1 && ((members = party(game()->main_party)->sum_head()), ((PartyV*)m->get(main))->max_members() > members))
                     result = 1;
+                else
+                    result = 0;
             } else {
                 int stacks = party((int)params[0])->max_stacks();
                 result = stacks > party((int)params[0])->first_flagged();
@@ -655,13 +953,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             if (params[0] == 0) {
                 int main = game()->main_party;
-                // named in the original's call order (cl evaluates the right operand first)
-                int stacks = party(main)->max_stacks(), prisoners;
-                if (stacks - party(main)->count_tail() < 1 ||
-                    ((prisoners = party(game()->main_party)->sum_flagged()), prisoners >= party(main)->max_prisoners()))
-                    result = 0;
-                else
+                PartyMgr* m = &game()->parties;
+                int stacks = party(main)->max_stacks();
+                int members;
+                if (stacks - ((PartyV*)m->get(main))->count_tail() >= 1 && ((members = party(game()->main_party)->sum_flagged()), ((PartyV*)m->get(main))->max_prisoners() > members))
                     result = 1;
+                else
+                    result = 0;
             } else {
                 int stacks = party((int)params[0])->max_stacks();
                 result = stacks > party((int)params[0])->count_tail();
@@ -683,39 +981,39 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troops_can_join:
         if (params[0] > 0) {
             int main = game()->main_party;
-            // named in the original's call order (cl evaluates the right operand first)
+            PartyMgr* m = &game()->parties;
             int stacks = party(main)->max_stacks();
-            int members;
-            if (stacks - party(main)->first_flagged() < 1 ||
-                ((members = party(main)->sum_head()), (__int64)members + params[0] > (__int64)party(main)->max_members()))
-                result = 0;
-            else
+            __int64 total;
+            if (stacks - ((PartyV*)m->get(main))->first_flagged() >= 1 &&
+                ((total = (__int64)((PartyV*)m->get(main))->sum_head() + params[0]), (__int64)((PartyV*)m->get(main))->max_members() >= total))
                 result = 1;
+            else
+                result = 0;
         }
         break;
     case op::troops_can_join_as_prisoner:
         if (params[0] > 0) {
             int main = game()->main_party;
-            // named in the original's call order (cl evaluates the right operand first)
+            PartyMgr* m = &game()->parties;
             int stacks = party(main)->max_stacks();
-            int prisoners;
-            if (stacks - party(main)->count_tail() < 1 ||
-                ((prisoners = party(main)->sum_flagged()), (__int64)prisoners + params[0] > (__int64)party(main)->max_prisoners()))
-                result = 0;
-            else
+            __int64 total;
+            if (stacks - ((PartyV*)m->get(main))->count_tail() >= 1 &&
+                ((total = (__int64)((PartyV*)m->get(main))->sum_flagged() + params[0]), (__int64)((PartyV*)m->get(main))->max_prisoners() >= total))
                 result = 1;
+            else
+                result = 0;
         }
         break;
     case op::party_can_join_party:
         result = 0;
         if (check_party((int)params[0]) && check_party((int)params[1]))
-            result = game()->can_transfer((int)params[0], (int)params[1], params[2] != 0);
+            result = ((GameW*)game())->can_transfer((int)params[0], (int)params[1], params[2] != 0);
         break;
     case op::main_party_has_troop: {
         int main = game()->main_party;
         result = 0;
-        for (i = 0; i < party(main)->num_stacks; i++)
-            if ((__int64)party(main)->stacks[i].troop == params[0])
+        for (int k = 0; k < party(main)->num_stacks; k++)
+            if ((__int64)party(main)->stacks[k].troop == params[0])
                 result = 1;
         break;
     }
@@ -767,19 +1065,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troop_is_guarantee_ranged:
         result = 0;
         if (check_troop((int)params[0])) {
-            if ((troop((int)params[0])->flags & tf_guarantee_ranged) == 0)
-                result = 0;
-            else
+            if ((troop((int)params[0])->flags & tf_guarantee_ranged) != 0)
                 result = 1;
+            else
+                result = 0;
         }
         break;
     case op::troop_is_guarantee_horse:
         result = 0;
         if (check_troop((int)params[0])) {
-            if ((troop((int)params[0])->flags & tf_guarantee_horse) == 0)
-                result = 0;
-            else
+            if ((troop((int)params[0])->flags & tf_guarantee_horse) != 0)
                 result = 1;
+            else
+                result = 0;
         }
         break;
     case op::check_quest_active:
@@ -1006,7 +1304,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::init_position:
         if (check_register((int)params[0]))
-            script_pos((int)params[0]) = identity_frame();
+            ASSIGN_MAT(script_pos((int)params[0]), IDENTITY_VALUE());
         break;
     case op::get_trigger_object_position:
         if (check_register((int)params[0]))
@@ -1044,20 +1342,20 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::position_move_x:
         // movement in cm; [value] 0 = along the local axis, else along the global one
         if (check_register((int)params[0])) {
-            sf_0 = (float)params[1] * 0.01f;
+            float d = (float)params[1] * 0.01f;
             if (params[2])
-                script_pos((int)params[0]).o.x += sf_0;
+                script_pos((int)params[0]).o.x += d;
             else
-                script_pos((int)params[0]).o += sf_0 * script_pos((int)params[0]).s;
+                { float t = d; script_pos((int)params[0]).o += t * script_pos((int)params[0]).s; }
         }
         break;
     case op::position_move_y:
         if (check_register((int)params[0])) {
-            sf_0 = (float)params[1] * 0.01f;
+            float d = (float)params[1] * 0.01f;
             if (params[2])
-                script_pos((int)params[0]).o.y += sf_0;
+                script_pos((int)params[0]).o.y += d;
             else
-                script_pos((int)params[0]).o += sf_0 * script_pos((int)params[0]).f;
+                { float t = d; script_pos((int)params[0]).o += t * script_pos((int)params[0]).f; }
         }
         break;
     case op::position_move_z:
@@ -1066,22 +1364,27 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[2])
                 script_pos((int)params[0]).o.z += d;
             else
-                script_pos((int)params[0]).o += d * script_pos((int)params[0]).u;
+                { float t = d; script_pos((int)params[0]).o += t * script_pos((int)params[0]).u; }
         }
         break;
     case op::position_rotate_x:
+    { float sf_0;
         if (check_register((int)params[0])) {
             sf_0 = (float)params[1] * 0.017453292f;
             script_pos((int)params[0]).rotate_about_s(&sf_0);
         }
         break;
+    }
     case op::position_rotate_y:
+    { float sf_0;
         if (check_register((int)params[0])) {
             sf_0 = (float)params[1] * 0.017453292f;
             script_pos((int)params[0]).rotate_about_f(&sf_0);
         }
         break;
+    }
     case op::position_rotate_z:
+    { float sf_0;
         // [use_global_z_axis]: rotate every row about the global z axis instead of the local one
         if (check_register((int)params[0])) {
             sf_0 = (float)params[1] * 0.017453292f;
@@ -1094,6 +1397,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 script_pos((int)params[0]).rotate_about_u(&sf_0);
         }
         break;
+    }
     case op::position_get_x:
         if (check_register((int)params[1])) {
             SET_LV(round_i64(g_script.fixed_point_multiplier * script_pos((int)params[1]).o.x));
@@ -1323,10 +1627,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::race_completed_by_player:
         break;
     case op::num_active_teams_le:
-        if ((__int64)mission()->team_count() > params[0])
-            result = 0;
-        else
+        if ((__int64)mission()->team_count() <= params[0])
             result = 1;
+        else
+            result = 0;
         break;
     case op::main_hero_fallen:
         result = mission()->hero_down();
@@ -1810,6 +2114,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
 
     // ---- factions and quests -----------------------------------------------------------------------------------
     case op::set_relation:
+    { int si_0; int si_1; float sf_0; float sf_1; float sf_2;
         // (set_relation, <faction_id>, <faction_id>, <value>): value -100..100, symmetric; the player is told when
         // one side is faction 0
         if (check_faction((int)params[0]) && check_faction((int)params[1])) {
@@ -1844,6 +2149,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
         }
         break;
+    }
     case op::faction_set_name:
         if (check_faction((int)params[0]) && check_string_arg(types[1], (int)params[1]))
             { tstring text = g_strings.get_string((int)params[1], types[1]); tstring nm = g_script.expand(text);
@@ -1930,10 +2236,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
             game()->mercenary_source_party = (int)params[0];
         break;
     case op::set_merchandise_modifier_quality: {
+    { float sf_0; float sf_1; float sf_2;
         // percentage, clamped to 0..1000 (as a factor 0..10)
         sf_0 = (float)params[0] * 0.01f, sf_1 = 0, sf_2 = 1000.0f;
         game()->merchandise_modifier_quality = clamp(&sf_0, &sf_1, &sf_2);
         break;
+    }
     }
     case op::reset_item_probabilities: {
         // (reset_item_probabilities, [value]): default 100; only the low word of the operand is tested
@@ -2134,6 +2442,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
 
     case op::troop_loot_troop:
+    { float sf_0;
         // (troop_loot_troop, <target_troop>, <source_troop_id>, <probability>): every itp_always_loot item, then ten
         // random draws weighted by the source's level against the item value
         if (params[2] > 0 && check_troop((int)params[0]) && check_troop((int)params[1])) {
@@ -2170,6 +2479,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
         }
         break;
+    }
     case op::troop_get_inventory_capacity:
         if (check_troop((int)params[1]))
             SET_LV((__int64)(troop((int)params[1])->inv_count() + 10));
@@ -2329,6 +2639,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::party_wound_members:
+    { int si_0;
         // (party_wound_members, <party_id>, <troop_id>, <number>): the first regular stack of the troop
         if (check_party((int)params[0])) {
             PartyMgr* pm = &game()->parties;
@@ -2347,6 +2658,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
         }
         break;
+    }
     case op::party_remove_members_wounded_first:
         g_script.reg[0] = 0;
         if (check_party((int)params[0]) && check_troop((int)params[1]) && params[2] > 0)
@@ -2369,7 +2681,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_position:
         if (check_register((int)params[0]) && check_party((int)params[1])) {
-            *(rgl::mat3*)&script_pos((int)params[0]) = identity3();
+            ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), IDENTITY3_VALUE());
             script_pos((int)params[0]).o = party_pos(party((int)params[1]));
         }
         break;
@@ -2786,7 +3098,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::agent_get_look_position:
         if (check_register((int)params[0]) && warn_agent((int)params[1])) {
-            *(rgl::mat3*)&script_pos((int)params[0]) = identity3();
+            ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), IDENTITY3_VALUE());
             rgl::matrix* dst = &script_pos((int)params[0]);
             AgentTable* t = &mission()->agents;
             int a = (int)params[1];
@@ -2804,7 +3116,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (t->get(a)->body)
                 script_pos((int)params[0]) = (rgl::matrix&)t->get(a)->body->m;      // the body frame (+0x58)
             else {
-                *(rgl::mat3*)&script_pos((int)params[0]) = identity3();
+                ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), IDENTITY3_VALUE());
                 script_pos((int)params[0]).o = t->get(a)->pos;
             }
         }
@@ -2999,16 +3311,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::agent_play_sound:
+    { int si_0;
         if (warn_agent((int)params[0]) && warn_sound((int)params[1])) {
             si_0 = (int)params[1];
             agent((int)params[0])->play_sound(&si_0);
         }
         break;
+    }
     case op::agent_get_team:
         if (warn_agent((int)params[1]))
             SET_LV((__int64)agent((int)params[1])->clamped_team());
         break;
     case op::agent_set_team:
+    { int si_0;
         // an agent joining a team without a leader becomes its leader
         if (warn_agent((int)params[0])) {
             si_0 = (int)params[1];
@@ -3020,6 +3335,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 tr->leader = m->agents.get(a)->id;
         }
         break;
+    }
     case op::agent_get_class:
         if (warn_agent((int)params[1]))
             SET_LV((__int64)((AgentX*)agent((int)params[1]))->agent_class());
@@ -3084,6 +3400,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::team_set_order_position:
+    { int si_0; float sf_0; float sf_1; float sf_2;
         // (team_set_order_position, <team_no>, <sub_class>, <position_no>)
         if (IN_RANGE(params[0], 0, 8) && check_register((int)params[2]) &&
             mission()->point_in_rect(&script_pos((int)params[2]).o)) {
@@ -3098,6 +3415,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->unselect_team((int)params[0]);
         }
         break;
+    }
     case op::team_get_leader:
         if (IN_RANGE(params[1], 0, 8))
             SET_LV((__int64)mission()->teams[(int)params[1]].leader);
@@ -3140,6 +3458,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::set_fog_distance:
+    { unsigned su_0; float sf_0; float sf_1;
         // (set_fog_distance, <distance_in_meters>, [fog_color]): 0 = the colour of the scene's environment row
         if (g_mission) {
             mission()->fog_distance = (float)params[0];
@@ -3154,10 +3473,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
         }
         break;
+    }
     case op::get_scene_boundaries:
         if (check_register((int)params[0]) && check_register((int)params[1])) {
-            script_pos((int)params[0]) = identity_frame();
-            script_pos((int)params[1]) = identity_frame();
+            ASSIGN_MAT(script_pos((int)params[0]), IDENTITY_VALUE());
+            ASSIGN_MAT(script_pos((int)params[1]), IDENTITY_VALUE());
             MissionX* m = mission();
             script_pos((int)params[0]).o.x = m->rect_min_x;
             script_pos((int)params[0]).o.y = m->rect_min_y;
@@ -3173,10 +3493,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // fails when there is no such instance
         if (warn_scene_prop((int)params[1])) {
             int n = mission()->find_prop((int)params[1], (int)params[2]);
-            if (n < 0)
-                result = 0;
-            else
+            if (n >= 0)
                 SET_LV((__int64)n);
+            else
+                result = 0;
         }
         break;
     case op::prop_instance_get_position:
@@ -3191,7 +3511,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // the scale as the diagonal of an otherwise identity frame
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission) {
             rgl::matrix* dst = &script_pos((int)params[0]);
-            *dst = identity_frame();
+            ASSIGN_MAT(*dst, IDENTITY_VALUE());
             PropVec* pv = &mission()->props;
             int k = (int)params[1];
             dst->s.x = prop_at(*pv, k)->scale_x;
@@ -3204,6 +3524,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             prop_at(mission()->props, (int)params[0])->set_position(&script_pos((int)params[1]));
         break;
     case op::prop_instance_animate_to_position:
+    { float sf_0; float sf_1;
         // (prop_instance_animate_to_position, <scene_prop_id>, position, <duration-in-1/100-seconds>)
         if (warn_scene_prop_instance((int)params[0]) && check_register((int)params[1]) && g_mission) {
             sf_0 = 0;
@@ -3211,6 +3532,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             prop_at(mission()->props, (int)params[0])->animate_to(&script_pos((int)params[1]), &sf_1, &sf_0);
         }
         break;
+    }
     case op::replace_scene_props:
         // only in the scene-load trigger (context -19)
         if (warn_scene_prop((int)params[0]) && warn_scene_prop((int)params[1]) && *context == -19)
@@ -3281,6 +3603,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::set_current_color:
+    { float sf_0; float sf_1; float sf_2; rgl::vector4 sv_0;
         // red, green, blue: a value of 255 means 100% (the original scales by 1/100)
         {
             sf_0 = (float)params[2] * 0.01f;
@@ -3290,7 +3613,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             game()->current_color = sv_0.set(sf_2, sf_1, sf_0);
         }
         break;
+    }
     case op::set_position_delta:
+    { float sf_0; float sf_1; float sf_2; rgl::vector4 sv_0;
         {
             sf_0 = (float)params[2] * 0.01f;
             sf_1 = (float)params[1] * 0.01f;
@@ -3299,6 +3624,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             game()->position_delta = sv_0.set(sf_2, sf_1, sf_0);
         }
         break;
+    }
     case op::add_point_light:
         // (add_point_light, [flicker_magnitude], [flicker_interval]): on the trigger's item (context -50) or the scene
         if (params[0] >= 0 && params[1] >= 0) {
@@ -3322,6 +3648,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::particle_system_add_new:
+    { int si_0; int si_1;
         // (particle_system_add_new, <par_sys_id>, [position_no]): on the trigger's entity, at the position delta
         if (warn_particle_system((int)params[0])) {
             int ctx = *context;
@@ -3341,6 +3668,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
         }
         break;
+    }
     case op::particle_system_emit:
         // (particle_system_emit, <par_sys_id>, <value_num_particles>, <value_period>)
         if (warn_particle_system((int)params[0])) {
@@ -3407,7 +3735,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- tableaus -----------------------------------------------------------------------------------------------
     case op::cur_tableau_add_tableau_mesh:
         // (cur_tableau_add_tableau_mesh, <tableau_material_id>, <value>, <position_register_no>, [scale_fixed_point])
-        if (warn_tableau((int)params[0]) && check_register((int)params[2]) && g_tableaus.worlds.size()) {
+        if (warn_tableau((int)params[0]) && check_register((int)params[2]) && g_tableaus.worlds.size() > 0) {
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
             // temporary itself (C4238), as the original: no copy into a third vector
             rgl::vector4 a, b;
@@ -3441,6 +3769,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::cur_scene_prop_set_tableau_material:
+    { int si_0; int si_1;
         // only inside ti_on_init_scene_prop (context -40)
         if (warn_tableau((int)params[0]) && *context == -40) {
             TriggerMeshObj* o = (TriggerMeshObj*)trigger_mesh_obj(-40);
@@ -3450,7 +3779,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
         }
         break;
+    }
     case op::cur_map_icon_set_tableau_material:
+    { int si_0; int si_1;
         // only inside ti_on_init_map_icon (context -70)
         if (warn_tableau((int)params[0]) && *context == -70) {
             TriggerMeshObj* o = (TriggerMeshObj*)trigger_mesh_obj(-70);
@@ -3460,19 +3791,21 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
         }
         break;
+    }
     case op::cur_tableau_render_as_alpha_mask:
-        if (g_tableaus.worlds.size())
+        if (g_tableaus.worlds.size() > 0)
             g_tableaus.alpha_mask = 1;
         break;
     case op::cur_tableau_set_background_color:
-        if (g_tableaus.worlds.size())
+        if (g_tableaus.worlds.size() > 0)
             g_tableaus.set_background_color((int)params[0]);
         break;
     case op::cur_tableau_set_ambient_light:
+    { float sf_0; float sf_1; float sf_2; rgl::vector4 sv_0;
         // the original divides each component by the int multiplier: a float local divisor gets rewritten as one
         // reciprocal and three multiplies (different rounding). Same in camera_parameters / point_light / sun_light
         // (cur_tableau_set_ambient_light, <red_fixed_point>, <green_fixed_point>, <blue_fixed_point>)
-        if (g_tableaus.worlds.size()) {
+        if (g_tableaus.worlds.size() > 0) {
             sf_0 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[1] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[0] / g_script.fixed_point_multiplier;
@@ -3480,14 +3813,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_tableaus.set_ambient_light((const float*)&sv_0.set(sf_2, sf_1, sf_0));
         }
         break;
+    }
     case op::cur_tableau_set_camera_position:
-        if (check_register((int)params[0]) && g_tableaus.worlds.size())
+        if (check_register((int)params[0]) && g_tableaus.worlds.size() > 0)
             g_tableaus.set_camera_position(&script_pos((int)params[0]));
         break;
     case op::cur_tableau_set_camera_parameters:
+    { float sf_0; float sf_1; float sf_2; float sf_3;
         // (.., <is_perspective>, <camera_width_times_1000>, <camera_height_times_1000>, <camera_near_times_1000>,
         // <camera_far_times_1000>): fixed point in fact
-        if (g_tableaus.worlds.size()) {
+        if (g_tableaus.worlds.size() > 0) {
             sf_0 = (float)params[4] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[2] / g_script.fixed_point_multiplier;
@@ -3496,9 +3831,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_tableaus.set_camera_parameters((const char*)&perspective, &sf_3, &sf_2, &sf_1, &sf_0);
         }
         break;
+    }
     case op::cur_tableau_add_point_light:
+    { float sf_0; float sf_1; float sf_2;
         // the position is operand 0 and the colour operands 1..3 (the header's <map_icon_id> is not read)
-        if (check_register((int)params[0]) && g_tableaus.worlds.size()) {
+        if (check_register((int)params[0]) && g_tableaus.worlds.size() > 0) {
             sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[1] / g_script.fixed_point_multiplier;
@@ -3506,8 +3843,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_tableaus.add_point_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
         break;
+    }
     case op::cur_tableau_add_sun_light:
-        if (check_register((int)params[0]) && g_tableaus.worlds.size()) {
+    { float sf_0; float sf_1; float sf_2;
+        if (check_register((int)params[0]) && g_tableaus.worlds.size() > 0) {
             sf_0 = (float)params[3] / g_script.fixed_point_multiplier;
             sf_1 = (float)params[2] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[1] / g_script.fixed_point_multiplier;
@@ -3515,9 +3854,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_tableaus.add_sun_light(&script_pos((int)params[0]), c.set(sf_2, sf_1, sf_0));
         }
         break;
+    }
     case op::cur_tableau_add_mesh:
         // (cur_tableau_add_mesh, <mesh_id>, <position_no>, <scale_fixed_point>, <alpha_fixed_point>)
-        if (check_mesh((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size()) {
+        if (check_mesh((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size() > 0) {
             int color = -1;
             float alpha;
             if (params[3] == 0)
@@ -3542,7 +3882,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::cur_tableau_add_mesh_with_vertex_color:
         // (.., <mesh_id>, <position_no>, <scale_fixed_point>, <alpha_fixed_point>, <vertex_color>)
-        if (check_mesh((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size()) {
+        if (check_mesh((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size() > 0) {
             int color = (int)params[4];
             float alpha;
             if (params[3] == 0)
@@ -3566,8 +3906,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::cur_tableau_add_map_icon:
+    { float sf_0;
         // (cur_tableau_add_map_icon, <map_icon_id>, <position_no>, <scale_fixed_point>)
-        if (check_map_icon((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size()) {
+        if (check_map_icon((int)params[0]) && check_register((int)params[1]) && g_tableaus.worlds.size() > 0) {
             sf_0;
             if (params[2] == 0)
                 sf_0 = 1.0f;
@@ -3576,7 +3917,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_tableaus.spawn_scaled2((int)params[0], &script_pos((int)params[1]), &sf_0);
         }
         break;
+    }
     case op::cur_tableau_add_troop:
+    { int si_0; int si_1;
         // (.., <troop_id>, <position_no>, <animation_id>, <instance_no>): instance <= 0 = no random face (heroes)
         if (check_troop((int)params[0]) && check_register((int)params[1]) && check_animation((int)params[2]) &&
             g_tableaus.worlds.size()) {
@@ -3589,7 +3932,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             tableau_add_agent((int)params[0], -1, &script_pos((int)params[1]), &si_1, &si_0);
         }
         break;
+    }
     case op::cur_tableau_add_horse:
+    { int si_0; int si_1;
         // (cur_tableau_add_horse, <item_id>, <position_no>, <animation_id>)
         if (check_item_kind((int)params[0]) && check_register((int)params[1]) && check_animation((int)params[2]) &&
             g_tableaus.worlds.size()) {
@@ -3598,23 +3943,25 @@ char Operation::execute(__int64* locals, int* context, int* error)
             tableau_add_agent(-1, (int)params[0], &script_pos((int)params[1]), &si_0, &si_1);
         }
         break;
+    }
     case op::cur_tableau_set_override_flags:
-        if (g_tableaus.worlds.size())
+        if (g_tableaus.worlds.size() > 0)
             tableau_overrides()->override_flags = (int)params[0];
         break;
     case op::cur_tableau_clear_override_items:
-        if (g_tableaus.worlds.size())
+        if (g_tableaus.worlds.size() > 0)
             tableau_overrides()->num_override_items = 0;
         break;
     case op::cur_tableau_add_override_item:
         // no bound on the item count
-        if (g_tableaus.worlds.size()) {
+        if (g_tableaus.worlds.size() > 0) {
             int n = tableau_overrides()->num_override_items;
             tableau_overrides()->override_items[n] = (int)params[0];
             ++tableau_overrides()->num_override_items;
         }
         break;
     case op::cur_tableau_add_mesh_with_scale_and_vertex_color:
+    { int si_0; float sf_0; float sf_1;
         // (.., <mesh_id>, <position_no>, <scale_position_no>, <alpha_fixed_point>, <vertex_color>): the scale is the
         // origin of the second position, in fixed point
         if (check_mesh((int)params[0]) && check_register((int)params[1]) && check_register((int)params[2]) &&
@@ -3630,6 +3977,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                                 &(script_pos((int)params[2]).o * sf_1), &sf_0, (const unsigned*)&si_0);
         }
         break;
+    }
 
 
     // ---- mission camera and time speed --------------------------------------------------------------------------
@@ -3914,18 +4262,22 @@ char Operation::execute(__int64* locals, int* context, int* error)
             SET_LV(params[0] % params[1]);
         break;
     case op::val_min:
+    { int si_0; int si_1;
         // on the low 32 bits
         {
             si_0 = (int)params[0], si_1 = (int)params[1];
             SET_LV((__int64)min_int(si_0, si_1));
         }
         break;
+    }
     case op::val_max:
+    { int si_0; int si_1;
         {
             si_0 = (int)params[0], si_1 = (int)params[1];
             SET_LV((__int64)imax_ref(&si_0, &si_1));
         }
         break;
+    }
     case op::val_clamp:
         // dest = max(min(dest, <upper_bound> - 1), <lower_bound>)
         SET_LV((__int64)clamp_index((int)params[0], (int)params[1], (int)params[2]));
@@ -4323,7 +4675,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_get_ai_target_position:
         if (check_register((int)params[0]) && check_party((int)params[1])) {
             rgl::matrix* dst = &script_pos((int)params[0]);
-            *dst = identity_frame();
+            ASSIGN_MAT(*dst, IDENTITY_VALUE());
             PartyV* p = party((int)params[1]);
             dst->o.x = p->ai_target_x;
             dst->o.y = p->ai_target_y;
@@ -4596,13 +4948,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     }
 
+    char r;
     if (neg)
-        result = !result;
-    if (result) {
+        r = !result;
+    else
+        r = result;
+    if (r) {
         if (or_next)
             g_or_latch = 1;
     } else if (or_next)
-        result = 1;
+        r = 1;
     *error = g_script_error;
-    return result;
+    return r;
 }

@@ -270,6 +270,6 @@ int Mission::find_prop(int tag, int nth)
 // @ 0x48ef20
 BattleRec* BattleTable::get(unsigned index)
 {
-    BattleRec** page = &pages[index >> 4];
-    return *page + (index & 0xf);
+    std::vector<BattleRec*>& pg = *(std::vector<BattleRec*>*)((char*)this + 0x14);
+    return pg[index >> 4] + (index & 0xf);
 }

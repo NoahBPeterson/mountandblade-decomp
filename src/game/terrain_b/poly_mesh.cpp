@@ -77,33 +77,33 @@ void PolyMesh::build_geometry()
 {
     build_adjacency();
     for (unsigned i = 0; i < faces.size(); i++) {
-        MPoly* f = &vat(faces, i);
+        MPoly* f = &faces[i];
         f->centroid = vector4(0.0f, 0.0f, 0.0f);
-        for (int j = 0; j < vat(faces, i).n; j++) {
-            MPoly& g = vat(faces, i);
-            MVert& v = vat(verts, g.vid[j]);
+        for (int j = 0; j < faces[i].n; j++) {
+            MPoly& g = faces[i];
+            MVert& v = verts[g.vid[j]];
             g.centroid.x = g.centroid.x + v.pos.x;
             g.centroid.y = v.pos.y + g.centroid.y;
             g.centroid.z = v.pos.z + g.centroid.z;
-            vat(faces, i).nbr[j] = -1;
-            MPoly& h = vat(faces, i);
-            if (vat(edges, h.eid[j]).nfaces >= 2) {
-                if (vat(edges, h.eid[j]).face[0] == (int)i)
-                    h.nbr[j] = vat(edges, h.eid[j]).face[1];
-                else if (vat(edges, h.eid[j]).face[1] == (int)i)
-                    h.nbr[j] = vat(edges, h.eid[j]).face[0];
+            faces[i].nbr[j] = -1;
+            MPoly& h = faces[i];
+            if (edges[h.eid[j]].nfaces >= 2) {
+                if (edges[h.eid[j]].face[0] == (int)i)
+                    h.nbr[j] = edges[h.eid[j]].face[1];
+                else if (edges[h.eid[j]].face[1] == (int)i)
+                    h.nbr[j] = edges[h.eid[j]].face[0];
             }
         }
-        MPoly& h = vat(faces, i);
+        MPoly& h = faces[i];
         float s = 1.0f / (float)h.n;
         h.centroid.x = s * h.centroid.x;
         h.centroid.y = s * h.centroid.y;
         h.centroid.z = s * h.centroid.z;
     }
     for (unsigned i = 0; i < edges.size(); i++) {
-        MEdge& e = vat(edges, i);
-        MVert& a = vat(verts, e.v0);
-        MVert& b = vat(verts, e.v1);
+        MEdge& e = edges[i];
+        MVert& a = verts[e.v0];
+        MVert& b = verts[e.v1];
         e.mid = vector4((b.pos.x + a.pos.x) * 0.5f, (b.pos.y + a.pos.y) * 0.5f, (b.pos.z + a.pos.z) * 0.5f);
     }
     compute_face_normals();
@@ -150,16 +150,15 @@ void Skin::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
     for (int i = 0; i < dst->cnt[idx]; i++) {
         float best = 100000.0f;
         int bi = 0;
-        const rgl::point20* bp = &*base->v70.begin();
         for (int j = 0; j < nbase; j++) {
-            vector4 q = (&*obj->get70_rec().begin())[i].a;
+            vector4 q = obj->get70_rec()[i].a;
             if (q.x < 0.0f) q.x = -q.x;
-            float dx = q.x - bp->a.x;
-            float dy = q.y - bp->a.y;
-            float dz = q.z - bp->a.z;
+            const rgl::point20& bp = base->v70[j];
+            float dx = q.x - bp.a.x;
+            float dy = q.y - bp.a.y;
+            float dz = q.z - bp.a.z;
             float d = dy * dy + (dx * dx + dz * dz);
             if (d < best) { best = d; bi = j; }
-            bp++;
         }
         dst->arr[idx][i] = bi;
     }
@@ -237,14 +236,14 @@ void ShadowMap::attach_camera(rgl::world* c)
     WL_MARKER(12)
     // marker "WL" 12 here in the original
     cam = (LightCam*)c;
-    c->view.vmin = vector4(10000.0f, 10000.0f, 10000.0f);
-    c->view.vmax = vector4(-10000.0f, -10000.0f, -10000.0f);
-    c->view.size = vector4(1.0f, 1.0f, 1.0f);
-    c->view.center = vector4(0.0f, 0.0f, 0.0f);
-    c->view.wcenter = vector4(0.0f, 0.0f, 0.0f);
-    c->build_light_frame(&c->view.world, &c->shadow_amb);
+    ((rgl::world*)cam)->view.vmin = vector4(10000.0f, 10000.0f, 10000.0f);
+    ((rgl::world*)cam)->view.vmax = vector4(-10000.0f, -10000.0f, -10000.0f);
+    ((rgl::world*)cam)->view.size = vector4(1.0f, 1.0f, 1.0f);
+    ((rgl::world*)cam)->view.center = vector4(0.0f, 0.0f, 0.0f);
+    ((rgl::world*)cam)->view.wcenter = vector4(0.0f, 0.0f, 0.0f);
+    ((rgl::world*)cam)->build_light_frame(&((rgl::world*)cam)->view.world, &((rgl::world*)cam)->shadow_amb);
     vector4 z(0.0f, 0.0f, 0.0f);
-    c->view.world.o = z;
+    ((rgl::world*)cam)->view.world.o = z;
     if (g_cfg.shadowmap_quality != g_cfg.shadow_quality_req) {
         release_all();
         g_cfg.shadowmap_quality = g_cfg.shadow_quality_req;

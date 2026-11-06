@@ -164,9 +164,7 @@ struct Scene { char pad0[0xb0]; SceneObjs* objs; };
 struct SceneSlot {                                                // 0x130 bytes, 64 at Mission +0x670
     rgl::matrix A, B, C, D;
     char pad100[0x10];
-    int clock;                                               // +0x110
-    int pad114;
-    __int64 start;                                           // +0x118
+    Timer timer;                                             // +0x110
     int f120;
     int pad124;
     void* face;                                              // +0x128
@@ -194,11 +192,21 @@ extern unsigned __int64 g_bit[]; // 0x5a8e68
 
 static inline unsigned lcg(unsigned x) { return (x * 0x1c13 - 0xd098556) * 0x1105; }
 
-static inline void put(unsigned& dst, unsigned mask, int shift, unsigned v)
+static inline void put(unsigned& dst, unsigned mask, int shift, const int& val)
 {
-    if (v > mask) v = mask;
+    unsigned v = (unsigned)val <= mask ? (unsigned)val : mask;
     dst = (dst & ~(mask << shift)) | (v << shift);
 }
+
+static inline void cross2(vector4& o, const vector4& a, const vector4& b)
+{
+    o.x = a.y * b.z - b.y * a.z;
+    o.y = b.x * a.z - a.x * b.z;
+    o.z = b.y * a.x - b.x * a.y;
+}
+static inline float& lane(vector4& v, int i) { return (&v.x)[i]; }
+static inline float fmin2(float a, float b) { return a < b ? a : b; }
+static inline float fmax2(float a, float b) { return a > b ? a : b; }
 
 static inline void norm3(float* v)
 {
@@ -222,8 +230,9 @@ static inline int iround(float x)
 {
     float f = floor(x);
     int r = (int)f;
-    if (!(x - f <= 0.5f)) r++;
-    return r;
+    int out = r;
+    if (!(x - f <= 0.5f)) out = r + 1;
+    return out;
 }
 
 static inline int ifloor(float x)
@@ -235,10 +244,12 @@ static inline int ifloor(float x)
 static inline Party* party_rec(PartyMgr* pm, int id)
 {
     int i = pm->lookup(id);
-    Party*& pg = pm->pages[i >> 4];
-    return (Party*)((char*)pg + (i & 0xf) * 0x5ac8);
+    return &pm->pages[i >> 4][i & 15];
 }
 
+#define RECT(i) (((float*)this)[0x194f + (i)])
+#define SLOT(i) (((SceneSlot*)((char*)this + 0x670))[i])
+#define PROP(i) (at<std::vector<PlacedObj> >(0x6688)[i])
 #define LV (*(LevelRaw*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494))
 
 // ---------------------------------------------------------------------------
@@ -247,22 +258,21 @@ static inline Party* party_rec(PartyMgr* pm, int id)
 void Mission::start_setup()
 {
     Mission* m = this;
-    vector4 t20, u, v, in, out;
-    mat3 tmp;
+    vector4 in, out;
     int ptype;
 
     WL_MARKER(4)
     reset();
-    at<__int64>(0x62f0) = g_ticks[at<int>(0x62e8)];
-    at<__int64>(0x6300) = g_ticks[at<int>(0x62f8)];
-    at<__int64>(0x6310) = g_ticks[at<int>(0x6308)];
-    at<__int64>(0x6320) = g_ticks[at<int>(0x6318)];
+    at<Timer>(0x62e8).restamp();
+    at<Timer>(0x62f8).restamp();
+    at<Timer>(0x6308).restamp();
+    at<Timer>(0x6318).restamp();
     ((stream_base&)g_log).w_cstr("begin_setup");
     g_phys.reset();
 
-    ModeRec* mrec = (ModeRec*)((char*)g_mission_templates + at<int>(0x5df0) * 0x58);
-    LevelRaw* lrec = (LevelRaw*)(RAWAT(char*, g_game, 0x13a50) + at<int>(0x5df4) * 0x494);
+    ModeRec* mrec = &g_mission_templates[at<int>(0x5df0)];
     at<int>(0x6550) = 0;
+    LevelRaw* lrec = &RAWAT(LevelRaw*, g_game, 0x13a50)[at<int>(0x5df4)];
     bank_of(mrec)->randomize();
     if (lrec->at<char>(0x78) == 0)
         g_game->load_scene(at<int>(0x5df4));
@@ -270,13 +280,15 @@ void Mission::start_setup()
     // ---- camera party + neighbour temperature accumulation ---------------------------------
     PartyMgr* pm = &g_game->parties;
     int pid = RAWAT(int, g_game, 0x78);
-    Party* pa = party_rec(pm, pid);
-    ptype = RAWAT(int, party_rec(pm, pid), 0x5978);
+    int pi0 = pm->lookup(pid);
+    Party* pa = &pm->pages[pi0 >> 4][pi0 & 15];
+    pi0 = pm->lookup(pid);
+    ptype = RAWAT(int, &pm->pages[pi0 >> 4][pi0 & 15], 0x5978);
     float temp[16];
-    temp[0] = 0.0f; temp[1] = 0.0f; temp[2] = 0.0f; temp[3] = 0.0f;
-    temp[4] = 0.0f; temp[5] = 0.0f; temp[6] = 0.0f; temp[7] = 0.0f;
-    temp[8] = 0.0f; temp[9] = 0.0f; temp[10] = 0.0f; temp[11] = 0.0f;
-    temp[12] = 0.0f; temp[13] = 0.0f; temp[14] = 0.0f; temp[15] = 0.0f;
+    for (int t = 0; t < 16; t++) temp[t] = 0.0f;
+    float temper, f14, fo, humidity;
+    {
+    vector4 u;
     u = *(vector4*)&party_rec(pm, pid)->pos;
 
     if (g_script.level != 0) {
@@ -289,14 +301,13 @@ void Mission::start_setup()
             else if (!(d2 < 324.0f))
                 continue;
             int slot = *(int*)(p + 0x24);
-            if (slot >= 0 && slot < 16)
-                temp[slot] = 10.0f / d2 + temp[slot];
+            if (slot >= 0 && slot < 16) {
+                float& tr = temp[slot];
+                tr = 10.0f / d2 + tr;
+            }
         }
     } else {
-        temp[0] = 0.2f; temp[1] = 0.2f; temp[2] = 0.2f; temp[3] = 0.2f;
-        temp[4] = 0.2f; temp[5] = 0.2f; temp[6] = 0.2f; temp[7] = 0.2f;
-        temp[8] = 0.2f; temp[9] = 0.2f; temp[10] = 0.2f; temp[11] = 0.2f;
-        temp[12] = 0.2f; temp[13] = 0.2f; temp[14] = 0.2f; temp[15] = 0.2f;
+        for (int t = 0; t < 16; t++) temp[t] = 0.2f;
     }
 
     WL_MARKER(5)
@@ -305,7 +316,7 @@ void Mission::start_setup()
     g_game->blend(&u.x, pa->pos.x, pa->pos.y);
     WL_MARKER(0xc)
 
-    float temper = temp[0] * 0.1f + (temp[8] * 0.01f + (temp[3] * 0.001f + (temp[11] * 0.002f +
+    temper = temp[0] * 0.1f + (temp[8] * 0.01f + (temp[3] * 0.001f + (temp[11] * 0.002f +
                    (temp[4] * 0.005f + (temp[12] * 0.01f + (temp[1] * 0.003f + (temp[9] * 0.005f +
                    (temp[2] * 0.0005f + temp[10] * 0.0015f))))))));
     if (temper < 0.0f) temper = 0.0f;
@@ -315,20 +326,24 @@ void Mission::start_setup()
     in.z = 0.0f;
     in.y = g_ticks[1] * 1e-5f;
     noise_fractal(96.0f, 0.7f, 4, 0, &in.x, &out.x);
-    float f14 = (out.z + out.y + out.x) * 5.0f;
-    v.z = 700.0f;
-    v.x = (float)RAWAT(int, g_game, 4) * 0.1f;
-    v.y = g_ticks[1] * 1e-5f;
-    in = v;
+    f14 = (out.z + out.y + out.x) * 5.0f;
+    {
+        vector4 q;
+        q.z = 700.0f;
+        q.x = (float)RAWAT(int, g_game, 4) * 0.1f;
+        q.y = g_ticks[1] * 1e-5f;
+        in = q;
+    }
     noise_fractal(72.0f, 0.7f, 4, 0, &in.x, &out.x);
-    float fo = (out.z + out.y + out.x) * 5.0f;
+    fo = (out.z + out.y + out.x) * 5.0f;
 
-    float humidity = clamp01(((f14 + f14) + 0.5f) * temper + (RND() * 6.32231167e-05f) * 0.0500000007f);
+    humidity = clamp01(((f14 + f14) + 0.5f) * temper + (RND() * 6.32231167e-05f) * 0.0500000007f);
     at<float>(0x65f4) = humidity;
     at<int>(0x65f8) = RAWAT(int, pa, 0x38);
     at<int>(0x65f0) = *(int*)&u.x;
     at<int>(0x6618) = *(int*)&u.z;
     at<int>(0x661c) = *(int*)&u.w;
+    }
     at<int>(0x6600) = 0;
     at<int>(0x6604) = 0;
 
@@ -388,8 +403,7 @@ void Mission::start_setup()
     at<int>(0x6608) = ptype;
     props = *(std::vector<PlacedObj>*)((char*)lrec + 0x104);
     for (unsigned i = 0; i < props.size(); i++) {
-        PlacedObj* pe = at<PlacedObj*>(0x668c) + i;
-        RAWAT(unsigned, pe, 0x14) = i;
+        RAWAT(unsigned, &at<std::vector<PlacedObj> >(0x6688)[i], 0x14) = i;
     }
 
     g_script.param1 = ptype;
@@ -411,10 +425,15 @@ void Mission::start_setup()
         EnvRow* s = &g_env_rows[i];
         float r = RND() * 6.32231149e-07f;
         s->rank = r;
-        if ((at<float>(0x65e8) > 7.0f && at<float>(0x65e8) < 17.0f) ? (s->f10 & 3) == 0 :
-            (at<float>(0x65e8) > 4.0f && at<float>(0x65e8) < 20.0f) ? (s->f10 & 3) == 1 :
-            (s->f10 & 3) == 2)
-            s->rank = r + 1.0f;
+        if (at<float>(0x65e8) > 7.0f && at<float>(0x65e8) < 17.0f) {
+            if ((s->f10 & 3) != 0) goto no_bonus;
+        } else if (at<float>(0x65e8) > 4.0f && at<float>(0x65e8) < 20.0f) {
+            if ((s->f10 & 3) != 1) goto no_bonus;
+        } else {
+            if ((s->f10 & 3) != 2) goto no_bonus;
+        }
+        s->rank = r + 1.0f;
+    no_bonus:
         s->rank = s->rank - abs(at<int>(0x65fc) - ((s->f10 >> 4) & 0xf)) * 0.100000001f;
     }
     at<int>(0x660c) = 0;
@@ -433,10 +452,11 @@ void Mission::start_setup()
             int y = (int)party_rec(pm2, pid2)->pos.y;
             int parity = at<int>(0x5270) % 3;
             int fr = RAWAT(int, gg, 4);
-            unsigned a = (fr * 0x1b0b + parity + y * 0x230b + x * 17) & 0x7fffff;
-            unsigned c = (fr * 0xf4d + parity + y * 0x16a1 + x * 19) & 0x7fffff;
-            unsigned b = (y * 0x19c9 + parity + fr * 0x1e6f + x * 31) & 0x7fffff;
-            unsigned mc = (*(unsigned*)((char*)&g_bit + 0xf8)) - 1;
+            int a = fr * 0x1b0b + parity + y * 0x230b + x * 17;
+            int c = fr * 0xf4d + parity + y * 0x16a1 + x * 19;
+            int b = y * 0x19c9 + parity + fr * 0x1e6f + x * 31;
+            unsigned mc = (unsigned)g_bit[31] - 1;
+            b &= 0x7fffff; a &= 0x7fffff; c &= 0x7fffff;
             put(g_terrain.bits[0], mc, 0, a);
             put(g_terrain.bits[2], mc, 0, c);
             put(g_terrain.bits[1], mc, 0, b);
@@ -453,10 +473,16 @@ void Mission::start_setup()
             } else if ((ptype == 3 || ptype == 0xb) && chance < 0.150000006f) {
                 storm = 1;
             }
-            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x20)) - 1, 28, ptype);
-            put(g_terrain.bits[3], (*(unsigned*)((char*)&g_bit + 0x8)) - 1, 31, storm != 0);
-            put(g_terrain.bits[3], (*(unsigned*)((char*)&g_bit + 0x8)) - 1, 30, 0);
-            seed = lcg(seed);
+            put(g_terrain.bits[4], (unsigned)g_bit[4] - 1, 28, ptype);
+            {
+                unsigned m1 = (unsigned)g_bit[1] - 1;
+                unsigned v1 = (unsigned)(storm != 0) <= m1 ? (unsigned)(storm != 0) : m1;
+                unsigned w = g_terrain.bits[3];
+                seed = lcg(seed);
+                w = (w & ~(m1 << 31)) | (v1 << 31);
+                w &= ~(m1 << 30);
+                g_terrain.bits[3] = w;
+            }
             g_rand_seed = seed;
             float ff = RNDU(seed) * 6.32231149e-06f + 0.449999988f;
             if (storm) {
@@ -475,7 +501,7 @@ void Mission::start_setup()
             int ai = iround(ff * 100.0f);
             if (ai < 0) ai = 0;
             else if (ai >= 100) ai = 99;
-            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 0, ai);
+            put(g_terrain.bits[4], (unsigned)g_bit[7] - 1, 0, ai);
 
             seed = lcg(g_rand_seed);
             int cc = (int)(RNDU(seed) * 0.00126446225f + 12.0f);
@@ -489,7 +515,7 @@ void Mission::start_setup()
                 cc += iround((RNDU(seed) * 6.32231167e-05f + 0.400000006f) * temp[1] * 0.449999988f);
             }
             if (cc > 0x41) cc = 0x41;
-            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 14, cc);
+            put(g_terrain.bits[4], (unsigned)g_bit[7] - 1, 14, cc);
 
             seed = lcg(seed);
             g_rand_seed = seed;
@@ -502,18 +528,26 @@ void Mission::start_setup()
             int ti = ifloor(tot);
             if (ti < 0) ti = 0;
             else if (ti >= 0x80) ti = 0x7f;
-            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 7, ti);
+            put(g_terrain.bits[4], (unsigned)g_bit[7] - 1, 7, ti);
 
             int ri = iround((RND() * 1.2644623e-05f + 0.800000012f) * 100.0f);
             if (ri < 0) ri = 0;
             else if (ri >= 100) ri = 99;
-            put(g_terrain.bits[4], (*(unsigned*)((char*)&g_bit + 0x38)) - 1, 21, ri);
+            put(g_terrain.bits[4], (unsigned)g_bit[7] - 1, 21, ri);
         }
-        at<RectF>(0x652c).x0 = 0.0f;
-        at<RectF>(0x652c).y0 = 0.0f;
-        at<float>(0x6534) = (float)(g_terrain.bits[3] & ((*(unsigned*)((char*)&g_bit + 0x50)) - 1));
-        at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((*(unsigned*)((char*)&g_bit + 0x50)) - 1));
-        at<RectF>(0x653c) = at<RectF>(0x652c);
+        {
+            vec2 z;
+            z.x = 0.0f;
+            z.y = 0.0f;
+            at<float>(0x652c) = z.x;
+            at<float>(0x6530) = z.y;
+        }
+        at<float>(0x6534) = (float)(g_terrain.bits[3] & ((unsigned)g_bit[10] - 1));
+        at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
+        at<int>(0x653c) = at<int>(0x652c);
+        at<int>(0x6540) = at<int>(0x6530);
+        at<int>(0x6544) = at<int>(0x6534);
+        at<int>(0x6548) = at<int>(0x6538);
         at<float>(0x654c) = -0.300000012f;
     } else {
         at<int>(0x654c) = lrec->at<int>(0x64);
@@ -529,51 +563,51 @@ void Mission::start_setup()
     g_terrain.tail = at<tstring>(0x6814);
 
     // ---- prop bounding box, two passes ------------------------------------------------------
-    for (unsigned i = 0; i < props.size(); i++) {
-        PlacedObj* p = &at<PlacedObj*>(0x668c)[i];
+    {
+    vector4 lo;
+    for (unsigned i = 0; i < at<std::vector<PlacedObj> >(0x6688).size(); i++) {
+        PlacedObj* p = &at<std::vector<PlacedObj> >(0x6688)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
             PropKind* k = &g_propkinds[RAWAT(int, p, 0x18c)];
-            v.x = (RAWAT(float, p, 0x28) * k->f5c + RAWAT(float, p, 0x38) * k->fx60 +
-                   RAWAT(float, p, 0x18) * k->f58) + RAWAT(float, p, 0x48);
-            v.y = (RAWAT(float, p, 0x2c) * k->f5c + RAWAT(float, p, 0x3c) * k->fx60 +
-                   RAWAT(float, p, 0x1c) * k->f58) + RAWAT(float, p, 0x4c);
-            v.z = (RAWAT(float, p, 0x30) * k->f5c + RAWAT(float, p, 0x40) * k->fx60 +
-                   RAWAT(float, p, 0x20) * k->f58) + RAWAT(float, p, 0x50);
-            vector4 hi = v;
-            v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
-            RectF& box = at<RectF>(0x652c);
-            box.x0 = box.x0 < v.x ? box.x0 : v.x;
-            box.y0 = box.y0 < v.y ? box.y0 : v.y;
-            box.x1 = box.x1 > hi.x ? box.x1 : hi.x;
-            box.y1 = box.y1 > hi.y ? box.y1 : hi.y;
+            lo.x = (RAWAT(float, p, 0x18) * k->f58 + (RAWAT(float, p, 0x28) * k->f5c + RAWAT(float, p, 0x38) * k->fx60)) + RAWAT(float, p, 0x48);
+            lo.y = (RAWAT(float, p, 0x1c) * k->f58 + (RAWAT(float, p, 0x2c) * k->f5c + RAWAT(float, p, 0x3c) * k->fx60)) + RAWAT(float, p, 0x4c);
+            lo.z = (RAWAT(float, p, 0x20) * k->f58 + (RAWAT(float, p, 0x30) * k->f5c + RAWAT(float, p, 0x40) * k->fx60)) + RAWAT(float, p, 0x50);
+            vector4 hi = lo;
+            lo.x -= k->f68; lo.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
+            at<float>(0x652c) = fmin2(at<float>(0x652c), lo.x);
+            at<float>(0x6530) = fmin2(at<float>(0x6530), lo.y);
+            at<float>(0x6534) = fmax2(at<float>(0x6534), hi.x);
+            at<float>(0x6538) = fmax2(at<float>(0x6538), hi.y);
         }
     }
-    for (unsigned i = 0; i < props.size(); i++) {
-        PlacedObj* p = &at<PlacedObj*>(0x668c)[i];
+    for (unsigned i = 0; i < at<std::vector<PlacedObj> >(0x6688).size(); i++) {
+        PlacedObj* p = &at<std::vector<PlacedObj> >(0x6688)[i];
         if (RAWAT(int, p, 0x188) == 0 && RAWAT(int, p, 0x18c) >= 0) {
             PropKind* k = &g_propkinds[RAWAT(int, p, 0x18c)];
-            v.x = (RAWAT(float, p, 0x38) * k->fx60 + RAWAT(float, p, 0x28) * k->f5c +
-                   RAWAT(float, p, 0x18) * k->f58) + RAWAT(float, p, 0x48);
-            v.y = (RAWAT(float, p, 0x1c) * k->f58 + RAWAT(float, p, 0x3c) * k->fx60 +
-                   RAWAT(float, p, 0x2c) * k->f5c) + RAWAT(float, p, 0x4c);
-            v.z = (RAWAT(float, p, 0x20) * k->f58 + RAWAT(float, p, 0x40) * k->fx60 +
-                   RAWAT(float, p, 0x30) * k->f5c) + RAWAT(float, p, 0x50);
-            vector4 hi = v;
-            v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
-            RectF& box = at<RectF>(0x652c);
-            box.x0 = box.x0 < v.x ? box.x0 : v.x;
-            box.y0 = box.y0 < v.y ? box.y0 : v.y;
-            box.x1 = box.x1 > hi.x ? box.x1 : hi.x;
-            box.y1 = box.y1 > hi.y ? box.y1 : hi.y;
+            lo.x = (RAWAT(float, p, 0x18) * k->f58 + (RAWAT(float, p, 0x38) * k->fx60 + RAWAT(float, p, 0x28) * k->f5c)) + RAWAT(float, p, 0x48);
+            lo.y = (RAWAT(float, p, 0x2c) * k->f5c + (RAWAT(float, p, 0x3c) * k->fx60 + RAWAT(float, p, 0x1c) * k->f58)) + RAWAT(float, p, 0x4c);
+            lo.z = (RAWAT(float, p, 0x30) * k->f5c + (RAWAT(float, p, 0x40) * k->fx60 + RAWAT(float, p, 0x20) * k->f58)) + RAWAT(float, p, 0x50);
+            vector4 hi = lo;
+            lo.x -= k->f68; lo.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
+            at<float>(0x652c) = fmin2(at<float>(0x652c), lo.x);
+            at<float>(0x6530) = fmin2(at<float>(0x6530), lo.y);
+            at<float>(0x6534) = fmax2(at<float>(0x6534), hi.x);
+            at<float>(0x6538) = fmax2(at<float>(0x6538), hi.y);
         }
+    }
     }
 
     // ---- fade, params, ambient, sun ---------------------------------------------------------
     rebuild_nav(at<int>(0x5df4), at<int>(0x5df0));
-    at<int>(0x5274) = 0;
-    at<rgl::world*>(0)->set_fade(&at<float>(0x6614), (const int*)&g_env_rows[at<int>(0x660c)].f44);   // 0x4624c0
-    unsigned color = 0xff334455;
-    at<rgl::world*>(0)->set_params(-5.0f, 10.0f, (const int*)&color, &at<float>(0x654c));     // 0x462540
+    {
+        unsigned* fc = &g_env_rows[at<int>(0x660c)].f44;
+        at<int>(0x5274) = 0;
+        at<rgl::world*>(0)->set_fade(&at<float>(0x6614), (const int*)fc);   // 0x4624c0
+    }
+    {
+        unsigned color = 0xff334455;
+        at<rgl::world*>(0)->set_params(-5.0f, 10.0f, (const int*)&color, &at<float>(0x654c));     // 0x462540
+    }
     setup_ambient(at<int>(0x5df4), at<int>(0x660c), at<float>(0x6614));
 
     Entity* sun = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
@@ -632,44 +666,52 @@ void Mission::start_setup()
     ((rgl::world*)at<rgl::world*>(0))->build(&nav);   // 0x478c50
 
     // ---- light/frame table: 64 slots + 5 extra for a custom camera --------------------------
-    SceneSlot* slots = &at<SceneSlot>(0x670);
     at<int>(0x5278) = 0x40;
     at<int>(0x5274) = 0;
-    vec2 center = { (at<float>(0x6544) - at<float>(0x653c)) * 0.5f + at<float>(0x653c),
-                    (at<float>(0x6548) - at<float>(0x6540)) * 0.5f + at<float>(0x6540) };
     vec2 lofs = { 0.0f, 0.0f };
-    if (lrec->flags.b8) lofs = center;
+    {
+    vec2 ext = { at<float>(0x6544) - at<float>(0x653c), at<float>(0x6548) - at<float>(0x6540) };
+    vec2 half_ext = { ext.x * 0.5f, ext.y * 0.5f };
+    struct { vec2 c; float z, w; } center;
+    center.c.x = half_ext.x + at<float>(0x653c);
+    center.c.y = half_ext.y + at<float>(0x6540);
+    if (lrec->flags.b8) lofs = center.c;
+    }
+    {
+    vector4 v;
     v.z = 500.0f;
-    for (int k = 0; k < 0x40; k++) {
-        *(mat3*)&slots[k].A = *identity3(&tmp);
-        v.x = (float)(k % 8 + 1) + lofs.x;
-        v.y = (float)(k / 8 + 1) + lofs.y;
-        slots[k].A.o = v;
+    int k = 0;
+    do {
+        mat3 tmp;
+        *(mat3*)&SLOT(k).A = *identity3(&tmp);
+        vec2 g = { (float)(k % 8 + 1), (float)(k / 8 + 1) };
+        v.x = g.x + lofs.x;
+        v.y = g.y + lofs.y;
+        SLOT(k).A.o = v;
+    } while (++k < 0x40);
     }
 
     if (LV.flags.b10) {
+        vector4 v, u;
         at<int>(0x5278) = 5;
         int par = rand() % 2;
-        float* box = &at<float>(0x653c);
-        float* vf = &v.x;
-        float* uf = &u.x;
         for (int s = 0; s < 5; s++) {
-            float a = (RND() * 6.32231167e-05f) * 0.400000006f + 0.300000012f;
-            vf[1 - par] = a * (box[3 - par] - box[1 - par]) + box[1 - par];
+            lane(v, 1 - par) = ((RND() * 6.32231167e-05f) * 0.400000006f + 0.300000012f) * (RECT(3 - par) - RECT(1 - par)) + RECT(1 - par);
             float b = (((RND() * 6.32231167e-05f - 0.5f) * 0.100000001f + s) * 0.25f) * 0.600000024f + 0.200000003f;
             if (s < 2)
                 b = b * 0.75f;
             else if (s > 2)
                 b = 1.0f - (1.0f - b) * 0.75f;
-            vf[par] = b * (box[2 + par] - box[par]) + box[par];
+            lane(v, par) = b * (RECT(2 + par) - RECT(par)) + RECT(par);
             v.z = 1000.0f;
-            SceneSlot* sl = &slots[s];
+            SceneSlot* sl = &SLOT(s);
+            mat3 tmp;
             *(mat3*)&sl->A = *identity3(&tmp);
             sl->A.o = v;
             u.z = 0.0f;
-            uf[1 - par] = 0.0f;
-            if (s < 2) uf[par] = 1.0f;
-            else uf[par] = -1.0f;
+            lane(u, 1 - par) = 0.0f;
+            if (s < 2) lane(u, par) = 1.0f;
+            else lane(u, par) = -1.0f;
             sl->A.f = u;
             sl->A.orthonormalize();
             sl->B = sl->A;
@@ -683,36 +725,41 @@ void Mission::start_setup()
     }
 
     // ---- per-prop frame copy into the table ----------------------------------------------------
-    for (unsigned i = 0; i < props.size(); i++) {
-        PlacedObj* p = &at<PlacedObj*>(0x668c)[i];
-        int sl = RAWAT(int, p, 0x1a0);
-        if (RAWAT(int, p, 0x188) == 1 && sl >= 0 && sl < 0x40) {
-            SceneSlot* s = &slots[sl];
-            s->A.o = RAWAT(vector4, p, 0x48);
-            *(mat3*)&s->A = RAWAT(mat3, p, 0x18);
-            s->B = s->A;
-            u.x = 0.0f; u.y = 0.0f; u.z = 1.0f;
-            s->B.u = u;
-            v.x = s->B.u.z * s->B.f.y - s->B.u.y * s->B.f.z;
-            v.y = s->B.u.x * s->B.f.z - s->B.f.x * s->B.u.z;
-            v.z = s->B.f.x * s->B.u.y - s->B.u.x * s->B.f.y;
-            s->B.s = v;
-            norm3(&s->B.s.x);
-            t20.x = s->B.u.y * s->B.s.z - s->B.s.y * s->B.u.z;
-            t20.y = s->B.s.x * s->B.u.z - s->B.u.x * s->B.s.z;
-            t20.z = s->B.s.y * s->B.u.x - s->B.s.x * s->B.u.y;
-            s->B.f = t20;
-            s->C = s->B;
-            s->D = s->B;
+    {
+    vector4 u, v, t20;
+    for (unsigned i = 0; i < at<std::vector<PlacedObj> >(0x6688).size(); i++) {
+        PlacedObj* p = &PROP(i);
+        if (RAWAT(int, p, 0x188) == 1) {
+            int sl = RAWAT(int, p, 0x1a0);
+            if (sl >= 0 && sl < 0x40) {
+                SLOT(sl).A.o = RAWAT(vector4, p, 0x48);
+                *(mat3*)&SLOT(sl).A = RAWAT(mat3, &PROP(i), 0x18);
+                SLOT(sl).B = SLOT(sl).A;
+                u.x = 0.0f; u.y = 0.0f; u.z = 1.0f;
+                vector4* up = &SLOT(sl).B.u;
+                *up = u;
+                vector4* sd = &SLOT(sl).B.s;
+                v.x = up->z * SLOT(sl).B.f.y - up->y * SLOT(sl).B.f.z;
+                v.y = SLOT(sl).B.f.z * up->x - SLOT(sl).B.f.x * up->z;
+                v.z = SLOT(sl).B.f.x * up->y - up->x * SLOT(sl).B.f.y;
+                *sd = v;
+                norm3(&sd->x);
+                cross2(t20, *up, *sd);
+                SLOT(sl).B.f = t20;
+                SLOT(sl).C = SLOT(sl).B;
+                SLOT(sl).D = SLOT(sl).B;
+            }
         }
+    }
     }
 
     // ---- prop ground / spawn pass --------------------------------------------------------------
+    {
     int pi;
-    for (pi = 0; pi < (int)props.size(); ) {
-        PlacedObj* p = &at<PlacedObj*>(0x668c)[pi];
-        RAWAT(int, p, 0x1b4) = 0;
-        if (g_cfg.enable_edit_mode == 0 && RAWAT(int, p, 0x188) == 4 && LV.flags.b8) {
+    for (pi = 0; (unsigned)pi < at<std::vector<PlacedObj> >(0x6688).size(); ) {
+        RAWAT(int, &PROP(pi), 0x1b4) = 0;
+        if (g_cfg.enable_edit_mode == 0 && RAWAT(int, &PROP(pi), 0x188) == 4 && LV.flags.b8) {
+            PlacedObj* p = &PROP(pi);
             int j;
             for (j = 0; j < g_ptype_count; j++)
                 if (g_ptypes[j].name.equals(RAWAT(tstring, p, 0x190)))   // 0x4866c0: add esi, 0x20
@@ -720,12 +767,13 @@ void Mission::start_setup()
             j = 0;
         found:
             g_terrain.emit_by_type(j, (const rgl::matrix*)&RAWAT(rgl::matrix, p, 0x18), &RAWAT(vector4, p, 0x158), RAWAT(int, p, 0x1a0));
-            pi++;
+            pi = pi + 1;
         } else {
             int foundv = -1;
             spawn_prop(&pi, &foundv);
-            pi++;
+            pi = pi + 1;
         }
+    }
     }
     update_prop_flags();
     {
@@ -741,8 +789,8 @@ void Mission::start_setup()
 
     // ---- scene effect object (rain / snow emitter) ---------------------------------------------
     if ((*(int*)((char*)&g_options + 0x20)) != 0 && !lrec->flags.b0 && at<int>(0x6604) > 0) {
-        EnvRow* sr = &g_env_rows[at<int>(0x660c)];
-        u = *(vector4*)sr->base;
+        vector4 u, t20;
+        u = *(vector4*)g_env_rows[at<int>(0x660c)].base;
         float scale = (u.x * 3.0f + 1.0f) * 0.400000006f;
         Entity* fx = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
         at<Entity*>(0x65b8) = fx;
@@ -752,6 +800,7 @@ void Mission::start_setup()
         at<Entity*>(0x65b8)->v6(&far_clip);
         rgl::matrix mx;
         u.x = 0.0f; u.y = 0.0f; u.z = 0.0f;
+        mat3 tmp;
         *(mat3*)&mx.s = *identity3(&tmp);
         t20.x = at<float>(0x6618) * 0.349999994f;
         t20.y = at<float>(0x661c) * 0.349999994f;
@@ -774,14 +823,10 @@ void Mission::start_setup()
                     em->vc4 = t20;
                     em->vb4 = t20;
                     norm3(&em->vb4.x);
-                    em->f198 = at<float>(0x6600) * em->f198;
-                    em->fa0 = 11.0f / (float)(10.0 / em->f24);
-                    em->curve[2].v = scale * em->curve[2].v;
-                    em->curve[3].v = scale * em->curve[3].v;
-                    em->curve[4].v = scale * em->curve[4].v;
-                    em->curve[5].v = scale * em->curve[5].v;
-                    em->curve[6].v = scale * em->curve[6].v;
-                    em->curve[7].v = scale * em->curve[7].v;
+                    em->f198 *= at<float>(0x6600);
+                    RAWAT(float, em, 0xa0) = 11.0f / (float)(10.0 / em->f24);   // a float in the original (0x486a..: fstp [esi+0xa0]); psys::fa0 is declared int
+                    for (int c = 2; c < 8; c++)
+                        em->curve[c].v = scale * em->curve[c].v;
                     at<Entity*>(0x65b8)->v25(em);
                 }
             }
@@ -795,15 +840,11 @@ void Mission::start_setup()
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
                     em->vc4 = t20;
-                    em->curve[2].v = scale * em->curve[2].v;
-                    em->curve[3].v = scale * em->curve[3].v;
-                    em->curve[4].v = scale * em->curve[4].v;
-                    em->curve[5].v = scale * em->curve[5].v;
-                    em->curve[6].v = scale * em->curve[6].v;
-                    em->curve[7].v = scale * em->curve[7].v;
+                    for (int c = 2; c < 8; c++)
+                        em->curve[c].v = scale * em->curve[c].v;
                     em->vb4 = t20;
                     norm3(&em->vb4.x);
-                    em->f198 = at<float>(0x6600) * em->f198;
+                    em->f198 *= at<float>(0x6600);
                     at<Entity*>(0x65b8)->v25(em);
                 }
             }
@@ -819,32 +860,33 @@ void Mission::start_setup()
         at<Entity*>(0x65c0) = eb;
         float two = 2.0f;
         eb->v6(&two);
-        at<Mesh*>(0x65c4) = new Mesh;
-        at<Mesh*>(0x65c4)->at<unsigned>(0x10c) &= 0xfffeffff;
-        at<Mesh*>(0x65c4)->at<int>(0x114) = 1;
-        at<Mesh*>(0x65c4)->at<int>(0x140) = 1;
+        at<Mesh*>(0x65c4) = (Mesh*)new rgl::mesh;
+        RAWAT(unsigned, at<Mesh*>(0x65c4), 0x10c) &= 0xfffeffff;
+        RAWAT(int, at<Mesh*>(0x65c4), 0x114) = 1;
+        RAWAT(int, at<Mesh*>(0x65c4), 0x140) = 1;
         {
             Entity* e2 = at<Entity*>(0x65c0);
             int mi = (int)at<Mesh*>(0x65c4);
-            e2->at<std::vector<int> >(0x118).push_back(mi);
+            RAWAT(std::vector<int>, e2, 0x118).push_back(mi);
             e2->v4();
         }
         {
             tstring nm("sun");
             at<Mesh*>(0x65c8) = (Mesh*)g_resmgr.get_object(&nm)->clone();
         }
-        at<Mesh*>(0x65c8)->at<int>(0x114) = 1;
-        at<Mesh*>(0x65c8)->at<int>(0x140) = 1;
+        RAWAT(int, at<Mesh*>(0x65c8), 0x114) = 1;
+        RAWAT(int, at<Mesh*>(0x65c8), 0x140) = 1;
         float c = (1.0f - 150.0f / (at<float>(0x6610) + 150.0f)) * g_env_rows[at<int>(0x660c)].size * 0.899999976f;
+        vector4 u;
         u.x = u.y = u.z = c;
-        at<Mesh*>(0x65c8)->at<unsigned>(0x3c) = rgl::pack_color(&u);
-        at<Mesh*>(0x65c8)->at<unsigned>(0x3c) |= 0xff000000;
-        at<Mesh*>(0x65c8)->at<unsigned>(0x10c) &= 0xfffeffff;
+        RAWAT(unsigned, at<Mesh*>(0x65c8), 0x3c) = rgl::pack_color(&u);
+        RAWAT(unsigned, at<Mesh*>(0x65c8), 0x3c) |= 0xff000000;
+        RAWAT(unsigned, at<Mesh*>(0x65c8), 0x10c) &= 0xfffeffff;
         at<Mesh*>(0x65c8)->scale(50.0f);
         {
             Entity* e2 = at<Entity*>(0x65c0);
             int mi = (int)at<Mesh*>(0x65c8);
-            e2->at<std::vector<int> >(0x118).push_back(mi);
+            RAWAT(std::vector<int>, e2, 0x118).push_back(mi);
             e2->v4();
         }
     }
@@ -863,13 +905,13 @@ void Mission::start_setup()
     {
         Entity* e2 = at<Entity*>(0x65d0);
         int mi = (int)at<Mesh*>(0x65d4);
-        e2->at<std::vector<int> >(0x118).push_back(mi);
+        RAWAT(std::vector<int>, e2, 0x118).push_back(mi);
         e2->v4();
     }
-    at<Mesh*>(0x65d8) = new Mesh;
+    at<Mesh*>(0x65d8) = (Mesh*)new rgl::mesh;
     {
         tstring nm("vertex_color_add_mat");
-        at<Mesh*>(0x65d8)->at<void*>(0x2c) = g_resmgr.get_material(nm);
+        RAWAT(void*, at<Mesh*>(0x65d8), 0x2c) = g_resmgr.get_material(nm);
     }
     at<Entity*>(0x65d0)->add_extra(at<Mesh*>(0x65d8));
     at<int>(0x65dc) = 0;
@@ -878,10 +920,10 @@ void Mission::start_setup()
         float f33 = 33.5f;
         at<Entity*>(0x65dc)->v6(&f33);
     }
-    at<Mesh*>(0x65e0) = new Mesh;
+    at<Mesh*>(0x65e0) = (Mesh*)new rgl::mesh;
     {
         tstring nm("vertex_color_add_mat");
-        at<Mesh*>(0x65e0)->at<void*>(0x2c) = g_resmgr.get_material(nm);
+        RAWAT(void*, at<Mesh*>(0x65e0), 0x2c) = g_resmgr.get_material(nm);
     }
     at<Entity*>(0x65dc)->add_extra(at<Mesh*>(0x65e0));
     at<Entity*>(0x65e4) = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
@@ -889,9 +931,9 @@ void Mission::start_setup()
         float f33 = 33.5f;
         at<Entity*>(0x65e4)->v6(&f33);
     }
-    at<Entity*>(0x65d0)->at<char>(0x140) = 0;
-    at<Entity*>(0x65dc)->at<char>(0x140) = 0;
-    at<Entity*>(0x65e4)->at<char>(0x140) = 0;
+    RAWAT(char, at<Entity*>(0x65d0), 0x140) = 0;
+    RAWAT(char, at<Entity*>(0x65dc), 0x140) = 0;
+    RAWAT(char, at<Entity*>(0x65e4), 0x140) = 0;
 
     // ---- counters, light table ground snap -------------------------------------------------------
     for (int i = 0; i < 8; i++)
@@ -902,29 +944,30 @@ void Mission::start_setup()
     at<int>(0x6524) = 0;
     at<char>(0x6338) = 0;
     for (int k = 0; k < 0x40; k++) {
-        SceneSlot* s = &slots[k];
         float outY;
-        s->face = 0;
+        Timer* tm = &SLOT(k).timer;
+        void** fp = &SLOT(k).face;
+        *fp = 0;
         int n = 0;
         do {
-            ((rgl::world*)at<rgl::world*>(0))->floor_at(&s->B.o.x, &outY, (face**)&s->face);     // 0x439be0
-            if (s->face == 0) {
-                s->B.o.x = (frand() - 0.5f) * 0.01f + s->B.o.x;
-                s->B.o.y = (frand() - 0.5f) * 0.01f + s->B.o.y;
+            ((rgl::world*)at<rgl::world*>(0))->floor_at(&SLOT(k).B.o.x, &outY, (face**)fp);     // 0x439be0
+            if (*fp == 0) {
+                SLOT(k).B.o.x = (frand() - 0.5f) * 0.01f + SLOT(k).B.o.x;
+                SLOT(k).B.o.y = (frand() - 0.5f) * 0.01f + SLOT(k).B.o.y;
                 n++;
                 if (n > 100) {
-                    s->B.o.x = (frand() - 0.5f) * 100.0f;
-                    s->B.o.y = (frand() - 0.5f) * 100.0f;
+                    SLOT(k).B.o.x = (frand() - 0.5f) * 100.0f;
+                    SLOT(k).B.o.y = (frand() - 0.5f) * 100.0f;
                     if (n > 10000)
-                        s->face = *RAWAT(void**, at<rgl::world*>(0), 0x58);
+                        *fp = *RAWAT(void**, at<rgl::world*>(0), 0x58);
                 }
             }
-        } while (s->face == 0);
-        s->B.o.z = outY;
-        s->C = s->B;
-        s->D = s->B;
-        s->start = g_ticks[s->clock];
-        s->f120 = 0;
+        } while (*fp == 0);
+        SLOT(k).B.o.z = outY;
+        SLOT(k).C = SLOT(k).B;
+        SLOT(k).D = SLOT(k).B;
+        tm->restamp();
+        SLOT(k).f120 = 0;
         copy_slot(k);
     }
 
@@ -954,10 +997,11 @@ void Mission::start_setup()
 
     // ---- placed-prop jitter + ground snap ----------------------------------------------------------
     for (unsigned i = 0; i < props.size(); i++) {
-        PlacedObj* p = &at<PlacedObj*>(0x668c)[i];
+        PlacedObj* p = &at<std::vector<PlacedObj> >(0x6688)[i];
         if (RAWAT(int, p, 0x188) == 0 && (g_propkinds[RAWAT(int, p, 0x18c)].flags & 0x1000)) {
             float outY;
             void* sink;
+            vector4 v;
             v = at<vector4>(0x6598);
             v.x = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.x;
             v.y = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.y;
@@ -989,11 +1033,11 @@ void Mission::start_setup()
 // ---------------------------------------------------------------------------
 // @ 0x4875a0 (same code as round_float 0x432540; a long long is what keeps the add/adc pair)
 // ---------------------------------------------------------------------------
-int __cdecl near_round(const float* p)
+long long __cdecl near_round(const float* p)
 {
     float fl = (float)floor((double)*p);
     long long i = (long long)fl;
-    if (!(*p - fl <= 0.5f))
-        i += 1;
-    return (int)i;
+    if (*p - fl <= 0.5f)
+        return i;
+    return i + 1;
 }

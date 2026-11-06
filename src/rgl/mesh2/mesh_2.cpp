@@ -18,6 +18,7 @@
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10, stamp 0x4c1ee0)
 #include "../scene/world.h"                // rgl::world: ~world 0x475d50 (the grid's destructor body, called without the delete)
 #include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
+#include "../../include/wl_marker.h"            // WL_MARKER: the original's inline WinLicense region markers
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 std::vector<RegSkeleton> g_skeletons;                           // 0xa180e8 (constructed and destroyed by the compiler)
@@ -64,39 +65,31 @@ void C4c3050::frame_update(float)
     }
 }
 
+static __forceinline void release_buckets(tstring** p, int n)
+{
+    do {
+        p -= 4;
+        if (p[0]) {
+            tstring* last = p[1];
+            for (tstring* s = p[0]; s != last; s++)
+                s->~tstring();
+            operator delete(p[0]);
+        }
+        p[0] = 0;
+        p[1] = 0;
+        p[2] = 0;
+        n--;
+    } while (n != 0);
+}
+
 // @ 0x4ca720
 // Releases both hash tables of the translation table: every bucket's strings, then its buffer.
 void StrTable::release_strings()
 {
-    lang_bucket* p = &vals[0xdf3];
-    int n = 0xdf3;
-    do {
-        p--;
-        if (p->myfirst) {
-            for (tstring* s = p->myfirst; s != p->mylast; s++)
-                s->~tstring();
-            operator delete(p->myfirst);
-        }
-        p->myfirst = 0;
-        p->mylast = 0;
-        p->myend = 0;
-        n--;
-    } while (n != 0);
-
-    p = &keys[0xdf3];
-    n = 0xdf3;
-    do {
-        p--;
-        if (p->myfirst) {
-            for (tstring* s = p->myfirst; s != p->mylast; s++)
-                s->~tstring();
-            operator delete(p->myfirst);
-        }
-        p->myfirst = 0;
-        p->mylast = 0;
-        p->myend = 0;
-        n--;
-    } while (n != 0);
+    language.~tstring();
+    notfound.~tstring();
+    release_buckets(&vals[0xdf3].myfirst, 0xdf3);
+    release_buckets(&keys[0xdf3].myfirst, 0xdf3);
 }
 
 // @ 0x4ca8c0
@@ -307,14 +300,17 @@ again:
 bool graph_obj::split_edge(int e)
 {
     int count = 0;
-    int i;
-    int idx = 0;
     if (e == -1) {
-        for (i = 0; i < (edges ? (int)(edges_end - edges) : 0); i++) {
+        unsigned i = 0;
+        e = -1;
+        while (1) {
+            if (!edges || i >= (unsigned)(edges_end - edges))
+                break;
             if (edges[i].sel) {
                 count++;
                 e = i;
             }
+            i++;
         }
         if (count != 1)
             return false;
@@ -324,45 +320,46 @@ bool graph_obj::split_edge(int e)
     graph_face* f0 = &faces[edges[e].f0];
     if (f0->count != 3)
         return false;
-    graph_face* f1 = &faces[edges[e].f1];
-    if (f1->count != 3)
+    int f1 = edges[e].f1;
+    if (faces[f1].count != 3)
         return false;
 
-    int i0 = -1, i1 = -1;
+    int i0 = -1;
+    int i1 = -1;
     if (f0->ends[0] == e)
         i0 = 0;
-    if (f1->ends[0] == e)
+    if (faces[f1].ends[0] == e)
         i1 = 0;
     if (f0->ends[1] == e)
         i0 = 1;
-    if (f1->ends[1] == e)
+    if (faces[f1].ends[1] == e)
         i1 = 1;
     if (f0->ends[2] == e)
         i0 = 2;
-    if (f1->ends[2] == e)
+    if (faces[f1].ends[2] == e)
         i1 = 2;
 
+    // ring order (0x4cb530..0x4cb5c3): f0's next two entries, then f1's next two
     int xs[4];
     int ys[4];
-    // ring order (0x4cb530..0x4cb5c3): f0's next two entries, then f1's next two
-    xs[0] = f0->verts[(i0 + 1) % 3];
-    ys[0] = f0->ends[(i0 + 1) % 3];
-    xs[1] = f0->verts[(i0 + 2) % 3];
-    ys[1] = f0->ends[(i0 + 2) % 3];
-    xs[2] = f1->verts[(i1 + 1) % 3];
-    ys[2] = f1->ends[(i1 + 1) % 3];
-    xs[3] = f1->verts[(i1 + 2) % 3];
-    ys[3] = f1->ends[(i1 + 2) % 3];
+    xs[0] = faces[edges[e].f0].verts[(i0 + 1) % 3];
+    ys[0] = faces[edges[e].f0].ends[(i0 + 1) % 3];
+    xs[2] = faces[f1].verts[(i1 + 1) % 3];
+    ys[2] = faces[f1].ends[(i1 + 1) % 3];
+    xs[1] = faces[edges[e].f0].verts[(i0 + 2) % 3];
+    ys[1] = faces[edges[e].f0].ends[(i0 + 2) % 3];
+    xs[3] = faces[f1].verts[(i1 + 2) % 3];
+    ys[3] = faces[f1].ends[(i1 + 2) % 3];
 
-    f0->verts[0] = xs[0];
-    f0->verts[1] = xs[1];
-    f0->verts[2] = xs[2];
-    f0->verts[3] = xs[3];
-    f0->ends[0] = ys[0];
-    f0->ends[1] = ys[1];
-    f0->ends[2] = ys[2];
-    f0->ends[3] = ys[3];
-    f0->count = 4;
+    faces[edges[e].f0].ends[0] = ys[0];
+    faces[edges[e].f0].verts[0] = xs[0];
+    faces[edges[e].f0].ends[1] = ys[1];
+    faces[edges[e].f0].verts[1] = xs[1];
+    faces[edges[e].f0].ends[2] = ys[2];
+    faces[edges[e].f0].verts[2] = xs[2];
+    faces[edges[e].f0].ends[3] = ys[3];
+    faces[edges[e].f0].verts[3] = xs[3];
+    faces[edges[e].f0].count = 4;
     remove_edge(e);
     ((PolyMesh*)this)->build_adjacency();   // 0x470920
     return true;
@@ -831,11 +828,10 @@ void MissionObj::read(stream_base* s)
     tstring t1;
     s->r_tstr(&t0);
     if (t0.len > 1 && t0.differs(g_none)) {
-        std::vector<rgl::mesh*> nodes = g_resmgr.find_meshes(&t0);
-        nodes_ = nodes;
+        nodes_ = g_resmgr.find_meshes(&t0);
         unsigned j = 0;
         while (1) {
-            if (nodes_.size() <= j)
+            if (j >= nodes_.size())
                 break;
             vector4 a, b;
             mesh_node_bounds(nodes_[j], &a, &b);
@@ -875,13 +871,15 @@ MissionRec2::MissionRec2()
 // Two 18-byte WinLicense markers (jmp +0x10 over "WL  " data) sit inside the original; cl cannot emit them.
 Terrain::Terrain()
 {
+    WL_MARKER(12)
     sun_ambient = rgl::vector4(0.2f, 0.2f, 0.2f);
-    sun_diffuse = rgl::vector4(0.6f, 0.55f, 0.5f);       // the w lane (+0x843bd48) is the uninitialised w of the temporary
     scale = 2.0f;
     block = 0x28;
+    sun_diffuse = rgl::vector4(0.6f, 0.55f, 0.5f);       // the w lane (+0x843bd48) is the uninitialised w of the temporary
     flag843bd75 = 0;
     pad_843bd74 = 0;
     *(int*)pad280 = 0;
     n284 = 2;
+    WL_MARKER(13)
     reset();
 }

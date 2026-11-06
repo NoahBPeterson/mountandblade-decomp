@@ -6,3 +6,6 @@
 ../src/game/char_sheet/editor_ui.cpp  ?refresh_dialog@EditorApp@@QAEXXZ  004f6390  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ?uninit_fill@@YAXPAUNameVecRec@@IABU1@PAURecAlloc@@@Z  004f65f0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ?insert_n@TextRowVec@@QAEPAUTextRow@@PAU2@IABU2@@Z  004f6360  /O2 /MT /Gy /TP
+../src/game/char_sheet/editor_ui.cpp  ?destroy_range@@YAXPAUNameVecRec@@0@Z  004f6680  /O2 /MT /Gy /TP
+../src/game/char_sheet/editor_ui.cpp  ?OneTimeSceneInit@GameApp@@UAEJXZ  004f63c0  /O2 /MT /Gy /TP
+../src/game/char_sheet/editor_ui.cpp  ?make_scrollbar@@YAPAUUiD@@PAXPBUtstring@@@Z  004f6160  /O2 /MT /Gy /TP

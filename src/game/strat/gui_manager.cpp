@@ -190,6 +190,7 @@ gui_manager::gui_manager()
     reset();
     panel_color = f1718 = -1;
     *(vec2*)&p24a = gm_vec2(0.0f, 0.0f);
+    *(vec2*)&p24a = gm_vec2(0.0f, 0.0f);
     *(vec2*)&mouse[0] = gm_vec2(0.0f, 0.0f);
     vec2 prev = gm_vec2(0.0f, 0.0f);
     show_cursor = 1;

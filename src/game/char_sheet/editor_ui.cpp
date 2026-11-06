@@ -1,3 +1,4 @@
+#define UIB_CTOR_OUT_OF_LINE   // O2 inlines the correctly ordered body below at the make_slider call site (0x48b4b0)
 #include "../../include/image_addrs.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
@@ -14,6 +15,15 @@
 #include "../game_globals.h"      // canonical g_trial_mode (listed directly: the audit reads only the source's own includes)
 #include "../config/core.h"      // GameApp: OneTimeSceneInit is vtable slot 4 of the application object
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+// UiB's constructor 0x48b4b0 as inlined at the call sites: the base constructor, the vptr, then f178, f17c,
+// v168, f180, f184 (ui_widgets.h's generic inline body orders the stores differently).
+__forceinline UiB::UiB() { f178 = 0; f17c = 0.008f; v168 = 1.0f; f180 = 0; f184 = 0; }
+
+// UiD's constructor 0x48b890 as inlined at the call sites: the base constructor, the vptr, then f178, f17c,
+// v168, f180, f184.
+__forceinline UiD::UiD() { f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
+
 struct Font;
 extern Font* g_font;                                        // 0x5e2934
 
@@ -106,16 +116,17 @@ UiB* __cdecl make_slider(void* parent, const tstring* name)
         w = 0;
     label_refresh(w, *name);
     float h = w->screen[0];
-    {
-        float size[2];
-        size[0] = h * 0.25f;
-        size[1] = h * 0.03f;
-        w->set_xy(size);
-    }
+    float size[2];
+    size[0] = h * 0.25f;
+    size[1] = h * 0.03f;
+    w->set_xy(size);
     mesh* track = load_mesh("slider_hor");
     mesh* handle = load_mesh("handle_hor");
     if (h != 1.0f) {
-        rgl::vector4 c(h, h, h);
+        rgl::vector4 c;
+        c.x = h;
+        c.y = h;
+        c.z = h;
         track->set_color(c);
         handle->set_color(c);
     }
@@ -134,11 +145,13 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
     else
         w = 0;
     label_refresh(w, *name);
-    float a = w->screen[0] * 50.0f;
+    rgl::vector4 col;
+    col.x = w->screen[0] * 50.0f;
     w->f178 = 1;
-    float b = w->screen[1] * 1.5576323f;
-    w->f17c = b * 0.31f;
-    rgl::vector4 col(a, b, 1.0f);
+    float y = w->screen[1] * 1.5576323f;
+    col.y = y;
+    col.z = 1.0f;
+    w->f17c = y * 0.31f;
     mesh* m1;
     {
         tstring n("scrollbar");
@@ -175,12 +188,15 @@ Camera* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
 }
 
 // @ 0x4f6360
+struct SubVec {                                 // the record's inner vector (allocator word in front)
+    void* alloc;                                // +0x00
+    void* first;                                // +0x04
+    void* last;                                 // +0x08
+    void* end;                                  // +0x0c
+};
 struct NameVecRec {                             // 0x20 bytes: a name and a vector (renamed from Rec20: agent/agent.h Rec20 is the g_tbl20 record)
     tstring name;                               // +0x00
-    void* vec_begin;                            // +0x10
-    int vec_end;                                // +0x14
-    int vec_cap;                                // +0x18
-    void* f1c;                                  // +0x1c
+    SubVec items;                               // +0x10
 };
 struct RecAlloc {};
 struct UiRow;
@@ -221,18 +237,24 @@ void uninit_fill(NameVecRec* first, unsigned n, const NameVecRec& v, RecAlloc* a
 // arguments (the two range pointers), the caller passes the sub-object and the range start as well
 // (the extra parameters were folded away by the linker).
 // (0x4d10f0 is item_modifier_array_dtor, editor_ui.h)
+struct ptr_tag {};   // the range destructor's by-value iterator tag: an empty class, pushed from an unwritten slot
 void __cdecl destroy_range(NameVecRec* first, NameVecRec* last)
 {
-    for (; first != last; ++first) {
-        void** v = (void**)((char*)first + 0x14);
-        if (*v != 0) {
-            item_modifier_array_dtor((item_modifier*)*v, (item_modifier*)v[1]);
-            ::operator delete(*v);
-        }
-        *v = 0;
-        v[1] = 0;
-        v[2] = 0;
-        first->name.~tstring();
+    if (first != last) {
+        void** b = (void**)&first->items.first;
+        do {
+            if (*b != 0) {
+                ptr_tag tag;
+                ((void (__cdecl*)(void*, void*, void*, ptr_tag))item_modifier_array_dtor)(b[0], b[1], b - 1, tag);
+                ::operator delete(*b);
+            }
+            b[0] = 0;
+            b[1] = 0;
+            b[2] = 0;
+            first->name.~tstring();
+            first++;
+            b = (void**)((char*)b + sizeof(NameVecRec));
+        } while (first != last);
     }
 }
 
@@ -251,6 +273,7 @@ void EditorApp::refresh_dialog()
 HRESULT GameApp::OneTimeSceneInit()
 {
     srand(timeGetTime());
+    WL_MARKER(4)
     g_batch.init_formats();   // 0x4bc5b0
     g_log.name.assign("rgl_log.txt");
     FILE* f = fopen("rgl_log.txt", "w");
@@ -263,7 +286,7 @@ HRESULT GameApp::OneTimeSceneInit()
         g_log.failed = ok;
     }
     g_log.autoflush = ok;
-    g_log.w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
+    ((stream_base&)g_log).w_cstr("Starting new log file.\n");   // virtual slot +0x28 (0x4f6441 call [eax+0x28]); text_stream::w_cstr 0x4153a0 at run time
     g_resmgr.root = g_module_path;
     bool b = g_cfg.enable_edit_mode != 0;
     g_resmgr.editor_cc = b;
@@ -292,16 +315,20 @@ HRESULT GameApp::OneTimeSceneInit()
     {
         FontDef* p = (FontDef*)::operator new(0x386c);
         if (p != 0)
-            p = (FontDef*)new (p, raw_place()) Font;   // 0x4d99d0
-        g_font = (Font*)p;
+            g_font = (Font*)new (p, raw_place()) Font;   // 0x4d99d0
+        else
+            g_font = (Font*)p;
     }
     {
         tstring n("Data\\font_data.xml");
         g_font->load((const char*)&n);   // 0x4d9aa0
     }
     g_gui.reset_geometry();   // 0x4f658d calls 0x4e64b0 (the message log's 32+32 meshes), not gui_manager::reset 0x42d1b0
+    WL_MARKER(5)
     init_mission_trigger_records();
+    WL_MARKER(12)
     g_5e29a4 = g_trial_mode;
     g_windows.set_state(2);
+    WL_MARKER(13)
     return 0;
 }

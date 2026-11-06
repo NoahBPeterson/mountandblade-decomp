@@ -85,7 +85,6 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
     // c is reused throughout, as in the original: cross-product scratch, then colour (r, g, b, a), then the
     // quad's first corner and finally the four corner indices
     union { float col[4]; int idx[4]; } c;
-    vector4& t = *(vector4*)c.col;
     // the views psys.h used to declare as members: five curve4 over the ten float pairs, the quad's half size and uvs
     curve4& a = *(curve4*)&curve[0];
     curve4& r = *(curve4*)&curve[2];
@@ -95,7 +94,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
     float& half_w = half.u;
     float& half_h = half.v;
     float& brightness = vd8.x;
-    vec2* uv = (vec2*)quad;
+    vector4& t = *(vector4*)c.col;
     unsigned type = flags & 0xf00;
     if (type == 0x100) {
         vector4 d;
@@ -222,13 +221,13 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
         int f5c;
         int v0, v1, v2, v3;
         f5c = 0; colorv = color;
-        v0 = out->add_vertex(c.idx[0], &uv[0], &colorv, &m->f, &f5c);
+        v0 = out->add_vertex(c.idx[0], &((vec2*)quad)[0], &colorv, &m->f, &f5c);
         f5c = 0; colorv = color;
-        v1 = out->add_vertex(c.idx[1], &uv[1], &colorv, &m->f, &f5c);
+        v1 = out->add_vertex(c.idx[1], &((vec2*)quad)[1], &colorv, &m->f, &f5c);
         f5c = 0; colorv = color;
-        v2 = out->add_vertex(c.idx[2], &uv[2], &colorv, &m->f, &f5c);
+        v2 = out->add_vertex(c.idx[2], &((vec2*)quad)[2], &colorv, &m->f, &f5c);
         f5c = 0; colorv = color;
-        v3 = out->add_vertex(c.idx[3], &uv[3], &colorv, &m->f, &f5c);
+        v3 = out->add_vertex(c.idx[3], &((vec2*)quad)[3], &colorv, &m->f, &f5c);
         out->add_face(v0, v1, v2);
         out->add_face(v0, v2, v3);
     }

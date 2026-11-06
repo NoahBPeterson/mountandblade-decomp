@@ -63,7 +63,7 @@ void rgl::world::relocate(shape_base* o)
                     grid_cell* c = &((grid_cell**)cells)[p.x][p.y];
                     c->remove(o);
                     shape_list::node* h = c->objs.head;
-                    shape_list::node* n = h->next;
+                    shape_list::node* n = c->objs.head->next;
                     while (n != h) {
                         if (n->obj == o)
                             break;
@@ -257,7 +257,7 @@ vector4 face_normal(const vector4* a, const vector4* b, const vector4* c)
 }
 
 // @ 0x4246f0
-ground_g136::ground_g136()
+__declspec(noinline) ground_g136::ground_g136()
 {
     f24 = 0;
     f6c = 0;

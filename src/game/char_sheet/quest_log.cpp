@@ -95,7 +95,6 @@ static inline const float* float2_arg(const float2& v) { return &v.x; }
 static inline float quest_list_height(float h) { return 0.56f > h ? 0.56f : h; }
 
 // the list frame expands the container constructor (0x4ee590); NodeA calls 0x4931a0
-inline ContainerBase::ContainerBase() {}
 
 // @ 0x4ee230
 void Rec454::init_screen()

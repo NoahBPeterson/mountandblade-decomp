@@ -133,10 +133,14 @@ int GameData::battle_root(int party)
 {
     PartyMgr* pm = &parties;
     int cur = party;
-    Party* p = party_of(pm, cur);
-    while (p->f8c8 >= 0) {
-        cur = p->f8c8;
-        p = party_of(pm, cur);
+    Party* p = party_of(&parties, cur);
+    if (p->f8c8 >= 0) {
+        std::vector<Party*>::iterator pg = pm->pages.begin();
+        do {
+            cur = p->f8c8;
+            int k = pm->lookup(cur);
+            p = (Party*)((char*)*(pg + (k >> 4)) + (k & 0xf) * 0x5ac8);
+        } while (p->f8c8 >= 0);
     }
     return cur;
 }

@@ -6,6 +6,7 @@
 #include "../terrain_b/scene_file.h"
 #include "../strat/gui_manager.h"
 #include "../render_batch.h"                // render_batch, g_batch (0x5fe898): render 0x47e520
+#include "../world_data/thiscall_free.h"    // CALL_STDCALL_ON (clear_f14 with g_resmgr in ecx)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/render_flags.h"
 
@@ -204,7 +205,8 @@ NOINL void ShadowMapP::build_sw()
         target = (ShSkin*)g_resmgr.get_shadow_skin(w, h, 0x1c, 0);
         if (target != 0) {
             target->file.assign("shadow_shader");
-            target->shader = (int)g_resmgr.resolve_shader(target->file);      // 0x418e90
+            ShSkin* t = target;
+            t->shader = (int)g_resmgr.resolve_shader(t->file);      // 0x418e90
             target->id = 0x108;
             target->refs[0]->f24 = 0x300000;
         }
@@ -221,7 +223,7 @@ NOINL void ShadowMapP::build_sw()
         g_batch.render(&SC);
     }
     if (target2 != 0) {
-        clear_f14((named_object*)target2);          // 0x4175f0
+        CALL_STDCALL_ON(clear_f14, &g_resmgr, target2);          // 0x4175f0 (the resource manager in ecx)
         target2 = 0;
     }
 }

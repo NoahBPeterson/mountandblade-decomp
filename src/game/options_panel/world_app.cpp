@@ -247,14 +247,16 @@ struct HashTab {
 void HashTab::insert(HOut* out, unsigned* key)
 {
     unsigned count = f24;
-    unsigned n = f14 ? (unsigned)(((char*)f18 - (char*)f14) >> 2) : 0u;
+    std::vector<scalar4>* vec = (std::vector<scalar4>*)(void*)((char*)this + 0x10);
     if (f24 <= (unsigned)f0c >> 2) {               // 0x4d3c0d: shr (unsigned)
+        unsigned n = f14 ? (unsigned)(((char*)f18 - (char*)f14) >> 2) : 0u;
         if (count < n - 1) {
             if (f20 < count)
                 f20 = f20 * 2 + 1;
         } else {
-            f20 = n * 2 - 3;
-            { scalar4 sen; sen.v = (int)pool.sentinel; ((std::vector<scalar4>*)(void*)((char*)this + 0x10))->resize(n * 2 - 1, sen); }   // 0x4cd010
+            unsigned n2 = f14 ? (unsigned)(((char*)f18 - (char*)f14) >> 2) : 0u;
+            f20 = n2 * 2 - 3;
+            { scalar4 sen; sen.v = (int)pool.sentinel; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
         }
         unsigned idx = count - (f20 >> 1) - 1;
         HNode* p = f14[idx];
@@ -266,16 +268,16 @@ void HashTab::insert(HOut* out, unsigned* key)
                 } else {
                     q = p->next;
                     if (q != pool.sentinel) {
-                        HNode* b = f14[idx];
                         unsigned u = idx;
-                        while (p == b) {
+                        while (p == f14[u]) {
                             f14[u] = q;
                             if (u == 0)
                                 break;
                             u = u - 1;
-                            b = f14[u];
                         }
                         HNode* s = pool.sentinel;
+                        list_node* pl = &pool;
+                        if (pl) pl->grow(0);
                         *(HNode**)p->prev = q;
                         *(HNode**)q->prev = s;
                         *(HNode**)s->prev = p;
@@ -302,8 +304,9 @@ void HashTab::insert(HOut* out, unsigned* key)
     unsigned i = (k ^ 0xdeadbeef) & f20;
     if (f24 <= i)
         i = i + (-1 - (f20 >> 1));
-    HNode* p = f14[i + 1];
-    if (p != f14[i]) {
+    HNode** b = f14 + i;
+    HNode* p = b[1];
+    if (p != b[0]) {
         do {
             p = p->prev;
             if ((int)p->key <= (int)k) {
@@ -315,20 +318,22 @@ void HashTab::insert(HOut* out, unsigned* key)
                 p = p->next;
                 break;
             }
-        } while (p != f14[i]);
+        } while (p != b[0]);
     }
     HNode* nn = (HNode*)list_int_make_node((list_int*)&pool, 0, p, p->prev, key);
     pool.grow(1);
     p->prev = nn;
     *(HNode**)nn->prev = nn;
     HNode* q = (HNode*)p->prev;
-    if (p == f14[i]) {
+    b = f14 + i;
+    if (p == b[0]) {
         do {
-            f14[i] = q;
+            b[0] = q;
             if (i == 0)
                 break;
             i = i - 1;
-        } while (p == f14[i]);                      // 0x4d3e13: cmp edi, [f14+i*4]; je back
+            b = f14 + i;
+        } while (p == b[0]);
     }
     out->node = q;
     out->inserted = 1;
@@ -351,8 +356,9 @@ void TreeW::erase(void* p1, void* p2)
 void TreeW::insert(void** out, void* a, void* b)
 {
     if (a != b) {
-        E176* p = std::_Copy_opt((E176*)b, (E176*)f8, (E176*)a, std::_Nonscalar_ptr_iterator_tag());
-        std::_Destroy_range(p, (E176*)f8, *(std::allocator<E176>*)(void*)this, std::_Nonscalar_ptr_iterator_tag());
+        std::_Nonscalar_ptr_iterator_tag tag;
+        E176* p = std::_Copy_opt((E176*)b, (E176*)f8, (E176*)a, tag);
+        std::_Destroy_range(p, (E176*)f8, *(std::allocator<E176>*)(void*)this);
         f8 = p;
     }
     *out = a;

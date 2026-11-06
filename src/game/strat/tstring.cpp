@@ -348,7 +348,10 @@ tstring tstring::strip_tags() const
         start = find('>', lt) + 1;
         if (start >= 0) lt = find('<', start);
     }
-    r.append(substr(start < 0 ? lt : start, len));
+    if (start >= 0)
+        r.append(substr(start, len));
+    else
+        r.append(substr(lt, len));
     return r;
 }
 // @ 0x42c7a0

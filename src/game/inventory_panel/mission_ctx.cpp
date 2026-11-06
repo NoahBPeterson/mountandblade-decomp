@@ -143,17 +143,19 @@ void MapFlags::commit(char* out)
 
     if (f1 != 0) {
         if (f8 <= 0 && g_game->fb0 == 0)
-            g_game->fb0 = 1;
-        if (g_game->fb0 != 0) {
-            g_mission_ctx.setup(g_game->fb0, 0);
-            g_game->fb0 = 0;
+            g_game->fb0 |= 1;
+        int& fb0 = g_game->fb0;
+        if (fb0 != 0) {
+            g_mission_ctx.setup(fb0, 0);
+            fb0 = 0;
         }
         f1 = 0;
     }
 
-    if (GD_I(0xa8) != 0) {
-        g_mission_ctx.setup(GD_I(0xa8), 0);
-        GD_I(0xa8) = 0;
+    int& a8 = GD_I(0xa8);
+    if (a8 != 0) {
+        g_mission_ctx.setup(a8, 0);
+        a8 = 0;
     }
     GD_I(0xa8) = 0;
 
@@ -164,17 +166,19 @@ void MapFlags::commit(char* out)
         f1 = 1;
         g_mission_ctx.start_mission();
     }
-    else if (key == 2) {
-        g_mission_ctx.build_hero_table(g_mission_ctx.f140, -1, -1, 3);
-    }
-    else if (key == 0x40 || key == 0x20) {
-        if (key == 0x20) {
-            int p = g_mission_ctx.f13c;
-            g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 2);
+    else if (key == 2 || key == 0x40 || key == 0x20) {
+        if (key == 2) {
+            g_mission_ctx.build_hero_table(g_mission_ctx.f140, -1, -1, 3);
         }
         else if (key == 0x40) {
             int p = (&g_mission_ctx.ids[1])[-g_mission_ctx.side];
-            g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 4);
+            PartyMgr* pm = &g_game->parties;
+            g_mission_ctx.build_hero_table(*(int*)((char*)pm->get(p) + 0xac), -1, p, 4);
+        }
+        else {
+            int p = g_mission_ctx.f13c;
+            PartyMgr* pm = &g_game->parties;
+            g_mission_ctx.build_hero_table(*(int*)((char*)pm->get(p) + 0xac), -1, p, 2);
         }
     }
     else if (key == 0x10) {
@@ -252,7 +256,7 @@ void MapFlags::commit(char* out)
 }
 
 // @ 0x513b10
-unsigned MissionCtx::pop_key()
+unsigned __declspec(noinline) MissionCtx::pop_key()
 {
     unsigned* p = (unsigned*)g_bit;
 
@@ -468,20 +472,26 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
 {
     mode = tmpl;
     MI(this, 0x6520) = a4;
-    f5df8 = a3;
     f5df4 = a2;
+    f5df8 = a3;
     f6214 = a6;
     cnt[0] = 0;
     cnt[1] = 0;
     int p0 = ctx->party[0];
     if (p0 >= 0) {
-        cnt[0] = 0;
-        g_game->list_members(p0, (int*)list[0], (int*)&cnt[0]);
+        int* a = &cnt[0];
+        int* b = (int*)list[0];
+        GameData* g = g_game;
+        *a = 0;
+        g->list_members(p0, b, a);
     }
     int p1 = ctx->party[1];
     if (p1 >= 0) {
-        cnt[1] = 0;
-        g_game->list_members(p1, (int*)list[1], (int*)&cnt[1]);
+        int* a = &cnt[1];
+        int* b = (int*)list[1];
+        GameData* g = g_game;
+        *a = 0;
+        g->list_members(p1, b, a);
     }
     f6218 = a7;
     g_game->list_members(g_game->f78, (int*)(list[1] - a7 * 0x80), (int*)((char*)this + (0x1884 - a7) * 4));
@@ -510,13 +520,15 @@ void MissionV::init_scene()
     Team* tm = (Team*)((char*)this + 0x527c);
     for (; i < 8; i++, tm++)
         tm->init(i);
-    FrameTemp t;
-    t.pos.x = 0.0f;
-    t.pos.y = 0.0f;
-    t.pos.z = 0.0f;
-    t.out.m = *identity3(&t.rot);
-    *(rgl::vector4*)&t.out.a = t.pos;
-    *(FramePlacement*)((char*)this + 0x6624) = t.out;
+    rgl::vector4 pos;
+    mat3 rot;
+    FramePlacement out;
+    pos.x = 0.0f;
+    pos.y = 0.0f;
+    pos.z = 0.0f;
+    out.m = *identity3(&rot);
+    *(rgl::vector4*)&out.a = pos;
+    *(FramePlacement*)((char*)this + 0x6624) = out;
     g_terrain.reset();
     g_sound_mgr.stop_all();
     ((std::vector<int>*)((char*)this + 0x63c0))->resize(0, 0);

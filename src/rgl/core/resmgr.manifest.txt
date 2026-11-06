@@ -1,6 +1,7 @@
 ../src/rgl/core/resmgr.cpp  ?save_elem14@@YAPAUstream_base@@PAU1@PAUbone_influence@rgl@@@Z  00419190  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?save_frame@@YAPAUstream_base@@PAU1@PAUframe_t@rgl@@@Z  00419200  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?compute_bounds@mesh@rgl@@QAEXXZ  00419300  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  ?linearise_vertex_colors@mesh@rgl@@QAEXXZ  00419360  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ??1mesh_owner@@QAE@XZ  00419420  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?forget@mesh_owner@@QAEXXZ  00419470  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?save_keyframes@@YAPAUstream_base@@PAU1@PAUkeyframes@rgl@@@Z  004194c0  /O2  /MT  /Gy  /TP

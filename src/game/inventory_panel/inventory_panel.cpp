@@ -864,7 +864,9 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
         result = (int)value;
     } else {
         g_script.trigger_result.value = 100;
-        int mode = adjust ? 4 : 3;
+        int mode = 3;
+        if (adjust)
+            mode = 4;
         if (emit_event(mode, item->item, (int)value)) {
             result = (int)((float)g_script.trigger_result.value * value * 0.01f);
         } else {
@@ -874,10 +876,10 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
             float tf = *(float*)((char*)factions + row * 0x300 + 0x2c);
             // a bad relation weighs 3x, a good one 0.5x (0x512be7..0x512c75)
             if (tf < -1.0f)
-                tf = -1.0f * 3.0f;
+                tf = -1.0f;
             else if (tf > 1.0f)
-                tf = 1.0f * 0.5f;
-            else if (tf < 0.0f)
+                tf = 1.0f;
+            if (tf < 0.0f)
                 tf *= 3.0f;
             else
                 tf *= 0.5f;
@@ -1114,11 +1116,9 @@ void PartyWindow::add_cost(int delta)
         sprintf(buf, g_strtable.lookup(key)->c_str());
     }
     {
-        tstring_buffer out;
-        {
-            tstring msg(buf);
-            total_cost->set_text((float*)out.get(), &msg);
-        }
+        tstring msg(buf);
+        float sz[2];
+        total_cost->set_text(sz, &msg);
     }
 }
 
@@ -1130,11 +1130,11 @@ bool PartyWindow::try_place(ItemRef* item, int page, int slot)
     int id = item->item;
 
     if (id == -1)
-        return found;
+        goto done;
     if (test_slot_flag(page, slot, 1))
-        return found;
+        goto done;
     if (ITYPE(id) != 0xb)
-        return found;
+        goto done;
 
     if (page == 1) {
         int idx = w14;
@@ -1176,6 +1176,7 @@ bool PartyWindow::try_place(ItemRef* item, int page, int slot)
             g_gui.add(*g_strtable.lookup(msg), -1);
         }
     }
+done:
     return found;
 }
 

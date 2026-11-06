@@ -24,7 +24,7 @@ using namespace rgl;
 
 void sort_range(std::vector<entity*>::iterator first, std::vector<entity*>::iterator last, int ideal);          // 0x426a30
 
-static inline void scale3(vector4* v, float k) { v->x = k * v->x; v->y = k * v->y; v->z = k * v->z; }
+static inline void scale3(vector4& v, float k) { v.x = k * v.x; v.y = k * v.y; v.z = k * v.z; }
 static __forceinline void set3(vector4* o, float x, float y, float z) { o->x = x; o->y = y; o->z = z; }
 
 // @ 0x425370
@@ -101,8 +101,8 @@ void dynamic_entity::apply_forces(float t)
     dt = t;
     force = mass * vector4(0.0f, 0.0f, -9.8f);
     torque = vector4(0.0f, 0.0f, 0.0f);
-    scale3(&vel, 1.0f - t * lin_damp);
-    scale3(&angvel, 1.0f - t * ang_damp);
+    scale3(vel, 1.0f - t * lin_damp);
+    scale3(angvel, 1.0f - t * ang_damp);
 }
 
 // @ 0x4258e0
@@ -262,7 +262,7 @@ void dynamic_entity::integrate(float t)
     vector4 dv = t * vel;
     m.o.x = dv.x + m.o.x;
     m.o.y = m.o.y + dv.y;
-    m.o.z = m.o.z + dv.z;
+    m.o.z = dv.z + m.o.z;
     vector4 cf, cu;
     cf.x = angvel.y * local.f.z - angvel.z * local.f.y;
     cf.y = angvel.z * local.f.x - angvel.x * local.f.z;

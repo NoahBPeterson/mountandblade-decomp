@@ -511,38 +511,82 @@ void Terrain::regenerate_water(void** out, bool mode)
 // the light term table written by create_water (ground array of the scene, 9 floats per record, light at +0x20).
 // The mesh of chunk (x, y) lives in arr3[layer * 25 + x * 5 + y] (arr2[x * 5 + y] for layer 15); it is rebuilt from the cells
 // whose x/y fall inside the chunk, then registered with the chunk's scene entity ents[x * 5 + y].
-static __forceinline unsigned round_clamp255(float v)       // fl = floor(v); i = (int)fl; if (v - fl > 0.5) i++; clamp 0..255
+static __forceinline int round_i(float v)       // fl = floor(v); i = (int)fl; if (v - fl > 0.5) i++
 {
-    double fl = floor((double)v);
+    float fl = (float)floor(v);
     int i = (int)fl;
-    if (!((float)(v - fl) <= 0.5f))
+    if (!(v - fl <= 0.5f))
         i++;
+    return i;
+}
+static __forceinline unsigned round_clamp255(float v)
+{
+    int i = round_i(v);
     if (i < 0) return 0;
     if (i >= 0x100) return 0xff;
     return i;
 }
 struct vec_i4 { int pad; int* first; int* last; int* end; };    // std::vector<int>-shaped list in the entity's mesh vector (allocator word at +0)
+// the inline vector helpers this function expands
+static __forceinline void v_normalize(vector4& v)
+{
+    float len = (float)sqrt(v.z * v.z + v.y * v.y + v.x * v.x);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        v.x = v.x * inv;
+        v.y = v.y * inv;
+        v.z = v.z * inv;
+    } else {
+        v.x = 0.0f;
+        v.y = 1.0f;
+        v.z = 0.0f;
+    }
+}
+static __forceinline float v_dot(const vector4& a, const vector4& b)
+{
+    return b.z * a.z + b.y * a.y + b.x * a.x;
+}
+
+static __forceinline vector4 v_cross(const vector4& a, const vector4& b)
+{
+    vector4 r;
+    r.x = a.y * b.z - a.z * b.y;
+    r.y = a.z * b.x - a.x * b.z;
+    r.z = a.x * b.y - a.y * b.x;
+    return r;
+}
+static __forceinline void v_min(vector4& a, const vector4& p)
+{
+    float v = a.x; if (!(v < p.x)) v = p.x; a.x = v;
+    v = a.y; if (!(v < p.y)) v = p.y; a.y = v;
+    v = a.z; if (!(v < p.z)) v = p.z; a.z = v;
+}
+static __forceinline void v_max(vector4& a, const vector4& p)
+{
+    float v = a.x; if (!(v > p.x)) v = p.x; a.x = v;
+    v = a.y; if (!(v > p.y)) v = p.y; a.y = v;
+    v = a.z; if (!(v > p.z)) v = p.z; a.z = v;
+}
 // @ 0x47ff60
 void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
 {
-    TerrainLayer* L = &layer[layerno];
-    if (L->type < 0)
+    if (layer[layerno].type < 0)
         return;
 
     rgl::mesh* m;
     if (layerno < 15)
-        m = (rgl::mesh*)arr3[layerno][cx * 5 + cy];
+        m = (rgl::mesh*)((int(*)[5][5])arr3)[layerno][cx][cy];
     else
-        m = (rgl::mesh*)arr2[cx * 5 + cy];
+        m = (rgl::mesh*)((int(*)[5])arr2)[cx][cy];
     if (m == 0)
         m = new rgl::mesh();
     ((mesh*)m)->clear_geometry();
 
     if (layerno < 15) {
-        if (blend < 0)
-            m->res = (skin*)L->fc;
+        if (blend >= 0)
+            m->res = (skin*)layer[layerno].f10;
         else
-            m->res = (skin*)L->f10;
+            m->res = (skin*)layer[layerno].fc;
     } else {
         m->res = 0;
     }
@@ -553,40 +597,30 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
 
     for (int yi = 0; yi < h; yi++) {
         for (int xi = 0; xi < w; xi++) {
-            if (!(block * cx <= xi) ||
-                !((cx == nx - 1 || xi < (cx + 1) * block) && block * cy <= yi &&
-                  (cy == ny - 1 || yi < (cy + 1) * block)))
+            if (xi < block * cx || (cx != nx - 1 && xi >= (cx + 1) * block) || yi < block * cy ||
+                (cy != ny - 1 && yi >= (cy + 1) * block))
                 continue;
             for (int flip = 0; flip < 2; flip++) {
-                int tri[6];
-                triangle_corners(xi, yi, flip, &tri[0], &tri[2], &tri[4]);
+                int tri[3][2];
+                triangle_corners(xi, yi, flip, tri[0], tri[1], tri[2]);
                 char vis[3];
                 for (int k = 0; k < 3; k++) {
-                    terrain_cell* c = &cells[tri[k * 2] * 251 + tri[k * 2 + 1]];
+                    terrain_cell* c = &cells[tri[k][0] * 251 + tri[k][1]];
                     if (layerno < 15) {
-                        char v;
-                        if (blend < 0) {
-                            v = c->visible(layerno);
-                        } else {
-                            if (c->visible(layerno) == 0 && c->visible(blend) == 0)
-                                v = 0;
-                            else
-                                v = 1;
-                        }
-                        vis[k] = v;
+                        if (blend < 0)
+                            vis[k] = c->visible(layerno);
+                        else
+                            vis[k] = (c->visible(layerno) || c->visible(blend)) ? 1 : 0;
                         if (layerno == 0) {          // the first layer extends the light camera's bounds
                             float dx = c->px - g_shadow_map.cam->world.o.x;
                             float dy = c->py - g_shadow_map.cam->world.o.y;
                             float dz = c->pz - g_shadow_map.cam->world.o.z;
-                            float lx = dz * g_shadow_map.cam->world.s.z + dy * g_shadow_map.cam->world.s.y + dx * g_shadow_map.cam->world.s.x;
-                            float ly = dz * g_shadow_map.cam->world.f.z + dy * g_shadow_map.cam->world.f.y + dx * g_shadow_map.cam->world.f.x;
-                            float lz = dz * g_shadow_map.cam->world.u.z + dy * g_shadow_map.cam->world.u.y + dx * g_shadow_map.cam->world.u.x;
-                            if (!(g_shadow_map.cam->vmin.x < lx)) g_shadow_map.cam->vmin.x = lx;
-                            if (!(g_shadow_map.cam->vmin.y < ly)) g_shadow_map.cam->vmin.y = ly;
-                            if (!(g_shadow_map.cam->vmin.z < lz)) g_shadow_map.cam->vmin.z = lz;
-                            if (!(lx < g_shadow_map.cam->vmax.x)) g_shadow_map.cam->vmax.x = lx;
-                            if (!(ly < g_shadow_map.cam->vmax.y)) g_shadow_map.cam->vmax.y = ly;
-                            if (!(lz < g_shadow_map.cam->vmax.z)) g_shadow_map.cam->vmax.z = lz;
+                            vector4 lp;
+                            lp.x = dz * g_shadow_map.cam->world.s.z + dy * g_shadow_map.cam->world.s.y + dx * g_shadow_map.cam->world.s.x;
+                            lp.y = dz * g_shadow_map.cam->world.f.z + dy * g_shadow_map.cam->world.f.y + dx * g_shadow_map.cam->world.f.x;
+                            lp.z = dz * g_shadow_map.cam->world.u.z + dy * g_shadow_map.cam->world.u.y + dx * g_shadow_map.cam->world.u.x;
+                            v_min(g_shadow_map.cam->vmin, lp);
+                            v_max(g_shadow_map.cam->vmax, lp);
                         }
                     } else {
                         vis[k] = 1;
@@ -596,42 +630,47 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     continue;
 
                 for (int k = 0; k < 3; k++) {
-                    terrain_cell* c = &cells[tri[k * 2] * 251 + tri[k * 2 + 1]];
+                    terrain_cell* c = &cells[tri[k][0] * 251 + tri[k][1]];
                     if (c->f10 != -1)
                         continue;
                     int pt = m->add_point((const vector4*)c);
                     unsigned balpha = 0xff;          // blend alpha
                     unsigned edi = 0xff;             // the cell colour level
-                    float uu, vv;
+                    float uu;
+                    Vec2 uv;
                     if (layerno < 15) {
                         float f;
                         if (blend < 0) {
                             f = c->w[layerno];
                         } else {
                             f = (1.0f - c->w[blend]) * c->w[layerno] + c->w[blend];
-                            balpha = round_clamp255(c->w[blend] * 255.0f);
+                            int ba = round_i(c->w[blend] * 255.0f);
+                            if (ba < 0) balpha = 0;
+                            else if (ba < 0x100) balpha = ba;
+                            else balpha = 0xff;
                         }
                         edi = round_clamp255(f * c->f90 * 255.0f);
-                        float t = c->py * 0.025f;
-                        uu = (c->px * 0.025f) * *(float*)&L->f14;
-                        vv = t * *(float*)&L->f14;
+                        float s = *(float*)&layer[layerno].f14;
+                        Vec2 t(c->px * 0.025f, c->py * 0.025f);
+                        uv = Vec2(t.x * s, t.y * s);
+                        uu = uv.x;
                     } else {
                         vector4 pu = g_shadow_map.to_unit(*(const vector4*)c);
                         uu = pu.x;
-                        vv = pu.y;
+                        uv.x = uu;
+                        uv.y = pu.y;
                     }
                     vector4 rgb;
                     rgb.x = 1.0f; rgb.y = 1.0f; rgb.z = 1.0f;
                     if (layerno > 0 && layerno < 15) {
                         vector4 tmp;
-                        vector4* gc = ground_color(&tmp, (const float*)c);
-                        rgb.x = gc->x; rgb.y = gc->y; rgb.z = gc->z; rgb.w = gc->w;
+                        rgb = *ground_color(&tmp, (const float*)c);
                         vector4 tc = rgl::unpack_color((const unsigned*)&c->f8c);
-                        rgb.x = rgb.x * tc.x;
-                        rgb.y = rgb.y * tc.y;
-                        rgb.z = rgb.z * tc.z;
+                        rgb.x *= tc.x;
+                        rgb.y *= tc.y;
+                        rgb.z *= tc.z;
                     }
-                    unsigned col = 0;
+                    unsigned col;
                     if (g_use_shaders == 0) {
                         if (m->res == 0 || (m->res->shader->stages[0].b & 0x1f) != 0x18) {
                             if (layerno < 15) {
@@ -643,50 +682,28 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             }
                         } else {
                             // tangent-space material: light the cell's own frame
-                            vector4 n;
-                            n.x = c->nrm.x; n.y = c->nrm.y; n.z = c->nrm.z; n.w = c->nrm.w;
-                            float len = (float)sqrt(n.z * n.z + n.y * n.y + n.x * n.x);
-                            if (len > 1e-10f) {
-                                float inv = 1.0f / len;
-                                n.x = n.x * inv; n.y = n.y * inv; n.z = n.z * inv;
-                            } else {
-                                n.x = 0.0f; n.y = 1.0f; n.z = 0.0f;
-                            }
-                            float px_ = 0.0f, py_ = 1.0f, pz_ = 0.0f;
-                            vector4 t;
-                            t.x = n.z * py_ - pz_ * n.y;
-                            t.y = pz_ * n.x - px_ * n.z;
-                            t.z = n.y * px_ - py_ * n.x;
-                            len = (float)sqrt(t.z * t.z + t.y * t.y + t.x * t.x);
-                            if (len > 1e-10f) {
-                                float inv = 1.0f / len;
-                                t.x = t.x * inv; t.y = t.y * inv; t.z = t.z * inv;
-                            } else {
-                                t.x = 0.0f; t.y = 1.0f; t.z = 0.0f;
-                            }
-                            vector4 b;
-                            b.x = t.z * n.y - t.y * n.z;
-                            b.y = n.z * t.x - t.z * n.x;
-                            b.z = t.y * n.x - n.y * t.x;
-                            len = (float)sqrt(b.z * b.z + b.y * b.y + b.x * b.x);
-                            float bx, by, bz;
-                            if (len > 1e-10f) {
-                                float inv = 1.0f / len;
-                                bx = b.x * inv; by = b.y * inv; bz = b.z * inv;
-                            } else {
-                                bx = 0.0f; by = 1.0f; bz = 0.0f;
-                            }
+                            vector4 n0 = c->N();
+                            v_normalize(n0);
+                            rot3 fr;                 // the cell's tangent frame: u = normal, s, f orthonormalized against it
+                            fr.u = n0;
+                            fr.f = vector4(0.0f, 1.0f, 0.0f);
+                            fr.s = v_cross(fr.f, fr.u);
+                            v_normalize(fr.s);
+                            fr.f = v_cross(fr.u, fr.s);
+                            v_normalize(fr.f);
                             vector4 Ld;
                             Ld.x = -sun_dir[0]; Ld.y = -sun_dir[1]; Ld.z = -sun_dir[2];
-                            float Lt = Ld.z * t.z + Ld.y * t.y + Ld.x * t.x;
-                            float Lb = Ld.z * bz + Ld.y * by + Ld.x * bx;
-                            float Ln = Ld.z * n.z + Ld.y * n.y + Ld.x * n.x;
-                            float s = ((sun_diffuse.x + sun_diffuse.z) + sun_diffuse.y) * 0.33333334f * (c->f40 + 0.02f);
                             vector4 cv;
-                            cv.x = Lt * s;
-                            cv.y = -(Lb * s);
-                            cv.z = Ln * s;
+                            cv.x = v_dot(Ld, fr.s);
+                            cv.y = v_dot(Ld, fr.f);
+                            cv.z = v_dot(Ld, fr.u);
                             cv.w = 1.0f;
+                            float avg = ((sun_diffuse.x + sun_diffuse.z) + sun_diffuse.y) * 0.33333334f;
+                            float s = avg * (c->f40 + 0.02f);
+                            cv.x *= s;
+                            cv.y *= s;
+                            cv.z *= s;
+                            cv.y = -cv.y;
                             col = pack_signed_color(&cv.x);
                         }
                     } else {
@@ -703,27 +720,24 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         int ia = (int)(r * 255.0f);
                         edi = ia < 0 ? 0 : (ia < 0x100 ? ia : 0xff);
                     }
-                    unsigned fg2 = col | (edi << 24);
-                    unsigned fg = fg2;
+                    col = col | (edi << 24);
+                    unsigned fg = col;
                     if (blend >= 0)
-                        fg = (fg2 & 0xffffff) | (balpha << 24);
-                    unsigned cw = fg2;
-                    int f5c = fg2;
-                    vec2 uvv;
-                    uvv.x = uu; uvv.y = vv;
-                    int vi = m->add_vertex(pt, &uvv, &cw, (const vector4*)&c->nrm, &f5c);
-                    c->f10 = vi;
-                    m->v50[vi].f58 = fg;
-                    m->v50[c->f10].f48 = *(int*)&uu;
-                    m->v50[c->f10].f4c = *(int*)&vv;
+                        fg = (col & 0xffffff) | (balpha << 24);
+                    unsigned cw = col;
+                    int f5c = col;
+                    c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
+                    m->v50[c->f10].f58 = fg;
+                    *(float*)&m->v50[c->f10].f48 = uu;
+                    *(float*)&m->v50[c->f10].f4c = uv.y;
                 }
-                m->add_face(cells[tri[0] * 251 + tri[1]].f10, cells[tri[2] * 251 + tri[3]].f10, cells[tri[4] * 251 + tri[5]].f10);
+                m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
             }
         }
     }
 
     if (layerno == 15) {
-        arr2[cx * 5 + cy] = (int)m;
+        ((int(*)[5])arr2)[cx][cy] = (int)m;
         m->color = 0xff000811;
         m->mask = 0xffff;
     } else {
@@ -731,7 +745,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
             ((rgl::mesh*)m)->compute_tangents();
             world->light_mesh(m, (matrix*)((char*)ents[cx * 5 + cy] + 0x58), 1);
         }
-        arr3[layerno][cx * 5 + cy] = (int)m;
+        ((int(*)[5][5])arr3)[layerno][cx][cy] = (int)m;
         m->mask = 0x17fff;
     }
 
@@ -745,14 +759,14 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
 
     rgl::entity* e = (rgl::entity*)ents[cx * 5 + cy];
     std::vector<rgl::mesh*>& em = e->meshes;
-    unsigned found = (unsigned)-1;
-    for (unsigned k = 0; em._Myfirst != 0 && k < (unsigned)em.size(); k++) {
-        if (em._Myfirst[k] == m)
+    int found = -1;
+    for (unsigned k = 0; k < em.size(); k++) {
+        if (e->meshes[k] == m)
             found = k;
     }
-    if ((int)found < 0) {
+    if (found < 0) {
         ((rgl::mesh*)m)->compute_bounds();
-        vpush(em, m);
+        em.push_back((rgl::mesh*)m);
         e->recalc();
     }
 }

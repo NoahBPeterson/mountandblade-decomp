@@ -203,10 +203,8 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
             unsigned t = (unsigned)kind->type_flags & 0xff;
             if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11 ||
                 t == 2 || t == 3 || t == 4 || t == 7) {
-                {
-                    tstring name = item_mesh_name(kind, ir.item, ir.m4);
-                    *p = (int)g_resmgr.make_lod_mesh(name, false);
-                }
+                tstring name = item_mesh_name(kind, ir.item, ir.m4);
+                *p = (int)g_resmgr.make_lod_mesh(name, false);
                 ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
                 TimerList* snd = (TimerList*)((char*)kind + 0x228);      // the item's sound holder (ItemKind+0x228)
@@ -333,26 +331,32 @@ void MissileU::update(float dt)
     // the components are spilled to float locals
     vector4 sv = vel * speed;
     vector4 gv(dt * 0.0f, dt * 0.0f, dt * (-9.8f));
-    v.x = gv.x + sv.x;
-    v.y = gv.y + sv.y;
-    v.z = gv.z + sv.z;
+    v.x = sv.x + gv.x;
+    v.y = sv.y + gv.y;
+    v.z = sv.z + gv.z;
     vector4 dp = v * dt;
-    pos.x = dp.x + pos.x;
-    pos.y = dp.y + pos.y;
-    pos.z = dp.z + pos.z;
+    vector4& pp = pos;
+    pp.x += dp.x;
+    pp.y += dp.y;
+    pp.z += dp.z;
+    float& px = pos.x;
+    float& py = pos.y;
+    float& pz = pos.z;
 
     if (ent->f140 == 0) {
-        float dx = pos.x - prev.x;
-        float dy = pos.y - prev.y;
-        float dz = pos.z - prev.z;
-        if ((float)sqrt(dy * dy + (dz * dz + dx * dx)) > 1.7f)
+        float dx = px - prev.x;
+        float dy = py - prev.y;
+        float dz = pz - prev.z;
+        float l2 = dx * dx + dz * dz;
+        l2 += dy * dy;
+        if ((float)sqrt(l2) > 1.7f)
             ent->f140 = 1;
     }
 
-    if (troop < 0)
-        d.z = 0.8f;
-    else
+    if (troop >= 0)
         d.z = (float)g_items[troop].weight * 0.01f;
+    else
+        d.z = 0.8f;
     pb.x = d.z * vel.x;
     d.y = d.z * vel.y;
     d.z = d.z * vel.z;
@@ -603,7 +607,7 @@ void Skin::use_carry(lod_mesh* l, const float* w)
             copy_troop(&vat(head_maps, idx), (const lod_group*)l);
             break;
         }
-        if (vat(head_maps, i).name.equals(*(tstring*)((char*)l + 0xd0)))
+        if (head_maps[i].name.equals(*(tstring*)((char*)l + 0xd0)))
             idx = i;
         i++;
     } while (idx == (unsigned)-1);

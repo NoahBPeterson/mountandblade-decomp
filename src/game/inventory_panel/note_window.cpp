@@ -17,6 +17,7 @@
 #include <dinput.h>
 #include <stdlib.h>
 #include <math.h>
+#include <vector>
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/rgl_string.h"
 
@@ -33,10 +34,10 @@ extern "C" double atof(const char* s);                       // 0x537352
 // widgets -- only the vtable slots touched by this function are named
 // ---------------------------------------------------------------------------
 
+#define TEXT_BOX_OUT_OF_LINE   // this file calls 0x50d0b0 (0x50c434, 0x50c493); see ui/container.h
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../res_mgr.h"                   // g_resmgr: the resource manager 0x5d6fa0 (get_object 0x419540)
 #include "../../rgl/mesh.h"             // rgl::mesh::clone 0x41c6d0
-#define TEXT_BOX_OUT_OF_LINE   // this file calls 0x50d0b0 (0x50c434, 0x50c493); see ui/container.h
 #include "../ui/container.h"             // NodeA (0x592848), text_box (0x597050)
 #include "../ui/map_list.h"              // MWidget (0x5995c0): the report and link lists
 #include "../party2/camera_class.h"      // Camera (draw 0x488d50)
@@ -75,80 +76,95 @@ Camera* make_editor_list(void* parent, const tstring* name, int child);         
 
 
 // ---------------------------------------------------------------------------
+// the party accessors: visible here too, as header inlines in the original (the same definitions as ui/mission_ui.cpp,
+// mission5/troop_rec.cpp and dialog_manager.cpp; the row owners win the link). cl then knows the calls keep g_game, so
+// `&g_game->parties` stays in a register across them (0x50b0d2, 0x50b28c, 0x50b4b6).
+// ---------------------------------------------------------------------------
+inline int Map10007::lookup(unsigned id)
+{
+    if (id < 0x2717)
+        return tab[id].value;
+    int h = id % 0x2717;
+    int n = 0;
+    if (tab[h].key != id) {
+        do {
+            if (n >= 1000)
+                return -1;
+            h = (h + 0x4f) % 0x2717;
+            n++;
+        } while (tab[h].key != id);
+    }
+    if (n < 1000)
+        return tab[h].value;
+    return -1;
+}
+__declspec(noinline) Party* PartyMgr::get(int id)
+{
+    int k = this->lookup(id);
+    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages._Myfirst[k >> 4]);
+}
+__declspec(noinline) void PartyMgr::next_party_id(int* id)
+{
+    unsigned i = lookup(*id) + 1;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        *id = deflt;
+    else
+        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+}
+__declspec(noinline) int PartyMgr::first_party_id()
+{
+    unsigned i = 0;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        return deflt;
+    return pages._Myfirst[i >> 4][i & 0xf].id;
+}
+
+// ---------------------------------------------------------------------------
 // small helpers
 // ---------------------------------------------------------------------------
 
-// translated string object (kept as a pointer: the database owns the object). The key is a temporary of the full
-// expression that uses the result: it is destroyed after the call the translation is passed to (0x50a476..0x50a4ae)
-static __forceinline tstring* tr_key(const tstring& k)
-{
-    return UITEXT->lookup(k);
-}
-#define tr_obj(key) tr_key(tstring(key))
-// localised string for a key (a macro: the temporary key lives to the end of the caller's full expression, the way the
-// original's inlined lookup keeps it, 0x50a84f..0x50a8b8)
-static __forceinline const char* tstr_chars(tstring* s)
-{
-    return s->buf ? s->buf : (char*)&s->buf;
-}
-#define tr(key) tstr_chars(tr_obj(key))
+// translated text of a key; the key is a temporary of the caller's full expression (0x50a84f..0x50a8b8)
+#define TR(key) (UITEXT->lookup(key))
 
-// config entry -> text value
-static char* cfg_text(int idx)
+// config float: 0 when the key is absent. The key is a temporary of the caller's full expression (0x50c4f0..0x50c563).
+static __forceinline float cfg_float(const tstring& key)
 {
-    char* e = (char*)&g_game_vars + 0x1c + idx * 0x2c;
-    char* s = *(char**)(e + 4);
-    return s ? s : (e + 4);
-}
-
-static __forceinline float cfg_float(const char* key)
-{
-    tstring k(key);
-    int i = CONFIG->find(k);
     float v = 0.0f;
-    if (i >= 0)
-        v = (float)atof(cfg_text(i));
+    int i = CONFIG->find(key);
+    if (i >= 0) {
+        char* e = (char*)&g_game_vars + 0x1c + i * 0x2c;
+        char* s = *(char**)(e + 4);
+        v = (float)atof(s ? s : (e + 4));
+    }
     return v;
 }
 
-// name of a game record (troop/party/faction), key stored in a tstring
-// a quest's title without its markup: the tstring at +0x40 of the 0x138-byte quest record, strip_tags 0x42c5d0
-// (thiscall, returns by value)
-static __forceinline tstring quest_title(int q)
+// a troop's display name: the UITEXT entry for its key, else the record's own name (0x50a95e / 0x50ab3f)
+static __forceinline tstring* troop_name(Troop& t)
 {
-    return ((const tstring*)(((char*)WORLD->quests) + q * 0x138 + 0x40))->strip_tags();
+    tstring* s = UITEXT->find(&t.key);
+    return s ? s : &t.name;
 }
 
-static const char* ts_chars(const tstring* s);
-
-// a troop record's display name: the UITEXT entry for its key at +0x20, else the record's own tstring at +0
-// (0x4c6010 find, falling back to the record itself: 0x50a95e / 0x50ab3f)
-static tstring* troop_name(char* rec)
+// a faction's display name: its own name, replaced by the UITEXT entry for its key when the flag byte at +0x10 is clear
+// and the entry exists (0x50ae3b..0x50ae5d)
+static __forceinline tstring* faction_name(FactionRec& f)
 {
-    tstring* s = UITEXT->find((tstring*)(rec + 0x20));
-    return s ? s : (tstring*)rec;
-}
-
-// a faction record's display name: its own tstring at +0, replaced by the UITEXT entry for the key at +0x14 when the
-// record's flag byte at +0x10 is clear and the entry exists (0x50ae3b..0x50ae5d)
-static tstring* faction_name(char* rec)
-{
-    tstring* nm = (tstring*)rec;
-    if (*(char*)(rec + 0x10) == 0) {
-        tstring* s = UITEXT->find((tstring*)(rec + 0x14));
+    tstring* nm = &f.name;
+    if (f.f10 == 0) {
+        tstring* s = UITEXT->find(&f.key);
         if (s)
             nm = s;
     }
     return nm;
 }
 
-static const char* ts_chars(const tstring* s)
-{
-    return s->buf ? s->buf : (const char*)&s->buf;
-}
-
-// name tstring of a map-party record (record base from the party table)
-static tstring* party_name(char* rec)
+// name tstring of a map-party record
+static __forceinline tstring* party_name(char* rec)
 {
     if (*(char*)&g_module_settings.show_party_ids_instead_of_names != 0)
         return (tstring*)(rec + 0x20);
@@ -160,34 +176,24 @@ static tstring* party_name(char* rec)
     return (tstring*)(rec + 0x0c);
 }
 
-struct int_vector {
-    int* first;
-    int* last;
-    int* cap;
-    int_vector() { first = 0; last = 0; cap = 0; }
-    ~int_vector() { if (first) delete[] first; }   // std::vector<int>: the original guards it (0x50cc00)
-    int size() const { return (int)(last - first); }
-    int operator[](int i) const { return first[i]; }
-    void push_back(int v)
-    {
-        if (last == cap) {
-            int n = (int)(last - first);
-            int m = n ? n * 2 : 8;
-            int* p = new int[m];
-            for (int i = 0; i < n; i++)
-                p[i] = first[i];
-            delete[] first;
-            first = p;
-            last = p + n;
-            cap = p + m;
-        }
-        *last++ = v;
-    }
-};
-
 // ---------------------------------------------------------------------------
 // the window
 // ---------------------------------------------------------------------------
+
+// set_text's vtable slot (+0xa4) as the source saw it: it returns the text's size by value through a hidden pointer, so
+// every call that isn't assigned has its own private temporary ([esp+0x258]..[esp+0x2d0])
+struct text_size { float x, y; text_size() {} };
+struct text_slot {
+#define S4(n) virtual void n##0() = 0; virtual void n##1() = 0; virtual void n##2() = 0; virtual void n##3() = 0;
+    S4(a) S4(b) S4(c) S4(d) S4(e) S4(f) S4(g) S4(h) S4(i) S4(j)
+    virtual void k0() = 0;
+#undef S4
+    virtual text_size set_text(const tstring* s) = 0;   // +0xa4
+};
+#define TEXTSET(w, s) (((text_slot*)(w))->set_text(s))
+
+struct sel_list;
+void __stdcall sort_list(sel_list* l, int mode);       // 0x50cc70 (inventory_panel/widget_text.cpp)
 
 struct note_window {
     char pad00[0x18];
@@ -212,14 +218,8 @@ struct note_window {
     MissionUi* btn_back;          // +0x6c
     MissionUi* btn_forward;       // +0x70
     MissionUi* btn_map;           // +0x74
-    char   pad78[4];
-    int*   back_beg;           // +0x7c
-    int*   back_end;           // +0x80
-    int*   back_cap;           // +0x84
-    int    unk_88;             // +0x88
-    int*   fwd_beg;            // +0x8c
-    int*   fwd_end;            // +0x90
-    int*   fwd_cap;            // +0x94
+    std::vector<int> back;     // +0x78 (first +0x7c)
+    std::vector<int> fwd;      // +0x88 (first +0x8c)
     int    back_sel_a;         // +0x98
     int    back_sel_b;         // +0x9c
     int    fwd_sel_a;          // +0xa0
@@ -231,31 +231,10 @@ struct note_window {
     void build(int page, int arg);              // 0x50a1c0
 };
 
-struct sel_list;
-void __stdcall sort_list(sel_list* l, int mode);       // 0x50cc70 (inventory_panel/widget_text.cpp)
-static float fld(void* p, int off) { return *(float*)((char*)p + off); }
-static void  fst(void* p, int off, float v) { *(float*)((char*)p + off) = v; }
-
 // @ 0x50a1c0
 void note_window::build(int page_, int arg_)
 {
     char buf[0x100];
-    float sz1[2];
-    float sz2[2];
-    float sz3[2];
-    float sz4[2];
-    float sz5[2];
-    float sz6[2];
-    float sz7[2];
-    float sz8[2];
-    float sz9[2];
-    float sz10[2];
-    float sz11[2];
-    float sz12[2];
-    float sz13[2];
-    float sz14[2];
-    float sz15[2];
-    float sz16[2];
     char buf2[0x100];
 
     this->page = page_;
@@ -263,27 +242,28 @@ void note_window::build(int page_, int arg_)
     g_gui.reset();
 
     // ---- main panel ------------------------------------------------------
-    NodeA* panel = new NodeA;                       // constructor 0x4931a0, then the container's vtable and f188 (0x50a20e)
-    panel->f188 = 0;
-    this->panel = panel;
+    this->panel = new NodeA((char)0);               // constructor 0x4931a0, then the container's vtable and f188 (0x50a20e)
     {
         float v[2];
         v[0] = 0.0f;
         v[1] = 0.0f;
-        panel->move_a(v);
+        this->panel->move_a(v);
         v[0] = 1.0f;
         v[1] = 0.75f;
-        panel->set_xy(v);
+        this->panel->set_xy(v);
     }
     {
         tstring key("note_window");
-        rgl::mesh* item = g_resmgr.get_object(&key);       // 0x419540
-        panel->set_track(0, ((rgl::mesh*)item)->clone());   // 0x41c6d0
+        this->panel->set_track(0, g_resmgr.get_object(&key)->clone());   // 0x419540, 0x41c6d0
     }
 
     // ---- title picture ---------------------------------------------------
     this->picture = new MissionUi;
     label_refresh(this->picture, tstring("note_i_picture"));
+
+    // [esp+0x14] / [esp+0x24]: the text heights of the links and the report; the 0.1 stands when a page sets neither
+    float x_cur = 0.1f;
+    float y_cur = 0.1f;
 
     // ---- report text -----------------------------------------------------
     this->report = new MWidget;
@@ -299,7 +279,7 @@ void note_window::build(int page_, int arg_)
     {
         tstring empty("");
         float sz[2];
-        this->links->set_text(sz, &(empty));
+        this->links->set_text(sz, &empty);
     }
     label_refresh(this->links, tstring("note_t_data"));          // (it joins the data panel later, 0x50c5eb)
 
@@ -308,113 +288,90 @@ void note_window::build(int page_, int arg_)
     label_refresh(this->title, tstring("note_t_title"));
     {
         tstring empty("");
-        float sz[2];
-        this->title->set_text(sz, &(empty));
+        TEXTSET(this->title, &empty);
     }
-    panel->add_child(this->title);
+    this->panel->add_child(this->title);
 
     // ---- back / forward / map buttons ------------------------------------
     {
         float small_h = cfg_float("note_button_sm_h");      // the config's small-button height (0x50a423..0x50a466)
-        this->btn_back = make_short_button(panel, tr_obj("ui_back"), 0.0f, 0.0f, small_h);
+        this->btn_back = make_short_button(this->panel, TR("ui_back"), 0.0f, 0.0f, small_h);
         label_refresh(this->btn_back, tstring("note_b_back"));
-        this->btn_forward = make_short_button(panel, tr_obj("ui_forward"), 0.0f, 0.0f, small_h);
+        this->btn_forward = make_short_button(this->panel, TR("ui_forward"), 0.0f, 0.0f, small_h);
         label_refresh(this->btn_forward, tstring("note_b_forward"));
-        this->btn_map = new_long_button(panel, tr_obj("ui_display_on_map"), 0.0f, 0.0f, small_h);
+        this->btn_map = new_long_button(this->panel, TR("ui_display_on_map"), 0.0f, 0.0f, small_h);
         label_refresh(this->btn_map, tstring("note_b_map_follow"));
         this->btn_map->hide();
     }
 
-    // a button is enabled only when its history has an entry to go to (0x50a5db: slot 0xbc enable, 0x50a5e8: 0xb8
-    // disable; these calls predate the ui_widget.h enable/disable slot fix and were left inverted)
-    // (the original takes the vector's size as (end - beg) >> 2 and indexes from beg: 0x50a588..0x50a5d0)
-    unsigned back_n = (unsigned)((char*)this->back_end - (char*)this->back_beg) >> 2;
-    if (this->back_beg == 0 || back_n == 0) {
-        this->btn_back->flag2_set();
-    } else {
-        this->back_sel_a = this->back_beg[back_n - 2];
-        this->back_sel_b = this->back_beg[back_n - 1];
+    // a button is enabled only when its history has an entry to go to (0x50a5db: slot 0xbc enable, 0x50a5e8: 0xb8 disable)
+    if (this->back.size() > 0) {
+        this->back_sel_a = this->back[this->back.size() - 2];
+        this->back_sel_b = this->back[this->back.size() - 1];
         this->btn_back->flag2_clear();
-    }
-    // (the original takes the vector's size as (end - beg) >> 2 and indexes from beg: 0x50a588..0x50a5d0)
-    unsigned fwd_n = (unsigned)((char*)this->fwd_end - (char*)this->fwd_beg) >> 2;
-    if (this->fwd_beg == 0 || fwd_n == 0) {
-        this->btn_forward->flag2_set();
     } else {
-        this->fwd_sel_a = this->fwd_beg[fwd_n - 2];
-        this->fwd_sel_b = this->fwd_beg[fwd_n - 1];
+        this->btn_back->flag2_set();
+    }
+    if (this->fwd.size() > 0) {
+        this->fwd_sel_a = this->fwd[this->fwd.size() - 2];
+        this->fwd_sel_b = this->fwd[this->fwd.size() - 1];
         this->btn_forward->flag2_clear();
+    } else {
+        this->btn_forward->flag2_set();
     }
 
     // ---- page link key + candidate list ----------------------------------
-    tstring acc;            // +0xa0   "<trp=%d>" for the current page
-    int_vector vec;             // +0x60
-
-    // [esp+0x14] / [esp+0x24]: the original never initialises these two (case 0 and an empty troop page reach the panels
-    // without a text height), but their frame slots still hold the 0.1f / 0.1f the preceding call (0x50a2dd, the by-value
-    // 0.1,0.1 pairs pushed around the 0x1d0 allocation) stored there, so on those paths the panels get 0.1 (+0.001), not garbage.
-    float x_cur = 0.1f;
-    float y_cur = 0.1f;
+    tstring acc;                // +0xa0   "<trp=%d>" for the current page
+    std::vector<int> vec;       // +0x5c
     bool  any = true;           // [esp+0x1b]
     int   selected = -1;        // [esp+0x58]
     this->picture->hide();
 
     switch (page_) {
     case 0: {
-        tstring line;
-        tstring* t = tr_obj("ui_click_button_to_view_note");
-        x_cur = ((float*)this->links->set_text(sz1, &(*t)))[1];    // the returned size (0x50a6d8), not sz1
+        x_cur = TEXTSET(this->links, TR("ui_click_button_to_view_note")).y;    // the returned size (0x50a6d8)
         break;
     }
 
     case 1: {
         // ---- troop report -------------------------------------------------
-        int ti = arg_;
-        char* troop = ((char*)WORLD->troops) + ti * 0x508;
-        if (*(int*)(troop + 0x4a0) >= 0) {
-            int id = ti;
-            this->picture->set_track(0, g_tableaus.make_mesh_from((const int*)(troop + 0x4a0), &id));
+        if (WORLD->troops[arg_].note_tableau >= 0) {
+            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->troops[arg_].note_tableau, &arg_));
             this->picture->show();
         }
-        sprintf(buf, "<trp=%d>", ti);
+        sprintf(buf, "<trp=%d>", arg_);
         acc.assign(buf);
 
         tstring line;
         for (int k = 0; k < 8; k++) {
-            char* slot = troop + k * 0x10;
-            if (*(int*)(slot + 0x42c) <= 0)
-                continue;
-            if (line.len > 0) {
-                line.append(tstring("\n\n"));
-            }
-            line.append(*(tstring*)(slot + 0x420));
-            int sid = *(int*)(((char*)WORLD->troops) + (ti * 0x142 + k) * 4 + 0x400);
-            if (sid < 0)
-                continue;
-            if (sid < WORLD->string_count) {
-                sprintf(buf2, tr("ui_report_is_value_days_old"), WORLD->string_count - sid);
-                line.append(tstring(buf2));
-            } else {
-                line.append(tstring(tr("ui_report_is_current")));
+            if (WORLD->troops[arg_].notes[k].len > 0) {
+                if (line.len > 0)
+                    line.append("\n\n");
+                line.append(WORLD->troops[arg_].notes[k]);
+                if (WORLD->troops[arg_].note_times[k] >= 0) {
+                    if (WORLD->troops[arg_].note_times[k] < WORLD->string_count) {
+                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->troops[arg_].note_times[k]);
+                        line.append(buf2);
+                    } else {
+                        line.append(*TR("ui_report_is_current"));
+                    }
+                }
             }
         }
 
         if (line.len > 0) {
-            this->title->set_text(sz2, &(*troop_name(troop)));
-            float* r = (float*)this->links->set_text(sz3, &(line));
-            x_cur = r[1];
+            TEXTSET(this->title, troop_name(WORLD->troops[arg_]));
+            x_cur = TEXTSET(this->links, &line).y;
             line.clear();
             any = false;
         } else {
-                    float* r = (float*)this->links->set_text(sz4, &(*tr_obj("ui_click_button_to_view_note")));
-            x_cur = r[1];
+            x_cur = TEXTSET(this->links, TR("ui_click_button_to_view_note")).y;
         }
 
         // all troops that carry at least one report item
         for (int i = 0; i < WORLD->ntroops; i++) {
-            char* rec = ((char*)WORLD->troops) + i * 0x508;
             for (int k = 0; k < 8; k++) {
-                if (*(int*)(rec + 0x42c + k * 0x10) > 0) {
+                if (WORLD->troops[i].notes[k].len > 0) {
                     vec.push_back(i);
                     break;
                 }
@@ -422,71 +379,60 @@ void note_window::build(int page_, int arg_)
         }
         ::sort_list((sel_list*)&vec, 1);
 
-        for (int i = 0; i < vec.size(); i++) {
-            int v = vec[i];
+        for (unsigned n = 0; n < vec.size(); n++) {
+            int v = vec[n];
             if (selected < 0)
                 selected = v;
-            const char* nm = ts_chars(troop_name(((char*)WORLD->troops) + v * 0x508));
             if (v == arg_)
-                sprintf(buf2, "%s\n", nm);
+                sprintf(buf2, "%s\n", troop_name(WORLD->troops[v])->c_str());
             else
-                sprintf(buf2, "<trp=%d>%s</>\n", v, nm);
-            line.append(tstring(buf2));
+                sprintf(buf2, "<trp=%d>%s</>\n", v, troop_name(WORLD->troops[v])->c_str());
+            line.append(buf2);
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
-        {
-            this->report->set_text(sz5, &(line));
-        }
+        y_cur = TEXTSET(this->report, &line).y;
         break;
     }
 
     case 2: {
         // ---- faction report -----------------------------------------------
-        int fi = arg_;
-        char* fac = ((char*)WORLD->factions) + fi * 0x300;
-        if (*(int*)(fac + 0x2fc) >= 0) {
-            int id = fi;
-            this->picture->set_track(0, g_tableaus.make_mesh_from((const int*)(fac + 0x2fc), &id));
+        if (WORLD->factions[arg_].note_tableau >= 0) {
+            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->factions[arg_].note_tableau, &arg_));
             this->picture->show();
         }
-        sprintf(buf, "<fac=%d>", fi);
+        sprintf(buf, "<fac=%d>", arg_);
         acc.assign(buf);
 
         tstring line;
         for (int k = 0; k < 8; k++) {
-            char* slot = fac + k * 0x10;
-            if (*(int*)(slot + 0x288) <= 0)
-                continue;
-            if (line.len > 0)
-                line.append(tstring("\n\n"));
-            line.append(*(tstring*)(slot + 0x27c));
-            int sid = *(int*)(((char*)WORLD->factions) + (fi * 0xc0 + k) * 4 + 0x25c);
-            if (sid < 0)
-                continue;
-            if (sid < WORLD->string_count) {
-                sprintf(buf2, tr("ui_report_is_value_days_old"), WORLD->string_count - sid);
-                line.append(tstring(buf2));
-            } else {
-                line.append(tstring(tr("ui_report_is_current")));
+            if (WORLD->factions[arg_].notes[k].len > 0) {
+                if (line.len > 0)
+                    line.append("\n\n");
+                line.append(WORLD->factions[arg_].notes[k]);
+                if (WORLD->factions[arg_].note_times[k] >= 0) {
+                    if (WORLD->factions[arg_].note_times[k] < WORLD->string_count) {
+                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->factions[arg_].note_times[k]);
+                        line.append(buf2);
+                    } else {
+                        line.append(*TR("ui_report_is_current"));
+                    }
+                }
             }
         }
 
         if (line.len > 0) {
-            this->title->set_text(sz6, &(*faction_name(fac)));
-            float* r = (float*)this->links->set_text(sz7, &(line));
-            x_cur = r[1];
+            TEXTSET(this->title, faction_name(WORLD->factions[arg_]));
+            x_cur = TEXTSET(this->links, &line).y;
             line.clear();
             any = false;
         } else {
-                    float* r = (float*)this->links->set_text(sz8, &(*tr_obj("ui_click_button_to_view_note")));
-            x_cur = r[1];
+            x_cur = TEXTSET(this->links, TR("ui_click_button_to_view_note")).y;
         }
 
         for (int i = 0; i < WORLD->n_factions; i++) {
-            char* rec = ((char*)WORLD->factions) + i * 0x300;
             for (int k = 0; k < 8; k++) {
-                if (*(int*)(rec + 0x288 + k * 0x10) > 0) {
+                if (WORLD->factions[i].notes[k].len > 0) {
                     vec.push_back(i);
                     break;
                 }
@@ -494,156 +440,128 @@ void note_window::build(int page_, int arg_)
         }
         ::sort_list((sel_list*)&vec, 2);
 
-        for (int i = 0; i < vec.size(); i++) {
-            int v = vec[i];
+        for (unsigned n = 0; n < vec.size(); n++) {
+            int v = vec[n];
             if (selected < 0)
                 selected = v;
-            const char* nm = ts_chars(faction_name(((char*)WORLD->factions) + v * 0x300));
             if (v == arg_)
-                sprintf(buf2, "%s\n", nm);
+                sprintf(buf2, "%s\n", faction_name(WORLD->factions[v])->c_str());
             else
-                sprintf(buf2, "<fac=%d>%s</>\n", v, nm);
-            line.append(tstring(buf2));
+                sprintf(buf2, "<fac=%d>%s</>\n", v, faction_name(WORLD->factions[v])->c_str());
+            line.append(buf2);
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
-        {
-            this->report->set_text(sz9, &(line));
-        }
+        y_cur = TEXTSET(this->report, &line).y;
         break;
     }
 
     case 3: {
         // ---- map party (location) report ----------------------------------
-        int pi = arg_;
-        void* party = WORLDMAP->get(pi);
-        if (*(int*)((char*)party + 0x5aa8) >= 0) {
-            int id = pi;
-            this->picture->set_track(0, g_tableaus.make_mesh_from((const int*)((char*)party + 0x5aa8), &id));
+        if (WORLDMAP->get(arg_)->note_tableau >= 0) {
+            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLDMAP->get(arg_)->note_tableau, &arg_));
             this->picture->show();
         }
-        sprintf(buf, "<p=%d>", pi);
+        sprintf(buf, "<p=%d>", arg_);
         acc.assign(buf);
 
         tstring line;
-        int idx = WORLDMAP->lookup(pi);
-        char* base = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x5ac8;
-        char* ids  = ((char**)WORLD->parties.pages._Myfirst)[idx >> 4] + (idx & 0xf) * 0x16b2 * 4;
         for (int k = 0; k < 8; k++) {
-            if (*(int*)(base + 0x5a34 + k * 0x10) <= 0)
-                continue;
-            if (line.len > 0)
-                line.append(tstring("\n\n"));
-            line.append(*(tstring*)(base + 0x5a28 + k * 0x10));
-            int sid = *(int*)(ids + 0x5a08 + k * 4);
-            if (sid < 0)
-                continue;
-            if (sid < WORLD->string_count) {
-                sprintf(buf2, tr("ui_report_is_value_days_old"), WORLD->string_count - sid);
-                line.append(tstring(buf2));
-            } else {
-                line.append(tstring(tr("ui_report_is_current")));
+            if (WORLDMAP->get_w(arg_)->notes[k].len > 0) {
+                if (line.len > 0)
+                    line.append("\n\n");
+                line.append(WORLDMAP->get_w(arg_)->notes[k]);
+                if (WORLDMAP->get_w(arg_)->note_times[k] >= 0) {
+                    if (WORLDMAP->get(arg_)->note_times[k] < WORLD->string_count) {
+                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLDMAP->get(arg_)->note_times[k]);
+                        line.append(buf2);
+                    } else {
+                        line.append(*TR("ui_report_is_current"));
+                    }
+                }
             }
         }
 
         if (line.len > 0) {
             if (this->menu_id == 7)
                 this->btn_map->show();
-            this->title->set_text(sz10, &(*party_name(base)));
-            float* r = (float*)this->links->set_text(sz11, &(line));
-            x_cur = r[1];
+            TEXTSET(this->title, party_name((char*)WORLDMAP->get_w(arg_)));
+            x_cur = TEXTSET(this->links, &line).y;
             line.clear();
             any = false;
         } else {
-                    float* r = (float*)this->links->set_text(sz12, &(*tr_obj("ui_click_button_to_view_note")));
-            x_cur = r[1];
+            x_cur = TEXTSET(this->links, TR("ui_click_button_to_view_note")).y;
         }
 
         // live map parties
         {
-            int v = WORLDMAP->first_party_id();
-            while (v < (int)WORLD->parties.n_parties) {
-                int vi = WORLDMAP->lookup(v);
-                char* prec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
+            int p = WORLDMAP->first_party_id();
+            while ((unsigned)p < WORLD->parties.n_parties) {
                 for (int k = 0; k < 8; k++) {
-                    if (*(int*)(prec + 0x5a34 + k * 0x10) > 0) {
-                        vec.push_back(v);
+                    if (WORLDMAP->get_w(p)->notes[k].len > 0) {
+                        vec.push_back(p);
                         break;
                     }
                 }
-                WORLDMAP->next_party_id(&v);
+                WORLDMAP->next_party_id(&p);
             }
         }
         ::sort_list((sel_list*)&vec, 3);
 
-        for (int i = 0; i < vec.size(); i++) {
-            int v = vec[i];
+        for (unsigned n = 0; n < vec.size(); n++) {
+            int v = vec[n];
             if (selected < 0)
                 selected = v;
-            int vi = WORLDMAP->lookup(v);
-            char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
-            const char* nm = ts_chars(party_name(rec));
             if (v == arg_)
-                sprintf(buf2, "%s\n", nm);
+                sprintf(buf2, "%s\n", party_name((char*)WORLDMAP->get_w(v))->c_str());
             else
-                sprintf(buf2, "<p=%d>%s</>\n", v, nm);
-            line.append(tstring(buf2));
+                sprintf(buf2, "<p=%d>%s</>\n", v, party_name((char*)WORLDMAP->get_w(v))->c_str());
+            line.append(buf2);
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
-        {
-            y_cur = ((float*)this->report->set_text(sz13, &line))[1];
-        }
+        y_cur = TEXTSET(this->report, &line).y;
         break;
     }
 
     case 4: {
         // ---- quest report -------------------------------------------------
-        int qi = arg_;
-        char* quest = ((char*)WORLD->quests) + qi * 0x138;
-        if (*(int*)(quest + 0x108) >= 0) {
-            int id = qi;
-            this->picture->set_track(0, g_tableaus.make_mesh_from((const int*)(quest + 0x108), &id));
+        if (WORLD->quests[arg_].note_tableau >= 0) {
+            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->quests[arg_].note_tableau, &arg_));
             this->picture->show();
         }
-        sprintf(buf, "<qst=%d>", qi);
+        sprintf(buf, "<qst=%d>", arg_);
         acc.assign(buf);
 
         tstring line;
         for (int k = 0; k < 8; k++) {
-            char* slot = quest + k * 0x10;
-            if (*(int*)(slot + 0x94) <= 0)
-                continue;
-            if (line.len > 0)
-                line.append(tstring("\n\n"));
-            line.append(*(tstring*)(slot + 0x88));
-            int sid = *(int*)(quest + 0x68 + k * 4);
-            if (sid < 0)
-                continue;
-            if (sid < WORLD->string_count) {
-                sprintf(buf2, tr("ui_report_is_value_days_old"), WORLD->string_count - sid);
-                line.append(tstring(buf2));
-            } else {
-                line.append(tstring(tr("ui_report_is_current")));
+            if (WORLD->quests[arg_].notes[k].len > 0) {
+                if (line.len > 0)
+                    line.append("\n\n");
+                line.append(WORLD->quests[arg_].notes[k]);
+                if (WORLD->quests[arg_].note_times[k] >= 0) {
+                    if (WORLD->quests[arg_].note_times[k] < WORLD->string_count) {
+                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->quests[arg_].note_times[k]);
+                        line.append(buf2);
+                    } else {
+                        line.append(*TR("ui_report_is_current"));
+                    }
+                }
             }
         }
 
         if (line.len > 0) {
-            tstring qt = quest_title(qi);
-            this->title->set_text(sz14, &(qt));
-            float* r = (float*)this->links->set_text(sz15, &(line));
-            x_cur = r[1];
+            TEXTSET(this->title, &WORLD->quests[arg_].text.strip_tags());
+            x_cur = TEXTSET(this->links, &line).y;
             line.clear();
             any = false;
         } else {
-                    float* r = (float*)this->links->set_text(sz16, &(*tr_obj("ui_click_button_to_view_note")));
-            x_cur = r[1];
+            x_cur = TEXTSET(this->links, TR("ui_click_button_to_view_note")).y;
         }
 
         for (int i = 0; i < WORLD->n_quests; i++) {
-            char* rec = ((char*)WORLD->quests) + i * 0x138;
             for (int k = 0; k < 8; k++) {
-                if (*(int*)(rec + 0x94 + k * 0x10) > 0) {
+                if (WORLD->quests[i].notes[k].len > 0) {
                     vec.push_back(i);
                     break;
                 }
@@ -651,22 +569,19 @@ void note_window::build(int page_, int arg_)
         }
         ::sort_list((sel_list*)&vec, 3);
 
-        for (int i = 0; i < vec.size(); i++) {
-            int v = vec[i];
+        for (unsigned n = 0; n < vec.size(); n++) {
+            int v = vec[n];
             if (selected < 0)
                 selected = v;
             if (v == arg_)
-                sprintf(buf2, "%s\n", quest_title(v).c_str());
+                sprintf(buf2, "%s\n", WORLD->quests[v].text.strip_tags().c_str());
             else
-                sprintf(buf2, "<qst=%d>%s</>\n", v, quest_title(v).c_str());
-            line.append(tstring(buf2));
+                sprintf(buf2, "<qst=%d>%s</>\n", v, WORLD->quests[v].text.strip_tags().c_str());
+            line.append(buf2);
         }
         if (line.len > 0)
             line.erase(line.len - 1, 1);
-        {
-            float sz17[2];
-            y_cur = ((float*)this->report->set_text(sz17, &line))[1];
-        }
+        y_cur = TEXTSET(this->report, &line).y;
         break;
     }
 
@@ -680,203 +595,160 @@ void note_window::build(int page_, int arg_)
     this->links->put(&link_text);
     if (acc.len > 0) {
         for (int i = 0; i < WORLD->ntroops; i++) {
-            char* rec = ((char*)WORLD->troops) + i * 0x508;
             for (int k = 0; k < 8; k++) {
-                char* slot = rec + k * 0x10;
-                if (*(int*)(slot + 0x42c) <= 0)
-                    continue;
-                if (((tstring*)(slot + 0x420))->find(acc, 0) < 0)
-                    continue;
-                sprintf(buf, "<trp=%d>%s</>", i, ts_chars(troop_name(rec)));
-                tstring entry(buf);
-                if (link_text.find(entry, 0) < 0) {
-                    if (other.len > 0)
-                        other.append(tstring(", "));
-                    other.append(entry);
-                }
-                break;
-            }
-        }
-        for (int i = 0; i < WORLD->n_factions; i++) {
-            char* rec = ((char*)WORLD->factions) + i * 0x300;
-            for (int k = 0; k < 8; k++) {
-                char* slot = rec + k * 0x10;
-                if (*(int*)(slot + 0x288) <= 0)
-                    continue;
-                if (((tstring*)(slot + 0x27c))->find(acc, 0) < 0)
-                    continue;
-                sprintf(buf, "<fac=%d>%s</>", i, ts_chars(faction_name(rec)));
-                tstring entry(buf);
-                if (link_text.find(entry, 0) < 0) {
-                    if (other.len > 0)
-                        other.append(tstring(", "));
-                    other.append(entry);
-                }
-                break;
-            }
-        }
-        {
-            int v = WORLDMAP->first_party_id();
-            while (v < (int)WORLD->parties.n_parties) {
-                int vi = WORLDMAP->lookup(v);
-                char* rec = ((char**)WORLD->parties.pages._Myfirst)[vi >> 4] + (vi & 0xf) * 0x5ac8;
-                for (int k = 0; k < 8; k++) {
-                    if (*(int*)(rec + 0x5a34 + k * 0x10) <= 0)
-                        continue;
-                    if (((tstring*)(rec + 0x5a28 + k * 0x10))->find(acc, 0) < 0)
-                        continue;
-                    sprintf(buf, "<p=%d>%s</>", v, ts_chars(party_name(rec)));
-                    tstring entry(buf);
-                    if (link_text.find(entry, 0) < 0) {
+                if (WORLD->troops[i].notes[k].len > 0 && WORLD->troops[i].notes[k].find(acc, 0) >= 0) {
+                    sprintf(buf2, "<trp=%d>%s</>", i, troop_name(WORLD->troops[i])->c_str());
+                    if (link_text.find(buf2, 0) < 0) {
                         if (other.len > 0)
-                            other.append(tstring(", "));
-                        other.append(entry);
+                            other.append(", ");
+                        other.append(buf2);
                     }
                     break;
                 }
-                WORLDMAP->next_party_id(&v);
+            }
+        }
+        for (int i = 0; i < WORLD->n_factions; i++) {
+            for (int k = 0; k < 8; k++) {
+                if (WORLD->factions[i].notes[k].len > 0 && WORLD->factions[i].notes[k].find(acc, 0) >= 0) {
+                    sprintf(buf2, "<fac=%d>%s</>", i, faction_name(WORLD->factions[i])->c_str());
+                    if (link_text.find(buf2, 0) < 0) {
+                        if (other.len > 0)
+                            other.append(", ");
+                        other.append(buf2);
+                    }
+                    break;
+                }
+            }
+        }
+        {
+            int p = WORLDMAP->first_party_id();
+            while ((unsigned)p < WORLD->parties.n_parties) {
+                for (int k = 0; k < 8; k++) {
+                    if (WORLDMAP->get_w(p)->notes[k].len > 0 && WORLDMAP->get_w(p)->notes[k].find(acc, 0) >= 0) {
+                        sprintf(buf2, "<p=%d>%s</>", p, party_name((char*)WORLDMAP->get_w(p))->c_str());
+                        if (link_text.find(buf2, 0) < 0) {
+                            if (other.len > 0)
+                                other.append(", ");
+                            other.append(buf2);
+                        }
+                        break;
+                    }
+                }
+                WORLDMAP->next_party_id(&p);
             }
         }
         for (int i = 0; i < WORLD->n_quests; i++) {
-            char* rec = ((char*)WORLD->quests) + i * 0x138;
             for (int k = 0; k < 8; k++) {
-                char* slot = rec + k * 0x10;
-                if (*(int*)(slot + 0x94) <= 0)
-                    continue;
-                if (((tstring*)(slot + 0x88))->find(acc, 0) < 0)
-                    continue;
-                tstring qt = quest_title(i);
-                sprintf(buf, "<qst=%d>%s</>", i, qt.c_str());
-                tstring entry(buf);
-                if (link_text.find(entry, 0) < 0) {
-                    if (other.len > 0)
-                        other.append(tstring(", "));
-                    other.append(entry);
+                if (WORLD->quests[i].notes[k].len > 0 && WORLD->quests[i].notes[k].find(acc, 0) >= 0) {
+                    sprintf(buf2, "<qst=%d>%s</>", i, WORLD->quests[i].text.strip_tags().c_str());
+                    if (link_text.find(buf2, 0) < 0) {
+                        if (other.len > 0)
+                            other.append(", ");
+                        other.append(buf2);
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
 
     if (other.len > 0) {
         tstring t;
-        float szT[2];
         this->links->put(&t);
-        if (t.equals(*tr_obj("ui_click_button_to_view_note"))) {
-            this->links->set_text(szT, &(*tr_obj("ui_this_page_contains_no_information")));
+        float sz[2];
+        if (t.equals(*TR("ui_click_button_to_view_note"))) {
+            this->links->set_text(sz, TR("ui_this_page_contains_no_information"));
             this->links->put(&t);
         }
-        t.append(tstring("\n\n"));
-        t.append(*tr_obj("ui_other_pages_that_link_here"));
+        t.append("\n\n");
+        t.append(*TR("ui_other_pages_that_link_here"));
         t.append(other);
-        float* r = (float*)this->links->set_text(szT, &(t));
-        x_cur = r[1];
+        x_cur = this->links->set_text(sz, &t)[1];
     }
 
     // ---- key / data scrolling panels -------------------------------------
     // x_cur holds the links text height, y_cur the report's (0x50c405)
     x_cur += 0.001f;
     y_cur += 0.001f;
-    text_box* keys = new text_box;
-    this->keys_panel = keys;
-    label_refresh(keys, tstring("note_bo_keys"));
+    this->keys_panel = new text_box;
+    label_refresh(this->keys_panel, tstring("note_bo_keys"));
     {
         float v[2];
-        v[0] = fld(keys, 0xf0);
-        v[1] = y_cur + fld(keys, 0xf4);
-        keys->set_xy(v);
+        v[0] = this->keys_panel->screen[0];
+        v[1] = y_cur + this->keys_panel->screen[1];
+        this->keys_panel->set_xy(v);
     }
 
-    text_box* data = new text_box;
-    this->data_panel = data;
-    label_refresh(data, tstring("note_bo_data"));
+    this->data_panel = new text_box;
+    label_refresh(this->data_panel, tstring("note_bo_data"));
 
     if (this->picture->flag1() == 0) {
         rgl::vector4 a, b;                                // calc_bounds writes whole vectors
-        ((rgl::mesh*)this->picture->tracks[0])->calc_bounds(&a, &b);   // 0x438d80 (the font object)
+        this->picture->tracks[0]->calc_bounds(&a, &b);    // 0x438d80 (the font object)
         float h = b.y - a.y;
         float w = b.x - a.x;
-        float border = cfg_float("note_image_border");
-        x_cur = (h + border) + x_cur;                     // the picture sits above the links (0x50c54f)
+        x_cur = h + cfg_float("note_image_border") + x_cur;     // the picture sits above the links (0x50c54f)
         float v[2];
-        v[0] = (fld(data, 0xf0) - w) * 0.5f - a.x;       // centred across the panel (0x50c568)
+        v[0] = (this->data_panel->screen[0] - w) * 0.5f - a.x;       // centred across the panel (0x50c568)
         v[1] = x_cur - b.y;
-        this->picture->move_a((float*)v);
+        this->picture->move_a(v);
     }
 
     {
         float v[2];
-        v[0] = fld(data, 0xf0);
-        v[1] = x_cur + fld(data, 0xf4);
-        data->set_xy(v);
+        v[0] = this->data_panel->screen[0];
+        v[1] = x_cur + this->data_panel->screen[1];
+        this->data_panel->set_xy(v);
     }
 
     this->keys_panel->add_child(this->report);
     this->data_panel->add_child(this->picture);
     this->data_panel->add_child(this->links);
 
-    // each key string is a temporary that dies right after its call (0x50c5f1..0x50c642)
-    UiD* keys_scroll_base;
-    {
-        tstring s_keys("note_s_keys");
-        keys_scroll_base = make_scrollbar(this->panel, &s_keys);      // 0x4f6160
-    }
-    {
-        tstring sc_keys("note_sc_keys");
-        this->keys_scroll = make_editor_list(this->keys_panel, &sc_keys,
-                                         (int)keys_scroll_base);                 // 0x4f62f0
-    }
+    UiD* keys_scroll_base = make_scrollbar(this->panel, &tstring("note_s_keys"));      // 0x4f6160
+    this->keys_scroll = make_editor_list(this->keys_panel, &tstring("note_sc_keys"), (int)keys_scroll_base);   // 0x4f62f0
 
+    {
+        float h = this->keys_scroll->screen[1] - y_cur;
+        h = h > 0.0f ? h : 0.0f;
+        float v[2];
+        v[0] = this->keys_scroll->fE0;
+        v[1] = h + this->keys_scroll->fE4;
+        this->keys_scroll->move_a(v);
+    }
     {
         float v[2];
-        float h = fld(this->keys_scroll, 0xf4) - y_cur;
-        if (h < 0.0f)
-            h = 0.0f;
-        v[0] = fld(this->keys_scroll, 0xe0);
-        v[1] = h + fld(this->keys_scroll, 0xe4);
-        this->keys_scroll->move_a((float*)v);
-
-        v[1] = (y_cur <= fld(this->keys_scroll, 0xf4)) ? y_cur
-                                                       : fld(this->keys_scroll, 0xf4);
-        v[0] = fld(this->keys_scroll, 0xf0);
+        v[1] = y_cur < this->keys_scroll->screen[1] ? y_cur : this->keys_scroll->screen[1];
+        v[0] = this->keys_scroll->screen[0];
         this->keys_scroll->set_xy(v);
-        ((Camera*)this->keys_scroll)->draw();       // 0x488d50
-        this->panel->add_child(this->keys_scroll);
     }
+    ((Camera*)this->keys_scroll)->draw();       // 0x488d50
+    this->panel->add_child(this->keys_scroll);
 
     if (this->scroll_pos >= -0.0001f) {
         ((UiD*)*(void**)((char*)this->keys_scroll + 0x484))->set_value(this->scroll_pos);
         this->scroll_pos = -1.0f;
     }
 
-    // each key string is a temporary that dies right after its call (0x50c5f1..0x50c642)
-    UiD* data_scroll_base;
-    {
-        tstring s_data("note_s_data");
-        data_scroll_base = make_scrollbar(this->panel, &s_data);      // 0x4f6160
-    }
-    {
-        tstring sc_data("note_sc_data");
-        this->data_scroll = make_editor_list(this->data_panel, &sc_data,
-                                         (int)data_scroll_base);                 // 0x4f62f0
-    }
+    UiD* data_scroll_base = make_scrollbar(this->panel, &tstring("note_s_data"));      // 0x4f6160
+    this->data_scroll = make_editor_list(this->data_panel, &tstring("note_sc_data"), (int)data_scroll_base);   // 0x4f62f0
 
+    {
+        float h = this->data_scroll->screen[1] - x_cur;
+        h = h > 0.0f ? h : 0.0f;
+        float v[2];
+        v[0] = this->data_scroll->fE0;
+        v[1] = h + this->data_scroll->fE4;
+        this->data_scroll->move_a(v);
+    }
     {
         float v[2];
-        float h = fld(this->data_scroll, 0xf4) - x_cur;
-        if (h < 0.0f)
-            h = 0.0f;
-        v[0] = fld(this->data_scroll, 0xe0);
-        v[1] = h + fld(this->data_scroll, 0xe4);
-        this->data_scroll->move_a((float*)v);
-
-        v[1] = (x_cur <= fld(this->data_scroll, 0xf4)) ? x_cur
-                                                       : fld(this->data_scroll, 0xf4);
-        v[0] = fld(this->data_scroll, 0xf0);
+        v[1] = x_cur < this->data_scroll->screen[1] ? x_cur : this->data_scroll->screen[1];
+        v[0] = this->data_scroll->screen[0];
         this->data_scroll->set_xy(v);
-        ((Camera*)this->data_scroll)->draw();       // 0x488d50
-        this->panel->add_child(this->data_scroll);
     }
+    ((Camera*)this->data_scroll)->draw();       // 0x488d50
+    this->panel->add_child(this->data_scroll);
 
     // ---- bottom row of page buttons --------------------------------------
     {
@@ -885,25 +757,24 @@ void note_window::build(int page_, int arg_)
         float bh = cfg_float("note_button_h");
         float ba = cfg_float("note_button_x_a");
 
-        this->btn_game_log = make_short_button(this->panel, tr_obj("ui_game_log"), bx, by, bh);
+        this->btn_game_log = make_short_button(this->panel, TR("ui_game_log"), bx, by, bh);
+        x_cur = ba + bx;
         *(int*)((char*)this->btn_game_log + 0x184) = 1;
-        x_cur = bx + ba;
-        this->btn_recent = make_short_button(this->panel, tr_obj("ui_recent_messages"), x_cur, by, bh);
+        this->btn_recent = make_short_button(this->panel, TR("ui_recent_messages"), x_cur, by, bh);
+        x_cur = x_cur + ba;
         *(int*)((char*)this->btn_recent + 0x184) = 1;
+        this->btn_quests = make_short_button(this->panel, TR("ui_quests"), x_cur, by, bh);
         x_cur = x_cur + ba;
-        this->btn_quests = make_short_button(this->panel, tr_obj("ui_quests"), x_cur, by, bh);
         *(int*)((char*)this->btn_quests + 0x184) = 1;
+        this->btn_troops = make_short_button(this->panel, TR("ui_troops2"), x_cur, by, bh);
         x_cur = x_cur + ba;
-        this->btn_troops = make_short_button(this->panel, tr_obj("ui_troops2"), x_cur, by, bh);
         *(int*)((char*)this->btn_troops + 0x184) = 1;
+        this->btn_locations = make_short_button(this->panel, TR("ui_locations"), x_cur, by, bh);
         x_cur = x_cur + ba;
-        this->btn_locations = make_short_button(this->panel, tr_obj("ui_locations"), x_cur, by, bh);
         *(int*)((char*)this->btn_locations + 0x184) = 1;
-        x_cur = x_cur + ba;
-        this->btn_factions = make_short_button(this->panel, tr_obj("ui_factions"), x_cur, by, bh);
+        this->btn_factions = make_short_button(this->panel, TR("ui_factions"), x_cur, by, bh);
         *(int*)((char*)this->btn_factions + 0x184) = 1;
-        x_cur = x_cur + ba;
-        this->btn_return = make_short_button(this->panel, tr_obj("ui_return"), x_cur, by, bh);   // (the only one of the seven the original leaves without f184 = 1, 0x50c99b..0x50cb62)
+        this->btn_return = make_short_button(this->panel, TR("ui_return"), x_cur + ba, by, bh);
     }
 
     // ---- highlight the active page button and disable it (0x50cbb8: slot 0xb8) ----

@@ -4,7 +4,9 @@
 usage: opencode_wave.py <batch> [--model cheaperinference/deepseek-v4.1-flash] [--prompt docs/opencode_bm_prompt.txt]
                         [--concurrent 8] [--hang 900] [--cooldown 120] [--max-nudges 3] [--interval 30] [--status]
 
-Batch: work/batches/<batch>.json, a list of {"id": obj stem, "module": "src/.../stem", "vas": [...], "rows": "text"}.
+Batch: work/batches/<batch>.json, a list of {"id": obj stem, "module": "src/.../stem", "vas": [...], "rows": "text"}; optional
+"obj" (the stem, when id differs), "prompt" (another template) and "after" (an id that must have finished first, because
+two sessions must not share a module).
 The prompt template takes {MODULE}, {OBJ} and {ROWS}. A session is finished when a turn ends with WAVE-DONE in its text.
 
 Each pass: starts sessions up to the concurrency limit (re-read from work/opencode/wave_<batch>.conc, so it can change
@@ -118,7 +120,8 @@ def main():
         sid = s.get("id") or s.get("data", {}).get("id")
         state[e["id"]] = {"sid": sid, "state": "running", "nudges": 0, "started": time.time(), "last_prompt": time.time()}
         save()                 # the broker must know the session before its first request
-        api("POST", "/api/session/%s/prompt" % sid, {"text": tmpl.replace("{MODULE}", e["module"]).replace("{OBJ}", e["id"])
+        t = open(os.path.join(ROOT, e["prompt"])).read() if e.get("prompt") else tmpl
+        api("POST", "/api/session/%s/prompt" % sid, {"text": t.replace("{MODULE}", e["module"]).replace("{OBJ}", e.get("obj", e["id"]))
                                                      .replace("{ROWS}", e["rows"])})
         print(time.strftime("%H:%M:%S"), "start", e["id"], sid, flush=True)
 
@@ -166,7 +169,7 @@ def main():
             for e in batch:
                 if running >= limit:
                     break
-                if e["id"] not in state:
+                if e["id"] not in state and state.get(e.get("after"), {"state": "done"})["state"] in ("done", "abandoned"):
                     start(e)
                     running += 1
             save()

@@ -30,6 +30,7 @@ template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, _
 #include "../mesh_slot/mesh_slot.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
+#include "../../include/wl_marker.h"        // WL_MARKER: the original's inline WinLicense region markers
 
 // @ 0x51eb90
 void PartyMgr::read(stream_base* s, int flag)
@@ -103,7 +104,7 @@ void PartyMgr::reset_ids()
 Party* PartyMgr::get(int id)
 {
     int k = this->lookup(id);
-    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages._Myfirst[k >> 4]);
+    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages[k >> 4]);
 }
 
 // @ 0x51ee80
@@ -174,6 +175,8 @@ void Party::read(stream_base* s, int flag)
 
 #include "../window_mgr.h"                        // g_windows (0xa73980)
 
+float g_start_time = 600000.0f;                     // 0x59bffc
+
 static inline int clamp_rank(int v)
 {
     return v < 0 ? 0 : (v > g_skill_tbl[36].max_rank ? g_skill_tbl[36].max_rank : v);
@@ -184,6 +187,9 @@ void Game::start_new_game()
 {
     tstring a;                                      // [esp+0x28] -- first parties.txt string
     tstring b;                                      // [esp+0x18] -- second parties.txt string
+    int hit;                                        // [esp+0x10] -- lookup result, then the trial hit points
+    int version;                                    // [esp+0x14] -- parties.txt version word
+    int i;                                          // shared loop counter
 
     g_script.param1_lo = -100000;                    // 0xa70448
     g_script.param2_lo = -100000;                    // 0xa70450
@@ -202,7 +208,9 @@ void Game::start_new_game()
     g_script.vars._Mylast = 0;
     g_script.vars._Myend = 0;
 
-    g_ticks[1] = (__int64)600000.0f;
+    WL_MARKER(12)
+
+    g_ticks[1] = (__int64)g_start_time;
 
     ((snd_bank*)&triggers)->randomize();            // 0x462790 (the sound bank sits at +0x139e8)
     simple.arm();                                   // 0x51f7c0
@@ -213,8 +221,8 @@ void Game::start_new_game()
     timer1a298.t = g_ticks[timer1a298.clock];
 
     if (g_cfg.skip_tutorial == 0) {
-        for (int i = 0; i < 30; i++)
-            *(int*)((char*)g_windows.arr[i] + 8) = 0;
+        for (int i = 0; i < 0x78; i += 4)
+            *(int*)((char*)*(void**)((char*)&g_windows + i) + 8) = 0;
     }
 
     f13b28 = -1;
@@ -233,7 +241,6 @@ void Game::start_new_game()
         stream_base* sp = &stream;                  // the original calls the slots through the vtable
         sp->r_tstr(rs(&a));
         sp->r_tstr(rs(&b));
-        int version;
         sp->r_int(&version);
         scene.read(&stream, 0);
         stream.failed = 1;                          // set after the scene is read (0x51f3ba), not before
@@ -244,7 +251,7 @@ void Game::start_new_game()
     pr->f74 = 0x80;
 
     if (g_party_template_count > 0) {
-        for (int i = 0; i < g_party_template_count; i++) {
+        for (i = 0; i < g_party_template_count; i++) {
             PartyTemplate* r = &g_party_templates[i];
             r->f34 = 0;
             r->f38 = 0;
@@ -253,7 +260,7 @@ void Game::start_new_game()
         }
     }
     if (g_item_kind_count > 0) {
-        for (int i = 0; i < g_item_kind_count; i++)
+        for (i = 0; i < g_item_kind_count; i++)
             ((VecView*)((char*)&g_items[i] + 0x30))->clear();
     }
 
@@ -276,21 +283,20 @@ void Game::start_new_game()
     ((tstring*)&TROOP(cur_troop))[0] = "";
 
     if (g_cfg.skip_tutorial != 0) {
-        int a1 = g_skill_tbl[1].max_rank < 3 ? g_skill_tbl[1].max_rank : 3;
-        ((NibWord*)&TROOP(cur_troop).nib[0])->n1 = a1;
-        int y = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
-        if ((float)y < TROOP(cur_troop).hp)
+        ((NibWord*)&TROOP(cur_troop).nib[0])->n1 = g_skill_tbl[1].max_rank < 3 ? g_skill_tbl[1].max_rank : 3;
+        hit = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
+        if ((float)hit < TROOP(cur_troop).hp)
             TROOP(cur_troop).hp = (float)(TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2);
-        int a2 = g_skill_tbl[2].max_rank < 2 ? g_skill_tbl[2].max_rank : 2;
-        ((NibWord*)&TROOP(cur_troop).nib[0])->n2 = a2;
-        int z = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
-        if ((float)z < TROOP(cur_troop).hp)
+        ((NibWord*)&TROOP(cur_troop).nib[0])->n2 = g_skill_tbl[2].max_rank < 2 ? g_skill_tbl[2].max_rank : 2;
+        hit = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
+        if ((float)hit < TROOP(cur_troop).hp)
             TROOP(cur_troop).hp = (float)(TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2);
     }
 
     TROOP(cur_troop).exp = rand() % 50 + 0x6b;
     TROOP(cur_troop).f3b4 = 0;
-    TROOP(cur_troop).hp = (float)(TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2);
+    hit = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
+    TROOP(cur_troop).hp = (float)hit;
     TROOP(cur_troop).fa8 = 4;
     TROOP(cur_troop).fa4 = 4;
     TROOP(cur_troop).fac = 10;
@@ -299,6 +305,8 @@ void Game::start_new_game()
     for (int i = 0; i < 0x2a; i++)
         TROOP(cur_troop).set_skill(i, 0);
 #undef TROOP
+
+    WL_MARKER(13)
 
     more_start();                                   // 0x51f800
 }
@@ -344,12 +352,15 @@ static inline int slot_count(ItemRef* s) { return s->m4 & 0xff; }
 void Game::more_start()
 {
     for (int i = 0; i < ntroops; i++) {
-        ((TroopRec*)&troops[i])->reset_items(i == cur_troop);   // 0x51ff90
+        if (i != cur_troop)
+            ((TroopRec*)&troops[i])->reset_items(0);            // 0x51ff90
+        else
+            ((TroopRec*)&troops[i])->reset_items(1);
         ((TroopRec*)&troops[i])->apply_items();                 // 0x520110
     }
 
-    TroopRec* me = (TroopRec*)(troops + cur_troop);
     int pool = 0;
+    TroopRec* me = (TroopRec*)(troops + cur_troop);
     int n = me->inv_count();                        // 0x462b60
 
     // collect the room left in the worn equipment

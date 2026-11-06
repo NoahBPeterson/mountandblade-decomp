@@ -254,15 +254,15 @@ void widget_mgr::set_text(int idx, const tstring* text)
 void widget_mgr::set_position(int idx, const float* pos)
 {
     if (OW(idx)->type() == 7) {
-        OW(idx)->set_pos((float*)pos);
-        ((FieldPanel*)(void*)OW(idx))->update();
+        TxObj* o = OW(idx);
+        o->set_pos((float*)pos);
+        ((FieldPanel*)(void*)o)->update();
         return;
     }
     float wx = (OW(idx)->flags148 & 0x10) ? OW(idx)->w * 0.5f : 0.0f;
     float wy = (OW(idx)->flags148 & 0x1000) ? OW(idx)->h * 0.5f : 0.0f;
-    float v[2];
-    v[0] = pos[0] - wx;
-    v[1] = pos[1] - wy;
-    OW(idx)->set_pos(v);
+    TxObj* o = OW(idx);
+    float v[2] = { pos[0] - wx, pos[1] - wy };
+    o->set_pos(v);
     OW(idx)->get_state(v);
 }

@@ -1,1 +1,0 @@
-0048fd60	126	fill_parties: loop and register choice differ

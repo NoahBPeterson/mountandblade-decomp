@@ -1,4 +1,4 @@
 0046e590  6512  render_batch::render_scene (7965 vs 7926 bytes): complete; frame layout and scheduling differ (not analysed further). [equiv: UNSUPPORTED, resolution audit disagrees on 2 operands (the vMaterialColor string copy, g_render); same as the slice]
 004705e0  272  PolyMesh::compute_face_normals: complete (357 vs 353 bytes), instruction scheduling differs. [equiv: WEAK, no mismatch, 93.5% insns]
-00470750	142	complete: fld/fmul operand order only (original fld d.x; fmul k and fld st(3); fmul st(1), keeping n.x in a register). Operator and helper forms inflate the row. [equiv: PASS, 315 valid, all edges]
+00470750	140	complete: fld/fmul operand order only (original fld d.x; fmul k and fld st(3); fmul st(1), keeping n.x in a register). l2 written as n.length() to match the original's left-to-right x*x+y*y+z*z summation. [equiv: kept on closer-distance rule, not re-run]
 00470920  181  PolyMesh::build_adjacency: complete (217 vs 225 bytes). [equiv: PASS, 281 valid, all edges]

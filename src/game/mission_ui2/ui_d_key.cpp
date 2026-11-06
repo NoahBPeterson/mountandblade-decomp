@@ -44,6 +44,7 @@ char UiD::key(unsigned p)
         }
         f184 = 0;
         set_value(t - e[i]);
+        set_key_flags(0x10000);
     } else {
         if (p == 8) {
             g_gui.ui_active = 0;
@@ -53,8 +54,8 @@ char UiD::key(unsigned p)
             goto tail;
         }
         set_value((g_gui.mouse[f178] - f184) - e[f178]);
+        set_key_flags(0x10000);
     }
-    set_key_flags(0x10000);
 tail:
     set_key_flags(p);
     refresh();

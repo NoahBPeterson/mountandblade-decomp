@@ -783,7 +783,8 @@ INT_PTR CALLBACK folder_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 1: {                          // OK: store the folder
             GetDlgItemTextA(dlg, 0x4b8, buf, 0x1000);
             tstring folder(buf);
-            if (folder.buf[folder.len - 1] != '\\')
+            int n = folder.len;
+            if (folder.buf[n - 1] != '\\')
                 folder.push_back('\\');
             HKEY key;
             open_keys_key(&key);
@@ -845,7 +846,9 @@ void parse_module_info()
     g_display_wp[4] = 1;
     g_display_wp[5] = 1;
     g_display_wp[6] = 1;
-    for (int i = 0; n > 0 && i < n; i++) {
+    WL_MARKER(12)
+    int i = 0;
+    if (n > 0) do {
         if (i >= 0 && i < g_module_info.count) {
             msg = g_module_info.entries[i].key;
             val = g_module_info.entries[i].value;
@@ -1092,7 +1095,8 @@ void parse_module_info()
         }
         else if (msg.len > 1)      // (0x4c16d4: cmp [msg.len], 1; not the entry count)
             ((stream_base&)g_log).w_cstr("Unrecognized Module_info directive = ").w_tstr(&msg).w_cstr(". Skipping.\n");
-    }
+    } while (++i < n);
+    WL_MARKER(13)
     g_resmgr.linearise_meshes();
 }
 
@@ -1471,10 +1475,11 @@ void MenuRec::read(stream_base& s)
         tstring tmp(buf);
         ops.text = tmp;
     }
-    s.r_int(&count);
-    if (count != 0)
-        items = new menu_item[count];
-    for (int i = 0; i < count; i++)
+    int& n = count;
+    s.r_int(&n);
+    if (n != 0)
+        items = new menu_item[n];
+    for (int i = 0; i < n; i++)
         items[i].read(&s, &id);
 }
 
@@ -1499,14 +1504,15 @@ music_player::~music_player()
 // (the original brackets the monitor initialisation with two 18-byte WinLicense markers, at 0x4c2542 and 0x4c25c1)
 music_player::music_player()
 {
-    WL_MARKER(12)
     for (int i = 0; i < 0x100; i++)
         ((tstring*)((char*)this + 0x18 + i * 0x20))->tstring::tstring();
     t2418.clock = 0; t2418.start = g_ticks[0];
     t2450.clock = 0; t2450.start = g_ticks[0];
     t2460.clock = 0; t2460.start = g_ticks[0];
     ((tstring*)&root)->tstring::tstring();
-    track_count = 0;
+    WL_MARKER(12)
+    int& tc = track_count;
+    tc = 0;
     stream[0] = 0;  active[0] = 0;  channel[0] = -1;  opened[0] = 0;  track[0] = -1;  volume[0] = 1000;  fading[0] = 0;
     stream[1] = 0;  active[1] = 0;  channel[1] = -1;  opened[1] = 0;  track[1] = -1;  volume[1] = 1000;  fading[1] = 0;
     situation = 0;

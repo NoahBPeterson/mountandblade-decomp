@@ -11,6 +11,17 @@ static inline vector4 vcross(const vector4& a, const vector4& b)
     return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 }
 
+// The polygon constructor as this file sees it (0x477ca0, written out: a loop that cl unrolls would re-run its
+// optimizer over the whole caller and fold every materialised element address).
+struct EFace : MPoly {
+    EFace() : MPoly(raw_t())
+    {
+        stamp = 0; f5c = 0; f60 = 0; n = 0;
+        vid[0] = -100000; vid[1] = -100000; vid[2] = -100000; vid[3] = -100000;
+        eid[0] = -100000; eid[1] = -100000; eid[2] = -100000; eid[3] = -100000;
+    }
+};
+
 // @ 0x4d1410
 bool EditMesh::build_first_pass()
 {
@@ -193,62 +204,64 @@ void EditMesh::build_second_pass()
 // @ 0x4d1d80
 bool EditMesh::add_triangle(int* tri)
 {
-    OwnedIntVec found;
-    for (unsigned i = 0; i < faces.size(); i++) {
+    std::vector<int> found;
+    for (int i = 0; i < faces.size(); i++) {
         int cnt = 0;
-        for (int j = 0; j < vat(faces, i).n; j++) {
-            int v = vat(faces, i).vid[j];
+        MPoly& f = faces[i];
+        for (int j = 0; j < f.n; j++) {
+            int v = f.vid[j];
             if (v == tri[0]) cnt++;
             if (v == tri[1]) cnt++;
             if (v == tri[2]) cnt++;
         }
         if (cnt > 0)
-            found.push_back((int)i);
+            found.push_back(i);
         if (cnt > 2)
             return false;
     }
-    float nx = 0.0f, ny = 0.0f, nz = 0.0f;
-    for (unsigned i = 0; i < found.size(); i++) {
-        nx = nx + vat(faces, found[i]).normal.x;
-        ny = ny + vat(faces, found[i]).normal.y;
-        nz = nz + vat(faces, found[i]).normal.z;
+    Vec4 n(0.0f, 0.0f, 0.0f);
+    for (int k = 0; k < found.size(); k++) {
+        n.x += faces[found[k]].normal.x;
+        n.y += faces[found[k]].normal.y;
+        n.z += faces[found[k]].normal.z;
     }
-    Vec4 nrm(nx / (float)found.size(), ny / (float)found.size(), nz / (float)found.size());
-    nrm.normalize_inl();
-    float d1x = vat(verts, tri[2]).pos.x - vat(verts, tri[0]).pos.x;
-    float d1y = vat(verts, tri[2]).pos.y - vat(verts, tri[0]).pos.y;
-    float d1z = vat(verts, tri[2]).pos.z - vat(verts, tri[0]).pos.z;
-    Vec4 d2(vat(verts, tri[1]).pos.x - vat(verts, tri[0]).pos.x,       // vector locals live in memory as floats
-            vat(verts, tri[1]).pos.y - vat(verts, tri[0]).pos.y,
-            vat(verts, tri[1]).pos.z - vat(verts, tri[0]).pos.z);
-    Vec4 cr;
-    cr.x = d2.y * d1z - d2.z * d1y;
-    cr.y = d2.z * d1x - d2.x * d1z;
-    float cz = d2.x * d1y - d2.y * d1x;
-    if (cz * nrm.z + cr.y * nrm.y + cr.x * nrm.x < 0.0f) {     // faces away from the neighbours' normal
+    n.x /= (float)found.size();
+    n.y /= (float)found.size();
+    n.z /= (float)found.size();
+    n.normalize_inl();
+    vector4 d1(verts[tri[2]].pos.x - verts[tri[0]].pos.x,
+               verts[tri[2]].pos.y - verts[tri[0]].pos.y,
+               verts[tri[2]].pos.z - verts[tri[0]].pos.z);
+    vector4 d2(verts[tri[1]].pos.x - verts[tri[0]].pos.x,
+               verts[tri[1]].pos.y - verts[tri[0]].pos.y,
+               verts[tri[1]].pos.z - verts[tri[0]].pos.z);
+    vector4 cr = vcross(d2, d1);
+    if (cr.z * n.z + cr.y * n.y + cr.x * n.x < 0.0f) {     // faces away from the neighbours' normal
         int t = tri[0];
         tri[0] = tri[2];
         tri[2] = t;
     }
     int eid[3] = {-1, -1, -1};
-    for (unsigned i = 0; i < edges.size(); i++) {
+    for (int i = 0; i < edges.size(); i++) {
+        MEdge& e = edges[i];
         for (int j = 0; j < 3; j++) {
-            MEdge& e = vat(edges, i);
             if ((e.v0 == tri[j] && e.v1 == tri[(j + 1) % 3]) ||
                 (e.v1 == tri[j] && e.v0 == tri[(j + 1) % 3])) {
-                eid[j] = (int)i;
+                eid[j] = i;
                 if (e.nfaces == 2)
                     return false;
             }
         }
     }
-    MPoly face;
+    EFace face;
     face.n = 3;
     for (int j = 0; j < 3; j++) {
         face.vid[j] = tri[j];
         if (eid[j] == -1) {
+            MEdge e;
+            e.v0 = tri[j];
+            e.v1 = tri[(j + 1) % 3];
             eid[j] = (int)edges.size();
-            NewEdge e(tri[j], tri[(j + 1) % 3]);
             edges.push_back(e);
         }
         face.eid[j] = eid[j];
@@ -262,32 +275,32 @@ bool EditMesh::add_triangle(int* tri)
 void EditMesh::finish()
 {
     for (unsigned i = 0; i < edges.size(); i++)
-        edge_word(vat(edges, i)) = 0;
+        edge_word(edges[i]) = 0;
     Vec4 n(0.0f, 0.0f, 0.0f);
     int cnt = 0;
     for (unsigned i = 0; i < faces.size(); i++) {
-        if (vat(faces, i).f60) {
-            n.x = n.x + vat(faces, i).normal.x;
+        if (faces[i].f60) {
+            n.x = n.x + faces[i].normal.x;
             cnt++;
-            n.y = n.y + vat(faces, i).normal.y;
-            n.z = n.z + vat(faces, i).normal.z;
-            for (int j = 0; j < vat(faces, i).n; j++)
-                edge_word(vat(edges, vat(faces, i).eid[j]))++;
+            n.y = n.y + faces[i].normal.y;
+            n.z = n.z + faces[i].normal.z;
+            for (int j = 0; j < faces[i].n; j++)
+                edge_word(edges[faces[i].eid[j]])++;
         }
     }
     if (cnt == 0)
         return;
     int nv = (int)verts.size();
     for (unsigned i = 0; i < edges.size(); i++) {
-        if (edge_word(vat(edges, i)) == 1) {
-            NewEdge e(vat(edges, i).v0, vat(edges, i).v1);
+        if (edge_word(edges[i]) == 1) {
+            NewEdge e(edges[i].v0, edges[i].v1);
             for (int j = 0; j < 2; j++) {
                 int k = nv;
-                while (k < (int)verts.size() && vat(verts, k).pad14 != (&e.v0)[j])
+                while (k < (int)verts.size() && verts[k].pad14 != (&e.v0)[j])
                     k++;
                 if (k >= (int)verts.size()) {         // no copy yet: append one (the scan ran out: 0x4d24a3 jae)
                     MVert v;                            // the pad after flag is left as the stack had it
-                    v.pos = vat(verts, (&e.v0)[j]).pos;
+                    v.pos = verts[(&e.v0)[j]].pos;
                     v.flag = 0;
                     v.pad14 = (&e.v0)[j];
                     (&e.v0)[j] = (int)verts.size();     // the index the copy gets (read before the push)
@@ -297,14 +310,14 @@ void EditMesh::finish()
                 }
             }
             for (unsigned f = 0; f < faces.size(); f++) {
-                for (int j = 0; j < vat(faces, f).n; j++) {
-                    if (vat(faces, f).f60) {
-                        if (vat(faces, f).eid[j] == (int)i)
-                            vat(faces, f).eid[j] = (int)edges.size();
-                        if (vat(faces, f).vid[j] == vat(verts, e.v0).pad14)
-                            vat(faces, f).vid[j] = e.v0;
-                        else if (vat(faces, f).vid[j] == vat(verts, e.v1).pad14)
-                            vat(faces, f).vid[j] = e.v1;
+                for (int j = 0; j < faces[f].n; j++) {
+                    if (faces[f].f60) {
+                        if (faces[f].eid[j] == (int)i)
+                            faces[f].eid[j] = (int)edges.size();
+                        if (faces[f].vid[j] == verts[e.v0].pad14)
+                            faces[f].vid[j] = e.v0;
+                        else if (faces[f].vid[j] == verts[e.v1].pad14)
+                            faces[f].vid[j] = e.v1;
                     }
                 }
             }
@@ -312,12 +325,12 @@ void EditMesh::finish()
         }
     }
     for (unsigned i = 0; i < edges.size(); i++) {
-        if (edge_word(vat(edges, i)) > 1) {
+        if (edge_word(edges[i]) > 1) {
             for (int k = nv; k < (int)verts.size(); k++) {
-                if (vat(edges, i).v0 == vat(verts, k).pad14)
-                    vat(edges, i).v0 = k;
-                if (vat(edges, i).v1 == vat(verts, k).pad14)
-                    vat(edges, i).v1 = k;
+                if (edges[i].v0 == verts[k].pad14)
+                    edges[i].v0 = k;
+                if (edges[i].v1 == verts[k].pad14)
+                    edges[i].v1 = k;
             }
         }
     }
@@ -334,36 +347,36 @@ void EditMesh::finish()
 // @ 0x4d27d0
 bool EditMesh::split_marked_edge()
 {
-    int cnt = 0;
     int mark = -1;
+    int cnt = 0;
     for (unsigned i = 0; i < edges.size(); i++) {
-        if (vat(edges, i).flag) {
-            cnt++;
+        if (edges[i].flag) {
             mark = (int)i;
+            cnt++;
         }
     }
     if (cnt != 1)
         return false;
-    int split = (int)edges.size();        // index the copy of the marked edge will get
     MVert v;
     v.flag = 0;
-    v.pos = vector4((vat(verts, vat(edges, mark).v0).pos.x + vat(verts, vat(edges, mark).v1).pos.x) * 0.5f,
-                    (vat(verts, vat(edges, mark).v0).pos.y + vat(verts, vat(edges, mark).v1).pos.y) * 0.5f,
-                    vat(verts, vat(edges, mark).v0).pos.z + vat(verts, vat(edges, mark).v1).pos.z);
-    v.pos.z *= 0.5f;                        // the z sum is stored as a float first, then halved in place
-    NewEdge ne(vat(edges, mark).v0, (int)verts.size());
+    int split = (int)edges.size();        // index the copy of the marked edge will get
+    v.pos = (verts[edges[mark].v0].pos + verts[edges[mark].v1].pos) * 0.5f;
+    MEdge ne;
+    ne.v0 = edges[mark].v0;
+    ne.v1 = (int)verts.size();
     ne.flag = 1;
     edges.push_back(ne);
-    for (int slot = 0; slot < vat(edges, mark).nfaces; slot++) {
-        int fi = vat(edges, mark).face[slot];
-        int n = vat(faces, fi).n;
+    for (int slot = 0; slot < edges[mark].nfaces; slot++) {
         int last = split;                       // 0x4d2987: reset to the split edge for every slot, then follows each new edge
+        int n = faces[edges[mark].face[slot]].n;
         int corners[4];
         int nc = 0;
         for (int j = 0; j < n; j++) {
-            int vi = vat(faces, fi).vid[j];
-            if (vi != vat(edges, mark).v0 && vi != vat(edges, mark).v1)
-                corners[nc++] = j;
+            if (faces[edges[mark].face[slot]].vid[j] != edges[mark].v0 &&
+                faces[edges[mark].face[slot]].vid[j] != edges[mark].v1) {
+                corners[nc] = j;
+                nc++;
+            }
         }
         if (nc == 2 && abs(corners[0] - corners[1]) != 1) {
             int t = corners[0];
@@ -371,44 +384,47 @@ bool EditMesh::split_marked_edge()
             corners[1] = t;
         }
         for (int k = 0; k < nc; k++) {
-            MPoly nf;
-            int cn = corners[k];
+            EFace nf;
             nf.n = 3;
-            nf.vid[0] = vat(faces, fi).vid[(cn + n - 1) % n];
-            nf.vid[1] = vat(faces, fi).vid[cn];
+            nf.vid[0] = faces[edges[mark].face[slot]].vid[(corners[k] + n - 1) % n];
+            nf.vid[1] = faces[edges[mark].face[slot]].vid[corners[k]];
             nf.vid[2] = (int)verts.size();
-            nf.eid[0] = vat(faces, fi).eid[(cn + n - 1) % n];
-            if ((nf.vid[2] == vat(edges, last).v0 && nf.vid[0] == vat(edges, last).v1) ||
-                (nf.vid[2] == vat(edges, last).v1 && nf.vid[0] == vat(edges, last).v0))
+            nf.eid[0] = faces[edges[mark].face[slot]].eid[(corners[k] + n - 1) % n];
+            if ((nf.vid[2] == edges[last].v0 && nf.vid[0] == edges[last].v1) ||
+                (nf.vid[2] == edges[last].v1 && nf.vid[0] == edges[last].v0))
                 nf.eid[2] = last;
             else
                 nf.eid[2] = mark;
+            last = (int)edges.size();                   // 0x4d2b72: the size read before the push
             nf.eid[1] = (int)edges.size();
-            last = nf.eid[1];                           // 0x4d2b72: the size read before the push
-            NewEdge e2(nf.vid[1], nf.vid[2]);
+            MEdge e2;
+            e2.v0 = nf.vid[1];
+            e2.v1 = nf.vid[2];
             edges.push_back(e2);
             faces.push_back(nf);
         }
-        int cn = nc ? corners[nc - 1] : n;   // nc == 0 (no real face): the original reads corners[-1], the slot holding n (0x4d2c10)
-        int v0 = vat(faces, fi).vid[cn];
-        int v1 = vat(faces, fi).vid[(cn + 1) % n];
-        int v2 = (int)verts.size();
-        int e0 = vat(faces, fi).eid[cn];
-        int e1;
-        if ((v1 == vat(edges, split).v0 && v2 == vat(edges, split).v1) ||
-            (v1 == vat(edges, split).v1 && v2 == vat(edges, split).v0))
-            e1 = split;
+        // nc == 0 (no real face): the original reads corners[-1], the slot holding n (0x4d2c10)
+        EFace f2;
+        f2.n = 3;
+        f2.vid[0] = faces[edges[mark].face[slot]].vid[corners[nc - 1]];
+        f2.vid[1] = faces[edges[mark].face[slot]].vid[(corners[nc - 1] + 1) % n];
+        f2.vid[2] = (int)verts.size();
+        f2.eid[0] = faces[edges[mark].face[slot]].eid[corners[nc - 1]];
+        if ((f2.vid[1] == edges[split].v0 && f2.vid[2] == edges[split].v1) ||
+            (f2.vid[1] == edges[split].v1 && f2.vid[2] == edges[split].v0))
+            f2.eid[1] = split;
         else
-            e1 = mark;
-        vat(faces, fi).n = 3;
-        vat(faces, fi).vid[0] = v0;
-        vat(faces, fi).vid[1] = v1;
-        vat(faces, fi).vid[2] = v2;
-        vat(faces, fi).eid[0] = e0;
-        vat(faces, fi).eid[1] = e1;
-        vat(faces, fi).eid[2] = last;             // 0x4d2d73
+            f2.eid[1] = mark;
+        f2.eid[2] = last;
+        faces[edges[mark].face[slot]].n = f2.n;
+        faces[edges[mark].face[slot]].vid[0] = f2.vid[0];
+        faces[edges[mark].face[slot]].vid[1] = f2.vid[1];
+        faces[edges[mark].face[slot]].vid[2] = f2.vid[2];
+        faces[edges[mark].face[slot]].eid[0] = f2.eid[0];
+        faces[edges[mark].face[slot]].eid[1] = f2.eid[1];
+        faces[edges[mark].face[slot]].eid[2] = f2.eid[2];
     }
-    vat(edges, mark).v0 = (int)verts.size();
+    edges[mark].v0 = (int)verts.size();
     verts.push_back(v);
     build_adjacency();
     return true;

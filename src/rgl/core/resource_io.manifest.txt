@@ -28,3 +28,4 @@
 ../src/rgl/core/resource_io.cpp  ?reset@aabb@rgl@@QAEXXZ  00416e40  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?extend@aabb@rgl@@QAEXPBUvector4@2@@Z  00416ef0  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?update@aabb@rgl@@QAEXXZ  00416f70  /O2 /MT /Gy /TP
+../src/rgl/core/resource_io.cpp  ?supported@material@@QAE_NXZ  00416930  /O2 /MT /Gy /TP

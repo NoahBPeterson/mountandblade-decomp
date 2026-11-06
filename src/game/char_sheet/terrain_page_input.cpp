@@ -42,26 +42,35 @@ void TerrainPage::simulate(float dt)
     if (g_keyboard.down[0x4a])
         zoom = (1.0f - dt * 2.1f) * zoom;
 
+    vector2 d;
     vector2 m[2];                                           // the camera frame: m[0] = strafe axis, m[1] = forward
     identity_2x2(&m[0].x);                                  // 0x4f3be0
     float a = -yaw;
     ((rot2*)&m[0].x)->rotate_2x2(a);                        // 0x4f3b40 turns m[0].xy / m[1].xy
 
     if (g_keyboard.down[0x1e]) {
-        view_pos.x = view_pos.x - (m[0].x * 50.0f) * dt;
-        view_pos.y = view_pos.y - (m[0].y * 50.0f) * dt;
+        d.x = (m[0].x * 50.0f) * dt;
+        d.y = (m[0].y * 50.0f) * dt;
+        view_pos.x = view_pos.x - d.x;
+        view_pos.y = view_pos.y - d.y;
     }
     if (g_keyboard.down[0x20]) {
-        view_pos.x = (m[0].x * 50.0f) * dt + view_pos.x;
-        view_pos.y = (m[0].y * 50.0f) * dt + view_pos.y;
+        d.x = (m[0].x * 50.0f) * dt;
+        d.y = (m[0].y * 50.0f) * dt;
+        view_pos.x = d.x + view_pos.x;
+        view_pos.y = d.y + view_pos.y;
     }
     if (g_keyboard.down[0x11]) {
-        view_pos.x = (m[1].x * 50.0f) * dt + view_pos.x;
-        view_pos.y = (m[1].y * 50.0f) * dt + view_pos.y;
+        d.x = (m[1].x * 50.0f) * dt;
+        d.y = (m[1].y * 50.0f) * dt;
+        view_pos.x = d.x + view_pos.x;
+        view_pos.y = d.y + view_pos.y;
     }
     if (g_keyboard.down[0x1f]) {
-        view_pos.x = view_pos.x - (m[1].x * 50.0f) * dt;
-        view_pos.y = view_pos.y - (m[1].y * 50.0f) * dt;
+        d.x = (m[1].x * 50.0f) * dt;
+        d.y = (m[1].y * 50.0f) * dt;
+        view_pos.x = view_pos.x - d.x;
+        view_pos.y = view_pos.y - d.y;
     }
     if (view_pos.x < 0.0f)
         view_pos.x = 0.0f;
@@ -139,7 +148,7 @@ void TerrainPage::paste_clipboard()
             const char* p = (const char*)GlobalLock(h);
             if (p) {
                 { tstring s0(p); g_terrain.parse(s0); }   // 0x4658c0
-                { tstring s(p); rgl::vector4 r; hexbox->set_text((float*)&r, &s); }
+                { tstring s(p); float r[2]; hexbox->set_text(r, &s); }
                 GlobalUnlock(h);
                 read_fields();
                 update();
@@ -168,12 +177,16 @@ void TerrainPage::path(float dt)
     pos.x = m.u.x * zoom;
     pos.y = m.u.y * zoom;
     pos.z = m.u.z * zoom;                                   // the eye vector doubles as the temporary
-    m.o.x = pos.x + m.o.x;
-    m.o.y = m.o.y + pos.y;
-    m.o.z = m.o.z + pos.z;
+    float sx = pos.x + m.o.x;
+    float sy = m.o.y + pos.y;
+    float sz = m.o.z + pos.z;
+    m.o.x = sx;
+    m.o.y = sy;
+    m.o.z = sz;
 
-    cam.m = m;                               // page +0x138
-    cam.build_planes();                    // 0x41e4f0: thiscall on this+0x70
-    *(FrustumBlock*)&view->scene3d.fr = *(FrustumBlock*)&cam;             // 0x120 bytes: page +0x70 -> world +0x1ac
+    rgl::frustum* f = &cam;                  // page +0x70
+    f->m = m;
+    f->build_planes();                    // 0x41e4f0: thiscall on this+0x70
+    *(FrustumBlock*)&view->scene3d.fr = *(FrustumBlock*)f;             // 0x120 bytes: page +0x70 -> world +0x1ac
     g_terrain.update_particles(&m);        // 0x4f3e10
 }

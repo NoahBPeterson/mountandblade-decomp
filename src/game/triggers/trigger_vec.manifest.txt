@@ -44,3 +44,5 @@
 ../src/game/triggers/trigger_vec.cpp  ?read_options@GameApp@@QAEXXZ  004bf170  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?resize@TriggerVec@@QAEXAAUstream_base@@PBD@Z  004c1c90  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?resize@GameVec@@QAEHAAUstream_base@@PBDH@Z  004c1e10  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ?folder_dlg_proc@@YGHPAUHWND__@@IIJ@Z  004c03b0  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ??0music_player@@QAE@XZ  004c24c0  /O2 /MT /Gy /TP

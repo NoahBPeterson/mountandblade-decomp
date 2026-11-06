@@ -24,29 +24,18 @@ void Mesh_s2da20::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     const rgl::vector4& v1 = verts.first[e.v0].pos;
     const rgl::vector4& v2 = verts.first[e.v1].pos;
 
-    float endx = d.x * 1000.0f + p.x;
-    float endy = d.y * 1000.0f + p.y;
-    float endz = d.z * 1000.0f + p.z;
-    float ux = endx - p.x;
-    float uy = endy - p.y;
-    float uz = endz - p.z;
+    rgl::vector4 end = p + d * 1000.0f;
+    rgl::vector4 u = end - p;
+    rgl::vector4 w = v2 - v1;
+    rgl::vector4 rv = p - v1;
 
-    float wx = v2.x - v1.x;
-    float wy = v2.y - v1.y;
-    float wz = v2.z - v1.z;
-
-    float aw = p.x - v1.x;
-    float bw = p.y - v1.y;
-    float cw = p.z - v1.z;
-
-    float e1 = wx * aw + wy * bw + wz * cw;             // v . w
-    float b1 = ux * wx + uy * wy + uz * wz;             // u . v
-    float d1 = ux * aw + uy * bw + uz * cw;             // u . w   (negated below)
-    float c1 = wx * wx + wy * wy + wz * wz;             // v . v
-    float a1 = ux * ux + uy * uy + uz * uz;             // u . u
+    float e1 = w.x * rv.x + w.y * rv.y + w.z * rv.z;       // v . r
+    float b1 = u.x * w.x + u.y * w.y + u.z * w.z;          // u . v
+    float c1 = w.x * w.x + w.y * w.y + w.z * w.z;          // v . v
+    float a1 = u.x * u.x + u.y * u.y + u.z * u.z;          // u . u
 
     float den = a1 * c1 - b1 * b1;
-    float s = (b1 * e1 - c1 * d1) / den;
+    float s = (b1 * e1 - c1 * (rv.x * u.x + rv.y * u.y + rv.z * u.z)) / den;
     float t = (e1 + s * b1) / c1;                       // edge parameter from the UNCLAMPED ray parameter
 
     if (s < 0.0f)
@@ -58,16 +47,11 @@ void Mesh_s2da20::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     else if (t > 1.0f)
         t = 1.0f;
 
-    float rx = p.x + ux * s;
-    float ry = p.y + uy * s;
-    float rz = p.z + uz * s;
-    float qx = v1.x + wx * t;
-    float qy = v1.y + wy * t;
-    float qz = v1.z + wz * t;
+    rgl::vector4 r = p + u * s;
+    rgl::vector4 q = v1 + w * t;
 
-    *a = (float)sqrt((rx - qx) * (rx - qx) + (ry - qy) * (ry - qy) + (rz - qz) * (rz - qz));
-    *b = (float)sqrt((qx - p.x) * (qx - p.x) + (qy - p.y) * (qy - p.y) +
-                     (qz - p.z) * (qz - p.z));          // distance from the ray origin to the edge point
+    *a = (q - r).length();
+    *b = (q - p).length();          // distance from the ray origin to the edge point
 }
 
 // @ 0x52df40

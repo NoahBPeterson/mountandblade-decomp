@@ -177,7 +177,7 @@ void render_batch::render_scene(scene* sc)
                 IDirect3DBaseTexture9* t = tex_current(st, 0.0f);
                 g_effect->SetTexture("shadowmap_texture", t);
                 D3DXMATRIX proj = scene_sky(sc)->shadow_cam.projection();
-                D3DXMATRIX view = frustum_view_matrix(&scene_sky(sc)->shadow_cam);
+                D3DXMATRIX view = scene_sky(sc)->shadow_cam.view_matrix();
                 D3DXMATRIX svp = view * proj * D3DXMATRIX(0.5f, 0.0f, 0.0f, 0.0f,
                                                          0.0f, -0.5f, 0.0f, 0.0f,
                                                          0.0f, 0.0f, 1.0f, 0.0f,
@@ -257,7 +257,7 @@ void render_batch::render_scene(scene* sc)
     g_effect->SetVector("vCameraPos", (D3DXVECTOR4*)&camp);
 
     D3DXMATRIX proj = sc->fr.projection();
-    D3DXMATRIX view = frustum_view_matrix(&sc->fr);
+    D3DXMATRIX view = sc->fr.view_matrix();
     g_effect->SetMatrixTranspose("matView", &view);
     D3DXMATRIX viewproj = view * proj;
     g_effect->SetMatrixTranspose("matViewProj", &viewproj);
@@ -554,7 +554,7 @@ void render_batch::render_scene(scene* sc)
                 D3DXMATRIX world2 = world;
                 if ((it->m->res->shader->flags20 & 0x100) && sc->refl) {
                     D3DXMATRIX wproj = sc->refl->fr.projection();
-                    D3DXMATRIX wview = frustum_view_matrix(&sc->refl->fr);
+                    D3DXMATRIX wview = sc->refl->fr.view_matrix();
                     wproj = world2 * wview * wproj;
                     g_effect->SetMatrixTranspose("matWaterWorldViewProj", &wproj);
                 }
@@ -677,7 +677,7 @@ void PolyMesh::compute_edge_creases()
                 float k = (d.x * f.normal.x + (d.y * f.normal.y + d.z * f.normal.z)) * 0.2f;
                 s.x = d.x * k; s.y = d.y * k; s.z = d.z * k;
                 n.x = f.normal.x - s.x; n.y = f.normal.y - s.y; n.z = f.normal.z - s.z;
-                float l2 = (float)sqrt(n.z * n.z + (n.x * n.x + n.y * n.y));
+                float l2 = n.length();
                 e->crease[j] = (l2 > 1e-10f) ? (1.0f / l2) * n.z : 0.0f;
             } else {
                 e->crease[j] = 1.0f;

@@ -1,0 +1,1 @@
+../src/game/mesh_slot/mesh_start.cpp  ?near_round@@YA_JPBM@Z  004875a0  /O2 /MT /Gy /TP

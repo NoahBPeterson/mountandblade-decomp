@@ -438,16 +438,16 @@ void graph_obj::calc_edge_mode(int mode)
 // @ 0x4c57d0
 void graph_obj::swap_face_vertices(int a, int b)
 {
-    for (unsigned i = 0; edges && i < edges_n(); i++) {
-        edge* e = edges + i;
-        if (e->a == a)
-            e->a = b;
-        else if (e->a == b)
-            e->a = a;
-        if (e->b == a)
-            e->b = b;
-        else if (e->b == b)
-            e->b = a;
+    for (unsigned i = 0; i < edges_n(); i++) {
+        edge& e = edges[i];
+        if (e.a == a)
+            e.a = b;
+        else if (e.a == b)
+            e.a = a;
+        if (e.b == a)
+            e.b = b;
+        else if (e.b == b)
+            e.b = a;
     }
 }
 
@@ -495,7 +495,7 @@ void graph_obj::remove_vertex_from_polys(int v)
 // @ 0x4c59c0
 void graph_obj::remove_vertex_from_edges(int v)
 {
-    for (unsigned i = 0; edges && i < edges_n(); i++) {
+    for (unsigned i = 0; i < edges_n(); i++) {
         edge* e = edges + i;
         if (e->a == v || e->b == v) {
             remove_edge(i);
@@ -1215,48 +1215,47 @@ void ConfigDialog::init()
 // @ 0x4c77c0
 void MapEditorDialog::refresh()
 {
-    Frame* g = ((Frame*)g_game);
     MapRecord* r = 0;
-    int var2_no = 0;
-    char name[0xc8];
+    int var_no;
+    vector4 pos;
+    char buf[0x80];
     float matrix[0x10];
-    float x, y, z;
+    char name[0x80];
     int entry_no = 0;
-    int var_no = 0;
-    int mode = 0;
+    int mode;
 
-    if (g->object_index) {
-        memcpy(matrix, (*(Pawn**)&g_mission->f65e4)->matrix, 0x28);
-        matrix[12] += g->keep;
-        mode = g->mode;
-        x = g->eye.x;
-        y = g->eye.y;
-        z = g->eye.z;
+    if (((Frame*)g_game)->object_index) {
+        memcpy(matrix, (*(Pawn**)&g_mission->f65e4)->matrix, sizeof(matrix));
+        matrix[14] += ((Frame*)g_game)->keep;
+        pos = *(vector4*)((char*)((Frame*)g_game) + 0x1a09c);
+        mode = ((Frame*)g_game)->mode;
         var_no = 0;
-        strcpy(name, "New Object");
+        sprintf(name, "New Object");
         entry_no = 0;
-    } else if (g->record >= 0) {
-        r = ((Map*)g_mission)->records + g->record;
-        memcpy(matrix, &r->mesh_name, sizeof(matrix));
+    } else if (((Frame*)g_game)->record >= 0) {
+        r = ((Map*)g_mission)->records + ((Frame*)g_game)->record;
         entry_no = r->entry_no;
+        memcpy(matrix, &r->mesh_name, sizeof(matrix));
+        pos = *(vector4*)((char*)r + 0x158);
+        mode = ((ItemPage*)r)->kind;
         var_no = r->var_no;
         ((ItemPage*)r)->format(name);
     }
 
-    if (!(g->record < 0 && g->object_index == 0)) {
+    if (!(((Frame*)g_game)->record < 0 && ((Frame*)g_game)->object_index == 0)) {
         SetDlgItemTextA(hwnd, 0x439, name);
-        _snprintf(name, 0x80, "%3f", matrix[0]);
-        SetDlgItemTextA(hwnd, 0x435, name);
-        _snprintf(name, 0x80, "%3f", matrix[1]);
-        SetDlgItemTextA(hwnd, 0x436, name);
-        _snprintf(name, 0x80, "%3f", matrix[2]);
-        SetDlgItemTextA(hwnd, 0x437, name);
-        _snprintf(name, 0x80, "%3f", x);
-        SetDlgItemTextA(hwnd, 0x48b, name);
-        _snprintf(name, 0x80, "%3f", y);
-        SetDlgItemTextA(hwnd, 0x48c, name);
-        _snprintf(name, 0x80, "%3f", z);
-        SetDlgItemTextA(hwnd, 0x48d, name);
+        _snprintf(buf, 0x80, "%3f", matrix[12]);
+        SetDlgItemTextA(hwnd, 0x435, buf);
+        _snprintf(buf, 0x80, "%3f", matrix[13]);
+        SetDlgItemTextA(hwnd, 0x436, buf);
+        _snprintf(buf, 0x80, "%3f", matrix[14]);
+        SetDlgItemTextA(hwnd, 0x437, buf);
+        _snprintf(buf, 0x80, "%3f", pos.x);
+        SetDlgItemTextA(hwnd, 0x48b, buf);
+        _snprintf(buf, 0x80, "%3f", pos.y);
+        SetDlgItemTextA(hwnd, 0x48c, buf);
+        _snprintf(buf, 0x80, "%3f", pos.z);
+        SetDlgItemTextA(hwnd, 0x48d, buf);
         SetDlgItemInt(hwnd, 0x43a, entry_no, 0);
         SetDlgItemInt(hwnd, 0x43b, var_no, 0);
 
@@ -1272,14 +1271,14 @@ void MapEditorDialog::refresh()
         }
         return;
     }
-    sprintf(name, "");
-    SetDlgItemTextA(hwnd, 0x439, name);
-    SetDlgItemTextA(hwnd, 0x435, name);
-    SetDlgItemTextA(hwnd, 0x436, name);
-    SetDlgItemTextA(hwnd, 0x437, name);
-    SetDlgItemTextA(hwnd, 0x48b, name);
-    SetDlgItemTextA(hwnd, 0x48c, name);
-    SetDlgItemTextA(hwnd, 0x48d, name);
+    sprintf(buf, "");
+    SetDlgItemTextA(hwnd, 0x439, buf);
+    SetDlgItemTextA(hwnd, 0x435, buf);
+    SetDlgItemTextA(hwnd, 0x436, buf);
+    SetDlgItemTextA(hwnd, 0x437, buf);
+    SetDlgItemTextA(hwnd, 0x48b, buf);
+    SetDlgItemTextA(hwnd, 0x48c, buf);
+    SetDlgItemTextA(hwnd, 0x48d, buf);
 }
 
 // @ 0x4c7bf0
@@ -1372,9 +1371,11 @@ void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
     if (flags & 2) {
         int n = *((int*)p - 1);
         Rec78* cur = (Rec78*)p + n;
+        Rec78Members* tail = (Rec78Members*)((char*)cur + 0x44);
         while (--n >= 0) {
             --cur;
-            ((Rec78Members*)cur->tail)->~Rec78Members();
+            tail = (Rec78Members*)((char*)tail - 0x78);
+            tail->~Rec78Members();
             cur->name.~tstring();
         }
         if (flags & 1)
@@ -1614,7 +1615,8 @@ edit_vert* edit_vec::ufill(edit_vert* dst, int n, const edit_vert* src)
 tstr_iter tstr_vec::erase_range(tstring* first, tstring* lastp)
 {
     if (first != lastp) {
-        tstring* end = std::_Copy_opt<tstring*, tstring*>(lastp, last, first, std::_Nonscalar_ptr_iterator_tag());
+        tstring* end = std::_Copy_opt<tstring*, tstring*>(lastp, last, first,
+            *(std::_Nonscalar_ptr_iterator_tag*)&lastp);
         for (tstring* it = end; it != last; it++)
             it->~tstring();
         last = end;

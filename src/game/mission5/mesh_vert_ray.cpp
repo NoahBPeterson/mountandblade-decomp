@@ -16,23 +16,22 @@
 
 #include "../key_names.h"
 
+static __forceinline float vdot(const rgl::vector4& a, const rgl::vector4& b)
+{ return a.x * b.x + (a.y * b.y + a.z * b.z); }
+
 // @ 0x52dae0
 void Mesh_s2da20::vert_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
                                float* a, float* b)
 {
     const mface_s2da20& v = verts.first[index];
-    float t = (v.pos.x - p.x) * d.x + (v.pos.y - p.y) * d.y + (v.pos.z - p.z) * d.z;
+    float t = vdot(v.pos - p, d);
     rgl::vector4 q;
     if (t < 0.0f)
         q = p;
     else
-        q = rgl::vector4(p.x + d.x * t, p.y + d.y * t, p.z + d.z * t);
-    *a = (float)sqrt((q.x - v.pos.x) * (q.x - v.pos.x) +
-                     (q.y - v.pos.y) * (q.y - v.pos.y) +
-                     (q.z - v.pos.z) * (q.z - v.pos.z));
-    *b = (float)sqrt((q.x - p.x) * (q.x - p.x) +
-                     (q.y - p.y) * (q.y - p.y) +
-                     (q.z - p.z) * (q.z - p.z));
+        q = p + d * t;
+    *a = (q - v.pos).length();
+    *b = (q - p).length();
 }
 
 // @ 0x52dc00

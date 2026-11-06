@@ -71,25 +71,21 @@ void MissionScreen::fill_mission_grid()
         float pos[2];
         vt(overlay)->d41(pos, &none);
     }
-    int kb = 0;
     for (int k = 0; k < g_mission_ctx.rows; k++) {
-        int jb = 0;
         for (int j = 0; j < g_mission_ctx.depth; j++) {
-            int* cell = (int*)((char*)g_mission_ctx.grid + kb + jb);
+            int* cell = (int*)((char*)g_mission_ctx.grid + k * 0x38 + j * 0xc);
             for (int i = 0; i < g_mission_ctx.cols; i++) {
                 Troop* u = &g_game->troops[*cell];
+                float v[2] = { 0.1f, y };
                 const tstring* txt = g_strtable.find(&u->key);
                 if (!txt)
                     txt = (const tstring*)u;
-                float v[2] = { 0.1f, y };
                 vt(overlay)->d43((void*)txt, v);
                 cell++;
                 y -= 0.02f;
             }
-            jb += 0xc;
             y -= 0.005f;
         }
-        kb += 0x38;
         y -= 0.01f;
     }
 }
@@ -150,8 +146,7 @@ void Rec44::init_screen()
         ((MissionScreen*)this)->fill_mission_grid();
     else if (g_mission_ctx.mode == 3 || g_mission_ctx.mode == 4 || g_mission_ctx.mode == 5)
         ((MissionScreen*)this)->fill_single_mission();
-    { MissionUi* root_ = (MissionUi*)overlay; g_gui.objs.push_back(root_); }
-    g_gui.dirty = 1;
+    { MissionUi* root_ = (MissionUi*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
 }
 
 
@@ -206,7 +201,7 @@ void MissionScreen::fill_mission_row(int side)
     if (id == -1)
         return;
     int pidx = g_game->parties.lookup(id);
-    Party* party = (Party*)((char*)g_game->parties.pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);      // PartyMgr::get_party with the lookup 0x48ad00 under its defining class
+    Party* party = (Party*)((char*)g_game->parties.pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);
 
     float v[2];
     const tstring* text;
@@ -224,8 +219,10 @@ void MissionScreen::fill_mission_row(int side)
         Troop* u = &g_game->troops[rec->troop];
         char buf[0x14];   // 0x14 like the original: its sprintf of a long count pair overflows into the line buffer that follows
         if (u->flags30 & 0x10) {
-            int h = ((unsigned char*)u)[0x7a] & 0xf;
-            if (h > g_skill_tbl[36].max_rank)
+            int h = ((char*)u)[0x7a] & 0xf;
+            if (h < 0)
+                h = 0;
+            else if (h > g_skill_tbl[36].max_rank)
                 h = g_skill_tbl[36].max_rank;
             sprintf(buf, " %d%%",
                     (int)(u->hp * 100.0f / (u->lvl58 + h * 2 + 0x23) + 0.0001f));
@@ -274,8 +271,8 @@ void Rec3c::init_screen()
         tstring none("");
         row[2] = new_button(overlay, none, 0.65f, 0.6f, 0.15f, 0.05f);
     }
-    ((UiA*)row[2])->f184 |= 1;
     {
+        ((UiA*)row[2])->f184 = 1;       // original: `or [eax+0x184],1`; the freshly built button has f184 == 0, so set-to-1 is equivalent
         tstring n("ui_factions");
         struct { int a, b; } ret;
         vt(row[2])->d41(&ret, (void*)g_strtable_c.lookup(n));
