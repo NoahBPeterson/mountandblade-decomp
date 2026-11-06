@@ -179,10 +179,11 @@ int rgl::mesh::count(int kind)
 // @ 0x4686a0
 void EnvRec::reset()
 {
+    f40 = 1.0f;
+    f0 = 0;
     f3c = -1;
     f8 = -1;
     fc = -1;
-    f0 = 0;
     f30 = 0;
     fa4 = 10;
     f9c = 13;
@@ -195,8 +196,8 @@ void EnvRec::reset()
     k1 = 0;
     f54 = 0;
     f58 = 0;
-    f40 = 1.0f;
     fbc = 1.0f;
+
     fa0 = 1.0f;
     { int& one = fb4; one = 1; }
     { int& one = f50; one = 1; }
@@ -364,36 +365,43 @@ bool ShadowMap::test(unsigned p, float* out)
 
 // ---- terrain: brush, path walk, flow spreading, ambient particles, normals -------------------------------------------------
 
+static inline int max0(const int& v) { return v > 0 ? v : 0; }
 // @ 0x468da0
+
 void Terrain::apply_brush(const float* center, float radius, float strength)
 {
-    float fv = (float)((((unsigned*)g_bit)[14] - 1) & (flags >> 7));
+    const unsigned& bm = ((unsigned*)g_bit)[14] - 1;
+    float fv = (float)((flags >> 7) & bm);
     int lo[2], hi[2];
     const int* lim = &w;
     for (int k = 0; k < 2; ++k) {
         float a = (float)ceil((center[k] - radius) / scale);
         float fl = (float)floor(a);
         int i0 = (int)fl;
-        int r = i0;
-        if (!(a - fl <= 0.5f)) r = i0 + 1;
-        lo[k] = r > 0 ? r : 0;
+        int r = (a - fl <= 0.5f) ? i0 : i0 + 1;
+        lo[k] = max0(r);
         float b = (float)floor((center[k] + radius) / scale);
         float fl2 = (float)floor(b);
         int i1 = (int)fl2;
         int r2 = i1;
         if (!(b - fl2 <= 0.5f)) r2 = i1 + 1;
-        int h = lim[k];
+        int h = *lim;
         if (r2 < h) h = r2;
         hi[k] = h;
+        lim++;
     }
+
     for (int j = lo[1]; j <= hi[1]; ++j) {
         for (int i = lo[0]; i <= hi[0]; ++i) {
             terrain_cell& c = cells[i * 251 + j];
-            float dx = (float)i * scale - center[0];
-            float dy = (float)j * scale - center[1];
-            float d = (1.0f / radius) * (float)sqrt(dy * dy + dx * dx);
+            float p[2] = { (float)i * scale, (float)j * scale };
+            float dv[2];
+            dv[0] = p[0] - center[0];
+            dv[1] = p[1] - center[1];
+            float d = (1.0f / radius) * (float)sqrt(dv[1] * dv[1] + dv[0] * dv[0]);
             if (d < 1.0f) {
-                float v = ((((float)cos(d * 3.1415927f) + 1.0f) * strength) * 0.5f * c.weight * fv) * 0.01f + c.pz;
+                float v = (((float)cos(d * 3.1415927f) + 1.0f) * strength) * 0.5f;
+                v = v * c.weight * fv * 0.01f + c.pz;
                 c.pz = v;
                 c.h2 = v;
             }
@@ -1093,15 +1101,17 @@ void Terrain::seed_brushes(float size, float density, float scale)
     float r = (float)(rand() % 15817) * 1.2644623e-5f + 0.4f;
     density = density * wx * wy / (size * size * 0.25f);
     float fl = (float)floor(density);
-    int k = (int)fl;
-    if (!(density - fl <= 0.5f)) k++;
+    int k0 = (int)fl;
+    int k = !(density - fl <= 0.5f) ? k0 + 1 : k0;
     int n = (int)((float)k * r * 30.0f);
     for (; n > 0; n--) {
         density = size + size;      // (the original reuses the argument slot)
         float f = (rand_avg4() * 0.5f + 0.05f) * size;
         float pos[2];
-        pos[1] = (density + wy) * (float)(rand() % 15817) * 6.322312e-05f - size;
-        pos[0] = (density + wx) * (float)(rand() % 15817) * 6.322312e-05f - size;
+        float py = (density + wy) * (float)(rand() % 15817) * 6.322312e-05f - size;
+        float px = (density + wx) * (float)(rand() % 15817) * 6.322312e-05f - size;
+        pos[0] = px;
+        pos[1] = py;
         apply_brush(pos, f, ((float)(rand() % 15817) * 6.3223115e-06f + 0.2f) * f * scale);
     }
 }
@@ -1171,7 +1181,10 @@ void Terrain::make_river()
             if (is_far) {
                 trace_path(&a.dx, &b.dx, 2, &steps, &minz, 1.5f, 0.9f, 0, 1);
                 if (minz < 3.5f) ok = true;
-                else clear_flags(river_both());
+                else {
+                    const unsigned& mb = (int)g_river_mask_b;
+                    clear_flags(g_river_mask_a | mb);
+                }
                 tries++;
             }
         } while (!ok);

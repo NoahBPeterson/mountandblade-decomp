@@ -39,6 +39,7 @@
 #include "../agent/agent.h"
 #include "../agent3/agent_combat.h"
 #include "../agent_obj.h"
+#include "../key_names.h"      // g_keyboard (0xa170c8): pick_sound_ids
 #include "../mission.h"
 #include "../terrain_b/poly_mesh.h"
 #include "../glyph_lookup.h"
@@ -353,6 +354,169 @@ static int ir_room_left(ItemRef* r)                      // 0x434c30
 {
     return ir_max_amount(r) - (int)(r->m4 & 0xff);
 }
+// The original agent translation unit (0x4353a0..0x45fxxx) saw these bodies: a local whose address reaches only them does not
+// escape, so it shares stack slots (codegen 7). agent/agent.cpp and agent2/agent_stats.cpp own the rows.
+inline __declspec(noinline) int ItemRef::max_amount() const     // 0x434b70
+{
+    if (item < 0) return 0;
+    int v = g_items[item].f210;
+    if (v != 0 && (m4 & 0xff000000) == 0x2a000000) {
+        float f = v * 0.13f;
+        int d = round_float(&f);
+        if (d < 1) d = 1;
+        v += d;
+    }
+    return v;
+}
+inline __declspec(noinline) void ItemRef::add_amount(int n)     // 0x434be0
+{
+    int v = (m4 & 0xff) + n;
+    if (v > max_amount()) {
+        v = max_amount();
+        b.amount = 0;
+        m4 |= v;
+        return;
+    }
+    b.amount = 0;
+    m4 |= v;
+}
+inline __declspec(noinline) ItemRef Agent::best_ammo(int idx, int* missing, int* total, int* slot_out)      // 0x436880
+{
+    ItemRef r;
+    *slot_out = -1;
+    r.item = -1;
+    if (idx == -1) idx = slots[0];
+    *missing = -1;
+    *total = -1;
+    if (idx >= 0 && pairs[idx].item >= 0) {
+        unsigned wt = g_items[pairs[idx].item].type_flags & 0xff;
+        if (wt == 8 || wt == 9 || wt == 10 || wt == 0x11 || wt == 0x10) {
+            *missing = 0;
+            *total = 0;
+            for (int i = 0; i < 4; i++) {
+                ItemRef* cur = &pairs[i];
+                if (cur->item >= 0) {
+                    int w = pairs[idx].item;
+                    unsigned t = g_items[w].type_flags & 0xff;
+                    if ((t == 8 && (char)g_items[cur->item].type_flags == 5) ||
+                        (t == 9 && (char)g_items[cur->item].type_flags == 6) ||
+                        (t == 0x10 && (char)g_items[cur->item].type_flags == 0x12) ||
+                        (t == 0x11 && (char)g_items[cur->item].type_flags == 0x12) ||
+                        (t == 10 && cur->item == w)) {
+                        if (*slot_out == -1) {
+                            r = *cur;
+                            *slot_out = i;
+                        }
+                        if (*missing == 0) {
+                            unsigned b = cur->m4;
+                            if (cur->max_amount() != (int)(b & 0xff)) {
+                                r = *cur;
+                                *slot_out = i;
+                            }
+                        }
+                        unsigned b2 = cur->m4;
+                        *missing += cur->max_amount() - (b2 & 0xff);
+                        *total += cur->max_amount();
+                    }
+                }
+            }
+        }
+    }
+    return r;
+}
+inline __declspec(noinline) void node_list::cap_all(const float* limit)     // 0x438f90
+{
+    for (rgl::mesh** it = first; it < last; ++it) {
+        rgl::mesh* n = *it;
+        struct L { int a0; int* data; int count; };
+        L* l = n->local_a1 ? (L*)&n->kf : (L*)&n->parent->get_kf();
+        if (0 < l->count) {
+            if (*limit > (float)l->data[l->count - 1])
+                n->c8 = (float)l->data[l->count - 1];
+            else
+                n->c8 = *limit;
+        }
+    }
+}
+inline __declspec(noinline) void node_groups::cap_all(const float* limit)   // 0x439000
+{
+    for (int i = 0; i < nlists; ++i)
+        lists[i].cap_all(limit);
+}
+inline __declspec(noinline) void Agent::play_hit_sound(int* kind)
+{
+    Mission* m = g_mission;
+    if (m->terrain.muted)
+        return;
+    int snd;
+    if (f10 == 0) {
+        int k = *kind;
+        if (k < 0)
+            return;
+        if (k > 1) {
+            if (k != 3)
+                return;
+            snd = 0xe;
+        } else if (!(pos.z < m->terrain.base_z)) {
+            bool b = (g_game->slots[m->f5df4].flags8 & 1) != 0;
+            snd = b ? 0x10 : 0xf;
+        } else {
+            snd = 0x11;
+        }
+    } else {
+        int k = *kind;
+        unsigned c = fb8 & 7;
+        if (k == 4) {
+            snd = 0x61;
+        } else if (pos.z > m->terrain.base_z) {
+            if (c == 2 || c == 0) {
+                if (k != 0 && k != 2) return;
+                snd = 0x67;
+            } else if (c == 3) {
+                if (k != 0 && k != 2) return;
+                snd = 0x68;
+            } else if (c == 4) {
+                if (k != 0) return;
+                snd = 0x69;
+            } else {
+                if (c != 5) return;
+                if (k != 0) return;
+                snd = 0x6a;
+            }
+        } else {
+            if (k != 2 && k != 3) return;
+            snd = 0x11;
+        }
+    }
+    int r = rand();
+    float pitch = (float)(r % 0x3dc9) * 2.5289246e-05f + 0.8f;
+    g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &body->m.o.x, pitch, 0);
+}
+inline __declspec(noinline) void Agent::play_sound_var(int* kind, float* var)
+{
+    if (*kind != -1 && body != 0) {
+        float pitch = 1.0f;
+        if (*var > 0.001f) {
+            float v = ((float)(rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * *var;
+            v = v + v;
+            if (v > 0.001f)
+                pitch = v + 1.0f;
+            else if (v < -0.001f)
+                { float nv = -v; pitch = 1.0f / (nv + 1.0f); }
+        }
+        int own = 0;
+        if (id == g_mission->player_id)
+            own = 1;
+        vector4 p = body->m.o;
+        float h = (f10 == 0 && f2c != -1) ? 2.4f : 1.5f;
+        p.z += h - 0.3f;
+        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p.x, pitch, (int*)&pitch);
+    }
+}
+inline __declspec(noinline) float __cdecl clamp(const float* x, const float* lo, const float* hi)     // 0x40e3d0
+{
+    return *x < *lo ? *lo : (*x >= *hi ? *hi : *x);
+}
 static inline unsigned itype(const ItemRef* p) { return g_items[p->item].type_flags & 0xff; }
 
 
@@ -578,7 +742,6 @@ float __cdecl hit_chance(int* who, Agent* a);                          // 0x438c
 static __forceinline float hit_chance_ref(const ItemRef& who, Agent* a) { return hit_chance((int*)&who, a); }
 int __cdecl team_leader(const Agent* a);                                // 0x435b60
 float frand();                                                          // 0x40e400
-float clamp(const float* x, const float* lo, const float* hi);          // 0x40e3d0
 float __cdecl fmin_ref(const float* a, const float* b);                 // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
 float g_dt_scale = 1.0f;                                    // 0x5a9bf0
@@ -5780,7 +5943,7 @@ static __declspec(noinline) void ui_weapon_class_name(int type, char* out)
         } \
     }
 // @ 0x457b40
-void Agent::process_blow(int unused)
+void Agent::process_blow(float unused)
 {
     int attacker;
     float dmg;
@@ -6884,6 +7047,94 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
     return result;
 }
 
+inline __declspec(noinline) void Agent::pick_sound_ids(int* a, int* b, int* c)
+{
+    *a = -1;
+    *b = -1;
+    *c = -1;
+    int mode = 0;
+    if (id != g_mission->player_id || g_options.stick_mode == 0) {
+        int t = pick_duel();
+        if (t != -1) {
+            Agent* o = agent_by_id(t);
+            if (o->active == 2)
+                mode = o->mode1;
+            else if (o->active == 1)
+                mode = o->mode1;
+        }
+    } else if (g_options.stick_mode == 1) {
+        float dx = g_keyboard.f818;
+        float dy = g_keyboard.f81c;
+        if (g_options.invert != 0)
+            dy = -dy;
+        if (dx > dy) {
+            if (dx > -dy)
+                mode = 2;
+            else
+                mode = 3;
+        } else {
+            if (dx < -dy)
+                mode = 1;
+            else
+                mode = 0;
+        }
+    } else {
+        mode = 0;
+        int t = pick_front();
+        if (t >= 0) {
+            Agent* o = agent_by_id(t);
+            AgentBody* tb = o->body;
+            if (tb != 0) {
+                rgl::matrix cam = g_mission->view;
+                { const float quarter = -1.5707964f; cam.matrix::rotate_about_s(&quarter); }
+                vector4 p = o->pos;
+                p.z = p.z + 0.7f;
+                if (o->f10 == 0)
+                    p = ((const ::pos&)o->body->m).transform_point(*(vector4*)(tb->skel->rec(9) + 0x30));
+                vector4 q = cam.transform_point_to_local(p);
+                float inv = 1.0f / q.y;
+                float x = q.x * inv;
+                float z = inv * q.z;
+                float k = 0.4f * z;
+                if (x < k - 0.02f && x < -0.02f - k) mode = 2;
+                else if (k + 0.02f < x && 0.02f - k < x) mode = 1;
+                else if (z < -0.1f) mode = 3;
+                else mode = 0;
+            }
+        }
+    }
+    unsigned __int64 flags = 0;
+    ItemRef p0 = slot_pair_inl(0);
+    if (p0.item != -1)
+        flags = g_items[p0.item].flags;
+    ItemRef p1 = slot_pair_inl(1);
+    if (p1.item > 0) {
+        *a = 0xc7; *b = 0xc8; *c = 0xc9;
+        return;
+    }
+    if (p0.item <= 0) {
+        *a = 0x97; *b = 0x98; *c = 0x99;
+        return;
+    }
+    unsigned __int64 pole = flags & (((unsigned __int64)0x100) << 32);
+    if (mode == 0) {
+        if (pole) { *a = 0xd6; *b = 0xd7; *c = 0xd8; return; }
+        if (flags & (((unsigned __int64)0x1000) << 32)) { *a = 0xca; *b = 0xcb; *c = 0xcc; return; }
+        if (flags & (((unsigned __int64)0x10000) << 32)) { *a = 0xe2; *b = 0xe3; *c = 0xe4; return; }
+    } else if (mode == 2) {
+        if (pole) { *a = 0xd0; *b = 0xd1; *c = 0xd2; return; }
+        if (flags & (((unsigned __int64)0x1000) << 32)) { *a = 0xd0; *b = 0xd1; *c = 0xd2; return; }
+        if (flags & (((unsigned __int64)0x10000) << 32)) { *a = 0xe8; *b = 0xe9; *c = 0xea; return; }
+    } else if (mode == 1) {
+        if (pole) { *a = 0xd3; *b = 0xd4; *c = 0xd5; return; }
+        if (flags & (((unsigned __int64)0x1000) << 32)) { *a = 0xd3; *b = 0xd4; *c = 0xd5; return; }
+        if (flags & (((unsigned __int64)0x10000) << 32)) { *a = 0xeb; *b = 0xec; *c = 0xed; return; }
+    } else {
+        if (pole) { *a = 0xd9; *b = 0xda; *c = 0xdb; return; }
+        if (flags & (((unsigned __int64)0x1000) << 32)) { *a = 0xcd; *b = 0xce; *c = 0xcf; return; }
+        if (flags & (((unsigned __int64)0x10000) << 32)) { *a = 0xe5; *b = 0xe6; *c = 0xe7; }
+    }
+}
 // ---- Agent::update_attack: the per-tick attack / reload state machine -------------------------------------------------------------
 #define itp_cant_reload_on_horseback 0x00100000
 #define itcf_throw_knife   0x0000000000020000i64
@@ -6905,6 +7156,7 @@ static __forceinline ItemRef* cur_ptr(Agent* a) { ItemRef* p = 0; if (a->wield[0
 // @ 0x45c220
 void Agent::update_attack(float dt)
 {
+    int slot;
     Blow hit;
     hit.init();
     if (((int)(anim[0].events & 0x1ffff) >= 0x20 && anim[0].cur >= 0 && (defs->defs[anim[0].cur].flags & 0x400)) ||
@@ -7060,18 +7312,18 @@ void Agent::update_attack(float dt)
                 else if (tt == 3) aid = 0x73;
                 set_order(1, aid, 0x0140000c, damage_factor(0));
             }
-            if (r != 1) {
-                if (r == 2)
-                    goto clear_state;
-                goto chk99;
+            if (r == 1) {
+                if (hit.dmg_out < 5.0f && cur.item >= 0) {
+                    set_order(r, snd_c, 0x1400023, damage_factor(0));
+                    active = 5;
+                } else {
+                    active = 3;
+                }
+                goto tail;
             }
-            if (hit.dmg_out < 5.0f && cur.item >= 0) {
-                set_order(1, snd_c, 0x1400023, damage_factor(0));
-                active = 5;
-            } else {
-                active = 3;
-            }
-            goto tail;
+            if (r == 2)
+                goto clear_state;
+            goto chk99;
         } else {
             if (S == 3)
                 goto chk99;
@@ -7087,23 +7339,26 @@ void Agent::update_attack(float dt)
         }
     } else if (ik->is_ranged()) {
         // ------------------------------------------------------------------ bow / crossbow / thrown / guns
-        int slot = 0, missing, total;
+        int missing, total;
+        float var;
+        int kind;
+        slot = 0;
         best_ammo(-1, &missing, &total, &slot);
         if (TYPE == itp_type_crossbow) {
-            if (cur.max_amount() - (cur.m4 & 0xff) == 0) {
-                float var = 0.0f;
-                links[wield[0]]->cap_all(&var);
-                if (slot >= 0)
-                    links[slot]->vis = 0;
-            } else {
-                float var = 100.0f;
-                links[wield[0]]->cap_all(&var);
+            if (cur.max_amount() - (cur.m4 & 0xff) != 0) {
+                float var2 = 100.0f;
+                links[wield[0]]->cap_all(&var2);
                 if (slot >= 0)
                     links[slot]->vis = 0xffff;
+            } else {
+                float var2 = 0.0f;
+                links[wield[0]]->cap_all(&var2);
+                if (slot >= 0)
+                    links[slot]->vis = 0;
             }
         } else if (TYPE == itp_type_bow && links[wield[0]] != 0) {
-            float var = 0.0f;
-            links[wield[0]]->cap_all(&var);
+            float var2 = 0.0f;
+            links[wield[0]]->cap_all(&var2);
         }
         int S = active;
         if (S == 0) {
@@ -7177,8 +7432,8 @@ void Agent::update_attack(float dt)
                     float x = (PROG - 0.46f) * 2.5f;
                     float hi = 1.0f;
                     float lo = 0.0f;
-                    float var = clamp(&x, &lo, &hi) * 100.0f;
-                    links[wield[0]]->cap_all(&var);
+                    float var2 = clamp(&x, &lo, &hi) * 100.0f;
+                    links[wield[0]]->cap_all(&var2);
                 }
                 links[slot]->vis = 0xffff;
                 update_quiver();
@@ -7219,20 +7474,18 @@ void Agent::update_attack(float dt)
                 active = 3;
             }
             if (TYPE == itp_type_bow) {
-                int kind = 0x25;
-                float var = 0.1f;
+                kind = 0x25;
+                var = 0.1f;
                 if (id != g_mission->player_id)
                     play_sound_var(&kind, &var);
                 else
                     play_sound_var(&kind, &var);
             } else if (TYPE == itp_type_crossbow) {
-                float var = 0.1f;
-                int kind = 0x26;
+                var = 0.1f;
+                kind = 0x26;
                 play_sound_var(&kind, &var);
             } else if (TYPE == itp_type_thrown) {
                 unsigned __int64 sm = ik->flags & itcf_shoot_mask;
-                int kind;
-                float var;
                 if (sm == itcf_throw_javelin) {
                     kind = 0x27;
                     var = 0.1f;
@@ -7287,8 +7540,8 @@ void Agent::update_attack(float dt)
                 float x = (PROG - lo2) / (hi2 - lo2);
                 float hi = 1.0f;
                 float lo = 0.0f;
-                float var = clamp(&x, &lo, &hi) * 100.0f;
-                links[wield[0]]->cap_all(&var);
+                float var2 = clamp(&x, &lo, &hi) * 100.0f;
+                links[wield[0]]->cap_all(&var2);
             }
         } else if (S == 3) {
             if (ACT == 0x84 || ACT == 0x80 || ACT == 0x82 || ACT == 0x7e) {
@@ -7985,7 +8238,7 @@ void Agent::update(float dt)
     if (f30 == -1) {
         if (f7c != 2) {
             ai_idle_tick(&dt);
-            poll_input(*(int*)&dt0, (InputState*)&in_flags);
+            poll_input(dt0, (InputState*)&in_flags);
         }
         if (f2c >= 0) {
             unsigned id = f2c;
@@ -7994,7 +8247,7 @@ void Agent::update(float dt)
         }
     }
     if (dt > 0.0f) {
-        process_blow(*(int*)&dt0);
+        process_blow(dt0);
         update_controls(dt0);
         update_attack(dt0);
         if (f2c == -1)

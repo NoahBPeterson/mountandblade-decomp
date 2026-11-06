@@ -111,9 +111,11 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             g_save_kind = header.year;
         }
         *counter = *counter + 1;
-        out->assign(g_strtable.lookup(tstring("ui_creating_game"))->c_str());
-        return r;
+        tstring t0("ui_creating_game");
+        out->assign(g_strtable.lookup(t0)->c_str());
+        goto done;
     }
+    r = true;
     if (step == 1) {
         Game* g = new Game;
         g_game_G = g;
@@ -121,7 +123,8 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         g_game_G->init(g_module_name, f8c, w04 == 2 || w04 == 3);
         g_game_G->f1a05c = 1;
         *counter = *counter + 1;
-        out->assign(g_strtable.lookup(tstring("ui_loading_setting_data"))->c_str());
+        tstring t1("ui_loading_setting_data");
+        out->assign(g_strtable.lookup(t1)->c_str());
         return false;
     }
     if (step == 2) {
@@ -135,21 +138,20 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             g_game_G->title = header.title;
         }
         *counter = *counter + 1;
-        out->assign(g_strtable.lookup(tstring("ui_loading_savegame_file"))->c_str());
+        tstring t2("ui_loading_savegame_file");
+        out->assign(g_strtable.lookup(t2)->c_str());
         return false;
     }
     if (step == 3) {
         if (w04 == 1) {
             g_game_G->load_state(save);
             save->failed = 1;
-            if (save) {
-                ((mem_stream*)save)->mem_stream::~mem_stream();   // 0x417c90, called directly (the stream base destructor)
-                ::operator delete(save);
-            }
+            delete save;
             save = 0;
         }
         *counter = *counter + 1;
-        out->assign(g_strtable.lookup(tstring("ui_loading_map_file"))->c_str());
+        tstring t3("ui_loading_map_file");
+        out->assign(g_strtable.lookup(t3)->c_str());
         return false;
     }
     if (step == 4) {
@@ -191,7 +193,8 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         out->assign(g_strtable.lookup(tstring("ui_finished"))->c_str());
         return false;
     }
-    return true;
+done:
+    return r;
 }
 
 // @ 0x51cc10

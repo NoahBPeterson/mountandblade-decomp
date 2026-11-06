@@ -943,19 +943,15 @@ void Mission::check_slot(int id, unsigned bits)
         *(int*)((char*)this + r->idx * 0x130 + 0x770) = 0;     // r->idx is re-read: the stores may alias it
         *(int*)((char*)this + r->idx * 0x130 + 0x774) = 0;
         add_amount(id, bits);
-        if (r->flags & 1) { slot_b = 1; return; }
-        if (r->flags & 2) { slot_a = 1; return; }
-        int a = r->flags & 0x40;
-        if (a == 0 && (r->flags & 0x80) == 0) { slot_a = 1; return; }
-        if (a != 0 && team_b == 0) { slot_a = 1; return; }
-        int b = r->flags & 0x80;
-        if (b != 0 && team_b == 1) { slot_a = 1; return; }
-        if (a != 0 && team_b == 1) { slot_b = 1; return; }
-        if (b != 0 && team_b == 0) { slot_b = 1; return; }
-        if (a != 0 && team_a == 1) { slot_a = 1; return; }
-        if (b != 0 && team_a == 0) { slot_a = 1; return; }
-        if (a != 0 && team_a == 0) { slot_b = 1; return; }
-        if (b != 0 && team_a == 1) slot_b = 1;
+        int f = r->flags;
+        if (f & 1) { slot_b = 1; return; }
+        if (f & 2) { slot_a = 1; return; }
+        int b;
+        int a = f & 0x40;
+        if (((f & 0x40) == 0 && (f & 0x80) == 0) || (a != 0 && team_b == 0) || ((b = f & 0x80) != 0 && team_b == 1)) { slot_a = 1; return; }
+        if ((a != 0 && team_b == 1) || (b != 0 && team_b == 0)) { slot_b = 1; return; }
+        if ((a != 0 && team_a == 1) || (b != 0 && team_a == 0)) { slot_a = 1; return; }
+        if ((a != 0 && team_a == 0) || (b != 0 && team_a == 1)) slot_b = 1;
     } else {
         g_gui.add(tstring("Invalid entry no for add_reinforcements"), -1);
     }
@@ -1542,10 +1538,7 @@ static __declspec(noinline) char warn_scene_prop_instance(const int& value)
 {
     char buf[512];
     char r = 1;
-    int id;
-    MissionX* m;
-    char* first;
-    if (!(m = mission()) || (id = value) < 0 || !(first = (char*)m->props._Myfirst) || (unsigned)id >= (unsigned)(((char*)m->props._Mylast - first) / 0x1c8)) {   // jb: unsigned
+    if (!mission() || value < 0 || value >= mission()->props.size()) {
         sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Scene_prop Instance ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
@@ -2944,6 +2937,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     g_cur_opcode = id;
     unsigned op_word = id;
     char result = 1;
+    char* result_addr = &result;   // result's address is taken in the front end (the original keeps it in memory, and stores to it may alias loop bounds: main_party_has_troop reloads num_stacks)
     unsigned neg = op_word & op::neg;
     unsigned or_next = op_word & op::this_or_next;
     if (g_or_latch) {
@@ -2995,11 +2989,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // 2.3 times its radius of it
         GameX* game = ::game();
         result = 0;
-        int mp = game->main_party;
-        if ((__int64)party(mp)->ai_object == params[0] &&
-            party(mp)->ai_behavior == ai_bhvr_attack_party) {
-            float dist = (party_pos(party(party(mp)->ai_object)) - party_pos(party(mp))).out_length();
-            if (party(game->main_party)->radius * 2.3f >= dist)
+        int mp = game->main_party; PartyMgr* pm = &game->parties;
+        if ((__int64)((PartyV*)pm->get(mp))->ai_object == params[0] &&
+            ((PartyV*)pm->get(mp))->ai_behavior == ai_bhvr_attack_party) {
+            float dist = ((rgl::vector4&)pm->get(((PartyV*)pm->get(mp))->ai_object)->pos - (rgl::vector4&)pm->get(mp)->pos).out_length();
+            if (((PartyV*)pm->get(game->main_party))->radius * 2.3f >= dist)
                 result = 1;
         }
         break;
@@ -3104,13 +3098,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::party_can_join:
-        if (g_dialogs.f10 < 0 || !game()->can_transfer(g_dialogs.f10, game()->main_party, 0))
+        if (g_dialogs.f10 < 0 || !((GameW*)g_game)->can_transfer(g_dialogs.f10, ((GameX*)g_game)->main_party, 0))
             result = 0;
         else
             result = 1;
         break;
     case op::party_can_join_as_prisoner:
-        if (g_dialogs.f10 < 0 || !game()->can_transfer(g_dialogs.f10, game()->main_party, 1))
+        if (g_dialogs.f10 < 0 || !((GameW*)g_game)->can_transfer(g_dialogs.f10, ((GameX*)g_game)->main_party, 1))
             result = 0;
         else
             result = 1;
@@ -3149,8 +3143,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::main_party_has_troop: {
         int main = game()->main_party;
         result = 0;
-        for (int k = 0; k < party(main)->num_stacks; k++)
-            if ((__int64)party(main)->stacks[k].troop == params[0])
+        for (i = 0; i < party(main)->num_stacks; i++)
+            if ((__int64)party(main)->stacks[i].troop == params[0])
                 result = 1;
         break;
     }

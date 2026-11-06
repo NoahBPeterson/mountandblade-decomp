@@ -46,6 +46,96 @@ struct Ctx {
 static __forceinline int add_v(mesh* m, int pt, const vec2& uv, unsigned ca, const vector4& pos, const int& z) { return m->add_vertex(pt, &uv, &ca, &pos, &z); }
 static __forceinline void v_neg(vector4& r, const float* d) { r.x = -d[0]; r.y = -d[1]; r.z = -d[2]; }
 
+// Bodies the original's object saw (header inlines left out of line; row owner terrain_a.cpp 0x4644e0): an object whose
+// address only reaches a visible body does not escape (docs/codegen.md section 7)
+static __forceinline vec2 cell_v2(float x, float y) { vec2 r; r.x = x; r.y = y; return r; }
+static __forceinline void cell_set_weight(terrain_cell* c, const float& v) { c->w[0] = v; c->f90 = v; }
+inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
+{
+    ensure_local();
+    int n = (int)v50.size();
+    v50.resize(n + 1);
+    (&*v50.begin())[n].index = index;
+    (&*v50.begin())[n].uv = *uv;
+    (&*v50.begin())[n].color = *color;
+    (&*v50.begin())[n].f5c = *f5c;
+    vertex60* vv = v50._Myfirst + n;
+    vv->normal = *pos;
+    vv->pos = *pos;
+    return n;
+}
+inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
+{
+    ensure_local();
+    int n = (int)v70.size();
+    v70.resize(n + 1);
+    v70[n].a = *p;
+    v70[n].b = *p;
+    return n;
+}
+inline __declspec(noinline) void terrain_cell::init(const float* q)
+{
+    P() = *(const rgl::vector4*)q;
+    *(float*)&flags = 0.0f;
+    weight = 1.0f;
+    f14 = -1;
+    f10 = -1;
+    disp = cell_v2(q[0] * 0.7f, q[1] * 0.7f);
+    dir = cell_v2(0.0f, 1.0f);
+    order = -1;
+    for (int i = 1; i < 15; i++)
+        w[i] = 0.0f;
+    f88 = 0.0f;
+    cell_set_weight(this, 1.0f);
+    h2 = pz;
+    f8c = -1;
+}
+
+inline __declspec(noinline) float rgl::vector4::normalize()
+{
+    float len = (float)sqrt(x * x + y * y + z * z);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+}
+inline __declspec(noinline) vector4 tri_normal(const vector4* p)
+{
+    vector4 a = (p[1] - p[0]);
+    vector4 b = (p[2] - p[0]);
+    vector4 n;
+    n.x = a.y * b.z - a.z * b.y; n.y = a.z * b.x - a.x * b.z; n.z = a.x * b.y - a.y * b.x;
+    n.normalize();
+    return n;
+}
+inline __declspec(noinline) void Terrain::triangle_corners(int x, int y, int flip, int* a, int* b, int* c)
+{
+    if (this->quad(x, y).diag != 0) {
+        if (flip == 0) {
+            a[0] = x; a[1] = y;
+            b[1] = y; b[0] = x + 1;
+            c[0] = x + 1; c[1] = y + 1;
+        } else {
+            a[1] = y; a[0] = x;
+            b[0] = x + 1; b[1] = y + 1;
+            c[0] = x; c[1] = y + 1;
+        }
+    } else {
+        if (flip == 0) {
+            a[1] = y; a[0] = x + 1;
+            b[1] = y + 1; b[0] = x;
+            c[0] = x; c[1] = y;
+        } else {
+            a[0] = x + 1; a[1] = y;
+            b[0] = x + 1; b[1] = y + 1;
+            c[0] = x; c[1] = y + 1;
+        }
+    }
+}
+
 // ---- 0x480db0 -------------------------------------------------------------------------------------------------------
 
 // @ 0x480db0 -- the water of the world map: the river light term, one water particle per chunk of every active water
@@ -57,7 +147,7 @@ void Terrain::create_water(void** out)
     float cz;
     {
         vector4 amb = world->ambient;
-        cz = (amb.z + amb.y + amb.x) * 0.3f;   // summed z, y, x as at 0x480e0e
+        cz = (amb.x + amb.y + amb.z) * 0.3f;   // the code sums z, y, x (0x480e0e): cl rewrites the order of a local's fields
     }
 
     for (int y = 0; y <= h; y++) {
@@ -69,8 +159,9 @@ void Terrain::create_water(void** out)
                 float d = ld.x * c->nrm.x + ld.y * c->nrm.y + ld.z * c->nrm.z;
                 if (0.0f > d)
                     d = 0.0f;
-                float* arr = *(float**)((char*)world->ground + 4);
-                arr[c->f14 * 9 + 8] = d * c->f40 * cmap;
+                NavVert& nv = world->ground->verts[c->f14];
+                nv.level = d * c->f40;
+                nv.level *= cmap;
             }
         }
     }
@@ -123,8 +214,7 @@ void Terrain::create_water(void** out)
             for (int k = 0; k < 2; k++) {
                 int tri[3][2];
                 triangle_corners(j, i, k, tri[0], tri[1], tri[2]);
-                int i0 = tri[0][0] * 251 + tri[0][1];
-                if (cells[i0].pz <= -0.3f || at(tri[1][0], tri[1][1]).pz <= -0.3f || at(tri[2][0], tri[2][1]).pz <= -0.3f) {
+                if (at(tri[0][0], tri[0][1]).pz <= -0.3f || at(tri[1][0], tri[1][1]).pz <= -0.3f || at(tri[2][0], tri[2][1]).pz <= -0.3f) {
                 for (int q = 0; q < 3; q++) {
                     terrain_cell* c = &at(tri[q][0], tri[q][1]);
                     if (c->f10 != -1)
@@ -145,8 +235,8 @@ void Terrain::create_water(void** out)
                 }
                 int& f2 = at(tri[2][0], tri[2][1]).f10;
                 int& f1 = at(tri[1][0], tri[1][1]).f10;
-                m->add_face(cells[i0].f10, f1, f2);
-                m->add_face(cells[i0].f10, f2, f1);
+                m->add_face(at(tri[0][0], tri[0][1]).f10, f1, f2);
+                m->add_face(at(tri[0][0], tri[0][1]).f10, f2, f1);
                 }
             }
         }
@@ -239,10 +329,10 @@ struct HF : HeightField {
     }
 };
 
-// 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri (terrain_a/wind.h; hidden return pointer)
-rgl::vector4 tri_normal(const rgl::vector4* tri);
 // light-slot table at terrain+0x258; the cell lum[] entries are only used for slots flagged in 0x8ed4e14
 
+static __forceinline HCell& hc(HeightField* hf, int x, int y) { return hf->cols[x][y]; }
+static __forceinline HCell& hc2(HeightField* hf, const int& x, const int& y) { return hf->cols[x][y]; }
 // @ 0x481570 -- re-tessellate every terrain quad into two triangles (four when the half-quad normals disagree), assigning
 // each touched corner cell a point in the new Geom and each quad a 0x88-byte element record with the final lighting, then
 // rebuild the world mesh, install a fresh HeightField and relight the scene
@@ -253,7 +343,8 @@ void Terrain::tessellate()
     HeightField* cr = new HF(scale, *(vector4*)((char*)this + 0x843bcfc), &w);
     HeightField* rows = cr;
 
-    for (int y = 0; y <= h; y++) {
+    int y;
+    for (y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
             terrain_cell* c = &at(x, y);
             int id = *(int*)&c->pz;                 // the height's bits (0x481630 reads cell+8)
@@ -266,34 +357,33 @@ void Terrain::tessellate()
     g->elems().reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
     g->pts().reserve(npts);
 
-    for (int y = 0; y < h; y++) {
+    for (y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             terrain_quad* qp = &quads[x * 250 + y];     // 0x4816d6: row stride 0x38, column stride 0x36b0 (index x * 250 + y)
-            int tri[2][8];
+            int tri[2][4][2];
             vector4 nrm[2];
 
             for (int k = 0; k < 2; k++) {
-                int* t = tri[k];
-                triangle_corners(x, y, k, &t[0], &t[2], &t[4]);
+                triangle_corners(x, y, k, tri[k][0], tri[k][1], tri[k][2]);
                 vector4 cell[3];
-                cell[0] = *(vector4*)&at(t[0], t[1]);
-                cell[1] = *(vector4*)&at(t[2], t[3]);
-                cell[2] = *(vector4*)&at(t[4], t[5]);
+                { int ix = tri[k][0][0]; cell[0] = *(vector4*)&at(ix, tri[k][0][1]); }
+                cell[1] = *(vector4*)&at(tri[k][1][0], tri[k][1][1]);
+                cell[2] = *(vector4*)&at(tri[k][2][0], tri[k][2][1]);
                 nrm[k] = tri_normal(cell);
             }
 
             int ncorner = 4;
             int nquad = 1;
             if (nrm[1].y * nrm[0].y + nrm[1].z * nrm[0].z + nrm[1].x * nrm[0].x > 0.999f) {      // summed y, z, x as at 0x4817f9
-                tri[0][0] = x;     tri[0][1] = y;
-                tri[0][2] = x + 1; tri[0][3] = y;
-                tri[0][4] = x + 1; tri[0][5] = y + 1;
-                tri[0][6] = x;     tri[0][7] = y + 1;
+                tri[0][0][0] = x;     tri[0][0][1] = y;
+                tri[0][1][0] = x + 1; tri[0][1][1] = y;
+                tri[0][2][0] = x + 1; tri[0][2][1] = y + 1;
+                tri[0][3][0] = x;     tri[0][3][1] = y + 1;
             } else {
                 ncorner = 3;
                 nquad = 2;
                 for (int k = 0; k < 2; k++)
-                    triangle_corners(x, y, k, &tri[k][0], &tri[k][2], &tri[k][4]);
+                    triangle_corners(x, y, k, tri[k][0], tri[k][1], tri[k][2]);
                 {
                     int& fl = *(int*)&rows->cols[x][y].flags;
                     fl |= 1;
@@ -319,9 +409,8 @@ void Terrain::tessellate()
                 rec.f24 = 0;
                 rec.n = ncorner;
 
-                int* cid = &tri[qn][1];
                 for (int k = 0; k < ncorner; k++) {
-                    terrain_cell* c = &at(cid[-1], cid[0]);
+                    terrain_cell* c = &at(tri[qn][k][0], tri[qn][k][1]);
                     if (c->f14 == -1) {
                         c->f14 = g->pts().size();
                         geom_pt pt;
@@ -341,7 +430,6 @@ void Terrain::tessellate()
                         slot -= 10;
                     }
                     rec.ids[k] = c->f14;
-                    cid += 2;
                 }
 
                 rec.flags |= 0x10;
@@ -440,10 +528,9 @@ void Terrain::generate(int seed, int* objs, char flag)
     float inv = 1.0f / scale;
     int& rw = w;
     rw = (int)(inv * wx);
-    int& rh = h;
-    rh = (int)(inv * wy);
+    h = (int)(inv * wy);
     if (w > 250)
-        w = 250;
+        rw = 250;
     if (h > 250)
         h = 250;
     if (w < 40)
@@ -463,16 +550,12 @@ void Terrain::generate(int seed, int* objs, char flag)
     init_layers();
 
     for (int y = 0; y <= h; y++) {
-        int x = 0;
-        if (x <= w) {
+        for (int x = 0; x <= w; x++) {
             vector4 p;
+            p.x = (float)x * scale;
+            p.y = (float)y * scale;
             p.z = 0.0f;
-            do {
-                p.x = (float)x * scale;
-                p.y = (float)y * scale;
-                cells[x * 251 + y].init(&p.x);
-                x++;
-            } while (x <= w);
+            cells[x * 251 + y].init(&p.x);
         }
     }
 
@@ -627,6 +710,19 @@ static __forceinline void v_max(vector4& a, const vector4& p)
     v = a.y; if (!(v > p.y)) v = p.y; a.y = v;
     v = a.z; if (!(v > p.z)) v = p.z; a.z = v;
 }
+struct Vec2m : Vec2 { Vec2m() {} Vec2m(float a, float b) : Vec2(a, b) {} Vec2m operator*(float s) const { return Vec2m(x * s, y * s); } };
+static __forceinline Vec2 v2mul(const Vec2& a, float s) { return Vec2(a.x * s, a.y * s); }
+static __forceinline Vec2 v2mul2(const Vec2& a, float s) { Vec2 q; q.x = a.x * s; q.y = a.y * s; return q; }
+static __forceinline Vec2 to2a(const vector4& v) { Vec2 r; r.x = v.x; r.y = v.y; return r; }
+static __forceinline Vec2 to2b(const vector4& v) { return Vec2(v.x, v.y); }
+static __forceinline Vec2 to2c(const vector4& v) { Vec2 r; *(int*)&r.x = *(int*)&v.x; *(int*)&r.y = *(int*)&v.y; return r; }
+static __forceinline Vec2 to2d(const vector4& v) { return *(const Vec2*)&v; }
+static __forceinline Vec2 v2mulv(Vec2 a, float s) { return Vec2(a.x * s, a.y * s); }
+static __forceinline Vec2 v2mulw(float s, Vec2 a) { return Vec2(a.x * s, a.y * s); }
+static __forceinline float lv1(const NavVert& v) { return v.level; }
+static __forceinline float lv2(const NavVert* v) { float l = v->level; return l; }
+static __forceinline const NavVert& lv3(NavData* n, int i) { return n->verts[i]; }
+static __forceinline const NavVert& lv4(rgl::world* w, int i) { NavVert& r = w->ground->verts[i]; return r; }
 // @ 0x47ff60
 void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
 {
@@ -696,7 +792,6 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     int pt = m->add_point((const vector4*)c);
                     unsigned balpha = 0xff;          // blend alpha
                     unsigned edi = 0xff;             // the cell colour level
-                    int ux;                  // uv.x's dword, kept in a register across add_vertex (ebx, 0x480496)
                     Vec2 uv;
                     if (layerno < 15) {
                         float f;
@@ -710,15 +805,11 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         edi = round_clamp255(f);
                         float s = *(float*)&layer[layerno].f14;
                         Vec2 t(c->px * 0.025f, c->py * 0.025f);
-                        Vec2 r(t.x * s, t.y * s);
-                        ux = *(int*)&r.x;
-                        *(int*)&uv.y = *(int*)&r.y;
+                        uv = Vec2(t.x * s, t.y * s);
                     } else {
                         vector4 pu = g_shadow_map.to_unit(*(const vector4*)c);
-                        ux = *(int*)&pu.x;
-                        *(int*)&uv.y = *(int*)&pu.y;
+                        uv = *(Vec2*)&pu;
                     }
-                    *(int*)&uv.x = ux;
                     vector4 rgb;
                     rgb.x = 1.0f; rgb.y = 1.0f; rgb.z = 1.0f;
                     if (layerno > 0 && layerno < 15) {
@@ -771,9 +862,9 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     col = col & 0xffffff;
                     if (layerno == 15) {
                         col = 0x810;
-                        float* arr = *(float**)((char*)world->ground + 4);
-                        float li = arr[c->f14 * 9 + 8];
-                        float r = li / (z + li);
+                        NavVert& nv = world->ground->verts[c->f14];
+                        float a = nv.level;
+                        float r = a / (z + a);
                         if (r < 0.0f) r = 0.0f;
                         else if (r > 0.75f) r = 0.75f;
                         int ia = (int)(r * 255.0f);
@@ -786,8 +877,8 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     unsigned cw = col;
                     int f5c = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
-                    (*(m->v50.begin() + c->f10)).f58 = fg;
-                    { vertex60& v = m->v50[c->f10]; v.f48 = ux; *(int*)&v.f4c = *(int*)&uv.y; }
+                    m->v50[c->f10].f58 = fg;
+                    { vertex60& v = m->v50[c->f10]; v.f48 = *(int*)&uv.x; *(int*)&v.f4c = *(int*)&uv.y; }
                 }
                 m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
             }

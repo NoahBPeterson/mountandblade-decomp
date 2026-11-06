@@ -593,6 +593,10 @@ Still unknown: the original contains these same constructs and doesn't fold.
   7. A dead parameter's home is overlaid by a block-scoped copy, and the first free home wins.
   8. Partly overlapping slots mean separate locals: a 20-byte `z[5]` was really `uv[2]` plus `pos[3]`.
   Method: map every slot from the original with push depth removed, write one local per observed slot, then fix the scopes.
+- **Probed further on M&B `agent_hud`:** small frames sort by size ascending then uses descending; large frames by `floor(1000*uses/size)` descending, low
+  address first. The switch came between 128 and 132 total bytes of locals, in one probe. Locals with disjoint lifetimes merge into a group first: its uses are
+  summed and its size is the largest member's (inferred from 0x4fb350). Ties come from an unstable quicksort, and that tie order isn't solved, so slots can't yet
+  be predicted exactly.
 - **Order by size.** In one function the locals sorted by size ascending, then by
   declaration; shrinking an array (`char q1[0x105]`) was the only way to move it
   below another.
@@ -1402,6 +1406,8 @@ Added by the third round (59 matched, including two functions 109 and 144 instru
 - **A reference to a container shifts use weights across the whole function:** `std::vector<light_t*>& ls = v->lights` gave 0x46d8c0 this=edi, v=ebp, taking it
   from 652 to 843 of 871. Register choice is decided by use counts, sometimes by one use.
 - **Statement-form sums keep x87 order:** `s = x*x; s += z*z; s += y*y`, where a single expression gets reordered.
+- **`fld [m]; fmul st(2)` plus a later `fstp st(0)` means the scale is a double** (0x4f8c80). A dead `lea r,[base+i*4]` after a load is a real `vector::operator[]`.
+- **A float pair struct keeps the second value computed and spilled before the first `_ftol`:** `struct {float x,y;} fp = {...}` (0x4faee0).
 
 Rows that resisted all of these, so stop early: SIB base/index order (`[ebx+ecx]` against `[ecx+ebx]`) and `fld/fmul`
 operand order, one instruction scheduled a slot away with no structural difference, and a read-modify-write `or [m], r`

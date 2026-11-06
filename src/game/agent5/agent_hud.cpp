@@ -467,6 +467,7 @@ static __forceinline void hv_add_to(vector4& a, const vector4& b) { a.x = a.x + 
 static __forceinline void hv_sub_to(vector4& a, const vector4& b) { a.x = a.x - b.x; a.y = a.y - b.y; a.z = a.z - b.z; }
 #define AG(i) agent_by_id(i)
 static __forceinline void hv_add_mix(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = b.y + a.y; a.z = b.z + a.z; }
+static __forceinline float fmax_i(const float& a, const float& b) { return a > b ? a : b; }
 static __forceinline void hv_view(rgl::frustum& f, const matrix& m) { f.m = m; f.build_planes(); }
 static __forceinline float clamp_i(const float& x, const float& lo, const float& hi) { return x < lo ? lo : (x >= hi ? hi : x); }
 static __forceinline void hv_sub_of(vector4& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; }
@@ -864,12 +865,11 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
 bool ShadowMap::sample(const vector4* p, float* out)
 {
     // (dx, dy) tap offsets: the original builds two int[9] tables on the stack (x then y)
-    float w[9] = { 1.0f, 0.9f, 0.9f, 0.9f, 0.9f, 0.7f, 0.7f, 0.7f, 0.7f };
-    int tx[9] = { 0, 1, 1, -1, -1, 2, -2, 0, 0 };
-    int ty[9] = { 0, 1, -1, 1, -1, 0, 0, 2, -2 };
-
     volatile bool ret = true;           // the original keeps the result byte in memory
     *out = 1.0f;
+    int tx[9] = { 0, 1, 1, -1, -1, 2, -2, 0, 0 };
+    int ty[9] = { 0, 1, -1, 1, -1, 0, 0, 2, -2 };
+    float w[9] = { 1.0f, 0.9f, 0.9f, 0.9f, 0.9f, 0.7f, 0.7f, 0.7f, 0.7f };
     if (!cam || !g_use_shaders || !surf) {
         ret = false;
         return false;
@@ -879,12 +879,11 @@ bool ShadowMap::sample(const vector4* p, float* out)
     if (!(0.0f <= clip.x && clip.x < 1.0f && 0.0f <= clip.y && clip.y < 1.0f))
         return true;
     int zero_x = 0;
+    struct { float x, y; } fp = { (float)scn.f8 * clip.x, (1.0f - clip.y) * (float)scn.fc };
     *out = 0.0f;
-    float fx = (float)scn.f8 * clip.x;
-    float fy = (1.0f - clip.y) * (float)scn.fc;
-    int px = (int)fx;
+    int px = (int)fp.x;
     int zero_y = 0;
-    int py = (int)fy;
+    int py = (int)fp.y;
     float depth = clip.z - 0.001f;
     for (int i = 0; i < 9; i++) {
         int xv = tx[i] + px;
@@ -1133,91 +1132,58 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         // name temporary dies at the end of the statement (0x4fbab0).
         std::vector<rgl::mesh*> objects = g_resmgr.find_meshes(as_rgl_string(((ItemRef*)ref)->mesh_name()));
         if (objects.empty()) {
-            {
-                tstring name = ((ItemRef*)ref)->mesh_name();
-                mb_warning("Unable to find mesh %s", name.c_str());
-            }
+            mb_warning("Unable to find mesh %s", ((ItemRef*)ref)->mesh_name().c_str());
             result = new rgl::mesh;
             return result;
         }
         result = objects[0]->clone();
         for (unsigned i = 1; i < objects.size(); i++) {
-            identity_pos((pos*)&m);
-            result->append_skinned(objects[i], (const rgl::mat4*)&m, -1, -1, 0);
+            result->append_skinned(objects[i], (const rgl::mat4*)identity_pos((pos*)&m), -1, -1, 0);
         }
     }
 
     unsigned type = g_items[ref->item].type_flags & 0xff;
     identity3((rgl::mat3*)&m);
-    float angle;
+    matrix& mr = *(matrix*)&m;
     if (type == 0xd) {
-        angle = -1.5707964f;
-        ((rgl::matrix*)&m)->rotate_about_s(&angle);
-        angle = 3.1415927f;
-        goto sf;
+        rot_s(mr, -1.5707964f);
+        rot_u(mr, 3.1415927f);
     } else if (type == 1) {
-        angle = -1.5707964f;
-        ((rgl::matrix*)&m)->rotate_about_s(&angle);
-        angle = 1.5707964f;
-        goto sf;
+        rot_s(mr, -1.5707964f);
+        rot_u(mr, 1.5707964f);
     } else if (type == 2 || type == 3 || type == 4) {
-        angle = -0.7853982f;
-        goto sf;
+        rot_u(mr, -0.7853982f);
     } else if (type == 0xe) {
-        angle = -1.5707964f;
-        ((rgl::matrix*)&m)->rotate_about_s(&angle);
-        angle = 2.670354f;
-        ((rgl::matrix*)&m)->rotate_about_u(&angle);
-        angle = -0.31415927f;
-        ((rgl::matrix*)&m)->rotate_about_s(&angle);
-        goto done;
+        rot_s(mr, -1.5707964f);
+        rot_u(mr, 2.670354f);
+        rot_s(mr, -0.31415927f);
     } else if (type == 7) {
-        angle = 1.5707964f;
-        goto sf;
+        rot_u(mr, 1.5707964f);
     } else if (type == 0xc) {
-        angle = -0.47123894f;
-        ((rgl::matrix*)&m)->rotate_about_f(&angle);
-        angle = 0.62831855f;
-        ((rgl::matrix*)&m)->rotate_about_s(&angle);
-        goto done;
+        rot_f(mr, -0.47123894f);
+        rot_s(mr, 0.62831855f);
     } else if (type == 9) {
-        angle = 1.5707964f;
-        ((rgl::matrix*)&m)->rotate_about_f(&angle);
-        angle = -2.3561945f;
-        ((rgl::matrix*)&m)->rotate_about_s(&angle);
-        goto done;
+        rot_f(mr, 1.5707964f);
+        rot_s(mr, -2.3561945f);
     } else if (type == 0x11) {
-        goto done;
     } else if (type == 8) {
-        angle = 2.3561945f;
-        goto sf;
+        rot_u(mr, 2.3561945f);
     } else if (type == 0xa || type == 5 || type == 6) {
-        angle = 0.7853982f;
-        goto sf;
+        rot_u(mr, 0.7853982f);
     } else if (type == 0xb) {
-        angle = -1.2566371f;
-        ((rgl::matrix*)&m)->rotate_about_s(&angle);
-        angle = 0.7853982f;
-        goto sf;
+        rot_s(mr, -1.2566371f);
+        rot_u(mr, 0.7853982f);
     } else if (type == 0x14) {
-        angle = -0.62831855f;
-        ((rgl::matrix*)&m)->rotate_about_s(&angle);
-        angle = -0.47123894f;
-        goto sf;
-    } else {
-        goto done;
+        rot_s(mr, -0.62831855f);
+        rot_u(mr, -0.47123894f);
     }
-sf:
-    ((rgl::matrix*)&m)->rotate_about_u(&angle);
-done:
     result->set_part(m);
 
     vector4 bmin, bmax;
     result->calc_bounds(&bmin, &bmax);
 
-    float sumz = bmax.z + bmin.z;
-    float cx = (bmin.x + bmax.x) * 0.5f;
-    float cy = (bmin.y + bmax.y) * 0.5f;
+    vector4 sum = hv_add(bmin, bmax);
+    vector4 c = hv_mulv(sum, 0.5f);
 
     unsigned t2 = g_items[ref->item].type_flags & 0xff;
     float size = 1.0f;
@@ -1229,14 +1195,9 @@ done:
             size = 1.0f;
     }
 
-    float extent = bmax.y - bmin.y;
-    if (extent < bmax.x - bmin.x)
-        extent = bmax.x - bmin.x;
+    float extent = fmax_i(bmax.x - bmin.x, bmax.y - bmin.y);
 
-    vector4 tr;
-    tr.x = -cx;
-    tr.y = -cy;
-    tr.z = -(sumz * 0.5f);
+    vector4 tr = hv_neg(c);
     result->translate(&tr);
     result->scale(((*scale / extent) * size) * 0.95f);
     result->darken_vertices();

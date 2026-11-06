@@ -179,31 +179,31 @@ void EditMesh::build_second_pass()
         if (edges[i].nfaces != 1)
             continue;
 
-        int a[2] = { -1, -1 };      // far vertex of the neighbouring edge / the new vertex
-        int b[2] = { -1, -1 };      // that edge / the new edge
+        int b[2] = { -1, -1 };      // the neighbouring edge / the new edge
+        int a[2] = { -1, -1 };      // far vertex of that edge / the new vertex
         for (int k = 0; k < 2; k++) {
-            MVert* pv = &verts[((EV&)edges[i]).v[k]];
             int count = 1;
-            vector4 sum = pv->pos + graph(this)->normal(&i);
+            // &edges[0] plus a raw index: cl folds i*0x34 + k*4 into an IV of its own, unlike operator[] (materialised element)
+            MVert* pv = &verts[((EV&)(&edges[0])[i]).v[k]];
+            vector4 sum = graph(this)->normal(&i) + pv->pos;
             for (int j = 0; (unsigned)j < edges.size(); j++) {
-                MEdge& g = edges[j];
-                if (g.v0 != ((EV&)edges[i]).v[k] && g.v1 != ((EV&)edges[i]).v[k])
+                if (edges[j].v0 != ((EV&)edges[i]).v[k] && edges[j].v1 != ((EV&)edges[i]).v[k])
                     continue;
                 if (i == j)
                     continue;
-                if (g.nfaces >= 2)
+                if (edges[j].nfaces >= 2)
                     continue;
-                if (g.nfaces == 0) {
+                if (edges[j].nfaces == 0) {
                     b[k] = j;
-                    if (g.v0 == ((EV&)edges[i]).v[k])
-                        a[k] = g.v1;
+                    if (edges[j].v0 == ((EV&)edges[i]).v[k])
+                        a[k] = edges[j].v1;
                     else
-                        a[k] = g.v0;
+                        a[k] = edges[j].v0;
                     continue;
                 }
-                if (!edge_word(g))
+                if (!edge_word(edges[j]))
                     continue;
-                MVert* q = &verts[((EV&)edges[i]).v[k]];
+                MVert* q = &verts[((EV&)(&edges[0])[i]).v[k]];
                 vector4 nj = graph(this)->normal(&j) + q->pos;
                 count++;
                 vaddto(sum, nj);
@@ -214,10 +214,9 @@ void EditMesh::build_second_pass()
                 MEdge ne;
                 ne.v0 = ((EV&)edges[i]).v[k];
                 QVert nv;
-                float inv = 1.0f / (float)count;
-                nv.pos.x = sum.x * inv;
-                nv.pos.y = sum.y * inv;
-                nv.pos.z = sum.z * inv;
+                nv.pos.x = sum.x * (1.0f / (float)count);
+                nv.pos.y = sum.y * (1.0f / (float)count);
+                nv.pos.z = sum.z * (1.0f / (float)count);
                 ne.v1 = (int)verts.size();
                 verts.push_back(nv);
                 edges.push_back(ne);
@@ -228,10 +227,10 @@ void EditMesh::build_second_pass()
         PartFace nf;
         nf.n = 4;
         graph(this)->find_triangle(&i, &p, &q);
+        nf.eid[0] = i;
         nf.eid[2] = (int)edges.size();
         nf.vid[0] = q;
         nf.vid[1] = p;
-        nf.eid[0] = i;
         if (p == edges[i].v0) {
             nf.eid[1] = b[0];
             nf.eid[3] = b[1];
@@ -424,7 +423,8 @@ bool EditMesh::split_marked_edge()
     MVert v;
     v.flag = 0;
     int split = (int)edges.size();        // index the copy of the marked edge will get
-    v.pos = (verts[edges[mark].v0].pos + verts[edges[mark].v1].pos) * 0.5f;
+    vector4 mid = verts[edges[mark].v0].pos + verts[edges[mark].v1].pos;
+    v.pos = mid * 0.5f;
     MEdge ne;
     ne.v0 = edges[mark].v0;
     ne.v1 = (int)verts.size();
@@ -436,8 +436,9 @@ bool EditMesh::split_marked_edge()
         int corners[4];
         int nc = 0;
         for (int j = 0; j < n; j++) {
-            if (faces[edges[mark].face[slot]].vid[j] != edges[mark].v0 &&
-                faces[edges[mark].face[slot]].vid[j] != edges[mark].v1) {
+            MEdge& em = edges[mark];
+            if (faces[edges[mark].face[slot]].vid[j] != em.v0 &&
+                faces[edges[mark].face[slot]].vid[j] != em.v1) {
                 corners[nc] = j;
                 nc++;
             }

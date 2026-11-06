@@ -467,7 +467,7 @@ struct Agent {                                          // 0x5928 bytes
     unsigned pick_front();                       // 0x43b9e0
     unsigned pick_duel();                        // 0x43bb80
     void update_aim_error();                     // 0x43bdb0
-    void poll_input(int unused, InputState* out);   // 0x43c9c0 (ret 8)
+    void poll_input(float unused, InputState* out);   // 0x43c9c0 (ret 8)
     int update_nav_face();                       // 0x43cb30
     int move_anim(int mode);                     // 0x43cc30
     void update_anims(int unused);               // 0x43d040 (ret 4)
@@ -542,7 +542,7 @@ struct Agent {                                          // 0x5928 bytes
     void update_controls(float dt);              // 0x4556d0
     void tick_death();                           // 0x457710
     void note_blow(Blow* b);                     // 0x457af0
-    void process_blow(int unused);               // 0x457b40 (ret 4): the handler of a pending blow
+    void process_blow(float unused);               // 0x457b40 (ret 4): the handler of a pending blow
     void update(float dt);                       // 0x45f660: the per-frame agent update (animation scales, footsteps, input, attack and movement)
     void tick();                                 // 0x45ff30: the per-frame agent tick (animations, rider/mount copy, off-map check, death)
     void move_step(float dt);                    // 0x45d820: the per-frame movement / collision step (capsule sweep, floor probe, landing blow)

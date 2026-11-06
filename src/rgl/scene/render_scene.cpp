@@ -193,15 +193,19 @@ void world::render_scene(scene* sc, bool reflect)
     render_info info;
     info.valid = 0;
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
+        float r;
         vector4 c;
         centre(c, *it);
-        if (in_frustum_n(sc, &c, (*it)->get_radius()))
+        r = (*it)->get_radius();
+        if (in_frustum_n(sc, &c, r))
             (*it)->render(sc, &info);
     }
     for (entity** it = ents2._Myfirst; it < ents2._Mylast; ++it) {
+        float r;
         vector4 c;
         centre2(c, *it);
-        if (in_frustum_n(sc, &c, (*it)->get_radius()))
+        r = (*it)->get_radius();
+        if (in_frustum_n(sc, &c, r))
             (*it)->render(sc, &info);
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
@@ -278,9 +282,11 @@ void world::render_scene(scene* sc, bool reflect)
         return;
     }
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
+        float r;
         vector4 c;
         centre3(c, *it);
-        if (in_frustum_n(sc->refl, &c, (*it)->get_radius()))
+        r = (*it)->get_radius();
+        if (in_frustum_n(sc->refl, &c, r))
             (*it)->render(sc->refl, &rinfo);
     }
     }

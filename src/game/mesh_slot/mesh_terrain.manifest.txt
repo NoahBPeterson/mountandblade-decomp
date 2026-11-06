@@ -1,3 +1,5 @@
 ../src/game/mesh_slot/mesh_terrain.cpp  ?destroy_water@Terrain@@QAEXH@Z  004814a0  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_terrain.cpp  ?regenerate_water@Terrain@@QAEXPAPAX_N@Z  00482170  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_terrain.cpp  ?append_mesh@@YAPAUSkin@@HHPAPAX00DPAH@Z  00481c40  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_terrain.cpp  ?generate@Terrain@@QAEXHPAHD@Z  00481d10  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_terrain.cpp  ?create_water@Terrain@@QAEXPAPAX@Z  00480db0  /O2 /MT /Gy /TP

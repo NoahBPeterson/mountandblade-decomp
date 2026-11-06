@@ -2,3 +2,5 @@
 ../src/game/options_panel/mesh_edit.cpp  ?add_triangle@EditMesh@@QAE_NPAH@Z  004d1d80  /O2 /MT /Gy /TP
 ../src/game/options_panel/mesh_edit.cpp  ?add_quad@EditMesh@@QAEXPBUvector4@rgl@@@Z  004d2df0  /O2 /MT /Gy /TP
 ../src/game/options_panel/mesh_edit.cpp  ?finish@EditMesh@@QAEXXZ  004d22d0  /O2 /MT /Gy /TP
+../src/game/options_panel/mesh_edit.cpp  ?build_second_pass@EditMesh@@QAEXXZ  004d1880  /O2 /MT /Gy /TP
+../src/game/options_panel/mesh_edit.cpp  ?split_marked_edge@EditMesh@@QAE_NXZ  004d27d0  /O2 /MT /Gy /TP

@@ -547,8 +547,8 @@ bool dynamic_entity::on_entity(entity* e)
         rec2.p = pt;
         rec2.n = neg;
         ((contact_ops&)o->contacts).push_back(rec2);
-        float vn = rel.x * nrm.x + (rel.y * nrm.y + rel.z * nrm.z);
-        vector4 t = rel - vn * nrm;
+        float vn = vdot_zyx(nrm, rel);
+        vector4 t = rel - nrm * vn;
         vector4 td;
         normalize(td, t);
         if (!(vn >= 0.0f)) {                    // true for a NaN vn too (0x42727e: test ah,1 = C0, set when unordered)

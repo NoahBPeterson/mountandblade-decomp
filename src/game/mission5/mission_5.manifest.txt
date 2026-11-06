@@ -20,3 +20,7 @@
 ../src/game/mission5/mission_5.cpp  ?init_order_markers@Screen_s2ae70@@QAEXXZ  0052ae70  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?find_speaker_agent@ViewObj_s257f0@@QAEHXZ  00526070  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?find_listener_agent@ViewObj_s257f0@@QAEHXZ  00526130  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?reset_party_heroes@MissionCtx@@QAEXH@Z  00529670  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?save@Grid_s27c90@@QAEXPAUstream_base@@PAH@Z  00528060  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?save@SceneObjRec_s27c90@@QAEXPAUstream_base@@H@Z  00527da0  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?update@Terrain@@QAEXPAHPAUvector4@rgl@@HHH@Z  0052bf40  /O2 /MT /Gy /TP

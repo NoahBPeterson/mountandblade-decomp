@@ -503,7 +503,7 @@ void Agent::update_aim_error()
 
 // ---- input queue, nav face tracking and the movement animation chooser -------------------------------------------------------------------------------------------------------
 // @ 0x43c9c0
-void Agent::poll_input(int unused, InputState* out)
+void Agent::poll_input(float unused, InputState* out)
 {
     InputState orig = *out;
     *out = in_prev;

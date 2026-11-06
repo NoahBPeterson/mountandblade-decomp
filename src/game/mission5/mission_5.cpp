@@ -352,6 +352,8 @@ static __forceinline void vsub_to_s257f0(vector4& r, const vector4& a, const vec
 }
 #undef AG_S257F0
 #define AG_S257F0(id) ((*(std::vector<Agent_s257f0*>*)((char*)g_mission_s257f0 + 0x18))[(unsigned)(id) >> 4] + ((id) & 0xf))
+static __forceinline void vadd_s257f0(vector4& a, const vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
+static __forceinline float vdot_neg_s257f0(const vector4& a, const vector4& b) { return -a.x * b.x + -a.z * b.z + -a.y * b.y; }
 // @ 0x5257f0 -------------------------------------------------------------------------------------------
 void ViewObj_s257f0::update()
 {
@@ -371,15 +373,10 @@ void ViewObj_s257f0::update()
         F = x;                                // the look direction (0x5258e1..0x5258fa copy all four dwords)
         if (1.0f < len)
             len = 1.0f;
-        vector4 step = x * len;
-        G.x += step.x;
-        G.y += step.y;
-        G.z += step.z;
+        vadd_s257f0(G, x * len);
     } else {
         F = AG_S257F0(target)->body->m.f;
-        G.x += F.x;
-        G.y += F.y;
-        G.z += F.z;
+        vadd_s257f0(G, F);
         if (listener != -1) {
             vector4 x = AG_S257F0(listener)->body->m.o;
             {
@@ -387,14 +384,14 @@ void ViewObj_s257f0::update()
                 vsub_to_s257f0(x, L, G);
             }
             float dist = x.normalize();
-            float t = -F.x * x.x + -F.z * x.z + -F.y * x.y;
+            float t = vdot_neg_s257f0(F, x);
             if (dist < 1.4f) {
                 vector4 b = x + F * t;
                 b.normalize();
                 vsub_to_s257f0(x, G, F);
                 vector4 half = b * 0.5f;
                 ((Vec3*)&G)->sub_assign(*(const Vec3*)&half);
-                vsub_to_s257f0(F, G, x);
+                F = G - x;
                 F.normalize();
             }
         }
@@ -408,7 +405,9 @@ void ViewObj_s257f0::update()
         D = cross_s257f0(up, F);
         D.normalize();
     }
-    vector4 E = cross_s257f0(F, D);
+    {
+    vector4 E;
+    E = cross_s257f0(F, D);
 
     if ((m.o - G).length() > 0.3f || (m.u - F).length() > 0.1f)
         blend = blend - g_step_tbl[2] * 4.0f;
@@ -420,23 +419,23 @@ void ViewObj_s257f0::update()
     }
     t = clamp01_s257f0(t);
     float inv = 1.0f - t;
-    matrix* mp = &this->m;
 
-    mp->o = G * t + mp->o * inv;
-    mp->s = D * t + mp->s * inv;
-    mp->f = E * t + mp->f * inv;
-    mp->u = F * t + mp->u * inv;
+    m.o = G * t + m.o * inv;
+    m.s = D * t + m.s * inv;
+    m.f = E * t + m.f * inv;
+    m.u = F * t + m.u * inv;
 
-    mp->orthonormalize();
-    m_fc = *mp;
+    m.orthonormalize();
+    m_fc = m;
     float far_plane = 2.0f;
-    ((Mission*)g_mission_s257f0)->camera_to((const rgl::matrix*)mp, &far_plane);
+    ((Mission*)g_mission_s257f0)->camera_to((const rgl::matrix*)&m, &far_plane);
 
     struct Pose { char b[0x120]; };
     *(Pose*)((char*)f30 + 0x1ac) = *(Pose*)((char*)this + 0x34);
 
     blend = (g_step_tbl[2] + g_step_tbl[2]) + blend;
     blend = blend < 0.0f ? 0.0f : (blend >= 1.0f ? 1.0f : blend);
+    }
 }
 
 // ======================================================= slice s00526130: functions
@@ -1103,23 +1102,23 @@ void GameData_s27c90::save_scene(int idx)
 // @ 0x527da0
 void SceneObjRec_s27c90::save(stream_base* s, int arg)
 {
-    int version = -0x2cd;
-    s->w_int(&version);
-    int four = 4;
-    s->w_int(&four);
+    {
+        int version = -0x2cd;
+        s->w_int(&version);
+    }
+    {
+        int four = 4;
+        s->w_int(&four);
+    }
     int count = 0;
-    for (unsigned i = 0;
-         objs_first && i < (unsigned)((objs_last - objs_first) / 0x1c8);
-         i++) {
-        if (((SceneObj_s27c90*)objs_first)[i].f10 == arg)
+    for (unsigned i = 0; i < objs.size(); i++) {
+        if (objs[i].f10 == arg)
             count++;
     }
     s->w_int(&count);
-    for (unsigned i = 0;
-         objs_first && i < (unsigned)((objs_last - objs_first) / 0x1c8);
-         i++) {
-        if (((SceneObj_s27c90*)objs_first)[i].f10 == arg)
-            ((SceneObj_s27c90*)objs_first)[i].save(s);
+    for (unsigned j = 0; j < objs.size(); j++) {
+        if (objs[j].f10 == arg)
+            objs[j].save(s);
     }
     stream_b.rewind();
     s->w_stream(&stream_b);
@@ -1175,6 +1174,13 @@ void GridSet_s27c90::save(stream_base* s)
     }
 }
 
+// the value write of Grid::save: floats as they are for a negative type, else a byte rounded from 0..255
+static inline int round_s28060(float y)
+{
+    float f = (float)floor((double)y);
+    int ci = (int)f;
+    return (y - f <= 0.5f) ? ci : ci + 1;
+}
 // @ 0x528060
 void Grid_s27c90::save(stream_base* s, int* dims)
 {
@@ -1185,103 +1191,91 @@ void Grid_s27c90::save(stream_base* s, int* dims)
         s->w_int(&zero);
         return;
     }
-    int one = 1;
-    s->w_int(&one);
+    {
+        int one = 1;
+        s->w_int(&one);
+    }
 
     bool run = false;
-    int count = 0;
     int gap = 0;
-    int saved_row = 0;
+    int count = 0;
     int saved_col = 0;
-    int row = 0;
-    if (dims[1] <= 0) {
-        s->w_int(&gap);
-        return;
-    }
-    for (row = 0; row < dims[1]; row++) {
-        int col;
-        for (col = 0; col < dims[0]; col++) {
-            float v = data[col * 0x1a4 + row];
-            bool transparent;
-            if (type == -0x3115)
-                transparent = ((*(int*)&v & 0xffffff) == 0xffffff);
-            else
-                transparent = (-0.001f < v && v < 0.001f);
-            if (transparent) {
-                if (run) {
-                    s->w_int(&count);
-                    int n = count;
-                    int r = saved_row;
-                    int c = saved_col;
-                    for (int i = 0; i < n; i++) {
-                        if (type < 0)
-                            s->w_float(&data[c * 0x1a4 + r]);
-                        else {
-                            float y = data[c * 0x1a4 + r] * 255.0f;
-                            double f = floor((double)y);
-                            int ci = (int)f;
-                            if (!(y - f <= 0.5f))
-                                ci++;
-                            unsigned char b;
-                            if (ci < 0)
-                                b = 0;
-                            else {
-                                b = 0xff;
-                                if (ci < 0x100)
-                                    b = (unsigned char)ci;
+    int saved_row = 0;
+    for (int row = 0; row < dims[1]; row++) {
+        {
+            for (int col = 0; col < dims[0]; col++) {
+                float v = data[col * 0x1a4 + row];
+                bool transparent;
+                if (type == -0x3115)
+                    transparent = ((*(int*)&v & 0xffffff) == 0xffffff);
+                else
+                    transparent = (-0.001f < v && v < 0.001f);
+                if (transparent) {
+                    if (run) {
+                        s->w_int(&count);
+                        int r = saved_row;
+                        int c = saved_col;
+                        for (int i = 0; i < count; i++) {
+                            if (type >= 0) {
+                                float y = data[c * 0x1a4 + r] * 255.0f;
+                                int ci = round_s28060(y);
+                                if (ci < 0) {
+                                    unsigned char b = 0;
+                                    s->w_byte(&b);
+                                } else {
+                                    unsigned char b = 0xff;
+                                    if (ci < 0x100)
+                                        b = (unsigned char)ci;
+                                    s->w_byte(&b);
+                                }
+                            } else
+                                s->w_float(&data[c * 0x1a4 + r]);
+                            c++;
+                            if (c >= dims[0]) {
+                                c = 0;
+                                r++;
                             }
-                            s->w_byte(&b);
                         }
-                        c++;
-                        if (c >= dims[0]) {
-                            c = 0;
-                            r++;
-                        }
+                        count = 0;
+                        run = false;
+                        gap = 1;
+                    } else {
+                        gap++;
                     }
-                    count = 0;
-                    run = false;
-                    gap = 1;
                 } else {
-                    gap++;
-                }
-            } else {
-                if (run) {
-                    count++;
-                } else {
-                    run = true;
-                    s->w_int(&gap);
-                    gap = 0;
-                    count = 1;
-                    saved_row = row;
-                    saved_col = col;
+                    if (run) {
+                        count++;
+                    } else {
+                        run = true;
+                        s->w_int(&gap);
+                        gap = 0;
+                        count = 1;
+                        saved_col = col;
+                        saved_row = row;
+                    }
                 }
             }
         }
     }
     if (run) {
         s->w_int(&count);
-        int n = count;
         int r = saved_row;
         int c = saved_col;
-        for (int i = 0; i < n; i++) {
-            if (type < 0)
-                s->w_float(&data[c * 0x1a4 + r]);
-            else {
+        for (int i = 0; i < count; i++) {
+            if (type >= 0) {
                 float y = data[c * 0x1a4 + r] * 255.0f;
-                double f = floor((double)y);
-                int ci = (int)f;
-                if (!(y - f <= 0.5f))
-                    ci++;
-                unsigned char b;
-                if (ci < 0)
-                    b = 0;
-                else {
-                    b = 0xff;
+                int ci = round_s28060(y);
+                if (ci < 0) {
+                    unsigned char b = 0;
+                    s->w_byte(&b);
+                } else {
+                    unsigned char b = 0xff;
                     if (ci < 0x100)
                         b = (unsigned char)ci;
+                    s->w_byte(&b);
                 }
-                s->w_byte(&b);
-            }
+            } else
+                s->w_float(&data[c * 0x1a4 + r]);
             c++;
             if (c >= dims[0]) {
                 c = 0;
@@ -1767,20 +1761,19 @@ void Mission_s29840::fn_529840(int)
 {
     unsigned i = agents.first_used();
     while (i < (unsigned)agents.count) {
-        Agent_s29840* a = &agents.pages[i >> 4][i & 0xf];
+        std::vector<Agent_s29840*>& pgs = *(std::vector<Agent_s29840*>*)&agents.pad4[0x14 - 4];
+        Agent_s29840* a = pgs[i >> 4] + (i & 0xf);
         if (a->f10 != 1 && a->f10 == 0) {
             if (a->f1bc >= 0 && a->f1c0 >= 0) {
                 Troop_s29840* t = &troop_tbl_s29840()[a->troop];
                 if (!(t->flags & 0x10) && a->f1bc == g_game_s29840->cur_party && t->f50 > 0) {
-                    // 0x529905..0x529920: the xp stays an exact integer / x87 value until the _ftol; no float rounding of the
-                    // int (a plain int when the troop is not above the player's level) or of the quotient
+                    // the xp stays an exact integer / x87 value until the _ftol
+                    float xp = (float)a->f5730;
+                    int lv = t->b0;
                     int cur = troop_tbl_s29840()[g_game_s29840->cur_troop].b0;
-                    int v;
-                    if (t->b0 > cur)
-                        v = (int)(a->f5730 / ((t->b0 - cur) + 7.0f) * 7.0f);
-                    else
-                        v = a->f5730;
-                    party_mgr_s29840()->get(a->f1bc)->add_xp_to_stack(a->f1c0, v);
+                    if (lv > cur)
+                        xp = xp / ((lv - cur) + 7.0f) * 7.0f;
+                    party_mgr_s29840()->get(a->f1bc)->add_xp_to_stack(a->f1c0, (int)xp);
                 }
                 t = &troop_tbl_s29840()[a->troop];
                 if (t->flags & 0x10) {
@@ -1788,7 +1781,7 @@ void Mission_s29840::fn_529840(int)
                     Party* p = party_mgr_s29840()->at(party_mgr_s29840()->lookup(a->f1bc));
                     int skill = p->skill_level(9);
                     float v = a->f571c - a->f5724;
-                    if (v < 0.0f) v = 0.0f;
+                    if (0.0f > v) v = 0.0f;
                     troop_tbl_s29840()[a->troop].f_a0 += (skill * 0.05f + 0.1f) * v;
                 }
                 if (a->f14 != 1) {
@@ -1798,14 +1791,13 @@ void Mission_s29840::fn_529840(int)
                         fn_529d00(a);
                 }
             } else {
-                Troop_s29840* t = &troop_tbl_s29840()[a->troop];
-                if (t->flags & 0x10) {
-                    t->f_a0 = a->f5724;
+                if (troop_tbl_s29840()[a->troop].flags & 0x10) {
+                    troop_tbl_s29840()[a->troop].f_a0 = a->f5724;
                     if (a->troop == g_game_s29840->cur_troop) {
                         Party* p = party_mgr_s29840()->at(party_mgr_s29840()->lookup(g_game_s29840->cur_party));
                         int skill = p->skill_level(9);
                         float v = a->f571c - a->f5724;
-                        if (v < 0.0f) v = 0.0f;
+                        if (0.0f > v) v = 0.0f;
                         troop_tbl_s29840()[a->troop].f_a0 += (skill * 0.05f + 0.1f) * v;
                     }
                 }
@@ -1840,18 +1832,18 @@ void Mission_s29840::fn_529c30(int* hist, int party_id, int slot, int value, int
 {
     Party* p = party_mgr_s29840()->at(party_mgr_s29840()->lookup(party_id));
     int count = p->stacks[slot].count;
-    int* h = hist + slot * 32;
     int found = -1;
+    int (*g)[32] = (int (*)[32])hist;
     for (int i = 0; i < count; i++) {
         if (found != -1)
             break;
-        if (value == h[i])
+        if (value == g[slot][i])
             found = i;
     }
     if (found != -1) {
         for (int j = found; j < 0x1f; j++)
             hist[slot * 32 + j] = hist[slot * 32 + j + 1];
-        hist[slot * 32 + 31] = rand();
+        g[slot][31] = rand();
         if (flag && p->stacks[slot].count <= 0x20)
             hist[slot * 32 + p->stacks[slot].count - 1] = value;
     }
@@ -1877,18 +1869,19 @@ void Mission_s29840::fn_529d80()
 {
     Scene_s29840* sc = (Scene_s29840*)(*(char**)((char*)g_game_s29840 + 0x13a50) + f5df4 * 0x494);
     for (unsigned i = 0; i < records.size(); i++) {
-        PlacedObj* r = &records[i];
-        if (r->m10 == 0 && r->m14 >= 0) {
-            r->id = sc->recs[r->m14].id;
-            r->name = sc->recs[r->m14].name;
+        if (records[i].m10 == 0 && records[i].m14 >= 0) {
+            PlacedObj& q = sc->recs[records[i].m14];
+            records[i].id = q.id;
+            records[i].name = q.name;
         }
     }
-    sc->recs.resize(0);
+    std::vector<PlacedObj>& recs = sc->recs;
+    recs.resize(0);
     for (unsigned i = 0; i < records.size(); i++) {
         PlacedObj* r = &records[i];
         if (r->m10 == 0) {
-            sc->recs.push_back(*r);
-            r->m14 = (int)sc->recs.size() - 1;
+            recs.push_back(*r);
+            r->m14 = (int)recs.size() - 1;
         }
     }
 }
@@ -2822,10 +2815,9 @@ void Terrain::update(int* objs, vector4* pos, int sel, int mode, int flag)
 {
     clear_brushed();
 
-    int m = mode;
-    if (m == 1)
+    if (mode == 1)
         sel = objs[1];
-    else if (m == 2)
+    else if (mode == 2)
         sel = objs[2];
 
     float speed;
@@ -2841,93 +2833,63 @@ void Terrain::update(int* objs, vector4* pos, int sel, int mode, int flag)
     r2 = r2 * r2;
 
     int cell[2];   // brush() reads {col, row} through one pointer (0x52c0a1: [esp+0x1c], [esp+0x20])
-    int& row = cell[1];
-    int& col = cell[0];
-    row = 0;
-    if (this->h >= 0) {
-        do {
-            col = 0;
-            if (this->w >= 0) {
-                do {
-                    terrain_cell& tc = this->cell[col][row];
-                    float dx = tc.px - pos->x;
-                    float dy = tc.py - pos->y;
-                    float dz = tc.pz - pos->z;
-                    float d2 = dx * dx + (dz * dz + dy * dy);
-                    if ((m == 0 && d2 <= r2) || d2 <= r1) {
-                        char place = 1;
-                        float d = (float)sqrt(d2);
-                        if (!(d2 <= r1))   // 0x52c065: fcomp vs the squared distance (the fld st(0) copy), not d
-                            place = 0;
-                        if (sel < 0)
-                            return;
-                        if (sel >= objs[0])
-                            return;
-                        brush(objs, &sel, cell, &d, &m, &flag, &place);
-                    }
-                    col++;
-                } while (col <= this->w);
+    for (cell[1] = 0; cell[1] <= this->h; cell[1]++) {
+        for (cell[0] = 0; cell[0] <= this->w; cell[0]++) {
+            terrain_cell& tc = this->cell[cell[0]][cell[1]];
+            const vector4 dv = *(const vector4*)&tc.px - *pos;
+            float d2 = dv.x * dv.x + dv.z * dv.z + dv.y * dv.y;
+            if ((mode == 0 && d2 <= r2) || d2 <= r1) {
+                char place = 1;
+                float d = (float)sqrt(d2);
+                if (!(d2 <= r1))   // 0x52c065: fcomp vs the squared distance (the fld st(0) copy), not d
+                    place = 0;
+                if (sel < 0)
+                    return;
+                if (sel >= objs[0])
+                    return;
+                brush(objs, &sel, cell, &d, &mode, &flag, &place);
             }
-            row++;
-        } while (row <= this->h);
+        }
     }
 
-    if (m == 0) {
-        if (objs[0] - 2 > 0) {
-            int i = 0;
-            int rowbase = 0;
-            do {
-                char found = 0;
-                if (nx >= 0) {
-                    int j = 0;
-                    do {
-                        if (ny >= 0) {
-                            int k = 0;
-                            if (i + 4 < 0xf) {
-                                do {
-                                    if (brushed[i + 4][j][k] != 0)
-                                        found = 1;
-                                    k++;
-                                } while (k <= ny);
-                            }
-                        }
-                        j++;
-                    } while (j <= nx);
+    if (mode == 0) {
+        int rowbase = 0;
+        for (int i = 0; i < objs[0] - 2; i++) {
+            char found = 0;
+            for (int j = 0; j <= nx; j++) {
+                for (int k = 0; k <= ny; k++) {
+                    if (i + 4 < 0xf && brushed[i + 4][j][k] != 0)
+                        found = 1;
                 }
-                if (found)
-                    this->load_layer(objs, i);
-                i++;
-                rowbase += 5;
-            } while (i < objs[0] - 2);
+            }
+            if (found)
+                this->load_layer(objs, i);
+            rowbase += 5;
         }
-    } else if (m == 1) {
+    } else if (mode == 1) {
         this->load_layer(objs, objs[1]);
-    } else if (m == 2) {
+    } else if (mode == 2) {
         this->load_layer(objs, objs[2]);
     }
 
-    char* rec = (char*)this->world;
-    float a = *(float*)(rec + 0x68);
-    float b = *(float*)(rec + 0x6c);
-    float c = *(float*)(rec + 0x70);
-    float h = (c + b + a) * 0.3f;
+    float h;
+    {
+        vector4 v = *(vector4*)((char*)this->world + 0x68);
+        h = (v.x + v.y + v.z) * 0.3f;
+    }
 
-    if (this->nx > 0) {
-        for (int bx = 0; bx < this->nx; bx++) {
-            if (this->ny > 0) {
-                for (int by = 0; by < this->ny; by++) {
-                    for (int layer = 0; layer < 0xf; layer++) {
-                        if (brushed[layer][bx][by] != 0) {
-                            int blend = -1;
-                            if (g_use_shaders != 0 && this->layer[1].f10 != 0) {
-                                if (layer == 1)
-                                    blend = 2;
-                                else if (layer == 2)
-                                    continue;
-                            }
-                            this->emit_particle(layer, blend, bx, by, h);
-                        }
+    for (int bx = 0; bx < this->nx; bx++) {
+        for (int by = 0; by < this->ny; by++) {
+            for (int layer = 0; layer < 0xf; layer++) {
+                if (brushed[layer][bx][by] != 0) {
+                    int blend = -1;
+                    if (g_use_shaders != 0 && this->layer[1].f10 != 0) {
+                        if (layer == 1)
+                            blend = 2;
+                        else if (layer == 2)
+                            continue;
                     }
+                    this->emit_particle(layer, blend, bx, by, h);
                 }
             }
         }
@@ -2973,6 +2935,7 @@ static __forceinline void elem_set_s2c2b0(BrushElem_s2c2b0* E, const int* c, flo
 // @ 0x52c2b0
 void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB)
 {
+    int*& cell_r = cell; int*& pidx_r = pidx; int*& op_r = op; int*& fA_r = fA; float*& amt_r = amt;   // these parameters escape (the caller keeps its locals in private slots: 0x52bf40)
     int stampbase = 0;
 #define MODE_S2C2B0 (*(int*)(g_game_c + 0x1a094))
     float sel;

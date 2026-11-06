@@ -1,0 +1,1 @@
+../src/game/agent5/editor_dialog.cpp  ?terrain_dialog@GameApp@@QAEJPAUHWND__@@IIJ@Z  004fe860  /O2 /MT /Gy /TP

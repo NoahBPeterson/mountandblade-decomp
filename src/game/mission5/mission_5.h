@@ -640,13 +640,13 @@ struct ResourceOwner_s27c90 {
     __declspec(noinline) void release();    // 0x528470
 };
 
+struct SceneObj_s27c90;
 struct SceneObjRec_s27c90 {
     char pad0[0x30];
     unsigned flags30;                       // +0x30
-    char pad34[0x108 - 0x34];
-    char* objs_first;                       // +0x108 (vector of 0x1c8-byte scene objects)
-    char* objs_last;                        // +0x10c
-    char pad110[0x414 - 0x110];
+    char pad34[0x104 - 0x34];
+    std::vector<SceneObj_s27c90> objs;      // +0x104 (first at +0x108: 0x1c8-byte scene objects)
+    char pad110[0x414 - 0x114];
     mem_stream stream_a;                    // +0x414 (0x30 bytes)
     mem_stream stream_b;                    // +0x444
     char pad474[0x494 - 0x474];
@@ -985,8 +985,8 @@ struct Mission_s29130 {
 
 struct Troop_s29130 {
     char pad0[0x30];
-    unsigned flags;                                           // +0x30 (0x10 = hero)
-    char pad34[0xa0 - 0x34];
+    unsigned __int64 flags;                                   // +0x30 (0x10 = hero)
+    char pad34[0xa0 - 0x38];
     float f_a0;                                               // +0xa0
     char pad_a4[0x508 - 0xa4];
 };
@@ -1071,8 +1071,8 @@ struct Agent_s29840 {
 // ---- troop records (0x508 bytes in the table at g_game_s29840+0x13a00) ----------------------------------------
 struct Troop_s29840 {
     char pad0[0x30];
-    unsigned flags;                                           // +0x30 (0x10 = hero)
-    char pad34[0x50 - 0x34];
+    unsigned __int64 flags;                                   // +0x30 (0x10 = hero)
+    char pad34[0x50 - 0x38];
     int f50;                                                  // +0x50
     char pad54[0xa0 - 0x54];
     float f_a0;                                               // +0xa0

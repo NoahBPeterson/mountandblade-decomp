@@ -48,7 +48,7 @@ struct FactionRec;
 
 
 struct MapWidget {
-    rgl::vector4* project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (inventory_panel/map_picker.cpp)
+    void project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (inventory_panel/map_picker.cpp)
 };
 struct DistObj;
 bool __fastcall dist_is_zero(DistObj* o);                                 // 0x51be20 (map_tooltip.cpp)
@@ -78,20 +78,6 @@ typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     
 
 
 // ------------------------------------------------------------------------------------- helpers ------
-// party page lookup, exactly as inlined at 0x51ac38 / 0x51aed3: pages[idx >> 4] + (idx & 15)
-static Party* party_at(PartyMgr* mgr, int idx)
-{
-    return (Party*)mgr->pages._Myfirst[idx >> 4] + (idx & 0xf);
-}
-static Party* party_by_id(int id)
-{
-    return party_at(&g_game->parties, g_game->parties.lookup(id));
-}
-static BattleTable* agents_of() { return (BattleTable*)((char*)g_game + 0xcc); }   // GameData +0xcc (0x48ef20 is its get())
-static Rec98* agent_at(int idx)
-{
-    return (Rec98*)g_game->agent_pages[idx >> 4] + (idx & 0xf);
-}
 
 // a record's display string: the key's string-table entry when the key is a token (0x51afb6, 0x51b2cb)
 static tstring* record_name(Party* r)
@@ -120,6 +106,8 @@ static int first_enemy_stack(Party* r)
     return i;
 }
 
+// party lookup with the id by const reference: a by-value id takes one more scratch pick and rotates what follows (0x51b87e, 0x51b930)
+static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return (Party*)((char*)m->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
 struct FleetRec { rgl::vector4 pos; char pad10[0x5c - 0x10]; };   // the 0x5c-byte fleet / battle record: only its position is read here
 
 // -----------------------------------------------------------------------------------------------------
@@ -171,13 +159,14 @@ void MapPanel::update(int type, int id)
                     g_gui.draw_string(g_strtable.lookup("ui_capital_versus"), 0.024f, -1, 1);
                 }
 
+                PartyMgr& mg = g_game->parties;
                 GameData* g = g_game;
-                Party* rec = g->parties.get_party(agent);        // [esp+0x60]  record being painted
+                Party* rec = mg.get_party(agent);        // [esp+0x60]  record being painted
                 float    rel   = g->relation(agent, g->f78);
                 unsigned rel_color = g->color_of(rel, 1);
                 unsigned color;
                 if (g_module_settings.show_faction_color)
-                    color = g_game->factions[g->parties.get_party(agent)->faction].color;
+                    color = g_game->factions[mg.get_party(agent)->faction].color;
                 else
                     color = rel_color;
                 if (c == 0) {
@@ -231,17 +220,20 @@ void MapPanel::update(int type, int id)
                 }
 
                 // ---- faction tag -------------------------------------------------------------------
+                GameData* gd;                   // esi: re-read after each call that can kill it; it stays live into the party lookup below
                 if (rec->flags & 0x400000) {
                     int fac = rec->faction;
-                    if (fac >= 0 && g_game->factions[fac].f24 == 0) {
-                        FactionRec* f = &g_game->factions[fac];
-                        tstring* fn = &f->name;
+                    if (fac >= 0) {
+                        gd = g_game;
+                        if (gd->factions[fac].f24 != 0) goto have_gd;
+                        FactionRec* f = gd->factions;
+                        f += fac;
                         if (f->f10 == 0) {
                             tstring* s = g_strtable.find(&f->key);
-                            if (s) fn = s;
+                            if (s) f = (FactionRec*)s;
                         }
                         char buf[0x200];
-                        mb_snprintf(buf, 0x200, "(%s)", fn->c_str());        // 0x415100
+                        mb_snprintf(buf, 0x200, "(%s)", f->name.c_str());        // 0x415100
                         unsigned fcol;
                         if (g_module_settings.show_faction_color) {
                             fcol = g_game->factions[fac].color;
@@ -254,7 +246,8 @@ void MapPanel::update(int type, int id)
                         g_gui.draw_string(buf, 0.022f, fcol, 1);     // 0x3cb43958
                     }
                 }
-                GameData* gd = g_game;
+                gd = g_game;
+            have_gd:
                 if (rec->extra_text.len > 2) {
                     g_gui.draw_string(rec->extra_text, 0.023f, 0xffffffff, 1);
                     gd = g_game;
@@ -265,14 +258,8 @@ void MapPanel::update(int type, int id)
                     int action = rec->action;
                     if (action == 0) {
                         label = *g_strtable.lookup("ui_waiting");
-                    } else if (action == 4 || action == 1) {
-                        if (action == 1 || agent == gd->f78
-                            || (gd->parties.get_party(rec->target)->flags & 0x400))
-                            label = *g_strtable.lookup("ui_travelling_to");
-                        else
-                            label = *g_strtable.lookup("ui_following");
-                        label.append(*record_name(g_game->parties.get_party(rec->target)));
-                    } else if (action == 10) {
+                    } else if (action != 4 && action != 1) {
+                        if (action == 10) {
                         label = *g_strtable.lookup("ui_accompanying");
                         label.append(*g_game->parties.get(rec->target)->display_name());
                     } else if (action == 5) {
@@ -300,6 +287,15 @@ void MapPanel::update(int type, int id)
                                 label.append(*g_game->parties.get(other)->display_name());
                             }
                         }
+                        }
+                    } else {
+                        if (rec->action == 1 || agent == gd->f78
+                            // gd becomes the manager here: one variable across the lookup keeps it in esi (add esi,0xf8), which sets the scratch picks of the whole order chain
+                            || (pget((PartyMgr*)(gd = (GameData*)&gd->parties), rec->target)->flags & 0x400))
+                            label = *g_strtable.lookup("ui_travelling_to");
+                        else
+                            label = *g_strtable.lookup("ui_following");
+                        label.append(*record_name(pget(&g_game->parties, rec->target)));
                     }
 
                     if (!(rec->flags & 0x400)) {
@@ -351,11 +347,11 @@ void MapPanel::update(int type, int id)
 
         // ---- move the panel to the selection's screen position --------------------------------------
         {
-            float out[2];
-            rgl::vector4* o = ((MapWidget*)view)->project((rgl::vector4*)out, &pos);
+            float out[2];                  // eight bytes: it shares [esp+0x60] with rec, the garrison index and the capital-battle temporary
+            ((MapWidget*)view)->project((rgl::vector4*)out, &pos);
             float screen[2];
-            screen[0] = o->x;
-            screen[1] = o->y;
+            screen[0] = out[0];
+            screen[1] = out[1];
         g_gui.set_view(screen);      // 0x4c5190
         }
     }

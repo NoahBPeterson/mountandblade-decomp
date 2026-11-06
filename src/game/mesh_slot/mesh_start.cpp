@@ -191,7 +191,7 @@ extern unsigned __int64 g_bit[]; // 0x5a8e68
 
 static inline unsigned lcg(unsigned x) { return (x * 0x1c13 - 0xd098556) * 0x1105; }
 
-static inline void put(unsigned& dst, unsigned mask, int shift, const int& val)
+static inline void put(unsigned& dst, const unsigned& mask, int shift, const int& val)
 {
     unsigned v = (unsigned)val <= mask ? (unsigned)val : mask;
     dst = (dst & ~(mask << shift)) | (v << shift);
@@ -234,8 +234,7 @@ static inline int iround(float x)
 
 static inline int ifloor(float x)
 {
-    if (!(x > 0.0f)) x -= 0.999999881f;
-    return (int)x;
+    return (int)(x > 0.0f ? x : x - 0.999999881f);
 }
 
 static inline Party* party_rec(PartyMgr* pm, int id)
@@ -283,7 +282,6 @@ void Mission::start_setup()
     vector4 u;
     int ptype;
     ptype = RAWAT(int, party_rec(pm, pid), 0x5978);
-    if (0) { extern void trace_int(int*); trace_int(&ptype); }   // dead call: takes ptype's address, which keeps it in memory across the sky block as in the original (no code emitted)
 
     for (int t = 0; t < 16; t++) temp[t] = 0.0f;
     u = *(vector4*)&party_rec(pm, pid)->pos;
@@ -458,9 +456,9 @@ void Mission::start_setup()
             put(g_terrain.bits[1], mc, 0, b);
 
 
+            int storm = 0;
             unsigned seed = (at<int>(0x5270) % 3 + RAWAT(int, g_game, 4) * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
                             0x1ddcf5f + 0x2f784719;
-            int storm = 0;
             float chance = RNDU(seed) * 6.32231167e-05f;
             if (ptype == 7) {
                 storm = 1;
@@ -680,7 +678,6 @@ void Mission::start_setup()
 
     }
     {
-    {
     v.z = 500.0f;
     int k = 0;
     do {
@@ -693,16 +690,18 @@ void Mission::start_setup()
     } while (++k < 0x40);
     }
 
+    {
+    int pi;
     if (LV.flags.b10) {
         at<int>(0x5278) = 5;
         int par = rand() % 2;
-        SceneSlot* sl = &SLOT(0);
-        for (ptype = 0; ptype < 5; ptype++, sl++) {
+        for (int s = 0; s < 5; s++) {
+            SceneSlot* sl = &SLOT(s);
             lane(v, 1 - par) = ((RND() * 6.32231167e-05f) * 0.400000006f + 0.300000012f) * (RECT(3 - par) - RECT(1 - par)) + RECT(1 - par);
-            float b = (((RND() * 6.32231167e-05f - 0.5f) * 0.100000001f + ptype) * 0.25f) * 0.600000024f + 0.200000003f;
-            if (ptype < 2)
+            float b = (((RND() * 6.32231167e-05f - 0.5f) * 0.100000001f + s) * 0.25f) * 0.600000024f + 0.200000003f;
+            if (s < 2)
                 b = b * 0.75f;
-            else if (ptype > 2)
+            else if (s > 2)
                 b = 1.0f - (1.0f - b) * 0.75f;
             lane(v, par) = b * (RECT(2 + par) - RECT(par)) + RECT(par);
             v.z = 1000.0f;
@@ -715,14 +714,13 @@ void Mission::start_setup()
             a->o = v;
             u.z = 0.0f;
             lane(u, 1 - par) = 0.0f;
-            if (ptype < 2) lane(u, par) = 1.0f;
+            if (s < 2) lane(u, par) = 1.0f;
             else lane(u, par) = -1.0f;
             a->f = u;
             a->orthonormalize();
             sl->B = *a;
 
         }
-    }
     }
     if (LV.flags.b8) {
         at<float>(0x653c) = at<float>(0x653c) + 24.0f;
@@ -734,13 +732,13 @@ void Mission::start_setup()
     // ---- per-prop frame copy into the table ----------------------------------------------------
     {
     vector4 t20;
-    for (ptype = 0; (unsigned)ptype < at<std::vector<PlacedObj> >(0x6688).size(); ptype++) {
-        PlacedObj* p = &PROP(ptype);
+    for (int ip = 0; (unsigned)ip < at<std::vector<PlacedObj> >(0x6688).size(); ip++) {
+        PlacedObj* p = &PROP(ip);
         if (RAWAT(int, p, 0x188) == 1) {
             int sl = RAWAT(int, p, 0x1a0);
             if (sl >= 0 && sl < 0x40) {
                 SLOT(sl).A.o = RAWAT(vector4, p, 0x48);
-                *(mat3*)&SLOT(sl).A = RAWAT(mat3, &PROP(ptype), 0x18);
+                *(mat3*)&SLOT(sl).A = RAWAT(mat3, &PROP(ip), 0x18);
                 SLOT(sl).B = SLOT(sl).A;
                 u.x = 0.0f; u.y = 0.0f; u.z = 1.0f;
                 vector4* up = &SLOT(sl).B.u;
@@ -762,7 +760,6 @@ void Mission::start_setup()
 
     // ---- prop ground / spawn pass --------------------------------------------------------------
     {
-    int pi;
     for (pi = 0; (unsigned)pi < at<std::vector<PlacedObj> >(0x6688).size(); ) {
         RAWAT(int, &PROP(pi), 0x1b4) = 0;
         if (g_cfg.enable_edit_mode == 0 && RAWAT(int, &PROP(pi), 0x188) == 4 && LV.flags.b8) {
@@ -863,6 +860,7 @@ void Mission::start_setup()
         }
     }
 
+    }
     }
     // ---- intro billboard (sun mesh) ---
 ----------------------------------------------------------
