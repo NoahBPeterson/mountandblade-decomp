@@ -37,11 +37,7 @@ void mb_warning(const char* fmt, ...);          // 0x42cb80  vsnprintf + Message
 __int64 file_length(FILE* f);                   // 0x42cbc0
 void mb_error(const char* fmt, ...);            // 0x42cc80  "ERROR:" to g_log, MessageBoxA "RGL ERROR", exit(-1)
 
-struct gui_timer : Timer {          // 16 bytes (gui_manager ctor 0x42d5c0 initialises three); set_delay 0x42cd20 is Timer's
-    gui_timer() { clock = 0; start = g_ticks[0]; }
-    void rewind() { start = g_ticks[clock] - 100000; }   // inline: one second in the past
-};
-
+// gui_timer: include/timer.h
 // the UI root's widget list (the vector at +0): push_back 0x49b120 and insert 0x49b170 are the out-of-line instances the
 // original calls (config/widget_node.cpp); _Insert_n 0x49b1c0 follows them
 struct WidgetVec : std::vector<MissionUi*> {
@@ -70,7 +66,7 @@ struct gui_manager {
     int view_y;                     // +0x550  update_view_rect 0x4bace0 (the 3D view's origin inside the window)
     int view_x;                     // +0x554
     float view_a, view_b;           // +0x558, +0x55c  g_view_a / g_view_b (0x5d75d8 / 0x5d75dc; agent_hud: g_screen_b / g_screen_a): the view's scale factors
-    char show_cursor;               // +0x560  ctor; g_5d75e0 (GameApp::m_bShowCursorWhenFullscreen)
+    bool show_cursor;               // +0x560  ctor; g_5d75e0 (GameApp::m_bShowCursorWhenFullscreen)
     char pad561[3];
     rgl::mesh* drag;                // +0x564  set_drag 0x42cd80, reset, dtor 0x42d3e0; g_drag (the mesh dragged by the inventory)
     rgl::mesh* overlay;             // +0x568  set_overlay 0x42cdb0; g_overlay (the text mesh the lines are drawn into)
@@ -121,6 +117,15 @@ struct gui_manager {
         tstring names[32];          // +0xb0c0
         int vals[32];               // +0xb2c0
         Ring() { head = 0; count = 0; }
+        // inline; the element address comes from the ring's this, which keeps `names` from folding into `(idx + 0xb0c) << 4` (0x4334b0)
+        void add(const tstring& s, int v) {
+            if (count < 32) {
+                int idx = (head + count) % 32;
+                names[idx] = s;
+                vals[idx] = v;
+                count++;
+            }
+        }
         void pop(tstring& out, int& index);             // 0x4f13f0 (src/game/char_sheet/msg_log_ui.cpp): oldest entry, or "No messages" and -1
     } ring;
     std::vector<tstring> history;   // +0xb340  (vector: alloc at +0xb340, first +0xb344; ctor zeroes first/last/end) the log line history

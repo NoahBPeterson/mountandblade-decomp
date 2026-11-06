@@ -66,9 +66,7 @@ void snd_bank::randomize()
 {
     for (int i = 0; i < count; i++) {
         snd_slot* s = &slots[i];
-        int r = rand() % 15817;
-        float secs = (float)r * s->min_gap * 6.32231167e-05f;
-        set_delay_inl(s->gap, secs);
+        set_delay_inl(s->gap, (float)(rand() % 15817) * s->min_gap * 6.32231167e-05f);
     }
 }
 

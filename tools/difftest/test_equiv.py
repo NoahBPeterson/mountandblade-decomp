@@ -394,6 +394,27 @@ def test_tail_call_pops_count():
     assert r["callee_pop"] == 0x10 and r["valid"] > 0, r
 
 
+def test_tail_jump_arguments_start_above_the_return_address():
+    """The site hook runs before the instruction: `call` has its first argument at [esp], a tail `jmp` has the return
+    address there. 0x4d5290 reported a FAIL with args=[7efff000] against [3] on a `mov [esp+4],3; jmp` that the original
+    made with `push 3; call`."""
+    import struct, types
+    mem = {0x1000: 0x7EFFF000, 0x1004: 3, 0x1008: 5}
+    uc = types.SimpleNamespace(reg_read=lambda r: 0)
+
+    def record(is_jmp):
+        r = types.SimpleNamespace(calls=[], call_esps=[], call_taint=[], call_regs=[], call_taint_fn=lambda a: a,
+                                  opts=types.SimpleNamespace(call_regs=False),
+                                  m=types.SimpleNamespace(read=lambda a, n: b"".join(
+                                      struct.pack("<I", mem.get(a + k, 0)) for k in range(0, n, 4))))
+        esp = 0x1000 if is_jmp else 0x1004
+        equiv.Runner._record_call(r, uc, 0x401000, {"add_esp": 1, "is_jmp": is_jmp}, esp)
+        return r
+    tail, call = record(True), record(False)
+    assert tail.calls[0][3] == call.calls[0][3] and tail.calls[0][3][:2] == (3, 5)
+    assert tail.call_esps == call.call_esps == [0x1004] and tail.call_taint == call.call_taint == [0x1004]
+
+
 def test_uninit_copy_is_excused():
     """scene_tbl::placed 0x499050: Frame3's rows leave w unset and set_part copies them into the mesh, so both builds
     store an uninitialised stack slot there (different leftovers). The original's value is a plain copy of a slot

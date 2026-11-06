@@ -76,9 +76,12 @@ struct WVt {
 // the vector<tstring> of a drop-down's rows: its out-of-line _Tidy (0x42d390, protected: the member's destructor reaches it)
 namespace std { template<> void vector<tstring, allocator<tstring> >::_Tidy(); }   // 0x42d390
 struct RowVec : std::vector<tstring> { using std::vector<tstring>::_Tidy; };   // (the rows' _Tidy is protected: reset_tail 0x4933b0 calls it)
-struct DropDown : MissionUi {                   // ctor 0x4931d0, vtable 0x592570 (compiler-emitted), size 0x1d0
+// The stores of +0x178 and +0x121 come before DropDown's vptr store (0x4931d0), so they belong to an intermediate base's inline constructor.
+struct DropMid : MissionUi {
     int f178;                                   // +0x178 list mode (0x4932a0)
-    int f17c;                                   // +0x17c
+    DropMid() { f178 = 0; b121 = 0; }
+};
+struct DropDown : DropMid {                     // ctor 0x4931d0, vtable 0x592570 (compiler-emitted), size 0x1d0
     char f180;                                  // +0x180 open (0x49aca0)
     int f184;                                   // +0x184
     NodeA* f188;                                // +0x188 the open list container (0x49aca0)

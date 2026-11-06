@@ -1359,7 +1359,7 @@ void MapEditorDialog::update_objects()
 }
 
 // The tail of a Rec78 as the array destructor runs it: the owner in the body, then the members in reverse order
-// (the sound set, then the buffer). gui_edit.h's Rec78Tail ran ~TimerList twice.
+// (the sound set, then the buffer).
 struct Rec78Block {
     char* p;
     char* e;

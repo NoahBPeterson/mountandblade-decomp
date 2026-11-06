@@ -105,15 +105,13 @@ void MissionBlocker::slot_empty_4()
 }
 
 // ---- the remaining item constructors (0x4ceb30 / 0x4cef20 / 0x4cef80) --------------------------------------
-static inline void block_zero(owned_block& b) { b.begin = 0; b.end = 0; b.cap = 0; }
-struct ClockStamp { int idx; int pad; __int64 t; void start(int i) { idx = i; t = g_ticks[i]; } };   // clock index, its time
 
 // @ 0x4ceb30
 ItemA::ItemA()
 {
     w04 = 0;
-    block_zero(owned);
-    ((ClockStamp*)&clock)->start(0);
+    owned.zero();
+    ((Timer*)&clock)->start_on(0);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -123,8 +121,8 @@ ItemA::ItemA()
 ItemB::ItemB()
 {
     w04 = 0;
-    block_zero(owned);
-    ((ClockStamp*)&clock)->start(0);
+    owned.zero();
+    ((Timer*)&clock)->start_on(0);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -134,8 +132,8 @@ ItemB::ItemB()
 ItemC::ItemC()
 {
     w04 = 0;
-    block_zero(owned);
-    ((ClockStamp*)&clock)->start(0);
+    owned.zero();
+    ((Timer*)&clock)->start_on(0);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;

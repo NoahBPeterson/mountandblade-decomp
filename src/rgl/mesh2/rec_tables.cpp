@@ -47,11 +47,10 @@ ResultWindow::~ResultWindow()
 }
 
 // @ 0x4c2d10
-struct ClockStamp { int idx; int pad; __int64 t; void start(int i) { idx = i; t = g_ticks[i]; } };   // +0x110: clock index, its time
 C4c2d10::C4c2d10()
 {
     pos tmp;
-    ((ClockStamp*)&v110)->start(2);
+    ((Timer*)&v110)->start_on(2);   // +0x110: clock index, its time
     v120 = 0;
     v128 = 0;
     f124 = 6.0f;

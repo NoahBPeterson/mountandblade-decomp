@@ -16,7 +16,8 @@ belong to the next TU and are not taken) are unchanged and stay the reference. E
 | mesh_edit.cpp | 0x4d1410..0x4d3330 | 6 | 0 | 0 | 6 | 0 |
 | ragdoll_models.cpp | 0x4d3330..0x4d3720 | 3 | 2 | 2 | 1 | 0 |
 | world_app.cpp | 0x4d3720..0x4d4b80 | 12 | 5 | 5 | 7 | 0 |
-| hud.cpp | 0x4d4b80..0x4d5ba0 | 8 | 4 | 4 | 4 | 0 |
+| hud.cpp | 0x4d4b80..0x4d5410 | 3 | 2 | 1 | 1 | 0 |
+| hud_source.cpp | 0x4d5410..0x4d5ba0 | 5 | 4 | 1 | 1 | 0 |
 | quest_page.cpp | 0x4d5ba0..0x4d63b0 | 4 | 2 | 2 | 2 | 0 |
 | video_page.cpp | 0x4d63b0..0x4d6b80 | 1 | 0 | 0 | 1 | 0 |
 | keys_page.cpp | 0x4d6b80..0x4d7370 | 8 | 4 | 4 | 4 | 0 |

@@ -1,4 +1,5 @@
 #include "./screen.h"
+#include "../head_rec.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -265,7 +266,7 @@ void gui_manager::process(int param)
 // @ 0x4ec460
 // The engine's end-of-frame callback. When a screenshot was requested it saves the frame; otherwise, with a
 // camera present and a module-leave pending, it leaves the current module.
-void __cdecl frame_hook(void)
+void head_rec::frame_hook()
 {
     if ((g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0xd2] && !g_keyboard.prev[0xd2])
         take_screenshot();

@@ -40,7 +40,7 @@ void WindowMgrW::apply()
     ((dev_item*)arr[dq.back()])->restore();
     dq.pop_back();
     if (!dq.empty()) {
-        unsigned char v = ((dev_item*)arr[dq.back()])->index();
+        bool v = ((dev_item*)arr[dq.back()])->index();
         if (g_render.dev)
             g_render.dev->ShowCursor(v);
         g_gui.show_cursor = v;

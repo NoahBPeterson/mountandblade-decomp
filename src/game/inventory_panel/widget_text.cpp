@@ -16,6 +16,7 @@
 
 // ------------------------------------------------------------------ engine string (0x10 bytes) -----------
 #include "../tstring.h"
+#define TEXT_BOX_OUT_OF_LINE      // 0x50d0b0 is defined below
 #define CONTAINER_DTOR_EXPANDED   // ??_Gtext_box, slot 0 of 0x597050 (the code of 0x5021f0), see ui/container.h
 #include "../ui/container.h"                          // MissionUi (flag1 0x50cc60), text_box (0x50d0b0)
 #include "../shared_vars.h"                             // g_show_party_ids_instead_of_names 0xa181b8
@@ -167,6 +168,9 @@ unsigned MissionUi::flag1() const
 
 // the text box (vtable 0x597050, size 0x188): ui/container.h's container with nothing added. Its slot 0 is the container's
 // destroying destructor (0x5021f0, the copy party_window.cpp's object holds).
+
+// this file's text_box constructor expands the container constructor (0x50d0b3); the other sites call 0x4931a0
+inline ContainerBase::ContainerBase() {}
 
 // @ 0x50d0b0 text_box::text_box
 text_box::text_box()
@@ -421,4 +425,4 @@ void mesh_scene::read(AccessStream* s)
     m->relax(-1, w);   // 0x4735e0
 }
 
-#pragma inline_depth(2)   // for ??_Gtext_box, generated at the end of the object
+#pragma inline_depth(3)   // for ??_Gtext_box, generated at the end of the object

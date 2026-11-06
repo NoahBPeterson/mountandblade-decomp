@@ -13,6 +13,7 @@
 #include "./scene_math.h"
 #include "./scene.h"
 #include "./emitter.h"
+#include "../../include/timer.h"      // gui_timer
 #include "../../include/shape.h"      // shape_base: the collision shape an entity carries
 
 struct FxDef;                   // fx.h (global, like FxElem)
@@ -147,12 +148,8 @@ struct strategic_entity : entity {
     float f294;                 // 0x294
     int f298;                   // 0x298 (-1)
     char pad29c[4];
-    int f2a0;                   // 0x2a0
-    char pad2a4[4];
-    __int64 t2a8;               // 0x2a8 clock stamp
-    int f2b0;                   // 0x2b0
-    char pad2b4[4];
-    __int64 t2b8;               // 0x2b8
+    gui_timer tm2a0;            // 0x2a0 clock index, 0x2a8 its stamp
+    gui_timer tm2b0;            // 0x2b0 clock index, 0x2b8 its stamp
     int f2c0;                   // 0x2c0
     char pad2c4[0x2ec - 0x2c4];
     int f2ec;                   // 0x2ec

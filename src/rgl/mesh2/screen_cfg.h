@@ -21,7 +21,7 @@ struct dev_item {
     virtual void s14() = 0;
     virtual void s18() = 0;
     virtual void s1c() = 0;
-    virtual int index() = 0;                     // +0x20
+    virtual bool index() = 0;                    // +0x20
 };
 
 // the render device seen through slot 0x30 (set_index)

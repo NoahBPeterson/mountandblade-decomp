@@ -163,14 +163,14 @@ struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
 struct Rec38 : head_rec { MB_ZERO_TAIL(Rec38)   // vtable 0x595828
     ContainerBase* win;       // +0x2c
     MissionUi* f30;           // +0x30
-    MissionUi* f34;           // +0x34 the "leave" button (slot 3, hud.cpp 0x4d59f0)
+    MissionUi* f34;           // +0x34 the "leave" button (slot 3, hud_source.cpp 0x4d59f0)
     virtual void reset_screen();
     virtual void init_screen();
     virtual void frame_update(float);
     virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
-struct Rec44 : head_rec { MB_ZERO_TAIL(Rec44)   // vtable 0x5957e0 (the mission window: slot 2 cls_map.cpp 0x4dae40, slot 3 hud.cpp 0x4d5980)
+struct Rec44 : head_rec { MB_ZERO_TAIL(Rec44)   // vtable 0x5957e0 (the mission window: slot 2 cls_map.cpp 0x4dae40, slot 3 hud_source.cpp 0x4d5980)
     ContainerBase* overlay;   // +0x2c the window
     MissionUi* row[5];        // +0x30 (row[2] is the mission text, row[4] is cleared first)
     virtual void reset_screen();
@@ -188,7 +188,7 @@ struct Rec34 : head_rec { MB_ZERO_TAIL(Rec34)   // vtable 0x59584c (the debrief 
     virtual char pure_7() { return 0; }    // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
-struct Rec454 : head_rec { MB_ZERO_TAIL(Rec454)   // vtable 0x595894 (the quest log: slot 2 char_sheet/quest_log.cpp 0x4ee230, slot 3 options_panel/hud.cpp 0x4d5a20)
+struct Rec454 : head_rec { MB_ZERO_TAIL(Rec454)   // vtable 0x595894 (the quest log: slot 2 char_sheet/quest_log.cpp 0x4ee230, slot 3 options_panel/hud_source.cpp 0x4d5a20)
     NodeA* window;               // +0x2c
     UiA* done;                   // +0x30 the "done" text
     UiA* active_tab;             // +0x34

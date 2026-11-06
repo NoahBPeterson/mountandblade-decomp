@@ -1,0 +1,4 @@
+../src/game/options_panel/hud_source.cpp  ?on_value_changed@ValueSource@@QAEXM@Z  004d5940  /O2 /MT /Gy /TP
+../src/game/options_panel/hud_source.cpp  ?frame_update@Rec38@@UAEXM@Z  004d59f0  /O2 /MT /Gy /TP
+../src/game/options_panel/hud_source.cpp  ?frame_update@Rec454@@UAEXM@Z  004d5a20  /O2 /MT /Gy /TP
+../src/game/options_panel/hud_source.cpp  ?frame_update@Rec44@@UAEXM@Z  004d5980  /O2 /MT /Gy /TP

@@ -841,8 +841,6 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
     return found;
 }
 
-static inline void timer_restart(Timer* t) { t->start = g_ticks[t->clock]; }
-
 // @ 0x4897a0
 void MissionView::setup(void* src, int* b, int* c)
 {
@@ -851,7 +849,7 @@ void MissionView::setup(void* src, int* b, int* c)
     memcpy(vd8, src, sizeof(vd8));
     f168 = *c;
     f16c = *b;
-    timer_restart((Timer*)&f170);
+    ((Timer*)&f170)->restamp();
 
     f180 = 0;
 }

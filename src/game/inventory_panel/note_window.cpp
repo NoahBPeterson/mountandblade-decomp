@@ -36,6 +36,7 @@ extern "C" double atof(const char* s);                       // 0x537352
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../res_mgr.h"                   // g_resmgr: the resource manager 0x5d6fa0 (get_object 0x419540)
 #include "../../rgl/mesh.h"             // rgl::mesh::clone 0x41c6d0
+#define TEXT_BOX_OUT_OF_LINE   // this file calls 0x50d0b0 (0x50c434, 0x50c493); see ui/container.h
 #include "../ui/container.h"             // NodeA (0x592848), text_box (0x597050)
 #include "../ui/map_list.h"              // MWidget (0x5995c0): the report and link lists
 #include "../party2/camera_class.h"      // Camera (draw 0x488d50)

@@ -57,3 +57,5 @@
 ../src/game/world_data/world_data.cpp  ?alloc_record@RecPool@@QAEIXZ  00493700  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_sun_light@TableauTbl@@QAEXPBUmatrix@rgl@@ABUvector4@3@@Z  00494020  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?pop_back_delete@TableauTbl@@QAEXXZ  00492ee0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??0DropDown@@QAE@XZ  004931d0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?open@WindowMgrW@@QAEXH@Z  00494260  /O2 /MT /Gy /TP

@@ -1133,6 +1133,9 @@ static __forceinline int blend_i(const float& lim, const float& d, int a, int b)
     return i;
 }
 
+// this constructor expands the container constructor (0x49deb7); the other sites call 0x4931a0
+inline ContainerBase::ContainerBase() {}
+
 // @ 0x49deb0
 Camera::Camera()
 {

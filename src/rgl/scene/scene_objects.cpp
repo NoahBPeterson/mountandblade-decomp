@@ -383,7 +383,7 @@ namespace rgl {
 
 // @ 0x421720
 strategic_entity::strategic_entity()
-    : f2a0(0), t2a8(g_ticks[0]), f2b0(0), t2b8(g_ticks[0]), f2c0(0)
+    : f2c0(0)
 {
     map_kind = 0;
     matrix tmp;

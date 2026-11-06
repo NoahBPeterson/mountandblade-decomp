@@ -40,12 +40,7 @@ static __forceinline const char* c_str(const tstring* s)
 // ---- the engine widget interface: only the slots this slice dispatches ---------------------------------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
-// 0x4ec460 (game/char_sheet/screen.cpp defines it as a free function whose body never reads `this`): the original calls it
-// as a method of the current screen (the id-ring lookup's result is in ecx at the call), so it is declared as one here.
-struct ScreenFrameHook {
-    void frame_hook(void);                                   // 0x4ec460
-};
-
+#include "../head_rec.h"                 // head_rec::frame_hook 0x4ec460 (listed directly: the resolution audit reads only the source's own includes)
 #include "../window_mgr.h"               // IdStack g_id_stack (0xa739f8), current_screen_id
 
 // ---- game (0x5e2930).  Only the members touched here. ------------------------------------------------
@@ -163,7 +158,7 @@ HRESULT GameApp::FrameMove()
         }
     }
 
-    slot_as<ScreenFrameHook>(current_screen_id())->frame_hook();
+    slot_as<head_rec>(current_screen_id())->frame_hook();
     slot_as<head_rec>(current_screen_id())->frame_update(dt);
 
     if (g_game) {
@@ -232,7 +227,7 @@ HRESULT GameApp::FrameMove()
         }
     }
 
-    m_bShowCursorWhenFullscreen = *(bool*)&g_gui.show_cursor;   // a plain byte copy (a char -> bool conversion would normalise 0xff to 1; gui_manager.h declares it char)
+    m_bShowCursorWhenFullscreen = g_gui.show_cursor;
     if (g_saved) m_bQuitRequested = true;
     return 0;
 }

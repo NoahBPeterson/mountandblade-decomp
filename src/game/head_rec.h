@@ -53,6 +53,7 @@ struct head_rec {
     // (`return 1`) in most, 0x4280e0 (`return 0`) in ResultWindow, C4c3050, Rec34 and Rec38.
     virtual char pure_7() = 0;                                      // slot 7: __purecall; every derived class overrides it
     virtual char always_true() { return 1; }                        // slot 8  0x48b170
+    void frame_hook();         // 0x4ec460 (char_sheet/screen.cpp): the current screen's end-of-frame keys (the body never reads this)
     int     w04;               // +4     0x4c2c50
     int     w08;               // +8     0x63
     char    pad0c[4];          // +0xc

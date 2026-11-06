@@ -8,6 +8,6 @@ struct ScreenObj {
     virtual void s1(); virtual char s2();
     virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6();
     virtual char s7();                                          // +0x1c
-    virtual char s8();                                          // +0x20
+    virtual bool s8();                                          // +0x20
 };
 #endif // GAME_SCREEN_OBJ_H

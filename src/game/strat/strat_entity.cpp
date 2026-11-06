@@ -73,7 +73,7 @@ void rgl::strategic_entity::update_shadows(scene* sc, bool a, bool b)
         update_ground_cache();
         shadow_pos = local.o;
     }
-    if ((float)(g_ticks[f2a0] - t2a8) * 1e-05f >= -0.0001f) {
+    if ((float)(g_ticks[tm2a0.clock] - tm2a0.start) * 1e-05f >= -0.0001f) {
         if (a)
             create_shadow_mesh(&shadow_a, 1);
         if (b) {
@@ -84,9 +84,9 @@ void rgl::strategic_entity::update_shadows(scene* sc, bool a, bool b)
     }
     if (a) {
         if (mode & 2) {
-            if ((float)(g_ticks[f2b0] - t2b8) * 1e-05f >= -0.0001f) {
+            if ((float)(g_ticks[tm2b0.clock] - tm2b0.start) * 1e-05f >= -0.0001f) {
                 float k = -1.0f / (f15c * 25.0f);
-                t2b8 = g_ticks[f2b0] - (int)((k - (float)(rand() % 0x3dc9) * 6.3223115e-07f) * 100000.0f);
+                tm2b0.start = g_ticks[tm2b0.clock] - (int)((k - (float)(rand() % 0x3dc9) * 6.3223115e-07f) * 100000.0f);
                 shadow_tick();
                 if (p288 != 0) {
                     shadow_a->res = p288;

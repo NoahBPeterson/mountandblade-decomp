@@ -11,6 +11,7 @@
 // sub-object is 0x5374 bytes long, so its timers are only 4-byte aligned; an __int64 member would pad them).
 #ifndef MB_TIMER_H
 #define MB_TIMER_H
+#include "clock_table.h"                    // g_ticks
 
 struct Timer {
     int clock;                              // +0 index into g_time (0x5e2948: 64-bit counters, 100 kHz units)
@@ -19,6 +20,14 @@ struct Timer {
     void restart();                         // 0x432bf0
     float elapsed() const;                  // 0x432c10
     void set_delay(float seconds);          // 0x42cd20 (ret 4)
+    void start_on(int i) { clock = i; start = g_ticks[i]; }   // inline: the constructors' `int clock; __int64 stamp` pairs (0x4c2d10, 0x4ceb30)
+    void restamp() { start = g_ticks[clock]; }                // inline form of restart (0x4897a0)
+};
+
+// A Timer started on clock 0 by its constructor (gui_manager ctor 0x42d5c0 initialises three; strategic_entity ctor 0x421720 two).
+struct gui_timer : Timer {
+    gui_timer() { clock = 0; start = g_ticks[0]; }
+    void rewind() { start = g_ticks[clock] - 100000; }   // inline: one second in the past
 };
 
 // a Timer followed by an armed flag (game_util.cpp: 0x432da0 arms it once, 0x432de0 disarms it when it has run out)

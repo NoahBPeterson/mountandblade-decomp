@@ -9,6 +9,7 @@ struct owned_block {
     void* end;                                  // ItemRec+0x38
     void* cap;                                  // ItemRec+0x3c
     ~owned_block();                             // 0x4c8bf0
+    void zero() { begin = 0; end = 0; cap = 0; }   // inline, as the constructors clear it (0x4ce870, 0x4ceb30): the stores stay after the vptr
 };
 
 #endif // INCLUDE_OWNED_BLOCK_H

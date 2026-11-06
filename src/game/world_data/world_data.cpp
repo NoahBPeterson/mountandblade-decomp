@@ -1147,8 +1147,6 @@ ContainerBase::ContainerBase()
 // @ 0x4931d0
 DropDown::DropDown() throw()
 {
-    f178 = 0;
-    b121 = 0;
     f180 = 0;
     f188 = 0;
     f164 = 0;
@@ -1620,24 +1618,13 @@ int WidgetMgrW::create_button_overlay(const tstring* text, unsigned flags)
 // @ 0x494260
 void WindowMgrW::open(int _idx)
 {
-    char* self = (char*)this;
     g_gui.set_overlay(0, 1);
     dq.push_back(_idx);
     arr[_idx]->s2();
-
-    unsigned _u = *(unsigned*)(self + 0x88) + *(unsigned*)(self + 0x84) - 1;
-    unsigned _q = _u >> 2;
-    unsigned _r = _u - (_q << 2);
-    if (*(unsigned*)(self + 0x80) <= _q)
-        _q -= *(unsigned*)(self + 0x80);
-    int* _row = *(int**)(*(int*)(self + 0x7c) + _q * 4);
-    int _elem = *(int*)((char*)_row + _r * 4);
-    int _bl = (unsigned char)arr[_elem]->s8();
-    if (g_render.dev != 0) {
-        PanelFn _fn = (PanelFn)(*(void***)g_render.dev)[12];
-        _fn((void*)g_render.dev, (unsigned char)_bl);
-    }
-    g_gui.show_cursor = (char)_bl;
+    bool v = arr[dq.back()]->s8();
+    if (g_render.dev != 0)
+        g_render.dev->ShowCursor(v);
+    g_gui.show_cursor = v;
 }
 
 // ==== 0x4942f0, 0x494310: the sound player ================================================================================

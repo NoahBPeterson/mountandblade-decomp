@@ -11,14 +11,12 @@
 // The member initialisers are small inline helpers: written out flat, cl schedules the base ctor's id store and the
 // derived vptr store after the zero stores, which the original does not.
 
-static __forceinline void start_timer(Timer& t) { t.clock = 0; t.start = g_ticks[0]; }
-static __forceinline void clear_block(owned_block& b) { b.begin = 0; b.end = 0; b.cap = 0; }
 // @ 0x4ce870
 ItemRec::ItemRec() : head_rec(no_w04())
 {
     w04 = 0;
-    clear_block(owned);
-    start_timer(tm);
+    owned.zero();
+    tm.start_on(0);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -28,8 +26,8 @@ ItemRec::ItemRec() : head_rec(no_w04())
 ItemRec2::ItemRec2() : head_rec(no_w04())
 {
     w04 = 0;
-    clear_block(owned);
-    start_timer(tm);
+    owned.zero();
+    tm.start_on(0);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;

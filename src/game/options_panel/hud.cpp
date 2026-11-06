@@ -1,5 +1,5 @@
 // hud.cpp: the mesh editor's selection handler (the last editor function), the mission object's destructor
-// wrapper, and the mission screen's button handler and mission-item callbacks (0x4d4b80..0x4d5ba0). Names
+// wrapper, and the mission screen's button handler and mission-item callbacks (0x4d4b80..0x4d5410). Names
 // provisional.
 #include <windows.h>
 #include "../game_globals.h"
@@ -147,16 +147,12 @@ bool EditMesh::on_selection_changed()
 
 
 #define W(x) ((MissionUi*)(void*)(x))
-// The button handler sees the source's pick as a declaration only. With the real body visible cl knows pick keeps
-// nothing of &arg and turns set_state into a tail call that overwrites arg, which the original does not; so the original
-// compiled this caller without pick's body (a visibility twin, docs/tu_map.md; pick starts the next object at 0x4d5410).
-struct MissionSourceDecl {
-    void pick(int* arg);   // 0x4d5410
-};
+// The button handler sees the source's pick as a declaration only (it is in hud_source.cpp). With the real body visible cl
+// knows pick keeps nothing of &arg and turns set_state into a tail call that overwrites arg, which the original does not.
 // @ 0x4d5290
 void ItemRec::frame_update(float arg)
 {
-    ((MissionSourceDecl*)((char*)(void*)this + 0x30))->pick((int*)&arg);
+    ((MissionSource*)((char*)(void*)this + 0x30))->pick((int*)&arg);
     if (W(row_tutorial)->clear_mask(0x10000)) {
         slot_as<int>(3)[6] = 4;
         slot_as<int>(3)[1] = 3;
@@ -193,10 +189,6 @@ void ItemRec::frame_update(float arg)
 struct clip_table {
     ~clip_table();   // 0x4be6f0
 };
-// mesh_node (rgl/xmlcfg/game_util.h, whose shape.h clashes with this TU's headers): the animation node's time setter.
-struct mesh_node {
-    void set_time(const float* t);   // 0x433190
-};
 #include "../../rgl/mesh2/graph_obj.h"   // graph_obj (clear_vecs 0x4cb780)
 // MapDialog (rgl/mesh2/gui_edit.h): that header cannot be included here (its mesh2_common.h declares another g_strtable), so the
 // one member the destructor needs is repeated under the same class name.
@@ -230,158 +222,3 @@ void Mission::destroy()
     ((MapDialog*)(p + 0x30))->clear_objects();
     ((MapDialog*)(p + 0x4))->clear_objects();
 }
-
-// @ 0x4d5940
-__declspec(noinline) void ValueSource::on_value_changed(float arg)
-{
-    ((UiD*)(void*)this)->set_value((step / slot[idx] * arg) * 0.0005f + ((UiD*)(void*)this)->value());
-}
-
-// @ 0x4d5410
-void MissionSource::pick(int* arg)
-{
-    float t;
-    if (family < 0)                     // 0x4d541b: jl to the epilogue -- nothing else runs without a family
-        return;
-    {
-        __int64 now = g_ticks[slot];
-        __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
-        g_script.param1 = (__int64)(int)((double)d * 1000.0f * 1e-5f);
-        play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
-        t = (float)(fmod((double)g_ticks[0] * 1e-5f, 1.0) * 40.0f
-                    + 100.0f);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
-    }
-    if (g_gui.wheel) {
-        float best_d = 1.0e5f;
-        int best = -1;
-        for (unsigned i = 0; i < (unsigned)size(); i++) {
-            MissionUi* it = begin[i];
-            if (it->kind() != 7)
-                continue;
-            // inside [org + near, org + far) on an axis: 0, else the distance to the nearer edge (0x4d54f5..0x4d55f0)
-            float dx;
-            if (it->screen[2] + it->e[0] <= g_gui.mouse[0] && g_gui.mouse[0] < it->screen[0] + it->e[0]) {
-                dx = 0.0f;
-            } else {
-                dx = ABS(g_gui.mouse[0] - (it->screen[0] + it->e[0]));
-                float alt = ABS(g_gui.mouse[0] - (it->screen[2] + it->e[0]));
-                if (alt < dx)
-                    dx = alt;
-            }
-            float dy;
-            if (it->screen[3] + it->e[1] <= g_gui.mouse[1] && g_gui.mouse[1] < it->screen[1] + it->e[1]) {
-                dy = 0.0f;
-            } else {
-                dy = ABS(g_gui.mouse[1] - (it->screen[1] + it->e[1]));
-                float alt = ABS(g_gui.mouse[1] - (it->e[1] + it->screen[3]));
-                if (alt < dy)
-                    dy = alt;
-            }
-            float dist = (float)sqrt(dx * dx + dy * dy);
-            if (dist < best_d) {
-                best = i;
-                best_d = dist;
-            }
-        }
-        if (best >= 0) {
-            int idx = best;
-            ValueSource* u = item_value(begin[idx]);
-            u->on_value_changed((float)g_gui.wheel);
-            ValueWidget* w = item_value(begin[best]);
-            w->set_key_flags(0x10000);
-        }
-    }
-
-    for (unsigned i = 0; i < (unsigned)size(); i++) {
-        // every use re-reads the item from the vector (the original goes through its iterator, 0x534160, each
-        // time): a callee may move the storage, so a pointer to begin[i] taken once can go stale
-        for (int n = 0; n < 5; n++) {
-            if (begin[i]->tracks[n])
-                ((mesh_node*)begin[i]->tracks[n])->set_time(&t);
-        }
-        if (begin[i]->clear_mask(0x10000)) {
-            g_script.param1 = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
-            int k = begin[i]->kind();
-            if (k == 2 || k == 3) {
-                g_script.param2 = (__int64)(int)begin[i]->get168();
-                play_family_sound(family, -0x3e);
-            } else if (k == 5) {
-                g_script.param2 = (__int64)begin[i]->get15c();
-                play_family_sound(family, -0x3e);
-            } else if (k == 6) {
-                g_script.str[0] = begin[i]->name;
-                play_family_sound(family, -0x3e);
-            } else if (k != 8 || ((UiA*)begin[i])->f184 != 1) {
-                play_family_sound(family, -0x3e);
-            } else {
-                g_script.param2 = ((UiA*)begin[i])->f180 != 0;
-                play_family_sound(family, -0x3e);
-            }
-        } else if (begin[i]->clear_mask(2)) {
-            g_script.param2 = 0;
-            g_script.param1 = i;
-            play_family_sound(family, -0x3f);
-        } else if (begin[i]->clear_mask(4)) {
-            g_script.param2 = 1;
-            g_script.param1 = i;
-            play_family_sound(family, -0x3f);
-        }
-    }
-}
-
-// @ 0x4d5980
-void Rec44::frame_update(float)
-{
-    *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_mission_ctx.scene_counter;
-    g_mission_ctx.scene_counter = g_mission_ctx.scene_counter + 1;
-    g_mission->start_setup();
-    slot_as<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)
-    slot_as<MenuScreen>(14)->f18 = w18;
-    slot_as<int>(11)[1] = 0;
-    slot_as<int>(11)[0x18 / 4] = w18;
-    g_windows.set_state(0xe);
-}
-
-// @ 0x4d59f0
-void Rec38::frame_update(float)
-{
-    if (((MissionUi*)(void*)f34)->clear_mask(0x10000))
-        g_windows.set_state(7);
-}
-
-#define W(x) ((MissionUi*)(void*)(x))
-// @ 0x4d5a20
-void Rec454::frame_update(float)
-{
-    if (g_gui.wheel) {
-        ValueWidget* u = item_value((MissionUi*)(void*)list);
-        float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
-        u->set_value((float)g_gui.wheel / u->slot[u->idx] * u->step * 0.0005f + v);
-        item_value((MissionUi*)(void*)list)->set_key_flags(0x10000);
-    }
-    for (int i = 0; i < count; i++) {
-        if (W(rows[i])->clear_mask(0x10000)) {
-            f250 = i;
-            ((QuestPage*)(void*)this)->fill();
-        }
-    }
-    if (W(active_tab)->clear_mask(0x10000)) {
-        if (w04 == 0) {
-            W(active_tab)->set15c(1);
-            return;
-        }
-        w04 = 0;
-        g_windows.set_state(0xd);
-    } else if (W(finished_tab)->clear_mask(0x10000)) {
-        if (w04 == 1) {
-            W(finished_tab)->set15c(1);
-            return;
-        }
-        w04 = 1;
-        g_windows.set_state(0xd);
-    } else if (W(done)->clear_mask(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
-        g_windows.set_state(w18);
-    }
-}
-#undef W
-

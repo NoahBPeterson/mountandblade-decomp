@@ -51,5 +51,10 @@ struct NodeA : ContainerBase {
 struct text_box : ContainerBase {
     text_box();                                 // 0x50d0b0 (no destructor of its own: slot 0 is the deleting destructor 0x5021f0, the same code as PartyPanel's)
 };
+// `new text_box` expands this at most sites (call 0x4931a0, then the vptr store: 0x4e3974, 0x4f6822, 0x4fcb2e, ...). note_window.cpp calls the
+// out-of-line copy (0x50c434, 0x50c493) and widget_text.cpp holds it, so both define TEXT_BOX_OUT_OF_LINE.
+#ifndef TEXT_BOX_OUT_OF_LINE
+inline text_box::text_box() {}
+#endif
 
 #endif // GAME_UI_CONTAINER_H

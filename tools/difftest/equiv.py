@@ -3025,15 +3025,19 @@ class Runner:
             self.tr_block = None
 
     def _record_call(self, uc, tgt, info, esp):
+        # The hook runs before the instruction. At a `call` esp points at the first argument, since the return address
+        # is not pushed yet; at a tail `jmp` it is already there, so the arguments start one dword higher (read from esp,
+        # a tail call's arguments compared one slot off against the same call made with `call`).
+        args_at = esp + 4 if info["is_jmp"] else esp
         try:
-            words = struct.unpack("<8I", self.m.read(esp, 32))
+            words = struct.unpack("<8I", self.m.read(args_at, 32))
         except Exception:
             words = (0,) * 8
         self.calls.append((tgt, uc.reg_read(UC_X86_REG_ECX), uc.reg_read(UC_X86_REG_EDX), words,
                            info["add_esp"], info["is_jmp"]))
-        self.call_esps.append(esp)
+        self.call_esps.append(args_at)
         if self.call_taint_fn is not None:
-            self.call_taint.append(self.call_taint_fn(esp))     # uninit_copies: which argument dwords are leftovers
+            self.call_taint.append(self.call_taint_fn(args_at))     # uninit_copies: which argument dwords are leftovers
         if self.opts.call_regs:
             self.call_regs.append(call_reg_snapshot(uc))
 
