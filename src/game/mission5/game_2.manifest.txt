@@ -10,3 +10,4 @@
 ../src/game/mission5/game_2.cpp  ?uninit_copy_str@@YAPAUtstring@@PAU1@00AAUtstring_alloc@@Uptr_tag@@@Z  00524cd0  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?terrain_material@@YGPAUskin@@H@Z  00523390  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?read_file@FactionFile@@QAEXAAUstream_base@@H@Z  00524a70  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?read_map@@YAPAUstream_base@@PAU1@PAUMapStore@@@Z  00520c00  /O2 /MT /Gy /TP

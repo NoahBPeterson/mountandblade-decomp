@@ -238,7 +238,7 @@ void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
 void Mesh_s2dfd0::remove_selected()
 {
     if (mode == 0) {
-        for (int i = 0; i < verts.size(); i++) {
+        for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
             if (verts.first[i].flag) {
                 remove_node(i);
                 i--;
@@ -246,14 +246,14 @@ void Mesh_s2dfd0::remove_selected()
         }
     }
     if (mode == 1) {
-        for (int i = 0; i < edges.size(); i++) {
+        for (unsigned i = 0; i < (unsigned)edges.size(); i++) {
             if (edges.first[i].flag) {
                 remove_edge(i);
                 i--;
             }
         }
     } else {
-        for (int i = 0; i < polys.size(); i++) {
+        for (unsigned i = 0; i < (unsigned)polys.size(); i++) {
             if (polys.first[i].flag) {
                 remove_face(i);
                 i--;

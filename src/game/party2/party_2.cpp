@@ -69,38 +69,37 @@ void scene_step(int material)
 
     o->fr.flag = 0;
     g_tableaus.alpha_mask = 0;
-    o->fr.mat4[0] = 1.0f;
-    o->fr.mat4[1] = 1.0f;
-    o->fr.mat4[2] = 1.0f;
-    o->fr.mat4[3] = 1.0f;
-    o->f344 = 0;
+    *(vector4*)o->fr.mat4 = vector4(1.0f, 1.0f, 1.0f);
     o->f348 = 0;
+    o->f344 = 0;
     ((rgl::world*)o)->reset();
 
-    o->fr.perspective = 0;
-    o->fr.nplanes = 0;
-    o->fr.nearz = 0.0f;
-    o->fr.farz = 501.0f;   // 0x43fa8000 at 4b12af..4b12b9
-    o->fr.left = -0.5f;
-    o->fr.right = 0.5f;
-    o->fr.bottom = -0.375f;
-    o->fr.top = 0.375f;
-    o->fr.build_planes();
+    TabFrustum& fr = o->fr;
+    fr.perspective = 0;
+    fr.nearz = 0.0f;
+    fr.farz = 501.0f;   // 0x43fa8000 at 4b12af..4b12b9
+    fr.left = -0.5f;
+    fr.right = 0.5f;
+    fr.bottom = -0.375f;
+    fr.top = 0.375f;
+    fr.build_planes();
 
-    char ident[0x40];
-    rgl::identity_pos((rgl::matrix*)ident);
-    ((vector4*)(ident + 0x30))->x = 0.0f;
-    ((vector4*)(ident + 0x30))->y = 0.0f;
-    ((vector4*)(ident + 0x30))->z = 400.0f;
-    *(vector4*)(ident + 0x30) = *(vector4*)(ident + 0x30);
-    o->fr.m = *(rgl::matrix*)ident;
-    o->fr.build_planes();
+    {
+        rgl::matrix ident;
+        rgl::identity_pos(&ident);
+        ident.o = vector4(0.0f, 0.0f, 400.0f);
+        fr.m = ident;
+    }
+    fr.build_planes();
 
-    __int64 v = *(__int64*)((char*)m + 0x60);
-    int flag = 1;
-    ((DialogBlock*)rec->holder)->emit(-0x41, 0, &flag, &v, -1);
+    {
+        __int64 params[16];                        // the script's argument registers (0x4b1344: frame 0x28..0xa8, only [0] is set)
+        params[0] = *(int*)((char*)m + 0x60);      // the instance code, sign extended (0x4b133a mov eax,[ecx+0x60]; cdq)
+        int count = 1;
+        ((DialogBlock*)rec->holder)->emit(-0x41, 0, &count, params, -1);
+    }
 
-    sc.fr = o->fr;
+    sc.fr = fr;
     sc.f190 = o->fr.flag;
     sc.f1b0 = &o->view;
     sc.f160 = 1;
@@ -111,22 +110,22 @@ void scene_step(int material)
     sc.target = (texture*)m->target;
     o->step(0.0f);
     if (g_tableaus.alpha_mask != 0)
-        sc.f160 = 1;
+        sc.f164 = 1;
 
     for (;;) {
         o->render_scene(&sc, false);
         int h = rec->h;
-        if (h < 0x201)
+        if (h <= 0x200)
             h = 0x200;
         int w = rec->w;
-        if (w < 0x201)
+        if (w <= 0x200)
             w = 0x200;
         texture* t = g_resmgr.get_texture(w, h, 0x50);
         if (t != 0)
             sc.f15c = (int)t;
         bool ok = g_batch.render(&sc);
         if (t != 0)
-            clear_f14((named_object*)t);
+            CALL_STDCALL_ON(clear_f14, &g_resmgr, t);   // 0x4175f0 (the resource manager in ecx)
         if (ok)
             break;
     }

@@ -44,3 +44,4 @@
 ../src/game/party2/party_2.cpp  ?speed_factor@Party@@QAEMXZ  004b20b0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?set_order_agent@Party@@QAEXPAH@Z  004b2ab0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?strength@Party@@QAEMXZ  004b1fa0  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?scene_step@@YAXH@Z  004b1160  /O2 /MT /Gy /TP

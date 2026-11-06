@@ -189,7 +189,7 @@ void sphere::transform(const pos* m)
     center = m->transform_point(local_center);
 }
 // @ 0x408460
-vector4 matrix::transform_point(const vector4& p) const
+inline vector4 matrix::transform_point(const vector4& p) const
 {
     return vector4(s.x * p.x + f.x * p.y + u.x * p.z + o.x,
                    s.y * p.x + f.y * p.y + u.y * p.z + o.y,
@@ -461,12 +461,11 @@ void sphere_sphere_contact(sphere* a, sphere* b, int max, contact* out, int* cou
             vector4 nrm;
             normalize(nrm, d);
             float t = b->radius / (a->radius + b->radius);
-            vector4 dt(d.x * t, d.y * t, d.z * t);
+            vector4 dt = d * t;
             d.x = dt.x + b->center.x; d.y = dt.y + b->center.y; d.z = dt.z + b->center.z;
             contact c;
             c.normal = nrm;
             c.point = d;
-            c.point.w = nrm.w;
             c.depth = depth;
             out[n - 1] = c;
         }

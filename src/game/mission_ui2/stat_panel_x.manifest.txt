@@ -1,3 +1,4 @@
 ../src/game/mission_ui2/stat_panel_x.cpp  ?add_skill@Troop@@QAEXHH@Z  0048c090  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/stat_panel_x.cpp  ??0Event@@QAE@XZ  0048c210  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/stat_panel_x.cpp  ?set_attr@Troop@@QAEXHH@Z  0048be70  /O2 /MT /Gy /TP
+../src/game/mission_ui2/stat_panel_x.cpp  ?set_skill@Troop@@QAEXHH@Z  0048bf90  /O2 /MT /Gy /TP

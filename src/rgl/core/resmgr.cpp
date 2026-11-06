@@ -123,13 +123,13 @@ void rgl::mesh::linearise_vertex_colors()
     if (local_a1) {
         int n = (int)v50.size();
         for (int i = 0; i < n; i++) {
-            vertex60* v = &(&*v50.begin())[i];
-            vector4 c = rgl::unpack_color(&v->color);
+            vertex60& v = v50[i];
+            vector4 c = rgl::unpack_color(&v.color);
             c.x = (float)pow(c.x, 2.2f);
             c.y = (float)pow(c.y, 2.2f);
             c.z = (float)pow(c.z, 2.2f);
-            v->color = pack_color(&c);
-            (&*v50.begin())[i].f58 = (&*v50.begin())[i].color;
+            v.color = pack_color(&c);
+            v50[i].f58 = v50[i].color;
         }
     }
 }
@@ -183,18 +183,20 @@ int resmgr::restore(ID3DXEffect* fx)
     return 0;
 }
 
+static inline void resolved_clear(effect_set* r)
+{
+    for (int i = 0; i < 4; i++)
+        r->h[i] = 0;
+    r->resolved = 0;
+}
+
 // @ 0x4195e0
 int resmgr::invalidate()
 {
     for (std::vector<texture*>::iterator it = textures.begin(); it != textures.end(); ++it)
         (*it)->unload();
     for (std::vector<effect_set*>::iterator it = effects.begin(); it != effects.end(); ++it) {
-        effect_set* r = *it;
-        r->h[0] = 0;
-        r->h[1] = 0;
-        r->h[2] = 0;
-        r->h[3] = 0;
-        r->resolved = 0;
+        resolved_clear(*it);
     }
     release_pixel_shaders();
     return 0;

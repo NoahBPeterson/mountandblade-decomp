@@ -49,11 +49,8 @@ extern Presentation* g_presentation;                        // 0x5e299c
 // @ 0x490030
 void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
 {
-    Vec2 np;
-    float dx, dy;
-    int gi;
-    *out = pos;
     char ok = 0;
+    *out = pos;
     int iter = 0;
     FaceId* f = (FaceId*)find_at(&pos.x);
     if (f == 0)
@@ -65,15 +62,15 @@ void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
         if (iter >= 5000)
             return;
         iter++;
-        dx = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
-        dy = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
-        if (sqrt(dx * dx + dy * dy) <= r) {
-            np = Vec2(pos.x + dx, pos.y + dy);
-            *out = np;
+        Vec2 d;
+        d.x = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
+        d.y = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
+        if (sqrt(d.x * d.x + d.y * d.y) <= r) {
+            *out = Vec2(pos.x + d.x, pos.y + d.y);
             FaceId* g = (FaceId*)find_at(&out->x);
             if (g != 0) {
-                gi = g->m4;
-                ok = g_script.level->ground->shares(first, gi) != 0;
+                int gi = g->m4;
+                ok = (char)g_script.level->ground->shares(first, gi);
             }
         }
     }
@@ -293,8 +290,8 @@ void ContainerBase::render(rgl::scene* sc, float* p3, int c, int d)
     l.mx = p4[0];
     l.y0 = p3[0];
     l.my = p4[1];
-    l.ly = p5[1];
     l.hy = p5[0];
+    l.ly = p5[1];
     float v = *(float*)((char*)this + 0xf8) + *(float*)((char*)this + 0xe0);
     if (l.mx < v) l.mx = v;
     v = *(float*)((char*)this + 0xf0) + *(float*)((char*)this + 0xe0);
@@ -793,13 +790,18 @@ int MissionW::count_agents(int idx)
 // @ 0x4920e0
 bool MissionW::all_defeated(int a)
 {
-    if (f5c < 0) return false;
-    int* p = teams[rec((unsigned)f5c)->team].relation;
-    int* h = &counts[0][1];
-    for (int k = 0; k < 8; k++, p++, h += 6) {
-        if (*p == -1 && *h > 0) return false;
+    if (f5c >= 0) {
+        int team = rec((unsigned)f5c)->team;
+        bool all = true;
+        for (int k = 0; k < 8; k++) {
+            if (teams[team].relation[k] == -1 && counts[k][1] > 0) {
+                all = false;
+                break;
+            }
+        }
+        return all && (float)g_ticks[2] * 1e-05f - changed_at >= (float)a;
     }
-    return (float)g_ticks[2] * 1e-05f - changed_at >= (float)a;
+    return false;
 }
 
 // @ 0x492170
@@ -814,9 +816,15 @@ bool MissionW::hero_down()
 unsigned MissionW::find_agent_by_troop(int id)
 {
     unsigned found = 0xffffffff;
-    unsigned n = (unsigned)agents.count;
-    for (unsigned i = agents.first_used(); i < n; agents.next_used(&i)) {
-        if (rec(i)->troop == id) found = i;
+    AgentTable* pool = &agents;
+    unsigned i = pool->first_used();
+    unsigned n = (unsigned)pool->count;
+    if (i < n) {
+        std::vector<Agent*>::iterator pages = agents.pages.begin();
+        do {
+            if (((AgentW*)((char*)pages[i >> 4] + (i & 0xf) * 0x5928))->troop == id) found = i;
+            pool->next_used(&i);
+        } while (i < n);
     }
     return found;
 }
@@ -912,10 +920,9 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
 // @ 0x492470
 void MissionCtx::refresh_rating()
 {
-    GameW* g = (GameW*)g_game;
-    PartyMgr* mgr = &g->pm();
-    Party* pp = mgr->at(mgr->lookup(ids[side]));
-    int t = pp->sum_stat(0x10);
+    PartyMgr* mgr = &((GameW*)g_game)->pm();
+    int idx = mgr->lookup(ids[side]);
+    int t = mgr->pages[idx >> 4][idx & 0xf].sum_stat(0x10);
     if (t <= 3)
         tier = 0;
     else if (t <= 0xa)
@@ -924,7 +931,7 @@ void MissionCtx::refresh_rating()
         tier = (t > 0x32) + 2;
 
     int s = side;
-    int r = g->gate_rating(g->f78, ids[s], ids[1 - s]);
+    int r = ((GameW*)g_game)->gate_rating(((GameW*)g_game)->f78, ids[s], ids[1 - s]);
     f1c = r;
     if (r > 6)
         f1c = 6;
@@ -990,13 +997,12 @@ void MissionCtx::select_side(int s)
     if (m != 4)
         f24 = s;
     if (ids[1 - s] >= 0) {
-        int fl = f10 & ~0x10;
         int flip = 1 - s;
         side = flip;
-        f10 = fl;
+        f10 &= ~0x10;
         f144 = 1;
         if (m == 4 && flip == 1)
-            f10 = fl | m;
+            f10 |= m;
         refresh_rating();
     }
     WL_MARKER(13)
@@ -1250,15 +1256,14 @@ static __declspec(noinline) void decode_utf8_487b00(int* _Out, const tstring* _s
 // @ 0x493400
 void DropDown::append(const tstring* _name)
 {
+    float _scale = 0.02f;
     int _count;
     int _maxn = 0x800;
     int _buf[0x800];
     decode_utf8_487b00(&_count, _name, _buf, &_maxn);
-    float _scale = (float)_count * 0.0077999993f;
-    if (_scale > 0.21f)
-        _scale = 0.21f / _scale * 0.02f;
-    else
-        _scale = 0.02f;
+    float _w = (float)_count * 0.0077999993f;
+    if (_w > 0.21f)
+        _scale = 0.21f / _w * 0.02f;
     if (_scale < f140) {
         float _pair[2];
         _pair[0] = _scale;
@@ -1596,8 +1601,10 @@ int WidgetMgrW::create_button_overlay(const tstring* text, unsigned flags)
         v.y = 0.0f;
         vt(w)->d22(&v);
     }
-    flags = (flags & 0x181c) | 0x200;
-    vt(w)->d29(&flags);
+    {
+        unsigned f = (flags & 0x181c) | 0x200;
+        vt(w)->d29(&f);
+    }
     {
         unsigned c = 0xff55ff50;
         vt(w)->d39(&c);
@@ -1668,19 +1675,21 @@ extern "C" const char s_ui_quest_completed_value[];             // 0x592650
 extern "C" const char s_ui_quest_succeeded_value[];             // 0x59266c
 extern "C" const char s_ui_quest_failed_value[];                // 0x592688
 
+static inline bool qbit(unsigned v, int n) { return ((v >> n) & 1) != 0; }
+
 // @ 0x494410
 void GameW::quest_done(int _idx)
 {
     WL_MARKER(12)
-    char* _e = (char*)((char*)quests + _idx * 0x138);
-    if ((*(unsigned*)(_e + 0x50) >> 1 & 1) != 0 ||
-        ((*(unsigned*)(_e + 0x64) & 0x200) == 0 && (*(unsigned*)(_e + 0x64) & 0x100) != 0)) {
+    if (qbit(*(unsigned*)((char*)&quests[_idx] + 0x50), 1) ||
+        ((*(unsigned*)((char*)&quests[_idx] + 0x64) & 0x200) == 0 && (*(unsigned*)((char*)&quests[_idx] + 0x64) & 0x100) != 0)) {
+        char* _e = (char*)&quests[_idx];
         if ((*(unsigned*)(_e + 0x64) & 0x800) == 0) {
             tstring _val(*(const tstring*)(_e + 0x40));
             char _buf[0x200];
             {
                 tstring _fmt("ui_quest_completed_value");
-                char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
+                char* _f = _val.buf; if (_f == 0) _f = (char*)&_val.buf;
                 char* _r = (char*)g_strtable.lookup(_fmt) + 4;
                 if (*(char**)_r != 0)
                     _r = *(char**)_r;
@@ -1692,12 +1701,12 @@ void GameW::quest_done(int _idx)
             }
             g_sound_mgr.play(g_sound_mgr.slot[3], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
         }
-        if ((*(unsigned*)(_e + 0x50) >> 1 & 1) == 0)
-            *(unsigned*)(_e + 0x64) |= 0x200;
-        else
+        if (qbit(*(unsigned*)(_e + 0x50), 1))
             *(int*)(_e + 0x64) = 0;
+        else
+            *(unsigned*)(_e + 0x64) |= 0x200;
+        WL_MARKER(13)
     }
-    WL_MARKER(13)
 }
 
 // @ 0x494560

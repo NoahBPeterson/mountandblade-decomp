@@ -10,3 +10,4 @@
 ../src/game/inventory_panel/mission_ctx.cpp  ?pick_template@MissionCtx@@QAEXXZ  00514360  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?quick_save_msg@@YAXXZ  00516a70  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?fill_ids@GameDataV@@QAEXPAHH@Z  005168e0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?reset_ids@MissionCtx@@QAEXH@Z  005169e0  /O2 /MT /Gy /TP

@@ -365,16 +365,14 @@ static __declspec(noinline) char check_party(const int& value)
     char buf[512];
     PartyMgr* t = &g_game->parties;
     unsigned id = value;
-    if (id < (unsigned)t->deflt) {
-        int idx = t->lookup(id);
-        if (idx >= 0) {
-            if (t->pages[idx >> 4][idx & 0xf].type == 1)
-                return 1;
-        }
+    char r = 1;
+    int idx;
+    if (id >= (unsigned)t->deflt || (idx = t->lookup(id)) < 0 || t->atu(idx)->type != 1) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Party ID: %d", g_cur_opcode, id);
+        report(buf);
+        r = 0;
     }
-    sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Party ID: %d", g_cur_opcode, id);
-    report(buf);
-    return 0;
+    return r;
 }
 
 // @ 0x49d1f0
@@ -438,13 +436,13 @@ static __declspec(noinline) char warn_tableau(const int& value)
 {
     char buf[512];
     int id = value;
-    if (id >= 0 && g_tableaus.recs._Myfirst != 0) {
-        if ((unsigned)id < (unsigned)g_tableaus.recs.size())    // jb: unsigned, as the original
-            return 1;
+    char r = 1;
+    if (id < 0 || g_tableaus.recs._Myfirst == 0 || (unsigned)id >= (unsigned)g_tableaus.recs.size()) {   // jb: unsigned, as the original
+        sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Tableau ID: %d", g_cur_opcode, id);
+        report(buf);
+        r = 0;
     }
-    sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Tableau ID: %d", g_cur_opcode, id);
-    report(buf);
-    return 0;
+    return r;
 }
 
 // @ 0x49d3d0
@@ -468,15 +466,15 @@ static __declspec(noinline) char warn_agent(const int& value)
 {
     char buf[512];
     char r = 0;
-    if (g_mission) {
-        int id = value;
-        if (id >= 0 && id < mission()->agents.count) {
-            if (mission()->agents.pages[id >> 4][id & 0xf].live != 0)
-                return 1;
-        }
+    int id;
+    unsigned u;
+    if (g_mission && (id = value) >= 0 && id < mission()->agents.count &&
+        (u = id, mission()->agents.pages[u >> 4][u & 0xf].live != 0)) {
+        r = 1;
+    } else {
+        sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Agent ID: %d", g_cur_opcode, value);
+        report(buf);
     }
-    sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Agent ID: %d", g_cur_opcode, value);
-    report(buf);
     return r;
 }
 

@@ -519,7 +519,8 @@ void __fastcall music_player::tick()
             stop(0);   // 0x4be0a0
             fading[0] = 0;
         } else {
-            float c_v = t2450.elapsed() * 0.2f, c_lo = 0.0f, c_hi = 1.0f;
+            float c_hi = 1.0f, c_lo = 0.0f;
+            float c_v = t2450.elapsed() * 0.2f;
             vol = (1.0f - clamp(&c_v, &c_lo, &c_hi)) * vol;
         }
     }

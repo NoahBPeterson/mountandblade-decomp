@@ -3814,42 +3814,39 @@ void Agent::start_ragdoll()
 }
 
 // ---- blood and dust on the meshes of an agent ------------------------------------------------------------------------------
+static inline float dust_clamp01(float v) { return v < 0.0f ? 0.0f : (v >= 1.0f ? 1.0f : v); }
+
 // @ 0x451710
 void dust_vertices(mesh* m, const mat4* xf, const float* center, const float* radius, const float* strength,
                    const vector4* tint)
 {
     bool dirty = false;
-    char loc = m->local_a1;
-    std::vector<rgl::vertex60>& vs = m->get50();
-    std::vector<rgl::point20>& ps = m->get70();
+    std::vector<rgl::vertex60>& vs = m->get50_rec();
+    std::vector<rgl::point20>& ps = m->get70_rec();
     for (unsigned i = 0; i < vs.size(); i++) {
-        rgl::point20* pt = &(&*ps.begin())[(&*vs.begin())[i].index];
+        rgl::point20* pt = &ps[vs[i].index];
         vector4 w;
-        w.x = xf->s.x * pt->b.x + xf->u.x * pt->b.z + xf->f.x * pt->b.y + xf->o.x;
-        w.y = xf->s.y * pt->b.x + xf->u.y * pt->b.z + xf->f.y * pt->b.y + xf->o.y;
-        w.z = xf->s.z * pt->b.x + xf->u.z * pt->b.z + xf->f.z * pt->b.y + xf->o.z;
-        float dx = w.x - center[0];
-        float dy = w.y - center[1];
-        float dz = w.z - center[2];
-        float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
+        w.x = xf->s.x * pt->b.x + xf->f.x * pt->b.y + xf->u.x * pt->b.z + xf->o.x;
+        w.y = xf->s.y * pt->b.x + xf->f.y * pt->b.y + xf->u.y * pt->b.z + xf->o.y;
+        w.z = xf->s.z * pt->b.x + xf->f.z * pt->b.y + xf->u.z * pt->b.z + xf->o.z;
+        vector4 d;
+        d.x = w.x - center[0];
+        d.y = w.y - center[1];
+        d.z = w.z - center[2];
+        float dist = d.length();
         if (dist < *radius && (float)(rand() % 15817) * (1.0f / 15817.0f) < 0.6f) {
             float a = (1.0f - dist / *radius) * 1.5f;
-            float s = ((float)(rand() % 15817) * (0.6f / 15817.0f) + 0.4f) * a;
-            s = s * *strength;
-            if (s < 0.0f)
-                continue;
-            if (s >= 1.0f)
-                s = 1.0f;
-            else if (!(s > 0.02f))
-                continue;
-            m->ensure_local();
-            vector4 c;
-            c = rgl::unpack_color(&(&*vs.begin())[i].color);
-            float omt = 1.0f - s;
-            vector4 o = a_vadd(a_vscale(omt, c), a_vscale(s, *tint));
-            o.w = c.w;
-            (&*m->v50.begin())[i].color = rgl::pack_color(&o);
-            dirty = true;
+            float e = ((float)(rand() % 15817) * (0.6f / 15817.0f) + 0.4f) * a;
+            float s = dust_clamp01(e * *strength);
+            if (s > 0.02f) {
+                m->ensure_local();
+                vector4 c = rgl::unpack_color(&vs[i].color);
+                float omt = 1.0f - s;
+                vector4 o = a_vadd(a_vscale(omt, c), a_vscale(s, *tint));
+                o.w = c.w;
+                m->v50[i].color = rgl::pack_color(&o);
+                dirty = true;
+            }
         }
     }
     if (dirty)

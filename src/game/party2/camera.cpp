@@ -1101,7 +1101,6 @@ using rgl::vector4;
 inline void identity_pos(float* m) { rgl::identity_pos((rgl::matrix*)m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
-extern float g_tick_scale;                     // 0x54a6d0  1e-05f  (tick -> seconds); defined once, in mesh_slot/slot.cpp
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
 extern const float g_k002;                    // 0x590cd0  0.02f
 
@@ -1128,9 +1127,7 @@ static __forceinline int blend_i(const float& lim, const float& d, int a, int b)
     float v = ((lim - d) * (float)a + (float)b * d) * (1.0f / lim);
     float fl = (float)floor(v);
     int i = (int)fl;
-    if (!(v - fl <= 0.5f))
-        i++;
-    return i;
+    return (v - fl <= 0.5f) ? i : i + 1;
 }
 
 // this constructor expands the container constructor (0x49deb7); the other sites call 0x4931a0
@@ -1174,13 +1171,20 @@ void Camera::on_child_moved(MissionUi* e)
     e->on_moved();
 }
 
+static inline float2 operator*(const float2& a, float k) { return float2(a.x * k, a.y * k); }
+static inline float track_elapsed(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
+static inline float2 fade_mix(float s, const float2& a, float t, const float2& b)
+{
+    float2 l(s * a.x, s * a.y);
+    float2 r(t * b.x, t * b.y);
+    return float2(l.x + r.x, l.y + r.y);
+}
+
 // @ 0x49dfe0
 // Per-frame view update: the two shake axes follow the tracked object while its follow objects report
 // a weight, then the four fades (zoom, colour, level, shake) are advanced.
 void Camera::animate(int)
 {
-    float2 v;
-
     shake_x = target->screen[2];
     shake_y = target->screen[3];
     for (int i = 2; i != 0; i--) {
@@ -1192,43 +1196,39 @@ void Camera::animate(int)
     }
     on_child_moved(target);
 
-    float d0 = elapsed(0);    // colour
-    float d1 = elapsed(1);    // level
-    float d4 = elapsed(4);    // zoom
-    float d5 = elapsed(5);    // shake
+    float d0 = track_elapsed(*(const Timer*)((char*)this + 8));         // colour
+    float d1 = track_elapsed(*(const Timer*)((char*)this + 0x18));      // level
+    float d4 = track_elapsed(*(const Timer*)((char*)this + 0x48));      // zoom
+    float d5 = track_elapsed(*(const Timer*)((char*)this + 0x58));      // shake
 
-    // zoom: blend the target's zoom from the near weights toward the far ones
+    // zoom: blend the target's zoom from the near weights toward the far ones (track flag c4, as 0x4886ab sets it)
     if (d4 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - d4;
-        float xn = d4 * f88 + rest * a8;
-        // (the original spills both y terms and their sum to float slots before scaling; as plain locals they stay in x87
-        // registers: the same value except that denormal results are not rounded to float in between)
-        float yb = d4 * f8c;
-        float yr = rest * ac;
-        float yn = yr + yb;
-        float x = xn * inv;
-        float y = yn * inv;
-        v.x = x * 0.02f;
-        v.y = y * 0.02f;
+        float2 z = fade_mix(d4, *(float2*)&f88, rest, *(float2*)&a8) * inv;
+        float2 v = z * 0.02f;
         target->kids[0]->set_size((float*)&v);
-        fD8 = x;
-        fDC = y;
+        fD8 = z.x;
+        fDC = z.y;
         ((FieldPanel*)this)->update();
-    } else if (c2) {
-        c2 = 0;
+    } else if (c4) {
+        c4 = 0;
         ((WItem*)this)->terrain_refresh(&f88);
     }
 
     // colour: the three level bytes blended from the target levels and packed under the inherited
     // alpha byte, then the target sub-object's colour slot
     if (d0 < dur(0)) {
-        int i0 = blend_u(dur(0), d0, srcA & 0xff, valA & 0xff);
-        int i1 = blend_i(dur(0), d0, ((unsigned char*)&srcA)[1], ((unsigned char*)&valA)[1]);
-        int i2 = blend_i(dur(0), d0, ((unsigned char*)&srcA)[2], ((unsigned char*)&valA)[2]);
-        unsigned col = (color14c | target->kids[0]->color14c) & 0xff000000u;
-        col |= (unsigned)((i2 << 16) + (i1 << 8) + i0);
+        int c = blend_u(dur(0), d0, srcA & 0xff, valA & 0xff);
+        c = (blend_i(dur(0), d0, ((unsigned char*)&srcA)[1], ((unsigned char*)&valA)[1]) << 8) + c;
+        c = (blend_i(dur(0), d0, ((unsigned char*)&srcA)[2], ((unsigned char*)&valA)[2]) << 16) + c;
+        unsigned kid_col = target->kids[0]->color14c;
+        unsigned col = color14c;
+        col |= kid_col;
+        col &= 0xff000000u;
+        col |= c;
         target->kids[0]->set_color(&col);
+        float2 v;
         target->kids[0]->get_xy((float*)&v);
     } else if (c0) {
         c0 = 0;
@@ -1243,18 +1243,17 @@ void Camera::animate(int)
         ((FieldPanel*)this)->set_alpha(((unsigned char*)&valA)[7]);
     }
 
-    // shake: blend toward the far weights and hand the offset to the object
+    // shake: blend toward the far weights and hand the offset to the object (track flag c5, as 0x48870b sets it)
     if (d5 < dur(5)) {
         float inv = g_one / dur(5);
         float rest = dur(5) - d5;
-        v.x = (d5 * f80 + rest * a0) * inv;
-        v.y = (d5 * f84 + rest * a4) * inv;
+        float2 v = fade_mix(d5, *(float2*)&f80, rest, *(float2*)&a0) * inv;
         move_a((float*)&v);
         ((FieldPanel*)this)->update();
-    } else if (c3) {
+    } else if (c5) {
         move_a(&f80);
         ((FieldPanel*)this)->update();
-        c3 = 0;
+        c5 = 0;
     }
 }
 

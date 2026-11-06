@@ -267,8 +267,11 @@ unsigned Agent::find_talk_target()
                 if (b <= a) {
                     vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                     float len = d.normalize();
-                    if (len < 1.0f && d.x * fx + d.y * fy > 0.1f)
-                        best = i;
+                    if (len < 1.0f) {
+                        struct V2 { float x, y; } h = { fx, fy };
+                        if (d.y * h.y + d.x * h.x > 0.1f)
+                            best = i;
+                    }
                 }
             }
             m = g_mission;

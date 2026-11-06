@@ -54,3 +54,6 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?insert_b@MapDialog@@QAEPAHPAHHH@Z  004c6ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?ufill@edit_vec@@QAEPAUedit_vert@@PAU2@HPBU2@@Z  004c8810  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??0CampaignScreen@@QAE@XZ  004c49f0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?frame_update@ResultWindow@@UAEXM@Z  004ca550  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?init@ConfigDialog@@QAEXXZ  004c7290  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?normal@graph_obj@@QAE?AUvector4@rgl@@PBH@Z  004c8000  /O2 /MT /Gy /TP

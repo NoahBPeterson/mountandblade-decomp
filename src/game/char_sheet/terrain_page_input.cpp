@@ -119,11 +119,11 @@ void rot2::rotate_2x2(float angle)
 // @ 0x4f3be0
 __declspec(noinline) void identity_2x2(float* m)
 {
-    float a = 1.0f, b = 0.0f, c = 0.0f, d = 1.0f;           // the original fills four stack temps, then the array
-    m[0] = a;
-    m[1] = b;
-    m[2] = c;
-    m[3] = d;
+    struct V2 { float x, y; };
+    V2 t, u;
+    t.x = 1.0f; t.y = 0.0f; u.x = 0.0f; u.y = 1.0f;
+    *(V2*)&m[0] = t;
+    *(V2*)&m[2] = u;
 }
 
 // @ 0x4f3c30
@@ -138,8 +138,8 @@ void TerrainPage::paste_clipboard()
         if (h) {
             const char* p = (const char*)GlobalLock(h);
             if (p) {
-                g_terrain.parse(tstring(p));   // 0x4658c0
-                { char r[8]; hexbox->set_text((float*)r, &(tstring(p))); }
+                { tstring s0(p); g_terrain.parse(s0); }   // 0x4658c0
+                { tstring s(p); rgl::vector4 r; hexbox->set_text((float*)&r, &s); }
                 GlobalUnlock(h);
                 read_fields();
                 update();

@@ -594,10 +594,10 @@ bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format)
 void Config::split_line(const char* line, tstring* first, tstring* second)
 {
     int i = 0;
-    char ch;
     first->clear();
     second->clear();
 
+    char ch;
     const char* p = line;
     for (;;) {
         ch = *p;
@@ -1188,10 +1188,17 @@ int render_batch::release_decls()
     return 0;
 }
 
+struct uv_pair {                                    // the record's first four floats are two of these
+    float u, v;
+    uv_pair() {}
+    uv_pair(float u_, float v_) : u(u_), v(v_) {}
+};
 // @ 0x4bd120
 font_details::font_details()
 {
-    a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0;
+    *(uv_pair*)&a = uv_pair(0.0f, 0.0f);
+    *(uv_pair*)&c = uv_pair(0.0f, 0.0f);
+    e = 0; f = 0; g = 0;
 }
 
 // ---- ambient particle ring ----------------------------------------------------------------------------------------------
@@ -1534,6 +1541,11 @@ void EmitTable::load_used()
     }
 }
 
+static inline void channel_to_float(float* out, unsigned b)
+{
+    if (b) *out = (float)(int)b * 0.003921568859f; else *out = -1.0f;
+}
+
 // @ 0x4bdc00
 void* psys_record::read(stream_base& a, char* o)
 {
@@ -1541,20 +1553,29 @@ void* psys_record::read(stream_base& a, char* o)
     tstring tmp;
     RS(a, &tmp);
     *(void**)o = g_resmgr.get_skeleton_anim(tmp);
-    stream_base& s = RI(RI(a, o + 0x10), o + 0x14).r_uint((unsigned*)(o + 0x08)).r_uint((unsigned*)(o + 0x18));
+    stream_base& s1 = RI(RI(a, o + 0x10), o + 0x14).r_uint((unsigned*)(o + 0x08));
     int* q = (int*)(o + 0x2c);
+    stream_base& s = s1.r_uint((unsigned*)(o + 0x18));
     RF(RF(RF(s, q), q + 1), q + 2);
     RF(s, o + 0x3c);
     {
         // (an if/else per channel as the original branches: 0x4bdc9f..0x4bdd3d; a zero byte gives -1.0)
+        float& f_b0 = *(float*)(o + 0x1c);
+        f_b0 = -1.0f;
         unsigned b0 = *(unsigned*)(o + 0x18) & 0xff;
-        if (b0) *(float*)(o + 0x1c) = (float)(int)b0 * 0.003921568859f; else *(float*)(o + 0x1c) = -1.0f;
+        channel_to_float(&f_b0, b0);
+        float& f_b1 = *(float*)(o + 0x20);
+        f_b1 = -1.0f;
         unsigned b1 = *(unsigned char*)(o + 0x19);
-        if (b1) *(float*)(o + 0x20) = (float)(int)b1 * 0.003921568859f; else *(float*)(o + 0x20) = -1.0f;
-        unsigned b2 = *(unsigned char*)(o + 0x1a);
-        if (b2) *(float*)(o + 0x24) = (float)(int)b2 * 0.003921568859f; else *(float*)(o + 0x24) = -1.0f;
+        channel_to_float(&f_b1, b1);
+        float& f_b2 = *(float*)(o + 0x24);
+        f_b2 = -1.0f;
+        unsigned b2 = *(char*)(o + 0x1a) & 0xff;
+        channel_to_float(&f_b2, b2);
+        float& f_b3 = *(float*)(o + 0x28);
+        f_b3 = -1.0f;
         unsigned b3 = *(unsigned char*)(o + 0x1b);
-        if (b3) *(float*)(o + 0x28) = (float)(int)b3 * 0.003921568859f; else *(float*)(o + 0x28) = -1.0f;
+        channel_to_float(&f_b3, b3);
     }
     return &a;
 }

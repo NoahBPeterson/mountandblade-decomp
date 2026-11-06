@@ -676,17 +676,23 @@ struct MissionSub_s27c90 {
     __forceinline void read(stream_base* s);              // 0x524f00 (ret 4)
 };
 
+struct ResourceOwner_s27c90;
+struct MissionItem_s27c90 {                 // 0x1c8 bytes
+    char pad0[0x1b4];
+    ResourceOwner_s27c90* owner;            // +0x1b4
+    char pad1b8[0x1c8 - 0x1b8];
+};
 struct Mission_s27c90 {
     char pad0[0x5df4];
     int cur_scene;                          // +0x5df4 (index into GameData_s27c90::scenes)
     char pad5df8[0x63d0 - 0x5df8];
     GridSet_s27c90 grids;                          // +0x63d0
     char pad668c[0x668c - 0x63d0 - sizeof(GridSet_s27c90)];
-    char* item_array;                       // +0x668c (per-item array, 0x1c8 apart)
+    MissionItem_s27c90* item_array;         // +0x668c (per-item array, 0x1c8 apart)
     char pad6690[0x6698 - 0x6690];
     MissionSub_s27c90 other;                       // +0x6698
     __declspec(noinline) void save_scene_data();                 // 0x527f90
-    __declspec(noinline) int release_item(int idx);              // 0x528410 (ret 4)
+    __declspec(noinline) void release_item(int idx);             // 0x528410 (ret 4)
 };
 
 // ---- world (Mission_s27c90+0) ---------------------------------------------------------------------------------

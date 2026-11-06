@@ -148,11 +148,12 @@ void grid_cell::add(shape_base* x)
 }
 
 // @ 0x4240d0
-__declspec(noinline) int shape_vec::find(shape_base* o) const
+__declspec(noinline) inline int shape_vec::find(shape_base* o) const
 {
-    for (unsigned i = 0; first != 0 && i < (unsigned)(last - first); i++)
+    for (unsigned i = 0; i < size(); i++) {
         if (first[i] == o)
             return i;
+    }
     return -1;
 }
 

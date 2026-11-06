@@ -41,3 +41,6 @@
 ../src/game/triggers/trigger_vec.cpp  ?init@MissionCtx@@QAEXXZ  004be730  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?uninit_copy_204@@YAPADPAUblk204@@0PADPAUAlloc204@@Uptr_tag@@@Z  004c1b60  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ??0TriggerRec@@QAE@XZ  004c1c20  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ?read_options@GameApp@@QAEXXZ  004bf170  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ?resize@TriggerVec@@QAEXAAUstream_base@@PBD@Z  004c1c90  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ?resize@GameVec@@QAEHAAUstream_base@@PBDH@Z  004c1e10  /O2 /MT /Gy /TP

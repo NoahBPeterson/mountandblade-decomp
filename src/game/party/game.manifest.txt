@@ -22,3 +22,4 @@
 ../src/game/party/game.cpp  ?read@SpriteRec@@QAEXPAUstream_base@@H@Z  0051e970  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?load_clock@Game@@QAEXPAUstream_base@@@Z  0051de70  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?read@I64Vec@@QAEXPAUstream_base@@@Z  0051e0b0  /O2 /MT /Gy /TP
+../src/game/party/game.cpp  ?resize@TrackVec@@QAEXIUTrackRec@@@Z  0051e7a0  /O2 /MT /Gy /TP

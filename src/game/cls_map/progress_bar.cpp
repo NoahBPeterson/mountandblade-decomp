@@ -229,9 +229,11 @@ static __forceinline int config_index(const tstring& key)
 }
 
 // the value of entry i as a float (atof of the string, 0 when the entry does not exist)
-static __forceinline float config_value(int i)
+// a settings value keyed by name, as init_screen inlines it: the default is stored before the search
+static __forceinline float config_float(const tstring& key)
 {
     float r = 0.0f;
+    int i = config_index(key);
     if (i >= 0) {
         char* e = (char*)&g_game_vars + 0x1c + 0x2c * i;
         char* v = *(char**)(e + 4);
@@ -253,7 +255,7 @@ void C4c31c0::init_screen()
         float v[2];
         v[0] = -0.001f;
         v[1] = -0.001f;
-        vt(w)->d22(v);
+        vt(window)->d22(v);
     }
     {
         float v[2];
@@ -287,12 +289,12 @@ void C4c31c0::init_screen()
     if (is_load) {
         tstring h("save_b_done_h");
         tstring caption("ui_save");
-        float f = config_value(config_index(h));
+        float f = config_float(h);
         btn_done = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     } else {
         tstring h("save_b_done_h");
         tstring caption("ui_restore");
-        float f = config_value(config_index(h));
+        float f = config_float(h);
         btn_done = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh((MissionUi*)(void*)btn_done, "save_b_done");
@@ -301,14 +303,14 @@ void C4c31c0::init_screen()
     {
         tstring h("save_b_cancel_h");
         tstring caption("ui_cancel");
-        float f = config_value(config_index(h));
+        float f = config_float(h);
         btn_cancel = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh((MissionUi*)(void*)btn_cancel, "save_b_cancel");
     {
         tstring h("save_b_delete_h");
         tstring caption("ui_delete");
-        float f = config_value(config_index(h));
+        float f = config_float(h);
         btn_delete = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh((MissionUi*)(void*)btn_delete, "save_b_delete");
@@ -729,21 +731,25 @@ void ItemC::create2()
     g_gui.reset();
     ContainerBase* w = new NodeA(0);
     win = w;
-    float v[2];
-    v[0] = -0.001f;
-    v[1] = -0.001f;
-    vt(win)->d22(v);
-    v[0] = 1.002f;
-    v[1] = 0.752f;
-    vt(win)->d25(v);
+    {
+        float v[2];
+        v[0] = -0.001f;
+        v[1] = -0.001f;
+        vt(win)->d22(v);
+        v[0] = 1.002f;
+        v[1] = 0.752f;
+        vt(win)->d25(v);
+    }
     block().init(win, g_presentations.used[2]);
     if (block().index < 0) {
         tstring n("load_window");
         vt(win)->d31(0, res_get(n)->clone());
     }
-    void* root = win;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)(root));
+    {
+        void* root = win;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(root));
+    }
 }
 
 // ---- 0x4e5f50..0x4e6050: the std::vector<Skin> / std::fill<RagModel> helpers the linker placed here ---------------------------

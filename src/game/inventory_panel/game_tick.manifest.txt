@@ -5,3 +5,5 @@
 ../src/game/inventory_panel/game_tick.cpp  ?first@GamePool@@QAEHXZ  005179b0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/game_tick.cpp  ?skill_plus_8@GameG@@QAEMXZ  00518940  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/game_tick.cpp  ?shift_over@Vec5c@@QAEPAPAURec5c@@PAPAU2@PAU2@1@Z  00518990  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?sky_color@GameG@@QAEPAUvector4@rgl@@PAU23@@Z  00517770  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?next@GamePool@@QAEXPAH@Z  00517960  /O2 /MT /Gy /TP

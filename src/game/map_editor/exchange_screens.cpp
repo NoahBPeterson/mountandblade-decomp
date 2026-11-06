@@ -505,18 +505,15 @@ void PartyScreen::swap_rows(int which)
         owner = w10;
     PartyX* p = party_index(owner);
 
-    Stack tmp = p->stacks[slot + which];
-    p->stacks[slot + which] = p->stacks[slot];
+    int other = slot + which;
+    Stack tmp = p->stacks[other];
+    p->stacks[other] = p->stacks[slot];
     p->stacks[slot] = tmp;
 
-    int o1 = 0x1405c + slot * 0x80;
-    int o2 = 0x1405c + (slot + which) * 0x80;
     for (int i = 0; i < 0x20; i++) {
-        int t = *(int*)((char*)g_game + o2);
-        *(int*)((char*)g_game + o2) = *(int*)((char*)g_game + o1);
-        *(int*)((char*)g_game + o1) = t;
-        o1 += 4;
-        o2 += 4;
+        int t = g_game->tbl[other][i];
+        g_game->tbl[other][i] = g_game->tbl[slot][i];
+        g_game->tbl[slot][i] = t;
     }
 }
 
@@ -595,8 +592,9 @@ void GameDataX::update_party_sprites()
     PartyMgr* mgr = &parties;
     PartyX* p = party_index(this, *(int*)((char*)this + 0x7c));
     if (((Party*)p)->sum_stat(0x10) != 0) {
-        PartyX* q = party_index(this, *(int*)((char*)this + 0x78));
-        int spr = add_sprite(*(float*)((char*)q + 0x30), *(float*)((char*)q + 0x34), 1);
+        int qi = mgr->lookup(*(int*)((char*)this + 0x78));
+        Party* page = mgr->pages[qi >> 4];
+        int spr = add_sprite(page[qi & 0xf].pos.x, page[qi & 0xf].pos.y, 1);
         PartyX* r = party_index(this, spr);
         int n = *(int*)((char*)p + 0x8a8);
         int i = 0;
@@ -616,10 +614,13 @@ void GameDataX::update_party_sprites()
         int* row = (int*)((char*)p + 0xac);
         do {
             Troop* rec = &troops[row[0]];
-            if ((rec->flags32 & 0x10) != 0) {
-                int kind = (row[1] & 1) ? 2 : 1;
-                PartyX* q = party_index(this, *(int*)((char*)this + 0x78));
-                int spr = add_sprite(*(float*)((char*)q + 0x30), *(float*)((char*)q + 0x34), kind);
+            if ((rec->flags30 & 0x10) != 0) {
+                int kind = 1;
+                if (row[1] & 1)
+                    kind = 2;
+                int qi = mgr->lookup(*(int*)((char*)this + 0x78));
+                Party* page = mgr->pages[qi >> 4];
+                int spr = add_sprite(page[qi & 0xf].pos.x, page[qi & 0xf].pos.y, kind);
                 PartyX* d = party_index(this, spr);
                 Troop* src = &troops[row[0]];
                 tstring* s = STR_TABLE->find((const tstring*)((char*)src + 0x20));

@@ -86,3 +86,4 @@
 004d3e70 ?erase@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@QAE?AViterator@12@V312@0@Z
 004d93e0 ??$_Ucopy@Vconst_iterator@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@IAEPAUE50@@Vconst_iterator@01@0PAU2@@Z
 004d9420 ??$_Ucopy@Vconst_iterator@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@@?$vector@UE176@@V?$allocator@UE176@@@std@@@std@@IAEPAUE176@@Vconst_iterator@01@0PAU2@@Z
+0049b4f0 ?get_xy@MissionUi@@UAEXPAM@Z  # MissionUi vtable slot +0x94, reached through the UiA vtable

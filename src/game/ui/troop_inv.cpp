@@ -135,26 +135,24 @@ int Troop::pick(int seed, int p3, unsigned must, unsigned mustnot, unsigned type
     int best = -1, cheap = -1;
     float bestv = -1.0f, cheapv = 1e9f;
     int n = inv_count();
-    int matching = 0;
     int total = 0;
     int i = 0;
     if (0 < n) {
         ItemRef* pp = inv;
         do {
             if (pp->item >= 0 && item_matches(i, p3, must, mustnot, type, t2, t3))
-                matching++;
+                total++;
             i++;
             pp++;
         } while (i < n);
-        total = matching;
-        if (matching != 0 && cheapest == 0)
-            total = matching + 3;
+        if (total != 0 && cheapest == 0)
+            total += 3;
     }
+    float thr = 1.7f / (float)total;
+    total = 0;
+    if (total < n) {
     ItemKind* items = g_items;
-    float ftotal = (float)total;
-    float thr = 1.7f / ftotal;
-    if (0 < n) {
-    for (total = 0; total < n; total++) {
+    do {
         ItemRef* p = &inv[total];
         if (p->item >= 0) {
                 ItemKind* k = &items[p->item];
@@ -179,10 +177,11 @@ int Troop::pick(int seed, int p3, unsigned must, unsigned mustnot, unsigned type
                     }
                 }
         }
+        total++;
+    } while (total < n);
     }
     if (best != -1)
         return best;
-    }
     return cheap;
 }
 

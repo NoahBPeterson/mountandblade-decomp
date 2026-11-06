@@ -19,3 +19,4 @@
 ../src/rgl/dynamic/world_grid.cpp  ??$_Uninit_copy@PAUground_g136@@PAU1@V?$allocator@Uground_g136@@@std@@@std@@YAPAUground_g136@@PAU1@00AAV?$allocator@Uground_g136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00425140  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ??$_Uninit_fill_n@PAUground_g136@@IU1@V?$allocator@Uground_g136@@@std@@@std@@YAXPAUground_g136@@IABU1@AAV?$allocator@Uground_g136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004251c0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?add_tree@world@rgl@@QAEXPAUshape_base@@@Z  00425240  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_grid.cpp  ?find@shape_vec@@QBEHPAUshape_base@@@Z  004240d0  /O2 /MT /Gy /TP

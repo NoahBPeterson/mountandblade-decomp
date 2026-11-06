@@ -106,15 +106,15 @@ bool face::contains_xy(const float* p) const
 {
     bool inside = true;
     int i = 0;
-    const vector4* a = w;
     do {
-        if (i >= count) return inside;
-        i++;
-        int j = i % count;
-        float e = w[j].x - a->x, f = w[j].y - a->y, g = p[0] - a->x, h = p[1] - a->y;
-        if (h * e - g * f < 0.0f)
+        if (i >= count) break;
+        struct V2 { float x, y; };
+        int j = (i + 1) % count;
+        V2 d = { w[j].x - w[i].x, w[j].y - w[i].y };
+        V2 q = { p[0] - w[i].x, p[1] - w[i].y };
+        if (q.y * d.x - q.x * d.y < 0.0f)
             inside = false;
-        a++;
+        i++;
     } while (inside);
     return inside;
 }
@@ -208,10 +208,11 @@ bool Channel::busy()
         float inv = 1.0f / period;
         int a = (int)((t - g_step_tbl[tbl_idx]) * inv);
         int b = (int)(t * inv);
-        if (a < b) return true;
-        return false;
+        r = a < b;
     }
-    if (mode != 21 && mode != 22) return r;
-    if (t >= period) return true;
-    return false;
+    else if (mode == 21 || mode == 22) {
+        if (t >= period) r = true;
+        else r = false;
+    }
+    return r;
 }

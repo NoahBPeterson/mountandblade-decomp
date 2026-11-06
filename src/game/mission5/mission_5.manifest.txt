@@ -14,3 +14,4 @@
 ../src/game/mission5/mission_5.cpp  ?clear@Elem_s2ce00@@QAEXXZ  0052ce00  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?put@Elem_s2ce00@@QAEXPAH00@Z  0052ce70  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?tick@MissionCtx@@QAEXXZ  005295a0  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?clamp_cell@Terrain@@QAEPAHPAH0@Z  0052cef0  /O2 /MT /Gy /TP

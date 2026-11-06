@@ -158,7 +158,7 @@ struct Forwarder {
 // @ 0x4eb8c0
 void Forwarder::forward(int a, int b, int c)
 {
-    std::_Uninit_copy(std::vector<Skin>::const_iterator((Skin*)a), std::vector<Skin>::const_iterator((Skin*)b), (Skin*)c, *(std::allocator<Skin>*)this, std::_Nonscalar_ptr_iterator_tag());   // 0x4e4340
+    std::_Uninitialized_copy(std::vector<Skin>::const_iterator((Skin*)a), std::vector<Skin>::const_iterator((Skin*)b), (Skin*)c, *(std::allocator<Skin>*)this);   // 0x4e4340 through _Ptr_cat
 }
 
 // @ 0x4eb8e0 save-load UI entry (whole body reconstructed at 0x4eb8e0; 0x4eb8ed is its interior

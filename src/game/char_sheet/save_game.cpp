@@ -137,7 +137,10 @@ int save_game(int version, tstring* name)
                     WL_MARKER(0x0d)
                     if (!r) {
                         LOG("Savegame succeded...");
-                        g_gui.add(*g_strtable.lookup(tstring("ui_game_saved_successfully")), -1);
+                        {
+                            tstring msg("ui_game_saved_successfully");
+                            g_gui.add(*g_strtable.lookup(msg), -1);
+                        }
                         goto done;
                     }
                 }

@@ -39,13 +39,17 @@ struct ListHolder {
 #include "./field_panel.h"
 
 // ---- 0x48d5f0, 0x48d690: containers of 0x1dc-byte elements and of 8-byte records ---------------------------------------------
+struct ArrInner {
+    char pad0[0xb0];
+    std::vector<int> vals;                  // +0xb0 (first at +0xb4; 0x48d636)
+};
 struct ArrElem {
     virtual int v00();
     virtual int v04();
     virtual int v08(int arg);
-    char pad8[0x1a0 - 4];
-    int* a;                                 // +0x1a0
-    int* b;                                 // +0x1a4
+    char pad8[0x19c - 4];
+    std::vector<ArrInner*> list;            // +0x19c (first at +0x1a0, last at +0x1a4)
+    char pad1ac[0x1dc - 0x1ac];
 };
 struct ArrHolder {
     char pad0[4];

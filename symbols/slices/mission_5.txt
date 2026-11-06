@@ -28,3 +28,4 @@
 005aa008 ?g_options@@3Uoptions@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
 005e29dc ?g_propkinds@@3PAUPropKind@@A  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
 005a9c20 ?g_step_tbl@@3PAMA  # canonical name (names n1: renamed global/function, harness cannot read the shared-header annotation)
+08ed50c8 ?g_dialogs@@3UDialogMgr@@A  # dialogue manager singleton (dialog_mgr.h, included only through mission_5.h, so the resolver misses its annotation; ecx of listener 0x460670 at 0x526138)

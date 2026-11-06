@@ -1102,25 +1102,23 @@ void PartyWindow::add_cost(int delta)
 
     pending += delta;
     if (pending < 0) {
-        tstring_buffer sv;
         tstring key("ui_notification_payment_value");
         sprintf(buf, g_strtable.lookup(key)->c_str(),
-                GV->string_value(sv.get(), -pending)->c_str());
-        sv.destroy();
+                GV->GameData::string_value(-pending).c_str());
     } else if (pending > 0) {
-        tstring_buffer sv;
         tstring key("ui_notification_payment_receive_value");
         sprintf(buf, g_strtable.lookup(key)->c_str(),
-                GV->string_value(sv.get(), pending)->c_str());
-        sv.destroy();
+                GV->GameData::string_value(pending).c_str());
     } else {
         tstring key("ui_no_cost");
         sprintf(buf, g_strtable.lookup(key)->c_str());
     }
     {
         tstring_buffer out;
-        tstring msg(buf);
-        total_cost->set_text((float*)out.get(), &msg);
+        {
+            tstring msg(buf);
+            total_cost->set_text((float*)out.get(), &msg);
+        }
     }
 }
 

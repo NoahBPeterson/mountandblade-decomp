@@ -3,3 +3,5 @@
 ../src/game/inventory_panel/widget_text.cpp  ?_Insert_n@vec_named@@QAEXPAUnamed_vec@@IABU2@@Z  0050d260  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/widget_text.cpp  ?_Destroy@vec_named@@QAEXPAUnamed_vec@@0@Z  0050d230  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/widget_text.cpp  ??0text_box@@QAE@XZ  0050d0b0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/widget_text.cpp  ?resize@vec_model@@QAEXIUSkin@@@Z  0050d170  /O2 /MT /Gy /TP
+../src/game/inventory_panel/widget_text.cpp  ?read@mesh_scene@@QAEXPAUAccessStream@@@Z  0050d520  /O2 /MT /Gy /TP

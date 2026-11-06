@@ -318,6 +318,14 @@ void GameKeys::restore()
 // The box is four float arguments (the caller pushes four immediates).
 void layout_row(MissionUi* row, const tstring* text, float bx, float by, float bz, float bw);
 
+static inline void row_colour(MissionUi* row, char assigned)
+{
+    unsigned colour = 0xffff2200;
+    if (!assigned)
+        colour = 0xff000000;
+    row->set_color(&colour);
+}
+
 // @ 0x4d7120
 void KeysPage::refresh()
 {
@@ -333,16 +341,13 @@ void KeysPage::refresh()
         tstring text;
         g_game_keys.key_binding_name(i, &text, (int*)&assigned);   // stores one byte
         layout_row(p->keys[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
-        unsigned colour = 0xffff2200;
-        if (!assigned)
-            colour = 0xff000000;
-        p->keys[i]->set_color(&colour);
+        row_colour(p->keys[i], assigned);
         p->keys[i]->set15c(0);
     }
 
     bool unassigned = false;
-    for (int i = 0; i < 0x25; i++)
-        if (g_game_keys.entry[i][0] == -1) unassigned = true;
+    for (int i = 0; i < 0x128; i += 8)
+        if (*(int*)((char*)g_game_keys.entry + i) == -1) unassigned = true;
     // 0x4d71e0: Done is greyed while any key is unbound (+0xb8), Undo only while nothing changed. Written when ui_widget.h
     // had the two slots swapped and not flipped with it, so Done was greyed with every key bound.
     if (unassigned) p->w30->flag2_set();

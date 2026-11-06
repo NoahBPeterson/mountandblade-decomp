@@ -374,11 +374,11 @@ struct BigArray {
 // @ 0x50d170 vec_model::resize
 void vec_model::resize(unsigned n, Skin val)
 {
-    Skin* f = first;
-    if (size() < n)
-        ((vec_cfg_pub*)this)->_Insert_n(std::vector<Skin>::iterator(last), n - size(), val);
-    else if (n < size())
-        ((BigArray*)this)->erase((Skin**)&val, f + n, last);
+    vec_cfg_pub& v = *(vec_cfg_pub*)this;
+    if (v.size() < n)
+        v._Insert_n(v.end(), n - v.size(), val);
+    else if (n < v.size())
+        ((BigArray*)this)->erase((Skin**)&n, &*(v.begin() + n), &*v.end());   // the result slot is n's own (the original's discarded iterator)
 }
 
 // ------------------------------------------------------------------ the scene reader -----------------------
@@ -406,11 +406,8 @@ void mesh_scene::read(AccessStream* s)
     s->read_int(&count);
     unsigned n = count;
     models.resize(n);
-    for (int i = 0; i < count; i++) {
-        Skin* p = models.first + i;
-        AccessStream* in = s;
-        p->read((MsStream*)in);
-    }
+    for (int i = 0; i < count; i++)
+        (*(((vec_cfg_pub*)&models)->begin() + i)).read((MsStream*)s);
     f8 = 0;
     f0 = -1;
     f4 = -1;
@@ -421,8 +418,7 @@ void mesh_scene::read(AccessStream* s)
     f128 = 0.3f;
     for (int i = 0; i < 0x3f; i++)
         w[i] = 0.5f;
-    Skin* m = &models.first[f8];
-    m->relax(-1, w);   // 0x4735e0
+    (*(((vec_cfg_pub*)&models)->begin() + f8)).relax(-1, w);   // 0x4735e0
 }
 
 #pragma inline_depth(3)   // for ??_Gtext_box, generated at the end of the object

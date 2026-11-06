@@ -234,6 +234,15 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
     }
 }
 
+static inline vector4 cross_of(const vector4& a, const vector4& b)
+{
+    vector4 r;
+    r.x = a.y * b.z - b.y * a.z;
+    r.y = a.z * b.x - b.z * a.x;
+    r.z = a.x * b.y - b.x * a.y;
+    return r;
+}
+
 // @ 0x414960
 // Builds the frame the particles of this system are oriented by (s = axis-x-view, f = u x s, u = axis),
 // looks the output mesh up on first use and emits every particle.
@@ -247,17 +256,13 @@ void psys::update(scene* sc)
         m.u = vb4;
         m.f = v->axis;
         vector4 t, t2;
-        t.x = ((m.f.y)*( m.u.z)) - ((m.u.y)*( m.f.z));
-        t.y = ((m.f.z)*( m.u.x)) - ((m.u.z)*( m.f.x));
-        t.z = ((m.f.x)*( m.u.y)) - ((m.f.y)*( m.u.x));
+        t = cross_of(m.f, m.u);
         m.s = t;
         m.s.normalize();
-        t2.x = ((m.s.z)*( m.u.y)) - ((m.s.y)*( m.u.z));
-        t2.y = ((m.u.z)*( m.s.x)) - ((m.s.z)*( m.u.x));
-        t2.z = ((m.s.y)*( m.u.x)) - ((m.s.x)*( m.u.y));
+        particle* q = (particle*)&*particles.begin();
+        t2 = cross_of(m.u, m.s);
         m.f = t2;
-        if ((particle*)&*particles.begin() != (particle*)&*particles.end()) {
-            particle* q = (particle*)&*particles.begin();
+        if (q != (particle*)&*particles.end()) {
             do {
                 emit(q, &m, cache, (const float*)&v->eye);
                 q++;

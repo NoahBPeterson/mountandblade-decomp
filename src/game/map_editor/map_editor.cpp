@@ -343,8 +343,7 @@ void MapEditorDialog::add_selected(rgl::mesh* target, const rgl::matrix* frame, 
         flip = 1;
     for (unsigned i = 0; i < ent_of(prop)->meshes.size(); i++)
     {
-        rgl::mesh* msh = ent_of(prop)->meshes[i];
-        matrix m = ((const rgl::mat4*)frame)->relative((const rgl::mat4&)ent_of(prop)->local);   // 0x4329d0
-        target->append_skinned(msh, (const rgl::mat4*)&m, -1, color, flip);   // 0x44eb00
+        rgl::mesh*& msh = ent_of(prop)->meshes[i];
+        target->append_skinned(msh, (const rgl::mat4*)&((const rgl::mat4*)frame)->relative((const rgl::mat4&)ent_of(prop)->local), -1, color, flip);   // 0x4329d0, 0x44eb00
     }
 }

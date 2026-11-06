@@ -158,6 +158,9 @@ void TerrainDesc::read(stream_base* s)
 
 // ---- the cell and quad records -------------------------------------------------------------------------------
 
+static __forceinline vec2 cell_v2(float x, float y) { vec2 r; r.x = x; r.y = y; return r; }
+static __forceinline void cell_set_weight(terrain_cell* c, const float& v) { c->w[0] = v; c->f90 = v; }
+
 // @ 0x4644e0
 void terrain_cell::init(const float* q)
 {
@@ -166,14 +169,13 @@ void terrain_cell::init(const float* q)
     weight = 1.0f;
     f14 = -1;
     f10 = -1;
-    V30() = rgl::vector4(q[0] * 0.7f, q[1] * 0.7f, 0.0f);
+    disp = cell_v2(q[0] * 0.7f, q[1] * 0.7f);
+    dir = cell_v2(0.0f, 1.0f);
     order = -1;
-    v30.w = 1.0f;
     for (int i = 1; i < 15; i++)
         w[i] = 0.0f;
     f88 = 0.0f;
-    w[0] = 1.0f;
-    f90 = 1.0f;
+    cell_set_weight(this, 1.0f);
     h2 = pz;
     f8c = -1;
 }
@@ -1118,8 +1120,8 @@ void Terrain::sun_light(rgl::vector4* out, const float* dir, const float* scale)
     rgl::vector4 d(t * sun_diffuse.x, t * sun_diffuse.y, t * sun_diffuse.z);
     rgl::vector4 r;                 // r.w is never written: the original copies the stack slot as is
     r.x = amb.x + d.x;
-    r.y = amb.y + d.y;
-    r.z = amb.z + d.z;
+    r.y = d.y + amb.y;
+    r.z = d.z + amb.z;
     *out = r;
 }
 
@@ -1319,11 +1321,12 @@ bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, ch
         return false;
     if (ok && (fl & 0x70000)) {
         Troop* t = &(*(World3**)&g_game)->troops[b->troop];
-        __int64 tf = t->flags30;
-        bool x3 = false, x5 = false, x4 = false;
-        if ((tf & 0x1000000) && (a->f8 & 0x100) == 0) {
+        bool x3 = false;
+        bool x5 = false;
+        bool x4 = false;
+        if ((t->flags30 & 0x1000000) && (a->f8 & 0x100) == 0) {
             x5 = true;
-        } else if ((tf & 0x4000000)) {
+        } else if ((t->flags30 & 0x4000000)) {
             x4 = true;
         } else {
             x3 = true;

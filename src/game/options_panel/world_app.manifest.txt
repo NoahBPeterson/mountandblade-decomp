@@ -6,3 +6,4 @@
 ../src/game/options_panel/world_app.cpp  ??1Skin@@QAE@XZ  004d3720  /O2 /MT /Gy /TP
 ../src/game/options_panel/world_app.cpp  ??0GameApp@@QAE@XZ  004d3ec0  /O2 /MT /Gy /TP
 ../src/game/options_panel/world_app.cpp  ?erase@TreeW@@QAEXPAX0@Z  004d3e50  /O2 /MT /Gy /TP
+../src/game/options_panel/world_app.cpp  ?init@Big@@QAEPAU1@XZ  004d3880  /O2 /MT /Gy /TP

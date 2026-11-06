@@ -34,13 +34,13 @@ shape_base* body_part::clone_shape()
 {
     shape_base* r;
     if (shape->shape_type() == 0) {
-        return new sphere(*(sphere*)shape);
+        r = new sphere(*(sphere*)shape);
     } else if (shape->shape_type() == 1) {
-        return new capsule(*(capsule*)shape);
+        r = new capsule(*(capsule*)shape);
     } else if (shape->shape_type() == 2) {
-        return new face(*(face*)shape);
+        r = new face(*(face*)shape);
     } else if (shape->shape_type() == 3) {
-        return new composite(*(composite*)shape);
+        r = new composite(*(composite*)shape);
     } else if (shape->shape_type() == 4) {
         return ((manifold*)shape)->build_composite();
     }

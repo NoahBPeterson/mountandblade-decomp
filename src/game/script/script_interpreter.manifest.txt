@@ -18,3 +18,6 @@
 ../src/game/script/script_interpreter.cpp  ?warn_sound@@YADABH@Z  0049d310  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?warn_track@@YADABH@Z  0049d3d0  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?check_animation@@YADABH@Z  0049d4b0  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_party@@YADABH@Z  0049d160  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?warn_tableau@@YADABH@Z  0049d360  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?warn_agent@@YADABH@Z  0049d430  /O2 /MT /Gy /TP

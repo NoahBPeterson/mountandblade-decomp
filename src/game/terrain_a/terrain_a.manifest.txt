@@ -42,3 +42,4 @@
 ../src/game/terrain_a/terrain_a.cpp  _$E1  00547a20  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  _$E1  00547a30  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?init@Missile@@QAEXXZ  00467fb0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?init@terrain_cell@@QAEXPBM@Z  004644e0  /O2 /MT /Gy /TP

@@ -641,20 +641,19 @@ void NavGraph::score_triggers(int* a, int* b, int* c)
 // @ 0x51db70    MB_NOINLINE float NavGraph::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)   (ret 0x14)
 MB_NOINLINE float NavGraph::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)
 {
-    char* rec = (char*)nodes + row * 0x88;
-    char* oth = (char*)nodes + *(int*)(rec + 0x28 + idx * 4) * 0x88;
-    unsigned m = *(unsigned*)(rec + 0x24) & a;
-    unsigned n = *(unsigned*)(oth + 0x24) & a;
-    if (m == c)
-        return 1000000000.0f;
-    if (n == c)
+    NavNode* v = nodes;
+    NavNode& r = v[row];
+    NavNode& o = v[r.nb[idx]];
+    unsigned m = r.mask & a;
+    unsigned n = o.mask & a;
+    if (m == c || n == c)
         return 1000000000.0f;
     if (m == b) {
-        if (n != b)
-            return 1000000000.0f;
-    } else if (n == b)
-        return 1000000000.0f;
-    return 2.0f;
+        if (n == b)
+            return 2.0f;
+    } else if (n != b)
+        return 2.0f;
+    return 1000000000.0f;
 }
 
 
@@ -953,17 +952,16 @@ MB_NOINLINE void TrackRec::read(stream_base* s)
     s->r_float(&f14).r_int(&f18);
 }
 
+struct E92VecPub : std::vector<E92> { using std::vector<E92>::_Insert_n; };   // _Insert_n is protected
 // @ 0x51e7a0
+// std::vector::resize: the iterator erase returns is discarded, in n's own slot.
 MB_NOINLINE void TrackVec::resize(unsigned n, TrackRec val)
 {
-    if ((unsigned)size() < n) {
-        insert_n(_Mylast, n - size(), &val);
-        return;
-    }
-    if (_Myfirst && n < (unsigned)size()) {
-        TrackRec* it;
-        shift_over(&it, _Myfirst + n, _Mylast);
-    }
+    E92VecPub& v = *(E92VecPub*)this;
+    if (v.size() < n)
+        v._Insert_n(v.end(), n - v.size(), *(const E92*)&val);
+    else if (n < v.size())
+        ((Vec5c*)this)->shift_over((Rec5c**)&n, (Rec5c*)&*(v.begin() + n), (Rec5c*)&*v.end());
 }
 
 // @ 0x51e840

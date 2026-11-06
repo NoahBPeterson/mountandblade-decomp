@@ -355,11 +355,9 @@ rgl::vector4* GameG::sky_color(rgl::vector4* out)
         c = rgl::vector4(0.035f, 0.04f, 0.14f);
     } else {
         float f = f13b40 + f13b3c;
-        float t = (f + f + 1.0f) * 0.08f;
-        float x = t + 0.24f;
-        float y = t + 0.28f;
-        float z = t + 0.44f;
-        c = rgl::vector4(x, y, z);
+        // the tint is one expression repeated per component: cl commons it but keeps y and z in the temporary's slots
+        rgl::vector4 v((f + f + 1.0f) * 0.08f, (f + f + 1.0f) * 0.08f, (f + f + 1.0f) * 0.08f);
+        c = v + rgl::vector4(0.24f, 0.28f, 0.44f);
     }
     *out = c;
     return out;
@@ -400,17 +398,14 @@ void GameG::set_grid_color(unsigned* c)
     }
 }
 
+struct Rec98 { int f0; int alive; char pad[0x90]; };
+static inline Rec98& pool_at(GamePool* p, int i) { return (*(std::vector<Rec98*>*)((char*)p + 0x14))[(unsigned)i >> 4][i & 0xf]; }
 // @ 0x517960
 void GamePool::next(int* index)
 {
-    int i = ++*index;
-    if (i >= count)
-        return;
-    do {
-        if (*(int*)(pages[(unsigned)i >> 4] + (i & 0xf) * 0x98 + 4) != 0)
-            return;
-        *index = ++i;
-    } while (i < count);
+    ++*index;
+    while (*index < count && !pool_at(this, *index).alive)
+        ++*index;
 }
 
 // @ 0x5179b0

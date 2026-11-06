@@ -276,8 +276,9 @@ void vec44::push_back(char* v)
     int n = size();
     if (begin && (unsigned)n < capacity()) {
         ptr_tag tag;
-        uninit_fill_n(end, 1, v, (block_copier*)(void*)this, tag);
-        end += 0x2c;
+        char* e = end;
+        uninit_fill_n(e, 1, v, (block_copier*)(void*)this, tag);
+        end = e + 0x2c;
         return;
     }
     ((std::vector<R44>*)(void*)this)->insert(std::vector<R44>::iterator((R44*)end), *(const R44*)v);

@@ -547,6 +547,15 @@ inline ptr_tag ptr_cat(const E12*, const E12*) { ptr_tag t; return t; }
 E12* vec12::ucopy(E12* a, E12* b, E12* c) { return uninit_copy_E12(a, b, c, *this, ptr_cat(a, c)); }
 
 // ---- ranged hit chance ---------------------------------------------------------------------------------------------------------
+extern float g_one;   // 0x549cdc
+static __forceinline int item_rank(int idx)
+{
+    if (idx < 0)
+        return 100;
+    int r = g_items[idx].f204;
+    return r == 0 ? 99 : r;
+}
+
 // @ 0x438cb0
 float __cdecl hit_chance(int* who, Agent* a)
 {
@@ -554,7 +563,6 @@ float __cdecl hit_chance(int* who, Agent* a)
     if (a->f2c >= 0)
         v *= 0.9f;
     int idx = *who;
-    int s1;
     if (idx >= 0) {
         unsigned k = g_items[idx].type_flags & 0xff;
         if (k == 10)
@@ -563,13 +571,11 @@ float __cdecl hit_chance(int* who, Agent* a)
             v *= 0.9f;                           // bow
         else if (k == 0x11 || k == 0x10)
             v *= 0.55f;                          // musket / pistol
-        s1 = g_items[idx].f204;
-        if (s1 == 0) s1 = 99;
-    } else
-        s1 = 100;
-    int s2 = idx < 0 ? 100 : (g_items[idx].f204 == 0 ? 99 : g_items[idx].f204);
+    }
+    int s1 = item_rank(idx);
+    int s2 = item_rank(idx);
     float p = (float)(s2 * s1) * 0.0001f;
-    if (!(p < 1.0f)) p = 1.0f;
+    if (!(p < g_one)) p = g_one;
     return p * v;
 }
 
@@ -1008,6 +1014,8 @@ float rgl::world::floor_z(const float* p)
 
 // sweep the segment a->b (clipped to maxlen) with a thin capsule; false if the height field blocks it or a shape
 // is hit (that shape goes to *hit)
+
+
 // @ 0x439d60
 int rgl::world::trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused)
 {
@@ -1020,10 +1028,7 @@ int rgl::world::trace_ray(const float* a, const float* b, float maxlen, shape_ba
         d.z = b[2] - a[2];
         float len = d.normalize();
         if (maxlen < len) len = maxlen;
-        vector4 t;
-        t.x = d.x * len;
-        t.y = d.y * len;
-        t.z = d.z * len;
+        vector4 t(d.x * len, d.y * len, d.z * len);
         d.x = t.x + a[0];
         d.y = t.y + a[1];
         d.z = t.z + a[2];

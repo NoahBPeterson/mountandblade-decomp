@@ -79,6 +79,18 @@ void Troop::set_attr(int idx, int val)
         hp = (float)(base + 0x23 + clamp_rank(F7A(this) & 0xf, m) * 2);
 }
 
+// the 36th skill's value (nibble at +0x7a), clamped to its rank limit, and the hit points it gives
+static inline int skill36(Troop* t)
+{
+    int v = F7A(t) & 0xf;
+    if (v < 0)
+        v = 0;
+    else if (v > g_skill_tbl[36].max_rank)
+        v = g_skill_tbl[36].max_rank;
+    return v;
+}
+static inline int max_hp(Troop* t) { int base = ATTR(t)[0]; return base + 0x23 + skill36(t) * 2; }
+
 // @ 0x48bf90
 void Troop::set_skill(int idx, int val)
 {
@@ -96,22 +108,8 @@ void Troop::set_skill(int idx, int val)
     if (val > cur && idx == 0x24)
         hp += (float)((val - cur) * 2);
     nib[word] = (nib[word] & ~(0xf << shift)) | ((val & 0xf) << shift);
-    int v = F7A(this) & 0xf;
-    int m;
-    int base = ATTR(this)[0];
-    m = g_skill_tbl[36].max_rank;
-    int x = v;
-    if (x < 0)
-        x = 0;
-    else if (x > m)
-        x = m;
-    if ((float)(base + 0x23 + x * 2) < hp) {
-        if (v < 0)
-            v = 0;
-        else if (v > m)
-            v = m;
-        hp = (float)(base + 0x23 + v * 2);
-    }
+    if ((float)max_hp(this) < hp)
+        hp = (float)max_hp(this);
 }
 
 // @ 0x48c090
@@ -122,45 +120,45 @@ void Troop::add_skill(int id, int delta)
     set_skill(id, nibble(id) + delta);
 }
 
+// sort_value 0x488f80 and its round-to-nearest, as they inline here
+static inline int rnd_val(const float* p)
+{
+    float fl = (float)floor(*p);
+    int i = (int)fl;
+    if (*p - fl <= 0.5f)
+        return i;
+    return i + 1;
+}
+static inline int sort_val(ItemRef* e)
+{
+    int idx = e->item;
+    if (idx >= 0) {
+        float x = (float)g_items[idx].value * g_sort_val[e->b.mod * 5].v;
+        return rnd_val(&x);
+    }
+    return 0;
+}
+
 // @ 0x48c0c0
 void Troop::sort_inv()
 {
     int count = inv_count();
     inv[0].compact(count);
     if (count > 0) {
-        int passes = count;
         int limit = count - 1;
+        int passes = count;
         do {
             if (limit > 0) {
-                int* p = (int*)&inv[0];
+                ItemRef* p = &inv[0];
                 int i = limit;
                 do {
-                    int l, r;
-                    if (*p >= 0) {
-                        float v = (float)g_items[*p].value * g_sort_val[*((char*)p + 7) * 5].v;
-                        float fl = (float)floor(v);
-                        int n = (int)fl;
-                        if (!(v - fl <= 0.5f))
-                            n++;
-                        l = n;
-                    } else {
-                        l = 0;
+                    int l = sort_val(&p[0]);
+                    int r = sort_val(&p[1]);
+                    if (l < r || (l == r && p[0].item > p[1].item)) {
+                        int t = p[0].item; p[0].item = p[1].item; p[1].item = t;
+                        t = p[0].m4; p[0].m4 = p[1].m4; p[1].m4 = t;
                     }
-                    if (p[2] >= 0) {
-                        float v = (float)g_items[p[2]].value * g_sort_val[*((char*)p + 0xf) * 5].v;
-                        float fl = (float)floor(v);
-                        int n = (int)fl;
-                        if (!(v - fl <= 0.5f))
-                            n++;
-                        r = n;
-                    } else {
-                        r = 0;
-                    }
-                    if (l < r || (l == r && p[0] > p[2])) {
-                        int t = p[0]; p[0] = p[2]; p[2] = t;
-                        t = p[1]; p[1] = p[3]; p[3] = t;
-                    }
-                    p += 2;
+                    p++;
                     i--;
                 } while (i != 0);
             }

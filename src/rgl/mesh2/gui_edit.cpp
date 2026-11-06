@@ -1152,6 +1152,7 @@ void ConfigDialog::init()
         ((rgl_config*)&cfg)->save(f);
         fclose(f);
     }
+    WL_MARKER(12)
     SetWindowPos(hwnd, 0, 0, 0, 0x280, 0x1e0, 0x16);
     SetWindowPos(GetDlgItem(hwnd, 0x410), 0, 0x14, 0x46, 0xe6, 0x28, 0x14);
     SetWindowPos(GetDlgItem(hwnd, 0x405), 0, 0x14, 0x6e, 0xe6, 0x28, 0x14);
@@ -1207,13 +1208,17 @@ void ConfigDialog::init()
     }
 
     tstring file(g_module_path);
-    file.append(tstring("main.bmp"));
+    {
+        tstring name("main.bmp");
+        file.append(name);
+    }
     HBITMAP logo = (HBITMAP)LoadImageA(0, file.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     *(HBITMAP*)((char*)this + 0x354) = logo;
     if (!logo)
         *(HBITMAP*)((char*)this + 0x354) = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     if (g_trial_mode)
         ShowWindow(GetDlgItem(hwnd, 0x419), 5);
+    WL_MARKER(13)
 }
 
 // @ 0x4c77c0
@@ -1341,21 +1346,12 @@ void MapEditorDialog::update_objects()
         return;
     HWND list = GetDlgItem(hwnd, 0x438);
     SendMessageA(list, 0x184, 0, 0);
-    int i = 0;
-    int off = 0;
-    do {
-        char* base = (char*)((Map*)g_mission)->records;
-        if (!base)
-            break;
-        if ((unsigned)i >= (unsigned)(((Map*)g_mission)->records_end - ((Map*)g_mission)->records))
-            break;
+    for (int i = 0; (unsigned)i < (((Map*)g_mission)->records ? (unsigned)(((Map*)g_mission)->records_end - ((Map*)g_mission)->records) : 0); i++) {
         char name[128];
-        ((ItemPage*)(base + off))->format(name);
+        ((ItemPage*)&(*(std::vector<MapRecord>*)((char*)g_mission + 0x6688))[i])->format(name);
         int item = SendMessageA(list, 0x180, 0, (LPARAM)name);
         SendMessageA(list, 0x19a, item, i);
-        i++;
-        off += 0x1c8;
-    } while ((char*)((Map*)g_mission)->records);
+    }
 }
 
 // The tail of a Rec78 as the array destructor runs it: the owner in the body, then the members in reverse order
@@ -1427,14 +1423,14 @@ void graph_obj::update_terrain(int idx, const float* d)
 // Plane normal of the face that owns edge *e, scaled by the triangle's first edge (node b -> node a).
 rgl::vector4 graph_obj::normal(const int* e)
 {
-    int b, a;
+    int a, b;
     find_triangle(e, &a, &b);
-    node* v = &nodes[b];
     node* w = &nodes[a];
+    node* v = &nodes[b];
     float dx = v->x - w->x;
     float dy = v->y - w->y;
     float dz = v->z - w->z;
-    float* m = (float*)&faces[edges[*e].f0];
+    float* m = (float*)&faces[(*(std::vector<edge>*)((char*)this + 0x38))[*e].f0];   // the edge through vector::operator[] (its reference is materialised)
     rgl::vector4 res;
     res.x = dy * m[8] - dz * m[7];
     res.y = dz * m[6] - dx * m[8];
@@ -2019,18 +2015,11 @@ void GameData::save_language_files(bool translated)
 // @ 0x4ca550
 void ResultWindow::frame_update(float)
 {
-    if (b3c->clear_mask(0x10000))
+    // the Enter key counts as "off" only while there is no second button (0x4ca573/0x4ca57d)
+    if (b3c->clear_mask(0x10000) || (!b40 && g_keyboard.down[0x1c] && !g_keyboard.prev[0x1c]))
         goto off;
-    if (b40) {
-        if (b40->clear_mask(0x10000))
-            goto on;
+    if (!b40 || !b40->clear_mask(0x10000))
         return;
-    } else {
-        if (!g_keyboard.down[0x1c] || g_keyboard.prev[0x1c])
-            return;
-        goto off;   // 0x4ca573/0x4ca57d: windowed setting on and other off -> the 'off' tail at 0x4ca5c7
-    }
-on:
     if (flag)
         *flag = 1;
     if (text && box38)

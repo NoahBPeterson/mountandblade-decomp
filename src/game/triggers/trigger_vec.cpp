@@ -372,6 +372,8 @@ void GameApp::show_options()
 // @ 0x4bf170
 void GameApp::read_options()
 {
+    BOOL ok;
+    DWORD q;
     g_launcher_cfg.texture_detail = SendMessageA(GetDlgItem(options_hwnd, 0x43e), WM_USER, 0, 0);
     g_launcher_cfg.use_pixel_shaders = SendMessageA(GetDlgItem(options_hwnd, 0x441), BM_GETCHECK, 0, 0) == 1;
     g_launcher_cfg.use_vertex_shaders = SendMessageA(GetDlgItem(options_hwnd, 0x468), CB_GETCURSEL, 0, 0) == 1;
@@ -384,7 +386,6 @@ void GameApp::read_options()
     g_launcher_cfg.disable_music = SendMessageA(GetDlgItem(options_hwnd, 0x446), BM_GETCHECK, 0, 0) == 1;
     g_launcher_cfg.disable_frequency_variation = SendMessageA(GetDlgItem(options_hwnd, 0x44d), BM_GETCHECK, 0, 0) != 1;
     {   // "fps limit" edit box, clamped to 10..999
-        BOOL ok;
         UINT v = GetDlgItemInt(options_hwnd, 0x448, &ok, FALSE);
         if (ok != 0) {
             int iv = (int)v;
@@ -408,13 +409,11 @@ void GameApp::read_options()
             g_launcher_cfg.display_bits = 0x20;
     } else {
         // the edit box holds "<width>x<height> <bits>"
-        char buf[100];
+        char buf[0x80];
         GetWindowTextA(GetDlgItem(options_hwnd, 0x45f), buf, 100);
         tstring s(buf);
-        char cx = 'x';
-        int ix = s.find(cx, 0);
-        char cs = ' ';
-        int isp = s.find(cs, 0);
+        int ix = s.find('x', 0);
+        int isp = s.find(' ', 0);
         g_launcher_cfg.display_width = atoi(s.substr(0, ix).c_str());
         g_launcher_cfg.display_height = atoi(s.substr(ix + 1, isp).c_str());
         g_launcher_cfg.display_bits = atoi(s.substr(isp + 1, isp + 3).c_str());
@@ -431,7 +430,6 @@ void GameApp::read_options()
     else
         m = mode.Format;
     if (g_launcher_cfg.antialiasing > 1) {
-        DWORD q;
         if (m_pD3D->CheckDeviceMultiSampleType(0, D3DDEVTYPE_HAL, (D3DFORMAT)m, FALSE,
                                                g_launcher_cfg.antialiasing != 2 ? D3DMULTISAMPLE_4_SAMPLES : D3DMULTISAMPLE_2_SAMPLES, &q) >= 0) {
             g_launcher_cfg.sample_quality = q - 1;
@@ -1239,7 +1237,7 @@ ini_file g_module_info;     // 0xa18238 module.ini
 ini_file g_game_vars;       // 0xa44240 game_variables.txt
 
 // ---- trigger and game records -------------------------------------------------------------------------------------------------
-struct TimedVal { int id; int pad; __int64 t; void reset() { id = 0; t = g_ticks[0]; } };    // a (clock index, reading) pair: trigger_entry +0x20, TriggerRec +0x48 / +0x58 / +0x68
+struct TimedVal { int id; int pad; __int64 t; void reset() { id = 0; t = g_ticks[0]; } void set(int c) { id = c; t = g_ticks[c]; } };    // a (clock index, reading) pair: trigger_entry +0x20, TriggerRec +0x48 / +0x58 / +0x68
 
 // @ 0x4c1c20
 TriggerRec::TriggerRec()
@@ -1249,6 +1247,13 @@ TriggerRec::TriggerRec()
     p[1].reset();
     p[2].reset();
     f0c = 0;
+}
+
+static inline void stamp_rec(TriggerRec& r, int c)
+{
+    ((TimedVal*)&r.f48)->set(c);
+    ((TimedVal*)&r.f58)->set(c);
+    ((TimedVal*)&r.f68)->set(c);
 }
 
 // @ 0x4c1c90
@@ -1261,12 +1266,8 @@ void TriggerVec::resize(stream_base& s, const char* name)
     }
     data = new TriggerRec[count];
     for (int i = 0; i < count; i++) {
-        int c = cur;
-        TriggerRec* r = data + i;
-        r->f48 = c; r->f50 = g_ticks[c];
-        r->f58 = c; r->f60 = g_ticks[c];
-        r->f68 = c; r->f70 = g_ticks[c];
-        ((trigger_rec*)r)->read(s, name, i);
+        stamp_rec(data[i], cur);
+        ((trigger_rec*)&data[i])->read(s, name, i);
     }
 }
 
@@ -1302,10 +1303,9 @@ int GameVec::resize(stream_base& s, const char* name, int extra)
         data = new trigger_entry[count];
     }
     for (int i = 0; i < count; i++) {
-        int c = cur;
-        TimedVal* tv = (TimedVal*)(i * 0x30 + (int)data + 0x20);
-        tv->id = c;
-        tv->t = g_ticks[c];
+        trigger_entry& e = data[i];
+        TimedVal* tv = (TimedVal*)&e.clock;
+        tv->set(cur);
         if (i < count - extra)
             data[i].read(s, name, i);
     }
@@ -1373,12 +1373,14 @@ stream_base& read_entry(stream_base& s, RecH& e)
     e.tail = 0x64;
     s.r_tstr((rgl::string*)&e);
     s.r_uint((unsigned*)&e.s.b);
-    s.r_int(&e.s.a);
-    e.s.ptr = (int*)new char[e.s.a << 6];
-    for (int i = 0; i < e.s.a; i++)
-        psys_record::read(s, (char*)e.s.ptr + i * 0x40);
+    int& n = e.s.a;
+    s.r_int(&n);
+    struct Blk40 { char b[0x40]; };
+    e.s.ptr = (int*)new Blk40[n];
+    for (int i = 0; i < n; i++)
+        psys_record::read(s, (char*)&((Blk40*)e.s.ptr)[i]);
     if (e.s.b & 0xff000000)
-        e.tail = (unsigned char)((unsigned)e.s.b >> 24);
+        e.tail = ((unsigned char*)&e.s.b)[3];
     return s;
 }
 
@@ -1390,8 +1392,7 @@ AnimSet::~AnimSet()
     RecH* o = data;
     if (o == 0)
         return;
-    char* base = (char*)o - 4;
-    int n = *(int*)base;
+    int n = ((int*)o)[-1];
     RecH* e = o + n;
     for (int i = n - 1; i >= 0; i--) {
         e--;
@@ -1399,7 +1400,7 @@ AnimSet::~AnimSet()
         e->s.name.~tstring();
         e->name.~tstring();
     }
-    delete[] base;
+    delete[] ((char*)o - 4);
 }
 
 // @ 0x4c2250

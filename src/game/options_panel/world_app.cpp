@@ -125,6 +125,9 @@ struct Big {
 
 typedef char big_size_check[sizeof(Big) == 0x6868 ? 1 : -1];   // operator new(0x6868) at 0x4d4083
 
+static inline void zero3(void* v) { int* q = (int*)v; q[0] = 0; q[1] = 0; q[2] = 0; }
+static inline void start_timer2(void* clk, void* st) { *(int*)clk = 2; ((int*)st)[0] = ((int*)g_ticks)[4]; ((int*)st)[1] = ((int*)g_ticks)[5]; }
+
 // @ 0x4d3880
 Big* Big::init()
 {
@@ -138,43 +141,27 @@ Big* Big::init()
     p->f030 = 0;
     p->f054 = 0; p->f058 = 0;
     for (int i = 0; i < 0x40; i++)
-        new (p->blocks + i * 0x130) C4c2d10;
+        ((C4c2d10*)(p->blocks + i * 0x130))->C4c2d10::C4c2d10();
 
-    p->f5de0 = 2;
-    p->f5de8 = ((int*)g_ticks)[4];
-    p->f5dec = ((int*)g_ticks)[5];
+    start_timer2(&p->f5de0, &p->f5de8);
     p->f5e00 = 0; p->f5e04 = 0; p->f5e08 = 0;
 
-    p->f62e8 = 2;
-    p->f62f0 = ((int*)g_ticks)[4];
-    p->f62f4 = ((int*)g_ticks)[5];
-    p->f62f8 = 2;
-    p->f6300 = ((int*)g_ticks)[4];
-    p->f6304 = ((int*)g_ticks)[5];
-    p->f6308 = 2;
-    p->f6310 = ((int*)g_ticks)[4];
-    p->f6314 = ((int*)g_ticks)[5];
-    p->f6318 = 2;
-    p->f6320 = ((int*)g_ticks)[4];
-    p->f6324 = ((int*)g_ticks)[5];
-    p->f6328 = 2;
-    p->f6330 = ((int*)g_ticks)[4];
-    p->f6334 = ((int*)g_ticks)[5];
-    p->f63c4 = 0; p->f63c8 = 0; p->f63cc = 0;
-    new (p->f63d0) clip_table;
+    start_timer2(&p->f62e8, &p->f62f0);
+    start_timer2(&p->f62f8, &p->f6300);
+    start_timer2(&p->f6308, &p->f6310);
+    start_timer2(&p->f6318, &p->f6320);
+    start_timer2(&p->f6328, &p->f6330);
+    zero3(&p->f63c4);
+    ((clip_table*)p->f63d0)->clip_table::clip_table();
 
-    p->f667c = 0; p->f6680 = 0; p->f6684 = 0;
-    p->f668c = 0; p->f6690 = 0; p->f6694 = 0;
-    new (p->f6698) growable_array;
+    zero3(&p->f667c);
+    zero3(&p->f668c);
+    ((growable_array*)p->f6698)->growable_array::growable_array();
 
-    p->f67d8 = 2;
-    p->f67e0 = ((int*)g_ticks)[4];
-    p->f67e4 = ((int*)g_ticks)[5];
-    p->f6800 = 2;
-    p->f6808 = ((int*)g_ticks)[4];
-    p->f680c = ((int*)g_ticks)[5];
+    start_timer2(&p->f67d8, &p->f67e0);
+    start_timer2(&p->f6800, &p->f6808);
 
-    new (p->f6814) tstring;
+    ((tstring*)p->f6814)->tstring::tstring();
     p->f000 = 0;
     *(int*)((char*)p + 0x5270) = 0;
     return this;

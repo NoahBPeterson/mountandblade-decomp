@@ -1042,31 +1042,21 @@ void MissionBlocker::update_status()
 }
 
 
+static __forceinline vector4 hv_scaled(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
+
+static __forceinline vector4 hv_scaled2(const float& s, const vector4& a) { return vector4(s * a.x, s * a.y, s * a.z); }
+
 // @ 0x4fb8e0: shift every point of the ammo mesh by the scaled vertex normal, and every morph
 // key frame's vertex by its scaled normal.
 void rgl::mesh::set_offset(const vector4& pos)
 {
     ensure_local();
-    for (unsigned i = 0; v50.begin() != NULL && i < v50.size(); i++) {
+    for (unsigned i = 0; i < v50.size(); i++) {
         int idx = v50[i].index;
-        // each offset is a vector temporary (normal * pos.x): the original forms all three products before it adds any of them
-        float dx = v50[i].normal.x * pos.x, dy = v50[i].normal.y * pos.x, dz = v50[i].normal.z * pos.x;
-        rgl::point20* p = &v70[idx];
-        p->a.x += dx;
-        p->a.y += dy;
-        p->a.z += dz;
-        dx = v50[i].normal.x * pos.x, dy = v50[i].normal.y * pos.x, dz = v50[i].normal.z * pos.x;
-        p = &v70[idx];
-        p->b.x += dx;
-        p->b.y += dy;
-        p->b.z += dz;
-        for (int j = 0; j < kf.count; j++) {
-            rgl::frame_t& f = kf.frames[j];
-            vector4 fo = hv_mulv(f.norms[i], pos.x);
-            f.verts[idx].x += fo.x;
-            f.verts[idx].y += fo.y;
-            f.verts[idx].z += fo.z;
-        }
+        hv_add_to(v70[idx].a, hv_scaled(v50[i].normal, pos.x));
+        hv_add_to(v70[idx].b, hv_scaled(v50[i].normal, pos.x));
+        for (int j = 0; j < kf.count; j++)
+            hv_add_to(kf.frames[j].verts[idx], hv_scaled2(pos.x, kf.frames[j].norms[i]));
     }
     slots[0].f28 = 1;                       // +0x138 (dirty flag)
     ((rgl::mesh*)this)->compute_bounds();
@@ -1684,20 +1674,18 @@ void MWidget::get_xy(float* result)
         }
         this->set_mesh(4, m);
     }
-    u->tracks[4]->clear_geometry();
-
-    vector4 rc;
-    rc.x = u->f138;
-    rc.y = u->f13c;
-    rc.z = 0.0f;
-    unsigned col[3] = { 0xffff0000, 0xff0000ff, 0xff000000 };
-    Font* f = (Font*)u->f124;
-    if (f)
-        f->layout_map(result, &u->name, &rc, &u->f140, u->tracks[4], &col[2], &col[1], &col[0], &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
-    else
-        g_font->layout_map(result, &u->name, &rc, &u->f140, u->tracks[4], &col[2], &col[1], &col[0], &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
-    unsigned white = 0xffffffff;
-    u->set_color(&white);                   // +0x98 (0x4fd6df)
+    MapText r;
+    if (u->f124) {
+        u->tracks[4]->clear_geometry();
+        MapText t;
+        r = *(MapText*)((Font*)u->f124)->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
+    } else {
+        u->tracks[4]->clear_geometry();
+        MapText t;
+        r = *(MapText*)g_font->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
+    }
+    u->set_color((unsigned*)&(const unsigned&)0xffffffffu);   // +0x98 (0x4fd6df)
+    *(MapText*)result = r;
 }
 
 // 0x487b00: UTF-8 decoder (another object in the original; cl gave it a custom register convention: text in EDI, &out_len in EDX, the buffer and
@@ -1950,29 +1938,28 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
     return out;
 }
 
+static __forceinline unsigned v4_size(const V4List* v) { return v->first == 0 ? 0 : (unsigned)(v->last - v->first); }
+static __forceinline unsigned v4_capacity(const V4List* v) { return v->first == 0 ? 0 : (unsigned)(v->end - v->first); }
+static __forceinline vector4* v4_ufill(V4List* v, vector4* p, unsigned n, const vector4& val)
+{
+    uninit_fill_n<vector4>(p, n, val, *(std::allocator<vector4>*)v, std::_Ptr_cat(p, p));
+    return p + n;
+}
+static __forceinline V4List::iterator v4_end(V4List* v) { V4List::iterator r; r.p = v->last; return r; }
+
 // @ 0x4fdff0
 void V4List::push_back(const vector4& v)
 {
-    unsigned size = first == 0 ? 0 : (unsigned)(last - first);
-    if (first != 0 && size < (unsigned)(end - first)) {
-        vector4* l = last;
-        uninit_fill_n<vector4>(l, 1, v, *(std::allocator<vector4>*)this, std::_Nonscalar_ptr_iterator_tag());
-        last = l + 1;
-    } else {
-        iterator w;
-        w.p = last;
-        insert(w, v);
-    }
+    if (v4_size(this) < v4_capacity(this))
+        last = v4_ufill(this, last, 1, v);
+    else
+        insert(v4_end(this), v);
 }
 
 // @ 0x4fe060
 V4List::iterator V4List::insert(iterator where, const vector4& val)
 {
-    unsigned idx;
-    if (first == 0 || last - first == 0)
-        idx = 0;
-    else
-        idx = where.p - first;
+    unsigned idx = v4_size(this) == 0 ? 0 : (unsigned)(where.p - first);
     ((VecOps<vector4>*)this)->insert_n(std::vector<vector4>::iterator(where.p), 1, val);
     iterator r;
     r.p = first + idx;

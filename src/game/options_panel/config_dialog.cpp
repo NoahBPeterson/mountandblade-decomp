@@ -268,7 +268,7 @@ LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_INITDIALOG:
         options_hwnd = hwnd;
         SetSingleDialogSkin(hwnd, "Dialog");
-        char path[256];
+        char path[MAX_PATH];
         sprintf(path, k_config);          // the file name is the format string itself (0x4d0295)
         user_path(path);
         if (mb_file_exists(path)) {
@@ -278,7 +278,7 @@ LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         } else {
             g_launcher_cfg.texture_detail = 0x46;
         }
-        ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, false);
+        ((OptionsDlg*)&g_app_obj)->choose_dx_settings(LAUNCHER_CFG, false);
         fill_video_tab();
         show_options();
         return 1;
@@ -290,12 +290,15 @@ LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 1;
     }
     case WM_NOTIFY:             // 0x4e: only the tab control (0x43d, compared as a 16-bit word) is handled
-        if ((short)wParam != 0x43d)
+        if (LOWORD(wParam) != 0x43d)
             return DefWindowProcA(hwnd, msg, wParam, lParam);
-        ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(GetDlgItem(options_hwnd, 0x43d), 0x130b, 0, 0));
+        {
+            HWND tabs = GetDlgItem(options_hwnd, 0x43d);
+            ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(tabs, 0x130b, 0, 0));
+        }
         // falls through to the control dispatch: a tab notification also runs it
     case WM_COMMAND:            // 0x111 enters the dispatch directly (4d03d1)
-        switch (wParam & 0xffff) {
+        switch (LOWORD(wParam)) {
         case 1: {               // ok: write the config back
             read_options();
             FILE* f = mb_open_user_file(k_config, "w");
@@ -308,24 +311,25 @@ LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             EndDialog(hwnd, 2);
             return 1;
         case 0x448:             // refresh-rate edit: keep 10..999, else restore
-            if ((wParam >> 16) == 0x200) {
+            if (HIWORD(wParam) == 0x200) {
                 BOOL ok;
                 int v = (int)GetDlgItemInt(options_hwnd, 0x448, &ok, 0);   // signed compares (jl / jge)
                 if (ok && v >= 10 && v < 1000) {
                     g_launcher_cfg.max_framerate = v;
-                } else {
-                    SetDlgItemInt(options_hwnd, 0x448, g_launcher_cfg.max_framerate, 0);
+                    return 1;
                 }
+                SetDlgItemInt(options_hwnd, 0x448, g_launcher_cfg.max_framerate, 0);
+                return 1;
             }
-            return 1;
+            break;
         case 0x45e:             // auto adjust: re-detect and re-read the config
             read_options();
             g_launcher_cfg.first_time = 0;
             ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, true);
             show_options();
-            return 1;
+            break;
         case 0x45f:             // display-mode list changed
-            if ((wParam >> 16) == 9) {
+            if (HIWORD(wParam) == 9) {
                 ((MapDialog*)this)->refresh_list(0);
                 return 1;
             }

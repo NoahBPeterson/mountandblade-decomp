@@ -560,17 +560,10 @@ void FieldPanel::update()
 // @ 0x48d5f0
 int ArrHolder::lookup(int index, int arg)
 {
-    int i = ((ArrElem*)((char*)base + index * 0x1dc))->v08(arg);
-    if (i < 0)
-        return 0;
-    ArrElem* e = (ArrElem*)((char*)base + index * 0x1dc);     // base re-read after the call (0x48d613)
-    int* a = e->a;
-    if (!a)
-        return 0;
-    if (e->b - a == 0)          // an empty list (pointer difference is already a count: no >> 2)
-        return 0;
-    int* v = (int*)a[0];
-    return (*(int**)((char*)v + 0xb4))[i];     // +0xb4 holds a pointer to the int array (0x48d636)
+    int i = base[index].v08(arg);
+    if (i >= 0 && base[index].list.size() != 0)
+        return base[index].list[0]->vals[i];
+    return 0;
 }
 
 // @ 0x48d650

@@ -162,11 +162,9 @@ void rgl::mesh::set_part(const rgl::matrix& mtx)
 void rgl::mesh::set_alpha(float a)
 {
     ensure_local();
-    std::vector<rgl::vertex60>& verts = v50;
-    for (unsigned i = 0; i < verts.size(); i++) {
-        rgl::vertex60* base = &verts[0];
-        unsigned packed = base[i].color;
-        rgl::vertex60* p = &base[i];
+    for (unsigned i = 0; i < v50.size(); i++) {
+        unsigned packed = v50[i].color;
+        rgl::vertex60* p = &v50[i];
         rgl::vector4 v;
         v = rgl::unpack_color(&packed);
         v.w = a;

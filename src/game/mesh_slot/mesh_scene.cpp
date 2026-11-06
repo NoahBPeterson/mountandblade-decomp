@@ -57,6 +57,7 @@ void Terrain::build_entity()
         return;
     meshes = g_resmgr.find_meshes(&tail);
 
+    {
     vector4 center;
     center.x = wx - 10.0f;
     center.y = wy - 10.0f;
@@ -122,6 +123,7 @@ void Terrain::build_entity()
             q++;
         } while (--j);
     } while (--k);
+    }
 }
 
 // ---- 0x47ce00 / 0x47ced0 -------------------------------------------------------------------------------------------
@@ -537,12 +539,10 @@ void mesh_anim_x::apply_anim(const float* t)
     ensure_local();                               // 0x412ee0
 
     for (unsigned i = 0; i < v70.size(); i++) {
-        point20* p = &vat(v70, i);
-        vcopy(&p->a, &p->b);
+        vat(v70, i).a = vat(v70, i).b;
     }
     for (unsigned j = 0; j < v50.size(); j++) {
-        vertex60* p = &vat(v50, j);
-        vcopy(&p->pos, &p->normal);
+        vat(v50, j).pos = vat(v50, j).normal;
     }
     compute_bounds();                                // 0x419300
 }
@@ -596,22 +596,18 @@ void Skin::use_carry(lod_mesh* l, const float* w)
     std::vector<ArrSet>& v = head_maps;
     unsigned idx = (unsigned)-1;
     unsigned i = 0;
-    unsigned off = 0;
     do {
         if (v._Myfirst == 0 || i >= (unsigned)v.size()) {
             idx = v.size();
             head_maps.resize(head_maps.size() + 1);
-            ArrSet* e = &vat(head_maps, idx);
-            copy_troop(e, (const lod_group*)l);
+            copy_troop(&vat(head_maps, idx), (const lod_group*)l);
             break;
         }
-        if (((ArrSet*)((char*)head_maps._Myfirst + off))->name.equals(*(tstring*)((char*)l + 0xd0)))
+        if (vat(head_maps, i).name.equals(*(tstring*)((char*)l + 0xd0)))
             idx = i;
         i++;
-        off += 0x38;
     } while (idx == (unsigned)-1);
-    ArrSet* e2 = &vat(head_maps, idx);
-    blend_all(l, e2, w);
+    blend_all(l, &vat(head_maps, idx), w);
 }
 
 // ---- 0x47df80: the scatter-set generator ---------------------------------------------------------------------------

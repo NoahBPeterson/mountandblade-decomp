@@ -52,12 +52,10 @@ extern MissionTemplate* g_mission_templates;                    // 0x5e2a00
 
 using rgl::mat3;
 struct FramePlacement { mat3 m; int a, b, c, d; };      // 0x40 bytes (rotation + position; was Placement: agent/agent.h's Placement is the game-data view of 0x435650)
-struct FrameTemp {                                      // init_scene's 0x1c8-byte frame scratch (never constructed)
-    char pad0[0x10];
-    int f10, f14, f18, f1c;                             // +0x10
-    mat3 rot;                                           // +0x20
-    FramePlacement out;                                    // +0x50
-    char pad90[0x1c8 - 0x90];
+struct FrameTemp {                                      // init_scene's 0x80-byte locals: the zero origin, the identity rotation, the placement built from them
+    rgl::vector4 pos;                                   // +0x00
+    mat3 rot;                                           // +0x10
+    FramePlacement out;                                 // +0x40
 };
 template<> void std::vector<int, std::allocator<int> >::resize(size_t, int);   // 0x43f310 (ret 8; agent3/agent_combat.cpp: the out-of-line instance, only declared)
 template<> void std::vector<PlacedObj, std::allocator<PlacedObj> >::resize(size_t, PlacedObj);   // 0x4777c0 (terrain_b/terrain_b.cpp; ret 0x1cc: the 0x1c8 object by value, then the count)
@@ -65,7 +63,7 @@ int save_game(int id, tstring* name);                  // 0x4e8980
 #include "../dialog_mgr.h"                              // DialogMgr g_dialogs (0x8ed50c8)
 
 
-int count_hero_items();                                 // 0x513e10
+struct HeroCount { int count_hero_items(); };          // 0x513e10: a MissionCtx member that never reads this (the callers load ecx); declared here because MissionCtx lives in a shared header
 static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k); }
 #include "../rec98.h"                                  // Rec98: the 0x98-byte scene node record (pages at game+0xe4)
 // ---- objects and constants of other translation units ----------------------------------------------------------------
@@ -309,7 +307,7 @@ void MissionCtx::update_parties()
         party_at(pm, pm->lookup(g_game->f78))->f88 = -1;
         party_at(pm, pm->lookup(g_game->f78))->action = 0;
 
-        if (count_hero_items() > f168) {
+        if (((HeroCount*)this)->count_hero_items() > f168) {
             tstring msg("ui_some_soldiers_are_ready_to_upgrade");
 
             g_gui.push(*g_strtable.lookup(msg), 0xffbbffbb);
@@ -321,7 +319,7 @@ void MissionCtx::update_parties()
 }
 
 // @ 0x513e10
-int count_hero_items()
+int HeroCount::count_hero_items()
 {
     GameData* g = g_game;
     PartyMgr* m = &g->parties;
@@ -509,18 +507,16 @@ void MissionV::init_scene()
     dismount_count = 0;
     f5c = -1;
     f60 = -1;
+    int i = 0;
     Team* tm = (Team*)((char*)this + 0x527c);
-    for (int i = 0; i < 8; i++, tm++)
+    for (; i < 8; i++, tm++)
         tm->init(i);
     FrameTemp t;
-    t.f10 = 0;
-    t.f14 = 0;
-    t.f18 = 0;
+    t.pos.x = 0.0f;
+    t.pos.y = 0.0f;
+    t.pos.z = 0.0f;
     t.out.m = *identity3(&t.rot);
-    t.out.a = t.f10;
-    t.out.b = t.f14;
-    t.out.c = t.f18;
-    t.out.d = t.f1c;
+    *(rgl::vector4*)&t.out.a = t.pos;
     *(FramePlacement*)((char*)this + 0x6624) = t.out;
     g_terrain.reset();
     g_sound_mgr.stop_all();
@@ -1168,6 +1164,7 @@ int PartyV::data_ready()
     return 1;
 }
 
+static inline int hero_rank(Troop* t) { int k = ((char*)t)[0x7a] & 0xf; if (k < 0) k = 0; else if (k > (*(int*)&g_skill_tbl[36].max_rank)) k = (*(int*)&g_skill_tbl[36].max_rank); return k; }
 // @ 0x516700
 void MissionCtx::update_anim()
 {
@@ -1186,24 +1183,18 @@ void MissionCtx::update_anim()
     if (party[0] >= 0) {
         GameData* g = g_game;
         PartyMgr* m = &g->parties;
-        Party* p = party_at(m, m->lookup(party[0]));
+        Party* p = m->at(m->lookup(party[0]));
         int slot = p->stacks[0].troop;
         if (slot >= 0) {
-            Troop* t = &g->troops[slot];
+            Troop* t = g->troops + slot;
             if ((t->flags30 & 0x10) != 0) {
-                int k = ((char*)t)[0x7a] & 0xf;
-                if (k < 0)
-                    k = 0;
-                else if (k > (*(int*)&g_skill_tbl[36].max_rank))
-                    k = (*(int*)&g_skill_tbl[36].max_rank);
-                int n = t->f58[0] + k * 2 + 0x23;
-                float g = (float)(int)((float)n * 0.5f + 3.0f);
+                float g = (float)(int)((float)(t->f58[0] + hero_rank(t) * 2 + 0x23) * 0.5f + 3.0f);
                 if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips
                     t->hp = g;
             }
         }
     }
-    f168 = count_hero_items();
+    f168 = ((HeroCount*)this)->count_hero_items();
     f34 = 0;
     f35 = 0;
     f38 = 0;
@@ -1257,13 +1248,12 @@ void MissionCtx::reset_ids(int id)
     if (id == -1)
         return;
     PartyMgr* m = &g_game->parties;
-    Party* rec = party_at(m, m->lookup(id));
+    Party* rec = m->at(m->lookup(id));
     for (int i = 0; i < rec->nstacks; i++) {
-        int slot = *(int*)((char*)rec + 0xac + i * 0x20);
-        Troop* t = (Troop*)((char*)g_game->troops + slot * 0x508);
-        if ((t->flags32 & 0x10) != 0) {
-            *(int*)((char*)rec + 0xb8 + i * 0x20) = 0;
-            *(int*)((char*)rec + 0xa8 + i * 0x20) = 1;
+        Stack& s = rec->stacks[i];
+        if ((g_game->troops[s.troop].flags30 & 0x10) != 0) {
+            s.wounded = 0;
+            s.count = 1;
         }
     }
 }

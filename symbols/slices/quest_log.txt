@@ -1,0 +1,1 @@
+00408030 ?on_track_set@MissionUi@@UAEXPAX@Z  # MissionUi vtable slot +0x88, reached through the ContainerBase vtable this module now references

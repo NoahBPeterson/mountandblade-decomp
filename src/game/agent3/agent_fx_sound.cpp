@@ -335,15 +335,16 @@ rgl::psys* Mission::spawn_effect(int idx, const mat4* m, int duration)
     g_emit_defs.setup(e, idx, &v);
     e->mf4 = *m * e->m134;
     if (e->res != 0 && (e->res->flags & 0x40)) {
-        EnvRow* c = &g_env_rows[cam];
         vector4 t;
-        t.x = c->v20[0] * 0.3f;
-        t.y = c->v20[1] * 0.3f;
-        t.z = c->v20[2] * 0.3f;
+        t.x = g_env_rows[cam].v20[0] * 0.3f;
+        t.y = g_env_rows[cam].v20[1] * 0.3f;
+        t.z = g_env_rows[cam].v20[2] * 0.3f;
+        EnvRow* c = &g_env_rows[cam];
         v.x = t.x + c->base[0];
         v.y = t.y + c->base[1];
         v.z = t.z + c->base[2];
-        e->vd8 = v;
+        vector4* d = &e->vd8;
+        *d = v;
     }
     e->flags &= ~1u;
     e->spawn_left = e->f1a0 = duration;
@@ -494,10 +495,10 @@ unsigned Agent::pick_shout_target(int flags, float maxdist)
     return best;
 }
 
+static inline bool fire_ok(Agent* a, unsigned id) { int fc; return a->fire_check(id, &fc) == 1; }
 // @ 0x443430
 unsigned Agent::pick_threat()
 {
-    float score;
     unsigned best = (unsigned)-1;
     float bestv = -100.0f;
     unsigned id = (unsigned)-1;
@@ -508,14 +509,14 @@ unsigned Agent::pick_threat()
             id = r->id;
             Agent* o = &g_mission->agents.pages[id >> 4][id & 0xf];
             if (o->f14 == 1 && line_of_sight(id, 0)) {
-                if (fire_check(id, (int*)&score) == 1) {
+                if (fire_ok(this, id)) {
                     const vector4& op = g_mission->agents.pages[id >> 4][id & 0xf].pos;
                     float dx = op.x - pos.x;
                     float dy = op.y - pos.y;
                     float dz = op.z - pos.z;
                     float v = 3.0f / (float)sqrt(dy * dy + (dx * dx + dz * dz));
                     if (!(v < 4.0f)) v = 4.0f;
-                    score = v / ((float)g_mission->agents.pages[(unsigned)r->id >> 4][r->id & 0xf].f55e8 + 7.0f);
+                    float score = v / ((float)g_mission->agents.pages[(unsigned)r->id >> 4][r->id & 0xf].f55e8 + 7.0f);
                     float s = ((float)(rand() % 0x3dc9) * 1.2644623e-05f + 1.0f) * score;
                     if (s > bestv) { bestv = s; best = r->id; }
                 }

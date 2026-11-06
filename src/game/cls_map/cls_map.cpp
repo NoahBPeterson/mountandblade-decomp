@@ -765,6 +765,8 @@ void Rec44::init_screen()
     g_gui.dirty = 1;
 }
 
+
+
 // @ 0x4db1f0
 void Rec118::init_screen()
 {
@@ -785,20 +787,16 @@ void Rec118::init_screen()
         }
         vt(overlay)->d50(row[i]);
     }
-    int j = 0;
-    do {
-        j++;
-        ContainerBase* c = new text_box;
-        col[j - 1] = c;
+    for (int j = 0; j < 3; j++) {
+        col[j] = new text_box;
         {
-            float v[2] = { 0.6f, g_5a9f24 - j * g_5a9f28[1] };     // globals in the original (0x4db3bf / 0x4db3c6)
-            vt(c)->d22(v);
+            float v[2] = { g_5a9f20, g_5a9f24 - (j + 1) * g_5a9f28[1] };     // globals in the original (0x4db3aa / 0x4db3bf / 0x4db3c6)
+            vt(col[j])->d22(v);
         }
-        vt(c)->d25(g_5a9f28);
-        vt(overlay)->d50(c);
-    } while (j < 3);
-    { MissionUi* root_ = (MissionUi*)overlay; g_gui.objs.push_back(root_); }
-    g_gui.dirty = 1;
+        vt(col[j])->d25(g_5a9f28);
+        vt(overlay)->d50(col[j]);
+    }
+    { MissionUi* root_ = (MissionUi*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
     ((MissionScreen*)this)->fill_mission_row(0);
     ((MissionScreen*)this)->fill_mission_row(1);
     ((MissionScreen*)this)->fill_mission_row(2);

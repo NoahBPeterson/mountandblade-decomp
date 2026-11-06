@@ -9,7 +9,11 @@
 //
 // Boundary: class changes only (Game | Scene at 0x51eb90, TroopRec | Game at 0x520b20); no forward call proves either.
 //-----------------------------------------------------------------------------
-#include "../std_vec_out_of_line.h"      // std::vector<int / __int64>::resize: the out-of-line instances of agent_combat.cpp / world_data.cpp
+#include <vector>
+// std::vector<int / __int64>::resize: the out-of-line instances of agent_combat.cpp / world_data.cpp. Not std_vec_out_of_line.h,
+// which also keeps push_back out of line: here the original expands push_back inline (0x51eb90, 0x51eda0).
+template<> void std::vector<int, std::allocator<int> >::resize(size_t, int);                  // 0x43f310
+template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, __int64);      // 0x493090
 #include "./troop_rec.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../party/game.h"
@@ -26,7 +30,6 @@
 #include "../mesh_slot/mesh_slot.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-
 
 // @ 0x51eb90
 void PartyMgr::read(stream_base* s, int flag)
@@ -534,10 +537,9 @@ static __forceinline int get_skill(TroopRec* t, T i)
 {
     int v = (t->nib[i / 8] >> ((i % 8) * 4)) & 0xf;
     if (v < 0)
-        return 0;
-    int cap = g_skill_tbl[i].max_rank;
-    if (v > cap)
-        return cap;
+        v = 0;
+    else if (v > g_skill_tbl[i].max_rank)
+        v = g_skill_tbl[i].max_rank;
     return v;
 }
 

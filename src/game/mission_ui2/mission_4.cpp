@@ -76,13 +76,13 @@ void FieldPanel::relayout(const tstring* text)
     // get_state(&v[2]) writes *two* more (a 2D state) over v[2] and v[3] - the original's last dword. A float v[3]
     // here makes that second dword overwrite the saved frame (return address -> the state's float bit pattern).
     float v[4];
-    scene()->view[0]->text_size(v, text);
+    { FieldVisual** a = scene()->view; a[0]->text_size(v, text); }
     if (sqrt(tail.y * tail.y + tail.x * tail.x) > 0.0f) {
-        scene()->view[0]->set_xy(&tail.x);
-        scene()->view[0]->get_state(v);
-        scene()->view[0]->set_xy(v);
-        scene()->view[0]->f13c = v[1] - f144 * 0.63f - 0.001f;   // the text-metric f144 (0x48f0c0), not screen[3]
-        scene()->view[0]->get_state(&v[2]);
+        { FieldVisual** a = scene()->view; a[0]->set_xy(&tail.x); }
+        { FieldVisual** a = scene()->view; a[0]->get_state(v); }
+        { FieldVisual** a = scene()->view; a[0]->set_xy(v); }
+        { FieldVisual** a = scene()->view; a[0]->f13c = v[1] - f144 * 0.63f - 0.001f; }
+        { FieldVisual** a = scene()->view; a[0]->get_state(&v[2]); }
     }
     update();
 }

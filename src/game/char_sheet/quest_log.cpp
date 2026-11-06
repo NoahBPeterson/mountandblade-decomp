@@ -91,68 +91,85 @@ Camera* make_quest_list(ContainerBase* parent, const float* pos, const float* si
     return cam;
 }
 
+static inline const float* float2_arg(const float2& v) { return &v.x; }
+static inline float quest_list_height(float h) { return 0.56f > h ? 0.56f : h; }
+
+// the list frame expands the container constructor (0x4ee590); NodeA calls 0x4931a0
+inline ContainerBase::ContainerBase() {}
+
 // @ 0x4ee230
 void Rec454::init_screen()
 {
     g_gui.reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
-    NodeA* win = new NodeA;                 // 0x4931a0, vptr 0x592848 (0x4ee268)
-    if (win)
-        win->f188 = 0;                      // 0x4ee26e
-    window = win;
-    float pos[2];
-    pos[0] = 0.0f;
-    pos[1] = 0.0f;
-    win->move_a(pos);
-    float size[2];
-    size[0] = 1.0f;
-    size[1] = 0.75f;
-    win->set_xy(size);
-    mesh* bgm;
+    window = new NodeA(0);                  // 0x4931a0, vptr 0x592848 (0x4ee268)
+    {
+        float v[2] = { 0.0f, 0.0f };
+        window->move_a(v);
+    }
+    {
+        float v[2] = { 1.0f, 0.75f };
+        window->set_xy(v);
+    }
+    rgl::mesh* bgm;
     {
         tstring bg("quests_window");   // 0x598810 (no "ui_" prefix); destroyed right after the clone
         bgm = g_resmgr.get_object(&bg)->clone();
     }
-    win->set_mesh(0, bgm);
-    g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)win);   // 0x49b120
+    window->set_mesh(0, bgm);
+    { MissionUi* root_ = (MissionUi*)window; g_gui.dirty = 1; g_gui.objs.push_back(root_); }   // 0x49b120
 
     // the two panels behind the tabs
     panel1 = new MissionUi;
-    pos[0] = 0.58f;
-    pos[1] = 0.21875f;
-    panel1->move_a(pos);
-    size[0] = 0.39f;
-    size[1] = 0.3f;
-    panel1->set_xy(size);
-    int flags = 0x101;
-    panel1->set148(&flags);
-    float tint[2];
-    tint[0] = 0.025f;
-    tint[1] = 0.025f;
-    panel1->set_size(tint);
-    win->add_child(panel1);
+    {
+        float v[2] = { 0.58f, 0.21875f };
+        panel1->move_a(v);
+    }
+    {
+        float v[2] = { 0.39f, 0.3f };
+        panel1->set_xy(v);
+    }
+    {
+        int flags = 0x101;
+        panel1->set148(&flags);
+    }
+    {
+        float v[2] = { 0.025f, 0.025f };
+        panel1->set_size(v);
+    }
+    window->add_child(panel1);
 
     panel2 = new MissionUi;
-    panel2->move_a(pos);
-    panel2->set_xy(size);
-    flags = 0x10;
-    panel2->set148(&flags);
-    panel2->set_size(tint);
-    win->add_child(panel2);
+    {
+        float v[2] = { 0.58f, 0.21875f };
+        panel2->move_a(v);
+    }
+    {
+        float v[2] = { 0.39f, 0.3f };
+        panel2->set_xy(v);
+    }
+    {
+        int flags = 0x10;
+        panel2->set148(&flags);
+    }
+    {
+        float v[2] = { 0.025f, 0.025f };
+        panel2->set_size(v);
+    }
+    window->add_child(panel2);
 
     // the three texts
     {
         tstring key("ui_done");
-        done = new_medium_button(win, g_strtable.lookup(key), 0.7f, 0.09f, 0.04f);
+        done = new_medium_button(window, g_strtable.lookup(key), 0.7f, 0.09f, 0.04f);
     }
     {
         tstring key("ui_active_quests");
-        active_tab = new_medium_button(win, g_strtable.lookup(key), 0.1f, 0.04f, 0.04f);
+        active_tab = new_medium_button(window, g_strtable.lookup(key), 0.1f, 0.04f, 0.04f);
     }
     {
         tstring key("ui_finished_quests");
-        finished_tab = new_medium_button(win, g_strtable.lookup(key), 0.28f, 0.04f, 0.04f);
+        finished_tab = new_medium_button(window, g_strtable.lookup(key), 0.28f, 0.04f, 0.04f);
     }
     active_tab->set_flag();
     finished_tab->set_flag();
@@ -164,61 +181,56 @@ void Rec454::init_screen()
     refresh();
 
     // the quest list frame: 0x188 bytes, vtable 0x5924a0
-    float h = (float)count * 0.04f + 0.09f;
-    if (h < 0.56f)     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
-        h = 0.56f;
+    float h = quest_list_height((float)count * 0.04f + 0.09f);     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
     frame = new ContainerBase;                  // vptr 0x5924a0
-    pos[0] = 0.0f;
-    pos[1] = 0.0f;
-    frame->move_a(pos);
-    float fsize[2];
-    fsize[0] = 0.32f;
-    fsize[1] = h;
-    frame->set_xy(fsize);
+    {
+        float v[2] = { 0.0f, 0.0f };
+        frame->move_a(v);
+    }
+    {
+        float v[2] = { 0.32f, h };
+        frame->set_xy(v);
+    }
     frame->set_mesh(0, make_background(frame->screen, (int)0xff000000));
 
     // one row per listed quest
-    h -= 0.05f;     // 0x4ee623: fsub [0x54b4d0] (0.05) before the loop
     for (int i = 0; i < count; i++) {
+        tstring text(*(tstring*)(QUEST(indices[i]) + 0x40));
         char* q = QUEST(indices[i]);
-        tstring text(*(tstring*)(q + 0x40));
         char buf[512];
         if (q[0x50] & 1) {
             mb_snprintf(buf, 0x200, "%s (%d%%)", text.buf ? text.buf : (char*)&text, *(int*)(q + 0x64) & 0xff);
         } else {
             mb_snprintf(buf, 0x200, "%s", text.buf ? text.buf : (char*)&text);
         }
-        UiA* row = new UiA;                     // vptr 0x591d58
-        rows[i] = row;
-        float rp[2];
-        rp[0] = 0.01f;
-        rp[1] = h - (float)i * 0.04f;
-        row->move_a(rp);
-        float rs[2];
-        rs[0] = 0.3f;
-        rs[1] = 0.04f;
-        row->set_xy(rs);
+        rows[i] = new UiA;                     // vptr 0x591d58
+        {
+            float v[2] = { 0.01f, h - 0.05f - (float)i * 0.04f };
+            rows[i]->move_a(v);
+        }
+        {
+            float v[2] = { 0.3f, 0.04f };
+            rows[i]->set_xy(v);
+        }
         {
             // set_text(out, text): `out` is the hidden pointer of the 8-byte result (never initialised, 0x4ee750),
             // text is a temporary tstring built from the formatted buffer and destroyed right after the call
             char ret[8];
             tstring shown(buf);
-            row->set_text((float*)ret, &shown);
+            rows[i]->set_text((float*)ret, &shown);
         }
-        unsigned a = 0xffffffff;
-        row->set_color(&a);
-        int b = -3941;     // 0xfffff09b
-        row->set_target(&b);
-        frame->add_child(row);
+        {
+            unsigned a = 0xffffffff;
+            rows[i]->set_color(&a);
+        }
+        {
+            int b = -3941;     // 0xfffff09b
+            rows[i]->set_target(&b);
+        }
+        frame->add_child(rows[i]);
     }
-    UiD* track = make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f);
-    float lpos[2];
-    lpos[0] = 0.1f;     // 0x4ee7ea..: pos = [esp+0x4c] (0.1, 0.11), size = [esp+0x44] (0.32, 0.58)
-    lpos[1] = 0.11f;
-    float lsize[2];
-    lsize[0] = 0.32f;
-    lsize[1] = 0.58f;
-    list = make_quest_list(frame, lpos, lsize, track);
+    // 0x4ee7ea..: pos = [esp+0x4c] (0.1, 0.11), size = [esp+0x44] (0.32, 0.58): argument temporaries, stored after the pushes
+    list = make_quest_list(frame, float2_arg(float2(0.1f, 0.11f)), float2_arg(float2(0.32f, 0.58f)), make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f));
     window->add_child(list);
 }
 

@@ -181,18 +181,17 @@ gui_manager::~gui_manager()
 // 0x42d570 std::vector<rgl::vector4>::_Buy (the only member of this instance the linker kept)
 template class std::vector<vector4>;
 
+static __forceinline vec2 gm_vec2(float x, float y) { vec2 r; r.x = x; r.y = y; return r; }
+
 // @ 0x42d5c0
 gui_manager::gui_manager()
 {
     WL_MARKER(12)
     reset();
     panel_color = f1718 = -1;
-    p24a = 0;
-    p24b = 0;
-    mouse[0] = 0;
-    mouse[1] = 0;
-    prev_mx = 0;
-    prev_my = 0;
+    *(vec2*)&p24a = gm_vec2(0.0f, 0.0f);
+    *(vec2*)&mouse[0] = gm_vec2(0.0f, 0.0f);
+    vec2 prev = gm_vec2(0.0f, 0.0f);
     show_cursor = 1;
     drag = 0;
     overlay = 0;
@@ -205,6 +204,7 @@ gui_manager::gui_manager()
     corner[2] = 0;
     corner[3] = 0;
     panel_bg = 0xff101010;
+    *(vec2*)&prev_mx = prev;
     f1709 = 0;
     f170c = 0;
     hud_flag = 0;

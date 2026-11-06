@@ -59,3 +59,10 @@
 ../src/game/world_data/world_data.cpp  ?pop_back_delete@TableauTbl@@QAEXXZ  00492ee0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??0DropDown@@QAE@XZ  004931d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?open@WindowMgrW@@QAEXH@Z  00494260  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?random_position_around@GameW@@QAEXUVec2@@MPAU2@@Z  00490030  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?find_agent_by_troop@MissionW@@QAEIH@Z  004921b0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?refresh_rating@MissionCtx@@QAEXXZ  00492470  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?select_side@MissionCtx@@QAEXH@Z  00492750  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?create_button_overlay@WidgetMgrW@@QAEHPBUtstring@@I@Z  00494110  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?quest_done@GameW@@QAEXH@Z  00494410  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?all_defeated@MissionW@@QAE_NH@Z  004920e0  /O2 /MT /Gy /TP

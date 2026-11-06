@@ -338,23 +338,21 @@ void ShadowMap::extend(const vector4* p)
 // @ 0x468c80
 bool ShadowMap::test(unsigned p, float* out)
 {
-    float* o = out;
-    *o = 1.0f;
+    *out = 1.0f;
     bool result = true;
     if (cam) {
         vector4 pt = ((rgl::frustum*)&cam->fr)->to_clip(*(const vector4*)p);   // 0x4621f0 (hidden return pointer = &pt)
-        if (!(0.0f <= pt.x)) return true;
-        if (!(pt.x < 1.0f)) return true;
-        if (!(0.0f <= pt.y)) return true;
-        if (!(pt.y < 1.0f)) return true;
+        if (!(0.0f <= pt.x && pt.x < 1.0f && 0.0f <= pt.y && pt.y < 1.0f)) return true;
         float scr[2];
         scr[0] = (float)scn.f8 * pt.x;
         scr[1] = (1.0f - pt.y) * (float)scn.fc;
         if (g_use_shaders && surf) {
-            // the depth reader overwrites the two argument slots (&out receives the stored depth)
-            read_pixel((int)g_render.dev, (int)scr[0], (int)scr[1], (unsigned*)&out, (unsigned*)&p);
-            if ((pt.z - 0.001f) > *(float*)&out)
-                *o = 0.0f;
+            // cl overlays these two locals on the dead argument slots
+            float depth;
+            unsigned dummy;
+            read_pixel((int)g_render.dev, (int)scr[0], (int)scr[1], (unsigned*)&depth, &dummy);
+            if ((pt.z - 0.001f) > depth)
+                *out = 0.0f;
         } else {
             result = false;
         }
@@ -1261,9 +1259,9 @@ void rgl::mesh::fill_indices(unsigned short* out)
 {
     std::vector<rgl::face20>& fs = local_a0 ? v90 : parent->get90();
     for (unsigned i = 0; i < fs.size(); i++) {
-        *out++ = (unsigned short)(&fs[i].b)[-1];
-        *out++ = (unsigned short)(&fs[i].b)[0];
-        *out++ = (unsigned short)(&fs[i].b)[1];
+        *out++ = (unsigned short)fs[i].a;
+        *out++ = (unsigned short)fs[i].b;
+        *out++ = (unsigned short)fs[i].c;
     }
 }
 

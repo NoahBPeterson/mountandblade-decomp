@@ -1553,20 +1553,24 @@ void mesh_flip::flip_faces()
     slots[0].f28 = 1;
 }
 
+// The agent's Timed members have inline constructors in the original: a store through the helper's reference keeps the
+// state store ahead of the tick copy.
+static inline void timed_start(Timed& t) { t.state = 2; t.t = tk(2); }
+
 // @ 0x477a30
 MAgent::MAgent()
 {
-    t40.state = 2; t40.t = tk(2);
-    new (&view) ViewState;   // 0x475e50
+    timed_start(t40);
+    ((ViewState*)&view)->ViewState::ViewState();   // 0x475e50 (no null test: in the original this is a member's constructor)
     subB.init();
-    t57c8.state = 2; t57c8.t = tk(2); f57d8 = 0;
-    t57e0.state = 2; t57e0.t = tk(2);
-    t57f0.state = 2; t57f0.t = tk(2);
-    t5800.state = 2; t5800.t = tk(2);
-    t5810.state = 2; t5810.t = tk(2);
-    t5820.state = 2; t5820.t = tk(2);
+    timed_start(t57c8); f57d8 = 0;
+    timed_start(t57e0);
+    timed_start(t57f0);
+    timed_start(t5800);
+    timed_start(t5810);
+    timed_start(t5820);
     f5860 = 0; f5868 = tk(0);
-    t5918.state = 2; t5918.t = tk(2);
+    timed_start(t5918);
 }
 
 // @ 0x477b70

@@ -38,16 +38,10 @@ void UiB::set_value(float x)
 // @ 0x48b760
 UiC::UiC()
 {
-    float v[4];
-    float* p = v;
-    v198.x = p[0] = 1.0f;
-    v198.y = p[1] = 1.0f;
-    v198.z = p[2] = 1.0f;
-    v198.w = p[3];
-    int z = 0;
-    f178 = z;
-    f180 = z;
-    f184 = z;
+    v198 = rgl::vector4(1.0f, 1.0f, 1.0f);
+    f178 = 0;
+    f180 = 0;
+    f184 = 0;
     src = 0;
     f17c = 0.008f;
     v168 = 1.0f;

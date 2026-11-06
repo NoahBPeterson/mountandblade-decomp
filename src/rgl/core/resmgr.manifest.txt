@@ -62,3 +62,4 @@
 ../src/rgl/core/resmgr.cpp  ?load_pack@resmgr@@QAEXABUtstring@@H@Z  0041e150  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?load_stream@resmgr@@QAEPAUstream_base@@PAU2@@Z  0041db20  /O2 /MT /Gy /TP
 ../src/rgl/core/resmgr.cpp  ?get_render_target@resmgr@@QAEPAUtexture@@HHHHH@Z  0041b7d0  /O2 /MT /Gy /TP
+../src/rgl/core/resmgr.cpp  ?invalidate@resmgr@@QAEHXZ  004195e0  /O2 /MT /Gy /TP

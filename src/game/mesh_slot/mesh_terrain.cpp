@@ -363,11 +363,9 @@ Skin* append_mesh(int colour, int kind, void** c, void** a, void** b, char carri
         g_anim.item = -1;
     g_anim_view.collect(g_module_settings.limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
-    Skin* ec = &g_anim.skin_vec.first[g_anim.cur];
-    int* rec = (int*)((char*)&ec->face_textures[0] + g_anim.material * 0xb0 + 0x18);
-    int* slot = out;
-    *slot = *rec;
-    return ec;
+    Skin& ec = g_anim.skin_vec.first[g_anim.cur];
+    *out = *(int*)((char*)&ec.face_textures[g_anim.material] + 0x18);
+    return &ec;
 }
 
 // ---- 0x481d10: world-map (re)generation -------------------------------------------------------------------------------

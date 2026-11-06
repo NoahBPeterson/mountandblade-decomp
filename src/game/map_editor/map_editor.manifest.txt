@@ -1,2 +1,3 @@
 ../src/game/map_editor/map_editor.cpp  ?remove_prop@MapMission@@QAEXH@Z  005313c0  /O2 /MT /Gy /TP
 ../src/game/map_editor/map_editor.cpp  ?erase@PropVec@@QAE?AViterator@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@V234@@Z  00531470  /O2 /MT /Gy /TP
+../src/game/map_editor/map_editor.cpp  ?add_selected@MapEditorDialog@@QAEXPAUmesh@rgl@@PBUmatrix@3@PAXI@Z  005314e0  /O2 /MT /Gy /TP

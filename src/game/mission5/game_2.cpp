@@ -55,23 +55,29 @@ extern const int g_level_xp[64] = {  // 0x5937c8 experience bound per level (rda
 
 // ---- the map object (0xa732b8): vertex and group vectors of the ground geometry ---------------------------------------
 // The records and vectors are the ones world_grid.cpp (rgl/dynamic) defines: ground_v36 (0x24 bytes: position, normal, a flag) and ground_g136
-// (0x88 bytes), std::vector<ground_v36> and its group sibling vec136, the group constructor (0x4246f0), the container constructor NavCore
+// (0x88 bytes), std::vector of each, the group constructor (0x4246f0), the container constructor NavCore
 // (0x478150) and PolyGeom::build (mesh_slot/mesh_pass.cpp 0x47ee60). They are declared here in the shape this module needs.
-struct ground_v36  { int v[9]; };                               // 0x24 bytes
-struct ground_g136 { int v[34]; ground_g136(); };              // 0x88 bytes: n +0, vertex ids +4, ...; ctor 0x4246f0
+struct ground_v36  { float x, y, z; int pad0c[5]; float f20; ground_v36() {} };   // 0x24 bytes
+struct ground_g136 {                                            // 0x88 bytes
+    int n;                                                      // +0x00
+    int vidx[8];                                                // +0x04 vertex ids
+    int f24;                                                    // +0x24 mask
+    int pad28[16];
+    int f68;                                                    // +0x68
+    int pad6c[7];
+    ground_g136();                                              // ctor 0x4246f0
+};
+typedef char ground_g136_size_chk[sizeof(ground_g136) == 0x88 ? 1 : -1];
 namespace std {
 template<> void vector<ground_v36, allocator<ground_v36> >::resize(size_t, ground_v36);     // 0x424740
 }
-struct vec136 {                                                 // vector<ground_g136>, _Myfirst at +4
-    char pad0[4];
-    ground_g136* first; ground_g136* last; ground_g136* end;
+struct vec136 : std::vector<ground_g136> {                      // world_grid.cpp's written-out sibling of vector<ground_g136>
     void resize(unsigned n, ground_g136 v);                     // 0x424cc0
 };
 struct PolyGeom { void build(); };                              // 0x47ee60
 typedef char nav_core_size_chk[sizeof(NavCore) == 0x68 ? 1 : -1];     // new NavCore allocates the map store's 0x68 bytes
 struct MapStore {                                               // the global map (0xa732b8), 0x68 bytes
-    char pad0[4];
-    ground_v36* first; ground_v36* last; ground_v36* end;       // +0 vector<ground_v36>
+    std::vector<ground_v36> verts;                              // +0
     vec136 groups;                                              // +0x10
     char pad20[4];
     ground_v36* edge_first; ground_v36* edge_last; ground_v36* edge_end;   // +0x20 vector<GeomEdge> (0x24-byte edges; PolyGeom::edges in mesh_pass.cpp)
@@ -101,34 +107,24 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
 {
     int n;
     s->r_int(&n);
-    ((std::vector<ground_v36>*)map)->resize(n, ground_v36());
+    map->verts.resize(n, ground_v36());
     int i;
     for (i = 0; i < n; i++) {
-        char* p = (char*)map->first + i * 0x24;
-        s->r_float((float*)p).r_float((float*)p + 1).r_float((float*)p + 2);
-        *(float*)((char*)map->first + i * 0x24 + 0x20) = -1.0f;
+        ground_v36& v = map->verts[i];
+        s->r_float(&v.x).r_float(&v.y).r_float(&v.z);
+        map->verts[i].f20 = -1.0f;
     }
     int n2;
     s->r_int(&n2);
-    // The record's neighbour list (+0x28) and weights (+0x38) are NOT in map.txt: read_map writes count (+0), the
-    // group's vertex ids (+4), mask (+0x24) and +0x68, and Group::Group 0x4246f0 leaves +0x28/+0x38 untouched. The
-    // original therefore stamps whatever its stack template held; ours held heap bytes, and score_triggers 0x51dac0
-    // treats any nb[k] != -1 as a node index and walked off the graph (the Start-New-Game fault). Initialise them
-    // explicitly so the template is deterministic: nb = -1 (no neighbour), weights = 0.
-    ground_g136 tmpl;                                  // ground_g136::ground_g136 0x4246f0 (mask/+0x48..+0x70 +0x84, as the original)
-    for (int k = 0; k < 4; k++) {
-        ((int*)((char*)&tmpl + 0x28))[k] = -1;         // nb[k]: this list is filled by the graph builder, not by map.txt
-        ((float*)((char*)&tmpl + 0x38))[k] = 0.0f;     // weight[k]
-    }
-    map->groups.resize(n2, tmpl);
+    // link[] (+0x28) and the weights (+0x38) stay as the group constructor left them: PolyGeom::build fills link[k]
+    // for every k < n, and nothing reads k >= n (score_triggers 0x51dac0 and solve 0x51d3a0 stop at count).
+    map->groups.resize(n2, ground_g136());
     for (i = 0; i < n2; i++) {
-        char* g = (char*)map->groups.first + i * 0x88;
-        s->r_int((int*)(g + 0x24));
-        s->r_int((int*)(g + 0x68));
-        s->r_int((int*)g);
-        int nn = *(int*)g;
-        for (int j = 0; j < nn; j++)
-            s->r_int((int*)(g + 4 + j * 4));
+        s->r_int(&map->groups[i].f24);
+        s->r_int(&map->groups[i].f68);
+        s->r_int(&map->groups[i].n);
+        for (int j = 0; j < map->groups[i].n; j++)
+            s->r_int(&map->groups[i].vidx[j]);
     }
     ((PolyGeom*)map)->build();
     return s;
@@ -382,8 +378,8 @@ void Game::build_map_trees()
             MapEdge* ed = &mgr->edges[e];
             int a = ed->a, b = ed->b;
             // 0x5218d7: the edge endpoints are read from g_nav's vertex vector (map.txt's store, +4), not mgr->pts
-            const float* pa = (const float*)((char*)((MapStore*)g_script.nav)->first + a * 0x24);
-            const float* pb = (const float*)((char*)((MapStore*)g_script.nav)->first + b * 0x24);
+            const float* pa = (const float*)((char*)((MapStore*)g_script.nav)->verts._Myfirst + a * 0x24);
+            const float* pb = (const float*)((char*)((MapStore*)g_script.nav)->verts._Myfirst + b * 0x24);
             float dx = pa[0] - pb[0];
             float dy = pa[1] - pb[1];
             float dz = pa[2] - pb[2];

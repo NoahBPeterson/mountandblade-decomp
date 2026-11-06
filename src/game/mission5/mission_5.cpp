@@ -421,14 +421,19 @@ int find_listener_agent()
 {
     int found = -1;
     int listener = g_n_dialogs_s26130.listener();
-    if ((g_game_s26130->chars[listener].flags & 0x10) | ((*(int*)((char*)&g_dialogs + 0x14)) == -1)) {
-        AgentTable_s26130* t = &g_mission_s26130->agents;
+    unsigned __int64 flags = *(unsigned __int64*)&g_game_s26130->chars[listener].flags;    // 64-bit troop flags
+    if ((flags & 0x10) != 0 || *(int*)((char*)&g_dialogs + 0x14) == -1) {
+        Mission_s26130* m = g_mission_s26130;
+        AgentTable_s26130* t = &m->agents;
         unsigned i = t->first_used();
-        Agent_s26130** pages = t->pages;
-        while (i < (unsigned)t->count) {
-            if ((pages[i >> 4] + (i & 0xf))->troop == listener)
-                found = i;
-            t->next_used(&i);
+        unsigned count = t->count;
+        if (i < count) {
+            std::vector<Agent_s26130*>::iterator pages(m->agents.pages);
+            do {
+                if ((pages[i >> 4] + (i & 0xf))->troop == listener)
+                    found = i;
+                t->next_used(&i);
+            } while (i < count);
         }
     }
     return found;
@@ -1249,18 +1254,13 @@ void Grid_s27c90::save(stream_base* s, int* dims)
 }
 
 // @ 0x528410
-int Mission_s27c90::release_item(int idx)
+void Mission_s27c90::release_item(int idx)
 {
-    int off = idx * 0x1c8;
-    char* p = (char*)item_array + off;
-    if (*(void**)(p + 0x1b4)) {
-        (*(ResourceOwner_s27c90**)(p + 0x1b4))->release();
-        int id = *(int*)((char*)*(void**)(item_array + off + 0x1b4) + 8);
-        ((MissionHdr_s27c90*)this)->world->remove_entity(id);
-        *(void**)(item_array + off + 0x1b4) = 0;
-        return (int)p;   // rgl::world::remove_entity is void; see mission_5.nonmatching.txt (0x528410): the original leaves item_array+off in EAX
+    if (item_array[idx].owner) {
+        item_array[idx].owner->release();
+        ((MissionHdr_s27c90*)this)->world->remove_entity(*(int*)((char*)item_array[idx].owner + 8));
+        item_array[idx].owner = 0;
     }
-    return (int)p;
 }
 
 // @ 0x528470
@@ -3150,30 +3150,22 @@ void Elem_s2ce00::put(int* ix, int* iy, int* value)
 // @ 0x52cef0
 int* Terrain::clamp_cell(int* out, int* in)
 {
-    int ox;
+    int ox, oy;
     int ix = in[0] / block;
-    if (ix < 0) {
+    if (ix < 0)
         ox = 0;
-    } else {
-        int m = nx;
-        ox = m - 1;
-        if (ix < m)
-            ox = ix;
-    }
-
+    else if (ix >= nx)
+        ox = nx - 1;
+    else
+        ox = ix;
     int iy = in[1] / block;
-    if (iy < 0) {
-        out[0] = ox;
-        out[1] = 0;
-        return out;
-    }
-    int mx = ny;
-    if (iy >= mx) {
-        out[0] = ox;
-        out[1] = mx - 1;
-        return out;
-    }
+    if (iy < 0)
+        oy = 0;
+    else if (iy >= ny)
+        oy = ny - 1;
+    else
+        oy = iy;
     out[0] = ox;
-    out[1] = iy;
+    out[1] = oy;
     return out;
 }

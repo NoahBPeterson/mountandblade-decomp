@@ -77,3 +77,4 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?add_face@PolyMesh@@QAEHHHHHHHHHH@Z  004784d0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?clear@PolyMesh@@QAEXXZ  00478580  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ??_EMAgent@@UAEPAXI@Z  00431f40  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ??0MAgent@@QAE@XZ  00477a30  /O2 /MT /Gy /TP

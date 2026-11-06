@@ -3,3 +3,4 @@
 ../src/game/mesh_slot/mesh_scene.cpp  ?update_ranged_mesh@MissileU@@QAEXXZ  0047d320  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_scene.cpp  ?reset@PhysSet@@QAEXXZ  0047dc50  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_scene.cpp  ?apply_anim_all@lod_mesh_a@@QAEXPBM@Z  0047dd90  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_scene.cpp  ?apply_anim@mesh_anim_x@@QAEXPBM@Z  0047dcd0  /O2 /MT /Gy /TP
