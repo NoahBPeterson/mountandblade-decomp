@@ -348,8 +348,8 @@ bool ShadowMap::test(unsigned p, float* out)
         if (!(0.0f <= pt.y)) return true;
         if (!(pt.y < 1.0f)) return true;
         float scr[2];
-        scr[0] = (float)scn.f20 * pt.x;
-        scr[1] = (1.0f - pt.y) * (float)scn.f24;
+        scr[0] = (float)scn.f8 * pt.x;
+        scr[1] = (1.0f - pt.y) * (float)scn.fc;
         if (g_use_shaders && surf) {
             // the depth reader overwrites the two argument slots (&out receives the stored depth)
             read_pixel((int)g_render.dev, (int)scr[0], (int)scr[1], (unsigned*)&out, (unsigned*)&p);

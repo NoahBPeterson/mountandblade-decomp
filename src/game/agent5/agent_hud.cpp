@@ -807,11 +807,11 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
 bool ShadowMap::sample(const vector4* p, float* out)
 {
     // (dx, dy) tap offsets: the original builds two int[9] tables on the stack (x then y)
+    float w[9] = { 1.0f, 0.9f, 0.9f, 0.9f, 0.9f, 0.7f, 0.7f, 0.7f, 0.7f };
     int tx[9] = { 0, 1, 1, -1, -1, 2, -2, 0, 0 };
     int ty[9] = { 0, 1, -1, 1, -1, 0, 0, 2, -2 };
-    float w[9] = { 1.0f, 0.9f, 0.9f, 0.9f, 0.9f, 0.7f, 0.7f, 0.7f, 0.7f };
 
-    bool ret = true;
+    volatile bool ret = true;
     *out = 1.0f;
     if (!cam || !g_use_shaders || !surf) {
         ret = false;
@@ -823,17 +823,16 @@ bool ShadowMap::sample(const vector4* p, float* out)
         return ret;
     int zero_x = 0;
     *out = 0.0f;
-    int px = (int)((float)scn.f20 * clip.x);
+    int px = (int)((float)scn.f8 * clip.x);
     int zero_y = 0;
-    int py = (int)((1.0f - clip.y) * (float)scn.f24);
+    int py = (int)((1.0f - clip.y) * (float)scn.fc);
     float depth = clip.z - 0.001f;
     for (int i = 0; i < 9; i++) {
         int xv = tx[i] + px;
         int yv = ty[i] + py;
         float a, b;
-        int cy = clamp_index(&yv, &zero_y, &scn.f24);
-        int cx = clamp_index(&xv, &zero_x, &scn.f20);
-        read_pixel((int)g_render.dev, cx, cy, (unsigned*)&a, (unsigned*)&b);
+        read_pixel((int)g_render.dev, clamp_index(&xv, &zero_x, &scn.f8),
+                   clamp_index(&yv, &zero_y, &scn.fc), (unsigned*)&a, (unsigned*)&b);
         if (!(a < depth))
             *out += w[i];
     }
