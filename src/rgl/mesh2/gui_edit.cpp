@@ -1760,6 +1760,15 @@ WindowMgrW g_windows;                                       // 0xa73980 (compile
 // PartyTemplate's for DialogRec / GameString / ModRec / QuickString / FaceKey (name +0, key +0x10), 0x4c62b0 MenuDoor's
 // for TroopRec / ItemKind, 0x4c6530 RecB's for Party, 0x4c6860 RecC's for FactionRec, 0x4c63f0 / 0x4c6330 / 0x4c6470 RecA's
 // for QuestRec (and translated_plural of TroopRec / ItemKind). The calls go to the class that defines the function.
+// The record's name through the translation table, or the record's own name (the first member): each record class's
+// inline accessor, written once.
+template <class R>
+inline const tstring* rec_name(R* r)
+{
+    const tstring* p = g_strtable.find(&r->key);
+    return p ? p : (const tstring*)r;
+}
+
 // @ 0x4c8ca0
 void GameData::save_language_files(bool translated)
 {
@@ -1775,7 +1784,7 @@ void GameData::save_language_files(bool translated)
                 tstring suffix("_pl");                                  // 0x5923b0
                 ((ini_file&)g_strtable).write(f, chars[i].key + suffix, ((RecA*)&chars[i])->translated_plural());
             } else {
-                ((ini_file&)g_strtable).write(f, chars[i].key, *find_or(chars[i].key, chars[i].name));
+                ((ini_file&)g_strtable).write(f, chars[i].key, *rec_name(&chars[i]));
                 tstring suffix("_pl");                                  // built before plural_name() runs, as in the original
                 ((ini_file&)g_strtable).write(f, chars[i].key + suffix, *chars[i].plural_name());
             }
@@ -1798,7 +1807,7 @@ void GameData::save_language_files(bool translated)
                     else if (p->flag)
                         v = &p->name;
                     else
-                        v = find_or(p->key, p->name);
+                        v = rec_name(p);
                     write_row(f, parties.get_party(i)->key, *v);
                 }
             }
@@ -1816,7 +1825,7 @@ void GameData::save_language_files(bool translated)
             } else {
                 const tstring* v = &factions[i].name;
                 if (!factions[i].flag)
-                    v = find_or(factions[i].key, factions[i].name);
+                    v = rec_name(&factions[i]);
                 write_row(f, factions[i].key, *v);
             }
         }
@@ -1834,7 +1843,7 @@ void GameData::save_language_files(bool translated)
                 tstring suffix("_pl");
                 write_row(f, g_items[i].key + suffix, ((RecA*)&g_items[i])->translated_plural());
             } else {
-                const tstring* v = find_or(g_items[i].key, g_items[i].name);
+                const tstring* v = rec_name(&g_items[i]);
                 write_row(f, g_items[i].key, *v);
                 tstring suffix("_pl");                                  // built before plural_name() runs, as in the original
                 write_row(f, g_items[i].key + suffix, *g_items[i].plural_name());
@@ -1850,7 +1859,7 @@ void GameData::save_language_files(bool translated)
                 tstring v = ((PartyTemplate*)r)->translated();
                 write_row(f, r->key, v);
             } else {
-                write_row(f, r->key, *find_or(r->key, r->name));
+                write_row(f, r->key, *rec_name(r));
             }
         }
         fclose(f);
@@ -1864,7 +1873,7 @@ void GameData::save_language_files(bool translated)
                 write_row(f, g_party_templates[i].key, v);
             } else {
                 write_row(f, g_party_templates[i].key,
-                          *find_or(g_party_templates[i].key, g_party_templates[i].name));
+                          *rec_name(&g_party_templates[i]));
             }
         }
         fclose(f);
@@ -1878,7 +1887,7 @@ void GameData::save_language_files(bool translated)
                 write_row(f, g_strings.strings[i].key, v);
             } else {
                 write_row(f, g_strings.strings[i].key,
-                          *find_or(g_strings.strings[i].key, g_strings.strings[i].name));
+                          *rec_name(&g_strings.strings[i]));
             }
         }
         fclose(f);
@@ -1892,7 +1901,7 @@ void GameData::save_language_files(bool translated)
                 write_row(f, g_strings.quick[i].key, v);
             } else {
                 write_row(f, g_strings.quick[i].key,
-                          *find_or(g_strings.quick[i].key, g_strings.quick[i].name));
+                          *rec_name(&g_strings.quick[i]));
             }
         }
         fclose(f);
@@ -1909,7 +1918,7 @@ void GameData::save_language_files(bool translated)
                 tstring suffix("_text");                                // 0x5923b4
                 write_row(f, quests[i].key + suffix, ((RecA*)&quests[i])->translated_text());
             } else {
-                write_row(f, quests[i].key, *find_or(quests[i].key, quests[i].name));
+                write_row(f, quests[i].key, *rec_name(&quests[i]));
                 tstring suffix("_text");                                // built before text_name() runs, as in the original
                 write_row(f, quests[i].key + suffix, *quests[i].text_name());
             }
@@ -1946,7 +1955,7 @@ void GameData::save_language_files(bool translated)
                     write_row(f, g_anim.skin_vec.first[i].face_keys[j].key, v);
                 } else {
                     write_row(f, g_anim.skin_vec.first[i].face_keys[j].key,
-                              *find_or(g_anim.skin_vec.first[i].face_keys[j].key, g_anim.skin_vec.first[i].face_keys[j].name));
+                              *rec_name(&g_anim.skin_vec.first[i].face_keys[j]));
                 }
             }
         }
@@ -1964,7 +1973,7 @@ void GameData::save_language_files(bool translated)
                 tstring suffix("_desc");                                // 0x595ca4
                 write_row(f, r->key + suffix, r->translated_desc());
             } else {
-                write_row(f, r->key, *find_or(r->key, r->name));
+                write_row(f, r->key, *rec_name(r));
                 tstring suffix("_desc");                                // built before desc_name() runs, as in the original
                 write_row(f, r->key + suffix, *r->desc_name());
             }
@@ -1992,7 +2001,7 @@ void GameData::save_language_files(bool translated)
                     }
                 } else {
                     write_row(f, ((MenuDoor*)g_menus[i].items)[j].key,
-                              *find_or(((MenuDoor*)g_menus[i].items)[j].key, ((MenuDoor*)g_menus[i].items)[j].name));
+                              *rec_name(&((MenuDoor*)g_menus[i].items)[j]));
                     const tstring* p = suffix_or(((MenuDoor*)g_menus[i].items)[j].key, "_door",
                                                  ((MenuDoor*)g_menus[i].items)[j].text);
                     if (p->len > 2)

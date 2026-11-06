@@ -74,6 +74,15 @@ struct SkillNames {                                     // a skill record seen f
 #include "../ui_globals.h"      // UI / core globals
 #include "../float_consts.h"     // g_one
 
+// the translated name of a record, else the record's own name (0x5102d2, 0x510604: the record itself, not its key)
+template <class T> static __forceinline const char* shown_name(T* rec)
+{
+    tstring* nm = g_strtable.find(&rec->key);
+    if (nm == 0)
+        nm = &rec->name;
+    return nm->c_str();
+}
+
 // @ 0x50fe20
 void PartyWindow::frame_update(float unused)
 {
@@ -105,13 +114,11 @@ void PartyWindow::frame_update(float unused)
 
     if (icon_a84 != 0 && icon_a84->clear_mask(0x10000)) {
         spec_ac0 = (spec_ac0 + 1) % 4;
-        tstring name("inv_i_character");
-        add_strip_icon(&icon_a84, name, g_game->player, spec_ac0);
+        add_strip_icon(&icon_a84, "inv_i_character", g_game->player, spec_ac0);
     }
     if (icon_a88 != 0 && icon_a88->clear_mask(0x10000)) {
         spec_ac4 = (spec_ac4 + 1) % 4;
-        tstring name("inv_i_character2");
-        add_strip_icon(&icon_a88, name, w14, spec_ac4);
+        add_strip_icon(&icon_a88, "inv_i_character2", w14, spec_ac4);
     }
 
     refresh_lists(0);
@@ -126,19 +133,22 @@ void PartyWindow::frame_update(float unused)
             int worn = 0;
             if (w04 == 0 && w14 == GD_I(0x90)) {
                 ItemRef* it = &TROOP(w14)->inv[1];
-                for (int i = 0; i < 9; i += 3) {
-                    if (it[i - 1].item >= 0)
+                for (int i = 3; i; i--, it += 3) {
+                    if (it[-1].item >= 0)
                         worn++;
-                    if (it[i].item >= 0)
+                    if (it[0].item >= 0)
                         worn++;
-                    if (it[i + 1].item >= 0)
+                    if (it[1].item >= 0)
                         worn++;
                 }
             }
 
             if (pending < 0) {
-                if (-pending <= TROOP(g_game->player)->f3b4) {
-                    g_game->remove_gold(-pending, g_game->player);
+                int plr = g_game->player;
+                int gold = TROOP(plr)->f3b4;
+                int cost = -pending;
+                if (cost <= gold) {
+                    g_game->remove_gold(cost, plr);
                     TROOP(w14)->f3b4 -= pending;
                     eaten = 1;
                 } else {
@@ -146,15 +156,13 @@ void PartyWindow::frame_update(float unused)
                     char buf[0x200];
                     {
                         tstring key("ui_you_dont_have_value");
-                        tstring_buffer vb;
-                        tstring* val = GV->string_value(vb.get(), -pending);
-                        const char* v = val->c_str();
-                        sprintf(buf, g_strtable.lookup(key)->c_str(), v);
-                        vb.destroy();
-                    }                                   // the value, then the key (0x5101a4, 0x5101ad)
-                    tstring msg(buf);
-                    float out[2];
-                    total_cost->set_text(out, &msg);
+                        sprintf(buf, g_strtable.lookup(key)->c_str(), GV->GameData::string_value(-pending).c_str());
+                    }
+                    {
+                        tstring msg(buf);
+                        float out[2];
+                        total_cost->set_text(out, &msg);
+                    }
                     WL_MARKER(5)
                 }
             } else if (pending > 0) {
@@ -164,44 +172,34 @@ void PartyWindow::frame_update(float unused)
                     eaten = 1;
                 } else {
                     WL_MARKER(4)
-                    q_pay = -1;
+                    int* q = &q_pay;
+                    *q = -1;
                     char buf[0x200];
-                    {
-                        tstring key("ui_merchant_cant_afford_value");
-                        tstring_buffer vb1;
-                        const char* gold = GV->string_value(vb1.get(), TROOP(w14)->f3b4)->c_str();
-                        tstring_buffer vb2;
-                        const char* price = GV->string_value(vb2.get(), pending)->c_str();
-                        Troop* rec = TROOP(w14);
-                        tstring* nm = g_strtable.find(&rec->key);
-                        if (nm == 0)
-                            nm = &rec->name;            // 0x510604: the record itself, not its key
-                        mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), nm->c_str(), price, gold);
-                        vb2.destroy();
-                        vb1.destroy();
-                    }
+                    mb_snprintf(buf, 0x200, g_strtable.lookup("ui_merchant_cant_afford_value")->c_str(), shown_name(TROOP(w14)),
+                                GV->GameData::string_value(pending).c_str(), GV->GameData::string_value(TROOP(w14)->f3b4).c_str());
                     {
                         tstring think("ui_merchant_think_of_something_else");
                         tstring pay("ui_merchant_pay_whatever");
                         tstring msg(buf);
-                        g_windows.box()->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), (int)&q_pay);
+                        g_windows.box()->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), (int)q);
                     }                                   // msg, pay, think destroyed here (0x5106bd..0x5106cf)
                     g_windows.box()->f04 = 2;
                     g_windows.set_state(0);
                     WL_MARKER(5)
                 }
             } else if (worn > 0) {
-                q_dump = -1;
+                int* q = &q_dump;
+                *q = -1;
                 char buf[0x200];
-                {
-                    tstring key(worn == 1 ? "ui_dumping_value_item" : "ui_dumping_value_items");
-                    mb_snprintf(buf, 0x200, g_strtable.lookup(key)->c_str(), worn);
-                }
+                if (worn == 1)
+                    mb_snprintf(buf, 0x200, g_strtable.lookup("ui_dumping_value_item")->c_str(), worn);
+                else
+                    mb_snprintf(buf, 0x200, g_strtable.lookup("ui_dumping_value_items")->c_str(), worn);
                 {
                     tstring no("ui_no");
                     tstring yes("ui_yes");
                     tstring msg(buf);
-                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_dump);
+                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)q);
                 }
                 g_windows.box()->f04 = 2;
                 g_windows.set_state(0);
@@ -212,22 +210,15 @@ void PartyWindow::frame_update(float unused)
             int food = g_game->troops->equip[9].item;
             if (food >= 0 && ITYPE(food) == 1) {
                 WL_MARKER(4)
-                q_food = -1;
+                int* q = &q_food;
+                *q = -1;
                 char buf[0x200];
-                {
-                    tstring q("ui_question_slaughter_food_and_eat");
-                    ItemKind* rec = &g_items[food];
-                    tstring* nm = g_strtable.find(&rec->key);
-                    if (nm == 0)
-                        nm = &rec->name;                // 0x5102d2: the record itself, not its key
-                    const char* n = nm->c_str();
-                    mb_snprintf(buf, 0x200, g_strtable.lookup(q)->c_str(), n);
-                }
+                mb_snprintf(buf, 0x200, g_strtable.lookup("ui_question_slaughter_food_and_eat")->c_str(), shown_name(&g_items[food]));
                 {
                     tstring no("ui_no");
                     tstring yes("ui_yes");
                     tstring msg(buf);
-                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&q_food);
+                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)q);
                 }
                 g_windows.set_state(0);
                 eaten = 0;
@@ -239,10 +230,10 @@ void PartyWindow::frame_update(float unused)
     if (q_food == 0) {
         WL_MARKER(4)
         q_food = -1;
-        Troop* rec = TROOP(g_game->player);
-        rec->equip[9].item = 1;
-        rec->equip[9].m4 = 0;
-        rec->equip[9].reduce(0);
+        ItemRef* food = &TROOP(g_game->player)->equip[9];
+        food->item = 1;
+        food->m4 = 0;
+        food->reduce(0);
         set_slot_flag(2, 9, 2, 1);
         g_sound_mgr.play(g_sound_mgr.slot[0x76], 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
         g_sound_mgr.play(g_sound_mgr.slot[0x61], 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
@@ -260,23 +251,23 @@ void PartyWindow::frame_update(float unused)
     }
 
     if (w14 >= 3) {
-        Troop* rec = TROOP(w14);
-        unsigned f = rec->flags32;
+        const unsigned __int64& f = TROOP(w14)->flags;
         if ((f & 0x10) == 0 || (f & 0x1000) == 0) {
             if (w04 == 4)
-                ((TroopRec*)rec)->auto_equip(-1, 0x100e, 0, 0);
+                ((TroopRec*)TROOP(w14))->auto_equip(-1, 0x100e, 0, 0);
         }
     }
 
-    if (w18 != 0x64)
-        g_windows.set_state(w18);
-    else
+    int state = w18;
+    if (state == 0x64)
         g_map_flags.commit(&eaten);
+    else
+        g_windows.set_state(state);
 }
 
 
 // @ 0x510850
-void PartyWindow::set_slot_flag(int page, int idx, unsigned mask, char on)
+__declspec(noinline) void PartyWindow::set_slot_flag(int page, int idx, unsigned mask, char on)
 {
     if (page < 2) {
         if (on)
@@ -291,57 +282,57 @@ void PartyWindow::set_slot_flag(int page, int idx, unsigned mask, char on)
     }
 }
 
+// set_overlay(0, true) written out (0x42cdb0's body; the object's slot 0 is its deleting destructor)
+static __forceinline void close_tooltip(gui_manager* g)
+{
+    void* o = g->overlay;
+    if (o != 0)
+        ((GuiObjV*)o)->d0(1);
+    g->panel_color = -1;
+    g->panel_bg = 0xff101010;
+    for (int i = 0; i < 0x50; i++)
+        g->lines[i].assign("");
+    g->fa4 = 0;
+    g->fa8 = -0.03f;
+    g->fa0 = 0;
+    g->overlay = 0;
+    g->sel_ent = 0;
+}
+
 // @ 0x5108d0
 void PartyWindow::refresh_lists(int unused)
 {
-    MissionUi** w;
     for (int page = 0; page < pages; page++) {
         int troop = g_game->player;
         if (page != 0)
             troop = w14;
-        w = widgets[page];
         int count;
         if (troop == GD_I(0x90) && w04 == 0)
             count = 9;
         else
             count = TROOP(troop)->inv_count();
-        for (int i = count; i; i--, w++)
-            if ((*w)->clear_mask(4))
+        for (int i = 0; i < count; i++)
+            if (widgets[page][i]->clear_mask(4))
                 g_gui.set_overlay(0, true);
-        w = widgets[page];
-        for (int i = 0; i < count; i++, w++)
-            if ((*w)->clear_mask(2) && locked == 0)
-                place_slot(*w, &EQUIP(troop, i), page, i);
+        for (int i = 0; i < count; i++)
+            if (widgets[page][i]->clear_mask(2) && locked == 0)
+                place_slot(widgets[page][i], &EQUIP(troop, i), page, i);
     }
 
     for (int page = 0; page < rows; page++) {
         int troop = g_game->player;
         if (page != 0)
             troop = w14;
-        w = row_slot[page];
-        for (int i = 10; i; i--, w++)
-            if (*w != 0 && (*w)->clear_mask(4) && locked == 0)
-                g_gui.set_overlay(0, true);
-        w = row_slot[page];
         for (int i = 0; i < 10; i++)
-            if (w[i] != 0 && w[i]->clear_mask(2) && locked == 0)
-                place_slot(w[i], &GRID(troop, i), 2, i);
+            if (row_slot[page][i] != 0 && row_slot[page][i]->clear_mask(4) && locked == 0)
+                g_gui.set_overlay(0, true);
+        for (int i = 0; i < 10; i++)
+            if (row_slot[page][i] != 0 && row_slot[page][i]->clear_mask(2) && locked == 0)
+                place_slot(row_slot[page][i], &GRID(troop, i), 2, i);
     }
 
-    if (locked != 0) {
-        void* o = g_gui.overlay;
-        if (o != 0)
-            ((GuiObjV*)o)->d0(1);
-        g_gui.panel_color = -1;
-        g_gui.panel_bg = 0xff101010;
-        for (tstring* s = g_gui.lines; s < g_gui.lines + 0x50; s++)
-            s->assign("");
-        g_gui.fa4 = 0;
-        g_gui.fa8 = -0.03f;
-        g_gui.fa0 = 0;
-        g_gui.overlay = 0;
-        g_gui.sel_ent = 0;
-    }
+    if (locked != 0)
+        close_tooltip(&g_gui);
 
     for (int page = 0; page < pages; page++) {
         if (!page_widget[page]->clear_mask(0x10000))
@@ -356,23 +347,24 @@ void PartyWindow::refresh_lists(int unused)
             count = TROOP(troop)->inv_count();
         if (count <= 0)
             continue;
-        MissionUi** w = widgets[page];
         for (int i = 0; i < count; i++) {
-            if (!w[i]->clear_mask(0x10000))
+            if (!widgets[page][i]->clear_mask(0x10000))
                 continue;
             int idx = i;
             if (locked != 0 && page != 0) {
                 int r = TROOP(troop)->find_free();
-                if (r >= 0 && !(troop == GD_I(0x90) && w04 == 0 && r >= 9))
+                if (!(troop == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
                     idx = r;
             }
             transfer_slot(&EQUIP(troop, idx), page, idx);
-            place_slot(w[i], &EQUIP(troop, i), page, i);
+            place_slot(widgets[page][i], &EQUIP(troop, i), page, i);
             if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
                 locked != 0 && pages == 2) {
-                int other = (page == 0) ? w14 : g_game->player;
+                int other = g_game->player;
+                if (page == 0)
+                    other = w14;
                 int r = TROOP(other)->find_free();
-                if (r >= 0 && !(other == GD_I(0x90) && w04 == 0 && r >= 9))
+                if (!(other == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
                     transfer_slot(&EQUIP(other, r), 1 - page, r);
             }
         }
@@ -381,31 +373,32 @@ void PartyWindow::refresh_lists(int unused)
     for (int page = 0; page < rows; page++) {
         if (!panels[page]->clear_mask(0x10000))
             continue;
-        MissionUi** w = row_slot[page];
         for (int i = 0; i < 10; i++) {
-            if (w[i] == 0)
+            if (row_slot[page][i] == 0)
                 continue;
-            if (!w[i]->clear_mask(0x10000))
+            if (!row_slot[page][i]->clear_mask(0x10000))
                 continue;
-            int troop = (page != 0) ? w14 : g_game->player;
-            ItemRef* slot = &GRID(troop, i);
-            transfer_slot(slot, page + 2, i);
-            place_slot(w[i], slot, 2, i);
+            int troop = g_game->player;
+            if (page != 0)
+                troop = w14;
+            transfer_slot(&GRID(troop, i), page + 2, i);
+            place_slot(row_slot[page][i], &GRID(troop, i), 2, i);
             if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0 || g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0) &&
                 locked != 0 && rows == 2 && page == 1) {
                 int t = g_game->player;
-                int count = TROOP(t)->inv_count();
+                Troop* base = g_game->troops;
+                Troop* tr = base + t;
                 int idx = -1;
                 bool found = false;
-                ItemRef* it = &EQUIP(t, 0);
-                for (int k = 0; k < count && !found; k++, it++) {
-                    if (it->item == -1) {
+                int count = tr->inv_count();
+                for (int k = 0; !found && k < count; k++) {
+                    if (tr->inv[k].item == -1) {
                         idx = k;
                         found = true;
                     }
                 }
                 if (idx >= 0)
-                    transfer_slot(&EQUIP(t, idx), 0, idx);
+                    transfer_slot(&((ItemRef*)((char*)base + 0xb4))[t * 0xa1 + idx], 0, idx);
             }
         }
     }
@@ -651,7 +644,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     if (it->type_flags & 0x10100000)
         g_gui.draw_string(g_strtable.lookup("ui_cannot_be_used_on_horseback"), 0.024f, 0xffccbb33, 1);
 
-    g_trial_mode = aux[0][0]; for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++) {
         g_script.trigger_result.store0 = 0;
         g_script.trigger_result.store1 = 0;
         g_script.result_string.assign("");
@@ -796,8 +789,9 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
         if (emit_event(mode, item->item, (int)value)) {
             result = (int)((float)g_script.trigger_result.value * value * 0.01f);
         } else {
+            float v2 = value;
             if (scaled)
-                value = value * g_items[item->item].f21c;
+                v2 = value * g_items[item->item].f21c;
             int row = *(int*)((char*)troops + idx * 0x508 + 0x4c);
             float tf = *(float*)((char*)factions + row * 0x300 + 0x2c);
             // a bad relation weighs 3x, a good one 0.5x (0x512be7..0x512c75)
@@ -812,8 +806,8 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
             tf = (1.0f - tf) * f + 1.0f;
             if (adjust)
                 tf = 1.0f / tf;
-            value = tf * value;
-            result = round_float(&value);
+            float last = tf * v2;
+            result = round_float(&last);
         }
     }
     if (result < 1)
@@ -825,69 +819,47 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
 // @ 0x512c80
 void PartyWindow::transfer_slot(ItemRef* item, int page, int slot)
 {
-    ItemRef tmp;
-    char fl;
-    int sv;
-    int hv;
-    char hf;
-    char buf[0x100];
-
+    if ((locked != 0 && can_transfer(&held, page, slot)) || (locked == 0 && item->item != -1)) {
+        if (!(w04 == 2 && try_place(item, page, slot))) {
     if (locked != 0) {
-        if (can_transfer(&held, page, slot))
-            goto L_cd4;
-        if (locked != 0)
-            goto L_304c;
-    }
-    if (item->item == -1)
-        goto L_303e;
-L_cd4:
-    if (w04 == 2 && try_place(item, page, slot))
-        goto L_303e;
-    if (locked == 0)
-        goto L_de3;
-    if (held.item == item->item && item->item >= 0 && ITYPE(item->item) == 0x12 &&
-        (held.m4 & 0xff) != 0 && (item->m4 & 0xff) != 0) {
-        // same stackable: pour as much as fits from the hand into the held stack
-        g_gui.play_sound();
-        int n = item->m4 & 0xff;
-        int have = held.m4 & 0xff;
-        int room = held.max_amount() - have;
-        if (n > room)
-            n = room;
-        item->reduce(n);
-        held.add_amount(n);
-        if (held.max_amount() - (held.m4 & 0xff) > 0)
+        ItemRef* h = &held;
+        if (h->item == item->item && item->item >= 0 && ITYPE(item->item) == 0x12 &&
+            held.b.amount != 0 && item->b.amount != 0) {
+            // same stackable: pour as much as fits from the hand into the held stack
+            g_gui.play_sound();
+            int n = item->m4 & 0xff;
+            int have = h->m4 & 0xff;
+            int room = h->max_amount() - have;
+            if (n > room)
+                n = room;
+            item->reduce(n);
+            h->add_amount(n);
+            int have2 = h->m4 & 0xff;
+            int left = h->max_amount() - have2;
+            if (left > 0)
+                return;
+            h->item = -1;
+            g_gui.set_drag(0);
+            locked = 0;
             return;
-        held.item = -1;
-        g_gui.set_drag(0);
-        locked = 0;
-        return;
+        }
     }
-L_de3:
     // pick the slot's contents up into the hand
     g_gui.play_sound();
-    tmp = *item;
-    fl = test_slot_flag(page, slot, 1);
-    sv = (page < 2) ? (int)aux[page][slot] : (int)row_value[page - 2][slot];
+    ItemRef tmp = *item;
+    char fl = test_slot_flag(page, slot, 1);
+    int sv = (page < 2) ? (int)aux[page][slot] : (int)row_value[page - 2][slot];
     item->item = -1;
     or_slot_flag(page, slot);
-    if (locked == 0)
-        goto L_f9d;
-    hf = held_flag;
-    hv = held_value;
-    set_slot_flag(page, slot, 1, hf);
-    set_slot_value(page, slot, hf ? hv : 0x1e61);
-    if (w04 == 2) {
-        // trade mode: price the move, unless it stays on the same side
-        if (page == 1) {
-            if (held_page == 1)
-                goto L_f54;
-        } else {
-            if (held_page != 1)
-                goto L_f54;
-        }
-        {
-            int price = hf ? hv : compute_price((int*)&held, held_page);
+    int hv;
+    if (locked != 0) {
+        char hf = held_flag;
+        hv = held_value;
+        set_slot_flag(page, slot, 1, hf);
+        set_slot_value(page, slot, hf ? hv : 0x1e61);
+        if (w04 == 2 && (page == 1 ? held_page != page : held_page == 1)) {
+            // trade mode: price the move, unless it stays on the same side
+            int price = held_flag ? held_value : compute_price((int*)&held, held_page);
             char empty = (held_flag == 0);
             set_slot_flag(page, slot, 1, empty);
             set_slot_value(page, slot, empty ? price : 0x1e61);
@@ -901,24 +873,20 @@ L_de3:
             }
             g_game->emit_event(ev, held.item, held_flag != 0);
         }
+        // hand the held item back to the slot
+        *item = held;
+        or_slot_flag(page, slot);
+        held.item = -1;
+        delete g_gui.drag;
+        g_gui.drag = 0;
+        locked = 0;
     }
-L_f54:
-    // hand the held item back to the slot
-    *item = held;
-    or_slot_flag(page, slot);
-    held.item = -1;
-    delete g_gui.drag;
-    g_gui.drag = 0;
-    locked = 0;
-L_f9d:
     // take the slot's contents into the hand
-    if (tmp.item < 0)
-        return;
-    held = tmp;
-    held_page = page;
-    held_flag = fl;
-    held_value = sv;
-    {
+    if (tmp.item >= 0) {
+        held = tmp;
+        held_page = page;
+        held_flag = fl;
+        held_value = sv;
         int idx = g_game->player;
         if (page == 1 || page == 3) {
             if (fl == 0)
@@ -933,11 +901,12 @@ L_f9d:
         g_gui.drag = m;
         locked = 1;
     }
-    return;
-L_303e:
-    if (locked == 0)
-        return;
-L_304c:
+
+            return;
+        }
+    }
+    if (locked != 0) {
+    char buf[0x100];
     if (page < 2)
         return;
     if (slot == 8 && ITYPE(held.item) == 1) {
@@ -974,6 +943,8 @@ L_304c:
                 ((TroopRec*)((char*)g_game->chars + w14 * 0x508))->display_name()->c_str());
     }
     g_gui.add(tstring(buf), 0xffff7700);
+
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -981,23 +952,23 @@ L_304c:
 char PartyWindow::can_transfer(ItemRef* item, int where, int flag)
 {
     char r = 1;
-    if (where == 0)
-        return r;
-    if (where >= 2) {
-        int idx = (where == 2) ? g_game->player : w14;
-        r = ((TroopRec*)((char*)g_game->chars + idx * 0x508))->fits_slot(item, flag);
-        if (flag != 9)
-            return r;
-        if (w04 != 2 && w04 != 4)
-            return r;
-    } else {
-        if (where != 1)
-            return r;
-        if (w04 != 3)
-            return r;
+    if (where != 0) {
+        if (where >= 2) {
+            int idx = g_game->player;
+            if (where - 2 != 0)
+                idx = w14;
+            r = ((TroopRec*)((char*)g_game->chars + idx * 0x508))->fits_slot(item, flag);
+            if (flag == 9 && (w04 == 2 || w04 == 4)) {
+                char k = ITYPE(item->item);
+                if (k == 1)
+                    r = 0;
+            }
+        } else if (where == 1 && w04 == 3) {
+            char k = ITYPE(item->item);
+            if (k == 1)
+                r = 0;
+        }
     }
-    if (ITYPE(item->item) == 1)
-        r = 0;
     return r;
 }
 
@@ -1063,32 +1034,34 @@ bool PartyWindow::try_place(ItemRef* item, int page, int slot)
         goto done;
 
     if (page == 1) {
+        GameData* gd = g_game;
         int idx = w14;
         int n;
 
-        if (idx == GD_I(0x90) && w04 == 0)
+        if (idx == *(int*)((char*)gd + 0x90) && w04 == 0)
             n = 9;
         else
-            n = g_game->troops[idx].inv_count();
+            n = gd->troops[idx].inv_count();
         for (int i = 0; i < n; i++) {                       // (n <= 0: nothing found, the original returns at once: 0x513554)
-            if (g_game->troops[idx].inv[i].item == id && (flags[1][i] & 1))
+            if (gd->troops[idx].inv[i].item == id && (flags[1][i] & 1))
                 found = true;
         }
     }
     else {
-        int idx = g_game->player;
+        GameData* gd = g_game;
+        int idx = gd->player;
         int n;
 
-        if (idx == GD_I(0x90) && w04 == 0)
+        if (idx == *(int*)((char*)gd + 0x90) && w04 == 0)
             n = 9;
         else
-            n = g_game->troops[idx].inv_count();
+            n = gd->troops[idx].inv_count();
         for (int i = 0; i < n; i++) {                       // (the loop's own entry test is the original's `jle 0x51360b`)
-            if (g_game->troops[idx].inv[i].item == id && (flags[0][i] & 1))
+            if (gd->troops[idx].inv[i].item == id && (flags[0][i] & 1))
                 found = true;
         }
         for (int i = 0; i < 10; i++) {
-            if (g_game->troops[idx].equip[i].item == id && (row_state[0][i] & 1))
+            if (gd->troops[idx].equip[i].item == id && (row_state[0][i] & 1))
                 found = true;
         }
     }

@@ -1137,7 +1137,8 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
         }
         result = objects[0]->clone();
         for (unsigned i = 1; i < objects.size(); i++) {
-            result->append_skinned(objects[i], (const rgl::mat4*)identity_pos((pos*)&m), -1, -1, 0);
+            const rgl::mat4* idm = (const rgl::mat4*)identity_pos((pos*)&m);
+            result->append_skinned(objects[i], idm, -1, -1, 0);
         }
     }
 
@@ -1393,18 +1394,19 @@ static __forceinline float param_value(const char* key)
             found = i;
     }
     if (found >= 0) {
-        char** s = &g_game_vars.entries[found].value.buf;
-        v = (float)atof(*s ? *s : (char*)s);
+        v = (float)atof(g_game_vars.entries[found].value.c_str());
     }
     return v;
 }
-#define MAKE_TAB(name) make_tab(frame, name, x, yy, h)
-static MissionUi* make_tab(NodeA* frame, const char* name, float x, float y, float h)
-{
-    return (MissionUi*)make_short_button(frame, g_strtable.lookup(tstring(name)), x, y, h);
-}
+#define MAKE_TAB(field, name) { tstring n(name); field = (MissionUi*)make_short_button(frame, g_strtable.lookup(n), x, yy, h); }
 
 static __forceinline int hist_n() { if (g_gui.history.begin() == 0) return 0; return (int)g_gui.history.size(); }
+static __forceinline void slider_sync(UiD* flag)
+{
+    float* pf = &flag->screen[flag->f178];
+    float value = (*pf - flag->f17c) * ((flag->v168 - flag->f16c) / (flag->f170 - flag->f16c)) - (flag->f17c / *pf) * 5000.0f;
+    flag->set_value(value);
+}
 // @ 0x4fc820
 void Rec58::build(bool show)
 {
@@ -1450,7 +1452,7 @@ void Rec58::build(bool show)
         if (arr)
             ((TStringArray*)arr)->destroy(3);
     } else {
-        count = (int)g_gui.history.size() * 3;
+        count = hist_n() * 3;
         for (int i = 0; i < count; i += 3) {
             log->name.append(g_gui.history[i / 3]);
             log->name.push_back('\n');
@@ -1473,11 +1475,12 @@ void Rec58::build(bool show)
     UiD* track = make_scroll_track((ContainerBase*)frame, 0.95f, 0.08f, 0.02f, 0.64f);
     {
         float ymin = y < 0.64f ? y : 0.64f;
-        float d = 0.64f - y;
-        if (!(d > 0.0f))
-            d = 0.0f;
-        float a[2] = { 0.03f, d + 0.08f };
-        float b[2] = { 0.915f, ymin };
+        float d = fmax_i(0.64f - y, 0.0f);
+        float a[2], b[2];
+        b[0] = 0.915f;
+        b[1] = ymin;
+        a[0] = 0.03f;
+        a[1] = d + 0.08f;
         slider = make_quest_list((ContainerBase*)bar, a, b, track);
     }
     frame->add_child(slider);
@@ -1485,50 +1488,43 @@ void Rec58::build(bool show)
     float x = param_value("note_button_x");
     float yy = param_value("note_button_y");
     float h = param_value("note_button_h");
-    float dy = param_value("note_button_x_a");
-    tab_log = MAKE_TAB("ui_game_log");
+    float dx = param_value("note_button_x_a");
+    MAKE_TAB(tab_log, "ui_game_log");
     ((UiA*)tab_log)->f184 = 1;
-    yy += dy;
-    tab_recent = MAKE_TAB("ui_recent_messages");
+    x += dx;
+    MAKE_TAB(tab_recent, "ui_recent_messages");
     ((UiA*)tab_recent)->f184 = 1;
-    yy += dy;
-    tab_quests = MAKE_TAB("ui_quests");
+    x += dx;
+    MAKE_TAB(tab_quests, "ui_quests");
     ((UiA*)tab_quests)->f184 = 1;
-    yy += dy;
-    tab_troops = MAKE_TAB("ui_troops2");
+    x += dx;
+    MAKE_TAB(tab_troops, "ui_troops2");
     ((UiA*)tab_troops)->f184 = 1;
-    yy += dy;
-    tab_locations = MAKE_TAB("ui_locations");
+    x += dx;
+    MAKE_TAB(tab_locations, "ui_locations");
     ((UiA*)tab_locations)->f184 = 1;
-    yy += dy;
-    tab_factions = MAKE_TAB("ui_factions");
+    x += dx;
+    MAKE_TAB(tab_factions, "ui_factions");
     ((UiA*)tab_factions)->f184 = 1;
-    yy += dy;
-    tab_return = MAKE_TAB("ui_return");
-    ((UiA*)tab_return)->f184 = 1;
+    { tstring n("ui_return"); tab_return = (MissionUi*)make_short_button(frame, g_strtable.lookup(n), x + dx, yy, h); }
 
-    MissionUi* active;
     if (show) {
         tab_log->set15c(1);
-        active = tab_log;
+        tab_log->flag2_set();
     } else {
         tab_recent->set15c(1);
-        active = tab_recent;
+        tab_recent->flag2_set();
     }
-    active->flag2_set();
 
-    g_gui.dirty = 1;
     {
         MissionUi* root = frame;
+        g_gui.dirty = 1;
         g_gui.objs.push_back(*(MissionUi**)&root);
     }
 
     // the slider's value follows the log's scroll state
-    UiD* flag = (UiD*)((Camera*)slider)->follow[1];
-    float* pf = &flag->screen[flag->f178];
-    float value = (*pf - flag->f17c) * ((flag->v168 - flag->f16c) / (flag->f170 - flag->f16c)) - (flag->f17c / *pf) * 5000.0f;
-    flag->set_value(value);
-    flag->set_key_flags(0x10000);
+    slider_sync((UiD*)((Camera*)slider)->follow[1]);
+    ((UiD*)((Camera*)slider)->follow[1])->set_key_flags(0x10000);
 }
 
 // ---- the tstring array and the map-text list widget -------------------------------------------------------
@@ -1711,6 +1707,7 @@ static __forceinline void ints_push(IntList* v, const int& x)
         ((VecOps<int>*)v)->insert_n(std::vector<int>::iterator(v->last), 1, x);
 }
 
+static __forceinline bool name_is(tstring& s, const tstring& p) { return s.find(p, 0) == 0; }
 // @ 0x4fd700  The map-text row renderer: `this` (the font) in ECX, 17 stack arguments (the first is the caller's 8-byte result block), ret 0x44.
 // It lays the text out in rows, breaking at spaces / tabs / newlines, draws every glyph into the mesh and records, for each <tag=value> span,
 // the rectangles (rects_a: where it opens, rects_b: where it closes) and the tag indices the widget's click test reads.
@@ -1735,7 +1732,6 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
     float sc[2];
     sc[0] = scale[0] / x_ratio * font_scale;                      // the glyph advance scale
     sc[1] = font_scale / y_ratio * scale[1];
-    float widest = *xmin;
 
     int buf[0x2000];
     int total;
@@ -1752,6 +1748,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
         }
     }
 
+    float widest = *xmin;
     int y = 0;
     bool in_tag = false;
     bool tag = false;
@@ -1814,21 +1811,21 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                             name.push_back((char)buf[e]);
                         name.to_lower();
                         int code;
-                        if (name.find(tstring("trp="), 0) == 0) {
+                        if (name_is(name, tstring("trp="))) {
                             code = 1;
                             VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name.find(tstring("fac="), 0) == 0) {
+                        } else if (name_is(name, tstring("fac="))) {
                             code = 2;
                             VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name.find(tstring("p="), 0) == 0) {
+                        } else if (name_is(name, tstring("p="))) {
                             code = 3;
                             VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name.find(tstring("qst="), 0) == 0) {
+                        } else if (name_is(name, tstring("qst="))) {
                             code = 4;
                             VEC_INT_PUSH_BACK(codes, code);
                         }
                         char eq = '=';
-                        int value = atoi(name.substr(name.find(eq, 0) + 1, name.len).c_str());
+                        int value = atol(name.substr(name.find(eq, 0) + 1, name.len).c_str());
                         ints_push(codes, value);
                         rects_a->push_back(pos);
                         ints_push(tags, tag_index);

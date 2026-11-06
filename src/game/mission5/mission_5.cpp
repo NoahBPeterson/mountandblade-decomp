@@ -478,18 +478,6 @@ int ViewObj_s257f0::find_listener_agent()
 #define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
 #undef g_clamp_max
 #define g_clamp_max g_skill_tbl[36].max_rank             // 0x8ee3ac4
-// deque<int>::back(), expanded (the original inlined it here; end() - 1 then the block/offset split)
-struct DequeLayout_s261e0 { int al; int** map; unsigned mapsize; unsigned off; unsigned size; };
-static __forceinline int& deque_back_s261e0(std::deque<int>& dq)
-{
-    DequeLayout_s261e0* d = (DequeLayout_s261e0*)&dq;
-    unsigned o = d->size + d->off - 1;
-    unsigned block = o >> 2;
-    o -= block * 4;
-    if (d->mapsize <= block)
-        block -= d->mapsize;
-    return d->map[block][o];
-}
 
 // @ 0x5261e0
 void MissionBlocker::frame_update(float dt)
@@ -519,7 +507,7 @@ void MissionBlocker::frame_update(float dt)
             if (r >= 1.0f) {
                 g_mission_s261e0->f67f4 = g_mission_s261e0->f67f8;
                 sdt = sdt * g_mission_s261e0->f67f4;
-                *(int*)&g_mission_s261e0->f6810 = 0;
+                g_mission_s261e0->f6810 = 0.0f;
             } else {
                 sdt = (r * g_mission_s261e0->f67f8 + (1.0f - r) * g_mission_s261e0->f67f4) * sdt;
             }
@@ -595,7 +583,7 @@ restore:
             b6 = true;
         } else {
             b6 = false;
-            if (deque_back_s261e0(g_windows.dq) == 0)
+            if (*(g_windows.dq.end() - 1) == 0)
                 b6 = true;
         }
     }
@@ -1336,7 +1324,7 @@ void ViewCtrl_s284a0::update(float dt)
     if (!g_game_s284a0->f1a090) {
         if (g_presentation == 0 || (flags44 & 1)) {
             if (g_mission->f5c >= 0) {
-                Agent_s284a0* a = (Agent_s284a0*)&agr_s284a0(g_mission->f5c);
+                Agent* a = &agr_s284a0(g_mission->f5c);
                 ItemRef_s284a0 w0 = a->slot_pair(0);
                 ItemRef_s284a0 w1 = a->slot_pair(1);
                 bool hand0;
@@ -1346,9 +1334,9 @@ void ViewCtrl_s284a0::update(float dt)
                     int t = g_items_s284a0[w0.item].type_flags & 0xff;
                     hand0 = (t == 2 || t == 3 || t == 4);
                 }
-                if (((hand0 && a->f560c == 1 && g_options.ctl_mode > 0 && a->f100 == a->f55ec) ||
-                     (w1.item < 0 && a->f5610 > 0 && g_options.stick_mode > 0 && a->f100 == a->f5614)) &&
-                    a->f118 < 0.6f)
+                if (((hand0 && a->active == 1 && g_options.ctl_mode > 0 && a->anim[1].cur == a->snd_a) ||
+                     (w1.item < 0 && a->f5610 > 0 && g_options.stick_mode > 0 && a->anim[1].cur == a->f5614)) &&
+                    a->anim[1].scale < 0.6f)
                     k *= 0.1f;
             }
         }
@@ -1396,7 +1384,7 @@ void ViewCtrl_s284a0::update(float dt)
         return;
 
     // ---- build the view frame and hand its forward row to the local agent ----------------------------
-    Agent_s284a0* a = (Agent_s284a0*)&agr_s284a0(g_mission->f5c);
+    Agent* a = &agr_s284a0(g_mission->f5c);
     {
         matrix m;
         identity3((rgl::mat3*)&m);
@@ -1407,12 +1395,12 @@ void ViewCtrl_s284a0::update(float dt)
         if (g_game_keys.entry[13][0] >= 0 && g_keyboard.down[g_game_keys.entry[13][0]] != 0)
             looking = true;
         if ((g_game_keys.entry[13][1] < 0 || g_keyboard.down[g_game_keys.entry[13][1]] == 0) && !looking)
-            a->dir55d8 = m.f;
+            (*(vector4*)&a->fx) = m.f;
     }
 
     if (snap < 5) {
-        const vector4& d = a->dir;
-        a->dir55d8 = d;
+        const vector4& d = a->vel;
+        (*(vector4*)&a->fx) = d;
         float nx = -d.x;
         float ang = (float)atan2(nx, d.y);
         int n = snap + 1;
@@ -1429,7 +1417,7 @@ void ViewCtrl_s284a0::update(float dt)
         if (g_game_keys.clicked(5))
             a->in_flags |= 0x100000;
 
-        if (a->mount_id >= 0) {
+        if (a->f2c >= 0) {
             if (g_game_keys.clicked(0))
                 a->in_flags |= 0x80000;
             if (g_game_keys.is_down(0))
@@ -1455,7 +1443,7 @@ void ViewCtrl_s284a0::update(float dt)
                 a->in_flags |= 8;
             if (g_game_keys.clicked(4) && mode == 2 && aim_valid != 0) {
                 a->in_flags |= 0x20000;
-                a->target_id = target;
+                a->target = target;
             }
         }
 
@@ -1473,7 +1461,7 @@ void ViewCtrl_s284a0::update(float dt)
         } else if (g_game_keys.clicked(9)) {
             a->cycle_slot(1);
         } else if (g_game_keys.clicked(10)) {
-            a->wield_a = -1;
+            a->wield[0] = -1;
             a->on_wield_reset();
         }
     }
@@ -1952,8 +1940,8 @@ void Screen_s29ec0::f_529ec0()
                 contact c;
                 if (shape_contact_count((shape_base*)found[i], &cap, 1, &c)) {
                     vector4 hit = c.point;
-                    front = hit - pos;
-                    float len = front.normalize();
+                    vector4 d = hit - pos;
+                    float len = d.normalize();
                     if (len < best) {
                         best = len;
                         mode = -1;
@@ -1969,21 +1957,21 @@ void Screen_s29ec0::f_529ec0()
     cap.radius = 0.1f;
     {
         vector4 t = cap.p1 - cap.p0;
-        float al = (float)sqrt(t.x * t.x + t.z * t.z + t.y * t.y);
+        float al = (float)sqrt(t.y * t.y + t.z * t.z + t.x * t.x);
         if (al > 1e-10f) {
             float inv = 1.0f / al;
-            t.x = t.x * inv;
-            t.y = t.y * inv;
-            t.z = t.z * inv;
+            t.x = inv * t.x;
+            t.y = inv * t.y;
+            t.z = inv * t.z;
         } else {
             t.x = 0.0f;
             t.y = 1.0f;
             t.z = 0.0f;
         }
         vector4 s = t * 0.1f;
-        cap.p0.x += s.x;
-        cap.p0.y += s.y;
-        cap.p0.z += s.z;
+        cap.p0.x = s.x + cap.p0.x;
+        cap.p0.y = s.y + cap.p0.y;
+        cap.p0.z = s.z + cap.p0.z;
     }
     best += 1.0f;
 
@@ -1996,8 +1984,8 @@ void Screen_s29ec0::f_529ec0()
         if (!shape_contact_count((shape_base*)e->shape, &cap, 1, &c))
             continue;
 
-        front = c.point - pos;
-        float len = len_xzy_s29ec0(front);
+        vector4 d = c.point - pos;
+        float len = len_xzy_s29ec0(d);
         if (!(len <= best))        // 0x52a2d1: test ah,0x41 / jp -- skips on len > best and on NaN
             continue;
 
@@ -2017,7 +2005,7 @@ void Screen_s29ec0::f_529ec0()
                 if (g_items_s29ec0[a->item.item].type_flags == 1 && a->f30 == -1 && a->f14 == 1 && a->f5830 == 2) {
                     target = e->id;
                     mode = 2;
-                    best = front.out_length();
+                    best = d.out_length();
                     vector4 r = e->pos - pos;
                     second = r.out_length();   // 0x52a420: call 0x407c50 on the second vector as well
                 }
@@ -2912,7 +2900,7 @@ __declspec(noinline) void Terrain::clear_brushed()
 #undef g_game_c
 #define g_game_c ((char*)g_game)
 // the element's lazy value block: read with a default, store with the allocate-on-positive rule (expanded at every use)
-static __forceinline float elem_get_s2c2b0(BrushElem_s2c2b0* E, const int* c)
+static inline float elem_get_s2c2b0(BrushElem_s2c2b0* E, const int* c)
 {
     float r = 0.0f;
     if (E->v)
@@ -2933,7 +2921,9 @@ static __forceinline void elem_set_s2c2b0(BrushElem_s2c2b0* E, const int* c, flo
 // @ 0x52c2b0
 void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB)
 {
-    int*& cell_r = cell; int*& pidx_r = pidx; int*& op_r = op; int*& fA_r = fA; float*& amt_r = amt;   // these parameters escape (the caller keeps its locals in private slots: 0x52bf40)
+    // Stand-ins, no code: 0x52bf40 needs brush's cell, pidx, op and fA to count as escaping (without them it keeps its locals in shared slots).
+    // An opaque brush gives 0x52bf40 the same bytes, so the original's escape was real or the callee was opaque; its real form is not known yet.
+    int*& cell_r = cell; int*& pidx_r = pidx; int*& op_r = op; int*& fA_r = fA;
     int stampbase = 0;
 #define MODE_S2C2B0 (*(int*)(g_game_c + 0x1a094))
     float sel;
@@ -2989,7 +2979,8 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
             if (1.0f < nv) nv = 1.0f;
 
             bool any = false;
-            for (int i = *pidx + 1; i < *elems - 2; i++) {
+            int n = *elems - 2;
+            for (int i = *pidx + 1; i < n; i++) {
                 if (elem_get_s2c2b0(&((BrushElem_s2c2b0*)((char*)elems + 0xc))[i], cell) > 0.98f)
                     any = true;
             }

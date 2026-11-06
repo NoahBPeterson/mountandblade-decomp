@@ -16,8 +16,10 @@
 ../src/game/agent4/agent_logic.cpp  ?drop_held@Agent@@QAEXXZ  004529e0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?layout_clear@Font@@QAEPAUvector4@rgl@@PAU23@PBUtstring@@PBU23@PBMPAUmesh@3@PBH33I@Z  00452bb0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?set_visible@Skeleton@@QAEXD@Z  00452f80  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?log_message@@YGXPBUtstring@@H@Z  00453020  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?log_message@MissionLog@@QAEXPBUtstring@@M@Z  00453020  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?on_removed@Agent@@QAEXXZ  00454320  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?spawn_corpse@Agent@@QAEXXZ  004554c0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?note_blow@Agent@@QAEXPAUBlow@@@Z  00457af0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?tick@Agent@@QAEXXZ  0045ff30  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?update@Agent@@QAEXM@Z  0045f660  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?add_quad@mesh@rgl@@QAEXPBUvector4@2@0PBUvec2@@1PBI@Z  0044e970  /O2 /MT /Gy /TP

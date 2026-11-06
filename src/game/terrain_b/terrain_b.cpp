@@ -68,6 +68,31 @@
 using rgl::vector4;
 using rgl::matrix;
 
+// a x b with the first term's factors the other way round (the x87 order of the billboard's forward vector)
+static __forceinline vector4 cross_ba(const vector4& a, const vector4& b)
+{
+    vector4 r;
+    r.x = b.z * a.y - a.z * b.y;
+    r.y = a.z * b.x - a.x * b.z;
+    r.z = a.x * b.y - a.y * b.x;
+    return r;
+}
+
+static inline void frame_set(frame4& f, const rot3& r, const vector4& o)
+{
+    f.rot = r;
+    f.o = o;
+}
+
+// the texture-space bias of the shadow map; arguments are evaluated right to left, and the original computes the x offset first
+static __forceinline D3DXMATRIX shadow_bias(float oy, float ox)
+{
+    return D3DXMATRIX(0.5f, 0.0f, 0.0f, 0.0f,
+                      0.0f, -0.5f, 0.0f, 0.0f,
+                      0.0f, 0.0f, 1.0f, 0.0f,
+                      ox, oy, 0.0f, 1.0f);
+}
+
 // @ 0x46e590
 void render_batch::render_scene(scene* sc)
 {
@@ -132,10 +157,10 @@ void render_batch::render_scene(scene* sc)
                 float m = pc.y > pc.z ? pc.y : pc.z;
                 if (pc.x > m)
                     m = pc.x;
-                m = 1.0f / m;
-                pc.x *= m;
-                pc.y *= m;
-                pc.z *= m;
+                double k = 1.0f / m;
+                pc.x = (float)(pc.x * k);
+                pc.y = (float)(pc.y * k);
+                pc.z = (float)(pc.z * k);
             }
             g_effect->SetValue("vPointLightColor", &pc, 16);
             g_effect->SetValue("vSkyLightDir", &sky_dir, 12);
@@ -175,12 +200,8 @@ void render_batch::render_scene(scene* sc)
                 g_effect->SetTexture("shadowmap_texture", t);
                 D3DXMATRIX proj = scene_sky(sc)->shadow_cam.projection();
                 D3DXMATRIX view = scene_sky(sc)->shadow_cam.view_matrix();
-                D3DMATRIX bias = { 0.5f, 0.0f, 0.0f, 0.0f,
-                                   0.0f, -0.5f, 0.0f, 0.0f,
-                                   0.0f, 0.0f, 1.0f, 0.0f,
-                                   0.5f / (float)scene_sky(sc)->shadow->width + 0.5f,
-                                   0.5f / (float)scene_sky(sc)->shadow->height + 0.5f, 0.0f, 1.0f };
-                D3DXMATRIX svp = view * proj * *(D3DXMATRIX*)&bias;
+                D3DXMATRIX svp = view * proj * shadow_bias(0.5f / (float)scene_sky(sc)->shadow->height + 0.5f,
+                                                           0.5f / (float)scene_sky(sc)->shadow->width + 0.5f);
                 g_effect->SetMatrixTranspose("matSunViewProj", &svp);
             }
         } else {
@@ -239,8 +260,7 @@ void render_batch::render_scene(scene* sc)
     {
         frame4 b;
         rot3 idt;
-        b.rot = *(rot3*)identity3((mat3*)&idt);
-        b.o = vector4(0.0f, 0.0f, 0.0f);
+        frame_set(b, *(rot3*)identity3((mat3*)&idt), vector4(0.0f, 0.0f, 0.0f));
         float ang = 1.5707964f;
         ((rgl::matrix*)&b)->rotate_about_s(&ang);
         a = *(frame4*)&(*(rgl::matrix*)&b * *(rgl::matrix*)&a);
@@ -305,28 +325,7 @@ void render_batch::render_scene(scene* sc)
                 g_render.dev->SetIndices(ib.bufs[ibk].ib);
             }
             material* mat;
-            if (sc->f162 || sc->f164) {
-                skin_calls* part = (skin_calls*)it->m->res;
-                if (sc->f164) {
-                    if (part->shader->flags20 & 0x80000000)
-                        mat = sh3;
-                    else
-                        mat = sh2;
-                } else {
-                    if (part->shader->flags20 & 0x80000000)
-                        mat = sh1;
-                    else
-                        mat = sh0;
-                }
-                texture* t = part->tex[0];
-                if (t) {
-                    IDirect3DBaseTexture9* cur = tex_current(t, 0.0f);
-                    if (g_render.tex_cache[0] != cur) {
-                        g_render.tex_cache[0] = cur;
-                        g_effect->SetTexture("diffuse_texture", cur);
-                    }
-                }
-            } else {
+            if (!sc->f162 && !sc->f164) {
                 skin_calls* part = (skin_calls*)it->m->res;
                 if ((skin_calls*)cur_part != part) {
                     cur_part = (skin*)part;
@@ -399,8 +398,9 @@ void render_batch::render_scene(scene* sc)
                 if (sc->f160 && !(mat->flags20 & 0x80)) {
                     float lk[4];
                     int li[4];
+                    unsigned i = 0;
                     int n = 0;
-                    for (unsigned i = 0; i < scene_lights(sc).size() && n < 10; i++) {
+                    for (; i < scene_lights(sc).size() && n < 10; i++) {
                         if (scene_lights(sc)[i]->type == 0) {
                             mesh* im = it->m;
                             float dx = scene_lights(sc)[i]->position.x - im->m194.o.x;
@@ -409,9 +409,9 @@ void render_batch::render_scene(scene* sc)
                             float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
                             if (dist - im->f44 < scene_lights(sc)[i]->radius) {
                                 float key = (scene_lights(sc)[i]->diffuse.z + scene_lights(sc)[i]->diffuse.y + scene_lights(sc)[i]->diffuse.x) / dist;
+                                bool done = false;
                                 int p = nsel;
                                 int j = nsel - 1;
-                                bool done = false;
                                 do {
                                     if (j < 0)
                                         break;
@@ -468,6 +468,27 @@ void render_batch::render_scene(scene* sc)
                     }
                 }
                 ((mi_ops*)it->m)->setup_material();
+            } else {
+                skin_calls* part = (skin_calls*)it->m->res;
+                if (sc->f164) {
+                    if (part->shader->flags20 & 0x80000000)
+                        mat = sh3;
+                    else
+                        mat = sh2;
+                } else {
+                    if (part->shader->flags20 & 0x80000000)
+                        mat = sh1;
+                    else
+                        mat = sh0;
+                }
+                texture* t = part->tex[0];
+                if (t) {
+                    IDirect3DBaseTexture9* cur = tex_current(t, 0.0f);
+                    if (g_render.tex_cache[0] != cur) {
+                        g_render.tex_cache[0] = cur;
+                        g_effect->SetTexture("diffuse_texture", cur);
+                    }
+                }
             }
             if (!tex_ok)
                 goto next_item;
@@ -531,7 +552,7 @@ void render_batch::render_scene(scene* sc)
                     w.o = it->m->m194.o;
                     w.rot.u = it->m->m194.u;
                     w.rot.s = sc->fr.m.s;
-                    w.rot.f = cross_i(w.rot.u, w.rot.s);
+                    w.rot.f = cross_ba(w.rot.u, w.rot.s);
                     float len = (float)sqrt(w.rot.u.z * w.rot.u.z + w.rot.u.y * w.rot.u.y + w.rot.u.x * w.rot.u.x);
                     if (len > 1e-10f) {
                         len = 1.0f / len;
@@ -565,10 +586,9 @@ void render_batch::render_scene(scene* sc)
             }
             if (cur_mat->flags20 & 0x80000000) {
                 if (it->m->p220) {
-                    void* bo = (void*)it->m->f224;
-                    if (g_render.bone_origin_cache != bo) {
-                        g_render.bone_origin_cache = bo;
-                        g_effect->SetVectorArray("matBoneOriginArray", ((vec_arr*)bo)->data, ((vec_arr*)bo)->count);
+                    if (g_render.bone_origin_cache != (void*)it->m->f224) {
+                        g_render.bone_origin_cache = (void*)it->m->f224;
+                        g_effect->SetVectorArray("matBoneOriginArray", ((vec_arr*)it->m->f224)->data, ((vec_arr*)it->m->f224)->count);
                     }
                     g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)it->m->p220, it->m->f228);
                 } else {
@@ -628,18 +648,18 @@ void PolyMesh::compute_face_normals()
     vector4 t;                              // the normal before it is stored (its w lane is never written)
     vector4 b;
     for (unsigned i = 0; i < faces.size(); i++) {
-        MPoly& f = vat(faces, i);
-        float ax = vat(verts, f.vid[2]).pos.x - vat(verts, f.vid[0]).pos.x;
-        float ay = vat(verts, f.vid[2]).pos.y - vat(verts, f.vid[0]).pos.y;
-        float az = vat(verts, f.vid[2]).pos.z - vat(verts, f.vid[0]).pos.z;
-        b.x = vat(verts, f.vid[1]).pos.x - vat(verts, f.vid[0]).pos.x;
-        b.y = vat(verts, f.vid[1]).pos.y - vat(verts, f.vid[0]).pos.y;
-        b.z = vat(verts, f.vid[1]).pos.z - vat(verts, f.vid[0]).pos.z;
+        MPoly& f = faces.begin()[i];
+        float ax = verts.begin()[f.vid[2]].pos.x - verts.begin()[f.vid[0]].pos.x;
+        float ay = verts.begin()[f.vid[2]].pos.y - verts.begin()[f.vid[0]].pos.y;
+        float az = verts.begin()[f.vid[2]].pos.z - verts.begin()[f.vid[0]].pos.z;
+        b.x = verts.begin()[f.vid[1]].pos.x - verts.begin()[f.vid[0]].pos.x;
+        b.y = verts.begin()[f.vid[1]].pos.y - verts.begin()[f.vid[0]].pos.y;
+        b.z = verts.begin()[f.vid[1]].pos.z - verts.begin()[f.vid[0]].pos.z;
         t.x = b.y * az - b.z * ay;
         t.y = b.z * ax - az * b.x;
         t.z = ay * b.x - b.y * ax;
         f.normal = t;
-        MPoly& g = vat(faces, i);
+        MPoly& g = faces.begin()[i];
         float len = g.normal.length();
         if (len > 1e-10f) {
             float inv = 1.0f / len;
@@ -657,25 +677,25 @@ void PolyMesh::compute_edge_creases()
 {
     vector4 d, s, n;                       // direction of the edge, projected part, perpendicular part
     for (unsigned i = 0; i < edges.size(); i++) {
-        MEdge* e = &vat(edges, i);
-        MVert& a = vat(verts, e->v0);
-        MVert& b = vat(verts, e->v1);
+        MEdge* e = &edges.begin()[i];
+        MVert& a = verts.begin()[e->v0];
+        MVert& b = verts.begin()[e->v1];
         d.x = b.pos.x - a.pos.x; d.y = b.pos.y - a.pos.y; d.z = b.pos.z - a.pos.z;
         float mz = e->mid.z;
         float len = d.length();
         if (len > 1e-10f) {
             float inv = 1.0f / len;
-            d.x = d.x * inv; d.y = d.y * inv; d.z = d.z * inv;
+            d.x = inv * d.x; d.y = inv * d.y; d.z = inv * d.z;
         } else {
             d.x = 0.0f; d.y = 1.0f; d.z = 0.0f;
         }
         for (int j = 0; j < e->nfaces; j++) {
-            MPoly& f = vat(faces, e->face[j]);
+            MPoly& f = faces.begin()[e->face[j]];
             if (f.centroid.z > mz) {
                 float k = (d.x * f.normal.x + (d.y * f.normal.y + d.z * f.normal.z)) * 0.2f;
-                s.x = d.x * k; s.y = d.y * k; s.z = d.z * k;
+                s.x = k * d.x; s.y = k * d.y; s.z = k * d.z;
                 n.x = f.normal.x - s.x; n.y = f.normal.y - s.y; n.z = f.normal.z - s.z;
-                float l2 = n.length();
+                float l2 = (float)sqrt((n.y * n.y + n.x * n.x) + n.z * n.z);
                 e->crease[j] = (l2 > 1e-10f) ? (1.0f / l2) * n.z : 0.0f;
             } else {
                 e->crease[j] = 1.0f;
@@ -688,13 +708,11 @@ void PolyMesh::compute_edge_creases()
 void PolyMesh::build_adjacency()
 {
     for (unsigned i = 0; i < edges.size(); i++)
-        vat(edges, i).nfaces = 0;
+        edges.begin()[i].nfaces = 0;
     for (unsigned i = 0; i < faces.size(); i++) {
-        MPoly* f = &vat(faces, i);
-        for (int j = 0; j < f->n; j++) {
-            vat(edges, f->eid[j]).face[vat(edges, f->eid[j]).nfaces] = i;
-            vat(edges, vat(faces, i).eid[j]).nfaces++;
-            f = &vat(faces, i);
+        for (int j = 0; j < faces.begin()[i].n; j++) {
+            edges.begin()[faces.begin()[i].eid[j]].face[edges.begin()[faces.begin()[i].eid[j]].nfaces] = i;
+            edges.begin()[faces.begin()[i].eid[j]].nfaces++;
         }
     }
 }

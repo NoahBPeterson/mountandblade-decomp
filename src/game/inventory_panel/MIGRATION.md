@@ -21,9 +21,9 @@ the default flags `/O2 /MT /Gy /TP` (no per-row flags).
 | inventory_panel.cpp | 0x50fe20..0x513710 | 17 | 9 | 9 | 0 | 0 | 8 | 0 | merged |
 | mission_ctx.cpp | 0x513710..0x516ac0 | 27 | 8 | 8 | 0 | 0 | 19 | 0 | merged |
 | game_tick.cpp | 0x516ac0..0x5191e0 | 19 (18 + 1 padding row) | 7 | 7 | 0 | 0 | 12 | 0 | merged |
-| map_update.cpp | 0x5191e0..0x51a2d0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | carried over |
-| map_picker.cpp | 0x51a2d0..0x51abd0 | 7 | 2 | 2 | 0 | 0 | 5 | 0 | carried over |
-| map_info.cpp | 0x51abd0..0x51be20 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | carried over |
+| map_panel.cpp (was map_update.cpp) | 0x5191e0..0x51a2d0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | carried over |
+| map_panel.cpp (was map_picker.cpp) | 0x51a2d0..0x51abd0 | 7 | 2 | 2 | 0 | 0 | 5 | 0 | carried over |
+| map_panel.cpp (was map_info.cpp) | 0x51abd0..0x51be20 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | carried over |
 | map_tooltip.cpp | 0x51be20..0x51c5a0 | 3 | 1 | 1 | 0 | 0 | 2 | 0 | carried over |
 | **total** | | **118** | **44** | **44** | 0 | 0 | **74** | 0 | |
 
@@ -86,7 +86,7 @@ sequence, so they prove nothing either.
 - **0x50d3d9 / 0x50d473** are catch funclets of the `_Insert_n` instantiation at 0x50d260 (index artifacts, not
   functions): `widget_text.nonmatching.txt` keeps them as in the slice.
 - `GameDataV::f516ac0` of `inv_common.h` is `GameG::tick` (0x516ac0, game_tick.cpp), declared there for 0x4xxxxx callers.
-  `mission_ctx.cpp` still calls the 0x5191e0 function `f5191e0()` (the map-screen `update_target`, `map_update.cpp`).
+  `mission_ctx.cpp` still calls the 0x5191e0 function `f5191e0()` (the map-screen `update_target`, `map_panel.cpp`).
 
 ## Canonical headers
 
@@ -131,7 +131,7 @@ PASS 10, WEAK 17, UNSUPPORTED 46, FAIL 1 (each row's verdict is appended to its 
   `party_at(&parties, id)` without the `PartyMgr::index_of(id)` call the original makes (FAIL, 191/568 inputs
   faulting at the first page lookup). Fixed (`party_at(&parties, parties.index_of(id))`, game_tick.cpp); the module now
   gets WEAK/UNSUPPORTED only.
-- **0x5191e0 `update_target` (map_update.cpp) is FAIL under the sweep's seed and unresolved**: the source is the
+- **0x5191e0 `update_target` (map_panel.cpp, then map_update.cpp) is FAIL under the sweep's seed and unresolved**: the source is the
   slice's, verbatim, which is WEAK (0 mismatches over 480 and 537 valid inputs) with two other seeds. One signature,
   `call #16 (depth 1)`: the original reaches `PartyMgr::index_of` where the source reaches `Party::reissue_order`;
   `--replay` of the saved input does not reproduce it. Recorded in the row; the owner of the map screen class
@@ -142,10 +142,16 @@ PASS 10, WEAK 17, UNSUPPORTED 46, FAIL 1 (each row's verdict is appended to its 
 ### Not done / open
 
 - Modules `char_sheet`, `char_window`, `view_open`, `note_window`, `widget_text`, `module_files`, `game_app`,
-  `loading_screen`, `skeleton_load`, `map_update`, `map_picker`, `map_info`, `map_tooltip` (45 rows) are slice sources
+  `loading_screen`, `skeleton_load`, `map_panel` (merged from map_update, map_picker, map_info), `map_tooltip` (45 rows) are slice sources
   carried over, not merged onto the canonical headers. Their classes (`MapPanel` / `MapScreen` / `Camera` = one
   world-map screen, `CharSheet` / `char_window`, `EditorPanel` at 0x8ee3c48, `GameApp`, `LoadingScreen`) remain
   defined locally; merging them with `Screen` of `mission_ctx.h` and with `src/game/char_sheet/` is future work.
 - No nonmatching function was improved except `place_slot_mesh` (4241 -> 4210); `train_troops` is 3 bytes worse
   than its slice (2335 vs 2332; the code is 16 bytes smaller).
 - 0x51c5a0 (`Panel::update`) belongs to the next object (see Boundaries).
+
+### 0x5191e0..0x51be20 merged into map_panel.cpp
+
+map_update.cpp, map_picker.cpp and map_info.cpp are one file, in address order. 0x5191e0 calls 0x51a2d0, 0x51a3a0, 0x51a420 and 0x51abd0, and
+the block has no other callers except 0x514d40 (the root), 0x52bdb0 and 0x529ec0. map_tooltip.cpp (0x51be20..0x51c5a0) stays apart: update
+0x51abd0 compiles right only when 0x51be20 and 0x51be60 are opaque (visible, cl inlines dist_is_zero and party_counts no longer escapes its locals).

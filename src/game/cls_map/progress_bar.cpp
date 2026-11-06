@@ -926,10 +926,6 @@ void gui_manager::update(float dt)
 // Clears the owner mesh and, for every point record of the shape, builds a four-point spike: the record's position becomes the origin of
 // a local frame (identity_pos) and four points are placed in that frame; four triangles then close them into a tetrahedron. Width and
 // colour come from the shape's mode (+0x78) and the record flag; the owner's two dirty flags (+0x138 / +0x164) are set once at the end.
-static inline rgl::vector4 operator+(const rgl::vector4& a, const rgl::vector4& b)
-{
-    return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z);
-}
 
 // @ 0x4e65e0
 void Shape::build_spikes(rgl::mesh* owner)
@@ -941,11 +937,9 @@ void Shape::build_spikes(rgl::mesh* owner)
 
     int off = 0;
     for (unsigned i = 0;; ++i, off += 0x18) {
-        if (pts == 0)
+        if (i >= pts.size())
             break;
-        if (i >= (unsigned)(((char*)pts_end - (char*)pts) / 0x18))
-            break;
-        ShapePt* e = (ShapePt*)((char*)pts + off);
+        ShapePt* e = &pts[i];
 
         float w;
         unsigned color;
@@ -1008,87 +1002,83 @@ void Shape::build_spikes(rgl::mesh* owner)
 // ---- 0x4e6a70: Shape::build_ribbons -----------------------------------------------------------------------------------------------------------
 // Walks the shape's 0x34-byte segment records and, for each, adds two rows of four points offset along the segment normal, then stitches
 // them with add_face (the segment's two end points come from the point records).
+static __forceinline rgl::vector4 xf_inl(const rgl::matrix& m, const rgl::vector4& p)
+{
+    return rgl::vector4(m.s.x * p.x + m.f.x * p.y + m.u.x * p.z + m.o.x,
+                        m.s.y * p.x + m.f.y * p.y + m.u.y * p.z + m.o.y,
+                        m.s.z * p.x + m.f.z * p.y + m.u.z * p.z + m.o.z);
+}
+static __forceinline float normalize_inl(rgl::vector4& v)
+{
+    float s = v.x * v.x;
+    s += v.z * v.z;
+    s += v.y * v.y;
+    float len = (float)sqrt(s);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        v.x *= inv; v.y *= inv; v.z *= inv;
+    } else {
+        v.x = 0.0f; v.y = 1.0f; v.z = 0.0f;
+    }
+    return len;
+}
+static __forceinline rgl::vector4 cross_inl(const rgl::vector4& a, const rgl::vector4& b)
+{
+    return rgl::vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
+
 // @ 0x4e6a70
 void Shape::build_ribbons(rgl::mesh* owner)
 {
     owner->clear_geometry();
-    int elem_off = 0;
-    for (unsigned i = 0; segs != 0 && i < (unsigned)(segs_end - segs); i++) {
-        ShapeSeg* e = (ShapeSeg*)((char*)segs + elem_off);
+    for (unsigned i = 0; i < segs.size(); ++i) {
+        ShapeSeg& e = segs[i];
         float w;
         unsigned color;
-        if (mode == 1) {
-            if (e->flag != 0) {
-                w = 2.0f;
-                color = 0xaaff5555;
-            } else {
-                w = 1.4f;
-                color = 0xaa66cc55;
-            }
+        if (mode == 1 && e.flag != 0) {
+            w = 2.0f;
+            color = 0xaaff5555;
+        } else if (mode == 1) {
+            w = 1.4f;
+            color = 0xaa66cc55;
         } else {
             w = 1.0f;
             color = 0x77668866;
         }
-        const rgl::vector4& p0 = pts[e->a].pos;
-        const rgl::vector4& p1 = pts[e->b].pos;
+        const rgl::vector4& p0 = pts[e.a].pos;
+        const rgl::vector4& p1 = pts[e.b].pos;
         rgl::vector4 d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
-        float len = d.length();
-        if (len > 1e-10f) {
-            float inv = 1.0f / len;
-            d.x *= inv; d.y *= inv; d.z *= inv;
-        } else {
-            d.x = 0.0f; d.y = 1.0f; d.z = 0.0f;
-        }
-        // perp = d x (0,0,1) normalised (normalize leaves (0,1,0) if the length is tiny); n = perp x d (the side vector)
-        rgl::vector4 perp(d.y - 0.0f * d.z, 0.0f * d.z - d.x, 0.0f * d.x - 0.0f * d.y);
-        float plen = perp.length();
-        if (plen > 1e-10f) {
-            float pinv = 1.0f / plen;
-            perp.x *= pinv; perp.y *= pinv; perp.z *= pinv;
-        } else {
-            perp.x = 0.0f; perp.y = 1.0f; perp.z = 0.0f;
-        }
-        rgl::vector4 n(perp.y * d.z - perp.z * d.y, perp.z * d.x - perp.x * d.z, perp.x * d.y - perp.y * d.x);
-        // Six vertices around the segment's start point p0: perp * pa + n * nb + d * along, where the 3 at the start end are
-        // pushed 0.3 along d and the 3 at the far end (len - 0.3 along d) are the arrow tail (all offsets scale with the width w).
-        float near_d = 0.3f, far_d = len - 0.3f;
-        float pa0 = w * 0.0f, pa1 = w * -0.07f, pa2 = w * 0.07f;
-        float nb0 = w * 0.08f, nb1 = w * -0.2f, nb2 = w * -0.2f;
+        float len = normalize_inl(d);
+        rgl::matrix m;
+        m.o = p0;
+        m.f = d;
+        m.s = cross_inl(m.f, rgl::vector4(0.0f, 0.0f, 1.0f));
+        normalize_inl(m.s);
+        m.u = cross_inl(m.s, m.f);
+        // Six vertices: three at the start of the segment and three at the far end, in the segment's frame (all offsets scale with the width)
         rgl::vector4 v[6];
-        v[0].x = p0.x + perp.x * pa0 + n.x * nb0 + d.x * pa0 + d.x * near_d;
-        v[0].y = p0.y + perp.y * pa0 + n.y * nb0 + d.y * pa0 + d.y * near_d;
-        v[0].z = p0.z + perp.z * pa0 + n.z * nb0 + d.z * pa0 + d.z * near_d;
-        v[1].x = p0.x + perp.x * pa1 + n.x * nb1 + d.x * pa0 + d.x * near_d;
-        v[1].y = p0.y + perp.y * pa1 + n.y * nb1 + d.y * pa0 + d.y * near_d;
-        v[1].z = p0.z + perp.z * pa1 + n.z * nb1 + d.z * pa0 + d.z * near_d;
-        v[2].x = p0.x + perp.x * pa2 + n.x * nb1 + d.x * pa0 + d.x * near_d;
-        v[2].y = p0.y + perp.y * pa2 + n.y * nb1 + d.y * pa0 + d.y * near_d;
-        v[2].z = p0.z + perp.z * pa2 + n.z * nb1 + d.z * pa0 + d.z * near_d;
-        v[3].x = p0.x + perp.x * pa0 + n.x * nb0 + d.x * pa0 + d.x * far_d;
-        v[3].y = p0.y + perp.y * pa0 + n.y * nb0 + d.y * pa0 + d.y * far_d;
-        v[3].z = p0.z + perp.z * pa0 + n.z * nb0 + d.z * pa0 + d.z * far_d;
-        v[4].x = p0.x + perp.x * pa1 + n.x * nb1 + d.x * pa0 + d.x * far_d;
-        v[4].y = p0.y + perp.y * pa1 + n.y * nb1 + d.y * pa0 + d.y * far_d;
-        v[4].z = p0.z + perp.z * pa1 + n.z * nb1 + d.z * pa0 + d.z * far_d;
-        v[5].x = p0.x + perp.x * pa2 + n.x * nb2 + d.x * pa0 + d.x * far_d;
-        v[5].y = p0.y + perp.y * pa2 + n.y * nb2 + d.y * pa0 + d.y * far_d;
-        v[5].z = p0.z + perp.z * pa2 + n.z * nb2 + d.z * pa0 + d.z * far_d;
+        v[0] = xf_inl(m, rgl::vector4(w * 0.0f, w * 0.0f, w * 0.08f)) + m.f * 0.3f;
+        v[1] = xf_inl(m, rgl::vector4(w * -0.07f, w * 0.0f, w * -0.2f)) + m.f * 0.3f;
+        v[2] = xf_inl(m, rgl::vector4(w * 0.07f, w * 0.0f, w * -0.2f)) + m.f * 0.3f;
+        v[3] = xf_inl(m, rgl::vector4(w * 0.0f, w * 0.0f, w * 0.08f)) + m.f * (len - 0.3f);
+        v[4] = xf_inl(m, rgl::vector4(w * -0.07f, w * 0.0f, w * -0.2f)) + m.f * (len - 0.3f);
+        v[5] = xf_inl(m, rgl::vector4(w * 0.07f, w * 0.0f, w * -0.2f)) + m.f * (len - 0.3f);
 
         int idx[6];
         vec2 uv;
         uv.x = 0.0f;
         uv.y = 0.0f;
         int zero = 0;
+        unsigned c = color;
         rgl::vector4 nn(0.0f, 0.0f, 1.0f);
         for (int k = 0; k < 6; k++) {
             int p = owner->add_point(&v[k]);
-            idx[k] = owner->add_vertex(p, &uv, &color, &nn, &zero);
+            idx[k] = owner->add_vertex(p, &uv, &c, &nn, &zero);
         }
         owner->add_face(idx[0], idx[3], idx[4]);
         owner->add_face(idx[0], idx[4], idx[1]);
         owner->add_face(idx[0], idx[2], idx[3]);
         owner->add_face(idx[2], idx[5], idx[3]);
-        elem_off += 0x34;
     }
     *((char*)owner + 0x164) = 1;
     *((char*)owner + 0x138) = 1;
@@ -1105,8 +1095,8 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
     out->clear_geometry();
     unsigned index = 0;
     int off = 0;
-    while (index < (faces == 0 ? 0u : (unsigned)(faces_end - faces))) {
-        ShapeFace* f = (ShapeFace*)((char*)faces + off);
+    while (index < faces.size()) {
+        ShapeFace* f = &faces[index];
         int size = f->count;
         int k;
         float cx = 0.0f, cy = 0.0f, cz = 0.0f;

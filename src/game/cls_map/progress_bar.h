@@ -69,16 +69,11 @@ struct ShapeFace {                              // 0x64 bytes (0x4e75a0)
 // 0x4785e0 / 0x4705e0 are PolyMesh::build / compute_face_normals (terrain_b/poly_mesh.h): the polygon set below is that class; only the members are declared
 #include "../terrain_b/poly_mesh.h"
 struct Shape {
-    char pad0[0x1c];
-    ShapePt* pts;                               // +0x1c (a std::vector's first; the allocator word is +0x18)
-    ShapePt* pts_end;                           // +0x20
-    char pad24[0x2c - 0x24];
-    ShapeFace* faces;                           // +0x2c
-    ShapeFace* faces_end;                       // +0x30
-    char pad34[0x3c - 0x34];
-    ShapeSeg* segs;                             // +0x3c
-    ShapeSeg* segs_end;                         // +0x40
-    char pad44[0x78 - 0x44];
+    char pad0[0x18];
+    std::vector<ShapePt> pts;                   // +0x18
+    std::vector<ShapeFace> faces;               // +0x28
+    std::vector<ShapeSeg> segs;                 // +0x38
+    char pad48[0x78 - 0x48];
     int mode;                                   // +0x78 (0: spikes; 1: ribbons; 2: the map polygon mesh)
     char pad7c[4];
     float lx, ly, lz;                           // +0x80 light direction

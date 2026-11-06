@@ -67,14 +67,14 @@ void TextPart::get_text(int row, int index, tstring* out)
 // the two arrow-button factories share a shape: build the medium button with the three mesh names, then
 // clone the highlighted mesh, scale it by x / z and attach it as slot 3.
 // @ 0x4f5df0
-void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, float z)
+void* __cdecl make_left_arrow(void* parent, float a2, float a3, float x, float a5, float z)
 {
     void* b;
     {
         tstring down("left_arrow_down");
         tstring up("left_arrow");
         tstring empty("");
-        b = new_sized_button((MissionUi*)parent, empty, *(float*)&a2, *(float*)&a3, x, up, down, *(float*)&a5, z, 0.085f);   // 0x4dcc50
+        b = new_sized_button((MissionUi*)parent, empty, a2, a3, x, up, down, a5, z, 0.085f);   // 0x4dcc50
     }
     mesh* m;
     {
@@ -87,14 +87,14 @@ void* __cdecl make_left_arrow(void* parent, int a2, int a3, float x, int a5, flo
 }
 
 // @ 0x4f5ed0
-void* __cdecl make_right_arrow(void* parent, int a2, int a3, float x, int a5, float z)
+void* __cdecl make_right_arrow(void* parent, float a2, float a3, float x, float a5, float z)
 {
     void* b;
     {
         tstring down("right_arrow_down");
         tstring up("right_arrow");
         tstring empty("");
-        b = new_sized_button((MissionUi*)parent, empty, *(float*)&a2, *(float*)&a3, x, up, down, *(float*)&a5, z, 0.085f);   // 0x4dcc50
+        b = new_sized_button((MissionUi*)parent, empty, a2, a3, x, up, down, a5, z, 0.085f);   // 0x4dcc50
     }
     mesh* m;
     {

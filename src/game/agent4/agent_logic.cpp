@@ -104,6 +104,26 @@ template<> E56* _Copy_backward_opt<E56*, E56*>(E56*, E56*, E56*, _Nonscalar_ptr_
 
 // ---- PolyMesh::find_path: A*-style search over the navigation faces ---------------------------------------------------------
 
+// More bodies the original's object saw (rgl header inlines left out of line; shapes.cpp and game_util.cpp own the rows).
+inline __declspec(noinline) float rgl::vector4::normalize()
+{
+    float len = (float)sqrt(x * x + y * y + z * z);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+}
+inline __declspec(noinline) vector4 rgl::matrix::rot(const vector4& p) const
+{
+    return vector4(p.x * s.x + (f.x * p.y + u.x * p.z),
+                   f.y * p.y + (s.y * p.x + u.y * p.z),
+                   f.z * p.y + (s.z * p.x + u.z * p.z));
+}
+inline __declspec(noinline) vector4 rgl::cross(const vector4& a, const vector4& b) { return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+inline __declspec(noinline) float __cdecl fmax_ref(const float* a, const float* b) { return *a > *b ? *a : *b; }
 // @ 0x444c50
 bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int* out_count, int* out_steps,
                         const float* w0, const float* w1, const float* w2)
@@ -516,6 +536,45 @@ inline __declspec(noinline) void Agent::play_sound_var(int* kind, float* var)
 inline __declspec(noinline) float __cdecl clamp(const float* x, const float* lo, const float* hi)     // 0x40e3d0
 {
     return *x < *lo ? *lo : (*x >= *hi ? *hi : *x);
+}
+inline __declspec(noinline) void Agent::update_quiver()
+{
+    for (int i = 0; i < 4; i++) {
+        if (pairs[i].item >= 0) {
+            ItemKind* ik = &g_items[pairs[i].item];
+            unsigned t = ik->type_flags & 0xff;
+            if ((t == 5 || t == 6 || t == 10) && disp[i] != 0) {
+                int used = pairs[i].m4 & 0xff;
+                int n = pairs[i].max_amount() - used;
+                if (links[i] != 0 && links[i]->vis != 0) n--;
+                float v = (float)((n * 5 + 5) * 2);
+                disp[i]->cap_all(&v);
+            }
+        }
+    }
+}
+inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
+{
+    ensure_local();
+    int n = (int)v50.size();
+    v50.resize(n + 1);
+    (&*v50.begin())[n].index = index;
+    (&*v50.begin())[n].uv = *uv;
+    (&*v50.begin())[n].color = *color;
+    (&*v50.begin())[n].f5c = *f5c;
+    vertex60* vv = v50._Myfirst + n;
+    vv->normal = *pos;
+    vv->pos = *pos;
+    return n;
+}
+inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
+{
+    ensure_local();
+    int n = (int)v70.size();
+    v70.resize(n + 1);
+    v70[n].a = *p;
+    v70[n].b = *p;
+    return n;
 }
 static inline unsigned itype(const ItemRef* p) { return g_items[p->item].type_flags & 0xff; }
 
@@ -3280,27 +3339,21 @@ using rgl::mat4;
 // @ 0x44e970
 void rgl::mesh::add_quad(const vector4* p0, const vector4* p1, const vec2* uv0, const vec2* uv1, const unsigned* color)
 {
-    int i0 = add_point(p0);
-    vector4 q;
-    q.x = p1->x; q.y = p0->y; q.z = p0->z;
-    int i1 = add_point(&q);
-    q.x = p1->x; q.y = p1->y; q.z = p0->z;
-    int i2 = add_point(&q);
-    q.x = p0->x; q.y = p1->y; q.z = p0->z;
-    int i3 = add_point(&q);
+    int pts[4];
+    int vts[4];
+    pts[0] = add_point(p0);
+    { vector4 q; q.x = p1->x; q.y = p0->y; q.z = p0->z; pts[1] = add_point(&q); }
+    { vector4 q; q.x = p1->x; q.y = p1->y; q.z = p0->z; pts[2] = add_point(&q); }
+    { vector4 q; q.x = p0->x; q.y = p1->y; q.z = p0->z; pts[3] = add_point(&q); }
     vector4 n(0.0f, 0.0f, 1.0f);
     int f5c = 0;
-    int v0 = add_vertex(i0, uv0, color, &n, &f5c);
-    vec2 u1; u1.x = uv1->x; u1.y = uv0->y;
+    vts[0] = add_vertex(pts[0], uv0, color, &n, &f5c);
+    { vec2 u; u.x = uv1->x; u.y = uv0->y; f5c = 0; vts[1] = add_vertex(pts[1], &u, color, &n, &f5c); }
     f5c = 0;
-    int v1 = add_vertex(i1, &u1, color, &n, &f5c);
-    f5c = 0;
-    int v2 = add_vertex(i2, uv1, color, &n, &f5c);
-    vec2 u3; u3.x = uv0->x; u3.y = uv1->y;
-    f5c = 0;
-    int v3 = add_vertex(i3, &u3, color, &n, &f5c);
-    add_face(v0, v1, v2);
-    add_face(v0, v2, v3);
+    vts[2] = add_vertex(pts[2], uv1, color, &n, &f5c);
+    { vec2 u; u.x = uv0->x; u.y = uv1->y; f5c = 0; vts[3] = add_vertex(pts[3], &u, color, &n, &f5c); }
+    add_face(vts[0], vts[1], vts[2]);
+    add_face(vts[0], vts[2], vts[3]);
     slots[0].f28 = 1;
     slots[1].f28 = 1;
 }
@@ -4482,8 +4535,10 @@ void Skeleton::set_visible(char on)
     frozen = on;
 }
 
+// Mission::log_message: the caller loads g_mission into ecx and the body ignores it (ret 8). agent_obj/mission.h is shared, so a stub class names the member here.
+struct MissionLog { __declspec(noinline) void log_message(const tstring* s, float seconds); };
 // @ 0x453020
-void __stdcall log_message(const tstring* s, int unused)
+void MissionLog::log_message(const tstring* s, float seconds)
 {
     g_gui.add(*s, -261);
 }
@@ -5890,7 +5945,6 @@ void Agent::update_controls(float dt)
 #include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628): .data is the array of 0x30-byte animation definitions
 struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c
 struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };   // g_anim_set.data entry as 0x457b40 reads it (agent_obj.h's AnimDef calls +0x10 `subs`)
-void __stdcall log_message(const tstring* s, int seconds_bits);   // 0x453020 (ret 8; the second argument is the float 20.0f it is called with)
 #define itp_wooden_attack 0x00020000
 #define itcf_throw_stone 0x0000000000010000i64
 #define tf_allways_fall_dead 0x80
@@ -6038,7 +6092,7 @@ void Agent::process_blow(float unused)
                 }
                 {
                     tstring t(hbuf);
-                    ::log_message(&t, 0x41a00000);               // 20.0f seconds
+                    ((MissionLog*)g_mission)->log_message(&t, 20.0f);
                 }
             } else {
                 const char* key = 0;
@@ -7152,7 +7206,8 @@ static __forceinline ItemRef* cur_ptr(Agent* a) { ItemRef* p = 0; if (a->wield[0
 #define PRIO1 anim[1].events     // +0x114
 #define PROG anim[1].scale       // +0x118 animation progress
 #define TYPE (ik->type_flags & 0xff)
-#define LOG_TIMED(str) { ::log_message(g_strtable.lookup(tstring(str)), 0x41a00000); }
+static __forceinline void log_timed(const char* s) { tstring msg(s); ((MissionLog*)g_mission)->log_message(g_strtable.lookup(msg), 20.0f); }
+#define LOG_TIMED(str) log_timed(str);
 // @ 0x45c220
 void Agent::update_attack(float dt)
 {
@@ -7245,14 +7300,13 @@ void Agent::update_attack(float dt)
                     } else {
                         set_order(1, snd_b, 0x0140000a, damage_factor(0));
                         active = 2;
-                        int kind = 3;
-                        play_hit_sound(&kind);
+                        { int kind = 3; play_hit_sound(&kind); }
                         if (f2c == -1 && frand() < (f57c0 - 1.0f) * 3.5f) {
                             if (id == g_mission->player_id || frand() < 0.3f) {
-                                kind = 2;
+                                int kind = 2;
                                 play_class_sound(&kind);
                             } else {
-                                kind = 3;
+                                int kind = 3;
                                 play_class_sound(&kind);
                             }
                         }
@@ -7340,8 +7394,6 @@ void Agent::update_attack(float dt)
     } else if (ik->is_ranged()) {
         // ------------------------------------------------------------------ bow / crossbow / thrown / guns
         int missing, total;
-        float var;
-        int kind;
         slot = 0;
         best_ammo(-1, &missing, &total, &slot);
         if (TYPE == itp_type_crossbow) {
@@ -7356,7 +7408,7 @@ void Agent::update_attack(float dt)
                 if (slot >= 0)
                     links[slot]->vis = 0;
             }
-        } else if (TYPE == itp_type_bow && links[wield[0]] != 0) {
+        } else if (TYPE == itp_type_bow && links[wield[0]]) {
             float var2 = 0.0f;
             links[wield[0]]->cap_all(&var2);
         }
@@ -7372,7 +7424,8 @@ void Agent::update_attack(float dt)
                         f5620 = 0x7b;
                     } else if (ik->type_flags & itp_cant_reload_on_horseback) {
                         if (id == g_mission->player_id) {
-                            g_gui.add(*g_strtable.lookup(tstring("ui_cant_reload_this_weapon_on_horseback")), -1);
+                            tstring msg("ui_cant_reload_this_weapon_on_horseback");
+                            g_gui.add(*g_strtable.lookup(msg), -1);
                         }
                     } else {
                         f5620 = 0x7c;
@@ -7428,7 +7481,7 @@ void Agent::update_attack(float dt)
             }
         } else if (S == 1) {
             if ((unsigned char)ik->type_flags == itp_type_bow && PROG > 0.3f) {
-                if (PROG > 0.46f && links[wield[0]] != 0) {
+                if (PROG > 0.46f && links[wield[0]]) {
                     float x = (PROG - 0.46f) * 2.5f;
                     float hi = 1.0f;
                     float lo = 0.0f;
@@ -7440,7 +7493,7 @@ void Agent::update_attack(float dt)
             }
             if (in_flags & 0x200) {
                 order1(this, -1, 2);
-                if ((unsigned char)ik->type_flags == itp_type_bow && links[slot] != 0) {
+                if ((unsigned char)ik->type_flags == itp_type_bow && links[slot]) {
                     links[slot]->vis = 0;
                     update_quiver();
                 }
@@ -7457,7 +7510,7 @@ void Agent::update_attack(float dt)
                         rel = 0x40001b;
                     } else if (TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) {
                         ItemRef* rp = cur_ptr(this);
-                        if (rp != 0)
+                        if (rp)
                             rp->add_amount(1);
                     }
                 }
@@ -7467,40 +7520,40 @@ void Agent::update_attack(float dt)
                 shoot();
                 if ((unsigned char)ik->type_flags == itp_type_bow)
                     top_up_ammo(1);
-                if (slot >= 0 && links[slot] != 0)
+                if (slot >= 0 && links[slot])
                     links[slot]->vis = 0;
                 active = 0;
             } else {
                 active = 3;
             }
             if (TYPE == itp_type_bow) {
-                kind = 0x25;
-                var = 0.1f;
+                int kind = 0x25;
+                float var = 0.1f;
                 if (id != g_mission->player_id)
                     play_sound_var(&kind, &var);
                 else
                     play_sound_var(&kind, &var);
             } else if (TYPE == itp_type_crossbow) {
-                var = 0.1f;
-                kind = 0x26;
+                float var = 0.1f;
+                int kind = 0x26;
                 play_sound_var(&kind, &var);
             } else if (TYPE == itp_type_thrown) {
                 unsigned __int64 sm = ik->flags & itcf_shoot_mask;
                 if (sm == itcf_throw_javelin) {
-                    kind = 0x27;
-                    var = 0.1f;
+                    int kind = 0x27;
+                    float var = 0.1f;
                     play_sound_var(&kind, &var);
                 } else if (sm == itcf_throw_axe) {
-                    var = 0.1f;
-                    kind = 0x28;
+                    float var = 0.1f;
+                    int kind = 0x28;
                     play_sound_var(&kind, &var);
                 } else if (sm == itcf_throw_knife) {
-                    var = 0.1f;
-                    kind = 0x29;
+                    float var = 0.1f;
+                    int kind = 0x29;
                     play_sound_var(&kind, &var);
                 } else if (sm == itcf_throw_stone) {
-                    kind = 0x2a;
-                    var = 0.1f;
+                    int kind = 0x2a;
+                    float var = 0.1f;
                     play_sound_var(&kind, &var);
                 }
             }
@@ -7522,7 +7575,7 @@ void Agent::update_attack(float dt)
                 active = 0;
             } else if (PROG > 0.99f) {
                 ItemRef* rp = cur_ptr(this);
-                if (rp != 0) {
+                if (rp) {
                     unsigned u = rp->m4 & 0xff;
                     int n = top_up_ammo(u);
                     ItemRef* rq = cur_ptr(this);
@@ -7531,7 +7584,7 @@ void Agent::update_attack(float dt)
                 }
                 update_quiver();
                 goto clear_state;
-            } else if (links[wield[0]] != 0) {
+            } else if (links[wield[0]]) {
                 float lo2 = 0.4f, hi2 = 0.66f;
                 if (f2c != -1) {
                     lo2 = 0.16f;
@@ -7597,7 +7650,7 @@ tail:
                             v = damage_factor(1);
                         float p = PROG;
                         set_order(1, f5614, 0x0240000e, v);
-                        anim[1].phase = p * 0.85f;
+                        { AnimSlot& a1 = anim[1]; a1.phase = p * 0.85f; }
                         active = 0;
                         goto done;
                     }
@@ -8129,15 +8182,15 @@ void Agent::update(float dt)
                 } else if (k == 1) {
                     float pitch;
                     switch (anim[1].cur) {
-                    case 0x75:
-                    case 0x77:
-                        pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, (const float*)&body->m.o, pitch, 0);
-                        break;
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.4f + 0.8f;
                         g_sound_mgr.play(g_sound_mgr.slot[44], 0, (const float*)&body->m.o, pitch, 0);
+                        break;
+                    case 0x75:
+                    case 0x77:
+                        pitch = frand() * 0.2f + 0.9f;
+                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     }
                 }

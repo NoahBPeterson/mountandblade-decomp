@@ -1872,6 +1872,179 @@ __declspec(noinline) void TableauTbl::set_camera_parameters(const char* perspect
     c->fr.farz = fz;
     c->fr.build_planes();
 }
+extern const int g_value_max;   // 0x590a9c (agent/agent.cpp)
+struct Prop { void update(int x); };   // 0x467c50 (ui/mission.h)
+// Bodies this object sees so that execute's temporaries pack as in the original: a local whose address reaches a callee cl cannot see
+// keeps a private frame slot (cl assumes the callee may keep the pointer), and that holds through a chain, so the whole chain has to be
+// visible. unpack_color: cur_tableau_add_mesh*'s colour. MissionView::setup: prop_instance_animate_to_position's duration and zero.
+// ItemRef + Mission::add_placed + init_placed: spawn_item's ItemRef. Duplicates of the canonical rows (see NOTES.md, "What the object can see").
+__declspec(noinline) rgl::vector4 rgl::unpack_color(const unsigned* c)
+{
+    rgl::vector4 v;
+    const unsigned char* b = (const unsigned char*)c;
+    v.w = b[3] * (1.0f / 255.0f);
+    v.x = b[2] * (1.0f / 255.0f);
+    v.y = b[1] * (1.0f / 255.0f);
+    v.z = (*c & 0xff) * (1.0f / 255.0f);
+    return v;
+}
+__declspec(noinline) int ItemRef::stat_1e8()
+{
+    if (item >= 0) {
+        int v = g_items[item].f1e8;
+        if ((char)g_items[item].type_flags == itp_type_horse) {
+            if (v == 0) v = 100;
+        } else if (v == 0)
+            return v;
+        switch (b.mod) {
+        case imod_cracked: v -= 0x38; break;
+        case imod_battered: v -= 0x1a; break;
+        case 0x19: v += 0x2f; break;
+        case 0x1b: v += 0x53; break;
+        case 0x1d: v += 0x9b; break;
+        case imod_heavy: v += 10; break;
+        case 0x20: v += 5; break;
+        }
+        if (v >= 1) return v;
+    }
+    return 1;
+}
+__declspec(noinline) void ItemRef::reduce(int n)
+{
+    if (item > 0) {
+        unsigned t = g_items[item].type_flags & 0xff;
+        if (t == itp_type_thrown || t == itp_type_arrows || t == itp_type_bolts || t == itp_type_pistol ||
+            t == itp_type_musket || t == itp_type_crossbow || t == itp_type_bullets) {
+            if (n <= 0) {
+                b.amount = 0;
+                return;
+            }
+            unsigned v = (m4 & 0xff) - n;
+            b.amount = 0;
+            m4 = m4 | (((int)v < 0) - 1 & v);
+        } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
+            unsigned v = stat_1e8();
+            *(short*)&m4 = 0;
+            m4 |= v;
+        }
+    }
+}
+__declspec(noinline) void ItemRef::set_modifier(int k)
+{
+    if (k >= 0 && k < 0x2b) {
+        ((char*)this)[7] = 0;
+        m4 |= k << 24;
+        reduce(0);
+    }
+}
+__declspec(noinline) void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m)
+{
+    tstring name;
+    o->reset();
+    int k = *kind;
+    if (k == 2 || k == 6 || k == 7) {
+        name = g_items[*id].key;
+        o->value = *value;
+    } else if (k == 4) {
+        name = g_ptypes[*id].name;
+        o->value = *value;
+    } else if (k == 0) {
+        name = g_propkinds[*id].name;
+    } else {
+        int zero = 0;
+        o->value = clamp_index(value, &zero, &g_value_max);
+    }
+    o->m18 = *m;
+    o->m98 = *m;
+    o->kind = *kind;
+    o->id = *id;
+    o->name = name;
+}
+__declspec(noinline) int Mission::add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn_id)
+{
+    int cnt = 0;
+    int prev = -1;
+    int idx = (int)props.size();
+    {
+        PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent.cpp): shared rec1c8.h
+        ((std::vector<PlacedObj>&)props).push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
+        int off = idx * 0x1c8;
+        ::init_placed((PlacedObj*)((char*)&props[0] + off), kind, id, value, m);
+        if (*kind == 7 || *kind == 6)
+            ((PlacedObj*)((char*)&props[0] + off))->m10 = 2;
+        if (*kind == 1) {
+            cnt = 0;
+            prev = -1;
+            for (int k = 0; k < 0x28; k++) {
+                if (prev >= cnt)
+                    break;
+                prev = cnt;
+                for (unsigned j = 0; j < props.size(); j++) {
+                    if (((PlacedObj&)props[j]).kind == 1 && ((PlacedObj&)props[j]).value == cnt)
+                        cnt++;
+                }
+            }
+            if (cnt < 0x40)
+                ((PlacedObj*)((char*)&props[0] + off))->value = cnt;
+        }
+        spawn_prop(&idx, spawn_id);
+    }
+    return idx;
+}
+__declspec(noinline) void MissionView::setup(void* src, int* b, int* c)
+{
+    char* t = (char*)this;
+    ((Prop*)this)->update(0);
+    memcpy(t + 0x118, t + 0x18, 0x40);
+    memcpy(t + 0xd8, src, 0x40);
+    *(int*)(t + 0x168) = *c;
+    *(int*)(t + 0x16c) = *b;
+    ((Timer*)(t + 0x170))->restamp();
+    *(int*)(t + 0x180) = 0;
+}
+// TableauTbl::spawn_scaled / spawn_scaled2 (0x499390, 0x499540; world_data/obj_tbl.cpp owns the rows): visible duplicates. With them
+// execute's cur_tableau_add_* cases share the validator temporaries as in the original (24 more identical cases, frame 0x10 smaller).
+struct TableauEntityV { void* vptr; char pad4[0x58 - 4]; rgl::matrix local; };
+__declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale,
+                              const float* alpha, const unsigned* color)
+{
+    TableauEntityV* e = (TableauEntityV*)((rgl::world*)(void*)worlds[worlds.size() - 1])->create_entity(9);
+    rgl::mesh* m = g_meshes.placed(index);
+    if (!(0.99999f <= scale->x && scale->x < 1.00001f
+       && 0.99999f <= scale->y && scale->y < 1.00001f
+       && 0.99999f <= scale->z && scale->z < 1.00001f))
+        m->set_color(*scale);
+    if (*color != 0xffffffffu) {
+        rgl::vector4 c = rgl::unpack_color(color);
+        if (g_use_shaders) {
+            c.x = pow((double)c.x, (double)2.2f);
+            c.y = pow((double)c.y, (double)2.2f);
+            c.z = pow((double)c.z, (double)2.2f);
+        }
+        ((rgl::mesh*)(void*)m)->set_bone_index((int)rgl::pack_color(&c));
+    }
+    if (*alpha < 0.99f) {
+        float a;
+        if (*alpha < 0.0f)
+            a = 0.0f;
+        else if (*alpha >= 1.0f)
+            a = 1.0f;
+        else
+            a = *alpha;
+        m->set_alpha(a);
+    }
+    ((Poser*)(void*)e)->add_extra((int)m);
+    e->local = *frame;
+}
+__declspec(noinline) void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float* scale)
+{
+    TableauEntityV* e = (TableauEntityV*)((rgl::world*)(void*)worlds[worlds.size() - 1])->create_entity(9);
+    rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
+    if (!(0.99999f <= *scale && *scale < 1.00001f))
+        m->scale(*scale);
+    ((Poser*)(void*)e)->add_extra((int)m);
+    e->local = *frame;
+}
 // PartyMgr::get and the id lookup: visible here too, as header inlines in the original. cl then knows the calls keep the
 // operands in registers (esi = params[0] low, ebx = params[1] low across PartyMgr::get, 0x49fb9f..).
 inline int Map10007::lookup(unsigned id)

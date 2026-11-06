@@ -66,13 +66,7 @@ struct face_frustum : rgl::frustum {
 };
 
 // the arrow factories take the width ratio as the float it is (the shared declaration says int)
-typedef void* (__cdecl *arrow_fn)(void*, int, int, float, float, float);
 
-static __forceinline rgl::world* new_scene()
-{
-    return new rgl::world((const float*)&face_pair(-80.0f, -80.0f), (const float*)&face_pair(80.0f, 80.0f),
-                          &(const int&)0, &(const int&)0, &(const int&)0);   // 0x478ad0
-}
 // @ 0x4f49d0
 void FaceGen::init_screen()
 {
@@ -83,8 +77,9 @@ void FaceGen::init_screen()
     f360 = 0.5f;
     f364 = 0.5f;
     skin = 0;
-    if (w14 >= 0)
-        skin = *(int*)(g_game->chars_c + w14 * 0x508 + 0x30) & 0xf;
+    int id = w14;
+    if (id >= 0)
+        skin = (int)g_game->troops[id].flags30 & 0xf;
     int keys = g_anim.skin_vec.first[skin].n_face_keys - 1;
     g_gui.reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
@@ -144,17 +139,17 @@ void FaceGen::init_screen()
     float arrow_h2 = config_float("face_button_arrow_h");
     float arrow_w = config_float("arrow_button_height");
     float arrow_r = config_float("arrow_button_width_ratio");
-    b_next_face = (MissionUi*)((arrow_fn)make_right_arrow)(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    b_next_face = (MissionUi*)make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_next_face, "face_b_next_face");
-    b_next_beard = (MissionUi*)((arrow_fn)make_right_arrow)(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    b_next_beard = (MissionUi*)make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_next_beard, "face_b_next_beard");
-    b_next_hair = (MissionUi*)((arrow_fn)make_right_arrow)(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    b_next_hair = (MissionUi*)make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_next_hair, "face_b_next_hair");
-    b_prev_face = (MissionUi*)((arrow_fn)make_left_arrow)(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    b_prev_face = (MissionUi*)make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_prev_face, "face_b_prev_face");
-    b_prev_beard = (MissionUi*)((arrow_fn)make_left_arrow)(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    b_prev_beard = (MissionUi*)make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_prev_beard, "face_b_prev_beard");
-    b_prev_hair = (MissionUi*)((arrow_fn)make_left_arrow)(buttons, 0, 0, arrow_h2, arrow_r, arrow_w);
+    b_prev_hair = (MissionUi*)make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_prev_hair, "face_b_prev_hair");
     { tstring t("face_t_change_beard"); tstring v("ui_change_beard"); t_change_beard = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
     { tstring t("face_t_change_face"); tstring v("ui_change_skin"); t_change_face = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
@@ -178,8 +173,9 @@ void FaceGen::init_screen()
     // ---- face body, world and lights ----------------------------------------------------------
     body = new MapWidget;   // 0x4ed630
     {
-        rgl::world* w = new_scene();
-        world = w;
+        world = new rgl::world((const float*)&face_pair(-80.0f, -80.0f), (const float*)&face_pair(80.0f, 80.0f),
+                               &(const int&)0, &(const int&)0, &(const int&)0);
+        rgl::world* w = world;
         w->ambient = rgl::vector4(0.3f, 0.3f, 0.3f);
         w->ambient.w = 1.0f;
     }
@@ -209,7 +205,11 @@ void FaceGen::init_screen()
     body->scene3d.f190 = 0xff201815;
 
     // ---- the camera frustum (35 degrees, fitted to the body) ---------------------------------------------
-    ((face_frustum*)&fr)->init_inl(0.61086524f, body->screen[1] / body->screen[0] * g_gui.fov_k, 0.01f, 20.0f);
+    {
+        float aspect = body->screen[1] / body->screen[0];
+        aspect *= g_gui.fov_k;
+        ((face_frustum*)&fr)->init_inl(0.61086524f, aspect, 0.01f, 20.0f);
+    }
     add_kid(ui, body);
 
     { fr.m.o = rgl::vector4(0.0f, 0.0f, 10.0f); }

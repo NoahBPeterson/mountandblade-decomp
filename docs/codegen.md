@@ -1421,6 +1421,13 @@ These are not absolute: a reference local flipped SIB order on 0x4c1e10, and an 
 - **A constant store written first keeps its register live (0x4686a0).** `f40 = 1.0f; f0 = 0;` ahead of the -1 stores put -1 in esi; cl sinks those two stores back to the original's order.
 - **Index every element read through the same base (0x46d8c0).** `v->lights[i]` for all three reads, with a local `ls` kept only for the size test, gave `mov edx,ecx` and `lea edx,[edx+esi*4]`.
 
+- **When `insn_align` looks identical, run `chk.py` (`Agent::update` 0x45f660).** `insn_align` masks constants, so the last difference, switch case bodies in the wrong order, showed only as 4 constant mismatches in `chk.py`. Moving the 0x7b/0x7c bodies before 0x75/0x77 matched the row.
+- **Arrays with enregistered first elements (`mesh::add_quad` 0x44e970).** Real `int pts[4]` and `int vts[4]`, block-scoped `q` and `u`, and visible `add_point` and `add_vertex` matched the row.
+- **One short-lived local per arm (`update_attack` 0x45c220).** Separate locals in each arm gave the original's slot groups, where one shared `kind`/`var` with high use counts didn't.
+
+- **`v.begin()[i]` keeps the materialised address (`PolyMesh::build_adjacency` 0x470920).** `v[i]` and an accessor both fold it. That one change took the row from 57 of 93 identical to a match.
+- **A test placed after an if/else gets jump-threaded (0x46e590).** That explains an else arm laid out after the join.
+
 ## 15. Not source-controllable, or without a known lever
 
 Record the function as complete and move on after two rounds without a diff drop.

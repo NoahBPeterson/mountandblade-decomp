@@ -105,6 +105,8 @@ struct PlaneTrace {
     void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0 ret 0xc
 };
 
+// 0x407f70, owned by rgl/shapes/shapes.cpp. The original saw this body when compiling project: `in` does not escape, which
+// fixes update's pos copy schedule (the original's was a header inline, emitted with its first user).
 inline __declspec(noinline) vector4 rgl::matrix::transform_point_to_local(const vector4& p) const
 {
     vector4 d(p.x - o.x, p.y - o.y, p.z - o.z);
@@ -236,7 +238,7 @@ void MapPanel::update_target()
     // ---- 0x51969b: thin capsule around the clipped segment -----------------------------------------
     capsule cap(0.0f, &np, &fp);
     matrix mtx;
-    cap.transform((const pos*)identity_pos(&mtx));
+    cap.capsule::transform((const pos*)identity_pos(&mtx));
 
     // The sweep endpoints are built component-wise and only x/y of each are ever written; the third
     // lane is whatever the stack slot already held (reproduced verbatim -- see the notes).
@@ -481,13 +483,14 @@ void MapPanel::set_label(int id)
 {
     tstring unused_a, unused_b;
     char show = 1;
+    GameData* g = g_game;
     if (id == g_sel_party) {
-        if (g_game->cur_label == g_sel_label && f2d0 < 1.0f)
+        if (g->cur_label == g_sel_label && f2d0 < 1.0f)
             return;
         show = 0;
     }
     g_sel_party = id;
-    g_sel_label = g_game->cur_label;
+    g_sel_label = g->cur_label;
     f2d0 = 0.0f;
     if (g_gui.label_obj)
         delete g_gui.label_obj;
@@ -496,39 +499,36 @@ void MapPanel::set_label(int id)
     if (id < 0)
         return;
 
-    PartyMgr* pool = &g_game->parties;
-    int idx = pool->lookup(id);
-    char* rec = (char*)g_game->parties.pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8;
-    vector4 pos = *(vector4*)(rec + 0x30);
+    g = g_game;
+    vector4 pos = *(vector4*)&g->parties.get_party(id)->pos;
 
     unsigned color;
     if (g_module_settings.show_faction_color == 0) {
-        float rel = g_game->relation(id, g_game->f78);
-        color = g_game->color_of(rel, 1);
+        float rel = g->relation(id, g->f78);
+        color = g->color_of(rel, 1);
     } else {
-        int idx2 = pool->lookup(id);
-        char* rec2 = (char*)g_game->parties.pages._Myfirst[idx2 >> 4] + (idx2 & 0xf) * 0x5ac8;
-        color = *(unsigned*)((char*)g_game->factions + *(int*)(rec2 + 0x70) * 0x300 + 0x28);
+        g = g_game;
+        color = g_game->factions[g->parties.get_party(id)->faction].color;
     }
 
-    int idx3 = pool->lookup(id);
-    char* rec3 = (char*)g_game->parties.pages._Myfirst[idx3 >> 4] + (idx3 & 0xf) * 0x5ac8;
+    g = g_game;
+    Party* rec3 = g->parties.get_party(id);
     const tstring* name;
     if (g_module_settings.show_party_ids_instead_of_names)
-        name = (const tstring*)(rec3 + 0x20);
-    else if (*(char*)(rec3 + 0x1c) == 0 && (name = g_strtable.find((const tstring*)(rec3 + 0x20))) != 0)
+        name = &rec3->key;
+    else if (rec3->flag == 0 && (name = g_strtable.find(&rec3->key)) != 0)
         ;
     else
-        name = (const tstring*)(rec3 + 0xc);
+        name = &rec3->name;
     g_gui.add_label(name, 0.021f, (int)color);
 
     for (int i = 0; i < g_game->n_labels; i++)
         g_gui.add_label(&g_game->labels[i], 0.015f, (int)(((g_game->cur_label != i) - 1 & 0xffff0001) - 1));
 
     if (show) {
-        vector4 pt;
-        ((MapWidget*)view)->project(&pt, &pos);
-        g_gui.set_pos((const float*)&pt);
+        float pt[2];
+        ((MapWidget*)view)->project((vector4*)pt, &pos);
+        g_gui.set_pos(pt);
     }
 }
 
@@ -595,13 +595,14 @@ void gui_manager::add_label(const tstring* text, float h, int color)
     }
     {
         float out[2];
+        int col = color;
         float scale[2];
         scale[0] = h;
         scale[1] = h;
         float xmin = -1.0f;
         float xmax = 1.0f;
         vector4 pos(0.0f, cursor_y, 0.0f);
-        g_font->layout_text(out, text, &pos, scale, label_obj, (int)&color, &xmin, &xmax, 0x10);
+        g_font->layout_text(out, text, &pos, scale, label_obj, (int)&col, &xmin, &xmax, 0x10);
     }
     cursor_y -= h;
     {
@@ -609,10 +610,11 @@ void gui_manager::add_label(const tstring* text, float h, int color)
         label_obj->calc_bounds(&mn, &mx);
         float corner[2];
         float size[2];
+        vector4 e = mx - mn;
+        size[0] = e.x + 0.02f;
+        size[1] = e.y + 0.02f;
         corner[0] = mn.x - 0.01f;
         corner[1] = mn.y - 0.01f;
-        size[0] = (mx.x - mn.x) + 0.02f;
-        size[1] = (mx.y - mn.y) + 0.02f;
         set_quad(corner, size);
     }
     {
@@ -624,30 +626,18 @@ void gui_manager::add_label(const tstring* text, float h, int color)
 }
 
 // ---- 0x51aa20 -------------------------------------------------------------------------------------------
+static inline void set_point(rgl::point20& p, const vector4& v) { p.a = v; p.b = v; }
+
 // @ 0x51aa20
 void gui_manager::set_quad(const float* origin, const float* size)
 {
     float sy = origin[1] + size[1];
     float sx = origin[0] + size[0];
     m570.ensure_local();
-    vector4 v;
-    v.x = origin[0];
-    v.y = origin[1];
-    v.z = 0.0f;
-    m570.v70[0].a = v;
-    m570.v70[0].b = v;
-    v.x = sx;
-    v.y = origin[1];
-    m570.v70[1].a = v;
-    m570.v70[1].b = v;
-    v.x = sx;
-    v.y = sy;
-    m570.v70[2].a = v;
-    m570.v70[2].b = v;
-    v.x = origin[0];
-    v.y = sy;
-    m570.v70[3].a = v;
-    m570.v70[3].b = v;
+    set_point(m570.v70[0], vector4(origin[0], origin[1], 0.0f));
+    set_point(m570.v70[1], vector4(sx, origin[1], 0.0f));
+    set_point(m570.v70[2], vector4(sx, sy, 0.0f));
+    set_point(m570.v70[3], vector4(origin[0], sy, 0.0f));
     m570.slots[0].f28 = 1;
     {
         tstring name("matte");

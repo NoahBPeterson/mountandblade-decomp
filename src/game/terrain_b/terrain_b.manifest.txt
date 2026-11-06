@@ -1,1 +1,2 @@
 ../src/game/terrain_b/terrain_b.cpp  ?compute_bounds@NavData@@QAEXXZ  004704b0  /O2 /MT /Gy /TP
+../src/game/terrain_b/terrain_b.cpp  ?build_adjacency@PolyMesh@@QAEXXZ  00470920  /O2 /MT /Gy /TP
