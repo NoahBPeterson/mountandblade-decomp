@@ -652,10 +652,9 @@ StrTable g_strtable;   // 0x5e2a18
 // @ 0x4cda90
 void StrTable::load(const tstring* root_t)
 {
-    const char* root = root_t->c_str();
     FILE* f = fopen("language.txt", "r");
     tstring line;
-    char buf[5000];
+    char buf[5012];
     ptr_tag tag;
     if (fgets(buf, 5000, f)) {
         line.assign(buf);
@@ -668,24 +667,22 @@ void StrTable::load(const tstring* root_t)
     }
     fclose(f);
 
+    long h;
     char pattern[0x200];
     _finddata_t fdata;
     _finddata_t* fd = &fdata;
-    sprintf(pattern, "%slanguages\\%s\\*", root, language.c_str());
-    long h = _findfirst(pattern, fd);
-    if (h == -1) {
-        _findclose(h);
-        return;
-    }
+    sprintf(pattern, "%slanguages\\%s\\*", root_t->c_str(), language.c_str());
+    h = _findfirst(pattern, fd);
+    if (h != -1) {
     do {
         if ((fd->attrib & 0x10) != 0)
             continue;
         char path[0x200];
-        sprintf(path, "%slanguages\\%s\\%s", root, language.c_str(), fd->name);
+        sprintf(path, "%slanguages\\%s\\%s", root_t->c_str(), language.c_str(), fd->name);
         FILE* g = fopen(path, "r");
+        tstring text;
         tstring key;
         tstring value;
-        tstring text;
         bool first = true;
         while (fgets(buf, 5000, g)) {
             bool first_line = first;            // the BOM is only looked for on the file's first line ([esp+0x13] at 0x4cdc71)
@@ -710,26 +707,25 @@ void StrTable::load(const tstring* root_t)
                     key = text.substr(a, stop);
                     value = text.substr(kstart, end);
                     unsigned hash = 0;
-                    for (int c = 0; c < key.len; c++)
+                    for (unsigned c = 0; c < (unsigned)key.len; c++)
                         hash = (hash * 0x3b + (unsigned)(signed char)key.buf[c]) % 0xdf3;
                     tstring* found = find(&key);
-                    if (found != 0) {
-                        *found = value;
-                    } else {
+                    if (found == 0) {
                         lang_bucket* kb = &keys[hash];
-                        if (kb->size() < (unsigned)(kb->myend - kb->myfirst)) {
+                        if (kb->size() < ((std::vector<tstring>*)kb)->capacity()) {
                             uninit_fill_n_str(kb->mylast, 1, key, *(alloc_tstring*)kb, tag);
                             kb->mylast++;
                         } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
                             ((tstring_vec_pub*)kb)->_Insert_n(std::vector<tstring>::iterator(kb->mylast), 1, key);
                         }
                         lang_bucket* vb = &vals[hash];
-                        if (vb->size() < (unsigned)(vb->myend - vb->myfirst)) {
+                        if (vb->size() < ((std::vector<tstring>*)vb)->capacity()) {
                             uninit_fill_n_str(vb->mylast, 1, value, *(alloc_tstring*)vb, tag);
-                            vb->mylast++;
-                        } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
+                            vb->mylast++;                        } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
                             ((tstring_vec_pub*)vb)->_Insert_n(std::vector<tstring>::iterator(vb->mylast), 1, value);
                         }
+                    } else {
+                        *found = value;
                     }
                 }
                 i++;
@@ -737,6 +733,7 @@ void StrTable::load(const tstring* root_t)
         }
         fclose(g);
     } while (_findnext(h, fd) == 0);
+    }
     _findclose(h);
 }
 

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <vector>
 #include <new>                       // makes cl emit operator new[]/delete[] (??_U/??_V)
 
 // ---------------------------------------------------------------- basics
@@ -64,27 +65,35 @@ __forceinline stream_base& open_module_file(tstream3& s, const char* name)
 
 #include "../ui/timer_list.h"           // TimerList: the icon's trigger/sound list at +0x3c (~TimerList 0x4317b0)
 
-// scene_props.txt element (0x78 bytes): ctor 0x4ce2a0, read 0x4ce360, array-deleting
-// destructor 0x4c7ee0 (flag 3 = destroy the elements and free the cookie-prefixed block).
+// scene_props.txt element (0x78 bytes): ctor 0x4ce2a0, read 0x4ce360. `delete[]` calls the vector deleting destructor the compiler builds
+// from the destructor below (the original's is 0x4c7ee0, thiscall, ret 4). Same layout as Rec78 (rec78.h) and Rec78Members (rgl/mesh2/gui_edit.cpp); the generated destructor is byte-equal to 0x4c7ee0 (relocations aside).
+struct PropOwner {
+    virtual ~PropOwner();                              // slot 0
+};
 struct MissionObj {
-    char data[0x78];
+    tstring name;                // +0x00
+    char pad10[0x30];            // +0x10
+    std::vector<char> buf;       // +0x40 (allocator word, then first +0x44, last, end)
+    char pad50[4];               // +0x50
+    PropOwner* owner;            // +0x54
+    char pad58[0x14];            // +0x58
+    TimerList groups;            // +0x6c
     MissionObj();                                      // 0x4ce2a0
-    ~MissionObj() {}                                   // user-declared: `new MissionObj[n]` stores the element count in front (0x50da3a), which 0x4c7ee0 reads back
+    ~MissionObj() { delete owner; }
     void read(stream_base* s);                       // 0x4ce360
 };
-// the array-deleting destructors of the four record arrays, as the definitions declare them (the loader calls them with the
-// array pointer in ecx and the flags on the stack; the second slot is the definitions' unused edx parameter)
-void* __fastcall destroy_record_array(void* p, int, unsigned char flags);             // 0x4c7ee0 (the 0x78-byte records)
-struct elem60;
-void* __fastcall elem60_vector_delete(elem60* p, void*, unsigned flags);               // 0x4c4f40 (the 0x60-byte menu records)
+// the 0x58-byte mission templates' array delete, as the definition declares it
 struct elem58 {
-    void* vector_deleting_delete(unsigned flags);   // 0x4c3430 (the 0x58-byte mission templates)
+    void* vector_deleting_delete(unsigned flags);   // 0x4c3430
 };
-struct conv_rec;
-void* __fastcall conv_item_array_dtor(conv_rec* p, int, unsigned char flags);          // 0x4c8980 (the 0xb0-byte party templates)
 
 // menus.txt element (0x60 bytes): ctor is inlined, load 0x4c2b20, array reject 0x4c4f40.
 #include "../menu_rec.h"           // MenuRec (menus.txt element, 0x60 bytes)
+#include "../../include/rec_dtors.h"   // RecI: the menu's items (0x68-byte records, array delete 0x431810)
+// the destructor the compiler builds the array delete 0x4c4f40 from
+struct MenuRecArr : MenuRec {
+    ~MenuRecArr() { if (items) ((RecI*)items)->destroy(3); }
+};
 
 // map_icons.txt element (0x48 bytes): inline ctor, read 0x4c20c0.
 struct MapIcon {
@@ -104,6 +113,27 @@ struct MapIcon {
 #include "../mode_rec.h"
 #include "../game_globals.h"
 
+// The record as the loader's array `new` builds it: the trigger vector at +0x4c has its own inline constructor, which runs
+// before the record's constructor body (0x50e7ef: +0x50, +0x54, +0x4c, then +0x34, +0x3c).
+struct TriggerSlots {
+    int count;                   // +0x00
+    void* data;                  // +0x04
+    int cur;                     // +0x08
+    TriggerSlots() { data = 0; cur = 0; count = 0; }
+};
+struct MissionRec {
+    tstring name;                // +0x00
+    tstring f10;                 // +0x10
+    int f20;                     // +0x20
+    tstring display;             // +0x24
+    void* spawns;                // +0x34
+    int n_spawns;                // +0x38
+    int f3c;                     // +0x3c
+    int f40, f44, f48;           // +0x40
+    TriggerSlots triggers;       // +0x4c
+    MissionRec() { spawns = 0; f3c = -1; }
+};
+
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 MissionTemplate* g_mission_templates;                       // 0x5e2a00 mission templates (0x58-byte records, count 0x5e2a04)
 MenuRec* g_menus;                                           // 0x5e29b0 the game menus (0x60-byte records)
@@ -116,11 +146,9 @@ int g_item_kind_count;                                      // 0x5e29d4 number o
 struct PartyTplRec {
     tstring a;                   // +0x00
     tstring b;                   // +0x10
-    char pad20[0x84];            // +0x20
-    int fA4;                     // +0xa4
-    int fA8;                     // +0xa8
-    int fAC;                     // +0xac
-    PartyTplRec() : fA4(0), fA8(0), fAC(0) {}
+    char pad20[0x80];            // +0x20
+    std::vector<__int64> slots;  // +0xa0
+    PartyTplRec() {}
 };
 struct sound_def {
     void save(stream_base& s);   // 0x4bdff0 (game/config: the party template's record writer)
@@ -149,11 +177,6 @@ struct RefRecord;
 struct Block {
     void read(stream_base* s, int version);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; ret 8, the file version is the second argument)
 };
-struct csv_row {
-    char data[0x238];
-    csv_row();   // 0x4cdf20 (ItemKind::ItemKind: rgl/mesh2)
-};
-
 
 // ---------------------------------------------------------------- module state
 
@@ -176,19 +199,6 @@ PartyTemplate* g_party_templates;                    // 0x5e29f8 (.bss) the part
 
 // ---------------------------------------------------------------- loader
 
-// `new ItemKind[n]` as the original runs it: the element count in front of the elements, each element built by 0x4cdf20
-static ItemKind* new_item_array(int n)
-{
-    int* raw = (int*)::operator new(n * 0x238 + 4);
-    if (raw == 0)
-        return 0;
-    raw[0] = n;
-    csv_row* e = (csv_row*)(raw + 1);
-    for (int i = 0; i < n; i++)
-        new (&e[i]) csv_row;
-    return (ItemKind*)e;
-}
-
 // @ 0x50d5e0
 void load_module_files()
 {
@@ -204,8 +214,8 @@ void load_module_files()
     in_sounds.r_tstr(RSTR(&str2));
     in_sounds.r_int(&version);
     ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_module_settings.scan_module_sounds, &g_module_path);
-    g_gui.f170c = *(int*)g_sound_mgr.defs;
     s_sounds.failed = 1;
+    g_gui.f170c = *(int*)g_sound_mgr.defs;
 
     // particle_systems.txt
     tstream3 s_particles;
@@ -233,7 +243,7 @@ void load_module_files()
     in_scene.r_int(&version);
     in_scene.r_int(&g_propkind_count);
     if (g_propkinds) {
-        destroy_record_array(g_propkinds, 0, 3);
+        delete[] (MissionObj*)g_propkinds;
         g_propkinds = 0;
     }
     g_propkinds = (Rec78*)new MissionObj[g_propkind_count];
@@ -249,10 +259,10 @@ void load_module_files()
     in_menus.r_int(&version);
     in_menus.r_int(&g_menu_count);
     if (g_menus) {
-        elem60_vector_delete((elem60*)g_menus, 0, 3);
+        delete[] (MenuRecArr*)g_menus;
         g_menus = 0;
     }
-    g_menus = new MenuRec[g_menu_count];
+    g_menus = new MenuRecArr[g_menu_count];
     for (int i = 0; i < g_menu_count; i++)
         g_menus[i].read(*(stream_base*)&s_menus);
     s_menus.failed = 1;
@@ -285,8 +295,10 @@ void load_module_files()
     in_map_icons.r_tstr(RSTR(&str2));
     in_map_icons.r_int(&version);
     in_map_icons.r_int(&g_map_icon_count);
-    delete[] g_map_icons;
-    g_map_icons = 0;
+    if (g_map_icons) {
+        delete[] g_map_icons;
+        g_map_icons = 0;
+    }
     g_map_icons = new MapIcon[g_map_icon_count];
     for (int i = 0; i < g_map_icon_count; i++)
         g_map_icons[i].read(*(stream_base*)&s_map_icons);
@@ -322,9 +334,11 @@ void load_module_files()
     in_items.r_tstr(RSTR(&str2));
     in_items.r_int(&version);
     in_items.r_int(&g_item_kind_count);
-    delete[] g_items;
-    g_items = 0;
-    g_items = new_item_array(g_item_kind_count);
+    if (g_items) {
+        delete[] g_items;
+        g_items = 0;
+    }
+    g_items = new ItemKind[g_item_kind_count];
     for (int i = 0; i < g_item_kind_count; i++)
         ((Block*)&g_items[i])->read((stream_base*)&s_items, version);
     s_items.failed = 1;
@@ -351,7 +365,7 @@ void load_module_files()
         ((elem58*)g_mission_templates)->vector_deleting_delete(3);
         g_mission_templates = 0;
     }
-    g_mission_templates = new ModeRec[g_mission_template_count];
+    g_mission_templates = (ModeRec*)new MissionRec[g_mission_template_count];
     for (int i = 0; i < g_mission_template_count; i++)
         g_mission_templates[i].read(*(stream_base*)&s_mission);
     s_mission.failed = 1;
@@ -365,7 +379,7 @@ void load_module_files()
     in_party.r_int(&version);
     in_party.r_int(&g_party_template_count);
     if (g_party_templates) {
-        conv_item_array_dtor((conv_rec*)g_party_templates, 0, 3);
+        delete[] (PartyTplRec*)g_party_templates;
         g_party_templates = 0;
     }
     g_party_templates = (PartyTemplate*)new PartyTplRec[g_party_template_count];

@@ -851,8 +851,6 @@ void GameG::train_troops()
 
     Party* p = party_at(&parties, parties.lookup(f78));
 
-    GameG* self = this;
-
     int gain[64];
     for (int i = 0; i < p->nstacks; i++)
         gain[i] = 0;
@@ -864,7 +862,7 @@ void GameG::train_troops()
         Stack& s = p->stacks[i];
         if (s.flags & 1)
             continue;
-        if (!(self->troops[s.troop].flags30 & 0x10))
+        if (!(troops[s.troop].flags30 & 0x10))
             continue;
         if (s.troop == player ? troops[s.troop].hp < g_module_settings.player_wounded_treshold : troops[s.troop].hp < g_module_settings.hero_wounded_treshold)
             continue;

@@ -88,16 +88,17 @@ void* PartyWindow::make_inventory_menu(int idx)
     pos[8] = Vec2(f_ax - 0.088f, f_hy);
     pos[9] = Vec2(f_ax, f_hy - 0.088f);
 
-    panels[idx] = new PartyPanel;
-    label_refresh((MissionUi*)panels[idx], tstring("inv_im_equipment_menu"));
+    PartyPanel* panel = new PartyPanel;
+    panels[idx] = panel;
+    label_refresh((MissionUi*)panel, tstring("inv_im_equipment_menu"));
     {
-        Vec2 v(f_1 + panels[idx]->fE0, panels[idx]->fE4);
-        panels[idx]->move_a(&v.x);
+        Vec2 v(f_1 + panel->fE0, panel->fE4);
+        panel->move_a(&v.x);
     }
     {
         tstring e("");
         float out[2];
-        panels[idx]->set_text(out, &e);
+        panel->set_text(out, &e);
     }
 
     {
@@ -118,7 +119,7 @@ void* PartyWindow::make_inventory_menu(int idx)
             float out[2];
             w->set_text(out, lookup(tstring("ui_outfit")));
         }
-        panels[idx]->add_child(w);
+        panel->add_child(w);
     }
     {
         MissionUi* w = new MissionUi;
@@ -138,7 +139,7 @@ void* PartyWindow::make_inventory_menu(int idx)
             float out[2];
             w->set_text(out, lookup(tstring("ui_arms")));
         }
-        panels[idx]->add_child(w);
+        panel->add_child(w);
     }
     {
         MissionUi* w = new MissionUi;
@@ -158,7 +159,7 @@ void* PartyWindow::make_inventory_menu(int idx)
             float out[2];
             w->set_text(out, lookup(tstring("ui_horse")));
         }
-        panels[idx]->add_child(w);
+        panel->add_child(w);
     }
     if (idx == 0 && g_module_settings.disable_food_slot == 0) {
         MissionUi* w = new MissionUi;
@@ -178,7 +179,7 @@ void* PartyWindow::make_inventory_menu(int idx)
             float out[2];
             w->set_text(out, lookup(tstring("ui_food")));
         }
-        panels[idx]->add_child(w);
+        panel->add_child(w);
     }
 
     int troop_idx = g_game_G->cur_troop;

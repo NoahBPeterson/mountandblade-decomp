@@ -25,6 +25,8 @@ using namespace rgl;
 void sort_range(std::vector<entity*>::iterator first, std::vector<entity*>::iterator last, int ideal);          // 0x426a30
 
 static inline void scale3(vector4& v, float k) { v.x = k * v.x; v.y = k * v.y; v.z = k * v.z; }
+static __forceinline float dot_r(const vector4& a, const vector4& b) { return a.x * b.x + (a.y * b.y + a.z * b.z); }
+static __forceinline float dot_yz(const vector4& a, const vector4& b) { return a.y * b.y + a.z * b.z; }
 static __forceinline void set3(vector4* o, float x, float y, float z) { o->x = x; o->y = y; o->z = z; }
 
 // @ 0x425370
@@ -131,9 +133,9 @@ void dynamic_entity::resolve()
     bool flagB = false;
     for (Contact* c = contacts.first; c < contacts.last; c++) {
         const vector4& n = c->n;
-        float d1 = -(force.x * n.x + (force.y * n.y + force.z * n.z));
+        float d1 = -(n.x * force.x + dot_yz(n, force));
         if (d1 > 0.0f) {
-            float d2 = vel.x * n.x + (vel.y * n.y + vel.z * n.z);
+            float d2 = dot_r(n, vel);
             if (d2 > 0.0f) {
                 float k = (mass / dt) * d2;
                 if (d1 < k)
@@ -262,7 +264,7 @@ void dynamic_entity::integrate(float t)
     vector4 dv = t * vel;
     m.o.x = dv.x + m.o.x;
     m.o.y = m.o.y + dv.y;
-    m.o.z = dv.z + m.o.z;
+    m.o.z = m.o.z + dv.z;
     vector4 cf, cu;
     cf.x = angvel.y * local.f.z - angvel.z * local.f.y;
     cf.y = angvel.z * local.f.x - angvel.x * local.f.z;

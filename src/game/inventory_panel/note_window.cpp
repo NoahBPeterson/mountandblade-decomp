@@ -136,11 +136,18 @@ static __forceinline float cfg_float(const tstring& key)
     float v = 0.0f;
     int i = CONFIG->find(key);
     if (i >= 0) {
-        char* e = (char*)&g_game_vars + 0x1c + i * 0x2c;
-        char* s = *(char**)(e + 4);
-        v = (float)atof(s ? s : (e + 4));
+        v = (float)atof(CONFIG->entries[i].value.c_str());
     }
     return v;
+}
+
+static __forceinline void cfg_get(float& v, const tstring& key)
+{
+    v = 0.0f;
+    int i = CONFIG->find(key);
+    if (i >= 0) {
+        v = (float)atof(CONFIG->entries[i].value.c_str());
+    }
 }
 
 // a troop's display name: the UITEXT entry for its key, else the record's own name (0x50a95e / 0x50ab3f)
@@ -200,7 +207,12 @@ struct text_slot {
 struct sel_list { void add(int val); };                // 0x50d0e0 (inventory_panel/widget_text.cpp)
 
 
+// 0x50cc70 (inventory_panel/widget_text.cpp): a __thiscall member (`mov ecx, this` before each of the four calls; the body
+// never reads ecx, ret 8).
+#define SORT_LIST(l, m) this->sort_list(l, m)
+
 struct note_window {
+    void sort_list(sel_list* l, int mode);      // 0x50cc70 (inventory_panel/widget_text.cpp)
     char pad00[0x18];
     int  menu_id;              // +0x18
     char pad1c[0x2c - 0x1c];
@@ -234,7 +246,6 @@ struct note_window {
     float  scroll_pos;         // +0xb0
 
     void build(int page, int arg);              // 0x50a1c0
-    void sort_list(sel_list* l, int mode);      // 0x50cc70 (inventory_panel/widget_text.cpp)
 };
 
 // @ 0x50a1c0
@@ -383,7 +394,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        this->sort_list((sel_list*)&vec, 1);
+        SORT_LIST((sel_list*)&vec, 1);
 
         for (unsigned n = 0; n < vec.size(); n++) {
             int v = vec[n];
@@ -444,7 +455,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        this->sort_list((sel_list*)&vec, 2);
+        SORT_LIST((sel_list*)&vec, 2);
 
         for (unsigned n = 0; n < vec.size(); n++) {
             int v = vec[n];
@@ -512,7 +523,7 @@ void note_window::build(int page_, int arg_)
                 WORLDMAP->next_party_id(&p);
             }
         }
-        this->sort_list((sel_list*)&vec, 3);
+        SORT_LIST((sel_list*)&vec, 3);
 
         for (unsigned n = 0; n < vec.size(); n++) {
             int v = vec[n];
@@ -573,7 +584,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        this->sort_list((sel_list*)&vec, 3);
+        SORT_LIST((sel_list*)&vec, 3);
 
         for (unsigned n = 0; n < vec.size(); n++) {
             int v = vec[n];
@@ -600,9 +611,8 @@ void note_window::build(int page_, int arg_)
     tstring link_text;          // +0xb0   scratch for the links widget  (0x50bc50)
     this->links->put(&link_text);
     if (acc.len > 0) {
-        int k;
         for (int i = 0; i < WORLD->ntroops; i++) {
-            for (k = 0; k < 8; k++) {
+            for (int k = 0; k < 8; k++) {
                 if (WORLD->troops[i].notes[k].len > 0 && WORLD->troops[i].notes[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<trp=%d>%s</>", i, troop_name(WORLD->troops[i])->c_str());
                     if (link_text.find(buf2, 0) < 0) {
@@ -615,7 +625,7 @@ void note_window::build(int page_, int arg_)
             }
         }
         for (int i = 0; i < WORLD->n_factions; i++) {
-            for (k = 0; k < 8; k++) {
+            for (int k = 0; k < 8; k++) {
                 if (WORLD->factions[i].notes[k].len > 0 && WORLD->factions[i].notes[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<fac=%d>%s</>", i, faction_name(WORLD->factions[i])->c_str());
                     if (link_text.find(buf2, 0) < 0) {
@@ -630,7 +640,7 @@ void note_window::build(int page_, int arg_)
         {
             int p = WORLDMAP->first_party_id();
             while ((unsigned)p < WORLD->parties.n_parties) {
-                for (k = 0; k < 8; k++) {
+                for (int k = 0; k < 8; k++) {
                     if (WORLDMAP->get_w(p)->notes[k].len > 0 && WORLDMAP->get_w(p)->notes[k].find(acc, 0) >= 0) {
                         sprintf(buf2, "<p=%d>%s</>", p, party_name((char*)WORLDMAP->get_w(p))->c_str());
                         if (link_text.find(buf2, 0) < 0) {
@@ -645,7 +655,7 @@ void note_window::build(int page_, int arg_)
             }
         }
         for (int i = 0; i < WORLD->n_quests; i++) {
-            for (k = 0; k < 8; k++) {
+            for (int k = 0; k < 8; k++) {
                 if (WORLD->quests[i].notes[k].len > 0 && WORLD->quests[i].notes[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<qst=%d>%s</>", i, WORLD->quests[i].text.strip_tags().c_str());
                     if (link_text.find(buf2, 0) < 0) {
@@ -748,29 +758,29 @@ void note_window::build(int page_, int arg_)
 
     // ---- bottom row of page buttons --------------------------------------
     {
-        float bx = cfg_float("note_button_x");
-        float by = cfg_float("note_button_y");
-        float bh = cfg_float("note_button_h");
-        float ba = cfg_float("note_button_x_a");
+        float bx; cfg_get(bx, "note_button_x");
+        float by; cfg_get(by, "note_button_y");
+        float bh; cfg_get(bh, "note_button_h");
+        float ba; cfg_get(ba, "note_button_x_a");
 
         this->btn_game_log = make_short_button(this->panel, TR("ui_game_log"), bx, by, bh);
-        x_cur = bx + ba;
+        float x = bx + ba;
         *(int*)((char*)this->btn_game_log + 0x184) = 1;
-        this->btn_recent = make_short_button(this->panel, TR("ui_recent_messages"), x_cur, by, bh);
-        x_cur = x_cur + ba;
+        this->btn_recent = make_short_button(this->panel, TR("ui_recent_messages"), x, by, bh);
+        x = x + ba;
         *(int*)((char*)this->btn_recent + 0x184) = 1;
-        this->btn_quests = make_short_button(this->panel, TR("ui_quests"), x_cur, by, bh);
-        x_cur = x_cur + ba;
+        this->btn_quests = make_short_button(this->panel, TR("ui_quests"), x, by, bh);
+        x = x + ba;
         *(int*)((char*)this->btn_quests + 0x184) = 1;
-        this->btn_troops = make_short_button(this->panel, TR("ui_troops2"), x_cur, by, bh);
-        x_cur = x_cur + ba;
+        this->btn_troops = make_short_button(this->panel, TR("ui_troops2"), x, by, bh);
+        x = x + ba;
         *(int*)((char*)this->btn_troops + 0x184) = 1;
-        this->btn_locations = make_short_button(this->panel, TR("ui_locations"), x_cur, by, bh);
-        x_cur = x_cur + ba;
+        this->btn_locations = make_short_button(this->panel, TR("ui_locations"), x, by, bh);
+        x = x + ba;
         *(int*)((char*)this->btn_locations + 0x184) = 1;
-        this->btn_factions = make_short_button(this->panel, TR("ui_factions"), x_cur, by, bh);
+        this->btn_factions = make_short_button(this->panel, TR("ui_factions"), x, by, bh);
         *(int*)((char*)this->btn_factions + 0x184) = 1;
-        this->btn_return = make_short_button(this->panel, TR("ui_return"), x_cur + ba, by, bh);
+        this->btn_return = make_short_button(this->panel, TR("ui_return"), x + ba, by, bh);
     }
 
     // ---- highlight the active page button and disable it (0x50cbb8: slot 0xb8) ----

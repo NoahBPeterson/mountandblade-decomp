@@ -45,6 +45,53 @@ extern const float g_aim_range_tbl[14] = {-0.5f, 3.1415927f, -2.0f, 2.0f, -1.5f,
 #include "../ui_globals.h"      // UI / core globals
 #include "../map_flags.h"      // MapFlags::commit 0x513710
 
+// The agent table's walkers: the original's bodies were visible here (cl keeps g_mission in a register across them,
+// as they write no global), though it left them out of line. agent2/agent_ai.cpp owns the rows at these addresses.
+inline __declspec(noinline) void AgentTable::next_used(unsigned* i)
+{
+    ++*i;
+    while ((int)*i < count) {
+        unsigned v = *i;
+        if (pages[v >> 4][v & 0xf].used != 0) break;
+        ++*i;
+    }
+}
+inline __declspec(noinline) int AgentTable::first_used()
+{
+    unsigned v = 0;
+    if (0 < count) {
+        Agent** pg = &pages[0];
+        do {
+            if (pg[v >> 4][v & 0xf].used != 0) break;
+            v++;
+        } while ((int)v < count);
+    }
+    return v;
+}
+inline Agent* AgentTable::get(unsigned id)
+{
+    return &pages[id >> 4][id & 0xf];
+}
+
+inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0: visible too (agent/agent.cpp owns the row)
+{
+    vector4 zero(0.0f, 0.0f, 0.0f);
+    vector4 unit(1.0f, 0.0f, 0.0f);
+    pos = zero;
+    dir = unit;
+    dir2 = unit;
+    flags = 0;
+    attacker = -1;
+    bone = 0;
+    dmg_in = 0;
+    kind = 0;
+    item = -1;
+    missile = 0;
+    dmg_out = 0;
+    absorbed = 0;
+    return this;
+}
+
 // ======================================================= slice s00525160: functions
 #undef g_big
 #define g_big       (*(Big5e292c_s25160**)&g_mission)
@@ -264,18 +311,15 @@ int ViewObj_s257f0::find_speaker_agent()
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s257f0->chars[speaker].flags;    // 64-bit troop flags
     bool any = false;
     if ((flags & 0x10) != 0 || *(int*)((char*)&g_dialogs + 0x14) == -1) {
-        Mission_s257f0* m = g_mission_s257f0;
-        AgentTable_s257f0* t = &m->agents;
-        unsigned i = t->first_used();
-        if (i < (unsigned)t->count) {
-            std::vector<Agent_s257f0*>::iterator pages(m->agents.pages);
+        unsigned i = g_mission->agents.first_used();
+        if (i < (unsigned)g_mission->agents.count) {
             do {
-                if ((pages[i >> 4] + (i & 0xf))->troop == speaker) {
+                if ((g_mission->agents.pages[i >> 4] + (i & 0xf))->troop == speaker) {
                     found = i;
                     any = true;
                 }
-                t->next_used(&i);
-            } while (i < (unsigned)t->count);
+                g_mission->agents.next_used(&i);
+            } while (i < (unsigned)g_mission->agents.count);
         }
     }
     if (!any)
@@ -409,16 +453,13 @@ int ViewObj_s257f0::find_listener_agent()
     int listener = g_n_dialogs_s26130.listener();
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s26130->chars[listener].flags;    // 64-bit troop flags
     if ((flags & 0x10) != 0 || *(int*)((char*)&g_dialogs + 0x14) == -1) {
-        Mission* m = g_mission;
-        AgentTable* t = &m->agents;
-        unsigned i = t->first_used();
-        unsigned count = t->count;
+        unsigned i = g_mission->agents.first_used();
+        unsigned count = g_mission->agents.count;
         if (i < count) {
-            std::vector<Agent*>::iterator pages(m->agents.pages.begin());
             do {
-                if ((pages[i >> 4] + (i & 0xf))->troop == listener)
+                if ((g_mission->agents.pages[i >> 4] + (i & 0xf))->troop == listener)
                     found = i;
-                t->next_used(&i);
+                g_mission->agents.next_used(&i);
             } while (i < count);
         }
     }
@@ -437,7 +478,7 @@ int ViewObj_s257f0::find_listener_agent()
 #undef g_flags_s261e0
 #define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
 #undef g_clamp_max
-#define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
+#define g_clamp_max g_skill_tbl[36].max_rank             // 0x8ee3ac4
 // deque<int>::back(), expanded (the original inlined it here; end() - 1 then the block/offset split)
 struct DequeLayout_s261e0 { int al; int** map; unsigned mapsize; unsigned off; unsigned size; };
 static __forceinline int& deque_back_s261e0(std::deque<int>& dq)
@@ -832,23 +873,15 @@ restore:
         f2dc = 0;
     } else if (template_bit1_s261e0(g_mission_s261e0->cur_rec) && g_mission_s261e0->local_id >= 0 &&
                g_game_keys.clicked(4) && f2c8 == 8) {
-        Mission_s261e0* m = g_mission_s261e0;
         float best = 10000.0f;
-        AgentTable_s261e0* table = (AgentTable_s261e0*)((char*)m + 4);
-        {
-        unsigned id = (unsigned)table->first_used();
-        while (id < (unsigned)table->count) {
-            Agent_s261e0* a = page_agent_s261e0(m, id);
-            if (a->f14 == 1 && a->f10 == 0 && ((AgentX*)page_agent_s261e0(m, m->local_id))->is_enemy((Agent const*)a)) {
-                m = g_mission_s261e0;
-                vector4 d = *(vector4*)&a->px - *(vector4*)&page_agent_s261e0(m, m->local_id)->px;
+        for (unsigned id = g_mission->agents.first_used(); id < (unsigned)g_mission->agents.count; g_mission->agents.next_used(&id)) {
+            Agent_s261e0* a = page_agent_s261e0(g_mission_s261e0, id);
+            if (a->f14 == 1 && a->f10 == 0 && ((AgentX*)page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->local_id))->is_enemy((Agent const*)a)) {
+                vector4 d = *(vector4*)&a->px - *(vector4*)&page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->local_id)->px;
                 float dist = (float)sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
                 if (dist < best)
                     best = dist;
             }
-            table = (AgentTable_s261e0*)((char*)m + 4);
-            table->next_used(&id);
-        }
         }
         if (g_game_keys.clicked(4) && f2c8 == 8) {
             if (best > 8.0f) {
@@ -1294,6 +1327,8 @@ void ResourceOwner_s27c90::release()
 #define g_key_names_s284a0 (*(KeyNames_s284a0*)&g_keyboard)
 #undef AGENT
 #define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
+static __forceinline Agent& ag_s284a0(unsigned id) { return g_mission->agents.pages[id >> 4][id & 0xf]; }
+static __forceinline Agent& agr_s284a0(unsigned id) { Agent** pages = *(Agent***)((char*)g_mission + 0x1c); return *(pages[id >> 4] + (id & 0xf)); }
 static __forceinline float cl0_s284a0(float x) { if (0.0f > x) x = 0.0f; return x; }
 // @ 0x5284a0 ------------------------------------------------------------------------------------------
 void ViewCtrl_s284a0::update(float dt)
@@ -1394,7 +1429,8 @@ void ViewCtrl_s284a0::update(float dt)
     if (snap < 5) {
         const vector4& d = a->dir;
         a->dir55d8 = d;
-        float ang = (float)atan2(-d.x, d.y);
+        float nx = -d.x;
+        float ang = (float)atan2(nx, d.y);
         int n = snap + 1;
         p_ref = 0.0f;
         snap = n;
@@ -1462,7 +1498,7 @@ void ViewCtrl_s284a0::update(float dt)
         g_game_s284a0->f139e4 = (g_game_s284a0->f139e4 == 0);
         update_equipment();
     }
-    AGENT(g_mission_s284a0->selected)->f55d4 = (g_game_s284a0->f139e4 != 0);
+    agr_s284a0(g_mission->f5c).f55d4 = (g_game_s284a0->f139e4 != 0);
 
     // ---- field of view ------------------------------------------------------------------------------
     bool zoom_key = false;
@@ -1473,7 +1509,9 @@ void ViewCtrl_s284a0::update(float dt)
     else
         fov = fov + dt * 350.0f;
 
-    float limit = g_game_s284a0->f139e4 ? 90.0f : 97.0f;
+    float limit = 97.0f;
+    if (g_game_s284a0->f139e4 != 0)
+        limit = 90.0f;
     if (fov < 37.0f)
         fov = 37.0f;
     else if (fov > limit)
@@ -1481,57 +1519,44 @@ void ViewCtrl_s284a0::update(float dt)
 
     // ---- the "use / attack" keys walk the agent table and hit the agent under the crosshair ---------
     if (g_cfg.cheat_mode != 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) && g_keyboard.down[63] != 0 && g_keyboard.prev[63] == 0) {
-        int old = AGENT(g_mission_s284a0->selected)->f7c;
-        int two = 2;
-        Agent_s284a0* t = g_mission_s284a0->agents.get(g_mission_s284a0->selected);
-        if (old == two)
-            t->f7c = 1;
+        if (agr_s284a0(g_mission->f5c).f7c == 2)
+            g_mission->agents.get(g_mission->f5c)->f7c = 1;
         else
-            t->f7c = two;
+            g_mission->agents.get(g_mission->f5c)->f7c = 2;
     }
 
     if (g_cfg.cheat_mode != 0 && g_keyboard.down[29] != 0 && g_key_names_s284a0.is_ready(0x3e)) {
-        Mission_s284a0* m = g_mission_s284a0;
-        AgentTable* t = (AgentTable*)&m->agents;
         bool done = false;
-        unsigned i = t->first_used();
-        unsigned cur = i;
-        while (cur < (unsigned)m->agents.count && !done) {
-            Agent_s284a0* o = m->agents.pages[cur >> 4] + (cur & 0xf);
-            if (o->f14 == 1 && o->f10 == 0 && ((AgentX*)t->get(m->selected))->is_enemy((Agent const*)o)) {
-                Blow_s284a0 b;
-                b.f48 = 2;
-                b.f38 = 0;
-                Mission_s284a0* n = g_mission_s284a0;
-                b.attacker = n->selected;
-                AgentTable* u = (AgentTable*)&n->agents;
-                b.pos = *(vector4*)((char*)u->get(cur) + 0x50);
-                b.damage = 100.0f;
-                ((Agent*)u->get(cur))->note_blow((Blow*)&b);
+        for (unsigned i = g_mission->agents.first_used(); i < (unsigned)g_mission->agents.count && !done; g_mission->agents.next_used(&i)) {
+            Agent* o = (Agent*)AGENT(i);
+            if (o->f14 == 1 && o->f10 == 0 && ((AgentX*)g_mission->agents.get(g_mission_s284a0->selected))->is_enemy(o)) {
+                Blow b;
+                b.init();
+                b.kind = 2;
+                b.bone = 0;
+                b.attacker = g_mission->f5c;
+                b.pos = g_mission->agents.get(i)->pos;
+                b.dmg_in = 100.0f;
+                g_mission->agents.get(i)->note_blow(&b);
                 if (g_keyboard.down[42] == 0)
                     done = true;
             }
-            m = g_mission_s284a0;
-            t = (AgentTable*)&m->agents;
-            t->next_used(&i);
-            cur = i;
         }
     }
 
     if (g_cfg.cheat_mode != 0 && g_keyboard.down[29] != 0 && g_keyboard.down[64] != 0 && g_keyboard.prev[64] == 0) {
         bool done = false;
-        for (unsigned i = ((AgentTable*)&g_mission_s284a0->agents)->first_used(); i < (unsigned)g_mission_s284a0->agents.count && !done;
-             ((AgentTable*)&g_mission_s284a0->agents)->next_used(&i)) {
-            Agent_s284a0* o = AGENT(i);
-            if (i != (unsigned)g_mission_s284a0->selected && o->f14 == 1 && o->f10 == 0 &&
-                ((Agent*)((AgentTable*)&g_mission_s284a0->agents)->get(g_mission_s284a0->selected))->is_friend((Agent const*)o)) {
-                Blow_s284a0 b;
-                b.f48 = 2;
-                b.f38 = 0;
-                b.attacker = g_mission_s284a0->selected;
-                b.pos = *(vector4*)((char*)((AgentTable*)&g_mission_s284a0->agents)->get(i) + 0x50);
-                b.damage = 100.0f;
-                ((Agent*)((AgentTable*)&g_mission_s284a0->agents)->get(i))->note_blow((Blow*)&b);
+        for (unsigned i = g_mission->agents.first_used(); i < (unsigned)g_mission->agents.count && !done; g_mission->agents.next_used(&i)) {
+            Agent* o = (Agent*)AGENT(i);
+            if (i != (unsigned)g_mission->f5c && o->f14 == 1 && o->f10 == 0 && g_mission->agents.get(g_mission_s284a0->selected)->is_friend(o)) {
+                Blow b;
+                b.init();
+                b.kind = 2;
+                b.bone = 0;
+                b.attacker = g_mission->f5c;
+                b.pos = g_mission->agents.get(i)->pos;
+                b.dmg_in = 100.0f;
+                g_mission->agents.get(i)->note_blow(&b);
                 if (g_keyboard.down[42] == 0)
                     done = true;
             }
@@ -1539,17 +1564,18 @@ void ViewCtrl_s284a0::update(float dt)
     }
 
     if (g_cfg.cheat_mode != 0 && g_keyboard.down[29] != 0 && g_keyboard.down[61] != 0 && g_keyboard.prev[61] == 0) {
-        Blow_s284a0 b;
-        b.f48 = 2;
-        b.f38 = 0;
-        b.attacker = g_mission_s284a0->selected;
-        b.pos = AGENT(g_mission_s284a0->selected)->pos;
-        b.damage = 200.0f;
-        AGENT(g_mission_s284a0->selected)->note_blow(&b);
+        Blow b;
+        b.init();
+        b.kind = 2;
+        b.bone = 0;
+        b.attacker = g_mission->f5c;
+        b.pos = ag_s284a0(g_mission->f5c).pos;
+        b.dmg_in = 200.0f;
+        ((Agent*)AGENT(g_mission_s284a0->selected))->note_blow(&b);
     }
 
     if ((g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) && g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0 && g_cfg.cheat_mode != 0)
-        AGENT(g_mission_s284a0->selected)->f5724 = AGENT(g_mission_s284a0->selected)->f5720;
+        agr_s284a0(g_mission->f5c).health = agr_s284a0(g_mission->f5c).max_health;
 }
 
 // ======================================================= slice s00529130: functions
@@ -1938,8 +1964,8 @@ void Screen_s29ec0::f_529ec0()
                 contact c;
                 if (shape_contact_count((shape_base*)found[i], &cap, 1, &c)) {
                     vector4 hit = c.point;
-                    vector4 d = hit - pos;
-                    float len = d.normalize();
+                    front = hit - pos;
+                    float len = front.normalize();
                     if (len < best) {
                         best = len;
                         mode = -1;
@@ -1982,8 +2008,8 @@ void Screen_s29ec0::f_529ec0()
         if (!shape_contact_count((shape_base*)e->shape, &cap, 1, &c))
             continue;
 
-        vector4 d = c.point - pos;
-        float len = len_xzy_s29ec0(d);
+        front = c.point - pos;
+        float len = len_xzy_s29ec0(front);
         if (!(len <= best))        // 0x52a2d1: test ah,0x41 / jp -- skips on len > best and on NaN
             continue;
 
@@ -2003,7 +2029,7 @@ void Screen_s29ec0::f_529ec0()
                 if (g_items_s29ec0[a->item.item].type_flags == 1 && a->f30 == -1 && a->f14 == 1 && a->f5830 == 2) {
                     target = e->id;
                     mode = 2;
-                    best = d.out_length();
+                    best = front.out_length();
                     vector4 r = e->pos - pos;
                     second = r.out_length();   // 0x52a420: call 0x407c50 on the second vector as well
                 }

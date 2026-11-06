@@ -447,11 +447,10 @@ void set_progress_range(int low, int high)
 void __cdecl refresh_settings_list(const tstring* page, char detailed)
 {
     char text[0x1000];
-    CHARRANGE sel;                                  // [esp+0x14]: the selection, then (L, L + page length) after the insert
     CHARRANGE range;                                // [esp+0x24]: the span being coloured
+    CHARRANGE sel;                                  // [esp+0x14]: the selection, then (L, L + page length) after the insert
     struct { int flags, codepage; } stx;            // [esp+0x58] SETTEXTEX (the code page is never written)
     CHARFORMAT cf;                                  // [esp+0x60]: cbSize 0x3c, mask, effects; crTextColor at +0x14
-    POINT scroll;                                   // [esp+0x40]
     RECT window;
     char quote;
 
@@ -467,38 +466,38 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
         sel_text.append(line);
     }
 
+    POINT scroll;                                   // [esp+0x40]
     stx.flags = 2;
     SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x461, (WPARAM)&stx, (LPARAM)page->c_str());
 
-    const int L = sel.cpMin;                        // the base every coloured span is measured from (never modified)
-    sel.cpMax = page->len + L;                      // 0x4bb4f2: [esp+0x18]
+    sel.cpMax = page->len + sel.cpMin;              // 0x4bb4f2: [esp+0x18]
     quote = '"';
     int first = page->find(quote, 0);
     int separated = 0;
     cf.cbSize = 0x3c;
     cf.dwMask = 0x40000000;
     cf.dwEffects = 0;
-    int color = detailed ? 0x00c80000 : 0;
 
     for (;;) {
-        range.cpMin = separated + L;
-        range.cpMax = first < 0 ? sel.cpMax : first + L;
+        range.cpMin = separated + sel.cpMin;
+        range.cpMax = first < 0 ? sel.cpMax : first + sel.cpMin;
         SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
-        cf.crTextColor = color;
+        cf.crTextColor = detailed ? 0x00c80000 : 0;
         SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
         if (first < 0) {
             break;
         }
         separated = page->find(quote, first + 1) + 1;
-        if (separated < 1) {
-            first = -1;
-        } else {
-            range.cpMin = first + L;
-            range.cpMax = L + separated;
+        if (separated > 0) {
+            range.cpMin = sel.cpMin + first;
+            range.cpMax = sel.cpMin + separated;
             SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
             cf.crTextColor = (detailed ? 0x00c80000 : 0) + 0xc800;
             SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
+            quote = '"';
             first = page->find(quote, separated);
+        } else {
+            first = -1;
         }
     }
 
@@ -512,29 +511,31 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
             if (k < 0) {
                 k = page->len;
             }
-            bool mark = true;
-            if (key_end >= 3) {
-                int e = sel_text.find(quote, key_end);
-                if (e < 0) {
-                    e = sel_text.len;
+            do {
+                if (key_end >= 3) {
+                    quote = ',';
+                    int e = sel_text.find(quote, key_end);
+                    if (e < 0) {
+                        e = sel_text.len;
+                    }
+                    long l = atoi(page->substr(first, k).c_str());
+                    long r = atoi(sel_text.substr(key_end, e).c_str());
+                    if (l == r) {
+                        break;
+                    }
                 }
-                long l = atoi(page->substr(first, k).c_str());
-                long r = atoi(sel_text.substr(key_end, e).c_str());
-                mark = (l != r);
-            }
-            if (mark) {
-                range.cpMin = L + first;
-                range.cpMax = L + k;
+                range.cpMin = sel.cpMin + first;
+                range.cpMax = sel.cpMin + k;
                 SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x437, 0, (LPARAM)&range);
                 cf.crTextColor = 0xff;
                 SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x444, 1, (LPARAM)&cf);
-            }
+            } while (0);
             first = page->find(tstring(" = "), first) + 3;
             key_end = sel_text.find(tstring(" = "), key_end) + 3;
         }
     }
 
-    int top = (int)SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x436, 0, L);    // EM_EXLINEFROMCHAR
+    int top = (int)SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x436, 0, sel.cpMin);    // EM_EXLINEFROMCHAR
     GetWindowRect(GetDlgItem(g_app_obj.script_dlg, 0x4b0), &window);
     int prev = g_edit_value;
     int lineheight = (top - 5) * 0x11;

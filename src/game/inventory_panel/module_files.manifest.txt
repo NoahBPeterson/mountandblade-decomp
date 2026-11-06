@@ -1,1 +1,1 @@
-# no byte-exact function in this module (see module_files.nonmatching.txt)
+../src/game/inventory_panel/module_files.cpp  ?load_module_files@@YAXXZ  0050d5e0  /O2 /MT /Gy /TP

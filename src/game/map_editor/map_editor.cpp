@@ -70,6 +70,15 @@ static __forceinline void cross3(vector4& r, const vector4& a, const vector4& b)
     r.z = a.x * b.y - a.y * b.x;
 }
 
+static __forceinline vector4 crossv(const vector4& a, const vector4& b)
+{
+    vector4 r;
+    r.x = a.y * b.z - a.z * b.y;
+    r.y = a.z * b.x - a.x * b.z;
+    r.z = a.x * b.y - a.y * b.x;
+    return r;
+}
+
 static __forceinline float normalize_vec(vector4& v)
 {
     float len = (float)sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
@@ -149,7 +158,7 @@ refresh_list:
         ed_selected(g_game) = -1;
         for (unsigned i = 0; i < (unsigned)record_count(); i++)
             ((IntVec&)ed_sel_list(g_game)).push_back(i);
-        if (ed_sel_list(g_game).size() != 0)
+        if (ed_sel_list(g_game).size() > 0)
             ed_selected(g_game) = ed_sel_list(g_game)[0];
         f2f9 = 1;
         ed_dirty_1c8(g_game) = 1;
@@ -167,9 +176,9 @@ refresh_list:
         dir.x = -cam_x; dir.y = -cam_y; dir.z = -cam_z;
         m.o = ed_pos(g_game);
         m.f = dir;
-        cross3(m.s, m.f, m.u);
+        m.s = crossv(m.f, m.u);
         normalize_vec(m.s);
-        cross3(m.f, m.u, m.s);
+        m.f = crossv(m.u, m.s);
         normalize_vec(m.f);
         m.move_forward(1.0f);
         ed_frame(g_game) = m;

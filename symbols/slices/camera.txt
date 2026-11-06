@@ -1,4 +1,0 @@
-# src/game/party2/camera.cpp: globals above the audit's annotation limit and the namespaced view classes
-08ed4f7c ?g_skins_begin@c49f060@@3PAHA  # body mesh table (vector<int>, entry ptr at +0x1e8)
-08ed4f88 ?g_skin_count@c49f060@@3IA
-0049e580 ??_ECamera@@UAEPAXI@Z  # deleting destructor, slot 0 of the vtable ctor 0x49deb0 stores

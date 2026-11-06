@@ -20,26 +20,38 @@ struct EntityV {
     virtual void refresh();                                 // +0x10
 };
 
-// a "medium"/"short" button of the board panel (0x4dcc50 with the two skin names and the 3.7 / 3.0 text scale);
-// the three strings are built label first and die in reverse order, as the original's named temporaries do
-static __forceinline MissionUi* board_button(MissionUi* parent, const char* label, float x, float y, float h,
-                                            const char* down, const char* up, float scale)
+// a "medium"/"short" button of the board panel (0x4dcc50 with the two skin names and the 3.7 / 3.0 text scale): the label
+// is the caller's temporary, the two skin names this helper's, so they die first
+static inline MissionUi* medium_button(MissionUi* parent, const tstring& label, float x, float y, float h)
 {
-    tstring a(label);
-    tstring d(down);
-    tstring u(up);
-    return (MissionUi*)new_sized_button((MissionUi*)parent, a, x, y, h, u, d, scale, 0.072f, 0.085f);
+    return (MissionUi*)new_sized_button(parent, label, x, y, h, "medium_button", "medium_button_down", 3.7f, 0.072f, 0.085f);
 }
-static __forceinline void board_text(MissionUi* parent, const char* text, float x, float y)
+static inline MissionUi* short_button(MissionUi* parent, const tstring& label, float x, float y, float h)
 {
-    tstring s(text);
-    tvec2 p = { x, y };
-    parent->layout_text_to(&s, (const float*)&p);   // +0xac
+    return (MissionUi*)new_sized_button(parent, label, x, y, h, "short_button", "short_button_down", 3.0f, 0.072f, 0.085f);
 }
 static __forceinline mesh* board_mesh(const char* name)
 {
     tstring n(name);
     return g_resmgr.get_object(&n)->clone();   // 0x419540, 0x41c6d0
+}
+
+// the entity's mesh list: push_back expanded in place (a file that sees std_vec_push_back.h would call 0x440b30)
+struct BoardMeshVec : std::vector<int> {
+    __forceinline void add(const int& x)
+    {
+        if (size() < capacity())
+            _Mylast = _Ufill(_Mylast, 1, x);
+        else
+            _Insert_n(end(), 1, x);
+    }
+};
+// the scene bounds, passed by address as temporaries (0x478ad0)
+struct board_pair { float x, y; board_pair(float a, float b) : x(a), y(b) {} };
+// the board's child list (ContainerBase::kids): a real inlined push_back; the slow path is 0x4927d0
+static __forceinline void add_kid(ContainerBase* c, MissionUi* w)
+{
+    ((std::vector<SceneObject*>&)c->kids).push_back((SceneObject*)w);
 }
 
 // @ 0x4f1460
@@ -88,30 +100,30 @@ void TerrainPage::init_screen()
         panel->set_text((float*)out, &(e));                    // +0xa4
     }
     { tvec2 s = { 0.02f, 0.02f }; panel->set_size((const float*)&s); }
-    push_child(board->kids, panel);
+    add_kid(board, panel);
 
-    board_text(panel, "Shade occluded:", 0.24f, 0.62f);
-    water_box = board_button(panel, "disabled", 0.36f, 0.62f, 0.03f, "medium_button_down", "medium_button", 3.7f);
+    { tstring s("Shade occluded:"); tvec2 p = { 0.24f, 0.62f }; panel->layout_text_to(&s, (const float*)&p); }
+    water_box = medium_button(panel, "disabled", 0.36f, 0.62f, 0.03f);
     *(int*)((char*)water_box + 0x184) = 1;
-    board_text(panel, "Place river:", 0.01f, 0.62f);
-    terrain_box = board_button(panel, "place river", 0.1f, 0.62f, 0.03f, "medium_button_down", "medium_button", 3.7f);
+    { tstring s("Place river:"); tvec2 p = { 0.01f, 0.62f }; panel->layout_text_to(&s, (const float*)&p); }
+    terrain_box = medium_button(panel, "place river", 0.1f, 0.62f, 0.03f);
     *(int*)((char*)terrain_box + 0x184) = 1;
-    board_text(panel, "Disable grass:", 0.24f, 0.58f);
-    river_box = board_button(panel, "3dgrass", 0.36f, 0.58f, 0.03f, "medium_button_down", "medium_button", 3.7f);
+    { tstring s("Disable grass:"); tvec2 p = { 0.24f, 0.58f }; panel->layout_text_to(&s, (const float*)&p); }
+    river_box = medium_button(panel, "3dgrass", 0.36f, 0.58f, 0.03f);
     *(int*)((char*)river_box + 0x184) = 1;
-    board_text(panel, "Deep water:", 0.01f, 0.58f);
-    terraingen_box = board_button(panel, "deep water", 0.1f, 0.58f, 0.03f, "medium_button_down", "medium_button", 3.7f);
+    { tstring s("Deep water:"); tvec2 p = { 0.01f, 0.58f }; panel->layout_text_to(&s, (const float*)&p); }
+    terraingen_box = medium_button(panel, "deep water", 0.1f, 0.58f, 0.03f);
     *(int*)((char*)terraingen_box + 0x184) = 1;
 
     // the three seeds: a caption, a "randomize" button and an edit box (UiE, inlined constructor)
     for (i = 0; i < 3; i++) {
         float t = (float)i * 0.04f;
-        board_text(panel, i == 0 ? "terrain seed" : i == 1 ? "river seed" : "flora seed", 0.03f, t + 0.07f);
-        float y = t + 0.06f;
-        layer_boxes[i] = board_button(panel, "randomize", 0.38f, y, 0.03f, "medium_button_down", "medium_button", 3.7f);
+        float ty = t + 0.07f;
+        { tstring s(i == 0 ? "terrain seed" : i == 1 ? "river seed" : "flora seed"); tvec2 p = { 0.03f, ty }; panel->layout_text_to(&s, (const float*)&p); }
+        layer_boxes[i] = medium_button(panel, "randomize", 0.38f, t + 0.06f, 0.03f);
 
         bit_fields[i] = new UiE(0);                 // the inlined constructor (config/ui_widgets_c.h)
-        { tvec2 p = { 0.1f, y }; bit_fields[i]->move_a((const float*)&p); }
+        { tvec2 p = { 0.1f, t + 0.06f }; bit_fields[i]->move_a((const float*)&p); }
         { tvec2 s = { 0.225f, 0.025f }; bit_fields[i]->set_xy((const float*)&s); }
         mesh* up = board_mesh("party_button");
         mesh* down = board_mesh("party_button_down");
@@ -123,8 +135,8 @@ void TerrainPage::init_screen()
     }
 
     // the six parameter sliders, each with its caption
+    char name[64];                                  // function scope: the buffer below keeps a separate slot
     for (i = 0; i < 6; i++) {
-        char name[32];
         switch (i) {
         case 0: strcpy(name, "Size x"); break;
         case 1: strcpy(name, "Size y"); break;
@@ -134,30 +146,28 @@ void TerrainPage::init_screen()
         case 5: strcpy(name, "Vegetation"); break;
         default: strcpy(name, "unknown"); break;
         }
-        float t = (float)i * 0.04f;
-        board_text(panel, name, 0.05f, t + 0.2f);
-        sliders[i] = (MissionUi*)make_slider((MissionUi*)panel, 0.23f, t + 0.19f, 1.0f);
+        { tstring s(name); float t = (float)i * 0.04f; tvec2 p = { 0.05f, t + 0.2f }; panel->layout_text_to(&s, (const float*)&p); }
+        sliders[i] = (MissionUi*)make_slider((MissionUi*)panel, 0.23f, (float)i * 0.04f + 0.19f, 1.0f);
     }
 
-    regen_btn = board_button(panel, "Generate Terrain", 0.07f, 0.02f, 0.035f, "medium_button_down", "medium_button", 3.7f);
-    back_btn = board_button(panel, "Close", 0.33f, 0.01f, 0.028f, "medium_button_down", "medium_button", 3.7f);
+    regen_btn = medium_button(panel, "Generate Terrain", 0.07f, 0.02f, 0.035f);
+    back_btn = medium_button(panel, "Close", 0.33f, 0.01f, 0.028f);
     {
         tstring k("key");
         hexbox = (MissionUi*)make_hint((ContainerBase*)panel, k, 0.0f, 0.72f, 0.5f, 0.02f);   // 0x4dada0
     }
     { tvec2 s = { 0.02f, 0.02f }; hexbox->set_size((const float*)&s); }
-    copy_btn = board_button(panel, "Copy", 0.1f, 0.685f, 0.025f, "short_button_down", "short_button", 3.0f);
-    paste_btn = board_button(panel, "Paste", 0.25f, 0.685f, 0.025f, "short_button_down", "short_button", 3.0f);
-    board_text(panel, "Terrain:", 0.03f, 0.49f);
-    board_text(panel, "Polygon Size:", 0.03f, 0.54f);
-
+    copy_btn = short_button(panel, "Copy", 0.1f, 0.685f, 0.025f);
+    paste_btn = short_button(panel, "Paste", 0.25f, 0.685f, 0.025f);
+    { tstring s("Terrain:"); tvec2 p = { 0.03f, 0.49f }; panel->layout_text_to(&s, (const float*)&p); }
+    { tstring s("Polygon Size:"); tvec2 p = { 0.03f, 0.54f }; panel->layout_text_to(&s, (const float*)&p); }
     {
         tstring n("region type");
         type_box = (MissionUi*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
     }
-    for (const int* r = g_region_types; r < g_region_types + 8; r++) {
+    for (i = 0; i < 8; i++) {
         char buf[64];
-        region_name(*r, buf);
+        region_name(g_region_types[i], buf);
         tstring s(buf);
         ((DropDown*)type_box)->append(&s);                    // +0xc8: the drop-down's add-item
     }
@@ -172,21 +182,9 @@ void TerrainPage::init_screen()
 
     // the 3D preview: the view widget, its scene and camera
     view = new MapWidget;                           // 0x4ed630
-    {
-        tvec2 lo = { -200.0f, -200.0f };
-        tvec2 hi = { 200.0f, 200.0f };
-        int cells = 6;
-        int cells2 = 6;
-        int flag = 0;
-        void* p = operator new(0x344);
-        world = p ? (rgl::world*)new (p) rgl::world((const float*)&lo, (const float*)&hi, &cells, &cells2, &flag) : 0;   // 0x478ad0
-    }
-    {
-        float start = 500.0f;
-        float end = 1000.0f;
-        int color = (int)0xff405060;
-        ((rgl::world*)(void*)world)->set_fog(&start, &end, &color);   // 0x488cd0
-    }
+    world = new rgl::world((const float*)&board_pair(-200.0f, -200.0f), (const float*)&board_pair(200.0f, 200.0f),
+                           &(const int&)6, &(const int&)6, &(const int&)0);   // 0x478ad0
+    world->set_fog(&(const float&)500.0f, &(const float&)1000.0f, &(const int&)0xff405060);   // 0x488cd0
     view->world = world;
     { tvec2 p = { 0.0f, 0.0f }; view->move_a((float*)(const float*)&p); }
     { tvec2 s = { 0.5f, 0.75f }; view->set_xy((const float*)&s); }
@@ -194,13 +192,13 @@ void TerrainPage::init_screen()
     view->scene3d.f190 = 0xff111133;
     cam.init(0.69813174f, 1.5f, 2.0f, 1000.0f);    // 0x4f25a0 (40 degrees)
     view->scene3d.fr = cam;
-    push_child(board->kids, view);
+    add_kid(board, view);
 
     EntityV* ent = (EntityV*)((rgl::world*)(void*)world)->create_entity(9);   // 0x428440
     {
         tstring n("prtcl_drop");
         mesh* m = g_resmgr.get_object(&n)->clone();
-        ((std::vector<int>*)((char*)ent + 0x118))->push_back((int)m);   // _Insert_n 0x410610
+        ((BoardMeshVec*)((char*)ent + 0x118))->add((int)m);   // _Insert_n 0x410610
         ent->refresh();
     }
 

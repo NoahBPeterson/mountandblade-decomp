@@ -351,10 +351,9 @@ void Agent::update_aim_error()
     float v = 0.0f;
     ItemRef* r = 0;
     if (slots[0] >= 0) r = &pairs[slots[0]];
-    ItemRef tmp;
-    tmp.item = -1;
-    if (r) tmp = *r;
-    ItemRef cur = tmp;
+    ItemRef cur;
+    cur.item = -1;
+    if (r) cur = *r;
     int item = cur.item;
     if (item >= 0) {
         unsigned t = g_items[item].type_flags & 0xff;

@@ -22,8 +22,8 @@
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_globals.h): g_bit[2] = 4 (size mask), g_bit[4] = 0x10 (type mask)
-unsigned g_river_mask_b = (unsigned)g_bit[2];               // 0x5e2584
 unsigned g_river_mask_a = (unsigned)g_bit[4];               // 0x5e2580
+unsigned g_river_mask_b = (unsigned)g_bit[2];               // 0x5e2584
 #include "../mission.h"                                      // Mission, g_mission (0x5e292c)
 #include "../../include/render_flags.h"
 
@@ -470,84 +470,78 @@ void Terrain::init_layers()
 void Terrain::scatter(particle_list* set, int mode, int n)
 {
     set->nsrc = 0;
-    int cnt = g_ptype_count;
     ptype* specs = g_ptypes;
+    int cnt = g_ptype_count;
     unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
     float total = 0.0f;
     int fits = 0;
-    int idx = 0;
     if (0 < cnt) {
-        do {
-            if ((specs[idx].flags & 0x1000000) != 0) {
+        for (int i = 0; i < cnt; i++) {
+            if ((specs[i].flags & 0x1000000) != 0) {
                 int tt = t;
-                if (spec_weight(&idx, &tt, &mode) > 0.1f)
+                if (spec_weight(&i, &tt, &mode) > 0.1f)
                     fits++;
             }
-            idx++;
-        } while (idx < cnt);
+        }
     }
-    idx = 0;
-    int tt = t;
     if (0 < cnt) {
-        do {
-            float w_ = spec_weight(&idx, &tt, &mode);
+        int tt = t;
+        for (int i = 0; i < cnt; i++) {
+            float w_ = spec_weight(&i, &tt, &mode);
             if (w_ < 0.0f) w_ = 0.0f;
             else if (w_ > 1.0f) w_ = 1.0f;
-            idx++;
             total = w_ + total;
-        } while (idx < cnt);
+        }
     }
     int pick_fit = 0;
     if (fits != 0) pick_fit = 1;
     if (0 < n) {
         int left = n;
         do {
-            if (0.0f < total) {
+            if (total > 0.0f) {
                 int pick;
                 if (pick_fit) {
-                    int r;
-                    if (fits < 2) r = 0;
-                    else {
+                    int r = 0;
+                    if (fits > 1) {
                         r = rand() % fits;
                         cnt = g_ptype_count;
                         specs = g_ptypes;
                     }
                     float target = (float)r;
                     int seen = 0;
-                    idx = 0;
+                    int i = 0;
                     if (0.0f <= target) {
                         do {
-                            if (cnt <= idx) break;
-                            if ((specs[idx].flags & 0x1000000) != 0) {
+                            if (i >= cnt) break;
+                            if ((specs[i].flags & 0x1000000) != 0) {
                                 int t2 = t;
-                                if (spec_weight(&idx, &t2, &mode) > 0.1f)
+                                if (spec_weight(&i, &t2, &mode) > 0.1f)
                                     seen++;
                             }
-                            idx++;
+                            i++;
                         } while ((float)seen <= target);
                     }
                     pick_fit = 0;
-                    pick = idx;
+                    pick = i;
                 } else {
                     int r = rand() % 15817;
                     cnt = g_ptype_count;
-                    idx = 0;
                     float acc = 0.0f;
                     float target = (float)r * total * 6.3223117e-05f;
                     int j = 0;
                     if (0.0f < target) {
                         do {
-                            if (cnt <= j) break;
+                            if (j >= cnt) break;
                             int t2 = t;
                             float w_ = spec_weight(&j, &t2, &mode);
                             j++;
-                            acc = w_ + acc;
+                            acc += w_;
                         } while (acc < target);
                     }
                     pick = j;
                 }
                 int sel = pick - 1;
-                sel = ((sel < 1) - 1) & sel;
+                sel = ((sel <= 0) - 1) & sel;
                 scatter_src* it = &set->src[set->nsrc];
                 it->kind = sel;
                 float rx = (float)(rand() % 15817) * 0.63223112f;

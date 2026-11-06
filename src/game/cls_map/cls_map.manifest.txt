@@ -47,3 +47,6 @@
 ../src/game/cls_map/cls_map.cpp  ?make_background@@YAPAUmesh@rgl@@PAMH@Z  004de320  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?init_screen@Rec38@@UAEXXZ  004de1b0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?init_screen@C4c3050@@UAEXXZ  004ddf80  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?init_screen@C4c3290@@UAEXXZ  004e3aa0  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?new_progress_bar@@YAPAUprogress_bar@@PAUContainerBase@@MMMM@Z  004e3d50  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?init_screen@Recf0@@UAEXXZ  004e05c0  /O2 /MT /Gy /TP

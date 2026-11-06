@@ -379,12 +379,12 @@ void Game::build_map_trees()
     }
 
     // ---- bbox + aggregate masks ----------------------------------------
-    *(map_v2*)&g_script.minx = map_v2(100000.0f, 100000.0f);
-    *(map_v2*)&g_script.maxx = map_v2(-100000.0f, -100000.0f);
     unsigned water = (unsigned)(g_bit[8] | g_bit[7]);
     unsigned land = (unsigned)(g_bit[4] | g_bit[5] | g_bit[11] | g_bit[9] | g_bit[12] | g_bit[13] | g_bit[10] | g_bit[2] | g_bit[3] | g_bit[1]);
     unsigned sea = (unsigned)g_bit[0];
     unsigned wood = (unsigned)g_bit[9];
+    *(map_v2*)&g_script.minx = map_v2(100000.0f, 100000.0f);
+    *(map_v2*)&g_script.maxx = map_v2(-100000.0f, -100000.0f);
     ((GameMapView*)this)->scan_arrays(fr.scan_a, fr.scan_b);
 
     for (i = 0; i < g_script.level->ground->verts.size(); i++) {
@@ -517,33 +517,50 @@ void Game::build_map_trees()
                     int f0 = nf[0], f2 = nf[2], f1 = nf[1];
 
                     // ---- material / node-type filter ----
-                    bool add = false;
-                    if (mt == 0) {
-                        if (nd.ids[8] == 0 || nd.ids[8] == 0xf)
-                            add = true;
-                    } else if (mt == 8) {
-                        if (nd.ids[8] == 8 || nd.ids[8] == 7)
-                            add = true;
-                        else if (nd.ids[8] == 0 && ((water & f0) != 0 || (water & f1) != 0 || (water & f2) != 0))
-                            add = true;
-                    } else if (mt == 0x15) {
-                        if (nd.ids[8] > 0 && nd.ids[8] != 8 && nd.ids[8] != 0xf && nd.ids[8] != 7 && nd.ids[8] != 1
-                            && (fr.dist[nd.ids[0]] < 1.51f || fr.dist[nd.ids[1]] < 1.51f || fr.dist[nd.ids[2]] < 1.51f))
-                            add = true;
-                    } else if (mt == 0x16 || mt == 0x17) {
-                        if (nd.ids[8] == 0 && (fr.dist[nd.ids[0]] < 0.01f || fr.dist[nd.ids[1]] < 0.01f || fr.dist[nd.ids[2]] < 0.01f))
-                            add = true;
-                    } else if (mt != 7 && mt != 0xf) {
-                        if (mt == 9) {
-                            if (nd.ids[8] != 8 && nd.ids[8] != 0 && ((wood & f0) != 0 || (wood & f1) != 0 || (wood & f2) != 0))
-                                add = true;
+                    {
+                        if (mt == 0) {
+                            if (nd.ids[8] == 0 || nd.ids[8] == 0xf)
+                                goto emit;
+                            goto no_emit;
+                        } else if (mt == 8) {
+                            if (nd.ids[8] == 8 || nd.ids[8] == 7)
+                                goto emit;
+                            if (nd.ids[8] != 0)
+                                goto no_emit;
+                            if ((water & f0) != 0 || (water & f1) != 0 || (water & f2) != 0)
+                                goto emit;
+                            goto no_emit;
+                        } else if (mt == 0x15) {
+                            if (nd.ids[8] <= 0 || nd.ids[8] == 8 || nd.ids[8] == 0xf || nd.ids[8] == 7 || nd.ids[8] == 1)
+                                goto no_emit;
+                            if (fr.dist[nd.ids[0]] < 1.51f || fr.dist[nd.ids[1]] < 1.51f || fr.dist[nd.ids[2]] < 1.51f)
+                                goto emit;
+                            goto no_emit;
+                        } else if (mt != 0x16 && mt != 0x17) {
+                            if (mt == 7 || mt == 0xf)
+                                goto no_emit;
+                            if (mt == 9) {
+                                if (nd.ids[8] == 8 || nd.ids[8] == 0)
+                                    goto no_emit;
+                                if ((wood & f0) == 0 && (wood & f1) == 0 && (wood & f2) == 0)
+                                    goto no_emit;
+                                goto emit;
+                            } else {
+                                if (nd.ids[8] == 8 || nd.ids[8] == 7 || nd.ids[8] == 0)
+                                    goto no_emit;
+                                if ((umask & f0) == 0 && (umask & f1) == 0 && (umask & f2) == 0)
+                                    goto no_emit;
+                                goto emit;
+                            }
                         } else {
-                            if (nd.ids[8] != 8 && nd.ids[8] != 7 && nd.ids[8] != 0 && ((umask & f0) != 0 || (umask & f1) != 0 || (umask & f2) != 0))
-                                add = true;
+                            if (nd.ids[8] != 0)
+                                goto no_emit;
+                            if (fr.dist[nd.ids[0]] < 0.01f || fr.dist[nd.ids[1]] < 0.01f || fr.dist[nd.ids[2]] < 0.01f)
+                                goto emit;
+                            goto no_emit;
                         }
                     }
-                    if (!add)
-                        goto no_emit;
+                emit:
                     int k = 0;
                     if (nd.npts > 0) {
                         rgl::world* w = g_script.level;

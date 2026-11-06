@@ -121,7 +121,6 @@ int __stdcall draw_party_line(int index)
         tstring k("ui_tracks");
         g_gui.draw_string(g_strtable.lookup(k), 0.02f, 0xfff0e0d0, 1);
     }
-    GameData* g = g_game;
 
     char buf[512];
     if (skill > 1) {
@@ -133,7 +132,7 @@ int __stdcall draw_party_line(int index)
         else if (div > 10)
             div = 10;
         int lo = (hours / div) * div;
-        int hi = lo + div - 1;
+        int hi = div + lo - 1;
         if (lo < 1)
             lo = 1;
         else if (lo > 0x20)
@@ -166,7 +165,7 @@ int __stdcall draw_party_line(int index)
         else if (div2 > 10)
             div2 = 10;
         int lo2 = (size / div2) * div2;
-        int hi2 = lo2 + div2 - 1;
+        int hi2 = div2 + lo2 - 1;
         if (lo2 <= 0)
             lo2 = 1;
         if (hi2 <= 0)
@@ -215,15 +214,18 @@ int __stdcall draw_party_line(int index)
                 } else if (skill < 10)
                     return f;
                 {
-                    PartyTemplate& r = g_party_templates[n];
+                    PartyTemplate* r;
                     unsigned color;
-                    if (g_module_settings.show_faction_color != 0)
-                        color = *(unsigned*)&g_game->rel[r.f2c * 0xc0 + 0xa];
-                    else
-                        color = g_game->color_of(g_game->rel[r.f2c * 0xc0 + 0xb], 1);   // 0x4b1930
-                    const tstring* name = g_strtable.find(&r.key);
+                    if (g_module_settings.show_faction_color != 0) {
+                        r = &g_party_templates[n];
+                        color = *(unsigned*)&g_game->rel[g_party_templates[n].f2c * 0xc0 + 0xa];
+                    } else {
+                        r = &g_party_templates[n];
+                        color = g_game->color_of(g_game->rel[g_party_templates[n].f2c * 0xc0 + 0xb], 1);   // 0x4b1930
+                    }
+                    const tstring* name = g_strtable.find(&r->key);
                     if (name == 0)
-                        name = &r.name;
+                        name = &r->name;
                     g_gui.draw_string((tstring*)name, 0.025f, color, 1);   // the function ends here: eax stays draw_string's result (the original returns it)
                 }
             }

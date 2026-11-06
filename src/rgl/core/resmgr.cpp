@@ -1088,8 +1088,7 @@ stream_base* read_mesh(stream_base* s, mesh* m)
     std::vector<face20>& vf = m->v90;
     vf.resize(nfaces, fv);
     for (i = 0; i < nfaces; i++) {
-        face20* f = m->v90._Myfirst + i;
-        int* q = &f->a;
+        int* q = &vat(m->v90, i).a;
         for (int j = 0; j < 3; j++)
             s->r_int(q++);
     }

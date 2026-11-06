@@ -489,16 +489,17 @@ void GameIo::import_apply(ini_file* imp)
 {
     WL_MARKER(4)
     Troop* troop = &troops[cur_troop];
+    int count = imp->count;
 
     // one key/value pair for the whole loop, assigned per entry (0x4d8c65: two default constructors before it,
     // operator= inside), not a copy constructed and destroyed per entry
     tstring key;
     tstring value;
-    for (int i = 0; i < imp->count; i++) {
+    for (int i = 0; i < count; i++) {
         if (i >= 0 && i < imp->count) {
-            ini_entry* e = &imp->entries[i];
-            key = e->key;
-            value = e->value;
+            ini_entry& e = imp->entries[i];
+            key = e.key;
+            value = e.value;
         }
 
         if (key.equals("name")) {
@@ -508,20 +509,23 @@ void GameIo::import_apply(ini_file* imp)
         }
         if (key.equals("xp")) {
             int xp = atoi(value.c_str());
+            int v;
             if (xp < 0) {
-                xp = 0;
+                v = 0;
             } else if (xp >= 0x26635cb0) {
-                xp = 0x26635caf;
+                v = 0x26635caf;
+            } else {
+                v = xp;
             }
-            troop->exp = xp;
+            troop->exp = v;
             troop->level = 1;
             int j = 1;
             while (j < 0x40) {
-                if (xp <= g_level_xp[j]) break;
+                if (v <= g_level_xp[j]) break;
                 troop->level = j;
-                if (xp <= g_level_xp[j + 1]) break;
+                if (v <= g_level_xp[j + 1]) break;
                 troop->level = j + 1;
-                if (xp <= g_level_xp[j + 2]) break;
+                if (v <= g_level_xp[j + 2]) break;
                 j += 3;
                 troop->level = j - 1;
             }
@@ -572,15 +576,16 @@ void GameIo::import_apply(ini_file* imp)
         key.to_lower();
         bool found = false;
         tstring tmp;
-        for (int j = 0; j < 42 && !found; j++) {
+        for (int j = 0; j < 42; j++) {
+            if (found) break;
             tmp = g_skill_tbl[j].name;
             tmp.spaces_to_underscores();
             tmp.to_lower();
             if (tmp.equals(key)) {
-                int v = atoi(value.c_str());
                 int lo = 0, hi = 0xb;
-                int r = clamp_index(&v, &lo, &hi);
-                troop->set_skill(j, r);
+                int v = atoi(value.c_str());
+                int rr = clamp_index(&v, &lo, &hi);
+                troop->set_skill(j, rr);
                 found = true;
             }
         }
@@ -589,23 +594,22 @@ void GameIo::import_apply(ini_file* imp)
         // (0x4d9142..0x4d9185: the short strcpy inlined as dword moves, then assign from the buffer)
         char weapon_text[0x100];
         tstring wname;
-        for (int j = 0; j < 7 && !found; j++) {
-            switch (j) {
-            case 0: strcpy(weapon_text, "one_handed_weapons"); break;
-            case 1: strcpy(weapon_text, "two_handed_weapons"); break;
-            case 2: strcpy(weapon_text, "polearms"); break;
-            case 3: strcpy(weapon_text, "archery"); break;
-            case 4: strcpy(weapon_text, "crossbows"); break;
-            case 5: strcpy(weapon_text, "throwing"); break;
-            case 6: strcpy(weapon_text, "firearms"); break;
-            }
+        for (int w = 0; w < 7; w++) {
+            if (found) break;
+            if (w == 0) strcpy(weapon_text, "one_handed_weapons");
+            else if (w == 1) strcpy(weapon_text, "two_handed_weapons");
+            else if (w == 2) strcpy(weapon_text, "polearms");
+            else if (w == 3) strcpy(weapon_text, "archery");
+            else if (w == 4) strcpy(weapon_text, "crossbows");
+            else if (w == 5) strcpy(weapon_text, "throwing");
+            else if (w == 6) strcpy(weapon_text, "firearms");
             wname.assign(weapon_text);
             wname.spaces_to_underscores();
             if (wname.equals(key)) {
-                int v = atoi(value.c_str());
                 int lo = 0, hi = 0x2bc;
-                int r = clamp_index(&v, &lo, &hi);
-                troop->f80[j] = (float)r;
+                int v = atoi(value.c_str());
+                int rr = clamp_index(&v, &lo, &hi);
+                troop->f80[w] = (float)rr;
                 found = true;
             }
         }

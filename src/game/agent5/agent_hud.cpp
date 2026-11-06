@@ -457,7 +457,7 @@ inline __declspec(noinline) capsule::capsule(float r, const vector4* a, const ve
 static __forceinline vector4 hv_scaled(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline void hv_addr(vector4& a, const vector4& b) { a.x = b.x + a.x; a.y = b.y + a.y; a.z = b.z + a.z; }
 static __forceinline vector4 hv_mulv(const vector4& a, float s) { return vector4(a.x * s, a.y * s, a.z * s); }
-struct HvS { float v; __forceinline HvS(float s) : v(s) {} };
+struct HvS { double v; __forceinline HvS(double s) : v(s) {} };
 static __forceinline vector4 hv_m6(const vector4& a, HvS s) { return vector4(a.x * s.v, a.y * s.v, a.z * s.v); }
 // a scale by double: the float lanes load first, the scale stays live on the x87 stack and is dropped by fstp st(0)
 static __forceinline vector4 hv_md(const vector4& a, double s) { return vector4(a.x * s, a.y * s, a.z * s); }
@@ -502,7 +502,7 @@ void MissionBlocker::update_camera(float dt)
             c.x = gcam.x - geye.x;
             c.y = gcam.y - geye.y;
             c.z = gcam.z - geye.z;
-            vector4 a = hv_add(hv_md(c, (1.0f - dt) * c.normalize()), geye);
+            vector4 a = hv_add(hv_m6(c, (1.0f - dt) * c.normalize()), geye);
             float ya = atan2(-(-c.x), -c.y);
             if (yaw > 6.2831855f)
                 yaw = yaw - 6.2831855f;
@@ -630,7 +630,11 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                     sk->ensure_updated();
                 vector4 n = *(vector4*)(sk->recs + 0x1170);
                 vector4 c = n - lag;
-                hv_add_to(lag, hv_md(c, clamp_v(c.out_length() * dt * 200.0f, 0.0f, 1.0f)));
+                float hi = 1.0f;
+                float lo = 0.0f;
+                float l = c.out_length();
+                float x = l * dt * 200.0f;
+                hv_add_to(lag, hv_m6(c, clamp_v(x, lo, hi)));
                 { vector4 tp = body->m.transform_point(lag);
                 k.o = tp; }
                 rot_s(k, 1.5707964f);
@@ -693,7 +697,8 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                 float d2 = d;
                 t = 1000.0f;
                 for (i = 0; i < count; i++) {
-                    if (list[i]->shape_type() == 2 && shape_contact_count(list[i], &cap, 1, &ct) != 0) {
+                    shape_base* sh;
+                    if (list[i]->shape_type() == 2 && (sh = list[i], shape_contact_count(sh, &cap, 1, &ct) != 0)) {
                         vector4 n = ((face*)list[i])->normal;
                         float dx = ct.point.x - q.x, dy = ct.point.y - q.y, dz = ct.point.z - q.z;
                         float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
@@ -707,7 +712,7 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                     }
                 }
                 f2ec = (d2 - f2ec) * dt * 11.0f + f2ec;
-                { vector4 r = hv_scaled(k.u, f2ec); k.o = vector4(r.x + q.x, r.y + q.y, r.z + q.z); }
+                { vector4 r = k.u * f2ec; k.o = vector4(r.x + q.x, r.y + q.y, r.z + q.z); }
             }
         }
       }
@@ -1372,12 +1377,13 @@ void ItemA::init_screen()
     { float v[2]; v[0] = 0.0f; v[1] = 0.0f; value->move_a(v); }
     { float v[2]; v[0] = 0.75f; v[1] = 0.36f; value->set_xy(v); }
     UiD* track_made = make_scroll_track(win, 0.7f, 0.02f, 0.01f, 0.36f);
-    float a[2], b[2];
+    Camera* made;
+    { float a[2], b[2];
     b[0] = 0.75f;
     b[1] = 0.36f;
     a[0] = 0.01f;
     a[1] = 0.02f;
-    Camera* made = make_quest_list((ContainerBase*)value, a, b, track_made);
+    made = make_quest_list((ContainerBase*)value, a, b, track_made); }
     slider = made;
     frame()->add_child(made);
 
@@ -1389,8 +1395,8 @@ void ItemA::init_screen()
         (*kp)->set_target(&c9);
         float pos[2] = { 0.64f, 0.04f };
         (*kp)->set_xy(pos);
-        unsigned c8 = color;
-        (*kp)->set_color(&c8);
+        c9 = color;
+        (*kp)->set_color(&c9);
         (*kp)->hide();
         value->add_child(*kp);
     }

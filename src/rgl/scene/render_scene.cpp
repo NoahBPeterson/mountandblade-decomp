@@ -133,7 +133,7 @@ static __forceinline void centre(vector4& c, entity* e)
     const vector4& v = e->vc4;
     float x = l.f.x * v.y;
     x = x + l.u.x * v.z;
-    x = x + l.s.x * v.x;
+    x = x + v.x * l.s.x;
     c.x = x + l.o.x;
     float y = l.f.y * v.y;
     y = y + l.s.y * v.x;
@@ -151,7 +151,7 @@ static __forceinline void centre2(vector4& c, entity* e)
     const vector4& v = e->vc4;
     float x = l.f.x * v.y;
     x = x + l.u.x * v.z;
-    x = x + l.s.x * v.x;
+    x = x + v.x * l.s.x;
     c.x = x + l.o.x;
     float y = l.f.y * v.y;
     y = y + l.u.y * v.z;
@@ -193,12 +193,13 @@ void world::render_scene(scene* sc, bool reflect)
     render_info info;
     info.valid = 0;
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
-        float r;
+        entity* e = *it;
         vector4 c;
-        centre(c, *it);
-        r = (*it)->get_radius();
+        float r;
+        centre(c, e);
+        r = e->get_radius();
         if (in_frustum_n(sc, &c, r))
-            (*it)->render(sc, &info);
+            e->render(sc, &info);
     }
     for (entity** it = ents2._Myfirst; it < ents2._Mylast; ++it) {
         float r;
@@ -253,8 +254,10 @@ void world::render_scene(scene* sc, bool reflect)
     if (!sc->rt->loaded)
         return;
     sc->refl->reset();
-    if (g_cfg.enable_edit_mode)
-        g_debug_log.w_cstr("RENDERING REFLECTIONS;");
+    if (g_cfg.enable_edit_mode) {
+        stream_base& log = g_debug_log;
+        log.w_cstr("RENDERING REFLECTIONS;");
+    }
     if (!g_cfg.fake_reflections)
         sc->refl->flags |= 0x200;
     matrix cam = sc->fr.m;

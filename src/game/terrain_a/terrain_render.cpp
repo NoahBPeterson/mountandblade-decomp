@@ -470,14 +470,14 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
         vnorm(nd[k]);
     }
     unsigned bitmask = 1 << *(const int*)&bit;   // the original reads the whole pushed dword (the parameter is really an int)
-    terrain_cell* cur = &at(pos.dx, pos.dy);
-    cur->flags |= bitmask;
+    int ci = pos.dx * 251 + pos.dy;   // the original keeps this + ci * 0x94 as a CSE temporary, every field displaced by +0x288
+    cells[ci].flags |= bitmask;
     if (record) {
-        cur->dir = g;
+        cells[ci].dir = g;
         vec2 t;
         t.x = 0.0f;
         t.y = (float)*steps;
-        cur->disp = t;
+        cells[ci].disp = t;
     }
     bool blocked = false;
     for (;;) {
@@ -515,7 +515,7 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
                 } else {
                     float du = (u.y * nd[k].y + u.x * nd[k].x + 0.7f) * 0.5f;
                     float dg = (g.y * nd[k].y + g.x * nd[k].x + 0.7f) * 0.5f * w1;
-                    float dz = ((cur->pz - cells[ni].pz) * w2) * 3.0f;
+                    float dz = ((cells[ci].pz - cells[ni].pz) * w2) * 3.0f;
                     if (dz < 0.0f)
                         dz = (0.25f - lvl * 0.0022f) * dz;
                     sc[k] = du * 0.65f + dz + dg + edge;
@@ -569,18 +569,18 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
         }
         v2_normalize(g);
         (*steps)++;
-        cur = &at(px, py);
-        cur->flags |= bitmask;
-        cur->order = *steps;
+        ci = px * 251 + py;
+        cells[ci].flags |= bitmask;
+        cells[ci].order = *steps;
         if (record) {
-            cur->dir = g;
+            cells[ci].dir = g;
             vec2 t;
             t.x = 0.0f;
             t.y = (float)*steps * 0.7f;
-            cur->disp = t;
+            cells[ci].disp = t;
         }
-        if (cur->pz < *minz)
-            *minz = cur->pz;
+        if (cells[ci].pz < *minz)
+            *minz = cells[ci].pz;
         if (*steps == 100000)
             return;
         if (blocked)
@@ -1539,19 +1539,20 @@ int dev_buffer::upload(void* scratch, void* tag)
     }
     it = meshes.begin();
     if (!is_dynamic) {
-        int need = 0;
+        int x = 0, need = 0;
         for (; it != meshes.end(); ++it) {
             if ((*it)->slots[type].fc != generation || (*it)->slots[type].f28 != 0 || (*it)->slots[type].f14 != (*it)->slots[type].f4)
-                need += ((rgl::mesh*)*it)->count(type);
+                x = need += ((rgl::mesh*)*it)->count(type);
         }
-        if (need == 0)
+        if (x == 0)
             return 0;
         int* pcap = &count;
-        if (cursor + need < *pcap) {
-            int tries = 0;
+        if (cursor + x < *pcap) {
+            int tries;
             if (type == 1) {
+                tries = 0;
                 do {
-                    if (ib->Lock(cursor * 2, need * 2, (void**)&locked, D3DLOCK_NOOVERWRITE) >= 0)
+                    if (ib->Lock(cursor * 2, x * 2, (void**)&locked, D3DLOCK_NOOVERWRITE) >= 0)
                         break;
                     tries++;
                     Sleep(10);
@@ -1559,6 +1560,7 @@ int dev_buffer::upload(void* scratch, void* tag)
                         mb_error("unable to lock index buffer");
                 } while (tries < 100);
             } else {
+                tries = 0;
                 do {
                     if (vb->Lock(cursor * elem_size, elem_size * need, (void**)&locked, D3DLOCK_NOOVERWRITE) >= 0)
                         break;

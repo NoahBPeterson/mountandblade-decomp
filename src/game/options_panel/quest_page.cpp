@@ -43,7 +43,7 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
 struct Pos2 { float x, y; };    // 8-byte position slot; the original passes an unset 8-byte stack slot
 
 // 0x5e2950: the current time stamp (the second entry of the clock table, read as one __int64).
-// (g_ticks[0], declared in fx.h)
+// (g_ticks[1], 0x5e2950: g_ticks starts at 0x5e2948; declared in fx.h)
 
 // 0x489f40 (thiscall on the game object): the game's difficulty rating (percent). GameData (include/game_data.h) cannot be
 // included next to party/game.h, so the member is repeated under the class name.
@@ -158,7 +158,7 @@ void QuestPage::fill()
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
         int given = (int)(QREC->f11c * (1.0f / 24));
-        int now = (int)(g_ticks[0] * 4.1666667e-07f);
+        int now = (int)(g_ticks[1] * 4.1666667e-07f);
         mb_snprintf(buf, 0x200, fmt, now - given);
     }
     {

@@ -45,6 +45,7 @@ typedef MissionUi Control;
 
 #include "../str_table.h"
 #include "../strat/gui_manager.h"
+#include "../../rgl/stream_inline.h"   // bin_reader: the inline ctor/dtor the save path builds on its stack (0x4ea46f)
 void save_path(char* out);                                      // 0x4dd7b0
 int  save_game(int arg, tstring* name);                         // 0x4e8980
 
@@ -74,45 +75,49 @@ void C4c31c0::frame_update(float)
     // save_path reads this as a C string, then WRITES the whole "%s\Mount&Blade Savegames\%s" path back into
     // it (its own local buffer is 0x104), so this is a char buffer of that size - the 16 bytes it used to have
     // were overrun, corrupting the neighbouring `name` buffer (crash 0x73726573 = the tail of "...\users").
-    char pathbuf[0x200];
-    char name[0x200];
     for (int i = 0; i < 9; i++) {
         MissionUi* button = labels[i];
         if (button && button->clear_mask(0x10000))
             select(i);
     }
     if (btn_done->clear_mask(0x10000)) {
+        char pathbuf[0x200];
+        char name[0x200];
         if (is_load) {
-        *(int*)((char*)this + 0x220) = -1;
-        tstring title("ui_set_save_file_name");
-        const tstring* r = g_strtable.lookup(title);
-        mb_snprintf(name, 0x200, text_of(r));   // original passes the text itself as the format (0x4ea368, 0x4ea776)
-        tstring cancel("ui_cancel");
-        tstring ok("ui_ok");
-        tstring title2(name);
-        const tstring* rc = g_strtable.lookup(cancel);
-        const tstring* ro = g_strtable.lookup(ok);
-        g_menu_rec->name68.clear();
-        // The original (0x4ea40c..0x4ea42d) stores the prompt into +0x1c and the two answers into +0x78/+0x88:
-        // +0x1c = the question, +0x78 = ui_ok, +0x88 = ui_cancel. Ours had +0x1c and +0x88 swapped.
-        g_menu_rec->name1c = title2;
-        g_menu_rec->name78 = *ro;
-        g_menu_rec->name88 = *rc;
-        g_menu_rec->f4c = (int)((char*)this + 0x220);
-        g_menu_rec->f50 = (int)((char*)this + 0x224);
-        int* slotname;
-        if (*(int*)((char*)this + sel218 * 0x30 + 0x4c) != 0)
-            slotname = (int*)((char*)this + sel218 * 0x30 + 0x2c);
-        else
-            slotname = (int*)(*(int*)((char*)g_game + 0x8c) * 0x508 +
-                              *(int*)((char*)g_game + 0x13a00));
-        g_menu_rec->name54 = *(tstring*)slotname;
-        g_menu_rec->f04 = 3;
-        g_windows.set_state(0);
-        return;
-        } else {
+            *(int*)((char*)this + 0x220) = -1;
+            {
+                tstring title("ui_set_save_file_name");
+                const tstring* r = g_strtable.lookup(title);
+                mb_snprintf(pathbuf, 0x200, text_of(r));
+            }
+            int* slotname;
+            if (*(int*)((char*)this + sel218 * 0x30 + 0x4c) != 0)
+                slotname = (int*)((char*)this + sel218 * 0x30 + 0x2c);
+            else
+                slotname = (int*)(*(int*)((char*)g_game + 0x8c) * 0x508 +
+                                  *(int*)((char*)g_game + 0x13a00));
+            tstring cancel("ui_cancel");
+            tstring ok("ui_ok");
+            tstring title2(pathbuf);
+            const tstring* rc = g_strtable.lookup(cancel);
+            const tstring* ro = g_strtable.lookup(ok);
+            g_menu_rec->name68.clear();
+            // The original (0x4ea40c..0x4ea42d) stores the prompt into +0x1c and the two answers into +0x78/+0x88:
+            // +0x1c = the question, +0x78 = ui_ok, +0x88 = ui_cancel. Ours had +0x1c and +0x88 swapped.
+            g_menu_rec->name1c = title2;
+            g_menu_rec->name78 = *ro;
+            g_menu_rec->name88 = *rc;
+            g_menu_rec->f4c = (int)((char*)this + 0x220);
+            g_menu_rec->f50 = (int)((char*)this + 0x224);
+            g_menu_rec->name54 = *(tstring*)slotname;
+            g_menu_rec->f04 = 3;
+            g_windows.set_state(0);
+            return;
+        }
         char* slot = (char*)this + sel218 * 0x30;
         if (slot[0x58] == 0 && slot[0x59] == 0 && slot[0x5a] == 0) {
+            bin_reader s;
+            SlotHeader hdr;
             sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
@@ -124,7 +129,6 @@ void C4c31c0::frame_update(float)
             *(int*)(slot_as<char>(3) + 0x8c) = sel218;
             g_windows.set_state(3);
             return;
-        }
         }
     }
     if (btn_cancel->clear_mask(0x10000)) {
@@ -143,6 +147,8 @@ void C4c31c0::frame_update(float)
         // +0x21c is the dialog's answer slot (the confirm sets it to -1 before opening the box). The original
         // (0x4ea5f5: cmp [esi+0x21c], 0 / jne 0x4ea6bc) removes the file when the answer is 0 (ui_yes).
         if (*(int*)((char*)this + 0x21c) == 0) {
+            char pathbuf[0x200];
+            char name[0x200];
             sprintf(pathbuf, "");
             save_path(pathbuf);
             const char* path = pathbuf;
@@ -166,6 +172,8 @@ void C4c31c0::frame_update(float)
         return;
     }
 confirm_delete:
+    {
+    char name[0x200];
     *(int*)((char*)this + 0x21c) = -1;
     tstring title("ui_confirm_delete_game");
     const tstring* r = g_strtable.lookup(title);
@@ -184,6 +192,7 @@ confirm_delete:
     g_menu_rec->f50 = 0;
     g_menu_rec->f04 = 1;
     g_windows.set_state(0);
+    }
 }
 
 // @ 0x4ea850

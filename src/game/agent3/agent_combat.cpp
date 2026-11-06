@@ -466,6 +466,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
     int mode = 0;
     if (id != g_mission->player_id || g_options.stick_mode == 0) {
         int t = pick_duel();
+        t = (unsigned)t;
         if (t != -1) {
             Agent* o = agent_by_id(t);
             if (o->active == 2)
@@ -502,14 +503,14 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
                 p.z = p.z + 0.7f;
                 if (o->f10 == 0)
                     p = ((const ::pos&)o->body->m).transform_point(*(vector4*)(tb->skel->rec(9) + 0x30));
-                p = cam.transform_point_to_local(p);
-                float inv = 1.0f / p.y;
-                p.x = p.x * inv;
-                p.z = inv * p.z;
-                float k = 0.4f * p.z;
-                if (p.x < k - 0.02f && p.x < -0.02f - k) mode = 2;
-                else if (k + 0.02f < p.x && 0.02f - k < p.x) mode = 1;
-                else if (p.z < -0.1f) mode = 3;
+                const vector4 q = cam.transform_point_to_local(p);
+                float inv = 1.0f / q.y;
+                float x = q.x * inv;
+                float z = inv * q.z;
+                float k = 0.4f * z;
+                if (x < k - 0.02f && x < -0.02f - k) mode = 2;
+                else if (k + 0.02f < x && 0.02f - k < x) mode = 1;
+                else if (z < -0.1f) mode = 3;
                 else mode = 0;
             }
         }
@@ -523,7 +524,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
         *a = 0xc7; *b = 0xc8; *c = 0xc9;
         return;
     }
-    if (p0.item < 1) {
+    if (p0.item <= 0) {
         *a = 0x97; *b = 0x98; *c = 0x99;
         return;
     }

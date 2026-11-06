@@ -24,6 +24,11 @@ struct EFace : MPoly {
 
 static inline void vaddto(vector4& a, const vector4& o) { a.x += o.x; a.y += o.y; a.z += o.z; }
 
+// A vertex record as add_quad and finish default-construct it: only the flag is set.
+struct QVert : MVert {
+    QVert() { flag = 0; }
+};
+
 // @ 0x4d1410
 bool EditMesh::build_first_pass()
 {
@@ -111,6 +116,54 @@ bool EditMesh::build_first_pass()
     return built;
 }
 
+namespace rgl { float vector4::normalize()
+{
+    float len = length();
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+} }
+// An edge's two endpoints as the array the original indexes.
+struct EV { int v[2]; };
+
+// Local copies of 0x4c5f60 and 0x4c8000 (owned by rgl/mesh2/gui_edit.cpp); see the note on update_terrain below.
+void graph_obj::find_triangle(const int* e, int* a, int* b)
+{
+    int ei = *e;
+    graph_face* f = &faces[edges[ei].f0];
+    int idx = -1;
+    for (int k = 0; k < f->count; k++) {
+        if (ei == f->ends[k]) {
+            idx = k;
+            break;
+        }
+    }
+    *a = f->verts[idx];
+    graph_face* g = &faces[edges[*e].f0];
+    *b = g->verts[(idx + 1) % g->count];
+}
+rgl::vector4 graph_obj::normal(const int* e)
+{
+    int a, b;
+    find_triangle(e, &a, &b);
+    node* w = &nodes[a];
+    node* v = &nodes[b];
+    float dx = v->x - w->x;
+    float dy = v->y - w->y;
+    float dz = v->z - w->z;
+    float* m = (float*)&faces[(*(std::vector<edge>*)((char*)this + 0x38))[*e].f0];   // the edge through vector::operator[] (its reference is materialised)
+    rgl::vector4 res;
+    res.x = dy * m[8] - dz * m[7];
+    res.y = dz * m[6] - dx * m[8];
+    res.z = dx * m[7] - dy * m[6];
+    res.normalize();
+    return res;
+}
+
 // @ 0x4d1880
 void EditMesh::build_second_pass()
 {
@@ -129,19 +182,12 @@ void EditMesh::build_second_pass()
         int a[2] = { -1, -1 };      // far vertex of the neighbouring edge / the new vertex
         int b[2] = { -1, -1 };      // that edge / the new edge
         for (int k = 0; k < 2; k++) {
-            int vi = (&edges[i].v0)[k];
-            MVert* pv = &verts[vi];
+            MVert* pv = &verts[((EV&)edges[i]).v[k]];
             int count = 1;
-            vector4 sum;
-            {
-                vector4 nn = graph(this)->normal(&i);
-                sum.x = pv->pos.x + nn.x;
-                sum.y = nn.y + pv->pos.y;
-                sum.z = nn.z + pv->pos.z;
-            }
+            vector4 sum = pv->pos + graph(this)->normal(&i);
             for (int j = 0; (unsigned)j < edges.size(); j++) {
                 MEdge& g = edges[j];
-                if (g.v0 != vi && g.v1 != vi)
+                if (g.v0 != ((EV&)edges[i]).v[k] && g.v1 != ((EV&)edges[i]).v[k])
                     continue;
                 if (i == j)
                     continue;
@@ -149,7 +195,7 @@ void EditMesh::build_second_pass()
                     continue;
                 if (g.nfaces == 0) {
                     b[k] = j;
-                    if (g.v0 == vi)
+                    if (g.v0 == ((EV&)edges[i]).v[k])
                         a[k] = g.v1;
                     else
                         a[k] = g.v0;
@@ -157,20 +203,22 @@ void EditMesh::build_second_pass()
                 }
                 if (!edge_word(g))
                     continue;
-                MVert* q = &verts[(&edges[i].v0)[k]];
-                vector4 nj = graph(this)->normal(&j);
+                MVert* q = &verts[((EV&)edges[i]).v[k]];
+                vector4 nj = graph(this)->normal(&j) + q->pos;
                 count++;
-                float tx = nj.x + q->pos.x, ty = nj.y + q->pos.y, tz = nj.z + q->pos.z;
-                sum.x += tx;
-                sum.y += ty;
-                sum.z += tz;
+                vaddto(sum, nj);
             }
             if (b[k] < 0) {
                 b[k] = (int)edges.size();
                 a[k] = (int)verts.size();
+                MEdge ne;
+                ne.v0 = ((EV&)edges[i]).v[k];
+                QVert nv;
                 float inv = 1.0f / (float)count;
-                NewVert nv(sum.x * inv, sum.y * inv, sum.z * inv);
-                NewEdge ne(vi, (int)verts.size());
+                nv.pos.x = sum.x * inv;
+                nv.pos.y = sum.y * inv;
+                nv.pos.z = sum.z * inv;
+                ne.v1 = (int)verts.size();
                 verts.push_back(nv);
                 edges.push_back(ne);
             }
@@ -195,7 +243,9 @@ void EditMesh::build_second_pass()
             nf.vid[2] = a[1];
             nf.vid[3] = a[0];
         }
-        NewEdge ne2(a[0], a[1]);
+        MEdge ne2;
+        ne2.v0 = a[0];
+        ne2.v1 = a[1];
         edges.push_back(ne2);
         faces.push_back(nf);
         edges[edges.size() - 1].flag = 1;
@@ -265,17 +315,37 @@ bool EditMesh::add_triangle(int* tri)
     return true;
 }
 
+// A local copy of 0x4c7f90 (owned by rgl/mesh2/gui_edit.cpp): the original compiled this editor code in the same object, so finish()
+// sees that its direction argument reaches no opaque callee: the accumulated normal stays in x87 registers (see codegen.md section 7).
+void graph_obj::update_terrain(int idx, const float* d)
+{
+    calc_vertex_mode(idx);
+    for (unsigned i = 0, off = 0;; i++, off += 0x18) {
+        char* base = *(char**)((char*)this + 0x1c);
+        if (!base)
+            break;
+        unsigned count = (unsigned)((*(char**)((char*)this + 0x20) - base) / 0x18);
+        if (i >= count)
+            break;
+        float* p = (float*)(*(char**)((char*)this + 0x1c) + off);
+        if (((int*)p)[5] != 0) {
+            p[0] += d[0];
+            p[1] += d[1];
+            p[2] += d[2];
+        }
+    }
+}
 // @ 0x4d22d0
 void EditMesh::finish()
 {
     for (unsigned i = 0; i < edges.size(); i++)
         edge_word(edges[i]) = 0;
-    Vec4 sum(0.0f, 0.0f, 0.0f);
+    Vec4 n(0.0f, 0.0f, 0.0f);
     int cnt = 0;
     for (unsigned i = 0; i < faces.size(); i++) {
         if (faces[i].f60) {
             cnt++;
-            vaddto(sum, faces[i].normal);
+            vaddto(n, faces[i].normal);
             for (int j = 0; j < faces[i].n; j++)
                 edge_word(edges[faces[i].eid[j]])++;
         }
@@ -297,9 +367,8 @@ void EditMesh::finish()
                     }
                 }
                 if (found == -1) {                      // no copy yet: append one
-                    MVert v;                            // the pad after flag is left as the stack had it
+                    QVert v;                            // the pad after flag is left as the stack had it
                     v.pos = verts[(&edges[i].v0)[j]].pos;
-                    v.flag = 0;
                     v.pad14 = (&edges[i].v0)[j];
                     found = (int)verts.size();          // the index the copy gets (read before the push)
                     verts.push_back(v);
@@ -333,9 +402,9 @@ void EditMesh::finish()
     }
     build_adjacency();
     float inv = 1.0f / (float)cnt;
-    { Vec4 n(sum.x * inv, sum.y * inv, sum.z * inv);
+    n.x = n.x * inv; n.y = n.y * inv; n.z = n.z * inv;
     n.normalize_inl();
-    graph(this)->update_terrain(2, (const float*)&n); }
+    graph(this)->update_terrain(2, (const float*)&n);
     graph(this)->clean();
 }
 
@@ -424,10 +493,6 @@ bool EditMesh::split_marked_edge()
     build_adjacency();
     return true;
 }
-
-struct QVert : MVert {
-    QVert() { flag = 0; }
-};
 
 // @ 0x4d2df0
 // Appends a 6 x 6 quad around p: four vertices, four edges, one face, then rebuilds the adjacency.

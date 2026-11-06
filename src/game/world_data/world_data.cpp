@@ -1919,7 +1919,8 @@ void GameW::share_experience(int party, float amount)
 // @ 0x494e40
 void GameW::award_experience(int party, float amount, int mode)
 {
-    if ((unsigned)party >= parties.n_parties)
+    GameData* gd = this;
+    if ((unsigned)party >= pm().n_parties)
         return;
     PartyMgr& m2 = pm();
     int idx = m2.lookup(party);
@@ -1929,48 +1930,50 @@ void GameW::award_experience(int party, float amount, int mode)
         return;
     idx = m2.lookup(party);                      // the original looks the party up a second time
     Party* p = &((Party*)(m2.pages[idx >> 4]))[idx & 15];
-    int m = mode != 0 ? mode - 1 : rand() % 2;
+    int m = mode == 0 ? rand() % 2 : mode - 1;
 
     int total = 0;
     for (int i = 0; i < p->nstacks; i++) {
-        Stack& s = p->stacks[i];
-        if (s.flags & 1)
+        if (p->stacks[i].flags & 1)
             break;
-        if (troops[s.troop].flags30 & 0x10)
-            total = (int)((float)total + (i == 0 ? 10.0f : 3.0f));
-        else
-            total += s.count;
+        if (gd->troops[p->stacks[i].troop].flags30 & 0x10) {
+            if (i == 0)
+                total = (int)((float)total + 10.0f);
+            else
+                total = (int)((float)total + 3.0f);
+        } else
+            total += p->stacks[i].count;
     }
     float per = amount / (float)total;
 
     for (int i = 0; i < p->nstacks; i++) {
-        Stack& s = p->stacks[i];
-        if (s.flags & 1)
+        if (p->stacks[i].flags & 1)
             break;
-        if (troops[s.troop].flags30 & 0x10) {
+        int troop = p->stacks[i].troop;
+        if (gd->troops[troop].flags30 & 0x10) {
             int r = rand() % 15817;
             // no float temporary: the original keeps the product on the x87 stack (0x494fd1 .. 0x494fdb) and truncates it from there
             if (i == 0)
-                GameData::add_experience(s.troop, (int)((((float)r * (1.0f / 31634.0f) + 0.75f) * per) * 10.0f));
+                GameData::add_experience(troop, (int)(((float)r * (1.0f / 31634.0f) + 0.75f) * 10.0f * per));
             else
-                GameData::add_experience(s.troop, (int)((((float)r * (1.0f / 31634.0f) + 0.75f) * per) * 3.0f));
+                GameData::add_experience(troop, (int)(((float)r * (1.0f / 31634.0f) + 0.75f) * 3.0f * per));
         } else {
             int r = rand() % 15817;
-            p->add_xp_to_stack(i, (int)((((float)r * (1.0f / 15817.0f)) * 0.5f + 0.75f) * (float)s.count * per));
+            p->add_xp_to_stack(i, (int)((((float)r * (1.0f / 15817.0f)) * 0.5f + 0.75f) * (float)p->stacks[i].count * per));
         }
     }
 
     for (int i = 0; i < p->nstacks; i++) {
-        Stack& s = p->stacks[i];
-        if (s.flags & 1)
+        if (p->stacks[i].flags & 1)
             break;
-        if (troops[s.troop].flags30 & 0x10)
+        if (gd->troops[p->stacks[i].troop].flags30 & 0x10)
             continue;
+        Stack& s = p->stacks[i];
         if (s.f14 <= 0)
             continue;
-        int lead = troops[s.troop].f50;
-        if (m == 1 && (unsigned)troop_f54(&troops[s.troop]) > 0)
-            lead = troop_f54(&troops[s.troop]);
+        int lead = gd->troops[s.troop].f50;
+        if (m == 1 && (unsigned)troop_f54(&gd->troops[s.troop]) > 0)
+            lead = troop_f54(&gd->troops[s.troop]);
 
         int n = 0;
         for (int j = 0; j < p->nstacks; j++) {
@@ -1984,12 +1987,11 @@ void GameW::award_experience(int party, float amount, int mode)
                 k = j;
 
         if (k >= 0) {
-            Stack& d = p->stacks[k];
-            d.count += s.f14;
+            p->stacks[k].count += s.f14;
             int extra = (s.f14 - s.count) + s.wounded;
             if (extra < 0)
                 extra = 0;
-            d.wounded += extra;
+            p->stacks[k].wounded += extra;
             if (s.f14 == s.count) {
                 int out[8];
                 p->remove_row(out, i, 0);

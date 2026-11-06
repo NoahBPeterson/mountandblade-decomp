@@ -105,10 +105,11 @@ done:
     if (page_changed(regen_btn)) {
         // "regenerate": reset the scene, arm the flash effect, rebuild the terrain and put the camera on it
         world->reset();                      // 0x421390 (rgl::world::reset)
-        const float one = 1.0f;
         vector4 clear_colour(0.2f, 0.2f, 0.3f);
-        world->ambient = clear_colour;
-        world->ambient.w = one;
+        rgl::world* wp = world;
+        vector4& amb = wp->ambient;
+        amb = clear_colour;
+        wp->ambient.w = 1.0f;
         Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30
         flash->color = vector4(0.9f, 0.9f, 0.9f);
         flash->base_color.x = 1.0f;
@@ -138,8 +139,8 @@ done:
         int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
         owner[1] = 0; owner[2] = 0; owner[3] = 0;
         g_terrain.destroy_water((int)owner);   // 0x4814a0
-        float x = camera_x * 0.5f;
         float y = camera_y * 0.5f;
+        float x = camera_x * 0.5f;
         view_pos.x = x;
         view_pos.y = y;
         if (owner[1] != 0)

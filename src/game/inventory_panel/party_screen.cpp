@@ -46,7 +46,7 @@ inline int Map10007::lookup(unsigned id)
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_item_sel;                                  // 0xa75f6c (the selected item index; negative = nothing selected)
 
-#define g_clamp_max g_skill_tbl[36].cap         // 0x8ee3ac4 (the level cap of skill 36)
+#define g_clamp_max g_skill_tbl[36].max_rank         // 0x8ee3ac4 (the level cap of skill 36)
 #define WINT(w, off) (*(int*)((char*)(w) + (off)))
 // slot +0xa4 returns the text's size by value; nothing here reads it (0x5063e0, 0x503ed0)
 #define STX(w, s) ((PsOpsW*)(w))->set_text_w(s)
@@ -72,13 +72,9 @@ static inline Troop* rec_of(int troop) { return &g_game->troops[troop]; }
 static __forceinline int skill_of(const Stack* ms, int skill)
 {
     int v = g_game->skill_level(ms->troop, skill);
-    if (ms->troop == g_game->player) {
-        if (g_game->troops[ms->troop].hp < g_module_settings.player_wounded_treshold)
-            v = 0;
-    } else {
-        if (g_game->troops[ms->troop].hp < g_module_settings.hero_wounded_treshold)
-            v = 0;
-    }
+    if (ms->troop == g_game->player ? g_game->troops[ms->troop].hp < g_module_settings.player_wounded_treshold
+                                    : g_game->troops[ms->troop].hp < g_module_settings.hero_wounded_treshold)
+        v = 0;
     return v;
 }
 
@@ -957,8 +953,8 @@ void PartyScreen::setup_skills()
         y -= t_y_a;
 
         for (int k = 0; k < 42; k++) {
-            SkillRec* se = &g_skill_tbl[k];
-            if (!attr_bit(se->attr, 4))
+            tstring& nm = g_skill_tbl[k].name;      // the row cursor is biased to the name (0x8ee3110: 0x505fac)
+            if (!attr_bit(*(unsigned*)((char*)&nm + 0x30), 4))
                 continue;
             int best = 0;
             int best_i = -1;
@@ -974,14 +970,14 @@ void PartyScreen::setup_skills()
             if (best_i == mi) {
                 int pq = members->skill_level(k);
                 if (pq == best) {
-                    tstring* sn = g_strtable.find(&se->key);
+                    tstring* sn = g_strtable.find(&nm + 1);     // the key follows the name
                     if (sn == 0)
-                        sn = &se->name;         // 0x5060d1: the row itself (edi), not its key
+                        sn = &nm;               // 0x5060d1: the name (edi), not the key
                     sprintf(buf, "%s (%d)", sn->c_str(), best);
                 } else {
-                    tstring* sn = g_strtable.find(&se->key);
+                    tstring* sn = g_strtable.find(&nm + 1);     // the key follows the name
                     if (sn == 0)
-                        sn = &se->name;
+                        sn = &nm;               // 0x5060d1: the name (edi), not the key
                     sprintf(buf, "%s (%d)(+%d)", sn->c_str(), best, pq - best);
                 }
                 {

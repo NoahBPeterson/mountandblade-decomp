@@ -31,6 +31,17 @@ static inline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
     }
 }
 
+// push_back as the original inlines it at 0x4ec9b9: size first (0 when empty), then the room check, then a direct store
+static inline void push_back_direct(std::vector<MissionUi*>& c, MissionUi* const& v)
+{
+    unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
+    if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
+        *c._Mylast++ = v;
+    } else {
+        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
+    }
+}
+
 // the 0x5ac8-byte record of dense index idx (page table at PartyMgr +0x138d0), as the original indexes it
 static char* party_bytes(PartyMgr* mgr, int idx)
 {
@@ -41,8 +52,8 @@ static char* party_bytes(PartyMgr* mgr, int idx)
 void CampaignScreen::init_screen()
 {
     g_gui.reset();
-    g_game->f1a090 = 0;
     g_gui.hud_flag = 1;
+    g_game->f1a090 = 0;
     g_sound_mgr.stop_all();   // 0x494310
     g_game->f88 = 1;
     f2d4 = 0;
@@ -50,136 +61,70 @@ void CampaignScreen::init_screen()
 
     NodeA* bar = new NodeA(0);
     overlay = bar;
-    vector2 p0;
-    p0.x = 0.0f;
-    p0.y = 0.0f;
-    overlay->move_a((float*)&p0.x);
-    vector2 s0;
-    s0.x = 1.0f;
-    s0.y = 0.75f;
-    overlay->set_xy(&s0.x);
+    overlay->move_a((float*)&vector2(0.0f, 0.0f));
+    overlay->set_xy((float*)&vector2(1.0f, 0.75f));
     g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)overlay);   // 0x49b120
+    g_gui.objs.push_back(overlay);   // 0x49b120
 
-    text_box* buttons = new text_box;
-    f34 = (MissionUi*)buttons;
-    p0.x = 0.0f;
-    p0.y = 0.0f;
-    buttons->move_a((float*)&p0.x);
-    s0.x = 1.0f;
-    s0.y = 0.05f;
-    buttons->set_xy(&s0.x);
+    f34 = (MissionUi*)new text_box;
+    f34->move_a((float*)&vector2(0.0f, 0.0f));
+    f34->set_xy((float*)&vector2(1.0f, 0.05f));
     {
-        rgl::mesh* bar_mesh;
-        {
-            tstring map_bar("map_bar");
-            bar_mesh = ((rgl::mesh*)g_resmgr.get_object(&map_bar))->clone();
-        }                                           // the key string dies before set_mesh (0x4ec681 dtor, then 0x4ec6.. call 0x488aa0)
-        buttons->set_mesh(0, bar_mesh);
+        rgl::mesh* bar_mesh = ((rgl::mesh*)g_resmgr.get_object((const tstring*)&tstring("map_bar")))->clone();
+        f34->set_mesh(0, bar_mesh);
     }
     f48 = 0;
     if (g_cfg.enable_edit_mode) {
-        f48 = (int)make_short_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_terrain")), 0.002f, 0.006f, 0.03f);
+        f48 = (int)make_short_button(f34, g_strtab.lookup(tstring("ui_terrain")), 0.002f, 0.006f, 0.03f);
     }
-    f4c = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
-    f38 = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_reports")), 0.216f, 0.006f, 0.03f);
-    f50 = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_quests")), 0.332f, 0.006f, 0.03f);
-    f40 = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
-    f44 = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_character")), 0.564f, 0.006f, 0.03f);
-    f3c = (MissionUi*)new_medium_button((MissionUi*)buttons, g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
-    push_child(overlay->kids, *(MissionUi**)&f34);   // 0x4ec824: the map-bar overlay takes the button bar
+    f4c = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
+    f38 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_reports")), 0.216f, 0.006f, 0.03f);
+    f50 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_quests")), 0.332f, 0.006f, 0.03f);
+    f40 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
+    f44 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_character")), 0.564f, 0.006f, 0.03f);
+    f3c = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
+    push_child(overlay->kids, (MissionUi*)f34);   // 0x4ec824: the map-bar overlay takes the button bar
 
     {
-        {
-            tstring none("");
-            f5c = (MissionUi*)make_hint((ContainerBase*)buttons, none, 0.8f, -0.006f, 0.2f, 0.027f);
-        }                                           // the empty key string dies before set_flag (0x4ec8bf dtor, then vt+0x74)
+        f5c = (MissionUi*)make_hint((ContainerBase*)f34, tstring(""), 0.8f, -0.006f, 0.2f, 0.027f);
         int flag = 0x11;
         f5c->set148(&flag);
         f5c->b122 = 1;                               // 0x4ec8dd: +0x122
     }
     {
-        {
-            tstring none("");
-            f60 = (MissionUi*)make_hint((ContainerBase*)buttons, none, 0.8f, 0.015f, 0.2f, 0.027f);
-        }                                           // the empty key string dies before set_flag (0x4ec8bf dtor, then vt+0x74)
+        f60 = (MissionUi*)make_hint((ContainerBase*)f34, tstring(""), 0.8f, 0.015f, 0.2f, 0.027f);
         int flag = 0x11;
         f60->set148(&flag);
         f60->b122 = 1;                               // 0x4ec93c: +0x122
     }
 
-    MapWidget* map = new MapWidget;
-    f30 = map;
-    map->world = (void*)g_script.level;
-    memcpy(&map->scene3d.fr, &cam, 0x120);
-    vector2 mp;
-    mp.x = 0.0f;
-    mp.y = 0.04f;
-    map->move_a((float*)&mp.x);
-    vector2 ms;
-    ms.x = 1.0f;
-    ms.y = 0.71f;
-    map->set_xy(&ms.x);
-    push_back_inline(overlay->kids, *(MissionUi**)&map);   // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
+    f30 = new MapWidget;
+    f30->world = (void*)g_script.level;
+    memcpy(&f30->scene3d.fr, &cam, 0x120);
+    f30->move_a((float*)&vector2(0.0f, 0.04f));
+    f30->set_xy((float*)&vector2(1.0f, 0.71f));
+    push_back_direct(overlay->kids, (MissionUi*)f30);   // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
     f54 = new_widget(0x178);
-    {
-        vector2 pp;
-        pp.x = 0.445f;                               // 0x4eca31
-        pp.y = 0.06f;
-        f54->move_a((float*)&pp.x);
-    }
-    {
-        vector2 ps;
-        ps.x = 0.09f;                                // 0x4eca4f
-        ps.y = 0.04f;
-        f54->set_xy(&ps.x);
-    }
+    f54->move_a((float*)&vector2(0.445f, 0.06f));        // 0x4eca31
+    f54->set_xy((float*)&vector2(0.09f, 0.04f));         // 0x4eca4f
     {
         unsigned white = 0xffffffffu;
         f54->set_color(&white);
     }
-    {
-        vector2 pz;
-        pz.x = 0.03f;
-        pz.y = 0.03f;
-        f54->set_size(&pz.x);
-    }
-    {
-        tstring name("ui_paused");
-        struct { int a, b; } ret;                    // set_text's 8-byte result: its own slot, not the key string
-        f54->set_text((float*)&ret, &(*g_strtab.lookup(name)));
-    }
-    overlay->kids.push_back(*(MissionUi**)&f54);
+    f54->set_size((float*)&vector2(0.03f, 0.03f));
+    f54->set_text((float*)&vector2(), g_strtab.lookup(tstring("ui_paused")));
+    overlay->kids.push_back(f54);
 
     f58 = new_widget(0x178);
-    {
-        vector2 pp;
-        pp.x = 0.73f;
-        pp.y = 0.045f;
-        f58->move_a((float*)&pp.x);
-    }
-    {
-        vector2 ps;
-        ps.x = 0.27f;
-        ps.y = 0.03f;
-        f58->set_xy(&ps.x);
-    }
+    f58->move_a((float*)&vector2(0.73f, 0.045f));
+    f58->set_xy((float*)&vector2(0.27f, 0.03f));
     {
         unsigned white = 0xffffffffu;
         f58->set_color(&white);
     }
-    {
-        vector2 pz;
-        pz.x = 0.018f;
-        pz.y = 0.018f;
-        f58->set_size(&pz.x);
-    }
-    {
-        tstring name("ui_click_left_button_to_cancel_wait");
-        struct { int a, b; } ret;                    // set_text's 8-byte result: its own slot, not the key string
-        f58->set_text((float*)&ret, &(*g_strtab.lookup(name)));
-    }
-    overlay->kids.push_back(*(MissionUi**)&f58);
+    f58->set_size((float*)&vector2(0.018f, 0.018f));
+    f58->set_text((float*)&vector2(), g_strtab.lookup(tstring("ui_click_left_button_to_cancel_wait")));
+    overlay->kids.push_back(f58);
 
     {
         PartyMgr* mgr = &g_game->parties;
@@ -188,15 +133,12 @@ void CampaignScreen::init_screen()
         *(Rect*)((char*)this + 0x290) = *r;
     }
     {
-        float zero = 0.0f;
         target.z = target.z + 1.0f;                           // +0x298 (camera target z; 0x4ecc09), not the zoom at +0x2b8
-        *(float*)((char*)this + 0x2bc) = zero;
-        *(float*)((char*)this + 0x2c0) = zero;
-        *(float*)((char*)this + 0x2c4) = zero;
-        *(float*)((char*)this + 0x2c8) = zero;
+        *(vector2*)((char*)this + 0x2bc) = vector2(0.0f, 0.0f);
+        *(vector2*)((char*)this + 0x2c4) = vector2(0.0f, 0.0f);
     }
     camera_mark_entities();
-    camera_update(0.0f);                                   // 0x4ece20 (push ebx = 0)
+    camera_update(0);                                      // 0x4ece20 (push ebx = 0)
 
     if ((int)g_script.level != (int)g_shadow_map.cam && g_use_shaders) {
         ((ShadowMap*)g_psys)->attach_camera((rgl::world*)g_script.level);   // 0x4711e0
@@ -215,7 +157,7 @@ void CampaignScreen::init_screen()
 void CampaignScreen::camera_mark_entities()
 {
     extern float g_one;   // 0x549cdc (float_consts.h; declared here, the shared header is not ours to edit)
-    g_game->f13acc = (f2b8 * g_590bb8 + g_one) * g_54b3b4;
+    g_game->f13acc = (g_590bb8 * f2b8 + g_one) * g_54b3b4;
     GameData* game = g_game;
     PartyMgr* mgr = &game->parties;
     for (int id = mgr->first_party_id(); id < game->parties.n_parties; mgr->next_party_id((int*)&id)) {

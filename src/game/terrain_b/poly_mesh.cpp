@@ -971,9 +971,9 @@ inline Party* get_party(int id)
 // @ 0x473a60
 void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop, int* out_side, int* out_flag, int* out_seed)
 {
+    SpawnRec* r = &g_mission_templates[mode].recs[idx];
     *out_party = -1;
     *out_stack = -1;
-    SpawnRec* r = &g_mission_templates[mode].recs[idx];
     *out_side = -1;
     *out_flag = -1;
     *out_seed = -1;
@@ -1000,8 +1000,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
         }
     } else if (r->flags & 0xc0) {
         int a = r->flags & 0x40;
-        int b = r->flags & 0x80;
-        if (((a && f6214 == 0) || (b && f6214 == 1)) || (f6214 == 2 && ((f6218 == 1 && a) || (f6218 == 0 && b)))) {
+        if (((a && f6214 == 0) || ((r->flags & 0x80) && f6214 == 1)) || (f6214 == 2 && ((f6218 == 1 && a) || (f6218 == 0 && (r->flags & 0x80))))) {
             local_side = 0;
             if (g_game->troops[g_game->player].used == 0) {
                 *out_party = g_game->f78;
@@ -1019,10 +1018,10 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
     } else if (r->flags & 1) {
         int* pc = &cnt[f6218];
         int k;
-        if (*pc > 1)
-            k = rand() % *pc;
-        else
+        if (*pc <= 1)
             k = 0;
+        else
+            k = rand() % *pc;
         *out_party = list[f6218][k];
         list_idx = f6218;
         *out_side = 1;
@@ -1236,15 +1235,15 @@ void Mission::update_team_stats()
 {
     int t, k;
     for (t = 0; t < 8; t++) {
-        TeamRec& tm_ = teams[t];
-        if ((int)tm_.leader >= 0) {
-            for (k = 0; k < 3; k++) {
-                ClassInfo& c = tm_.cls[k];
-                if (c.kind == 2) {
-                    MAgent& a = AGENT(this, tm_.leader);
-                    c.pos = a.f50;
-                    c.nav = AGENT(this, tm_.leader).update_nav_face();
-                    c.target = AGENT(this, tm_.leader).f56b4;
+        TeamRec* tm_ = &teams[t];
+        if (tm_->leader >= 0) {
+            ClassInfo* c = tm_->cls;
+            for (k = 0; k < 3; k++, c++) {
+                if (c->kind == 2) {
+                    MAgent& a = AGENT(this, (unsigned)tm_->leader);
+                    c->pos = a.f50;
+                    c->nav = AGENT(this, (unsigned)tm_->leader).update_nav_face();
+                    c->target = AGENT(this, (unsigned)tm_->leader).f56b4;
                 }
             }
         }

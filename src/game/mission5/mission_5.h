@@ -505,7 +505,7 @@ extern int  g_pending_action;                                  // 0x5a9f18
 extern int  g_vert_budget;                                  // 0x5a9c34
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 #include "../../include/renderer.h"
-#define g_clamp_max g_skill_tbl[36].cap             // 0x8ee3ac4
+#define g_clamp_max g_skill_tbl[36].max_rank             // 0x8ee3ac4
 
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
@@ -1476,14 +1476,12 @@ struct ItemKind_s2b5c0 {
     char pad[0x1c8];
     unsigned kind;                                      // +0x1c8
     char pad2[0x238 - 0x1cc];
-    unsigned type() const { return kind & 0xff; }
 };
 
 
 struct ItemRef_s2b5c0 {
     int id;                                             // +0x00
     int count;                                          // +0x04
-    __forceinline int room() { int n = count & 0xff; return max_amount() - n; }
     __forceinline int max_amount();                                   // 0x434b70 (thiscall)
     __forceinline void name(char* out);                               // 0x512730 (thiscall, ret 4)
 };

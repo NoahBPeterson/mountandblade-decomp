@@ -1003,33 +1003,29 @@ void CampaignScreen::camera_move(float dt)
 
     bool b = g_game_keys.entry[2][0] >= 0 && g_keyboard.down[g_game_keys.entry[2][0]] != 0;
     if ((g_game_keys.entry[2][1] >= 0 && g_keyboard.down[g_game_keys.entry[2][1]] != 0) || b) {
-        float h = height + 10.0f;
-        x -= m.m[0] * h * dt;
-        z -= m.m[1] * h * dt;
+        x -= m.m[0] * (height + 10.0f) * dt;
+        z -= m.m[1] * (height + 10.0f) * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
     b = g_game_keys.entry[3][0] >= 0 && g_keyboard.down[g_game_keys.entry[3][0]] != 0;
     if ((g_game_keys.entry[3][1] >= 0 && g_keyboard.down[g_game_keys.entry[3][1]] != 0) || b) {
-        float h = height + 10.0f;
-        x += m.m[0] * h * dt;
-        z += m.m[1] * h * dt;
+        x += m.m[0] * (height + 10.0f) * dt;
+        z += m.m[1] * (height + 10.0f) * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
     b = g_game_keys.entry[0][0] >= 0 && g_keyboard.down[g_game_keys.entry[0][0]] != 0;
     if ((g_game_keys.entry[0][1] >= 0 && g_keyboard.down[g_game_keys.entry[0][1]] != 0) || b) {
-        float h = height + 10.0f;
-        x += m.m[2] * h * dt;
-        z += m.m[3] * h * dt;
+        x += m.m[2] * (height + 10.0f) * dt;
+        z += m.m[3] * (height + 10.0f) * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
     b = g_game_keys.entry[1][0] >= 0 && g_keyboard.down[g_game_keys.entry[1][0]] != 0;
     if ((g_game_keys.entry[1][1] >= 0 && g_keyboard.down[g_game_keys.entry[1][1]] != 0) || b) {
-        float h = height + 10.0f;
-        x -= m.m[2] * h * dt;
-        z -= m.m[3] * h * dt;
+        x -= m.m[2] * (height + 10.0f) * dt;
+        z -= m.m[3] * (height + 10.0f) * dt;
         GD_C(0x88) = 0;
         GD_I(0x84) = g_game->f78;
     }
@@ -1068,7 +1064,7 @@ void CampaignScreen::camera_move(float dt)
 }
 
 // @ 0x516220
-mat2::mat2(const float* a, const float* b)
+__declspec(noinline) mat2::mat2(const float* a, const float* b)
 {
     m[0] = a[0];
     m[1] = a[1];

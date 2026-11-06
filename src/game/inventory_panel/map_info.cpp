@@ -48,7 +48,7 @@ struct FactionRec;
 
 
 struct MapWidget {
-    void project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (inventory_panel/map_picker.cpp)
+    rgl::vector4* project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (inventory_panel/map_picker.cpp)
 };
 struct DistObj;
 bool __fastcall dist_is_zero(DistObj* o);                                 // 0x51be20 (map_tooltip.cpp)
@@ -120,123 +120,120 @@ static int first_enemy_stack(Party* r)
     return i;
 }
 
-// append the name of the party an order refers to
-static void append_order_target(tstring& label, int target)
-{
-    label.append(*record_name(party_by_id(target)));
-}
+struct FleetRec { rgl::vector4 pos; char pad10[0x5c - 0x10]; };   // the 0x5c-byte fleet / battle record: only its position is read here
 
 // -----------------------------------------------------------------------------------------------------
 // @ 0x51abd0
 void MapPanel::update(int type, int id)
 {
-    tstring label;                           // [E+0x2c]  the accumulated order text
-    tstring scratch;                         // [E+0x170] constructed and destroyed, otherwise unused
-    PartyV4    pos = { 0.0f, 0.0f, 0.0f, 0.0f };// [E+0x40]  world anchor of the selection
-    Party*   rec  = 0;                        // [E+0x60]  record currently being painted
-    int     ncols = 1;                       // [E+0x28]
-    int     agent;                           // [E+0x14]  battle side shown in the current column
+    tstring label;                           // [esp+0x2c]  the accumulated order text
+    tstring scratch;                         // [esp+0x170] constructed and destroyed, otherwise unused
+    rgl::vector4 pos(0.0f, 0.0f, 0.0f);      // [esp+0x40]  world anchor of the selection (w stays unset)
 
     // ---- anchor the panel -------------------------------------------------------------------------
     if (type == 1) {
-        rec = party_by_id(id);
-        pos = rec->pos;
+        pos = *(rgl::vector4*)&g_game->parties.get_w(id)->pos;
     } else if (type == 3) {
-        pos = *(PartyV4*)(g_game->fleet + id * 0x5c);
+        pos = ((FleetRec*)g_game->fleet)[id].pos;
     } else if (type == 4) {
-        rec = (Party*)g_game->parties.get(id);
-        pos = rec->pos;
+        pos = *(rgl::vector4*)&g_game->parties.get(id)->pos;
     }
 
     // ---- the same selection is still on screen and the cooldown has not elapsed -------------------
     if (type == g_sel_type && id == g_sel_id && timer < 1.0f) return;
 
-    g_gui.set_overlay(0, true);
     timer = 0.0f;
+    g_gui.set_overlay(0, true);
 
     if (type != 0) {
         if (type == 1) {
-            Party roster;                     // [E+0xae0] the selected party's own roster (0x4934d0)
+            Party roster;                     // [esp+0xae0] the selected party's own roster (0x4934d0)
+            int ncols = 1;                    // [esp+0x28]
 
-            ncols = 1;
-            rec = party_by_id(id);
-            if (rec->battle >= 0) {
-                g_gui.draw_string(*g_strtable.lookup(tstring("ui_capital_battle")), 0.02f, 0xffffffff, 1);
+            if (g_game->parties.get_party(id)->battle >= 0) {
+                g_gui.draw_string(g_strtable.lookup("ui_capital_battle"), 0.02f, -1, 1);
                 ncols = 2;
             }
 
             for (int c = 0; c < ncols; c++) {                       // 0x51adc0
-                agent = id;
+                int agent = id;               // [esp+0x14]  battle side shown in the current column
+                char buf[0x100];
                 if (ncols > 1) {
-                    Party*     r    = party_by_id(id);
-                    Rec98* slot = agent_at(r->battle);
-                    agent = (c == 0) ? slot->f58 : slot->f54;
+                    GameData* g = g_game;
+                    int b = g->parties.get_party(agent)->battle;
+                    Rec98* slot = (Rec98*)g->agent_pages[(unsigned)b >> 4] + (b & 0xf);
+                    if (c == 0) agent = slot->f58;
+                    else agent = slot->f54;
                 }
                 if (c > 0) {
-                    g_gui.draw_string(tstring(" "), 0.01f, 0xffffffff, 1);
-                    g_gui.draw_string(*g_strtable.lookup(tstring("ui_capital_versus")), 0.024f, 0xffffffff, 1);
+                    g_gui.draw_string(" ", 0.01f, -1, 1);
+                    g_gui.draw_string(g_strtable.lookup("ui_capital_versus"), 0.024f, -1, 1);
                 }
 
-                rec = party_by_id(agent);
-                float    rel   = g_game->relation(agent, g_game->f78);
-                unsigned rel_color = g_game->color_of(rel, 1);
-                unsigned color = rel_color;
+                GameData* g = g_game;
+                Party* rec = g->parties.get_party(agent);        // [esp+0x60]  record being painted
+                float    rel   = g->relation(agent, g->f78);
+                unsigned rel_color = g->color_of(rel, 1);
+                unsigned color;
                 if (g_module_settings.show_faction_color)
-                    color = g_game->factions[party_by_id(agent)->faction].color;
+                    color = g_game->factions[g->parties.get_party(agent)->faction].color;
+                else
+                    color = rel_color;
                 if (c == 0) {
                     g_gui.panel_color = rel_color;          // 0x51af67: the relation colour (edi), not the faction override (esi)
-                    g_gui.panel_bg    = rel < -0.001f ? 0xff200000u
-                                  : rel >  0.001f ? 0xff002000u : 0xff101010u;
+                    if (rel < -0.001f) g_gui.panel_bg = 0xff200000u;
+                    else if (rel > 0.001f) g_gui.panel_bg = 0xff002000u;
+                    else g_gui.panel_bg = 0xff101010u;
                 }
 
                 // ---- the party's own name (or its list of sub-parties) -----------------------------
                 if (rec->f6c == 0) {
-                    char buf[0x100];
                     _snprintf(buf, 0x100, "%s", record_name_c(rec));             // 0x535717
-                    g_gui.draw_string(tstring(buf), 0.021f, color, 1);
+                    g_gui.draw_string(buf, 0.021f, color, 1);
                 } else {
-                    int members[128];                                        // [E+0x8e0]
-                    int count = 0;                                           // [E+0x18]
+                    int members[128];                                        // [esp+0x8e0]
+                    int count = 0;                                           // [esp+0x18]
                     g_game->list_members(agent, members, &count);                 // 0x490fa0
                     for (int i = 0; i < count; i++) {
+                        GameData* g = g_game;
                         int      m    = members[i];
-                        float    mrel = g_game->relation(m, g_game->f78);
-                        unsigned mcol = g_game->color_of(mrel, 1);
+                        float    mrel = g->relation(m, g->f78);
+                        unsigned mcol = g->color_of(mrel, 1);
                         if (g_module_settings.show_faction_color)
-                            mcol = g_game->factions[party_by_id(m)->faction].color;
-                        if (party_by_id(m)->flags & 0x40000)
+                            mcol = g->factions[g->parties.get_party(m)->faction].color;
+                        if (g->parties.get_party(m)->flags & 0x40000)
                             mcol = mrel < -0.01f ? 0xffaa22ddu : 0xff22aaffu;
 
-                        int extra = 0, wounded = 0, size = 0;
-                        g_game->party_counts(m, &size, &wounded, &extra);    // 0x51be60: arg2 = troops, arg3 = wounded, arg4 = prisoners (the "+ N")
+                        int extra, wounded, size;
+                        g->party_counts(m, &size, &wounded, &extra);    // 0x51be60: arg2 = troops, arg3 = wounded, arg4 = prisoners (the "+ N")
 
-                        char buf[0x100];
-                        Party* mr = party_by_id(m);
-                        if (mr->flags_lo & 0x200000) {
-                            _snprintf(buf, 0x100, "%s", record_name_c(mr));
+                        PartyMgr& pm = g_game->parties;
+                        if (pm.get_party(m)->flags & 0x200000) {
+                            _snprintf(buf, 0x100, "%s", record_name_c(pm.get_party(m)));
                         } else if (wounded != 0) {
                             if (extra != 0)
-                                _snprintf(buf, 0x100, "%s (%d/%d + %d)", record_name_c(mr), size - wounded, size, extra);
+                                _snprintf(buf, 0x100, "%s (%d/%d + %d)", record_name_c(pm.get_party(m)), size - wounded, size, extra);
                             else
-                                _snprintf(buf, 0x100, "%s (%d/%d)", record_name_c(mr), size - wounded, size);
+                                _snprintf(buf, 0x100, "%s (%d/%d)", record_name_c(pm.get_party(m)), size - wounded, size);
                         } else {
                             if (extra != 0)
-                                _snprintf(buf, 0x100, "%s (%d + %d)", record_name_c(mr), size, extra);
+                                _snprintf(buf, 0x100, "%s (%d + %d)", record_name_c(pm.get_party(m)), size, extra);
                             else
-                                _snprintf(buf, 0x100, "%s (%d)", record_name_c(mr), size);
+                                _snprintf(buf, 0x100, "%s (%d)", record_name_c(pm.get_party(m)), size);
                         }
-                        g_gui.draw_string(tstring(buf), 0.021f, mcol, 1);
+                        g_gui.draw_string(buf, 0.021f, mcol, 1);
                     }
 
                     roster.count = 0;
-                    g_game->fill_parties(agent, (Party*)&roster);                    // 0x48fd60
-                    ((Party*)&roster)->prepare();                                        // 0x4b1eb0
+                    g_game->fill_parties(agent, &roster);                    // 0x48fd60
+                    roster.prepare();                                        // 0x4b1eb0
                 }
 
                 // ---- faction tag -------------------------------------------------------------------
-                if ((rec->flags_lo & 0x400000) && rec->faction >= 0) {
-                    FactionRec* f = &g_game->factions[rec->faction];
-                    if (f->f24 == 0) {
+                if (rec->flags & 0x400000) {
+                    int fac = rec->faction;
+                    if (fac >= 0 && g_game->factions[fac].f24 == 0) {
+                        FactionRec* f = &g_game->factions[fac];
                         tstring* fn = &f->name;
                         if (f->f10 == 0) {
                             tstring* s = g_strtable.find(&f->key);
@@ -244,108 +241,106 @@ void MapPanel::update(int type, int id)
                         }
                         char buf[0x200];
                         mb_snprintf(buf, 0x200, "(%s)", fn->c_str());        // 0x415100
-                        unsigned fcol = g_module_settings.show_faction_color
-                                      ? f->color
-                                      : f->rel[0] < -0.001f ? 0xffff4422u
-                                      : f->rel[0] >  0.001f ? 0xff44ff22u : 0xffffffffu;
-                        g_gui.draw_string(tstring(buf), 0.022f, fcol, 1);     // 0x3cb43958
+                        unsigned fcol;
+                        if (g_module_settings.show_faction_color) {
+                            fcol = g_game->factions[fac].color;
+                        } else {
+                            const float& r = g_game->factions[fac].rel[0];
+                            fcol = 0xffffffffu;
+                            if (r < -0.001f) fcol = 0xffff4422u;
+                            else if (r > 0.001f) fcol = 0xff44ff22u;
+                        }
+                        g_gui.draw_string(buf, 0.022f, fcol, 1);     // 0x3cb43958
                     }
                 }
-                if (rec->extra_text.len > 2)
+                GameData* gd = g_game;
+                if (rec->extra_text.len > 2) {
                     g_gui.draw_string(rec->extra_text, 0.023f, 0xffffffff, 1);
+                    gd = g_game;
+                }
 
                 // ---- the order line (single-column display only) -----------------------------------
                 if (ncols == 1) {
-                    switch (rec->action) {                                    // 0x51b5d1
-                    case 0:
-                        label = *g_strtable.lookup(tstring("ui_waiting"));
-                        break;
-                    case 1:
-                        label = *g_strtable.lookup(tstring("ui_travelling_to"));
-                        append_order_target(label, rec->target);
-                        break;
-                    case 2:
-                        label = *g_strtable.lookup(tstring("ui_patrolling"));
-                        break;
-                    case 3:
-                        label = *g_strtable.lookup(tstring("ui_patrolling_around"));
+                    int action = rec->action;
+                    if (action == 0) {
+                        label = *g_strtable.lookup("ui_waiting");
+                    } else if (action == 4 || action == 1) {
+                        if (action == 1 || agent == gd->f78
+                            || (gd->parties.get_party(rec->target)->flags & 0x400))
+                            label = *g_strtable.lookup("ui_travelling_to");
+                        else
+                            label = *g_strtable.lookup("ui_following");
+                        label.append(*record_name(g_game->parties.get_party(rec->target)));
+                    } else if (action == 10) {
+                        label = *g_strtable.lookup("ui_accompanying");
                         label.append(*g_game->parties.get(rec->target)->display_name());
-                        break;
-                    case 4: {
-                        bool on_way = (agent == g_game->f78);
-                        if (!on_way)
-                            on_way = (party_by_id(rec->target)->flags & 0x400) != 0;
-                        label = *(on_way ? g_strtable.lookup(tstring("ui_travelling_to"))
-                                         : g_strtable.lookup(tstring("ui_following")));
-                        append_order_target(label, rec->target);
-                        break;
-                    }
-                    case 5:
-                        label = *g_strtable.lookup(tstring("ui_running_from"));
+                    } else if (action == 5) {
+                        label = *g_strtable.lookup("ui_running_from");
                         label.append(*g_game->parties.get(rec->target)->display_name());
-                        break;
-                    case 6:
-                        label = *(dist_is_zero((DistObj*)rec) ? g_strtable.lookup(tstring("ui_holding"))
-                                                   : g_strtable.lookup(tstring("ui_travelling")));
-                        break;
-                    case 7: {
+                    } else if (action == 2) {
+                        label = *g_strtable.lookup("ui_patrolling");
+                    } else if (action == 3) {
+                        label = *g_strtable.lookup("ui_patrolling_around");
+                        label.append(*g_game->parties.get(rec->target)->display_name());
+                    } else if (action == 6) {
+                        if (dist_is_zero((DistObj*)rec))
+                            label = *g_strtable.lookup("ui_holding");
+                        else
+                            label = *g_strtable.lookup("ui_travelling");
+                    } else if (action == 7) {
                         int a = rec->battle;
                         if (a >= 0) {
-                            Rec98* slot = (Rec98*)agents_of()->get(a);         // 0x48ef20
-                            int other = (slot->f54 == agent) ? slot->f58 : slot->f54;
+                            Rec98* slot = (Rec98*)((BattleTable*)((char*)gd + 0xcc))->get(a);         // 0x48ef20
+                            int other;
+                            if (slot->f54 == agent) other = slot->f58;
+                            else other = slot->f54;
                             if (other >= 0) {
-                                label = *g_strtable.lookup(tstring("ui_fighting_against"));
+                                label = *g_strtable.lookup("ui_fighting_against");
                                 label.append(*g_game->parties.get(other)->display_name());
                             }
                         }
-                        break;
-                    }
-                    case 10:
-                        label = *g_strtable.lookup(tstring("ui_accompanying"));
-                        label.append(*g_game->parties.get(rec->target)->display_name());
-                        break;
-                    default:
-                        break;                       // unknown order: the label stays empty
                     }
 
-                    if (!(rec->flags_lo & 0x400)) {
+                    if (!(rec->flags & 0x400)) {
                         g_gui.draw_string(label, 0.021f, 0xffc0b0a0, 1);
                         if (!dist_is_zero((DistObj*)rec)) {
                             char buf[0x200];
-                            const char* fmt = g_strtable.lookup(tstring("ui_speed_equals"))->c_str();
-                            sprintf(buf, fmt, (double)((Party*)rec)->speed_factor());
-                            g_gui.draw_string(tstring(buf), 0.021f, 0xffb0a090, 1);
+                            sprintf(buf, g_strtable.lookup("ui_speed_equals")->c_str(), (double)rec->speed_factor());
+                            g_gui.draw_string(buf, 0.021f, 0xffb0a090, 1);
                         }
                     }
                 }
 
                 // ---- garrison contents -------------------------------------------------------------
-                if (!(rec->flags_lo & 0x200000) && rec->f6c != 0) {              // 0x51ba69
-                    unsigned tcol = 0xffd0b0e0;
-                    g_gui.draw_string(*g_strtable.lookup(tstring((rec->flags_lo & 0x400) ? "ui_defenders"
-                                                                                    : "ui_troops")),
-                                      0.02f, 0xffc08020, 1);
+                unsigned __int64 fl = rec->flags;
+                unsigned tcol = 0xffd0b0e0;
+                if (!(fl & 0x200000)) if (rec->f6c != 0) {              // 0x51ba69
+                    if (fl & 0x400)
+                        g_gui.draw_string(g_strtable.lookup("ui_defenders"), 0.02f, 0xffc08020, 1);
+                    else
+                        g_gui.draw_string(g_strtable.lookup("ui_troops"), 0.02f, 0xffc08020, 1);
                     for (int i = 0; i < roster.count; i++) {
                         if (i == first_enemy_stack(&roster)) {                // 0x51bb56
-                            g_gui.draw_string(*g_strtable.lookup(tstring("ui_prisoners")), 0.02f, 0xffc08020, 1);
+                            g_gui.draw_string(g_strtable.lookup("ui_prisoners"), 0.02f, 0xffc08020, 1);
                             tcol = 0xffc0a060;
                         }
-                        Stack* s = &roster.stacks[i];
-                        Troop* t = &g_game->troops[s->troop];
-                        char   buf[0x100];
+                        Stack& s = roster.stacks[i];
+                        Troop* t = &g_game->troops[s.troop];
+                        char   buf[0x200];
                         if (t->flags30 & 0x10) {
+                            int base = t->f58[0];
                             int tier = t->nib_b[0x7a - 0x68] & 0xf;
                             if (tier < 0)                tier = 0;
                             else if (tier > (*(int*)&g_skill_tbl[36].max_rank)) tier = (*(int*)&g_skill_tbl[36].max_rank);
-                            int pct = (int)(t->hp * 100.0f / (float)(t->f58[0] + tier * 2 + 0x23) + 1e-4f);
-                            sprintf(buf, "%s (%d%%)", troop_name_c(t), pct);
-                            g_gui.draw_string(tstring(buf), 0.015f, tcol | 0x0f0f0f, 0);
+                            const char* name = troop_name_c(t);
+                            sprintf(buf, "%s (%d%%)", name, (int)(t->hp * 100.0f / (base + tier * 2 + 0x23) + 1e-4f));
+                            g_gui.draw_string(buf, 0.015f, tcol | 0x0f0f0f, 0);
                         } else {
-                            if (s->wounded == 0)
-                                sprintf(buf, "%s (%d)", troop_name_c(t), s->count);
+                            if (s.wounded == 0)
+                                sprintf(buf, "%s (%d)", troop_name_c(t), s.count);
                             else
-                                sprintf(buf, "%s (%d/%d)", troop_name_c(t), s->count - s->wounded, s->count);
-                            g_gui.draw_string(tstring(buf), 0.015f, tcol, 0);
+                                sprintf(buf, "%s (%d/%d)", troop_name_c(t), s.count - s.wounded, s.count);
+                            g_gui.draw_string(buf, 0.015f, tcol, 0);
                         }
                     }
                 }
@@ -355,11 +350,14 @@ void MapPanel::update(int type, int id)
         }
 
         // ---- move the panel to the selection's screen position --------------------------------------
-        float xyv[4];                                           // project's output (a vector4; the original reads it back through eax)
-        ((MapWidget*)view)->project((rgl::vector4*)xyv, (const rgl::vector4*)&pos);   // 0x51a690
-        int* xy = (int*)xyv;
-        int  screen[2] = { xy[0], xy[1] };
-        g_gui.set_view((const float*)screen);      // 0x4c5190
+        {
+            rgl::vector4 out;
+            rgl::vector4* o = ((MapWidget*)view)->project(&out, &pos);
+            float screen[2];
+            screen[0] = o->x;
+            screen[1] = o->y;
+        g_gui.set_view(screen);      // 0x4c5190
+        }
     }
 
     g_sel_type = type;

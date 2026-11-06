@@ -30,11 +30,11 @@ extern "C" int __cdecl isalpha(int c);                                 // 0x537f
 extern "C" int __cdecl isdigit(int c);                                 // 0x537fa4
 
 // request text fragments of the update checker (the narrow literals live in .rdata at 0x593668..0x593794)
-static const char kUserAgent[] = "User-Agent: Mozilla/4.0\r\n";          // 0x593694
-static const char kAcceptEnc[] = "Accept-Encoding: gzip, deflate\r\n";   // 0x5936b0
-static const char kAcceptLang[] = "Accept-Language: en-us\r\n";          // 0x5936d4
-static const char kAccept[] = "Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, "
-    "application/vnd.ms-excel, application/msword, application/vnd.ms-powerpoint, */*\r\n";  // 0x5936f0
+#define kUserAgent "User-Agent: Mozilla/4.0\r\n"                          // 0x593694
+#define kAcceptEnc "Accept-Encoding: gzip, deflate\r\n"                   // 0x5936b0
+#define kAcceptLang "Accept-Language: en-us\r\n"                          // 0x5936d4
+#define kAccept "Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, " \
+    "application/vnd.ms-excel, application/msword, application/vnd.ms-powerpoint, */*\r\n"  // 0x5936f0
 
 // @ 0x4b8f40
 // append n bytes from src to the buffer, doubling the capacity (realloc) until it fits
@@ -104,14 +104,10 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
 int __cdecl http_fetch(const char* url, const char* extra, const char* post, int post_len, int out_)
 {
     http_result* out = (http_result*)out_;
-    char scheme[20];
-    char req[1024];
-    char path[1024];
-    char host[256];
-    char buf[512];
+    struct { char scheme[20]; char req[1024]; char host[256]; char buf[512]; char path[1024]; } b;
     long port;
-    parse_url(url, scheme, 20, host, 256, path, 1024, &port);
-    if (memcmp(scheme, "HTTP", 5) != 0)
+    parse_url(url, b.scheme, 20, b.host, 256, b.path, 1024, &port);
+    if (memcmp(b.scheme, "HTTP", 5) != 0)
         return 1;
     WSADATA wsa;
     if (WSAStartup(0x101, &wsa) != 0)
@@ -122,78 +118,80 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     sockaddr_in addr;
     addr.sin_family = 2;
     addr.sin_port = htons((u_short)port);
-    hostent* he = gethostbyname(host);
-    addr.sin_addr.s_addr = 0;
+    hostent* he = gethostbyname(b.host);
+    unsigned long host_addr = (unsigned long)he;
     if (he)
-        addr.sin_addr.s_addr = *(unsigned long*)he->h_addr_list[0];
+        host_addr = *(unsigned long*)he->h_addr_list[0];
+    addr.sin_addr.s_addr = host_addr;
     if (connect(sock, (sockaddr*)&addr, 16) != 0)
         return 1;                           // (the original leaks the socket here: no closesocket)
-    if (path[0] == '\0')
-        lstrcpynA(path, "/", 1024);
+    if (b.path[0] == '\0')
+        lstrcpynA(b.path, "/", 1024);
     if (post == 0) {
         sock_send_str(sock, "GET ");
-        strcpy(req, "GET ");
+        strcpy(b.req, "GET ");
     } else {
         sock_send_str(sock, "POST ");
-        strcpy(req, "POST ");
+        strcpy(b.req, "POST ");
     }
-    sock_send_str(sock, path);
-    strcat(req, path);
+    sock_send_str(sock, b.path);
+    strcat(b.req, b.path);
     sock_send_str(sock, " HTTP/1.0\r\n");
-    strcat(req, " HTTP/1.0\r\n");
+    strcat(b.req, " HTTP/1.0\r\n");
     sock_send_str(sock, kAccept);
-    strcat(req, kAccept);
+    strcat(b.req, kAccept);
     sock_send_str(sock, kAcceptLang);
-    strcat(req, kAcceptLang);
+    strcat(b.req, kAcceptLang);
     sock_send_str(sock, kAcceptEnc);
-    strcat(req, kAcceptEnc);
+    strcat(b.req, kAcceptEnc);
     sock_send_str(sock, kUserAgent);
-    strcat(req, kUserAgent);
+    strcat(b.req, kUserAgent);
     if (post_len != 0) {
-        wsprintfA(buf, "Content-Length: %ld\r\n", post_len);
-        sock_send_str(sock, buf);
-        strcat(req, buf);
+        wsprintfA(b.buf, "Content-Length: %ld\r\n", post_len);
+        sock_send_str(sock, b.buf);
+        strcat(b.req, b.buf);
     }
     sock_send_str(sock, "Host: ");
-    strcat(req, "Host: ");
-    sock_send_str(sock, host);
-    strcat(req, host);
+    strcat(b.req, "Host: ");
+    sock_send_str(sock, b.host);
+    strcat(b.req, b.host);
     sock_send_str(sock, "\r\n");
-    strcat(req, "\r\n");
+    strcat(b.req, "\r\n");
     if (extra != 0 && extra[0] != '\0') {
         sock_send_str(sock, extra);
-        strcat(req, extra);
+        strcat(b.req, extra);
     }
     sock_send_str(sock, "\r\n");
-    strcat(req, "\r\n");
+    strcat(b.req, "\r\n");
     if (post != 0 && post_len != 0) {
         send(sock, post, post_len, 0);
         ((char*)post)[post_len] = '\0';
-        strcat(req, post);
+        strcat(b.req, post);
     }
-    char* urlcopy = (char*)malloc(strlen(req) * 4);
+    char* urlcopy = (char*)malloc(strlen(b.req) * 4);
     out->url = urlcopy;
-    strcpy(urlcopy, req);
+    strcpy(urlcopy, b.req);
     // header lines, one recv'd byte at a time
     byte_buf hdr;
+    hdr.cap = 10;
     hdr.data = (char*)malloc(10);
     hdr.pos = hdr.data;
-    hdr.cap = 10;
     int blank = 0;
     int flag = 0;
     do {
-        int r = recv(sock, buf, 1, 0);
+        int r = recv(sock, b.buf, 1, 0);
         if (r < 0)
             flag = 1;
-        if (buf[0] == '\n') {
+        if (b.buf[0] != '\n') {
+            if (b.buf[0] != '\r')
+                blank++;
+        } else {
             if (blank == 0)
                 flag = 1;
             blank = 0;
-        } else if (buf[0] != '\r') {
-            blank++;
         }
         // (inline in the original: grow once, by doubling, when the buffer is full)
-        char c = buf[0];
+        char c = b.buf[0];
         unsigned used = (unsigned)(hdr.pos - hdr.data);
         if (used >= (unsigned)hdr.cap) {
             hdr.cap *= 2;
@@ -205,15 +203,15 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     *hdr.pos = '\0';
     out->headers = hdr.data;
     // body, in 0x1ff-byte chunks
+    hdr.cap = 10;
     hdr.data = (char*)malloc(10);
     hdr.pos = hdr.data;
-    hdr.cap = 10;
     for (;;) {
-        int n = recv(sock, buf, 0x1ff, 0);
+        int n = recv(sock, b.buf, 0x1ff, 0);
         if (n < 0)
             break;
-        buf[n] = '\0';
-        bytes_append(&hdr, buf, n);
+        b.buf[n] = '\0';
+        bytes_append(&hdr, b.buf, n);
         if (n <= 0)
             break;
     }

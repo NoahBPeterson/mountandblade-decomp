@@ -18,3 +18,5 @@
 ../src/game/mission5/mission_5.cpp  ?release_item@Mission_s27c90@@QAEXH@Z  00528410  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?frame_update@Rec1208@@UAEXM@Z  00525160  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?init_order_markers@Screen_s2ae70@@QAEXXZ  0052ae70  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?find_speaker_agent@ViewObj_s257f0@@QAEHXZ  00526070  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?find_listener_agent@ViewObj_s257f0@@QAEHXZ  00526130  /O2 /MT /Gy /TP

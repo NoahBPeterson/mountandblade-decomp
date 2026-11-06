@@ -11,7 +11,6 @@
 #include "../tstring.h"
 #include "../slot.h"
 #include "../ui/mission_ui.h"
-#include "../view_state.h"
 
 
 #define NOINL __declspec(noinline)     // keeps the definition's name visible to tools/difftest/slice.py's marker scan
@@ -244,8 +243,6 @@ void MissionUi::animate(int)
 
     bool changed = false;
 
-    // the six tracks re-read the 64-bit tick distance through the dword view (tick), so one folded
-    // template helper (mov/push/sbb)/fild shapes every pair the same way
     float e0 = (float)(g_ticks[tm[0].clock] - tm[0].start) * 1e-5f;
     float e1 = (float)(g_ticks[tm[1].clock] - tm[1].start) * 1e-5f;
     float e2 = (float)(g_ticks[tm[2].clock] - tm[2].start) * 1e-5f;
@@ -258,12 +255,13 @@ void MissionUi::animate(int)
 
     // --- track E (+0x78): fade +0xa8/+0xac toward +0x88/+0x8c, hand the scaled pair to +0x6c
     if (e4 < periodE) {
-        float part[3];                          // the fDC partial products: stack floats (rounded), not x87 temporaries
+        float inv = g_one / periodE;
+        float part[2];                          // the fDC partial products
         part[0] = e4 * f8c;
         part[1] = (periodE - e4) * ac;
-        fD8 = (e4 * f88 + (periodE - e4) * a8) * (g_one / periodE);
-        part[2] = part[1] + part[0];
-        fDC = part[2] * (g_one / periodE);
+        fD8 = (e4 * f88 + (periodE - e4) * a8) * inv;
+        part[1] = part[1] + part[0];
+        fDC = part[1] * inv;
         pair[0] = fD8 * g_k002;
         pair[1] = fDC * g_k002;
         set_size(pair);
@@ -272,10 +270,10 @@ void MissionUi::animate(int)
         fD8 = f88;
         fDC = f8c;
         c4 = 0;
+        changed = true;
         pair[0] = fD8 * g_k002;
         pair[1] = fDC * g_k002;
         set_size(pair);
-        changed = true;
     }
 
     // --- track A (+0x68): blend the RGB bytes of +0xb0 into +0x90, keep the alpha of +0x14c, call +0x98
@@ -283,10 +281,10 @@ void MissionUi::animate(int)
         unsigned char* vs = (unsigned char*)&valA;
         unsigned char* ss = (unsigned char*)&srcA;
         float p;
-        double fl;
+        float fl;
         int c;
 
-        p = ((float)(srcA & 0xff) * (periodA - e0) + (float)(valA & 0xff) * e0) * (g_one / periodA);
+        p = ((float)((unsigned)srcA & 0xff) * (periodA - e0) + (float)((unsigned)valA & 0xff) * e0) * (g_one / periodA);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -296,16 +294,12 @@ void MissionUi::animate(int)
         p = ((float)ss[1] * (periodA - e0) + (float)vs[1] * e0) * (g_one / periodA);
         fl = floor((double)p);
         c = (int)fl;
-        if (!(p - fl <= 0.5f))
-            c++;
-        col += (unsigned)c << 8;
+        col += (unsigned)(c + !(p - fl <= 0.5f)) << 8;
 
         p = ((float)ss[2] * (periodA - e0) + (float)vs[2] * e0) * (g_one / periodA);
         fl = floor((double)p);
         c = (int)fl;
-        if (!(p - fl <= 0.5f))
-            c++;
-        col += (unsigned)c << 16;
+        col += (unsigned)(c + !(p - fl <= 0.5f)) << 16;
 
         col |= color14c & 0xff000000u;
         set_color(&col);
@@ -322,7 +316,7 @@ void MissionUi::animate(int)
         unsigned char* ss = (unsigned char*)&srcB;
         unsigned char* vs = (unsigned char*)&valB;
         float p = ((float)ss[3] * (periodB - e1) + (float)vs[3] * e1) * (g_one / periodB);
-        double fl = floor((double)p);
+        float fl = floor((double)p);
         int c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
@@ -341,10 +335,10 @@ void MissionUi::animate(int)
         unsigned char* vs = (unsigned char*)&valC;
         unsigned char* ss = (unsigned char*)&srcC;
         float p;
-        double fl;
+        float fl;
         int c;
 
-        p = ((float)(srcC & 0xff) * (periodC - e2) + (float)(valC & 0xff) * e2) * (g_one / periodC);
+        p = ((float)((unsigned)srcC & 0xff) * (periodC - e2) + (float)((unsigned)valC & 0xff) * e2) * (g_one / periodC);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -380,7 +374,7 @@ void MissionUi::animate(int)
         unsigned char* ss = (unsigned char*)&srcD;
         unsigned char* vs = (unsigned char*)&valD;
         float p = ((float)ss[3] * (periodD - e3) + (float)vs[3] * e3) * (g_one / periodD);
-        double fl = floor((double)p);
+        float fl = floor((double)p);
         int c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;

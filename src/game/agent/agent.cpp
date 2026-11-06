@@ -948,44 +948,41 @@ void alloc_int::construct(int* p, const int& v) { new ((void*)p) int(v); }
 bool HeightField::line_clear(const vector4* a, const vector4* b)
 {
     const float* org = &bounds.x;
+    vec2 lo = { org[0], org[1] };
+    vec2 hi = lo;
+    hi.x = (float)w * cell + hi.x;
+    hi.y = (float)h * cell + hi.y;
     float t0 = 0.0f;
     vector4 d;
+    d.x = b->x - a->x;
+    d.y = b->y - a->y;
+    d.z = b->z - a->z;
+    float t1 = d.normalize();
     vector4 p0;
-    float t1;
-    {
-        vec2 lo = { org[0], org[1] };
-        vec2 hi = lo;
-        hi.x = (float)w * cell + hi.x;
-        hi.y = (float)h * cell + hi.y;
-        d.x = b->x - a->x;
-        d.y = b->y - a->y;
-        d.z = b->z - a->z;
-        t1 = d.normalize();
-        p0.x = d.x * t0 + a->x;
-        if (p0.x < lo.x) {
-            if (d.x > 0.0f)
-                t0 = (lo.x - p0.x) / d.x;
-        } else if (p0.x > hi.x && d.x < 0.0f)
-            t0 = (hi.x - p0.x) / d.x;
-        p0.y = d.y * t0 + a->y;
-        if (p0.y < lo.y) {
-            if (d.y > 0.0f)
-                t0 += (lo.y - p0.y) / d.y;
-        } else if (p0.y > hi.y && d.y < 0.0f)
-            t0 += (hi.y - p0.y) / d.y;
-        p0.x = d.x * t1 + a->x;
-        if (p0.x < lo.x) {
-            if (d.x < 0.0f)
-                t1 += (lo.x - p0.x) / d.x;
-        } else if (p0.x > hi.x && d.x > 0.0f)
-            t1 += (hi.x - p0.x) / d.x;
-        p0.y = d.y * t1 + a->y;
-        if (p0.y < lo.y) {
-            if (d.y < 0.0f)
-                t1 += (lo.y - p0.y) / d.y;
-        } else if (p0.y > hi.y && d.y > 0.0f)
-            t1 += (hi.y - p0.y) / d.y;
-    }
+    p0.x = d.x * t0 + a->x;
+    if (p0.x < lo.x) {
+        if (d.x > 0.0f)
+            t0 = (lo.x - p0.x) / d.x;
+    } else if (p0.x > hi.x && d.x < 0.0f)
+        t0 = (hi.x - p0.x) / d.x;
+    p0.y = d.y * t0 + a->y;
+    if (p0.y < lo.y) {
+        if (d.y > 0.0f)
+            t0 += (lo.y - p0.y) / d.y;
+    } else if (p0.y > hi.y && d.y < 0.0f)
+        t0 += (hi.y - p0.y) / d.y;
+    p0.x = d.x * t1 + a->x;
+    if (p0.x < lo.x) {
+        if (d.x < 0.0f)
+            t1 += (lo.x - p0.x) / d.x;
+    } else if (p0.x > hi.x && d.x > 0.0f)
+        t1 += (hi.x - p0.x) / d.x;
+    p0.y = d.y * t1 + a->y;
+    if (p0.y < lo.y) {
+        if (d.y < 0.0f)
+            t1 += (lo.y - p0.y) / d.y;
+    } else if (p0.y > hi.y && d.y > 0.0f)
+        t1 += (hi.y - p0.y) / d.y;
     if (t0 >= t1)
         return true;
     vector4 p1;
@@ -995,7 +992,9 @@ bool HeightField::line_clear(const vector4* a, const vector4* b)
     p1.x = d.x * t1 + a->x;
     p1.y = d.y * t1 + a->y;
     p1.z = d.z * t1 + a->z;
-    vec2 seg = { p1.x - p0.x, p1.y - p0.y };
+    vec2 seg;
+    seg.x = p1.x - p0.x;
+    seg.y = p1.y - p0.y;
     if (sqrt(seg.y * seg.y + seg.x * seg.x) > 1e10f)
         return false;
     vec2 dir = seg;

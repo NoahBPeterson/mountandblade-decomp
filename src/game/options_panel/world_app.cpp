@@ -510,7 +510,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             ShowWindow(GetDlgItem(hwnd, 0x410), 0);
             ShowWindow(GetDlgItem(hwnd, 0x425), 0);
             MessageBoxA(0, UI("ui_there_are_no_modules_installed")->c_str(), "ERROR", 0x10);
-            break;
+            return 1;
         }
         HWND list = GetDlgItem(hwnd, 0x420);
         if (list == 0)
@@ -531,13 +531,13 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         switch (LOWORD(wp)) {
         case 2:
             EndDialog(h, 2);
-            break;
+            return 1;
         case 0x405:
             DialogBoxParamA(0, (LPCSTR)0xc1, hwnd, (DLGPROC)wndproc_thunk, 0);
-            break;
+            return 1;
         case 0x406:
             ShellExecuteA(0, "open", "http://www.gamersgate.com", 0, 0, 5);
-            break;
+            return 1;
         case 0x410: {
             g_5e2630 = 0;
             int sel = 0;
@@ -549,21 +549,24 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             g_module_name = *mod_name(sel);
             g_module_path.assign("Modules\\");
             g_module_path.append(g_module_name);
-            g_module_path.append(tstring("\\"));
+            {
+                tstring slash("\\");
+                g_module_path.append(slash);
+            }
             HKEY key;
             open_keys_key(&key);
             keys_write_value(&key, "last_module", &g_module_name);
             if (key != 0)
                 RegCloseKey(key);
             EndDialog(h, 0x410);
-            break;
+            return 1;
         }
         case 0x41f: {                                       // check for a newer version
             int v = get_latest_version();
             if (v > 0x3f3) {
                 tstring text(*UI("ui_notification_new_version"));
                 unescape(&text);
-                char buf[0x100];
+                char buf[0x200];
                 sprintf(buf, text.c_str(), 1, 0, 1, 1,
                             v / 1000, (v / 100) % 10, (v / 10) % 10, v % 10);
                 MessageBoxA(hwnd, buf, UI("ui_new_version_found")->c_str(), 0);
@@ -586,10 +589,10 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         }
         case 0x469:
             EndDialog(h, 2);
-            break;
+            return 1;
         case 0x46b:
             ShellExecuteA(0, "open", "http://www.paradoxplaza.com/Mount&Blade/", 0, 0, 5);
-            break;
+            return 1;
         case 0x420: {                                       // module selection changed
             if (HIWORD(wp) != 9)
                 break;

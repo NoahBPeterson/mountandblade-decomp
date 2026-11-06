@@ -7,6 +7,7 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include "../party/party_window_class.h"      // PartyWindow: the one class of this object
 #include "../party2/camera_class.h"            // Camera: the scrolling item list (its scroll bar is follow[1])
@@ -84,25 +85,32 @@ void PartyWindow::frame_update(float unused)
     if (g_gui.wheel != 0) {
         UiD* bar = (UiD*)view[page]->follow[1];
         int stop = bar->f178;
-        bar->set_value((g_gui.wheel / bar->e[stop]) * bar->f17c * 0.0005f +
-                       (bar->e[stop] - bar->f17c) *
+        float& es = bar->screen[stop];
+        bar->set_value((g_gui.wheel / es) * bar->f17c * 0.0005f +
+                       (es - bar->f17c) *
                        ((bar->v168 - bar->f16c) / (bar->f170 - bar->f16c)));
-        bar->set_key_flags(0x10000);
+        ((UiD*)view[page]->follow[1])->set_key_flags(0x10000);
     }
 
     if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x2c] != 0 && g_keyboard.prev[0x2d] == 0 &&
-        g_cfg.cheat_mode != 0 && g_trial_mode != 0) {
-        g_game->add_gold(1000, g_game->player);
-        money_label(0);
+        g_cfg.cheat_mode != 0) {
+        WL_MARKER(12)
+        if (g_trial_mode != 0) {
+            g_game->add_gold(1000, g_game->player);
+            money_label(0);
+        }
+        WL_MARKER(13)
     }
 
     if (icon_a84 != 0 && icon_a84->clear_mask(0x10000)) {
         spec_ac0 = (spec_ac0 + 1) % 4;
-        add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game->player, spec_ac0);
+        tstring name("inv_i_character");
+        add_strip_icon(&icon_a84, name, g_game->player, spec_ac0);
     }
     if (icon_a88 != 0 && icon_a88->clear_mask(0x10000)) {
         spec_ac4 = (spec_ac4 + 1) % 4;
-        add_strip_icon(&icon_a88, tstring("inv_i_character2"), w14, spec_ac4);
+        tstring name("inv_i_character2");
+        add_strip_icon(&icon_a88, name, w14, spec_ac4);
     }
 
     refresh_lists(0);
@@ -116,9 +124,13 @@ void PartyWindow::frame_update(float unused)
         if (locked == 0) {
             int worn = 0;
             if (w04 == 0 && w14 == GD_I(0x90)) {
-                ItemRef* it = &TROOP(w14)->inv[0];
-                for (int i = 0; i < 9; i++) {
+                ItemRef* it = &TROOP(w14)->inv[1];
+                for (int i = 0; i < 9; i += 3) {
+                    if (it[i - 1].item >= 0)
+                        worn++;
                     if (it[i].item >= 0)
+                        worn++;
+                    if (it[i + 1].item >= 0)
                         worn++;
                 }
             }
@@ -129,6 +141,7 @@ void PartyWindow::frame_update(float unused)
                     TROOP(w14)->f3b4 -= pending;
                     eaten = 1;
                 } else {
+                    WL_MARKER(4)
                     char buf[0x200];
                     {
                         tstring key("ui_you_dont_have_value");
@@ -141,6 +154,7 @@ void PartyWindow::frame_update(float unused)
                     tstring msg(buf);
                     float out[2];
                     total_cost->set_text(out, &msg);
+                    WL_MARKER(5)
                 }
             } else if (pending > 0) {
                 if (pending <= TROOP(w14)->f3b4) {
@@ -148,6 +162,7 @@ void PartyWindow::frame_update(float unused)
                     TROOP(w14)->f3b4 -= pending;
                     eaten = 1;
                 } else {
+                    WL_MARKER(4)
                     q_pay = -1;
                     char buf[0x200];
                     {
@@ -172,6 +187,7 @@ void PartyWindow::frame_update(float unused)
                     }                                   // msg, pay, think destroyed here (0x5106bd..0x5106cf)
                     g_windows.box()->f04 = 2;
                     g_windows.set_state(0);
+                    WL_MARKER(5)
                 }
             } else if (worn > 0) {
                 q_dump = -1;
@@ -194,6 +210,7 @@ void PartyWindow::frame_update(float unused)
 
             int food = g_game->troops->equip[9].item;
             if (food >= 0 && ITYPE(food) == 1) {
+                WL_MARKER(4)
                 q_food = -1;
                 char buf[0x200];
                 {
@@ -213,11 +230,13 @@ void PartyWindow::frame_update(float unused)
                 }
                 g_windows.set_state(0);
                 eaten = 0;
+                WL_MARKER(5)
             }
         }
     }
 
     if (q_food == 0) {
+        WL_MARKER(4)
         q_food = -1;
         Troop* rec = TROOP(g_game->player);
         rec->equip[9].item = 1;
@@ -227,6 +246,7 @@ void PartyWindow::frame_update(float unused)
         g_sound_mgr.play(g_sound_mgr.slot[0x76], 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
         g_sound_mgr.play(g_sound_mgr.slot[0x61], 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
         init_window();
+        WL_MARKER(5)
     }
 
     // an unanswered question keeps the screen open (0x510479..0x51048f); the merchant's gold goes to the player
@@ -273,34 +293,35 @@ void PartyWindow::set_slot_flag(int page, int idx, unsigned mask, char on)
 // @ 0x5108d0
 void PartyWindow::refresh_lists(int unused)
 {
+    MissionUi** w;
     for (int page = 0; page < pages; page++) {
         int troop = g_game->player;
         if (page != 0)
             troop = w14;
+        w = widgets[page];
         int count;
         if (troop == GD_I(0x90) && w04 == 0)
             count = 9;
         else
             count = TROOP(troop)->inv_count();
-        if (count > 0) {
-            MissionUi** w = widgets[page];
-            for (int i = 0; i < count; i++)
-                if (w[i]->clear_mask(4))
-                    g_gui.set_overlay(0, true);
-            for (int i = 0; i < count; i++)
-                if (w[i]->clear_mask(2) && locked == 0)
-                    place_slot(w[i], &EQUIP(troop, i), page, i);
-        }
+        for (int i = count; i; i--, w++)
+            if ((*w)->clear_mask(4))
+                g_gui.set_overlay(0, true);
+        w = widgets[page];
+        for (int i = 0; i < count; i++, w++)
+            if ((*w)->clear_mask(2) && locked == 0)
+                place_slot(*w, &EQUIP(troop, i), page, i);
     }
 
     for (int page = 0; page < rows; page++) {
         int troop = g_game->player;
         if (page != 0)
             troop = w14;
-        MissionUi** w = row_slot[page];
-        for (int i = 0; i < 10; i++)
-            if (w[i] != 0 && w[i]->clear_mask(4) && locked == 0)
+        w = row_slot[page];
+        for (int i = 10; i; i--, w++)
+            if (*w != 0 && (*w)->clear_mask(4) && locked == 0)
                 g_gui.set_overlay(0, true);
+        w = row_slot[page];
         for (int i = 0; i < 10; i++)
             if (w[i] != 0 && w[i]->clear_mask(2) && locked == 0)
                 place_slot(w[i], &GRID(troop, i), 2, i);

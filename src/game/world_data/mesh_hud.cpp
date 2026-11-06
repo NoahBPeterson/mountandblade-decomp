@@ -16,6 +16,16 @@
 #include "../../include/mesh_parts.h"
 #include "../../include/mesh_prims.h"
 
+// x87 evaluation helpers for the fade blocks below (the original inlines these shapes).
+struct mh_float2 { float x, y; mh_float2() {} mh_float2(float a, float b) { x = a; y = b; } };
+static inline mh_float2 operator*(const mh_float2& a, float k) { return mh_float2(a.x * k, a.y * k); }
+static inline mh_float2 mh_fade_mix(float s, const mh_float2& a, float t, const mh_float2& b)
+{
+    mh_float2 l(s * a.x, s * a.y);
+    mh_float2 r(t * b.x, t * b.y);
+    return mh_float2(l.x + r.x, l.y + r.y);
+}
+
 // ==== 0x4958f0: clone a mesh with the same owner, material, flags and name =====================================
 // @ 0x4958f0
 rgl::mesh* rgl::mesh::copy_of()
@@ -224,14 +234,14 @@ void MeshWidget::animate(int)
     float e3 = elapsed(5);
 
     if (e2 < dur(4)) {
-        float k = 1.0f / dur(4);
-        float x = (e2 * f88 + (dur(4) - e2) * a8) * k;
-        float y = ((dur(4) - e2) * ac + e2 * f8c) * k;
-        rgl::vector4 v(x / fD8, y / fDC, 1.0f);
+        float inv = 1.0f / dur(4);
+        float rest = dur(4) - e2;
+        mh_float2 z = mh_fade_mix(e2, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        rgl::vector4 v(z.x / fD8, z.y / fDC, 1.0f);
         msh(0)->set_color(v);
         s03();
-        fD8 = x;
-        fDC = y;
+        fD8 = z.x;
+        fDC = z.y;
     } else if (c4) {
         c4 = 0;
         msh(0)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
@@ -273,11 +283,10 @@ void MeshWidget::animate(int)
     }
 
     if (e3 < dur(5)) {
-        float k = 1.0f / dur(5);
-        rgl::vector4 v;
-        v.x = (e3 * f80 + (dur(5) - e3) * a0) * k;
-        v.y = ((dur(5) - e3) * a4 + e3 * f84) * k;
-        s22(&v);
+        float inv = 1.0f / dur(5);
+        float rest = dur(5) - e3;
+        mh_float2 z = mh_fade_mix(e3, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
+        s22(&z);
     } else if (c5) {
         s22(&f80);
         c5 = 0;
@@ -293,14 +302,14 @@ void XyzButton::animate(int)
     float e3 = elapsed(5);
 
     if (e2 < dur(4)) {
-        float k = 1.0f / dur(4);
-        float x = (e2 * f88 + (dur(4) - e2) * a8) * k;
-        float y = ((dur(4) - e2) * ac + e2 * f8c) * k;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        float inv = 1.0f / dur(4);
+        float rest = dur(4) - e2;
+        mh_float2 z = mh_fade_mix(e2, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
         update_bounds();
-        fD8 = x;
-        fDC = y;
+        fD8 = z.x;
+        fDC = z.y;
     } else if (c4) {
         c4 = 0;
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
@@ -350,11 +359,10 @@ void XyzButton::animate(int)
 alpha_done:
 
     if (e3 < dur(5)) {
-        float k = 1.0f / dur(5);
-        rgl::vector4 v;
-        v.x = (e3 * f80 + (dur(5) - e3) * a0) * k;
-        v.y = ((dur(5) - e3) * a4 + e3 * f84) * k;
-        move_a((float*)&v);
+        float inv = 1.0f / dur(5);
+        float rest = dur(5) - e3;
+        mh_float2 z = mh_fade_mix(e3, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
+        move_a((float*)&z);
     } else if (c5) {
         move_a((float*)&f80);
         c5 = 0;
@@ -373,21 +381,21 @@ void DropDown::animate(int)
     float e5 = elapsed(5);
 
     if (e4 < dur(4)) {
-        float k = 1.0f / dur(4);
-        float x = (e4 * f88 + (dur(4) - e4) * a8) * k;
-        float y = ((dur(4) - e4) * ac + e4 * f8c) * k;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        float sy = y * 0.02f;
+        float inv = 1.0f / dur(4);
+        float rest = dur(4) - e4;
+        mh_float2 z = mh_fade_mix(e4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        float sy = z.y * 0.02f;
         rgl::vector4 v(sy, sy, 1.0f);
         set_size((float*)&v);
         v.x = sy;
-        v.y = y * 0.013f;
+        v.y = z.y * 0.013f;
         set_offset((float*)&v);
         update_bounds();
-        fD8 = x;
-        fDC = y;
+        fD8 = z.x;
+        fDC = z.y;
         dirty = 1;
     } else if (c4) {
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
@@ -479,11 +487,10 @@ void DropDown::animate(int)
     }
 
     if (e5 < dur(5)) {
-        float k = 1.0f / dur(5);
-        rgl::vector4 v;
-        v.x = (e5 * f80 + (dur(5) - e5) * a0) * k;
-        v.y = ((dur(5) - e5) * a4 + e5 * f84) * k;
-        move_a((float*)&v);
+        float inv = 1.0f / dur(5);
+        float rest = dur(5) - e5;
+        mh_float2 z = mh_fade_mix(e5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
+        move_a((float*)&z);
     } else if (c5) {
         move_a((float*)&f80);
         c5 = 0;
@@ -501,24 +508,23 @@ void UiB::animate(int)
     float t1 = elapsed(1);
     float t4 = elapsed(4);
     float t5 = elapsed(5);
-    unsigned char zero = 0;
 
     if (t4 < dur(4)) {
-        float k = 1.0f / dur(4);
-        float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
-        float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
-        rgl::vector4 v(x / fD8, y / fDC, 1.0f);
+        float inv = 1.0f / dur(4);
+        float rest = dur(4) - t4;
+        mh_float2 z = mh_fade_mix(t4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        rgl::vector4 v(z.x / fD8, z.y / fDC, 1.0f);
         ((rgl::mesh*)tracks[0])->set_color(v);
         ((rgl::mesh*)tracks[2])->set_color(v);
         update_bounds();
-        v.x = x * 0.25f;
+        v.x = z.x * 0.25f;
         v.y = screen[1];
         set_xy((float*)&v);
-        fD8 = x;
-        fDC = y;
+        fD8 = z.x;
+        fDC = z.y;
     } else if (c4) {
         rgl::vector4 v(f88 / fD8, f8c / fDC, 1.0f);
-        c4 = zero;
+        c4 = 0;
         ((rgl::mesh*)tracks[0])->set_color(v);
         ((rgl::mesh*)tracks[2])->set_color(v);
         update_bounds();
@@ -546,11 +552,10 @@ void UiB::animate(int)
     }
 
     if (t5 < dur(5)) {
-        float k = 1.0f / dur(5);
-        rgl::vector4 v;
-        v.x = (t5 * f80 + (dur(5) - t5) * a0) * k;
-        v.y = (t5 * f84 + (dur(5) - t5) * a4) * k;
-        move_a((float*)&v);
+        float inv = 1.0f / dur(5);
+        float rest = dur(5) - t5;
+        mh_float2 z = mh_fade_mix(t5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
+        move_a((float*)&z);
     } else if (c5) {
         move_a((float*)&f80);
         c5 = 0;
@@ -565,19 +570,19 @@ void UiC::animate(int)
     float t5 = elapsed(5);
 
     if (t4 < dur(4)) {
-        float k = 1.0f / dur(4);
-        float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
-        float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
+        float inv = 1.0f / dur(4);
+        float rest = dur(4) - t4;
+        mh_float2 z = mh_fade_mix(t4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
         f194 = -23234124.0f;                     // 0xcbb14326: never a real frame, so refresh rebuilds
-        rgl::vector4 c(x * 0.38940808f, y, 1.0f);
+        rgl::vector4 c(z.x * 0.38940808f, z.y, 1.0f);
         v198 = c;
-        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
         update_bounds();
-        rgl::vector4 s(x * 0.25f, screen[1], 1.0f);
+        rgl::vector4 s(z.x * 0.25f, screen[1], 1.0f);
         set_xy((float*)&s);
-        fD8 = x;
-        fDC = y;
+        fD8 = z.x;
+        fDC = z.y;
     } else if (c4) {
         rgl::vector4 c(f88 * 0.38940808f, f8c, 1.0f);
         v198 = c;
@@ -613,11 +618,10 @@ void UiC::animate(int)
     }
 
     if (t5 < dur(5)) {
-        float k = 1.0f / dur(5);
-        rgl::vector4 v;
-        v.x = (t5 * f80 + (dur(5) - t5) * a0) * k;
-        v.y = (t5 * f84 + (dur(5) - t5) * a4) * k;
-        move_a((float*)&v);
+        float inv = 1.0f / dur(5);
+        float rest = dur(5) - t5;
+        mh_float2 z = mh_fade_mix(t5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
+        move_a((float*)&z);
     } else if (c5) {
         move_a((float*)&f80);
         c5 = 0;
@@ -637,19 +641,19 @@ void UiE::animate(int)
 
     // bars: lerp the (x, z) pair over dur(4), then the two companion vectors from its y component
     if (t4 < dur(4)) {
-        float k = 1.0f / dur(4);
-        float x = (t4 * f88 + (dur(4) - t4) * a8) * k;
-        float y = (t4 * f8c + (dur(4) - t4) * ac) * k;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(x / fD8, y / fDC, 1.0f));
-        rgl::vector4 v(y * 0.02f, y * 0.02f, 1.0f);
+        float inv = 1.0f / dur(4);
+        float rest = dur(4) - t4;
+        mh_float2 z = mh_fade_mix(t4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        rgl::vector4 v(z.y * 0.02f, z.y * 0.02f, 1.0f);
         set_size((float*)&v);
         v.x = 0.0f;
-        v.y = y * 0.009f;
+        v.y = z.y * 0.009f;
         set_offset((float*)&v);
         update_bounds();
-        fD8 = x;
-        fDC = y;
+        fD8 = z.x;
+        fDC = z.y;
         changed = true;
     } else if (c4) {
         c4 = 0;
@@ -737,11 +741,10 @@ void UiE::animate(int)
 
     // position: lerp the (x, y) pair over dur(5)
     if (t5 < dur(5)) {
-        float k = 1.0f / dur(5);
-        rgl::vector4 v;
-        v.x = (t5 * f80 + (dur(5) - t5) * a0) * k;
-        v.y = (t5 * f84 + (dur(5) - t5) * a4) * k;
-        move_a((float*)&v);
+        float inv = 1.0f / dur(5);
+        float rest = dur(5) - t5;
+        mh_float2 z = mh_fade_mix(t5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
+        move_a((float*)&z);
     } else if (c5) {
         move_a((float*)&f80);
         c5 = 0;

@@ -504,6 +504,63 @@ so look at the expressions before the call:
   write_soa(out, soa);
   ```
 
+### 6.5 Rotation is a chain, and it can start at a file-static store
+
+Found on M&B `Operation::execute` 0x49fa10 (69 KB, 590 cases), where the original
+has `ecx/edx/eax` and ours had `eax/ecx/edx` across the whole function. Dozens of
+spellings at the rotated sites changed nothing, because the cause wasn't at those
+sites. Trace rotation back to the **first** temporary in the function:
+
+1. **The first pick set everything after it.** The original starts with
+   `mov ecx,[edi]` for `g_cur_opcode = id`; ours used `eax`. In ours `eax` was already
+   taken by the zero register (`xor eax,eax`), because `g_script_error = 0` comes first
+   in the source.
+2. **The original's scheduler sank that store below the `id` loads.** It can only do
+   that if the store can't alias `*this`, which means the global is a **file static**.
+   Every reference to 0x5e2590..0x5e25a4 in the image lies inside 0x49cc60..0x4b10d7,
+   so the image agrees. With `static` and the store first, the prologue came out
+   instruction for instruction like the original.
+3. **Each scratch pick depends on the temporaries before it, in IL order, across
+   cases.** One extra or missing temporary rotates later code until something
+   resynchronises. So rotation isn't a local property of the code that shows it, and
+   a local fix can lose more than it gains: one fix lost 49 cases and gained 20.
+
+How to work on it:
+
+- Work top-down, and fix the earliest rotated code first.
+- Judge an edit by the count with registers **and** stack slots masked, as well as by
+  the identical count.
+- Find where the rotation changes by compiling subsets of the function.
+- When a store seems to move across pointer loads in the original, ask whether the
+  global could be `static`: list which addresses reference it. A narrow range of
+  referencing functions is evidence of one original translation unit.
+
+Status: the prologue is exact, the rotation is right from there on, and 295 of 590
+cases are identical (217 before). The row isn't byte-exact yet, and making the global
+really `static` needs the other file's users moved into this object. So this is one
+function's evidence. Try it on other rotated rows before treating it as general.
+
+**Callee visibility sets the global register map too.** In the same function, calls
+to visible callees that reach nothing opaque don't kill a local whose address escaped
+elsewhere. Making `lookup`, `get`, `is_live`, `first_flagged` and similar visible
+produced the original's `edi=this, ebp=locals, esi=params[0] low, ebx=params[1] low`
+with no case edits, and moved about 200 cases to identical. Keep a pure callee opaque
+if the original calls it in order, since a visible one can be reordered or hoisted.
+
+### 6.6 Page-load folds are switched on per function
+
+`vector::operator[]` normally gives a materialised `lea r,[b+i*4]; mov r,[r]`. cl
+folds it for the whole function once something in that function gets loop-optimised.
+From small probes for M&B `Mission::start_setup` 0x484590:
+
+- **Triggers:** a partial or full unroll, a trip-count-1 fill loop (including the
+  `_Ufill` in `std::vector::push_back`), and store promotion of a memory variable in
+  a loop (`x = x + *p`).
+- **Not triggers:** `for c<1`, `__int64` accumulation, uncounted loops with branches,
+  and a size threshold (1600 extra statements changed nothing).
+
+Still unknown: the original contains these same constructs and doesn't fold.
+
 ---
 
 ## 7. Stack layout
@@ -513,6 +570,26 @@ so look at the expressions before the call:
   scoping, or per-arm short-lived values, lets later values reuse slots and
   shrinks the frame. Local-slot order did **not** depend on declaration order in
   24 shuffled variants of one function (observed in Spore's cl 13.10 code).
+- **A local's size and scope decide its group.** Smaller objects are placed first, so an
+  8-byte object takes a slot before 16-byte ones. Block-scoping address-taken floats
+  frees a slot, and one object updated in place, rather than a chain of named values,
+  reproduces store-then-reload in one slot (0x484590).
+- **What decides slot sharing and order (M&B `cls_map`, 7 rows matched with this; 1, 2 and 6 tested directly, the rest inferred).**
+  1. Escape is interprocedural. An address-taken local keeps a private slot if the callee's parameter escapes or the callee is opaque, even
+     when the callee is defined later in the TU. Taking the address of the parameter in the callee counts, and leaves the callee's bytes
+     unchanged: `int*& n = count` moved `count` out of a shared slot (0x4dd6e0). `inline` on the callee doesn't hide its body.
+  2. The same analysis decides whether memory counts as clobbered. A hidden-return vector is unclobbered across later calls only if the
+     callee's body is visible and doesn't leak the pointer. Reloads of a local vector's base are a sign the original saw that body (0x4e05c0).
+  3. Conflicts follow scope, not just liveness. An object conflicts with everything inside its enclosing block: `{ {f2} tstring name; }`
+     conflicts where sibling blocks `{f2} {name}` don't.
+  4. A function-scope object that escapes stays live to the end of the function. A later local can only share with it if it was block-scoped.
+  5. Slots order by the total post-optimisation uses of the merged group, descending from esp, not each local's own uses, so which group a
+     late local joins can flip the order. Ties go to the first-referenced local.
+  6. Declaration order is irrelevant. In a probe of 14 equal-sized cases, more uses gave a lower address and a tie went to the first
+     referenced. Folded references add no use.
+  7. A dead parameter's home is overlaid by a block-scoped copy, and the first free home wins.
+  8. Partly overlapping slots mean separate locals: a 20-byte `z[5]` was really `uv[2]` plus `pos[3]`.
+  Method: map every slot from the original with push depth removed, write one local per observed slot, then fix the scopes.
 - **Order by size.** In one function the locals sorted by size ascending, then by
   declaration; shrinking an array (`char q1[0x105]`) was the only way to move it
   below another.
@@ -1295,10 +1372,25 @@ Added by the third round (59 matched, including two functions 109 and 144 instru
 - **A memory accumulator in a dead parameter's slot, also passed by address, is a block-scoped address-taken local** (0x46d060).
 - **Other small shapes.** `val <= mask ? val : mask` gives `jbe`; a right-nested sum `t + (a + b)` preserves fld order; by-value `fmin2(a, b)` helpers give
   `fst/fcomp st(1)`; `do { } while (++k < N)` keeps signed `%` and `/`, where `for` lets cl prove k non-negative (0x484590).
+- **Static validators get esi or edi for a parameter when all three scratch registers conflict.** 0x49cda0 matched with sequential
+  `if (type == N)` on the reference itself, plus `r = 0; goto done;` on errors. A local `int t = type` lets cl thread the jumps.
+- **Tail-merge hubs need the same shape everywhere.** All `result = 0` tails hub to one block in the original only if other cases use
+  `if (ok) result = 1; else result = 0;`. A stray `result = 0;` first arm moves the hub.
+- **By-value `__forceinline` wrappers spill their arguments, and shim forwarders add inline formals that change allocation.** Calling
+  the real signature or class fixed `map_get_*_position` and matched 0x52ae70.
+- **`inline` on a visible callee hides its register use:** `inline __declspec(noinline)` keeps a register live across the call.
+- **`insn_align`'s raw identical count can jump about 150 between equivalent layouts** (difflib noise): compare the count with slots masked.
+- **`/FAs` frame symbols name every local and temp with its offset.** Grouping them by offset shows which variables to split or rescope. Reused
+  floats were often separate variables: splitting by the original's slot sharing fixed whole frames (`divisor`/`inv`, `mv`/`inp`, 0x4556d0).
+- **An address-taken local doesn't share its slot with variables nested in its scope; a sibling block does** (0x44e2b0).
+- **Identical if/else arms leave dead loads:** `if (id == x) s = s*0.7f; else s = s*0.7f;` keeps only the two loads (0x456503).
+- **A wrong field in a global can byte-match, because data addresses are masked.** `g_skill_tbl[36].cap` matched where the original reads `max_rank`,
+  in several modules. Run tools/difftest/resaudit_all.py, and check any global you touch against the original.
 
 Rows that resisted all of these, so stop early: SIB base/index order (`[ebx+ecx]` against `[ecx+ebx]`) and `fld/fmul`
-operand order, callee-saved or scratch register rotation alone, one instruction scheduled a slot away with no structural
-difference, and a read-modify-write `or [m], r` where the original loads, ors and stores.
+operand order, one instruction scheduled a slot away with no structural difference, and a read-modify-write `or [m], r`
+where the original loads, ors and stores. Rotation on its own isn't on this list any more: don't try spellings at the rotated
+site, trace it back to the function's first temporary (section 6.5).
 These are not absolute: a reference local flipped SIB order on 0x4c1e10, and an inline helper with reference parameters moved
 `fld/fmul` order on 0x414960, so try one of those before giving up.
 

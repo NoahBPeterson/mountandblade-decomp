@@ -181,7 +181,7 @@ void Rec454::init_screen()
 
     // the quest list frame: 0x188 bytes, vtable 0x5924a0
     float h = quest_list_height((float)count * 0.04f + 0.09f);     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
-    frame = new ContainerBase;                  // vptr 0x5924a0
+    frame = new ContainerBase(ContainerBase::inl_tag());                  // vptr 0x5924a0
     {
         float v[2] = { 0.0f, 0.0f };
         frame->move_a(v);

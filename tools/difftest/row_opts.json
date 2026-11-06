@@ -460,19 +460,19 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "camera 0049bbb0": {
+  "script_interpreter 0049bbb0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "camera 0049bea0": {
+  "script_interpreter 0049bea0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "camera 0049f060": {
+  "script_interpreter 0049f060": {
     "args": [
       "--party-table"
     ],

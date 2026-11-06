@@ -625,15 +625,18 @@ void Animator::reset(void* a, void* b)
     unpack((const unsigned __int64*)b);
 
     int r = rand();
-    float t = (float)(item - s1) * ((float)(r % 15817) * 6.322311674011871e-05f);
+    float f = (float)(r % 15817) * 6.322311674011871e-05f;
+    float t = (float)(item - s1) * f;
     item = s1 + round_float(&t);
 
     r = rand();
-    t = (float)(set - s0) * ((float)(r % 15817) * 6.322311674011871e-05f);
+    f = (float)(r % 15817) * 6.322311674011871e-05f;
+    t = (float)(set - s0) * f;
     set = s0 + round_float(&t);
 
     r = rand();
-    t = (float)(material - s5) * ((float)(r % 15817) * 6.322311674011871e-05f);
+    f = (float)(r % 15817) * 6.322311674011871e-05f;
+    t = (float)(material - s5) * f;
     int v = round_float(&t) + s5;
     material = v;
 
@@ -653,9 +656,11 @@ void Animator::reset(void* a, void* b)
     }
 
     r = rand();
-    scale = (scale - s128) * ((float)(r % 15817) * 6.322311674011871e-05f) + s128;
+    f = (float)(r % 15817) * 6.322311674011871e-05f;
+    scale = (scale - s128) * f + s128;
     r = rand();
-    time = (time - s12c) * ((float)(r % 15817) * 6.322311674011871e-05f) + s12c;
+    f = (float)(r % 15817) * 6.322311674011871e-05f;
+    time = (time - s12c) * f + s12c;
 
     pf = weights;
     for (int i = 0; i < 0x3f; i += 9) {

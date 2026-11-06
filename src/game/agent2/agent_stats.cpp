@@ -57,7 +57,7 @@ const RangePair g_range_tbl[6] = {                       // 0x590aac
 // inline vector helpers of the original: rgl's operators are out-of-line in other objects
 static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline vector4 vneg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
-static __forceinline float vdot(const vector4& a, const vector4& b) { return a.x * b.x + (a.y * b.y + a.z * b.z); }
+static __forceinline float vdot(const vector4& a, const vector4& b) { return a.x * b.x + (a.z * b.z + a.y * b.y); }
 
 
 // ---- the 0x1c8-byte record -----------------------------------------------------------------------------------------
@@ -1401,60 +1401,64 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
     Light** it = lights._Myfirst;
     if (it < lights._Mylast) {
         unsigned skip_dir = flags & 2;
+        int type;
         do {
-            if (skip_dir && (*it)->type == 2) goto next;
-            if ((flags & 4) && (*it)->type != 2) goto next;
+            type = (*it)->type;
+            if (skip_dir && type == 2) goto next;
+            if ((flags & 4) && type != 2) goto next;
             {
-                Light* l = *it;
-                int type = l->type;
-                double dist;
-                vector4 d;
-                float k;
+            Light* l = *it;
+            float dist;
+            vector4 d;
+            float k;
+            if (type == 2) {
+                dist = 1000.0f;
+                d = l->dir;
+                k = scale;
+            } else {
+                d = vsub(p, l->pos);
+                dist = d.normalize();
+                k = 1.0f;
+            }
+            float dp = vdot(n, vneg(d));
+            if (dp > 0.0f && (type == 2 || dist < l->range)) {
+                vector4 hp = l->pos;
                 if (type == 2) {
-                    dist = 1000.0f;
-                    d = l->dir;
-                    k = scale;
+                    vector4 t = vmul(d, dist);
+                    hp = vsub(p, t);
                 } else {
-                    d = vsub(p, l->pos);
-                    dist = d.normalize();
-                    k = 1.0f;
+                    k = 1.0f / (dist * dist) * k;
                 }
-                float dp = vdot(n, vneg(d));
-                if (0.0f < dp && (type == 2 || dist < l->range)) {
-                    vector4 hp = l->pos;
-                    if (type == 2) {
-                        vector4 t = vmul(d, (float)dist);
-                        hp = vsub(p, t);
-                    } else {
-                        k = (float)(1.0 / (dist * dist) * k);
-                    }
-                    bool nothing = (flags == 0);
-                    if (nothing) {
-                        vector4 p0 = vsub(p, vmul(d, 0.05f));
-                        if (!trace_ray(&p0.x, &hp.x, 150.0f, 0, 0)) goto next;
-                    }
-                    l = *it;
-                    if (l->flags & 1) k = k * 0.5f;
-                    float t = dp * 0.9f + 0.1f;
-                    float s = k * t;
-                    float cr = s * l->color.x;
-                    float cg = s * l->color.y;
-                    float cb = s * l->color.z;
-                    out_col->x = cr + out_col->x;
-                    out_col->y = cg + out_col->y;
-                    out_col->z = cb + out_col->z;
-                    l = *it;
-                    float br = (l->color.z + l->color.y) + l->color.x;
-                    float ax = (d.x * k) * t;
-                    float ay = (d.y * k) * t;
-                    float az = (d.z * k) * t;
-                    float bx = ax * 0.33f;
-                    float by = ay * 0.33f;
-                    float bz = az * 0.33f;
-                    out_dir->x = bx * br + out_dir->x;
-                    out_dir->y = by * br + out_dir->y;
-                    out_dir->z = br * bz + out_dir->z;
+                bool nothing = (flags == 0);
+                if (nothing) {
+                    vector4 p0 = vsub(p, vmul(d, 0.05f));
+                    if (!trace_ray(&p0.x, &hp.x, 150.0f, 0, 0)) goto next;
                 }
+                l = *it;
+                if (l->flags & 1) k = k * 0.5f;
+                float t = dp * 0.9f + 0.1f;
+                float s = k * t;
+                float cr = s * l->color.x;
+                float cg = s * l->color.y;
+                float cb = s * l->color.z;
+                out_col->x = cr + out_col->x;
+                out_col->y = cg + out_col->y;
+                out_col->z = cb + out_col->z;
+                l = *it;
+                float br = (l->color.z + l->color.y) + l->color.x;
+                float ax = d.x * k;
+                float ay = d.y * k;
+                float az = d.z * k;
+                ax = ax * t;
+                ay = ay * t;
+                az = az * t;
+                float bx = ax * 0.33f;
+                float by = ay * 0.33f;
+                float bz = az * 0.33f;
+                out_dir->x = bx * br + out_dir->x;
+                out_dir->y = by * br + out_dir->y;
+                out_dir->z = br * bz + out_dir->z;
+            }
             }
         next:
             it++;

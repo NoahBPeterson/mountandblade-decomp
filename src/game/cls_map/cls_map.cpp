@@ -423,19 +423,19 @@ void gui_manager::rebuild()
 TableauTbl g_tableaus;                                          // 0xa75f40 (.bss; compiler-constructed)
 TableauTbl::~TableauTbl() {}
 
+static inline tstring* hint_text(const tstring& key) { return g_strtable_c.lookup(const_cast<tstring&>(key)); }
 // @ 0x4daa10   the loading screen: the overlay window, the logo, the hint line and one random hint text
 void C4c2fb0::init_screen()
 {
     g_gui.reset();
 
-    ContainerBase* o = new NodeA(0);
-    overlay = o;
+    overlay = new NodeA(0);
 
     {
         float v[2];
         v[0] = -0.001f;
         v[1] = -0.001f;
-        vt(o)->d22(v);
+        vt(overlay)->d22(v);
     }
     {
         float v[2];
@@ -452,13 +452,12 @@ void C4c2fb0::init_screen()
         vt(overlay)->d38(&color);
     }
 
-    MissionUi* logo_ = new MissionUi;
-    logo = logo_;
+    logo = new MissionUi;
     {
         float v[2];
         v[0] = 0.05f;
         v[1] = 0.6f;
-        vt(logo_)->d22(v);
+        vt(logo)->d22(v);
     }
     {
         float v[2];
@@ -471,7 +470,7 @@ void C4c2fb0::init_screen()
         vt(logo)->d31(0, res_get(lname)->clone());
     }
 
-    vt(overlay)->d50(logo_);
+    vt(overlay)->d50(logo);
 
     {
         tstring hintpos("");
@@ -486,9 +485,9 @@ void C4c2fb0::init_screen()
         vt(text)->d29(&flag);
     }
 
-    g_gui.dirty = 1;
     {
         void* root = overlay;
+        g_gui.dirty = 1;
         g_gui.objs.push_back((MissionUi* const&)(root));
     }
 
@@ -501,16 +500,15 @@ void C4c2fb0::init_screen()
             idx = rand() % g_module_settings.num_hints;
 
         tstring prefix("hint_");
-        char num[0x40];
+        char num[0x80];
         _itoa(idx + 1, num, 10);
-        prefix.append(tstring(num));
-        tstring full(*g_strtable_c.lookup(tstring("ui_hint")));
-        full.append(tstring(" #"));
-        full.append(tstring(num));
-        full.append(tstring(": "));
+        { tstring t(num); prefix.append(t); }
+        tstring full(*hint_text("ui_hint"));
+        { tstring t(" #"); full.append(t); }
+        { tstring t(num); full.append(t); }
+        { tstring t(": "); full.append(t); }
         full.append(*g_strtable_c.lookup(prefix));
-        struct { int a, b; } ret;
-        vt(text)->d41(&ret, (void*)&full);
+        { struct { int a, b; } ret; vt(text)->d41(&ret, (void*)&full); }
     }
     counter = 0;
     f40 = 0;
@@ -1901,14 +1899,13 @@ namespace std {
 template<> __forceinline void vector<tstring, allocator<tstring> >::_Tidy()
 {
     if (_Myfirst != 0) {
-        tstring* first = _Myfirst;
-        tstring* last = _Mylast;
-        for (tstring* p = first; p != last; ++p)
+        for (tstring* p = _Myfirst; p != _Mylast; ++p)
             p->~tstring();
-        operator delete(first);
+        operator delete(_Myfirst);
     }
 }
 }
+
 // the medium button of the toggle rows: inline, so window and text are loaded before the two mesh-name temporaries are built
 static __forceinline UiA* new_medium_button_i(MissionUi* parent, const tstring& text, float a, float b, float c)
 {
@@ -1929,6 +1926,7 @@ static __forceinline UiA* new_medium_button_i(MissionUi* parent, const tstring& 
 #define DD_ITEM(dd, key) { tstring k_(key); vt(dd)->d50(g_strtable_c.lookup(k_)); }
 #define DD_TEXT(dd, text) { tstring t_(text); vt(dd)->d50(&t_); }
 
+#include "../options_panel/list_modes.h"   // the body must be visible here (see there); after the _Tidy specialization above
 // @ 0x4e05c0
 void Recf0::init_screen()
 {
@@ -2072,17 +2070,15 @@ void Recf0::init_screen()
 
     {
     std::vector<tstring> modes = list_modes();
-    tstring* names = &modes[0];
     for (int i = (int)modes.size() - 1; i >= 0; i--) {
-        tstring& mn = names[i];
-        bool ok = g_cfg.display_bits == 16 && mn.find("16 bits", 0) >= 0;
+        bool ok = g_cfg.display_bits == 16 && modes[i].find("16 bits", 0) >= 0;
         if (!ok)
-            ok = mn.find("32 bits", 0) >= 0;
+            ok = modes[i].find("32 bits", 0) >= 0;
         if (ok) {
-            vt(resolution)->d50(&mn);
+            vt(resolution)->d50(&modes[i]);
             char mb[0x80];
             sprintf(mb, "%dx%d", g_cfg.display_width, g_cfg.display_height);
-            ok = mn.find(mb, 0) >= 0;
+            ok = modes[i].find(mb, 0) >= 0;
             if (ok)
                 vt(resolution)->d11(drop_count(resolution) - 1);
         }
@@ -2543,19 +2539,21 @@ void C4c3290::init_screen()
     f44 = 10;
     f48 = 0;
     overlay = new NodeA(0);
-    float f2[2];
-    f2[0] = -0.001f;
-    f2[1] = -0.001f;
-    vt(overlay)->d22(f2);
-    f2[0] = 1.002f;
-    f2[1] = 0.752f;
-    vt(overlay)->d25(f2);
+    {
+    {
+        float f2[2];
+        f2[0] = -0.001f;
+        f2[1] = -0.001f;
+        vt(overlay)->d22(f2);
+        f2[0] = 1.002f;
+        f2[1] = 0.752f;
+        vt(overlay)->d25(f2);
+    }
     {
         tstring name("load_window");
         vt(overlay)->d31(0, res_get(name)->clone());
     }
-    int iv = 0xff442323;
-    vt(overlay)->d38(&iv);
+    { int iv = 0xff442323; vt(overlay)->d38(&iv); }
     // the picture's name outlives the logo and the hint blocks (the original destroys it only after them)
     int t = rand() % 0x3dc9;
     float f = (float)t * 6.3223117e-005f;
@@ -2567,17 +2565,19 @@ void C4c3290::init_screen()
     else if (f < 0.75f)
         pic.assign("ini_pic_mb_warrior_4");
     vt(overlay)->d32(2, res_get(pic)->clone());
+    logo = new MissionUi;
     {
-        MissionUi* logo_ = new MissionUi;
-        logo = logo_;
+        float f2[2];
         f2[0] = 0.05f;
         f2[1] = 0.6f;
-        vt(logo_)->d22(f2);
+        vt(logo)->d22(f2);
         f2[0] = 0.4f;
         f2[1] = 0.1f;
-        vt(logo_)->d25(f2);
+        vt(logo)->d25(f2);
+    }
+    {
         tstring name("warrider_logo");
-        vt(logo_)->d31(0, res_get(name)->clone());
+        vt(logo)->d31(0, res_get(name)->clone());
     }
     vt(overlay)->d50(logo);
     bar = new_progress_bar(overlay, 0.1f, 0.07f, 0.8f, 0.03f);
@@ -2592,6 +2592,7 @@ void C4c3290::init_screen()
     }
     step = 0;
     total = 0;
+    }
 }
 
 // ---- 0x4e3d50: the progress bar maker --------------------------------------------------------------------------------------------
@@ -2600,21 +2601,26 @@ progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, floa
 {
     progress_bar* p = new progress_bar;
     p->idx = 0;
-    float pos[2];
-    pos[0] = x;
-    pos[1] = y;
-    vt(p)->d22(pos);
+    {
+        float pos[2];
+        pos[0] = x;
+        pos[1] = y;
+        vt(p)->d22(pos);
+    }
     // the size is the unscaled (a, b); the scaled pair (and 1.0) is the bar's colour and rect, whose w is never set
     // (0x4e3d9b..0x4e3dd8: [esp+0x10] = a, [esp+0x14] = b; a * 1.5576323, b * 50, 1.0 into the vector at [esp+0x20])
-    float size[2];
-    size[0] = a;
-    size[1] = b;
     rgl::vector4 v;
     v.x = a * 1.5576323f;
-    v.y = b * 50.0f;
+    float h = b * 50.0f;
+    v.y = h;
     v.z = 1.0f;
-    vt(p)->d25(size);
-    p->ratio = v.y * 0.31f;
+    {
+        float size[2];
+        size[0] = a;
+        size[1] = b;
+        vt(p)->d25(size);
+    }
+    p->ratio = h * 0.31f;
     rgl::mesh* c;
     {
         tstring name("progressbar");

@@ -1,1 +1,4 @@
-# mesh_edit: no byte-exact function (every row of mesh_edit.cpp is in mesh_edit.nonmatching.txt). Flags /O2 /MT /Gy /TP.
+../src/game/options_panel/mesh_edit.cpp  ?build_first_pass@EditMesh@@QAE_NXZ  004d1410  /O2 /MT /Gy /TP
+../src/game/options_panel/mesh_edit.cpp  ?add_triangle@EditMesh@@QAE_NPAH@Z  004d1d80  /O2 /MT /Gy /TP
+../src/game/options_panel/mesh_edit.cpp  ?add_quad@EditMesh@@QAEXPBUvector4@rgl@@@Z  004d2df0  /O2 /MT /Gy /TP
+../src/game/options_panel/mesh_edit.cpp  ?finish@EditMesh@@QAEXXZ  004d22d0  /O2 /MT /Gy /TP

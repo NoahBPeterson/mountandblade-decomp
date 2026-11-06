@@ -853,6 +853,7 @@ void parse_module_info()
             msg = g_module_info.entries[i].key;
             val = g_module_info.entries[i].value;
         }
+        float x, lo, hi;
         if (msg.equals("load_resource")) {
             ((stream_base&)g_log).w_cstr("Loading Resource ").w_tstr(&val).w_cstr("\n");
             g_resmgr.load_pack(val, 0);
@@ -890,16 +891,16 @@ void parse_module_info()
             ((stream_base&)g_log).w_cstr("Setting armor_reduction_factor_against_blunt = ").w_float(&g_module_settings.armor_reduction_factor[2]).w_cstr("\n");
         }
         else if (msg.equals("missile_damage_speed_power")) {
-            float x = (float)atof(val.c_str());
-            float lo = 2.0f;
-            float hi = 1.0f;
+            lo = 2.0f;
+            hi = 1.0f;
+            x = (float)atof(val.c_str());
             g_module_settings.missile_damage_speed_power = clamp(&x, &hi, &lo);
             ((stream_base&)g_log).w_cstr("Setting missile_damage_speed_power = ").w_float(&g_module_settings.missile_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("melee_damage_speed_power")) {
-            float x = (float)atof(val.c_str());
             float lo = 2.0f;
             float hi = 1.0f;
+            x = (float)atof(val.c_str());
             g_module_settings.melee_damage_speed_power = clamp(&x, &hi, &lo);
             ((stream_base&)g_log).w_cstr("Setting melee_damage_speed_power = ").w_float(&g_module_settings.melee_damage_speed_power).w_cstr("\n");
         }
@@ -940,9 +941,9 @@ void parse_module_info()
             ((stream_base&)g_log).w_cstr("Setting Base Companion Limit = ").w_int(&g_module_settings.base_companion_limit).w_cstr("\n");
         }
         else if (msg.equals("player_xp_multiplier")) {
-            float x = (float)atof(val.c_str());
             float lo = 10.0f;
             float hi = 1.0f;
+            x = (float)atof(val.c_str());
             g_module_settings.player_xp_multiplier = clamp(&x, &hi, &lo);
             ((stream_base&)g_log).w_cstr("Setting player_xp_multiplier = ").w_float(&g_module_settings.player_xp_multiplier).w_cstr("\n");
         }

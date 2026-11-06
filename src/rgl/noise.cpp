@@ -206,7 +206,7 @@ void noise_fractal(float freq, float gain, int octaves, int sharpen, const float
     out[2] = 0.0f;
     out[1] = 0.0f;
     L.amp = 1.0f;
-    L.total = 0;
+    L.total = 0.0f;
     out[0] = 0.0f;
     if (octaves >= 0) {
         int n = octaves + 1;

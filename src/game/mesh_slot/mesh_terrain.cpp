@@ -11,6 +11,7 @@
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/render_flags.h"
 #include "../config/config_block.h"
+#include "../../include/wl_marker.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 
@@ -42,6 +43,9 @@ struct Ctx {
     void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60
 };
 
+static __forceinline int add_v(mesh* m, int pt, const vec2& uv, unsigned ca, const vector4& pos, const int& z) { return m->add_vertex(pt, &uv, &ca, &pos, &z); }
+static __forceinline void v_neg(vector4& r, const float* d) { r.x = -d[0]; r.y = -d[1]; r.z = -d[2]; }
+
 // ---- 0x480db0 -------------------------------------------------------------------------------------------------------
 
 // @ 0x480db0 -- the water of the world map: the river light term, one water particle per chunk of every active water
@@ -50,17 +54,22 @@ void Terrain::create_water(void** out)
 {
     rgl::entity* e = world->create_entity(9);
     float cmap = (*(float*)((char*)this + 0x843bd24) + *(float*)((char*)this + 0x843bd20) + *(float*)((char*)this + 0x843bd1c)) * 0.33f;   // summed z, y, x as at 0x480dce
-    rgl::world* wo = world;
-    float cz = (wo->ambient.z + wo->ambient.y + wo->ambient.x) * 0.3f;   // summed z, y, x as at 0x480e0e
+    float cz;
+    {
+        vector4 amb = world->ambient;
+        cz = (amb.z + amb.y + amb.x) * 0.3f;   // summed z, y, x as at 0x480e0e
+    }
 
     for (int y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
             terrain_cell* c = &at(x, y);
             if (c->f14 >= 0) {
-                float d = -(sun_dir[0] * c->nrm.x + sun_dir[1] * c->nrm.y + sun_dir[2] * c->nrm.z);
-                if (d < 0.0f)
+                vector4 ld;
+                v_neg(ld, sun_dir);
+                float d = ld.x * c->nrm.x + ld.y * c->nrm.y + ld.z * c->nrm.z;
+                if (0.0f > d)
                     d = 0.0f;
-                float* arr = *(float**)((char*)wo->ground + 4);
+                float* arr = *(float**)((char*)world->ground + 4);
                 arr[c->f14 * 9 + 8] = d * c->f40 * cmap;
             }
         }
@@ -90,12 +99,19 @@ void Terrain::create_water(void** out)
     g_shadow_map.fit_bounds();
     *out = 0;
 
+    unsigned argb;
+    {
     vector4 col;
-    col.x = sun_diffuse.x * 0.5f + sun_ambient.x * 1.3f;
-    col.y = sun_diffuse.y * 0.5f + sun_ambient.y * 1.3f;
-    col.z = sun_diffuse.z * 0.5f + sun_ambient.z * 1.3f;
     col.w = 0.9f;
-    unsigned argb = pack_color(&col);
+    vector4 a;
+    a.x = sun_diffuse.x * 0.5f; a.y = sun_diffuse.y * 0.5f; a.z = sun_diffuse.z * 0.5f;
+    vector4 b;
+    b.x = sun_ambient.x * 1.3f; b.y = sun_ambient.y * 1.3f; b.z = sun_ambient.z * 1.3f;
+    col.x = b.x + a.x;
+    col.y = b.y + a.y;
+    col.z = b.z + a.z;
+    argb = pack_color(&col);
+    }
 
     mesh* m = new mesh();
     for (int y = 0; y <= h; y++)
@@ -105,27 +121,30 @@ void Terrain::create_water(void** out)
     for (int i = 0; i < h; i++) {
         for (int j = 0; j < w; j++) {
             for (int k = 0; k < 2; k++) {
-                int tri[6];
-                triangle_corners(j, i, k, &tri[0], &tri[2], &tri[4]);
-                if (at(tri[0], tri[1]).pz > -0.3f && at(tri[2], tri[3]).pz > -0.3f && at(tri[4], tri[5]).pz > -0.3f)
-                    continue;
+                int tri[3][2];
+                triangle_corners(j, i, k, tri[0], tri[1], tri[2]);
+                int i0 = tri[0][0] * 251 + tri[0][1];
+                if (cells[i0].pz <= -0.3f || at(tri[1][0], tri[1][1]).pz <= -0.3f || at(tri[2][0], tri[2][1]).pz <= -0.3f) {
                 for (int q = 0; q < 3; q++) {
-                    terrain_cell* c = &at(tri[q * 2], tri[q * 2 + 1]);
+                    terrain_cell* c = &at(tri[q][0], tri[q][1]);
                     if (c->f10 != -1)
                         continue;
-                    vector4 p(c->px, c->py, -0.3f);
+                    vector4 p;
+                    p.x = c->px;
+                    p.y = c->py;
+                    p.z = -0.3f;
                     int pt = m->add_point(&p);
                     vec2 uv;
                     uv.x = c->disp.x * 0.125f;
                     uv.y = c->disp.y * 0.125f;
-                    vector4 pos(0.0f, 0.0f, 1.0f);
-                    int zero = 0;
-                    c->f10 = m->add_vertex(pt, &uv, &argb, &pos, &zero);
-                    m->v50[c->f10].f48 = c->px * 0.025f;
-                    m->v50[c->f10].f4c = c->py * 0.025f;
+                    c->f10 = add_v(m, pt, uv, argb, vector4(0.0f, 0.0f, 1.0f), 0);
+                    *(Vec2*)&m->v50[c->f10].f48 = Vec2(c->px * 0.025f, c->py * 0.025f);
                 }
-                m->add_face(at(tri[0], tri[1]).f10, at(tri[2], tri[3]).f10, at(tri[4], tri[5]).f10);
-                m->add_face(at(tri[0], tri[1]).f10, at(tri[4], tri[5]).f10, at(tri[2], tri[3]).f10);
+                int& f2 = at(tri[2][0], tri[2][1]).f10;
+                int& f1 = at(tri[1][0], tri[1][1]).f10;
+                m->add_face(cells[i0].f10, f1, f2);
+                m->add_face(cells[i0].f10, f2, f1);
+                }
             }
         }
     }
@@ -134,14 +153,19 @@ void Terrain::create_water(void** out)
         tstring name("river");
         m->res = g_resmgr.get_material(name);
     }
+    {
+    vector4 o(0.0f, 0.0f, 0.0f);
     matrix id;
-    identity3((mat3*)&id);
-    id.s.w = 0.0f; id.f.w = 0.0f; id.u.w = 0.0f;
-    id.o.x = 0.0f; id.o.y = 0.0f; id.o.z = 0.0f; id.o.w = 1.0f;
-    m->m1d4 = id;
+    mat3 t;
+    *(mat3*)&id = *identity3(&t);
+    id.o = o;
+    matrix& fr = m->m1d4;
+    fr = id;
+    fr.s.w = 0.0f; fr.f.w = 0.0f; fr.u.w = 0.0f; fr.o.w = 1.0f;
+    }
     ((rgl::mesh*)m)->compute_tangents();
     ((rgl::mesh*)m)->compute_bounds();
-    ((rgl::entity*)e)->meshes.push_back(m);
+    (*(std::vector<int>*)&((rgl::entity*)e)->meshes).push_back((int)m);     // 0x481480: the vector<int> _Insert_n 0x410610
     ((rgl::entity*)e)->recalc();
     *out = m;
 }
@@ -201,6 +225,17 @@ struct Geom_t : NavCore {                           // 0x68
 };
 
 
+// the height field with the constructor tessellate inlines into its `new` (0x4815a1..0x4815e7)
+struct HF : HeightField {
+    HF(double cell_, vector4 b, const int* dim)
+    {
+        cell = (float)cell_;
+        cols = 0;
+        bounds = b;
+        alloc(dim);
+    }
+};
+
 // 0x4612d0 (cdecl): normal of the triangle spanned by the three 16-byte records at *tri (terrain_a/wind.h; hidden return pointer)
 rgl::vector4 tri_normal(const rgl::vector4* tri);
 // light-slot table at terrain+0x258; the cell lum[] entries are only used for slots flagged in 0x8ed4e14
@@ -210,104 +245,97 @@ rgl::vector4 tri_normal(const rgl::vector4* tri);
 // rebuild the world mesh, install a fresh HeightField and relight the scene
 void Terrain::tessellate()
 {
-    Geom_t* g = new Geom_t;                 // the mesh being rebuilt: a local, as in the original ([esp+0x28])
+    Geom_t* g = (Geom_t*)new NavCore;       // the mesh being rebuilt: a local, as in the original ([esp+0x28])
 
-    HeightField* rows = new HeightField;
-    HeightField* cr = rows;
-    if (rows) {
-        rows->cell = scale;
-        rows->cols = 0;
-        rows->bounds = *(vector4*)((char*)this + 0x843bcfc);
-        rows->alloc(&w);
-    }
+    HeightField* cr = new HF(scale, *(vector4*)((char*)this + 0x843bcfc), &w);
+    HeightField* rows = cr;
 
     for (int y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
             terrain_cell* c = &at(x, y);
-            c->f14 = -1;
             int id = *(int*)&c->pz;                 // the height's bits (0x481630 reads cell+8)
+            c->f14 = -1;
             *(int*)&rows->cols[x][y].h = id;              // the 16-byte row entries' first dword (0x48163e: [row + y*16])
         }
     }
 
+    int npts = (w + 2) * (h + 2);
     g->elems().reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
-    g->pts().reserve((w + 2) * (h + 2));
+    g->pts().reserve(npts);
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             terrain_quad* qp = &quads[x * 250 + y];     // 0x4816d6: row stride 0x38, column stride 0x36b0 (index x * 250 + y)
-            int tri[16];
+            int tri[2][8];
             vector4 nrm[2];
 
             for (int k = 0; k < 2; k++) {
-                triangle_corners(x, y, k, &tri[k * 8], &tri[k * 8 + 2], &tri[k * 8 + 4]);
-                float cell[12];
-                for (int m = 0; m < 3; m++) {
-                    terrain_cell* c = &at(tri[k * 8 + m * 2], tri[k * 8 + m * 2 + 1]);
-                    cell[m * 4 + 0] = c->px;
-                    cell[m * 4 + 1] = c->py;
-                    cell[m * 4 + 2] = c->pz;
-                    *(int*)&cell[m * 4 + 3] = c->ntype;
-                }
-                nrm[k] = tri_normal((const vector4*)cell);
+                int* t = tri[k];
+                triangle_corners(x, y, k, &t[0], &t[2], &t[4]);
+                vector4 cell[3];
+                cell[0] = *(vector4*)&at(t[0], t[1]);
+                cell[1] = *(vector4*)&at(t[2], t[3]);
+                cell[2] = *(vector4*)&at(t[4], t[5]);
+                nrm[k] = tri_normal(cell);
             }
 
             int ncorner = 4;
             int nquad = 1;
             if (nrm[1].y * nrm[0].y + nrm[1].z * nrm[0].z + nrm[1].x * nrm[0].x > 0.999f) {      // summed y, z, x as at 0x4817f9
-                tri[0] = x;     tri[1] = y;
-                tri[2] = x + 1; tri[3] = y;
-                tri[4] = x + 1; tri[5] = y + 1;
-                tri[6] = x;     tri[7] = y + 1;
+                tri[0][0] = x;     tri[0][1] = y;
+                tri[0][2] = x + 1; tri[0][3] = y;
+                tri[0][4] = x + 1; tri[0][5] = y + 1;
+                tri[0][6] = x;     tri[0][7] = y + 1;
             } else {
                 ncorner = 3;
                 nquad = 2;
                 for (int k = 0; k < 2; k++)
-                    triangle_corners(x, y, k, &tri[k * 8], &tri[k * 8 + 2], &tri[k * 8 + 4]);
-                int* row = (int*)rows->cols[x];
-                *(unsigned*)(row + y * 4 + 1) |= 1;
-                if (qp->diag)
-                    *(unsigned*)(row + y * 4 + 1) |= 2;
+                    triangle_corners(x, y, k, &tri[k][0], &tri[k][2], &tri[k][4]);
+                {
+                    int& fl = *(int*)&rows->cols[x][y].flags;
+                    fl |= 1;
+                }
+                if (qp->diag) {
+                    int& fl = *(int*)&rows->cols[x][y].flags;
+                    fl |= 2;
+                }
             }
 
             for (int qn = 0; qn < nquad; qn++) {
+                int vbase = g->elems().size();
+                float acc = 0.0f;
                 geom_elem rec;
-                rec.n = ncorner;
-                rec.f24 = 0;
+                rec.f6c = 0;
+                rec.f70 = 0;
+                rec.flags = 0;
+                rec.f84 = 0;
+                rec.f64 = 1.0f;
                 rec.f48 = -1;
                 rec.f4c = -1;
                 rec.f50 = -1;
-                rec.f64 = 1.0f;
-                rec.flags = 0;
-                rec.f6c = 0;
-                rec.f70 = 0;
-                rec.f84 = 0;
-                int vbase = g->elems().size();
-                float acc = 0.0f;
+                rec.f24 = 0;
+                rec.n = ncorner;
 
-                int* cid = tri + qn * 8;
+                int* cid = &tri[qn][1];
                 for (int k = 0; k < ncorner; k++) {
-                    terrain_cell* c = &at(cid[0], cid[1]);
+                    terrain_cell* c = &at(cid[-1], cid[0]);
                     if (c->f14 == -1) {
                         c->f14 = g->pts().size();
                         geom_pt pt;
-                        *(int*)&pt.px = *(int*)&c->px;
-                        *(int*)&pt.py = *(int*)&c->py;
-                        *(int*)&pt.wet = *(int*)&c->pz;
-                        pt.f0c = c->ntype;
+                        *(vector4*)&pt = *(vector4*)c;
                         pt.f20 = 1.0f;
                         g->pts().push_back(pt);
                     }
 
-                    int* slot = (int*)((char*)this + 0x258);
                     float mult = 1.0f;
                     float* l = &c->w[14];
+                    int* slot = (int*)((char*)this + 0x258);
                     for (int m = 15; m != 0; m--) {     // a countdown, as the original (dec esi; jne at 0x481aa7): cl unrolls an up-count
                         if (*slot >= 0 && (g_ground_types[*slot].f1c & 2))
                             acc += mult * *l;
-                        slot -= 10;
-                        mult *= 1.0f - *l;          // 0x481aa1: fsub [ecx + 4] after the pointer step, i.e. the entry just used
                         l -= 1;
+                        mult *= 1.0f - l[1];        // 0x481aa1: fsub [ecx + 4] after the pointer step, i.e. the entry just used
+                        slot -= 10;
                     }
                     rec.ids[k] = c->f14;
                     cid += 2;
@@ -318,10 +346,9 @@ void Terrain::tessellate()
                     rec.flags |= 0x4000;
                 g->elems().push_back(rec);
 
-                int* row = (int*)rows->cols[x];
-                *(int*)((char*)row + y * 16 + 8 + qn * 4) = vbase;
+                (&rows->cols[x][y].id)[qn] = vbase;
                 if (nquad == 1)
-                    *(int*)((char*)row + y * 16 + 12) = vbase;
+                    rows->cols[x][y].id2 = vbase;
             }
         }
     }
@@ -330,10 +357,17 @@ void Terrain::tessellate()
     g->compute_bounds();
     world->build_faces((NavData*)g);
 
-    HeightField* old = world->hf;
-    if (old)
-        delete old;
-    world->hf = cr;
+    rgl::world* wo = world;
+    HeightField* old = wo->hf;
+    if (old) {                                 // ~HeightField (0x41ecc0) expanded in place
+        if (old->cols) {
+            for (int i = 0; i <= old->w; i++)
+                delete[] (char*)old->cols[i];
+            delete[] (char*)old->cols;
+        }
+        operator delete(old);
+    }
+    wo->hf = cr;
     world->update_probes(g_use_shaders != 0);
 }
 
@@ -378,17 +412,33 @@ void Terrain::generate(int seed, int* objs, char flag)
 {
     reset();
 
-    unsigned cell = (flags14 & ((*(int*)((char*)&g_bit + 0x10)) - 1)) + 2;
+    int smask = (*(int*)((char*)&g_bit + 0xf8)) - 1;
+    const int& s0 = *(int*)this & smask;
+    const int& cm = (*(int*)((char*)&g_bit + 0x10)) - 1;
+    unsigned cell = (flags14 & cm) + 2;
     scale = (float)cell;
-    srand(*(int*)this & ((*(int*)((char*)&g_bit + 0xf8)) - 1) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
-    flag843bd75 = (char)((char)((*(int*)((char*)&g_bit + 0x8)) - 1) & (char)((unsigned)hword >> 31)) != 0;
-    wx = (float)(unsigned)(hword & ((*(int*)((char*)&g_bit + 0x50)) - 1));                 // height band -> map extent
-    wy = (float)(unsigned)(((unsigned)hword >> 10) & ((*(int*)((char*)&g_bit + 0x50)) - 1));
+    srand(s0 & smask);
+    int& hw = hword;
+    {
+        const int& fm = (*(int*)((char*)&g_bit + 0x8)) - 1;
+        flag843bd75 = (char)((char)fm & (char)((unsigned)hw >> 31)) != 0;
+    }
+    {
+ const int& m = (*(int*)((char*)&g_bit + 0x50)) - 1;
+        wx = (float)(unsigned)(hw & m);                 // height band -> map extent
+    }
+    {
+ const int& m = (*(int*)((char*)&g_bit + 0x50)) - 1;
+        wy = (float)(unsigned)(((unsigned)hw >> 10) & m);
+    }
     world = (rgl::world*)seed;
+    WL_MARKER(0xc);
 
     float inv = 1.0f / scale;
-    w = (int)(inv * wx);
-    h = (int)(inv * wy);
+    int& rw = w;
+    rw = (int)(inv * wx);
+    int& rh = h;
+    rh = (int)(inv * wy);
     if (w > 250)
         w = 250;
     if (h > 250)
@@ -401,22 +451,25 @@ void Terrain::generate(int seed, int* objs, char flag)
     wx = (float)w * scale;
     wy = (float)h * scale;
 
-    float b[4];
-    b[0] = 0.0f;
-    b[1] = 0.0f;
-    b[2] = 0.0f;
-    b[3] = 0.0f;
-    *(vector4*)((char*)this + 0x843bcfc) = *(vector4*)b;
+    {
+        vector4& bd = *(vector4*)((char*)this + 0x843bcfc);
+        bd = vector4(0.0f, 0.0f, 0.0f);
+    }
+    WL_MARKER(0xd);
 
     init_layers();
 
     for (int y = 0; y <= h; y++) {
-        float p[4];
-        for (int x = 0; x <= w; x++) {
-            *(int*)&p[2] = 0;
-            p[0] = (float)x * scale;
-            p[1] = (float)y * scale;
-            cells[x * 251 + y].init(p);
+        int x = 0;
+        if (x <= w) {
+            vector4 p;
+            p.z = 0.0f;
+            do {
+                p.x = (float)x * scale;
+                p.y = (float)y * scale;
+                cells[x * 251 + y].init(&p.x);
+                x++;
+            } while (x <= w);
         }
     }
 
@@ -426,7 +479,10 @@ void Terrain::generate(int seed, int* objs, char flag)
     }
 
     generate_heights();
-    srand(*(int*)((char*)this + 4) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
+    {
+        const int& m = (*(int*)((char*)&g_bit + 0xf8)) - 1;
+        srand(*(int*)((char*)this + 4) & m);
+    }
 
     ((Terrain*)this)->make_river();
     ((Terrain*)this)->smooth_heights();
@@ -443,7 +499,10 @@ void Terrain::generate(int seed, int* objs, char flag)
             fill_desc_none((TerrainDesc*)objs);
     }
 
-    srand(*(int*)((char*)this + 8) & ((*(int*)((char*)&g_bit + 0xf8)) - 1));
+    {
+        const int& m = (*(int*)((char*)&g_bit + 0xf8)) - 1;
+        srand(*(int*)((char*)this + 8) & m);
+    }
 
     off_b[0] = (float)(rand() % 0x3dc9) * 0.063223116f;
     off_b[1] = (float)(rand() % 0x3dc9) * 0.063223116f;
@@ -463,11 +522,10 @@ void Terrain::generate(int seed, int* objs, char flag)
     spawn_particles(&list_c, 2);
     ((Terrain*)this)->create_chunk_entities();
     g_shadow_map.attach_camera(world);
-    float v[3];
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    v[2] = 0.0f;
-    world->sample_lights((vector4*)v, (vector4*)sun_dir, (vector4*)((char*)this + 0x843bd1c));
+    {
+        vector4 v(0.0f, 0.0f, 0.0f);
+        world->sample_lights(&v, (vector4*)sun_dir, (vector4*)((char*)this + 0x843bd1c));
+    }
     tessellate();
     refresh_cells();
 }
@@ -546,7 +604,6 @@ static __forceinline float v_dot(const vector4& a, const vector4& b)
     return a.z * b.z + a.y * b.y + a.x * b.x;
 }
 
-static __forceinline void v_neg(vector4& r, const float* d) { r.x = -d[0]; r.y = -d[1]; r.z = -d[2]; }
 static __forceinline vector4 v_cross(const vector4& a, const vector4& b)
 {
     vector4 r;
@@ -636,7 +693,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     int pt = m->add_point((const vector4*)c);
                     unsigned balpha = 0xff;          // blend alpha
                     unsigned edi = 0xff;             // the cell colour level
-                    int ux;
+                    int ux;                  // uv.x's dword, kept in a register across add_vertex (ebx, 0x480496)
                     Vec2 uv;
                     if (layerno < 15) {
                         float f;

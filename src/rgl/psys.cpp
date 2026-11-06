@@ -189,9 +189,9 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
         std::vector<vertex60>& vts = src->local_a1 ? src->v50 : (src->parent->*&mesh::get50)();
         for (unsigned i = 0; i < vts.size(); i++) {
             vertex60 vx = vts[i];
-            float dx = m->s.x * vts[i].pos.x + (m->f.x * vts[i].pos.y + m->u.x * vts[i].pos.z);
-            float dy = m->s.y * vts[i].pos.x + (m->f.y * vts[i].pos.y + m->u.y * vts[i].pos.z);
-            float dz = m->s.z * vts[i].pos.x + (m->f.z * vts[i].pos.y + m->u.z * vts[i].pos.z);
+            float dx = m->u.x * vts[i].pos.z + m->f.x * vts[i].pos.y + m->s.x * vts[i].pos.x;
+            float dy = m->u.y * vts[i].pos.z + m->f.y * vts[i].pos.y + m->s.y * vts[i].pos.x;
+            float dz = m->u.z * vts[i].pos.z + m->f.z * vts[i].pos.y + m->s.z * vts[i].pos.x;
             vx.index += npoints;
             vx.pos.w = c.col[3];
             vx.normal.w = c.col[3];
@@ -205,10 +205,8 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             out->add_face(fcs[i].a + nverts, fcs[i].b + nverts, fcs[i].c + nverts);
     } else {
         // camera-facing quad: half-width along s, half-height along u
-        vector4 hs0 = m->s * half_w;
-        vector4 hu0 = m->u * half_h;
-        vector4 hu = (hu0 * size) * p->scale;
-        vector4 hs = (hs0 * size) * p->scale;
+        vector4 hs = ((m->s * half_w) * size) * p->scale;
+        vector4 hu = ((m->u * half_h) * size) * p->scale;
         c.col[0] = (hu.x + p->pos.x) + hs.x; c.col[1] = (hu.y + p->pos.y) + hs.y; c.col[2] = (hu.z + p->pos.z) + hs.z;
         c.idx[0] = out->add_point((const vector4*)c.col);
         vector4 vb = vadd(hu, p->pos) - hs;

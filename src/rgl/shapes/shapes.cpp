@@ -507,20 +507,21 @@ void segment_closest_points(const vector4* a0, const vector4* a1, const vector4*
         if (lo > len) {
             *outA = *a1;
             if (swapped) pick = b1;
-            *outB = *pick;
-        } else if (hi < 0.0f) {
-            *outA = *a0;
-            if (!swapped) pick = b1;
-            *outB = *pick;
         } else {
-            if (lo > 0.0f) {
-                if (swapped) pick = b1;
-            } else if (!swapped) pick = b1;
-            *outB = *pick;
-            float dot = m.u.x * nrx + m.u.y * nry + m.u.z * nrz;
-            *outA = *outB - m.u * dot;
-            return;
+            if (hi < 0.0f) {
+                *outA = *a0;
+                if (!swapped) pick = b1;
+            } else {
+                if (lo > 0.0f) {
+                    if (swapped) pick = b1;
+                } else if (!swapped) pick = b1;
+                *outB = *pick;
+                float dot = m.u.x * nrx + m.u.y * nry + m.u.z * nrz;
+                *outA = *outB - m.u * dot;
+                return;
+            }
         }
+        *outB = *pick;
     } else {
         float sn = (b * c - e * rd1) / denom;
         float tn = (sn * b + c) / e;

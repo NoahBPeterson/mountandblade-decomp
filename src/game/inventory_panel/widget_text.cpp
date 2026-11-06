@@ -257,55 +257,32 @@ static inline void swap_index(sel_list* l, unsigned i, unsigned j)
     l->v._Myfirst[j] = t;
 }
 
-struct int_alloc : std::allocator<int> { int state; };
-typedef std::vector<int, int_alloc> idx_vec;
-struct idx4 { int v; };
-struct sel_vec : IntVec {
-    idx4& operator[](unsigned i) { return *(idx4*)&(*(idx_vec*)this)[i]; }
-};
-
 // @ 0x50cc70 sel_list::sort
 struct note_window { void sort_list(sel_list* l, int mode); };    // the screen itself is defined in note_window.cpp
 void note_window::sort_list(sel_list* l, int mode)
 {
-    sel_vec& v = *(sel_vec*)&l->v;
-    for (unsigned i = 0; i < v.count(); i++) {
-        for (unsigned j = i + 1; j < v.count(); j++) {
+    for (unsigned i = 0; i < l->v.count(); i++) {
+        for (unsigned j = i + 1; j < l->v.count(); j++) {
+            bool do_swap = false;
             switch (mode) {
             case 1:
-                if (strcmp(name_of_1(v[i].v), name_of_1(v[j].v)) > 0) {
-                    int t = v[i].v;
-                    v[i].v = v[j].v;
-                    v[j].v = t;
-                }
+                do_swap = strcmp(name_of_1(l->v._Myfirst[i]), name_of_1(l->v._Myfirst[j])) > 0;
                 break;
             case 2:
-                if (strcmp(name_of_2(v[i].v), name_of_2(v[j].v)) > 0) {
-                    int t = v[i].v;
-                    v[i].v = v[j].v;
-                    v[j].v = t;
-                }
+                do_swap = strcmp(name_of_2(l->v._Myfirst[i]), name_of_2(l->v._Myfirst[j])) > 0;
                 break;
             case 3:
-                if (strcmp(name_of_3(v[i].v), name_of_3(v[j].v)) > 0) {
-                    int t = v[i].v;
-                    v[i].v = v[j].v;
-                    v[j].v = t;
-                }
+                do_swap = strcmp(name_of_3(l->v._Myfirst[i]), name_of_3(l->v._Myfirst[j])) > 0;
                 break;
             case 4: {
-                const tstring* si = &name_of_4(v[i].v);
-                const tstring* sj = &name_of_4(v[j].v);
-                tstring a = si->strip_tags();
-                tstring b = sj->strip_tags();
-                if (strcmp(a.c_str(), b.c_str()) > 0) {
-                    int t = v[i].v;
-                    v[i].v = v[j].v;
-                    v[j].v = t;
-                }
+                tstring a = name_of_4(l->v._Myfirst[i]).strip_tags();
+                tstring b = name_of_4(l->v._Myfirst[j]).strip_tags();
+                do_swap = strcmp(a.c_str(), b.c_str()) > 0;
                 break;
             }
             }
+            if (do_swap)
+                swap_index(l, i, j);
         }
     }
 }

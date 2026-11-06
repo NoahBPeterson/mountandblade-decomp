@@ -111,8 +111,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             g_save_kind = header.year;
         }
         *counter = *counter + 1;
-        tstring k("ui_creating_game");
-        out->assign(g_strtable.lookup(k)->c_str());
+        out->assign(g_strtable.lookup(tstring("ui_creating_game"))->c_str());
         return r;
     }
     if (step == 1) {
@@ -122,23 +121,21 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         g_game_G->init(g_module_name, f8c, w04 == 2 || w04 == 3);
         g_game_G->f1a05c = 1;
         *counter = *counter + 1;
-        tstring k("ui_loading_setting_data");
-        out->assign(g_strtable.lookup(k)->c_str());
+        out->assign(g_strtable.lookup(tstring("ui_loading_setting_data"))->c_str());
         return false;
     }
     if (step == 2) {
         g_game_G->load_game_data(g_scripts.success);   // 0x5236f0
         if (w04 == 1) {
-            Game* g = g_game_G;
             {
                 tstring tmp(header.body);
-                troop_name(&g->troops[g->cur_troop]) = tmp;
+                tstring& dst = g_game_G->troops[g_game_G->cur_troop].name;
+                dst = tmp;
             }
             g_game_G->title = header.title;
         }
         *counter = *counter + 1;
-        tstring k("ui_loading_savegame_file");
-        out->assign(g_strtable.lookup(k)->c_str());
+        out->assign(g_strtable.lookup(tstring("ui_loading_savegame_file"))->c_str());
         return false;
     }
     if (step == 3) {
@@ -152,8 +149,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             save = 0;
         }
         *counter = *counter + 1;
-        tstring k("ui_loading_map_file");
-        out->assign(g_strtable.lookup(k)->c_str());
+        out->assign(g_strtable.lookup(tstring("ui_loading_map_file"))->c_str());
         return false;
     }
     if (step == 4) {
@@ -161,18 +157,16 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         if (m == 0 || m == 2 || m == 3) {
             g_game_G->start_new_game();          // 0x51f1a0
             if (w04 == 2 || w04 == 3) {      // re-read after the call (0x51ca17)
-                Game* g = g_game_G;
                 tstring key("ui_player");
                 tstring name(*g_strtable.lookup(key));
-                troop_name(&g->troops[g->cur_troop]) = name;
+                troop_name(&g_game_G->troops[g_game_G->cur_troop]) = name;
             }
         }
         if (w04 != 2 && w04 != 3)
             g_game_G->build_map();               // 0x520b20
         log_stream_ptr()->w_cstr("load_map_data complete.\n");
         *counter = *counter + 1;
-        tstring k("ui_initializing_map");
-        out->assign(g_strtable.lookup(k)->c_str());
+        out->assign(g_strtable.lookup(tstring("ui_initializing_map"))->c_str());
         return false;
     }
     if (step == 5) {
@@ -180,8 +174,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             g_game_G->init_map();
         *counter = *counter + 1;
         {
-            tstring k("ui_launching_game");
-            out->assign(g_strtable.lookup(k)->c_str());
+            out->assign(g_strtable.lookup(tstring("ui_launching_game"))->c_str());
         }   // the key dies before the log line (0x51cb4a, then the call at 0x51cb5e)
         log_stream_ptr()->w_cstr("Init_map complete.\n");
         return false;
@@ -195,8 +188,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         }
         log_stream_ptr()->w_cstr("launch complete.\n");
         *counter = *counter + 1;
-        tstring k("ui_finished");
-        out->assign(g_strtable.lookup(k)->c_str());
+        out->assign(g_strtable.lookup(tstring("ui_finished"))->c_str());
         return false;
     }
     return true;
@@ -1029,6 +1021,7 @@ MB_NOINLINE void SpriteTable::clear()
         free_ids.push_back(i);
     }
 }
+
 // @ 0x51eaa0
 // The scene's party record of Game::f78 (0x5ac8-byte records, 16 per page; the page table is the first pointer of
 // scene.list, +0x138d0): its count at +0x8a8, entries of 0x20 bytes from +0xc0 (troop id at -0x14, a float at +0,
