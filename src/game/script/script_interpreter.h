@@ -29,7 +29,7 @@
 // interpreter's names; each view method forwards (inline, __forceinline: nothing is emitted for it) to the function of the class that
 // DEFINES that address in the sources, declared here with that class's name and signature. The modules that define them name the
 // class after another of their users, and the linker folds identical bodies, so the view object is the object the definition works
-// on (cast at the forwarder). The namespaces cNNNNNN are the anonymous namespaces src/game/party2/camera.cpp wraps its local classes in.
+// on (cast at the forwarder). The namespaces cNNNNNN are the namespaces script_interpreter.cpp wraps its local classes in.
 struct mesh_part; struct TabCurrent;
 struct EmitterCtl { void add(int e); };                                      // 0x4955e0 (world_data.cpp): registers an emitter in a table
 struct GameW {                                                               // world_data.cpp: the game object's world operations
@@ -57,6 +57,8 @@ struct GameW {                                                               // 
     void transfer_stack(int a, int b, char flag);                           // 0x492530
 };
 struct MissionW {                                                            // world_data.cpp
+    void set_weapon_order_1(int team, unsigned value);                      // 0x492230 (ret 8)
+    void set_weapon_order_2(int team, unsigned value);                      // 0x492350 (ret 8)
     bool all_defeated(int team);                                            // 0x4920e0
     bool hero_down();                                                       // 0x492170
     int count_agents(int team);                                             // 0x491f50
@@ -64,11 +66,11 @@ struct MissionW {                                                            // 
     void add_wind_effect(float a1, float a2);                                   // 0x4952f0
 };
 struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
-struct Sel { void set_vec(const int* a, const int* b, const int* c); rgl::vector4 first(); };     // 0x4898e0, 0x489890 (ui/mission_ui.cpp)
+struct Sel { void set_v(int v); void set_vec(const int* a, const int* b, const int* c); void bump(int d); rgl::vector4 first(); };     // 0x489860, 0x4898e0, 0x4899e0, 0x489890 (ui/mission_ui.cpp)
 struct NamedSelRec { void set_name(const tstring* s); void set_sel(const int* src); };   // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
 struct Named16 { void set(const tstring* s); };                              // 0x489ab0 (ui/mission_ui.cpp)
 struct MissionView { void setup(void* src, int* b, int* c); void set(void* src); };   // 0x4897a0 / 0x489820 (ui/mission_ui.cpp)
-struct ElemList { void call0(int i, int a); void call1(int i, int a); };     // 0x488e20 / 0x488e40 (ui/mission_ui.cpp)
+#include "../ui/mission_ui.h"
 void sl_item_flag_all();                                                       // 0x48a210 (ui/mission_ui.cpp; ui/world.h declares the same)
 void __stdcall sl_item_set_all(float v);                                       // 0x48a250
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
@@ -114,11 +116,6 @@ struct WidgetMgrW : widget_mgr {                                             // 
     int create_mesh_overlay_with_tableau(int a, int b, float c);            // 0x4996e0
     int create_slider_overlay(int vmin, int vmax);                          // 0x495970
 };
-namespace c49bea0 { struct Mission { void check_slot(int id, unsigned bits); }; }   // 0x49c170
-namespace c49c2c0 { struct Mission { void order(int team, int order); }; }   // 0x49c2c0
-namespace c49e780 {
-struct View { int create_text_overlay(int text, int flags); };              // 0x49e780
-}
 namespace c49f060 {
 void __cdecl spawn_party_scene(int a, int b, int* pos, int* anim, int* instance);   // 0x49f3d0
 }
@@ -240,7 +237,7 @@ struct Presentation {
     char pad0[0x28];
     float duration;                                                     // +0x28 (presentation_set_duration 0x4a2143)
     // the overlay operations are the presentation object's (widget_mgr / WidgetMgrW); the interpreter's tstring arguments go by address
-    __forceinline int create_text_overlay(const tstring& text, int flags) { return ((c49e780::View*)this)->create_text_overlay((int)&text, flags); }   // 0x49e780 (ret 8)
+    int create_text_overlay(const tstring& text, int flags);   // 0x49e780 (ret 8)
     __forceinline int create_mesh_overlay(int mesh) { return ((WidgetMgrW*)this)->create_mesh_overlay(mesh); }                                  // 0x4995e0 (ret 4)
     __forceinline int create_button_overlay(const tstring& text, int flags) { return ((WidgetMgrW*)this)->create_button_overlay(&text, flags); }   // 0x494110 (ret 8)
     __forceinline int create_image_button_overlay(int mesh, int mesh_pressed) { return ((widget_mgr*)this)->create_image_button_overlay(mesh, mesh_pressed); }   // 0x499a20 (ret 8)
@@ -494,7 +491,7 @@ struct GameX {
     __forceinline void transfer_stack(int from, int to, char as_prisoners) { ((GameW*)this)->transfer_stack(from, to, as_prisoners); }   // 0x492530 (ret 0xc)
     __forceinline int remove_troops(int party, int troop, int count, char prisoners, int a5) { return ((GameData*)this)->remove_troops(party, troop, count, prisoners, a5); }   // 0x48f9f0 (ret 0x14: count removed)
     __forceinline void remove_party(int party) { ((GameW*)this)->remove_party(party); }                                               // 0x4915d0 (ret 4)
-    __forceinline int create_companion_party(int troop, rgl::vector4 pos) { return ((GameData*)this)->create_companion_party(troop, pos.x, pos.y, pos.z); }   // 0x49ef00 (ret 0x14)
+    int create_companion_party(int troop, rgl::vector4 pos);   // 0x49ef00 (ret 0x14)
     __forceinline void mark_kind(int faction) { ((GameW*)this)->mark_kind(faction); }                                                 // 0x490990 (ret 4)
     __forceinline void start_quest(int quest, int giver_troop) { ((GameData*)this)->start_quest(quest, giver_troop); }                 // 0x49b930 (ret 8)
     __forceinline void quest_done(int quest) { ((GameW*)this)->quest_done(quest); }                                                    // 0x494410 (ret 4)
@@ -681,7 +678,7 @@ struct MissionX {
     __forceinline int riding_order(int team) { return ((Mission*)this)->riding_order(team); }                         // 0x48ab30 (ret 4)
     __forceinline int weapon_usage_order(int team) { return ((Mission*)this)->weapon_usage_order(team); }             // 0x48ab90 (ret 4)
     __forceinline int hold_fire_order(int team) { return ((Mission*)this)->hold_fire_order(team); }                   // 0x48abf0 (ret 4)
-    __forceinline void order(int team, int order) { ((c49c2c0::Mission*)this)->order(team, order); }                  // 0x49c2c0 (ret 8)
+    void order(int team, int order);                  // 0x49c2c0 (ret 8)
     __forceinline char point_in_rect(const rgl::vector4* p) { return ((Mission*)this)->point_in_rect((const float*)p); }   // 0x48a990 (ret 4; ui/mission.h)
     __forceinline int count_props(int prop) { return ((Mission*)this)->count_props(prop); }                           // 0x48ee20 (ret 4)
     __forceinline int find_prop(int prop, int n) { return ((Mission*)this)->find_prop(prop, n); }                     // 0x48ee90 (ret 8: -1 = none)
@@ -691,7 +688,7 @@ struct MissionX {
     __forceinline float blend_param() { return ((Mission*)this)->blend_param(); }                                     // 0x48a740 (blend_param)
     __forceinline float blend2_param() { return ((Mission*)this)->blend2_param(); }                                   // 0x48a7d0 (blend2_param)
     __forceinline int find_agent_by_troop(int troop) { return ((MissionW*)this)->find_agent_by_troop(troop); }        // 0x4921b0 (ret 4)
-    __forceinline void check_slot(int entry, int count) { ((c49bea0::Mission*)this)->check_slot(entry, count); }      // 0x49c170 (ret 8)
+    void check_slot(int entry, int count);      // 0x49c170 (ret 8)
     __forceinline void add_wind_effect(float flicker_magnitude, float flicker_interval) { ((MissionW*)this)->add_wind_effect(flicker_magnitude, flicker_interval); }   // 0x4952f0 (ret 8)
     __forceinline void spawn_effect(int psys, const rgl::matrix* p, int strength) { ((Mission*)this)->spawn_effect(psys, (const rgl::mat4*)p, strength); }   // 0x442ca0 (ret 0xc)
     __forceinline int place(const ItemRef* item) { return ((Mission*)this)->place((const int*)item); }   // 0x49b4b0 (ret 4)

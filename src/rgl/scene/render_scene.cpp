@@ -193,25 +193,24 @@ void world::render_scene(scene* sc, bool reflect)
     render_info info;
     info.valid = 0;
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
-        entity* e = *it;
         vector4 c;
         float r;
-        centre(c, e);
-        r = e->get_radius();
+        centre(c, *it);
+        r = (*it)->get_radius();
         if (in_frustum_n(sc, &c, r))
-            e->render(sc, &info);
+            (*it)->render(sc, &info);
     }
     for (entity** it = ents2._Myfirst; it < ents2._Mylast; ++it) {
         float r;
         vector4 c;
         centre2(c, *it);
         r = (*it)->get_radius();
-        if (in_frustum(sc, &c, r))
+        if (in_frustum_n(sc, &c, r))
             (*it)->render(sc, &info);
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
         psys* p = *it;
-        if (in_frustum_n(sc, &p->mf4.o, p->radius))
+        if (in_frustum(sc, &p->mf4.o, p->radius))
             p->update(sc);
     }
     for (unsigned i = 0; i < meshes.size(); i++) {

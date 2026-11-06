@@ -753,15 +753,18 @@ OpenItem* ElemCopier::fill_n_elems(OpenItem* dst, unsigned count, OpenItem* val)
     return dst + count;
 }
 
+typedef std::vector<E12>::iterator OpenIt;
+static __forceinline OpenItem* oi(OpenIt it) { return (OpenItem*)&*it; }
+
 // @ 0x4b2710
 // std::push_heap tail: sift up the last element
-void push_back_elem(OpenItem* first, OpenItem* last, HeapGt comp)
+void push_back_elem(OpenIt first, OpenIt last, HeapGt comp)
 {
     if (first != last) {
-        OpenItem* l = last - 1;
+        OpenIt l = last - 1;
         int n = (int)(l - first);
         if (n > 0) {
-            push_heap_elem(first, n, 0, *l, comp);
+            push_heap_elem(oi(first), n, 0, *oi(l), comp);
         }
     }
 }
@@ -2298,44 +2301,50 @@ extern float g_105;         // 0x59364c = 10.5f
 extern float g_005;         // 0x54b4d0 = 0.05f
 extern float g_vis;         // 0x54a6f0 = 0.01f
 
-struct DetailVert { char pad0[0x14]; float x, y, z, w; };   // the 0x24-byte detail vertices of the map mesh (NavData +0x24)
-#define OPEN_BEGIN (*(OpenItem**)&v30.first)         // the open list: a vector<E12> at +0x30 (allocator word, first, last, end)
-#define OPEN_END (*(OpenItem**)&v30.last)
+struct DetailVert { char pad0[0x14]; rgl::vector4 p; };   // the 0x24-byte detail vertices of the map mesh (NavData +0x24)
+#define NODE(i) ((std::vector<NavRec>&)cells)[i]
+#define OPENQ (*(OpenQ*)&v30)                        // the open list: a vector<E12> at +0x30 (allocator word, first, last, end), then the comparator
 
-// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<E12> plus its comparator at +0x40)
-struct QComp { char c; };
+// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<E12> plus its comparator at +0x40).
+// E12 is the open-list record (OpenItem) as the shared vector instance names it. The heap steps follow std::pop_heap and
+// std::push_heap on real iterators (compare PQ, terrain_b/poly_mesh.h, for the same search over the mission's nav mesh).
+static __forceinline void pop_heap_1(OpenIt first, OpenIt last, OpenIt dest, OpenItem val, HeapGt pred)
+{
+    *oi(dest) = *oi(first);
+    adjust_heap_node((hnode*)oi(first), 0, (int)(last - first), *(hnode*)&val, *(node_gt*)&pred);
+}
+static __forceinline void pop_heap_x(OpenIt first, OpenIt last, HeapGt pred)
+{
+    if (1 < last - first)
+        pop_heap_1(first, last - 1, last - 1, *oi(last - 1), pred);
+}
+static __forceinline void pop_heap_y(OpenIt first, OpenIt last, HeapGt pred)
+{
+    if (1 < last - first)
+        pop_heap_elem(oi(first), oi(last - 1), oi(last - 1), *oi(last - 1), pred, 0);
+}
+static __forceinline void push_heap_z(OpenIt first, OpenIt last, HeapGt pred)
+{
+    int n = (int)(last - first);
+    if (n > 0)
+        push_heap_elem(oi(first), n, 0, *oi(last), pred);
+}
+static __forceinline void push_heap_y(OpenIt first, OpenIt last, HeapGt pred)
+{
+    if (first != last)
+        push_heap_z(first, --last, pred);
+}
 struct OpenQ {
     std::vector<E12> c;
-    QComp comp;
-    __forceinline bool empty() const { return c.empty(); }
-    __forceinline void pop_back() { c.pop_back(); }
-    __forceinline OpenItem* begin_() { return (OpenItem*)&*c.begin(); }
-    __forceinline OpenItem* end_() { return (OpenItem*)&*c.end(); }
-
+    HeapGt comp;
+    bool empty() const { return c.empty(); }
+    const E12& top() const { return c.front(); }
+    __forceinline void pop_x() { pop_heap_x(c.begin(), c.end(), comp); c.pop_back(); }
+    __forceinline void pop_y() { pop_heap_y(c.begin(), c.end(), comp); c.pop_back(); }
+    __forceinline void push_x(const E12& v) { c.push_back(v); push_back_elem(c.begin(), c.end(), comp); }
+    __forceinline void push_y(const E12& v) { c.push_back(v); push_heap_y(c.begin(), c.end(), comp); }
 };
-static __forceinline void pq_drain(OpenItem* first, OpenItem* last, QComp pred)
-{
-    if (1 < last - first) {
-        OpenItem val = *(last - 1);
-        *(last - 1) = *first;
-        adjust_heap(first, 0, (int)(last - 1 - first), val, *(HeapGt*)&pred);
-    }
-}
-static __forceinline rgl::vector4 v4_sub(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
-static __forceinline float v4_len_zyx(const rgl::vector4& v) { return (float)sqrt(v.z * v.z + v.y * v.y + v.x * v.x); }
-static __forceinline int edge_index(const NavRec& r, int id)
-{
-    int idx = 0;
-    int cnt = r.npts;
-    for (int j = 0; j < cnt; j++) {
-        if (((NavRec&)r).targets()[j] == id) {
-            idx = j;
-            break;
-        }
-    }
-    return idx;
-}
-
+static inline rgl::vector4 v4_sub(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 // @ 0x4b6b40
 // A* over the map's 0x88-byte formation records; fills the record-id chain, the per-node positions and the stall limit of
 // the target node.
@@ -2343,137 +2352,101 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
                        unsigned* mask_req, unsigned* mask_ban, char* avoid)
 {
     (void)guard;
-    OpenQ* q = (OpenQ*)&v30;
+    int chain[0x2004];                               // frame 0x8070: the array ends 0x10 past chain[0x2000], which the original also writes
 
     // drain whatever the previous search left on the open list
-    while (!q->empty()) {
-        pq_drain(q->begin_(), q->end_(), q->comp);
-        q->pop_back();
-    }
+    while (!OPENQ.empty())
+        OPENQ.pop_x();
 
     reset();
 
-    int so = from * 0x88;
-    *(int*)((char*)RECS + so + 0x6c) = m64 + 1;
-    *(int*)((char*)RECS + so + 0x70) = from;
+    NODE(from).gen() = m64 + 1;
+    NODE(from).parent() = from;
     OpenItem cur;
-    cur.node = from;
     cur.cost = 0.0f;
     cur.dist = 0.0f;
-    ((std::vector<E12>*)&v30)->push_back(*(const E12*)&cur);
-    push_back_elem(q->begin_(), q->end_(), *(HeapGt*)&q->comp);
+    cur.node = from;
+    OPENQ.push_x(*(const E12*)&cur);
     *visited = 0;
     float best = 0.0f;
     float limit = 10000.0f;
     if (*avoid != 0)
         limit = 1e6f;
-    int to0 = to * 0x88;
 
-    while (*(int*)((char*)RECS + to0 + 0x6c) <= m64 && !q->empty() && cur.dist < limit) {
-        *visited = *visited + 1;
-        cur = *(OpenItem*)v30.first;
-        {
-            QComp hg = q->comp;
-            OpenItem* first = q->begin_();
-            OpenItem* lastp = q->end_();
-            if ((int)(lastp - first) > 1)
-                pop_heap_elem(first, lastp - 1, lastp - 1, lastp[-1], *(HeapGt*)&hg, 0);
-        }
-        q->pop_back();
-
-        int sn = cur.node * 0x88;
-        int nb = 0;
-        if (*(int*)((char*)RECS + sn) > 0) {
-            int nidx = cur.node * 0x22;
-            int off = nidx * 4 + 0x28;
-            do {
-                int nbr = *(int*)((char*)RECS + off);
-                if (nbr != -1) {
-                    int sb = nbr * 0x88;
-                    if (*(int*)((char*)RECS + sb + 0x6c) <= m64) {
-                        *(int*)((char*)RECS + sb + 0x6c) = m64 + 1;
-                        *(int*)((char*)RECS + sb + 0x70) = cur.node;
-
-                        unsigned fl = *(unsigned*)((char*)RECS + sb + 0x24);
-                        float cost = *(float*)((char*)RECS + (nidx + nb) * 4 + 0x38);
-                        if ((*mask_req & fl) != *mask_req)
-                            cost += 10000.0f;
-                        if ((*mask_ban & fl) != 0)
-                            cost += 10000.0f;
-
-                        rgl::vector4& pb = *(rgl::vector4*)((char*)RECS + sb + 0x74);
-                        rgl::vector4 dt = v4_sub(*(rgl::vector4*)((char*)RECS + to0 + 0x74), pb);
-                        rgl::vector4 df = v4_sub(*(rgl::vector4*)((char*)RECS + so + 0x74), pb);
-                        float d_from = v4_len_zyx(df);
-                        float d_to = v4_len_zyx(dt);
-
-                        cost += cur.cost;
-                        if (cur.cost > best)
-                            best = cur.cost;
-
-                        OpenItem add;
-                        add.node = nbr;
-                        add.cost = cost;
-                        add.dist = (d_to / d_from + 1.0f) * cost;
-                        ((std::vector<E12>*)&v30)->push_back(*(const E12*)&add);
-                        {
-                            QComp hg = q->comp;
-                            OpenItem* first = q->begin_();
-                            OpenItem* lastp = q->end_();
-                            if (first != lastp) {
-                                lastp--;
-                                int n = (int)(lastp - first);
-                                if (n > 0)
-                                    push_heap_elem(first, n, 0, *lastp, *(HeapGt*)&hg);
-                            }
-                        }
-                    }
-                }
-                off += 4;
-                nb++;
-            } while (nb < *(int*)((char*)RECS + sn));
-        }
-        *(int*)((char*)RECS + sn + 0x6c) = m64 + 2;
-    }
-
-    if (*(int*)((char*)RECS + to0 + 0x6c) <= m64) {
-        *count = 0;
-        return 0;
-    }
-
-    char reachable = 1;
-    if (!(best < 10000.0f))
-        reachable = 0;
-
-    int chain[0x2004];                               // frame 0x8070: the array ends 0x10 past chain[0x2000], which the original also writes
-    int k = 0;
-    for (int c = to; c != from; c = RECS[c].parent()) {
-        if (k >= 0x2000)
+    while (NODE(to).gen() <= m64) {
+        if (OPENQ.empty() || !(cur.dist < limit))
             break;
-        chain[k++] = c;
-    }
-    chain[k++] = from;
-    int m = k < 0x400 ? k : 0x400;
-    *count = m;
+        (*visited)++;
+        cur = *(const OpenItem*)&OPENQ.top();
+        OPENQ.pop_y();
 
-    int prev = from;                             // the edge is looked up on the previous step's record
+        int cn = cur.node;
+        for (int k = 0; k < NODE(cn).npts; k++) {
+            int nb = NODE(cn).targets()[k];
+            if (nb != -1 && NODE(nb).gen() <= m64) {
+                NODE(nb).gen() = m64 + 1;
+                NODE(nb).parent() = cn;
+                float cost = NODE(cn).dists()[k];
+                if ((*mask_req & NODE(nb).mask()) != *mask_req)
+                    cost += 10000.0f;
+                if ((*mask_ban & NODE(nb).mask()) != 0)
+                    cost += 10000.0f;
+                rgl::vector4 dt = v4_sub(NODE(to).pos4(), NODE(nb).pos4());
+                rgl::vector4 df = v4_sub(NODE(from).pos4(), NODE(nb).pos4());
+                float d_from = df.length();
+                float d_to = dt.length();
+                cost += cur.cost;
+                if (cur.cost > best)
+                    best = cur.cost;
+                OpenItem add;
+                add.cost = cost;
+                add.dist = (d_to / d_from + 1.0f) * cost;
+                add.node = nb;
+                OPENQ.push_y(*(const E12*)&add);
+            }
+        }
+        NODE(cn).gen() = m64 + 2;
+    }
+
+    if (NODE(to).gen() <= m64) {
+        *count = 0;
+        return false;
+    }
+
+    bool reachable = true;
+    if (!(best < 10000.0f))
+        reachable = false;
+
+    int len = 0;
+    int f = to;
+    while (f != from && len < 0x2000) {
+        chain[len++] = f;
+        f = NODE(f).parent();
+    }
+    chain[len++] = from;
+    *count = len < 0x400 ? len : 0x400;
+
     rgl::vector4* out = (rgl::vector4*)detail;
-    int* pc = &chain[k - 1];
+    int prev = from;                             // the edge is looked up on the previous step's record
     for (int i = 0; i < *count; i++) {
-        int id = *pc;
+        int id = chain[len - 1 - i];
         path[i] = id;
-        NavRec& r = RECS[prev];
-        int v = ((int*)&r)[prev * 0 + edge_index(r, id) + 5];
-        *out = *(rgl::vector4*)&((DetailVert*)v20.first)[v].x;
-        out++;
+        int e = 0;
+        NavRec& pr = NODE(prev);
+        for (int j = 0; j < pr.npts; j++) {
+            if (pr.targets()[j] == id) {
+                e = j;
+                break;
+            }
+        }
+        out[i] = ((std::vector<DetailVert>&)v20)[NODE(prev).agents()[e]].p;
         prev = path[i];
-        pc--;
     }
 
     for (int i = 1; i < *count; i++)
-        ((rgl::vector4*)detail)[i - 1] = ((rgl::vector4*)detail)[i];
-    ((rgl::vector4*)detail)[*count - 1] = *(rgl::vector4*)((char*)RECS + path[*count - 1] * 0x88 + 0x74);
-    return reachable != 0;
+        out[i - 1] = out[i];
+    out[*count - 1] = NODE(path[*count - 1]).pos4();
+    return reachable;
 }
 
 // @ 0x4b71e0

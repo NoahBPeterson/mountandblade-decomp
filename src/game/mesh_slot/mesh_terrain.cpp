@@ -138,7 +138,10 @@ void Terrain::create_water(void** out)
                     uv.x = c->disp.x * 0.125f;
                     uv.y = c->disp.y * 0.125f;
                     c->f10 = add_v(m, pt, uv, argb, vector4(0.0f, 0.0f, 1.0f), 0);
-                    *(Vec2*)&m->v50[c->f10].f48 = Vec2(c->px * 0.025f, c->py * 0.025f);
+                    vertex60& v = m->v50[c->f10];
+                    Vec2 u2(c->px * 0.025f, c->py * 0.025f);
+                    *(int*)&v.f48 = *(int*)&u2.x;
+                    *(int*)&v.f4c = *(int*)&u2.y;
                 }
                 int& f2 = at(tri[2][0], tri[2][1]).f10;
                 int& f1 = at(tri[1][0], tri[1][1]).f10;
@@ -784,7 +787,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     int f5c = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
                     (*(m->v50.begin() + c->f10)).f58 = fg;
-                    { vertex60& v = *(m->v50.begin() + c->f10); v.f48 = ux; *(float*)&v.f4c = uv.y; }
+                    { vertex60& v = m->v50[c->f10]; v.f48 = ux; *(int*)&v.f4c = *(int*)&uv.y; }
                 }
                 m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
             }

@@ -41,18 +41,6 @@ struct tvec2 {
 #include "../std_vec_insert_n.h"           // the entity's mesh list at +0x118: _Insert_n 0x410610
 #include "../ui_globals.h"      // UI / core globals
 
-// a container widget's children vector (ContainerBase::kids), pushed onto as the original inlines it
-static __forceinline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
-{
-    unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
-    if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
-        *c._Mylast = v;
-        ++c._Mylast;
-    } else {
-        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);   // 0x4927d0
-    }
-}
-
 // a 4-float temporary as the original copies it (the w lane is never written: the copy carries whatever the stack held)
 struct v4raw {
     float x, y, z, w;

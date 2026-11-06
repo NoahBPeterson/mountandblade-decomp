@@ -922,29 +922,26 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
     }
     if (i < *(unsigned*)tbl) {
         do {
-            char** pp = &(*(char***)((char*)this + 0x1c))[i >> 4];
-            Agent* a = (Agent*)(*pp + (i & 0xf) * 0x5928);
-            SunBody* sb = (SunBody*)a->body;
-            if (sb) {
-                float one = 1.0f;
+            Agent* a = ((AgentTable*)((char*)this + 4))->pages[i >> 4] + (i & 0xf);
+            if (a->body) {
                 float intensity;
-                float dx = sb->origin.x - pos->x;
-                float dy = sb->origin.y - pos->y;
-                float dz = sb->origin.z - pos->z;
+                const vector4& o = ((SunBody*)a->body)->origin;
+                float dx = o.x - pos->x;
+                float dy = o.y - pos->y;
+                float dz = o.z - pos->z;
                 float d = (float)sqrt(dy * dy + (dx * dx + dz * dz));
                 float dist = 3.5f / (d > 3.5f ? d : 3.5f);
                 if (!(d > 1.0f))
                     d = 1.0f;
                 intensity = (1.0f / d) * size;
-                sb->set_intensity(&intensity);
-                const float* v;
-                if (a->f8 == vl->local_id || a->f30 == vl->local_id)
-                    v = &one;
-                else {
-                    dist = dist * range;
-                    v = &dist;
+                ((SunBody*)a->body)->set_intensity(&intensity);
+                if (a->f8 == vl->local_id || a->f30 == vl->local_id) {
+                    float one = 1.0f;
+                    ((PartyModel*)a->body)->set_fade(&one);
+                } else {
+                    float v = dist * range;
+                    ((PartyModel*)a->body)->set_fade(&v);
                 }
-                ((PartyModel*)sb)->set_fade(v);
             }
             int n2 = *(int*)tbl;
             for (i++; (int)i < n2; i++) {
@@ -1387,18 +1384,17 @@ void ItemA::init_screen()
     slider = made;
     frame()->add_child(made);
 
-    MissionUi** kp = kids;
-    for (int i = 16; i != 0; i--, kp++) {
+    for (int i = 0; i < 16; i++) {
         UiA* child = new UiA;
-        *kp = child;
+        kids[i] = child;
         unsigned c9 = 0xff55ff50;
-        (*kp)->set_target(&c9);
+        kids[i]->set_target(&c9);
         float pos[2] = { 0.64f, 0.04f };
-        (*kp)->set_xy(pos);
+        kids[i]->set_xy(pos);
         c9 = color;
-        (*kp)->set_color(&c9);
-        (*kp)->hide();
-        value->add_child(*kp);
+        kids[i]->set_color(&c9);
+        kids[i]->hide();
+        value->add_child(kids[i]);
     }
 
     if (ok) {
@@ -1612,6 +1608,10 @@ MWidget::MWidget()
     cur = -1;
 }
 
+// the three lists are VC7.1 vectors (map_list.h keeps the fields other rows name)
+#define MW_IDS (*(std::vector<int>*)&list_e)
+#define MW_A (*(std::vector<vector4>*)&rects_a)
+#define MW_B (*(std::vector<vector4>*)&rects_b)
 // @ 0x4fd1d0
 char MWidget::key(unsigned ev)
 {
@@ -1620,36 +1620,26 @@ char MWidget::key(unsigned ev)
         int id[2];                          // +0x94 writes its 8-byte result here (0x4fd2ba reuses the slot)
         id[0] = cur;
         cur = -1;
-        int* ids = list_e.first;
-        unsigned i = 0, off = 0;
-        for (; ids != 0 && i < (unsigned)(list_e.last - ids); i++, off += 0x10) {
-            vector4* a = (vector4*)((char*)rects_a.first + off);
-            vector4* b = (vector4*)((char*)rects_b.first + off);
-            if (a->x + fE0 <= g_gui.mouse[0])
-                if (fE0 + b->x > g_gui.mouse[0])
-                    if (a->y + fE4 <= g_gui.mouse[1])
-                        if (b->y + fE4 > g_gui.mouse[1]) {
-                            cur = list_e.first[i];
-                            break;
-                        }
+        for (unsigned i = 0; i < MW_IDS.size(); i++) {
+            const float left = fE0;
+            if (MW_A[i].x + left <= g_gui.mouse[0] && fE0 + MW_B[i].x > g_gui.mouse[0]
+                && MW_A[i].y + fE4 <= g_gui.mouse[1] && MW_B[i].y + fE4 > g_gui.mouse[1]) {
+                cur = MW_IDS[i];
+                break;
+            }
         }
         if (cur != id[0])
             get_xy((float*)id);
     } else if ((ev & 8) != 0) {
-        int* ids = list_e.first;
         r = 1;
-        unsigned i = 0, off = 0;
-        for (; ids != 0 && i < (unsigned)(list_e.last - ids); i++, off += 0x10) {
-            vector4* a = (vector4*)((char*)rects_a.first + off);
-            vector4* b = (vector4*)((char*)rects_b.first + off);
-            if (fE0 + a->x <= g_gui.mouse[0])
-                if (b->x + fE0 > g_gui.mouse[0])
-                    if (a->y + fE4 <= g_gui.mouse[1])
-                        if (b->y + fE4 > g_gui.mouse[1]) {
-                            set_key_flags(0x10000);
-                            sel = i;
-                            break;
-                        }
+        for (unsigned i = 0; i < MW_IDS.size(); i++) {
+            const float left = fE0;
+            if (left + MW_A[i].x <= g_gui.mouse[0] && MW_B[i].x + fE0 > g_gui.mouse[0]
+                && MW_A[i].y + fE4 <= g_gui.mouse[1] && MW_B[i].y + fE4 > g_gui.mouse[1]) {
+                set_key_flags(0x10000);
+                sel = i;
+                break;
+            }
         }
     }
     set_key_flags(ev);

@@ -1381,19 +1381,12 @@ void ViewCtrl_s284a0::update(float dt)
 
     // ---- damp the view rates and integrate them into yaw / pitch ------------------------------------
     if (!g_game_s284a0->f1a090 || (*(int*)((char*)&g_keyboard + 0x38c)) != 0) {
-        float r = 1.0f - dt * 20.0f;
-        float yr = cl0_s284a0(r) * yaw_rate;
-        yaw_rate = yr;
-        float pr = cl0_s284a0(r) * pitch_rate;
-        pitch_rate = pr;
-        yr = look_x * fov * 0.0018f + yr;
-        yaw_rate = yr;
-        if (g_options.invert)
-            look_y = -look_y;
-        pr = look_y * fov * 0.0018f + pr;
-        pitch_rate = pr;
-        yaw = yaw - yr * k * dt;
-        pitch = pitch - pr * k * dt;
+        { float r = 1.0f - dt * 20.0f; if (0.0f > r) r = 0.0f; yaw_rate = r * yaw_rate; }
+        { float r = 1.0f - dt * 20.0f; if (0.0f > r) r = 0.0f; pitch_rate = r * pitch_rate; }
+        yaw_rate = look_x * fov * 0.0018f + yaw_rate;
+        pitch_rate = (g_options.invert ? -look_y : look_y) * fov * 0.0018f + pitch_rate;
+        yaw = yaw - yaw_rate * k * dt;
+        pitch = pitch - pitch_rate * k * dt;
     }
 
     // ---- clamps -------------------------------------------------------------------------------------
@@ -1407,11 +1400,11 @@ void ViewCtrl_s284a0::update(float dt)
     else if (look_speed > 10.0f)
         look_speed = 10.0f;
 
-    if (g_mission_s284a0->selected < 0)
+    if (g_mission->f5c < 0)
         return;
 
     // ---- build the view frame and hand its forward row to the local agent ----------------------------
-    Agent_s284a0* a = AGENT(g_mission_s284a0->selected);
+    Agent_s284a0* a = (Agent_s284a0*)((g_mission->f5c & 0xf) + *(*(Agent***)((char*)g_mission + 0x1c) + ((unsigned)g_mission->f5c >> 4)));
     float& y_ref = yaw;
     {
         matrix m;
@@ -1498,7 +1491,11 @@ void ViewCtrl_s284a0::update(float dt)
         g_game_s284a0->f139e4 = (g_game_s284a0->f139e4 == 0);
         update_equipment();
     }
-    agr_s284a0(g_mission->f5c).f55d4 = (g_game_s284a0->f139e4 != 0);
+    {
+        unsigned id = g_mission->f5c;
+        Agent** pages = *(Agent***)((char*)g_mission + 0x1c);
+        (pages[id >> 4] + (id & 0xf))->f55d4 = (g_game_s284a0->f139e4 != 0);
+    }
 
     // ---- field of view ------------------------------------------------------------------------------
     bool zoom_key = false;

@@ -14,3 +14,5 @@
 ../src/game/agent5/agent_hud.cpp  ?push_back@V4List@@QAEXABUvector4@rgl@@@Z  004fdff0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?insert@V4List@@QAE?AUiterator@1@U21@ABUvector4@rgl@@@Z  004fe060  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?init_screen@MissionBlocker@@UAEXXZ  004f7f00  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?apply_sun_light@Mission@@QAEXPBUvector4@rgl@@PBM@Z  004fb180  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?key@MWidget@@UAEDI@Z  004fd1d0  /O2 /MT /Gy /TP

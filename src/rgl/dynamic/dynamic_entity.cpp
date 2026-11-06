@@ -547,7 +547,7 @@ bool dynamic_entity::on_entity(entity* e)
         rec2.p = pt;
         rec2.n = neg;
         ((contact_ops&)o->contacts).push_back(rec2);
-        float vn = vdot_zyx(nrm, rel);
+        float vn = dot_r(rel, nrm);
         vector4 t = rel - nrm * vn;
         vector4 td;
         normalize(td, t);

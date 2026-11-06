@@ -149,6 +149,7 @@ void MapPanel::update(int type, int id)
         if (type == 1) {
             Party roster;                     // [esp+0xae0] the selected party's own roster (0x4934d0)
             int ncols = 1;                    // [esp+0x28]
+            float mrel;
 
             if (g_game->parties.get_party(id)->battle >= 0) {
                 g_gui.draw_string(g_strtable.lookup("ui_capital_battle"), 0.02f, -1, 1);
@@ -157,6 +158,7 @@ void MapPanel::update(int type, int id)
 
             for (int c = 0; c < ncols; c++) {                       // 0x51adc0
                 int agent = id;               // [esp+0x14]  battle side shown in the current column
+                int i;
                 char buf[0x100];
                 if (ncols > 1) {
                     GameData* g = g_game;
@@ -194,10 +196,10 @@ void MapPanel::update(int type, int id)
                     int members[128];                                        // [esp+0x8e0]
                     int count = 0;                                           // [esp+0x18]
                     g_game->list_members(agent, members, &count);                 // 0x490fa0
-                    for (int i = 0; i < count; i++) {
+                    for (i = 0; i < count; i++) {
                         GameData* g = g_game;
                         int      m    = members[i];
-                        float    mrel = g->relation(m, g->f78);
+                        mrel = g->relation(m, g->f78);
                         unsigned mcol = g->color_of(mrel, 1);
                         if (g_module_settings.show_faction_color)
                             mcol = g->factions[g->parties.get_party(m)->faction].color;
@@ -312,20 +314,19 @@ void MapPanel::update(int type, int id)
                 }
 
                 // ---- garrison contents -------------------------------------------------------------
-                unsigned __int64 fl = rec->flags;
                 unsigned tcol = 0xffd0b0e0;
-                if (!(fl & 0x200000)) if (rec->f6c != 0) {              // 0x51ba69
-                    if (fl & 0x400)
+                if (!(rec->flags & 0x200000) && rec->f6c != 0) {              // 0x51ba69
+                    if (rec->flags & 0x400)
                         g_gui.draw_string(g_strtable.lookup("ui_defenders"), 0.02f, 0xffc08020, 1);
                     else
                         g_gui.draw_string(g_strtable.lookup("ui_troops"), 0.02f, 0xffc08020, 1);
-                    for (int i = 0; i < roster.count; i++) {
+                    for (i = 0; i < roster.count; i++) {
                         if (i == first_enemy_stack(&roster)) {                // 0x51bb56
                             g_gui.draw_string(g_strtable.lookup("ui_prisoners"), 0.02f, 0xffc08020, 1);
                             tcol = 0xffc0a060;
                         }
                         Stack& s = roster.stacks[i];
-                        Troop* t = &g_game->troops[s.troop];
+                        Troop* t = g_game->troops + s.troop;
                         char   buf[0x200];
                         if (t->flags30 & 0x10) {
                             int base = t->f58[0];

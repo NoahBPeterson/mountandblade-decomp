@@ -168,6 +168,7 @@ struct NavRec : NavCell {
     int& gen() { return *(int*)((char*)this + 0x6c); }  // +0x6c search stamp (compare with NavData::m64)   0x4b6b40
     int& parent() { return *(int*)((char*)this + 0x70); }   // +0x70 search parent                   0x4b6b40
     float* pos() { return (float*)((char*)this + 0x74); }   // +0x74 x, y, z                         0x4b6b40
+    rgl::vector4& pos4() { return *(rgl::vector4*)((char*)this + 0x74); }
     float& limit() { return *(float*)((char*)this + 0x80); }// +0x80 keep distance of the node       0x4b6b40
 };
 inline NavRec* nav_recs() { return (NavRec*)((rgl::world*)g_script.level)->ground->cells.first; }       // the record array (+0x14 of the nav data)

@@ -536,8 +536,7 @@ How to work on it:
   referencing functions is evidence of one original translation unit.
 
 Status: the prologue is exact, the rotation is right from there on, and 295 of 590
-cases are identical (217 before). The row isn't byte-exact yet, and making the global
-really `static` needs the other file's users moved into this object. So this is one
+cases were identical at that point (217 before). The row isn't byte-exact yet. So this is one
 function's evidence. Try it on other rotated rows before treating it as general.
 
 **Callee visibility sets the global register map too.** In the same function, calls
@@ -546,6 +545,10 @@ elsewhere. Making `lookup`, `get`, `is_live`, `first_flagged` and similar visibl
 produced the original's `edi=this, ebp=locals, esi=params[0] low, ebx=params[1] low`
 with no case edits, and moved about 200 cases to identical. Keep a pure callee opaque
 if the original calls it in order, since a visible one can be reordered or hoisted.
+
+**An address taken once, even if the pointer is never used, decides whether an array's dwords stay in registers across calls.** After the two files merged,
+nothing took `params`' address any more and its dwords stayed in registers. One unused `__int64* args = params;` restored the original's map (0x49fa10).
+The merged file also confirmed the file-static finding above: `g_script_error` is now a real file static, and 313 of 590 cases are identical.
 
 ### 6.6 Page-load folds are switched on per function
 
@@ -1386,6 +1389,19 @@ Added by the third round (59 matched, including two functions 109 and 144 instru
 - **Identical if/else arms leave dead loads:** `if (id == x) s = s*0.7f; else s = s*0.7f;` keeps only the two loads (0x456503).
 - **A wrong field in a global can byte-match, because data addresses are masked.** `g_skill_tbl[36].cap` matched where the original reads `max_rank`,
   in several modules. Run tools/difftest/resaudit_all.py, and check any global you touch against the original.
+- **Which calls a global survives shows which callee bodies were visible.** The original keeps g_mission in a register across first_used, next_used, get
+  and Blow::init, and reloads it after is_enemy, note_blow and is_ready. So those first four were visible in the file but left out of line. Making them
+  `inline __declspec(noinline)` and writing plain `g_mission->...` with no named locals matched 0x526130 and 0x526070. Not universal: making max_amount visible
+  made 0x52b5c0 much worse.
+- **Two arms each calling the same function get hoisted:** `if (x == 2) get()->f = 1; else get()->f = 2;` stops the setne if-conversion (0x5284a0).
+- **A slot shared between a probe vector and later differences means one reused variable** (0x529ec0).
+- **FP hoisting depends on where values are assigned, not on escape.** cl hoists `sqrt(x*x+y*y)` when `x` and `y` are copy-propagated invariants. Assigning a
+  local inside the loop and normalising it in place (`vec2 u; u.x = (float)(...); u.y = ...; v2_normalize(u)`) leaves only the conversions hoisted (0x468fc0).
+- **Stack stores crossing pointer loads come down to escape.** A local whose address only reaches a body cl can see doesn't escape, so its stores and loads can
+  cross pointer accesses. Visible `tri_normal` and `triangle_corners` fixed 0x46ad50; visible `normalize` fixed 0x46d8c0's copies.
+- **A reference to a container shifts use weights across the whole function:** `std::vector<light_t*>& ls = v->lights` gave 0x46d8c0 this=edi, v=ebp, taking it
+  from 652 to 843 of 871. Register choice is decided by use counts, sometimes by one use.
+- **Statement-form sums keep x87 order:** `s = x*x; s += z*z; s += y*y`, where a single expression gets reordered.
 
 Rows that resisted all of these, so stop early: SIB base/index order (`[ebx+ecx]` against `[ecx+ebx]`) and `fld/fmul`
 operand order, one instruction scheduled a slot away with no structural difference, and a read-modify-write `or [m], r`

@@ -566,7 +566,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             if (v > 0x3f3) {
                 tstring text(*UI("ui_notification_new_version"));
                 unescape(&text);
-                char buf[0x200];
+                char buf[0x254];
                 sprintf(buf, text.c_str(), 1, 0, 1, 1,
                             v / 1000, (v / 100) % 10, (v / 10) % 10, v % 10);
                 MessageBoxA(hwnd, buf, UI("ui_new_version_found")->c_str(), 0);
@@ -598,7 +598,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
                 break;
             int idx = SendMessageA(GetDlgItem(h, 0x420), 0x147, 0, 0);    // GetDlgItem per message, as above
             int sel = SendMessageA(GetDlgItem(h, 0x420), 0x150, idx, 0);
-            if (module_count <= sel)
+            if (sel >= module_count)
                 sel = module_count - 1;
             g_module_name = *mod_name(sel);
 

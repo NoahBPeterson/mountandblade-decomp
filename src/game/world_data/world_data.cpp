@@ -1919,10 +1919,9 @@ void GameW::share_experience(int party, float amount)
 // @ 0x494e40
 void GameW::award_experience(int party, float amount, int mode)
 {
-    GameData* gd = this;
-    if ((unsigned)party >= pm().n_parties)
-        return;
     PartyMgr& m2 = pm();
+    if ((unsigned)party >= m2.n_parties)
+        return;
     int idx = m2.lookup(party);
     if (idx < 0)
         return;
@@ -1936,7 +1935,7 @@ void GameW::award_experience(int party, float amount, int mode)
     for (int i = 0; i < p->nstacks; i++) {
         if (p->stacks[i].flags & 1)
             break;
-        if (gd->troops[p->stacks[i].troop].flags30 & 0x10) {
+        if (troops[p->stacks[i].troop].flags30 & 0x10) {
             if (i == 0)
                 total = (int)((float)total + 10.0f);
             else
@@ -1950,7 +1949,7 @@ void GameW::award_experience(int party, float amount, int mode)
         if (p->stacks[i].flags & 1)
             break;
         int troop = p->stacks[i].troop;
-        if (gd->troops[troop].flags30 & 0x10) {
+        if (troops[troop].flags30 & 0x10) {
             int r = rand() % 15817;
             // no float temporary: the original keeps the product on the x87 stack (0x494fd1 .. 0x494fdb) and truncates it from there
             if (i == 0)
@@ -1966,14 +1965,14 @@ void GameW::award_experience(int party, float amount, int mode)
     for (int i = 0; i < p->nstacks; i++) {
         if (p->stacks[i].flags & 1)
             break;
-        if (gd->troops[p->stacks[i].troop].flags30 & 0x10)
+        if (troops[p->stacks[i].troop].flags30 & 0x10)
             continue;
         Stack& s = p->stacks[i];
         if (s.f14 <= 0)
             continue;
-        int lead = gd->troops[s.troop].f50;
-        if (m == 1 && (unsigned)troop_f54(&gd->troops[s.troop]) > 0)
-            lead = troop_f54(&gd->troops[s.troop]);
+        int lead = troops[s.troop].f50;
+        if (m == 1 && (unsigned)troop_f54(&troops[s.troop]) > 0)
+            lead = troop_f54(&troops[s.troop]);
 
         int n = 0;
         for (int j = 0; j < p->nstacks; j++) {

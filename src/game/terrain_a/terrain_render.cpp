@@ -1833,10 +1833,10 @@ void render_batch::draw(view_t* v)
                 }
                 std::vector<light_t*>& ls = v->lights;
                 for (int i = 0; i < ls.size() && i < 0x40; i++) {
-                    if (ls[i]->type == 2) {
+                    if (v->lights[i]->type == 2) {
                         enable_light(i, 1);
                     } else {
-                        if (len3(ls[i]->pos - p->m->m194.o) - p->m->f44 < ls[i]->range)
+                        if (len3(v->lights[i]->pos - p->m->m194.o) - p->m->f44 < v->lights[i]->range)
                             enable_light(i, 1);
                         else
                             enable_light(i, 0);

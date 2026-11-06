@@ -164,12 +164,13 @@ bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int
     chain[len++] = from;
     *out_count = len < 0x400 ? len : 0x400;
     int prev = from;
-    for (int i = 0; i < *out_count; i++) {
-        int cur = chain[len - 1 - i];
+    for (int i = 0; i < *out_count; ++i) {
+        const int cur = chain[len - 1 - i];
         out_faces[i] = cur;
         int k = 0;
-        for (int j = 0; j < faces[prev].n; j++) {
-            if (faces[prev].nbr[j] == cur) {
+        MPoly& pr = faces[prev];
+        for (int j = 0; j < pr.n; j++) {
+            if (pr.nbr[j] == cur) {
                 k = j;
                 break;
             }
@@ -3035,15 +3036,14 @@ void Agent::shoot()
     }
     const vector4* o19 = &((BoneW*)an->recs)[19].world.o;
     const rgl::matrix* m = &body->m;
-    float kx = o19->x * 0.35f + P.x;
-    float ky = o19->y * 0.35f + P.y;
-    float kz = o19->z * 0.35f + P.z;
-    P.x = kz * m->u.x + ky * m->f.x + kx * m->s.x + m->o.x;
-    P.y = kz * m->u.y + ky * m->f.y + kx * m->s.y + m->o.y;
-    P.z = kz * m->u.z + ky * m->f.z + kx * m->s.z + m->o.z;
-    P.x = W->f.x * 0.15f + P.x;
-    P.y = W->f.y * 0.15f + P.y;
-    P.z = W->f.z * 0.15f + P.z;
+    vector4 kv = *o19 * 0.35f + P;
+    P.x = kv.y * m->f.x + kv.z * m->u.x + kv.x * m->s.x + m->o.x;
+    P.y = kv.y * m->f.y + kv.z * m->u.y + kv.x * m->s.y + m->o.y;
+    P.z = kv.y * m->f.z + kv.z * m->u.z + kv.x * m->s.z + m->o.z;
+    vector4 hf = W->f * 0.15f;
+    P.x = hf.x + P.x;
+    P.y = hf.y + P.y;
+    P.z = hf.z + P.z;
 
     vector4 d0 = vel;
     if (f2c >= 0) {
@@ -3088,7 +3088,6 @@ void Agent::shoot()
     int missing, total, slot_out;
     ItemRef ammo = best_ammo(-1, &missing, &total, &slot_out);
     vector4 shot;
-    shot.w = d0.w;
     rand_cone_dir(&shot, d0, spr);
     ItemRef launcher = cur_pair_fi();
     mid = g_mission->spawn_missile(&P, &shot, &launcher, &ammo, id);
@@ -5955,8 +5954,7 @@ void Agent::process_blow(int unused)
                 off.y = last_blow().missile->ammo_scale();
                 off.z = 0.0f;
                 ms->translate(&off);
-                rgl::mat4 rel = ((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm);
-                ((FxDef*)body->skel)->attach_psys(last_blow().bone, (Psys*)ms, &rel);
+                ((FxDef*)body->skel)->attach_psys(last_blow().bone, (Psys*)ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
             }
         }
     }

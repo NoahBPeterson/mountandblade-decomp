@@ -1408,9 +1408,9 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
             if ((flags & 4) && type != 2) goto next;
             {
             Light* l = *it;
-            float dist;
             vector4 d;
             float k;
+            float dist;
             if (type == 2) {
                 dist = 1000.0f;
                 d = l->dir;
@@ -1441,23 +1441,19 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
                 float cr = s * l->color.x;
                 float cg = s * l->color.y;
                 float cb = s * l->color.z;
-                out_col->x = cr + out_col->x;
-                out_col->y = cg + out_col->y;
-                out_col->z = cb + out_col->z;
+                out_col->x += cr;
+                out_col->y += cg;
+                out_col->z += cb;
                 l = *it;
                 float br = (l->color.z + l->color.y) + l->color.x;
-                float ax = d.x * k;
-                float ay = d.y * k;
-                float az = d.z * k;
-                ax = ax * t;
-                ay = ay * t;
-                az = az * t;
-                float bx = ax * 0.33f;
-                float by = ay * 0.33f;
-                float bz = az * 0.33f;
-                out_dir->x = bx * br + out_dir->x;
-                out_dir->y = by * br + out_dir->y;
-                out_dir->z = br * bz + out_dir->z;
+                vector4 a = vmul(vmul(d, k), t);
+                vector4 c = vmul(a, 0.33f);
+                float dx = c.x * br;
+                float dy = c.y * br;
+                float dz = br * c.z;
+                out_dir->x += dx;
+                out_dir->y += dy;
+                out_dir->z += dz;
             }
             }
         next:

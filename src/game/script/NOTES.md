@@ -1,4 +1,4 @@
-# script_interpreter: the Module System operation interpreter (0x49fa10)
+# script_interpreter: the Module System operation interpreter (0x49fa10) and the rest of its original object
 
 `Operation::execute(__int64* locals, int* context, int* error)` (thiscall, `ret 0xc`, 69416 bytes with its
 jump table) runs one operation of a script, trigger, menu or dialog block. It is the largest function of the
@@ -10,11 +10,11 @@ Files:
 
 | file | content |
 |---|---|
-| `script_interpreter.cpp` | the validators 0x49cc60..0x49d4b0 and `Operation::execute` |
+| `script_interpreter.cpp` | one original translation unit, bodies in address order: party2/camera.cpp was merged in (panel views, GameData members, order code, validators, operand accessors, Camera, sprites, `Operation::execute`, the block runner) |
 | `script_interpreter.h` | every record, global and callee the interpreter touches (views of the shared headers, see below) |
 | `script_opcodes.h` | `namespace op`: every header_operations.py name as an enum value, plus the flag bits `op::neg` (0x80000000) and `op::this_or_next` (0x40000000) |
-| `script_interpreter.manifest.txt` | byte-exact rows (report and four validators) |
-| `script_interpreter.nonmatching.txt` | `execute` and the other 18 validators: complete, not byte-exact |
+| `script_interpreter.manifest.txt` | byte-exact rows (36: 13 from camera, 23 from here) |
+| `script_interpreter.nonmatching.txt` | `execute` and 24 other rows: complete, not byte-exact |
 | `PROGRESS.md` | cases done per opcode range (591 / 591) |
 
 Build: `/O2 /MT /Gy /TP`, no `/EH`, nothing else. It compiles without warnings.
@@ -135,19 +135,24 @@ Conflicts worked around locally:
 
 ## What the object can see (the key to the register map)
 
-The original compiled `execute` with several callee bodies visible, and that decides which operand dwords stay in
-registers. A call to a callee cl can see and that calls nothing opaque does not kill `params` (whose address escapes
-through `set_lvalue`), so values survive it. Visible here, as duplicates of the canonical definitions (build.py takes
-each from its row's module): `get_operand`, `Map10007::lookup` (`inline`, or `check_party` sees its register use and stops
-matching), `PartyMgr::get`, `PartyMgr::is_live`, `next_party_id`, `Party::max_stacks/first_flagged/count_tail/sum_*`,
-`TableauTbl::current`, `AgentTable::get/next_used`, `min_int`. They are defined after the validators.
-`set_lvalue` must stay opaque: with its body visible `locals` leaves ebp and `params` no longer reloads after a call.
-`first_flagged`, `count_tail` and `is_live` are each required (removing one loses about 30 identical cases). Tried and not
-kept: `Troop::is_hero` (worse), the vector4 operators (neutral, fewer same-size cases).
+The merge settled the old contradiction. `set_lvalue` 0x49d500 is in this object, and cl sees every body in the file whatever its position
+(moving it to the end changes nothing). The earlier "visible set_lvalue breaks the register map" (18 identical) had a different cause:
+**nothing took `params`' address any more**, so its dwords stayed in registers across every call. The front end only has to see the address taken once:
+`__int64* args = params;` is enough, and the reference or pointer need not be used (`const __int64& x = params[0]` and an inline helper
+taking `const __int64&` do the same). With that:
+- `esi` = params[0] low and `ebx` = params[1] low, with reloads after calls, exactly as in the original.
+- `SET_LV` is a by-value temporary again; the shared `lv_` is gone. The temporaries pack at 0x18, sharing with validator temporaries as in the original.
+- `SlotArray::set` stays visible, so its slot temporary shares 0x10 with validator temporaries as in the original.
+- The prologue is instruction for instruction the original's, with params at 0x2c, except `opcode` (0x10 here, 0x20 there).
 
-Measured by a scratch per-case comparison on `work/match/`: compile, compare each jump-table target's instructions with
-relocations masked. Selecting the cases by bisection (compile with only cases [a,b)) is what found `assign`'s
-`&params[1]` as the point where the cached set changes.
+Other callees whose bodies this object sees, as duplicates of the canonical definitions (build.py takes each from its row's module): `Map10007::lookup` (`inline`),
+`PartyMgr::get/is_live/next_party_id`, `Party::first_flagged/count_tail/sum_*`, `TableauTbl::current`, `AgentTable::get/next_used`, `min_int`, `clamp_index`, `round_float`,
+`rand_below`, `round_i64`, the vector4 operators, `imax_ref`, `fmin_ref`, `clamp`, `rotate_about_*`, `Sel::set_vec`, `set_fog`, `EmitTable::spawn`, `set_camera_parameters`,
+`SlotArray::get/set`, `NamedSelRec::set_sel`. Removing any one was re-measured after the merge: none gains identical cases (most lose cases or frame; a few are neutral).
+`Party::max_stacks` (0x4b1700, after this TU) stays opaque.
+
+Tool: `work/match/bm4o1_c.py --real lo hi` lists real slots (push-adjusted) per case on both sides, `--vs` the low slots per case. That is how the two stray dwords
+below params were found: one slot used only by `add_companion_party`, whose forwarder passed three floats where the original passes a by-value `vector4` (ret 0x14).
 
 ## Open problems
 
@@ -166,24 +171,16 @@ relocations masked. Selecting the cases by bisection (compile with only cases [a
    `result = 0` tails all jump to `ge`'s block in the original, which needs every other tail in `if (ok) result=1; else result=0;` form;
    by-value `__forceinline` wrappers spill their arguments (call the real signature, as map_get_*_position does now); RHS-first assignment
    (`ASSIGN_MAT`, `ASSIGN_STR`).
-   Open, the next thing to crack: `result` is very likely address-taken in the original. `char& rr_ = result;` after its declaration, with
-   `main_party_has_troop` looping on the function-scope `i`, makes that case's loop exact except for one thing: the original increments with
-   `mov edx,[i]; inc edx; ...; mov [i],edx`, cl here folds it to `inc dword ptr [i]` (i++, i=i+1, n=i++, unsigned casts, do/while(++i) all fold).
-   That missing temporary is one step of the rotation chain: this form alone gives 229 identical, and adding one dummy temporary inside
-   that loop gives 295 with same-size 396 (the best seen) and the right callee-saved map. So the source is one spelling of the increment away from
-   beating the current form. Not adopted until that spelling is found.
-   Also open: `mov edx,esi; push edx; lea ecx,[eax+0xf8]; lea edi,[eax+0xf8]` at the start of hero_can_join / troops_can_join (4 cases).
-1. **Frame layout** (the bulk of the byte diff). The original packs nearly all temporaries and block locals
-   into a handful of slots (validator argument temps at esp+0x10 or 0x18, the set_lvalue value at 0x18,
-   clamp/`vector4::set` arguments at 0x10/0x20/0x24/0x28 reusing the dead `opcode` and `i` slots) and keeps
-   params at 0x2c, types at 0xb4, or_next at 0xf4, neg at 0x100, the message buffer at 0x920 and four 0x400
-   link buffers above it (frame 0x1ec0). cl 13.10 does the same packing on parts of this file (any 300 cases
-   compiled alone pack well) but gives up as the function grows: compiled whole, ~200 named locals and ~200
-   temporaries keep slots of their own (frame 0x2630; every stack displacement then differs). Synthetic tests
-   reproduce the cut-off (a switch with ~600 cases of three address-taken locals packs into 4 slots, ~700
-   cases into none). Declaration order does not change the layout. The original therefore had fewer packing
-   candidates than this source; finding the spelling that gets under the limit (fewer named locals passed by
-   address, more temporaries, or shared function-scope scratch variables like `lv_`) is the next step.
+   Open, the next thing to crack: `result` is very likely address-taken in the original (`char* rr_ = &result;`: `main_party_has_troop` then loops like the original, except
+   `mov edx,[k]; inc edx; ...; mov [k],edx` against cl's `inc dword ptr [k]`; every spelling of the increment tried folds, and a `volatile` counter restores the chain but
+   not the loop). With rr_ today: 245 identical, first regression at party_is_in_any_town, right after hero_can_join and troops_can_join. Those four cases open with
+   `mov edx,esi; push edx; lea ecx,[eax+0xf8]; lea edi,[eax+0xf8]`, an uneliminated copy and an un-CSEd lea, and that missing temporary rotates what follows. Tried without success:
+   by-value and by-reference inline wrappers, `party(game()->main_party)`, a `main` assigned inside the argument, `m` after the call. The second load in the same case is
+   `mov eax,[G]; mov ecx,[eax+0x78]; push ecx; lea ecx,[eax+0xf8]`, which suggests the first site is the same expression with its load CSEd into a copy.
+1. **Frame layout**: 0x1ee8 against 0x1ec0, 0x28 to lose. Low slots agree with the original from 0x10 to params at 0x2c except `opcode`. Still private here and low there:
+   `set_battle_advantage` (same source as `party_set_morale`, which packs; cause unknown), `spawn_item`'s ItemRef (visible `set_modifier` alone does not help), the
+   `cur_tableau_add_*` and `cur_*_set_tableau_*` temporaries, `prop_instance_animate_to_position`, `race_completed_by_player`. The validator temporary leaves slot 0x10 at case 1993 in the original and about 2100 here.
+   Dropping cases only removes their own slots: no sign of a cumulative packing limit on this source.
 2. Validators: the 65-byte range checks differ by the argument register (EAX vs the original's ECX) and the
    register of the `g_cur_opcode` load; `check_party`, `warn_tableau`, `warn_scene_prop_instance`,
    `warn_agent` and `check_string_arg` need register conventions cl only chooses itself.
@@ -195,7 +192,5 @@ relocations masked. Selecting the cases by bisection (compile with only cases [a
 
 ## Translation unit
 
-The original object runs at least from 0x49a0b0 to 0x4b1xxx: party2/camera.cpp and this file are one TU split in two here. Execute's callees in that range
-(`Mission::place` 0x49b4b0, `spawn_party_scene` 0x49f3d0, `create_companion_party` 0x49ef00, the block runner's globals) are visible there. Merging the two files
-would allow `static int g_script_error` for real and reduce the duplicated bodies above. `set_lvalue` 0x49d500 stays the exception: visible, it
-breaks the register map (18 identical), although the original's lvalue temporary shares slot 0x18 with validator temporaries, which an opaque callee does not allow.
+The original object runs at least from 0x49a0b0 to 0x4b1xxx; every reference to 0x5e2590..0x5e25a4 lies in it. party2/camera.cpp is merged here, so `g_script_error` is a true file static.
+`GameCompanion::create_companion_party` is a local view because include/game_data.h still declares the old three-float signature: move it to `GameData` when that header is next edited (no other caller exists).

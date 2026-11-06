@@ -282,7 +282,6 @@ void Mission::start_setup()
     std::vector<PlacedObj>& props = at<std::vector<PlacedObj> >(0x6688);
     {
     vector4 u;
-    {
     int ptype;
     ptype = RAWAT(int, party_rec(pm, pid), 0x5978);
     if (0) { extern void sinkp(int*); sinkp(&ptype); }
@@ -451,11 +450,13 @@ void Mission::start_setup()
             int a = fr * 0x1b0b + parity + y * 0x230b + x * 17;
             int c = fr * 0xf4d + parity + y * 0x16a1 + x * 19;
             int b = y * 0x19c9 + parity + fr * 0x1e6f + x * 31;
+            a &= 0x7fffff; c &= 0x7fffff; b &= 0x7fffff;
+
             unsigned mc = (unsigned)g_bit[31] - 1;
-            b &= 0x7fffff; a &= 0x7fffff; c &= 0x7fffff;
             put(g_terrain.bits[0], mc, 0, a);
             put(g_terrain.bits[2], mc, 0, c);
             put(g_terrain.bits[1], mc, 0, b);
+
 
             unsigned seed = (at<int>(0x5270) % 3 + RAWAT(int, g_game, 4) * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
                             0x1ddcf5f + 0x2f784719;
@@ -535,8 +536,8 @@ void Mission::start_setup()
             vec2 z;
             z.x = 0.0f;
             z.y = 0.0f;
-            at<float>(0x652c) = z.x;
-            at<float>(0x6530) = z.y;
+            at<vec2>(0x652c) = z;
+
         }
         at<float>(0x6534) = (float)(g_terrain.bits[3] & ((unsigned)g_bit[10] - 1));
         at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
@@ -557,7 +558,6 @@ void Mission::start_setup()
         at<int>(0x6538) = at<int>(0x6548);
     }
     g_terrain.tail = at<tstring>(0x6814);
-    }
 
 
     // ---- prop bounding box, two passes ------------------------------------------------------
@@ -571,8 +571,9 @@ void Mission::start_setup()
             v.y = (RAWAT(float, p, 0x1c) * k->f58 + (RAWAT(float, p, 0x2c) * k->f5c + RAWAT(float, p, 0x3c) * k->fx60)) + RAWAT(float, p, 0x4c);
             v.z = (RAWAT(float, p, 0x20) * k->f58 + (RAWAT(float, p, 0x30) * k->f5c + RAWAT(float, p, 0x40) * k->fx60)) + RAWAT(float, p, 0x50);
             hi = v;
-            v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
-            at<float>(0x652c) = fmin2(at<float>(0x652c), v.x);
+            float lx = v.x - k->f68;
+            v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
+            at<float>(0x652c) = fmin2(at<float>(0x652c), lx);
             at<float>(0x6530) = fmin2(at<float>(0x6530), v.y);
             at<float>(0x6534) = fmax2(at<float>(0x6534), hi.x);
             at<float>(0x6538) = fmax2(at<float>(0x6538), hi.y);
@@ -586,8 +587,9 @@ void Mission::start_setup()
             v.y = (RAWAT(float, p, 0x2c) * k->f5c + (RAWAT(float, p, 0x3c) * k->fx60 + RAWAT(float, p, 0x1c) * k->f58)) + RAWAT(float, p, 0x4c);
             v.z = (RAWAT(float, p, 0x30) * k->f5c + (RAWAT(float, p, 0x40) * k->fx60 + RAWAT(float, p, 0x20) * k->f58)) + RAWAT(float, p, 0x50);
             hi = v;
-            v.x -= k->f68; v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
-            at<float>(0x652c) = fmin2(at<float>(0x652c), v.x);
+            float lx = v.x - k->f68;
+            v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
+            at<float>(0x652c) = fmin2(at<float>(0x652c), lx);
             at<float>(0x6530) = fmin2(at<float>(0x6530), v.y);
             at<float>(0x6534) = fmax2(at<float>(0x6534), hi.x);
             at<float>(0x6538) = fmax2(at<float>(0x6538), hi.y);
@@ -694,26 +696,29 @@ void Mission::start_setup()
     if (LV.flags.b10) {
         at<int>(0x5278) = 5;
         int par = rand() % 2;
-        for (int s = 0; s < 5; s++) {
+        for (ptype = 0; ptype < 5; ptype++) {
             lane(v, 1 - par) = ((RND() * 6.32231167e-05f) * 0.400000006f + 0.300000012f) * (RECT(3 - par) - RECT(1 - par)) + RECT(1 - par);
-            float b = (((RND() * 6.32231167e-05f - 0.5f) * 0.100000001f + s) * 0.25f) * 0.600000024f + 0.200000003f;
-            if (s < 2)
+            float b = (((RND() * 6.32231167e-05f - 0.5f) * 0.100000001f + ptype) * 0.25f) * 0.600000024f + 0.200000003f;
+            if (ptype < 2)
                 b = b * 0.75f;
-            else if (s > 2)
+            else if (ptype > 2)
                 b = 1.0f - (1.0f - b) * 0.75f;
             lane(v, par) = b * (RECT(2 + par) - RECT(par)) + RECT(par);
             v.z = 1000.0f;
-            SceneSlot* sl = &SLOT(s);
+            SceneSlot* sl = &SLOT(ptype);
             mat3 tmp;
-            *(mat3*)&sl->A = *identity3(&tmp);
-            sl->A.o = v;
+            rgl::matrix* a = &sl->A;
+
+            *(mat3*)a = *identity3(&tmp);
+            a->o = v;
             u.z = 0.0f;
             lane(u, 1 - par) = 0.0f;
-            if (s < 2) lane(u, par) = 1.0f;
+            if (ptype < 2) lane(u, par) = 1.0f;
             else lane(u, par) = -1.0f;
-            sl->A.f = u;
-            sl->A.orthonormalize();
-            sl->B = sl->A;
+            a->f = u;
+            a->orthonormalize();
+            sl->B = *a;
+
         }
     }
     }
@@ -727,13 +732,13 @@ void Mission::start_setup()
     // ---- per-prop frame copy into the table ----------------------------------------------------
     {
     vector4 t20;
-    for (unsigned i = 0; i < at<std::vector<PlacedObj> >(0x6688).size(); i++) {
-        PlacedObj* p = &PROP(i);
+    for (ptype = 0; (unsigned)ptype < at<std::vector<PlacedObj> >(0x6688).size(); ptype++) {
+        PlacedObj* p = &PROP(ptype);
         if (RAWAT(int, p, 0x188) == 1) {
             int sl = RAWAT(int, p, 0x1a0);
             if (sl >= 0 && sl < 0x40) {
                 SLOT(sl).A.o = RAWAT(vector4, p, 0x48);
-                *(mat3*)&SLOT(sl).A = RAWAT(mat3, &PROP(i), 0x18);
+                *(mat3*)&SLOT(sl).A = RAWAT(mat3, &PROP(ptype), 0x18);
                 SLOT(sl).B = SLOT(sl).A;
                 u.x = 0.0f; u.y = 0.0f; u.z = 1.0f;
                 vector4* up = &SLOT(sl).B.u;
@@ -869,21 +874,19 @@ void Mission::start_setup()
         float two = 2.0f;
         eb->v6(&two);
         }
-        int mi;
-
         at<Mesh*>(0x65c4) = (Mesh*)new rgl::mesh;
         RAWAT(unsigned, at<Mesh*>(0x65c4), 0x10c) &= 0xfffeffff;
         RAWAT(int, at<Mesh*>(0x65c4), 0x114) = 1;
         RAWAT(int, at<Mesh*>(0x65c4), 0x140) = 1;
         {
             Entity* e2 = at<Entity*>(0x65c0);
-            mi = (int)at<Mesh*>(0x65c4);
+            int mi = (int)at<Mesh*>(0x65c4);
             RAWAT(std::vector<int>, e2, 0x118).push_back(mi);
             e2->v4();
-        }
         {
             tstring nm("sun");
             at<Mesh*>(0x65c8) = (Mesh*)g_resmgr.get_object(&nm)->clone();
+        }
         }
         RAWAT(int, at<Mesh*>(0x65c8), 0x114) = 1;
         RAWAT(int, at<Mesh*>(0x65c8), 0x140) = 1;
@@ -899,7 +902,8 @@ void Mission::start_setup()
         at<Mesh*>(0x65c8)->scale(50.0f);
         {
             Entity* e2 = at<Entity*>(0x65c0);
-            mi = (int)at<Mesh*>(0x65c8);
+            int mi = (int)at<Mesh*>(0x65c8);
+
 
 
             RAWAT(std::vector<int>, e2, 0x118).push_back(mi);

@@ -22,7 +22,7 @@
 ../src/game/party2/party_2.cpp  ?pop_heap_elem@@YAXPAUOpenItem@@00U1@UHeapGt@@PAH@Z  004b2610  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?construct_events@@YAPAUE92@@PAU1@00PAUElemCopier@@Uptr_tag@@@Z  004b2670  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?fill_n_elems@ElemCopier@@QAEPAUOpenItem@@PAU2@I0@Z  004b26e0  /O2 /MT /Gy /TP
-../src/game/party2/party_2.cpp  ?push_back_elem@@YAXPAUOpenItem@@0UHeapGt@@@Z  004b2710  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?push_back_elem@@YAXViterator@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@0UHeapGt@@@Z  004b2710  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?set_order_pos@Party@@QAEXPAH@Z  004b2970  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?clear_map_flag@Party@@QAEXXZ  004b32f0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?construct_events_n@@YAXPAXIPBXPAUElemCopier@@H@Z  004b3350  /O2 /MT /Gy /TP
