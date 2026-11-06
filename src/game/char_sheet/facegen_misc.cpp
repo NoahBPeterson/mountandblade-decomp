@@ -280,10 +280,10 @@ void __cdecl menu_variables_loaded(char flag)
 {
     if (!flag && !g_cfg.enable_edit_mode)
         return;
-    load_game_variables();   // 0x4c0520
+    ((void (__fastcall*)(void*))load_game_variables)(&g_app_obj);   // 0x4c0520 (a member of the application object in the original: ecx is loaded and ignored)
     if (flag)
         return;
-    int value = current_screen_id();
+    int value = g_windows.dq[g_windows.dq.size() - 1];   // [size - 1] rather than back(): the offset folds into `lea [off + size - 1]`
     g_windows.set_state(value);
     g_gui.add("Menu variables are loaded...", 0xffff0000);
 }

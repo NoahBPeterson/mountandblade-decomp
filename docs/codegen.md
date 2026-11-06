@@ -1186,6 +1186,36 @@ instead of unrolled `movs`.
 
 ---
 
+## 14A. Near misses: the source had more structure than ours
+
+Found on 2026-11-05 by retrying rows 3-10 instructions from a match. Varying statements inside the flattened shape
+matched 1 of 18; restoring the structure below matched 8 of 17, usually within two compiles. When a row is one address
+computation, one branch or one frame slot away, look here first.
+
+- **A small inline helper was written out.** Inlining changes constant folding and block layout. `(idx + 0xb0c) << 4`
+  stopped folding once the access went through an inline `ring_add(Ring* r, ...)` indexing from the ring's own pointer
+  (0x4334b0). `if (n == 0) mb_error(...); int idx = rand_below(n);` with an inline `rand_below` gave the two separate
+  zero blocks (0x514360).
+- **A reused named local was really an argument temporary.** One frame slot holding different values, with stores
+  delayed until after the pushes, means `f(T(...))` through a const reference, including a literal to `const int&`
+  (0x4995e0, 0x4996e0).
+- **Wrong scope.** Declare locals per arm when immediate stores land after a hoisted push (0x49abc0). A destructor
+  that runs mid-function means a named temporary in its own block: `{ tstring t("x"); path.append(t); }` (0x4c3350).
+- **A member destructor was written by hand.** A free that runs after an array member's destructors belongs in the
+  member's own destructor (`VarVec`, 0x4cb9e0).
+- **A store through a reference is an alias barrier.** `int& h = hword;` keeps a later load from being scheduled above
+  the store (0x482170).
+- **STL spelling matters.** `dq[dq.size() - 1]` and `dq.back()` compile differently (0x4ebb80).
+- **`mov ecx, ...` before a call to a free function means a member call.** Fix the declaration (0x4ebb80, 0x4406a0).
+- **Struct copies.** A copy through a typed pointer (`*d = *(const vector4*)c`) can match where four scalar copies
+  cannot (0x48f5a0). `lea r, [r]` padding inside a loop means a real nested `for`, not `for(;;)` with gotos (0x4d6f90).
+- **Base pointer plus index.** `Troop* t = &troops[sel]; t->inv[i].item = -1` instead of a precomputed field pointer
+  stops cl folding the offset into one `lea` (0x5168b0).
+
+Rows that resisted all of these, so stop early: SIB base/index order (`[ebx+ecx]` against `[ecx+ebx]`) and `fld/fmul`
+operand order, callee-saved or scratch register rotation alone, one instruction scheduled a slot away with no structural
+difference, and a read-modify-write `or [m], r` where the original loads, ors and stores.
+
 ## 15. Not source-controllable, or without a known lever
 
 Record the function as complete and move on after two rounds without a diff drop.

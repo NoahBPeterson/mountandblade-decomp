@@ -55,3 +55,4 @@
 ../src/rgl/mesh2/mesh_2.cpp  ?read@ObjectList@@QAEXPAUstream_base@@@Z  004cdfd0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0MissionObj@@QAE@XZ  004ce2a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0MissionRec2@@QAE@XZ  004ce680  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ??1ScriptState@@QAE@XZ  004cb9e0  /O2 /MT /Gy /TP

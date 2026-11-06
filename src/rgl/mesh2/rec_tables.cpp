@@ -220,7 +220,10 @@ void load_skyboxes()
 {
     tstream3 r;
     tstring path(g_module_path);
-    path.append(tstring("actions.txt"));
+    {
+        tstring t("actions.txt");
+        path.append(t);
+    }
     const char* nm = path.buf ? path.buf : (const char*)&path.buf;
     if (!((text_file*)&r)->open_read_text(nm))
         mb_error("Unable to open %s", nm);

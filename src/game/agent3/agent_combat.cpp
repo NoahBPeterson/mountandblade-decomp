@@ -544,6 +544,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
     }
 }
 
+struct Word_ { int v; Word_(int i) : v(i) {} };   // a class-typed argument: a fastcall never passes it in a register
 // @ 0x4406a0
 int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* target)
 {
@@ -612,7 +613,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
                 if (sp.item < 0)
                     return 1;
             }
-            return ::id_matches_dir(grp, mode);
+            return ((int (__fastcall*)(void*, Word_, Word_))::id_matches_dir)(this, Word_(grp), Word_(mode));   // 0x4326d0: `this` is loaded and ignored
         }
     }
     return 0;

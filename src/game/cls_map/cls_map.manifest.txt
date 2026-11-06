@@ -34,3 +34,4 @@
 ../src/game/cls_map/cls_map.cpp  ?msg_proc_thunk@@YGHPAUHWND__@@IIJ@Z  004d9440  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  _$E1  00547a00  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  _$E3  00547a60  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?init_screen@Rec34@@UAEXXZ  004de5b0  /O2 /MT /Gy /TP

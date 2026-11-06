@@ -92,9 +92,11 @@ void WItem::terrain_refresh(const float* off)
 {
     FieldPanel* p = (FieldPanel*)(void*)this;
     float v[2];
-    v[0] = off[0] * 0.02f;
+    float a = off[0] * 0.02f;
+    FieldVisual* w = p->scene()->view[0];
+    v[0] = a;
     v[1] = off[1] * 0.02f;
-    p->scene()->view[0]->set_size(v);
+    w->set_size(v);
     *(int*)&p->fD8 = ((const int*)off)[0];
     *(int*)&p->fDC = ((const int*)off)[1];
     p->update();
@@ -230,11 +232,8 @@ void TableauTbl::set_background_color(int c)
 void TableauTbl::set_ambient_light(const float* c)
 {
     TabCurrent* t = (TabCurrent*)worlds[worlds.size() - 1];
-    float* d = t->ambient;
-    d[0] = c[0];
-    d[1] = c[1];
-    d[2] = c[2];
-    d[3] = c[3];
+    rgl::vector4* d = (rgl::vector4*)t->ambient;
+    *d = *(const rgl::vector4*)c;
 }
 
 // the widget `idx` is re-read from the manager's vector at every use

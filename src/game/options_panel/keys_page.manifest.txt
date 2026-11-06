@@ -2,3 +2,4 @@
 ../src/game/options_panel/keys_page.cpp  ?frame_update@Rec1bc@@UAEXM@Z  004d6e50  /O2 /MT /Gy /TP
 ../src/game/options_panel/keys_page.cpp  ?restore@GameKeys@@QAEXXZ  004d6fd0  /O2 /MT /Gy /TP
 ../src/game/options_panel/keys_page.cpp  ?save@GameKeys@@QAEXXZ  004d7000  /O2 /MT /Gy /TP
+../src/game/options_panel/keys_page.cpp  ?forget@GameKeys@@QAEXHH@Z  004d6f90  /O2 /MT /Gy /TP

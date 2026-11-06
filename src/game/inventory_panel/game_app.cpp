@@ -40,7 +40,11 @@ static __forceinline const char* c_str(const tstring* s)
 // ---- the engine widget interface: only the slots this slice dispatches ---------------------------------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
-void __cdecl frame_hook(void);                               // 0x4ec460 (game/char_sheet/screen.cpp: the end-of-frame callback, a free function)
+// 0x4ec460 (game/char_sheet/screen.cpp defines it as a free function whose body never reads `this`): the original calls it
+// as a method of the current screen (the id-ring lookup's result is in ecx at the call), so it is declared as one here.
+struct ScreenFrameHook {
+    void frame_hook(void);                                   // 0x4ec460
+};
 
 #include "../window_mgr.h"               // IdStack g_id_stack (0xa739f8), current_screen_id
 
@@ -147,11 +151,11 @@ HRESULT GameApp::FrameMove()
         }
     }
     if (g_cfg.enable_edit_mode) {
-        if (g_keyboard.down[0x32] && !g_keyboard.prev[0x32]) {
-            if ((g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_keyboard.down[42])) {
+        if (g_keyboard.down[0x32]) {
+            if (!g_keyboard.prev[0x32] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) && (g_keyboard.down[0x36] || g_keyboard.down[42])) {
                 load_skyboxes();
                 g_gui.add(tstring("Animation data restored."), -1);
-            } else if (g_keyboard.down[0x9d] || g_keyboard.down[0x1d]) {
+            } else if (!g_keyboard.prev[0x32] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
                 load_data_files();
                 load_module_files();
                 g_gui.add(tstring("Module data restored."), -1);
@@ -159,13 +163,13 @@ HRESULT GameApp::FrameMove()
         }
     }
 
-    frame_hook();
+    slot_as<ScreenFrameHook>(current_screen_id())->frame_hook();
     slot_as<head_rec>(current_screen_id())->frame_update(dt);
 
     if (g_game) {
         // (0x50f057, the "hide" path, is reached whenever f1a090 is 0, on screen 0xe or not)
-        if (g_game->f1a090) {
-            if (current_screen_id() == 0xe) {
+        if (current_screen_id() == 0xe && g_game->f1a090) {
+            {
                 if (!g_game->f1a160) {
                     if (!m_hMapEditorDlg) {
                         m_hMapEditorDlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xc0, m_hWnd,
@@ -203,7 +207,7 @@ HRESULT GameApp::FrameMove()
                     g_game->f1a1c8 = 0;
                 }
             }
-        } else {
+        } else if (!g_game->f1a090) {
             if (g_game->f1a160) {
                 if (m_hMapEditorDlg)
                     ShowWindow(m_hMapEditorDlg, 0);
@@ -228,7 +232,7 @@ HRESULT GameApp::FrameMove()
         }
     }
 
-    m_bShowCursorWhenFullscreen = g_gui.show_cursor;
+    m_bShowCursorWhenFullscreen = *(bool*)&g_gui.show_cursor;   // a plain byte copy (a char -> bool conversion would normalise 0xff to 1; gui_manager.h declares it char)
     if (g_saved) m_bQuitRequested = true;
     return 0;
 }

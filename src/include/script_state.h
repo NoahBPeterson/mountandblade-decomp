@@ -26,6 +26,7 @@ union TriggerResult { __int64 value; struct { int store0; int store1; }; };
 // the script variables: std::vector<__int64> with the allocator word, constructed empty (List8's other users are records the compiler never constructs)
 struct VarVec : List8 {
     VarVec() { _Myfirst = 0; _Mylast = 0; _Myend = 0; }
+    ~VarVec() { if (_Myfirst) operator delete(_Myfirst); _Myfirst = 0; _Mylast = 0; _Myend = 0; }   // runs after str[]'s destructors (~ScriptState 0x4cb9e0)
 };
 
 struct ScriptState {

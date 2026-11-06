@@ -6,3 +6,5 @@
 ../src/game/inventory_panel/mission_ctx.cpp  ?start_battle@MissionCtx@@QAEXHHHH@Z  00514c00  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ??0mat2@@QAE@PBM0@Z  00516220  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?data_ready@PartyV@@QAEHXZ  005166a0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?reset_trade_ids@GameDataV@@QAEXXZ  005168b0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?pick_template@MissionCtx@@QAEXXZ  00514360  /O2 /MT /Gy /TP

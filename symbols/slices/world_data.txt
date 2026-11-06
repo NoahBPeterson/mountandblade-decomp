@@ -11,3 +11,5 @@
 0048ce90 ?_Ufill@?$vector@_JV?$allocator@_J@std@@@std@@IAEPA_JPA_JIAB_J@Z  # std instantiation called out of line from this module (resolution audit local copy)
 004927d0 ?_Insert_n@?$vector@PAUParty@@V?$allocator@PAUParty@@@std@@@std@@IAEXViterator@12@IABQAUParty@@@Z  # std instantiation called out of line from this module (resolution audit local copy)
 004927d0 ?_Insert_n@?$vector@PAUMissionUi@@V?$allocator@PAUMissionUi@@@std@@@std@@IAEXViterator@12@IABQAUMissionUi@@@Z  # std instantiation called out of line from this module (resolution audit local copy)
+00490930 ??_EContainerBase@@UAEPAXI@Z  # deleting destructor, slot 0 of vtable 0x5924a0
+004933d0 ??_EDropDown@@UAEPAXI@Z  # deleting destructor, slot 0 of the vtable ctor 0x4931d0 stores

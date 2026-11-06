@@ -447,6 +447,8 @@ void MissionCtx::setup(unsigned flags, int delta)
     WL_MARKER(13)
 }
 
+// a random index below n (the original inlined a helper of this form: its two zero returns stay separate blocks)
+static inline int rand_below(int n) { if (n <= 1) return 0; return rand() % n; }
 // @ 0x514360
 void MissionCtx::pick_template()
 {
@@ -458,15 +460,9 @@ void MissionCtx::pick_template()
         if (g_mission_templates[i].type == kind)
             found[n++] = i;
     }
-    int idx;
-    if (n == 0) {
+    if (n == 0)
         mb_error("Unable to find matching mission template for mission type %d.", kind);
-        idx = 0;
-    } else if (n <= 1) {
-        idx = 0;
-    } else {
-        idx = rand() % n;
-    }
+    int idx = rand_below(n);
     SCENE->init(found[idx], 0, 0, f1c, this, f24, side);
 }
 
@@ -1226,11 +1222,9 @@ void MissionCtx::update_anim()
 // @ 0x5168b0  clear the 0x60 (stride 8) trade ids of the record selected by f90
 void GameDataV::reset_trade_ids()
 {
-    ItemRef* p = &troops[*(int*)((char*)this + 0x90)].inv[0];
-    for (int i = 0; i < 0x60; i++) {
-        p->item = -1;
-        p++;
-    }
+    Troop* t = &troops[*(int*)((char*)this + 0x90)];
+    for (int i = 0; i < 0x60; i++)
+        t->inv[i].item = -1;
 }
 
 // @ 0x5168e0  rebuild a party's id grid (the 0x20-slot rows at party+0xa8)

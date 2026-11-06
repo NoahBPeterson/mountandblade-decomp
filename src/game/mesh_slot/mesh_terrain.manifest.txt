@@ -1,1 +1,2 @@
 ../src/game/mesh_slot/mesh_terrain.cpp  ?destroy_water@Terrain@@QAEXH@Z  004814a0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_terrain.cpp  ?regenerate_water@Terrain@@QAEXPAPAX_N@Z  00482170  /O2 /MT /Gy /TP

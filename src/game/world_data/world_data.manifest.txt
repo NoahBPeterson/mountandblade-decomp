@@ -54,3 +54,4 @@
 ../src/game/world_data/world_data.cpp  ??_GIfaceA@@UAEPAXI@Z  00431400  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??1Party@@UAE@XZ  00431b90  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??_EParty@@UAEPAXI@Z  00431cb0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?alloc_record@RecPool@@QAEIXZ  00493700  /O2 /MT /Gy /TP

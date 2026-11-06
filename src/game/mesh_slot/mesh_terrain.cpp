@@ -496,12 +496,13 @@ void Terrain::regenerate_water(void** out, bool mode)
     int r = (int)wx;
     if ((unsigned)r > (unsigned)mask)
         r = mask;
-    hword = (hword & ~mask) | r;
+    int& h = hword;                 // through a reference: the store is an alias barrier, wy's fld stays after it
+    h = (h & ~mask) | r;
     mask = (*(int*)((char*)&g_bit + 0x50)) - 1;
     r = (int)wy;
     if ((unsigned)r > (unsigned)mask)
         r = mask;
-    hword = (hword & ~(mask << 10)) | (r << 10);
+    h = (h & ~(mask << 10)) | (r << 10);
 }
 #undef hword
 

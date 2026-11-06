@@ -390,14 +390,17 @@ void widget_mgr::set_area_size(int idx, const float* pos)
 void MissionUi::layout_text_to(const tstring* text, const float* pos)
 {
     float out[2];
-    vector4 p;
-    p.z = 0.0f;
-    int arg = -1;
     if (f124) {
+        int arg = -1;
+        vector4 p;
+        p.z = 0.0f;
         p.x = pos[0];
         p.y = pos[1];
         ((Font*)f124)->layout_text(out, text, &p, &f140, tracks[4], (int)&arg, &screen[2], &screen[0], 0);
     } else {
+        int arg = -1;
+        vector4 p;
+        p.z = 0.0f;
         p.x = pos[0];
         p.y = pos[1];
         g_font->layout_text(out, text, &p, &f140, tracks[4], (int)&arg, &screen[2], &screen[0], 0);

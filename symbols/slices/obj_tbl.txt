@@ -1,0 +1,1 @@
+00502300 ??_EMeshWidget@@UAEPAXI@Z  # deleting destructor, slot 0 of the vtable create_mesh_overlay 0x4995e0 stores

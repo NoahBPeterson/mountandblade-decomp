@@ -12,3 +12,4 @@
 ../src/rgl/xmlcfg/agent_pick.cpp  ?set_v184@Obj3@@QAEXPBUvector4@rgl@@@Z  00433740  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/agent_pick.cpp  ?set_placement@Obj3@@QAEXPBUmatrix@rgl@@PBUvector4@3@1H@Z  00433770  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/agent_pick.cpp  ?reset_pending@Obj3@@QAEXH@Z  00433810  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/agent_pick.cpp  ?push@gui_manager@@QAEXABUtstring@@H@Z  004334b0  /O2 /MT /Gy /TP

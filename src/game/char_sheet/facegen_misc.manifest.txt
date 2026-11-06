@@ -1,1 +1,2 @@
 ../src/game/char_sheet/facegen_misc.cpp  ??1SkinVec@@QAE@XZ  004eb810  /O2 /MT /Gy /TP
+../src/game/char_sheet/facegen_misc.cpp  ?menu_variables_loaded@@YAXD@Z  004ebb80  /O2 /MT /Gy /TP

@@ -28,9 +28,9 @@ struct MeshWidgetVt {
     virtual void w4(); virtual void w5(); virtual void w6(); virtual void w7(); virtual void w8(); virtual void w9();
     virtual void w10(); virtual void w11(); virtual void w12(); virtual void w13(); virtual void w14(); virtual void w15();
     virtual void w16(); virtual void w17(); virtual void w18(); virtual void w19(); virtual void w20(); virtual void w21();
-    virtual void w22(void* a);                                  // +0x58
+    virtual void w22(const V2& a);                                 // +0x58
     virtual void w23(); virtual void w24(); virtual void w25(); virtual void w26(); virtual void w27(); virtual void w28();
-    virtual void w29(void* a);                                  // +0x74
+    virtual void w29(const int& a);                                 // +0x74
     virtual void w30(); virtual void w31();
     virtual void w32(int a, rgl::mesh* m);                      // +0x80
 };
@@ -157,12 +157,8 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 int WidgetMgrW::create_mesh_overlay(int index)
 {
     MeshWidget* w = new MeshWidget;
-    vec2 v;
-    v.x = 0.0f;
-    v.y = 0.0f;
-    ((MeshWidgetVt*)w)->w22(&v);
-    *(int*)&v.x = 0x700;
-    ((MeshWidgetVt*)w)->w29(&v);
+    ((MeshWidgetVt*)w)->w22(V2(0.0f, 0.0f));
+    ((MeshWidgetVt*)w)->w29(0x700);
     ((MeshWidgetVt*)w)->w32(0, g_meshes.placed(index));
     ((MeshWidgetVt*)w)->w3();
     scene->d50(w);
@@ -174,12 +170,8 @@ int WidgetMgrW::create_mesh_overlay(int index)
 int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
 {
     MeshWidget* w = new MeshWidget;
-    vec2 v;
-    v.x = 0.0f;
-    v.y = 0.0f;
-    ((MeshWidgetVt*)w)->w22(&v);
-    *(int*)&v.x = 0x700;
-    ((MeshWidgetVt*)w)->w29(&v);
+    ((MeshWidgetVt*)w)->w22(V2(0.0f, 0.0f));
+    ((MeshWidgetVt*)w)->w29(0x700);
     if (a >= 0) {
         rgl::mesh* m = g_meshes.placed(a);
         skin* nr = (skin*)g_tableaus.add_spawned(&b, (const int*)&c);   // 0x4b14b0

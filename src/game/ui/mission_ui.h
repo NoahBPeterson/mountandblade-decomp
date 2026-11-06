@@ -32,7 +32,7 @@ struct MissionUi {
     // function the original's slot names (the comment on each: slot, its address and owner). A derived widget class
     // overrides a slot with the same name and its own jmp.
     __declspec(noinline) virtual ~MissionUi();   // +0x00 0x487c00 (mesh_slot/slot.cpp); the deleting destructor 0x502300 is the compiler's (called with push 1 by 0x488ad0)
-    virtual bool is_active();                     // +0x04 "is active" (tested by 0x488720): returns 0 (0x4280e0; UiA & co. return 1: 0x48b170)
+    virtual bool is_active();                     // +0x04 0x4280e0 "is active": returns 0 (UiA & co. return 1: 0x48b170; tested by 0x488720)
     virtual void animate(int unused);       // +0x08 0x487c40 (mesh_slot/slot.cpp: the widgets' per-frame track animator; the argument is not used)
     virtual void update_bounds();           // +0x0c 0x48d020 (mission_ui2/mission_3.cpp: the union of the four shapes' bounds)
     virtual void set_a(float a, int b);                         // +0x10 0x488560
@@ -54,7 +54,7 @@ struct MissionUi {
     virtual void set_d4(int v);                                 // +0x50 0x488940
     virtual void or_d4(int m);                                  // +0x54 0x488950
     virtual void move_a(const float* p);                           // +0x58 0x488970: position/offset pair (0x487c40)
-    virtual void on_child_moved(MissionUi* src);       // +0x5c "child moved" notification, passed this (0x488970): `ret 4` (0x408030)
+    virtual void on_child_moved(MissionUi* src);       // +0x5c 0x408030 `ret 4`: the "child moved" notification, passed this (0x488970)
     virtual void on_moved();                     // +0x60 `ret` (0x477b70)
     virtual void set_xy(const float* p);                           // +0x64 0x4889b0 (0x488b50, 0x48b090)
     virtual void move_f8(const float* p);                          // +0x68 0x4889e0

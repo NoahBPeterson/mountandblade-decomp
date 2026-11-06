@@ -266,15 +266,12 @@ void Rec1bc::frame_update(float)
 void GameKeys::forget(int index, int button)
 {
     int* p = (int*)entry;
-    int loop = 0x25;
-    int n = 2;
-    for (;;) {
-        if (*p == button)
-            *p = -1;
-        p++;
-        if (--n) continue;
-        if (!--loop) break;
-        n = 2;
+    for (int loop = 0x25; loop != 0; loop--) {
+        for (int n = 2; n != 0; n--) {
+            if (*p == button)
+                *p = -1;
+            p++;
+        }
     }
     entry[index][0] = button;
 }

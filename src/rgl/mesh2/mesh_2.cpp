@@ -480,9 +480,10 @@ static inline void tidy_list(RawVec& v)
 // @ 0x4cb9e0
 ScriptState::~ScriptState()
 {
-    if (level) {
-        ((rgl::world*)level)->~world();   // 0x475d50: the grid destructor, called before the delete
-        operator delete(level);
+    rgl::world* lv = level;
+    if (lv) {
+        lv->~world();   // 0x475d50: the grid destructor, called before the delete
+        operator delete(lv);
     }
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
@@ -496,11 +497,6 @@ ScriptState::~ScriptState()
     tidy_list(mat_sea);
     tidy_list(mat_river);
     tidy_list(mat_type0);
-    if (vars._Myfirst)
-        operator delete(vars._Myfirst);
-    vars._Myfirst = 0;
-    vars._Mylast = 0;
-    vars._Myend = 0;
 }
 
 // @ 0x4cbb90

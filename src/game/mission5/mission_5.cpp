@@ -283,10 +283,10 @@ int find_speaker_agent()
 {
     unsigned found = (unsigned)-1;
     int speaker = g_n_dialogs_s257f0.speaker();
+    char any = 0;
     if ((g_game_s257f0->chars[speaker].flags & 0x10) || (*(int*)((char*)&g_dialogs + 0x14)) == -1) {
         AgentTable_s257f0* t = &g_mission_s257f0->agents;
         Agent_s257f0** pages = t->pages;
-        int any = 0;
         for (unsigned i = t->first_used(); i < (unsigned)t->count; t->next_used(&i)) {
             if ((pages[i >> 4] + (i & 0xf))->troop == speaker) {
                 found = i;

@@ -64,12 +64,16 @@ const RowRec* row_val;
 
 // ---- the int helpers -------------------------------------------------------------------------------------
 
-// @ 0x4fe0b0  vector<int>::push_back
+// vector<ui_cell>::push_back wrapper (inlined caller of the member below)
 void* __cdecl int_push_back() throw()
 {
     int_v.push_back(*int_x);
     return 0;
 }
+
+template std::vector<ui_cell>::iterator std::vector<ui_cell>::insert(std::vector<ui_cell>::iterator, const ui_cell&);
+// @ 0x4fe0b0  vector<ui_cell>::push_back (out of line)
+template void std::vector<ui_cell>::push_back(const ui_cell&);
 
 // @ 0x4fe190  vector<int>::insert(iterator, const int&) -- reached through insert(end, count, val) below
 void* __cdecl int_insert() throw()

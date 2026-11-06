@@ -126,15 +126,23 @@ float face::plane_z(const float* p) const
 // @ 0x433470
 composite::composite(const composite& o) : shape_base(inline_init()) { ((composite*)this)->copy_from(&o); }
 
+// gui_manager::Ring's inline "add" (a member of the ring in the original: the element address is computed from the ring's own
+// this, which keeps `names` from folding into `(idx + 0xb0c) << 4`)
+static inline void ring_add(gui_manager::Ring* r, const tstring& s, int v)
+{
+    if (r->count < 32) {
+        int idx = (r->head + r->count) % 32;
+        r->names[idx] = s;
+        r->vals[idx] = v;
+        r->count++;
+    }
+}
+
 // @ 0x4334b0
 void gui_manager::push(const tstring& s, int v)
 {
-    if (enabled && ring.count < 32) {
-        int idx = (ring.head + ring.count) % 32;
-        ring.names[idx] = s;
-        ring.vals[idx] = v;
-        ring.count++;
-    }
+    if (enabled)
+        ring_add(&ring, s, v);
 }
 
 static inline int ifloor(float f) { return (int)(f > 0.0f ? f : f - 0.99999988f); }
