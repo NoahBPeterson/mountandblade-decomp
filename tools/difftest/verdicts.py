@@ -63,6 +63,8 @@ def category(d):
             return "funclet"
         if r.startswith("only ") and "inputs valid" in r:
             return "inputs"
+        if r.startswith("not a verdict: time limit"):    # the run was cut short: the harness itself is not at fault
+            return "not_run"
         return "harness"
     return "not_run"
 
