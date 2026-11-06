@@ -1239,9 +1239,35 @@ Added by the second round (50 of 106 rows matched):
   boundary (0x4d5290).
 - **Markers.** A helper between a `// @ 0x...` marker and its function steals the marker. Put helpers above it.
 
+Added by the third round (59 matched, including two functions 109 and 144 instructions away):
+
+- **A large distance is often a few structural errors.** Fix types first: real vectors with `operator[]`, `vector4` and
+  `float2` locals, real arrays (a frame gap with no references marks an array only partly used, `__int64 params[16]` in
+  0x4b1160), per-block temporaries (0x520c00, 0x4b1160). Re-measure before chasing instructions. These rewrites also found
+  wrong field offsets and flags that no test had caught.
+- **Materialised vector reference.** `lea r,[base+i*4]; mov r,[r]` or `add r,base; mov r,[r+off]` is `vector::operator[]`,
+  `*(begin()+i)` or a `vector::iterator` local. Raw indexing folds the address (0x5169e0, 0x517960, 0x4c8000, 0x526130).
+- **`inline` on a same-TU callee's definition.** When ours keeps a value in edx/ecx across a call to a function in the same
+  file and the original saves it in esi, cl is using the callee's known register use. `inline` hides it (0x408420, 0x40a870).
+- **Retained result.** `mov bl,1` plus `xor al,al; ... mov al,bl` is `char r=1; if (bad) {report; r=0;} return r;` (0x49d160).
+- **Float pairs.** `mov [esp+N],0; mov r,[esp+N]` on one reused slot is a two-float temporary assigned whole (0x4644e0,
+  0x4bd120). `struct V2 {x,y} d = {a-b, c-e};` keeps several x87 values live (0x4333c0).
+- **Dead-parameter overlay.** A local whose slot is a parameter's home is a real local that cl overlaid on the dead
+  parameter. Don't write through the parameter (0x468c80).
+- **Hidden return.** A trailing `mov ecx,eax` on a "void" function, or eax being the result pointer at `ret`, means a hidden
+  return pointer (0x466ed0, 0x4fd4f0).
+- **Placement new against an explicit constructor call.** `new (p) T` adds `cmp reg,0; je` (0x4d3880).
+- **Clamps.** `if (v<0) v=0; else if (v>cap) v=cap; return v;` matched where early returns and ternaries did not (0x520420,
+  0x48bf90, 0x52cef0).
+- **Missing `WL_MARKER`.** `jmp; push edi; dec esp; and [eax],ah` in the original's alignment means one is missing (0x4c7290).
+- **A helper pulled in by a shared header can force a call.** `std_vec_out_of_line.h` makes every includer call 0x440b30
+  where the original inlines `push_back` (0x51eda0).
+
 Rows that resisted all of these, so stop early: SIB base/index order (`[ebx+ecx]` against `[ecx+ebx]`) and `fld/fmul`
 operand order, callee-saved or scratch register rotation alone, one instruction scheduled a slot away with no structural
 difference, and a read-modify-write `or [m], r` where the original loads, ors and stores.
+These are not absolute: a reference local flipped SIB order on 0x4c1e10, and an inline helper with reference parameters moved
+`fld/fmul` order on 0x414960, so try one of those before giving up.
 
 ## 15. Not source-controllable, or without a known lever
 
