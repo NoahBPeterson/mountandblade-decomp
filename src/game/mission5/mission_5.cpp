@@ -1343,8 +1343,8 @@ void ViewCtrl_s284a0::update(float dt)
     // ---- aiming at an agent while a melee weapon (or the fists) is out is slower ---------------------
     if (!g_game_s284a0->f1a090) {
         if (g_presentation == 0 || (flags44 & 1)) {
-            if (g_mission_s284a0->selected >= 0) {
-                Agent_s284a0* a = AGENT(g_mission_s284a0->selected);
+            if (g_mission->f5c >= 0) {
+                Agent_s284a0* a = (Agent_s284a0*)&agr_s284a0(g_mission->f5c);
                 ItemRef_s284a0 w0 = a->slot_pair(0);
                 ItemRef_s284a0 w1 = a->slot_pair(1);
                 bool hand0;
@@ -1404,12 +1404,11 @@ void ViewCtrl_s284a0::update(float dt)
         return;
 
     // ---- build the view frame and hand its forward row to the local agent ----------------------------
-    Agent_s284a0* a = (Agent_s284a0*)((g_mission->f5c & 0xf) + *(*(Agent***)((char*)g_mission + 0x1c) + ((unsigned)g_mission->f5c >> 4)));
-    float& y_ref = yaw;
+    Agent_s284a0* a = (Agent_s284a0*)&agr_s284a0(g_mission->f5c);
     {
         matrix m;
         identity3((rgl::mat3*)&m);
-        ((MatrixExt_s284a0*)&m)->rotate_sf(&y_ref);
+        ((MatrixExt_s284a0*)&m)->rotate_sf(&yaw);
         ((MatrixExt_s284a0*)&m)->rotate_fu(&p_ref);
 
         bool looking = false;
@@ -1427,7 +1426,7 @@ void ViewCtrl_s284a0::update(float dt)
         int n = snap + 1;
         p_ref = 0.0f;
         snap = n;
-        y_ref = ang;
+        yaw = ang;
     }
 
     // ---- movement / action bits ---------------------------------------------------------------------
@@ -1525,8 +1524,8 @@ void ViewCtrl_s284a0::update(float dt)
     if (g_cfg.cheat_mode != 0 && g_keyboard.down[29] != 0 && g_key_names_s284a0.is_ready(0x3e)) {
         bool done = false;
         for (unsigned i = g_mission->agents.first_used(); i < (unsigned)g_mission->agents.count && !done; g_mission->agents.next_used(&i)) {
-            Agent* o = (Agent*)AGENT(i);
-            if (o->f14 == 1 && o->f10 == 0 && ((AgentX*)g_mission->agents.get(g_mission_s284a0->selected))->is_enemy(o)) {
+            Agent* o = &agr_s284a0(i);
+            if (o->f14 == 1 && o->f10 == 0 && ((AgentX*)g_mission->agents.get(g_mission->f5c))->is_enemy(o)) {
                 Blow b;
                 b.init();
                 b.kind = 2;
@@ -1544,8 +1543,8 @@ void ViewCtrl_s284a0::update(float dt)
     if (g_cfg.cheat_mode != 0 && g_keyboard.down[29] != 0 && g_keyboard.down[64] != 0 && g_keyboard.prev[64] == 0) {
         bool done = false;
         for (unsigned i = g_mission->agents.first_used(); i < (unsigned)g_mission->agents.count && !done; g_mission->agents.next_used(&i)) {
-            Agent* o = (Agent*)AGENT(i);
-            if (i != (unsigned)g_mission->f5c && o->f14 == 1 && o->f10 == 0 && g_mission->agents.get(g_mission_s284a0->selected)->is_friend(o)) {
+            Agent* o = &agr_s284a0(i);
+            if (i != (unsigned)g_mission->f5c && o->f14 == 1 && o->f10 == 0 && g_mission->agents.get(g_mission->f5c)->is_friend(o)) {
                 Blow b;
                 b.init();
                 b.kind = 2;
@@ -1568,7 +1567,7 @@ void ViewCtrl_s284a0::update(float dt)
         b.attacker = g_mission->f5c;
         b.pos = ag_s284a0(g_mission->f5c).pos;
         b.dmg_in = 200.0f;
-        ((Agent*)AGENT(g_mission_s284a0->selected))->note_blow(&b);
+        agr_s284a0(g_mission->f5c).note_blow(&b);
     }
 
     if ((g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) && g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0 && g_cfg.cheat_mode != 0)
@@ -1843,17 +1842,18 @@ void Mission_s29840::fn_529c30(int* hist, int party_id, int slot, int value, int
     int count = p->stacks[slot].count;
     int* h = hist + slot * 32;
     int found = -1;
-    int i = 0;
-    while (found == -1 && i < count) {
-        if (h[i] == value) found = i;
-        i++;
+    for (int i = 0; i < count; i++) {
+        if (found != -1)
+            break;
+        if (value == h[i])
+            found = i;
     }
-    if (found >= 0) {
-        if (found < 0x1f)
-            memcpy(h + found, h + found + 1, (0x1f - found) * 4);
-        h[31] = rand();
+    if (found != -1) {
+        for (int j = found; j < 0x1f; j++)
+            hist[slot * 32 + j] = hist[slot * 32 + j + 1];
+        hist[slot * 32 + 31] = rand();
         if (flag && p->stacks[slot].count <= 0x20)
-            h[p->stacks[slot].count - 1] = value;
+            hist[slot * 32 + p->stacks[slot].count - 1] = value;
     }
 }
 
@@ -2781,29 +2781,32 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
     cap.transform((const ::pos*)identity_pos(&m));
 
     vector4 p;
+    float b[2] = { far_pt.x, far_pt.y };
     p.x = near_pt.x;
     p.y = near_pt.y;
-    float b[3];
-    b[0] = far_pt.x;
-    b[1] = far_pt.y;
 
     float best = 1000000.0f;
-    shape_base_s2b5c0* shapes[8191];
-    int count;
-    g_mission_s2b5c0->f0->query_segment((const float*)&p, b, 0x100, (shape_base**)shapes, &count);
-
-    for (int i = 0; i < count; i++) {
-        shape_base_s2b5c0* s = shapes[i];
-        if (s->shape_type() == 2 && shape_contact_count((shape_base*)s, &cap, 0, 0)) {
-            s->intersect(&p, &near_pt, &far_pt);
-            float dx = p.x - near_pt.x;
-            float dy = p.y - near_pt.y;
-            float dz = p.z - near_pt.z;
-            float d = (float)sqrt(dx * dx + dy * dy + dz * dz);
-            if (d < best) {
-                best = d;
-                *pos = p;
-                *ok = 1;
+    shape_base_s2b5c0* shapes[8192];
+    int n;
+    {
+        int count;
+        g_mission_s2b5c0->f0->query_segment((const float*)&p, b, 0x100, (shape_base**)shapes, &count);
+        n = count;
+    }
+    for (int i = 0; i < n; i++) {
+        if (shapes[i]->shape_type() == 2) {
+            shape_base_s2b5c0* s = shapes[i];
+            if (shape_contact_count((shape_base*)s, &cap, 0, 0)) {
+                s->intersect(&p, &near_pt, &far_pt);
+                float dx = p.x - near_pt.x;
+                float dy = p.y - near_pt.y;
+                float dz = p.z - near_pt.z;
+                float d = (float)sqrt(dx * dx + dy * dy + dz * dz);
+                if (d < best) {
+                    best = d;
+                    *pos = p;
+                    *ok = 1;
+                }
             }
         }
     }

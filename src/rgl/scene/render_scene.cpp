@@ -194,18 +194,14 @@ void world::render_scene(scene* sc, bool reflect)
     info.valid = 0;
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
         vector4 c;
-        float r;
         centre(c, *it);
-        r = (*it)->get_radius();
-        if (in_frustum_n(sc, &c, r))
+        if (in_frustum_n(sc, &c, (*it)->get_radius()))
             (*it)->render(sc, &info);
     }
     for (entity** it = ents2._Myfirst; it < ents2._Mylast; ++it) {
-        float r;
         vector4 c;
         centre2(c, *it);
-        r = (*it)->get_radius();
-        if (in_frustum_n(sc, &c, r))
+        if (in_frustum_n(sc, &c, (*it)->get_radius()))
             (*it)->render(sc, &info);
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
@@ -273,6 +269,7 @@ void world::render_scene(scene* sc, bool reflect)
     sc->refl->owner = this;
     sc->refl->f1b0 = &view;
     sc->refl->list = (const ptr_list&)lights;
+    {
     render_info rinfo;
     rinfo.valid = 0;
     if (g_cfg.fake_reflections) {
@@ -281,12 +278,11 @@ void world::render_scene(scene* sc, bool reflect)
         return;
     }
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
-        float r;
         vector4 c;
         centre3(c, *it);
-        r = (*it)->get_radius();
-        if (in_frustum_n(sc->refl, &c, r))
+        if (in_frustum_n(sc->refl, &c, (*it)->get_radius()))
             (*it)->render(sc->refl, &rinfo);
+    }
     }
 }
 

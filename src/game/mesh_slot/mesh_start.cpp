@@ -56,7 +56,6 @@ struct snd_slot {
 struct snd_bank {
     void randomize();   // 0x462790 (ui/item_ref.cpp)
 };
-void __stdcall reset_spawned(int party_id);                  // 0x4739f0 (terrain_b/terrain_b.cpp: a free function)
 
 struct RectF { float x0, y0, x1, y1; };
 float __cdecl frand();                                       // 0x40e400
@@ -284,7 +283,8 @@ void Mission::start_setup()
     vector4 u;
     int ptype;
     ptype = RAWAT(int, party_rec(pm, pid), 0x5978);
-    if (0) { extern void sinkp(int*); sinkp(&ptype); }
+    if (0) { extern void trace_int(int*); trace_int(&ptype); }   // dead call: takes ptype's address, which keeps it in memory across the sky block as in the original (no code emitted)
+
     for (int t = 0; t < 16; t++) temp[t] = 0.0f;
     u = *(vector4*)&party_rec(pm, pid)->pos;
 
@@ -696,7 +696,8 @@ void Mission::start_setup()
     if (LV.flags.b10) {
         at<int>(0x5278) = 5;
         int par = rand() % 2;
-        for (ptype = 0; ptype < 5; ptype++) {
+        SceneSlot* sl = &SLOT(0);
+        for (ptype = 0; ptype < 5; ptype++, sl++) {
             lane(v, 1 - par) = ((RND() * 6.32231167e-05f) * 0.400000006f + 0.300000012f) * (RECT(3 - par) - RECT(1 - par)) + RECT(1 - par);
             float b = (((RND() * 6.32231167e-05f - 0.5f) * 0.100000001f + ptype) * 0.25f) * 0.600000024f + 0.200000003f;
             if (ptype < 2)
@@ -705,9 +706,10 @@ void Mission::start_setup()
                 b = 1.0f - (1.0f - b) * 0.75f;
             lane(v, par) = b * (RECT(2 + par) - RECT(par)) + RECT(par);
             v.z = 1000.0f;
-            SceneSlot* sl = &SLOT(ptype);
             mat3 tmp;
             rgl::matrix* a = &sl->A;
+
+
 
             *(mat3*)a = *identity3(&tmp);
             a->o = v;
@@ -997,7 +999,7 @@ void Mission::start_setup()
         int* cnts = &at<int>(0x620c);
         for (int sd = 0; sd < 2; sd++)
             for (int i = 0; i < cnts[sd]; i++)
-                ::reset_spawned(lists[sd * 128 + i]);
+                reset_spawned(lists[sd * 128 + i]);
     }
     for (int i = 0; i < RAWAT(int, g_game, 0x13a04); i++)
         *(int*)(RAWAT(char*, g_game, 0x13a00) + i * 0x508 + 0x3bc) = 0;

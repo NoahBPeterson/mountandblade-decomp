@@ -8,3 +8,8 @@ __pycache__/
 /game
 .opencode/
 src/**/_dataaudit_*.cpp
+
+# The game's own resources: extracted from your install with tools/relink/rsrc_repo.py extract, never committed
+resources/RT_*/
+resources/SKINMAGIC/
+resources/manifest.json

@@ -1929,7 +1929,7 @@ void GameW::award_experience(int party, float amount, int mode)
         return;
     idx = m2.lookup(party);                      // the original looks the party up a second time
     Party* p = &((Party*)(m2.pages[idx >> 4]))[idx & 15];
-    int m = mode == 0 ? rand() % 2 : mode - 1;
+    mode = mode == 0 ? rand() % 2 : mode - 1;
 
     int total = 0;
     for (int i = 0; i < p->nstacks; i++) {
@@ -1971,7 +1971,7 @@ void GameW::award_experience(int party, float amount, int mode)
         if (s.f14 <= 0)
             continue;
         int lead = troops[s.troop].f50;
-        if (m == 1 && (unsigned)troop_f54(&troops[s.troop]) > 0)
+        if (mode == 1 && (unsigned)troop_f54(&troops[s.troop]) > 0)
             lead = troop_f54(&troops[s.troop]);
 
         int n = 0;
@@ -1988,8 +1988,7 @@ void GameW::award_experience(int party, float amount, int mode)
         if (k >= 0) {
             p->stacks[k].count += s.f14;
             int extra = (s.f14 - s.count) + s.wounded;
-            if (extra < 0)
-                extra = 0;
+            extra = extra < 0 ? 0 : extra;
             p->stacks[k].wounded += extra;
             if (s.f14 == s.count) {
                 int out[8];
@@ -2017,8 +2016,7 @@ void GameW::award_experience(int party, float amount, int mode)
                 }
                 if (n2 < p->max_stacks()) {
                     int x = (s.f14 - s.count) + s.wounded;
-                    if (x < 0)
-                        x = 0;
+                    x = x < 0 ? 0 : x;
                     p->add_members(lead, s.f14, 0, x, 0);
                     s.count -= s.f14;
                     int c = s.count;

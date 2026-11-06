@@ -24,7 +24,7 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?relax@Skin@@QAEXHPAM@Z  004735e0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?unpack@Animator@@QAEPAUSkin@@PB_K@Z  00473800  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?refresh_cells@Terrain@@QAEXXZ  00473980  /O2 /MT /Gy /TP
-../src/game/terrain_b/poly_mesh.cpp  ?reset_spawned@@YGXH@Z  004739f0  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?reset_spawned@Mission@@QAEXH@Z  004739f0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?next_used@?$Pool@URecJ@@@@QAEXPAI@Z  00474300  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?ucopy@vecArr2@@QAEPAUArrSet@@PAU2@00@Z  00474350  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ??$_Insertion_sort@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@P6A_NABUP8@@0@Z@std@@YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@0P6A_NABUP8@@1@Z@Z  00474370  /O2 /MT /Gy /TP

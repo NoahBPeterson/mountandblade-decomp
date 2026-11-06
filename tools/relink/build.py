@@ -14,7 +14,7 @@ Steps (each tool's docstring has the details):
   7. data gate        the build fails on a data definition smaller than a declaration of its address, on two storage
                       locations for one original address (data_size_audit.py), or on one data name annotated with
                       two original addresses
-  8. add_rsrc.py      the original's resources (dialogs, icons)
+  8. add_rsrc.py      resources/ (dialogs, placeholder icons, version info) via rsrc_repo.py
 Writes OUT/mb_standalone.exe, OUT/link.log, OUT/mb_standalone.map and OUT/build.json (what each step did).
 
 Vtable fix-up (and redirect: matched vtables' references in our code are moved to the copy of the original's
@@ -440,8 +440,6 @@ def build_from_inputs(a, out):
     """Compile and link with no original exe: the order of the objects decides the static initialisers and which copy of a
     duplicate symbol the linker keeps, so an unchanged tree gives the same exe as the checked build."""
     import trial_link as T
-    if not os.path.exists(a.game_exe):
-        sys.exit("no game exe at %s: pass --game-exe, the mount&blade.exe of your own install (for its resources)" % a.game_exe)
     print(run(["tools/relink/glue.py", "--inputs", LINK_INPUTS, "--out", os.path.join(out, "glue")]).strip())
     inp = json.load(open(LINK_INPUTS))
     objs, fails = T.objects()
@@ -462,7 +460,7 @@ def build_from_inputs(a, out):
     unres = T.parse_unresolved(log)
     if unres or not os.path.exists(exe_path):
         sys.exit("link failed: %d unresolved (%s); link.log has them" % (len(unres), ", ".join(sorted(unres)[:6])))
-    print(run(["tools/relink/add_rsrc.py", exe_path, "--from", a.game_exe]).strip())
+    print(run(["tools/relink/add_rsrc.py", exe_path]).strip())
     if new:
         print("not in link_inputs.json, linked last: %s" % ", ".join(new))
     print("-> %s (no gates ran: build.py --faithful checks against the original)" % os.path.relpath(exe_path, ROOT))
@@ -489,9 +487,7 @@ def main():
                          % DEFAULT_CFLAGS)
     ap.add_argument("--no-original", action="store_true",
                     help="build without the original exe: link order, aliases and import names come from "
-                         "symbols/link_inputs.json, resources from --game-exe; no gate runs (implies --faithful)")
-    ap.add_argument("--game-exe", default=os.environ.get("MB_GAME_EXE") or os.path.join(ROOT, "game", "mount&blade.exe"),
-                    help="the player's own installed game, for its resources (--no-original)")
+                         "symbols/link_inputs.json, resources from resources/; no gate runs (implies --faithful)")
     ap.add_argument("--write-inputs", action="store_true", help="write symbols/link_inputs.json from this (faithful) build")
     ap.add_argument("--jobs", type=int, help="worker processes for the resolve and data-gate steps (default: MB_JOBS, "
                     "else CPUs - 2); lanes building side by side pass a small number")

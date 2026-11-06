@@ -134,7 +134,8 @@ void MapPanel::update(int type, int id)
     if (type == 1) {
         pos = *(rgl::vector4*)&g_game->parties.get_w(id)->pos;
     } else if (type == 3) {
-        pos = ((FleetRec*)g_game->fleet)[id].pos;
+        FleetRec& fr = ((FleetRec*)g_game->fleet)[id];
+        pos = fr.pos;
     } else if (type == 4) {
         pos = *(rgl::vector4*)&g_game->parties.get(id)->pos;
     }
@@ -149,7 +150,6 @@ void MapPanel::update(int type, int id)
         if (type == 1) {
             Party roster;                     // [esp+0xae0] the selected party's own roster (0x4934d0)
             int ncols = 1;                    // [esp+0x28]
-            float mrel;
 
             if (g_game->parties.get_party(id)->battle >= 0) {
                 g_gui.draw_string(g_strtable.lookup("ui_capital_battle"), 0.02f, -1, 1);
@@ -158,7 +158,6 @@ void MapPanel::update(int type, int id)
 
             for (int c = 0; c < ncols; c++) {                       // 0x51adc0
                 int agent = id;               // [esp+0x14]  battle side shown in the current column
-                int i;
                 char buf[0x100];
                 if (ncols > 1) {
                     GameData* g = g_game;
@@ -196,10 +195,10 @@ void MapPanel::update(int type, int id)
                     int members[128];                                        // [esp+0x8e0]
                     int count = 0;                                           // [esp+0x18]
                     g_game->list_members(agent, members, &count);                 // 0x490fa0
-                    for (i = 0; i < count; i++) {
+                    for (int i = 0; i < count; i++) {
                         GameData* g = g_game;
                         int      m    = members[i];
-                        mrel = g->relation(m, g->f78);
+                        float mrel = g->relation(m, g->f78);
                         unsigned mcol = g->color_of(mrel, 1);
                         if (g_module_settings.show_faction_color)
                             mcol = g->factions[g->parties.get_party(m)->faction].color;
@@ -320,7 +319,7 @@ void MapPanel::update(int type, int id)
                         g_gui.draw_string(g_strtable.lookup("ui_defenders"), 0.02f, 0xffc08020, 1);
                     else
                         g_gui.draw_string(g_strtable.lookup("ui_troops"), 0.02f, 0xffc08020, 1);
-                    for (i = 0; i < roster.count; i++) {
+                    for (int i = 0; i < roster.count; i++) {
                         if (i == first_enemy_stack(&roster)) {                // 0x51bb56
                             g_gui.draw_string(g_strtable.lookup("ui_prisoners"), 0.02f, 0xffc08020, 1);
                             tcol = 0xffc0a060;
@@ -352,8 +351,8 @@ void MapPanel::update(int type, int id)
 
         // ---- move the panel to the selection's screen position --------------------------------------
         {
-            rgl::vector4 out;
-            rgl::vector4* o = ((MapWidget*)view)->project(&out, &pos);
+            float out[2];
+            rgl::vector4* o = ((MapWidget*)view)->project((rgl::vector4*)out, &pos);
             float screen[2];
             screen[0] = o->x;
             screen[1] = o->y;

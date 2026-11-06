@@ -870,10 +870,9 @@ void Terrain::compute_normals()
         for (x = 0; x < w; x++) {
             for (flip = 0; flip < 2; flip++) {
                 triangle_corners(x, y, flip, &ab[0], &ab[2], &ab[4]);
-                const vector4& q = quad(x, y).nrm[flip];
-                add_to(&at(ab[0], ab[1]).nrm, q);
-                add_to(&at(ab[2], ab[3]).nrm, q);
-                add_to(&at(ab[4], ab[5]).nrm, q);
+                add_to(&at(ab[0], ab[1]).nrm, quad(x, y).nrm[flip]);
+                add_to(&at(ab[2], ab[3]).nrm, quad(x, y).nrm[flip]);
+                add_to(&at(ab[4], ab[5]).nrm, quad(x, y).nrm[flip]);
             }
         }
     }
@@ -1537,10 +1536,10 @@ int dev_buffer::upload(void* scratch, void* tag)
             s.f20 = (s.f20 + 1) % 2;
         }
     }
-    it = meshes.begin();
     if (!is_dynamic) {
         int x = 0, need = 0;
-        for (; it != meshes.end(); ++it) {
+        for (it = meshes.begin(); it != meshes.end(); ++it) {
+
             if ((*it)->slots[type].fc != generation || (*it)->slots[type].f28 != 0 || (*it)->slots[type].f14 != (*it)->slots[type].f4)
                 x = need += ((rgl::mesh*)*it)->count(type);
         }
@@ -1653,7 +1652,7 @@ int dev_buffer::upload(void* scratch, void* tag)
     int* pcap = &count;
     {
         int total = 0;
-        for (; it != meshes.end(); ++it)
+        for (it = meshes.begin(); it != meshes.end(); ++it)
             total += ((rgl::mesh*)*it)->count(type);
         if (total > count)
             LOG_GROW("dynamic", ":Out of dynamic vertex buffer memory. Needed = ");

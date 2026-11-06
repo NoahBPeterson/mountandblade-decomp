@@ -40,10 +40,14 @@ See [`docs/PLAN.md`](docs/PLAN.md) for the plan and [`docs/matching.md`](docs/ma
 
 ## Building without the original exe
 ```sh
-.venv/bin/python tools/relink/build.py --no-original --game-exe "$MB/mount&blade.exe"
+.venv/bin/python tools/relink/rsrc_repo.py extract "$MB/mount&blade.exe"   # once, from your own install
+.venv/bin/python tools/relink/build.py --no-original
 ```
-This needs the toolchain and your own installed game, which supplies the exe's resources (dialogs, icons, version info). It
-compiles `src/`, takes link order, aliases and import names from `symbols/link_inputs.json`, and holds no bytes of the original.
+The extract step writes the game's dialogs, menus and accelerators to `resources/`, which git ignores, because they aren't ours to
+publish. After that a build needs only the toolchain. It sets the version strings to `1.0.11_Recomp` and uses placeholder icons from
+`resources/icons/` (`tools/relink/make_placeholder_icons.py` writes them; they're to be replaced). `tools/relink/rsrc_repo.py` assembles
+the `.rsrc` section. The build compiles `src/`, takes link order, aliases and import names from `symbols/link_inputs.json`, and holds no
+code or data bytes of the original.
 No gate runs in this mode. `build.py --faithful` still needs `work/mb.analysis.bin`: it checks the build against the original and
 reports `link_inputs STALE` when a source change needs `--write-inputs`. The `--no-original` build is the faithful one (no patches).
 

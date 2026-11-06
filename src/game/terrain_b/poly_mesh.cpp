@@ -944,7 +944,7 @@ void Terrain::refresh_cells()
 }
 
 // @ 0x4739f0
-void __stdcall reset_spawned(int party_id)
+void Mission::reset_spawned(int party_id)
 {
     if (party_id != -1) {
         PartyMgr* pm = &g_game->parties;

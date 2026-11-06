@@ -868,21 +868,23 @@ bool ShadowMap::sample(const vector4* p, float* out)
     int tx[9] = { 0, 1, 1, -1, -1, 2, -2, 0, 0 };
     int ty[9] = { 0, 1, -1, 1, -1, 0, 0, 2, -2 };
 
-    volatile bool ret = true;
+    volatile bool ret = true;           // the original keeps the result byte in memory
     *out = 1.0f;
     if (!cam || !g_use_shaders || !surf) {
         ret = false;
-        return ret;
+        return false;
     }
     rgl::frustum* lf = (rgl::frustum*)((char*)cam + 0x10c);
     vector4 clip = lf->to_clip(*p);
     if (!(0.0f <= clip.x && clip.x < 1.0f && 0.0f <= clip.y && clip.y < 1.0f))
-        return ret;
+        return true;
     int zero_x = 0;
     *out = 0.0f;
-    int px = (int)((float)scn.f8 * clip.x);
+    float fx = (float)scn.f8 * clip.x;
+    float fy = (1.0f - clip.y) * (float)scn.fc;
+    int px = (int)fx;
     int zero_y = 0;
-    int py = (int)((1.0f - clip.y) * (float)scn.fc);
+    int py = (int)fy;
     float depth = clip.z - 0.001f;
     for (int i = 0; i < 9; i++) {
         int xv = tx[i] + px;

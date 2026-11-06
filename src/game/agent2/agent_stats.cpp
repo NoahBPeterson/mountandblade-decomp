@@ -1401,13 +1401,12 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
     Light** it = lights._Myfirst;
     if (it < lights._Mylast) {
         unsigned skip_dir = flags & 2;
-        int type;
         do {
-            type = (*it)->type;
-            if (skip_dir && type == 2) goto next;
-            if ((flags & 4) && type != 2) goto next;
+            if (skip_dir && (*it)->type == 2) goto next;
+            if ((flags & 4) && (*it)->type != 2) goto next;
             {
             Light* l = *it;
+            int type = l->type;
             vector4 d;
             float k;
             float dist;
