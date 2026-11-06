@@ -16,7 +16,7 @@ extern float g_549d70;            // 0.5f
 double __cdecl floor(double v);         // 0x536b10  CRT floor
 inline int grid_count(float v)          // integer part (__ftol2 of floor), +1 when the fraction is above 0.5
 {
-    double fl = floor((double)v);
+    float fl = (float)floor((double)v);
     int f = (int)fl;
     if (v - fl <= 0.5f) return f;
     return f + 1;

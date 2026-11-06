@@ -952,7 +952,8 @@ void gui_manager::set_rect(const float* a, const float* b)
     { rgl::vector4 v(sx, a[1], 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 1; r->b = r->a = v; }
     { rgl::vector4 v(sx, sy, 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 2; r->b = r->a = v; }
     { rgl::vector4 v(a[0], sy, 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 3; r->b = r->a = v; }
-    mfb0.color = panel_bg;
+    int& bg_color = *(int*)&mfb0.color;
+    bg_color = panel_bg;
     mfb0.slots[0].f28 = 1;
     {
         tstring n("matte");
@@ -2782,13 +2783,18 @@ void Rec48::init_screen()
 {
     g_gui.reset();
     bg = new NodeA(0);
-    float f2[2];
-    f2[0] = 0.0f;
-    f2[1] = 0.0f;
-    vt(bg)->d22(f2);
-    f2[0] = 1.0f;
-    f2[1] = 0.75f;
-    vt(bg)->d25(f2);
+    {
+        float f2[2];
+        f2[0] = 0.0f;
+        f2[1] = 0.0f;
+        vt(bg)->d22(f2);
+    }
+    {
+        float f2[2];
+        f2[0] = 1.0f;
+        f2[1] = 0.75f;
+        vt(bg)->d25(f2);
+    }
     rgl::mesh* m;
     {
         tstring name("meeting_window");
@@ -2818,20 +2824,29 @@ void Rec48::init_screen()
         tstring t("ui_import_character");
         import_btn = new_long_button(bg, g_strtable_c.lookup(t), 0.5f, 0.5f, 0.04f);
     }
+    panel = new text_box;
     {
-        panel = new text_box;
+        float f2[2];
+        f2[0] = 0.05f;
+        f2[1] = 0.0f;
+        vt(panel)->d22(f2);
     }
-    f2[0] = 0.05f;
-    f2[1] = 0.0f;
-    vt(panel)->d22(f2);
-    f2[0] = 0.43f;
-    f2[1] = 0.63f;
-    vt(panel)->d25(f2);
-    f2[0] = 0.02f;
-    f2[1] = 0.02f;
-    vt(panel)->d27(f2);
-    int iv = 0xff000000;
-    vt(panel)->d38(&iv);
+    {
+        float f2[2];
+        f2[0] = 0.43f;
+        f2[1] = 0.63f;
+        vt(panel)->d25(f2);
+    }
+    {
+        float f2[2];
+        f2[0] = 0.02f;
+        f2[1] = 0.02f;
+        vt(panel)->d27(f2);
+    }
+    {
+        int iv = 0xff000000;
+        vt(panel)->d38(&iv);
+    }
     {
         tstring none("");
         float out[2];

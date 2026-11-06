@@ -116,7 +116,7 @@ void GameData::init_slots(int troop, int want)
         if (t->inv[i].item == -1)
             filled++;
     for (i = 0; i < 200 && filled < want; i++) {
-        int pick = n > 1 ? rand() % n : 0;
+        int pick = n <= 1 ? 0 : rand() % n;
         int item = t->inv[pick].item;
         if (item != -1 && !(g_items[item].type_flags & 0x1000)) {
             t->inv[pick].item = -1;
@@ -495,7 +495,7 @@ void MissionUi::update_bounds()
 void FieldPanel::set_color(unsigned rgb)
 {
     FieldVisual* v = scene()->view[0];
-    rgb = rgb | (v->color & 0xff000000);
+    rgb = (v->color & 0xff000000) | rgb;
     scene()->view[0]->set_color(&rgb);
     float out[2];
     scene()->view[0]->get_state(out);
@@ -603,7 +603,11 @@ int ScriptState::get_var(unsigned index)
 // @ 0x48d6d0
 tstring* TroopRec::plural_name()
 {
-    tstring* r = g_strtable.find(&(key + tstring("_pl")));
+    tstring* r;
+    {
+        tstring sfx("_pl");
+        r = g_strtable.find(&(key + sfx));
+    }
     return r ? r : &plural;
 }
 
@@ -617,7 +621,11 @@ tstring* QuestRec::raw_text()
 // @ 0x48d750
 tstring* QuestRec::raw_title()
 {
-    tstring* r = g_strtable.find(&(key + tstring("_text")));
+    tstring* r;
+    {
+        tstring sfx("_text");
+        r = g_strtable.find(&(key + sfx));
+    }
     return r ? r : &desc;
 }
 
@@ -634,14 +642,18 @@ tstring* Party::display_name()
     return &name;
 }
 
+template <class V> static __forceinline void tidy_vec(V& v)
+{
+    if (v._Myfirst)
+        operator delete(v._Myfirst);
+    v._Myfirst = 0;
+    v._Mylast = 0;
+    v._Myend = 0;
+}
 // @ 0x48d7e0
 void Party::clear_particle_systems()
 {
-    if (deferred._Myfirst)
-        operator delete(deferred._Myfirst);
-    deferred._Myfirst = 0;
-    deferred._Mylast = 0;
-    deferred._Myend = 0;
+    tidy_vec(deferred);
     if (model)
         ((PartyModelV*)model)->release();
 }
@@ -844,11 +856,9 @@ void widget_mgr::set_val(int idx, int v)
         return;
     }
     if (OW(idx)->type() == 5) {
-        if (v < OW(idx)->min160) {
-            OW(idx)->set_value(OW(idx)->min160);
-            return;
-        }
-        if (v > OW(idx)->max164)
+        if (v < OW(idx)->min160)
+            v = OW(idx)->min160;
+        else if (v > OW(idx)->max164)
             v = OW(idx)->max164;
         OW(idx)->set_value(v);
         return;

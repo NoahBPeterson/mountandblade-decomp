@@ -182,7 +182,7 @@ void ShadowMap::release_all()
 }
 
 // @ 0x463bc0
-void ShadowMap::pick_size()
+__declspec(noinline) void ShadowMap::pick_size()   // setup 0x463e90 calls it; without the original's stack temporary cl would inline it
 {
     w = 0x400;
     h = 0x400;
@@ -193,9 +193,12 @@ void ShadowMap::pick_size()
         w = 0x1000;
         h = 0x1000;
     }
-    if (w > g_render.caps.MaxTextureWidth || h > g_render.caps.MaxTextureHeight) {
-        w = g_render.caps.MaxTextureWidth;
-        h = g_render.caps.MaxTextureHeight;
+    struct { int x, y; } m;                      // signed compares (jg/jle); the original also spills both to an 8-byte stack temporary
+    m.x = g_render.caps.MaxTextureWidth;
+    m.y = g_render.caps.MaxTextureHeight;
+    if (w > m.x || h > m.y) {
+        w = m.x;
+        h = m.y;
     }
 }
 
@@ -257,15 +260,12 @@ void ShadowMap::setup()
     LightCam* c = cam;
     c->light = c->world;
     c = cam;
-    c->light.o = c->wcenter;
+    const vector4& wc = c->wcenter;
+    c->light.o = wc;
     c = cam;
-    float lx = c->vmin.x - c->center.x;
-    float ly = c->vmin.y - c->center.y;
-    float lz = c->vmin.z - c->center.z;
-    float rx = c->vmax.x - c->center.x;
-    float ry = c->vmax.y - c->center.y;
-    float rz = c->vmax.z - c->center.z;
-    float dz = rz - lz;
+    vector4 lo(c->vmin.x - c->center.x, c->vmin.y - c->center.y, c->vmin.z - c->center.z);
+    vector4 hi(c->vmax.x - c->center.x, c->vmax.y - c->center.y, c->vmax.z - c->center.z);
+    float dz = hi.z - lo.z;
     float t = dz * 0.5f + 20.0f;
     vector4 d(t * c->light.u.x, t * c->light.u.y, t * c->light.u.z);
     c->light.o.x += d.x;
@@ -277,12 +277,12 @@ void ShadowMap::setup()
     f->build_planes();
     f = &cam->fr;
     f->perspective = 0;
-    f->left = lx;
-    f->right = rx;
-    f->top = ry;
-    f->bottom = ly;
-    f->nearz = 20.0f;
     f->farz = dz + 20.0f;
+    f->nearz = 20.0f;
+    f->left = lo.x;
+    f->right = hi.x;
+    f->bottom = lo.y;
+    f->top = hi.y;
     f->build_planes();
     scn.fr = cam->fr;
     scn.f162 = 1;

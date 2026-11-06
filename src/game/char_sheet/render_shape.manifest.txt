@@ -1,0 +1,1 @@
+../src/game/char_sheet/render_shape.cpp  ?render@MapWidget@@UAEXPAUscene@rgl@@PAMHH@Z  004ed6f0  /O2 /MT /Gy /TP

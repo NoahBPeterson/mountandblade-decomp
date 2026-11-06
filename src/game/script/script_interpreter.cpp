@@ -175,13 +175,12 @@ char __fastcall check_script_param(int* value, int* limit)
 }
 
 // @ 0x49cd00
-__declspec(noinline) char __fastcall check_register(const int& value)
+static __declspec(noinline) char check_register(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= 0x80) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Register ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= 0x80) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Register ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
@@ -189,13 +188,12 @@ __declspec(noinline) char __fastcall check_register(const int& value)
 }
 
 // @ 0x49cd50
-__declspec(noinline) char __fastcall check_presentation(const int& value)
+static __declspec(noinline) char check_presentation(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_presentations.count) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Presentation ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_presentations.count) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Presentation ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
@@ -234,28 +232,26 @@ static __declspec(noinline) char check_string_arg(const int& type, const int& va
     return r;
 }
 
-// Range validators: the value pointer in ECX (__fastcall with external linkage keeps cl from picking another register)
+// Range validators: statics; cl gives value the ECX register convention when the body reads value directly (a local `int v = value` moves it to EAX and rotates the scratch registers)
 // @ 0x49ce40
-__declspec(noinline) char __fastcall check_mesh(const int& value)
+static __declspec(noinline) char check_mesh(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_meshes.count) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Mesh ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_meshes.count) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Mesh ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
     return r;
 }
 // @ 0x49ce90
-__declspec(noinline) char __fastcall check_menu(const int& value)
+static __declspec(noinline) char check_menu(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_menu_count) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Menu ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_menu_count) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Menu ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
@@ -301,13 +297,12 @@ __declspec(noinline) char __fastcall check_faction(const int& value)
     return r;
 }
 // @ 0x49cfd0
-__declspec(noinline) char __fastcall check_item_kind(const int& value)
+static __declspec(noinline) char check_item_kind(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_item_kind_count) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Item Kind ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_item_kind_count) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Item Kind ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
@@ -327,39 +322,36 @@ __declspec(noinline) char __fastcall check_scene(const int& value)
     return r;
 }
 // @ 0x49d070
-__declspec(noinline) char __fastcall check_mission_template(const int& value)
+static __declspec(noinline) char check_mission_template(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_mission_template_count) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Mission Template ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_mission_template_count) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Mission Template ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
     return r;
 }
 // @ 0x49d0c0
-__declspec(noinline) char __fastcall check_party_template(const int& value)
+static __declspec(noinline) char check_party_template(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_party_template_count) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Party Template ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_party_template_count) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Party Template ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
     return r;
 }
 // @ 0x49d110
-__declspec(noinline) char __fastcall check_map_icon(const int& value)
+static __declspec(noinline) char check_map_icon(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_map_icon_count) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Map Icon ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_map_icon_count) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Map Icon ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
@@ -386,26 +378,24 @@ static __declspec(noinline) char check_party(const int& value)
 }
 
 // @ 0x49d1f0
-__declspec(noinline) char __fastcall warn_particle_system(const int& value)
+static __declspec(noinline) char warn_particle_system(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_emit_defs.count) {
-        sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid particle_system ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_emit_defs.count) {
+        sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid particle_system ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
     return r;
 }
 // @ 0x49d240
-__declspec(noinline) char __fastcall warn_scene_prop(const int& value)
+static __declspec(noinline) char warn_scene_prop(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_scene_prop_count) {
-        sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Scene_prop ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_scene_prop_count) {
+        sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Scene_prop ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }
@@ -428,14 +418,13 @@ static __declspec(noinline) char warn_scene_prop_instance(const int& value)
 }
 
 // @ 0x49d310
-__declspec(noinline) char __fastcall warn_sound(const int& value)
+static __declspec(noinline) char warn_sound(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_sound_mgr.ngroups) {
+    if (value < 0 || value >= g_sound_mgr.ngroups) {
         if (g_cfg.disable_sound == 0) {
-            sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Sound ID: %d", g_cur_opcode, v);
+            sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Sound ID: %d", g_cur_opcode, value);
             report(buf);
         }
         r = 0;
@@ -459,14 +448,13 @@ static __declspec(noinline) char warn_tableau(const int& value)
 }
 
 // @ 0x49d3d0
-__declspec(noinline) char __fastcall warn_track(const int& value)
+static __declspec(noinline) char warn_track(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_music.track_count) {
+    if (value < 0 || value >= g_music.track_count) {
         if (g_cfg.disable_music == 0 && g_cfg.disable_sound == 0) {
-            sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, v);
+            sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Track ID: %d", g_cur_opcode, value);
             report(buf);
         }
         r = 0;
@@ -493,13 +481,12 @@ static __declspec(noinline) char warn_agent(const int& value)
 }
 
 // @ 0x49d4b0
-__declspec(noinline) char __fastcall check_animation(const int& value)
+static __declspec(noinline) char check_animation(const int& value)
 {
     char buf[512];
-    int v = value;
     char r = 1;
-    if (v < 0 || v >= g_anim_set.count) {
-        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Animation ID: %d", g_cur_opcode, v);
+    if (value < 0 || value >= g_anim_set.count) {
+        sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Animation ID: %d", g_cur_opcode, value);
         report(buf);
         r = 0;
     }

@@ -1,2 +1,0 @@
-004ce870	30	ItemRec::ItemRec: complete; the derived vtable store sits after the status word in the original, the optimizer here moves it behind the zeroing stores. [_ReadWriteBarrier removed, ctor takes head_rec(no_w04) and a real Timer member: the base-ctor w08 store and derived vptr store are scheduled after the zeroing stores (30 bytes; was 25 with the fences); equiv PASS (vtable bytes)]
-004ce8d0	30	ItemRec2::ItemRec2: same as 0x4ce870 with vtable 0x596148. [same as 0x4ce870: equiv PASS]

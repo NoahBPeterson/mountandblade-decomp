@@ -30,3 +30,5 @@
 ../src/rgl/mesh2/rec_tables.cpp  ?load@music_set@@QAEXPAUstream_base@@HPBUtstring@@@Z  004c4340  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??1StringTable@@QAE@XZ  004c4640  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?load_skyboxes@@YAXXZ  004c3350  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?load@GameKeys@@QAEXXZ  004c2ea0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??0C4c2d10@@QAE@XZ  004c2d10  /O2 /MT /Gy /TP

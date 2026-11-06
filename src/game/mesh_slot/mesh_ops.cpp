@@ -115,7 +115,7 @@ void rgl::mesh::set_color(vector4 color)
     }
 
     // 0x47af89: every key-frame record's first colour vector
-    for (int i = 0; i < kf.count; i++) {
+    for (unsigned i = 0; i < (unsigned)kf.count; i++) {
         vector4* p = kf.frames[i].verts._Myfirst;
         for (; p != kf.frames[i].verts._Mylast; p++) {
             p->x *= color.x;  p->y *= color.y;  p->z *= color.z;

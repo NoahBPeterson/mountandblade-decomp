@@ -448,7 +448,7 @@ float Party::strength()
         return 0.0f;
     }
     if (v >= g_one) {
-        return g_one;
+        v = g_one;
     }
     return v;
 }
@@ -869,9 +869,8 @@ void Party::set_order_agent(int* t)
         if (d.z * d.z + d.y * d.y + d.x * d.x > 10.0f) {
             f5988 = 1;
         }
-        PartyV4& rp = party_of(&g_game->parties, tgt_id)->pos;
-        f5990 = rp.x;
-        f5994 = rp.y;
+        struct xy { float x, y; };
+        *(xy*)&f5990 = *(xy*)&party_of(&g_game->parties, tgt_id)->pos;
     }
 }
 

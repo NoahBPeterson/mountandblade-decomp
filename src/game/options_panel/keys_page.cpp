@@ -160,13 +160,12 @@ void KeysPage::update_perf()
     limit = g_options.i40;
     if (limit >= 5) limit = 5;
     perf += limit;
-    int d3d = g_options.i2c;
     char high = g_render.use_hw_shadow;
     perf += g_options.i34 * 0.1f;
     int shadows = g_use_shaders;
     perf += g_options.scale_y * 10.0f;
 
-    if (d3d) {
+    if (g_options.i2c) {
         if (g_cfg.shadow_quality_req >= 2)
             perf += 3.0f;
         if (shadows) {

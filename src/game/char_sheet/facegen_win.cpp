@@ -232,12 +232,12 @@ __declspec(noinline) void rgl::frustum::init(float fov, float aspect, float znea
     nearz = znear;
     double t = tan(fov * 0.5f);
     farz = zfar;
-    double p = t * znear;
-    left = (float)-p;
-    znear = (float)(znear * t);
-    right = znear;
-    bottom = (float)-(p * aspect);
-    top = znear * aspect;
+    float p = (float)(znear * t);
+    left = -p;
+    float r = (float)t * znear;
+    right = r;
+    bottom = -p * aspect;
+    top = r * aspect;
     build_planes();
 }
 #pragma function(tan)

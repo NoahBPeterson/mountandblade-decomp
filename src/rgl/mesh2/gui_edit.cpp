@@ -1358,6 +1358,27 @@ void MapEditorDialog::update_objects()
     } while ((char*)((Map*)g_mission)->records);
 }
 
+// The tail of a Rec78 as the array destructor runs it: the owner in the body, then the members in reverse order
+// (the sound set, then the buffer). gui_edit.h's Rec78Tail ran ~TimerList twice.
+struct Rec78Block {
+    char* p;
+    char* e;
+    char* c;
+    ~Rec78Block() { if (p) operator delete(p); p = 0; e = 0; c = 0; }
+};
+struct Rec78Members {
+    Rec78Block buf;                     // +0x44
+    char pad0c[4];
+    RefRecord* owner;                   // +0x54 (deleted through slot 0)
+    char pad14[0x14];
+    TimerList groups;                   // +0x6c
+    ~Rec78Members()
+    {
+        if (owner)
+            owner->deleting_dtor(1);
+    }
+};
+
 // @ 0x4c7ee0
 void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
 {
@@ -1366,7 +1387,7 @@ void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
         Rec78* cur = (Rec78*)p + n;
         while (--n >= 0) {
             --cur;
-            rec78_tail(cur).~Rec78Tail();
+            ((Rec78Members*)cur->tail)->~Rec78Members();
             cur->name.~tstring();
         }
         if (flags & 1)

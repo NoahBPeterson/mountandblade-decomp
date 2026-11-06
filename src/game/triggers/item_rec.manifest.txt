@@ -1,1 +1,3 @@
 ../src/game/triggers/item_rec.cpp  ??_GItemRec@@UAEPAXI@Z  004ce930  /O2 /MT /Gy /TP
+../src/game/triggers/item_rec.cpp  ??0ItemRec@@QAE@XZ  004ce870  /O2 /MT /Gy /TP
+../src/game/triggers/item_rec.cpp  ??0ItemRec2@@QAE@XZ  004ce8d0  /O2 /MT /Gy /TP

@@ -6,6 +6,7 @@
   "?clear@Stack@@QAEXXZ": "?reset@NamedSelRec@@QAEXXZ",
   "?display_name@ItemKind@@QAEPAUtstring@@XZ": "?display_name@TroopRec@@QAEPAUtstring@@XZ",
   "?frame_hook@ScreenFrameHook@@QAEXXZ": "?frame_hook@@YAXXZ",
+  "?pick@MissionSourceDecl@@QAEXPAH@Z": "?pick@MissionSource@@QAEXPAH@Z",
   "?push_back@mesh_ptr_vec@@QAEXABQAUmesh@rgl@@@Z": "?push_back@?$vector@PAUscene@rgl@@V?$allocator@PAUscene@rgl@@@std@@@std@@QAEXABQAUscene@rgl@@@Z",
   "?reset@Agent@@QAEXXZ": "?reset@BigObj@@QAEXXZ",
   "?set_value@Meter@@QAEXPAM@Z": "?cap_all@node_groups@@QAEXPBM@Z",

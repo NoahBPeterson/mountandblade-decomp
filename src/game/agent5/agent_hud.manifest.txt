@@ -8,3 +8,4 @@
 ../src/game/agent5/agent_hud.cpp  ??_GMWidget@@UAEPAXI@Z  004fd3b0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ??1MWidget@@UAE@XZ  004fd3d0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?buy@IntList@@QAE_NI@Z  004fd490  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ??0MWidget@@QAE@XZ  004fd150  /O2 /MT /Gy /TP

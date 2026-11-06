@@ -5,3 +5,4 @@
 ../src/game/char_sheet/editor_ui.cpp  ?make_editor_list@@YAPAUCamera@@PAXPBUtstring@@H@Z  004f62f0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ?refresh_dialog@EditorApp@@QAEXXZ  004f6390  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ?uninit_fill@@YAXPAUNameVecRec@@IABU1@PAURecAlloc@@@Z  004f65f0  /O2 /MT /Gy /TP
+../src/game/char_sheet/editor_ui.cpp  ?insert_n@TextRowVec@@QAEPAUTextRow@@PAU2@IABU2@@Z  004f6360  /O2 /MT /Gy /TP

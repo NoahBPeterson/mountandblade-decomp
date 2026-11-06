@@ -54,20 +54,24 @@ static inline vector4 rot_world(const matrix& m, const vector4& d)
 }
 
 // ---- font glyph metrics ---------------------------------------------------------------------------------------
+static inline const Glyph& font_glyph(Font* f, int ch)
+{
+    int key = ch;
+    if (ch >= 0x200) {
+        IntHashBase::iterator it = ((IntHashBase&)f->map).lower_bound(key);
+        GlyphNode* n = (GlyphNode*)it._Mynode();
+        if (n != f->map.head)
+            return n->val;
+        return f->dflt;
+    }
+    return f->ascii[ch];
+}
+
 // @ 0x43e190
 float Font::advance(int ch)
 {
-    if (ch >= 0x200) {
-        IntHashBase::iterator it = ((IntHashBase&)map).lower_bound(ch);
-        GlyphNode* n = (GlyphNode*)it._Mynode();
-        if (n != map.head) {
-            Glyph* g = &n->val;
-            return g->f18 + g->f10;
-        }
-        return dflt.f18 + dflt.f10;
-    }
-    Glyph* g = &ascii[ch];
-    return g->f18 + g->f10;
+    const Glyph& g = font_glyph(this, ch);
+    return g.f18 + g.f10;
 }
 
 // @ 0x43e200

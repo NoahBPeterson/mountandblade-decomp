@@ -510,8 +510,7 @@ int __fastcall sort_value(ItemRef* e)
 {
     int idx = e->item;
     if (idx >= 0) {
-        float x = (float)g_items[idx].value;
-        x = x * g_sort_val[e->b.mod * 5].v;
+        float x = (float)g_items[idx].value * g_sort_val[e->b.mod * 5].v;
         return rnd(&x);
     }
     return 0;
@@ -748,16 +747,12 @@ int* Party::remove_row(int* out, int index, int* arr)
 
     *(int*)((char*)this + nstacks * 0x20 + 0x8c) = -1;
     *(int*)((char*)this + nstacks * 0x20 + 0x88) = 0;
-    int cnt = nstacks - 1;
-    nstacks = cnt;
+    nstacks = nstacks - 1;
     dirty = 1;
 
-    if (arr != 0 && index < cnt) {
-        int j = index;
-        do {
+    if (arr != 0) {
+        for (int j = index; j < nstacks; j++)
             *(Blob80*)((char*)arr + j * 0x80) = *(Blob80*)((char*)arr + (j + 1) * 0x80);
-            j++;
-        } while (j < nstacks);
     }
 
     *(Stack*)out = local;
@@ -846,6 +841,8 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
     return found;
 }
 
+static inline void timer_restart(Timer* t) { t->start = g_ticks[t->clock]; }
+
 // @ 0x4897a0
 void MissionView::setup(void* src, int* b, int* c)
 {
@@ -854,10 +851,7 @@ void MissionView::setup(void* src, int* b, int* c)
     memcpy(vd8, src, sizeof(vd8));
     f168 = *c;
     f16c = *b;
-    int idx = f170;
-    struct W2 { int lo, hi; };
-    ((W2*)&f178)->lo = ((W2*)g_ticks)[idx].lo;
-    ((W2*)&f178)->hi = ((W2*)g_ticks)[idx].hi;
+    timer_restart((Timer*)&f170);
 
     f180 = 0;
 }
@@ -1089,6 +1083,10 @@ int GameData::sl_take(int group, int item, int want, char extras)
     return total;
 }
 
+static inline int sl_rand(int n) { return n <= 1 ? 0 : rand() % n; }
+static inline bool sl_bit(unsigned v, int n) { return ((v >> n) & 1) != 0; }
+static inline QuestRec* sl_quest(QuestRec* q, int i) { return q + i; }
+
 // @ 0x489e70
 int GameData::sl_roll_party(int lo, int hi)
 {
@@ -1097,25 +1095,11 @@ int GameData::sl_roll_party(int lo, int hi)
     do {
         if (tries >= 1000)
             return found;
-        int span = hi - lo;
-        int v;
-        if (span <= 1)
-            v = 0;
-        else
-            v = rand() % span;
-        found = v + lo;
-        QuestRec* pi = (QuestRec*)((char*)quests + found * 0x138);
+        found = sl_rand(hi - lo) + lo;
+        QuestRec* pi = sl_quest(quests, found);
         tries++;
-        if (!pi->f50_active) {
+        if (!sl_bit(pi->flags2, 1) || sl_bit(pi->flags, 8))
             found = -1;
-            continue;
-        }
-        if (pi->f64_flag) {
-            found = -1;
-            continue;
-        }
-        if (found == -1)
-            continue;
     } while (found == -1);
     return found;
 }

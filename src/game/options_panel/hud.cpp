@@ -147,46 +147,40 @@ bool EditMesh::on_selection_changed()
 
 
 #define W(x) ((MissionUi*)(void*)(x))
+// The button handler sees the source's pick as a declaration only. With the real body visible cl knows pick keeps
+// nothing of &arg and turns set_state into a tail call that overwrites arg, which the original does not; so the original
+// compiled this caller without pick's body (a visibility twin, docs/tu_map.md; pick starts the next object at 0x4d5410).
+struct MissionSourceDecl {
+    void pick(int* arg);   // 0x4d5410
+};
 // @ 0x4d5290
 void ItemRec::frame_update(float arg)
 {
-    ((MissionSource*)((char*)(void*)this + 0x30))->pick((int*)&arg);
+    ((MissionSourceDecl*)((char*)(void*)this + 0x30))->pick((int*)&arg);
     if (W(row_tutorial)->clear_mask(0x10000)) {
         slot_as<int>(3)[6] = 4;
         slot_as<int>(3)[1] = 3;
         slot_as<int>(3)[0x8c / 4] = 0;
         g_windows.set_state(3);
-        return;
-    }
-    if (W(row_new_game)->clear_mask(0x10000)) {
+    } else if (W(row_new_game)->clear_mask(0x10000)) {
         slot_as<int>(3)[1] = 0;
         slot_as<int>(3)[0x8c / 4] = first_free;
         g_windows.set_state(3);
-        return;
-    }
-    if (W(row_restore)->clear_mask(0x10000)) {
+    } else if (W(row_restore)->clear_mask(0x10000)) {
         slot_as<int>(21)[6] = 4;
         g_windows.set_state(0x15);
-        return;
-    }
-    if (row_custom != 0 && W(row_custom)->clear_mask(0x10000)) {
+    } else if (row_custom != 0 && W(row_custom)->clear_mask(0x10000)) {
         slot_as<int>(3)[6] = 4;
         slot_as<int>(3)[1] = 2;
         slot_as<int>(3)[0x8c / 4] = 0;
         g_windows.set_state(3);
-        return;
-    }
-    if (W(row_options)->clear_mask(0x10000)) {
+    } else if (W(row_options)->clear_mask(0x10000)) {
         slot_as<int>(18)[6] = 4;
         g_windows.set_state(0x12);
-        return;
-    }
-    if (W(row_credits)->clear_mask(0x10000)) {
+    } else if (W(row_credits)->clear_mask(0x10000)) {
         slot_as<int>(28)[6] = 4;
         g_windows.set_state(0x1c);
-        return;
-    }
-    if (W(row_exit)->clear_mask(0x10000))
+    } else if (W(row_exit)->clear_mask(0x10000))
         g_saved = 1;
 }
 

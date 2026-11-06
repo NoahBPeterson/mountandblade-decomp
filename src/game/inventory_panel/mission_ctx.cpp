@@ -1231,20 +1231,23 @@ void GameDataV::reset_trade_ids()
 void GameDataV::fill_ids(int* out, int id)
 {
     PartyMgr* m = &parties;
-    Party* rec = party_at(m, m->lookup(id));
-    if (rec->nstacks <= 0)
-        return;
-    int* base = out;
-    for (int row = 0; row < rec->nstacks; row++, base += 0x20) {
-        int* o = base;
-        for (int j = 0; j < rec->stacks[row].count; j++, o++) {
-            if (j >= 0x20)
-                break;
-            int v = -1;
-            if (id >= 0)
-                v = m->get(id)->stacks[row].troop;
-            *o = v * 0x1bf + (id * 0x7bb7 + j) + 0x45db;
-        }
+    Party* rec = m->at(m->lookup(id));
+    int row = 0;
+    if (rec->nstacks > 0) {
+        int* base = out;
+        do {
+            int* o = base;
+            for (int j = 0; j < rec->stacks[row].count; j++, o++) {
+                if (j >= 0x20)
+                    break;
+                int v = -1;
+                if (id >= 0)
+                    v = m->get(id)->stacks[row].troop;
+                *o = v * 0x1bf + (id * 0x7bb7 + j) + 0x45db;
+            }
+            row++;
+            base += 0x20;
+        } while (row < rec->nstacks);
     }
 }
 
@@ -1268,6 +1271,9 @@ void MissionCtx::reset_ids(int id)
 // @ 0x516a70
 void quick_save_msg()
 {
-    g_gui.add(*g_strtable.lookup(tstring("ui_quick_saving")), -1);
+    {
+        tstring t("ui_quick_saving");
+        g_gui.add(*g_strtable.lookup(t), -1);
+    }
     save_game(-1, 0);
 }

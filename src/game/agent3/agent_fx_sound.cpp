@@ -544,7 +544,8 @@ void Agent::play_hit_sound(int* kind)
                 return;
             snd = 0xe;
         } else if (!(pos.z < m->terrain.base_z)) {
-            snd = (g_game->slots[m->f5df4].flags8 & 1) ? 0x10 : 0xf;
+            bool b = (g_game->slots[m->f5df4].flags8 & 1) != 0;
+            snd = b ? 0x10 : 0xf;
         } else {
             snd = 0x11;
         }
@@ -596,7 +597,7 @@ void Agent::play_sound_var(int* kind, float* var)
             own = 1;
         vector4 p = body->m.o;
         float h = (f10 == 0 && f2c != -1) ? 2.4f : 1.5f;
-        p.z = (h - 0.3f) + p.z;
+        p.z += h - 0.3f;
         g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p.x, pitch, (int*)&pitch);
     }
 }

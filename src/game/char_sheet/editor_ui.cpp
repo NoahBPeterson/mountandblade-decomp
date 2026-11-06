@@ -192,7 +192,8 @@ struct TextRowVec {
 };
 TextRow* TextRowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
 {
-    std::_Uninit_fill_n((Skin*)pos, n, (const Skin&)v, *(std::allocator<Skin>*)this, std::_Nonscalar_ptr_iterator_tag());
+    std::_Nonscalar_ptr_iterator_tag cat;
+    std::_Uninit_fill_n((Skin*)pos, n, (const Skin&)v, *(std::allocator<Skin>*)this, cat);
     return pos + n;
 }
 

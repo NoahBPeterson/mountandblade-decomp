@@ -772,7 +772,7 @@ MB_NOINLINE void I64Vec::read(stream_base* s)
     s->r_int(&n);
     ((std::vector<__int64>*)this)->resize((unsigned)n, 0);   // 0x493090
     for (int i = 0; i < n; i++)
-        s->r_i64(&_Myfirst[i]);
+        s->r_i64(&((std::vector<__int64>*)this)->operator[](i));
 }
 
 // @ 0x51e100

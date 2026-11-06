@@ -4,3 +4,5 @@
 ../src/game/options_panel/world_app.cpp  ?uninit_fill_n_68@@YAXPAUElem68@@IABU1@AAUAlloc68@@@Z  004d4a50  /O2 /MT /Gy /TP
 ../src/game/options_panel/world_app.cpp  ?uninit_fill_n_b0@@YAXPAUElemB0@@IABU1@AAUAllocB0@@@Z  004d4ae0  /O2 /MT /Gy /TP
 ../src/game/options_panel/world_app.cpp  ??1Skin@@QAE@XZ  004d3720  /O2 /MT /Gy /TP
+../src/game/options_panel/world_app.cpp  ??0GameApp@@QAE@XZ  004d3ec0  /O2 /MT /Gy /TP
+../src/game/options_panel/world_app.cpp  ?erase@TreeW@@QAEXPAX0@Z  004d3e50  /O2 /MT /Gy /TP

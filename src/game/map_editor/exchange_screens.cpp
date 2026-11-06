@@ -91,23 +91,15 @@ void MissionCtx::setup_entry(MenuEntry* e)
     f10 |= 0x20;
 }
 
+static __forceinline float clamp01(float k) { if (k < 0.0f) return 0.0f; if (k >= 1.0f) return 1.0f; return k; }
 // @ 0x5316f0
 int MissionCtx::weight(unsigned flags)
 {
     float f = (float)(int)(flags & 0x7f);
-    float x;
     if (flags & 0x100)
-        x = (float)(f1c + 0x20);
+        f *= clamp01((float)(f1c + 0x20) * 0.04736842f - 0.4f);
     else if (flags & 0x200)
-        x = (float)(6 - f1c);
-    else
-        return (int)f;
-    float k = x * 0.04736842f - 0.4f;
-    if (k < 0.0f)
-        k = 0.0f;
-    else if (k >= 1.0f)
-        k = 1.0f;
-    f *= k;
+        f *= clamp01((float)(6 - f1c) * 0.04736842f - 0.4f);
     return (int)f;
 }
 

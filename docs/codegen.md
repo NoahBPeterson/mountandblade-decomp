@@ -1212,6 +1212,33 @@ computation, one branch or one frame slot away, look here first.
 - **Base pointer plus index.** `Troop* t = &troops[sel]; t->inv[i].item = -1` instead of a precomputed field pointer
   stops cl folding the offset into one `lea` (0x5168b0).
 
+Added by the second round (50 of 106 rows matched):
+
+- **Small inline helpers fence store scheduling.** Flat zero or timer stores let cl sink a base constructor's stores and
+  the vptr store below them. Helpers taking a struct reference fixed a family: zeroing a vector triple (0x4cee50,
+  0x4ceb30, 0x4cef20, 0x4cef80, 0x4fd150, 0x4ce870, 0x4ce8d0) and starting a timer as `clock = i; start = g_ticks[i]`
+  (0x4c2d10, 0x4897a0). An `int clock` followed by `__int64 stamp` is a Timer.
+- **A callee can use the argument register directly.** `static __declspec(noinline) char f(const int& value)` reading
+  `value` itself keeps it in ecx, with edx and eax as scratch. A local `int v = value` moves it to eax and rotates the
+  scratch registers. This matched 13 validators in the script interpreter (0x49cd00..0x49d4b0), so scratch rotation is
+  not always unfixable.
+- **`extern float g_one` against the literal `1.0f`.** The extern may alias, so `fld` can't move above an int store; the
+  literal allows it (0x4ed6f0).
+- **Float floor.** `float fl = (float)floor(v)` gives `fcomp dword`; `double fl` gives `fcomp qword` (0x4f25a0).
+- **Real STL calls.** `vector::operator[]` rather than `&_Myfirst[i]` (0x51e0b0), a three-argument `_Destroy_range`
+  rather than an explicit tag (0x4d3e50), `worlds.pop_back()` (0x492ee0).
+- **Empty tag arguments.** An argument pushed from an unwritten slot is an empty tag struct by value. Use an uninitialised
+  local tag; `tag()` emits `mov byte [esp+N],0` and a frame (0x4f6360, 0x4ebdc0, 0x50d230).
+- **Conditional shape picks the block layout.** `n <= 1 ? 0 : rand() % n` against `n > 1 ? rand() % n : 0` (0x48c4c0);
+  an else-if chain against per-arm `return` (0x4d5290, 0x48e340); `if (v >= g_one) v = g_one; return v;` stops a tail
+  merge (0x4b1fa0).
+- **`shr; test r8,1` is a TU-local inline bit test.** `static inline bool bit(unsigned v, int n) { return ((v >> n) & 1) != 0; }`.
+  Written inline or as a bit-field it folds to `test dl,2` (0x489e70).
+- **A store before the vptr means an intermediate base** with an inline constructor (0x4931d0).
+- **`mov [esp+4],N; jmp` in ours means cl saw the callee's body.** The original saw only a declaration, so this marks a TU
+  boundary (0x4d5290).
+- **Markers.** A helper between a `// @ 0x...` marker and its function steals the marker. Put helpers above it.
+
 Rows that resisted all of these, so stop early: SIB base/index order (`[ebx+ecx]` against `[ecx+ebx]`) and `fld/fmul`
 operand order, callee-saved or scratch register rotation alone, one instruction scheduled a slot away with no structural
 difference, and a read-modify-write `or [m], r` where the original loads, ors and stores.

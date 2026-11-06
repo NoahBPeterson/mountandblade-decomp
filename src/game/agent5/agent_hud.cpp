@@ -1582,15 +1582,12 @@ void* TStringArray::destroy(unsigned flags)
     return this;
 }
 
+static inline void v4list_zero(V4List& l) { l.first = 0; l.last = 0; l.end = 0; }
 // @ 0x4fd150
 MWidget::MWidget()
 {
-    rects_a.first = 0;
-    rects_a.last = 0;
-    rects_a.end = 0;
-    rects_b.first = 0;
-    rects_b.last = 0;
-    rects_b.end = 0;
+    v4list_zero(rects_a);
+    v4list_zero(rects_b);
     list_c.buy(0);
     list_d.first = 0;
     list_d.last = 0;

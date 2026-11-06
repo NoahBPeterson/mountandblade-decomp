@@ -1,1 +1,2 @@
 ../src/game/char_sheet/facegen_win.cpp  ?region_name@@YAXHPAD@Z  004f2610  /O2 /MT /Gy /TP
+../src/game/char_sheet/facegen_win.cpp  ?init@frustum@rgl@@QAEXMMMM@Z  004f25a0  /O2 /MT /Gy /TP

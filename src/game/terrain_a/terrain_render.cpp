@@ -181,7 +181,7 @@ void EnvRec::reset()
 {
     f3c = -1;
     f8 = -1;
-    fb4 = 1;
+    fc = -1;
     f0 = 0;
     f30 = 0;
     fa4 = 10;
@@ -198,8 +198,8 @@ void EnvRec::reset()
     f40 = 1.0f;
     fbc = 1.0f;
     fa0 = 1.0f;
-    fc = -1;
-    f50 = 1;
+    { int& one = fb4; one = 1; }
+    { int& one = f50; one = 1; }
     t0 = g_ticks[clock];
     fac = 0;
     fb0 = 0;

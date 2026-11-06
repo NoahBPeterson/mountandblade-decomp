@@ -105,13 +105,15 @@ void MissionBlocker::slot_empty_4()
 }
 
 // ---- the remaining item constructors (0x4ceb30 / 0x4cef20 / 0x4cef80) --------------------------------------
+static inline void block_zero(owned_block& b) { b.begin = 0; b.end = 0; b.cap = 0; }
+struct ClockStamp { int idx; int pad; __int64 t; void start(int i) { idx = i; t = g_ticks[i]; } };   // clock index, its time
+
 // @ 0x4ceb30
 ItemA::ItemA()
 {
     w04 = 0;
-    owned.begin = 0; owned.end = 0; owned.cap = 0;
-    clock = 0;
-    stamp = g_ticks[0];
+    block_zero(owned);
+    ((ClockStamp*)&clock)->start(0);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -121,9 +123,8 @@ ItemA::ItemA()
 ItemB::ItemB()
 {
     w04 = 0;
-    owned.begin = 0; owned.end = 0; owned.cap = 0;
-    clock = 0;
-    stamp = g_ticks[0];
+    block_zero(owned);
+    ((ClockStamp*)&clock)->start(0);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -133,9 +134,8 @@ ItemB::ItemB()
 ItemC::ItemC()
 {
     w04 = 0;
-    owned.begin = 0; owned.end = 0; owned.cap = 0;
-    clock = 0;
-    stamp = g_ticks[0];
+    block_zero(owned);
+    ((ClockStamp*)&clock)->start(0);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -147,11 +147,12 @@ ItemC::ItemC()
 // The item records' virtual destructor, laid over item_base: the body releases the two blocks and the inlined
 // item_base dtor then restores the base vtable 0x5947d8 and destroys the name (the original order).
 // novtable: the original dtor has no store of its own vtable at the top (only cl's ctor/dtor scaffolding emits one).
+static inline void triple_zero(owned_triple& t) { t.p0 = 0; t.p1 = 0; t.p2 = 0; }   // through a reference: the stores stay after the vptr
 // @ 0x4cee50 (the two owned triples are built by their member constructors, as in 0x4ceec0)
 ItemD::ItemD()
 {
-    blk0.p0 = 0; blk0.p1 = 0; blk0.p2 = 0;
-    blk1.p0 = 0; blk1.p1 = 0; blk1.p2 = 0;
+    triple_zero(blk0);
+    triple_zero(blk1);
 }
 
 

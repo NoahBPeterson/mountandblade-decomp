@@ -64,6 +64,7 @@ void Troop::add_attr(int idx, int delta)
     } while (--n);
 }
 
+static __forceinline int clamp_rank(int x, const int& hi) { if (x < 0) x = 0; else if (x > hi) x = hi; return x; }
 // @ 0x48be70
 void Troop::set_attr(int idx, int val)
 {
@@ -72,21 +73,10 @@ void Troop::set_attr(int idx, int val)
     else if (val > 100)
         val = 100;
     ATTR(this)[idx] = val;
-    int v = F7A(this) & 0xf;
-    int x = v;
     int base = ATTR(this)[0];
-    int m = g_skill_tbl[36].max_rank;
-    if (v < 0)
-        x = 0;
-    else if (v > m)
-        x = m;
-    if ((float)(base + 0x23 + x * 2) < hp) {
-        if (v < 0)
-            v = 0;
-        else if (v > m)
-            v = m;
-        hp = (float)(base + 0x23 + v * 2);
-    }
+    const int& m = g_skill_tbl[36].max_rank;
+    if ((float)(base + 0x23 + clamp_rank(F7A(this) & 0xf, m) * 2) < hp)
+        hp = (float)(base + 0x23 + clamp_rank(F7A(this) & 0xf, m) * 2);
 }
 
 // @ 0x48bf90
@@ -111,9 +101,9 @@ void Troop::set_skill(int idx, int val)
     int base = ATTR(this)[0];
     m = g_skill_tbl[36].max_rank;
     int x = v;
-    if (v < 0)
+    if (x < 0)
         x = 0;
-    else if (v > m)
+    else if (x > m)
         x = m;
     if ((float)(base + 0x23 + x * 2) < hp) {
         if (v < 0)

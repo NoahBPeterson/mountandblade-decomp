@@ -5,3 +5,16 @@
 ../src/game/script/script_interpreter.cpp  ?check_faction@@YIDABH@Z  0049cf80  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?check_scene@@YIDABH@Z  0049d020  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?report@@YAXPBD@Z  0049cc60  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_register@@YADABH@Z  0049cd00  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_presentation@@YADABH@Z  0049cd50  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_mesh@@YADABH@Z  0049ce40  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_menu@@YADABH@Z  0049ce90  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_item_kind@@YADABH@Z  0049cfd0  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_mission_template@@YADABH@Z  0049d070  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_party_template@@YADABH@Z  0049d0c0  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_map_icon@@YADABH@Z  0049d110  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?warn_particle_system@@YADABH@Z  0049d1f0  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?warn_scene_prop@@YADABH@Z  0049d240  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?warn_sound@@YADABH@Z  0049d310  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?warn_track@@YADABH@Z  0049d3d0  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_animation@@YADABH@Z  0049d4b0  /O2 /MT /Gy /TP

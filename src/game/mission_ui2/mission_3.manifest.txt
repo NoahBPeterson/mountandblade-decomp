@@ -17,3 +17,8 @@
 ../src/game/mission_ui2/mission_3.cpp  ?set_limits@widget_mgr@@QAEXHHH@Z  0048e4c0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?add_item@widget_mgr@@QAEXHH@Z  0048e590  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?add_members@Party@@QAEHHHHHD@Z  0048c840  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?init_slots@GameData@@QAEXHH@Z  0048c4c0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?plural_name@TroopRec@@QAEPAUtstring@@XZ  0048d6d0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?raw_title@QuestRec@@QAEPAUtstring@@XZ  0048d750  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?set_val@widget_mgr@@QAEXHH@Z  0048e340  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?clear_particle_systems@Party@@QAEXXZ  0048d7e0  /O2 /MT /Gy /TP

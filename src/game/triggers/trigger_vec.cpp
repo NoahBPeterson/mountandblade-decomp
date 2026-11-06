@@ -1239,17 +1239,15 @@ ini_file g_module_info;     // 0xa18238 module.ini
 ini_file g_game_vars;       // 0xa44240 game_variables.txt
 
 // ---- trigger and game records -------------------------------------------------------------------------------------------------
-struct TimedVal { int id; int pad; __int64 t; };    // a (clock index, reading) pair: trigger_entry +0x20, TriggerRec +0x48 / +0x58 / +0x68
+struct TimedVal { int id; int pad; __int64 t; void reset() { id = 0; t = g_ticks[0]; } };    // a (clock index, reading) pair: trigger_entry +0x20, TriggerRec +0x48 / +0x58 / +0x68
 
 // @ 0x4c1c20
 TriggerRec::TriggerRec()
 {
     TimedVal* p = (TimedVal*)&f48;
-    for (int i = 0; i < 3; i++) {
-        p->id = 0;
-        p->t = g_ticks[0];
-        p++;
-    }
+    p[0].reset();
+    p[1].reset();
+    p[2].reset();
     f0c = 0;
 }
 

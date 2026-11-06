@@ -3,3 +3,4 @@
 ../src/game/options_panel/hud.cpp  ?frame_update@Rec38@@UAEXM@Z  004d59f0  /O2 /MT /Gy /TP
 ../src/game/options_panel/hud.cpp  ?frame_update@Rec454@@UAEXM@Z  004d5a20  /O2 /MT /Gy /TP
 ../src/game/options_panel/hud.cpp  ?frame_update@Rec44@@UAEXM@Z  004d5980  /O2 /MT /Gy /TP
+../src/game/options_panel/hud.cpp  ?frame_update@ItemRec@@UAEXM@Z  004d5290  /O2 /MT /Gy /TP

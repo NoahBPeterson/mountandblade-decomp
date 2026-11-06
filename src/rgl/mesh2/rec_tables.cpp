@@ -47,12 +47,11 @@ ResultWindow::~ResultWindow()
 }
 
 // @ 0x4c2d10
+struct ClockStamp { int idx; int pad; __int64 t; void start(int i) { idx = i; t = g_ticks[i]; } };   // +0x110: clock index, its time
 C4c2d10::C4c2d10()
 {
     pos tmp;
-    v110 = 2;
-    v118 = ((int*)g_ticks)[4];
-    v11c = ((int*)g_ticks)[5];
+    ((ClockStamp*)&v110)->start(2);
     v120 = 0;
     v128 = 0;
     f124 = 6.0f;
@@ -105,15 +104,15 @@ void GameKeys::load()
     if (r.failed) {
         set_defaults();
     } else {
-        int n = 0;
-        r.r_int(&n);
+        int n;
+        ((stream_base&)r).r_int(&n);
         if (n != 0x25) {
             set_defaults();
         } else {
             int* d = &entry[0][0];
             for (int i = 0; i < 0x25; i++)
                 for (int j = 0; j < 2; j++)
-                    r.r_int(d++);
+                    ((stream_base&)r).r_int(d++);
         }
         r.failed = 1;
     }

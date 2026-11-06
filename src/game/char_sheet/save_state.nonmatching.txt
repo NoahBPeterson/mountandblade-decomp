@@ -1,2 +1,2 @@
 # save_state nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)
-004e9620  31  complete; one extra 4-byte frame slot in the original (push ecx / pop ecx, the base+0xa0 temporary gets its own local instead of the dead argument home); ~8 source shapes tried. equiv.py: UNSUPPORTED (fake-arity)
+004e9620  31  complete; one extra 4-byte frame slot in the original (push ecx / pop ecx, the base+0xa0 temporary gets its own local instead of the dead argument home); ~8 source shapes tried. equiv.py: UNSUPPORTED (fake-arity)  [note: the original keeps base+0xa0 in its own 4-byte frame slot (push ecx); cl reuses the dead base parameter slot in ours; local vs b->blk vs raw offsets all the same.]

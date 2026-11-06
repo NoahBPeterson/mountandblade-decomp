@@ -1418,7 +1418,7 @@ void Prop::update(int unused)
 void Missile::init()
 {
     f54 = 0.01f;
-    f68 = 0;
+    int& n = f68; n = 0;
     t0 = g_ticks[clock];
     spent = 0;
     fa0 = 0;

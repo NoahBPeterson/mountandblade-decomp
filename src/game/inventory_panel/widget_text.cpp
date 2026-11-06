@@ -301,8 +301,7 @@ named_vec* vec_named::_Ufill(named_vec* ptr, unsigned n, const named_vec& val)
 // @ 0x50d230 vec_named::_Destroy
 void vec_named::_Destroy(named_vec* first_, named_vec* last_)
 {
-    named_vec* p = last_;
-    destroy_named_t(first_, last_, this, p);
+    destroy_named_t(first_, last_, this, junk_tag());
 }
 
 // @ 0x50d260 vec_named::_Insert_n

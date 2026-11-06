@@ -8,18 +8,17 @@
 #include "../../include/clock_table.h"
 #include "../strat/gui_manager.h"     // g_gui
 
-// A compiler fence (no code): pins the store order of the base ctor's id store, the derived vptr store and
-// the zero/load stores, which cl 13.10 otherwise schedules differently from the original (docs/codegen.md 10.9).
+// The member initialisers are small inline helpers: written out flat, cl schedules the base ctor's id store and the
+// derived vptr store after the zero stores, which the original does not.
 
+static __forceinline void start_timer(Timer& t) { t.clock = 0; t.start = g_ticks[0]; }
+static __forceinline void clear_block(owned_block& b) { b.begin = 0; b.end = 0; b.cap = 0; }
 // @ 0x4ce870
 ItemRec::ItemRec() : head_rec(no_w04())
 {
     w04 = 0;
-    owned.begin = 0;
-    owned.end = 0;
-    owned.cap = 0;
-    tm.clock = 0;
-    tm.start = g_ticks[0];
+    clear_block(owned);
+    start_timer(tm);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;
@@ -29,11 +28,8 @@ ItemRec::ItemRec() : head_rec(no_w04())
 ItemRec2::ItemRec2() : head_rec(no_w04())
 {
     w04 = 0;
-    owned.begin = 0;
-    owned.end = 0;
-    owned.cap = 0;
-    tm.clock = 0;
-    tm.start = g_ticks[0];
+    clear_block(owned);
+    start_timer(tm);
     f5c = 0;
     f58 = 1.0f;
     f40 = -1;

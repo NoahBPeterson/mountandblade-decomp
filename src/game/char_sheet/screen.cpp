@@ -51,14 +51,16 @@ void __cdecl take_screenshot(void)
 // 0x4d10f0 (item_modifier_array_dtor) as the row destructor uses it: (first, model = this+0x10, last, this).
 
 // The member at +0x10 is the row's model: [0]=first, [4]=buffer (freed), [8]=last.
+struct ptr_tag {};   // the range destructor's by-value iterator tag: an empty class, pushed from an unwritten slot
 // @ 0x4ebdc0
 void __stdcall destroy(UiRow* param)
 {
     UiRow* self = param;
     int* l = &self->pad10;
     if (l[1]) {
-        // arg 4 is a distinct 4-arg instantiation ICF-folded with the 2-arg range destructor.
-        ((void (__cdecl*)(void*, void*, void*, void*))item_modifier_array_dtor)((void*)l[1], (void*)l[2], l, param);   // 0x4d10f0 (reads two)
+        // arg 4 is the iterator tag (an empty class by value); 0x4d10f0 reads only the first two.
+        ptr_tag tag;
+        ((void (__cdecl*)(void*, void*, void*, ptr_tag))item_modifier_array_dtor)((void*)l[1], (void*)l[2], l, tag);   // 0x4d10f0 (reads two)
         ::operator delete((void*)l[1]);
     }
     l[1] = 0;

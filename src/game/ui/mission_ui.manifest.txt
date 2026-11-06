@@ -103,3 +103,5 @@
 ../src/game/ui/mission_ui.cpp  ?key@UiA@@UAEDI@Z  0048b200  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ??_GMissionUi@@UAEPAXI@Z  00502300  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?first@Sel@@QAE?AUvector4@rgl@@XZ  00489890  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?setup@MissionView@@QAEXPAXPAH1@Z  004897a0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?remove_row@Party@@QAEPAHPAHH0@Z  00489540  /O2 /MT /Gy /TP

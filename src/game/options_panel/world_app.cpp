@@ -357,7 +357,7 @@ struct TreeW {
 // @ 0x4d3e50
 void TreeW::erase(void* p1, void* p2)
 {
-    std::_Destroy_range((E68*)p1, (E68*)p2, *(std::allocator<E68>*)(void*)this, std::_Nonscalar_ptr_iterator_tag());   // 0x4cd570
+    std::_Destroy_range((E68*)p1, (E68*)p2, *(std::allocator<E68>*)(void*)this);   // 0x4cd570
 }
 
 // @ 0x4d3e70
@@ -403,8 +403,8 @@ GameApp g_app_obj;                                  // 0x8ee3c48 (.bss; construc
 // @ 0x4d3ec0
 GameApp::GameApp()
 {
-    WL_MARKER(12)
     f350 = 0;
+    WL_MARKER(12)
 
     m_dw334 = (DWORD)"m";
     m_strWindowTitle = (TCHAR*)"Mount&Blade";

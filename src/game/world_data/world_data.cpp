@@ -1056,8 +1056,7 @@ void TableauTbl::pop_back_delete()
         ((rgl::world*)_Ptr)->~world();                // 0x475d50
         ::operator delete(_Ptr);
     }
-    if (worlds._Myfirst != 0 && worlds.size() != 0)
-        --worlds._Mylast;
+    worlds.pop_back();
 }
 
 // ==== 0x492f40: the game object's destructor =======================================================================
@@ -1154,13 +1153,10 @@ DropDown::DropDown() throw()
     f188 = 0;
     f164 = 0;
     f160 = 0;
-    f1b0 = 0.2265f;
-    f1b4 = 0.029f;
-    f1bc = 0.018f;
-    f1c0 = 0.018f;
+    *(V2*)&f1b0 = V2(0.2265f, 0.029f);
+    *(V2*)&f1bc = V2(0.018f, 0.018f);
     f1b8 = 0.0135f;
-    f1c4 = 0.02f;
-    f1c8 = 0.01f;
+    *(V2*)&f1c4 = V2(0.02f, 0.01f);
 }
 
 // @ 0x4932a0
@@ -1582,15 +1578,11 @@ void TableauTbl::add_point_light(const rgl::matrix* p, const rgl::vector4& c)
 // @ 0x494020
 void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 {
-    int _g[4];
     Light* l = ((rgl::world*)worlds[worlds.size() - 1])->spawn_wind();   // 0x478f30
     l->color = c;
     l->type = 2;
-    l->dir = p->u;
-    l->pos.x = p->o.x - l->dir.x * 1000.0f;
-    l->pos.y = p->o.y - l->dir.y * 1000.0f;
-    l->pos.z = p->o.z - l->dir.z * 1000.0f;
-    *(int*)&l->pos.w = _g[3];
+    l->dir = p->f;
+    l->pos = p->o - l->dir * 1000.0f;
     l->base_color = l->color;
 }
 
