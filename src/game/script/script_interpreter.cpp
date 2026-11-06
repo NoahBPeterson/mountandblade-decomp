@@ -1783,7 +1783,7 @@ __declspec(noinline) void AgentTable::next_used(unsigned* i)
         ++*i;
     }
 }
-__declspec(noinline) Agent* AgentTable::get(unsigned id)
+inline __declspec(noinline) Agent* AgentTable::get(unsigned id)
 {
     return &pages[id >> 4][id & 0xf];
 }
@@ -3144,6 +3144,21 @@ static __forceinline const tstring& str_ref(const tstring& s) { return s; }
 // buf: 0x920..0xb20 in the original frame (single-use temporaries fill the rest up to the link buffers at 0xd20)
 // In execute the accessors expand in place: the original writes g_game->troops[id] directly, so the expression is evaluated where it stands,
 // after a call's arguments (a function, even __forceinline, computes the pointer into a temporary first and that rotates the scratch registers).
+#ifdef SI_TRUE_ABI
+// the original's 0x4904a0 takes the context in EAX: a static of this object (execute is its only caller). See NOTES.md.
+static __declspec(noinline) int trigger_item_mesh_s(int c)
+{
+    GameX* g = (GameX*)g_game;
+    if (trigger_entity(c) == 0)
+        return -1;
+    if (c != -0x32 && c != -0x33)
+        return -1;
+    if (*(int*)((char*)g + 0x1a204) < 0)
+        return -1;
+    return trigger_entity(*(int*)((char*)g + 0x1a1f4));   // scratch body: measures the call sites only
+}
+#define trigger_item_mesh trigger_item_mesh_s
+#endif
 #define game() ((GameX*)g_game)
 #define CS(s) (((const string_view_*)(s))->get())
 #define troop(id) (&((GameX*)g_game)->troops[id])
@@ -4240,7 +4255,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_price_rate_for_item_type:
         for (int k = 0; k < g_item_kind_count; k++)
-            if ((__int64)(item_kind(k)->type_flags & 0xff) == params[0])
+            if ((__int64)(int)(item_kind(k)->type_flags & 0xff) == params[0])
                 item_kind(k)->price_rate = (float)params[1] * 0.01f;
         break;
     case op::party_join:
@@ -4885,7 +4900,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::item_get_type:
         if (check_item_kind((int)params[1]))
-            SET_LV((__int64)(item_kind((int)params[1])->type_flags & 0xff));
+            SET_LV((__int64)(int)(item_kind((int)params[1])->type_flags & 0xff));
         break;
 
     // ---- parties -----------------------------------------------------------------------------------------------
@@ -5149,10 +5164,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_stack_get_troop_dna:
         // the main party's stacks keep their dna in the game's stack rows
         if (check_party((int)params[1]) && IN_RANGE(params[2], 0, 0x40)) {
-            if (params[1] != (__int64)game()->main_party)
-                SET_LV((__int64)((GameW*)g_game)->stack_dna((int)params[1], (int)params[2], 0, 0));
-            else
+            if (params[1] == (__int64)game()->main_party)
                 SET_LV((__int64)*(int*)(game()->stack_rows + (int)params[2] * 0x80));
+            else
+                SET_LV((__int64)((GameW*)g_game)->stack_dna((int)params[1], (int)params[2], 0, 0));
         }
         break;
     case op::party_prisoner_stack_get_troop_id:
@@ -5307,7 +5322,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_icon:
         if (check_party((int)params[1]))
-            SET_LV((__int64)(unsigned)((unsigned)party((int)params[1])->flags & 0xff));
+            SET_LV((__int64)(int)((unsigned)party((int)params[1])->flags & 0xff));
         break;
     case op::party_get_skill_level:
         {
@@ -5792,14 +5807,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (set_fog_distance, <distance_in_meters>, [fog_color]): 0 = the colour of the scene's environment row
         if (g_mission) {
             mission()->fog_distance = (float)params[0];
-            if (mission()->scene) {
+            rgl::world* w = mission()->scene;
+            if (w) {
                 MissionX* m = mission();
-                su_0 = g_env_rows[m->env_row].f44;
+                unsigned c = g_env_rows[m->env_row].f44;
                 if (params[1])
-                    su_0 = (unsigned)params[1];
+                    c = (unsigned)params[1];
+                su_0 = c;
                 sf_0 = (float)params[0];
                 sf_1 = 1.0f;
-                m->scene->set_fog(&sf_1, &sf_0, (const int*)&su_0);
+                w->set_fog(&sf_1, &sf_0, (const int*)&su_0);
             }
         }
         break;
@@ -6252,7 +6269,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     { int si_0; int si_1;
         // (.., <troop_id>, <position_no>, <animation_id>, <instance_no>): instance <= 0 = no random face (heroes)
         if (check_troop((int)params[0]) && check_register((int)params[1]) && check_animation((int)params[2]) &&
-            g_tableaus.worlds.size()) {
+            g_tableaus.worlds.size() > 0) {
             si_0;
             if (params[3] > 0)
                 si_0 = (int)params[3];
@@ -6267,7 +6284,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     { int si_0; int si_1;
         // (cur_tableau_add_horse, <item_id>, <position_no>, <animation_id>)
         if (check_item_kind((int)params[0]) && check_register((int)params[1]) && check_animation((int)params[2]) &&
-            g_tableaus.worlds.size()) {
+            g_tableaus.worlds.size() > 0) {
             si_0 = (int)params[2];
             si_1 = -1;
             tableau_add_agent(-1, (int)params[0], &script_pos((int)params[1]), &si_0, &si_1);
@@ -6295,7 +6312,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (.., <mesh_id>, <position_no>, <scale_position_no>, <alpha_fixed_point>, <vertex_color>): the scale is the
         // origin of the second position, in fixed point
         if (check_mesh((int)params[0]) && check_register((int)params[1]) && check_register((int)params[2]) &&
-            g_tableaus.worlds.size()) {
+            g_tableaus.worlds.size() > 0) {
             si_0 = (int)params[4];
             sf_0;
             if (params[3] == 0)
@@ -6528,6 +6545,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             case 2: ok = check_faction((int)params[1]); break;
             case 3: ok = check_party((int)params[1]); break;
             case 4: ok = check_quest((int)params[1]); break;
+            default: __assume(0);
             }
             if (ok) {
                 game()->next_window = 0x10;
@@ -6614,10 +6632,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::val_abs:
         {
-            __int64 v = params[0];
-            if (v < 0)
-                v = -v;
-            SET_LV(v);
+            SET_LV(params[0] < 0 ? -params[0] : params[0]);
         }
         break;
     case op::val_or:
@@ -6828,9 +6843,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[2])
                 SET_LV((__int64)(int)troop((int)params[1])->hit_points);
             else {
-                TroopX* t = troop((int)params[1]);
-                float h = t->hit_points * 100.0f;
-                SET_LV((__int64)(h / t->max_hit_points()));
+                float h = troop((int)params[1])->hit_points * 100.0f;
+                SET_LV((__int64)(h / troop((int)params[1])->max_hit_points()));
             }
         }
         break;

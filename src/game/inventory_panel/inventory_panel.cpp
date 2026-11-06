@@ -3,7 +3,8 @@
 //
 // Desc: the inventory / trade screen's window object: the per-frame step (scroll-bar follow, trial-mode money, character
 //       strip clicks, the pending trade value and its pay / receive / dump questions), the slot state and value tables,
-//       the grid refresh, the item tooltip, the item and attribute names, the price rules, and the slot-transfer engine.
+//       the grid refresh, the item tooltip, the item and attribute names, the price rules, the slot-transfer engine, and
+//       MapFlags::commit (0x513710): frame_update's `eaten` store schedule shows the original saw that body in this TU.
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"

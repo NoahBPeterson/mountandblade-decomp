@@ -15,3 +15,4 @@
 ../src/game/inventory_panel/mission_ctx.cpp  ?init_scene@MissionV@@QAEXXZ  005144d0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?init@MissionV@@QAEXHHHHPAUMissionCtx@@HH@Z  005143f0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?camera_move@CampaignScreen@@QAEXM@Z  00515d80  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?init_battle@MissionCtx@@QAEXH@Z  00516250  /O2 /MT /Gy /TP

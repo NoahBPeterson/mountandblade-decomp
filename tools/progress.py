@@ -485,6 +485,10 @@ def _tree_rows():
     rows = []
     for a in sorted(set(game) | set(lib)):
         rel = files.get(a)
+        if rel:                          # one box per module: its manifest and nonmatching rows drew as two same-named boxes
+            for suf in (".nonmatching.txt", ".manifest.txt", ".partial.txt"):
+                if rel.endswith(suf):
+                    rel = rel[:-len(suf)]
         if a in lib:
             group, fname = "3rd party", "lib_crt"
         elif rel and rel.startswith("src/rgl/"):

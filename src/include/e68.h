@@ -21,7 +21,7 @@ struct E68 {                                // 0x68: the map (tableau) block
     DialogBlock m;                          // 0x38
     std::vector<scalar4> v;                 // 0x54
     skin* t;                                // 0x64 the tableau material (0x4c83a0)
-    E68() {}
+    E68() { b0 = -1; t = 0; }
     E68(const E68& o);                      // 0x4cd100 (mesh_2.cpp)
     E68& operator=(const E68& o);           // 0x4cd2f0 (mesh_2.cpp)
     void free_materials();                  // 0x4c8330 (src/rgl/mesh2/gui_edit.cpp)

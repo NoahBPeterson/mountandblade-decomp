@@ -9,13 +9,10 @@
 004c4d10 ??1Tail2@@QAE@XZ  # dtor: drains +0x10 refcap, frees +4 pointer vector back-to-front, drops the array
 004c4d80 ?clear@list_int@@QAEXXZ  # std::list<int>::clear: walk next from head+4, free every node
 004c4dc0 ?list_int_buynode@@YIPAXPAUlist_int@@@Z  # scalar new of a 0x28-byte self-linking node (EH-framed in the original)
-004c4e2f ?list_int_buynode_funclet@@YAXPAUlist_node_int@@@Z  # EH funclet of 0x4c4dc0 (delete + rethrow)
 004c4e50 ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z  # scalar new of a node initialised through 0x4be9c0 (ret 0xc)
-004c4ebd ?list_int_make_node_funclet@@YAXPAX@Z  # EH funclet of 0x4c4e50 (delete + rethrow)
 004c4ee0 ??1Terrain@@QAE@XZ  # big object dtor: free +0x845e7bc, clear 3 words, dtor name + 15 0x28-stride strings
 004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  # deleting dtor (ret 4) of a 0x60-byte element / its vector
 004c5010 ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z  # uninitialized fill of n 0x2c-byte records through 0x4c1b20, EH-guarded
-004c5074 ?fill_records_funclet@@YAXXZ  # EH funclet of 0x4c5010 (rethrow)
 5947d8 ??_7head_rec@@6B@  # head_rec / CampaignScreen base vtable
 595bd8 ??_7CampaignScreen@@6B@  # CampaignScreen vtable
 595c20 ??_7CharSheet@@6B@  # head_obj2 vtable

@@ -21,3 +21,6 @@
 004d1330  # catch funclet of _Uninit_copy<mission> 0x4d12c0 (module_load.cpp)
 004fe184  # rethrow tail (push 0; push 0; call _CxxThrowException) of the catch in cell_fill 0x4fe120 (agent_vec.cpp, byte-exact with it)
 004fe516  # rethrow tail of the catch in cell_copy 0x4fe4b0 (agent_vec.cpp, byte-exact with it)
+004c4e2f  # EH funclet inside std::list::_Buynode 0x4c4dc0 (gui_edit.cpp, byte-exact with it: section compared, 2026-11-06)
+004c4ebd  # EH funclet inside list_int_make_node 0x4c4e50 (gui_edit.cpp, byte-exact with it: section compared, 2026-11-06)
+004c5074  # rethrow funclet of 0x4c5010 (gui_edit.cpp, byte-exact with it: section compared, 2026-11-06)

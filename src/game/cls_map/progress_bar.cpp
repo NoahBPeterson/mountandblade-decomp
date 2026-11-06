@@ -1148,18 +1148,11 @@ void TableauTbl::read(SlotReader* stream)
     WL_MARKER(12)
     int n;
     stream->get_int(&n);                        // vtable +0x4c: the block count
-    E68 blank;
-    blank.b0 = -1;
-    blank.m.items = 0;
-    blank.m.count = 0;
-    blank.m.done = 0;
-    blank.t = 0;
-    recs.resize(n, blank);                    // 0x4e40f0
+    recs.resize(n);                           // 0x4e40f0
     WL_MARKER(13)
     for (int i = 0; i < n; i++) {
-        MapBlock* b = (MapBlock*)&recs[0] + i;
-        b->read_terrain(stream);                // 0x4c83a0
-        ((MapBlock*)&recs[0] + i)->b0 = i;
+        recs[i].read_terrain((stream_base*)stream);                // 0x4c83a0
+        ((MapBlock&)recs[i]).b0 = i;
     }
     ::conv_map_codes((conv_rec*)this);             // 0x4c84f0
 }

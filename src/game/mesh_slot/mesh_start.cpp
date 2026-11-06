@@ -329,7 +329,7 @@ void Mission::start_setup()
     in.z = 0.0f;
     in.y = g_ticks[1] * 1e-5f;
     noise_fractal(96.0f, 0.7f, 4, 0, &in.x, &out.x);
-    float f14 = (out.z + out.y + out.x) * 5.0f;
+    float f14 = (out.x + out.y + out.z) * 5.0f;
     {
         v.z = 700.0f;
         v.x = (float)RAWAT(int, g_game, 4) * 0.1f;
@@ -337,7 +337,7 @@ void Mission::start_setup()
         in = v;
     }
     noise_fractal(72.0f, 0.7f, 4, 0, &in.x, &out.x);
-    fo = (out.z + out.y + out.x) * 5.0f;
+    fo = (out.x + out.y + out.z) * 5.0f;
 
     humidity = clamp01(((f14
  + f14) + 0.5f) * temper + (RND() * 6.32231167e-05f) * 0.0500000007f);
@@ -367,7 +367,7 @@ void Mission::start_setup()
         at<float>(0x6610) = (RND() * 4.42561795e-05f + 0.300000012f) * at<float>(0x6610);
 
     if (RAWAT(float, g_game, 0x13b3c) > 0.600000024f) {
-        if (humidity * 0.100000001f + ((RND() * 6.32231167e-05f) * 0.0500000007f + RAWAT(float, g_game, 0x13b3c) * 0.200000003f) +
+        if (humidity * 0.100000001f + (RAWAT(float, g_game, 0x13b3c) * 0.200000003f + (RND() * 6.32231167e-05f) * 0.0500000007f) +
             fo > 0.460000008f) {
             if (ptype == 4 || ptype == 0xc)
                 at<int>(0x6604) = 2;

@@ -163,9 +163,9 @@ Rule, measured: **a local whose address reaches a callee cl cannot see keeps a p
 So when a slot is private here and low in the original, look down the callee chain for an opaque function. The older open item about set_battle_advantage's private slots no longer shows up in the slot lists.
 Removing each of the 47 `noinline` bodies above execute was re-measured with the frame right: none gains (most lose 1 to 300 cases).
 
-High frame order: tstring temporaries are laid out in two interleaved rising sequences by case, and the sequences are shifted against the original (case 60: 0x390 and 0x640 there, 0x310 and 0x5c0 here). Temporaries added before execute in the file do not move them, so the order is decided inside the function. Several cases have more slots in the original (question_box 11 against 6, set_relation 6 against 4, dialog_box 5 against 4), which is the likely cause. Tool: `work/match/bm4o2_c.py --perc lo hi` prints slots per case.
+High frame order: solved, see the third lane's section below.
 
-Calling `create_text_overlay` / `create_button_overlay` directly (without the `Presentation` forwarders) gives the original's argument order (flags pushed first) but rotates later cases: 360 identical, 418 ignoring slots and registers. Not applied; it is probably right once the rotation above it is fixed.
+`create_text_overlay` / `create_button_overlay` are called directly now.
 
 ## Merge test (docs/original_tus.md A2), 2026-11-06
 
@@ -181,6 +181,27 @@ Measured in a scratch merge (`work/match/bm4o2_merge.py`, `bm4o2_patch.py`). Not
 - Against widget_node: 0x49ad46 calls the ContainerBase constructor out of line where Camera::Camera expands it; that is the +29. It agrees with the forward call 0x49aca0 -> 0x49ad20.
 - Still unexplained: `agent_of` 0x4904a0 taking EAX with execute as its only caller.
 - Visible bodies do not prove a shared object: `PartyMgr::get` 0x51ee50 and `lookup` 0x48ad00 are visible here and far outside this range, so they look like header inlines.
+
+## 2026-11-06, third lane: fix top-down, judge by "mod-stack+regs"
+
+Figures: see script_interpreter.nonmatching.txt. Levers, in order of yield:
+- **Case order.** Nine cases were out of the original's order (1112, 1113, 1505, 1506, 1535, 1536, 1612, 1784, 2383); the source now has the original's order (`bm4o3_c.py --order` prints differences). Rotation is a chain in that order.
+- **Forwarders again.** `CS()` is a macro in execute now, `create_*_overlay`, `create_mesh_overlay_with_tableau`, NamedRec `setup`/`setup2` and GameData `get_name`, `event_string` are called directly. The earlier "direct overlay calls rotate later cases" was an earlier wrong case (position_set_z_to_ground_level): fixed top-down, it gains.
+- **`check_string_arg(value, type)`.** The parameter order was wrong (the row stays byte-exact either way, arguments are evaluated right to left, so call sites flipped `lea ecx`/`lea esi`): +14 mod-stack.
+- **Named strings.** `tstring("x")` as a temporary pushes eax (the ctor's return); the original pushes `lea r,[tmp]`: `{ tstring msg(buf); g_gui.push(msg, c); }`, `{ tstring sep(": "); ...append(sep); }`. And locals that weren't in the original go: `tstring text = ...; nm = expand(text)` and `const char* arg0 = CS(...)` were expressions.
+- **High frame order: solved.** All tstring slots match the original now. It was the forwarders' temporaries and locals above, not the slot allocator. The slots are laid out by the temporaries' creation, so wrong temporaries shifted everything.
+- **`inline __declspec(noinline)` versus `__declspec(noinline)`.** `AgentTable::get` was plain visible: an x87 value stayed on the FP stack across it. As `inline` (a header inline, compiled later) the float spills as in the original (store_agent_hit_points, agent_set_speed_limit). Making each of the other 47 visible bodies `inline` changes nothing.
+- A float computed in both arms is one expression per arm, CSE hoists it (`position_move_x`). `bool v = x != 0; g = v;` gives `mov al,1 / xor al,al` (set_show_messages). `switch ... default: __assume(0)` drops the range check (change_screen_notes). `size() > 0` gives `jbe`. `(__int64)(int)(x & 0xff)` gives cdq where x is unsigned (item_get_type and neighbours: +6 cases each, they were rotating what follows).
+- **The R1 cases are not rotation.** `[eax+edx+0x64]` against `[edx+eax+0x64]` flips with the number of *used* symbols in the whole function, in cases before and after the edit (codegen.md 6.2). It does not move with unused locals. Adding named locals one by one flips groups on and off (check_quest_*, troop_*, slot cases) with no monotonic pattern, so "identical" is noisy by about 30 cases for any single edit: judge by mod-stack+regs. These should settle when the symbol count is right.
+
+**`SI_TRUE_ABI` (off by default).** Three callees have a different ABI in the original, and the definitions belong to other modules. With the macro defined, execute is what the original calls, for measuring: 
+- `Mission::get_frame` 0x48a420 returns the matrix by value (execute is its only caller, 5 sites; mission.h, ui/mission_ui.cpp). The forwarder's named local put five 0x40 slots first in the frame. By value: all slots above 0xb00 match and code shrinks by 128 bytes.
+- `sl_item_flag_all` 0x48a210, `sl_item_set_all` 0x48a250 and `is_night` 0x435740 (not yet under the macro) ignore `this`, but the call sites load `mov ecx,g_game`: they're GameData members.
+- `agent_of` / `trigger_item_mesh` 0x4904a0: a `static` in this file gets EAX from cl at the three call sites, so the row belongs to this object (world_data.cpp has it now). The macro's body is a stand-in: only the call sites are real.
+
+Open, top-down: hero_can_join family (still as in the section above), player_has_item, store_conversation_agent (2199: `cmp esi,[ebx]` reloads the count where ours CSEs it across the visible next_used; the tail of its first arm is the X form `mov [18],eax; lea eax,[18]` that 2200..2263 share, so this one case probably rotates the store block), quest note indexing `(i*0x138 + j*16) + base` (ours `(base + i*0x138) + j*16`), set_visitor/set_visitors (tree order, 19 bytes), store_troop_health's `h` (private 0xac, 0x10 there: max_hit_points is opaque here, perhaps a visible inline).
+
+Tools: `work/match/bm4o3_c.py` (`--bm NAME...` masked diff with source, `--both`, `--order`, `--cnt N`, `BMD=1` compiles with SI_TRUE_ABI), `bm4o3_tv.py` (edit variants in parallel), `bm4o3_tf.py`, `bm4o3_rows.sh`.
 
 ## Open problems
 

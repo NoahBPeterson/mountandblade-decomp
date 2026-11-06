@@ -24,3 +24,4 @@
 ../src/game/cls_map/progress_bar.cpp  ?create@ItemB@@QAEXXZ  004e5d90  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?create2@ItemC@@QAEXXZ  004e5e60  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?init_screen@C4c31c0@@UAEXXZ  004e4790  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?read@TableauTbl@@QAEXPAUSlotReader@@@Z  004e7a70  /O2 /MT /Gy /TP
