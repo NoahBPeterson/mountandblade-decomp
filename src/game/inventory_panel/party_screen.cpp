@@ -264,37 +264,45 @@ void PartyScreen::init_screen()
 }
 
 
+// the party record of an id as a reference: `.stacks[i]` then stays one address chain (page + (record + stack) at 0x50397d)
+static inline Party& party_ref(PartyMgr* m, int id)
+{
+    int i = m->lookup(id);
+    return m->pages[i >> 4][i & 0xf];
+}
+
 // @ 0x503810
 void PartyScreen::read(int which)
 {
-    int mainp = g_game->f78;
-    int owner = g_game->player;
+    GameData* g = g_game;
+    int mainp = g->f78;
+    int owner = g->player;
     if (which != 0) {
         mainp = w10;
         if (w04 == 3 || w04 == 2)
             owner = w14;
         else
-            owner = *(int*)((char*)PARTIES->get(mainp) + 0xac);
+            owner = *(int*)((char*)g->parties.get(mainp) + 0xac);
     }
-    if (owner >= 0)
-        owner_troop[which] = g_game->chars[owner].f3b4;
-    party_7c[which] = *(int*)((char*)party_index(mainp) + 0x7c);
+    if (owner >= 0) {
+        owner_troop[which] = g->chars[owner].f3b4;
+        g = g_game;                                 // reloaded on this path only: the other keeps edi (0x503875)
+    }
+    {
+        PartyMgr* m = &g->parties;
+        party_7c[which] = *(int*)((char*)party_at(m, m->lookup(mainp)) + 0x7c);
+    }
     party_80[which] = *(int*)((char*)party_index(mainp) + 0x80);
     nstacks[which] = *(int*)((char*)party_index(mainp) + 0x8a8);
-    if (nstacks[which] > 0) {
-        int i = 0;
-        PsRow* dst = rows[which];
-        do {
-            *(int*)((char*)party_index(mainp) + 0xb4 + i * 0x20) = 0;
-            *dst = *(PsRow*)((char*)party_index(mainp) + 0xa8 + i * 0x20);
-            i++;
-            dst++;
-        } while (i < nstacks[which]);
+    for (int i = 0; i < nstacks[which]; i++) {
+        party_ref(PARTIES, mainp).stacks[i].f0c = 0;
+        Stack* q = &party_index(mainp)->stacks[i];
+        rows[which][i] = *(PsRow*)q;
     }
     if (which == 0) {
         for (int i = 0; i < 64; i++)
             for (int j = 0; j < 32; j++)
-                table[i][j] = ((int*)((char*)g_game + 0x1405c))[i * 32 + j];
+                table[i][j] = g_game->tbl[i][j];
     }
 }
 
@@ -309,6 +317,10 @@ static inline int round_half_up(const float* p)
 // the party's morale, through a reference (the local stays in memory across the compares)
 static inline void get_morale(float& out, Party* p) { out = *(float*)((char*)p + 0x7c); }
 
+// the morale name past the first arm goes through an inline taking the text by value: its parameter is the separate
+// temporary the original has there (`mov eax,ecx; mov esi,eax` on arms 2..9, `mov esi,ecx` on arm 1)
+static inline const char* text_of(const char* s) { return s; }
+
 // @ 0x503a50
 void PartyScreen::refresh_morale()
 {
@@ -320,14 +332,14 @@ void PartyScreen::refresh_morale()
         sprintf(text,
                 g_strtable.lookup("ui_morale")->c_str(),
                 morale < 0.1f ? g_strtable.lookup("ui_terrible")->c_str()
-              : morale < 0.2f ? g_strtable.lookup("ui_very_low")->c_str()
+              : text_of(morale < 0.2f ? g_strtable.lookup("ui_very_low")->c_str()
               : morale < 0.3f ? g_strtable.lookup("ui_low")->c_str()
               : morale < 0.4f ? g_strtable.lookup("ui_below_average")->c_str()
               : morale < 0.6f ? g_strtable.lookup("ui_average")->c_str()
               : morale < 0.7f ? g_strtable.lookup("ui_above_average")->c_str()
               : morale < 0.8f ? g_strtable.lookup("ui_high")->c_str()
               : morale < 0.9f ? g_strtable.lookup("ui_very_high")->c_str()
-              : g_strtable.lookup("ui_excellent")->c_str());
+              : g_strtable.lookup("ui_excellent")->c_str()));
     }
 
     {
@@ -590,29 +602,36 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
             total = bar_amount[type];
     }
 
-    float p[2];                     // the one float pair every set_pos / set_size call below reuses
-    MissionUi** row = buttons[type + page * 2];
-    for (int i = 0; i < count; i++, row++) {
-        MissionUi* bar = *row;
+    for (int i = 0; i < count; i++) {
+        MissionUi* bar = buttons[type + page * 2][i];
+        float p[2];
         *(int*)&p[0] = WINT(bar, 0xe8);
         p[1] = total - (float)(i + 1) * unit;
         PSO(bar)->set_pos(p);
     }
 
-    MissionUi* a = ((MissionUi**)members_page)[type + page * 2];
-    *(int*)&p[0] = WINT(a, 0xf0);
-    p[1] = total;
-    PSO(a)->set_size(p);
+    {
+        MissionUi* a = ((MissionUi**)members_page)[type + page * 2];
+        float p[2];
+        *(int*)&p[0] = WINT(a, 0xf0);
+        p[1] = total;
+        PSO(a)->set_size(p);
+    }
 
     float x = (bar_amount[type] < total) ? bar_amount[type] : total;
     MissionUi** pb = &((MissionUi**)member_list)[type + page * 2];
-    *(int*)&p[0] = WINT(*pb, 0xf0);
-    p[1] = x;
-    PSO(*pb)->set_size(p);
-
-    *(int*)&p[0] = WINT(*pb, 0xe8);
-    p[1] = bar_start[type] + bar_amount[type] - x;
-    PSO(*pb)->set_pos(p);
+    {
+        float p[2];
+        *(int*)&p[0] = WINT(*pb, 0xf0);
+        p[1] = x;
+        PSO(*pb)->set_size(p);
+    }
+    {
+        float p[2];
+        *(int*)&p[0] = WINT(*pb, 0xe8);
+        p[1] = bar_start[type] + bar_amount[type] - x;
+        PSO(*pb)->set_pos(p);
+    }
 
     quarter_update(*pb);
 }
@@ -650,26 +669,17 @@ int GameDataV::weekly_cost()
     g_script.trigger_result.store0 = 0;
     g_script.trigger_result.store1 = 0;
     int total = 0;
-    if (sl_query(8, 0, 0))
-        return g_script.trigger_result.store0;
-
-    int id = parties.lookup(f78);
-    int* blk = (int*)parties.pages._Myfirst[id >> 4];
-    char* rec = (char*)blk + (id & 0xf) * 0x5ac8;
-    int cnt = *(int*)(rec + 0x8a8);
-
-    int* row = (int*)(rec + 0xcc);
-    for (int i = 1; i < cnt; i++) {
-        if (row[1] & 1)
-            break;
-        int member = row[0];
-        int v = sl_party_value(member);
-        if ((troops[member].flags32 & 0x10) == 0)
-            v *= row[-1];
-        total += v;
-        row += 8;
+    if (!sl_query(8, 0, 0)) {
+        Party* p = parties.get_w(f78);
+        for (int i = 1; i < p->nstacks; i++) {
+            Stack* st = &p->stacks[i];
+            if (st->flags & 1)
+                break;
+            total += (troops[st->troop].flags & 0x10) ? sl_party_value(st->troop) : sl_party_value(st->troop) * st->count;
+        }
+        return total;
     }
-    return total;
+    return g_script.trigger_result.store0;
 }
 
 
@@ -716,7 +726,7 @@ void PartyScreen::setup_party(int side)
     }
 
     for (int page = 0; page < 2; page++) {
-        ContainerBase* c = new ContainerBase;
+        ContainerBase* c = new ContainerBase(ContainerBase::inl_tag());
         MissionUi** mp = &members_page[side][page];
         *mp = c;
         label_refresh(*mp, tstring("party_bo_members_base"));

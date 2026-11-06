@@ -1304,6 +1304,7 @@ void ItemRec2::init_screen()
     }
 }
 
+
 // @ 0x4ddf80
 void C4c3050::init_screen()
 {
@@ -1332,35 +1333,40 @@ void C4c3050::init_screen()
 
     image = new MissionUi;
 
-    v[0] = 0.05f;
-    v[1] = 0.29f;
-    vt(image)->d22(v);
+    {
+        float q[2];
+        q[0] = 0.05f;
+        q[1] = 0.29f;
+        vt(image)->d22(q);
 
-    v[0] = 0.4f;
-    v[1] = 0.1f;
-    vt(image)->d25(v);
+        q[0] = 0.4f;
+        q[1] = 0.1f;
+        vt(image)->d25(q);
 
-    vt(image)->d41(v, &name);
+        vt(image)->d41(q, &name);
+    }
     vt(win)->d50(image);
 
-    rows[0] = 0;
-    rows[1] = 0;
-    rows[2] = 0;
-    rows[3] = 0;
-    rows[4] = 0;
-    rows[5] = 0;
+    { for (int k = 0; k < 6; k++) rows[k] = 0; }
 
     for (int i = 0; i < count; i++) {
-        tstring t1("longer_button_down");
-        tstring t2("longer_button");
-        rows[i] = new_sized_button(win, ((tstring*)t6c)[i], 0.05f,
-                                   0.3f - (float)(i - count + 6) * 0.05f,
-                                   0.04f, t2, t1, 9.7f, 0.072f, 0.085f);
+        float y = 0.3f - (float)(i - count + 6) * 0.05f;
+        ContainerBase* parent = win;
+        UiA* b;
+        {
+            tstring t1("longer_button_down");
+            tstring t2("longer_button");
+            b = new_sized_button(parent, ((tstring*)t6c)[i], 0.05f, y,
+                                 0.04f, t2, t1, 9.7f, 0.072f, 0.085f);
+        }
+        rows[i] = b;
     }
 
-    void* wv = win;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)(wv));
+    {
+        void* wv = win;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(wv));
+    }
     f58 = g_gui.show_cursor;
 }
 
@@ -1369,7 +1375,6 @@ void C4c3050::init_screen()
 // @ 0x4de1b0
 void Rec38::init_screen()
 {
-    float tv[2];
     ContainerBase* w;
     {
         ContainerBase* p = new NodeA(0);
@@ -1377,21 +1382,22 @@ void Rec38::init_screen()
     }
     win = w;
 
-    float v[4];
-    v[0] = 0.3f;
-    v[1] = 0.2f;
-    vt(win)->d22(v);
+    float size[2];
+    {
+    float pos[2];
+    pos[0] = 0.3f;
+    pos[1] = 0.2f;
+    vt(win)->d22(pos);
 
-    v[2] = 0.5f;
-    v[3] = 0.3f;
-    vt(win)->d25(v + 2);
+    size[0] = 0.5f;
+    size[1] = 0.3f;
+    vt(win)->d25(size);
 
-    vt(win)->d31(0, make_background(v + 2, -1));
+    vt(win)->d31(0, make_background(size, -1));
 
     PartyMgr* party = &g_game->parties;
     int h = party->lookup(w10);
-    Party** page = party->pages._Myfirst;
-    char* rec = (char*)((h & 0xf) * 0x5ac8 + (char*)page[h >> 4]);
+    char* rec = (char*)((h & 0xf) * 0x5ac8 + (char*)party->pages[h >> 4]);
     const tstring* text;
     if (g_module_settings.show_party_ids_instead_of_names)
         text = (const tstring*)(rec + 0x20);
@@ -1401,47 +1407,52 @@ void Rec38::init_screen()
         const tstring* p = g_strtable.find((const tstring*)(rec + 0x20));
         text = p != 0 ? p : (const tstring*)(rec + 0xc);
     }
-    vt(win)->d41(tv, (void*)text);
+    {
+        float tv[2];
+        vt(win)->d41(tv, (void*)text);
+    }
 
     {
         tstring t("ui_done");
-        f34 = new_button(win, *g_strtable_c.lookup(t), 0.2f, 0.03f, 0.15f, 0.05f);
+        const tstring& label = *g_strtable_c.lookup(t);
+        ContainerBase* parent = win;
+        f34 = new_button(parent, label, 0.2f, 0.03f, 0.15f, 0.05f);
+    }
     }
 
-    void* wv = win;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)(wv));
+    {
+        void* wv = win;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)(wv));
+    }
 }
 
 // @ 0x4de320
 rgl::mesh* make_background(float* v, int color)
 {
-    PanelMesh* m;
-    {
-        PanelMesh* p = (PanelMesh*)::operator new(0x260);
-        if (p != 0)
-            new (p) rgl::mesh();
-        else
-            p = 0;
-        m = p;
-    }
+    PanelMesh* m = (PanelMesh*)new rgl::mesh;
     {
         tstring t("background");
         m->res = g_resmgr.get_material(t);
     }
 
     float a[2];
-    a[0] = v[0] + v[0];
-    a[1] = -v[1] - v[1];
+    float*& size = v;
+    a[0] = size[0];
+    a[1] = -size[1];
+    a[0] = a[0] + a[0];
+    a[1] = a[1] + a[1];
 
-    float z[5];
-    z[0] = 0.0f;
-    z[1] = 0.0f;
-    z[2] = 0.0f;
-    z[3] = 0.0f;
-    z[4] = 0.0f;
+    float uv[2];
+    uv[0] = 0.0f;
+    uv[1] = 0.0f;
+    float pos[3];
+    pos[0] = 0.0f;
+    pos[1] = 0.0f;
+    pos[2] = 0.0f;
+    { int c = color;
 
-    m->build_panel(&z[2], v, z, a, &color);
+    m->build_panel(pos, size, uv, a, &c); }
     return m;
 }
 
@@ -1449,7 +1460,7 @@ rgl::mesh* make_background(float* v, int color)
 void PanelMesh::build_panel(const float* base, const float* size, const float* uv0, const float* uv1, int* col)
 {
     float uv[2];
-    int idx[4];
+    int ia[2], ib[2];
     rgl::vector4 p;
     int vv[4];
     int f5c;
@@ -1457,22 +1468,22 @@ void PanelMesh::build_panel(const float* base, const float* size, const float* u
     p.x = base[0];
     p.y = base[1];
     p.z = base[2];
-    idx[0] = add_point(&p);
+    ia[0] = add_point(&p);
 
     p.x = base[0] + size[0];
     p.y = base[1];
     p.z = base[2];
-    idx[1] = add_point(&p);
+    ia[1] = add_point(&p);
 
     p.x = base[0] + size[0];
     p.y = size[1] + base[1];
     p.z = base[2];
-    idx[2] = add_point(&p);
+    ib[0] = add_point(&p);
 
     p.x = base[0];
     p.y = size[1] + base[1];
     p.z = base[2];
-    idx[3] = add_point(&p);
+    ib[1] = add_point(&p);
 
     uv[0] = uv0[0];
     uv[1] = uv0[1] - uv1[1];
@@ -1480,20 +1491,20 @@ void PanelMesh::build_panel(const float* base, const float* size, const float* u
     p.y = 0.0f;
     p.z = 1.0f;
     f5c = 0;
-    vv[0] = add_vertex(idx[0], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
+    vv[0] = add_vertex(ia[0], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
 
     f5c = 0;
     uv[0] = uv0[0] + uv1[0];
     uv[1] = uv0[1] - uv1[1];
-    vv[1] = add_vertex(idx[1], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
+    vv[1] = add_vertex(ia[1], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
 
     uv[0] = uv0[0] + uv1[0];
     uv[1] = uv0[1];
     f5c = 0;
-    vv[2] = add_vertex(idx[2], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
+    vv[2] = add_vertex(ib[0], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
 
     f5c = 0;
-    vv[3] = add_vertex(idx[3], (const vec2*)uv0, (const unsigned*)col, &p, &f5c);
+    vv[3] = add_vertex(ib[1], (const vec2*)uv0, (const unsigned*)col, &p, &f5c);
 
     add_face(vv[0], vv[1], vv[2]);
     add_face(vv[0], vv[2], vv[3]);

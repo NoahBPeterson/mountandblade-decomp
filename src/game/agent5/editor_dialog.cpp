@@ -45,7 +45,6 @@ extern Mission* g_mission;                              // 0x5e292c (mission.h; 
 // 0..100 slider range and the byte->float colour unit.
 float g_one = 1.0f;                                 // 0x549cdc   1.0f
 float g_hundred = 100.0f;                           // 0x54ab28 100.0f
-float g_color_unit = 1.0f / 255.0f;                 // 0x54a6c4   1/255
 
 
 void restore_defaults();                           // 0x4d3a50
@@ -143,12 +142,14 @@ struct EditorTerrainView {            // 0x1c8 bytes
     char  pad1b8[0x1c8 - 0x1b8];
 };
 
+struct EditorBrushRec { int index; char pad[0x14]; };
+
 struct EditorSceneView {
     char  pad0[0x63d0];
     int   brush_count;      // +0x63d0
     char  pad63d4[0x63ec - 0x63d4];
-    int   brush_first;      // +0x63ec  brush_count records, 0x18 apart (index at +0)
-    char  pad63f0[0x651c - 0x63f0];
+    EditorBrushRec brushes[10];  // +0x63ec  brush_count records, 0x18 apart (index at +0)
+    char  pad63f0[0x651c - 0x63ec - 10 * 0x18];
     int   object_kind;      // +0x651c
     char  pad6520[0x65e4 - 0x6520];
     EditorMeshObj* edit_obj;  // +0x65e4
@@ -186,7 +187,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_SETPOS, TRUE, 255);
         SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_SETPOS, TRUE, 255);
         for (int i = 0; i < g_editor->brush_count - 2; i++) {
-            int j = *(int*)((char*)g_editor + i * 0x18 + 0x63ec);
+            int j = g_editor->brushes[i].index;
             if (j >= 0) {
                 // name table: 0x20-byte records at 0x8ed4df8 starting with a tstring: its c_str() (buf at +4, NULL ->
                 // the address of that buf field, 0x4feb0a)
@@ -220,9 +221,10 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x4c8:
         case 0x4c9:
         case 0x4ca: {
-            int r = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_GETPOS, 0, 0);
-            int g = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_GETPOS, 0, 0);
-            int b = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_GETPOS, 0, 0);
+            int b, g, r;
+            r = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_GETPOS, 0, 0);
+            g = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_GETPOS, 0, 0);
+            b = (int)SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_GETPOS, 0, 0);
             char num[64];
             char text[64];
             _itoa(r, num, 10);
@@ -238,11 +240,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             if (strcmp(num, text) != 0)
                 SetDlgItemTextA(m_hMapEditorDlg, 0x4ce, num);
             SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4cb), 0x443, 0, RGB(r, g, b));      // colour in lParam (0x4fee47..0x4fee79)
-            rgl::vector4 c;
-            c.x = (float)r * g_color_unit;
-            c.y = (float)g * g_color_unit;
-            c.z = (float)b * g_color_unit;
-            g_game_ed->col = c;
+            g_game_ed->col = rgl::vector4((float)r * (1.0f / 255.0f), (float)g * (1.0f / 255.0f), (float)b * (1.0f / 255.0f));
             return 0;
         }
         case 0x473: {
@@ -295,9 +293,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_COMMAND:
         // WM_COMMAND: LOWORD(wParam) is the control, HIWORD(wParam) the notification code (0x4ff24c reads both from
         // wParam; every case below tested HIWORD(lParam), the control's window handle)
-        {
-        int id = LOWORD(wParam);
-        switch (id) {
+        switch (LOWORD(wParam)) {
         case 0x431:
             if (HIWORD(wParam) == 1) {
                 ((MapEditorDialog*)this)->update_object_type();
@@ -404,7 +400,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             }
             break;
         case 0x46d:
-            if (HIWORD(wParam) == 0) {
+            if (!(wParam >> 16)) {
                 g_game_ed->mode = 2;
                 ((CreateGameOptionsPage*)this)->update_checks();
                 char buf[128];
@@ -459,7 +455,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game_ed->axis + 0x474);
             break;
         case 0x470:
-            if (HIWORD(wParam) == 0) {
+            if (!(wParam >> 16)) {
                 g_game_ed->mode = 1;
                 ((CreateGameOptionsPage*)this)->update_checks();
                 char buf[128];
@@ -476,7 +472,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             }
             break;
         case 0x471:
-            if (HIWORD(wParam) == 0) {
+            if (!(wParam >> 16)) {
                 g_game_ed->mode = 3;
                 ((CreateGameOptionsPage*)this)->update_checks();
                 char buf[128];
@@ -493,7 +489,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             }
             break;
         case 0x46f:
-            if (HIWORD(wParam) == 0) {
+            if (!(wParam >> 16)) {
                 g_game_ed->mode = 0;
                 ((CreateGameOptionsPage*)this)->update_checks();
                 return 1;
@@ -545,7 +541,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             }
             break;
         case 0x497:
-            if (HIWORD(wParam) == 0) {
+            if (!(wParam >> 16)) {
                 g_game_ed->sub_mode = 0;
                 ((CreateGameOptionsPage*)this)->update_checks();
                 g_editor->need_redraw[0] = 1;
@@ -563,14 +559,14 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             }
             break;
         case 0x49a:
-            if (HIWORD(wParam) == 0) {
+            if (!(wParam >> 16)) {
                 g_game_ed->mode = 4;
                 ((CreateGameOptionsPage*)this)->update_checks();
                 return 1;
             }
             break;
         case 0x499:
-            if (HIWORD(wParam) == 0) {
+            if (!(wParam >> 16)) {
                 g_game_ed->sub_mode = 2;
                 ((CreateGameOptionsPage*)this)->update_checks();
                 g_editor->need_redraw[0] = 1;
@@ -580,7 +576,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             }
             break;
         case 0x498:
-            if (HIWORD(wParam) == 0) {
+            if (!(wParam >> 16)) {
                 g_game_ed->sub_mode = 1;
                 ((CreateGameOptionsPage*)this)->update_checks();
                 g_editor->need_redraw[0] = 1;                   // joins the redraw tail after the dirty store (0x5005f0)
@@ -695,22 +691,12 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             if (HIWORD(wParam) == 0x400) {
                 char text[0x40];
                 GetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text, 0x40);
-                int v;
                 // the edit text is rewritten only when the value had to be corrected (empty, negative or above 255: 0x50078c);
                 // an in-range value goes straight to the trackbar (0x5007b3)
-                bool fix = true;
-                if (text[0] == 0)
-                    v = 0;
-                else {
-                    v = atol(text);
-                    if (v > 0xff)
-                        v = 0xff;
-                    else if (v < 0)
-                        v = 0;
-                    else
-                        fix = false;
-                }
-                if (fix) {
+                int v = -1;
+                if (text[0]) v = atol(text);
+                if (v > 0xff || v < 0) {
+                    if (v < 0) v = 0; else v = 0xff;
                     _itoa(v, text, 10);
                     SetDlgItemTextA(m_hMapEditorDlg, 0x4cd, text);
                 }
@@ -722,20 +708,10 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             if (HIWORD(wParam) == 0x400) {
                 char text[0x40];
                 GetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text, 0x40);
-                int v;
-                bool fix = true;
-                if (text[0] == 0)
-                    v = 0;
-                else {
-                    v = atol(text);
-                    if (v > 0xff)
-                        v = 0xff;
-                    else if (v < 0)
-                        v = 0;
-                    else
-                        fix = false;
-                }
-                if (fix) {
+                int v = -1;
+                if (text[0]) v = atol(text);
+                if (v > 0xff || v < 0) {
+                    if (v < 0) v = 0; else v = 0xff;
                     _itoa(v, text, 10);
                     SetDlgItemTextA(m_hMapEditorDlg, 0x4cf, text);
                 }
@@ -747,16 +723,13 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             if (HIWORD(wParam) == 0x400) {
                 char text[0x40];
                 GetDlgItemTextA(m_hMapEditorDlg, 0x4ce, text, 0x40);
-                int v;
-                if (text[0] == 0 || (v = atol(text)) < 0)
-                    v = 0;
-                else if (v > 0xff)
-                    v = 0xff;
+                int v = -1;
+                if (text[0]) v = atol(text);                  // empty text: -1, which the clamp turns into 0 (0x5008ca jumps straight there)
+                if (v < 0) v = 0; else if (v > 0xff) v = 0xff;
                 SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_SETPOS, TRUE, (LPARAM)v);
                 return 1;
             }
             break;
-        }
         }
         break;
     case WM_MOUSEMOVE:

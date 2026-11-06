@@ -267,8 +267,36 @@ def decide_manual(r):
     return "hold", "manual mode: every request needs supervisor approval (policy verdict: %s)" % (decide(r)[1] if act in ("shell","bash") else act)
 
 
+def own_module(sid):
+    """The module a wave session was given (work/opencode/wave_<batch>.json), None when it isn't known."""
+    try:
+        st = json.load(open(os.path.join(ROOT, "work/opencode/wave_%s.json" % batch)))
+    except (OSError, ValueError):
+        return None
+    for k, s in st.items():
+        if s.get("sid") == sid:
+            return next((e["module"] for e in _recs if e["id"] == k), None)
+    return None
+
+
+def other_module(sid, paths):
+    """A path under src/ that belongs to a different module than this session's own."""
+    mod = own_module(sid) if SRC_MODULES else None
+    if not mod:
+        return None
+    for p in paths:
+        rel = os.path.relpath(p, ROOT) if os.path.isabs(p) else p
+        if rel.startswith("src/") and not rel.startswith(mod + "."):
+            return rel
+    return None
+
+
 def decide(r):
     act, res = r.get("action"), r.get("resources") or []
+    if act in ("edit", "write", "patch", "apply_patch"):
+        bad = other_module(r.get("sessionID"), res)
+        if bad:
+            return "reject", "edit outside your own module: %s" % bad[:100]
     if act in ("task", "subagent"):
         return "reject", "subagent spawning is forbidden; do the work yourself in this session"
     if act in ("read", "glob", "grep", "list", "lsp", "external_directory"):

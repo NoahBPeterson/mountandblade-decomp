@@ -16,6 +16,11 @@
 struct ContainerBase : MissionUi {
     std::vector<MissionUi*> kids;               // +0x178 the child widgets (allocator word, first +0x17c, last +0x180, end +0x184)
     ContainerBase();                            // 0x4931a0 (world_data.cpp)
+    // `new NodeA` calls that constructor, while `new ContainerBase` expands it in place (0x4f7f00, 0x4fbfa0). One
+    // definition can't produce both, so a file that needs the expanded form uses this overload.
+#define CONTAINER_HAS_INL_CTOR
+    struct inl_tag {};
+    __forceinline ContainerBase(inl_tag) {}
 #ifdef CONTAINER_DTOR_EXPANDED
     // party_window.cpp, widget_text.cpp: their deleting destructors (PartyPanel, text_box, 0x5021f0) expand this destructor
     // down to the vector's out-of-line _Tidy 0x41f4b0; every other object calls 0x490520.

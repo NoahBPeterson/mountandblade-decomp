@@ -121,7 +121,7 @@ Conflicts worked around locally:
   text with integer case labels, `progress.py` regenerates PROGRESS.md, `build.sh` compiles and runs chk).
   The equivalence harness was not run on `execute` (70 KB, custom-register callees, the presentation /
   tableau / mission objects); this reading is the check.
-- `chk.py src/game/script/script_interpreter.cpp 0x49fa10`: 69856 vs 69416 bytes, 46702 differing bytes (positional; see insn_align).
+- `chk.py src/game/script/script_interpreter.cpp 0x49fa10`: see script_interpreter.nonmatching.txt for the current figures.
   `run_all.py --manifest src/game/script/script_interpreter.manifest.txt`: 23 / 23 byte-exact.
 - Resolution audit (resaudit.py's `audit()` driven by `work/match/scratch_si_resaudit.py`, with
   `work/match/scratch_si_symbols.txt` for the globals above the annotation range, see open problems):
@@ -151,12 +151,28 @@ relocations masked. Selecting the cases by bisection (compile with only cases [a
 
 ## Open problems
 
-0. Scratch registers: `ge`/`eq`/`gt` load into ecx/edx/eax in the original and eax/ecx/edx here, and many cases show that
-   same rotation. It does not respond to the prologue's spelling, to extra temporaries, or to extra blocks in earlier cases,
-   so it is not a running count. It also decides which `set_lvalue` tails are identical, hence the tail merging (cases
-   +-21/22 bytes; 131 calls here, 147 in the original).
-   Pure visible callees can be reordered: `stacks - first_flagged()` calls first_flagged first here (hero_can_join,
-   troops_can_join), the original calls max_stacks first.
+0. Scratch registers: **cause found.** The rotation starts at the first temporary: `mov ecx,[edi]` for `g_cur_opcode = id` in the original,
+   `mov eax,[edi]` otherwise. Eax is taken because the zero web (`xor eax,eax`) already exists there: `g_script_error = 0` comes first in the
+   source, and the scheduler sinks its store below the `id` loads. It may do that only if `g_script_error` cannot alias `*this`, i.e. it is a
+   **file static** whose address is never taken. The image agrees: every reference to 0x5e259c (and to 0x5e2590..0x5e25a4) is inside
+   0x49cc60..0x4b10d7, one translation unit that also holds the block runner now in party2/camera.cpp. With an extern the rotation is right but
+   the store stays at the top of the function (four prologue instructions differ). `#define SI_ERR_STATIC` selects the static; it cannot be the
+   default until camera.cpp's users of `g_script_error` (report's copy, DialogBlock's runner) live in this object, because camera.obj needs the symbol.
+   The rotation is then a chain: each scratch pick depends on the temporaries before it in IL order, across cases, so one case with an extra or
+   missing temporary rotates the following cases until something resynchronises. Identical-case counts jump around for this reason (a single
+   fix lost 49 cases and gained 20); fix cases top-down, and judge edits by "mod-stack+regs" as well as "identical".
+   Measured by compiling a generated copy with `SI_ERR_STATIC` defined (the source's relative includes rewritten).
+   Other spellings found: pure visible callees can be reordered, so `Party::max_stacks` (0x4b1700, after this TU) stays opaque; false-block hub:
+   `result = 0` tails all jump to `ge`'s block in the original, which needs every other tail in `if (ok) result=1; else result=0;` form;
+   by-value `__forceinline` wrappers spill their arguments (call the real signature, as map_get_*_position does now); RHS-first assignment
+   (`ASSIGN_MAT`, `ASSIGN_STR`).
+   Open, the next thing to crack: `result` is very likely address-taken in the original. `char& rr_ = result;` after its declaration, with
+   `main_party_has_troop` looping on the function-scope `i`, makes that case's loop exact except for one thing: the original increments with
+   `mov edx,[i]; inc edx; ...; mov [i],edx`, cl here folds it to `inc dword ptr [i]` (i++, i=i+1, n=i++, unsigned casts, do/while(++i) all fold).
+   That missing temporary is one step of the rotation chain: this form alone gives 229 identical, and adding one dummy temporary inside
+   that loop gives 295 with same-size 396 (the best seen) and the right callee-saved map. So the source is one spelling of the increment away from
+   beating the current form. Not adopted until that spelling is found.
+   Also open: `mov edx,esi; push edx; lea ecx,[eax+0xf8]; lea edi,[eax+0xf8]` at the start of hero_can_join / troops_can_join (4 cases).
 1. **Frame layout** (the bulk of the byte diff). The original packs nearly all temporaries and block locals
    into a handful of slots (validator argument temps at esp+0x10 or 0x18, the set_lvalue value at 0x18,
    clamp/`vector4::set` arguments at 0x10/0x20/0x24/0x28 reusing the dead `opcode` and `i` slots) and keeps
@@ -176,3 +192,10 @@ relocations masked. Selecting the cases by bisection (compile with only cases [a
    0x8ee30ec, `g_skin_count`, `g_meshes`, `g_mesh_count`, `g_particle_system_count`, `g_particle_mgr`) needs
    `symbols/` lines, which are outside this module: the facts are in `work/match/scratch_si_symbols.txt`
    (format of `symbols/slices/*.txt`) for the orchestrator to copy to `symbols/slices/script_interpreter.txt`.
+
+## Translation unit
+
+The original object runs at least from 0x49a0b0 to 0x4b1xxx: party2/camera.cpp and this file are one TU split in two here. Execute's callees in that range
+(`Mission::place` 0x49b4b0, `spawn_party_scene` 0x49f3d0, `create_companion_party` 0x49ef00, the block runner's globals) are visible there. Merging the two files
+would allow `static int g_script_error` for real and reduce the duplicated bodies above. `set_lvalue` 0x49d500 stays the exception: visible, it
+breaks the register map (18 identical), although the original's lvalue temporary shares slot 0x18 with validator temporaries, which an opaque callee does not allow.

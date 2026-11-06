@@ -265,7 +265,8 @@ struct sel_vec : IntVec {
 };
 
 // @ 0x50cc70 sel_list::sort
-void __stdcall sort_list(sel_list* l, int mode)
+struct note_window { void sort_list(sel_list* l, int mode); };    // the screen itself is defined in note_window.cpp
+void note_window::sort_list(sel_list* l, int mode)
 {
     sel_vec& v = *(sel_vec*)&l->v;
     for (unsigned i = 0; i < v.count(); i++) {

@@ -21,3 +21,4 @@
 ../src/game/script/script_interpreter.cpp  ?check_party@@YADABH@Z  0049d160  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?warn_tableau@@YADABH@Z  0049d360  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?warn_agent@@YADABH@Z  0049d430  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?check_string_arg@@YADABH0@Z  0049cda0  /O2 /MT /Gy /TP

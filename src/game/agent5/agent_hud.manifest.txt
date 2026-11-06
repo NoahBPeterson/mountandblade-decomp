@@ -13,3 +13,4 @@
 ../src/game/agent5/agent_hud.cpp  ?set_offset@mesh@rgl@@QAEXABUvector4@2@@Z  004fb8e0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?push_back@V4List@@QAEXABUvector4@rgl@@@Z  004fdff0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?insert@V4List@@QAE?AUiterator@1@U21@ABUvector4@rgl@@@Z  004fe060  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?init_screen@MissionBlocker@@UAEXXZ  004f7f00  /O2 /MT /Gy /TP

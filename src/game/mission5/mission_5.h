@@ -1476,12 +1476,14 @@ struct ItemKind_s2b5c0 {
     char pad[0x1c8];
     unsigned kind;                                      // +0x1c8
     char pad2[0x238 - 0x1cc];
+    unsigned type() const { return kind & 0xff; }
 };
 
 
 struct ItemRef_s2b5c0 {
     int id;                                             // +0x00
     int count;                                          // +0x04
+    __forceinline int room() { int n = count & 0xff; return max_amount() - n; }
     __forceinline int max_amount();                                   // 0x434b70 (thiscall)
     __forceinline void name(char* out);                               // 0x512730 (thiscall, ret 4)
 };
@@ -1705,22 +1707,7 @@ struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; 
 namespace rgl { struct entity; }
 
 struct ItemRef;
-struct Agent {
-    void start_attack(int kind);   // 0x4464d0
-    void hide();   // 0x4f8bc0
-    bool is_friend(Agent const*) const;   // 0x4323a0
-    int pick_attack_dir(unsigned);   // 0x43f970
-    unsigned pick_front();   // 0x43b9e0
-    void cycle_slot(int);   // 0x44bc30
-    void note_blow(Blow*);   // 0x457af0
-    void on_wield_reset();   // 0x445a20
-    ItemRef slot_pair(int) const;   // 0x432790
-};
-struct AgentTable {
-    struct Agent* get(unsigned id);   // 0x43b1f0
-    int first_used();   // 0x43b1b0
-    void next_used(unsigned*);   // 0x43b160
-};
+#include "../mission.h"   // the real Agent, AgentTable, Mission (agent_obj.h)
 struct AgentX {
     bool f100_is_0x48_and_charged() const;   // 0x432470
     bool is_enemy(Agent const*) const;   // 0x432350
@@ -1760,14 +1747,6 @@ struct MapEditor_s2f250 {
 struct MapObject {
     tstring* mesh_ptr();   // 0x4c6ca0
 };
-struct Mission {
-    void light_entities(rgl::mesh**, int);   // 0x47ce00 (mission.h)
-    char mode_flag1() const;   // 0x435840
-    void camera_to(rgl::matrix const*, float const*);   // 0x4fa790
-    int add_placed(const int*, const int*, const int*, rgl::matrix const*, int*);   // 0x44f870
-    void refresh_agent(Agent*);   // 0x4f7e00
-    void frame(float, bool);   // 0x483f60 (mesh_slot/mesh_game.cpp)
-};
 struct MissionSource {
     void pick(int*);   // 0x4d5410
 };
@@ -1776,9 +1755,6 @@ struct Picker {
 };
 struct PlaneTrace {
     void intersect(rgl::vector4*, rgl::vector4 const*, rgl::vector4 const*);   // 0x51a2d0
-};
-struct PolyMesh {
-    void build_geometry();   // 0x470a00
 };
 struct Poser {
     void add_extra(int);   // 0x442110

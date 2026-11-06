@@ -1421,6 +1421,8 @@ static __declspec(noinline) int slot_class_impl(int item, int flag)
 struct a_v2 { float x, y; a_v2() {} a_v2(const float& a, const float& b) : x(a), y(b) {} a_v2 operator*(const float& k) const { return a_v2(k * x, k * y); } void operator*=(const float& k) { x *= k; y *= k; } };
 static inline float a_clampr(const float& x, float lo, const float& hi) { return clamp(&x, &lo, &hi); }
 static inline float a_len(float y, float x) { return (float)sqrt(x * x + y * y); }
+static __forceinline void a_dec(float* v, int j, const float& dt) { v[j] = v[j] - (v[j] + 1.0f) * dt; }
+static __forceinline void a_add2(float* o, const a_v2& u) { o[0] = u.x + o[0]; o[1] = u.y + o[1]; }
 static inline float a_len2(const vec2& v) { return (float)sqrt(v.x * v.x + v.y * v.y); }
 static inline bool a_bit(unsigned v, int n) { return ((v >> n) & 1) != 0; }
 static inline const vector4& a_pos(const Agent* a) { return a->pos; }
@@ -3099,13 +3101,16 @@ void Agent::shoot()
         d0.z = (0.5f - (float)(rand() % 0x3dc9) * 6.322312e-05f) * err + d0.z;
         d0.normalize();
     }
+    unsigned mid;
+    {
     int missing, total, slot_out;
     ItemRef ammo = best_ammo(-1, &missing, &total, &slot_out);
     vector4 shot;
-    shot.w = d0.w;       // rand_cone_dir writes only x/y/z; the original builds `shot` in the stack slot of d0's 16-byte temporary, so its w lane is d0.w (0x44e82f..0x44e84b)
+    shot.w = d0.w;
     rand_cone_dir(&shot, d0, spr);
     ItemRef launcher = cur_pair_fi();
-    unsigned mid = g_mission->spawn_missile(&P, &shot, &launcher, &ammo, id);
+    mid = g_mission->spawn_missile(&P, &shot, &launcher, &ammo, id);
+    }
     unsigned __int64 shoot_bits = ik->flags & 0xff000ui64;
     if (shoot_bits == 0x30000ui64) {
         mrec((Pool*)g_mission->poolJ, mid).f98 = 6.0f;
@@ -5138,7 +5143,7 @@ static __forceinline bool aset_inl(AnimSlot& s, int id, unsigned prio)         /
     return true;
 }
 static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart as the slice's callers inline it
-static __forceinline void vset3(float* v, const float& a, const float& b, const float& c) { v[0] = a; v[1] = b; v[2] = c; }
+static __forceinline void vset3(float* v, const float& a, const float& b, const float& c) { v[2] = c; v[1] = b; v[0] = a; }
 // 0x4379c0 as cl inlines it (the call sites that pass a constant slot 1)
 static __forceinline void set_order_inl(Agent* a, int slot, int id, unsigned prio, float rate)
 {
@@ -5339,8 +5344,8 @@ void Agent::update_controls(float dt)
                     mag = lim;
                 if (mag < lim * -0.8f)
                     mag = lim * -0.8f;
-                int off = troop * 0x508;
-                Troop* tr = (Troop*)((char*)g_game->chars + off);
+                int off = troop;
+                Troop* tr = &g_game->chars[off];
                 float skill = ((60.0f / (f24c + 60.0f)) * (tr->nibble(0x19) * 5.0f + tr->f58[1]) + 100.0f) * 0.01f;
                 float nvx, nvy;
                 {
@@ -5350,7 +5355,7 @@ void Agent::update_controls(float dt)
                         dv.y = dv.y * 0.8f;
                     dv.x = dv.x - vel_xy.x;
                     dv.y = dv.y - vel_xy.y;
-                    tr = (Troop*)((char*)g_game->chars + off);
+                    tr = &g_game->chars[off];
                     float step = (((70.0f / (f24c + 70.0f)) * ((25.0f / (f24c + 25.0f)) *
                                   ((float)tr->nibble(0x19) * 0.2f + (float)tr->f58[1] * 0.06666667f) + 1.0f)) * dt) * 10.0f;
                     float lo_ = -step;
@@ -5372,7 +5377,7 @@ void Agent::update_controls(float dt)
                 if (band == 2 && nvy < -0.1f)
                     band = 1;
                 if (band == 2) {
-                    int ath3 = ((Troop*)((char*)g_game->chars + off))->nibble(0x19);
+                    int ath3 = g_game->chars[off].nibble(0x19);
                     divisor = ((float)ath3 + 30.0f) * 0.07f;
                     if (fabs(nvy) * 0.5f > fabs(nvx)) {
                         if (nvy > 0.0f)
@@ -5519,13 +5524,12 @@ void Agent::update_controls(float dt)
                 v = cross(up, c);
                 v.normalize();
                 float lim2;
-                if (v.z > 0.01f) {
+                if (v.z > 0.01f)
                     lim2 = (1.0f - v.z * 0.9f) * cap;
-                } else {
+                else if (v.z < -0.27f)
+                    lim2 = (1.0f - (-0.27f - v.z) * 1.3f) * cap;
+                else
                     lim2 = cap;
-                    if (v.z < -0.27f)
-                        lim2 = (1.0f - (-0.27f - v.z) * 1.3f) * cap;
-                }
                 if (vel_xy.y < -1.0f)
                     vel_xy.y = -1.0f;
                 else if (lim2 < vel_xy.y)
@@ -5595,11 +5599,12 @@ void Agent::update_controls(float dt)
                         { float c5 = impulse.z + 5.0f; vset3(&impulse.x, impulse.x, impulse.y, c5); }
                         set_order(0, 2, 0x1000002, 1.0f);
                         float var = 0.1f;
+                        int kind;
                         if (pos.z < g_mission->terrain.base_z) {
-                            int kind = 0x1f;
+                            kind = 0x1f;
                             play_sound_var(&kind, &var);
                         } else {
-                            int kind = 0x1d;
+                            kind = 0x1d;
                             play_sound_var(&kind, &var);
                         }
                         ((Timer*)&t5800)->set_delay(-2.0f);
@@ -5609,11 +5614,12 @@ void Agent::update_controls(float dt)
                     { float c6 = impulse.z + 6.0f; vset3(&impulse.x, impulse.x, impulse.y, c6); }
                     set_order(0, 0x19d, 0x1000002, 1.0f);
                     float var = 0.1f;
+                    int kind;
                     if (pos.z < g_mission->terrain.base_z) {
-                        int kind = 0x23;
+                        kind = 0x23;
                         play_sound_var(&kind, &var);
                     } else {
-                        int kind = 0x21;
+                        kind = 0x21;
                         play_sound_var(&kind, &var);
                     }
                     ((Timer*)&t5800)->set_delay(-4.0f);
@@ -5947,7 +5953,7 @@ void Agent::process_blow(int unused)
     // ---- a missile that sticks in the body ----
     if (last_blow().missile != 0 && g_items[last_blow().missile->ammo.item].flags != itcf_throw_stone &&
         !(g_mission->terrain.f158 & 1) && dmg > 7.0f && (health < 1.0f || last_blow().bone != 9 || dmg > 75.0f)) {
-        rgl::mat4 M = body->m * *(rgl::mat4*)body->skel->rec(last_blow().bone);
+        rgl::matrix M = body->m * *(rgl::matrix*)body->skel->rec(last_blow().bone);
         float len = last_blow().missile->ammo_scale() * 0.7f;
         matrix mm;
         mm.o = last_blow().pos - len * last_blow().dir;
@@ -5962,7 +5968,8 @@ void Agent::process_blow(int unused)
                 off.y = last_blow().missile->ammo_scale();
                 off.z = 0.0f;
                 ms->translate(&off);
-                ((FxDef*)body->skel)->attach_psys(last_blow().bone, (Psys*)ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
+                rgl::mat4 rel = ((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm);
+                ((FxDef*)body->skel)->attach_psys(last_blow().bone, (Psys*)ms, &rel);
             }
         }
     }
@@ -7894,13 +7901,13 @@ void Agent::update(float dt)
     }
     f56e4 = f56e0;
     f56e0 = anim[0].scale;
-    float speed = (float)sqrt(vel_xy.y * vel_xy.y + vel_xy.x * vel_xy.x);
+    float speed = a_len2(vel_xy);
     if (anim[0].cur >= 0) {
         unsigned flags = ((AnimDefW*)defs->defs)[anim[0].cur].subs[anim[0].sub].flags;
         if (disabled == 0 && (flags & 0x300)) {
-            float pitch;
-            int k = 0;
             int kind = 0;
+            int k = 0;
+            float pitch;
             do {
                 if (f56e4 <= ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] &&
                     ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] < f56e0) {
@@ -7939,18 +7946,14 @@ void Agent::update(float dt)
                                     s = 0.9f;
                                 ::pos m;
                                 identity_pos((::pos*)&m);
-                                vec2 d;
+                                a_v2 d;
                                 d.x = vel_xy.x;
                                 d.y = vel_xy.y;
-                                d.normalize();
-                                vec2 t;
-                                t.x = d.x * s;
-                                t.y = d.y * s;
+                                ((vec2*)&d)->normalize();
+                                *(a_v2*)&m.o = d * s;
                                 m.f.x = vel_xy.x;
                                 m.f.y = vel_xy.y;
                                 m.f.z = 0.0f;
-                                m.o.x = t.x;
-                                m.o.y = t.y;
                                 m.f.normalize();
                                 m.orthonormalize();
                                 fx1b0->m134 = m;
@@ -7962,19 +7965,19 @@ void Agent::update(float dt)
                                     v = speed * 3.0f + 5.0f;
                                 ((Obj3*)fx1b0)->reset_pending((int)(v * 0.5f));
                                 ((Obj3*)fx1b4)->reset_pending((int)(v * 0.4f));
-                                float ux = d.x * 0.7f;
-                                float uy = d.y * 0.7f;
-                                m.o.x = ux + m.o.x;
-                                m.o.y = m.o.y + uy;
+                                a_v2 u = d * 0.7f;
+                                a_add2(&m.o.x, u);
                                 fx1b8->m134 = m;
                                 ((Obj3*)fx1b8)->reset_pending(1);
-                            } else if (fx1ac && f10 == 1) {
+                            } else if (fx1ac) {
                                 float v = 0.0f;
-                                if (speed > 5.5f && fbc && (((shape_base*)fbc)->m8 & 0x4000))
-                                    v = speed + 10.0f;
-                                if (fx1ac->tag != g_emit_defs.used[4])
-                                    v = v * 3.0f;
-                                ((Obj3*)fx1ac)->reset_pending((int)(v * 0.15f));
+                                if (f10 == 1) {
+                                    if (speed > 5.5f && fbc && (((shape_base*)fbc)->m8 & 0x4000))
+                                        v = speed + 10.0f;
+                                    if (fx1ac->tag != g_emit_defs.used[4])
+                                        v = v * 3.0f;
+                                    ((Obj3*)fx1ac)->reset_pending((int)(v * 0.15f));
+                                }
                             }
                         }
                     }
@@ -8016,16 +8019,14 @@ void Agent::update(float dt)
                 (&v98.x)[2] = ((((&v98.x)[2] - 0.7f) * dt) * 5.0f + 1.0f) * (&v98.x)[2];
             else
                 (&v98.x)[j] = (1.0f - (&v98.x)[j]) * dt + (&v98.x)[j];
-            if ((&v98.x)[j] > 0.0f) {
-            zero:
+            if ((&v98.x)[j] > 0.0f)
                 (&v98.x)[j] = 0.0f;
-            }
-        } else if (!((&v98.x)[j] > 0.001f)) {
-            goto zero;
-        } else {
-            (&v98.x)[j] = (&v98.x)[j] - ((&v98.x)[j] + 1.0f) * dt;
+        } else if ((&v98.x)[j] > 0.001f) {
+            a_dec(&v98.x, j, dt);
             if ((&v98.x)[j] < 0.0f)
-                goto zero;
+                (&v98.x)[j] = 0.0f;
+        } else {
+            (&v98.x)[j] = 0.0f;
         }
         j++;
     } while (j < 3);

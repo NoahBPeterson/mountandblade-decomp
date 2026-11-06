@@ -154,13 +154,12 @@ static __forceinline tstring* troop_name(Troop& t)
 // and the entry exists (0x50ae3b..0x50ae5d)
 static __forceinline tstring* faction_name(FactionRec& f)
 {
-    tstring* nm = &f.name;
     if (f.f10 == 0) {
         tstring* s = UITEXT->find(&f.key);
         if (s)
-            nm = s;
+            return s;
     }
-    return nm;
+    return &f.name;
 }
 
 // name tstring of a map-party record
@@ -180,6 +179,12 @@ static __forceinline tstring* party_name(char* rec)
 // the window
 // ---------------------------------------------------------------------------
 
+// the original's callees take the name by reference (implicit temporaries of the literals, built before the arguments are
+// loaded); the definitions in char_sheet/editor_ui.cpp take a pointer, the same ABI.
+#define mk_scrollbar ((UiD* (__cdecl*)(void*, const tstring&))make_scrollbar)
+#define mk_editor_list ((Camera* (__cdecl*)(void*, const tstring&, int))make_editor_list)
+static inline float fmin2(const float& a, const float& b) { return a < b ? a : b; }
+
 // set_text's vtable slot (+0xa4) as the source saw it: it returns the text's size by value through a hidden pointer, so
 // every call that isn't assigned has its own private temporary ([esp+0x258]..[esp+0x2d0])
 struct text_size { float x, y; text_size() {} };
@@ -192,8 +197,8 @@ struct text_slot {
 };
 #define TEXTSET(w, s) (((text_slot*)(w))->set_text(s))
 
-struct sel_list;
-void __stdcall sort_list(sel_list* l, int mode);       // 0x50cc70 (inventory_panel/widget_text.cpp)
+struct sel_list { void add(int val); };                // 0x50d0e0 (inventory_panel/widget_text.cpp)
+
 
 struct note_window {
     char pad00[0x18];
@@ -229,6 +234,7 @@ struct note_window {
     float  scroll_pos;         // +0xb0
 
     void build(int page, int arg);              // 0x50a1c0
+    void sort_list(sel_list* l, int mode);      // 0x50cc70 (inventory_panel/widget_text.cpp)
 };
 
 // @ 0x50a1c0
@@ -328,10 +334,10 @@ void note_window::build(int page_, int arg_)
     this->picture->hide();
 
     switch (page_) {
-    case 0: {
+    case 0:
         x_cur = TEXTSET(this->links, TR("ui_click_button_to_view_note")).y;    // the returned size (0x50a6d8)
         break;
-    }
+
 
     case 1: {
         // ---- troop report -------------------------------------------------
@@ -377,7 +383,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        ::sort_list((sel_list*)&vec, 1);
+        this->sort_list((sel_list*)&vec, 1);
 
         for (unsigned n = 0; n < vec.size(); n++) {
             int v = vec[n];
@@ -438,7 +444,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        ::sort_list((sel_list*)&vec, 2);
+        this->sort_list((sel_list*)&vec, 2);
 
         for (unsigned n = 0; n < vec.size(); n++) {
             int v = vec[n];
@@ -506,7 +512,7 @@ void note_window::build(int page_, int arg_)
                 WORLDMAP->next_party_id(&p);
             }
         }
-        ::sort_list((sel_list*)&vec, 3);
+        this->sort_list((sel_list*)&vec, 3);
 
         for (unsigned n = 0; n < vec.size(); n++) {
             int v = vec[n];
@@ -567,7 +573,7 @@ void note_window::build(int page_, int arg_)
                 }
             }
         }
-        ::sort_list((sel_list*)&vec, 3);
+        this->sort_list((sel_list*)&vec, 3);
 
         for (unsigned n = 0; n < vec.size(); n++) {
             int v = vec[n];
@@ -594,8 +600,9 @@ void note_window::build(int page_, int arg_)
     tstring link_text;          // +0xb0   scratch for the links widget  (0x50bc50)
     this->links->put(&link_text);
     if (acc.len > 0) {
+        int k;
         for (int i = 0; i < WORLD->ntroops; i++) {
-            for (int k = 0; k < 8; k++) {
+            for (k = 0; k < 8; k++) {
                 if (WORLD->troops[i].notes[k].len > 0 && WORLD->troops[i].notes[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<trp=%d>%s</>", i, troop_name(WORLD->troops[i])->c_str());
                     if (link_text.find(buf2, 0) < 0) {
@@ -608,7 +615,7 @@ void note_window::build(int page_, int arg_)
             }
         }
         for (int i = 0; i < WORLD->n_factions; i++) {
-            for (int k = 0; k < 8; k++) {
+            for (k = 0; k < 8; k++) {
                 if (WORLD->factions[i].notes[k].len > 0 && WORLD->factions[i].notes[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<fac=%d>%s</>", i, faction_name(WORLD->factions[i])->c_str());
                     if (link_text.find(buf2, 0) < 0) {
@@ -623,7 +630,7 @@ void note_window::build(int page_, int arg_)
         {
             int p = WORLDMAP->first_party_id();
             while ((unsigned)p < WORLD->parties.n_parties) {
-                for (int k = 0; k < 8; k++) {
+                for (k = 0; k < 8; k++) {
                     if (WORLDMAP->get_w(p)->notes[k].len > 0 && WORLDMAP->get_w(p)->notes[k].find(acc, 0) >= 0) {
                         sprintf(buf2, "<p=%d>%s</>", p, party_name((char*)WORLDMAP->get_w(p))->c_str());
                         if (link_text.find(buf2, 0) < 0) {
@@ -638,7 +645,7 @@ void note_window::build(int page_, int arg_)
             }
         }
         for (int i = 0; i < WORLD->n_quests; i++) {
-            for (int k = 0; k < 8; k++) {
+            for (k = 0; k < 8; k++) {
                 if (WORLD->quests[i].notes[k].len > 0 && WORLD->quests[i].notes[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<qst=%d>%s</>", i, WORLD->quests[i].text.strip_tags().c_str());
                     if (link_text.find(buf2, 0) < 0) {
@@ -655,15 +662,14 @@ void note_window::build(int page_, int arg_)
     if (other.len > 0) {
         tstring t;
         this->links->put(&t);
-        float sz[2];
         if (t.equals(*TR("ui_click_button_to_view_note"))) {
-            this->links->set_text(sz, TR("ui_this_page_contains_no_information"));
+            TEXTSET(this->links, TR("ui_this_page_contains_no_information"));
             this->links->put(&t);
         }
         t.append("\n\n");
         t.append(*TR("ui_other_pages_that_link_here"));
         t.append(other);
-        x_cur = this->links->set_text(sz, &t)[1];
+        x_cur = TEXTSET(this->links, &t).y;
     }
 
     // ---- key / data scrolling panels -------------------------------------
@@ -673,10 +679,8 @@ void note_window::build(int page_, int arg_)
     this->keys_panel = new text_box;
     label_refresh(this->keys_panel, tstring("note_bo_keys"));
     {
-        float v[2];
-        v[0] = this->keys_panel->screen[0];
-        v[1] = y_cur + this->keys_panel->screen[1];
-        this->keys_panel->set_xy(v);
+        float2 v(this->keys_panel->screen[0], y_cur + this->keys_panel->screen[1]);
+        this->keys_panel->set_xy((float*)&v);
     }
 
     this->data_panel = new text_box;
@@ -688,39 +692,35 @@ void note_window::build(int page_, int arg_)
         float h = b.y - a.y;
         float w = b.x - a.x;
         x_cur = h + cfg_float("note_image_border") + x_cur;     // the picture sits above the links (0x50c54f)
-        float v[2];
-        v[0] = (this->data_panel->screen[0] - w) * 0.5f - a.x;       // centred across the panel (0x50c568)
-        v[1] = x_cur - b.y;
-        this->picture->move_a(v);
+        {
+            float v[2];
+            v[0] = (this->data_panel->screen[0] - w) * 0.5f - a.x;       // centred across the panel (0x50c568)
+            v[1] = x_cur - b.y;
+            this->picture->move_a(v);
+        }
     }
 
     {
-        float v[2];
-        v[0] = this->data_panel->screen[0];
-        v[1] = x_cur + this->data_panel->screen[1];
-        this->data_panel->set_xy(v);
+        float2 v(this->data_panel->screen[0], x_cur + this->data_panel->screen[1]);
+        this->data_panel->set_xy((float*)&v);
     }
 
     this->keys_panel->add_child(this->report);
     this->data_panel->add_child(this->picture);
     this->data_panel->add_child(this->links);
 
-    UiD* keys_scroll_base = make_scrollbar(this->panel, &tstring("note_s_keys"));      // 0x4f6160
-    this->keys_scroll = make_editor_list(this->keys_panel, &tstring("note_sc_keys"), (int)keys_scroll_base);   // 0x4f62f0
+    UiD* keys_scroll_base = mk_scrollbar(this->panel, "note_s_keys");      // 0x4f6160
+    this->keys_scroll = mk_editor_list(this->keys_panel, "note_sc_keys", (int)keys_scroll_base);   // 0x4f62f0
 
     {
         float h = this->keys_scroll->screen[1] - y_cur;
         h = h > 0.0f ? h : 0.0f;
-        float v[2];
-        v[0] = this->keys_scroll->fE0;
-        v[1] = h + this->keys_scroll->fE4;
-        this->keys_scroll->move_a(v);
+        float2 v(this->keys_scroll->fE0, h + this->keys_scroll->fE4);
+        this->keys_scroll->move_a((float*)&v);
     }
     {
-        float v[2];
-        v[1] = y_cur < this->keys_scroll->screen[1] ? y_cur : this->keys_scroll->screen[1];
-        v[0] = this->keys_scroll->screen[0];
-        this->keys_scroll->set_xy(v);
+        float2 v(this->keys_scroll->screen[0], fmin2(y_cur, this->keys_scroll->screen[1]));
+        this->keys_scroll->set_xy((float*)&v);
     }
     ((Camera*)this->keys_scroll)->draw();       // 0x488d50
     this->panel->add_child(this->keys_scroll);
@@ -730,22 +730,18 @@ void note_window::build(int page_, int arg_)
         this->scroll_pos = -1.0f;
     }
 
-    UiD* data_scroll_base = make_scrollbar(this->panel, &tstring("note_s_data"));      // 0x4f6160
-    this->data_scroll = make_editor_list(this->data_panel, &tstring("note_sc_data"), (int)data_scroll_base);   // 0x4f62f0
+    UiD* data_scroll_base = mk_scrollbar(this->panel, "note_s_data");      // 0x4f6160
+    this->data_scroll = mk_editor_list(this->data_panel, "note_sc_data", (int)data_scroll_base);   // 0x4f62f0
 
     {
         float h = this->data_scroll->screen[1] - x_cur;
         h = h > 0.0f ? h : 0.0f;
-        float v[2];
-        v[0] = this->data_scroll->fE0;
-        v[1] = h + this->data_scroll->fE4;
-        this->data_scroll->move_a(v);
+        float2 v(this->data_scroll->fE0, h + this->data_scroll->fE4);
+        this->data_scroll->move_a((float*)&v);
     }
     {
-        float v[2];
-        v[1] = x_cur < this->data_scroll->screen[1] ? x_cur : this->data_scroll->screen[1];
-        v[0] = this->data_scroll->screen[0];
-        this->data_scroll->set_xy(v);
+        float2 v(this->data_scroll->screen[0], fmin2(x_cur, this->data_scroll->screen[1]));
+        this->data_scroll->set_xy((float*)&v);
     }
     ((Camera*)this->data_scroll)->draw();       // 0x488d50
     this->panel->add_child(this->data_scroll);
@@ -758,7 +754,7 @@ void note_window::build(int page_, int arg_)
         float ba = cfg_float("note_button_x_a");
 
         this->btn_game_log = make_short_button(this->panel, TR("ui_game_log"), bx, by, bh);
-        x_cur = ba + bx;
+        x_cur = bx + ba;
         *(int*)((char*)this->btn_game_log + 0x184) = 1;
         this->btn_recent = make_short_button(this->panel, TR("ui_recent_messages"), x_cur, by, bh);
         x_cur = x_cur + ba;
@@ -799,7 +795,7 @@ void note_window::build(int page_, int arg_)
         break;
     }
 
-    g_gui.objs.push_back(this->panel);
+    ((sel_list*)&g_gui)->add((int)this->panel);     // 0x50d0e0: pushes and sets g_gui.dirty (+0x1708)
 
     if (any && selected >= 0)
         this->build(page_, selected);

@@ -178,12 +178,13 @@ void Game::build_scene()
         wd->ambient.w = 1.0f;
     }
 
-    Light* w;
+    int wv;
     {
         rgl::world* world = g_script.level;
-        w = new Light;                                         // the 0x7c-byte wind object (constructor 0x461480)
-        world->lights.push_back(w);
+        wv = (int)new Light;                                   // the 0x7c-byte wind object (constructor 0x461480)
+        ((std::vector<int>&)world->lights).push_back(wv);
     }
+    Light* w = (Light*)wv;
     self->wind = w;
     self->wind->type = 2;
     self->wind->color = self->fog1;
@@ -305,9 +306,9 @@ struct map_frame : rgl::matrix {                                    // a frame f
     map_frame(const rgl::mat3& r, const rgl::vector4& p) { *(rgl::mat3*)this = r; o = p; }
 };
 // the cell's mesh list and its recalculation (the same steps as Poser::add_extra 0x442110, expanded here)
-static inline void add_cell_mesh(rgl::entity* e, rgl::mesh* m)
+static inline void add_cell_mesh(rgl::entity* e, int m)
 {
-    e->meshes.push_back(m);
+    ((std::vector<int>&)e->meshes).push_back(m);
     e->recalc();
 }
 
@@ -482,7 +483,7 @@ void Game::build_map_trees()
             lo.y = (float)row * step.y + g_script.miny;
             hi.y = (float)(row + 1) * step.y + g_script.miny;
 
-            rgl::mesh* cellmesh = new rgl::mesh();
+            int cmv = (int)new rgl::mesh();
             rgl::vector4 center;
             *(map_v2*)&center = map_v2((hi.x + lo.x) * 0.5f, (hi.y + lo.y) * 0.5f);
             center.z = 0.0f;
@@ -495,7 +496,7 @@ void Game::build_map_trees()
                 else if (mi == 12) mt = 0x17;
                 unsigned umask = (unsigned)g_bit[mi];
 
-                rgl::mesh* m = new rgl::mesh();
+                int mv = (int)new rgl::mesh();                 // int: the lists below are the shared vector<int> instance (0x410610)
                 g_script.map_cell[ci]->local.o = center;
 
                 for (i = 0; i < g_script.level->ground->verts.size(); i++)
@@ -543,8 +544,10 @@ void Game::build_map_trees()
                     }
                     if (!add)
                         goto no_emit;
-                    rgl::world* w = g_script.level;
-                    for (int k = 0; k < nd.npts; k++) {
+                    int k = 0;
+                    if (nd.npts > 0) {
+                        rgl::world* w = g_script.level;
+                        do {
                         int& id = nd.ids[k];
                         if (fr.vert[id] != -1)
                             continue;
@@ -552,7 +555,8 @@ void Game::build_map_trees()
                         const rgl::vector4& normal = w->ground->verts[id].n;
 
                         if (mt == 0x17) {
-                            if ((sea & fr.flags[id]) == 0 || (land & fr.flags[id]) == 0) {
+                            bool both = (sea & fr.flags[id]) != 0 && (land & fr.flags[id]) != 0;
+                            if (!both) {
                                 int chain[128];
                                 int ncnt;
                                 ((ChainGraph*)w->ground)->build_chain(id, ni, chain, &ncnt);   // 0x5234e0 (target vertex, start node)
@@ -607,7 +611,7 @@ void Game::build_map_trees()
                         }
 
                         rgl::vector4 rel(p.x - center.x, p.y - center.y, p.z);
-                        int pidx = m->add_point(&rel);
+                        int pidx = ((rgl::mesh*)mv)->add_point(&rel);
 
                         // ---- per-material uv ----------
                         vec2 uv;
@@ -748,10 +752,11 @@ void Game::build_map_trees()
                             c.z = (float)sqrt(c.z);
                         }
 
-                        fr.vert[id] = map_add_vertex(m, pidx, uv, rgl::pack_color(&c), normal, 0);
+                        fr.vert[id] = map_add_vertex((rgl::mesh*)mv, pidx, uv, rgl::pack_color(&c), normal, 0);
                         w = g_script.level;
+                                            } while (++k < nd.npts);
                     }
-                    m->add_face(fr.vert[nd.ids[0]], fr.vert[nd.ids[1]], fr.vert[nd.ids[2]]);
+                    ((rgl::mesh*)mv)->add_face(fr.vert[nd.ids[0]], fr.vert[nd.ids[1]], fr.vert[nd.ids[2]]);
 
                 no_emit:
                     // ---- tree-mesh selection, material 0 only ----
@@ -791,42 +796,42 @@ void Game::build_map_trees()
                                 ofs.y = s.y - center.y;
                                 ofs.z = s.z;
                                 frame.o = ofs;
-                                cellmesh->append_skinned(chosen, &frame, -1, 0xffffffff, 0); // 0x44eb00
+                                ((rgl::mesh*)cmv)->append_skinned(chosen, &frame, -1, 0xffffffff, 0); // 0x44eb00
                             }
                         }
                     }
                 }
 
                 // ---- finalize the per-material mesh ----
-                if (m->v90.size() != 0) {
-                    m->res = ((GameMapView*)this)->terrain_material(mt);
-                    ((NibbleObj*)m)->set_nibble(mi - 6);
-                    m->mask = 0x17fff;
-                    m->compute_bounds();
-                    add_cell_mesh(g_script.map_cell[ci], m);
+                if (((rgl::mesh*)mv)->v90.size() != 0) {
+                    ((rgl::mesh*)mv)->res = ((GameMapView*)this)->terrain_material(mt);
+                    ((NibbleObj*)mv)->set_nibble(mi - 6);
+                    ((rgl::mesh*)mv)->mask = 0x17fff;
+                    ((rgl::mesh*)mv)->compute_bounds();
+                    add_cell_mesh(g_script.map_cell[ci], mv);
                     if (mt == 0)
-                        ((std::vector<rgl::mesh*>&)g_script.mat_type0).push_back(m);
+                        ((std::vector<int>&)g_script.mat_type0).push_back(mv);
                     else if (mt == 8)
-                        ((std::vector<rgl::mesh*>&)g_script.mat_river).push_back(m);
+                        ((std::vector<int>&)g_script.mat_river).push_back(mv);
                     else if (mt == 0x16)
-                        ((std::vector<rgl::mesh*>&)g_script.mat_sea).push_back(m);
+                        ((std::vector<int>&)g_script.mat_sea).push_back(mv);
                     else if (mt == 0x17)
-                        ((std::vector<rgl::mesh*>&)g_script.mat_sea2).push_back(m);
+                        ((std::vector<int>&)g_script.mat_sea2).push_back(mv);
                 } else {
-                    delete m;
+                    delete ((rgl::mesh*)mv);
                 }
             }
 
             // ---- finalize the cell mesh ----
-            if (cellmesh->v90.size() != 0) {
-                cellmesh->res = g_resmgr.get_material(RStr("map_trees"));
-                ((NibbleObj*)cellmesh)->set_nibble(2);
-                cellmesh->mask = 0x1ffff;
-                cellmesh->compute_bounds();
-                add_cell_mesh(g_script.map_cell[ci], cellmesh);
-                ((GameMapView*)this)->ents.push_back(cellmesh);
+            if (((rgl::mesh*)cmv)->v90.size() != 0) {
+                ((rgl::mesh*)cmv)->res = g_resmgr.get_material(RStr("map_trees"));
+                ((NibbleObj*)((rgl::mesh*)cmv))->set_nibble(2);
+                ((rgl::mesh*)cmv)->mask = 0x1ffff;
+                ((rgl::mesh*)cmv)->compute_bounds();
+                add_cell_mesh(g_script.map_cell[ci], cmv);
+                ((GameMapView*)this)->ents.push_back(cmv);
             } else {
-                delete cellmesh;
+                delete ((rgl::mesh*)cmv);
             }
         }
     }
@@ -938,7 +943,7 @@ void GameMapView::scan_arrays(void* p, void* unused)
 {
     unsigned i;
     for (i = 0; i < g_script.level->ground->verts.size(); i++)
-        *(volatile int*)((char*)p + 0xc3500) = (int)0xcb189680;
+        ((float*)p)[200000] = -10000000.0f;
     char buf[100000];
     for (i = 0; i < g_script.level->ground->cells.size(); i++)
         buf[i] = 0;

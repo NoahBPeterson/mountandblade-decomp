@@ -15,7 +15,7 @@
 #include "./party_2.h"
 #include "../../include/wl_marker.h"
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
-#include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
+#include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].max_rank is the clamp at 0x8ee3ac4
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical g_module_settings.seeing_range
 #include "../terrain_b/terrain_b.h"
@@ -1300,18 +1300,23 @@ int __cdecl terrain_is_water(unsigned kind);             // 0x4893b0 (is-water t
 
 static __forceinline bool party_flag(const Party* o, int mask) { return (o->flags & mask) != 0; }
 static __forceinline Vec2 v2_mul(const vec2& v, float k) { return Vec2(v.x * k, v.y * k); }
+static inline void rot2(vec2& v, float ang)
+{
+    float c = cosf(ang);
+    float s = sinf(ang);
+    float x = c * v.x - s * v.y;
+    v.y = c * v.y + s * v.x;
+    v.x = x;
+}
 // @ 0x4b3ce0
 // Act on the current map order: finish a move, chase a party or an agent, or sample a random walkable spot around the
 // current position and hand it to set_order_face as a new order.
 void Party::plan_order()
 {
     int act = action;
-    if (act == 0 || act == 7 || act == 8) {
-        kind = 0;
-        moving = 0;
-        f5988 = 0;
-        return;
-    }
+    if (act == 0) { kind = 0; moving = 0; f5988 = 0; return; }
+    if (act == 7) { kind = 0; moving = 0; f5988 = 0; return; }
+    if (act == 8) { kind = 0; moving = 0; f5988 = 0; return; }
 
     if (act != 2 && act != 3) {
         if (act == 9)
@@ -1328,25 +1333,28 @@ void Party::plan_order()
         int* tp = &target;
         if (target >= 0 && (act == 4 || act == 1)) {
             PartyMgr* m = &g_game->parties;
-            if (!m->is_live(t))
-                goto fail;
-            if (party_flag(m->get(t), 0x400))
+            if (m->is_live(t)) {
+                if (party_flag(m->get(t), 0x400))
+                    return;
+                set_order_party(tp);
                 return;
-            set_order_party(tp);
+            }
+            action = 0;
             return;
         }
         if (t >= 0 && act == 10) {
-            if (!g_game->parties.is_live(t))
-                goto fail;
-            set_order_agent(tp);
+            if (g_game->parties.is_live(t)) {
+                set_order_agent(tp);
+                return;
+            }
+            action = 0;
             return;
         }
         if (act != 5 && act != 11)
             return;
         {
             PartyMgr* m = &g_game->parties;
-            if (!m->is_live(t))
-                goto fail;
+            if (m->is_live(t)) {
 
             vec2r fwd;
             fwd.x = 0.0f;
@@ -1374,6 +1382,7 @@ void Party::plan_order()
             bool give_up = false;
             int tries = 0;
             float spread = 0.6f;
+            face* a;
             for (;;) {
                 ((vec2x*)&d)->rotate_a((frand() - 0.5f) * spread);
                 float len = speed_factor() * (interval + interval + 0.5f);
@@ -1381,7 +1390,7 @@ void Party::plan_order()
                 Vec2 s = v2_mul(d, len);
                 fwd.x = s.x + pos.x;
                 fwd.y = s.y + pos.y;
-                face* a = g_game->find_at(&fwd.x);
+                a = g_game->find_at(&fwd.x);
                 tries++;
                 spread += 0.4f;
                 if (tries > 6) {
@@ -1391,25 +1400,23 @@ void Party::plan_order()
                     give_up = true;
                 }
                 if (a) {
-                    NavData* w = ((rgl::world*)g_script.level)->ground;
                     int& cell = a->m4;
+                    NavData* w = ((rgl::world*)g_script.level)->ground;
                     if (w->shares(cell, mesh->m4)) {
                         unsigned __int64 fl = flags & 0x200;
-                        if (fl && (char)terrain_is_road(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask())) {
-                            set_order_face((int*)&fwd, a);
-                            return;
-                        }
-                        if (!fl && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask())) {
-                            set_order_face((int*)&fwd, a);
-                            return;
-                        }
+                        if (fl > 0 && (char)terrain_is_road(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask()))
+                            break;
+                        if (fl == 0 && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask()))
+                            break;
                     }
                 }
                 if (give_up)
                     return;
             }
+            set_order_face((int*)&fwd, a);
+            return;
+            }
         }
-fail:
         action = 0;
         return;
     }
@@ -1427,26 +1434,24 @@ fail:
         bool give_up = false;
         int tries = 0;
         float spread = 0.6f;
+        face* a;
         vec2 delta;
         delta.x = to.x - pos.x;
         delta.y = to.y - pos.y;
         for (;;) {
             vec2 h = *(vec2*)&dirx;
             float ang = ((float)(rand() % 15817) * 6.322312e-05f - 0.5f) * spread * 3.1415927f;
-            float c = cosf(ang);
-            float s = sinf(ang);
-            float hx = c * h.x - s * h.y;
-            h.y = c * h.y + s * h.x;
+            rot2(h, ang);
             float m2 = (float)(rand() % 15817) * 0.00012644623f + 1.0f;
             float len = speed_factor() * m2;
-            Vec2 w(hx * len, h.y * len);
+            Vec2 w(h.x * len, h.y * len);
             to.x = w.x + pos.x;
             to.y = w.y + pos.y;
             float k = (float)(rand() % 15817) / f8f4 * 6.322312e-05f;
             Vec2 e(delta.x * k, delta.y * k);
             to.x = e.x + to.x;
             to.y = e.y + to.y;
-            face* a = g_game->find_at(&to.x);
+            a = g_game->find_at(&to.x);
             tries++;
             spread += 0.4f;
             if (tries > 6) {
@@ -1456,26 +1461,23 @@ fail:
                 give_up = true;
             }
             if (a) {
-                NavData* g = ((rgl::world*)g_script.level)->ground;
                 int& cell = a->m4;
+                NavData* g = ((rgl::world*)g_script.level)->ground;
                 if (g->shares(cell, mesh->m4)) {
                     unsigned __int64 fl = flags & 0x200;
-                    if (fl) {
+                    if (fl > 0) {
                         unsigned k2 = ((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask();
-                        if ((k2 & 7) == 0 || k2 == 7) {
-                            set_order_face((int*)&to, a);
-                            return;
-                        }
+                        if ((k2 & 7) == 0 || k2 == 7)
+                            break;
                     }
-                    if (!fl && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask())) {
-                        set_order_face((int*)&to, a);
-                        return;
-                    }
+                    if (fl == 0 && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask()))
+                        break;
                 }
             }
             if (give_up)
                 return;
         }
+        set_order_face((int*)&to, a);
     }
 }
 
@@ -1724,6 +1726,21 @@ static __forceinline BattleRec* battle_page(unsigned t)
     std::vector<BattleRec*>& pages = *(std::vector<BattleRec*>*)((char*)g_game + 0xe0);
     return pages[t >> 4] + (t & 0xf);
 }
+static inline float norm_xy(vec2& d)
+{
+    float len = sqrtf(d.x * d.x + d.y * d.y);
+    if (len > 0.0f) {
+        float r = 1.0f / len;
+        float nx = d.x * r;
+        float ny = d.y * r;
+        d.x = nx;
+        d.y = ny;
+    } else {
+        d.x = 0.0f;
+        d.y = 1.0f;
+    }
+    return len;
+}
 // @ 0x4b4a00
 // The party's map AI step: gather the nearby parties (0x4b3910), score each one from troop strength, relation and distance,
 // then either commit a new order (action / target) or fall back to the pending one (state, +0x8e4).
@@ -1806,16 +1823,15 @@ void Party::think()
     int i = 0;
     if (n > 0) {
         unsigned a74 = f74;
-        int nib = a74 & 0xf;
-        int hi4 = (int)a74 >> 4 & 0xf;
         PartyMgr* m = &g_game->parties;
-        float hi_nib = (float)hi4;
+
         float prod = f8b0 * f8ac;
         float prod2 = prod + 0.05f;
         do {
             int tid = ids[i];
             Party* p = m->at(m->lookup(tid));
             float x = base / fmin1(near_v[i] - accum[i] * 0.9f) * (1.0f / frac);
+            int nib = a74 & 0xf;
             float mod = (nib != 0 ? (float)nib * 0.125f : 1.0f) * x;
             if (mod < 0.2f)
                 mod = 0.2f;
@@ -1826,7 +1842,7 @@ void Party::think()
             vec2 d;
             d.x = tp->x - pos.x;
             d.y = tp->y - pos.y;
-            float dist = d.normalize();
+            float dist = norm_xy(d);
             float invd = 3.0f / dist;
             if (invd < 0.6f)
                 invd = 0.6f;
@@ -1835,7 +1851,7 @@ void Party::think()
 
             float scale = fclamp(prod / (m->at(m->lookup(tid))->f8ac * m->at(m->lookup(tid))->f8b0), 0.5f, 1.1f);
 
-            float sc = hi_nib * -rel_v[i] * scale * invd * mod * 0.125f;
+            float sc = (float)((int)a74 >> 4 & 0xf) * -rel_v[i] * scale * invd * mod * 0.125f;
             if (rel_v[i] < 0.0f) {
                 float s = 0.0f;
                 if (a74 & 0x100)
@@ -2160,11 +2176,8 @@ void BattleRec::detach()
         }
 
         if (total < height) {
-            float v[3];
-            v[0] = x1;
-            v[1] = y1;
-            v[2] = z;
-            g_game->push_event((const int*)v, height);
+            rgl::vector4 v(x1, y1, z);
+            g_game->push_event((const int*)&v, height);
         }
 
         char is1, is2;
@@ -2298,7 +2311,7 @@ struct OpenQ {
     __forceinline void pop_back() { c.pop_back(); }
     __forceinline OpenItem* begin_() { return (OpenItem*)&*c.begin(); }
     __forceinline OpenItem* end_() { return (OpenItem*)&*c.end(); }
-    OpenItem*& first() { return *(OpenItem**)((char*)this + 4); }
+
 };
 static __forceinline void pq_drain(OpenItem* first, OpenItem* last, QComp pred)
 {
@@ -2871,10 +2884,7 @@ static inline float plane_dist(const vec2& a, const rgl::vector4& b)
     float dy = a.y - b.y;
     return sqrtf(dy * dy + dx * dx);
 }
-static inline void push_trail_event(GameData* g, int id, const rgl::vector4& pos, const float& heading)
-{
-    g->push_party_event(id, (const int*)&pos, &heading);
-}
+
 static __forceinline rgl::vector4 v4_half(const rgl::vector4& v) { return rgl::vector4(v.x * 0.5f, v.y * 0.5f, v.z * 0.5f); }
 static __forceinline rgl::vector4 v4_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline NavRec& nav_cell(int i) { return (*(std::vector<NavRec>*)&((rgl::world*)g_script.level)->ground->cells)[i]; }
@@ -2886,7 +2896,6 @@ static __forceinline bool mesh_used(const rgl::mesh* m)
         return m->parent->kf.count > 0;
     return m->kf.count > 0;
 }
-static inline void clamp_low0(float& v) { if (v < 0.0f) v = 0.0f; }
 static inline Vec2 v2_scale(const float& s, const float* v) { return Vec2(s * v[0], s * v[1]); }
 
 // @ 0x4b80d0

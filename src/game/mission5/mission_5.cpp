@@ -409,12 +409,12 @@ int ViewObj_s257f0::find_listener_agent()
     int listener = g_n_dialogs_s26130.listener();
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s26130->chars[listener].flags;    // 64-bit troop flags
     if ((flags & 0x10) != 0 || *(int*)((char*)&g_dialogs + 0x14) == -1) {
-        Mission_s26130* m = g_mission_s26130;
-        AgentTable_s26130* t = &m->agents;
+        Mission* m = g_mission;
+        AgentTable* t = &m->agents;
         unsigned i = t->first_used();
         unsigned count = t->count;
         if (i < count) {
-            std::vector<Agent_s26130*>::iterator pages(m->agents.pages);
+            std::vector<Agent*>::iterator pages(m->agents.pages.begin());
             do {
                 if ((pages[i >> 4] + (i & 0xf))->troop == listener)
                     found = i;
@@ -2421,22 +2421,23 @@ void Screen_s2ae70::draw_order_menu()
 #define g_mission_s2b5c0 (*(Mission_s2b5c0**)&g_mission)
 #undef g_editor_s2b5c0
 #define g_editor_s2b5c0 (*(Editor_s2b5c0*)&g_app_obj)
+static __forceinline int room_s2b5c0(ItemRef* r) { int n = r->m4 & 0xff; return r->max_amount() - n; }   // ItemRef::room_left (0x434c30), inlined here
 // @ 0x52b5c0
-bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
+bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order_)
 {
-    Agent_s2b5c0* agent = (*(std::vector<Agent_s2b5c0*>*)((char*)this + 0x18))[agent_id >> 4] + (agent_id & 0xf);
-    ItemKind_s2b5c0* ok = &g_items_s2b5c0[order->id];
+    ItemRef* order = (ItemRef*)order_;
+    Agent* agent = ((Mission*)this)->agents.pages[agent_id >> 4] + (agent_id & 0xf);
+    ItemKind* ok = &g_items[order->item];
     int chosen = -1;
 
     for (int i = 0; chosen == -1 && i < 4; i++) {
-        ItemRef_s2b5c0* r = &agent->orders[i];
-        ItemRef_s2b5c0 slot;
-        slot.id = r->id;
-        int c = r->count;
-        slot.count = c;
-        if (slot.id >= 0) {
-            ItemKind_s2b5c0* it = &g_items_s2b5c0[slot.id];
-            unsigned k = it->kind & 0xff;
+        ItemRef* r = &agent->pairs[i];
+        ItemRef slot;
+        slot.item = r->item;
+        int c = r->m4;
+        slot.m4 = c;
+        if (slot.item >= 0) {
+            unsigned k = g_items[slot.item].type_flags & 0xff;
             if (k == 5 || k == 6 || k == 0x12 || k == 0xa) {
                 if (slot.max_amount() - (c & 0xff) > 0)
                     continue;
@@ -2447,13 +2448,13 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
     }
 
     if (chosen == -1) {
-        unsigned k = ok->kind & 0xff;
+        unsigned k = ok->type_flags & 0xff;
         int cur;
         if (k == 2 || k == 3 || k == 4 || k == 8 || k == 9 || k == 0xa ||
             k == 0x10 || k == 0x11)
-            cur = agent->f22c;
+            cur = agent->slots[0];
         else if (k == 7)
-            cur = agent->f230;
+            cur = agent->slots[1];
         else
             goto L_rot;
         if (cur >= 0) {
@@ -2463,9 +2464,9 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
         }
     L_rot:
         {
-            int d = agent->f22c;
+            int d = agent->slots[0];
             int e = (d + 1) % 4;
-            int f = agent->f230;
+            int f = agent->slots[1];
             if (e == f)
                 e = (f + 1) % 4;
             if (e == d)
@@ -2476,12 +2477,12 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
     }
 
     if (chosen >= 0) {
-    ItemRef_s2b5c0* slot = &agent->orders[chosen];
+    ItemRef* slot = &agent->pairs[chosen];
     char newname[128];
     char oldname[128];
     char buf[512];
 
-    if (slot->id >= 0) {
+    if (slot->item >= 0) {
         slot->name(oldname);
         order->name(newname);
         {
@@ -2490,16 +2491,16 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
         }
         g_gui.add(tstring(buf), -1);
 
-        unsigned k = g_items_s2b5c0[slot->id].kind & 0xff;
+        unsigned k = g_items[slot->item].type_flags & 0xff;
         // 0x52b808..0x52b814: kind 7 with count <= 1 does not stop here, it falls into the generic
         // max_amount test below (0x52b816..0x52b84d)
-        if ((k == 7 && (slot->count & 0xffff) > 1) ||
+        if ((k == 7 && (slot->m4 & 0xffff) > 1) ||
             k == 2 || k == 3 || k == 4 || k == 8 || k == 9 || k == 0x10 || k == 0x11 ||
-            slot->max_amount() - (slot->count & 0xff) > 0) {
-            matrix m = agent->frame->m;
+            room_s2b5c0(slot) > 0) {
+            matrix m = agent->body->m;
             m.o.z += 0.1f;   // 0x52b86f..0x52b875: [esp+0x64] is matrix +0x38 (o.z), not o.y
             int mode = 6;
-            add_placed(&mode, &slot->id, &slot->count, &m,
+            ((Mission*)this)->add_placed(&mode, &slot->item, (int*)&slot->m4, &m,
                        (int*)((char*)agent + 8));
         }
     } else {
@@ -2511,23 +2512,26 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order)
         g_gui.add(tstring(buf), -1);
     }
 
-    slot->id = order->id;
-    slot->count = order->count;
-    agent->active[chosen] = 0;
+    slot->item = order->item;
+    slot->m4 = order->m4;
+    ((char*)agent + 0x220)[chosen] = 0;
 
-    unsigned k = g_items_s2b5c0[order->id].kind & 0xff;
+    unsigned k = g_items[order->item].type_flags & 0xff;
     if (k == 2 || k == 3 || k == 4 || k == 8 || k == 9 || k == 0xa ||
         k == 0x10 || k == 0x11)
-        agent->f22c = chosen;
+        agent->slots[0] = chosen;
     else if (k == 7)
-        agent->f230 = chosen;
+        agent->slots[1] = chosen;
 
-    ((Mission*)this)->refresh_agent((Agent*)agent);   // 0x4f7e00: Mission::refresh_agent(Agent*), this = the saved this
+    ((Mission*)this)->refresh_agent(agent);   // 0x4f7e00: Mission::refresh_agent(Agent*), this = the saved this
     agent->on_wield_reset();
     return true;
     }
 
-    g_gui.add(*g_strtable_s2b5c0.lookup(tstring("ui_unable_to_take")), -1);
+    {
+        tstring key("ui_unable_to_take");
+        g_gui.add(*g_strtable_s2b5c0.lookup(key), -1);
+    }
     return false;
 }
 

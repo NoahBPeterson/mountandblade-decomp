@@ -279,15 +279,27 @@ void CharSheet::init_screen()
         btn[i] = make_button(skills, "+", config_float_walk("char_b_skill_increment_x") + skills_x,
                              config_float_walk("char_b_skill_increment_y_a") + rowy, 1,
                              skills_y - config_float_walk("char_b_skill_increment_h_a"));
-        btn[i]->set_size((const float*)&vector2(config_float_walk("char_b_skill_increment_t_s"),
-                                  config_float_walk("char_b_skill_increment_t_s")));
+        {
+            tstring s1("char_b_skill_increment_t_s");
+            float a1 = config_float_walk(s1);
+            tstring s2("char_b_skill_increment_t_s");
+            float a2 = config_float_walk(s2);
+            btn[i]->set_size((const float*)&vector2(a2, a1));
+        }
         set_caption(btn[i], "+");
     }
 
     // the framed "skills" outer panel
     update_skill_rows();
-    UiD* inner = make_scrollbar(window, "char_s_skills");
-    skills_outer = make_editor_list(skills, "char_sc_skills_outer", (int)inner);
+    UiD* inner;
+    {
+        tstring k("char_s_skills");
+        inner = make_scrollbar(window, &k);
+    }
+    {
+        tstring k("char_sc_skills_outer");
+        skills_outer = make_editor_list(skills, &k, (int)inner);
+    }
     skills_outer->draw();
     window->add_child(skills_outer);
 
@@ -335,8 +347,13 @@ void CharSheet::init_screen()
                               config_float_walk("char_b_weapon_proficiency_increment_y")
                               - config_float_walk("char_b_weapon_proficiency_increment_y_a") * fj,
                               1, config_float_walk("char_b_weapon_proficiency_increment_h"));
-        rows[j]->set_size((const float*)&vector2(config_float_walk("char_b_weapon_proficiency_increment_t_s"),
-                                   config_float_walk("char_b_weapon_proficiency_increment_t_s")));
+        {
+            tstring s1("char_b_weapon_proficiency_increment_t_s");
+            float a1 = config_float_walk(s1);
+            tstring s2("char_b_weapon_proficiency_increment_t_s");
+            float a2 = config_float_walk(s2);
+            rows[j]->set_size((const float*)&vector2(a2, a1));
+        }
         set_caption(rows[j], "+");
 
         if (g_display_wp[j] == 0) {
@@ -356,12 +373,13 @@ void CharSheet::init_screen()
     label_refresh(name, "char_tb_character_name");
 
     rgl::mesh* up;
-    {
-        tstring k("party_button");
-        up = g_resmgr.get_object(&k)->clone();
-    }
     rgl::mesh* down;
     {
+        {
+            tstring k("party_button");
+            up = g_resmgr.get_object(&k)->clone();
+        }
+        // declared in the block that encloses the first key: the scopes nest, so the two keys may not share a slot
         tstring k("party_button_down");
         down = g_resmgr.get_object(&k)->clone();
     }
@@ -405,8 +423,13 @@ void CharSheet::init_screen()
         skill_val[k] = make_button(attribs, "+", config_float_walk("char_b_attrib_increment_x"),
                                    rowy - config_float_walk("char_b_attrib_increment_y_a"),
                                    1, config_float_walk("char_b_attrib_increment_h"));
-        skill_val[k]->set_size((const float*)&vector2(config_float_walk("char_b_attrib_increment_t_s"),
-                                        config_float_walk("char_b_attrib_increment_t_s")));
+        {
+            tstring s1("char_b_attrib_increment_t_s");
+            float a1 = config_float_walk(s1);
+            tstring s2("char_b_attrib_increment_t_s");
+            float a2 = config_float_walk(s2);
+            skill_val[k]->set_size((const float*)&vector2(a2, a1));
+        }
         set_caption(skill_val[k], "+");
     }
 
@@ -451,20 +474,24 @@ void CharSheet::init_screen()
     f4d4 = 0;
 
     if (mode == 0) {
-        tstring k1("ui_saving_policy_nonrealistic");
-        tstring k2("ui_saving_policy_realistic");
-        tstring k3("ui_question_saving_policy");
-        const char* nonreal = g_strtable.lookup(k1)->c_str();
-        const char* real = g_strtable.lookup(k2)->c_str();
-        slot_as<char_window>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
+        {
+            tstring k1("ui_saving_policy_nonrealistic");
+            tstring k2("ui_saving_policy_realistic");
+            tstring k3("ui_question_saving_policy");
+            const char* nonreal = g_strtable.lookup(k1)->c_str();
+            const char* real = g_strtable.lookup(k2)->c_str();
+            slot_as<char_window>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
+        }
         g_windows.open(1);
         return;
     } else if (mode == 1) {
-        tstring k1("ui_tutorial_character_generation");
-        tstring k2("ui_tutorial");
-        tstring* gen = g_strtable.lookup(k1);
-        tstring* tut = g_strtable.lookup(k2);
-        g_windows.box()->set_inline(tut, gen);
+        {
+            tstring k1("ui_tutorial_character_generation");
+            tstring k2("ui_tutorial");
+            tstring* gen = g_strtable.lookup(k1);
+            tstring* tut = g_strtable.lookup(k2);
+            g_windows.box()->set_inline(tut, gen);
+        }
         g_windows.open(0);
     }
 }

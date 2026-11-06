@@ -88,7 +88,7 @@ void Mission::refresh_agent(Agent* a)
 #define NEW_CONTAINER new ContainerBase
 #endif
 static __forceinline NodeA* hud_frame() { return new NodeA(0); }
-// ContainerBase::ContainerBase stays out of line: new NodeA calls 0x4931a0, but new ContainerBase expands it (0x4f7f00, 0x4fbfa0). One definition cannot give both; see the note in agent_hud.nonmatching.txt.
+// ContainerBase::ContainerBase stays out of line: new NodeA calls 0x4931a0, but new ContainerBase expands it (0x4f7f00, 0x4fbfa0). One definition cannot give both.
 inline UiD::UiD() { f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
 static __forceinline void t_back(Timer& t) { t.start = g_ticks[t.clock] - 10000000; }
 
@@ -459,6 +459,8 @@ static __forceinline void hv_addr(vector4& a, const vector4& b) { a.x = b.x + a.
 static __forceinline vector4 hv_mulv(const vector4& a, float s) { return vector4(a.x * s, a.y * s, a.z * s); }
 struct HvS { float v; __forceinline HvS(float s) : v(s) {} };
 static __forceinline vector4 hv_m6(const vector4& a, HvS s) { return vector4(a.x * s.v, a.y * s.v, a.z * s.v); }
+// a scale by double: the float lanes load first, the scale stays live on the x87 stack and is dropped by fstp st(0)
+static __forceinline vector4 hv_md(const vector4& a, double s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 hv_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 hv_neg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
 static __forceinline void hv_add_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
@@ -500,7 +502,7 @@ void MissionBlocker::update_camera(float dt)
             c.x = gcam.x - geye.x;
             c.y = gcam.y - geye.y;
             c.z = gcam.z - geye.z;
-            vector4 a = hv_add(hv_m6(c, (1.0f - dt) * c.normalize()), geye);
+            vector4 a = hv_add(hv_md(c, (1.0f - dt) * c.normalize()), geye);
             float ya = atan2(-(-c.x), -c.y);
             if (yaw > 6.2831855f)
                 yaw = yaw - 6.2831855f;
@@ -628,9 +630,9 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                     sk->ensure_updated();
                 vector4 n = *(vector4*)(sk->recs + 0x1170);
                 vector4 c = n - lag;
-                hv_add_to(lag, hv_m6(c, clamp_v(c.out_length() * dt * 200.0f, 0.0f, 1.0f)));
-                vector4 tp = body->m.transform_point(lag);
-                k.o = tp;
+                hv_add_to(lag, hv_md(c, clamp_v(c.out_length() * dt * 200.0f, 0.0f, 1.0f)));
+                { vector4 tp = body->m.transform_point(lag);
+                k.o = tp; }
                 rot_s(k, 1.5707964f);
                 k.rotate_about_f(&yaw);
                 k.rotate_about_s(&pitch);
@@ -695,7 +697,7 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                         vector4 n = ((face*)list[i])->normal;
                         float dx = ct.point.x - q.x, dy = ct.point.y - q.y, dz = ct.point.z - q.z;
                         float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
-                        float dot = n.z * c.z + n.y * c.y + n.x * c.x;
+                        float dot = c.x * n.x + c.y * n.y + c.z * n.z;
                         if (dot > 0.0f && dist < t) {
                             t = dist;
                             d2 = dist - (radius * 2.5f / fmax_v(dot, 0.1f) + 0.6f);
@@ -950,7 +952,6 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
 
 
 static __forceinline rgl::mesh* item_mesh_v(const ItemRef* r, const float& s) { return make_item_mesh(r, &s); }
-static __forceinline void set_col3(MissionUi* p, int n) { unsigned c = 0xffffffff; if (n <= 0) c = 0xffb02020; p->set_color(&c); }
 static __forceinline void offset_v(rgl::mesh* m, const float& v) { m->set_offset(*(const vector4*)&v); }
 // @ 0x4fb350
 void MissionBlocker::update_status()
@@ -1007,7 +1008,13 @@ void MissionBlocker::update_status()
             status_bar->show();
             ui_font->show();
             ui_font_bg->show();
-            set_col3(ui_font, shield_max);
+            if (shield_max > 0) {
+                unsigned c = 0xffffffff;
+                ui_font->set_color(&c);
+            } else {
+                unsigned c = 0xffb02020;
+                ui_font->set_color(&c);
+            }
         }
         if (res.item != shield_cur) {
             shield_mesh->clear_geometry();
@@ -1248,7 +1255,6 @@ void rgl::mesh::darken_vertices()
     slots[0].f28 = 1;
 }
 
-struct HudF2 { float x, y; __forceinline HudF2(float a, float b) : x(a), y(b) {} };
 // @ 0x4fbfa0
 void ItemA::init_screen()
 {
@@ -1366,7 +1372,12 @@ void ItemA::init_screen()
     { float v[2]; v[0] = 0.0f; v[1] = 0.0f; value->move_a(v); }
     { float v[2]; v[0] = 0.75f; v[1] = 0.36f; value->set_xy(v); }
     UiD* track_made = make_scroll_track(win, 0.7f, 0.02f, 0.01f, 0.36f);
-    Camera* made = make_quest_list((ContainerBase*)value, (const float*)&HudF2(0.01f, 0.02f), (const float*)&HudF2(0.75f, 0.36f), track_made);
+    float a[2], b[2];
+    b[0] = 0.75f;
+    b[1] = 0.36f;
+    a[0] = 0.01f;
+    a[1] = 0.02f;
+    Camera* made = make_quest_list((ContainerBase*)value, a, b, track_made);
     slider = made;
     frame()->add_child(made);
 
@@ -1419,9 +1430,8 @@ static __forceinline float param_value(const char* key)
             found = i;
     }
     if (found >= 0) {
-        char* s = g_game_vars.entries[found].value.buf;
-        if (s)
-            v = (float)atof(s ? s : (char*)&g_game_vars.entries[found].value.buf);
+        char** s = &g_game_vars.entries[found].value.buf;
+        v = (float)atof(*s ? *s : (char*)s);
     }
     return v;
 }
@@ -1435,6 +1445,7 @@ static __forceinline int hist_n() { if (g_gui.history.begin() == 0) return 0; re
 // @ 0x4fc820
 void Rec58::build(bool show)
 {
+    int count;
     g_gui.reset();
 
     frame = hud_frame();
@@ -1459,7 +1470,6 @@ void Rec58::build(bool show)
     { float v[2]; v[0] = 0.915f; v[1] = 0.1f; log->set_xy(v); }
     log->name.assign("");
 
-    int count;
     if (show) {
         char delim = '|';
         tstring* arr = ((tstring*)((char*)g_game + 0x13b50))->split(delim, count);

@@ -212,35 +212,36 @@ static __declspec(noinline) char check_presentation(const int& value)
 
 // @ 0x49cda0
 // String operand: its type selects the table: 3 = string (s_*), 0x16 = quick string, 0 = string register.
+// (sequential tests of the reference itself, with the error paths leaving: type stays in ECX, its value in EDX, value in ESI)
 static __declspec(noinline) char check_string_arg(const int& type, const int& value)
 {
     char buf[512];
     char r = 1;
-    int t = type;
-    if (t == 3) {
-        int v = value;
-        if (v < 0 || v >= g_strings.count) {
-            sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid String ID: %d", g_cur_opcode, v);
+    if (type == 3) {
+        if (value < 0 || value >= g_strings.count) {
+            sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid String ID: %d", g_cur_opcode, value);
             report(buf);
             r = 0;
+            goto done;
         }
     }
-    if (t == 0x16) {
-        int v = value;
-        if (v < 0 || v >= g_strings.quick_count) {
-            sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Quick String ID: %d", g_cur_opcode, v);
+    if (type == 0x16) {
+        if (value < 0 || value >= g_strings.quick_count) {
+            sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Quick String ID: %d", g_cur_opcode, value);
             report(buf);
             r = 0;
+            goto done;
         }
     }
-    if (t == 0) {
-        int v = value;
-        if (v < 0 || v >= 0x80) {
-            sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid String Register ID: %d", g_cur_opcode, v);
+    if (type == 0) {
+        if (value < 0 || value >= 0x80) {
+            sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid String Register ID: %d", g_cur_opcode, value);
             report(buf);
             r = 0;
+            goto done;
         }
     }
+done:
     return r;
 }
 
@@ -417,14 +418,16 @@ static __declspec(noinline) char warn_scene_prop(const int& value)
 static __declspec(noinline) char warn_scene_prop_instance(const int& value)
 {
     char buf[512];
-    int id = value;
-    if (g_mission && id >= 0) {
-        if (mission()->props._Myfirst && (unsigned)id < (unsigned)mission()->props.count())   // jb: unsigned
-            return 1;
+    char r = 1;
+    int id;
+    MissionX* m;
+    char* first;
+    if (!(m = mission()) || (id = value) < 0 || !(first = (char*)m->props._Myfirst) || (unsigned)id >= (unsigned)(((char*)m->props._Mylast - first) / 0x1c8)) {   // jb: unsigned
+        sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Scene_prop Instance ID: %d", g_cur_opcode, value);
+        report(buf);
+        r = 0;
     }
-    sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Scene_prop Instance ID: %d", g_cur_opcode, id);
-    report(buf);
-    return 0;
+    return r;
 }
 
 // @ 0x49d310
@@ -1609,8 +1612,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::context_menu_add_item:
         if (check_string_arg(types[0], (int)params[0])) {
-            game()->context_menu_texts[game()->num_context_menu_items] =
-                g_script.expand(g_strings.get_string((int)params[0], types[0]));
+            ASSIGN_STR(game()->context_menu_texts[game()->num_context_menu_items],
+                g_script.expand(g_strings.get_string((int)params[0], types[0])));
             game()->context_menu_values[game()->num_context_menu_items] = (int)params[1];
             game()->num_context_menu_items++;
         }
@@ -1758,7 +1761,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::set_show_messages:
-        g_gui.enabled = params[0] != 0;      // 0x4a30a0
+        g_gui.enabled = params[0] ? 1 : 0;      // 0x4a30a0
         break;
     case op::add_troop_note_tableau_mesh:
         if (check_troop((int)params[0]) && warn_tableau((int)params[1]))
@@ -1781,7 +1784,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // upper bound. add_quest_note_from_dialog validates its quest id as a troop id.
     case op::add_quest_note_from_dialog:
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
-            quest((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
+            ASSIGN_STR(quest((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             quest((int)params[0])->notes[(int)params[1]].append(tstring(": "));
             quest((int)params[0])->notes[(int)params[1]].append(((DialogMgrX&)g_dialogs).get_name());
             quest((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
@@ -1790,13 +1793,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::add_quest_note_from_sreg:
         // (add_quest_note_from_sreg, <quest_id>, <note_slot_no>, <string_id>, <value>)
         if (check_string_arg(types[2], (int)params[2]) && check_quest((int)params[0]) && params[1] < 8) {
-            quest((int)params[0])->notes[(int)params[1]] = g_script.expand(g_strings.get_string((int)params[2], types[2]));
+            ASSIGN_STR(quest((int)params[0])->notes[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
             quest((int)params[0])->note_times[(int)params[1]] = params[3] ? game()->note_time : -1;
         }
         break;
     case op::add_troop_note_from_dialog:
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
-            troop((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
+            ASSIGN_STR(troop((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             troop((int)params[0])->notes[(int)params[1]].append(tstring(": "));
             troop((int)params[0])->notes[(int)params[1]].append(((DialogMgrX&)g_dialogs).get_name());
             troop((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
@@ -1804,7 +1807,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::add_faction_note_from_dialog:
         if (*context == 4 && check_faction((int)params[0]) && params[1] < 8) {
-            faction((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
+            ASSIGN_STR(faction((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             faction((int)params[0])->notes[(int)params[1]].append(tstring(": "));
             faction((int)params[0])->notes[(int)params[1]].append(((DialogMgrX&)g_dialogs).get_name());
             faction((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
@@ -1812,7 +1815,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::add_party_note_from_dialog:
         if (*context == 4 && check_party((int)params[0]) && params[1] < 8) {
-            party((int)params[0])->notes[(int)params[1]] = *troop(g_dialogs.speaker())->display_name();
+            ASSIGN_STR(party((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             party((int)params[0])->notes[(int)params[1]].append(tstring(": "));
             party((int)params[0])->notes[(int)params[1]].append(((DialogMgrX&)g_dialogs).get_name());
             party((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
@@ -1820,13 +1823,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::add_troop_note_from_sreg:
         if (check_string_arg(types[2], (int)params[2]) && check_troop((int)params[0]) && params[1] < 8) {
-            troop((int)params[0])->notes[(int)params[1]] = g_script.expand(g_strings.get_string((int)params[2], types[2]));
+            ASSIGN_STR(troop((int)params[0])->notes[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
             troop((int)params[0])->note_times[(int)params[1]] = params[3] ? game()->note_time : -1;
         }
         break;
     case op::add_faction_note_from_sreg:
         if (check_string_arg(types[2], (int)params[2]) && check_faction((int)params[0]) && params[1] < 8) {
-            faction((int)params[0])->notes[(int)params[1]] = g_script.expand(g_strings.get_string((int)params[2], types[2]));
+            ASSIGN_STR(faction((int)params[0])->notes[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
             faction((int)params[0])->note_times[(int)params[1]] = params[3] ? game()->note_time : -1;
         }
         break;
@@ -2694,20 +2697,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::map_get_random_position_around_position:
         // (map_get_random_position_around_position, <dest_position_no>, <position_no>, <radius>)
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            game()->random_position_around(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y,
-                                           (float)params[2], &script_pos((int)params[0]).o);
+            ((GameW*)game())->random_position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o);
         break;
     case op::map_get_land_position_around_position:
         result = 0;
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            result = game()->position_around(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y,
-                                             (float)params[2], &script_pos((int)params[0]).o, 0);
+            result = ((GameW*)game())->position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 0);
         break;
     case op::map_get_water_position_around_position:
         result = 0;
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            result = game()->position_around(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y,
-                                             (float)params[2], &script_pos((int)params[0]).o, 1);
+            result = ((GameW*)game())->position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 1);
         break;
     case op::party_count_members_of_type:
         // (party_count_members_of_type, <destination>, <party_id>, <troop_id>)

@@ -42,3 +42,8 @@
 ../src/game/cls_map/cls_map.cpp  ?make_dropdown@@YAPAUDropDown@@PAUMissionUi@@PBUtstring@@MM@Z  004dfec0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?init_screen@ResultWindow@@UAEXXZ  004dc630  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?init_screen@ItemRec2@@UAEXXZ  004dda40  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?init_screen@ItemRec@@UAEXXZ  004dcef0  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?build_panel@PanelMesh@@QAEXPBM000PAH@Z  004de3e0  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?make_background@@YAPAUmesh@rgl@@PAMH@Z  004de320  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?init_screen@Rec38@@UAEXXZ  004de1b0  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?init_screen@C4c3050@@UAEXXZ  004ddf80  /O2 /MT /Gy /TP

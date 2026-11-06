@@ -12,7 +12,7 @@
 #include <math.h>
 #include <new>
 #include "../party/game.h"
-#include "../std_vec_out_of_line.h"           // std::vector<int>::_Insert_n (int_stdvec), resize
+// std::vector<int>::_Insert_n stays visible in this module: cl only allocates the push_back callers as the original when it can see the body; the instance folds with 0x410610 by name
 #include "../../include/iface.h"        // IfaceB (the polymorphic base of the scene record)
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
@@ -170,7 +170,7 @@ struct GameMapView {
     char   pad0[0x2c];
     rgl::mesh* map_track;            // +0x2c  0x520d60
     rgl::entity* track_entity;       // +0x30
-    std::vector<rgl::mesh*> ents;    // +0x34  std::vector<mesh*> (0x5213d0)
+    std::vector<int> ents;           // +0x34  std::vector<mesh*> (0x5213d0)
     rgl::mesh* map_obj;              // +0x44
     rgl::vector4 fog1;               // +0x48
     rgl::vector4 fog2;               // +0x58

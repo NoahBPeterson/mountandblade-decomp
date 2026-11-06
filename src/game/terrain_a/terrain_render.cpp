@@ -482,16 +482,16 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
     bool blocked = false;
     for (;;) {
         float lvl = (float)bit_field(flags, 7, 7);
-        float tx = (float)(to[0] - pos.dx);
-        float ty = (float)(to[1] - pos.dy);
         int w = this->w;
         int h = this->h;
         for (int k = 0; k < 8; k++) {
             int nx = g_nbr[k].dx + pos.dx;
             int ny = g_nbr[k].dy + pos.dy;
             sc[k] = 0.0f;
-            vec2 u;
-            v2_normalized(u, tx, ty);
+            vec2 u;   // assigned in the loop, so x*x+y*y is not invariant: cl hoists only the two conversions and recomputes the sqrt
+            u.x = (float)(to[0] - pos.dx);
+            u.y = (float)(to[1] - pos.dy);
+            v2_normalize(u);
             int ex = nx - w + 20;
             int ey = ny - h + 20;
             int bx = 20 - nx;
@@ -559,11 +559,12 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
             const vec2& n = nd[pick];
             pos.dx = px;
             pos.dy = py;
-            float ax = n.x * 0.1f, ay = n.y * 0.1f;
-            float bx = g.x * 0.9f, by = g.y * 0.9f;
+            float a[2], b[2];
+            a[0] = n.x * 0.1f; a[1] = n.y * 0.1f;
+            b[0] = g.x * 0.9f; b[1] = g.y * 0.9f;
             vec2 t;
-            t.x = bx + ax;
-            t.y = by + ay;
+            t.x = b[0] + a[0];
+            t.y = b[1] + a[1];
             g = t;
         }
         v2_normalize(g);
@@ -681,6 +682,54 @@ inline void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 using rgl::mat3;
+// Bodies the original's object saw (header inlines left out of line; row owners shapes.cpp 0x407d60, wind.cpp 0x4612d0, terrain_a.cpp 0x466e20): an object whose address
+// only reaches a visible body does not escape, so its stack stores may cross pointer loads (docs/codegen.md section 7).
+inline __declspec(noinline) float rgl::vector4::normalize()
+{
+    float len = (float)sqrt(x * x + y * y + z * z);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+}
+inline __declspec(noinline) vector4 tri_normal(const vector4* p)
+{
+    vector4 a = (p[1] - p[0]);
+    vector4 b = (p[2] - p[0]);
+    vector4 n;
+    n.x = a.y * b.z - a.z * b.y; n.y = a.z * b.x - a.x * b.z; n.z = a.x * b.y - a.y * b.x;
+    n.normalize();
+    return n;
+}
+
+inline __declspec(noinline) void Terrain::triangle_corners(int x, int y, int flip, int* a, int* b, int* c)
+{
+    if (this->quad(x, y).diag != 0) {
+        if (flip == 0) {
+            a[0] = x; a[1] = y;
+            b[1] = y; b[0] = x + 1;
+            c[0] = x + 1; c[1] = y + 1;
+        } else {
+            a[1] = y; a[0] = x;
+            b[0] = x + 1; b[1] = y + 1;
+            c[0] = x; c[1] = y + 1;
+        }
+    } else {
+        if (flip == 0) {
+            a[1] = y; a[0] = x + 1;
+            b[1] = y + 1; b[0] = x;
+            c[0] = x; c[1] = y;
+        } else {
+            a[0] = x + 1; a[1] = y;
+            b[0] = x + 1; b[1] = y + 1;
+            c[0] = x; c[1] = y + 1;
+        }
+    }
+}
+
 static __forceinline rgl::vector4 t_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline rgl::vector4 t_cross(const rgl::vector4& a, const rgl::vector4& b)
 {
@@ -1658,7 +1707,7 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 }
 
 static inline void set_w(matrix& m) { m.s.w = 0.0f; m.f.w = 0.0f; m.u.w = 0.0f; m.o.w = 1.0f; }
-static inline float len3(const vector4& v) { return (float)sqrt(v.y * v.y + v.z * v.z + v.x * v.x); }
+static inline float len3(const vector4& v) { float s = v.x * v.x; s += v.z * v.z; s += v.y * v.y; return (float)sqrt(s); }
 static inline void enable_light(int i, char on)
 {
     if (g_render.light_on[i] != on) {
@@ -1722,17 +1771,19 @@ void render_batch::draw(view_t* v)
     M.o = half;
     M.f.x *= 0.5f; M.f.y *= 0.5f; M.f.z *= 0.5f;
     M.u.x *= 0.5f; M.u.y *= 0.5f; M.u.z *= 0.5f;
-    matrix A;
-    identity_pos((pos*)&A);                      // pos adds no data to rgl::matrix
     {
-        float ang = 1.5707964f;
-        A.rotate_about_s(&ang);
+        matrix A;
+        identity_pos((pos*)&A);                      // pos adds no data to rgl::matrix
+        {
+            float ang = 1.5707964f;
+            A.rotate_about_s(&ang);
+        }
+        M = A * M;
     }
-    M = A * M;
+    set_w(M);
     cur_part = 0;
     cur_mat = 0;
     mesh_entry* p = v->ents._Myfirst;
-    set_w(M);
     if (p == v->ents._Mylast) return;
     do {
         skin_x* part = (skin_x*)p->m->res;
@@ -1778,11 +1829,12 @@ void render_batch::draw(view_t* v)
                     g_render.b506 = 1;
                     g_render.dev->SetRenderState(D3DRS_LIGHTING, 1);
                 }
-                for (int i = 0; i < v->lights.size() && i < 0x40; i++) {
-                    if (v->lights[i]->type == 2) {
+                std::vector<light_t*>& ls = v->lights;
+                for (int i = 0; i < ls.size() && i < 0x40; i++) {
+                    if (ls[i]->type == 2) {
                         enable_light(i, 1);
                     } else {
-                        if (len3(v->lights[i]->pos - p->m->m194.o) - p->m->f44 < v->lights[i]->range)
+                        if (len3(ls[i]->pos - p->m->m194.o) - p->m->f44 < ls[i]->range)
                             enable_light(i, 1);
                         else
                             enable_light(i, 0);
@@ -1857,10 +1909,10 @@ void render_batch::draw(view_t* v)
                 g_render.dev->SetPixelShader(0);
                 g_render.cur_ps = 0;
             }
-            int col = p->m->color;
+            const unsigned& col = p->m->color;
             if (g_render.tex_factor != col) {
                 g_render.tex_factor = col;
-                g_render.dev->SetRenderState(D3DRS_TEXTUREFACTOR, col);
+                g_render.dev->SetRenderState(D3DRS_TEXTUREFACTOR, g_render.tex_factor);
             }
         }
 
@@ -1874,13 +1926,14 @@ void render_batch::draw(view_t* v)
             g_render.dev->SetRenderState(D3DRS_CULLMODE, cull);
         }
 
+        matrix W;
         if (p->m->f34 == 0) {
             if (!(part->flags & 0x20000)) {
-                A = p->m->m194;
+                W = p->m->m194;
             } else {
-                (rot3&)A = *(rot3*)&p->m->m194;
-                A.o = v->org;
-                A.o.z = A.o.z * 0.75f;
+                (rot3&)W = *(rot3*)&p->m->m194;
+                W.o = v->org;
+                W.o.z = W.o.z * 0.75f;
             }
         } else if (p->m->f34 == 1) {
             matrix B;
@@ -1890,15 +1943,15 @@ void render_batch::draw(view_t* v)
             B.f = cross_i(B.s, B.u);
             B.u.normalize();
             B.s = cross_i(B.u, B.f);
-            A = B;
+            W = B;
         } else {
             matrix B;
             B.o = p->m->m194.o;
             B.s = v->rot.s; B.f = v->rot.f; B.u = v->rot.u;
-            A = B;
+            W = B;
         }
-        set_w(A);
-        g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&A);
+        set_w(W);
+        g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&W);
 
         std::vector<rgl::face20>& fv = node->local_a0 ? node->v90 : node->parent->get90();
         int nf = fv.size();

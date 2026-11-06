@@ -22,6 +22,8 @@ struct EFace : MPoly {
     }
 };
 
+static inline void vaddto(vector4& a, const vector4& o) { a.x += o.x; a.y += o.y; a.z += o.z; }
+
 // @ 0x4d1410
 bool EditMesh::build_first_pass()
 {
@@ -58,24 +60,27 @@ bool EditMesh::build_first_pass()
         faces[i].n = 3;
         nf.n = 3;
         PartEdge e;
+        int a0;
         if (verts[faces[i].vid[0]].flag) {
             nf.vid[1] = faces[i].vid[2];
-            nf.vid[0] = faces[i].vid[0];
-            e.v1 = faces[i].vid[2];
             e.v0 = faces[i].vid[0];
+            a0 = faces[i].vid[0];
+            e.v1 = faces[i].vid[2];
+            nf.vid[2] = faces[i].vid[3];
+            nf.vid[0] = a0;
             nf.eid[0] = edges.size();
             nf.eid[1] = faces[i].eid[2];
-            nf.vid[2] = faces[i].vid[3];
             nf.eid[2] = faces[i].eid[3];
             faces[i].eid[2] = edges.size();
         } else {
             nf.vid[1] = faces[i].vid[2];
-            nf.eid[0] = faces[i].eid[1];
-            e.v1 = faces[i].vid[3];
             e.v0 = faces[i].vid[1];
-            nf.vid[0] = faces[i].vid[1];
-            nf.eid[1] = faces[i].eid[2];
+            a0 = faces[i].vid[1];
+            e.v1 = faces[i].vid[3];
             nf.vid[2] = faces[i].vid[3];
+            nf.eid[0] = faces[i].eid[1];
+            nf.vid[0] = a0;
+            nf.eid[1] = faces[i].eid[2];
             nf.eid[2] = edges.size();
             faces[i].vid[2] = faces[i].vid[3];
             faces[i].eid[1] = edges.size();
@@ -83,10 +88,7 @@ bool EditMesh::build_first_pass()
         }
 
         // plane normal of the new triangle: (p1 - p0) x (p2 - p0), normalised ((0,1,0) when degenerate)
-        MVert* p0 = &verts[nf.vid[0]];
-        MVert* p1 = &verts[nf.vid[1]];
-        MVert* p2 = &verts[nf.vid[2]];
-        nf.normal = vcross(p1->pos - p0->pos, p2->pos - p0->pos);
+        nf.normal = vcross(verts[nf.vid[1]].pos - verts[a0].pos, verts[nf.vid[2]].pos - verts[a0].pos);
         float len = (float)sqrt(nf.normal.x * nf.normal.x + nf.normal.y * nf.normal.y + nf.normal.z * nf.normal.z);
         if (len > 1e-10f) {
             len = 1.0f / len;
@@ -207,9 +209,8 @@ bool EditMesh::add_triangle(int* tri)
     std::vector<int> found;
     for (int i = 0; i < faces.size(); i++) {
         int cnt = 0;
-        MPoly& f = faces[i];
-        for (int j = 0; j < f.n; j++) {
-            int v = f.vid[j];
+        for (int j = 0; j < faces[i].n; j++) {
+            int v = faces[i].vid[j];
             if (v == tri[0]) cnt++;
             if (v == tri[1]) cnt++;
             if (v == tri[2]) cnt++;
@@ -221,20 +222,14 @@ bool EditMesh::add_triangle(int* tri)
     }
     Vec4 n(0.0f, 0.0f, 0.0f);
     for (int k = 0; k < found.size(); k++) {
-        n.x += faces[found[k]].normal.x;
-        n.y += faces[found[k]].normal.y;
-        n.z += faces[found[k]].normal.z;
+        vaddto(n, faces[found[k]].normal);
     }
     n.x /= (float)found.size();
     n.y /= (float)found.size();
     n.z /= (float)found.size();
     n.normalize_inl();
-    vector4 d1(verts[tri[2]].pos.x - verts[tri[0]].pos.x,
-               verts[tri[2]].pos.y - verts[tri[0]].pos.y,
-               verts[tri[2]].pos.z - verts[tri[0]].pos.z);
-    vector4 d2(verts[tri[1]].pos.x - verts[tri[0]].pos.x,
-               verts[tri[1]].pos.y - verts[tri[0]].pos.y,
-               verts[tri[1]].pos.z - verts[tri[0]].pos.z);
+    vector4 d1 = verts[tri[2]].pos - verts[tri[0]].pos;
+    vector4 d2 = verts[tri[1]].pos - verts[tri[0]].pos;
     vector4 cr = vcross(d2, d1);
     if (cr.z * n.z + cr.y * n.y + cr.x * n.x < 0.0f) {     // faces away from the neighbours' normal
         int t = tri[0];
@@ -243,12 +238,11 @@ bool EditMesh::add_triangle(int* tri)
     }
     int eid[3] = {-1, -1, -1};
     for (int i = 0; i < edges.size(); i++) {
-        MEdge& e = edges[i];
         for (int j = 0; j < 3; j++) {
-            if ((e.v0 == tri[j] && e.v1 == tri[(j + 1) % 3]) ||
-                (e.v1 == tri[j] && e.v0 == tri[(j + 1) % 3])) {
+            if ((edges[i].v0 == tri[j] && edges[i].v1 == tri[(j + 1) % 3]) ||
+                (edges[i].v1 == tri[j] && edges[i].v0 == tri[(j + 1) % 3])) {
                 eid[j] = i;
-                if (e.nfaces == 2)
+                if (edges[i].nfaces == 2)
                     return false;
             }
         }
@@ -276,14 +270,12 @@ void EditMesh::finish()
 {
     for (unsigned i = 0; i < edges.size(); i++)
         edge_word(edges[i]) = 0;
-    Vec4 n(0.0f, 0.0f, 0.0f);
+    Vec4 sum(0.0f, 0.0f, 0.0f);
     int cnt = 0;
     for (unsigned i = 0; i < faces.size(); i++) {
         if (faces[i].f60) {
-            n.x = n.x + faces[i].normal.x;
             cnt++;
-            n.y = n.y + faces[i].normal.y;
-            n.z = n.z + faces[i].normal.z;
+            vaddto(sum, faces[i].normal);
             for (int j = 0; j < faces[i].n; j++)
                 edge_word(edges[faces[i].eid[j]])++;
         }
@@ -293,21 +285,26 @@ void EditMesh::finish()
     int nv = (int)verts.size();
     for (unsigned i = 0; i < edges.size(); i++) {
         if (edge_word(edges[i]) == 1) {
-            NewEdge e(edges[i].v0, edges[i].v1);
+            MEdge e;
+            e.v0 = edges[i].v0;
+            e.v1 = edges[i].v1;
             for (int j = 0; j < 2; j++) {
-                int k = nv;
-                while (k < (int)verts.size() && verts[k].pad14 != (&e.v0)[j])
-                    k++;
-                if (k >= (int)verts.size()) {         // no copy yet: append one (the scan ran out: 0x4d24a3 jae)
-                    MVert v;                            // the pad after flag is left as the stack had it
-                    v.pos = verts[(&e.v0)[j]].pos;
-                    v.flag = 0;
-                    v.pad14 = (&e.v0)[j];
-                    (&e.v0)[j] = (int)verts.size();     // the index the copy gets (read before the push)
-                    verts.push_back(v);
-                } else {
-                    (&e.v0)[j] = k;
+                int found = -1;
+                for (unsigned k = nv; k < verts.size(); k++) {
+                    if (verts[k].pad14 == (&edges[i].v0)[j]) {
+                        found = (int)k;
+                        break;
+                    }
                 }
+                if (found == -1) {                      // no copy yet: append one
+                    MVert v;                            // the pad after flag is left as the stack had it
+                    v.pos = verts[(&edges[i].v0)[j]].pos;
+                    v.flag = 0;
+                    v.pad14 = (&edges[i].v0)[j];
+                    found = (int)verts.size();          // the index the copy gets (read before the push)
+                    verts.push_back(v);
+                }
+                (&e.v0)[j] = found;
             }
             for (unsigned f = 0; f < faces.size(); f++) {
                 for (int j = 0; j < faces[f].n; j++) {
@@ -326,7 +323,7 @@ void EditMesh::finish()
     }
     for (unsigned i = 0; i < edges.size(); i++) {
         if (edge_word(edges[i]) > 1) {
-            for (int k = nv; k < (int)verts.size(); k++) {
+            for (unsigned k = nv; k < verts.size(); k++) {
                 if (edges[i].v0 == verts[k].pad14)
                     edges[i].v0 = k;
                 if (edges[i].v1 == verts[k].pad14)
@@ -336,11 +333,9 @@ void EditMesh::finish()
     }
     build_adjacency();
     float inv = 1.0f / (float)cnt;
-    n.x = n.x * inv;
-    n.y = n.y * inv;
-    n.z = n.z * inv;
+    { Vec4 n(sum.x * inv, sum.y * inv, sum.z * inv);
     n.normalize_inl();
-    graph(this)->update_terrain(2, (const float*)&n);
+    graph(this)->update_terrain(2, (const float*)&n); }
     graph(this)->clean();
 }
 
@@ -430,21 +425,22 @@ bool EditMesh::split_marked_edge()
     return true;
 }
 
+struct QVert : MVert {
+    QVert() { flag = 0; }
+};
+
 // @ 0x4d2df0
 // Appends a 6 x 6 quad around p: four vertices, four edges, one face, then rebuilds the adjacency.
 void EditMesh::add_quad(const vector4* p)
 {
-    NewVert a(p->x - 3.0f, p->y - 3.0f, p->z);
-    NewVert b(p->x + 3.0f, p->y - 3.0f, p->z);
-    NewVert cv(p->x + 3.0f, p->y + 3.0f, p->z);
-    NewVert d(p->x - 3.0f, p->y + 3.0f, p->z);
-    QuadEdge e0, e1, e2, e3;
     PartFace face;
-
-    e0.nfaces = 0; e0.flag = 0; e0.crease[0] = 1.0f; e0.crease[1] = 1.0f;
-    e1.nfaces = 0; e1.flag = 0; e1.crease[0] = 1.0f; e1.crease[1] = 1.0f;
-    e2.nfaces = 0; e2.flag = 0; e2.crease[0] = 1.0f; e2.crease[1] = 1.0f;
-    e3.nfaces = 0; e3.flag = 0; e3.crease[0] = 1.0f; e3.crease[1] = 1.0f;
+    QVert a, b, cv, d;
+    MEdge e0, e1, e2, e3;
+    float x0, y0, z, x1, y1;
+    { vector4 t; x0 = p->x - 3.0f; t.x = x0; y0 = p->y - 3.0f; t.y = y0; z = p->z; t.z = z; a.pos = t; }
+    { vector4 t; x1 = p->x + 3.0f; t.x = x1; t.y = y0; t.z = z; b.pos = t; }
+    { vector4 t; t.x = x1; y1 = p->y + 3.0f; t.y = y1; t.z = z; cv.pos = t; }
+    { vector4 t; t.x = x0; t.y = y1; t.z = z; d.pos = t; }
 
     e0.v0 = verts.size(); e0.v1 = verts.size() + 1;
     e1.v0 = verts.size() + 1; e1.v1 = verts.size() + 2;

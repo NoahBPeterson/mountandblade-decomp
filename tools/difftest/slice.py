@@ -273,7 +273,10 @@ def compile_key(src, flags):
     anon = False
     for f in _quoted_includes(src):
         h.update(os.path.relpath(f, ROOT).encode())
-        text = open(f, "rb").read()
+        try:
+            text = open(f, "rb").read()
+        except FileNotFoundError:   # a lane's scratch copy removed while we scan its directory
+            continue
         h.update(text)
         anon = anon or re.search(rb"namespace\s*\{", text) is not None
     if anon:

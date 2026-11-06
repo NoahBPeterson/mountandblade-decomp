@@ -515,16 +515,15 @@ static __forceinline int round_i(float v)       // fl = floor(v); i = (int)fl; i
 {
     float fl = (float)floor(v);
     int i = (int)fl;
-    if (!(v - fl <= 0.5f))
-        i++;
-    return i;
+    return v - fl <= 0.5f ? i : i + 1;
+}
+static __forceinline unsigned clamp255(int i)
+{
+    return i < 0 ? 0 : (i >= 0x100 ? 0xff : i);
 }
 static __forceinline unsigned round_clamp255(float v)
 {
-    int i = round_i(v);
-    if (i < 0) return 0;
-    if (i >= 0x100) return 0xff;
-    return i;
+    return clamp255(round_i(v));
 }
 struct vec_i4 { int pad; int* first; int* last; int* end; };    // std::vector<int>-shaped list in the entity's mesh vector (allocator word at +0)
 // the inline vector helpers this function expands
@@ -544,13 +543,14 @@ static __forceinline void v_normalize(vector4& v)
 }
 static __forceinline float v_dot(const vector4& a, const vector4& b)
 {
-    return b.z * a.z + b.y * a.y + b.x * a.x;
+    return a.z * b.z + a.y * b.y + a.x * b.x;
 }
 
+static __forceinline void v_neg(vector4& r, const float* d) { r.x = -d[0]; r.y = -d[1]; r.z = -d[2]; }
 static __forceinline vector4 v_cross(const vector4& a, const vector4& b)
 {
     vector4 r;
-    r.x = a.y * b.z - a.z * b.y;
+    r.x = a.y * b.z - b.y * a.z;
     r.y = a.z * b.x - a.x * b.z;
     r.z = a.x * b.y - a.y * b.x;
     return r;
@@ -636,7 +636,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     int pt = m->add_point((const vector4*)c);
                     unsigned balpha = 0xff;          // blend alpha
                     unsigned edi = 0xff;             // the cell colour level
-                    float uu;
+                    int ux;
                     Vec2 uv;
                     if (layerno < 15) {
                         float f;
@@ -644,22 +644,21 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             f = c->w[layerno];
                         } else {
                             f = (1.0f - c->w[blend]) * c->w[layerno] + c->w[blend];
-                            int ba = round_i(c->w[blend] * 255.0f);
-                            if (ba < 0) balpha = 0;
-                            else if (ba < 0x100) balpha = ba;
-                            else balpha = 0xff;
+                            balpha = round_clamp255(c->w[blend] * 255.0f);
                         }
-                        edi = round_clamp255(f * c->f90 * 255.0f);
+                        f = f * c->f90 * 255.0f;
+                        edi = round_clamp255(f);
                         float s = *(float*)&layer[layerno].f14;
                         Vec2 t(c->px * 0.025f, c->py * 0.025f);
-                        uv = Vec2(t.x * s, t.y * s);
-                        uu = uv.x;
+                        Vec2 r(t.x * s, t.y * s);
+                        ux = *(int*)&r.x;
+                        *(int*)&uv.y = *(int*)&r.y;
                     } else {
                         vector4 pu = g_shadow_map.to_unit(*(const vector4*)c);
-                        uu = pu.x;
-                        uv.x = uu;
-                        uv.y = pu.y;
+                        ux = *(int*)&pu.x;
+                        *(int*)&uv.y = *(int*)&pu.y;
                     }
+                    *(int*)&uv.x = ux;
                     vector4 rgb;
                     rgb.x = 1.0f; rgb.y = 1.0f; rgb.z = 1.0f;
                     if (layerno > 0 && layerno < 15) {
@@ -692,7 +691,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             fr.f = v_cross(fr.u, fr.s);
                             v_normalize(fr.f);
                             vector4 Ld;
-                            Ld.x = -sun_dir[0]; Ld.y = -sun_dir[1]; Ld.z = -sun_dir[2];
+                            v_neg(Ld, sun_dir);
                             vector4 cv;
                             cv.x = v_dot(Ld, fr.s);
                             cv.y = v_dot(Ld, fr.f);
@@ -715,10 +714,10 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         float* arr = *(float**)((char*)world->ground + 4);
                         float li = arr[c->f14 * 9 + 8];
                         float r = li / (z + li);
-                        if (!(r >= 0.0f)) r = 0.0f;
-                        else if (!(r <= 0.75f)) r = 0.75f;
+                        if (r < 0.0f) r = 0.0f;
+                        else if (r > 0.75f) r = 0.75f;
                         int ia = (int)(r * 255.0f);
-                        edi = ia < 0 ? 0 : (ia < 0x100 ? ia : 0xff);
+                        edi = clamp255(ia);
                     }
                     col = col | (edi << 24);
                     unsigned fg = col;
@@ -727,9 +726,8 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     unsigned cw = col;
                     int f5c = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
-                    m->v50[c->f10].f58 = fg;
-                    *(float*)&m->v50[c->f10].f48 = uu;
-                    *(float*)&m->v50[c->f10].f4c = uv.y;
+                    (*(m->v50.begin() + c->f10)).f58 = fg;
+                    { vertex60& v = *(m->v50.begin() + c->f10); v.f48 = ux; *(float*)&v.f4c = uv.y; }
                 }
                 m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
             }
@@ -761,12 +759,12 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     std::vector<rgl::mesh*>& em = e->meshes;
     int found = -1;
     for (unsigned k = 0; k < em.size(); k++) {
-        if (e->meshes[k] == m)
+        if (*(e->meshes.begin() + k) == m)
             found = k;
     }
     if (found < 0) {
         ((rgl::mesh*)m)->compute_bounds();
-        em.push_back((rgl::mesh*)m);
+        (*(std::vector<int>*)&em).push_back((int)m);     // 0x480d81: the vector<int> _Insert_n 0x410610
         e->recalc();
     }
 }
