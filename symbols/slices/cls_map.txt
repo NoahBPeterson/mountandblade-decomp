@@ -25,12 +25,6 @@
 004da9c0 ??1TwoVec@@QAE@XZ
 004daa10 ?init_screen@C4c2fb0@@UAEXXZ
 004dada0 ?make_hint@@YAPAUMissionUi@@PAUContainerBase@@ABUtstring@@MMMM@Z
-004dae40 ?init_mission_window@Screen@@QAEXXZ
-004db020 ?fill_single_mission@Screen@@QAEXXZ
-004db090 ?fill_mission_grid@Screen@@QAEXXZ
-004db1f0 ?init_meeting_window@Screen@@QAEXXZ
-004db440 ?fill_mission_row@Screen@@QAEXH@Z
-004db660 ?init_done_window@Screen@@QAEXXZ
 004db810 ?new_button@@YAPAUUiA@@PAUContainerBase@@ABUtstring@@MMMM@Z
 004db960 ?insert@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAE?AViterator@12@V312@ABUE50@@@Z
 004db9d0 ?_Insert_n@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@IAEXViterator@12@IABUE68@@@Z

@@ -715,13 +715,13 @@ void MissionBlocker::frame_update(float dt)
 
     // ---- region-change / texture timers ------------------------------------------------------------
     {
-        __int64 d = g_ticks[clock_a] - stamp_a;
+        __int64 d = g_ticks[timer_a.clock] - timer_a.start;
         if ((float)d * 1e-5f > g_f590b38 && g_mission_s261e0->local_id >= 0) {
             f29c = 0;
-            __int64 d2 = g_ticks[clock_b] - stamp_b;
+            __int64 d2 = g_ticks[timer_b.clock] - timer_b.start;
             if ((float)d2 * 1e-5f > 0.1f) {
                 ((Screen_s29ec0*)this)->f_529ec0();
-                stamp_b = g_ticks[clock_b];
+                timer_b.start = g_ticks[timer_b.clock];
             }
             if (f2c8 == -1) {
                 g_gui.set_overlay(0, 1);
@@ -865,7 +865,7 @@ void MissionBlocker::frame_update(float dt)
     }
     if (f324 >= 0 && g_presentation == 0) {
         ((Src_s261e0*)((char*)this + 0x30))->init((int)frame, f324);
-        if ((flags44 & 1) == 0) {
+        if ((bh.flags44 & 1) == 0) {
             if (g_render.dev != 0)
                 ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 1);
             g_gui.show_cursor = 1;
@@ -873,15 +873,15 @@ void MissionBlocker::frame_update(float dt)
     }
     if (g_presentation != 0) {
         ((Src_s261e0*)((char*)this + 0x30))->pick((int*)&val14);
-        __int64 d = g_ticks[f48] - stamp;
-        if ((float)d * 1e-5f > f58) {
+        __int64 d = g_ticks[bh.tick.clock] - bh.tick.start;
+        if ((float)d * 1e-5f > bh.f58) {
             g_presentation = 0;
-            if (owned.begin != 0)
-                operator delete(owned.begin);
-            owned.begin = 0;
-            owned.end = 0;
-            owned.cap = 0;
-            ((SrcVtbl_s261e0*)f5c)->v49();
+            if (bh.owned.begin != 0)
+                operator delete(bh.owned.begin);
+            bh.owned.begin = 0;
+            bh.owned.end = 0;
+            bh.owned.cap = 0;
+            ((SrcVtbl_s261e0*)bh.f5c)->v49();
             if (g_render.dev != 0)
                 ((void (__cdecl*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 0);
             g_gui.show_cursor = 0;

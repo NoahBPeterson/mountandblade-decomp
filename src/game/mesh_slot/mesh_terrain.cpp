@@ -635,8 +635,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     if (g_use_shaders == 0) {
                         if (m->res == 0 || (m->res->shader->stages[0].b & 0x1f) != 0x18) {
                             if (layerno < 15) {
-                                vector4 sl;
-                                sun_light(&sl, &c->nrm.x, &c->f40);
+                                vector4 sl = sun_light(&c->nrm.x, &c->f40);
                                 rgb.x = sl.x * rgb.x;
                                 rgb.y = sl.y * rgb.y;
                                 rgb.z = sl.z * rgb.z;

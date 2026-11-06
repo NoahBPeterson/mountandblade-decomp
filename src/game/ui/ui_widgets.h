@@ -45,7 +45,7 @@ struct UiB : MissionUi {                    // vtable 0x591fb0
     float f17c;                             // +0x17c tolerance
     int f180;                               // +0x180 dragging
     float f184;                             // +0x184 grab offset
-    UiB();                                  // 0x48b4b0
+    UiB();                                  // 0x48b4b0, defined out of line in ui_widgets_a.cpp and inline below for the TUs that see the body
     float value();                          // 0x48b550
     void set_value(float v);                // 0x48b6e0
     // slots of vtable 0x591fb0 that differ from the base's
@@ -89,6 +89,11 @@ struct UiD : MissionUi {                    // vtable 0x592140
 // (mission_ui.cpp, which defines it, and party/party_window.cpp) define UIA_CTOR_OUT_OF_LINE before including this header.
 #ifndef UIA_CTOR_OUT_OF_LINE
 inline UiA::UiA() { f180 = 0; f184 = 0; }
+#endif
+// Same for the slider: UiC's constructor 0x48b760 and create_slider_overlay 0x495970 expand it. ui_widgets_a.cpp defines it (0x48b4b0);
+// make_slider 0x4dfd50 (cls_map.cpp) is the one call to it.
+#ifndef UIB_CTOR_OUT_OF_LINE
+inline UiB::UiB() { f178 = 0; f180 = 0; f184 = 0; f17c = 0.008f; v168 = 1.0f; }
 #endif
 
 #endif // GAME_UI_WIDGETS_H

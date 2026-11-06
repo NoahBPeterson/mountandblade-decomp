@@ -5,6 +5,7 @@
 //       pick_vert / pick_edge / pick_poly call the ray functions as external functions (the original compiled them in
 //       separate objects). Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../std_vec_push_back.h"   // 0x52fbc0 calls std::vector<int>::push_back 0x440b30
 #include "./mesh_3.h"
 #include "../strat/gui_manager.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)

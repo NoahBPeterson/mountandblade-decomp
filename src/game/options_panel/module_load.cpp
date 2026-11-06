@@ -111,23 +111,6 @@ ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, gr
     return dst;
 }
 
-// @ 0x4d120a
-// EH catch block: destroys the elements already constructed in [first, last) of a partly built range,
-// then rethrows with `throw;`. (The address also sits inside text_stream's ctor as an EH funclet.)
-void destroy_range_and_rethrow(ground_spec* first, ground_spec* last)
-{
-    for (; first != last; first++)
-        conv_list_dtor((conv_rec*)first);
-    throw;
-}
-
-// @ 0x4d129a
-void destroy_range_ground(ground_spec* first, ground_spec* last)
-{
-    for (E68* f = (E68*)first, *l = (E68*)last; f != l; f++)   // stride 0x68
-        conv_list_dtor((conv_rec*)f);       // 0x4c8ba0 takes the element as its only argument
-}
-
 // @ 0x4d12c0 (returns the advanced destination, as std::_Uninit_copy does)
 mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last, mission_type* dst, mission_alloc& al)
 {
@@ -135,13 +118,6 @@ mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last
     for (E176* f = (E176*)first, *l = (E176*)last, *d = (E176*)dst; f != l; f++, d++, dst = (mission_type*)d)
         al.construct((mission_type*)d, *(const mission_type*)f);
     return dst;
-}
-
-// @ 0x4d1330
-void destroy_range_mission(mission_type* first, mission_type* last)
-{
-    for (E176* f = (E176*)first, *l = (E176*)last; f != l; f++)   // stride 0xb0
-        conv_sub_dtor((void**)f);           // 0x4c8ab0 takes the element as its only argument
 }
 
 // @ 0x4d0c20

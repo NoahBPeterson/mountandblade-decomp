@@ -10,8 +10,8 @@
 // Boundary: class changes only (Game | Scene at 0x51eb90, TroopRec | Game at 0x520b20); no forward call proves either.
 //-----------------------------------------------------------------------------
 #include <vector>
-// std::vector<int / __int64>::resize: the out-of-line instances of agent_combat.cpp / world_data.cpp. Not std_vec_out_of_line.h,
-// which also keeps push_back out of line: here the original expands push_back inline (0x51eb90, 0x51eda0).
+// std::vector<int / __int64>::resize: the out-of-line instances of agent_combat.cpp / world_data.cpp. Not std_vec_out_of_line.h, whose
+// _Insert_n declaration changes the code of 0x51eda0 (93 bytes), which expands push_back inline.
 template<> void std::vector<int, std::allocator<int> >::resize(size_t, int);                  // 0x43f310
 template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, __int64);      // 0x493090
 #include "./troop_rec.h"

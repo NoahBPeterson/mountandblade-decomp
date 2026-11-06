@@ -12,7 +12,7 @@ belong to the next TU and are not taken) are unchanged and stay the reference. E
 | mission_items.cpp | 0x4ce960..0x4cf100 | 13 | 4 | 4 | 9 | 0 |
 | config_dialog.cpp | 0x4cf100..0x4d0620 | 3 | 0 | 0 | 3 | 0 |
 | trigger_records.cpp | 0x4d0620..0x4d0c20 | 1 | 0 | 0 | 1 | 0 |
-| module_load.cpp | 0x4d0c20..0x4d1410 | 12 (11 functions + catch funclet 0x4d120a) | 3 | 3 | 9 | 0 |
+| module_load.cpp | 0x4d0c20..0x4d1410 | 9 (the catch funclets 0x4d120a, 0x4d129a, 0x4d1330 are in `symbols/not_functions.txt`) | 3 | 3 | 9 | 0 |
 | mesh_edit.cpp | 0x4d1410..0x4d3330 | 6 | 0 | 0 | 6 | 0 |
 | ragdoll_models.cpp | 0x4d3330..0x4d3720 | 3 | 2 | 2 | 1 | 0 |
 | world_app.cpp | 0x4d3720..0x4d4b80 | 12 | 5 | 5 | 7 | 0 |
@@ -26,8 +26,8 @@ belong to the next TU and are not taken) are unchanged and stay the reference. E
 
 The map lists 86 rows; four are not functions: 0x4d4554 is inside the `push imm32` at 0x4d4553 of `Core::msg_proc` and
 0x4d4a28 / 0x4d4ab8 / 0x4d4b4b are the catch funclets of the three `_Uninit_fill_n` instances (all four in
-`symbols/not_functions.txt`; the funclets are inside their parents, which are byte-exact). The one interior row kept is the
-catch funclet 0x4d120a of 0x4d11a0 (not in `not_functions.txt`; nonmatching with its own diff). The map's status column
+`symbols/not_functions.txt`; the funclets are inside their parents, which are byte-exact). The catch funclets 0x4d120a, 0x4d129a and
+0x4d1330 of the `_Uninit_copy` instances are listed there too. The map's status column
 (10 exact / 37 nonmatching / 27 partial / 12 missing) was stale: the real baseline is 32 byte-exact rows
 (`run_all.py` on the slice manifests of the range) and every other row is complete, compilable source.
 

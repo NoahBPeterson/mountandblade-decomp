@@ -39,12 +39,7 @@ void UiB::set_value(float x)
 UiC::UiC()
 {
     v198 = rgl::vector4(1.0f, 1.0f, 1.0f);
-    f178 = 0;
-    f180 = 0;
-    f184 = 0;
     src = 0;
-    f17c = 0.008f;
-    v168 = 1.0f;
     f190 = 1;
     mask = 0xff000000;
     f194 = 1.0f;

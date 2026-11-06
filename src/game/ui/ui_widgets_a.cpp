@@ -8,6 +8,7 @@
 // Boundary: UiA::key (0x48b200, previous object) calls play_sound (0x48b2d0) forward, so 0x48b2d0 starts an
 // object; UiB::show (0x48b4f0) calls UiB::value (0x48b550) forward, so the object ends before 0x48b550.
 //-----------------------------------------------------------------------------
+#define UIB_CTOR_OUT_OF_LINE   // UiB::UiB is defined below (0x48b4b0)
 #include "../tstring.h"
 #include "./ui_common.h"
 #include "./item_ref.h"

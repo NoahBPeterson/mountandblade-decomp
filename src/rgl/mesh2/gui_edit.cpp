@@ -287,8 +287,7 @@ void fill_records_funclet()
 }
 
 // @ 0x4c5080
-// copy-construct a range of 0x38-byte records (the original's auto-object range ctor; its EH pad is the
-// next function). Arguments: first, last, dst (esi = [ebp+8], [ebp+0xc] end, edi = [ebp+0x10]); the 4th is the record ctor's context.
+// copy-construct a range of 0x38-byte records (the original's auto-object range ctor; its catch funclet 0x4c50ea is part of it). Arguments: first, last, dst (esi = [ebp+8], [ebp+0xc] end, edi = [ebp+0x10]); the 4th is the record ctor's context.
 item38* copy_range38(const item38* first, const item38* last, item38* dst, editor* self)
 {
     for (; first != last; first++) {
@@ -296,14 +295,6 @@ item38* copy_range38(const item38* first, const item38* last, item38* dst, edito
         dst++;
     }
     return dst;
-}
-
-// SEH cleanup pad of 0x4c5080: destroys the target records it had built and rethrows (the compiler-generated
-// __catch$ …,0 of the original's auto-object range constructor; not expressible as C++ in cl 13.10 source,
-// so it is left as an empty function).
-// @ 0x4c50ea
-void copy_range38_catch(void)
-{
 }
 
 static inline void tidy3(void* base)

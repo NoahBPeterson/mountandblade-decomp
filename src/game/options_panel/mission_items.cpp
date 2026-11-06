@@ -54,16 +54,6 @@ extern GameData* g_game;                                    // 0x5e2930
 // @ 0x4ce960
 MissionBlocker::MissionBlocker()
 {
-    w04 = 0;
-    owned.begin = 0; owned.end = 0; owned.cap = 0; f48 = 0;
-    stamp = g_ticks[0];
-    f58 = 1.0f;
-    f40 = -1;
-    f5c = 0;
-    clock_a = 0;
-    stamp_a = g_ticks[0];
-    clock_b = 0;
-    stamp_b = g_ticks[0];
     shield_mesh = 0;
     shadow_mesh = 0;
 }

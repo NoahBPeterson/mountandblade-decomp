@@ -121,7 +121,7 @@ struct PsOpsW : PsFill {                            // the same widget, slot +0x
 // the party record behind a page-table index (PartyMgr::pages, pages of 16 records of 0x5ac8 bytes)
 static inline Party* party_at(PartyMgr* m, int idx)
 {
-    Party* page = m->pages._Myfirst[idx >> 4];
+    Party* page = m->pages[idx >> 4];
     return &page[idx & 0xf];
 }
 static inline Party* party_index(int id)

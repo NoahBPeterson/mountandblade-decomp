@@ -65,7 +65,7 @@ void CharSheet::refresh_panels()
     }
     POS(xp_bar, line, "char_t_next_level_at_y", "char_t_next_level_at_x");
 
-    if ((c->flags32 & 0x10) != 0) {
+    if ((c->flags30 & 0x10) != 0) {
         tstring k("ui_health_player");
         i = ((unsigned char*)c)[0x7a] & 0xf;      // 0x4f0cc2: mov al,[esi+0x7a]; and eax,0xf
         if (i < 0) i = 0;

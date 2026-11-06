@@ -1602,10 +1602,10 @@ make:
     }
 full:
     result = -1;
-    if ((g_game->troops[troop].flags32 & 0x10) != 0) {
+    if ((g_game->troops[troop].flags30 & 0x10) != 0) {
         found = -1;
         for (int i = 0; i < nstacks; i++) {
-            if ((g_game->troops[stacks[i].troop].flags32 & 0x10) == 0 && (int)(stacks[i].flags & 1) == cls)
+            if ((g_game->troops[stacks[i].troop].flags30 & 0x10) == 0 && (int)(stacks[i].flags & 1) == cls)
                 found = i;
         }
         if (found >= 0) {
@@ -1666,7 +1666,7 @@ float GameData::party_value(unsigned id)
             continue;
         Troop* t = &troops[s.troop];
         float lv = (float)t->level + 12.0f;
-        if ((t->flags32 & 0x10) != 0) {
+        if ((t->flags30 & 0x10) != 0) {
             if (this->agent_low(s.troop))
                 continue;
             total += lv * lv * 0.01f;

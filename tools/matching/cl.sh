@@ -30,7 +30,7 @@ tmp=$(mktemp "${TMPDIR:-/tmp}/clsh.XXXXXX")
 # the slot is held; cl.exe itself returns 0 or 2.
 slots=${MB_CL_SLOTS:-$(sysctl -n hw.ncpu 2>/dev/null || echo 8)}
 locks="$root/work/locks"; mkdir -p "$locks"
-# The Windows laptop's compile server comes FIRST (tools/remote/rcl.py: native cl.exe, 11 slots, 0.3-2 s a compile against
+# The Windows laptop's compile server comes FIRST (tools/remote/rcl.py: native cl.exe, 36 slots, 0.3-2 s a compile against
 # several seconds under wine here; a batch of 30 compiles took 3.9 s there and 760 s queued here; docs/remote_worker.md).
 # rcl.py exits 75 when the laptop is busy or unreachable (quick: 1 s connect timeout, then a 30 s "down" marker) and 76
 # when this command can only run here (not configured, odd flags, a header that was not shipped, an anonymous namespace);

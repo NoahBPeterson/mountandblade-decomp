@@ -22,17 +22,19 @@ struct item_base : head_rec {
 // 0x4f8b40 and update_marks 0x529130 are its other members.
 namespace rgl { struct mesh; }
 struct NodeA; struct MapWidget; struct Mark_s29130;
-struct MissionBlocker : item_base {
-    NodeA* frame;                                               // +0x2c the screen's root widget
-    owned_block owned;                                          // +0x30 the item source's buffer (begin / end / cap at +0x34..+0x3c, = 0); its destructor is the one the whole family's deleting destructor 0x4ce930 runs
+struct BlockHead {                                              // +0x30 the owned block and its timer: built before the frustum member (0x4ce9b8)
+    struct block : owned_block { block() { zero(); } } owned;   // +0x30 the item source's buffer (begin / end / cap at +0x34..+0x3c, = 0); its destructor is the one the whole family's deleting destructor 0x4ce930 runs
     int f40;                                                    // +0x40 = -1 (the block owner's menu kind)
     unsigned char flags44;                                      // +0x44
     unsigned char f45, f46, f47;
-    int f48;                                                    // +0x48 = 0 (tick clock index)
-    int f4c;
-    __int64 stamp;                                              // +0x50 = g_ticks[0]
+    gui_timer tick;                                             // +0x48 clock 0
     float f58;                                                  // +0x58 = 1.0f
     void* f5c;                                                  // +0x5c = 0 (the block owner's menu block)
+    BlockHead() { f58 = 1.0f; f40 = -1; f5c = 0; }
+};
+struct MissionBlocker : item_base {
+    NodeA* frame;                                               // +0x2c the screen's root widget
+    BlockHead bh;                                               // +0x30
     MapWidget* name_widget;                                     // +0x60 (0x4f7f00; 0x4f8c80 copies the frustum into it)
     int f64;                                                    // +0x64
     MissionUi* w[7];                                            // +0x68 the three crosshair arms, then the four arrows (0x4f7f00; 0x529130 shows / hides them)
@@ -68,12 +70,8 @@ struct MissionBlocker : item_base {
     int f29c;                                                   // +0x29c = 0
     int f2a0;                                                   // +0x2a0 = -1 (the order group tick() steps through)
     int f2a4;                                                   // +0x2a4
-    int clock_a;                                                // +0x2a8 tick clock index
-    int f2ac;
-    __int64 stamp_a;                                            // +0x2b0 (10 s before clock_a's time)
-    int clock_b;                                                // +0x2b8
-    int f2bc;
-    __int64 stamp_b;                                            // +0x2c0
+    gui_timer timer_a;                                          // +0x2a8 tick clock index, start (10 s before clock_a's time)
+    gui_timer timer_b;                                          // +0x2b8
     int f2c8;                                                   // +0x2c8
     int f2cc;                                                   // +0x2cc
     int f2d0;                                                   // +0x2d0

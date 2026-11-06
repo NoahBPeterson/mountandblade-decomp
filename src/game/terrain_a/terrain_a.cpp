@@ -1111,7 +1111,7 @@ void Terrain::triangle_corners(int x, int y, int flip, int* a, int* b, int* c)
 }
 
 // @ 0x466ed0
-void Terrain::sun_light(rgl::vector4* out, const float* dir, const float* scale)
+rgl::vector4 Terrain::sun_light(const float* dir, const float* scale)
 {
     rgl::vector4 amb = sun_ambient;
     float t = -(sun_dir[2] * dir[2] + sun_dir[1] * dir[1] + sun_dir[0] * dir[0]);
@@ -1122,7 +1122,7 @@ void Terrain::sun_light(rgl::vector4* out, const float* dir, const float* scale)
     r.x = amb.x + d.x;
     r.y = d.y + amb.y;
     r.z = d.z + amb.z;
-    *out = r;
+    return r;
 }
 
 // @ 0x466fa0

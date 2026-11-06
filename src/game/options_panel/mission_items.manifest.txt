@@ -8,3 +8,4 @@
 ../src/game/options_panel/mission_items.cpp  ??0ItemB@@QAE@XZ  004cef20  /O2 /MT /Gy /TP
 ../src/game/options_panel/mission_items.cpp  ??0ItemC@@QAE@XZ  004cef80  /O2 /MT /Gy /TP
 ../src/game/options_panel/mission_items.cpp  ?push_back@vec44@@QAEXPAD@Z  004cefe0  /O2 /MT /Gy /TP
+../src/game/options_panel/mission_items.cpp  ??0MissionBlocker@@QAE@XZ  004ce960  /O2 /MT /Gy /TP

@@ -535,21 +535,22 @@ void GameW::handout(Party* p, int id)
     int n = 0;
     int members[128];
     int cum[128];
-    int total = 0;
     list_members(id, members, &n);
-    PartyMgr* m = &pm();
+    int total = 0;
+    PartyMgr* m;
     for (int i = 0; i < n; i++) {
+        m = &pm();
         total += m->at(m->lookup(members[i]))->sum_stat(0x100);
         cum[i] = total;
     }
     if (total == 0)
         return;
     for (int i = 0; i < p->nstacks; i++) {
-        if ((troops[p->stacks[i].troop].flags32 & 0x10) != 0)
+        if ((troops[p->stacks[i].troop].flags30 & 0x10) != 0)
             continue;
         for (int j = 0; j < p->stacks[i].count; j++) {
             int pick;
-            if (total < 2)
+            if (total <= 1)
                 pick = 0;
             else
                 pick = rand() % total;
@@ -658,7 +659,7 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
     for (int k = 0; k < na; k++) {
         Stack* s = &a->stacks[k];
         bool matched = false;
-        if (!(chars[s->troop].flags32 & 0x10)) {
+        if (!(chars[s->troop].flags30 & 0x10)) {
             for (int j = 0; j < b->nstacks; j++) {
                 if (b->stacks[j].troop == s->troop) {
                     if (!flag) {
@@ -1875,7 +1876,7 @@ void GameW::share_experience(int party, float amount)
         if (s.flags & 1)
             break;
         int troop = s.troop;
-        char hero = (troops[troop].flags32 & 0x10) != 0;
+        char hero = (troops[troop].flags30 & 0x10) != 0;
         if (hero)
             total = (int)((float)total + (i == 0 ? 10.0f : 3.0f));
         else
@@ -1891,7 +1892,7 @@ void GameW::share_experience(int party, float amount)
             if (s.flags & 1)
                 break;
             int troop = s.troop;
-            char hero = (troops[troop].flags32 & 0x10) != 0;
+            char hero = (troops[troop].flags30 & 0x10) != 0;
             if (hero)
                 GameData::add_experience(troop, (int)(per * (idx2 == 0 ? 10.0f : 3.0f)));
             else
@@ -2173,19 +2174,19 @@ void GameW::spread_party_experience(int amount)
         live++;
     }
     int heroes = 0;
-    if (live <= 1)
-        return;
-    for (int i = 1; i < live; i++) {
-        int troop = p->stacks[i].troop;
-        if (troops[troop].flags32 & 0x10)
-            heroes++;
-    }
-    if (!heroes)
-        return;
-    for (int i = 1; i < live; i++) {
-        int troop = p->stacks[i].troop;
-        if (troops[troop].flags32 & 0x10)
-            GameData::add_experience(troop, amount / heroes);
+    if (live > 1) {
+        for (int i = 1; i < live; i++) {
+            int troop = p->stacks[i].troop;
+            if (troops[troop].flags30 & 0x10)
+                heroes++;
+        }
+        if (heroes) {
+            for (int i = 1; i < live; i++) {
+                int troop = p->stacks[i].troop;
+                if (troops[troop].flags30 & 0x10)
+                    GameData::add_experience(troop, amount / heroes);
+            }
+        }
     }
     WL_MARKER(13)
 }

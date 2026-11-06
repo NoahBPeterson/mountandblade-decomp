@@ -257,7 +257,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     void emit_particle(particle_list* l, int type, const rgl::matrix* frame, const rgl::vector4* dir, int anim);   // 0x466cd0
     void emit_by_type(int type, const rgl::matrix* frame, const rgl::vector4* dir, int anim);                     // 0x466d90
     void triangle_corners(int x, int y, int flip, int* a, int* b, int* c);   // 0x466e20
-    void sun_light(rgl::vector4* out, const float* dir, const float* scale); // 0x466ed0
+    rgl::vector4 sun_light(const float* dir, const float* scale);            // 0x466ed0
     void create_chunk_entities();           // 0x466fa0
     void load_layer(int* set, int idx);     // 0x467250
     int count_low_quads();                  // 0x467530

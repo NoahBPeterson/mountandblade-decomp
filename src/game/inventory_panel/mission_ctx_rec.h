@@ -63,6 +63,7 @@ struct MissionCtx {
     void refresh_rating();                              // 0x492470
     unsigned pop_key();                                 // 0x513b10
     void update_parties();                              // 0x513b40
+    int count_hero_items();                             // 0x513e10 (never reads this)
     void setup(unsigned flags, int delta);              // 0x513f80 (ret 8)
     void pick_template();                               // 0x514360
     void start_scene(int a, int b, int c);              // 0x5147e0 (ret 0xc)

@@ -9,7 +9,8 @@ s004e7b30, s004e85d0 head) into two translation units. The slices are unchanged.
 
 | module | range | functions | exact before (slices) | exact after | nonmatching rows | partial |
 |---|---|---|---|---|---|---|
-| cls_map.cpp | 0x4d92c0..0x4e3eb0 | 76 (incl. 8 EH funclets) | 29 | 34 | 42 (8 funclet rows, 0 diff) | 0 |
+| cls_map.cpp | 0x4d92c0..0x4e3eb0 (minus mission_window.cpp) | 76 (incl. 8 EH funclets) | 29 | 34 | 42 (8 funclet rows, 0 diff) | 0 |
+| mission_window.cpp | 0x4dae40..0x4db810 | 6 | 1 | 2 | 4 | 0 |
 | progress_bar.cpp | 0x4e3eb0..0x4e87d0 | 41 (incl. 2 EH funclets) | 14 | 22 | 19 (2 funclet rows, 0 diff) | 0 |
 | **total** | | **117** | **43** | **56** | | |
 

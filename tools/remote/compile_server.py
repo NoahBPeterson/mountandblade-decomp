@@ -211,7 +211,7 @@ def main():
     ap.add_argument("--token", default=None)
     ap.add_argument("--bind", default="0.0.0.0", help="address to listen on (the Tailscale IP on the laptop)")
     ap.add_argument("--port", type=int, default=47813)
-    ap.add_argument("--slots", type=int, default=11)
+    ap.add_argument("--slots", type=int, default=36)
     ap.add_argument("--wine", action="store_true", help="test mode on the Mac: run cl.exe under wine with Z: paths")
     a = ap.parse_args()
     a.token = a.token or os.path.join(a.root, "token")

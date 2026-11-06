@@ -120,8 +120,8 @@ void MissionBlocker::init_screen()
         }
     }
 
-    stamp_b = g_ticks[clock_b] - 10000000u;
-    stamp_a = g_ticks[clock_a] - 10000000u;
+    timer_b.start = g_ticks[timer_b.clock] - 10000000u;
+    timer_a.start = g_ticks[timer_a.clock] - 10000000u;
     f2c8 = -1;
     f2d4 = 0;
     f2e4 = 0;

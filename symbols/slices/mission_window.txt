@@ -1,0 +1,7 @@
+# mission_window: split from cls_map at the file boundary 0x4db810 (0x4db1f0 sees only the declaration of UiA::UiA)
+004dae40 ?init_mission_window@Screen@@QAEXXZ
+004db020 ?fill_single_mission@Screen@@QAEXXZ
+004db090 ?fill_mission_grid@Screen@@QAEXXZ
+004db1f0 ?init_meeting_window@Screen@@QAEXXZ
+004db440 ?fill_mission_row@Screen@@QAEXH@Z
+004db660 ?init_done_window@Screen@@QAEXXZ

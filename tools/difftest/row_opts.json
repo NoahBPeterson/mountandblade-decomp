@@ -478,7 +478,7 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "cls_map 004db440": {
+  "mission_window 004db440": {
     "args": [
       "--party-table"
     ],

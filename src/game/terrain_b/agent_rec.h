@@ -9,7 +9,18 @@
 
 
 #include "../view_state.h"           // tick, tk, Timer16, Vec4z, ViewBody, ViewState (shared with ui/troop_inv)
-struct Timed { int state; int pad; tick t; };       // 0x10: state (2 = idle) and the tick it was set
+struct Timed {                                      // 0x10: state (2 = idle) and the tick it was set
+    int state; int pad; tick t;
+    Timed() { state = 2; t = tk(2); }
+};
+struct TimedFlag : Timed {                          // a Timed and its armed flag (+0x57c8)
+    char flag;
+    TimedFlag() { flag = 0; }
+};
+struct ClockStamp {                                 // +0x5860: clock index 0 and the tick it was set
+    int state; int pad; tick t;
+    ClockStamp() { state = 0; t = tk(0); }
+};
 #include "../blow.h"                 // Blow: the last blow at agent +0x563c, whose initialiser (0x4353a0) the constructor calls
 struct EmptySlot { virtual void slot(); };      // 0x477b70: the empty slot 1 / 2 of the IfaceB-style records
 
@@ -29,6 +40,7 @@ struct EmitterSink {
 struct IdVec : std::vector<int> {
     void tidy() { _Tidy(); }
 };
+struct BlowInit : Blow { BlowInit() { init(); } };   // the blow member's constructor is init 0x4353a0
 struct MAgent : IfaceB {
     // vtable 0x591848 (stored by the constructor). There is no destructor in source: the implicit one destroys the members
     // in reverse order, the view's Tail2 at +0x53c0 (~Tail2 0x4c4d10) and then the id vector at +0x1c, and ends with the base's
@@ -134,7 +146,7 @@ struct MAgent : IfaceB {
     char pad23c[0x14];
     EmitterSink* f250;   // +0x250
     char pad254[0x4];
-    ViewBody view;   // +0x258
+    ViewState view;   // +0x258
     char pad55cc[0x4];
     int f55d0;   // +0x55d0
     char pad55d4[0x4];
@@ -148,7 +160,7 @@ struct MAgent : IfaceB {
     rgl::vector4 f5624;   // +0x5624
     int f5634;   // +0x5634
     int f5638;   // +0x5638
-    Blow subB;   // +0x563c (0x477a30)
+    BlowInit subB;   // +0x563c (0x477a30)
     rgl::vector4 f5694;   // +0x5694
     rgl::vector4 f56a4;   // +0x56a4
     rgl::vector4 f56b4;   // +0x56b4
@@ -174,9 +186,8 @@ struct MAgent : IfaceB {
     char pad5734[0x80];
     float f57b4;   // +0x57b4
     char pad57b8[0x10];
-    Timed t57c8;   // +0x57c8 (0x477a30)
-    char f57d8;   // +0x57d8
-    char pad57d9[0x7];
+    TimedFlag t57c8;   // +0x57c8 (0x477a30), armed flag +0x57d8
+    char pad57dc[0x4];
     Timed t57e0;   // +0x57e0 state / +0x57e8 tick
     Timed t57f0;   // +0x57f0 state / +0x57f8 tick
     Timed t5800;   // +0x5800 state / +0x5808 tick
@@ -194,9 +205,7 @@ struct MAgent : IfaceB {
     char pad5854[0x4];
     int f5858;   // +0x5858
     char pad585c[0x4];
-    int f5860;   // +0x5860
-    char pad5864[0x4];
-    tick f5868;   // +0x5868
+    ClockStamp clk5860;   // +0x5860
     char pad5870[0x4];
     int f5874;   // +0x5874
     char f5878;   // +0x5878

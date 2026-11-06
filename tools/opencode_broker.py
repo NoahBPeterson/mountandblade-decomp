@@ -29,7 +29,15 @@ IDS = "(?:" + "|".join(map(re.escape, ids)) + ")"
 # then write the module TU and its bookkeeping, the renames/report files of their slices and a scratch dir, and
 # run tools/migrate/rewrite.py; slices and generated headers stay read-only (the slice paths are NOT allowed).
 MODULES = sorted({s["module"] for s in _recs if s.get("module")})
-if MODULES:
+SRC_MODULES = bool(MODULES) and all(m.startswith("src/") for m in MODULES)
+if SRC_MODULES:
+    # Byte-matching batches: "module" is the full source path without .cpp. A session may write that .cpp, its two
+    # bookkeeping files, its symbol slice and scratch files; never a header.
+    MODS = "(?:" + "|".join(map(re.escape, MODULES)) + ")"
+    ALLOWED_PATH = re.compile(r"^(?:%s/)?(?:%s(?:\.cpp|\.manifest\.txt|\.nonmatching\.txt)|symbols/slices/%s\.txt|work/match/.*)$"
+                              % (re.escape(ROOT), MODS, IDS))
+    MIGRATE_TOOL = ""
+elif MODULES:
     MODS = "(?:" + "|".join(map(re.escape, MODULES)) + ")"
     ALLOWED_PATH = re.compile(r"^(?:%s/)?(?:src/game/%s(?:\.cpp|/[^/]+)|symbols/slices/%s\.txt|work/match/.*|"
                               r"work/migrate/(?:renames_%s\.json|rewrite_%s[^/]*\.json|report_%s(?:_\w+)?\.md|scratch_%s(?:/.*)?))$"
@@ -39,7 +47,7 @@ else:
     ALLOWED_PATH = re.compile(r"^(?:%s/)?(?:match/slices/%s/[^/]+|symbols/slices/%s\.txt|work/match/.*)$"
                               % (re.escape(ROOT), IDS, IDS))
     MIGRATE_TOOL = ""
-PY_TOOLS = re.compile(r"^(?:\.venv/bin/python3?\s+)?(?:" + MIGRATE_TOOL + r"tools/matching/(?:slice_info|card|chk|cmpdis|try_variants|run_all|od_names|"
+PY_TOOLS = re.compile(r"^(?:\.venv/bin/python3?\s+)?(?:" + MIGRATE_TOOL + r"tools/matching/(?:slice_info|card|chk|insn_align|cmpdis|try_variants|run_all|od_names|"
                       r"disasm|pattern_info|cmpobj|patterns|libmatch|asm_audit)\.py|"
                       r"tools/difftest/(?:equiv|batch|slice)\.py)(?:\s|$)")
 SAFE_CMD = re.compile(r"^(?:rg|ls|cat|head|tail|wc|sort|uniq|cut|tr|echo|printf|true|false|test|\[|pwd|file|xxd|od|"
@@ -263,12 +271,20 @@ def decide(r):
     act, res = r.get("action"), r.get("resources") or []
     if act in ("task", "subagent"):
         return "reject", "subagent spawning is forbidden; do the work yourself in this session"
+    if act in ("read", "glob", "grep", "list", "lsp", "external_directory"):
+        for p in res:
+            ap = p if os.path.isabs(p) else os.path.normpath(os.path.join(ROOT, p))
+            if (not ap.startswith(ROOT + "/") and ap != ROOT) or SECRETY.search(p):
+                return "reject", "path outside the repo or a credential file: %s" % p[:100]
     if act in ("read", "glob", "grep", "list", "lsp", "todowrite", "todoread", "skill"):
         return "once", "read-only/agent tool"
     if act in ("edit", "write", "patch", "apply_patch"):
         bad = [p for p in res if not ok_path(os.path.relpath(p, ROOT) if os.path.isabs(p) else p)]
         return ("once", "edit inside batch slice paths") if not bad else ("reject", "edit outside allowed paths: %s" % bad[:3])
     if act in ("shell", "bash"):
+        # Policy mode too: these sessions talk to an external provider, so nothing outside the repo may be readable.
+        if outside_repo("\n".join(res)):
+            return "reject", "references a path outside the repo, env vars or credentials"
         # opencode sometimes passes a whole compound command as one resource: judge every simple command in it,
         # not just the first word (a `cd ... && python - <<'PY' ... PY` line hid a write to `>工作`, 2026-10-20)
         for seg in [s for r in res for s in split_shell(r)]:

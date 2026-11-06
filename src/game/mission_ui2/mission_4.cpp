@@ -46,27 +46,27 @@ void ContainerBase::update_children()
 }
 
 // @ 0x48efa0
-int NavData::shares(const int& a, const int& b) const
+bool NavData::shares(const int& a, const int& b) const
 {
     const NavCell* ra = &cells[a];
     int ai = ra->ids[0x11];
     int aj = -1;
-    if (ai == 0x5f5e0ff) {
+    int id = ai;
+    if (id == 0x5f5e0ff) {
         ai = ra->ids[0x12];
         aj = ra->ids[0x13];
     }
-    const NavCell* rb = &cells[b];
-    int bi = rb->ids[0x11];
+    const NavCell& rb = cells[b];
+    int bi = rb.ids[0x11];
     int bj = -2;
-    if (bi == 0x5f5e0ff) {
-        int t = rb->ids[0x13];
-        bi = rb->ids[0x12];
+    int id2 = bi;
+    if (id2 == 0x5f5e0ff) {
+        bi = rb.ids[0x12];
+        int t = rb.ids[0x13];
         if (t >= 0)
             bj = t;
     }
-    if (ai == bi || ai == bj || aj == bi || aj == bj)
-        return 1;
-    return 0;
+    return ai == bi || ai == bj || aj == bi || aj == bj;
 }
 
 // @ 0x48f020

@@ -83,7 +83,7 @@ caller of `cl.sh` benefits unchanged (`slice.compile_obj`, `run_all`, the `/Zs` 
 
 How it works:
 * `tools/remote/compile_server.py` (copy at `D:\mb\rc\compile_server.py`, not the repo checkout) listens on the Tailscale IP, port
-  47813, 11 slots. Auth: both ends hold the same token (`~/.config/mb-compile-token` on the Mac, `D:\mb\rc\token` on the laptop, both
+  47813, 36 slots. Auth: both ends hold the same token (`~/.config/mb-compile-token` on the Mac, `D:\mb\rc\token` on the laptop, both
   outside the repo); only HMACs of a fresh nonce cross the wire, in both directions (the client will not send source to a server that
   fails the check). The server runs `cl.exe` only, args starting with `@` are refused, job paths cannot leave the job directory.
 * `tools/remote/rcl.py` (stdlib only) is the client. It reserves a slot first (a busy laptop answers in one round trip), then scans the
@@ -101,7 +101,7 @@ Start / stop / check (the server must be detached from the ssh session, so use W
 the session):
 
     # start: a ps1 run through ssh containing
-    $cmd = 'cmd.exe /c "D:\mb\repo\.venv\Scripts\python D:\mb\rc\compile_server.py --bind 100.84.111.92 > D:\mb\jobs\rcserver.log 2>&1"'
+    $cmd = 'cmd.exe /c "D:\mb\repo\.venv\Scripts\python D:\mb\rc\compile_server.py --bind 100.84.111.92 --slots 36 > D:\mb\jobs\rcserver.log 2>&1"'
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine=$cmd; CurrentDirectory='D:\mb\repo'}
     (Get-Process -Id $r.ProcessId).PriorityClass = 'Idle'; Set-Content D:\mb\jobs\rcserver.pid $r.ProcessId
     # check:  netstat -ano | findstr 47813      (LISTENING)   and   type D:\mb\jobs\rcserver.log

@@ -333,7 +333,7 @@ void MapPanel::update(int type, int id)
                         Stack* s = &roster.stacks[i];
                         Troop* t = &g_game->troops[s->troop];
                         char   buf[0x100];
-                        if (t->flags32 & 0x10) {
+                        if (t->flags30 & 0x10) {
                             int tier = t->nib_b[0x7a - 0x68] & 0xf;
                             if (tier < 0)                tier = 0;
                             else if (tier > (*(int*)&g_skill_tbl[36].max_rank)) tier = (*(int*)&g_skill_tbl[36].max_rank);

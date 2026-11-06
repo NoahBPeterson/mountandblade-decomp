@@ -63,7 +63,6 @@ int save_game(int id, tstring* name);                  // 0x4e8980
 #include "../dialog_mgr.h"                              // DialogMgr g_dialogs (0x8ed50c8)
 
 
-struct HeroCount { int count_hero_items(); };          // 0x513e10: a MissionCtx member that never reads this (the callers load ecx); declared here because MissionCtx lives in a shared header
 static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k); }
 #include "../rec98.h"                                  // Rec98: the 0x98-byte scene node record (pages at game+0xe4)
 // ---- objects and constants of other translation units ----------------------------------------------------------------
@@ -307,7 +306,7 @@ void MissionCtx::update_parties()
         party_at(pm, pm->lookup(g_game->f78))->f88 = -1;
         party_at(pm, pm->lookup(g_game->f78))->action = 0;
 
-        if (((HeroCount*)this)->count_hero_items() > f168) {
+        if (count_hero_items() > f168) {
             tstring msg("ui_some_soldiers_are_ready_to_upgrade");
 
             g_gui.push(*g_strtable.lookup(msg), 0xffbbffbb);
@@ -319,7 +318,7 @@ void MissionCtx::update_parties()
 }
 
 // @ 0x513e10
-int HeroCount::count_hero_items()
+int MissionCtx::count_hero_items()
 {
     GameData* g = g_game;
     PartyMgr* m = &g->parties;
@@ -337,7 +336,7 @@ int HeroCount::count_hero_items()
     int total = 0;
     s = p->stacks;
     while (n-- > 0) {
-        if (!(g->troops[s->troop].flags32 & 0x10))
+        if (!(g->troops[s->troop].flags30 & 0x10))
             total += s->f14;
         s++;
     }
@@ -351,10 +350,10 @@ void GameDataV::clear_hero_ammo(unsigned id)
     PartyMgr* m = &g->parties;
     if (id < m->n_parties) {
         int idx = m->lookup(id);
-        if (idx >= 0 && party_at(m, idx)->type == 1) {
+        if (idx >= 0 && m->atu(idx)->type == 1) {
             Party* p = party_at(m, m->lookup(id));
             for (int i = 0; i < p->nstacks; i++) {
-                if ((g->troops[p->stacks[i].troop].flags32 & 0x10) != 0 && p->stacks[i].f10 != 0)
+                if ((g->troops[p->stacks[i].troop].flags30 & 0x10) != 0 && p->stacks[i].f10 != 0)
                     p->stacks[i].f10 = 0;
             }
         }
@@ -614,7 +613,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
         Stack* s = &p->stacks[1];
         do {
             int item = s->troop;
-            if ((g_game->troops[item].flags32 & 0x10) != 0 && item != a1) {
+            if ((g_game->troops[item].flags30 & 0x10) != 0 && item != a1) {
                 *(int*)(t + oi) = item;
                 *(int*)(t + of) = 1;
                 oi += 8;
@@ -634,7 +633,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
             // for the loop condition, but not before the first iteration
             do {
                 int item = party_at(m, m->lookup(a3))->stacks[n].troop;
-                if ((g_game->troops[item].flags32 & 0x10) != 0) {
+                if ((g_game->troops[item].flags30 & 0x10) != 0) {
                     *(int*)(t + oi) = party_at(m, m->lookup(a3))->stacks[n].troop;
                     *(int*)(t + of) = 1;
                     oi += 8;
@@ -1194,7 +1193,7 @@ void MissionCtx::update_anim()
             }
         }
     }
-    f168 = ((HeroCount*)this)->count_hero_items();
+    f168 = count_hero_items();
     f34 = 0;
     f35 = 0;
     f38 = 0;

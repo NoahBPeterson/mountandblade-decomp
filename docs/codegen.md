@@ -1262,6 +1262,16 @@ Added by the third round (59 matched, including two functions 109 and 144 instru
 - **Missing `WL_MARKER`.** `jmp; push edi; dec esp; and [eax],ah` in the original's alignment means one is missing (0x4c7290).
 - **A helper pulled in by a shared header can force a call.** `std_vec_out_of_line.h` makes every includer call 0x440b30
   where the original inlines `push_back` (0x51eda0).
+- **Stores after the vptr but before a member's constructor are other members with inline constructors,** not a base. A real
+  intermediate base leaves its own vptr store behind (0x4ce960). An empty constructor body can explain store order too (0x477a30).
+- **`and r,M; xor r2,r2; or r,r2; jcc` is a test on a 64-bit field.** Decide per site: some sites really read a 32-bit word
+  (`flags30` matched 0x513eb0, 0x491430 and 0x4957d0, and broke 0x460160, 0x4554c0 and 0x443870).
+- **`mov eax,1 / xor eax,eax` where callers `test al,al` is `bool f() { return a || b; }`.** `if (...) return 1` gives `mov al,1` (0x48efa0).
+- **A long `jcc` (`0f 8e`) where the original has a short one, with the same text, means the branch target is wrong.** Compare
+  encoded sizes. An early `return` before a trailing `WL_MARKER` lands past the marker (0x4957d0).
+- **`shr` against `sar` on a page index means an unsigned parameter to the inline accessor** (`atu`, not `at`, 0x513eb0).
+- **An instruction scheduled after a guard can be a variable assigned inside the loop,** not initialised at its declaration (0x491430).
+- **An explicit specialization of `_Insert_n` changes callers that expand `push_back` inline,** so those files can't include it (0x51eda0).
 
 Rows that resisted all of these, so stop early: SIB base/index order (`[ebx+ecx]` against `[ecx+ebx]`) and `fld/fmul`
 operand order, callee-saved or scratch register rotation alone, one instruction scheduled a slot away with no structural

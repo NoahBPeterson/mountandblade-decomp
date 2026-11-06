@@ -1,0 +1,2 @@
+../src/game/cls_map/mission_window.cpp  ?fill_single_mission@MissionScreen@@QAEXXZ  004db020  /O2 /MT /Gy /TP
+../src/game/cls_map/mission_window.cpp  ?init_screen@Rec118@@UAEXXZ  004db1f0  /O2 /MT /Gy /TP

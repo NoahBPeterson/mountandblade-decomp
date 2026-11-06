@@ -14,3 +14,10 @@
 # cold tails / catch funclets inside a parent's COMDAT (verified byte-for-byte with the parent; src/game/world_data)
 00492930  # cold copy loops + catch(...) funclets of 0x4927d0
 00492c96  # __catch funclet + non-reallocating insert branches of 0x492b30
+# catch(...) funclets with no source of their own (entered with the parent's ebp frame, or the tail of its catch block)
+004c50ea  # catch funclet of copy_range38 0x4c5080 (src/rgl/mesh2/gui_edit.cpp): [ebp-0x14], [ebp+0x10] destroy loop, rethrow
+004d120a  # catch funclet of _Uninit_copy<flora> 0x4d11a0 (module_load.cpp)
+004d129a  # catch funclet of _Uninit_copy<ground> 0x4d1230 (module_load.cpp)
+004d1330  # catch funclet of _Uninit_copy<mission> 0x4d12c0 (module_load.cpp)
+004fe184  # rethrow tail (push 0; push 0; call _CxxThrowException) of the catch in cell_fill 0x4fe120 (agent_vec.cpp, byte-exact with it)
+004fe516  # rethrow tail of the catch in cell_copy 0x4fe4b0 (agent_vec.cpp, byte-exact with it)

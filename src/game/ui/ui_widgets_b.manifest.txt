@@ -3,3 +3,4 @@
 ../src/game/ui/ui_widgets_b.cpp  ?kind@UiC@@UAEHXZ  0048b880  /O2 /MT /Gy /TP
 ../src/game/ui/ui_widgets_b.cpp  ??0UiD@@QAE@XZ  0048b890  /O2 /MT /Gy /TP
 ../src/game/ui/ui_widgets_b.cpp  ?render@UiD@@UAEXPAUscene@rgl@@PAMHH@Z  0048b8d0  /O2 /MT /Gy /TP
+../src/game/ui/ui_widgets_b.cpp  ??0UiC@@QAE@XZ  0048b760  /O2 /MT /Gy /TP

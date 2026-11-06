@@ -645,7 +645,7 @@ void GameG::weekly_report(bool)
         float thr = factor1;
         if (s->flags & 1)
             thr = factor2;
-        if ((troops[s->troop].flags32 & 0x10) == 0) {
+        if ((troops[s->troop].flags30 & 0x10) == 0) {
             counts[nsel] = 0;
             for (int k = 0; k < s->count; k++) {
                 if ((float)(rand() % 0x3dc9) * 6.3223117e-5f < thr) {
@@ -667,7 +667,7 @@ void GameG::weekly_report(bool)
         for (int j = 0; j < nsel; j++) {
             body.push_back(' ');
             Troop* tr = &troops[ids[j]];
-            if ((tr->flags32 & 0x10) != 0) {
+            if ((tr->flags30 & 0x10) != 0) {
                 tstring* name = g_strtable.find(&tr->key);
                 if (name == 0)
                     name = (tstring*)tr;

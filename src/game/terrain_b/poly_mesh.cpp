@@ -835,13 +835,13 @@ void MAgent::reset()
     f587c = -1;
     f57b4 = 1.0f;
     fc0 = 0;
-    f57d8 = 0;
+    t57c8.flag = 0;
     t57e0.t = tk(t57e0.state);
     t57f0.t = tk(t57f0.state);
     t5800.t = tk(t5800.state);
     t5820.t = tk(t5820.state);
     t40.t = tk(t40.state);
-    f5868 = tk(f5860);
+    clk5860.t = tk(clk5860.state);
     t5918.t = tk(t5918.state);
     t5810.t = tk(t5810.state);
     f58f0 = vector4(0.0f, 0.0f, 0.0f);
@@ -1553,24 +1553,9 @@ void mesh_flip::flip_faces()
     slots[0].f28 = 1;
 }
 
-// The agent's Timed members have inline constructors in the original: a store through the helper's reference keeps the
-// state store ahead of the tick copy.
-static inline void timed_start(Timed& t) { t.state = 2; t.t = tk(2); }
-
 // @ 0x477a30
 MAgent::MAgent()
 {
-    timed_start(t40);
-    ((ViewState*)&view)->ViewState::ViewState();   // 0x475e50 (no null test: in the original this is a member's constructor)
-    subB.init();
-    timed_start(t57c8); f57d8 = 0;
-    timed_start(t57e0);
-    timed_start(t57f0);
-    timed_start(t5800);
-    timed_start(t5810);
-    timed_start(t5820);
-    f5860 = 0; f5868 = tk(0);
-    timed_start(t5918);
 }
 
 // @ 0x477b70

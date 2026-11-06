@@ -284,6 +284,7 @@
   "video_page",
   "dialog_manager",
   "module_load",
+  "mission_window",
   "keys_page",
   "gui_edit",
   "save_state",
