@@ -567,7 +567,7 @@ void TroopRec::level_up()
         fa8 = 0;
 
     fa4 = level + 3;
-    for (unsigned i = 0; i < 0x2a; i += 6)
+    for (int i = 0; i < 0x2a; i += 6)
         for (unsigned j = 0; j < 6; j++)
             fa4 -= get_skill(this, i + j);
     if (fa4 < 0)

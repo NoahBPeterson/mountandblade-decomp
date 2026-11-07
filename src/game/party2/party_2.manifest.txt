@@ -45,3 +45,5 @@
 ../src/game/party2/party_2.cpp  ?set_order_agent@Party@@QAEXPAH@Z  004b2ab0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?strength@Party@@QAEMXZ  004b1fa0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?scene_step@@YAXH@Z  004b1160  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?reset@NavData@@QAEXXZ  004b33c0  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?leave_battle@Party@@QAEXXZ  004b6ae0  /O2 /MT /Gy /TP

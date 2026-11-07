@@ -28,6 +28,7 @@
 ../src/game/agent4/agent_logic.cpp  ?ufill@vecE1c8@@QAEPAUPlacedObj@@PAU2@IABU2@@Z  0043db60  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?deque_xlen@@YAXXZ  0043e0e0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?destroy@alloc_e56@@QAEXPAUVecPair2@@@Z  0043e150  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?advance@Font@@QAEMH@Z  0043e190  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?measure@Font@@QAEMPBHHPAH1@Z  0043e200  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?_Xlen@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IBEXXZ  0043e2a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?_Insert_n@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXViterator@12@IABUtstring@@@Z  0043e310  /O2 /MT /Gy /TP
@@ -74,6 +75,7 @@
 ../src/game/agent4/agent_logic.cpp  ?queue_dead@Mission@@QAEXPAUAgent@@@Z  00442dc0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?can_target@Agent@@QAE_NIIMPAM@Z  00442ed0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_threat@Agent@@QAEIXZ  00443430  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?play_hit_sound@Agent@@QAEXPAH@Z  004435c0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?play_sound_var@Agent@@QAEXPAHPAM@Z  00443730  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?play_sound@Agent@@QAEXPAH@Z  00443870  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?play_pain_sound@Agent@@QAEXM@Z  00443a00  /O2 /MT /Gy /TP

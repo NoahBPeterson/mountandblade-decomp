@@ -87,14 +87,17 @@ int GameData::add_members(int party, int troop, int count, char prisoners)
 // @ 0x48f9f0
 int GameData::remove_troops(int party, int troop, int count, char prisoners, int a5)
 {
-    int i = 0;
     int found = -1;
-    for (; i < PARTY(party)->nstacks; i++) {
-        if (troop == PARTY(party)->stacks[i].troop) {
-            if ((prisoners && (PARTY(party)->stacks[i].flags & 1))
-                || (!prisoners && !(PARTY(party)->stacks[i].flags & 1)))
-                found = i;
-        }
+    int i = 0;
+    if (PARTY(party)->nstacks > 0) {
+        do {
+            if (troop == PARTY(party)->stacks[i].troop) {
+                if ((prisoners && (PARTY(party)->stacks[i].flags & 1))
+                    || (!prisoners && !(PARTY(party)->stacks[i].flags & 1)))
+                    found = i;
+            }
+            i++;
+        } while (i < PARTY(party)->nstacks);
     }
     if (found >= 0) {
         Stack* s = &PARTY(party)->stacks[found];

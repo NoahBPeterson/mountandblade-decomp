@@ -136,9 +136,11 @@ void rgl::world::insert(int id, const float* lo_, const float* hi_)
     int a[2], b[2];
     to_cell(lo_, a);
     to_cell(hi_, b);
-    for (int x = a[0]; x <= b[0]; x++)
-        for (int y = a[1]; y <= b[1]; y++)
-            cells[x][y].c.push_back(id);
+    int x, y;
+    std::vector<int>* c = &cells[a[0]][a[1]].c;
+    for (x = a[0]; x <= b[0]; x++)
+        for (y = a[1]; y <= b[1]; y++, c += 1)
+            c->push_back(id);
 }
 
 // @ 0x478ad0
@@ -719,15 +721,17 @@ void Terrain::make_grid()
 void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
     Level494* es = &g_game->levels[which];
+    rgl::world* sc = scene;
     MeshVec meshes;
     meshes = g_resmgr.find_meshes(&es->name34);
     if (meshes.size() == 0)
         mb_error("Error unable to find interior mesh %s", es->name34.c_str());
-    rgl::entity* e = scene->create_entity(9);
+    rgl::entity* e = sc->create_entity(9);
     *n = (int)meshes.size();
+    rgl::mesh** o = out;
     for (int i = 0; i < *n; i++) {
         rgl::mesh* m = ((rgl::mesh*)meshes[i])->clone();
-        out[i] = m;
+        *o++ = m;
         e->meshes.push_back(m);
         e->recalc();
     }

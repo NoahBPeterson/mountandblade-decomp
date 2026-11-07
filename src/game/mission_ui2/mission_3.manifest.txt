@@ -23,3 +23,5 @@
 ../src/game/mission_ui2/mission_3.cpp  ?set_val@widget_mgr@@QAEXHH@Z  0048e340  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?clear_particle_systems@Party@@QAEXXZ  0048d7e0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?lookup@ArrHolder@@QAEHHH@Z  0048d5f0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?consume_stack@Party@@QAEHHHPAHD@Z  0048c3c0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?set_color@widget_mgr@@QAEXHI@Z  0048dc30  /O2 /MT /Gy /TP

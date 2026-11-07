@@ -1,0 +1,4 @@
+# the catch(...) funclet of uninit_fill (0x4f65f0) at 0x4f6658: cl emits it with the parent COMDAT as a $L
+# label (its number is TU-global and unstable), no COFF symbol of its own. The manifest row names the CC
+# reference "$L" and run_all.py's resolve() places it by offset from the parent function it follows.
+004f6658  $L  # catch funclet of uninit_fill 0x4f65f0 (the loop `for (; start != first; ++start) destroy(a, start); throw;`)

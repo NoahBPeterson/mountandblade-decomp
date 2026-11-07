@@ -349,34 +349,33 @@ void cell::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigne
 {
     shape_base* buf[0x2000];
     int n = 0;
-    struct { unsigned i; int k; } st;               // lives in memory in the original (reloaded every iteration)
-    st.i = 0;
-    st.k = 0;
-    while (a.size() > st.i) {
-        shape_base* sh = (shape_base*)a[st.i];
+    unsigned i = 0;                 // lives in memory in the original (reloaded every iteration)
+    int k = 0;
+    while (i < a.size()) {
+        shape_base* sh = a[i];
         if (sh->m8 & mask) {
-            st.i++;
+            i++;
             continue;
         }
         vector4 tv[2];                  // both query temporaries live in one block (min below max)
         const vector4* smax = sh->get_max(&tv[1]);
         const vector4* smin = sh->get_min(&tv[0]);
-        bool hit;
+        char hit;
         if (*use3d == 0)
             hit = box_overlap2(bmin, bmax, smin, smax);
         else
             hit = box_overlap3(bmin, bmax, smin, smax);
         if (!hit) {
-            st.i++;
+            i++;
             continue;
         }
-        if (st.k < *count) {
-            shape_base* o = out[st.k];
-            shape_base* cur = a[st.i];
+        if (k < *count) {
+            shape_base* o = out[k];
+            shape_base* cur = a[i];
             if (cur >= o) {
-                st.k++;
+                k++;
                 if (cur == o) {
-                    st.i++;
+                    i++;
                     buf[n++] = cur;
                 } else {
                     buf[n++] = o;
@@ -384,13 +383,13 @@ void cell::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigne
                 continue;
             }
         }
-        shape_base* cur2 = a[st.i];
-        st.i++;
+        shape_base* cur2 = a[i];
+        i++;
         buf[n++] = cur2;
     }
-    if (st.k < *count) {
-        int m = *count - st.k;
-        memcpy(&buf[n], &out[st.k], m * sizeof(shape_base*));
+    if (k < *count) {
+        int m = *count - k;
+        memcpy(&buf[n], &out[k], m * sizeof(shape_base*));
         n += m;
     }
     *count = n;

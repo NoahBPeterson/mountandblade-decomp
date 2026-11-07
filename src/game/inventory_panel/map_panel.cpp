@@ -454,13 +454,15 @@ reissue:
 }
 
 // @ 0x51a2d0
-// Not byte-exact (map_panel.nonmatching.txt): x87 spill schedule of the e*t products
+// Not byte-exact (map_panel.nonmatching.txt): the original rounds e.x*t / e.y*t to float32 but keeps
+// e.z*t extended; ours rounds all three (the e*t temporary). Closest form: `vector4 e = *b - *a; ... *a + e * t`.
 void PlaneTrace::intersect(vector4* out, const vector4* a, const vector4* b)
 {
     vector4 d = pt - *a;
+    vector4 e = *b - *a;
     float t = (d.x * nrm.x + (d.y * nrm.y + d.z * nrm.z)) /
-              ((b->x - a->x) * nrm.x + ((b->y - a->y) * nrm.y + (b->z - a->z) * nrm.z));
-    vector4 r = *a + vector4(b->x - a->x, b->y - a->y, b->z - a->z) * t;
+              (e.x * nrm.x + (e.y * nrm.y + e.z * nrm.z));
+    vector4 r = *a + e * t;
     out->x = r.x;
     out->y = r.y;
     out->z = r.z;

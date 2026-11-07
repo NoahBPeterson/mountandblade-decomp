@@ -167,14 +167,14 @@ void rgl::mesh::set_bone_index(int bone)
 void rgl::mesh::multiply_color(const vector4* tint)
 {
     ensure_local();
-    for (unsigned i = 0; i < v50.size(); i++) {
-        vertex60* v = &vat(v50, i);
+    for (unsigned i = 0, off = 0; i < v50.size(); i++, off += 0x60) {
+        vertex60* v = (vertex60*)((char*)v50._Myfirst + off);
         vector4 c = rgl::unpack_color(&v->color);
         c.x = c.x * tint->x;
+        v->color &= 0xff000000;
         c.y = c.y * tint->y;
         c.z = c.z * tint->z;
-        v->color &= 0xff000000;
-        v->color |= pack_color(&c) & 0xffffff;
+        ((vertex60*)((char*)v50._Myfirst + off))->color |= pack_color(&c) & 0xffffff;
     }
     slots[0].f28 = 1;
 }
@@ -492,18 +492,18 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
 void Skin::blend(mesh* m, int unused, const float* weights)
 {
     m->ensure_local();
-    for (int i = 0; i < (int)m->v70.size(); i++) {
-        point20* p = &vat(m->v70, i);
+    vector4 v;
+    vector4 d;
+    for (unsigned i = 0, off = 0; i < m->v70.size(); i++, off += 0x20) {
         for (int j = 0; j < n_face_keys; j++) {
             FaceKey* b = &face_keys[j];
-            vector4* t = &((vector4*)b->delta)[i];
+            vector4* t = (vector4*)b->delta + i;
             if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
                 float w = (b->f28 - b->f24) * weights[j] + b->f24;
-                vector4 d;
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
-                vector4 v;
+                point20* p = (point20*)((char*)m->v70._Myfirst + off);
                 v.x = p->a.x + d.x;
                 v.y = p->a.y + d.y;
                 v.z = p->a.z + d.z;
@@ -521,29 +521,28 @@ void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
     ArrSet* s = (ArrSet*)set;
     if ((int)m->v70.size() != s->cnt[*index])
         return;
-    unsigned i = 0;
-    while (i < m->v70.size()) {
-        point20* p = &vat(m->v70, i);
+    for (unsigned i = 0, off = 0; i < m->v70.size(); i++, off += 0x20) {
         for (int j = 0; j < n_face_keys; j++) {
             int bi = s->arr[*index][i];
             FaceKey* b = &face_keys[j];
-            vector4* t = &((vector4*)b->delta)[bi];
+            vector4* t = (vector4*)b->delta + bi;
             if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
                 float w = (b->f28 - b->f24) * weights[j] + b->f24;
                 vector4 d;
+                point20* p = (point20*)((char*)m->v70._Myfirst + off);
                 d.x = w * t->x;
-                if (p->a.x < 0.0f)
-                    d.x = -d.x;
                 d.y = w * t->y;
                 d.z = w * t->z;
-                p->a.x += d.x;
-                p->a.y += d.y;
-                p->a.z += d.z;
-                p->a.w = d.w;
-                p->b = p->a;
+                if (p->a.x < 0.0f)
+                    d.x = -d.x;
+                vector4 v;
+                v.x = p->a.x + d.x;
+                v.y = p->a.y + d.y;
+                v.z = p->a.z + d.z;
+                p->a = v;
+                p->b = v;
             }
         }
-        i++;
     }
 }
 
@@ -552,23 +551,23 @@ void Terrain::snap(mesh* m)
 {
     m->ensure_local();
     int off = 0;
+    float f;
+    vector4 v;
     for (unsigned i = 0; i < m->v70.size(); i++, off += 0x20) {
         point20* p = (point20*)((char*)m->v70._Myfirst + off);
         vector4 g = sample(&p->a.x);
-        float f = 1.0f - sqrtf((g.x - p->a.x) * (g.x - p->a.x) +
-                               (g.y - p->a.y) * (g.y - p->a.y)) * 0.02f;
-        if (!(f < 0.0f)) {
-            if (f >= 1.0f)
-                f = 1.0f;
-            else if (!(f > 1e-5f))
-                continue;
-            vector4 v;
-            v.x = p->a.x;
-            v.y = p->a.y;
-            v.z = (1.0f - f) * p->a.z + (g.z - 1.5f) * f;
-            v.w = p->a.w;
-            p->a = v;
-            p->b = v;
-        }
+        float dx = g.x - p->a.x;
+        float dy = g.y - p->a.y;
+        f = 1.0f - sqrtf(dx * dx + dy * dy) * 0.02f;
+        if (f < 0.0f)
+            continue;
+        else if (f >= 1.0f)
+            f = 1.0f;
+        else if (!(f > 1e-5f))
+            continue;
+        v = p->a;
+        v.z = (1.0f - f) * p->a.z + (g.z - 1.5f) * f;
+        p->a = v;
+        p->b = v;
     }
 }

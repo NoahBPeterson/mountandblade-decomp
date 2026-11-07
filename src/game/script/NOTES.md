@@ -13,7 +13,7 @@ Files:
 | `script_interpreter.cpp` | one original translation unit, bodies in address order: party2/camera.cpp was merged in (panel views, GameData members, order code, validators, operand accessors, Camera, sprites, `Operation::execute`, the block runner) |
 | `script_interpreter.h` | every record, global and callee the interpreter touches (views of the shared headers, see below) |
 | `script_opcodes.h` | `namespace op`: every header_operations.py name as an enum value, plus the flag bits `op::neg` (0x80000000) and `op::this_or_next` (0x40000000) |
-| `script_interpreter.manifest.txt` | byte-exact rows (38: 13 from camera, 25 from here) |
+| `script_interpreter.manifest.txt` | byte-exact rows |
 | `script_interpreter.nonmatching.txt` | `execute` and 22 other rows: complete, not byte-exact |
 | `PROGRESS.md` | cases done per opcode range (591 / 591) |
 
@@ -199,6 +199,22 @@ Figures: see script_interpreter.nonmatching.txt. Levers, in order of yield:
 Open, top-down: hero_can_join family (still as in the section above), player_has_item, store_conversation_agent (2199: `cmp esi,[ebx]` reloads the count where ours CSEs it across the visible next_used; the tail of its first arm is the X form `mov [18],eax; lea eax,[18]` that 2200..2263 share, so this one case probably rotates the store block), quest note indexing `(i*0x138 + j*16) + base` (ours `(base + i*0x138) + j*16`), set_visitor/set_visitors (tree order, 19 bytes), store_troop_health's `h` (private 0xac, 0x10 there: max_hit_points is opaque here, perhaps a visible inline).
 
 Tools: `work/match/bm4o3_c.py` (`--bm NAME...` masked diff with source, `--both`, `--order`, `--cnt N`, `BMD=1` compiles with SI_TRUE_ABI), `bm4o3_tv.py` (edit variants in parallel), `bm4o3_tf.py`, `bm4o3_rows.sh`.
+
+## 2026-11-06, fourth lane
+
+Figures: see script_interpreter.nonmatching.txt. New levers, by yield:
+- **A by-value matrix goes through `ASSIGN_MAT`, right-hand side first.** `mission_cam_get_position` alone gained 24 cases and lost 1; the three `cam_frame` sites gained 10 and lost 1. Plain `script_pos(i) = get_frame()` computes the destination before the call.
+- **A parameter the original keeps across a call is a named local taken before the call.** `troop_add_item`'s `int item` fixed its own case and rotated 6 more into place (`push edi` in the original). Same for `store_num_regular_prisoners`' `pid`. Elsewhere a named `int a = (int)params[k]` is neutral or wrong: `agent_get_position` needed it removed.
+- **Branch sense.** `val_div` and `store_div` test `!= 0` first, `set_visitor` tests `!= -1` first, `store_attacker_count` / `store_defender_count` end in `!side`.
+- `set_merchandise_modifier_quality` stores `sf_2` before `sf_1`. `troop_set_health` computes the troop in each arm, but cl still hoists the index to before the test; several spellings tried, not solved.
+- `identical` swung from 444 to 414 on edits that left mod-stack+regs at 500 (`store_troop_kind_count`'s read order alone did it, and an unrelated local in `troop_add_proficiency_points` did too). Undoing the read order later, with two more edits in place, stayed at 414. This looks like the 6.2 group flipping, though which edit holds it now wasn't isolated. Judge by mod-stack+regs.
+
+Equivalence findings (2026-11-06):
+- **The harness cannot map `g_script_error`.** It is a file static, so our copy lives in the object's own `.bss`, not at 0x5e259c: ours writes 1 where the harness doesn't look, and reads 0 where a real callee wrote 1. That is the FAIL on execute, `set_lvalue` and `step_less` (`.data 0x5e259c`, orig 1, ours 0) and on `DialogBlock::emit` (`.data 0x5a9f8c`, 0x3b vs 0x34: the "At %s." log line isn't written). A symbols line can't help, because a static has no external name. Measured on a scratch copy with the variable `extern` at its real address: `set_lvalue` 169 valid, 0 mismatched; `step_less` WEAK, 275 valid, no mismatch; `emit` 159 valid, 0 mismatched (44% of instructions). The source stays as it is.
+- `GameData::label_text` 0x49baa0: no logic difference was found by reading both sides (same constants, arguments and order). The mismatch was vertices off by exactly 2^8. The likely cause is the uninitialised w lane of `pos`, whose slot differed by 4 between the frames; that part is inferred, not traced. It's byte-exact now, and the run shows 73 valid, 0 mismatched, 100% coverage, cut short by the time limit (not a PASS verdict).
+- `Mission::spawn_battle_icon` 0x49bbb0: the tools were testing the wrong function. `marker_names` also reads names from comments of the form `// 0x<va> word`, and the header comment `0x49bbb0  spawn the battle icon` bound the row to `EmitTable::spawn`. The comment block now writes `[0x...]`. Right symbol: PASS, 205 valid, all edges, 100%.
+
+`DialogBlock::emit`: `check_script_param` has to be noinline (cl inlined it, frame 0x10f4 against 0xafc without it). `items[line]` is reloaded after every call and `line * 0x98` is kept in esi, so statements are written through `line`. Still open: the original enters the loop by `jmp` to the `idx < count` test, where ours threads the first test because idx is known to be 0; the three `set_lvalue` tails of 0x15..0x17 are one in the original; the key tests' layout (the 0x3b arm is last there).
 
 ## Open problems
 

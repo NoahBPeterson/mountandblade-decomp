@@ -157,23 +157,28 @@ void CampaignScreen::init_screen()
 void CampaignScreen::camera_mark_entities()
 {
     extern float g_one;   // 0x549cdc (float_consts.h; declared here, the shared header is not ours to edit)
-    g_game->f13acc = (g_590bb8 * f2b8 + g_one) * g_54b3b4;
+    g_game->f13acc = (f2b8 * 0.07f + g_one) * 0.8f;
     GameData* game = g_game;
     PartyMgr* mgr = &game->parties;
-    for (int id = mgr->first_party_id(); id < game->parties.n_parties; mgr->next_party_id((int*)&id)) {
-        int cur = id;
-        int idx = mgr->lookup(cur);
-        if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
-            idx = mgr->lookup(cur);
-            if (*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x400) {
+    unsigned cur = (unsigned)mgr->first_party_id();
+    unsigned id = cur;
+    if (cur < game->parties.n_parties) {
+        do {
+            int idx = mgr->lookup(cur);
+            if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
                 idx = mgr->lookup(cur);
-                if (!(*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x80000)) {
+                if (*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x400) {
                     idx = mgr->lookup(cur);
-                    party_bytes(mgr, idx)[0x8b5] = 1;
-                    game = g_game;
-                    mgr = &game->parties;
+                    if (!(*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x80000)) {
+                        idx = mgr->lookup(cur);
+                        party_bytes(mgr, idx)[0x8b5] = 1;
+                        game = g_game;
+                    }
                 }
             }
-        }
+            mgr = &game->parties;
+            mgr->next_party_id((int*)&id);
+            cur = id;
+        } while (cur < game->parties.n_parties);
     }
 }

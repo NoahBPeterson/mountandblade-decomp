@@ -5,3 +5,4 @@
 004d1160 ?construct@ground_alloc@@QAEXPAUground_spec@@ABU2@@Z  # allocator construct (copy_from 0x4cd100)
 004d1180 ?construct@mission_alloc@@QAEXPAUmission_type@@ABU2@@Z  # allocator construct (copy_from 0x4cd170)
 004d1360 ??0growable_array@@QAE@XZ  # one range at +8 and six 0x10-byte ranges at +0x1c, vector4 (1,1,1) normalised at +0x80
+004c8ab0 ?destroy@?$allocator@UE176@@@std@@QAEXPAUE176@@@Z  # std::allocator<E176>::destroy (mission element dtor, unwind path of 0x4d12c0)

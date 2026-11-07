@@ -66,6 +66,25 @@ template<> __declspec(noinline) std::vector<ui_cell>::iterator std::vector<ui_ce
 // the inline insert/fill helpers expand into it rather than the header template being instantiated here.
 template<> void std::vector<ui_cell>::_Insert_n(std::vector<ui_cell>::iterator, std::vector<ui_cell>::size_type, const ui_cell&);
 
+// The original's _Insert_n expands _Ucopy (-> 0x4fe4b0) and _Ufill (-> 0x4fe120) inline while the
+// _Uninit_copy / _Uninit_fill_n calls they wrap stay calls; cl 13.10 will not inline the two-argument
+// header helpers at this instantiation depth and folds the forwarding away instead.  Spelling out the
+// two bodies (each is the header's own one-liner) reproduces the call sequence.
+class cell_vec : public std::vector<ui_cell> {
+public:
+    __forceinline pointer ucopy(pointer _First, pointer _Last, pointer _Ptr)
+    {
+        return _Uninit_copy(_First, _Last, _Ptr, this->_Alval,
+            std::_Ptr_cat(_First, _Ptr));
+    }
+    __forceinline pointer ufill(pointer _Ptr, size_type _Count, const ui_cell& _Val)
+    {
+        _Uninit_fill_n(_Ptr, _Count, _Val, this->_Alval,
+            std::_Ptr_cat(_Ptr, _Ptr));
+        return _Ptr + _Count;
+    }
+};
+
 // ---- the vectors the engine works on (globals here keep the instantiations reachable) -------------------
 static int_vec int_v;
 const ui_cell* int_x;
@@ -137,13 +156,10 @@ template<> void std::vector<ui_cell>::_Insert_n(
         ui_cell* _Ptr = _Newvec;
 
         _TRY_BEGIN
-        _Ptr = _Uninit_copy(_Myfirst, _ITER_BASE(_Where), _Newvec, this->_Alval,
-            _Nonscalar_ptr_iterator_tag());
-        _Uninit_fill_n(_Ptr, _Count, _Tmp, this->_Alval,
-            _Nonscalar_ptr_iterator_tag());
-        _Ptr += _Count;
-        _Uninit_copy(_ITER_BASE(_Where), _Mylast, _Ptr, this->_Alval,
-            _Nonscalar_ptr_iterator_tag());
+        _Ptr = ((cell_vec*)this)->ucopy(_Myfirst,
+            _ITER_BASE(_Where), _Newvec);   // copy prefix
+        _Ptr = ((cell_vec*)this)->ufill(_Ptr, _Count, _Tmp);    // add new stuff
+        ((cell_vec*)this)->ucopy(_ITER_BASE(_Where), _Mylast, _Ptr);    // copy suffix
         _CATCH_ALL
         _Destroy(_Newvec, _Ptr);
         this->_Alval.deallocate(_Newvec, _Capacity);
@@ -162,12 +178,12 @@ template<> void std::vector<ui_cell>::_Insert_n(
         }
     else if ((size_type)(_Mylast - _ITER_BASE(_Where)) < _Count)
         {
-        _Uninit_copy(_ITER_BASE(_Where), _Mylast,
-            _ITER_BASE(_Where) + _Count, this->_Alval, _Nonscalar_ptr_iterator_tag());
+        ((cell_vec*)this)->ucopy(_ITER_BASE(_Where), _Mylast,
+            _ITER_BASE(_Where) + _Count);   // copy suffix
 
         _TRY_BEGIN
-        _Uninit_fill_n(_Mylast, _Count - (_Mylast - _ITER_BASE(_Where)),
-            _Tmp, this->_Alval, _Nonscalar_ptr_iterator_tag());
+        ((cell_vec*)this)->ufill(_Mylast, _Count - (_Mylast - _ITER_BASE(_Where)),
+            _Tmp);  // insert new stuff off end
         _CATCH_ALL
         _Destroy(_ITER_BASE(_Where) + _Count, _Mylast + _Count);
         _RERAISE;
@@ -179,8 +195,8 @@ template<> void std::vector<ui_cell>::_Insert_n(
     else
         {
         ui_cell* _Oldend = _Mylast;
-        _Mylast = _Uninit_copy(_Oldend - _Count, _Oldend, _Mylast, this->_Alval,
-            _Nonscalar_ptr_iterator_tag());
+        _Mylast = ((cell_vec*)this)->ucopy(_Oldend - _Count, _Oldend,
+            _Mylast);   // copy suffix
         copy_backward(_ITER_BASE(_Where), _Oldend - _Count, _Oldend);
         fill(_ITER_BASE(_Where), _ITER_BASE(_Where) + _Count, _Tmp);
         }

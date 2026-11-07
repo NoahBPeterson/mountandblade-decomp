@@ -678,7 +678,7 @@ def marker_names(src, va):
     '// ... @ 0x<va>' marker, and names written next to the address in comments."""
     lines = open(src, encoding="utf-8", errors="replace").read().split("\n")
     marker = re.compile(r"//.*@\s*0x0*%x\b" % va, re.I)
-    named = re.compile(r"//\s*(?:@\s*)?(?:0x)?0*%x\b[\s:,-]*((?:[A-Za-z_]\w*::)*~?[A-Za-z_]\w*)" % va, re.I)
+    named = re.compile(r"//\s*(?:@\s*)?(?:0x)?0*%x\b[\s:,-]*((?:[A-Za-z_]\w*::)*~?[A-Za-z_]\w*\b)(?!\s+\w)" % va, re.I)   # (a word followed by more words is prose)
     out = []
     for i, line in enumerate(lines):
         if marker.search(line):

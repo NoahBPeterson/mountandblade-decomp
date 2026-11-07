@@ -18,25 +18,26 @@ void __fastcall Rec454::refresh()
         mb_error(msg->buf ? msg->buf : (char*)&msg->buf);
     }
     count = 0;
-    char* q = QUESTS;
-    int i = 0;
-    int off = 0;
-    while (i < QUEST_COUNT) {
+    for (int i = 0; i < QUEST_COUNT; i++) {
+        int off = i * 0x138;
         if (off >= 0x9c00)
             break;
-        unsigned f = *(unsigned*)(q + off + 0x64);
+        unsigned f = *(unsigned*)(QUESTS + off + 0x64);
         if (f & 0x100) {
-            int m = w04;
-            if (m == 0 && !(f & 0x200)) {
-                indices[count] = i;
-                count++;
-            } else if (m == 1 && (f & 0x200)) {
-                indices[count] = i;
-                count++;
+            if (w04 == 0) {
+                if (!(f & 0x200))
+                    goto add;
             }
+            if (w04 == 1) {
+                if (f & 0x200)
+                    goto add;
+            }
+            goto next;
+        add:
+            indices[count] = i;
+            count++;
+        next:;
         }
-        i++;
-        off += 0x138;
     }
 }
 
@@ -44,28 +45,41 @@ void __fastcall Rec454::refresh()
 UiD* make_scroll_track(ContainerBase* parent, float x, float y, float h, float w)
 {
     UiD* self = new UiD;
-    float pos[2];
-    pos[0] = x;
-    pos[1] = y;
-    self->move_a(pos);
-    self->f178 = 1;
+    {
+        float pos[2];
+        pos[0] = x;
+        pos[1] = y;
+        self->f178 = 1;
+        self->move_a(pos);
+    }
     // the size is the unscaled (h, w); the scaled pair is the meshes' colour (0x4ee965..0x4ee998: [esp+0x10] = h,
     // [esp+0x14] = w; h * g_590b70, w * g_592758 and 1.0 into the vector at [esp+0x20], whose w is never set)
-    float size[2];
-    size[0] = h;
-    size[1] = w;
     vector4 col;
     col.x = h * 50.0f;
-    col.y = w * 1.5576323f;
+    float sy = w * 1.5576323f;
+    col.y = sy;
     col.z = 1.0f;
-    self->set_xy(size);             // vtable +0x64 (0x4ee99c), not set_size +0x6c
-    self->f17c = col.y * 0.31f;
-    // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix) into a temporary
-    // tstring(const char*) (0x42bbe0), destroyed right after the clone
-    mesh* m1 = g_resmgr.get_object(&tstring("scrollbar"))->clone();
+    {
+        float size[2];
+        size[0] = h;
+        size[1] = w;
+        self->set_xy(size);             // vtable +0x64 (0x4ee99c), not set_size +0x6c
+    }
+    self->f17c = sy * 0.31f;
+    // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix) into a tstring
+    // (0x42bbe0) that lives in a scope and is destroyed right after the clone
+    mesh* m1;
+    {
+        tstring name("scrollbar");
+        m1 = g_resmgr.get_object(&name)->clone();
+    }
     m1->set_color(col);
-    // 0x592734 = "scrollbar_handle", a temporary the same way
-    mesh* m2 = g_resmgr.get_object(&tstring("scrollbar_handle"))->clone();
+    // 0x592734 = "scrollbar_handle", a scoped tstring the same way
+    mesh* m2;
+    {
+        tstring name("scrollbar_handle");
+        m2 = g_resmgr.get_object(&name)->clone();
+    }
     m2->set_color(col);
     // the original calls vtable slot 0x80 = MissionUi::set_track(int i, mesh* p) with *both* arguments
     // (0x4eea5e: push edi/push 0/ecx=esi; 0x4eea6b: push ebx/push 2), which is why a one-argument call through a

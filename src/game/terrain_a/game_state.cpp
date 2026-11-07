@@ -129,7 +129,6 @@ const char* GameData::module_path(const char* sub)
 // @ 0x463a80
 vector4 __stdcall wind_noise()
 {
-    vector4 r;
     float in[3], out[3];
     float t = (float)g_ticks[1] * 1e-5f;
     in[0] = t; in[1] = 0.0f; in[2] = 0.0f;
@@ -140,6 +139,7 @@ vector4 __stdcall wind_noise()
     float b = out[0];
     in[0] = -125.0f; in[1] = 6337.0f; in[2] = t;
     noise_fractal(24.0f, 0.63f, 4, 0, in, out);
+    vector4 r;
     r.x = a;
     r.y = b;
     r.z = out[0];
@@ -221,7 +221,7 @@ void ShadowMap::fit_bounds()
 {
     WL_MARKER(12)
     LightCam* c = cam;
-    vector4 ctr((c->vmin.x + c->vmax.x) * 0.5f, (c->vmax.y + c->vmin.y) * 0.5f, (c->vmax.z + c->vmin.z) * 0.5f);
+    vector4 ctr = (c->vmin + c->vmax) * 0.5f;
     c->center = ctr;
     c = cam;
     vector4 wc((c->world.u.x * c->center.z + c->world.f.x * c->center.y) + c->world.s.x * c->center.x + c->world.o.x,
@@ -297,12 +297,10 @@ void ShadowMap::setup()
 void ShadowMap::bind_target()
 {
     if (g_use_shaders != 0 && target != 0) {
-        if (g_render.use_hw_shadow) {
+        if (g_render.use_hw_shadow)
             cam->target = target2;
-            cam->dirty = 1;
-            return;
-        }
-        cam->target = target->refs[0];
+        else
+            cam->target = target->refs[0];
         cam->dirty = 1;
     }
 }

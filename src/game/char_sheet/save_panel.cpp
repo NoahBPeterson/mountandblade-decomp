@@ -4,6 +4,11 @@
 #include "../window_mgr.h"      // g_windows slot 3 (0xa7398c): the save dialog
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+static bool more_skins(skin_data* s, int i)
+{
+    return s->begin && (unsigned)i < (unsigned)(s->end - s->begin);
+}
+
 // @ 0x4ea0c0
 void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
 {
@@ -16,11 +21,7 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
     char flip = 0;
     if (prod < 0.0f)
         flip = 1;
-    for (int i = 0; ; i++) {
-        if (!o->skins->begin)
-            break;
-        if ((unsigned)i >= (unsigned)(o->skins->end - o->skins->begin))
-            break;
+    for (int i = 0; more_skins(o->skins, i); i++) {
         mat3 tmp;
         // the original (0x4ea147..0x4ea241) multiplies a full mat4 (rows from identity3, origin zeroed): 0x40e870 reads the
         // left operand's origin (+0x30..+0x38), so it must be zero, not the stack bytes after a bare mat3

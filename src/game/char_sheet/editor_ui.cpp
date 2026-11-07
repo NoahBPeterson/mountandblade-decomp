@@ -106,34 +106,58 @@ void* __cdecl make_right_arrow(void* parent, float a2, float a3, float x, float 
     return b;
 }
 
+// the original's inlined mesh loader: get_object/clone with the name passed by pointer.
+static __forceinline mesh* load_mesh_arg(const tstring& n)
+{
+    return (mesh*)((rgl::mesh*)g_resmgr.get_object(&n))->clone();
+}
+
+// the original inlines the two mesh loads as two named function-scope tstring temporaries that the compiler
+// has to give separate stack slots (a plain temporary would coalesce them into one slot).
+struct MeshNameBuf { int w[4]; };
+
+// the original's inlined widget allocator: a named pointer, the allocator's result tested with a plain
+// `if (p)`, and the raw-placement constructor. The base constructor 0x48ae20 and the derived constructor
+// 0x48b4b0 are only declared here, so the tail of the block has to use the public MissionUi methods (a cast
+// from the void* the helper returns) rather than the derived class's, whose section would create a vftable
+// in this object.
+static __forceinline void* new_widget_188()
+{
+    void* p = ::operator new(0x188);
+    if (p)
+        new (p, raw_place()) UiB;   // 0x48b4b0 (the base constructor 0x48ae20, the vptr 0x591fb0, the slider fields)
+    else
+        p = 0;
+    return p;
+}
+
 // @ 0x4f5fb0
 UiB* __cdecl make_slider(void* parent, const tstring* name)
 {
-    UiB* w = (UiB*)::operator new(sizeof(UiB));
-    if (w != 0)
-        w = new (w, raw_place()) UiB;   // 0x48b4b0 (the base constructor 0x48ae20, the vptr 0x591fb0, the slider fields)
-    else
-        w = 0;
-    label_refresh(w, *name);
-    float h = w->screen[0];
-    float size[2];
-    size[0] = h * 0.25f;
-    size[1] = h * 0.03f;
-    w->set_xy(size);
-    mesh* track = load_mesh("slider_hor");
-    mesh* handle = load_mesh("handle_hor");
-    if (h != 1.0f) {
-        rgl::vector4 c;
-        c.x = h;
-        c.y = h;
-        c.z = h;
-        track->set_color(c);
-        handle->set_color(c);
+    void* w = new_widget_188();
+    label_refresh((MissionUi*)w, *name);
+    float h = ((MissionUi*)w)->screen[0];
+    {
+        float size[2];
+        size[0] = h * 0.25f;
+        size[1] = h * 0.03f;
+        ((MissionUi*)w)->set_xy(size);
     }
-    w->set_track(0, track);
-    w->set_track(2, handle);
-    ((ContainerBase*)parent)->add_child(w);
-    return w;
+    MeshNameBuf nb1, nb2;
+    new (nb1.w) tstring("slider_hor");
+    rgl::mesh* track = (rgl::mesh*)load_mesh_arg(*(tstring*)nb1.w);
+    ((tstring*)nb1.w)->~tstring();
+    new (nb2.w) tstring("handle_hor");
+    rgl::mesh* handle = (rgl::mesh*)load_mesh_arg(*(tstring*)nb2.w);
+    ((tstring*)nb2.w)->~tstring();
+    if (h != 1.0f) {
+        ((mesh*)track)->set_color(rgl::vector4(h, h, h));
+        ((mesh*)handle)->set_color(rgl::vector4(h, h, h));
+    }
+    ((MissionUi*)w)->set_track(0, (rgl::mesh*)track);
+    ((MissionUi*)w)->set_track(2, (rgl::mesh*)handle);
+    ((ContainerBase*)parent)->add_child((MissionUi*)w);
+    return (UiB*)w;
 }
 
 // @ 0x4f6160

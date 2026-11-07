@@ -127,25 +127,28 @@ tstring GameData::string_value(int index)
 // @ 0x48ea80
 face* GameData::find_at(const float* p)
 {
-    int idx[2];
-    shape_base* cand[0x2000];
     int count;
-    float q[3];
     int flag;
+    int idx[2];
+    float q[4];
+    shape_base* cand[0x2000];
 
+    rgl::world* level = g_script.level;
     q[0] = p[0];
     q[1] = p[1];
     q[2] = 0;                                      // 0x48ea80 builds a 3-float point with z = 0
-    g_script.level->to_cell(q, idx);
     flag = 0;
-    rgl::cell* c = &g_script.level->cells[idx[0]][idx[1]];
-    c->collect_point(q, &flag, 0x100, cand, &count);
-    for (int k = 0; k < count; k++) {
+    level->to_cell(q, idx);
+    count = 0;
+    rgl::cell* row = level->cells[idx[0]];
+    row[idx[1]].collect_point(q, &flag, 0x100, cand, &count);
+    int n = count;
+    for (int k = 0; k < n; k++) {
         shape_base* s = cand[k];
         if (s->m4 < 0)
             continue;
         if (((face*)s)->contains_xy(p))
-            return (face*)s;
+            return (face*)cand[k];
     }
     return 0;
 }
@@ -214,21 +217,23 @@ void GameData::add_inventory(int item, int amount)
     add_inventory(old_item, amount);
 }
 
+// the number of 0x1c8-byte prop records: a null vector holds none (the original guard, 0x48ed70/0x48ee33)
+static inline int prop_count(const std::vector<PlacedObj>& v)
+{
+    return v._Myfirst ? (int)(((char*)v._Mylast - (char*)v._Myfirst) / (int)sizeof(PlacedObj)) : 0;
+}
+
 // @ 0x48ed60
 void Mission::retag_props(int from, int to)
 {
-    PlacedObj* base = props._Myfirst;
-    if (!base)
-        return;
-    int n = (int)(((char*)props._Mylast - (char*)base) / 0x1c8);
-    for (int i = 0; i < n; i++) {
-        PlacedObj* r = base + i;
+    for (unsigned i = 0; i < prop_count(props); i++) {
+        PlacedObj* r = &props._Myfirst[i];
         if (r->kind)
             continue;
         if (!r->name.equals(g_propkinds[from].name))
             continue;
-        r->id = to;
-        r->name = g_propkinds[to].name;
+        props[i].id = to;
+        props[i].name = g_propkinds[to].name;
     }
 }
 
@@ -236,12 +241,8 @@ void Mission::retag_props(int from, int to)
 int Mission::count_props(int tag)
 {
     int count = 0;
-    PlacedObj* base = props._Myfirst;
-    if (!base)
-        return 0;
-    unsigned n = (unsigned)(((char*)props._Mylast - (char*)base) / 0x1c8);
-    for (unsigned i = 0; i < n; i++) {
-        PlacedObj* r = base + i;
+    for (unsigned i = 0; i < prop_count(props); i++) {
+        PlacedObj* r = &props._Myfirst[i];
         if (!r->kind && r->id == tag)
             count++;
     }
@@ -252,12 +253,8 @@ int Mission::count_props(int tag)
 int Mission::find_prop(int tag, int nth)
 {
     int found = 0;
-    PlacedObj* base = props._Myfirst;
-    if (!base)
-        return -1;
-    unsigned n = (unsigned)(((char*)props._Mylast - (char*)base) / 0x1c8);
-    for (unsigned i = 0; i < n; i++) {
-        PlacedObj* r = base + i;
+    for (unsigned i = 0; i < prop_count(props); i++) {
+        PlacedObj* r = &props._Myfirst[i];
         if (!r->kind && r->id == tag) {
             if (found == nth)
                 return i;

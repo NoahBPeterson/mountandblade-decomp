@@ -38,16 +38,15 @@ struct MeshWidgetVt {
 // @ 0x499050
 rgl::mesh* MeshTable::placed(int index)
 {
-    SceneRec48* recs = (SceneRec48*)records;
-    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&recs[index].name))->clone();
-    if (recs[index].flags & 1)
+    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&((SceneRec48*)records)[index].name))->clone();
+    if (((SceneRec48*)records)[index].flags & 1)
         m->f214 += 0x2000;
+    vector4 sc;
     vector4 pos;
-    SceneRec48* r = &recs[index];
-    vector4 sc(recs[index].sx, recs[index].sy, recs[index].sz);
-    pos.x = r->px;
-    pos.y = r->py;
-    pos.z = r->pz;
+    SceneRec48* r = &((SceneRec48*)records)[index];
+    pos.x = ((SceneRec48*)records)[index].px;
+    pos.y = ((SceneRec48*)records)[index].py;
+    pos.z = ((SceneRec48*)records)[index].pz;
     Frame3 frame;
     identity3(&frame);
     float a = r->rx * 0.017453292f;
@@ -56,7 +55,10 @@ rgl::mesh* MeshTable::placed(int index)
     ((rgl::matrix*)&frame)->rotate_about_f(&a);
     a = r->rz * 0.017453292f;
     ((rgl::matrix*)&frame)->rotate_about_u(&a);
-    if (r->sx != g_one || r->sy != g_one || r->sz != g_one)
+    sc.x = r->sx;
+    sc.y = r->sy;
+    sc.z = r->sz;
+    if (sc.x != g_one || sc.y != g_one || sc.z != g_one)
         m->set_color(sc);
     m->set_part(*(rgl::matrix*)&frame);
     if (pos.z * pos.z + pos.y * pos.y + pos.x * pos.x != 0.0f)

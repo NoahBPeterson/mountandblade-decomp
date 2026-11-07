@@ -60,15 +60,11 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
     }
     {
         tstring n("slider_hor");
-        rgl::mesh* m = (rgl::mesh*)g_resmgr.get_object(&n);
-        void* object = m->clone();
-        w->set_track(0, (rgl::mesh*)object);
+        w->set_track(0, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
     }
     {
         tstring n("handle_hor");
-        rgl::mesh* m = (rgl::mesh*)g_resmgr.get_object(&n);
-        void* object = m->clone();
-        w->set_track(2, (rgl::mesh*)object);
+        w->set_track(2, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
     }
     w->update_bounds();
     {
@@ -164,6 +160,8 @@ void rgl::mesh::set_part(const rgl::matrix& mtx)
     slots[0].f28 = 1;
     ((rgl::mesh*)(void*)this)->compute_bounds();            // 0x419300
 }
+
+
 
 // ==== 0x495f00: set the alpha of every vertex record ===========================================================
 // Each vertex record keeps its packed colour at +0x54; that colour is unpacked into floats, the alpha lane is replaced

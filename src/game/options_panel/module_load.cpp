@@ -39,6 +39,8 @@ void load_skyboxes();                            // 0x4c3350
 
 // std::allocator<E50>::destroy (0x4cd6a0, mesh_2.cpp; the unwind path of 0x4d11a0 calls it)
 namespace std { template<> void allocator<E50>::destroy(E50*); }
+// std::allocator<E176>::destroy (0x4c8ab0, mesh_2.cpp; the unwind path of 0x4d12c0 calls it)
+namespace std { template<> void allocator<E176>::destroy(E176*); }
 
 // @ 0x4d10f0
 void item_modifier_array_dtor(item_modifier* first, item_modifier* last)
@@ -113,6 +115,10 @@ struct flora_copy_alloc {
     __forceinline void destroy(E50* p) { ((std::allocator<E50>*)(void*)this)->destroy(p); }
 };
 
+struct mission_copy_alloc {
+    __forceinline void destroy(E176* p) { ((std::allocator<E176>*)(void*)this)->destroy(p); }
+};
+
 
 
 // @ 0x4d11a0 (std::_Uninit_copy's allocator variant, 0x50-byte element E50)
@@ -149,8 +155,15 @@ ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, gr
 mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last, mission_type* dst, mission_alloc& al)
 {
     // the vector's element is E176 (stride 0xb0), not the 0x20-byte table record
-    for (E176* f = (E176*)first, *l = (E176*)last, *d = (E176*)dst; f != l; f++, d++, dst = (mission_type*)d)
-        al.construct((mission_type*)d, *(const mission_type*)f);
+    E176* next = (E176*)dst;
+    try {
+        for (; (E176*)first != (E176*)last; ++(E176*&)dst, ++(E176*&)first)
+            al.construct((mission_type*)dst, *(const mission_type*)first);
+    } catch (...) {
+        for (; next != (E176*)dst; ++next)
+            ((mission_copy_alloc*)&al)->destroy(next);   // 0x4c8ab0
+        throw;
+    }
     return dst;
 }
 

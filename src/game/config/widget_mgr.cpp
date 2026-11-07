@@ -432,18 +432,22 @@ void MissionUi::get_xy(float* out)
         *(int*)((char*)tracks[4] + 0x114) = 1;
         *(int*)((char*)tracks[4] + 0x140) = 1;
     }
-    float r[2];
-    float pos[4];
-    pos[1] = f13c;
-    pos[2] = 0.0f;
-    int arg = -1;
-    pos[0] = f138;
-    Font* font = f124 ? (Font*)f124 : g_font;
-    tracks[4]->clear_geometry();
-    font->layout_text(r, &name, (vector4*)pos, &f140, tracks[4], (int)&arg, &screen[2], &screen[0], f148);
-    set_color(&color14c);
-    out[0] = r[0];
-    out[1] = r[1];
+    {
+        float r[2];
+        float pos[4];
+        pos[1] = f13c;
+        pos[2] = 0.0f;
+        int arg = -1;
+        Font* font = f124 ? (Font*)f124 : g_font;
+        rgl::mesh* m = tracks[4];
+        pos[0] = f138;
+        unsigned flags = f148;
+        m->clear_geometry();
+        font->layout_text(r, &name, (vector4*)pos, &f140, m, (int)&arg, &screen[2], &screen[0], flags);
+        ((WVt*)this)->d38(&color14c);
+        *(int*)&out[0] = *(int*)&r[0];
+        *(int*)&out[1] = *(int*)&r[1];
+    }
 }
 
 // @ 0x49aca0

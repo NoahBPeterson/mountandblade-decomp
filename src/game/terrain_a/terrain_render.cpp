@@ -903,12 +903,13 @@ void Terrain::compute_normals()
 // @ 0x46b190
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found)
 {
+    Troop* t = ((World3*)g_game)->troops + troop;
     *found = 0;
     if (((__int64)mask & g_bit[slot]) == 0 &&
         ((mask & 0x200) == 0 || (g_bit[slot] & 0x10) == 0 ||
-         (int)g_items[((World3*)g_game)->troops[troop].equip[slot].item].type_flags >= 0)) {
+         (int)g_items[t->equip[slot].item].type_flags >= 0)) {
         *found = 1;
-        return *(__int64*)&(*(World3**)&g_game)->troops[troop].equip[slot];
+        return *(__int64*)&t->equip[slot];
     }
     int i = 0;
     ItemRef res;
@@ -921,7 +922,7 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
         r.m4 = 0;
         if (v >= 0) {
             r.item = v;
-            if (((World3*)g_game)->troops[troop].fits_slot(&r, slot)) {
+            if (t->fits_slot(&r, slot)) {
                 res.item = v;
                 res.m4 = 0;
                 res.reduce(0);

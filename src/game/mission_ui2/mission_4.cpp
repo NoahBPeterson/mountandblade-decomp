@@ -205,20 +205,24 @@ void TableauTbl::set_camera_position(const rgl::matrix* m)
 // @ 0x48f4c0
 void TableauTbl::set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_)
 {
+    TabCurrent* c = (TabCurrent*)worlds[worlds.size() - 1];
     float fz = *far_;
     float nz = *near_;
     float fh = *h;
     float fh2 = *h;
     float fw = *w;
     float fw2 = *w;
-    TabCurrent* c = (TabCurrent*)worlds[worlds.size() - 1];
+    float top = fh * 0.5f;
+    float bottom = fh2 * -0.5f;
+    float right = fw2 * 0.5f;
+    float left = fw * -0.5f;
     c->fr.perspective = *perspective;
-    c->fr.left = fw * -0.5f;
-    c->fr.right = fw2 * 0.5f;
-    c->fr.top = fh * 0.5f;
-    c->fr.bottom = fh2 * -0.5f;
     c->fr.nearz = nz;
+    c->fr.left = left;
+    c->fr.right = right;
     c->fr.farz = fz;
+    c->fr.bottom = bottom;
+    c->fr.top = top;
     c->fr.build_planes();
 }
 

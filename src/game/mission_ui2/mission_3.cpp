@@ -70,8 +70,8 @@ void Party::remove_slot(int index)
 // @ 0x48c3c0
 int Party::consume_stack(int index, int amount, int* rows, char keep)
 {
-    Stack* e = &stacks[index];
     int r = 0;
+    Stack* e = &stacks[index];
     e->count -= amount;
     int v = e->count;
     if (keep) {
@@ -401,11 +401,12 @@ int __fastcall trigger_item(int key)
         int i = ((SiteKeys*)g_game)->cur;
         if (i >= 0) {
             PlacedObj* m = &g_mission->props._Myfirst[i];
-            PropEnt::Vec* v = &((PropEnt*)m->ent)->lods;
+            PropEnt* e = (PropEnt*)m->ent;
+            PropEnt::Vec* v = &e->lods;
             if (v->first != 0) {
                 unsigned n = v->last - v->first;
                 if (n > 0)
-                    r = *((PropEnt*)m->ent)->lods.first;
+                    r = *(int*)((char*)((PropEnt*)m->ent) + 0x10c);
             }
         }
     } else if (key == -0x32 || key == -0x33)
@@ -420,12 +421,13 @@ int __fastcall trigger_mesh_obj(int key)
     if (key == -0x28) {
         int i = ((SiteKeys*)g_game)->cur;
         if (i >= 0) {
-            PlacedObj* m = &g_mission->props._Myfirst[i];
-            PropEnt::Vec* v = &((PropEnt*)m->ent)->meshes;
+            PlacedObj* base = &g_mission->props._Myfirst[i];
+            PropEnt* e = (PropEnt*)base->ent;
+            PropEnt::Vec* v = &e->meshes;
             if (v->first != 0) {
                 unsigned n = v->last - v->first;
                 if (n > 0)
-                    r = *((PropEnt*)m->ent)->meshes.first;
+                    r = *v->first;
             }
         }
     } else if (key == -0x32 || key == -0x46)
@@ -495,8 +497,7 @@ void MissionUi::update_bounds()
 // @ 0x48d350
 void FieldPanel::set_color(unsigned rgb)
 {
-    FieldVisual* v = scene()->view[0];
-    rgb = (v->color & 0xff000000) | rgb;
+    rgb = rgb | (scene()->view[0]->color & 0xff000000);
     scene()->view[0]->set_color(&rgb);
     float out[2];
     scene()->view[0]->get_state(out);
@@ -517,44 +518,38 @@ void FieldPanel::set_alpha(unsigned a)
 // @ 0x48d470
 void FieldPanel::update()
 {
-    FieldVisual* v = scene()->view[0];
     float p[2];
-    p[0] = v->f0;
-    p[1] = v->f4;
+    FieldVisual** view = scene()->view;
+    p[0] = view[0]->f0;
+    p[1] = view[0]->f4;
     scene()->set_xy(p);
 
     if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f) {
-        float q[2];                     // a copy of the stored size (0x48d4d4)
-        q[0] = tail.x;
-        q[1] = tail.y;
-        set_xy(q);
+        p[0] = tail.x;                  // a copy of the stored size (0x48d4d4)
+        p[1] = tail.y;
+        set_xy(p);
     } else {
-        float q[2];                     // none stored: the scene's width, our height (0x48d4f6)
-        q[0] = scene()->screen[0];
-        q[1] = screen[1];
-        set_xy(q);
+        p[0] = scene()->screen[0];      // none stored: the scene's width, our height (0x48d4f6)
+        p[1] = screen[1];
+        set_xy(p);
     }
 
-    if (!(scene()->screen[1] < screen[1])) {        // fcomp; test ah,5; jp (0x48d528): not shorter than us
-        float z[2];
-        z[0] = 0.0f;
-        z[1] = 0.0f;
-        scene()->view[0]->set_pos(z);           // view[0] re-read after the set_xy calls (0x48d587)
+    if (scene()->screen[1] < screen[1]) {           // fcomp; test ah,5; jp (0x48d528): shorter than us
+        p[1] = screen[1] - scene()->screen[1];
+        p[0] = 0.0f;
+        view[0]->set_pos(p);                    // re-read (0x48d543)
+        p[0] = scene()->screen[0];
+        p[1] = screen[1];
+        scene()->set_xy(p);
     } else {
-        float z[2];
-        z[0] = 0.0f;
-        z[1] = screen[1] - scene()->screen[1];
-        scene()->view[0]->set_pos(z);           // re-read (0x48d543)
-        float w[2];
-        w[0] = scene()->screen[0];
-        w[1] = screen[1];
-        scene()->set_xy(w);
+        p[0] = 0.0f;
+        p[1] = 0.0f;
+        view[0]->set_pos(p);                    // view[0] re-read after the set_xy calls (0x48d587)
     }
 
-    float m[2];
-    m[0] = screen[0] + e[0] + 0.01f;
-    m[1] = e[1];
-    mirror()->move_a(m);
+    p[0] = screen[0] + e[0] + 0.01f;
+    p[1] = e[1];
+    mirror()->move_a(p);
     draw();
 }
 
@@ -731,13 +726,12 @@ void* widget_mgr::set_mesh_matrix(int idx, const void* src)
     rgl::matrix m;
     rgl::identity_pos(&m);
     memcpy(&m, src, 0x30);
-    OvNode** nodes = (OvNode**)widgets._Myfirst;
-    if (nodes[idx]->s0) memcpy((char*)nodes[idx]->s0 + 0xcc, &m, 0x40);
-    if (nodes[idx]->s2) memcpy((char*)nodes[idx]->s2 + 0xcc, &m, 0x40);
-    if (nodes[idx]->s1) memcpy((char*)nodes[idx]->s1 + 0xcc, &m, 0x40);
-    if (nodes[idx]->s3) memcpy((char*)nodes[idx]->s3 + 0xcc, &m, 0x40);
-    if (nodes[idx]->s4) memcpy((char*)nodes[idx]->s4 + 0xcc, &m, 0x40);
-    return &nodes[idx];
+    if (((OvNode*)widgets[idx])->s0) memcpy((char*)((OvNode*)widgets[idx])->s0 + 0xcc, &m, 0x40);
+    if (((OvNode*)widgets[idx])->s2) memcpy((char*)((OvNode*)widgets[idx])->s2 + 0xcc, &m, 0x40);
+    if (((OvNode*)widgets[idx])->s1) memcpy((char*)((OvNode*)widgets[idx])->s1 + 0xcc, &m, 0x40);
+    if (((OvNode*)widgets[idx])->s3) memcpy((char*)((OvNode*)widgets[idx])->s3 + 0xcc, &m, 0x40);
+    if (((OvNode*)widgets[idx])->s4) memcpy((char*)((OvNode*)widgets[idx])->s4 + 0xcc, &m, 0x40);
+    return &widgets[idx];
 }
 
 // the widget `idx` is re-read from the manager's vector at every use (cl keeps no copy across the virtual calls)
@@ -750,17 +744,19 @@ void widget_mgr::set_color(int idx, unsigned argb)
         OW(idx)->type() != 6) {
         if (OW(idx)->type() == 4) {
             OW(idx)->m108->color = (OW(idx)->m108->color & 0xff000000) | argb;
+            unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
+            OW(idx)->set_color(&c);
         } else if (OW(idx)->type() == 8) {
             OW(idx)->m110->color = (OW(idx)->m110->color & 0xff000000) | argb;
             OW(idx)->m10c->color = (OW(idx)->m10c->color & 0xff000000) | argb;
+            unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
+            OW(idx)->set_color(&c);
         } else if (OW(idx)->type() == 7) {
             ((FieldPanel*)(void*)OW(idx))->set_color(argb);
             return;
         } else {
             return;
         }
-        unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
-        OW(idx)->set_color(&c);
     } else {
         unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
         OW(idx)->set_color(&c);

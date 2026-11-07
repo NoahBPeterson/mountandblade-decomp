@@ -8,3 +8,6 @@
 ../src/game/mission_ui2/slot_api.cpp  ?get_string@StringTable@@QAE?AUtstring@@HH@Z  0048e8f0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/slot_api.cpp  ?string_value@GameData@@QAE?AUtstring@@H@Z  0048e9e0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/slot_api.cpp  ?get@BattleTable@@QAEPAUBattleRec@@I@Z  0048ef20  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?count_props@Mission@@QAEHH@Z  0048ee20  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?find_prop@Mission@@QAEHHH@Z  0048ee90  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?retag_props@Mission@@QAEXHH@Z  0048ed60  /O2 /MT /Gy /TP

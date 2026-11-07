@@ -1,1 +1,0 @@
-004d12c0  107  uninitialized_copy_mission (std::_Uninit_copy for mission_type): the original has the template's try/catch EH frame (handler 0x547810) and its catch funclet reloads the allocator (mov ebx,[ebp+0x14]; mov ecx,ebx); with the try/catch written out ours keeps the allocator live from the try loop, so 2 instructions differ (52 vs 52).

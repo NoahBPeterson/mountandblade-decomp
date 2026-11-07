@@ -250,10 +250,11 @@ vector4 face_normal(const vector4* a, const vector4* b, const vector4* c)
     d.z = c->z - a->z;
     vector4 n;
     n.x = d.z * by - d.y * bz;
-    n.y = bz * d.x - d.z * bx;
+    n.y = bz * d.x - bx * d.z;
     n.z = d.y * bx - d.x * by;
-    n.normalize();
-    return n;
+    vector4 unit = n;
+    unit.normalize();
+    return unit;
 }
 
 // @ 0x4246f0
@@ -293,8 +294,8 @@ void rgl::world::add_tree(shape_base* s)
 // @ 0x4252c0
 void rgl::world::add_shape(shape_base* s)
 {
-    int lo[2], hi[2];
     vector4 t0, t1;
+    int lo[2], hi[2];
     to_cell((const float*)s->get_min(&t0), lo);
     to_cell((const float*)s->get_max(&t1), hi);
     for (int i = lo[0]; i <= hi[0]; i++)
@@ -445,18 +446,18 @@ void vec36::_Insert_n(iterator _Where, size_type _Count, const ground_v36& _Val)
 
 __forceinline ground_g136* copy_nonscalar(ground_g136* f, ground_g136* l, ground_g136* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
 
-// @ 0x424db0
-void vec136::_Insert_n(iterator _Where, size_type _Count, const ground_g136& _Val)
-{
-    INSERT_N_BODY(ground_g136)
-}
 // @ 0x424cc0
 void vec136::resize(size_type _Newsize, ground_g136 _Val)
 {
     if (size() < _Newsize)
-        insert(_Mylast, _Newsize - size(), _Val);
+        _Insert_n(_Mylast, _Newsize - size(), _Val);
     else if (_Newsize < size())
         erase(iterator_::mk(_Myfirst + _Newsize), iterator_::mk(_Mylast));
+}
+// @ 0x424db0
+void vec136::_Insert_n(iterator _Where, size_type _Count, const ground_g136& _Val)
+{
+    INSERT_N_BODY(ground_g136)
 }
 // @ 0x424d60
 vec136::iterator_ vec136::erase(iterator_ _First, iterator_ _Last)

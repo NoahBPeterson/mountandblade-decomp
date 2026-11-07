@@ -308,18 +308,13 @@ int Troop::nibble(int i)
 ItemRef Wielder::ranged_ref()
 {
     ItemRef r;
-    int it = a.item;
-    if (it < 0) {
-        r.item = -1;
-        return r;
+    r.item = -1;
+    if (a.item >= 0) {
+        if ((char)g_items[a.item].type_flags == itp_type_thrown)
+            r = a;
+        else
+            r = b;
     }
-    if ((char)g_items[it].type_flags == itp_type_thrown) {
-        r.item = a.item;
-        r.m4 = a.m4;
-        return r;
-    }
-    r.item = b.item;
-    r.m4 = b.m4;
     return r;
 }
 // @ 0x435260
@@ -358,11 +353,11 @@ void PlacedObj::reset()
 // @ 0x4353a0
 Blow* Blow::init()
 {
-    vector4 zero(0.0f, 0.0f, 0.0f);
-    vector4 unit(1.0f, 0.0f, 0.0f);
-    pos = zero;
-    dir = unit;
-    dir2 = unit;
+    vector4 v(0.0f, 0.0f, 0.0f);
+    pos = v;
+    v.x = 1.0f;
+    dir.x = v.x; dir.y = v.y; dir.z = v.z; dir.w = v.w;
+    dir2.x = v.x; dir2.y = v.y; dir2.z = v.z; dir2.w = v.w;
     flags = 0;
     attacker = -1;
     bone = 0;
@@ -683,7 +678,7 @@ void __cdecl rotate_scale_xy(vector4* out, const vector4* in, const float* angle
     t.y = ty; t.x = tx;
     t.normalize();
     float len = (float)sqrt(scale->x * scale->x + scale->y * scale->y);
-    t.x = len * t.x; t.y = len * t.y; t.z = scale->z;
+    t.x = t.x * len; t.y = t.y * len; t.z = scale->z;
     *out = t;
 }
 

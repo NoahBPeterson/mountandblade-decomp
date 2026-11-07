@@ -1864,7 +1864,7 @@ void Mission_s29840::fn_529d80()
     std::vector<PlacedObj>& recs = sc->recs;
     recs.resize(0);
     for (unsigned i = 0; i < records.size(); i++) {
-        PlacedObj* r = &records[i];
+        PlacedObj* r = &records[0] + i;
         if (r->m10 == 0) {
             recs.push_back(*r);
             r->m14 = (int)recs.size() - 1;
@@ -2550,18 +2550,7 @@ void Mission_s2b5c0::update_ui()
     g_mission_s2b5c0->f6738->f140 = 0;
 
     int m = g_game_s2b5c0->game_mode;
-    if (m != 0) {
-        if (m == 1 || m == 3 || m == 2) {
-            g_mission_s2b5c0->f65dc->f140 = 0;
-            g_mission_s2b5c0->f65e4->f140 = 0;
-            this->update_cursor();
-        } else if (m == 4) {
-            g_mission_s2b5c0->f6738->f140 = 1;
-            this->update_mode4();
-        }
-        goto L_bbc5;
-    }
-
+    if (m == 0) {
     if (g_game_s2b5c0->f1a20c != 0)
         return;
 
@@ -2580,13 +2569,9 @@ void Mission_s2b5c0::update_ui()
     g_editor_s2b5c0.update_checks();
     if (g_game_s2b5c0->f1a098 == 0) {
         g_editor_s2b5c0.refresh();
-        goto L_bb21;
+    } else {
+        goto L_bb4b;
     }
-
-L_bb4b:
-    g_mission_s2b5c0->f65dc->f140 = 0;
-    this->update_map();
-    goto L_bbc5;
 
 L_bb21:
     if (g_game_s2b5c0->f1a098 == 0 && g_game_s2b5c0->f1a0c8 == 0) {
@@ -2594,13 +2579,23 @@ L_bb21:
         this->update_dialog();
         goto L_bbc5;
     }
-    goto L_bb4b;
+
+L_bb4b:
+    g_mission_s2b5c0->f65dc->f140 = 0;
+    this->update_map();
+    goto L_bbc5;
+    } else if (m == 1 || m == 3 || m == 2) {
+        g_mission_s2b5c0->f65dc->f140 = 0;
+        g_mission_s2b5c0->f65e4->f140 = 0;
+        this->update_cursor();
+    } else if (m == 4) {
+        g_mission_s2b5c0->f6738->f140 = 1;
+        this->update_mode4();
+    }
 
 L_bbc5:
     if (g_game_s2b5c0->game_mode == 0 && g_game_s2b5c0->f1a098 == 0) {
-        long long now = g_ticks[this->f2b8];
-        long long prev = this->f2c0;
-        if ((float)(now - prev) * 1e-05f > 0.05f) {
+        if ((float)(g_ticks[this->f2b8] - this->f2c0) * 1e-05f > 0.05f) {
             this->pick_entity();
             this->f2c0 = g_ticks[this->f2b8];
         }
@@ -2759,8 +2754,8 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
     matrix m;
     cap.transform((const ::pos*)identity_pos(&m));
 
-    vector4 p;
     float b[2] = { far_pt.x, far_pt.y };
+    vector4 p;
     p.x = near_pt.x;
     p.y = near_pt.y;
 

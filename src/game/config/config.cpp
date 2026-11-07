@@ -600,14 +600,12 @@ void Config::split_line(const char* line, tstring* first, tstring* second)
 
     char ch;
     const char* p = line;
-    for (;;) {
+    const char* start = line + 1;
+    do {
         ch = *p;
         p++;
-        if (ch == 0) {
-            break;
-        }
-    }
-    int count = (int)(p - (line + 1));
+    } while (ch != 0);
+    int count = (int)(p - start);
     int state = 0;
 
     for (; i < count; i++) {
@@ -1223,12 +1221,13 @@ void gui_manager::render_log(rgl::scene* pass, const float* depth)
                 a = 0;
             else if (a >= 255)
                 a = 254;
-            meshA[idx].color = (a << 24) | (col & 0xffffff);
+            unsigned ca = (a << 24) | (col & 0xffffff);
             int b = (int)((unsigned)(255 - a) * 2 / 3);
             if (b < 0)
                 b = 0;
             else if (b >= 255)
                 b = 254;
+            meshA[idx].color = ca;
             meshB[idx].color = ((b | 0xffffff00) << 8 | b) << 8 | b;
             meshA[idx].render(pass, m);       // 0x413750
             meshB[idx].render(pass, m);
@@ -1288,6 +1287,7 @@ void ini_file::parse_line(const char* line, tstring& key, tstring& value)
 
     char ch;
     const char* p = line;
+    const char* start = line + 1;
     for (;;) {
         ch = *p;
         p++;
@@ -1295,7 +1295,7 @@ void ini_file::parse_line(const char* line, tstring& key, tstring& value)
             break;
         }
     }
-    int len = (int)(p - (line + 1));
+    int len = (int)(p - start);
     int state = 0;
     for (; i < len; i++) {
         char c = line[i];
@@ -1452,19 +1452,18 @@ void psys_record::load(stream_base& a)
     RF(a, o + 0x38);
     RF(a, o + 0x3c);
     RF(a, o + 0x40);
-    int* p = (int*)(o + 0x44);
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(a, p), p + 1); p += 2;
-    RF(RF(RF(a, p), p + 1), p + 2); p += 4;     // two x,y,z triples 0x10 apart (+0x94, +0xa4: 0x4bdb01), w unread
-    RF(RF(RF(a, p), p + 1), p + 2);
+    { float* p = (float*)(o + 0x44); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x4c); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x54); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x5c); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x64); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x6c); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x74); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x7c); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x84); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x8c); RF(RF(a, p), p + 1); }
+    { float* p = (float*)(o + 0x94); RF(RF(RF(a, p), p + 1), p + 2); }   // two x,y,z triples 0x10 apart, w unread
+    { float* p = (float*)(o + 0xa4); RF(RF(RF(a, p), p + 1), p + 2); }
     RF(a, o + 0xb4);
     RF(a, o + 0xb8);
     *(float*)(o + 0xb8) *= 0.017453292f;
@@ -1719,7 +1718,10 @@ void music_player::play(int rec, int* slot)
         if (!s) s = (const char*)r + 0x1c;
         sprintf(path, "music\\%s", s);
     }
-    stream[*slot] = FSOUND_Stream_Open(path, (((music_res*)((char*)this + 0x20 * track[*slot]))->flags & 0x40) ? 0x1000002 : 0x1000000, 0, 0);
+    unsigned mode = 0x1000000;
+    if (((music_res*)((char*)this + 0x20 * track[*slot]))->flags & 0x40)
+        mode = 0x1000002;
+    stream[*slot] = FSOUND_Stream_Open(path, mode, 0, 0);
     active[*slot] = 1;
     opened[*slot] = 0;
     volume[*slot] = 10000;

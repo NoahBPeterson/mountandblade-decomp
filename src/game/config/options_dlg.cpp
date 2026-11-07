@@ -81,17 +81,17 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
     if (*p == '/' && p[1] == '/')
         p += 2;
     char* start = p;
-    char c = *p;
+    char c = *start;
     while (isalpha(c) || isdigit(c) || c == '-' || c == '.' ||
            c == ':') {
-        if (*p == 0)
+        if (*start == 0)
             break;
-        p++;
-        c = *p;
+        start++;
+        c = *start;
     }
-    *p = '\0';
-    lstrcpynA(host, start, host_n);
-    lstrcpynA(path, url + (p - s), path_n);
+    *start = '\0';
+    lstrcpynA(host, p, host_n);
+    lstrcpynA(path, url + (start - s), path_n);
     char* ph = strchr(host, ':');
     if (ph) {
         *ph = '\0';

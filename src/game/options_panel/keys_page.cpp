@@ -355,22 +355,29 @@ void KeysPage::refresh()
 // @ 0x4d7270
 void layout_row(MissionUi* row, const tstring* text, float bx, float by, float bz, float bw)
 {
-    float s = bx * g_k065;
-    int len;
-    int maxn = 0x800;
-    vector2 scale;
     int buf[0x800];
-    decode_utf8(text, &len, buf, &maxn);
-    float tw = len * s * g_k039;
+    float s = bx * g_k065;
+    float tw;
+    {
+        int len;
+        int maxn = 0x800;
+        decode_utf8(text, &len, buf, &maxn);
+        tw = (float)len * s * g_k039;
+    }
     float room = bx * by - bx / bz * bw;
     if (tw > room)
-        s *= room / tw;
-    scale.x = s;
-    scale.y = s;
-    row->set_size((const float*)&scale);
-    vector2 pos;
-    pos.x = 0;
-    pos.y = bx * 0.5f - s * g_chunk_scale;
-    row->set_offset((const float*)&pos);
-    { char r[8]; row->set_text((float*)r, &(*text)); }
+        s = room / tw * s;
+    {
+        vector2 scale;
+        scale.x = s;
+        scale.y = s;
+        row->set_size((const float*)&scale);
+        {
+            vector2 pos;
+            pos.x = 0;
+            pos.y = bx * 0.5f - s * g_chunk_scale;
+            row->set_offset((const float*)&pos);
+            { char r[8]; row->set_text((float*)r, &(*text)); }
+        }
+    }
 }

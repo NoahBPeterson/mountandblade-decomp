@@ -132,16 +132,24 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
 // @ 0x47fb10
 void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
 {
-    weights[skin_vec.first[cur].n_face_keys - 1] = 1.0f;
+    // the original source held skin_vec as a std::vector<Skin>; SkinVec (skin.h) mirrors its four words, and
+    // operator[] is what materialises the element address (0x47fb10: add eax,[ecx+1ch])
+    std::vector<Skin>& sv = *(std::vector<Skin>*)&skin_vec;
+    weights[sv[cur].n_face_keys - 1] = 1.0f;
 
     int v = variant;
     if (flag != 0) {
-        int* vals = ((Ramp*)&skin_vec.first[cur].face_textures[0])[material].vals;
-        unsigned n = vals ? ((Ramp*)&skin_vec.first[cur].face_textures[0])[material].vals_end - vals : 0;
-        v = vals[(unsigned)variant % n];
+        E176* r = &sv[cur].face_textures[material];
+        int* vals = r->v._Myfirst;
+        unsigned n;
+        if (!vals)
+            n = 0;
+        else
+            n = r->v._Mylast - vals;
+        v = sv[cur].face_textures[material].v[(unsigned)variant % n];
     }
 
-    skin_vec.first[cur].collect(a, b, c, weights, item, set, material, v, scale, time);
+    sv[cur].collect(a, b, c, weights, item, set, material, v, scale, time);
 }
 
 // The binary reader on the stack: its constructor and destructor are expanded inline in the original (stream_inline.h);

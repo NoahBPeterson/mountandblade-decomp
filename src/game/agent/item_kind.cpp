@@ -32,24 +32,24 @@ rgl::mesh* ItemKind::mesh_for(unsigned __int64 cls, int bit)
 {
     rgl::mesh* none = (rgl::mesh*)0;
     unsigned __int64 mask = 1i64 << bit;
+    int found = -1;
     int n = mesh_count;
-    bit = -1;
+    int i = 0;
     if (n > 0) {
-        int i = 0;
         do {
             unsigned __int64 c = meshes[i].flags & 0xF000000000000000ui64;
             if (c != 0 && c == cls) {
-                if (bit == -1) bit = i;
-                if (meshes[i].flags & mask) bit = i;
+                if (found == -1) found = i;
+                if (meshes[i].flags & mask) found = i;
             }
             i++;
         } while (i < n);
-        if (bit != -1)
-            return (rgl::mesh*)g_resmgr.get_object(&meshes[bit].name);
-        return none;
+        if (found != -1)
+            none = (rgl::mesh*)g_resmgr.get_object(&meshes[found].name);
     }
     return none;
 }
+
 // @ 0x433d90
 bool ItemKind::is_ranged()
 {

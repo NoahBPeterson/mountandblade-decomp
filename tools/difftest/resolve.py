@@ -1060,7 +1060,10 @@ class Resolver:
                         work.append((tsec, sub_eh))
                         continue
                     va, how = (None, None)
-                    if not s.name.startswith(EH_PREFIXES) and s.cls == 2 and not s.name.startswith(LOCAL_CONST_PREFIXES[:4]):
+                    # a file-static variable (`static int g;  // 0x5e259c`) is the original's global too, but only an
+                    # annotation can say where: it has no external name
+                    static_data = s.cls == 3 and not s.naux and s.name.startswith("_") and coff.sections[tsec].name in (".bss", ".data")
+                    if not s.name.startswith(EH_PREFIXES) and (s.cls == 2 or static_data) and not s.name.startswith(LOCAL_CONST_PREFIXES[:4]):
                         va, how = try_single(s)
                     if va is None and s.name.startswith("??_C@"):
                         tsec_o = coff.sections[tsec]

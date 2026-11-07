@@ -105,24 +105,27 @@ void TerrainPage::simulate(float dt)
 // The original keeps sin/cos in x87 registers, spills one float copy of the sine and the m[1]/m[3]
 // products to the stack: m[0]/m[2] therefore round their products once, m[1]/m[3] twice, and only
 // the m[2] sine product uses the unrounded register value.  The volatile temps reproduce exactly
-// that (the values are bit-identical to the original), and the stores go through unsigned copies in
-// the original's order (the last one leaves the new m[2] in eax, which a caller may read).
+// that (the values are bit-identical to the original); the direct stores keep the original's order
+// (the last one leaves the new m[2] in eax, which a caller may read).
 void rot2::rotate_2x2(float angle)
 {
-    float s = sinf(angle), c = cosf(angle);
-    volatile float sr = s;                                  // the float32 copy the original spills
-    float x = m[0], y = m[1], z = m[2], w = m[3];
-    volatile float a = c * y, b = sr * w;                   // m[1] products (spilled -> rounded)
-    volatile float d = c * w, e = sr * y;                   // m[3] products (spilled -> rounded)
-    float r0 = c * x + sr * z;
+    float s = sinf(angle);
+    volatile float sr = s;
+    float c = cosf(angle);
+    volatile float t0 = c * m[0];
+    volatile float t2 = sr * m[2];
+    volatile float a = c * m[1];
+    volatile float b = sr * m[3];
+    float r0 = t0 + t2;
     float r1 = a + b;
-    float r2 = c * z - s * x;                               // the unrounded sine, as in the original
+    volatile float e = sr * m[1];
+    volatile float d = c * m[3];
+    float r2 = c * m[2] - s * m[0];
     float r3 = d - e;
-    unsigned* mi = (unsigned*)m;
-    mi[0] = *(unsigned*)&r0;
-    mi[1] = *(unsigned*)&r1;
-    mi[3] = *(unsigned*)&r3;
-    mi[2] = *(unsigned*)&r2;
+    m[0] = r0;
+    m[1] = r1;
+    m[2] = r2;
+    m[3] = r3;
 }
 
 // @ 0x4f3be0

@@ -11,7 +11,7 @@ For each row:
 1. Measure: .venv/bin/python tools/matching/insn_align.py {MODULE}.cpp 0x<va> --show
    It aligns the original against ours. Reason about the first real difference; one early structural error often shifts registers through the rest of a function.
 2. The usual causes: the original source had more structure than ours. Look for inline helpers that were flattened, argument temporaries, block scopes, destructors, references, real STL calls, a declared type or signature that is wrong, a different evaluation order, a missing or extra local.
-3. Change only that function, then re-measure. Budget: at most 5 rounds on one row, then move on. Don't try permutations blindly.
+3. Change only that function, then re-measure. Budget: keep going while the distance keeps falling, up to about 20 rounds on one row; move on after 6 rounds without progress. Don't try permutations blindly.
 4. When it reaches 0 differences: .venv/bin/python tools/matching/chk.py {MODULE}.cpp <va> prints a manifest row. Add that row to {MODULE}.manifest.txt and remove the va's line from {MODULE}.nonmatching.txt.
 5. If it doesn't reach 0 but insn_align shows fewer differences than when you started on that row, keep the closer version. Before the first edit to a row, write that function's text unchanged to work/match/ds_{OBJ}_<va>.prev.txt so it can be restored. Update the row's line in {MODULE}.nonmatching.txt with the new distance. If the distance didn't fall, restore the previous text exactly. Do not run tools/difftest/equiv.py: the orchestrator checks kept versions on another machine after this wave and restores any that fail, so the behaviour must really be the same. The goal is still byte-exact: keeping a closer version is only a step toward it.
 
@@ -21,6 +21,8 @@ It must report every row of the module byte-exact. If a change broke another row
 Rules:
 - A change must preserve the function's behaviour. A byte match proves that apart from relocations, so check you call the same function and use the same global as the original. Field offsets and callee addresses in the alignment output must agree.
 - Never write a literal image address in code (a vtable, global or function as a number, such as (void*)0x5924a0). The build must not depend on the original exe, and a gate rejects it. Use the real class, global or function, declared locally if needed; an address belongs only in a comment.
+- Never add an `extern` for a global or constant that nothing in src/ defines, even with a `// 0x...` comment. The match check can't see this, but the build's link gate rejects it, because the game must not read the original exe's data. Search src/ for the existing definition and use that exact declaration, including const. If there is none, define the value in your module (`float g_x = 0.01f;`), or use the real field (`g_terrain.flags14`), or leave the row.
+- Never add a manifest row whose symbol isn't a real function name.
 - Never edit a header. If a function needs a shared-header change, leave the row and report what it needs.
 - Never change a call so that it uses a different calling convention from the callee's definition.
 - No inline asm, no per-function pragma tricks, no volatile added to force a result: nothing that could not have been in the original source.

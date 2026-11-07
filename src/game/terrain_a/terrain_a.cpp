@@ -330,26 +330,28 @@ void Terrain::set_field_b(const float* p)
 float Terrain::spec_weight(int* spec, int* type, int* mode)
 {
     ptype* g = &g_ptypes[*spec];
-    int m = *mode;
     int t;
-    if (m == 0 && (g->flags & 0x400000) == 0)
+    if (*mode == 0 && (g->flags & 0x400000) == 0)
         return 0.0f;
-    if (m == 1) {
+    if (*mode == 1) {
         __int64 f = g->flags;
         if ((f & 0x400000) != 0 || (f & 0x80000) != 0)
             return 0.0f;
     }
-    if ((m != 2 || (g->flags & 0x80000) != 0) &&
-        (t = *type, t != 2 || (g->flags & 0x8) != 0) &&
-        (t != 10 || (g->flags & 0x800) != 0) &&
-        (t != 4 || (g->flags & 0x10) != 0) &&
-        (t != 12 || (g->flags & 0x1000) != 0) &&
-        (t != 5 || (g->flags & 0x20) != 0) &&
-        (t != 13 || (g->flags & 0x2000) != 0) &&
-        (t != 3 || (g->flags & 0x4) != 0) &&
-        (t != 11 || (g->flags & 0x400) != 0) &&
-        ((t & 7) != 7 || (g->flags & 0x4) != 0))
-        return 1.0f;
+    if (*mode != 2 || (g->flags & 0x80000) != 0) {
+        t = *type;
+        if (t != 2 || (g->flags & 0x8) != 0) {
+        if (t != 10 || (g->flags & 0x800) != 0) {
+        if (t != 4 || (g->flags & 0x10) != 0) {
+        if (t != 12 || (g->flags & 0x1000) != 0) {
+        if (t != 5 || (g->flags & 0x20) != 0) {
+        if (t != 13 || (g->flags & 0x2000) != 0) {
+        if (t != 3 || (g->flags & 0x4) != 0) {
+        if (t != 11 || (g->flags & 0x400) != 0) {
+        if ((t & 7) != 7 || (g->flags & 0x4) != 0)
+            return 1.0f;
+        }}}}}}}}
+    }
     return 0.0f;
 }
 

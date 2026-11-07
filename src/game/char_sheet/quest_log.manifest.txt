@@ -1,1 +1,3 @@
 ../src/game/char_sheet/quest_log.cpp  ?make_quest_list@@YAPAUCamera@@PAUContainerBase@@PBM1PAUUiD@@@Z  004eea90  /O2 /MT /Gy /TP
+../src/game/char_sheet/quest_log.cpp  ?make_scroll_track@@YAPAUUiD@@PAUContainerBase@@MMMM@Z  004ee910  /O2 /MT /Gy /TP
+../src/game/char_sheet/quest_log.cpp  ?refresh@Rec454@@QAIXXZ  004ee840  /O2 /MT /Gy /TP

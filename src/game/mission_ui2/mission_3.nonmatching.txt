@@ -1,16 +1,14 @@
-0048c3c0	11	shl ecx,5 / lea index setup and argument push order for remove_row differ; equiv PASS
 0048c5c0	477	float/random-item selection codegen differs (large body, register allocation)
 0048c849	296	second Ghidra function start inside Party::add_members (0x48c840, byte-identical to its 357-byte symbol); suggest symbols/not_functions.txt
 0048ca30	366	large body, register allocation and scheduling differ
 0048cc40	476	large body, register allocation and scheduling differ
 0048cec0	60	semantically equivalent body; cl register choice / instruction order differs from the original
-0048cf40	79	semantically equivalent body; cl register choice / instruction order differs from the original
+0048cf40	75	semantically equivalent body; cl register choice / instruction order differs from the original
 0048d020	703	MissionUi::update_bounds: original uses different stack slots and register choice for the vec2 temporaries
 0048d350	8	ecx/edx register swap; equiv UNSUPPORTED (fake-arity) [2026-11-05 near-miss retry] set_color: ecx/edx rotation only; operand order and a named temporary did not move it.
 0048d3c0	9	ecx/edx register swap; equiv UNSUPPORTED (fake-arity)
-0048d470	328	semantically equivalent body; cl register choice / instruction order differs from the original
+0048d470	311	semantically equivalent body; cl register choice / instruction order differs from the original
 0048d650	4	temp register eax vs ecx, allocator-only: the only differing bytes are 0048d662/665/667/66a (mov/sub/sar/cmp). The original computes _Mylast-_Myfirst in eax with a dead ecx; cl 13.10 /O2 always recycles ecx (this) there, for every source form of the same three tests (30+ variants: locals, reference, inline helper, pointer compare, reordered tests, int/unsigned, member size()). /O1 and /O2 /Os do pick eax (byte-identical prefix) but emit the size-optimised shared epilogue (jmp past the failure block) instead of the original's duplicated tails. Forcing a 64-bit index removes the ecx clobber but adds a two-word compare whose high-word branch is unreachable (cfg edge can never be covered), so no equiv PASS either. Equivalence fails only on "ecx (untouched by the original)"; return value, edx/eax, esp and memory all agree.
 0048d690	10	one extra dead stack store in the original; otherwise identical
-0048db20	223	semantically equivalent body; cl register choice / instruction order differs from the original
-0048dc30	166	semantically equivalent body; cl register choice / instruction order differs from the original
+0048db20	218	semantically equivalent body; cl register choice / instruction order differs from the original
 0048de00	677	semantically equivalent body; cl register choice / instruction order differs from the original

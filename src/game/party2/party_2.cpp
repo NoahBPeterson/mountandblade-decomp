@@ -1084,11 +1084,9 @@ void throw_stub_33b4()
 void NavData::reset()
 {
     if (m64 > 1000000000) {
-        int cnt = (int)((unsigned)cells.last - (unsigned)cells.first) / 0x88;
-        if ((unsigned)cells.first != 0) {
-            for (unsigned i = 0; i < (unsigned)cnt; i++) {
-                ((NavRec*)cells.first)[i].gen() = 0;
-            }
+        for (unsigned i = 0; i < cells.size(); i++) {
+            std::vector<NavRec>::iterator it = (*(std::vector<NavRec>*)&cells).begin() + i;
+            it->gen() = 0;
         }
         m64 = 0;
     }
@@ -1506,8 +1504,8 @@ void Party::step_route()
             d = *(vec2*)((char*)this + 0x197c + i * 0x10);
             goal = *(int*)((char*)this + 0x970 + i * 4);
         } else {
-            d.y = goal_y;
             d.x = goal_x;
+            d.y = goal_y;
             goal = f5984;
         }
         float lim;
@@ -1525,15 +1523,15 @@ void Party::step_route()
         if (dist < lim && ((rgl::world*)g_script.level)->ground->can_move(cur, pos.x, pos.y, goal, &d.x, 0, tries))
             cursor = i + 1;
     }
-    if (cursor < n) {
-        int off = cursor * 0x10;
-        int vv = *(int*)((char*)this + 0x196c + off);
-        dest_xi = vv;
-        dest_yi = *(int*)((char*)this + 0x1970 + off);
+    if (cursor >= n) {
+        moving = z;
+        f5988 = z;
         return;
     }
-    moving = z;
-    f5988 = z;
+    int off = cursor * 0x10;
+    int vv = *(int*)((char*)this + 0x196c + off);
+    dest_xi = vv;
+    dest_yi = *(int*)((char*)this + 0x1970 + off);
 }
 
 
@@ -1630,17 +1628,14 @@ void GameData::refresh_party(unsigned id)
     int idx = m->lookup(id);
     if (idx < 0)
         return;
-    Party** pp = &m->pages[(unsigned)idx >> 4];
-    if ((*pp)[idx & 0xf].type != 1)
+    if (m->atu(idx)->type != 1)
         return;
     int j = m->lookup(id);
-    Party** pq = &m->pages[j >> 4];
-    Party* p = &(*pq)[j & 0xf];
+    Party* p = m->at(j);
     for (int i = 0; i < p->nstacks; i++) {
         Stack* st = &p->stacks[i];
-        int c = st->count;
-        if (st->f14 > c)
-            st->f14 = c;
+        if (st->f14 > st->count)
+            st->f14 = st->count;
     }
     for (int i = p->nstacks - 1; i >= 0; i--) {
         if (p->stacks[i].count <= 0) {
@@ -2078,22 +2073,17 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
 {
     PartyMgr* pm = &parties;
     int idx = pm->lookup(party);
-    Party* p = pm->pages._Myfirst[idx >> 4] + (idx & 0xf);
+    Party* p = pm->pages[idx >> 4] + (idx & 0xf);
     event_rec r;
     r.p = *(const Pos4i*)pos;
     r.angle = *src;
     int a = 0, b = 0, c = 0, d = 0;
     r.f14 = 0;
     count_units(party, &a, &b, &c, &d);
-    EventFlags fl;
-    fl.all = 0;
-    fl.f.low = (a + c) & 0xff;
-    fl.f.high = rand() % 16;
-    int troop = p->owner;
-    if (troop == -1)
-        troop = 0xff;
-    fl.f.mid = troop;
-    r.flags = fl;
+    r.flags.all = 0;
+    r.flags.f.low = (a + c) & 0xff;
+    r.flags.f.high = rand() % 16;
+    r.flags.f.mid = (p->owner == -1) ? 0xff : p->owner;
     init_event((E92*)&r);
     GD(std::vector<E92>, 0x13a60).push_back(*(E92*)&r);
 }
@@ -2286,7 +2276,8 @@ void Party::leave_battle()
     if (f8c8 < 0 || !f8cc) {
         if (f88 >= 0) {
             unsigned bi = (unsigned)f88;
-            BattleRec* b = (BattleRec*)((char*)battles()->pages[bi >> 4] + (bi & 15) * 0x98);
+            std::vector<BattleRec*>& pages = *(std::vector<BattleRec*>*)((char*)battles() + 0x14);
+            BattleRec* b = (BattleRec*)((char*)pages[bi >> 4] + (bi & 15) * 0x98);
             b->detach();
         }
     } else {

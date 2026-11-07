@@ -1381,7 +1381,8 @@ stream_base& read_entry(stream_base& s, RecH& e)
     int& n = e.s.a;
     s.r_int(&n);
     struct Blk40 { char b[0x40]; };
-    e.s.ptr = (int*)new Blk40[n];
+    int cnt = n;
+    e.s.ptr = (int*)new Blk40[cnt];
     for (int i = 0; i < n; i++)
         psys_record::read(s, (char*)&((Blk40*)e.s.ptr)[i]);
     if (e.s.b & 0xff000000)
@@ -1394,18 +1395,7 @@ AnimSet g_anim_set;                                     // 0xa76628 (.bss; no co
 
 AnimSet::~AnimSet()
 {
-    RecH* o = data;
-    if (o == 0)
-        return;
-    int n = ((int*)o)[-1];
-    RecH* e = o + n;
-    for (int i = n - 1; i >= 0; i--) {
-        e--;
-        delete[] e->s.ptr;
-        e->s.name.~tstring();
-        e->name.~tstring();
-    }
-    delete[] ((char*)o - 4);
+    delete[] data;
 }
 
 // @ 0x4c2250
@@ -1413,7 +1403,7 @@ int __cdecl entry_vec_resize(stream_base* sp, AnimSet* self)
 {
     stream_base& s = *sp;
     AnimSet* t = self;
-    delete[] t->data;    // 0x4315d0 (??_ERecH)
+    delete[] t->data;
     s.r_int(&t->count);
     t->data = new RecH[t->count];
     for (int i = 0; i < t->count; i++)

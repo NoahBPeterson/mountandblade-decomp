@@ -198,8 +198,8 @@ void MissionCtx::update_parties()
 int MissionCtx::count_hero_items()
 {
     GameData* g = g_game;
-    PartyMgr* m = &g->parties;
-    Party* p = party_at(m, m->lookup(g->f78));
+    PartyMgr& m = g->parties;
+    Party* p = m.at(m.lookup(g_game->f78));
     int n = 0;
     int i = 0;
     Stack* s = p->stacks;

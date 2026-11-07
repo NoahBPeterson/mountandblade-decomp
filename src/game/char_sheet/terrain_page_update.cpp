@@ -164,11 +164,8 @@ void TerrainPage::copy_clipboard()
         if (h) {
             EmptyClipboard();
             char* p = (char*)GlobalLock(h);
-            const char* src = s.buf;
-            if (src == 0)
-                src = (const char*)&s.buf;            // an empty string reads as the string object itself
-            memcpy(p, src, s.len);
-            p[s.len] = 0;
+            memcpy(p, s.c_str(), s.len);
+            s.len[p] = '\0';
             GlobalUnlock(h);
             SetClipboardData(CF_TEXT, h);
         }

@@ -21,11 +21,8 @@ void FaceGen::update_view(int unused)
     identity_pos((pos*)&m);
     float angle = 1.5707964f;
     ((rgl::matrix*)&m)->rotate_about_s(&angle);
-    vector4 t;
-    t.x = m.u.x * zoom;
-    t.y = m.u.y * zoom;
-    t.z = m.u.z * zoom;
-    m.o.x = t.x + m.o.x;
+    vector4 t = m.u * zoom;
+    m.o.x = m.o.x + t.x;
     m.o.y = t.y + m.o.y;
     m.o.z = t.z + m.o.z;
     rgl::frustum* f = &fr;
@@ -136,17 +133,14 @@ SkinVec::~SkinVec()
 // @ 0x4eb860
 void BigArray::erase(Skin** out, Skin* first, Skin* last)
 {
-    Skin** fp = &first;
-    if (*fp != last) {
-        Skin* p = copy_configs_forward(last, this->end, *fp);
+    if (first != last) {
+        Skin* p = ((Skin* (__cdecl*)(Skin*, Skin*, Skin*, Skin**))copy_configs_forward)(last, this->end, first, out);
         Skin* e = this->end;
-        while (p != e) {
+        for (; p != e; ++p)
             p->~Skin();
-            ++p;
-        }
         this->end = p;
     }
-    *out = *fp;
+    *out = first;
 }
 
 // ---- event forwarding -----------------------------------------------------------------------------------
@@ -244,31 +238,31 @@ HRESULT GameApp::Render()
 // @ 0x4eb660
 void Animator::pack_state(PackedState* out)
 {
-    out->a = out->b = out->c = out->d = 0;
-    out->a = (unsigned __int64)(item + 1);
+    for (int k = 0; k < 4; k++)
+        ((unsigned __int64*)out)[k] = 0;
+    out->a |= (unsigned __int64)(item + 1);
     out->a |= (unsigned __int64)(set + 1) << 6;
     out->a |= (unsigned __int64)material << 12;
     out->a |= (unsigned __int64)variant << 18;
     out->a |= (unsigned __int64)(int)(time * 63.0f) << 24;
     out->a |= (unsigned __int64)(int)(scale * 63.0f) << 30;
-    unsigned __int64* w = (unsigned __int64*)out;
-    int bit = 0;
-    float* v = weights;
-    for (int i = 0; i < skin_vec.first[cur].n_face_keys; i++) {
-        int sh = bit;
-        int wi = 1;
-        if (sh >= 0x3f) {
-            sh -= 0x3f;
-            wi = 2;
-        }
-        float fv = *v * 7.0f;
-        int fi = grid_count(fv);
-        w[wi] |= (unsigned __int64)fi << sh;
-        bit += 3;
-        ++v;
+    int i = 0;
+    if (i < skin_vec.first[cur].n_face_keys) {
+        float* v = &weights[i];
+        do {
+            int wi = 1;
+            int sh = i * 3;
+            if (sh >= 0x3f) {
+                wi = 2;
+                sh -= 0x3f;
+            }
+            float fv = *v * 7.0f;
+            int fi = grid_count(fv);
+            ((unsigned __int64*)out)[wi] |= (unsigned __int64)fi << sh;
+            ++v;
+        } while (++i < skin_vec.first[cur].n_face_keys);
     }
 }
-
 // @ 0x4ebb80
 
 #include "../window_mgr.h"

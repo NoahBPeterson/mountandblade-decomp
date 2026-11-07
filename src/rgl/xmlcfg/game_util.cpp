@@ -261,21 +261,22 @@ void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread)
     ang = ang + ang;
     float c = cos(ang);
     float s = sin(ang);
-    float x1 = c * 1.0f - s * 0.0f;
-    float y1 = c * 0.0f + s;
+    vector4 v1 = vector4(c * 1.0f - s * 0.0f, c * 0.0f + s, 0.0f);
     float phi = (float)(rand() % 0x3dc9) * 0.00039724255f;
     float c2 = cos(phi);
     float s2 = sin(phi);
-    float B = y1 * s2 + c2 * 0.0f;
-    float A = y1 * c2 - s2 * 0.0f;
+    float B = v1.y * s2 + c2 * 0.0f;
+    float A = v1.y * c2 - s2 * 0.0f;
     rgl::rot3 m;
     m.f = dir;
     m.u = vector4(0.0f, 0.0f, 1.0f);
     ((matrix*)&m)->orthonormalize();
-    float px = m.u.x * A + m.f.x * x1;
+    float px = m.u.x * A + m.f.x * v1.x;
+    float py = m.u.y * A + m.s.y * B + m.f.y * v1.x;
+    float pz = m.u.z * A + m.s.z * B + m.f.z * v1.x;
     out->x = px + m.s.x * B;
-    out->y = m.u.y * A + m.s.y * B + m.f.y * x1;
-    out->z = m.u.z * A + m.s.z * B + m.f.z * x1;
+    out->y = py;
+    out->z = pz;
 }
 
 // @ 0x432da0

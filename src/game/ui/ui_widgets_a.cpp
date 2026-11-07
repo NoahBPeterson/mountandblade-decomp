@@ -109,18 +109,22 @@ float* MediumButton::set_text(float* out, const tstring* s)
     const int maxn = 0x800;
     decode_utf8(s, &len, buf, &maxn);
     float w = (float)len * scale * 0.39f;
-    float avail = sw - h * 1.1805556f;
-    if (w > avail)
-        scale = avail / w * scale;
-    float size[2];
-    size[0] = scale;
-    size[1] = scale;
-    set_size(size);
-    float pos[2];
-    pos[0] = 0.0f;
-    pos[1] = h * 0.5f - scale * 0.3f;
-    set_offset(pos);
-    return MissionUi::set_text(out, s);
+    if (w > sw - h * 1.1805556f)
+        scale = (sw - h * 1.1805556f) / w * scale;
+    {
+        float size[2];
+        size[0] = scale;
+        size[1] = scale;
+        set_size(size);
+    }
+    {
+        float pos[2];
+        pos[0] = 0.0f;
+        pos[1] = h * 0.5f - scale * 0.3f;
+        set_offset(pos);
+    }
+    MissionUi::set_text(out, s);
+    return out;
 }
 
 // @ 0x48b4a0

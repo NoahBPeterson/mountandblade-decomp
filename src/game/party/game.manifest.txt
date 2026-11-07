@@ -26,3 +26,5 @@
 ../src/game/party/game.cpp  ?load_scene_parties@Game@@QAEXPAUstream_base@@@Z  0051eaa0  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ??0Game@@QAE@XZ  0051cfa0  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?load_state@Game@@QAEXPAUstream_base@@@Z  0051dbd0  /O2 /MT /Gy /TP
+../src/game/party/game.cpp  ?clear@SpriteTable@@QAEXXZ  0051ea10  /O2 /MT /Gy /TP
+../src/game/party/game.cpp  ?read@SpriteTable@@QAEXPAUstream_base@@H@Z  0051e840  /O2 /MT /Gy /TP

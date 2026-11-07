@@ -139,13 +139,16 @@ int Slot::is_ready(int i)
 void Slot::update(float dt)
 {
     bool ch = false;
-    memcpy(prev, down, sizeof down);
+
+    for (int i = 0; i < 0x100; i++)
+        prev[i] = down[i];
     read_keys();
     read_state();
     float f = 1.0f - dt * 0.14f;
-    if (0.2f > f)
-        f = 0.2f;
-    float g = f818 * f;
+    float fc = f;
+    if (0.2f > fc)
+        fc = 0.2f;
+    float g = f818 * fc;
     f818 = g;
     if (0.2f > f)
         f = 0.2f;
@@ -168,9 +171,14 @@ void Slot::update(float dt)
     }
 }
 
-// @ 0x487b00  (custom register convention in the original: tstring* s in edi, int* out_len in edx)
+// @ 0x487b00
+// The original body uses a static convention cl 13.10 does not choose for this shape: tstring* s in edi,
+// int* out_len in edx (cached in ebp), i in eax, n in esi, with buf/maxn on the stack and s->buf reloaded
+// per arm. Every argument order and spelling tested gives out_len->edi / s->edx / i->esi (230 bytes vs 252),
+// so the declaration is kept at the natural order and only the natural convention is reachable (see
+// slot.nonmatching.txt row 00487b00).
 const int g_max_chars = 8192;                           // 0x59095c
-static NOINL void decode_utf8(int* out_len, const tstring* s, int* buf, const int* maxn)
+static NOINL void decode_utf8(const tstring* s, int* out_len, int* buf, const int* maxn)
 {
     *out_len = 0;
     int n = s->len;
@@ -204,7 +212,7 @@ static NOINL void decode_utf8(int* out_len, const tstring* s, int* buf, const in
         } while (i < n);
     }
 }
-void use_decode(const tstring* s, int* buf) { int len; decode_utf8(&len, s, buf, &g_max_chars); }
+void use_decode(const tstring* s, int* buf) { int len; decode_utf8(s, &len, buf, &g_max_chars); }
 
 // @ 0x487c00
 // The widget base's destructor: the five child meshes are deleted through their virtual destructors, then the name string.

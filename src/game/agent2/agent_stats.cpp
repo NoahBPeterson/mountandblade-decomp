@@ -303,8 +303,9 @@ float Agent::attack_speed()
     if (cur.item < 0)
         goto done;
     {
-        base = (float)g_items[cur.item].f1f4;
-        unsigned type = g_items[cur.item].type_flags & 0xff;
+        ItemKind* it = &g_items[cur.item];
+        base = (float)it->f1f4;
+        unsigned type = it->type_flags & 0xff;
         if (type == 8) {
             int lvl = g_game->skill_level(troop, 0x21);
             int v = cur.stat_1ec() + 4;
@@ -680,21 +681,24 @@ shape_base* body_part::copy_shape()
     return r;
 }
 
+float g_zero = 0.0f;                // 0x549ca8
+
 // @ 0x4391d0
 bool PolyMesh::inside(const int* face, const float* p)
 {
     MPoly* f = &faces[*face];
     bool in = true;
     int i = 0;
+    int n = f->n;
     const int* vi = f->vert_p();
     do {
-        if (i >= f->n) return in;
+        if (i >= n) break;
         const MVert* a = &verts[*vi];
         i++;
         const MVert* b = &verts[f->vert_p()[i % f->n]];
         V2 d(b->pos.x - a->pos.x, b->pos.y - a->pos.y);
         V2 q(p[0] - a->pos.x, p[1] - a->pos.y);
-        if (d.x * q.y - d.y * q.x < 0.0f)
+        if (q.y * d.x - d.y * q.x < g_zero)
             in = false;
         vi++;
     } while (in);
@@ -820,9 +824,9 @@ bool PolyMesh::trace(int face, vector4 from, int end_face, const float* to, int*
 void rgl::cell::collect_masked(unsigned mask, shape_base** out, int* count)
 {
     shape_base* buf[0x2000];
-    int n = 0;
-    int k = 0;
     unsigned i = 0;
+    int k = 0;
+    int n = 0;
     while (i < a.size()) {
         shape_base* sh = a[i];
         if (sh->m8 & mask) {
@@ -862,7 +866,8 @@ void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_b
     unsigned i = 0;
     *count = 0;
     while (i < a.size()) {
-        shape_base* sh = a[i];
+        shape_base** q = &a[i];
+        shape_base* sh = *q;
         if (sh->m8 & mask) {
             i++;
             continue;
@@ -875,12 +880,13 @@ void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_b
             hit = smin->x <= p[0] && p[0] <= smax->x && smin->y <= p[1] && p[1] <= smax->y;
         else
             hit = in_box(smin, smax, (const vector4*)p);
-        if (hit) {
-            out[*count] = a[i];
+        if (!hit) {
             i++;
-            (*count)++;
-        } else
-            i++;
+            continue;
+        }
+        out[*count] = *q;
+        ++*count;
+        i++;
     }
 }
 

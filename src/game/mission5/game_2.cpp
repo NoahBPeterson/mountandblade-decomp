@@ -969,15 +969,16 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
         int found = -1;
         if (n <= 0)
             return;
-        int* nb = (int*)((char*)rec + 0x14);
-        do {
+        int* nb = rec->nb;
+        while (n > 0) {
             int v = *nb;
             Node24* node = (Node24*)((char*)this->f24 + v * 0x24);
             if (node->f00 > 1 && node->f04 != prev && node->f08 != prev
                 && (node->f0c == target || node->f10 == target))
                 found = v;
             nb++;
-        } while (--n);
+            --n;
+        }
         if (found < 0)
             return;
         Node24* node = (Node24*)((char*)this->f24 + found * 0x24);
@@ -1387,8 +1388,8 @@ void FactionFile::read_file(stream_base& s, int count)
 
 typedef std::vector<tstring>::iterator rv_it;
 static inline ptr_tag rv_cat(rv_it, tstring*) { ptr_tag c; return c; }
-static inline tstring* rv_uninit(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return uninit_copy_str(&*f, &*l, d, al, rv_cat(f, d)); }
-static inline tstring* rv_ucopy(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return rv_uninit(f, l, d, al); }
+static inline tstring* rv_uninit(rv_it l, rv_it f, tstring* d, tstring_alloc& al) { return uninit_copy_str(&*f, &*l, d, al, rv_cat(l, d)); }
+static inline tstring* rv_ucopy(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return rv_uninit(l, f, d, al); }
 // @ 0x524bc0
 void tstring_vec::reserve(unsigned n)
 {

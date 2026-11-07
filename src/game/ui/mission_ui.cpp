@@ -1014,9 +1014,8 @@ tstring GameData::get_name()
 // @ 0x489c50
 int GameData::count_in(int id, int idx, char flag)
 {
-    Troop* base = troops;
     int c = 0;
-    Troop* t = &base[idx];
+    Troop* t = &troops[idx];
     int n = t->inv_count();
     if (n > 0) {
         ItemRef* e = t->inv;
@@ -1027,17 +1026,16 @@ int GameData::count_in(int id, int idx, char flag)
         } while (--n);
     }
     if (flag) {
-        Troop* b = &base[idx];
-        if (b->equip[0].item == id) c++;
-        if (b->equip[1].item == id) c++;
-        if (b->equip[2].item == id) c++;
-        if (b->equip[3].item == id) c++;
-        if (b->equip[4].item == id) c++;
-        if (b->equip[5].item == id) c++;
-        if (b->equip[6].item == id) c++;
-        if (b->equip[7].item == id) c++;
-        if (b->equip[8].item == id) c++;
-        if (b->equip[9].item == id) c++;
+        if (troops[idx].equip[0].item == id) c++;
+        if (troops[idx].equip[1].item == id) c++;
+        if (troops[idx].equip[2].item == id) c++;
+        if (troops[idx].equip[3].item == id) c++;
+        if (troops[idx].equip[4].item == id) c++;
+        if (troops[idx].equip[5].item == id) c++;
+        if (troops[idx].equip[6].item == id) c++;
+        if (troops[idx].equip[7].item == id) c++;
+        if (troops[idx].equip[8].item == id) c++;
+        if (troops[idx].equip[9].item == id) c++;
     }
     return c;
 }
@@ -1138,12 +1136,14 @@ int GameData::sl_value_factor()
 // @ 0x48a000
 void GameData::sl_update_avg()
 {
-    float now = (float)g_ticks[0] * 1e-05f;
-    float dt = now - avg_prev_time;
-    float add = sl_value_factor();
-    avg_value = avg_value * avg_weight + add * dt;
-    avg_prev_time = now;
-    float wsum = dt + avg_weight;
+    struct { float dt, now; int add; } s;
+    s.now = (float)g_ticks[0] * 1e-05f;
+    s.dt = s.now - avg_prev_time;
+    s.add = sl_value_factor();
+    float av = avg_value;
+    avg_value = av * avg_weight + s.add * s.dt;
+    avg_prev_time = s.now;
+    float wsum = s.dt + avg_weight;
     avg_weight = wsum;
     avg_value = avg_value / wsum;
 }
@@ -1182,11 +1182,9 @@ int GameData::template_count(int party, int cell, float)
 {
     char* base = (char*)&g_party_templates[party];
     int roll = rand() % 0x3dc9;
-    int lo = range_lo;
-    int hi = range_hi;
-    int span = *(int*)(base + cell * 0x10 + 0x48) - *(int*)(base + cell * 0x10 + 0x44);
-    float f = (float)(hi - lo) * ((float)roll * 6.322312e-05f);
-    f = (f + lo) * span;
+    float f = (float)roll * 6.322312e-05f;
+    f = f * (float)(range_hi - range_lo);
+    f = (f + range_lo) * (*(int*)(base + cell * 0x10 + 0x48) - *(int*)(base + cell * 0x10 + 0x44));
     f = f * 0.01f;
     return *(int*)(base + cell * 0x10 + 0x44) + rnd(&f);
 }
@@ -1208,17 +1206,17 @@ void GameData::sl_item_set_all(float v)
 // @ 0x48a290
 int GameData::sl_party_value(int party)
 {
-    if (party >= 0) {
+    if (party < 0)
+        return 0;
+    else {
         g_script.trigger_result.store0 = 0;
         g_script.trigger_result.store1 = 0;
         if (emit_event(7, party, cur_party) != 0)
             return g_script.trigger_result.store0;
-        Troop* r = &troops[party];
-        if (((__int64)r->flags30 & 0x10) != 0)
+        if (((__int64)troops[party].flags30 & 0x10) != 0)
             return 0;
-        return r->fb0 * r->fb0 / 20 + 25;
+        return troops[party].fb0 * troops[party].fb0 / 20 + 25;
     }
-    return 0;
 }
 
 // @ 0x48a320

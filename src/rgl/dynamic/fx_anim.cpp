@@ -194,7 +194,7 @@ void FxAnim::update_poses2()
                 quaternion qb;
                 qb.set(q.x * blend, q.y * blend, q.z * blend, q.w * blend);
                 BN(b).rot() = qa + qb;
-                (BN(b).rot()).normalize();
+                BN(b).rot().normalize();
             } else {
                 BN(b).rot() = q;
             }
@@ -210,7 +210,7 @@ void FxAnim::update_poses2()
             BN(b).abs_rot() = (BN(BN(b).parent).abs_rot()).mul(BN(b).rot());
         quat_to_matrix((matrix*)&BN(b).m44, &BN(b).rot());
         if (b == 0) {
-            BN(0).m44.o = vadd(res->recs->m.o, v0c);
+            BN(0).m44.o = vadd(v0c, res->recs->m.o);
         }
         if (BN(b).parent == -1)
             *(matrix*)&BN(b).m84 = BN(b).m44;

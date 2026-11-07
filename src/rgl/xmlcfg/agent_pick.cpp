@@ -133,22 +133,21 @@ void gui_manager::push(const tstring& s, int v)
         ring.add(s, v);
 }
 
-static inline int ifloor(float f) { return (int)(f > 0.0f ? f : f - 0.99999988f); }
+static inline int ifloor(float f) { float fl = f; if (f > 0.0f) fl = f; else fl -= 0.99999988f; return (int)fl; }
 // @ 0x433510
 void HeightField::sample(float x, float y, float* out_h, int* out_id)
 {
-    float t[2];
     float inv = 1.0f / cell;
-    t[0] = x * inv;
-    t[1] = y * inv;
-    int ix = ifloor(t[0]);
+    float tx = x * inv;
+    float ty = y * inv;
+    int ix = ifloor(tx);
     if (ix < 0) ix = 0;
     else { int r = w - 1; if (ix < w) r = ix; ix = r; }
-    int iy = ifloor(t[1]);
+    int iy = ifloor(ty);
     if (iy < 0) iy = 0;
     else { int r = h - 1; if (iy < h) r = iy; iy = r; }
-    float fu = (float)fmod((double)t[0], 1.0);
-    float fv = (float)fmod((double)t[1], 1.0);
+    float fu = (float)fmod((double)tx, 1.0);
+    float fv = (float)fmod((double)ty, 1.0);
     *out_id = cols[ix][iy].id;
     HCell** pc = &cols[ix];
     HCell* a = pc[0] + iy;

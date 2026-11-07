@@ -262,9 +262,23 @@ void tstring::get_token(char* out, int* n)
     }
     char q = buf[i];
     if (q == '"' || q == '\'') {
-        pos++; i = pos; if (i < l) { do { if (buf[pos] == q || *n >= 0x2000) break; out[*n] = buf[pos]; (*n)++; pos++; } while (pos < len); } pos++;
+        pos++;
+        if (pos < l) {
+            do {
+                if (buf[pos] == q || *n >= 0x2000) break;
+                out[*n] = buf[pos];
+                (*n)++;
+                pos++;
+            } while (pos < len);
+        }
+        pos++;
     } else {
-        do { if ((unsigned char)buf[pos] < 0x21 || *n >= 0x2000) break; out[*n] = buf[pos]; (*n)++; pos++; } while (pos < len);
+        do {
+            if ((unsigned char)buf[pos] < 0x21 || *n >= 0x2000) break;
+            out[*n] = buf[pos];
+            (*n)++;
+            pos++;
+        } while (pos < len);
     }
     int k = *n;
     if (k >= 0x1fff) k = 0x1fff;

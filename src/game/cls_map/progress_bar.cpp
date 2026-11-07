@@ -22,14 +22,15 @@
 #include "../../rgl/mesh.h"
 
 // ---- 0x4e3eb0: the progress bar widget (vtable 0x597f20) -----------------------------------------------------------------------
-extern const float g_progressbar_scale;         // 0x590e0c-ish constant 0.01f (the ctor stores it as the initial value)
-extern const float g_max_ratio;                 // 0x549cdc = 1.0f
-extern const float g_min_ratio;                 // 0x54a6f0 = 0.01f
+extern float g_progressbar_scale;               // 0x590e0c-ish constant 0.01f (the ctor stores it as the initial value)
+extern float g_max_ratio;                 // 0x549cdc = 1.0f
+float g_k0_01 = 0.01f;                     // 0x54a6f0
 
 // @ 0x4e3eb0
 progress_bar::progress_bar()
 {
-    rect = rgl::vector4(1.0f, 1.0f, 1.0f);
+    rgl::vector4 r(1.0f, 1.0f, 1.0f);
+    rect = r;
     idx = 0;
     handle = 0;
     v168 = 0.01f;
@@ -48,12 +49,11 @@ void progress_bar::render(rgl::scene* sc, float* count, int c, int d)
 // @ 0x4e3f60
 void progress_bar::set168(float r)
 {
-    if (r < 0.01f) {
-        f184 = 1;
-        v168 = 0.01f;
-        return;
-    }
-    v168 = (r > g_one) ? g_one : r;
+    if (r < g_k0_01)
+        r = g_k0_01;
+    else if (r > g_one)
+        r = g_one;
+    v168 = r;
     f184 = 1;
 }
 
@@ -1208,9 +1208,9 @@ void MapScreen::frame_step()
     if (!(*(unsigned*)(*(char**)((char*)g_game + 0x13a50) + f5df4 * 0x494 + 0x30) & 0x100))
         return;
     int mode = 3;
-    if ((((unsigned)g_bit[2] - 1) & g_terrain.flags14) != 0 &&
-        ((g_terrain.flags14 & ((unsigned)g_bit[2] - 1)) == 1 || (g_terrain.flags14 & ((unsigned)g_bit[2] - 1)) == 2 ||
-         (((unsigned)g_bit[2] - 1) & g_terrain.flags14) == 3))
+    if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) != 0 &&
+        ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 1 || (g_terrain.flags14 & ((int)g_bit[2] - 1)) == 2 ||
+         (g_terrain.flags14 & ((int)g_bit[2] - 1)) == 3))
         mode = 2;
     mesh.build(*(void**)((char*)view + 0x64), mode);
     mesh.polygon_to_mesh(mesh.poly_mesh);

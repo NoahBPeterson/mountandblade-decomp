@@ -574,10 +574,9 @@ void Skin::blend_all(lod_mesh* m, void* set, const float* w)
     int i = 0;
     if (0 < m->count) {
         do {
-            int j = i;
-            if (m->lists[i].v._Myfirst != 0 && m->lists[i].v._Mylast - m->lists[i].v._Myfirst != 0)
-                blend_indexed(*m->lists[i].v._Myfirst, set, &i, w);
-            i = j + 1;
+            if (m->lists[i].v.size() != 0)
+                blend_indexed(m->lists[i].v[0], set, &i, w);
+            i++;
         } while (i < m->count);
     }
 }

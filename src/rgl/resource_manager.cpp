@@ -595,8 +595,8 @@ void resmgr::release_pixel_shaders()
 // else the recursively resolved alternatives; falls back to the default shader.
 material* resmgr::resolve_shader(const rgl::string& name)
 {
-    material* shader = get_shader(name);
     material* best;
+    material* shader = get_shader(name);
     if (g_use_shaders) {
         rgl::string s("def_shader");
         best = get_shader(s);
@@ -609,28 +609,26 @@ material* resmgr::resolve_shader(const rgl::string& name)
     if (shader->supported())
         return shader;
     bool found = false;
-    int i;
-    rgl::string* alt = &shader->alts[0];
-    for (i = 0; i < shader->nalt; i++) {
-        material* m = get_shader(*alt);
+    int i = 0;
+    while (i < shader->nalt) {
+        material* m = get_shader(shader->alts[i]);
         if (m->supported()) {
             best = m;
             found = true;
         }
-        alt++;
+        i++;
         if (found)
             break;
     }
     i = 0;
     if (!found) {
-        alt = &shader->alts[0];
-        for (; i < shader->nalt; i++) {
-            material* m = resolve_shader(*alt);
+        while (i < shader->nalt) {
+            material* m = resolve_shader(shader->alts[i]);
             if (m != best) {
                 best = m;
                 found = true;
             }
-            alt++;
+            i++;
             if (found)
                 break;
         }

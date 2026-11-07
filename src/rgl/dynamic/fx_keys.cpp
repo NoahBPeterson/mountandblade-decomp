@@ -51,20 +51,27 @@ void quaternion::normalize()
 quaternion quaternion::mul(const quaternion& o) const
 {
     quaternion r;
+    float s = o.x * x;
+    s += o.y * y;
+    s += o.z * z;
     r.x = ((y * o.z - o.y * z) + o.w * x) + o.x * w;
     r.y = ((o.x * z - o.z * x) + y * o.w) + o.y * w;
     r.z = ((o.y * x - o.x * y) + o.w * z) + w * o.z;
-    r.w = o.w * w - ((o.x * x + o.y * y) + o.z * z);
+    r.w = o.w * w - s;
     return r;
 }
 // @ 0x422f60
 quaternion quaternion::mul_conj(const quaternion& o) const
 {
     quaternion r;
+    float s = x * o.x;
+    s += o.z * z;
+    s += o.y * y;
+    s += o.w * w;
     r.x = ((z * o.y - o.z * y) + w * o.x) - x * o.w;
     r.y = ((o.z * x - z * o.x) + w * o.y) - o.w * y;
     r.z = ((o.x * y - x * o.y) + o.z * w) - z * o.w;
-    r.w = ((x * o.x + o.z * z) + o.y * y) + o.w * w;
+    r.w = s;
     return r;
 }
 // @ 0x423010
@@ -339,6 +346,6 @@ quaternion* FxAnim::chain(quaternion* out, int i, int k)
         t3 = t.mul(q);
         p = &t3;
     }
-    *out = *p;
+    memcpy(out, p, sizeof(quaternion));
     return out;
 }

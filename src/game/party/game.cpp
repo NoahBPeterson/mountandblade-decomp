@@ -621,15 +621,15 @@ next:
 // For every trigger record and every neighbour slot that is set, stores the compatibility score.
 void NavGraph::score_triggers(int* a, int* b, int* c)
 {
-    int i = 0;
     int off = 0;
+    unsigned i = 0;
     while ((char*)nodes) {
-        if ((unsigned)i >= (unsigned)(((char*)nodes_end - (char*)nodes) / 0x88))
+        if (i >= (unsigned)(((char*)nodes_end - (char*)nodes) / 0x88))
             break;
-        for (int k = 0; k < *(int*)((char*)nodes + off); k++) {
-            if (*(int*)((char*)nodes + off + 0x28 + k * 4) != -1)
-                *(float*)((char*)nodes + off + 0x38 + k * 4) =
-                    trigger_score(i, k, *a, *b, *c);
+        NavNode& n = *(NavNode*)((char*)nodes + off);
+        for (int k = 0; k < n.count; k++) {
+            if (n.nb[k] != -1)
+                n.weight[k] = trigger_score(i, k, *a, *b, *c);
         }
         i++;
         off += 0x88;
@@ -978,16 +978,16 @@ void SpriteTable::read(stream_base* s, int arg)
         alloc_id();
     clear();
     ((std::vector<int>*)&free_ids)->resize(0, 0);
+    int flag;
     for (int i = 0; i < n; i++) {
         SpriteRec* e = at(i);
-        int flag;
         s->r_int(&flag);
         e->live = flag;
         if (flag) {
             s->r_int(&e->f0c);
             e->read(s, arg);
         } else {
-            free_ids.push_back(i);
+            ((std::vector<int>*)&free_ids)->push_back(i);
         }
     }
 }
@@ -1021,7 +1021,7 @@ MB_NOINLINE void SpriteTable::clear()
     for (int i = 0; i < count; i++) {
         SpriteRec* e = at(i);
         e->live = 0;
-        free_ids.push_back(i);
+        ((std::vector<int>*)&free_ids)->push_back(i);
     }
 }
 

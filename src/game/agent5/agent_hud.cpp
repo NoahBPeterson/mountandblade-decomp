@@ -1212,7 +1212,7 @@ void rgl::mesh::darken_vertices()
     for (unsigned i = 0; i < v50.size(); i++) {
         rgl::vertex60& v = v50[i];
         float f = (v.normal.z + 0.25f) * 0.8f;
-        vector4 rgb = rgl::unpack_color(&v.color);
+        vector4 rgb = rgl::unpack_color(&v50[i].color);
         rgb.x *= f;
         rgb.y *= f;
         rgb.z *= f;

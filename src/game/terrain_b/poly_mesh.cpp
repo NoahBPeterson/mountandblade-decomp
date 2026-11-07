@@ -179,7 +179,8 @@ bool __stdcall ground_height(rgl::world* lv, const float* p, float* out)
     lv->to_cell(&q.x, cellxy);
     count = 0;
     rgl::cell* col = lv->cells[cellxy[0]];
-    col[cellxy[1]].collect_point(&q.x, &use3d, 0x104, hits, &count);
+    rgl::cell* c = (rgl::cell*)((char*)col + cellxy[1] * sizeof(rgl::cell));
+    c->collect_point(&q.x, &use3d, 0x104, hits, &count);
     int n = count;
     for (int i = 0; i < n; i++) {
         if (hits[i]->m4 >= 0 && ((face*)hits[i])->contains_xy(p)) {
@@ -1464,6 +1465,11 @@ rgl::world::~world()
     reset();
 }
 
+static inline void zero_tail2(Tail2& t)
+{
+    t.arr = 0; t.count = 0; t.refbase = 0; t.refcap = 0;
+}
+
 // @ 0x475e50
 ViewState::ViewState()
 {
@@ -1472,7 +1478,7 @@ ViewState::ViewState()
     ta8.init(2);
     t5118.init(2);
     t5128.init(2);
-    tail2.arr = 0; tail2.count = 0; tail2.refbase = 0; tail2.refcap = 0;
+    zero_tail2(tail2);
     Vec2 z; z.x = 0.0f; z.y = 0.0f;
     v50e8 = z;
 }
@@ -1547,8 +1553,10 @@ void mesh_flip::flip_faces()
         v90[i].a = v90[i].c;
         v90[i].c = t;
     }
-    slots[1].f28 = 1;
-    slots[0].f28 = 1;
+    rgl::slot& s1 = slots[1];
+    rgl::slot& s0 = slots[0];
+    s1.f28 = 1;
+    s0.f28 = 1;
 }
 
 // @ 0x477a30

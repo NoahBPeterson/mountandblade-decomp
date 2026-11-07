@@ -14,6 +14,7 @@
 ../src/game/agent/agent.cpp  ?stat_int@Troop@@QAEHH@Z  00435150  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?scaled_b0@Troop@@QAEHXZ  00435170  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?nibble@Troop@@QAEHH@Z  004351a0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?ranged_ref@Wielder@@QAE?AUItemRef@@XZ  004351f0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?find_in_table20@@YAHPBUtstring@@@Z  00435260  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?find_in_table78@@YAHPBUtstring@@@Z  004352a0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?ftoi_helper@@YAHH@Z  00435440  /O2 /MT /Gy /TP

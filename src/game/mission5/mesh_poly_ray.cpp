@@ -174,15 +174,15 @@ void Mesh_s2dfd0::toggle_flag(int type, int index)
 // @ 0x52e590
 void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
 {
-    calc_vertex_mode(dummy);
-    float sx = 0.0f, sy = 0.0f, sz = 0.0f;
+    float sx = 0, sy = 0, sz = 0;
     int n = 0;
-    for (int i = 0; i < verts.size(); i++) {
-        mface_s2dfd0& v = verts.first[i];
-        if (v.index) {
-            sx += v.pos.x;
-            sy += v.pos.y;
-            sz += v.pos.z;
+    calc_vertex_mode(dummy);
+    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
+        mface_s2dfd0* v = &verts.first[i];
+        if (v->index) {
+            sx += v->pos.x;
+            sy += v->pos.y;
+            sz += v->pos.z;
             n++;
         }
     }
@@ -190,7 +190,7 @@ void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
     float mx = sx * inv;
     float my = sy * inv;
     float mz = sz * inv;
-    for (int i = 0; i < verts.size(); i++) {
+    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
         mface_s2dfd0& v = verts.first[i];
         if (!v.index)
             continue;
@@ -204,15 +204,15 @@ void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
 // @ 0x52e6d0
 void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
 {
-    calc_vertex_mode(dummy);
-    float sx = 0.0f, sy = 0.0f, sz = 0.0f;
+    float sx = 0, sy = 0, sz = 0;
     int n = 0;
-    for (int i = 0; i < verts.size(); i++) {
-        mface_s2dfd0& v = verts.first[i];
-        if (v.index) {
-            sx += v.pos.x;
-            sy += v.pos.y;
-            sz += v.pos.z;
+    calc_vertex_mode(dummy);
+    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
+        mface_s2dfd0* v = &verts.first[i];
+        if (v->index) {
+            sx += v->pos.x;
+            sy += v->pos.y;
+            sz += v->pos.z;
             n++;
         }
     }
@@ -220,7 +220,7 @@ void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
     float mx = sx * inv;
     float my = sy * inv;
     float mz = sz * inv;
-    for (int i = 0; i < verts.size(); i++) {
+    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
         mface_s2dfd0& v = verts.first[i];
         if (!v.index)
             continue;
@@ -240,7 +240,8 @@ void Mesh_s2dfd0::remove_selected()
 {
     if (mode == 0) {
         for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
-            if (verts.first[i].flag) {
+            const mface_s2dfd0& v = verts.first[i];
+            if (v.flag) {
                 remove_node(i);
                 i--;
             }
@@ -248,14 +249,16 @@ void Mesh_s2dfd0::remove_selected()
     }
     if (mode == 1) {
         for (unsigned i = 0; i < (unsigned)edges.size(); i++) {
-            if (edges.first[i].flag) {
+            medge_s2dfd0& e = *(edges.first + i);
+            if (e.flag) {
                 remove_edge(i);
                 i--;
             }
         }
     } else {
         for (unsigned i = 0; i < (unsigned)polys.size(); i++) {
-            if (polys.first[i].flag) {
+            mpoly_s2dfd0& p = *(polys.first + i);
+            if (p.flag) {
                 remove_face(i);
                 i--;
             }
@@ -314,8 +317,9 @@ int Mesh_s2e960::vertex_index(int index, const rgl::matrix& m)
     }
     int n = verts2.size();
     mface_s2e960 f;
-    f.pos = m.transform_point_to_local(verts.first[index].pos);
     f.flag = 0;
+    const rgl::vector4& src = verts.first[index].pos;
+    f.pos = m.transform_point_to_local(src);
     f.index = index;
     verts2.push_back(f);
     return n;

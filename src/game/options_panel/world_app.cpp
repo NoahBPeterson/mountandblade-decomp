@@ -352,12 +352,17 @@ void TreeW::erase(void* p1, void* p2)
     std::_Destroy_range((E68*)p1, (E68*)p2, *(std::allocator<E68>*)(void*)this);   // 0x4cd570
 }
 
+static inline E176* copy_into(E176* first, E176* last, E176* dest)
+{
+    std::_Nonscalar_ptr_iterator_tag tag;
+    return std::_Copy_opt(first, last, dest, tag);
+}
+
 // @ 0x4d3e70
 void TreeW::insert(void** out, void* a, void* b)
 {
     if (a != b) {
-        std::_Nonscalar_ptr_iterator_tag tag;
-        E176* p = std::_Copy_opt((E176*)b, (E176*)f8, (E176*)a, tag);
+        E176* p = copy_into((E176*)b, (E176*)f8, (E176*)a);
         std::_Destroy_range(p, (E176*)f8, *(std::allocator<E176>*)(void*)this);
         f8 = p;
     }

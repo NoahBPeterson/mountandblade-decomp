@@ -62,8 +62,8 @@ void Troop::add_attr(int idx, int delta)
                 else if (step == -1)
                     hp -= 1.0f;
             }
-            int sv = ATTR(this)[idx] + step;
-            ((TroopX*)this)->set_attr(idx, sv);
+            TroopX* s = (TroopX*)this;
+            s->set_attr(idx, ATTR(this)[idx] + step);
         }
     } while (--n);
 }
@@ -177,15 +177,14 @@ void ItemRef::compact(int n)
     if (n <= 0)
         n = 0x60;
     int i = 0;
-    while (i < n) {
+    for (; i < n; i++) {
         if (this[i].item == -1)
             break;
-        i++;
     }
     int j = i + 1;
     if (j < n) {
         ItemRef* d = &this[i];
-        while (j < n) {
+        for (; j < n; j++) {
             if (this[j].item != -1) {
                 if (j >= n)
                     break;
@@ -195,7 +194,6 @@ void ItemRef::compact(int n)
                 this[j].item = -1;
                 d++;
             }
-            j++;
         }
     }
     sort_sel(i);

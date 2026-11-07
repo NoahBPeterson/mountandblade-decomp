@@ -79,30 +79,29 @@ void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
 // @ 0x490160
 char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
 {
-    Vec2 np;
-    float dx, dy;
     *out = pos;
     char ok = 0;
     int iter = 0;
+    Vec2 np;
+    float d[2];
     while (iter < 50000) {
         iter++;
-        dx = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
-        dy = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
-        if (sqrt(dx * dx + dy * dy) > r)
-            continue;
-        np = Vec2(pos.x + dx, pos.y + dy);
-        *out = np;
-        FaceId* f = (FaceId*)find_at(&out->x);
-        if (f == 0)
-            continue;
-        int kind = g_script.level->ground->cells[f->m4].ids[8];
-        int low = kind & 7;
-        if (any)
-            ok = low == 0 || kind == 7;
-        else
-            ok = (low >= 2 && low < 7) || kind == 7;
-        if (ok)
-            break;
+        d[0] = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
+        d[1] = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
+        if (sqrt(d[0] * d[0] + d[1] * d[1]) <= r) {
+            np = Vec2(pos.x + d[0], pos.y + d[1]);
+            *out = np;
+            FaceId* f = (FaceId*)find_at(&out->x);
+            if (f != 0) {
+                int kind = g_script.level->ground->cells[f->m4].ids[8];
+                if (any)
+                    ok = (kind & 7) == 0 || kind == 7;
+                else
+                    ok = ((kind & 7) >= 2 && (kind & 7) < 7) || kind == 7;
+                if (ok)
+                    break;
+            }
+        }
     }
     return ok;
 }
@@ -214,10 +213,11 @@ void ContainerBase::on_child_moved(MissionUi* p)
 {
     char* e = (char*)p;
     float n[2];
+    float* tp = (float*)((char*)this + 0xe0);
     float* ep = (float*)(e + 0xe8);
-    n[0] = *(float*)((char*)this + 0xe0) + ep[0];
+    n[0] = tp[0] + ep[0];
+    n[1] = tp[1] + ep[1];
     *(int*)(e + 0xe0) = *(int*)&n[0];
-    n[1] = *(float*)((char*)this + 0xe4) + ep[1];
     *(int*)(e + 0xe4) = *(int*)&n[1];
     p->on_moved();
     if (f104 & 0x100) {
@@ -1163,11 +1163,12 @@ void DropDown::render(rgl::scene* sc, float* count, int c, int d)
         f178 = 1;
     else
         f178 = 0;
-    b11c[3] = 0;
     if (f178 != 0) {
+        b11c[3] = 0;
         b11c[2] = 1;
         b11c[1] = 0;
     } else {
+        b11c[3] = 0;
         b11c[2] = 0;
         b11c[1] = 1;
     }

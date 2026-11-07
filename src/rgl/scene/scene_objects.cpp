@@ -357,12 +357,12 @@ void world::insert(entity* o, int x, int y)
 // @ 0x421600
 void world::insert_obj(entity* o)
 {
-    int hi[2];
-    int lo[2];
-    to_cell((const float*)o->get_v9c(), lo);
-    to_cell((const float*)o->get_vac(), hi);
-    for (int x = lo[0]; x <= hi[0]; ++x)
-        for (int y = lo[1]; y <= hi[1]; ++y)
+    struct pt { int x, y; };
+    pt lo, hi;
+    to_cell((const float*)o->get_v9c(), &lo.x);
+    to_cell((const float*)o->get_vac(), &hi.x);
+    for (int x = lo.x; x <= hi.x; ++x)
+        for (int y = lo.y; y <= hi.y; ++y)
             insert(o, x, y);
 }
 

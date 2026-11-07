@@ -194,8 +194,7 @@ void sel_list::add(int val)
         *p = val;
         v._Mylast = p + 1;
     } else {
-        int pv = val;
-        ((c49aca0::PVec*)&v)->_Insert_n((c49aca0::NodeA**)v._Mylast, 1, *(c49aca0::NodeA* const*)&pv);   // 0x49b1c0
+        ((c49aca0::PVec*)&v)->_Insert_n((c49aca0::NodeA**)v._Mylast, 1, *(c49aca0::NodeA* const*)&val);   // 0x49b1c0
     }
 }
 

@@ -5,4 +5,5 @@
 ../src/game/options_panel/module_load.cpp  ?item_modifier_array_dtor@@YAXPAUitem_modifier@@0@Z  004d10f0  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ?uninitialized_copy_flora@@YAPAUflora_kind@@PAU1@00AAUflora_alloc@@@Z  004d11a0  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ?uninitialized_copy_ground@@YAPAUground_spec@@PAU1@00AAUground_alloc@@@Z  004d1230  /O2 /MT /Gy /TP
+../src/game/options_panel/module_load.cpp  ?uninitialized_copy_mission@@YAPAUmission_type@@PAU1@00AAUmission_alloc@@@Z  004d12c0  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ??0growable_array@@QAE@XZ  004d1360  /O2 /MT /Gy /TP

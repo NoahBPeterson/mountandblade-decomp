@@ -1,3 +1,4 @@
+../src/game/ui/ui_widgets_a.cpp  ?set_text@MediumButton@@UAEPAMPAMPBUtstring@@@Z  0048b3a0  /O2 /MT /Gy /TP
 ../src/game/ui/ui_widgets_a.cpp  ?play_sound@gui_manager@@QAEXXZ  0048b2d0  /O2 /MT /Gy /TP
 ../src/game/ui/ui_widgets_a.cpp  ?render@UiA@@UAEXPAUscene@rgl@@PAMHH@Z  0048b320  /O2 /MT /Gy /TP
 ../src/game/ui/ui_widgets_a.cpp  ??0UiB@@QAE@XZ  0048b4b0  /O2 /MT /Gy /TP

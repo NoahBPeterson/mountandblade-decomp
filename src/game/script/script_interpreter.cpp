@@ -129,7 +129,7 @@ int g_lineno;                                    // 0x5e2598 (.bss) line of the 
 // translation unit's address range (0x49cc60..0x4b10d7): it is a file static there, which is what lets cl sink the store below
 // the `id` loads in execute() (a static whose address is never taken cannot alias *this) and so sets execute's whole scratch
 // register rotation.
-static int g_script_error;
+static int g_script_error;                       // 0x5e259c (.bss)
 int g_cur_opcode;                                // 0x5e25a0 (.bss) opcode word of the statement being run
 int g_or_latch;                                  // 0x5e25a4 (.bss) this_or_next chain already satisfied
 #include "../ui_globals.h"      // UI / core globals
@@ -432,12 +432,12 @@ int Mission::place(const int* p)
 // ======================================================================================
 namespace c49b630 {
 // Slice s0049b630: six Mission methods from one translation unit.
-//   0x49b630  rebuild the mission's UI "font mesh" (material lookup + layout_text)
-//   0x49b720  add "value" to an army slot and, for slot 0, log the gained amount
-//   0x49b820  subtract "value" from an army slot (clamped at 0) and log the lost amount
-//   0x49b930  mark a quest record as taken (write +0x118/+0x11c, log ui_new_quest_taken)
-//   0x49baa0  layout one text row into a mesh with the non-wrap/scale preset
-//   0x49bbb0  spawn the battle icon for one 0x98-byte army record
+//   [0x49b630] rebuild the mission's UI "font mesh" (material lookup + layout_text)
+//   [0x49b720] add "value" to an army slot and, for slot 0, log the gained amount
+//   [0x49b820] subtract "value" from an army slot (clamped at 0) and log the lost amount
+//   [0x49b930] mark a quest record as taken (write +0x118/+0x11c, log ui_new_quest_taken)
+//   [0x49baa0] layout one text row into a mesh with the non-wrap/scale preset
+//   0x49bbb0: the battle icon for one 0x98-byte army record (Mission::spawn_battle_icon)
 // Names and field names are provisional; every offset is read off the disassembly.
 // The class layout is shared with the neighbouring slices s0049bea0 / s0049c2c0 (Mission).
 // (tstring.h inlined below)
@@ -628,29 +628,30 @@ void GameData::start_quest(int quest, int giver_troop)
     WL_MARKER(13)
 }
 
+struct LabelScale { float x, y; LabelScale(float a, float b) : x(a), y(b) {} };
+
 // @ 0x49baa0
 void GameData::label_text(rgl::mesh* m, const tstring* text, char flag, int arg, const float* h)
 {
-    Font* font = g_font;
     unsigned flags = 0;
     rgl::vector4 pos(0.05f, 0.1f, 0.2f);
-    float   scale[2];
-    scale[0] = 0.2f; scale[1] = 0.2f;
+    LabelScale scale(0.2f, 0.2f);
     float   xmin = 0.0f;
     float   xmax = 1.0f;
 
     if (flag) {
-        xmax = GD(float, 0x13acc) * *h;
-        xmin = -xmax;
-        scale[0] = xmax * 0.6f;
-        scale[1] = xmax * 0.6f;
+        float x = GD(float, 0x13acc) * *h;
         pos = rgl::vector4(0.0f, 0.1f, 0.4f);              // 0x49bb06: 0x3ecccccd
+        scale = LabelScale(x * 0.6f, x * 0.6f);
+        xmin = x * -1.0f;
+        xmax = x;
         flags = 0x10;
     }
     float   out[2];
-    arg = arg;
+    int     a = arg;
+    Font* font = g_font;
     m->clear_geometry();
-    font->layout_text(out, text, &pos, scale, m, (int)&arg, &xmin, &xmax, flags);
+    font->layout_text(out, text, &pos, (float*)&scale, m, (int)&a, &xmin, &xmax, flags);
 }
 
 namespace c49b630 {
@@ -1290,7 +1291,7 @@ static __declspec(noinline) void report(const char* msg)
 }
 
 // @ 0x49ccc0
-char __fastcall check_script_param(int* value, int* limit)
+__declspec(noinline) char __fastcall check_script_param(int* value, int* limit)
 {
     char buf[512];
     int v = *value;
@@ -3163,7 +3164,6 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 }
 #define game() ((GameX*)g_game)
 #define CS(s) (((const string_view_*)(s))->get())
-#define troop(id) (&((GameX*)g_game)->troops[id])
 #define faction(id) (&((GameX*)g_game)->factions[id])
 #define quest(id) (&((GameX*)g_game)->quests[id])
 #define scene(id) (&((GameX*)g_game)->scenes[id])
@@ -4435,15 +4435,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (set_visitor, <entry_no>, <troop_id>, [<dna>]); troop -1 clears the entry
         if (IN_RANGE(params[0], 0, 0x40) && (params[1] == -1 || check_troop((int)params[1]))) {
             scene(g_visitor_scene)->visitors[(int)params[0]].troop = (int)params[1];
-            if (params[1] == -1) {
+            if (params[1] != -1) {
+                scene(g_visitor_scene)->visitor_counts[(int)params[0]] = 1;
+                if (params[2])
+                    scene(g_visitor_scene)->visitors[(int)params[0]].dna = (int)params[2];
+                if (g_mission)
+                    mission()->clear_done();
+            } else
                 scene(g_visitor_scene)->visitor_counts[(int)params[0]] = 0;
-                break;
-            }
-            scene(g_visitor_scene)->visitor_counts[(int)params[0]] = 1;
-            if (params[2])
-                scene(g_visitor_scene)->visitors[(int)params[0]].dna = (int)params[2];
-            if (g_mission)
-                mission()->clear_done();
         }
         break;
     case op::set_visitors:
@@ -4590,7 +4589,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::set_merchandise_modifier_quality: {
     { float sf_0; float sf_1; float sf_2;
         // percentage, clamped to 0..1000 (as a factor 0..10)
-        sf_0 = (float)params[0] * 0.01f, sf_1 = 0, sf_2 = 1000.0f;
+        sf_0 = (float)params[0] * 0.01f, sf_2 = 1000.0f, sf_1 = 0;
         game()->merchandise_modifier_quality = clamp(&sf_0, &sf_1, &sf_2);
         break;
     }
@@ -4693,10 +4692,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (params[0] == (__int64)game()->player_troop)
                 ((GameData*)g_game)->add_inventory((int)params[1], (int)params[2]);
             else {
+                int item = (int)params[1];
                 TroopX* t = troop((int)params[0]);
                 int k = t->find_free();
                 if (k >= 0)
-                    t->set_slot((int)params[1], k, (int)params[2]);
+                    t->set_slot(item, k, (int)params[2]);
             }
         }
         break;
@@ -4882,10 +4882,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troop_set_health:
         // (troop_set_health, <troop_id>, <relative health (0-100)>, [absolute])
         if (check_troop((int)params[0])) {
-            TroopX* t = troop((int)params[0]);
             if (params[2]) {
+                TroopX* t = troop((int)params[0]);
                 t->hit_points = (float)clamp_index((int)params[1], 0, t->max_hit_points() + 1);
             } else {
+                TroopX* t = troop((int)params[0]);
                 t->hit_points = (float)clamp_index((int)((__int64)t->max_hit_points() * params[1] / 100), 0,
                                                    t->max_hit_points() + 1);
             }
@@ -4996,7 +4997,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int p = (int)params[0];
             int found = -1;
             for (i = 0; found == -1 && i < ((PartyV*)pm->get(p))->num_stacks; i++)
-                if ((__int64)((PartyV*)pm->get(p))->stacks[i].troop == params[1] &&
+                if (params[1] == (__int64)((PartyV*)pm->get(p))->stacks[i].troop &&
                     !(((PartyV*)pm->get(p))->stacks[i].flags & 1))
                     found = i;
             if (found >= 0) {
@@ -5459,12 +5460,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_get_position:
         if (check_register((int)params[0]) && warn_agent((int)params[1])) {
             AgentTable* t = &mission()->agents;
-            int a = (int)params[1];
-            if (t->get(a)->body)
-                script_pos((int)params[0]) = (rgl::matrix&)t->get(a)->body->m;      // the body frame (+0x58)
+            if (t->get((int)params[1])->body)
+                script_pos((int)params[0]) = (rgl::matrix&)t->get((int)params[1])->body->m;      // the body frame (+0x58)
             else {
                 ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), IDENTITY3_VALUE());
-                script_pos((int)params[0]).o = t->get(a)->pos;
+                script_pos((int)params[0]).o = t->get((int)params[1])->pos;
             }
         }
         break;
@@ -6337,8 +6337,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             MissionX* m = mission();
             m->cam_mode = clamp_index((int)params[0], 0, 2);
             if (mission()->cam_mode == 0 && params[1] > 0) {
-                mission()->cam_target_frame = ((Mission*)mission())->get_frame();
-                mission()->cam_target_aperture = mission()->blend_param();
+                ASSIGN_MAT(mission()->cam_target_frame, ((Mission*)mission())->get_frame());
+                MissionX* m2 = mission();
+                m2->cam_target_aperture = m2->blend_param();
                 mission()->cam_anim_time = (float)params[1] * 0.001f;
                 mission()->cam_timer.restart();
                 mission()->cam_easing = 0;
@@ -6371,7 +6372,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::mission_cam_get_position:
         if (g_mission && check_register((int)params[0]))
-            script_pos((int)params[0]) = ((Mission*)mission())->get_frame();
+            ASSIGN_MAT(script_pos((int)params[0]), ((Mission*)mission())->get_frame());
         break;
     case op::mission_cam_set_position:
         if (g_mission && check_register((int)params[0])) {
@@ -6382,7 +6383,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_position:
         // (.., <position_register_no>, <duration-in-1/1000-seconds>, <value>) # value 0: linear velocity
         if (g_mission && check_register((int)params[0]) && params[1] > 0) {
-            mission()->cam_frame = ((Mission*)mission())->get_frame();
+            ASSIGN_MAT(mission()->cam_frame, ((Mission*)mission())->get_frame());
             mission()->cam_target_frame = script_pos((int)params[0]);
             MissionX* m = mission();
             m->cam_target_aperture = m->blend_param();
@@ -6408,7 +6409,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_aparture:
         // (mission_cam_animate_to_aparture, <value>, <duration-in-1/1000-seconds>, <value>)
         if (g_mission && params[1] > 0) {
-            mission()->cam_frame = ((Mission*)mission())->get_frame();
+            ASSIGN_MAT(mission()->cam_frame, ((Mission*)mission())->get_frame());
             mission()->cam_target_frame = mission()->cam_frame;
             MissionX* m = mission();
             m->cam_aperture = m->blend_param();
@@ -6421,7 +6422,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_animate_to_position_and_aparture:
         // (.., <position_register_no>, <value>, <duration-in-1/1000-seconds>, <value>)
         if (g_mission && check_register((int)params[0]) && params[2] > 0) {
-            mission()->cam_frame = ((Mission*)mission())->get_frame();
+            ASSIGN_MAT(mission()->cam_frame, ((Mission*)mission())->get_frame());
             mission()->cam_target_frame = script_pos((int)params[0]);
             MissionX* m = mission();
             m->cam_aperture = m->blend_param();
@@ -6602,10 +6603,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::val_div:
         // division by zero stores 40000000
-        if (params[1] == 0)
-            SET_LV(40000000);
-        else
+        if (params[1] != 0)
             SET_LV(params[0] / params[1]);
+        else
+            SET_LV(40000000);
         break;
     case op::val_mod:
         if (params[1] != 0)
@@ -6663,10 +6664,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         SET_LV(params[2] * params[1]);
         break;
     case op::store_div:
-        if (params[2] == 0)
-            SET_LV(40000000);
-        else
+        if (params[2] != 0)
             SET_LV(params[1] / params[2]);
+        else
+            SET_LV(40000000);
         break;
     case op::set_fixed_point_multiplier:
         if (params[0] > 0)
@@ -6775,8 +6776,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // party whose id is the troop id (original bug)
         {
             int count = 0, k = 0;
-            PartyMgr* pm = &game()->parties;
             int mp = game()->main_party;
+            PartyMgr* pm = &game()->parties;
             if (((PartyV*)pm->get(mp))->num_stacks > 0) {
                 do {
                     if ((__int64)((PartyV*)pm->get(mp))->stacks[k].troop == params[1])
@@ -6791,13 +6792,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // the main party's non-hero prisoner stacks, sizes read from party <party_id> (original bug)
         {
             int count = 0, k = 0;
-            PartyMgr* pm = &game()->parties;
             int mp = game()->main_party;
+            PartyMgr* pm = &game()->parties;
+            int pid = (int)params[1];
             if (((PartyV*)pm->get(mp))->num_stacks > 0) {
                 do {
                     if ((((PartyV*)pm->get(mp))->stacks[k].flags & 1) &&
                         !troop(((PartyV*)pm->get(mp))->stacks[k].troop)->is_hero())
-                        count += ((PartyV*)pm->get((int)params[1]))->stacks[k].count;
+                        count += ((PartyV*)pm->get(pid))->stacks[k].count;
                     ++k;
                 } while (k < ((PartyV*)pm->get(mp))->num_stacks);
             }
@@ -7260,10 +7262,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 SET_LV((__int64)m->count_agents(0));
             else if (m->mode == 0)
                 SET_LV((__int64)m->count_agents(1));
-            else if (g_mission_ctx.side)
-                SET_LV((__int64)m->count_agents(1));
-            else
+            else if (!g_mission_ctx.side)
                 SET_LV((__int64)m->count_agents(0));
+            else
+                SET_LV((__int64)m->count_agents(1));
         }
         break;
     case op::store_defender_count:
@@ -7274,10 +7276,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 SET_LV((__int64)m->count_agents(1));
             else if (m->mode == 0)
                 SET_LV((__int64)m->count_agents(0));
-            else if (g_mission_ctx.side)
-                SET_LV((__int64)m->count_agents(0));
-            else
+            else if (!g_mission_ctx.side)
                 SET_LV((__int64)m->count_agents(1));
+            else
+                SET_LV((__int64)m->count_agents(0));
         }
         break;
     case op::store_normalized_team_count:
@@ -7309,7 +7311,6 @@ char Operation::execute(__int64* locals, int* context, int* error)
 }
 #undef game
 #undef CS
-#undef troop
 #undef faction
 #undef quest
 #undef scene
@@ -7377,9 +7378,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
     done = 0;
     advance = 1;
 
-    for (;;) {
-        if (idx >= count)
-            break;
+    while (idx < count) {
         brk = 0;
         if ((tag & 0xffff) == (unsigned)idx || in_key) {
             in_key = 1;
@@ -7397,72 +7396,78 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                     set_debug_label();
                     tag = 0xffffffff;
                     done = 1;
-                } else if (g_keyboard.down[0x3a] && !g_keyboard.prev[0x3a]) {
+                    break;
+                }
+                if (g_keyboard.down[0x3a] && !g_keyboard.prev[0x3a]) {
                     tag = 0xffffffff;
                     done = 1;
-                } else if (g_keyboard.down[0x39] && !g_keyboard.prev[0x39]) {
+                    break;
+                }
+                if (g_keyboard.down[0x39] && !g_keyboard.prev[0x39]) {
                     int e = (int)tag >> 16;
                     if (g_scripts[e].name.equals(EMIT_AUDIO.name))
                         tag = ((unsigned)e << 16) | (unsigned)EMIT_AUDIO.tag;
                     done = 1;
-                } else if (g_keyboard.down[0x38] && !g_keyboard.prev[0x38]) {
-                    brk = 1;
-                } else if (!(g_keyboard.down[0x37] && !g_keyboard.prev[0x37])) {
-                    pump_messages();
-                    continue;
+                    break;
                 }
-                break;
+                if (g_keyboard.down[0x38] && !g_keyboard.prev[0x38]) {
+                    brk = 1;
+                    break;
+                }
+                if (g_keyboard.down[0x37] && !g_keyboard.prev[0x37])
+                    break;
+                pump_messages();
             }
             pump_messages();
         }
 
-        Elem* stmt = items + idx;
-        int off  = idx * 0x98;
-        int op = stmt->id & 0xfffffff;
-        (void)off;
-        g_lineno = idx;
-        saved = idx;
+        int line = idx;
+        int op = items[line].id & 0xfffffff;
+        g_lineno = line;
+        saved = line;
         ok = 1;
         g_cur_opcode = op;
 
         if (op < 0x15 && op != 1) {
-            if (stmt->id == 3) {
+            Elem* stmt = &items[line];
+            int id = stmt->id;
+            if (id == 3) {
                 advance = 1;
                 pop_try((int)buf, buf2.data, &idx);
-            } else if (stmt->id == 4) {
+            } else if (id == 4) {
                 advance = 1;
-                buf2.push(idx, 0);
-                idx++;
-            } else if (stmt->id == 5) {
+                buf2.push(line, 0);
+                idx = line + 1;
+            } else if (id == 5) {
                 if (advance) {
                     idx = stmt->f90;
                 } else {
-                    idx++;
+                    idx = line + 1;
                     advance = 1;
                 }
             } else {
                 int v = 0;
                 advance = 1;
-                if (stmt->id == 6) {
+                if (id == 6) {
                     which = 1;
                     v = (int)stmt->get_operand((__int64*)buf, &which, &out2);
-                } else if (stmt->id == 7) {
+                } else if (id == 7) {
                     which = 2;
                     v = (int)stmt->get_operand((__int64*)buf, &which, &out2) - 1;
-                } else if (stmt->id == 0xc) {
+                } else if (id == 0xc) {
                     v = g_mission->agents.first_used();
-                } else if (stmt->id == 0xb) {
+                } else if (id == 0xb) {
                     v = (int)g_game->parties.first_party_id();
-                } else if (stmt->id == 0xf) {
+                } else if (id == 0xf) {
                     v = 0;
                 } else {
-                    mb_error("invalid opcode %d", stmt->id);
+                    mb_error("invalid opcode %d", id);
                 }
                 buf2.push(idx, v);
                 value = v;
-                stmt->set_lvalue((__int64*)buf, value);
+                items[line].set_lvalue((__int64*)buf, value);
                 if (!step_less((int)buf, buf2.data)) {
-                    idx = stmt->f90;
+                    idx = items[line].f90;
                     goto step_end;
                 }
                 idx++;
@@ -7470,17 +7475,20 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
         } else if (op < 0x1e) {
             if (op == 1) {
                 which = 0;
-                int id = (int)stmt->get_operand((__int64*)buf, &which, &out1);
+                int id = (int)items[line].get_operand((__int64*)buf, &which, &out1);
                 if (id < 0 || id >= g_scripts.count || depth >= 0x100) {
                     ok = 0;
-                    advance = 0;
-                    idx = stmt->f90;
-                    goto step_end;
+                    goto fail;
                 }
-                which = 1;
-                for (int i = 1; i < stmt->n; i++) {
-                    which = i;
-                    sub[i - 1] = stmt->get_operand((__int64*)buf, &which, &out1);
+                {
+                Elem* s = &items[line];
+                int i = 1;
+                which = i;
+                for (; i < s->n; i++) {
+                    sub[i - 1] = s->get_operand((__int64*)buf, &which, &out1);
+                    s = &items[line];
+                    which = i + 1;
+                }
                 }
                 unsigned t;
                 if (brk)
@@ -7489,41 +7497,38 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                     t = ((unsigned)id << 16) | (unsigned)EMIT_AUDIO.tag;
                 else
                     t = 0xffffffff;
-                nsub = stmt->n - 1;
+                nsub = items[line].n - 1;
                 ok = g_scripts[id].body.emit(script, depth + 1, &nsub, sub, t);
-                if (!ok) {
-                    advance = 0;
-                    idx = stmt->f90;
-                } else {
-                    idx++;
-                }
+                goto after;
             } else if (op == 0x15) {
                 which = 0;
                 if (check_script_param(&which, limit))
-                    stmt->set_lvalue((__int64*)buf, vals[0]);
+                    items[line].set_lvalue((__int64*)buf, vals[0]);
                 idx++;
             } else if (op == 0x16) {
                 which = 1;
                 if (check_script_param(&which, limit))
-                    stmt->set_lvalue((__int64*)buf, vals[1]);
+                    items[line].set_lvalue((__int64*)buf, vals[1]);
                 idx++;
             } else if (op == 0x17) {
                 which = 1;
-                int k = (int)stmt->get_operand((__int64*)buf, &which, &out3) - 1;
+                int k = (int)items[line].get_operand((__int64*)buf, &which, &out3) - 1;
                 which = k;
                 if (check_script_param(&which, limit))
-                    stmt->set_lvalue((__int64*)buf, vals[k]);
+                    items[line].set_lvalue((__int64*)buf, vals[k]);
                 idx++;
             } else {
                 idx++;
             }
         } else {
             ok = run_line((int)buf, &idx, (int)&script);
+        after:
             if (ok) {
                 idx++;
             } else {
+            fail:
                 advance = 0;
-                idx = stmt->f90;
+                idx = items[line].f90;
             }
         }
 
