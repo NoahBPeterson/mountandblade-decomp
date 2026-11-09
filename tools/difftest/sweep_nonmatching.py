@@ -18,6 +18,8 @@ EQ = os.path.join(ROOT, "tools", "difftest", "equiv.py")
 ROW = re.compile(r"^([0-9a-fA-F]{8})\s+\S+\s+(.*)$")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import slice as SL                                # noqa: E402  (VA->symbol tables, manifests, source markers)
+import threading                                  # noqa: E402
+import fn_hash                                    # noqa: E402  (per-function fingerprints: skip rows whose code is unchanged)
 
 _VA_COMMENT = re.compile(r"//.*@\s*0x0*([0-9a-fA-F]{3,8})\b")
 _TABLES, _MANIFESTS, _COMMENTS = {}, {}, {}
@@ -146,12 +148,69 @@ def row_opts(r):
     return list((_ROW_OPTS.get("%s %s" % (r["id"], r["va"])) or {}).get("args", []))
 
 
+FN_CACHE = os.path.join(ROOT, "work", "equiv_fn_cache.json")
+_FC, _FC_LOCK = None, threading.Lock()
+SKIPPED = []
+
+
+def fn_cache():
+    """{va: {"key": fingerprint+options, "json": path of the result it produced, "verdict": ...}} (work/equiv_fn_cache.json)."""
+    global _FC
+    if _FC is None:
+        try:
+            _FC = json.load(open(FN_CACHE))
+        except (OSError, ValueError):
+            _FC = {}
+    return _FC
+
+
+def save_fn_cache():
+    if _FC is not None:
+        tmp = FN_CACHE + ".tmp"
+        json.dump(_FC, open(tmp, "w"), indent=0, sort_keys=True)
+        os.replace(tmp, FN_CACHE)
+
+
+def cached_obj(src, flags):
+    """The object slice.compile_obj would return for src+flags if it is already cached, else None. Never compiles: a
+    row with no cached object just runs (equiv compiles it)."""
+    try:
+        flags = SL.resolve_include_flags(flags)
+        obj = os.path.join(SL.OBJDIR, "%s_%s.obj" % (SL._stem(src), SL.compile_key(src, flags)[:12]))
+    except Exception:
+        return None
+    return obj if os.path.exists(obj) else None
+
+
+def row_key(r, symbol, flags, extra):
+    """The row's fingerprint: our compiled function (fn_hash) + the equiv options that shape the verdict. None when the
+    object or symbol cannot be found (then the row simply runs)."""
+    if not r["src"] or not symbol:
+        return None
+    obj = cached_obj(os.path.join(ROOT, r["src"]), (flags or "").split())
+    sha = obj and fn_hash.fn_sha(obj, symbol)
+    if not sha:
+        return None
+    return sha + "|" + " ".join(row_opts(r) + list(extra))
+
+
 def run(r, out, extra, force=False):
     """Run one row into out/<id>_<va>.json. An existing result is skipped (restartable) unless force: then it stays in
-    place until the new result replaces it, so a re-run in progress never leaves the row without a result."""
+    place until the new result replaces it, so a re-run in progress never leaves the row without a result.
+    Unless force, a row whose compiled function and options are unchanged since its last recorded run is not re-run:
+    that result is copied in (fn_cache, keyed by tools/difftest/fn_hash.py)."""
     js = os.path.join(out, "%s_%s.json" % (r["id"], r["va"]))
     if os.path.exists(js) and not force:
         return
+    prev = fn_cache().get(r["va"])
+    if prev and not force and os.path.exists(prev.get("json", "")):
+        k = row_key(r, prev.get("symbol"), prev.get("flags"), extra)
+        if k and k == prev.get("key"):
+            if os.path.abspath(prev["json"]) != os.path.abspath(js):
+                import shutil
+                shutil.copyfile(prev["json"], js)
+            SKIPPED.append(r["va"])
+            return
     cmd = [PY, EQ, r["id"], r["va"], "--fp-tol", "--max-mismatch", "200", "--json", js + ".part"] + extra + row_opts(r)
     if r["src"]:
         cmd += ["--src", os.path.join(ROOT, r["src"])]
@@ -165,6 +224,23 @@ def run(r, out, extra, force=False):
         os.replace(js + ".part", js)
     else:
         json.dump([{"verdict": "CRASH"}], open(js, "w"))
+    record(r, js, extra)
+
+
+def record(r, js, extra):
+    """Remember the fingerprint the result in js was produced from (nothing for a crash or a timeout)."""
+    try:
+        d = json.load(open(js))
+        d = d[0] if isinstance(d, list) and d else d
+    except (OSError, ValueError):
+        return
+    if d.get("verdict") in (None, "CRASH", "TIMEOUT") or not d.get("symbol"):
+        return
+    k = row_key(r, d["symbol"], d.get("flags"), extra)
+    if k:
+        with _FC_LOCK:
+            fn_cache()[r["va"]] = {"key": k, "json": os.path.abspath(js), "verdict": d["verdict"],
+                                   "symbol": d["symbol"], "flags": d.get("flags")}
 
 
 def tally(rs, out):
@@ -190,12 +266,18 @@ def main():
     ap.add_argument("--filter")
     ap.add_argument("--tally", action="store_true")
     ap.add_argument("--extra", default="")
+    ap.add_argument("--force", action="store_true", help="re-run every row, even one whose compiled function is unchanged "
+                    "since its last run (after a harness change)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     rs = [r for r in rows() if not a.filter or a.filter in r["id"] or a.filter in r["va"]]
     if not a.tally:
         with ThreadPoolExecutor(a.workers) as ex:
-            list(ex.map(lambda r: run(r, a.out, a.extra.split()), rs))
+            list(ex.map(lambda r: run(r, a.out, a.extra.split(), force=a.force), rs))
+        save_fn_cache()
+        if SKIPPED:
+            print("%d rows not re-run: their compiled function and options are unchanged since the recorded run"
+                  % len(SKIPPED))
     tally(rs, a.out)
 
 

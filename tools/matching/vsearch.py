@@ -327,7 +327,92 @@ def rw_if_shapes(body, mask):
             yield ("if-flip @%d: if (%s)" % (m.start(), cond.strip()[:50]), body[:m.start()] + new + body[ee:], True)
 
 
-REWRITES = [rw_cmp_swap, rw_comm_swap, rw_incdec, rw_zero_test, rw_if_shapes, rw_stmt_swap, rw_decl_hoist]
+def rw_loops(body, mask):
+    """for (I; C; S) B  ->  { I; while (C) { B S; } }   (no `continue` in B: it would skip S)
+       for (...; i++)   ->  for (...; ++i)  and back"""
+    for m in re.finditer(r"\bfor\s*\(", mask):
+        cp = m.end() - 1
+        ce = _close(mask, cp, "(", ")")
+        if ce < 0:
+            continue
+        hdr = mask[cp + 1:ce - 1]
+        semis, d = [], 0
+        for i, ch in enumerate(hdr):
+            d += ch in "([{"
+            d -= ch in ")]}"
+            if ch == ";" and d == 0:
+                semis.append(cp + 1 + i)
+        if len(semis) != 2:
+            continue
+        init, cond, step = body[cp + 1:semis[0]].strip(), body[semis[0] + 1:semis[1]].strip(), body[semis[1] + 1:ce - 1].strip()
+        # step form: i++ <-> ++i
+        sm = re.fullmatch(r"(\+\+|--)\s*([A-Za-z_]\w*)|([A-Za-z_]\w*)\s*(\+\+|--)", step)
+        if sm:
+            alt = (sm.group(2) + sm.group(1)) if sm.group(1) else (sm.group(4) + sm.group(3))
+            new = body[:semis[1] + 1] + " " + alt + body[ce - 1:]
+            yield ("loop-step @%d: %s -> %s" % (m.start(), step, alt), new, True)
+        se = _stmt_end(mask, ce)
+        if se < 0 or not cond or not step:
+            continue
+        stmt = body[ce:se].strip()
+        if re.search(r"\bcontinue\b", mask[ce:se]):
+            continue
+        inner = stmt[1:-1] if stmt.startswith("{") else stmt
+        new = "{ %s%s while (%s) { %s %s; } }" % (init, ";" if init else "", cond, inner.strip(), step)
+        yield ("for-while @%d: for (%s; %s; %s)" % (m.start(), init[:30], cond[:30], step[:20]), body[:m.start()] + new + body[se:], True)
+
+
+def rw_misc(body, mask):
+    """x = x OP y; <-> x OP= y;   x = c ? a : b; -> if (c) x = a; else x = b;   if (c) {.. return ..;} else Y -> drop else"""
+    lv = r"[A-Za-z_]\w*(?:(?:\.|->)[A-Za-z_]\w*|\[[^\[\]\n]*\])*"
+    for m in re.finditer(r"(?m)^([ \t]*)(%s)\s*=\s*(%s)\s*([-+*/&|^])\s*([^;\n?]+);" % (lv, lv), mask):
+        if body[m.start(2):m.end(2)] == body[m.start(3):m.end(3)]:
+            ind, x, op, y = m.group(1), body[m.start(2):m.end(2)], m.group(4), body[m.start(5):m.end(5)].strip()
+            # x OP= y is x = x OP (y): only when y holds nothing binding looser than OP (x = x * a + b is not x *= a + b)
+            yops = set(re.findall(r"(?<=[\w\])\s])\s*([-+*/%&|^<>?=!])", mask[m.start(5):m.end(5)]))
+            if not (yops <= ({"*", "/", "%"} if op in "+-" else set())):
+                continue
+            if True:
+                new = "%s%s %s= %s;" % (ind, x, op, y)
+                yield ("compound @%d: %s" % (m.start(), new.strip()), body[:m.start()] + new + body[m.end():], True)
+    for m in re.finditer(r"(?m)^([ \t]*)(%s)\s*([-+*/&|^])=\s*([^;\n]+);" % lv, mask):
+        ind, x, op, y = m.group(1), body[m.start(2):m.end(2)], m.group(3), body[m.start(4):m.end(4)].strip()
+        yv = y if re.fullmatch(r"[\w.\[\]>-]+", y) else "(%s)" % y
+        new = "%s%s = %s %s %s;" % (ind, x, x, op, yv)
+        yield ("compound @%d: %s" % (m.start(), new.strip()), body[:m.start()] + new + body[m.end():], True)
+    for m in re.finditer(r"(?m)^([ \t]*)(%s)\s*=\s*([^;?\n]+?)\s*\?\s*([^;:\n]+?)\s*:\s*([^;\n]+);" % lv, mask):
+        if mask[m.start(3):m.end(5)].count("?") != 1 or mask[m.start(3):m.end(5)].count(":") != 1:
+            continue   # a nested conditional or a `::` qualifier: leave it
+        ind = m.group(1)
+        x, c, a, b = (body[m.start(i):m.end(i)].strip() for i in (2, 3, 4, 5))
+        new = "%sif (%s) %s = %s; else %s = %s;" % (ind, c, x, a, x, b)
+        yield ("ternary @%d: %s = %s ? ..." % (m.start(), x, c[:30]), body[:m.start()] + new + body[m.end():], True)
+    for m in re.finditer(r"\bif\s*\(", mask):
+        ce = _close(mask, m.end() - 1, "(", ")")
+        if ce < 0:
+            continue
+        se = _stmt_end(mask, ce)
+        if se < 0:
+            continue
+        k = re.match(r"\s*else\b", mask[se:])
+        then = mask[ce:se].strip()
+        if not k or not re.search(r"\breturn\b[^;]*;\s*\}?$", then):
+            continue
+        ee = _stmt_end(mask, se + k.end())
+        if ee < 0:
+            continue
+        y = body[se + k.end():ee].strip()
+        if y.startswith("{"):
+            y = y[1:-1].strip()
+        # dropping the else moves Y's locals into the enclosing scope: only when it declares none
+        if re.search(r"(?m)^\s*(?:const\s+)?[A-Za-z_][\w:<>]*[\s*&]+[A-Za-z_]\w*\s*[=;\[(]", y) and not y.startswith("if"):
+            continue
+        new = body[m.start():se] + " " + y
+        yield ("drop-else @%d" % m.start(), body[:m.start()] + new + body[ee:], True)
+
+
+REWRITES = [rw_cmp_swap, rw_comm_swap, rw_incdec, rw_zero_test, rw_if_shapes, rw_loops, rw_misc, rw_stmt_swap,
+            rw_decl_hoist]
 
 
 def variants(body):
@@ -515,13 +600,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("src", nargs="?"); ap.add_argument("va", nargs="?")
     ap.add_argument("--batch", action="store_true"); ap.add_argument("--max-aligned", type=int, default=64)
+    ap.add_argument("--min-aligned", type=int, default=1)
     ap.add_argument("--limit", type=int, default=0); ap.add_argument("--rounds", type=int, default=8)
     ap.add_argument("--jobs", type=int, default=24); ap.add_argument("--apply", action="store_true")
     ap.add_argument("--keep-unsafe", action="store_true")
     ap.add_argument("--shard", default="", help="K/N: only every N-th row starting at K (run N shards side by side)")
     a = ap.parse_args()
     if a.batch:
-        rows = nonmatching_rows(a.max_aligned)
+        rows = [r for r in nonmatching_rows(a.max_aligned) if r[0] >= a.min_aligned]
         if a.limit:
             rows = rows[:a.limit]
         if a.shard:
