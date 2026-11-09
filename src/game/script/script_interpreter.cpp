@@ -1077,7 +1077,10 @@ void Mission::order(int index, int order) {
         Leader* L = &leaders[index];
         if (L->agent_id != -1) {
             int f = agent_by_id(this, L->agent_id)->update_nav_face();
-            vector4 zero = { 0, 0, 0 };
+            vector4 zero;               // (0, 0, 0) with w unset, as rgl's 3-argument vector4: set_vec copies the leftover w into every armed slot
+            zero.x = 0.0f;
+            zero.y = 0.0f;
+            zero.z = 0.0f;
             set_vec(L, &agent_by_id(this, L->agent_id)->pos, &f, &zero);
             if (L->sub[0].mode) L->sub[0].state = 1;
             if (L->sub[1].mode) L->sub[1].state = 1;
@@ -1131,20 +1134,19 @@ void Mission::order(int index, int order) {
                 continue;
             if (s->state == 0)
                 continue;
-            vector4 p;
+            vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
             p.x = s->ox * 7.0f + s->target.x;
             p.y = s->oy * 7.0f + s->target.y;
             p.z = s->oz * 7.0f + s->target.z;
-            p.w = 0.0f;
             if (!point_in_rect(&p))
                 continue;
             s->target = p;
-            s->target.w = 0.0f;
             s->face = level->nearest_face(&p.x);
-            s->extra.x = 0.0f;
-            s->extra.y = 0.0f;
-            s->extra.z = 0.0f;
-            s->extra.w = 0.0f;
+            vector4 zero;               // (0, 0, 0) with w unset: the original copies the leftover frame word into extra.w
+            zero.x = 0.0f;
+            zero.y = 0.0f;
+            zero.z = 0.0f;
+            s->extra = zero;
             s->state = 1;
         }
         strcpy(ordstr, order_string("ui_advance_e_"));
@@ -1156,20 +1158,19 @@ void Mission::order(int index, int order) {
                 continue;
             if (s->state == 0)
                 s->target = s->home;
-            vector4 p;
+            vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
             p.x = s->target.x - s->ox * 7.0f;
             p.y = s->target.y - s->oy * 7.0f;
             p.z = s->target.z - s->oz * 7.0f;
-            p.w = 0.0f;
             if (!point_in_rect(&p))
                 continue;
             s->target = p;
-            s->target.w = 0.0f;
             s->face = level->nearest_face(&p.x);
-            s->extra.x = 0.0f;
-            s->extra.y = 0.0f;
-            s->extra.z = 0.0f;
-            s->extra.w = 0.0f;
+            vector4 zero;               // (0, 0, 0) with w unset: the original copies the leftover frame word into extra.w
+            zero.x = 0.0f;
+            zero.y = 0.0f;
+            zero.z = 0.0f;
+            s->extra = zero;
             s->state = 1;
         }
         strcpy(ordstr, order_string("ui_fall_back_e_"));

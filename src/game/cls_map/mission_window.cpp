@@ -200,8 +200,9 @@ void MissionScreen::fill_mission_row(int side)
         id = g_mission_ctx.ids[1 - g_mission_ctx.side];
     if (id == -1)
         return;
-    int pidx = g_game->parties.lookup(id);
-    Party* party = (Party*)((char*)g_game->parties.pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);
+    PartyMgr* pm = &g_game->parties;
+    int pidx = pm->lookup(id);
+    Party* party = (Party*)((char*)pm->pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);
 
     float v[2];
     const tstring* text;
@@ -217,7 +218,11 @@ void MissionScreen::fill_mission_row(int side)
     for (int i = 0; i < party->first_flagged(); i++) {
         Stack* rec = (Stack*)((char*)party + 0xa8) + i;
         Troop* u = &g_game->troops[rec->troop];
-        char buf[0x14];   // 0x14 like the original: its sprintf of a long count pair overflows into the line buffer that follows
+        // buf (0x14) is followed directly by line in the original's frame (esp+0x34 / esp+0x48): its sprintf of a long
+        // count pair overflows into line, and the line sprintf then reads buf while overwriting that overlap. One struct
+        // pins the adjacency whatever the register allocator does with the frame.
+        struct { char buf[0x14]; char line[0x30]; char spare[0xc]; } fr;   // spare: the original's frame is 0xc larger above line
+        char* buf = fr.buf;
         if (u->flags30 & 0x10) {
             int h = ((char*)u)[0x7a] & 0xf;
             if (h < 0)
@@ -233,7 +238,7 @@ void MissionScreen::fill_mission_row(int side)
         if (!nm)
             nm = (const tstring*)u;
         const char* nm2 = nm->c_str();
-        char line[0x30];
+        char* line = fr.line;
         sprintf(line, "%s %s", nm2, buf);
         {
             tstring ts(line);

@@ -1029,6 +1029,12 @@ class Resolver:
                 return va, "import-thunk"
             if name in BUILTIN_ADDR:
                 return BUILTIN_ADDR[name], "builtin"
+            if name.startswith("??_E") and name.endswith("@@UAEPAXI@Z"):
+                # the vector deleting destructor a class's vtable slot 0 names: the original has one function there
+                # (VC7.1 folds the scalar and vector forms), and the symbol tables / manifests name it `??_G<class>`
+                va, how2 = self.by_symbols("??_G" + name[4:], our_quals, wf)
+                if va:
+                    return va, "deleting-dtor(%s)" % how2
             return None, note
 
         required_secs, eh_secs = set(), set()

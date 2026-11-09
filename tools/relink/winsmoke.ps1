@@ -79,11 +79,12 @@ function Shot($proc, $path) {
     $dc = $g.GetHdc(); [W]::PrintWindow($h, $dc, 2) | Out-Null; $g.ReleaseHdc($dc); $g.Dispose()
     $crop = New-Object System.Drawing.Rectangle ($x - $wr.L), ($y - $wr.T), $w, $hh
     $crop.Intersect((New-Object System.Drawing.Rectangle 0, 0, $full.Width, $full.Height))
-    if ($crop.Width -gt 0 -and $crop.Height -gt 0) {
+    # a window still being created can be a few pixels high; [int] rounds to nearest, so sample with Floor (in range)
+    if ($crop.Width -ge 40 -and $crop.Height -ge 40) {
       $cand = $full.Clone($crop, $full.PixelFormat)
       $sum = 0; $cnt = 0
       for ($i = 0; $i -lt 40; $i++) { for ($j = 0; $j -lt 40; $j++) {
-        $c = $cand.GetPixel([int]($cand.Width * ($i + 0.5) / 40), [int]($cand.Height * ($j + 0.5) / 40)); $sum += $c.R + $c.G + $c.B; $cnt++ } }
+        $c = $cand.GetPixel([int][Math]::Floor($cand.Width * ($i + 0.5) / 40), [int][Math]::Floor($cand.Height * ($j + 0.5) / 40)); $sum += $c.R + $c.G + $c.B; $cnt++ } }
       if ($sum / $cnt -gt 6) { $bmp = $cand } else { $cand.Dispose() }
     }
     $full.Dispose()

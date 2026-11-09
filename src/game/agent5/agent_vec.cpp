@@ -25,8 +25,8 @@ struct ui_cell {
 // parsed so every use is a call to the out-of-line instance (0x4fe120 / 0x4fe4b0).
 #include <xmemory>
 namespace std {
-void _Uninit_fill_n(ui_cell*, unsigned, const ui_cell&, allocator<ui_cell>&, _Nonscalar_ptr_iterator_tag);
-ui_cell* _Uninit_copy(ui_cell*, ui_cell*, ui_cell*, allocator<ui_cell>&, _Nonscalar_ptr_iterator_tag);
+void _Uninit_fill_n(ui_cell*, unsigned, const ui_cell&, allocator<ui_cell>&, _Nonscalar_ptr_iterator_tag);   // 0x4fe120 (cell_fill below)
+ui_cell* _Uninit_copy(ui_cell*, ui_cell*, ui_cell*, allocator<ui_cell>&, _Nonscalar_ptr_iterator_tag);   // 0x4fe4b0 (cell_copy below)
 }
 
 #include <vector>

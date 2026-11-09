@@ -385,10 +385,12 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         a->f5724 = h;
         if (a1 == *(int*)(((char*)g_game) + 0x78)) {
             PartyMgr* pm = &g_game->parties;
-            Skeleton96* rec = (Skeleton96*)(pm->pages._Myfirst[pm->lookup(a1) >> 4]);
-            int idx = pm->lookup(a1) & 0xf;
-            if (rec[idx].f80 > 0.5f) {
-                a->f5724 = (1.5f - rec[idx].f80) * h;
+            int li = pm->lookup(a1);
+            Skeleton96* rec = (Skeleton96*)(pm->pages._Myfirst[li >> 4]);
+            if (rec[li & 0xf].f80 > 0.5f) {
+                int lj = pm->lookup(a1);   // the original looks the record up again inside the branch
+                Skeleton96* rec2 = (Skeleton96*)(pm->pages._Myfirst[lj >> 4]);
+                a->f5724 = (1.5f - rec2[lj & 0xf].f80) * h;
             }
         }
     }
