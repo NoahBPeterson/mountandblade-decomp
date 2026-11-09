@@ -276,6 +276,10 @@ void HashTab::insert(HOut* out, unsigned* key)
                             u = u - 1;
                         }
                         HNode* s = pool.sentinel;
+                        // stand-in: the original's std::list::_Splice size move (`if (this != &_Right)`, 0x4d3ce0
+                        // `cmp ecx,ecx; je` over the call) is never taken here (one list); cl 13.10 folds that compare
+                        // away (482 bytes), so an always-true pointer test keeps the call's shape. grow(0) is a no-op
+                        // (0x4cb6f0: 0x7ffffff - size >= 0 unsigned, size += 0), so behaviour is unchanged.
                         list_node* pl = &pool;
                         if (pl) pl->grow(0);
                         *(HNode**)p->prev = q;

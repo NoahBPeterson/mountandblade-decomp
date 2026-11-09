@@ -373,12 +373,16 @@
       "g:a17420=0,1@0.6",
       "--hint",
       "g:a17820=0,1@0.3",
+      "--hint",
+      "g:a1712c=0,1@0.5",
+      "--hint",
+      "g:a1752c=0,1@0.3",
       "--inputs",
       "1500",
       "--plateau",
       "800"
     ],
-    "why": "MapEditorDialog::update's three blocks are gated on keyboard-modifier globals (0xa17458/0xa17858 list modifier, 0xa17148/0xa17348 select-all, 0xa1714c/0xa1754c, 0xa17420/0xa17820 delete) that are zero in the harness, so everything below the first test was unreached; soft g:ADDR hints set them to 0 or 1"
+    "why": "MapEditorDialog::update's three blocks are gated on keyboard-modifier globals (0xa17458/0xa17858 list modifier, 0xa17148/0xa17348 select-all, 0xa1714c/0xa1754c, 0xa17420/0xa17820 delete) that are zero in the harness, so everything below the first test was unreached; soft g:ADDR hints set them to 0 or 1 [bm7cr 2026-11-08: + 0xa1712c/0xa1752c (down/prev[0x16], the Ctrl+U frame push-back in section 7), which our source had read as down[0x14]; the select-all test read down[0x1c] where the original reads down[0x1e] (0xa1714c) - both real bugs, fixed in map_editor.cpp]"
   },
   "mission_ctx 00513710": {
     "args": [
@@ -1121,5 +1125,33 @@
       "476130,476020,4772f0,477380,476240,4762b0,424830,424db0"
     ],
     "why": "tessellate: our build compiles its own copies of vector<geom_elem>/<geom_pt> reserve and push_back (and their _Insert_n growth), so their allocations show at depth 1 where the original's are inside out-of-line calls. With allocation failure injected (alloc_fail), the reserve fails and push_back regrows, which made the traces differ; heap operations and end state were identical (replay of the saved FAIL input, 2026-11-08)."
+  },
+  "world_app 004d3c00": {
+    "args": [
+      "--transparent",
+      "4cb6f0"
+    ],
+    "why": "HashTab::insert: the original's rehash splice has std::list::_Splice's `this != &_Right` size move (0x4d3ce0 `cmp ecx,ecx; je` over `push 0; call 0x4cb6f0`), never taken; ours keeps the call's shape with an always-true pointer test (stand-in, see world_app.cpp), so ours calls list_node::grow(0) where the original does not. grow(0) is a provable no-op (0x7ffffff - size >= 0 unsigned, then size += 0) with no inner calls, so making 0x4cb6f0 transparent hides only the no-op calls; the saved FAIL input replays with no difference (bm7cr 2026-11-08)."
+  },
+  "game_2 00524710": {
+    "args": [
+      "--transparent",
+      "401800"
+    ],
+    "why": "TroopRec ctor: the original builds its tstring names[8] member through the out-of-line vector constructor iterator ??_H (0x401800: push 0x42bbd0; push 8; push 0x10; a plain loop calling the ctor count times), ours expands that loop inline, so the original's 8 tstring::tstring calls were hidden inside one ??_H call at depth 1. Same constructor, same 8 this pointers (+0x10 stride) in the same order; replay of the saved FAIL input with --transparent 401800 shows no difference (bm7ct 2026-11-08)."
+  },
+  "game_2 00524860": {
+    "args": [
+      "--transparent",
+      "401800"
+    ],
+    "why": "QuestRec ctor: the original builds its tstring names[8] member through the out-of-line vector constructor iterator ??_H (0x401800: push 0x42bbd0; push 8; push 0x10; a plain loop calling the ctor count times), ours expands that loop inline, so the original's 8 tstring::tstring calls were hidden inside one ??_H call at depth 1. Same constructor, same 8 this pointers (+0x10 stride) in the same order; replay of the saved FAIL input with --transparent 401800 shows no difference (bm7ct 2026-11-08)."
+  },
+  "game_2 005249f0": {
+    "args": [
+      "--transparent",
+      "401800"
+    ],
+    "why": "Faction ctor: the original builds its tstring names[8] member through the out-of-line vector constructor iterator ??_H (0x401800: push 0x42bbd0; push 8; push 0x10; a plain loop calling the ctor count times), ours expands that loop inline, so the original's 8 tstring::tstring calls were hidden inside one ??_H call at depth 1. Same constructor, same 8 this pointers (+0x10 stride) in the same order; replay of the saved FAIL input with --transparent 401800 shows no difference (bm7ct 2026-11-08)."
   }
 }

@@ -42,6 +42,15 @@ static inline void push_back_direct(std::vector<MissionUi*>& c, MissionUi* const
     }
 }
 
+// std::vector<MissionUi*>::push_back out of line, as the original calls it at 0x4ecada / 0x4ecbad: the linker folded
+// every pointer vector's push_back onto one body (0x4936b0, defined as vector<Party*>'s in world_data/world_data.cpp)
+struct Party;
+template<> void std::vector<Party*, std::allocator<Party*> >::push_back(Party* const& v);   // 0x4936b0
+static inline void push_back_shared(std::vector<MissionUi*>& c, MissionUi* const& v)
+{
+    ((std::vector<Party*>*)&c)->push_back(*(Party* const*)&v);
+}
+
 // the 0x5ac8-byte record of dense index idx (page table at PartyMgr +0x138d0), as the original indexes it
 static char* party_bytes(PartyMgr* mgr, int idx)
 {
@@ -113,7 +122,7 @@ void CampaignScreen::init_screen()
     }
     f54->set_size((float*)&vector2(0.03f, 0.03f));
     f54->set_text((float*)&vector2(), g_strtab.lookup(tstring("ui_paused")));
-    overlay->kids.push_back(f54);
+    push_back_shared(overlay->kids, f54);   // 0x4936b0 (out of line in the original)
 
     f58 = new_widget(0x178);
     f58->move_a((float*)&vector2(0.73f, 0.045f));
@@ -124,7 +133,7 @@ void CampaignScreen::init_screen()
     }
     f58->set_size((float*)&vector2(0.018f, 0.018f));
     f58->set_text((float*)&vector2(), g_strtab.lookup(tstring("ui_click_left_button_to_cancel_wait")));
-    overlay->kids.push_back(f58);
+    push_back_shared(overlay->kids, f58);   // 0x4936b0 (out of line in the original)
 
     {
         PartyMgr* mgr = &g_game->parties;

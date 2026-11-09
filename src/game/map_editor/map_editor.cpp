@@ -153,7 +153,7 @@ refresh_list:
     }
 
     // 2. select-all modifier: select every record
-    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x1c] != 0 && g_keyboard.prev[0x1e] == 0) {
+    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x1e] != 0 && g_keyboard.prev[0x1e] == 0) {   // Ctrl+A press (0x5308f0: [0xa1714c] = down[0x1e])
         ed_sel_list(g_game).resize(0, 0);
         ed_selected(g_game) = -1;
         for (unsigned i = 0; i < (unsigned)record_count(); i++)
@@ -279,7 +279,7 @@ refresh_list:
         }
 
         // 7. push the visual frames back into the scene objects
-        if (g_keyboard.down[0x1d] != 0 && g_keyboard.down[0x14] != 0 && g_keyboard.prev[0x16] == 0)
+        if (g_keyboard.down[0x1d] != 0 && g_keyboard.down[0x16] != 0 && g_keyboard.prev[0x16] == 0)   // Ctrl+U press (0x531235: [0xa1712c] = down[0x16])
             for (unsigned i = 0; i < (unsigned)record_count(); i++) {
                 PlacedObj* r = rec_at(i);
                 *(matrix*)((char*)ent_of(r) + 0x58) = r->m58;

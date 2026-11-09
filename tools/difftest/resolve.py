@@ -1193,9 +1193,12 @@ class Resolver:
         # include/sound_mgr.h) is still on record in src/ and symbols/. Binding it to the original's
         # address (kind "orig-code") makes our call run the original's own body, the honest model.
         # Runs after alignment so a positional match the original's own call operands confirm keeps
-        # its (possibly ICF-folded) address.
+        # its (possibly ICF-folded) address. Symbols reached only through EH or vtable sections ("eh") get the same
+        # name lookup: a vtable slot of our own inline constructor (ContainerBase::on_child_moved / render, nonmatching
+        # rows listed in no symbol table) otherwise went to the trap page and discarded every input reaching it
+        # (party_screen 0x504ef0, agent_hud 0x4fc820). They still never get a model stub below.
         for si, (kind, _note) in list(pending.items()):
-            if kind != "req" or si in r.addr:
+            if kind not in ("req", "eh") or si in r.addr:
                 continue
             s = syms[si]
             wf = want_func(s)

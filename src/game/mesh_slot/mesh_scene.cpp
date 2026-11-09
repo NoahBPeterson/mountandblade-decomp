@@ -203,8 +203,8 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
             unsigned t = (unsigned)kind->type_flags & 0xff;
             if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11 ||
                 t == 2 || t == 3 || t == 4 || t == 7) {
-                tstring name = item_mesh_name(kind, ir.item, ir.m4);
-                *p = (int)g_resmgr.make_lod_mesh(name, false);
+                // the name is a temporary of the full expression: the original destroys it (0x47d180) before add_group
+                *p = (int)g_resmgr.make_lod_mesh(item_mesh_name(kind, ir.item, ir.m4), false);
                 ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
                 TimerList* snd = (TimerList*)((char*)kind + 0x228);      // the item's sound holder (ItemKind+0x228)
