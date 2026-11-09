@@ -2,9 +2,9 @@
 """Seed work/equiv_fn_cache.json from existing sweep results, so the first fingerprinted sweep skips unchanged rows.
 
 usage: seed_fn_cache.py DIR [DIR ...]      (later dirs win; default: the sources docs/equiv_verdicts.json lists)
-A row is seeded from its newest result only when that result is provably from today's code: our object for the row
-(work/difftest/obj, cached by the source+headers+flags content) already existed when the result was written. A row
-edited since then has a newer object (or none yet) and is left to run."""
+A row is seeded from its newest result only when the function's bytes in the newest cached object of its source that
+existed when the result was written (the object that run compiled; work/difftest/obj keeps them all) equal the bytes in
+today's object. A row edited since then is left to run."""
 import glob, json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sweep_nonmatching as SW   # noqa: E402
@@ -38,9 +38,10 @@ for va, js in best.items():
     if not obj:
         stale += 1; continue
     k = SW.row_key(r, d["symbol"], d.get("flags"), [])
-    if k and os.path.getmtime(obj) > os.path.getmtime(js):
-        # today's object is newer than the result (a header edit re-keys a whole TU): the result still stands if the
-        # function's bytes in the object that existed when it was written are the same as today's
+    if k:
+        # the result stands only if the function's bytes in the newest object that existed when it was written (the one
+        # the run compiled) equal today's. (Not "today's object is older than the result": an edit that was later
+        # reverted leaves today's object old while the result came from the edited one.)
         t = os.path.getmtime(js)
         then = [o for o in by_stem.get(SL._stem(src), []) if os.path.getmtime(o) <= t]
         old_sha = then and fn_hash.fn_sha(max(then, key=os.path.getmtime), d["symbol"])
