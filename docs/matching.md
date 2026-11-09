@@ -80,6 +80,16 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
   every VA. Prints finished manifest rows for matches. Pairs VAs to symbols by the `// @ 0x<va>` marker
   (`marker`), the manifest (`manif`), or size (`~size`, unreliable: add markers).
 - `.venv/bin/python tools/matching/try_variants.py <scratch.cpp> <va>`: rank every function in a scratch file.
+- `.venv/bin/python tools/matching/vsearch.py <file.cpp> <va>` (or `--batch --max-aligned N [--shard K/N]`):
+  **variant search, no model in the loop**. Rewrites the function after the marker mechanically (comparison and
+  commutative operand swaps, `i++`/`++i`/`i += 1`, `if (x)`/`if (x != 0)`, `if (A && B)` split, if/else flip,
+  independent-statement swaps and moves, declaration hoists), compiles every variant (laptop compile server first),
+  scores the aligned figure, and hill-climbs. Writes `work/vsearch/<stem>_<va>.patch`; never edits `src/` unless
+  `--apply`. A statement swap/move or hoist is only guarded by a shared-identifier check (it cannot see aliasing,
+  or a call that reads a moved store), so read those patches and run equiv on the row before landing; a MATCH is
+  correct by definition. First sweep (2026-11-09): 3 MATCHes and ~50 rows closer (~700 aligned bytes) from the
+  340 rows with aligned <= 256, ~15 min per sweep. `i < n` -> `n > i` (the cmp operand order) and store order were
+  the levers that most often paid.
 - `.venv/bin/python tools/matching/cmpdis.py <obj> <symbol-substring> <va>`: instruction-level diff (compile
   first: `tools/matching/cl.sh /nologo /c /O2 /MT /Gy /TP <src> /Fo<obj>`).
 - `.venv/bin/python tools/matching/disasm.py <va> [len]`: the original's instructions.
