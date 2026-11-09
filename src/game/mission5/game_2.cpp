@@ -338,6 +338,7 @@ static inline int map_add_vertex(rgl::mesh* m, int index, const vec2& uv, const 
 }
 static inline void map_add(rgl::vector4& a, const rgl::vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
 static inline void map_scale(rgl::vector4& v, float k) { v.x *= k; v.y *= k; v.z *= k; }
+static inline void map_mul(rgl::vector4& a, const rgl::vector4& b) { a.x *= b.x; a.y *= b.y; a.z *= b.z; }   // per-channel product: lit.z stays on the x87 stack
 struct map_ground {                                                 // NavData with its edge vector typed
     rgl::vec<NavVert> verts;
     rgl::vec<NavCell> cells;
@@ -376,7 +377,7 @@ void Game::build_map_trees()
 
     // the lighting vectors the fixed-function vertex colour uses
     rgl::vector4 lightL, lightM;
-    unsigned i;
+    rgl::world* lvl;     // re-read at the end of each pass of the dot loop: the original keeps it in edi and reloads it at the latch
     {
         const rgl::vector4& sun_dir = ((GameMapView*)this)->wind->dir;
         rgl::vector4 dir;
@@ -387,16 +388,18 @@ void Game::build_map_trees()
 
         lightL = g_script.level->ambient;
         lightM = g_script.level->lights[0]->color;
+        lvl = g_script.level;
 
         // ---- per-point view dot --------------------------------------------
-        for (i = 0; i < g_script.level->ground->verts.size(); i++) {
-            NavVert& v = g_script.level->ground->verts[i];
+        for (unsigned i = 0; i < lvl->ground->verts.size(); i++) {
+            NavVert& v = lvl->ground->verts[i];
             float s = v.n.y * dir.y;
             s += v.n.z * dir.z;
             s += v.n.x * dir.x;
             v.level = s;
             if (g_use_shaders != 0)
                 v.level = s * s;
+            lvl = g_script.level;
         }
     }
 
@@ -404,13 +407,15 @@ void Game::build_map_trees()
     // 100000 entries each; the exe reserves 4 MB of stack (/STACK:0x3e8480), the same as the relink.
     map_arrays fr;
 
-    NavData* ground = g_script.level->ground;
-    for (i = 0; i < ground->verts.size(); i++) {
+    NavData* ground = lvl->ground;
+    // each loop has its own counter: the original keeps the edge loop's and the cells loop's counters in different slots
+    for (unsigned i = 0; i < ground->verts.size(); i++) {
         fr.flags[i] = 0;
         fr.dist[i] = 1000.0f;
     }
-    for (i = 0; i < ground->cells.size(); i++) {
-        NavCell& c = ground->cells[i];
+    int ni;              // one counter for this loop and the per-cell node loop below: the original gives both one slot
+    for (ni = 0; (unsigned)ni < ground->cells.size(); ni++) {
+        NavCell& c = ground->cells[ni];
         for (int k = 0; k <= 9; k++) {
             int kind = c.ids[8] & 7;
             int t = c.ids[8];
@@ -434,15 +439,16 @@ void Game::build_map_trees()
     }
 
     // ---- bbox + aggregate masks ----------------------------------------
+    // the bounds are reset before the masks are formed: the original interleaves these stores with the mask loads
+    *(map_v2*)&g_script.minx = map_v2(100000.0f, 100000.0f);
+    *(map_v2*)&g_script.maxx = map_v2(-100000.0f, -100000.0f);
     unsigned water = (unsigned)(g_bit[8] | g_bit[7]);
     unsigned land = (unsigned)(g_bit[4] | g_bit[5] | g_bit[11] | g_bit[9] | g_bit[12] | g_bit[13] | g_bit[10] | g_bit[2] | g_bit[3] | g_bit[1]);
     unsigned sea = (unsigned)g_bit[0];
     unsigned wood = (unsigned)g_bit[9];
-    *(map_v2*)&g_script.minx = map_v2(100000.0f, 100000.0f);
-    *(map_v2*)&g_script.maxx = map_v2(-100000.0f, -100000.0f);
     ((GameMapView*)this)->scan_arrays(fr.scan_a, fr.scan_b);
 
-    for (i = 0; i < g_script.level->ground->verts.size(); i++) {
+    for (unsigned i = 0; i < g_script.level->ground->verts.size(); i++) {
         rgl::vector4& p = g_script.level->ground->verts[i].p;
         if (p.x < g_script.minx) g_script.minx = p.x;
         if (p.x > g_script.maxx) g_script.maxx = p.x;
@@ -455,7 +461,7 @@ void Game::build_map_trees()
     // ---- ten relaxation passes over the edges --------------------------
     map_ground* g2 = (map_ground*)g_script.level->ground;
     for (int pass = 10; pass != 0; pass--) {
-        for (i = 0; i < g2->edges.size(); i++) {
+        for (unsigned i = 0; i < g2->edges.size(); i++) {
             int a = g2->edges[i].a;
             int b = g2->edges[i].b;
             // the edge endpoints are read from g_nav's vertex vector (map.txt's store), not the ground's
@@ -554,10 +560,10 @@ void Game::build_map_trees()
                 int mv = (int)new rgl::mesh();                 // int: the lists below are the shared vector<int> instance (0x410610)
                 g_script.map_cell[ci]->local.o = center;
 
-                for (i = 0; i < g_script.level->ground->verts.size(); i++)
+                for (unsigned i = 0; i < g_script.level->ground->verts.size(); i++)
                     fr.vert[i] = -1;
 
-                for (int ni = 0; ; ni++) {
+                for (ni = 0; ; ni++) {
                     map_ground* g = (map_ground*)g_script.level->ground;
                     if ((unsigned)ni >= g->ncells())
                         break;
@@ -663,10 +669,7 @@ void Game::build_map_trees()
                                             d.z = 0.0f;
                                         }
                                         if (len > 0.25f) {
-                                            rgl::vector4 r = q + d * 0.25f;
-                                            sum.x += r.x;
-                                            sum.y += r.y;
-                                            sum.z += r.z;
+                                            map_add(sum, q + d * 0.25f);     // the helper's reference: fld r.x; faddp like the original
                                         } else {
                                             sum.x += p.x;
                                             sum.y += p.y;
@@ -764,10 +767,7 @@ void Game::build_map_trees()
                         c.z = (no.x * 0.6f + 0.87f) * sc;
                         if (g_use_shaders == 0) {
                             // the fixed-function lighting factor per channel
-                            rgl::vector4 lit = lightL + lightM * g_script.level->ground->verts[id].level * 1.1f;
-                            c.x *= lit.x;
-                            c.y *= lit.y;
-                            c.z *= lit.z;
+                            map_mul(c, lightL + lightM * g_script.level->ground->verts[id].level * 1.1f);
                         }
                         c.w = 1.0f;
 
@@ -801,7 +801,14 @@ void Game::build_map_trees()
                                 c.w = 0.0f;
                             if (nd.ids[8] == 0 && dd > 0.01f)
                                 c.w = 0.0f;
-                        } else if (mt == 0x16 || mt == 0x17) {
+                        } else if (mt == 0x16) {
+                            // two arms with one body: cl merges them into the `mt == 0x16 || mt == 0x17` test, but the
+                            // c.w stores stay apart (with one arm, cl hoists c.w = 0 and moves the block last)
+                            if (fr.dist[id] > 0.01f)
+                                c.w = 0.0f;
+                            else
+                                c.w = (water & fr.flags[id]) != 0 ? 0.0f : 1.0f;
+                        } else if (mt == 0x17) {
                             if (fr.dist[id] > 0.01f)
                                 c.w = 0.0f;
                             else

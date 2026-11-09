@@ -64,9 +64,8 @@ void Terrain::emit_cell(int x, int y)
     int n = list_c.count;
     unsigned nf = 0, nr = 0, no = 0;
     if (n > 0) {
-        int i = 0;
+        DustParticle* p = dust_at(this, 0);     // walks the list (the original's p += 0xa0 per entry)
         do {
-            DustParticle* p = dust_at(this, i);
             int ix = (int)(p->frame.o.x * 0.05f);
             int cx;
             if (ix < 0) {

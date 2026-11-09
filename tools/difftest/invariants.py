@@ -294,12 +294,44 @@ ELEM_N_INV = Invariant("Elem::n", "the operand count of an operation (dialog_rec
 
 # (module, va) -> the invariants its inputs must satisfy. Keyed by the row's own module+VA, not by symbol:
 # a module rename or a second instantiation of the same source cannot silently pick up someone else's bound.
+# -- Mesh::poly_ray 0x52dfd0 (mission5/mesh_3.h: Mesh_s2dfd0, polys +0x28, verts +0x18, vec first/last +4/+8;
+#    mpoly 0x64 bytes, idx[4] +0x28, count +0x48; mface 0x18). The function builds the polygon's points from
+#    verts[poly.idx[i]] for i < count into a local pts[4]: count 2 leaves pts[2] as the 0xCCCCCCCC stack fill and
+#    makes a degenerate segment whose edge tests are decided by x87 rounding, and an index past either vector
+#    reads soup. A well-formed polygon has index < polys.size(), 3 <= count <= 4 and every idx < verts.size().
+
+def _poly_ray(gen, inp):
+    th = inp.regs.get("ecx", 0)
+    if not (POOL_BASE <= th < POOL_BASE + NSLOTS * SLOT) or len(inp.args or ()) < 3:
+        return
+    pf, pl = _dword(gen, inp, th + 0x2C), _dword(gen, inp, th + 0x30)
+    vf, vl = _dword(gen, inp, th + 0x1C), _dword(gen, inp, th + 0x20)
+    ip = _dword(gen, inp, inp.args[2])
+    if None in (pf, pl, vf, vl, ip) or pl < pf or vl < vf:
+        return
+    npolys, nverts = (pl - pf) // 0x64, (vl - vf) // 0x18
+    yield "poly_ray index", ip, 0, max(npolys - 1, -1)
+    if ip >= npolys:
+        return
+    poly = pf + 0x64 * ip
+    n = _dword(gen, inp, poly + 0x48)
+    yield "mpoly::count", n, 3, 4
+    if n is None or not (3 <= n <= 4):
+        return
+    for k in range(n):
+        yield "mpoly::idx[%d]" % k, _dword(gen, inp, poly + 0x28 + 4 * k), 0, max(nverts - 1, -1)
+
+
+POLY_RAY_INV = Invariant("mpoly", "the polygon Mesh::poly_ray walks (index < polys.size(), count 3..4, idx < verts.size())",
+                         _poly_ray, [(3, 4)])
+
 SPECS = {
     ("shapes", 0x40A000): [FACE_INV],
     ("shapes", 0x40B0F0): [FACE_INV],
     ("strat_entity", 0x42B080): [NIDS_INV, GFACE_INV],
     ("terrain_a", 0x465AF0): [TERRAIN_INV],
     ("script_interpreter", 0x49FA10): [ELEM_N_INV],
+    ("mesh_poly_ray", 0x52DFD0): [POLY_RAY_INV],
 }
 
 

@@ -273,12 +273,12 @@ void note_window::sort_list(sel_list* l, int mode)
             case 3:
                 do_swap = strcmp(name_of_3(l->v._Myfirst[i]), name_of_3(l->v._Myfirst[j])) > 0;
                 break;
-            case 4: {
-                tstring a = name_of_4(l->v._Myfirst[i]).strip_tags();
-                tstring b = name_of_4(l->v._Myfirst[j]).strip_tags();
-                do_swap = strcmp(a.c_str(), b.c_str()) > 0;
+            case 4:
+                // one full expression, as the original: the arguments evaluate right to left, so j's
+                // strip_tags() temporary is built first and both die after the strcmp
+                do_swap = strcmp(name_of_4(l->v._Myfirst[i]).strip_tags().c_str(),
+                                 name_of_4(l->v._Myfirst[j]).strip_tags().c_str()) > 0;
                 break;
-            }
             }
             if (do_swap)
                 swap_index(l, i, j);

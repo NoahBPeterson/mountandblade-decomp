@@ -255,12 +255,21 @@
     ],
     "why": "Dialog::proc dispatches on the message id (arg 1) through a jump table and then on the command id in wParam's low word; a random 32-bit msg is almost never 0x4e/0x110/0x111/0x114 (3/33 edges, 7.4% of insns). Soft arg hints only (--hint argN[&MASK]=V1,..@P, new in invariants.py), nothing is discarded."
   },
+  "game_app 0050ec40": {
+    "args": [
+      "--stub",
+      "418b30,418c10,418c80,418cf0,419540,4ebfd0"
+    ],
+    "why": "GameApp::FrameMove calls gui_manager::process (0x4ebfd0), which hands a 16-event stack buffer to the keyboard device's GetDeviceData (a generated fake method in the harness, so it writes neither the buffer nor the count, left at 0x10) and then walks the 16 uninitialised events. What they hold is the stack residue at process's frame, which sits 4 bytes lower in the original (FrameMove frame 0xc vs ours 8), so the event loop took different branches and wrote different widget fields (pool @4920167c 4 vs 0xe via MissionUi::refresh 0x42ce50; traced with a write watch: orig esp 7dffde48, ours 7dffde4c). process is image code both builds call identically; stubbing it (plus the default lookup stubs) removes the uninitialised walk. bm9fv 2026-11-08"
+  },
   "view_open 00509980": {
     "args": [
       "--hint",
-      "this+2dc=ffffffff@0.8"
+      "this+2dc=ffffffff@0.8",
+      "--stub",
+      "418b30,418c10,418c80,418cf0,419540,41e4f0"
     ],
-    "why": "char_window::open_view's flat-fallback branch (the elem2 path) needs +0x2dc == -1; random ints never hit it (68.5% -> 84.4% insns with the soft hint, nothing discarded)"
+    "why": "char_window::open_view's flat-fallback branch (the elem2 path) needs +0x2dc == -1; random ints never hit it (68.5% -> 84.4% insns with the soft hint, nothing discarded). bm9fv 2026-11-08: --stub 41e4f0 (frustum::build_planes, plus the default lookup stubs): identity_pos's worker 0x40cd60 fills the camera matrix' w lanes from its own uninitialised locals, i.e. whatever an earlier callee left there, which differs because our frame sits 0x1c lower (write watch: orig esp 7dffdf20, ours 7dffdf04; orig u.w 50001820 vs ours 7dffdee4, o.w 0 vs 50001948). The copies are excused as uninit-copy, but build_planes computes planes from them, so its output differed on ~74/386 inputs. build_planes is image code both builds call with the same this; stubbed: 392/395 -> see the row note."
   },
   "fx_anim 00423b60": {
     "args": [
@@ -1153,5 +1162,12 @@
       "401800"
     ],
     "why": "Faction ctor: the original builds its tstring names[8] member through the out-of-line vector constructor iterator ??_H (0x401800: push 0x42bbd0; push 8; push 0x10; a plain loop calling the ctor count times), ours expands that loop inline, so the original's 8 tstring::tstring calls were hidden inside one ??_H call at depth 1. Same constructor, same 8 this pointers (+0x10 stride) in the same order; replay of the saved FAIL input with --transparent 401800 shows no difference (bm7ct 2026-11-08)."
+  },
+  "mission_5 00529ec0": {
+    "args": [
+      "--stub",
+      "418b30,418c10,418c80,418cf0,419540,4e43e0"
+    ],
+    "why": "bm9fv 2026-11-08: the two closing gui_manager::draw_string calls (0x4e43e0) reach 0x4dc350, which stores a vector4 whose w is its own uninitialised local ([esp+0x1c], a stale stack address: orig 7dff5e60, ours 7dff5e2c) into the font record; with g_font NULL in the harness that record is page 0, and Font::layout_text then divides by it, so g_gui 0x5d876c differed by 16-32 ulp in proportion to our frame offset (0x34). Original-code uninitialised read; draw_string is image code both builds call with the same arguments (still compared); stubbed: 64/200 FAIL -> 0/245 mismatches."
   }
 }

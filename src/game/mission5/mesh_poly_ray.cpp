@@ -47,11 +47,12 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
 
     // from here on the original calls nothing: the differences, dot and cross products are inline
     float mx = mean.x - p.x, my = mean.y - p.y, mz = mean.z - p.z;
-    if (mx * d.x + my * d.y + mz * d.z < 0.0f) {   // face points away from the ray
+    // every sum below keeps the original's term order (x87 adds round per step)
+    if (mx * d.x + mz * d.z + my * d.y < 0.0f) {   // face points away from the ray
         *dist = 1e6f;
         return;
     }
-    float t = (normal.x * mx + normal.y * my + normal.z * mz) / (normal.x * d.x + normal.y * d.y + normal.z * d.z);
+    float t = (normal.z * mz + normal.y * my + normal.x * mx) / (normal.x * d.x + normal.z * d.z + normal.y * d.y);
     rgl::vector4 hit(p.x + d.x * t, p.y + d.y * t, p.z + d.z * t);
 
     bool outside = false;
@@ -59,7 +60,7 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         const rgl::vector4& a = pts[i];
         const rgl::vector4& b = pts[(i + 1) % n];
         float ex = b.x - a.x, ey = b.y - a.y, ez = b.z - a.z;
-        float len = (float)sqrt(ex * ex + ey * ey + ez * ez);
+        float len = (float)sqrt(ez * ez + ey * ey + ex * ex);
         if (len > 1e-10f) {
             float k = 1.0f / len;
             ex = ex * k;
@@ -73,7 +74,7 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         float cx = ey * normal.z - ez * normal.y;
         float cy = ez * normal.x - ex * normal.z;
         float cz = ex * normal.y - ey * normal.x;
-        if ((hit.x - a.x) * cx + (hit.y - a.y) * cy + (hit.z - a.z) * cz > 0.0f)
+        if ((hit.z - a.z) * cz + (hit.y - a.y) * cy + (hit.x - a.x) * cx > 0.0f)
             outside = true;
     }
     if (outside) {
@@ -81,7 +82,7 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         return;
     }
     float qx = pts[0].x - p.x, qy = pts[0].y - p.y, qz = pts[0].z - p.z;
-    *dist = (float)sqrt(qx * qx + qy * qy + qz * qz);
+    *dist = (float)sqrt(qz * qz + qy * qy + qx * qx);
 }
 
 // ======================================================= slice s0052dfd0: functions
@@ -112,11 +113,12 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
 
     // from here on the original calls nothing: the differences, dot and cross products are inline
     float mx = mean.x - p.x, my = mean.y - p.y, mz = mean.z - p.z;
-    if (mx * d.x + my * d.y + mz * d.z < 0.0f) {   // face points away from the ray
+    // every sum below keeps the original's term order (x87 adds round per step)
+    if (mx * d.x + mz * d.z + my * d.y < 0.0f) {   // face points away from the ray
         *dist = 1e6f;
         return;
     }
-    float t = (normal.x * mx + normal.y * my + normal.z * mz) / (normal.x * d.x + normal.y * d.y + normal.z * d.z);
+    float t = (normal.z * mz + normal.y * my + normal.x * mx) / (normal.x * d.x + normal.z * d.z + normal.y * d.y);
     rgl::vector4 hit(p.x + d.x * t, p.y + d.y * t, p.z + d.z * t);
 
     bool outside = false;
@@ -124,7 +126,7 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         const rgl::vector4& a = pts[i];
         const rgl::vector4& b = pts[(i + 1) % n];
         float ex = b.x - a.x, ey = b.y - a.y, ez = b.z - a.z;
-        float len = (float)sqrt(ex * ex + ey * ey + ez * ez);
+        float len = (float)sqrt(ez * ez + ey * ey + ex * ex);
         if (len > 1e-10f) {
             float k = 1.0f / len;
             ex = ex * k;
@@ -138,7 +140,7 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         float cx = ey * normal.z - ez * normal.y;
         float cy = ez * normal.x - ex * normal.z;
         float cz = ex * normal.y - ey * normal.x;
-        if ((hit.x - a.x) * cx + (hit.y - a.y) * cy + (hit.z - a.z) * cz > 0.0f)
+        if ((hit.z - a.z) * cz + (hit.y - a.y) * cy + (hit.x - a.x) * cx > 0.0f)
             outside = true;
     }
     if (outside) {
@@ -146,7 +148,7 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         return;
     }
     float qx = pts[0].x - p.x, qy = pts[0].y - p.y, qz = pts[0].z - p.z;
-    *dist = (float)sqrt(qx * qx + qy * qy + qz * qz);
+    *dist = (float)sqrt(qz * qz + qy * qy + qx * qx);
 }
 
 // Select/deselect one vertex, edge or polygon.  Only the vertex case updates `selected`.

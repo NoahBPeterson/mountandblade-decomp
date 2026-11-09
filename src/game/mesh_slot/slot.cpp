@@ -264,12 +264,16 @@ void MissionUi::animate(int)
     // --- track E (+0x78): fade +0xa8/+0xac toward +0x88/+0x8c, hand the scaled pair to +0x6c
     if (e4 < periodE) {
         float inv = g_one / periodE;
-        float part[2];                          // the fDC partial products
-        part[0] = e4 * f8c;
-        part[1] = (periodE - e4) * ac;
-        fD8 = (e4 * f88 + (periodE - e4) * a8) * inv;
-        part[1] = part[1] + part[0];
-        fDC = part[1] * inv;
+        float d = periodE - e4;
+        float s[2], t[2];                       // the two products of each lane
+        s[0] = e4 * f88;
+        s[1] = e4 * f8c;
+        t[0] = d * a8;
+        t[1] = d * ac;
+        s[0] = s[0] + t[0];
+        s[1] = t[1] + s[1];
+        fD8 = s[0] * inv;
+        fDC = s[1] * inv;
         pair[0] = fD8 * g_k002;
         pair[1] = fDC * g_k002;
         set_size(pair);

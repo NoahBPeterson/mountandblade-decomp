@@ -109,6 +109,8 @@ struct C4c3290 : head_rec {
     char pad4c[4];
     tstring t50;               // +0x50
     tstring_pair t60;          // +0x60, +0x70
+    char pad80[0x18];          // +0x80..+0x97: no code found reads them, but the record is 0x98 bytes (init_mission_trigger_records
+                               // allocates it with push 0x98 at 0x4d06cb)
     C4c3290();                 // 0x4c3290
     virtual void reset_screen();      // slot 1  0x4c6e00: g_gui.reset()
     virtual void init_screen();      // slot 2  0x4e3aa0 (cls_map.cpp)

@@ -3945,7 +3945,6 @@ __forceinline ClassInfo* Agent::class_rec()
 
 
 static inline float a_dot3r(const vector4& b, const vector4& a) { return a.z * b.z + a.y * b.y + a.x * b.x; }
-typedef std::vector<Agent*>::iterator Pages;
 static inline void a_sub3(vector4& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; }
 // @ 0x4465e0
 void Agent::update_ai()
@@ -3953,16 +3952,15 @@ void Agent::update_ai()
     ClassInfo* cr = class_rec();
 
     int prev = -1;
-    int near_ = f55c0;
-    Pages pg;
-    if (near_ >= 0 && (pg = g_mission->agents.pages.begin(), (*(pg + ((unsigned)near_ >> 4)))[near_ & 0xf].f14 == 1)) {
-        Agent* o = &(*(pg + ((unsigned)f55c0 >> 4)))[f55c0 & 0xf];
+    int near_ = last_attacker;
+    if (near_ >= 0 && g_mission->agents[near_].f14 == 1) {
+        Agent* o = &g_mission->agents[last_attacker];   // re-read, not near_: the original reloads it here
         vector4 d;
         a_sub3(d, o->pos, pos);
         float len = d.normalize();
         bool far_ = true;
         if (target >= 0) {
-            const vector4& cp = (*(pg + ((unsigned)target >> 4)))[target & 0xf].pos;
+            const vector4& cp = g_mission->agents[target].pos;
             vector4 e = cp - pos;
             far_ = !(sqrt(e.y * e.y + (e.z * e.z + e.x * e.x)) <= len + 1.0f);
         }
@@ -5974,7 +5972,7 @@ void Agent::choose_action(int unused)
     }
     cr = &g_mission->teams[cls].cls[kind];
 
-    f55c0 = -1;
+    last_attacker = -1;
     f28c = 0;
     f288 = 1.5f;
     ZERO_S
@@ -6432,9 +6430,9 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
     int nverts = (int)v50.size();
     if (other->f228 > f228) f228 = other->f228;
     if (bone + 1 > f228) f228 = bone + 1;
-    std::vector<point20>& pts = other->get70();
-    std::vector<vertex60>& vs = other->get50();
-    std::vector<skin_vert>& sk = other->get60();
+    std::vector<point20>& pts = other->get70_rec();
+    std::vector<vertex60>& vs = other->get50_rec();
+    std::vector<skin_vert>& sk = other->get60_rec();
     vector4 p;
     for (unsigned i = 0; i < pts.size(); i++) {
         const vector4& q = pts[i].a;
@@ -6482,7 +6480,7 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
         v.f58 = v.color;
         v50.push_back(v);
     }
-    std::vector<face20>& fs = other->get90();
+    std::vector<face20>& fs = other->get90_rec();
     for (unsigned i = 0; i < fs.size(); i++) {
         if (flip)
             add_face(fs[i].a + nverts, fs[i].c + nverts, fs[i].b + nverts);
@@ -9030,7 +9028,7 @@ void Agent::process_blow(float unused)
     anim_a = -1;
     anim_b = -1;
     if (attacker >= 0)
-        f55c0 = attacker;
+        last_attacker = attacker;
     m = g_mission;
     atk_troop = -1;
     atk_rider = -1;

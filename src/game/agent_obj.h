@@ -255,7 +255,7 @@ struct Agent {                                          // 0x5928 bytes
     int scripted_mode;                                  // +0x55b4
     int always_attack_in_melee;                         // +0x55b8 (0x4a970a)
     shape_base* last_hit;                    // +0x55bc 0x448eb0
-    int f55c0;                    // +0x55c0 0x4465e0, 0x44d000
+    int last_attacker;            // +0x55c0 id of the agent that last hit this one (take_blow sets it, reset clears it; update_ai 0x4465e0)
     unsigned f55c4;                    // +0x55c4 0x448eb0, 0x44df30
     float speed_limit;                                  // +0x55c8 m/s (agent_set_speed_limit 0x4a96d2)
     char pad55cc[0x55d0 - 0x55cc];
@@ -571,6 +571,7 @@ struct AgentTable {
     void next_used(unsigned* i);                        // 0x43b160
     int first_used();                                   // 0x43b1b0
     __declspec(noinline) Agent* get(unsigned id);       // 0x43b1f0 (thiscall, ret 4)
+    Agent& operator[](unsigned id) { return pages[id >> 4][id & 0xf]; }   // inline lookup: pages of 16 agents
     int serial;                                         // +0x24 (terrain_b: Pool<MAgent>::serial)
 };
 

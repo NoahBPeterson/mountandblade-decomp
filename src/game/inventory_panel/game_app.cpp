@@ -136,7 +136,8 @@ HRESULT GameApp::FrameMove()
     FSOUND_Update();
 
     if (g_cfg.enable_edit_mode) {
-        if (g_keyboard.down[0x1f] && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
+        // Ctrl+F (DIK_F 0x21: down at 0xa17158, prev at 0xa17558, 0x50ed15/0x50ed1d)
+        if (g_keyboard.down[0x21] && !g_keyboard.prev[0x21] && (g_keyboard.down[0x9d] || g_keyboard.down[0x1d])) {
             if (build_shader() < 0) {
                 mb_error("Unable to compile the effect file.");
             } else {

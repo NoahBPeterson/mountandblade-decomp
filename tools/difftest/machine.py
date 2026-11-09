@@ -708,8 +708,13 @@ class Machine:
         generated function pointer): it may emulate a do-nothing method and the run resumes."""
         import time as _time
         uc = self.uc
-        for a, n in self.model_blocks.values():     # both sides start from the same model memory
-            uc.mem_write(a, b"\0" * n)
+        # both sides start from the same model memory: the WHOLE region, not only the declared blocks. A garbage
+        # pointer into it (a random index landing past a block) let the original's pass leave a write the second
+        # pass then read (obj_tbl 0x4991d0: a vector grown by the first pass, regrown by ours).
+        z = getattr(Machine, "_model_zero", None)
+        if z is None:
+            z = Machine._model_zero = bytes(MODEL_SIZE)
+        uc.mem_write(MODEL_BASE, z)
         self.stop_reason = None
         self.fake_calls = 0
         self.tsc = 0x1000000

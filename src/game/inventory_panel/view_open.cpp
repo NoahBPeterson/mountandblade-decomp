@@ -5,6 +5,7 @@
 // follow the verified neighbours s004f49d0 (the same 0x358 face body, 0x344 world and 0x7c wind trio),
 // s004f8c80 (frustum) and s00502300 (widget vtables).  Names are provisional; every offset comes from
 // this slice's disassembly.
+#define UIA_CTOR_OUT_OF_LINE   // the flat branch's new XyzButton calls the constructor 0x48b1c0 (call at 0x509a5f)
 #include <stdlib.h>
 #include <windows.h>
 #include <new>
@@ -96,7 +97,7 @@ struct char_window {
     rgl::world* world;                                           // +0x2e4
     char pad2e8[0x2ec - 0x2e8];
     rgl::frustum fr;                                         // +0x2ec (0x120; the frame sits at +0xc8)
-    float rect[4];                                          // +0x40c
+    rgl::vector4 rect;                                      // +0x40c (set from the 3-float constructor: w stays unset, 0x509f99)
     float f41c;                                             // +0x41c
     float f420;                                             // +0x420
     float f424;                                             // +0x424
@@ -117,8 +118,8 @@ void char_window::open_view()
         face_body* b = new face_body;
         label_refresh((MissionUi*)b, tstring("char_i_character"));
         if (world != 0) {
-            ((rgl::world*)world)->~world();    // 0x475d50 (the CellGrid destructor body), then the free
-            free(world);
+            ((rgl::world*)world)->~world();    // 0x475d50 (the CellGrid destructor body), then operator delete (0x535712, call at 0x509b28)
+            ::operator delete(world);
             world = 0;
         }
         float lo[2];
@@ -172,22 +173,16 @@ void char_window::open_view()
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);
         rgl::matrix mat;
         identity_pos((pos*)&mat);
-        // identity_pos (0x40cd00) has its worker 0x40cd60 copy its OWN stack locals into the matrix' w
-        // lanes, so u.w (and s.w/f.w) hold whatever the deepest previous callee left on the stack rather
-        // than 0.  In the original build frustum::init's prologue spilled the 0x1200 flags value into that
-        // slot, and build_planes below propagates it into the frustum, so the two builds only agree if we
-        // pin the same leftover.  This is an uninitialised-read artifact of the original, not a value the
-        // source computes (the identity matrix' w lanes are meant to be 0).
-        *(unsigned*)&mat.u.w = 0x1200u;
+        // identity_pos (0x40cd00) has its worker 0x40cd60 copy its OWN uninitialised stack locals into the matrix' w
+        // lanes, so s.w/u.w/f.w/o.w hold whatever an earlier callee left on the stack (the original's own uninitialised
+        // read; build_planes below then computes with them).  [bm9fv 2026-11-08: the earlier `mat.u.w = 0x1200` pin,
+        // which only reproduced one particular leftover for the harness, is removed; the harness stubs build_planes.]
         mat.o.x += mat.u.x * 1.2f;
         mat.o.y += mat.u.y * 1.2f;
         mat.o.z += mat.u.z * 1.2f;
         *(rgl::matrix*)((char*)this + 0x3b4) = mat;
         fr.build_planes();
-        rect[0] = 0.0f;
-        rect[1] = 0.0f;
-        rect[2] = 0.0f;
-        rect[3] = 0.0f;
+        rect = rgl::vector4(0.0f, 0.0f, 0.0f);
         f41c = -0.3f;
         f420 = -0.09f;
         f424 = 0.7f;
