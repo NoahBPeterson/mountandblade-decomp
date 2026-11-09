@@ -306,6 +306,9 @@ compiler computes a trip count and uses `mul`.
     into an existing vector (`d = A - B`, `B = rot(...)`) is an assignment.
   - *`int zero = 0` where the original passes `0.0f`.* An int local holding 0 joins every other int 0 (`age = 0`, `push 0`) and
     cl hoists `xor ebp,ebp` for them all; `float zero = 0.0f` keeps immediates and freed ebp for the original's allocation.
+  - *A struct copy after a call, written from the array element, not a cached sub-object pointer.* In `Mission::start_setup`
+    0x484590 the original builds `B = A` from the slot pointer after `orthonormalize` (`lea edi,[esi+0x40]`);
+    `rgl::matrix* a = &sl->A; ... sl->B = *a;` kept `a+0x10` in edi across the call. `SLOT(s).B = SLOT(s).A` gave +19.
   - *Named key, then the colour:* `{ tstring key("ui_..."); g_gui.add(*g_strtable.lookup(key), colour); }` pushes the colour after
     the key ctor and reloads `lea` for the lookup, as the original does; `lookup(tstring("..."))` pushes the colour first.
 - **Put the `// @ 0x...` marker directly above the function it names.** A marker above a `static __forceinline` helper made chk,

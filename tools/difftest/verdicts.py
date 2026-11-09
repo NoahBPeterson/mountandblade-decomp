@@ -29,6 +29,7 @@ import argparse, datetime, glob, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+CUT_SHORT_MIN_VALID = 20    # a run cut short by its time limit counts as WEAK with this many valid inputs and no mismatch
 sys.path.insert(0, HERE)
 CUR = os.path.join(ROOT, "docs", "equiv_verdicts.json")
 FAILURES = os.path.join(ROOT, "docs", "equiv_failures.md")
@@ -64,6 +65,10 @@ def category(d):
         if r.startswith("only ") and "inputs valid" in r:
             return "inputs"
         if r.startswith("not a verdict: time limit"):    # the run was cut short: the harness itself is not at fault
+            # ...but what it did compare counts, as merge_shards.py counts a shard short of wall time: enough valid
+            # inputs and no mismatch is WEAK evidence (no mismatch, coverage incomplete), like any WEAK row
+            if (d.get("valid") or 0) >= CUT_SHORT_MIN_VALID and not d.get("mismatches"):
+                return "weak"
             return "not_run"
         return "harness"
     return "not_run"
@@ -268,7 +273,16 @@ def main():
                 return d.get("verdict") not in (None, "TIMEOUT", "CRASH") and not (
                     d.get("verdict") == "UNSUPPORTED" and d.get("stopped_early"))
             done = [g for g in got if finished(g[1])]
-            d = max(done or got, key=lambda g: g[0])[1] if got else None
+            best = max(done or got, key=lambda g: g[0]) if got else None
+            if best and (best[1] or {}).get("verdict") == "FAIL":
+                # a FAIL is superseded by a NEWER cut-short run that replayed the saved inputs (regress/fail_inputs,
+                # which hold the failing ones) and still found no mismatch: the FAIL was measured on code since fixed
+                # (screen_init 0x4ec4d0: an old 32/32 FAIL kept beating a 190-valid, 0-mismatch run on the fixed source)
+                newer = [g for g in got if g[0] > best[0] and (g[1] or {}).get("regress_inputs")
+                         and not (g[1] or {}).get("mismatches") and (g[1] or {}).get("valid")]
+                if newer:
+                    best = max(newer, key=lambda g: g[0])
+            d = best[1] if best else None
             cs = case_sweep(r["id"], r["va"])
             if cs is not None:
                 # a switch function swept case by case: one whole-function run never gets past its dispatch

@@ -290,9 +290,10 @@ void Mission::start_setup()
     std::vector<PlacedObj>& props = at<std::vector<PlacedObj> >(0x6688);
     int mi0 = at<int>(0x5df0);   // stand-in: named indices, neutral here, kept only because the symbol ids they add flip x87 operand order in the prop-frame loop to the original's (docs/codegen.md 6.2)
     int li0 = at<int>(0x5df4);
+    int lo = li0 * 0x494;      // a byte offset: head unchanged, the added symbol id flips one x87 operand pair in the prop-frame loop to the original's (docs/codegen.md 6.2)
     at<int>(0x6550) = 0;
     ModeRec* mrec = &g_mission_templates[mi0];
-    LevelRaw* lrec = &RAWAT(LevelRaw*, g_game, 0x13a50)[li0];
+    LevelRaw* lrec = (LevelRaw*)(RAWAT(char*, g_game, 0x13a50) + lo);
     bank_of(mrec)->randomize();
     if (lrec->at<char>(0x78) == 0)
         g_game->load_scene(at<int>(0x5df4));
@@ -567,9 +568,9 @@ void Mission::start_setup()
             at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
             at<vec2>(0x653c) = z;      // from z, not a copy of 0x652c: the original stores both pairs from the registers holding z (0x485a8a..)
         }
-        at<int>(0x6548) = at<int>(0x6538);   // 0x6538 is loaded first in the original
-        at<int>(0x6544) = at<int>(0x6534);
         at<float>(0x654c) = -0.300000012f;
+        at<int>(0x6548) = at<int>(0x6538);   // 0x6538 is loaded first in the original; the -0.3 store sits between the pair stores (0x4858ed)
+        at<int>(0x6544) = at<int>(0x6534);
     } else {
         at<int>(0x654c) = lrec->at<int>(0x64);
         at<int>(0x653c) = lrec->at<int>(0x54);
@@ -753,7 +754,7 @@ void Mission::start_setup()
             else lane(fwd, par) = -1.0f;
             a->f = fwd;
             a->orthonormalize();
-            sl->B = *a;
+            SLOT(s).B = SLOT(s).A;   // not `sl->B = *a`: the original rebuilds the copy addresses from the slot (lea edi,[esi+0x40]) instead of keeping a+0x10 in edi across orthonormalize
 
         }
     }
@@ -1021,9 +1022,9 @@ void Mission::start_setup()
                 }
             }
         } while (*fp == 0);
-        SLOT(k).B.o.z = outY;
-        SLOT(k).C = SLOT(k).B;
-        SLOT(k).D = SLOT(k).B;
+        sl->B.o.z = outY;   // the tail copies through sl (+4)
+        sl->C = sl->B;
+        sl->D = sl->B;
         tm->restamp();
         SLOT(k).f120 = 0;
         copy_slot(k);
