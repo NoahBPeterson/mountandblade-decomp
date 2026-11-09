@@ -366,7 +366,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
     ptype* pt = &g_ptypes[p->type];
     if (g_use_shaders == 0 || g_options.i7c != 2) {
         for (int k = 0; k < p->nmesh; k++) {
-            mesh* m = p->meshes[k];
+            mesh*& m = p->meshes[k];
             if (m->res->flags & 0x40) {
                 float light = 1.0f;
                 if ((pt->flags & 0x80000i64) != 0 && ((int*)world->hf->cols[p->cx])[p->f0c + p->cy * 4 + 2] >= 0) {
@@ -389,16 +389,16 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                     pos.y = c.y + p->frame.o.y;
                     pos.z = c.z + p->frame.o.z;
                     if (c.z < 1.5f) {
-                        vector4 d, far_, near_;
+                        vector4 d, d2, far_, near_;
                         vscale_to(d, *(vector4*)sun_dir, 1000.0f);
                         far_.x = pos.x - d.x; far_.y = pos.y - d.y; far_.z = pos.z - d.z;
-                        vscale_to(d, *(vector4*)sun_dir, 0.05f);
-                        near_.x = pos.x - d.x; near_.y = pos.y - d.y; near_.z = pos.z - d.z;
+                        vscale_to(d2, *(vector4*)sun_dir, 0.05f);
+                        near_.x = pos.x - d2.x; near_.y = pos.y - d2.y; near_.z = pos.z - d2.z;
                         bool visible;
                         if (trace)
                             visible = world->trace_ray(&near_.x, &far_.x, 50.0f, 0, 0) != 0;
                         else
-                            visible = world->hf->line_clear(&near_, &far_) != 0;
+                            visible = world->hf->line_clear(&near_, &far_);
                         if (!visible)
                             light *= 0.1f;
                     }

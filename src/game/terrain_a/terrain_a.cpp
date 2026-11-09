@@ -472,21 +472,19 @@ void Terrain::init_layers()
 void Terrain::scatter(particle_list* set, int mode, int n)
 {
     set->nsrc = 0;
-    ptype* specs = g_ptypes;
     int cnt = g_ptype_count;
-    unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
+    ptype* specs = g_ptypes;
     float total = 0.0f;
     int fits = 0;
-    if (0 < cnt) {
-        for (int i = 0; i < cnt; i++) {
-            if ((specs[i].flags & 0x1000000) != 0) {
-                int tt = t;
-                if (spec_weight(&i, &tt, &mode) > 0.1f)
-                    fits++;
-            }
+    unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
+    for (int i = 0; i < cnt; i++) {
+        if ((specs[i].flags & 0x1000000) != 0) {
+            int tt = t;
+            if (spec_weight(&i, &tt, &mode) > 0.1f)
+                fits++;
         }
     }
-    if (0 < cnt) {
+    {
         int tt = t;
         for (int i = 0; i < cnt; i++) {
             float w_ = spec_weight(&i, &tt, &mode);
@@ -503,8 +501,10 @@ void Terrain::scatter(particle_list* set, int mode, int n)
             if (total > 0.0f) {
                 int pick;
                 if (pick_fit) {
-                    int r = 0;
-                    if (fits > 1) {
+                    int r;
+                    if (fits <= 1)
+                        r = 0;
+                    else {
                         r = rand() % fits;
                         cnt = g_ptype_count;
                         specs = g_ptypes;
@@ -527,13 +527,13 @@ void Terrain::scatter(particle_list* set, int mode, int n)
                     pick = i;
                 } else {
                     int r = rand() % 15817;
-                    cnt = g_ptype_count;
                     float acc = 0.0f;
                     float target = (float)r * total * 6.3223117e-05f;
                     int j = 0;
                     if (0.0f < target) {
+                        int cnt2 = g_ptype_count;
                         do {
-                            if (j >= cnt) break;
+                            if (j >= cnt2) break;
                             int t2 = t;
                             float w_ = spec_weight(&j, &t2, &mode);
                             j++;
@@ -552,11 +552,10 @@ void Terrain::scatter(particle_list* set, int mode, int n)
                 it->v = vector4(rz, ry, rx);
                 it->freq = (float)(rand() % 15817) * 0.0031611556f + 50.0f;
                 it->thresh = (float)(rand() % 15817) * 3.1611557e-06f;
-                int r5 = rand() % 15817;
-                ptype* gs = &g_ptypes[sel];
-                int dens = (unsigned short)(((unsigned*)&gs->flags)[1]);
-                it->rate = ((float)r5 * 6.3223117e-05f + 1.0f) * ((it->thresh + 0.4f) * ((3.0f / ((float)n + 2.0f)) * (float)dens)) * 0.015f;
-                if (gs->flags & 0x80000) {
+                float rr = (float)(rand() % 15817) * 6.3223117e-05f;
+                int dens = (unsigned short)(((unsigned*)&g_ptypes[sel].flags)[1]);
+                it->rate = (rr + 1.0f) * ((it->thresh + 0.4f) * ((3.0f / ((float)n + 2.0f)) * (float)dens)) * 0.015f;
+                if (g_ptypes[sel].flags & 0x80000) {
                     it->freq = it->freq * 0.45f;
                     it->thresh = it->thresh - 0.11f;
                 }

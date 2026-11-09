@@ -15,6 +15,8 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 #include "../../include/render_flags.h"
+#include "../../rgl/scene/world.h"      // rgl::world (ground at +0xb0)
+#include "../terrain_b/nav_data.h"      // NavData / NavVert (the scene's ground vertices)
 
 // std::vector<MissionUi*>::push_back as the original inlines it (0x4ec824): with room, std::_Uninit_fill_n of the pointer
 // instance (0x40f8a0, ICF-folded: last, 1, &value, allocator; cdecl), else _Insert_n at the end (0x4927d0, thiscall)
@@ -36,7 +38,9 @@ static inline void push_back_direct(std::vector<MissionUi*>& c, MissionUi* const
 {
     unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
     if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
-        *c._Mylast++ = v;
+        MissionUi** p = c._Mylast;
+        *p = v;
+        c._Mylast = p + 1;
     } else {
         ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
     }
@@ -72,36 +76,71 @@ void CampaignScreen::init_screen()
     overlay = bar;
     overlay->move_a((float*)&vector2(0.0f, 0.0f));
     overlay->set_xy((float*)&vector2(1.0f, 0.75f));
-    g_gui.dirty = 1;
-    g_gui.objs.push_back(overlay);   // 0x49b120
+    {
+        MissionUi* w = overlay;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back((MissionUi* const&)w);   // 0x49b120
+    }
 
     f34 = (MissionUi*)new text_box;
     f34->move_a((float*)&vector2(0.0f, 0.0f));
     f34->set_xy((float*)&vector2(1.0f, 0.05f));
     {
-        rgl::mesh* bar_mesh = ((rgl::mesh*)g_resmgr.get_object((const tstring*)&tstring("map_bar")))->clone();
+        rgl::mesh* bar_mesh;
+        {
+            tstring nm("map_bar");
+            bar_mesh = ((rgl::mesh*)g_resmgr.get_object(&nm))->clone();
+        }
         f34->set_mesh(0, bar_mesh);
     }
     f48 = 0;
     if (g_cfg.enable_edit_mode) {
-        f48 = (int)make_short_button(f34, g_strtab.lookup(tstring("ui_terrain")), 0.002f, 0.006f, 0.03f);
+        tstring t("ui_terrain");
+        f48 = (int)make_short_button(f34, g_strtab.lookup(t), 0.002f, 0.006f, 0.03f);
     }
-    f4c = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_camp")), 0.1f, 0.006f, 0.03f);
-    f38 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_reports")), 0.216f, 0.006f, 0.03f);
-    f50 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_quests")), 0.332f, 0.006f, 0.03f);
-    f40 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_inventory")), 0.448f, 0.006f, 0.03f);
-    f44 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_character")), 0.564f, 0.006f, 0.03f);
-    f3c = (MissionUi*)new_medium_button(f34, g_strtab.lookup(tstring("ui_party")), 0.68f, 0.006f, 0.03f);
-    push_child(overlay->kids, (MissionUi*)f34);   // 0x4ec824: the map-bar overlay takes the button bar
+    {
+        tstring t("ui_camp");
+        f4c = (MissionUi*)new_medium_button(f34, g_strtab.lookup(t), 0.1f, 0.006f, 0.03f);
+    }
+    {
+        tstring t("ui_reports");
+        f38 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(t), 0.216f, 0.006f, 0.03f);
+    }
+    {
+        tstring t("ui_quests");
+        f50 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(t), 0.332f, 0.006f, 0.03f);
+    }
+    {
+        tstring t("ui_inventory");
+        f40 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(t), 0.448f, 0.006f, 0.03f);
+    }
+    {
+        tstring t("ui_character");
+        f44 = (MissionUi*)new_medium_button(f34, g_strtab.lookup(t), 0.564f, 0.006f, 0.03f);
+    }
+    {
+        tstring t("ui_party");
+        f3c = (MissionUi*)new_medium_button(f34, g_strtab.lookup(t), 0.68f, 0.006f, 0.03f);
+    }
+    {
+        MissionUi* bar_copy = f34;
+        push_child(overlay->kids, bar_copy);
+    }   // 0x4ec824: the map-bar overlay takes the button bar
 
     {
-        f5c = (MissionUi*)make_hint((ContainerBase*)f34, tstring(""), 0.8f, -0.006f, 0.2f, 0.027f);
+        {
+            tstring empty("");
+            f5c = (MissionUi*)make_hint((ContainerBase*)f34, empty, 0.8f, -0.006f, 0.2f, 0.027f);
+        }
         int flag = 0x11;
         f5c->set148(&flag);
         f5c->b122 = 1;                               // 0x4ec8dd: +0x122
     }
     {
-        f60 = (MissionUi*)make_hint((ContainerBase*)f34, tstring(""), 0.8f, 0.015f, 0.2f, 0.027f);
+        {
+            tstring empty("");
+            f60 = (MissionUi*)make_hint((ContainerBase*)f34, empty, 0.8f, 0.015f, 0.2f, 0.027f);
+        }
         int flag = 0x11;
         f60->set148(&flag);
         f60->b122 = 1;                               // 0x4ec93c: +0x122
@@ -144,19 +183,16 @@ void CampaignScreen::init_screen()
     {
         target.z = target.z + 1.0f;                           // +0x298 (camera target z; 0x4ecc09), not the zoom at +0x2b8
         *(vector2*)((char*)this + 0x2bc) = vector2(0.0f, 0.0f);
-        *(vector2*)((char*)this + 0x2c4) = vector2(0.0f, 0.0f);
+        *(int*)((char*)this + 0x2c4) = 0;
+        *(int*)((char*)this + 0x2c8) = 0;
     }
     camera_mark_entities();
     camera_update(0);                                      // 0x4ece20 (push ebx = 0)
 
-    if ((int)g_script.level != (int)g_shadow_map.cam && g_use_shaders) {
+    if ((int)g_shadow_map.cam != (int)g_script.level && g_use_shaders) {
         ((ShadowMap*)g_psys)->attach_camera((rgl::world*)g_script.level);   // 0x4711e0
-        void* scene_objs = *(void**)((char*)g_script.level + 0xb0);
-        int count = (*(int*)((char*)scene_objs + 8) - *(int*)((char*)scene_objs + 4)) / 0x24;
-        char* p = *(char**)((char*)scene_objs + 4);
-        for (int i = 0; i < count; i++, p += 0x24) {
-            ((ShadowMap*)g_psys)->extend((const rgl::vector4*)p);   // 0x468c20
-        }
+        for (unsigned i = 0; i < g_script.level->ground->verts.size(); i++)
+            ((ShadowMap*)g_psys)->extend(&g_script.level->ground->verts[i].p);   // 0x468c20
         ((ShadowMap*)g_psys)->fit_bounds();   // 0x463cc0
         ((ShadowMapP*)g_psys)->render();   // 0x47fef0
     }

@@ -108,44 +108,41 @@ void PartyWindow::init_screen()
     icon_a84 = 0;
     icon_a88 = 0;
 
-    NodeA* win = new NodeA(0);
-    container = win;
+    container = new NodeA(0);
     {
         Vec2 p(0.0f, 0.0f);
-        win->move_a(&p.x);
+        container->move_a(&p.x);
     }
     {
         Vec2 s(1.0f, 0.75f);
-        win->set_xy(&s.x);
+        container->set_xy(&s.x);
     }
     {
         tstring n("inventory_window_b");
         rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
-        win->set_track(0, m);
+        container->set_track(0, m);
     }
 
     if (w04 == 4) {
-        MissionUi* bg = new MissionUi;
-        equip_bg = bg;
-        label_refresh(bg, tstring("inv_i_equipment_pangel_bg"));
+        equip_bg = new MissionUi;
+        label_refresh(equip_bg, tstring("inv_i_equipment_pangel_bg"));
         {
             tstring n("inventory_equipment_panel");
-            bg->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
+            equip_bg->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
         }
-        container->add_child(bg);
+        container->add_child(equip_bg);
     }
 
     for (int k = 0; k < 4; k++) {
-        MissionUi* h = new MissionUi;
-        hinge[k] = h;
+        hinge[k] = new MissionUi;
         char buf[0x58];
         sprintf(buf, "inv_hinge%d", k + 1);
-        label_refresh(h, tstring(buf));
+        label_refresh(hinge[k], tstring(buf));
         {
             tstring n("inventory_window_hinge");
-            h->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
+            hinge[k]->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
         }
-        container->add_child(h);
+        container->add_child(hinge[k]);
     }
     {
         tstring e("");
@@ -201,51 +198,49 @@ void PartyWindow::init_screen()
 
         float m = rows_h < visible ? rows_h : visible;
         {
-            Vec2 p(v->fE8, v->fEC - m);
-            v->move_a(&p.x);
+            Vec2 p(view[i]->fE8, view[i]->fEC - m);
+            view[i]->move_a(&p.x);
         }
         {
-            Vec2 s(v->screen[0], m);
-            v->set_xy(&s.x);
+            Vec2 s(view[i]->screen[0], m);
+            view[i]->set_xy(&s.x);
         }
-        v->draw();                                       // 0x488d50
+        view[i]->draw();                                       // 0x488d50
         container->add_child(view[i]);
 
-        MissionUi* g = new MissionUi;
-        gold[i] = g;
+        gold[i] = new MissionUi;
         if (i == 0)
-            label_refresh(g, tstring("inv_t_gold1"));
+            label_refresh(gold[i], tstring("inv_t_gold1"));
         else
-            label_refresh(g, tstring("inv_t_gold2"));
-        container->add_child(g);
+            label_refresh(gold[i], tstring("inv_t_gold2"));
+        container->add_child(gold[i]);
         if (w04 != 0 || idx != g_game_G->hero_troop)
             money_label(i);
 
-        MissionUi* nm = new MissionUi;
-        name[i] = nm;
+        name[i] = new MissionUi;
         if (i == 0) {
-            label_refresh(nm, tstring("inv_t_name1"));
+            label_refresh(name[i], tstring("inv_t_name1"));
             Troop* t0 = g_game_G->troops;
             tstring* s = g_strtable.find(&t0->key);
             if (s == 0)
                 s = &t0->name;
             float out[2];
-            nm->set_text(out, s);
+            name[i]->set_text(out, s);
         } else {
-            label_refresh(nm, tstring("inv_t_name2"));
+            label_refresh(name[i], tstring("inv_t_name2"));
             if (w04 == 2 || w04 == 4) {
                 Troop* t = &g_game_G->troops[w14];
                 tstring* s = g_strtable.find(&t->key);
                 if (s == 0)
                     s = &t->name;
                 float out[2];
-                nm->set_text(out, s);
+                name[i]->set_text(out, s);
             } else if (w04 == 0) {
                 float out[2];
-                nm->set_text(out, g_strtable.lookup(tstring("ui_dump")));
+                name[i]->set_text(out, g_strtable.lookup(tstring("ui_dump")));
             }
         }
-        container->add_child(nm);
+        container->add_child(name[i]);
     }
     for (int i = 0; i < rows; i++)
         make_inventory_menu(i);
@@ -257,12 +252,11 @@ void PartyWindow::init_screen()
     }
     label_refresh((MissionUi*)leave, tstring("inv_b_leave"));
     {
-        MissionUi* tc = new MissionUi;
-        total_cost = tc;
-        label_refresh(tc, tstring("inv_t_total_cost"));
+        total_cost = new MissionUi;
+        label_refresh(total_cost, tstring("inv_t_total_cost"));
         float out[2];
-        tc->set_text(out, g_strtable.lookup(tstring("ui_no_cost")));
-        container->add_child(tc);
+        total_cost->set_text(out, g_strtable.lookup(tstring("ui_no_cost")));
+        container->add_child(total_cost);
     }
 
     for (int r = 0; r < 4; r++) {

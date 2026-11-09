@@ -679,14 +679,19 @@ int GameDataV::weekly_cost()
 }
 
 
-// a widget's position relative to its parent, as the two-float value set_pos takes
-static inline void place_rel(MissionUi* w, MissionUi* parent)
+// a two-float position with a user copy constructor. set_pos gets a copy of a filled local: the copy carries both
+// values on the x87 stack and stores them after the argument push (y computed first, x stored first), which is the
+// original's `fld y; fld x; push; fstp x; fstp y` (0x5054e7, 0x505a71)
+struct PsVec2 { float x, y; PsVec2() {} PsVec2(const PsVec2& o) : x(o.x), y(o.y) {} };
+// a widget's position relative to its parent, as the two-float value set_pos takes. `w` is the screen's member itself:
+// the call re-reads it after the stores, so the vtable load comes after them (0x50551f)
+static inline void place_rel(MissionUi*& w, MissionUi* parent)
 {
     const float* b = &parent->fE0;
-    float d[2];
-    d[1] = w->fE4 - b[1];
-    d[0] = w->fE0 - b[0];
-    PSO(w)->set_pos(d);
+    PsVec2 d;
+    d.y = w->fE4 - b[1];
+    d.x = w->fE0 - b[0];
+    PSO(w)->set_pos((float*)&PsVec2(d));
 }
 
 // Party::display_name: the party's id when the module asks for ids, else its translation, else its name
@@ -706,19 +711,19 @@ static inline tstring* party_shown_name(Party* rec)
 void PartyScreen::setup_party(int side)
 {
     members_base[side] = new text_box;
-    if (side == 0) {
+    if (side == 0)
         label_refresh(members_base[0], tstring("party_bo_party1"));
-        if (g_game->skill_level(g_game->player, 2) == 0) {
-            prisoner_mgmt = new MissionUi;
-            label_refresh(prisoner_mgmt, tstring("party_t_prisoner_management"));
-            {
-                tstring k("ui_need_to_learn_prisoner_management");
-                STX(prisoner_mgmt, *g_strtable.lookup(k));
-            }
-            PSO(members_base[0])->add_child(prisoner_mgmt);
-        }
-    } else {
+    else
         label_refresh(members_base[side], tstring("party_bo_party2"));
+    // a second test of side, not a nested if: the party2 arm is laid out inside the prisoner block (0x504f86)
+    if (side == 0 && g_game->skill_level(g_game->player, 2) == 0) {
+        prisoner_mgmt = new MissionUi;
+        label_refresh(prisoner_mgmt, tstring("party_t_prisoner_management"));
+        {
+            tstring k("ui_need_to_learn_prisoner_management");
+            STX(prisoner_mgmt, *g_strtable.lookup(k));
+        }
+        PSO(members_base[0])->add_child(prisoner_mgmt);
     }
 
     for (int page = 0; page < 2; page++) {
@@ -933,9 +938,11 @@ void PartyScreen::setup_skills()
     // ---- pass 2: a caption line per member and a line per skill ----
     char buf[512];
     for (int mi = 0; mi < members->nstacks; mi++) {
-        if ((members->stacks[mi].flags & 1) != 0 || (g_game->troops[members->stacks[mi].troop].flags & 0x10) == 0)
+        if ((members->stacks[mi].flags & 1) != 0)
             continue;
-        Troop* r = rec_of(members->stacks[mi].troop);
+        Troop* r = rec_of(members->stacks[mi].troop);      // the hero test reads the record (0x505edd)
+        if ((r->flags & 0x10) == 0)
+            continue;
         tstring* nm = (tstring*)r;
         tstring* tr = g_strtable.find(&r->key);
         if (tr)
@@ -1001,7 +1008,7 @@ void PartyScreen::setup_skills()
     {
         tstring name("party_sc_skills");
         MissionUi* panel = skills_base;
-        Camera* list = new_scroll_list();                  // 0x4a8, ctor 0x49deb0
+        Camera* list = new Camera;                         // 0x4a8, ctor 0x49deb0
         list->f104 |= 0x20;
         if (sb != 0)
             list->follow[1] = sb;           // +0x484 the scroll bar
@@ -1014,10 +1021,10 @@ void PartyScreen::setup_skills()
     // ---- place the list in the panel ----
     {
         float dy = skills_base->screen[1] > skills_list->screen[1] ? 0.0f : skills_list->screen[1] - skills_base->screen[1];
-        float pos[2];
-        pos[0] = skills_list->fE0;
-        pos[1] = dy + skills_list->fE4;
-        PSO(skills_list)->set_pos(pos);
+        PsVec2 d;
+        d.y = dy + skills_list->fE4;
+        d.x = skills_list->fE0;
+        PSO(skills_list)->set_pos((float*)&PsVec2(d));
     }
     {
         const float& lower = skills_base->screen[1] > skills_list->screen[1] ? skills_list->screen[1] : skills_base->screen[1];     // 0x50630c: the lower of the two

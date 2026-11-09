@@ -33,11 +33,11 @@ using rgl::vector4;
 #include "../ini_file.h"                      // ini_file, g_game_vars (0xa44240; its count is 0xa70240)
 
 // lookup of one setting (0x4bd5a0 + atof), 0.0f when the key is missing
-static float config_float(const char* name)
+static __forceinline float config_float(const char* name)
 {
     tstring key(name);
-    int idx = g_game_vars.find(key);
     float r = 0.0f;
+    int idx = g_game_vars.find(key);
     if (idx >= 0) {
         ini_entry* e = &g_game_vars.entries[idx];
         r = (float)atof(e->value.c_str());
@@ -45,10 +45,24 @@ static float config_float(const char* name)
     return r;
 }
 
-// the fourth..seventh lookups at the end of 0x4f66e0 use an explicit linear `equals` scan instead of `find`
-static float scan_float(const char* name)
+// the same lookup folded into a max with the current value (the compare happens before the key is destroyed)
+static __forceinline float config_max(const char* name, float cur)
 {
     tstring key(name);
+    float r = 0.0f;
+    int idx = g_game_vars.find(key);
+    if (idx >= 0) {
+        ini_entry* e = &g_game_vars.entries[idx];
+        r = (float)atof(e->value.c_str());
+    }
+    return (r > cur) ? r : cur;
+}
+
+// the fourth..seventh lookups at the end of 0x4f66e0 use an explicit linear `equals` scan instead of `find`
+static __forceinline float scan_float(const char* name)
+{
+    tstring key(name);
+    float r = 0.0f;
     int idx = -1;
     int i = 0;
     do {
@@ -58,7 +72,6 @@ static float scan_float(const char* name)
             idx = i;
         i++;
     } while (idx == -1);
-    float r = 0.0f;
     if (idx >= 0) {
         ini_entry* e = &g_game_vars.entries[idx];
         r = (float)atof(e->value.c_str());

@@ -3118,7 +3118,6 @@ void Agent::update_equipment_display()
 }
 
 // ---- the wield change ----------------------------------------------------------------------------------------------------------------------------
-// @ 0x444370
 // AnimSlot::set 0x4378a0 written out at these two sites only (every other caller in this file calls it)
 static __forceinline bool aset_fx(AnimSlot& s, int id, unsigned prio)
 {
@@ -3130,14 +3129,33 @@ static __forceinline bool aset_fx(AnimSlot& s, int id, unsigned prio)
         s.events = 0;
     return true;
 }
+// Agent::set_order 0x4379c0 (agent_stats.cpp) expanded for slot 1; INL picks the inline AnimSlot::set (two of the three sites)
+template <bool INL>
+static __forceinline void set_order_1(Agent* a, int id, unsigned prio, float rate)
+{
+    if (id >= -1 && id < a->defs->count) {
+        if (INL ? aset_fx(a->anim[1], id, prio) : a->anim[1].set(id, prio)) {
+            a->anim[1].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
+            if (prio & 0x4000000)
+                ((Curve*)a->body->skel)->set_rec_phase(1, 0.0f);   // 0x433b20
+            int k = a->wield[0];
+            if (k >= 0 && a->pairs[k].item >= 0) {
+                if (prio & 0x10000000)
+                    a->A[k]->vis = 0;
+                else
+                    a->A[k]->vis = 0xffff;
+            }
+        }
+    }
+}
+// @ 0x444370
 void Agent::on_wield_changed()
 {
     int anim_ = -1;
     int anim2 = -1;
     int snd2 = -1;
     int snd1 = -1;
-    int j;
-    for (j = 0; j < 2; j++) {
+    for (int j = 0; j < 2; j++) {
         int c = wield[j];
         int p = wield_prev[j];
         if (c != p) {
@@ -3222,45 +3240,29 @@ void Agent::on_wield_changed()
     }
     if (f23c != 0)
         wield_prev[1] = -1;
-    if (anim[1].cur == 0x7b && defs->count > -1 && aset_fx(anim[1], -1, 0x46)) {
-        anim[1].rate = 1.0f;
-        int c0 = wield[0];
-        if (c0 >= 0 && pairs[c0].item >= 0)
-            A[c0]->vis = 0xffff;
-    }
-    if (anim_ != -1) {
-        if (anim_ < -1 || anim_ >= defs->count || !aset_fx(anim[1], anim_, 0x5000046))
-            goto skip;
-    } else {
-        if (anim2 == -1 || anim2 < -1 || anim2 >= defs->count || !anim[1].set(anim2, 0x5000046))
-            goto skip;
-    }
-    anim[1].rate = 1.0f;
-    ((Curve*)body->skel)->set_rec_phase(1, 0.0f);   // 0x433b20
-    {
-        int c0 = wield[0];
-        if (c0 >= 0 && pairs[c0].item >= 0)
-            A[c0]->vis = 0xffff;
-    }
-skip:
+    if (anim[1].cur == 0x7b)
+        set_order_1<true>(this, -1, 0x46, 1.0f);
+    if (anim_ != -1)
+        set_order_1<true>(this, anim_, 0x5000046, 1.0f);
+    else if (anim2 != -1)
+        set_order_1<false>(this, anim2, 0x5000046, 1.0f);
     if (snd1 != -1 && (float)(g_ticks[g_mission->time_idx] - g_mission->time_base) * 1e-05f > 1.0f)
         g_sound_mgr.play(g_sound_mgr.slot[snd1], 0, &pos.x, 1.0f, 0);
     if (snd2 != -1 && (float)(g_ticks[g_mission->time_idx] - g_mission->time_base) * 1e-05f > 1.0f)
         g_sound_mgr.play(g_sound_mgr.slot[snd2], 0, &pos.x, 1.0f, 0);
     f130 = 0;
-    for (j = 0; j < 2; j++) {
+    for (int j = 0; j < 2; j++) {
         int s = wield[j];
         if (s >= 0 && pairs[s].item >= 0 && (j == 0 || f23c == 0)) {
             ItemKind* ik = &g_items[pairs[s].item];
-            unsigned fl = ik->type_flags;
-            unsigned t = fl & 0xff;
+            unsigned t = ik->type_flags & 0xff;
             if (t == itp_type_bow) {
                 f130 = 0x10;
                 variant = 0;
             } else if (t == itp_type_crossbow || t == itp_type_thrown) {
                 f130 = 0x20;
                 variant = 4;
-            } else if (t == itp_type_two_handed_wpn && (fl & itp_two_handed)) {
+            } else if (t == itp_type_two_handed_wpn && (ik->type_flags & itp_two_handed)) {
                 f130 = 4;
             } else if (t == itp_type_shield) {
                 f130 |= 0x1000;
@@ -7527,34 +7529,39 @@ void gui_manager::add(tstring msg, int color)
             }
         }
         {
+        vector4 ext;
+        {
             vec2 scale;
-            int zero;
+            float zero;
             float f08;
             int minus1;
-            vector4 p;
-            vector4 ext;
+            f08 = 0.8f;
             scale.x = 0.021f;                                  // 0x3cac0831 (0x452d72)
             scale.y = 0.021f;                                  // 0x3cac0831 (0x452d7a)
-            f08 = 0.8f;
             cur = (cur + 31) % 32;
             ((rgl::mesh*)&meshA[cur])->clear_geometry();
             ((rgl::mesh*)&meshB[cur])->clear_geometry();
-            zero = 0;
+            zero = 0.0f;
             minus1 = -1;
-            p.x = 0.02f;
-            p.y = -0.03f;
-            p.z = 0.0f;
-            g_font->layout_clear(&ext, &S, &p, (const float*)&scale, &meshA[cur], &minus1, (const float*)&zero, &f08, 0);
-            identity_pos((::pos*)&M);
-            meshB[cur].append_skinned(&meshA[cur], (mat4*)&M, -1, -1, 0);
+            vector4 p(0.02f, -0.03f, 0.0f);
+            g_font->layout_clear(&ext, &S, &p, (const float*)&scale, &meshA[cur], &minus1, &zero, &f08, 0);
+            mat4* id = (mat4*)identity_pos((::pos*)&M);
+            meshB[cur].append_skinned(&meshA[cur], id, -1, -1, 0);
             this->color[cur] = color;
             age[cur] = 0;
             meshA[cur].calc_bounds(&ext, &p);       // 0x438d80
             height[cur] = p.y - ext.y;
             total_h += height[cur];
         }
-        meshA[cur].res = get_mat(tstring("ui_font"));
-        meshB[cur].res = get_mat(tstring("ui_font_background"));
+        {
+            tstring n("ui_font");
+            meshA[cur].res = get_mat(n);
+        }
+        {
+            tstring n("ui_font_background");
+            meshB[cur].res = get_mat(n);
+        }
+        }
         history.push_back(msg);
     }
 }
@@ -7725,27 +7732,17 @@ void Agent::on_removed()
 }
 
 // ---- Agent::hit_damage: the damage of a melee blow or missile hit ------------------------------------------------------------------
-static inline Agent* AGENT(Mission* ms, unsigned id)
-{
-    return &ms->agents.pages[id >> 4][id & 0xf];
-}
 
-static __forceinline vector4 vmul_vs(const vector4& v, const float& s)
-{
-    vector4 r;
-    r.x = v.x * s; r.y = v.y * s; r.z = v.z * s;
-    return r;
-}
 static __forceinline vector4 vmul_sv(const float& s, const vector4& v)
 {
     vector4 r;
     r.x = s * v.x; r.y = s * v.y; r.z = s * v.z;
     return r;
 }
-static __forceinline vector4 rot_xy(const rgl::matrix& M, vec2 p)
+static __forceinline vector4 rot_xy(const rgl::matrix& M, const vector4& p)     // p.z taken as 0
 {
     vector4 t;
-    t.x = p.x * M.s.x + 0.0f * M.u.x + p.y * M.f.x;
+    t.x = p.x * M.s.x + (0.0f * M.u.x + p.y * M.f.x);
     t.y = 0.0f * M.u.y + p.x * M.s.y + p.y * M.f.y;
     t.z = 0.0f * M.u.z + p.x * M.s.z + p.y * M.f.z;
     return t;
@@ -7767,44 +7764,42 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
     vector4 A;
     A.x = 0.0f; A.y = 0.0f; A.z = 0.0f;
     if ((int)victim >= 0) {
-        unsigned mid = AGENT(ms, victim)->f2c;
-        Agent* v = AGENT(ms, victim);
-        if ((int)mid >= 0) {
-            A = vmul_vs(AGENT(ms, mid)->body->m.f, AGENT(ms, mid)->vel_xy.y);
+        Agent& v = ms->agents[victim];
+        if (v.f2c >= 0) {
+            A = vmul_sv(ms->agents[v.f2c].vel_xy.y, ms->agents[v.f2c].body->m.f);
         } else {
             vector4 lv;
-            lv.x = v->vel_xy.x; lv.y = v->vel_xy.y; lv.z = 0.0f;
-            A = ((const ::pos&)v->body->m).rot(lv);
+            lv.x = v.vel_xy.x; lv.y = v.vel_xy.y; lv.z = 0.0f;
+            A = ((const ::pos&)v.body->m).rot(lv);
         }
     }
     vector4 B;
     if (f2c >= 0) {
-        B = vmul_sv(AGENT(ms, f2c)->vel_xy.y, AGENT(ms, f2c)->body->m.f);
+        B = vmul_sv(ms->agents[f2c].vel_xy.y, ms->agents[f2c].body->m.f);
     } else {
-        vec2 lv = vel_xy;
+        vector4 lv;
+        *(vec2*)&lv = vel_xy;                       // x, y as dwords; z is never stored (rot_xy uses 0)
         B = rot_xy(body->m, lv);
     }
+    int item = sp.item;
     if (missile) {
         *out_flag = 1;
         float spd = missile->f5c;
         if ((int)victim >= 0) {
-            float z = missile->p40.z * missile->f5c;
-            float x = A.x - missile->f5c * missile->p40.x;
-            float y = A.y - missile->p40.y * missile->f5c;
-            spd = (float)sqrt((A.z - z) * (A.z - z) + y * y + x * x);        // 0x4539d7: (dz^2 + y^2) + x^2
+            vector4 rel = A - missile->p40 * missile->f5c;
+            spd = rel.length();        // 0x4539d7: (dz^2 + dy^2) + dx^2
         }
         *out_dmg = (float)pow((double)(spd / missile->f60), (double)g_module_settings.missile_damage_speed_power) * missile->f64 * *scale;
     } else {
         int st = hand ? mode2 : mode1;
         unsigned fl = (st == 0);
         *out_flag = fl;
-        float base;
-        if (sp.item >= 0)
-            base = (float)(int)sp.stat_21x(fl) * *scale;
+        if (item >= 0)
+            *out_dmg = (float)(int)sp.stat_21x(fl) * *scale;
         else
-            base = (float)g_game->chars[troop].lvl58 * 0.3f + 2.0f;
-        *out_dmg = base;
-        vector4 d = vsub(A, B);
+            *out_dmg = (float)g_game->chars[troop].lvl58 * 0.3f + 2.0f;
+        vector4 d;
+        d = A - B;
         float len = d.normalize();
         if (f100_is_0x48_and_charged()) {
             *out_dmg = (*out_dmg + 5.0f) * (float)pow((double)len, (double)1.8f);
@@ -7813,9 +7808,9 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             *out_dmg = ((0.2f - (q.z * d.z + q.y * d.y + q.x * d.x)) * *out_dmg) * g_module_settings.couched_lance_damage_multiplier * 0.2f;
             if (g_options.damage_msgs) {
                 if (id == g_mission->player_id)
-                    g_gui.add(*lk(tstring("ui_delivered_couched_lance_damage")), 0xffd03030);
+                    { tstring key("ui_delivered_couched_lance_damage"); g_gui.add(*g_strtable.lookup(key), 0xffd03030); }
                 else if (victim == (unsigned)g_mission->player_id)
-                    g_gui.add(*lk(tstring("ui_received_couched_lance_damage")), 0xffd03030);
+                    { tstring key("ui_received_couched_lance_damage"); g_gui.add(*g_strtable.lookup(key), 0xffd03030); }
             }
         } else {
             if (mode1 == 3)
@@ -7823,39 +7818,34 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             vector4 q = ((const ::pos&)body->m).rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
             q.normalize();
             int m = mode1;
+            vector4 dir;
             vector4 up;
             up.x = 0.0f; up.y = 0.0f; up.z = 1.0f;
             if (m == 0) {
-                A = q;
+                dir = q;
+            } else if (m == 2) {
+                dir = rgl::cross(q, up);
+            } else if (m == 1) {
+                vector4 c = rgl::cross(q, up);
+                up.x = -c.x; up.y = -c.y; up.z = -c.z;
+                dir = up;
             } else {
-                vector4* ax;
-                if (m == 2) {
-                    ax = &up;
-                } else {
-                    if (m == 1) {
-                        vector4 c = rgl::cross(q, up);
-                        up.x = -c.x; up.y = -c.y; up.z = -c.z;
-                        A = up;
-                        goto done_dir;
-                    }
-                    A = rgl::cross(q, up);
-                    A.normalize();
-                    ax = &A;
-                }
-                A = rgl::cross(q, *ax);
+                vector4 s = rgl::cross(q, up);
+                s.normalize();
+                dir = rgl::cross(q, s);
             }
-        done_dir:
-            A.normalize();
+            dir.normalize();
             float t = 1.0f;
             float h = anim[1].scale;
             if (h < 0.33f) {
-                t = h * 3.030303f;
-                if (t < 0.0f)
-                    t = 0.0f;
-                else if (t >= 1.0f)
-                    t = 1.0f;
+                float k = h * 3.030303f;
+                if (k < 0.0f)
+                    k = 0.0f;
+                else if (k >= 1.0f)
+                    k = 1.0f;
                 if (m != 0)
-                    t = t * 0.7f + 0.3f;
+                    k = k * 0.7f + 0.3f;
+                t = k;
             } else if (h > 0.61f) {
                 float x = (h - 0.65f) * -25.000025f;
                 t = 1.0f;
@@ -7868,11 +7858,8 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             if (t < 1e-06f) {
                 *out_dmg = 0.0f;
             } else {
-                if (t < 0.1f)
-                    t = 0.1f;
-                else if (t >= 1.2f)
-                    t = 1.2f;
-                t = (t * w - (A.z * d.z + A.y * d.y + A.x * d.x) * len) / w;
+                float c = t < 0.1f ? 0.1f : (t >= 1.2f ? 1.2f : t);
+                t = (c * w - (dir.x * d.x + (dir.y * d.y + dir.z * d.z)) * len) / w;
                 if (t < 0.3f)
                     t = 0.3f;
                 else if (t > 3.0f)
@@ -7883,26 +7870,29 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                 int n = round_float(&bonus);
                 if (n != 0 && g_options.damage_msgs && id == g_mission->player_id) {
                     char msg[512];
-                    if (n > 0)
-                        sprintf(msg, lk(tstring("ui_speed_bonus_plus"))->c_str(), n);
-                    else
-                        sprintf(msg, lk(tstring("ui_speed_bonus"))->c_str(), n);
+                    if (n > 0) {
+                        tstring key("ui_speed_bonus_plus");
+                        sprintf(msg, g_strtable.lookup(key)->c_str(), n);
+                    } else {
+                        tstring key("ui_speed_bonus");
+                        sprintf(msg, g_strtable.lookup(key)->c_str(), n);
+                    }
                     g_gui.add(tstring(msg), -1);
                 }
             }
         }
     }
-    if (sp.item >= 0) {
+    if (item >= 0) {
         ItemRef w = slot_pair_fi(1);
-        int cls = slot_class_impl(sp.item, w.item >= 0);
+        int cls = slot_class_impl(item, w.item >= 0);
         int prof = (int)g_game->chars[troop].f80[cls];
-        if ((g_items[sp.item].type_flags & 0xff) == itp_type_crossbow) {
+        if ((g_items[item].type_flags & 0xff) == itp_type_crossbow) {
             if (g_mission->fog_dense == 1)
                 *out_dmg = *out_dmg * 0.75f;
         } else {
             float pct = (float)prof * 0.01f;
             *out_dmg = (pct * 0.15f + 0.85f) * *out_dmg;
-            unsigned t = g_items[sp.item].type_flags & 0xff;
+            unsigned t = g_items[item].type_flags & 0xff;
             if (t == itp_type_bow) {
                 int sk = g_game->skill_level(troop, 0x21);
                 int lim = sp.stat_1ec() + 4;
@@ -7921,13 +7911,13 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                     int hs = g_game->skill_level(troop, 0x17);
                     *out_dmg = ((float)hs * 0.019f + 0.8f) * *out_dmg;
                 }
-            } else if (g_items[sp.item].is_melee()) {
+            } else if (g_items[item].is_melee()) {
                 int sk = g_game->skill_level(troop, 0x23);
                 *out_dmg = ((float)sk * 0.08f + 1.0f) * *out_dmg;
             }
             *out_dmg = (float)g_game->chars[troop].lvl58 * 0.2f + *out_dmg;
         }
-        unsigned t2 = g_items[sp.item].type_flags & 0xff;
+        unsigned t2 = g_items[item].type_flags & 0xff;
         if (t2 == itp_type_two_handed_wpn || t2 == itp_type_polearm) {
             ItemRef w2 = slot_pair_fi(1);
             if (w2.item >= 0 || f2c >= 0)

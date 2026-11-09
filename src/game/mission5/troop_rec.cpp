@@ -32,6 +32,15 @@ template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, _
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../../include/wl_marker.h"        // WL_MARKER: the original's inline WinLicense region markers
 
+static inline void tab_put(PartyMgr* m, int index, int id)
+{
+    int key = id % 0x2717;
+    while (m->tab[key].key != -1)
+        key = (key + 0x4f) % 0x2717;
+    m->tab[key].key = id;
+    m->tab[key].value = index;
+}
+
 // @ 0x51eb90
 void PartyMgr::read(stream_base* s, int flag)
 {
@@ -58,29 +67,23 @@ void PartyMgr::read(stream_base* s, int flag)
             int id;
             s->r_int(&id);
             rec->type = 1;
-            int key = id % 0x2717;
-            if (tab[key].key != -1) {
-                do {
-                    key = (key + 0x4f) % 0x2717;
-                } while (tab[key].key != -1);
-            }
-            tab[key].value = index;
-            tab[key].key = id;
+            tab_put(this, index, id);
             rec->id = id;
             rec->read(s, flag);
         } else {
             rec->type = 0;
         }
     }
-    if (free_ids._Myfirst)
-        operator delete(free_ids._Myfirst);
-    free_ids._Myfirst = 0;
-    free_ids._Mylast = 0;
-    free_ids._Myend = 0;
+    std::vector<int>& fr = free_ids;
+    if (fr._Myfirst)
+        operator delete(fr._Myfirst);
+    fr._Myfirst = 0;
+    fr._Mylast = 0;
+    fr._Myend = 0;
     for (int i = 0; i < count; i++) {
         Party* rec = (Party*)((char*)pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x5ac8);
         if (rec->type != 1)
-            free_ids.push_back(i);
+            fr.push_back(i);
     }
     n_parties = last;
 }

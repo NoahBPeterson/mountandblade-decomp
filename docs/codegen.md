@@ -261,9 +261,46 @@ compiler computes a trip count and uses `mul`.
   (one load, one store across the `_ftol` between them) while the original keeps load/and/or/store per put. Writing the
   second put through the union's other member (`g_terrain.flags` instead of `bits[4]`, as `Terrain::set_field_a` 0x464a60
   does) reproduced the separate RMWs and freed `ebx` for the value the original keeps there (M&B `start_setup`).
+- **`mov [this+N],eax` followed by `mov ecx,[this+N]` means the member is used after the store, not a local.** M&B `PartyWindow::init_screen` 0x500ad0: writing `container = new NodeA(0); container->move_a(..)`, `hinge[k] = new MissionUi; label_refresh(hinge[k], ..)`, `name[i]`, `gold[i]`, `total_cost`, `equip_bg` and `view[i]->..` (instead of `T* w = new ..; member = w; w->..`) took the aligned figure from 1955 to 1711; the two widget arrays of the armour loop went the other way (1763 -> 1837), so test each site.
+- **UI construction code (M&B `ConvScreen::open` 0x4f66e0, `CampaignScreen::init_screen` 0x4ec4d0; bmD 2026-11-09, aligned 3974 -> 702 and 746 -> 198).**
+  - *tstring order is a scoping signal.* A tstring ctor that runs BEFORE the call's float arguments are pushed is a named block-scoped
+    local (`{ tstring t("ui_camp"); f = new_medium_button(f34, tab.lookup(t), 0.1f, ...); }`); an argument temporary
+    (`lookup(tstring("..."))`) constructs after the floats. Narrow the block around just the call, or the name will not share the
+    frame's base slot with the later flag/vector temps (a name in the same block as a later `int flag` moved the tstring up 0x10).
+  - *`(float*)&vector2(x, y)` temporaries share one slot; named `float pos[2]` locals do not* (frame 0xb0 vs the original 0xe0
+    once everything else matched).
+  - *A same-type cast is an lvalue to cl 13.10.* `push_child(kids, (MissionUi*)f34)` bound the reference to `this->f34` itself and
+    kept `&f34` in a register for the whole function; the original copies the pointer into a temp (`{ MissionUi* w = f34;
+    push_child(kids, w); }`, the block matters: a function-scope local with its address taken stays live to the end).
+  - *Inline config lookup:* `float r = 0.0f;` goes BEFORE the `find` call (the original stores it before the call), a max folded
+    into the same helper (`return r > cur ? r : cur`) puts the compare before the key's destructor, and `__forceinline` is what
+    makes the `find` + `imul 0x2c` + `atof` block appear at all (a `static` helper became a register-convention call).
+  - *Inline `new T` + ctor merges the null check into the result register* (`return p ? new (p, raw_place()) T : 0;`), where
+    `if (p) new (p) T; return p;` leaves a copy (`mov esi, eax` after the call).
+  - *A widget whose inline ctor zeroes three words* (ContainerBase(inl_tag)) is what makes cl hoist 0 into ebx for the whole
+    function; leaving those stores out changed every `cmp esi, ebx` and `push ebx` in the function.
+  - *`g_gui.dirty = 1; g_gui.objs.push_back(w)` with `w` a block-scoped copy* puts the dirty store after the temp's creation
+    (facegen_init / party_screen spelling).
+- **Combat/agent code (M&B `Agent::hit_damage` 0x453710, `Agent::on_wield_changed` 0x444370, `gui_manager::add` 0x452c00; bmB 2026-11-09).**
+  - *A field held in a callee-saved register across opaque calls is a local copy.* `ItemRef sp = slot_pair(hand)` escapes to the
+    opaque `sp.stat_21x()`, so every `sp.item` reloads; the original keeps the index in `edi` from its first use to the end, i.e.
+    `int item = sp.item;` (+140 identical, and it fixed ebp/ebx for two other webs).
+  - *An inline caller's callee shows as a whole block.* Three `rate store / prio&0x4000000 -> set_rec_phase / wield[0] vis`
+    sequences were `Agent::set_order(1, id, prio, 1.0f)` 0x4379c0 expanded in place; writing it as a forceinline helper took
+    on_wield_changed from 349 to 466/524 identical. Look for a known function's body before hand-writing the pieces.
+  - *Initialise, don't assign, when the original returns straight into the object.* `A = cross(q, up)` goes through a temporary
+    and a 4-dword copy; `vector4 s = cross(q, up)` gets the hidden pointer to `s` itself. Conversely a temporary + dword copy
+    into an existing vector (`d = A - B`, `B = rot(...)`) is an assignment.
+  - *`int zero = 0` where the original passes `0.0f`.* An int local holding 0 joins every other int 0 (`age = 0`, `push 0`) and
+    cl hoists `xor ebp,ebp` for them all; `float zero = 0.0f` keeps immediates and freed ebp for the original's allocation.
+  - *Named key, then the colour:* `{ tstring key("ui_..."); g_gui.add(*g_strtable.lookup(key), colour); }` pushes the colour after
+    the key ctor and reloads `lea` for the lookup, as the original does; `lookup(tstring("..."))` pushes the colour first.
+- **Put the `// @ 0x...` marker directly above the function it names.** A marker above a `static __forceinline` helper made chk,
+  insn_align (and so the harness) compare that helper (on_wield_changed was "1601/2116 diff" against `aset_fx`).
 - **A guard on the address of a field of a fresh allocation is real.**
   `lea ecx,[eax+8]; test ecx,ecx; je` comes from `if (&pNode->mValueA)`;
   removing it shrinks the function.
+- **An element reloaded at every use is a reference, not a cached pointer (M&B `Terrain::light_particle` 0x471b30).** The original walks `p->meshes[k]` with a pointer in `ebx` and does `mov eax,[ebx]` before every `m->...` access, so there is no register-held `m`. `mesh* m = p->meshes[k];` caches it in `esi` (aligned 1296); `mesh*& m = p->meshes[k];` reloads it like the original (aligned 1025, size 1288 -> 1266). The same function: two scale temporaries that the original keeps in different slots must be two locals (`d`, `d2`), not one reused (-259 aligned). `Terrain::scatter` 0x4650f0: reading `g_ptypes[sel]` at each of its two uses instead of through a `ptype* gs` local gave +94 identical, and a `float rr = (float)(rand() % N) * k` expression written inline (instead of an `int r` temp) lets cl convert and scale before the unrelated loads, as the original does (-52 aligned). `if (x <= 1) a; else {b}` reproduces an original that falls through into the `a` arm and `jg`s to `b`, where `a = 0; if (x > 1) {b}` puts `b` inline.
 
 ---
 
@@ -293,6 +330,13 @@ original's allocation (observed in Spore).
 no `rep movs` copy, no caller destructor) **only if the class has a user-declared
 copy ctor**. With the implicit copy ctor the compiler builds a temporary and
 copies.
+
+- **Two floats computed, then the argument pushed, then both stored (M&B `setup_party` 0x504ef0, `setup_skills` 0x5059c0).**
+  The shape `fld y; fsub; fld x; fsub; push &tmp; fstp x; fstp y` is a local filled field by field and passed as a copy
+  made by a user copy ctor: `V2 d; d.y = ..; d.x = ..; w->set_pos(&V2(d))`. The copy forwards both values through the x87
+  stack, and the computation order is the order of the stores into `d`. A ctor from two floats, a float array or
+  `operator-` all compute and store each value in store order. If the vtable load also follows the stores, the object
+  pointer was re-read after them: take it by reference to the member (`MissionUi*& w`), +21 in 0x504ef0.
 
 ### 5.3 Multiple inheritance and subobjects
 
@@ -793,6 +837,10 @@ a `sub`/`dec` compare chain.
   section 11.5).
 - **Unsigned count tests.** M&B: `> 0` on an unsigned count gives `jbe`, `!= 0`
   gives `je`.
+- **An else arm laid out inside the then arm's `new` diamond means two ifs (M&B `setup_party` 0x504ef0).** The original put
+  `else label_refresh(party2)` between the `jmp` and the `xor eax,eax` of a `new` inside a nested `if`. Inverting the
+  condition or adding a goto left it where it was. Writing `if (s == 0) A; else B; if (s == 0 && c) { new ... }` gave the
+  original's block order, and cl folds the second test of `s` away (+8 identical, positional diff 2122 -> 283).
 
 ---
 
@@ -964,6 +1012,14 @@ only the x87 arithmetic.
   (`terrain_b` `blend` 0x471040, ground_height 0x470f40). Pass a real pair,
   `float p[2] = { x, y }; f(p);`. That costs two stores, but the callee gets the
   same values.
+
+- **A clamp the original keeps on the x87 stack is a ternary** (M&B `Agent::hit_damage` 0x453710):
+  `float c = t < 0.1f ? 0.1f : (t >= 1.2f ? 1.2f : t);` gives `fld [t]; fcomp; jp; fld const; jmp` with the result left in
+  st(0); `if (t < 0.1f) t = 0.1f; else if ...` on an address-taken `t` stores each constant to memory. A clamp computed in its
+  own scalar (`float k = h * 3.03f; if (k < 0) k = 0; ...; t = k;`) also stays in registers.
+- **`v.length()` and the written-out sum are not the same order.** `sqrt(r.z*r.z + r.y*r.y + r.x*r.x)` came out x-first while
+  `r.length()` (x*x+y*y+z*z) gave the original's `dz^2 + dy^2 + dx^2`; a dot product needed `x + (y + z)` to come out z, y, x.
+  When three-term sums come out reversed, try the other association before reordering terms.
 
 ### 9.5 Reading float mismatches
 

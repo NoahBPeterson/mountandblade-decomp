@@ -8,152 +8,133 @@
 #include "../map_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../conv_screen.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_globals.h"      // UI / core globals
+#include "../../include/vec.h"      // vector2
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
+
+// the mesh lookup by name that the original inlines at the talk panel, the relation bar and the pointer
+template<class W> static __forceinline void mesh_by_name(W* w, const char* nm)
+{
+    tstring name(nm);
+    w->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
+}
+template<class W> static __forceinline void track_by_name(W* w, const char* nm)
+{
+    tstring name(nm);
+    w->set_track(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
+}
+
+// push_back as the original inlines it: size first (0 when empty), then the room check, then a direct store
+static inline void push_back_direct(std::vector<MissionUi*>& c, MissionUi* const& v)
+{
+    unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
+    if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
+        MissionUi** p = c._Mylast;
+        *p = v;
+        c._Mylast = p + 1;
+    } else {
+        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
+    }
+}
+
+// the 0x178-byte base widget: new + the inline MissionUi ctor, the null check merged in the result register
+static __forceinline MissionUi* widget_base()
+{
+    void* p = ::operator new(0x178);
+    return p ? new (p, raw_place()) MissionUi : 0;
+}
 
 // @ 0x4f66e0
 void Rec1208::init_screen()
 {
     g_gui.reset();   // 0x42d1b0 (g_gui is the gui_manager)
 
-    NodeA* panel = new NodeA(0);
-    talk = panel;
+    talk = new NodeA(0);
+    talk->move_a((float*)&vector2(0.0f, 0.0f));
+    talk->set_xy((float*)&vector2(1.0f, 0.75f));
+    mesh_by_name(talk, "conversation_window");
     {
-        float pos[2] = { 0.0f, 0.0f };
-        talk->move_a(pos);
-        float sz[2] = { 1.0f, 0.75f };
-        talk->set_xy(sz);
-    }
-    {
-        tstring name("conversation_window");
-        talk->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
-    }
-    {
-        MissionUi* v = (MissionUi*)talk;
+        MissionUi* w = talk;
         g_gui.dirty = 1;
-        g_gui.objs.push_back(v);   // 0x49b120
+        g_gui.objs.push_back((MissionUi* const&)w);   // 0x49b120
     }
 
     float sentence_y_a = config_float("conv_sentence_y_a");
 
-    text_box* bar = new text_box;
-    bar_reln = bar;
-    {
-        tstring name("conv_bo_board");
-        label_refresh((MissionUi*)bar, name);
-    }
-    push_back_inline(talk->kids, bar);
+    bar_reln = new text_box;
+    label_refresh((MissionUi*)bar_reln, tstring("conv_bo_board"));
+    push_back_direct(talk->kids, (MissionUi*)bar_reln);
 
-    MissionUi* line = (MissionUi*)new_widget_base(0x178);
-    label_text = line;
-    {
-        tstring name("conv_t_partner");
-        label_refresh((MissionUi*)line, name);
-    }
-    bar->add_child(line);
+    label_text = widget_base();
+    label_refresh(label_text, tstring("conv_t_partner"));
+    bar_reln->add_child(label_text);
 
-    MissionUi* speaker = (MissionUi*)new_widget_base(0x178);
-    label_speaker = speaker;
-    {
-        tstring name("conv_t_utterer_name");
-        label_refresh((MissionUi*)speaker, name);
-    }
-    bar->add_child(speaker);
+    label_speaker = widget_base();
+    label_refresh(label_speaker, tstring("conv_t_utterer_name"));
+    bar_reln->add_child(label_speaker);
 
     // sentence_y_a = max(sentence_y_a * 1024.0f, conv_choices_min_y)
-    float scaled = sentence_y_a * 1024.0f;
-    float min_y = config_float("conv_choices_min_y");
-    sentence_y_a = (scaled > min_y) ? scaled : min_y;
+    sentence_y_a = sentence_y_a * 1024.0f;
+    sentence_y_a = config_max("conv_choices_min_y", sentence_y_a);
 
-    ContainerBase* ch = new ContainerBase;
-    choice = ch;
+    choice = new ContainerBase(ContainerBase::inl_tag());
+    label_refresh((MissionUi*)choice, tstring("conv_bo_choices"));
+    choice->move_f8((float*)&vector2(0.0f, -sentence_y_a));
+
+    MissionUi* reln;
     {
-        tstring name("conv_bo_choices");
-        label_refresh((MissionUi*)ch, name);
+        tstring scroll_name("conv_s_choices");
+        reln = (MissionUi*)make_scrollbar(talk, &scroll_name);
     }
     {
-        float zero = 0.0f;
-        float v[2] = { zero, -sentence_y_a };
-        ch->move_f8(v);
+        tstring list_name("conv_sc_choices");
+        question = (MissionUi*)make_editor_list(choice, &list_name, (int)reln);
     }
-
-    tstring scroll_name("conv_s_choices");
-    MissionUi* reln = (MissionUi*)make_scrollbar(talk, &scroll_name);
-    tstring list_name("conv_sc_choices");
-    question = (MissionUi*)make_editor_list(ch, &list_name, (int)reln);
     ((Camera*)question)->draw();   // 0x488d50
     talk->add_child(question);
 
-    MissionUi* input = (MissionUi*)new_widget_base(0x178);
-    input_label = input;
-    {
-        tstring name("conv_t_press_mouse");
-        label_refresh((MissionUi*)input, name);
-    }
+    input_label = widget_base();
+    label_refresh(input_label, tstring("conv_t_press_mouse"));
     {
         tstring key("ui_press_left_mouse_button_to_continue");
-        struct { int a, b; } ret;                        // set_text's 8-byte result (original [esp+0x10]); the looked-up string is the text
-        input->set_text((float*)&ret, &(*g_strtable.lookup(key)));
+        int ret[2];                        // set_text's 8-byte result (original [esp+0x10]); the looked-up string is the text
+        input_label->set_text((float*)ret, &(*g_strtable.lookup(key)));
     }
-    talk->add_child(input);
+    talk->add_child(input_label);
 
     // the message window (+0x11e0): a text_box at 0.03/0.3, 0.25/0.21, mesh "message_window"
-    text_box* msg = new text_box;
-    msg_window = msg;
-    {
-        float pos[2] = { 0.03f, 0.3f };
-        msg->move_a(pos);
-        float sz[2] = { 0.25f, 0.21f };
-        msg->set_xy(sz);
-    }
+    msg_window = new text_box;
+    msg_window->move_a((float*)&vector2(0.03f, 0.3f));
+    msg_window->set_xy((float*)&vector2(0.25f, 0.21f));
     {
         tstring name("message_window");
-        msg->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
+        rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&name))->clone();
+        msg_window->set_mesh(0, m);
     }
-    msg->hide();
+    msg_window->hide();
 
-    MissionUi* rbar = (MissionUi*)new_widget_base(0x178);
-    relation_bar = rbar;
-    {
-        float pos[2] = { 0.01f, 0.02f };
-        rbar->move_a((float*)pos);
-        float sz[2] = { 0.23f, 0.02f };
-        rbar->set_xy(sz);
-    }
-    {
-        tstring name("talk_relation_bar");
-        rbar->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
-    }
-    msg->add_child(rbar);
+    relation_bar = widget_base();
+    relation_bar->move_a((float*)&vector2(0.01f, 0.02f));
+    relation_bar->set_xy((float*)&vector2(0.23f, 0.02f));
+    mesh_by_name(relation_bar, "talk_relation_bar");
+    msg_window->add_child(relation_bar);
 
-    MissionUi* rptr = (MissionUi*)new_widget_base(0x178);
-    reln_pointer = rptr;
-    {
-        float pos[2] = { 0.1f, 0.02f };
-        rptr->move_a((float*)pos);
-        float sz[2] = { 0.03f, 0.03f };
-        rptr->set_xy(sz);
-    }
-    {
-        tstring name("talk_reln_pointer");
-        rptr->set_track(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
-    }
-    msg->add_child(rptr);
+    reln_pointer = widget_base();
+    reln_pointer->move_a((float*)&vector2(0.1f, 0.02f));
+    reln_pointer->set_xy((float*)&vector2(0.03f, 0.03f));
+    track_by_name(reln_pointer, "talk_reln_pointer");
+    msg_window->add_child(reln_pointer);
 
     for (int i = 0; i < 5; i++) {
-        MissionUi* ln = (MissionUi*)new_widget_base(0x178);
-        lines[i] = ln;
-        float pos[2] = { 0.01f, 0.17f - (float)i * 0.03f };
-        ln->move_a((float*)pos);
-        float sz[2] = { 0.23f, 0.03f };
-        ln->set_xy(sz);
+        lines[i] = widget_base();
+        lines[i]->move_a((float*)&vector2(0.01f, 0.17f - (float)i * 0.03f));
+        lines[i]->set_xy((float*)&vector2(0.23f, 0.03f));
         int flag = 4;
-        ln->set148(&flag);
-        float sc[2] = { 0.021f, 0.021f };
-        ln->set_size(sc);
-        msg->add_child(ln);
+        lines[i]->set148(&flag);
+        lines[i]->set_size((float*)&vector2(0.021f, 0.021f));
+        msg_window->add_child(lines[i]);
     }
 
-    talk->add_child((MissionUi*)msg);
+    talk->add_child((MissionUi*)msg_window);
 
     // the four trailing geometry settings use the explicit linear `equals` scan
     float sentence_x = scan_float("conv_sentence_x");
@@ -161,75 +142,85 @@ void Rec1208::init_screen()
     float width_ratio = scan_float("conv_sentence_width_ratio");
     float button_height = scan_float("conv_sentence_button_height");
 
-    for (int i = 0; i < 0x400; i++) {
-        buttons[i] = (MissionUi*)new_sized_button(ch, tstring("hello"), sentence_x, -((float)i * sentence_y_a), sentence_size_y,
-                                              tstring("dlg_button"), tstring("dlg_button_down"),
-                                              width_ratio, button_height, 0.085f);   // 0x4dcc50
+    // button i sits (i + 1) slots below the choices box origin: the original's counter is incremented before the offset is taken
+    for (int i = 1; i <= 0x400; i++) {
+        tstring hello("hello");
+        tstring dlg("dlg_button");
+        tstring dlg_down("dlg_button_down");
+        buttons[i - 1] = (MissionUi*)new_sized_button((MissionUi*)choice, hello, sentence_x, -((float)i * sentence_y_a), sentence_size_y,
+                                              dlg, dlg_down, width_ratio, button_height, 0.085f);   // 0x4dcc50
     }
 
     // +0x30: a 0x358-byte view-window object (ctor 0x4ed630); its +0x1ac receives a copy of the screen's
     // embedded camera (at this+0x34) and its +0x178 points at the current mission
-    float pos[2] = { 0.008f, 0.29f };
-    float sz[2] = { 0.289000f, 0.452998f };
-    ViewWindow* vw = new MapWidget;
-    window = vw;
-    {
-        *(void**)((char*)vw + 0x178) = *(void**)g_mission;
-        dword_copy(0x48, (char*)&vw->scene3d.fr, (char*)this + 0x34);
-        vw->move_a((float*)pos);
-        vw->set_xy(sz);
-    }
+    window = new MapWidget;
+    *(void**)((char*)window + 0x178) = *(void**)g_mission;
+    rgl::frustum* cam = &fr;
+    memcpy(&window->scene3d.fr, cam, 0x120);
+    window->move_a((float*)&vector2(0.008f, 0.29f));
+    float sz[2] = { 0.289f, 0.453f };
+    window->set_xy(sz);
 
-    // the camera/frustum embedded in the screen at +0x34 (its +0xf8/+0x120 float4s and the projection fields)
+    // the camera/frustum embedded in the screen at +0x34 (its projection fields; the frame origin and the float4 at +0x154 are set below)
     {
-        ConvCamera* cam = (ConvCamera*)((char*)this + 0x34);
         float ratio = sz[1] / sz[0];
-        *(unsigned char*)((char*)cam + 0) = 1;
-        float* f = (float*)((char*)cam + 0xf8);      // this+0x12c
-        f[0] = f[1] = 0.0f;
-        f[2] = 10.0f;
-        f[3] = 0.0f;
-        *(float*)((char*)cam + 0x118) = 0.1f;
-        *(float*)((char*)cam + 0x11c) = 500.0f;
-        float a = (float)tan(PI_OVER_EIGHT) * 0.1f;
-        *(float*)((char*)cam + 0x108) = -a;
-        *(float*)((char*)cam + 0x10c) = a;
-        *(float*)((char*)cam + 0x114) = -a * ratio;
-        *(float*)((char*)cam + 0x110) = a * ratio;
-        float* q = (float*)((char*)cam + 0x120);     // this+0x154
-        q[0] = q[1] = q[2] = q[3] = 0.0f;
-        *(int*)((char*)cam + 0x130) = 0;             // this+0x164
-        *(int*)((char*)cam + 0x134) = 0;             // this+0x168
-        *(float*)((char*)cam + 0x138) = 1.0f;        // this+0x16c
-        ((rgl::frustum*)cam)->build_planes();   // 0x41e4f0 (the camera block is a frustum)
+        cam->perspective = 1;
+        cam->nearz = 0.1f;
+        cam->farz = 500.0f;
+        float a = 0.1f * (float)tan(PI_OVER_EIGHT);
+        cam->left = -a;
+        float b = (float)tan(PI_OVER_EIGHT) * 0.1f;
+        cam->right = b;
+        cam->bottom = -a * ratio;
+        cam->top = b * ratio;
+        cam->build_planes();   // 0x41e4f0
     }
 
     quest_mode = 0;
     {
-        rgl::matrix id;
-        identity3((rgl::mat3*)&id);
-        dword_copy(16, &world, &id);          // +0x1194: the screen's world transform
+        rgl::vector4 _pos;
+        _pos.x = 0.0f;
+        _pos.y = 0.0f;
+        _pos.z = 0.0f;
+        rgl::mat3 _t;
+        rgl::mat3 _rot = *rgl::identity3(&_t);
+        rgl::matrix _m;
+        *(rgl::mat3*)&_m = _rot;
+        _m.o = _pos;
+        world = _m;                           // +0x1194: the screen's world transform
     }
 
     // the talk panel's child vector gets the view window at +0x30 pushed directly (again via _Insert_n)
-    push_back_inline(talk->kids, (MissionUi*)vw);
     started = 1;
+    push_back_direct(talk->kids, (MissionUi*)window);
+    fr.m.o = rgl::vector4(0.0f, 0.0f, 10.0f);
+    *(rgl::vector4*)(pad154) = rgl::vector4(0.0f, 0.0f, 0.0f);    // +0x154 (w never written)
+    *(int*)(pad154 + 0x10) = 0;                                   // +0x164
+    *(int*)(pad154 + 0x14) = 0;                                   // +0x168
+    *(float*)(pad154 + 0x18) = 1.0f;                              // +0x16c
 
     n_lines = 0;
 
     refresh(-1, 0);
 
     if (target >= 0) {
-        int i = 0;
-        while (i < g_mission->agents.count && g_mission->agents.get(i)->troop == 0)
-            i++;
-        while (i < g_mission->agents.count) {
-            Agent* a = g_mission->agents.get(i);
+        // the first_used / next_used scans (0x43b1b0 / 0x43b160) as the original inlines them
+        AgentTable* t = &g_mission->agents;
+        int n = t->count;
+        unsigned i = 0;
+        for (; (int)i < n; i++)
+            if (t->get(i)->used)
+                break;
+        while (i < (unsigned)t->count) {
+            Agent* a = &g_mission->agents.pages[i >> 4][i & 0xf];
             if (a->troop == target)
                 g_mission->init_agent(a);
+            t = &g_mission->agents;
+            n = t->count;
             i++;
-            while (i < g_mission->agents.count && g_mission->agents.get(i)->troop == 0)
-                i++;
+            for (; (int)i < n; i++)
+                if (t->get(i)->used)
+                    break;
         }
         target = -1;
     }
