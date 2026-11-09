@@ -9,6 +9,11 @@ byte-identical still counts as MATCH ("other"; the manifest row must then name t
 slice is checked with a single wine compile.
 A slice id (sXXXXXXXX) is looked up in work/batches/*.json. -a also lists every symbol's best VA.
 Exit 0 iff every target VA has a MATCH. Final verification is still run_all.py --manifest.
+
+Two counts per row: "diff" is positional (byte i against byte i, plus the size difference; 0 means MATCH), so one shifted
+instruction makes everything after it count. "aligned" first aligns the two instruction lists (difflib, as insn_align.py)
+and counts only the bytes of instructions that are changed or exist on one side: the figure to judge progress by and the
+one the .nonmatching.txt column records.
 """
 import argparse, glob, hashlib, json, os, subprocess, sys
 
@@ -20,6 +25,50 @@ sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 from slice import marker_names, demangle_qual, base_ident  # noqa: E402
 
 SKIP = ("__ehhandler", "__unwindfunclet", "__catch", "__tryend", "$")
+
+
+def aligned_diff(theirs, omask, mine, rmask):
+    """Bytes of the instructions that differ once the two instruction lists are aligned: a changed run costs the larger
+    of its two byte spans, an orig-only or ours-only run its own bytes. Relocated bytes are masked on each side."""
+    import difflib
+    import capstone
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    md.detail = True
+
+    def toks(data, mask):
+        out, pos = [], 0
+        while pos < len(data):
+            i = next(md.disasm(bytes(data[pos:pos + 16]), pos, 1), None)
+            n = i.size if i is not None else 1
+            if i is not None and (i.mnemonic.startswith("j") or i.mnemonic in ("call", "loop")):
+                key = i.mnemonic.encode()      # relative targets move with any shift: compare the branch kind only
+            else:
+                key = bytes(0 if pos + k in mask else data[pos + k] for k in range(n))
+            out.append((key, n))
+            pos += n
+        return out
+    # the unpacked exe has no relocation table (omask is usually empty): mask the original's 4-byte operands that hold an
+    # image address, the fields our object leaves as relocations
+    om = set(omask)
+    pos = 0
+    while pos < len(theirs):
+        i = next(md.disasm(bytes(theirs[pos:pos + 16]), pos, 1), None)
+        n = i.size if i is not None else 1
+        if i is not None:
+            # exactly the displacement and immediate fields (capstone's offsets), not any 4 bytes that look like one
+            for at, size in ((i.disp_offset, i.disp_size), (i.imm_offset, i.imm_size)):
+                if at and size == 4:
+                    v = int.from_bytes(bytes(theirs[pos + at:pos + at + 4]), "little")
+                    if 0x400000 <= v < 0x10000000:
+                        om.update(range(pos + at, pos + at + 4))
+        pos += n
+    a, b = toks(theirs, om), toks(mine, rmask)
+    sm = difflib.SequenceMatcher(None, [t[0] for t in a], [t[0] for t in b], autojunk=False)
+    d = 0
+    for t, i1, i2, j1, j2 in sm.get_opcodes():
+        if t != "equal":
+            d += max(sum(x[1] for x in a[i1:i2]), sum(x[1] for x in b[j1:j2]))
+    return d
 
 
 def slice_vas(sid):
@@ -134,9 +183,9 @@ def main():
             d = sum(1 for i in range(n) if i not in rmask and i not in omask and theirs[i] != mine[i]) + abs(n - n0)
             d += len(constant_diffs(consts, relocs, off, theirs, orig.read, mine))
             if near and (size_best is None or d < size_best[0]):
-                size_best = (d, n, name)
+                size_best = (d, n, name, mine, rmask)
             if (not bound or name in bound) and (va not in best or d < best[va][0]):
-                best[va] = (d, n, name)
+                best[va] = (d, n, name, mine, rmask)
             if name not in sym_best or d < sym_best[name][0]:
                 sym_best[name] = (d, va)
         if size_best and size_best[0] == 0 and best.get(va, (1,))[0] != 0:
@@ -145,7 +194,11 @@ def main():
             best[va], how = size_best, "other"
         b = best.get(va)
         if b:
-            print("%08x %5d  %4d diff  %-6s %s%s" % (va, n0, b[0], how, b[2], "  MATCH" if b[0] == 0 else
+            al = ""
+            if b[0]:
+                theirs0, omask0 = orig.bytes_and_mask(va, n0)
+                al = "  aligned %d" % aligned_diff(theirs0, omask0, b[3], b[4])
+            print("%08x %5d  %4d diff%s  %-6s %s%s" % (va, n0, b[0], al, how, b[2], "  MATCH" if b[0] == 0 else
                                                      ("  (size %d vs %d)" % (b[1], n0) if b[1] != n0 else "")))
         else:
             print("%08x %5d     -  (no marker symbol and no symbol of similar size)" % (va, n0))

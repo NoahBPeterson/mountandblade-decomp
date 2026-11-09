@@ -24,6 +24,7 @@ Effort: S < 1 wk, M 1-6 wk, L 6-12 wk, XL > 12 wk (estimates, one engineer with 
 | [016](016-raise-hard-coded-limits.md) | Modding: audit and raise hard-coded limits and static pools | modding | L | high | 003, 006 |
 | [017](017-verifying-the-portable-build.md) | Verifying a build that is not bit-identical | verification | L | high | 004 |
 | [018](018-interim-32bit-exe-quick-wins.md) | Interim quick wins on the 32-bit exe (LAA, SSE2, pacing) | perf | S | low | - |
+| [019](019-idiomatic-source.md) | Idiomatic source: accessors, real names, no offset arithmetic (after byte-exactness) | cleanup | M | high | - |
 
 Order of attack: 003 (in flight) and 004/002/005 -> 007 -> 009+008 with 010 and 011 stubbed first -> 006 in parallel per header -> 012/013 -> 014/015/016 -> 017 continuously.
 

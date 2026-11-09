@@ -1640,7 +1640,7 @@ Harness behaviour worth knowing when reading a verdict:
 | Need | Tool |
 |---|---|
 | Annotated disassembly plus decompile | `tools/matching/card.py <va>` |
-| Compile once, diff every VA | `tools/matching/chk.py` |
+| Compile once, diff every VA | `tools/matching/chk.py` ("diff" is positional, 0 = MATCH; "aligned" counts only the bytes of differing instructions after aligning the two lists: judge progress by it and record it in the `.nonmatching.txt` column) |
 | Rank variants | `tools/matching/try_variants.py` |
 | Instruction-level diff (exact mangled name) | `tools/matching/cmpdis.py` |
 | Aligned instruction comparison | `tools/matching/insn_align.py <src.cpp> <va> [--show]` |
