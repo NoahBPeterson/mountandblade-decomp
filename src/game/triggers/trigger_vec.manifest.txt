@@ -65,3 +65,5 @@
 ../src/game/triggers/trigger_vec.cpp  _$E8  00548200  /O2  /MT  /Gy  /TP
 ../src/game/triggers/trigger_vec.cpp  _$E20  00548340  /O2  /MT  /Gy  /TP
 ../src/game/triggers/trigger_vec.cpp  _$E17  00548350  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E22  00547ee0  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E23  00548310  /O2  /MT  /Gy  /TP

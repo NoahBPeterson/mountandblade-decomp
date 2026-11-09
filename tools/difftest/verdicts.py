@@ -23,6 +23,7 @@ when a case FAILs, PASS when every case PASSes, WEAK otherwise. Categories (each
   comdatdiff  no callable symbol and the enclosing COMDAT differs: the fragment sits inside a parent that does NOT
               match, so its bytes are not verified either
   funclet     no callable symbol and no COMDAT verdict yet (not yet run through comdat_check.py)
+  notcode     not code at all: int3 padding the function index lists as a function (comdat_check.py NOT-CODE)
   not_run     no result (timeout, crash, or never swept)
 """
 import argparse, datetime, glob, json, os, sys
@@ -34,7 +35,7 @@ sys.path.insert(0, HERE)
 CUR = os.path.join(ROOT, "docs", "equiv_verdicts.json")
 FAILURES = os.path.join(ROOT, "docs", "equiv_failures.md")
 HIST = os.path.join(ROOT, "docs", "equiv_history.json")
-CATS = ("pass", "weak", "fail", "inputs", "harness", "comdat", "comdatdiff", "funclet", "not_run")
+CATS = ("pass", "weak", "fail", "inputs", "harness", "comdat", "comdatdiff", "funclet", "notcode", "not_run")
 
 
 def load(path):
@@ -52,6 +53,8 @@ def category(d):
         return "comdat"
     if isinstance(v, str) and v.startswith("COMDAT-DIFFERS"):
         return "comdatdiff"
+    if v == "NOT-CODE":         # padding the function index took for a function (comdat_check.py)
+        return "notcode"
     if v in ("PASS", "PASS-FP"):
         return "pass"
     if v in ("WEAK", "WEAK-FP"):

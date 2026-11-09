@@ -5,4 +5,3 @@
 ../src/game/party/party_window.cpp  ?init_window@PartyWindow@@QAEXXZ  005025a0  /O2 /MT /Gy /TP
 ../src/game/party/party_window.cpp  ?refresh_stash@PartyWindow@@QAEXH@Z  00502c30  /O2 /MT /Gy /TP
 ../src/game/party/party_window.cpp  ?make_mesh@PartyWindow@@QAEPAUmesh@rgl@@PAUItemRef@@PAXH@Z  00502b80  /O2 /MT /Gy /TP
-../src/game/party/party_window.cpp  ?add_strip_icon@PartyWindow@@QAEXPAPAUStripIcon@@ABUtstring@@HH@Z  005024e0  /O2 /MT /Gy /TP

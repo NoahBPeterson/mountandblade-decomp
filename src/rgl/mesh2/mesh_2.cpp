@@ -84,14 +84,19 @@ static __forceinline void release_buckets(tstring** p, int n)
     } while (n != 0);
 }
 
-// @ 0x4ca720
-// Releases both hash tables of the translation table: every bucket's strings, then its buffer.
-void StrTable::release_strings()
+// Both hash tables: every bucket's strings, then its buffer. Only ever inlined into ~StrTable.
+__forceinline StrTableBase::~StrTableBase()
 {
-    language.~tstring();
-    notfound.~tstring();
     release_buckets(&vals[0xdf3].myfirst, 0xdf3);
     release_buckets(&keys[0xdf3].myfirst, 0xdf3);
+}
+
+// @ 0x4ca720
+// The table's destructor, out of line (the atexit thunk 0x548470 tail-calls it). The members go first (language, then
+// notfound), then the base's tables. It used to be a release_strings() helper that also destroyed the two strings, called
+// from an inline ~StrTable, so the compiler then destroyed them a second time at exit.
+StrTable::~StrTable()
+{
 }
 
 // @ 0x4ca8c0
@@ -648,7 +653,7 @@ StrTable::StrTable()
 }
 
 // The UI string table: a real definition, built by the compiler's dynamic initialiser (the ctor above) and torn down by its
-// atexit destructor (release_strings 0x4ca720); it replaces static_init's hand stubs 0x547a80 / 0x548470.
+// atexit destructor (~StrTable 0x4ca720); it replaces static_init's hand stubs 0x547a80 / 0x548470.
 StrTable g_strtable;   // 0x5e2a18
 
 // @ 0x4cda90

@@ -1,7 +1,7 @@
 // str_table.h: the translated-string table (global object g_strtable at 0x5e2a18), the one definition of its class.
 //   lookup 0x43a1e0 (thiscall, ret 4): never fails, a shared entry answers a miss
 //   find   0x4c6010: null when the key is absent
-//   ctor 0x4cda20, load 0x4cda90 (reads language.txt and languages/<lang>/*), release_strings 0x4ca720 (the atexit destructor)
+//   ctor 0x4cda20, load 0x4cda90 (reads language.txt and languages/<lang>/*), ~StrTable 0x4ca720 (the atexit thunk 0x548470 tail-calls it)
 // Merged views: the former rgl/mesh2 LangTables (this class: ctor, loader, find, write), agent2 StrTab (the layout, lookup),
 // char_sheet/screen_init.h StrTab, options_panel/world_app.cpp StrTable, mission5's StrTable_s* and the partial copies of camera.cpp,
 // note_window.cpp, mission_items.cpp, mesh_game.cpp, cls_map.h, gui_edit.cpp.
@@ -48,17 +48,17 @@ struct StrTableBase {
             n--;
         } while (n != 0);
     }
+    ~StrTableBase();                                            // both tables, vals first (inlined into ~StrTable, mesh_2.cpp)
 };
 
 struct StrTable : StrTableBase {
     tstring notfound;                                           // +0x1be60 the shared entry answering a miss ("STR NOT FOUND")
     tstring language;                                           // +0x1be70 (0x5fe888) the language of the skin file name 
     StrTable();                                                 // 0x4cda20
-    ~StrTable() { release_strings(); }                          // the atexit destructor 0x548470
+    ~StrTable();                                                // 0x4ca720: language, notfound, then the base's tables
     tstring* find(const tstring* key);                          // 0x4c6010 (null when absent)
     tstring* lookup(const tstring& key);                        // 0x43a1e0 (key -> translated string; ret 4)
     void load(const tstring* root);                             // 0x4cda90 (the path prefix is a tstring: buf, else its inline bytes at +4)
-    void release_strings();                                     // 0x4ca720
 };
 
 extern StrTable g_strtable; // 0x5e2a18

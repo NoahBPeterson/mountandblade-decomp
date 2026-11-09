@@ -103,12 +103,14 @@ inline bin_writer::bin_writer() {}
 
 // ---- the key table (0xa73730: game/game_keys.h) -----------------------------------------------------------
 // the one global of the table: the original constructs it in the static initializer 0x547e90 (every code -1, then load() 0x4c2ea0)
-GameKeys g_game_keys;                                                              // 0xa73730
-GameKeys::GameKeys()
+// inline: the original has no out-of-line ctor; its body is expanded into the initializer. A loop, not memset: cl
+// folds a memset of a global into its initial data (no fill at run time); the loop gives the original's rep stosd
+inline GameKeys::GameKeys()
 {
-    memset(entry, 0xff, sizeof entry);
+    for (int i = 0; i < 0x25; i++) for (int j = 0; j < 2; j++) entry[i][j] = -1;
     load();
 }
+GameKeys g_game_keys;                                                              // 0xa73730
 
 // ---- the page ----------------------------------------------------------------------------------------
 // The page is read from both ends: the two button objects sit at +0x30 (apply / restore) and the widget

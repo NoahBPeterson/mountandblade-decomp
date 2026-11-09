@@ -112,6 +112,7 @@ EV_CATS = (("pass", "PASS: matched, every branch outcome taken"), ("weak", "WEAK
            ("comdat", "Byte-exact via COMDAT (no callable symbol, not executed)"),
            ("comdatdiff", "COMDAT differs (symbol-less fragment of a non-matching parent)"),
            ("funclet", "Symbol-less code block: not yet COMDAT-checked"),
+           ("notcode", "Not code: int3 padding the function index lists"),
            ("not_run", "Not run"))
 try:
     ev = json.load(open(W("docs", "equiv_verdicts.json")))
@@ -453,7 +454,7 @@ TREE_CATS = (("byte-exact", "Byte-exact", "#0072B2"),                    # blue
 # a TIMEOUT row (verdicts.py category not_run) has source: it was "No source yet" here until 2026-10-29
 _VCAT = {"inputs": "inputs", "harness": "harness", "funclet": "funclet", "comdat": "comdat",
          "comdatdiff": "comdatdiff", "not_run": "not_run",
-         "weak": "weak"}      # a run cut short by its time limit with enough clean inputs (verdicts.py)
+         "weak": "weak", "notcode": "excluded"}      # a run cut short by its time limit with enough clean inputs (verdicts.py)
 
 
 def _verdict_data():

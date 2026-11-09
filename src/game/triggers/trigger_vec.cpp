@@ -1506,8 +1506,11 @@ music_player g_music;                                // 0xa73a10 (.bss; construc
 music_player::~music_player()
 {
     ((tstring*)&root)->~tstring();
-    for (int i = 0x100; i; i--)
-        ((tstring*)((char*)this + 0x18 + (i - 1) * 0x20))->~tstring();
+    char* p = (char*)this + 0x18 + 0x100 * 0x20;   // from the end, step then destroy (the compiler's array-destructor shape)
+    for (int n = 0x100; n; n--) {
+        p -= 0x20;
+        ((tstring*)p)->~tstring();
+    }
 }
 
 // @ 0x4c24c0

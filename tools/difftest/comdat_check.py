@@ -450,6 +450,14 @@ def prepare_row(row, va, parent_override=None, override_src=None, flags_override
     try:
         parent, info = resolve_fragment(va, row, parent_override, override_src, flags_override)
         if parent is None or info is None:
+            # the function index also lists padding: a "fragment" whose bytes are all int3 between two functions is
+            # not code (game_tick 0x51776f, the last of five 0xcc after sun_color's ret 4)
+            n = out["fragment_size"] or 1
+            import run_all as RA                                   # noqa: E402 - Original reads the image by VA
+            b = RA.Original().read(va, n)
+            if b and set(b) == {0xcc}:
+                out["not_code"] = "%d int3 padding byte(s) at 0x%08x, not a function" % (n, va)
+                return out
             out["error"] = "no symbol-bearing parent COMDAT for 0x%08x" % va
             return out
         lo, hi = orig_extent(parent)
@@ -485,6 +493,9 @@ _DIFFAT = re.compile(r"diff@\s*\[([^\]]*)\]")
 def execute(prep):
     """Run cmpobj and classify both the COMDAT and the fragment's own bytes."""
     res = dict(prep)
+    if prep.get("not_code"):
+        res.update(verdict="NOT-CODE", reason=prep["not_code"], fragment_verdict="NOT-CODE")
+        return res
     if prep.get("error"):
         res.update(verdict="ERROR", reason=prep["error"], fragment_verdict="ERROR")
         return res
@@ -572,8 +583,8 @@ def result_json(r):
 
 
 def print_one(r):
-    if r.get("verdict") == "ERROR":
-        print("0x%08x %s: ERROR %s" % (r["va"], r.get("module", "?"), r.get("reason", "")))
+    if r.get("verdict") in ("ERROR", "NOT-CODE"):
+        print("0x%08x %s: %s %s" % (r["va"], r.get("module", "?"), r["verdict"], r.get("reason", "")))
         return
     print("0x%08x %s parent 0x%08x len %d: %s" % (
         r["va"], r.get("module", "?"), r["comdat_parent"], r["comdat_len"], r["verdict"]))
