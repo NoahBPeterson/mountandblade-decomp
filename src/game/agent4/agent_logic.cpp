@@ -7668,9 +7668,11 @@ void Agent::get_label_box(void* out_)
     } else if (body != 0) {
         vector4 p1 = body->m.transform_point(*(vector4*)(body->skel->recs + 0x648));
         vector4 p2 = body->m.transform_point(*(vector4*)(body->skel->recs + 0xbdc));
+        p1.x = p2.x + p1.x;
+        p1.y = p2.y + p1.y;
         p2.z = p2.z + p1.z;
-        p1.x = (p2.x + p1.x) * 0.5f;
-        p1.y = (p2.y + p1.y) * 0.5f;
+        p1.x = p1.x * 0.5f;
+        p1.y = p1.y * 0.5f;
         p1.z = p2.z * 0.5f;
         out->a = p1;
         out->b = body->m.transform_point(*(vector4*)(body->skel->recs + 0x1170));
@@ -7717,9 +7719,9 @@ void Agent::shield_hit(int damage)
                     wield[1] = -1;
                     on_wield_reset();
                     set_order(1, move_anim(0), 0x1000010, 1.0f);
-                    float var = 0.0f;
+                    f = 0.0f;
                     int kind = 0x5e;
-                    play_sound_var(&kind, &var);
+                    play_sound_var(&kind, &f);
                     mat4 M = body->m * *(mat4*)body->skel->rec(0xc);
                     int mod = it->b.mod;
                     kind = 7;
@@ -8285,7 +8287,7 @@ void Agent::draw_name()
     scale.x = 0.14f; scale.y = 0.14f;
     float a = -1.0f;
     float bb = 1.0f;
-    if ((int)local >= 0) {
+    if (local < 0x80000000u) {
         if (team == ms->agents.pages[local >> 4][local & 0xf].team)
             col = 0xff44ff44;
         else if ((int)local >= 0 && ms->agents.pages[local >> 4][local & 0xf].is_friend(this))
@@ -8293,7 +8295,8 @@ void Agent::draw_name()
     }
     if (f10 == 0 && id != (int)local) {
         unsigned fl = g_mission_templates[ms->mode].flags;
-        if (((fl >> 1) & 1) && (int)local >= 0 && ms->agents.pages[local >> 4][local & 0xf].is_friend(this)) {
+        unsigned f1 = (fl >> 1) % 2;
+        if (f1 && (int)local >= 0 && ms->agents.pages[local >> 4][local & 0xf].is_friend(this)) {
             char buf[512];
             tstring* nm = g_game->chars[troop].display_name();
             sprintf(buf, "%s", nm->c_str());

@@ -44,26 +44,25 @@ void rgl::world::add_item(shape_base* e)
 // @ 0x423c80
 void rgl::world::relocate(shape_base* o)
 {
-    vector4 tmp;
     int2 nlo, nhi;
+    vector4 tmp;
     to_cell((const float*)o->get_min(&tmp), &nlo.x);
     to_cell((const float*)o->get_max(&tmp), &nhi.x);
     if (nlo.x == o->min_x && nlo.y == o->min_y && nhi.x == o->max_x && nhi.y == o->max_y)
         return;
     const int2* lo = (const int2*)&o->min_x;
     const int2* hi = (const int2*)&o->max_x;
-    int2 t1, t2;
+    int2 t1, mx;
     int2 mn = *min2(&t1, &nlo, lo);
-    int2 mx = *max2(&t2, &nhi, hi);
+    max2(&mx, &nhi, hi);
     int2 p;
     for (p.x = mn.x; p.x <= mx.x; p.x++) {
         for (p.y = mn.y; p.y <= mx.y; p.y++) {
-            if ((bool)in_rect(&p, lo, hi)) {
-                if (!(bool)in_rect(&p, &nlo, &nhi)) {
-                    grid_cell* c = &((grid_cell**)cells)[p.x][p.y];
-                    c->remove(o);
-                    shape_list::node* h = c->objs.head;
-                    shape_list::node* n = c->objs.head->next;
+            if ((char)in_rect(&p, lo, hi)) {
+                if (!(char)in_rect(&p, &nlo, &nhi)) {
+                    ((grid_cell**)cells)[p.x][p.y].remove(o);
+                    shape_list::node* h = ((grid_cell**)cells)[p.x][p.y].objs.head;
+                    shape_list::node* n = ((grid_cell**)cells)[p.x][p.y].objs.head->next;
                     while (n != h) {
                         if (n->obj == o)
                             break;
@@ -73,10 +72,10 @@ void rgl::world::relocate(shape_base* o)
                         n->prev->next = n->next;
                         n->next->prev = n->prev;
                         operator delete(n);
-                        c->objs.size--;
+                        ((grid_cell**)cells)[p.x][p.y].objs.size--;
                     }
                 }
-            } else if ((bool)in_rect(&p, &nlo, &nhi)) {
+            } else if ((char)in_rect(&p, &nlo, &nhi)) {
                 ((grid_cell**)cells)[p.x][p.y].add(o);
             }
         }
@@ -86,7 +85,7 @@ void rgl::world::relocate(shape_base* o)
 }
 
 // @ 0x423e70
-int2* min2(int2* out, const int2* a, const int2* b)
+__declspec(noinline) int2* min2(int2* out, const int2* a, const int2* b)
 {
     int x = a->x < b->x ? a->x : b->x;
     int y = a->y < b->y ? a->y : b->y;
@@ -95,7 +94,7 @@ int2* min2(int2* out, const int2* a, const int2* b)
     return out;
 }
 // @ 0x423ea0
-int2* max2(int2* out, const int2* a, const int2* b)
+__declspec(noinline) int2* max2(int2* out, const int2* a, const int2* b)
 {
     int x = a->x > b->x ? a->x : b->x;
     int y = a->y > b->y ? a->y : b->y;
@@ -105,7 +104,7 @@ int2* max2(int2* out, const int2* a, const int2* b)
 }
 
 // @ 0x423ed0
-int rgl::world::in_rect(const int2* p, const int2* lo, const int2* hi)
+__declspec(noinline) int rgl::world::in_rect(const int2* p, const int2* lo, const int2* hi)
 {
     if (p->x >= lo->x && p->x <= hi->x && p->y >= lo->y && p->y <= hi->y)
         return 1;
@@ -250,11 +249,10 @@ vector4 face_normal(const vector4* a, const vector4* b, const vector4* c)
     d.z = c->z - a->z;
     vector4 n;
     n.x = d.z * by - d.y * bz;
-    n.y = bz * d.x - bx * d.z;
+    n.y = bz * d.x - d.z * bx;
     n.z = d.y * bx - d.x * by;
-    vector4 unit = n;
-    unit.normalize();
-    return unit;
+    n.normalize();
+    return n;
 }
 
 // @ 0x4246f0
@@ -294,8 +292,8 @@ void rgl::world::add_tree(shape_base* s)
 // @ 0x4252c0
 void rgl::world::add_shape(shape_base* s)
 {
-    vector4 t0, t1;
     int lo[2], hi[2];
+    vector4 t0, t1;
     to_cell((const float*)s->get_min(&t0), lo);
     to_cell((const float*)s->get_max(&t1), hi);
     for (int i = lo[0]; i <= hi[0]; i++)

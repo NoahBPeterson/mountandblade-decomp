@@ -126,7 +126,7 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in rgl/mesh.h)
 
 struct envelope;                                            // the scene-envelope object 0x4624c0 works on
-bool __stdcall ground_height(rgl::world* lv, const float* p, float* out);   // 0x470f40 (terrain_b.cpp: a free stdcall, ret 0xc, returns bool; callers load no ecx)
+// ground_height (0x470f40) is GameData::ground_height (include/game_data.h): a member that ignores this; this caller loads ecx=g_game
 
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 

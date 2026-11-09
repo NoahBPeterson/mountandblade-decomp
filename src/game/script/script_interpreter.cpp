@@ -1765,6 +1765,31 @@ __declspec(noinline) TabCurrent* TableauTbl::current()
 {
     return (TabCurrent*)worlds[worlds.size() - 1];
 }
+__declspec(noinline) int PartyMgr::first_party_id()
+{
+    unsigned i = 0;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        return deflt;
+    return pages._Myfirst[i >> 4][i & 0xf].id;
+}
+__declspec(noinline) rgl::mat3* __cdecl rgl::identity3(mat3* out)
+{
+    vector4 a(1.0f, 0.0f, 0.0f), b(0.0f, 1.0f, 0.0f), c(0.0f, 0.0f, 1.0f);
+    out->s = a;
+    out->f = b;
+    out->u = c;
+    return out;
+}
+__declspec(noinline) rgl::matrix* __cdecl rgl::identity_pos(matrix* out)
+{
+    vector4 o(0.0f, 0.0f, 0.0f);
+    mat3 m;
+    *(mat3*)out = *identity3(&m);
+    out->o = o;
+    return out;
+}
 __declspec(noinline) void PartyMgr::next_party_id(int* id)
 {
     unsigned i = lookup(*id) + 1;
@@ -2751,6 +2776,15 @@ int GameData::attach_party_center(const float* pt, int a, int b)
     return id;
 }
 
+// a direction turned by an angle: cos and sin are read from the by-value parameter, y is stored first
+static __forceinline void rot2(float2& v, float a)
+{
+    float c = (float)cos(a);
+    float s = (float)sin(a);
+    float nx = c * v.x - s * v.y;
+    v.y = c * v.y + s * v.x;
+    v.x = nx;
+}
 // @ 0x49ebd0
 // Add a party of party template `tmpl` at (x, y): the last party record is filled from the template record, named after
 // it, randomly rotated, and given a fixture-following behaviour.
@@ -2760,32 +2794,24 @@ int GameData::add_sprite(float x, float y, int tmpl)
     int id = parties.add_slot();         // 0x493960
     parties.get_w(id)->init();                       // 0x48f180
     parties.get_w(id)->template_id = tmpl;
-    parties.get_w(id)->pos.x = x;
-    parties.get_w(id)->pos.y = y;
-    parties.get_w(id)->dirx = 1.0f;
-    parties.get_w(id)->diry = 0;
+    // stand-in: x and y read as one by-value pair. The original copies them as a pair, so it probably takes a Vec2; the row's symbol keeps the two floats (callers in other modules)
+    *(float2*)&parties.get_w(id)->pos = *(float2*)&x;
+    *(float2*)&parties.get_w(id)->dirx = float2(1.0f, 0);
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
-    float c = (float)cos(ang);
-    float s = (float)sin(ang);
-    Party* ro = parties.get_w(id);
-    float oy = ro->diry;
-    float ox = ro->dirx;
-    ro->diry = c * oy + s * ox;
-    ro->dirx = c * ox - s * oy;
+    rot2(*(float2*)&parties.get_w(id)->dirx, ang);
     tstring* n = g_strtable.find(&tr->key);     // 0x4c6010
     if (n == 0)
         n = &tr->name;
-    parties.get_w(id)->name = *n;
-    parties.get_w(id)->flag = 1;
+    Party* rec = parties.get_w(id);
+    rec->name = *n;
+    rec->flag = 1;
     parties.get_w(id)->key = tr->key;
-    parties.get_w(id)->flags_hi = tr->f24;
-    parties.get_w(id)->flags_lo = tr->f20;
+    *(float2*)&parties.get_w(id)->flags_lo = *(float2*)&tr->f20;
     parties.get_w(id)->f90 = tr->f28;
     parties.get_w(id)->f70 = tr->f2c;
     parties.get_w(id)->f74 = tr->f30;
     parties.get_w(id)->state = 2;
-    parties.get_w(id)->ai_target_x = x;
-    parties.get_w(id)->ai_target_y = y;
+    *(float2*)&parties.get_w(id)->ai_target_x = *(float2*)&x;
     add_template(id, tmpl, 0);                            // 0x48fbd0
     ((c49bea0::MissionAgents*)this)->add_order_arrow(id);  // 0x49bea0
     tr->num_created += 1;
@@ -3127,6 +3153,7 @@ typedef mat3_value (__cdecl* identity3_value_fn)();
 #define IDENTITY3_VALUE() (((identity3_value_fn)(rgl::mat3* (__cdecl*)(rgl::mat3*))rgl::identity3)())
 // d = s with s evaluated first (the original calls the identity function, then computes the destination register)
 static __forceinline const rgl::matrix& mat_ref(const rgl::matrix& m) { return m; }
+static __forceinline const rgl::vector4& v4_ref(const rgl::vector4& v) { return v; }
 static __forceinline const rgl::mat3& mat3_ref(const rgl::mat3& m) { return m; }
 #define ASSIGN_MAT(d, s) do { const rgl::matrix* m_; (m_ = &mat_ref(s), (d) = *m_); } while (0)
 #define ASSIGN_MAT3(d, s) do { const rgl::mat3* m_; (m_ = &mat3_ref(s), (d) = *m_); } while (0)
@@ -3304,9 +3331,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // a free stack slot and room under the party size limit ([party_id], default the main party)
         if (check_party((int)params[0])) {
             if (params[0] == 0) {
-                int main = game()->main_party;
-                PartyMgr* m = &game()->parties;
-                int stacks = party(main)->max_stacks();
+                GameX* game = (GameX*)g_game;
+                int main = game->main_party;
+                PartyMgr* m = &game->parties;
+                int stacks = party(game()->main_party)->max_stacks();
                 int members;
                 if (stacks - ((PartyV*)m->get(main))->first_flagged() >= 1 && ((members = party(game()->main_party)->sum_head()), ((PartyV*)m->get(main))->max_members() > members))
                     result = 1;
@@ -3321,9 +3349,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::hero_can_join_as_prisoner:
         if (check_party((int)params[0])) {
             if (params[0] == 0) {
-                int main = game()->main_party;
-                PartyMgr* m = &game()->parties;
-                int stacks = party(main)->max_stacks();
+                GameX* game = (GameX*)g_game;
+                int main = game->main_party;
+                PartyMgr* m = &game->parties;
+                int stacks = party(game()->main_party)->max_stacks();
                 int members;
                 if (stacks - ((PartyV*)m->get(main))->count_tail() >= 1 && ((members = party(game()->main_party)->sum_flagged()), ((PartyV*)m->get(main))->max_prisoners() > members))
                     result = 1;
@@ -3349,9 +3378,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troops_can_join:
         if (params[0] > 0) {
-            int main = game()->main_party;
-            PartyMgr* m = &game()->parties;
-            int stacks = party(main)->max_stacks();
+            GameX* game = (GameX*)g_game;
+            int main = game->main_party;
+            PartyMgr* m = &game->parties;
+            int stacks = party(game()->main_party)->max_stacks();
             __int64 total;
             if (stacks - ((PartyV*)m->get(main))->first_flagged() >= 1 &&
                 ((total = (__int64)((PartyV*)m->get(main))->sum_head() + params[0]), (__int64)((PartyV*)m->get(main))->max_members() >= total))
@@ -3362,9 +3392,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troops_can_join_as_prisoner:
         if (params[0] > 0) {
-            int main = game()->main_party;
-            PartyMgr* m = &game()->parties;
-            int stacks = party(main)->max_stacks();
+            GameX* game = (GameX*)g_game;
+            int main = game->main_party;
+            PartyMgr* m = &game->parties;
+            int stacks = party(game()->main_party)->max_stacks();
             __int64 total;
             if (stacks - ((PartyV*)m->get(main))->count_tail() >= 1 &&
                 ((total = (__int64)((PartyV*)m->get(main))->sum_flagged() + params[0]), (__int64)((PartyV*)m->get(main))->max_prisoners() >= total))
@@ -3822,9 +3853,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::position_set_z_to_ground_level:
         if (check_register((int)params[0])) {
-            MissionX* m = mission();
-            if (m->min_x <= script_pos((int)params[0]).o.x && script_pos((int)params[0]).o.x < m->max_x && m->min_y <= script_pos((int)params[0]).o.y && script_pos((int)params[0]).o.y < m->max_y) {
-                float z = m->scene->floor_z(&script_pos((int)params[0]).o.x);
+            if (mission()->min_x <= script_pos((int)params[0]).o.x && script_pos((int)params[0]).o.x < mission()->max_x && mission()->min_y <= script_pos((int)params[0]).o.y && script_pos((int)params[0]).o.y < mission()->max_y) {
+                float z = mission()->scene->floor_z(&script_pos((int)params[0]).o.x);
                 script_pos((int)params[0]).o.z = z;
             }
         }
@@ -4148,9 +4178,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // upper bound. add_quest_note_from_dialog validates its quest id as a troop id.
     case op::add_troop_note_from_dialog:
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(troop((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
-            { tstring sep(": "); troop((int)params[0])->notes[(int)params[1]].append(sep); }
-            troop((int)params[0])->notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            ASSIGN_STR(((GameX*)g_game)->troops[(int)params[0]].notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
+            { tstring sep(": "); ((GameX*)g_game)->troops[(int)params[0]].notes[(int)params[1]].append(sep); }
+            ((GameX*)g_game)->troops[(int)params[0]].notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
             troop((int)params[0])->note_times[(int)params[1]] = params[2] ? game()->note_time : -1;
         }
         break;
@@ -4474,20 +4504,21 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_faction((int)params[0]) && check_faction((int)params[1])) {
             sf_0 = (float)params[2] * 0.01f;
             int old_rel = round_float(faction((int)params[0])->relations[(int)params[1]] * 100.0f);
-            sf_1 = -1.0f, sf_2 = 1.0f;
+            sf_2 = 1.0f, sf_1 = -1.0f;
             float c = clamp(&sf_0, &sf_1, &sf_2);
             faction((int)params[0])->relations[(int)params[1]] = c;
             faction((int)params[1])->relations[(int)params[0]] = c;
             int new_rel = round_float(faction((int)params[0])->relations[(int)params[1]] * 100.0f);
             if (params[0] == 0 || params[1] == 0) {
-                si_0 = (int)params[1], si_1 = (int)params[0];
                 if (old_rel < new_rel) {
+                    si_0 = (int)params[1], si_1 = (int)params[0];
                     {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
                         tstring key("ui_your_relations_with_value_has_improved_from_number_to_number");
                         sprintf(buf, CS(g_ui_strings.lookup(key)), CS(faction(imax_ref(&si_1, &si_0))->display_name()), old_rel, new_rel);
                     }
                     { tstring msg(buf); g_gui.push(msg, 0xff6fff28); }
                 } else if (old_rel > new_rel) {
+                    si_0 = (int)params[1], si_1 = (int)params[0];
                     {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
                         tstring key("ui_your_relations_with_value_has_deteriorated_from_number_to_number");
                         sprintf(buf, CS(g_ui_strings.lookup(key)), CS(faction(imax_ref(&si_1, &si_0))->display_name()), old_rel, new_rel);
@@ -4670,8 +4701,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::troop_add_proficiency_points:
         // at most 99 points at a time
         if (check_troop((int)params[0]) && params[1] > 0) {
-            int* points = &troop((int)params[0])->proficiency_points;
-            *points += clamp_index((int)params[1], 0, 100);
+            troop((int)params[0])->proficiency_points += clamp_index((int)params[1], 0, 100);
         }
         break;
     case op::troop_add_gold:
@@ -4728,18 +4758,18 @@ char Operation::execute(__int64* locals, int* context, int* error)
             params[1] < (__int64)(troop((int)params[0])->inv_count() + 10)) {
             if (params[1] < 10) {
                 if (params[2] > 0) {
-                    int mx = troop((int)params[0])->equipment[(int)params[1]].max_amount();
+                    int missing = troop((int)params[0])->equipment[(int)params[1]].max_amount() - (int)params[2];
                     ItemRef& r = troop((int)params[0])->equipment[(int)params[1]];
                     r.b.amount = 0;
-                    r.m4 |= mx - (int)params[2];
+                    r.m4 |= missing;
                 } else
                     troop((int)params[0])->equipment[(int)params[1]].item = -1;
             } else {
                 if (params[2] > 0) {
-                    int mx = troop((int)params[0])->items[(int)params[1] - 10].max_amount();
+                    int missing = troop((int)params[0])->items[(int)params[1] - 10].max_amount() - (int)params[2];
                     ItemRef& r = troop((int)params[0])->items[(int)params[1] - 10];
                     r.b.amount = 0;
-                    r.m4 |= mx - (int)params[2];
+                    r.m4 |= missing;
                 } else
                     troop((int)params[0])->items[(int)params[1] - 10].item = -1;
             }
@@ -4993,19 +5023,18 @@ char Operation::execute(__int64* locals, int* context, int* error)
     { int si_0;
         // (party_wound_members, <party_id>, <troop_id>, <number>): the first regular stack of the troop
         if (check_party((int)params[0])) {
-            PartyMgr* pm = &game()->parties;
             int p = (int)params[0];
             int found = -1;
-            for (i = 0; found == -1 && i < ((PartyV*)pm->get(p))->num_stacks; i++)
-                if (params[1] == (__int64)((PartyV*)pm->get(p))->stacks[i].troop &&
-                    !(((PartyV*)pm->get(p))->stacks[i].flags & 1))
+            for (i = 0; found == -1 && i < party(p)->num_stacks; i++)
+                if (params[1] == (__int64)party(p)->stacks[i].troop &&
+                    !(party(p)->stacks[i].flags & 1))
                     found = i;
             if (found >= 0) {
-                si_0 = ((PartyV*)pm->get(p))->stacks[found].wounded + (int)params[2];
-                int v = min_int(si_0, ((PartyV*)pm->get(p))->stacks[found].count);
+                si_0 = party(p)->stacks[found].wounded + (int)params[2];
+                int v = min_int(si_0, party(p)->stacks[found].count);
                 if (v < 0)
                     v = 0;
-                ((PartyV*)pm->get(p))->stacks[found].wounded = v;
+                party(p)->stacks[found].wounded = v;
             }
         }
         break;
@@ -5025,9 +5054,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_relocate_near_party:
         // (party_relocate_near_party, <party_id>, <target_party_id>, <value_spawn_radius>)
         if (check_party((int)params[0]) && check_party((int)params[1])) {
-            GameX* g = game();
-            PartyV* target = party((int)params[1]);
-            g->set_pos(target->pos.x, target->pos.y, (int)params[0], (float)params[2]);
+            ((GameW*)g_game)->set_pos(*(Vec2*)&party((int)params[1])->pos, (int)params[0], (float)params[2]);
         }
         break;
     case op::party_get_position:
@@ -5062,7 +5089,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[1]) && check_troop((int)params[2])) {
             int t = (int)params[2], p = (int)params[1];
             int prisoners = ((GameData*)g_game)->count_troops(t, p, 1);
-            SET_LV((__int64)(((GameData*)g_game)->count_troops(t, p, 0) + prisoners));
+            SET_LV((__int64)(prisoners + ((GameData*)g_game)->count_troops(t, p, 0)));
         }
         break;
     case op::party_count_companions_of_type:
@@ -5118,9 +5145,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_set_ai_target_position:
         if (check_party((int)params[0]) && check_register((int)params[1])) {
+            int q = (int)params[1];
             PartyV* p = party((int)params[0]);
-            p->ai_target_x = script_pos((int)params[1]).o.x;
-            p->ai_target_y = script_pos((int)params[1]).o.y;
+            p->ai_target_x = script_pos(q).o.x;
+            p->ai_target_y = script_pos(q).o.y;
         }
         break;
     case op::party_set_ai_patrol_radius:
@@ -5190,13 +5218,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_prisoner_stack_get_troop_dna:
         if (check_party((int)params[1])) {
-            GameX* g = game();
             int k = party((int)params[1])->first_flagged() + (int)params[2];
+            GameX* g = game();
             if (k >= 0 && k < 0x40) {
-                if (params[1] != (__int64)g->main_party)
-                    SET_LV((__int64)g->stack_dna((int)params[1], k, 0, 0));
-                else
+                if (params[1] == (__int64)g->main_party)
                     SET_LV((__int64)*(int*)(g->stack_rows + k * 0x80));
+                else
+                    SET_LV((__int64)g->stack_dna((int)params[1], k, 0, 0));
             }
         }
         break;
@@ -5331,7 +5359,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         {
             int v = 0;
             if (check_party((int)params[1]) && IN_RANGE(params[2], 0, 0x2a))
-                v = party((int)params[1])->skill_level((int)params[2]);
+                v = ((PartyV*)game()->parties.get((int)params[1]))->skill_level((int)params[2]);
             SET_LV((__int64)v);
         }
         break;
@@ -5446,14 +5474,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::agent_get_look_position:
         if (check_register((int)params[0]) && warn_agent((int)params[1])) {
-            ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), IDENTITY3_VALUE());
-            rgl::matrix* dst = &script_pos((int)params[0]);
+            int p = (int)params[0];
+            ASSIGN_MAT3(*(rgl::mat3*)&script_pos(p), IDENTITY3_VALUE());
             AgentTable* t = &mission()->agents;
             int a = (int)params[1];
-            dst->o = t->get(a)->pos;
+            script_pos(p).o = t->get(a)->pos;
             if (t->get(a)->body) {
-                dst->f = *(rgl::vector4*)&t->get(a)->fx;      // the facing direction (+0x55d8)
-                dst->orthonormalize();
+                script_pos(p).f = *(rgl::vector4*)&t->get(a)->fx;      // the facing direction (+0x55d8)
+                script_pos(p).orthonormalize();
             }
         }
         break;
@@ -5587,11 +5615,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::agent_has_item_equipped:
         if (warn_agent((int)params[0]) && check_item_kind((int)params[1])) {
-            AgentTable* t = &mission()->agents;
             int a = (int)params[0];
             result = 0;
             for (int k = 0; k < 10; ++k)
-                if ((__int64)t->get(a)->equipment[k].item == params[1])
+                if ((__int64)agent(a)->equipment[k].item == params[1])
                     result = 1;
         }
         break;
@@ -5600,9 +5627,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (warn_agent((int)params[0]) && check_register((int)params[1])) {
             MissionX* m = mission();
             if (params[2]) {
-                rgl::vector4* o = &script_pos((int)params[1]).o;
-                if (m->min_x <= o->x && o->x < m->max_x && m->min_y <= o->y && o->y < m->max_y) {
-                    script_pos((int)params[1]).o.z = m->scene->floor_z(&o->x);
+                if (m->min_x <= script_pos((int)params[1]).o.x && script_pos((int)params[1]).o.x < m->max_x && m->min_y <= script_pos((int)params[1]).o.y && script_pos((int)params[1]).o.y < m->max_y) {
+                    float z = m->scene->floor_z(&script_pos((int)params[1]).o.x);
+                    script_pos((int)params[1]).o.z = z;
                     m = mission();
                 }
             }
@@ -5749,18 +5776,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::team_set_order_position:
     { int si_0; float sf_0; float sf_1; float sf_2;
         // (team_set_order_position, <team_no>, <sub_class>, <position_no>)
-        if (IN_RANGE(params[0], 0, 8) && check_register((int)params[2]) &&
-            mission()->point_in_rect(&script_pos((int)params[2]).o)) {
-            mission()->select_team((int)params[0]);
+        if (IN_RANGE(params[0], 0, 8) && check_register((int)params[2])) {
+          MissionX* m = mission();
+          if (m->point_in_rect(&script_pos((int)params[2]).o)) {
+            m->select_team((int)params[0]);
             mission()->select_class((int)params[0], (int)params[1]);
-            MissionX* m = mission();
+            m = mission();
             rgl::vector4* p = &script_pos((int)params[2]).o;
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
             si_0 = m->scene->nearest_face((const float*)p);
             rgl::vector4 off;
             TEAM_SEL(m, (int)params[0])->set_vec((const int*)p, &si_0, (const int*)&off.set(sf_2, sf_1, sf_0));
             mission()->unselect_team((int)params[0]);
-        }
+        } }
         break;
     }
     case op::team_get_leader:
@@ -5778,7 +5806,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->select_class((int)params[1], (int)params[2]);
             MissionX* m = mission();
             int t = (int)params[1];
-            script_pos((int)params[0]).o = TEAM_SEL(m, t)->first();
+            { const rgl::vector4* v_; (v_ = &v4_ref(TEAM_SEL(m, t)->first()), script_pos((int)params[0]).o = *v_); }
             m->unselect_team(t);
         }
         break;
@@ -5850,22 +5878,23 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::prop_instance_get_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            ASSIGN_MAT(script_pos((int)params[0]), prop_at(mission()->props, (int)params[1])->frame);
+            ASSIGN_MAT(script_pos((int)params[0]), ((PropInst*)&mission()->props[(int)params[1]])->frame);
         break;
     case op::prop_instance_get_starting_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            ASSIGN_MAT(script_pos((int)params[0]), prop_at(mission()->props, (int)params[1])->start_frame);
+            ASSIGN_MAT(script_pos((int)params[0]), ((PropInst*)&mission()->props[(int)params[1]])->start_frame);
         break;
     case op::prop_instance_get_scale:
         // the scale as the diagonal of an otherwise identity frame
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission) {
-            rgl::matrix* dst = &script_pos((int)params[0]);
-            ASSIGN_MAT(*dst, IDENTITY_VALUE());
+            int p = (int)params[0];
+            rgl::matrix* dst;
+            ASSIGN_MAT(*(dst = &script_pos(p)), IDENTITY_VALUE());
             PropVec* pv = &mission()->props;
             int k = (int)params[1];
             dst->s.x = prop_at(*pv, k)->scale_x;
-            dst->f.y = prop_at(*pv, k)->scale_y;
-            dst->u.z = prop_at(*pv, k)->scale_z;
+            script_pos(p).f.y = prop_at(*pv, k)->scale_y;
+            script_pos(p).u.z = prop_at(*pv, k)->scale_z;
         }
         break;
     case op::prop_instance_set_position:
@@ -5928,14 +5957,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_mission_template((int)params[0]) && params[1] >= 0) {
             MissionTemplate* t = &g_mission_templates[(int)params[0]];
             if (params[1] < (__int64)t->num_entries)
-                t->entries[(int)params[1]].override_flags = (int)params[2];
+                g_mission_templates[(int)params[0]].entries[(int)params[1]].override_flags = (int)params[2];
         }
         break;
     case op::mission_tpl_entry_clear_override_items:
         if (check_mission_template((int)params[0]) && params[1] >= 0) {
             MissionTemplate* t = &g_mission_templates[(int)params[0]];
             if (params[1] < (__int64)t->num_entries)
-                t->entries[(int)params[1]].num_override_items = 0;
+                g_mission_templates[(int)params[0]].entries[(int)params[1]].num_override_items = 0;
         }
         break;
     case op::mission_tpl_entry_add_override_item:
@@ -5943,10 +5972,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_mission_template((int)params[0]) && params[1] >= 0 &&
             params[1] < (__int64)g_mission_templates[(int)params[0]].num_entries &&
             check_item_kind((int)params[2])) {
-            SpawnRec* e = &g_mission_templates[(int)params[0]].entries[(int)params[1]];
-            int n = e->num_override_items;
+            int& n = g_mission_templates[(int)params[0]].entries[(int)params[1]].num_override_items;
             if (n < 8) {
-                e->override_items[n] = (int)params[2];
+                g_mission_templates[(int)params[0]].entries[(int)params[1]].override_items[n] = (int)params[2];
                 ++g_mission_templates[(int)params[0]].entries[(int)params[1]].num_override_items;
             }
         }
@@ -6218,13 +6246,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             rgl::vector4 a, b;
             const rgl::vector4* scale;
             if (params[2] == 0) {
-                float z = 1.0f, y = 1.0f, x = 1.0f;
-                scale = &a.set(x, y, z);
+                scale = &a.set(1.0f, 1.0f, 1.0f);
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
-                float x, y, z;
-                x = y = z = (float)params[2];
-                scale = &(b.set(z, y, x) * s);
+                scale = &(b.set((float)params[2], (float)params[2], (float)params[2]) * s);
             }
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), scale, &alpha, (const unsigned*)&color);
         }
@@ -6243,13 +6268,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             rgl::vector4 a, b;
             const rgl::vector4* scale;
             if (params[2] == 0) {
-                float z = 1.0f, y = 1.0f, x = 1.0f;
-                scale = &a.set(x, y, z);
+                scale = &a.set(1.0f, 1.0f, 1.0f);
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
-                float x, y, z;
-                x = y = z = (float)params[2];
-                scale = &(b.set(z, y, x) * s);
+                scale = &(b.set((float)params[2], (float)params[2], (float)params[2]) * s);
             }
             g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), scale, &alpha, (const unsigned*)&color);
         }
@@ -6362,14 +6384,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::mission_time_speed_move_to_value:
         // (mission_speed_move_to_value, <value_fixed_point>, <duration-in-1/1000-seconds>)
-        if (g_mission && params[0] > 0 && params[1] > 0) {
-            MissionX* m = mission();
+        {
+        MissionX* m = mission();
+        if (m && params[0] > 0 && params[1] > 0) {
             m->time_speed = m->blend2_param();
             mission()->target_time_speed = (float)params[0] / g_script.fixed_point_multiplier;
             mission()->time_speed_anim_time = (float)params[1] * 0.001f;
             mission()->time_speed_timer.restart();
         }
         break;
+        }
     case op::mission_cam_get_position:
         if (g_mission && check_register((int)params[0]))
             ASSIGN_MAT(script_pos((int)params[0]), ((Mission*)mission())->get_frame());
@@ -6887,19 +6911,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // the dialog's agent for non-heroes; else the last agent of the conversation troop
         {
             int v = -1;
-            if (!troop(g_dialogs.fc)->is_hero() && g_dialogs.partner_agent != -1) {
+            if (!troop(g_dialogs.fc)->is_hero() && g_dialogs.partner_agent != -1)
                 v = g_dialogs.partner_agent;
-                SET_LV((__int64)v);
-            } else {
+            else {
                 AgentTable* t = &mission()->agents;
-                unsigned id = t->first_used();
-                while (id < (unsigned)t->count) {
+                unsigned id;
+                for (id = t->first_used(); id < (unsigned)t->count; t->next_used(&id)) {
                     if (t->get(id)->troop == g_dialogs.fc)
                         v = id;
-                    t->next_used(&id);
                 }
-                SET_LV((__int64)v);
             }
+            SET_LV((__int64)v);
         }
         break;
     case op::store_conversation_troop:
@@ -6937,7 +6959,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int n = game()->num_quests;
             for (int k = 0; k < n; ++k) {
                 QuestRec* q = &game()->quests[k];
-                if ((q->flags & 0x100) && (q->flags2 & 2) && q->giver_troop == g_dialogs.fc)
+                if ((char)((q->flags >> 8) & 1) && (char)((q->flags2 >> 1) & 1) && q->giver_troop == g_dialogs.fc)
                     v = k;
             }
             SET_LV((__int64)v);
@@ -6961,11 +6983,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int a = ((GameData*)g_game)->sl_roll_other((int)params[0], (int)params[1]);
             int b = a;
             int n = 0;
-            while (n < 100000) {
+            while (b == a && n < 100000) {
                 ++n;
                 b = ((GameData*)g_game)->sl_roll_other((int)params[0], (int)params[1]);
-                if (b != a)
-                    break;
             }
             g_script.reg[0] = a;
             g_script.reg[1] = b;
@@ -7022,11 +7042,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_ai_target_position:
         if (check_register((int)params[0]) && check_party((int)params[1])) {
-            rgl::matrix* dst = &script_pos((int)params[0]);
-            ASSIGN_MAT(*dst, IDENTITY_VALUE());
+            int q = (int)params[0];
+            ASSIGN_MAT(script_pos(q), IDENTITY_VALUE());
             PartyV* p = party((int)params[1]);
-            dst->o.x = p->ai_target_x;
-            dst->o.y = p->ai_target_y;
+            script_pos(q).o.x = p->ai_target_x;
+            script_pos(q).o.y = p->ai_target_y;
         }
         break;
     case op::get_party_ai_current_behavior:
@@ -7080,31 +7100,34 @@ char Operation::execute(__int64* locals, int* context, int* error)
         {
             int n = 0;
             PartyMgr* pm = &game()->parties;
-            int id = pm->first_party_id();
-            unsigned end = game()->parties.deflt;
-            while ((unsigned)id < end) {
-                if ((__int64)((PartyV*)pm->get(id))->template_id == params[1])
-                    ++n;
-                pm->next_party_id(&id);
+            unsigned end;
+            {
+                int id = pm->first_party_id();
+                end = game()->parties.deflt;
+                while ((unsigned)id < end) {
+                    if ((__int64)((PartyV*)pm->get(id))->template_id == params[1])
+                        ++n;
+                    pm->next_party_id(&id);
+                }
             }
             int found = -1;
             if (n > 0) {
                 int pick = rand_below(&n);
                 pm = &game()->parties;
                 n = 0;
-                id = pm->first_party_id();
+                int id = pm->first_party_id();
                 if (pick >= 0) {
                     end = game()->parties.deflt;
-                    do {
-                        if ((unsigned)id >= end)
-                            break;
+                    while ((unsigned)id < end) {
                         if ((__int64)((PartyV*)pm->get(id))->template_id == params[1]) {
                             if (n == pick)
                                 found = id;
                             ++n;
                         }
                         pm->next_party_id(&id);
-                    } while (n <= pick);
+                        if (n > pick)
+                            break;
+                    }
                 }
             }
             result = found >= 0;

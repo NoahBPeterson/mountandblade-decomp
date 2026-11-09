@@ -29,7 +29,7 @@ struct World3 { char pad0[0x13a00]; Troop* troops; char pad1[0x13a50 - 0x13a04];
 
 struct RuleRec { int f0; unsigned flags; unsigned f8; };    // flags: 0x100/0x200/0x400 and 0x10000/0x20000/0x40000 (0x467940)
 struct CandRec { int f0; int troop; unsigned char f8; };
-bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, char p6);    // 0x467940
+// rule_accepts (0x467940) is Mission::rule_accepts (game/mission.h): a thiscall member that ignores this
 
 // ---- std::vector<T> (VC7.1 layout: allocator at +0, _First +4, _Last +8, _End +0xc) and allocator::construct stubs ----
 #include "../alloc_construct.h"      // alloc_rec36 0x436cb0, alloc_rec136 0x436cd0

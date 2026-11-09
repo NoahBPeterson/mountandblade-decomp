@@ -8,7 +8,7 @@
 #ifndef MB_GAME_DATA_H
 #define MB_GAME_DATA_H
 #include "../game/tstring.h"
-namespace rgl { struct matrix; }
+namespace rgl { struct matrix; struct world; }
 #include "./troop.h"
 #include "./party.h"
 #include "./game_recs.h"
@@ -296,6 +296,7 @@ struct GameData {
     const char* module_path(const char* sub);   // 0x4639d0
     void load_scene(int idx);                   // 0x47fbd0 (mesh_slot/mesh_char.cpp: reads the scene object file of level idx)
     void blend(float* out, float x, float y);   // 0x471040 (wind / sky blend over the anchors)
+    bool ground_height(rgl::world* lv, const float* p, float* out);   // 0x470f40 (ignores this: blend loads ecx=this, 0x4ed410 ecx=g_game)
     void save_language_files(bool translated);  // 0x4c8ca0
     // ---- src/game/party2 (method declarations only; fields at the offsets noted are reached by offset there) ----
     struct face* find_at(const float* p);       // 0x48ea80 (nav-mesh face under a map position; other object)

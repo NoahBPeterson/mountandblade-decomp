@@ -435,7 +435,10 @@ row fails on the vtable bytes. The fix pattern (mission_items 0x4ce960
 Allocation is whole-function and keyed by internal ids, not by textual position.
 A far-away residual after a local edit is normal. Where the original has a
 register swap that no source change moves (which callee-saved register holds
-`this` or a loop pointer), see section 15.
+`this` or a loop pointer), see section 15. Which callee-saved register a value
+gets is solved for small functions (reference-count priority, esi, edi, ebx,
+ebp): see "Callee-saved register order" in section 7, including its limit in
+very large functions.
 
 ### 6.2 Commutative and SIB order keyed by ids
 
@@ -444,6 +447,10 @@ internal symbol and IL ids. Any source change that adds or removes named locals,
 references, inline formals, operator records or earlier global references can
 flip operand order in distant code. Directly commuting one operation's operands
 in source is normally neutral.
+
+**The flip can come down to one accessor's form, not a symbol count (M&B `Operation::execute`).** Whether `troop()` was a macro or the header's `__forceinline` accessor moved 43 of 590 cases at once, all `[imul+ptr+k]` forms, and lost none. Dead locals, copied locals and pass-through inline calls didn't flip it. `party()` or `mission()` as macros flip it back (-44, -19), while `faction`, `quest` and `game` stay right as macros. So when a large function's identical count swings by dozens on an unrelated edit, compare a count that ignores slots and registers to tell the flip from real progress, then try each accessor both ways. Some flips still went unexplained: one read order and one unrelated local each moved about 30 cases.
+
+**A CSE temporary's id decides SIB order, not the comparison's spelling (M&B `frame_update` 0x50fe20).** The original has `[edi+eax]` where ours has `[eax+edi]`, on `food*0x238` used twice. Ten spellings of the comparison and index left it unchanged. Removing the second use of `food` (so there is no CSE) gives product-first, and so does a struct copy of the item reference, though that adds a dead load. So when one SIB order resists every respelling, look at what is being shared between the uses rather than at the expression itself.
 
 ### 6.3 Register calling conventions for translation-unit-local statics
 
@@ -566,6 +573,8 @@ Still unknown: the original contains these same constructs and doesn't fold.
 
 ---
 
+**Triggers isolated on M&B `start_setup` 0x484590, by truncating the function (2026-11-06).** Each of these folds a page load in the function, even in a minimal one, and removing all of them stops the folding: a `Party* const& page` reference helper (plain `pages[i>>4]+(i&15)` doesn't); a `for` over a range with cached bounds (a guarded do-while doesn't; `continue` inside is fine); a `for` over a small fixed count such as `curve[2..8]` (a do-while stays a real loop; `while`, a `for` from 0 and an inline helper fold again); `push_back`'s `_Ufill`, a trip-count-1 loop; and `new rgl::psys`, likely from its inline ctor's vector `_Buy(0)`. A local copy of a loop's value can bring folds back. So "the original contains these same constructs" is wrong for the reference helper and the fixed-count loop. The two STL triggers aren't explained: the original has the same store shapes and doesn't fold, and that row's stand-ins for them shouldn't be permanent.
+
 ## 7. Stack layout
 
 - **`/O2` homes** come from a conflict graph over lifetimes, ordered by increasing
@@ -605,6 +614,24 @@ Still unknown: the original contains these same constructs and doesn't fold.
   4. **Not tested:** locals with disjoint lifetimes. Inferred from 0x4fb350 only: they merge into a group first, with uses summed and the largest member's size.
   In real functions, slot swaps that looked like ties usually turned out to be structure: a scope or an escape fixed them in `ItemA`, `update_status`,
   `camera_to` and `Rec58::build`.
+- **Callee-saved register order, solved for small functions (the same probe method, `work/match/bm6o_*`, on `Operation::execute`'s behalf):**
+  1. **Rule:** webs that live across a call are colored in priority order, and each takes the first free register of **esi, edi, ebx, ebp**.
+     Priority is the web's reference count, defs included, highest first; ties go to the web defined first. Declaration order doesn't count.
+     This held on 150 of 150 random straight-line functions with 4 values, 150 of 150 with declaration order shuffled apart from assignment
+     order, and 150 of 150 with some uses as pointer bases. First use, last use, value id, live-range length, uses per length and declaration
+     order scored 14 to 87 of 150.
+  2. **What counts:** `x += y` is 2 references. `x = q(x)` starts a new web. A named variable that holds a call result also counts its copy and
+     the two-address result it is coalesced with: `int b = q(1); f(b - r(2));` counts 4, while the bare temporary of `f(q(1) - r(2))` counts
+     at most 2. So naming a value raises it in the order, and dropping a name lowers it.
+  3. **Weights:** a use under one `if` counts about 1/2. It counts about 1/3 under two levels, under `a && b`, or in a second `if` after a join, and still
+     about 1/3 at three levels. An `else` arm counts 1/2. Loop bodies don't count more. Wrapping the probe in a 600-case switch changes none of this.
+     The exchange grids (`bm6o_grid.py`) put each boundary at m = 2n or m = 3n, a little above the exact fractions.
+  4. **In a switch,** a long-lived web (`this`, a pointer parameter, a promoted array dword) is dead in the cases that don't use it, so each case's
+     values take the free registers in priority order.
+  5. **Limit:** in the 70 KB interpreter, cases whose text gives the original's registers when compiled alone still come out differently inside
+     the whole function, and keeping different subsets of its cases moves the result non-monotonically. There the order also depends on
+     function-wide state. A spelling inside the case can't fix that; check the case alone with a probe before spending spellings on it.
+- **Refinement, inferred from `start_setup` 0x484590 only:** use counts are taken before cl duplicates tails, so a statement cl duplicates counts once. Each local then joins the newest compatible group. Scalars that aren't address-taken conflict by liveness; address-taken ones conflict by scope.
 - **A temporary's destructor after the store** means the temporary lived in the same full expression or block as the assignment. Moving a helper inline took
   `Rec58::build` from 400 to 521 identical, because callee-saved pushes sink only when the code above allows it, so a helper's shape can move every stack offset.
 - **Order by size.** In one function the locals sorted by size ascending, then by
@@ -729,6 +756,15 @@ a `sub`/`dec` compare chain.
   in a call with the same argument registers is merged by the compiler, so write
   the call in both arms (`ClipCursor(&rc)` / `ClipCursor(0)`) rather than
   computing the argument first (`s00401010`).
+- **Re-read the field when the original repeats a compare (M&B `place_slot_mesh` 0x510fa0, matched).** With
+  `int kind = it->type_flags & 0xff;` cached in a local, cl threads `kind == 4` past the inner test, drops the
+  second `cmp eax,4` and adds a `jmp`. Writing `(it->type_flags & 0xff) == 4` at each test keeps the second compare,
+  as the original does. A second stray `jmp` further down was only loop-alignment padding shifted by the first, and
+  it went away with the same fix. So check whether a lone diff in a long function is just alignment knock-on before chasing it.
+- **Equivalent nestings can reduce to one CFG (M&B `InventoryPanel::transfer_slot` 0x512c80).** A nested form, a
+  single `if (c && !(a && b)) {body} else if (locked) {refused}`, and the inverted guard with an early `return` all
+  compiled to the same 281/410. When restructuring doesn't move the count at all, the difference is in one
+  test's polarity (here `item != -1`: ours `jne` to the body, the original `je` to the refusal), not in arm order.
 - **`do { if (a) break; ... } while (0)`** is the idiom for a guarded block with
   several forward exits to one join; nested ifs and early returns often compile
   identically because cross-jumping rebuilds shared exits.
@@ -812,6 +848,11 @@ Derive float sum **grouping from the assembly, not from a decompile**.
   the original probably used a different operand form: `void f(const vector4& t){
   vector4* o=&cur.o; o->x += t.x; ... }` fixed an asymmetric `fld` order that
   `float*` spellings could not (`s00409500`).
+- **Vector helpers set operand order downstream (M&B `terrain_b`, round bm6tb).**
+  - **Inline vs out-of-line normalize (`render_batch::render_scene` 0x46e590):** going through the header's inline `vector4::normalize` body, whose `length()` sums z, y, x (wrapped as `vec4n`, like `shapes.cpp`'s `vec4i`), changed which x87 operand loads first. Both cross products after it then matched.
+  - **Re-derived references reproduce reloads (`PolyMesh::compute_face_normals` 0x4705e0):** `const vector4& p0 = verts.begin()[faces.begin()[i].vid[0]].pos;`, then p1 the same way, gives the original's second `vid[0]` load.
+  - **A loop-scoped vector temporary (`compute_edge_creases` 0x470750):** `vector4 d = b.pos - a.pos;` inside the loop fixed the normalisation's fld/fmul order.
+  - **Taking a re-read out can move registers elsewhere (render_scene's bone cache):** every form without the re-read of `it->m->f224` after the cache store moves `this` and `it` to other registers and stack slots, and costs about 150 instructions.
 
 ### 9.3 `sqrt`
 
@@ -1439,6 +1480,13 @@ These are not absolute: a reference local flipped SIB order on 0x4c1e10, and an 
 - **A test placed after an if/else gets jump-threaded (0x46e590).** That explains an else arm laid out after the join.
 
 - **Equal-output accessors aren't equal to the compiler (`note_window::build` 0x50a1c0).** A distant operand form flipped in bands as compiler-internal work grew, not with emitted size, and code-free statements such as `int Z = this->menu_id;` count (band period about 340 of them). Exact bytes under added padding mean the row is one band away and the fix is accessor weight, not structure: nine `get_w` became `get_party`, which emit the same code, and the row matched. Padding is a probe only; it never stays. Check that a form test tells the original's shape from a renamed copy of ours.
+- **The same band effect, but dead padding doesn't count (`CharSheet::init_screen` 0x507400, 95 bytes off).** The register that joins the two arms after `new text_box` (original esi, ours eax) depends on how much real work survives *after* the site. Cutting the function off with `return;` before the weapon loop gives esi; cutting it after the weapon loop gives eax. Unlike note_window, dead padding doesn't move it.
+  - **The anomaly is ours:** an image-wide scan of `new`-then-join sites found 12 esi/esi, 12 esi/ecx and no eax joins anywhere, so the original's source isn't winning a tie.
+  - **Didn't move it:** fewer reference formals, a shared loop counter, and `vector2` out-params, all byte-identical.
+  - **Not yet tried:** implicit vs explicit `tstring` temporaries at the lookup and label sites, and the `vector2(float,float)` constructor temporaries.
+  - Truncation probes also move the whole callee-saved map, so read only the join from them.
+- **`lea mgr,[g+0xf8]` then `[mgr+0x138d0]` means a member accessor on the sub-object, not a free helper (`MapPanel::update_target` 0x5191e0, +60 slot-masked instructions).** A free `party_at(g, id)` folds the two offsets into `[g+0x139c8]`; `g->parties.get_w(id)` keeps the `lea` as the original does. Likewise a 64-bit `and; xor; or; jcc` test means the source tested the 64-bit flags field, not its low dword.
+- **Register swaps that follow how many times the source reads a global (`MapPanel::update` 0x51abd0).** Every form with one `g_game` read gave g=esi; only a second read gave the original's edi/esi, and that also moved the load into the loop head. Count the original's reloads of a global before trying accessor forms.
 - **`break` against `return` is a whole-switch pattern (`terrain_dialog` 0x4fe860).** With one shared-exit difference in a large switch, test patterns across the switch, not per site: radio cases `return 1` with the rest `break` gave 0 differences, where the other three patterns gave 3456 to 4599. Temporarily renaming a callee shows which tail groups compete for the exit hub.
 - **Raw index against `operator[]` (`build_second_pass` 0x4d1880).** `(&vec[0])[i].field[k]` lets cl fold first + (i*size + k*4) with its own induction variable; `vec[i].field[k]` materialises the element. One function can use both. A `T& g = vec[j]` reference CSEs field loads, so repeated reloads of one field in the original mean there was no reference local.
 - **A reciprocal written out, not named (0x4d1880).** A named `float inv` used three times gives `fld m; fmul st(1)` ... `fstp st(0)`; the same expression repeated becomes a CSE temp that dies at its last use, giving the final `fmul [m]`.
@@ -1446,12 +1494,35 @@ These are not absolute: a reference local flipped SIB order on 0x4c1e10, and an 
 - **A store hoisted out of a loop past an opaque call means the original saw the callee's body (`mesh_terrain`).** Other shapes from there: an unreferenced frame gap can be a larger array (`int tri[4][2]` with 3 rows used); one loop variable shared by two loops merges their slots; `x + y + z` of a local's fields can compile to `z, y, x`.
 - **An address-taken local conflicts with locals nested in its block (`start_setup` 0x484590).** Where its block opens and closes moves other locals between slots and can change the frame size; spills in a block nested in its scope go to high slots.
 
+- **A local whose address reaches a callee cl can't see keeps a private slot, through the whole call chain (`execute`, frame 0x1ee8 to 0x1ec0).** Give the chain's callees visible `inline __declspec(noinline)` bodies above the function. Check by removing each one: of 47 added, none gained when removed. Conversely, an extra visible body can hurt: `update_controls` lost 61 instructions to a visible `AgentTable::get`, and `ShadowMap::extend` needs `transform_point_to_local` opaque while `map_panel` needs it visible, so that body can't move to a shared header.
+- **`tstring` temporaries: a block-scoped local, not a forwarder's temporary (`execute`).** `{ tstring msg(buf); ... }` and plain expressions gave every tstring slot; `tstring("x")` temporaries and locals like `text`, `nm` and `arg0` from forwarders were the cause, not the allocator.
+- **`__forceinline` forwarders compute `this` before the arguments**, which rotates scratch registers. Call the real method directly. Cases out of the original's order rotate later cases too, so follow the jump table's body order.
+- **A by-value return goes right-hand side first (`get_frame`).** Assigning `script_pos(i) = get_frame()` computes the destination before the call; a helper that takes the result first gained 34 cases. A signature that returns by pointer can't give those shapes, so check `ret 4` hidden returns against the callers. Likewise `set_pos` takes a `Vec2` by value: the two dwords are pushed after the other arguments, and no two-float spelling or forwarder can do that.
+- **`mov ecx,g_game` before a call to a function that ignores `this` means a member with an unused `this`** (`sl_item_flag_all`, `is_night`). An argument in EAX to a one-caller function means a `static` in the caller's object (`trigger_item_mesh`), even when its address sits far from the caller.
+- **A named local before a call keeps a parameter across it (`troop_add_item`: fixed that case and 6 others).** Branch sense also matters: `!= 0` first, `!= -1` first, or ending in `!side`.
+- **Nested ternary of lookups in one expression gives cl's conditional-temporary flag (`place_slot_mesh`).** `sprintf(buf, lookup("x")->c_str(), stat, t==0 ? lookup("a")->c_str() : ...)`. With an implicit `lookup("key")`, cl emits the constructor, inlined-call arguments, the lookup, then out-of-line arguments; code between the constructor and the lookup means an inline accessor. A dropped intermediate local can fix a distant register map.
+- **Immediate zero stores next to a live zero register mean float fields (`close_tooltip`).** `(float)x` conversion of a value in `[0,2]` hides unsigned vs signed. `resize(n)` is the inline overload that spills `n` first; `resize(n, T())` gives the wrong shape (`TableauTbl::read`).
+- **A helper written between `// @ 0x<va>` and the function becomes the marker's symbol**, so chk and equiv test the helper. Keep helpers above the marker. And check what a row is tested as: a comment like `// 0x49bbb0 spawn the battle icon` once bound a row to the wrong function, which read as a fault and a mismatch (fixed in `marker_names`). A `FAIL` with an audit disagreement on the first callee is worth this check first.
+
+- **A const-reference helper reading a field at offset 0 keeps the address materialised (`update_team_stats` 0x474e60).** `team_leader(teams[t])` moved the loop's induction base from +0x50 to 0, which fixed a `lea ecx,[ebx+0x50]; lea ebp,[ecx-0x34]` head. Using `operator-` with a const-reference operand moved another bias.
+- **A value read twice in source blocks CSE of its index arithmetic,** even though the load itself is CSE'd (0x474e60). `fstp m; fmul m` rather than `fst m; fmulp` means a block boundary between the store and the use. A function-scope loop variable merges slots across the whole function: per-loop block scopes took that frame from 0x84 to 0x80.
+
 ## 15. Not source-controllable, or without a known lever
 
-Record the function as complete and move on after two rounds without a diff drop.
+There is no round limit on these: keep trying different ideas, and record the
+function as complete when you have honestly run out of them.
 
 - Which callee-saved register holds `this` or a loop pointer (`esi`/`edi`/`ebx`
-  swaps), and `edx`/`ecx` swaps in the same instruction stream.
+  swaps), and `edx`/`ecx` swaps in the same instruction stream. Small functions
+  now have a rule (section 7, "Callee-saved register order"); very large ones
+  and reload orders don't.
+  - **Reload order after a loop (M&B `Terrain::tessellate` 0x481570, 4 bytes off).**
+    The original reloads edi, ebx `[0x44]`, esi `[0x14]`; ours reloads edi,
+    esi, ebx. About 30 probes ruled out next-use order (the ebx use moved first
+    and nothing changed), def and use order (identical in both builds), and the
+    declaration order of the named locals. Struct members, walkers, loop forms,
+    scope changes and forceinline helpers didn't move it either. It moved only
+    together with other code: adding `qn == 0 &&` to a test, or dropping a store.
 - Several values kept unrounded on the x87 stack across a branch while others
   live in memory (M&B `screen_to_world`: `sy`, `py`, `oy` in registers, `px`, `z`,
   `ox` in memory). Twelve source shapes and four `volatile`/pointer variants moved

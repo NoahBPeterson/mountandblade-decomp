@@ -6,6 +6,7 @@
 ../src/game/terrain_a/game_state.cpp  ?module_path@GameData@@QAEPBDPBD@Z  004639d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/game_state.cpp  ?release_all@ShadowMap@@QAEXXZ  00463b70  /O2 /MT /Gy /TP
 ../src/game/terrain_a/game_state.cpp  ?create_target@ShadowMap@@QAEXPAPAUShSkin@@@Z  00463e10  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?setup@ShadowMap@@QAEXXZ  00463e90  /O2 /MT /Gy /TP
 ../src/game/terrain_a/game_state.cpp  ?bind_target@ShadowMap@@QAEXXZ  00464070  /O2 /MT /Gy /TP
 ../src/game/terrain_a/game_state.cpp  ?sync_readback@ShadowMap@@QAEXXZ  004640d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/game_state.cpp  ?read_pixel@ShadowMap@@QAEXHHHPAI0@Z  004641a0  /O2 /MT /Gy /TP

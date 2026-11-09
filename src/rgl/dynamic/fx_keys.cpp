@@ -295,9 +295,11 @@ void KeyTable::find(int* cur, float* frac, float* key)
     float last = (float)keys[n - 1];
     float k = (float)keys[0];
     if (!(*key < k)) {
-        k = last;
-        if (!(last <= *key))
-            k = *key;
+        float keyv = *key;
+        if (keyv >= last)
+            k = last;
+        else
+            k = keyv;
     }
     int c = *cur;
     if (c > -1 && c < n - 1) {
@@ -346,6 +348,6 @@ quaternion* FxAnim::chain(quaternion* out, int i, int k)
         t3 = t.mul(q);
         p = &t3;
     }
-    memcpy(out, p, sizeof(quaternion));
+    *out = *p;
     return out;
 }

@@ -193,8 +193,8 @@ void FxAnim::update_poses2()
                 qa.set(m.x * s, m.y * s, m.z * s, m.w * s);
                 quaternion qb;
                 qb.set(q.x * blend, q.y * blend, q.z * blend, q.w * blend);
-                BN(b).rot() = qa + qb;
-                BN(b).rot().normalize();
+                *(quaternion*)&BN(b).q = qa + qb;
+                (*(quaternion*)&BN(b).q).normalize();
             } else {
                 BN(b).rot() = q;
             }
@@ -203,14 +203,14 @@ void FxAnim::update_poses2()
                 v0c = vadd((key0 * blend), (pos_old * s));
             }
         }
-        BN(b).delta() = saved.mul_conj(BN(b).rot());
+        *(quaternion*)&BN(b).qe4 = saved.mul_conj(BN(b).rot());
         if (BN(b).parent == -1)
-            BN(b).abs_rot() = BN(b).rot();
+            *(quaternion*)BN(b).padd4 = BN(b).rot();
         else
-            BN(b).abs_rot() = (BN(BN(b).parent).abs_rot()).mul(BN(b).rot());
+            *(quaternion*)BN(b).padd4 = (BN(BN(b).parent).abs_rot()).mul(BN(b).rot());
         quat_to_matrix((matrix*)&BN(b).m44, &BN(b).rot());
         if (b == 0) {
-            BN(0).m44.o = vadd(v0c, res->recs->m.o);
+            BN(0).m44.o = v0c + res->recs->m.o;
         }
         if (BN(b).parent == -1)
             *(matrix*)&BN(b).m84 = BN(b).m44;

@@ -1,0 +1,9 @@
+# Near-exact rows: hand-reviewed functions whose only remaining difference from the original is register or
+# stack-slot choice (or one load's placement that follows from it), with every call, field offset, literal and float
+# op identical. tools/progress.py counts them as equivalent PASS (the user's call, 2026-11-08); an
+# equivalence FAIL still wins over this label. Remove a row when it matches or when a real difference is found.
+# VA        bytes off  why
+00481570    4          Terrain::tessellate: reload order edi,esi,ebx vs edi,ebx,esi after the qn loop (equiv FAIL in local vector copies: untriaged)
+00507400    95         CharSheet::init_screen: join register after new text_box (eax vs esi) and the hoisted i=0 store it forces
+0050fe20    1          PartyWindow::frame_update: SIB order [eax+edi] vs [edi+eax], keyed by the CSE temp for food*0x238
+0051abd0    20 insns   MapPanel::update: g_game/manager register swaps at 3 sites (follow the number of g_game reads)

@@ -27,21 +27,16 @@
 
 using namespace rgl;
 
-static __forceinline void set_groups_color(std::vector<rgl::lod_mesh2*>& v, int c)
-{
-    for (std::vector<rgl::lod_mesh2*>::iterator g = v.begin(); g < v.end(); ++g) {
-        rgl::lod_mesh2* grp = *g;
-        for (int i = 0; i < grp->count; ++i)
-            grp->lists[i].set_color(c);
-    }
-}
-
 // @ 0x4219c0
 void FxElem::set_color(int c)
 {
     for (std::vector<rgl::mesh*>::iterator it = psys.begin(); it < psys.end(); ++it)
         (*it)->color = c;
-    set_groups_color(groups, c);
+    for (std::vector<rgl::lod_mesh2*>::iterator g = groups.begin(); g < groups.end(); ++g) {
+        rgl::lod_mesh2* grp = *g;
+        for (int i = 0; i < grp->count; ++i)
+            grp->lists[i].set_color(c);
+    }
 }
 
 namespace rgl {

@@ -67,7 +67,9 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?slot@EmptySlot@@UAEXXZ  00477b70  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UE36x@@V?$allocator@UE36x@@@std@@@std@@QAEXABUE36x@@@Z  00477b80  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UMVert@@V?$allocator@UMVert@@@std@@@std@@QAEXABUMVert@@@Z  00477c10  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?resize@?$vector@UMPoly@@V?$allocator@UMPoly@@@std@@@std@@QAEXI@Z  00477ca0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UMPoly@@V?$allocator@UMPoly@@@std@@@std@@QAEXABUMPoly@@@Z  00477d20  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?resize@?$vector@UMEdge@@V?$allocator@UMEdge@@@std@@@std@@QAEXI@Z  00477db0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UMEdge@@V?$allocator@UMEdge@@@std@@@std@@QAEXABUMEdge@@@Z  00477e10  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?resize@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@QAEXI@Z  00477ea0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?reset@?$Pool@UMAgent@@@@QAEXXZ  00477f00  /O2 /MT /Gy /TP
@@ -82,3 +84,4 @@
 ../src/game/terrain_b/poly_mesh.cpp  ??0MAgent@@QAE@XZ  00477a30  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?attach_camera@ShadowMap@@QAEXPAUworld@rgl@@@Z  004711e0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?apply_group@Skin@@QAEXPAUArrSet@@HPAUmesh@rgl@@@Z  00470db0  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?update_team_stats@Mission@@QAEXXZ  00474e60  /O2 /MT /Gy /TP

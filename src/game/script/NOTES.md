@@ -216,6 +216,122 @@ Equivalence findings (2026-11-06):
 
 `DialogBlock::emit`: `check_script_param` has to be noinline (cl inlined it, frame 0x10f4 against 0xafc without it). `items[line]` is reloaded after every call and `line * 0x98` is kept in esi, so statements are written through `line`. Still open: the original enters the loop by `jmp` to the `idx < count` test, where ours threads the first test because idx is known to be 0; the three `set_lvalue` tails of 0x15..0x17 are one in the original; the key tests' layout (the 0x3b arm is last there).
 
+## 2026-11-06, fifth lane
+
+Figures: see script_interpreter.nonmatching.txt. 414 -> 460 identical, 500 -> 507 ignoring slots and registers.
+- **The 6.2 flip group is pinned: `troop()` is the header's `__forceinline` accessor, not a macro.** Removing `#define troop` alone gained 43 cases and lost none (all troop, quest, faction and scene `[imul + ptr + k]` forms). It is not a count of formals or of used locals: 91 pass-through `__forceinline int f(int)` calls, chains of up to 800 copied locals and dead locals don't flip it (400 and 800 locals lose one unrelated case). Making `quest()` a forwarder flips troop and scene only from its 13th source site on, and `party()` or `mission()` as macros flip it back (-44, -19). `faction`, `quest` and `game` stay macros (removing each loses 2 to 4); `scene` is neutral either way. So a future edit that swings the group by about 30 is about forwarders, and one spelling flips it.
+- The other direct gains: `party_prisoner_stack_get_troop_dna` tests `==` first with `g` taken after `first_flagged`; `troop_add_proficiency_points` is one `+=` with no pointer local; `party_get_skill_level` goes through `parties.get` directly, so the argument is pushed before `this` (the `party()` forwarder evaluates `this` first; that holds at any `party(x)->f(arg)` where the original pushes first). `team_get_order_position` is right-hand side first (`v4_ref`, as `ASSIGN_MAT`). `team_set_order_position` keeps `m` from before `point_in_rect` through `select_team`, and a named `t`.
+- Tableau cases: `a.set(1.0f, 1.0f, 1.0f)` and `b.set((float)params[2], ...)` as expressions, not named x, y, z (+2 same in 1992).
+- **`set_pos` 0x491e50 takes the position by value.** Called as `void set_pos(Vec2 at, int id, float radius)`, `party_relocate_near_party` is identical at once: the two dwords are pushed after `id` and the radius, from one `PartyMgr::get`. No two-float spelling and no forwarder can do that. Not applied: world_data defines the row with two floats, so the symbol would not resolve (`?set_pos@GameW@@QAEXMMHM@Z`).
+- **The SET_LV tails, three forms.** 0x49fccb (Y form) is the only real hub, 46 jumps in the original and 42 here; every other tail has no predecessors. Per case the forms are: merged into the hub, unmerged X (`lea eax`), unmerged Y (`lea edx`). From 2199 to the end ours is a permutation of the original: orig merged = ours unmerged Y, orig X = ours merged, orig Y = ours X. A Y tail identical to the hub's stays unmerged here, so merging isn't textual on the final code. Spelling the SET_LV differently in 2200 changes nothing, and neither does correcting 2199's shape (below). Inferred, not shown: the state comes from earlier in the function, so fix earlier structural cases first and re-read this cluster (about 25 cases).
+- `store_conversation_agent`: `int v` with its address taken gives the original's `je`, the surviving `mov [v],eax` and `cmp esi,[ebx]`, but makes v private (0xb4, frame +4, and the frame shift loses 67 slot-bearing cases; opaque `next_used` measures the same now, 67 lost with mod-stack+regs down only 1, so the old "opaque loses 56" was probably this frame shift too). The address has to reach a visible callee for v to pack, and no such call is known. A function-level `int v` also keeps the dead store and goes private.
+- **Low slots.** Orig puts named scalars at 0x20 with the validator temporary at 0x10 (1492, 1696, 1994, 1995); ours gives the named one 0x10 and, in 1696, the temporary 0x20. That pushes 1996..2016, 2110..2112 and 2175's temporaries to private 0xac. Function-level declaration, a ternary and declaration order don't move it. The order isn't by declaration or code order; unsolved.
+- `set_visitor`, `set_visitors`: orig `(scene*0x494 + k*8) + ptr`, ours `(ptr + scene*0x494) + k*8`; `scene()` as forwarder doesn't change it.
+- A helper written between `// @ 0x49fa10` and `execute` becomes the marker's symbol: chk and equiv then test the helper. Keep helpers above the marker (next to `mat_ref`).
+- Equivalence: `g_script_error` no longer gives a false FAIL. 195 valid, 0 mismatched, cut by the 180 s limit (UNSUPPORTED), coverage 0.7%.
+
+## 2026-11-06, sixth lane
+
+Figures: 461 -> 507 identical, 484 -> 514 ignoring slots, 508 -> 535 ignoring slots and registers, same size 533, size 69424 vs 69416, frame exact. Tools: `work/match/bm5o2_c.py` (bm4o3_c plus `--tails`, `--slot HEX o|m`, opcode and `i` slots in the summary), `bm5o2_tv.py`, `bm5o2_gen.py`, `bm5o2_rv.py` (variants of a non-execute row).
+
+**Solved after the pause: a visible `first_party_id` (0x460d20) is the low-slot fix.** Opaque, it kills `params[1]` in ebx, so `end` takes ebx and stays out of memory. Visible, with 2311's `end` restored, opcode goes to 0x20, `i` stays at 0x28 and identical goes 485 -> 497. `AgentTable::first_used` made no difference (kept opaque), so 2199's count reload is still open and its cause isn't this. The next bullets are the record at the pause; where they say "probe" or "provisional", this paragraph replaces them. 2311 now has a block-scoped first `id` and a shared `end`; its bottom test is still a `while` with `if (n > pick) break`, where the original looks like do/while, but do/while loses the rotation that follows (-4). n at 0xac, end at 0x28 and the second id at 0x24 are still off.
+- **Same mechanism, general rule: when the original reuses a value across a call and we reload, look for an opaque callee.** Visible `rgl::identity_pos` and `identity3` made get_scene_boundaries identical (identity3 alone doesn't).
+- **A named index and no `dst` pointer** for `script_pos`: `int p = (int)params[0]; ASSIGN_MAT(script_pos(p), ...); script_pos(p).o = ...` made agent_get_look_position and party_get_ai_target_position identical, and helped prop_instance_get_scale and party_set_ai_target_position.
+- Direct `g_mission_templates[...]` (no `t` pointer) at the store: +2 ignoring slots and registers. Direct `props[k]` instead of `prop_at` works in 1850 and 1851, but also doing 1855 flips the quest group (-15), the 6.2 flip again, so 1855 and 1860 keep `prop_at`.
+- store01_random_parties_in_range is `while (b == a && n < 100000)`; store_partner_quest tests `(char)((flags >> 8) & 1)`. Both identical.
+- `particle_systems` is a raw `PSys**` here and the original has `lea; mov [eax]`, so it is probably a real vector; 1696's dead `lea` is the same sign. Reference spellings don't produce it.
+- **add_sprite 827 -> 15:** pairs copied as pairs (`pos`, dir from a temporary, `ai_target`, the 64-bit flags) and a by-value angle in `rot2`. Left: `imul`/`lea` scheduled around `fsin`. It reads x and y as one pair (stand-in, marked in the source).
+- spawn_battle_icon: the original loads `mov ecx,edi` before calling 0x495b20, so that function is really a member with an unused `this`; mesh_hud defines it `__stdcall`. The ternary pushing per arm is unsolved: `tstring` in each arm gives 779.
+- Camera::Camera: statement order and field-wise tail don't move `mov eax,edi`. deploy_party and emit were not worked on.
+
+Record at the pause:
+- **The SET_LV hub is a third form.** 0x49fccb is `cdq; lea ecx,[18]; ...` (Z), not the Y form the fifth lane recorded. X, Y and Z are one scratch register rotating, which is the permutation seen from 2199 on.
+- **store_conversation_agent had one SET_LV after the join** (+18, no loss). cl duplicates it into both arms, so the original's two calls come from one source call. Left in 2199: `cmp esi,[ebx]` reload against our CSE spill of `count`, and `mov ecx,eax` after `get`.
+- Notes: the troop note cases spell `((GameX*)g_game)->troops[i].notes[k]` instead of `troop()` (+2). Spelling set_visitor the same way doesn't help; there the original still loads the scene index before the pointer. Not solved.
+- **Low slots: the cause is `end` in store_random_party_of_template.** Measured with `unsigned volatile end` in 2311 only (probe, not applied): opcode moves to 0x20 as in the original, `i` stays at 0x28, identical 497 (+17, -5, the 5 being the rotation fix below), ignoring slots unchanged. So `end` has to be memory-homed; 2310's `end` doesn't drive it. Keep a second `end =` def in pass 2: the same probe with `deflt` read inline in pass 2 doesn't flip.
+- Inferred, not shown: `end` takes ebx because the `params[1]` value in ebx doesn't reach the first loop here (we reload `mov ecx,[34]`, the original uses ebx after `get` and `next_party_id`). So something in that loop kills it for us and not for the original. Next check: `first_party_id` isn't defined in this file, so it is opaque here, while `next_party_id` and `get` are visible. Try a visible body for `first_party_id` (and `AgentTable::first_used`, which could also explain 2199's reload). I had only located this when paused; nothing tested.
+- **2311 in the source is provisional.** `while (id < deflt && n <= pick)` was applied because it fixes the rotation after it (+4, str_store_*), but its shape is further from the original (n=88/89, same 56 vs 59). The original's shape is `n <= pick` first with `end` hoisted, as in the earlier do/while. Expect to restore that once `end` is solved.
+- Not stand-ins, not applied: no volatile is in the source.
+- Also seen: store_partner_quest tests a bit by shift (`mov ebx,[ecx+0x14]; shr ebx,8; test bl,1`), the obvious spelling didn't change it. store01_random_parties_in_range looks like `while (b == a && n < 100000) { ++n; b = ...; }` (not tried). The 2380..2385 tails are the same rotation, starting at or before 2360. A single-SET_LV form of 2383/2384 flipped the whole function (identical 398, ignoring slots and registers 455), cause not looked at, not applied.
+
+## 2026-11-06, Fable lane
+
+Figures: 507 -> 512 identical, 514 -> 520 ignoring slots, 535 -> 543 ignoring slots and registers, same size 533 -> 542; size 69492 vs 69416 (the join cases grew to the original's sizes), frame exact. Tools: `work/match/bm5f_c.py` (bm5o2_c plus `--raw NAME` side by side, `--grep REGEX` over the original's case text, `--lru`), `bm5f_tv.py` (also patches script_interpreter.h), `bm5f_mk.py file.py NAME` (writes the variant for `bm5f_c.py <file> --raw`).
+- **hero_can_join family: a `GameX* game` local, and the first call reads the global.** `GameX* game = g_game; int main = game->main_party; PartyMgr* m = &game->parties; stacks = party(game()->main_party)->max_stacks();` gives the original's `mov edx,esi; push edx; lea ecx,[eax+0xf8]; lea edi,[eax+0xf8]` (the formal is a copy of the CSE'd load, and `m` comes from the local pointer so it is not CSE'd with the forwarder's `g_game->parties`). All four are identical modulo callee-saved registers now (R).
+- **1534 troop_inventory_slot_set_item_amount identical: `int missing = ...max_amount() - (int)params[2];` before `r.b.amount = 0`.** The params[2] read has to precede the byte store (it may alias); with it, each arm's tail is 19 bytes and cl does not cross-jump them (ours merged a 23-byte tail).
+- **party_wound_members identical: no `pm` local, `party(p)` everywhere.** The original's `add esi,0xf8` comes after `found = -1` and `i = 0`: it is the CSE temp of the forwarder's `g_game->parties` (visible `get` keeps it live), created at the first use.
+- **mission_time_speed_move_to_value identical: `MissionX* m = mission(); if (m && ...)`.** The variable must be the first use. With `if (g_mission && ...) { m = mission(); }` the test's load is a CSE temp and `m` a copy of it, and the copy lands after the test (`mov eax,[G]; test; ...; mov esi,eax`). The same shape (load into a scratch, use, copy to a callee-saved register) is still in 1630, 1696, agent_set_team (`mov eax,[s34]; push eax; mov esi,eax` where the original loads esi): a forceinline forwarder for the call (F2) and declaration order did not fix those; the first use is a push there, not a test.
+- set_relation: `sf_2 = 1.0f, sf_1 = -1.0f` (1.0 stored first), and `si_0 = ..., si_1 = ...` inside each message arm (the original stores them after the `jge`/`jle`). Same instruction count now; the rest is scratch and callee-saved rotation (`mov eax,[G]` is 1 byte shorter than `mov ecx,[G]`, so the size differs by 11).
+- 1942 mission_tpl_entry_add_override_item: `int& n = ...num_override_items;` gives the original's dead `lea edx,[edx+ecx+0x24]` (a materialised reference) and `n` in esi. Same shape; registers left.
+- 1633/1634: the original's `jl` goes to `xor eax,eax; jmp 0x49fccb` and the else arm ends `sub eax,ecx; jmp 0x49fccb`: one `SET_LV((__int64)v)` with an `int v` after the join, `members` spilled at 0x10 because `p` keeps ebx. Written that way (C1) it loses 5 cases and grows; C2/C3 unchanged. Not applied.
+- Not working: set_visitor/set_visitors `(scene*0x494 + k*8) + ptr` (an `extern int g_visitor_scene` declared first, a `visitor_at(s, k)` forceinline helper, direct spelling, a `scenes` local reloaded per statement: all unchanged); troop_set_health (the hoisted `params[0]*0x508` comes from a head merge of the arms' identical prefixes, which the original's arms do not have because their scratch registers differ; H1..H4 unchanged or -7); player_has_item `lea ebp,[ecx+edx]` (Q1..Q4 unchanged); `std::vector<PSys*> particle_systems` in SceneEntity does not give the `lea; mov [eax]` (VB).
+- **Callee-saved pick order is not LRU** (`--lru`): the original's picks per case against the last-use order of ebx/esi/edi/ebp show no relation. Declaration order does move it: in hero_can_join, `m` before `main` gives m=edi (right) but swaps main/stacks (esi/ebx). The original's order there is m, stacks, main, i.e. `main` is processed last; cause unknown.
+- 2201 store_partner_faction, 2323, 2325: the original cross-jumps into a neighbour's tail (`mov edx,[g_dialogs.fc]; jmp` into store_troop_faction's `mov eax,[G]; imul edx...`; 2323 jumps after check_troop into 2322's tail; 2325 after `mov ecx,[s34]` into 2326's). Ours has the identical text but cl did not merge them; which tails merge seems to follow the scratch rotation state.
+- Tool artefact fixed: jump-table `jmp dword ptr [r*4 + table]` was compared unmasked (change_screen_notes was D for that alone).
+- **position_set_z_to_ground_level identical with no `m` local (`mission()` everywhere) plus `prop_at` as a macro.** Each alone flips {add_quest_note_from_dialog, add_quest_note_from_sreg, class_is_listening_order} (-3); together they cancel (512 identical). So two flip-group edits can be paired: when a right edit loses a group, look for a second edit that flips the same group.
+- agent_has_item_equipped: `agent(a)` forwarder, no `t` (the `result = 0` store then precedes `add edi,4`); agent_set_scripted_destination: no `o` pointer and a named `float z` (the original re-reads params[1] for the z store after the opaque floor_z call; a CSE'd `o` let ours keep the address); team_set_order_position: no named `t` (the original reads params[0] after the opaque calls). All three closer, none identical.
+- **Split webs (open).** 1630, 1696, 1771, 1210, 2344: a named `int x = (int)params[k]` is loaded into a scratch, used (push, `or`, `imul`), then copied to a callee-saved register; the original loads the callee-saved register and copies to a scratch for the use. Tried without effect: a forceinline forwarder for the call (F2), declaration before the validator (G2), `*(int*)&params[k]` (LOW: flips 16 SIB cases and merges 2201's tail instead), `__int64 p` (P64, worse). hero_can_join gets the original's copy from the forwarder's formal, so the copy direction follows what the IL has, not a spelling of the load.
+- Accessor toggles re-measured (S1..S7): `scene` inline and `party` as a macro are neutral now (the latter was -44 earlier), `faction` inline -2, `quest` inline -6, `mission` as a macro -50 (but it merges 2201's tail and fixes agent_has_item_equipped's alignment).
+- Rejected: opaque `rand_below` (RB: identical 60, the register map collapses); `i` as the loop bound in 2310/2311 (I1: `i` moves to 0x2c, -408); `mission()->agents.count` in 2199's loop test (T3: -20).
+- 2311's original has `n` at 0xac (private: its address goes to rand_below and it is read after), `end` at 0x28 and the second `id` at 0x24; ours has `n` at 0x28, `end` at 0x24, `id` at 0xac. 2310's `end` is at 0x28 there (ours 0x18). Slot 0x28 is shared by `i` and case locals on both sides (16 cases there, 13 here), so `end` is a separate local that joins `i`'s group in the original.
+- troop_loot_troop: only `n` (ebp there, `[esp+0x20]` here, so ours hoists the 0x3000 mask into ebp) and the alignment differ; `do/while (--n)` and a `flags` local change nothing.
+- 2380/2381: the original's store_enemy_count is `push 1; call count_agents; jmp 0x49fccb` and store_friend_count is `push 0; jmp` into a later `call; jmp` tail (in store_attacker/defender_count); ours has the merge direction swapped (friend_count is the full copy). 2370/2371 are the same swap (timer_a full there, timer_b merged into the 0x49fccc hub; ours the reverse). The merge direction is the cross-jumper's choice, not a spelling.
+- Equivalence after this lane: 36 valid, 0 mismatched, bit-identical, 0.6% coverage (the 180 s limit; UNSUPPORTED as before). run_all: 40 / 40.
+- **What remains, by cause (78 cases):** callee-saved pick order (36, 101, 102, 105, 106, 150, 1530, 1667, 1920, 2110, 2111, 2055 and the esi/edi halves of 1270, 1794, 1791); scratch rotation and the SET_LV tail form X/Y/Z it selects (1210, 1792, 1793, 1906, 1910..1912, 1935, 1936, 1940, 1941, 2360, 2372, 2385, plus the cross-jump direction in 2201, 2323, 2325, 2332, 2370, 2371, 2380..2384); split webs (1630, 1696, 1771, 1210, 2344); slot assignment (1722, 1980, 1989, 1992, 1993, 2158, 2310, 2126, 2311, 2159, 1791's si_0); address-tree order in the set_visitor family (1263..1265); troop_set_health's hoisted index; player_has_item's `lea`; the materialised vector reference in 1968 and 1696; 1855/1860 evaluating the position argument before the prop lookup; 2199's count reload; 2154/2155 and 1730's unfolded memory operand; 1633/1634's single SET_LV after the join; loop-head alignment padding that follows from earlier sizes (1729, 2180, 1121, 1225 are one scheduled instruction each).
+
+## 2026-11-08, register-rule lane (bm6o)
+
+Tools: `work/match/bm6o_probe.py file.cpp [--asm FN]` (compiles a probe file, prints per function the register each `gN`
+load lands in), `bm6o_gen.py` / `bm6o_gen2.py` / `bm6o_gen3.py` (random probe generators), `bm6o_score.py` /
+`bm6o_score3.py` (score candidate rules), `bm6o_grid.py VARIANT` (two-value exchange-rate grids, `NC=600` wraps the
+probe in a 600-case switch), `bm6o_mx2.py` (mini-execute probes with long-lived webs), `bm6o_sub.py CASE --keep a:b`
+(execute with only some case blocks), `bm6o_tv.py` (bm5f_tv against `bm6o_base.pkl`, the baseline of this lane).
+
+**Callee-saved pick rule, measured in small functions (docs/codegen.md section 7, "Callee-saved register order"):** webs are colored in priority order and
+take the first free callee-saved register in the fixed order **esi, edi, ebx, ebp**. Priority = references of the web
+(defs count as well as uses), highest first; ties go to the web defined first. Declaration order does not count.
+- 150/150 random straight-line probes (4 values); 150/150 with declaration order shuffled apart from assignment
+  order; 150/150 with values used as pointer bases. Every other key scored 14..87/150 (first use, last use, value id,
+  live-range length, uses/length, declaration).
+- A named variable that holds a call result counts its copy and the two-address result it is coalesced with:
+  `int b = q(1); f(b - r(2));` counts 4, `f(q(1) - r(2));`'s temporary at most 2 (bm6o_nt.cpp). hero_can_join's
+  original order (main, m, then the max_stacks value) is exactly what the temporary form gives in a probe
+  (hcj_v1), and every spelling with a named `stacks` gives ours (hcj_w1..w8).
+- `x += y` counts 2 (a use and a def). `x = q(x)` starts a new web each time.
+- Uses under conditions count less: one `if` about 1/2 (exchange boundary m = 2n), two levels, `a && b`, or a
+  second `if` after a join about 1/3, the same at three levels; an `else` arm 1/2; loop bodies do not count more
+  (counter webs compete instead). A 600-case switch around the probe doesn't change any of this.
+- In a switch, long-lived webs (this, locals, params dwords) are dead in cases that don't use them, so a case's values
+  take the free registers in priority order (bm6o_mx2: every probe followed this).
+
+**But execute's own picks don't follow from the case text.** Compiled alone, our entering_town source gives the
+original's registers (game=ebp, mp=ebx, pm=edi: bm6o_et.cpp), and our party_count_members_of_type source loads `t`
+and `p` straight into callee-saved registers as the original does (bm6o_sw.cpp, the split web is gone). In execute
+both come out as ours. Compiling execute with only some case blocks (bm6o_sub.py) moves entering_town's pick
+non-monotonically with the subset: blocks 0..40 and 0..80 give game=ebp with mp rematerialised, 0..60, 0..100,
+0..125 and 0..150 give ours. In isolation one extra top-level use of `game` flips it to ours, two deep-conditional
+uses don't, so game and mp are close. So the R and split-web cases come from function-wide state (what the other
+cases do to the weights or the tie order), not from their own spelling, which is why about 35 local spellings failed.
+The case count isn't that state: the grid boundaries are the same with the probe in an 8-, 137-, 591- or 600-case switch.
+It isn't the 6.2 id flip group either. `mission()` as a macro (S7: -50 identical, the whole flip group) and `party()` as a
+macro (S5: neutral) leave entering_town, 1667 and 1630 byte-for-byte as they were (bm6o_v5.py). So the state is
+stable against symbol-id changes but differs from a lone compile. The next thing to check is the long-lived webs
+around a case (which callee-saved registers are really free there). The mini-execute probes say all four are free
+when unused, but they don't reproduce the full function's shapes (mp rematerialised, params[0] not in esi).
+
+hero_can_join in execute (variants in bm6o_v1.py, bm6o_v4.py, all measured against bm6o_base.pkl, none applied):
+- The rule says the max_stacks value should be a temporary, not `stacks` (the probe gives the original's order then).
+  In execute every temporary form (no `stacks`: NS2, NS4; `-ff + max_stacks()`: T1; `party(main)`: T6; `+ 0`: T7)
+  makes cl evaluate `m->get(main)->first_flagged()` first and keep `g_game` in esi across it. The probe doesn't
+  reorder. NS2 511/540 msr, NS4 511/538, T1 513 identical but 541 msr (it gains agent_has_item_equipped and turns
+  hero_can_join from R to D), T6 512/541, T7 511/540. The named `stacks` stays: it's the only form that keeps
+  the call order here.
+- Also unchanged in execute: entering_town with `game` renamed (E1), `pm` declared before `mp` (E2), `mp` declared
+  first (E3); 1667 with a named `PartyMgr* pm` (P1, P1b); start_mission_conversation with a named argument or a
+  direct `g_mission` (P1b, S1).
+- start_mission_conversation is scheduling, not priority: the original pushes params[0] (esi) before loading
+  g_mission, so esi is free for `m`. Ours loads `m` first, so `m` gets edi.
+
 ## Open problems
 
 0. Scratch registers: **cause found.** The rotation starts at the first temporary: `mov ecx,[edi]` for `g_cur_opcode = id` in the original,
@@ -238,7 +354,7 @@ Equivalence findings (2026-11-06):
    The 68 cases lost whenever that loop was right were compensation between wrong cases, not a real cost.
    **Levers found, by yield:**
    - A `__forceinline` forwarder or accessor evaluates `this` and pointer expressions into temporaries *before* the call's arguments, which rotates scratch registers. `((GameW*)g_game)->can_transfer(g_dialogs.f10, ((GameX*)g_game)->main_party, 0)` made party_can_join, party_can_join_as_prisoner (with the original's `push 1; jmp` cross-jump) and party_can_join_party exact.
-     So execute now calls game and presentation methods directly (77 sites), and `game()`, `troop()`, `faction()`, `quest()`, `scene()` are macros for the length of execute only (`#undef` right after it). Measured and rejected: macros for `mission()` (loses 35), `party()` (loses 1), `script_pos()` (loses 15); removing PartyV's no-argument forwarders (loses 2); direct calls on `mission()` (neutral).
+     So execute now calls game and presentation methods directly (77 sites), and `game()`, `faction()`, `quest()`, `scene()` are macros for the length of execute only (`troop()` no longer: see the fifth lane) (`#undef` right after it). Measured and rejected: macros for `mission()` (loses 35), `party()` (loses 1), `script_pos()` (loses 15); removing PartyV's no-argument forwarders (loses 2); direct calls on `mission()` (neutral).
    - A callee the original sees: esi/ebx survive the call. `Troop::inv_count` + `Troop::nibble` (+7) and `Mission::team_count` (+1) are now visible duplicates. `vec2x::rotate_b`, made visible, keeps the angle and index in eax/edx across the call where the original has esi/edi, so it stays opaque. That is a usable test: **callee-saved registers across a call suggest opaque, caller-saved ones visible**.
    - Use the real container operation. `warn_scene_prop_instance` matched at once with `value >= mission()->props.size()`, after the hand-written `_Mylast - _Myfirst` spellings had rotated it.
    - A `||` group places a shared tail where separate `if`s don't, and re-testing `f & 0x40` rather than `a` stops jump threading (`check_slot` 0x49c170).

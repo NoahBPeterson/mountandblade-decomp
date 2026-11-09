@@ -82,7 +82,7 @@ void PolyMesh::build_geometry()
         for (int j = 0; j < faces[i].n; j++) {
             MPoly& g = faces[i];
             MVert& v = verts[g.vid[j]];
-            g.centroid.x = g.centroid.x + v.pos.x;
+            g.centroid.x = v.pos.x + g.centroid.x;
             g.centroid.y = v.pos.y + g.centroid.y;
             g.centroid.z = v.pos.z + g.centroid.z;
             faces[i].nbr[j] = -1;
@@ -104,7 +104,7 @@ void PolyMesh::build_geometry()
         MEdge& e = edges[i];
         MVert& a = verts[e.v0];
         MVert& b = verts[e.v1];
-        e.mid = vector4((b.pos.x + a.pos.x) * 0.5f, (b.pos.y + a.pos.y) * 0.5f, (b.pos.z + a.pos.z) * 0.5f);
+        e.mid = (b.pos + a.pos) * 0.5f;
     }
     compute_face_normals();
 }
@@ -165,7 +165,7 @@ void Skin::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
 }
 
 // @ 0x470f40
-bool __stdcall ground_height(rgl::world* lv, const float* p, float* out)
+bool GameData::ground_height(rgl::world* lv, const float* p, float* out)   // a member that ignores this
 {
     shape_base* hits[0x2000];
     int count;
@@ -179,8 +179,7 @@ bool __stdcall ground_height(rgl::world* lv, const float* p, float* out)
     lv->to_cell(&q.x, cellxy);
     count = 0;
     rgl::cell* col = lv->cells[cellxy[0]];
-    rgl::cell* c = (rgl::cell*)((char*)col + cellxy[1] * sizeof(rgl::cell));
-    c->collect_point(&q.x, &use3d, 0x104, hits, &count);
+    col[cellxy[1]].collect_point(&q.x, &use3d, 0x104, hits, &count);
     int n = count;
     for (int i = 0; i < n; i++) {
         if (hits[i]->m4 >= 0 && ((face*)hits[i])->contains_xy(p)) {
@@ -202,7 +201,9 @@ void GameData::blend(float* out, float x, float y)
     int n = 4;
     do {
         n--;
-        float w = 1.0f / (float)sqrt((xy[0] - x) * (xy[0] - x) + (xy[1] - y) * (xy[1] - y));
+        float dx = xy[0] - x;
+        float dy = xy[1] - y;
+        float w = 1.0f / (float)sqrt(dx * dx + dy * dy);
         s1 = w * rec[0] + s1;
         s0 = w * rec[-1] + s0;
         s2 = w * rec[1] + s2;
@@ -218,13 +219,8 @@ void GameData::blend(float* out, float x, float y)
     float r3 = wn.w + t * s3;
     if (g_script.level == 0)
         t = 1.0f;
-    else {
-        // ground_height reads p[0] and p[1]: the original passes &x (0x471163) and the callee reads the y beside it.
-        // cl treats y as dead after the loop and reused its home (for t, a spill, even a pointer to y), so p[1]
-        // read garbage and ours faulted where the original returned. A real pair gives the callee the same x, y.
-        float p[2] = { x, y };
-        ground_height((rgl::world*)g_script.level, p, &t);
-    }
+    else
+        ground_height((rgl::world*)g_script.level, &x, &t);
     out[0] = r0 - t * 10.0f;
     out[1] = r1;
     out[2] = r2 * t + r2;
@@ -467,11 +463,13 @@ void Mission::update_prop_flags()
     }
 }
 
+// the mark's clock (+0xd0) and stamp (+0xd8) are a Timer; MarkRec (mission.h) spells them as separate fields (stand-in view)
+static inline void mark_restart(Timer& t) { t.start = g_ticks[t.clock]; }
 // @ 0x472160
 void Mission::replace_mark(int idx)
 {
     recs[idx].f790 = 0.1f;
-    recs[idx].stamp = g_ticks[recs[idx].clock];
+    mark_restart(*(Timer*)&recs[idx].clock);
     recs[idx].cnt++;
     vector4* sv = &recs[idx].m.s;
     recs[idx].floor = 0;
@@ -530,10 +528,6 @@ template<class T> void rgl::pool<T>::free_values()
 template void rgl::pool<rgl::cellnode>::free_values();
 template void rgl::pool<rgl::cellref>::free_values();
 
-// 0x467940 is a stdcall function that ignores `this` (src/game/terrain_a/misc.h): the member spelling of game/mission.h would name
-// a symbol nothing defines, so the call goes to the definition's own declaration
-struct RuleRec; struct CandRec;
-bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, char p6);    // 0x467940
 
 // @ 0x4724c0
 MRow36* vecMRow36::ufill(MRow36* f, unsigned n, const MRow36& v)
@@ -759,8 +753,7 @@ void MAgent::reset()
     f70 = 0;
     f74 = 0;
     f78 = 0.15f;
-    fa8 = 0;
-    fac = 0;
+    *(Vec2*)&fa8 = Vec2(0.0f, 0.0f);     // stand-in view: fa8/fac are a two-float pair assigned whole (agent_rec.h has two ints)
     f58e0 = vector4(-10000.0f, -100000.0f, -100000.0f);
     f98 = vector4(0.0f, 0.0f, 0.0f);
     f5624 = vector4(0.0f, 0.0f, 0.0f);
@@ -1075,10 +1068,10 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                     } else if (s->spawned == 0) {
                         if (!agent_low_inl(s->troop)) {
                             done[idx] = 0;
-                            if (t->f4e4 < 0)
-                                x3 = 1;
-                            else
+                            if (t->f4e4 >= 0)
                                 x5 = 1;
+                            else
+                                x3 = 1;
                         }
                     }
                 }
@@ -1096,9 +1089,9 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                 Stack* s = &party->stacks[k];
                 Troop* t = &g_game->troops[s->troop];
                 __int64 hero = t->flags30s & 0x10;
-                if ((hero != 0 && s->spawned == 0 && t->used == 0 && (s->troop == g_game->player || !g_game->agent_low(s->troop)))
-                    || (hero == 0 && s->count > s->wounded + s->spawned)) {
-                    if (::rule_accepts((RuleRec*)r, (CandRec*)s, k, x3, x4, x5)) {
+                if ((hero && s->spawned == 0 && t->used == 0 && (s->troop == g_game->player || !g_game->agent_low(s->troop)))
+                    || (!hero && s->count > s->wounded + s->spawned)) {
+                    if (rule_accepts(r, s, k, x3, x4, x5)) {
                         if (hero == 0) {
                             float chance = (float)(s->count - s->wounded) / (float)total + 0.25f;
                             float rnd = (float)(rand() % 15817) * (1.0f / 15817.0f);
@@ -1214,9 +1207,31 @@ static __forceinline vector4 vsum(const vector4& a, const vector4& b)
 {
     return vector4(a.x + b.x, a.y + b.y, a.z + b.z);
 }
+// statement-form sum: the original squares y, then x, then z; a single expression comes out x, y, z
+static inline float len2(const vector4& v)
+{
+    float z = v.z; float y = v.y; float x = v.x; float s = y * y; s += x * x; s += z * z; return s;
+}
 static __forceinline float normalize_inline(vector4& v)
 {
-    float len = (float)sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    float len = v.length();
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        goto scale;   // stand-in: the original's store of inv and its first use are in separate blocks; source of that split unknown
+scale:
+        v.x = v.x * inv;
+        v.y = v.y * inv;
+        v.z = v.z * inv;
+    } else {
+        v.x = 0.0f;
+        v.y = 1.0f;
+        v.z = 0.0f;
+    }
+    return len;
+}
+static __forceinline float normalize_dir(vector4& v)
+{
+    float len = (float)sqrt(len2(v));
     if (len > 1e-10f) {
         float inv = 1.0f / len;
         v.x = v.x * inv;
@@ -1229,41 +1244,95 @@ static __forceinline float normalize_inline(vector4& v)
     }
     return len;
 }
-#define AGENT(m, id) (agent_pool(m).pages[(id) >> 4][(id) & 0xf])
+// Helpers of update_team_stats (0x474e60). The shapes they give are load-bearing: a const-reference parameter keeps a
+// materialised address (team_leader gives the team pointer its zero displacement, so the class pointer is a separate lea).
+inline int AgentTable::first_used()
+{
+    unsigned v = 0;
+    if (0 < count) {
+        Agent** pg = &pages[0];
+        do {
+            if (pg[v >> 4][v & 0xf].used != 0) break;
+            v++;
+        } while ((int)v < count);
+    }
+    return v;
+}
+static inline MAgent& agent_get(AgentTable& t, unsigned id) { return (MAgent&)t.pages[id >> 4][id & 0xf]; }
+static inline void vec_div(vector4& v, const float& d)
+{
+    float inv = 1.0f / d;
+    v.x = inv * v.x;
+    v.y = inv * v.y;
+    v.z = inv * v.z;
+}
+static inline float dist(const vector4& a, const vector4& b)
+{
+    float dx = a.x - b.x;
+    float dy = a.y - b.y;
+    float dz = a.z - b.z;
+    return (float)sqrt(dx * dx + (dy * dy + dz * dz));
+}
+static __forceinline void team_totals(TeamRec& tm_)
+{
+    for (int k = 0; k < 3; k++) {
+        float n = tm_.cls[k].count;
+        for (int j = 0; j < 3; j++) {
+            if (j != k) {
+                if (dist(tm_.cls[k].pos, tm_.cls[j].pos) < 1.0f)
+                    n = n + tm_.cls[j].count;
+            }
+        }
+        tm_.cls[k].half = n * 0.5f;
+        tm_.cls[k].total = n;
+    }
+}
+static inline int team_of(const MAgent& a)
+{
+    int t = a.team;
+    if (t < 0 || t >= 8) t = 7;
+    return t;
+}
+static inline int team_leader(const TeamRec& tm) { return tm.leader; }
+static inline int team_rel(const TeamRec& tm, int other) { return tm.relation[other]; }
+static inline bool agent_live(AgentTable& t, int id)
+{
+    return id >= 0 && id < t.count && agent_get(t, id).f4 != 0;
+}
+static inline float timer_secs(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
+static inline void set_delay_inl(Timer& t, float seconds) { t.start = g_ticks[t.clock] - (int)(seconds * 100000.0f); }
 
 // @ 0x474e60
 void Mission::update_team_stats()
 {
-    int t, k;
-    for (t = 0; t < 8; t++) {
-        TeamRec* tm_ = &teams[t];
-        if (tm_->leader >= 0) {
-            ClassInfo* c = tm_->cls;
-            for (k = 0; k < 3; k++, c++) {
-                if (c->kind == 2) {
-                    MAgent& a = AGENT(this, (unsigned)tm_->leader);
-                    c->pos = a.f50;
-                    c->nav = AGENT(this, (unsigned)tm_->leader).update_nav_face();
-                    c->target = AGENT(this, (unsigned)tm_->leader).f56b4;
+    for (int t = 0; t < 8; t++) {
+        if (teams[t].leader >= 0) {
+            for (int k = 0; k < 3; k++) {
+                if (teams[t].cls[k].kind == 2) {
+                    teams[t].cls[k].pos = agent_get(agents, teams[t].leader).f50;
+                    teams[t].cls[k].nav = ((Agent&)agent_get(agents, teams[t].leader)).update_nav_face();
+                    teams[t].cls[k].target = agent_get(agents, teams[t].leader).f56b4;
                 }
             }
         }
     }
-    if ((float)(g_ticks[tm.clock] - tm.start) * 1e-5f >= 0.0f) {      // Timer::elapsed() inlined
-        tm.start = g_ticks[tm.clock] + 110000;
+    if (timer_secs(tm) >= 0.0f) {
+        set_delay_inl(tm, -1.1f);
+        {
         vector4 zero(0.0f, 0.0f, 0.0f);
-        for (t = 0; t < 8; t++)
-            for (k = 0; k < 3; k++) {
+        for (int t = 0; t < 8; t++)
+            for (int k = 0; k < 3; k++) {
                 teams[t].cls[k].count = 0.0f;
                 teams[t].cls[k].sum = zero;
             }
+        }
 
-        unsigned i = agent_pool(this).first_used();
-        while (i < (unsigned)agent_pool(this).next_id) {
-            MAgent& a = AGENT(this, i);
+        {
+        unsigned i = agents.first_used();
+        while (i < (unsigned)agents.count) {
+            MAgent& a = agent_get(agents, i);
             if (a.f14 == 1 && a.f10 == 0) {
-                int tid = a.team;
-                if (tid < 0 || tid >= 8) tid = 7;
+                int tid = team_of(a);
                 int cl = a.agent_class();
                 a.head_count = (int)(teams[tid].cls[cl].count > 0.0f ? teams[tid].cls[cl].count : teams[tid].cls[cl].count - 0.99999988f);
                 if (tid >= 0 && tid < 8 && cl >= 0 && cl < 3) {
@@ -1275,34 +1344,23 @@ void Mission::update_team_stats()
             }
             agents.next_used(&i);
         }
+        }
 
-        for (t = 0; t < 8; t++) {
-            TeamRec& tm_ = teams[t];
-            for (k = 0; k < 3; k++) {
-                float n = tm_.cls[k].count;
-                for (int j = 0; j < 3; j++) {
-                    if (j != k) {
-                        float dx = tm_.cls[k].pos.x - tm_.cls[j].pos.x;
-                        float dy = tm_.cls[k].pos.y - tm_.cls[j].pos.y;
-                        float dz = tm_.cls[k].pos.z - tm_.cls[j].pos.z;
-                        if (sqrt(dx * dx + (dy * dy + dz * dz)) < 1.0f)
-                            n = n + tm_.cls[j].count;
-                    }
-                }
-                tm_.cls[k].half = n * 0.5f;
-                tm_.cls[k].total = n;
-            }
-            if ((int)tm_.leader >= 0 && AGENT(this, tm_.leader).f14 != 1) {
+        {
+        for (int t = 0; t < 8; t++) {
+            team_totals(teams[t]);
+            if (team_leader(teams[t]) >= 0 && agent_get(agents, team_leader(teams[t])).f14 != 1) {
                 bool found = false;
-                unsigned i2 = agent_pool(this).first_used();
-                while (i2 < (unsigned)agent_pool(this).next_id) {
-                    MAgent& a = AGENT(this, i2);
-                    if (!found && a.f14 == 1 && a.f10 != 1) {
-                        int tid = a.team;
-                        if (tid < 0 || tid >= 8) tid = 7;
-                        if (tid == t) {
-                            found = true;
-                            tm_.leader = i2;
+                unsigned i2 = agents.first_used();
+                while (i2 < (unsigned)agents.count) {
+                    if (!found) {
+                        MAgent& a = agent_get(agents, i2);
+                        if (a.f14 == 1 && a.f10 != 1) {
+                            int tid = team_of(a);
+                            if (tid == t) {
+                                found = true;
+                                teams[t].leader = i2;
+                            }
                         }
                     }
                     agents.next_used(&i2);
@@ -1310,22 +1368,22 @@ void Mission::update_team_stats()
             }
         }
 
-        for (t = 0; t < 8; t++) {
-            for (k = 0; k < 3; k++) {
-                float inv = 1.0f / teams[t].cls[k].count;
-                teams[t].cls[k].sum.x = inv * teams[t].cls[k].sum.x;
-                teams[t].cls[k].sum.y = inv * teams[t].cls[k].sum.y;
-                teams[t].cls[k].sum.z = inv * teams[t].cls[k].sum.z;
-            }
         }
 
         {
-            unsigned i3 = agent_pool(this).first_used();
-            while (i3 < (unsigned)agent_pool(this).next_id) {
-                MAgent& a = AGENT(this, i3);
+        for (int t = 0; t < 8; t++) {
+            for (int k = 0; k < 3; k++) {
+                vec_div(teams[t].cls[k].sum, teams[t].cls[k].count);
+            }
+        }
+        }
+
+        {
+            unsigned i3 = agents.first_used();
+            while (i3 < (unsigned)agents.count) {
+                MAgent& a = agent_get(agents, i3);
                 if (a.f14 == 1 && a.f10 != 1) {
-                    int tid = a.team;
-                    if (tid < 0 || tid >= 8) tid = 7;
+                    int tid = team_of(a);
                     int cl = a.agent_class();
                     if (tid >= 0) {
                         a.view.v50e8.x = (float)a.head_count - teams[tid].cls[cl].count * 0.5f;
@@ -1338,25 +1396,20 @@ void Mission::update_team_stats()
             }
         }
 
-        for (t = 0; t < 8; t++) {
-            TeamRec& tm_ = teams[t];
-            if ((int)tm_.leader >= 0) {
-                for (k = 0; k < 3; k++) {
-                    ClassInfo& c = tm_.cls[k];
+        {
+        for (int t = 0; t < 8; t++) {
+            if (teams[t].leader >= 0) {
+                for (int k = 0; k < 3; k++) {
                     vector4 v;
                     v.x = 0.0f; v.y = 0.0f; v.z = 0.0f;
-                    unsigned i4 = agent_pool(this).first_used();
-                    while (i4 < (unsigned)agent_pool(this).next_id) {
-                        MAgent& a = AGENT(this, i4);
+                    unsigned i4 = agents.first_used();
+                    while (i4 < (unsigned)agents.count) {
+                        MAgent& a = agent_get(agents, i4);
                         if (a.f14 == 1 && a.f10 != 1) {
-                            int tid = a.team;
-                            if (tid < 0 || tid >= 8) tid = 7;
+                            int tid = team_of(a);
                             a.agent_class();
-                            if (teams[t].relation[tid] == -1) {
-                                vector4 d;
-                                d.x = a.f50.x - c.pos.x;
-                                d.y = a.f50.y - c.pos.y;
-                                d.z = a.f50.z - c.pos.z;
+                            if (team_rel(teams[t], tid) == -1) {
+                                vector4 d = a.f50 - teams[t].cls[k].pos;
                                 float len = normalize_inline(d);
                                 if (len < 2.0f) len = 2.0f;
                                 else if (len > 400.0f) len = 400.0f;
@@ -1372,30 +1425,31 @@ void Mission::update_team_stats()
                     v.z = 0.0f;
                     if (v.length() > 1e-11f) {
                         normalize_inline(v);
-                        if (c.dir.length_squared() < 0.5f) {
-                            c.dir = v;
+                        if (len2(teams[t].cls[k].dir) < 0.5f) {
+                            teams[t].cls[k].dir = v;
                         } else {
-                            c.dir = vsum(c.dir * 0.8f, v * 0.2f);
-                            normalize_inline(c.dir);
+                            teams[t].cls[k].dir = vsum(teams[t].cls[k].dir * 0.8f, v * 0.2f);
+                            normalize_dir(teams[t].cls[k].dir);
                         }
                     }
                 }
             }
         }
+        }
 
         {
-            unsigned i5 = agent_pool(this).first_used();
-            while (i5 < (unsigned)agent_pool(this).next_id) {
-                AGENT(this, i5).f55e8 = 0;
+            unsigned i5 = agents.first_used();
+            while (i5 < (unsigned)agents.count) {
+                agent_get(agents, i5).f55e8 = 0;
                 agents.next_used(&i5);
             }
         }
         {
-            unsigned i6 = agent_pool(this).first_used();
-            while (i6 < (unsigned)agent_pool(this).next_id) {
-                int o = AGENT(this, i6).view.target;
-                if (o >= 0 && o < agent_pool(this).next_id && AGENT(this, o).f4 != 0)
-                    AGENT(this, o).f55e8++;
+            unsigned i6 = agents.first_used();
+            while (i6 < (unsigned)agents.count) {
+                MAgent& a = agent_get(agents, i6);
+                if (agent_live(agents, a.view.target))
+                    agent_get(agents, a.view.target).f55e8++;
                 agents.next_used(&i6);
             }
         }
@@ -1571,12 +1625,40 @@ void EmptySlot::slot() {}
 template void std::vector<MRow36>::push_back(const MRow36&);
 // @ 0x477c10
 template void std::vector<MVert>::push_back(const MVert&);
-// @ 0x477ca0 resize(n) pads with MPoly()
-template void std::vector<MPoly>::resize(size_t);
+// @ 0x477ca0 resize(n) pads with MPoly(): the library wrapper, out of line (the 2-arg overload is 0x4775a0)
+template<>
+__declspec(noinline) void std::vector<MPoly>::resize(size_t _Newsize)
+{
+    size_t n = _Newsize;
+    MPoly _Val;
+    int* lim = _Val.lim;
+    lim[0] = -100000;
+    _Val.stamp = 0;
+    _Val.f5c = 0;
+    _Val.f60 = 0;
+    _Val.n = 0;
+    for (int i = 1; i < 8; i++)
+        lim[i] = -100000;
+    std::vector<MPoly>::resize(n, _Val);
+}
 // @ 0x477d20
 template void std::vector<MPoly>::push_back(const MPoly&);
-// @ 0x477db0 resize(n) pads with MEdge()
-template void std::vector<MEdge>::resize(size_t);
+// @ 0x477db0 resize(n) pads with MEdge(): the library wrapper, out of line (the 2-arg overload is 0x4776b0)
+template<>
+__declspec(noinline) void std::vector<MEdge>::resize(size_t _Newsize)
+{
+    MEdge _Val;
+    _Val.flag = 0;
+    _Val.crease[0] = 1.0f;
+    _Val.crease[1] = 1.0f;
+    int* lim = &_Val.v0;
+    lim[0] = -10000;
+    lim[1] = -10000;
+    lim[2] = -10000;
+    lim[3] = -10000;
+    _Val.nfaces = 0;
+    std::vector<MEdge>::resize(_Newsize, _Val);
+}
 // @ 0x477e10
 template void std::vector<MEdge>::push_back(const MEdge&);
 // @ 0x477ea0 resize(n) pads with PlacedObj() (the inlined constructor 0x437830)

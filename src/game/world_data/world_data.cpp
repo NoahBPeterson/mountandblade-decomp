@@ -216,8 +216,8 @@ void ContainerBase::on_child_moved(MissionUi* p)
     float* tp = (float*)((char*)this + 0xe0);
     float* ep = (float*)(e + 0xe8);
     n[0] = tp[0] + ep[0];
-    n[1] = tp[1] + ep[1];
     *(int*)(e + 0xe0) = *(int*)&n[0];
+    n[1] = tp[1] + ep[1];
     *(int*)(e + 0xe4) = *(int*)&n[1];
     p->on_moved();
     if (f104 & 0x100) {
@@ -261,8 +261,8 @@ void ContainerBase::clear_c8()
 void ContainerBase::render(rgl::scene* sc, float* p3, int c, int d)
 {
 // the two bounds pairs arrive as ints (the slot's signature is MissionUi::render's); naming them keeps the original's register use
-#define p4 ((float*)c)
-#define p5 ((float*)d)
+    float* p4 = (float*)c;
+    float* p5 = (float*)d;
     if (f104 & 1)
         return;
     struct __declspec(align(8)) Locals {
@@ -271,8 +271,8 @@ void ContainerBase::render(rgl::scene* sc, float* p3, int c, int d)
     MissionUi::render(sc, p3, c, d);   // 0x488720
     l.mx = p4[0];
     l.y0 = p3[0];
-    l.my = p4[1];
     l.hy = p5[0];
+    l.my = p4[1];
     l.ly = p5[1];
     float v = *(float*)((char*)this + 0xf8) + *(float*)((char*)this + 0xe0);
     if (l.mx < v) l.mx = v;
@@ -730,8 +730,8 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
 
 // ==== 0x491e50: put a party near a point =============================================================================
 // @ 0x491e50
-void GameW::set_pos(float x, float y, int id, float radius) {
-    random_position_around(x, y, radius, &x);
+void GameW::set_pos(Vec2 at, int id, float radius) {
+    random_position_around(at.x, at.y, radius, &at.x);
     PartyMgr* m = &pm();
     if ((unsigned)id >= m->n_parties) return;
     int i = m->lookup(id);
@@ -739,7 +739,7 @@ void GameW::set_pos(float x, float y, int id, float radius) {
     if (m->atu((unsigned)i)->type != 1) return;
     i = m->lookup(id);
     Party* p = m->at(i);
-    *(Vec2*)&p->pos = *(Vec2*)&x;
+    *(Vec2*)&p->pos = at;
     i = m->lookup(id);
     m->at(i)->place_on_map();
 }
@@ -755,28 +755,29 @@ int GameW::token_lookup(int a, int b, int c, int d) {
 // @ 0x491f50
 int MissionW::count_agents(int idx)
 {
+    int r = idx * 0x5b;
     int total = 0;
-    if (teams[idx].relation[0] > 0) total = counts[0][1];
-    if (teams[idx].relation[1] > 0) total += counts[1][1];
-    if (teams[idx].relation[2] > 0) total += counts[2][1];
-    if (teams[idx].relation[3] > 0) total += counts[3][1];
-    if (teams[idx].relation[4] > 0) total += counts[4][1];
-    if (teams[idx].relation[5] > 0) total += counts[5][1];
-    if (teams[idx].relation[6] > 0) total += counts[6][1];
+    int* rel = rel_flat();
+    if (rel[r + 0] > 0) total = counts[0][1];
+    if (rel[r + 1] > 0) total += counts[1][1];
+    if (rel[r + 2] > 0) total += counts[2][1];
+    if (rel[r + 3] > 0) total += counts[3][1];
+    if (rel[r + 4] > 0) total += counts[4][1];
+    if (rel[r + 5] > 0) total += counts[5][1];
+    if (rel[r + 6] > 0) total += counts[6][1];
     if (teams[idx].relation[7] > 0) total += counts[7][1];
     if (total == 0) return 0;
     int cu = f5c;
     if (cu < 0) return 0;
-    AgentW* rr = rec((unsigned)cu);
-    if (rr->team < 0) return 0;
-    int n = teams[idx].relation[rr->team];
+    if (rec((unsigned)cu)->team < 0) return 0;
+    int n = rel[r + rec((unsigned)cu)->team];
     int s = f6520();
     if (n < 0) s = -s;
     float v = total * (1.0f / speed_factor((float)s));
     double fl = floor(v);
     int res = (int)fl;
-    if (v - fl > 0.5) res++;
-    if (res < 1) res = 1;
+    if (v - (float)fl > 0.5f) res++;
+    if (res <= 0) res = 1;
     return res;
 }
 
@@ -1289,9 +1290,9 @@ Party::Party() throw()
         stacks[i].count = 0;
         stacks[i].troop = -1;
         stacks[i].flags = 0;
+        stacks[i].f14 = 0;
         stacks[i].spawned = 0;
         stacks[i].wounded = 0;
-        stacks[i].f14 = 0;
         stacks[i].f18 = 0;
     }
 
@@ -2038,19 +2039,22 @@ int GameW::add_random_experience(int amount)
 // @ 0x4952f0
 void MissionW::add_wind_effect(float a1, float a2)
 {
-    GameW* g = (GameW*)g_game;
     Light* o = ((rgl::world*)*(void**)this)->spawn_wind();   // 0x478f30
     o->flicker_magnitude = a1;
     o->flicker_interval = a2;
-    o->color = g->cur_color();
+    o->color = ((GameW*)g_game)->cur_color();
     o->type = 0;
     rgl::vector4 v;
-    v.x = g->trig_row(2).x * g->pos_delta().z + g->trig_row(1).x * g->pos_delta().y +
-          g->trig_row(0).x * g->pos_delta().x + g->trig_row(3).x;
-    v.y = g->trig_row(0).y * g->pos_delta().x + g->trig_row(2).y * g->pos_delta().z +
-          g->trig_row(1).y * g->pos_delta().y + g->trig_row(3).y;
-    v.z = g->trig_row(0).z * g->pos_delta().x + g->trig_row(2).z * g->pos_delta().z +
-          g->trig_row(1).z * g->pos_delta().y + g->trig_row(3).z;
+    rgl::vector4& t0 = ((GameW*)g_game)->trig_row(0);
+    rgl::vector4& t1 = ((GameW*)g_game)->trig_row(1);
+    rgl::vector4& t2 = ((GameW*)g_game)->trig_row(2);
+    rgl::vector4& t3 = ((GameW*)g_game)->trig_row(3);
+    v.x = t2.x * ((GameW*)g_game)->pos_delta().z + t1.x * ((GameW*)g_game)->pos_delta().y +
+          t0.x * ((GameW*)g_game)->pos_delta().x + t3.x;
+    v.y = t0.y * ((GameW*)g_game)->pos_delta().x + t2.y * ((GameW*)g_game)->pos_delta().z +
+          t1.y * ((GameW*)g_game)->pos_delta().y + t3.y;
+    v.z = t0.z * ((GameW*)g_game)->pos_delta().x + t2.z * ((GameW*)g_game)->pos_delta().z +
+          t1.z * ((GameW*)g_game)->pos_delta().y + t3.z;
     o->pos = v;
     o->base_color = o->color;
     o->range = (o->color.z + o->color.y + o->color.x) * 10.0f;

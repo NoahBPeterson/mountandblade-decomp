@@ -882,7 +882,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         col = 0x810;
                         NavVert& nv = world->ground->verts[c->f14];
                         float a = nv.level;
-                        nv.level = a;                  // emits no store, but leaves the dead lea at 0x480a09
+                        nv.level = a;                  // stand-in: emits no store, but leaves the dead lea at 0x480a09 (not it: a pointer, a float&, a by-value copy, a const NavVert& helper, nv.level read twice in the division)
                         float r = a / (z + a);
                         if (r < 0.0f) r = 0.0f;
                         else if (r > 0.75f) r = 0.75f;
@@ -896,7 +896,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     int f5c = col;
                     unsigned cw = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
-                    { vertex60& v = m->v50[c->f10]; v.f58 = col; v.f58 = fg; }     // two uses at folding time: add eax,edx at 0x480ad0
+                    { vertex60& v = m->v50[c->f10]; v.f58 = col; v.f58 = fg; }     // stand-in: two uses at folding time give add eax,edx at 0x480ad0 (not it: one store, a vertex60& helper, `= col; if (blend >= 0) = fg`)
                     { vertex60& v = m->v50[c->f10]; v.f48 = *(int*)&uv.x; *(int*)&v.f4c = *(int*)&uv.y; }
                 }
                 m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
@@ -933,7 +933,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     int found = -1;
     for (unsigned k = 0; k < em.size(); k++) {
         rgl::mesh*& r = e->meshes[k];
-        if (r == m && r == m)      // the second read folds away and leaves the dead lea at 0x480d1d
+        if (r == m && r == m)      // stand-in: the second read folds away and leaves the dead lea at 0x480d1d (not it: a value copy, e->meshes[k] == m, a const-ref helper)
             found = k;
     }
     if (found < 0) {

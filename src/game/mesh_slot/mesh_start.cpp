@@ -200,8 +200,8 @@ static inline unsigned lcg(unsigned x) { return (x * 0x1c13 - 0xd098556) * 0x110
 static inline void put(unsigned& dst, const unsigned mask, int shift, const int& val)
 {
     unsigned v = (unsigned)val <= mask ? (unsigned)val : mask;
-    unsigned& d = dst;
-    d = (d & ~(mask << shift)) | (v << shift);
+    dst &= ~(mask << shift);
+    dst |= v << shift;
 }
 
 static inline void cross2(vector4& o, const vector4& a, const vector4& b)
@@ -290,7 +290,6 @@ void Mission::start_setup()
     std::vector<PlacedObj>& props = at<std::vector<PlacedObj> >(0x6688);
     ModeRec* mrec = &g_mission_templates[at<int>(0x5df0)];
     at<int>(0x6550) = 0;
-    {
     LevelRaw* lrec = &RAWAT(LevelRaw*, g_game, 0x13a50)[at<int>(0x5df4)];
     bank_of(mrec)->randomize();
     if (lrec->at<char>(0x78) == 0)
@@ -310,6 +309,7 @@ void Mission::start_setup()
     vector4 ppos = *(vector4*)&party_rec(pm, pid)->pos;
 
     if (g_script.level != 0) {
+        // guarded do-while, not `for`: a for over this walk makes cl fold the page loads of the whole function (docs/codegen.md 6.6)
         SceneObjs* objs = ((Scene*)g_script.level)->objs;
         unsigned p = (unsigned)objs->first;
         unsigned end = (unsigned)objs->last;
@@ -323,7 +323,7 @@ void Mission::start_setup()
                 continue;
             int slot = *(int*)(p + 0x24);
             if (slot >= 0 && slot < 16) {
-                float* tp = temp; float& tr = tp[slot];
+                float& tr = temp[slot];
                 tr = 10.0f / d2 + tr;
             }
         } while ((p += 0x88) < end);
@@ -484,26 +484,26 @@ void Mission::start_setup()
 
 
             int storm = 0;
+            int pt = ptype;   // a block copy (ptype is dead after this block): puts the weather-bit locals in the original's slot groups (slot hunks 347 -> 160)
             unsigned seed = (at<int>(0x5270) % 3 + RAWAT(int, g_game, 4) * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
                             0x1ddcf5f + 0x2f784719;
             float chance = RNDU(seed) * 6.32231167e-05f;
-            if (ptype == 7) {
+            if (pt == 7) {
                 storm = 1;
-                ptype = 3;
+                pt = 3;
             } else if (temp[8] > 27.0f) {
                 storm = 1;
-            } else if ((ptype == 3 || ptype == 0xb) && chance < 0.150000006f) {
+            } else if ((pt == 3 || pt == 0xb) && chance < 0.150000006f) {
                 storm = 1;
             }
-            put(g_terrain.bits[4], (unsigned)g_bit[4] - 1, 28, ptype);
+            put(g_terrain.bits[4], (unsigned)g_bit[4] - 1, 28, pt);
             {
+                seed = lcg(seed);
                 unsigned m1 = (unsigned)g_bit[1] - 1;
                 unsigned v1 = (unsigned)(storm != 0) <= m1 ? (unsigned)(storm != 0) : m1;
-                unsigned w = g_terrain.bits[3];
-                seed = lcg(seed);
-                w = (w & ~(m1 << 31)) | (v1 << 31);
-                w &= ~(m1 << 30);
-                g_terrain.bits[3] = w;
+                g_terrain.bits[3] &= ~(m1 << 31);
+                g_terrain.bits[3] |= v1 << 31;
+                g_terrain.bits[3] &= ~(m1 << 30);
             }
             g_rand_seed = seed;
             float ff = RNDU(seed) * 6.32231149e-06f + 0.449999988f;
@@ -511,7 +511,7 @@ void Mission::start_setup()
                 seed = lcg(seed);
                 g_rand_seed = seed;
                 ff = ff + RNDU(seed) * 6.32231149e-06f + 0.349999994f;
-            } else if (ptype == 0xb || ptype == 0xc) {
+            } else if (pt == 0xb || pt == 0xc) {
                 seed = lcg(seed);
                 g_rand_seed = seed;
                 ff = ff - (RNDU(seed) * 1.2644623e-05f + 0.25f);
@@ -528,9 +528,9 @@ void Mission::start_setup()
             seed = lcg(g_rand_seed);
             int cc = (int)(RNDU(seed) * 0.00126446225f + 12.0f);
             seed = lcg(seed);
-            if (ptype == 0xb) {
+            if (pt == 0xb) {
                 cc = ifloor(RNDU(seed) * 0.00189669349f) + 30;
-            } else if (ptype == 0xc) {
+            } else if (pt == 0xc) {
                 cc = ifloor(RNDU(seed) * 0.00158057781f) + 25;
             } else {
                 g_rand_seed = seed;
@@ -539,7 +539,7 @@ void Mission::start_setup()
             if (cc > 0x41) cc = 0x41;
             put(g_terrain.bits[4], (unsigned)g_bit[7] - 1, 14, cc);
 
-            seed = lcg(seed);
+            seed = lcg(g_rand_seed);   // the original reloads the global here (0x4856b5): in the 0xb/0xc arms it was not restored, so this is one lcg step behind the register
             g_rand_seed = seed;
             float tot = RNDU(seed) * 0.000948346744f + 10.0f;
             float tb = (temp[12] + temp[11]) * 0.349999994f + temp[1] * 0.600000024f;
@@ -562,12 +562,10 @@ void Mission::start_setup()
             z.x = 0.0f;
             z.y = 0.0f;
             at<vec2>(0x652c) = z;
-
+            at<float>(0x6534) = (float)(g_terrain.bits[3] & ((unsigned)g_bit[10] - 1));
+            at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
+            at<vec2>(0x653c) = z;      // from z, not a copy of 0x652c: the original stores both pairs from the registers holding z (0x485a8a..)
         }
-        at<float>(0x6534) = (float)(g_terrain.bits[3] & ((unsigned)g_bit[10] - 1));
-        at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
-        at<int>(0x653c) = at<int>(0x652c);
-        at<int>(0x6540) = at<int>(0x6530);
         at<int>(0x6544) = at<int>(0x6534);
         at<int>(0x6548) = at<int>(0x6538);
         at<float>(0x654c) = -0.300000012f;
@@ -650,11 +648,15 @@ void Mission::start_setup()
         GameData* g1 = g_game;
         int secs = (int)((g_ticks[RAWAT(int, g1, 0x13b18)] - RAWAT(__int64, g1, 0x13b20)) * 1e-5f);
         int h = secs % 24;
+        {
         float angle = g_env_rows[at<int>(0x660c)].f14 * 0.0174532924f -
                       (float)(h - 12) * 0.0174532924f * 15.0;
         sun->at<rgl::matrix>(0x58).rotate_about_u(&angle);
-        angle = 1.0e8f;
-        sun->v6(&angle);
+        }
+    }
+    {   // a sibling block, not angle's parent: an address-taken local conflicts with locals nested in its block, and the original has far1 in angle's slot (0x18)
+        float far1 = 1.0e8f;
+        sun->v6(&far1);
     }
     at<rgl::world*>(0)->sky = (rgl::entity*)sun;
 
@@ -754,7 +756,6 @@ void Mission::start_setup()
         }
     }
     {
-    int pi;
     if (LV.flags.b8) {
         at<float>(0x653c) = at<float>(0x653c) + 24.0f;
         at<float>(0x6540) = at<float>(0x6540) + 24.0f;
@@ -765,7 +766,7 @@ void Mission::start_setup()
     // ---- per-prop frame copy into the table ----------------------------------------------------
     {
     vector4 t20;
-    for (int ip = 0; (unsigned)ip < at<std::vector<PlacedObj> >(0x6688).size(); ip++) {
+    for (int ip = 0; (unsigned)ip < props.size(); ip++) {
         PlacedObj* p = &PROP(ip);
         if (RAWAT(int, p, 0x188) == 1) {
             int sl = RAWAT(int, p, 0x1a0);
@@ -795,7 +796,9 @@ void Mission::start_setup()
     // ---- prop ground / spawn pass --------------------------------------------------------------
     {
     int pc = 0;
-    pi = pc;
+    int pi;
+    int& pr = pi;
+    pr = pc;
     while ((unsigned)pc < at<std::vector<PlacedObj> >(0x6688).size()) {
         RAWAT(int, &PROP(pc), 0x1b4) = 0;
         if (g_cfg.enable_edit_mode == 0 && RAWAT(int, &PROP(pc), 0x188) == 4 && LV.flags.b8) {
@@ -807,12 +810,11 @@ void Mission::start_setup()
             j = 0;
         found:
             g_terrain.emit_by_type(j, (const rgl::matrix*)&RAWAT(rgl::matrix, p, 0x18), &RAWAT(vector4, p, 0x158), RAWAT(int, p, 0x1a0));
-            pc = ++pi;
         } else {
             int foundv = -1;
-            spawn_prop(&pi, &foundv);
-            pc = ++pi;
+            spawn_prop(&pr, &foundv);
         }
+        pc = ++pr;
     }
     }
     update_prop_flags();
@@ -888,8 +890,9 @@ void Mission::start_setup()
                     em->curve[5].v = scale * em->curve[5].v;
                     em->curve[6].v = scale * em->curve[6].v;
                     em->curve[7].v = scale * em->curve[7].v;
-                    em->vb4 = t20;
-                    norm3(&em->vb4.x);
+                    vector4* vb = &em->vb4;
+                    *vb = t20;
+                    norm3(&vb->x);
                     em->f198 *= at<float>(0x6600);
                     at<Entity*>(0x65b8)->v25(em);
                 }
@@ -981,7 +984,6 @@ void Mission::start_setup()
     RAWAT(char, at<Entity*>(0x65dc), 0x140) = 0;
     RAWAT(char, at<Entity*>(0x65e4), 0x140) = 0;
 
-    }
     // ---- counters, light table ground snap -------------------------------------------------------
     for (int i = 0; i < 8; i++) {
         int j = 0;

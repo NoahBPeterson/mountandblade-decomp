@@ -363,9 +363,10 @@ void face::transform(const pos* m)
     for (int i = 0; i < count; i++) {
         const matrix& mm = *m;
         const vector4& s = mm.s, &f = mm.f, &u = mm.u, &o = mm.o;
-        w[i] = vector4((f.x * v[i].y + s.x * v[i].x) + u.x * v[i].z + o.x,
-                       (f.y * v[i].y + s.y * v[i].x) + u.y * v[i].z + o.y,
-                       (f.z * v[i].y + s.z * v[i].x) + u.z * v[i].z + o.z);
+        const float* p = &v[i].y;
+        w[i] = vector4((s.x * p[-1] + f.x * p[0]) + u.x * p[1] + o.x,
+                       (s.y * p[-1] + f.y * p[0]) + u.y * p[1] + o.y,
+                       (f.z * p[0] + s.z * p[-1]) + u.z * p[1] + o.z);
     }
     vector4 e1 = vsub(w[2], w[1]);
     vector4 e0 = vsub(w[1], w[0]);

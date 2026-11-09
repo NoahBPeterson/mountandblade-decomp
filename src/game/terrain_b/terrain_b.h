@@ -52,7 +52,6 @@ extern ptype* g_ptypes;                         // 0x5e28f8 particle / prop type
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (g_bit[i] == 1 << i)
 
 rgl::vector4 __stdcall wind_noise();             // 0x463a80 (hidden return pointer)
-bool __stdcall ground_height(rgl::world* lv, const float* p, float* out);   // 0x470f40
 void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
 
 #endif // TERRAIN_B_H

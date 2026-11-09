@@ -68,11 +68,11 @@
 using rgl::vector4;
 using rgl::matrix;
 
-// a x b with the first term's factors the other way round (the x87 order of the billboard's forward vector)
+// a x b with the x term's second product written b.y * a.z (the x87 load order of the billboard's forward vector)
 static __forceinline vector4 cross_ba(const vector4& a, const vector4& b)
 {
     vector4 r;
-    r.x = b.z * a.y - a.z * b.y;
+    r.x = a.y * b.z - b.y * a.z;
     r.y = a.z * b.x - a.x * b.z;
     r.z = a.x * b.y - a.y * b.x;
     return r;
@@ -92,6 +92,21 @@ static __forceinline D3DXMATRIX shadow_bias(float oy, float ox)
                       0.0f, 0.0f, 1.0f, 0.0f,
                       ox, oy, 0.0f, 1.0f);
 }
+
+// vector4::normalize (0x407d60) as callers inline it: the header's body (sums z, y, x like length())
+struct vec4n : vector4 {
+    __forceinline float normalize_inl()
+    {
+        float len = length();
+        if (len > 1e-10f) {
+            float inv = 1.0f / len;
+            x *= inv; y *= inv; z *= inv;
+        } else {
+            x = 0.0f; y = 1.0f; z = 0.0f;
+        }
+        return len;
+    }
+};
 
 // @ 0x46e590
 void render_batch::render_scene(scene* sc)
@@ -553,13 +568,7 @@ void render_batch::render_scene(scene* sc)
                     w.rot.u = it->m->m194.u;
                     w.rot.s = sc->fr.m.s;
                     w.rot.f = cross_ba(w.rot.u, w.rot.s);
-                    float len = (float)sqrt(w.rot.u.z * w.rot.u.z + w.rot.u.y * w.rot.u.y + w.rot.u.x * w.rot.u.x);
-                    if (len > 1e-10f) {
-                        len = 1.0f / len;
-                        w.rot.u.x *= len; w.rot.u.y *= len; w.rot.u.z *= len;
-                    } else {
-                        w.rot.u.x = 0.0f; w.rot.u.y = 1.0f; w.rot.u.z = 0.0f;
-                    }
+                    ((vec4n&)w.rot.u).normalize_inl();
                     w.rot.s = cross_i(w.rot.f, w.rot.u);
                     world = *(D3DXMATRIX*)&w;
                 } else {
@@ -652,9 +661,12 @@ void PolyMesh::compute_face_normals()
         float ax = verts.begin()[f.vid[2]].pos.x - verts.begin()[f.vid[0]].pos.x;
         float ay = verts.begin()[f.vid[2]].pos.y - verts.begin()[f.vid[0]].pos.y;
         float az = verts.begin()[f.vid[2]].pos.z - verts.begin()[f.vid[0]].pos.z;
-        b.x = verts.begin()[f.vid[1]].pos.x - verts.begin()[f.vid[0]].pos.x;
-        b.y = verts.begin()[f.vid[1]].pos.y - verts.begin()[f.vid[0]].pos.y;
-        b.z = verts.begin()[f.vid[1]].pos.z - verts.begin()[f.vid[0]].pos.z;
+        // the second edge through corners re-derived from the face list (the original reloads vid[0] here)
+        const vector4& p0 = verts.begin()[faces.begin()[i].vid[0]].pos;
+        const vector4& p1 = verts.begin()[faces.begin()[i].vid[1]].pos;
+        b.x = p1.x - p0.x;
+        b.y = p1.y - p0.y;
+        b.z = p1.z - p0.z;
         t.x = b.y * az - b.z * ay;
         t.y = b.z * ax - az * b.x;
         t.z = ay * b.x - b.y * ax;
@@ -675,12 +687,12 @@ void PolyMesh::compute_face_normals()
 // @ 0x470750
 void PolyMesh::compute_edge_creases()
 {
-    vector4 d, s, n;                       // direction of the edge, projected part, perpendicular part
+    vector4 s, n;                          // projected part, perpendicular part
     for (unsigned i = 0; i < edges.size(); i++) {
         MEdge* e = &edges.begin()[i];
         MVert& a = verts.begin()[e->v0];
         MVert& b = verts.begin()[e->v1];
-        d.x = b.pos.x - a.pos.x; d.y = b.pos.y - a.pos.y; d.z = b.pos.z - a.pos.z;
+        vector4 d = b.pos - a.pos;         // direction of the edge (a loop-scoped temporary: the x87 order of its normalisation)
         float mz = e->mid.z;
         float len = d.length();
         if (len > 1e-10f) {

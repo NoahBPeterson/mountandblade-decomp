@@ -19,6 +19,7 @@
 #include <io.h>
 #include <new>
 #include "../../rgl/rgl_string.h"      // rgl::string::read_from (0x4151e0)
+#define RecH RecH_hdr
 #include "./trigger_vec.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
@@ -33,6 +34,16 @@
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#undef RecH
+
+// The trigger-entry record as this module sees it: the header's RecH (records.h) has no constructor, but the original
+// entry_vec_resize's array-new loop stores 0 into the SubB pointer slot, i.e. it ran a user-provided constructor.
+struct RecH {
+    tstring name;
+    SubB s;
+    int tail;
+    RecH() { s.ptr = 0; }
+};
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_compatible_module_version;                            // 0x5e29b8
@@ -1395,19 +1406,26 @@ AnimSet g_anim_set;                                     // 0xa76628 (.bss; no co
 
 AnimSet::~AnimSet()
 {
-    delete[] data;
+    delete[] (RecH_hdr*)data;
 }
+
+// force the 139-byte vector deleting destructor COMDAT outside the inline_depth(0) region
+void force_del(RecH* p) { delete[] p; }
+
+#pragma inline_depth(0)
+inline void clear_a(AnimSet* t) { delete[] (RecH*)t->data; }
+#pragma inline_depth()
 
 // @ 0x4c2250
 int __cdecl entry_vec_resize(stream_base* sp, AnimSet* self)
 {
     stream_base& s = *sp;
     AnimSet* t = self;
-    delete[] t->data;
+    clear_a(t);
     s.r_int(&t->count);
-    t->data = new RecH[t->count];
+    t->data = (RecH_hdr*)new RecH[t->count];
     for (int i = 0; i < t->count; i++)
-        read_entry(s, t->data[i]);
+        read_entry(s, ((RecH*)t->data)[i]);
     return (int)&s;
 }
 
@@ -1468,10 +1486,11 @@ void MenuRec::read(stream_base& s)
     }
     int& n = count;
     s.r_int(&n);
-    if (n != 0)
+    if (n != 0) {
         items = new menu_item[n];
-    for (int i = 0; i < n; i++)
-        items[i].read(&s, &id);
+        for (int i = 0; i < n; i++)
+            items[i].read(&s, &id);
+    }
 }
 
 // ---- the music monitor (global object, 0x2474 bytes: 0x100 track records of 0x20 bytes from +0, play state from +0x2008) --------

@@ -1304,8 +1304,10 @@ void Mission::add_amount(int idx, unsigned flags)
 // ---- test whether a candidate (b) passes the filter flags of a rule (a) -------------------------------------
 
 // @ 0x467940
-bool __stdcall rule_accepts(RuleRec* a, CandRec* b, int p3, char p4, char p5, char p6)
+bool Mission::rule_accepts(SpawnRec* ra, Stack* sb, int p3, char p4, char p5, char p6)   // a member that ignores this
 {
+    RuleRec* a = (RuleRec*)ra;      // the fields this test reads, as misc.h names them
+    CandRec* b = (CandRec*)sb;
     bool ok = true;
     if (b->f8 & 1) ok = false;
     unsigned fl = a->flags;

@@ -504,7 +504,9 @@ int __fastcall sort_value(ItemRef* e)
 {
     int idx = e->item;
     if (idx >= 0) {
-        float x = (float)g_items[idx].value * g_sort_val[e->b.mod * 5].v;
+        float v = (float)g_items[idx].value;
+        int mod = (signed char)(e->m4 >> 24);
+        float x = v * g_sort_val[mod * 5].v;
         return rnd(&x);
     }
     return 0;
@@ -1011,20 +1013,25 @@ tstring GameData::get_name()
     return *(tstring*)((char*)this + 0xe028);
 }
 
-// @ 0x489c50
-int GameData::count_in(int id, int idx, char flag)
+static __forceinline int count_inv2(Troop* base, int idx, int id)
 {
     int c = 0;
-    Troop* t = &troops[idx];
-    int n = t->inv_count();
+    int n = base[idx].inv_count();
     if (n > 0) {
-        ItemRef* e = t->inv;
+        ItemRef* e = base[idx].inv;
         do {
             if (e->item == id)
                 c++;
             e++;
         } while (--n);
     }
+    return c;
+}
+
+// @ 0x489c50
+int GameData::count_in(int id, int idx, char flag)
+{
+    int c = count_inv2(troops, idx, id);
     if (flag) {
         if (troops[idx].equip[0].item == id) c++;
         if (troops[idx].equip[1].item == id) c++;
@@ -1044,12 +1051,10 @@ int GameData::count_in(int id, int idx, char flag)
 int GameData::sl_take(int group, int item, int want, char extras)
 {
     int total = 0;
-    Troop* t = &troops[group];
-    int n = t->inv_count();
-    for (int i = 0; i < n; i++) {
-        if (want == 0)
-            break;
-        ItemRef* p = (ItemRef*)((char*)troops + 0xb4) + group * 0xa1 + i;
+    int n = troops[group].inv_count();
+    ItemRef* base = (ItemRef*)((char*)troops + 0xb4) + group * 0xa1;
+    for (int i = 0; i < n && want > 0; i++) {
+        ItemRef* p = base + i;
         if (p->item == item) {
             total += sort_value(p);
             p->item = -1;
@@ -1057,18 +1062,14 @@ int GameData::sl_take(int group, int item, int want, char extras)
         }
     }
     if (extras) {
-        int i = 0;
-        ItemRef* base = (ItemRef*)((char*)troops + 0x4a4);
-        while (i < 10) {
-            if (want == 0)
-                break;
-            ItemRef* p = base + group * 0xa1 + i;
+        ItemRef* ebase = (ItemRef*)((char*)troops + 0x4a4) + group * 0xa1;
+        for (int i = 0; i < 10 && want > 0; i++) {
+            ItemRef* p = ebase + i;
             if (p->item == item) {
                 total += sort_value(p);
                 p->item = -1;
                 want--;
             }
-            i++;
         }
     }
     return total;
@@ -1154,27 +1155,25 @@ int GameData::sl_pick_chain(int leader, char lancer)
     int chain[32];
     chain[0] = leader;
     int n = 0;
-    if (troops[leader].f50 > 0) {
-        do {
-            chain[n + 1] = troops[chain[n]].f50;
-            n++;
-        } while (troops[chain[n]].f50 > 0);
+    while (troops[chain[n]].f50 > 0) {
+        chain[n + 1] = troops[chain[n]].f50;
+        n++;
     }
     int cnt = troops[cur_troop].fb0 / 3 + 1;
     int r;
-    if (cnt > 1)
-        r = rand() % cnt;
-    else
+    if (cnt <= 1)
         r = 0;
-    r++;
+    else
+        r = rand() % cnt;
+    int r2 = r + 1;
     int lo = 1;
     if (lancer)
         lo = 0;
-    if (r < lo)
-        r = lo;
-    if (r > n)
+    if (r2 < lo)
+        r2 = lo;
+    if (r2 > n)
         return chain[n];
-    return chain[r];
+    return chain[r2];
 }
 
 // @ 0x48a150
@@ -1183,8 +1182,10 @@ int GameData::template_count(int party, int cell, float)
     char* base = (char*)&g_party_templates[party];
     int roll = rand() % 0x3dc9;
     float f = (float)roll * 6.322312e-05f;
-    f = f * (float)(range_hi - range_lo);
-    f = (f + range_lo) * (*(int*)(base + cell * 0x10 + 0x48) - *(int*)(base + cell * 0x10 + 0x44));
+    int lo = range_lo;
+    int hi = range_hi;
+    f = f * (float)(hi - lo);
+    f = (f + lo) * (*(int*)(base + cell * 0x10 + 0x48) - *(int*)(base + cell * 0x10 + 0x44));
     f = f * 0.01f;
     return *(int*)(base + cell * 0x10 + 0x44) + rnd(&f);
 }

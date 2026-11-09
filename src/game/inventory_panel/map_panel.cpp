@@ -118,11 +118,6 @@ struct camera_ray {
     void screen_to_world(vector4* near_pt, vector4* far_pt);   // 0x4bd2f0 (game/config/config.h)
 };
 
-static inline Party* party_at(GameData* g, int id)
-{
-    int i = g->parties.lookup(id);
-    return g->parties.pages[i >> 4] + (i & 0xf);
-}
 
 struct DistObj;
 bool __fastcall dist_is_zero(DistObj* o);                                 // 0x51be20 (map_tooltip.cpp)
@@ -310,7 +305,7 @@ void MapPanel::update_target()
             if (o->game_id == g_game->f78) d += 0.35f;
         }
         if (!(d < bestd)) continue;
-        if (kind == 1 && (party_at(g_game, o->game_id)->flags_lo & 0x80100)) continue;
+        if (kind == 1 && (g_game->parties.get_w(o->game_id)->flags & 0x80100)) continue;
         bestd   = d;
         bestobj = o;
     }
@@ -330,7 +325,7 @@ void MapPanel::update_target()
         int kind = bestobj->map_kind;
         if (kind == 1) {
             int id = bestobj->game_id;
-            if (!(party_at(g_game, id)->flags_lo & 0x80000))
+            if (!(g_game->parties.get_w(id)->flags & 0x80000))
                 update(1, id);
         } else if (kind == 2) {
             update(2, bestobj->game_id);
@@ -371,41 +366,41 @@ void MapPanel::update_target()
                     // 0x519c9e..0x519cd5: both arms are the same store (the `0x400` flags test survives
                     // only as a dead select); reproduced verbatim.
                     PartyMgr& pm = g_game->parties;
-                    if (pm.get_w(id)->flags_lo & 0x400)
+                    if (pm.get_w(id)->flags & 0x400)
                         pm.get_w(me)->action = 4;
                     else
                         pm.get_w(me)->action = 4;
-                    party_at(g_game, g_game->f78)->target = bestobj->game_id;
-                    party_at(g_game, g_game->f78)->reissue_order();
+                    g_game->parties.get_w(g_game->f78)->target = bestobj->game_id;
+                    g_game->parties.get_w(g_game->f78)->reissue_order();
                 }
             } else if (kind == 3) {
                 int id = bestobj->game_id;
                 AgentRec* rec = ((AgentRec**)g_game->agent_pages)[(unsigned)id >> 4] + (id & 0xf)   /* 0x519d57: shr */;
                 if (rec->kind == 1) {
-                    party_at(g_game, g_game->f78)->action = 4;
-                    party_at(g_game, g_game->f78)->target = rec->party;
-                    party_at(g_game, g_game->f78)->reissue_order();
+                    g_game->parties.get_w(g_game->f78)->action = 4;
+                    g_game->parties.get_w(g_game->f78)->target = rec->party;
+                    g_game->parties.get_w(g_game->f78)->reissue_order();
                 } else if (rec->kind == 2) {
-                    party_at(g_game, g_game->f78)->action = 9;
-                    party_at(g_game, g_game->f78)->target = bestobj->game_id;
-                    party_at(g_game, g_game->f78)->reissue_order();
+                    g_game->parties.get_w(g_game->f78)->action = 9;
+                    g_game->parties.get_w(g_game->f78)->target = bestobj->game_id;
+                    g_game->parties.get_w(g_game->f78)->reissue_order();
                 }
             }
         } else if (best >= 0) {
             bool go = true;
             if (g_keyboard.down[0x1d] && g_cfg.cheat_mode) {
-                *(vector4*)&party_at(g_game, g_game->f78)->pos = bestpt;
+                *(vector4*)&g_game->parties.get_w(g_game->f78)->pos = bestpt;
             } else if (!g_script.level->ground->shares(rec_index,
-                                               *(const int*)((char*)party_at(g_game, g_game->f78)->mesh + 4))) {
+                                               *(const int*)((char*)g_game->parties.get_w(g_game->f78)->mesh + 4))) {
                 go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
             }
             if (go) {
-                party_at(g_game, g_game->f78)->action = 6;
+                g_game->parties.get_w(g_game->f78)->action = 6;
                 vector2 xy(bestpt.x, bestpt.y);
-                Party* pl = party_at(g_game, g_game->f78);
+                Party* pl = g_game->parties.get_w(g_game->f78);
                 pl->order_pos.x = xy.x;
                 pl->order_pos.y = xy.y;
-                party_at(g_game, g_game->f78)->reissue_order();
+                g_game->parties.get_w(g_game->f78)->reissue_order();
             }
         }
     }
@@ -435,7 +430,7 @@ void MapPanel::update_target()
         Party* dst = pm.get_w(me);
         dst->order_pos.x = src->pos.x;
         dst->order_pos.y = src->pos.y;
-        party_at(g_game, g_game->f78)->reissue_order();
+        g_game->parties.get_w(g_game->f78)->reissue_order();
 
         {
             tstring tmp("ui_target_lost");
@@ -450,7 +445,7 @@ void MapPanel::update_target()
         g = g_game;
     }
 reissue:
-    party_at(g, g->f78)->reissue_order();
+    g->parties.get_w(g->f78)->reissue_order();
 }
 
 // @ 0x51a2d0

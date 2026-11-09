@@ -465,16 +465,16 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     { tstring s(buf); g_gui.draw_string(&s, 0.025f, 0xfff0e0d0, 1); }
 
     {
-    unsigned int flags = it->type_flags;
-    unsigned int kind = flags & 0xff;
-    if (kind == 2 || kind == 3 || kind == 4) {
-        if (kind == 4) {
-            if (flags & 0x200000)
+    // the type re-read in every test, no kind/flags locals: with a local cl threads kind==4 past the inner test
+    // (an extra jmp at 0x51104a); on the field the original keeps the second `cmp eax,4`
+    if ((it->type_flags & 0xff) == 2 || (it->type_flags & 0xff) == 3 || (it->type_flags & 0xff) == 4) {
+        if ((it->type_flags & 0xff) == 4) {
+            if (it->type_flags & 0x200000)
                 sprintf(buf, g_strtable.lookup("ui_polearm_no_shield")->c_str());
             else
                 sprintf(buf, g_strtable.lookup("ui_polearm")->c_str());
-        } else if (kind == 3) {
-            if (flags & 0x200000)
+        } else if ((it->type_flags & 0xff) == 3) {
+            if (it->type_flags & 0x200000)
                 sprintf(buf, g_strtable.lookup("ui_two_handed")->c_str());
             else
                 sprintf(buf, g_strtable.lookup("ui_two_handed_one_handed")->c_str());

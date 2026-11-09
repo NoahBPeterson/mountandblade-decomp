@@ -68,7 +68,7 @@
 ../src/game/world_data/world_data.cpp  ?all_defeated@MissionW@@QAE_NH@Z  004920e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?handout@GameW@@QAEXPAUParty@@H@Z  00491430  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?spread_party_experience@GameW@@QAEXH@Z  004957d0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?set_pos@GameW@@QAEXMMHM@Z  00491e50  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?set_pos@GameW@@QAEXUVec2@@HM@Z  00491e50  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?append@DropDown@@UAEXPBUtstring@@@Z  00493400  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?mark_kind@GameW@@QAEXH@Z  00490990  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?render@DropDown@@UAEXPAUscene@rgl@@PAMHH@Z  004932a0  /O2 /MT /Gy /TP

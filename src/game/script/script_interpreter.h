@@ -48,7 +48,7 @@ struct GameW {                                                               // 
     void recruit(int id, int count, Party* dest);                          // 0x4910a0
     void remove_party(int id);                                              // 0x4915d0
     void set_objective(int party, int value);                               // 0x4949d0
-    void set_pos(float x, float y, int id, float radius);                   // 0x491e50
+    void set_pos(Vec2 at, int id, float radius);                            // 0x491e50
     void set_quest_cancelled(int quest);                                    // 0x4948c0
     void set_quest_concluded(int quest);                                    // 0x4947a0
     void share_experience(int party, float amount);                         // 0x494b60
@@ -506,7 +506,6 @@ struct GameX {
     __forceinline void give_item(int troop, int item, int count) { ((GameData*)this)->give_item(troop, item, count); }                 // 0x48c9b0 (ret 0xc)
     __forceinline int sl_take(int troop, int item, int count, char a4) { return ((GameData*)this)->sl_take(troop, item, count, a4); }  // 0x489d10 (ret 0x10: value removed)
     __forceinline int add_members(int party, int troop, int count, char prisoners) { return ((GameData*)this)->add_members(party, troop, count, prisoners); }   // 0x48f8f0 (ret 0x10: number added)
-    __forceinline void set_pos(float x, float y, int party, float radius) { ((GameW*)this)->set_pos(x, y, party, radius); }           // 0x491e50 (ret 0x10)
     __forceinline void random_position_around(float x, float y, float radius, rgl::vector4* out) { ((GameW*)this)->random_position_around(Vec2(x, y), radius, (Vec2*)out); }   // 0x490030 (ret 0x10)
     __forceinline char position_around(float x, float y, float radius, rgl::vector4* out, char water) { return ((GameW*)this)->position_around(Vec2(x, y), radius, (Vec2*)out, water); }   // 0x490160 (ret 0x14)
     __forceinline int count_troops(int troop, int party, char prisoners) { return ((GameData*)this)->count_troops(troop, party, prisoners); }   // 0x48f790 (ret 0xc)
@@ -568,7 +567,7 @@ struct PropInst {                       // 0x1c8-byte scene prop instance
 };
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
 namespace std { template<> PlacedObj& vector<PlacedObj, allocator<PlacedObj> >::operator[](size_t); }   // 0x438c10 (agent2/agent_stats.cpp: the out-of-line instance)
-__forceinline PropInst* prop_at(PropVec& v, int id) { return (PropInst*)&v[id]; }   // the script's view of the record; operator[] stays out of line (thiscall, ret 4)
+#define prop_at(v, id) ((PropInst*)&(v)[id])   // the script's view of the record; operator[] stays out of line (thiscall, ret 4)
 // the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)
 struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
 // TeamRec (0x16c bytes at mission +0x5280): src/game/mission.h

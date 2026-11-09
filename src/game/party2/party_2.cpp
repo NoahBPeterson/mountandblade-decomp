@@ -846,7 +846,10 @@ void Party::set_order_party(int* t)
         float dy = pp->y - pos.y;
         float dz = pp->z - pos.z;
         moving = 0;
-        if (sqrtf(dx * dx + dy * dy + dz * dz) > 3.0f) {
+        float s = dx * dx;
+        s += dy * dy;
+        s += dz * dz;
+        if (sqrtf(s) > 3.0f) {
             f5988 = 1;
         }
     }
@@ -1519,7 +1522,8 @@ void Party::step_route()
         }
         float ndx = pos.x - d.x;
         float ndy = pos.y - d.y;
-        float dist = ndx * ndx + ndy * ndy;
+        float dist = ndx * ndx;
+        dist += ndy * ndy;
         if (dist < lim && ((rgl::world*)g_script.level)->ground->can_move(cur, pos.x, pos.y, goal, &d.x, 0, tries))
             cursor = i + 1;
     }

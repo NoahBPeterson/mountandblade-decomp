@@ -46,6 +46,14 @@ except (OSError, ValueError):
     _ie = {}
 insn_exact = {int(a, 16) for a, r in _ie.get("rows", {}).items() if r.get("verdict") == "INSN-EXACT"} & game - exact
 migrated = S["migrated"] & done
+# Near-exact: hand-reviewed rows that differ only in register/slot choice (docs/near_exact.txt). Their own tier, not
+# counted in `done`; an equivalence FAIL wins over it.
+try:
+    near = {int(l.split()[0], 16) for l in open(W("docs", "near_exact.txt"))
+            if l.strip() and not l.startswith("#")} & game - exact
+except (OSError, ValueError):
+    near = set()
+near_shown = {a for a in near if _verd.get("%08x" % a) not in ("FAIL", "FAIL-FP")}
 
 
 def table(headers, rows):
@@ -81,7 +89,9 @@ print(table(["Instruction-exact (not counted above)", "Functions", "Share", "Ins
              "Share (size)"],
             [row("Same instructions, renamed registers/slots", insn_exact),
              row("  of which: equivalent (STRONG pass)", insn_exact & equiv),
-             row("  of which: weak / untestable / FAIL", insn_exact & equiv_fail)]))
+             row("  of which: weak / untestable / FAIL", insn_exact & equiv_fail),
+             row("Near-exact: register choice only (docs/near_exact.txt)", near),
+             row("  of which: equivalence FAIL (shown as FAIL)", near - near_shown)]))
 _sw = [(int(a, 16), r) for a, r in _ie.get("rows", {}).items() if r.get("cases")]
 if _sw:
     print()
@@ -277,7 +287,8 @@ def plot_history(path):
     now = datetime.datetime.now().astimezone()
     live = {"exact": 100.0 * len(exact) / G, "comp": 100.0 * len(done) / G, "mig": 100.0 * len(migrated) / G,
             "exact_sz": 100.0 * nbytes(exact) / B, "comp_sz": 100.0 * nbytes(done) / B,
-            "mig_sz": 100.0 * nbytes(migrated) / B}
+            "mig_sz": 100.0 * nbytes(migrated) / B,
+            "near": 100.0 * len(exact | near_shown) / G, "near_sz": 100.0 * nbytes(exact | near_shown) / B}
     # One saved point per --plot run, keyed by its timestamp (older files were keyed by date, one entry per day;
     # re-keying them by their 'when' keeps those points).
     hist_path = W("docs", "progress_history.json")
@@ -330,21 +341,24 @@ def plot_history(path):
     fig, grid = plt.subplots(nrows, 2, figsize=(12, 4.4 * nrows + 1.6), dpi=150, squeeze=False)
     axes = grid[0]
     fig.patch.set_facecolor(SURFACE)
-    for ax, (title, ke, kc, km) in zip(axes, (("Share of functions", "exact", "comp", "mig"),
-                                              ("Share of code size", "exact_sz", "comp_sz", "mig_sz"))):
+    for ax, (title, ke, kc, km, kn) in zip(axes, (("Share of functions", "exact", "comp", "mig", "near"),
+                                                  ("Share of code size", "exact_sz", "comp_sz", "mig_sz", "near_sz"))):
         ax.set_facecolor(SURFACE)
         # `mig` is migrated AND counted in `comp` (migrated = S["migrated"] & done), so once the migration finished it
         # only repeats `comp` and hid it: draw it just where the two differ, and don't call it the migrated share today.
         for key, color, label in ((km, AQUA, "Moved into src/ (migration phase only)"),
-                                  (kc, ORANGE, "Byte-exact + equivalence PASS"), (ke, BLUE, "Byte-exact")):
+                                  (kc, ORANGE, "Byte-exact + equivalence PASS"),
+                                  (kn, "#3B2F8F", "Byte-exact + near-exact (register choice only, reviewed)"),
+                                  (ke, BLUE, "Byte-exact")):
             val = (lambda p, key=key: p.get(key, 0.0)) if key == km else (lambda p, key=key: p.get(key))
             use = [(t, val(p)) for t, p in pts if val(p) is not None
                    and (key != km or p.get(kc) is None or val(p) < p[kc] - 0.05)]
             if not use:
                 continue
             xs, ys = zip(*use)
-            ax.plot(xs, ys, color=color, lw=2, marker="o", ms=4, label=label, solid_capstyle="round")
-            if key != km:
+            ax.plot(xs, ys, color=color, lw=2, marker="o", ms=4, label=label, solid_capstyle="round",
+                    ls="--" if key == kn else "-")
+            if key not in (km, kn):
                 ax.annotate("%.1f%%" % ys[-1], (xs[-1], ys[-1]), xytext=(6, 0), textcoords="offset points",
                             va="center", fontsize=9, color=INK)
         ax.set_ylim(0, ymax)
@@ -428,6 +442,7 @@ def plot_history(path):
 # Okabe-Ito (colour-blind safe): one hue per verdict, exactly one grey (comdat) and white (no source). The four
 # "untested/unknown" kinds used to be four shades of grey, which is what made the treemap unreadable.
 TREE_CATS = (("byte-exact", "Byte-exact", "#0072B2"),                    # blue
+             ("near-exact", "Near-exact: register choice only (reviewed, not counted)", "#3B2F8F"),  # indigo
              ("equivalent", "Equivalent: STRONG pass", "#009E73"),        # bluish green
              ("weak", "Weak: some branch never taken", "#E69F00"),        # orange
              ("fail", "FAIL: a mismatch", "#D55E00"),                     # vermillion
@@ -507,6 +522,8 @@ def _tree_rows():
             cat = "byte-exact"
         elif a in equiv:
             cat = "equivalent"
+        elif a in near_shown:
+            cat = "near-exact"
         else:
             v, c = verd.get(a, (None, None))
             cat = ("equivalent" if v in ("PASS", "PASS-FP") else "fail" if v in ("FAIL", "FAIL-FP") else

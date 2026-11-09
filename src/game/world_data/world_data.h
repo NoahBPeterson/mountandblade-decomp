@@ -120,7 +120,7 @@ struct GameW : GameData {
     void remove_party(int id);                                      // 0x4915d0 (ret 4)
     bool can_transfer(unsigned id, int other, char flag);       // 0x4918d0 (ret 0xc)
     int gate_rating(unsigned p1, unsigned p2, int p3);          // 0x491b20 (ret 0xc)
-    void set_pos(float x, float y, int id, float radius);       // 0x491e50 (ret 0x10)
+    void set_pos(Vec2 at, int id, float radius);                // 0x491e50 (ret 0x10)
     int token_lookup(int a, int b, int c, int d);               // 0x491f20 (ret 0x10)
     void transfer_stack(int a, int b, char flag);               // 0x492530 (ret 0xc)
     void quest_done(int quest);                                 // 0x494410 (ret 4)

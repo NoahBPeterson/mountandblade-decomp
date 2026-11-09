@@ -21,6 +21,8 @@
 #include "../../include/clock_table.h"
 #include "../../include/render_flags.h"
 
+extern "C" void _ReadWriteBarrier(void);   // compiler fence: cl 13.10 ships no <intrin.h> (docs/codegen.md 10)
+
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 ShadowMap g_shadow_map;                             // 0xa70248 (.bss: target, target2, surf, w, h, ... zero until setup())
 
@@ -208,11 +210,8 @@ __declspec(noinline) void ShadowMap::pick_size()   // setup 0x463e90 calls it; w
 vector4 ShadowMap::to_unit(const vector4& p)
 {
     vector4 l = cam->world.transform_point_to_local(p);
-    const vector4* mn = &cam->vmin;
-    l.x -= mn->x; l.y -= mn->y; l.z -= mn->z;
-    LightCam* c = cam;
-    l.x /= c->size.x; l.y /= c->size.y; l.z /= c->size.z;
-    return l;
+    vector4 d(l.x - cam->vmin.x, l.y - cam->vmin.y, l.z - cam->vmin.z);
+    return vector4(d.x / cam->size.x, d.y / cam->size.y, d.z / cam->size.z);
 }
 
 // @ 0x463cc0
@@ -282,8 +281,10 @@ void ShadowMap::setup()
     f->build_planes();
     f = &cam->fr;
     f->perspective = 0;
-    f->farz = dz + 20.0f;
+    _ReadWriteBarrier();     // pins the farz x87 chain (fld/fadd/fstp) ahead of the l/r/b/t word stores, as in the original
+    _ReadWriteBarrier();
     f->nearz = 20.0f;
+    f->farz = dz + 20.0f;
     f->left = lo.x;
     f->right = hi.x;
     f->bottom = lo.y;

@@ -12,3 +12,4 @@
 ../src/game/inventory_panel/inventory_panel.cpp  ?try_place@PartyWindow@@QAE_NPAUItemRef@@HH@Z  005134c0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?refresh_lists@PartyWindow@@QAEXH@Z  005108d0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?commit@MapFlags@@QAEXPAD@Z  00513710  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?place_slot_mesh@PartyWindow@@QAEXPAUItemRef@@PAMHH@Z  00510fa0  /O2 /MT /Gy /TP
