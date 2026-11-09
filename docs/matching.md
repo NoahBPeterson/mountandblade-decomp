@@ -67,6 +67,13 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
   `docs`, other slices); never run git or Ghidra. If the shared header lacks something, declare it locally in
   your slice and say so in your report (the orchestrator merges it into `match/include`).
 
+- Compiler-generated static initialisers (the original's 0x5479a0..0x5484b0: `mov ecx, <global>; call <ctor>; push <dtor thunk>;
+  call atexit`, and the thunks) are module manifest rows named by the object's local symbols `_$E<n>` (section `.text$yc` =
+  initialiser, `.text$yd` = destructor thunk). run_all.py needs no special handling (the name is an exact symbol). The number
+  is the compiler's count in that translation unit, so adding or removing a global with a constructor renumbers the rows:
+  run_all then fails and the rows are re-paired by bytes (global address + the thunk each initialiser pushes). The module that
+  owns one is the module whose `.cpp` defines the global it constructs.
+
 ## Tools (from the repo root)
 - `.venv/bin/python tools/matching/card.py <va> [...]`: annotated disassembly + Ghidra decompile.
 - `.venv/bin/python tools/matching/chk.py <file.cpp> <slice-id | va,va,...> [-a]`: ONE compile, diff count for
