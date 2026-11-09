@@ -204,7 +204,7 @@ def run(r, out, extra, force=False):
         return
     prev = fn_cache().get(r["va"])
     if prev and not force and os.path.exists(prev.get("json", "")):
-        k = row_key(r, prev.get("symbol"), prev.get("flags"), extra)
+        k = row_key(r, prev.get("symbol"), prev.get("flags"), [])
         if k and k == prev.get("key"):
             if os.path.abspath(prev["json"]) != os.path.abspath(js):
                 import shutil
@@ -224,7 +224,7 @@ def run(r, out, extra, force=False):
         os.replace(js + ".part", js)
     else:
         json.dump([{"verdict": "CRASH"}], open(js, "w"))
-    record(r, js, extra)
+    record(r, js, [])          # the key leaves out --extra (a time limit changes the effort, not the code tested)
 
 
 def record(r, js, extra):
@@ -266,11 +266,25 @@ def main():
     ap.add_argument("--filter")
     ap.add_argument("--tally", action="store_true")
     ap.add_argument("--extra", default="")
+    ap.add_argument("--vas", help="file of VAs (one per line): run only these rows")
+    ap.add_argument("--list-stale", action="store_true", help="print the rows whose compiled function or options changed "
+                    "since their recorded run (or that have none) and exit")
     ap.add_argument("--force", action="store_true", help="re-run every row, even one whose compiled function is unchanged "
                     "since its last run (after a harness change)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     rs = [r for r in rows() if not a.filter or a.filter in r["id"] or a.filter in r["va"]]
+    if a.vas:
+        want = {l.strip().lower() for l in open(a.vas) if l.strip()}
+        rs = [r for r in rs if r["va"] in want]
+    if a.list_stale:
+        fc = fn_cache()
+        for r in rs:
+            prev = fc.get(r["va"])
+            k = prev and os.path.exists(prev.get("json", "")) and row_key(r, prev.get("symbol"), prev.get("flags"), a.extra.split())
+            if not (k and k == prev.get("key")):
+                print(r["va"])
+        return 0
     if not a.tally:
         with ThreadPoolExecutor(a.workers) as ex:
             list(ex.map(lambda r: run(r, a.out, a.extra.split(), force=a.force), rs))
