@@ -213,7 +213,7 @@ void FxElem::add_to_first(rgl::psys* o)
 // @ 0x420ec0
 void FxDef::clear_defs()
 {
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; count > i; i++) {
         for (std::vector<rgl::mesh*>::iterator it = elems[i].psys.begin(); it != elems[i].psys.end(); ++it)
             delete *it;
         elems[i].psys.resize(0, 0);

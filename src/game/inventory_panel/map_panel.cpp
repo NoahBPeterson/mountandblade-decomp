@@ -816,8 +816,8 @@ void MapPanel::update(int type, int id)
                         if (g_module_settings.show_faction_color) {
                             fcol = g_game->factions[fac].color;
                         } else {
-                            const float& r = g_game->factions[fac].rel[0];
                             fcol = 0xffffffffu;
+                            const float& r = g_game->factions[fac].rel[0];
                             if (r < -0.001f) fcol = 0xffff4422u;
                             else if (r > 0.001f) fcol = 0xff44ff22u;
                         }

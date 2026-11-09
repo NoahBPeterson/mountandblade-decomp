@@ -80,8 +80,8 @@ void MissionScreen::fill_mission_grid()
                 const tstring* txt = g_strtable.find(&u->key);
                 if (!txt)
                     txt = (const tstring*)u;
-                vt(overlay)->d43((void*)txt, v);
                 cell++;
+                vt(overlay)->d43((void*)txt, v);
                 y -= 0.02f;
             }
             y -= 0.005f;

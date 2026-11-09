@@ -317,9 +317,9 @@ void PartyWindow::init_window()
 // @ 0x502620
 void PartyWindow::refresh_armor(MissionUi** labels, int t)
 {
+    int legs = 0;
     int head = 0, body = 0;
     float enc = 0.0f;
-    int legs = 0;
     for (int i = 0; i < 8; i++) {
         ItemRef* r = (ItemRef*)&EQUIP(t, i);
         if (r->item < 0)

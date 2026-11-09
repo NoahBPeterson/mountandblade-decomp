@@ -87,8 +87,8 @@ Light::Light() throw()
     base_color.x = z.x; base_color.y = z.y; base_color.z = z.z; base_color.w = z.w;
     pos.x = z.x; pos.y = z.y; pos.z = z.z; pos.w = z.w;
     v34.x = z.x; v34.y = z.y; v34.z = z.z; v34.w = z.w;
-    dir = vector4(0.0f, 1.0f, 0.0f);
     type = 0;
+    dir = vector4(0.0f, 1.0f, 0.0f);
     range = 0.0f; f58 = 0.0f; f5c = 1.0f; f60 = 0.0f; f64 = 0.0f; f68 = 0.0f; flags = 0;
     flicker_magnitude = 0.0f;
     flicker_interval = 0.0f;

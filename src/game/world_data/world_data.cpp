@@ -389,8 +389,8 @@ void GameData::count_units(unsigned id, int* a, int* b, int* c, int* d)
     if (m->atu((unsigned)i)->type != 1)
         return;
     if (m->at(m->lookup(id))->nstacks > 0) {
-        int k = 0;
         int n = 0;
+        int k = 0;
         do {
             if ((*(unsigned char*)((char*)m->at(m->lookup(id)) + 0xb0 + k) & 1) != 0) {
                 *c += *(int*)((char*)m->at(m->lookup(id)) + 0xa8 + k);
@@ -644,17 +644,17 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
     }
     int p190 = b->first_flagged();
     int d1 = b->max_stacks() - p190;
+    Troop* chars = troops;
     int p510 = b->count_tail();
     int d2 = b->max_stacks() - p510;
     int na = a->nstacks;
     int c1 = 0, c2 = 0;
-    Troop* chars = troops;
     for (int k = 0; k < na; k++) {
         Stack* s = &a->stacks[k];
         bool matched = false;
         if (!(chars[s->troop].flags30 & 0x10)) {
-            for (int j = 0; j < b->nstacks; j++) {
-                if (b->stacks[j].troop == s->troop) {
+            for (int j = 0; b->nstacks > j; j++) {
+                if (s->troop == b->stacks[j].troop) {
                     if (!flag) {
                         if (((s->flags ^ b->stacks[j].flags) & 1) == 0) matched = true;
                     } else {
@@ -665,7 +665,7 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
             if (matched) continue;
         }
         if (!flag) { if (s->flags & 1) c2++; else c1++; }
-        else       { if (s->flags & 1) c1++; else c2++; }
+        else       { if (!(s->flags & 1)) { c2++; } else { c1++; } }
     }
     if (c1 > d1) return false;
     if (c2 > d2) return false;

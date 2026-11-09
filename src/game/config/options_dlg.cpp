@@ -72,8 +72,8 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
     char* p;
     if (colon) {
         *colon = '\0';
-        lstrcpynA(scheme, s, scheme_n);
         p = colon + 1;
+        lstrcpynA(scheme, s, scheme_n);
     } else {
         lstrcpynA(scheme, "HTTP", scheme_n);
         p = s;

@@ -501,9 +501,9 @@ void Skin::blend(mesh* m, int unused, const float* weights)
             if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
                 float w = (b->f28 - b->f24) * weights[j] + b->f24;
                 d.x = w * t->x;
+                point20* p = (point20*)((char*)m->v70._Myfirst + off);
                 d.y = w * t->y;
                 d.z = w * t->z;
-                point20* p = (point20*)((char*)m->v70._Myfirst + off);
                 v.x = p->a.x + d.x;
                 v.y = p->a.y + d.y;
                 v.z = p->a.z + d.z;

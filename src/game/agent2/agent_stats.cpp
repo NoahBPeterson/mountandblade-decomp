@@ -735,7 +735,7 @@ float PolyMesh::dist(const int* face, const float* p)
             float d = (p[1] - a->pos.y) * ny + (p[0] - a->pos.x) * nx;
             if (!(d < 0.0f)) {
                 in = false;
-                if (out < d) out = d;
+                if (d > out) out = d;
             }
             vi++;
         } while (i < n);
@@ -745,7 +745,7 @@ float PolyMesh::dist(const int* face, const float* p)
 have_out:
     const MVert* a0 = &verts[f->vert_p()[0]];
     float dz = p[2] - (a0->pos.z - ((p[0] - a0->pos.x) * f->normal.x + (p[1] - a0->pos.y) * f->normal.y) / f->normal.z);
-    if (-1.0f < dz && dz < 0.1f)
+    if (dz > -1.0f && dz < 0.1f)
         dz = 0.0f;
     return (float)fabs(dz) + out;
 }
@@ -823,10 +823,10 @@ bool PolyMesh::trace(int face, vector4 from, int end_face, const float* to, int*
 // @ 0x4396b0
 void rgl::cell::collect_masked(unsigned mask, shape_base** out, int* count)
 {
+    int n = 0;
     shape_base* buf[0x2000];
     unsigned i = 0;
     int k = 0;
-    int n = 0;
     while (i < a.size()) {
         shape_base* sh = a[i];
         if (sh->m8 & mask) {
@@ -846,8 +846,8 @@ void rgl::cell::collect_masked(unsigned mask, shape_base** out, int* count)
                 continue;
             }
         }
-        i++;
         buf[n++] = sh;
+        i++;
     }
     if (k < *count) {
         int m = *count - k;

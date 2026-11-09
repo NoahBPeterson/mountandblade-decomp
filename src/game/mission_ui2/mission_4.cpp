@@ -66,7 +66,7 @@ bool NavData::shares(const int& a, const int& b) const
         if (t >= 0)
             bj = t;
     }
-    return ai == bi || ai == bj || aj == bi || aj == bj;
+    return ai == bi || bj == ai || aj == bi || aj == bj;
 }
 
 // @ 0x48f020

@@ -191,14 +191,14 @@ gui_manager::gui_manager()
     panel_color = f1718 = -1;
     *(vec2*)&p24a = gm_vec2(0.0f, 0.0f);
     *(vec2*)&p24a = gm_vec2(0.0f, 0.0f);
-    *(vec2*)&mouse[0] = gm_vec2(0.0f, 0.0f);
-    vec2 prev = gm_vec2(0.0f, 0.0f);
     show_cursor = 1;
     drag = 0;
     overlay = 0;
     label_obj = 0;
     fa0 = 0;
     fa4 = 0;
+    *(vec2*)&mouse[0] = gm_vec2(0.0f, 0.0f);
+    vec2 prev = gm_vec2(0.0f, 0.0f);
     fa8 = -0.03f;
     corner[0] = 0;
     corner[1] = 0;

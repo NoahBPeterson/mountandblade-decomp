@@ -97,6 +97,7 @@ int __stdcall msg_proc_thunk(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // @ 0x4d9450
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    PROCESS_INFORMATION pi;
     WL_MARKER(12)
     (void)hPrevInstance;
 
@@ -159,7 +160,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     g_app_obj.m_fMinFrameTime = 1.0f / (float)g_cfg.max_framerate;
     g_app_obj.m_bStartFullscreen = (g_cfg.start_windowed == 0);
     STARTUPINFOA si;
-    PROCESS_INFORMATION pi;
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
     memset(&pi, 0, sizeof(pi));
@@ -427,7 +427,7 @@ void gui_manager::rebuild()
     sel_ent = 0;
     if (count > 0) {
         int i;
-        for (i = 0; i < count; i++)
+        for (i = 0; count > i; i++)
             draw_string(&lines[i], line_height[i], line_arg[i], line_wrap[i]);
     }
 }

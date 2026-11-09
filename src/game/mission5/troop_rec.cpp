@@ -44,6 +44,7 @@ static inline void tab_put(PartyMgr* m, int index, int id)
 // @ 0x51eb90
 void PartyMgr::read(stream_base* s, int flag)
 {
+    int index;
     this->reset_ids();
     int n;
     s->r_int(&n);
@@ -62,7 +63,6 @@ void PartyMgr::read(stream_base* s, int flag)
         int live;
         s->r_int(&live);
         if (live != 0) {
-            int index;
             s->r_int(&index);
             int id;
             s->r_int(&id);

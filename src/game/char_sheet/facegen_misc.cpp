@@ -258,8 +258,8 @@ void Animator::pack_state(PackedState* out)
             }
             float fv = *v * 7.0f;
             int fi = grid_count(fv);
-            ((unsigned __int64*)out)[wi] |= (unsigned __int64)fi << sh;
             ++v;
+            ((unsigned __int64*)out)[wi] |= (unsigned __int64)fi << sh;
         } while (++i < skin_vec.first[cur].n_face_keys);
     }
 }

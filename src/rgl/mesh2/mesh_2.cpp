@@ -693,8 +693,8 @@ void StrTable::load(const tstring* root_t)
         bool first = true;
         while (fgets(buf, 5000, g)) {
             bool first_line = first;            // the BOM is only looked for on the file's first line ([esp+0x13] at 0x4cdc71)
-            first = false;
             text.assign(buf);
+            first = false;
             if (first_line && text.len > 2 && text.buf[0] == '\xef' && text.buf[1] == '\xbb' && text.buf[2] == '\xbf')
                 text = text.substr(3, text.len);
             int i = 0;

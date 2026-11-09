@@ -29,9 +29,9 @@ float g_k0_01 = 0.01f;                     // 0x54a6f0
 // @ 0x4e3eb0
 progress_bar::progress_bar()
 {
+    idx = 0;
     rgl::vector4 r(1.0f, 1.0f, 1.0f);
     rect = r;
-    idx = 0;
     handle = 0;
     v168 = 0.01f;
     f184 = 1;
@@ -1180,7 +1180,7 @@ void Terrain::init_map(void* desc)
         }
     }
     rgl::vector4 box = *(rgl::vector4*)((char*)world + 0x68);
-    float f = box.z + box.y;
+    float f = box.y + box.z;
     f = (f + box.x) * g_chunk_scale;
     int row;
     for (row = 0; row < nx; row++) {

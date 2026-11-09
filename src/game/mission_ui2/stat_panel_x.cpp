@@ -213,21 +213,21 @@ Event::Event()
 // @ 0x48c260
 void Event::slot1()
 {
-    f10 = 0;
     name.assign("An Event");
+    f10 = 0;
     f24 = 0;
     f28 = 0.0f;
     f50 = 0;
     float s = 0.0f;
     float c = 1.0f;
-    f34 = s;
     f38 = c;
+    f34 = s;
     float a = (float)(rand() % 15817) * 0.00039724255f;
     float ca = cos(a);
     float sa = sin(a);
     f38 = sa * f34 + ca * f38;
     f34 = ca * s - sa * c;
+    f90 = -1;
     f40 = 0.3f;
     f44 = -10000.0f;
-    f90 = -1;
 }

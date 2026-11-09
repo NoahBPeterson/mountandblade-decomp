@@ -218,8 +218,8 @@ NOINL void Mission::spawn(AgentS* a)
         a->f110 = 7;
         TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop];
         if (*(unsigned long long*)&t->skin & 0x10) {
-            PartyMgr* pm = &g_game->parties;
             int n = 1;
+            PartyMgr* pm = &g_game->parties;
             do {
                 int idx = pm->lookup(g_game->f78);
                 char* page = (char*)pm->pages._Myfirst[idx >> 4];

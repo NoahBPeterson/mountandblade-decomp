@@ -407,7 +407,7 @@ void Party::prepare()
         keep++;
     }
     int dst = 0;
-    for (int j = 0; j < keep; j++) {
+    for (int j = 0; keep > j; j++) {
         if (g_game->troops[stacks[j].troop].flags30 & 0x10) {
             if (dst != j) {
                 rotate_stacks(dst, j);
@@ -774,9 +774,9 @@ void push_back_elem(OpenIt first, OpenIt last, HeapGt comp)
 // @ 0x4b2770
 void BattleRec::bind_host()
 {
+    int clk = born.clock;
     face1 = g_game->find_at(&x1);
     z = face1->w[0].z - ((x1 - face1->w[0].x) * face1->normal.x + (y1 - face1->w[0].y) * face1->normal.y) / face1->normal.z;
-    int clk = born.clock;
     ((int*)&born.start)[0] = ((int*)&g_ticks[clk])[0];
     ((int*)&born.start)[1] = ((int*)&g_ticks[clk])[1];
     next_simulation_time = 1.0f;
@@ -1373,7 +1373,7 @@ void Party::plan_order()
             {
                 Vec2 a(fwd.x * 0.85f, fwd.y * 0.85f);
                 Vec2 b(-d.x, -d.y);
-                d.x = a.x + b.x;
+                d.x = b.x + a.x;
                 d.y = a.y + b.y;
             }
             if (d.y * d.y + d.x * d.x < 1e-13f) {
@@ -2668,8 +2668,8 @@ void Party::update_flags()
     }
     float arg;
     unsigned def = flags_lo & 0xff;
-    rgl::mesh* m2 = 0;
     int rider = f94;
+    rgl::mesh* m2 = 0;
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
     rows_scale(*(Rot3*)&m->m_cc, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     GDP(rgl::mesh*, 0x1a200) = m;

@@ -335,8 +335,8 @@ int GameData::pick_random_item(int t0, int t1, int t2, int t3)
 // @ 0x48cc40
 void GameData::spawn_items(int type, int want, int troop)
 {
-    Troop* ag = &troops[troop];
     int got = 0;
+    Troop* ag = &troops[troop];
     for (int tries = 0; tries < 10000 && got < want; tries++) {
         int idx;
         if (g_item_kind_count <= 1)

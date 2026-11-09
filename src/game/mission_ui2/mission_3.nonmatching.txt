@@ -1,7 +1,7 @@
 0048c5c0	399	float/random-item selection codegen differs (large body, register allocation)
 0048c849	296	second Ghidra function start inside Party::add_members (0x48c840, byte-identical to its 357-byte symbol); suggest symbols/not_functions.txt
 0048ca30	95	large body, register allocation and scheduling differ
-0048cc40	223	large body, register allocation and scheduling differ
+0048cc40	217	large body, register allocation and scheduling differ
 0048cec0	51	semantically equivalent body; cl register choice / instruction order differs from the original
 0048cf40	37	semantically equivalent body; cl register choice / instruction order differs from the original
 0048d020	405	MissionUi::update_bounds: original uses different stack slots and register choice for the vec2 temporaries

@@ -49,8 +49,8 @@ void FxDef::update(float dt, const matrix* m)
     if (!p64) self->update_envelopes(dt);
     f54 = dt + f54;
     b50 = false;
-    if (p64) self->update_poses();
-    else self->update_poses2();
+    if (!p64) self->update_poses2();
+    else self->update_poses();
     for (int i = 0; i < count; ++i) {
         for (std::vector<mesh*>::iterator it = elems[i].psys.begin(); it < elems[i].psys.end(); ++it) {
             if (!(*it)->kids.empty())

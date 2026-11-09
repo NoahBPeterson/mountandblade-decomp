@@ -1709,14 +1709,14 @@ void music_player::play(int rec, int* slot)
     track[*slot] = rec;
     music_res* r = (music_res*)((char*)this + 0x20 * track[*slot]);
     const char* s = r->name;
-    if (r->flags & 0x10000000) {
+    if (!(r->flags & 0x10000000)) {
+        if (!s) s = (const char*)r + 0x1c;
+        sprintf(path, "music\\%s", s);
+    } else {
         if (!s) s = (const char*)r + 0x1c;
         const char* dir = root.buf;
         if (!dir) dir = (const char*)&root.buf;
         sprintf(path, "%sMusic\\%s", dir, s);
-    } else {
-        if (!s) s = (const char*)r + 0x1c;
-        sprintf(path, "music\\%s", s);
     }
     unsigned mode = 0x1000000;
     if (((music_res*)((char*)this + 0x20 * track[*slot]))->flags & 0x40)

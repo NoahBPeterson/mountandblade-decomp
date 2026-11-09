@@ -47,9 +47,9 @@ void aabb::extend_box(const aabb* b, const matrix* m)
         c[5][0] = b->max.x; c[5][1] = b->min.y; c[5][2] = b->max.z;
         c[6][0] = b->min.x; c[6][1] = b->max.y; c[6][2] = b->max.z;
         c[7][0] = b->max.x; c[7][1] = b->max.y; c[7][2] = b->max.z;
-        for (int i = 0; i < 8; i++) {
-            vector4 p;
+        for (int i = 0; 8 > i; i++) {
             float x = c[i][1] * m->f.x;
+            vector4 p;
             x = x + c[i][2] * m->u.x;
             x = x + c[i][0] * m->s.x;
             p.x = x + m->o.x;

@@ -787,7 +787,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     ((rgl::world*)scene)->m30c = hv_neg(eye->u);
     ((rgl::world*)scene)->m31c = eye->o;
     matrix lis = *eye;
-    hv_sub_to(lis.o, lis.u * 0.4f);
+    hv_sub_to(lis.o, 0.4f * lis.u);
     if (g_cfg.disable_sound == 0) {
         g_sound_mgr.frame = lis;
         // FMOD is y-up: y and z swap (0x4fa887..0x4fa8ae push f.x, f.z, f.y, u.x, u.z, u.y)

@@ -216,10 +216,10 @@ void Agent::hand_pos(vector4* out)
     float x2 = t8 + out->x;
     out->x = x2;
     float y2 = pndx * k + out->y;
-    out->y = y2;
     float kk = k * 0.1f;
-    float t4 = kk * f534c;
+    out->y = y2;
     out->x = x2 + kk * f5348;
+    float t4 = kk * f534c;
     out->y = y2 + t4;
     float height = x2;
     face* hit;
@@ -581,9 +581,9 @@ void Agent::collect_enemies(int)
 // @ 0x43b4d0
 unsigned Agent::pick_target()
 {
-    int n = nthreat;
     unsigned best = (unsigned)-1;
     float bestv = -100.0f;
+    int n = nthreat;
     unsigned tid = (unsigned)-1;
     if (0 < n) {
         Threat* r = threats;
@@ -963,8 +963,8 @@ int Agent::update_nav_face()
     vector4 d(nav_pos.x - pos.x, nav_pos.y - pos.y, nav_pos.z - pos.z);
     if (d.y * d.y + (d.z * d.z + d.x * d.x) > 0.001f) {
         vector4* p = &pos;
-        int face = nav_face;
         nav_pos = *p;
+        int face = nav_face;
         if (face != -1) {
             if (g_mission->scene->nav->inside(&nav_face, &p->x))
                 return nav_face;
@@ -1286,10 +1286,10 @@ inline void Agent::set_goal_point(vector4 p, int face)
 done:
     goal = p;
     p.x = 0.0f; p.y = 0.0f; p.z = 0.0f;
+    path_state = 1;
     goal_dir = p;
     f318 = -1;
     goal_face = face;
-    path_state = 1;
     path_flag = 0;
 }
 
@@ -1303,8 +1303,8 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
     do {
         p = *center;
         p.x = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.x;
-        p.y = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.y;
         m = g_mission;
+        p.y = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.y;
         if (m->terrain.min_x <= p.x && p.x < m->terrain.max_x && m->terrain.min_y <= p.y && p.y < m->terrain.max_y)
             break;
         i++;
@@ -1335,7 +1335,7 @@ void Agent::advance_path()
     if (path_active != 0 && (path_state & 3) != 0) {
         int face = update_nav_face();
         int n = path_count;
-        if (face == path_face[n]) {
+        if (path_face[n] == face) {
             path_active = 0;
             goal_changed = 0;
             return;
@@ -2598,8 +2598,8 @@ void GameData::add_experience(int troop, int amount)
             }
         } else {
             PartyMgr* pm = &parties;
-            int p = pm->lookup(f78);
             int i = 0;
+            int p = pm->lookup(f78);
             if (pm->pages._Myfirst[p >> 4][p & 0xf].count > 0) {
                 do {
                     int q = pm->lookup(f78);
@@ -2757,8 +2757,8 @@ void Agent::update_alarm()
 // @ 0x443270
 unsigned Agent::pick_shout_target(int flags, float maxdist)
 {
-    float bestv = 0.0f;
     unsigned best = (unsigned)-1;
+    float bestv = 0.0f;
     AgentTable* tbl = &g_mission->agents;
     unsigned i = tbl->first_used();
     if (i < (unsigned)tbl->count) {
@@ -5570,9 +5570,9 @@ bb72:
 // @ 0x44bc30
 void Agent::cycle_slot(int which)
 {
-    int old = slots[which];
     bool found = false;
     int old_item = -1;
+    int old = slots[which];
     if (old >= 0)
         old_item = pairs[old].item;
     if (which == 0 || slots[0] < 0 || slots[1] < 0 || slots[4] == 0) {
@@ -6278,8 +6278,8 @@ void Agent::ai_idle_tick(const float* dt)
     }
     if (f310_f() <= (float)(g_ticks[ai_tc.clock] - ai_tc.start) * 1e-05f) {
         update_alarm();
-        g_input_mask = f53bc;
         in_prev.v[0] = 0;
+        g_input_mask = f53bc;
         f53bc = 0;
         ai_update_control();
         ai_tc.start = g_ticks[ai_tc.clock];

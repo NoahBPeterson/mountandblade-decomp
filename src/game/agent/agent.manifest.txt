@@ -56,3 +56,4 @@
 ../src/game/agent/agent.cpp  ?uninit_copy_E12@@YAPAUE12@@PBU1@0PAU1@AAUalloc_E12@@Uptr_tag@@@Z  00436d10  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?construct@alloc_int@@QAEXPAHABH@Z  00436d80  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?falloff@Troop@@QAEMMM@Z  004375b0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?reset@PlacedObj@@QAEXXZ  004352f0  /O2 /MT /Gy /TP

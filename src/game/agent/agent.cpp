@@ -343,8 +343,8 @@ void PlacedObj::reset()
     m1a4 = 0;
     m1b0 = 0;
     ent = 0;
-    m1b8 = 0;
     m168 = m14 = -1;
+    m1b8 = 0;
     rgl::mat4 ident;
     md8 = *(rgl::mat4*)identity_pos((pos*)&ident);      // 0x40cd00 (global pos* identity_pos(pos*), declared above)
     f16c = 1.0f;

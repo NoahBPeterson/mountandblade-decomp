@@ -53,3 +53,4 @@
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/game/cls_map/cls_map.cpp  _$E5  00547f50  /O2  /MT  /Gy  /TP
 ../src/game/cls_map/cls_map.cpp  _$E6  00548500  /O2  /MT  /Gy  /TP
+../src/game/cls_map/cls_map.cpp  ?rebuild@gui_manager@@QAEXXZ  004da900  /O2 /MT /Gy /TP

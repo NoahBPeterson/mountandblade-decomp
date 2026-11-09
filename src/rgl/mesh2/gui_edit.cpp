@@ -1536,6 +1536,7 @@ void __fastcall conv_free_one(conv_rec* self)
 // @ 0x4c8630
 void Terrain::conv_build_scene()
 {
+    rgl::matrix m;
     for (int gy = 0; gy <= h; gy++) {
         for (int x = 0; x <= w; x++) {
             ((world_root*)world)->codes->cols[x][gy * 4] = *(int*)&cell[x][gy].pz;   // the tableau code rides in the cell's z lane
@@ -1553,7 +1554,6 @@ void Terrain::conv_build_scene()
             vector4 z0(0.0f, 0.0f, 0.0f);
             rgl::mat3 t;
             rgl::mat3* ip = identity3(&t);
-            rgl::matrix m;
             *(rgl::mat3*)&m = *ip;
             m.o = z0;
             r->set_frame(&m);

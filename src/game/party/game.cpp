@@ -319,8 +319,8 @@ void Game::reset()
     f1a1f0 = -1;
     f1a1d8 = 0;
     f1a1dc = 0;
-    f1a1e0 = 0;
     f1a1e4 = 0;
+    f1a1e0 = 0;
     f1a1e8 = 0;
     f1a1ec = 0;
     f1a20c = 0;
@@ -627,7 +627,7 @@ void NavGraph::score_triggers(int* a, int* b, int* c)
         if (i >= (unsigned)(((char*)nodes_end - (char*)nodes) / 0x88))
             break;
         NavNode& n = *(NavNode*)((char*)nodes + off);
-        for (int k = 0; k < n.count; k++) {
+        for (int k = 0; n.count > k; k++) {
             if (n.nb[k] != -1)
                 n.weight[k] = trigger_score(i, k, *a, *b, *c);
         }

@@ -885,7 +885,7 @@ void Terrain::compute_normals()
         }
     }
     for (y = 0; y <= h; y++) {
-        for (x = 0; x <= w; x++) {
+        for (x = 0; w >= x; x++) {
             vector4& v = at(x, y).N();
             float len = v.length();
             if (len > 1e-10f) {
@@ -916,7 +916,7 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
     res.item = -1;
     res.m4 = 0;
     do {
-        if (n <= i) break;
+        if (i >= n) break;
         int v = cand[i];
         ItemRef r;
         r.m4 = 0;
