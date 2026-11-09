@@ -13,4 +13,14 @@
     __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 \
     __asm _emit 0x57 __asm _emit 0x4c __asm _emit 0x20 __asm _emit 0x20
 
+// The long variant seen once (id 7 at 0x4d0bfb, the end of init_mission_trigger_records): 23 bytes, `jmp +0x15` over
+// "WL  ", id, zero dword, "WL  " and five zero bytes.
+#define WL_MARKER_LONG(id) \
+    __asm _emit 0xeb __asm _emit 0x15 \
+    __asm _emit 0x57 __asm _emit 0x4c __asm _emit 0x20 __asm _emit 0x20 \
+    __asm _emit (id) & 0xff __asm _emit ((id) >> 8) & 0xff __asm _emit ((id) >> 16) & 0xff __asm _emit ((id) >> 24) & 0xff \
+    __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 \
+    __asm _emit 0x57 __asm _emit 0x4c __asm _emit 0x20 __asm _emit 0x20 \
+    __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0 __asm _emit 0
+
 #endif

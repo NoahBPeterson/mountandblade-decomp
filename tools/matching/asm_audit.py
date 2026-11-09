@@ -84,7 +84,7 @@ def marker_header_ok():
         for p in glob.glob(os.path.join(ROOT, "src", "**", "*." + ext), recursive=True):
             code = _strip_comments(open(p, errors="ignore").read())
             if os.path.basename(p) == "wl_marker.h":  # drop the WL_MARKER define (with its `\` continuations)
-                code = re.sub(r"#\s*define\s+WL_MARKER\s*\(\s*id\s*\)(?:[^\n]*\\\n)*[^\n]*", "", code)
+                code = re.sub(r"#\s*define\s+WL_MARKER(?:_LONG)?\s*\(\s*id\s*\)(?:[^\n]*\\\n)*[^\n]*", "", code)
             if re.search(r"\b_?_emit\b", code):
                 bad.append(p)
     return bad

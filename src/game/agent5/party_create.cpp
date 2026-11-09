@@ -7,11 +7,12 @@
 //       the inventory tutorial once; PartyWindow::money_label writes the formatted money amount of one side.
 //       The class is the party window of src/game/party/party_window.h (code 0x501a20..0x502cc0 follows this object):
 //       the members these two functions prove are added there as pure additions (the former padding).
-//       "T regime" region (docs/tu_map.md): binary order is kept. 0x500ad0 holds two WinLicense marker blobs (an 18-byte
-//       `EB 10 57 4C ..` sequence at 0x500b10 and 0x500bbf) that no C++ source can emit, so it can never be byte-exact.
+//       "T regime" region (docs/tu_map.md): binary order is kept. 0x500ad0 holds two WinLicense markers (18-byte
+//       `EB 10 57 4C ..` records at 0x500b0e and 0x500bbd, ids 12/13), emitted with WL_MARKER.
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../config/config_block.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,6 +88,7 @@ void PartyWindow::init_screen()
         flags[0][k] = 0;
         flags[1][k] = 0;
     }
+    WL_MARKER(12)
 
     if (w04 == 1) {
         w14 = g_game_G->f13af0;
@@ -107,6 +109,7 @@ void PartyWindow::init_screen()
     q_food = -1;
     icon_a84 = 0;
     icon_a88 = 0;
+    WL_MARKER(13)
 
     container = new NodeA(0);
     {

@@ -92,6 +92,19 @@ mechanisms. This guide does not depend on it.
   shape.
 - Static CRT code is linked from the real library, so a function there is not a
   codegen puzzle.
+- **WinLicense markers are source, and we can emit them.** An 18-byte
+  `EB 10 "WL  " <id dword> 00000000 "WL  "` in a function is a WinLicense/Themida
+  SDK region marker (ids 12/13 start/end, also 4/5, 6): the jmp skips it, no
+  runtime effect. Write `WL_MARKER(id)` from `src/include/wl_marker.h` at that
+  point in the source (the one place `_emit` is allowed; asm_audit knows it).
+  Functions with markers do reach byte-exact (game.cpp 0x51de70, troop_rec.cpp,
+  exchange_screens.cpp). The `__asm` is also a scheduling and register-allocation
+  barrier, exactly as in the original, so a missing marker shifts registers and
+  slots around it too: add the markers before chasing those differences. Older
+  notes that say a WinLicense row "can never be byte-exact" predate the header.
+  Find them by scanning the unpacked image for `EB 10 57 4C 20 20` *and* for the long variant (`EB 15 "WL  " id 0
+  "WL  "` plus five zero bytes, 23 bytes: seen once, id 7 at 0x4d0bfb), which `WL_MARKER_LONG(id)` emits. A row whose
+  source already has `WL_MARKER`s can still be missing one of a pair: compare the count per function against the scan.
 
 ### 1.3 Smell tests
 
@@ -915,6 +928,7 @@ Derive float sum **grouping from the assembly, not from a decompile**.
   - **Re-derived references reproduce reloads (`PolyMesh::compute_face_normals` 0x4705e0):** `const vector4& p0 = verts.begin()[faces.begin()[i].vid[0]].pos;`, then p1 the same way, gives the original's second `vid[0]` load.
   - **A loop-scoped vector temporary (`compute_edge_creases` 0x470750):** `vector4 d = b.pos - a.pos;` inside the loop fixed the normalisation's fld/fmul order.
   - **A `const vector4&` helper bound to a temporary keeps the last lane on the stack (M&B `Game::build_map_trees` 0x5213d0, round bm9bt).** The original multiplies `c` by a lit vector with `fld c.z; fmul st(1); fstp c.z; fstp st(0)`: lit.z isn't consumed. A named `vector4 lit = ...; c.x *= lit.x; ...` consumes it (`fmul [c.z]`). `map_mul(c, lightL + lightM * s)`, with `map_mul(vector4& a, const vector4& b) { a.x *= b.x; ... }`, gives the original's shape (+4). The same kind of helper, `map_add(sum, q + d * 0.25f)`, gave a chain sum's `fld r.x; faddp st(4)`. It doesn't work everywhere: a `const float&` scale bound to a temporary or to a named float changed nothing, and in a loop where the original consumes the value, the helper's reference is wrong.
+  - **A member helper (through `this`) sets the x87 operand order where caller-side spellings are canonicalised (M&B `Game::build_map_trees` 0x5213d0, round bmH).** In the caller, `d.y = d.y * inv` and `inv * d.y` both give `fld d.y; fmul inv`. The same body as an inline member, `((map_vn&)d).normalize_inl()` with `x *= inv; y *= inv; z *= inv;`, gives the original's `fld inv; fmul d.y` (+2). A 2D rotation `((map_uv&)uv).rot(ca, sa)` that returns rx and writes y, and an offset add `((map_uv&)uv).add(rx, t)`, gave +4 and +2 more. It isn't general: the y sum inside `rot` still evaluates `ca*y` first however it's spelled, and the same member add or scale made other sites worse (-3 to -6) or left them unchanged. So try the member form per site and keep it only where it helps.
   - **Taking a re-read out can move registers elsewhere (render_scene's bone cache):** every form without the re-read of `it->m->f224` after the cache store moves `this` and `it` to other registers and stack slots, and costs about 150 instructions.
 
 ### 9.3 `sqrt`

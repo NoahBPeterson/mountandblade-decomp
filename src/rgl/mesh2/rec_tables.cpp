@@ -279,18 +279,19 @@ static __forceinline float game_var_float(const tstring& key)
 // @ 0x4c3510
 // GameApp::InitDeviceObjects: hands the font object the device, publishes the window size, queries the caps,
 // decides whether shaders can be used, then reads the ten buffer-size options into the renderer's buffer table.
-// The original brackets two groups of statements with 18-byte WinLicense markers (jmp +0x10 over the 16-byte
-// record "WL  ",12/13,0,"WL  ") that cl cannot emit from C++ (an _emit block would be an asm transcription):
-// they are left out here, everything between them is the original's code.
+// The original brackets the font-init call and the width/height publish with 18-byte WinLicense markers
+// (ids 12 / 13), emitted here with WL_MARKER.
 HRESULT GameApp::InitDeviceObjects()
 {
     font->InitDeviceObjects(m_pd3dDevice);
+    WL_MARKER(12)
     g_render.dev = m_pd3dDevice;
     g_render.width = (int)m_pD3D;                       // (the dword at +0xf4 and the one at +0x22c, m_d3dsdBackBuffer.Format, are what the original publishes as the render state's width / height)
     if (m_bWindowed)
         g_render.height = (int)m_d3dsdBackBuffer.Format;
     else
         g_render.height = (int)m_d3dsdBackBuffer.Format;
+    WL_MARKER(13)
     g_render.dev->GetDeviceCaps(&g_render.caps);
     g_render.vsync = -1;
     g_render.pad504 = 0;

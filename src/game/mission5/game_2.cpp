@@ -339,6 +339,29 @@ static inline int map_add_vertex(rgl::mesh* m, int index, const vec2& uv, const 
 static inline void map_add(rgl::vector4& a, const rgl::vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
 static inline void map_scale(rgl::vector4& v, float k) { v.x *= k; v.y *= k; v.z *= k; }
 static inline void map_mul(rgl::vector4& a, const rgl::vector4& b) { a.x *= b.x; a.y *= b.y; a.z *= b.z; }   // per-channel product: lit.z stays on the x87 stack
+// vector4::normalize (0x407d60) as the original inlines it here: returns the old length, (0,1,0) if <= 1e-10. As a member
+// (x *= inv through this) it gives the original's fld inv; fmul d.y; with d's fields scaled in the caller cl loads d.y first.
+// The length sums x, z, y (map_len): the header's length() order moves the fsqrt operand shuffle.
+struct map_vn : rgl::vector4 {
+    __forceinline float normalize_inl()
+    {
+        float len = map_len(*this);
+        if (len > 1e-10f) {
+            float inv = 1.0f / len;
+            x *= inv; y *= inv; z *= inv;
+        } else {
+            x = 0.0f; y = 1.0f; z = 0.0f;
+        }
+        return len;
+    }
+};
+// the uv rotation as a member (through this): cl evaluates sa * x before ca * y like the original; written in the
+// caller, the y sum's operands are canonicalised to ca * y first whatever the source order
+struct map_uv : vec2 {
+    __forceinline float rot(float ca, float sa) { float rx = ca * x - sa * y; y = ca * y + sa * x; return rx; }
+    // the river's noise offset (t.x + rx in the original's operand order; the sea arms add in the caller)
+    __forceinline void add(float rx, const rgl::vector4& t) { x = rx + t.x; y = t.y + y; }
+};
 struct map_ground {                                                 // NavData with its edge vector typed
     rgl::vec<NavVert> verts;
     rgl::vec<NavCell> cells;
@@ -657,17 +680,7 @@ void Game::build_map_trees()
                                     for (a = 0; a < ncnt; a++) {
                                         const rgl::vector4& q = g_script.level->ground->verts[chain[a]].p;
                                         rgl::vector4 d = p - q;
-                                        float len = map_len(d);
-                                        if (len > 1e-10f) {
-                                            float inv = 1.0f / len;
-                                            d.x = d.x * inv;
-                                            d.y = d.y * inv;
-                                            d.z = d.z * inv;
-                                        } else {
-                                            d.x = 0.0f;
-                                            d.y = 1.0f;
-                                            d.z = 0.0f;
-                                        }
+                                        float len = ((map_vn&)d).normalize_inl();
                                         if (len > 0.25f) {
                                             map_add(sum, q + d * 0.25f);     // the helper's reference: fld r.x; faddp like the original
                                         } else {
@@ -712,19 +725,16 @@ void Game::build_map_trees()
                         } else if (mt == 8) {
                             float ca = (float)cos(river_ang), sa = (float)sin(river_ang);
                             rgl::vector4 nz;
-                            float rx = ca * uv.x - sa * uv.y;
-                            uv.y = ca * uv.y + sa * uv.x;
+                            float rx = ((map_uv&)uv).rot(ca, sa);
                             noise_fractal(6.0f, 0.7f, 3, 0, (const float*)&p, (float*)&nz);
                             rgl::vector4 t = nz * 0.5f;
-                            uv.x = t.x + rx;
-                            uv.y = t.y + uv.y;
+                            ((map_uv&)uv).add(rx, t);
                             uv.x *= 0.4f;
                             uv.y *= 0.4f;
                         } else if (mt == 0x16) {
                             float ca = (float)cos(sea_ang), sa = (float)sin(sea_ang);
                             rgl::vector4 nz;
-                            float rx = ca * uv.x - sa * uv.y;
-                            uv.y = ca * uv.y + sa * uv.x;
+                            float rx = ((map_uv&)uv).rot(ca, sa);
                             noise_fractal(6.0f, 0.7f, 3, 0, (const float*)&p, (float*)&nz);
                             rgl::vector4 t = nz * 0.7f;
                             uv.x = rx + t.x;
@@ -734,8 +744,7 @@ void Game::build_map_trees()
                         } else if (mt == 0x17) {
                             float ca = (float)cos(sea_ang), sa = (float)sin(sea_ang);
                             rgl::vector4 nz;
-                            float rx = ca * uv.x - sa * uv.y;
-                            uv.y = ca * uv.y + sa * uv.x;
+                            float rx = ((map_uv&)uv).rot(ca, sa);
                             noise_fractal(6.0f, 0.7f, 3, 0, (const float*)&p, (float*)&nz);
                             rgl::vector4 t = nz * 0.3f;
                             uv.x = rx + t.x;

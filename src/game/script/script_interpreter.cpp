@@ -2825,14 +2825,17 @@ struct GameCompanion : GameData { int create_companion_party(int troop, rgl::vec
 int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
 {
     int id = add_sprite(pos.x, pos.y, 3);                // 0x49ebd0
-    tstring* n = g_strtable.find(&chars[troop].key);     // 0x4c6010
+    WL_MARKER(12)
+    TroopRec* r = &chars[troop];
+    tstring* n = g_strtable.find(&r->key);     // 0x4c6010
     if (n == 0)
-        n = &chars[troop].key;
-    parties.get_w(id)->name = *n;
-    parties.get_w(id)->flag = 1;
-    Party* p = parties.get_w(id);
-    p->f70 = chars[troop].faction;
-    p->add_members((int)n, 1, 0, 0, 0);            // 0x48c840
+        n = &r->name;                    // (the record itself, at +0: the original falls back to the name, not the key)
+    Party* w = parties.get_w(id);
+    w->name = *n;
+    w->flag = 1;
+    parties.get_w(id)->f70 = chars[troop].faction;
+    parties.get_w(id)->add_members((int)n, 1, 0, 0, 0);            // 0x48c840
+    WL_MARKER(13)
     return id;
 }
 

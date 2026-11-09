@@ -42,4 +42,5 @@ void init_mission_trigger_records()
     slot_as<ItemC>(28) = new ItemC;
     slot_as<FaceGen>(29) = new FaceGen;
     g_5e29ac = g_trial_mode;
+    WL_MARKER_LONG(7)
 }

@@ -113,7 +113,7 @@ and the local `tstring` / `Widget` / `InventoryPanel` class copies of `s00500ad0
 
 ## Known limits
 
-* 0x4f7f00 and 0x500ad0 contain WinLicense marker blobs and can never be byte-exact.
+* 0x4f7f00 and 0x500ad0 contain WinLicense marker blobs; `WL_MARKER(id)` (src/include/wl_marker.h) emits them, so they do not block byte-exactness (2026-11-09).
 * The large nonmatching bodies (0x4f8c80, 0x4f7f00, 0x4fbfa0, 0x4fc820, 0x4fd700, 0x4fe860, 0x500ad0) are complete, faithful ports; the remaining difference is x87 scheduling and
   register allocation.
 * Equivalence (difftest): see the audit in the commit message / report; the `agent_vec` rows keep "local copy" entries because the vector instantiations are compiled here.
