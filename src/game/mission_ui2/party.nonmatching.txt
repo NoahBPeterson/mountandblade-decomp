@@ -1,1 +1,1 @@
-0048f9f0	45	remove_troops: loop structure and register choice differ [2026-11-05 near-miss retry] remove_troops: the scaled induction zero (ebp) is set at function top where ours sets it in the loop preheader, and one add is scheduled a slot away; 6 loop shapes did not move it.
+0048f9f0	8	remove_troops: loop structure and register choice differ [2026-11-05 near-miss retry] remove_troops: the scaled induction zero (ebp) is set at function top where ours sets it in the loop preheader, and one add is scheduled a slot away; 6 loop shapes did not move it.

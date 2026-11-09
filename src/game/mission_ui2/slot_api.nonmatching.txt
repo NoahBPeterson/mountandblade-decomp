@@ -1,2 +1,2 @@
-0048ea80	49	semantically equivalent body; cl folds cells[idx[0]][idx[1]] into one addressing form and copies count through eax where the original materializes the row pointer in esi
-0048eb50	406	semantically equivalent body; cl register choice / instruction order differs from the original
+0048ea80	22	semantically equivalent body; cl folds cells[idx[0]][idx[1]] into one addressing form and copies count through eax where the original materializes the row pointer in esi
+0048eb50	495	semantically equivalent body; cl register choice / instruction order differs from the original
