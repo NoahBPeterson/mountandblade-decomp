@@ -3944,6 +3944,7 @@ __forceinline ClassInfo* Agent::class_rec()
 }
 
 
+static inline float a_dot3r(const vector4& b, const vector4& a) { return a.z * b.z + a.y * b.y + a.x * b.x; }
 typedef std::vector<Agent*>::iterator Pages;
 static inline void a_sub3(vector4& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; }
 // @ 0x4465e0
@@ -3955,7 +3956,7 @@ void Agent::update_ai()
     int near_ = f55c0;
     Pages pg;
     if (near_ >= 0 && (pg = g_mission->agents.pages.begin(), (*(pg + ((unsigned)near_ >> 4)))[near_ & 0xf].f14 == 1)) {
-        Agent* o = &(*(pg + ((unsigned)near_ >> 4)))[near_ & 0xf];
+        Agent* o = &(*(pg + ((unsigned)f55c0 >> 4)))[f55c0 & 0xf];
         vector4 d;
         a_sub3(d, o->pos, pos);
         float len = d.normalize();
@@ -3985,10 +3986,10 @@ void Agent::update_ai()
             t = target;
             if ((int)t >= 0) {
                 bool ranged = false;
-                const vector4& op = AG(t).pos;
+                const vector4& op = AG(target).pos;
                 vector4 dd = a_vsub(pos, op);
                 float dist = (float)sqrt(dd.y * dd.y + (dd.z * dd.z + dd.x * dd.x));
-                ItemRef p = AG(t).cur_pair_fi();
+                ItemRef p = AG(target).cur_pair_fi();
                 if (p.item >= 0 && g_items[p.item].is_ranged())
                     ranged = true;
                 if (f2c >= 0 || v56b4.length_squared() < 0.7f || dist < 15.0f ||
@@ -4015,12 +4016,10 @@ void Agent::update_ai()
             const vector4& op = AG(target).pos;
             vector4 w = op - pos;
             float dist = w.normalize();
-            bool ranged = false;
-            {
-                ItemRef sp = AG(target).slot_pair(0);
-                if (sp.item >= 0 && g_items[sp.item].is_ranged())
-                    ranged = true;
-            }
+            ItemRef sp = AG(target).slot_pair(0);
+            int ranged = 0;
+            if (sp.item >= 0 && g_items[sp.item].is_ranged())
+                ranged = 1;
             f533c = 2;
             if (!ranged && dist > 15.0f && f2c < 0)
                 f533c = 0;
@@ -4056,11 +4055,11 @@ void Agent::update_ai()
                             }
                         }
                         wsum[idx] = w2 + wsum[idx];
-                        q.z = dv.z * w2;
                         float* ap = &acc[idx].x;
-                        ap[0] = dv.x * w2 + ap[0];
-                        ap[1] = dv.y * w2 + ap[1];
-                        ap[2] = q.z + ap[2];
+                        vector4 t = dv * w2;
+                        ap[0] = t.x + ap[0];
+                        ap[1] = t.y + ap[1];
+                        ap[2] = t.z + ap[2];
                     }
                     m = g_mission;
                     m->agents.next_used(&it);
@@ -4072,8 +4071,10 @@ void Agent::update_ai()
                 q.y = bp.y - pos.y;
                 q.z = bp.z - pos.z;
                 q.normalize();
-                if (q.x * f294() + (q.y * f298() + q.z * f29c()) > -0.3f)
+                if (q.x * f294() + (q.y * f298() + q.z * f29c()) > -0.3f) {
                     target = best;
+                    m = g_mission;
+                }
             }
             bool close_ = false;
             if (cr->kind == 1) {
@@ -4086,11 +4087,12 @@ void Agent::update_ai()
                     goal_near_for_class(&q, &r);
                     close_ = true;
                 }
+                m = g_mission;
             }
             if (cr->kind == 2) {
                 int t2 = team;
                 if (t2 < 0 || t2 >= 8) t2 = 7;
-                if (g_mission->teams[t2].leader != id) {
+                if (m->teams[t2].leader != id) {
                     hand_pos(&q);
                     vector4 d = pos - q;
                     float len = d.normalize();
@@ -4102,7 +4104,6 @@ void Agent::update_ai()
             }
             if (!close_) {
                 if (f2e4 == 0) {
-                    vector4 d;
                     float diff = wsum[1] - wsum[0];
                     if (diff < 0.05f)
                         diff = 0.05f;
@@ -4148,14 +4149,10 @@ void Agent::update_ai()
                                 AgentTable* tb = &g_mission->agents;
                                 int u = target;
                                 t98 = ((fr + 2.0f) * m) * 0.2f;
-                                const vector4* pv = &tb->get(u)->vel;
-                                d.x = t98 * pv->x;
-                                d.y = t98 * pv->y;
-                                d.z = t98 * pv->z;
-                                pv = &tb->get(u)->vel;
-                                q = *pv;
+                                vector4 d = t98 * tb->get(u)->v56b4;
+                                q = tb->get(u)->v56b4;
                                 q.normalize();
-                                float f = q.y * w.y + (q.z * w.z + q.x * w.x) + 1.0f;
+                                float f = q.x * w.x + q.z * w.z + q.y * w.y + 1.0f;
                                 w.x = d.x * f;
                                 w.y = d.y * f;
                                 w.z = d.z * f;
@@ -4177,7 +4174,6 @@ void Agent::update_ai()
                         }
                     }
                 } else if (f2e4 == 1) {
-                    vector4 d;
                     float val = wsum[0] * 1.3f - wsum[1];
                     float hi = 0.3f;
                     float lo = 0.01f;
@@ -4201,16 +4197,10 @@ void Agent::update_ai()
                     }
                     if (f2e8 != 1) {
                         f2e8 = f2e4;
-                        float z = acc[0].z * 4.0f;
-                        q.x = acc[0].x * 4.0f - acc[1].x;
-                        q.y = acc[0].y * 4.0f - acc[1].y;
-                        q.z = z - acc[1].z;
+                        a_sub3(q, acc[0] * 4.0f, acc[1]);
                         q.normalize();
                         float r16 = 16.0f;
-                        q.z = q.z * 15.0f;
-                        d.x = q.x * 15.0f + pos.x;
-                        d.y = q.y * 15.0f + pos.y;
-                        d.z = q.z + pos.z;
+                        vector4 d = q * 15.0f + pos;
                         set_goal_near(&d, &r16);
                     }
                 }
@@ -4218,13 +4208,12 @@ void Agent::update_ai()
         }
     L_tail4:
         {
-            unsigned fl = path_state;
-            path_state = fl | 0x20;
+            path_state |= 0x20;
             float s = 0.5f;
             ItemRef cp = cur_pair_fi();
             if (cp.item != -1)
                 s = (float)g_items[cp.item].weight * 0.01f + 0.9f;
-            if (fl & 2) {
+            if (path_state & 2) {
                 f288 = s;
                 f28c = s - 0.4f;
             } else {
@@ -4233,31 +4222,28 @@ void Agent::update_ai()
             }
         }
     } else if (mode_ == 5 && combat_state != 1 && combat_state != 3 && combat_state != 4) {
-        float chance = hit_chance_ref(slot_pair(0), this);
+        float chance = hit_chance((int*)&(const ItemRef&)slot_pair(0), this);
         vector4 q, w;
         float t80 = 500.0f;
         float near_ = 500.0f;
         int e = pick_target();
-        Mission* m = g_mission;
         if (e >= 0) {
-            vector4 d = m->agents.get(e)->pos - pos;
+            vector4 d = g_mission->agents.get(e)->pos - pos;
             near_ = d.normalize();
         }
-        if (target >= 0 && m->agents.get(target)->f14 != 1) {
+        if (target >= 0 && g_mission->agents.get(target)->f14 != 1) {
             target = -1;
-            m = g_mission;
         }
         if (target == -1) {
             int c = f2cc;
-            if (c >= 0 && m->agents.get(c)->f14 == 1) {
+            if (c >= 0 && g_mission->agents.get(c)->f14 == 1) {
                 target = c;
-                m = g_mission;
             }
         }
         int tg = target;
         float cur;
         if (tg >= 0) {
-            vector4 d = m->agents.get(tg)->pos - pos;
+            vector4 d = g_mission->agents.get(tg)->pos - pos;
             cur = d.normalize();
         } else {
             cur = t80;
@@ -4291,7 +4277,7 @@ void Agent::update_ai()
             if (cr->kind == 1 || (cr->kind == 2 && team_leader(this) != id)) {
                 close99 = true;
                 hand_pos(&w);
-                q = pos - w;
+                a_sub3(q, pos, w);
                 wsum[0] = q.normalize();
             }
             t80 = chance * 0.7f;
@@ -4308,14 +4294,8 @@ void Agent::update_ai()
                 if (close99) {
                     q = w;
                 } else {
-                    d.z = d.z * 0.7f;
-                    q.x = d.x * 0.7f + pos.x;
-                    q.y = d.y * 0.7f + pos.y;
-                    q.z = d.z + pos.z;
-                    q.w = w.w;
-                    w.x = q.x;
-                    w.y = q.y;
-                    w.z = q.z;
+                    w = d * 0.7f + pos;
+                    q = w;
                 }
             }
             if (frand() < 0.3f) {
@@ -4338,6 +4318,7 @@ void Agent::update_ai()
         f288 = 1.5f;
     } else if (mode_ == 6) {
         hit_chance_ref(cur_pair_fi(), this);
+        float t80 = 500.0f;
         float near_ = 500.0f;
         int e = pick_target();
         if (e >= 0) {
@@ -4349,16 +4330,15 @@ void Agent::update_ai()
             vector4 d = AG(target).pos - pos;
             cur = d.normalize();
         } else {
-            cur = 500.0f;
+            cur = t80;
         }
         if (near_ < 8.0f && cur > near_ + near_)
             target = e;
         int r = rand() % 0x3dc9;
-        float wsum[2];
         int c;
         if (((float)r * (1.0f / 15817.0f) < 0.2f || target == -1 ||
              g_mission->agents.get(target)->f14 != 1) &&
-            (collect_enemies((int)wsum), nthreat > 0 && (c = (int)pick_threat()) >= 0)) {
+            (collect_enemies((int)&t80), nthreat > 0 && (c = (int)pick_threat()) >= 0)) {
             f2cc = c;
             target = c;
         }
@@ -4420,21 +4400,14 @@ void Agent::update_ai()
         }
         if (cr->kind != 3 &&
             (!(path_state & 1) || g_mission->agents.get(f2c)->fac < 1.0f || (goal_face != goal_face_done && goal_face >= 0))) {
-            vector4 gp;
-            const vector4* gpp;
-            float rr;
             if (g_mission->agents.get(f2c)->fac > 2.0f) {
-                gpp = &gp;
-                rr = 15.0f;
-                gp.z = vel.z * 25.0f;
-                gp.x = vel.x * 25.0f + pos.x;
-                gp.y = vel.y * 25.0f + pos.y;
-                gp.z = gp.z + pos.z;
+                float rr = 15.0f;
+                vector4 gp = vel * 25.0f + pos;
+                set_goal_near(&gp, &rr);
             } else {
-                gpp = &pos;
-                rr = 30.0f;
+                float rr = 30.0f;
+                set_goal_near(&pos, &rr);
             }
-            set_goal_near(gpp, &rr);
         }
         if (path_flag != 0) {
             float r50 = 50.0f;
@@ -4479,32 +4452,17 @@ void Agent::update_ai()
                 float fr = frand();
                 unsigned u2 = target;
                 float k = ((fr + 2.0f) * m) * 0.2f;
-                vector4 q, w, d, r4;
-                Agent* t1 = g_mission->agents.get(u2);
-                q.x = k * t1->v56b4.x;
-                q.y = k * t1->v56b4.y;
-                q.z = k * t1->v56b4.z;
-                t1 = g_mission->agents.get(u2);
-                w.x = q.x + t1->pos.x;
-                w.y = q.y + t1->pos.y;
-                w.z = q.z + t1->pos.z;
-                t1 = g_mission->agents.get(u2);
-                r4 = t1->v56b4;
+                AgentTable* tb = &g_mission->agents;
+                vector4 q = k * tb->get(u2)->v56b4;
+                vector4 w = q + tb->get(u2)->pos;
+                vector4 r4 = tb->get(u2)->v56b4;
                 r4.normalize();
-                float f = r4.y * v.y + r4.x * v.x;
+                float f = r4.x * v.x + r4.y * v.y;
                 if (f < 0.0f) {
                     f = f + 1.0f;
-                    d.x = q.x * f;
-                    d.y = q.y * f;
-                    d.z = q.z * f;
-                    t1 = g_mission->agents.get(u2);
-                    q.x = d.x + t1->pos.x;
-                    q.y = d.y + t1->pos.y;
-                    q.z = d.z + t1->pos.z;
-                    w.w = q.w;
-                    w.x = q.x;
-                    w.y = q.y;
-                    w.z = q.z;
+                    vector4 d = q * f;
+                    q = d + tb->get(u2)->pos;
+                    w = q;
                 }
                 float val = dist * 0.35f - 0.7f;
                 float hi = 25.0f;
@@ -4513,10 +4471,9 @@ void Agent::update_ai()
                 set_goal_near(&w, &c);
             }
         }
-        unsigned fl = path_state;
-        path_state = fl | 0x20;
+        path_state |= 0x20;
         if (path_state & 2)
-            path_state = fl | 0xa0;
+            path_state |= 0x80;
         if (dist < 35.0f)
             path_state |= 0x200;
         f533c = 2;
@@ -4526,7 +4483,7 @@ void Agent::update_ai()
         hand_pos(&q);
         f2d0 = q;
         ItemRef sp = slot_pair(0);
-        d = q - pos;
+        a_sub3(d, q, pos);
         float dist = d.normalize();
         float m = 1000.0f;
         bool b99 = false;
@@ -4570,12 +4527,8 @@ void Agent::update_ai()
         target = -1;
         f288 = 3.5f;
         if (frand() < 0.0005f || prev >= 0) {
-            vector4 v;
-            v.z = vel.z * 10.0f;
             float r15 = 15.0f;
-            v.x = vel.x * 10.0f + pos.x;
-            v.y = vel.y * 10.0f + pos.y;
-            v.z = v.z + pos.z;
+            vector4 v = vel * 10.0f + pos;
             set_goal_near(&v, &r15);
         }
     } else if (mode_ == 0xe) {
@@ -4583,12 +4536,8 @@ void Agent::update_ai()
         target = -1;
         f288 = 3.0f;
         if (frand() < 0.3f) {
-            vector4 v;
-            v.z = vel.z * 20.0f;
             float r15 = 15.0f;
-            v.x = vel.x * 20.0f + pos.x;
-            v.y = vel.y * 20.0f + pos.y;
-            v.z = v.z + pos.z;
+            vector4 v = vel * 20.0f + pos;
             set_goal_near(&v, &r15);
         }
     } else if (mode_ == 3) {
@@ -4596,32 +4545,28 @@ void Agent::update_ai()
         if (fac < 0.5f && f2c != -1)
             g_input_flags |= 0x10000;
     } else if (mode_ == 2) {
-        if (f2c == -1) {
+        if (f2c != -1) {
+            if (attack_delay() > 1.0f)
+                attack_delay() = 1.0f;
+        } else {
             int c = f2cc;
             if (c != -1 && g_mission->agents.get(c)->f14 == 1) {
                 Agent* ca = g_mission->agents.get(c);
                 vector4 d = ca->pos - pos;
                 float l = d.out_length();
-                vector4 w, q;
                 if (l > 0.99f) {
                     flag_a = true;
                     AgentBody* b = ca->body;
+                    vector4 q;
                     if (l > 2.0f) {
-                        float sz = b->m.s.z;
-                        w.x = ca->pos.x - b->m.s.x;
-                        w.y = ca->pos.y - b->m.s.y;
-                        w.z = ca->pos.z;
+                        vector4 s(b->m.s.x, b->m.s.y, b->m.s.z);
+                        q = a_vsub(ca->pos, s);
                         path_state = 0x21;
-                        w.z = w.z - sz;
                     } else {
-                        float sz = b->m.s.z * 0.2f;
-                        w.x = ca->pos.x - b->m.s.x * 0.2f;
-                        w.y = ca->pos.y - b->m.s.y * 0.2f;
-                        w.z = ca->pos.z;
+                        vector4 s = b->m.s * 0.2f;
+                        q = a_vsub(ca->pos, s);
                         path_state = 1;
-                        w.z = w.z - sz;
                     }
-                    q = w;
                     float r0 = 0.0f;
                     set_goal_near(&q, &r0);
                 } else {
@@ -4632,8 +4577,6 @@ void Agent::update_ai()
                 }
                 f288 = 0.15f;
             }
-        } else if (attack_delay() > 1.0f) {
-            attack_delay() = 1.0f;
         }
     }
 
@@ -4685,7 +4628,7 @@ done:
         } else if (n > 0) {
             for (int i = 0; i < nthreat; i++) {
                 Threat* t = &threats[i];
-                double score = (float)-0.01f;       // kept unrounded in the x87 stack once computed (0x448c7e)
+                float score = -0.01f;
                 Agent* ta = &AG((unsigned)t->id);
                 if (ta->f14 == 1) {
                     vector4 d = ta->pos - pos;
@@ -4693,15 +4636,12 @@ done:
                     float len = t->dir.normalize();
                     t->dist = len;
                     if (len < range) {
-                        AgentBody* b = body;
-                        score = 10.0f / (len + 1.0f) +
-                                (b->m.f.z * t->dir.z + b->m.f.y * t->dir.y + b->m.f.x * t->dir.x) * 0.1f;
+                        score = 10.0f / (len + 1.0f) + a_dot3r(t->dir, body->m.f) * 0.1f;
                     } else {
                         if (f2c == -1) {
                             ItemRef p1 = slot_pair_fi(1);
                             if (p1.item >= 0) {
-                                ItemRef p1b = slot_pair(1);
-                                if ((char)g_items[p1b.item].type_flags == itp_type_shield) {     // cmp cl, 7 (0x448bf6)
+                                if ((char)g_items[slot_pair(1).item].type_flags == itp_type_shield) {     // cmp cl, 7 (0x448bf6)
                                     ItemRef p0 = ta->slot_pair(0);
                                     if (p0.item >= 0) {
                                         ItemKind* ik = &g_items[p0.item];
@@ -4726,15 +4666,16 @@ done:
                 }
             }
         }
-        if (bestid < 0)
-            target = -1;
-        else
+        if (bestid >= 0)
             target = bestid;
+        else
+            target = -1;
         f533c = (target == -1) ? 0 : 2;
     }
     if (flag_b && f10 == 0 && target >= 0) {
-        vector4 ta_ = a_vadd(AG(target).v56b4, AG(target).pos);
-        vector4 tb_ = a_vadd(v56b4, pos);
+        const vector4& tv = AG(target).v56b4;
+        vector4 ta_ = a_vadd(vector4(tv.x, tv.y, tv.z), AG(target).pos);
+        vector4 tb_ = a_vadd(vector4(v56b4.x, v56b4.y, v56b4.z), pos);
         vector4 d = a_vsub(ta_, tb_);
         float dist = d.normalize();
         float range = 3.0f;

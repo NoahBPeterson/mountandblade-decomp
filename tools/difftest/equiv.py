@@ -6692,7 +6692,7 @@ def _test_function(sid, va, opts, log=print):
                 break
             if i >= opts.inputs and not (steer and corpus and edges_missing(runner) and steer.has_work()):
                 break               # past --inputs only while steering still has uncovered branches to try
-            if getattr(opts, "stop_full_coverage", False) and valid >= FULL_COVERAGE_MIN_VALID and not edges_missing(runner):
+            if getattr(opts, "stop_full_coverage", False) and valid >= FULL_COVERAGE_MIN_VALID and not mism and not edges_missing(runner):
                 # every edge of both builds has run and compared: stop here instead of running --min-valid inputs.
                 # Recorded in the JSON, so a PASS that stopped this way can be told from one with the full input count.
                 out["stopped_full_coverage"] = "all edges covered after %d inputs, %d valid" % (i, valid)

@@ -253,6 +253,14 @@ compiler computes a trip count and uses `mul`.
   0x11c to 0x26c and the diff from 993 to 2,088 bytes; the same maths written
   scalar-per-component, letting the compiler CSE the shared `w * k` terms, came
   within 10 bytes (`s004e65e0`).
+- **A local reference or pointer keeps loads and stores in source order.** Fields read through `RectF& rc = at<RectF>(off)` or
+  `float_pair* cv = em->curve` were not moved across neighbouring stores through `this`/`em`, where the same fields spelled
+  `at<float>(off)` / `em->curve[i]` were hoisted or interleaved. When the original keeps a run of loads below stores that
+  can't alias, try going through a named reference (M&B `start_setup` 0x484590: +15 and +7 identical).
+- **Two union members for one word keep two read-modify-writes apart.** cl merged two field puts into the same global word
+  (one load, one store across the `_ftol` between them) while the original keeps load/and/or/store per put. Writing the
+  second put through the union's other member (`g_terrain.flags` instead of `bits[4]`, as `Terrain::set_field_a` 0x464a60
+  does) reproduced the separate RMWs and freed `ebx` for the value the original keeps there (M&B `start_setup`).
 - **A guard on the address of a field of a fresh allocation is real.**
   `lea ecx,[eax+8]; test ecx,ecx; je` comes from `if (&pNode->mValueA)`;
   removing it shrinks the function.
@@ -452,6 +460,8 @@ in source is normally neutral.
 
 **A CSE temporary's id decides SIB order, not the comparison's spelling (M&B `frame_update` 0x50fe20).** The original has `[edi+eax]` where ours has `[eax+edi]`, on `food*0x238` used twice. Ten spellings of the comparison and index left it unchanged. Removing the second use of `food` (so there is no CSE) gives product-first, and so does a struct copy of the item reference, though that adds a dead load. So when one SIB order resists every respelling, look at what is being shared between the uses rather than at the expression itself.
 
+**An inline helper's formal order can decide a lane's operand order (M&B `MissionBlocker::update_camera` 0x4f8c80).** In `head.x + v98.x` the original loads `head.x` first, while the y and z lanes load `v98` first. Writing the sums `a+b` or `b+a`, a `float` temporary, pointer formals, a `const&` local for `v98` or a reference to `head` all left the x lane unchanged. Swapping the helper's formals to `hv_add_mix(const vector4& b, vector4& a)`, called as `hv_add_mix(ag->v98, head)` with the same body, fixed it and nothing else moved (22 -> 16 bytes). So when source order is ignored, try the order of the inline helper's formals.
+
 ### 6.3 Register calling conventions for translation-unit-local statics
 
 **Without link-time code generation, a `static` function in the same TU gets a
@@ -631,6 +641,8 @@ Still unknown: the original contains these same constructs and doesn't fold.
   5. **Limit:** in the 70 KB interpreter, cases whose text gives the original's registers when compiled alone still come out differently inside
      the whole function, and keeping different subsets of its cases moves the result non-monotonically. There the order also depends on
      function-wide state. A spelling inside the case can't fix that; check the case alone with a probe before spending spellings on it.
+- **A spilled variable keeps one slot for all its webs (M&B `Game::build_map_trees` 0x5213d0).** One function-wide `unsigned i` reused by six loops put the counters of the two loops that spill it in one slot. The original has them in different slots, so it had a counter per loop. `for (unsigned i = 0; ...)` in each loop gave +111 identical. Two loops whose counters share one original slot, with nothing else in it, can be one variable: an `int ni` shared by the cells loop and the per-cell node loop gave the original's group. When a slot holds two loops' counters, or they're split across slots, check how many counter variables the source has.
+- **Naming a global's re-read raises its register priority (same function).** `for (...; i < g.level->ground->size(); ...)` and `rgl::world* lvl = g.level; for (...; i < lvl->...; ...) { ...; lvl = g.level; }` give the same loads, but the named one ranks higher and took edi like the original. Assigning `lvl` earlier, before two more uses, ranked it too high (esi).
 - **Refinement, inferred from `start_setup` 0x484590 only:** use counts are taken before cl duplicates tails, so a statement cl duplicates counts once. Each local then joins the newest compatible group. Scalars that aren't address-taken conflict by liveness; address-taken ones conflict by scope.
 - **A temporary's destructor after the store** means the temporary lived in the same full expression or block as the assignment. Moving a helper inline took
   `Rec58::build` from 400 to 521 identical, because callee-saved pushes sink only when the code above allows it, so a helper's shape can move every stack offset.
@@ -1505,7 +1517,10 @@ These are not absolute: a reference local flipped SIB order on 0x4c1e10, and an 
 - **A helper written between `// @ 0x<va>` and the function becomes the marker's symbol**, so chk and equiv test the helper. Keep helpers above the marker. And check what a row is tested as: a comment like `// 0x49bbb0 spawn the battle icon` once bound a row to the wrong function, which read as a fault and a mismatch (fixed in `marker_names`). A `FAIL` with an audit disagreement on the first callee is worth this check first.
 
 - **A const-reference helper reading a field at offset 0 keeps the address materialised (`update_team_stats` 0x474e60).** `team_leader(teams[t])` moved the loop's induction base from +0x50 to 0, which fixed a `lea ecx,[ebx+0x50]; lea ebp,[ecx-0x34]` head. Using `operator-` with a const-reference operand moved another bias.
-- **A value read twice in source blocks CSE of its index arithmetic,** even though the load itself is CSE'd (0x474e60). `fstp m; fmul m` rather than `fst m; fmulp` means a block boundary between the store and the use. A function-scope loop variable merges slots across the whole function: per-loop block scopes took that frame from 0x84 to 0x80.
+- **Inline vector operators leave a fingerprint (`Agent::update_ai` 0x4465e0).** Look for `fld a.x; fmul k; fld a.y; fmul k; fld a.z; fmul k; fstp [t]; fxch; fadd b.x ...`, where all three products come first and only z goes to memory. That is `a * k + b` written with the header's inline `operator*`/`operator+`. Writing the components out lets cl compute z first. When x and y are loaded as floats but z is copied as an int, the source built a 3-float `vector4(v.x, v.y, v.z)`, not a memberwise copy. Declare the result where it's computed (`vector4 d = k * t->v56b4;`). Assigning to an existing local whose address escapes goes through a temporary plus a 4-dword copy. Together with the read-twice rule below, these took the row from 1715 to 2081 identical and its frame to the original's 0xa0.
+- **cl keeps the reload of a global it caches itself, but not a named local's.** `mov ebp, g_mission` after a store into `this` means the source used `g_mission` directly, so the reload is cl's own CSE. A `Mission* m` local with explicit `m = g_mission;` reloads gets a different register priority (0x4465e0 mode 5: 45 instead of 60 differing). This depends on the region: in the same function's mode-4 loop the direct spelling swapped two registers and lost 41.
+- **A visible pure callee is sunk past a later call to its use.** With `clamp`'s body in the TU, `c = clamp(...); fr = frand(); ... fr * c` comes out as frand first and then clamp (0x4465e0). The original calls clamp first. Making clamp opaque restores the order, but its arguments then get private slots and the frame grows (0xa0 to 0xb0).
+- **A value read twice in source blocks CSE of its index arithmetic,** even though the load itself is CSE'd (0x474e60). Confirmed in 0x4465e0: `AG(target).pos` and `AG(target).cur_pair_fi()` both read the member, and `&AG(f55c0)` re-reads it after `near_ = f55c0` was tested. That made the original's recomputed `and/imul/shr` match, and it brought the function-wide `ebx=-1`/`ebp=0` constant registers with it (+87 identical in one edit). `fstp m; fmul m` rather than `fst m; fmulp` means a block boundary between the store and the use. A function-scope loop variable merges slots across the whole function: per-loop block scopes took that frame from 0x84 to 0x80.
 
 ## 15. Not source-controllable, or without a known lever
 
@@ -1532,6 +1547,7 @@ function as complete when you have honestly run out of them.
   is address-taken-and-read-after-escape block locals, and the fix is the
   function-scope scratch hoist (section 7). Application to the script interpreter
   (`0x2630` → `0x1ec0` target) was in progress when this was written.
+- **Where an independent integer load lands next to x87 work (M&B `update_camera` 0x4f8c80).** In `((float)(ticks) * 1e-5f) / v; if (num > 0)`, ours loads `num` between the two int64 stores, and the original loads it after the `fild`. Every form that moves the load also emits `fdiv` before `fmul`, which is a different rounding. About 20 other spellings left it alone (locals, helpers, a `Timer` member, compare forms).
 - The frame sharing around pushed `double` varargs.
 - Six `push`es against `sub esp,0x18` plus six stores for a by-value 6-int block.
 - Extended-precision x87 ordering that differs by one ULP.

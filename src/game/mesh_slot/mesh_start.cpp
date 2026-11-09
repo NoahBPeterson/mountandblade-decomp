@@ -288,9 +288,11 @@ void Mission::start_setup()
     g_phys.reset();
 
     std::vector<PlacedObj>& props = at<std::vector<PlacedObj> >(0x6688);
-    ModeRec* mrec = &g_mission_templates[at<int>(0x5df0)];
+    int mi0 = at<int>(0x5df0);   // stand-in: named indices, neutral here, kept only because the symbol ids they add flip x87 operand order in the prop-frame loop to the original's (docs/codegen.md 6.2)
+    int li0 = at<int>(0x5df4);
     at<int>(0x6550) = 0;
-    LevelRaw* lrec = &RAWAT(LevelRaw*, g_game, 0x13a50)[at<int>(0x5df4)];
+    ModeRec* mrec = &g_mission_templates[mi0];
+    LevelRaw* lrec = &RAWAT(LevelRaw*, g_game, 0x13a50)[li0];
     bank_of(mrec)->randomize();
     if (lrec->at<char>(0x78) == 0)
         g_game->load_scene(at<int>(0x5df4));
@@ -362,10 +364,9 @@ void Mission::start_setup()
     noise_fractal(72.0f, 0.7f, 4, 0, &in.x, &out.x);
     fo = (out.x + out.y + out.z) * 5.0f;
 
-    humidity = clamp01(((f14
- + f14) + 0.5f) * temper + (RND() * 6.32231167e-05f) * 0.0500000007f);
+    humidity = clamp01(((f14 + f14) + 0.5f) * temper + (RND() * 6.32231167e-05f) * 0.0500000007f);
+    at<int>(0x65f8) = RAWAT(int, pa, 0x38);   // before the humidity store: the original loads pa+0x38 ahead of it (0x484a..)
     at<float>(0x65f4) = humidity;
-    at<int>(0x65f8) = RAWAT(int, pa, 0x38);
     at<int>(0x65f0) = *(int*)&u.x;
     at<int>(0x6618) = *(int*)&u.z;
     at<int>(0x661c) = *(int*)&u.w;
@@ -566,8 +567,8 @@ void Mission::start_setup()
             at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
             at<vec2>(0x653c) = z;      // from z, not a copy of 0x652c: the original stores both pairs from the registers holding z (0x485a8a..)
         }
+        at<int>(0x6548) = at<int>(0x6538);   // 0x6538 is loaded first in the original
         at<int>(0x6544) = at<int>(0x6534);
-        at<int>(0x6548) = at<int>(0x6538);
         at<float>(0x654c) = -0.300000012f;
     } else {
         at<int>(0x654c) = lrec->at<int>(0x64);
@@ -701,7 +702,8 @@ void Mission::start_setup()
     vector4 c0;
     c0.x = 0.0f; c0.y = 0.0f;
     {
-    vec2 ext = { at<float>(0x6544) - at<float>(0x653c), at<float>(0x6548) - at<float>(0x6540) };
+    RectF& rc = at<RectF>(0x653c);   // through a reference: the original's loads stay below the 0x5278/0x5274 stores (direct at<> loads were hoisted above them)
+    vec2 ext = { rc.x1 - rc.x0, rc.y1 - rc.y0 };
     vec2 mid;
     mid.x = ext.x * 0.5f;
     mid.y = ext.y * 0.5f;
@@ -831,8 +833,7 @@ void Mission::start_setup()
 
     // ---- scene effect object (rain / snow emitter) ---------------------------------------------
     if ((*(int*)((char*)&g_options + 0x20)) != 0 && !lrec->flags.b0 && at<int>(0x6604) > 0) {
-        vector4 sky = *(vector4*)g_env_rows
-[at<int>(0x660c)].base;
+        vector4 sky = *(vector4*)g_env_rows[at<int>(0x660c)].base;
         float scale = (sky.x * 3.0f + 1.0f) * 0.400000006f;
         Entity* fx = (Entity*)((rgl::world*)at<rgl::world*>(0))->create_entity(9);
         at<Entity*>(0x65b8) = fx;
@@ -866,12 +867,15 @@ void Mission::start_setup()
                     norm3(&em->vb4.x);
                     em->f198 *= at<float>(0x6600);
                     RAWAT(float, em, 0xa0) = 11.0f / (float)(10.0 / em->f24);   // a float in the original (0x486a..: fstp [esi+0xa0]); psys::fa0 is declared int
-                    em->curve[2].v = scale * em->curve[2].v;
-                    em->curve[3].v = scale * em->curve[3].v;
-                    em->curve[4].v = scale * em->curve[4].v;
-                    em->curve[5].v = scale * em->curve[5].v;
-                    em->curve[6].v = scale * em->curve[6].v;
-                    em->curve[7].v = scale * em->curve[7].v;
+                    {
+                    rgl::float_pair* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
+                    cv[2].v = scale * cv[2].v;
+                    cv[3].v = scale * cv[3].v;
+                    cv[4].v = scale * cv[4].v;
+                    cv[5].v = scale * cv[5].v;
+                    cv[6].v = scale * cv[6].v;
+                    cv[7].v = scale * cv[7].v;
+                    }
                     at<Entity*>(0x65b8)->v25(em);
                 }
             }
@@ -884,12 +888,15 @@ void Mission::start_setup()
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
                     em->vc4 = t20;
-                    em->curve[2].v = scale * em->curve[2].v;
-                    em->curve[3].v = scale * em->curve[3].v;
-                    em->curve[4].v = scale * em->curve[4].v;
-                    em->curve[5].v = scale * em->curve[5].v;
-                    em->curve[6].v = scale * em->curve[6].v;
-                    em->curve[7].v = scale * em->curve[7].v;
+                    {
+                    rgl::float_pair* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
+                    cv[2].v = scale * cv[2].v;
+                    cv[3].v = scale * cv[3].v;
+                    cv[4].v = scale * cv[4].v;
+                    cv[5].v = scale * cv[5].v;
+                    cv[6].v = scale * cv[6].v;
+                    cv[7].v = scale * cv[7].v;
+                    }
                     vector4* vb = &em->vb4;
                     *vb = t20;
                     norm3(&vb->x);
@@ -903,8 +910,7 @@ void Mission::start_setup()
     }
     }
     }
-    // ---- intro billboard (sun mesh) ---
-----------------------------------------------------------
+    // ---- intro billboard (sun mesh) -------------------------------------------------------------
     at<int>(0x65c0) = 0;
     at<int>(0x65c4) = 0;
     at<int>(0x65c8) = 0;

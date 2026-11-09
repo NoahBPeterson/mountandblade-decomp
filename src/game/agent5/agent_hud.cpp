@@ -465,7 +465,8 @@ static __forceinline vector4 hv_neg(const vector4& a) { return vector4(-a.x, -a.
 static __forceinline void hv_add_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
 static __forceinline void hv_sub_to(vector4& a, const vector4& b) { a.x = a.x - b.x; a.y = a.y - b.y; a.z = a.z - b.z; }
 #define AG(i) agent_by_id(i)
-static __forceinline void hv_add_mix(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = b.y + a.y; a.z = b.z + a.z; }
+// stand-in: the source operand comes first in the formals only because that order gives the original's x lane (`fld head.x` first)
+static __forceinline void hv_add_mix(const vector4& b, vector4& a) { a.x = a.x + b.x; a.y = b.y + a.y; a.z = b.z + a.z; }
 static __forceinline float fmax_i(const float& a, const float& b) { return a > b ? a : b; }
 static __forceinline void hv_view(rgl::frustum& f, const matrix& m) { f.m = m; f.build_planes(); }
 static __forceinline float clamp_i(const float& x, const float& lo, const float& hi) { return x < lo ? lo : (x >= hi ? hi : x); }
@@ -668,7 +669,7 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
             }
             head = ag->pos;
             head.z += f280;
-            hv_add_mix(head, ag->v98);
+            hv_add_mix(ag->v98, head);
             rot_s(k, 1.5707964f);
             k.rotate_about_f(&yaw);
             k.rotate_about_s(&pitch);
