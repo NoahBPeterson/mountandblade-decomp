@@ -1114,5 +1114,12 @@
       "g:6000114=6000200@1"
     ],
     "why": "six passing entries: VC7.1 vector growth reaches spare capacity on the 6th push"
+  },
+  "mesh_terrain 00481570": {
+    "args": [
+      "--transparent",
+      "476130,476020,4772f0,477380,476240,4762b0,424830,424db0"
+    ],
+    "why": "tessellate: our build compiles its own copies of vector<geom_elem>/<geom_pt> reserve and push_back (and their _Insert_n growth), so their allocations show at depth 1 where the original's are inside out-of-line calls. With allocation failure injected (alloc_fail), the reserve fails and push_back regrows, which made the traces differ; heap operations and end state were identical (replay of the saved FAIL input, 2026-11-08)."
   }
 }
