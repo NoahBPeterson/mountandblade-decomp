@@ -64,3 +64,6 @@
 ../src/rgl/core/resmgr.cpp  ?load_stream@resmgr@@QAEPAUstream_base@@PAU2@@Z  0041db20  /O2 /MT /Gy /TP
 ../src/rgl/core/resmgr.cpp  ?get_render_target@resmgr@@QAEPAUtexture@@HHHHH@Z  0041b7d0  /O2 /MT /Gy /TP
 ../src/rgl/core/resmgr.cpp  ?invalidate@resmgr@@QAEHXZ  004195e0  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/rgl/core/resmgr.cpp  _$E1  005479a0  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  _$E2  00548130  /O2  /MT  /Gy  /TP

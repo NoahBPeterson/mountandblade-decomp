@@ -50,3 +50,18 @@
 ../src/game/triggers/trigger_vec.cpp  ?read_entry@@YAAAUstream_base@@AAU1@AAURecH@@@Z  004c2170  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?entry_vec_resize@@YAHPAUstream_base@@PAUAnimSet@@@Z  004c2250  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?read@MenuRec@@QAEXAAUstream_base@@@Z  004c2b20  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/triggers/trigger_vec.cpp  _$E1  00547bc0  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E10  00547da0  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E13  00547dc0  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E7  00547e40  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E19  00547fa0  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E16  00548040  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E4  005480d0  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E5  00548160  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E2  00548190  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E11  005481a0  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E14  005481d0  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E8  00548200  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E20  00548340  /O2  /MT  /Gy  /TP
+../src/game/triggers/trigger_vec.cpp  _$E17  00548350  /O2  /MT  /Gy  /TP

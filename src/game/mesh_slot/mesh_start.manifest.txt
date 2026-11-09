@@ -1,1 +1,4 @@
 ../src/game/mesh_slot/mesh_start.cpp  ?near_round@@YA_JPBM@Z  004875a0  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/mesh_slot/mesh_start.cpp  _$E1  00547fc0  /O2  /MT  /Gy  /TP
+../src/game/mesh_slot/mesh_start.cpp  _$E2  00548420  /O2  /MT  /Gy  /TP

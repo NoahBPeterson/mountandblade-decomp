@@ -80,3 +80,12 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?fill_records@PresentationTable@@QAEXPAURefRecord@@@Z  004c6950  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read@Block@@QAEXPAUstream_base@@H@Z  004c8110  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_map_codes@@YIXPAUconv_rec@@@Z  004c84f0  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/rgl/mesh2/gui_edit.cpp  _$E10  00547ec0  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/gui_edit.cpp  _$E1  00547f10  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/gui_edit.cpp  _$E4  00547f30  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/gui_edit.cpp  _$E7  00547fb0  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/gui_edit.cpp  _$E2  005483c0  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/gui_edit.cpp  _$E5  00548400  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/gui_edit.cpp  _$E8  00548410  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/gui_edit.cpp  _$E11  00548460  /O2  /MT  /Gy  /TP

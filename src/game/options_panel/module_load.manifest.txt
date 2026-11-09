@@ -7,3 +7,10 @@
 ../src/game/options_panel/module_load.cpp  ?uninitialized_copy_ground@@YAPAUground_spec@@PAU1@00AAUground_alloc@@@Z  004d1230  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ?uninitialized_copy_mission@@YAPAUmission_type@@PAU1@00AAUmission_alloc@@@Z  004d12c0  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ??0growable_array@@QAE@XZ  004d1360  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/options_panel/module_load.cpp  _$E4  00547e60  /O2  /MT  /Gy  /TP
+../src/game/options_panel/module_load.cpp  _$E1  00547f60  /O2  /MT  /Gy  /TP
+../src/game/options_panel/module_load.cpp  _$E7  00547fe0  /O2  /MT  /Gy  /TP
+../src/game/options_panel/module_load.cpp  _$E2  00548220  /O2  /MT  /Gy  /TP
+../src/game/options_panel/module_load.cpp  _$E8  00548250  /O2  /MT  /Gy  /TP
+../src/game/options_panel/module_load.cpp  _$E5  00548360  /O2  /MT  /Gy  /TP

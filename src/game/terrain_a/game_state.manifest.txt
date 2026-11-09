@@ -10,3 +10,6 @@
 ../src/game/terrain_a/game_state.cpp  ?bind_target@ShadowMap@@QAEXXZ  00464070  /O2 /MT /Gy /TP
 ../src/game/terrain_a/game_state.cpp  ?sync_readback@ShadowMap@@QAEXXZ  004640d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/game_state.cpp  ?read_pixel@ShadowMap@@QAEXHHHPAI0@Z  004641a0  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/terrain_a/game_state.cpp  _$E1  00547de0  /O2  /MT  /Gy  /TP
+../src/game/terrain_a/game_state.cpp  _$E2  00548490  /O2  /MT  /Gy  /TP

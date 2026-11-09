@@ -8,3 +8,6 @@
 ../src/game/options_panel/options_panel.cpp  ?frame_update@Rec48@@UAEXM@Z  004d8000  /O2 /MT /Gy /TP
 ../src/game/options_panel/options_panel.cpp  ?export_path@options_panel@@QAEXPAD@Z  004d9260  /O2 /MT /Gy /TP
 ../src/game/options_panel/options_panel.cpp  ?export_character@GameIo@@QAEXPAUoutfile@@@Z  004d86d0  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/options_panel/options_panel.cpp  _$E1  00547ae0  /O2  /MT  /Gy  /TP
+../src/game/options_panel/options_panel.cpp  _$E2  005482b0  /O2  /MT  /Gy  /TP

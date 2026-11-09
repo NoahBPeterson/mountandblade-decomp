@@ -15,3 +15,6 @@
 ../src/game/mission5/game_2.cpp  ?build_scene@Game@@QAEXXZ  00520d60  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?read_file@SceneFile@@QAEXAAUstream_base@@@Z  00524d60  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?read@Local@@QAEXAAUstream_base@@@Z  00524f00  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/mission5/game_2.cpp  _$E1  00548070  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  _$E2  00548270  /O2 /MT /Gy /TP

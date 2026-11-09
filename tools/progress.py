@@ -452,7 +452,8 @@ TREE_CATS = (("byte-exact", "Byte-exact", "#0072B2"),                    # blue
              ("nosource", "No source yet", "#FFFFFF"))
 # a TIMEOUT row (verdicts.py category not_run) has source: it was "No source yet" here until 2026-10-29
 _VCAT = {"inputs": "inputs", "harness": "harness", "funclet": "funclet", "comdat": "comdat",
-         "comdatdiff": "comdatdiff", "not_run": "not_run"}
+         "comdatdiff": "comdatdiff", "not_run": "not_run",
+         "weak": "weak"}      # a run cut short by its time limit with enough clean inputs (verdicts.py)
 
 
 def _verdict_data():

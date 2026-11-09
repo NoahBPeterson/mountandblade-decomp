@@ -11,3 +11,6 @@
 ../src/game/strat/gui_manager.cpp  ?_Tidy@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXXZ  0042d390  /O2 /MT /Gy /TP
 ../src/game/strat/gui_manager.cpp  ??1gui_manager@@QAE@XZ  0042d3e0  /O2 /MT /Gy /TP
 ../src/game/strat/gui_manager.cpp  ?_Buy@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@IAE_NI@Z  0042d570  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/strat/gui_manager.cpp  _$E1  005479c0  /O2  /MT  /Gy  /TP
+../src/game/strat/gui_manager.cpp  _$E2  00548140  /O2  /MT  /Gy  /TP

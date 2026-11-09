@@ -19,3 +19,6 @@
 ../src/game/dialog_manager.cpp  ?advance@DialogMgr@@QAEXXZ  00460ff0  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ?advance_all@DialogMgr@@QAEXPAH@Z  00461140  /O2 /MT /Gy /TP
 ../src/game/dialog_manager.cpp  ?start@DialogMgr@@QAEXHHHHD@Z  004610b0  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/dialog_manager.cpp  _$E1  00547e20  /O2  /MT  /Gy  /TP
+../src/game/dialog_manager.cpp  _$E2  005484a0  /O2  /MT  /Gy  /TP

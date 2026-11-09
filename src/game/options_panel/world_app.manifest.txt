@@ -7,3 +7,8 @@
 ../src/game/options_panel/world_app.cpp  ??0GameApp@@QAE@XZ  004d3ec0  /O2 /MT /Gy /TP
 ../src/game/options_panel/world_app.cpp  ?erase@TreeW@@QAEXPAX0@Z  004d3e50  /O2 /MT /Gy /TP
 ../src/game/options_panel/world_app.cpp  ?init@Big@@QAEPAU1@XZ  004d3880  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/options_panel/world_app.cpp  _$E1  005480b0  /O2  /MT  /Gy  /TP
+../src/game/options_panel/world_app.cpp  _$E4  00548110  /O2  /MT  /Gy  /TP
+../src/game/options_panel/world_app.cpp  _$E2  00548150  /O2  /MT  /Gy  /TP
+../src/game/options_panel/world_app.cpp  _$E5  005482a0  /O2  /MT  /Gy  /TP

@@ -50,3 +50,6 @@
 ../src/game/cls_map/cls_map.cpp  ?init_screen@C4c3290@@UAEXXZ  004e3aa0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?new_progress_bar@@YAPAUprogress_bar@@PAUContainerBase@@MMMM@Z  004e3d50  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?init_screen@Recf0@@UAEXXZ  004e05c0  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/cls_map/cls_map.cpp  _$E5  00547f50  /O2  /MT  /Gy  /TP
+../src/game/cls_map/cls_map.cpp  _$E6  00548500  /O2  /MT  /Gy  /TP

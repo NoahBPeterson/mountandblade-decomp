@@ -34,3 +34,8 @@
 ../src/rgl/mesh2/rec_tables.cpp  ?load_skyboxes@@YAXXZ  004c3350  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?load@GameKeys@@QAEXXZ  004c2ea0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??0C4c2d10@@QAE@XZ  004c2d10  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/rgl/mesh2/rec_tables.cpp  _$E4  00547f00  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/rec_tables.cpp  _$E1  00548010  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/rec_tables.cpp  _$E5  005483b0  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/rec_tables.cpp  _$E2  005483e0  /O2  /MT  /Gy  /TP
