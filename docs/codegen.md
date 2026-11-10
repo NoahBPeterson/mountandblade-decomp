@@ -932,6 +932,45 @@ Derive float sum **grouping from the assembly, not from a decompile**.
   - **A loop-scoped vector temporary (`compute_edge_creases` 0x470750):** `vector4 d = b.pos - a.pos;` inside the loop fixed the normalisation's fld/fmul order.
   - **A `const vector4&` helper bound to a temporary keeps the last lane on the stack (M&B `Game::build_map_trees` 0x5213d0, round bm9bt).** The original multiplies `c` by a lit vector with `fld c.z; fmul st(1); fstp c.z; fstp st(0)`: lit.z isn't consumed. A named `vector4 lit = ...; c.x *= lit.x; ...` consumes it (`fmul [c.z]`). `map_mul(c, lightL + lightM * s)`, with `map_mul(vector4& a, const vector4& b) { a.x *= b.x; ... }`, gives the original's shape (+4). The same kind of helper, `map_add(sum, q + d * 0.25f)`, gave a chain sum's `fld r.x; faddp st(4)`. It doesn't work everywhere: a `const float&` scale bound to a temporary or to a named float changed nothing, and in a loop where the original consumes the value, the helper's reference is wrong.
   - **A member helper (through `this`) sets the x87 operand order where caller-side spellings are canonicalised (M&B `Game::build_map_trees` 0x5213d0, round bmH).** In the caller, `d.y = d.y * inv` and `inv * d.y` both give `fld d.y; fmul inv`. The same body as an inline member, `((map_vn&)d).normalize_inl()` with `x *= inv; y *= inv; z *= inv;`, gives the original's `fld inv; fmul d.y` (+2). A 2D rotation `((map_uv&)uv).rot(ca, sa)` that returns rx and writes y, and an offset add `((map_uv&)uv).add(rx, t)`, gave +4 and +2 more. It isn't general: the y sum inside `rot` still evaluates `ca*y` first however it's spelled, and the same member add or scale made other sites worse (-3 to -6) or left them unchanged. So try the member form per site and keep it only where it helps.
+  - **Inline Vec2 operators, a `double` local bound to `const float&`, and a repeated call make the original's
+    spills (M&B `rot2::rotate_2x2` 0x4f3b40, byte-exact 2026-11-10).** The original saved the sine with
+    `fst [esp]` right after `fsin`, reloaded it, saved a second copy into the angle's own stack slot, and spilled
+    only the y lane of each product, while the cosine never left the x87 stack. The source that matches:
+    ```cpp
+    struct Vec2 { float x, y; Vec2(float a, float b) : x(a), y(b) {}
+        Vec2 operator*(const float& f) const { return Vec2(x * f, y * f); }   // + and - the same way
+    };
+    struct rot2 { Vec2 r[2]; void rotate_2x2(float angle); };
+    void rot2::rotate_2x2(float angle) {
+        double s = sin(angle);
+        Vec2 r0 = r[0] * cos(angle) + r[1] * s;
+        Vec2 r1 = r[1] * cos(angle) - r[0] * s;
+        r[0] = r0; r[1] = r1;
+    }
+    ```
+    Each piece maps to an instruction pattern:
+    - **A `double` bound to `const float&`** makes a float temporary at each use: `fst dword [esp]` / `fld [esp]`,
+      and a second temporary later (here, the dead angle slot). That is the "rounded copy kept beside the unrounded
+      register value" pattern; a `float` local or `volatile` cannot produce it.
+    - **A call written out at each use** (`cos(angle)` twice, no local) is computed once and kept on the x87
+      stack (`fld st(0)` duplicate), never stored. Naming it (`double c` or `float c`) spilled it instead.
+    - **An inline operator returning `Vec2(x*f, y*f)` through a constructor** keeps x on the stack and spills y:
+      only the second lane goes to memory. A body that fills a named local and returns it was worse (228-252).
+    - **The result landing in two named row temporaries, then assigned**, gives the struct-copy-through-eax/edx
+      ending; a matrix temporary or direct row assignment was worse.
+    - **Operand order of the first row** decides which value is converted first: `r[0]*cos + r[1]*s` matched;
+      `r[1]*s + r[0]*cos` was 30 aligned (cl evaluates the right operand of the operator first).
+
+    **How it was found, and what to do next time.** One-at-a-time edits and a greedy variant search stalled at
+    116-129 aligned: every single change from the matching shape was worse, so the match was only reachable as a
+    *combination*. An outside analysis proposed the Vec2-operator structure; compiled verbatim it scored 175 and
+    was nearly dismissed. A cartesian grid over its listed dimensions, as standalone TUs scored by chk.py (operator
+    member/free, `float`/`const float&`, `x*f`/`f*x`, result landing, trig as `float`/`double`/`(float)` cast/
+    `sinf` and order), found 30 in 240 compiles; a second grid over the trig values (`double` local / `float`
+    local / written at each use, for sine and cosine separately) found three byte-exact forms in 204 compiles.
+    Each grid took a few minutes on the laptop compile server. So: compile a proposed shape **exactly as given** first,
+    then grid its dimensions, before writing it off; `tools/matching/vsearch.py --beam` searches combinations the
+    same way. The grids are in `work/match/rotgrid/`.
   - **Taking a re-read out can move registers elsewhere (render_scene's bone cache):** every form without the re-read of `it->m->f224` after the cache store moves `this` and `it` to other registers and stack slots, and costs about 150 instructions.
 
 ### 9.3 `sqrt`

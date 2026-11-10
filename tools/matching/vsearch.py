@@ -471,7 +471,8 @@ def rw_x87(body, mask):
     inline-local float v = E; ... v ...  ->  ... (E) ...   (repeat a pure expression instead of naming it: changes x87
                  register lifetimes / spills; only when E's inputs are never assigned afterwards; UNVERIFIED)
     assoc        A + B + C  <->  A + (B + C)   (summation order; not exact in floating point: UNVERIFIED)
-    literal      0.5f <-> 0.5 for constants exact in float (fmul dword vs qword; double promotes the expression: UNVERIFIED)"""
+    literal      0.5f <-> 0.5 for constants exact in float (fmul dword vs qword; double promotes the expression: UNVERIFIED)
+    x87-type     float v = E;  <->  double v = E;   (UNVERIFIED; see docs/codegen.md 9.2, rot2::rotate_2x2)"""
     O = OPND
     # neg-fold
     for m in re.finditer(r"(%s)(\s*)\+\s*-\s*(%s\s*\*\s*%s)" % (O, O, O), mask):
@@ -489,7 +490,7 @@ def rw_x87(body, mask):
         new = "%s%s+ -%s%s" % (a, sp, b, c)
         yield ("neg-unfold @%d: %s" % (m.start(), new[:60]), body[:m.start()] + new + body[m.end():], True)
     # inline-local
-    for m in re.finditer(r"(?m)^[ \t]*(?:const\s+)?float\s+([A-Za-z_]\w*)\s*=\s*([^;\n]+);[ \t]*\n", mask):
+    for m in re.finditer(r"(?m)^[ \t]*(?:const\s+)?(?:float|double)\s+([A-Za-z_]\w*)\s*=\s*([^;\n]+);[ \t]*\n", mask):
         name, expr = m.group(1), body[m.start(2):m.end(2)].strip()
         rest_m, rest_b = mask[m.end():], body[m.end():]
         uses = [u for u in re.finditer(r"\b%s\b" % re.escape(name), rest_m)]
@@ -512,6 +513,21 @@ def rw_x87(body, mask):
             new_rest = new_rest[:u.start() + off] + e + new_rest[u.end() + off:]
             off += len(e) - (u.end() - u.start())
         yield ("inline-local @%d: %s" % (m.start(), name), body[:m.start()] + new_rest, False)
+    # sum-swap: P + Q -> Q + P where both are products (exact: IEEE addition commutes); picks which product (and so which
+    # conversion temporary) cl evaluates first
+    T = r"%s\s*[*/]\s*%s" % (O, O)
+    for m in re.finditer(r"(?<![\w)\].*/-])(%s)(\s*)\+(\s*)(%s)(?=\s*[;),])" % (T, T), mask):
+        p, q = body[m.start(1):m.end(1)], body[m.start(4):m.end(4)]
+        new = "%s + %s" % (q, p)
+        yield ("sum-swap @%d: %s" % (m.start(), new[:60]), body[:m.start()] + new + body[m.end():], True)
+    # cast-drop: (float)E -> E for a call or simple operand (a double result kept double; UNVERIFIED)
+    for m in re.finditer(r"\(float\)\s*(%s\s*\([^()]*\)|%s)" % (r"[A-Za-z_]\w*", O), mask):
+        new = body[m.start(1):m.end(1)]
+        yield ("cast-drop @%d: %s" % (m.start(), new[:40]), body[:m.start()] + new + body[m.end():], False)
+    # float <-> double local (a double bound to a `const float&` parameter makes a float temporary at each use)
+    for m in re.finditer(r"(?m)^([ \t]*(?:const\s+)?)(float|double)(\s+[A-Za-z_]\w*\s*=)", mask):
+        new = m.group(1) + ("double" if m.group(2) == "float" else "float") + m.group(3)
+        yield ("x87-type @%d: %s" % (m.start(), new.strip()), body[:m.start()] + new + body[m.end():], False)
     # assoc
     for m in re.finditer(r"(?<![\w)\].*/(])(%s)(\s*)([-+])(\s*)(%s)(\s*)\+(\s*)(%s)(?![\w(\[.]|\s*[*/])" % (O, O, O), mask):
         a, op, b, c = (body[m.start(i):m.end(i)] for i in (1, 3, 5, 8))
@@ -625,7 +641,53 @@ class Scorer:
 
 
 # ----------------------------------------------------------------------------------------------------------- search
-def search(src, va, rounds=8, jobs=24, keep_unsafe=False, log=print):
+def _beam(sc, text, base, va, rounds, jobs, width, log, t0, src):
+    """Beam search: each round expands every kept state by every single rewrite and keeps the `width` best results,
+    whether or not they beat the start. Greedy search stops at the first round without an improvement, so it cannot
+    reach a match whose every single step looks worse (rot2::rotate_2x2 0x4f3b40 matched only as a combination of
+    `double s`, `cos(angle)` written at each use and the first row's operand order; docs/codegen.md 9.2)."""
+    states = [(base[:2], text, [])]
+    seen = {text}
+    best = states[0]
+    tried = 0
+    with cf.ThreadPoolExecutor(jobs) as ex:
+        for rnd in range(rounds):
+            cands = []
+            for _sc, t, path in states:
+                a, b = function_span(t, va)
+                pre = t[max(0, a - 800):a]
+                sig = pre[max(pre.rfind(";"), pre.rfind("}")) + 1:]
+                for d, nb, s in variants(t[a:b], sig):
+                    nt = t[:a] + nb + t[b:]
+                    if nt not in seen:
+                        seen.add(nt)
+                        cands.append((nt, path + [(d, s)]))
+            if not cands:
+                log("  round %d: no new variants" % (rnd + 1))
+                break
+            futs = {ex.submit(sc.score, nt): (nt, path) for nt, path in cands}
+            tried += len(cands)
+            scored = []
+            for f in cf.as_completed(futs):
+                r = f.result()
+                if r is not None:
+                    nt, path = futs[f]
+                    scored.append((r[:2], nt, path))
+            scored.sort(key=lambda x: x[0])
+            states = scored[:width]
+            if scored and scored[0][0] < best[0]:
+                best = scored[0]
+            log("  round %d: %d variants, beam %s, best so far aligned %d diff %d" % (
+                rnd + 1, len(cands), "/".join(str(s[0][0]) for s in states[:6]), best[0][0], best[0][1]))
+            if best[0][1] == 0:
+                break
+    (al, d), bt, path = best
+    unsafe = any(not s for _, s in path)
+    return dict(src=src, va=va, start=base[:2], end=(al, d), applied=path, text=bt, orig_text=text,
+                match=d == 0, unsafe=unsafe and d != 0, tried=tried, secs=time.time() - t0)
+
+
+def search(src, va, rounds=8, jobs=24, keep_unsafe=False, log=print, beam=1):
     text = open(src).read()
     flags = row_flags(src, va)
     sc = Scorer(src, va, flags)
@@ -640,6 +702,8 @@ def search(src, va, rounds=8, jobs=24, keep_unsafe=False, log=print):
         return None
     log("  start: aligned %d, diff %d  (%s)" % (base[0], base[1], base[2][:70]))
     cur_text, cur, applied, tried = text, base, [], 0
+    if beam > 1:
+        return _beam(sc, text, base, va, rounds, jobs, beam, log, t0, src)
     with cf.ThreadPoolExecutor(jobs) as ex:
         for rnd in range(rounds):
             if cur[1] == 0:
@@ -732,6 +796,9 @@ def main():
     ap.add_argument("--limit", type=int, default=0); ap.add_argument("--rounds", type=int, default=8)
     ap.add_argument("--jobs", type=int, default=24); ap.add_argument("--apply", action="store_true")
     ap.add_argument("--keep-unsafe", action="store_true")
+    ap.add_argument("--beam", type=int, default=1,
+                    help="keep the N best variants each round even when none improves (finds matches only reachable as "
+                         "a combination of individually-worse steps; try --beam 8 --rounds 4)")
     ap.add_argument("--shard", default="", help="K/N: only every N-th row starting at K (run N shards side by side)")
     a = ap.parse_args()
     if a.batch:
@@ -745,7 +812,7 @@ def main():
         for al, src, va in rows:
             print("%s %08x  (aligned %d)" % (os.path.relpath(src, ROOT), va, al), flush=True)
             try:
-                r = search(src, va, a.rounds, a.jobs, a.keep_unsafe, log=lambda s: print(s, flush=True))
+                r = search(src, va, a.rounds, a.jobs, a.keep_unsafe, log=lambda s: print(s, flush=True), beam=a.beam)
             except Exception:
                 print("  ERROR\n" + traceback.format_exc(), flush=True)
                 r = None
@@ -759,7 +826,7 @@ def main():
         return 0
     if not (a.src and a.va):
         ap.error("src and va, or --batch")
-    r = search(a.src, int(a.va, 16), a.rounds, a.jobs, a.keep_unsafe)
+    r = search(a.src, int(a.va, 16), a.rounds, a.jobs, a.keep_unsafe, beam=a.beam)
     report(r, a.apply, a.keep_unsafe)
     return 0 if r and r["match"] else 1
 
