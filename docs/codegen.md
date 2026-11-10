@@ -109,8 +109,10 @@ mechanisms. This guide does not depend on it.
 ### 1.3 Smell tests
 
 - `fld st(i); fmul [m]` (a just-computed value stays on the stack and is
-  multiplied by memory) is cl 13.10 output; the reverse order,
-  `fld [m]; fmul st(i)`, is not.
+  multiplied by memory) is cl 13.10 output **for a `float` scalar**. The reverse,
+  `fld [m]; fmul st(i)`, is **also cl 13.10 output, when the scalar is a `double`**
+  (section 9.2, "THE DOUBLE-SCALAR LEVER"). It is not a sign of another compiler:
+  try `double` before anything else.
 - `sqrt` compiles to a `_CIsqrt` call in this compiler. If the original has an
   inline `fsqrt`, no source lever is confirmed (section 9.3).
 - A function that reads `eax`, `edx` or `ecx` at entry with no C signature to
@@ -891,8 +893,32 @@ Derive float sum **grouping from the assembly, not from a decompile**.
 
 ### 9.2 Operand shape
 
+> **THE DOUBLE-SCALAR LEVER: try this first on any x87 operand-order or spill difference.**
+> When a float expression is scaled by a value, **declaring that value (or casting one operand) `double`**
+> changes cl 13.10's x87 shape:
+> - **Operand orientation flips to memory-first:** `fld [m]; fmul st(n)` instead of `fld st(n); fmul [m]`.
+> - **The value stays unrounded on the x87 stack** instead of being rounded through a float slot.
+> - **Bound to a `const float&` parameter, a `double` gets a float temporary per use** (`fst dword [esp]`,
+>   reload), the "rounded copy beside the register value" pattern.
+>
+> On 2026-11-10 it made five functions byte-exact in one afternoon, one after another:
+> - `rot2::rotate_2x2` 0x4f3b40: `double s = sin(angle)` (details below).
+> - shapes.cpp 0x409e90: the scale factor `t` declared `double`.
+> - shapes.cpp 0x409980: `double t` plus a `vector4 dt(d.x*t, d.y*t, d.z*t)` temporary.
+> - shapes.cpp 0x408a50: `v[i].y * (double)s[1]`.
+> - fx_keys.cpp 0x423390: `double t = 1.0f - rec(i)->f18`.
+>
+> It also took fx_keys 0x423440 from 82 to 80. Earlier lanes had tried many spellings of these rows, and every
+> `float` spelling failed. `tools/matching/vsearch.py` tries it mechanically: its x87-type rewrite
+> (`float v = E;` <-> `double v = E;`) and cast-drop. Run it with `--beam 8`.
+>
+> **Is it safe?** In values, it is exact where the original keeps the value unrounded, which the instruction
+> shape shows. The game's render thread runs the x87 at 24-bit precision (9.1), so float and double give the same
+> results there. Still confirm each row with `tools/difftest/sweep_nonmatching.py`.
+
 - `fld st(i); fmul [m]` (keeps a just-computed value on the stack and multiplies
-  by memory) is the cl 13.10 shape. Observed in Spore's cl 13.10 code (Havok x87).
+  by memory) is the cl 13.10 shape **for a `float` scalar**; with a `double` scalar the same compiler emits
+  `fld [m]; fmul st(n)` (the lever above). Observed in Spore's cl 13.10 code (Havok x87).
 - `fstp [local]` followed by a reload is also cl 13.10 output. Where the original
   does that, the source must keep the value in a **memory-resident struct field**
   (an `hkVector4` local), because a `const float` scalar stays unrounded on the
