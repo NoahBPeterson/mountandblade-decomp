@@ -1,0 +1,28 @@
+You are making decompiled C++ from Mount & Blade 1.011 (32-bit x86, built with MSVC 7.1, cl 13.10) compile to the original machine code byte for byte. Repo root: /Users/noahpeterson/Documents/Projects/mountandblade-decomp. Run every command from there, with relative paths.
+
+Your module: {MODULE}.cpp. Nothing else may be edited apart from its {MODULE}.manifest.txt and {MODULE}.nonmatching.txt (check.py updates both for you) and scratch files named work/match/ds_{OBJ}_*. Other workers are editing other modules at the same time.
+
+These functions already have complete source and are only a few bytes from a match. Rows, closest first, as "<va> <size in bytes> <aligned bytes still differing> <name>":
+{ROWS}
+
+Setup, once: read section 14A of docs/codegen.md, "Near misses: the source had more structure than ours" (rg -n "^## 14A|^## 15" docs/codegen.md gives the line range). Use rg, not grep.
+
+For each row:
+1. Read it: .venv/bin/python tools/contrib/task.py 0x<va>
+   It prints the function's source, its note (what earlier attempts found), its flags and what to do next.
+2. Measure: .venv/bin/python tools/contrib/check.py 0x<va>
+   It compiles, compares with the original and prints MATCH or the instruction diff (original | yours). It also re-checks every byte-exact function of your module: BROKE means your edit made another function stop matching; undo that part.
+3. Reason about the first real difference in the diff; one early structural difference often shifts registers through the rest. The usual causes: statement or declaration order, an inline helper that was flattened, a temporary or a missing local, a reference instead of a pointer, `i < n` versus `n > i`, an if/else written the other way round, a wrong declared type. Change only that function, then run check.py again.
+4. check.py records results itself: on MATCH it moves the row into the manifest; when the figure goes down ("closer") it writes the new figure into the row. "further" means your change moved away: undo it. Before the first edit to a row, write that function's text unchanged to work/match/ds_{OBJ}_<va>.prev.txt so it can be restored.
+5. After six to eight different ideas on a row without progress, stop and move on: append what you tried and what still differs to the row's note in {MODULE}.nonmatching.txt (keep the first two columns as they are). Notes are how the next attempt starts ahead.
+
+Rules:
+- A change must preserve the function's behaviour exactly. Never replace a typed member access with a raw offset or a cast that reads something else: a previous wave turned `*ent->lods.first` into `*(int*)((char*)ent + 0x10c)`, dropping a dereference, and the game read the wrong value for three days. Field offsets and callee addresses in the diff must agree with the original's. Every kept change is re-checked for equivalence after the wave and reverted if it fails.
+- Never write a literal image address in code (a vtable, global or function as a number, such as (void*)0x5924a0). Use the real class, global or function; an address belongs only in a comment.
+- Never add an `extern` for a global or constant that nothing in src/ defines. Search src/ for the existing definition and use that exact declaration.
+- Never edit a header. If a function needs a shared-header change, leave the row and say what it needs.
+- Never change a call so that it uses a different calling convention from the callee's definition.
+- No inline asm, no per-function pragma tricks, no volatile added to force a result: nothing that could not have been in the original source.
+- Never run git, tools/relink/*, the game, opencode, or any broker script. Never start subagents or tasks. Never read anything outside the repo. Don't use network tools. No bare python with stdin scripts, no shell background jobs with &. Use the edit tool for source changes, not sed -i. Keep output short: cut long tool output with head when you don't need it.
+
+When finished, reply with one line per row: "<va> MATCH", "<va> closer: <old> -> <new>" or "<va> no: <what still differs, in a few words>"; then at most 3 lines on shared-header needs and anything that looks like a real bug in the existing source. The very last line must be: WAVE-DONE
