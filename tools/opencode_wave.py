@@ -96,6 +96,9 @@ def main():
     ap.add_argument("--max-nudges", type=int, default=3)
     ap.add_argument("--interval", type=int, default=30)
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--revive", action="store_true",
+                    help="put abandoned sessions back to running (nudges reset) and continue them on --model, keeping "
+                         "their whole context; every prompt names --model, so a session can change model mid-way")
     a = ap.parse_args()
     W = lambda *p: os.path.join(ROOT, "work", "opencode", *p)
     state_file, conc_file, sess_file = W("wave_%s.json" % a.batch), W("wave_%s.conc" % a.batch), W("sessions_%s.txt" % a.batch)
@@ -107,6 +110,11 @@ def main():
         open(conc_file, "w").write(str(a.concurrent))
     tmpl = open(os.path.join(ROOT, a.prompt)).read()
     prov, mid = a.model.split("/", 1)
+    MODEL = {"providerID": prov, "id": mid}
+    if a.revive:
+        for s in state.values():
+            if s.get("state") == "abandoned":
+                s.update(state="running", nudges=0, last_prompt=0, revived=a.model)
 
     def save():
         tmp = state_file + ".tmp"
@@ -122,7 +130,7 @@ def main():
         save()                 # the broker must know the session before its first request
         t = open(os.path.join(ROOT, e["prompt"])).read() if e.get("prompt") else tmpl
         api("POST", "/api/session/%s/prompt" % sid, {"text": t.replace("{MODULE}", e["module"]).replace("{OBJ}", e.get("obj", e["id"]))
-                                                     .replace("{ROWS}", e["rows"])})
+                                                     .replace("{ROWS}", e["rows"]), "model": MODEL})
         print(time.strftime("%H:%M:%S"), "start", e["id"], sid, flush=True)
 
     n = 0
@@ -151,13 +159,13 @@ def main():
                     else:
                         s["nudges"] += 1
                         s["last_prompt"] = now
-                        api("POST", "/api/session/%s/prompt" % s["sid"], {"text": NUDGE})
+                        api("POST", "/api/session/%s/prompt" % s["sid"], {"text": NUDGE, "model": MODEL})
                         print(time.strftime("%H:%M:%S"), "nudge", k, s["nudges"], flush=True)
                 elif last and not (last.get("time") or {}).get("completed") and now - (last["time"]["created"] / 1000) > a.hang:
                     print(time.strftime("%H:%M:%S"), "hung", k, flush=True)
                     api("POST", "/api/session/%s/interrupt" % s["sid"], {})
                     s["last_prompt"] = now
-                    api("POST", "/api/session/%s/prompt" % s["sid"], {"text": NUDGE})
+                    api("POST", "/api/session/%s/prompt" % s["sid"], {"text": NUDGE, "model": MODEL})
                 if s["state"] == "running":
                     running += 1
                     if n % 10 == 0:
