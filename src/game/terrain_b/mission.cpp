@@ -355,8 +355,8 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         }
         float cx = col.x * k;
         float cy = col.y * k;
-        col.z *= k;
         f65b0->color = u;
+        col.z *= k;
         f65b0->base_color = f65b0->color;
 
         // the cell colour: the unpacked table colour faded by k, offset by the table base position
@@ -465,15 +465,15 @@ void rgl::world::build_faces(NavData* map)
     for (unsigned i = 0; i < map->verts.size(); i++) {
         vector4& n = map->verts[i].n;
         float len = (float)sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
-        if (len <= 1e-10f) {
-            n.x = 0.0f;
-            n.y = 1.0f;
-            n.z = 0.0f;
-        } else {
+        if (!(len <= 1e-10f)) {
             float inv = 1.0f / len;
             n.x *= inv;
             n.y *= inv;
             n.z *= inv;
+        } else {
+            n.x = 0.0f;
+            n.y = 1.0f;
+            n.z = 0.0f;
         }
     }
 }
@@ -626,8 +626,8 @@ layers:
             a->f250->add_emitter(e1);
             a->f1b4 = (int)e1;
         }
-        pos.y = pos.y + 0.6f;
         idx = g_emit_defs.used[9];
+        pos.y = pos.y + 0.6f;
         owner = 0;
         rgl::psys* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e2) {
@@ -720,8 +720,8 @@ void Terrain::make_grid()
 // @ 0x47a800
 void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
-    Level494* es = &g_game->levels[which];
     rgl::world* sc = scene;
+    Level494* es = &g_game->levels[which];
     MeshVec meshes;
     meshes = g_resmgr.find_meshes(&es->name34);
     if (meshes.size() == 0)

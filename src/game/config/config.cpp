@@ -594,7 +594,6 @@ bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format)
 // runs) -> 3 (in the second run) -> 4 (after the second run).
 void Config::split_line(const char* line, tstring* first, tstring* second)
 {
-    int i = 0;
     first->clear();
     second->clear();
 
@@ -608,7 +607,7 @@ void Config::split_line(const char* line, tstring* first, tstring* second)
     int count = (int)(p - start);
     int state = 0;
 
-    for (; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         ch = line[i];
         if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_') {
             if (state == 0) {
@@ -623,8 +622,11 @@ void Config::split_line(const char* line, tstring* first, tstring* second)
                 second->push_back(ch);
             }
         } else {
-            if (state == 1) state = 2;
-            if (state == 3) state = 4;
+            if (state == 1) {
+                state = 2;
+            } else if (state == 3) {
+                state = 4;
+            }
         }
     }
 }
@@ -1244,8 +1246,8 @@ void gui_manager::render_log(rgl::scene* pass, const float* depth)
 void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
 {
     struct Frame {
-        float px, hp, z, hz;
         float v[4];
+        float px, hp, z, hz;
         float ox;
     } f;
     float oy;
@@ -1260,8 +1262,8 @@ void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
         f.ox = k * zc8 * f.px;
         oy = k * zc8 * py;
     }
-    float z2 = -zc8;
     f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;
+    float z2 = -zc8;
     f.v[1] = f.z * view.u.y + py * view.f.y + f.px * view.s.y + view.o.y;
     f.v[2] = f.z * view.u.z + py * view.f.z + f.px * view.s.z + view.o.z;
     near_pt->x = f.v[0];
@@ -1281,13 +1283,12 @@ void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
 // @ 0x4bd4d0
 void ini_file::parse_line(const char* line, tstring& key, tstring& value)
 {
-    int i = 0;
     key.clear();
     value.clear();
 
     char ch;
     const char* p = line;
-    const char* start = line + 1;
+    const char* start = p + 1;
     for (;;) {
         ch = *p;
         p++;
@@ -1297,7 +1298,7 @@ void ini_file::parse_line(const char* line, tstring& key, tstring& value)
     }
     int len = (int)(p - start);
     int state = 0;
-    for (; i < len; i++) {
+    for (int i = 0; i < len; i++) {
         char c = line[i];
         if (c <= ' ' || c == '=') {
             if (state == 1) {

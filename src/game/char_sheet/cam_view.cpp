@@ -95,12 +95,13 @@ void FaceGen::frame_update(float dt)
             HGLOBAL h = GlobalAlloc(0x2002, len);
             if (h) {
                 EmptyClipboard();
-                char* dst = (char*)GlobalLock(h);
                 char* src = text;
-                while (*src) {
-                    *dst++ = *src++;
-                }
-                *dst = 0;
+                char* dst = (char*)GlobalLock(h);
+                char c;
+                do {
+                    c = *src++;
+                    *dst++ = c;
+                } while (c);
                 GlobalUnlock(h);
                 SetClipboardData(1, h);
             }
@@ -126,12 +127,12 @@ void FaceGen::frame_update(float dt)
         flag = 1;
     }
     if (b_next_hair->clear_mask(0x10000)) {
-        f354 = f354 + 1;
         flag = 1;
+        f354 = f354 + 1;
     }
     if (b_next_face->clear_mask(0x10000)) {
-        f35c = f35c + 1;
         flag = 1;
+        f35c = f35c + 1;
     }
     if (b_prev_beard && b_prev_beard->clear_mask(0x10000)) {
         int m = SKIN_INT(n_beard);
@@ -161,16 +162,16 @@ void FaceGen::frame_update(float dt)
         f350 = rand();
         f35c = rand();
         f358 = rand();
-        sl_hair_color->set168(g_anim.time);
         flag = 1;
+        sl_hair_color->set168(g_anim.time);
     }
     if (b_reset->clear_mask(0x10000)) {
         float* p = g_dummy_mat_arr;
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
         Skin* set = &g_anim.skin_vec.first[g_anim.cur];
-        set->relax(-1, g_dummy_mat_arr);
         flag = 1;
+        set->relax(-1, g_dummy_mat_arr);
         for (int i = 0; i < n; i++)
             deform_rows[i]->set168(g_dummy_mat_arr[i]);
     }

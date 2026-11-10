@@ -42,11 +42,12 @@ void MapEditor_s2cf60::update()
     float dt;
     int   picked;
 
+    vector4 from, to;
+    vector4 c;
     g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
 
     // --- pick the mesh_s2cf60 element under the cursor ------------------------------------------------
     if ((*(int*)((char*)&g_keyboard + 0x390)) != 0 && (*(int*)((char*)&g_keyboard + 0x790)) == 0) {
-        vector4 from, to;
         this->view->screen_to_world(from, to);
         vector4 dir;
         dir.x = to.x - from.x;
@@ -111,11 +112,11 @@ void MapEditor_s2cf60::update()
         pos.x = basis.m[0] * a - basis.m[2] * b;
         pos.y = basis.m[1] * a - basis.m[3] * b;
         pos.z = 0.0f;
+        g_game_s2cf60->dirty = 1;
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
-        g_game_s2cf60->dirty = 1;
     }
 
     // --- lift / lower (only while no modifier is held) ------------------------------------------
@@ -128,10 +129,10 @@ void MapEditor_s2cf60::update()
         else
             pos.z = 0.0f;
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);
+        g_game_s2cf60->dirty = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
-        g_game_s2cf60->dirty = 1;
     }
 
     // --- the three per-mode rotate keys (blocked while a modifier is held) -----------------------
@@ -191,7 +192,6 @@ L5c6:
         goto L7dd;
     {
         float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
-        vector4 c;
         c.x = dim;
         c.y = dim;
         c.z = dim;

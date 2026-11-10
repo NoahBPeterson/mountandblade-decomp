@@ -147,8 +147,8 @@ void HeightField::sample(float x, float y, float* out_h, int* out_id)
     if (iy < 0) iy = 0;
     else { int r = h - 1; if (iy < h) r = iy; iy = r; }
     float fu = (float)fmod((double)tx, 1.0);
-    float fv = (float)fmod((double)ty, 1.0);
     *out_id = cols[ix][iy].id;
+    float fv = (float)fmod((double)ty, 1.0);
     HCell** pc = &cols[ix];
     HCell* a = pc[0] + iy;
     if (a->flags & 2) {

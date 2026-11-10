@@ -488,8 +488,8 @@ static const char* const weapon_names[7] = {
 void GameIo::import_apply(ini_file* imp)
 {
     WL_MARKER(4)
-    Troop* troop = &troops[cur_troop];
     int count = imp->count;
+    Troop* troop = &troops[cur_troop];
 
     // one key/value pair for the whole loop, assigned per entry (0x4d8c65: two default constructors before it,
     // operator= inside), not a copy constructed and destroyed per entry

@@ -419,7 +419,7 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
         t.count = p.count;
         t.unk5c = 0;
         t.flag = 1;
-        for (int j = 0; j < p.count; j++) {
+        for (int j = 0; p.count > j; j++) {
             t.idx[j] = p.idx[j] + voff;
             t.idx2[j] = p.idx2[j] + eoff;
         }
@@ -644,8 +644,8 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
     angle = angle * 0.005f;
 
     *f1 = 0;
-    *f2 = 0;
     *f3 = 0;
+    *f2 = 0;
 
     rot2 m;
 
@@ -658,11 +658,11 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
 
         float dx = (*(float*)((char*)&g_keyboard + 0x80c)) * k * 0.01;
         pos[0] += m.m[0] * dx;
+        *f1 = 1;
         pos[1] += m.m[1] * dx;
         float dy = (*(float*)((char*)&g_keyboard + 0x810)) * k * 0.01;
         pos[0] -= m.m[2] * dy;
         pos[1] -= m.m[3] * dy;
-        *f1 = 1;
         *f4 = 1;
     }
 
@@ -678,10 +678,10 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
     }
 
     if (g_keyboard.down[19] != 0 && g_keyboard.prev[19] == 0) {
+        *f2 = 1;
         Matrix12_s2fe40 tmp;
         Matrix12_s2fe40* id = identity3(&tmp);
         *(Matrix12_s2fe40*)out = *id;
-        *f2 = 1;
     }
 
     if (g_keyboard.down[45] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
@@ -740,11 +740,11 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
         *f4 = 1;
     }
     if (g_keyboard.down[48] != 0 && g_keyboard.prev[48] == 0 && (g_keyboard.down[0x38] != 0 || g_keyboard.down[0xb8] != 0)) {
+        *f3 = 1;
         vec[0] = 1.0f;
         vec[1] = 1.0f;
         vec[2] = 1.0f;
         vec[3] = m.m[3];
-        *f3 = 1;
         *f4 = 1;
     }
 }

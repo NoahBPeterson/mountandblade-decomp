@@ -63,8 +63,8 @@ NodeA* DropDown::create()
     sz[1] = (float)rows.size() * wh[1];
     vt(b)->d25(sz);
 
-    g_gui.dirty = 1;
     MissionUi* tmp = b;
+    g_gui.dirty = 1;
     g_gui.objs.push_back(tmp);
     vt(b)->d19(0x20000);
     vt(b)->d20(4);

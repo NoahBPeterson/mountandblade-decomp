@@ -112,8 +112,8 @@ void MissionSource::pick(int* arg)
             }
         } else if (begin[i]->clear_mask(2)) {
             g_script.param2 = 0;
-            g_script.param1 = i;
             play_family_sound(family, -0x3f);
+            g_script.param1 = i;
         } else if (begin[i]->clear_mask(4)) {
             g_script.param2 = 1;
             g_script.param1 = i;

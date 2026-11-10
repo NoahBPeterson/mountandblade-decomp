@@ -361,9 +361,9 @@ void MissileU::update(float dt)
     d.y = d.z * vel.y;
     d.z = d.z * vel.z;
     pa.x = pb.x + pos.x;
+    pb.x = pb.x + start.x;
     pa.y = d.y + pos.y;
     pa.z = d.z + pos.z;
-    pb.x = pb.x + start.x;
     pb.y = d.y + start.y;
     pb.z = d.z + start.z;
 
@@ -382,8 +382,8 @@ void MissileU::update(float dt)
             qhit = 1;
         } else if (r != 0) {
             g_mission->scene->remove_entity(ent->id);
-            ent = 0;
             state = 2;
+            ent = 0;
             clk.start = g_ticks[clk.clock];
         } else {
             if (mode == 1) {
@@ -633,9 +633,9 @@ void Terrain::gen_set_init(particle_list* s)
     if (0 < s->count) {
         char* pr = (char*)s + 0x68;
         do {
+            std::vector<mesh*> list;
             ptype* ge = &g_ptypes[RV(int, -0x64)];
             RV(int, 0) = RV(int, 0) + ge->nframes * 100;
-            std::vector<mesh*> list;
             RV(int, 0) = RV(int, 0) % ge->nframes;
             GmRec* gr = &((GmRec*)ge->boxes)[RV(int, 0)];
             if (gr->n > 0)

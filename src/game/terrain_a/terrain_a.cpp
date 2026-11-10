@@ -264,15 +264,13 @@ void Terrain::reset()
 void Terrain::set_bits(const unsigned& lo, const int& hi, const unsigned& v)
 {
     unsigned a = lo;
-    int b = hi;
-    unsigned mask = (unsigned)(g_bit + 1)[b - a] - 1;
+    unsigned mask = (unsigned)(g_bit + 1)[hi - a] - 1;
     unsigned vv = v;
     if (vv > mask)
         vv = mask;
-    unsigned sh = a & 0x1f;
     unsigned idx = a >> 5;
-    unsigned old = bits[idx];
-    bits[idx] = (~(mask << sh) & old) | (vv << sh);
+    unsigned sh = a & 0x1f;
+    bits[idx] = (~(mask << sh) & bits[idx]) | (vv << sh);
 }
 
 // @ 0x4649b0
@@ -358,7 +356,8 @@ float Terrain::spec_weight(int* spec, int* type, int* mode)
 // @ 0x464d50
 vector4* Terrain::ground_color(vector4* out, const float* pos)
 {
-    unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
+    const unsigned& m = ((unsigned*)g_bit)[8] - 1U;
+    unsigned t = flags >> 28 & m;
     if (t == 4 || t == 12) {
         out->x = 1.0f; out->y = 1.0f; out->z = 1.0f;
         return out;
@@ -536,15 +535,15 @@ void Terrain::scatter(particle_list* set, int mode, int n)
                             if (j >= cnt2) break;
                             int t2 = t;
                             float w_ = spec_weight(&j, &t2, &mode);
-                            j++;
                             acc += w_;
+                            j++;
                         } while (acc < target);
                     }
                     pick = j;
                 }
                 int sel = pick - 1;
-                sel = ((sel <= 0) - 1) & sel;
                 scatter_src* it = &set->src[set->nsrc];
+                sel = ((sel <= 0) - 1) & sel;
                 it->kind = sel;
                 float rx = (float)(rand() % 15817) * 0.63223112f;
                 float ry = (float)(rand() % 15817) * 0.63223112f;
@@ -735,15 +734,15 @@ vector4 Terrain::sample(const float* p)
     vector4* q01 = (vector4*)&C[i * 251 + (j + 1)];
     vector4* q11 = (vector4*)&C[(i + 1) * 251 + (j + 1)];
     vector4 c00 = *q00;
-    vector4 c10 = *q10;
-    vector4 c01 = *q01;
     vector4 c11 = *q11;
+    vector4 c01 = *q01;
+    vector4 c10 = *q10;
     vector4 a, b;
     // the vector4(x, y, z) temporaries leave w untouched: when a blended a / b leaves through the early
     // returns, the original returns whatever its stack held in that lane (an uninitialised slot; the harness models it as uninitialised-in-both)
     if (p[1] < c00.y) {
         a = *q00;
-    } else if (c01.y < p[1]) {
+    } else if (p[1] > c01.y) {
         a = *q01;
     } else {
         float t = (p[1] - c00.y) / (c01.y - c00.y);
@@ -754,7 +753,7 @@ vector4 Terrain::sample(const float* p)
     }
     if (p[1] < c10.y) {
         b = *q10;
-    } else if (c11.y < p[1]) {
+    } else if (p[1] > c11.y) {
         b = *q11;
     } else {
         float t = (p[1] - c10.y) / (c11.y - c10.y);
@@ -763,7 +762,7 @@ vector4 Terrain::sample(const float* p)
         float sy = c10.y * u;
         b = vector4(q11->x * t + sx, t * c11.y + sy, q11->z * t + u * q10->z);
     }
-    if (p[0] < c00.x) {
+    if (c00.x > p[0]) {
         return a;
     }
     if (c10.x < p[0]) {
@@ -830,7 +829,7 @@ void Terrain::smooth_cells(int bit, float k)
                         if (kind == 0) kind = 1;
                         nv = cell[x - 1][py].pz;
                     }
-                    if (y >= 0 && y <= h && (cell[x - 1][y].flags & m) != 0) {
+                    if (y >= 0 && h >= y && (cell[x - 1][y].flags & m) != 0) {
                         kind = 2;
                         nv = cell[x - 1][y].pz;
                     }
@@ -859,7 +858,7 @@ static inline void t_cross3(vector4& r, const vector4& a, const vector4& b) { r.
 void Terrain::smooth_heights()
 {
     for (int y = 0; y <= this->h; y++) {
-        for (int x = 0; x <= this->w; x++) {
+        for (int x = 0; this->w >= x; x++) {
             float sum = this->at(x, y).pz;
             float cnt = 1.0f;
             #define INR(a, b) ((a) >= 0 && (a) <= this->w && (b) >= 0 && (b) <= this->h)
@@ -1155,8 +1154,7 @@ void Terrain::create_chunk_entities()
             int cw = ch;
             if (i == nx - 1) {
                 cw = w;
-                if (ch / 2 < cw % ch) cw = cw % ch;
-                else cw = cw % block + block;
+                if (!(ch / 2 < cw % ch)) { cw = cw % block + block; } else { cw = cw % ch; }
             }
             if (j == ny - 1) {
                 if (block / 2 < h % block) ch = h % ch;

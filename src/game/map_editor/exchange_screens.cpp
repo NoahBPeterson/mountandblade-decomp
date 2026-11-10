@@ -624,8 +624,8 @@ void GameDataX::update_party_sprites()
                 if (row[1] & 1)
                     kind = 2;
                 int qi = mgr->lookup(*(int*)((char*)this + 0x78));
-                Party* page = mgr->pages[qi >> 4];
-                int spr = add_sprite(page[qi & 0xf].pos.x, page[qi & 0xf].pos.y, kind);
+                Party* pp = mgr->pages[qi >> 4] + (qi & 0xf);
+                int spr = add_sprite(pp->pos.x, pp->pos.y, kind);
                 PartyX* d = party_index(this, spr);
                 Troop* src = &troops[row[0]];
                 tstring* s = STR_TABLE->find((const tstring*)((char*)src + 0x20));
@@ -746,15 +746,15 @@ void ItemA::frame_update(float)
         g_windows.set_state(0xf);
     }
     else if (CTRL && g_game_keys.clicked(0x12)) {
-        if (g_module_settings.show_quest_notes == 0) {
-            slot_as<MenuItem>(13)->f18 = 0x17;
-            slot_as<MenuItem>(13)->f4 = 0;
-            g_windows.set_state(0xd);
-        } else {
+        if (!(g_module_settings.show_quest_notes == 0)) {
             slot_as<MenuItem>(26)->f18 = 0x17;
             GI(0x13b08) = 4;
             GI(0x13b0c) = 0;
             g_windows.set_state(0x1a);
+        } else {
+            slot_as<MenuItem>(13)->f18 = 0x17;
+            slot_as<MenuItem>(13)->f4 = 0;
+            g_windows.set_state(0xd);
         }
     }
     else if ((k & 0x200) == 0 && g_game_keys.clicked(0x13)) {
@@ -765,7 +765,11 @@ void ItemA::frame_update(float)
     else {
         // no hotkey: pick the row's option by key flag 0x10 (the first option) or by the pressed option widget
         // (0x5331a9..0x533409: both paths leave through the state test below)
-        if ((k & 0x10) == 0) {
+        if (!((k & 0x10) == 0)) {
+            local = 0;
+            if (F(this, 0xa0, int) > 0)
+                goto emit_option;
+        } else {
             if (g_game->fc8 == 0 && F(this, 0xa0, int) > 0) {
                 int i = 0;
                 ChoiceList** ws = (ChoiceList**)((char*)this + 0x60);
@@ -777,10 +781,6 @@ void ItemA::frame_update(float)
                 if (local >= 0)
                     goto emit_option;
             }
-        } else {
-            local = 0;
-            if (F(this, 0xa0, int) > 0)
-                goto emit_option;
         }
     }
 
@@ -827,8 +827,8 @@ dispatch:
             return;
         }
         if (st == 0xd) {
-            g_game->fc8 = 0;
             g_mission_ctx.f3c |= 8;
+            g_game->fc8 = 0;
             g_map_flags.commit((char*)&slot);
             return;
         }
@@ -1031,8 +1031,8 @@ void ItemD::frame_update(float)
         it.ptr = F(w, 0x19c, int*);
         second = 0;
         int** r = it.advance(&second, F(w, 0x1cc, int));
-        int iv2 = **r;
         int iv1 = F(w, 0x1ac, int*)[F(w, 0x1cc, int)];
+        int iv2 = **r;
         if (F(this, 0x8c, void*) != 0)
             operator delete(F(this, 0x8c, void*));
         F(this, 0x8c, void*) = 0;

@@ -45,6 +45,7 @@ struct mesh_flip {
 // vertex indices shifted by this mesh's existing vertex count.
 void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
 {
+    vector4 out;
     if (!local_a0) {
         *(std::vector<point20>*)&v90 = *(std::vector<point20>*)&parent->v90;      // 0x411630
         local_a0 = 1;
@@ -68,7 +69,6 @@ void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
         float y = mm.u.y * pts[i].a.z + mm.s.y * pts[i].a.x + mm.f.y * pts[i].a.y;
         float z = mm.u.z * pts[i].a.z + mm.f.z * pts[i].a.y + mm.s.z * pts[i].a.x;
         float zz = z - (y * m->u.y + x * m->u.x) / m->u.z;
-        vector4 out;
         out.x = x + m->o.x;
         out.y = y + m->o.y;
         out.z = zz + m->o.z;
@@ -395,11 +395,11 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
         if (p->a.x > 0.001f) {
             vector4 q;
             q.x = -p->a.x;
+            remap[n] = i;
             q.y = p->a.y;
             q.z = p->a.z;
             q.w = p->a.w;
             m->add_point(&q);
-            remap[n] = i;
             map2[i] = n;
             n++;
         }
@@ -414,7 +414,20 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
         vertex60* v = &vat(m->v50, i);
         int pi = v->index;
         int mi = map2[pi];
-        if (mi < 0) {
+        if (!(mi < 0)) {
+            vertex60 t = *v;
+            t.pos.x = -t.pos.x;
+            t.normal = t.pos;                  // 0x47c395..0x47c3aa: the normal copies the NEGATED position
+            t.f5c = 0;
+            if (flip) {
+                t.uv.x = 1.0f - t.uv.x;
+                *(float*)&t.f48 = 1.0f - *(float*)&t.f48;
+            }
+            t.index = mi;
+            m->v50.push_back(t);
+            mapv[i] = nw;
+            nw++;
+        } else {
             v->pos.x = 0.0f;
             float len = sqrtf(v->pos.x * v->pos.x + v->pos.y * v->pos.y + v->pos.z * v->pos.z);
             if (len > 1e-10f) {
@@ -431,7 +444,7 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
             v->normal.y = v->pos.y;
             v->normal.z = v->pos.z;
             v->normal.w = v->pos.w;
-            if (v->uv.x > 0.51f) {
+            if (0.51f < v->uv.x) {
                 vertex60 t = *v;
                 t.f5c = 0;
                 if (flip) {
@@ -443,19 +456,6 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
                 mapv[i] = nw;
                 nw++;
             }
-        } else {
-            vertex60 t = *v;
-            t.pos.x = -t.pos.x;
-            t.normal = t.pos;                  // 0x47c395..0x47c3aa: the normal copies the NEGATED position
-            t.f5c = 0;
-            if (flip) {
-                t.uv.x = 1.0f - t.uv.x;
-                *(float*)&t.f48 = 1.0f - *(float*)&t.f48;
-            }
-            t.index = mi;
-            m->v50.push_back(t);
-            mapv[i] = nw;
-            nw++;
         }
     }
 

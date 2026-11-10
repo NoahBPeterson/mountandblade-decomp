@@ -550,7 +550,7 @@ void ItemRef::sort_sel(int n)
 {
     for (int j = 0; j < n - 1; j++) {
         int best = j;
-        for (int k = j + 1; k < n; k++) {
+        for (int k = j + 1; n > k; k++) {
             if (this[k].item > this[best].item ||
                 (this[k].item == this[best].item && g_sort_val[this[k].b.mod * 5].v > g_sort_val[this[best].b.mod * 5].v))
                 best = k;
@@ -1568,21 +1568,21 @@ MissionUi::MissionUi()
     tm[5].clock = 0; tm[5].start = g_ticks[0];
     // name's tstring constructor runs implicitly (0x42bbd0)
     fE0 = 0; fE4 = 0; fE8 = 0; fEC = 0;
-    f100 = 1;
     p154 = 0;
+    f100 = 1;
     f104 = 0;
     for (int i = 0; i < 5; i++) {
         tracks[i] = 0;
         b11c[i] = 0;
     }
+    color14c = 0xff000000;
     f138 = a;
+    color150 = 0xff000000;
     f140 = b;
     f13c = c;
-    color14c = 0xff000000;
-    color150 = 0xff000000;
     b11c[0] = 1;
-    b11c[2] = 1;
     f164 = 1;
+    b11c[2] = 1;
     screen[3] = c;
     f144 = b;
     screen[2] = c;

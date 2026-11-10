@@ -450,8 +450,8 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
     for (int ctr = 0; (unsigned)ctr < vec().size(); ctr++) {
         int cur = ctr;
         if (top >= 0) {
-            cur = stack[top];
             ctr--;
+            cur = stack[top];
             top--;
         }
         if (nv[cur].cost >= 0)
@@ -510,8 +510,8 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
     }
     for (i = 0; i < vec().size(); i++) {
         if (nv[i].cost == 0x5f5e0ff) {
-            int cnt = 0;
             *path = (int)i;
+            int cnt = 0;
             int ii = (int)i;
             walk(&ii, &ii, path, &cnt);
         }
@@ -554,18 +554,18 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
                     return (int*)(*a * 0x88 + (int)nodes);
             } else {
                 int* s = (int*)((int)nodes + *a * 0x88);
-                if (s[0x4c / 4] == -1) {
-                    s[0x4c / 4] = c[0x48 / 4];
-                } else if (s[0x4c / 4] != c[0x48 / 4]) {
+                if (!(s[0x4c / 4] == -1)) { if (s[0x4c / 4] != c[0x48 / 4]) {
                     s[0x50 / 4] = c[0x48 / 4];
                     return (int*)(child * 0x88 + (int)nodes);
+                } } else {
+                    s[0x4c / 4] = c[0x48 / 4];
                 }
             }
         }
         base = (int*)nodes;
         local_8 += 4;
-        node = (int*)(*idx * 0x88 + (int)base);
         local_4++;
+        node = (int*)(*idx * 0x88 + (int)base);
         if (*(int*)(*idx * 0x88 + (int)base) <= local_4)
             return node;
     }

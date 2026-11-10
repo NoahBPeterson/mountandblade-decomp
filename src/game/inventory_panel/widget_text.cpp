@@ -189,12 +189,13 @@ struct sel_list {
 void sel_list::add(int val)
 {
     dirty = 1;
+    const int n = 1;
     if (v.count() < v.capacity()) {
         int* p = v._Mylast;
         *p = val;
         v._Mylast = p + 1;
     } else {
-        ((c49aca0::PVec*)&v)->_Insert_n((c49aca0::NodeA**)v._Mylast, 1, *(c49aca0::NodeA* const*)&val);   // 0x49b1c0
+        ((c49aca0::PVec*)&v)->_Insert_n((c49aca0::NodeA**)v._Mylast, n, *(c49aca0::NodeA* const*)&val);   // 0x49b1c0
     }
 }
 

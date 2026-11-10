@@ -804,7 +804,7 @@ bool PolyMesh::trace(int face, vector4 from, int end_face, const float* to, int*
                 }
                 if (st.found != -1) break;
             }
-            if (st.found >= 0) {
+            if (!(st.found >= 0)) { done = true; } else {
                 st.prev = f->edge_p()[st.found];
                 int nb = f->nbr_p()[st.found];
                 done = false;
@@ -812,8 +812,7 @@ bool PolyMesh::trace(int face, vector4 from, int end_face, const float* to, int*
                     done = true;
                 } else
                     st.cur = nb;
-            } else
-                done = true;
+            }
         }
     }
     return st.cur == end_face;

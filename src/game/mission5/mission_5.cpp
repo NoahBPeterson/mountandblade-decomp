@@ -1630,8 +1630,8 @@ void MissionBlocker::update_marks()
 
     if (pair.item >= 0) {
         bool other = false;
-        if (g_game_keys.entry[13][0] >= 0 && ((void**)((char*)&g_keyboard + 0xc))[g_game_keys.entry[13][0]]) other = true;
-        if ((g_game_keys.entry[13][1] < 0 || ((void**)((char*)&g_keyboard + 0xc))[g_game_keys.entry[13][1]] == 0) && !other) {
+        if (g_game_keys.entry[13][0] >= 0 && g_keyboard.down[g_game_keys.entry[13][0]]) other = true;
+        if ((g_game_keys.entry[13][1] < 0 || g_keyboard.down[g_game_keys.entry[13][1]] == 0) && !other) {
             int type = g_items_s29130[pair.item].type & 0xff;
             if ((type == 8 || type == 9 || type == 10 || type == 16 || type == 17) && g_options.i64) {
                 if (!((AgentX*)cur_at_s29130())->f100_is_0x48_and_charged()) {
@@ -1673,7 +1673,7 @@ void MissionBlocker::update_marks()
             if (color[i] < target[i]) color[i] = target[i];
         }
         if (i < 3)
-            marks[i]->color = 0xffffff;
+            marks[i]->color = 0x00ffffff;
         else
             marks[i]->color = 0xffbb11;
         int alpha = (int)(color[i] * 255.0f);
@@ -2626,8 +2626,8 @@ void Mission_s2b5c0::update_ui_continue()
     if (m != 0) {
         if (m == 1 || m == 3 || m == 2) {
             g_mission_s2b5c0->f65dc->f140 = 0;
-            g_mission_s2b5c0->f65e4->f140 = 0;
             this->update_cursor();
+            g_mission_s2b5c0->f65e4->f140 = 0;
         } else if (m == 4) {
             g_mission_s2b5c0->f6738->f140 = 1;
             this->update_mode4();
@@ -2663,8 +2663,8 @@ L_bb4b:
 
 L_bb21:
     if (g_game_s2b5c0->f1a098 == 0 && g_game_s2b5c0->f1a0c8 == 0) {
-        g_mission_s2b5c0->f65e4->f140 = 0;
         this->update_dialog();
+        g_mission_s2b5c0->f65e4->f140 = 0;
         goto L_bbc5;
     }
     goto L_bb4b;

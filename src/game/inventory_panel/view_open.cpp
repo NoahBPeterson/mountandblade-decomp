@@ -113,7 +113,27 @@ void char_window::open_view()
     f4cc = 0;
     f4d0 = 0;
     int mode = g_a75f64;
-    if (g_a75f64 < 0) {
+    if (!(g_a75f64 < 0)) {
+        // ---- flat fallback: a shadow image plus the empty character icon ----
+        if (f2dc == -1) {
+            MissionUi* a = new MissionUi;
+            f4d0 = a;
+            label_refresh(a, tstring("char_i_character_shadow"));
+            {
+                tstring nm("character_window_shadow");
+                mesh* m = g_resmgr.get_object(&nm);
+                m = m->clone();
+                a->set_mesh(0, m);
+            }
+            ui->add_child(a);
+            XyzButton* c = new XyzButton;                             // ctor 0x48b1c0, vptr 0x591ee8
+            f4cc = c;
+            label_refresh(c, tstring("char_i_character"));
+            mesh* m2 = g_tableaus.make_mesh_from(&mode, &troop);
+            c->set_track(0, m2);
+            ui->add_child(c);
+        }
+    } else {
         // ---- 3D portrait: build the body, the world, the wind tracks and the camera ----
         face_body* b = new face_body;
         label_refresh((MissionUi*)b, tstring("char_i_character"));
@@ -200,13 +220,13 @@ void char_window::open_view()
         if (f2dc == -1) {
             // seed the body's face from the troop record and start the idle animation
             char* rec = g_game->chars_c + troop * 0x508;
+            void* ra = 0;
             int skin = *(int*)(rec + 0x30) & 0xf;
             int flags = 0;
+            void* rc = 0;
             g_anim.cur = clamp_index(&skin, &flags, &g_anim.char_count);
             g_anim.unpack((const unsigned __int64*)(rec + 0x3c0));
-            void* ra = 0;
             void* rb = 0;
-            void* rc = 0;
             g_anim.collect(g_module_settings.limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
             e->on_anim_end();
             std::vector<named_object*>* rl = (std::vector<named_object*>*)((char*)e + 0x108);
@@ -215,26 +235,6 @@ void char_window::open_view()
                 rl->push_back((named_object*&)rc);
             if (rb)
                 rl->push_back((named_object*&)rb);
-        }
-    } else {
-        // ---- flat fallback: a shadow image plus the empty character icon ----
-        if (f2dc == -1) {
-            MissionUi* a = new MissionUi;
-            f4d0 = a;
-            label_refresh(a, tstring("char_i_character_shadow"));
-            {
-                tstring nm("character_window_shadow");
-                mesh* m = g_resmgr.get_object(&nm);
-                m = m->clone();
-                a->set_mesh(0, m);
-            }
-            ui->add_child(a);
-            XyzButton* c = new XyzButton;                             // ctor 0x48b1c0, vptr 0x591ee8
-            f4cc = c;
-            label_refresh(c, tstring("char_i_character"));
-            mesh* m2 = g_tableaus.make_mesh_from(&mode, &troop);
-            c->set_track(0, m2);
-            ui->add_child(c);
         }
     }
 }

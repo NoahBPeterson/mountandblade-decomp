@@ -20,6 +20,7 @@ static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the ca
 void TerrainPage::frame_update(float dt)
 {
     // the three terrain slots: a "select" checkbox, random bits, the %d caption of the number field
+    void* water_out;                            // 0x482170 stores the new water mesh here; the original never reads it back
     for (int i = 0; i < 3; i++) {
         if (page_changed(layer_boxes[i])) {
             layer_bits[i] = rand() % 0x1b5781;
@@ -109,8 +110,8 @@ done:
         rgl::world* wp = world;
         vector4& amb = wp->ambient;
         amb = clear_colour;
-        wp->ambient.w = 1.0f;
         Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30
+        wp->ambient.w = 1.0f;
         flash->color = vector4(0.9f, 0.9f, 0.9f);
         flash->base_color.x = 1.0f;
         flash->base_color.y = 1.0f;
@@ -134,7 +135,6 @@ done:
         }
         sync_bits();
         g_terrain.generate((int)world, (int*)0, 0);   // 0x481d10
-        void* water_out;                            // 0x482170 stores the new water mesh here; the original never reads it back
         g_terrain.regenerate_water(&water_out, 0);   // 0x482170
         int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
         owner[1] = 0; owner[2] = 0; owner[3] = 0;

@@ -29,8 +29,8 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
     int v;
 
     *out_a = 0;
-    *out_b = 0;
     *out_c = 0;
+    *out_b = 0;
 
     if (n_beard == 0)
         set = -1;

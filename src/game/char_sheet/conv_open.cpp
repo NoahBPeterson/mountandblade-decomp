@@ -125,10 +125,10 @@ void Rec1208::init_screen()
     msg_window->add_child(reln_pointer);
 
     for (int i = 0; i < 5; i++) {
+        int flag = 4;
         lines[i] = widget_base();
         lines[i]->move_a((float*)&vector2(0.01f, 0.17f - (float)i * 0.03f));
         lines[i]->set_xy((float*)&vector2(0.23f, 0.03f));
-        int flag = 4;
         lines[i]->set148(&flag);
         lines[i]->set_size((float*)&vector2(0.021f, 0.021f));
         msg_window->add_child(lines[i]);

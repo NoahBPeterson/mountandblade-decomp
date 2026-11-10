@@ -152,8 +152,8 @@ void dynamic_entity::resolve()
             }
         }
     }
-    vector4 fn = force;
     int n = 0;
+    vector4 fn = force;
     bool flagA = false;
     vector4 u;
     if (fn.x * fn.x + (fn.y * fn.y + fn.z * fn.z) < 1e-6f)
@@ -201,14 +201,14 @@ void dynamic_entity::resolve()
                                 ihi = j;
                             }
                         } else {
-                            lo = (float)ang;
                             ihi = j;
+                            lo = (float)ang;
                         }
                     } else if (s < -0.1) {
                         if (-1 < ilo) {
                             if (ang > hi) {
-                                hi = (float)ang;
                                 ilo = j;
+                                hi = (float)ang;
                             }
                         } else {
                             hi = (float)ang;
@@ -262,9 +262,9 @@ void dynamic_entity::integrate(float t)
         asleep = true;
     matrix m = local;
     vector4 dv = t * vel;
-    m.o.x = dv.x + m.o.x;
+    m.o.x = m.o.x + dv.x;
     m.o.y = m.o.y + dv.y;
-    m.o.z = m.o.z + dv.z;
+    m.o.z = dv.z + m.o.z;
     vector4 cf, cu;
     cf.x = angvel.y * local.f.z - angvel.z * local.f.y;
     cf.y = angvel.z * local.f.x - angvel.x * local.f.z;
@@ -274,8 +274,8 @@ void dynamic_entity::integrate(float t)
     cu.z = angvel.x * local.u.y - angvel.y * local.u.x;
     vector4 sf = t * cf;
     vector4 su = t * cu;
-    m.f.x = sf.x + m.f.x; m.f.y = sf.y + m.f.y; m.f.z = sf.z + m.f.z;
-    m.u.x = su.x + m.u.x; m.u.y = su.y + m.u.y; m.u.z = su.z + m.u.z;
+    m.f.x = m.f.x + sf.x; m.f.y = sf.y + m.f.y; m.f.z = sf.z + m.f.z;
+    m.u.x = m.u.x + su.x; m.u.y = su.y + m.u.y; m.u.z = su.z + m.u.z;
     normalize(m.f, m.f);
     m.s.x = m.f.y * m.u.z - m.f.z * m.u.y;
     m.s.y = m.f.z * m.u.x - m.f.x * m.u.z;

@@ -141,8 +141,8 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     scale[1] = height;
     // the colour word is the caller's own `arg` slot (0x4e451b pushes its address)
     g_font->layout_text(out, s, &pos, scale, self->overlay, (int)&arg, &xmin, &xmax, flags);
-    pen = pen - height;                             // one line down (0x4e454a subtracts the height argument)
     self->overlay->calc_bounds(&lo, &hi);
+    pen = pen - height;                             // one line down (0x4e454a subtracts the height argument)
     float w = hi.x - lo.x;                          // the laid-out text's bounds (0x4e4569: [esp+0x30] - [esp+0x20])
     float h = hi.y - lo.y;
     float sz[2];
@@ -760,6 +760,7 @@ struct RenderXform {
 // @ 0x4e6050
 void gui_manager::build_scene()
 {
+    float zero[2];
     rgl::scene* s1 = &x44;
     s1->reset();                                // 0x428f30
 
@@ -792,10 +793,10 @@ void gui_manager::build_scene()
     rgl::vector4 o;
     char mslot[0x40];                           // one frame slot (the original's ES+0x28) serves as both the
     rgl::matrix* m = (rgl::matrix*)mslot;       // frustum matrix and the render xform below
+    rgl::identity_pos((rgl::matrix*)mslot);     // 0x40cd00
     o.x = 0.5f;
     o.y = 0.375f;
     o.z = 400.0f;
-    rgl::identity_pos((rgl::matrix*)mslot);     // 0x40cd00
     // o.w is never assigned (the original copies the uninitialised w slot too)
     m->o = o;
     fr->m = *m;
@@ -821,7 +822,6 @@ void gui_manager::build_scene()
         unsigned n = (unsigned)(objs._Mylast - data);
         if (i >= n)
             break;
-        float zero[2];
         float size[2];
         zero[0] = 0.0f;
         zero[1] = 0.0f;
@@ -848,7 +848,7 @@ void gui_manager::build_scene()
         t += 1.0f;
         memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
         float k = vs;
-        for (int r = 0; r < 3; ++r) {
+        for (int r = 0; 3 > r; ++r) {
             x->m[r * 4 + 0] *= k;
             x->m[r * 4 + 1] *= k;
             x->m[r * 4 + 2] *= k;
@@ -967,12 +967,9 @@ void Shape::build_spikes(rgl::mesh* owner)
 
         // the four spikes, in the frame's local coordinates
         rgl::vector4 ring[4];
-        rgl::vector4 l0;
-        l0.x = w * 0.034f;
-        l0.y = w * 0.0154f;
-        l0.z = w * 0.2f;
+        rgl::vector4 l0 = w * rgl::vector4(0.034f, 0.0154f, 0.2f);
         ring[0] = xf_inl(m, l0);
-        ring[1] = xf_inl(m, rgl::vector4(w * -0.060200002f, w * -0.148f, w * -0.0666f));
+        ring[1] = xf_inl(m, w * rgl::vector4(-0.060200002f, -0.148f, -0.0666f));
         ring[2] = xf_inl(m, rgl::vector4(w * -0.060200002f, w * 0.1786f, w * -0.0666f));
         ring[3] = xf_inl(m, rgl::vector4(w * 0.222600013f, w * 0.0154f, w * -0.0666f));
 
@@ -1286,6 +1283,7 @@ struct BeardMeshNew : BeardMesh {           // the constructor BeardMesh should 
 void Skin::read(MsStream* s)
 {
     tstring name;
+    int nref;
     stream_str(s, &id);
     stream_u(s, &flags);
     stream_str(s, &name);
@@ -1382,7 +1380,6 @@ void Skin::read(MsStream* s)
             col.z *= col.z;
             color = rgl::pack_color(&col);                     // 0x40e440
         }
-        int nref;
         stream_i(s, &nref);
         int ntile;
         stream_i(s, &ntile);

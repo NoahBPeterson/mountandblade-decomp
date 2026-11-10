@@ -250,13 +250,13 @@ void HashTab::insert(HOut* out, unsigned* key)
     std::vector<scalar4>* vec = (std::vector<scalar4>*)(void*)((char*)this + 0x10);
     if (f24 <= (unsigned)f0c >> 2) {               // 0x4d3c0d: shr (unsigned)
         unsigned n = f14 ? (unsigned)(((char*)f18 - (char*)f14) >> 2) : 0u;
-        if (count < n - 1) {
-            if (f20 < count)
-                f20 = f20 * 2 + 1;
-        } else {
+        if (!(count < n - 1)) {
             unsigned n2 = f14 ? (unsigned)(((char*)f18 - (char*)f14) >> 2) : 0u;
             f20 = n2 * 2 - 3;
             { scalar4 sen; sen.v = (int)pool.sentinel; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
+        } else {
+            if (f20 < count)
+                f20 = f20 * 2 + 1;
         }
         unsigned idx = count - (f20 >> 1) - 1;
         HNode* p = f14[idx];
@@ -267,7 +267,7 @@ void HashTab::insert(HOut* out, unsigned* key)
                     q = p->next;
                 } else {
                     q = p->next;
-                    if (q != pool.sentinel) {
+                    if (pool.sentinel != q) {
                         unsigned u = idx;
                         while (p == f14[u]) {
                             f14[u] = q;
@@ -310,7 +310,7 @@ void HashTab::insert(HOut* out, unsigned* key)
         i = i + (-1 - (f20 >> 1));
     HNode** b = f14 + i;
     HNode* p = b[1];
-    if (p != b[0]) {
+    if (b[0] != p) {
         do {
             p = p->prev;
             if ((int)p->key <= (int)k) {
@@ -502,6 +502,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
     tstring path;
 
+    HKEY key;
     switch (msg) {
     case 0xf: {                                             // WM_PAINT
         ((OptionsDlg*)(void*)this)->paint();
@@ -562,7 +563,6 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
                 tstring slash("\\");
                 g_module_path.append(slash);
             }
-            HKEY key;
             open_keys_key(&key);
             keys_write_value(&key, "last_module", &g_module_name);
             if (key != 0)

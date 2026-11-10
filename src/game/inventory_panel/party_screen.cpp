@@ -491,15 +491,15 @@ void PartyScreen::refresh_party_members(int type)
                 // hero: percentage of the (clamped) level denominator
                 if (g_game->agent_low(st->troop)) {
                     {
-                        tstring key("ui_button_party_member_hero_percentage_wounded");
                         Troop* rec = &g_game->troops[st->troop];
+                        tstring key("ui_button_party_member_hero_percentage_wounded");
                         sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec)->c_str(),
                                 (int)(g_game->troops[st->troop].hp * 100.0f / hero_max_hp(rec) + 0.0001f));
                     }
                 } else {
                     {
-                        tstring key("ui_button_party_member_hero_percentage");
                         Troop* rec = &g_game->troops[st->troop];
+                        tstring key("ui_button_party_member_hero_percentage");
                         sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec)->c_str(),
                                 (int)(g_game->troops[st->troop].hp * 100.0f / hero_max_hp(rec) + 0.0001f));
                     }
@@ -922,7 +922,7 @@ void PartyScreen::setup_skills()
                     best_i = i;
                 }
             }
-            if (best_i == m)
+            if (m == best_i)
                 y += t_y_a_short;
         }
     }

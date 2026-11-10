@@ -500,8 +500,8 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
             int item = s->troop;
             if ((g_game->troops[item].flags30 & 0x10) != 0 && item != a1) {
                 *(int*)(t + oi) = item;
-                *(int*)(t + of) = 1;
                 oi += 8;
+                *(int*)(t + of) = 1;
                 of += 4;
             }
             n++;
@@ -521,8 +521,8 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
                 if ((g_game->troops[item].flags30 & 0x10) != 0) {
                     *(int*)(t + oi) = party_at(m, m->lookup(a3))->stacks[n].troop;
                     *(int*)(t + of) = 1;
-                    oi += 8;
                     of += 4;
+                    oi += 8;
                 }
                 n++;
             } while (n < party_at(m, m->lookup(a3))->nstacks);
@@ -732,9 +732,9 @@ void CampaignScreen::frame_update(float dt)
             tstring a("ui_explanation_level_limit");
             tstring b("ui_level_limit_reached");
             g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
+            start = 0;
             g_windows.open(trial);
             f64 = 1;
-            start = 0;
         } else if (1 - (int)(t * -0.041666667f) > 30 && trial == 0) {
             tstring a("ui_explanation_time_limit");
             tstring b("ui_time_limit_reached");
@@ -753,16 +753,16 @@ void CampaignScreen::frame_update(float dt)
     GD_I(0x13af8) = 0;
     ((TimerList*)((char*)g_game + 0x139f4))->update(-6);
     g_game->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
-    if (GD_I(0x13aec) > 0) {
-        g_mission_ctx.frame(GD_I(0x13aec));
-        Party* party = PARTIES->get(GD_I(0x78));
-        g_map_flags.f8 = GD_I(0x13aec);
-        g_map_flags.f4 = party->f88;
-    } else {
+    if (!(GD_I(0x13aec) > 0)) {
         g_mission_ctx.frame(-1);
         g_mission_ctx.f2c8_word = 1;
         Party* party = PARTIES->get(GD_I(0x78));
         g_map_flags.f8 = -1;
+        g_map_flags.f4 = party->f88;
+    } else {
+        g_mission_ctx.frame(GD_I(0x13aec));
+        Party* party = PARTIES->get(GD_I(0x78));
+        g_map_flags.f8 = GD_I(0x13aec);
         g_map_flags.f4 = party->f88;
     }
     g_map_flags.f0 = 1;
@@ -1032,9 +1032,9 @@ void MissionCtx::frame(int tick)
         party[1] = node_call(f08).f54;
 
         // the record is looked up again for each test (0x516447, 0x5164cf), not read from party[]
+        int ida = node_call(f08).f58;
         int a = 0;
         int b = 0;
-        int ida = node_call(f08).f58;
         GameData* ga = g_game;
         PartyMgr* pa = &ga->parties;
         Party* qa = party_at(pa, pa->lookup(ida));
@@ -1055,8 +1055,8 @@ void MissionCtx::frame(int tick)
             f10 &= ~0x10;
             f144 = 1;
         } else {
-            f10 |= 0x10;
             side = 0;
+            f10 |= 0x10;
             f144 = 0;
         }
     }
@@ -1115,9 +1115,10 @@ void MissionCtx::update_anim()
         Party* p = m->at(m->lookup(party[0]));
         int slot = p->stacks[0].troop;
         if (slot >= 0) {
-            Troop* t = g->troops + slot;
-            if ((t->flags30 & 0x10) != 0) {
-                float g = (float)(int)((float)(t->f58[0] + hero_rank(t) * 2 + 0x23) * 0.5f + 3.0f);
+            if ((g->troops[slot].flags30 & 0x10) != 0) {
+                Troop* t = &g->troops[slot];
+                int f = t->f58[0];
+                float g = (float)(int)((float)(f + hero_rank(t) * 2 + 0x23) * 0.5f + 3.0f);
                 if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips
                     t->hp = g;
             }

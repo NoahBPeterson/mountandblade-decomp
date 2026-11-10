@@ -82,11 +82,11 @@ void PolyMesh::build_geometry()
         for (int j = 0; j < faces[i].n; j++) {
             MPoly& g = faces[i];
             MVert& v = verts[g.vid[j]];
+            faces[i].nbr[j] = -1;
+            MPoly& h = faces[i];
             g.centroid.x = v.pos.x + g.centroid.x;
             g.centroid.y = v.pos.y + g.centroid.y;
             g.centroid.z = v.pos.z + g.centroid.z;
-            faces[i].nbr[j] = -1;
-            MPoly& h = faces[i];
             if (edges[h.eid[j]].nfaces >= 2) {
                 if (edges[h.eid[j]].face[0] == (int)i)
                     h.nbr[j] = edges[h.eid[j]].face[1];
@@ -196,8 +196,8 @@ void GameData::blend(float* out, float x, float y)
 {
     vector4 wn = wind_noise();
     float s1 = 0.0f, s0 = 0.0f, s2 = 0.0f, s3 = 0.0f, sum = 0.0f;
-    float* rec = &val[0][1];
     float* xy = &pos[0][0];
+    float* rec = &val[0][1];
     int n = 4;
     do {
         n--;
@@ -209,8 +209,8 @@ void GameData::blend(float* out, float x, float y)
         s2 = w * rec[1] + s2;
         s3 = s3 + w * rec[2];
         sum = w + sum;
-        rec += 4;
         xy += 2;
+        rec += 4;
     } while (n != 0);
     float t = 1.0f / sum;                    // inverse weight sum, then reused for the ground factor (address taken)
     float r0 = wn.x + t * s0;
@@ -421,7 +421,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                     vector4 t1, t2, t3, r;
                     vscale_to(t1, sun_diffuse, lf);
                     vscale_to(t2, sun_ambient, 1.5f);
-                    t3.x = t2.x + t1.x; t3.y = t2.y + t1.y; t3.z = t2.z + t1.z;
+                    t3.x = t1.x + t2.x; t3.y = t1.y + t2.y; t3.z = t2.z + t1.z;
                     r.x = t3.x * col.x; r.y = t3.y * col.y; r.z = t3.z * col.z;
                     v.color = rgl::pack_color(&r);
                 }
@@ -488,8 +488,8 @@ void Mission::replace_mark(int idx)
     int n = 0;
     vector4 b;
     do {
-        n++;
         b = vadd3(a, *ov);
+        n++;
         float fz;
         face* fs;
         scene->floor_at(&b.x, &fz, &fs);
@@ -741,13 +741,13 @@ void MAgent::reset()
     f124 = -1.0f;
     f128 = 100;
     view.init();
-    f50 = vector4(0.0f, 0.0f, 0.0f);
-    f55d8 = vector4(0.0f, 1.0f, 0.0f);
-    f60 = vector4(0.0f, 1.0f, 0.0f);
     f14 = 0;
     f18 = 0;
     f88 = -1;
     f34 = 1;
+    f50 = vector4(0.0f, 0.0f, 0.0f);
+    f55d8 = vector4(0.0f, 1.0f, 0.0f);
+    f60 = vector4(0.0f, 1.0f, 0.0f);
     f38 = 9;
     f55d0 = 0;
     f70 = 0;
@@ -793,10 +793,10 @@ void MAgent::reset()
     f10c = 0;
     f56d0 = 0;
     f3c = 1;
+    f56b4 = vector4(0.0f, 0.0f, 0.0f);
     fb8 = 1;
     fb4 = 0;
     f5858 = -1;
-    f56b4 = vector4(0.0f, 0.0f, 0.0f);
     fc4 = vector4(100000.0f, 10000.0f, 100000.0f);
     f13c = 0; f140 = 0; f144 = 0; f148 = 0; f14c = 0; f150 = 0; f154 = 0; f158 = 0;
     f15c = 0; f160 = 0; f164 = 0; f168 = 0; f16c = 0; f170 = 0; f174 = 0; f178 = 0;
@@ -983,14 +983,14 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
         else
             *out_seed = g_game->levels[f5df4].pairs[idx].b;
     } else if (r->flags & 4) {
-        if (r->id == f5df8) {
-            *out_troop = g_game->player;
-        } else if (*out_troop == -1 && terrain.f180 == 0) {
+        if (!(r->id == f5df8)) { if (*out_troop == -1 && terrain.f180 == 0) {
             for (int i = 1; i < g_game->ntroops; i++) {
                 unsigned v = g_game->troops[i].f3b8;
                 if ((v & 0xffff) == (unsigned)f5df4 && ((v >> 16) & 0xff) == (unsigned)r->id && g_game->troops[i].used == 0)
                     *out_troop = i;
             }
+        } } else {
+            *out_troop = g_game->player;
         }
     } else if (r->flags & 0xc0) {
         int a = r->flags & 0x40;
@@ -1036,9 +1036,9 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
         int start = 0;
         int step = 1;
         if (r->flags & 0x1000000) {
-            start = party->nstacks - 1;
             end = -1;
             step = -1;
+            start = party->nstacks - 1;
         }
         int total = party->sum_stat(0x112);
         char x4 = 0, x3 = 0, x5 = 0;
@@ -1082,7 +1082,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
             *out_troop = g_game->player;
             party->stacks[0].spawned = 1;
         }
-        if (start != end) {
+        if (end != start) {
             for (int k = start; k != end; k += step) {
                 if (*out_troop != -1)
                     break;

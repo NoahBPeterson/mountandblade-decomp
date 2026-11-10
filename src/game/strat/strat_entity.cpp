@@ -145,8 +145,8 @@ void rgl::strategic_entity::update_ground_cache()
         for (int k = 0; k < face->npts; k++) {
             NavVert* gv = &owner->ground->verts[face->ids[k]];
             vector4 v = gv->p;
-            c[k] = m.transform_point_to_local(v);
             float inv = 0.5f / shadow_radius;
+            c[k] = m.transform_point_to_local(v);
             c[k].x = inv * c[k].x;
             c[k].y = inv * c[k].y;
             c[k].z = inv * c[k].z;

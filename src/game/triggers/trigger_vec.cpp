@@ -567,10 +567,10 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
 {
     char msgbuf[0x1000];
     char buf[0x400];
+    RECT rc, br;
     switch (msg) {
     case WM_INITDIALOG: {
         script_dlg = h;
-        RECT rc, br;
         GetWindowRect(h, &rc);
         SetWindowPos(GetDlgItem(script_dlg, 0x4b0), 0, rc.left + 10, rc.top + 0x78,
                      (rc.right - rc.left) - 0x1e, (rc.bottom - rc.top) - 0xf5, 0x14);
@@ -750,8 +750,8 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
                         int j = 0, k = 0, idx = 0;
                         while (k >= 0) {
                             char lp = '(';
-                            j = body.find(lp, j);
                             char rp = ')';
+                            j = body.find(lp, j);
                             k = body.find(rp, j) + 1;
                             if (j < 0)
                                 break;

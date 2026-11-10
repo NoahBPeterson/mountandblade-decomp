@@ -1750,11 +1750,11 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
     }
 
     float widest = *xmin;
-    int y = 0;
     bool in_tag = false;
+    int y = 0;
+    int tag_index = -1;
     bool tag = false;
     int tag_start = 0;
-    int tag_index = -1;
     int n = total;
     if (n > 0) {
         int align_left = flags & 4;
@@ -1762,8 +1762,8 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
         int search;
         do {
             search = y;
-            float run_w = 0.0f;
             bool first = true;
+            float run_w = 0.0f;
             for (;;) {
                 bool stop = false;
                 int i = search;
@@ -1827,10 +1827,10 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         }
                         char eq = '=';
                         int value = atoi(name.substr(name.find(eq, 0) + 1, name.len).c_str());
+                        tag = false;
                         ints_push(codes, value);
                         rects_a->push_back(pos);
                         ints_push(tags, tag_index);
-                        tag = false;
                     } else {                                      // the closing tag: the span's end rectangle
                         vector4 t;
                         t.x = pos.x;
@@ -1900,8 +1900,8 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
             if (widest < pos.x)
                 widest = pos.x;
             float row = font_scale * scale[1] * line_spacing * 0.9f;
-            pos.x = *xmin;
             y = search;
+            pos.x = *xmin;
             pos.y -= row;
         } while (search < n);
     }

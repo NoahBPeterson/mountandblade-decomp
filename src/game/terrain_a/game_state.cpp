@@ -197,7 +197,9 @@ __declspec(noinline) void ShadowMap::pick_size()   // setup 0x463e90 calls it; w
         w = 0x1000;
         h = 0x1000;
     }
-    struct { int x, y; } m;                      // signed compares (jg/jle); the original also spills both to an 8-byte stack temporary
+    struct S2 { int x, y; };
+    // signed compares (jg/jle); the original also spills both to an 8-byte stack temporary
+    S2 m;
     m.x = g_render.caps.MaxTextureWidth;
     m.y = g_render.caps.MaxTextureHeight;
     if (w > m.x || h > m.y) {

@@ -160,8 +160,8 @@ void gui_manager::process(int param)
     }
 
     acc0 = 0;
-    acc1 = 0;
     this->wheel = 0;
+    acc1 = 0;
     this->dirty = 0;
 
     {

@@ -136,6 +136,8 @@ struct VideoPage {
 // @ 0x4d63b0
 void Recf0::frame_update(float)
 {
+    vector4 v, vi;
+    char buf[0x40];
     if (W(blood)->clear_mask(0x10000)) {
         g_options.blood = settings_value(W(blood));
         update_performance_caption((VideoPage*)this);
@@ -209,12 +211,10 @@ void Recf0::frame_update(float)
         float gamma = W(ui_scale)->get168();
         g_options.scale_x = gamma;
         float inv = g_one / gamma;
-        vector4 v, vi;
         v.x = v.y = v.z = v.w = gamma;
         vi.x = vi.y = vi.z = vi.w = inv;
         g_effect->SetVector("output_gamma", (const D3DXVECTOR4*)&v);
         g_effect->SetVector("output_gamma_inv", (const D3DXVECTOR4*)&vi);
-        char buf[0x40];
         _itoa((int)(gamma * 100.0f), buf, 10);
         tstring text(buf);
         {

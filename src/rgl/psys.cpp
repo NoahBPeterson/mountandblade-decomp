@@ -87,11 +87,11 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
     union { float col[4]; int idx[4]; } c;
     // the views psys.h used to declare as members: five curve4 over the ten float pairs, the quad's half size and uvs
     curve4& a = *(curve4*)&curve[0];
+    float& half_w = half.u;
     curve4& r = *(curve4*)&curve[2];
     curve4& g = *(curve4*)&curve[4];
     curve4& b = *(curve4*)&curve[6];
     curve4& s = *(curve4*)&curve[8];
-    float& half_w = half.u;
     float& half_h = half.v;
     float& brightness = vd8.x;
     vector4& t = *(vector4*)c.col;
@@ -191,8 +191,8 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             vertex60 vx = vts[i];
             float dx = m->u.x * vts[i].pos.z + m->f.x * vts[i].pos.y + m->s.x * vts[i].pos.x;
             float dy = m->u.y * vts[i].pos.z + m->f.y * vts[i].pos.y + m->s.y * vts[i].pos.x;
-            float dz = m->u.z * vts[i].pos.z + m->f.z * vts[i].pos.y + m->s.z * vts[i].pos.x;
             vx.index += npoints;
+            float dz = m->u.z * vts[i].pos.z + m->f.z * vts[i].pos.y + m->s.z * vts[i].pos.x;
             vx.pos.w = c.col[3];
             vx.normal.w = c.col[3];
             vx.pos.x = dx; vx.pos.y = dy; vx.pos.z = dz;

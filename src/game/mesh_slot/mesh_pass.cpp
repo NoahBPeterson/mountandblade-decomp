@@ -168,23 +168,20 @@ again:
         g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
         if (o->f15c != 0 && ((texture*)o->f15c)->loaded != 0) {
             texture* d2 = (texture*)o->f15c;
-            if (d2->kind == 2) {
-                g_render.dev->SetDepthStencilSurface(d2->surface);
-            } else {
+            if (!(d2->kind == 2)) {
                 IDirect3DSurface9* surf = d2->kind == 1 ? d2->level0 : d2->surface;
                 g_render.dev->SetDepthStencilSurface(surf);
                 bias = 0.0002f;
                 g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xc3, *(unsigned*)&bias);
                 bias = 2.0f;
                 g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
+            } else {
+                g_render.dev->SetDepthStencilSurface(d2->surface);
             }
             ds_changed = o->f15c;
         }
         o->apply_state();
-        if (g_use_shaders)
-            render_scene(o);
-        else
-            draw((view_t*)o);
+        if (!(g_use_shaders)) { draw((view_t*)o); } else { render_scene(o); }
     }
 
     if (last_tex)
@@ -204,8 +201,8 @@ again:
 
     for (std::vector<rgl::scene*>::iterator e = tmp.begin(); e != tmp.end(); ++e) {
         scene_ms* o = SC(*e);
-        Q(*e).clear();
         o->registered = 0;
+        Q(*e).clear();
         for (unsigned i = 0; i < o->cache.size(); i++)
             ((mesh*)o->cache[i])->clear_geometry();
     }

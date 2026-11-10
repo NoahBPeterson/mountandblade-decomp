@@ -61,8 +61,8 @@ static inline int cell_clamp(int v, int n)
 void Terrain::emit_cell(int x, int y)
 {
     emitted[x][y] = 1;
-    int n = list_c.count;
     unsigned nf = 0, nr = 0, no = 0;
+    int n = list_c.count;
     if (n > 0) {
         DustParticle* p = dust_at(this, 0);     // walks the list (the original's p += 0xa0 per entry)
         do {

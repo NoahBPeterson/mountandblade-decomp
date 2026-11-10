@@ -76,6 +76,7 @@ void C4c31c0::frame_update(float)
     // save_path reads this as a C string, then WRITES the whole "%s\Mount&Blade Savegames\%s" path back into
     // it (its own local buffer is 0x104), so this is a char buffer of that size - the 16 bytes it used to have
     // were overrun, corrupting the neighbouring `name` buffer (crash 0x73726573 = the tail of "...\users").
+    bin_reader s;
     for (int i = 0; i < 9; i++) {
         MissionUi* button = labels[i];
         if (button && button->clear_mask(0x10000))
@@ -117,10 +118,9 @@ void C4c31c0::frame_update(float)
         }
         char* slot = (char*)this + sel218 * 0x30;
         if (slot[0x58] == 0 && slot[0x59] == 0 && slot[0x5a] == 0) {
-            bin_reader s;
-            SlotHeader hdr;
             sprintf(pathbuf, "");
             save_path(pathbuf);
+            SlotHeader hdr;
             const char* path = pathbuf;
             const char* pf = g_module_name.c_str();
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,

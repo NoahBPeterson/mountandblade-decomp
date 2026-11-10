@@ -210,10 +210,10 @@ unsigned GameData::color_of(float t, int flag)
     if (t < -0.0001f) {
         float a = 1.0f + t;
         float hi[3];
+        float u = -t;
         hi[0] = 0.95f * a;
         hi[1] = 0.65f * a;
         hi[2] = 0.65f * a;
-        float u = -t;
         float lo[3];
         lo[0] = 0.95f * u;
         lo[1] = 0.0f * u;
@@ -372,8 +372,8 @@ void Party::add_xp_to_stack(int idx, int amount)
     GameData* g = g_game;
     Troop* chars = g->troops;
     Stack& slot = stacks[idx];
-    float& acc = *(float*)&stacks[idx].f18;
     Troop* chr = &chars[slot.troop];
+    float& acc = *(float*)&stacks[idx].f18;
     if (chr->flags30 & 0x10) {
         chr->exp += amount;
         return;
@@ -383,7 +383,7 @@ void Party::add_xp_to_stack(int idx, int amount)
     }
     acc += (float)amount;
     if (acc >= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f)) {
-        while (slot.f14 < slot.count) {
+        while (slot.count > slot.f14) {
             slot.f14++;
             acc -= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f);
             if ((float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f) >= acc) {
@@ -919,8 +919,8 @@ static inline int max_hit_points(Troop* t)
 // @ 0x4b2c00
 void Party::tick_stats()
 {
-    float speed = (float)skill_level(0xb) * 0.2f + 1.0f;
     GameData* g = g_game;
+    float speed = (float)skill_level(0xb) * 0.2f + 1.0f;
     if (id == g->f78 && g->f13ad0f > 0.0f && g->f13ad4 != 0) {
         speed = speed + speed;
     } else if (f88 > 0) {
@@ -1125,9 +1125,9 @@ bool NavData::can_move(int from, float x, float y, int to, const float* p, unsig
     int vert = 1;
     if (-0.000001f < dx && dx < 0.000001f)
         vert = 0;
+    bool stop = false;
     int hops = 0;
     int prev = -1;
-    bool stop = false;
     if (from != to) {
         do {
             if (from < 0 || stop || hops >= max)
@@ -1588,14 +1588,14 @@ make:
         s->count = 0;
         s->troop = -1;
         s->flags = 0;
+        stacks[nstacks].troop = troop;
+        stacks[nstacks].count = count;
         s->f0c = 0;
         s->f10 = 0;
         s->f14 = 0;
-        s->f18 = 0;
-        stacks[nstacks].troop = troop;
-        stacks[nstacks].count = count;
         stacks[nstacks].f10 = f10;
         stacks[nstacks].f14 = 0;
+        s->f18 = 0;
         *(int*)((char*)this + (nstacks + 6) * 0x20) = 0;
         stacks[nstacks].flags = flags;
         int idx = nstacks + 1;
@@ -2138,8 +2138,8 @@ void BattleRec::detach()
         int n1 = 0;
         g_game->list_members(party_a, (int*)list1, &n1);
         int n2 = 0;
-        g_game->list_members(party_b, (int*)list2, &n2);
         int total = 0;
+        g_game->list_members(party_b, (int*)list2, &n2);
         {
             PartyMgr* m = &g_game->parties;
             int a = party_a;
@@ -2157,12 +2157,12 @@ void BattleRec::detach()
             PartyMgr* m = &g_game->parties;
             unsigned b = party_b;
             if (party_valid(m, b)) {
+                int sum = 0;
                 Party* q = m->at(m->lookup(b));
                 q->action = 0;
                 q->interval = 0.1f;
                 q->clk8d0.restamp();
                 q->f88 = -1;
-                int sum = 0;
                 for (int t = 0; t < q->nstacks; t++) {
                     Stack& s = q->stacks[t];
                     sum += (s.flags & 1) == 0 && s.count >= 0 ? s.count : 0;
@@ -2520,11 +2520,11 @@ void Party::update_nav()
     if (moving) {
         if (kind == 2) {
             int d = tgt_id;
-            if (!g_game->parties.is_live(d)) {
-                kind = 0;
-            } else if (g_game->parties.get(d)->mesh != tgt) {
+            if (!(!g_game->parties.is_live(d))) { if (g_game->parties.get(d)->mesh != tgt) {
                 moving = 0;
                 f5988 = 1;
+            } } else {
+                kind = 0;
             }
         }
         if (moving) {
@@ -2542,14 +2542,14 @@ void Party::update_nav()
         dest_y = ly;
     } else if (kind == 2) {
         int d = tgt_id;
-        if (!g_game->parties.is_live(d)) {
-            kind = 0;
-        } else {
+        if (!(!g_game->parties.is_live(d))) {
             float* p = &g_game->parties.get(d)->pos.x;
             dest_x = p[0];
             dest_y = p[1];
             lx = p[0];
             ly = p[1];
+        } else {
+            kind = 0;
         }
     } else if (kind == 3) {
         if (!(frand() < 0.35f)) {
@@ -2574,9 +2574,7 @@ void Party::update_nav()
     }
 
     face* tf;
-    if (kind == 1) {
-        tf = tgt;
-    } else {
+    if (!(kind == 1)) {
         int d = tgt_id;
         if (kind == 2 && g_game->parties.is_live(d)) {
             tgt = g_game->parties.get(d)->mesh;
@@ -2587,13 +2585,12 @@ void Party::update_nav()
         } else {
             tf = mesh;
         }
+    } else {
+        tf = tgt;
     }
 
     if (f5988 && tf && mesh->m4 != tf->m4) {
-        if (!start_path(tf->m4, dest_x, dest_y)) {
-            f598c = 1;
-            f5988 = 0;
-        } else {
+        if (!(!start_path(tf->m4, dest_x, dest_y))) {
             f598c = 0;
             f5984 = tf->m4;
             int lim = 10;                                    // 0x4b7758: the step budget ...
@@ -2620,6 +2617,9 @@ void Party::update_nav()
             }
             moving = 1;
             step_route();
+        } else {
+            f598c = 1;
+            f5988 = 0;
         }
     }
 }
@@ -2758,21 +2758,23 @@ void Party::update_hud_text()
         g_script.trigger_result.store0 = 100;
         g_script.trigger_result.store1 = 0;
         g_game->emit_event(0x1a, id, 0);
+        f8b0 = (float)g_script.trigger_result.value * 0.01f;
         dirty = 0;
         f8b5 = 1;
-        f8b0 = (float)g_script.trigger_result.value * 0.01f;
     }
     if (!f8b5)
         return;
+    int b = 0, d = 0, c = 0;
     int ammo = 0;
     vector4 t;
     float v;
-    int b = 0, d = 0, c = 0;
     g_game->count_units(id, &ammo, &c, &b, &d);
     GameData* g = g_game;
     v = *(float*)((char*)g->factions + f70 * 0x300 + 0x2c);
     unsigned color;
-    if (g_module_settings.show_faction_color != 0) {
+    if (!(g_module_settings.show_faction_color != 0)) {
+        color = g->color_of(v, f6c);
+    } else {
         t.x = *(float*)((char*)g->factions + f70 * 0x300 + 0x28);
         if (f6c != 0) {
             vector4 tmp = rgl::unpack_color((unsigned*)&t.x);
@@ -2784,8 +2786,6 @@ void Party::update_hud_text()
         } else {
             color = *(unsigned*)&t.x;
         }
-    } else {
-        color = g->color_of(v, f6c);
     }
     if (id == g->f78) {
         color = 0xffffffff;
@@ -2795,14 +2795,11 @@ void Party::update_hud_text()
             color = 0xff22aaff;
     }
     char buf[128];
-    if (b == 0)
-        sprintf(buf, "%d", ammo);
-    else
-        sprintf(buf, "%d+%d", ammo, b);
+    if (!(b == 0)) { sprintf(buf, "%d+%d", ammo, b); } else { sprintf(buf, "%d", ammo); }
     float ct = *(float*)&flags_hi;
     if ((flags_lo & 0x80000) != 0) {
-        tstring str("");
         ct = 1.0f;
+        tstring str("");
         g_game->label_text(label, &str, 0, 1, &ct);
     } else if ((flags_lo & 0x400) != 0) {
         ct = this->scale();
@@ -2932,7 +2929,10 @@ void Party::tick(float dt)
         float speed = speed_factor();
         float step = speed * dt;
 
-        if (moving == 0 && kind == 2) {
+        if (!(moving == 0 && kind == 2)) {
+            if (dist < step)
+                step = dist;
+        } else {
             if (dist - radius * 1.2f < step) {
                 step = dist - radius * 1.2f;
                 if (step < 0.0f)
@@ -2941,9 +2941,6 @@ void Party::tick(float dt)
                 if (dist < 0.0f)
                     goto probe;
             }
-        } else {
-            if (dist < step)
-                step = dist;
         }
 
         if (dist > 0.0f) {
@@ -3022,8 +3019,8 @@ probe:
                 vec2 o = *(vec2*)&m->get(t)->pos;
                 float d = plane_dist(o, p);
                 if (d < m->get(t)->radius + radius) {
-                    int me = id;
                     int him = t;
+                    int me = id;
                     if (me == g_game->f78 && !party_flag(m->get(t), 0x400) && m->get(t)->f88 < 0 &&
                         m->get(t)->action == 4 && m->get(t)->target == me) {
                         him = me;

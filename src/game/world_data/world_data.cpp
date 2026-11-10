@@ -491,7 +491,15 @@ void GameW::recruit(int id, int count, Party* dest)
                         hp += 10;
                     if ((float)(rand() % 0x3dc9) * (float)hp * 6.322312e-05f < 2.0f) {
                         tr = &troops[troop];
-                        if ((tr->flags30 & 0x10) == 0) {
+                        if (!((tr->flags30 & 0x10) == 0)) {
+                            if (troops[troop].hp > g_module_settings.player_wounded_treshold)
+                                troops[troop].hp = g_module_settings.player_wounded_treshold;
+                            troops[troop].hp -= 15.0f;
+                            if (troops[troop].hp < 0.0f)
+                                troops[troop].hp = 0.0f;
+                            if (dest != 0)
+                                dest->add_members(troop, 1, 0, 1, 0);
+                        } else {
                             if ((float)(rand() % 0x3dc9) * 6.322312e-05f < g_k065
                                 || (troops[troop].flags30 & 0x80) != 0) {
                                 st->count--;
@@ -502,14 +510,6 @@ void GameW::recruit(int id, int count, Party* dest)
                                 if (dest != 0)
                                     dest->add_members(troop, 1, 0, 1, 0);
                             }
-                        } else {
-                            if (troops[troop].hp > g_module_settings.player_wounded_treshold)
-                                troops[troop].hp = g_module_settings.player_wounded_treshold;
-                            troops[troop].hp -= 15.0f;
-                            if (troops[troop].hp < 0.0f)
-                                troops[troop].hp = 0.0f;
-                            if (dest != 0)
-                                dest->add_members(troop, 1, 0, 1, 0);
                         }
                         total--;
                     }
@@ -755,8 +755,8 @@ int GameW::token_lookup(int a, int b, int c, int d) {
 // @ 0x491f50
 int MissionW::count_agents(int idx)
 {
-    int r = idx * 0x5b;
     int total = 0;
+    int r = idx * 0x5b;
     int* rel = rel_flat();
     if (rel[r + 0] > 0) total = counts[0][1];
     if (rel[r + 1] > 0) total += counts[1][1];

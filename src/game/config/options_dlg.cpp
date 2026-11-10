@@ -394,8 +394,8 @@ void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
     GlobalMemoryStatus(&mem);
 
     IDxDiagContainer* root = 0;
-    IDxDiagContainer* devices = 0;
     IDxDiagContainer* display = 0;
+    IDxDiagContainer* devices = 0;
     IDxDiagProvider* provider = 0;
     DXDIAG_INIT_PARAMS params;
     WCHAR name[0x100];

@@ -43,7 +43,7 @@ void CampaignScreen::camera_update(float dt)
 
     // --- ease the four rates back to zero (each through its own 0-floor clamp) ---------------------
     float d = 1.0f - dt * 9.8f;
-    if (d < 0.0f)
+    if (0.0f > d)
         d = 0.0f;
     f2bc *= d;
     d = 1.0f - dt * 9.8f;
@@ -51,11 +51,11 @@ void CampaignScreen::camera_update(float dt)
         d = 0.0f;
     f2c0 *= d;
     d = 1.0f - dt * 9.8f;
-    if (d < 0.0f)
+    if (0.0f > d)
         d = 0.0f;
     f2c4 *= d;
     d = 1.0f - dt * 9.8f;
-    if (d < 0.0f)
+    if (0.0f > d)
         d = 0.0f;
     f2c8 *= d;
 
@@ -139,7 +139,7 @@ void CampaignScreen::camera_update(float dt)
     vector4 h(frame.o.x - frame.u.x * 0.5f, frame.o.y - frame.u.y * 0.5f, frame.o.z - frame.u.z * 0.5f);
     g_game->ground_height((rgl::world*)g_script.level, (const float*)&h, &q);
     q = q + 0.5f;
-    if (frame.o.z < q)
+    if (q > frame.o.z)
         frame.o.z = q;
 
     // the fog distance parameter (the 0.9 / 0.94 / 0.98 range steps shift it progressively)

@@ -426,7 +426,7 @@ void renderer::draw_polygon(const vector4* pts, int n)
     c.x = c.x * inv;
     c.y = c.y * inv;
     c.z = c.z * inv;
-    for (i = 0; i < n; i++) {
+    for (i = 0; n > i; i++) {
         vector4 t((pts[i].x - c.x) * 0.99f + c.x, (pts[i].y - c.y) * 0.99f + c.y, (pts[i].z - c.z) * 0.99f + c.z);
         shrunk[i] = t;
     }
@@ -554,7 +554,7 @@ void capsule_sphere_contact(capsule* a, sphere* b, int max, contact* out, int* c
     }
     B = vector4(A.x - b->center.x, A.y - b->center.y, A.z - b->center.z);
     float depth = (a->radius + b->radius) - (float)sqrt(B.x * B.x + (B.y * B.y + B.z * B.z));
-    if (0.0f <= depth) {
+    if (depth >= 0.0f) {
         int n = ++*count;
         if (n <= max) {
             normalize(A, B);

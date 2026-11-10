@@ -124,8 +124,8 @@ char UiE::key(unsigned p)
                 get_xy((float*)out_len);
             } else if (ch == 8) {
                 if (name.len > 0) {
-                    const char* q = name.buf + name.len - 1;
                     int n = 1;
+                    const char* q = name.buf + name.len - 1;
                     while ((*q & 0xc0) == 0x80 && n < name.len) {
                         n++;
                         q--;
@@ -139,9 +139,9 @@ char UiE::key(unsigned p)
         } else if (p == 0x10) {
 leave_edit:
             f180 = 0;
-            b = 1;
             g_gui.ui_active = 0;
             g_gui.play_sound();
+            b = 1;
             set_key_flags(0x10000);
         }
     } else if (p == 0x10) {

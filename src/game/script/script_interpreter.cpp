@@ -872,9 +872,9 @@ static OrderObj* order_create_entity(int type)
 void MissionAgents::add_order_arrow(int id)
 {
     rgl::vector4 zero(0.0f, 0.0f, 0.0f);
+    int idx = table.index_of(id);
     float radius = 0.3f;
     float h;
-    int idx = table.index_of(id);
     OrderEntry* e = (OrderEntry*)(table.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
     OrderObj* o = order_create_entity(9);
     Shape* shape = (Shape*)operator new(0x44);
@@ -1071,6 +1071,7 @@ void Mission::order(int index, int order) {
     char ordtxt[0x200];                 // this+0x238: the leader's order text
     char msg[0x200];                    // this+0x438: the composed log line
 
+    vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
     ordstr[0] = 0;
 
     if (order == 0) {                           // hold this position
@@ -1134,7 +1135,6 @@ void Mission::order(int index, int order) {
                 continue;
             if (s->state == 0)
                 continue;
-            vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
             p.x = s->ox * 7.0f + s->target.x;
             p.y = s->oy * 7.0f + s->target.y;
             p.z = s->oz * 7.0f + s->target.z;
@@ -2297,7 +2297,7 @@ tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int
                         int n = body.find(',', 0);
                         if (n <= 0 && body.len <= 0)
                             break;
-                        int endpos = (n <= 0) ? body.len : n;
+                        int endpos = (0 >= n) ? body.len : n;
                         tstring item = body.substr(0, endpos);
                         if (endpos + 1 < body.len)
                             body = body.substr(endpos + 1, body.len);
@@ -2322,8 +2322,8 @@ tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int
                             value.insert(base + endpos, num);
                             base += pre.len;
                         }
-                        idx++;
                         base = base + 1 + endpos;
+                        idx++;
                     }
                 }
             }
@@ -2694,25 +2694,19 @@ int View::create_text_overlay(int arg, int flags)
     o->attach((void*)&v, (void*)arg);                    // +0xa4 (the original passes &r first, then arg)
     if (flags & 0x2000) {
         scene_obj* ps = (scene_obj*)operator new(0x188);
-        if (ps)
-            ps = ps_ctor(ps);                            // 0x48b890
-        else
-            ps = 0;
+        if (!(ps)) { ps = 0; } else { ps = ps_ctor(ps); }
         *(int*)((char*)ps + 0x178) = 1;
         v.x = 0;
         v.y = 0;
         ps->set_pos(&v);                                 // +0x58
         this->list->add_child(ps);                       // +0xc8
         scene_obj* cam = (scene_obj*)operator new(0x4a8);
-        if (cam)
-            cam = cam_ctor(cam);                         // 0x49deb0
-        else
-            cam = 0;
+        if (!(cam)) { cam = 0; } else { cam = cam_ctor(cam); }
+        v.x = 0;
+        v.y = 0;
         *(int*)((char*)cam + 0x104) |= 0x20;
         *(scene_obj**)((char*)cam + 0x484) = ps;
         scene_obj* grp = (scene_obj*)new ContainerBase;
-        v.x = 0;
-        v.y = 0;
         grp->set_pos(&v);                                // +0x58
         grp->set_rot((float2*)((char*)o + 0xf0));        // +0x64
         grp->add_child(o);                               // +0xc8
@@ -2931,6 +2925,7 @@ inline void place_scene_agents(SceneObj* e, ItemRef* items, void* b8) { ::place_
 // 0x4288c0, 0x46b9d0) live in other slices.
 void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
 {
+    SpawnArea area;
     if (g_tableaus.worlds._Myfirst == 0 || g_tableaus.worlds.size() == 0)
         return;
     World* world = (World*)g_tableaus.worlds[g_tableaus.worlds.size() - 1];
@@ -2943,7 +2938,6 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     s.m4 = 0;
     s.reduce(0);
 
-    SpawnArea area;
     float dist = 0.0f;
     char scratch = 0;
 
@@ -2954,10 +2948,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
 
     ::ItemRef items[10];
     int count;
-    if (party < 0) {
-        def->init((FxRes*)::g_resmgr.get_object70(tstring("skel_horse")));
-        count = 1;
-    } else {
+    if (!(party < 0)) {
         unsigned t = (unsigned)::g_game->chars[party].flags & 0xf;
         def->init((FxRes*)(t < (unsigned)g_anim.char_count
                               ? (void*)g_anim.skin_vec.first[t].skeleton : 0));
@@ -2966,6 +2957,9 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
             *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,
                                                            &world->f34c, 0, &scratch);
         count = level;
+    } else {
+        def->init((FxRes*)::g_resmgr.get_object70(tstring("skel_horse")));
+        count = 1;
     }
     char name[0x10];
     ::build_appearance((rgl::strategic_entity*)e, count, party, *args, &s, (rgl::lod_mesh2**)&area.b8, (int*)name, (rgl::lod_mesh2**)&area.f60,
@@ -3025,7 +3019,7 @@ bool GameData::deploy_party(int a, int b)
         }
         Rec98* nd = agent_rec(this, parties.get_w(lead)->f88);
         int x = nd->f58;
-        if (x == lead)
+        if (lead == x)
             x = nd->f54;
         if (relation(x, a) < -0.01f)
             return 0;
@@ -3044,13 +3038,13 @@ bool GameData::deploy_party(int a, int b)
         return 1;
     }
     if (b == party_id_78) {
-        if (0.0f < f13ad0f && f13ad4 != 0)
+        if (f13ad0f > 0.0f && f13ad4 != 0)
             return 0;
         int la = battle_root(a);
         attach_party = la;
+        Party* p1 = parties.get(la);
         attach_scene = -100000;
         attach_flip = 1;
-        Party* p1 = parties.get(la);
         Party* p2 = parties.get(b);
         attach_center(this, (p1->pos.x + p2->pos.x) * 0.5f, (p2->pos.y + p1->pos.y) * 0.5f, b, la);
         return 1;

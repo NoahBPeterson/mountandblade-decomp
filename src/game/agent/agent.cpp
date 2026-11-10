@@ -834,8 +834,8 @@ ItemRef Agent::best_ammo(int idx, int* missing, int* total, int* slot_out)
     if (idx >= 0 && pairs[idx].item >= 0) {
         unsigned wt = g_items[pairs[idx].item].type_flags & 0xff;
         if (wt == 8 || wt == 9 || wt == 10 || wt == 0x11 || wt == 0x10) {
-            *missing = 0;
             *total = 0;
+            *missing = 0;
             for (int i = 0; i < 4; i++) {
                 ItemRef* cur = &pairs[i];
                 if (cur->item >= 0) {
@@ -853,8 +853,8 @@ ItemRef Agent::best_ammo(int idx, int* missing, int* total, int* slot_out)
                         if (*missing == 0) {
                             unsigned b = cur->m4;
                             if (cur->max_amount() != (int)(b & 0xff)) {
-                                r = *cur;
                                 *slot_out = i;
+                                r = *cur;
                             }
                         }
                         unsigned b2 = cur->m4;
@@ -955,11 +955,11 @@ bool HeightField::line_clear(const vector4* a, const vector4* b)
     float t1 = d.normalize();
     vector4 p0;
     p0.x = d.x * t0 + a->x;
-    if (p0.x < lo.x) {
+    if (!(p0.x < lo.x)) { if (p0.x > hi.x && d.x < 0.0f)
+        t0 = (hi.x - p0.x) / d.x; } else {
         if (d.x > 0.0f)
             t0 = (lo.x - p0.x) / d.x;
-    } else if (p0.x > hi.x && d.x < 0.0f)
-        t0 = (hi.x - p0.x) / d.x;
+    }
     p0.y = d.y * t0 + a->y;
     if (p0.y < lo.y) {
         if (d.y > 0.0f)
@@ -967,11 +967,11 @@ bool HeightField::line_clear(const vector4* a, const vector4* b)
     } else if (p0.y > hi.y && d.y < 0.0f)
         t0 += (hi.y - p0.y) / d.y;
     p0.x = d.x * t1 + a->x;
-    if (p0.x < lo.x) {
+    if (!(lo.x > p0.x)) { if (hi.x < p0.x && d.x > 0.0f)
+        t1 += (hi.x - p0.x) / d.x; } else {
         if (d.x < 0.0f)
             t1 += (lo.x - p0.x) / d.x;
-    } else if (p0.x > hi.x && d.x > 0.0f)
-        t1 += (hi.x - p0.x) / d.x;
+    }
     p0.y = d.y * t1 + a->y;
     if (p0.y < lo.y) {
         if (d.y < 0.0f)

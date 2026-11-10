@@ -214,10 +214,10 @@ void world::render_scene(scene* sc, bool reflect)
             p->update(sc);
     }
     for (unsigned i = 0; i < meshes.size(); i++) {
+        vector4 zero(0.0f, 0.0f, 0.0f);
         meshes[i]->slots[0].f28 = 1;
         meshes[i]->slots[1].f28 = 1;
         mat3 id;
-        vector4 zero(0.0f, 0.0f, 0.0f);
         mat4 m;
         *(mat3*)&m = *identity3(&id);
         m.o = zero;

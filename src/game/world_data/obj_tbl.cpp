@@ -43,10 +43,10 @@ rgl::mesh* MeshTable::placed(int index)
         m->f214 += 0x2000;
     vector4 sc;
     vector4 pos;
-    SceneRec48* r = &((SceneRec48*)records)[index];
     pos.x = ((SceneRec48*)records)[index].px;
     pos.y = ((SceneRec48*)records)[index].py;
     pos.z = ((SceneRec48*)records)[index].pz;
+    SceneRec48* r = &((SceneRec48*)records)[index];
     Frame3 frame;
     identity3(&frame);
     float a = r->rx * 0.017453292f;
@@ -65,20 +65,19 @@ rgl::mesh* MeshTable::placed(int index)
         m->translate(&pos);
     return m;
 }
-
 // @ 0x4991d0
 rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
 {
     rgl::mesh* m = new rgl::mesh;
     int i = *index;
     vector4 b, a;
-    vec2 uv1, uv0;
     unsigned color;
     b.x = ((TableauRec*)&recs[i])->f30;
     b.y = ((TableauRec*)&recs[i])->f34;
     a.x = ((TableauRec*)&recs[i])->f28;
     a.y = ((TableauRec*)&recs[i])->f2c;
     color = 0xffffffff;
+    vec2 uv1, uv0;
     uv1.x = 1.0f;
     uv1.y = 1.0f;
     uv0.x = 0.0f;

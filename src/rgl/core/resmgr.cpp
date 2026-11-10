@@ -564,9 +564,8 @@ std::vector<mesh*> resmgr::find_meshes(const rgl::string* prefix)
     std::vector<mesh*> out;
     rgl::string tmp;
     int to = prefix->len;
-    int from;
+    int from = 0;
     for (std::vector<mesh*>::iterator it = meshes.begin(); it != meshes.end(); ++it) {
-        from = 0;
         if (!(*it)->name.range_equals(from, to, *prefix))
             continue;
         if (to != (*it)->name.len) {
@@ -964,9 +963,9 @@ void rgl::mesh::compute_tangents()
         float e2x = p2->a.x - p0->a.x;
         float e1y = p1->a.y - p0->a.y;
         float e2y = p2->a.y - p0->a.y;
+        float du1 = v1->uv.x - v0->uv.x;
         float e1z = p1->a.z - p0->a.z;
         float e2z = p2->a.z - p0->a.z;
-        float du1 = v1->uv.x - v0->uv.x;
         float du2 = v2->uv.x - v0->uv.x;
         float dv1 = v1->uv.y - v0->uv.y;
         float dv2 = v2->uv.y - v0->uv.y;

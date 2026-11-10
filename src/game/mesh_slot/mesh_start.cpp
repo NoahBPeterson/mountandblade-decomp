@@ -291,8 +291,8 @@ void Mission::start_setup()
     int mi0 = at<int>(0x5df0);   // stand-in: named indices, neutral here, kept only because the symbol ids they add flip x87 operand order in the prop-frame loop to the original's (docs/codegen.md 6.2)
     int li0 = at<int>(0x5df4);
     int lo = li0 * 0x494;      // a byte offset: head unchanged, the added symbol id flips one x87 operand pair in the prop-frame loop to the original's (docs/codegen.md 6.2)
-    at<int>(0x6550) = 0;
     ModeRec* mrec = &g_mission_templates[mi0];
+    at<int>(0x6550) = 0;
     LevelRaw* lrec = (LevelRaw*)(RAWAT(char*, g_game, 0x13a50) + lo);
     bank_of(mrec)->randomize();
     if (lrec->at<char>(0x78) == 0)
@@ -490,13 +490,13 @@ void Mission::start_setup()
             unsigned seed = (at<int>(0x5270) % 3 + RAWAT(int, g_game, 4) * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
                             0x1ddcf5f + 0x2f784719;
             float chance = RNDU(seed) * 6.32231167e-05f;
-            if (pt == 7) {
-                storm = 1;
-                pt = 3;
-            } else if (temp[8] > 27.0f) {
+            if (!(pt == 7)) { if (temp[8] > 27.0f) {
                 storm = 1;
             } else if ((pt == 3 || pt == 0xb) && chance < 0.150000006f) {
                 storm = 1;
+            } } else {
+                storm = 1;
+                pt = 3;
             }
             put(g_terrain.bits[4], (unsigned)g_bit[4] - 1, 28, pt);
             {
@@ -1006,8 +1006,8 @@ void Mission::start_setup()
         SceneSlot* sl = &SLOT(k);
         Timer* tm = &sl->timer;
         void** fp = &sl->face;
-        *fp = 0;
         int n = 0;
+        *fp = 0;
         do {
             ((rgl::world*)at<rgl::world*>(0))->floor_at(&SLOT(k).B.o.x, &outY, (face**)fp);     // 0x439be0
             if (*fp == 0) {

@@ -860,8 +860,8 @@ void PartyWindow::transfer_slot(ItemRef* item, int page, int slot)
     or_slot_flag(page, slot);
     int hv;
     if (locked != 0) {
-        char hf = held_flag;
         hv = held_value;
+        char hf = held_flag;
         set_slot_flag(page, slot, 1, hf);
         set_slot_value(page, slot, hf ? hv : 0x1e61);
         if (w04 == 2 && (page == 1 ? held_page != page : held_page == 1)) {
@@ -916,13 +916,7 @@ void PartyWindow::transfer_slot(ItemRef* item, int page, int slot)
     char buf[0x100];
     if (page < 2)
         return;
-    if (slot == 8 && ITYPE(held.item) == 1) {
-        if (page == 2) {
-            tstring key("ui_notification_riding_skill_not_enough");
-            g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
-            return;
-        }
-    } else if (slot >= 0 && slot < 4 &&
+    if (!(slot == 8 && ITYPE(held.item) == 1)) { if (slot >= 0 && slot < 4 &&
                ((g_items[held.item].type_flags & 0xff) == 2 || (g_items[held.item].type_flags & 0xff) == 3 ||
                 (g_items[held.item].type_flags & 0xff) == 4 || (g_items[held.item].type_flags & 0xff) == 8 ||
                 (g_items[held.item].type_flags & 0xff) == 9 || (g_items[held.item].type_flags & 0xff) == 10 ||
@@ -943,6 +937,12 @@ void PartyWindow::transfer_slot(ItemRef* item, int page, int slot)
         }
     } else {
         return;
+    } } else {
+        if (page == 2) {
+            tstring key("ui_notification_riding_skill_not_enough");
+            g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
+            return;
+        }
     }
     {
         tstring key("ui_troop_cant_use_item");

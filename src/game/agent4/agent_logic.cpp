@@ -395,7 +395,7 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
                     k = 1.0f;
                 }
                 float dp = vdot(n, vneg(d));
-                if (0.0f < dp && (type == 2 || dist < l->range)) {
+                if (dp > 0.0f && (type == 2 || dist < l->range)) {
                     vector4 hp = l->pos;
                     if (type == 2) {
                         vector4 t = vmul(d, (float)dist);
@@ -415,10 +415,10 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
                     float cr = s * l->color.x;
                     float cg = s * l->color.y;
                     float cb = s * l->color.z;
+                    l = *it;
                     out_col->x = cr + out_col->x;
                     out_col->y = cg + out_col->y;
                     out_col->z = cb + out_col->z;
-                    l = *it;
                     float br = (l->color.z + l->color.y) + l->color.x;
                     float ax = (d.x * k) * t;
                     float ay = (d.y * k) * t;
@@ -768,6 +768,7 @@ unsigned Agent::pick_duel()
 // @ 0x43bdb0
 void Agent::update_aim_error()
 {
+    vector4 p, n;
     float v = 0.0f;
     ItemRef* r = 0;
     if (slots[0] >= 0) r = &pairs[slots[0]];
@@ -781,7 +782,6 @@ void Agent::update_aim_error()
             float tm = (float)(g_ticks[timer.clock] - timer.start) * 1e-5f;
             float a, b, nz;
             {
-                vector4 p, n;
                 p.x = tm; p.y = a = tm + 3.0f; p.z = b = tm * 1.5f;
                 noise_gradient(0.7f, &p.x, &n.x);
                 nz = (n.y + n.x) * 1.9f + 1.4f;
@@ -801,8 +801,8 @@ void Agent::update_aim_error()
                 int tr = troop;
                 float sk = (float)g_game->skill_level(tr, skl_power_draw) * 25.0f + (int)g_game->chars[tr].f80[3];
                 float p21 = (float)cur.stat_21x(1) * 8.0f;
-                float w = (float)cur.stat_1ec() * 40.0f + p21 + 50.0f;
                 int c = g_items[item].f204;
+                float w = (float)cur.stat_1ec() * 40.0f + p21 + 50.0f;
                 if (c == 0) c = 99;
                 float cf = (float)c * 0.01f;
                 float acc0 = ((w + 50.0f) - sk) * 6e-5f;
@@ -831,7 +831,7 @@ void Agent::update_aim_error()
                         float zero = 0.0f;
                         float x = (lvl - tm) / lvl - sk * 0.001f;
                         v = fmax_ref(&zero, &x) + acc;
-                    } else if (thr < tm) {
+                    } else if (tm > thr) {
                         vector4 q, n; q.x = tm; q.y = a; q.z = b;
                         noise_gradient(0.4f, &q.x, &n.x);
                         float e1 = (tm - thr) * 0.4f;
@@ -1642,7 +1642,7 @@ int Agent::pick_attack_dir(unsigned tid)
                 alt = 0;
                 goto done;
             }
-            if (!(0.2f < v) || dir != 1)
+            if (!(v > 0.2f) || dir != 1)
                 goto done;
             alt = 0;
         } else {
@@ -1682,7 +1682,7 @@ int Agent::pick_attack_dir(unsigned tid)
         } else {
             dir = 0;
             alt = 2;
-            if (!(0.0f < x))
+            if (!(x > 0.0f))
                 alt = 1;
         }
         int f = f2c;
@@ -1741,10 +1741,7 @@ void Agent::start_shoot(int slot)
     int dir, alt;
     if (f2c >= 0) {
         float v = signed_angle(xy(&vel), xy(&fx));
-        if (v < 0.0f)
-            dir = 1;
-        else
-            dir = 2;
+        if (!(v < 0.0f)) { dir = 2; } else { dir = 1; }
         alt = 0;
     } else {
         dir = rand() % 4;
@@ -1753,10 +1750,10 @@ void Agent::start_shoot(int slot)
             alt = 3 - dir;
     }
     int tgt = pick_front();
-    if (id == g_mission->player_id && (g_options.ctl_mode != 0 || tgt != -1))
+    if (g_mission->player_id == id && (g_options.ctl_mode != 0 || tgt != -1))
         dir = pick_attack_dir(tgt);
     unsigned __int64 kind = flags & itcf_shoot_mask;
-    if (kind == 0) {
+    if (0 == kind) {
         if (slot == 0) {
             mode1 = dir;
             pick_sounds(0, dir, &snd_a, &snd_b, &snd_c, &variant);
@@ -1765,11 +1762,11 @@ void Agent::start_shoot(int slot)
                 pick_sounds(0, alt, &snd_a, &snd_b, &snd_c, &variant);
             }
         } else {
-            mode2 = dir;
             pick_sounds(slot, mode1, &snd2_a, &snd2_b, &snd2_c, &variant);
+            mode2 = dir;
             if (snd2_a == -1) {
-                mode2 = alt;
                 pick_sounds(slot, mode1, &snd2_a, &snd2_b, &snd2_c, &variant);
+                mode2 = alt;
             }
         }
         return;
@@ -2509,8 +2506,8 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
             if (ch >= 0) {
                 int looping = groups[idx].flags & 2;
                 int hi = 0x100;
-                int vol = 0;
                 int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_options.master_volume * 255.0f);
+                int vol = 0;
                 vol = clamp_index(&r, &vol, &hi);
                 int prio;
                 if (flags & 1) {
@@ -2518,10 +2515,10 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                     prio = 0xff;
                 } else {
                     FSOUND_3D_SetAttributes(ch, pos, 0);
-                    float dist = (frame.o - *(const vector4*)pos).out_length();
-                    float f = 3.0f / (dist + 3.0f);
                     int lo = 0;
                     int hi2 = 0x100;
+                    float dist = (frame.o - *(const vector4*)pos).out_length();
+                    float f = 3.0f / (dist + 3.0f);
                     int pr = round_i(((const Agent*)&defs[dn])->range_scale() * f * 254.0f);
                     prio = clamp_index(&pr, &lo, &hi2);
                 }
@@ -3534,7 +3531,8 @@ bool Agent::plan_path()
         width = 0.6f;
     int face = update_nav_face();
     if (face >= 0 && goal_face >= 0) {
-        g_mission->nav.find_path(face, goal_face, pface(), ppos(), &path_count, &path_steps, &width, &width, &width);
+        g_mission->nav.find_path(face, goal_face, pface(), ppos(), &path_count, &path_steps,
+                                 &width, &width, &width);
         path_cur = 0;
         path_flag = path_count <= 0;
         goal_face_done = goal_face;
@@ -3747,8 +3745,8 @@ int Agent::top_up_ammo(int count)
                         while (added < count) {
                             if (ir_room_left(s) <= 0)
                                 break;
-                            ir_add_amount(s, 1);
                             added++;
+                            ir_add_amount(s, 1);
                         }
                         if (added >= count)
                             done = true;
@@ -5675,8 +5673,8 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     e->local.f = *dir;
     e->local.u = vector4(0.0f, 0.0f, 1.0f);
     e->local.orthonormalize();
-    e->local.o = *pos;
     float half = 0.5f;
+    e->local.o = *pos;
     e->set_fbc(&half);
     e->vc4 = vector4(0.0f, e->get_fbc(), 0.0f);
     e->f140 = 0;
@@ -5811,10 +5809,10 @@ after:
         float b = (float)(rand() % 0x3dc9) * (float)(2.0 / 15817) + 1.0f;
         float c = (float)(rand() % 0x3dc9) * (float)(2.0 / 15817);
         e->v19c = a_vadd(a_vadd(vmul(c, e->local.f), vector4(0.0f, 0.0f, b)), vmul(a, e->local.u));
+        e->f15c = 0.4f;
         float a2 = (float)(rand() % 0x3dc9) * (float)(9.0 / 15817);
         float c2 = (float)(rand() % 0x3dc9) * (float)(4.0 / 15817);
         float d = (float)(rand() % 0x3dc9) * (float)(6.0 / 15817);
-        e->f15c = 0.4f;
         e->f1d4 = 0;
         e->v1ac = a_vadd(a_vadd(vmul(d, r->m18.s), vmul(c2, r->m18.f)), vmul(a2, r->m18.u));
     } else {
@@ -5903,10 +5901,7 @@ done_shape:
             ((Placement*)g_game)->set_matrix(&r->m18);
             g_game->f1a1f0 = *idx;
             SceneEnt* en = P_ENT(r);
-            if (en->meshes.size() > 0)
-                g_game->f1a200 = (int)en->meshes[0];
-            else
-                g_game->f1a200 = 0;
+            if (!(en->meshes.size() > 0)) { g_game->f1a200 = 0; } else { g_game->f1a200 = (int)en->meshes[0]; }
             g_game->f1a1fc = 0;
             g_script.param1 = *idx;
             ss->update(-0x28);
@@ -6340,7 +6335,7 @@ void Agent::shoot()
     float spr = aim_error;
     Mission* ms = g_mission;
     int tid = target;
-    if (id != ms->player_id && tid >= 0) {
+    if (ms->player_id != id && tid >= 0) {
         ItemRef c2 = slot_pair_fi(1);
         float cls = (float)slot_class_impl(curp.item, c2.item >= 0);
         Agent* tg = &ms->agents.pages[tid >> 4][tid & 0xf];
@@ -6350,10 +6345,10 @@ void Agent::shoot()
         float dist = dn.normalize();
         vector4 q = a_vadd(diff, rel);
         q.normalize();
+        float err = cls + 20.0f;
         float cx = dn.y * q.z - dn.z * q.y;
         float cy = dn.z * q.x - q.z * dn.x;
         float cz = q.y * dn.x - dn.y * q.x;
-        float err = cls + 20.0f;
         float g5 = (float)g_options.difficulty * 0.5f;
         float cm = (float)sqrt(cx * cx + cz * cz + cy * cy);
         float rm = (float)sqrt(rel.x * rel.x + rel.z * rel.z + rel.y * rel.y);
@@ -6467,11 +6462,11 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
     new ((void*)&tint) vector4(rgl::unpack_color(&col));   // constructed in place: the hidden return pointer is &tint
     for (unsigned i = 0; i < vs.size(); i++) {
         const vector4& n = vs[i].pos;
+        vertex60 v = vs[i];
         vector4 t;
         t.x = n.x * m->s.x + (m->f.x * n.y + m->u.x * n.z);
         t.y = m->f.y * n.y + (m->u.y * n.z + n.x * m->s.y);
         t.z = m->f.z * n.y + (m->u.z * n.z + n.x * m->s.z);
-        vertex60 v = vs[i];
         v.pos = t;
         v.normal = t;
         v.index += npts;
@@ -6484,10 +6479,7 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
     }
     std::vector<face20>& fs = other->get90_rec();
     for (unsigned i = 0; i < fs.size(); i++) {
-        if (flip)
-            add_face(fs[i].a + nverts, fs[i].c + nverts, fs[i].b + nverts);
-        else
-            add_face(fs[i].a + nverts, fs[i].b + nverts, fs[i].c + nverts);
+        if (!(flip)) { add_face(fs[i].a + nverts, fs[i].b + nverts, fs[i].c + nverts); } else { add_face(fs[i].a + nverts, fs[i].c + nverts, fs[i].b + nverts); }
     }
     slots[0].f28 = 1;
     slots[1].f28 = 1;
@@ -7283,8 +7275,8 @@ void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, c
             bool brk = false;
             int p = cur;
             do {
-                int s = p;
                 brk = false;
+                int s = p;
                 if (p < len) {
                     for (; s < len; s++) {
                         int c = buf[s];
@@ -7614,9 +7606,9 @@ void Agent::get_label_box(void* out_)
     } else if (body != 0) {
         vector4 p1 = body->m.transform_point(*(vector4*)(body->skel->recs + 0x648));
         vector4 p2 = body->m.transform_point(*(vector4*)(body->skel->recs + 0xbdc));
-        p1.x = p2.x + p1.x;
-        p1.y = p2.y + p1.y;
-        p2.z = p2.z + p1.z;
+        p1.x = p1.x + p2.x;
+        p1.y = p1.y + p2.y;
+        p2.z = p1.z + p2.z;
         p1.x = p1.x * 0.5f;
         p1.y = p1.y * 0.5f;
         p1.z = p2.z * 0.5f;
@@ -7631,8 +7623,8 @@ void Agent::get_label_box(void* out_)
         else
             z = pos.z + 1.5f;
         vector4 lo(pos.x, pos.y, z - 0.5f);
-        vector4 hi(pos.x, pos.y, z + 0.5f);
         out->a = lo;
+        vector4 hi(pos.x, pos.y, z + 0.5f);
         out->b = hi;
         out->scale = 0.4f;
     }
@@ -7673,7 +7665,7 @@ void Agent::shield_hit(int damage)
                     kind = 7;
                     g_mission->add_placed(&kind, &it->item, &mod, (rgl::matrix*)&M, &id);
                     if (((g_mission_templates[g_mission->mode].flags >> 1) & 1) && old >= 0 &&
-                        id == g_mission->player_id && old < 10 && B220(old)) {
+                        g_mission->player_id == id && old < 10 && B220(old)) {
                         ItemRef* s = &pairs[old];
                         if (s->item >= 0 && (g_items[s->item].type_flags & 0xff) == itp_type_shield) {
                             unsigned bits;
@@ -8120,6 +8112,7 @@ void Agent::ragdoll_update()
 // @ 0x454e30
 void Agent::reduce_blow(Blow* b)
 {
+    int bone, aux;
     float dmg = b->dmg_in;
     int idx;
     if (f10 == 1)
@@ -8139,7 +8132,6 @@ void Agent::reduce_blow(Blow* b)
         if (w.item >= 0 && b->hit) {
             ItemKind* ik = &g_items[w.item];
             pos2 carry;
-            int bone, aux;
             ik->get_carry_pos(&carry, &bone, &aux);
             rgl::mat4 r = *(rgl::mat4*)body->skel->rec(bone);
             rgl::mat4 u = (rgl::mat4&)body->m * (r * *(rgl::mat4*)&carry);
@@ -8159,7 +8151,7 @@ void Agent::reduce_blow(Blow* b)
                 if (gap < (float)ik->weight * 0.01f) {
                     int bonus = w.stat_200() + 10;
                     armor_v = (float)bonus + armor_v;
-                    if (id == g_mission->player_id) {
+                    if (g_mission->player_id == id) {
                         tstring key("ui_hit_shield_on_back");
                         g_gui.add(*g_strtable.lookup(key), -1);
                     }
@@ -8217,7 +8209,7 @@ void Agent::draw_name()
     float a = -1.0f;
     float bb = 1.0f;
     if (local < 0x80000000u) {
-        if (team == ms->agents.pages[local >> 4][local & 0xf].team)
+        if (ms->agents.pages[local >> 4][local & 0xf].team == team)
             col = 0xff44ff44;
         else if ((int)local >= 0 && ms->agents.pages[local >> 4][local & 0xf].is_friend(this))
             col = 0xff4444ff;
@@ -8305,14 +8297,14 @@ void Agent::tick_death()
         if (f5844 != 0) {
             if (!(TICKS_SINCE(tm) > 3.0f))
                 return;
-            f5830 = 4;
             tm.start = g_ticks[tm.clock];
+            f5830 = 4;
             return;
         }
         if (disabled == 0 && queued == 0 && tm.elapsed() > 3.0f) {
             if (f14 != 1) {
                 body->skel->set_visible(1);
-                if (id != g_mission->player_id)
+                if (g_mission->player_id != id)
                     drop_held();
             }
             if (id != g_mission->player_id)
@@ -8479,8 +8471,8 @@ void Agent::update_controls(float dt)
             } else if (in_flags & 8) {
                 side = -1.0f;
                 g_move_fwd = g_move_fwd * 0.7f;
-                unsigned run = in_flags;
                 g_move_side = -0.9f;
+                unsigned run = in_flags;
                 if (!(run & 0x200000))
                     g_move_side = -0.55f;
             }
@@ -8500,8 +8492,8 @@ void Agent::update_controls(float dt)
                     ms = ms * 0.6f;
                     mf = mf * 0.6f;
                 }
-                g_move_fwd = mf;
                 g_move_side = ms;
+                g_move_fwd = mf;
             }
 
             int mode = 0;
@@ -8729,8 +8721,8 @@ void Agent::update_controls(float dt)
                     unsigned bb = fb8;
                     if ((bb & 0x300) == 0) {
                         bb = bb | 0x200;
-                        vel_xy.y = -0.9f;
                         fb8 = bb;
+                        vel_xy.y = -0.9f;
                     } else if (bb & 0x200) {
                         vel_xy.y = vel_xy.y - dt * 0.5f;
                     } else if (bb & 0x100) {
@@ -10146,7 +10138,234 @@ void Agent::update_attack(float dt)
     if (ci < 0) ci = 0;
     ItemKind* ik = &g_items[ci];
     unsigned t0 = TYPE;
-    if (t0 == itp_type_one_handed_wpn || t0 == itp_type_two_handed_wpn || t0 == itp_type_polearm || cur.item < 0) {
+    if (!(t0 == itp_type_one_handed_wpn || t0 == itp_type_two_handed_wpn || t0 == itp_type_polearm || cur.item < 0)) { if (ik->is_ranged()) {
+        // ------------------------------------------------------------------ bow / crossbow / thrown / guns
+        int missing, total;
+        slot = 0;
+        best_ammo(-1, &missing, &total, &slot);
+        if (TYPE == itp_type_crossbow) {
+            if (cur.max_amount() - (cur.m4 & 0xff) != 0) {
+                float var2 = 100.0f;
+                links[wield[0]]->cap_all(&var2);
+                if (slot >= 0)
+                    links[slot]->vis = 0xffff;
+            } else {
+                float var2 = 0.0f;
+                links[wield[0]]->cap_all(&var2);
+                if (slot >= 0)
+                    links[slot]->vis = 0;
+            }
+        } else if (TYPE == itp_type_bow && links[wield[0]]) {
+            float var2 = 0.0f;
+            links[wield[0]]->cap_all(&var2);
+        }
+        int S = active;
+        if (S == 0) {
+            if (!(in_flags & 0x400))
+                goto tail;
+            if ((TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) &&
+                cur.max_amount() - (cur.m4 & 0xff) == 0) {
+                if (missing > 0) {
+                    f5620 = -1;
+                    if (f2c == -1) {
+                        f5620 = 0x7b;
+                    } else if (ik->type_flags & itp_cant_reload_on_horseback) {
+                        if (id == g_mission->player_id) {
+                            tstring msg("ui_cant_reload_this_weapon_on_horseback");
+                            g_gui.add(*g_strtable.lookup(msg), -1);
+                        }
+                    } else {
+                        f5620 = 0x7c;
+                    }
+                    unsigned __int64 rl = ik->flags & itcf_reload_mask;
+                    if (rl != 0) {
+                        if (rl == itcf_reload_pistol)
+                            f5620 = 0x87;
+                        else if (rl == itcf_reload_musket)
+                            f5620 = 0x8a;
+                    }
+                    if (f5620 >= 0) {
+                        set_order(1, f5620, 0x0140003c, damage_factor(0));
+                        update_quiver();
+                        active = 2;
+                    }
+                } else if (id == g_mission->player_id) {
+                    if (total > 0)
+                        LOG_TIMED("ui_no_more_bolts")
+                    else
+                        LOG_TIMED("ui_you_are_not_carrying_any_bolts")
+                }
+            } else if (missing <= 0 && TYPE != itp_type_crossbow && TYPE != itp_type_pistol && TYPE != itp_type_musket) {
+                if (id == g_mission->player_id) {
+                    if (total > 0) {
+                        if (TYPE == itp_type_bow)
+                            LOG_TIMED("ui_no_more_arrows")
+                    } else {
+                        if (TYPE == itp_type_bow)
+                            LOG_TIMED("ui_you_are_not_carrying_any_arrows")
+                        else
+                            LOG_TIMED("ui_you_are_not_carrying_any_bolts")
+                    }
+                }
+            } else {
+                hit_once = 0;
+                prop_done = 0;
+                active = 1;
+                timer.start = g_ticks[timer.clock];
+                start_shoot(0);
+                if (snd_a != -1) {
+                    set_order(1, snd_a, 0x02400002, damage_factor(0));
+                    unsigned __int64 sm = ik->flags & itcf_shoot_mask;
+                    if (sm == itcf_throw_axe || sm == itcf_throw_knife || sm == itcf_throw_stone ||
+                        sm == itcf_shoot_musket || TYPE == itp_type_thrown || TYPE == itp_type_crossbow) {
+                        variant = 4;
+                        this->cur = 0.0f;
+                    } else {
+                        this->cur = 0.0f;
+                        variant = ((TYPE != itp_type_pistol) - 1) & 5;
+                    }
+                }
+            }
+        } else if (S == 1) {
+            if ((unsigned char)ik->type_flags == itp_type_bow && PROG > 0.3f) {
+                if (PROG > 0.46f && links[wield[0]]) {
+                    float x = (PROG - 0.46f) * 2.5f;
+                    float hi = 1.0f;
+                    float lo = 0.0f;
+                    float var2 = clamp(&x, &lo, &hi) * 100.0f;
+                    links[wield[0]]->cap_all(&var2);
+                }
+                links[slot]->vis = 0xffff;
+                update_quiver();
+            }
+            if (in_flags & 0x200) {
+                order1(this, -1, 2);
+                if ((unsigned char)ik->type_flags == itp_type_bow && links[slot]) {
+                    links[slot]->vis = 0;
+                    update_quiver();
+                }
+                goto clear_state;
+            }
+            if (in_flags & 0x100)
+                goto tail;
+            if (!(PROG > 0.99f) && ((TYPE != itp_type_crossbow && TYPE != itp_type_musket) || !(PROG > 0.2f)))
+                goto tail;
+            {
+                unsigned rel = 0;
+                if (TYPE != itp_type_bow) {
+                    if (TYPE == itp_type_thrown) {
+                        rel = 0x40001b;
+                    } else if (TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) {
+                        ItemRef* rp = cur_ptr(this);
+                        if (rp)
+                            rp->add_amount(1);
+                    }
+                }
+                set_order(1, snd_b, rel | 0x1000002, damage_factor(0));
+            }
+            if ((unsigned char)ik->type_flags != itp_type_thrown) {
+                shoot();
+                if ((unsigned char)ik->type_flags == itp_type_bow)
+                    top_up_ammo(1);
+                if (slot >= 0 && links[slot])
+                    links[slot]->vis = 0;
+                active = 0;
+            } else {
+                active = 3;
+            }
+            if (TYPE == itp_type_bow) {
+                float var = 0.1f;
+                int kind = 0x25;
+                if (id != g_mission->player_id)
+                    play_sound_var(&kind, &var);
+                else
+                    play_sound_var(&kind, &var);
+            } else if (TYPE == itp_type_crossbow) {
+                float var = 0.1f;
+                int kind = 0x26;
+                play_sound_var(&kind, &var);
+            } else if (TYPE == itp_type_thrown) {
+                unsigned __int64 sm = ik->flags & itcf_shoot_mask;
+                if (sm == itcf_throw_javelin) {
+                    int kind = 0x27;
+                    float var = 0.1f;
+                    play_sound_var(&kind, &var);
+                } else if (sm == itcf_throw_axe) {
+                    float var = 0.1f;
+                    int kind = 0x28;
+                    play_sound_var(&kind, &var);
+                } else if (sm == itcf_throw_knife) {
+                    float var = 0.1f;
+                    int kind = 0x29;
+                    play_sound_var(&kind, &var);
+                } else if (sm == itcf_throw_stone) {
+                    int kind = 0x2a;
+                    float var = 0.1f;
+                    play_sound_var(&kind, &var);
+                }
+            }
+            g_game->f1a1f4 = id;
+            g_game->f1a1f8 = f8c.item;
+            g_game->f1a204 = wield[0];
+            {
+                GameData* g = g_game;
+                g->f1a1fc = (int)slot_mesh[ftoi_helper(g->f1a204)];
+            }
+            g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
+            ((TimerList*)((char*)ik + 0x228))->update(-0x33);
+        } else if (S == 2) {
+            if (ACT != f5620) {
+                active = 0;
+            } else if ((in_flags & 0x130200) ||
+                       (ACT == 0x7b && PROG < 0.8f && id == g_mission->player_id && (in_flags & 0xf))) {
+                order1(this, -1, 0x3d);
+                active = 0;
+            } else if (PROG > 0.99f) {
+                ItemRef* rp = cur_ptr(this);
+                if (rp) {
+                    unsigned u = rp->m4 & 0xff;
+                    int n = top_up_ammo(u);
+                    ItemRef* rq = cur_ptr(this);
+                    rq->b.amount = 0;
+                    rq->m4 |= u - n;
+                }
+                update_quiver();
+                goto clear_state;
+            } else if (links[wield[0]]) {
+                float lo2 = 0.4f, hi2 = 0.66f;
+                if (f2c != -1) {
+                    lo2 = 0.16f;
+                    hi2 = 0.5f;
+                }
+                float x = (PROG - lo2) / (hi2 - lo2);
+                float hi = 1.0f;
+                float lo = 0.0f;
+                float var2 = clamp(&x, &lo, &hi) * 100.0f;
+                links[wield[0]]->cap_all(&var2);
+            }
+        } else if (S == 3) {
+            if (ACT == 0x84 || ACT == 0x80 || ACT == 0x82 || ACT == 0x7e) {
+                if (PROG > 0.25f) {
+                    shoot();
+                    top_up_ammo(1);
+                    active = 4;
+                    if (wield[0] >= 0)
+                        links[wield[0]]->vis = 0;
+                }
+            } else {
+                active = 0;
+            }
+        } else if (S == 4) {
+            if (ACT == 0x84 || ACT == 0x80 || ACT == 0x82 || ACT == 0x7e) {
+                if (!(PROG > 0.98f))
+                    goto tail;
+                if (wield[0] >= 0)
+                    links[wield[0]]->vis = 0xffff;
+                update_quiver();
+            }
+            goto clear_state;
+        }
+    } } else {
         // ------------------------------------------------------------------ melee / bare hands
         if (ACT == -1)
             active = 0;
@@ -10299,233 +10518,6 @@ void Agent::update_attack(float dt)
                 goto tail;
         clear_state:
             active = 0;
-        }
-    } else if (ik->is_ranged()) {
-        // ------------------------------------------------------------------ bow / crossbow / thrown / guns
-        int missing, total;
-        slot = 0;
-        best_ammo(-1, &missing, &total, &slot);
-        if (TYPE == itp_type_crossbow) {
-            if (cur.max_amount() - (cur.m4 & 0xff) != 0) {
-                float var2 = 100.0f;
-                links[wield[0]]->cap_all(&var2);
-                if (slot >= 0)
-                    links[slot]->vis = 0xffff;
-            } else {
-                float var2 = 0.0f;
-                links[wield[0]]->cap_all(&var2);
-                if (slot >= 0)
-                    links[slot]->vis = 0;
-            }
-        } else if (TYPE == itp_type_bow && links[wield[0]]) {
-            float var2 = 0.0f;
-            links[wield[0]]->cap_all(&var2);
-        }
-        int S = active;
-        if (S == 0) {
-            if (!(in_flags & 0x400))
-                goto tail;
-            if ((TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) &&
-                cur.max_amount() - (cur.m4 & 0xff) == 0) {
-                if (missing > 0) {
-                    f5620 = -1;
-                    if (f2c == -1) {
-                        f5620 = 0x7b;
-                    } else if (ik->type_flags & itp_cant_reload_on_horseback) {
-                        if (id == g_mission->player_id) {
-                            tstring msg("ui_cant_reload_this_weapon_on_horseback");
-                            g_gui.add(*g_strtable.lookup(msg), -1);
-                        }
-                    } else {
-                        f5620 = 0x7c;
-                    }
-                    unsigned __int64 rl = ik->flags & itcf_reload_mask;
-                    if (rl != 0) {
-                        if (rl == itcf_reload_pistol)
-                            f5620 = 0x87;
-                        else if (rl == itcf_reload_musket)
-                            f5620 = 0x8a;
-                    }
-                    if (f5620 >= 0) {
-                        set_order(1, f5620, 0x0140003c, damage_factor(0));
-                        update_quiver();
-                        active = 2;
-                    }
-                } else if (id == g_mission->player_id) {
-                    if (total > 0)
-                        LOG_TIMED("ui_no_more_bolts")
-                    else
-                        LOG_TIMED("ui_you_are_not_carrying_any_bolts")
-                }
-            } else if (missing <= 0 && TYPE != itp_type_crossbow && TYPE != itp_type_pistol && TYPE != itp_type_musket) {
-                if (id == g_mission->player_id) {
-                    if (total > 0) {
-                        if (TYPE == itp_type_bow)
-                            LOG_TIMED("ui_no_more_arrows")
-                    } else {
-                        if (TYPE == itp_type_bow)
-                            LOG_TIMED("ui_you_are_not_carrying_any_arrows")
-                        else
-                            LOG_TIMED("ui_you_are_not_carrying_any_bolts")
-                    }
-                }
-            } else {
-                hit_once = 0;
-                prop_done = 0;
-                active = 1;
-                timer.start = g_ticks[timer.clock];
-                start_shoot(0);
-                if (snd_a != -1) {
-                    set_order(1, snd_a, 0x02400002, damage_factor(0));
-                    unsigned __int64 sm = ik->flags & itcf_shoot_mask;
-                    if (sm == itcf_throw_axe || sm == itcf_throw_knife || sm == itcf_throw_stone ||
-                        sm == itcf_shoot_musket || TYPE == itp_type_thrown || TYPE == itp_type_crossbow) {
-                        variant = 4;
-                        this->cur = 0.0f;
-                    } else {
-                        this->cur = 0.0f;
-                        variant = ((TYPE != itp_type_pistol) - 1) & 5;
-                    }
-                }
-            }
-        } else if (S == 1) {
-            if ((unsigned char)ik->type_flags == itp_type_bow && PROG > 0.3f) {
-                if (PROG > 0.46f && links[wield[0]]) {
-                    float x = (PROG - 0.46f) * 2.5f;
-                    float hi = 1.0f;
-                    float lo = 0.0f;
-                    float var2 = clamp(&x, &lo, &hi) * 100.0f;
-                    links[wield[0]]->cap_all(&var2);
-                }
-                links[slot]->vis = 0xffff;
-                update_quiver();
-            }
-            if (in_flags & 0x200) {
-                order1(this, -1, 2);
-                if ((unsigned char)ik->type_flags == itp_type_bow && links[slot]) {
-                    links[slot]->vis = 0;
-                    update_quiver();
-                }
-                goto clear_state;
-            }
-            if (in_flags & 0x100)
-                goto tail;
-            if (!(PROG > 0.99f) && ((TYPE != itp_type_crossbow && TYPE != itp_type_musket) || !(PROG > 0.2f)))
-                goto tail;
-            {
-                unsigned rel = 0;
-                if (TYPE != itp_type_bow) {
-                    if (TYPE == itp_type_thrown) {
-                        rel = 0x40001b;
-                    } else if (TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) {
-                        ItemRef* rp = cur_ptr(this);
-                        if (rp)
-                            rp->add_amount(1);
-                    }
-                }
-                set_order(1, snd_b, rel | 0x1000002, damage_factor(0));
-            }
-            if ((unsigned char)ik->type_flags != itp_type_thrown) {
-                shoot();
-                if ((unsigned char)ik->type_flags == itp_type_bow)
-                    top_up_ammo(1);
-                if (slot >= 0 && links[slot])
-                    links[slot]->vis = 0;
-                active = 0;
-            } else {
-                active = 3;
-            }
-            if (TYPE == itp_type_bow) {
-                int kind = 0x25;
-                float var = 0.1f;
-                if (id != g_mission->player_id)
-                    play_sound_var(&kind, &var);
-                else
-                    play_sound_var(&kind, &var);
-            } else if (TYPE == itp_type_crossbow) {
-                float var = 0.1f;
-                int kind = 0x26;
-                play_sound_var(&kind, &var);
-            } else if (TYPE == itp_type_thrown) {
-                unsigned __int64 sm = ik->flags & itcf_shoot_mask;
-                if (sm == itcf_throw_javelin) {
-                    int kind = 0x27;
-                    float var = 0.1f;
-                    play_sound_var(&kind, &var);
-                } else if (sm == itcf_throw_axe) {
-                    float var = 0.1f;
-                    int kind = 0x28;
-                    play_sound_var(&kind, &var);
-                } else if (sm == itcf_throw_knife) {
-                    float var = 0.1f;
-                    int kind = 0x29;
-                    play_sound_var(&kind, &var);
-                } else if (sm == itcf_throw_stone) {
-                    int kind = 0x2a;
-                    float var = 0.1f;
-                    play_sound_var(&kind, &var);
-                }
-            }
-            g_game->f1a1f4 = id;
-            g_game->f1a1f8 = f8c.item;
-            g_game->f1a204 = wield[0];
-            {
-                GameData* g = g_game;
-                g->f1a1fc = (int)slot_mesh[ftoi_helper(g->f1a204)];
-            }
-            g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
-            ((TimerList*)((char*)ik + 0x228))->update(-0x33);
-        } else if (S == 2) {
-            if (ACT != f5620) {
-                active = 0;
-            } else if ((in_flags & 0x130200) ||
-                       (ACT == 0x7b && PROG < 0.8f && id == g_mission->player_id && (in_flags & 0xf))) {
-                order1(this, -1, 0x3d);
-                active = 0;
-            } else if (PROG > 0.99f) {
-                ItemRef* rp = cur_ptr(this);
-                if (rp) {
-                    unsigned u = rp->m4 & 0xff;
-                    int n = top_up_ammo(u);
-                    ItemRef* rq = cur_ptr(this);
-                    rq->b.amount = 0;
-                    rq->m4 |= u - n;
-                }
-                update_quiver();
-                goto clear_state;
-            } else if (links[wield[0]]) {
-                float lo2 = 0.4f, hi2 = 0.66f;
-                if (f2c != -1) {
-                    lo2 = 0.16f;
-                    hi2 = 0.5f;
-                }
-                float x = (PROG - lo2) / (hi2 - lo2);
-                float hi = 1.0f;
-                float lo = 0.0f;
-                float var2 = clamp(&x, &lo, &hi) * 100.0f;
-                links[wield[0]]->cap_all(&var2);
-            }
-        } else if (S == 3) {
-            if (ACT == 0x84 || ACT == 0x80 || ACT == 0x82 || ACT == 0x7e) {
-                if (PROG > 0.25f) {
-                    shoot();
-                    top_up_ammo(1);
-                    active = 4;
-                    if (wield[0] >= 0)
-                        links[wield[0]]->vis = 0;
-                }
-            } else {
-                active = 0;
-            }
-        } else if (S == 4) {
-            if (ACT == 0x84 || ACT == 0x80 || ACT == 0x82 || ACT == 0x7e) {
-                if (!(PROG > 0.98f))
-                    goto tail;
-                if (wield[0] >= 0)
-                    links[wield[0]]->vis = 0xffff;
-                update_quiver();
-            }
-            goto clear_state;
         }
     }
     }

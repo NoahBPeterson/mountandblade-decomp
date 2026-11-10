@@ -45,3 +45,5 @@
 ../src/game/terrain_a/terrain_a.cpp  ?init@terrain_cell@@QAEXPBM@Z  004644e0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?sun_light@Terrain@@QAE?AUvector4@rgl@@PBM0@Z  00466ed0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?rule_accepts@Mission@@QAE_NPAUSpawnRec@@PAUStack@@HDDD@Z  00467940  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?set_bits@Terrain@@QAEXABIABH0@Z  00464960  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?ground_color@Terrain@@QAEPAUvector4@rgl@@PAU23@PBM@Z  00464d50  /O2 /MT /Gy /TP

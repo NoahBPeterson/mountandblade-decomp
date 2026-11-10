@@ -299,8 +299,8 @@ void PartyWindow::init_screen()
             int count = *(int*)(rec + 0x8a8);
             int c = 0;
             if (count > 0) {
-                char* p = rec + 0xb0;
                 int j = 0;
+                char* p = rec + 0xb0;
                 do {
                     if ((*p & 1) != 0)
                         break;
@@ -334,8 +334,8 @@ void PartyWindow::init_screen()
         tstring* text = g_strtable.lookup(t1);
         tstring* title = g_strtable.lookup(t2);
         g_windows.box()->set_inline(title, text);
-        g_windows.open(0);
         g_game_G->f13ae8 |= 1;
+        g_windows.open(0);
     }
 }
 

@@ -156,6 +156,7 @@ face* GameData::find_at(const float* p)
 // @ 0x48eb50
 void GameData::add_inventory(int item, int amount)
 {
+    char buf[0x200];
     Troop* agent = &troops[player];
     int n = agent->inv_count();
     int free_slot = -1;
@@ -172,7 +173,6 @@ void GameData::add_inventory(int item, int amount)
         if (f13a34 == 0)
             return;
 
-        char buf[0x200];
         {
             tstring key("ui_got_item_value");
             tstring* nm = g_strtable.find(&g_items[item].key);
@@ -192,8 +192,8 @@ void GameData::add_inventory(int item, int amount)
     if (!((flags >> 12) & 1))
         return;
 
-    int replace = -1;
     int m = agent->inv_count();
+    int replace = -1;
     for (i = 0; i < m; i++) {
         if (replace != -1)
             break;

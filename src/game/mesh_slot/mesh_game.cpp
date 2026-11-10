@@ -417,8 +417,8 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     if ((int)item >= 0) {
         int nid = this->create(m, (const ItemStackG*)&item, troop);
         AgentS* na = &POOL.pages[(unsigned)nid >> 4][nid & 0xf];
-        na->f30 = own;
         a->f2c = nid;
+        na->f30 = own;
         na->f1bc = a1;
         na->f1c0 = a2;
         if (troop == *(int*)(((char*)g_game) + 0x8c))
@@ -441,15 +441,15 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         if (MAT(char, 0x6669) != 0) {
             AgentS* cmdr = &POOL.pages[(unsigned)this->f5c >> 4][this->f5c & 0xf];
             if (cmdr->is_enemy(a)) {
-                MAT(char, 0x6669) = 0;
                 lit = "ui_new_enemies_have_arrived";
+                MAT(char, 0x6669) = 0;
             }
         }
         if (lit == 0 && MAT(char, 0x6668) != 0) {
             AgentS* cmdr = &POOL.pages[(unsigned)this->f5c >> 4][this->f5c & 0xf];
             if (cmdr->is_friend(a)) {
-                MAT(char, 0x6668) = 0;
                 lit = "ui_reinforcements_have_arrived";
+                MAT(char, 0x6668) = 0;
             }
         }
         if (lit != 0) {
@@ -584,10 +584,10 @@ void Mission::frame(float dt, bool spawn)
     if (scene_changed) {
         unsigned flags = *(unsigned*)(*(char**)(((char*)g_game) + 0x13a50) + f5df4 * 0x494 + 0x30);
         int* water = (int*)&MAT(int, 0x63c0);
-        if (flags & 0x100) {
-            g_terrain.destroy_water((int)water);        // 0x4814a0
-        } else if (!(flags & 1)) {
+        if (!(flags & 0x100)) { if (!(flags & 1)) {
             ((ShadowMapP*)ps)->render();
+        } } else {
+            g_terrain.destroy_water((int)water);        // 0x4814a0
         }
     }
 
@@ -644,19 +644,14 @@ void Mission::frame(float dt, bool spawn)
         if (dead) {
             if (p->f50 != 0) {
                 unsigned n = (unsigned)retire_list.size();
-                if (n < retire_list.capacity())
-                    retire_list.push_back(p->f50);
-                else
-                    retire_list.insert(retire_list.end(), p->f50);
+                if (!(n < retire_list.capacity())) { retire_list.insert(retire_list.end(), p->f50); } else { retire_list.push_back(p->f50); }
             }
             p->used = 0;
             unsigned n2 = (unsigned)cull_list.size();
-            if (n2 < cull_list.capacity())
-                cull_list.push_back((int)i);
-            else {
+            if (!(n2 < cull_list.capacity())) {
                 int idx = (int)i;
                 cull_list.insert(cull_list.end(), idx);
-            }
+            } else { cull_list.push_back((int)i); }
         }
         props.next_prop(&i);
     }

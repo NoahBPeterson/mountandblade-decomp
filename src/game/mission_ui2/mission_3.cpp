@@ -162,7 +162,7 @@ void ItemRef::randomize_modifier(float quality)
     float target = (float)(rand() % 15817) * total * 6.322312e-05f;
     if (target > ref) {
         total = ref;
-        for (int i = 0; i < 0x2b; i++) {
+        for (int i = 0; 0x2b > i; i++) {
             if (found != -1)
                 break;
             if ((g_items[item].f1e0 & (unsigned)g_bit[i]) != 0 ||
@@ -524,13 +524,13 @@ void FieldPanel::update()
     p[1] = view[0]->f4;
     scene()->set_xy(p);
 
-    if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f) {
-        p[0] = tail.x;                  // a copy of the stored size (0x48d4d4)
-        p[1] = tail.y;
-        set_xy(p);
-    } else {
+    if (!(sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)) {
         p[0] = scene()->screen[0];      // none stored: the scene's width, our height (0x48d4f6)
         p[1] = screen[1];
+        set_xy(p);
+    } else {
+        p[0] = tail.x;                  // a copy of the stored size (0x48d4d4)
+        p[1] = tail.y;
         set_xy(p);
     }
 

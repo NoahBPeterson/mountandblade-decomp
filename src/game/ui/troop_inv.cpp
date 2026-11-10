@@ -32,7 +32,7 @@ static MB_NOINLINE void item_slot_source(int item, int* f58_idx, int* nib_idx, i
     *stat_idx = -1;
     if (item >= 0) {
         ItemKind* it = &g_items[item];
-        unsigned t = (unsigned)it->type_flags & 0xff;     // (the original materialises the record pointer: add eax,esi; mov eax,[eax+0x1c8]; cl folds the add: parked, troop_inv.nonmatching.txt)
+        const unsigned t = (unsigned)it->type_flags & 0xff;
         if (t != itp_type_one_handed_wpn && t != itp_type_two_handed_wpn && t != itp_type_polearm && t != itp_type_crossbow) {
             if (t == itp_type_horse) { *nib_idx = 0x18; return; }
             if (t == itp_type_bow) { *nib_idx = 0x21; return; }

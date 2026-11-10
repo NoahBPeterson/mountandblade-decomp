@@ -253,7 +253,7 @@ void Game::start_new_game()
     Party* pr = (Party*)((char*)scene.pages._Myfirst[slot >> 4] + (slot & 0xf) * 0x5ac8);
     pr->f74 = 0x80;
 
-    if (g_party_template_count > 0) {
+    if (0 < g_party_template_count) {
         for (i = 0; i < g_party_template_count; i++) {
             PartyTemplate* r = &g_party_templates[i];
             r->f34 = 0;

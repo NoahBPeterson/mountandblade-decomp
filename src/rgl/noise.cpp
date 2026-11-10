@@ -133,9 +133,9 @@ void noise_gradient(float scale, const float* p, float* out)
         x = x - (float)ix;
         int iy = (int)floor(y);
         y = y - (float)iy;
+        int ix1 = ix + 1;
         int iz = (int)floor(z);
         z = z - (float)iz;
-        int ix1 = ix + 1;
         float xm = x - 1.0f;
         float ym = y - 1.0f;
         float zm = z - 1.0f;

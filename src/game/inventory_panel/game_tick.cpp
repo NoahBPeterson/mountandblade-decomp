@@ -448,7 +448,18 @@ void GameG::update_cursor(float dt)
                 float dx = p->pos.x - mp->pos.x;
                 float dy = p->pos.y - mp->pos.y;
                 float dist = (float)sqrt(dx * dx + dy * dy);
-                if ((flags & 0x4000) == 0) {
+                if (!((flags & 0x4000) == 0)) {
+                    p->alpha = 1.0f;
+                    if (dist <= radius * 0.5f && p->f6c == 0) {
+                        p->f6c = 1;
+                        p->dirty = 1;
+                        emit_event(0xc, (int)cur, 0);
+                    } else if (radius + radius < dist && p->f6c != 0) {
+                        p->f6c = 0;
+                        p->dirty = 1;
+                        emit_event(0xd, (int)cur, 0);
+                    }
+                } else {
                     if (dist <= radius && dist <= p->strength() * radius) {
                         g_script.trigger_result.store1 = 0;
                         g_script.trigger_result.store0 = 1;
@@ -482,24 +493,13 @@ void GameG::update_cursor(float dt)
                             emit_event(0xd, (int)cur, 0);
                         }
                     }
-                } else {
-                    p->alpha = 1.0f;
-                    if (dist <= radius * 0.5f && p->f6c == 0) {
-                        p->f6c = 1;
-                        p->dirty = 1;
-                        emit_event(0xc, (int)cur, 0);
-                    } else if (radius + radius < dist && p->f6c != 0) {
-                        p->f6c = 0;
-                        p->dirty = 1;
-                        emit_event(0xd, (int)cur, 0);
-                    }
                 }
-                if (f95 == 0) {
-                    float v = (p->alpha < 0.01f) ? 0.0f : 1.0f;
-                    p->model->set_fade(&v);
-                } else {
+                if (!(f95 == 0)) {
                     p->alpha = 1.0f;
                     p->f6c = 1;
+                } else {
+                    float v = (p->alpha < 0.01f) ? 0.0f : 1.0f;
+                    p->model->set_fade(&v);
                 }
             }
         }
@@ -519,10 +519,8 @@ void GameG::update_cursor(float dt)
             if (dist <= radius) {
                 float f = dt * 30.0f + r->opacity;
                 r->opacity = f;
-                if (f > 1.0f)
-                    r->opacity = 1.0f;
-                else if (f < -100.0f)
-                    r->opacity = 1.0f;
+                if (!(f > 1.0f)) { if (f < -100.0f)
+                    r->opacity = 1.0f; } else { r->opacity = 1.0f; }
             } else {
                 float f = r->opacity - dt * 5.0f;
                 r->opacity = f;
@@ -798,7 +796,7 @@ void GameG::update_tracks()
 
     float denom = (float)party_at(&parties, parties.lookup(f78))->skill_level(0x10) + 8.0f;
 
-    for (Rec5c* p = events._Myfirst; p < events._Mylast; ++p) {
+    for (Rec5c* p = events._Myfirst; events._Mylast > p; ++p) {
         if (!f95 && !(p->flags & 0x20000000))
             continue;
 
@@ -873,15 +871,15 @@ void GameG::train_troops()
         if (!cost)
             continue;
 
-        int n = p->nstacks;
         int j = 0;
+        int n = p->nstacks;
         if (n > 0) do {
             Stack& q = p->stacks[j];
             if (j == i)
                 continue;
             if (q.flags & 1)
                 continue;
-            if (troops[q.troop].level >= troops[s.troop].level)
+            if (troops[s.troop].level <= troops[q.troop].level)
                 continue;
             if (troops[q.troop].flags30 & 0x10) {
                 if (q.troop == player ? troops[q.troop].hp < g_module_settings.player_wounded_treshold : troops[q.troop].hp < g_module_settings.hero_wounded_treshold)

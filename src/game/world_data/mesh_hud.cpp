@@ -344,8 +344,8 @@ void XyzButton::animate(int)
             col = round_float(&v) << 24;
             tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         } else if (c1) {
-            col = aa().dword;
             c1 = 0;
+            col = aa().dword;
             tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         } else {
             goto alpha_done;
@@ -405,8 +405,8 @@ void DropDown::animate(int)
         w.x = f8c * 0.02f;
         w.y = f8c * 0.013f;
         set_offset((float*)&w);
-        update_bounds();
         c4 = 0;
+        update_bounds();
         fD8 = f88;
         fDC = f8c;
         dirty = 1;
@@ -424,8 +424,8 @@ void DropDown::animate(int)
         set_color(&col);
         dirty = 1;
     } else if (c0) {
-        unsigned col = (color14c ^ ca().dword) & 0xffffff ^ color14c;
         c0 = 0;
+        unsigned col = (color14c ^ ca().dword) & 0xffffff ^ color14c;
         set_color(&col);
         dirty = 1;
     }
@@ -438,8 +438,8 @@ void DropDown::animate(int)
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         tracks[3]->color = (tracks[3]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
         dirty = 1;
+        set_color(&col);
     } else if (c1) {
         c1 = 0;
         unsigned a = aa().dword;
@@ -463,8 +463,8 @@ void DropDown::animate(int)
         set_target(&col);
         dirty = 1;
     } else if (c2) {
-        unsigned col = (color150 ^ ca2().dword) & 0xffffff ^ color150;
         c2 = 0;
+        unsigned col = (color150 ^ ca2().dword) & 0xffffff ^ color150;
         set_target(&col);
         dirty = 1;
     }
@@ -478,8 +478,8 @@ void DropDown::animate(int)
         dirty = 1;
     } else if (c3) {
         unsigned a = aa2().dword;
-        unsigned col = (color150 ^ a) & 0xffffff ^ a;
         c3 = 0;
+        unsigned col = (color150 ^ a) & 0xffffff ^ a;
         set_target(&col);
         dirty = 1;
     }
@@ -606,8 +606,8 @@ void UiC::animate(int)
         set_color(&col);
     } else if (c1) {
         unsigned col = aa().dword;
-        mask = col;
         f194 = -23234124.0f;
+        mask = col;
         c1 = 0;
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
@@ -629,13 +629,13 @@ void UiC::animate(int)
 // @ 0x4985f0
 void UiE::animate(int)
 {
+    bool changed = false;
     float t0 = elapsed(0);
     float t1 = elapsed(1);
     float t2 = elapsed(2);
     float t3 = elapsed(3);
     float t4 = elapsed(4);
     float t5 = elapsed(5);
-    bool changed = false;
 
     // bars: lerp the (x, z) pair over dur(4), then the two companion vectors from its y component
     if (t4 < dur(4)) {
@@ -648,11 +648,11 @@ void UiE::animate(int)
         set_size((float*)&v);
         v.x = 0.0f;
         v.y = z.y * 0.009f;
+        changed = true;
         set_offset((float*)&v);
         update_bounds();
         fD8 = z.x;
         fDC = z.y;
-        changed = true;
     } else if (c4) {
         c4 = 0;
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
@@ -681,8 +681,8 @@ void UiE::animate(int)
         set_color(&col);
         changed = true;
     } else if (c0) {
-        col = (ca().dword & 0xffffff) | (color14c & 0xff000000);
         c0 = 0;
+        col = (ca().dword & 0xffffff) | (color14c & 0xff000000);
         set_color(&col);
         changed = true;
     }
@@ -697,10 +697,10 @@ void UiE::animate(int)
         set_color(&col);
         changed = true;
     } else if (c1) {
+        c1 = 0;
         col = aa().dword;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
-        c1 = 0;
         col = (col & 0xff000000) | (color14c & 0xffffff);
         set_color(&col);
         changed = true;
@@ -718,8 +718,8 @@ void UiE::animate(int)
         set_target(&col);
         changed = true;
     } else if (c2) {
-        col = (ca2().dword & 0xffffff) | (color150 & 0xff000000);
         c2 = 0;
+        col = (ca2().dword & 0xffffff) | (color150 & 0xff000000);
         set_target(&col);
         changed = true;
     }

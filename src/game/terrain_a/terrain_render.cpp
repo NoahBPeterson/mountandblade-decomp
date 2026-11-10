@@ -472,7 +472,7 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
         g.y = 1.0f;
     }
     vec2 nd[8];
-    for (int k = 0; k < 8; k++) {
+    for (int k = 0; 8 > k; k++) {
         nd[k].x = (float)g_nbr[k].dx;
         nd[k].y = (float)g_nbr[k].dy;
         vnorm(nd[k]);
@@ -542,8 +542,8 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
 #undef ADD
 #undef ADD0
         int r = rand();
-        int pick = -1;
         float roll = ((float)(r % 0x3dc9) * total) * 6.322312e-05f;
+        int pick = -1;
         float acc = 0.0f;
         if (sc[0] > 0.0f) {
             if (0.0f <= roll && roll < sc[0]) pick = 0;
@@ -575,9 +575,9 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
             t.y = b[1] + a[1];
             g = t;
         }
+        ci = px * 251 + py;
         v2_normalize(g);
         (*steps)++;
-        ci = px * 251 + py;
         cells[ci].flags |= bitmask;
         cells[ci].order = *steps;
         if (record) {
@@ -1608,8 +1608,8 @@ int dev_buffer::upload(void* scratch, void* tag)
             }
             memcpy(locked + written, scratch, elem_size * n);
             if (type == 1) {
-                ib->Unlock();
                 cursor += base;
+                ib->Unlock();
                 return 0;
             }
             vb->Unlock();
@@ -1648,8 +1648,8 @@ int dev_buffer::upload(void* scratch, void* tag)
             s.fc = generation;
             s.f14 = s.f4;
             s.f28 = 0;
-            int k = type;
             rgl::mesh* tm = (rgl::mesh*)*it;
+            int k = type;
             base += tm->count(k);
             n += tm->count(k);
         }
