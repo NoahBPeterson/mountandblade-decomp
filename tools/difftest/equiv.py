@@ -4066,8 +4066,8 @@ class Runner:
             self.last_call_uninit = None
         return {x: (oa[x], ob[x]) for x in oa if x in ob}
 
-    def _traced_reads(self, inp):
-        """[(address, dword)] of every 4-byte read the original makes from an input buffer, the
+    def _traced_reads(self, inp, side=None):
+        """[(address, dword)] of every 4-byte read the original (or `side`) makes from an input buffer, the
         argument area or image .data, in order (the last matching one is the most recent)."""
         m = self.m
         self.reads = []
@@ -4075,7 +4075,7 @@ class Runner:
         ranges += [(lo, hi) for _nm, lo, hi in m.writable]
         hs = [m.uc.hook_add(UC_HOOK_MEM_READ, self._on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
         try:
-            self.run_side(self.orig, inp)
+            self.run_side(side or self.orig, inp)
         finally:
             for h in hs:
                 m.uc.hook_del(h)
@@ -4167,7 +4167,7 @@ class Runner:
             return 1 << ops[1].imm
         return None
 
-    def repair(self, inp, fault, rng, attempt=0):
+    def repair(self, inp, fault, rng, attempt=0, side=None):
         """The original faulted at an unmapped address A. Find the dword the bad pointer V came from
         (the last 4-byte read from the input buffers, image .data or the argument area with
         0 <= A - V < 64K; else an argument/register holding such a V) and make it point into a
@@ -4178,7 +4178,7 @@ class Runner:
         m = self.m
         fault_eip = m.uc.reg_read(UC_X86_REG_EIP)
         fault_regs = {cs: m.uc.reg_read(u) for cs, u in CS2UC.items()}
-        reads = self._traced_reads(inp)
+        reads = self._traced_reads(inp, side)
 
         # The faulting instruction's base register is the bad pointer V (exactly, if it was
         # loaded unchanged); otherwise fall back to "some value up to 64K below A".
@@ -6066,6 +6066,7 @@ def classify_pairs(pairs):
 FPCW_REF = 0x037F        # 64-bit precision: approximates exact arithmetic for the reference run
 FP_STORES = ("movss", "movaps", "movups", "movlps", "movhps", "movsd", "movapd", "movupd", "movlpd", "movhpd", "movq")
 FP_BIG = 1e30            # a differing float above this (or Inf/NaN) in the original is "out of range"
+FP_REL = 2e-6            # rounding-only tolerance relative to the reference (fp_judge_value)
 
 
 def _f32(v):
@@ -6097,7 +6098,11 @@ def fp_judge_value(fa, fb, fr, bits=24):
     ulp = fp_ulp(max(abs(fr), abs(fa), abs(fb)), bits)
     ratio = eu / eo if eo > 0 else None
     detail = "orig %r ours %r reference %r: err_orig %.3g err_ours %.3g (%.3g ulp)" % (fa, fb, fr, eo, eu, eu / ulp)
-    ok = eu <= max(2 * eo, 4 * ulp)
+    # Ours may be at most twice as far from the reference as the original, or 4 ulp, or 2e-6 relative. The relative
+    # bound is for an intermediate that one build keeps on the x87 stack (80-bit) and the other spills to a float slot:
+    # one extra float rounding, amplified by cancellation (rot2::rotate_2x2 0x4f3b40: 16 ulp = 1.0e-6 relative). It
+    # still catches a wrong constant like ConvScreen's 0.452998 for 0.453 (4.4e-6).
+    ok = eu <= max(2 * eo, 4 * ulp, FP_REL * abs(fr))
     return ("ok" if ok else "real"), abs(fa - fb) / ulp, ratio, detail
 
 
@@ -6920,6 +6925,30 @@ def _test_function(sid, va, opts, log=print):
                 if opts.verbose:
                     log("  discard input %d (ours): UcError: %s" % (i, str(e)[:120]))
                 continue
+            if b["status"][0] == "fault" and st == "ok" and b.get("fault") and b["fault"][0] in ("read", "read-prot") \
+                    and opts.repairs:
+                # Only OUR build faulted, on a read: cl may load a value earlier than the original (above the branch
+                # that guards it: world::insert 0x478a10 reads this->f28 before `if (lo > hi) return`; pick_slot_item
+                # 0x46b190 reads a global at entry). With soup in that pointer only ours touches it. Repair the
+                # pointer exactly as for an original fault (Runner.repair) and re-run BOTH builds on the repaired
+                # input: a harmless early read then agrees; a real difference still mismatches. If the original
+                # stops returning normally on the repaired input, the input is kept as it was.
+                for k_ in range(4):
+                    rep = runner.repair(inp, b["fault"], rng, k_, side=runner.ours)
+                    if rep is None:
+                        break
+                    a2 = runner.run_side(runner.orig, rep)
+                    if a2["status"][0] != "ok" or not runner.abi_ok(a2):
+                        break
+                    rb2 = runner.run_blocks
+                    try:
+                        b2 = runner.run_side(runner.ours, rep)
+                    except UcError:
+                        break
+                    inp, a, b, run_blocks = rep, a2, b2, rb2
+                    out["ours_read_repairs"] = out.get("ours_read_repairs", 0) + 1
+                    if not (b["status"][0] == "fault" and b.get("fault") and b["fault"][0] in ("read", "read-prot")):
+                        break
             sb = b["status"]
             if sb[0] == "trap":
                 traps[sb[1]] = traps.get(sb[1], 0) + 1
