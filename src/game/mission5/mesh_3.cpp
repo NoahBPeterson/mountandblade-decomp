@@ -103,14 +103,14 @@ void MapEditor_s2cf60::update()
     // --- free drag: rotate the two 2x2 basis blocks by the editor's angle, then move the terrain
     //     along the rotated step ------------------------------------------------------------------
     if (g_keyboard.down[34] != 0) {
-        rot2 keep  = {{1.0f, 0.0f, 0.0f, 1.0f}};   // the original initialises a second identity block
-        rot2 basis = {{1.0f, 0.0f, 0.0f, 1.0f}};
+        rot2 keep  = {{rot2_row(1.0f, 0.0f), rot2_row(0.0f, 1.0f)}};   // the original initialises a second identity block
+        rot2 basis = {{rot2_row(1.0f, 0.0f), rot2_row(0.0f, 1.0f)}};
         basis.rotate_2x2(this->angle);
         float a = ((*(float*)((char*)&g_keyboard + 0x80c)) * dt) * 0.01;
         float b = ((*(float*)((char*)&g_keyboard + 0x810)) * dt) * 0.01;
         vector4 pos;
-        pos.x = basis.m[0] * a - basis.m[2] * b;
-        pos.y = basis.m[1] * a - basis.m[3] * b;
+        pos.x = basis.r[0].x * a - basis.r[1].x * b;
+        pos.y = basis.r[0].y * a - basis.r[1].y * b;
         pos.z = 0.0f;
         g_game_s2cf60->dirty = 1;
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);

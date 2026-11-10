@@ -1204,15 +1204,20 @@ void MapScreen::frame_step()
 {
     if (!(*(unsigned*)(*(char**)((char*)g_game + 0x13a50) + f5df4 * 0x494 + 0x30) & 0x100))
         return;
+    register MapScreen* self = this;
     int mode = 3;
-    if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) != 0 &&
-        ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 1 || (g_terrain.flags14 & ((int)g_bit[2] - 1)) == 2 ||
-         (g_terrain.flags14 & ((int)g_bit[2] - 1)) == 3))
-        mode = 2;
-    mesh.build(*(void**)((char*)view + 0x64), mode);
-    mesh.polygon_to_mesh(mesh.poly_mesh);
-    mesh.build_ribbons(mesh.ribbon_mesh);
-    mesh.build_spikes(mesh.spike_mesh);
+    if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) != 0) {
+        if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 1)
+            mode = 2;
+        if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 2)
+            mode = 2;
+        if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 3)
+            mode = 2;
+    }
+    self->mesh.build(*(void**)((char*)self->view + 0x64), mode);
+    self->mesh.polygon_to_mesh(self->mesh.poly_mesh);
+    self->mesh.build_ribbons(self->mesh.ribbon_mesh);
+    self->mesh.build_spikes(self->mesh.spike_mesh);
 }
 
 // ---- 0x4e7b30: the map scene's stream reader --------------------------------------------------------------------------------------------------------

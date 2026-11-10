@@ -633,7 +633,7 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
     Party* a = mgr->at(ia);
     int ib = mgr->lookup(other);
     Party* b = mgr->at(ib);
-    if (b->flags_lo & 0x100000) {
+    if (b->flags & 0x100000) {
         if (!flag) {
             if (b->sum_head() + a->sum_head() > b->max_members()) return false;
             if (b->sum_flagged() + a->sum_flagged() > b->max_prisoners()) return false;
@@ -650,22 +650,21 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
     int na = a->nstacks;
     int c1 = 0, c2 = 0;
     for (int k = 0; k < na; k++) {
-        Stack* s = &a->stacks[k];
         bool matched = false;
-        if (!(chars[s->troop].flags30 & 0x10)) {
+        if (!(chars[a->stacks[k].troop].flags30 & 0x10)) {
             for (int j = 0; b->nstacks > j; j++) {
-                if (s->troop == b->stacks[j].troop) {
+                if (a->stacks[k].troop == b->stacks[j].troop) {
                     if (!flag) {
-                        if (((s->flags ^ b->stacks[j].flags) & 1) == 0) matched = true;
+                        if (((a->stacks[k].flags ^ b->stacks[j].flags) & 1) == 0) matched = true;
                     } else {
-                        if (((s->flags ^ b->stacks[j].flags) & 1) != 0) matched = true;
+                        if (((a->stacks[k].flags ^ b->stacks[j].flags) & 1) != 0) matched = true;
                     }
                 }
             }
             if (matched) continue;
         }
-        if (!flag) { if (s->flags & 1) c2++; else c1++; }
-        else       { if (!(s->flags & 1)) { c2++; } else { c1++; } }
+        if (!flag) { if (a->stacks[k].flags & 1) c2++; else c1++; }
+        else       { if (!(a->stacks[k].flags & 1)) { c2++; } else { c1++; } }
     }
     if (c1 > d1) return false;
     if (c2 > d2) return false;
@@ -2051,7 +2050,7 @@ void MissionW::add_wind_effect(float a1, float a2)
     rgl::vector4& t3 = ((GameW*)g_game)->trig_row(3);
     v.x = ((GameW*)g_game)->trig_row(2).x * ((GameW*)g_game)->pos_delta().z +
           ((GameW*)g_game)->trig_row(1).x * ((GameW*)g_game)->pos_delta().y +
-          ((GameW*)g_game)->trig_row(0).x * ((GameW*)g_game)->pos_delta().x +
+          t0.x * ((GameW*)g_game)->pos_delta().x +
           t3.x;
     v.y = t0.y * ((GameW*)g_game)->pos_delta().x + t2.y * ((GameW*)g_game)->pos_delta().z +
           t1.y * ((GameW*)g_game)->pos_delta().y + t3.y;

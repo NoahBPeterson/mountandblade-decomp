@@ -1035,9 +1035,9 @@ void MissionBlocker::update_status()
                     frame.o.z -= 10.0f;
                     shield_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
                     frame.o.x += 0.0012f;
-                    shield_mesh->res = piece->res;
                     frame.o.y -= 0.001f;
                     frame.o.z -= 10.0f;
+                    shield_mesh->res = piece->res;
                     piece->scale(1.05f);
                     shadow_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
                     {

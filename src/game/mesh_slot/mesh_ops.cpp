@@ -167,14 +167,14 @@ void rgl::mesh::set_bone_index(int bone)
 void rgl::mesh::multiply_color(const vector4* tint)
 {
     ensure_local();
-    for (unsigned i = 0, off = 0; i < v50.size(); i++, off += 0x60) {
-        vertex60* v = (vertex60*)((char*)v50._Myfirst + off);
-        vector4 c = rgl::unpack_color(&v->color);
+    for (unsigned i = 0; i < v50.size(); i++) {
+        vertex60* v = &v50[i];
+        vector4 c = rgl::unpack_color(&v50[i].color);
         c.x = c.x * tint->x;
-        v->color &= 0xff000000;
         c.y = c.y * tint->y;
+        v->color &= 0xff000000;
         c.z = c.z * tint->z;
-        ((vertex60*)((char*)v50._Myfirst + off))->color |= pack_color(&c) & 0xffffff;
+        v50[i].color |= pack_color(&c) & 0xffffff;
     }
     slots[0].f28 = 1;
 }

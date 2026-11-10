@@ -101,34 +101,18 @@ void TerrainPage::simulate(float dt)
 }
 
 // @ 0x4f3b40
-// Rotate the 2x2 matrix m by `angle`: first row -> c*row0 + s*row1, second row -> c*row1 - s*row0.
-// The original keeps sin/cos in x87 registers, spills one float copy of the sine and the m[1]/m[3]
-// products to the stack: m[0]/m[2] therefore round their products once, m[1]/m[3] twice, and only
-// the m[2] sine product uses the unrounded register value.  The volatile temps reproduce exactly
-// that, except one: the original multiplies m[0]/m[1] by the cosine still on the x87 stack (80-bit), while
-// cl spills c to a float slot here and multiplies by the rounded copy, so m[1] can differ by a few ulp (equiv:
-// ~1e-7 on some inputs). Keeping c in a register (t0/t2 not volatile) fixes the values (PASS-FP, 191/200
-// bit-identical) but costs 50 aligned bytes; this order (the original's: sine products first) is the closest.
-// The direct stores keep the original's order (the last one leaves the new m[2] in eax, which a caller may read).
+// Rotate the 2x2 matrix by `angle`: row0 -> row0*c + row1*s, row1 -> row1*c - row0*s, through the engine's inline
+// row operators (rot2.h: rot2_row). Byte-exact only in this spelling: the sine a double local (bound to the operators'
+// `const float&`, so cl makes a float temporary of it at each use: the original's `fst [esp]` after fsin and the
+// second copy in the angle's slot) and the cosine written out at each use (it stays on the x87 stack).
+// Found 2026-11-10 by a grid over the shapes an outside analysis suggested (work/match/rotgrid/).
 void rot2::rotate_2x2(float angle)
 {
-    float s = sinf(angle);
-    volatile float sr = s;
-    float c = cosf(angle);
-    volatile float t2 = sr * m[2];
-    volatile float b = sr * m[3];
-    volatile float t0 = c * m[0];
-    volatile float a = c * m[1];
-    float r0 = t0 + t2;
-    float r1 = a + b;
-    volatile float e = sr * m[1];
-    volatile float d = c * m[3];
-    float r2 = c * m[2] - s * m[0];
-    float r3 = d - e;
-    m[0] = r0;
-    m[1] = r1;
-    m[2] = r2;
-    m[3] = r3;
+    double s = sin(angle);
+    rot2_row r0 = r[0] * cos(angle) + r[1] * s;
+    rot2_row r1 = r[1] * cos(angle) - r[0] * s;
+    r[0] = r0;
+    r[1] = r1;
 }
 
 // @ 0x4f3be0

@@ -192,18 +192,19 @@ void MissionScreen::fill_mission_row(int side)
     int id;
     if (side == 0)
         id = g_game->f78;
-    else if (g_mission_ctx.side < 0)
+    else if (g_mission_ctx.side >= 0) {
+        if (side == 1)
+            id = g_mission_ctx.ids[g_mission_ctx.side];
+        else {
+            int k = 1 - g_mission_ctx.side;
+            id = g_mission_ctx.ids[k];
+        }
+    } else {
         id = g_mission_ctx.ids[side - 1];          // side 1 / 2: the two sides' party ids
-    else if (side == 1)
-        id = g_mission_ctx.ids[g_mission_ctx.side];
-    else
-        id = g_mission_ctx.ids[1 - g_mission_ctx.side];
+    }
     if (id == -1)
         return;
-    PartyMgr* pm = &g_game->parties;
-    int pidx = pm->lookup(id);
-    Party* party = (Party*)((char*)pm->pages._Myfirst[pidx >> 4] + (pidx & 0xf) * 0x5ac8);
-
+    Party* party = g_game->parties.get_w(id);
     float v[2];
     const tstring* text;
     if (g_module_settings.show_party_ids_instead_of_names)
@@ -213,7 +214,6 @@ void MissionScreen::fill_mission_row(int side)
     else
         text = &party->name;
     vt(col[side])->d41(v, (void*)text);
-
     float y = 0.15f;
     for (int i = 0; i < party->first_flagged(); i++) {
         Stack* rec = (Stack*)((char*)party + 0xa8) + i;
@@ -224,13 +224,14 @@ void MissionScreen::fill_mission_row(int side)
         struct { char buf[0x14]; char line[0x30]; char spare[0xc]; } fr;   // spare: the original's frame is 0xc larger above line
         char* buf = fr.buf;
         if (u->flags30 & 0x10) {
-            int h = ((char*)u)[0x7a] & 0xf;
+            int lvl = u->lvl58;
+            int h = u->nib_b[0x12] & 0xf;
             if (h < 0)
                 h = 0;
             else if (h > g_skill_tbl[36].max_rank)
                 h = g_skill_tbl[36].max_rank;
             sprintf(buf, " %d%%",
-                    (int)(u->hp * 100.0f / (u->lvl58 + h * 2 + 0x23) + 0.0001f));
+                    (int)(u->hp * 100.0f / (lvl + h * 2 + 0x23) + 0.0001f));
         } else {
             sprintf(buf, " (%d/%d)", rec->count - rec->wounded, rec->count);
         }

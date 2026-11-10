@@ -5100,12 +5100,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_free_companions_capacity:
         if (check_party((int)params[1])) {
+            GameX* game = (GameX*)g_game;
+            PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
-            if (stacks - party((int)params[1])->first_flagged() < 1)
+            if (stacks - ((PartyV*)m->get((int)params[1]))->first_flagged() < 1)
                 SET_LV(0);
             else {
-                int members = party((int)params[1])->sum_head();
-                SET_LV((__int64)(party((int)params[1])->max_members() - members));
+                int p = (int)params[1];
+                int members = party(p)->sum_head();
+                SET_LV((__int64)(((PartyV*)m->get(p))->max_members() - members));
             }
         }
         break;

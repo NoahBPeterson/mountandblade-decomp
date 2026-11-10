@@ -248,9 +248,20 @@ void world::render_part(scene* view, int rem, int div)
         entity* e = *it;
         if (e->id % div == rem) {
             vector4 c;
-            c.x = e->local.f.x * e->vc4.y + e->local.s.x * e->vc4.x + e->local.u.x * e->vc4.z + e->local.o.x;
-            c.y = e->local.s.y * e->vc4.x + e->local.f.y * e->vc4.y + e->local.u.y * e->vc4.z + e->local.o.y;
-            c.z = e->local.s.z * e->vc4.x + e->local.f.z * e->vc4.y + e->local.u.z * e->vc4.z + e->local.o.z;
+            const mat4& l = e->local;
+            const vector4& v = e->vc4;
+            float x = l.f.x * v.y;
+            x = x + l.u.x * v.z;
+            x = x + v.x * l.s.x;
+            c.x = x + l.o.x;
+            float y = l.s.y * v.x;
+            y = y + l.f.y * v.y;
+            y = y + l.u.y * v.z;
+            c.y = y + l.o.y;
+            float z = l.s.z * v.x;
+            z = z + l.f.z * v.y;
+            z = z + l.u.z * v.z;
+            c.z = z + l.o.z;
             float r = e->get_radius();
             int n = view->fr.nplanes;
             int ok = 1;
@@ -266,9 +277,18 @@ void world::render_part(scene* view, int rem, int div)
         entity* e = *it;
         if (e->id % div == rem) {
             vector4 c;
-            c.x = e->local.f.x * e->vc4.y + e->local.u.x * e->vc4.z + e->local.s.x * e->vc4.x + e->local.o.x;
-            c.y = e->local.f.y * e->vc4.y + e->local.s.y * e->vc4.x + e->local.u.y * e->vc4.z + e->local.o.y;
-            c.z = e->local.f.z * e->vc4.y + e->local.s.z * e->vc4.x + e->local.u.z * e->vc4.z + e->local.o.z;
+            float x = e->local.f.x * e->vc4.y;
+            x = x + e->local.u.x * e->vc4.z;
+            x = x + e->local.s.x * e->vc4.x;
+            c.x = x + e->local.o.x;
+            float y = e->local.f.y * e->vc4.y;
+            y = y + e->local.u.y * e->vc4.z;
+            y = y + e->local.s.y * e->vc4.x;
+            c.y = y + e->local.o.y;
+            float z = e->local.f.z * e->vc4.y;
+            z = z + e->local.u.z * e->vc4.z;
+            z = z + e->local.s.z * e->vc4.x;
+            c.z = z + e->local.o.z;
             float r = e->get_radius();
             int n = view->fr.nplanes;
             int ok = 1;

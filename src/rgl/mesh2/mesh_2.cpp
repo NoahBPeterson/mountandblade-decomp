@@ -697,8 +697,8 @@ void StrTable::load(const tstring* root_t)
             first = false;
             if (first_line && text.len > 2 && text.buf[0] == '\xef' && text.buf[1] == '\xbb' && text.buf[2] == '\xbf')
                 text = text.substr(3, text.len);
-            int i = 0;
             int len = text.len;
+            int i = 0;
             bool done = false;                  // the line is split at its first '|' only ([esp+0x12] in the original)
             while (i < len && !done) {
                 if (text.buf[i] == '|') {
@@ -718,19 +718,8 @@ void StrTable::load(const tstring* root_t)
                         hash = (hash * 0x3b + (unsigned)(signed char)key.buf[c]) % 0xdf3;
                     tstring* found = find(&key);
                     if (found == 0) {
-                        lang_bucket* kb = &keys[hash];
-                        if (kb->size() < ((std::vector<tstring>*)kb)->capacity()) {
-                            uninit_fill_n_str(kb->mylast, 1, key, *(alloc_tstring*)kb, tag);
-                            kb->mylast++;
-                        } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
-                            ((tstring_vec_pub*)kb)->_Insert_n(std::vector<tstring>::iterator(kb->mylast), 1, key);
-                        }
-                        lang_bucket* vb = &vals[hash];
-                        if (vb->size() < ((std::vector<tstring>*)vb)->capacity()) {
-                            uninit_fill_n_str(vb->mylast, 1, value, *(alloc_tstring*)vb, tag);
-                            vb->mylast++;                        } else {                    // the bucket is the vector (ecx = bucket); _Insert_n moves mylast itself
-                            ((tstring_vec_pub*)vb)->_Insert_n(std::vector<tstring>::iterator(vb->mylast), 1, value);
-                        }
+                        keys[hash].v().push_back(key);
+                        vals[hash].v().push_back(value);
                     } else {
                         *found = value;
                     }

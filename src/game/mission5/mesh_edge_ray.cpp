@@ -35,7 +35,7 @@ void Mesh_s2da20::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     float a1 = u.x * u.x + u.y * u.y + u.z * u.z;          // u . u
 
     float den = a1 * c1 - b1 * b1;
-    float s = (b1 * e1 - c1 * (rv.x * u.x + rv.y * u.y + rv.z * u.z)) / den;
+    float s = (b1 * e1 - c1 * (u.x * rv.x + u.y * rv.y + u.z * rv.z)) / den;
     float t = (e1 + s * b1) / c1;                       // edge parameter from the UNCLAMPED ray parameter
 
     if (s < 0.0f)

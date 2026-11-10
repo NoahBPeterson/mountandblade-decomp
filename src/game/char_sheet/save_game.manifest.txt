@@ -4,3 +4,4 @@
 ../src/game/char_sheet/save_game.cpp  _$E1  005480f0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_game.cpp  _$E2  00548430  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_game.cpp  ?save_game@@YAHHPAUtstring@@@Z  004e8980  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_game.cpp  ?frame_update@ItemRec2@@UAEXM@Z  004e87d0  /O2 /MT /Gy /TP

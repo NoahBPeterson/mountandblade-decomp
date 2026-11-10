@@ -674,7 +674,7 @@ void Terrain::parse(const tstring& s)
             if (count >= 6) break;
             lo = end - 8;
             int b = lo;
-            if (lo < start) b = start;
+            if (b < start) b = start;
             t = s.substr(b, end);
             int val = 0;
             int i = 0;
@@ -1177,14 +1177,16 @@ void Terrain::load_layer(int* set, int idx)
             if (set[idx * 6 + 8] == 0) {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++) {
-                        at(x, y).f88 = 0.0f;
-                        at(x, y).pz = at(x, y).f88 + at(x, y).h2;
+                        terrain_cell* c = &at(x, y);
+                        c->f88 = 0.0f;
+                        c->pz = c->f88 + c->h2;
                     }
             } else {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++) {
-                        at(x, y).f88 = *(float*)(y * 4 + x * 0x690 + set[idx * 6 + 8]);
-                        at(x, y).pz = at(x, y).f88 + at(x, y).h2;
+                        terrain_cell* c = &at(x, y);
+                        c->f88 = *(float*)(y * 4 + x * 0x690 + set[idx * 6 + 8]);
+                        c->pz = c->f88 + c->h2;
                     }
             }
         } else if (set[idx * 6 + 7] == -0x3115) {
@@ -1207,8 +1209,8 @@ void Terrain::load_layer(int* set, int idx)
                     for (int x = 0; x <= w; x++)
                         at(x, y).layer[idx] = *(int*)(y * 4 + x * 0x690 + set[idx * 6 + 8]);
             }
-            tlayer* l = &layers[idx];
             int t = set[idx * 6 + 7];
+            tlayer* l = &layers[idx];
             l->type = t;
             if (t >= 0) {
                 GroundType* tt = &g_ground_types[t];

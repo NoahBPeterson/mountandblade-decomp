@@ -438,15 +438,15 @@ void MissionUi::get_xy(float* out)
         pos[1] = f13c;
         pos[2] = 0.0f;
         int arg = -1;
-        Font* font = f124 ? (Font*)f124 : g_font;
         rgl::mesh* m = tracks[4];
         pos[0] = f138;
         unsigned flags = f148;
+        Font* font = f124 ? (Font*)f124 : g_font;
         m->clear_geometry();
         font->layout_text(r, &name, (vector4*)pos, &f140, m, (int)&arg, &screen[2], &screen[0], flags);
+        vec2 rr = *(vec2*)r;
         ((WVt*)this)->d38(&color14c);
-        *(int*)&out[0] = *(int*)&r[0];
-        *(int*)&out[1] = *(int*)&r[1];
+        *(vec2*)out = rr;
     }
 }
 

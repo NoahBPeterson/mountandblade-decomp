@@ -137,7 +137,9 @@ static inline int sort_val(ItemRef* e)
 {
     int idx = e->item;
     if (idx >= 0) {
-        float x = (float)g_items[idx].value * g_sort_val[e->b.mod * 5].v;
+        float v = (float)g_items[idx].value;
+        int mod = (signed char)(e->m4 >> 24);     // = e->b.mod (the union's top byte), read from the word: TroopInv::sort_inv 0x48c0c0 is byte-exact only this way (68 aligned with b.mod)
+        float x = v * g_sort_val[mod * 5].v;
         return rnd_val(&x);
     }
     return 0;

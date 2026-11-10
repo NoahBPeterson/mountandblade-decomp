@@ -97,8 +97,9 @@ def main():
     ap.add_argument("--interval", type=int, default=30)
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--revive", action="store_true",
-                    help="put abandoned sessions back to running (nudges reset) and continue them on --model, keeping "
-                         "their whole context; every prompt names --model, so a session can change model mid-way")
+                    help="put abandoned sessions back to running (nudges reset) and continue them with their whole context. "
+                         "They stay on the model they were created with: the service ignores a prompt's model field and "
+                         "a PATCH of the session's model (tested 2026-11-10), so a revive bills at the old model's price")
     a = ap.parse_args()
     W = lambda *p: os.path.join(ROOT, "work", "opencode", *p)
     state_file, conc_file, sess_file = W("wave_%s.json" % a.batch), W("wave_%s.conc" % a.batch), W("sessions_%s.txt" % a.batch)

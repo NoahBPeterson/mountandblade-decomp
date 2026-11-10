@@ -1183,7 +1183,7 @@ void BlockOwner::init(ContainerBase* parent, int which)
 {
     if (which < 0)
         return;
-    block = new UiFrame;
+    block = new UiFrame(UiFrame::inl_tag());
     vt(block)->d25(parent->screen);
     vt(block)->d22(parent->e);
     vt(parent)->d50(block);

@@ -34,3 +34,4 @@
 ../src/game/strat/tstring.cpp  ?strip_tags@tstring@@QBE?AU1@XZ  0042c5d0  /O2 /MT /Gy /TP
 ../src/game/strat/tstring.cpp  ?reserve@tstring@@QAEXI@Z  0042bb50  /O2 /MT /Gy /TP
 ../src/game/strat/tstring.cpp  ?grow@tstring@@QAEXI@Z  0042bac0  /O2 /MT /Gy /TP
+../src/game/strat/tstring.cpp  ?get_token@tstring@@QAEXPADPAH@Z  0042c270  /O2 /MT /Gy /TP

@@ -252,32 +252,27 @@ bool tstring::has_token()
 void tstring::get_token(char* out, int* n)
 {
     *n = 0;
-    int l = len;
     while (pos < len && (unsigned char)buf[pos] < 0x21) pos++;
-    int i = pos;
-    if (i >= l) {
-        out[0] = 0;
-        return;
-    }
-    char q = buf[i];
-    if (q == '"' || q == '\'') {
+    if (pos >= len) { out[0] = 0; return; }
+    if (buf[pos] == '"' || buf[pos] == '\'') {
+        char q = buf[pos];
         pos++;
-        if (pos < l) {
-            do {
+        if (pos < len) {
+            while (pos < len) {
                 if (buf[pos] == q || *n >= 0x2000) break;
                 out[*n] = buf[pos];
                 (*n)++;
                 pos++;
-            } while (pos < len);
+            }
         }
         pos++;
     } else {
-        do {
+        while (pos < len) {
             if ((unsigned char)buf[pos] < 0x21 || *n >= 0x2000) break;
             out[*n] = buf[pos];
             (*n)++;
             pos++;
-        } while (pos < len);
+        }
     }
     int k = *n;
     if (k >= 0x1fff) k = 0x1fff;

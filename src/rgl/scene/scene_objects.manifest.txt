@@ -22,3 +22,4 @@
 ../src/rgl/scene/scene_objects.cpp  ?get_radius@strategic_entity@rgl@@UAEMXZ  00421890  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?set_color@strategic_entity@rgl@@UAEXH@Z  004218a0  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ??0strategic_entity@rgl@@QAE@XZ  00421720  /O2 /MT /Gy /TP
+../src/rgl/scene/scene_objects.cpp  ?render_part@world@rgl@@QAEXPAUscene@2@HH@Z  00421110  /O2 /MT /Gy /TP

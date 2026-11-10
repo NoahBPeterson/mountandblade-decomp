@@ -156,18 +156,18 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
 void Mesh_s2dfd0::toggle_flag(int type, int index)
 {
     if (type == 0) {
-        bool flag = verts.first[index].flag;
-        verts.first[index].flag = !flag;
-        if (verts.first[index].flag)
+        bool flag = (*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))[index].flag;
+        (*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))[index].flag = !flag;
+        if ((*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))[index].flag)
             selected = index;
         else
             selected = -1;
     } else if (type == 1) {
-        bool flag = edges.first[index].flag;
-        edges.first[index].flag = !flag;
+        bool flag = (*(std::vector<medge_s2dfd0>*)((char*)this + 0x38))[index].flag;
+        (*(std::vector<medge_s2dfd0>*)((char*)this + 0x38))[index].flag = !flag;
     } else {
-        bool flag = polys.first[index].flag;
-        polys.first[index].flag = !flag;
+        bool flag = (*(std::vector<mpoly_s2dfd0>*)((char*)this + 0x28))[index].flag;
+        (*(std::vector<mpoly_s2dfd0>*)((char*)this + 0x28))[index].flag = !flag;
     }
 }
 
@@ -251,7 +251,7 @@ void Mesh_s2dfd0::remove_selected()
     }
     if (mode == 1) {
         for (unsigned i = 0; i < (unsigned)edges.size(); i++) {
-            if (edges_v(this)[i].flag) {
+            if ((*(std::vector<medge_s2dfd0>*)((char*)this + 0x38))[i].flag) {
                 remove_edge(i);
                 i--;
             }
@@ -313,19 +313,18 @@ static __forceinline int mface_src_index(const mface_s2e960& v) { return v.index
 int Mesh_s2e960::vertex_index(int index, const rgl::matrix& m)
 {
     for (int i = 0; (unsigned)i < (unsigned)verts2.size(); i++) {
-        if (verts2.first[i].index == index) {
+        if ((*(std::vector<mface_s2e960>*)((char*)this + 0x48))[i].index == index) {
             if (i >= 0)
                 return i;
             break;
         }
     }
-    int n = verts2.size();
+    int n = (*(std::vector<mface_s2e960>*)((char*)this + 0x48)).size();
     mface_s2e960 f;
     f.flag = 0;
-    const rgl::vector4& src = verts.first[index].pos;
-    f.pos = m.transform_point_to_local(src);
+    f.pos = m.transform_point_to_local(verts.first[index].pos);
     f.index = index;
-    verts2.push_back(f);
+    (*(std::vector<mface_s2e960>*)((char*)this + 0x48)).push_back(f);
     return n;
 }
 
@@ -652,19 +651,19 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
     rot2 m;
 
     if (g_keyboard.down[34] != 0) {
-        m.m[0] = 1.0f;
-        m.m[1] = 0.0f;
-        m.m[2] = 0.0f;
-        m.m[3] = 1.0f;
+        m.r[0].x = 1.0f;
+        m.r[0].y = 0.0f;
+        m.r[1].x = 0.0f;
+        m.r[1].y = 1.0f;
         m.rotate_2x2(yaw);
 
         float dx = (*(float*)((char*)&g_keyboard + 0x80c)) * k * 0.01;
-        pos[0] += m.m[0] * dx;
+        pos[0] += m.r[0].x * dx;
         *f1 = 1;
-        pos[1] += m.m[1] * dx;
+        pos[1] += m.r[0].y * dx;
         float dy = (*(float*)((char*)&g_keyboard + 0x810)) * k * 0.01;
-        pos[0] -= m.m[2] * dy;
-        pos[1] -= m.m[3] * dy;
+        pos[0] -= m.r[1].x * dy;
+        pos[1] -= m.r[1].y * dy;
         *f4 = 1;
     }
 
@@ -746,7 +745,7 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
         vec[0] = 1.0f;
         vec[1] = 1.0f;
         vec[2] = 1.0f;
-        vec[3] = m.m[3];
+        vec[3] = m.r[1].y;
         *f4 = 1;
     }
 }

@@ -590,7 +590,7 @@ float capsule_sphere_gap(capsule* a, sphere* b)
     else if ((float)sqrt(d.x * d.x + (d.y * d.y + d.z * d.z)) < t) d = a->p1;
     else {
         vector4 dt(dir.x * t, dir.y * t, dir.z * t);
-        d.x = dt.x + a->p0.x; d.y = dt.y + a->p0.y; d.z = dt.z + a->p0.z;
+        d = dt + a->p0;
     }
     float ex = d.x - b->center.x, ey = d.y - b->center.y, ez = d.z - b->center.z;
     return (float)sqrt(ex * ex + (ey * ey + ez * ez)) - (a->radius + b->radius);
@@ -761,6 +761,7 @@ void renderer::tessellate(float* pts, int* n, float a, float b, float r, int sta
         for (int j = 0; j < slices; j++) {
             vector4 c[4];
             for (int k = 0; k < 4; k++) {
+                vector4& t = c[k];
                 int lat = i, lon = j;
                 if (k == 1 || k == 2) lat = i + 1;
                 if (k == 2 || k == 3) lon = j + 1;
@@ -769,11 +770,11 @@ void renderer::tessellate(float* pts, int* n, float a, float b, float r, int sta
                 if (mode > 0) latang = (float)lat * 1.5707964f / stacks - 1.5707964f;
                 else if (mode < 0) latang = (float)lat * 1.5707964f / stacks;
                 else latang = 0.0f;
-                c[k].x = (float)(cos(lonang) * cos(latang) * r);
-                c[k].y = (float)(sin(lonang) * cos(latang) * r);
-                if (mode > 0) c[k].z = (float)(sin(latang) * r + a);
-                else if (mode < 0 || k == 1 || k == 2) c[k].z = (float)(sin(latang) * r + b);
-                else c[k].z = (float)(sin(latang) * r + a);
+                t.x = (float)(cos(lonang) * cos(latang) * r);
+                t.y = (float)(sin(lonang) * cos(latang) * r);
+                if (mode > 0) t.z = (float)(sin(latang) * r + a);
+                else if (mode < 0 || k == 1 || k == 2) t.z = (float)(sin(latang) * r + b);
+                else t.z = (float)(sin(latang) * r + a);
             }
             pts[*n] = c[0].x; pts[*n + 1] = c[0].y; pts[*n + 2] = c[0].z; *n += 3;
             pts[*n] = c[1].x; pts[*n + 1] = c[1].y; pts[*n + 2] = c[1].z; *n += 3;

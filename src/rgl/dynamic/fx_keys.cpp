@@ -295,30 +295,29 @@ void KeyTable::find(int* cur, float* frac, float* key)
     float last = (float)keys[n - 1];
     float k = (float)keys[0];
     if (!(*key < k)) {
-        float keyv = *key;
-        if (keyv >= last)
+        if (*key >= last)
             k = last;
         else
-            k = keyv;
+            k = *key;
     }
     int c = *cur;
-    if (c > -1 && c < n - 1) {
+    if (c >= 0 && c < n - 1) {
         if ((float)keys[c] <= k) {
             if (k < (float)keys[c + 1])
                 goto done;
             if (c < n - 2 && k < (float)keys[c + 2]) {
-                *cur = c + 1;
+                *cur = ++c;
                 goto done;
             }
-        } else if (0 < c && (float)keys[c - 1] <= k) {
-            *cur = c - 1;
+        } else if (c >= 1 && (float)keys[c - 1] <= k) {
+            *cur = --c;
             goto done;
         }
     }
     {
         int hi = n - 1;
         int lo = 0;
-        if (n != 2 && -1 < n - 2) {
+        if (n > 2) {
             int m = lo;
             do {
                 m = (hi + lo) >> 1;
