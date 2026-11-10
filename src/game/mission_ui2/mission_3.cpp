@@ -406,7 +406,7 @@ int __fastcall trigger_item(int key)
             if (v->first != 0) {
                 unsigned n = v->last - v->first;
                 if (n > 0)
-                    r = *(int*)((char*)((PropEnt*)m->ent) + 0x10c);
+                    r = *((PropEnt*)m->ent)->lods.first;   // the first LOD entry (re-read through m->ent, as the original)
             }
         }
     } else if (key == -0x32 || key == -0x33)

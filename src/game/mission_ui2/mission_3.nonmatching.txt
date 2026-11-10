@@ -2,7 +2,7 @@
 0048c849	296	second Ghidra function start inside Party::add_members (0x48c840, byte-identical to its 357-byte symbol); suggest symbols/not_functions.txt
 0048ca30	95	large body, register allocation and scheduling differ
 0048cc40	217	large body, register allocation and scheduling differ
-0048cec0	51	semantically equivalent body; cl register choice / instruction order differs from the original
+0048cec0	49	semantically equivalent body; cl register choice / instruction order differs from the original
 0048cf40	37	semantically equivalent body; cl register choice / instruction order differs from the original
 0048d020	405	MissionUi::update_bounds: original uses different stack slots and register choice for the vec2 temporaries
 0048d350	34	ecx/edx register swap; equiv UNSUPPORTED (fake-arity) [2026-11-05 near-miss retry] set_color: ecx/edx rotation only; operand order and a named temporary did not move it.

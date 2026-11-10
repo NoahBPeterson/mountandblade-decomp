@@ -105,17 +105,20 @@ void TerrainPage::simulate(float dt)
 // The original keeps sin/cos in x87 registers, spills one float copy of the sine and the m[1]/m[3]
 // products to the stack: m[0]/m[2] therefore round their products once, m[1]/m[3] twice, and only
 // the m[2] sine product uses the unrounded register value.  The volatile temps reproduce exactly
-// that (the values are bit-identical to the original); the direct stores keep the original's order
-// (the last one leaves the new m[2] in eax, which a caller may read).
+// that, except one: the original multiplies m[0]/m[1] by the cosine still on the x87 stack (80-bit), while
+// cl spills c to a float slot here and multiplies by the rounded copy, so m[1] can differ by a few ulp (equiv:
+// ~1e-7 on some inputs). Keeping c in a register (t0/t2 not volatile) fixes the values (PASS-FP, 191/200
+// bit-identical) but costs 50 aligned bytes; this order (the original's: sine products first) is the closest.
+// The direct stores keep the original's order (the last one leaves the new m[2] in eax, which a caller may read).
 void rot2::rotate_2x2(float angle)
 {
     float s = sinf(angle);
     volatile float sr = s;
     float c = cosf(angle);
-    volatile float t0 = c * m[0];
     volatile float t2 = sr * m[2];
-    volatile float a = c * m[1];
     volatile float b = sr * m[3];
+    volatile float t0 = c * m[0];
+    volatile float a = c * m[1];
     float r0 = t0 + t2;
     float r1 = a + b;
     volatile float e = sr * m[1];
