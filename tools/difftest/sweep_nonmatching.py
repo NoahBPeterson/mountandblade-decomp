@@ -211,7 +211,7 @@ def run(r, out, extra, force=False):
                 shutil.copyfile(prev["json"], js)
             SKIPPED.append(r["va"])
             return
-    cmd = [PY, EQ, r["id"], r["va"], "--fp-tol", "--max-mismatch", "200", "--json", js + ".part"] + extra + row_opts(r)
+    cmd = [PY, EQ, r["id"], r["va"], "--fp-tol", "--max-mismatch", "200", "--json", js + ".part"] + row_opts(r) + extra   # --extra last: an explicit cap beats a row's own
     if r["src"]:
         cmd += ["--src", os.path.join(ROOT, r["src"])]
     # the hard cap follows a --time-limit given to equiv (the last one wins, as in argparse), with room to write the JSON
