@@ -266,6 +266,11 @@ def parse_status_md(md):
     return out if "exact" in out and "comp" in out else None
 
 
+# Before this snapshot the orange "byte-exact + equivalence PASS" series counted any row with compilable source (it sat
+# at 100%); from here on it is the real measure, so earlier points are left out of the plot.
+COMP_SINCE = datetime.datetime.fromisoformat("2026-10-27T10:37:34-05:00")
+
+
 def plot_history(path):
     """Progress over time: one point per committed docs/STATUS.md and one per --plot run (kept in
     docs/progress_history.json), plus the equivalence-evidence stacked bands per recorded sweep.
@@ -351,7 +356,8 @@ def plot_history(path):
                                   (ke, BLUE, "Byte-exact")):
             val = (lambda p, key=key: p.get(key, 0.0)) if key == km else (lambda p, key=key: p.get(key))
             use = [(t, val(p)) for t, p in pts if val(p) is not None
-                   and (key != km or p.get(kc) is None or val(p) < p[kc] - 0.05)]
+                   and (key != km or p.get(kc) is None or val(p) < p[kc] - 0.05)
+                   and (key != kc or t >= COMP_SINCE)]
             if not use:
                 continue
             xs, ys = zip(*use)
@@ -419,8 +425,8 @@ def plot_history(path):
                  x=0.01, ha="left", fontsize=12, color=INK)
     fig.text(0.01, 0.01, "One point per committed docs/STATUS.md and one per --plot run. "
              "Equivalent = complete compilable source whose equivalence sweep PASSed (no mismatch on the same random\n"
-             "inputs); weak / untestable / FAIL rows are failures here. Before the drop on Oct 27 the orange line counted any row "
-             "with compilable source,\nso that 100%% plateau is not the same measure. Moved into src/ = moved from match/slices "
+             "inputs); weak / untestable / FAIL rows are failures here. The orange line starts on Oct 27: before that it\n"
+             "counted any row with compilable source, a different measure. Moved into src/ = moved from match/slices "
              "into one .cpp per original translation unit.%s" %
              ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax) +
              ("\nVerdicts: one point per full equivalence sweep (tools/difftest/verdicts.py); a sweep tests the original and "
