@@ -16,7 +16,7 @@ Polls the opencode background service for pending permission requests in this pr
 Every decision is appended to work/opencode/decisions.jsonl. Requires .opencode/opencode.json with
 "permission": {"edit": "ask", "bash": "ask", ...} so requests reach the service.
 """
-import json, os, re, sys, time, urllib.parse, urllib.request, base64, subprocess
+import json, os, re, shutil, sys, time, urllib.parse, urllib.request, base64, subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOG = os.path.join(ROOT, "work/opencode/decisions.jsonl")
@@ -292,12 +292,37 @@ def other_module(sid, paths):
     return None
 
 
+BACKUP_DIR = os.path.join(ROOT, "work", "opencode", "src_backup")
+
+
+def backup_once(paths):
+    """Copy each src/ file to work/opencode/src_backup/ before its first approved edit in this broker's lifetime: a wave
+    session's `write` once replaced all of terrain_render.cpp with a placeholder (2026-11-09)."""
+    for p in paths:
+        rel = os.path.relpath(p, ROOT) if os.path.isabs(p) else p
+        src, dst = os.path.join(ROOT, rel), os.path.join(BACKUP_DIR, rel)
+        if rel.startswith("src/") and os.path.isfile(src) and not os.path.exists(dst):
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(src, dst)
+
+
+def mass_delete(r):
+    """True when the request's diff (if opencode sent one) deletes far more source lines than it adds."""
+    d = (r.get("metadata") or {}).get("diff") or ""
+    minus = sum(1 for l in d.splitlines() if l.startswith("-") and not l.startswith("---"))
+    plus = sum(1 for l in d.splitlines() if l.startswith("+") and not l.startswith("+++"))
+    return minus > 150 and minus > 3 * plus
+
+
 def decide(r):
     act, res = r.get("action"), r.get("resources") or []
     if act in ("edit", "write", "patch", "apply_patch"):
         bad = other_module(r.get("sessionID"), res)
         if bad:
             return "reject", "edit outside your own module: %s" % bad[:100]
+        if any((os.path.relpath(p, ROOT) if os.path.isabs(p) else p).startswith("src/") for p in res) and mass_delete(r):
+            return "reject", ("this edit deletes most of a source file; edit only the function you are working on, "
+                              "never rewrite or overwrite the whole .cpp (scratch files go in work/match/)")
     if act in ("task", "subagent"):
         return "reject", "subagent spawning is forbidden; do the work yourself in this session"
     if act in ("read", "glob", "grep", "list", "lsp", "external_directory"):
@@ -309,6 +334,8 @@ def decide(r):
         return "once", "read-only/agent tool"
     if act in ("edit", "write", "patch", "apply_patch"):
         bad = [p for p in res if not ok_path(os.path.relpath(p, ROOT) if os.path.isabs(p) else p)]
+        if not bad:
+            backup_once(res)
         return ("once", "edit inside batch slice paths") if not bad else ("reject", "edit outside allowed paths: %s" % bad[:3])
     if act in ("shell", "bash"):
         # Policy mode too: these sessions talk to an external provider, so nothing outside the repo may be readable.

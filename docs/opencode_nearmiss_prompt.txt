@@ -2,7 +2,7 @@ You are making decompiled C++ from Mount & Blade 1.011 (32-bit x86, built with M
 
 Your module: {MODULE}.cpp. Nothing else may be edited apart from its {MODULE}.manifest.txt and {MODULE}.nonmatching.txt (check.py updates both for you) and scratch files named work/match/ds_{OBJ}_*. Other workers are editing other modules at the same time.
 
-These functions already have complete source and are only a few bytes from a match. Rows, closest first, as "<va> <size in bytes> <aligned bytes still differing> <name>":
+These functions already have complete source and are close to a match (a few to a hundred-odd differing bytes; at that distance there is usually one structural cause: find it in the first differing instructions). Rows, closest first, as "<va> <size in bytes> <aligned bytes still differing> <name>":
 {ROWS}
 
 Setup, once: read section 14A of docs/codegen.md, "Near misses: the source had more structure than ours" (rg -n "^## 14A|^## 15" docs/codegen.md gives the line range). Use rg, not grep.
@@ -20,6 +20,9 @@ Rules:
 - A change must preserve the function's behaviour exactly. Never replace a typed member access with a raw offset or a cast that reads something else: a previous wave turned `*ent->lods.first` into `*(int*)((char*)ent + 0x10c)`, dropping a dereference, and the game read the wrong value for three days. Field offsets and callee addresses in the diff must agree with the original's. Every kept change is re-checked for equivalence after the wave and reverted if it fails.
 - Never write a literal image address in code (a vtable, global or function as a number, such as (void*)0x5924a0). Use the real class, global or function; an address belongs only in a comment.
 - Never add an `extern` for a global or constant that nothing in src/ defines. Search src/ for the existing definition and use that exact declaration.
+- Never use the write tool on {MODULE}.cpp, and never rewrite whole functions you were not given: edit only the rows above, with the edit tool. Other functions in the file are byte-exact or someone else's. (A previous session overwrote its whole .cpp with a placeholder.)
+- If you put a row's code back to how it was, run check.py on it again so its recorded figure matches the code (check.py writes "closer" figures as soon as they happen).
+- Notes go on the row's own line in {MODULE}.nonmatching.txt, never on a new line of their own.
 - Never edit a header. If a function needs a shared-header change, leave the row and say what it needs.
 - Never change a call so that it uses a different calling convention from the callee's definition.
 - No inline asm, no per-function pragma tricks, no volatile added to force a result: nothing that could not have been in the original source.
