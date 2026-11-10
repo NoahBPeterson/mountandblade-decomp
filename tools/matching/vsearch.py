@@ -16,9 +16,12 @@ Every variant is a whole-TU compile (cl.sh: the laptop's compile server first) s
 (the .nonmatching.txt column), positional diff as the tie-break. Greedy hill climb: each round tries every single
 rewrite of the current best and takes the best strict improvement, until none improves or it MATCHes.
 
-Safety: every rewrite except stmt-swap and decl-hoist is meaning-preserving by construction. stmt-swap is guarded by
-the shared-identifier check, which cannot see aliasing through pointers, so a result that uses it and is not a MATCH is
-only reported (marked UNVERIFIED), never applied, unless --keep-unsafe. A MATCH is correct by definition.
+Safety: every rewrite except stmt-swap and decl-hoist is meaning-preserving by construction. stmt-swap/stmt-move are
+guarded by the shared-identifier check and by _order_safe (no call moves past a statement touching memory, no store
+through a pointer/index past another pointer access), but a non-MATCH result using them is still only reported (marked
+UNVERIFIED), never applied, unless --keep-unsafe. A MATCH is correct by definition. A lower aligned figure is no proof
+of the original order: 11 of 14 call-crossing reorders reviewed on 2026-11-09 went AGAINST the original's order, and one
+(game_tick 0x5179f0) broke script trigger results. The difftest harness stubs callees, so it cannot catch such moves.
 --apply writes the best variant back to the source only when it is strictly better; re-run chk.py / run_all after.
 Variant files live in work/vsearch/ (never in src/); the source's own directory is passed as /I.
 """
@@ -190,7 +193,7 @@ def rw_stmt_swap(body, mask):
         shared = ia & ib
         shared = {w for w in shared if not re.search(r"\b%s\b\s*[*&]*\s*[A-Za-z_]\w*\s*[;=\[,]" % re.escape(w), a)
                   or not re.search(r"\b%s\b\s*[*&]*\s*[A-Za-z_]\w*\s*[;=\[,]" % re.escape(w), b)}
-        if shared:
+        if shared or not _order_safe(a, b):
             continue
         new = lines[:i] + [lines[i + 1], lines[i]] + lines[i + 2:]
         yield ("stmt-swap @%d: [%s] <-> [%s]" % (offs[i], lines[i].strip(), lines[i + 1].strip()), "\n".join(new), False)
@@ -210,11 +213,58 @@ def rw_stmt_swap(body, mask):
                 yield ("stmt-move @%d: [%s] up %d" % (offs[i], lines[i].strip(), k), "\n".join(new), False)
 
 
+_LOCALS = set()   # names declared in the current function (parameters and locals), set by variants()
+_DECL_NAME = re.compile(r"\b[A-Za-z_][\w:]*(?:<[^<>;{}]*>)?\s*[*&]*\s*\b([A-Za-z_]\w*)\s*(?=[;=\[,()])")
+_CALL = re.compile(r"\b([A-Za-z_]\w*)\s*\(")
+
+
+def _locals_of(text):
+    return {m.group(1) for m in _DECL_NAME.finditer(text) if m.group(1) not in KEYWORDS}
+
+
+def _effects(s):
+    """(calls, writes_memory, reads_memory, deref_write) of one simple statement. Memory = anything that is not a
+    plain local of this function: a member, a global, or an access through a pointer/index."""
+    s = s.split("//")[0].strip().rstrip(";")
+    calls = any(w not in KEYWORDS for w in _CALL.findall(s))
+    m = re.match(r"^(.*?[^=!<>+\-*/%&|^])((?:[+\-*/%&|^]|<<|>>)?=)(?!=)(.*)$", s)
+    lhs, rhs = (m.group(1).strip(), m.group(3)) if m else (s, "")
+    inc = re.match(r"^(?:\+\+|--)?\s*(.*?)\s*(?:\+\+|--)?$", lhs)
+    if not m and not re.search(r"\+\+|--", s):
+        lhs = ""                                  # a bare expression or call: no assignment target
+    elif inc:
+        lhs = inc.group(1)
+    dm = re.match(r"^(?:[A-Za-z_][\w:]*(?:<[^<>]*>)?\s*[*&]*\s+|[A-Za-z_][\w:]*\s*[*&]+\s*)([A-Za-z_]\w*)\s*(\[[^\]]*\])?$", lhs)
+    if dm and dm.group(2) is None:                # a declaration `T* p = ...`: writes a local only
+        lhs = dm.group(1)
+    deref = lhs.startswith("*") or lhs.endswith("]") or "->" in lhs
+    base = re.match(r"^[*&(\s]*([A-Za-z_]\w*)", lhs)
+    writes = bool(lhs) and (deref or "." in lhs or not base or base.group(1) not in _LOCALS)
+    reads = bool(re.search(r"->|\[|(?<![\w)\]])\*\s*[A-Za-z_(]", rhs + (s if not m else ""))) or \
+        any(w not in _LOCALS and w not in KEYWORDS and not w[0].isupper() for w in idents(rhs))
+    return calls, writes, reads, deref
+
+
+def _order_safe(a, b):
+    """False if swapping the two statements could be visible: a call against memory the other touches (the callee may
+    read or write it), or a store through a pointer/index against another pointer access (they may alias). This is
+    what let `emit_event(...)` hop above the stores of the trigger result it reads (game_tick 0x5179f0, 2026-11-09)."""
+    ca, wa, ra, da = _effects(a)
+    cb, wb, rb, db = _effects(b)
+    if (ca and (wb or rb)) or (cb and (wa or ra)):
+        return False
+    if (da and (wb or rb)) or (db and (wa or ra)):
+        return False
+    return True
+
+
 def _independent(a, b):
     """No shared identifier (a declaration pair may share its type name) and not two calls."""
     if ":" in a.split("//")[0].replace("::", "") or ":" in b.split("//")[0].replace("::", ""):
         return False
     if "(" in a.split("//")[0] and "(" in b.split("//")[0]:
+        return False
+    if not _order_safe(a, b):
         return False
     decl = r"\b%s\b\s*[*&]*\s*[A-Za-z_]\w*\s*[;=\[,(]"
     shared = {w for w in idents(a) & idents(b)
@@ -415,8 +465,11 @@ REWRITES = [rw_cmp_swap, rw_comm_swap, rw_incdec, rw_zero_test, rw_if_shapes, rw
             rw_decl_hoist]
 
 
-def variants(body):
+def variants(body, sig=""):
+    """sig: the text just before the body (the signature), so parameters count as locals for the reorder guard."""
     mask = code_mask(body)
+    _LOCALS.clear()
+    _LOCALS.update(_locals_of(code_mask(sig) + "\n" + mask))
     seen = set()
     for rw in REWRITES:
         for desc, new, safe in rw(body, mask):
@@ -520,7 +573,9 @@ def search(src, va, rounds=8, jobs=24, keep_unsafe=False, log=print):
                 break
             a, b = function_span(cur_text, va)
             body = cur_text[a:b]
-            cands = [(d, cur_text[:a] + nb + cur_text[b:], s) for d, nb, s in variants(body)]
+            pre = cur_text[max(0, a - 800):a]
+            sig = pre[max(pre.rfind(";"), pre.rfind("}")) + 1:]
+            cands = [(d, cur_text[:a] + nb + cur_text[b:], s) for d, nb, s in variants(body, sig)]
             if not cands:
                 break
             futs = {ex.submit(sc.score, t): (d, t, s) for d, t, s in cands}
