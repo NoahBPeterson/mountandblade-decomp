@@ -461,8 +461,81 @@ def rw_misc(body, mask):
         yield ("drop-else @%d" % m.start(), body[:m.start()] + new + body[ee:], True)
 
 
+PURE_CALLS = {"sinf", "cosf", "sqrtf", "fabsf", "sin", "cos", "sqrt", "fabs", "floor", "floorf", "ceil", "ceilf",
+              "atan2", "atan2f", "acos", "acosf", "asin", "asinf"}
+
+
+def rw_x87(body, mask):
+    """x87 levers (cl 13.10; spore docs/codegen.md section 4 and 9):
+    neg-fold     A + -B * C  <->  A - B * C;  -B * C + A -> A - B * C   (exact: fchs vs fsub)
+    inline-local float v = E; ... v ...  ->  ... (E) ...   (repeat a pure expression instead of naming it: changes x87
+                 register lifetimes / spills; only when E's inputs are never assigned afterwards; UNVERIFIED)
+    assoc        A + B + C  <->  A + (B + C)   (summation order; not exact in floating point: UNVERIFIED)
+    literal      0.5f <-> 0.5 for constants exact in float (fmul dword vs qword; double promotes the expression: UNVERIFIED)"""
+    O = OPND
+    # neg-fold
+    for m in re.finditer(r"(%s)(\s*)\+\s*-\s*(%s\s*\*\s*%s)" % (O, O, O), mask):
+        a, sp, bc = (body[m.start(i):m.end(i)] for i in (1, 2, 3))
+        new = "%s%s- %s" % (a, sp, bc)
+        yield ("neg-fold @%d: %s" % (m.start(), new[:60]), body[:m.start()] + new + body[m.end():], True)
+    for m in re.finditer(r"(?<![\w)\].])-\s*(%s\s*\*\s*%s)\s*\+\s*(%s(?:\s*[*/]\s*%s)?)(?=\s*[;),])" % (O, O, O, O), mask):
+        bc, a = body[m.start(1):m.end(1)], body[m.start(2):m.end(2)]
+        new = "%s - %s" % (a, bc)
+        yield ("neg-fold @%d: %s" % (m.start(), new[:60]), body[:m.start()] + new + body[m.end():], True)
+    for m in re.finditer(r"(%s)(\s*)-\s*(%s)(\s*\*\s*%s)(?=\s*[;),+\-])" % (O, O, O), mask):
+        if re.match(r"\s*-\s*\d", mask[m.start(2):m.start(3)]):
+            continue
+        a, sp, b, c = (body[m.start(i):m.end(i)] for i in (1, 2, 3, 4))
+        new = "%s%s+ -%s%s" % (a, sp, b, c)
+        yield ("neg-unfold @%d: %s" % (m.start(), new[:60]), body[:m.start()] + new + body[m.end():], True)
+    # inline-local
+    for m in re.finditer(r"(?m)^[ \t]*(?:const\s+)?float\s+([A-Za-z_]\w*)\s*=\s*([^;\n]+);[ \t]*\n", mask):
+        name, expr = m.group(1), body[m.start(2):m.end(2)].strip()
+        rest_m, rest_b = mask[m.end():], body[m.end():]
+        uses = [u for u in re.finditer(r"\b%s\b" % re.escape(name), rest_m)]
+        if not uses or len(uses) > 4:
+            continue
+        if re.search(r"(?:\b%s\s*(?:[-+*/%%&|^]?=(?!=)|\+\+|--)|(?:\+\+|--|&)\s*%s\b)" % (re.escape(name), re.escape(name)), rest_m):
+            continue
+        calls = set(re.findall(r"\b([A-Za-z_]\w*)\s*\(", expr)) - KEYWORDS
+        if calls - PURE_CALLS:
+            continue
+        ids = idents(re.sub(r"\b(?:%s)\b" % "|".join(PURE_CALLS), "", expr))
+        if any(re.search(r"(?:\b%s\b[^;=\n]*?(?:[-+*/%%&|^]?=(?!=)|\+\+|--)|(?:\+\+|--|&)\s*%s\b)" % (re.escape(i), re.escape(i)), rest_m)
+               for i in ids):
+            continue
+        if re.search(r"->|\.|\[", expr) and re.search(r"\b(?!(?:%s)\b)[A-Za-z_]\w*\s*\(" % "|".join(PURE_CALLS | KEYWORDS), rest_m[:uses[-1].end()]):
+            continue   # E reads memory and a call between the declaration and the last use could change it
+        e = expr if re.fullmatch(r"[\w.\[\]>-]+|[\w]+\([^()]*\)", expr) else "(%s)" % expr
+        new_rest, off = rest_b, 0
+        for u in uses:
+            new_rest = new_rest[:u.start() + off] + e + new_rest[u.end() + off:]
+            off += len(e) - (u.end() - u.start())
+        yield ("inline-local @%d: %s" % (m.start(), name), body[:m.start()] + new_rest, False)
+    # assoc
+    for m in re.finditer(r"(?<![\w)\].*/(])(%s)(\s*)([-+])(\s*)(%s)(\s*)\+(\s*)(%s)(?![\w(\[.]|\s*[*/])" % (O, O, O), mask):
+        a, op, b, c = (body[m.start(i):m.end(i)] for i in (1, 3, 5, 8))
+        if op == "-":
+            continue
+        new = "%s %s (%s + %s)" % (a, op, b, c)
+        yield ("assoc @%d: %s" % (m.start(), new[:60]), body[:m.start()] + new + body[m.end():], False)
+    for m in re.finditer(r"(%s)\s*\+\s*\(\s*(%s)\s*\+\s*(%s)\s*\)" % (O, O, O), mask):
+        a, b, c = (body[m.start(i):m.end(i)] for i in (1, 2, 3))
+        new = "%s + %s + %s" % (a, b, c)
+        yield ("assoc @%d: %s" % (m.start(), new[:60]), body[:m.start()] + new + body[m.end():], False)
+    # literal type
+    import struct
+    for m in re.finditer(r"(?<![\w.])(\d+\.\d*(?:[eE][-+]?\d+)?|\d*\.\d+(?:[eE][-+]?\d+)?)([fF]?)(?![\w.])", mask):
+        lit, f = body[m.start(1):m.end(1)], m.group(2)
+        v = float(lit)
+        if struct.unpack("<f", struct.pack("<f", v))[0] != v:
+            continue
+        new = lit if f else lit + "f"
+        yield ("literal @%d: %s%s -> %s" % (m.start(), lit, f, new), body[:m.start()] + new + body[m.end():], False)
+
+
 REWRITES = [rw_cmp_swap, rw_comm_swap, rw_incdec, rw_zero_test, rw_if_shapes, rw_loops, rw_misc, rw_stmt_swap,
-            rw_decl_hoist]
+            rw_decl_hoist, rw_x87]
 
 
 def variants(body, sig=""):
