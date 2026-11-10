@@ -587,17 +587,16 @@ unsigned Agent::pick_target()
     unsigned tid = (unsigned)-1;
     if (0 < n) {
         Threat* r = threats;
-        Mission* m = g_mission;
         do {
             tid = r->id;
-            if (m->agents.pages[tid >> 4][tid & 0xf].f14 == 1) {
-                const vector4& p = m->agents.pages[tid >> 4][tid & 0xf].pos;
+            if (g_mission->agents.pages[tid >> 4][tid & 0xf].f14 == 1) {
+                const vector4& p = g_mission->agents.pages[tid >> 4][tid & 0xf].pos;
                 float dx = p.x - pos.x;
                 float dy = p.y - pos.y;
                 float dz = p.z - pos.z;
                 float v = 3.0f / (float)sqrt(dy * dy + (dx * dx + dz * dz));
                 if (!(v < 4.0f)) v = 4.0f;
-                v = v / ((float)m->agents.pages[tid >> 4][tid & 0xf].f55e8 + 7.0f);
+                v = v / ((float)g_mission->agents.pages[tid >> 4][tid & 0xf].f55e8 + 7.0f);
                 if (v > bestv) { bestv = v; best = tid; }
             }
             r++;
@@ -675,13 +674,11 @@ vector4* Agent::local_velocity(vector4* out)
 // @ 0x43b8a0
 unsigned Agent::find_talk_target()
 {
-    Mission* m = g_mission;
-    AgentTable* t = &m->agents;
     unsigned best = (unsigned)-1;
-    unsigned i = t->first_used();
-    if (i < (unsigned)t->count) {
+    unsigned i = g_mission->agents.first_used();
+    if (i < (unsigned)g_mission->agents.count) {
         do {
-            Agent* o = &m->agents.pages[i >> 4][i & 0xf];
+            Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
             if (o->f10 == 1 && o->f30 == -1 && o->f14 == 1 && o->f5830 == 2) {
                 int a = g_game->skill_level(troop, 0x18);
                 int b = o->f8c.stat_1ec();
@@ -695,10 +692,8 @@ unsigned Agent::find_talk_target()
                     }
                 }
             }
-            m = g_mission;
-            t = &m->agents;
-            t->next_used(&i);
-        } while (i < (unsigned)t->count);
+            g_mission->agents.next_used(&i);
+        } while (i < (unsigned)g_mission->agents.count);
     }
     return best;
 }
@@ -706,23 +701,22 @@ unsigned Agent::find_talk_target()
 // @ 0x43b9e0
 unsigned Agent::pick_front()
 {
-    Mission* m = g_mission;
     unsigned best = (unsigned)-1;
     float bestv = 0.07f;
-    unsigned i = m->agents.first_used();
-    unsigned n = m->agents.count;
+    unsigned i = g_mission->agents.first_used();
+    unsigned n = g_mission->agents.count;
     if (i < n) {
         int myteam = team;
         do {
-            Agent* o = &m->agents.pages[i >> 4][i & 0xf];
-            if (!allied_to(m, myteam, o) && o->f14 == 1 && o->f10 != 1) {
+            Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
+            if (!allied_to(g_mission, myteam, o) && o->f14 == 1 && o->f10 != 1) {
                 vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                 float len = d.normalize();
                 float a = clampf((d.x * fx + d.y * fy) + 0.5f, 0.0f, 1.2f);
                 float b = clampf(1.0f / (len + 0.5f), 0.0f, 1.0f);
                 if (b * a > bestv) { best = i; bestv = b * a; }
             }
-            m->agents.next_used(&i);
+            g_mission->agents.next_used(&i);
         } while (i < n);
     }
     return best;
@@ -2789,7 +2783,6 @@ unsigned Agent::pick_shout_target(int flags, float maxdist)
             tbl = &m->agents;
             tbl->next_used(&i);
         } while (i < (unsigned)tbl->count);
-        return best;
     }
     return best;
 }

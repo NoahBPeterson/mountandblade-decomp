@@ -13,3 +13,4 @@
 ../src/rgl/scene/entity_types.cpp  ?instantiate@world@rgl@@QAEPAUentity@2@H@Z  00428240  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_types.cpp  ?create_entity@world@rgl@@QAEPAUentity@2@H@Z  00428440  /O2 /MT /Gy /TP
 ../src/rgl/scene/entity_types.cpp  ?load@entity@rgl@@UAEXPAUstream_base@@@Z  004284e0  /O2 /MT /Gy /TP
+../src/rgl/scene/entity_types.cpp  ?step@world@rgl@@QAEXM@Z  00427f40  /O2 /MT /Gy /TP

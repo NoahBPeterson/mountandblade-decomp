@@ -937,11 +937,10 @@ int rgl::world::nearest_face(const float* p)
     if (m) {
         unsigned i = 0;
         while (i < m->faces.size()) {
-            int idx = i;
-            float d = m->dist(&idx, p);
+            float d = m->dist((const int*)&i, p);
             if (d <= 0.0f) {
-                MPoly* f = &m->faces[i];
-                const MVert* v = &m->verts[f->vert_p()[0]];
+                const MPoly* f = &m->faces[i];
+                const MVert* v = &m->verts[m->faces[i].vert_p()[0]];
                 float dz = p[2] - (v->pos.z - ((p[0] - v->pos.x) * f->normal.x + (p[1] - v->pos.y) * f->normal.y) / f->normal.z);
                 if (dz > -2.0f) {
                     dz = (float)fabs(dz);
@@ -952,8 +951,8 @@ int rgl::world::nearest_face(const float* p)
                     }
                 }
             } else if (d < 10.0f) {
-                MPoly* f = &m->faces[i];
-                const MVert* v = &m->verts[f->vert_p()[0]];
+                const MVert* v = &m->verts[m->faces[i].vert_p()[0]];
+                const MPoly* f = &m->faces[i];
                 float dz = p[2] - (v->pos.z - ((p[0] - v->pos.x) * f->normal.x + (p[1] - v->pos.y) * f->normal.y) / f->normal.z);
                 if (dz > -2.0f) {
                     float s = (10.0f - d) - (float)fabs(dz);

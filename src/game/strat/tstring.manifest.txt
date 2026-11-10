@@ -32,3 +32,5 @@
 ../src/game/strat/tstring.cpp  ?insert@tstring@@QAEXHABU1@@Z  0042c900  /O2 /MT /Gy /TP
 ../src/game/strat/tstring.cpp  ?split@tstring@@QBEPAU1@ABDAAH@Z  0042c9b0  /O2 /MT /Gy /TP
 ../src/game/strat/tstring.cpp  ?strip_tags@tstring@@QBE?AU1@XZ  0042c5d0  /O2 /MT /Gy /TP
+../src/game/strat/tstring.cpp  ?reserve@tstring@@QAEXI@Z  0042bb50  /O2 /MT /Gy /TP
+../src/game/strat/tstring.cpp  ?grow@tstring@@QAEXI@Z  0042bac0  /O2 /MT /Gy /TP

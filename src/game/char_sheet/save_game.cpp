@@ -16,11 +16,10 @@ void ItemRec2::frame_update(float arg)
 {
     ((MissionSource*)&owned)->pick((int*)&arg);
     bool save = false;
-    if (W(row1)->clear_mask(0x10000)) {
+    if (W(row1)->clear_mask(0x10000))
         save = true;
-    } else {
-        if (row5 == 0 || !W(row5)->clear_mask(0x10000)) {
-            if (W(row2)->clear_mask(0x10000)) {
+    if (!save && (row5 == 0 || !W(row5)->clear_mask(0x10000))) {
+        if (W(row2)->clear_mask(0x10000)) {
                 *(int*)(slot_as<char>(18) + 0x18) = 5;
                 g_windows.set_state(0x12);
                 return;
@@ -44,7 +43,6 @@ void ItemRec2::frame_update(float arg)
                 return;
             }
             return;
-        }
     }
     g_game->sl_update_avg();
     if (save)

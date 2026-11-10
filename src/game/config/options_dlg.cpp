@@ -68,11 +68,10 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
     *port = 80;
     char* s = _strdup(url);
     _strupr(s);
-    char* colon = strchr(s, ':');
-    char* p;
-    if (colon) {
-        *colon = '\0';
-        p = colon + 1;
+    char* p = strchr(s, ':');
+    if (p) {
+        *p = '\0';
+        p++;
         lstrcpynA(scheme, s, scheme_n);
     } else {
         lstrcpynA(scheme, "HTTP", scheme_n);
@@ -81,13 +80,13 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
     if (*p == '/' && p[1] == '/')
         p += 2;
     char* start = p;
-    char c = *start;
-    while (isalpha(c) || isdigit(c) || c == '-' || c == '.' ||
-           c == ':') {
+    for (;;) {
+        char c = *start;
+        if (!(isalpha(c) || isdigit(c) || c == '-' || c == '.' || c == ':'))
+            break;
         if (*start == 0)
             break;
         start++;
-        c = *start;
     }
     *start = '\0';
     lstrcpynA(host, p, host_n);

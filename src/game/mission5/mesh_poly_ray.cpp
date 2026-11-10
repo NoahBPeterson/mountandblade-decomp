@@ -237,13 +237,13 @@ void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
 
 // Delete every flagged element of the current mode, then rebuild the derived data.  The
 // index is held still after a deletion, since the array shrinks under it.
+static std::vector<medge_s2dfd0>& edges_v(Mesh_s2dfd0* m) { return *(std::vector<medge_s2dfd0>*)((char*)m + 0x38); }
 // @ 0x52e870
 void Mesh_s2dfd0::remove_selected()
 {
     if (mode == 0) {
         for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
-            const mface_s2dfd0& v = verts.first[i];
-            if (v.flag) {
+            if ((*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))[i].flag) {
                 remove_node(i);
                 i--;
             }
@@ -251,16 +251,14 @@ void Mesh_s2dfd0::remove_selected()
     }
     if (mode == 1) {
         for (unsigned i = 0; i < (unsigned)edges.size(); i++) {
-            medge_s2dfd0& e = *(edges.first + i);
-            if (e.flag) {
+            if (edges_v(this)[i].flag) {
                 remove_edge(i);
                 i--;
             }
         }
     } else {
         for (unsigned i = 0; i < (unsigned)polys.size(); i++) {
-            mpoly_s2dfd0& p = *(polys.first + i);
-            if (p.flag) {
+            if ((*(std::vector<mpoly_s2dfd0>*)((char*)this + 0x28))[i].flag) {
                 remove_face(i);
                 i--;
             }
@@ -310,12 +308,16 @@ void Mesh_s2e960::make_copy(const rgl::matrix& m)
 }
 
 // Return the copy index of source vertex `index`, creating it the first time it is asked for.
+static __forceinline int mface_src_index(const mface_s2e960& v) { return v.index; }
 // @ 0x52ebc0
 int Mesh_s2e960::vertex_index(int index, const rgl::matrix& m)
 {
-    for (unsigned i = 0; i < (unsigned)verts2.size(); i++) {
-        if (verts2.first[i].index == index)
-            return (int)i;
+    for (int i = 0; (unsigned)i < (unsigned)verts2.size(); i++) {
+        if (verts2.first[i].index == index) {
+            if (i >= 0)
+                return i;
+            break;
+        }
     }
     int n = verts2.size();
     mface_s2e960 f;

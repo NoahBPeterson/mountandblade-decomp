@@ -391,6 +391,9 @@ void ViewBody::init()
     FL(0x5370) = 15.0f;
 }
 
+extern float g_one;  // 0x549cdc (defined in editor_dialog.cpp)
+extern float g_zero;  // 0x549ca8
+
 // @ 0x463610
 rgl::vector4 EnvRow::get_dir(int a, int b)
 {
@@ -398,10 +401,12 @@ rgl::vector4 EnvRow::get_dir(int a, int b)
     float ang = sun_angle * 0.017453292f;
     float c = (float)cos(ang), s = (float)sin(ang);
     float x1 = c * -1.0f - s * 0.0f;
-    r.z = c * 0.0f - s * 1.0f;
+    r.z = c * 0.0f - s * g_one;
     double q = (float)(a - 12) * -0.017453292f * 15.0;
     float cb = cos(q);
     r.x = cb * 0.0f - sin(q) * x1;
-    r.y = sin(q) * 0.0f + cb * x1;
+    float yy = cb * x1;
+    yy += sin(q) * g_zero;
+    r.y = yy;
     return r;
 }

@@ -65,18 +65,17 @@ void CharSheet::refresh_panels()
     }
     POS(xp_bar, line, "char_t_next_level_at_y", "char_t_next_level_at_x");
 
-    if ((c->flags30 & 0x10) != 0) {
-        tstring k("ui_health_player");
-        i = ((unsigned char*)c)[0x7a] & 0xf;      // 0x4f0cc2: mov al,[esi+0x7a]; and eax,0xf
-        if (i < 0) i = 0;
-        else if (i > g_skill_tbl[36].max_rank) i = g_skill_tbl[36].max_rank;
-        sprintf(line, g_strtable.lookup(k)->c_str(), (int)c->hp, c->lvl58 + i * 2 + 0x23);
-    } else {
+    if (!((c->flags30 & 0x10) != 0)) {
         tstring k("ui_health");
         i = ((unsigned char*)c)[0x7a] & 0xf;      // 0x4f0d40: mov dl,[ebp+0x7a]; and edx,0xf
         if (i < 0) i = 0;
         else if (i > g_skill_tbl[36].max_rank) i = g_skill_tbl[36].max_rank;
         sprintf(line, g_strtable.lookup(k)->c_str(), c->lvl58 + i * 2 + 0x23);
+    } else {
+        tstring k("ui_health_player");
+        i = ((unsigned char*)c)[0x7a] & 0xf;      // 0x4f0cc2: mov al,[esi+0x7a]; and eax,0xf
+        if (!(i < 0)) { if (i > g_skill_tbl[36].max_rank) i = g_skill_tbl[36].max_rank; } else { i = 0; }
+        sprintf(line, g_strtable.lookup(k)->c_str(), (int)c->hp, c->lvl58 + i * 2 + 0x23);
     }
     POS(xp_bar, line, "char_t_health_y", "char_t_health_x");
 

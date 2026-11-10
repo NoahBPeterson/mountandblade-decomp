@@ -551,14 +551,19 @@ Skin* copy_skin(Skin* self, const Skin* o)
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
 struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; TimerList m3c; };   // 0x48 bytes
 // the vector deleting destructors of the global record tables (rgl/mesh2/gui_edit.cpp, rec_tables.cpp): 0x4c4f40 elem60_vector_delete and
-// 0x4c7ee0 destroy_record_array / 0x4c8980 conv_item_array_dtor (fastcall: ecx = the table, flags on the stack), 0x4c3430 elem58's member
-struct elem60; struct conv_rec;
-void* __fastcall elem60_vector_delete(elem60* self, void* unused, unsigned flags);               // 0x4c4f40
+// 0x4c7ee0 destroy_record_array / 0x4c8980 conv_item_array_dtor are `??_E`-style members (ecx = the table, flags on the stack)
 struct elem58 {
     void* vector_deleting_delete(unsigned flags);   // 0x4c3430
 };
-void* __fastcall destroy_record_array(void* p, int unused, unsigned char flags);               // 0x4c7ee0
-void* __fastcall conv_item_array_dtor(conv_rec* self, int unused, unsigned char flags);        // 0x4c8980
+struct elem60v {
+    void* vector_deleting_delete(unsigned flags);   // 0x4c4f40
+};
+struct propv {
+    void* vector_deleting_delete(unsigned char flags);   // 0x4c7ee0
+};
+struct convv {
+    void* vector_deleting_delete(unsigned char flags);   // 0x4c8980
+};
 #include "../../include/list_int.h"                  // list_int::clear 0x4c4d80 (std::list<int>::clear)
 #include "../window_mgr.h"                                    // g_windows (0xa73980)
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
@@ -601,7 +606,7 @@ HRESULT GameApp::FinalCleanup()
         delete[] g_items;
     }
     if (g_menus) {
-        elem60_vector_delete((elem60*)g_menus, 0, 3);              // ??_E, flags 3 (0x4c4f40)
+        ((elem60v*)g_menus)->vector_deleting_delete(3);              // ??_E, flags 3 (0x4c4f40)
     }
     if (g_5e2928) {
         delete[] (E24*)g_5e2928;
@@ -610,7 +615,7 @@ HRESULT GameApp::FinalCleanup()
         ((elem58*)g_mission_templates)->vector_deleting_delete(3);            // 0x4c3430
     }
     if (g_propkinds) {
-        destroy_record_array(g_propkinds, 0, 3);            // 0x4c7ee0
+        ((propv*)g_propkinds)->vector_deleting_delete(3);            // 0x4c7ee0
     }
     if (g_ptypes) {
         delete[] (E20b*)g_ptypes;
@@ -622,7 +627,7 @@ HRESULT GameApp::FinalCleanup()
         delete[] (NameRec48*)g_map_icons;
     }
     if (g_party_templates) {
-        conv_item_array_dtor((conv_rec*)g_party_templates, 0, 3);            // 0x4c8980
+        ((convv*)g_party_templates)->vector_deleting_delete(3);            // 0x4c8980
     }
     for (int i = 0; i < 30; i++) {
         delete g_windows.arr[i];
@@ -864,21 +869,19 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
     int i = 0;
     if (n > 0) {
         do {
-            if (*out_len >= *maxn)
+            int cnt = *out_len;
+            if (cnt >= *maxn)
                 break;
             unsigned char c = s->buf[i];
             int ch;
             if (c >= 0xf0 && c < 0xf5) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = (((((q[0] & 7) << 6) | (q[1] & 0x3f)) << 6 | (q[2] & 0x3f)) << 6) | (q[3] & 0x3f);
+                ch = ((((((unsigned char)s->buf[i] & 7) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6 | ((unsigned char)s->buf[i+2] & 0x3f)) << 6) | ((unsigned char)s->buf[i+3] & 0x3f);
                 i += 4;
             } else if (c >= 0xe0 && c < 0xf0) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = ((((q[0] & 0xf) << 6) | (q[1] & 0x3f)) << 6) | (q[2] & 0x3f);
+                ch = (((((unsigned char)s->buf[i] & 0xf) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6) | ((unsigned char)s->buf[i+2] & 0x3f);
                 i += 3;
             } else if (c >= 0xc2 && c < 0xe0) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = (((q[0] & 0x1f) << 6) | (q[1] & 0x3f));
+                ch = ((((unsigned char)s->buf[i] & 0x1f) << 6) | ((unsigned char)s->buf[i+1] & 0x3f));
                 i += 2;
             } else {
                 i++;
@@ -886,8 +889,8 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
                     continue;
                 ch = (signed char)c;
             }
-            buf[*out_len] = ch;
-            (*out_len)++;
+            buf[cnt] = ch;
+            *out_len = cnt + 1;
         } while (i < n);
     }
 }
@@ -929,7 +932,8 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
     int maxn = 0x800;
     decode_utf8(&text, &len, buf, &maxn);
     float t = (float)len * v * 0.39f;
-    float e = tmp - (r * c) * k3;               // 0x4dcdc7: r, * c, * k3 in that order
+    float r2 = r;
+    float e = tmp - r2 * c * k3;                // 0x4dcdc7: r, * c, * k3 in that order
     if (t > e)
         v = v * (e / t);
     {
@@ -1130,28 +1134,30 @@ UiA* build_row(ContainerBase* parent, const tstring* key, float x, float y, floa
 {
     UiA* p = new UiA;
 
-    float v[2] = {x, y};
-    vt(p)->d22(v);
-
-    v[0] = w;
-    v[1] = h;
-    vt(p)->d25(v);
+    {
+        float pos[2] = {x, y};
+        vt(p)->d22(pos);
+    }
+    {
+        float sz[2] = {w, h};
+        vt(p)->d25(sz);
+    }
 
     {
         int colour = 0xffefefef;
         vt(p)->d38(&colour);
     }
 
-    v[0] = h * 0.9f;
-    v[1] = h * 0.9f;
-    vt(p)->d27(v);
-
+    float z = h * 0.9f;
     {
-        int colour2 = 0xff55ff50;
-        vt(p)->d39(&colour2);
+        float sz2[2] = {z, z};
+        vt(p)->d27(sz2);
+        {
+            int colour2 = 0xff55ff50;
+            vt(p)->d39(&colour2);
+        }
+        vt(p)->d41(sz2, (void*)key);
     }
-
-    vt(p)->d41(v, (void*)key);
 
     vt(parent)->d50(p);
     return p;

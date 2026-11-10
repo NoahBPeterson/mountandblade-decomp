@@ -269,10 +269,10 @@ void ContainerBase::render(rgl::scene* sc, float* p3, int c, int d)
         float z, y0, hy, ly, mx, my;
     } l;
     MissionUi::render(sc, p3, c, d);   // 0x488720
-    l.mx = p4[0];
     l.y0 = p3[0];
-    l.hy = p5[0];
+    l.mx = p4[0];
     l.my = p4[1];
+    l.hy = p5[0];
     l.ly = p5[1];
     float v = *(float*)((char*)this + 0xf8) + *(float*)((char*)this + 0xe0);
     if (l.mx < v) l.mx = v;
@@ -2049,8 +2049,10 @@ void MissionW::add_wind_effect(float a1, float a2)
     rgl::vector4& t1 = ((GameW*)g_game)->trig_row(1);
     rgl::vector4& t2 = ((GameW*)g_game)->trig_row(2);
     rgl::vector4& t3 = ((GameW*)g_game)->trig_row(3);
-    v.x = t2.x * ((GameW*)g_game)->pos_delta().z + t1.x * ((GameW*)g_game)->pos_delta().y +
-          t0.x * ((GameW*)g_game)->pos_delta().x + t3.x;
+    v.x = ((GameW*)g_game)->trig_row(2).x * ((GameW*)g_game)->pos_delta().z +
+          ((GameW*)g_game)->trig_row(1).x * ((GameW*)g_game)->pos_delta().y +
+          ((GameW*)g_game)->trig_row(0).x * ((GameW*)g_game)->pos_delta().x +
+          t3.x;
     v.y = t0.y * ((GameW*)g_game)->pos_delta().x + t2.y * ((GameW*)g_game)->pos_delta().z +
           t1.y * ((GameW*)g_game)->pos_delta().y + t3.y;
     v.z = t0.z * ((GameW*)g_game)->pos_delta().x + t2.z * ((GameW*)g_game)->pos_delta().z +

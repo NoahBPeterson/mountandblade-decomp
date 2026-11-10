@@ -5,3 +5,4 @@
 ../src/game/mission_ui2/mission_4.cpp  ?set_camera_position@TableauTbl@@QAEXPBUmatrix@rgl@@@Z  0048f480  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_4.cpp  ?set_ambient_light@TableauTbl@@QAEXPBM@Z  0048f5a0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_4.cpp  ?set_position@widget_mgr@@QAEXHPBM@Z  0048f6b0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_4.cpp  ?set_camera_parameters@TableauTbl@@QAEXPBDPBM111@Z  0048f4c0  /O2 /MT /Gy /TP

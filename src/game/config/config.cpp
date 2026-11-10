@@ -964,6 +964,12 @@ render_batch::~render_batch()
     operator delete[](world_mats);
 }
 
+static inline void config_set_format(dev_buffer& b, unsigned fvf, int elem)
+{
+    b.fvf = fvf;
+    b.elem_size = elem;
+}
+
 // @ 0x4bc5b0
 void render_batch::init_formats()
 {
@@ -974,19 +980,21 @@ void render_batch::init_formats()
     int n = (g_cfg.render_buffer_size << 18) / 0x44;
     int n3 = n * 3;
     int n2 = n / 2;
+    int c0 = n3 * 8;
+    int c1 = n2 * 8;
     for (int i = 0; i < 10; i++)
         vf[i / 2].bufs[i % 2].type = 0;
     dev_buffer* p = &vf[0].bufs[0];
-    p[0].fvf = 0x02000013; p[0].elem_size = 0x24;
-    p[1].fvf = 0x02000013; p[1].elem_size = 0x24;
-    p[2].fvf = 0x02000053; p[2].elem_size = 0x28;
-    p[3].fvf = 0x02000053; p[3].elem_size = 0x28;
-    p[4].fvf = 0x02000153; p[4].elem_size = 0x40;
-    p[5].fvf = 0x02000153; p[5].elem_size = 0x40;
-    p[6].fvf = 0x01001013; p[6].elem_size = 0x44;
-    p[7].fvf = 0x01001013; p[7].elem_size = 0x44;
-    p[8].fvf = 0x01001113; p[8].elem_size = 0x5c;
-    p[9].fvf = 0x01001113; p[9].elem_size = 0x5c;
+    config_set_format(p[0], 0x02000013, 0x24);
+    config_set_format(p[1], 0x02000013, 0x24);
+    config_set_format(p[2], 0x02000053, 0x28);
+    config_set_format(p[3], 0x02000053, 0x28);
+    config_set_format(p[4], 0x02000153, 0x40);
+    config_set_format(p[5], 0x02000153, 0x40);
+    config_set_format(p[6], 0x01001013, 0x44);
+    config_set_format(p[7], 0x01001013, 0x44);
+    config_set_format(p[8], 0x01001113, 0x5c);
+    config_set_format(p[9], 0x01001113, 0x5c);
     {
         tstring s("vdt_regular_ffp");
         p[0].name = s;
@@ -1014,8 +1022,8 @@ void render_batch::init_formats()
     }
     ib.bufs[0].type = 1;
     ib.bufs[1].type = 1;
-    ib.bufs[0].count = n3 << 3;
-    ib.bufs[1].count = n2 << 3;
+    ib.bufs[0].count = c0;
+    ib.bufs[1].count = c1;
     WL_MARKER(13)
 }
 

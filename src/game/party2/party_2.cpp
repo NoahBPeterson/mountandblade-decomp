@@ -2081,7 +2081,8 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
     event_rec r;
     r.p = *(const Pos4i*)pos;
     r.angle = *src;
-    int a = 0, b = 0, c = 0, d = 0;
+    int a, b, c, d;
+    a = b = c = d = 0;
     r.f14 = 0;
     count_units(party, &a, &b, &c, &d);
     r.flags.all = 0;

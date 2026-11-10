@@ -361,12 +361,20 @@ void face::scale(const float* s)
 void face::transform(const pos* m)
 {
     for (int i = 0; i < count; i++) {
-        const matrix& mm = *m;
         const float* p = &v[i].y;
-        const vector4& s = mm.s, &f = mm.f, &u = mm.u, &o = mm.o;
-        w[i] = vector4((s.x * p[-1] + f.x * p[0]) + u.x * p[1] + o.x,
-                       (s.y * p[-1] + f.y * p[0]) + u.y * p[1] + o.y,
-                       (f.z * p[0] + s.z * p[-1]) + u.z * p[1] + o.z);
+        float x = m->s.x * v[i].x;
+        x += m->f.x * v[i].y;
+        x += m->u.x * p[1];
+        x += m->o.x;
+        float y = m->s.y * v[i].x;
+        y += m->f.y * v[i].y;
+        y += m->u.y * p[1];
+        y += m->o.y;
+        float z = m->f.z * v[i].y;
+        z += m->s.z * v[i].x;
+        z += m->u.z * p[1];
+        z += m->o.z;
+        w[i] = vector4(x, y, z);
     }
     vector4 e1 = vsub(w[2], w[1]);
     vector4 e0 = vsub(w[1], w[0]);

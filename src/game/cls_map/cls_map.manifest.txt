@@ -54,3 +54,5 @@
 ../src/game/cls_map/cls_map.cpp  _$E5  00547f50  /O2  /MT  /Gy  /TP
 ../src/game/cls_map/cls_map.cpp  _$E6  00548500  /O2  /MT  /Gy  /TP
 ../src/game/cls_map/cls_map.cpp  ?rebuild@gui_manager@@QAEXXZ  004da900  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?build_row@@YAPAUUiA@@PAUContainerBase@@PBUtstring@@MMMM@Z  004dd830  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?new_sized_button@@YAPAUUiA@@PAUMissionUi@@ABUtstring@@MMM11MMM@Z  004dcc50  /O2 /MT /Gy /TP

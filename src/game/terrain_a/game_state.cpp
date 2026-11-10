@@ -213,7 +213,9 @@ vector4 ShadowMap::to_unit(const vector4& p)
 {
     vector4 l = cam->world.transform_point_to_local(p);
     vector4 d(l.x - cam->vmin.x, l.y - cam->vmin.y, l.z - cam->vmin.z);
-    return vector4(d.x / cam->size.x, d.y / cam->size.y, d.z / cam->size.z);
+    LightCam* c = cam;
+    vector4 r(d.x / c->size.x, d.y / c->size.y, d.z / c->size.z);
+    return r;
 }
 
 // @ 0x463cc0
@@ -223,11 +225,12 @@ void ShadowMap::fit_bounds()
     WL_MARKER(12)
     LightCam* c = cam;
     vector4 ctr = (c->vmin + c->vmax) * 0.5f;
+    c = cam;
     c->center = ctr;
     c = cam;
-    vector4 wc((c->world.u.x * c->center.z + c->world.f.x * c->center.y) + c->world.s.x * c->center.x + c->world.o.x,
-               (c->world.u.y * c->center.z + c->world.s.y * c->center.x) + c->world.f.y * c->center.y + c->world.o.y,
-               (c->world.u.z * c->center.z + c->world.s.z * c->center.x) + c->world.f.z * c->center.y + c->world.o.z);
+    vector4 wc((c->world.u.x * c->center.z + c->world.f.x * c->center.y) + c->center.x * c->world.s.x + c->world.o.x,
+               (c->world.s.y * c->center.x + c->world.u.y * c->center.z) + c->world.f.y * c->center.y + c->world.o.y,
+               (c->world.s.z * c->center.x + c->world.u.z * c->center.z) + c->world.f.z * c->center.y + c->world.o.z);
     c->wcenter = wc;
     c = cam;
     vector4 sz(c->vmax.x - c->vmin.x, c->vmax.y - c->vmin.y, c->vmax.z - c->vmin.z);

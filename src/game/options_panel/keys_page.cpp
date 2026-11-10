@@ -358,13 +358,13 @@ void KeysPage::refresh()
 void layout_row(MissionUi* row, const tstring* text, float bx, float by, float bz, float bw)
 {
     int buf[0x800];
-    float s = bx * g_k065;
+    float s = bx * 0.65f;
     float tw;
     {
         int len;
         int maxn = 0x800;
         decode_utf8(text, &len, buf, &maxn);
-        tw = (float)len * s * g_k039;
+        tw = (float)len * s * 0.39f;
     }
     float room = bx * by - bx / bz * bw;
     if (tw > room)
@@ -377,7 +377,7 @@ void layout_row(MissionUi* row, const tstring* text, float bx, float by, float b
         {
             vector2 pos;
             pos.x = 0;
-            pos.y = bx * 0.5f - s * g_chunk_scale;
+            pos.y = bx * 0.5f - s * 0.3f;
             row->set_offset((const float*)&pos);
             { char r[8]; row->set_text((float*)r, &(*text)); }
         }

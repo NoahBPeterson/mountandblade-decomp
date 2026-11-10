@@ -84,14 +84,21 @@ void C4c2fb0::frame_update(float)
             g_map_flags.f0 = 1;
         } else {
             g_game_G->f13aec = 3;
-            g_map_flags.f8 = g_game_G->f13aec;
             g_map_flags.f0 = 1;
+            g_map_flags.f8 = g_game_G->f13aec;
         }
         g_map_flags.f2 = 0;
         g_map_flags.f1 = 0;
         g_map_flags.f4 = -1;
         g_map_flags.commit(&tmp);
     }
+}
+
+// 0x51c720: the "ui_player" name assignment was an inlined by-value helper (its parameter temp sits in sub's
+// lower temp slot, the key in the upper one).
+static __forceinline void set_troop_name(Troop* t, tstring s)
+{
+    troop_name(t) = s;
 }
 
 // @ 0x51c720
@@ -132,14 +139,15 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         if (w04 == 1) {
             {
                 tstring tmp(header.body);
-                tstring& dst = g_game_G->troops[g_game_G->cur_troop].name;
-                dst = tmp;
+                g_game_G->troops[g_game_G->cur_troop].name = tmp;
             }
             g_game_G->title = header.title;
         }
         *counter = *counter + 1;
-        tstring t2("ui_loading_savegame_file");
-        out->assign(g_strtable.lookup(t2)->c_str());
+        {
+            tstring t2("ui_loading_savegame_file");
+            out->assign(g_strtable.lookup(t2)->c_str());
+        }
         return false;
     }
     if (step == 3) {
@@ -150,8 +158,10 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             save = 0;
         }
         *counter = *counter + 1;
-        tstring t3("ui_loading_map_file");
-        out->assign(g_strtable.lookup(t3)->c_str());
+        {
+            tstring t3("ui_loading_map_file");
+            out->assign(g_strtable.lookup(t3)->c_str());
+        }
         return false;
     }
     if (step == 4) {
@@ -160,15 +170,17 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             g_game_G->start_new_game();          // 0x51f1a0
             if (w04 == 2 || w04 == 3) {      // re-read after the call (0x51ca17)
                 tstring key("ui_player");
-                tstring name(*g_strtable.lookup(key));
-                troop_name(&g_game_G->troops[g_game_G->cur_troop]) = name;
+                set_troop_name(&g_game_G->troops[g_game_G->cur_troop], *g_strtable.lookup(key));
             }
         }
         if (w04 != 2 && w04 != 3)
             g_game_G->build_map();               // 0x520b20
         log_stream_ptr()->w_cstr("load_map_data complete.\n");
         *counter = *counter + 1;
-        out->assign(g_strtable.lookup(tstring("ui_initializing_map"))->c_str());
+        {
+            tstring t4("ui_initializing_map");
+            out->assign(g_strtable.lookup(t4)->c_str());
+        }
         return false;
     }
     if (step == 5) {
@@ -176,7 +188,8 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             g_game_G->init_map();
         *counter = *counter + 1;
         {
-            out->assign(g_strtable.lookup(tstring("ui_launching_game"))->c_str());
+            tstring t5("ui_launching_game");
+            out->assign(g_strtable.lookup(t5)->c_str());
         }   // the key dies before the log line (0x51cb4a, then the call at 0x51cb5e)
         log_stream_ptr()->w_cstr("Init_map complete.\n");
         return false;
@@ -190,7 +203,10 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         }
         log_stream_ptr()->w_cstr("launch complete.\n");
         *counter = *counter + 1;
-        out->assign(g_strtable.lookup(tstring("ui_finished"))->c_str());
+        {
+            tstring t6("ui_finished");
+            out->assign(g_strtable.lookup(t6)->c_str());
+        }
         return false;
     }
 done:

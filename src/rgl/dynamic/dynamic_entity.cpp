@@ -562,7 +562,7 @@ bool dynamic_entity::on_entity(entity* e)
         double j = vdot_zyx(td, rel) * -0.5;
         float rb = o->impulse_response(&pt, &td);
         double mag = j / (impulse_response(&pt, &td) + rb);
-        vector4 imp(td.x * mag, td.y * mag, td.z * mag);
+        vector4 imp = td * mag;
         apply_impulse(&pt, &imp);
         vector4 imp2(-imp.x, -imp.y, -imp.z);
         o->apply_impulse(&pt, &imp2);

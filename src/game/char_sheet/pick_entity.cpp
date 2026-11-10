@@ -28,9 +28,9 @@ void __fastcall pick_entity(GuiCtx* self)
     vector4 lo, hi;
     lo.x = rect0[0];
     lo.y = rect0[1];
+    hi.x = rect1[0];
     lo.z = rect0[2];
     lo.w = rect0[3];
-    hi.x = rect1[0];
     hi.y = rect1[1];
     hi.z = rect1[2];
     hi.w = rect1[3];
@@ -78,7 +78,7 @@ void __fastcall pick_entity(GuiCtx* self)
                     vector4 mx, mn;
                     hit->get_max(&mx);
                     hit->get_min(&mn);
-                    sph.local_center = vector4((mn.x + mx.x) * 0.5f, (mn.y + mx.y) * 0.5f, (mn.z + mx.z) * 0.5f);
+                    sph.local_center = vector4((mn.x + mx.x) * 0.5f, (mx.y + mn.y) * 0.5f, (mn.z + mx.z) * 0.5f);
                     sph.local_center.w = hi.w;
                     vector4 d = vector4(mx.x - sph.local_center.x, mx.y - sph.local_center.y, mx.z - sph.local_center.z);
                     sph.radius = d.out_length();
@@ -136,8 +136,8 @@ void __fastcall pick_entity(GuiCtx* self)
         color_b = 0xffaaff22;
         color_a = 0xffaaaaff;
     }
-    scene_row* sel = (scene_row*)((int)sc->props._Myfirst + self->f2cc * 0x1c8);
     tstring s_kind, s_info, s_info2;
+    scene_row* sel = (scene_row*)((int)sc->props._Myfirst + self->f2cc * 0x1c8);
     switch (sel->kind) {
     case 4:
         s_kind.assign("FLORA");

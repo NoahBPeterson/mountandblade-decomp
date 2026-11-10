@@ -532,23 +532,34 @@ void GameG::update_cursor(float dt)
     }
 }
 
+// PartyMgr::next_party_id (the row is owned elsewhere): a visible duplicate, so update_weather's loop counter can
+// stay in a register across the call.
+__declspec(noinline) void PartyMgr::next_party_id(int* id)
+{
+    unsigned i = lookup(*id) + 1;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        *id = deflt;
+    else
+        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+}
+
 // @ 0x517e70
 void GameG::update_weather()
 {
     PartyMgr* mgr = &parties;
 
-    unsigned id = (unsigned)mgr->first_party_id();
-    while (id < mgr->n_parties) {
-        if (id == (unsigned)main_party
-            || (*(unsigned __int64*)&party_at(mgr, mgr->lookup((int)id))->flags_lo & 0x80100) == 0)
-            party_at(mgr, mgr->lookup((int)id))->tick_stats();
-        mgr->next_party_id((int*)&id);
+    int id = mgr->first_party_id();
+    while ((unsigned)id < parties.n_parties) {
+        if (id == main_party
+            || (*(unsigned __int64*)&party_at(mgr, mgr->lookup(id))->flags_lo & 0x80100) == 0)
+            party_at(mgr, mgr->lookup(id))->tick_stats();
+        mgr->next_party_id(&id);
     }
 
     __int64 cur = g_ticks[f13b18];
-    __int64 ref;
-    ((int*)&ref)[0] = f13b20;
-    ((int*)&ref)[1] = f13b24;
+    __int64 ref = f13b20i64;
     int hour = (int)((float)(cur - ref) * 1e-5f) % 24;
 
     float v = ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.5f) * 0.1f + f13b3c;

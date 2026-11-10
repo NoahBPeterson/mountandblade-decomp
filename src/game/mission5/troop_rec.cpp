@@ -362,8 +362,8 @@ void Game::more_start()
         ((TroopRec*)&troops[i])->apply_items();                 // 0x520110
     }
 
-    int pool = 0;
     TroopRec* me = (TroopRec*)(troops + cur_troop);
+    int pool = 0;
     int n = me->inv_count();                        // 0x462b60
 
     // collect the room left in the worn equipment
@@ -434,7 +434,7 @@ void Game::more_start()
     // last pass: top the weapon stacks up with whatever is still left over, first the worn ones ...
     s = me->equip;
     for (int i = 0; i < 10; i++, s++) {
-        if (s->item > 0) {
+        if (0 < s->item) {
             int ty = item_type(s->item);
             if (ty == 0x11 || ty == 0x10) {
                 int room = slot_count(s) + slot_cap(s) - s->max_amount();

@@ -129,9 +129,8 @@ int ItemRef::stat_21x(int which)
 {
     if (item < 0) return 0;
     unsigned v;
-    if (which == 0) v = g_items[item].f218;
-    else v = g_items[item].f214;
-    v &= 0xff;
+    if (which == 0) v = g_items[item].f218 & 0xff;
+    else v = g_items[item].f214 & 0xff;
     if (v != 0) {
         switch (b.mod) {
         case imod_cracked: v -= 5; break;
@@ -1094,9 +1093,9 @@ void rgl::cell_grid::walk(const float* a, const float* b, int (*cells)[2], int* 
     *count = 0;
     cells[0][0] = cur[0];
     cells[0][1] = cur[1];
+    float acc = 0.0f;
     int n = *count + 1;
     *count = n;
-    float acc = 0.0f;
     float total = (float)sqrt(d.y * d.y + d.x * d.x);
     while (total > tmax[0] + acc || total > tmax[1] + acc) {
         int idx;

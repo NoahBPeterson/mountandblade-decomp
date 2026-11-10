@@ -271,9 +271,14 @@ void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread)
     m.f = dir;
     m.u = vector4(0.0f, 0.0f, 1.0f);
     ((matrix*)&m)->orthonormalize();
-    float px = m.u.x * A + m.f.x * v1.x;
-    float py = m.u.y * A + m.s.y * B + m.f.y * v1.x;
-    float pz = m.u.z * A + m.s.z * B + m.f.z * v1.x;
+    float px = m.u.x * A;
+    px += m.f.x * v1.x;
+    float py = m.u.y * A;
+    py += m.s.y * B;
+    py += m.f.y * v1.x;
+    float pz = m.u.z * A;
+    pz += m.s.z * B;
+    pz += m.f.z * v1.x;
     out->x = px + m.s.x * B;
     out->y = py;
     out->z = pz;
@@ -326,10 +331,10 @@ void Agent::fill_weights(float* out, int idx, int rec)
 {
     int best = -100;
     for (int i = 0; i < agent_recs(this)[rec].count; i++) {
-        unsigned fl = agent_recs(this)[rec].items[i].flags;
+        ActorItemRec& item = agent_recs(this)[rec].items[i];
         int score = 0;
-        if (fl & 0x1000000) score = (agent_flags130(this) & 4) ? 2 : -10;
-        if (fl & 0x2000000) {
+        if (item.flags & 0x1000000) score = (agent_flags130(this) & 4) ? 2 : -10;
+        if (item.flags & 0x2000000) {
             if ((agent_flags130(this) & 8) && f2c != -1) score += 2;
             else score -= 10;
         }

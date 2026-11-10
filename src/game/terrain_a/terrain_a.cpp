@@ -328,7 +328,6 @@ void Terrain::set_field_b(const float* p)
 float Terrain::spec_weight(int* spec, int* type, int* mode)
 {
     ptype* g = &g_ptypes[*spec];
-    int t;
     if (*mode == 0 && (g->flags & 0x400000) == 0)
         return 0.0f;
     if (*mode == 1) {
@@ -337,16 +336,15 @@ float Terrain::spec_weight(int* spec, int* type, int* mode)
             return 0.0f;
     }
     if (*mode != 2 || (g->flags & 0x80000) != 0) {
-        t = *type;
-        if (t != 2 || (g->flags & 0x8) != 0) {
-        if (t != 10 || (g->flags & 0x800) != 0) {
-        if (t != 4 || (g->flags & 0x10) != 0) {
-        if (t != 12 || (g->flags & 0x1000) != 0) {
-        if (t != 5 || (g->flags & 0x20) != 0) {
-        if (t != 13 || (g->flags & 0x2000) != 0) {
-        if (t != 3 || (g->flags & 0x4) != 0) {
-        if (t != 11 || (g->flags & 0x400) != 0) {
-        if ((t & 7) != 7 || (g->flags & 0x4) != 0)
+        if (*type != 2 || (g->flags & 0x8) != 0) {
+        if (*type != 10 || (g->flags & 0x800) != 0) {
+        if (*type != 4 || (g->flags & 0x10) != 0) {
+        if (*type != 12 || (g->flags & 0x1000) != 0) {
+        if (*type != 5 || (g->flags & 0x20) != 0) {
+        if (*type != 13 || (g->flags & 0x2000) != 0) {
+        if (*type != 3 || (g->flags & 0x4) != 0) {
+        if (*type != 11 || (g->flags & 0x400) != 0) {
+        if ((*type & 7) != 7 || (g->flags & 0x4) != 0)
             return 1.0f;
         }}}}}}}}
     }
@@ -950,7 +948,7 @@ void Terrain::pick_diagonals()
                     rgl::vector4 e3 = ((this->at(x, y + 1).P()) - (this->at(x, y).P()));
                     rgl::vector4 cr;
                     t_cross3(cr, e2, e3);
-                    if (e1.y * cr.y + e1.z * cr.z + e1.x * cr.x > 0.0f) q.diag = 0; else q.diag = 1;   // x is added last (0x46689a: the spilled cr component goes in after the other two)
+                    if (e1.y * cr.y + cr.x * e1.x + e1.z * cr.z > 0.0f) q.diag = 0; else q.diag = 1;
                     break; }
                 case 0:
                 case 2:

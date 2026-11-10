@@ -150,24 +150,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
     int mesh_color = 0;                             // written by append_mesh, tints the cloned meshes
 
-    if (hand != 0) {
-        // ---- only the hand-held weapon ------------------------------------------------------------
-        // one full-expression: the name is a temporary built straight into make_lod_mesh's argument (0x48254d:
-        // tstring(const char*) on [esp+0x38], no copy) and destroyed after the push (0x48256e); a named `nm`
-        // initialised from the conditional was a copy of a temporary (an extra 0x80-byte buffer and destructor)
-        vpush_i(a->fx->groups, (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
-                   ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
-                   : tstring("Error: Invalid item"), false));
-        float* e = (float*)a->fx->elems;
-        *(float*)((char*)e + 0x944) = 0.2f;
-        *(float*)((char*)e + 0xb20) = 0.25f;
-        *(float*)((char*)e + 0xcfc) = 0.25f;
-        *(float*)((char*)e + 0xed8) = 0.3f;
-        float f = 3.1f;
-        a->set_fbc(&f);
-        a->shadow_radius = 2.1f;
-        a->vc4 = vector4(0.0f, 0.0f, 1.3f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
-    } else {
+    if (!(hand != 0)) {
         // ---- the character's weapon ---------------------------------------------------------------
         ItemRef* w = &eq->weapon;
         if (w->item >= 0) {
@@ -215,7 +198,12 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 ELEM(9)->add_group((int)wl);
             int c3 = (wflags & 0x80000000) ? 1 : legs_covered;
             ap[3] = wl;
-            if (c3 == 0) {
+            if (!(c3 == 0)) {
+                if (ap[0]) lod_release(ap[0]);
+                if (ap[1]) lod_release(ap[1]);
+                if (ap[2]) lod_release(ap[2]);
+                ap[0] = ap[1] = ap[2] = 0;
+            } else {
                 ((lod2_a*)ap[0])->transform((matrix*)mtx);
                 ELEM(9)->add_group((int)ap[0]);
                 if (ap[2]) {
@@ -226,11 +214,6 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     ((lod2_a*)ap[1])->transform((matrix*)mtx);
                     ELEM(9)->add_group((int)ap[1]);
                 }
-            } else {
-                if (ap[0]) lod_release(ap[0]);
-                if (ap[1]) lod_release(ap[1]);
-                if (ap[2]) lod_release(ap[2]);
-                ap[0] = ap[1] = ap[2] = 0;
             }
         }
 
@@ -377,6 +360,23 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         a->set_fbc(&f);
         a->shadow_radius = 1.1f;
         a->vc4 = vector4(0.0f, 0.0f, 1.1f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
+    } else {
+        // ---- only the hand-held weapon ------------------------------------------------------------
+        // one full-expression: the name is a temporary built straight into make_lod_mesh's argument (0x48254d:
+        // tstring(const char*) on [esp+0x38], no copy) and destroyed after the push (0x48256e); a named `nm`
+        // initialised from the conditional was a copy of a temporary (an extra 0x80-byte buffer and destructor)
+        vpush_i(a->fx->groups, (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
+                   ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
+                   : tstring("Error: Invalid item"), false));
+        float* e = (float*)a->fx->elems;
+        *(float*)((char*)e + 0x944) = 0.2f;
+        *(float*)((char*)e + 0xb20) = 0.25f;
+        *(float*)((char*)e + 0xcfc) = 0.25f;
+        *(float*)((char*)e + 0xed8) = 0.3f;
+        float f = 3.1f;
+        a->set_fbc(&f);
+        a->shadow_radius = 2.1f;
+        a->vc4 = vector4(0.0f, 0.0f, 1.3f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
     }
 
     // ---- common tail -----------------------------------------------------------------------------
@@ -386,10 +386,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     {
         lod_mesh2* br = *out_body;
         if (br) {
-            if (br->count == 0)
-                lod_release(br);
-            else
-                vpush_i(a->fx->groups, br);
+            if (!(br->count == 0)) { vpush_i(a->fx->groups, br); } else { lod_release(br); }
         }
     }
 

@@ -848,24 +848,19 @@ lod_group* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
         if (copy) {
             vpush(g->lists[level], *it);
         } else {
-            mesh* mm = ((rgl::mesh*)*it)->clone();
-            vpush(g->lists[level], mm);
+            vpush(g->lists[level], ((rgl::mesh*)*it)->clone());
         }
         if (level + 1 > g->count)
             g->count = level + 1;
     }
     for (int k = 1; k < g->count - 1; k++) {
-        std::vector<mesh*>& prev = g->lists[k - 1];
-        std::vector<mesh*>& cur = g->lists[k];
-        if (cur.size() == 0 && prev.size() > 0) {
-            cur.resize(prev.size());
-            for (unsigned j = 0; j < prev.size(); j++) {
+        if (g->lists[k].size() == 0 && g->lists[k - 1].size() > 0) {
+            g->lists[k].resize(g->lists[k - 1].size());
+            for (unsigned j = 0; j < g->lists[k - 1].size(); j++) {
                 if (copy) {
-                    vat(cur, j) = vat(prev, j);
+                    vat(g->lists[k], j) = vat(g->lists[k - 1], j);
                 } else {
-                    mesh** src = &vat(prev, j);
-                    mesh** dst = &vat(cur, j);
-                    *dst = ((rgl::mesh*)*src)->clone();
+                    *(g->lists[k].begin() + j) = ((rgl::mesh*)*(g->lists[k - 1].begin() + j))->clone();
                 }
             }
         }
@@ -1074,8 +1069,8 @@ stream_base* read_mesh(stream_base* s, mesh* m)
         vat(m->v50, i).f5c = 0;
         vertex60* v = &vat(m->v50, i);
         s->r_float(&v->pos.x).r_float(&v->pos.y).r_float(&v->pos.z);
-        vat(m->v50, i).normal = vat(m->v50, i).pos;
-        vat(m->v50, i).f58 = vat(m->v50, i).color;
+        m->v50[i].normal = m->v50[i].pos;
+        m->v50[i].f58 = m->v50[i].color;
         for (int j = 0; j < 2; j++) {
             float* f = &vat(m->v50, i).uv.x + j * 2;
             s->r_float(f).r_float(f + 1);

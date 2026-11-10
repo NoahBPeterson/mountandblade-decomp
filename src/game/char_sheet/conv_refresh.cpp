@@ -121,7 +121,7 @@ void Rec1208::refresh(int sel, int* out)
             float limit = size_y * 23.5f - 0.02f;
             float X = size_y;                            // original [esp+0x28]
             float v0, v1;
-            if (limit < text_px && (flags & 0x80000)) {
+            if (text_px > limit && (flags & 0x80000)) {
                 flags = 0x100;
                 buttons[i]->set148((const int*)&flags);
                 float r = text_px;

@@ -292,7 +292,7 @@ int GameData::pick_random_item(int t0, int t1, int t2, int t3)
         }
         unsigned tf = k->type_flags;
         unsigned t = tf & 0xff;
-        unsigned f = tf >> 12;
+        unsigned char f = tf >> 12;
         if ((tf & 0x10000) != 0 && (f & 1) == 0 &&
             (t == (unsigned)t0 || t == (unsigned)t1 || t == (unsigned)t2 || t == (unsigned)t3)) {
             float v = (float)troops[player].level;
@@ -730,8 +730,9 @@ void* widget_mgr::set_mesh_matrix(int idx, const void* src)
     if (((OvNode*)widgets[idx])->s2) memcpy((char*)((OvNode*)widgets[idx])->s2 + 0xcc, &m, 0x40);
     if (((OvNode*)widgets[idx])->s1) memcpy((char*)((OvNode*)widgets[idx])->s1 + 0xcc, &m, 0x40);
     if (((OvNode*)widgets[idx])->s3) memcpy((char*)((OvNode*)widgets[idx])->s3 + 0xcc, &m, 0x40);
+    void* slot = &widgets[idx];
     if (((OvNode*)widgets[idx])->s4) memcpy((char*)((OvNode*)widgets[idx])->s4 + 0xcc, &m, 0x40);
-    return &widgets[idx];
+    return slot;
 }
 
 // the widget `idx` is re-read from the manager's vector at every use (cl keeps no copy across the virtual calls)

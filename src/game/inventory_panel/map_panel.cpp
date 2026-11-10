@@ -142,6 +142,9 @@ typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     
 void MapPanel::update_target()
 {
     // ---- 0x5191ee: party-label column hover ---------------------------------------------------------
+    int count;
+    vector4 nearp, np, fp;
+    vector4 dir;
     if (f2d5) {
         // The mouse is copied before the call and the box is moved in place: w and h end up in mx, dy reads mn.y.
         float dx = g_gui.mouse[0];
@@ -200,8 +203,6 @@ void MapPanel::update_target()
     // Slots read off the original: the hover box mn/mx above share farp/bestpt (S+0x1c) and nearp (S+0x40); dir shares hp (S+0x2c);
     // the block scopes below are what lets those lifetimes overlay.
     {
-    vector4 nearp, np, fp;
-    vector4 dir;
     {
         {
             vector4 farp;
@@ -219,7 +220,7 @@ void MapPanel::update_target()
             if (np.z < g_script.level->ground->e44.z) {
                 float t = fabsf((g_script.level->ground->e44.z - np.z) / dir.z);
                 vector4 m = dir * t;
-                np.x += m.x; np.y += m.y; np.z += m.z;
+                np.x = np.x + m.x; np.y += m.y; np.z += m.z;
             }
             if (fp.z < g_script.level->ground->e44.z) {
                 float t = fabsf((g_script.level->ground->e44.z - fp.z) / dir.z);
@@ -255,7 +256,6 @@ void MapPanel::update_target()
     {
         vector2 seg_a(np.x, np.y);             // the sweep's rectangle corners: x and y only
         vector2 seg_b(fp.x, fp.y);
-        int count;
         g_script.level->query_segment((const float*)&seg_a, (const float*)&seg_b, 0x110, hits, &count);   // 0x439870
 
         int n = count;

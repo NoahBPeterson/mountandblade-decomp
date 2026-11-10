@@ -105,11 +105,14 @@ void gui_manager::build_frames()
         int color = 0xa0ffffff;
         float uv1[2] = { 0.1f, 1.0f };
         float uv0[2] = { 0.0f, 0.0f };
-        float z[4];
-        float base[3] = { 0.0f, 0.0f, 0.0f };
+        float z[3];
+        float base[4];
 
         z[0] = 0.1f;
         z[1] = 1.0f;
+        base[0] = 0.0f;
+        base[1] = 0.0f;
+        base[2] = 0.0f;
         ((PanelMesh*)m)->build_panel(base, z, uv0, uv1, &color);
         m->compute_normals();
     }

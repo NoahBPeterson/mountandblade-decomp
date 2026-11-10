@@ -72,3 +72,4 @@
 ../src/game/world_data/world_data.cpp  ?append@DropDown@@UAEXPBUtstring@@@Z  00493400  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?mark_kind@GameW@@QAEXH@Z  00490990  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?render@DropDown@@UAEXPAUscene@rgl@@PAMHH@Z  004932a0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?render@ContainerBase@@UAEXPAUscene@rgl@@PAMHH@Z  00490710  /O2 /MT /Gy /TP

@@ -482,6 +482,7 @@ int ViewObj_s257f0::find_listener_agent()
 // @ 0x5261e0
 void MissionBlocker::frame_update(float dt)
 {
+    float v[2];
     if (g_mt_inited)
         EnterCriticalSection(&g_mt_cs);
 
@@ -678,11 +679,11 @@ restore:
                 bool changed = false;
                 int* p = (int*)(base + 0x4c);
                 for (int m = 3; m != 0; m--) {                // the original counts down (cl unrolls an up-counting constant loop)
-                    if (*p == 0) {
+                    if (!(*p == 0)) {
+                        *p = 0;
+                    } else {
                         *p = 1;
                         changed = true;
-                    } else {
-                        *p = 0;
                     }
                     p = (int*)((char*)p + 0x6c);
                 }
@@ -752,7 +753,6 @@ restore:
             }
             if (f2c8 == -1) {
                 g_gui.set_overlay(0, 1);
-                float v[2];
                 v[0] = 0.5f;
                 v[1] = 0.5f;
                 g_gui.set_view(v);
@@ -761,8 +761,8 @@ restore:
     }
 
     // ---- item-use keys + sound slots ---------------------------------------------------------------
-    unsigned char flag13 = 0;   // esp+0x13 ("value valid")
     int val14 = -1;             // esp+0x14, the slot sdt had
+    unsigned char flag13 = 0;   // esp+0x13 ("value valid")
     if (g_mission_s261e0->local_id >= 0) {
         if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 4 && f2d4 != 0) {
             WL_MARKER(12)
@@ -816,7 +816,7 @@ restore:
             int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
             for (int i = 0; i < *slots; i++)
                 ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x16);
-            if (g_script.trigger_result.value != 0)
+            if (0 != g_script.trigger_result.value)
                 flag13 = 1;
         }
     }
@@ -824,12 +824,12 @@ restore:
     if (g_cfg.enable_edit_mode && g_keyboard.down[56] && g_keyboard.down[38] == 0 && g_keyboard.prev[38] != 0)
         ((Mission*)g_mission_s261e0)->light_entities((rgl::mesh**)((char*)g_mission_s261e0 + 0x6340), g_mission_s261e0->f633c);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
 
-    if (f2d8 == 0) {
-        b6 = false;
-    } else if (f2dc == 0) {
+    if (!(f2d8 == 0)) { if (f2dc == 0) {
         int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
         for (int i = 0; i < *slots; i++)
             ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x1e);
+        b6 = false;
+    } } else {
         b6 = false;
     }
 
@@ -1909,6 +1909,7 @@ static inline bool area_bit1_s29ec0()
 // @ 0x529ec0
 void Screen_s29ec0::f_529ec0()
 {
+    contact c;
     Agent_s29ec0* me = table_agent_s29ec0(g_mission_s29ec0->local_id);
     int mode = -1;
     int target = -1;
@@ -1937,7 +1938,6 @@ void Screen_s29ec0::f_529ec0()
         int n = count;
         for (int i = 0; i < n; i++) {
             if (found[i]->shape_type() == 2) {
-                contact c;
                 if (shape_contact_count((shape_base*)found[i], &cap, 1, &c)) {
                     vector4 hit = c.point;
                     vector4 d = hit - pos;
@@ -1969,9 +1969,9 @@ void Screen_s29ec0::f_529ec0()
             t.z = 0.0f;
         }
         vector4 s = t * 0.1f;
-        cap.p0.x = s.x + cap.p0.x;
-        cap.p0.y = s.y + cap.p0.y;
-        cap.p0.z = s.z + cap.p0.z;
+        cap.p0.x = cap.p0.x + s.x;
+        cap.p0.y = cap.p0.y + s.y;
+        cap.p0.z = cap.p0.z + s.z;
     }
     best += 1.0f;
 
@@ -2023,17 +2023,17 @@ void Screen_s29ec0::f_529ec0()
                     continue;
                 }
                 if (flags == 10 && len < 4.0f) {
+                    target = id;
                     mode = 8;
                     best = len;
-                    target = id;
                     second = len;
                     continue;
                 }
             } else if (p.kind == 5) {
                 if (g_mission_ctx.passage_menu > 0 && p.m1a4 >= 0 && p.m1a4 < g_mapobjs_s29ec0[g_mission_ctx.passage_menu].count) {
+                    target = id;
                     mode = 6;
                     best = len;
-                    target = id;
                     second = len;
                     continue;
                 }
@@ -2973,8 +2973,8 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
             float nv = v + amount;
             if (1.0f < nv) nv = 1.0f;
 
-            bool any = false;
             int n = *elems - 2;
+            bool any = false;
             for (int i = *pidx + 1; i < n; i++) {
                 if (elem_get_s2c2b0(&((BrushElem_s2c2b0*)((char*)elems + 0xc))[i], cell) > 0.98f)
                     any = true;
@@ -3008,8 +3008,8 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
             } else {
                 // response = average of the nine surrounding terrain tiles, blended by `amount`
                 int x = cell[0];
-                int yp1 = cell[1] + 1;
                 int cnt = 0;
+                int yp1 = cell[1] + 1;
                 float sum = 0.0f;
                 if (x >= 0 && x < w && yp1 >= 0 && yp1 < h) {
                     sum = cells[x * 251 + yp1].f88
@@ -3023,7 +3023,7 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
                              + cells[xp1 * 251 + yp1].h2;
                         cnt++;
                     }
-                    if (xp1 >= 0 && xp1 < w && cell[1] >= 0 && cell[1] < h) {
+                    if (xp1 >= 0 && xp1 < w && cell[1] >= 0 && h > cell[1]) {
                         cnt++;
                         sum += cells[xp1 * 251 + cell[1]].f88
                              + cells[xp1 * 251 + cell[1]].h2;

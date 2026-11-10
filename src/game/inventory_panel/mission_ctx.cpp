@@ -560,11 +560,11 @@ void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
 // @ 0x514cd0
 void MissionCtx::start_mission()
 {
+    PartyMgr* pm = PARTIES;
     GameDataV* g = GV;
-    PartyMgr* pm = &g->parties;
     int i = pm->lookup(party[side]);
     Party* p = pm->at(i);
-    build_hero_table(p->stacks[0].troop, g->token_lookup(party[side], 0, 0, 0), party[side], 1);
+    build_hero_table(p->stacks[0].troop, ((GameW*)g)->token_lookup(party[side], 0, 0, 0), party[side], 1);
 }
 
 static inline Rec98* rec98_at(std::vector<Rec98*>::iterator pages, unsigned idx)

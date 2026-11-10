@@ -445,20 +445,17 @@ void Mission::update_prop_flags()
         if (special)
             special->flag = (g_game->f1a20c == 0 && g_game->f1a090 != 0) ? 1 : 0;
         for (unsigned i = 0; i < props.size(); i++) {
-            PlacedObj& e = props[i];
-            if (e.kind == 0) {
-                if ((g_propkinds[e.id].flags11 & 0x40) == 0)
+            if (props[i].kind == 0) {
+                if ((g_propkinds[props[i].id].flags11 & 0x40) == 0)
                     continue;
             } else {
-                if (e.kind != 1 && e.kind != 5)
+                if (props[i].kind != 1 && props[i].kind != 5)
                     continue;
             }
-            {
-                if (g_game->f1a090 != 0 && g_game->f1a20c == 0)
-                    e.ent->flag = 1;
-                else
-                    e.ent->flag = 0;
-            }
+            if (g_game->f1a090 != 0 && g_game->f1a20c == 0)
+                props[i].ent->flag = 1;
+            else
+                props[i].ent->flag = 0;
         }
     }
 }

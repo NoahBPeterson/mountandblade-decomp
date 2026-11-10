@@ -17,18 +17,17 @@ int   g_str_grow_add = 128;    // 0x5a8e60 (image value 0x80: growth step)
 float g_str_grow_mul = 2.0f;    // 0x5a8e64 (image value 2.0: growth factor)
 
 // @ 0x42bac0
-// NONMATCHING (17 bytes): same instructions, `this`/new-size registers swapped (ebx/ebp)
 void tstring::grow(unsigned n)
 {
-    unsigned need, a, b;
+    unsigned need, a, c, b;
     char* nb;
     if (n > 0) {
         need = n + 1;
         if ((unsigned)cap < need) {
             a = (unsigned)((int)cap * g_str_grow_mul);
-            b = cap + g_str_grow_add;
-            b = (a > b) ? a : b;
-            b = (b > need) ? b : need;
+            c = (unsigned)(cap + g_str_grow_add);
+            if (a > c) b = a; else b = c;
+            if (b <= need) b = need;
             nb = new char[b];
             if (buf) {
                 memcpy(nb, buf, len + 1);
@@ -40,16 +39,16 @@ void tstring::grow(unsigned n)
     }
 }
 // @ 0x42bb50
-// NONMATCHING (19 bytes): same instructions and size; `this`/new size are in esi/edi in the original, edi/esi here
 void tstring::reserve(unsigned n)
 {
     if (n > 0) {
         unsigned need = n + 1;
         int old = cap;
         if ((unsigned)old < need) {
-            unsigned b = (unsigned)(old * g_str_grow_mul);
-            unsigned c = old + g_str_grow_add;
-            if (c > b) b = c;
+            unsigned a = (unsigned)(cap * g_str_grow_mul);
+            unsigned c = (unsigned)(cap + g_str_grow_add);
+            unsigned b;
+            if (a > c) b = a; else b = c;
             if (b <= need) b = need;
             char* nb = new char[b];
             if (buf) delete[] buf;

@@ -33,10 +33,10 @@ void CharSheet::update_detail()
     char attr[0x200];
     if (f_2d8 == 1) {
         // skills page: one skill row
+        int anchor = 0;
         int id = f_228[row];
         SkillRec* sk = &g_skill_tbl[id];
         tstring s = skill_row_title(sk);
-        int anchor = 0;
         if (id == 2)
             anchor = g_module_settings.skill_prisoner_management_bonus;
         else if (id == 1)

@@ -605,6 +605,8 @@ void GameData::remove_gold(int gold, int troop)
         value_message(this, gold, "ui_you_lost_value", &g_sound_mgr.slot[9]);
 }
 
+static inline bool quest_bit(unsigned v, int n) { return ((v >> n) & 1) != 0; }
+
 // @ 0x49b930
 void GameData::start_quest(int quest, int giver_troop)
 {
@@ -612,7 +614,7 @@ void GameData::start_quest(int quest, int giver_troop)
     quests[quest].giver_troop = giver_troop;       // +0x118
     quests[quest].f11c = (float)(g_ticks[f13b18] - *(__int64*)&f13b20) * 1e-5f;   // +0x11c (game time when started)
     QuestRec* rec = &quests[quest];
-    if (((rec->flags2 >> 1) & 1) || !rec->f64_flag) {
+    if (quest_bit(rec->flags2, 1) || !rec->f64_flag) {
         tstring name(quests[quest].text);
         char buf[0x200];
         {
@@ -624,8 +626,8 @@ void GameData::start_quest(int quest, int giver_troop)
         g_gui.add(tstring(buf), 0xffd0f0c8);
         g_sound_mgr.play(g_sound_mgr.slot[2], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
         rec->flags = 0x100;
+        WL_MARKER(13)
     }
-    WL_MARKER(13)
 }
 
 struct LabelScale { float x, y; LabelScale(float a, float b) : x(a), y(b) {} };

@@ -109,3 +109,4 @@
 ../src/game/agent4/agent_logic.cpp  ?tick@Agent@@QAEXXZ  0045ff30  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  _$E1  00547d80  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  _$E2  005484b0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?pick_front@Agent@@QAEIXZ  0043b9e0  /O2 /MT /Gy /TP

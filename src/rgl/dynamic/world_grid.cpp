@@ -448,7 +448,7 @@ __forceinline ground_g136* copy_nonscalar(ground_g136* f, ground_g136* l, ground
 void vec136::resize(size_type _Newsize, ground_g136 _Val)
 {
     if (size() < _Newsize)
-        _Insert_n(_Mylast, _Newsize - size(), _Val);
+        _Insert_n(iterator_::mk(_Mylast)._Ptr, _Newsize - size(), _Val);
     else if (_Newsize < size())
         erase(iterator_::mk(_Myfirst + _Newsize), iterator_::mk(_Mylast));
 }

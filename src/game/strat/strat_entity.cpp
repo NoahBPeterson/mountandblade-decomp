@@ -188,7 +188,7 @@ void rgl::strategic_entity::build_shadow_frame(matrix* m, vector4* amb)
 {
     vector4* o = &m->o;
     *o = local.o;
-    *o = tp(local, vc4);
+    *o = local.transform_point_inl(vc4);
     vector4 d;
     owner->sample_lights(&local.o, &d, amb);
     if (d.z > -0.1f) d.z = -0.1f;

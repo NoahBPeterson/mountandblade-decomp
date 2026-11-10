@@ -47,3 +47,4 @@
 ../src/game/terrain_a/terrain_a.cpp  ?rule_accepts@Mission@@QAE_NPAUSpawnRec@@PAUStack@@HDDD@Z  00467940  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?set_bits@Terrain@@QAEXABIABH0@Z  00464960  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?ground_color@Terrain@@QAEPAUvector4@rgl@@PAU23@PBM@Z  00464d50  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?spec_weight@Terrain@@QAEMPAH00@Z  00464bf0  /O2 /MT /Gy /TP

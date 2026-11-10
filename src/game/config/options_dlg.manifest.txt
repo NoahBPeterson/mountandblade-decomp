@@ -7,3 +7,4 @@
 ../src/game/config/options_dlg.cpp  ?run_settings_probe@@YAXXZ  004b99c0  /O2 /MT /Gy /TP
 ../src/game/config/options_dlg.cpp  ?container_prop_string_impl@@YGJPAUIDxDiagContainer@@PAGPADI@Z  004b9a30  /O2 /MT /Gy /TP
 ../src/game/config/options_dlg.cpp  ?paint@OptionsDlg@@QAEXXZ  004b9af0  /O2 /MT /Gy /TP
+../src/game/config/options_dlg.cpp  ?parse_url@@YAXPBDPADH1H1HPAJ@Z  004b8ff0  /O2 /MT /Gy /TP

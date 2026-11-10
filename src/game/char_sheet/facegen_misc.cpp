@@ -134,10 +134,11 @@ SkinVec::~SkinVec()
 void BigArray::erase(Skin** out, Skin* first, Skin* last)
 {
     if (first != last) {
-        Skin* p = ((Skin* (__cdecl*)(Skin*, Skin*, Skin*, Skin**))copy_configs_forward)(last, this->end, first, out);
+        Skin* end0 = this->end;
+        Skin* p = ((Skin* (__cdecl*)(Skin*, Skin*, Skin*, Skin*))copy_configs_forward)(last, end0, first, end0);
         Skin* e = this->end;
-        for (; p != e; ++p)
-            p->~Skin();
+        for (Skin* i = p; i != e; ++i)
+            i->~Skin();
         this->end = p;
     }
     *out = first;
@@ -248,7 +249,6 @@ void Animator::pack_state(PackedState* out)
     out->a |= (unsigned __int64)(int)(scale * 63.0f) << 30;
     int i = 0;
     if (i < skin_vec.first[cur].n_face_keys) {
-        float* v = &weights[i];
         do {
             int wi = 1;
             int sh = i * 3;
@@ -256,9 +256,8 @@ void Animator::pack_state(PackedState* out)
                 wi = 2;
                 sh -= 0x3f;
             }
-            float fv = *v * 7.0f;
+            float fv = weights[i] * 7.0f;
             int fi = grid_count(fv);
-            ++v;
             ((unsigned __int64*)out)[wi] |= (unsigned __int64)fi << sh;
         } while (++i < skin_vec.first[cur].n_face_keys);
     }

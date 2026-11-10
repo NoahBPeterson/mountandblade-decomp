@@ -61,7 +61,9 @@ void Terrain::build_entity()
     vector4 center;
     center.x = wx - 10.0f;
     center.y = wy - 10.0f;
-    center.z = (wx + wy) * 0.5f;
+    float z = wx;
+    z += wy;
+    center.z = z * 0.5f;
     vector4 tv(5.0f, 5.0f, 0.0f);
 
     entity** e = sent;
@@ -96,11 +98,11 @@ void Terrain::build_entity()
             iy = 2;
         else
             iy = 1;
-        entity** ep = &sent[ix * 3 + iy];
-
         m->f214 = 10;
+        entity** ep = &sent[ix * 3 + iy];
         entity* e0 = *ep;
-        e0->meshes.push_back(m);
+        mesh* mm = m;
+        e0->meshes.push_back(mm);
         e0->recalc();
 
         if (g_use_shaders == 0)
