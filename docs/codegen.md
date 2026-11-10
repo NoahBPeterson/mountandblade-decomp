@@ -948,6 +948,10 @@ Derive float sum **grouping from the assembly, not from a decompile**.
         r[0] = r0; r[1] = r1;
     }
     ```
+    In the tree the row type is `rot2_row` in `src/include/rot2.h`, not `vec.h`'s `Vec2`. The operators were first
+    added to the shared `Vec2`, and that swapped two stack slots in `MapPanel::draw_party_line` 0x51c090, a
+    function that never uses them: new inline members in a header that 112 sources include shift cl's symbol ids
+    (6.2). Put a new inline helper in the narrowest header that needs it.
     Each piece maps to an instruction pattern:
     - **A `double` bound to `const float&`** makes a float temporary at each use: `fst dword [esp]` / `fld [esp]`,
       and a second temporary later (here, the dead angle slot). That is the "rounded copy kept beside the unrounded
