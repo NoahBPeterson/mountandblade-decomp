@@ -322,48 +322,43 @@ void render_batch::add_mesh(scene* e, mesh* m)
 // original, which re-reads vel/pos/angvel from memory after each update.
 static inline void add_to(vector4& a, const vector4& b) { a.x = b.x + a.x; a.y = b.y + a.y; a.z = b.z + a.z; }
 static inline void scale_f(float& a, const float& k) { a = k * a; }
+static inline void scale_v(vector4& a, const float& k) { a.x = k * a.x; a.y = k * a.y; a.z = k * a.z; }
 // @ 0x412150
 void emitter::update(const float* pdt, const matrix& frame)
 {
     world = frame * local;
     float maxd2 = 0.0f;
     std::vector<emitter_particle>::iterator it;
-    float* pv;
-    for (it = particles.begin(), pv = (float*)((char*)&*it + 0x48); it != particles.end(); ++it, pv += 25) {
+    for (it = particles.begin(); it != particles.end(); ++it) {
+        float& vz = it->vel.z;
         vector4 g = vmul(accel, accel_scale);
         vector4 gd = (g * *pdt);
-        pv[-2] = gd.x + pv[-2];
-        pv[-1] = gd.y + pv[-1];
-        pv[0] = gd.z + pv[0];
+        it->vel.x = gd.x + it->vel.x;
+        it->vel.y = gd.y + it->vel.y;
+        vz = gd.z + vz;
         if (noise_amount > 0.01f) {
-            vector4 in = *(vector4*)&pv[-6];
+            vector4 in = it->pos;
             float w = (float)fmod((double)((float)g_ticks[noise_index] * 1e-5f), 4000.0);   // 0x412240: _CIfmod 0x536a6a
             in.z = w * noise_scale * 0.2f + in.z;
             vector4 out;
             noise_gradient(noise_scale, &in.x, &out.x);
             if (flags & 0x10000)
                 out.z = 0.0f;
-            float f = noise_amount * *pdt;
+            float f = (double)noise_amount * *pdt;
             vector4 nd = (out * f);
-            pv[-2] = nd.x + pv[-2];
-            pv[-1] = nd.y + pv[-1];
-            pv[0] = nd.z + pv[0];
+            add_to(it->vel, nd);
         }
-        float kd = drag * *pdt;
+        float kd = drag * (double)*pdt;
         float k = 1.0f - kd;
-        pv[-2] = k * pv[-2];
-        pv[-1] = k * pv[-1];
-        pv[0] = k * pv[0];
-        vector4 dp = (*pdt * *(vector4*)&pv[-2]);
-        add_to(*(vector4*)&pv[-6], dp);
-        float sk = 1.0f - spin_drag * *pdt;
-        scale_f(pv[5], sk);
-        pv[4] = *pdt * pv[5] + pv[4];
-        pv[2] = *pdt / lifetime + pv[2];
-        float dx = pv[-6] - world.o.x;
-        float dy = pv[-5] - world.o.y;
-        float dzz = pv[-4] - world.o.z;
-        float d2 = dx * dx + (dy * dy + dzz * dzz);
+        scale_v(it->vel, k);
+        vector4 dp = (*pdt * it->vel);
+        add_to(it->pos, dp);
+        float sd = spin_drag * (double)*pdt;
+        float sk = 1.0f - sd;
+        scale_f(it->angvel, sk);
+        it->angle = *pdt * it->angvel + it->angle;
+        it->age = *pdt / lifetime + it->age;
+        float d2 = (it->pos - world.o).length_squared();
         if (d2 > maxd2)
             maxd2 = d2;
     }

@@ -320,6 +320,19 @@ compiler computes a trip count and uses `mul`.
   removing it shrinks the function.
 - **An element reloaded at every use is a reference, not a cached pointer (M&B `Terrain::light_particle` 0x471b30).** The original walks `p->meshes[k]` with a pointer in `ebx` and does `mov eax,[ebx]` before every `m->...` access, so there is no register-held `m`. `mesh* m = p->meshes[k];` caches it in `esi` (aligned 1296); `mesh*& m = p->meshes[k];` reloads it like the original (aligned 1025, size 1288 -> 1266). The same function: two scale temporaries that the original keeps in different slots must be two locals (`d`, `d2`), not one reused (-259 aligned). `Terrain::scatter` 0x4650f0: reading `g_ptypes[sel]` at each of its two uses instead of through a `ptype* gs` local gave +94 identical, and a `float rr = (float)(rand() % N) * k` expression written inline (instead of an `int r` temp) lets cl convert and scale before the unrelated loads, as the original does (-52 aligned). `if (x <= 1) a; else {b}` reproduces an original that falls through into the `a` arm and `jg`s to `b`, where `a = 0; if (x > 1) {b}` puts `b` inline.
 
+- **A pointer to an element of a global's array is not a local when the original reloads the global at each use (M&B
+  `pick_slot_item` 0x46b190, Gemini fp_gem wave 2026-11-10).** `Troop* t = g_game->troops + troop;` hoisted a `g_game`
+  read onto a path where the original never touches it (equivalence FAIL: an unmapped read) and moved registers;
+  writing `g_game->troops[troop]` at each of the three sites gave 240 -> 132 aligned and FAIL -> WEAK with 0
+  mismatches. Then **`(x & 0x80000000) == 0` instead of `(int)x >= 0`** for the sign-bit test gave 132 -> 126.
+- **Pass a cast expression straight to a `const&` parameter instead of a named local (M&B Operation::execute 0x49fa10,
+  `val_min` / `val_max`, si_gem 2026-11-10).** `int a = params[0], b = params[1]; min_int(a, b)` names two
+  address-taken locals; `min_int((int)params[0], (int)params[1])` binds each `const int&` to an unnamed temporary, as
+  the original does: +1 case each (526 -> 527 -> 528), and the stack-renamed count rose 534 -> 536.
+- **Reloads at the end of a loop body may belong in the `for` step (tentative: one case).** Opcode 1225 of
+  Operation::execute: moving `main = g->main_party; pm = &g->parties;` from the body's tail into the step clause,
+  `for (...; i++, main = g->main_party, pm = &g->parties)`, gave +1 case (529 -> 530).
+
 ---
 
 ## 5. Classes, value types and layout
@@ -1001,6 +1014,31 @@ Derive float sum **grouping from the assembly, not from a decompile**.
     Each grid took a few minutes on the laptop compile server. So: compile a proposed shape **exactly as given** first,
     then grid its dimensions, before writing it off; `tools/matching/vsearch.py --beam` searches combinations the
     same way. The grids are in `work/match/rotgrid/`.
+  - **Gemini 4 Carbon fp_gem wave, 2026-11-10: rows that matched only within a float tolerance (levers from the
+    transcripts, `work/opencode/levers_fp_gem.md`).**
+    - *A combination, not a single edit (`emitter::update` 0x412150, 24 -> 5 aligned; 66 equivalence inputs
+      bit-identical).* Typed iterator fields (`it->vel`, `it->pos`) for a raw `0x48`-offset `float*` walk, in-place
+      helpers (`scale_v(vector4&, const float&)`, `add_to`), a `float& vz` reference for the z lane only, and
+      `length_squared()` for the distance gave 13; `(double)noise_amount * *pdt` and `drag * (double)*pdt` then gave 5.
+      Each piece alone measured worse (33-164). A `(double)` product stored straight to a float rounds once from an
+      exact product, so it is value-neutral there.
+    - *Per-lane association can differ inside one inlined transform (FxDef::skin 0x4291c0, 489 -> 451, -FP gone).*
+      The x lane is `pos.x*M.s.x + (f.x*pos.y + u.x*pos.z)`, the y and z lanes `f.y*pos.y + (s.y*pos.x + u.y*pos.z)`:
+      copy each lane's grouping from the instructions; don't assume the three lanes share one.
+    - *A lane-asymmetric helper body (`compute_normals` 0x451c50, 800 -> 18, FAIL -> WEAK).* In the member helper
+      `add_inl`, `x += o.x; y += o.y; z = z + o.z;` (z spelled differently) gave 58 -> 18; re-deriving
+      `v70[v50[v90[i].a].index].a` in each edge expression instead of a named `p0` gave a further 40 bytes.
+    - *Unnamed temporaries keep a dot product's lanes on the stack (MapPanel 0x51a2d0, 178 -> MATCH).*
+      `V::dot(pt - *a, n) / V::dot(*b - *a, n)` with no `d`/`e` locals gave 18; the rest was the result built in
+      place in `out`, which the original returns in eax: a by-value `vector4` return (11.3). The committed spelling
+      is an explicit `out->vector4::vector4(...)`; the clean form is the by-value signature.
+    - *Operand order of a quaternion sum, and unnamed temporaries (fx_anim 0x422130, 1437 -> 838, FAIL -> PASS).*
+      `quaternion().set(...) + quaternion().set(...)` instead of named `qa`/`qb`, and `q = t2 + t1`. The frame stays
+      0x10 short because `FxAnim::chain` (0x423b60) is an out-parameter in `fx_anim.h` but returns a `quaternion` by
+      value in the original: fix the header before the next attempt.
+    - *A `double` average scale and one object for three rotated vectors (light_mesh 0x47b7b0, 2855 -> 323).*
+      `double k = (col.x + col.y + col.z) * 0.33f; c.x *= k; ...` gave 1238 -> 826; keeping the three rotated
+      vectors in one struct object gave 323. Equivalence coverage there is only 1%, so unverified in values.
   - **Taking a re-read out can move registers elsewhere (render_scene's bone cache):** every form without the re-read of `it->m->f224` after the cache store moves `this` and `it` to other registers and stack slots, and costs about 150 instructions.
 
 ### 9.3 `sqrt`
@@ -1763,6 +1801,13 @@ inputs, fake-call arity. Check for them when writing a function.
   without an initialiser. Zero-initialising it is a behaviour change. The
   remaining equivalence difference is then a documented artifact, a different
   stack leftover in each build, not a bug.
+- **A running pointer stepping by the wrong size (M&B `mission` 0x478a10, found 2026-11-10).** A `vector<int>* c`
+  advanced with `c += 1` strode 0x10 bytes where the cells are `sizeof(cell)` = 0x34; indexing `cells[c[0]][c[1]]`
+  fixed it (FAIL -> PASS, aligned 118 -> 29).
+- **A store moved ahead of a read of aliased memory (`PolyMesh::build_geometry` 0x470a00).** `nbr[j] = -1` was written
+  before the centroid accumulate that reads the same memory, putting a NaN pattern into the sum; the original stores
+  it after. The fix alone made the bytes worse (293 -> 326); the match came with `faces[i].centroid += ...` through an
+  inline `operator+=`.
 
 Harness behaviour worth knowing when reading a verdict:
 
@@ -1777,7 +1822,6 @@ Harness behaviour worth knowing when reading a verdict:
     `__stdcall`), unless ecx is itself an object with that vtable;
   - a call whose caller pops the arguments (`__cdecl`).
   Everything else at such a call is still compared.
-
 ---
 
 ## Appendix: tools

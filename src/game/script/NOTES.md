@@ -380,3 +380,21 @@ hero_can_join in execute (variants in bm6o_v1.py, bm6o_v4.py, all measured again
 
 The original object runs at least from 0x49a0b0 to 0x4b1xxx; every reference to 0x5e2590..0x5e25a4 lies in it. party2/camera.cpp is merged here, so `g_script_error` is a true file static.
 `GameCompanion::create_companion_party` is a local view because include/game_data.h still declares the old three-float signature: move it to `GameData` when that header is next edited (no other caller exists).
+
+## Gemini 4 Carbon session si_gem, 2026-11-10 (512 -> 530 cases; per-experiment ledger work/match/gem_si_log.txt,
+## levers read from its transcript in work/opencode/levers_si_gem.md)
+
+- **Prop calls take the real class's method too (1855 +1, 1860 +8).** The forwarder lever applies to MissionView prop
+  calls as well: `((MissionView*)prop_at(...))->set(...)` / `->setup(...)` instead of the forceinline header forwarders
+  `set_position` / `animate_to`, keeping `prop_at`.
+- **Matrix copy: the source's form picks the spelling (1850 +1, 1851 +1).** An lvalue source (`...->frame`,
+  `->start_frame`) copies as `(rgl::matrix&)g_script.pos[i] = ...`; `ASSIGN_MAT` stays right for a by-value source.
+  Plain `script_pos(i) = ...` was 0 and grew the function by 16 bytes.
+- **The named-index lever is per case, not general.** team_set_order_position (1791) wants a pointer `p` into
+  `g_script.pos[]`, `Mission*`-cast calls, a `MissionX* mx` declared after the opaque calls, and the function-scope `i`
+  reused (+2, measured as one bundle); an `int pos` without `p`, or `int p` with `script_pos(p).o`, was -2.
+- **Cast temporaries for `const&` arguments (val_min / val_max, +1 each)** and **reloads in the `for` step (1225, +1)**:
+  see docs/codegen.md section 4.
+- **Declaration order moves picks (1121, +1):** `yes, no, yes_type, no_type`.
+- Measured 0 or worse: 2344 inlined `int q` (-1); the 1920, 1794, 2154, 1968, 1942 (without `int& n`), 1771
+  `Leader*`, 2055 `if (g)` and `quest_at` forwarder variants (0). The first SET_LV tail disagreement is still at 1792.
