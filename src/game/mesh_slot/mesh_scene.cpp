@@ -318,89 +318,55 @@ void MissileU::update_ranged_mesh()
 // apply the drag / tumble.
 void MissileU::update(float dt)
 {
-    char qhit;
-    float tmp;
-    vector4 d;
-    vector4 v;
-    vector4 pa;
-    vector4 pb;
-
     start = pos;
     if (state != 0)
         return;
 
-    // the velocity is a sum of two vector temporaries (vel * speed, and the gravity step); like the original, only some of
-    // the components are spilled to float locals
-    vector4 sv = vel * speed;
-    vector4 gv(dt * 0.0f, dt * 0.0f, dt * (-9.8f));
-    v.x = sv.x + gv.x;
-    v.y = sv.y + gv.y;
-    v.z = sv.z + gv.z;
-    vector4 dp = v * dt;
-    vector4& pp = pos;
-    pp.x += dp.x;
-    pp.y += dp.y;
-    pp.z += dp.z;
-    float& px = pos.x;
-    float& py = pos.y;
-    float& pz = pos.z;
+    vector4 v = vel * speed + vector4(dt * 0.0f, dt * 0.0f, dt * (-9.8f));
+    {
+        vector4 dp = v * dt;
+        pos.x += dp.x;
+        pos.y += dp.y;
+        pos.z += dp.z;
+    }
 
     if (ent->f140 == 0) {
-        float dx = px - prev.x;
-        float dy = py - prev.y;
-        float dz = pz - prev.z;
-        float l2 = dx * dx + dz * dz;
-        l2 += dy * dy;
-        if ((float)sqrt(l2) > 1.7f)
+        if ((pos - prev).length() > 1.7f)
             ent->f140 = 1;
     }
 
+    float s;
     if (troop >= 0)
-        d.z = (float)g_items[troop].weight * 0.01f;
+        s = (float)g_items[troop].weight * 0.01f;
     else
-        d.z = 0.8f;
-    pb.x = d.z * vel.x;
-    d.y = d.z * vel.y;
-    d.z = d.z * vel.z;
-    pa.x = pb.x + pos.x;
-    pb.x = pb.x + start.x;
-    pa.y = d.y + pos.y;
-    pa.z = d.z + pos.z;
-    pb.y = d.y + start.y;
-    pb.z = d.z + start.z;
+        s = 0.8f;
 
+    bool qhit;
     {
-        capsule cap(0.01f, &pb, &pa);
-        qhit = (char)((Missile*)this)->settle(&cap);
+        vector4 d = vel * s;
+        qhit = ((Missile*)this)->settle(&capsule(0.01f, &(d + start), &(d + pos)));
     }
-    if (qhit == 0) {
+    if (!qhit) {
         Blow blow;
         blow.init();                                   // 0x4353a0
-        // shooter agent: mission->pages[shooter>>4] + (shooter&0xf)*0x5928
-        Agent* a = (Agent*)(*(char**)(*(char**)((char*)g_mission + 0x1c) + (shooter >> 4) * 4) + (shooter & 0xf) * 0x5928);
-        int r = a->swing_trace(0, (Missile*)this, &blow, &this->hit);
+        int r = g_mission->agents[shooter].swing_trace(0, (Missile*)this, &blow, &this->hit);
         if (r >= 3) {
             pos = ent->local.o;
-            qhit = 1;
+            qhit = true;
         } else if (r != 0) {
             g_mission->scene->remove_entity(ent->id);
-            state = 2;
             ent = 0;
+            state = 2;
             clk.start = g_ticks[clk.clock];
         } else {
             if (mode == 1) {
-                pb.z = v.z * 0.23f;
-                pa.x = v.x * 0.23f + pos.x;
-                pa.y = v.y * 0.23f + pos.y;
-                pa.z = pb.z + pos.z;
-                d.x = g_mission->view.o.x - pa.x;
-                d.y = g_mission->view.o.y - pa.y;
-                d.z = g_mission->view.o.z - pa.z;
-                if (d.x * vel.x + (d.y * vel.y + d.z * vel.z) < 0.0f
+                vector4 pa = v * g_k0_23 + pos;
+                vector4 d = g_mission->view.o - pa;
+                if (d.x * vel.x + (d.z * vel.z + d.y * vel.y) < 0.0f
                     && g_mission->view.o.z - g_one < pa.z) {
                     mode = 3;
                     if (d.out_length() < 20.0f) {
-                        tmp = v.out_length();
+                        float sp = v.out_length();
                         int snd = 0x35;
                         int t = g_items[item].type_flags & 0xff;
                         if (t == 9) snd = 0x30;
@@ -412,8 +378,7 @@ void MissileU::update(float dt)
                             else if (sub == 0x40000) snd = 0x31;
                             else if (sub == 0x20000) snd = 0x34;
                         }
-                        tmp = tmp * 0.01f + frand() * g_f590c74 + g_f59190c;
-                        sound = g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &pa.x, tmp, 0);
+                        sound = g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &pa.x, sp * 0.01f + frand() * g_f590c74 + g_f59190c, 0);
                         sound_t = (float)g_ticks[0] * 1e-5f;
                     }
                 }
@@ -433,7 +398,7 @@ void MissileU::update(float dt)
         }
     }
 
-    if (qhit != 0) {
+    if (qhit) {
         clk.start = g_ticks[clk.clock];
         __int64 sub = g_items[item].flags & 0xff000;
         if (sub == 0x10000 || sub == 0x80000 || sub == 0x70000) {
@@ -446,25 +411,21 @@ void MissileU::update(float dt)
             update_ranged_mesh();
         }
 
-        Mission* ms_ = g_mission;
-        pb.x = ms_->view.o.x - pos.x;
-        pb.y = ms_->view.o.y - pos.y;
-        pb.z = ms_->view.o.z - pos.z;
-        if (pb.normalize() < 40.0f) {
+        if ((g_mission->view.o - pos).normalize() < 40.0f) {
             int m = mode;
             int snd = -1;
-            if (m == 1 || m == 3 || (m == 0 && shooter == (unsigned)ms_->player_id)) {
+            if (m == 1 || m == 3 || (m == 0 && shooter == (unsigned)g_mission->player_id)) {
                 ItemKind* k = &g_items[item];
                 int type = k->type_flags & 0xff;
-                if (type == 9) snd = (-(unsigned)(m != 1) & 7) + 0x37;
-                else if (type == 8) snd = (-(unsigned)(m != 1) & 7) + 0x36;
+                if (type == 9) snd = (m == 1) ? 0x37 : 0x3e;
+                else if (type == 8) snd = (m == 1) ? 0x36 : 0x3d;
                 else {
                     __int64 sub2 = k->flags & 0xff000;
-                    if (sub2 == 0x10000) snd = (-(unsigned)(m != 1) & 7) + 0x39;
-                    else if (sub2 == 0x30000) snd = (-(unsigned)(m != 1) & 7) + 0x3a;
-                    else if (sub2 == 0x20000) snd = (-(unsigned)(m != 1) & 7) + 0x3b;
-                    else if (sub2 == 0x40000) snd = (-(unsigned)(m != 1) & 7) + 0x38;
-                    else snd = (-(unsigned)(m != 1) & 7) + 0x3c;
+                    if (sub2 == 0x10000) snd = (m == 1) ? 0x39 : 0x40;
+                    else if (sub2 == 0x30000) snd = (m == 1) ? 0x3a : 0x41;
+                    else if (sub2 == 0x20000) snd = (m == 1) ? 0x3b : 0x42;
+                    else if (sub2 == 0x40000) snd = (m == 1) ? 0x38 : 0x3f;
+                    else snd = (m == 1) ? 0x3c : 0x43;
                 }
             }
             if (sound >= 0 && (float)g_ticks[0] * 1e-5f - 0.6f < sound_t)
@@ -476,7 +437,7 @@ void MissileU::update(float dt)
 
 after_item_sound:
     if (ent != 0) {
-        speed = (float)sqrt(v.y * v.y + (v.z * v.z + v.x * v.x));
+        speed = v.length();
         v.normalize();
         speed = speed - (speed * speed * dt) * 0.0027f;
         if (speed > 0.0001f) {
@@ -485,21 +446,16 @@ after_item_sound:
         }
 
         ent->local.f = vel;
-        d.x = 0.0f;
-        d.y = 0.0f;
-        d.z = 1.0f;
-        ent->local.u = d;
+        ent->local.u = vector4(0.0f, 0.0f, 1.0f);
         ((matrix&)ent->local).orthonormalize();
 
         if (state == 0) {
-            matrix idt;
-            mesh* const& mr = ent->meshes[0];
-            mr->m_cc = *identity_pos(&idt);
-            tmp = 1.5707964f;
-            ent->meshes[0]->m_cc.rotate_about_f(&tmp);
+            ent->meshes[0]->m_cc = IDENTITY_VALUE();
+            float a = 1.5707964f;
+            ent->meshes[0]->m_cc.rotate_about_f(&a);
             if (tumble > 0.0f) {
-                tmp = 1.5f - clk.elapsed() * tumble;
-                ent->meshes[0]->m_cc.rotate_about_u(&tmp);
+                float b = 1.5f - clk.elapsed() * tumble;
+                ent->meshes[0]->m_cc.rotate_about_u(&b);
             }
         }
         ent->local.o = pos;

@@ -11,3 +11,4 @@
 ../src/rgl/dynamic/fx_keys.cpp  ?key_value@FxAnim@@QAE?AUvector4@rgl@@H@Z  00423300  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/fx_keys.cpp  ?slerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004238c0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/fx_keys.cpp  ?nlerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004239c0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_keys.cpp  ?lerp_value@FxAnim@@QAE?AUvector4@rgl@@H@Z  00423390  /O2 /MT /Gy /TP

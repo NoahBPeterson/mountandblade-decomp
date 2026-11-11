@@ -75,9 +75,9 @@ void FxDef::skin(mesh* mm, char flag)
                 acc->y += sc.y;
                 acc->z += sc.z;
                 M = &B[*pb];
-                vector4 n(M->s.x * V->pos.x + (M->f.x * V->pos.y + M->u.x * V->pos.z),
-                          M->s.y * V->pos.x + (M->f.y * V->pos.y + M->u.y * V->pos.z),
-                          M->s.z * V->pos.x + (M->f.z * V->pos.y + M->u.z * V->pos.z));
+                vector4 n(V->pos.x * M->s.x + (M->f.x * V->pos.y + M->u.x * V->pos.z),
+                          M->f.y * V->pos.y + (M->s.y * V->pos.x + M->u.y * V->pos.z),
+                          M->f.z * V->pos.y + (M->s.z * V->pos.x + M->u.z * V->pos.z));
                 vector4 sn = w * n;
                 nacc->x += sn.x;
                 nacc->y += sn.y;

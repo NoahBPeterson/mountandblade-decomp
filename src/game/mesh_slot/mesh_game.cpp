@@ -352,16 +352,16 @@ int Mission::create(const matrix* m, const ItemStackG* it, int troop)
 NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3, int a4, int a5, int a6, int cnt, int* arr)
 {
     int own = POOL.alloc();
-    if (troop == *(int*)(((char*)g_game) + 0x8c)) {
+    if (troop == g_game->player) {
         this->f5c = own;
         this->f6598 = m->o;
     }
-    AgentS* a = &POOL.pages[own >> 4][own & 0xf];
+    AgentS* a = &POOL.pages[(unsigned)own >> 4][own & 0xf];
     a->reset();
     a->f1bc = a1;
+    a->f1c0 = a2;
     a->f94 = a4;
     a->f56f0 = a5;
-    a->f1c0 = a2;
     a->troop = troop;
     a->item_a = -1;
     a->f5714 = cnt;
@@ -373,29 +373,35 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     a->dir = m->f;
     a->userdata = a->dir;
 
-    TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[troop];
-    int v = t->f7a & 0xf;
-    if (v < 0) v = 0;
-    if (v > g_skill_tbl[36].max_rank) v = g_skill_tbl[36].max_rank;
-    float h = (float)(t->f58 + 0x23 + v * 2);
+    struct Helpers {
+        static int max_hp(Troop* t) {
+            int base = t->lvl58;
+            int v = t->nib_b[0x12] & 0xf;
+            if (v < 0)
+                v = 0;
+            else if (v > g_skill_tbl[36].max_rank)
+                v = g_skill_tbl[36].max_rank;
+            return base + v * 2 + 0x23;
+        }
+        static char mode_flag1(const Mission* m) {
+            return ((g_mission_templates[m->mode].flags >> 1) & 1) != 0;
+        }
+    };
+    float h = (float)Helpers::max_hp(&g_game->troops[troop]);
     a->f5720 = h;
-    if (t->skin & 0x10) {
-        a->f5724 = t->fa0;
+    if (g_game->troops[troop].flags & 0x10) {
+        a->f5724 = g_game->troops[troop].hp;
     } else {
         a->f5724 = h;
-        if (a1 == *(int*)(((char*)g_game) + 0x78)) {
+        int pid;
+        if (a1 == (pid = g_game->f78)) {
             PartyMgr* pm = &g_game->parties;
-            int li = pm->lookup(a1);
-            Skeleton96* rec = (Skeleton96*)(pm->pages._Myfirst[li >> 4]);
-            if (rec[li & 0xf].f80 > 0.5f) {
-                int lj = pm->lookup(a1);   // the original looks the record up again inside the branch
-                Skeleton96* rec2 = (Skeleton96*)(pm->pages._Myfirst[lj >> 4]);
-                a->f5724 = (1.5f - rec2[lj & 0xf].f80) * h;
-            }
+            if (pm->get_party(pid)->zoom > 0.5f)
+                a->f5724 = (1.5f - pm->get_party(pid)->zoom) * h;
         }
     }
     a->f571c = a->f5724;
-    a->kind = t->f48;
+    a->kind = g_game->troops[troop].level48;
     a->f14 = 1;
     a->f258 = a6;
     a->f2c4 = 0;
@@ -413,58 +419,51 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     }
     this->spawn(a);
     a->f2c8 = a6;
-    long long item = pick_slot_item(troop, 8, a5, cnt, arr, 0, (char*)&a5);   // 0x483b4f..0x483b6e: mask and found are both the a5 slot (esp+0x40), not a6
-    if ((int)item >= 0) {
-        int nid = this->create(m, (const ItemStackG*)&item, troop);
-        AgentS* na = &POOL.pages[(unsigned)nid >> 4][nid & 0xf];
-        a->f2c = nid;
-        na->f30 = own;
-        na->f1bc = a1;
-        na->f1c0 = a2;
-        if (troop == *(int*)(((char*)g_game) + 0x8c))
-            this->f60 = nid;
+    {
+        char found;
+        long long item = pick_slot_item(troop, 8, a5, cnt, arr, 0, &found);
+        if ((int)item >= 0) {
+            int nid = this->create(m, (const ItemStackG*)&item, troop);
+            POOL.pages[(unsigned)nid >> 4][nid & 0xf].f30 = own;
+            a->f2c = nid;
+            POOL.pages[(unsigned)nid >> 4][nid & 0xf].f1bc = a1;
+            POOL.pages[(unsigned)nid >> 4][nid & 0xf].f1c0 = a2;
+            if (troop == g_game->player)
+                this->f60 = nid;
+        }
     }
     if (a->id == this->f5c) {
-        if ((MAT(char, 0x6528) & 1) || ((*(unsigned*)((char*)g_mission_templates + this->mode * 0x58 + 0x20) >> 1) & 1) != 0) {
+        if ((MAT(char, 0x6528) & 1) || Helpers::mode_flag1(this)) {
             a->cycle_slot(0);
             a->cycle_slot(1);
         }
     }
     a->on_wield_reset();
-    int s = a->f1c4;
-    int k = (s < 0 || s >= 8) ? 7 : s;
-    if (*(int*)((char*)this + 0x5280 + k * 0x16c) < 0 || a->id == this->f5c) {
-        *(int*)((char*)this + 0x5280 + k * 0x16c) = a->id;
+    int t1 = a->f1c4;
+    if (t1 < 0 || t1 >= 8) t1 = 7;
+    if (this->teams[t1].leader < 0 || a->id == this->f5c) {
+        int t2 = a->f1c4;
+        if (t2 < 0 || t2 >= 8) t2 = 7;
+        this->teams[t2].leader = a->id;
     }
     if (this->f5c >= 0) {
-        const char* lit = 0;
-        if (MAT(char, 0x6669) != 0) {
-            AgentS* cmdr = &POOL.pages[(unsigned)this->f5c >> 4][this->f5c & 0xf];
-            if (cmdr->is_enemy(a)) {
-                lit = "ui_new_enemies_have_arrived";
-                MAT(char, 0x6669) = 0;
-            }
-        }
-        if (lit == 0 && MAT(char, 0x6668) != 0) {
-            AgentS* cmdr = &POOL.pages[(unsigned)this->f5c >> 4][this->f5c & 0xf];
-            if (cmdr->is_friend(a)) {
-                lit = "ui_reinforcements_have_arrived";
-                MAT(char, 0x6668) = 0;
-            }
-        }
-        if (lit != 0) {
-            tstring msg(lit);
+        if (MAT(char, 0x6669) != 0 && this->agents[this->f5c].is_enemy((const Agent*)a)) {
+            MAT(char, 0x6669) = 0;
+            tstring msg("ui_new_enemies_have_arrived");
             tstring* t2 = g_strtable.lookup(msg);
-            if (g_gui.enabled && g_gui.ring.count < 0x20) {
-                int k3 = (g_gui.ring.head + g_gui.ring.count) % 0x20;
-                g_gui.ring.names[k3] = *t2;
-                g_gui.ring.vals[k3] = -1;
-                g_gui.ring.count++;
-            }
+            if (g_gui.enabled)
+                g_gui.ring.add(*t2, -1);
+        } else if (MAT(char, 0x6668) != 0 && this->agents[this->f5c].is_friend((const Agent*)a)) {
+            MAT(char, 0x6668) = 0;
+            tstring msg("ui_reinforcements_have_arrived");
+            tstring* t2 = g_strtable.lookup(msg);
+            if (g_gui.enabled)
+                g_gui.ring.add(*t2, -1);
         }
     }
     g_script.param1 = own;
-    SpawnSetG* p = (SpawnSetG*)((char*)g_mission_templates + this->mode * 0x58);
+    struct SndBody { int num; SndSlotS* slots; };
+    SndBody* p = (SndBody*)((char*)g_mission_templates + this->mode * 0x58 + 0x4c);
     for (int i = 0; i < p->num; i++)
         p->slots[i].update(-25);
     return own;

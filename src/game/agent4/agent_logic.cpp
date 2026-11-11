@@ -7114,8 +7114,34 @@ static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
 // @ 0x451c50
 void rgl::mesh::compute_normals()
 {
+    typedef struct {
+        void operator=(const std::vector<point20>&); // 0x411630
+    } _v90_op;
+    struct vec4n : vector4 {
+        __forceinline float normalize_inl()
+        {
+            float len = length();
+            if (len > 1e-10f) {
+                float inv = 1.0f / len;
+                x *= inv;
+                y *= inv;
+                z *= inv;
+            } else {
+                x = 0.0f;
+                y = 1.0f;
+                z = 0.0f;
+            }
+            return len;
+        }
+        __forceinline void add_inl(const vector4& o)
+        {
+            x += o.x;
+            y += o.y;
+            z = z + o.z;
+        }
+    };
     if (!local_a0) {
-        v90 = parent->v90;
+        *(std::vector<point20>*)&v90 = *(const std::vector<point20>*)&parent->v90;
         local_a0 = 1;
     }
     ensure_local();
@@ -7123,59 +7149,24 @@ void rgl::mesh::compute_normals()
     fnorm.resize(v90.size());
     unsigned i;
     for (i = 0; i < v90.size(); i++) {
-        face20* f = &(&*v90.begin())[i];
-        vertex60* vs = &*v50.begin();
-        point20* ps = &*v70.begin();
-        vector4* p0 = &ps[vs[f->a].index].a;
-        vector4* p1 = &ps[vs[f->b].index].a;
-        vector4* p2 = &ps[vs[f->c].index].a;
-        vector4 e1;
-        e1.x = p1->x - p0->x; e1.y = p1->y - p0->y; e1.z = p1->z - p0->z;
-        vector4 e2;
-        e2.x = p2->x - p0->x; e2.y = p2->y - p0->y; e2.z = p2->z - p0->z;
-        vector4& n = fnorm[i];
-        cross_inl(n, e1, e2);
-        float len = (float)sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
-        if (len > 1e-10f) {
-            float inv = 1.0f / len;
-            n.x = inv * n.x;
-            n.y = inv * n.y;
-            n.z = inv * n.z;
-        } else {
-            n.x = 0.0f;
-            n.y = 1.0f;
-            n.z = 0.0f;
+        vector4 e1 = v70[v50[v90[i].b].index].a - v70[v50[v90[i].a].index].a;
+        vector4 e2 = v70[v50[v90[i].c].index].a - v70[v50[v90[i].a].index].a;
+        cross_inl(fnorm[i], e1, e2);
+        ((vec4n&)fnorm[i]).normalize_inl();
+    }
+    for (i = 0; i < v50.size(); i++) {
+        v50[i].normal = vector4(0.0f, 0.0f, 0.0f);
+    }
+    for (i = 0; i < v90.size(); i++) {
+        for (int j = 0; j < 3; j++) {
+            ((vec4n&)v50[(&v90[i].a)[j]].normal).add_inl(fnorm[i]);
         }
     }
     for (i = 0; i < v50.size(); i++) {
-        vector4 z;
-        z.x = 0.0f; z.y = 0.0f; z.z = 0.0f;
-        (&*v50.begin())[i].normal = z;
-    }
-    for (i = 0; i < v90.size(); i++) {
-        vector4* n = &(&*v50.begin())[(&*v90.begin())[i].a].normal;
-        n->x = n->x + fnorm[i].x; n->y = fnorm[i].y + n->y; n->z = n->z + fnorm[i].z;
-        n = &(&*v50.begin())[(&*v90.begin())[i].b].normal;
-        n->x = n->x + fnorm[i].x; n->y = fnorm[i].y + n->y; n->z = n->z + fnorm[i].z;
-        n = &(&*v50.begin())[(&*v90.begin())[i].c].normal;
-        n->x = n->x + fnorm[i].x; n->y = fnorm[i].y + n->y; n->z = n->z + fnorm[i].z;
-    }
-    for (i = 0; i < v50.size(); i++) {
-        vector4* n = &(&*v50.begin())[i].normal;
-        if (n->x * n->x + n->y * n->y + n->z * n->z > 0.0001f) {
-            float len = (float)sqrt(n->x * n->x + n->y * n->y + n->z * n->z);
-            if (len > 1e-10f) {
-                float inv = 1.0f / len;
-                n->x = inv * n->x;
-                n->y = inv * n->y;
-                n->z = inv * n->z;
-            } else {
-                n->x = 0.0f; n->y = 1.0f; n->z = 0.0f;
-            }
+        if (v50[i].normal.length_squared() > 0.0001f) {
+            ((vec4n&)v50[i].normal).normalize_inl();
         } else {
-            vector4 t;
-            t.x = 0.0f; t.y = -1.0f; t.z = 0.0f;
-            *n = t;
+            v50[i].normal = vector4(0.0f, -1.0f, 0.0f);
         }
     }
     slots[0].f28 = 1;

@@ -4249,7 +4249,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::question_box:
         // (question_box, <string_id>, [yes_string_id], [no_string_id]); defaults strings 2 / 3; answer in game +0x1a208
         if (check_string_arg((int)params[0], types[0]) && g_windows.dq.back() != 0) {
-            int yes = 2, yes_type = 3, no = 3, no_type = 3;
+            int yes = 2, no = 3, yes_type = 3, no_type = 3;
             if (params[1] > 0 && check_string_arg((int)params[1], types[1])) {
                 yes = (int)params[1];
                 yes_type = types[1];
@@ -4397,7 +4397,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* g = game();
             int main = g->main_party;
             PartyMgr* pm = &g->parties;
-            for (i = 0; i < ((PartyV*)pm->get(main))->num_stacks; i++) {
+            for (i = 0; i < ((PartyV*)pm->get(main))->num_stacks; i++, main = g->main_party, pm = &g->parties) {
                 if (!(((PartyV*)pm->get(main))->stacks[i].flags & 1)) {
                     TroopX* troops = g->troops;
                     int t = ((PartyV*)pm->get(main))->stacks[i].troop;
@@ -4408,8 +4408,6 @@ char Operation::execute(__int64* locals, int* context, int* error)
                         ((PartyV*)pm->get(main))->stacks[i].wounded = 0;
                     g = game();
                 }
-                main = g->main_party;
-                pm = &g->parties;
             }
             if (g_mission && mission()->player_agent >= 0)
                 agent(mission()->player_agent)->health = agent(mission()->player_agent)->max_health;
@@ -5147,12 +5145,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             party((int)params[0])->ai_target_object = (int)params[1];
         break;
     case op::party_set_ai_target_position:
-        if (check_party((int)params[0]) && check_register((int)params[1])) {
-            int q = (int)params[1];
-            PartyV* p = party((int)params[0]);
-            p->ai_target_x = script_pos(q).o.x;
-            p->ai_target_y = script_pos(q).o.y;
-        }
+        if (check_party((int)params[0]) && check_register((int)params[1]))
+            *(Vec2*)&party((int)params[0])->ai_target_x = *(const Vec2*)&script_pos((int)params[1]).o;
         break;
     case op::party_set_ai_patrol_radius:
         if (check_party((int)params[0])) {
@@ -5777,20 +5771,20 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::team_set_order_position:
-    { int si_0; float sf_0; float sf_1; float sf_2;
+    { float sf_0; float sf_1; float sf_2;
         // (team_set_order_position, <team_no>, <sub_class>, <position_no>)
         if (IN_RANGE(params[0], 0, 8) && check_register((int)params[2])) {
-          MissionX* m = mission();
-          if (m->point_in_rect(&script_pos((int)params[2]).o)) {
+          Mission* m = (Mission*)mission();
+          if (m->point_in_rect((const float*)&g_script.pos[(int)params[2]].o)) {
             m->select_team((int)params[0]);
-            mission()->select_class((int)params[0], (int)params[1]);
-            m = mission();
-            rgl::vector4* p = &script_pos((int)params[2]).o;
+            ((Mission*)mission())->select_class((int)params[0], (int)params[1]);
+            MissionX* mx = mission();
+            rgl::vector4* p = &g_script.pos[(int)params[2]].o;
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
-            si_0 = m->scene->nearest_face((const float*)p);
+            i = mx->scene->nearest_face((const float*)p);
             rgl::vector4 off;
-            TEAM_SEL(m, (int)params[0])->set_vec((const int*)p, &si_0, (const int*)&off.set(sf_2, sf_1, sf_0));
-            mission()->unselect_team((int)params[0]);
+            TEAM_SEL(mx, (int)params[0])->set_vec((const int*)p, &i, (const int*)&off.set(sf_2, sf_1, sf_0));
+            ((Mission*)mission())->unselect_team((int)params[0]);
         } }
         break;
     }
@@ -5881,11 +5875,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::prop_instance_get_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            ASSIGN_MAT(script_pos((int)params[0]), ((PropInst*)&mission()->props[(int)params[1]])->frame);
+            (rgl::matrix&)g_script.pos[(int)params[0]] = ((PropInst*)&mission()->props[(int)params[1]])->frame;
         break;
     case op::prop_instance_get_starting_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            ASSIGN_MAT(script_pos((int)params[0]), ((PropInst*)&mission()->props[(int)params[1]])->start_frame);
+            (rgl::matrix&)g_script.pos[(int)params[0]] = ((PropInst*)&mission()->props[(int)params[1]])->start_frame;
         break;
     case op::prop_instance_get_scale:
         // the scale as the diagonal of an otherwise identity frame
@@ -5902,7 +5896,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::prop_instance_set_position:
         if (warn_scene_prop_instance((int)params[0]) && check_register((int)params[1]) && g_mission)
-            prop_at(mission()->props, (int)params[0])->set_position(&script_pos((int)params[1]));
+            ((MissionView*)prop_at(mission()->props, (int)params[0]))->set(&script_pos((int)params[1]));
         break;
     case op::prop_instance_animate_to_position:
     { float sf_0; float sf_1;
@@ -5910,7 +5904,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (warn_scene_prop_instance((int)params[0]) && check_register((int)params[1]) && g_mission) {
             sf_0 = 0;
             sf_1 = (float)params[2] * 0.01f;
-            prop_at(mission()->props, (int)params[0])->animate_to(&script_pos((int)params[1]), &sf_1, &sf_0);
+            ((MissionView*)prop_at(mission()->props, (int)params[0]))->setup(&script_pos((int)params[1]), (int*)&sf_1, (int*)&sf_0);
         }
         break;
     }
@@ -6640,22 +6634,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
             SET_LV(params[0] % params[1]);
         break;
     case op::val_min:
-    { int si_0; int si_1;
         // on the low 32 bits
-        {
-            si_0 = (int)params[0], si_1 = (int)params[1];
-            SET_LV((__int64)min_int(si_0, si_1));
-        }
+        SET_LV((__int64)min_int((int)params[0], (int)params[1]));
         break;
-    }
     case op::val_max:
-    { int si_0; int si_1;
-        {
-            si_0 = (int)params[0], si_1 = (int)params[1];
-            SET_LV((__int64)imax_ref(&si_0, &si_1));
-        }
+        SET_LV((__int64)imax_ref((int)params[0], (int)params[1]));
         break;
-    }
     case op::val_clamp:
         // dest = max(min(dest, <upper_bound> - 1), <lower_bound>)
         SET_LV((__int64)clamp_index((int)params[0], (int)params[1], (int)params[2]));

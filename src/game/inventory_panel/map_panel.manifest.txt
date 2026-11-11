@@ -3,3 +3,4 @@
 ../src/game/inventory_panel/map_panel.cpp  ?set_pos@gui_manager@@QAEXPBM@Z  0051a760  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/map_panel.cpp  ?set_quad@gui_manager@@QAEXPBM0@Z  0051aa20  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/map_panel.cpp  ?add_label@gui_manager@@QAEXPBUtstring@@MH@Z  0051a880  /O2 /MT /Gy /TP
+../src/game/inventory_panel/map_panel.cpp  ?intersect@PlaneTrace@@QAEXPAUvector4@rgl@@PBU23@1@Z  0051a2d0  /O2 /MT /Gy /TP

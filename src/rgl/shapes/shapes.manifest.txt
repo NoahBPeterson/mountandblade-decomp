@@ -124,3 +124,6 @@
 ../src/rgl/shapes/shapes.cpp  ?transform@sphere@@UAEXPBUmatrix@rgl@@@Z  00408420  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?apply@renderer@@QAEXPBUmatrix@rgl@@@Z  0040a870  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?rot3@matrix@rgl@@QBE?AUmat3@2@ABU12@@Z  0040a920  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?capsule_capsule_contact@@YAXPAUcapsule@@0HPAUcontact@@PAH@Z  00409e90  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?sphere_sphere_contact@@YAXPAUsphere@@0HPAUcontact@@PAH@Z  00409980  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?scale@face@@UAEXPBM@Z  00408a50  /O2 /MT /Gy /TP

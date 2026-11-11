@@ -248,6 +248,31 @@ void lod_mesh_x::append(lod_mesh* src, int bone, const matrix* m, const unsigned
 // tangent-space material modes) also into the two extra colour words.
 void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
 {
+    struct mat_inl : matrix {
+        __forceinline vector4 rot_inl(const vector4& p) const
+        {
+            return vector4(s.x * p.x + f.x * p.y + u.x * p.z,
+                           s.y * p.x + f.y * p.y + u.y * p.z,
+                           s.z * p.x + f.z * p.y + u.z * p.z);
+        }
+    };
+    struct fn {
+        static __forceinline float dot(const vector4& a, const vector4& b)
+        {
+            return a.z * b.z + a.y * b.y + a.x * b.x;
+        }
+        static __forceinline vector4 neg(const vector4& v)
+        {
+            return vector4(-v.x, -v.y, -v.z);
+        }
+        static __forceinline void add_to(vector4& a, const vector4& o)
+        {
+            a.x = o.x + a.x;
+            a.y = o.y + a.y;
+            a.z = o.z + a.z;
+        }
+    };
+
     m->ensure_local();
     matrix lm = (*frame) * m->m_cc;
 
@@ -257,16 +282,14 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
     bool tangent = mode == 0x18;
 
     vector4 tint = ambient;
+    vector4 dir, col;
 
     // Flat-lit resources: no per-vertex work, just combine the scene light colour with the tint.
     if (m->res->flags & 0x40) {
-        vector4 dir, col;
         light_at(lm.o, lm.u, &dir, &col, flags, 1.0f);
-        vector4 c;
-        c.x = col.x * 0.7f + tint.x;
-        c.y = col.y * 0.7f + tint.y;
-        c.z = col.z * 0.7f + tint.z;
+        vector4 c = tint;
         c.w = 1.0f;
+        fn::add_to(c, col * 0.7f);
         if (!g_use_shaders) {
             c.x = (float)pow(c.x, g_ramp_gamma);
             c.y = (float)pow(c.y, g_ramp_gamma);
@@ -296,59 +319,58 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
         if (flat)
             alpha = (float)(v->color & 0xff) * (1.0f / 255.0f);
 
-        point20* p = &vat(m->v70, v->index);
-        vector4 pos, nrm;
-        pos.x = lm.s.x * p->a.x + lm.f.x * p->a.y + lm.u.x * p->a.z + lm.o.x;
-        pos.y = lm.s.y * p->a.x + lm.f.y * p->a.y + lm.u.y * p->a.z + lm.o.y;
-        pos.z = lm.s.z * p->a.x + lm.f.z * p->a.y + lm.u.z * p->a.z + lm.o.z;
-        nrm.x = lm.s.x * v->pos.x + lm.f.x * v->pos.y + lm.u.x * v->pos.z;
-        nrm.y = lm.s.y * v->pos.x + lm.f.y * v->pos.y + lm.u.y * v->pos.z;
-        nrm.z = lm.s.z * v->pos.x + lm.f.z * v->pos.y + lm.u.z * v->pos.z;
+        vector4 pos = lm.transform_point_inl(vat(m->v70, v->index).a);
+        vector4 nrm = ((const mat_inl&)lm).rot_inl(v->pos);
 
-        vector4 dir, col, dir2, col2;
-        if (!g_use_shaders) {
-            light_at(pos, nrm, &dir, &col, flags, alpha);
-        } else {
+        vector4 dir2, col2;
+        if (g_use_shaders) {
             light_at(pos, nrm, &dir, &col, flags | 2, 1.0f);
             light_at(pos, nrm, &dir2, &col2, flags | 4, 1.0f);
+        } else {
+            light_at(pos, nrm, &dir, &col, flags, alpha);
         }
 
         if (tangent || flat) {
-            vector4 vn, vb, vt;
-            vn.x = lm.s.x * v->pos.x + lm.f.x * v->pos.y + lm.u.x * v->pos.z;
-            vn.y = lm.s.y * v->pos.x + lm.f.y * v->pos.y + lm.u.y * v->pos.z;
-            vn.z = lm.s.z * v->pos.x + lm.f.z * v->pos.y + lm.u.z * v->pos.z;
-            vb.x = lm.s.x * v->f10.x + lm.f.x * v->f10.y + lm.u.x * v->f10.z;
-            vb.y = lm.s.y * v->f10.x + lm.f.y * v->f10.y + lm.u.y * v->f10.z;
-            vb.z = lm.s.z * v->f10.x + lm.f.z * v->f10.y + lm.u.z * v->f10.z;
-            vt.x = lm.s.x * v->f20.x + lm.f.x * v->f20.y + lm.u.x * v->f20.z;
-            vt.y = lm.s.y * v->f20.x + lm.f.y * v->f20.y + lm.u.y * v->f20.z;
-            vt.z = lm.s.z * v->f20.x + lm.f.z * v->f20.y + lm.u.z * v->f20.z;
+            rot3 fr;
+            fr.u = ((const mat_inl&)lm).rot_inl(v->pos);
+            fr.s = ((const mat_inl&)lm).rot_inl(v->f10);
+            fr.f = ((const mat_inl&)lm).rot_inl(v->f20);
 
-            float k = (col.x + col.y + col.z) * 0.33f;
             vector4 c;
-            c.x = (vb.x * -dir.x + vb.y * -dir.y + vb.z * -dir.z) * k;
-            c.y = -((vt.z * -dir.z + vt.y * -dir.y + vt.x * -dir.x) * k);
-            c.z = (vn.z * -dir.z + vn.y * -dir.y + vn.x * -dir.x) * k;
             c.w = 1.0f;
+            vector4 nd = fn::neg(dir);
+            c.x = fn::dot(nd, fr.s);
+            c.y = fn::dot(nd, fr.f);
+            c.z = fn::dot(nd, fr.u);
+            double k = (col.x + col.y + col.z) * 0.33f;
+            c.x *= k;
+            c.y *= k;
+            c.z *= k;
+            c.y = -c.y;
             unsigned lit = pack_signed_color((const float*)&c);
             if (flat)
-                v->f58 = v->f58 ^ ((v->f58 ^ lit) & 0xffffff);
+                v->f58 = (v->f58 & 0xff000000) | (lit & 0xffffff);
             else
-                v->f5c = v->f5c ^ ((v->f5c ^ lit) & 0xffffff);
+                v->f5c = (v->f5c & 0xff000000) | (lit & 0xffffff);
 
             if (g_use_shaders && flat) {
-                float k2 = (col2.x + col2.y + col2.z) * 0.33f;
-                c.x = (vb.x * -dir2.x + vb.y * -dir2.y + vb.z * -dir2.z) * k2;
-                c.y = -((vt.z * -dir2.z + vt.y * -dir2.y + vt.x * -dir2.x) * k2);
-                c.z = (vn.z * -dir2.z + vn.y * -dir2.y + vn.x * -dir2.x) * k2;
-                v->f5c = pack_signed_color((const float*)&c) & 0xffffff;
+                vector4 c2;
+                c2.w = 1.0f;
+                vector4 nd2 = fn::neg(dir2);
+                c2.x = fn::dot(nd2, fr.s);
+                c2.y = fn::dot(nd2, fr.f);
+                c2.z = fn::dot(nd2, fr.u);
+                double k2 = (col2.x + col2.y + col2.z) * 0.33f;
+                c2.x *= k2;
+                c2.y *= k2;
+                c2.z *= k2;
+                c2.y = -c2.y;
+                v->f5c = pack_signed_color((const float*)&c2) & 0xffffff;
             }
+        }
 
-        } else if (!g_use_shaders) {
-            col.x += tint.x;
-            col.y += tint.y;
-            col.z += tint.z;
+        if (!tangent && !flat && !g_use_shaders) {
+            fn::add_to(col, tint);
         }
 
         if (!g_use_shaders) {
@@ -362,11 +384,10 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
         vc.y *= col.y;
         vc.z *= col.z;
         unsigned lit = pack_color(&vc);
-        if (!g_use_shaders || tangent) {
-            if (flat || !tangent)
-                v->color = v->color ^ ((v->color ^ lit) & 0xffffff);
-        } else {
+        if (g_use_shaders && !tangent) {
             v->f5c = lit & 0xffffff;
+        } else if (flat || !tangent) {
+            v->color = (v->color & 0xff000000) | (lit & 0xffffff);
         }
     }
 }

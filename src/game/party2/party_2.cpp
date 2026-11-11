@@ -415,12 +415,13 @@ void Party::prepare()
             dst++;
         }
     }
+    int k2 = keep;
     for (int j = keep; j < nstacks; j++) {
         if (g_game->troops[stacks[j].troop].flags30 & 0x10) {
-            if (keep != j) {
-                rotate_stacks(keep, j);
+            if (k2 != j) {
+                rotate_stacks(k2, j);
             }
-            keep++;
+            k2++;
         }
     }
 }
@@ -1627,7 +1628,7 @@ full:
 void GameData::refresh_party(unsigned id)
 {
     PartyMgr* m = &parties;
-    if (id >= parties.n_parties)
+    if (id >= m->n_parties)
         return;
     int idx = m->lookup(id);
     if (idx < 0)

@@ -133,14 +133,12 @@ void rgl::world::init(const float* lo_, const float* hi_, int dimx, int dimy)
 // @ 0x478a10
 void rgl::world::insert(int id, const float* lo_, const float* hi_)
 {
-    int a[2], b[2];
+    int a[2], b[2], c[2];
     to_cell(lo_, a);
     to_cell(hi_, b);
-    int x, y;
-    std::vector<int>* c = &cells[a[0]][a[1]].c;
-    for (x = a[0]; x <= b[0]; x++)
-        for (y = a[1]; y <= b[1]; y++, c += 1)
-            c->push_back(id);
+    for (c[0] = a[0]; c[0] <= b[0]; c[0]++)
+        for (c[1] = a[1]; c[1] <= b[1]; c[1]++)
+            cells[c[0]][c[1]].c.push_back(id);
 }
 
 // @ 0x478ad0
@@ -528,37 +526,36 @@ struct MeshPush : std::vector<rgl::mesh*> {
 // @ 0x479e20
 void Mission::rebuild_nav(int which, int)
 {
-    Level494* sl = g_game->levels + which;
     Level494* cs = g_game->levels + f5df4;
     NavData* core_ = 0;
     body_part* r = 0;
     vector4 hi, lo;
-    if (sl->flags & 0x100) {
-        lo = vector4(terrain.min_x - 1.0f, terrain.min_y - 1.0f, 0.0f);
-        hi = vector4(terrain.max_x + 1.0f, terrain.max_y + 1.0f, 0.0f);
+    if (g_game->levels[which].flags & 0x100) {
+        *(V2*)&lo = V2(terrain.min_x - 1.0f, terrain.min_y - 1.0f);
+        *(V2*)&hi = V2(terrain.max_x + 1.0f, terrain.max_y + 1.0f);
     } else {
         core_ = (NavData*)new NavCore;   // 0x478150 (NavData() is the same constructor, ICF-folded)
-        r = (body_part*)g_resmgr.get_object60(cs->name44);
+        tstring& nm = cs->name44;
+        r = (body_part*)g_resmgr.get_object60(nm);
         if (r == 0) {
-            tstring* nm = &cs->name44;
-            mb_error("Unable to find body %s", nm->c_str());
+            const char* s = nm.buf;
+            if (!s) s = (const char*)&nm.buf;
+            mb_error("Unable to find body %s", s);
         }
         r->shape->get_max(&hi);
-        hi = vector4(hi.x + 1.0f, hi.y + 1.0f, 0.0f);
+        *(V2*)&hi = V2(hi.x + 1.0f, hi.y + 1.0f);
         r->shape->get_min(&lo);
-        lo = vector4(lo.x - 1.0f, lo.y - 1.0f, 0.0f);
+        *(V2*)&lo = V2(lo.x - 1.0f, lo.y - 1.0f);
     }
     int lod1 = LOG2UP((hi.x - lo.x) * (1.0f / 3.0f));
     int lod2 = LOG2UP((hi.y - lo.y) * (1.0f / 3.0f));
-    rgl::world* s = new rgl::world(&lo.x, &hi.x, &lod1, &lod2, &g_nav_param);
-    scene = s;
-    if ((sl->flags & 0x100) == 0) {
-        s->build_faces(core_);
+    scene = new rgl::world(&lo.x, &hi.x, &lod1, &lod2, &g_nav_param);
+    if ((g_game->levels[which].flags & 0x100) == 0) {
+        scene->build_faces(core_);
         shape_base* o = r->clone_shape();
         matrix m;
-        identity_pos(&m);
-        o->transform(&m);
-        s->reg_shape(o);
+        o->transform(identity_pos(&m));
+        scene->reg_shape(o);
     }
 }
 

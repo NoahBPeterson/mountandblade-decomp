@@ -143,7 +143,7 @@ void FxAnim::update_poses2()
                         float s = 1.0f - *pa;
                         quaternion t1(acc.x * s, acc.y * s, acc.z * s, acc.w * s);
                         quaternion t2(d.x * *pa, d.y * *pa, d.z * *pa, d.w * *pa);
-                        q = t1 + t2;
+                        q = t2 + t1;
                     }
                 } else {
                     q = quaternion(0.0f, 0.0f, 0.0f, 0.0f);
@@ -189,11 +189,8 @@ void FxAnim::update_poses2()
                     m.x = -m.x; m.y = -m.y; m.z = -m.z; m.w = -m.w;
                 }
                 float s = 1.0f - blend;
-                quaternion qa;
-                qa.set(m.x * s, m.y * s, m.z * s, m.w * s);
-                quaternion qb;
-                qb.set(q.x * blend, q.y * blend, q.z * blend, q.w * blend);
-                *(quaternion*)&BN(b).q = qa + qb;
+                *(quaternion*)&BN(b).q = quaternion().set(q.x * blend, q.y * blend, q.z * blend, q.w * blend)
+                                       + quaternion().set(m.x * s, m.y * s, m.z * s, m.w * s);
                 (*(quaternion*)&BN(b).q).normalize();
             } else {
                 BN(b).rot() = q;

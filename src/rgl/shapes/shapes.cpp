@@ -337,7 +337,7 @@ void face::scale(const float* s)
 {
     for (int i = 0; i < count; i++) {
         v[i].x *= s[0];
-        v[i].y = v[i].y * s[1];
+        v[i].y = v[i].y * (double)s[1];
         v[i].z *= s[2];
     }
     int neg = 0;
@@ -468,8 +468,8 @@ void sphere_sphere_contact(sphere* a, sphere* b, int max, contact* out, int* cou
         if (n <= max) {
             vector4 nrm;
             normalize(nrm, d);
-            float t = b->radius / (a->radius + b->radius);
-            vector4 dt = d * t;
+            double t = b->radius / (a->radius + b->radius);
+            vector4 dt(d.x * t, d.y * t, d.z * t);
             d.x = dt.x + b->center.x; d.y = dt.y + b->center.y; d.z = dt.z + b->center.z;
             contact c;
             c.normal = nrm;
@@ -606,7 +606,7 @@ void capsule_capsule_contact(capsule* a, capsule* b, int max, contact* out, int*
     if (!(depth < 0.0f)) {
         int n = ++*count;
         if (n <= max) {
-            float t = b->radius / (a->radius + b->radius);
+            double t = b->radius / (a->radius + b->radius);
             vector4 dt(d.x * t, d.y * t, d.z * t);
             pa.x = dt.x + pb.x; pa.y = dt.y + pb.y; pa.z = dt.z + pb.z;
             normalize(pb, d);

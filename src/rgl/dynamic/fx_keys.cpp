@@ -168,7 +168,7 @@ vector4 FxAnim::key_value(int i)
 // @ 0x423390
 vector4 FxAnim::lerp_value(int i)
 {
-    float t = 1.0f - rec(i)->f18;
+    double t = 1.0f - rec(i)->f18;
     AnimRec* r = rec(i);
     vector4 v = vadd((r->v8c * r->f18), (t * r->v7c));
     return v;
@@ -182,7 +182,7 @@ vector4 FxAnim::table_value(int i)
     float key = (float)(r.key_end - a) * r.f18 + a;
     float frac;
     r.table->tbl.find(&f1c, &frac, &key);
-    float s = 1.0f - frac;
+    double s = 1.0f - frac;
     const vector4* e = &r.table->tbl.v4()[f1c];
     vector4 v = vadd((frac * e[1]), (s * e[0]));
     return v;

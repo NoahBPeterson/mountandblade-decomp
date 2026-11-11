@@ -449,18 +449,13 @@ reissue:
 }
 
 // @ 0x51a2d0
-// Not byte-exact (map_panel.nonmatching.txt): the original rounds e.x*t / e.y*t to float32 but keeps
-// e.z*t extended; ours rounds all three (the e*t temporary). Closest form: `vector4 e = *b - *a; ... *a + e * t`.
 void PlaneTrace::intersect(vector4* out, const vector4* a, const vector4* b)
 {
-    vector4 d = pt - *a;
-    vector4 e = *b - *a;
-    float t = (d.x * nrm.x + (d.y * nrm.y + d.z * nrm.z)) /
-              (e.x * nrm.x + (e.y * nrm.y + e.z * nrm.z));
-    vector4 r = *a + e * t;
-    out->x = r.x;
-    out->y = r.y;
-    out->z = r.z;
+    struct V {
+        static inline float dot(const vector4& u, const vector4& v) { return u.x * v.x + u.y * v.y + u.z * v.z; }
+    };
+    float t = V::dot(pt - *a, nrm) / V::dot(*b - *a, nrm);
+    out->vector4::vector4((*b - *a) * t + *a);
 }
 
 // ---- 0x51a3a0 -------------------------------------------------------------------------------------------

@@ -72,39 +72,40 @@
 using rgl::vector4;
 using rgl::matrix;
 
+// build_geometry (0x470a00) is byte-exact only with operator+= inlined. The original most likely had it inline in the
+// header (0x40e420 in shapes.cpp being an emitted copy); defining it in rgl_math.h is the clean form, pending a check of
+// every source that includes it. Until then this TU-local inline definition (same result as shapes.cpp's) stands in.
+inline void rgl::vector4::operator+=(const rgl::vector4& o)
+{
+    x += o.x;
+    y += o.y;
+    z += o.z;
+}
+
 // @ 0x470a00
 void PolyMesh::build_geometry()
 {
     build_adjacency();
     for (unsigned i = 0; i < faces.size(); i++) {
-        MPoly* f = &faces[i];
-        f->centroid = vector4(0.0f, 0.0f, 0.0f);
+        faces[i].centroid = vector4(0.0f, 0.0f, 0.0f);
         for (int j = 0; j < faces[i].n; j++) {
-            MPoly& g = faces[i];
-            MVert& v = verts[g.vid[j]];
+            faces[i].centroid += verts[faces[i].vid[j]].pos;
             faces[i].nbr[j] = -1;
-            MPoly& h = faces[i];
-            g.centroid.x = v.pos.x + g.centroid.x;
-            g.centroid.y = v.pos.y + g.centroid.y;
-            g.centroid.z = v.pos.z + g.centroid.z;
-            if (edges[h.eid[j]].nfaces >= 2) {
-                if (edges[h.eid[j]].face[0] == (int)i)
-                    h.nbr[j] = edges[h.eid[j]].face[1];
-                else if (edges[h.eid[j]].face[1] == (int)i)
-                    h.nbr[j] = edges[h.eid[j]].face[0];
+            if (edges[faces[i].eid[j]].nfaces >= 2) {
+                if (edges[faces[i].eid[j]].face[0] == (int)i)
+                    faces[i].nbr[j] = edges[faces[i].eid[j]].face[1];
+                else if (edges[faces[i].eid[j]].face[1] == (int)i)
+                    faces[i].nbr[j] = edges[faces[i].eid[j]].face[0];
             }
         }
+        float s = 1.0f / (float)faces[i].n;
         MPoly& h = faces[i];
-        float s = 1.0f / (float)h.n;
-        h.centroid.x = s * h.centroid.x;
-        h.centroid.y = s * h.centroid.y;
-        h.centroid.z = s * h.centroid.z;
+        h.centroid.x *= s;
+        h.centroid.y *= s;
+        h.centroid.z *= s;
     }
     for (unsigned i = 0; i < edges.size(); i++) {
-        MEdge& e = edges[i];
-        MVert& a = verts[e.v0];
-        MVert& b = verts[e.v1];
-        e.mid = (b.pos + a.pos) * 0.5f;
+        edges.begin()[i].mid = (verts.begin()[edges.begin()[i].v0].pos + verts.begin()[edges.begin()[i].v1].pos) * 0.5f;
     }
     compute_face_normals();
 }
