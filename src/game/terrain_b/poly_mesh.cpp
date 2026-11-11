@@ -72,16 +72,6 @@
 using rgl::vector4;
 using rgl::matrix;
 
-// build_geometry (0x470a00) is byte-exact only with operator+= inlined. The original most likely had it inline in the
-// header (0x40e420 in shapes.cpp being an emitted copy); defining it in rgl_math.h is the clean form, pending a check of
-// every source that includes it. Until then this TU-local inline definition (same result as shapes.cpp's) stands in.
-inline void rgl::vector4::operator+=(const rgl::vector4& o)
-{
-    x += o.x;
-    y += o.y;
-    z += o.z;
-}
-
 // @ 0x470a00
 void PolyMesh::build_geometry()
 {

@@ -6681,6 +6681,8 @@ def _test_function(sid, va, opts, log=print):
     ours_probe = 0
     probes = 0
     deadline = time.time() + opts.time_limit
+    t_loop = time.time()
+    checkpoints = sorted(int(x) for x in str(getattr(opts, "checkpoints", "") or "").split(",") if x.strip())
     steer = ST.Steer(runner, gen, opts) if getattr(opts, "steer", True) else None
     hard = opts.inputs + (opts.extra_inputs if steer else 0)
     plateau = getattr(opts, "plateau", 0)
@@ -6703,6 +6705,13 @@ def _test_function(sid, va, opts, log=print):
                 out["stopped_full_coverage"] = "all edges covered after %d inputs, %d valid" % (i, valid)
                 opts.min_valid = min(opts.min_valid, valid)
                 break
+            while checkpoints and time.time() - t_loop >= checkpoints[0]:
+                # --checkpoints: what a shorter --time-limit would have measured, from this one run
+                out.setdefault("checkpoints", []).append(dict(
+                    seconds=checkpoints.pop(0), inputs=ran, valid=valid, mismatches=mism,
+                    **{"edges_" + nm: [len(set(sd.cfg.edges) & sd.edges),
+                                       len(set(sd.cfg.edges) - sd.cfg_static_unreachable)]
+                       for nm, sd in (("orig", runner.orig), ("ours", runner.ours))}))
             if time.time() > deadline:
                 out["stopped_early"] = "time limit %ds after %d inputs" % (opts.time_limit, i)
                 break
@@ -7454,6 +7463,9 @@ def parse_args(argv=None):
     ap.add_argument("--start-budget", type=int, default=START_BUDGET,
                     help="initial cap; raised to --budget if one of the first %d capped inputs finishes under it" % BUDGET_PROBES)
     ap.add_argument("--time-limit", type=int, default=180, help="seconds per function")
+    ap.add_argument("--checkpoints", default="", help="comma-separated seconds (e.g. 60,180): record inputs, mismatches "
+                    "and edge coverage as the input loop passes each, in the JSON's \"checkpoints\" (what a shorter "
+                    "--time-limit would have measured, from one run)")
     ap.add_argument("--stop-full-coverage", action="store_true",
                     help="stop as soon as every edge of both builds has run on at least %d valid inputs; the row can PASS below --min-valid (for rows too slow to finish; the JSON records stopped_full_coverage)" % FULL_COVERAGE_MIN_VALID)
     ap.add_argument("--run-seconds", type=float, default=0,
