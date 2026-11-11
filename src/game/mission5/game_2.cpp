@@ -1056,15 +1056,16 @@ void Game::load_game_data(int extra_triggers)
     in_factions.r_tstr(RSTR(&str2));
     int version;
     in_factions.r_int(&version);
-    int& nf = nfactions;
-    in_factions.r_int(&nf);
-    if (nf > 0x80)
-        mb_error("Too Many Factions: %d (Max should be %d)", nf, 0x80);
-    delete[] (FactionFile*)factions;
-    factions = 0;
-    factions = (Faction*)new FactionFile[nf];
-    for (int i = 0; i < nf; i++)
-        ((FactionFile*)factions)[i].read_file(in_factions, nf);
+    in_factions.r_int(&nfactions);
+    if (nfactions > 0x80)
+        mb_error("Too Many Factions: %d (Max should be %d)", nfactions, 0x80);
+    if (factions) {
+        delete[] (FactionFile*)factions;
+        factions = 0;
+    }
+    factions = (Faction*)new FactionFile[nfactions];
+    for (int i = 0; i < nfactions; i++)
+        ((FactionFile*)factions)[i].read_file(in_factions, nfactions);
     s_factions.failed = 1;
 
     // ---- skills.txt -------------------------------------------------------------------------------------
@@ -1107,8 +1108,10 @@ void Game::load_game_data(int extra_triggers)
     in_troops.r_int(&version);
     int& c_troops = ntroops;
     in_troops.r_int(&c_troops);
-    delete[] (TroopFile*)troops;
-    troops = 0;
+    if (troops) {
+        delete[] (TroopFile*)troops;
+        troops = 0;
+    }
     troops = (Troop*)new TroopFile[c_troops];
     for (int j = 0; j < ntroops; j++)
         ((TroopFile*)troops)[j].read_file(in_troops);
@@ -1127,8 +1130,10 @@ void Game::load_game_data(int extra_triggers)
     in_scenes.r_int(&version);
     int& c_scenes = nparties;
     in_scenes.r_int(&c_scenes);
-    delete[] (SceneFile*)parties;
-    parties = 0;
+    if (parties) {
+        delete[] (SceneFile*)parties;
+        parties = 0;
+    }
     parties = (char*)new SceneFile[c_scenes];
     for (int k = 0; k < nparties; k++)
         ((SceneFile*)parties)[k].read_file(in_scenes);
@@ -1147,8 +1152,10 @@ void Game::load_game_data(int extra_triggers)
     in_quests.r_int(&version);
     int& c_quests = nquests;
     in_quests.r_int(&c_quests);
-    delete[] (QuestFile*)quests;
-    quests = 0;
+    if (quests) {
+        delete[] (QuestFile*)quests;
+        quests = 0;
+    }
     quests = (QuestRec*)new QuestFile[c_quests];
     for (int n = 0; n < nquests; n++)
         ((QuestFile*)quests)[n].read_file(in_quests);

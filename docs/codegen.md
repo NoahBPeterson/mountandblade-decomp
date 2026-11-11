@@ -541,6 +541,17 @@ variants ranked by a trace number). What it has shown on this binary:
   With `>= 0x81` (no shared constant) every variable has the original's register.
   Naming the constant (a local, `static const`, `sizeof`, an inline helper) does not
   separate the two: 108 variants, all 47.
+- **`if (p) { delete[] p; p = 0; }` is not `delete[] p; p = 0;`** even when the final
+  code is the same. The original has the reset store inside the null test (the `je`
+  jumps past it), which is the guarded form (a SAFE_DELETE-style macro). Written
+  unguarded, cl still ends with the same instructions, but at allocation time the
+  store sits in the block after the join, where it adds `&p` and the zero to that
+  block's candidates (P 6 instead of 5, and other blocks shift with it).
+  `Game::load_game_data` 0x5236f0: the guarded form in its four sections drops
+  `&nfactions` from 47 to 43, just below the loop stride's 44, and the function
+  matches. With the address at the right priority the natural
+  spelling (the member `nfactions` at every use, no reference local) also gives the
+  count reload in the loop that the reference spelling lost.
 - **Exact ties go to the later definition**, and several near-misses are exact ties
   (`CharSheet::init_screen` 34 = 34, `MapPanel::update` 120 = 120). One more
   referenced value in a block breaks a tie; that is why moving a declaration can fix
