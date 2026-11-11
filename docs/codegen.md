@@ -523,6 +523,31 @@ gets is solved for small functions (reference-count priority, esi, edi, ebx,
 ebp): see "Callee-saved register order" in section 7, including its limit in
 very large functions.
 
+**The allocator can be traced.** `../vs2005-cpp` has a tracer for c2.dll that runs on
+this compiler (`--c2 13.10`; its `docs/c2/tracer.md` and `port-1310.md`): `regmap`
+(which of our variables has the wrong register, read off the original), `scratch`
+(every eax/ecx/edx rotation pick), `regs --why` (a value's priority, block by block),
+`rasim need` (the single changes that give a wanted register) and `tsweep` (source
+variants ranked by a trace number). What it has shown on this binary:
+
+- A value's priority is the sum over blocks of refcost · P · w, minus P · w for every
+  block it is live through unreferenced. P is the number of distinct register
+  candidates the block references, w is 2^(loop depth). Loop bodies do count more,
+  as on cl 14.
+- **A shared constant is a candidate and counts in P.** In
+  `if (n > 0x80) mb_error(..., n, 0x80);` the 0x80 of the compare and of the push is
+  one candidate, so the block has P = 4 and not 3. In `Game::load_game_data` 0x5236f0
+  that puts `&nfactions` at 47 against the loop stride's 44 and swaps ebx and ebp.
+  With `>= 0x81` (no shared constant) every variable has the original's register.
+  Naming the constant (a local, `static const`, `sizeof`, an inline helper) does not
+  separate the two: 108 variants, all 47.
+- **Exact ties go to the later definition**, and several near-misses are exact ties
+  (`CharSheet::init_screen` 34 = 34, `MapPanel::update` 120 = 120). One more
+  referenced value in a block breaks a tie; that is why moving a declaration can fix
+  a register and misplace a store at the same time.
+- A run of scratch picks one step off means the original has one temporary more (or
+  fewer) before that point. Find it in the original's code (a reload, an extra `lea`).
+
 ### 6.2 Commutative and SIB order keyed by ids
 
 The compiler sorts commutative operands, SIB components and scheduler ties by
@@ -1099,6 +1124,16 @@ only the x87 arithmetic.
   divides first. The original's `fmul [k]` before `fdiv st(1)` needs explicit
   parentheses: `((float)p * 0.017453292f) / m`. cl keeps the parenthesised order.
   (M&B `store_sin`/`store_cos`/`store_tan`.)
+- **Parentheses around a whole float expression move a neighbouring instruction.**
+  Each parenthesised float subexpression is an explicit tuple in c2's IL (OPPAREN).
+  `float t = ((a * k) / v);` has one more of them after the `fdiv` than
+  `float t = (a * k) / v;`, which makes the float result's chain one
+  pseudo-instruction longer, and the scheduler then places an unrelated integer load
+  differently. `MissionBlocker::update_camera` 0x4f8c80: with the outer pair, the
+  `mov eax,[num]` of the next statement lands after the int64 hi/lo store pair as in
+  the original, instead of between the two stores; that was the function's last
+  difference. Parentheses around the inner pieces (`(float)X`, the constant, the
+  divisor) changed nothing. Read off `c2trace.py il --at @Schedule@8`.
 - **Reciprocal: several divides by one float become one `1/m` and multiplies.**
   Any `float m = …` local that divides two or more values is turned into
   `fld 1.0; fdivr` / `fdiv [m]` followed by `fmul`s, which rounds differently. It

@@ -18,3 +18,4 @@
 ../src/game/agent5/agent_hud.cpp  ?key@MWidget@@UAEDI@Z  004fd1d0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?init_screen@ItemA@@UAEXXZ  004fbfa0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_hud.cpp  ?darken_vertices@mesh@rgl@@QAEXXZ  004fbef0  /O2 /MT /Gy /TP
+../src/game/agent5/agent_hud.cpp  ?update_camera@MissionBlocker@@QAEXM@Z  004f8c80  /O2 /MT /Gy /TP

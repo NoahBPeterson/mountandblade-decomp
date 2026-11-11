@@ -577,7 +577,7 @@ void MissionBlocker::update_camera(float dt)
     } else if (CAMSLOT.rec != 0) {
         // the scripted camera slot: cur -> sway over value seconds
         if (CAMSLOT.value > 0.0f) {
-            float t = ((float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f) / CAMSLOT.value;
+            float t = (((float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f) / CAMSLOT.value);
             if (CAMSLOT.num > 0) {
                 t = atan((t - 0.5f) * (float)CAMSLOT.num * 3.1415927f) / (atan((float)CAMSLOT.num * 1.5707964f) * 2.0f) + 0.5f;
             }
