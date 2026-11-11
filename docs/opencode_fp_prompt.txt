@@ -1,0 +1,27 @@
+You are making decompiled C++ from Mount & Blade 1.011 (32-bit x86, MSVC 7.1 = cl 13.10, /O2, x87 floating point only) behave exactly like the original and, ideally, compile to the original machine code byte for byte. Repo root: /Users/noahpeterson/Documents/Projects/mountandblade-decomp. Run every command from there, with relative paths. Use rg, not grep.
+
+Your module: {MODULE}.cpp. Nothing else may be edited apart from its {MODULE}.manifest.txt and {MODULE}.nonmatching.txt (check.py updates both for you) and scratch files named work/match/fp_{OBJ}_*. Other workers are editing other modules at the same time.
+
+These rows fail the equivalence test (tools/difftest/equiv.py runs the original and our function on the same random inputs and compares every result):
+- "WEAK-FP" / "PASS-FP": results agree only within a floating-point tolerance. Ours rounds somewhere the original does not (or the other way round). The usual cause in this codebase: the original keeps an intermediate as a `double` (unrounded on the x87 stack, or stored as a 64-bit qword) where ours declares `float`, or the reverse; or the operand order of a float expression differs.
+- "FAIL": a real mismatch (a wrong value, a crash, a wrong memory write). Find the source difference that causes it.
+Rows, as "<va> <current verdict> | <start of its note>", each with the exact command that measures its equivalence:
+{ROWS}
+
+Setup, once: read docs/codegen.md section 9.2 "THE DOUBLE-SCALAR LEVER" and smell test 1.3 (rg -n "DOUBLE-SCALAR|^### 1.3|^## 9" docs/codegen.md).
+
+For each row:
+1. Read it: .venv/bin/python tools/contrib/task.py 0x<va>   (source, note, flags)
+2. Measure:
+   a. bytes, after EVERY edit: .venv/bin/python tools/contrib/check.py 0x<va>   (MATCH, or the instruction diff original | yours, and an aligned figure). This is your steering measurement: about a minute.
+   b. equivalence, at most twice per row because it is slow (up to a minute and heavy on the machine): only for a FAIL row, once before the first edit (its output names the first mismatch: input, where, orig vs ours values; use it to find the expression that differs); and for every row, once on your final version. Use the row's "measure:" command above (strict: no --fp-tol).
+3. In the check.py diff, compare the x87 instructions: `fld dword`/`fstp dword` (float) versus `fld qword`/`fstp qword` (double), `fmul dword [m]` vs `fmul qword [m]` (a float vs a double constant: 0.5f vs 0.5), a value kept on the stack vs stored and reloaded (a float local forces a store-and-reload that rounds), memory-first `fld [m]; fmul st(n)` (a double scalar). Every such difference changes rounding. Make our types and constants say what the original's instructions say.
+4. Before the first edit to a row, save the function's text unchanged to work/match/fp_{OBJ}_<va>.prev.txt. After each edit run check.py. Keep an edit if check.py says MATCH or "closer", or if it makes the x87 instructions agree with the original's (types, widths, constants, store/reload) without saying "further" or BROKE; otherwise restore it from the .prev file and run check.py once more so the recorded figure matches the code. A byte-exact function needs no equivalence run. If the final equivalence run is worse than at the start, restore the .prev text.
+5. After eight different ideas on a row without progress, stop: append what you tried and what still differs to the row's note in {MODULE}.nonmatching.txt (same line, keep the first two columns).
+
+Rules:
+- The fix must be what the original source plausibly said: types, constants, temporaries, evaluation order. Never replace a typed member access with a raw offset, never write a literal image address, never add an `extern` for something src/ does not define, no inline asm, no pragmas, no volatile, no header edits (if a shared header is wrong, say so in the note and move on), no calling-convention changes.
+- Never use the write tool on {MODULE}.cpp; edit only the rows above, with the edit tool.
+- Never run git, tools/relink/*, the game, opencode or any broker script; no subagents; nothing outside the repo; no network tools; no shell background jobs; no stdin python; no sed -i. Keep output short (head, rg).
+
+When finished, reply with one line per row: "<va> <old verdict> -> <new verdict>, bytes <old aligned> -> <new>" (or "MATCH"), then at most 3 lines on anything that looks like a real bug. The very last line must be: WAVE-DONE
