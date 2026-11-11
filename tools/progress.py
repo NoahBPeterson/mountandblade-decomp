@@ -455,12 +455,13 @@ TREE_CATS = (("byte-exact", "Byte-exact", "#0072B2"),                    # blue
              ("comdatdiff", "COMDAT differs (symbol-less fragment)", "#000000"),   # black
              ("funclet", "Symbol-less, not COMDAT-checked", "#999999"),
              ("not_run", "Not run: hit the time limit", "#F0E442"),       # yellow
+             ("notcode", "Not code: the index listed an address the sweep found is not a function", "#D5D3CC"),
              ("excluded", "Byte-exact library code: the real VC7.1 CRT/STL (excluded from the totals)", "#8FB1C8"),
              ("nosource", "No source yet", "#FFFFFF"))
 # a TIMEOUT row (verdicts.py category not_run) has source: it was "No source yet" here until 2026-10-29
 _VCAT = {"inputs": "inputs", "harness": "harness", "funclet": "funclet", "comdat": "comdat",
          "comdatdiff": "comdatdiff", "not_run": "not_run",
-         "weak": "weak", "notcode": "excluded"}      # a run cut short by its time limit with enough clean inputs (verdicts.py)
+         "weak": "weak", "notcode": "notcode"}      # a run cut short by its time limit with enough clean inputs (verdicts.py)
 
 
 def _verdict_data():
@@ -502,7 +503,7 @@ def _tree_rows():
     drawn; `game` is the tier table's denominator and `lib` is the excluded CRT/STL the link takes from VC7.1."""
     files, verd = _files_by_function(), _verdict_data()
     rows = []
-    for a in sorted(set(game) | set(lib)):
+    for a in sorted(set(game)):          # the CRT/STL (`lib`) is not drawn: it is linked from VC7.1, not decompiled
         rel = files.get(a)
         if rel:                          # one box per module: its manifest and nonmatching rows drew as two same-named boxes
             for suf in (".nonmatching.txt", ".manifest.txt", ".partial.txt"):
@@ -750,8 +751,8 @@ def treemap(path):
                for k, _l, _c in TREE_CATS if counts[k]]
     fig.legend(handles=handles, loc="lower left", bbox_to_anchor=(0.012, 0.004), frameon=False, fontsize=8.6,
                labelcolor=INK, ncol=2, handlelength=1.1, handleheight=0.9)
-    fig.suptitle("Mount & Blade 1.011: %d functions (%d game/engine/3rd-party, %.2f MB, + %d CRT/STL) - area = "
-                 "instructions, colour = verdict" % (tot_n, tot_n - counts["excluded"], B / 1e6, counts["excluded"]),
+    fig.suptitle("Mount & Blade 1.011: %d game/engine/3rd-party functions, %.2f MB (the VC7.1 CRT/STL is linked, "
+                 "not decompiled, and not drawn) - area = instructions, colour = verdict" % (tot_n, B / 1e6),
                  x=0.012, ha="left", fontsize=12, color=INK)
     fig.text(0.012, 0.895, "Group -> file (module) -> function; area = Ghidra instruction count.  Game %.0f%%, engine "
              "(rgl) %.0f%%, 3rd party %.0f%% of the instructions.\n"
@@ -759,8 +760,7 @@ def treemap(path):
              "fit - rotated when the box is narrow, abbreviated at the smallest size, omitted when even that is too big.\n"
              "Import thunks (6-byte jmp stubs at/after 0x5342a6) are not drawn: no source by design.\n"
              "Colours are verdicts: byte-exact / equivalence PASS from tools/status.py and tools/difftest/verdicts.py, "
-             "WEAK / FAIL / untestable from the last sweep. The light blue is the real VC7.1 CRT/STL: byte-exact, but "
-             "excluded from the totals." % tuple(100.0 * gi.get(g, 0) / tot_i for g in ("Game", "Engine (rgl)", "3rd party")),
+             "WEAK / FAIL / untestable from the last sweep." % tuple(100.0 * gi.get(g, 0) / tot_i for g in ("Game", "Engine (rgl)", "3rd party")),
              fontsize=8.2, color=MUTED, va="top")
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d functions, %d module labels; %s)" % (os.path.relpath(path, ROOT), tot_n, labels,
