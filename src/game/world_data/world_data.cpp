@@ -82,15 +82,15 @@ char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
     *out = pos;
     char ok = 0;
     int iter = 0;
-    Vec2 np;
     float d[2];
-    while (iter < 50000) {
+    while (!ok) {
+        if (iter >= 50000)
+            break;
         iter++;
         d[0] = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
         d[1] = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
         if (sqrt(d[0] * d[0] + d[1] * d[1]) <= r) {
-            np = Vec2(pos.x + d[0], pos.y + d[1]);
-            *out = np;
+            *out = Vec2(pos.x + d[0], pos.y + d[1]);
             FaceId* f = (FaceId*)find_at(&out->x);
             if (f != 0) {
                 int kind = g_script.level->ground->cells[f->m4].ids[8];
@@ -98,8 +98,6 @@ char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
                     ok = (kind & 7) == 0 || kind == 7;
                 else
                     ok = ((kind & 7) >= 2 && (kind & 7) < 7) || kind == 7;
-                if (ok)
-                    break;
             }
         }
     }
