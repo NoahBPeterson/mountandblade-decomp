@@ -1300,8 +1300,24 @@ void Party::reissue_order()
 
 
 // ---- the map-order planner ----------------------------------------------------------------------------------------------
-int __cdecl terrain_is_road(unsigned kind);              // 0x489390 (is-farm/road terrain kind)
-int __cdecl terrain_is_water(unsigned kind);             // 0x4893b0 (is-water terrain kind)
+// The two terrain-kind tests live in ui/mission_ui.cpp (0x489390, 0x4893b0), but this unit saw their bodies (header
+// inlines in the original): Party::plan_order keeps `flags & 0x200` in a register across the call to the first one, which
+// cl only does for a callee it knows writes no memory, and it has the first one expanded inline in its second loop.
+inline int __cdecl terrain_is_road(unsigned v)           // 0x489390 (is-farm/road terrain kind)
+{
+    if ((v & 7) != 0 && v != 7)
+        return 0;
+    return 1;
+}
+inline int terrain_is_water(unsigned x)                  // 0x4893b0 (is-water terrain kind)
+{
+    int m = x & 7;
+    if (m < 2 || m >= 7) {
+        if (x != 7)
+            return 0;
+    }
+    return 1;
+}
 
 static __forceinline bool party_flag(const Party* o, int mask) { return (o->flags & mask) != 0; }
 static __forceinline Vec2 v2_mul(const vec2& v, float k) { return Vec2(v.x * k, v.y * k); }
@@ -1316,8 +1332,18 @@ static inline void rot2(vec2& v, float ang)
 // @ 0x4b3ce0
 // Act on the current map order: finish a move, chase a party or an agent, or sample a random walkable spot around the
 // current position and hand it to set_order_face as a new order.
+// What the original's code shows about the source (each of these changes registers, x87 operand order or frame slots,
+// not the instructions' meaning):
+//  - one function-scope float is the length in the act == 6 arm and the scale in both search loops (its low symbol key
+//    puts the vector's member first in `v.x * len`, which keeps len on the x87 stack);
+//  - the search loops run on a `found` flag set in the two accepting arms (cl threads it away; the store in the arm
+//    is what makes the inliner leave terrain_is_water as a call in the second loop while it expands terrain_is_road);
+//  - `flags & 0x200` is tested on the member both times (see the note at terrain_is_road);
+//  - in the second loop the target point `to` and the sampled point `p` are two variables: `to` is never address-taken,
+//    so its two loads are scheduled before its two stores.
 void Party::plan_order()
 {
+    float len;
     int act = action;
     if (act == 0) { kind = 0; moving = 0; f5988 = 0; return; }
     if (act == 7) { kind = 0; moving = 0; f5988 = 0; return; }
@@ -1329,7 +1355,8 @@ void Party::plan_order()
         if (act == 6) {
             float dx = order_pos.x - pos.x;
             float dy = order_pos.y - pos.y;
-            if (sqrtf(dy * dy + dx * dx) < 0.01f)
+            len = sqrtf(dy * dy + dx * dx);
+            if (len < 0.01f)
                 action = 0;
             return;
         }
@@ -1378,8 +1405,8 @@ void Party::plan_order()
                 d.y = a.y + b.y;
             }
             if (d.y * d.y + d.x * d.x < 1e-13f) {
-                Vec2 u(1.0f, 0.0f);
-                *(Vec2*)&fwd = u;
+                fwd.x = 1.0f;
+                fwd.y = 0.0f;
                 *(vec2*)&d = *(vec2*)&fwd;
             }
             d.normalize();
@@ -1388,9 +1415,10 @@ void Party::plan_order()
             int tries = 0;
             float spread = 0.6f;
             face* a;
-            for (;;) {
+            bool found = false;
+            while (!found) {
                 ((vec2x*)&d)->rotate_a((frand() - 0.5f) * spread);
-                float len = speed_factor() * (interval + interval + 0.5f);
+                len = speed_factor() * (interval + interval + 0.5f);
                 len = len + len;
                 Vec2 s = v2_mul(d, len);
                 fwd.x = s.x + pos.x;
@@ -1408,11 +1436,14 @@ void Party::plan_order()
                     int& cell = a->m4;
                     NavData* w = ((rgl::world*)g_script.level)->ground;
                     if (w->shares(cell, mesh->m4)) {
-                        unsigned __int64 fl = flags & 0x200;
-                        if (fl > 0 && (char)terrain_is_road(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask()))
-                            break;
-                        if (fl == 0 && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask()))
-                            break;
+                        if ((flags & 0x200) && (char)terrain_is_road(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask())) {
+                            found = true;
+                            continue;
+                        }
+                        if (!(flags & 0x200) && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask())) {
+                            found = true;
+                            continue;
+                        }
                     }
                 }
                 if (give_up)
@@ -1443,20 +1474,24 @@ void Party::plan_order()
         vec2 delta;
         delta.x = to.x - pos.x;
         delta.y = to.y - pos.y;
-        for (;;) {
+        vec2 p;
+        bool found = false;
+        while (!found) {
             vec2 h = *(vec2*)&dirx;
             float ang = ((float)(rand() % 15817) * 6.322312e-05f - 0.5f) * spread * 3.1415927f;
             rot2(h, ang);
             float m2 = (float)(rand() % 15817) * 0.00012644623f + 1.0f;
-            float len = speed_factor() * m2;
-            Vec2 w(h.x * len, h.y * len);
-            to.x = w.x + pos.x;
-            to.y = w.y + pos.y;
-            float k = (float)(rand() % 15817) / f8f4 * 6.322312e-05f;
-            Vec2 e(delta.x * k, delta.y * k);
-            to.x = e.x + to.x;
-            to.y = e.y + to.y;
-            a = g_game->find_at(&to.x);
+            len = speed_factor() * m2;
+            Vec2 w;
+            w.x = h.x * len;
+            w.y = h.y * len;
+            p.x = w.x + pos.x;
+            p.y = w.y + pos.y;
+            len = (float)(rand() % 15817) / f8f4 * 6.322312e-05f;
+            Vec2 e(delta.x * len, delta.y * len);
+            p.x = e.x + p.x;
+            p.y = e.y + p.y;
+            a = g_game->find_at(&p.x);
             tries++;
             spread += 0.4f;
             if (tries > 6) {
@@ -1469,20 +1504,20 @@ void Party::plan_order()
                 int& cell = a->m4;
                 NavData* g = ((rgl::world*)g_script.level)->ground;
                 if (g->shares(cell, mesh->m4)) {
-                    unsigned __int64 fl = flags & 0x200;
-                    if (fl > 0) {
-                        unsigned k2 = ((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask();
-                        if ((k2 & 7) == 0 || k2 == 7)
-                            break;
+                    if ((flags & 0x200) && (char)terrain_is_road(((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask())) {
+                        found = true;
+                        continue;
                     }
-                    if (fl == 0 && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask()))
-                        break;
+                    if (!(flags & 0x200) && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask())) {
+                        found = true;
+                        continue;
+                    }
                 }
             }
             if (give_up)
                 return;
         }
-        set_order_face((int*)&to, a);
+        set_order_face((int*)&p, a);
     }
 }
 
