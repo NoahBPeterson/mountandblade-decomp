@@ -826,33 +826,33 @@ ItemRef Agent::best_ammo(int idx, int* missing, int* total, int* slot_out)
     ItemRef r;
     *slot_out = -1;
     r.item = -1;
-    if (idx == -1) idx = slots[0];
+    int k = idx;
+    if (k == -1) k = slots[0];
     *missing = -1;
     *total = -1;
-    if (idx >= 0 && pairs[idx].item >= 0) {
-        unsigned wt = g_items[pairs[idx].item].type_flags & 0xff;
+    if (k >= 0 && pairs[k].item >= 0) {
+        unsigned wt = g_items[pairs[k].item].type_flags & 0xff;
         if (wt == 8 || wt == 9 || wt == 10 || wt == 0x11 || wt == 0x10) {
             *total = 0;
             *missing = 0;
             for (int i = 0; i < 4; i++) {
                 ItemRef* cur = &pairs[i];
                 if (cur->item >= 0) {
-                    int w = pairs[idx].item;
-                    unsigned t = g_items[w].type_flags & 0xff;
-                    if ((t == 8 && (char)g_items[cur->item].type_flags == 5) ||
-                        (t == 9 && (char)g_items[cur->item].type_flags == 6) ||
-                        (t == 0x10 && (char)g_items[cur->item].type_flags == 0x12) ||
-                        (t == 0x11 && (char)g_items[cur->item].type_flags == 0x12) ||
-                        (t == 10 && cur->item == w)) {
+                    int w = pairs[k].item;
+                    if (((g_items[w].type_flags & 0xff) == 8 && (char)g_items[cur->item].type_flags == 5) ||
+                        ((g_items[w].type_flags & 0xff) == 9 && (char)g_items[cur->item].type_flags == 6) ||
+                        ((g_items[w].type_flags & 0xff) == 0x10 && (char)g_items[cur->item].type_flags == 0x12) ||
+                        ((g_items[w].type_flags & 0xff) == 0x11 && (char)g_items[cur->item].type_flags == 0x12) ||
+                        ((g_items[w].type_flags & 0xff) == 10 && cur->item == w)) {
                         if (*slot_out == -1) {
                             r = *cur;
                             *slot_out = i;
                         }
                         if (*missing == 0) {
                             unsigned b = cur->m4;
-                            if (cur->max_amount() != (int)(b & 0xff)) {
-                                *slot_out = i;
+                            if (cur->max_amount() - (int)(b & 0xff) != 0) {
                                 r = *cur;
+                                *slot_out = i;
                             }
                         }
                         unsigned b2 = cur->m4;
