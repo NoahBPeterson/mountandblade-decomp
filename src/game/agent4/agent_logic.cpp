@@ -6160,18 +6160,14 @@ void Agent::choose_action(int unused)
                 if (k == 1 || (k == 2 && leader != id)) {
                     if ((int)cand >= 0) {
                         Agent* o = &AG(cand);
-                        float dx = o->pos.x - cr->pos.x;
-                        float dy = o->pos.y - cr->pos.y;
-                        float dz = o->pos.z - cr->pos.z;
-                        if ((float)sqrt(dx * dx + (dy * dy + dz * dz)) > cr->half + cr->half && dist > 10.0f)
+                        vector4 d = vsub(o->pos, cr->pos);
+                        if ((float)sqrt(d.z * d.z + d.x * d.x + d.y * d.y) > cr->half + cr->half && dist > 10.0f)
                             s[7] = s[7] * 0.0f;
                     }
                     if (k == 2 && leader != id) {
                         hand_pos(&hp);
-                        float dx = hp.x - pos.x;
-                        float dy = hp.y - pos.y;
-                        float dz = hp.z - pos.z;
-                        float l = (float)sqrt(dy * dy + (dz * dz + dx * dx)) * 0.25f;
+                        vector4 d = vsub(hp, pos);
+                        float l = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) * 0.25f;
                         if (l < 0.15f)
                             l = 0.15f;
                         else if (l >= 4.0f)
@@ -6181,10 +6177,8 @@ void Agent::choose_action(int unused)
                         pv[9] = AG(leader).pos;
                     } else if (k == 1) {
                         hand_pos(&hp);
-                        float dx = hp.x - pos.x;
-                        float dy = hp.y - pos.y;
-                        float dz = hp.z - pos.z;
-                        float l = (float)sqrt(dy * dy + (dz * dz + dx * dx)) * 0.25f;
+                        vector4 d = vsub(hp, pos);
+                        float l = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) * 0.25f;
                         if (l < 0.15f)
                             l = 0.15f;
                         else if (l >= 4.0f)
@@ -6194,7 +6188,7 @@ void Agent::choose_action(int unused)
                     }
                     ids[9] = cand;
                     ids[1] = cand;
-                } else if (k == 3) {
+                } else if (cr->kind == 3) {
                     pv[1] = pos;
                     s[1] = 1.5f;
                     ids[1] = cand;
@@ -6213,10 +6207,8 @@ void Agent::choose_action(int unused)
                                 if (a->f10 == 1 && a->f30 == -1 && a->f5830 == 2) {
                                     int v = a->f8c.stat_1ec();
                                     if (v <= T->nibble(0x18)) {
-                                        float dx = a->pos.x - pos.x;
-                                        float dy = a->pos.y - pos.y;
-                                        float dz = a->pos.z - pos.z;
-                                        float dd = (float)sqrt(dy * dy + (dz * dz + dx * dx));
+                                        vector4 d = vsub(a->pos, pos);
+                                        float dd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x);
                                         if (dd < best) {
                                             best = dd;
                                             bestid = it;
