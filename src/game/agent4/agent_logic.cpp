@@ -8411,7 +8411,7 @@ static __forceinline bool aset_inl(AnimSlot& s, int id, unsigned prio)         /
     return true;
 }
 static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart as the slice's callers inline it
-static __forceinline void vset3(float* v, const float& a, const float& b, const float& c) { v[2] = c; v[1] = b; v[0] = a; }
+static __forceinline void vset3(float* v, const float& a, const float& b, const float& c) { v[0] = a; v[1] = b; v[2] = c; }
 // 0x4379c0 as cl inlines it (the call sites that pass a constant slot 1)
 static __forceinline void set_order_inl(Agent* a, int slot, int id, unsigned prio, float rate)
 {
@@ -8624,8 +8624,7 @@ void Agent::update_controls(float dt)
                     dv.x = dv.x - vel_xy.x;
                     dv.y = dv.y - vel_xy.y;
                     const int& agi2 = g_game->chars[off].f58[1];
-                    float step = (((70.0f / (f24c + 70.0f)) * ((25.0f / (f24c + 25.0f)) *
-                                  ((float)g_game->chars[off].nibble(0x19) * 0.2f + (float)agi2 * 0.06666667f) + 1.0f)) * dt) * 10.0f;
+                    float step = (((70.0f / (f24c + 70.0f)) * ((25.0f / (f24c + 25.0f)) * (((float)g_game->chars[off].nibble(0x19) * 0.2f) + ((float)agi2 * 0.06666667f)) + 1.0f)) * dt) * 10.0f;
                     float lo_ = -step;
                     nvx = a_clampr(dv.x, lo_, step) + vel_xy.x;
                     vel_xy.x = nvx;
@@ -8784,7 +8783,7 @@ void Agent::update_controls(float dt)
                 vel.normalize();
                 int s3 = f8c.stat_1f4() + 1;
                 vector4* fr = &body->m.f;
-                float cap = ((float)rskill * 0.02f + 1.0f) * (((float)s3 * speed_mul) * 0.19f);
+                float cap = ((float)rskill * 0.02f + 1.0f) * ((float)s3 * speed_mul * 0.19f);
                 vector4 v;
                 v.x = vel_xy.y * fr->x;
                 v.y = fr->y * vel_xy.y;
@@ -8867,13 +8866,13 @@ void Agent::update_controls(float dt)
                         flags3c = flags3c & 0xfffffffe;
                         { float c5 = impulse.z + 5.0f; vset3(&impulse.x, impulse.x, impulse.y, c5); }
                         set_order(0, 2, 0x1000002, 1.0f);
-                        float var = 0.1f;
-                        int kind;
                         if (pos.z < g_mission->terrain.base_z) {
-                            kind = 0x1f;
+                            float var = 0.1f;
+                            int kind = 0x1f;
                             play_sound_var(&kind, &var);
                         } else {
-                            kind = 0x1d;
+                            float var = 0.1f;
+                            int kind = 0x1d;
                             play_sound_var(&kind, &var);
                         }
                         ((Timer*)&t5800)->set_delay(-2.0f);
@@ -8882,13 +8881,13 @@ void Agent::update_controls(float dt)
                     flags3c = flags3c & 0xfffffffe;
                     { float c6 = impulse.z + 6.0f; vset3(&impulse.x, impulse.x, impulse.y, c6); }
                     set_order(0, 0x19d, 0x1000002, 1.0f);
-                    float var = 0.1f;
-                    int kind;
                     if (pos.z < g_mission->terrain.base_z) {
-                        kind = 0x23;
+                        float var = 0.1f;
+                        int kind = 0x23;
                         play_sound_var(&kind, &var);
                     } else {
-                        kind = 0x21;
+                        float var = 0.1f;
+                        int kind = 0x21;
                         play_sound_var(&kind, &var);
                     }
                     ((Timer*)&t5800)->set_delay(-4.0f);
@@ -8957,7 +8956,7 @@ void Agent::update_controls(float dt)
         f2c = -1;
         draw_name();
     } else if (!(fl & 0x20000) || f2c != -1) {
-        if ((fl & 0xff000000) && (fl & 0xff000000) == 0x1000000 && f10 == 0 && anim[1].cur != 0x127 && f5874 < 3) {
+        if ((fl >> 24) && (fl & 0xff000000) == 0x1000000 && f10 == 0 && anim[1].cur != 0x127 && f5874 < 3) {
             order1(this, 0x127, 0x1000040);
             f5874++;
             int kind = 6;
