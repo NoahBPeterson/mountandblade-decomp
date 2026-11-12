@@ -8595,11 +8595,13 @@ void Agent::reduce_blow(Blow* b)
     if (b->dmg_out < 0.0f)
         b->dmg_out = 0.0f;
 }
+// the friend test as an inline on a by-value id: its own id >= 0 test stays after the outer one (0x455342, 0x4553a0)
+static __forceinline bool agent_friend(Mission* ms, int id, Agent* a) { return id >= 0 && mag(ms, id).is_friend(a); }
 // @ 0x4552c0
 void Agent::draw_name()
 {
     Mission* ms = g_mission;
-    unsigned local = ms->player_id;
+    int local = ms->player_id;
     unsigned col = 0xffffffff;
     float origin[3];
     origin[0] = 0.0f; origin[1] = 0.0f; origin[2] = 0.0f;
@@ -8607,16 +8609,15 @@ void Agent::draw_name()
     scale.x = 0.14f; scale.y = 0.14f;
     float a = -1.0f;
     float bb = 1.0f;
-    if (local < 0x80000000u) {
-        if (ms->agents.pages[local >> 4][local & 0xf].team == team)
+    if (local >= 0) {
+        if (mag(ms, local).team == team)
             col = 0xff44ff44;
-        else if ((int)local >= 0 && ms->agents.pages[local >> 4][local & 0xf].is_friend(this))
+        else if (agent_friend(ms, local, this))
             col = 0xff4444ff;
     }
-    if (f10 == 0 && id != (int)local) {
-        unsigned fl = g_mission_templates[ms->mode].flags;
-        unsigned f1 = (fl >> 1) % 2;
-        if (f1 && (int)local >= 0 && ms->agents.pages[local >> 4][local & 0xf].is_friend(this)) {
+    if (f10 == 0 && id != local) {
+        bool f1 = (g_mission_templates[ms->mode].flags >> 1) & 1;
+        if (f1 && agent_friend(ms, local, this)) {
             char buf[512];
             tstring* nm = g_game->chars[troop].display_name();
             sprintf(buf, "%s", nm->c_str());
