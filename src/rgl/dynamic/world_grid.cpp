@@ -292,17 +292,18 @@ void rgl::world::add_tree(shape_base* s)
 // @ 0x4252c0
 void rgl::world::add_shape(shape_base* s)
 {
-    int lo[2], hi[2];
+    int2 lo, hi;
     vector4 t0, t1;
-    to_cell((const float*)s->get_min(&t0), lo);
-    to_cell((const float*)s->get_max(&t1), hi);
-    for (int i = lo[0]; i <= hi[0]; i++)
-        for (int j = lo[1]; j <= hi[1]; j++)
-            ((grid_cell**)cells)[i][j].add(s);
-    s->min_x = lo[0];
-    s->min_y = lo[1];
-    s->max_x = hi[0];
-    s->max_y = hi[1];
+    to_cell((const float*)s->get_min(&t0), &lo.x);
+    to_cell((const float*)s->get_max(&t1), &hi.x);
+    int2 p;
+    for (p.x = lo.x; p.x <= hi.x; p.x++)
+        for (p.y = lo.y; p.y <= hi.y; p.y++)
+            ((grid_cell**)cells)[p.x][p.y].add(s);
+    s->min_x = lo.x;
+    s->min_y = lo.y;
+    s->max_x = hi.x;
+    s->max_y = hi.y;
 }
 
 // ---- the vector instantiations for the 0x24-byte vertex record (ground_v36) and the 0x88-byte group record (ground_g136) -----------
