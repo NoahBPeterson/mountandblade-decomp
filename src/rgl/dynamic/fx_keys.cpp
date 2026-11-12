@@ -68,9 +68,9 @@ quaternion quaternion::mul_conj(const quaternion& o) const
     s += o.z * z;
     s += o.y * y;
     s += o.w * w;
-    r.x = ((z * o.y - o.z * y) + w * o.x) - x * o.w;
-    r.y = ((o.z * x - z * o.x) + w * o.y) - o.w * y;
-    r.z = ((o.x * y - x * o.y) + o.z * w) - z * o.w;
+    r.x = (z * o.y - o.z * y) + w * o.x - x * o.w;
+    r.y = (o.z * x - z * o.x) + w * o.y - o.w * y;
+    r.z = (o.x * y - x * o.y) + o.z * w - z * o.w;
     r.w = s;
     return r;
 }
