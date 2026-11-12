@@ -8,3 +8,4 @@
 ../src/game/options_panel/keys_page.cpp  _$E2  00548210  /O2  /MT  /Gy  /TP
 ../src/game/options_panel/keys_page.cpp  _$E1  00547e90  /O2  /MT  /Gy  /TP
 ../src/game/options_panel/keys_page.cpp  ?refresh@KeysPage@@QAEXXZ  004d7120  /O2 /MT /Gy /TP
+../src/game/options_panel/keys_page.cpp  ?layout_row@@YAXPAUMissionUi@@PBUtstring@@MMMM@Z  004d7270  /O2 /MT /Gy /TP

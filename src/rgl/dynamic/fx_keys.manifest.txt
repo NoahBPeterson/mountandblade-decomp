@@ -12,3 +12,5 @@
 ../src/rgl/dynamic/fx_keys.cpp  ?slerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004238c0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/fx_keys.cpp  ?nlerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004239c0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/fx_keys.cpp  ?lerp_value@FxAnim@@QAE?AUvector4@rgl@@H@Z  00423390  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_keys.cpp  ?mul@quaternion@@QBE?AU1@ABU1@@Z  00422eb0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_keys.cpp  ?mul_conj@quaternion@@QBE?AU1@ABU1@@Z  00422f60  /O2 /MT /Gy /TP

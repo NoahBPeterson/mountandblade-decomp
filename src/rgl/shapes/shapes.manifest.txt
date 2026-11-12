@@ -126,3 +126,4 @@
 ../src/rgl/shapes/shapes.cpp  ?capsule_capsule_contact@@YAXPAUcapsule@@0HPAUcontact@@PAH@Z  00409e90  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?sphere_sphere_contact@@YAXPAUsphere@@0HPAUcontact@@PAH@Z  00409980  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?scale@face@@UAEXPBM@Z  00408a50  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?capsule_sphere_gap@@YAMPAUcapsule@@PAUsphere@@@Z  00409d20  /O2 /MT /Gy /TP

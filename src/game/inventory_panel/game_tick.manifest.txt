@@ -8,3 +8,4 @@
 ../src/game/inventory_panel/game_tick.cpp  ?sky_color@GameG@@QAEPAUvector4@rgl@@PAU23@@Z  00517770  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/game_tick.cpp  ?next@GamePool@@QAEXPAH@Z  00517960  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/game_tick.cpp  ?update_weather@GameG@@QAEXXZ  00517e70  /O2 /MT /Gy /TP
+../src/game/inventory_panel/game_tick.cpp  ?update_markers@GameG@@QAEXXZ  00517140  /O2 /MT /Gy /TP

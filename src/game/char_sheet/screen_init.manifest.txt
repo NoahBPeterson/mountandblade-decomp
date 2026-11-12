@@ -1,1 +1,2 @@
 ../src/game/char_sheet/screen_init.cpp  ?camera_mark_entities@CampaignScreen@@QAEXXZ  004ecce0  /O2 /MT /Gy /TP
+../src/game/char_sheet/screen_init.cpp  ?init_screen@CampaignScreen@@UAEXXZ  004ec4d0  /O2 /MT /Gy /TP

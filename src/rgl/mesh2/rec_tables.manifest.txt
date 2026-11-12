@@ -39,3 +39,4 @@
 ../src/rgl/mesh2/rec_tables.cpp  _$E1  00548010  /O2  /MT  /Gy  /TP
 ../src/rgl/mesh2/rec_tables.cpp  _$E5  005483b0  /O2  /MT  /Gy  /TP
 ../src/rgl/mesh2/rec_tables.cpp  _$E2  005483e0  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/rec_tables.cpp  ?tick@music_player@@QAIXXZ  004c4100  /O2 /MT /Gy /TP
