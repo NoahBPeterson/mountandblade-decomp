@@ -8455,9 +8455,9 @@ void Agent::update_controls(float dt)
             } else if (in_flags & 8) {
                 side = -1.0f;
                 g_move_fwd = g_move_fwd * 0.7f;
-                g_move_side = -0.9f;
-                unsigned run = in_flags;
-                if (!(run & 0x200000))
+                if (in_flags & 0x200000)
+                    g_move_side = -0.9f;
+                else
                     g_move_side = -0.55f;
             }
             float len2 = side * side + inp.y * inp.y;
@@ -8476,8 +8476,8 @@ void Agent::update_controls(float dt)
                     ms = ms * 0.6f;
                     mf = mf * 0.6f;
                 }
-                g_move_side = ms;
                 g_move_fwd = mf;
+                g_move_side = ms;
             }
 
             int mode = 0;
@@ -8504,10 +8504,10 @@ void Agent::update_controls(float dt)
                         anim = 5;
                         break;
                     case 2:
-                        if (slot_pair(0).item < 0 || (&g_items[slot_pair(0).item])->type_flags % 256 != 9)
+                        { ItemKind* ik; if (slot_pair(0).item < 0 || (ik = &g_items[slot_pair(0).item], (ik->type_flags & 0xff) != 9))
                             anim = 7;
                         else
-                            anim = 8;
+                            anim = 8; }
                         break;
                     case 3:
                         anim = 6;
@@ -8522,8 +8522,8 @@ void Agent::update_controls(float dt)
                     }
                     set_order(0, anim, 0, 1.0f);
                 }
-                a_v2 mv(g_move_side, g_move_fwd);
                 float divisor = 1.0f;
+                a_v2 mv(g_move_side, g_move_fwd);
                 float slope = 1.0f;
                 {
                     vector4 v(g_move_side, g_move_fwd, 0.0f);
@@ -8557,8 +8557,8 @@ void Agent::update_controls(float dt)
                 if (mag < lim * -0.8f)
                     mag = lim * -0.8f;
                 int off = troop;
-                Troop* tr = &g_game->chars[off];
-                float skill = ((60.0f / (f24c + 60.0f)) * (tr->nibble(0x19) * 5.0f + tr->f58[1]) + 100.0f) * 0.01f;
+                const int& agi = g_game->chars[off].f58[1];
+                float skill = ((60.0f / (f24c + 60.0f)) * (g_game->chars[off].nibble(0x19) * 5.0f + agi) + 100.0f) * 0.01f;
                 float nvx, nvy;
                 {
                     a_v2 dv = mv * mag * 2.8f * skill;
@@ -8567,9 +8567,9 @@ void Agent::update_controls(float dt)
                         dv.y = dv.y * 0.8f;
                     dv.x = dv.x - vel_xy.x;
                     dv.y = dv.y - vel_xy.y;
-                    tr = &g_game->chars[off];
+                    const int& agi2 = g_game->chars[off].f58[1];
                     float step = (((70.0f / (f24c + 70.0f)) * ((25.0f / (f24c + 25.0f)) *
-                                  ((float)tr->nibble(0x19) * 0.2f + (float)tr->f58[1] * 0.06666667f) + 1.0f)) * dt) * 10.0f;
+                                  ((float)g_game->chars[off].nibble(0x19) * 0.2f + (float)agi2 * 0.06666667f) + 1.0f)) * dt) * 10.0f;
                     float lo_ = -step;
                     nvx = a_clampr(dv.x, lo_, step) + vel_xy.x;
                     vel_xy.x = nvx;
@@ -8653,7 +8653,8 @@ void Agent::update_controls(float dt)
             float rmul = 1.0f;
             if (rid != -1) {
                 Agent* pg = g_mission->agents.pages[(unsigned)rid >> 4];
-                rskill = g_game->chars[pg[rid & 0xf].troop].nibble(0x18);
+                int rt = pg[rid & 0xf].troop;
+                rskill = g_game->chars[rt].nibble(0x18);
                 rmul = ((float)rskill + 25.0f) * 0.037037037f;
             }
             float sgn = 0.0f;
