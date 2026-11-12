@@ -116,22 +116,17 @@ void char_window::open_view()
     if (!(g_a75f64 < 0)) {
         // ---- flat fallback: a shadow image plus the empty character icon ----
         if (f2dc == -1) {
-            MissionUi* a = new MissionUi;
-            f4d0 = a;
-            label_refresh(a, tstring("char_i_character_shadow"));
+            f4d0 = new MissionUi;
+            label_refresh(f4d0, tstring("char_i_character_shadow"));
             {
                 tstring nm("character_window_shadow");
-                mesh* m = g_resmgr.get_object(&nm);
-                m = m->clone();
-                a->set_mesh(0, m);
+                f4d0->set_mesh(0, g_resmgr.get_object(&nm)->clone());
             }
-            ui->add_child(a);
-            XyzButton* c = new XyzButton;                             // ctor 0x48b1c0, vptr 0x591ee8
-            f4cc = c;
-            label_refresh(c, tstring("char_i_character"));
-            mesh* m2 = g_tableaus.make_mesh_from(&mode, &troop);
-            c->set_track(0, m2);
-            ui->add_child(c);
+            ui->add_child(f4d0);
+            f4cc = new XyzButton;                                   // ctor 0x48b1c0, vptr 0x591ee8
+            label_refresh(f4cc, tstring("char_i_character"));
+            f4cc->set_track(0, g_tableaus.make_mesh_from(&mode, &troop));
+            ui->add_child(f4cc);
         }
     } else {
         // ---- 3D portrait: build the body, the world, the wind tracks and the camera ----
