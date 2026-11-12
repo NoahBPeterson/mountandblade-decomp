@@ -6305,10 +6305,10 @@ randomise:
         }
         path_state |= 0x20;
         if (f2c < 0 && f10 != 1) {
-            if (scripted_mode == 0)
-                f288 = 1.0f;
-            else
+            if (scripted_mode != 0)
                 f288 = 1.75f;
+            else
+                f288 = 1.0f;
         } else {
             f288 = 3.0f;
         }
