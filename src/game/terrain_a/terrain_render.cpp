@@ -619,9 +619,11 @@ inline void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
             seen[x * kStride + y] = 0;
     for (y = 0; y <= this->h; y++) {
         for (x = 0; x <= this->w; x++) {
+            int& sn = seen[x * kStride + y];
             terrain_cell& c = at(x, y);
             const float& cy = at(x, y).py;
             int cnt = 0;
+            float inv = 0.0f;       // dead, but the first mention gives inv a symbol key below the sums': x87 operand order of sum * inv
             vec2 dsum, rsum;
             dsum.x = 0.0f; dsum.y = 0.0f; rsum.x = 0.0f; rsum.y = 0.0f;
             for (int k = 0; k < n; k++) {
@@ -649,8 +651,8 @@ inline void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
                 }
             }
             if (cnt >= 1 || (mark != 0 && cnt != 0)) {
-                seen[x * kStride + y] = 1;
-                const float& inv = 1.0f / (float)cnt;
+                sn = 1;
+                inv = 1.0f / (float)cnt;
                 c.disp = v2_mul(dsum, inv);
                 c.dir = v2_mul(rsum, inv);
                 float l = (float)sqrt(c.dir.y * c.dir.y + c.dir.x * c.dir.x);
