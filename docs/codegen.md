@@ -2037,3 +2037,12 @@ Key numbering (third batch, same night)
   allocated that many more symbols (fn_529d80 0x529d80, build_ribbons: evidence of missing inline layers, not a fix).
 - A `je`/`jne` displacement is invisible to insn_align: N/N identical with chk.py still differing means a store that
   belongs inside the guarded arm (`if (p) { delete p; p = 0; }`).
+- An address-taken local that is live across calls gets a save/reload pair at every call marker and the slot packer
+  counts those as uses (+2 per marker): its slot key inflates and it sorts ahead of everything. If the original has
+  such a slot late in the frame, the argument was an unnamed temporary (or the parameter is `const T&`)
+  (MissionBlocker::frame_update fb9ed8f7: 37 packer uses against 5 listing references).
+- `for` against `do-while` decides the per-function fold of `vector::operator[]` page loads (6.6): in
+  MissionBlocker::frame_update three loops had to become do-while together before any load unfolded (88af2cbc).
+- The kept copy of a merged tail is the earliest jump in the tail label's reference list; a `goto` to a forwarding
+  label reverses a group and reorders the merge (`c2trace merges --pairs`; Agent::update_attack 2ce34021). Lexical order
+  of two outer arms changes the extent of a shared constant's web even though the emitted layout stays the same.
