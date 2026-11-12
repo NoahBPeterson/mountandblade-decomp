@@ -2162,3 +2162,13 @@ Key numbering (third batch, same night)
   the busy block's blocks (read a field into a local once before arms; a flag set by a separate if) until the later
   definitions win the tie, and c2 splits it itself (CampaignScreen::frame_update 9978cae9: 822 -> 378).
 - `bool stale = false; if (p != 0) stale = f(p); if (stale && ...)` gives `setne al; test al,al`.
+- A whole-struct assignment after a call keeps the source lanes in callee-saved registers; per-field stores reload
+  them from the frame (MissionUi::update_bounds 809ca893).
+- A redundant compare the original keeps (a second `id >= 0`) comes from an inline helper testing its by-value
+  parameter; written inline it is folded or cross-jumped (Agent::draw_name c241ecec).
+- `shr; test reg,1` where ours folds to `test ch,0x10`: the bit is a bool value (`bool u = (x >> 12) & 1`).
+- A 64-bit mask test written as two halves with `>> 32` emits `_allshr`; the original's and/and/or is
+  `(u64 & g_bit[i]) != 0` (ItemRef::randomize_modifier 3592f10b).
+- `mov eax,imm; mov eax,[eax*4+tbl]`: the index was selected first (`k = 4` / `6`), then `used[k]` (post_spawn 5a472c9d).
+- A function whose callers set ecx and whose body overwrites ecx unread, ending `ret N`: a thiscall member with
+  `this` unused, not a free stdcall function.
