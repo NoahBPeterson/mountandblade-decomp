@@ -852,7 +852,12 @@ void Terrain::smooth_cells(int bit, float k)
 
 // ---- the terrain object's passes ------------------------------------------------------------------------------
 
-static inline void t_cross3(vector4& r, const vector4& a, const vector4& b) { r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x; }
+// The cross product is a MEMBER in the original (this = a x b): as a member its inline expansion's parameter symbols
+// take other symbol keys than a free function's, and the keys order the x87 operands of r.z (0x4666b0). It belongs in
+// rgl::vector4 (rgl_math.h); kept here as a file-local subclass until the shared header gets it.
+struct t_vector4 : vector4 {
+    void cross(const vector4& a, const vector4& b) { x = a.y * b.z - a.z * b.y; y = a.z * b.x - a.x * b.z; z = a.x * b.y - a.y * b.x; }
+};
 
 // @ 0x4661e0
 void Terrain::smooth_heights()
@@ -941,24 +946,23 @@ void Terrain::pick_diagonals()
                 if (v[1] != v[0] && v[3] != v[0]) r = 0;
                 if (v[2] != v[1] && v[0] != v[1]) r = 1;
                 if (v[3] != v[2] && v[1] != v[2]) r = 2;
-                terrain_quad& q = this->quad(x, y);
                 if (!(v[0] == v[3] || v[2] == v[3])) goto set1;
                 switch (r) {
                 case -1: {
                     rgl::vector4 e1 = ((this->at(x + 1, y + 1).P()) - (this->at(x, y).P()));
                     rgl::vector4 e2 = ((this->at(x + 1, y).P()) - (this->at(x, y).P()));
                     rgl::vector4 e3 = ((this->at(x, y + 1).P()) - (this->at(x, y).P()));
-                    rgl::vector4 cr;
-                    t_cross3(cr, e2, e3);
-                    if (e1.y * cr.y + cr.x * e1.x + e1.z * cr.z > 0.0f) q.diag = 0; else q.diag = 1;
+                    t_vector4 cr;
+                    cr.cross(e2, e3);
+                    if (e1.y * cr.y + cr.x * e1.x + e1.z * cr.z > 0.0f) this->quad(x, y).diag = 0; else this->quad(x, y).diag = 1;
                     break; }
                 case 0:
                 case 2:
-                    q.diag = 0;
+                    this->quad(x, y).diag = 0;
                     break;
                 default:
                 set1:
-                    q.diag = 1;
+                    this->quad(x, y).diag = 1;
                     break;
                 }
             }
