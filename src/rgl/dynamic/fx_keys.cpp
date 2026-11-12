@@ -315,18 +315,14 @@ void KeyTable::find(int* cur, float* frac, float* key)
         }
     }
     {
-        int hi = n - 1;
         int lo = 0;
-        if (n > 2) {
-            int m = lo;
-            do {
-                m = (hi + lo) >> 1;
-                if (k < (float)keys[m]) {
-                    hi = m;
-                    m = lo;
-                }
+        int hi = n - 1;
+        while (lo < hi - 1) {
+            int m = (hi + lo) >> 1;
+            if (k < (float)keys[m])
+                hi = m;
+            else
                 lo = m;
-            } while (m < hi - 1);
         }
         *cur = lo;
     }
