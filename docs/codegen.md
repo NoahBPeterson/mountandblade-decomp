@@ -2071,3 +2071,12 @@ Key numbering (third batch, same night)
   `size()`/`operator[]` fixed GameG::update_markers ee5cd014 and most of GameW::remove_party f300fd21. Adding real
   vector calls can exhaust the inliner budget for a small member (`PartyMgr::at` became a call): use the original's
   inlined form.
+- An STL member that returns an iterator (vector::erase, insert) cannot match through a `T** out` stand-in: use a
+  one-pointer iterator class with constructors (non-POD: returned through the hidden pointer, stored once after the
+  pops). VC7.1's `_Ptr_cat(_T1&, _T2&)` takes both by reference and the range helpers take iterators by value in
+  (f, l) order; the resulting dead stores identify the source (TreeW::insert 025a24ab, BigArray::erase,
+  tstring_vec::reserve 23aa73cc).
+- Slot-only rows: `c2trace slots --orig` plus `--what conf+/conf-` gives the exact conflict set the original needs;
+  read its scope structure from that (layout_row dcc63764).
+- Rows regress silently after shared refactors: compare a row note's recorded best state with chk.py now and try the
+  old spelling (PartyWindow::build_page 65f4a454).
