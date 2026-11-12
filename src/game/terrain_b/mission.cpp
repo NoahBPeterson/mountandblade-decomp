@@ -409,6 +409,31 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 // @ 0x479930
 template std::vector<MRow56>::iterator std::vector<MRow56>::erase(std::vector<MRow56>::iterator, std::vector<MRow56>::iterator);
 
+// rgl::identity_pos (0x40cd00) and vector4::normalize (0x407d60) as this unit inlines them
+static __forceinline matrix* bf_identity_pos(matrix* out)
+{
+    vector4 o(0.0f, 0.0f, 0.0f);
+    rgl::mat3 m;
+    *(rgl::mat3*)out = *rgl::identity3(&m);
+    out->o = o;
+    return out;
+}
+static __forceinline float bf_normalize(vector4& v)
+{
+    float len = v.length();
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        v.x *= inv; v.y *= inv; v.z *= inv;
+    } else {
+        v.x = 0.0f; v.y = 1.0f; v.z = 0.0f;
+    }
+    return len;
+}
+// NavData's cells and verts are std::vectors in the original (the real operator[] keeps the element address of every
+// cells[k] read; rgl::vec's raw first[i] folds it): viewed as such here until nav_data.h declares them so
+#define BF_CELLS (*(std::vector<NavCell>*)&map->cells)
+#define BF_VERTS (*(std::vector<NavVert>*)&map->verts)
+
 // @ 0x479980
 void rgl::world::build_faces(NavData* map)
 {
@@ -416,64 +441,31 @@ void rgl::world::build_faces(NavData* map)
         delete ground;
     ground = map;
 
-    for (unsigned k = 0; k < map->cells.size(); k++) {
+    for (unsigned k = 0; k < BF_CELLS.size(); k++) {
         face* f = new face;
-        NavCell* c = &map->cells[k];
-        f->count = c->npts;
-        for (int i = 0; i < c->npts; i++)
-            f->v[i] = map->verts[c->ids[i]].p;
+        f->count = BF_CELLS[k].npts;
+        for (int i = 0; i < BF_CELLS[k].npts; i++)
+            f->v[i] = BF_VERTS[BF_CELLS[k].ids[i]].p;
         f->m4 = k;
-        f->m8 = c->f68;
-        mat3 rot;
-        identity3(&rot);
+        f->m8 = BF_CELLS[k].f68;
         matrix m;
-        m.s = rot.s;
-        m.f = rot.f;
-        m.u = rot.u;
-        m.o = vector4(0.0f, 0.0f, 0.0f);
+        bf_identity_pos(&m);
         f->transform((const pos*)&m);
-        if (objs.size() < objs.capacity()) {
-            *objs._Mylast = (rgl::Obj*)f;
-            objs._Mylast++;
-        } else {
-            objs.insert(objs.end(), (rgl::Obj*)f);
-        }
+        objs.push_back((rgl::Obj*)f);
         add_tree((shape_base*)f);
-        c->obj = f;
+        BF_CELLS[k].obj = f;
     }
 
-    for (unsigned i = 0; i < map->verts.size(); i++)
-        map->verts[i].n = vector4(0.0f, 0.0f, 0.0f);
+    for (unsigned i = 0; i < BF_VERTS.size(); i++)
+        BF_VERTS[i].n = vector4(0.0f, 0.0f, 0.0f);
 
-    // the three products are read before any store and the cell is re-fetched each step: a vertex may overlap a
-    // cell record, so the order of these loads is behaviour
-    for (unsigned i = 0; i < map->cells.size(); i++) {
-        for (int j = 0; j < map->cells[i].npts; j++) {
-            NavCell* c = &map->cells[i];
-            float x = c->trans.x * c->scale;
-            float y = c->trans.y * c->scale;
-            float z = c->trans.z * c->scale;
-            NavVert* v = &map->verts[c->ids[j]];
-            v->n.x = x + v->n.x;
-            v->n.y = y + v->n.y;
-            v->n.z = z + v->n.z;
-        }
+    for (unsigned i = 0; i < BF_CELLS.size(); i++) {
+        for (int j = 0; j < BF_CELLS[i].npts; j++)
+            BF_VERTS[BF_CELLS[i].ids[j]].n += BF_CELLS[i].trans * BF_CELLS[i].scale;
     }
 
-    for (unsigned i = 0; i < map->verts.size(); i++) {
-        vector4& n = map->verts[i].n;
-        float len = (float)sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
-        if (!(len <= 1e-10f)) {
-            float inv = 1.0f / len;
-            n.x *= inv;
-            n.y *= inv;
-            n.z *= inv;
-        } else {
-            n.x = 0.0f;
-            n.y = 1.0f;
-            n.z = 0.0f;
-        }
-    }
+    for (unsigned i = 0; i < BF_VERTS.size(); i++)
+        bf_normalize(BF_VERTS[i].n);
 }
 
 // @ 0x479d20
