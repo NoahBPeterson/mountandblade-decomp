@@ -226,18 +226,11 @@ vector4 ShadowMap::to_unit(const vector4& p)
 void ShadowMap::fit_bounds()
 {
     WL_MARKER(12)
-    LightCam* c = cam;
-    vector4 ctr = (c->vmin + c->vmax) * 0.5f;
-    c = cam;
-    c->center = ctr;
-    c = cam;
-    vector4 wc((c->world.u.x * c->center.z + c->world.f.x * c->center.y) + c->center.x * c->world.s.x + c->world.o.x,
-               (c->world.s.y * c->center.x + c->world.u.y * c->center.z) + c->world.f.y * c->center.y + c->world.o.y,
-               (c->world.s.z * c->center.x + c->world.u.z * c->center.z) + c->world.f.z * c->center.y + c->world.o.z);
-    c->wcenter = wc;
-    c = cam;
-    vector4 sz(c->vmax.x - c->vmin.x, c->vmax.y - c->vmin.y, c->vmax.z - c->vmin.z);
-    c->size = sz;
+    cam->center = (cam->vmin + cam->vmax) * 0.5f;
+    cam->wcenter = vector4((cam->world.u.x * cam->center.z + cam->world.f.x * cam->center.y) + cam->center.x * cam->world.s.x + cam->world.o.x,
+                           (cam->world.s.y * cam->center.x + cam->world.u.y * cam->center.z) + cam->world.f.y * cam->center.y + cam->world.o.y,
+                           (cam->world.s.z * cam->center.x + cam->world.u.z * cam->center.z) + cam->world.f.z * cam->center.y + cam->world.o.z);
+    cam->size = cam->vmax - cam->vmin;
     WL_MARKER(13)
 }
 
