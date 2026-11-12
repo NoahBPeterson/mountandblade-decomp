@@ -292,6 +292,16 @@ bool Party::update()
     return true;
 }
 
+// 0x4638f0 (terrain_a/game_state.cpp owns the row): the body visible in the unit. skill_level calls it for stack 0 and
+// inlines it in its loop (each arm keeps its own imul/fld), party_value calls it (and hoists nstacks: it writes nothing),
+// find_worth needs it too.
+inline bool GameData::agent_low(int idx)
+{
+    if (idx == player)
+        return troops[idx].hp < g_module_settings.player_wounded_treshold;
+    return troops[idx].hp < g_module_settings.hero_wounded_treshold;
+}
+
 // @ 0x4b1be0
 int Party::slot_value(int idx, unsigned flags) const
 {
@@ -554,10 +564,10 @@ static inline bool stack_free(const Stack& s) { return (s.flags == 0) & 1; }
 int Party::skill_level(int skill)
 {
     int best = 0;
+    int found = 0;
     if (nstacks != 0 && !g_game->agent_low(stacks[0].troop)) {
         best = g_game->skill_level(stacks[0].troop, skill);
     }
-    int found = 0;
     for (int i = 0; i < nstacks; i++) {
         int item = stacks[i].troop;
         if (!(g_game->troops[item].flags30 & 0x10)) {
@@ -565,15 +575,8 @@ int Party::skill_level(int skill)
         }
         if (!stack_free(stacks[i]))
             continue;
-        if (item == g_game->player) {
-            if (!(g_game->troops[item].hp >= g_module_settings.player_wounded_treshold)) {
-                continue;
-            }
-        } else {
-            if (!(g_game->troops[item].hp >= g_module_settings.hero_wounded_treshold)) {
-                continue;
-            }
-        }
+        if (g_game->agent_low(stacks[i].troop))
+            continue;
         int v = g_game->skill_level(item, skill);
         if (v > found) {
             found = v;
