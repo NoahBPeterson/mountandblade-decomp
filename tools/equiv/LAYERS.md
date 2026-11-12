@@ -73,7 +73,10 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
   work/angr-venv/bin/pip install angr==10.0.6 pefile capstone`, or $EQUIV_ANGR_PYTHON). Fully automatic: call
   sites, returns, loop heads, callee `ret N` and argument registers come from the code and our decorated names.
   Loops are accepted only with a checked bound (every state reaching the bound provably diverges). Modelling
-  assumption: an address computed only from the entry state never points into the 1 MB below the entry esp.
+  assumption: an address computed only from the entry state never points into the 1 MB below the entry esp, nor
+  (M&B) at the return address and the function's own stack parameters ([esp, esp + 4 + W), W from the decorated
+  name or the original's `ret N`): they are the function's own objects (C++ lifetime), and cl keeps by-value
+  arguments in registers across stores through `this` on that basis.
   Counterexamples that rest on a guessed relocation pairing, assumed callee register reads, differences inside the
   function's own frame at L1, differing x87 sequences or supplied hints are reported as unknown, never refuted;
   (M&B) also a different frame size (esp at a call differs) and x87 operations modelled as uninterpreted functions.
@@ -85,7 +88,9 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
   UnsupportedIROpError); the layer installs fpSqrt for the first and uninterpreted functions for the rest. angr's own
   satisfiability check at every fork is skipped (LAZY_SOLVES; on x87 code it cost 26 s per fork and Z3 does not
   honour its timeout while bit-blasting floats); forks are pruned by a 0.5 s Z3 check on paths without float terms.
-  Literal constants are checked (func.const_ok) before solving. Loops whose trip count depends on the inputs are
+  Literal constants are paired by content and checked (func.const_ok) before solving. The proof reports the
+  instructions of ours it executed, and the self-test mutates only those (code after a call to a noreturn
+  function such as mb_error is dead in the model, and mutating it gives an equivalent mutant). Loops whose trip count depends on the inputs are
   given up at bound 4 instead of 64. Unsupported (unknown): switch tables, nested loops, loops that call or write
   memory, segment registers, calls into the function itself.
 - **ddec** (ddec_layer.py, ddec/): DDEC from STOKE (commit 98d8a0f) in Docker, optional: skipped when Docker is
