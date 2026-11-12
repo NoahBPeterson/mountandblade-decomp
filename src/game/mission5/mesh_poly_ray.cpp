@@ -815,7 +815,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
             if (g_map_pts_s2fe40[i].name.equals(o->name) != 0)
                 break;
         }
-        if (i == g_ptype_count)
+        if (i >= g_ptype_count)
             i = 0;
         o->f1a0 = o->f1a0 % g_map_pts_s2fe40[i].count;
         name = *(tstring*)((char*)g_map_pts_s2fe40[i].names + o->f1a0 * 0x48);
