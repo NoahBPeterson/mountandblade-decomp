@@ -12,3 +12,4 @@
 ../src/game/options_panel/world_app.cpp  _$E4  00548110  /O2  /MT  /Gy  /TP
 ../src/game/options_panel/world_app.cpp  _$E2  00548150  /O2  /MT  /Gy  /TP
 ../src/game/options_panel/world_app.cpp  _$E5  005482a0  /O2  /MT  /Gy  /TP
+../src/game/options_panel/world_app.cpp  ?insert@TreeW@@QAE?AUIt@1@U21@0@Z  004d3e70  /O2 /MT /Gy /TP
