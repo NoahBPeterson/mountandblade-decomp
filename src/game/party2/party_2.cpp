@@ -1721,37 +1721,32 @@ void GameData::refresh_party(unsigned id)
 float GameData::party_value(unsigned id)
 {
     float total = 0.0f;
-    if (id >= parties.n_parties)
-        return total;
-    int idx = parties.lookup(id);
-    if (idx < 0)
-        return total;
-    if (parties.pages[idx >> 4][idx & 0xf].type != 1)
-        return total;
-    int j = parties.lookup(id);
-    Party* p = &parties.pages[j >> 4][j & 0xf];
-    for (int i = 0; i < p->nstacks; i++) {
-        Stack& s = p->stacks[i];
-        if ((s.flags & 1) != 0)
-            continue;
-        Troop* t = &troops[s.troop];
-        float lv = (float)t->level + 12.0f;
-        if ((t->flags30 & 0x10) != 0) {
-            if (this->agent_low(s.troop))
-                continue;
-            total += lv * lv * 0.01f;
-        } else {
-            total += (float)(s.count - s.f10) * lv * lv * 0.01f;
+    PartyMgr* pm = &parties;
+    if (id < parties.n_parties) {
+        int idx = pm->lookup(id);
+        if (idx >= 0 && pm->atu(idx)->type == 1) {
+            Party* p = pm->at(pm->lookup(id));
+            for (int i = 0; i < p->nstacks; i++) {
+                Stack& s = p->stacks[i];
+                if ((s.flags & 1) != 0)
+                    continue;
+                Troop* t = &troops[s.troop];
+                if ((t->flags30 & 0x10) != 0) {
+                    if (this->agent_low(s.troop))
+                        continue;
+                    float lv = (float)t->level + 12.0f;
+                    total += lv * lv * 0.01f;
+                } else {
+                    float lv = (float)t->level + 12.0f;
+                    total += (float)(s.count - s.f10) * lv * lv * 0.01f;
+                }
+            }
+            for (int i = 0;; i++) {
+                if (!(i < pm->at(pm->lookup(id))->attached.size()))
+                    break;
+                total = party_value(pm->at(pm->lookup(id))->attached[i]) + total;
+            }
         }
-    }
-    for (int i = 0;; i++) {
-        int idx2 = parties.lookup(id);
-        Party* q = &parties.pages[idx2 >> 4][idx2 & 0xf];
-        if (q->attached._Myfirst == 0 || (unsigned)(q->attached._Mylast - q->attached._Myfirst) <= (unsigned)i)
-            break;
-        int idx3 = parties.lookup(id);
-        int copy = parties.pages[idx3 >> 4][idx3 & 0xf].attached._Myfirst[i];
-        total = party_value(copy) + total;
     }
     return total;
 }
