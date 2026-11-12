@@ -433,24 +433,39 @@ int GamePool::first()
     return i;
 }
 
+// GamePool::first as the original inlines it here (the row 0x5179b0 itself stays out of line)
+static __forceinline int pool_first(GamePool* gp)
+{
+    int i = 0;
+    if (gp->count > 0) {
+        do {
+            char* rec = gp->pages[(unsigned)i >> 4] + (i & 0xf) * 0x98;
+            if (*(int*)(rec + 4) != 0)
+                break;
+            i++;
+        } while (i < gp->count);
+    }
+    return i;
+}
+static __forceinline void cursor_fade(PartyModel* m, const float& v) { m->set_fade(&v); }   // a const float& temporary per arm
 // @ 0x5179f0
 void GameG::update_cursor(float dt)
 {
     PartyMgr* mgr = &parties;
 
     raw_party(mgr, mgr->lookup(main_party))->f6c = 1;
-    float radius = raw_party(mgr, mgr->lookup(main_party))->map_speed();
+    float radius = mgr->at(mgr->lookup(main_party))->map_speed();
 
     unsigned id = (unsigned)mgr->first_party_id();
-    while (id < mgr->n_parties) {
+    while (id < parties.n_parties) {
         unsigned cur = id;
         Party* p = raw_party(mgr, mgr->lookup(id));
         if (cur != (unsigned)main_party && p->f8c8 < 0) {
             unsigned __int64 flags = *(unsigned __int64*)&p->flags_lo;
             if ((flags & 0x1000100) == 0 && p->model != 0) {
-                Party* mp = raw_party(mgr, mgr->lookup(main_party));
-                float dx = p->pos.x - mp->pos.x;
-                float dy = p->pos.y - mp->pos.y;
+                const PartyV4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
+                float dx = p->pos.x - mp.x;
+                float dy = p->pos.y - mp.y;
                 float dist = (float)sqrt(dx * dx + dy * dy);
                 if (!((flags & 0x4000) == 0)) {
                     p->alpha = 1.0f;
@@ -502,23 +517,25 @@ void GameG::update_cursor(float dt)
                     p->alpha = 1.0f;
                     p->f6c = 1;
                 } else {
-                    float v = (p->alpha < 0.01f) ? 0.0f : 1.0f;
-                    p->model->set_fade(&v);
+                    if (p->alpha < 0.01f)
+                        cursor_fade(p->model, 0.0f);
+                    else
+                        cursor_fade(p->model, 1.0f);
                 }
             }
         }
         mgr->next_party_id((int*)&id);
     }
 
-    int i = pool.first();
+    int i = pool_first(&pool);
     while ((unsigned)i < (unsigned)pool.count) {
         MapRec* r = (MapRec*)(pool.pages[i >> 4] + (i & 0xf) * 0x98);
         if (f95 != 0) {
             r->opacity = 1.0f;
         } else {
-            Party* mp = raw_party(mgr, mgr->lookup(main_party));
-            float dx = r->x - mp->pos.x;
-            float dy = r->y - mp->pos.y;
+            const PartyV4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
+            float dx = r->x - mp.x;
+            float dy = r->y - mp.y;
             float dist = (float)sqrt(dx * dx + dy * dy);
             if (dist <= radius) {
                 float f = dt * 30.0f + r->opacity;
