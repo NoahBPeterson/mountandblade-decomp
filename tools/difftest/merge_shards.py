@@ -9,6 +9,8 @@ fresh inputs from its own seed. Every part of the gate combines soundly across t
   * valid inputs: each is a real comparison of both builds, so the counts add;
   * edges: an edge one shard covered was executed, so coverage is the union. An edge stays missed unless some shard
     covered it; it counts as unreachable only when EVERY shard listed it as unreachable (with that shard's reason).
+    One exception: an edge a shard run with --prove-dead proved dead is unreachable for the row (the proof is static),
+    unless another shard covered it. The merged JSON lists those edges (edges.*.proven_dead).
 The verdict thresholds are equiv.py's: FAIL on any mismatch; UNSUPPORTED when valid < max(10, inputs // 20) or a
 shard is UNSUPPORTED for a reason other than a shortage of valid inputs / wall time; PASS when valid >= 200 and
 neither side misses an edge; WEAK otherwise. A -FP suffix on any shard carries over.
@@ -44,19 +46,31 @@ def main():
     edges = {}
     for side in ("orig", "ours"):
         notcov, unr_all, total = None, None, None
+        proven = set()
         for d in shards:
             e = (d.get("edges") or {}).get(side) or {}
             total = e.get("total", total)
-            nc = set(e.get("missed", [])) | set(e.get("unreachable", []))
-            un = set(e.get("unreachable", []))
+            # equiv.py lists an unreachable edge as {"edge": ..., "reason": ...} (older results: the bare string)
+            unr = {(u["edge"] if isinstance(u, dict) else u): (u.get("reason", "") if isinstance(u, dict) else "")
+                   for u in e.get("unreachable", [])}
+            # without --full-edges the missed list stops at 64: an edge cut from one shard's list would look covered
+            assert e.get("missed_n", len(e.get("missed", []))) == len(e.get("missed", [])), \
+                "shard %s: %s lists %d of %d missed edges; re-run it with --full-edges" % (
+                    d.get("shard"), side, len(e.get("missed", [])), e.get("missed_n"))
+            nc = set(e.get("missed", [])) | set(unr)
+            un = set(unr)
+            # a --prove-dead proof is static (deadedge.py: z3 over the function's CFG, no input involved), so one
+            # shard's proof holds for the row; every other unreachable reason depends on what that shard ran
+            proven |= {k for k, why in unr.items() if why.startswith("proven-dead")}
             notcov = nc if notcov is None else notcov & nc
             unr_all = un if unr_all is None else unr_all & un
-        notcov, unr_all = notcov or set(), unr_all or set()
+        notcov, unr_all = notcov or set(), (unr_all or set()) | (proven & (notcov or set()))
         unreachable = sorted(notcov & unr_all)
         missed = sorted(notcov - unr_all)
         total = total or 0
         edges[side] = {"total": total, "covered": total - len(notcov), "required": total - len(unreachable),
-                       "unreachable": unreachable, "missed_n": len(missed), "missed": missed}
+                       "unreachable": unreachable, "missed_n": len(missed), "missed": missed,
+                       "proven_dead": sorted(proven & set(unreachable))}
 
     fails = [d for d in shards if d.get("verdict") == "FAIL"]
     hard = [d for d in shards if d.get("verdict") == "UNSUPPORTED" and d.get("valid", 0) > 0 and
