@@ -6129,12 +6129,14 @@ void Agent::choose_action(int unused)
                             if (!(w < 1.0f)) w = 1.0f;
                             int n = AG(threats[i].id).f55e8 - 1;
                             w = w / ((float)(n < 0 ? 0 : n) + 1.0f);
-                            float d = vel.y * threats[i].dir.y + (threats[i].dir.z * vel.z + threats[i].dir.x * vel.x);
-                            if (0.0f < d) w = (d * d * 20.0f + 1.0f) * w;
+                            float d = threats[i].dir.x * vel.x + threats[i].dir.z * vel.z + vel.y * threats[i].dir.y;
+                            if (d > 0.0f) w = (d * d * 20.0f + 1.0f) * w;
                             float sc = ((float)(rand() % 15817) * 6.3223117e-05f + 0.25f) * w * 0.5f;
-                            if ((AG(threats[i].id).f130 & 0x10) || (AG(threats[i].id).f130 & 0x20))
+                            if (AG(threats[i].id).f130 & 0x10)
                                 sc = sc * 1.5f;
-                            if (bests < sc) {
+                            else if (AG(threats[i].id).f130 & 0x20)
+                                sc = sc * 1.5f;
+                            if (sc > bests) {
                                 best = i;
                                 bests = sc;
                             }
@@ -6165,7 +6167,7 @@ void Agent::choose_action(int unused)
                         float dx = o->pos.x - cr->pos.x;
                         float dy = o->pos.y - cr->pos.y;
                         float dz = o->pos.z - cr->pos.z;
-                        if (cr->half + cr->half < (float)sqrt(dx * dx + (dy * dy + dz * dz)) && 10.0f < dist)
+                        if ((float)sqrt(dx * dx + (dy * dy + dz * dz)) > cr->half + cr->half && dist > 10.0f)
                             s[7] = s[7] * 0.0f;
                     }
                     if (k == 2 && leader != id) {
