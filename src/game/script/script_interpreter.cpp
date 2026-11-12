@@ -3199,6 +3199,32 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // named local first: the "split web" shape, load into a scratch register, use, copy).
 // rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
 inline const char* string_view_::get() const { const char* b = *(const char* const*)((const char*)this + 4); return b ? b : (const char*)this + 4; }
+// GameData::count_troops 0x48f790 (mission_ui2/party.cpp): party_count_members_of_type keeps params[1] / params[2] in esi / ebx
+// across both calls, store_troop_kind_count and 2180 likewise
+inline Party* si_party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4))); }
+inline Party* si_party_of(PartyMgr* m, int id) { return si_party_at(m, m->lookup(id)); }
+#define PARTY(id) si_party_of(&parties, id)
+int GameData::count_troops(int troop, int party, char prisoners)
+{
+    int total = 0;
+    int i = 0;
+    if (PARTY(party)->nstacks > 0) {
+        do {
+            if (troop == PARTY(party)->stacks[i].troop) {
+                if (prisoners != 0) {
+                    if ((PARTY(party)->stacks[i].flags & 1) != 0)
+                        goto add;
+                } else if ((PARTY(party)->stacks[i].flags & 1) == 0) {
+add:
+                    total += PARTY(party)->stacks[i].count;
+                }
+            }
+            i++;
+        } while (i < PARTY(party)->nstacks);
+    }
+    return total;
+}
+#undef PARTY
 #define game() ((GameX*)g_game)
 #define CS(s) (((const string_view_*)(s))->get())
 #define faction(id) (&((GameX*)g_game)->factions[id])
@@ -5095,9 +5121,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_count_members_of_type:
         // (party_count_members_of_type, <destination>, <party_id>, <troop_id>)
         if (check_party((int)params[1]) && check_troop((int)params[2])) {
-            int t = (int)params[2], p = (int)params[1];
-            int prisoners = ((GameData*)g_game)->count_troops(t, p, 1);
-            SET_LV((__int64)(prisoners + ((GameData*)g_game)->count_troops(t, p, 0)));
+            SET_LV((__int64)(((GameData*)g_game)->count_troops((int)params[2], (int)params[1], 1) + ((GameData*)g_game)->count_troops((int)params[2], (int)params[1], 0)));
         }
         break;
     case op::party_count_companions_of_type:
