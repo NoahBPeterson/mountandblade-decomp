@@ -727,9 +727,7 @@ unsigned Agent::find_talk_target()
         do {
             Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
             if (o->f10 == 1 && o->f30 == -1 && o->f14 == 1 && o->f5830 == 2) {
-                int a = g_game->skill_level(troop, 0x18);
-                int b = o->f8c.stat_1ec();
-                if (b <= a) {
+                if (o->f8c.stat_1ec() <= g_game->skill_level(troop, 0x18)) {
                     vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                     float len = d.normalize();
                     if (len < 1.0f) {
