@@ -812,14 +812,14 @@ static __forceinline float center_dist(const vector4& a, const vector4& c)
 void MissionObj::read(stream_base* s)
 {
     char buf[0x200];
-    vector4 mn(10000.0f, 10000.0f, 10000.0f);
-    vector4 mx(-10000.0f, -10000.0f, -10000.0f);
     s->r_tstr(&name);
     s->r_int(&f10);
     s->r_int(&f14);
     tstring t0;
     tstring t1;
     s->r_tstr(&t0);
+    vector4 mn(10000.0f, 10000.0f, 10000.0f);
+    vector4 mx(-10000.0f, -10000.0f, -10000.0f);
     if (t0.len > 1 && t0.differs(g_none)) {
         nodes_ = g_resmgr.find_meshes(&t0);
         unsigned j = 0;
@@ -832,7 +832,7 @@ void MissionObj::read(stream_base* s)
             vmin(&mn, &mn, &a);
             j++;
         }
-        v58 = vector4((mn.x + mx.x) * HALF, (mn.y + mx.y) * HALF, (mn.z + mx.z) * HALF);   // w: the temporary's unset lane
+        v58 = (mn + mx) * HALF;                          // w: the temporaries' unset lane
         radius = center_dist(mx, v58);
     }
     s->r_tstr(&t1);
@@ -842,7 +842,7 @@ void MissionObj::read(stream_base* s)
         vector4 b;
         vmax(&mx, &mx, body->get_max(&b));
         vmin(&mn, &mn, body->get_min(&b));
-        v58 = vector4((mn.x + mx.x) * HALF, (mn.y + mx.y) * HALF, (mn.z + mx.z) * HALF);   // w: the temporary's unset lane
+        v58 = (mn + mx) * HALF;                          // w: the temporaries' unset lane
         radius = center_dist(mx, v58);
     }
     _snprintf(buf, 0x200, "Mission object %s", name.c_str());
