@@ -41,11 +41,15 @@ rgl::mesh* MeshTable::placed(int index)
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&((SceneRec48*)records)[index].name))->clone();
     if (((SceneRec48*)records)[index].flags & 1)
         m->f214 += 0x2000;
+    // the position is read through a reference bound before pos's block opens: a pointer defined outside a local's
+    // scope does not get the local in its points-at set, so the x/y loads are free to cross the pos.x store
+    SceneRec48& q = ((SceneRec48*)records)[index];
+    {
     vector4 sc;
     vector4 pos;
-    pos.x = ((SceneRec48*)records)[index].px;
-    pos.y = ((SceneRec48*)records)[index].py;
-    pos.z = ((SceneRec48*)records)[index].pz;
+    pos.x = q.px;
+    pos.y = q.py;
+    pos.z = q.pz;
     SceneRec48* r = &((SceneRec48*)records)[index];
     Frame3 frame;
     identity3(&frame);
@@ -63,6 +67,7 @@ rgl::mesh* MeshTable::placed(int index)
     m->set_part(*(rgl::matrix*)&frame);
     if (pos.z * pos.z + pos.y * pos.y + pos.x * pos.x != 0.0f)
         m->translate(&pos);
+    }
     return m;
 }
 // @ 0x4991d0
@@ -70,12 +75,16 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
 {
     rgl::mesh* m = new rgl::mesh;
     int i = *index;
-    vector4 b, a;
     unsigned color;
+    // as in placed(): the record reference is bound before the block that holds a and b, so the loads through it can
+    // cross the stores to a and b (the first read keeps the plain indexed spelling: its base load is a scratch pick)
+    TableauRec& q = *(TableauRec*)&recs[i];
+    {
+    vector4 b, a;
     b.x = ((TableauRec*)&recs[i])->f30;
-    b.y = ((TableauRec*)&recs[i])->f34;
-    a.x = ((TableauRec*)&recs[i])->f28;
-    a.y = ((TableauRec*)&recs[i])->f2c;
+    b.y = q.f34;
+    a.x = q.f28;
+    a.y = q.f2c;
     color = 0xffffffff;
     vec2 uv1, uv0;
     uv1.x = 1.0f;
@@ -85,6 +94,7 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
     b.z = 0.0f;
     a.z = 0.0f;
     m->add_quad(&a, &b, &uv0, &uv1, &color);
+    }
     skin* nr = (skin*)add_spawned(index, (const int*)from);   // 0x4b14b0
     if (m->res)
         --*(int*)((char*)m->res + 0x64);
