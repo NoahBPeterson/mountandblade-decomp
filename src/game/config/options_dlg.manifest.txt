@@ -5,6 +5,7 @@
 ../src/game/config/options_dlg.cpp  ?get_latest_version@@YAJXZ  004b9aa0  /O2 /MT /Gy /TP
 ../src/game/config/options_dlg.cpp  ?set_active_tab@OptionsDlg@@QAEXH@Z  004b9790  /O2 /MT /Gy /TP
 ../src/game/config/options_dlg.cpp  ?run_settings_probe@@YAXXZ  004b99c0  /O2 /MT /Gy /TP
-../src/game/config/options_dlg.cpp  ?container_prop_string_impl@@YGJPAUIDxDiagContainer@@PAGPADI@Z  004b9a30  /O2 /MT /Gy /TP
+../src/game/config/options_dlg.cpp  ?prop_string@OptionsDlg@@QAEJPAUIDxDiagContainer@@PAGPADI@Z  004b9a30  /O2 /MT /Gy /TP
 ../src/game/config/options_dlg.cpp  ?paint@OptionsDlg@@QAEXXZ  004b9af0  /O2 /MT /Gy /TP
 ../src/game/config/options_dlg.cpp  ?parse_url@@YAXPBDPADH1H1HPAJ@Z  004b8ff0  /O2 /MT /Gy /TP
+../src/game/config/options_dlg.cpp  ?choose_dx_settings@OptionsDlg@@QAEXPAUConfig@@_N@Z  004b9b90  /O2 /MT /Gy /TP

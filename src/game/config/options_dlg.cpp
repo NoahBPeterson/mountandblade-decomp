@@ -274,10 +274,6 @@ struct IDxDiagProvider : public IUnknown {
 extern const GUID IID_IDxDiagProvider = { 0x9c6b4cb0, 0x23f8, 0x49cc, { 0xa3, 0xed, 0x45, 0xa5, 0x50, 0x00, 0xa6, 0xd2 } };       // 0x59c8e4
 extern const GUID CLSID_DxDiagProvider = { 0xa65b8071, 0x3bfe, 0x4213, { 0x9a, 0x5b, 0x49, 0x1d, 0xa4, 0x46, 0x1c, 0xa7 } };      // 0x59c8f4
 
-// 0x4b9a30: reads a DXDiag container property (as a wide string) into a char buffer. The callee itself passes the
-// property name (0x593a94, "szDisplayMemoryEnglish") to GetProp; the original also carries a fourth (unused)
-// stack argument, which the mangled symbol records as int.
-__declspec(noinline) long __stdcall container_prop_string_impl(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap);
 
 
 
@@ -344,9 +340,10 @@ void run_settings_probe()
 }
 
 // @ 0x4b9a30
-// Reads a DXDiag container property (a BSTR) into a char buffer; stdcall with four stack arguments (ret 0x10), ecx
-// is not used. A failed GetProp returns its code, a non-BSTR value E_INVALIDARG (neither clears the variant).
-long __stdcall container_prop_string_impl(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap)
+// Reads a DXDiag container property (a BSTR) into a char buffer. An OptionsDlg member that never reads this (the
+// caller passes it in ecx, `mov ecx,esi`); four stack arguments (ret 0x10). A failed GetProp returns its code, a
+// non-BSTR value E_INVALIDARG (neither clears the variant).
+__declspec(noinline) long OptionsDlg::prop_string(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap)
 {
     VARIANT result;
     VariantInit(&result);
@@ -415,7 +412,7 @@ void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
             break;
         if (devices->GetChildContainer(name, &display) < 0)
             break;
-        if (container_prop_string_impl(display, L"szDisplayMemoryEnglish", mem_text, 0x100) < 0)
+        if (prop_string(display, L"szDisplayMemoryEnglish", mem_text, 0x100) < 0)
             break;
         tstring s(mem_text);
         s.to_upper();

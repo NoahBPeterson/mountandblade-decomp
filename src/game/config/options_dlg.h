@@ -46,6 +46,7 @@ struct OptionsDlg {
     void set_active_tab(int tab);               // 0x4b9790
     void paint();                               // 0x4b9af0
     void choose_dx_settings(struct Config* cfg, bool overwrite);    // 0x4b9b90 (cfg: ./config.h)
+    long prop_string(struct IDxDiagContainer* obj, wchar_t* name, char* buf, unsigned cap);   // 0x4b9a30
 };
 
 
