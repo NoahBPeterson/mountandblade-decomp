@@ -3541,7 +3541,7 @@ void Agent::goal_near_for_class(const vector4* center, const float* radius)
 bool Agent::plan_path()
 {
     path_count = 0;
-    float width;
+    float width, w1, w2;      // w1 / w2 are never written and find_path (same unit) never reads them: they take width's frame slot
     if (f10 == 0 && f2c == -1)
         width = 0.45f;
     else
@@ -3549,7 +3549,7 @@ bool Agent::plan_path()
     int face = update_nav_face();
     if (face >= 0 && goal_face >= 0) {
         g_mission->nav.find_path(face, goal_face, pface(), ppos(), &path_count, &path_steps,
-                                 &width, &width, &width);
+                                 &width, &w1, &w2);
         path_cur = 0;
         path_flag = path_count <= 0;
         goal_face_done = goal_face;
