@@ -544,6 +544,9 @@ int Party::max_prisoners()
     return g_game->skill_level(stacks[0].troop, 2) * g_module_settings.skill_prisoner_management_bonus;
 }
 
+// the stack test as an inline bool helper: the original materialises it (sete al; test al,1), the `& 1` of a bool
+// computed from an int compare
+static inline bool stack_free(const Stack& s) { return (s.flags == 0) & 1; }
 // @ 0x4b2370
 int Party::skill_level(int skill)
 {
@@ -557,9 +560,8 @@ int Party::skill_level(int skill)
         if (!(g_game->troops[item].flags30 & 0x10)) {
             continue;
         }
-        if (stacks[i].flags != 0) {
+        if (!stack_free(stacks[i]))
             continue;
-        }
         if (item == g_game->player) {
             if (!(g_game->troops[item].hp >= g_module_settings.player_wounded_treshold)) {
                 continue;
