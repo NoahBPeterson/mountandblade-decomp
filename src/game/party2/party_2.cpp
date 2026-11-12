@@ -415,8 +415,11 @@ void Party::prepare()
             dst++;
         }
     }
+    // the third loop's counter starts from k2, not from keep (one more value-numbering temporary before the second
+    // loop's troop read, which is what orders base and index in its [troops + troop*0x508 + 0x30])
     int k2 = keep;
-    for (int j = keep; j < nstacks; j++) {
+    int j;
+    for (j = k2; j < nstacks; j++) {
         if (g_game->troops[stacks[j].troop].flags30 & 0x10) {
             if (k2 != j) {
                 rotate_stacks(k2, j);
