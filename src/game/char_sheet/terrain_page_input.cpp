@@ -42,33 +42,28 @@ void TerrainPage::simulate(float dt)
     if (g_keyboard.down[0x4a])
         zoom = (1.0f - dt * 2.1f) * zoom;
 
-    vector2 d;
-    vector2 m[2];                                           // the camera frame: m[0] = strafe axis, m[1] = forward
-    identity_2x2(&m[0].x);                                  // 0x4f3be0
+    rot2 m;                                                 // the camera frame: r[0] = strafe axis, r[1] = forward
+    identity_2x2(&m.r[0].x);                                // 0x4f3be0
     float a = -yaw;
-    ((rot2*)&m[0].x)->rotate_2x2(a);                        // 0x4f3b40 turns m[0].xy / m[1].xy
+    m.rotate_2x2(a);                                        // 0x4f3b40
 
     if (g_keyboard.down[0x1e]) {
-        d.x = (m[0].x * 50.0f) * dt;
-        d.y = (m[0].y * 50.0f) * dt;
+        rot2_row d = m.r[0] * 50.0f * dt;
         view_pos.x = view_pos.x - d.x;
         view_pos.y = view_pos.y - d.y;
     }
     if (g_keyboard.down[0x20]) {
-        d.x = (m[0].x * 50.0f) * dt;
-        d.y = (m[0].y * 50.0f) * dt;
+        rot2_row d = m.r[0] * 50.0f * dt;
         view_pos.x = d.x + view_pos.x;
         view_pos.y = d.y + view_pos.y;
     }
     if (g_keyboard.down[0x11]) {
-        d.x = (m[1].x * 50.0f) * dt;
-        d.y = (m[1].y * 50.0f) * dt;
+        rot2_row d = m.r[1] * 50.0f * dt;
         view_pos.x = d.x + view_pos.x;
         view_pos.y = d.y + view_pos.y;
     }
     if (g_keyboard.down[0x1f]) {
-        d.x = (m[1].x * 50.0f) * dt;
-        d.y = (m[1].y * 50.0f) * dt;
+        rot2_row d = m.r[1] * 50.0f * dt;
         view_pos.x = view_pos.x - d.x;
         view_pos.y = view_pos.y - d.y;
     }
