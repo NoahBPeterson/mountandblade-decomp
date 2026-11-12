@@ -645,126 +645,124 @@ void UiC::animate(int)
 // @ 0x4985f0
 void UiE::animate(int)
 {
-    bool changed = false;
-    float t0 = elapsed(0);
-    float t1 = elapsed(1);
-    float t2 = elapsed(2);
-    float t3 = elapsed(3);
-    float t4 = elapsed(4);
-    float t5 = elapsed(5);
+    unsigned char dirty = 0;
+    float e0 = mh_elapsed(this, 0);
+    float e1 = mh_elapsed(this, 1);
+    float e2 = mh_elapsed(this, 2);
+    float e3 = mh_elapsed(this, 3);
+    float e4 = mh_elapsed(this, 4);
+    float e5 = mh_elapsed(this, 5);
 
-    // bars: lerp the (x, z) pair over dur(4), then the two companion vectors from its y component
-    if (t4 < dur(4)) {
+    if (e4 < dur(4)) {
         float inv = 1.0f / dur(4);
-        float rest = dur(4) - t4;
-        mh_float2 z = mh_fade_mix(t4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
-        rgl::vector4 v(z.y * 0.02f, z.y * 0.02f, 1.0f);
-        set_size((float*)&v);
-        v.x = 0.0f;
-        v.y = z.y * 0.009f;
-        changed = true;
-        set_offset((float*)&v);
+        float rest = dur(4) - e4;
+        mh_float2 z = mh_fade_mix(e4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        // DropDown::animate's shape with two meshes; both y quotients parenthesised (the only pair of the grid that matches).
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, (z.y / fDC), 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, (z.y / fDC), 1.0f));
+        set_size((float*)&mh_float2(z.y * 0.02f, z.y * 0.02f));
+        set_offset((float*)&mh_float2(0.0f, z.y * 0.009f));
         update_bounds();
         fD8 = z.x;
         fDC = z.y;
+        dirty = 1;
     } else if (c4) {
         c4 = 0;
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        rgl::vector4 v(f8c * 0.02f, f8c * 0.02f, 1.0f);
-        set_size((float*)&v);
-        v.x = 0.0f;
-        v.y = f8c * 0.009f;
-        set_offset((float*)&v);
+        set_size((float*)&mh_float2(f8c * 0.02f, f8c * 0.02f));
+        set_offset((float*)&mh_float2(0.0f, f8c * 0.009f));
         update_bounds();
         fD8 = f88;
         fDC = f8c;
-        changed = true;
+        dirty = 1;
     }
 
-    // colour group 1: RGB (from ca()/cb()) with the alpha the widget keeps in color14c
-    unsigned col = 0;
-    if (t0 < dur(0)) {
-        float f = ((ca().dword & 0xff) * t0 + (cb().dword & 0xff) * (dur(0) - t0)) * (1.0f / dur(0));
-        col = round_float(&f);
-        f = (ca().g * t0 + cb().g * (dur(0) - t0)) * (1.0f / dur(0));
-        col += round_float(&f) << 8;
-        f = (ca().b * t0 + cb().b * (dur(0) - t0)) * (1.0f / dur(0));
-        col += round_float(&f) << 16;
+    if (e0 < dur(0)) {
+        unsigned col = 0;
+        float v = ((cb().dword & 0xff) * (dur(0) - e0) + (ca().dword & 0xff) * e0) * (1.0f / dur(0));
+        int r = round_float(&v);
+        col = r;
+        float v1 = (cb().g * (dur(0) - e0) + ca().g * e0) * (1.0f / dur(0));
+        int g = round_float(&v1);
+        col += g << 8;
+        float v2 = (cb().b * (dur(0) - e0) + ca().b * e0) * (1.0f / dur(0));
+        int b = round_float(&v2);
+        col += b << 16;
         col |= color14c & 0xff000000;
         set_color(&col);
-        changed = true;
+        dirty = 1;
     } else if (c0) {
         c0 = 0;
-        col = (ca().dword & 0xffffff) | (color14c & 0xff000000);
+        unsigned col = (color14c & 0xff000000) | (ca().dword & 0xffffff);
         set_color(&col);
-        changed = true;
+        dirty = 1;
     }
 
-    // colour group 1 alpha: it also tints both bar meshes
-    if (t1 < dur(1)) {
-        float f = (aa().a * t1 + ab().a * (dur(1) - t1)) * (1.0f / dur(1));
-        col = round_float(&f) << 24;
+    if (e1 < dur(1)) {
+        unsigned col = 0;
+        float v = (ab().a * (dur(1) - e1) + aa().a * e1) * (1.0f / dur(1));
+        col = round_float(&v) << 24;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
         set_color(&col);
-        changed = true;
+        dirty = 1;
     } else if (c1) {
         c1 = 0;
-        col = aa().dword;
-        tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
-        tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
-        col = (col & 0xff000000) | (color14c & 0xffffff);
+        tracks[2]->color = (tracks[2]->color & 0xffffff) | aa().dword;
+        tracks[1]->color = (tracks[1]->color & 0xffffff) | aa().dword;
+        unsigned col = (aa().dword & 0xff000000) | (color14c & 0xffffff);
         set_color(&col);
-        changed = true;
+        dirty = 1;
     }
 
-    // colour group 2: the same two passes with the second colour pair and the second kept word (color150)
-    if (t2 < dur(2)) {
-        float f = ((ca2().dword & 0xff) * t2 + (cb2().dword & 0xff) * (dur(2) - t2)) * (1.0f / dur(2));
-        col = round_float(&f);
-        f = (ca2().g * t2 + cb2().g * (dur(2) - t2)) * (1.0f / dur(2));
-        col += round_float(&f) << 8;
-        f = (ca2().b * t2 + cb2().b * (dur(2) - t2)) * (1.0f / dur(2));
-        col += round_float(&f) << 16;
+    if (e2 < dur(2)) {
+        unsigned col = 0;
+        float v = ((cb2().dword & 0xff) * (dur(2) - e2) + (ca2().dword & 0xff) * e2) * (1.0f / dur(2));
+        int r = round_float(&v);
+        col = r;
+        float v1 = (cb2().g * (dur(2) - e2) + ca2().g * e2) * (1.0f / dur(2));
+        int g = round_float(&v1);
+        col += g << 8;
+        float v2 = (cb2().b * (dur(2) - e2) + ca2().b * e2) * (1.0f / dur(2));
+        int b = round_float(&v2);
+        col += b << 16;
         col |= color150 & 0xff000000;
         set_target(&col);
-        changed = true;
+        dirty = 1;
     } else if (c2) {
         c2 = 0;
-        col = (ca2().dword & 0xffffff) | (color150 & 0xff000000);
+        unsigned col = (color150 & 0xff000000) | (ca2().dword & 0xffffff);
         set_target(&col);
-        changed = true;
+        dirty = 1;
     }
 
-    if (t3 < dur(3)) {
-        float f = (aa2().a * t3 + ab2().a * (dur(3) - t3)) * (1.0f / dur(3));
-        col = (color150 & 0xffffff) | (round_float(&f) << 24);
+    if (e3 < dur(3)) {
+        unsigned col = 0;
+        float v = (ab2().a * (dur(3) - e3) + aa2().a * e3) * (1.0f / dur(3));
+        col = round_float(&v) << 24;
+        col |= color150 & 0xffffff;
         set_target(&col);
-        changed = true;
+        dirty = 1;
     } else if (c3) {
         c3 = 0;
-        col = aa2().dword;
-        col = (col & 0xff000000) | (color150 & 0xffffff);
+        unsigned col = (aa2().dword & 0xff000000) | (color150 & 0xffffff);
         set_target(&col);
-        changed = true;
+        dirty = 1;
     }
 
-    // position: lerp the (x, y) pair over dur(5)
-    if (t5 < dur(5)) {
+    if (e5 < dur(5)) {
         float inv = 1.0f / dur(5);
-        float rest = dur(5) - t5;
-        mh_float2 z = mh_fade_mix(t5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
+        float rest = dur(5) - e5;
+        mh_float2 z = mh_fade_mix(e5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
         move_a((float*)&z);
     } else if (c5) {
         move_a((float*)&f80);
         c5 = 0;
     }
 
-    if (changed) {
+    if (dirty) {
         rgl::vector4 v;
         get_xy((float*)&v);
     }
