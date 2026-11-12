@@ -93,7 +93,7 @@ inline UiA::UiA() { f180 = 0; f184 = 0; }
 // Same for the slider: UiC's constructor 0x48b760 and create_slider_overlay 0x495970 expand it. ui_widgets_a.cpp defines it (0x48b4b0);
 // make_slider 0x4dfd50 (cls_map.cpp) is the one call to it.
 #ifndef UIB_CTOR_OUT_OF_LINE
-inline UiB::UiB() { f178 = 0; f180 = 0; f184 = 0; f17c = 0.008f; v168 = 1.0f; }
+inline UiB::UiB() { f178 = 0; f17c = 0.008f; v168 = 1.0f; f180 = 0; f184 = 0; }
 #endif
 
 #endif // GAME_UI_WIDGETS_H

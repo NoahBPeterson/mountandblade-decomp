@@ -134,10 +134,10 @@ int XyzButton::kind() { return 8; }
 UiB::UiB()
 {
     f178 = 0;
-    f180 = 0;
-    f184 = 0;
     f17c = 0.008f;
     v168 = 1.0f;
+    f180 = 0;
+    f184 = 0;
 }
 
 // @ 0x48b4f0
