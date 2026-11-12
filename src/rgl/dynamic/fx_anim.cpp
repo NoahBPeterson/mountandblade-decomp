@@ -41,6 +41,10 @@ static inline float vnormalize(vector4& v)
     return len;
 }
 
+// The pose pass picked by p64, as an inline helper: written in update's body the same if/else numbers the optimiser's
+// expression entries one off and the loop's [index+elems] operands come out base/index swapped.
+inline void update_pose_pass(FxAnim* a) { if (a->p64) a->update_poses(); else a->update_poses2(); }
+
 // @ 0x421df0
 void FxDef::update(float dt, const matrix* m)
 {
@@ -49,8 +53,7 @@ void FxDef::update(float dt, const matrix* m)
     if (!p64) self->update_envelopes(dt);
     f54 = dt + f54;
     b50 = false;
-    if (!p64) self->update_poses2();
-    else self->update_poses();
+    update_pose_pass(self);
     for (int i = 0; i < count; ++i) {
         for (std::vector<mesh*>::iterator it = elems[i].psys.begin(); it < elems[i].psys.end(); ++it) {
             if (!(*it)->kids.empty())
