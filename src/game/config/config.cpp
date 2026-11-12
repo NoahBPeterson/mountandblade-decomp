@@ -1711,26 +1711,21 @@ void music_player::stop(int i)
     channel[i] = -1;
 }
 
+// c_str() of a raw tstring buffer pointer (NULL: the text is stored in place)
+static inline const char* mp_cs(const char* const& b) { return b ? b : (const char*)&b; }
 // @ 0x4be0e0
 void music_player::play(int rec, int* slot)
 {
     char path[1024];
     track[*slot] = rec;
-    music_res* r = (music_res*)((char*)this + 0x20 * track[*slot]);
-    const char* s = r->name;
-    if (!(r->flags & 0x10000000)) {
-        if (!s) s = (const char*)r + 0x1c;
-        sprintf(path, "music\\%s", s);
-    } else {
-        if (!s) s = (const char*)r + 0x1c;
-        const char* dir = root.buf;
-        if (!dir) dir = (const char*)&root.buf;
-        sprintf(path, "%sMusic\\%s", dir, s);
-    }
-    unsigned mode = 0x1000000;
+    if (((music_res*)((char*)this + 0x20 * track[*slot]))->flags & 0x10000000)
+        sprintf(path, "%sMusic\\%s", mp_cs(root.buf), mp_cs(((music_res*)((char*)this + 0x20 * track[*slot]))->name));
+    else
+        sprintf(path, "music\\%s", mp_cs(((music_res*)((char*)this + 0x20 * track[*slot]))->name));
     if (((music_res*)((char*)this + 0x20 * track[*slot]))->flags & 0x40)
-        mode = 0x1000002;
-    stream[*slot] = FSOUND_Stream_Open(path, mode, 0, 0);
+        stream[*slot] = FSOUND_Stream_Open(path, 0x1000002, 0, 0);
+    else
+        stream[*slot] = FSOUND_Stream_Open(path, 0x1000000, 0, 0);
     active[*slot] = 1;
     opened[*slot] = 0;
     volume[*slot] = 10000;
