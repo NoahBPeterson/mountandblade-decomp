@@ -197,15 +197,14 @@ gui_manager::gui_manager()
     label_obj = 0;
     fa0 = 0;
     fa4 = 0;
-    *(vec2*)&mouse[0] = gm_vec2(0.0f, 0.0f);
-    vec2 prev = gm_vec2(0.0f, 0.0f);
     fa8 = -0.03f;
     corner[0] = 0;
     corner[1] = 0;
     corner[2] = 0;
     corner[3] = 0;
     panel_bg = 0xff101010;
-    *(vec2*)&prev_mx = prev;
+    *(vec2*)&mouse[0] = gm_vec2(0.0f, 0.0f);    // after panel_bg: mouse.y's store is then lexically behind it (equal-priority stores issue in lexical order)
+    *(vec2*)&prev_mx = gm_vec2(0.0f, 0.0f);
     f1709 = 0;
     f170c = 0;
     hud_flag = 0;
