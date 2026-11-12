@@ -5225,7 +5225,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int h = (int)params[1];
             if (h < 0)
                 h = 0;
-            party((int)params[0])->ignore_player_timer.set_delay((float)-h);
+            party((int)params[0])->ignore_timer.set_delay((float)-h);
         }
         break;
     case op::party_set_bandit_attraction:

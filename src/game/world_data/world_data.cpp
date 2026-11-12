@@ -1284,39 +1284,12 @@ void Party::slot1()
     init();
 }
 
-// @ 0x4934d0 (the constructor: the members' own constructors run first, then this body)
-Party::Party() throw()
+// @ 0x4934d0 (the constructor: the members' own constructors in declaration order: the names, the 64 Stack records, the
+// clock-1 timers and the footstep gui_timer (clock 0), the vectors, the notes; note_tableau is initialised in that order too)
+Party::Party() throw() : note_tableau(-1)
 {
-    for (int i = 0; i < 0x40; ++i) {
-        stacks[i].count = 0;
-        stacks[i].troop = -1;
-        stacks[i].flags = 0;
-        stacks[i].f14 = 0;
-        stacks[i].spawned = 0;
-        stacks[i].wounded = 0;
-        stacks[i].f18 = 0;
-    }
-
-    clk8d0.clock = 1;
-    clk8d0.start = g_ticks[1];
-    clk8f8.clock = 1;
-    clk8f8.start = g_ticks[1];
-    clk908.clock = 0;
-    clk908.start = g_ticks[0];
-    clk938.clock = 1;
-    clk938.start = g_ticks[1];
-    clk948.clock = 1;
-    clk948.start = g_ticks[1];
-    clk59b0.clock = 1;
-    clk59b0.start = g_ticks[1];
-
-    note_tableau = -1;
-    ignore_timer.clock = 1;
-    ignore_timer.start = g_ticks[1];
-
     init();
-
-    clk59b0.start = g_ticks[clk59b0.clock] - 100000;
+    clk59b0.rewind();
     f5a04 = 0;
 }
 

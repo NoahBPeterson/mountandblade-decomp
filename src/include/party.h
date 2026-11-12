@@ -16,6 +16,11 @@ namespace rgl { struct mesh; }
 struct stream_base;
 struct OutStream;
 struct Party;
+// a Timer started on clock 1 by its constructor (the Party members; clk908 is a gui_timer, clock 0)
+struct clock1_timer : Timer {
+    clock1_timer() { clock = 1; start = g_ticks[1]; }
+    void rewind() { start = g_ticks[clock] - 100000; }   // inline: one second in the past (as gui_timer::rewind)
+};
 struct PartyV4 { float x, y, z, w; };       // a plain 4-float vector (no constructors: the party record is built by memory copies)
 
 struct Stack {                              // 0x20 bytes, array at party+0xa8
@@ -34,6 +39,7 @@ struct Stack {                              // 0x20 bytes, array at party+0xa8
         int f10;
     };
     int f14, f18, f1c;
+    Stack() { count = 0; troop = -1; flags = 0; f14 = 0; spawned = 0; wounded = 0; f18 = 0; }   // inline (Party::Party 0x4934d0 builds the array with it)
     void clear();                           // 0x4893e0 (script: party_remove_members_of_troop / clear paths)
 };
 
@@ -114,7 +120,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     };
     char f8cc;                              // +0x8cc in mission   0x4b6180
     char pad8cd[0x8d0 - 0x8cd];
-    Timer clk8d0;                           // +0x8d0 re-plan timer   0x4b80d0
+    clock1_timer clk8d0;                    // +0x8d0 re-plan timer   0x4b80d0
     union {
         float interval;                     // +0x8e0 re-plan interval   0x4b80d0, 0x4b3ce0
         int ai_state;                       // +0x8e0 (script party_set_ai_behavior 0x4a79bb)
@@ -139,16 +145,8 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
         float f8f4;                         // +0x8f4 0x4b3ce0
         float ai_patrol_radius;             // +0x8f4 (script party_set_ai_patrol_radius 0x4a7abc)
     };
-    union {
-        Timer clk8f8;                       // +0x8f8 (constructor 0x4934d0: clock 1)
-        struct {
-            int f8f8;                       // +0x8f8 clock index   0x4b3ce0
-            char pad8fc[4];
-            int f900;                       // +0x900 0x4b3ce0 (clock lo)
-            int f904;                       // +0x904 (clock hi)
-        };
-    };
-    Timer clk908;                           // +0x908 footstep timer   0x4b80d0
+    clock1_timer clk8f8;                    // +0x8f8 (constructor 0x4934d0: clock 1; 0x4b3ce0 reads clock and start)
+    gui_timer clk908;                       // +0x908 footstep timer   0x4b80d0
     union {
         int action;                         // +0x918 map order (ai behaviour)   0x4b3910, 0x4b3ce0, 0x4b4a00
         int ai_behavior;                    // +0x918 ai_bhvr_* (script party_is_in_town 0x4a03d1)
@@ -166,15 +164,8 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
         int order_state;                    // +0x934 0x4b3bc0
         float t934;                         // 0x4b80d0 (next order-plan delay)
     };
-    union {
-        Timer clk938;                       // +0x938 (constructor 0x4934d0: clock 1)
-        struct {
-            int idx938;                     // +0x938 clock index   0x4b80d0
-            char pad93c[4];
-            __int64 t940;                   // +0x940 0x4b80d0
-        };
-    };
-    Timer clk948;                           // +0x948 0x4b80d0
+    clock1_timer clk938;                    // +0x938 (constructor 0x4934d0: clock 1; 0x4b80d0 reads clock and start)
+    clock1_timer clk948;                    // +0x948 0x4b80d0
     union {
         float f958;                         // +0x958 aggression scale   0x4b4a00
         float ai_initiative;                // +0x958 (script party_set_ai_initiative 0x4a7921)
@@ -210,7 +201,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     struct face* tgt;                       // +0x59a4 target face   0x4b2970
     int tgt_id;                             // +0x59a8 target party id   0x4b2ab0
     int f59ac;                              // +0x59ac
-    Timer clk59b0;                          // +0x59b0 (constructor 0x4934d0: clock 1; its start is re-set to 1 s back after init)
+    clock1_timer clk59b0;                   // +0x59b0 (constructor 0x4934d0: clock 1; its start is re-set to 1 s back after init)
     struct PartyModel* model;               // +0x59c0 0x4b32f0 (release), 0x4b80d0
     float trail_len;                        // +0x59c4 0x4b80d0
     PartyV4 trail;                          // +0x59c8 last event position   0x4b2880, 0x4b80d0
@@ -225,10 +216,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     tstring notes[8];                       // +0x5a28 (script 0x4a353c)
     int note_tableau;                       // +0x5aa8 (script add_party_note_tableau_mesh 0x4a31a6)
     int pad5aac;
-    union {
-        Timer ignore_timer;                 // +0x5ab0 (script: party_ignore_player 0x4a7b0c)   0x4b4a00
-        Timer ignore_player_timer;
-    };
+    clock1_timer ignore_timer;              // +0x5ab0 (script: party_ignore_player 0x4a7b0c)   0x4b4a00
     int visited;                            // +0x5ac0 nodes visited by the last path search   0x4b73c0
     char pad5ac4[0x5ac8 - 0x5ac4];
 

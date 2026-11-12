@@ -2965,7 +2965,7 @@ void Party::tick(float dt)
                     t934 = 0.0f;
                 }
             }
-            if ((float)(g_ticks[idx938] - t940) * 1e-05f > t934) {
+            if ((float)(g_ticks[clk938.clock] - clk938.start) * 1e-05f > t934) {
                 plan_order();
                 clk948.set_delay(0.1f);
                 clk938.restamp();

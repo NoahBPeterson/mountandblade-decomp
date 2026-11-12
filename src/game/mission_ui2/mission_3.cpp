@@ -84,8 +84,8 @@ int Party::consume_stack(int index, int amount, int* rows, char keep)
     if (e->f14 > v)
         e->f14 = v;
     if (stacks[index].count <= 0) {
-        Stack out;
-        remove_row((int*)&out, index, rows);
+        int out[8];                             // remove_row's 0x20-byte out record (not a constructed Stack)
+        remove_row(out, index, rows);
         r = 1;
     }
     dirty = 1;
