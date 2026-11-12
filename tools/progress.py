@@ -33,7 +33,7 @@ try:
 except (OSError, ValueError, KeyError):
     _verd = {}
 _equiv_all = equiv
-equiv = {a for a in _equiv_all if _verd.get("%08x" % a) in ("PASS", "PASS-FP")}   # PASS-FP = PASS within fp tolerance
+equiv = {a for a in _equiv_all if _verd.get("%08x" % a) in ("PASS", "PASS-FP", "PROVEN")}   # PASS-FP = PASS within fp tolerance; PROVEN = static proof (tools/equiv)
 # Near-exact rows (docs/near_exact.txt): hand-reviewed, only register/slot choice differs from the original. They count as
 # equivalent PASS; an equivalence FAIL still wins.
 try:
@@ -106,7 +106,8 @@ print(table(["Source tree", "Functions", "Share", "Insns", "Share (insns)", "Cod
             [row("Migrated into src/", migrated), row("Compilable, still only in match/slices", done - migrated)]))
 
 # Equivalence evidence for the equivalent-only rows (tools/difftest/verdicts.py, from the latest sweep)
-EV_CATS = (("pass", "PASS: matched, every branch outcome taken"), ("weak", "WEAK: matched, some branch outcomes never taken"),
+EV_CATS = (("pass", "PASS: matched, every branch outcome taken"),
+           ("proven", "PROVEN: static proof, same code up to register/slot renaming and reordering (tools/equiv)"), ("weak", "WEAK: matched, some branch outcomes never taken"),
            ("fail", "FAIL: a mismatch (see the row's note)"), ("inputs", "Untestable: random inputs invalid"),
            ("harness", "Untestable: harness limitation"),
            ("comdat", "Byte-exact via COMDAT (no callable symbol, not executed)"),
@@ -383,6 +384,7 @@ def plot_history(path):
         TC = dict((k, c) for k, _l, c in TREE_CATS)
         LAYERS = (("exact", "Byte-exact", TC["byte-exact"]),
                   ("pass", "Equivalent: PASS (matched, every branch taken)", TC["equivalent"]),
+                  ("proven", "Equivalent: proven (static proof)", "#00C49A"),
                   ("comdat", "Byte-exact via COMDAT (symbol-less fragment)", "#7FB8DA"),
                   ("weak", "WEAK: matched, some branch never taken", TC["weak"]),
                   ("fail", "FAIL: a mismatch", TC["fail"]),
@@ -484,7 +486,7 @@ def plot_history(path):
 # Okabe-Ito (colour-blind safe): one hue per verdict, exactly one grey (comdat) and white (no source). The four
 # "untested/unknown" kinds used to be four shades of grey, which is what made the treemap unreadable.
 TREE_CATS = (("byte-exact", "Byte-exact", "#0072B2"),                    # blue
-             ("equivalent", "Equivalent: STRONG pass", "#009E73"),        # bluish green
+             ("equivalent", "Equivalent: STRONG pass or proven", "#009E73"),   # bluish green
              ("weak", "Weak: some branch never taken", "#E69F00"),        # orange
              ("fail", "FAIL: a mismatch", "#D55E00"),                     # vermillion
              ("inputs", "Untestable: random inputs invalid", "#CC79A7"),  # reddish purple
@@ -567,7 +569,7 @@ def _tree_rows():
             cat = "equivalent"
         else:
             v, c = verd.get(a, (None, None))
-            cat = ("equivalent" if v in ("PASS", "PASS-FP") else "fail" if v in ("FAIL", "FAIL-FP") else
+            cat = ("equivalent" if v in ("PASS", "PASS-FP", "PROVEN") else "fail" if v in ("FAIL", "FAIL-FP") else
                    "weak" if v in ("WEAK", "WEAK-FP") else _VCAT.get(c, "nosource"))
         rows.append((group, fname, a, INS.get(a, 0) or 1, cat))
     return rows

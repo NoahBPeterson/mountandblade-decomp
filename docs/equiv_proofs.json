@@ -1,0 +1,87 @@
+{
+ "what": "functions proven equivalent by tools/equiv/prove.py (static: same code up to register renaming, independent-instruction reordering and frame-slot renaming; L1 = calling contract). Regenerate from work/equiv/rename_sweep.jsonl; tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
+ "when": "2026-11-12T16:17:52-06:00",
+ "commit": "6eb20f2d",
+ "rows": {
+  "00435c10": {
+   "src": "src/game/agent/agent.cpp",
+   "symbol": "?camera_params@Agent@@QAEXPAUCamParams@@@Z",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "188 instructions, 18 blocks, 0 moved, 21 with other register names, 11 with other frame slots (slots mode)",
+   "build": null
+  },
+  "0043f560": {
+   "src": "src/game/agent4/agent_logic.cpp",
+   "symbol": "?aim_point_and_dir@Agent@@QAEXPAUvector4@rgl@@0@Z",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "113 instructions, 5 blocks, 18 moved, 8 with other register names, 0 with other frame slots (slots mode)",
+   "build": null
+  },
+  "0043f6d0": {
+   "src": "src/game/agent4/agent_logic.cpp",
+   "symbol": "?capsule_hit@Agent@@QAE_NPAUshape_base@@PAUvector4@rgl@@1PAH@Z",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "173 instructions, 15 blocks, 0 moved, 2 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
+   "build": null
+  },
+  "0047c810": {
+   "src": "src/game/mesh_slot/mesh_ops.cpp",
+   "symbol": "?blend_indexed@Skin@@QAEXPAUmesh@rgl@@PAXPAHPBM@Z",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "137 instructions, 16 blocks, 0 moved, 3 with other register names, 0 with other frame slots (slots mode)",
+   "build": null
+  },
+  "0049deb0": {
+   "src": "src/game/script/script_interpreter.cpp",
+   "symbol": "??0Camera@@QAE@XZ",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "30 instructions, 1 blocks, 3 moved, 1 with other register names, 0 with other frame slots (slots mode)",
+   "build": null
+  },
+  "0049ebd0": {
+   "src": "src/game/script/script_interpreter.cpp",
+   "symbol": "?add_sprite@GameData@@QAEHMMH@Z",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "238 instructions, 3 blocks, 4 moved, 3 with other register names, 0 with other frame slots (slots mode)",
+   "build": null
+  },
+  "004e7b30": {
+   "src": "src/game/cls_map/progress_bar.cpp",
+   "symbol": "?read@Skin@@QAEXPAUMsStream@@@Z",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "851 instructions, 100 blocks, 0 moved, 18 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
+   "build": null
+  },
+  "005094a0": {
+   "src": "src/game/inventory_panel/char_window.cpp",
+   "symbol": "?load_troop@char_window@@QAEXXZ",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "123 instructions, 1 blocks, 0 moved, 22 with other register names, 0 with other frame slots (slots mode)",
+   "build": null
+  },
+  "00529130": {
+   "src": "src/game/mission5/mission_5.cpp",
+   "symbol": "?update_marks@MissionBlocker@@QAEXXZ",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "322 instructions, 54 blocks, 2 moved, 30 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
+   "build": null
+  },
+  "00529d80": {
+   "src": "src/game/mission5/mission_5.cpp",
+   "symbol": "?fn_529d80@Mission_s29840@@QAEXXZ",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "106 instructions, 16 blocks, 0 moved, 2 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
+   "build": null
+  }
+ }
+}

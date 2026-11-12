@@ -25,6 +25,10 @@ when a case FAILs, PASS when every case PASSes, WEAK otherwise. Categories (each
   funclet     no callable symbol and no COMDAT verdict yet (not yet run through comdat_check.py)
   notcode     not code at all: int3 padding the function index lists as a function (comdat_check.py NOT-CODE)
   not_run     no result (timeout, crash, or never swept)
+  proven      PROVEN: a static proof (tools/equiv/prove.py, docs/equiv_proofs.json) that our function is the original up to
+              register renaming, independent-instruction reordering and frame-slot renaming, for the calling contract
+              (L1) or every register (L2). Overrides any differential verdict except FAIL (a FAIL beside a proof is a
+              harness or proof bug and stays FAIL until resolved). verdicts.py --apply-proofs re-applies the list.
 """
 import argparse, datetime, glob, json, os, sys
 
@@ -35,7 +39,8 @@ sys.path.insert(0, HERE)
 CUR = os.path.join(ROOT, "docs", "equiv_verdicts.json")
 FAILURES = os.path.join(ROOT, "docs", "equiv_failures.md")
 HIST = os.path.join(ROOT, "docs", "equiv_history.json")
-CATS = ("pass", "weak", "fail", "inputs", "harness", "comdat", "comdatdiff", "funclet", "notcode", "not_run")
+CATS = ("pass", "proven", "weak", "fail", "inputs", "harness", "comdat", "comdatdiff", "funclet", "notcode", "not_run")
+PROOFS = os.path.join(ROOT, "docs", "equiv_proofs.json")
 
 
 def load(path):
@@ -57,6 +62,8 @@ def category(d):
         return "notcode"
     if v in ("PASS", "PASS-FP"):
         return "pass"
+    if v == "PROVEN":
+        return "proven"
     if v in ("WEAK", "WEAK-FP"):
         return "weak"
     if v == "FAIL":
@@ -241,11 +248,44 @@ def write_failures(doc):
         f.write("\n".join(out))
 
 
+def apply_proofs(res):
+    """Overlay docs/equiv_proofs.json (tools/equiv/prove.py results) on the rows: a proven row becomes PROVEN unless its
+    differential verdict is FAIL. The differential verdict is kept as "tested"."""
+    try:
+        proofs = json.load(open(PROOFS)).get("rows", {})
+    except (OSError, ValueError):
+        return 0
+    n = 0
+    for va, p in proofs.items():
+        r = res.get(va)
+        if r is None or r.get("category") == "fail":
+            continue
+        if r.get("category") != "proven":
+            r["tested"] = r.get("verdict")
+        r.update(verdict="PROVEN", category="proven", proof="%s %s" % (p.get("layer"), p.get("level")))
+        r.pop("reason", None)
+        n += 1
+    return n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--from", dest="src", nargs="+")
     ap.add_argument("--backfill", nargs="+")
+    ap.add_argument("--apply-proofs", action="store_true", help="overlay docs/equiv_proofs.json on the current file")
     a = ap.parse_args()
+    if a.apply_proofs and not a.src:
+        doc = json.load(open(CUR))
+        n = apply_proofs(doc["rows"])
+        for c in CATS:
+            doc["summary"].setdefault(c, 0); doc["summary"].setdefault(c + "_sz", 0)
+        doc["summary"] = summarize((v["category"], v["size"]) for v in doc["rows"].values())
+        doc["when_proofs"] = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
+        with open(CUR, "w") as f:
+            json.dump(doc, f, indent=0, sort_keys=False)
+            f.write("\n")
+        add_history(dict(doc["summary"], when=doc["when_proofs"], source="proofs", rows=len(doc["rows"])))
+        print("applied %d proofs" % n)
     if a.backfill:
         for d in a.backfill:
             items = []
@@ -317,6 +357,7 @@ def main():
                 fm = (d or {}).get("first_mismatch")
                 if fm:
                     res[r["va"]]["first_mismatch"] = fm
+        apply_proofs(res)
         when = max(newest(d) for d in src_dirs if glob.glob(os.path.join(d, "*.json")))
         head = os.popen("git -C '%s' rev-parse --short HEAD" % ROOT).read().strip()
         summ = summarize((v["category"], v["size"]) for v in res.values())

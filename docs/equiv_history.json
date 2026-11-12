@@ -3010,5 +3010,32 @@
   "when": "2026-11-12T00:37:09-06:00",
   "source": "work/sweep_1105+work/sweep_bm4+work/sweep_bm4c+work/sweep_bm4_fails+work/sweep_1108+work/sweep_1109+work/vsearch/equiv+work/chk60_laptop+work/chk60+work/equiv_vs128+work/equiv_after_wave+work/equiv_nm2+work/equiv_k31+work/equiv_live+work/equiv_live2+work/equiv_cp+work/sweep_1111+work/equiv_n_eq",
   "rows": 585
+ },
+ "2026-11-12T16:17:52-06:00": {
+  "pass": 144,
+  "proven": 10,
+  "weak": 270,
+  "fail": 1,
+  "inputs": 9,
+  "harness": 9,
+  "comdat": 121,
+  "comdatdiff": 9,
+  "funclet": 0,
+  "notcode": 1,
+  "not_run": 11,
+  "pass_sz": 74653,
+  "proven_sz": 7913,
+  "weak_sz": 459026,
+  "fail_sz": 701,
+  "inputs_sz": 25418,
+  "harness_sz": 3423,
+  "comdat_sz": 2871,
+  "comdatdiff_sz": 2846,
+  "funclet_sz": 0,
+  "notcode_sz": 1,
+  "not_run_sz": 28388,
+  "when": "2026-11-12T16:17:52-06:00",
+  "source": "proofs",
+  "rows": 585
  }
 }

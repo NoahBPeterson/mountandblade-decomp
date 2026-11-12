@@ -22,26 +22,28 @@
 "work/equiv_n_eq"
 ],
 "summary": {
-"pass": 149,
-"weak": 273,
+"pass": 144,
+"proven": 10,
+"weak": 270,
 "fail": 1,
 "inputs": 9,
-"harness": 10,
+"harness": 9,
 "comdat": 121,
 "comdatdiff": 9,
 "funclet": 0,
 "notcode": 1,
-"not_run": 12,
-"pass_sz": 77196,
-"weak_sz": 460886,
+"not_run": 11,
+"pass_sz": 74653,
+"proven_sz": 7913,
+"weak_sz": 459026,
 "fail_sz": 701,
 "inputs_sz": 25418,
-"harness_sz": 4227,
+"harness_sz": 3423,
 "comdat_sz": 2871,
 "comdatdiff_sz": 2846,
 "funclet_sz": 0,
 "notcode_sz": 1,
-"not_run_sz": 31094
+"not_run_sz": 28388
 },
 "rows": {
 "00408bd0": {
@@ -889,9 +891,11 @@
 "00435c10": {
 "module": "agent",
 "file": "src/game/agent/agent.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 759
+"verdict": "PROVEN",
+"category": "proven",
+"size": 759,
+"tested": "PASS",
+"proof": "rename L1"
 },
 "00436210": {
 "module": "agent",
@@ -1204,16 +1208,20 @@
 "0043f560": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 354
+"verdict": "PROVEN",
+"category": "proven",
+"size": 354,
+"tested": "PASS",
+"proof": "rename L1"
 },
 "0043f6d0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 658
+"verdict": "PROVEN",
+"category": "proven",
+"size": 658,
+"tested": "PASS",
+"proof": "rename L1"
 },
 "0043f970": {
 "module": "agent_logic",
@@ -2053,9 +2061,11 @@
 "0047c810": {
 "module": "mesh_ops",
 "file": "src/game/mesh_slot/mesh_ops.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 405
+"verdict": "PROVEN",
+"category": "proven",
+"size": 405,
+"tested": "WEAK",
+"proof": "rename L1"
 },
 "0047c9b0": {
 "module": "mesh_ops",
@@ -2538,9 +2548,11 @@
 "0049deb0": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 122
+"verdict": "PROVEN",
+"category": "proven",
+"size": 122,
+"tested": "PASS",
+"proof": "rename L1"
 },
 "0049dfe0": {
 "module": "script_interpreter",
@@ -2566,10 +2578,11 @@
 "0049ebd0": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "PROVEN",
+"category": "proven",
 "size": 804,
-"reason": "not a verdict: 8 input(s) ran the emulated heap out of address space (8 in the original's pass, 0 in ours); neither run has a comparable end state"
+"tested": "UNSUPPORTED",
+"proof": "rename L1"
 },
 "0049ef00": {
 "module": "script_interpreter",
@@ -3277,9 +3290,11 @@
 "004e7b30": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "not_run",
-"size": 2706
+"verdict": "PROVEN",
+"category": "proven",
+"size": 2706,
+"tested": "UNSUPPORTED",
+"proof": "rename L1"
 },
 "004e85d0": {
 "module": "progress_bar",
@@ -3619,9 +3634,11 @@
 "005094a0": {
 "module": "char_window",
 "file": "src/game/inventory_panel/char_window.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 650
+"verdict": "PROVEN",
+"category": "proven",
+"size": 650,
+"tested": "PASS",
+"proof": "rename L1"
 },
 "00509980": {
 "module": "view_open",
@@ -3985,9 +4002,11 @@
 "00529130": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1136
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1136,
+"tested": "WEAK",
+"proof": "rename L1"
 },
 "00529840": {
 "module": "mission_5",
@@ -4006,9 +4025,11 @@
 "00529d80": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 319
+"verdict": "PROVEN",
+"category": "proven",
+"size": 319,
+"tested": "WEAK",
+"proof": "rename L1"
 },
 "00529ec0": {
 "module": "mission_5",
@@ -4181,5 +4202,6 @@
 "category": "weak",
 "size": 1719
 }
-}
+},
+"when_proofs": "2026-11-12T16:17:52-06:00"
 }
