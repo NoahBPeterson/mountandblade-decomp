@@ -54,3 +54,4 @@
 ../src/game/party2/party_2.cpp  ?prepare@Party@@QAEXXZ  004b1eb0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?push_party_event@GameData@@QAEXHPBHPBM@Z  004b6070  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?set_order_party@Party@@QAEXPAH@Z  004b29d0  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?reissue_order@Party@@QAEXXZ  004b3bc0  /O2 /MT /Gy /TP
