@@ -367,12 +367,10 @@ void layout_row(MissionUi* row, const tstring* text, float bx, float by, float b
         scale.x = s;
         scale.y = s;
         row->set_size((const float*)&scale);
-        {
-            vector2 pos;
-            pos.x = 0;
-            pos.y = bx * 0.5f - s * 0.3f;
-            row->set_offset((const float*)&pos);
-            { char r[8]; row->set_text((float*)r, &(*text)); }
-        }
     }
+    vector2 pos;
+    pos.x = 0;
+    pos.y = bx * 0.5f - s * 0.3f;
+    row->set_offset((const float*)&pos);
+    { char r[8]; row->set_text((float*)r, &(*text)); }
 }
