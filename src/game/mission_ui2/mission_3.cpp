@@ -348,39 +348,48 @@ void GameData::spawn_items(int type, int want, int troop)
 {
     int got = 0;
     Troop* ag = &troops[troop];
-    for (int tries = 0; tries < 10000 && got < want; tries++) {
+    for (int tries = 0; got < want; tries++) {
+        if (tries >= 10000)
+            break;
         int idx;
         if (g_item_kind_count <= 1)
             idx = 0;
         else
             idx = rand() % g_item_kind_count;
-        ItemKind* k = &g_items[idx];
-        unsigned tf = k->type_flags;
+        unsigned tf = g_items[idx].type_flags;
         if ((tf & 0xff) != (unsigned)type || (tf & 0x1000) != 0 || (tf & 0x10000) == 0)
             continue;
-        float chance = (float)k->f220 * k->f224 * 0.01f;
-        if (chance < 0.0f)
+        float c = (float)g_items[idx].f220 * g_items[idx].f224 * 0.01f;
+        float chance;
+        if (c < 0.0f)
             chance = 0.0f;
-        else if (chance >= 20.0f)
+        else if (c >= 20.0f)
             chance = 20.0f;
+        else
+            chance = c;
         float roll = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         for (; chance > roll && got < want; got++) {
             chance -= 1.0f;
             int n = ag->inv_count();
-            int slot = n > 1 ? rand() % n : 0;
+            int slot;
+            if (n <= 1)
+                slot = 0;
+            else
+                slot = rand() % n;
             ItemRef* e = &ag->inv[slot];
             if (e->item == -1 || (g_items[e->item].type_flags & 0x1000) == 0) {
                 e->item = idx;
                 e->m4 = 0;
                 if (idx > 0) {
-                    unsigned t = k->type_flags & 0xff;
+                    unsigned t = g_items[idx].type_flags & 0xff;
                     if (t == itp_type_thrown || t == itp_type_arrows || t == itp_type_bolts ||
                         t == itp_type_pistol || t == itp_type_musket || t == itp_type_crossbow ||
                         t == itp_type_bullets) {
                         e->b.amount = 0;
                     } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
-                        e->b.amount = 0;
-                        e->m4 |= (unsigned)e->stat_1e8();
+                        int v = e->stat_1e8();
+                        *(unsigned short*)&e->m4 = 0;
+                        e->m4 |= (unsigned)v;
                     }
                 }
                 e->randomize_modifier(f13a38);
