@@ -332,28 +332,32 @@ int Mesh_s2e960::vertex_index(int index, const rgl::matrix& m)
 // @ 0x52eca0
 int Mesh_s2e960::edge_index(int index, const rgl::matrix& m)
 {
-    // same shape as vertex_index: real std::vector size()/operator[], the dead `i >= 0` test, and the fresh
-    // edge's constants set before its endpoints are looked up (a constructor in the original, presumably)
+    // real std::vector size()/operator[]; the search leaves its result in r (-1: not found) and the fresh edge is
+    // built in the `r < 0` arm, which returns its own index: that puts the found return after the arm. The fresh
+    // edge's constants are set before its endpoints are looked up (a constructor in the original, presumably).
+    int r = -1;
     for (int i = 0; (unsigned)i < edges2.size(); i++) {
         if (edges2[i].index == index) {
-            if (i >= 0)
-                return i;
+            r = i;
             break;
         }
     }
-    int n = edges2.size();
-    medge_s2e960 e;
-    e.unk08 = -10000;
-    e.unk0c = -10000;
-    e.unk10 = 0;
-    e.flag = 0;
-    e.t0 = 1.0f;
-    e.t1 = 1.0f;
-    e.v0 = vertex_index(edges[index].v0, m);
-    e.v1 = vertex_index(edges[index].v1, m);
-    e.index = index;
-    edges2.push_back(e);
-    return n;
+    if (r < 0) {
+        int n = edges2.size();
+        medge_s2e960 e;
+        e.unk08 = -10000;
+        e.unk0c = -10000;
+        e.flag = 0;
+        e.unk10 = 0;
+        e.t0 = 1.0f;
+        e.t1 = 1.0f;
+        e.v0 = vertex_index(edges[index].v0, m);
+        e.v1 = vertex_index(edges[index].v1, m);
+        e.index = index;
+        edges2.push_back(e);
+        return n;
+    }
+    return r;
 }
 
 // Flatten the copy buffers into the real ones: every copied vertex goes back to world space via
