@@ -386,41 +386,38 @@ void XyzButton::animate(int)
 void DropDown::animate(int)
 {
     unsigned char dirty = 0;
-    float e0 = elapsed(0);
-    float e1 = elapsed(1);
-    float e2 = elapsed(2);
-    float e3 = elapsed(3);
-    float e4 = elapsed(4);
-    float e5 = elapsed(5);
+    float e0 = mh_elapsed(this, 0);
+    float e1 = mh_elapsed(this, 1);
+    float e2 = mh_elapsed(this, 2);
+    float e3 = mh_elapsed(this, 3);
+    float e4 = mh_elapsed(this, 4);
+    float e5 = mh_elapsed(this, 5);
 
     if (e4 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - e4;
         mh_float2 z = mh_fade_mix(e4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        // Two parenthesised y quotients (any two of the three calls match): each is one more tuple, and the scheduler's
+        // 81-tuple region must end two tuples before the third set_color call (0x496fa8: its last store precedes the
+        // mesh load). The size and offset arguments are 8-byte temporaries, one per call: they open the frame slot the
+        // vector temporaries and the later mix temporaries then share (frame 0x38).
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, (z.y / fDC), 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, (z.y / fDC), 1.0f));
         ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
         float sy = z.y * 0.02f;
-        rgl::vector4 v(sy, sy, 1.0f);
-        set_size((float*)&v);
-        v.x = sy;
-        v.y = z.y * 0.013f;
-        set_offset((float*)&v);
+        set_size((float*)&mh_float2(sy, sy));
+        set_offset((float*)&mh_float2(sy, z.y * 0.013f));
         update_bounds();
         fD8 = z.x;
         fDC = z.y;
         dirty = 1;
     } else if (c4) {
+        c4 = 0;
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        float sy = f8c * 0.02f;
-        rgl::vector4 w(sy, sy, 1.0f);
-        set_size((float*)&w);
-        w.x = f8c * 0.02f;
-        w.y = f8c * 0.013f;
-        set_offset((float*)&w);
-        c4 = 0;
+        set_size((float*)&mh_float2(f8c * 0.02f, f8c * 0.02f));
+        set_offset((float*)&mh_float2(f8c * 0.02f, f8c * 0.013f));
         update_bounds();
         fD8 = f88;
         fDC = f8c;
@@ -430,17 +427,20 @@ void DropDown::animate(int)
     if (e0 < dur(0)) {
         unsigned col = 0;
         float v = ((cb().dword & 0xff) * (dur(0) - e0) + (ca().dword & 0xff) * e0) * (1.0f / dur(0));
-        col = round_float(&v);
-        v = (cb().g * (dur(0) - e0) + ca().g * e0) * (1.0f / dur(0));
-        col += round_float(&v) << 8;
-        v = (cb().b * (dur(0) - e0) + ca().b * e0) * (1.0f / dur(0));
-        col += round_float(&v) << 16;
+        int r = round_float(&v);
+        col = r;
+        float v1 = (cb().g * (dur(0) - e0) + ca().g * e0) * (1.0f / dur(0));
+        int g = round_float(&v1);
+        col += g << 8;
+        float v2 = (cb().b * (dur(0) - e0) + ca().b * e0) * (1.0f / dur(0));
+        int b = round_float(&v2);
+        col += b << 16;
         col |= color14c & 0xff000000;
         set_color(&col);
         dirty = 1;
     } else if (c0) {
         c0 = 0;
-        unsigned col = (color14c ^ ca().dword) & 0xffffff ^ color14c;
+        unsigned col = (color14c & 0xff000000) | (ca().dword & 0xffffff);
         set_color(&col);
         dirty = 1;
     }
@@ -453,15 +453,14 @@ void DropDown::animate(int)
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         tracks[3]->color = (tracks[3]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        dirty = 1;
         set_color(&col);
+        dirty = 1;
     } else if (c1) {
         c1 = 0;
-        unsigned a = aa().dword;
-        tracks[2]->color = (tracks[2]->color & 0xffffff) | a;
-        tracks[1]->color = (tracks[1]->color & 0xffffff) | a;
-        tracks[3]->color = (tracks[3]->color & 0xffffff) | a;
-        unsigned col = (color14c ^ a) & 0xffffff ^ a;
+        tracks[2]->color = (tracks[2]->color & 0xffffff) | aa().dword;
+        tracks[1]->color = (tracks[1]->color & 0xffffff) | aa().dword;
+        tracks[3]->color = (tracks[3]->color & 0xffffff) | aa().dword;
+        unsigned col = (aa().dword & 0xff000000) | (color14c & 0xffffff);
         set_color(&col);
         dirty = 1;
     }
@@ -469,17 +468,20 @@ void DropDown::animate(int)
     if (e2 < dur(2)) {
         unsigned col = 0;
         float v = ((cb2().dword & 0xff) * (dur(2) - e2) + (ca2().dword & 0xff) * e2) * (1.0f / dur(2));
-        col = round_float(&v);
-        v = (cb2().g * (dur(2) - e2) + ca2().g * e2) * (1.0f / dur(2));
-        col += round_float(&v) << 8;
-        v = (cb2().b * (dur(2) - e2) + ca2().b * e2) * (1.0f / dur(2));
-        col += round_float(&v) << 16;
+        int r = round_float(&v);
+        col = r;
+        float v1 = (cb2().g * (dur(2) - e2) + ca2().g * e2) * (1.0f / dur(2));
+        int g = round_float(&v1);
+        col += g << 8;
+        float v2 = (cb2().b * (dur(2) - e2) + ca2().b * e2) * (1.0f / dur(2));
+        int b = round_float(&v2);
+        col += b << 16;
         col |= color150 & 0xff000000;
         set_target(&col);
         dirty = 1;
     } else if (c2) {
         c2 = 0;
-        unsigned col = (color150 ^ ca2().dword) & 0xffffff ^ color150;
+        unsigned col = (color150 & 0xff000000) | (ca2().dword & 0xffffff);
         set_target(&col);
         dirty = 1;
     }
@@ -492,9 +494,8 @@ void DropDown::animate(int)
         set_target(&col);
         dirty = 1;
     } else if (c3) {
-        unsigned a = aa2().dword;
         c3 = 0;
-        unsigned col = (color150 ^ a) & 0xffffff ^ a;
+        unsigned col = (aa2().dword & 0xff000000) | (color150 & 0xffffff);
         set_target(&col);
         dirty = 1;
     }
