@@ -844,6 +844,12 @@ void load_game_variables()
     }
 }
 
+// The parser's clamp wrapper: the value by value, the bounds by reference. The by-value copy is why the three clamp
+// sites share one slot for the parsed value (0x18) that sits after the first site's bounds (0x10, 0x14): each inlined
+// copy is its own 2-use temporary and they pack into one slot, while the bound temporaries, stored before atof, each
+// keep theirs. A function-level `float x` (6 uses) packs first, at 0x10.
+inline float clamp(float x, const float& lo, const float& hi) { return clamp(&x, &lo, &hi); }
+
 // ---- module_info.txt: one directive per entry of the table at 0xa18238 ---------------------------------------------------------
 // @ 0x4c05b0
 void parse_module_info()
@@ -864,7 +870,6 @@ void parse_module_info()
             msg = g_module_info.entries[i].key;
             val = g_module_info.entries[i].value;
         }
-        float x, lo, hi;
         if (msg.equals("load_resource")) {
             ((stream_base&)g_log).w_cstr("Loading Resource ").w_tstr(&val).w_cstr("\n");
             g_resmgr.load_pack(val, 0);
@@ -902,17 +907,11 @@ void parse_module_info()
             ((stream_base&)g_log).w_cstr("Setting armor_reduction_factor_against_blunt = ").w_float(&g_module_settings.armor_reduction_factor[2]).w_cstr("\n");
         }
         else if (msg.equals("missile_damage_speed_power")) {
-            lo = 2.0f;
-            hi = 1.0f;
-            x = (float)atof(val.c_str());
-            g_module_settings.missile_damage_speed_power = clamp(&x, &hi, &lo);
+            g_module_settings.missile_damage_speed_power = clamp((float)atof(val.c_str()), 1.0f, 2.0f);
             ((stream_base&)g_log).w_cstr("Setting missile_damage_speed_power = ").w_float(&g_module_settings.missile_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("melee_damage_speed_power")) {
-            float lo = 2.0f;
-            float hi = 1.0f;
-            x = (float)atof(val.c_str());
-            g_module_settings.melee_damage_speed_power = clamp(&x, &hi, &lo);
+            g_module_settings.melee_damage_speed_power = clamp((float)atof(val.c_str()), 1.0f, 2.0f);
             ((stream_base&)g_log).w_cstr("Setting melee_damage_speed_power = ").w_float(&g_module_settings.melee_damage_speed_power).w_cstr("\n");
         }
         else if (msg.equals("damage_interrupt_attack_treshold") || msg.equals("damage_interrupt_attack_threshold")) {
@@ -952,10 +951,7 @@ void parse_module_info()
             ((stream_base&)g_log).w_cstr("Setting Base Companion Limit = ").w_int(&g_module_settings.base_companion_limit).w_cstr("\n");
         }
         else if (msg.equals("player_xp_multiplier")) {
-            float lo = 10.0f;
-            float hi = 1.0f;
-            x = (float)atof(val.c_str());
-            g_module_settings.player_xp_multiplier = clamp(&x, &hi, &lo);
+            g_module_settings.player_xp_multiplier = clamp((float)atof(val.c_str()), 1.0f, 10.0f);
             ((stream_base&)g_log).w_cstr("Setting player_xp_multiplier = ").w_float(&g_module_settings.player_xp_multiplier).w_cstr("\n");
         }
         else if (msg.equals("hero_xp_multiplier")) {
