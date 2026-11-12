@@ -830,12 +830,9 @@ void Agent::update_aim_error()
                 nz = (n.x + n.y) * 1.9f + 1.4f;
             }
             ItemKind* ik = &g_items[item];
-            vector4 d;
-            d.x = fx - prev_facing.x;
-            d.y = fy - prev_facing.y;
-            d.z = fz - prev_facing.z;
+            vector4 d = vsub(*(vector4*)&fx, prev_facing);
             float spd = 0.0f;
-            if (g_step_tbl[0] > 0.0f) spd = (float)sqrt(d.y * d.y + (d.x * d.x + d.z * d.z)) / g_step_tbl[0];
+            if (g_step_tbl[0] > 0.0f) spd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) / g_step_tbl[0];
             spd = spd * 0.0f;
             if (spd > 1.0f) spd = 1.0f;
             prev_facing = *(vector4*)&fx;
