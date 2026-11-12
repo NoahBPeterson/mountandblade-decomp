@@ -91,9 +91,10 @@ struct UiD : MissionUi {                    // vtable 0x592140
 inline UiA::UiA() { f180 = 0; f184 = 0; }
 #endif
 // Same for the slider: UiC's constructor 0x48b760 and create_slider_overlay 0x495970 expand it. ui_widgets_a.cpp defines it (0x48b4b0);
-// make_slider 0x4dfd50 (cls_map.cpp) is the one call to it.
+// make_slider 0x4dfd50 (cls_map.cpp) is the one call to it. __forceinline: with plain inline, O2 declines the expansion
+// in editor_ui.cpp's make_slider 0x4f5fb0 (which the original inlines); the other users are unchanged either way.
 #ifndef UIB_CTOR_OUT_OF_LINE
-inline UiB::UiB() { f178 = 0; f17c = 0.008f; v168 = 1.0f; f180 = 0; f184 = 0; }
+__forceinline UiB::UiB() { f178 = 0; f17c = 0.008f; v168 = 1.0f; f180 = 0; f184 = 0; }
 #endif
 
 #endif // GAME_UI_WIDGETS_H

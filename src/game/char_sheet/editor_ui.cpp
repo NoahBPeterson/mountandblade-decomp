@@ -1,4 +1,3 @@
-#define UIB_CTOR_OUT_OF_LINE   // O2 inlines the correctly ordered body below at the make_slider call site (0x48b4b0)
 #include "../../include/image_addrs.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
@@ -16,10 +15,6 @@
 #include "../config/core.h"      // GameApp: OneTimeSceneInit is vtable slot 4 of the application object
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
-// UiB's constructor 0x48b4b0 as inlined at the call sites: the base constructor, the vptr, then f178, f17c,
-// v168, f180, f184 (ui_widgets.h's generic inline body orders the stores differently).
-__forceinline UiB::UiB() { f178 = 0; f17c = 0.008f; v168 = 1.0f; f180 = 0; f184 = 0; }
-
 // UiD's constructor 0x48b890 as inlined at the call sites: the base constructor, the vptr, then f178, f17c,
 // v168, f180, f184.
 __forceinline UiD::UiD() { f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
