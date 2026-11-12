@@ -526,17 +526,6 @@ void quick_save_msg(); // 0x516a70
 void __cdecl operator delete(void* p);                        // 0x535712 (operator delete, ??3@YAXPAX@Z)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 
-static __forceinline bool any_pressed_s261e0(const int* keys, int n)
-{
-    bool r = false;
-    for (const int* p = keys; (int)p < (int)(keys + n); p++) {            // the original walks a pointer to a fixed end (cl unrolls the counted form)
-        int k = *p;
-        if (k >= 0 && ((int*)((char*)&g_keyboard + 0xc))[k] != 0 && ((int*)((char*)&g_keyboard + 0x40c))[k] == 0)
-            r = true;
-    }
-    return r;
-}
-
 __forceinline Agent_s261e0* AgentTable_s261e0::at(unsigned id) { return pages[id >> 4] + (id & 0xf); }
 static __forceinline Agent_s261e0* page_agent_s261e0(Mission_s261e0* m, unsigned id)
 {
