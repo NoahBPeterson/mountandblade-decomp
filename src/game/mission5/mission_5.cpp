@@ -541,31 +541,31 @@ void MissionBlocker::frame_update(float dt)
 
     // ---- no-camera position save -------------------------------------------------------------------
     if (g_cfg.enable_edit_mode && (g_keyboard.down[29] || g_keyboard.down[157]) && g_keyboard.down[18] && !g_keyboard.prev[18]) {
-        if (g_game_s261e0->f1a090 != 0)
-            goto restore;
-        if (g_mission_s261e0->local_id >= 0) {
-            *(vector4*)((char*)g_game_s261e0 + 0x1a1a4) = *(vector4*)((char*)page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->local_id) + 0x50);
-            *(float*)((char*)g_game_s261e0 + 0x1a1ac) += 1.5f;
+        if (g_game_s261e0->f1a090 == 0) {
+            if (g_mission_s261e0->local_id >= 0) {
+                *(vector4*)((char*)g_game_s261e0 + 0x1a1a4) = *(vector4*)((char*)page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->local_id) + 0x50);
+                *(float*)((char*)g_game_s261e0 + 0x1a1ac) += 1.5f;
+            } else {
+                *(vector4*)((char*)g_game_s261e0 + 0x1a1a4) = *(vector4*)((char*)this + 0x218);
+            }
+            g_game_s261e0->f139e4 = 0;
+            g_game_s261e0->f1a090 = 1;
+            *(int*)((char*)g_game_s261e0 + 0x1a20c) = 0;
+            g_game_s261e0->f1a1b4 = -1;
+            ((std::vector<int>*)((char*)g_game_s261e0 + 0x1a1b8))->resize(0, 0);
+            *(int*)((char*)g_game_s261e0 + 0x1a1cc) = 0;
+            ((Screen_s2ae70*)g_mission_s261e0)->init_order_markers();   // 0x52653e: ecx = g_mission (0x5e292c), not the screen
         } else {
-            *(vector4*)((char*)g_game_s261e0 + 0x1a1a4) = *(vector4*)((char*)this + 0x218);
+            restore_defaults();
+            if (g_mt_inited) {
+                LeaveCriticalSection(&g_mt_cs);
+                SetEvent(g_mt_event);
+            }
+            return;
         }
-        g_game_s261e0->f139e4 = 0;
-        g_game_s261e0->f1a090 = 1;
-        *(int*)((char*)g_game_s261e0 + 0x1a20c) = 0;
-        g_game_s261e0->f1a1b4 = -1;
-        ((std::vector<int>*)((char*)g_game_s261e0 + 0x1a1b8))->resize(0, 0);
-        *(int*)((char*)g_game_s261e0 + 0x1a1cc) = 0;
-        ((Screen_s2ae70*)g_mission_s261e0)->init_order_markers();   // 0x52653e: ecx = g_mission (0x5e292c), not the screen
     }
     if (g_game_s261e0->f1a090 != 0) {
         ((Mission_s2b5c0*)this)->update_ui();
-        if (g_mt_inited) {
-            LeaveCriticalSection(&g_mt_cs);
-            SetEvent(g_mt_event);
-        }
-        return;
-restore:
-        restore_defaults();
         if (g_mt_inited) {
             LeaveCriticalSection(&g_mt_cs);
             SetEvent(g_mt_event);
