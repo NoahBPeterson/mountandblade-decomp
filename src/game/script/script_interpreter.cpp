@@ -3192,6 +3192,13 @@ static __declspec(noinline) int trigger_item_mesh(int c)
     }
     return r;
 }
+// ---- visible duplicates of small callees (the rows belong to the modules named) ------------------------------------------
+// In the original these are header inlines that cl did not expand in execute: the call stays, but with the body in the
+// unit cl has the callee's summary (docs/c2/callee.md) and knows the call writes none of execute's address-taken locals.
+// A params[] dword then stays in its callee-saved register across the call instead of being reloaded (or copied to a
+// named local first: the "split web" shape, load into a scratch register, use, copy).
+// rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
+inline const char* string_view_::get() const { const char* b = *(const char* const*)((const char*)this + 4); return b ? b : (const char*)this + 4; }
 #define game() ((GameX*)g_game)
 #define CS(s) (((const string_view_*)(s))->get())
 #define faction(id) (&((GameX*)g_game)->factions[id])
@@ -7221,9 +7228,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::str_store_quest_name_link:
-      { int q = (int)params[1];
+      {
         if (check_register((int)params[0]) && check_quest((int)params[1])) {
             char link[0x400];
+            int q = (int)params[1];
             sprintf(link, "<qst=%d>%s</>", q, CS(&quest(q)->text));
             g_script.str[(int)params[0]].assign(link);
         }
