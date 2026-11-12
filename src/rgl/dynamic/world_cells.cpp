@@ -65,9 +65,9 @@ void rgl::world::relocate(shape_base* o)
         return;
     const int2* lo = (const int2*)&o->min_x;
     const int2* hi = (const int2*)&o->max_x;
-    int2 t1, mx;
-    int2 mn = *min2(&t1, &nlo, lo);
-    max2(&mx, &nhi, hi);
+    int2 mn, mx;
+    { int2 t1; mn = *min2(&t1, &nlo, lo); }
+    { int2 t2; mx = *max2(&t2, &nhi, hi); }
     int2 p;
     for (p.x = mn.x; p.x <= mx.x; p.x++) {
         for (p.y = mn.y; p.y <= mx.y; p.y++) {
