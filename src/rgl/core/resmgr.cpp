@@ -1082,9 +1082,9 @@ stream_base* read_mesh(stream_base* s, mesh* m)
     std::vector<face20>& vf = m->v90;
     vf.resize(nfaces, fv);
     for (i = 0; i < nfaces; i++) {
-        int* q = &vat(m->v90, i).a;
+        face20* f = &vat(m->v90, i);
         for (int j = 0; j < 3; j++)
-            s->r_int(q++);
+            s->r_int(&f->a + j);
     }
 
     ((rgl::mesh*)m)->compute_tangents();
