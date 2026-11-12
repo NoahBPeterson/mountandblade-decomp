@@ -517,16 +517,15 @@ void Skin::blend(mesh* m, int unused, const float* weights)
     m->ensure_local();
     vector4 v;
     vector4 d;
-    for (unsigned i = 0, off = 0; i < m->v70.size(); i++, off += 0x20) {
+    for (unsigned i = 0; i < m->v70.size(); i++) {
         for (int j = 0; j < n_face_keys; j++) {
-            FaceKey* b = &face_keys[j];
-            vector4* t = (vector4*)b->delta + i;
-            if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
-                float w = (b->f28 - b->f24) * weights[j] + b->f24;
+            if (((vector4*)face_keys[j].delta)[i].length_squared() > 1e-10f) {
+                float w = (face_keys[j].f28 - face_keys[j].f24) * weights[j] + face_keys[j].f24;
+                vector4* t = (vector4*)face_keys[j].delta + i;
                 d.x = w * t->x;
-                point20* p = (point20*)((char*)m->v70._Myfirst + off);
                 d.y = w * t->y;
                 d.z = w * t->z;
+                point20* p = (point20*)m->v70._Myfirst + i;
                 v.x = p->a.x + d.x;
                 v.y = p->a.y + d.y;
                 v.z = p->a.z + d.z;
@@ -544,18 +543,17 @@ void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
     ArrSet* s = (ArrSet*)set;
     if ((int)m->v70.size() != s->cnt[*index])
         return;
-    for (unsigned i = 0, off = 0; i < m->v70.size(); i++, off += 0x20) {
+    for (unsigned i = 0; i < m->v70.size(); i++) {
         for (int j = 0; j < n_face_keys; j++) {
             int bi = s->arr[*index][i];
-            FaceKey* b = &face_keys[j];
-            vector4* t = (vector4*)b->delta + bi;
-            if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
-                float w = (b->f28 - b->f24) * weights[j] + b->f24;
+            if (((vector4*)face_keys[j].delta)[bi].length_squared() > 1e-10f) {
+                float w = (face_keys[j].f28 - face_keys[j].f24) * weights[j] + face_keys[j].f24;
+                vector4* t = (vector4*)face_keys[j].delta + bi;
                 vector4 d;
-                point20* p = (point20*)((char*)m->v70._Myfirst + off);
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
+                point20* p = (point20*)m->v70._Myfirst + i;
                 if (p->a.x < 0.0f)
                     d.x = -d.x;
                 vector4 v;
