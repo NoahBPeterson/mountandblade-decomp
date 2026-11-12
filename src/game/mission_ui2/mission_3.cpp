@@ -393,6 +393,11 @@ ItemRef* __stdcall copy_refs(ItemRef* dst, unsigned n, const ItemRef* src)
     return dst + n;
 }
 
+// The mesh / LOD id lists of a placed object's entity, as the std::vectors they are. The original tests size() and then
+// indexes [0], re-evaluating props[i].ent for each (no named object or entity local): size() keeps &vector as `this`,
+// operator[] re-reads the entity through the materialised props[i].
+static inline std::vector<int>& ent_lods(const PlacedObj& o) { return *(std::vector<int>*)&((PropEnt*)o.ent)->lods; }
+static inline std::vector<int>& ent_meshes(const PlacedObj& o) { return *(std::vector<int>*)&((PropEnt*)o.ent)->meshes; }
 // @ 0x48cec0
 int __fastcall trigger_item(int key)
 {
@@ -400,14 +405,8 @@ int __fastcall trigger_item(int key)
     if (key == -0x28 || key == -0x2b || key == -0x2a) {
         int i = ((SiteKeys*)g_game)->cur;
         if (i >= 0) {
-            PlacedObj* m = &g_mission->props._Myfirst[i];
-            PropEnt* e = (PropEnt*)m->ent;
-            PropEnt::Vec* v = &e->lods;
-            if (v->first != 0) {
-                unsigned n = v->last - v->first;
-                if (n > 0)
-                    r = *((PropEnt*)m->ent)->lods.first;   // the first LOD entry (re-read through m->ent, as the original)
-            }
+            if (ent_lods(g_mission->props[i]).size() > 0)
+                r = ent_lods(g_mission->props[i])[0];       // the first LOD entry
         }
     } else if (key == -0x32 || key == -0x33)
         r = ((SiteKeys*)g_game)->key_a;
@@ -421,14 +420,8 @@ int __fastcall trigger_mesh_obj(int key)
     if (key == -0x28) {
         int i = ((SiteKeys*)g_game)->cur;
         if (i >= 0) {
-            PlacedObj* base = &g_mission->props._Myfirst[i];
-            PropEnt* e = (PropEnt*)base->ent;
-            PropEnt::Vec* v = &e->meshes;
-            if (v->first != 0) {
-                unsigned n = v->last - v->first;
-                if (n > 0)
-                    r = *v->first;
-            }
+            if (ent_meshes(g_mission->props[i]).size() > 0)
+                r = ent_meshes(g_mission->props[i])[0];
         }
     } else if (key == -0x32 || key == -0x46)
         r = ((SiteKeys*)g_game)->key_b;
