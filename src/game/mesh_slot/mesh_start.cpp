@@ -566,11 +566,13 @@ void Mission::start_setup()
             at<vec2>(0x652c) = z;
             at<float>(0x6534) = (float)(g_terrain.bits[3] & ((unsigned)g_bit[10] - 1));
             at<float>(0x6538) = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
+            // statement order found by enumeration (24 orders): this one makes the else arm's scratch rotation the original's (its 18 copies start at ecx);
+            // the original's own order of this arm (0x6538 loaded first, then stores 0x6540, 0x654c, 0x653c, 0x6544, 0x6548, z in ecx/edx) is still not reached
+            at<float>(0x654c) = -0.300000012f;
+            at<int>(0x6544) = at<int>(0x6534);
             at<vec2>(0x653c) = z;      // from z, not a copy of 0x652c: the original stores both pairs from the registers holding z (0x485a8a..)
+            at<int>(0x6548) = at<int>(0x6538);
         }
-        at<float>(0x654c) = -0.300000012f;
-        at<int>(0x6548) = at<int>(0x6538);   // 0x6538 is loaded first in the original; the -0.3 store sits between the pair stores (0x4858ed)
-        at<int>(0x6544) = at<int>(0x6534);
     } else {
         at<int>(0x654c) = lrec->at<int>(0x64);
         at<int>(0x653c) = lrec->at<int>(0x54);
