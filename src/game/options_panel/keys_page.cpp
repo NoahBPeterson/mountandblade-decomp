@@ -316,14 +316,6 @@ void GameKeys::restore()
 // The box is four float arguments (the caller pushes four immediates).
 void layout_row(MissionUi* row, const tstring* text, float bx, float by, float bz, float bw);
 
-static inline void row_colour(MissionUi* row, char assigned)
-{
-    unsigned colour = 0xff000000;
-    if (assigned)
-        colour = 0xffff2200;
-    row->set_color(&colour);
-}
-
 // @ 0x4d7120
 void KeysPage::refresh()
 {
@@ -339,7 +331,8 @@ void KeysPage::refresh()
         tstring text;
         g_game_keys.key_binding_name(i, &text, (int*)&assigned);   // stores one byte
         layout_row(p->keys[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
-        row_colour(p->keys[i], assigned);
+        if (assigned) { unsigned c = 0xffff2200; p->keys[i]->set_color(&c); }
+        else { unsigned c = 0xff000000; p->keys[i]->set_color(&c); }
         p->keys[i]->set15c(0);
     }
 
