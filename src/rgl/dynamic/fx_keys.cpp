@@ -54,9 +54,9 @@ quaternion quaternion::mul(const quaternion& o) const
     float s = o.x * x;
     s += o.y * y;
     s += o.z * z;
-    r.x = ((y * o.z - o.y * z) + o.w * x) + o.x * w;
-    r.y = ((o.x * z - o.z * x) + y * o.w) + o.y * w;
-    r.z = ((o.y * x - o.x * y) + o.w * z) + w * o.z;
+    r.x = (y * o.z - o.y * z) + o.w * x + o.x * w;
+    r.y = (o.x * z - o.z * x) + y * o.w + o.y * w;
+    r.z = (o.y * x - o.x * y) + o.w * z + w * o.z;
     r.w = o.w * w - s;
     return r;
 }
