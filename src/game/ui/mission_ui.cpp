@@ -1043,10 +1043,12 @@ int GameData::count_in(int id, int idx, char flag)
 int GameData::sl_take(int group, int item, int want, char extras)
 {
     int total = 0;
-    int n = troops[group].inv_count();
-    ItemRef* base = (ItemRef*)((char*)troops + 0xb4) + group * 0xa1;
-    for (int i = 0; i < n && want > 0; i++) {
-        ItemRef* p = base + i;
+    Troop* t = &troops[group];
+    int n = t->inv_count();
+    for (int i = 0; i < n; i++) {
+        if (want <= 0)
+            break;
+        ItemRef* p = (ItemRef*)((char*)troops + 0xb4) + group * 0xa1 + i;
         if (p->item == item) {
             total += sort_value(p);
             p->item = -1;
@@ -1054,14 +1056,18 @@ int GameData::sl_take(int group, int item, int want, char extras)
         }
     }
     if (extras) {
-        ItemRef* ebase = (ItemRef*)((char*)troops + 0x4a4) + group * 0xa1;
-        for (int i = 0; i < 10 && want > 0; i++) {
-            ItemRef* p = ebase + i;
+        int i = 0;
+        ItemRef* base = (ItemRef*)((char*)troops + 0x4a4);
+        while (i < 10) {
+            if (want <= 0)
+                break;
+            ItemRef* p = base + group * 0xa1 + i;
             if (p->item == item) {
                 total += sort_value(p);
                 p->item = -1;
                 want--;
             }
+            i++;
         }
     }
     return total;
