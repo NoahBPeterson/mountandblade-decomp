@@ -19,6 +19,7 @@
 #define STD_VECTOR_INT_INSTANTIATED_HERE   // std_vec_out_of_line.h: vector<int>::resize 0x43f310 and operator= 0x43f0a0 are this file's
 #define INT_HASH_LOWER_BOUND_INSTANTIATED_HERE   // glyph_lookup.h: the int hash lookup 0x43b210 is this file's
 #include <vector>
+#include <deque>
 #include "../../rgl/rgl_math.h"
 #include "../std_vec_out_of_line.h"
 #include "../agent2/agent_types.h"
@@ -960,34 +961,23 @@ void Agent::update_aim_error()
 }
 
 // ---- input queue, nav face tracking and the movement animation chooser -------------------------------------------------------------------------------------------------------
+// the input queue at +0x53c0 is a std::deque<InputRec> (map +0x53c4, map size, offset, size; one 0x20-byte record per block)
+typedef std::deque<InputRec> InputQueue;
+static __forceinline InputQueue& input_queue(Agent* a) { return *(InputQueue*)((char*)a + 0x53c0); }
 // @ 0x43c9c0
 void Agent::poll_input(float unused, InputState* out)
 {
     InputState orig = *out;
     *out = in_prev;
-    if (q_count != 0) {
-        unsigned now_lo = ((unsigned*)g_ticks)[4];
-        int now_hi = ((int*)g_ticks)[5];
-        while (q_count != 0) {
-            unsigned i = q_head;
-            if (q_cap <= i)
-                i -= q_cap;
-            InputRec* e = q_buf[i];
-            if (e->hi > now_hi || (e->hi == now_hi && e->lo >= now_lo))
+    InputQueue& q = input_queue(this);
+    if (!q.empty()) {
+        __int64 now = g_ticks[2];
+        while (!q.empty()) {
+            if (*(__int64*)&q.front().lo >= now)
                 break;
-            i = q_head;
-            if (q_cap <= i)
-                i -= q_cap;
-            out->v[0] |= q_buf[i]->bits;
+            out->v[0] |= q.front().bits;
             in_last = *out;
-            if (q_count != 0) {
-                q_head++;
-                if (q_cap <= q_head)
-                    q_head = 0;
-                q_count--;
-                if (q_count == 0)
-                    q_head = 0;
-            }
+            q.pop_front();
         }
     }
     out->v[0] |= in_last.v[0];
