@@ -422,7 +422,9 @@ inline vector4 vcross_s2e960(const vector4& a, const vector4& b)
 namespace rgl {
 inline vector4 to_world_s2e960(const matrix& m, const vector4& p)
 {
-    return vector4(m.s.x * p.x + m.f.x * p.y + m.u.x * p.z + m.o.x,
+    // x row: the y and z terms are summed first (0x52f02c..0x52f04d; without the parentheses cl adds the x term
+    // second). Still open in apply_copy: the original multiplies the z term before the y term there.
+    return vector4((m.u.x * p.z + m.f.x * p.y) + m.s.x * p.x + m.o.x,
                    m.s.y * p.x + m.f.y * p.y + m.u.y * p.z + m.o.y,
                    m.s.z * p.x + m.f.z * p.y + m.u.z * p.z + m.o.z);
 }
