@@ -153,6 +153,18 @@ def _dword(gen, inp, addr):
     if POOL_BASE <= addr < POOL_BASE + NSLOTS * SLOT:
         slot = (addr - POOL_BASE) & ~(SLOT - 1)
         page = addr & ~0xFFF
+        # Fast path, same value as the general one below: slot_pages copies the 64 KB slot and applies every
+        # pool_over edit of it per call (5 ms with a typed input's thousands of edits; TypedInputs.realign reads
+        # hundreds of dwords per input, 3.6 s per input on Operation::execute 0x49fa10). When no edit overlaps
+        # this dword at another address, the dword is its own edit, else the cached soup's.
+        po = inp.pool_over
+        if getattr(inp, "pagegen", 1) != 1 and addr & 0xFFF <= 0x1000 - 4 and not (
+                addr - 3 in po or addr - 2 in po or addr - 1 in po or addr + 1 in po or addr + 2 in po or addr + 3 in po):
+            if addr in po:
+                return po[addr] & 0xFFFFFFFF
+            soup = gen.slot_cache.get((inp.seed, inp.profile, POOL_BASE + slot))
+            if soup is not None and len(soup) == SLOT:
+                return struct.unpack_from("<I", soup, addr - POOL_BASE - slot)[0]
         buf = gen.slot_pages(inp, POOL_BASE + slot).get(page)
         if buf is None or addr & 0xFFF > len(buf) - 4:
             return None

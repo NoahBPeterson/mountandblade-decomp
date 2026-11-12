@@ -1259,3 +1259,25 @@ def test_native_hooks_give_identical_row_results():
          "--no-regress", "--fp-tol", "--time-limit", "3000"]))))
     assert a == b
     assert a["fp_tol"]["fp_tolerable"] > 0, a["fp_tol"]
+
+
+def test_dword_fast_path_equals_slot_pages():
+    """invariants._dword's fast path (own edit, else cached soup) returns exactly what the slot_pages path does,
+    including edits at unaligned addresses that overlap the dword (those take the general path)."""
+    import struct
+    import invariants as INV
+    _ti, gen, rng = _typed_fixture()
+    soup = bytes(rng.getrandbits(8) for _ in range(M.SLOT))
+    gen._slot_soup = lambda inp, slot: soup
+    inp = _new_input(rng)
+    inp.pagegen = 2
+    base = M.POOL_BASE + 3 * M.SLOT
+    for _ in range(300):
+        inp.pool_over[base + rng.randrange(0, 0x3000)] = rng.getrandbits(32)
+
+    def slow(a):
+        buf = gen.slot_pages(inp, base).get(a & ~0xFFF)
+        return None if buf is None or a & 0xFFF > len(buf) - 4 else struct.unpack_from("<I", buf, a & 0xFFF)[0]
+    assert INV._dword(gen, inp, base + 0x10) == slow(base + 0x10)      # before the soup is cached, and after
+    for a in list(inp.pool_over) + [base + rng.randrange(0, 0x3004) for _ in range(3000)] + [base + 0xFFD, base + 0xFFC]:
+        assert INV._dword(gen, inp, a) == slow(a), hex(a)

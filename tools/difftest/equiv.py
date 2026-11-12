@@ -685,7 +685,7 @@ def _audit_copy(t, name, ova):
         code = img.read(lo, hi - lo)
         insns, _tables = R.recursive_descent(lambda a, n: code[a - lo:a - lo + n], lo, hi, ova,
                                              lambda a: struct.unpack_from("<I", code, a - lo)[0] if lo <= a <= hi - 4 else None)
-        return RA.audit(t.coff, syms[0], t.res, insns, img).get("local_copy", [])
+        return audit_cached(t, syms[0], insns, img).get("local_copy", [])
     except Exception:
         return []
 
@@ -6512,8 +6512,20 @@ def _cache_key(t, out, opts):
         for f in sorted(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "*.py"))):
             h.update(open(f, "rb").read())
         _harness_hash = h.hexdigest()
+    h = _object_hash(t, _harness_hash)
+    keep = {k: v for k, v in out.items() if k not in ("seconds",)}
+    h.update(json.dumps(keep, sort_keys=True, default=str).encode())
+    h.update(json.dumps({k: v for k, v in sorted(vars(opts).items()) if k not in _UNKEYED_OPTS},
+                        sort_keys=True, default=str).encode())
+    return h.hexdigest()
+
+
+def _object_hash(t, harness_hash):
+    """sha1 object over the harness sources, the compiled object (non-debug sections, relocations by symbol name,
+    symbols) and the resolution of its symbols into the image: the first part of the result-cache key."""
+    import hashlib
     c = t.coff
-    h = hashlib.sha1(_harness_hash.encode())
+    h = hashlib.sha1(harness_hash.encode())
     for sec in c.sections:
         if sec.discard:
             continue
@@ -6522,11 +6534,54 @@ def _cache_key(t, out, opts):
         h.update(repr([(r[0], c.syms[r[1]].name if r[1] in c.syms else r[1], r[2]) for r in sec.relocs]).encode())
     h.update(repr([(sy.name, sy.value, sy.secno, sy.cls) for _, sy in sorted(c.syms.items())]).encode())
     h.update(repr(sorted((c.syms[i].name if i in c.syms else str(i), a) for i, a in t.res.addr.items())).encode())
-    keep = {k: v for k, v in out.items() if k not in ("seconds",)}
-    h.update(json.dumps(keep, sort_keys=True, default=str).encode())
-    h.update(json.dumps({k: v for k, v in sorted(vars(opts).items()) if k not in _UNKEYED_OPTS},
-                        sort_keys=True, default=str).encode())
-    return h.hexdigest()
+    return h
+
+
+AUDIT_CACHE_DIR = os.path.join(S.ROOT, "work", "difftest", "audit_cache")
+
+
+def audit_cached(t, fsym, orig_insns, img):
+    """resaudit.audit(t.coff, fsym, t.res, orig_insns, img), kept on disk: the audit depends only on the harness
+    sources, the object, its resolution, the symbol and the original's instructions, and pairing two long
+    instruction lists is slow (difflib: 35 s for Operation::execute 0x49fa10, paid by every run of every case of
+    case_sweep.py). The key holds all of those (line endings of the sources normalised, so the Windows worker's
+    checkout keys alike); DIFFTEST_NO_CACHE=1 turns it off. A cache problem falls back to the computation."""
+    if os.environ.get("DIFFTEST_NO_CACHE"):
+        return RA.audit(t.coff, fsym, t.res, orig_insns, img)
+    import hashlib, pickle
+    global _audit_harness
+    if _audit_harness is None:
+        hh = hashlib.sha1()
+        for f in sorted(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "*.py"))):
+            hh.update(open(f, "rb").read().replace(b"\r\n", b"\n"))
+        _audit_harness = hh.hexdigest()
+    h = _audit_obj.get(id(t))
+    if h is None:
+        _audit_obj.clear()          # one target at a time (and no stale id() of a collected one)
+        h = _audit_obj[id(t)] = _object_hash(t, _audit_harness).hexdigest()
+    k = hashlib.sha1(("audit:%s:%s:%d:%d:" % (h, fsym.name, fsym.secno, fsym.value)).encode())
+    for a in sorted(orig_insns):
+        k.update(b"%x:" % a + bytes(orig_insns[a].bytes))
+    path = os.path.join(AUDIT_CACHE_DIR, k.hexdigest() + ".pkl")
+    try:
+        with open(path, "rb") as fh:
+            return pickle.load(fh)
+    except Exception:           # noqa: BLE001 - absent or unreadable: compute it
+        pass
+    aud = RA.audit(t.coff, fsym, t.res, orig_insns, img)
+    try:
+        os.makedirs(AUDIT_CACHE_DIR, exist_ok=True)
+        tmp = "%s.%d.part" % (path, os.getpid())
+        with open(tmp, "wb") as fh:
+            pickle.dump(aud, fh)
+        os.replace(tmp, path)
+    except Exception:           # noqa: BLE001 - an unpicklable result or a full disk only costs the time
+        pass
+    return aud
+
+
+_audit_harness = None
+_audit_obj = {}
 
 
 def test_function(sid, va, opts, log=print):
@@ -6587,7 +6642,7 @@ def _test_function(sid, va, opts, log=print):
     # Resolution audit (resaudit.py): every mapped reference vs the original's operand at the paired instruction.
     # A disagreement means our build would call/read something other than what the original does there, so any
     # PASS or FAIL would be meaningless (three wave-1 FAILs were wrong mappings): report it instead of running.
-    aud = RA.audit(t.coff, t.fsym, t.res, t.orig_insns, context()["img"])
+    aud = audit_cached(t, t.fsym, t.orig_insns, context()["img"])
     out["resolution_audit"] = {"disagree": aud["disagree"], "unverified": aud["unverified"],
                                "local_copy": aud["local_copy"], "same_code": aud["same_code"],
                                "agree": len(aud["agree"]), "paired_insns": aud["pairs"], "insns": aud["insns"]}
