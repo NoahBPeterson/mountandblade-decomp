@@ -381,21 +381,14 @@ void OptionsDlg::paint()
 // (a Config copy on the caller's stack) is only written when `overwrite` is set, except for the low-memory case.
 void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
 {
-    MEMORYSTATUS mem;                           // zeroed field by field (dwLength stays 0); the result is never read
-    mem.dwLength = 0;
-    mem.dwMemoryLoad = 0;
-    mem.dwTotalPhys = 0;
-    mem.dwAvailPhys = 0;
-    mem.dwTotalPageFile = 0;
-    mem.dwAvailPageFile = 0;
-    mem.dwTotalVirtual = 0;
-    mem.dwAvailVirtual = 0;
+    MEMORYSTATUS mem;                           // zeroed whole by memset (one xor eax,eax, eight stores); the result is never read
+    memset(&mem, 0, sizeof(mem));
     GlobalMemoryStatus(&mem);
 
-    IDxDiagContainer* root = 0;
     IDxDiagContainer* display = 0;
     IDxDiagContainer* devices = 0;
     IDxDiagProvider* provider = 0;
+    IDxDiagContainer* root = 0;
     DXDIAG_INIT_PARAMS params;
     WCHAR name[0x100];
     char mem_text[0x100];
@@ -407,6 +400,7 @@ void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
             break;
         if (!provider)
             break;
+        memset(&params, 0, sizeof(params));
         params.dwSize = 0x10;
         params.dwDxDiagHeaderVersion = 0x6f;
         params.bAllowWHQLChecks = 0;
@@ -452,15 +446,20 @@ void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
                 cfg->texture_detail = 0x64;
                 cfg->shadowmap_quality = 1;
             }
+        } else {                                // unknown sizes as 256 MB: both arms merge, the last equals result is unused
+            if (overwrite) {
+                cfg->texture_detail = 0x64;
+                cfg->shadowmap_quality = 1;
+            }
         }
     } while (0);
-    if (devices) {
-        devices->Release();
-        devices = 0;
-    }
     if (display) {
         display->Release();
         display = 0;
+    }
+    if (devices) {
+        devices->Release();
+        devices = 0;
     }
     if (root) {
         root->Release();
