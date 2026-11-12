@@ -164,15 +164,7 @@ void TerrainPage::path(float dt)
     ((rgl::matrix*)&m)->rotate_about_f(&angle);             // 0x40e670
     angle = -pitch;
     ((rgl::matrix*)&m)->rotate_about_s(&angle);
-    pos.x = m.u.x * zoom;
-    pos.y = m.u.y * zoom;
-    pos.z = m.u.z * zoom;                                   // the eye vector doubles as the temporary
-    float sx = pos.x + m.o.x;
-    float sy = m.o.y + pos.y;
-    float sz = m.o.z + pos.z;
-    m.o.x = sx;
-    m.o.y = sy;
-    m.o.z = sz;
+    m.o += m.u * zoom;                                      // inline operator* temporary shares the eye's frame slot
 
     rgl::frustum* f = &cam;                  // page +0x70
     f->m = m;
