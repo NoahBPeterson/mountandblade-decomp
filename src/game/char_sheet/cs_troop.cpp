@@ -106,6 +106,12 @@ int Troop::steps_to_point(int idx)
     return i;
 }
 
+// The original materialises the element address (`imul eax,0x238; add eax,[g_items]; mov eax,[eax+0x1c8]`) where a raw
+// g_items[n] folds the base into the load's address and needs a fourth register. That is the shape of an element access
+// through an object's member (std::vector operator[]: *(begin() + n)), so the table pointer is read here through a
+// vector view laid over it (_Myfirst = g_items). Stand-in: which holder object the original went through is not known
+// (module_files.cpp allocates g_items with new[]).
+static inline std::vector<ItemKind>& items_vec() { return *(std::vector<ItemKind>*)((char*)&g_items - 4); }
 // @ 0x4ef730 -------------------------------------------------------------------------------
 // Item type -> the (activity, skill) event pair used to learn it; *a = -1 for "not used".
 void item_events(int item, int* a, int* b, int* c)
@@ -115,7 +121,7 @@ void item_events(int item, int* a, int* b, int* c)
     *c = -1;
     if (item < 0)
         return;
-    unsigned t = g_items[item].type_flags & 0xff;
+    unsigned t = items_vec()[item].type_flags & 0xff;
     if (t == 2 || t == 3 || t == 4 || t == 9) {
         *a = 0;
         return;
