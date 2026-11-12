@@ -6176,8 +6176,7 @@ void Agent::choose_action(int unused)
                 int k = cr->kind;
                 if (k == 1 || (k == 2 && leader != id)) {
                     if ((int)cand >= 0) {
-                        Agent* o = &AG(cand);
-                        vector4 d = vsub(o->pos, cr->pos);
+                        vector4 d = vsub(AG(cand).pos, cr->pos);
                         if ((float)sqrt(d.z * d.z + d.x * d.x + d.y * d.y) > cr->half + cr->half && dist > 10.0f)
                             s[7] = s[7] * 0.0f;
                     }
@@ -6214,7 +6213,8 @@ void Agent::choose_action(int unused)
                 }
                 if (cr->k4 == 1 && f2c == -1) {
                     Troop* T = &g_game->troops[troop];
-                    if ((T->flags30 & tf_hero) || (T->flags30 & tf_guarantee_horse)) {
+                    unsigned __int64 fl = T->flags30;
+                    if ((fl & tf_hero) || (fl & tf_guarantee_horse)) {
                         AgentTable* tbl = &g_mission->agents;
                         float best = 10000.0f;
                         int bestid = -1;
