@@ -2844,30 +2844,27 @@ void Party::update_hud_text()
         return;
     int b = 0, d = 0, c = 0;
     int ammo = 0;
-    vector4 t;
-    float v;
     g_game->count_units(id, &ammo, &c, &b, &d);
     GameData* g = g_game;
-    v = *(float*)((char*)g->factions + f70 * 0x300 + 0x2c);
+    float v = *(float*)((char*)g->factions + f70 * 0x300 + 0x2c);
     unsigned color;
-    if (!(g_module_settings.show_faction_color != 0)) {
-        color = g->color_of(v, f6c);
-    } else {
-        t.x = *(float*)((char*)g->factions + f70 * 0x300 + 0x28);
+    if (g_module_settings.show_faction_color != 0) {
+        unsigned fc = *(unsigned*)((char*)g->factions + f70 * 0x300 + 0x28);
+        color = fc;
         if (f6c != 0) {
-            vector4 tmp = rgl::unpack_color((unsigned*)&t.x);
-            vector4* p = &tmp;
-            t.x = p->x * 1.2f;
-            t.y = p->y * 1.2f;
-            t.z = p->z * 1.2f;
+            vector4 t;
+            const vector4* u = &rgl::unpack_color(&fc);
+            t.x = u->x * 1.2f;
+            t.y = u->y * 1.2f;
+            t.z = u->z * 1.2f;
             color = rgl::pack_color(&t) | 0xff000000;
-        } else {
-            color = *(unsigned*)&t.x;
         }
+    } else {
+        color = g->color_of(v, f6c);
     }
     if (id == g->f78) {
         color = 0xffffffff;
-    } else if ((flags_lo & 0x40000) != 0) {
+    } else if (party_flag(this, 0x40000)) {
         color = 0xffaa22dd;
         if (!(v < -0.01f))
             color = 0xff22aaff;
@@ -2875,11 +2872,11 @@ void Party::update_hud_text()
     char buf[128];
     if (!(b == 0)) { sprintf(buf, "%d+%d", ammo, b); } else { sprintf(buf, "%d", ammo); }
     float ct = *(float*)&flags_hi;
-    if ((flags_lo & 0x80000) != 0) {
+    if (party_flag(this, 0x80000)) {
         ct = 1.0f;
         tstring str("");
         g_game->label_text(label, &str, 0, 1, &ct);
-    } else if ((flags_lo & 0x400) != 0) {
+    } else if (party_flag(this, 0x400)) {
         ct = this->scale();
         g_game->label_text(label, display_name(), 1, color, &ct);
     } else {
@@ -2889,7 +2886,6 @@ void Party::update_hud_text()
     }
     f8b5 = 0;
 }
-
 
 // ---- the party's per-tick update ---------------------------------------------------------------------------------------------
 
