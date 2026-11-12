@@ -561,8 +561,8 @@ static __forceinline PairF* pair_ref(const PairF& p) { return (PairF*)&p; }
 // one float setting by an existing key string (the caller's temporary)
 static __forceinline float config_float_key(const tstring& n)
 {
-    int i = g_game_vars.find(n);
     float r = 0.0f;
+    int i = g_game_vars.find(n);
     if (i >= 0) {
         r = (float)atof(g_game_vars.entries[i].value.c_str());
     }
@@ -573,8 +573,8 @@ static __forceinline float config_float_key(const tstring& n)
 static __forceinline float config_float(const char* name)
 {
     tstring n(name);
-    int i = g_game_vars.find(n);
     float r = 0.0f;
+    int i = g_game_vars.find(n);
     if (i >= 0) {
         r = (float)atof(g_game_vars.entries[i].value.c_str());
     }
@@ -597,18 +597,28 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, MissionUi** out)
 
     {
         tstring empty("");
-        tstring key_down("restore_game_panel_down");
-        tstring key("restore_game_panel");
-        *out = (MissionUi*)(void*)new_sized_button(parent, empty,
-                                save_x + (float)col * save_x_a,
-                                save_y - (float)row * save_y_a,
-                                save_size_y, key, key_down,
-                                1.5544f, save_button_h, 0.085f);
+        UiA* b;
+        {
+            tstring key_down("restore_game_panel_down");
+            tstring key("restore_game_panel");
+            b = new_sized_button(parent, empty,
+                                 save_x + (float)col * save_x_a,
+                                 save_y - (float)row * save_y_a,
+                                 save_size_y, key, key_down,
+                                 1.5544f, save_button_h, 0.085f);
+        }
+        *out = (MissionUi*)(void*)b;
     }
     ((UiA*)(void*)*out)->f184 = 1;
 
-    // one full expression: both lookups' key strings live until d27 returns (0x4e5734..0x4e5767 destroy them after it)
-    vt(*out)->d27(pair_ref(PairF(config_float_key(tstring("save_b_save_t_s")), config_float_key(tstring("save_b_save_t_s")))));
+    // two named keys in one block: both live until d27 returns, the second is built after the first lookup
+    {
+        tstring k1("save_b_save_t_s");
+        float a = config_float_key(k1);
+        tstring k2("save_b_save_t_s");
+        float b = config_float_key(k2);
+        vt(*out)->d27(pair_ref(PairF(b, a)));
+    }
     {
         tstring k("save_b_save_t_c");
         int v = g_game_vars.hex_field(k);
@@ -629,7 +639,7 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, MissionUi** out)
     float error_x = config_float("save_t_error_x");
     float error_y = config_float("save_t_error_y");
 
-    if (is_load != 0 && rec->seconds == 0) {
+    if (is_load != 0 && slots[slot].seconds == 0) {
         tstring k("ui_empty_slot");
         float p[2] = { name_x, name_y };
         vt(*out)->d43(g_strtable_c.lookup(k), p);
