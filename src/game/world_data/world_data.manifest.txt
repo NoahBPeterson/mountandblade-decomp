@@ -79,3 +79,4 @@
 ../src/game/world_data/world_data.cpp  ?place_scene_agents@@YAXPAUCarryBody@@PAUCarryRef@@PAUCarryCtx@@@Z  00495430  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?position_around@GameW@@QAEDUVec2@@MPAU2@D@Z  00490160  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??0Party@@QAE@XZ  004934d0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?count_agents@MissionW@@QAEHH@Z  00491f50  /O2 /MT /Gy /TP

@@ -64,3 +64,4 @@
 ../src/game/config/config.cpp  _$E1  00547ba0  /O2  /MT  /Gy  /TP
 ../src/game/config/config.cpp  ?init_formats@render_batch@@QAEXXZ  004bc5b0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?play@music_player@@QAEXHPAH@Z  004be0e0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?screen_to_world@camera_ray@@QAEXPAUvector4@rgl@@0@Z  004bd2f0  /O2 /MT /Gy /TP
