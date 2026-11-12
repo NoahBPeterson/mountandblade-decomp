@@ -1,2 +1,3 @@
 # trigger_records: no byte-exact function (every row of trigger_records.cpp is in trigger_records.nonmatching.txt). Flags /O2 /MT /Gy /TP.
 ../src/game/options_panel/trigger_records.cpp  ??_GRec118@@UAEPAXI@Z  004c3120  /O2 /MT /Gy /TP
+../src/game/options_panel/trigger_records.cpp  ?init_mission_trigger_records@@YAXXZ  004d0620  /O2 /MT /Gy /TP

@@ -23,6 +23,14 @@ __int64 file_length(FILE* f);                                   // 0x42cbc0 (gam
 // @ 0x4150f0
 named_object::~named_object() {}
 
+// Not in the original (see game/head_rec.h MB_ZERO_TAIL): operator new for the screen records, zeroing above the head.
+void* __cdecl mb_new_zero_tail(size_t n)
+{
+    char* p = (char*)::operator new(n);
+    if (p && n > 0x2c) memset(p + 0x2c, 0, n - 0x2c);
+    return p;
+}
+
 // @ 0x415100
 void mb_snprintf(char* buf, size_t n, const char* fmt, ...)
 {

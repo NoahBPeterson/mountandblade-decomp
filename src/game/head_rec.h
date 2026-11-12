@@ -71,7 +71,9 @@ struct head_rec {
 // rest as raw heap and release freed garbage (runtime workaround, not in the original). Zero everything above the
 // base's head (vptr, w04, w08, name) when the record is allocated, before any constructor runs: zeroing it in the
 // constructor body wiped the members it had just built (TerrainPage's frustum at +0x70, Rec118's tstring at +0x84).
-#define MB_ZERO_TAIL(T) static void* operator new(size_t n) \
-    { char* p = (char*)::operator new(n); if (p && n > 0x2c) memset(p + 0x2c, 0, n - 0x2c); return p; }
+// Out of line (rgl/text_stream.cpp) so each `new` site stays the original's push / call / add esp: inline, the memset
+// took edi and a rep stos per record and changed every builder's registers (init_mission_trigger_records 0x4d0620).
+void* __cdecl mb_new_zero_tail(size_t n);
+#define MB_ZERO_TAIL(T) static void* operator new(size_t n) { return mb_new_zero_tail(n); }
 
 #endif // MB_GAME_HEAD_REC_H
