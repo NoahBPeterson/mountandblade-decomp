@@ -1586,6 +1586,13 @@ computation, one branch or one frame slot away, look here first.
   stopped folding once the access went through an inline `ring_add(Ring* r, ...)` indexing from the ring's own pointer
   (0x4334b0). `if (n == 0) mb_error(...); int idx = rand_below(n);` with an inline `rand_below` gave the two separate
   zero blocks (0x514360).
+- **A store to a local ordered against a load through a pointer: where was the pointer derived?** The scheduler keeps
+  a store before a load only if there is a memory edge between them, and the edge exists only if the local is in the
+  pointer's points-at set. A pointer whose value was defined outside the local's scope does not get the local in its
+  set. `render_batch::render_scene` 0x46e590: `fog_col.w = 1.0f` comes before `mov edx,[esi+0x18]` (`sky->fog_start`)
+  in the original; with the outer `sky` ours had it after. Re-deriving the pointer inside each arm
+  (`sky_t* s = scene_sky(sc);`, CSE'd into the same register, no instructions added) gives the original's order at
+  both sites. `volatile`, or writing the field through a pointer or reference, changes nothing.
 - **A dead zero store at function entry that nothing reads is a conditional temporary's flag.** When a class temporary
   is built in one arm of `&&`, `||` or `?:`, c1xx adds a flag (`$T`) recording whether it was constructed and zeroes it
   at entry. If c2 later proves the arm unreachable it removes the arm and every test of the flag but keeps the entry

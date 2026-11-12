@@ -799,9 +799,11 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         sun->pos.o = eye->o;
         sun->pos.f = hv_neg(eye->u);
         sun->pos.u = vector4(0.0f, 0.0f, 1.0f);
-        sun->pos.s = cross(sun->pos.f, sun->pos.u);
+        // per-statement references: their keys set the fld/fmul operand order of each product (globopt re-sorts
+        // the CSE'd products by base keys); with the inline formals as bases the x lane of the first cross flipped
+        { const vector4& f = sun->pos.f; const vector4& u = sun->pos.u; sun->pos.s = cross(f, u); }
         sun->pos.s.normalize();
-        sun->pos.f = cross(sun->pos.u, sun->pos.s);
+        { const vector4& u = sun->pos.u; const vector4& s = sun->pos.s; sun->pos.f = cross(u, s); }
 #undef sun
         if (f6664 < 0 && fog_dense == 1)
             f6664 = g_sound_mgr.play_slot(8, 3, &g_sound_mgr.frame.o.x, 1.0f, 0);

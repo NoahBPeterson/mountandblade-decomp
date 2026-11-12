@@ -127,18 +127,20 @@ void render_batch::render_scene(scene* sc)
             if (sc->f169)
                 lt = !lt;
             if (lt) {
-                unsigned c = sky->fog_color_a;
+                sky_t* s = scene_sky(sc);
+                unsigned c = s->fog_color_a;
                 vector4 fog_col = unpack_color(&c);
                 fog_col.w = 1.0f;
-                g_effect->SetFloat("fFogStart", sky->fog_start_a);
+                g_effect->SetFloat("fFogStart", s->fog_start_a);
                 g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_a);
                 g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_a);
                 g_effect->SetVector("vFogColor", (D3DXVECTOR4*)&fog_col);
             } else {
-                unsigned c = sky->fog_color_b;
+                sky_t* s = scene_sky(sc);
+                unsigned c = s->fog_color_b;
                 vector4 fog_col = unpack_color(&c);
                 fog_col.w = 1.0f;
-                g_effect->SetFloat("fFogStart", sky->fog_start_b);
+                g_effect->SetFloat("fFogStart", s->fog_start_b);
                 g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_b);
                 g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_b);
                 g_effect->SetVector("vFogColor", (D3DXVECTOR4*)&fog_col);
