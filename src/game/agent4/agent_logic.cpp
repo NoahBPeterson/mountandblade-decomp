@@ -1363,7 +1363,7 @@ void Agent::advance_path()
     if (path_active != 0 && (path_state & 3) != 0) {
         int face = update_nav_face();
         int n = path_count;
-        if (path_face[n] == face) {
+        if (face == path_face[n]) {
             path_active = 0;
             goal_changed = 0;
             return;
@@ -1375,17 +1375,14 @@ void Agent::advance_path()
                 int nface;
                 vector4 np;
                 if (next < n) {
-                    nface = path_face[path_cur + 2];
                     np = path_pos[path_cur];
+                    nface = path_face[path_cur + 2];
                 } else {
-                    nface = goal_face;
                     np = goal;
+                    nface = goal_face;
                 }
                 int steps = 10;
-                vector4 d;
-                d.x = pos.x - np.x;
-                d.y = pos.y - np.y;
-                d.z = pos.z - np.z;
+                vector4 d = pos - np;
                 if (d.out_length_squared() < 900.0f) {
                     if (nav->trace(face, pos, nface, &np.x, &steps))
                         path_cur = next;
