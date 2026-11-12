@@ -52,8 +52,7 @@ void Troop::add_attr(int idx, int delta)
         return;
     int n = delta;
     do {
-        int v = ATTR(this)[idx] + step;
-        if (v >= 0 && v < 0x40) {
+        if (ATTR(this)[idx] + step >= 0 && ATTR(this)[idx] + step < 0x40) {   // no local: the sum is a CSE temporary
             if (idx == 2) {
                 fa4 += step;
             } else if (idx == 0) {
