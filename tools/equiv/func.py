@@ -168,7 +168,33 @@ def obj_func(obj, sym):
             toks[v - f0] = ("sym", nm, typ, addend)
             if si in consts:
                 const_bytes[nm] = consts[si]
+    end = obj_code_end(data, toks, s.secno, f0)
+    if end < len(data):
+        data = data[:end]
+        toks = {o: t for o, t in toks.items() if o + 4 <= end}
     return Func(0, data, toks, sym, "ours", {"obj": obj, "symbol": sym, "consts": const_bytes})
+
+
+def obj_code_end(data, toks, secno, f0):
+    """code_end for our side: in the object an indexed operand's displacement is a DIR32 relocation (the field
+    holds 0), so the table address is the target of that relocation, a label in the function's own section
+    ('$L123#<secno>+<value>'). Without this the switch tables (and their byte index tables) after the code were
+    decoded as instructions (Operation::execute 0x49fa10: 19862 instructions instead of ~15130)."""
+    end = len(data)
+    for i in MD.disasm(data, 0):
+        if i.mnemonic in ("jmp", "movzx", "mov") and any(
+                o.type == X.X86_OP_MEM and o.mem.index and o.mem.base == 0 for o in i.operands):
+            t = toks.get(i.address + i.disp_offset) if i.disp_offset else None
+            if not t:
+                continue
+            m = re.search(r"#(\d+)\+([0-9a-f]+)$", t[1])
+            if m and int(m.group(1)) == secno:
+                v = int(m.group(2), 16) + (t[3] if t[3] < 0x80000000 else t[3] - (1 << 32)) - f0
+                if i.address + i.size <= v < end:
+                    end = v
+        if i.address >= end:
+            break
+    return end
 
 
 def ret64(symbol):

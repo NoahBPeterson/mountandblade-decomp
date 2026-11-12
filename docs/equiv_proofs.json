@@ -1,7 +1,7 @@
 {
- "what": "functions proven equivalent by tools/equiv/prove.py (static: same code up to register renaming, independent-instruction reordering and frame-slot renaming; L1 = calling contract). Regenerate from work/equiv/rename_sweep.jsonl; tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
- "when": "2026-11-12T16:17:52-06:00",
- "commit": "6eb20f2d",
+ "what": "functions proven equivalent by tools/equiv/prove.py (static: the rename layer, angr symbolic execution or STOKE DDEC; L1 = calling contract, L2 = every register; see tools/equiv/LAYERS.md). Each row has our build hash (func.build_hash) and its proof bundle (docs/equiv_proofs/<va>.json, or work/equiv/proofs/ when large); prove.py --recheck re-verifies it. tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
+ "when": "2026-11-12T17:31:42-06:00",
+ "commit": "b7c84fef",
  "rows": {
   "00435c10": {
    "src": "src/game/agent/agent.cpp",
@@ -9,7 +9,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "188 instructions, 18 blocks, 0 moved, 21 with other register names, 11 with other frame slots (slots mode)",
-   "build": null
+   "build": "c78306f8cf8a0c074f7b51d6b22e3f7521c6093441cd2ea2ba7de3cda6e0e915",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/00435c10.json",
+   "proved": "2026-11-12"
   },
   "0043f560": {
    "src": "src/game/agent4/agent_logic.cpp",
@@ -17,7 +20,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "113 instructions, 5 blocks, 18 moved, 8 with other register names, 0 with other frame slots (slots mode)",
-   "build": null
+   "build": "215c0e95609fe2baca67cb2fa6ec4e855c46b94403fe47ef7dd539c7cc7dbbf1",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0043f560.json",
+   "proved": "2026-11-12"
   },
   "0043f6d0": {
    "src": "src/game/agent4/agent_logic.cpp",
@@ -25,7 +31,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "173 instructions, 15 blocks, 0 moved, 2 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": null
+   "build": "fed7e6566442a769fb2e86a9b4e78a3cda47b7570c53cba2cf098cd78d38521a",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0043f6d0.json",
+   "proved": "2026-11-12"
   },
   "0047c810": {
    "src": "src/game/mesh_slot/mesh_ops.cpp",
@@ -33,7 +42,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "137 instructions, 16 blocks, 0 moved, 3 with other register names, 0 with other frame slots (slots mode)",
-   "build": null
+   "build": "ec5541aa57722af7e0a9c9cf770a326b09c09006d9bfa7abbd6ff967c0be4e1b",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0047c810.json",
+   "proved": "2026-11-12"
   },
   "0049deb0": {
    "src": "src/game/script/script_interpreter.cpp",
@@ -41,7 +53,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "30 instructions, 1 blocks, 3 moved, 1 with other register names, 0 with other frame slots (slots mode)",
-   "build": null
+   "build": "abe255b81376158d0c0046f50e8cc276ba227bd9a295abcfa85c9547e5ee3a38",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0049deb0.json",
+   "proved": "2026-11-12"
   },
   "0049ebd0": {
    "src": "src/game/script/script_interpreter.cpp",
@@ -49,7 +64,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "238 instructions, 3 blocks, 4 moved, 3 with other register names, 0 with other frame slots (slots mode)",
-   "build": null
+   "build": "8bd587ec1ae2b297336e7e15fb364aa59e15e88dc7ad9b2c4cfd22ebcbcbe303",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0049ebd0.json",
+   "proved": "2026-11-12"
   },
   "004e7b30": {
    "src": "src/game/cls_map/progress_bar.cpp",
@@ -57,7 +75,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "851 instructions, 100 blocks, 0 moved, 18 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": null
+   "build": "a26b564b59a19b9f8bdb94b3b4253ad9132c46f86f43c4efbf460194100d37b5",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/004e7b30.json",
+   "proved": "2026-11-12"
   },
   "005094a0": {
    "src": "src/game/inventory_panel/char_window.cpp",
@@ -65,7 +86,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "123 instructions, 1 blocks, 0 moved, 22 with other register names, 0 with other frame slots (slots mode)",
-   "build": null
+   "build": "32099120cc62fc155a42f8ba8ac04a8f3fcdf0447cccbb09b474d3ae867f87da",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/005094a0.json",
+   "proved": "2026-11-12"
   },
   "00529130": {
    "src": "src/game/mission5/mission_5.cpp",
@@ -73,7 +97,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "322 instructions, 54 blocks, 2 moved, 30 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": null
+   "build": "6ce0b56ad9789d097c4248cf72aee308583bfe9f904e2a6b4c28fae157085814",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/00529130.json",
+   "proved": "2026-11-12"
   },
   "00529d80": {
    "src": "src/game/mission5/mission_5.cpp",
@@ -81,7 +108,10 @@
    "layer": "rename",
    "level": "L1",
    "detail": "106 instructions, 16 blocks, 0 moved, 2 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": null
+   "build": "4db55c06d0fb5f5270f45608ec2783c64c0a65013c86965cdb75cc48ca0a21ea",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/00529d80.json",
+   "proved": "2026-11-12"
   }
  }
 }

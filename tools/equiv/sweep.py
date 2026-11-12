@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Run prove.py's rename layer over many functions and summarise the verdicts (maintainers; needs the game image).
+"""Run prove.py's layers over many functions and summarise the verdicts (maintainers; needs the game image).
 
-  uv run python tools/equiv/sweep.py [--same-count] [--va VA ...] [--jobs 4] [--out work/equiv/rename_sweep.jsonl]
+  uv run python tools/equiv/sweep.py [--same-count] [--va VA ...] [--vas-file F] [--jobs 4] [--layers rename,angr]
+                                     [--timeout S] [--skip-proven] [--out work/equiv/rename_sweep.jsonl]
                                      [--resume] [--summary-only]
+
+EQUIVALENT rows carry the proof bundle (with the build hash); tools/equiv/record_sweep.py records them.
 
 Ported in spirit from spore-decomp tools/equiv/sweep.py (commit aaaf5c79f). Candidates: the DIFF rows of
 docs/insn_exact.json (source file and symbol from there), --same-count only those whose instruction count equals
@@ -22,11 +25,17 @@ sys.path.insert(0, HERE)
 OUT = os.path.join(ROOT, "work", "equiv", "rename_sweep.jsonl")
 
 
-def candidates(same_count, vas=None):
+def candidates(same_count, vas=None, skip_proven=False):
     rows = json.load(open(os.path.join(ROOT, "docs", "insn_exact.json")))["rows"]
+    proven = set()
+    if skip_proven:
+        try:
+            proven = set(json.load(open(os.path.join(ROOT, "docs", "equiv_proofs.json")))["rows"])
+        except (OSError, ValueError, KeyError):
+            pass
     out = []
     for va, r in sorted(rows.items()):
-        if r.get("verdict") != "DIFF" or not r.get("src"):
+        if r.get("verdict") != "DIFF" or not r.get("src") or va in proven:
             continue
         if same_count and r.get("insns") != r.get("ours"):
             continue
@@ -36,7 +45,7 @@ def candidates(same_count, vas=None):
     return out
 
 
-def one(va, src, symbol):
+def one(va, src, symbol, layers=("rename",), timeout=None):
     import io
     import contextlib
     import prove
@@ -46,8 +55,9 @@ def one(va, src, symbol):
     rename_core.CONV_MISMATCH.clear()
     try:
         with contextlib.redirect_stdout(buf):
-            res = prove.run(os.path.join(ROOT, src), va, symbol, log=lambda s: buf.write(s + "\n"))
-            if res["verdict"] == "EQUIVALENT":
+            res = prove.run(os.path.join(ROOT, src), va, symbol, log=lambda s: buf.write(s + "\n"),
+                            layers=list(layers), timeout=timeout)
+            if res["verdict"] == "EQUIVALENT" and res.get("layer") == "rename":
                 base = prove.run(os.path.join(ROOT, src), va, symbol, level=res["level"], frame_slots=False,
                                  log=lambda s: None)
                 res["needs_slots"] = base["verdict"] != "EQUIVALENT"
@@ -56,10 +66,10 @@ def one(va, src, symbol):
     except Exception as e:
         res = {"verdict": "ERROR", "detail": "%s: %s" % (type(e).__name__, str(e)[-300:])}
     keep = ("verdict", "level", "layer", "detail", "symbol", "facts_same", "facts_why", "insns", "info",
-            "needs_slots", "mutants", "build_s", "check_s")
+            "needs_slots", "mutants", "build_s", "check_s", "layers", "build", "bundle")
     out = {"va": "%08x" % va, "src": src}
     out.update({k: res[k] for k in keep if k in res})
-    out["detail"] = (out.get("detail") or "")[:400]
+    out["detail"] = (out.get("detail") or "")[:600]
     if rename_core.CONV_MISMATCH:
         out["conv_mismatch"] = sorted(set(rename_core.CONV_MISMATCH))[:10]
     out["seconds"] = round(time.time() - t, 3)
@@ -94,6 +104,35 @@ def reason_class(r):
     return "other"
 
 
+LAYER_REASONS = [
+    ("timeout", r"timeout"),
+    ("loop: input-dependent trip count", r"trip count depends on the inputs"),
+    ("loop: calls/nested/too many paths", r"loop body has calls, nested loops"),
+    ("loop: writes memory", r"loop body writes memory"),
+    ("loop: other", r"not bounded|can still leave the loop|loop exit depends"),
+    ("switch table / indirect jump", r"indirect jump|switch"),
+    ("x87 sequences differ", r"x87 instruction sequences differ|x87 sequences differ"),
+    ("x87 uninterpreted", r"uninterpreted"),
+    ("event sequence differs", r"event sequence"),
+    ("counterexample untrusted", r"counterexample in the model, not trusted"),
+    ("literal constant", r"literal constant"),
+    ("unsupported IR op", r"UnsupportedIROp|cannot step"),
+    ("too many paths", r"more than \d+ paths"),
+    ("ddec unsupported", r"ddec: unsupported"),
+    ("ddec not proved", r"ddec: not proved"),
+    ("ddec image/docker", r"docker image|Docker not found"),
+    ("solver unknown", r"solver returned unknown"),
+    ("worker error", r"worker failed|error:"),
+]
+
+
+def layer_reason(d):
+    for name, pat in LAYER_REASONS:
+        if re.search(pat, d or ""):
+            return name
+    return "other"
+
+
 def summary(rows, wall=None):
     c = collections.Counter(r["verdict"] for r in rows)
     lines = ["%d functions: %s" % (len(rows), ", ".join("%s %d" % kv for kv in sorted(c.items())))]
@@ -104,6 +143,18 @@ def summary(rows, wall=None):
                      % (", ".join("%s %d" % kv for kv in sorted(lv.items())), sum(1 for r in eq if r.get("needs_slots")),
                         sum(1 for r in eq if (r.get("info") or {}).get("mode") == "delta"),
                         sum(1 for r in eq if (r.get("info") or {}).get("moved"))))
+    if eq:
+        lines.append("EQUIVALENT by layer: %s" % ", ".join("%s %d" % kv for kv in sorted(
+            collections.Counter(r.get("layer") for r in eq).items())))
+    for name in ("rename", "angr", "ddec"):
+        st = collections.Counter((r.get("layers") or {}).get(name, ["-"])[0] for r in rows
+                                 if name in (r.get("layers") or {}))
+        if st:
+            lines.append("layer %s: %s" % (name, ", ".join("%s %d" % kv for kv in st.most_common())))
+            un_l = [r["layers"][name][1] for r in rows if r.get("layers", {}).get(name, [""])[0] == "unknown"]
+            if name != "rename" and un_l:
+                rc = collections.Counter(layer_reason(d) for d in un_l)
+                lines.append("  %s unknown by reason: %s" % (name, ", ".join("%s %d" % kv for kv in rc.most_common())))
     un = [r for r in rows if r["verdict"] == "UNKNOWN"]
     if un:
         rc = collections.Counter(reason_class(r) for r in un)
@@ -146,6 +197,10 @@ def main():
     ap.add_argument("--same-count", action="store_true", help="only rows with the original's instruction count")
     ap.add_argument("--va", nargs="*", help="only these VAs (hex)")
     ap.add_argument("--jobs", type=int, default=4)
+    ap.add_argument("--layers", default="rename", help="comma list, cheapest first (rename,angr,ddec)")
+    ap.add_argument("--timeout", type=float, help="seconds per layer run (prove.py's defaults otherwise)")
+    ap.add_argument("--skip-proven", action="store_true", help="leave out rows already in docs/equiv_proofs.json")
+    ap.add_argument("--vas-file", help="only the VAs listed in this file (one hex VA per line, or a sweep .jsonl)")
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--summary-only", action="store_true")
@@ -157,7 +212,15 @@ def main():
         print(summary(rows))
         return 0
     vas = {int(v, 16) for v in a.va} if a.va else None
-    cands = candidates(a.same_count, vas)
+    if a.vas_file:
+        vf = set()
+        for ln in open(a.vas_file):
+            ln = ln.strip()
+            if ln:
+                vf.add(int(json.loads(ln)["va"] if ln.startswith("{") else ln.split()[0], 16))
+        vas = vf if vas is None else vas & vf
+    layers = tuple(x.strip() for x in a.layers.split(",") if x.strip())
+    cands = candidates(a.same_count, vas, a.skip_proven)
     seen = set()
     if a.resume and os.path.exists(a.out):
         seen = {json.loads(l)["va"] for l in open(a.out) if l.strip()}
@@ -169,7 +232,7 @@ def main():
     t1 = time.time()
     rows = []
     with open(a.out, "a" if a.resume else "w") as out, ProcessPoolExecutor(a.jobs) as ex:
-        futs = [ex.submit(one, *c) for c in todo]
+        futs = [ex.submit(one, *c, layers=layers, timeout=a.timeout) for c in todo]
         for k, f in enumerate(as_completed(futs), 1):
             r = f.result()
             rows.append(r)
