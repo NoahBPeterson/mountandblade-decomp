@@ -87,6 +87,33 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 #include "../ui_globals.h"      // UI / core globals
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
+// the party accessors: visible here too, as header inlines in the original (the same definitions as
+// inventory_panel/note_window.cpp; the row owners win the link). cl then knows the calls write no memory and keeps
+// the page vector in a register across them (count_hero_items, setup, start_mission). clear_hero_ammo 0x513eb0, which
+// reloads it after the call, was compiled without them: it is in its own unit (hero_ammo.cpp).
+inline int Map10007::lookup(unsigned id)
+{
+    if (id < 0x2717)
+        return tab[id].value;
+    int h = id % 0x2717;
+    int n = 0;
+    if (tab[h].key != id) {
+        do {
+            if (n >= 1000)
+                return -1;
+            h = (h + 0x4f) % 0x2717;
+            n++;
+        } while (tab[h].key != id);
+    }
+    if (n < 1000)
+        return tab[h].value;
+    return -1;
+}
+__declspec(noinline) Party* PartyMgr::get(int id)
+{
+    int k = this->lookup(id);
+    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages._Myfirst[k >> 4]);
+}
 struct ShadowMapP {
     char pad0[0x48];
     int* f48;                                           // +0x48
@@ -220,22 +247,7 @@ int MissionCtx::count_hero_items()
     return total;
 }
 
-// @ 0x513eb0
-void GameDataV::clear_hero_ammo(unsigned id)
-{
-    GameDataV* g = this;
-    PartyMgr* m = &g->parties;
-    if (id < m->n_parties) {
-        int idx = m->lookup(id);
-        if (idx >= 0 && m->atu(idx)->type == 1) {
-            Party* p = party_at(m, m->lookup(id));
-            for (int i = 0; i < p->nstacks; i++) {
-                if ((g->troops[p->stacks[i].troop].flags30 & 0x10) != 0 && p->stacks[i].f10 != 0)
-                    p->stacks[i].f10 = 0;
-            }
-        }
-    }
-}
+// (0x513eb0 GameDataV::clear_hero_ammo: its own unit, hero_ammo.cpp)
 
 // @ 0x513f80
 void MissionCtx::setup(unsigned flags, int delta)
@@ -618,7 +630,9 @@ void CampaignScreen::frame_update(float dt)
         PSO(f60)->set_text(sz, &tmp);
     }
 
-    flag = GD_F(0x13ad0) <= 0.0f;
+    flag = 1;
+    if (!(GD_F(0x13ad0) <= 0.0f))
+        flag = 0;
     if (GD_C(0x18) == 0 && g_game_keys.clicked(0x24))
         quick_save_msg();
     if (GD_I(0x1a208) >= 0) {

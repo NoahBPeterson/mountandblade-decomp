@@ -1,0 +1,1 @@
+../src/game/inventory_panel/hero_ammo.cpp  ?clear_hero_ammo@GameDataV@@QAEXI@Z  00513eb0  /O2 /MT /Gy /TP

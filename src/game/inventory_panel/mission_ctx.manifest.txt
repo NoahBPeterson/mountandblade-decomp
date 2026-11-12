@@ -11,9 +11,10 @@
 ../src/game/inventory_panel/mission_ctx.cpp  ?quick_save_msg@@YAXXZ  00516a70  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?fill_ids@GameDataV@@QAEXPAHH@Z  005168e0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?reset_ids@MissionCtx@@QAEXH@Z  005169e0  /O2 /MT /Gy /TP
-../src/game/inventory_panel/mission_ctx.cpp  ?clear_hero_ammo@GameDataV@@QAEXI@Z  00513eb0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?init_scene@MissionV@@QAEXXZ  005144d0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?init@MissionV@@QAEXHHHHPAUMissionCtx@@HH@Z  005143f0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?camera_move@CampaignScreen@@QAEXM@Z  00515d80  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?init_battle@MissionCtx@@QAEXH@Z  00516250  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?update_anim@MissionCtx@@QAEXXZ  00516700  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?count_hero_items@MissionCtx@@QAEHXZ  00513e10  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?start_mission@MissionCtx@@QAEXXZ  00514cd0  /O2 /MT /Gy /TP
