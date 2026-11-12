@@ -352,6 +352,7 @@ struct SceneRec {
 };
 SI_ASSERT(scene_size, sizeof(SceneRec) == 0x494);
 SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
+#include "../../include/item_kind.h"   // ItemKind::display_name (0x43a480)
 // ItemKindX: view of the item kind record (ItemKind in src/game/agent/item_kind.h, array g_items 0x5e29d0)
 struct ItemKindX {
     char pad0[0x30];
@@ -365,7 +366,10 @@ struct ItemKindX {
     char pad220[0x224 - 0x220];
     float merchandise_probability;      // +0x224 (set_item_probability_in_merchandise 0x4a56ef)
     char pad228[0x238 - 0x228];
-    __forceinline tstring* display_name() { return ((TroopRec*)this)->display_name(); }   // 0x43a480 (folded with TroopRec::display_name)
+    // through ItemKind::display_name, its own function that the linker folded with TroopRec::display_name (0x43a480):
+    // with one call symbol for both, cl merges the item and troop name tails back past the call, which the original
+    // does not (str_store_item_name jumps to the tail in str_store_agent_name, 0x4ade88)
+    __forceinline tstring* display_name() { return ((ItemKind*)this)->display_name(); }   // 0x43a480
     __forceinline tstring* plural_name() { return ((TroopRec*)this)->plural_name(); }    // 0x48d6d0 (folded with TroopRec::plural_name)
 };
 SI_ASSERT(itemkind_size, sizeof(ItemKindX) == 0x238);

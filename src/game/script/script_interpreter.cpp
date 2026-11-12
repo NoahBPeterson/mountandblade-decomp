@@ -3412,7 +3412,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::main_party_has_troop: {
         int main = game()->main_party;
         result = 0;
-        for (i = 0; i < party(main)->num_stacks; i++)
+        for (int i = 0; i < party(main)->num_stacks; i++)
             if ((__int64)party(main)->stacks[i].troop == params[0])
                 result = 1;
         break;
@@ -4397,6 +4397,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* g = game();
             int main = g->main_party;
             PartyMgr* pm = &g->parties;
+            int i;
             for (i = 0; i < ((PartyV*)pm->get(main))->num_stacks; i++, main = g->main_party, pm = &g->parties) {
                 if (!(((PartyV*)pm->get(main))->stacks[i].flags & 1)) {
                     TroopX* troops = g->troops;
@@ -4824,7 +4825,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (troop_loot_troop, <target_troop>, <source_troop_id>, <probability>): every itp_always_loot item, then ten
         // random draws weighted by the source's level against the item value
         if (params[2] > 0 && check_troop((int)params[0]) && check_troop((int)params[1])) {
-            i = troop((int)params[1])->inv_count();
+            int i = troop((int)params[1])->inv_count();
             TroopX* t = troop((int)params[0]);
             int dst = t->items[0].check_slots(t->inv_count());
             for (int k = 0; k < i; k++) {
@@ -5023,6 +5024,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             int p = (int)params[0];
             int found = -1;
+            int i;
             for (i = 0; found == -1 && i < party(p)->num_stacks; i++)
                 if (params[1] == (__int64)party(p)->stacks[i].troop &&
                     !(party(p)->stacks[i].flags & 1))
@@ -5101,13 +5103,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* game = (GameX*)g_game;
             PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
-            if (stacks - ((PartyV*)m->get((int)params[1]))->first_flagged() < 1)
-                SET_LV(0);
-            else {
+            int v = 0;
+            if (stacks - ((PartyV*)m->get((int)params[1]))->first_flagged() >= 1) {
                 int p = (int)params[1];
-                int members = party(p)->sum_head();
-                SET_LV((__int64)(((PartyV*)m->get(p))->max_members() - members));
+                v = ((PartyV*)m->get(p))->max_members() - party(p)->sum_head();
             }
+            SET_LV((__int64)v);
         }
         break;
     case op::party_get_free_prisoners_capacity:
@@ -5781,7 +5782,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             MissionX* mx = mission();
             rgl::vector4* p = &g_script.pos[(int)params[2]].o;
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
-            i = mx->scene->nearest_face((const float*)p);
+            int i = mx->scene->nearest_face((const float*)p);
             rgl::vector4 off;
             TEAM_SEL(mx, (int)params[0])->set_vec((const int*)p, &i, (const int*)&off.set(sf_2, sf_1, sf_0));
             ((Mission*)mission())->unselect_team((int)params[0]);
@@ -6120,7 +6121,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
                 float x, y, z;
-                x = y = z = (float)params[3];
+                z = y = x = (float)params[3];
                 scale = &(b.set(z, y, x) * s);
             }
             g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), scale);
@@ -6585,7 +6586,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             // `delete game()` spelled out: the original calls ~GameX (0x492f40) and operator delete in place, where cl
             // (inline budget spent) would call the scalar deleting destructor out of line
             GameData* g = g_game;
-            g->world_free();
+            g_game->world_free();
             operator delete(g);
             g_game = 0;
         }
@@ -6805,12 +6806,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int count = 0, k = 0;
             int mp = game()->main_party;
             PartyMgr* pm = &game()->parties;
-            int pid = (int)params[1];
             if (((PartyV*)pm->get(mp))->num_stacks > 0) {
                 do {
                     if ((((PartyV*)pm->get(mp))->stacks[k].flags & 1) &&
                         !troop(((PartyV*)pm->get(mp))->stacks[k].troop)->is_hero())
-                        count += ((PartyV*)pm->get(pid))->stacks[k].count;
+                        count += ((PartyV*)pm->get((int)params[1]))->stacks[k].count;
                     ++k;
                 } while (k < ((PartyV*)pm->get(mp))->num_stacks);
             }
@@ -7220,12 +7220,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::str_store_quest_name_link:
+      { int q = (int)params[1];
         if (check_register((int)params[0]) && check_quest((int)params[1])) {
             char link[0x400];
-            int q = (int)params[1];
             sprintf(link, "<qst=%d>%s</>", q, CS(&quest(q)->text));
             g_script.str[(int)params[0]].assign(link);
         }
+      }
         break;
 
     // ---- mission counters ----------------------------------------------------------------------------------------
