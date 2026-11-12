@@ -168,12 +168,13 @@ int ItemRef::stat_1f0a()
 // @ 0x434df0
 int ItemRef::stat_1e8()
 {
+    int v;
     if (item >= 0) {
-        int v = g_items[item].f1e8;
+        v = g_items[item].f1e8;
         if ((char)g_items[item].type_flags == itp_type_horse) {
             if (v == 0) v = 100;
         } else if (v == 0)
-            return v;
+            goto done;
         switch (b.mod) {
         case imod_cracked: v -= 0x38; break;
         case imod_battered: v -= 0x1a; break;
@@ -183,9 +184,10 @@ int ItemRef::stat_1e8()
         case imod_heavy: v += 10; break;
         case 0x20: v += 5; break;
         }
-        if (v >= 1) return v;
-    }
-    return 1;
+        if (v < 1) v = 1;
+    } else v = 1;
+done:
+    return v;
 }
 // @ 0x434eb0
 int ItemRef::stat_200()
