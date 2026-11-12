@@ -567,7 +567,7 @@ void mesh::append(mesh* other, const matrix* m)
         p.z = m->s.z * q.x + m->u.z * q.z + m->f.z * q.y + m->o.z;
         add_point(&p);
     }
-    p = unpack_color(&other->color);
+    const vector4& c = unpack_color(&other->color);
     for (unsigned i = 0; i < vs.size(); i++) {
         const vector4& n = vs[i].normal;
         vertex60 v = vs[i];
@@ -578,7 +578,7 @@ void mesh::append(mesh* other, const matrix* m)
         v.normal = t;
         v.index += npts;
         vector4 col = rgl::unpack_color(&v.color);
-        col.x *= p.x; col.y *= p.y; col.z *= p.z; col.w *= p.w;
+        col.x *= c.x; col.y *= c.y; col.z *= c.z; col.w *= c.w;
         v.color = pack_color(&col);
         v50.push_back(v);
     }
