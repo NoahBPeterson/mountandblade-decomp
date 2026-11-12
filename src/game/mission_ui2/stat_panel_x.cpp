@@ -211,24 +211,33 @@ Event::Event()
     f8c = ((int*)&g_ticks[0])[1];
 }
 
+// The event's position (+0x24) and its direction (+0x34) are 2D vectors whose constructor takes its components by
+// const reference: each argument is a stack temporary that the member copy reads back (mov [esp+4],0; mov eax,[esp+4]).
+// The direction is then turned by a random angle through the vector's own rotate (it reads the stored components).
+struct EvVec2 {
+    float x, y;
+    EvVec2() {}
+    EvVec2(const float& a, const float& b) : x(a), y(b) {}
+    void rotate(float a)
+    {
+        float c = cos(a);
+        float s = sin(a);
+        float nx = c * x - s * y;
+        y = c * y + s * x;
+        x = nx;
+    }
+};
+
 // @ 0x48c260
 void Event::slot1()
 {
-    name.assign("An Event");
     f10 = 0;
-    f24 = 0;
-    f28 = 0.0f;
+    name.assign("An Event");
     f50 = 0;
-    float s = 0.0f;
-    float c = 1.0f;
-    f38 = c;
-    f34 = s;
-    float a = (float)(rand() % 15817) * 0.00039724255f;
-    float ca = cos(a);
-    float sa = sin(a);
-    f38 = sa * f34 + ca * f38;
-    f34 = ca * s - sa * c;
-    f90 = -1;
+    *(EvVec2*)&f24 = EvVec2(0.0f, 0.0f);
+    *(EvVec2*)&f34 = EvVec2(0.0f, 1.0f);
+    ((EvVec2*)&f34)->rotate((float)(rand() % 15817) * 0.00039724255f);
     f40 = 0.3f;
     f44 = -10000.0f;
+    f90 = -1;
 }
