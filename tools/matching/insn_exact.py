@@ -617,6 +617,21 @@ def run_cases(a, va, oi, ui, sec, ulo, relocs, d, symptr, reloc_target, img, pop
     for off_ in relocs:
         reloc_u.update(range(off_, off_ + 4))
 
+    # The original image has no relocation table (img.is_reloc is always False there), so a block's global reads used
+    # to compare as `[0x5e2930]` against our masked `[A]`, and every case that jumps into such a block was reported as
+    # a branch-target difference (30 of the interpreter's cases). An original instruction counts as relocated when it
+    # holds an image address AND our function has a relocated instruction of the same masked shape (so a plain
+    # constant that happens to lie in the image's range, e.g. 0x2625a00, is still compared by value).
+    def _shape(i):
+        t = i.mnemonic + " " + i.op_str
+        t = re.sub(r"\b(e[abcd]x|e[sd]i|ebp|[abcd][lh]|[abcd]x|[sd]il?)\b", "r", t)
+        t = re.sub(r"esp \+ (0x[0-9a-f]+|\d+)", "esp+S", t)
+        return re.sub(r"0x[0-9a-f]+|\b0\b", "A", t)
+    reloc_shapes = {_shape(i) for i in ui if any(i.address + k in reloc_u for k in range(i.size))}
+
+    def _orig_relocated(i):
+        return any(img.in_image(int(h, 16)) for h in re.findall(r"0x[0-9a-f]+", i.op_str)) and _shape(i) in reloc_shapes
+
     def block_key(side, addr, depth=0):
         """A jump leaving the case: what matters is the code it lands on, not where that code sits. The block from
         the target to its first jmp/ret, registers and stack offsets masked, addresses replaced by what they name."""
@@ -633,7 +648,7 @@ def run_cases(a, va, oi, ui, sec, ulo, relocs, d, symptr, reloc_target, img, pop
             t = i.mnemonic + " " + i.op_str
             t = re.sub(r"\b(e[abcd]x|e[sd]i|ebp|[abcd][lh]|[abcd]x|[sd]il?)\b", "r", t)
             t = re.sub(r"esp \+ (0x[0-9a-f]+|\d+)", "esp+S", t)
-            relocated = (any(img.is_reloc(i.address + k) for k in range(i.size)) if side == "o"
+            relocated = (_orig_relocated(i) if side == "o"
                          else any(i.address + k in reloc_u for k in range(i.size)))
             if i.mnemonic.startswith("j") or i.mnemonic == "call" or relocated:
                 t = re.sub(r"0x[0-9a-f]+|\b0\b", "A", t)

@@ -289,44 +289,43 @@ int widget_mgr::create_text_box_overlay()
 // rescale child mesh `sub` of a widget for a new size; the old size is MissionUi::fD8 / fDC
 #define ITEM ((WItem*)widgets[idx])
 #define STORE_SIZE() \
-    do { WItem* it_ = ITEM; it_->fD8 = pos[0]; it_->fDC = pos[1]; } while (0)
+    do { *(vec2*)&ITEM->fD8 = *(const vec2*)pos; } while (0)     // the new size, copied as a pair (no float loads)
 #define SCALE_BY_OLD(t) \
     ((rgl::mesh*)ITEM->tracks[t])->set_color(vector4(pos[0] / ITEM->fD8, pos[1] / ITEM->fDC, 1.0f))
 
+// a 2-float temporary built from references: the y read keeps its own address (`add eax,0xf4` in the kind 2/3 tail)
+struct V2r : vec2 { V2r(const float& a, const float& b) { x = a; y = b; } };
 // @ 0x49a300
 void widget_mgr::set_size(int idx, const float* pos)
 {
-    if (vt(ITEM)->kind() == 0 || vt(ITEM)->kind() == 1)
-        goto base;
-    if (vt(ITEM)->kind() == 9) {
+    if (vt(ITEM)->kind() == 0 || vt(ITEM)->kind() == 1) {
+        vt(ITEM)->d27(&V2(pos[0] * 0.02f, pos[1] * 0.02f));
+        STORE_SIZE();
+    }
+    else if (vt(ITEM)->kind() == 9) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
         vt(ITEM)->d25((void*)pos);
-        float sz[4];                            // out of slot 41 (text size), never read
-        vt(ITEM)->d41(sz, &ITEM->name);
+        { float sz[2]; vt(ITEM)->d41(sz, &ITEM->name); }   // sz: slot 41's text size, never read
         STORE_SIZE();
-        return;
     }
     else if (vt(ITEM)->kind() == 4) {
         SCALE_BY_OLD(0);
         vt(ITEM)->d03();
         STORE_SIZE();
-        return;
     }
     else if (vt(ITEM)->kind() == 8) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
         vt(ITEM)->d03();
         STORE_SIZE();
-        return;
     }
     else if (vt(ITEM)->kind() == 2) {
         SCALE_BY_OLD(0);
         SCALE_BY_OLD(2);
         vt(ITEM)->d03();
-        vt(ITEM)->d25(&vector4(pos[0] * 0.25f, ITEM->screen[1], 1.0f));
+        vt(ITEM)->d25(&V2r(pos[0] * 0.25f, ITEM->screen[1]));
         STORE_SIZE();
-        return;
     }
     else if (vt(ITEM)->kind() == 3) {
         vector4 c;
@@ -336,39 +335,30 @@ void widget_mgr::set_size(int idx, const float* pos)
         ((UiC*)ITEM)->v198 = c;   // 0x49a786: stored after the two scalings
         *(int*)&((UiC*)ITEM)->f194 = (int)0xcb3c57cb;
         vt(ITEM)->d03();
-        vt(ITEM)->d25(&vector4(pos[0] * 0.25f, ITEM->screen[1], 1.0f));
+        vt(ITEM)->d25(&V2r(pos[0] * 0.25f, ITEM->screen[1]));
         STORE_SIZE();
-        return;
     }
     else if (vt(ITEM)->kind() == 5) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
         SCALE_BY_OLD(3);
-        vt(ITEM)->d27(&vector4(pos[0] * 0.02f, pos[1] * 0.02f, 1.0f));
-        vt(ITEM)->d28(&vector4(pos[0] * 0.02f, pos[1] * 0.013f, 1.0f));   // 0x49a956: x is pos[0] * 0.02 (kind 6 passes 0)
+        vt(ITEM)->d27(&V2(pos[0] * 0.02f, pos[1] * 0.02f));
+        vt(ITEM)->d28(&V2(pos[0] * 0.02f, pos[1] * 0.013f));   // 0x49a956: x is pos[0] * 0.02 (kind 6 passes 0)
         vt(ITEM)->d03();
         STORE_SIZE();
-        float sz[4];                            // out of slot 41 (text size), never read
-        vt(ITEM)->d41(sz, &ITEM->name);
-        return;
+        { float sz[2]; vt(ITEM)->d41(sz, &ITEM->name); }   // sz: slot 41's text size, never read
     }
     else if (vt(ITEM)->kind() == 6) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
-        vt(ITEM)->d27(&vector4(pos[0] * 0.02f, pos[1] * 0.02f, 1.0f));
-        vt(ITEM)->d28(&vector4(0.0f, pos[1] * 0.009f, 1.0f));
+        vt(ITEM)->d27(&V2(pos[0] * 0.02f, pos[1] * 0.02f));
+        vt(ITEM)->d28(&V2(0.0f, pos[1] * 0.009f));
         vt(ITEM)->d03();
         STORE_SIZE();
-        return;
     }
     else if (vt(ITEM)->kind() == 7) {
         ITEM->terrain_refresh(pos);
-        return;
     }
-    return;
-base:
-    vt(ITEM)->d27(&vector4(pos[0] * 0.02f, pos[1] * 0.02f, 1.0f));
-    STORE_SIZE();
 }
 #undef ITEM
 
