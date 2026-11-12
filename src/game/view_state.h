@@ -17,6 +17,7 @@ struct Timer16 {
     int pad4;
     tick start;                 // +8
     void init(int c) { clock = c; start = tk(clock); }
+    void restamp() { *(__int64*)&start = g_ticks[clock]; }   // one 8-byte copy (ViewBody::init 0x463370: the clock loads stay behind the vector stores)
 };
 struct Vec4z { float x, y, z, w; };
 

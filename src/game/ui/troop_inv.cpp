@@ -330,9 +330,6 @@ void PlacedObj::read(stream_base* s, int version)
 #define VEC(o) (*(rgl::vector4*)((char*)this + (o)))
 #define T64(o) (*(__int64*)((char*)this + (o)))
 
-// Timer16's restamp, as an inline helper (the original reaches each timer through its own pointer: the clock loads stay
-// behind the vector stores). Belongs on Timer16 (src/game/view_state.h) as `void restamp()`.
-static inline void restamp16(Timer16& t) { *(__int64*)&t.start = g_ticks[t.clock]; }
 // @ 0x463370
 void ViewBody::init()
 {
@@ -349,11 +346,11 @@ void ViewBody::init()
     FL(0x68) = 0.1f;
     FL(0x30) = 1.0f;
     W(0x24) = -1;
-    restamp16(t58);
-    restamp16(ta8);
-    restamp16(t98);
-    restamp16(t5118);
-    restamp16(t5128);
+    t58.restamp();
+    ta8.restamp();
+    t98.restamp();
+    t5118.restamp();
+    t5128.restamp();
     FL(0xb8) = 0.1f;
     W(0x6c) = 0;
     W(0x88) = 0;
