@@ -559,8 +559,8 @@ void MissionCtx::start_mission()
 
 static inline Rec98* rec98_at(std::vector<Rec98*>::iterator pages, unsigned idx)
 {
-    Rec98* page = *(pages + (idx >> 4));
-    return page + (idx & 0xf);
+    pages += idx >> 4;
+    return *pages + (idx & 0xf);
 }
 static inline bool shadow_stale(void* target) { return ((ShadowMapP*)target)->f48[0x50 / 4] != g_batch.counter; }
 static inline void set_map_view(rgl::frustum& c, float left, float right, float bottom, float top)
@@ -720,16 +720,20 @@ void CampaignScreen::frame_update(float dt)
         }
         int trial = g_trial_mode;
         if (g_game->troops[g_game->player].level > 6 && trial == 0) {
+            {
             tstring a("ui_explanation_level_limit");
             tstring b("ui_level_limit_reached");
             g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
-            start = 0;
+            }
             g_windows.open(trial);
             f64 = 1;
+            start = 0;
         } else if (1 - (int)(t * -0.041666667f) > 30 && trial == 0) {
+            {
             tstring a("ui_explanation_time_limit");
             tstring b("ui_time_limit_reached");
             g_windows.box()->setup(g_strtable.lookup(b), g_strtable.lookup(a));
+            }
             g_windows.open(trial);
             f64 = 1;
             start = 0;
@@ -767,7 +771,8 @@ void CampaignScreen::frame_update(float dt)
     }
 
     if (flag) {
-        if (PSO(f40)->clicked_on(0x10000) || g_game_keys.clicked(0x10)) {
+        bool c_f40 = PSO(f40)->clicked_on(0x10000) || g_game_keys.clicked(0x10);
+        if (c_f40) {
             WL_MARKER(4)
             slot_as<MenuWidget>(8)->f18 = 7;
             slot_as<MenuWidget>(8)->f4 = 0;
@@ -775,13 +780,15 @@ void CampaignScreen::frame_update(float dt)
             WL_MARKER(5)
             return;
         }
-        if (PSO(f3c)->clicked_on(0x10000) || g_game_keys.clicked(0x11)) {
+        bool c_f3c = PSO(f3c)->clicked_on(0x10000) || g_game_keys.clicked(0x11);
+        if (c_f3c) {
             slot_as<MenuWidget>(12)->f18 = 7;
             slot_as<MenuWidget>(12)->f4 = 0;
             g_windows.set_state(0xc);
             return;
         }
-        if (PSO(f44)->clicked_on(0x10000) || g_game_keys.clicked(0xf)) {
+        bool c_f44 = PSO(f44)->clicked_on(0x10000) || g_game_keys.clicked(0xf);
+        if (c_f44) {
             slot_as<MenuWidget>(15)->f18 = 7;
             slot_as<MenuWidget>(15)->f4 = 0;
             slot_as<MenuWidget>(15)->f14 = GD_I(0x8c);
