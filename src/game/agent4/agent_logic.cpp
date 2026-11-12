@@ -2566,20 +2566,23 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
         int* pn = &groups[idx].nvar;
         int n = *pn;
         if (n > 0) {
-            int k = 0;
-            if (n > 1)
+            int k;
+            if (groups[idx].nvar <= 1)
+                k = 0;
+            else
                 k = rand() % *pn;
             int dn = groups[idx].var[k];
             int ch = FSOUND_PlaySoundEx(-1, defs[dn].sample, 0, 1);
             ret = ch;
             if (out_id)
                 *out_id = defs[dn].id;
+            int t = ch;                     // the handle pushed for a looping sound: address-taken, stored before the calls
             if (ch >= 0) {
-                int looping = groups[idx].flags & 2;
                 int hi = 0x100;
-                int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_options.master_volume * 255.0f);
                 int vol = 0;
+                int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_options.master_volume * 255.0f);
                 vol = clamp_index(&r, &vol, &hi);
+                int looping = groups[idx].flags & 2;
                 int prio;
                 if (flags & 1) {
                     FSOUND_3D_SetAttributes(ch, 0, 0);
@@ -2597,10 +2600,8 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                 FSOUND_SetLoopMode(ch, (looping != 0) + 1);
                 if (groups[idx].flags & 4)
                     FSOUND_SetCurrentPosition(ch, rand_below(&defs[dn].length));
-                if (looping) {
-                    int t = ch;
+                if (looping)
                     channels.push_back(t);
-                }
                 if (freq != 1.0f && g_cfg.disable_frequency_variation == 0)
                     FSOUND_SetFrequency(ch, (int)((float)defs[dn].freq * freq));
                 FSOUND_SetPriority(ch, prio);
