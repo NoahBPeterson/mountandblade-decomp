@@ -768,8 +768,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
 
     PartyMgr* pool = &parties;
     int pi = pool->lookup(f78);
-    Party* p = party_at(pool, pi);
-    int skill = p->skill_level(0);
+    int skill = pool->at(pi)->skill_level(0);
     float f = (1.0f - (float)skill * 0.06f) * 1.25f;
     if (adjust)
         f = f * 1.9f;
@@ -791,6 +790,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
     int result;
     if (plain) {
         result = (int)value;
+        if (result < 1) result = 1;
     } else {
         g_script.trigger_result.value = 100;
         int mode = 3;
@@ -798,6 +798,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
             mode = 4;
         if (emit_event(mode, item->item, (int)value)) {
             result = (int)((float)g_script.trigger_result.value * value * 0.01f);
+            if (result < 1) result = 1;
         } else {
             float v2 = value;
             if (scaled)
@@ -818,10 +819,9 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
                 tf = 1.0f / tf;
             float last = tf * v2;
             result = round_float(&last);
+            if (result < 1) result = 1;
         }
     }
-    if (result < 1)
-        result = 1;
     return result;
 }
 
