@@ -102,9 +102,8 @@ void char_window::load_troop()
     f50c = TROOP_FIELD(a, 0xa8);
     f510 = TROOP_FIELD(a, 0xac);
     f504 = TROOP_FIELD(a, 0xa0);
-    int b = troop;
-    f4d8 = TROOP_FIELD(b, 0x58);
     int& t = troop;
+    f4d8 = TROOP_FIELD(troop, 0x58);
     f4dc = TROOP_FIELD(t, 0x5c);
     f4e0 = TROOP_FIELD(t, 0x60);
     f4e4 = TROOP_FIELD(t, 0x64);
