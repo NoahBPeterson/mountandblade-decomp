@@ -4,6 +4,7 @@
 #ifndef GAME_MISSION_UI2_FIELD_PANEL_H
 #define GAME_MISSION_UI2_FIELD_PANEL_H
 #include <stddef.h>
+#include <vector>
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
@@ -43,9 +44,10 @@ struct FieldVisual {                        // the view object (a camera): colou
     char pad140[0x14c - 0x140];
     unsigned color;                         // +0x14c
 };
-struct FieldHost : MissionUi {              // the scene widget (MissionPanel::host): the view slot at +0x17c
-    int f178;                               // +0x178
-    FieldVisual** view;                     // +0x17c
+struct FieldHost : MissionUi {              // the scene widget (MissionPanel::host)
+    // +0x178: the view slot is element 0. The original reads it through operator[] at every use (base -> _Myfirst ->
+    // element chained in one scratch register: 0x48d350, 0x48d3c0, 0x48f020, 0x48f120).
+    std::vector<FieldVisual*> views;
 };
 struct FieldPanel : Camera {
     FieldHost* scene() const { return (FieldHost*)target; }

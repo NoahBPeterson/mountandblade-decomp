@@ -69,10 +69,6 @@ bool NavData::shares(const int& a, const int& b) const
     return ai == bi || bj == ai || aj == bi || aj == bj;
 }
 
-// FieldHost's view slot is element 0 of a std::vector<FieldVisual*> at +0x178 (f178 + view are its header): the
-// original reads it through operator[] (base -> _Myfirst -> element chained in one scratch register). FieldHost in
-// field_panel.h should declare the vector; until then the two readers here view it in place.
-#define HOST_VIEWS(h) (*(std::vector<FieldVisual*>*)&(h)->f178)
 
 // @ 0x48f020
 void FieldPanel::relayout(const tstring* text)
@@ -81,14 +77,14 @@ void FieldPanel::relayout(const tstring* text)
     // get_state(&v[2]) writes *two* more (a 2D state) over v[2] and v[3] - the original's last dword. A float v[3]
     // here makes that second dword overwrite the saved frame (return address -> the state's float bit pattern).
     float v[4];
-    HOST_VIEWS(scene())[0]->text_size(v, text);
+    scene()->views[0]->text_size(v, text);
     float ty = tail.y, tx = tail.x;
     if (sqrt(ty * ty + tx * tx) > 0.0f) {
-        HOST_VIEWS(scene())[0]->set_xy(&tail.x);
-        HOST_VIEWS(scene())[0]->get_state(v);
-        HOST_VIEWS(scene())[0]->set_xy(v);
-        HOST_VIEWS(scene())[0]->f13c = v[1] - f144 * 0.63f - 0.001f;
-        HOST_VIEWS(scene())[0]->get_state(&v[2]);
+        scene()->views[0]->set_xy(&tail.x);
+        scene()->views[0]->get_state(v);
+        scene()->views[0]->set_xy(v);
+        scene()->views[0]->f13c = v[1] - f144 * 0.63f - 0.001f;
+        scene()->views[0]->get_state(&v[2]);
     }
     update();
 }
@@ -99,7 +95,7 @@ void WItem::terrain_refresh(const float* off)
     FieldPanel* p = (FieldPanel*)(void*)this;
     float v[2];
     float a = off[0] * 0.02f;
-    FieldVisual* w = HOST_VIEWS(p->scene())[0];
+    FieldVisual* w = p->scene()->views[0];
     v[0] = a;
     v[1] = off[1] * 0.02f;
     w->set_size(v);

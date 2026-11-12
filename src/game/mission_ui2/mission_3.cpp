@@ -494,27 +494,24 @@ void MissionUi::update_bounds()
     }
 }
 
-// FieldHost's view slot is element 0 of a std::vector<FieldVisual*> at +0x178 (f178 + view are its header), read
-// through operator[] (see mission_4.cpp); FieldHost in field_panel.h should declare the vector.
-#define HOST_VIEWS(h) (*(std::vector<FieldVisual*>*)&(h)->f178)
 
 // @ 0x48d350
 void FieldPanel::set_color(unsigned rgb)
 {
-    unsigned c = (HOST_VIEWS(scene())[0]->color & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
-    HOST_VIEWS(scene())[0]->set_color(&c);
+    unsigned c = (scene()->views[0]->color & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
+    scene()->views[0]->set_color(&c);
     float out[2];
-    HOST_VIEWS(scene())[0]->get_state(out);
+    scene()->views[0]->get_state(out);
 }
 
 // @ 0x48d3c0
 void FieldPanel::set_alpha(unsigned a)
 {
     unsigned u = a << 24;
-    a = (HOST_VIEWS(scene())[0]->color & 0xffffff) | u;
-    HOST_VIEWS(scene())[0]->set_color(&a);
+    a = (scene()->views[0]->color & 0xffffff) | u;
+    scene()->views[0]->set_color(&a);
     float out[2];
-    HOST_VIEWS(scene())[0]->get_state(out);
+    scene()->views[0]->get_state(out);
     mirror()->tracks[0]->color = (tracks[0]->color & 0xffffff) | u;
     mirror()->tracks[2]->color = (tracks[2]->color & 0xffffff) | u;
 }
@@ -523,9 +520,8 @@ void FieldPanel::set_alpha(unsigned a)
 void FieldPanel::update()
 {
     float p[2];
-    FieldVisual** view = scene()->view;
-    p[0] = view[0]->f0;
-    p[1] = view[0]->f4;
+    p[0] = scene()->views[0]->f0;
+    p[1] = scene()->views[0]->f4;
     scene()->set_xy(p);
 
     if (!(sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)) {
@@ -541,14 +537,14 @@ void FieldPanel::update()
     if (scene()->screen[1] < screen[1]) {           // fcomp; test ah,5; jp (0x48d528): shorter than us
         p[1] = screen[1] - scene()->screen[1];
         p[0] = 0.0f;
-        view[0]->set_pos(p);                    // re-read (0x48d543)
+        scene()->views[0]->set_pos(p);                    // re-read (0x48d543)
         p[0] = scene()->screen[0];
         p[1] = screen[1];
         scene()->set_xy(p);
     } else {
         p[0] = 0.0f;
         p[1] = 0.0f;
-        view[0]->set_pos(p);                    // view[0] re-read after the set_xy calls (0x48d587)
+        scene()->views[0]->set_pos(p);                    // view[0] re-read after the set_xy calls (0x48d587)
     }
 
     p[0] = screen[0] + e[0] + 0.01f;
