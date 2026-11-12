@@ -1261,8 +1261,6 @@ void NamedRec::setup2(const tstring* a, const tstring* b, const tstring* c, int 
     f04 = 1;
 }
 
-// the combatant record of team i as the accessors below address it (CombatRec: the team record seen from +0x527c)
-static __forceinline CombatRec* ui_rec(Mission* m, int i) { return (CombatRec*)((char*)m + 0x527c + i * 0x16c); }
 
 // @ 0x48a420
 rgl::matrix Mission::get_frame()
@@ -1366,44 +1364,44 @@ bool Mission::point_in_rect(const float* p)
 // @ 0x48a9e0
 void Mission::select_team(int i)
 {
-    CombatRec* r = ui_rec(this, i);
-    r->b[0].m4 = r->b[0].use;
-    r->b[1].m4 = r->b[1].use;
-    r->b[2].m4 = r->b[2].use;
+    TeamRec* r = &teams[i];
+    r->cls[0].saved_use = r->cls[0].use;
+    r->cls[1].saved_use = r->cls[1].use;
+    r->cls[2].saved_use = r->cls[2].use;
 }
 
 // @ 0x48aa20
 void Mission::unselect_team(int i)
 {
-    CombatRec* r = ui_rec(this, i);
-    r->b[0].use = r->b[0].m4;
-    r->b[1].use = r->b[1].m4;
-    r->b[2].use = r->b[2].m4;
+    TeamRec* r = &teams[i];
+    r->cls[0].use = r->cls[0].saved_use;
+    r->cls[1].use = r->cls[1].saved_use;
+    r->cls[2].use = r->cls[2].saved_use;
 }
 
 // @ 0x48aa60
 void Mission::select_class(int i, int s)
 {
-    CombatRec* r = ui_rec(this, i);
+    TeamRec* r = &teams[i];
     if (s >= 0 && s < 3) {
-        r->b[0].use = 0;
-        r->b[1].use = 0;
-        r->b[2].use = 0;
-        r->b[s].use = 1;
+        r->cls[0].use = 0;
+        r->cls[1].use = 0;
+        r->cls[2].use = 0;
+        r->cls[s].use = 1;
     } else {
-        r->b[0].use = 1;
-        r->b[1].use = 1;
-        r->b[2].use = 1;
+        r->cls[0].use = 1;
+        r->cls[1].use = 1;
+        r->cls[2].use = 1;
     }
 }
 
 // @ 0x48aac0
 int Mission::movement_order(int i)
 {
-    CombatRec* r = ui_rec(this, i);
+    TeamRec* r = &teams[i];
     for (int k = 0; k < 3; k++) {
-        if (r->b[k].use != 0) {
-            switch (r->b[k].k8) {
+        if (r->cls[k].use != 0) {
+            switch (r->cls[k].kind) {
             case 0: return 2;
             case 2: return 1;
             case 1: return 0;
@@ -1418,11 +1416,11 @@ int Mission::movement_order(int i)
 // @ 0x48ab30
 int Mission::riding_order(int i)
 {
-    CombatRec* r = ui_rec(this, i);
+    TeamRec* r = &teams[i];
     int v = 0;
     while (v < 3) {
-        if (r->b[v].use != 0) {
-            v = r->b[v].kc;
+        if (r->cls[v].use != 0) {
+            v = r->cls[v].k4;
             goto sw;
         }
         v++;
@@ -1442,8 +1440,8 @@ int Mission::weapon_usage_order(int i)
 {
     int v = -1;
     for (int k = 0; k < 3; k++) {
-        if (ui_rec(this, i)->b[k].use) {
-            v = ui_rec(this, i)->b[k].k10;
+        if (teams[i].cls[k].use) {
+            v = teams[i].cls[k].a;
             break;
         }
     }
@@ -1459,8 +1457,8 @@ int Mission::hold_fire_order(int i)
 {
     int v = -1;
     for (int k = 0; k < 3; k++) {
-        if (ui_rec(this, i)->b[k].use) {
-            v = ui_rec(this, i)->b[k].k14;
+        if (teams[i].cls[k].use) {
+            v = teams[i].cls[k].b;
             break;
         }
     }

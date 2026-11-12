@@ -13,23 +13,7 @@
 #include "../mission.h"
 #include "../key_names.h"
 
-// ---- combatant record seen from +0x527c: the 0x16c-byte TeamRec (mission.h, at +0x5280) with its three ClassInfo blocks, as the
-// ui accessors address it (the displacements of their code are relative to 0x527c, so they cannot go through TeamRec) -------
-struct Blk {
-    char pad0[8];
-    int k8;                                 // +0x08 = ClassInfo::kind (switch in active_kind 0x48aac0)
-    int kc;                                 // +0x0c = ClassInfo::k4 (slot_mode 0x48ab30)
-    int k10;                                // +0x10 = ClassInfo::a (slot_kind_a 0x48ab90)
-    int k14;                                // +0x14 = ClassInfo::b (slot_kind_b 0x48abf0)
-    char pad18[0x4c - 0x18];
-    int use;                                // +0x4c = ClassInfo::use (0x48a9e0..0x48ac50)
-    int m4;                                 // +0x50 = ClassInfo::saved_use (0x48a9e0, 0x48aa20)
-    char pad54[0x6c - 0x54];
-};
-struct CombatRec {
-    Blk b[3];
-    char pad144[0x16c - 0x144];
-};
+// (the per-team accessors 0x48a9e0..0x48ac50 address mission.h's TeamRec teams[] at +0x527c directly)
 
 // ---- the view: three 16-int vectors and a render-target factory --------------------------------------------
 struct ViewObj {                            // interface at +0x1b4 (virtual 23 = +0x5c)
