@@ -2704,8 +2704,8 @@ void Party::update_flags()
         }
     }
     unsigned def = flags_lo & 0xff;
-    int rider = f94;
     rgl::mesh* m2 = 0;
+    int rider = f94;
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
     rows_scale(*(Rot3*)&m->m_cc, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     GDP(rgl::mesh*, 0x1a200) = m;
@@ -2775,9 +2775,14 @@ void Party::update_flags()
         model->f294 = 0.5f;
     }
     unsigned mask = (flags & 0x400) ? 0x1ffff : 0xffff;
-    m->mask = mask;
-    if (m2)
+    // the m store is written at the head of both arms (cl merges it back above the je after allocation): a use of m in
+    // the exit block keeps the ebp save in the prologue
+    if (m2) {
+        m->mask = mask;
         m2->mask = mask;
+    } else {
+        m->mask = mask;
+    }
     // The original assigns a (0, 0, 0.5) temporary (3-argument vector4 constructor: w left unset); the w lane it copies
     // (0x4b7e11 [esp+0x2c] -> 0x4b7e24) is never read: the entity's +0xc4 is the box centre, whose consumers use x, y, z.
     model->color = vector4(0.0f, 0.0f, 0.5f);
