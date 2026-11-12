@@ -851,6 +851,7 @@ void CampaignScreen::frame_update(float dt)
 
     GameG* tg = (GameG*)GV;
     tg->tick(dt);
+    {
     rgl::matrix m;
     rgl::identity_pos(&m);
     {
@@ -860,6 +861,7 @@ void CampaignScreen::frame_update(float dt)
         m.o = ((pos*)&cam.m)->transform_point(v);
     }
     (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
+    }
 
     if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && (char)g_keyboard.is_ready(0x12))
         GD_I(0x1a090) = (GD_I(0x1a090) == 0);
