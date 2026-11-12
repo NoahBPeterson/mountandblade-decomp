@@ -152,6 +152,38 @@ void Skin::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
     }
 }
 
+bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0
+// rgl::cell::collect_point (0x439780, agent2/agent_stats.cpp) with its body visible, as the original's unit saw it: the
+// hit array and the counts then do not escape, so the column pointer stays a register and the bound loads straight into ebx
+inline __declspec(noinline) void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count)
+{
+    unsigned i = 0;
+    *count = 0;
+    while (i < a.size()) {
+        shape_base** q = &a[i];
+        shape_base* sh = *q;
+        if (sh->m8 & mask) {
+            i++;
+            continue;
+        }
+        vector4 tv[2];
+        const vector4* smax = sh->get_max(&tv[0]);
+        const vector4* smin = sh->get_min(&tv[1]);
+        bool hit;
+        if (*use3d == 0)
+            hit = smin->x <= p[0] && p[0] <= smax->x && smin->y <= p[1] && p[1] <= smax->y;
+        else
+            hit = in_box(smin, smax, (const vector4*)p);
+        if (!hit) {
+            i++;
+            continue;
+        }
+        out[*count] = *q;
+        ++*count;
+        i++;
+    }
+}
+
 // @ 0x470f40
 bool GameData::ground_height(rgl::world* lv, const float* p, float* out)   // a member that ignores this
 {
