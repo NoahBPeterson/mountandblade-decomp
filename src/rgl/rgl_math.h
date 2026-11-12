@@ -14,6 +14,7 @@ struct vector4 {
     float x, y, z, w;
     vector4() {}
     vector4(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+    vector4(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) {}   // wind_noise 0x463a80 returns one built in the return buffer
     vector4& set(const float& x_, const float& y_, const float& z_);        // 0x407c30
     float length() const { return (float)sqrt(x * x + y * y + z * z); }
     float length_squared() const { return x * x + y * y + z * z; }

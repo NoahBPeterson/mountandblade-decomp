@@ -131,22 +131,17 @@ const char* GameData::module_path(const char* sub)
 // @ 0x463a80
 vector4 __stdcall wind_noise()
 {
-    float in[3], out[3];
+    float out[3];
     float t = (float)g_ticks[1] * 1e-5f;
-    in[0] = t; in[1] = 0.0f; in[2] = 0.0f;
-    noise_fractal(96.0f, 0.65f, 4, 0, in, out);
+    float in1[3] = { t, 0.0f, 0.0f };
+    noise_fractal(96.0f, 0.65f, 4, 0, in1, out);
     float a = out[0];
-    in[0] = 713.0f; in[1] = t; in[2] = 973.0f;
-    noise_fractal(72.0f, 0.63f, 4, 0, in, out);
+    float in2[3] = { 713.0f, t, 973.0f };
+    noise_fractal(72.0f, 0.63f, 4, 0, in2, out);
     float b = out[0];
-    in[0] = -125.0f; in[1] = 6337.0f; in[2] = t;
-    noise_fractal(24.0f, 0.63f, 4, 0, in, out);
-    vector4 r;
-    r.x = a;
-    r.y = b;
-    r.z = out[0];
-    r.w = out[1];
-    return r;
+    float in3[3] = { -125.0f, 6337.0f, t };
+    noise_fractal(24.0f, 0.63f, 4, 0, in3, out);
+    return vector4(a, b, out[0], out[1]);
 }
 
 // The compiler-generated initializer of g_shadow_map is 0x547de0 (the scene's constructor, then the four dwords and cam cleared) and its atexit
