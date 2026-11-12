@@ -209,16 +209,15 @@ void Rec454::init_screen()
     // one row per listed quest
     for (int i = 0; i < count; i++) {
         tstring text(*(tstring*)(QUEST(indices[i]) + 0x40));
-        char* q = QUEST(indices[i]);
         char buf[512];
-        if (q[0x50] & 1) {
-            mb_snprintf(buf, 0x200, "%s (%d%%)", text.buf ? text.buf : (char*)&text, *(int*)(q + 0x64) & 0xff);
+        if (QUEST(indices[i])[0x50] & 1) {
+            mb_snprintf(buf, 0x200, "%s (%d%%)", text.c_str(), *(int*)(QUEST(indices[i]) + 0x64) & 0xff);
         } else {
-            mb_snprintf(buf, 0x200, "%s", text.buf ? text.buf : (char*)&text);
+            mb_snprintf(buf, 0x200, "%s", text.c_str());
         }
         rows[i] = new UiA;                     // vptr 0x591d58
         {
-            float v[2] = { 0.01f, h - 0.05f - (float)i * 0.04f };
+            float v[2] = { 0.01f, (h - 0.05f) - (float)i * 0.04f };
             rows[i]->move_a(v);
         }
         {
@@ -243,7 +242,8 @@ void Rec454::init_screen()
         frame->add_child(rows[i]);
     }
     // 0x4ee7ea..: pos = [esp+0x4c] (0.1, 0.11), size = [esp+0x44] (0.32, 0.58): argument temporaries, stored after the pushes
-    list = make_quest_list(frame, float2_arg(float2(0.1f, 0.11f)), float2_arg(float2(0.32f, 0.58f)), make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f));
+    UiD* track = make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f);
+    list = make_quest_list(frame, float2_arg(float2(0.1f, 0.11f)), float2_arg(float2(0.32f, 0.58f)), track);
     window->add_child(list);
 }
 
