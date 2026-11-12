@@ -247,15 +247,14 @@ void mesh::build_skin()
         tb[i][3] = 0; tb[i][2] = 0; tb[i][1] = 0; tb[i][0] = 0;
     }
     for (unsigned bi = 0; bi < v80.size(); ++bi) {
-        bone_influence* b = &v80[bi];
-        for (unsigned k = 0; k < b->verts.size(); ++k) {
-            int vi = b->verts[k].index;
+        for (unsigned k = 0; k < v80[bi].verts.size(); ++k) {
+            int vi = v80[bi].verts[k].index;
             unsigned s = 0;
             do {
                 if (!(tw[vi][s] > 1e-5f)) {
                     if (s < 4) {
-                        tb[vi][s] = b->bone;
-                        tw[vi][s] = b->verts[k].weight;
+                        tb[vi][s] = v80[bi].bone;
+                        tw[vi][s] = v80[bi].verts[k].weight;
                     }
                     break;
                 }
@@ -280,7 +279,6 @@ void mesh::build_skin()
     }
 }
 
-// ---- the scene queue -------------------------------------------------------------------------------------------------
 // @ 0x412040
 void render_batch::register_scene(scene* e)
 {
