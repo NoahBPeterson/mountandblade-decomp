@@ -5651,8 +5651,9 @@ void Agent::cycle_slot(int which)
                     if (which == 0) {
                         unsigned fl = ik->type_flags;
                         if ((char)fl == 10) {
-                            int cnt = pairs[v].m4 & 0xff;
-                            int val = pairs[v].max_amount();
+                            ItemRef* p = &pairs[v];
+                            int cnt = p->m4 & 0xff;
+                            int val = p->max_amount();
                             if (val - cnt > 0 && pairs[slots[0]].item != old_item) {
                                 if (f2c < 0 || !(ik->type_flags & 0x10000000))
                                     found = true;
