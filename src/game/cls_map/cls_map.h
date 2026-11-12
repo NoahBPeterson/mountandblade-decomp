@@ -42,7 +42,7 @@
 // result of GlyphMap::insert (0x4d3c00): the node and whether it was new
 struct HOut { GlyphNode* node; char inserted; };
 // the value_type of the table: the key and the seven metric floats (a Glyph)
-struct node_pair { int key; Glyph value; };
+struct node_pair { int key; Glyph value; node_pair(const int& k, const Glyph& v) : key(k), value(v) {} };
 
 // ---- 0x4d9450: WinMain's globals and callees ---------------------------------------------------------------------
 

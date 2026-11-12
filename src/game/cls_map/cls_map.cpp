@@ -69,18 +69,14 @@ float g_5a9f28[2] = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} c
 #include "../glyph_lookup.h"
 // the 4d3c00 insert is world_app.cpp's HashTab::insert (the glyph table is a hash table of that layout)
 struct HashTab { HOut* insert(HOut* out, unsigned* key); };   // 0x4d3c00
-// the table's value as the original builds it: two (x, y) pairs set from float temporaries, three zeroed floats, and the
-// {key, value} pair made by a constructor (the 7-dword copy); views of Glyph / node_pair
-struct GlyphPt { float x, y; GlyphPt() {} GlyphPt(const float& a, const float& b) : x(a), y(b) {} };
-struct GlyphVal { GlyphPt a, b; float c, d, e; GlyphVal() { a = GlyphPt(0.0f, 0.0f); b = GlyphPt(0.0f, 0.0f); c = 0.0f; d = 0.0f; e = 0.0f; } };
-struct GlyphPair { int key; GlyphVal value; GlyphPair(const int& k, const GlyphVal& v) : key(k), value(v) {} };
+// the inserted value is a default-constructed Glyph (font.h) and the {key, value} node_pair is made by its constructor (the 7-dword copy)
 // @ 0x4d92c0
 Glyph* GlyphMap::at(const int& key)
 {
     HOut out;
     IntHashBase::iterator it = ((IntHashBase&)*this).lower_bound(key);
     if (*(GlyphNode**)&it == head) {
-        GlyphPair v(key, GlyphVal());
+        node_pair v(key, Glyph());
         return &((HashTab*)this)->insert(&out, (unsigned*)&v.key)->node->val;
     }
     return &(*(GlyphNode**)&it)->val;
@@ -226,31 +222,22 @@ template class std::vector<int>;
 // ---- 0x4d99d0: Font::Font (a real constructor: eax = this) ---------------------------------------------------------
 // The glyph table is a list (sentinel at +0x4c from list_int_buynode) plus a bucket vector of 9 copies of the sentinel.
 #include "../../include/list_int.h"                  // list_int::clear 0x4c4d80 (std::list<int>::clear)
-// the glyph's own constructor (two zeroed float pairs through temporaries, then three zeroed fields)
-struct FloatPair0 { float x, y; __forceinline FloatPair0() { const float z = 0.0f; x = z; y = z; } __forceinline FloatPair0(const FloatPair0& o) { x = o.x; y = o.y; } };
-static __forceinline void glyph_init(Glyph& g)
-{
-    *(FloatPair0*)&g.f0 = FloatPair0();
-    *(FloatPair0*)&g.f8 = FloatPair0();
-    g.f10 = 0.0f;
-    g.f14 = 0.0f;
-    g.f18 = 0.0f;
-}
 struct EmptyTag {};
-// @ 0x4d99d0
-Font::Font()
+// the glyph table's constructor (the stdext::hash_map constructor: comparator, list, 9 buckets of the sentinel, mask, max index)
+__forceinline GlyphMap::GlyphMap()
 {
-    glyph_init(dflt);
     EmptyTag tag;
-    *(EmptyTag*)&map.pad0[0] = tag;                 // the hash map's empty comparator (a one-byte copy)
-    list_int* l = (list_int*)&map.pad0[1];
+    *(EmptyTag*)&pad0[0] = tag;                     // the hash map's empty comparator (a one-byte copy)
+    list_int* l = (list_int*)&pad0[1];
     l->w04 = (list_node_int*)list_int_buynode(l);
     l->count = 0;
-    map.buckets.std::vector<int>::vector(9, (int)map.head);
-    map.i20 = 1;
-    map.i24 = 1;
-    for (int i = 0; i < 0x200; i++)
-        glyph_init(ascii[i]);
+    buckets.std::vector<int>::vector(9, (int)head);
+    i20 = 1;
+    i24 = 1;
+}
+// @ 0x4d99d0: the members' constructors only (dflt, map, then the 0x200 ascii glyphs)
+Font::Font()
+{
 }
 
 // ---- 0x4d9aa0: the font definition loader (TinyXML) ---------------------------------------------------------------

@@ -10,9 +10,13 @@
 namespace rgl { struct vector4; struct mesh; }
 
 // ---- font glyph metrics -----------------------------------------------------------------------------------
-struct Glyph {                                       // 0x1c bytes: key + 6 floats (std::map<int, glyph> value_type)
+struct GlyphPt { float x, y; GlyphPt() {} GlyphPt(const float& a, const float& b) : x(a), y(b) {} };   // an (x, y) metric pair
+struct Glyph {                                       // 0x1c bytes: two (x, y) pairs + 3 floats (the hash_map<int, Glyph> mapped type)
     union { int key; float f0; };                    // f0: the first metric as src/game/cls_map/cls_map.cpp Font::load 0x4d9aa0 stores it (a float)
     float f4, f8, fc, f10, f14, f18;
+    // the glyph's constructor: the two pairs assigned from const-float& temporaries, then three zeroed floats (Font::Font
+    // 0x4d99d0 runs it for dflt and the 0x200 ascii glyphs, GlyphMap::at 0x4d92c0 for the inserted value)
+    Glyph() { *(GlyphPt*)&f0 = GlyphPt(0.0f, 0.0f); *(GlyphPt*)&f8 = GlyphPt(0.0f, 0.0f); f10 = 0.0f; f14 = 0.0f; f18 = 0.0f; }
 };
 struct GlyphNode { GlyphNode *left, *parent, *right; Glyph val; };
 struct GlyphMap {                                    // std::map<int, glyph> (comparator, head, size)
@@ -22,6 +26,7 @@ struct GlyphMap {                                    // std::map<int, glyph> (co
     std::vector<int> buckets;                        // +0x10 (0x10 bytes) 9 copies of `head` (0x4d99d0)
     int i20;                                         // +0x20 (1, 0x4d99d0)
     int i24;                                         // +0x24 (1, 0x4d99d0)
+    GlyphMap();                                      // inline in cls_map.cpp (the hash_map constructor, expanded in Font::Font 0x4d99d0)
     Glyph* at(const int& key);                       // 0x4d92c0 (operator[]: the glyph of `key`, inserted zeroed when absent)
 };
 struct Font {

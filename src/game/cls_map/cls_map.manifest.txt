@@ -58,3 +58,4 @@
 ../src/game/cls_map/cls_map.cpp  ?new_sized_button@@YAPAUUiA@@PAUMissionUi@@ABUtstring@@MMM11MMM@Z  004dcc50  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?init@BlockOwner@@QAEXPAUContainerBase@@H@Z  004dd920  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?FinalCleanup@GameApp@@UAEJXZ  004da5b0  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?at@GlyphMap@@QAEPAUGlyph@@ABH@Z  004d92c0  /O2 /MT /Gy /TP
