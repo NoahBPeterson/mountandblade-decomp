@@ -7708,6 +7708,65 @@ void Agent::on_removed()
 }
 
 // ---- Agent::hit_damage: the damage of a melee blow or missile hit ------------------------------------------------------------------
+// 0x434c50 / 0x434cb0 / 0x434d70 (ItemRef::stat_1ec / stat_21x / stat_1f0a, agent/agent.cpp owns the rows): bodies that only read *this, so
+// Agent::hit_damage (0x453710) keeps sp.item in a register across the calls (no `item` local) and sp does not escape.
+inline __declspec(noinline) int ItemRef::stat_1ec()      // 0x434c50
+{
+    if (item < 0) return 0;
+    int v = g_items[item].f1ec;
+    if (v != 0) {
+        int m = b.mod;
+        if ((char)g_items[item].type_flags == itp_type_horse) {
+            if (m == imod_timid) return v - 1;
+            if (m == imod_stubborn) return v + 1;
+            if (m == imod_champion) return v + 2;
+        } else {
+            if (m == imod_heavy) return v + 1;
+            if (m == imod_strong) return v + 2;
+            if (m == imod_masterwork) v += 4;
+        }
+    }
+    return v;
+}
+inline __declspec(noinline) int ItemRef::stat_21x(int which)      // 0x434cb0
+{
+    if (item < 0) return 0;
+    unsigned v;
+    if (which == 0) v = g_items[item].f218 & 0xff;
+    else v = g_items[item].f214 & 0xff;
+    if (v != 0) {
+        switch (b.mod) {
+        case imod_cracked: v -= 5; break;
+        case imod_rusty:
+        case imod_bent: v -= 3; break;
+        case imod_chipped: v -= 1; break;
+        case imod_crude: v -= 2; break;
+        case imod_fine: v += 1; break;
+        case imod_heavy: v += 2; break;
+        case imod_balanced:
+        case imod_strong: v += 3; break;
+        case imod_tempered: v += 4; break;
+        case imod_masterwork: v += 5; break;
+        }
+    }
+    return v;
+}
+inline __declspec(noinline) int ItemRef::stat_1f0a()      // 0x434d70
+{
+    if (item < 0) return 100;
+    int v = g_items[item].f1f0;
+    if (v != 0) {
+        switch (b.mod) {
+        case imod_balanced: v += 3; break;
+        case imod_tempered: return v;
+        case imod_masterwork: v += 1; break;
+        case imod_heavy: v -= 2; break;
+        case imod_bent:
+        case imod_strong: v -= 3; break;
+        }
+    }
+    return v;
+}
 
 static __forceinline vector4 vmul_sv(const float& s, const vector4& v)
 {
@@ -7757,7 +7816,6 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
         *(vec2*)&lv = vel_xy;                       // x, y as dwords; z is never stored (rot_xy uses 0)
         B = rot_xy(body->m, lv);
     }
-    int item = sp.item;
     if (missile) {
         *out_flag = 1;
         float spd = missile->f5c;
@@ -7765,12 +7823,12 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             vector4 rel = A - missile->p40 * missile->f5c;
             spd = rel.length();        // 0x4539d7: (dz^2 + dy^2) + dx^2
         }
-        *out_dmg = (float)pow((double)(spd / missile->f60), (double)g_module_settings.missile_damage_speed_power) * missile->f64 * *scale;
+        *out_dmg = ((float)pow((double)(spd / missile->f60), (double)g_module_settings.missile_damage_speed_power)) * missile->f64 * *scale;
     } else {
         int st = hand ? mode2 : mode1;
         unsigned fl = (st == 0);
         *out_flag = fl;
-        if (item >= 0)
+        if (sp.item >= 0)
             *out_dmg = (float)(int)sp.stat_21x(fl) * *scale;
         else
             *out_dmg = (float)g_game->chars[troop].lvl58 * 0.3f + 2.0f;
@@ -7781,7 +7839,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             *out_dmg = (*out_dmg + 5.0f) * (float)pow((double)len, (double)1.8f);
             vector4 q = ((const ::pos&)body->m).rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
             q.normalize();
-            *out_dmg = ((0.2f - (q.z * d.z + q.y * d.y + q.x * d.x)) * *out_dmg) * g_module_settings.couched_lance_damage_multiplier * 0.2f;
+            *out_dmg = ((0.2f - (q.x * d.x + d.y * q.y + d.z * q.z)) * *out_dmg) * g_module_settings.couched_lance_damage_multiplier * 0.2f;
             if (g_options.damage_msgs) {
                 if (id == g_mission->player_id)
                     { tstring key("ui_delivered_couched_lance_damage"); g_gui.add(*g_strtable.lookup(key), 0xffd03030); }
@@ -7802,9 +7860,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             } else if (m == 2) {
                 dir = rgl::cross(q, up);
             } else if (m == 1) {
-                vector4 c = rgl::cross(q, up);
-                up.x = -c.x; up.y = -c.y; up.z = -c.z;
-                dir = up;
+                dir = vneg(rgl::cross(q, up));
             } else {
                 vector4 s = rgl::cross(q, up);
                 s.normalize();
@@ -7858,17 +7914,17 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             }
         }
     }
-    if (item >= 0) {
+    if (sp.item >= 0) {
         ItemRef w = slot_pair_fi(1);
-        int cls = slot_class_impl(item, w.item >= 0);
+        int cls = slot_class_impl(sp.item, w.item >= 0);
         int prof = (int)g_game->chars[troop].f80[cls];
-        if ((g_items[item].type_flags & 0xff) == itp_type_crossbow) {
+        if ((g_items[sp.item].type_flags & 0xff) == itp_type_crossbow) {
             if (g_mission->fog_dense == 1)
                 *out_dmg = *out_dmg * 0.75f;
         } else {
             float pct = (float)prof * 0.01f;
             *out_dmg = (pct * 0.15f + 0.85f) * *out_dmg;
-            unsigned t = g_items[item].type_flags & 0xff;
+            unsigned t = g_items[sp.item].type_flags & 0xff;
             if (t == itp_type_bow) {
                 int sk = g_game->skill_level(troop, 0x21);
                 int lim = sp.stat_1ec() + 4;
@@ -7887,13 +7943,13 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                     int hs = g_game->skill_level(troop, 0x17);
                     *out_dmg = ((float)hs * 0.019f + 0.8f) * *out_dmg;
                 }
-            } else if (g_items[item].is_melee()) {
+            } else if (g_items[sp.item].is_melee()) {
                 int sk = g_game->skill_level(troop, 0x23);
                 *out_dmg = ((float)sk * 0.08f + 1.0f) * *out_dmg;
             }
             *out_dmg = (float)g_game->chars[troop].lvl58 * 0.2f + *out_dmg;
         }
-        unsigned t2 = g_items[item].type_flags & 0xff;
+        unsigned t2 = g_items[sp.item].type_flags & 0xff;
         if (t2 == itp_type_two_handed_wpn || t2 == itp_type_polearm) {
             ItemRef w2 = slot_pair_fi(1);
             if (w2.item >= 0 || f2c >= 0)
