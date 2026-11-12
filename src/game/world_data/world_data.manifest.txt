@@ -78,3 +78,4 @@
 ../src/game/world_data/world_data.cpp  ?share_experience@GameW@@QAEXHM@Z  00494b60  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?place_scene_agents@@YAXPAUCarryBody@@PAUCarryRef@@PAUCarryCtx@@@Z  00495430  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?position_around@GameW@@QAEDUVec2@@MPAU2@D@Z  00490160  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??0Party@@QAE@XZ  004934d0  /O2 /MT /Gy /TP
