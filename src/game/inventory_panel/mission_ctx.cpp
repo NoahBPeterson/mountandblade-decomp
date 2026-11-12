@@ -502,32 +502,29 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     HT->pairs[1].v = a2;
     HT->flags[1] = 1;
 
-    PartyMgr* m = &g_game->parties;
-    Party* p = party_at(m, m->lookup(g_game->f78));
+    Party* p = party_index(g_game->f78);
     int k = 2;
     for (int n = 1; n < p->nstacks; n++) {
-        int item = p->stacks[n].troop;
-        if ((g_game->troops[item].flags30 & 0x10) != 0 && item != a1) {
-            HT->pairs[k].id = item;
+        if ((g_game->troops[p->stacks[n].troop].flags30 & 0x10) != 0 && p->stacks[n].troop != a1) {
+            HT->pairs[k].id = p->stacks[n].troop;
             HT->flags[k] = 1;
             k++;
         }
     }
 
     if (a3 > 0 && a3 != g_game->f78) {
-        m = &g_game->parties;
-        if (1 < party_at(m, m->lookup(a3))->nstacks) {
+        int n = 1;
+        if (n < party_index(a3)->nstacks) {
             int k = 17;
-            int n = 1;
             do {
-                int item = party_at(m, m->lookup(a3))->stacks[n].troop;
+                int item = party_index(a3)->stacks[n].troop;
                 if ((g_game->troops[item].flags30 & 0x10) != 0) {
-                    HT->pairs[k].id = party_at(m, m->lookup(a3))->stacks[n].troop;
+                    HT->pairs[k].id = party_index(a3)->stacks[n].troop;
                     HT->flags[k] = 1;
                     k++;
                 }
                 n++;
-            } while (n < party_at(m, m->lookup(a3))->nstacks);
+            } while (n < party_index(a3)->nstacks);
         }
     }
 
