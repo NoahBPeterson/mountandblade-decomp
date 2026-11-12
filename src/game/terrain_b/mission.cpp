@@ -722,26 +722,23 @@ void Terrain::make_grid()
     }
 }
 
+static __forceinline void interior_fbc(rgl::entity* e, const float& v) { e->set_fbc(&v); }   // a const float& temporary
 // @ 0x47a800
 void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
-    rgl::world* sc = scene;
     Level494* es = &g_game->levels[which];
     MeshVec meshes;
     meshes = g_resmgr.find_meshes(&es->name34);
     if (meshes.size() == 0)
         mb_error("Error unable to find interior mesh %s", es->name34.c_str());
-    rgl::entity* e = sc->create_entity(9);
+    rgl::entity* e = scene->create_entity(9);
     *n = (int)meshes.size();
-    rgl::mesh** o = out;
     for (int i = 0; i < *n; i++) {
-        rgl::mesh* m = ((rgl::mesh*)meshes[i])->clone();
-        *o++ = m;
-        e->meshes.push_back(m);
+        out[i] = ((rgl::mesh*)meshes[i])->clone();
+        e->meshes.push_back(out[i]);
         e->recalc();
     }
-    float dist = 100000.0f;
-    e->set_fbc(&dist);
+    interior_fbc(e, 100000.0f);
 }
 
 // @ 0x47a980
