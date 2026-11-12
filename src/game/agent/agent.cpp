@@ -833,10 +833,11 @@ ItemRef Agent::best_ammo(int idx, int* missing, int* total, int* slot_out)
     *missing = -1;
     *total = -1;
     if (k >= 0 && pairs[k].item >= 0) {
-        unsigned wt = g_items[pairs[k].item].type_flags & 0xff;
-        if (wt == 8 || wt == 9 || wt == 10 || wt == 0x11 || wt == 0x10) {
-            *total = 0;
+        ItemKind& ik = g_items[pairs[k].item];
+        if ((ik.type_flags & 0xff) == 8 || (ik.type_flags & 0xff) == 9 || (ik.type_flags & 0xff) == 10 ||
+            (ik.type_flags & 0xff) == 0x11 || (ik.type_flags & 0xff) == 0x10) {
             *missing = 0;
+            *total = 0;
             for (int i = 0; i < 4; i++) {
                 ItemRef* cur = &pairs[i];
                 if (cur->item >= 0) {
@@ -851,14 +852,14 @@ ItemRef Agent::best_ammo(int idx, int* missing, int* total, int* slot_out)
                             *slot_out = i;
                         }
                         if (*missing == 0) {
-                            unsigned b = cur->m4;
-                            if (cur->max_amount() - (int)(b & 0xff) != 0) {
+                            int b = cur->m4 & 0xff;
+                            if (cur->max_amount() - b != 0) {
                                 r = *cur;
                                 *slot_out = i;
                             }
                         }
-                        unsigned b2 = cur->m4;
-                        *missing += cur->max_amount() - (b2 & 0xff);
+                        int b2 = cur->m4 & 0xff;
+                        *missing += cur->max_amount() - b2;
                         *total += cur->max_amount();
                     }
                 }
