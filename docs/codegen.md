@@ -2191,3 +2191,11 @@ Key numbering (third batch, same night)
   (Event::slot1 8a775845).
 - A zero candidate coloured by Color (ebx=k0) yet emitted as immediates: dop2_CodegenUpdate between RegSimpleAssign
   and MdmSaveAndRestoreCallees drops low-benefit callee-saved assignments (gui_manager::clear_selection, untraced).
+- Part of a value stored or loaded before a `cmp/jcc` with only the varying piece in the arms: the source built the
+  whole value in each arm and cl hoisted the identical parts (Agent::get_label_box 8f597152).
+- Escape follows the whole callee chain: a visible body that passes the pointer on to an opaque function still lets
+  it escape; every body down the chain must be visible (Agent::refresh_carried 0c3ef5da).
+- cl 13.10 folds float constant chains (`x * 0.65f * 0.7f` -> one fmul); two fmuls in the original need
+  `(x * 0.65f) * 0.7f` (GameData::color_of 81612bcb).
+- Open: a redundant equality compare on an already-tested value that the original keeps (Agent::cycle_slot,
+  update_nav_face); every /O2 spelling tried threads it away.
