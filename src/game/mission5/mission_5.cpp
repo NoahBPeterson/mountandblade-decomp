@@ -2800,6 +2800,141 @@ L_bd8a:
 // =====================================================================================================
 //  Mission_s2b5c0::find_position
 // =====================================================================================================
+// The segment query chain with its bodies visible, as the original's unit saw it (world::query_segment 0x439870,
+// cell::collect_masked 0x4396b0: agent2/agent_stats.cpp; cell_grid::walk 0x437290: agent/agent.cpp): the end point b and the
+// count do not escape, so b[0] is stored after the &count push as in the original
+inline __declspec(noinline) void rgl::cell_grid::walk(const float* a, const float* b, int (*cells)[2], int* count)
+{
+    vec2 d;
+    d.x = b[0] - a[0];
+    d.y = b[1] - a[1];
+    vec2 dir = d;
+    float l = (float)sqrt(dir.x * dir.x + dir.y * dir.y);
+    if (l > 0.0f) {
+        float inv = 1.0f / l;
+        dir.x = inv * dir.x;
+        dir.y = inv * dir.y;
+    } else {
+        dir.x = 0.0f;
+        dir.y = 1.0f;
+    }
+    int step[2], cur[2];
+    float tdelta[2], tmax[2], fpos[2];
+    float* dd = &dir.x;
+    for (int i = 0; i < 2; i++) {
+        if (dd[i] > 0.0f)
+            step[i] = 1;
+        else
+            step[i] = -1;
+        float inv = 1.0f / dd[i];
+        tdelta[i] = (float)fabs(inv * cell_size[i]);
+        fpos[i] = (a[i] - lo[i]) / cell_size[i];
+        cur[i] = (int)floor(fpos[i]) + 1;
+        if (cur[i] < 0)
+            cur[i] = 0;
+        else if (cur[i] > n[i] - 1)
+            cur[i] = n[i] - 1;
+        if (a[i] < lo[i]) {
+            if (step[i] < 0)
+                tmax[i] = 1e10f;
+            else
+                tmax[i] = (float)fabs((lo[i] - a[i]) * inv);
+        } else if (a[i] > hi[i]) {
+            if (step[i] > 0)
+                tmax[i] = 1e10f;
+            else
+                tmax[i] = (float)fabs((a[i] - hi[i]) * inv);
+        } else {
+            float fr = (float)fmod(a[i] - lo[i], cell_size[i]);
+            if (step[i] > 0)
+                fr = cell_size[i] - fr;
+            tmax[i] = (float)fabs((double)(fr * inv));
+        }
+    }
+    int* pc = cur;
+    *count = 0;
+    cells[0][0] = cur[0];
+    cells[0][1] = cur[1];
+    float acc = 0.0f;
+    (*count)++;
+    int n = *count;     // the incremented count is a temporary copied into n (mov edi,eax)
+    float total = (float)sqrt(d.y * d.y + d.x * d.x);
+    while (total > tmax[0] + acc || total > tmax[1] + acc) {
+        int idx;
+        if (tmax[0] < tmax[1])
+            idx = 0;
+        else
+            idx = 1;
+        cur[idx] += step[idx];
+        cells[n][0] = cur[0];
+        cells[n][1] = cur[1];
+        n = *count + 1;
+        *count = n;
+        float* tp = &tmax[idx];
+        float* to = &tmax[1 - idx];
+        *to -= *tp;
+        acc += *tp;
+        if (pc[idx] == 0)
+            *tp = 1e10f;
+        else if (pc[idx] == this->n[idx] - 1)
+            *tp = 1e10f;
+        else
+            *tp = tdelta[idx];
+    }
+}
+
+// max by value over const references (the shape of the engine's own helper: std::max returns a reference and leaves
+// stack temporaries, the windows.h macro tests v > 0)
+static inline int max_of(const int& a, const int& b) { return a < b ? b : a; }
+inline __declspec(noinline) void rgl::cell::collect_masked(unsigned mask, shape_base** out, int* count)
+{
+    int n = 0;
+    shape_base* buf[0x2000];
+    unsigned i = 0;
+    int k = 0;
+    while (i < a.size()) {
+        shape_base* sh = a[i];
+        if (sh->m8 & mask) {
+            i++;
+            continue;
+        }
+        if (k < *count) {
+            shape_base* o = out[k];
+            if (sh >= o) {
+                if (sh == o) {
+                    i++;
+                    buf[n++] = sh;
+                } else {
+                    buf[n++] = o;
+                }
+                k++;
+                continue;
+            }
+        }
+        buf[n++] = sh;
+        i++;
+    }
+    if (k < *count) {
+        int m = *count - k;
+        memcpy(&buf[n], &out[k], m * sizeof(shape_base*));
+        n += m;
+    }
+    *count = n;
+    for (int j = 0; j < *count; j++)
+        out[j] = buf[j];
+}
+
+// shapes of this cell containing the point p (xy box, or the 3-D box via in_box when *use3d != 0)
+inline __declspec(noinline) void rgl::world::query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count)
+{
+    int pairs[0x2000][2];
+    int n;
+    walk(a, b, pairs, &n);
+    *count = 0;
+    for (int i = 0; i < n; i++)
+        cells[pairs[i][0]][pairs[i][1]].collect_masked(mask, out, count);
+}
+
 // @ 0x52bdb0
 void Mission_s2b5c0::find_position(char* ok, vector4* pos)
 {
