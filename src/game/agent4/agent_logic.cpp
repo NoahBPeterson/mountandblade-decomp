@@ -7549,8 +7549,11 @@ void gui_manager::add(tstring msg, int color)
             meshB[cur].append_skinned(&meshA[cur], id, -1, -1, 0);
             this->color[cur] = color;
             age[cur] = 0;
-            meshA[cur].calc_bounds(&ext, &p);       // 0x438d80
-            height[cur] = p.y - ext.y;
+            {
+                vector4 hi;                                 // never written here: it shares p's slot
+                meshA[cur].calc_bounds(&ext, &hi);       // 0x438d80
+                height[cur] = hi.y - ext.y;
+            }
             total_h += height[cur];
         }
         {
