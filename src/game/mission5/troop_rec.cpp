@@ -260,9 +260,7 @@ void Game::start_new_game()
         stream.failed = 1;                          // set after the scene is read (0x51f3ba), not before
     }
 
-    int slot = scene.lookup(f78);
-    Party* pr = (Party*)((char*)scene.pages._Myfirst[slot >> 4] + (slot & 0xf) * 0x5ac8);
-    pr->f74 = 0x80;
+    scene.at(scene.lookup(f78))->f74 = 0x80;
 
     if (0 < g_party_template_count) {
         for (i = 0; i < g_party_template_count; i++) {
