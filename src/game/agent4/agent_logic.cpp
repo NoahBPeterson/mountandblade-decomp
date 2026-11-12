@@ -4721,7 +4721,8 @@ done:
                         if (f2c == -1) {
                             ItemRef p1 = slot_pair_fi(1);
                             if (p1.item >= 0) {
-                                if ((char)g_items[slot_pair(1).item].type_flags == itp_type_shield) {     // cmp cl, 7 (0x448bf6)
+                                ItemKind& k1 = g_items[slot_pair(1).item];
+                                if ((char)k1.type_flags == itp_type_shield) {     // cmp cl, 7 (0x448bf6): the reference leaves the dead add eax,edx
                                     ItemRef p0 = ta->slot_pair(0);
                                     if (p0.item >= 0) {
                                         ItemKind* ik = &g_items[p0.item];
