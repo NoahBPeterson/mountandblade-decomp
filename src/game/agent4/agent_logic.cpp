@@ -227,6 +227,53 @@ void Agent::hand_pos(vector4* out)
     out->z = height;
 }
 
+// 0x433770 (Obj3::set_placement, rgl/xmlcfg/agent_pick.cpp owns the row; the emitter's placement block as game_util.h lays it out): the body
+// visible, so the frame EmitTable::setup (0x4424c0) passes does not escape and its origin stores are independent of the loads through d.
+struct Obj3Place_ {
+    char pad0[0xe8];
+    unsigned flags;                         // +0xe8
+    char padec[0x134 - 0xec];
+    rgl::matrix m134;                       // +0x134
+    vector4 v174;                           // +0x174
+    vector4 v184;                           // +0x184
+    int m194;                               // +0x194
+    int pad198;
+    int m19c, m1a0, m1a4;                   // +0x19c
+};
+inline __declspec(noinline) void Obj3::set_placement(const matrix* m, const vector4* a, const vector4* b, int c)
+{
+    Obj3Place_* t = (Obj3Place_*)this;
+    unsigned f = t->flags & ~1u;
+    t->flags = f;
+    t->m134 = *m;
+    t->v174 = *a;
+    t->v184 = *b;
+    t->m194 = c;
+    if (f & 2) {
+        t->m19c = t->m1a0 = 1000000000;
+        t->m1a4 = 0;
+    }
+}
+
+// 0x40cd60 / 0x40cd00 (rgl::identity3 / rgl::identity_pos, rgl/shapes/shapes.cpp owns the rows): the bodies visible, so a frame passed to
+// identity_pos does not escape and its later stores are independent of pointer loads (EmitTable::setup 0x4424c0).
+inline __declspec(noinline) rgl::mat3* __cdecl rgl::identity3(rgl::mat3* out)
+{
+    vector4 a(1.0f, 0.0f, 0.0f), b(0.0f, 1.0f, 0.0f), c(0.0f, 0.0f, 1.0f);
+    out->s = a;
+    out->f = b;
+    out->u = c;
+    return out;
+}
+inline __declspec(noinline) rgl::matrix* __cdecl rgl::identity_pos(rgl::matrix* out)
+{
+    vector4 o(0.0f, 0.0f, 0.0f);
+    rgl::mat3 m;
+    *(rgl::mat3*)out = *identity3(&m);
+    out->o = o;
+    return out;
+}
+
 // remove the entity of the agent's body from the scene
 // @ 0x43a6f0
 void Agent::release_body()
