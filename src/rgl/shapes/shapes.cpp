@@ -585,14 +585,12 @@ float capsule_sphere_gap(capsule* a, sphere* b)
     vector4 dir;
     normalize(dir, d);
     vector4 v(b->center.x - a->p0.x, b->center.y - a->p0.y, b->center.z - a->p0.z);
-    float t = v.x * dir.x + (v.y * dir.y + v.z * dir.z);
-    if (t < 0.0f) d = a->p0;
-    else if ((float)sqrt(d.x * d.x + (d.y * d.y + d.z * d.z)) < t) d = a->p1;
-    else {
-        vector4 dt(dir.x * t, dir.y * t, dir.z * t);
-        d = dt + a->p0;
-    }
-    float ex = d.x - b->center.x, ey = d.y - b->center.y, ez = d.z - b->center.z;
+    float t = dir.x * v.x + (v.y * dir.y + v.z * dir.z);   // dir.x mentioned first: its field key orders the x87 operands
+    vector4 c;                                              // its own variable: dir * t lands in d's slot
+    if (t < 0.0f) c = a->p0;
+    else if ((float)sqrt(d.x * d.x + (d.y * d.y + d.z * d.z)) < t) c = a->p1;
+    else c = dir * t + a->p0;
+    float ex = c.x - b->center.x, ey = c.y - b->center.y, ez = c.z - b->center.z;
     return (float)sqrt(ex * ex + (ey * ey + ez * ez)) - (a->radius + b->radius);
 }
 
