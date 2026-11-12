@@ -1444,29 +1444,18 @@ SceneBaseCtor* SceneBaseCtor::construct()
     *(int*)(self + 0x340) = 0;
     *(int*)(self + 0x9c) = 1;
 
-    float _g[4];
     {
         float _x[2] = { 1000.0f, 1000.0f };
         float _y[2] = { -1000.0f, -1000.0f };
         ((rgl::world*)(void*)this)->init(_y, _x, 0, 0);
     }
 
-    *(float*)(self + 0x30c) = 1.0f;
-    *(float*)(self + 0x310) = 0.0f;
-    *(float*)(self + 0x314) = 0.0f;
-    *(float*)(self + 0x318) = _g[3];
-    *(float*)(self + 0x31c) = 0.0f;
-    *(float*)(self + 0x320) = 0.0f;
-    *(float*)(self + 0x324) = 0.0f;
-    *(float*)(self + 0x328) = _g[3];
-
     *(int*)(self + 0xb0) = 0;
     *(int*)(self + 0xb4) = 0;
     *(int*)(self + 0x64) = 0;
-    *(float*)(self + 0x68) = 0.0f;
-    *(float*)(self + 0x6c) = 0.0f;
-    *(float*)(self + 0x70) = 0.0f;
-    *(float*)(self + 0x74) = _g[3];
+    *(rgl::vector4*)(self + 0x30c) = rgl::vector4(1.0f, 0.0f, 0.0f);
+    *(rgl::vector4*)(self + 0x31c) = rgl::vector4(0.0f, 0.0f, 0.0f);
+    *(rgl::vector4*)(self + 0x68) = rgl::vector4(0.0f, 0.0f, 0.0f);
     *(int*)(self + 0x78) = 0;
 
     return this;
