@@ -763,10 +763,14 @@ void renderer::tessellate(float* pts, int* n, float a, float b, float r, int sta
                 else if (mode < 0) latang = (float)lat * 1.5707964f / stacks;
                 else latang = 0.0f;
                 t.x = (float)(cos(lonang) * cos(latang) * r);
-                t.y = (float)(sin(lonang) * cos(latang) * r);
-                if (mode > 0) t.z = (float)(sin(latang) * r + a);
-                else if (mode < 0 || k == 1 || k == 2) t.z = (float)(sin(latang) * r + b);
-                else t.z = (float)(sin(latang) * r + a);
+                if (mode > 0) {
+                    t.y = (float)(sin(lonang) * cos(latang) * r);
+                    t.z = (float)(sin(latang) * r + a);
+                } else {
+                    t.y = (float)(sin(lonang) * cos(latang) * r);
+                    if (mode < 0 || k == 1 || k == 2) t.z = (float)(sin(latang) * r + b);
+                    else t.z = (float)(sin(latang) * r + a);
+                }
             }
             pts[*n] = c[0].x; pts[*n + 1] = c[0].y; pts[*n + 2] = c[0].z; *n += 3;
             pts[*n] = c[1].x; pts[*n + 1] = c[1].y; pts[*n + 2] = c[1].z; *n += 3;
