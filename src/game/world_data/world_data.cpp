@@ -2068,19 +2068,20 @@ void MissionW::add_wind_effect(float a1, float a2)
 // @ 0x495430
 void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx)
 {
-    char placed[11] = {0};
+    char placed[11];
+    memset(placed, 0, sizeof(placed));
     for (int i = 3; i >= 0; i--) {
         int id = table[i].item;
         if (id < 0)
             continue;
-        CarryKind* it = (CarryKind*)&g_items[id];
-        if (((it->f1d0 & 0xf0000000) | (it->f1d4 & 7)) == 0)
+        ItemKind* it = &g_items[id];
+        if ((it->flags & 0x7f0000000ui64) == 0)
             continue;
         rgl::matrix M;
         int attach;
         int bone;
-        ((ItemKind*)it)->get_carry_pos((pos2*)&M, &attach, &bone);
-        if (placed[bone] != 0 || (it->type == 7 && (table[i].m4 & 0xffff) <= 0xa)) {
+        it->get_carry_pos((pos2*)&M, &attach, &bone);
+        if (placed[bone] != 0 || ((it->type_flags & 0xff) == 7 && (int)(table[i].m4 & 0xffff) <= 0xa)) {
             if (ctx->c3[i] != 0)
                 ctx->c3[i]->vis = 0;
             continue;
@@ -2092,17 +2093,19 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
         }
         if (ctx->c1[i] != 0) {
             ctx->c1[i]->vis = 0xffff;
+            CarryMesh* c = ctx->c1[i];
             CarrySkel* sk = holder->skel;
-            ((Skeleton*)sk)->remove_shape((shape_base*)ctx->c1[i]);
-            ctx->c1[i]->frame = M;
-            ((FxElem*)&sk->elems[attach])->add_group((int)ctx->c1[i]);
+            ((Skeleton*)sk)->remove_shape((shape_base*)c);
+            c->frame = M;
+            ((FxElem*)&sk->elems[attach])->add_group((int)c);
         }
         if (ctx->c2[i] != 0) {
             ctx->c2[i]->vis = 0xffff;
+            CarryMesh* c = ctx->c2[i];
             CarrySkel* sk = holder->skel;
-            ((Skeleton*)sk)->remove_shape((shape_base*)ctx->c2[i]);
-            ctx->c2[i]->frame = M;
-            ((FxElem*)&sk->elems[attach])->add_group((int)ctx->c2[i]);
+            ((Skeleton*)sk)->remove_shape((shape_base*)c);
+            c->frame = M;
+            ((FxElem*)&sk->elems[attach])->add_group((int)c);
         }
     }
 }
