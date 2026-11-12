@@ -6029,6 +6029,14 @@ template std::vector<E56>::iterator std::vector<E56>::insert(std::vector<E56>::i
 #define ZERO_S for (int zi = 0; zi < 15; zi++) s[zi] = 0.0f;
 #define tf_hero 0x00000010i64
 #define tf_guarantee_horse 0x01000000i64
+static __forceinline char mode_flag1_i(const Mission* m) { return ((g_mission_templates[m->mode].flags >> 1) & 1) != 0; }
+static __forceinline int team_leader_i(const Agent* a)     // team_leader 0x435b60, inlined in choose_action
+{
+    int t = a->team;
+    if (t < 0 || t >= 8) t = 7;
+    return g_mission->teams[t].leader;
+}
+static __forceinline float ca_dot(const vector4& a, const vector4& b) { return a.x * b.x + a.z * b.z + b.y * a.y; }   // the threat-loop dot product (the dir reference anchors the loop pointer at dir.y, as the original)
 // @ 0x44d000
 void Agent::choose_action(int unused)
 {
@@ -6036,7 +6044,6 @@ void Agent::choose_action(int unused)
     int ids[15];                                // target id per kind
     ClassInfo* cr;
     float s[15];                                // score per kind
-    vector4 hp;
     unsigned cand;
     float dist;
     int cls = team;
@@ -6072,7 +6079,10 @@ void Agent::choose_action(int unused)
         }
         s[11] = (float)(rand() % 15817) * 9.4834677e-06f + 0.3f;
     } else {
-        collect_enemies((int)&hp);
+        {
+            vector4 hp;
+            collect_enemies((int)&hp);
+        }
         cand = pick_random();
         Mission* m = g_mission;
         bool target_mounted = false;
@@ -6140,14 +6150,14 @@ void Agent::choose_action(int unused)
                         for (int i = 0; i < nthreat; i++) {
                             float w = 50.0f / (threats[i].dist + 25.0f);
                             if (!(w < 1.0f)) w = 1.0f;
-                            int n = AG(threats[i].id).f55e8 - 1;
+                            int n = agent_by_id(threats[i].id)->f55e8 - 1;
                             w = w / ((float)(n < 0 ? 0 : n) + 1.0f);
-                            float d = threats[i].dir.x * vel.x + threats[i].dir.z * vel.z + vel.y * threats[i].dir.y;
+                            float d = ca_dot(vel, threats[i].dir);
                             if (d > 0.0f) w = (d * d * 20.0f + 1.0f) * w;
                             float sc = ((float)(rand() % 15817) * 6.3223117e-05f + 0.25f) * w * 0.5f;
-                            if (AG(threats[i].id).f130 & 0x10)
+                            if (agent_by_id(threats[i].id)->f130 & 0x10)
                                 sc = sc * 1.5f;
-                            else if (AG(threats[i].id).f130 & 0x20)
+                            else if (agent_by_id(threats[i].id)->f130 & 0x20)
                                 sc = sc * 1.5f;
                             if (sc > bests) {
                                 best = i;
@@ -6159,7 +6169,7 @@ void Agent::choose_action(int unused)
                     }
                 }
             } else {
-                if ((g_mission_templates[g_mission->mode].flags >> 1) & 1) {
+                if (mode_flag1_i(g_mission)) {
                     for (int i = 0; i < 8; i++) {
                         if (g_mission->teams[team].relation[i] == -1 &&
                             (g_mission->counts[i][5] > 0 || g_mission->counts[i][4] > 0)) {
@@ -6182,6 +6192,7 @@ void Agent::choose_action(int unused)
                             s[7] = s[7] * 0.0f;
                     }
                     if (k == 2 && leader != id) {
+                        vector4 hp;
                         hand_pos(&hp);
                         vector4 d = vsub(hp, pos);
                         float l = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) * 0.25f;
@@ -6193,6 +6204,7 @@ void Agent::choose_action(int unused)
                         pv[1] = AG(leader).pos;
                         pv[9] = AG(leader).pos;
                     } else if (k == 1) {
+                        vector4 hp;
                         hand_pos(&hp);
                         vector4 d = vsub(hp, pos);
                         float l = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) * 0.25f;
@@ -6219,8 +6231,9 @@ void Agent::choose_action(int unused)
                         unsigned it = tbl->first_used();
                         unsigned cnt = tbl->count;
                         if (it < cnt) {
+                            Agent* const* pg = &g_mission->agents.pages[0];
                             do {
-                                Agent* a = &AG(it);
+                                Agent* a = &pg[it >> 4][it & 0xf];
                                 if (a->f10 == 1 && a->f30 == -1 && a->f5830 == 2) {
                                     int v = a->f8c.stat_1ec();
                                     if (v <= T->nibble(0x18)) {
@@ -6269,38 +6282,21 @@ randomise:
         }
     } else {
         int k = cr->kind;
-        float zero;
-        if (k == 1) {
-            zero = 0.0f;
+        if (k == 1 || (k == 2 && team_leader_i(this) != id)) {
+            float zero = 0.0f;
             goal_near_for_class(&f2d0, &zero);
+        } else if (cr->kind == 3 && scripted_mode != 1) {
+            if (f53a0 == 0) {
+                const vector4& f = body->m.f;
+                vector4 p = a_vadd(vector4(f.x, f.y, f.z), pos);
+                int fkind = 2;
+                int face = update_nav_face();
+                float speed = 2.0f;
+                pick_reachable_goal(&p, &speed, &face, &fkind);
+            }
         } else {
-            bool other = false;
-            if (k == 2) {
-                int c2 = team;
-                if (c2 < 0 || c2 >= 8) c2 = 7;
-                if (g_mission->teams[c2].leader != id) {
-                    zero = 0.0f;
-                    goal_near_for_class(&f2d0, &zero);
-                    other = true;
-                }
-            }
-            if (!other) {
-                if (k == 3 && scripted_mode != 1) {
-                    if (f53a0 == 0) {
-                        vector4 p;
-                        p.x = body->m.f.x + pos.x;
-                        p.y = body->m.f.y + pos.y;
-                        p.z = body->m.f.z + pos.z;
-                        int fkind = 2;
-                        int face = update_nav_face();
-                        float speed = 2.0f;
-                        pick_reachable_goal(&p, &speed, &face, &fkind);
-                    }
-                } else {
-                    zero = 0.0f;
-                    set_goal_near(&f2d0, &zero);
-                }
-            }
+            float zero = 0.0f;
+            set_goal_near(&f2d0, &zero);
         }
         path_state |= 0x20;
         if (f2c < 0 && f10 != 1) {
