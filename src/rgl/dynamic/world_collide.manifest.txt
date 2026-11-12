@@ -18,3 +18,4 @@
 ../src/rgl/dynamic/world_collide.cpp  ??$_Uninit_copy@PAUContact@rgl@@PAU12@V?$allocator@UContact@rgl@@@std@@@std@@YAPAUContact@rgl@@PAU12@00AAV?$allocator@UContact@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00427880  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_collide.cpp  ??$_Uninitialized_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@@Z  00427ca0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_collide.cpp  ?on_shape@dynamic_entity@rgl@@UAE_NPAUshape_base@@@Z  00427900  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_collide.cpp  ?query_entities@world@rgl@@QAEXPAUentity@2@I_NPAV?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@Z  00426750  /O2 /MT /Gy /TP

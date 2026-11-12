@@ -125,3 +125,4 @@
 ../src/game/agent4/agent_logic.cpp  ?update_quiver@Agent@@QAEXXZ  0043a800  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?refresh_carried@Agent@@QAEXPAUMissile@@@Z  00452650  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?get_label_box@Agent@@QAEXPAX@Z  00453050  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?pick_random@Agent@@QAEIXZ  0043b5d0  /O2 /MT /Gy /TP
