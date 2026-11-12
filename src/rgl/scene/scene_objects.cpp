@@ -213,21 +213,28 @@ void FxElem::add_to_first(rgl::psys* o)
 // @ 0x420ec0
 void FxDef::clear_defs()
 {
-    for (int i = 0; count > i; i++) {
-        for (std::vector<rgl::mesh*>::iterator it = elems[i].psys.begin(); it != elems[i].psys.end(); ++it)
+    // Each iterator is declared first and assigned in the for header (no copy-initialisation temporary): with three
+    // or four of them written that way the frame-symbol count puts the symbol-key blocks where the original has
+    // them, which is what orders base and index in [i*0x1dc + elems + 0x1b8] of the second element loop.
+    for (int i = 0; i < count; i++) {
+        std::vector<rgl::mesh*>::iterator it;
+        for (it = elems[i].psys.begin(); it != elems[i].psys.end(); ++it)
             delete *it;
         elems[i].psys.resize(0, 0);
     }
-    for (std::vector<rgl::mesh*>::iterator it = psys.begin(); it < psys.end(); ++it)
-        delete *it;
+    std::vector<rgl::mesh*>::iterator pit;
+    for (pit = psys.begin(); pit < psys.end(); ++pit)
+        delete *pit;
     psys.resize(0, 0);
     for (int i = 0; i < count; i++) {
-        for (std::vector<rgl::lod_mesh2*>::iterator it = elems[i].groups.begin(); it < elems[i].groups.end(); ++it)
+        std::vector<rgl::lod_mesh2*>::iterator it;
+        for (it = elems[i].groups.begin(); it < elems[i].groups.end(); ++it)
             delete *it;
         elems[i].groups.resize(0, 0);
     }
-    for (std::vector<rgl::lod_mesh2*>::iterator it = groups.begin(); it < groups.end(); ++it)
-        delete *it;
+    std::vector<rgl::lod_mesh2*>::iterator git;
+    for (git = groups.begin(); git < groups.end(); ++git)
+        delete *git;
     groups.resize(0, 0);
 }
 
