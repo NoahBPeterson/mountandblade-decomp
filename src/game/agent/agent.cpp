@@ -407,9 +407,7 @@ void Agent::classify(int key)
         ItemKind* r = &g_items[slot_pair(key).item];
         unsigned t = r->type_flags & 0xff;
         if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11) {
-            unsigned m = (unsigned)r->flags & 0xff000;
-            int zero = 0;
-            if ((m == 0x30000 && !zero) || (m == 0x20000 && !zero))
+            if ((r->flags & 0xff000) == 0x30000 || (r->flags & 0xff000) == 0x20000)   // 64-bit compares (the high halves' xor/test)
                 f56c4 = 1;
             else
                 f56c4 = 0;
