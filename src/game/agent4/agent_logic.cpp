@@ -4351,8 +4351,8 @@ void Agent::update_ai()
             bool close99 = false;
             if (frand() + 1.5f > t80)
                 attack_delay() = 0.0f;
-            float one = 1.0f;
             t80 = (ta->pos.z - pos.z) * 0.7f + t80;
+            float one = 1.0f;
             float dd = fmax_ref(&t80, &one);
             if (cr->kind == 1 || (cr->kind == 2 && team_leader(this) != id)) {
                 close99 = true;
