@@ -572,18 +572,6 @@ void Skin::blend_all(lod_mesh* m, void* set, const float* w)
     }
 }
 
-// std::vector push_back with the fast path guarded exactly as the original does.
-template<class T> __forceinline void vpush_g(std::vector<T>& v, const T& x)
-{
-    if (v._Myfirst != 0 && v.size() < v.capacity()) {
-        T* p = v._Mylast;
-        *p = x;
-        v._Mylast = p + 1;
-    } else {
-        v.insert(v.end(), x);
-    }
-}
-
 // @ 0x47de60
 void Skin::use_carry(lod_mesh* l, const float* w)
 {
@@ -624,10 +612,10 @@ void Terrain::gen_set_init(particle_list* s)
     if (0 < s->count) {
         char* pr = (char*)s + 0x68;
         do {
-            std::vector<mesh*> list;
             ptype* ge = &g_ptypes[RV(int, -0x64)];
             RV(int, 0) = RV(int, 0) + ge->nframes * 100;
             RV(int, 0) = RV(int, 0) % ge->nframes;
+            std::vector<mesh*> list;
             GmRec* gr = &((GmRec*)ge->boxes)[RV(int, 0)];
             if (gr->n > 0)
                 list = gr->items;
@@ -659,7 +647,7 @@ void Terrain::gen_set_init(particle_list* s)
                 unsigned j = 0;
                 bool make = false;
                 do {
-                    if (grid[cell]._Myfirst == 0 || j >= (unsigned)grid[cell].size()) {
+                    if (j >= grid[cell].size()) {
                         make = true;
                         break;
                     }
@@ -667,31 +655,26 @@ void Terrain::gen_set_init(particle_list* s)
                         found = j;
                     j++;
                 } while (found == (unsigned)-1);
-                if (!make) {
-                    mesh* f = grid[cell][found];
-                    if (f->v50._Myfirst != 0 && 32000 < (unsigned)f->v50.size())
-                        make = true;
-                }
+                if (!make && grid[cell][found]->v50.size() > 32000)
+                    make = true;
                 if (make) {
                     mesh* nm = new mesh();
                     nm->res = src->res;
                     nm->mask = 0x1ffff;
                     nm->flags |= 0x10000000;
                     found = grid[cell].size();
-                    vpush_g(grid[cell], nm);
+                    grid[cell].push_back(nm);
                 }
                 if (RV(int, 0x38) < 4) {
-                    mesh* cur = grid[cell][found];
-                    ((mesh**)(pr + 8))[RV(int, 0x38)] = cur;
-                    ((int*)(pr + 0x18))[RV(int, 0x38)] = cur->v50._Myfirst ? (int)cur->v50.size() : 0;
+                    ((mesh**)(pr + 8))[RV(int, 0x38)] = grid[cell][found];
+                    ((int*)(pr + 0x18))[RV(int, 0x38)] = grid[cell][found]->v50.size();
                 }
-                mesh* cur2 = grid[cell][found];
                 if ((ge->flags & 0x20000) == 0)
-                    ((mesh*)cur2)->append_skinned(src, (const mat4*)&mat, -1, -1, 0);
+                    ((mesh*)grid[cell][found])->append_skinned(src, (const mat4*)&mat, -1, -1, 0);
                 else
-                    ((rgl::mesh*)cur2)->transform(src, &mat, -1);
+                    ((rgl::mesh*)grid[cell][found])->transform(src, &mat, -1);
                 if (RV(int, 0x38) < 4) {
-                    ((int*)(pr + 0x28))[RV(int, 0x38)] = cur2->v50._Myfirst ? (int)cur2->v50.size() : 0;
+                    ((int*)(pr + 0x28))[RV(int, 0x38)] = grid[cell][found]->v50.size();
                     RV(int, 0x38) = RV(int, 0x38) + 1;
                 }
             }
@@ -717,7 +700,7 @@ void Terrain::gen_set_init(particle_list* s)
                     TEntity* e = ents[cell];
                     mesh* mm = grid[cell][j];
                     std::vector<mesh*>& em = *(std::vector<mesh*>*)((char*)e + 0x118);
-                    vpush_g(em, mm);
+                    em.push_back(mm);
                     ((entity*)e)->recalc();
                 }
                 x++;
