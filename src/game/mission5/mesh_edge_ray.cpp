@@ -16,6 +16,11 @@
 
 #include "../key_names.h"
 
+// The dot products of two DIFFERENT vectors go through an inline helper, the squared lengths are written out: the
+// helper's expansions create the field symbols of u / w / rv in another order than plain expressions do, and the
+// symbol keys order the x87 operands (rv consumed in place in rv.u, s loaded first in u * s).
+static inline float dot3(const rgl::vector4& a, const rgl::vector4& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+
 // @ 0x52dcc0
 void Mesh_s2da20::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
                                float* a, float* b)
@@ -29,13 +34,13 @@ void Mesh_s2da20::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     rgl::vector4 w = v2 - v1;
     rgl::vector4 rv = p - v1;
 
-    float e1 = w.x * rv.x + w.y * rv.y + w.z * rv.z;       // v . r
-    float b1 = u.x * w.x + u.y * w.y + u.z * w.z;          // u . v
+    float e1 = dot3(w, rv);                                // v . r
+    float b1 = dot3(u, w);                                 // u . v
     float c1 = w.x * w.x + w.y * w.y + w.z * w.z;          // v . v
     float a1 = u.x * u.x + u.y * u.y + u.z * u.z;          // u . u
 
     float den = a1 * c1 - b1 * b1;
-    float s = (b1 * e1 - c1 * (u.x * rv.x + u.y * rv.y + u.z * rv.z)) / den;
+    float s = (b1 * e1 - c1 * dot3(u, rv)) / den;
     float t = (e1 + s * b1) / c1;                       // edge parameter from the UNCLAMPED ray parameter
 
     if (s < 0.0f)
