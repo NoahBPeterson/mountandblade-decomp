@@ -567,11 +567,8 @@ void Mission::rebuild_nav(int which, int)
 void Mission::post_spawn(MAgent* a)
 {
     EnvRow* row = &g_env_rows[cam];
-    float sz = row->v20[2] * 0.4f;
-    vector4 sc;
-    sc.x = row->base[0] + row->v20[0] * 0.4f;
-    sc.y = row->base[1] + row->v20[1] * 0.4f;
-    sc.z = row->base[2] + sz;
+    vector4 b(row->base[0], row->base[1], row->base[2]);
+    vector4 sc = b + *(const vector4*)row->v20 * 0.4f;
     vector4 pos;
     pos.x = 0.0f;
     pos.y = 0.0f;
@@ -581,26 +578,28 @@ void Mission::post_spawn(MAgent* a)
     if (g_options.i20 == 0)
         return;
     if ((g_game->levels[f5df4].flags & 1) == 0 && f6608 != 4) {
+        int k;
         if (fog_dense == 0) {
-            idx = g_emit_defs.used[4];
+            k = 4;
             pos.z = 0.4f;
         } else if (fog_dense == 1) {
-            idx = g_emit_defs.used[6];
+            k = 6;
         } else {
             goto layers;
         }
+        idx = g_emit_defs.used[k];
         if (idx >= 0) {
             owner = 0;
             rgl::psys* e = g_emit_defs.spawn(&idx, &pos, &owner);
             if (e) {
                 a->f250->add_emitter(e);
                 a->f1ac = (int)e;
-                e->curve[2].v *= sc.x;       // the r / g / b curves' end values (curve4 r 0x38, g 0x48, b 0x58: v0 at +4, v1 at +0xc)
-                e->curve[3].v *= sc.x;
-                e->curve[4].v *= sc.y;
-                e->curve[5].v *= sc.y;
-                e->curve[6].v *= sc.z;
-                e->curve[7].v *= sc.z;
+                e->curve[2].v = sc.x * e->curve[2].v;       // the r / g / b curves' end values (curve4 r 0x38, g 0x48, b 0x58: v0 at +4, v1 at +0xc)
+                e->curve[3].v = sc.x * e->curve[3].v;
+                e->curve[4].v = sc.y * e->curve[4].v;
+                e->curve[5].v = sc.y * e->curve[5].v;
+                e->curve[6].v = sc.z * e->curve[6].v;
+                e->curve[7].v = sc.z * e->curve[7].v;
             }
         }
     }
