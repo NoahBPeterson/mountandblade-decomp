@@ -183,8 +183,8 @@ vector4 FxAnim::table_value(int i)
     float frac;
     r.table->tbl.find(&f1c, &frac, &key);
     double s = 1.0f - frac;
-    const vector4* e = &r.table->tbl.v4()[f1c];
-    vector4 v = vadd((frac * e[1]), (s * e[0]));
+    const vector4* e = r.table->tbl.v4();
+    vector4 v = vadd((frac * e[f1c + 1]), (s * e[f1c]));
     return v;
 }
 
