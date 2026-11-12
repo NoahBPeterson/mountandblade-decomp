@@ -929,14 +929,16 @@ void rgl::world::nav_search(const float* p, const int* face, const int* max_dept
 // @ 0x439a50
 int rgl::world::nearest_face(const float* p)
 {
-    PolyMesh* m = nav;
+    // i is initialised first and m last: symbol keys follow first reference, and faces.first + i*0x64 is ordered by
+    // m's key against i's (faces first in the d <= 0 arm's lea)
+    unsigned i = 0;
     int best = -1;
     float near_score = 0.0f;
     bool have = false;
     float best_dz = 10000.0f;
+    PolyMesh* m = nav;
     if (m) {
-        unsigned i = 0;
-        while (i < m->faces.size()) {
+        for (i = 0; i < m->faces.size(); i++) {
             float d = m->dist((const int*)&i, p);
             if (d <= 0.0f) {
                 const MPoly* f = &m->faces[i];
@@ -962,7 +964,6 @@ int rgl::world::nearest_face(const float* p)
                     }
                 }
             }
-            i++;
         }
     }
     return best;
