@@ -1988,3 +1988,28 @@ Symbol keys and operand order (tool: `symkeys`)
   shifted one entry and swapped three operands without changing any instruction (FxDef::update 2b523d72).
 - Strength reduction anchors the induction pointer at the first store address that survives to that pass
   (Terrain::set_cells: exact only with a self-assignment, not landed).
+
+More shapes (second batch, same night)
+- An int followed by a pointer in a record is usually a `std::vector` header. Reading element 0 through `operator[]`
+  chains base, `_Myfirst`, element in one scratch register (eax, eax, ecx); a raw `T**` member rotates (eax, ecx, ecx).
+  The loop bound must be the real `size()` too, and each use must spell the view: a reference local to the vector
+  changes allocation (WItem::terrain_refresh f69948f8, FieldPanel 407c5287 1139e245, Mesh::remove_selected 57afdc36).
+- Name a twice-tested value or repeat the expression: `int v = e; if (v >= 0 && v < N)` is a coloured variable and
+  leaves the scratch cursor alone; `e` written twice is a CSE temporary that takes a scratch pick. A later pick one
+  register off with all earlier picks right points at this, either way round (Troop::add_attr 3d3afed9).
+- Hand-folded inline expansions lose scratch picks: an inline function with `const T&` parameters given constants
+  leaves folded temporaries that still rotate the cursor. Expand the real body with its real signature
+  (TerrainPage::read_fields 4921ec98).
+- Struct copy order shows where the copy lives: loads running two ahead of the stores (L0 L1 S0 L2 S1 L3 S2 S3) mean
+  the destination is independent of the source pointer: a by-value or `const&` parameter of an inline helper. Strict
+  L S L S is a plain local (rgl::mesh::set_alpha 776a10f4).
+- `a += b * s` through the inline vector operators gives the mixed fld/fmul orientation and shares the temporary's
+  slot with a dead local; per-component statements cannot (TerrainPage::path 4f8c411d).
+- A store of an address-taken pointer that sits earlier than ours before a call: the pushed object is a second local
+  bound by `const&`, mentioned between the other stores (mesh_pool::get_mesh 11033313).
+- A new address-taken local can be homed in a dead argument's slot: a store to an argument's home does not mean the
+  argument was assigned.
+- In the interpreter (`params` is address-taken): a named `int p = (int)params[k]` followed by a call to a callee with
+  no body in the unit becomes a split web (load to scratch, copy to callee-saved). With the body visible the reload
+  piece itself lives across the call. Callees the original evidently saw: c_str, vector<int>::size, clamped_team,
+  is_hero, count_troops; opaque there: Party::max_stacks, AgentTable::next_used (Operation::execute 555 -> 562).
