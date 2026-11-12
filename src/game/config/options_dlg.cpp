@@ -169,7 +169,7 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     }
     char* urlcopy = (char*)malloc(strlen(b.req) * 4);
     out->url = urlcopy;
-    { char* d = urlcopy; const char* s = b.req; while ((*d++ = *s++) != 0) ; }
+    { char* s = b.req; char* d = urlcopy; char c; do { c = *s++; *d++ = c; } while (c); }
     // header lines, one recv'd byte at a time
     byte_buf hdr;
     hdr.cap = 10;
