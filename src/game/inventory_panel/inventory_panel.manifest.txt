@@ -14,3 +14,4 @@
 ../src/game/inventory_panel/inventory_panel.cpp  ?commit@MapFlags@@QAEXPAD@Z  00513710  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?place_slot_mesh@PartyWindow@@QAEXPAUItemRef@@PAMHH@Z  00510fa0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?frame_update@PartyWindow@@UAEXM@Z  0050fe20  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?price@GameDataV@@QAEHPAUItemRef@@HDDD@Z  005129d0  /O2 /MT /Gy /TP

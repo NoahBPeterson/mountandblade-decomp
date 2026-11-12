@@ -1,1 +1,3 @@
 ../src/game/mission5/mesh_poly_ray.cpp  ?toggle_flag@Mesh_s2dfd0@@QAEXHH@Z  0052e510  /O2 /MT /Gy /TP
+../src/game/mission5/mesh_poly_ray.cpp  ?vertex_index@Mesh_s2e960@@QAEHHABUmatrix@rgl@@@Z  0052ebc0  /O2 /MT /Gy /TP
+../src/game/mission5/mesh_poly_ray.cpp  ?remove_selected@Mesh_s2dfd0@@QAEXXZ  0052e870  /O2 /MT /Gy /TP

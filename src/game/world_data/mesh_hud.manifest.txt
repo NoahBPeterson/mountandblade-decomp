@@ -10,3 +10,4 @@
 ../src/game/world_data/mesh_hud.cpp  ?animate@UiC@@UAEXH@Z  00497e30  /O2 /MT /Gy /TP
 ../src/game/world_data/mesh_hud.cpp  ?animate@UiE@@UAEXH@Z  004985f0  /O2 /MT /Gy /TP
 ../src/game/world_data/mesh_hud.cpp  ?animate@DropDown@@UAEXH@Z  00496d30  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?scroll_refresh@HudOuter@@QAEXPAUvector4@rgl@@@Z  00498420  /O2 /MT /Gy /TP
