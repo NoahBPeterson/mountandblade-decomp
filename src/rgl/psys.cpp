@@ -258,6 +258,10 @@ void psys::update(scene* sc)
         m.u = vb4;
         m.f = v->axis;
         vector4 t, t2;
+        // a dead mention of m.u.y: its float view gets a symbol key here, before the inliner makes the views of
+        // m.f.x / m.s.x, and the key order is what orders `m.f.x * m.u.y` and `m.s.x * m.u.y` (fld of the x factor first).
+        // Some reference to u.y sat here in the original; an unused `float uy = m.u.y;` gives the same bytes.
+        (void)m.u.y;
         t = cross_of(m.f, m.u);
         m.s = t;
         m.s.normalize();
