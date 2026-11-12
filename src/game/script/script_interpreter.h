@@ -598,8 +598,7 @@ struct SceneEntity {
     virtual int find_particle_system(int psys);                 // +0x6c (-1 = none)
     char pad4[0x304 - 4];
     EntityMeshes* meshes;               // +0x304
-    int pad308;
-    PSys** particle_systems;            // +0x30c
+    std::vector<PSys*> particle_systems;   // +0x308 (_Myfirst at +0x30c)
 };
 #include "../emit.h"                 // EmitTable, g_emit_defs (0x8ed5090): the particle-system table (terrain_b/mission.cpp)
 

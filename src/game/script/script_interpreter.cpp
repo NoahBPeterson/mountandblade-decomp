@@ -3515,9 +3515,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_troop((int)params[0])) {
             ItemRef* e = troop((int)params[0])->equipment;
             // count-down trip spelling: the original keeps the loop (an up-counter gets unrolled x10)
-            for (int k = 10; k; k--, e++)
+            int k = 10;
+            do {
                 if ((__int64)e->item == params[1])
                     result = 1;
+                e++;
+            } while (--k);
         }
         break;
     case op::troop_is_mounted:
@@ -7000,10 +7003,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         {
             int v = -1;
             int n = game()->num_quests;
-            for (int k = 0; k < n; ++k) {
-                QuestRec* q = &game()->quests[k];
-                if ((char)((q->flags >> 8) & 1) && (char)((q->flags2 >> 1) & 1) && q->giver_troop == g_dialogs.fc)
-                    v = k;
+            int k = 0;
+            if (k < n) {
+                do {
+                    QuestRec* q = &game()->quests[k];
+                    if ((char)((q->flags >> 8) & 1) && (char)((q->flags2 >> 1) & 1) && q->giver_troop == g_dialogs.fc)
+                        v = k;
+                } while (++k < n);
             }
             SET_LV((__int64)v);
         }
