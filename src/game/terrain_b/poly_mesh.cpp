@@ -109,15 +109,12 @@ void rgl::world::build_light_frame(matrix* m, vector4* amb)
         sample_lights(&p, &d, amb);
     }
     if (d.z > -0.1f) d.z = -0.1f;
-    vector4* u = &m->u;
-    vector4* f = &m->f;
-    vector4* s = &m->s;
-    *u = vector4(-d.x, -d.y, -d.z);
-    *f = vector4(0.0f, 0.0f, 1.0f);
-    *s = vector4(f->y * u->z - f->z * u->y, f->z * u->x - f->x * u->z, f->x * u->y - f->y * u->x);
-    s->normalize();
-    *f = vector4(u->y * s->z - u->z * s->y, u->z * s->x - u->x * s->z, u->x * s->y - u->y * s->x);
-    f->normalize();
+    m->u = vector4(-d.x, -d.y, -d.z);
+    m->f = vector4(0.0f, 0.0f, 1.0f);
+    m->s = cross_i(m->f, m->u);
+    m->s.normalize();
+    m->f = cross_i(m->u, m->s);
+    m->f.normalize();
 }
 
 // @ 0x470d80
