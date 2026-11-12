@@ -672,16 +672,24 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
 // @ 0x491b20
 int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     PartyMgr* mgr = &pm();
-    int a = 0, b = 0, c = 0, d = 0;
-    if (p2 < parties.n_parties) {
+    // the counts are zeroed on each side of the live test (a..d in order on the call path, a chained = on the other),
+    // and every party-count test after the first goes through mgr (this is then dead early and ebp is free)
+    int a, b, c, d;
+    bool ok = false;
+    if (p2 < mgr->n_parties) {
         int i = mgr->lookup(p2);
-        if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
-            count_units(p2, &a, &b, &c, &d);
-        }
+        if (i >= 0 && mgr->atu((unsigned)i)->type == 1)
+            ok = true;
+    }
+    if (ok) {
+        a = 0; b = 0; c = 0; d = 0;
+        count_units(p2, &a, &b, &c, &d);
+    } else {
+        a = b = c = d = 0;
     }
     float f1 = (float)(a - b);
     float f2 = 0.0f;
-    if (p1 < parties.n_parties) {
+    if (p1 < mgr->n_parties) {
         int i = mgr->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             int j = mgr->lookup(p1);
@@ -690,7 +698,7 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     }
     float f3 = 0.0f;
     if (p3 >= 0 && mgr->is_live(p3)) {
-        a = b = c = d = 0;
+        a = 0; b = 0; c = 0; d = 0;
         count_units(p3, &a, &b, &c, &d);
         f3 = (float)(a - b);
     }
@@ -705,18 +713,18 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     float fl = floor(prod);
     int r = (int)fl;
     if (!(prod - fl <= 0.5f)) r++;
-    if (p1 < parties.n_parties) {
+    if (p1 < mgr->n_parties) {
         int i = mgr->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             int j = mgr->lookup(p1);
-            r += mgr->atu((unsigned)j)->skill_level(0xf) / 2;
+            r += mgr->at(j)->skill_level(0xf) / 2;
         }
     }
-    if (p2 < parties.n_parties) {
+    if (p2 < mgr->n_parties) {
         int i = mgr->lookup(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             int j = mgr->lookup(p2);  // the original looks the party up again here (2nd call 0x48ad00)
-            r -= mgr->atu((unsigned)j)->skill_level(0xf) / 2;
+            r -= mgr->at(j)->skill_level(0xf) / 2;
         }
     }
     if (r < -0x14) return -0x14;
