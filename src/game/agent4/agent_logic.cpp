@@ -3830,11 +3830,7 @@ int Agent::top_up_ammo(int count)
                     float rate = damage_factor(0);
                     int anim_id = snd_b;
                     if (anim_id >= -1 && anim_id < defs->count && this->anim[1].set(anim_id, 0x11400020)) {
-                        if (rate < 0.1f)
-                            rate = 0.1f;
-                        else if (rate >= 10.0f)
-                            rate = 10.0f;
-                        this->anim[1].rate = rate;
+                        this->anim[1].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
                         if (slots[0] >= 0 && pairs[slots[0]].item >= 0)
                             links[slots[0]]->vis = 0;
                     }
