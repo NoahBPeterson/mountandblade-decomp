@@ -169,7 +169,7 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     }
     char* urlcopy = (char*)malloc(strlen(b.req) * 4);
     out->url = urlcopy;
-    strcpy(urlcopy, b.req);
+    { char* d = urlcopy; const char* s = b.req; while ((*d++ = *s++) != 0) ; }
     // header lines, one recv'd byte at a time
     byte_buf hdr;
     hdr.cap = 10;
@@ -199,24 +199,24 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
         }
         *hdr.pos++ = c;
     } while (!flag);
-    *hdr.pos = '\0';
     out->headers = hdr.data;
+    *hdr.pos = '\0';
     // body, in 0x1ff-byte chunks
-    hdr.cap = 10;
-    hdr.data = (char*)malloc(10);
-    hdr.pos = hdr.data;
-    for (;;) {
-        int n = recv(sock, b.buf, 0x1ff, 0);
+    byte_buf bd;
+    bd.cap = 10;
+    bd.data = (char*)malloc(10);
+    bd.pos = bd.data;
+    int n;
+    do {
+        n = recv(sock, b.buf, 0x1ff, 0);
         if (n < 0)
             break;
         b.buf[n] = '\0';
-        bytes_append(&hdr, b.buf, n);
-        if (n <= 0)
-            break;
-    }
-    *hdr.pos = '\0';
-    out->body = hdr.data;
-    out->body_len = hdr.pos - hdr.data;
+        bytes_append(&bd, b.buf, n);
+    } while (n > 0);
+    *bd.pos = '\0';
+    out->body = bd.data;
+    out->body_len = bd.pos - bd.data;
     closesocket(sock);
     return 0;
 }
