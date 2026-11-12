@@ -352,12 +352,10 @@ void PlacedObj::reset()
 // @ 0x4353a0
 Blow* Blow::init()
 {
-    vector4 v(0.0f, 0.0f, 0.0f);
-    pos = v;
-    v.x = 1.0f;
-    dir.x = v.x; dir.y = v.y; dir.z = v.z; dir.w = v.w;
-    dir2.x = v.x; dir2.y = v.y; dir2.z = v.z; dir2.w = v.w;
     flags = 0;
+    pos = vector4(0.0f, 0.0f, 0.0f);
+    dir = vector4(1.0f, 0.0f, 0.0f);
+    dir2 = dir;
     attacker = -1;
     bone = 0;
     dmg_in = 0;
