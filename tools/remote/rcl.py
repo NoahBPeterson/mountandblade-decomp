@@ -237,7 +237,9 @@ def main(argv):
             raise ConnectionError("server failed authentication")
         send(sock, {"op": "reserve"})
         ok = recv(sock)["ok"]
-    except (OSError, ConnectionError, ValueError, KeyError):
+    except (OSError, ConnectionError, ValueError, KeyError) as e:
+        if os.environ.get("MB_RC_DEBUG"):
+            sys.stderr.write("rcl: busy (connect/reserve): %r\n" % (e,))
         if traced:
             return BUSY
         try:
@@ -248,6 +250,8 @@ def main(argv):
             pass
         return BUSY
     if not ok:
+        if os.environ.get("MB_RC_DEBUG"):
+            sys.stderr.write("rcl: busy (no free slot)\n")
         return BUSY
     try:
         try:
@@ -269,7 +273,9 @@ def main(argv):
         got = {}
         for k in res["outs"]:
             got[k] = recv_blob(sock)
-    except (OSError, ConnectionError, ValueError, KeyError):
+    except (OSError, ConnectionError, ValueError, KeyError) as e:
+        if os.environ.get("MB_RC_DEBUG"):
+            sys.stderr.write("rcl: busy (during compile): %r\n" % (e,))
         return BUSY
     finally:
         sock.close()

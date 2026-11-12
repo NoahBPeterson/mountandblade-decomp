@@ -243,8 +243,9 @@ def main():
         def handle(self):
             try:
                 srv.handle(self.request)
-            except (OSError, ConnectionError, ValueError, KeyError):
-                pass
+            except (OSError, ConnectionError, ValueError, KeyError) as e:
+                sys.stderr.write("%s handler: %r\n" % (time.strftime("%H:%M:%S"), e))
+                sys.stderr.flush()
 
     class T(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
