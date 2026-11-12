@@ -212,13 +212,10 @@ void ContainerBase::move_a(const float* p)
 void ContainerBase::on_child_moved(MissionUi* p)
 {
     char* e = (char*)p;
-    float n[2];
-    float* tp = (float*)((char*)this + 0xe0);
-    float* ep = (float*)(e + 0xe8);
-    n[0] = tp[0] + ep[0];
-    *(int*)(e + 0xe0) = *(int*)&n[0];
-    n[1] = tp[1] + ep[1];
-    *(int*)(e + 0xe4) = *(int*)&n[1];
+    Vec2* tp = (Vec2*)((char*)this + 0xe0);
+    Vec2* ep = (Vec2*)(e + 0xe8);
+    *(Vec2*)(e + 0xe0) = Vec2(tp->x + ep->x, tp->y + ep->y);    // both sums into a temporary, then one struct copy (the
+                                                                // first store then schedules after the second add)
     p->on_moved();
     if (f104 & 0x100) {
         float v;
