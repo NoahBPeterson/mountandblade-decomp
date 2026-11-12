@@ -620,15 +620,16 @@ void CampaignScreen::frame_update(float dt)
                        g_strtable.lookup("ui_midnight"));
 
     int hi = (int)t;
+    GameData* ge = g_game;
     g_script.result_string.assign("");
-    g_game->emit_event(0xf, hi / 24, hi);
+    ge->emit_event(0xf, hi / 24, hi);
     {
         tstring tmp(g_script.result_string);
         PSO(f60)->set_text(sz, &tmp);
     }
 
     flag = 1;
-    if (GD_F(0x13ad0) > 0.0f)
+    if (!(GD_F(0x13ad0) <= 0.0f))
         flag = 0;
     if (GD_C(0x18) == 0 && g_game_keys.clicked(0x24))
         quick_save_msg();
@@ -753,18 +754,19 @@ void CampaignScreen::frame_update(float dt)
     GD_I(0x13af8) = 0;
     ((TimerList*)((char*)g_game + 0x139f4))->update(-6);
     g_game->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
-    if (!(GD_I(0x13aec) > 0)) {
-        g_mission_ctx.frame(-1);
-        g_mission_ctx.f2c8_word = 1;
-        Party* party = PARTIES->get(GD_I(0x78));
-        g_map_flags.f8 = -1;
-        g_map_flags.f4 = party->f88;
-    } else {
+    int id;
+    if (GD_I(0x13aec) > 0) {
         g_mission_ctx.frame(GD_I(0x13aec));
-        Party* party = PARTIES->get(GD_I(0x78));
-        g_map_flags.f8 = GD_I(0x13aec);
-        g_map_flags.f4 = party->f88;
+        int n = GD_I(0x13aec);
+        id = PARTIES->get(GD_I(0x78))->f88;
+        g_map_flags.f8 = n;
+    } else {
+        g_mission_ctx.frame(-1);
+        g_mission_ctx.f2c8 = 1;
+        id = PARTIES->get(GD_I(0x78))->f88;
+        g_map_flags.f8 = -1;
     }
+    g_map_flags.f4 = id;
     g_map_flags.f0 = 1;
     g_map_flags.f1 = 0;
     g_map_flags.f2 = 0;
