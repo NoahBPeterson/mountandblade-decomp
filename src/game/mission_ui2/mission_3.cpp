@@ -563,17 +563,15 @@ int ArrHolder::lookup(int index, int arg)
 }
 
 // @ 0x48d650
-// Not reproducible byte-exactly with cl 13.10 /O2 (see the note in mission_3.nonmatching.txt): the body is
-// identical except that the compiler puts `_Mylast - _Myfirst` in ecx (dead `this`) where the original uses
-// eax. Every source form of the same conditions (/O2) picks ecx; /O1 and /O2 /Os pick eax but emit the
-// size-optimised shared epilogue (a `jmp` past the failure block) instead of the original's duplicated tails.
+// The bound is the real vector's size(): its `_Myfirst == 0 ? 0 : ...` zero arm is folded away after the scratch
+// registers are picked, and that vanished pick is what leaves `_Mylast - _Myfirst` in eax and not in the dead `this`.
 __int64 SlotArray::get(const int& slot)
 {
-    I64Vec* v = (I64Vec*)this;
-    unsigned i = slot;
-    if ((int)i < 0 || !v->_Myfirst || i >= (unsigned)(v->_Mylast - v->_Myfirst))
+    std::vector<__int64>* v = (std::vector<__int64>*)this;
+    int i = slot;
+    if (i < 0 || (unsigned)i >= v->size())
         return 0;
-    return v->_Myfirst[i];
+    return (*v)[i];
 }
 
 // @ 0x48d690
