@@ -675,7 +675,7 @@ void __cdecl rotate_scale_xy(vector4* out, const vector4* in, const float* angle
     float ty = t.x * s + t.y * c;
     t.y = ty; t.x = tx;
     t.normalize();
-    float len = (float)sqrt(scale->x * scale->x + scale->y * scale->y);
+    double len = sqrt(scale->x * scale->x + scale->y * scale->y);
     t.x = t.x * len; t.y = t.y * len; t.z = scale->z;
     *out = t;
 }
