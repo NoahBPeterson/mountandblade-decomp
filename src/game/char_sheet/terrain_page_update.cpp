@@ -159,11 +159,14 @@ void TerrainPage::copy_clipboard()
     tstring s;
     hexbox->put(&s);
     if (OpenClipboard(0)) {
+        // p is initialised before the first read of s.len: symbol keys follow first reference, and the terminator
+        // store's base/index order is p's key against s.len's
+        char* p = 0;
         // GMEM_MOVEABLE | GMEM_DDESHARE (0x2002); a failure just leaves the clipboard closed again
         HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, s.len + 1);
         if (h) {
             EmptyClipboard();
-            char* p = (char*)GlobalLock(h);
+            p = (char*)GlobalLock(h);
             memcpy(p, s.c_str(), s.len);
             s.len[p] = '\0';
             GlobalUnlock(h);
