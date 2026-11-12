@@ -172,6 +172,11 @@ void rgl::mesh::set_part(const rgl::matrix& mtx)
 
 
 // ==== 0x495f00: set the alpha of every vertex record ===========================================================
+// The colour with its alpha lane replaced, packed again. An inline helper taking the colour by value: the copy of
+// unpack_color's result into the parameter is then independent of the loads through the returned pointer (the
+// original loads two lanes ahead of the stores; a plain local `v = unpack_color(..)` orders them load/store strictly).
+static __forceinline unsigned pack_with_alpha(rgl::vector4 c, float a) { c.w = a; return rgl::pack_color(&c); }
+
 // Each vertex record keeps its packed colour at +0x54; that colour is unpacked into floats, the alpha lane is replaced
 // by `a`, and it is packed back.
 // @ 0x495f00
@@ -181,10 +186,7 @@ void rgl::mesh::set_alpha(float a)
     for (unsigned i = 0; i < v50.size(); i++) {
         unsigned packed = v50[i].color;
         rgl::vertex60* p = &v50[i];
-        rgl::vector4 v;
-        v = rgl::unpack_color(&packed);
-        v.w = a;
-        p->color = rgl::pack_color(&v);
+        p->color = pack_with_alpha(rgl::unpack_color(&packed), a);
     }
 }
 
