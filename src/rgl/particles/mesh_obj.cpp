@@ -279,6 +279,7 @@ void mesh::build_skin()
     }
 }
 
+// ---- the scene queue -------------------------------------------------------------------------------------------------
 // @ 0x412040
 void render_batch::register_scene(scene* e)
 {
