@@ -7679,6 +7679,14 @@ void MissionLog::log_message(const tstring* s, float seconds)
     g_gui.add(*s, -261);
 }
 
+// rgl::matrix::transform_point (0x408460, src/rgl/shapes/shapes.cpp) with its body visible from here on (inline noinline
+// duplicate): its hidden return temporary does not escape, so get_label_box's third result shares p2's dead slot (frame 0x20)
+inline __declspec(noinline) vector4 rgl::matrix::transform_point(const vector4& p) const
+{
+    return vector4(s.x * p.x + f.x * p.y + u.x * p.z + o.x,
+                   s.y * p.x + f.y * p.y + u.y * p.z + o.y,
+                   s.z * p.x + f.z * p.y + u.z * p.z + o.z);
+}
 // box above the agent's head (two corner vectors and a scale), for its label
 struct LabelBox {
     char pad0[0x20];
@@ -7710,15 +7718,14 @@ void Agent::get_label_box(void* out_)
         out->scale = f80 * 0.33f;
     } else {
         g_gui.add(tstring("WARNING:CHECK INVALID ENTITY"), -1);
-        float z;
+        // one vector built in each arm: cl hoists the common x / y / pos.z part above the f2c test (the original's order)
+        vector4 c;
         if (f2c == -1)
-            z = pos.z + 0.8f;
+            c = vector4(pos.x, pos.y, pos.z + 0.8f);
         else
-            z = pos.z + 1.5f;
-        vector4 lo(pos.x, pos.y, z - 0.5f);
-        out->a = lo;
-        vector4 hi(pos.x, pos.y, z + 0.5f);
-        out->b = hi;
+            c = vector4(pos.x, pos.y, pos.z + 1.5f);
+        out->a = vector4(c.x, c.y, c.z - 0.5f);
+        out->b = vector4(c.x, c.y, c.z + 0.5f);
         out->scale = 0.4f;
     }
 }
