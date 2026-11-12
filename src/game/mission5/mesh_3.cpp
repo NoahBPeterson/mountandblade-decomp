@@ -36,6 +36,8 @@
 #define g_scene_s2cf60 (*(Scene_s2cf60**)&(*(void**)((char*)&g_mission + 0x0)))
 #undef g_editor_dialog_s2cf60
 #define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)&g_app_obj)
+// the 2x2 identity as the original expands it here (the body of identity_2x2 0x4f3be0: two row temporaries, copied)
+static inline void rot2_identity(rot2* m) { rot2_row t(1.0f, 0.0f), u(0.0f, 1.0f); m->r[0] = t; m->r[1] = u; }
 // @ 0x52cf60
 void MapEditor_s2cf60::update()
 {
@@ -54,12 +56,13 @@ void MapEditor_s2cf60::update()
         dir.y = to.y - from.y;
         dir.z = to.z - from.z;
         dir.normalize();
-        if (g_scene_s2cf60->mesh_s2cf60.mode == 0)
-            picked = (int)g_scene_s2cf60->mesh_s2cf60.pick_vert(from, dir);
-        else if (g_scene_s2cf60->mesh_s2cf60.mode == 1)
-            picked = (int)g_scene_s2cf60->mesh_s2cf60.pick_edge(from, dir);
+        gui_manager_s2cf60& ms = g_scene_s2cf60->mesh_s2cf60;   // one this pointer for the three arms
+        if (ms.mode == 0)
+            picked = (int)ms.pick_vert(from, dir);
+        else if (ms.mode == 1)
+            picked = (int)ms.pick_edge(from, dir);
         else
-            picked = (int)g_scene_s2cf60->mesh_s2cf60.pick_poly(from, dir);
+            picked = (int)ms.pick_poly(from, dir);
         if ((*(int*)((char*)&g_keyboard + 0x80)) == 0 && (*(int*)((char*)&g_keyboard + 0x280)) == 0) {
             g_scene_s2cf60->mesh_s2cf60.select_mode(g_scene_s2cf60->mesh_s2cf60.mode, 0);
             g_scene_s2cf60->mesh_s2cf60.need_redraw[g_scene_s2cf60->mesh_s2cf60.mode] = 1;
@@ -72,7 +75,7 @@ void MapEditor_s2cf60::update()
 
     dt = 0.6f;
     if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0)
-        dt = 0.06f;
+        dt *= 0.1f;                        // folded to 0x3d75c290 (0.06f is 0x3d75c28f)
 
     // --- mode switch keys ----------------------------------------------------------------------
     if (g_keyboard.down[2] != 0 && g_keyboard.prev[2] == 0) {
@@ -103,20 +106,18 @@ void MapEditor_s2cf60::update()
     // --- free drag: rotate the two 2x2 basis blocks by the editor's angle, then move the terrain
     //     along the rotated step ------------------------------------------------------------------
     if (g_keyboard.down[34] != 0) {
-        rot2 keep  = {{rot2_row(1.0f, 0.0f), rot2_row(0.0f, 1.0f)}};   // the original initialises a second identity block
-        rot2 basis = {{rot2_row(1.0f, 0.0f), rot2_row(0.0f, 1.0f)}};
+        rot2 basis;
+        rot2_identity(&basis);
         basis.rotate_2x2(this->angle);
         float a = ((*(float*)((char*)&g_keyboard + 0x80c)) * dt) * 0.01;
         float b = ((*(float*)((char*)&g_keyboard + 0x810)) * dt) * 0.01;
-        vector4 pos;
-        pos.x = basis.r[0].x * a - basis.r[1].x * b;
-        pos.y = basis.r[0].y * a - basis.r[1].y * b;
-        pos.z = 0.0f;
-        g_game_s2cf60->dirty = 1;
+        rot2_row d = basis.r[0] * a - basis.r[1] * b;   // through the row operators; the original keeps a in memory and b on the x87 stack (not reproduced)
+        vector4 pos(d.x, d.y, 0.0f);
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
+        g_game_s2cf60->dirty = 1;
     }
 
     // --- lift / lower (only while no modifier is held) ------------------------------------------
@@ -129,10 +130,10 @@ void MapEditor_s2cf60::update()
         else
             pos.z = 0.0f;
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);
-        g_game_s2cf60->dirty = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
+        g_game_s2cf60->dirty = 1;
     }
 
     // --- the three per-mode rotate keys (blocked while a modifier is held) -----------------------
