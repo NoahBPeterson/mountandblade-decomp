@@ -85,6 +85,11 @@ void PartyScreen::init_screen()
     skills_list = 0;
     char_quad = 0;
     name_lbl = 0;
+    // The original's dead `mov [esp+0x10],ebx` before g_gui.reset() (0x502cd0) is the entry init of a c1xx
+    // conditional-destruction flag: a class temporary in the arm of a &&/||/?: that c2 later proves unreachable
+    // (here: name_lbl was just zeroed). c2 drops the arm and every flag test but keeps the flag's `$T = 0` store, and the
+    // flag, never read, shares slot 0x10. Which statement it was is not recoverable from the bytes; this one is a stand-in.
+    if (name_lbl != 0 && tstring("x").c_str()) {}
 
     {
         tstring k("party_bo_member1_h");

@@ -4,3 +4,4 @@
 ../src/game/inventory_panel/party_screen.cpp  ?weekly_cost@GameDataV@@QAEHXZ  00504e20  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/party_screen.cpp  ?fill_member@PartyScreen@@QAEXHHPAUParty@@H@Z  00504ba0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/party_screen.cpp  ?read@PartyScreen@@QAEXH@Z  00503810  /O2 /MT /Gy /TP
+../src/game/inventory_panel/party_screen.cpp  ?init_screen@PartyScreen@@UAEXXZ  00502cc0  /O2 /MT /Gy /TP

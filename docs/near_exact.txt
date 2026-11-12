@@ -7,5 +7,4 @@
 00507400    95         CharSheet::init_screen: join register after new text_box (eax vs esi) and the hoisted i=0 store it forces
 0050fe20    1          PartyWindow::frame_update: SIB order [eax+edi] vs [edi+eax], keyed by the CSE temp for food*0x238
 0051abd0    20 insns   MapPanel::update: g_game/manager register swaps at 3 sites (follow the number of g_game reads)
-004f8c80    16         MissionBlocker::update_camera: one load scheduled before the fild in the first CAMSLOT blend (every source form that moves it reorders fdiv/fmul); equiv 173/173 bit-identical
 00433e40    2 aligned  ItemKind::get_carry_pos: one pop edi scheduled one slot earlier in the shared weight-offset tail (t-vector spellings, ref vs ptr, operand order, -= and const tried)

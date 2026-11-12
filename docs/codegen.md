@@ -541,6 +541,18 @@ variants ranked by a trace number). What it has shown on this binary:
   With `>= 0x81` (no shared constant) every variable has the original's register.
   Naming the constant (a local, `static const`, `sizeof`, an inline helper) does not
   separate the two: 108 variants, all 47.
+- **When a constant is a candidate** (`../vs2005-cpp/docs/c2/immcand.md`, measured on
+  this compiler): it has two or more qualifying uses anywhere in the function, or one
+  inside a loop. Qualifying: immediate stores, `push K`, compares and masks with K,
+  addresses of globals and strings; not multiplies, shifts or `lea` displacements.
+  Identity is the 32-bit value alone (`int 7` and `char 7` are one candidate), and on
+  13.10 a float store counts too (`1.0f` is 0x3f800000, `0.0f` shares with 0). A
+  constant used in a loop and after it is loaded in the loop's guard block, which is
+  why a guard block can reference many constants. No effect: named constants, 0
+  against NULL, declaration position, a second identical string literal, statement
+  order after the loop. The one code-neutral lever: storing a narrow value through
+  the other signedness (`*(unsigned char*)&x = 255` for a `char` -1) stops it sharing
+  a candidate.
 - **`if (p) { delete[] p; p = 0; }` is not `delete[] p; p = 0;`** even when the final
   code is the same. The original has the reset store inside the null test (the `je`
   jumps past it), which is the guarded form (a SAFE_DELETE-style macro). Written
@@ -1572,6 +1584,15 @@ computation, one branch or one frame slot away, look here first.
   stopped folding once the access went through an inline `ring_add(Ring* r, ...)` indexing from the ring's own pointer
   (0x4334b0). `if (n == 0) mb_error(...); int idx = rand_below(n);` with an inline `rand_below` gave the two separate
   zero blocks (0x514360).
+- **A dead zero store at function entry that nothing reads is a conditional temporary's flag.** When a class temporary
+  is built in one arm of `&&`, `||` or `?:`, c1xx adds a flag (`$T`) recording whether it was constructed and zeroes it
+  at entry. If c2 later proves the arm unreachable it removes the arm and every test of the flag but keeps the entry
+  store; the flag, never read, shares a slot with later locals. No user variable reproduces it: a zero-initialised
+  local either loses the store or takes a private slot. `PartyScreen::init_screen` 0x502cc0 (`xor ebx,ebx;
+  mov [esp+0x10],ebx` before `g_gui.reset()`) matches with such a statement; `Recf0::init_screen` 0x4e05c0 shows the
+  same store for its `tstring("16 bits")` under `&&`. The condition must be one only c2 can fold (a member just
+  stored, an inline returning a constant); one c1xx folds itself (`0 && ...`) leaves no flag. Which statement the
+  original had is not recoverable from the bytes, so ours is a labelled stand-in.
 - **A reused named local was really an argument temporary.** One frame slot holding different values, with stores
   delayed until after the pushes, means `f(T(...))` through a const reference, including a literal to `const int&`
   (0x4995e0, 0x4996e0).
