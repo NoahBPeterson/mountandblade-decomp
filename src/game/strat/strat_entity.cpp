@@ -333,19 +333,15 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
     }
     {
         vec2 off[3];
-        switch (nt) {
-        case 1:
+        if (nt == 1) {
             off[0] = vec2c(0.0f, 0.0f);
-            break;
-        case 2:
+        } else if (nt == 2) {
             off[0] = vec2c(-0.004296875f, 0.0046875f);
             off[1] = vec2c(0.00390625f, -0.004296875f);
-            break;
-        default:
+        } else {
             off[0] = vec2c(0.00078125f, 0.00546875f);
             off[1] = vec2c(-0.005078125f, -0.00546875f);
             off[2] = vec2c(0.00546875f, -0.005078125f);
-            break;
         }
         for (i = 0; i < nids; i++) {
             NavCell* face = &owner->ground->cells[ids[i]];
@@ -354,18 +350,15 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
                 float k = shadow_radius * 0.03f;
                 vector4 p = owner->ground->verts[face->ids[j]].p;
                 const vector4* n = &owner->ground->verts[face->ids[j]].n;
-                p.x = k * n->x + p.x;
-                p.y = p.y + k * n->y;
-                p.z = p.z + k * n->z;
+                p += k * *n;
                 int pi = ((rgl::mesh*)*slot)->add_point(&p);
                 pt[j] = pi;
                 // 0x42b363: the offsets from the frame origin stay unrounded in x87 registers
-                double rx = p.x - fr.o.x;
-                double ry = p.y - fr.o.y;
-                double rz = p.z - fr.o.z;
-                float ur = (float)(fr.s.x * rx + (fr.s.y * ry + fr.s.z * rz));
-                float vr = (float)(fr.f.y * ry + (fr.f.x * rx + fr.f.z * rz));
-                float ik = 1.0f / shadow_radius * 0.5f;
+                vector4 r = p - fr.o;
+                float ur = fr.s.z * r.z + fr.s.y * r.y + fr.s.x * r.x;
+                float vr = fr.f.z * r.z + fr.f.x * r.x + fr.f.y * r.y;
+                float inv = 1.0f / shadow_radius;
+                float ik = inv * 0.5f;
                 float u = ur * ik;
                 float v = vr * ik;
                 if (!flag) {
@@ -384,10 +377,8 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
                     c = (3.0f - (float)sqrt(9.0f - (c - 0.01f) * 12.0f)) * 0.125f;
                 }
                 // 0x42b4bd: the original adds the squares as (z + x) + y (x87 stack order), not (z + y) + x
-                float ex = p.x - local.o.x;
-                float ey = p.y - local.o.y;
-                float ez = p.z - local.o.z;
-                float a = (float)sqrt((ex * ex + ez * ez) + ey * ey) / shadow_radius * 1.3333334f - 3.8f;
+                vector4 e = p - local.o;
+                float a = (float)sqrt((e.x * e.x + e.z * e.z) + e.y * e.y) * inv * 1.3333334f - 3.8f;
                 if (a < 0.2f) a = 0.2f;
                 else if (a >= 1.0f) a = 1.0f;
                 float t = c * (1.0f - a) * f294;
