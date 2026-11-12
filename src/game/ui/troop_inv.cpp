@@ -330,6 +330,9 @@ void PlacedObj::read(stream_base* s, int version)
 #define VEC(o) (*(rgl::vector4*)((char*)this + (o)))
 #define T64(o) (*(__int64*)((char*)this + (o)))
 
+// Timer16's restamp, as an inline helper (the original reaches each timer through its own pointer: the clock loads stay
+// behind the vector stores). Belongs on Timer16 (src/game/view_state.h) as `void restamp()`.
+static inline void restamp16(Timer16& t) { *(__int64*)&t.start = g_ticks[t.clock]; }
 // @ 0x463370
 void ViewBody::init()
 {
@@ -346,13 +349,12 @@ void ViewBody::init()
     FL(0x68) = 0.1f;
     FL(0x30) = 1.0f;
     W(0x24) = -1;
-    T64(0x60) = g_ticks[W(0x58)];
-    T64(0xb0) = g_ticks[W(0xa8)];
-    T64(0xa0) = g_ticks[W(0x98)];
-    T64(0x5120) = g_ticks[W(0x5118)];
-    T64(0x5130) = g_ticks[W(0x5128)];
+    restamp16(t58);
+    restamp16(ta8);
+    restamp16(t98);
+    restamp16(t5118);
+    restamp16(t5128);
     FL(0xb8) = 0.1f;
-    VEC(4) = rgl::vector4(-3.0f, 0.0f, 0.0f);
     W(0x6c) = 0;
     W(0x88) = 0;
     W(0x70) = 0;
@@ -362,18 +364,19 @@ void ViewBody::init()
     W(0xbc) = 0;
     W(0x50e0) = 0;
     W(0x50e4) = 0;
+    VEC(4) = rgl::vector4(-3.0f, 0.0f, 0.0f);
     VEC(0x14) = rgl::vector4(0.0f, 0.0f, 0.0f);
     VEC(0x50f8) = rgl::vector4(0.0f, 0.0f, 0.0f);
     W(0xc0) = -1;
     W(0xc4) = -1;
     W(0xc8) = -1;
-    VEC(0x5154) = rgl::vector4(0.0f, 1.0f, 0.0f);
     W(0x5108) = 0;
     W(0x510c) = 0;
     W(0x5138) = 0;
     W(0x513c) = 0;
     W(0x5140) = 0;
     W(0x5144) = 0;
+    VEC(0x5154) = rgl::vector4(0.0f, 1.0f, 0.0f);
     W(0x514c) = 0;
     W(0x517c) = 0;
     W(0x5164) = 0;
@@ -384,11 +387,10 @@ void ViewBody::init()
     *(rgl::matrix*)((char*)this + 0x531c) = *rgl::identity_pos(&tmp);
     W(0x5360) = 0;
     W(0x5364) = 0;
+    *(Vec2*)((char*)this + 0x5110) = Vec2(0.0f, 0.0f);
     W(0x2c) = 0;
     W(0x5148) = 0;
     W(0x5314) = 0;
-    W(0x5110) = 0;
-    W(0x5114) = 0;
     W(0x5368) = -1;
     FL(0x5370) = 15.0f;
 }
