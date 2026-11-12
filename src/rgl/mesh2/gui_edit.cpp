@@ -884,30 +884,12 @@ SoundMgr::~SoundMgr()
 }
 SoundMgr g_sound_mgr;                                       // 0x5aa128 (.bss; the compiler registers ~SoundMgr with atexit)
 
-// The head mesh as place() reads it: the points (+0x70) and each key frame's vertices are real std::vectors (size()
-// tests _Myfirst for null, operator[] is _Myfirst + i, as the original's loops).
-struct MorphFrame {             // 0x20: a morph key frame
-    std::vector<vector4> v;     // +0 vertices
-    std::vector<vector4> n;     // +0x10 normals
-};
-struct MorphTrack {             // rgl::keyframes (12 bytes)
-    MorphFrame* frames;
-    int* times;
-    int count;
-};
-struct MorphMesh {
-    char pad0[0x70];
-    std::vector<PPoint> pts;    // +0x70 (rest, current)
-    char pad80[0xa4 - 0x80];
-    MorphTrack kf;              // +0xa4
-};
-
 // @ 0x4c6b30
 // Morph-target pose: clears the target's per-point offsets, finds the key frame nearest to the record's key time and
 // stores (frame vertex - rest vertex) for every point.
 void Skin::place(int e)
 {
-    MorphMesh* m = *(MorphMesh**)((POwner*)head)->mesh;
+    PMesh* m = *((POwner*)head)->mesh;
     for (unsigned i = 0; i < m->pts.size(); i++) {
         vector4 z(0.0f, 0.0f, 0.0f);
         ((vector4*)face_keys[e].delta)[i] = z;
@@ -1300,7 +1282,8 @@ void MapEditorDialog::update_object_type()
     if (!list_type) {
         for (int i = 0; i < g_propkind_count; i++) {
             // the substring is a temporary of the add-string call (destroyed once, right after it: 0x4c7caa)
-            int item = SendMessageA(list, 0x180, 0, (LPARAM)((Rec78*)g_propkinds)[i].name.substr(4, ((Rec78*)g_propkinds)[i].name.len).c_str());
+            int n = ((Rec78*)g_propkinds)[i].name.len;
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)((Rec78*)g_propkinds)[i].name.substr(4, n).c_str());
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 2) {
