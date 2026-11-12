@@ -7437,36 +7437,39 @@ void Agent::refresh_carried(Missile* other)
             m->scale(0.87f);
         mat4 M;
         M = body->m * *(mat4*)body->skel->rec(0xc);
-        rgl::mat4 fr;
-        fr.f = other->p40;
-        fr.u.x = 0.0f; fr.u.y = 0.0f; fr.u.z = 1.0f;
-        fr.o = other->p20;
-        fr.orthonormalize();
-        rgl::mat4 rel = M.relative(fr);
-        vector4 d;
-        d.x = rel.o.x;
-        d.z = 0.0f;
-        d.y = rel.o.y - 0.23f;
-        float n = d.normalize();
-        if (n < 0.0f)
-            n = 0.0f;
-        else if (n > 0.19f)
-            n = 0.19f;
-        d.x = d.x * n;
-        rel.o.x = d.x;
-        rel.o.w = d.w;
-        d.y = d.y * n + 0.23f;
-        rel.o.y = d.y;
-        d.z = d.z * n;
-        rel.o.z = d.z;
-        rel.o.z = 0.05f - (frand() * 0.01f + other->f5c * 0.0005f);
-        if (rel.o.x < -0.45f)
-            rel.o.x = -0.45f;
-        else if (rel.o.x > 0.2f)
-            rel.o.x = 0.2f;
-        rel.o.x = (frand() - 0.5f) * 0.02f + rel.o.x;
-        rel.o.y = (frand() - 0.5f) * 0.02f + rel.o.y;
-        (*L->lists[0].v.begin())->append_plain(m, (const mat4*)&rel);
+        // the frame block is its own scope (fr then shares the operator* return temporary's slot: frame 0xe0)
+        {
+            rgl::mat4 fr;
+            fr.o = other->p20;
+            fr.f = other->p40;
+            fr.u = rgl::vector4(0.0f, 0.0f, 1.0f);
+            fr.orthonormalize();
+            rgl::mat4 rel = M.relative(fr);
+            vector4 d;
+            d.x = rel.o.x;
+            d.z = 0.0f;
+            d.y = rel.o.y - 0.23f;
+            float n = d.normalize();
+            if (n < 0.0f)
+                n = 0.0f;
+            else if (n > 0.19f)
+                n = 0.19f;
+            {
+                vector4 t = vscale(d, n);
+                d.x = t.x;
+                d.y = t.y + 0.23f;
+                d.z = t.z;
+            }
+            rel.o = d;
+            rel.o.z = 0.05f - (frand() * 0.01f + other->f5c * 0.0005f);
+            if (rel.o.x < -0.45f)
+                rel.o.x = -0.45f;
+            else if (rel.o.x > 0.2f)
+                rel.o.x = 0.2f;
+            rel.o.x = (frand() - 0.5f) * 0.02f + rel.o.x;
+            rel.o.y = (frand() - 0.5f) * 0.02f + rel.o.y;
+            L->lists[0].v[0]->append_plain(m, (const mat4*)&rel);
+        }
     }
     delete m;
 }
