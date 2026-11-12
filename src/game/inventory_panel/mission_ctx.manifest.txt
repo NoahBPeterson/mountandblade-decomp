@@ -19,3 +19,4 @@
 ../src/game/inventory_panel/mission_ctx.cpp  ?count_hero_items@MissionCtx@@QAEHXZ  00513e10  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?start_mission@MissionCtx@@QAEXXZ  00514cd0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/mission_ctx.cpp  ?build_hero_table@MissionCtx@@QAEXHHHH@Z  00514890  /O2 /MT /Gy /TP
+../src/game/inventory_panel/mission_ctx.cpp  ?setup@MissionCtx@@QAEXIH@Z  00513f80  /O2 /MT /Gy /TP

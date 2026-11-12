@@ -285,34 +285,36 @@ void MissionCtx::setup(unsigned flags, int delta)
         int n = (int)flags >> 8 & 0xf;
         if (n > 8)
             n = 8 - n;
-        f1c = GV->gate_rating(g_game->f78, party[side], party[1 - side]) + n;
+        f1c = ((GameW*)g_game)->gate_rating(g_game->f78, party[side], party[1 - side]) + n;
         PartyMgr* m = &g_game->parties;
         party_at(m, m->lookup(g_game->f78))->sum_stat(0x110);
         if (g_game->parties.is_live(party[side]))
-            party_at(&g_game->parties, g_game->parties.lookup(party[side]))->sum_stat(0x110);
+            party_index(party[side])->sum_stat(0x110);
         if (mode == 4 && g_game->parties.is_live(party[1 - side]))
             g_game->parties.get(party[1 - side])->sum_stat(0x110);
         if (f1c > 6)
             f1c = 6;
         f27c = f1c - old;
         int i = 0;
-        while (i < party_at(&g_game->parties, g_game->parties.lookup(g_game->f78))->nstacks)
+        while (i < party_index(g_game->f78)->nstacks)
             i++;
         int l[8];
-        l[0] = 0;
-        l[2] = 0;
-        l[4] = 0;
+        unsigned ps = party[side];
         l[6] = 0;
-        g_game->count_units(party[side], &l[6], &l[4], &l[2], &l[0]);
+        l[4] = 0;
+        l[2] = 0;
+        l[0] = 0;
+        g_game->count_units(ps, &l[6], &l[4], &l[2], &l[0]);
         int d = -l[0];
         if (mode == 4) {
-            l[1] = 0;
-            l[3] = 0;
-            l[5] = 0;
+            unsigned po = party[1 - side];
             l[7] = 0;
-            g_game->count_units(party[1 - side], &l[7], &l[5], &l[3], &l[1]);
+            l[5] = 0;
+            l[3] = 0;
+            l[1] = 0;
+            g_game->count_units(po, &l[7], &l[5], &l[3], &l[1]);
         }
-        if (((signed char)f10 < 0 || f2c8 != 0) &&
+        if (((f10 & 0x80) != 0 || f2c8 != 0) &&
             ((flags & 0x2000000) || (d <= 0 && passage_menu <= 0))) {
             f164 = 0x143;
             f18 = 1;
