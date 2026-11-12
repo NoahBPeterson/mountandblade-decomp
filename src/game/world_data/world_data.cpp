@@ -553,6 +553,9 @@ void GameW::handout(Party* p, int id)
 }
 
 // ==== 0x4915d0: remove_party a party =================================================================================
+// PartyMgr::at spelled out as a file-local helper: the member is not expanded here once the vector size() / operator[] calls
+// have used up the inliner's budget (it compiles to a call), the original has the page lookup inline at each store.
+static inline Party* wd_at(PartyMgr* m, int i) { return m->pages[i >> 4] + (i & 0xf); }
 // @ 0x4915d0
 void GameW::remove_party(int id)
 {
@@ -572,18 +575,18 @@ void GameW::remove_party(int id)
             detach_party(id);
         p->attached_to = -1;
     }
-    if (p->attached._Myfirst != 0 && p->attached._Mylast - p->attached._Myfirst != 0) {
-        for (unsigned k = 0; p->attached._Myfirst != 0 && k < (unsigned)(p->attached._Mylast - p->attached._Myfirst); k++) {
-            if ((unsigned)p->attached._Myfirst[k] >= parties.n_parties)
+    if (p->attached.size() != 0) {
+        for (unsigned k = 0; k < p->attached.size(); k++) {
+            if ((unsigned)p->attached[k] >= m->n_parties)
                 continue;
-            int j = m->lookup(p->attached._Myfirst[k]);
+            int j = m->lookup(p->attached[k]);
             if (j < 0)
                 continue;
             if (m->atu(j)->type != 1)
                 continue;
-            m->at(m->lookup(p->attached._Myfirst[k]))->attached_to = -1;
-            m->at(m->lookup(p->attached._Myfirst[k]))->f8cc = 0;
-            m->at(m->lookup(p->attached._Myfirst[k]))->dirty = 1;
+            wd_at(m, m->lookup(p->attached[k]))->attached_to = -1;
+            wd_at(m, m->lookup(p->attached[k]))->f8cc = 0;
+            wd_at(m, m->lookup(p->attached[k]))->dirty = 1;
         }
         if (p->attached._Myfirst != 0)
             operator delete(p->attached._Myfirst);
@@ -597,7 +600,7 @@ void GameW::remove_party(int id)
 
     idx = m->lookup(id);
     if (idx >= 0 && idx < parties.count)
-        m->at(idx)->type = 2;
+        m->atu(idx)->type = 2;
 
     unsigned cur = m->first_party_id();
     if (cur < parties.n_parties) {
