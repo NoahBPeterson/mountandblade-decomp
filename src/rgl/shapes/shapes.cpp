@@ -698,7 +698,8 @@ capsule::capsule(const capsule& o) : shape_base(o), p0(o.p0), p1(o.p1), l0(o.l0)
 void capsule::draw()
 {
     vector4 d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
-    float half = d.length() * 0.5f;
+    float len = d.length();
+    float half = len * 0.5f;
     normalize(d, d);
     vector4 e;
     vcross(e, d, vector4(1.0f, 0.0f, 0.0f));
@@ -709,9 +710,7 @@ void capsule::draw()
     m.s = f;
     m.f = e;
     m.u = d;
-    vector4 mid(p1.x + p0.x, p1.y + p0.y, p1.z + p0.z);
-    mid.x *= 0.5f; mid.y *= 0.5f; mid.z *= 0.5f;
-    m.o = mid;
+    m.o = (p0 + p1) * 0.5f;                             // two temporaries: the sum (z lane spilled), then the product
     g_render.stack[g_render.sp] = g_render.cur;
     g_render.sp = g_render.sp + 1;
     g_render.apply(&m);
