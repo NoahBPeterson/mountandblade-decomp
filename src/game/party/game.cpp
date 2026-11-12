@@ -550,22 +550,22 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
         if (child < 0)
             continue;
         {
-            NavNode* c = &vec()[child];
-            if (c->cost != 0x5f5e0ff) {
-                NavNode* t = &vec()[*a];
-                if (t->prev == -1)
-                    t->prev = c->cost;
-                else if (t->prev != c->cost) {
-                    vec()[*a].next = vec()[child].cost;
-                    return (int*)&vec()[child];
+            if (vec()[child].cost != 0x5f5e0ff) {
+                if (vec()[*a].prev == -1)
+                    vec()[*a].prev = vec()[child].cost;
+                else if (vec()[*a].prev != vec()[child].cost) {
+                    NavNode* c = &vec()[child];
+                    vec()[*a].next = c->cost;
+                    return (int*)c;
                 }
             } else {
                 *n = num + 1;
-                seen[num + 1] = *idx;
+                seen[*n] = *idx;
                 walk(a, &child, seen, n);
                 *n = num;
-                if (vec()[*a].next != -1)
-                    return (int*)&vec()[*a];
+                NavNode* r = &vec()[*a];
+                if (r->next != -1)
+                    return (int*)r;
             }
         }
     next:;
