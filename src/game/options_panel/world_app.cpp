@@ -347,7 +347,9 @@ struct TreeW {
     char pad0[8];
     void* f8;                                       // +0x08
     void erase(void* p1, void* p2);                 // 0x4d3e50
-    void insert(void** out, void* a, void* b);      // 0x4d3e70
+    // the element iterator (a class with constructors, so it is returned through the hidden result pointer)
+    struct It { E176* p; It() {} It(E176* q) : p(q) {} };
+    It insert(It a, It b);                          // 0x4d3e70 (vector::erase's shape: returns a)
 };
 
 // @ 0x4d3e50
@@ -363,14 +365,14 @@ static inline E176* copy_into(E176* first, E176* last, E176* dest)
 }
 
 // @ 0x4d3e70
-void TreeW::insert(void** out, void* a, void* b)
+TreeW::It TreeW::insert(It a, It b)
 {
-    if (a != b) {
-        E176* p = copy_into((E176*)b, (E176*)f8, (E176*)a);
+    if (a.p != b.p) {
+        E176* p = copy_into(b.p, (E176*)f8, a.p);
         std::_Destroy_range(p, (E176*)f8, *(std::allocator<E176>*)(void*)this);
         f8 = p;
     }
-    *out = a;
+    return a;
 }
 
 // ---- the application object (0x4d3ec0, 0x4d4130, 0x4d4140) ----
