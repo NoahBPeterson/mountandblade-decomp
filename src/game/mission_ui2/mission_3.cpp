@@ -494,23 +494,27 @@ void MissionUi::update_bounds()
     }
 }
 
+// FieldHost's view slot is element 0 of a std::vector<FieldVisual*> at +0x178 (f178 + view are its header), read
+// through operator[] (see mission_4.cpp); FieldHost in field_panel.h should declare the vector.
+#define HOST_VIEWS(h) (*(std::vector<FieldVisual*>*)&(h)->f178)
+
 // @ 0x48d350
 void FieldPanel::set_color(unsigned rgb)
 {
-    rgb = rgb | (scene()->view[0]->color & 0xff000000);
-    scene()->view[0]->set_color(&rgb);
+    unsigned c = (HOST_VIEWS(scene())[0]->color & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
+    HOST_VIEWS(scene())[0]->set_color(&c);
     float out[2];
-    scene()->view[0]->get_state(out);
+    HOST_VIEWS(scene())[0]->get_state(out);
 }
 
 // @ 0x48d3c0
 void FieldPanel::set_alpha(unsigned a)
 {
     unsigned u = a << 24;
-    a = (scene()->view[0]->color & 0xffffff) | u;
-    scene()->view[0]->set_color(&a);
+    a = (HOST_VIEWS(scene())[0]->color & 0xffffff) | u;
+    HOST_VIEWS(scene())[0]->set_color(&a);
     float out[2];
-    scene()->view[0]->get_state(out);
+    HOST_VIEWS(scene())[0]->get_state(out);
     mirror()->tracks[0]->color = (tracks[0]->color & 0xffffff) | u;
     mirror()->tracks[2]->color = (tracks[2]->color & 0xffffff) | u;
 }
