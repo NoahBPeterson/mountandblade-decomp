@@ -189,15 +189,13 @@ struct RecB {
     tstring translated();                    // 0x4c6530
 };
 
-// ---- the morph-target layout used by ItemPage::place (0x4c6b30); these mirror rgl::mesh / rgl::keyframes of
+// ---- the morph-target layout used by Skin::place (0x4c6b30); these mirror rgl::mesh / rgl::keyframes of
 // src/rgl/particles/mesh_obj.h (point20 vector at mesh+0x70, keyframes at mesh+0xa4), kept local because that header
-// cannot be mixed with the rest of this module.
-struct PFrame {                 // 0x20: a morph key frame (vertices at +4, normals at +0x14, std::vector layout)
-    int a0;
-    vector4* v;
-    vector4* vend;
-    vector4* vcap;
-    char norms[0x10];
+// cannot be mixed with the rest of this module. The points and each key frame's vertices are real std::vectors (size()
+// tests _Myfirst for null, operator[] is _Myfirst + i, as the original's loops).
+struct PFrame {                 // 0x20: a morph key frame
+    std::vector<vector4> v;     // +0 vertices
+    std::vector<vector4> n;     // +0x10 normals
 };
 struct PTrack {                 // keyframes (12 bytes)
     PFrame* frames;
@@ -208,13 +206,9 @@ struct PTrack {                 // keyframes (12 bytes)
 struct PPoint { vector4 a, b; };   // 0x20 (rest, current)
 struct PMesh {
     char pad0[0x70];
-    int pa0;                    // +0x70 (allocator lane)
-    PPoint* pts;                // +0x74
-    PPoint* pts_end;            // +0x78
-    PPoint* pts_cap;            // +0x7c
+    std::vector<PPoint> pts;    // +0x70 (rest, current)
     char pad80[0xa4 - 0x80];
     PTrack kf;                  // +0xa4
-    unsigned npts() const { return pts ? (unsigned)(pts_end - pts) : 0; }
 };
 struct POwner { char pad0[0x38]; PMesh** mesh; };       // +0x38
 
