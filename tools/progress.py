@@ -392,6 +392,27 @@ def plot_history(path):
                   ("funclet", "Fragment not yet COMDAT-checked", TC["funclet"]),
                   ("not_run", "Not run (time limit)", TC["not_run"]),
                   ("nosource", "No source yet", "#E4E2DA"))
+        # A "now" point: the bands otherwise end at the last sweep, whose byte-exact share is that of its time while
+        # the top panels are live (2026-11-12: 80.9% here against 84.9% above). Today's byte-exact set at the bottom,
+        # and the last sweep's verdicts for the rows that are still not byte-exact.
+        if ev and evh and ev.get("rows"):
+            nowp = {"when": now.isoformat(timespec="seconds")}
+            for c, _ in EV_CATS:
+                nowp[c] = nowp[c + "_in"] = nowp[c + "_sz"] = 0
+            for a, r in ev["rows"].items():
+                try:
+                    va = int(a, 16)
+                except ValueError:
+                    continue
+                if va in exact:
+                    continue
+                c = r.get("category", "not_run")
+                if c in nowp:
+                    nowp[c] += 1
+                    nowp[c + "_in"] += INS.get(va, 0)
+                    nowp[c + "_sz"] += r.get("size", 0)
+            if datetime.datetime.fromisoformat(evh[-1]["when"]) < now - datetime.timedelta(minutes=5):
+                evh = evh + [nowp]
         xs = [datetime.datetime.fromisoformat(p["when"]) for p in evh]
         saved = sorted((datetime.datetime.fromisoformat(p["when"]), p) for p in hist.values())
 
@@ -446,7 +467,7 @@ def plot_history(path):
              "instructions.\nPoints before Nov 11 2026 were saved as byte shares; their instruction shares are backfilled "
              "(byte-exact from the manifests of the time, the rest scaled).%s" %
              ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax) +
-             ("\nVerdicts: one point per full equivalence sweep (tools/difftest/verdicts.py); a sweep tests the original and "
+             ("\nVerdicts: one point per full equivalence sweep (tools/difftest/verdicts.py), plus a last point now (today's byte-exact set, the last sweep's verdicts for the rest); a sweep tests the original and "
               "our function\non the same random inputs under emulation. The first point also counted pre-migration slice rows."
               if evh else "") + "\nPer-module detail (area = instructions, colour = verdict): tools/progress.py --treemap",
              fontsize=8, color=MUTED)
