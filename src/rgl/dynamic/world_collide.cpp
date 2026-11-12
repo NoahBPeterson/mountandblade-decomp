@@ -148,19 +148,20 @@ void world::query_entities(entity* e, unsigned mask, bool ordered, std::vector<e
     out->clear();
     for (cellref* r = (cellref*)e->refs; r != 0; r = r->next) {
         for (cellnode* nd = cells[r->x][r->y].head; nd != 0; nd = nd->next) {
-            entity** pe = &nd->obj;
-            if (*pe != e) {
-                if (type_ok((*pe)->type_id(), mask)) {
-                  if (!ordered || less(e, *pe)) {
-                    if (box3_inl(e->get_v9c(), e->get_vac(), (*pe)->get_v9c(), (*pe)->get_vac()))
-                        out->push_back(*pe);
+            if (nd->obj != e) {
+                if (type_ok(nd->obj->type_id(), mask)) {
+                  if (!ordered || less(e, nd->obj)) {
+                    if (box3_inl(e->get_v9c(), e->get_vac(), nd->obj->get_v9c(), nd->obj->get_vac()))
+                        out->push_back(nd->obj);
                   }
                 }
             }
         }
     }
     sort_range(out->begin(), out->end(), out->end() - out->begin());
-    out->erase(std::unique(out->begin(), out->end()), out->end());
+    std::vector<entity*>::iterator u;
+    u = std::unique(out->begin(), out->end());
+    out->erase(u, out->end());
 }
 
 // @ 0x426960
