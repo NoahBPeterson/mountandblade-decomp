@@ -519,39 +519,34 @@ void DropDown::animate(int)
 // @ 0x497880
 void UiB::animate(int)
 {
-    float t1 = elapsed(1);
-    float t4 = elapsed(4);
-    float t5 = elapsed(5);
+    float t1 = mh_elapsed(this, 1);
+    float t4 = mh_elapsed(this, 4);
+    float t5 = mh_elapsed(this, 5);
 
     if (t4 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - t4;
         mh_float2 z = mh_fade_mix(t4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
-        rgl::vector4 v(z.x / fD8, z.y / fDC, 1.0f);
-        ((rgl::mesh*)tracks[0])->set_color(v);
-        ((rgl::mesh*)tracks[2])->set_color(v);
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
         update_bounds();
-        v.x = z.x * 0.25f;
-        v.y = screen[1];
-        set_xy((float*)&v);
+        set_xy((float*)&mh_float2(z.x * 0.25f, screen[1]));
         fD8 = z.x;
         fDC = z.y;
     } else if (c4) {
-        rgl::vector4 v(f88 / fD8, f8c / fDC, 1.0f);
         c4 = 0;
-        ((rgl::mesh*)tracks[0])->set_color(v);
-        ((rgl::mesh*)tracks[2])->set_color(v);
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         update_bounds();
-        v.x = f88 * 0.25f;
-        v.y = screen[1];
-        set_xy((float*)&v);
+        set_xy((float*)&mh_float2(f88 * 0.25f, screen[1]));
         fD8 = f88;
         fDC = f8c;
     }
 
     if (t1 < dur(1)) {
-        float f = (aa().a * t1 + ab().a * (dur(1) - t1)) * (1.0f / dur(1));
-        unsigned col = round_float(&f) << 24;
+        unsigned col = 0;
+        float v = (ab().a * (dur(1) - t1) + aa().a * t1) * (1.0f / dur(1));
+        col = round_float(&v) << 24;
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
@@ -579,9 +574,9 @@ void UiB::animate(int)
 // @ 0x497e30
 void UiC::animate(int)
 {
-    float t1 = elapsed(1);
-    float t4 = elapsed(4);
-    float t5 = elapsed(5);
+    float t1 = mh_elapsed(this, 1);
+    float t4 = mh_elapsed(this, 4);
+    float t5 = mh_elapsed(this, 5);
 
     if (t4 < dur(4)) {
         float inv = 1.0f / dur(4);
@@ -593,8 +588,7 @@ void UiC::animate(int)
         ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
         update_bounds();
-        rgl::vector4 s(z.x * 0.25f, screen[1], 1.0f);
-        set_xy((float*)&s);
+        set_xy((float*)&mh_float2(z.x * 0.25f, screen[1]));
         fD8 = z.x;
         fDC = z.y;
     } else if (c4) {
@@ -605,29 +599,28 @@ void UiC::animate(int)
         ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
         update_bounds();
-        rgl::vector4 s(f88 * 0.25f, screen[1], 1.0f);
-        set_xy((float*)&s);
+        set_xy((float*)&mh_float2(f88 * 0.25f, screen[1]));
         fD8 = f88;
         fDC = f8c;
     }
 
     if (t1 < dur(1)) {
-        float f = (aa().a * t1 + ab().a * (dur(1) - t1)) * (1.0f / dur(1));
-        unsigned col = round_float(&f) << 24;
+        unsigned col = 0;
+        float v = (ab().a * (dur(1) - t1) + aa().a * t1) * (1.0f / dur(1));
+        col = round_float(&v) << 24;
         mask = col;
         f194 = -23234124.0f;
-        tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
-        tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
+        tracks[0]->color = (tracks[0]->color & 0xffffff) | mask;
+        tracks[2]->color = (tracks[2]->color & 0xffffff) | mask;
         col |= color14c & 0xffffff;
         set_color(&col);
     } else if (c1) {
-        unsigned col = aa().dword;
+        mask = aa().dword;
         f194 = -23234124.0f;
-        mask = col;
         c1 = 0;
-        tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
-        tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
-        col |= color14c & 0xffffff;
+        tracks[0]->color = (tracks[0]->color & 0xffffff) | mask;
+        tracks[2]->color = (tracks[2]->color & 0xffffff) | mask;
+        unsigned col = (color14c & 0xffffff) | aa().dword;
         set_color(&col);
     }
 
