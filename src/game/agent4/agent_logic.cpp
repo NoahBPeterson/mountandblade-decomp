@@ -5664,7 +5664,9 @@ void Agent::cycle_slot(int which)
                     } else {
                         unsigned fl = ik->type_flags;
                         unsigned t = fl & 0xff;
-                        if ((t == 7 || ((fl & 0x800000) && t == 7)) &&
+                        // stand-in: the original keeps the second t == 7 compare (cmp eax,7); written plainly cl folds it into
+                        // the first, (t ^ 7) == 0 survives to codegen as xor eax,7 (one byte off), t - 7 == 0 as add eax,-7
+                        if ((t == 7 || ((fl & 0x800000) && (t ^ 7) == 0)) &&
                             (f2c < 0 || !(fl & 0x10000000)) && (int)(pairs[v].m4 & 0xffff) > 0)
                             found = true;
                     }
