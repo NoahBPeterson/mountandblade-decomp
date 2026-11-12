@@ -2132,3 +2132,12 @@ Key numbering (third batch, same night)
 - Inlining of a small operator differs between functions of one unit (Agent::update_alarm calls vector4::operator-
   out of line while neighbours inline it): cl's per-site cost (`/d2inlT`, branch/size rules) decides; a per-unit
   declaration cannot express it.
+- A local array whose address goes only to an opaque callee escapes; its scalar-replaced fields are reloaded into
+  scratch registers after every later call, which flips spill decisions (e.g. memory-operand loop bounds). With the
+  callee's body visible they stay live across the calls and spill as in the original (world::to_cell's body made
+  insert_obj 217e7566, world::insert 44479cf3, collect_boxed d8f414fd and add_shape 06a75e0a byte-exact; loop shape
+  was irrelevant).
+- On 13.10 `or/add [m],imm` directly followed in IL by `push imm` is split into load/op/store during CodegenUpdate
+  (RegSimpleAssign); if the original keeps the RMW right before a push, something else stood between them then.
+- `regs` shows a constant candidate's size from its first sighting: a "1 bytes" constant comes from a byte operand,
+  which also limits its register candidates to byte registers (ebp excluded).
