@@ -68,19 +68,22 @@ float g_5a9f28[2] = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} c
 // calls that instance. Its explicit specialization is only declared.
 #include "../glyph_lookup.h"
 // the 4d3c00 insert is world_app.cpp's HashTab::insert (the glyph table is a hash table of that layout)
-struct HashTab { void insert(HOut* out, unsigned* key); };   // 0x4d3c00
+struct HashTab { HOut* insert(HOut* out, unsigned* key); };   // 0x4d3c00
+// the table's value as the original builds it: two (x, y) pairs set from float temporaries, three zeroed floats, and the
+// {key, value} pair made by a constructor (the 7-dword copy); views of Glyph / node_pair
+struct GlyphPt { float x, y; GlyphPt() {} GlyphPt(const float& a, const float& b) : x(a), y(b) {} };
+struct GlyphVal { GlyphPt a, b; float c, d, e; GlyphVal() { a = GlyphPt(0.0f, 0.0f); b = GlyphPt(0.0f, 0.0f); c = 0.0f; d = 0.0f; e = 0.0f; } };
+struct GlyphPair { int key; GlyphVal value; GlyphPair(const int& k, const GlyphVal& v) : key(k), value(v) {} };
 // @ 0x4d92c0
 Glyph* GlyphMap::at(const int& key)
 {
-    GlyphNode* it;
-    glyph_lower_bound(*this, &it, key);
-    if (it == head) {
-        HOut out;
-        node_pair v = { key, Glyph() };
-        ((HashTab*)this)->insert(&out, (unsigned*)&v.key);
-        return &out.node->val;
+    HOut out;
+    IntHashBase::iterator it = ((IntHashBase&)*this).lower_bound(key);
+    if (*(GlyphNode**)&it == head) {
+        GlyphPair v(key, GlyphVal());
+        return &((HashTab*)this)->insert(&out, (unsigned*)&v.key)->node->val;
     }
-    return &it->val;
+    return &(*(GlyphNode**)&it)->val;
 }
 
 // ---- the main window procedure thunk (0x4d9440): enters the shared handler with this = the application object -------
