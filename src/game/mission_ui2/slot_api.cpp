@@ -124,6 +124,39 @@ tstring GameData::string_value(int index)
     return g_script.result_string;
 }
 
+bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0
+// rgl::cell::collect_point (0x439780, agent2/agent_stats.cpp) with its body visible, as the original's unit saw it: the
+// candidate array and the counts then do not escape, so the row pointer stays a register (mov esi,[edx+eax*4]; add ecx,esi)
+// and the loop bound is loaded straight into ebx
+inline __declspec(noinline) void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count)
+{
+    unsigned i = 0;
+    *count = 0;
+    while (i < a.size()) {
+        shape_base** q = &a[i];
+        shape_base* sh = *q;
+        if (sh->m8 & mask) {
+            i++;
+            continue;
+        }
+        vector4 tv[2];
+        const vector4* smax = sh->get_max(&tv[0]);
+        const vector4* smin = sh->get_min(&tv[1]);
+        bool hit;
+        if (*use3d == 0)
+            hit = smin->x <= p[0] && p[0] <= smax->x && smin->y <= p[1] && p[1] <= smax->y;
+        else
+            hit = in_box(smin, smax, (const vector4*)p);
+        if (!hit) {
+            i++;
+            continue;
+        }
+        out[*count] = *q;
+        ++*count;
+        i++;
+    }
+}
+
 // @ 0x48ea80
 face* GameData::find_at(const float* p)
 {
