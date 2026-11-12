@@ -149,11 +149,12 @@ void rgl::strategic_entity::update_ground_cache()
         for (int k = 0; k < face->npts; k++) {
             NavVert* gv = &owner->ground->verts[face->ids[k]];
             vector4 v = gv->p;
-            float inv = 0.5f / shadow_radius;
             c[k] = m.transform_point_to_local(v);
-            c[k].x = inv * c[k].x;
-            c[k].y = inv * c[k].y;
-            c[k].z = inv * c[k].z;
+            float inv = 0.5f / shadow_radius;     // after the call: inv stays on the x87 stack for the three products
+            vector4& ck = c[k];
+            ck.x = inv * ck.x;
+            ck.y = inv * ck.y;
+            ck.z = inv * ck.z;
         }
         if ((c[0].z <= -0.5f || c[1].z <= -0.5f || c[2].z <= -0.5f || (face->npts == 4 && c[3].z <= -0.5f)) &&
             (c[0].z - c[0].x <= -0.5f || c[1].z - c[1].x <= -0.5f || c[2].z - c[2].x <= -0.5f || (face->npts == 4 && c[3].z - c[3].x <= -0.5f)) &&
