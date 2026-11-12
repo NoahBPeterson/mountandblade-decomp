@@ -10,3 +10,4 @@
 ../src/game/char_sheet/facegen_misc.cpp  ?pack_state@Animator@@QAEXPAUPackedState@@@Z  004eb660  /O2 /MT /Gy /TP
 ../src/game/char_sheet/facegen_misc.cpp  ?randomise@Animator@@QAEXXZ  004eb320  /O2 /MT /Gy /TP
 ../src/game/char_sheet/facegen_misc.cpp  ?refresh@FaceGen@@QAEXXZ  004eb3c0  /O2 /MT /Gy /TP
+../src/game/char_sheet/facegen_misc.cpp  ?erase@BigArray@@QAE?AUIt@1@U21@0@Z  004eb860  /O2 /MT /Gy /TP

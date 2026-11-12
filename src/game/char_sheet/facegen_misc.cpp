@@ -7,6 +7,7 @@
 #include "../../rgl/stream.h"      // text_stream g_debug_log (0x5a9f30): its buf (+0x20 = 0x5a9f50) is the status text the save/load screen draws
 #include "../strat/gui_manager.h"      // MsgLog::build_scene 0x4e6050 (listed directly: the resolution audit reads only the source's own includes)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
+#include "../../include/ptr_tag.h"      // ptr_tag (std::_Nonscalar_ptr_iterator_tag)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 text_stream g_debug_log;   // 0x5a9f30 the debug text log (constructed by the compiler: the original's static initializer 0x547aa0; destroyed by 0x548170)
@@ -120,24 +121,29 @@ struct BigArray {
     Skin* begin;                                         // +4
     Skin* end;                                           // +8
     Skin* cap;                                           // +0xc
-    void erase(Skin** out, Skin* first, Skin* last);       // 0x4eb860
+    // the element iterator (a class with constructors: returned through the hidden result pointer)
+    struct It { Skin* p; It() {} It(Skin* q) : p(q) {} };
+    It erase(It first, It last);                         // 0x4eb860 (vector::erase: copy down, destroy the tail)
 };
+// std::copy over the iterators: _Copy_opt (0x4da880) gets the pointers and _Ptr_cat(_First, _Dest)'s tag
+typedef Skin* (__cdecl* ba_copy_t)(Skin*, Skin*, Skin*, ptr_tag);
+static inline ptr_tag ba_cat(BigArray::It&, BigArray::It&) { ptr_tag c; return c; }
+static inline Skin* ba_copy(BigArray::It f, BigArray::It l, BigArray::It d) { return ((ba_copy_t)copy_configs_forward)(f.p, l.p, d.p, ba_cat(f, d)); }
 // (array_copy_range 0x4da880 is copy_configs_forward, cs_common.h)
 
 // (0x4eb810 is std::vector<Skin>::~vector, instantiated here by g_anim)
 
 // @ 0x4eb860
-void BigArray::erase(Skin** out, Skin* first, Skin* last)
+BigArray::It BigArray::erase(It first, It last)
 {
-    if (first != last) {
-        Skin* end0 = this->end;
-        Skin* p = ((Skin* (__cdecl*)(Skin*, Skin*, Skin*, Skin*))copy_configs_forward)(last, end0, first, end0);
+    if (first.p != last.p) {
+        Skin* p = ba_copy(last, It(this->end), first);
         Skin* e = this->end;
         for (Skin* i = p; i != e; ++i)
             i->~Skin();
         this->end = p;
     }
-    *out = first;
+    return first;
 }
 
 // ---- event forwarding -----------------------------------------------------------------------------------

@@ -377,7 +377,8 @@ void vec_named::_Insert_n(named_vec* where, unsigned count, const named_vec& val
 template<> void std::vector<Skin>::_Insert_n(std::vector<Skin>::iterator, size_t, const Skin&);   // 0x4fe520
 struct vec_cfg_pub : std::vector<Skin> { using std::vector<Skin>::_Insert_n; };
 struct BigArray {
-    void erase(Skin** out, Skin* first, Skin* last);           // 0x4eb860
+    struct It { Skin* p; It() {} It(Skin* q) : p(q) {} };   // the element iterator (facegen_misc.cpp)
+    It erase(It first, It last);                              // 0x4eb860
 };
 
 // @ 0x50d170 vec_model::resize
@@ -387,7 +388,7 @@ void vec_model::resize(unsigned n, Skin val)
     if (v.size() < n)
         v._Insert_n(v.end(), n - v.size(), val);
     else if (n < v.size())
-        ((BigArray*)this)->erase((Skin**)&n, &*(v.begin() + n), &*v.end());   // the result slot is n's own (the original's discarded iterator)
+        ((BigArray*)this)->erase(BigArray::It(&*(v.begin() + n)), BigArray::It(&*v.end()));   // the discarded iterator result
 }
 
 // ------------------------------------------------------------------ the scene reader -----------------------
