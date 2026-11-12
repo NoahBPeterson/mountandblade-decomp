@@ -305,20 +305,32 @@ bool ActiveTimer::expired()
     return false;
 }
 
+// The vectors of 0x432e30 are 16 bytes on its frame (x, y, z and an unused lane: the engine's 4-float vector); Vec3w is
+// that record with Vec3's inline operators. The moved velocity is three float locals, not a vector.
+struct Vec3w {
+    float x, y, z, w;
+    Vec3w() {}
+    Vec3w(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+    Vec3w operator-() const { return Vec3w(-x, -y, -z); }
+    Vec3w operator+(const Vec3w& o) const { return Vec3w(x + o.x, y + o.y, z + o.z); }
+    Vec3w operator*(float s) const { return Vec3w(x * s, y * s, z * s); }
+    Vec3w& operator-=(const Vec3w& o) { x = x - o.x; y = y - o.y; z = z - o.z; return *this; }
+    float dot(const Vec3w& o) const { return x * o.x + y * o.y + z * o.z; }
+};
 // ---- collision response: removes the approaching component of v along n, with friction ------------------
 // @ 0x432e30
-void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n)
+void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n_)
 {
-    float d = (-*n).dot(*v);
+    const Vec3w* n = (const Vec3w*)n_;
+    float d = (-*n).dot(*(const Vec3w*)v);
     if (d < 0.0f) d = 0.0f;
-    Vec3 t = *n * d;
-    Vec3 s;
-    s.x = t.x + v->x; s.y = t.y + v->y; s.z = t.z + v->z;
-    v->x = s.x; v->y = s.y; v->z = s.z;
+    Vec3w t = *n * d;
+    float sx = t.x + v->x, sy = t.y + v->y, sz = t.z + v->z;
+    v->x = sx; v->y = sy; v->z = sz;
     if (d > 0.0f) {
-        Vec3 g = s * d;
-        Vec3 f = g * 0.4f;
-        v->x = s.x - f.x; v->y = s.y - f.y; v->z = s.z - f.z;
+        Vec3w g(sx * d, sy * d, sz * d);
+        Vec3w f = g * 0.4f;
+        v->x = sx - f.x; v->y = sy - f.y; v->z = sz - f.z;
         t -= f;
     }
     out->x = -t.x; out->y = -t.y; out->z = -t.z;
