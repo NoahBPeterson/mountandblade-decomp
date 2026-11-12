@@ -170,10 +170,12 @@ void rgl::mesh::multiply_color(const vector4* tint)
     for (unsigned i = 0; i < v50.size(); i++) {
         vertex60* v = &v50[i];
         vector4 c = rgl::unpack_color(&v50[i].color);
+        unsigned keep = v->color & 0xff000000;     // read before the first store to c; written back between computing z and storing it
         c.x = c.x * tint->x;
         c.y = c.y * tint->y;
-        v->color &= 0xff000000;
-        c.z = c.z * tint->z;
+        float nz = c.z * tint->z;
+        v->color = keep;
+        c.z = nz;
         v50[i].color |= pack_color(&c) & 0xffffff;
     }
     slots[0].f28 = 1;
