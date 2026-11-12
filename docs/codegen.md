@@ -2172,3 +2172,12 @@ Key numbering (third batch, same night)
 - `mov eax,imm; mov eax,[eax*4+tbl]`: the index was selected first (`k = 4` / `6`), then `used[k]` (post_spawn 5a472c9d).
 - A function whose callers set ecx and whose body overwrites ecx unread, ending `ret N`: a thiscall member with
   `this` unused, not a free stdcall function.
+- A common call ending several arms each followed by its own `return` keeps one epilogue per arm; an if/else chain
+  falling to the function end lets cl merge the arms into one `push X; jmp` tail (C4c31c0::frame_update 04c7376d:
+  1232 -> 22).
+- A `static` helper the original expands several times can become a call with its argument in a register in ours:
+  `__forceinline` restores the expansion (Rec1208::refresh 343f05f0).
+- Member pointers reloaded after every call in the original (`mov reg,[this+off]` at each use): the source used the
+  member directly; a local copy keeps it in a callee-saved register instead.
+- A vtable load before the argument's evaluation: the argument is a call expression inside the call
+  (`w->set_mesh(0, get()->clone())`), not a named temporary.
