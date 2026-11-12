@@ -39,8 +39,10 @@ unsigned g_river_mask_b = (unsigned)g_bit[2];               // 0x5e2584
 
 
 const ivec2 g_nbr[9] = {{0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 0}};  // 0x591340 (rdata); entry 8 is the cell itself: order[0] = 8 in pick_triangle_types / accumulate_kinds reads it (the original's rdata has the zero pair there)
-const char* g_name_elevation = "ground_elevation";  // 0x5a9bf4
-const char* g_name_leveling = "ground_leveling";    // 0x5a9bf8
+// File-static (the extern declarations in terrain.h are unused and should go): with no address taken, cl knows a store
+// through a pointer cannot change them, so their loads schedule above the layer type stores, as in the original.
+static const char* s_name_elevation = "ground_elevation";  // 0x5a9bf4
+static const char* s_name_leveling = "ground_leveling";    // 0x5a9bf8
 
 
 using rgl::vector4;
@@ -624,8 +626,8 @@ void Terrain::fill_desc_named(TerrainDesc* d)
     d->n_minus1 = 12;
     d->layers[d->n_minus2].type = -0x1e71;
     d->layers[d->n_minus1].type = -0x3115;
-    d->layers[d->n_minus2].name.assign(g_name_elevation);
-    d->layers[d->n_minus1].name.assign(g_name_leveling);
+    d->layers[d->n_minus2].name.assign(s_name_elevation);
+    d->layers[d->n_minus1].name.assign(s_name_leveling);
     WL_MARKER(13)
     if (d->dims.w > 0x1a4 || d->dims.h > 0x1a4)
         mb_error("Illegal terrain size");
@@ -647,8 +649,8 @@ void Terrain::fill_desc_none(TerrainDesc* d)
     d->n_minus1 = 12;
     d->layers[d->n_minus2].type = -0x1e71;
     d->layers[d->n_minus1].type = -0x3115;
-    d->layers[d->n_minus2].name.assign(g_name_elevation);
-    d->layers[d->n_minus1].name.assign(g_name_leveling);
+    d->layers[d->n_minus2].name.assign(s_name_elevation);
+    d->layers[d->n_minus1].name.assign(s_name_leveling);
     d->n = 0;
     WL_MARKER(13)
     if (d->dims.w > 0x1a4 || d->dims.h > 0x1a4)
