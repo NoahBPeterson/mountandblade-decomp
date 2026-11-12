@@ -513,7 +513,7 @@ int __fastcall sort_value(ItemRef* e)
 }
 
 // @ 0x488ff0
-float __stdcall speed_scale(const float* base, const float* ref, float r)
+float ItemRef::speed_scale(const float* base, const float* ref, float r)
 {
     float d = fabsf(r - *ref);
     if ((r > 1.001f && *ref < 1.001f) || (r < 0.999f && *ref > 0.999f))

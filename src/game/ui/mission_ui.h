@@ -161,7 +161,6 @@ struct PairStack {
 
 // free functions of the item-pair sort and the speed table
 int __fastcall sort_value(ItemRef* e);                              // 0x488f80
-float __stdcall speed_scale(const float* base, const float* ref, float r);   // 0x488ff0
 void __fastcall clear_slots(ItemRef* e);                            // 0x489060 (sets the first 0x60 items to -1)
 
 #endif // GAME_UI_MISSION_UI_H
