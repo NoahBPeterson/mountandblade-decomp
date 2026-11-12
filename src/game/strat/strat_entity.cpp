@@ -62,6 +62,8 @@ Light* rgl::world::first_dir_light()
     return found;
 }
 
+static inline void set_delay_inl(Timer& t, float seconds) { t.start = g_ticks[t.clock] - (int)(seconds * 100000.0f); }     // Timer::set_delay (0x42cd20) as update_shadows inlines it
+
 // @ 0x42a1f0
 void rgl::strategic_entity::update_shadows(scene* sc, bool a, bool b)
 {
@@ -85,8 +87,10 @@ void rgl::strategic_entity::update_shadows(scene* sc, bool a, bool b)
     if (a) {
         if (mode & 2) {
             if ((float)(g_ticks[tm2b0.clock] - tm2b0.start) * 1e-05f >= -0.0001f) {
-                float k = -1.0f / (f15c * 25.0f);
-                tm2b0.start = g_ticks[tm2b0.clock] - (int)((k - (float)(rand() % 0x3dc9) * 6.3223115e-07f) * 100000.0f);
+                // d is a named float (it stays on the x87 stack through the divide: fld -1; fdiv st(1); fstp st(0)) and the
+                // timer is set through the inlined set_delay (clock index loaded before the _ftol2 call)
+                float d = f15c * 25.0f;
+                set_delay_inl(tm2b0, -1.0f / d - (float)(rand() % 0x3dc9) * 6.3223115e-07f);
                 shadow_tick();
                 if (p288 != 0) {
                     shadow_a->res = p288;
