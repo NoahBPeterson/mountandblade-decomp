@@ -2785,8 +2785,8 @@ unsigned Agent::pick_shout_target(int flags, float maxdist)
             if (ok) {
                 float x = 3.0f / (dist + 2.0f);
                 float t = (x < 1.0f) ? x : 1.0f;
+                float w = 1.0f / ((float)m->agents[id].f55e8 + 7.0f);
                 float k = 1.0f;
-                float w = 1.0f / ((float)m->agents.pages[id >> 4][id & 0xf].f55e8 + 7.0f);
                 if (f2c >= 0 && dist < 40.0f) {
                     vector4 d;
                     const vector4& op = m->agents.pages[id >> 4][id & 0xf].pos;
