@@ -1,2 +1,3 @@
 ../src/rgl/dynamic/fx_anim.cpp  ?update_envelopes@FxAnim@@QAEXM@Z  00421ef0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/fx_anim.cpp  ?update_poses@FxAnim@@QAEXXZ  00422080  /O2 /MT /Gy /TP
+../src/rgl/dynamic/fx_anim.cpp  ?update@FxDef@@QAEXMPBUmatrix@rgl@@@Z  00421df0  /O2 /MT /Gy /TP

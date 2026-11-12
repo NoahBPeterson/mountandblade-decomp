@@ -1,3 +1,5 @@
 ../src/rgl/psys.cpp  ?erase@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00413b60  /O2 /MT /Gy /TP
 ../src/rgl/psys.cpp  ?resize@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAEXIUvertex60@rgl@@@Z  00413bb0  /O2 /MT /Gy /TP
 ../src/rgl/psys.cpp  ?add_vertex@mesh@rgl@@QAEHHPBUvec2@@PBIPBUvector4@2@PBH@Z  00413c50  /O2 /MT /Gy /TP
+../src/rgl/psys.cpp  ?update@psys@rgl@@QAEXPAUscene@2@@Z  00414960  /O2 /MT /Gy /TP
+../src/rgl/psys.cpp  ?get_mesh@mesh_pool@rgl@@QAEPAUmesh@2@PAUskin@@@Z  00413d30  /O2 /MT /Gy /TP

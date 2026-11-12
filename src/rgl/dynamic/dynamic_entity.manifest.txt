@@ -29,3 +29,4 @@
 ../src/rgl/dynamic/dynamic_entity.cpp  ??1collision_entity@rgl@@UAE@XZ  00427cd0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ??_Gcollision_entity@rgl@@UAEPAXI@Z  00427d20  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/dynamic_entity.cpp  ?on_shape@dynamic_entity@rgl@@UAE_NPAUshape_base@@@Z  00427900  /O2 /MT /Gy /TP
+../src/rgl/dynamic/dynamic_entity.cpp  ?apply_forces@dynamic_entity@rgl@@UAEXM@Z  004257e0  /O2 /MT /Gy /TP

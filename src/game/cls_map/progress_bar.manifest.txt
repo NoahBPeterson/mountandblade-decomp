@@ -27,3 +27,4 @@
 ../src/game/cls_map/progress_bar.cpp  ?read@TableauTbl@@QAEXPAUSlotReader@@@Z  004e7a70  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ??0progress_bar@@QAE@XZ  004e3eb0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?build_spikes@Shape@@QAEXPAUmesh@rgl@@@Z  004e65e0  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?set168@progress_bar@@UAEXM@Z  004e3f60  /O2 /MT /Gy /TP

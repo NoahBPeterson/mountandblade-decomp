@@ -9,3 +9,4 @@
 ../src/game/ui/troop_inv.cpp  ?first_flagged@Party@@QAEHXZ  00463190  /O2 /MT /Gy /TP
 ../src/game/ui/troop_inv.cpp  ?read@PlacedObj@@QAEXPAUstream_base@@H@Z  004631c0  /O2 /MT /Gy /TP
 ../src/game/ui/troop_inv.cpp  ?pick@Troop@@QAEHHHIIIIID@Z  00462e20  /O2 /MT /Gy /TP
+../src/game/ui/troop_inv.cpp  ?item_slot_source@@YAXHPAH00@Z  00462ac0  /O2 /MT /Gy /TP
