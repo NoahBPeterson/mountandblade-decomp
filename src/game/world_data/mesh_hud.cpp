@@ -234,10 +234,10 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
 // @ 0x496100
 void MeshWidget::animate(int)
 {
-    float e0 = elapsed(0);
-    float e1 = elapsed(1);
-    float e2 = elapsed(4);
-    float e3 = elapsed(5);
+    float e0 = mh_elapsed(this, 0);
+    float e1 = mh_elapsed(this, 1);
+    float e2 = mh_elapsed(this, 4);
+    float e3 = mh_elapsed(this, 5);
 
     if (e2 < dur(4)) {
         float inv = 1.0f / dur(4);
@@ -259,17 +259,20 @@ void MeshWidget::animate(int)
     if (e0 < dur(0)) {
         unsigned col = 0;
         float v = ((cb().dword & 0xff) * (dur(0) - e0) + (ca().dword & 0xff) * e0) * (1.0f / dur(0));
-        col = round_float(&v);
-        v = (cb().g * (dur(0) - e0) + ca().g * e0) * (1.0f / dur(0));
-        col += round_float(&v) << 8;
-        v = (cb().b * (dur(0) - e0) + ca().b * e0) * (1.0f / dur(0));
-        col += round_float(&v) << 16;
+        int r = round_float(&v);
+        col = r;
+        float v1 = (cb().g * (dur(0) - e0) + ca().g * e0) * (1.0f / dur(0));
+        int g = round_float(&v1);
+        col += g << 8;
+        float v2 = (cb().b * (dur(0) - e0) + ca().b * e0) * (1.0f / dur(0));
+        int b = round_float(&v2);
+        col += b << 16;
         col |= color14c & 0xff000000;
         tracks[0]->color = col;
         set_color(&col);
     } else if (c0) {
-        unsigned col = (color14c ^ ca().dword) & 0xffffff ^ color14c;
         c0 = 0;
+        unsigned col = (color14c & 0xff000000) | (ca().dword & 0xffffff);
         tracks[0]->color = col;
         set_color(&col);
     }
@@ -278,13 +281,14 @@ void MeshWidget::animate(int)
         unsigned col = 0;
         float v = (ab().a * (dur(1) - e1) + aa().a * e1) * (1.0f / dur(1));
         col = round_float(&v) << 24;
+        tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        tracks[0]->color = (tracks[0]->color & 0xffffff) | (col & 0xff000000);
         set_color(&col);
     } else if (c1) {
-        unsigned col = aa().dword | (color14c & 0xffffff);
         c1 = 0;
-        tracks[0]->color = (tracks[0]->color & 0xffffff) | aa().dword;
+        unsigned col = aa().dword;
+        tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
+        col |= color14c & 0xffffff;
         set_color(&col);
     }
 
