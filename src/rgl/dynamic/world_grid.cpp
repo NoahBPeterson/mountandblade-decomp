@@ -149,13 +149,27 @@ void rgl::world::add_tree(shape_base* s)
     }
 }
 
+// Body the original's object saw (row owner rgl/core/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
+// so the corner cells are not reloaded around the add calls
+inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
+{
+    for (int i = 0; i < 2; i++) {
+        float f = (p[i] - lo[i]) / cell_size[i];
+        if (f <= 0.0f)
+            out[i] = 0;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
+        else
+            out[i] = (int)f + 1;
+    }
+}
+
 // @ 0x4252c0
 void rgl::world::add_shape(shape_base* s)
 {
     int2 lo, hi;
-    vector4 t0, t1;
-    to_cell((const float*)s->get_min(&t0), &lo.x);
-    to_cell((const float*)s->get_max(&t1), &hi.x);
+    { vector4 t; to_cell((const float*)s->get_min(&t), &lo.x); }
+    { vector4 t; to_cell((const float*)s->get_max(&t), &hi.x); }
     int2 p;
     for (p.x = lo.x; p.x <= hi.x; p.x++)
         for (p.y = lo.y; p.y <= hi.y; p.y++)
