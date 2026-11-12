@@ -697,14 +697,8 @@ unsigned Agent::pick_random()
 vector4* Agent::local_velocity(vector4* out)
 {
     unsigned idx = f2c;
-    vector4 v;
-    if ((int)idx >= 0) {
-        Agent* a = &g_mission->agents.pages[idx >> 4][idx & 0xf];
-        v.x = a->vel_xy.x; v.y = a->vel_xy.y;
-    } else {
-        v.x = vel_xy.x; v.y = vel_xy.y;
-    }
-    v.z = 0.0f;
+    const vec2& xy = (int)idx >= 0 ? g_mission->agents.pages[idx >> 4][idx & 0xf].vel_xy : vel_xy;
+    vector4 v(xy.x, xy.y, 0.0f);
     if (body) {
         const rgl::matrix& m = body->m;
         float rz = (v.y * m.f.z + v.x * m.s.z) + m.u.z * 0.0f;
