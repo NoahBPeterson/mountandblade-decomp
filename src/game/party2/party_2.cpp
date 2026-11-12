@@ -2097,7 +2097,7 @@ union EventFlags {                                   // the dword at event+0x18
 struct event_rec {                                   // 0x5c (E92)
     Pos4i p;                                          // +0x00
     float angle;                                     // +0x10 (random facing or supplied heading)
-    int f14;                                         // +0x14
+    float f14;                                       // +0x14 (stored as 0.0f: an immediate, not the shared zero register)
     EventFlags flags;                                // +0x18
     char pad1c[0x5c - 0x1c];
 };
@@ -2123,13 +2123,15 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
     event_rec r;
     r.p = *(const Pos4i*)pos;
     r.angle = *src;
-    int a, b, c, d;
-    a = b = c = d = 0;
     r.f14 = 0;
-    count_units(party, &a, &b, &c, &d);
     r.flags.all = 0;
-    r.flags.f.low = (a + c) & 0xff;
-    r.flags.f.high = rand() % 16;
+    {
+        int a, b, c, d;     // block scope: a, c, d share the dead argument homes
+        d = c = b = a = 0;
+        count_units(party, &a, &b, &c, &d);
+        r.flags.f.low = (a + c) & 0xff;
+        r.flags.f.high = rand() % 16;   // a, c still in scope: read before the call
+    }
     r.flags.f.mid = (p->owner == -1) ? 0xff : p->owner;
     init_event((E92*)&r);
     GD(std::vector<E92>, 0x13a60).push_back(*(E92*)&r);
