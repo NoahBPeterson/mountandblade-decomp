@@ -166,6 +166,21 @@ void rgl::strategic_entity::update_ground_cache()
     }
 }
 
+// Body the original's object saw (row owner rgl/core/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
+// so hi[1] stays in a register across the collect calls (docs/codegen.md section 16)
+inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
+{
+    for (int i = 0; i < 2; i++) {
+        float f = (p[i] - lo[i]) / cell_size[i];
+        if (f <= 0.0f)
+            out[i] = 0;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
+        else
+            out[i] = (int)f + 1;
+    }
+}
+
 // @ 0x42aa50
 void rgl::world::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
 {
@@ -173,11 +188,12 @@ void rgl::world::query_box(const float* bmin, const float* bmax, unsigned mask, 
     to_cell(bmin, lo);
     to_cell(bmax, hi);
     *count = 0;
-    for (int i = lo[0]; i <= hi[0]; i++) {
+    int2 p;
+    for (p.x = lo[0]; p.x <= hi[0]; p.x++) {
         if (lo[1] <= hi[1]) {
             int flat = 1;
-            for (int j = lo[1]; j <= hi[1]; j++)
-                cells[i][j].collect((const vector4*)bmin, (const vector4*)bmax, &flat, mask, out, count);
+            for (p.y = lo[1]; p.y <= hi[1]; p.y++)
+                cells[p.x][p.y].collect((const vector4*)bmin, (const vector4*)bmax, &flat, mask, out, count);
         }
     }
 }
