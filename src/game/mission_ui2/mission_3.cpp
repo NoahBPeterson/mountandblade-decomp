@@ -766,6 +766,9 @@ void widget_mgr::set_color(int idx, unsigned argb)
     }
 }
 
+// The colour write-back is written twice: once at the end of the else chain and once at the end of the function
+// (reached only from the type 4 arm), each in its own block. cl merges the two copies and keeps the lexically last
+// one, which the block order places right behind the type 4 arm, as in the original.
 // @ 0x48de00
 void widget_mgr::set_alpha(int idx, unsigned a)
 {
@@ -778,35 +781,44 @@ void widget_mgr::set_alpha(int idx, unsigned a)
     }
     if (OW(idx)->type() == 4) {
         OW(idx)->m108->color = (OW(idx)->m108->color & 0xffffff) | (a << 24);
-    } else if (OW(idx)->type() == 8 || OW(idx)->type() == 9) {
-        OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
-        OW(idx)->m10c->color = (OW(idx)->m10c->color & 0xffffff) | (a << 24);
-    } else if (OW(idx)->type() == 2) {
-        OW(idx)->m108->color = (OW(idx)->m108->color & 0xffffff) | (a << 24);
-        OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
-    } else if (OW(idx)->type() == 3) {
-        OW(idx)->m108->color = (OW(idx)->m108->color & 0xffffff) | (a << 24);
-        OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
-        OW(idx)->f1a8 = a << 24;
-        OW(idx)->f194 = 0xcb3c57cb;
-    } else if (OW(idx)->type() == 5 || OW(idx)->type() == 6) {
-        OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
-        OW(idx)->m10c->color = (OW(idx)->m10c->color & 0xffffff) | (a << 24);
-        if (OW(idx)->type() == 5)
-            OW(idx)->m114->color = (OW(idx)->m114->color & 0xffffff) | (a << 24);
-        unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
-        OW(idx)->set_color(&c);
-        float out[2];
-        OW(idx)->get_state(out);
-        return;
-    } else if (OW(idx)->type() == 7) {
-        ((FieldPanel*)(void*)OW(idx))->set_alpha(a);
-        return;
     } else {
+        if (OW(idx)->type() == 8 || OW(idx)->type() == 9) {
+            OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
+            OW(idx)->m10c->color = (OW(idx)->m10c->color & 0xffffff) | (a << 24);
+        } else if (OW(idx)->type() == 2) {
+            OW(idx)->m108->color = (OW(idx)->m108->color & 0xffffff) | (a << 24);
+            OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
+        } else if (OW(idx)->type() == 3) {
+            OW(idx)->m108->color = (OW(idx)->m108->color & 0xffffff) | (a << 24);
+            OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
+            OW(idx)->f1a8 = a << 24;
+            OW(idx)->f194 = 0xcb3c57cb;
+        } else if (OW(idx)->type() == 5 || OW(idx)->type() == 6) {
+            OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
+            OW(idx)->m10c->color = (OW(idx)->m10c->color & 0xffffff) | (a << 24);
+            if (OW(idx)->type() == 5)
+                OW(idx)->m114->color = (OW(idx)->m114->color & 0xffffff) | (a << 24);
+            unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
+            OW(idx)->set_color(&c);
+            float out[2];
+            OW(idx)->get_state(out);
+            return;
+        } else if (OW(idx)->type() == 7) {
+            ((FieldPanel*)(void*)OW(idx))->set_alpha(a);
+            return;
+        } else {
+            return;
+        }
+        {
+            unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
+            OW(idx)->set_color(&c);
+        }
         return;
     }
+    {
     unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
     OW(idx)->set_color(&c);
+    }
 }
 
 // @ 0x48e1a0
