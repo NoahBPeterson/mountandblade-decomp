@@ -1906,6 +1906,31 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
     }
 }
 
+// 0x4378f0 (Agent::get_dir, agent2/agent_stats.cpp owns the row): the body visible, so the direction pair passed by address does not escape
+// in Agent::can_hit (0x4406a0) and the slot_pair temporaries share its frame slot.
+inline __declspec(noinline) void Agent::get_dir(vec2* out)
+{
+    vec2 v = *(vec2*)&vel;
+    float l = (float)sqrt(v.x * v.x + v.y * v.y);
+    if (l > 0.0f) {
+        float inv = 1.0f / l;
+        v.x = inv * v.x;
+        v.y = inv * v.y;
+    } else {
+        v.x = 0.0f;
+        v.y = 1.0f;
+    }
+    if (f10 == 0 && f2c != -1 && (active != 0 || f5610 != 0)) {
+        float t = cur;
+        float c = (float)cos((double)t);
+        float s = (float)sin((double)t);
+        float nx = c * v.x - s * v.y;
+        float tt = c * v.y;
+        v.y = tt + s * v.x;
+        v.x = nx;
+    }
+    *out = v;
+}
 struct Word_ { int v; Word_(int i) : v(i) {} };   // a class-typed argument: a fastcall never passes it in a register
 // @ 0x4406a0
 int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* target)
@@ -1969,16 +1994,15 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
                 return 0;
         } else if (-0.2f < f.y * u.y + f.x * u.x)
             return 0;
-        if (not_base != 0 || !(b->anim[1].scale < 0.25f)) {
-            if (grp == 0x97) {
-                ItemRef sp = a->slot_pair_inl(0);
-                if (sp.item < 0)
-                    return 1;
-            }
-            return ((int (__fastcall*)(void*, Word_, Word_))::id_matches_dir)(this, Word_(grp), Word_(mode));   // 0x4326d0: `this` is loaded and ignored
+        if (not_base == 0 && b->anim[1].scale < 0.25f)
+            return 0;
+        if (grp == 0x97) {
+            ItemRef sp = a->slot_pair_inl(0);
+            if (sp.item < 0)
+                return 1;
         }
+        return ((int (__fastcall*)(void*, Word_, Word_))::id_matches_dir)(this, Word_(grp), Word_(mode));   // 0x4326d0: `this` is loaded and ignored
     }
-    return 0;
 }
 
 // more container instantiations
