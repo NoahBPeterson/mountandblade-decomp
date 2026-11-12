@@ -1399,8 +1399,8 @@ void ViewCtrl_s284a0::update(float dt)
     }
 
     if (snap < 5) {
+        a->dir55d8 = a->dir;        // copied through `a` itself: the scheduler then knows the stores cannot alias the loads
         const vector4& d = a->dir;
-        a->dir55d8 = d;
         float nx = -d.x;
         float ang = (float)atan2(nx, d.y);
         int n = snap + 1;
