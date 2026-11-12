@@ -690,14 +690,14 @@ void throw_stub_2514()
 // The comparator is an empty functor passed by value (one 4-byte slot).
 MB_NOINLINE void push_heap_elem(OpenItem* first, int hole, int top, OpenItem value, HeapGt pred)
 {
-    for (int i = (hole - 1) / 2; top < hole && pred(first[i], value); i = (hole - 1) / 2) {
-        first[hole] = first[i];
+    // the body of std::_Push_heap over the vector's iterator class: the final `*(f + hole) = value` through the
+    // iterator temporary is what schedules the dist load before the first pop (a raw-pointer struct copy does not)
+    std::vector<OpenItem>::iterator f(first);
+    for (int i = (hole - 1) / 2; top < hole && pred(*(f + i), value); i = (hole - 1) / 2) {
+        *(f + hole) = *(f + i);
         hole = i;
     }
-    OpenItem* d = &first[hole];
-    d->node = value.node;
-    d->cost = value.cost;
-    d->dist = value.dist;
+    *(f + hole) = value;
 }
 
 // @ 0x4b25a0
