@@ -107,69 +107,40 @@ rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent)
     return m;
 }
 
-// ==== 0x495ba0: transform the position list, the vertex list and every key frame ==================================
-// Takes a 3x4 transform (the s / f / u rows) by reference; the w lane of every rebuilt vector is whatever the
-// uninitialised local carries (the original never writes it; see the sibling rgl::mesh transform at 0x44f3c0).
-// Every sum is written in the original's evaluation order, which differs per row (0x495bdd..0x495e92: the position
-// pair's x rows add f,s then u; the other rows s,u then f, or u,f then s); cl keeps the written order here.
+// ==== 0x495ba0: rotate the position list, the vertex normals and every key frame ====================================
+// Takes a rotation frame (the s / f / u rows) by reference. Each vector goes through an inline rotation helper that
+// returns a vector4 built from three floats, so the w lane of every rebuilt vector is whatever the temporary carries
+// (the original never writes it; the out-of-line twin of the helper is rgl::matrix::rot 0x40a9c0). The vectors are
+// indexed per use (real operator[], real size() in the loop tests), as the original's reloads of the vector's first
+// pointer show (0x495bc0, 0x495c41, 0x495ce5, 0x495d80).
+// Left: in the first expansion only (pos[i].a) cl sums x as (f, u, s) and z as (u, s, f) where the original has
+// (f, s, u) and (s, u, f): an operand order decided by symbol keys.
+static inline rgl::vector4 mh_rot(const rgl::matrix& m, const rgl::vector4& p)
+{
+    return rgl::vector4(m.s.x * p.x + m.f.x * p.y + m.u.x * p.z,
+                        m.s.y * p.x + m.f.y * p.y + m.u.y * p.z,
+                        m.s.z * p.x + m.f.z * p.y + m.u.z * p.z);
+}
+
 // @ 0x495ba0
 void rgl::mesh::set_part(const rgl::matrix& mtx)
 {
     ensure_local();
-    {
-        std::vector<rgl::point20>& pos = v70;
-        for (unsigned i = 0; i < pos.size(); i++) {
-            vector4 a;
-            a.x = (mtx.f.x * pos[i].a.y + mtx.s.x * pos[i].a.x) + mtx.u.x * pos[i].a.z;
-            a.y = (mtx.s.y * pos[i].a.x + mtx.u.y * pos[i].a.z) + mtx.f.y * pos[i].a.y;
-            a.z = (mtx.s.z * pos[i].a.x + mtx.u.z * pos[i].a.z) + mtx.f.z * pos[i].a.y;
-            pos[i].a = a;
-            vector4 b;
-            b.x = (mtx.f.x * pos[i].b.y + mtx.s.x * pos[i].b.x) + mtx.u.x * pos[i].b.z;
-            b.y = (mtx.u.y * pos[i].b.z + mtx.f.y * pos[i].b.y) + mtx.s.y * pos[i].b.x;
-            b.z = (mtx.s.z * pos[i].b.x + mtx.u.z * pos[i].b.z) + mtx.f.z * pos[i].b.y;
-            pos[i].b = b;
-        }
+    for (unsigned i = 0; i < v70.size(); i++) {
+        v70[i].a = mh_rot(mtx, v70[i].a);
+        v70[i].b = mh_rot(mtx, v70[i].b);
     }
-    {
-        std::vector<rgl::vertex60>& verts = v50;
-        for (unsigned i = 0; i < verts.size(); i++) {
-            vector4* p = &verts[i].normal;
-            vector4 a;
-            a.x = (mtx.u.x * p->z + mtx.f.x * p->y) + mtx.s.x * p->x;
-            a.y = (mtx.s.y * p->x + mtx.u.y * p->z) + mtx.f.y * p->y;
-            a.z = (mtx.s.z * p->x + mtx.u.z * p->z) + mtx.f.z * p->y;
-            *p = a;
-        }
-    }
+    for (unsigned i = 0; i < v50.size(); i++)
+        v50[i].normal = mh_rot(mtx, v50[i].normal);
     for (int i = 0; i < kf.count; i++) {
-        rgl::frame_t* l = kf.frames + i;
-        {
-            std::vector<rgl::vector4>& vl = l->verts;
-            for (unsigned j = 0; j < vl.size(); j++) {
-                vector4 a;
-                a.x = (mtx.u.x * vl[j].z + mtx.f.x * vl[j].y) + mtx.s.x * vl[j].x;
-                a.y = (mtx.s.y * vl[j].x + mtx.u.y * vl[j].z) + mtx.f.y * vl[j].y;
-                a.z = (mtx.s.z * vl[j].x + mtx.u.z * vl[j].z) + mtx.f.z * vl[j].y;
-                vl[j] = a;
-            }
-        }
-        {
-            std::vector<rgl::vector4>& vl = l->norms;
-            for (unsigned j = 0; j < vl.size(); j++) {
-                vector4 a;
-                a.x = (mtx.u.x * vl[j].z + mtx.f.x * vl[j].y) + mtx.s.x * vl[j].x;
-                a.y = (mtx.s.y * vl[j].x + mtx.u.y * vl[j].z) + mtx.f.y * vl[j].y;
-                a.z = (mtx.s.z * vl[j].x + mtx.u.z * vl[j].z) + mtx.f.z * vl[j].y;
-                vl[j] = a;
-            }
-        }
+        for (unsigned j = 0; j < kf.frames[i].verts.size(); j++)
+            kf.frames[i].verts[j] = mh_rot(mtx, kf.frames[i].verts[j]);
+        for (unsigned j = 0; j < kf.frames[i].norms.size(); j++)
+            kf.frames[i].norms[j] = mh_rot(mtx, kf.frames[i].norms[j]);
     }
     slots[0].f28 = 1;
     ((rgl::mesh*)(void*)this)->compute_bounds();            // 0x419300
 }
-
-
 
 // ==== 0x495f00: set the alpha of every vertex record ===========================================================
 // The colour with its alpha lane replaced, packed again. An inline helper taking the colour by value: the copy of
