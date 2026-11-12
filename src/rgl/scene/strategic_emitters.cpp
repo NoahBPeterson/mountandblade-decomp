@@ -30,8 +30,13 @@ using namespace rgl;
 // @ 0x4219c0
 void FxElem::set_color(int c)
 {
-    for (std::vector<rgl::mesh*>::iterator it = psys.begin(); it < psys.end(); ++it)
-        (*it)->color = c;
+    // guarded do-while with the colour copied to a local inside the guard: c itself is address-taken by the second
+    // loop (set_color(const int&)), so a store through *it could alias it; the copy stays in a register across the loop
+    std::vector<rgl::mesh*>::iterator it = psys.begin();
+    if (it < psys.end()) {
+        int col = c;
+        do { (*it)->color = col; ++it; } while (it < psys.end());
+    }
     for (std::vector<rgl::lod_mesh2*>::iterator g = groups.begin(); g < groups.end(); ++g) {
         rgl::lod_mesh2* grp = *g;
         for (int i = 0; i < grp->count; ++i)
