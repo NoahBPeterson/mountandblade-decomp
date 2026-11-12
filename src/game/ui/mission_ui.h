@@ -83,8 +83,9 @@ struct MissionUi {
     // 49 slots: the original vtable 0x591c80 ends here. A 50th (+0xc4, `update_children`) exists only in the classes
     // that add it, each with its own function: UiC 0x497d10, UiD 0x498390, progress_bar 0x4e3fb0, NodeA 0x48ef40.
 
-    // six (clock index, start stamp) track pairs; the clock index selects an entry of g_ticks
-    Timer tm[6];                            // +0x08 + 0x10*i (clock index, start stamp)  0x488560..0x4886c0, 0x48ae20
+    // six (clock index, start stamp) track timers, each started on clock 0 by its inline constructor: 0x48ae20 expands
+    // the six before the name's tstring constructor (an array would be a vector-constructor call)
+    gui_timer tm0, tm1, tm2, tm3, tm4, tm5; // +0x08 + 0x10*i  0x488560..0x4886c0, 0x48ae20
     float periodA, periodB, periodC, periodD, periodE, periodF;   // +0x68..+0x7c  0x488560..0x4886c0 (default -1.0: 0x48ae20)
     float f80, f84;                         // +0x80 0x4886c0
     float f88, f8c;                         // +0x88 0x488660
@@ -128,7 +129,7 @@ struct MissionUi {
     // Seconds since track i was (re)started. Both pairs of parentheses are the original's: each parenthesised float
     // subexpression is an OPPAREN tuple, and with them the first fild's fmul is scheduled after the next timer's int64
     // stores (XyzButton::animate 0x4966e9..0x496717).
-    float elapsed(int i) const { return (((float)(g_ticks[tm[i].clock] - tm[i].start)) * 1e-5f); }
+    float elapsed(int i) const { return (((float)(g_ticks[(&tm0)[i].clock] - (&tm0)[i].start)) * 1e-5f); }
     float& dur(int i) { return (&periodA)[i]; }                 // +0x68 + 4i
     Color4& ca() { return *(Color4*)&valA; }                    // +0x90
     Color4& aa() { return *(Color4*)&valB; }                    // +0x94

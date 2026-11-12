@@ -69,7 +69,7 @@ static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; } 
 void MissionUi::set_a(float a, int b)
 {
     periodA = a;
-    restart_inl(tm[0]);
+    restart_inl(tm0);
     valA = b;
     srcA = color14c;
     c0 = 1;
@@ -79,7 +79,7 @@ void MissionUi::set_a(float a, int b)
 void MissionUi::set_b(float a, int b)
 {
     periodB = a;
-    restart_inl(tm[1]);
+    restart_inl(tm1);
     valB = b;
     srcB = color14c;
     c1 = 1;
@@ -89,7 +89,7 @@ void MissionUi::set_b(float a, int b)
 void MissionUi::set_c(float a, int b)
 {
     periodC = a;
-    restart_inl(tm[2]);
+    restart_inl(tm2);
     valC = b;
     srcC = color150;
     c2 = 1;
@@ -99,7 +99,7 @@ void MissionUi::set_c(float a, int b)
 void MissionUi::set_d(float a, int b)
 {
     periodD = a;
-    restart_inl(tm[3]);
+    restart_inl(tm3);
     valD = b;
     srcD = color150;
     c3 = 1;
@@ -109,7 +109,7 @@ void MissionUi::set_d(float a, int b)
 void MissionUi::set_e(float a, float* p)
 {
     periodE = a;
-    restart_inl(tm[4]);
+    restart_inl(tm4);
     f88 = p[0];
     f8c = p[1];
     a8 = fD8;
@@ -121,7 +121,7 @@ void MissionUi::set_e(float a, float* p)
 void MissionUi::set_f(float a, float* p)
 {
     periodF = a;
-    restart_inl(tm[5]);
+    restart_inl(tm5);
     f80 = p[0];
     f84 = p[1];
     a0 = fE0;
@@ -1546,55 +1546,56 @@ void TimerList::update(int flag)
 }
 
 
+// a two-float temporary built from const float& (each lane goes through a stack slot: 0x48ae20)
+struct UiPt { float x, y; UiPt(const float& a, const float& b) : x(a), y(b) {} };
 // @ 0x48ae20
 MissionUi::MissionUi()
 {
-    float a = 0.005f;
-    float b = 0.024f;
-    float c = 0.0f;
-    float d = 1.0f;
-
-    tm[0].clock = 0; tm[0].start = g_ticks[0];
-    tm[1].clock = 0; tm[1].start = g_ticks[0];
-    tm[2].clock = 0; tm[2].start = g_ticks[0];
-    tm[3].clock = 0; tm[3].start = g_ticks[0];
-    tm[4].clock = 0; tm[4].start = g_ticks[0];
-    tm[5].clock = 0; tm[5].start = g_ticks[0];
-    // name's tstring constructor runs implicitly (0x42bbd0)
-    fE0 = 0; fE4 = 0; fE8 = 0; fEC = 0;
-    p154 = 0;
     f100 = 1;
+    *(UiPt*)&fE0 = UiPt(0.0f, 0.0f);
+    *(UiPt*)&fE8 = UiPt(0.0f, 0.0f);
+    p154 = 0;
     f104 = 0;
     for (int i = 0; i < 5; i++) {
         tracks[i] = 0;
         b11c[i] = 0;
     }
+    *(UiPt*)&f138 = UiPt(0.005f, 0.0f);
+    *(UiPt*)&f140 = UiPt(0.024f, 0.024f);
     color14c = 0xff000000;
-    f138 = a;
     color150 = 0xff000000;
-    f140 = b;
-    f13c = c;
     b11c[0] = 1;
-    f164 = 1;
     b11c[2] = 1;
-    screen[3] = c;
-    f144 = b;
-    screen[2] = c;
-    periodA = periodB = periodC = periodD = periodE = periodF = -1.0f;
-    screen[0] = c;
-    fD8 = d;
+    f164 = 1;
+    *(UiPt*)&screen[2] = UiPt(0.0f, 0.0f);
+    f148 = 0x11;
+    f170 = 1.0f;
+    *(UiPt*)&screen[0] = UiPt(0.0f, 0.0f);
+    periodA = -1.0f;
+    periodB = -1.0f;
+    periodC = -1.0f;
+    periodD = -1.0f;
+    periodE = -1.0f;
+    periodF = -1.0f;
+    *(UiPt*)&fD8 = UiPt(1.0f, 1.0f);
     f124 = 0;
-    fC8 = fCC = fD0 = fD4 = 0;
+    fC8 = 0;
+    fCC = 0;
+    fD0 = 0;
+    fD4 = 0;
     f158 = 0;
-    v15c = f160 = 0;
-    v168 = f16c = 0;
+    v15c = 0;
+    f160 = 0;
+    *(int*)&v168 = 0;
+    *(int*)&f16c = 0;
     b121 = 0;
     b122 = 0;
-    c0 = c1 = c2 = c3 = c4 = c5 = 0;
-    f148 = 0x11;
-    f170 = d;
-    screen[1] = c;
-    fDC = d;
+    c0 = 0;
+    c1 = 0;
+    c2 = 0;
+    c3 = 0;
+    c4 = 0;
+    c5 = 0;
 }
 
 // @ 0x48b090

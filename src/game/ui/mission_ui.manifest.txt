@@ -113,3 +113,4 @@
 ../src/game/ui/mission_ui.cpp  ?sl_pick_chain@GameData@@QAEHHD@Z  0048a080  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?count_in@GameData@@QAEHHHD@Z  00489c50  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?template_count@GameData@@QAEHHHM@Z  0048a150  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ??0MissionUi@@QAE@XZ  0048ae20  /O2 /MT /Gy /TP
