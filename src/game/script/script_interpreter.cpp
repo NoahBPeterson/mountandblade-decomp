@@ -4561,7 +4561,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
 
     // ---- factions and quests -----------------------------------------------------------------------------------
     case op::set_relation:
-    { int si_0; int si_1; float sf_0; float sf_1; float sf_2;
+    { float sf_0; float sf_1; float sf_2;
         // (set_relation, <faction_id>, <faction_id>, <value>): value -100..100, symmetric; the player is told when
         // one side is faction 0
         if (check_faction((int)params[0]) && check_faction((int)params[1])) {
@@ -4574,6 +4574,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int new_rel = round_float(faction((int)params[0])->relations[(int)params[1]] * 100.0f);
             if (params[0] == 0 || params[1] == 0) {
                 if (old_rel < new_rel) {
+                    int si_0, si_1;
                     si_0 = (int)params[1], si_1 = (int)params[0];
                     {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
                         tstring key("ui_your_relations_with_value_has_improved_from_number_to_number");
@@ -4581,6 +4582,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     }
                     { tstring msg(buf); g_gui.push(msg, 0xff6fff28); }
                 } else if (old_rel > new_rel) {
+                    int si_0, si_1;
                     si_0 = (int)params[1], si_1 = (int)params[0];
                     {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
                         tstring key("ui_your_relations_with_value_has_deteriorated_from_number_to_number");
@@ -5163,23 +5165,25 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* game = (GameX*)g_game;
             PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
-            int v = 0;
             if (stacks - ((PartyV*)m->get((int)params[1]))->first_flagged() >= 1) {
                 int p = (int)params[1];
-                v = ((PartyV*)m->get(p))->max_members() - party(p)->sum_head();
-            }
-            SET_LV((__int64)v);
+                int h = party(p)->sum_head();
+                SET_LV((__int64)(((PartyV*)m->get(p))->max_members() - h));
+            } else
+                SET_LV(0);
         }
         break;
     case op::party_get_free_prisoners_capacity:
         if (check_party((int)params[1])) {
+            GameX* game = (GameX*)g_game;
+            PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
-            if (stacks - party((int)params[1])->count_tail() < 1)
+            if (stacks - ((PartyV*)m->get((int)params[1]))->count_tail() >= 1) {
+                int p = (int)params[1];
+                int h = party(p)->sum_flagged();
+                SET_LV((__int64)(((PartyV*)m->get(p))->max_prisoners() - h));
+            } else
                 SET_LV(0);
-            else {
-                int members = party((int)params[1])->sum_flagged();
-                SET_LV((__int64)(party((int)params[1])->max_prisoners() - members));
-            }
         }
         break;
     case op::party_set_ai_initiative:
