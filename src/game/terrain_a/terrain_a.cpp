@@ -667,43 +667,33 @@ void Terrain::fill_desc_none(TerrainDesc* d)
 // @ 0x4658c0
 void Terrain::parse(const tstring& s)
 {
-    int start = 0;
     bits[0] = 0; bits[1] = 0; bits[2] = 0; bits[3] = 0; bits[4] = 0; bits[5] = 0;
     int end = s.len;
     int count = 0;
-    int lo;
     tstring t;
-    int base = 0;
-    if (s.buf[0] == '0' && (s.buf[1] == 'x' || s.buf[1] == 'X')) {
-        base = 2;
+    int start = 0;
+    if (s.buf[0] == '0' && (s.buf[1] == 'x' || s.buf[1] == 'X'))
         start = 2;
-    }
-    if (end > start) {
-        do {
-            if (count >= 6) break;
-            lo = end - 8;
-            int b = lo;
-            if (b < start) b = start;
-            t = s.substr(b, end);
-            int val = 0;
-            int i = 0;
-            if (0 < t.len) {
-                do {
-                    unsigned c = t.buf[i];
-                    int d;
-                    val = val * 16;
-                    d = 0;
-                    if (c >= '0' && c <= '9') d = c - '0';
-                    else if (c >= 'a' && c <= 'f') d = c - 87;
-                    else if (c >= 'A' && c <= 'F') d = c - 55;
-                    val += d;
-                    i++;
-                } while (i < t.len);
-            }
-            bits[count] = val;
-            count++;
-            end = lo;
-        } while (lo > start);
+    // eight hex digits per word, from the end of the string backwards
+    while (end > start) {
+        if (count >= 6) break;
+        int b = end - 8;
+        if (b < start) b = start;
+        t = s.substr(b, end);
+        int val = 0;
+        for (int i = 0; i < t.len; i++) {
+            unsigned c = t.buf[i];
+            int d;
+            val = val * 16;
+            d = 0;
+            if (c >= '0' && c <= '9') d = c - '0';
+            else if (c >= 'a' && c <= 'f') d = c - 87;
+            else if (c >= 'A' && c <= 'F') d = c - 55;
+            val += d;
+        }
+        bits[count] = val;
+        count++;
+        end -= 8;
     }
 }
 
