@@ -509,7 +509,7 @@ void Terrain::spawn_bodies(SpawnSet* r)
 struct MeshPush : std::vector<rgl::mesh*> {
     __forceinline void ins(rgl::mesh** where, size_t n, rgl::mesh* const& v)     // 0x410610
     { ((IntVecPub*)this)->_Insert_n(std::vector<int>::iterator((int*)where), n, *(const int*)&v); }
-    void push(rgl::mesh* const& x)
+    void push(rgl::mesh* x)                  // by value: the copy is what goes to _Insert_n by address (m stays in esi)
     {
         if (size() < capacity()) {
             *_Mylast = x;
@@ -650,6 +650,8 @@ tmesh* tmesh::clone()
     return c;
 }
 
+// the cell counts are clamped through a reference (each count is stored, then re-read for its compare, as the original)
+static inline void mg_cap(int& v, int m) { if (v > m) v = m; }
 // @ 0x47a460
 void Terrain::make_grid()
 {
@@ -665,21 +667,23 @@ void Terrain::make_grid()
     if (g_options.i34 >= 10) {
         n_inner = (int)ceil(wx * 0.05f);
         n_outer = (int)ceil(wy * 0.05f);
-        if (n_inner > 0x30)
-            n_inner = 0x30;
-        if (n_outer > 0x30)
-            n_outer = 0x30;
+        mg_cap(n_inner, 0x30);
+        mg_cap(n_outer, 0x30);
         for (int x = 0; x < n_outer; x++) {
             for (int y = 0; y < n_inner; y++) {
                 gridA[y][x] = world->create_entity(9);
                 rgl::mesh* m = new rgl::mesh;
-                if (g_use_shaders != 0 && g_options.i7c == 2)
-                    m->res = g_resmgr.get_material(rs(tstring("grass")));
-                else
-                    m->res = g_resmgr.get_material(rs(tstring("grass_no_shadow")));
+                if (g_use_shaders != 0 && g_options.i7c == 2) {
+                    tstring s("grass");
+                    m->res = g_resmgr.get_material(rs(s));
+                } else {
+                    tstring s("grass_no_shadow");
+                    m->res = g_resmgr.get_material(rs(s));
+                }
                 m->flags |= 0x10000000;
-                ((MeshPush*)&gridA[y][x]->meshes)->push(m);
-                gridA[y][x]->recalc();
+                rgl::entity* e = gridA[y][x];
+                ((MeshPush*)&e->meshes)->push(m);
+                e->recalc();
             }
         }
         for (int i = 0; i < list_c.count; i++) {
