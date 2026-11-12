@@ -2089,3 +2089,13 @@ Key numbering (third batch, same night)
   `int k = idx; if (k == -1) k = ...;`, not `idx = ...`.
 - Literal-first float compares (`1.0f < x`) give `fld k; fcomp x`; `fld x; fcomp k` needs `x > k`
   (Agent::pick_attack_dir ed845bba).
+- N identical compares where only the first loads into a register and the row address is recomputed after a call:
+  cl's own full unroll of a constant-count `for (k = 0; k < N; k++)`, not hand-written ifs (GameData::count_in 5d86811f).
+- A constant stored as an immediate where ours colours it: in IL order its first use sits where every register is
+  live; move that statement earlier, usually into field order (Blow::init 526103e9).
+- `push A; jmp; push B; push x; call`: one call per arm, merged with the common pushes hoisted. A ternary whose two
+  constants differ by one bit folds into arithmetic instead (music_player::play 135c8d53).
+- `lea r,[ivA+ivB+BASE]` at an inner loop head with the outer offsets as separate induction values: the element is
+  indexed with the full expression in the innermost loop, not through a pointer local (fill_mission_grid 3647d494).
+- An early `return v` in one arm before a switch gets its own `ret` after the jump table; if the original's arm
+  reaches the shared return, write `goto done` (ItemRef::stat_1e8 10c13356).
