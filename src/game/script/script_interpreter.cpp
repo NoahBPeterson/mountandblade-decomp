@@ -3236,6 +3236,13 @@ int Agent::clamped_team() const
 // leader at +4. agent_set_team keeps this pointer (lea edi,[..+0x527c]) and reads [edi+4] into a register for the test.
 struct TeamHead { int f0; int leader; };
 #define TEAM_HEAD(m, t) ((TeamHead*)((char*)&(m)->teams[t] - 4))
+// Troop::is_hero 0x435130 (agent/agent.cpp): store_num_regular_prisoners keeps params[1] in ebx through its loop (push ebx
+// after the call), which leaves no register for its counters: they live in the frame as in the original
+bool Troop::is_hero()
+{
+    if (flags30 & 0x10) return true;
+    return false;
+}
 #define game() ((GameX*)g_game)
 #define CS(s) (((const string_view_*)(s))->get())
 #define faction(id) (&((GameX*)g_game)->factions[id])
@@ -6775,9 +6782,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::shuffle_range:
         // (shuffle_range, <reg_no>, <reg_no>): registers [first, last); the swapped-in value keeps only 32 bits
         if (check_register((int)params[0]) && check_register((int)params[1])) {
-            int first = (int)params[0];
-            for (int k = first; (__int64)k < params[1]; ++k) {
-                int n = (int)params[1] - first;
+            for (int k = (int)params[0]; (__int64)k < params[1]; ++k) {
+                int n = (int)params[1] - (int)params[0];
                 int j = rand_below(&n) + (int)params[0];
                 int v = (int)g_script.reg[k];
                 g_script.reg[k] = g_script.reg[j];
