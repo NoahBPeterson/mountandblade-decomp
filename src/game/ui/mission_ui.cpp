@@ -545,19 +545,29 @@ int ItemRef::check_slots(int n)
     return i;
 }
 
+// The selection order: higher item id first, ties by the modifier's sort weight (the modifier is the top byte of the
+// m4 word read as (int)m4 >> 24, a movsx of byte 7 anchored at +4).
+static inline bool sel_better(const ItemRef& a, const ItemRef& b)
+{
+    if (a.item > b.item)
+        return true;
+    if (a.item < b.item)
+        return false;
+    return g_sort_val[((int)a.m4 >> 24) * 5].v > g_sort_val[((int)b.m4 >> 24) * 5].v;
+}
 // @ 0x489090
+// Descending selection sort of n item references (cl unrolls the inner scan by 4, as in the original).
 void ItemRef::sort_sel(int n)
 {
     for (int j = 0; j < n - 1; j++) {
         int best = j;
-        for (int k = j + 1; n > k; k++) {
-            if (this[k].item > this[best].item ||
-                (this[k].item == this[best].item && g_sort_val[this[k].b.mod * 5].v > g_sort_val[this[best].b.mod * 5].v))
+        for (int k = j + 1; k < n; k++) {
+            if (sel_better(this[k], this[best]))
                 best = k;
         }
-        ItemRef tmp = this[best];
-        this[best] = this[j];
-        this[j] = tmp;
+        ItemRef tmp = this[j];
+        this[j] = this[best];
+        this[best] = tmp;
     }
 }
 // @ 0x4892a0
