@@ -213,9 +213,10 @@ static inline const char* name_of_1(int id)
 {
     char* base = *(char**)((char*)g_game + 0x13a00);
     char* rec = base + id * 0x508;
-    const tstring* t = g_strtable.find((const tstring*)(rec + 0x20));
-    if (t == 0)
-        t = (const tstring*)rec;
+    const tstring* t = (const tstring*)rec;
+    const tstring* q = g_strtable.find((const tstring*)(rec + 0x20));
+    if (q != 0)
+        t = q;
     return t->c_str();
 }
 
@@ -232,7 +233,8 @@ static inline const char* name_of_2(int id)
     return t->c_str();
 }
 
-static inline const char* name_of_3(int id)
+// expanded at both sort_list sites in the original; plain inline becomes a call once the unit's budget is spent
+__forceinline const char* name_of_3(int id)
 {
     PartyMgr* mgr = &g_game->parties;
     int v = mgr->lookup(id);
