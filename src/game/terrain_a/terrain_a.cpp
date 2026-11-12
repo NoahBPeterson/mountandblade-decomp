@@ -1133,6 +1133,18 @@ rgl::vector4 Terrain::sun_light(const float* dir, const float* scale)
     return r;
 }
 
+// create_chunk_entities' chunk count along one edge: an inline helper writing through a reference (the store through
+// it is not disambiguated from `block`, which the original reloads before the remainder's second idiv).
+static inline void chunk_count(Terrain* t, int& n, int size)
+{
+    n = size / t->block;
+    if (size % t->block > t->block / 2) n++;
+    int v = n;
+    if (v < 1) v = 1;
+    else if (v >= 5) v = 4;
+    n = v;
+}
+
 // @ 0x466fa0
 void Terrain::create_chunk_entities()
 {
@@ -1146,24 +1158,11 @@ void Terrain::create_chunk_entities()
             p++;
         }
     }
-    int ww = w;
-    nx = ww / block;
-    if (block / 2 < ww % block) nx++;
-    int t = nx;
-    if (t < 1) t = 1;
-    else if (t >= 5) t = 4;
-    nx = t;
-    int hh = h;
-    ny = hh / block;
-    if (block / 2 < hh % block) ny++;
-    t = ny;
-    if (t < 1) t = 1;
-    else if (t >= 5) t = 4;
-    ny = t;
+    chunk_count(this, nx, w);
+    chunk_count(this, ny, h);
     for (int j = 0; j < ny; j++) {
         for (int i = 0; i < nx; i++) {
-            TEntity** slot = &ents[i * 5 + j];
-            *slot = (TEntity*)world->create_entity(9);   // 0x428440
+            ents[i * 5 + j] = (TEntity*)world->create_entity(9);   // 0x428440
             int ch = block;
             int cw = ch;
             if (i == nx - 1) {
@@ -1171,14 +1170,14 @@ void Terrain::create_chunk_entities()
                 if (!(ch / 2 < cw % ch)) { cw = cw % block + block; } else { cw = cw % ch; }
             }
             if (j == ny - 1) {
-                if (block / 2 < h % block) ch = h % ch;
+                if (h % block > block / 2) ch = h % ch;
                 else ch = h % block + block;
             }
             int zero = 0;
-            (*slot)->s6(&zero);
+            ents[i * 5 + j]->s6(&zero);
             terrain_cell& cell = cells[block * (i * 251 + j) + (cw / 2) * 251 + ch / 2];
-            (*slot)->pos = *(rgl::vector4*)&cell;
-            (*slot)->pos.z += 2.0f;
+            ents[i * 5 + j]->pos = *(rgl::vector4*)&cell;
+            ents[i * 5 + j]->pos.z += 2.0f;
         }
     }
 }
