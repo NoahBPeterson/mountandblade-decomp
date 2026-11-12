@@ -73,14 +73,12 @@ void MissionScreen::fill_mission_grid()
     }
     for (int k = 0; k < g_mission_ctx.rows; k++) {
         for (int j = 0; j < g_mission_ctx.depth; j++) {
-            int* cell = (int*)((char*)g_mission_ctx.grid + k * 0x38 + j * 0xc);
             for (int i = 0; i < g_mission_ctx.cols; i++) {
-                Troop* u = &g_game->troops[*cell];
                 float v[2] = { 0.1f, y };
+                Troop* u = &g_game->troops[g_mission_ctx.grid[k * 14 + j * 3 + i]];
                 const tstring* txt = g_strtable.find(&u->key);
                 if (!txt)
                     txt = (const tstring*)u;
-                cell++;
                 vt(overlay)->d43((void*)txt, v);
                 y -= 0.02f;
             }
