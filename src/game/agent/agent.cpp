@@ -1121,6 +1121,9 @@ void rgl::cell_grid::walk(const float* a, const float* b, int (*cells)[2], int* 
     }
 }
 
+// max by value over const references (the shape of the engine's own helper: std::max returns a reference and leaves
+// stack temporaries, the windows.h macro tests v > 0)
+static inline int max_of(const int& a, const int& b) { return a < b ? b : a; }
 // @ 0x437510
 void ItemRef::reduce(int n)
 {
@@ -1132,9 +1135,9 @@ void ItemRef::reduce(int n)
                 b.amount = 0;
                 return;
             }
-            unsigned v = (m4 & 0xff) - n;
+            int v = (m4 & 0xff) - n;
             b.amount = 0;
-            m4 = m4 | (((int)v < 0) - 1 & v);
+            m4 |= max_of(v, 0);
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
             unsigned v = stat_1e8();
             *(short*)&m4 = 0;
