@@ -283,11 +283,7 @@ void Font::load(const char* filename)
 
     font_details fd;                                // staged glyph record: its ctor zeroes it once, before the loop
 
-    TiXmlElement* details = rootHandle.FirstChild("FontDetails").FirstChild().Element();
-    if (!details)
-        return;
-
-    for (TiXmlElement* e = details; e; e = e->NextSiblingElement()) {
+    for (TiXmlElement* e = rootHandle.FirstChild("FontDetails").FirstChild().Element(); e; e = e->NextSiblingElement()) {
         int code = 0;
         if (e->QueryIntAttribute("code", &code) != 0)
             continue;
