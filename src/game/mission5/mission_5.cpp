@@ -903,7 +903,7 @@ void MissionBlocker::frame_update(float dt)
             Agent_s261e0* a = page_agent_s261e0(g_mission_s261e0, id);
             if (a->f14 == 1 && a->f10 == 0 && ((AgentX*)page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->local_id))->is_enemy((Agent const*)a)) {
                 vector4 d = *(vector4*)&a->px - *(vector4*)&page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->local_id)->px;
-                float dist = (float)sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
+                float dist = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x);   // this term order gives the original x87 schedule (x*x in place, + z*z, + y*y)
                 if (dist < best)
                     best = dist;
             }
