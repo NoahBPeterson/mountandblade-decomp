@@ -1417,9 +1417,11 @@ void FactionFile::read_file(stream_base& s, int count)
 }
 
 typedef std::vector<tstring>::iterator rv_it;
-static inline ptr_tag rv_cat(rv_it, tstring*) { ptr_tag c; return c; }
-static inline tstring* rv_uninit(rv_it l, rv_it f, tstring* d, tstring_alloc& al) { return uninit_copy_str(&*f, &*l, d, al, rv_cat(l, d)); }
-static inline tstring* rv_ucopy(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return rv_uninit(l, f, d, al); }
+// VC7.1's chain: _Ucopy -> _Uninitialized_copy (iterators by value) -> _Uninit_copy(_ITER_BASE, .., _Ptr_cat(_First, _Dest)),
+// _Ptr_cat taking both by reference (the dead stores of f and of the destination pointer)
+static inline ptr_tag rv_cat(rv_it&, tstring*&) { ptr_tag c; return c; }
+static inline tstring* rv_uninit(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return uninit_copy_str(f._Myptr, l._Myptr, d, al, rv_cat(f, d)); }
+static inline tstring* rv_ucopy(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return rv_uninit(f, l, d, al); }
 // @ 0x524bc0
 void tstring_vec::reserve(unsigned n)
 {
