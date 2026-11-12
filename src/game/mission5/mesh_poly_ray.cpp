@@ -339,22 +339,27 @@ int Mesh_s2e960::vertex_index(int index, const rgl::matrix& m)
 // @ 0x52eca0
 int Mesh_s2e960::edge_index(int index, const rgl::matrix& m)
 {
-    for (unsigned i = 0; i < (unsigned)edges2.size(); i++) {
-        if (edges2.first[i].index == index)
-            return (int)i;
+    // same shape as vertex_index: real std::vector size()/operator[], the dead `i >= 0` test, and the fresh
+    // edge's constants set before its endpoints are looked up (a constructor in the original, presumably)
+    for (int i = 0; (unsigned)i < (*(std::vector<medge_s2e960>*)((char*)this + 0x68)).size(); i++) {
+        if ((*(std::vector<medge_s2e960>*)((char*)this + 0x68))[i].index == index) {
+            if (i >= 0)
+                return i;
+            break;
+        }
     }
-    int n = edges2.size();
+    int n = (*(std::vector<medge_s2e960>*)((char*)this + 0x68)).size();
     medge_s2e960 e;
-    e.v0 = vertex_index(edges.first[index].v0, m);
-    e.v1 = vertex_index(edges.first[index].v1, m);
     e.unk08 = -10000;
     e.unk0c = -10000;
     e.unk10 = 0;
     e.flag = 0;
     e.t0 = 1.0f;
     e.t1 = 1.0f;
+    e.v0 = vertex_index((*(std::vector<medge_s2e960>*)((char*)this + 0x38))[index].v0, m);
+    e.v1 = vertex_index((*(std::vector<medge_s2e960>*)((char*)this + 0x38))[index].v1, m);
     e.index = index;
-    edges2.push_back(e);
+    (*(std::vector<medge_s2e960>*)((char*)this + 0x68)).push_back(e);
     return n;
 }
 
