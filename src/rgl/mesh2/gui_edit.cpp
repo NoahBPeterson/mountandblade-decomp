@@ -884,29 +884,45 @@ SoundMgr::~SoundMgr()
 }
 SoundMgr g_sound_mgr;                                       // 0x5aa128 (.bss; the compiler registers ~SoundMgr with atexit)
 
+// The head mesh as place() reads it: the points (+0x70) and each key frame's vertices are real std::vectors (size()
+// tests _Myfirst for null, operator[] is _Myfirst + i, as the original's loops).
+struct MorphFrame {             // 0x20: a morph key frame
+    std::vector<vector4> v;     // +0 vertices
+    std::vector<vector4> n;     // +0x10 normals
+};
+struct MorphTrack {             // rgl::keyframes (12 bytes)
+    MorphFrame* frames;
+    int* times;
+    int count;
+};
+struct MorphMesh {
+    char pad0[0x70];
+    std::vector<PPoint> pts;    // +0x70 (rest, current)
+    char pad80[0xa4 - 0x80];
+    MorphTrack kf;              // +0xa4
+};
+
 // @ 0x4c6b30
 // Morph-target pose: clears the target's per-point offsets, finds the key frame nearest to the record's key time and
 // stores (frame vertex - rest vertex) for every point.
 void Skin::place(int e)
 {
-    PMesh* m = *((POwner*)head)->mesh;
-    vector4* vecs = (vector4*)face_keys[e].delta;
-    for (unsigned i = 0; i < m->npts(); i++) {
+    MorphMesh* m = *(MorphMesh**)((POwner*)head)->mesh;
+    for (unsigned i = 0; i < m->pts.size(); i++) {
         vector4 z(0.0f, 0.0f, 0.0f);
-        vecs[i] = z;
+        ((vector4*)face_keys[e].delta)[i] = z;
     }
     float t = (float)face_keys[e].f20;
     int lo, hi;
     float frac;
     ((rgl::keyframes*)&m->kf)->find(&lo, &hi, &frac, &t);
-    if (!(frac < 0.5f))
-        lo = hi;
-    if (lo >= 0 && lo < m->kf.count) {
-        for (unsigned i = 0; i < m->npts(); i++) {
-            const vector4& f = m->kf.frames[lo].v[i];
+    int k = frac < 0.5f ? lo : hi;
+    if (k >= 0 && k < m->kf.count) {
+        for (unsigned i = 0; i < m->pts.size(); i++) {
+            const vector4& f = m->kf.frames[k].v[i];
             const vector4& r = m->pts[i].a;
             vector4 d(f.x - r.x, f.y - r.y, f.z - r.z);
-            vecs[i] = d;
+            ((vector4*)face_keys[e].delta)[i] = d;
         }
     }
 }
