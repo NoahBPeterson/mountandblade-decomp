@@ -178,7 +178,7 @@ def main():
 
     orig = Original()
     coff_cache, const_cache = {}, {}
-    results, ok = {}, 0
+    results, ok, seen_va, ok_va = {}, 0, set(), set()
     func_vas = {}       # (source, flags) -> {function symbol: original address}, to place the $L label rows
     for src, sym, va, flags in rows:
         if not sym.startswith("$L"):
@@ -222,14 +222,20 @@ def main():
         if asm:
             status = "ASM transcription (%s), not decompiled: move the row to partial.txt" % asm
         results["%08x" % va] = {"src": src, "sym": sym, "status": status}
+        seen_va.add(va)
         if status == "MATCH":
             ok += 1
+            ok_va.add(va)
             if a.v:
                 print("MATCH  %-40s %08x" % (sym[:40], va))
         else:
             print("%-6s %-40s %08x  %s" % (status.split()[0], sym[:40], va, status))
     json.dump(results, open(res_path, "w"))
-    print("\n%d / %d functions byte-exact (%d sources compiled)" % (ok, len(rows), len(keys)))
+    # Rows, not functions: a function can be listed by more than one manifest (the old match/slices copy and its
+    # migrated src/ module both list it), so the row count over-counts; the distinct-address line is the function count.
+    print("\n%d / %d manifest rows byte-exact (%d sources compiled)" % (ok, len(rows), len(keys)))
+    print("%d / %d distinct addresses byte-exact (%d rows list an address another row already lists)"
+          % (len(ok_va), len(seen_va), len(rows) - len(seen_va)))
     return 0 if ok == len(rows) else 1
 
 
