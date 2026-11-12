@@ -51,10 +51,33 @@ void Animator::randomise()
     skin_vec[cur].relax(-1, weights);
 }
 
+// 0x432510 clamp_index: the canonical definition is in rgl/xmlcfg/game_util.cpp; this unit saw the body too (refresh
+// packs flags / zero into slots shared with later locals, which cl only does when it knows the callee keeps no address)
+__declspec(noinline) inline int __cdecl clamp_index(const int* v, const int* lo, const int* hi)
+{
+    if (*v < *lo) return *lo;
+    if (*v >= *hi) return *hi - 1;
+    return *v;
+}
+
+// the face parameters as one inline setter with by-value arguments: every slider value is read before the first store
+// (both floats travel on the x87 stack), and the skin row is looked up after the stores
+static inline void anim_set_face(Animator& a, int set, int item, int material, int beard, float scale, float time)
+{
+    a.item = item;
+    a.scale = scale;
+    a.set = set;
+    a.time = time;
+    a.material = material;
+    int r = beard % a.skin_vec[a.cur].n_hair_tex;
+    a.variant = r;
+    a.f10 = r;
+}
+
 // @ 0x4eb3c0
 void FaceGen::refresh()
 {
-    int n = g_anim.skin_vec._Myfirst[skin].n_face_keys - 1;
+    int n = g_anim.skin_vec[skin].n_face_keys - 1;
     for (int i = 0; i < n; i++)
         g_anim.weights[i] = deform_rows[i]->get168();
     f360 = sl_age->get168();
@@ -63,42 +86,29 @@ void FaceGen::refresh()
     int flags = *(int*)(g_game->chars_c + w14 * 0x508 + 0x30) & 0xf;
     int zero = 0;
     g_anim.cur = clamp_index(&flags, &zero, &g_anim.char_count);
-    g_anim.time = f364;
-    g_anim.scale = f360;
-    g_anim.material = f35c;
-    g_anim.set = f350 - 1;
-    g_anim.item = f354 - 1;
-    int r = f358 % g_anim.skin_vec._Myfirst[g_anim.cur].n_hair_tex;
-    g_anim.variant = r;
-    g_anim.f10 = r;
-    void *a, *b, *c;
-    g_anim.collect(g_module_settings.limit_hair_colors != 0, (rgl::lod_mesh**)&a, (rgl::lod_mesh**)&b, (rgl::lod_mesh**)&c);
-    void* p;
-    p = a;
-    ((std::vector<named_object*>*)&ent->lods)->push_back((named_object* const&)p);
-    p = b;
-    if (p)
-        ((std::vector<named_object*>*)&ent->lods)->push_back((named_object* const&)p);
-    p = c;
-    if (p)
-        ((std::vector<named_object*>*)&ent->lods)->push_back((named_object* const&)p);
+    anim_set_face(g_anim, f350 - 1, f354 - 1, f35c, f358, f360, f364);
+    rgl::lod_mesh *a, *b, *c;
+    g_anim.collect(g_module_settings.limit_hair_colors != 0, &a, &b, &c);
+    ((std::vector<named_object*>*)&ent->lods)->push_back((named_object*)a);
+    if (b)
+        ((std::vector<named_object*>*)&ent->lods)->push_back((named_object*)b);
+    if (c)
+        ((std::vector<named_object*>*)&ent->lods)->push_back((named_object*)c);
     g_anim.pack_state(&state);
-    char* kp = keys[0] + 16;
+    char buf[2];                                         // one hex digit and its terminator
     for (int i = 0; i < 4; i++) {
         unsigned __int64 v = ((unsigned __int64*)&state)[i];
         for (int j = 15; j >= 0; j--) {
-            char buf[4];
             _itoa((int)(v & 0xf), buf, 16);
-            kp[j - 16] = buf[0];
+            keys[i][j] = buf[0];
             v >>= 4;
         }
-        *kp = 0;
-        kp += 0x28;
+        keys[i][16] = 0;
     }
     if (cam_btn) {
-        char buf[512];
-        sprintf(buf, "k=%s%s%s%s", keys[0], keys[1], keys[2], keys[3]);
-        tstring text(buf);
+        char line[512];
+        sprintf(line, "k=%s%s%s%s", keys[0], keys[1], keys[2], keys[3]);
+        tstring text(line);
         vector2 pos;
         cam_btn->set_text((float*)&pos, &(text));
     }
