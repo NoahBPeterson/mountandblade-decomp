@@ -192,6 +192,12 @@ def call_conv(name):
     return {"A": "cdecl", "E": "thiscall", "G": "stdcall", "I": "fastcall"}.get(cc)
 
 
+def _params(name):
+    """The mangled return type + parameter list after the calling-convention letter, or None."""
+    m = re.match(r"\?[^@?]+(?:@[^@]+)*@@(?:[YZSKC][A-Z]|[AEIMQU][A-Z][A-Z])(.*)$", name)
+    return m[1] if m else None
+
+
 def conv_mismatches(aliases):
     """Aliases whose two names pass arguments differently: a cdecl caller of a thiscall definition (or stdcall /
     cdecl) hands the callee its arguments in the wrong places (read_psys_rec -> psys_record::read wrote floats through
@@ -200,7 +206,11 @@ def conv_mismatches(aliases):
     out = {}
     for a, t in aliases.items():
         ca, ct = call_conv(a), call_conv(t)
-        if ca and ct and ca != ct and {ca, ct} != {"thiscall", "fastcall"} and not (a.endswith("XZ") and t.endswith("XZ")):
+        # a thiscall caller of a stdcall body with the same parameter list passes the same stack (the callee pops it
+        # and ignores ecx): Mission::init_placed -> ::init_placed 0x435860, whose original call sites load ecx
+        same_stack = {ca, ct} == {"thiscall", "stdcall"} and _params(a) is not None and _params(a) == _params(t)
+        if ca and ct and ca != ct and {ca, ct} != {"thiscall", "fastcall"} and not same_stack \
+                and not (a.endswith("XZ") and t.endswith("XZ")):
             out[a] = "%s -> %s %s" % (ca, ct, t)
     return out
 
