@@ -519,40 +519,24 @@ void FieldPanel::set_alpha(unsigned a)
     mirror()->tracks[2]->color = (tracks[2]->color & 0xffffff) | u;
 }
 
+// The pair temporaries of update(): one per call, built from const float& (the view's f0/f4 are read as addresses, f4's
+// left unfolded as `add eax,0xf4; mov eax,[eax]`).
+struct FV2r { float x, y; FV2r(const float& a, const float& b) { x = a; y = b; } };
 // @ 0x48d470
 void FieldPanel::update()
 {
-    float p[2];
-    p[0] = scene()->views[0]->f0;
-    p[1] = scene()->views[0]->f4;
-    scene()->set_xy(p);
-
-    if (!(sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)) {
-        p[0] = scene()->screen[0];      // none stored: the scene's width, our height (0x48d4f6)
-        p[1] = screen[1];
-        set_xy(p);
-    } else {
-        p[0] = tail.x;                  // a copy of the stored size (0x48d4d4)
-        p[1] = tail.y;
-        set_xy(p);
-    }
-
-    if (scene()->screen[1] < screen[1]) {           // fcomp; test ah,5; jp (0x48d528): shorter than us
-        p[1] = screen[1] - scene()->screen[1];
-        p[0] = 0.0f;
-        scene()->views[0]->set_pos(p);                    // re-read (0x48d543)
-        p[0] = scene()->screen[0];
-        p[1] = screen[1];
-        scene()->set_xy(p);
-    } else {
-        p[0] = 0.0f;
-        p[1] = 0.0f;
-        scene()->views[0]->set_pos(p);                    // view[0] re-read after the set_xy calls (0x48d587)
-    }
-
-    p[0] = screen[0] + e[0] + 0.01f;
-    p[1] = e[1];
-    mirror()->move_a(p);
+    // the call goes through the ContainerBase member itself, so +0x490 is read again after the arguments (0x48d48c)
+    target->set_xy((float*)&FV2r(scene()->views[0]->f0, scene()->views[0]->f4));
+    if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)
+        set_xy((float*)&FV2r(tail.x, tail.y));
+    else
+        set_xy((float*)&FV2r(scene()->screen[0], screen[1]));
+    if (scene()->screen[1] < screen[1]) {
+        scene()->views[0]->set_pos((float*)&FV2r(0.0f, screen[1] - scene()->screen[1]));
+        scene()->set_xy((float*)&FV2r(scene()->screen[0], screen[1]));
+    } else
+        scene()->views[0]->set_pos((float*)&FV2r(0.0f, 0.0f));
+    follow[1]->move_a((float*)&FV2r(screen[0] + e[0] + 0.01f, e[1]));     // the UiD slot itself, not mirror()
     draw();
 }
 
