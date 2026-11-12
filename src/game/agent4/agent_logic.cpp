@@ -8411,7 +8411,7 @@ static __forceinline bool aset_inl(AnimSlot& s, int id, unsigned prio)         /
     return true;
 }
 static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart as the slice's callers inline it
-static __forceinline void vset3(float* v, const float& a, const float& b, const float& c) { v[0] = a; v[1] = b; v[2] = c; }
+static __forceinline void a_vadd(vector4& a, const vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }      // vector4 += (x + 0.0f folds to a copy that stays)
 // 0x4379c0 as cl inlines it (the call sites that pass a constant slot 1)
 static __forceinline void set_order_inl(Agent* a, int slot, int id, unsigned prio, float rate)
 {
@@ -8864,7 +8864,7 @@ void Agent::update_controls(float dt)
                 if (f10 == 0) {
                     if (f2c == -1) {
                         flags3c = flags3c & 0xfffffffe;
-                        { float c5 = impulse.z + 5.0f; vset3(&impulse.x, impulse.x, impulse.y, c5); }
+                        a_vadd(impulse, vector4(0.0f, 0.0f, 5.0f));
                         set_order(0, 2, 0x1000002, 1.0f);
                         if (pos.z < g_mission->terrain.base_z) {
                             float var = 0.1f;
@@ -8879,7 +8879,7 @@ void Agent::update_controls(float dt)
                     }
                 } else if (vel_xy.y > 3.5f) {
                     flags3c = flags3c & 0xfffffffe;
-                    { float c6 = impulse.z + 6.0f; vset3(&impulse.x, impulse.x, impulse.y, c6); }
+                    a_vadd(impulse, vector4(0.0f, 0.0f, 6.0f));
                     set_order(0, 0x19d, 0x1000002, 1.0f);
                     if (pos.z < g_mission->terrain.base_z) {
                         float var = 0.1f;
