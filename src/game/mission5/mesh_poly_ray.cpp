@@ -176,29 +176,27 @@ void Mesh_s2dfd0::toggle_flag(int type, int index)
 // @ 0x52e590
 void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
 {
-    float sx = 0, sy = 0, sz = 0;
+    rgl::vector4 c(0.0f, 0.0f, 0.0f);          // the centroid: sums first, scaled in place (a 16-byte vector: frame 0x14)
     int n = 0;
     calc_vertex_mode(dummy);
     for (unsigned i = 0; i < verts.size(); i++) {
-        mface_s2dfd0* v = &verts[i];
-        if (v->index) {
-            sx += v->pos.x;
-            sy += v->pos.y;
-            sz += v->pos.z;
+        if (verts[i].index) {
+            c.x += verts[i].pos.x;
+            c.y += verts[i].pos.y;
+            c.z += verts[i].pos.z;
             n++;
         }
     }
     float inv = 1.0f / (float)n;
-    float mx = sx * inv;
-    float my = sy * inv;
-    float mz = sz * inv;
+    c.x *= inv;
+    c.y *= inv;
+    c.z *= inv;
     for (unsigned i = 0; i < verts.size(); i++) {
-        mface_s2dfd0& v = verts[i];
-        if (!v.index)
+        if (!verts[i].index)
             continue;
-        v.pos.x = (v.pos.x - mx) * scale->x + mx;
-        v.pos.y = (v.pos.y - my) * scale->y + my;
-        v.pos.z = (v.pos.z - mz) * scale->z + mz;
+        verts[i].pos.x = (verts[i].pos.x - c.x) * scale->x + c.x;
+        verts[i].pos.y = (verts[i].pos.y - c.y) * scale->y + c.y;
+        verts[i].pos.z = (verts[i].pos.z - c.z) * scale->z + c.z;
     }
 }
 
@@ -206,32 +204,32 @@ void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
 // @ 0x52e6d0
 void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
 {
-    float sx = 0, sy = 0, sz = 0;
+    rgl::vector4 c(0.0f, 0.0f, 0.0f);
     int n = 0;
     calc_vertex_mode(dummy);
     for (unsigned i = 0; i < verts.size(); i++) {
-        mface_s2dfd0* v = &verts[i];
-        if (v->index) {
-            sx += v->pos.x;
-            sy += v->pos.y;
-            sz += v->pos.z;
+        if (verts[i].index) {
+            c.x += verts[i].pos.x;
+            c.y += verts[i].pos.y;
+            c.z += verts[i].pos.z;
             n++;
         }
     }
     float inv = 1.0f / (float)n;
-    float mx = sx * inv;
-    float my = sy * inv;
-    float mz = sz * inv;
+    c.x *= inv;
+    c.y *= inv;
+    c.z *= inv;
     for (unsigned i = 0; i < verts.size(); i++) {
-        mface_s2dfd0& v = verts[i];
-        if (!v.index)
+        if (!verts[i].index)
             continue;
-        float dx = v.pos.x - mx;
-        float dy = v.pos.y - my;
-        float dz = v.pos.z - mz;
-        v.pos = rgl::vector4(dz * m[8] + dy * m[4] + dx * m[0] + mx,
-                             dz * m[9] + dy * m[5] + dx * m[1] + my,
-                             dz * m[10] + dy * m[6] + dx * m[2] + mz);
+        float dx = verts[i].pos.x - c.x;
+        float dy = verts[i].pos.y - c.y;
+        float dz = verts[i].pos.z - c.z;
+        // the two parenthesised sums keep cl from reassociating rows y and z (dz and dx terms are added first)
+        rgl::vector4 r(dz * m[8] + dy * m[4] + dx * m[0],
+                       (dz * m[9] + dx * m[1]) + dy * m[5],
+                       (dz * m[10] + dx * m[2]) + dy * m[6]);
+        verts[i].pos = r + c;
     }
 }
 
