@@ -130,6 +130,21 @@ void rgl::world::init(const float* lo_, const float* hi_, int dimx, int dimy)
     }
 }
 
+// Body the original's object saw (row owner rgl/core/frustum_grid.cpp 0x41ed00): with it visible a/b do not escape,
+// so the bounds are not reloaded after each push_back and, with no callee-saved register left, stay in memory
+inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
+{
+    for (int i = 0; i < 2; i++) {
+        float f = (p[i] - lo[i]) / cell_size[i];
+        if (f <= 0.0f)
+            out[i] = 0;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
+        else
+            out[i] = (int)f + 1;
+    }
+}
+
 // @ 0x478a10
 void rgl::world::insert(int id, const float* lo_, const float* hi_)
 {
