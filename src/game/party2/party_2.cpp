@@ -1311,21 +1311,28 @@ void Party::collect_targets(int* out, int* max, int* count)
     }
 }
 
+static __forceinline bool party_flag(const Party* o, int mask) { return (o->flags & mask) != 0; }
+// the battle table's pages are a std::vector<BattleRec*> at +0x14 (allocator word, first at +0x18): reissue_order reads
+// them through the real operator[] (lea + load per access) and brec's by-value index is recomputed at each call
+static __forceinline std::vector<BattleRec*>& bpages() { return *(std::vector<BattleRec*>*)((char*)battles() + 0x14); }
+inline BattleRec* brec(unsigned i) { return bpages()[i >> 4] + (i & 0xf); }
 // @ 0x4b3bc0
 void Party::reissue_order()
 {
     if (action == 9) {
-        set_order_face((int*)&battles()->pages[(unsigned)target >> 4][target & 0xf].x2,
-                       battles()->pages[(unsigned)target >> 4][target & 0xf].face2);
+        set_order_face((int*)&brec(target)->x2, brec(target)->face2);
     } else if (action == 6) {
         set_order_pos((int*)&order_pos);
     } else if (action == 4 || action == 1) {
-        if (target >= 0 && parties()->is_live(target)) {
-            if (parties()->get(target)->flags_lo & 0x400)
-                set_order_face((int*)&parties()->get(target)->pos,
-                               parties()->get(target)->mesh);
-            else
-                set_order_party(&target);
+        int t = target;
+        if (t >= 0) {
+            PartyMgr* m = parties();
+            if (m->is_live(t)) {
+                if (party_flag(m->get(t), 0x400))
+                    set_order_face((int*)&m->get(t)->pos, m->get(t)->mesh);
+                else
+                    set_order_party(&target);
+            }
         }
     }
     order_state = 0;
@@ -1352,7 +1359,6 @@ inline int terrain_is_water(unsigned x)                  // 0x4893b0 (is-water t
     return 1;
 }
 
-static __forceinline bool party_flag(const Party* o, int mask) { return (o->flags & mask) != 0; }
 static __forceinline Vec2 v2_mul(const vec2& v, float k) { return Vec2(v.x * k, v.y * k); }
 static inline void rot2(vec2& v, float ang)
 {
