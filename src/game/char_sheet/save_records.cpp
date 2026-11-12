@@ -219,6 +219,16 @@ void PartyMgr::flush_ids()
         } while ((int)i < count);
     }
 }
+// std::vector<int>::push_back (0x440b30, the instance agent4/agent_logic.cpp owns), with <vector>'s body, visible here and kept out of
+// line: cs_common.h only declares it, and without a body cl must assume the callee keeps &idx, which adds dependences to the spill
+// of idx and schedules it one slot early. inline = a COMDAT, as the template's own instance would be.
+template<> inline __declspec(noinline) void std::vector<int, std::allocator<int> >::push_back(const int& v)
+{
+    if (size() < capacity())
+        _Mylast = _Ufill(_Mylast, 1, v);
+    else
+        insert(end(), v);
+}
 // @ 0x4ea030    void PartyMgr::id_remove(int id)   (thiscall, ret 4)   the 0x2717 open-addressed id hash
 //   The record behind the slot is type=0'd and the slot index is pushed onto the free list (push_back 0x440b30).
 void PartyMgr::id_remove(int id)
