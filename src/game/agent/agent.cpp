@@ -937,6 +937,20 @@ E12* uninit_copy_E12(const E12* first, const E12* last, E12* dest, alloc_E12& al
 // @ 0x436d80
 void alloc_int::construct(int* p, const int& v) { new ((void*)p) int(v); }
 
+// vector4::normalize (0x407d60, called, not inlined): its body visible here, so line_clear's d does not escape
+// (d then shares its frame slot with tdelta, as in the original)
+inline __declspec(noinline) float rgl::vector4::normalize()
+{
+    float len = (float)sqrt(x * x + y * y + z * z);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+}
+
 // @ 0x436da0
 bool HeightField::line_clear(const vector4* a, const vector4* b)
 {
@@ -946,45 +960,37 @@ bool HeightField::line_clear(const vector4* a, const vector4* b)
     hi.x = (float)w * cell + hi.x;
     hi.y = (float)h * cell + hi.y;
     float t0 = 0.0f;
-    vector4 d;
-    d.x = b->x - a->x;
-    d.y = b->y - a->y;
-    d.z = b->z - a->z;
+    vector4 d = *b - *a;
     float t1 = d.normalize();
-    vector4 p0;
-    p0.x = d.x * t0 + a->x;
-    if (!(p0.x < lo.x)) { if (p0.x > hi.x && d.x < 0.0f)
-        t0 = (hi.x - p0.x) / d.x; } else {
+    vector4 p;
+    p.x = d.x * t0 + a->x;
+    if (p.x < lo.x) {
         if (d.x > 0.0f)
-            t0 = (lo.x - p0.x) / d.x;
-    }
-    p0.y = d.y * t0 + a->y;
-    if (p0.y < lo.y) {
+            t0 = (lo.x - p.x) / d.x;
+    } else if (p.x > hi.x && d.x < 0.0f)
+        t0 = (hi.x - p.x) / d.x;
+    p.y = d.y * t0 + a->y;
+    if (p.y < lo.y) {
         if (d.y > 0.0f)
-            t0 += (lo.y - p0.y) / d.y;
-    } else if (p0.y > hi.y && d.y < 0.0f)
-        t0 += (hi.y - p0.y) / d.y;
-    p0.x = d.x * t1 + a->x;
-    if (!(lo.x > p0.x)) { if (hi.x < p0.x && d.x > 0.0f)
-        t1 += (hi.x - p0.x) / d.x; } else {
+            t0 += (lo.y - p.y) / d.y;
+    } else if (p.y > hi.y && d.y < 0.0f)
+        t0 += (hi.y - p.y) / d.y;
+    p.x = d.x * t1 + a->x;
+    if (p.x < lo.x) {
         if (d.x < 0.0f)
-            t1 += (lo.x - p0.x) / d.x;
-    }
-    p0.y = d.y * t1 + a->y;
-    if (p0.y < lo.y) {
+            t1 += (lo.x - p.x) / d.x;
+    } else if (p.x > hi.x && d.x > 0.0f)
+        t1 += (hi.x - p.x) / d.x;
+    p.y = d.y * t1 + a->y;
+    if (p.y < lo.y) {
         if (d.y < 0.0f)
-            t1 += (lo.y - p0.y) / d.y;
-    } else if (p0.y > hi.y && d.y > 0.0f)
-        t1 += (hi.y - p0.y) / d.y;
+            t1 += (lo.y - p.y) / d.y;
+    } else if (p.y > hi.y && d.y > 0.0f)
+        t1 += (hi.y - p.y) / d.y;
     if (t0 >= t1)
         return true;
-    vector4 p1;
-    p0.x = d.x * t0 + a->x;
-    p0.y = d.y * t0 + a->y;
-    p0.z = d.z * t0 + a->z;
-    p1.x = d.x * t1 + a->x;
-    p1.y = d.y * t1 + a->y;
-    p1.z = d.z * t1 + a->z;
+    vector4 p0 = d * t0 + *a;
+    vector4 p1 = d * t1 + *a;
     vec2 seg;
     seg.x = p1.x - p0.x;
     seg.y = p1.y - p0.y;
@@ -997,40 +1003,41 @@ bool HeightField::line_clear(const vector4* a, const vector4* b)
     int step[2], cellidx[2];
     const float* P0 = &p0.x;
     float* dd = &dir.x;
-    for (int i = 0; i < 2; i++) {
+    const float* o = org;
+    for (int i = 0; i < 2; i++, o++) {
         if (dd[i] > 0.0f)
             step[i] = 1;
         else
             step[i] = -1;
         float inv = 1.0f / dd[i];
         tdelta[i] = (float)fabs(inv * cell);
-        fpos[i] = (P0[i] - org[i]) / cell;
+        fpos[i] = (P0[i] - *o) / cell;
         cellidx[i] = (int)floor(fpos[i]);
-        float fr = (float)fmod(P0[i] - org[i], cell);
+        float fr = (float)fmod(P0[i] - *o, cell);
         if (dd[i] == 0.0f)
             tmax[i] = 1e9f;
-        else {
-            if (step[i] > 0)
-                fr = cell - fr;
+        else if (step[i] > 0)
+            tmax[i] = (float)fabs((cell - fr) * inv);
+        else
             tmax[i] = (float)fabs(fr * inv);
-        }
     }
     bool hit = false;
     while (!hit && (tmax[0] + acc < len || tmax[1] + acc < len)) {
-        int idx = !(tmax[0] < tmax[1]);
+        int idx = tmax[0] < tmax[1] ? 0 : 1;
         acc += tmax[idx];
-        tmax[1 - idx] -= tmax[idx];
+        float* to = &tmax[1 - idx];
+        *to -= tmax[idx];
         float zc = (p1.z - p0.z) * (acc / len) + p0.z;
-        int cx = cellidx[0], cy = cellidx[1];
-        if (cx >= 0 && cx < w && cy >= 0 && cy < h) {
-            int lx = cx, ly = cy;
-            if (step[idx] == 1) { if (idx == 0) lx++; else ly++; }
-            int hx = lx, hy = ly;
-            if (idx == 0) hy++; else hx++;
-            float fr = (float)fabs((dd[1 - idx] / cell) * tmax[1 - idx]);
+        if (cellidx[0] >= 0 && cellidx[0] < w && cellidx[1] >= 0 && cellidx[1] < h) {
+            int c0[2] = { cellidx[0], cellidx[1] };
+            if (step[idx] == 1)
+                c0[idx]++;
+            int c1[2] = { c0[0], c0[1] };
+            c1[1 - idx]++;
+            float fr = (float)fabs(dd[1 - idx] / cell * tmax[1 - idx]);
             if (step[1 - idx] == 1)
                 fr = 1.0f - fr;
-            if (zc < (1.0f - fr) * cols[lx][ly].h + fr * cols[hx][hy].h)
+            if (zc < (1.0f - fr) * cols[c0[0]][c0[1]].h + fr * cols[c1[0]][c1[1]].h)
                 hit = true;
         }
         cellidx[idx] += step[idx];
