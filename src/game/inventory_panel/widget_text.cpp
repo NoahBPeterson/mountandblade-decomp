@@ -185,17 +185,24 @@ struct sel_list {
     void add(int val);                              // 0x50d0e0
 };
 
+// std::vector::insert(where, val) as VC7.1 writes it: the offset of `where` is computed (and dropped by the caller),
+// which makes `where` a two-use value coloured before the &val temporary (eax for end(), edx for &val)
+static inline int* iv_insert(IntVec* v, int* where, const int& val)
+{
+    int off = v->count() == 0 ? 0 : (int)(where - v->_Myfirst);
+    ((c49aca0::PVec*)v)->_Insert_n((c49aca0::NodeA**)where, 1, *(c49aca0::NodeA* const*)&val);   // 0x49b1c0
+    return v->_Myfirst + off;
+}
 // @ 0x50d0e0 sel_list::add
 void sel_list::add(int val)
 {
     dirty = 1;
-    const int n = 1;
     if (v.count() < v.capacity()) {
         int* p = v._Mylast;
         *p = val;
         v._Mylast = p + 1;
     } else {
-        ((c49aca0::PVec*)&v)->_Insert_n((c49aca0::NodeA**)v._Mylast, n, *(c49aca0::NodeA* const*)&val);   // 0x49b1c0
+        iv_insert(&v, v._Mylast, val);
     }
 }
 
