@@ -1094,8 +1094,8 @@ void rgl::cell_grid::walk(const float* a, const float* b, int (*cells)[2], int* 
     cells[0][0] = cur[0];
     cells[0][1] = cur[1];
     float acc = 0.0f;
-    int n = *count + 1;
-    *count = n;
+    (*count)++;
+    int n = *count;     // the incremented count is a temporary copied into n (mov edi,eax)
     float total = (float)sqrt(d.y * d.y + d.x * d.x);
     while (total > tmax[0] + acc || total > tmax[1] + acc) {
         int idx;
