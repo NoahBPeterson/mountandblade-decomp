@@ -4011,6 +4011,8 @@ __forceinline ClassInfo* Agent::class_rec()
 }
 
 
+// 1 + the cosine of v (normalised in its by-value copy: loads run ahead of the copy's stores) with w
+static inline float a_cos1(vector4 v, const vector4& w) { v.normalize(); return v.x * w.x + v.z * w.z + v.y * w.y + 1.0f; }
 static inline float a_dot3r(const vector4& b, const vector4& a) { return a.z * b.z + a.y * b.y + a.x * b.x; }
 static inline void a_sub3(vector4& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; }
 // @ 0x4465e0
@@ -4218,9 +4220,7 @@ void Agent::update_ai()
                                 int u = target;
                                 t98 = ((fr + 2.0f) * m) * 0.2f;
                                 vector4 d = t98 * tb->get(u)->v56b4;
-                                q = tb->get(u)->v56b4;
-                                q.normalize();
-                                float f = q.x * w.x + q.z * w.z + q.y * w.y + 1.0f;
+                                float f = a_cos1(tb->get(u)->v56b4, w);
                                 w.x = d.x * f;
                                 w.y = d.y * f;
                                 w.z = d.z * f;
@@ -4228,10 +4228,10 @@ void Agent::update_ai()
                                 q.x = w.x + pp->x;
                                 q.y = w.y + pp->y;
                                 q.z = w.z + pp->z;
+                                d = q;
                                 t98 = dist * 0.3f - 0.6f;
                                 float hi = 20.0f;
                                 float lo = 0.0f;
-                                d = q;
                                 float c = clamp(&t98, &lo, &hi);
                                 if (always_attack_in_melee != 0 && c > 0.5f)
                                     c = 0.5f;
