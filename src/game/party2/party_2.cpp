@@ -2968,18 +2968,18 @@ void Party::tick(float dt)
         float speed = speed_factor();
         float step = speed * dt;
 
-        if (!(moving == 0 && kind == 2)) {
-            if (dist < step)
-                step = dist;
-        } else {
+        if (moving == 0 && kind == 2) {
             if (dist - radius * 1.2f < step) {
                 step = dist - radius * 1.2f;
                 if (step < 0.0f)
                     step = 0.0f;
                 dist = dist - radius * 1.2f;
                 if (dist < 0.0f)
-                    goto probe;
+                    dist = 0.0f;        // cl threads this straight to the probe (0x4b8404 jnp); the store is dead
             }
+        } else {
+            if (dist < step)
+                step = dist;
         }
 
         if (dist > 0.0f) {
@@ -3009,7 +3009,6 @@ void Party::tick(float dt)
             angle = k * diff + angle;
         }
 
-probe:
         // ---- nav-mesh probe at the candidate position -----------------------------------------------------
         {
             Vec2 ds = v2_scale(step, &dirx);
@@ -3079,9 +3078,10 @@ probe:
             }
             if (act == 9) {
                 t = target;
-                vec2 o = *(vec2*)&battle_page(t)->x2;
+                // both lookups read the member again (not t): that is what keeps cl from sharing the page index arithmetic
+                vec2 o = *(vec2*)&battle_page(target)->x2;
                 float d = plane_dist(o, p);
-                if (d < *(float*)((char*)(*(std::vector<char*>*)((char*)g_game + 0xe0))[(unsigned)t >> 4] + (t & 0xf) * 0x98 + 0x40) + radius) {
+                if (d < *(float*)((char*)battle_page(target) + 0x40) + radius) {
                     BattleRec* n = ((BattleTable*)((char*)g_game + 0xcc))->get(t);
                     p.x = n->x1;
                     p.y = n->y1;
@@ -3131,7 +3131,7 @@ acted:
                 g_game->push_party_event(id, (const int*)&mid, &ang);
                 float r1 = frand();
                 float rs = frand() + r1;
-                *(rgl::vector4*)&trail = p;
+                *(rgl::vector4*)&trail = *(rgl::vector4*)&pos;     // through this, not p: the loads may then pass the stores
                 trail_len = rs * 0.7f + 0.5f;
             }
         }
