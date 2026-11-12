@@ -2157,3 +2157,8 @@ Key numbering (third batch, same night)
   returns; in place `n = fl + 1` gives `inc`. `fcomp dword` against `amount - fl`: the floor result was a float.
 - Hand-expanded matrix products cannot reproduce x87 operand order; an inline row helper with parameters in member
   order (p, then the matrix) gets most of it (rot3x::mul_t d8d1f6d5).
+- A live-range split of `this` in the original (callee-saved register in one region, a home slot across a busy block,
+  another register later) means `this` lost the colouring order there: lower its priority by removing references in
+  the busy block's blocks (read a field into a local once before arms; a flag set by a separate if) until the later
+  definitions win the tie, and c2 splits it itself (CampaignScreen::frame_update 9978cae9: 822 -> 378).
+- `bool stale = false; if (p != 0) stale = f(p); if (stale && ...)` gives `setne al; test al,al`.
