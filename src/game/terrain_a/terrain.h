@@ -37,8 +37,6 @@ extern int g_use_shaders;                       // 0x5e28fc
 
 extern unsigned g_river_mask_a;                 // 0x5e2580 (0x46bc70: flag bit of the river path)
 extern unsigned g_river_mask_b;                 // 0x5e2584
-extern const char* g_name_elevation;            // 0x5a9bf4 "ground_elevation"
-extern const char* g_name_leveling;             // 0x5a9bf8 "ground_leveling"
 
 // ---- one terrain cell (0x94 bytes) ----------------------------------------------------------------------------
 // w[1..14] are the per-layer weights (0x4646b0 `kind` loops over +0x4c..+0x80); w[0] is the "none" weight (1.0 after
@@ -270,6 +268,14 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     // ---- bit fields of the six hex words (widths from the power-of-two table g_bit)
     void set_bits(const unsigned& lo, const int& hi, const unsigned& v);   // 0x464960
     unsigned get_bits(const unsigned& lo, const int& hi);                  // 0x4649b0
+    // get_bits' body where a caller expands it in place (TerrainPage::read_fields 0x4f3570: its last two fields). The bounds stay
+    // const references: their temporaries cost two scratch registers before the mask is loaded.
+    unsigned get_bits_inline(const unsigned& lo, const int& hi)
+    {
+        unsigned mask = (unsigned)(g_bit + 1)[hi - lo] - 1;
+        unsigned sh = lo & 0x1f;
+        return ((bits[lo >> 5] & (mask << sh)) >> sh) & mask;
+    }
     void set_pct(const float& f);                                          // 0x4649f0 (the percentage rides in the low 7 bits of bits[4])
     void parse(const tstring& s);                                          // 0x4658c0 fills bits[0..5] from "0x..."
     void build_hex_text(tstring& out);                                     // 0x4f29b0

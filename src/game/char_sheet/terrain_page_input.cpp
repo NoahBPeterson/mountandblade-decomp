@@ -10,16 +10,6 @@
 unsigned g_5e2464 = (unsigned)g_bit[2];                       // 0x5e2464 (no reader in this source; set at startup like its twin)
 unsigned g_5e2468 = (unsigned)g_bit[4];                       // 0x5e2468
 
-// Terrain::get_bits (0x4649b0) as the last two fields of read_fields expand it in place (same body, the bounds
-// by const reference: their temporaries cost two scratch registers before the mask is loaded). Belongs in
-// terrain.h as an inline member of Terrain.
-static inline unsigned terrain_bits(const unsigned& lo, const int& hi)
-{
-    unsigned mask = (unsigned)(g_bit + 1)[hi - lo] - 1;
-    unsigned sh = lo & 0x1f;
-    return ((g_terrain.bits[lo >> 5] & (mask << sh)) >> sh) & mask;
-}
-
 // @ 0x4f3570
 void TerrainPage::read_fields()
 {
@@ -36,8 +26,8 @@ void TerrainPage::read_fields()
     layer_bits[2] = g_terrain.get_bits(0x40, 0x5e);
     water_level = g_terrain.get_bits(0x8e, 0x94);
     water_height = (float)g_terrain.get_bits(0x95, 0x9b) * 0.01f;
-    terrain_type = terrain_bits(0x9c, 0x9f);                // the body of Terrain::get_bits expanded in place:
-    map_size = terrain_bits(0xa0, 0xa1);                    // bits[4] >> 28 & (g_bit[4] - 1), bits[5] & (g_bit[2] - 1)
+    terrain_type = g_terrain.get_bits_inline(0x9c, 0x9f);   // the body of Terrain::get_bits expanded in place:
+    map_size = g_terrain.get_bits_inline(0xa0, 0xa1);               // bits[4] >> 28 & (g_bit[4] - 1), bits[5] & (g_bit[2] - 1)
 }
 
 // @ 0x4f37f0
