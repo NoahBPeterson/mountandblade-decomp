@@ -2061,3 +2061,13 @@ Key numbering (third batch, same night)
 - `mov [tmp],imm; mov reg,[tmp]; mov [dst],reg` per lane: a constructor taking `const float&` assigned from a
   temporary. Three floats with one in a parameter home are scalars, not a struct. 16-byte gaps are 4-float vectors
   even when only x, y, z are used (bounce 77730b0a, GlyphMap::at 3d4bf5b4).
+- One zero stored as an immediate `mov [m],0` among zero stores that share an `xor reg` zero: that field is a float;
+  0.0f never joins the integer zero (GameData::push_party_event 1ab1382a).
+- A block whose scope reaches across a call: its address-taken locals are still read before the call, yet can share
+  dead argument homes (push_party_event: a..d plus the `rand()` call in one block).
+- A vector assigned in several arms and read after, with the original's frame one vector smaller: the result is its
+  own variable and the arm's expression temporary shares the dead source vector's slot (capsule_sphere_gap 3262e2a8).
+- Several raw count+pointer views of what are really `std::vector`s misallocate the whole function: the real
+  `size()`/`operator[]` fixed GameG::update_markers ee5cd014 and most of GameW::remove_party f300fd21. Adding real
+  vector calls can exhaust the inliner budget for a small member (`PartyMgr::at` became a call): use the original's
+  inlined form.
