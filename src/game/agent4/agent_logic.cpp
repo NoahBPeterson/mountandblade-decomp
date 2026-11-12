@@ -6773,37 +6773,27 @@ static inline tstring item_mesh_name(ItemKind* items, const ItemRef& r)
     return tstring("Error: Invalid item");
 }
 static __forceinline rgl::mesh* get_obj(const tstring& n) { return (rgl::mesh*)g_resmgr.get_object(&n); }
-static __forceinline mesh* build_ranged(int i, ItemRef r)
+// 0x40e670 / 0x40e770 (rgl/shapes/shapes.cpp owns the rows): the bodies visible, so the angle passed to them does not escape
+static __forceinline vector4 rm_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
+static __forceinline vector4 rm_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 rm_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+inline __declspec(noinline) void rgl::matrix::rotate_about_f(const float* angle)
 {
-    mesh* result = 0;
-    if (i >= 0) {
-        mesh* obj = (mesh*)get_obj(item_mesh_name(g_items, r));
-        float s = (float)g_items[i].weight * 0.01f;
-        if (obj) {
-            result = obj->clone();
-            vector4 d;
-            d.y = -s;
-            d.x = 0.0f;
-            d.z = 0.0f;
-            result->translate(&d);
-            pos2 rot;
-            identity_pos((::pos*)&rot);
-            float angle = 1.5707964f;
-            ((rgl::matrix&)rot).rotate_about_f(&angle);
-            if ((char)g_items[i].type_flags == 10) {
-                if ((g_items[i].flags & ITEM_CLASS_MASK) == ITEM_CLASS_C) {
-                    angle = frand() * 0.4f + 0.5f;
-                    ((rgl::matrix&)rot).rotate_about_u(&angle);
-                }
-                if ((g_items[i].flags & ITEM_CLASS_MASK) == ITEM_CLASS_B) {
-                    angle = frand() * 0.4f + 3.2415926f;
-                    ((rgl::matrix&)rot).rotate_about_u(&angle);
-                }
-            }
-            result->transform(*(mat4*)&rot);
-        }
-    }
-    return result;
+    double sn = sin((double)*angle);
+    vector4 ns, nu;
+    ns = rm_sub(rm_mul(s, cos((double)*angle)), rm_mul(u, sn));
+    nu = rm_add(rm_mul(u, cos((double)*angle)), rm_mul(s, sn));
+    s = ns;
+    u = nu;
+}
+inline __declspec(noinline) void rgl::matrix::rotate_about_u(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 ns, nf;
+    ns = rm_add(rm_mul(s, cos((double)*angle)), rm_mul(f, sn));
+    nf = rm_sub(rm_mul(f, cos((double)*angle)), rm_mul(s, sn));
+    s = ns;
+    f = nf;
 }
 
 // 0x4351f0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
@@ -6823,15 +6813,43 @@ inline __declspec(noinline) ItemRef Wielder::ranged_ref()      // 0x4351f0
 // @ 0x44f6a0
 mesh* Wielder::make_ranged_mesh()
 {
+    mesh* result = 0;
     ItemKind* items = g_items;
     int i = -1;
     int a = this->a.item;
     if (a >= 0) {
-        i = a;
-        if ((char)items[a].type_flags != 10)
+        if ((char)items[a].type_flags == 10)
+            i = a;
+        else
             i = this->b.item;
     }
-    return build_ranged(i, ranged_ref());
+    ItemRef r = ranged_ref();
+
+    if (i >= 0) {
+        mesh* obj = (mesh*)get_obj(item_mesh_name(g_items, r));
+        float s = (float)g_items[i].weight * 0.01f;
+        if (obj) {
+            result = obj->clone();
+            vector4 d(0.0f, -s, 0.0f);
+            result->translate(&d);
+            pos2 rot;
+            identity_pos((::pos*)&rot);
+            float angle = 1.5707964f;
+            ((rgl::matrix&)rot).rotate_about_f(&angle);
+            if ((char)g_items[i].type_flags == 10) {
+                if ((g_items[i].flags & ITEM_CLASS_MASK) == ITEM_CLASS_C) {
+                    angle = frand() * 0.4f + 0.5f;
+                    ((rgl::matrix&)rot).rotate_about_u(&angle);
+                }
+                if ((g_items[i].flags & ITEM_CLASS_MASK) == ITEM_CLASS_B) {
+                    angle = frand() * 0.4f + 3.2415926f;
+                    ((rgl::matrix&)rot).rotate_about_u(&angle);
+                }
+            }
+            result->transform(*(mat4*)&rot);
+        }
+    }
+    return result;
 }
 
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
