@@ -5,7 +5,7 @@
 ../src/game/entity.cpp  ?link_chunks@?$pool@Ucellnode@rgl@@@rgl@@QAEXXZ  0041f350  /O2 /MT /Gy /TP
 ../src/game/entity.cpp  ?link_chunks@?$pool@Ucellref@rgl@@@rgl@@QAEXXZ  0041f3d0  /O2 /MT /Gy /TP
 ../src/game/entity.cpp  ?erase_entity@world@rgl@@QAEXPAUentity@2@@Z  0041f450  /O2 /MT /Gy /TP
-../src/game/entity.cpp  ?clear@?$vec@UNavVert@@@rgl@@QAEXXZ  0041f4b0  /O2 /MT /Gy /TP
+../src/game/entity.cpp  ?clear@?$vec@Umface@@@rgl@@QAEXXZ  0041f4b0  /O2 /MT /Gy /TP
 ../src/game/entity.cpp  ??1scene@rgl@@QAE@XZ  0041f4e0  /O2 /MT /Gy /TP
 ../src/game/entity.cpp  ??1NavData@@QAE@XZ  0041f5d0  /O2 /MT /Gy /TP
 ../src/game/entity.cpp  ?_Insert@?$list@HV?$allocator@H@std@@@std@@QAEXViterator@12@ABH@Z  0041f640  /O2 /MT /Gy /TP
