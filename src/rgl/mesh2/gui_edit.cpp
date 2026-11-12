@@ -800,12 +800,12 @@ void ItemPage::format(char* out)
             _snprintf(out, 0x80, "INVALID PLANT");
         }
     } else if (kind == 2 || kind == 6) {
-        if (index < 0 || index >= g_item_kind_count) {
+        if (index >= 0 && index < g_item_kind_count) {
+            tstring key("ui_item_itemname");
+            _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), g_items[index].display_name()->c_str());
+        } else {
             _snprintf(out, 0x80, "INVALID ITEM");
-            return;
         }
-        tstring key("ui_item_itemname");
-        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), g_items[index].display_name()->c_str());
     } else if (kind == 0) {
         tstring key("ui_prop_propname");
         _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&field.buf));
