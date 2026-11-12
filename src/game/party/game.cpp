@@ -957,8 +957,9 @@ void Game::load_tracks(stream_base* s)
     s->r_int(&n);
     tracks.resize(n, val);
     for (int i = 0; i < n; i++) {
-        TrackRec* rec = tracks._Myfirst + i;
-        rec->read(s);
+        // std::vector's own operator[] (begin() + i through the iterator class): the element address is then computed
+        // before the argument push. TrackVec (game.h) is a hand-rolled view of this std::vector<TrackRec>.
+        (*(std::vector<TrackRec>*)&tracks)[i].read(s);
     }
 }
 
