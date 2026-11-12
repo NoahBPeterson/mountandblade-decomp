@@ -727,58 +727,59 @@ float Terrain::noise_at(int x, int y)
     return n[0] + n[1] + n[2];
 }
 
+// a cell coordinate pair as cell_of writes it
+struct ti2 { int x, y; };
+
 // @ 0x465af0
 vector4 Terrain::sample(const float* p)
 {
-    int ij[2];
-    cell_of(ij, p);
-    int i = ij[0], j = ij[1];
-    terrain_cell* C = &cell[0][0];
-    vector4* q00 = (vector4*)&C[i * 251 + j];
-    vector4* q10 = (vector4*)&C[(i + 1) * 251 + j];
-    vector4* q01 = (vector4*)&C[i * 251 + (j + 1)];
-    vector4* q11 = (vector4*)&C[(i + 1) * 251 + (j + 1)];
+    ti2 c;
+    cell_of(&c.x, p);
+    // the three neighbours are copies of the cell pair bumped in place (each copy's y field keeps its dead store of j)
+    ti2 c10 = c, c01 = c, c11 = c;
+    c10.x++;
+    c01.y++;
+    c11.x++;
+    c11.y++;
+    vector4* q00 = (vector4*)&cell[c.x][c.y];
     vector4 c00 = *q00;
-    vector4 c11 = *q11;
-    vector4 c01 = *q01;
-    vector4 c10 = *q10;
+    vector4* q10 = (vector4*)&cell[c10.x][c10.y];
+    vector4 c10v = *q10;
+    vector4* q01 = (vector4*)&cell[c01.x][c01.y];
+    vector4 c01v = *q01;
+    vector4* q11 = (vector4*)&cell[c11.x][c11.y];
+    vector4 c11v = *q11;
+    // the blends go through the inline vector operators: hi * t + lo * u (the lo * u temporary's x, y spilled, every
+    // result's w the sum temporary's unset lane)
     vector4 a, b;
-    // the vector4(x, y, z) temporaries leave w untouched: when a blended a / b leaves through the early
-    // returns, the original returns whatever its stack held in that lane (an uninitialised slot; the harness models it as uninitialised-in-both)
     if (p[1] < c00.y) {
         a = *q00;
-    } else if (p[1] > c01.y) {
+    } else if (p[1] > c01v.y) {
         a = *q01;
     } else {
-        float t = (p[1] - c00.y) / (c01.y - c00.y);
+        float t = (p[1] - c00.y) / (c01v.y - c00.y);
         float u = 1.0f - t;
-        float sx = c00.x * u;
-        float sy = c00.y * u;
-        a = vector4(q01->x * t + sx, t * c01.y + sy, q01->z * t + u * q00->z);
+        a = c01v * t + c00 * u;
     }
-    if (p[1] < c10.y) {
+    if (p[1] < c10v.y) {
         b = *q10;
-    } else if (p[1] > c11.y) {
+    } else if (p[1] > c11v.y) {
         b = *q11;
     } else {
-        float t = (p[1] - c10.y) / (c11.y - c10.y);
+        float t = (p[1] - c10v.y) / (c11v.y - c10v.y);
         float u = 1.0f - t;
-        float sx = c10.x * u;
-        float sy = c10.y * u;
-        b = vector4(q11->x * t + sx, t * c11.y + sy, q11->z * t + u * q10->z);
+        b = c11v * t + c10v * u;
     }
-    if (c00.x > p[0]) {
-        return a;
+    vector4 r;
+    if (p[0] < c00.x) {
+        r = a;
+    } else if (p[0] > c10v.x) {
+        r = b;
+    } else {
+        float t = (p[0] - c00.x) / (c10v.x - c00.x);
+        float u = 1.0f - t;
+        r = b * t + a * u;
     }
-    if (c10.x < p[0]) {
-        return b;
-    }
-    float t = (p[0] - c00.x) / (c10.x - c00.x);
-    float u = 1.0f - t;
-    float sx = a.x * u;
-    float sy = a.y * u;
-    vector4 r(b.x * t + sx, b.y * t + sy, b.z * t + u * a.z);
-    r.w = q10->w;
     return r;
 }
 
