@@ -1309,7 +1309,8 @@ void Skin::read(MsStream* s)
     // the poses
     stream_i(s, &n_face_keys);
     face_keys = (FaceKey*)new FaceKeyExt[n_face_keys];
-    for (int i = 0; i < n_face_keys; i++) {
+    int i;
+    for (i = 0; i < n_face_keys; i++) {
         FaceKey* q = &face_keys[i];
         stream_str(s, &q->key);
         stream_i(s, &q->f20);
@@ -1325,7 +1326,7 @@ void Skin::read(MsStream* s)
 
     // the columns
     stream_i(s, &n_hair);
-    for (int i = 0; i < n_hair; i++) {
+    for (i = 0; i < n_hair; i++) {
         tstring nm;
         stream_str(s, &nm);
         if (i < 0x40)
@@ -1334,7 +1335,7 @@ void Skin::read(MsStream* s)
     if (n_hair > 0x40)
         n_hair = 0x40;
     hair_maps.resize(n_hair);                                           // 0x477880
-    for (int i = 0; i < n_hair; i++)
+    for (i = 0; i < n_hair; i++)
         copy_troop(&hair_maps[i], hair_meshes[i]);   // 0x473570
 
     // the materials
@@ -1343,7 +1344,7 @@ void Skin::read(MsStream* s)
         beard_meshes = (BeardMesh*)new BeardMeshNew[n_beard];
         beard_maps.resize(n_beard);                                       // 0x477880
     }
-    for (int i = 0; i < n_beard; i++) {
+    for (i = 0; i < n_beard; i++) {
         stream_str(s, &beard_meshes[i].name);
         beard_meshes[i].mesh = g_resmgr.get_lod_mesh(beard_meshes[i].name);
         if (head->count == 0)                                        // the original tests [+0x38], not the material
@@ -1354,11 +1355,11 @@ void Skin::read(MsStream* s)
     // the two string tables
     stream_i(s, &n_hair_tex);
     hair_textures.resize(n_hair_tex);                                              // 0x4cbb10
-    for (int i = 0; i < n_hair_tex; i++)
+    for (i = 0; i < n_hair_tex; i++)
         stream_str(s, &hair_textures[i]);
     stream_i(s, &n_beard_tex);
     beard_textures.resize(n_beard_tex);                                              // 0x4cbb10
-    for (int i = 0; i < n_beard_tex; i++)
+    for (i = 0; i < n_beard_tex; i++)
         stream_str(s, &beard_textures[i]);
 
     // the face_textures
@@ -1369,7 +1370,7 @@ void Skin::read(MsStream* s)
         size_t n = n_face_tex;
         (((std::vector<MissionRec2>*)(void*)&face_textures)->*fn)(n, MissionRec2());   // 0x4e41e0
     }
-    for (int i = 0; i < n_face_tex; i++) {
+    for (i = 0; i < n_face_tex; i++) {
         stream_str(s, &((MissionRec2&)face_textures[i]).name);
         ((MissionRec2&)face_textures[i]).mat10 = g_resmgr.get_material(((MissionRec2&)face_textures[i]).name);                // 0x418a70
         {
@@ -1404,17 +1405,17 @@ void Skin::read(MsStream* s)
         for (int j = 0; j < ntile; j++) {
             unsigned argb;
             stream_u(s, &argb);
-            rgl::vector4 t = rgl::unpack_color(&argb);
-            ((MissionRec2&)face_textures[i]).tiles[j] = t;
+            const rgl::vector4* t = &rgl::unpack_color(&argb);
+            ((MissionRec2&)face_textures[i]).tiles[j] = *t;
         }
     }
 
     // the slot ids
     int nslot;
+    int id;
     stream_i(s, &nslot);
     tstring nm;
-    for (int i = 0; i < nslot; i++) {
-        int id;
+    for (i = 0; i < nslot; i++) {
         stream_i(s, &id);
         stream_str(s, &nm);
         if (id >= 0 && id < 7) {
