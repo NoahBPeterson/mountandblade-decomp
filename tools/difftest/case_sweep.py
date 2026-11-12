@@ -3,7 +3,7 @@
 
 usage: case_sweep.py <src.cpp> <va-hex> --selector 'this+OFF&MASK' [--jobs 8] [--inputs 100] [--min-valid 50]
                      [--time-limit 150] [--only OPCODES] [--redo VERDICT,...] [--names opcodes.json] [--out f.json]
-                     [--status] [--nice 10]
+                     [--status] [--plan-only] [--nice 10]
 
 equiv.py on a whole switch function never gets past the dispatch: the selector is soup, and a jump table entry is not a
 comparison steering can solve. This driver runs equiv.py once per case with `--pin <selector>=<the case's selector
@@ -34,7 +34,7 @@ equiv.py's machine-wide CPU slots (DIFFTEST_MAX_PROCS) still apply. --status pri
 The functions the source defines with a `// @ 0x<va>` marker (other than the tested one) are passed as --transparent:
 our object runs its own copies of them, so the original's call to one is replaced by the calls it makes.
 """
-import argparse, datetime, fcntl, glob, hashlib, json, os, re, signal, struct, subprocess, sys, tempfile, threading, time
+import argparse, datetime, glob, hashlib, json, os, re, signal, struct, subprocess, sys, tempfile, threading, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +47,9 @@ import resolve as R                                 # noqa: E402
 from coff import Coff                               # noqa: E402
 from cfgcov import MAX_TABLE                        # noqa: E402
 import insn_exact as IE                             # noqa: E402
+from winnative import lock as lock_file             # noqa: E402  (flock / msvcrt.locking)
+
+WIN = sys.platform == "win32"
 
 EQUIV = os.path.join(HERE, "equiv.py")
 REL_REL32 = 0x14
@@ -56,8 +59,22 @@ TERM = ("ret", "retf", "int3", "hlt", "ud2")
 def harness_hash():
     h = hashlib.sha1()
     for f in sorted(glob.glob(os.path.join(HERE, "*.py"))):
-        h.update(open(f, "rb").read())
+        # line endings normalised: a Windows checkout (core.autocrlf) holds the same sources with CRLF, and a
+        # case measured there (the laptop worker, docs/remote_worker.md) must carry the key the Mac computes
+        h.update(open(f, "rb").read().replace(b"\r\n", b"\n"))
     return h.hexdigest()
+
+
+def kill_tree(p):
+    """Kill an equiv.py run and everything it started (its process group; on Windows its process tree)."""
+    try:
+        if WIN:
+            subprocess.run(["taskkill", "/pid", str(p.pid), "/t", "/f"], stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL)
+        else:
+            os.killpg(p.pid, signal.SIGKILL)
+    except OSError:
+        pass
 
 
 # ---------------------------------------------------------------- regions
@@ -306,10 +323,7 @@ def stop(signum, _frame):
     STOPPING.set()
     with CHILDREN_LOCK:
         for p in list(CHILDREN):
-            try:
-                os.killpg(p.pid, signal.SIGKILL)
-            except OSError:
-                pass
+            kill_tree(p)
     os._exit(128 + signum)
 
 
@@ -353,14 +367,16 @@ def run_case(a, case, key, transparent, slice_id):
     try:
         if STOPPING.is_set():
             raise RuntimeError("stopping")
+        # Windows: no process groups or nice; the worker's jobs already run at Idle priority (startjob.ps1) and
+        # the children inherit it
         p = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                             preexec_fn=child_setup)
+                             **({} if WIN else {"preexec_fn": child_setup}))
         with CHILDREN_LOCK:
             CHILDREN.add(p)
         try:
             stdout, _ = p.communicate(timeout=a.time_limit * 3 + 300)
         except subprocess.TimeoutExpired:
-            os.killpg(p.pid, signal.SIGKILL)
+            kill_tree(p)
             p.communicate()
             raise
         finally:
@@ -429,6 +445,9 @@ def main():
     ap.add_argument("--nice", type=int, default=10)
     ap.add_argument("--out")
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--plan-only", action="store_true",
+                    help="plan, mark stale results in --out, print how many cases would run, and run none (e.g. to "
+                         "check a results file measured on the worker against this checkout)")
     a = ap.parse_args()
     a.va = int(a.va, 16)
     if a.operand_hints:
@@ -437,7 +456,7 @@ def main():
         a.pin = (a.pin or []) + ["this+8=10"] + ["this+%x=0,ffffffff" % (0x14 + 8 * k)
                                                  for k in range(16)]
     os.chdir(ROOT)
-    a.src = os.path.relpath(os.path.abspath(a.src), ROOT)
+    a.src = os.path.relpath(os.path.abspath(a.src), ROOT).replace(os.sep, "/")
     slice_id = os.path.basename(a.src).rsplit(".", 1)[0]
     out = a.out or os.path.join(ROOT, "work", "difftest", "cases", "%s_%08x.json" % (slice_id, a.va))
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -462,11 +481,11 @@ def main():
         return
     if not a.selector:
         sys.exit("--selector is required (e.g. 'this+0&0fffffff')")
-    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+    for sig in (signal.SIGTERM, signal.SIGINT) + (() if WIN else (signal.SIGHUP,)):
         signal.signal(sig, stop)
     lock = open(out + ".lock", "w")
     try:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_file(lock, wait=False)
     except OSError:
         sys.exit("another case_sweep is writing %s" % out)
     flags = a.flags.split() if a.flags else list(S.DEFAULT_FLAGS)
@@ -525,6 +544,9 @@ def main():
         os.replace(tmp, out)
 
     save()
+    if a.plan_only:
+        print("plan only:", summary(results, len(cases)))
+        return
     n = 0
     # the biggest cases first: they take longest, so the pool finishes evenly
     todo.sort(key=lambda nm: -cases[nm]["orig_insns"])
