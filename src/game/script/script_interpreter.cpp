@@ -3198,6 +3198,20 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // named local first: the "split web" shape, load into a scratch register, use, copy).
 // rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
 inline const char* string_view_::get() const { const char* b = *(const char* const*)((const char*)this + 4); return b ? b : (const char*)this + 4; }
+// Troop::max_hit_points 0x468770 (terrain_a/terrain_render.cpp) seen through a second name with its body in the unit
+struct Rec468770B { char pad0[0x58]; int f58; char pad5c[0x7a - 0x5c]; unsigned char b7a; };
+struct Rec468770V { __declspec(noinline) int max_hit_points(); };
+int Rec468770V::max_hit_points()
+{
+    int base = ((Rec468770B*)this)->f58;
+    int v = ((Rec468770B*)this)->b7a & 0xf;
+    if (v < 0)
+        v = 0;
+    else if (v > g_skill_tbl[36].max_rank)
+        v = g_skill_tbl[36].max_rank;
+    return base + v * 2 + 0x23;
+}
+#define HPMAX(t) (((Rec468770V*)(t))->max_hit_points())
 // GameData::count_troops 0x48f790 (mission_ui2/party.cpp): party_count_members_of_type keeps params[1] / params[2] in esi / ebx
 // across both calls, store_troop_kind_count and 2180 likewise
 inline Party* si_party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4))); }
@@ -4959,12 +4973,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (troop_set_health, <troop_id>, <relative health (0-100)>, [absolute])
         if (check_troop((int)params[0])) {
             if (params[2]) {
-                TroopX* t = troop((int)params[0]);
-                t->hit_points = (float)clamp_index((int)params[1], 0, t->max_hit_points() + 1);
+                troop((int)params[0])->hit_points = (float)clamp_index((int)params[1], 0, HPMAX(troop((int)params[0])) + 1);
             } else {
-                TroopX* t = troop((int)params[0]);
-                t->hit_points = (float)clamp_index((int)((__int64)t->max_hit_points() * params[1] / 100), 0,
-                                                   t->max_hit_points() + 1);
+                troop((int)params[0])->hit_points = (float)clamp_index((int)((__int64)HPMAX(troop((int)params[0])) * params[1] / 100), 0,
+                                                   HPMAX(troop((int)params[0])) + 1);
             }
         }
         break;
