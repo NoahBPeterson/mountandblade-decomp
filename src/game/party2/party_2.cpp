@@ -375,9 +375,7 @@ void Party::add_xp_to_stack(int idx, int amount)
 {
     GameData* g = g_game;
     Troop* chars = g->troops;
-    Stack& slot = stacks[idx];
-    Troop* chr = &chars[slot.troop];
-    float& acc = *(float*)&stacks[idx].f18;
+    Troop* chr = &chars[stacks[idx].troop];
     if (chr->flags30 & 0x10) {
         chr->exp += amount;
         return;
@@ -385,17 +383,18 @@ void Party::add_xp_to_stack(int idx, int amount)
     if (chr->f50 == 0) {
         return;
     }
+    float& acc = *(float*)&stacks[idx].f18;
     acc += (float)amount;
     if (acc >= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f)) {
-        while (slot.count > slot.f14) {
-            slot.f14++;
-            acc -= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f);
-            if ((float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f) >= acc) {
+        int count = stacks[idx].count;
+        do {
+            if (stacks[idx].f14 >= count)
                 break;
-            }
-        }
+            stacks[idx].f14++;
+            acc -= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f);
+        } while ((float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f) <= *(float*)&stacks[idx].f18);
     }
-    if ((float)slot.f14 >= (float)slot.count) {
+    if ((float)stacks[idx].f14 >= (float)stacks[idx].count) {
         acc = 0;
     }
 }
