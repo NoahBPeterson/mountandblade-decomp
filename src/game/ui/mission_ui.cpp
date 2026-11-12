@@ -1166,9 +1166,7 @@ int GameData::template_count(int party, int cell, float)
     float f = (float)roll * 6.322312e-05f;
     int lo = range_lo;
     int hi = range_hi;
-    f = f * (float)(hi - lo);
-    f = (f + lo) * (*(int*)(base + cell * 0x10 + 0x48) - *(int*)(base + cell * 0x10 + 0x44));
-    f = f * 0.01f;
+    f = (f * (hi - lo) + lo) * (*(int*)(base + cell * 0x10 + 0x48) - *(int*)(base + cell * 0x10 + 0x44)) * 0.01f;
     return *(int*)(base + cell * 0x10 + 0x44) + rnd(&f);
 }
 
