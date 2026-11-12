@@ -3225,6 +3225,17 @@ add:
     return total;
 }
 #undef PARTY
+// Agent::clamped_team 0x435490 (agent/agent.cpp): agent_set_team keeps params[0] in ebx across it
+int Agent::clamped_team() const
+{
+    int t = team;
+    if (t < 0 || t >= 8) t = 7;
+    return t;
+}
+// the head of a team record as the original addresses it: 4 bytes before mission.h's TeamRec (the record TEAM_SEL names),
+// leader at +4. agent_set_team keeps this pointer (lea edi,[..+0x527c]) and reads [edi+4] into a register for the test.
+struct TeamHead { int f0; int leader; };
+#define TEAM_HEAD(m, t) ((TeamHead*)((char*)&(m)->teams[t] - 4))
 #define game() ((GameX*)g_game)
 #define CS(s) (((const string_view_*)(s))->get())
 #define faction(id) (&((GameX*)g_game)->factions[id])
@@ -5734,7 +5745,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             ((NamedSelRec*)agent((int)params[0]))->set_sel(&si_0);
             MissionX* m = mission();
             int a = (int)params[0];
-            TeamRec* tr = &m->teams[m->agents.get(a)->clamped_team()];
+            TeamHead* tr = TEAM_HEAD(m, m->agents.get(a)->clamped_team());
             if (tr->leader < 0)
                 tr->leader = m->agents.get(a)->id;
         }
