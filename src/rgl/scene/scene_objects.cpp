@@ -381,6 +381,21 @@ void world::insert(entity* o, int x, int y)
     o->refs = r;
 }
 
+// Body the original's object saw (row owner rgl/core/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
+// so the bounds are not reloaded after each insert call and, with no callee-saved register left, stay in memory
+inline __declspec(noinline) void world::to_cell(const float* p, int* out)
+{
+    for (int i = 0; i < 2; i++) {
+        float f = (p[i] - lo[i]) / cell_size[i];
+        if (f <= 0.0f)
+            out[i] = 0;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
+        else
+            out[i] = (int)f + 1;
+    }
+}
+
 // @ 0x421600
 void world::insert_obj(entity* o)
 {
