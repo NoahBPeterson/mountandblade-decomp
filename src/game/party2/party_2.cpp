@@ -778,24 +778,22 @@ void push_back_elem(OpenIt first, OpenIt last, HeapGt comp)
 // @ 0x4b2770
 void BattleRec::bind_host()
 {
-    int clk = born.clock;
     face1 = g_game->find_at(&x1);
     z = face1->w[0].z - ((x1 - face1->w[0].x) * face1->normal.x + (y1 - face1->w[0].y) * face1->normal.y) / face1->normal.z;
-    ((int*)&born.start)[0] = ((int*)&g_ticks[clk])[0];
-    ((int*)&born.start)[1] = ((int*)&g_ticks[clk])[1];
+    born.restamp();
     next_simulation_time = 1.0f;
     opacity = -10000.0f;
     f74 = 0.0f;
     sound = -1;
     if (type == 2) {
-        int m = (int)nav_recs()[face1->m4].mask();
-        if ((m & 7) != 0 && m != 7) {
+        NavRec& r = nav_recs()[face1->m4];
+        if ((r.mask() & 7) != 0 && r.mask() != 7) {
             mb_warning("Ship position not in water");
         }
         face* b = g_game->find_at(&x2);
         face2 = b;
-        m = (int)nav_recs()[b->m4].mask();
-        if (((m & 7) < 2 || (m & 7) >= 7) && m != 7) {
+        NavRec& r2 = nav_recs()[b->m4];
+        if (((int)(r2.mask() & 7) < 2 || (int)(r2.mask() & 7) >= 7) && r2.mask() != 7) {
             mb_warning("Ship land position not on land");
         }
     }
