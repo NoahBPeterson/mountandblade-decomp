@@ -1115,6 +1115,32 @@ static __forceinline void cross_into(vector4& d, const vector4& a, const vector4
 
 #define RECS ((NavRec*)cells.first)
 
+// NavData::shares (0x48efa0; the row is owned by mission_ui2/mission_4.cpp): a visible duplicate. With the body in this unit cl
+// knows the callee does not keep &from / &to, so from's home is free once the walk has its own counter (the original keeps the
+// stop flag there).
+__declspec(noinline) bool NavData::shares(const int& a, const int& b) const
+{
+    const NavCell* ra = &cells[a];
+    int ai = ra->ids[0x11];
+    int aj = -1;
+    int id = ai;
+    if (id == 0x5f5e0ff) {
+        ai = ra->ids[0x12];
+        aj = ra->ids[0x13];
+    }
+    const NavCell& rb = cells[b];
+    int bi = rb.ids[0x11];
+    int bj = -2;
+    int id2 = bi;
+    if (id2 == 0x5f5e0ff) {
+        bi = rb.ids[0x12];
+        int t = rb.ids[0x13];
+        if (t >= 0)
+            bj = t;
+    }
+    return ai == bi || bj == ai || aj == bi || aj == bj;
+}
+
 // @ 0x4b3420
 // Walk the formation-record graph from `from` toward `to`, testing every record edge for a crossing of the move segment
 // (0.01 <= t <= 0.99, 0 <= s <= 1), honouring the order-target mask and the per-edge keep distance.
@@ -1122,59 +1148,60 @@ bool NavData::can_move(int from, float x, float y, int to, const float* p, unsig
 {
     if (!shares(from, to))
         return false;
-    int cur = -1;
-    if (from < 0 || to < 0)
-        return cur == to;
-    float dx = p[0] - x;
-    float dy = p[1] - y;
-    if (dx * dx + dy * dy < 0.0001f)
-        return true;
-    int vert = 1;
-    if (-0.000001f < dx && dx < 0.000001f)
-        vert = 0;
-    bool stop = false;
-    int hops = 0;
-    int prev = -1;
-    if (from != to) {
-        do {
-            if (from < 0 || stop || hops >= max)
-                break;
-            hops++;
-            int hit = -1;
-            NavRec* r = &RECS[from];
-            int i = 0;
-            while (i < r->npts) {
-                if (r->agents()[i] != prev) {
-                    NavVert* a = &verts.first[r->verts()[i]];
-                    NavVert* b = &verts.first[r->verts()[(i + 1) % r->npts]];
-                    float ex = b->p.x - a->p.x;
-                    float ey = b->p.y - a->p.y;
-                    float t = ((x - a->p.x) * dy - (y - a->p.y) * dx) / (ex * dy - ey * dx);
-                    float s;
-                    if (vert)
-                        s = ((ex * t + a->p.x) - x) / dx;
-                    else
-                        s = ((ey * t + a->p.y) - y) / dy;
-                    if (0.01f <= t && t <= 0.99f && 0.0f <= s && s <= 1.0f)
-                        hit = i;
-                }
-                i++;
-                if (hit != -1)
+    int cur = -1;                   // the walk has its own counter (from's home then holds the stop flag); one return
+    if (from >= 0 && to >= 0) {
+        float dx = p[0] - x;
+        float dy = p[1] - y;
+        if (dx * dx + dy * dy < 0.0001f)
+            return true;
+        int vert = 1;
+        if (-0.000001f < dx && dx < 0.000001f)
+            vert = 0;
+        bool stop = false;
+        int hops = 0;
+        int prev = -1;
+        cur = from;
+        if (cur != to) {
+            do {
+                if (cur < 0 || stop || hops >= max)
                     break;
-            }
-            if (hit < 0) {
-                stop = true;
-                continue;
-            }
-            int tgt = r->targets()[hit];
-            prev = r->agents()[hit];
-            if (tgt < 0 || 100.0f < r->dists()[hit] || (RECS[tgt].mask() & flags) != flags)
-                stop = true;
-            else
-                from = tgt;
-        } while (from != to);
+                hops++;
+                int hit = -1;
+                NavRec* r = &RECS[cur];
+                int i = 0;
+                do {
+                    if (i >= r->npts)
+                        break;
+                    if (r->agents()[i] != prev) {
+                        NavVert* a = &verts.first[r->verts()[i]];
+                        NavVert* b = &verts.first[r->verts()[(i + 1) % r->npts]];
+                        float ex = b->p.x - a->p.x;
+                        float ey = b->p.y - a->p.y;
+                        float t = ((x - a->p.x) * dy - (y - a->p.y) * dx) / (ex * dy - ey * dx);
+                        float s;
+                        if (vert)
+                            s = ((ex * t + a->p.x) - x) / dx;
+                        else
+                            s = ((ey * t + a->p.y) - y) / dy;
+                        if (0.01f <= t && t <= 0.99f && 0.0f <= s && s <= 1.0f)
+                            hit = i;
+                    }
+                    i++;
+                } while (hit == -1);
+                if (hit < 0) {
+                    stop = true;
+                    continue;
+                }
+                int tgt = r->targets()[hit];
+                prev = r->agents()[hit];
+                if (tgt < 0 || 100.0f < r->dists()[hit] || (RECS[tgt].mask() & flags) != flags)
+                    stop = true;
+                else
+                    cur = tgt;
+            } while (cur != to);
+        }
     }
-    return from == to;
+    return cur == to;
 }
 
 // Orient an event record on the map: its frame is the identity with the target as origin; the face under the target gives
