@@ -521,7 +521,7 @@ void __fastcall music_player::tick()
             fading[0] = 0;
         } else {
             float c_hi = 1.0f, c_lo = 0.0f;
-            float c_v = t2450.elapsed() * 0.2f;
+            float c_v = (t2450.elapsed() * 0.2f);   // the parentheses delay its fstp past the argument leas
             vol = (1.0f - clamp(&c_v, &c_lo, &c_hi)) * vol;
         }
     }
