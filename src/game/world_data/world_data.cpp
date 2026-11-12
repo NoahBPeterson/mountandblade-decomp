@@ -642,14 +642,13 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
     }
     int p190 = b->first_flagged();
     int d1 = b->max_stacks() - p190;
-    Troop* chars = troops;
     int p510 = b->count_tail();
     int d2 = b->max_stacks() - p510;
     int na = a->nstacks;
     int c1 = 0, c2 = 0;
     for (int k = 0; k < na; k++) {
         bool matched = false;
-        if (!(chars[a->stacks[k].troop].flags30 & 0x10)) {
+        if (!(troops[a->stacks[k].troop].flags30 & 0x10)) {
             for (int j = 0; b->nstacks > j; j++) {
                 if (a->stacks[k].troop == b->stacks[j].troop) {
                     if (!flag) {
@@ -664,8 +663,7 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
         if (!flag) { if (a->stacks[k].flags & 1) c2++; else c1++; }
         else       { if (!(a->stacks[k].flags & 1)) { c2++; } else { c1++; } }
     }
-    if (c1 > d1) return false;
-    if (c2 > d2) return false;
+    if (c1 > d1 || c2 > d2) return false;
     return true;
 }
 
