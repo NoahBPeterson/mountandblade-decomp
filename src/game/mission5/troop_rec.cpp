@@ -182,9 +182,20 @@ float g_start_time = 600000.0f;                     // 0x59bffc
 
 static inline int clamp_rank(int v)
 {
-    return v < 0 ? 0 : (v > g_skill_tbl[36].max_rank ? g_skill_tbl[36].max_rank : v);
+    int r = v;
+    if (v < 0)
+        r = 0;
+    else if (r > g_skill_tbl[36].max_rank)
+        r = g_skill_tbl[36].max_rank;
+    return r;
 }
 
+// the troop's hit-point cap (level + 35 + 2 * clamped strength-class nibble); the level is read first, before the clamp's branches
+static inline int troop_max_hp(TroopRec& t)
+{
+    int lv = t.lvl58;
+    return lv + 0x23 + clamp_rank(((unsigned char*)&t)[0x7a] & 0xf) * 2;
+}
 // @ 0x51f1a0
 void Game::start_new_game()
 {
@@ -286,19 +297,31 @@ void Game::start_new_game()
     ((tstring*)&TROOP(cur_troop))[0] = "";
 
     if (g_cfg.skip_tutorial != 0) {
-        ((NibWord*)&TROOP(cur_troop).nib[0])->n1 = g_skill_tbl[1].max_rank < 3 ? g_skill_tbl[1].max_rank : 3;
-        hit = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
-        if ((float)hit < TROOP(cur_troop).hp)
-            TROOP(cur_troop).hp = (float)(TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2);
-        ((NibWord*)&TROOP(cur_troop).nib[0])->n2 = g_skill_tbl[2].max_rank < 2 ? g_skill_tbl[2].max_rank : 2;
-        hit = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
-        if ((float)hit < TROOP(cur_troop).hp)
-            TROOP(cur_troop).hp = (float)(TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2);
+        {
+            TroopRec& t = TROOP(cur_troop);
+            int r = 3;
+            if (g_skill_tbl[1].max_rank < 3)
+                r = g_skill_tbl[1].max_rank;
+            ((NibWord*)&t.nib[0])->n1 = r;
+            hit = troop_max_hp(t);
+            if ((float)hit < t.hp)
+                t.hp = (float)(troop_max_hp(t));
+        }
+        {
+            TroopRec& t = TROOP(cur_troop);
+            int r = 2;
+            if (g_skill_tbl[2].max_rank < 2)
+                r = g_skill_tbl[2].max_rank;
+            ((NibWord*)&t.nib[0])->n2 = r;
+            hit = troop_max_hp(t);
+            if ((float)hit < t.hp)
+                t.hp = (float)(troop_max_hp(t));
+        }
     }
 
     TROOP(cur_troop).exp = rand() % 50 + 0x6b;
     TROOP(cur_troop).f3b4 = 0;
-    hit = TROOP(cur_troop).lvl58 + 0x23 + clamp_rank(((unsigned char*)&TROOP(cur_troop))[0x7a] & 0xf) * 2;
+    hit = troop_max_hp(TROOP(cur_troop));
     TROOP(cur_troop).hp = (float)hit;
     TROOP(cur_troop).fa8 = 4;
     TROOP(cur_troop).fa4 = 4;
