@@ -371,7 +371,9 @@ struct ItemKindX {
     // with one call symbol for both, cl merges the item and troop name tails back past the call, which the original
     // does not (str_store_item_name jumps to the tail in str_store_agent_name, 0x4ade88)
     __forceinline tstring* display_name() { return ((ItemKind*)this)->display_name(); }   // 0x43a480
-    __forceinline tstring* plural_name() { return ((TroopRec*)this)->plural_name(); }    // 0x48d6d0 (folded with TroopRec::plural_name)
+    // likewise the plural: ItemKind's own copy of TroopRec::plural_name (0x48d6d0), one symbol per record type, so the
+    // troop and item plural tails stay apart (str_store_troop_name_plural jumps into str_store_troop_name_by_count)
+    tstring* plural_name();                                 // 0x48d6d0 (folded with TroopRec::plural_name)
 };
 SI_ASSERT(itemkind_size, sizeof(ItemKindX) == 0x238);
 __forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; }
