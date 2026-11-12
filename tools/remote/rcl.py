@@ -202,8 +202,8 @@ def unmap_log(log, stage, repo):
 
 def main(argv):
     """A traced compile queues for the laptop instead of spilling onto this machine: on busy it asks again (MB_RC_RETRY
-    times, default 20, 5-20 s apart) before giving up with 75. Plain compiles ask once (cl.sh has local slots)."""
-    n = int(os.environ.get("MB_RC_RETRY", "20")) if os.environ.get("MB_RC_TC") else 0
+    times, default 2, 5-20 s apart; c2trace.py retries around this too) before giving up with 75. Plain compiles ask once (cl.sh has local slots)."""
+    n = int(os.environ.get("MB_RC_RETRY", "2")) if os.environ.get("MB_RC_TC") else 0
     for i in range(n + 1):
         rc = _once(argv)
         if rc != BUSY or i == n:
