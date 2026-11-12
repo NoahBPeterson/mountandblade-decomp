@@ -558,7 +558,9 @@ static __forceinline int item_rank(int idx)
     if (idx < 0)
         return 100;
     int r = g_items[idx].f204;
-    return r == 0 ? 99 : r;
+    if (r == 0)
+        r = 99;
+    return r;
 }
 
 // @ 0x438cb0
