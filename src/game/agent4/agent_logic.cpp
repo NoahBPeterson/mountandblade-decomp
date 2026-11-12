@@ -634,6 +634,7 @@ unsigned Agent::pick_target()
     unsigned tid = (unsigned)-1;
     if (0 < n) {
         Threat* r = threats;
+        int k = n;
         do {
             tid = r->id;
             if (g_mission->agents.pages[tid >> 4][tid & 0xf].f14 == 1) {
@@ -643,13 +644,13 @@ unsigned Agent::pick_target()
                 float dz = p.z - pos.z;
                 float v = 3.0f / (float)sqrt(dy * dy + (dx * dx + dz * dz));
                 if (!(v < 4.0f)) v = 4.0f;
-                v = v / ((float)g_mission->agents.pages[tid >> 4][tid & 0xf].f55e8 + 7.0f);
+                v = v / ((float)agent_by_id(r->id)->f55e8 + 7.0f);
                 if (v > bestv) { bestv = v; best = tid; }
             }
             r++;
-            n--;
+            k--;
             tid = best;
-        } while (n != 0);
+        } while (k != 0);
     }
     return tid;
 }
