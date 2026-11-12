@@ -30,9 +30,7 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
     rgl::vector4 mean(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < n; i++) {
         pts[i] = verts.first[poly.idx[i]].pos;
-        mean.x += pts[i].x;
-        mean.y += pts[i].y;
-        mean.z += pts[i].z;
+        mean += pts[i];
     }
     float inv = 1.0f / (float)n;
     mean.x *= inv;
@@ -53,12 +51,12 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
         return;
     }
     float t = (normal.z * mz + normal.y * my + normal.x * mx) / (normal.x * d.x + normal.z * d.z + normal.y * d.y);
-    rgl::vector4 hit(p.x + d.x * t, p.y + d.y * t, p.z + d.z * t);
+    rgl::vector4 hit = p + d * t;
 
     bool outside = false;
     for (int i = 0; i < n && !outside; i++) {
-        const rgl::vector4& a = pts[i];
-        const rgl::vector4& b = pts[(i + 1) % n];
+        rgl::vector4 a = pts[i];
+        rgl::vector4 b = pts[(i + 1) % n];
         float ex = b.x - a.x, ey = b.y - a.y, ez = b.z - a.z;
         float len = (float)sqrt(ez * ez + ey * ey + ex * ex);
         if (len > 1e-10f) {
