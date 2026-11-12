@@ -217,8 +217,10 @@ vector4 ShadowMap::to_unit(const vector4& p)
 {
     vector4 l = cam->world.transform_point_to_local(p);
     vector4 d = l - cam->vmin;
-    vector4 r(d.x / cam->size.x, d.y / cam->size.y, d.z / cam->size.z);
-    return r;
+    l.x = d.x / cam->size.x;
+    l.y = d.y / cam->size.y;
+    l.z = d.z / cam->size.z;
+    return l;
 }
 
 // @ 0x463cc0
