@@ -1643,6 +1643,13 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
 
 // Which of the four attack directions (1 left, 2 right, 3 up?, 0 thrust) the agent picks; derived from the
 // mouse movement (mode > 0) or from where the target stands relative to the view (mode 0).
+// rgl::matrix::transform_point_to_local (0x407f70, src/rgl/shapes/shapes.cpp) with its body visible here (inline noinline
+// duplicate, as map_panel.cpp): its argument does not escape
+inline __declspec(noinline) vector4 rgl::matrix::transform_point_to_local(const vector4& p) const
+{
+    vector4 d(p.x - o.x, p.y - o.y, p.z - o.z);
+    return vector4(s.x * d.x + s.y * d.y + s.z * d.z, f.x * d.x + f.y * d.y + f.z * d.z, u.x * d.x + u.y * d.y + u.z * d.z);
+}
 // @ 0x43f970
 int Agent::pick_attack_dir(unsigned tid)
 {
@@ -1673,7 +1680,7 @@ int Agent::pick_attack_dir(unsigned tid)
         if (f < 0)
             goto done;
         float v = signed_angle(xy(&vel), xy(&fx));
-        if (1.0f < agent_by_id_raw(f)->fac) {
+        if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->fac > 1.0f) {
             if (v < -0.2f && dir == 2) {
                 dir = 1;
                 alt = 0;
@@ -1687,12 +1694,12 @@ int Agent::pick_attack_dir(unsigned tid)
                 dir = 1;
                 goto done;
             }
-            if (!(0.2f < v) || dir != 1)
+            if (!(v > 0.2f) || dir != 1)
                 goto done;
         }
         dir = 2;
     } else {
-        Agent* t = agent_by_id_raw(tid);
+        Agent* t = &g_mission->agents.pages[tid >> 4][tid & 0xf];
         AgentBody* tb = t->body;
         if (tb == 0)
             return 0;
@@ -1726,7 +1733,7 @@ int Agent::pick_attack_dir(unsigned tid)
         if (f < 0)
             goto done;
         float v = signed_angle(xy(&vel), xy(&fx));
-        if (1.0f < agent_by_id_raw(f)->fac) {
+        if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->fac > 1.0f) {
             alt = 0;
             dir = (v < 0.0f) ? 1 : 2;
         } else {
@@ -1734,7 +1741,7 @@ int Agent::pick_attack_dir(unsigned tid)
                 dir = 1;
                 goto done;
             }
-            if (!(0.0f < v) || dir != 1)
+            if (!(v > 0.0f) || dir != 1)
                 goto done;
             dir = 2;
         }
