@@ -856,12 +856,12 @@ static inline void add_to(v4* v, const vector4& q) { v->x = v->x + q.x; v->y = v
 // @ 0x46ad50
 void Terrain::compute_normals()
 {
-    int x, y, flip;
+    int x, y;
     int ab[6];
     vector4 n;
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
-            for (flip = 0; flip < 2; flip++) {
+            for (int flip = 0; flip < 2; flip++) {
                 triangle_corners(x, y, flip, &ab[0], &ab[2], &ab[4]);
                 vector4 tri[3] = { at(ab[0], ab[1]).P(), at(ab[2], ab[3]).P(), at(ab[4], ab[5]).P() };
                 quad(x, y).nrm[flip] = *((vector4* (__cdecl*)(vector4*, const vector4*))tri_normal)(&n, tri);   // 0x4612d0: cdecl, hidden result pointer = &n, returned in eax
@@ -876,7 +876,7 @@ void Terrain::compute_normals()
     }
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
-            for (flip = 0; flip < 2; flip++) {
+            for (int flip = 0; flip < 2; flip++) {
                 triangle_corners(x, y, flip, &ab[0], &ab[2], &ab[4]);
                 add_to(&at(ab[0], ab[1]).nrm, quad(x, y).nrm[flip]);
                 add_to(&at(ab[2], ab[3]).nrm, quad(x, y).nrm[flip]);
@@ -885,7 +885,7 @@ void Terrain::compute_normals()
         }
     }
     for (y = 0; y <= h; y++) {
-        for (x = 0; w >= x; x++) {
+        for (x = 0; x <= w; x++) {
             vector4& v = at(x, y).N();
             float len = v.length();
             if (len > 1e-10f) {
