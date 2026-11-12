@@ -777,14 +777,14 @@ void gui_manager::build_scene()
     fov_k = r * 1.3333333730697632f;
 
     if (hud_flag)
-        s1->flags |= 0x200;
+        x44.flags |= 0x200;
 
-    s1->f8 = screen_w;
-    s1->f0 = 0;
-    s1->f4 = 0;
-    s1->fc = screen_h;
-    s1->f10 = 0;
-    s1->f14 = 1.0f;
+    x44.f8 = screen_w;
+    x44.f0 = 0;
+    x44.f4 = 0;
+    x44.fc = screen_h;
+    x44.f10 = 0;
+    x44.f14 = 1.0f;
 
     rgl::frustum* fr = &y3f4;
     fr->perspective = 0;
@@ -807,7 +807,7 @@ void gui_manager::build_scene()
     m->o = o;
     fr->m = *m;
     fr->build_planes();
-    s1->fr = *fr;
+    x44.fr = *fr;
 
     rgl::scene* s2 = &x21c;
     s2->reset();                                // 0x428f30
