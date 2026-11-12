@@ -71,13 +71,8 @@ unsigned Ramp::eval(float* t)
     int i = (int)(fl + 0.1f);
     float frac = x - fl;
     float f = 1.0f - frac;
-    float hi[3], lo[3];
-    hi[0] = frac * stops[i + 1].c[0]; hi[1] = frac * stops[i + 1].c[1]; hi[2] = frac * stops[i + 1].c[2];
-    lo[0] = f * stops[i].c[0]; lo[1] = f * stops[i].c[1]; lo[2] = f * stops[i].c[2];
-    vector4 c;
-    c.x = lo[0] + hi[0];
-    c.y = lo[1] + hi[1];
-    c.z = lo[2] + hi[2];
+    // the stops as vectors through the inline operators (float * vector4, then +): hi and lo are vector4 temporaries
+    vector4 c = f * *(const vector4*)stops[i].c + frac * *(const vector4*)stops[i + 1].c;
     if (g_use_shaders == 0) {
         c.x = (float)pow(c.x, g_ramp_gamma);
         c.y = (float)pow(c.y, g_ramp_gamma);
