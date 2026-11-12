@@ -26,14 +26,6 @@ static inline mh_float2 mh_fade_mix(float s, const mh_float2& a, float t, const 
     return mh_float2(l.x + r.x, l.y + r.y);
 }
 
-// Seconds since track i was (re)started: MissionUi::elapsed(i) with the original's parentheses. Both pairs are needed:
-// each parenthesised float subexpression is an OPPAREN tuple, and with them the first fild's fmul is scheduled after the
-// next timer's int64 stores, as in the original (0x4966e9..0x496717).
-static inline float mh_elapsed(const MissionUi* w, int i)
-{
-    return (((float)(g_ticks[w->tm[i].clock] - w->tm[i].start)) * 1e-5f);
-}
-
 // ==== 0x4958f0: clone a mesh with the same owner, material, flags and name =====================================
 // @ 0x4958f0
 rgl::mesh* rgl::mesh::copy_of()
@@ -207,10 +199,10 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
 // @ 0x496100
 void MeshWidget::animate(int)
 {
-    float e0 = mh_elapsed(this, 0);
-    float e1 = mh_elapsed(this, 1);
-    float e2 = mh_elapsed(this, 4);
-    float e3 = mh_elapsed(this, 5);
+    float e0 = elapsed(0);
+    float e1 = elapsed(1);
+    float e2 = elapsed(4);
+    float e3 = elapsed(5);
 
     if (e2 < dur(4)) {
         float inv = 1.0f / dur(4);
@@ -279,10 +271,10 @@ void MeshWidget::animate(int)
 // @ 0x4966b0
 void XyzButton::animate(int)
 {
-    float e0 = mh_elapsed(this, 0);
-    float e1 = mh_elapsed(this, 1);
-    float e2 = mh_elapsed(this, 4);
-    float e3 = mh_elapsed(this, 5);
+    float e0 = elapsed(0);
+    float e1 = elapsed(1);
+    float e2 = elapsed(4);
+    float e3 = elapsed(5);
 
     if (e2 < dur(4)) {
         float inv = 1.0f / dur(4);
@@ -357,12 +349,12 @@ void XyzButton::animate(int)
 void DropDown::animate(int)
 {
     unsigned char dirty = 0;
-    float e0 = mh_elapsed(this, 0);
-    float e1 = mh_elapsed(this, 1);
-    float e2 = mh_elapsed(this, 2);
-    float e3 = mh_elapsed(this, 3);
-    float e4 = mh_elapsed(this, 4);
-    float e5 = mh_elapsed(this, 5);
+    float e0 = elapsed(0);
+    float e1 = elapsed(1);
+    float e2 = elapsed(2);
+    float e3 = elapsed(3);
+    float e4 = elapsed(4);
+    float e5 = elapsed(5);
 
     if (e4 < dur(4)) {
         float inv = 1.0f / dur(4);
@@ -490,9 +482,9 @@ void DropDown::animate(int)
 // @ 0x497880
 void UiB::animate(int)
 {
-    float t1 = mh_elapsed(this, 1);
-    float t4 = mh_elapsed(this, 4);
-    float t5 = mh_elapsed(this, 5);
+    float t1 = elapsed(1);
+    float t4 = elapsed(4);
+    float t5 = elapsed(5);
 
     if (t4 < dur(4)) {
         float inv = 1.0f / dur(4);
@@ -545,9 +537,9 @@ void UiB::animate(int)
 // @ 0x497e30
 void UiC::animate(int)
 {
-    float t1 = mh_elapsed(this, 1);
-    float t4 = mh_elapsed(this, 4);
-    float t5 = mh_elapsed(this, 5);
+    float t1 = elapsed(1);
+    float t4 = elapsed(4);
+    float t5 = elapsed(5);
 
     if (t4 < dur(4)) {
         float inv = 1.0f / dur(4);
@@ -610,12 +602,12 @@ void UiC::animate(int)
 void UiE::animate(int)
 {
     unsigned char dirty = 0;
-    float e0 = mh_elapsed(this, 0);
-    float e1 = mh_elapsed(this, 1);
-    float e2 = mh_elapsed(this, 2);
-    float e3 = mh_elapsed(this, 3);
-    float e4 = mh_elapsed(this, 4);
-    float e5 = mh_elapsed(this, 5);
+    float e0 = elapsed(0);
+    float e1 = elapsed(1);
+    float e2 = elapsed(2);
+    float e3 = elapsed(3);
+    float e4 = elapsed(4);
+    float e5 = elapsed(5);
 
     if (e4 < dur(4)) {
         float inv = 1.0f / dur(4);

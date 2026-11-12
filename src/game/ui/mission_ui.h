@@ -125,7 +125,10 @@ struct MissionUi {
     MissionUi();                                        // 0x48ae20
     unsigned flag1() const;                             // 0x50cc60 (inventory_panel/widget_text.cpp: the hidden bit)
     // views of the track records for the animate overrides (mesh_hud.cpp)
-    float elapsed(int i) const { return (float)(g_ticks[*(const int*)((const char*)this + 8 + i * 0x10)] - *(const __int64*)((const char*)this + 0x10 + i * 0x10)) * 1e-5f; }
+    // Seconds since track i was (re)started. Both pairs of parentheses are the original's: each parenthesised float
+    // subexpression is an OPPAREN tuple, and with them the first fild's fmul is scheduled after the next timer's int64
+    // stores (XyzButton::animate 0x4966e9..0x496717).
+    float elapsed(int i) const { return (((float)(g_ticks[tm[i].clock] - tm[i].start)) * 1e-5f); }
     float& dur(int i) { return (&periodA)[i]; }                 // +0x68 + 4i
     Color4& ca() { return *(Color4*)&valA; }                    // +0x90
     Color4& aa() { return *(Color4*)&valB; }                    // +0x94
