@@ -185,8 +185,18 @@ void ShadowMap::release_all()
     }
 }
 
+// the device's largest texture, by value
+struct TexSize { int x, y; };
+static inline TexSize max_texture_size()
+{
+    TexSize r;
+    r.x = g_render.caps.MaxTextureWidth;
+    r.y = g_render.caps.MaxTextureHeight;
+    return r;
+}
+
 // @ 0x463bc0
-__declspec(noinline) void ShadowMap::pick_size()   // setup 0x463e90 calls it; without the original's stack temporary cl would inline it
+void ShadowMap::pick_size()
 {
     w = 0x400;
     h = 0x400;
@@ -197,12 +207,11 @@ __declspec(noinline) void ShadowMap::pick_size()   // setup 0x463e90 calls it; w
         w = 0x1000;
         h = 0x1000;
     }
-    struct S2 { int x, y; };
-    // signed compares (jg/jle); the original also spills both to an 8-byte stack temporary
-    S2 m;
-    m.x = g_render.caps.MaxTextureWidth;
-    m.y = g_render.caps.MaxTextureHeight;
-    if (w > m.x || h > m.y) {
+    // signed compares (jg/jle). Each max_texture_size() in the condition is its own by-value temporary: the field the
+    // arm does not read keeps its store (height before the first branch, width in the second arm), which is the
+    // original's 8-byte frame with two dead stores.
+    if (w > max_texture_size().x || h > max_texture_size().y) {
+        TexSize m = max_texture_size();
         w = m.x;
         h = m.y;
     }
