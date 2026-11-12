@@ -580,14 +580,7 @@ __int64 SlotArray::get(const int& slot)
 // @ 0x48d690
 int ScriptState::get_var(unsigned index)
 {
-    Pair690 r;
-    if ((int)index >= 0 && vars._Myfirst != 0 && index < (unsigned)(vars._Mylast - vars._Myfirst))
-        r = *(Pair690*)(vars._Myfirst + index);
-    else {
-        r.a = 0;
-        r.b = 0;
-    }
-    return r.a;
+    return (int)((SlotArray*)&vars)->get(index);
 }
 
 // @ 0x48d6d0
