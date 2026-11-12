@@ -1586,6 +1586,14 @@ computation, one branch or one frame slot away, look here first.
   stopped folding once the access went through an inline `ring_add(Ring* r, ...)` indexing from the ring's own pointer
   (0x4334b0). `if (n == 0) mb_error(...); int idx = rand_below(n);` with an inline `rand_below` gave the two separate
   zero blocks (0x514360).
+- **`else if (a || b) { X }` may have been two identical arms.** `PartyScreen::setup_party` 0x504ef0 matches with
+  `else if (w04 == 3) { X } else if (w04 == 2) { X }` where we had `w04 == 3 || w04 == 2`, and that one change fixed
+  two things. Block layout: with `||` the first compare branches straight to the shared arm, the layout's depth-first
+  walk visits the arm first and it lands after the else arm; with two arms it stays in source order. Frame slots: the
+  packer orders slots by `1000 * uses / size`, larger first (traced on 13.10 at StkColorCmp: an int with 5 uses, key
+  1250, against a 16-byte tstring with 18, key 1125), and it counts BOTH copies of the arm (24 uses, key 1500) before
+  the late flow passes merge them into the one copy the original shows. The merge also leaves a hoisted `lea` of the
+  shared object as a trace. A bool local or an inline helper for the condition fixes the layout but not the slots.
 - **A store to a local ordered against a load through a pointer: where was the pointer derived?** The scheduler keeps
   a store before a load only if there is a memory edge between them, and the edge exists only if the local is in the
   pointer's points-at set. A pointer whose value was defined outside the local's scope does not get the local in its

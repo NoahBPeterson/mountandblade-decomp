@@ -828,8 +828,19 @@ void PartyScreen::setup_party(int side)
             STX(choose_companions, *party_shown_name(get_party(w10)));
             tstring empty("");
             STX(choose_prisoners, empty);
-        } else if (w04 == 3 || w04 == 2) {
-            // each caption string dies before the next is built (0x505886)
+        } else if (w04 == 3) {
+            // the 3 and 2 arms are two identical copies, not one `3 || 2` arm: c2 merges them after stack packing
+            // (one copy at 0x505863), but the packer counted both, which puts this tstring slot (0x18) below the
+            // loop counter's (0x28). Each caption string dies before the next is built (0x505886)
+            {
+                tstring empty("");
+                STX(choose_companions, empty);
+            }
+            {
+                tstring empty2("");
+                STX(choose_prisoners, empty2);
+            }
+        } else if (w04 == 2) {
             {
                 tstring empty("");
                 STX(choose_companions, empty);
