@@ -136,8 +136,6 @@ struct VideoPage {
 // @ 0x4d63b0
 void Recf0::frame_update(float)
 {
-    vector4 v, vi;
-    char buf[0x40];
     if (W(blood)->clear_mask(0x10000)) {
         g_options.blood = settings_value(W(blood));
         update_performance_caption((VideoPage*)this);
@@ -208,14 +206,16 @@ void Recf0::frame_update(float)
 
     if (W(ui_scale)->clear_mask(0x10000)) {
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
-        float gamma = W(ui_scale)->get168();
-        g_options.scale_x = gamma;
-        float inv = g_one / gamma;
-        v.x = v.y = v.z = v.w = gamma;
-        vi.x = vi.y = vi.z = vi.w = inv;
+        g_options.scale_x = W(ui_scale)->get168();
+        // the two effect vectors are D3DXVECTOR4s built with the four-float constructor: the gamma lanes are integer
+        // copies of the stored option, the inverse is computed once and stored x..w
+        D3DXVECTOR4 v(g_options.scale_x, g_options.scale_x, g_options.scale_x, g_options.scale_x);
+        float inv = g_one / g_options.scale_x;
+        D3DXVECTOR4 vi(inv, inv, inv, inv);
         g_effect->SetVector("output_gamma", (const D3DXVECTOR4*)&v);
         g_effect->SetVector("output_gamma_inv", (const D3DXVECTOR4*)&vi);
-        _itoa((int)(gamma * 100.0f), buf, 10);
+        char buf[0x80];
+        _itoa((int)(g_options.scale_x * 100.0f), buf, 10);
         tstring text(buf);
         {
             tstring dot(".");
@@ -230,13 +230,11 @@ void Recf0::frame_update(float)
     }
 
     if (W(ragdoll_limit)->clear_mask(0x10000)) {
-        int pct = (int)W(ragdoll_limit)->get168();
-        g_options.i34 = pct;
-        char buf[0x40];
+        g_options.i34 = (int)W(ragdoll_limit)->get168();
+        char buf[0x80];
         {
             tstring key("ui_percentage_value");
-            tstring* e = g_strtable.lookup(key);
-            sprintf(buf, e->c_str(), pct);
+            sprintf(buf, g_strtable.lookup(key)->c_str(), g_options.i34);
         }
         {
             tstring text(buf);
@@ -256,13 +254,11 @@ void Recf0::frame_update(float)
         update_performance_caption((VideoPage*)this);
     }
     if (W(days)->clear_mask(0x10000)) {
-        int pct = (int)W(days)->get168();
-        g_cfg.texture_detail = pct;
-        char buf[0x40];
+        g_cfg.texture_detail = (int)W(days)->get168();
+        char buf[0x80];
         {
             tstring key("ui_percentage_value");
-            tstring* e = g_strtable.lookup(key);
-            sprintf(buf, e->c_str(), pct);
+            sprintf(buf, g_strtable.lookup(key)->c_str(), g_cfg.texture_detail);
         }
         {
             tstring text(buf);
@@ -278,14 +274,8 @@ void Recf0::frame_update(float)
         tstring label(*value_label(W(resolution), idx));
         int a = label.find('x', 0);
         int b = label.find(' ', 0);
-        {
-        tstring left = label.substr(0, a);
-        g_cfg.display_width = atol(left.c_str());     // 0x4d6900: _atol, not _atoi
-        }
-        {
-        tstring right = label.substr(a + 1, b);
-        g_cfg.display_height = atol(right.c_str());
-        }
+        g_cfg.display_width = atol(label.substr(0, a).c_str());     // _atol, not _atoi
+        g_cfg.display_height = atol(label.substr(a + 1, b).c_str());
         run_settings_probe();
         update_performance_caption((VideoPage*)this);
     }
@@ -305,7 +295,7 @@ void Recf0::frame_update(float)
                 tstring key("ui_change_graphics_settings_explanation");
                 tstring title("");
                 tstring* e = g_strtable.lookup(key);
-                g_windows.box()->set_inline(&title, e);
+                g_windows.box()->setup(&title, e);
             }
             g_windows.open(0);
         }
