@@ -593,8 +593,10 @@ void CampaignScreen::frame_update(float dt)
     char flag;                                      // 1 while the map is idle
     int start;
 
-    if (g_shadow_map.target != 0 && shadow_stale(g_shadow_map.target)
-        && (int)g_shadow_map.cam == (int)g_script.level && g_use_shaders != 0)
+    bool stale = false;
+    if (g_shadow_map.target != 0)
+        stale = shadow_stale(g_shadow_map.target);
+    if (stale && (int)g_shadow_map.cam == (int)g_script.level && g_use_shaders != 0)
         ((ShadowMapP*)&g_shadow_map)->render();
 
     set_map_view(cam, g_gui.view_a * -0.1f, g_gui.view_a * 0.1f, g_gui.view_b * -0.095f, g_gui.view_b * 0.095f);
@@ -606,7 +608,7 @@ void CampaignScreen::frame_update(float dt)
     t = (float)(cur - ref) * 1e-5f;
 
     float hour = (float)fmod((double)t, 24.0);
-
+    {
     float sz[2];
     PSO(f5c)->set_text(sz,
         hour < 1.0f  ? g_strtable.lookup("ui_midnight") :
@@ -620,6 +622,7 @@ void CampaignScreen::frame_update(float dt)
         hour < 20.0f ? g_strtable.lookup("ui_dusk") :
         hour < 23.0f ? g_strtable.lookup("ui_evening") :
                        g_strtable.lookup("ui_midnight"));
+    }
 
     int hi = (int)t;
     GameData* ge = g_game;
@@ -627,6 +630,7 @@ void CampaignScreen::frame_update(float dt)
     ge->emit_event(0xf, hi / 24, hi);
     {
         tstring tmp(g_script.result_string);
+        float sz[2];
         PSO(f60)->set_text(sz, &tmp);
     }
 
@@ -825,10 +829,11 @@ void CampaignScreen::frame_update(float dt)
         g_windows.set_state(0x17);
         return;
     }
+    PsOps* o = PSO(f54);
     if (GD_F(0x14058) == 0.0f)
-        PSO(f54)->act_b4();
+        o->act_b4();
     else
-        PSO(f54)->clear();
+        o->clear();
     g_gui.flush();
     if (GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) != 0) {
         PSO(f58)->act_b4();
