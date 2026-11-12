@@ -2141,3 +2141,9 @@ Key numbering (third batch, same night)
   (RegSimpleAssign); if the original keeps the RMW right before a push, something else stood between them then.
 - `regs` shows a constant candidate's size from its first sighting: a "1 bytes" constant comes from a byte operand,
   which also limits its register candidates to byte registers (ebp excluded).
+- The per-function page-load fold (6.6), traced on 13.10: `LurClassifyNests` returns nonzero when ANY innermost loop
+  classifies as an unroll candidate (it need not unroll); `LurEndUnroll` then reruns copy propagation over the whole
+  function, which deletes the symbol holding `vector::operator[]`'s reference, and `AddrModes` folds `[s]` into
+  `[base+i*4]`. The original's `lea; mov eax,[eax]` or dead `lea` beside a folded load means no loop in its function
+  classified: rewrite the classifying `for` loops as do-while (with a guard) — hook `LurClassifyDo`/`LurClassifyWhile`
+  to find them (Operation::execute, MissionBlocker::frame_update 88af2cbc).
