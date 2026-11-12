@@ -1532,6 +1532,9 @@ void __fastcall conv_free_one(conv_rec* self)
     ((tstring*)p)->~tstring();
 }
 
+// world_sub's verts are a std::vector<scene_vert> (allocator word, first at +4, last, end): conv_build_scene indexes them through
+// the real operator[] (the first element dword folded into the address, the rest through a lea)
+static __forceinline std::vector<scene_vert>& vverts(world_sub* s) { return *(std::vector<scene_vert>*)s; }
 // @ 0x4c8630
 void Terrain::conv_build_scene()
 {
@@ -1541,7 +1544,7 @@ void Terrain::conv_build_scene()
             ((world_root*)world)->codes->cols[x][gy * 4] = *(int*)&cell[x][gy].pz;   // the tableau code rides in the cell's z lane
             int vi = cell[x][gy].f14;
             if (vi >= 0)
-                ((world_root*)world)->sub->verts[vi].pos = *(vector4*)&cell[x][gy];
+                vverts(((world_root*)world)->sub)[vi].pos = *(vector4*)&cell[x][gy];
         }
     }
     world_sub* sub = ((world_root*)world)->sub;
@@ -1549,7 +1552,7 @@ void Terrain::conv_build_scene()
         scene_obj* r = sub->items[k].obj;
         if (r) {
             for (int j = 0; j < sub->items[k].n; j++)
-                r->pts[j] = sub->verts[sub->items[k].idx[j]].pos;
+                r->pts[j] = vverts(sub)[sub->items[k].idx[j]].pos;
             vector4 z0(0.0f, 0.0f, 0.0f);
             rgl::mat3 t;
             rgl::mat3* ip = identity3(&t);
