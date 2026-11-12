@@ -290,6 +290,7 @@ enum {  // header_troops.py / header_items.py
 #include "../party_x.h"                // PartyX : Party (aliases in party.h, member names of the interpreter): the one definition (map_editor and script)
 // PartyV: PartyX with the interpreter's calls bound to the functions of the classes that define them (Party of include/party.h, EmitterCtl and
 // NamedSelRec above): PartyX declares its own spellings of these (the shared header keeps them for map_editor), which would bind to PartyX symbols
+struct StackOut { int w[8]; };                // the 0x20-byte stack record remove_stack hands back (constructed by nothing: Stack has a constructor)
 struct PartyV : PartyX {
     __forceinline int sum_all() { return Party::sum_all(); }                  // 0x489490
     __forceinline int first_flagged() { return Party::first_flagged(); }      // 0x463190
@@ -303,7 +304,7 @@ struct PartyV : PartyX {
     __forceinline void set_id(int icon) { Party::set_id(icon); }              // 0x489420 (ret 4)
     __forceinline void set_name(const tstring& name) { ((NamedSelRec*)this)->set_name(&name); }   // 0x489400 (ret 4)
     __forceinline void add(int psys) { ((EmitterCtl*)this)->add(psys); }     // 0x4955e0 (ret 4)
-    __forceinline Stack remove_stack(int index, void* rows) { Stack out; Party::remove_row((int*)&out, index, (int*)rows); return out; }   // 0x489540 (ret 0xc: hidden return; Party::remove_row spells the out pointer)
+    __forceinline StackOut remove_stack(int index, void* rows) { StackOut out; Party::remove_row((int*)&out, index, (int*)rows); return out; }   // 0x489540 (ret 0xc: hidden return; Party::remove_row spells the out pointer)
 };
 SI_ASSERT(party_size, sizeof(PartyV) == 0x5ac8);
 SI_ASSERT(party_stacks, offsetof(PartyV, stacks) == 0xa8);
