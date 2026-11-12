@@ -634,9 +634,7 @@ void CampaignScreen::frame_update(float dt)
         PSO(f60)->set_text(sz, &tmp);
     }
 
-    flag = 1;
-    if (!(GD_F(0x13ad0) <= 0.0f))
-        flag = 0;
+    flag = GD_F(0x13ad0) <= 0.0f;
     if (GD_C(0x18) == 0 && g_game_keys.clicked(0x24))
         quick_save_msg();
     if (GD_I(0x1a208) >= 0) {
