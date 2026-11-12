@@ -3,3 +3,5 @@
 ../src/game/world_data/obj_tbl.cpp  ?spawn_scaled2@TableauTbl@@QAEXHPBUmatrix@rgl@@PBM@Z  00499540  /O2 /MT /Gy /TP
 ../src/game/world_data/obj_tbl.cpp  ?create_mesh_overlay@WidgetMgrW@@QAEHH@Z  004995e0  /O2 /MT /Gy /TP
 ../src/game/world_data/obj_tbl.cpp  ?create_mesh_overlay_with_tableau@WidgetMgrW@@QAEHHHM@Z  004996e0  /O2 /MT /Gy /TP
+../src/game/world_data/obj_tbl.cpp  ?placed@MeshTable@@QAEPAUmesh@rgl@@H@Z  00499050  /O2 /MT /Gy /TP
+../src/game/world_data/obj_tbl.cpp  ?make_mesh_from@TableauTbl@@QAEPAUmesh@rgl@@PBHPBX@Z  004991d0  /O2 /MT /Gy /TP

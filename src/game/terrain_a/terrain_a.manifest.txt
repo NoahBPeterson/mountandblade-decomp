@@ -50,3 +50,5 @@
 ../src/game/terrain_a/terrain_a.cpp  ?spec_weight@Terrain@@QAEMPAH00@Z  00464bf0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?fill_desc_none@Terrain@@QAEXPAUTerrainDesc@@@Z  004657c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?fill_desc_named@Terrain@@QAEXPAUTerrainDesc@@@Z  004656c0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?load_layer@Terrain@@QAEXPAHH@Z  00467250  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?pick_diagonals@Terrain@@QAEXXZ  004666b0  /O2 /MT /Gy /TP

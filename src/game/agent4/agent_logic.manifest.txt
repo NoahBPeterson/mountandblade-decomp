@@ -112,3 +112,7 @@
 ../src/game/agent4/agent_logic.cpp  ?pick_front@Agent@@QAEIXZ  0043b9e0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?hit_damage@Agent@@QAEXHPAUMissile@@PAMPAII1@Z  00453710  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?can_hit@Agent@@QAEHIIHHPBM@Z  004406a0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?pick_shout_target@Agent@@QAEIHM@Z  00443270  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?add_placed@Mission@@QAEHPBH00PBUmatrix@rgl@@PAH@Z  0044f870  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?add@gui_manager@@QAEXUtstring@@H@Z  00452c00  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?plan_path@Agent@@QAE_NXZ  00445910  /O2 /MT /Gy /TP

@@ -58,3 +58,4 @@
 ../src/game/agent/agent.cpp  ?falloff@Troop@@QAEMMM@Z  004375b0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?reset@PlacedObj@@QAEXXZ  004352f0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?stat_21x@ItemRef@@QAEHH@Z  00434cb0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?reduce@ItemRef@@QAEXH@Z  00437510  /O2 /MT /Gy /TP

@@ -51,3 +51,4 @@
 ../src/game/party2/party_2.cpp  ?refresh_party@GameData@@QAEXI@Z  004b4700  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?push_heap_elem@@YAXPAUOpenItem@@HHU1@UHeapGt@@@Z  004b2520  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?update_flags@Party@@QAEXXZ  004b7840  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?prepare@Party@@QAEXXZ  004b1eb0  /O2 /MT /Gy /TP

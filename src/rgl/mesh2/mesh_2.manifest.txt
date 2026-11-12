@@ -63,3 +63,4 @@
 ../src/rgl/mesh2/mesh_2.cpp  _$E2  00548520  /O2  /MT  /Gy  /TP
 ../src/rgl/mesh2/mesh_2.cpp  _$E4  00547a80  /O2  /MT  /Gy  /TP
 ../src/rgl/mesh2/mesh_2.cpp  _$E5  00548470  /O2  /MT  /Gy  /TP
+../src/rgl/mesh2/mesh_2.cpp  ?read@MissionObj@@QAEXPAUstream_base@@@Z  004ce360  /O2 /MT /Gy /TP

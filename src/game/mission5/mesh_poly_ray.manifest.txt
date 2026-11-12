@@ -4,3 +4,4 @@
 ../src/game/mission5/mesh_poly_ray.cpp  ?make_copy@Mesh_s2e960@@QAEXABUmatrix@rgl@@@Z  0052e960  /O2 /MT /Gy /TP
 ../src/game/mission5/mesh_poly_ray.cpp  ?scale_selected@Mesh_s2dfd0@@QAEXHPBUvector4@rgl@@@Z  0052e590  /O2 /MT /Gy /TP
 ../src/game/mission5/mesh_poly_ray.cpp  ?transform_selected@Mesh_s2dfd0@@QAEXHPBM@Z  0052e6d0  /O2 /MT /Gy /TP
+../src/game/mission5/mesh_poly_ray.cpp  ?edge_index@Mesh_s2e960@@QAEHHABUmatrix@rgl@@@Z  0052eca0  /O2 /MT /Gy /TP
