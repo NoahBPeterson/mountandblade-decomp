@@ -11,4 +11,4 @@
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/game/options_panel/options_panel.cpp  _$E1  00547ae0  /O2  /MT  /Gy  /TP
 ../src/game/options_panel/options_panel.cpp  _$E2  005482b0  /O2  /MT  /Gy  /TP
-../src/game/options_panel/options_panel.cpp  ?import_apply@GameIo@@QAEXPAUini_file@@@Z  004d8c20  /TP
+../src/game/options_panel/options_panel.cpp  ?import_apply@GameIo@@QAEXPAUini_file@@@Z  004d8c20  /O2 /MT /Gy /TP
