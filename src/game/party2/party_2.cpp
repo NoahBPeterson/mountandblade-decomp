@@ -3131,8 +3131,8 @@ acted:
                 g_game->push_party_event(id, (const int*)&mid, &ang);
                 float r1 = frand();
                 float rs = frand() + r1;
-                *(rgl::vector4*)&trail = *(rgl::vector4*)&pos;     // through this, not p: the loads may then pass the stores
                 trail_len = rs * 0.7f + 0.5f;
+                *(rgl::vector4*)&trail = *(rgl::vector4*)&pos;     // through this, not p: the loads may then pass the stores
             }
         }
 
