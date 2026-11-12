@@ -51,7 +51,7 @@ struct ModeFlag {
 // @ 0x4f7d70
 void Mission::init_agent(Agent* a)
 {
-    AgentEq_pick_slots((AgentEq*)a);
+    pick_slots((AgentEq*)a);
     refresh_agent(a);
     a->wield[0] = -1;
     a->wield[1] = -1;

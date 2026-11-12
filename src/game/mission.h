@@ -32,6 +32,7 @@ struct RecJ;
 struct SpawnRec;
 struct AgentS;                                  // mesh_slot/mesh_game.cpp: the agent as the spawner sees it
 struct ItemStackG;                              // mesh_slot/mesh_game.cpp: the item stack a spawned agent carries
+struct AgentEq;                                 // terrain_a/misc.h: the agent's equipment slots as 0x46b2d0 sees them
 struct Stack;
 struct EntFlag;
 namespace rgl { struct mesh; }
@@ -236,6 +237,7 @@ struct Mission {
     int count_props(int tag);                   // 0x48ee20 (ret 4: intact props of tag `tag`)
     int find_prop(int tag, int nth);            // 0x48ee90 (ret 8: index of the nth intact prop of tag `tag`, -1 when none)
     // ---- src/game/agent5 (agent_hud.cpp) ----
+    void pick_slots(AgentEq* a);                // 0x46b2d0 (terrain_a/terrain_render.cpp: ret 4; this unused: pick the ten equipment slots; callers load ecx)
     void init_agent(Agent* a);                  // 0x4f7d70 (ret 4: pick the agent's equipment slots, refresh its look, re-wield the hand slots)
     void refresh_agent(Agent* a);               // 0x4f7e00 (ret 4; this unused: rebuild the agent's appearance and equipment bodies)
     void camera_to(const rgl::matrix* eye, const float* far_plane);   // 0x4fa790 (ret 8: store the camera frame, move the listener, the sun and the flare)

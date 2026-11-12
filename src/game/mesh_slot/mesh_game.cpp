@@ -199,8 +199,6 @@ typedef char EntityG_size_check[sizeof(EntityG) == 0x30c ? 1 : -1];
 struct node_groups {
     void cap_all(const float* limit);   // 0x439000
 };
-struct AgentEq;                          // terrain_a/misc.h: the agent's equipment slots as 0x46b2d0 sees them
-void __stdcall AgentEq_pick_slots(AgentEq* a);      // 0x46b2d0 (ret 4)
 #include "./mesh_build.h"          // setup_item_meshes (0x47cfe0)
 #include "../skill_cap.h"
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
@@ -294,7 +292,7 @@ NOINL void Mission::spawn(AgentS* a)
             shp = 0;
         e->shape = shp;
     }
-    AgentEq_pick_slots((AgentEq*)a);
+    pick_slots((AgentEq*)a);
     build_appearance((rgl::strategic_entity*)e, a->kind, a->troop, a->f94, (ItemRef*)&a->item_a, (rgl::lod_mesh2**)&a->inv[0], (int*)&a->f240,
                      (rgl::lod_mesh2**)&a->f194, (int*)&a->f1a4, (rgl::lod_mesh2**)&a->f1a8, (EquipSet*)&a->slots[0], a->id);   // 0x482240
     setup_item_meshes((SkelBodyV*)e, a->kind, a->troop, &a->inv[0], (int)&a->f130, (ItemRef*)&a->slots[0], a->id);

@@ -137,7 +137,6 @@ struct AgentEq {
     int cand[8];                                // +0x56f4 candidate items
     int ncand;                                  // +0x5714
 };
-void __stdcall AgentEq_pick_slots(AgentEq* a);  // 0x46b2d0
 struct FireRay {
     char pad0[0x20];
     rgl::vector4 from;                          // +0x20

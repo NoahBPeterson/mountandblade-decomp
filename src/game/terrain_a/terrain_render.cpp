@@ -937,7 +937,7 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
 }
 
 // @ 0x46b2d0
-void __stdcall AgentEq_pick_slots(AgentEq* a)
+void Mission::pick_slots(AgentEq* a)
 {
     if (a->f10 == 0) {
         int cand[8];
