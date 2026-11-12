@@ -375,7 +375,8 @@ Game::Game()
 }
 
 // @ 0x51d1c0
-MB_NOINLINE bool TrackVec::buy(unsigned count)
+// std::vector<TrackRec>::_Buy (the library's body: _Xlen is the one shared instance 0x43e2a0)
+template<> MB_NOINLINE bool std::vector<TrackRec, std::allocator<TrackRec> >::_Buy(size_t count)
 {
     _Myfirst = 0;
     _Mylast = 0;
@@ -383,7 +384,7 @@ MB_NOINLINE bool TrackVec::buy(unsigned count)
     if (count == 0)
         return false;
     if (count > 0x2c8590b) {
-        _Xlen();
+        VEC_XLEN_CALL(this);
         return true;
     }
     TrackRec* p = (TrackRec*)operator new(count * 0x5c);
@@ -958,8 +959,8 @@ void Game::load_tracks(stream_base* s)
     tracks.resize(n, val);
     for (int i = 0; i < n; i++) {
         // std::vector's own operator[] (begin() + i through the iterator class): the element address is then computed
-        // before the argument push. TrackVec (game.h) is a hand-rolled view of this std::vector<TrackRec>.
-        (*(std::vector<TrackRec>*)&tracks)[i].read(s);
+        // before the argument push.
+        tracks[i].read(s);
     }
 }
 
@@ -974,7 +975,7 @@ MB_NOINLINE void TrackRec::read(stream_base* s)
 struct E92VecPub : std::vector<E92> { using std::vector<E92>::_Insert_n; };   // _Insert_n is protected
 // @ 0x51e7a0
 // std::vector::resize: the iterator erase returns is discarded, in n's own slot.
-MB_NOINLINE void TrackVec::resize(unsigned n, TrackRec val)
+template<> MB_NOINLINE void std::vector<TrackRec, std::allocator<TrackRec> >::resize(size_t n, TrackRec val)
 {
     E92VecPub& v = *(E92VecPub*)this;
     if (v.size() < n)

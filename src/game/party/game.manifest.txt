@@ -1,5 +1,5 @@
 ../src/game/party/game.cpp  ?init@Game@@QAEXABUtstring@@HD@Z  0051cc10  /O2 /MT /Gy /TP
-../src/game/party/game.cpp  ?buy@TrackVec@@QAE_NI@Z  0051d1c0  /O2 /MT /Gy /TP
+../src/game/party/game.cpp  ?_Buy@?$vector@UTrackRec@@V?$allocator@UTrackRec@@@std@@@std@@IAE_NI@Z  0051d1c0  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ??0SpriteTable@@QAE@XZ  0051d220  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ??0PartyMgr@@QAE@XZ  0051d250  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?init_map@Game@@QAEXXZ  0051d2b0  /O2 /MT /Gy /TP
@@ -22,7 +22,7 @@
 ../src/game/party/game.cpp  ?read@SpriteRec@@QAEXPAUstream_base@@H@Z  0051e970  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?load_clock@Game@@QAEXPAUstream_base@@@Z  0051de70  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?read@I64Vec@@QAEXPAUstream_base@@@Z  0051e0b0  /O2 /MT /Gy /TP
-../src/game/party/game.cpp  ?resize@TrackVec@@QAEXIUTrackRec@@@Z  0051e7a0  /O2 /MT /Gy /TP
+../src/game/party/game.cpp  ?resize@?$vector@UTrackRec@@V?$allocator@UTrackRec@@@std@@@std@@QAEXIUTrackRec@@@Z  0051e7a0  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?load_scene_parties@Game@@QAEXPAUstream_base@@@Z  0051eaa0  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ??0Game@@QAE@XZ  0051cfa0  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?load_state@Game@@QAEXPAUstream_base@@@Z  0051dbd0  /O2 /MT /Gy /TP

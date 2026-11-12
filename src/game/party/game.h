@@ -129,8 +129,11 @@ struct TrackRec {                           // 0x5c bytes: a game track (Rec5c)
     char pad1c[0x5c - 0x1c];
     __declspec(noinline) void read(stream_base* s);        // 0x51e750
 };
-// TrackVec is the vector of event / track records at Game+0x13a60 that other objects name by their own record type: the callees below are
-// declared by their definitions' classes (only the members are declared here; the headers of those classes bring other layouts).
+// The vector of event / track records at Game+0x13a60 is a std::vector of the 0x5c-byte record, which other objects name by their own
+// record type (E92 in party2/party_2.h, Rec5c in rec5c.h). Its _Buy (0x51d1c0) and resize (0x51e7a0) are out of line in the original:
+// the explicit specializations declared here are defined in game.cpp. The two library members resize calls were kept by the linker from
+// other objects under those objects' record names (std::vector<E92>::_Insert_n 0x4b54a0, party2/party_2.cpp; the range erase 0x518990,
+// inventory_panel/game_tick.h Vec5c::shift_over), so resize reaches them through those names until the three record types are one.
 struct Rec5c;                               // src/game/rec5c.h: the 0x5c-byte record (TrackRec is the same record)
 struct Vec5c {
     Rec5c** shift_over(Rec5c** out, Rec5c* dst, Rec5c* src);   // 0x518990 (ret 0xc; inventory_panel/game_tick.h)
@@ -138,24 +141,10 @@ struct Vec5c {
 #include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
 struct E92 { int v[23]; ~E92() {} };        // 0x5c: the same record as party2/party_2.h E92 (same definition)
 // std::vector<E92>::_Insert_n (0x4b54a0, party2/party_2.cpp) is a template member that stays out of line; its explicit specialization is only
-// declared. It is protected, so E92Vec (never constructed) reaches it.
+// declared.
 template<> void std::vector<E92>::_Insert_n(std::vector<E92>::iterator, size_t, const E92&);   // 0x4b54a0
-struct E92Vec : std::vector<E92> {
-    void insert_n(E92* where, unsigned count, const E92& val) { _Insert_n(where, count, val); }
-};
-struct TrackVec {                           // Game +0x13a60 (std::vector<TrackRec>)
-    int pad0;                               // +0
-    TrackRec* _Myfirst;                     // +4
-    TrackRec* _Mylast;                      // +8
-    TrackRec* _Myend;                       // +0xc
-    TrackVec() { buy(0); }
-    __declspec(noinline) bool buy(unsigned count);            // 0x51d1c0 (_Buy: 0x5c-byte elements, max 0x2c8590b)
-    int size() const { if (_Myfirst == 0) return 0; return (int)(_Mylast - _Myfirst); }
-    __declspec(noinline) void resize(unsigned n, TrackRec val);     // 0x51e7a0 (ret 0x60)
-    void _Xlen() const { VEC_XLEN_CALL(this); }               // 0x43e2a0 (std::vector<int>::_Xlen, agent3/agent_combat.cpp)
-    void insert_n(TrackRec* where, unsigned count, const TrackRec* val) { ((E92Vec*)this)->insert_n((E92*)where, count, *(const E92*)val); }   // 0x4b54a0
-    void shift_over(TrackRec** out, TrackRec* first, TrackRec* last) { ((Vec5c*)this)->shift_over((Rec5c**)out, (Rec5c*)first, (Rec5c*)last); }   // 0x518990
-};
+template<> bool std::vector<TrackRec, std::allocator<TrackRec> >::_Buy(size_t);                 // 0x51d1c0 (0x5c-byte elements, max 0x2c8590b)
+template<> void std::vector<TrackRec, std::allocator<TrackRec> >::resize(size_t, TrackRec);     // 0x51e7a0 (ret 0x60)
 
 // The Troop record's loader (0x51e540). Troop (ui/troop_inv.h) declares the inventory and equipment; the other
 // fields read here are reached by offset.
@@ -266,7 +255,7 @@ struct Game {
     int nparties;                            // +0x13a54  0x51e240
     QuestRec* quests;                        // +0x13a58  0x51cfa0, 0x51e100
     int nquests;                             // +0x13a5c  0x51e100
-    TrackVec tracks;                         // +0x13a60  0x51cfa0 (ctor), 0x51e6c0
+    std::vector<TrackRec> tracks;            // +0x13a60  0x51cfa0 (ctor), 0x51e6c0
     tstring t13a70;                          // +0x13a70  0x51cfa0, 0x51de70 (r_tstr)
     GameTimer timer13a80;                    // +0x13a80  0x51cfa0 (clock 1); +0x13a88 read by 0x51de70 (r_i64)
     GameTimer timer13a90;                    // +0x13a90  0x51cfa0 (clock 1); +0x13a98 reloaded by 0x51cc80
