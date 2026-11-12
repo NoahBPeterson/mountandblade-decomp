@@ -486,7 +486,7 @@ void PartyScreen::apply(int which)
             Stack* src = (Stack*)((char*)this + 0x8e8 + which * 0x800);
             int i = 0;
             do {
-                party_index(mainp)->stacks[i] = *src;
+                party_at(party_mgr(), party_mgr()->lookup(mainp))->stacks[i] = *src;     // party_index without its named idx: the page is added before the row offset
                 i++;
                 src++;
             } while (i < ((int*)((char*)this + 0x18e8))[which]);
