@@ -26,8 +26,9 @@ using rgl::vector4;
 #include "../ini_file.h"                               // ini_file, g_game_vars (0xa44240; its count is 0xa70240)
 
 
-// lookup of one setting, 0.0f when the key is missing (the original inlines this seven times)
-static float setting_float(const char* name)
+// lookup of one setting, 0.0f when the key is missing (the original inlines this seven times: forceinline, else cl
+// keeps it a register-argument static call)
+static __forceinline float setting_float(const char* name)
 {
     tstring key(name);
     int idx = -1;
