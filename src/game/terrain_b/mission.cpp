@@ -513,14 +513,13 @@ void Terrain::spawn_bodies(SpawnSet* r)
 struct MeshPush : std::vector<rgl::mesh*> {
     __forceinline void ins(rgl::mesh** where, size_t n, rgl::mesh* const& v)     // 0x410610
     { ((IntVecPub*)this)->_Insert_n(std::vector<int>::iterator((int*)where), n, *(const int*)&v); }
-    void push(rgl::mesh* x)                  // by value: the copy is what goes to _Insert_n by address (m stays in esi)
+    void push(rgl::mesh* x)                  // by value: the copy is what goes to _Insert_n by address (m stays in esi);
+                                             // the stock body: _Mylast = _Ufill(_Mylast, 1, x) reloads _Mylast for the store
     {
-        if (size() < capacity()) {
-            *_Mylast = x;
-            _Mylast++;
-        } else {
+        if (size() < capacity())
+            _Mylast = _Ufill(_Mylast, 1, x);
+        else
             ins(_Mylast, 1, x);
-        }
     }
 };
 // V2 (a vec2 with constructors): ../../include/vec.h
@@ -691,11 +690,9 @@ void Terrain::make_grid()
         }
         for (int i = 0; i < list_c.count; i++) {
             DustEntry* d = (DustEntry*)((char*)&list_c.items[i] + 0x44);
-            int iy = (int)(d->x * 0.05f);
-            if (iy < 0)
-                iy = 0;
-            else if (iy >= n_inner)
-                iy = n_inner - 1;
+            int vy = (int)(d->x * 0.05f);
+            int iy;
+            if (vy < 0) iy = 0; else { iy = n_inner - 1; if (vy < n_inner) iy = vy; }
             int ix = (int)(d->y * 0.05f);
             if (ix < 0)
                 ix = 0;
