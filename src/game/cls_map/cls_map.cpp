@@ -263,10 +263,11 @@ void Font::load(const char* filename)
     font_size = 0x4b;
 
     TiXmlHandle docHandle(&doc);
+    TiXmlHandle rootHandle(0);                       // the TinyXML tutorial shape: the zero store at 0x4d9b4e
     TiXmlElement* root = docHandle.FirstChildElement().Element();
     if (!root)
         return;
-    TiXmlHandle rootHandle(root);                    // the FontDetails chain hangs off the root element, not the document
+    rootHandle = TiXmlHandle(root);                  // the FontDetails chain hangs off the root element, not the document
 
     root->QueryIntAttribute("padding", &padding);
     root->QueryIntAttribute("width", &width);
