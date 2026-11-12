@@ -791,7 +791,7 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
         }
         if (cap - have <= 0) {
             if (force)
-                return found;
+                goto done;
         }
     }
 
@@ -806,10 +806,10 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
             p++;
         } while (i < n);
         if (found != -1)
-            return found;
+            goto done;
     }
     if (n >= 0x40)
-        return found;
+        goto done;
 
     if (flag & 1) {
         if ((*(unsigned __int64*)&flags_lo & 0x100000) == 0)
@@ -825,8 +825,10 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
                     break;
                 lead++;
             }
-            if (m - lead < 0x20)
-                return nstacks;
+            if (m - lead < 0x20) {
+                found = nstacks;
+                goto done;
+            }
         }
     }
     if (!(flag & 1)) {
@@ -834,7 +836,7 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
             int ff = first_flagged();
             int mx = max_stacks();
             if (!(ff < mx))
-                return found;
+                goto done;
         }
         int lead = 0;
         int m = nstacks;
@@ -843,9 +845,12 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
                 break;
             lead++;
         }
-        if (lead < 0x20)
-            return nstacks;
+        if (lead < 0x20) {
+            found = nstacks;
+            goto done;
+        }
     }
+done:   // every exit leaves through the one found-in-ebx epilogue (mov eax,ebx), as in the original
     return found;
 }
 
