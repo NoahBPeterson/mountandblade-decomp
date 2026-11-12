@@ -24,3 +24,4 @@
 ../src/rgl/scene/scene_objects.cpp  ??0strategic_entity@rgl@@QAE@XZ  00421720  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?render_part@world@rgl@@QAEXPAUscene@2@HH@Z  00421110  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?clear_defs@FxDef@@QAEXXZ  00420ec0  /O2 /MT /Gy /TP
+../src/rgl/scene/scene_objects.cpp  ?insert_obj@world@rgl@@QAEXPAUentity@2@@Z  00421600  /O2 /MT /Gy /TP

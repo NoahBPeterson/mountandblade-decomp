@@ -120,3 +120,5 @@
 ../src/game/agent4/agent_logic.cpp  ?setup@EmitTable@@QAEXPAUpsys@rgl@@HPBUvector4@3@@Z  004424c0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?find_talk_target@Agent@@QAEIXZ  0043b8a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_target@Agent@@QAEIXZ  0043b4d0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?collect_boxed@world@rgl@@QAEXPBUvector4@2@0PAV?$vector@IV?$allocator@I@std@@@std@@@Z  00442180  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?draw_glyph@Font@@QAEXHPBUvector4@rgl@@PBMPAUmesh@3@H@Z  0044f5d0  /O2 /MT /Gy /TP
