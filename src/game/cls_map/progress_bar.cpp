@@ -107,13 +107,11 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     }
     if (fa0 >= 0x50)
         return;
-    gui_manager* self = this;
-    int i = self->fa0;
-    self->lines[i] = *s;
-    self->line_wrap[i] = wrap;
-    self->line_height[i] = height;
-    self->line_arg[i] = arg;
-    self->fa0 = i + 1;
+    lines[fa0] = *s;
+    line_wrap[fa0] = wrap;
+    line_height[fa0] = height;
+    line_arg[fa0] = arg;
+    fa0++;
     unsigned flags;
     float x;
     if (wrap) {
@@ -121,62 +119,65 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
         x = 0.0f;
     } else {
         flags = 0;
-        x = self->fa8;
+        x = fa8;
     }
     {
         tstring font("ui_font");
-        self->overlay->res = g_resmgr.get_material(font);
+        overlay->res = g_resmgr.get_material(font);
     }
-    rgl::vector4 lo, hi;
-    float out[2];
-    float xmin = x - 1.0f;
-    float xmax = x + 1.0f;
-    float scale[2];
-    float& pen = (float&)self->sel_ent;
-    rgl::vector4 pos(x, pen, 0.0f);                 // the pen position (x, pen, 0) (0x4e4503..0x4e4537)
-    // pos never sets w: the original builds pos in the dead "ui_font" tstring's slot, so the glyph vertices get that
-    // tstring's len (+0xc, which ~tstring leaves alone) = 7
-    *(int*)&pos.w = 7;
-    scale[0] = height;
-    scale[1] = height;
-    // the colour word is the caller's own `arg` slot (0x4e451b pushes its address)
-    g_font->layout_text(out, s, &pos, scale, self->overlay, (int)&arg, &xmin, &xmax, flags);
-    self->overlay->calc_bounds(&lo, &hi);
-    pen = pen - height;                             // one line down (0x4e454a subtracts the height argument)
-    float w = hi.x - lo.x;                          // the laid-out text's bounds (0x4e4569: [esp+0x30] - [esp+0x20])
-    float h = hi.y - lo.y;
-    float sz[2];
-    float at[2];
-    sz[0] = w + g_k002;
-    sz[1] = h + g_k002;
-    at[0] = lo.x - 0.01f;
-    at[1] = lo.y - 0.01f;
-    self->set_rect(at, sz);
-    float v[2];
-    v[0] = self->vx;                               // the view pair at +0x16e8 (0x4e45c0), not +0x16e0
-    v[1] = self->vy;
-    self->set_view(v);
-    float& widest = (float&)self->fa4;
-    float& run = (float&)self->fa8;
-    // a line no wider than the widest so far (or NaN) changes nothing; a wrapped one only widens; the layout is
-    // rebuilt only when the running width moves (0x4e45e0..0x4e4680)
-    if (!(w > widest))
-        return;
-    if (wrap) {
+    float& pen = (float&)sel_ent;
+    {
+        int col = arg;                          // the colour word, homed in arg's dead slot
+        float xmax = x + 1.0f;
+        float xmin = x - 1.0f;
+        float scale[2];
+        scale[0] = height;
+        scale[1] = height;
+        rgl::vector4 pos(x, pen, 0.0f);         // w is never set: the slot is the dead "ui_font" tstring's, so
+                                                // the glyph vertices get that tstring's len (7), as in the original
+        float out[2];
+        g_font->layout_text(out, s, &pos, scale, overlay, (int)&col, &xmin, &xmax, flags);
+    }
+    pen = pen - height;
+    float w;
+    {
+        rgl::vector4 lo, hi;
+        overlay->calc_bounds(&lo, &hi);
+        w = hi.x - lo.x;
+        float sz[2];
+        float at[2];
+        sz[0] = hi.x - lo.x + g_k002;
+        sz[1] = hi.y - lo.y + g_k002;
+        at[0] = lo.x - 0.01f;
+        at[1] = lo.y - 0.01f;
+        set_rect(at, sz);
+    }
+    {
+        float v[2];
+        v[0] = vx;
+        v[1] = vy;
+        set_view(v);
+    }
+    float& widest = (float&)fa4;
+    float& run = (float&)fa8;
+    if (w > widest) {
+        if (!wrap) {
+            float d = widest - w;
+            float n = run + d;
+            run = n;
+            if (n < widest * g_half_ratio) {
+                n = n - d * g_ratio_a;
+                run = n;
+                widest = n * g_ratio_b;
+                rebuild();
+                return;
+            }
+            widest = w;
+            rebuild();
+            return;
+        }
         widest = w;
-        return;
     }
-    float d = widest - w;
-    float n = run + d;
-    run = n;
-    if (!(n >= widest * g_half_ratio)) {
-        n = n - d * g_ratio_a;
-        run = n;
-        widest = n * g_ratio_b;
-    } else {
-        widest = w;
-    }
-    rebuild();
 }
 
 // ---- 0x4e4690: the ragdoll model record's loader ---------------------------------------------------------------------------------
