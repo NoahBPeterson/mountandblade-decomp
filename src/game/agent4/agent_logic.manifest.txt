@@ -124,3 +124,4 @@
 ../src/game/agent4/agent_logic.cpp  ?draw_glyph@Font@@QAEXHPBUvector4@rgl@@PBMPAUmesh@3@H@Z  0044f5d0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?update_quiver@Agent@@QAEXXZ  0043a800  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?refresh_carried@Agent@@QAEXPAUMissile@@@Z  00452650  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?get_label_box@Agent@@QAEXPAX@Z  00453050  /O2 /MT /Gy /TP

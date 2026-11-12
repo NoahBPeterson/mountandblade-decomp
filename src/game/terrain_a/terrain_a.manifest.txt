@@ -52,3 +52,4 @@
 ../src/game/terrain_a/terrain_a.cpp  ?fill_desc_named@Terrain@@QAEXPAUTerrainDesc@@@Z  004656c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?load_layer@Terrain@@QAEXPAHH@Z  00467250  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?pick_diagonals@Terrain@@QAEXXZ  004666b0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?parse@Terrain@@QAEXABUtstring@@@Z  004658c0  /O2 /MT /Gy /TP

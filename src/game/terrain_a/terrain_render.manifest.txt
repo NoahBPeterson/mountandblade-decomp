@@ -11,7 +11,7 @@
 ../src/game/terrain_a/terrain_render.cpp  ?unequip_all@Troop@@QAEXXZ  004687a0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?auto_equip@Troop@@QAEXHHDD@Z  004687e0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?extend@ShadowMap@@QAEXPBUvector4@rgl@@@Z  00468c20  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_render.cpp  ?AgentEq_pick_slots@@YGXPAUAgentEq@@@Z  0046b2d0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?pick_slots@Mission@@QAEXPAUAgentEq@@@Z  0046b2d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?fill56@@YAXPAUelem56@@0ABU1@@Z  0046b3a0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?ray@FireAgent@@QAEXPAUFireRay@@@Z  0046b410  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?copy1c8@@YAPAUPlacedObj@@PAU1@00@Z  0046b4c0  /O2 /MT /Gy /TP

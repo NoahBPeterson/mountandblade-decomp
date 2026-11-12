@@ -90,3 +90,4 @@
 ../src/rgl/mesh2/gui_edit.cpp  _$E8  00548410  /O2  /MT  /Gy  /TP
 ../src/rgl/mesh2/gui_edit.cpp  _$E11  00548460  /O2  /MT  /Gy  /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?format@ItemPage@@QAEXPAD@Z  004c6620  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?update_object_type@MapEditorDialog@@QAEXXZ  004c7bf0  /O2 /MT /Gy /TP

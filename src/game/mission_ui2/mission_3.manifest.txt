@@ -32,3 +32,4 @@
 ../src/game/mission_ui2/mission_3.cpp  ?trigger_mesh_obj@@YIHH@Z  0048cf40  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?trigger_item@@YIHH@Z  0048cec0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?get@SlotArray@@QAE_JABH@Z  0048d650  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?update_bounds@MissionUi@@UAEXXZ  0048d020  /O2 /MT /Gy /TP
