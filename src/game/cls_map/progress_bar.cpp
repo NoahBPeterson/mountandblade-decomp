@@ -49,10 +49,10 @@ void progress_bar::render(rgl::scene* sc, float* count, int c, int d)
 // @ 0x4e3f60
 void progress_bar::set168(float r)
 {
-    if (r < g_k0_01)
-        r = g_k0_01;
-    else if (r > g_one)
-        r = g_one;
+    if (r < 0.01f)                              // literals: a store through this cannot alias them, so f184 = 1 schedules before the reload
+        r = 0.01f;
+    else if (r > 1.0f)
+        r = 1.0f;
     v168 = r;
     f184 = 1;
 }
