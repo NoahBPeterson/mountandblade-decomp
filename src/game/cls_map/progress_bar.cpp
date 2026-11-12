@@ -1028,14 +1028,14 @@ void Shape::build_ribbons(rgl::mesh* owner)
         m.u = cross_inl(m.s, m.f);
         // Six vertices: three at the start of the segment and three at the far end, in the segment's frame (all offsets scale with the width)
         rgl::vector4 v[6];
-        v[0] = xf_inl(m, rgl::vector4(w * 0.0f, w * 0.0f, w * 0.08f)) + m.f * 0.3f;
-        v[1] = xf_inl(m, rgl::vector4(w * -0.07f, w * 0.0f, w * -0.2f)) + m.f * 0.3f;
-        v[2] = xf_inl(m, rgl::vector4(w * 0.07f, w * 0.0f, w * -0.2f)) + m.f * 0.3f;
-        v[3] = xf_inl(m, rgl::vector4(w * 0.0f, w * 0.0f, w * 0.08f)) + m.f * (len - 0.3f);
-        v[4] = xf_inl(m, rgl::vector4(w * -0.07f, w * 0.0f, w * -0.2f)) + m.f * (len - 0.3f);
+        v[0] = xf_inl(m, w * rgl::vector4(0.0f, 0.0f, 0.08f)) + m.f * 0.3f;
+        v[1] = xf_inl(m, w * rgl::vector4(-0.07f, 0.0f, -0.2f)) + m.f * 0.3f;
+        v[2] = xf_inl(m, w * rgl::vector4(0.07f, 0.0f, -0.2f)) + m.f * 0.3f;
+        v[3] = xf_inl(m, w * rgl::vector4(0.0f, 0.0f, 0.08f)) + m.f * (len - 0.3f);
+        v[4] = xf_inl(m, w * rgl::vector4(-0.07f, 0.0f, -0.2f)) + m.f * (len - 0.3f);
         int k = 0;
         int zero = 0;
-        v[5] = xf_inl(m, rgl::vector4(w * 0.07f, w * 0.0f, w * -0.2f)) + m.f * (len - 0.3f);
+        v[5] = xf_inl(m, w * rgl::vector4(0.07f, 0.0f, -0.2f)) + m.f * (len - 0.3f);
 
         int idx[6];
         unsigned c = color;
