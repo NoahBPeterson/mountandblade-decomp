@@ -2120,3 +2120,15 @@ Key numbering (third batch, same night)
   floats that cl folds into the expression (draw_glyph).
 - A repeated table lookup the original recomputes: its index is a fresh by-value value (an inline helper parameter
   from a reloaded field), not a cached local (Agent::pick_target cdcb518b).
+- A pointer kept in eax to the end (loaded early, copied to edx for the stores, eax never written again): the
+  function returns it, even if every known caller ignores the result (rotate_scale_xy 88d34174).
+- `double len = sqrt(...)` rather than `float len = (float)sqrt(...)` for an x87 value that stays on the stack: the
+  operand is not consumed by its last fmul and is popped late (`fstp st(0)`).
+- Bisect shape `while (lo < hi - 1) { int m = (hi + lo) >> 1; if (k < keys[m]) hi = m; else lo = m; }`; declaration
+  order of lo/hi decides their registers (KeyTable::find 83590fb8).
+- A `T& r = arr[i]` reference reorders strength-reduced induction increments at the loop bottom
+  (Agent::update_quiver 1c33e183).
+- `sete al; test al,1` on a flag test: an inline helper returning `(x == 0) & 1` (Party::skill_level e7060744).
+- Inlining of a small operator differs between functions of one unit (Agent::update_alarm calls vector4::operator-
+  out of line while neighbours inline it): cl's per-site cost (`/d2inlT`, branch/size rules) decides; a per-unit
+  declaration cannot express it.
