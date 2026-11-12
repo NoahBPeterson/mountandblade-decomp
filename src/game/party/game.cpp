@@ -638,15 +638,14 @@ next:
 // For every trigger record and every neighbour slot that is set, stores the compatibility score.
 void NavGraph::score_triggers(int* a, int* b, int* c)
 {
+    int i = 0;
     int off = 0;
-    unsigned i = 0;
     while ((char*)nodes) {
-        if (i >= (unsigned)(((char*)nodes_end - (char*)nodes) / 0x88))
+        if ((unsigned)i >= (unsigned)(((char*)nodes_end - (char*)nodes) / 0x88))
             break;
-        NavNode& n = *(NavNode*)((char*)nodes + off);
-        for (int k = 0; n.count > k; k++) {
-            if (n.nb[k] != -1)
-                n.weight[k] = trigger_score(i, k, *a, *b, *c);
+        for (int k = 0; k < ((NavNode*)((char*)nodes + off))->count; k++) {
+            if (((NavNode*)((char*)nodes + off))->nb[k] != -1)
+                ((NavNode*)((char*)nodes + off))->weight[k] = trigger_score(i, k, *a, *b, *c);
         }
         i++;
         off += 0x88;
