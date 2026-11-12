@@ -78,13 +78,14 @@ void C4c31c0::frame_update(float)
     // save_path reads this as a C string, then WRITES the whole "%s\Mount&Blade Savegames\%s" path back into
     // it (its own local buffer is 0x104), so this is a char buffer of that size - the 16 bytes it used to have
     // were overrun, corrupting the neighbouring `name` buffer (crash 0x73726573 = the tail of "...\users").
-    bin_reader s;
     for (int i = 0; i < 9; i++) {
         MissionUi* button = labels[i];
         if (button && button->clear_mask(0x10000))
             select(i);
     }
-    if (btn_done->clear_mask(0x10000)) {
+    if (btn_done->clear_mask(0x10000) && (is_load || ((char*)this + sel218 * 0x30)[0x58] == 0
+                                          && ((char*)this + sel218 * 0x30)[0x59] == 0
+                                          && ((char*)this + sel218 * 0x30)[0x5a] == 0)) {
         char pathbuf[0x200];
         char name[0x200];
         if (is_load) {
@@ -100,101 +101,91 @@ void C4c31c0::frame_update(float)
             else
                 slotname = (int*)(*(int*)((char*)g_game + 0x8c) * 0x508 +
                                   *(int*)((char*)g_game + 0x13a00));
-            tstring cancel("ui_cancel");
-            tstring ok("ui_ok");
-            tstring title2(pathbuf);
-            const tstring* rc = g_strtable.lookup(cancel);
-            const tstring* ro = g_strtable.lookup(ok);
-            g_menu_rec->name68.clear();
-            // The original (0x4ea40c..0x4ea42d) stores the prompt into +0x1c and the two answers into +0x78/+0x88:
-            // +0x1c = the question, +0x78 = ui_ok, +0x88 = ui_cancel. Ours had +0x1c and +0x88 swapped.
-            g_menu_rec->name1c = title2;
-            g_menu_rec->name78 = *ro;
-            g_menu_rec->name88 = *rc;
-            g_menu_rec->f4c = (int)((char*)this + 0x220);
-            g_menu_rec->f50 = (int)((char*)this + 0x224);
-            g_menu_rec->name54 = *(tstring*)slotname;
-            g_menu_rec->f04 = 3;
+            {
+                tstring cancel("ui_cancel");
+                tstring ok("ui_ok");
+                tstring title2(pathbuf);
+                const tstring* rc = g_strtable.lookup(cancel);
+                const tstring* ro = g_strtable.lookup(ok);
+                NamedRec* rec = g_menu_rec;
+                rec->name68.clear();
+                // The original (0x4ea40c..0x4ea42d) stores the prompt into +0x1c and the two answers into +0x78/+0x88:
+                // +0x1c = the question, +0x78 = ui_ok, +0x88 = ui_cancel.
+                rec->name1c = title2;
+                rec->name78 = *ro;
+                rec->name88 = *rc;
+                rec->f4c = (int)((char*)this + 0x220);
+                rec->f50 = (int)((char*)this + 0x224);
+                rec->name54 = *(tstring*)slotname;
+                rec->f04 = 3;
+            }
             g_windows.set_state(0);
-            return;
-        }
-        char* slot = (char*)this + sel218 * 0x30;
-        if (slot[0x58] == 0 && slot[0x59] == 0 && slot[0x5a] == 0) {
+        } else {
+            bin_reader s;
+            SlotHeader hdr;
+            const char* pf = g_module_name.c_str();
+            int sel = sel218;
             sprintf(pathbuf, "");
             save_path(pathbuf);
-            SlotHeader hdr;
-            const char* path = pathbuf;
-            const char* pf = g_module_name.c_str();
-            mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
-                        sel218 / 10, sel218 % 10);
+            mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", pathbuf, pf, sel / 10, sel % 10);
             *(int*)(slot_as<char>(3) + 4) = 1;
             ((tstring*)(slot_as<char>(3) + 0x48))->assign(name);
             *(int*)(slot_as<char>(3) + 0x8c) = sel218;
             g_windows.set_state(3);
-            return;
         }
-    }
-    if (btn_cancel->clear_mask(0x10000)) {
+    } else if (btn_cancel->clear_mask(0x10000)) {
         g_windows.set_state(*(int*)((char*)this + 0x18));
-        return;
-    }
-    MissionUi* panel = btn_delete;
-    // The original (verified by the byte-level reconstruction in match/slices/save_panel) reaches the delete
-    // confirmation on the delete widget OR (a17420 set, a17820 clear, AND the panel's +0x104 bit 1 clear); the
-    // remaining case is the save/remove path. Ours had that second test as an OR of the positive bit, which sent
-    // the ordinary save/load click into the confirmation (equiv.py reported FAIL until this was ANDed).
-    if (panel->clear_mask(0x10000) ||
-        (g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0 && ((*(unsigned char*)((char*)panel + 0x104) & 2) == 0)))
-        goto confirm_delete;
-    {
+    } else if (!btn_delete->clear_mask(0x10000) &&
+               !(g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0 && ((*(unsigned char*)((char*)btn_delete + 0x104) & 2) == 0))) {
         // +0x21c is the dialog's answer slot (the confirm sets it to -1 before opening the box). The original
         // (0x4ea5f5: cmp [esi+0x21c], 0 / jne 0x4ea6bc) removes the file when the answer is 0 (ui_yes).
         if (*(int*)((char*)this + 0x21c) == 0) {
             char pathbuf[0x200];
             char name[0x200];
+            const char* pf = g_module_name.c_str();
+            int sel = sel218;
             sprintf(pathbuf, "");
             save_path(pathbuf);
-            const char* path = pathbuf;
-            const char* pf = g_module_name.c_str();
-            mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", path, pf,
-                        sel218 / 10, sel218 % 10);
+            mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", pathbuf, pf, sel / 10, sel % 10);
             if (_rmdir(name) != 0) {
                 tstring err("ui_error_removing_file");
                 g_gui.add(*g_strtable.lookup(err), 0xffff0000);
             }
             g_windows.set_state(0x15);
-            return;
+        } else if (*(int*)((char*)this + 0x220) == 0) {
+            save_game(sel218, (tstring*)((char*)this + 0x224));
+            ((tstring*)((char*)g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
+            {
+                tstring ok("ui_game_saved");
+                g_gui.add(*g_strtable.lookup(ok), -1);
+            }
+            g_windows.set_state(*(int*)((char*)this + 0x18));
         }
-        if (*(int*)((char*)this + 0x220) != 0)
-            return;
-        save_game(sel218, (tstring*)((char*)this + 0x224));
-        ((tstring*)((char*)g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
-        tstring ok("ui_game_saved");
-        g_gui.add(*g_strtable.lookup(ok), -1);
-        g_windows.set_state(*(int*)((char*)this + 0x18));
-        return;
-    }
-confirm_delete:
-    {
-    char name[0x200];
-    *(int*)((char*)this + 0x21c) = -1;
-    tstring title("ui_confirm_delete_game");
-    const tstring* r = g_strtable.lookup(title);
-    mb_snprintf(name, 0x200, text_of(r));   // original passes the text itself as the format (0x4ea368, 0x4ea776)
-    tstring no("ui_no");
-    tstring yes("ui_yes");
-    tstring title2(name);
-    const tstring* rn = g_strtable.lookup(no);
-    const tstring* ry = g_strtable.lookup(yes);
-    g_menu_rec->name68.clear();
-    // Same shape as the save-name box (0x4ea7e4..0x4ea801): +0x1c = the question, +0x78 = ui_yes, +0x88 = ui_no.
-    g_menu_rec->name1c = title2;
-    g_menu_rec->name78 = *ry;
-    g_menu_rec->name88 = *rn;
-    g_menu_rec->f4c = (int)((char*)this + 0x21c);
-    g_menu_rec->f50 = 0;
-    g_menu_rec->f04 = 1;
-    g_windows.set_state(0);
+    } else {
+        char name[0x200];
+        *(int*)((char*)this + 0x21c) = -1;
+        {
+            tstring title("ui_confirm_delete_game");
+            const tstring* r = g_strtable.lookup(title);
+            mb_snprintf(name, 0x200, text_of(r));   // original passes the text itself as the format (0x4ea368, 0x4ea776)
+        }
+        {
+            tstring no("ui_no");
+            tstring yes("ui_yes");
+            tstring title2(name);
+            const tstring* rn = g_strtable.lookup(no);
+            const tstring* ry = g_strtable.lookup(yes);
+            NamedRec* rec = g_menu_rec;
+            rec->name68.clear();
+            // Same shape as the save-name box (0x4ea7e4..0x4ea801): +0x1c = the question, +0x78 = ui_yes, +0x88 = ui_no.
+            rec->name1c = title2;
+            rec->name78 = *ry;
+            rec->name88 = *rn;
+            rec->f4c = (int)((char*)this + 0x21c);
+            rec->f50 = 0;
+            rec->f04 = 1;
+        }
+        g_windows.set_state(0);
     }
 }
 
