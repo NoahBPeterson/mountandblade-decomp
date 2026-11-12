@@ -68,6 +68,19 @@ inline __declspec(noinline) int AgentTable::first_used()
     }
     return v;
 }
+// GameKeys::clicked 0x48ac90 (game/ui/mission_ui.cpp owns the row): its body was visible here too; the screen tick keeps
+// g_mission and g_game in registers across its calls.
+inline __declspec(noinline) bool GameKeys::clicked(int i)
+{
+    bool r = false;
+    int a = entry[i][0];
+    if (a >= 0 && g_keyboard.down[a] != 0 && g_keyboard.prev[a] == 0)
+        r = true;
+    int b = entry[i][1];
+    if (b >= 0 && g_keyboard.down[b] != 0 && g_keyboard.prev[b] == 0)
+        r = true;
+    return r;
+}
 inline Agent* AgentTable::get(unsigned id)
 {
     return &pages[id >> 4][id & 0xf];
@@ -921,16 +934,17 @@ void MissionBlocker::frame_update(float dt)
     if (!b6) {
         // ---- boolean-false branch ------------------------------------------------------------------
         g_mission_ctx.tick();
-        if (w18 != 100) {
+        if (w18 == 100) {
+            if (0 < g_mission_ctx.passage_menu) {
+                if ((*(unsigned __int64*)((char*)g_menus + g_mission_ctx.passage_menu * 0x60 + 0x20) & 0x10) != 0)
+                    g_game_s261e0->fa8 |= 1;
+            }
+        } else {
             if (g_game_s261e0->f13ad0 > 0.0f && g_game_s261e0->f13ad4 != 0)
                 g_windows.set_state(7);
             else
                 g_windows.set_state(w18);
             goto unlock;
-        }
-        if (0 < g_mission_ctx.passage_menu) {
-            if ((*(unsigned __int64*)((char*)g_menus + g_mission_ctx.passage_menu * 0x60 + 0x20) & 0x10) != 0)
-                g_game_s261e0->fa8 |= 1;
         }
     } else {
         // ---- boolean-true branch -------------------------------------------------------------------
