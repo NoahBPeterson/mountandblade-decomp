@@ -2199,3 +2199,9 @@ Key numbering (third batch, same night)
   `(x * 0.65f) * 0.7f` (GameData::color_of 81612bcb).
 - Open: a redundant equality compare on an already-tested value that the original keeps (Agent::cycle_slot,
   update_nav_face); every /O2 spelling tried threads it away.
+- A cached manager pointer (`PartyMgr* m = &g_game->parties`) keeps the page-vector CSE temporary in a register
+  across lookups; the original re-derives it per use (`party_index(id)`), so the temporary loses its register and is
+  reloaded after each call (build_hero_table 6c4ccdb4, setup 7afaab1d). A `__forceinline` forwarding wrapper is an
+  extra inline layer that changes argument scheduling (setup: call the real member).
+- Open: a callee that kills globals (the original reloads g_game after it) while the page-load fold stays on
+  (MissionCtx::frame after data_ready 0x5166a0, CampaignScreen::frame_update after PartyMgr::get).
