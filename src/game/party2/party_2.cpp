@@ -206,35 +206,39 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
 // darkens it for the map labels.
 unsigned GameData::color_of(float t, int flag)
 {
+    // hi / lo are 4-float vectors (16-byte slots, frame 0x40 as the original), summed through the inline operator+
     vector4 c(1.0f, 1.0f, 1.0f);
     if (t < -0.0001f) {
         float a = 1.0f + t;
-        float hi[3];
+        vector4 hi;
         float u = -t;
-        hi[0] = 0.95f * a;
-        hi[1] = 0.65f * a;
-        hi[2] = 0.65f * a;
-        float lo[3];
-        lo[0] = 0.95f * u;
-        lo[1] = 0.0f * u;
-        lo[2] = 0.0f * u;
-        c = vector4(lo[0] + hi[0], lo[1] + hi[1], lo[2] + hi[2]);
+        hi.x = 0.95f * a;
+        hi.y = 0.65f * a;
+        hi.z = 0.65f * a;
+        vector4 lo;
+        lo.x = 0.95f * u;
+        lo.y = 0.0f * u;
+        lo.z = 0.0f * u;
+        c = lo + hi;
     } else if (t > 0.0001f) {
         float u = 1.0f - t;
-        float hi[3];
-        hi[0] = 0.75f * u;
-        hi[1] = 0.95f * u;
-        hi[2] = 0.65f * u;
-        float lo[3];
-        lo[0] = 0.50f * t;
-        lo[1] = 1.0f * t;
-        lo[2] = 0.20f * t;
-        c = vector4(lo[0] + hi[0], lo[1] + hi[1], lo[2] + hi[2]);
+        vector4 hi;
+        hi.x = 0.75f * u;
+        hi.y = 0.95f * u;
+        hi.z = 0.65f * u;
+        vector4 lo;
+        lo.x = 0.50f * t;
+        lo.y = 1.0f * t;
+        lo.z = 0.20f * t;
+        c = lo + hi;
     }
     if (flag == 0) {
-        c.x = c.x * 0.65f + 0.2f;
-        c.y = c.y * 0.65f + 0.2f;
-        c.z = c.z * 0.65f * 0.7f + 0.2f;
+        c.x = c.x * 0.65f;
+        c.y = c.y * 0.65f;
+        c.z = (c.z * 0.65f) * 0.7f;          // parenthesised: two multiplies (cl folds c.z * 0.65f * 0.7f to * 0.455f)
+        c.x += 0.2f;
+        c.y += 0.2f;
+        c.z += 0.2f;
     }
     c.w = 1.0f;
     return rgl::pack_color(&c);
