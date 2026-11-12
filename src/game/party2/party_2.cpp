@@ -2716,7 +2716,6 @@ namespace rgl { vector4 unpack_color(const unsigned* argb); }   // 0x40e4e0 (cde
 
 // helpers of Party::update_flags (0x4b7840)
 #define ICON_DEF(i) (&((PartyTypeDef*)g_map_icons)[i])
-#define MODEL_ENTS(m) (*(std::vector<rgl::mesh*>*)&(m)->ents)
 static __forceinline void rows_scale(Rot3& r, const vector4& v)
 {
     r.s.x = v.x * r.s.x; r.s.y = v.x * r.s.y; r.s.z = v.x * r.s.z;
@@ -2770,28 +2769,28 @@ void Party::update_flags()
         ICON_DEF(rdef)->frames.update(-0x46);
     }
     if (e59ec != 0) {
-        for (unsigned i = 0; i < MODEL_ENTS(model).size(); i++) {
-            if (MODEL_ENTS(model)[i] == e59ec) {
-                rgl::mesh* old = MODEL_ENTS(model)[i];
+        for (unsigned i = 0; i < model->ents.size(); i++) {
+            if (model->ents[i] == e59ec) {
+                rgl::mesh* old = model->ents[i];
                 if (old)
                     delete old;
-                MODEL_ENTS(model)[i] = m;
+                model->ents[i] = m;
             }
         }
     } else {
         model->add_extra(m);
     }
     if (e59f0 != 0) {
-        for (unsigned i = 0; i < MODEL_ENTS(model).size(); i++) {
-            if (MODEL_ENTS(model)[i] == e59f0) {
-                rgl::mesh* old = MODEL_ENTS(model)[i];
+        for (unsigned i = 0; i < model->ents.size(); i++) {
+            if (model->ents[i] == e59f0) {
+                rgl::mesh* old = model->ents[i];
                 if (old)
                     delete old;
                 if (m2) {
-                    MODEL_ENTS(model)[i] = m2;
+                    model->ents[i] = m2;
                 } else {
-                    MODEL_ENTS(model)[i] = MODEL_ENTS(model)[MODEL_ENTS(model).size() - 1];
-                    MODEL_ENTS(model).pop_back();
+                    model->ents[i] = model->ents[model->ents.size() - 1];
+                    model->ents.pop_back();
                 }
             }
         }
@@ -3192,9 +3191,9 @@ acted:
             model->visible = alpha > 0.01f ? 1 : 0;
             model->f294 = alpha * 0.5f;
         }
-        for (unsigned i = 0; i < MODEL_ENTS(model).size(); i++) {
-            if (MODEL_ENTS(model)[i] != 0)
-                MODEL_ENTS(model)[i]->color = color;
+        for (unsigned i = 0; i < model->ents.size(); i++) {
+            if (model->ents[i] != 0)
+                model->ents[i]->color = color;
         }
         if (!model->visible)
             return;

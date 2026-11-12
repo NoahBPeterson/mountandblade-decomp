@@ -32,7 +32,7 @@ struct PartyModel {
     float f_c0;                                         // +0xc0   0x4b7840
     vector4 color;                                      // +0xc4   0x4b7840
     char padd4[0x118 - 0xd4];
-    ptr_vec ents;                                       // +0x118 std::vector<rgl::mesh*> (first at +0x11c)   0x4b7840, 0x4b80d0
+    std::vector<rgl::mesh*> ents;                       // +0x118 (first at +0x11c)   0x4b7840, 0x4b80d0
     char pad128[0x140 - 0x128];
     char visible;                                       // +0x140   0x4b80d0
     char pad141[0x15c - 0x141];
