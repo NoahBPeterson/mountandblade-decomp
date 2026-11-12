@@ -6712,11 +6712,10 @@ int Mission::add_placed(const int* kind, const int* id, const int* value, const 
     int idx = (int)props.size();
     {
         PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent.cpp): shared rec1c8.h
-        ((std::vector<PlacedObj>&)props).push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
-        int off = idx * 0x1c8;
-        ::init_placed((PlacedObj*)((char*)&props[0] + off), kind, id, value, m);
+        props.push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
+        init_placed(&props[idx], kind, id, value, m);
         if (*kind == 7 || *kind == 6)
-            ((PlacedObj*)((char*)&props[0] + off))->m10 = 2;
+            props[idx].m10 = 2;
         if (*kind == 1) {
             cnt = 0;
             prev = -1;
@@ -6725,12 +6724,12 @@ int Mission::add_placed(const int* kind, const int* id, const int* value, const 
                     break;
                 prev = cnt;
                 for (unsigned j = 0; j < props.size(); j++) {
-                    if (((PlacedObj&)props[j]).kind == 1 && ((PlacedObj&)props[j]).value == cnt)
+                    if (props[j].kind == 1 && props[j].value == cnt)
                         cnt++;
                 }
             }
             if (cnt < 0x40)
-                ((PlacedObj*)((char*)&props[0] + off))->value = cnt;
+                props[idx].value = cnt;
         }
         spawn_prop(&idx, spawn_id);
     }
