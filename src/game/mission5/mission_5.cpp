@@ -492,6 +492,21 @@ int ViewObj_s257f0::find_listener_agent()
 #undef g_clamp_max
 #define g_clamp_max g_skill_tbl[36].max_rank             // 0x8ee3ac4
 
+// A key or its alternate went down this frame (the bindings' two codes). The loops of this function are do-while loops:
+// with the `for` forms (this walk, the three-slot group loops, the agent scan) cl folds every vector operator[] page
+// load of the function into its use, where the original keeps `lea r,[first+i*4]; mov r,[r]` (docs/codegen.md 6.6).
+static __forceinline bool pressed_s261e0(const int* keys, int n)
+{
+    bool r = false;
+    const int* p = keys;
+    do {
+        int k = *p;
+        if (k >= 0 && ((int*)((char*)&g_keyboard + 0xc))[k] != 0 && ((int*)((char*)&g_keyboard + 0x40c))[k] == 0)
+            r = true;
+        p++;
+    } while ((int)p < (int)(keys + n));
+    return r;
+}
 // MapFlags::commit 0x513710 and MissionSource::pick 0x4d5410 ignore their argument (commit overwrites the slot for its tail
 // call), and the callers pass the address of an unnamed temporary: here a byte that shares flag13's slot and a dword, in
 // Rec1208::frame_update a byte in the parameter's home. So the parameters are `const T&` of an empty class (commit) and of a
@@ -696,7 +711,8 @@ void MissionBlocker::frame_update(float dt)
             if (g_game_keys.clicked(0x23)) {
                 bool changed = false;
                 int* p = (int*)(base + 0x4c);
-                for (int m = 3; m != 0; m--) {                // the original counts down (cl unrolls an up-counting constant loop)
+                { int m = 3;                              // three slots, counted down
+                do {
                     if (!(*p == 0)) {
                         *p = 0;
                     } else {
@@ -704,27 +720,30 @@ void MissionBlocker::frame_update(float dt)
                         changed = true;
                     }
                     p = (int*)((char*)p + 0x6c);
-                }
+                } while (--m != 0); }
                 if (!changed) {
                     int* q = (int*)(base + 0x4c);
-                    for (int m = 3; m != 0; m--) {
+                    { int m = 3;                              // three slots, counted down
+                    do {
                         *q = 1;
                         q = (int*)((char*)q + 0x6c);
-                    }
+                    } while (--m != 0); }
                 }
             } else if (g_game_keys.clicked(0x1f)) {
                 int* q = (int*)(base + 0x4c);
-                for (int m = 3; m != 0; m--) {
+                { int m = 3;                              // three slots, counted down
+                do {
                     *q = 1;
                     q = (int*)((char*)q + 0x6c);
-                }
+                } while (--m != 0); }
             } else {
                 if (!b3) {
                     int* q = (int*)(base + 0x4c);
-                    for (int m = 3; m != 0; m--) {
+                    { int m = 3;                              // three slots, counted down
+                    do {
                         *q = 0;
                         q = (int*)((char*)q + 0x6c);
-                    }
+                    } while (--m != 0); }
                 }
                 int idx = 0;
                 if (g_game_keys.clicked(0x20))
@@ -738,11 +757,12 @@ void MissionBlocker::frame_update(float dt)
 
             bool all = true;
             int* ap = (int*)(base + 0x4c);
-            for (int m = 3; m != 0; m--) {
+            { int m = 3;                              // three slots, counted down
+            do {
                 if (*ap == 0)
                     all = false;
                 ap = (int*)((char*)ap + 0x6c);
-            }
+            } while (--m != 0); }
             if (all) {
                 tstring t("ui_everyone_hear_me");
                 g_gui.add(*g_strtable.lookup(t), 0xffddee88);
@@ -783,7 +803,7 @@ void MissionBlocker::frame_update(float dt)
     unsigned char flag13 = 0;   // esp+0x13 ("value valid")
     int val14 = -1;             // esp+0x14, the slot sdt had
     if (g_mission_s261e0->local_id >= 0) {
-        if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 4 && f2d4 != 0) {
+        if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 4 && f2d4 != 0) {
             WL_MARKER(12)
             int v = *(int*)((char*)g_game_s261e0->f13a50 + 0x7c +
                             (g_mission_s261e0->f5df4 * 0x125 + f2cc) * 4);
@@ -794,11 +814,11 @@ void MissionBlocker::frame_update(float dt)
                 g_game_s261e0->f13af8 = 0;
             }
             WL_MARKER(13)
-        } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 1 && f2d4 != 0) {
+        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 1 && f2d4 != 0) {
             WL_MARKER(12)
             g_mission_s261e0->f6620 = f2cc;
             WL_MARKER(13)
-        } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 7 && f2d4 != 0) {
+        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 7 && f2d4 != 0) {
             WL_MARKER(12)
             MissionItem_s261e0& it = item_vec_s261e0()[f2cc];
             int pair[2];
@@ -809,7 +829,7 @@ void MissionBlocker::frame_update(float dt)
                 update_equipment();
             }
             WL_MARKER(13)
-        } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 5 && f2d4 != 0) {
+        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 5 && f2d4 != 0) {
             MissionItem_s261e0& rec = item_vec_s261e0()[f2cc];
             WL_MARKER(12)
             int v = rec.f1a0;
@@ -820,7 +840,7 @@ void MissionBlocker::frame_update(float dt)
                                 (g_mission_s261e0->f5df4 * 0x125 + v) * 4);
             flag13 = 1;
             WL_MARKER(13)
-        } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 6 && f2d4 != 0) {
+        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 6 && f2d4 != 0) {
             WL_MARKER(12)
             int idx = item_vec_s261e0()[f2cc].f1a0;
             g_game_s261e0->f13af8 = idx;
@@ -830,12 +850,12 @@ void MissionBlocker::frame_update(float dt)
             ((DialogBlock*)(obj + block * 0x68 + 0x4c))->play(0x10);
         }
 
-        if (any_pressed_s261e0(g_game_keys.entry[16], 2)) {
+        if (pressed_s261e0(g_game_keys.entry[16], 2)) {
             g_script.trigger_result.value = 0;
             int* slots = rec_base_s261e0(g_mission_s261e0->cur_rec);
             for (int i = 0; i < *slots; i++)
                 ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x16);
-            if (0 != g_script.trigger_result.value)
+            if (g_script.trigger_result.value != 0)
                 flag13 = 1;
         }
     }
@@ -852,7 +872,7 @@ void MissionBlocker::frame_update(float dt)
         b6 = false;
     }
 
-    if (any_pressed_s261e0(g_game_keys.entry[11], 2) && g_keyboard.down[56] == 0 && g_keyboard.down[184] == 0) {
+    if (pressed_s261e0(g_game_keys.entry[11], 2) && g_keyboard.down[56] == 0 && g_keyboard.down[184] == 0) {
         g_script.trigger_result.value = 0;
         ((snd_bank*)rec_base_s261e0(g_mission_s261e0->cur_rec))->update_all(-0x15);
         if (g_script.trigger_result.value != 0)
@@ -870,15 +890,16 @@ void MissionBlocker::frame_update(float dt)
 
     // ---- "leave area" / agent selection ------------------------------------------------------------
     if ((g_mission_s261e0->f6528 & 1) != 0) {
-        if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 8)
+        if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 8)
             f2dc = 0;
-    } else if (any_pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 8 &&
+    } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 8 &&
                (!template_bit1_s261e0(g_mission_s261e0->cur_rec) || g_mission_s261e0->f6524 > 0)) {
         f2dc = 0;
     } else if (template_bit1_s261e0(g_mission_s261e0->cur_rec) && g_mission_s261e0->local_id >= 0 &&
                g_game_keys.clicked(4) && f2c8 == 8) {
         float best = 10000.0f;
-        for (unsigned id = g_mission->agents.first_used(); id < (unsigned)g_mission->agents.count; g_mission->agents.next_used(&id)) {
+        unsigned id = g_mission->agents.first_used();
+        if (id < (unsigned)g_mission->agents.count) do {
             Agent_s261e0* a = page_agent_s261e0(g_mission_s261e0, id);
             if (a->f14 == 1 && a->f10 == 0 && ((AgentX*)page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->local_id))->is_enemy((Agent const*)a)) {
                 vector4 d = *(vector4*)&a->px - *(vector4*)&page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->local_id)->px;
@@ -886,7 +907,8 @@ void MissionBlocker::frame_update(float dt)
                 if (dist < best)
                     best = dist;
             }
-        }
+            g_mission->agents.next_used(&id);
+        } while (id < (unsigned)g_mission->agents.count);
         if (g_game_keys.clicked(4) && f2c8 == 8) {
             if (best > 8.0f) {
                 int* result = &f2dc;
@@ -920,16 +942,17 @@ void MissionBlocker::frame_update(float dt)
         }
     }
     if (g_presentation != 0) {
-        ((MissionSource*)((char*)this + 0x30))->pick((int*)&PickArg_s261e0());
+        BlockHead& head = bh;
+        ((MissionSource*)&head)->pick((int*)&PickArg_s261e0());
         __int64 d = g_ticks[bh.tick.clock] - bh.tick.start;
         if ((float)d * 1e-5f > bh.f58) {
             g_presentation = 0;
-            if (bh.owned.begin != 0)
-                operator delete(bh.owned.begin);
-            bh.owned.begin = 0;
-            bh.owned.end = 0;
-            bh.owned.cap = 0;
-            ((SrcVtbl_s261e0*)bh.f5c)->v49();
+            if (head.owned.begin != 0)
+                operator delete(head.owned.begin);
+            head.owned.begin = 0;
+            head.owned.end = 0;
+            head.owned.cap = 0;
+            ((SrcVtbl_s261e0*)head.f5c)->v49();
             if (g_render.dev != 0)
                 ((void (__stdcall*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 0);
             g_gui.show_cursor = 0;
@@ -977,7 +1000,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (any_pressed_s261e0(g_game_keys.entry[15], 2) && g_mission_s261e0->local_id >= 0 && g_game_s261e0->b18 == 0) {
+        if (pressed_s261e0(g_game_keys.entry[15], 2) && g_mission_s261e0->local_id >= 0 && g_game_s261e0->b18 == 0) {
             grow_health = 1;
             char* rec = (char*)g_game_s261e0->chars;
             int base = *(int*)(rec + 0x58);
@@ -994,7 +1017,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (any_pressed_s261e0(g_game_keys.entry[17], 2) && g_game_s261e0->b18 == 0 &&
+        if (pressed_s261e0(g_game_keys.entry[17], 2) && g_game_s261e0->b18 == 0 &&
             !template_bit1_s261e0(g_mission_s261e0->cur_rec)) {
             slot_as<Widget_s261e0>(12)->f18 = 0xe;
             slot_as<Widget_s261e0>(12)->f4 = 5;
@@ -1002,7 +1025,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (any_pressed_s261e0(g_game_keys.entry[18], 2) && g_game_s261e0->b18 == 0) {
+        if (pressed_s261e0(g_game_keys.entry[18], 2) && g_game_s261e0->b18 == 0) {
             if (g_module_settings.show_quest_notes != 0) {
                 slot_as<Widget_s261e0>(26)->f18 = 0xe;
                 *(int*)((char*)g_game_s261e0 + 0x13b08) = 4;
@@ -1016,7 +1039,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (any_pressed_s261e0(g_game_keys.entry[19], 2) && g_game_s261e0->b18 == 0) {
+        if (pressed_s261e0(g_game_keys.entry[19], 2) && g_game_s261e0->b18 == 0) {
             slot_as<Widget_s261e0>(25)->f18 = 0xe;
             slot_as<Widget_s261e0>(25)->f4 = 0;
             g_windows.set_state(0x19);
