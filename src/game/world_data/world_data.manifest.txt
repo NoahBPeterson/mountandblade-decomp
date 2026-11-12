@@ -74,3 +74,4 @@
 ../src/game/world_data/world_data.cpp  ?render@DropDown@@UAEXPAUscene@rgl@@PAMHH@Z  004932a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?render@ContainerBase@@UAEXPAUscene@rgl@@PAMHH@Z  00490710  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?on_child_moved@ContainerBase@@UAEXPAUMissionUi@@@Z  004905c0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?gate_rating@GameW@@QAEHIIH@Z  00491b20  /O2 /MT /Gy /TP

@@ -60,3 +60,4 @@
 ../src/game/agent/agent.cpp  ?stat_21x@ItemRef@@QAEHH@Z  00434cb0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?reduce@ItemRef@@QAEXH@Z  00437510  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?stat_1e8@ItemRef@@QAEHXZ  00434df0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?init@Blow@@QAEPAU1@XZ  004353a0  /O2 /MT /Gy /TP

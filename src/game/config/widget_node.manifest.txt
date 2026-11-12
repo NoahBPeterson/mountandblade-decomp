@@ -1,3 +1,4 @@
 ../src/game/config/widget_node.cpp  ?push_back@WidgetVec@@QAEXABQAUMissionUi@@@Z  0049b120  /O2 /MT /Gy /TP
 ../src/game/config/widget_node.cpp  ?insert@WidgetVec@@QAE?AViterator@?$vector@PAUMissionUi@@V?$allocator@PAUMissionUi@@@std@@@std@@V234@ABQAUMissionUi@@@Z  0049b170  /O2 /MT /Gy /TP
 ../src/game/config/widget_node.cpp  ??_GNodeA@@UAEPAXI@Z  0049b0f0  /O2 /MT /Gy /TP
+../src/game/config/widget_node.cpp  ?create@DropDown@@QAEPAUNodeA@@XZ  0049ad20  /O2 /MT /Gy /TP

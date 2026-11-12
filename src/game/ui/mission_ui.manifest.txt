@@ -111,3 +111,4 @@
 ../src/game/ui/mission_ui.cpp  ?setup@MissionView@@QAEXPAXPAH1@Z  004897a0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?remove_row@Party@@QAEPAHPAHH0@Z  00489540  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sl_pick_chain@GameData@@QAEHHD@Z  0048a080  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?count_in@GameData@@QAEHHHD@Z  00489c50  /O2 /MT /Gy /TP
