@@ -1032,7 +1032,8 @@ static __forceinline Rec98& node_call(unsigned id)
     VecIter it;
     it.p = *(int**)((char*)g_game + 0xe4);
     int* slot;
-    Rec98* page = *(Rec98**)*it.advance(&slot, id >> 4);
+    int** r = it.advance(&slot, id >> 4);
+    Rec98* page = *(Rec98**)*r;
     return page[id & 0xf];
 }
 // @ 0x516370
@@ -1045,9 +1046,9 @@ void MissionCtx::frame(int tick)
         party[1] = node_call(f08).f54;
 
         // the record is looked up again for each test (0x516447, 0x5164cf), not read from party[]
-        int ida = node_call(f08).f58;
         int a = 0;
         int b = 0;
+        int ida = node_call(f08).f58;
         GameData* ga = g_game;
         PartyMgr* pa = &ga->parties;
         Party* qa = party_at(pa, pa->lookup(ida));
@@ -1055,8 +1056,7 @@ void MissionCtx::frame(int tick)
             a = 1;
         int idb = node_call(f08).f54;
         GameData* gb = g_game;
-        PartyMgr* pb = &gb->parties;
-        Party* qb = party_at(pb, pb->lookup(idb));
+        Party* qb = party_index(idb);
         if (*(float*)((char*)gb->factions + qb->f70 * 0x300 + 0x2c) < 0.0f)
             b = 1;
         if (a != 0 && b == 0) {
