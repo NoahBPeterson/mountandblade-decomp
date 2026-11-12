@@ -4705,7 +4705,7 @@ done:
             bestid = threats[0].id;
         if (cp.item >= 0 && g_items[cp.item].is_ranged()) {
             bestid = pick_threat();
-        } else if (n > 0) {
+        } else {
             for (int i = 0; i < nthreat; i++) {
                 Threat* t = &threats[i];
                 float score = -0.01f;
