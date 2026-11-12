@@ -664,7 +664,7 @@ void Agent::update_pitch(float dt)
 }
 
 // @ 0x436210
-void __cdecl rotate_scale_xy(vector4* out, const vector4* in, const float* angle, const vector4* scale)
+vector4* __cdecl rotate_scale_xy(vector4* out, const vector4* in, const float* angle, const vector4* scale)
 {
     vector4 t = *in;
     float a = *angle;
@@ -678,6 +678,7 @@ void __cdecl rotate_scale_xy(vector4* out, const vector4* in, const float* angle
     double len = sqrt(scale->x * scale->x + scale->y * scale->y);
     t.x = t.x * len; t.y = t.y * len; t.z = scale->z;
     *out = t;
+    return out;
 }
 
 // Sound ids (provisional): triples (a, b, c) of consecutive sound ids per action.
