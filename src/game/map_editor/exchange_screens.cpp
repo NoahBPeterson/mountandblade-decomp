@@ -474,14 +474,14 @@ void PartyScreen::apply(int which)
         if (w04 == 3 || w04 == 2) {
             owner = w14;
         } else {
-            owner = party_mgr()->get(mainp)->stacks[0].troop;
+            owner = g->parties.get(mainp)->stacks[0].troop;
         }
     }
     if (owner >= 0) {
         g->troops[owner].f3b4 = ((int*)((char*)this + 0x18f0))[which];
     }
     if (mainp >= 0) {
-        party_index(mainp)->nstacks = ((int*)((char*)this + 0x18e8))[which];
+        party_index(g, mainp)->nstacks = ((int*)((char*)this + 0x18e8))[which];
         if (((int*)((char*)this + 0x18e8))[which] > 0) {
             Stack* src = (Stack*)((char*)this + 0x8e8 + which * 0x800);
             int i = 0;
