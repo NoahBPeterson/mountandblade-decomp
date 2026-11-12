@@ -543,6 +543,19 @@ struct PtrTableF {                      // the paged pointer table (count; the p
     // the iterators are the pool's own members (ecx = the table, not the record)
     void next_prop(unsigned* i) { ((Pool<RecJ>*)this)->next_used(i); }      // 0x474300 (thiscall, ret 4)
     void next_agent(unsigned* i) { ((AgentTable*)this)->next_used(i); }   // 0x43b160 (AgentTable::next_used) (thiscall, ret 4)
+    AgentS* agent(unsigned i) { return (AgentS*)pages[i >> 4] + (i & 0xf); }
+    __forceinline unsigned first_agent()        // the agent table's first_used (0x43b1b0 inlined)
+    {
+        unsigned i = 0;
+        if (0 < count) {
+            do {
+                if (((AgentS*)pages[i >> 4])[i & 0xf].used != 0)
+                    break;
+                i++;
+            } while ((int)i < count);
+        }
+        return i;
+    }
 };
 typedef char assert_ptrtable[(sizeof(PtrTableF) == 0x20) ? 1 : -1];
 struct PropAnim {                       // the 0x1c8-byte prop tween record (PlacedObj)
@@ -585,11 +598,10 @@ void Mission::frame(float dt, bool spawn)
     if (scene_changed) {
         unsigned flags = *(unsigned*)(*(char**)(((char*)g_game) + 0x13a50) + f5df4 * 0x494 + 0x30);
         int* water = (int*)&MAT(int, 0x63c0);
-        if (!(flags & 0x100)) { if (!(flags & 1)) {
-            ((ShadowMapP*)ps)->render();
-        } } else {
+        if (flags & 0x100)
             g_terrain.destroy_water((int)water);        // 0x4814a0
-        }
+        else if (!(flags & 1))
+            ((ShadowMapP*)ps)->render();
     }
 
     if (!g_mt_inited && dt > 0.0f)
@@ -618,100 +630,61 @@ void Mission::frame(float dt, bool spawn)
         run_spawns();
 
     if (MAT(unsigned, 0x6550) != 0) {
-        char* set = (char*)g_mission_templates + this->mode * 0x58;
-        int n = *(int*)(set + 0x4c);
-        char* slot = *(char**)(set + 0x50);
-        for (int i = 0; i < n; i++, slot += 0x78)
-            ((SndSlotS*)slot)->update(0x10);
+        struct SndBody { int num; SndSlotS* slots; };
+        SndBody* p = (SndBody*)&g_mission_templates[this->mode].f4c;
+        for (int i = 0; i < p->num; i++)
+            p->slots[i].update(0x10);
     }
 
     // the prop pool: per-entry update, retire the finished ones, and steady the used slots
-    PtrTableF& props = MAT(PtrTableF, 0x30);
-    PtrTableF& agents = MAT(PtrTableF, 4);
-    std::vector<char*>& retire_list = *(std::vector<char*>*)&MAT(char, 0x5dfc);
-    std::vector<int>& cull_list = *(std::vector<int>*)&MAT(char, 0x34);     // the prop pool's free-id list (Pool<RecJ>::free_ids, ecx = this+0x34 at 0x484209)
-    unsigned i;
-    for (i = 0; i < (unsigned)props.count; i++)
-        if (((PropRecF*)props.pages[i >> 4])[i & 0xf].used != 0)
-            break;
-    while (i < (unsigned)props.count) {
-        PropRecF* p = (PropRecF*)props.pages[i >> 4] + (i & 0xf);
-        p->update(dt);
-        bool dead = false;
-        if (p->state == 2 || p->state == 3 || p->state == 1)
-            dead = (g_ticks[p->clock] - p->start) * 1e-5f > 1.0f;
-        if (!dead && p->f28 < -100.0f)
-            dead = true;
-        if (dead) {
-            if (p->f50 != 0) {
-                unsigned n = (unsigned)retire_list.size();
-                if (!(n < retire_list.capacity())) { retire_list.insert(retire_list.end(), p->f50); } else { retire_list.push_back(p->f50); }
-            }
-            p->used = 0;
-            unsigned n2 = (unsigned)cull_list.size();
-            if (!(n2 < cull_list.capacity())) {
-                int idx = (int)i;
-                cull_list.insert(cull_list.end(), idx);
-            } else { cull_list.push_back((int)i); }
+    {
+    unsigned i = MAT(Pool<RecJ>, 0x30).first_used();
+    while (i < (unsigned)MAT(Pool<RecJ>, 0x30).next_id) {
+        ((PropRecF*)&MAT(Pool<RecJ>, 0x30).pages[i >> 4][i & 0xf])->update(dt);
+        PropRecF& p = *(PropRecF*)&MAT(Pool<RecJ>, 0x30).pages[i >> 4][i & 0xf];
+        if ((p.state == 2 || p.state == 3 || p.state == 1) && (g_ticks[p.clock] - p.start) * 1e-5f > 1.0f
+            || p.f28 < -100.0f) {
+            if (p.f50 != 0)
+                (*(std::vector<char*>*)&MAT(char, 0x5dfc)).push_back(p.f50);
+            ((PropRecF*)&MAT(Pool<RecJ>, 0x30).pages[i >> 4][i & 0xf])->used = 0;
+            MAT(Pool<RecJ>, 0x30).free_ids.push_back(i);
         }
-        props.next_prop(&i);
+        MAT(Pool<RecJ>, 0x30).next_used(&i);
     }
 
     // the retire list overflows: drop a random prop and compact
-    if (retire_list.size() > 0x300) {
-        int n = (int)retire_list.size();                    // signed: cmp edi,1; jg / cdq; idiv (0x4842a5)
+    if ((*(std::vector<char*>*)&MAT(char, 0x5dfc)).size() > 0x300) {
+        int n = (int)(*(std::vector<char*>*)&MAT(char, 0x5dfc)).size();                    // signed: cmp edi,1; jg / cdq; idiv (0x4842a5)
         int k = n > 1 ? rand() % n : 0;
-        int id = *(int*)(retire_list[k] + 8);
-        ((rgl::world*)scene)->remove_entity(id);       // 0x41f0d0
-        unsigned last = (unsigned)retire_list.size();
-        retire_list[k] = retire_list[last - 1];
-        retire_list.resize(last - 1);
+        ((rgl::world*)scene)->remove_entity(*(int*)((*(std::vector<char*>*)&MAT(char, 0x5dfc))[k] + 8));       // 0x41f0d0
+        (*(std::vector<char*>*)&MAT(char, 0x5dfc))[k] = (*(std::vector<char*>*)&MAT(char, 0x5dfc))[(*(std::vector<char*>*)&MAT(char, 0x5dfc)).size() - 1];
+        (*(std::vector<char*>*)&MAT(char, 0x5dfc)).resize((*(std::vector<char*>*)&MAT(char, 0x5dfc)).size() - 1);
     }
 
-    std::vector<PropAnim>& anims = *(std::vector<PropAnim>*)&MAT(char, 0x6688);
-    for (unsigned k = 0; k < (unsigned)anims.size(); k++)
-        anims[k].update(dt);
+    for (unsigned k = 0; k < (*(std::vector<PropAnim>*)&MAT(char, 0x6688)).size(); k++)
+        (*(std::vector<PropAnim>*)&MAT(char, 0x6688))[k].update(dt);
 
     // agents: everything but the horses, then the horses, then every agent's tick
-    for (i = 0; i < (unsigned)agents.count; i++)
-        if (((AgentS*)agents.pages[i >> 4])[i & 0xf].used != 0)
-            break;
-    while (i < (unsigned)agents.count) {
-        AgentS* a = (AgentS*)agents.pages[i >> 4] + (i & 0xf);
-        if (a->kind != 1)
-            a->update(dt);
-        agents.next_agent(&i);
-    }
-    for (i = 0; i < (unsigned)agents.count; i++)
-        if (((AgentS*)agents.pages[i >> 4])[i & 0xf].used != 0)
-            break;
-    while (i < (unsigned)agents.count) {
-        AgentS* a = (AgentS*)agents.pages[i >> 4] + (i & 0xf);
-        if (a->kind == 1)
-            a->update(dt);
-        agents.next_agent(&i);
-    }
-    for (i = 0; i < (unsigned)agents.count; i++)
-        if (((AgentS*)agents.pages[i >> 4])[i & 0xf].used != 0)
-            break;
-    while (i < (unsigned)agents.count) {
-        AgentS* a = (AgentS*)agents.pages[i >> 4] + (i & 0xf);
-        a->tick();
-        agents.next_agent(&i);
+    for (i = MAT(PtrTableF, 4).first_agent(); i < (unsigned)MAT(PtrTableF, 4).count; MAT(PtrTableF, 4).next_agent(&i))
+        if (MAT(PtrTableF, 4).agent(i)->kind != 1)
+            MAT(PtrTableF, 4).agent(i)->update(dt);
+    for (i = MAT(PtrTableF, 4).first_agent(); i < (unsigned)MAT(PtrTableF, 4).count; MAT(PtrTableF, 4).next_agent(&i))
+        if (MAT(PtrTableF, 4).agent(i)->kind == 1)
+            MAT(PtrTableF, 4).agent(i)->update(dt);
+    for (i = MAT(PtrTableF, 4).first_agent(); i < (unsigned)MAT(PtrTableF, 4).count; MAT(PtrTableF, 4).next_agent(&i))
+        MAT(PtrTableF, 4).agent(i)->tick();
     }
 
     update_prop_flags();
 
     // the sky clock and the mission timers
-    SkyF* sky = MAT(SkyF*, 0x65a8);
-    float& sky_time = MAT(float, 0x65ac);
-    if (sky != 0) {
-        sky_time = sky_time + dt * 0.04f;
-        if (sky_time > 100.0f)
-            sky_time = (float)fmod((double)sky_time, 1.0);     // 0x4844df: the divisor is the double at 0x54a5d8 (1.0), the 100.0 is only the wrap test (0x54ab28)
-        sky->f1f8 = sky_time;
-        sky->f208 = sky_time;
-        sky->f48 = (float)(g_ticks[2] % 1000000000) * 7.5e-6f;
+    if (MAT(SkyF*, 0x65a8) != 0) {
+        float t = MAT(float, 0x65ac) = MAT(float, 0x65ac) + dt * 0.04f;
+        if (t > 100.0f)
+            MAT(float, 0x65ac) = (float)fmod((double)t, 1.0);     // 0x4844df: the divisor is the double at 0x54a5d8 (1.0), the 100.0 is only the wrap test (0x54ab28)
+        MAT(SkyF*, 0x65a8)->f1f8 = MAT(float, 0x65ac);
+        MAT(SkyF*, 0x65a8)->f208 = MAT(float, 0x65ac);
+        MAT(SkyF*, 0x65a8)->f48 = (float)(g_ticks[2] % 1000000000) * 7.5e-6f;
     }
 
     update_team_stats();
