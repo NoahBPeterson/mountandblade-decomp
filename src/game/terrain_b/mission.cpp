@@ -180,21 +180,18 @@ void rgl::world::build(PolyMesh* m)
         return;
     for (unsigned i = 0; i < nav->faces.size(); i++) {
         MPoly* r = &::vat(nav->faces, i);
-        MVert* verts = &*nav->verts.begin();
-        float lo[3] = { 1e6f, 1e6f, 0.0f };
-        float maxy = -1e6f;
-        float hi[3] = { -1e6f, maxy, 0.0f };
+        vector4 lo(1e6f, 1e6f, 0.0f);
+        vector4 hi(-1e6f, -1e6f, 0.0f);
         int n = r->n;
         int j;
         for (j = 0; j < n; j++) {
-            MVert* p = &verts[r->lim[j]];
-            if (lo[0] > p->pos.x) lo[0] = p->pos.x;
-            if (lo[1] > p->pos.y) lo[1] = p->pos.y;
-            if (hi[0] < p->pos.x) hi[0] = p->pos.x;
-            if (maxy < p->pos.y) maxy = p->pos.y;
+            MVert* p = &nav->verts[r->lim[j]];
+            if (lo.x > p->pos.x) lo.x = p->pos.x;
+            if (lo.y > p->pos.y) lo.y = p->pos.y;
+            if (hi.x < p->pos.x) hi.x = p->pos.x;
+            if (hi.y < p->pos.y) hi.y = p->pos.y;
         }
-        hi[1] = maxy;
-        insert((int)i, lo, hi);
+        insert((int)i, &lo.x, &hi.x);
     }
 }
 
