@@ -312,11 +312,12 @@ int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base*
 void Agent::update_quiver()
 {
     for (int i = 0; i < 4; i++) {
-        if (pairs[i].item >= 0) {
-            ItemKind* ik = &g_items[pairs[i].item];
+        ItemRef& pr = pairs[i];
+        if (pr.item >= 0) {
+            ItemKind* ik = &g_items[pr.item];
             if (((ik->type_flags & 0xff) == 5 || (ik->type_flags & 0xff) == 6 || (ik->type_flags & 0xff) == 10) && disp[i] != 0) {
-                int used = pairs[i].m4 & 0xff;
-                int n = pairs[i].max_amount() - used;
+                int used = pr.m4 & 0xff;
+                int n = pr.max_amount() - used;
                 if (links[i] != 0 && links[i]->vis != 0) n--;
                 float v = (float)((n * 5 + 5) * 2);
                 disp[i]->cap_all(&v);
