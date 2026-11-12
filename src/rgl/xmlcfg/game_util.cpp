@@ -185,23 +185,21 @@ void vec2x::rotate_b(float ang)
 void __cdecl vec3_sub(Vec3* out, const Vec3* a, const Vec3* b) { out->x = a->x - b->x; out->y = a->y - b->y; out->z = a->z - b->z; }
 
 // ---- frame algebra ----------------------------------------------------------------------------------
+// p in the rows of m (the rotation part of transform_point_to_local 0x407f70, written member-first like it): an
+// inline helper of the original (its parameters' keys order the x87 operands; the hand-expanded sums could not)
+static inline vector4 rot_to_local(const vector4& p, const rot3x* m)
+{
+    return vector4(m->s.x * p.x + m->s.y * p.y + m->s.z * p.z,
+                   m->f.x * p.x + m->f.y * p.y + m->f.z * p.z,
+                   m->u.x * p.x + m->u.y * p.y + m->u.z * p.z);
+}
 // @ 0x432860
 rot3x rot3x::mul_t(const rot3x& b) const
 {
     rot3x r;
-    vector4 a, c, d;
-    a.x = (b.s.x*this->s.x + b.s.y*this->s.y) + b.s.z*this->s.z;
-    a.y = (b.s.y*this->f.y + b.s.z*this->f.z) + b.s.x*this->f.x;
-    a.z = (b.s.x*this->u.x + b.s.z*this->u.z) + b.s.y*this->u.y;
-    r.s = a;
-    c.x = (b.f.x*this->s.x + b.f.y*this->s.y) + b.f.z*this->s.z;
-    c.y = (b.f.x*this->f.x + b.f.z*this->f.z) + b.f.y*this->f.y;
-    c.z = (b.f.x*this->u.x + b.f.z*this->u.z) + this->u.y*b.f.y;
-    r.f = c;
-    d.x = (b.u.y*this->s.y + b.u.z*this->s.z) + b.u.x*this->s.x;
-    d.y = (b.u.x*this->f.x + b.u.z*this->f.z) + b.u.y*this->f.y;
-    d.z = (b.u.x*this->u.x + b.u.z*this->u.z) + b.u.y*this->u.y;
-    r.u = d;
+    r.s = rot_to_local(b.s, this);
+    r.f = rot_to_local(b.f, this);
+    r.u = rot_to_local(b.u, this);
     return r;
 }
 
