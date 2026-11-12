@@ -191,6 +191,13 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
     whose code changed. Runs are niced (`--nice 10`), `--status` prints the summary, `--only` and `--redo`
     select cases. The Module System interpreter: `case_sweep.py src/game/script/script_interpreter.cpp
     49fa10 --selector 'this+0&0fffffff'`.
+    `--shards N` runs each case as N `equiv.py --shard K/N` runs and judges their union (valid inputs add, covered
+    edges unite, a mismatch in any shard is a FAIL): use it, not a longer `--time-limit`, for cases that cannot reach
+    `--min-valid` in one run. Results under other options go to their own file (`--out
+    work/difftest/cases/<module>_<va>.<tag>.json`); verdicts.py takes the strongest evidence per case across the
+    files. `--plan-only` runs nothing and marks the stored cases whose code has changed as stale; verdicts.py only
+    knows those marks (it adds "the source has changed since this sweep" to the reason when the file's hash moved),
+    so run it before quoting a case-sweep verdict.
   - Limit is 180 s per function by default. Run it with `run_in_background` and keep working, never with a
     shell `&`.
 

@@ -62,7 +62,14 @@ preempted). Open no windows; nothing needs a GUI.
   header a timestamp, so whole files differ. `equiv.py`'s result-cache key already ignores those.
 * An anonymous namespace's mangled names (`?A0x...`) hash the source path: a TU that has one compiles to different
   symbol names under `D:\mb\repo` than under another checkout path (the tools look such symbols up by name).
-* Not ported: `case_sweep.py` (`fcntl`, `killpg`), `crashrun.py`, `loadprofile.py` and the wine-only `keepalive.sh`.
+* `case_sweep.py` runs there too (its harness hash ignores line endings, so the keys of a results file measured on the
+  laptop match the Mac's for the same commit: fetch the file into `work/difftest/cases/` and check it with
+  `case_sweep.py ... --plan-only`, which runs nothing and marks the cases whose code differs here as stale).
+* Not ported: `crashrun.py`, `loadprofile.py` and the wine-only `keepalive.sh`.
+* The laptop's sshd refuses connections in bursts (`Permission denied` / `Connection closed` for a minute or so) when
+  several arrive close together: bundle files into one tar and one command per step instead of many small calls.
+* `equiv.py` re-executes itself when `PYTHONHASHSEED` is unset; on Windows the parent then returns at once with no
+  output. Set `PYTHONHASHSEED=0` (as `startjob.ps1` does) for anything run by hand over ssh.
 * No `MB_CL_SLOTS`-style compile limit: callers bound compile parallelism with `--jobs`.
 
 ## Verified equal to the Mac (commit a076d57 era)
