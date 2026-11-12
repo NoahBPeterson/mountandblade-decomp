@@ -798,36 +798,45 @@ void UiD::update_children(float arg)
 // @ 0x498420
 void HudOuter::scroll_refresh(vector4* arg)
 {
-    (*scroll->target)->t25(arg);              // 0x49843e: the target is reloaded for the second call (0x498441)
-    (*scroll->target)->t27((char*)*scroll->target + 0x140);
+    // the scroll object is a container (ui/container.h): its first child takes the new size, then its own text metrics
+    // (+0x140). The container is re-read per statement and kids[0] is the real operator[] (0x498441..0x498453).
+    ((ContainerBase*)scroll)->kids[0]->set_xy((float*)arg);
+    ((ContainerBase*)scroll)->kids[0]->set_size(&((ContainerBase*)scroll)->kids[0]->f140);
 
     f49c = arg->x;
     f4a0 = arg->y;
 
     vector4 scale;
-    {
-        vector4 v1;
-        v1.x = 0.01f;
-        v1.y = arg->y;
-        scale.x = 0.5f;
-        scale.y = arg->y * 1.5576323f;
-        scale.z = 1.0f;
-        bar->set_xy(&v1.x);
-    }
+    scale.x = 0.5f;
+    scale.y = arg->y * 1.5576323f;
+    scale.z = 1.0f;
+    bar->set_xy((float*)&mh_float2(0.01f, arg->y));       // an 8-byte temporary, as in the animate family
     bar->f17c = (float)(arg->y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
 
-    delete bar->tracks[0];
-    bar->tracks[0] = 0;
-    delete bar->tracks[2];
-    bar->tracks[2] = 0;
+    if (bar->tracks[0]) {
+        delete bar->tracks[0];
+        bar->tracks[0] = 0;
+    }
+    if (bar->tracks[2]) {
+        delete bar->tracks[2];
+        bar->tracks[2] = 0;
+    }
 
-    // the names are temporaries: each dies right after its clone (0x498534, 0x49858a)
-    rgl::mesh* a = ((rgl::mesh*)g_resmgr.get_object(&tstring("scrollbar")))->clone();
+    // the names are block locals: their address is recomputed for get_object (0x498518) and each dies after its clone
+    rgl::mesh* a;
+    {
+        tstring n("scrollbar");
+        a = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
+    }
     a->set_color(scale);
-    rgl::mesh* b = ((rgl::mesh*)g_resmgr.get_object(&tstring("scrollbar_handle")))->clone();
+    rgl::mesh* b;
+    {
+        tstring n("scrollbar_handle");
+        b = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
+    }
     b->set_color(scale);
     bar->set_track(0, a);
     bar->set_track(2, b);
 
-    ((FieldPanel*)(void*)this)->update();            // 0x48d470
+    ((FieldPanel*)(void*)this)->update();
 }
