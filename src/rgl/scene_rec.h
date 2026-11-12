@@ -23,11 +23,19 @@ struct ptr_list : std::vector<void*> {
 // 0x429890 (reflection pass), ~scene 0x41f4e0 and the mesh code (mesh::render 0x413750, scene_registry 0x412040/0x412100).
 // Queue entries are (mesh pointer, 0.0f) idx_weights in scene+0x1b4; the scene itself is queued in the global
 // registry 0x5fe898 (vector of scene* at +0x3a4) the first time something is added.
-struct scene {
+// The two leading 0x18-byte blocks are base subobjects with their own inline constructors: the scene constructor then takes
+// the frustum's address after the first block's last store, as the original does (0x429740).
+struct scene_block0 {
     int f0, f4, f8, fc, f10;    // 0x00
     float f14;                  // 0x14
+    scene_block0() : f0(0), f4(0), f8(0), fc(0), f10(0), f14(1.0f) {}
+};
+struct scene_block1 {
     int f18, f1c, f20, f24, f28;    // 0x18
     float f2c;                  // 0x2c
+    scene_block1() : f18(0), f1c(0), f20(0), f24(0), f28(0), f2c(1.0f) {}
+};
+struct scene : scene_block0, scene_block1 {
     frustum fr;                 // 0x30 (planes from 0x38, count at 0x34, camera frame at 0xf8)
     texture* target;            // 0x150 render target of this pass
     texture* rt;                // 0x154 render target of the reflection pass

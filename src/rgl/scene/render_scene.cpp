@@ -70,7 +70,6 @@ namespace rgl {
 
 // @ 0x429740
 scene::scene()
-    : f0(0), f4(0), f8(0), fc(0), f10(0), f14(1.0f), f18(0), f1c(0), f20(0), f24(0), f28(0), f2c(1.0f)
 {
     mask = 1;
     vector4 t(1.0f, 1.0f, 1.0f);
