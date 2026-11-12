@@ -1929,3 +1929,62 @@ Harness behaviour worth knowing when reading a verdict:
 | Final check of a manifest | `tools/matching/run_all.py --manifest ...` |
 | Compiler wrapper | `tools/matching/cl.sh` (cl 13.10.3052) |
 | Behaviour equivalence (`--fp-tol` for floats) | `tools/difftest/equiv.py` |
+
+## 16. Rules from the 2026-11-11 night wave (each from a traced, byte-exact match; commit in brackets)
+
+Alias and scheduling order
+- A store through a pointer is a scheduling dependence for a later load of a named global with external linkage or of
+  a non-const float global; not for a literal constant, nor for a file-static whose address is never taken. If the
+  original loads a constant/global above a pointer store that ours keeps below, its object was a literal or a static
+  (progress_bar::set168 b24a6e6c, Terrain::fill_desc_* 82413a3c).
+- A callee that is only declared is assumed to keep a pointer passed to it: the local's home store then depends on
+  every pointer access around it, the local cannot share a frame slot, and a value cannot stay in a register across the
+  call. Give the unit the callee's body (an `inline`/`__declspec(noinline)` duplicate, as several files already do) and
+  those effects vanish (camera_mark_entities 7395564d, PartyMgr::id_remove 70f26887, import_apply d3527887,
+  hit_damage c9c89196, plan_order 6e6a1af0). Visible bodies also change the inliner's costs (`/d2inlT` prints them;
+  threshold 74): a `found = true; continue;` arm pushed one helper above it and kept the other below.
+- Callee summaries work the other way too: if the original keeps a store into a local whose address goes to a
+  same-unit callee, that callee read through the parameter (PartyWindow::place_slot 3c200809).
+- Scope sets aliasing and frame overlay together: a local declared in an inner block is independent of pointers
+  computed before the block; at function scope it aliases but also conflicts with parameter homes in the packer
+  (PartyMgr::read a0e6a87b).
+- Parentheses around a float argument or right-hand side add an OPPAREN tuple that delays the next x87 instruction
+  past neighbouring integer stores/pushes (apply_forces 6aeef0ce, XyzButton::animate e3f372f3, hit_damage). The
+  scheduler works in regions of at most 81 tuples; one extra tuple can move a region boundary and with it an order
+  far away (DropDown::animate 8860b80f, plan_order).
+
+Shapes that identify the source
+- `mov reg2,reg` between a `cmp` and its `je` on a pointer: the null test is inside an inline helper, on its by-value
+  parameter (GameApp::FinalCleanup bed82727).
+- Unfolded `add reg,base; mov reg,[reg+off]`: the address is shared by several source-level reads, typically an
+  accessor called per comparison instead of a cached local (item_slot_source 823d4122).
+- Both operands computed, then both stored, with an integer copy between the x87 instructions: a struct temporary
+  assigned whole, not per-field stores (ContainerBase::on_child_moved ef16b1f9).
+- Element address computed before the argument push: the real `std::vector::operator[]`; after it: `first + i`
+  (Game::load_tracks bceaabc4).
+- A loop unrolled by 3 with `lea ecx,[eax+2]; lea esi,[ecx-1]` is cl's own unroller, which skips an integer loop whose
+  loads equal its stores: read the member in the condition instead of a local copy (import_apply).
+- `x + 0.0f` copies that stay (dead integer copies of x/y before a z store): `v += vector4(0, 0, k)` through an inline
+  helper (update_controls 77a9259a).
+- xor-merge of a colour with the alpha loaded twice: the source is `(a & 0xff000000) | (b & 0xffffff)`, and the flag
+  clear is written before it (mesh_hud animate family).
+- A reload of `lea reg,[tmp]` instead of reusing a constructor's returned this: a named temporary in its own block
+  (`{ tstring s(v); x = s; }`).
+
+Frame slots (tools: `c2trace.py slots --c2 13.10`, `c2slots.py --c2 13.10`)
+- Frame below 128 bytes: slots are never sorted by key; they stay in creation order = the packer's visiting order
+  (size ascending, uses descending, ties to the first to reach the count). At or above it: key 1000*uses/size.
+- One variable reused N times is one element with N times the uses; N separate variables are N elements that can
+  share a slot. Both directions occur (XyzButton: three floats; Skin::read 9f146922: one function-scope `int i`).
+- A by-value scalar parameter of an inline helper whose address goes to an opaque callee shares one slot across the
+  expansions; named locals and const-reference temporaries do not (parse_module_info 2e679497).
+- Arguments passed by address to set_size/set_offset/set_xy in the UI code are 8-byte two-float temporaries, one per
+  call, never a named vector4.
+
+Symbol keys and operand order (tool: `symkeys`)
+- Keys follow first reference: initialisation order of locals decides lea base/index and x87 operand order
+  (nearest_face 669df504); a dead early mention of a field moves its field-view key (psys::update 9eb5b08e).
+- SIB base/index can also flip from the optimiser's expression numbering: moving an if/else into an inline helper
+  shifted one entry and swapped three operands without changing any instruction (FxDef::update 2b523d72).
+- Strength reduction anchors the induction pointer at the first store address that survives to that pass
+  (Terrain::set_cells: exact only with a self-assignment, not landed).
