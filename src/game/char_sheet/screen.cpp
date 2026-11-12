@@ -101,7 +101,7 @@ void gui_manager::process(int param)
     int acc0, acc1;
     gui_timer* cr;
 
-    objs.back()->clear_c8();
+    objs[objs.size() - 1]->clear_c8();
 
     dmx = 0.0f;
     dmy = 0.0f;
@@ -156,7 +156,7 @@ void gui_manager::process(int param)
         this->ui_active->key(1);
     }
     else if (objs.size()) {
-        objs.back()->key(1);
+        objs[objs.size() - 1]->key(1);
     }
 
     acc0 = 0;
@@ -188,7 +188,7 @@ void gui_manager::process(int param)
                     this->ui_active->key(1);
                 }
                 else if (objs.size()) {
-                    objs.back()->key(1);
+                    objs[objs.size() - 1]->key(1);
                 }
                 acc0 = 0;
                 acc1 = 0;
@@ -248,7 +248,7 @@ void gui_manager::process(int param)
             this->ui_active->key(1);
         }
         else if (objs.size()) {
-            objs.back()->key(1);
+            objs[objs.size() - 1]->key(1);
         }
     }
 
