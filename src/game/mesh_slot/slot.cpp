@@ -251,12 +251,12 @@ void MissionUi::animate(int)
 
     bool changed = false;
 
-    float e0 = (float)(g_ticks[tm[0].clock] - tm[0].start) * 1e-5f;
-    float e1 = (float)(g_ticks[tm[1].clock] - tm[1].start) * 1e-5f;
-    float e2 = (float)(g_ticks[tm[2].clock] - tm[2].start) * 1e-5f;
-    float e3 = (float)(g_ticks[tm[3].clock] - tm[3].start) * 1e-5f;
-    float e4 = (float)(g_ticks[tm[4].clock] - tm[4].start) * 1e-5f;
-    float e5 = (float)(g_ticks[tm[5].clock] - tm[5].start) * 1e-5f;
+    float e0 = elapsed(0);
+    float e1 = elapsed(1);
+    float e2 = elapsed(2);
+    float e3 = elapsed(3);
+    float e4 = elapsed(4);
+    float e5 = elapsed(5);
 
     float pair[2];                              // the +0x58/+0x6c argument pair (reused by E and F)
     unsigned col;                               // packed colour word for +0x98/+0x9c
