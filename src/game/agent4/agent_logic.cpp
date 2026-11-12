@@ -6608,10 +6608,10 @@ void rgl::mesh::translate(const vector4* d)
 static __forceinline const Glyph* font_get(Font* f, int c)
 {
     if (c >= 0x200) {
-        GlyphNode* it;
-        glyph_lower_bound(f->map, &it, c);
-        if (it != f->map.head)
-            return &it->val;
+        IntHashBase::iterator it = ((IntHashBase&)f->map).lower_bound(c);   // the returned iterator is the local itself
+        GlyphNode* n = *(GlyphNode**)&it;
+        if (n != f->map.head)
+            return &n->val;
         return &f->dflt;
     }
     return &f->ascii[c];
@@ -6669,10 +6669,11 @@ void Font::draw_glyph(int ch, const vector4* pos, const float* scale_, mesh* m, 
     const Glyph* g = font_get(this, ch);
     float dv = g->fc - g->f4;
     vector4 a = *pos;
-    float h = dv * scale->y;
-    a.y = (g->f14 * scale->y - h) + a.y;
-    float w = (g->f8 - (*(float*)&g->key)) * scale->x;
-    vector4 b(a.x + w, a.y + h, a.z);
+    vec2f s;                            // the glyph size as a two-float struct: its lanes are field views, not substituted temporaries
+    s.y = dv * scale->y;
+    a.y = (g->f14 * scale->y - s.y) + a.y;
+    s.x = (g->f8 - (*(float*)&g->key)) * scale->x;
+    vector4 b(a.x + s.x, a.y + s.y, a.z);
     m->add_quad(&a, &b, (const vec2*)&g->key, (const vec2*)&g->f8, (const unsigned*)arg);
 }
 
