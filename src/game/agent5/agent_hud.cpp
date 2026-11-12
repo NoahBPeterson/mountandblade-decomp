@@ -979,12 +979,12 @@ void MissionBlocker::update_status()
         status_group->hide();
     else
         status_group->show();
-    matrix frame;
     int hp = (int)ag->health;
     if (hp != shown_health) {
         shown_health = hp;
         health_mesh->clear_geometry();
         {
+            matrix frame;
             tstring name("status_health_bar");
             const rgl::mat4* m = (const rgl::mat4*)identity_pos((pos*)&frame);
             rgl::mesh* obj = g_resmgr.get_object(&name);
@@ -1037,6 +1037,7 @@ void MissionBlocker::update_status()
             if (res.item >= 0) {
                 float piece_scale = 0.055f; rgl::mesh* piece = make_item_mesh(&res, &piece_scale);
                 if (piece) {
+                    matrix frame;
                     offset_v(piece, 0.0005f);
                     identity3((rgl::mat3*)&frame);
                     rot_u((rgl::matrix&)frame, -1.45f);
@@ -1044,10 +1045,11 @@ void MissionBlocker::update_status()
                     identity_pos((pos*)&frame);
                     frame.o.z -= 10.0f;
                     shield_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
-                    frame.o.x += 0.0012f;
+                    float nx = frame.o.x + 0.0012f;
+                    shield_mesh->res = piece->res;
+                    frame.o.x = nx;
                     frame.o.y -= 0.001f;
                     frame.o.z -= 10.0f;
-                    shield_mesh->res = piece->res;
                     piece->scale(1.05f);
                     shadow_mesh->append_skinned(piece, (const rgl::mat4*)&frame, -1, -1, 0);
                     {
