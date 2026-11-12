@@ -559,8 +559,8 @@ void MissionCtx::start_mission()
 
 static inline Rec98* rec98_at(std::vector<Rec98*>::iterator pages, unsigned idx)
 {
-    pages += idx >> 4;
-    return *pages + (idx & 0xf);
+    Rec98* page = *(pages + (idx >> 4));
+    return page + (idx & 0xf);
 }
 static inline bool shadow_stale(void* target) { return ((ShadowMapP*)target)->f48[0x50 / 4] != g_batch.counter; }
 static inline void set_map_view(rgl::frustum& c, float left, float right, float bottom, float top)
