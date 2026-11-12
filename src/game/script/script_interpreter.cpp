@@ -172,7 +172,10 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
 
 // camera.h's views of the interpreter's callees forward to the defining classes
 template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 world_data/world_data.cpp (out-of-line instance: only declared)
-template<> size_t std::vector<int>::size() const;                                   // 0x40f010 rgl/particles/mesh_obj.cpp (out-of-line instance: only declared)
+// 0x40f010 (the instance the linker keeps is rgl/particles/mesh_obj.cpp's). The body is visible here as in <vector>: cl does not expand it in
+// execute (the call stays), but with the body in the unit it knows the call writes nothing, so party_get_attached_party_with_rank
+// keeps params[1] in a register across it (docs/c2/callee.md: a declared-only callee kills every address-taken local).
+template<> inline size_t std::vector<int>::size() const { return (_Myfirst == 0 ? 0 : _Mylast - _Myfirst); }
 __forceinline void ScriptStack::push(int line, int val) { ((PairStack*)this)->push(line, val); }                // 0x488e60
 
 // ======================================================================================
