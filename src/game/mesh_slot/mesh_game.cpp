@@ -615,15 +615,13 @@ void Mission::frame(float dt, bool spawn)
     // every sixteenth frame the carried-item records restart from their first matrix
     if ((MAT(unsigned, 0x6550) & 0xf) == 1) {
         CarryRec* c = (CarryRec*)((char*)this + 0x6b0);
-        int n = 0x40;
-        do {
-            c->m0 = c->m1;                  // plain matrix copies (rep movsd x16 at 0x484060 / 0x484086), not normalize
-            c->f_c4 = 0;
-            c->f_c0 = 0;
-            c->f_e8 = 0;
-            c->m2 = c->m1;
-            c++;
-        } while (--n);
+        for (int k = 0; k < 0x40; k++) {
+            c[k].m0 = c[k].m1;              // plain matrix copies (rep movsd x16 at 0x484060 / 0x484086), not normalize
+            c[k].m2 = c[k].m1;
+            c[k].f_c4 = 0;
+            c[k].f_c0 = 0;
+            c[k].f_e8 = 0;
+        }
     }
 
     if (spawn)
