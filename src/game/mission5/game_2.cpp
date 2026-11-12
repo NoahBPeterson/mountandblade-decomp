@@ -387,10 +387,10 @@ static inline void add_cell_mesh(rgl::entity* e, int m)
 // @ 0x5213d0
 void Game::build_map_trees()
 {
-    ((rgl::vec<void*>&)g_script.mat_type0).clear();
-    ((rgl::vec<void*>&)g_script.mat_river).clear();
-    ((rgl::vec<void*>&)g_script.mat_sea).clear();
-    ((rgl::vec<void*>&)g_script.mat_sea2).clear();
+    g_script.mat_type0.clear();
+    g_script.mat_river.clear();
+    g_script.mat_sea.clear();
+    g_script.mat_sea2.clear();
 
     float sea_ang = g_module_settings.map_sea_direction * 3.1415927f;                       // deg -> rad
     sea_ang *= 0.0055555557f;
@@ -579,7 +579,7 @@ void Game::build_map_trees()
                 else if (mi == 12) mt = 0x17;
                 unsigned umask = (unsigned)g_bit[mi];
 
-                int mv = (int)new rgl::mesh();                 // int: the lists below are the shared vector<int> instance (0x410610)
+                rgl::mesh* mv = new rgl::mesh();               // pushed onto the std::vector<rgl::mesh*> material lists (_Insert_n 0x410610)
                 g_script.map_cell[ci]->local.o = center;
 
                 for (unsigned i = 0; i < g_script.level->ground->verts.size(); i++)
@@ -701,7 +701,7 @@ void Game::build_map_trees()
                         }
 
                         rgl::vector4 rel(p.x - center.x, p.y - center.y, p.z);
-                        int pidx = ((rgl::mesh*)mv)->add_point(&rel);
+                        int pidx = mv->add_point(&rel);
 
                         // ---- per-material uv ----------
                         vec2 uv;
@@ -854,7 +854,7 @@ void Game::build_map_trees()
                         w = g_script.level;
                                             } while (++k < nd.npts);
                     }
-                    ((rgl::mesh*)mv)->add_face(fr.vert[nd.ids[0]], fr.vert[nd.ids[1]], fr.vert[nd.ids[2]]);
+                    mv->add_face(fr.vert[nd.ids[0]], fr.vert[nd.ids[1]], fr.vert[nd.ids[2]]);
 
                 no_emit:
                     // ---- tree-mesh selection, material 0 only ----
@@ -901,22 +901,22 @@ void Game::build_map_trees()
                 }
 
                 // ---- finalize the per-material mesh ----
-                if (((rgl::mesh*)mv)->v90.size() != 0) {
-                    ((rgl::mesh*)mv)->res = ((GameMapView*)this)->terrain_material(mt);
+                if (mv->v90.size() != 0) {
+                    mv->res = ((GameMapView*)this)->terrain_material(mt);
                     ((NibbleObj*)mv)->set_nibble(mi - 6);
-                    ((rgl::mesh*)mv)->mask = 0x17fff;
-                    ((rgl::mesh*)mv)->compute_bounds();
-                    add_cell_mesh(g_script.map_cell[ci], mv);
+                    mv->mask = 0x17fff;
+                    mv->compute_bounds();
+                    add_cell_mesh(g_script.map_cell[ci], (int)mv);
                     if (mt == 0)
-                        ((std::vector<int>&)g_script.mat_type0).push_back(mv);
+                        g_script.mat_type0.push_back(mv);
                     else if (mt == 8)
-                        ((std::vector<int>&)g_script.mat_river).push_back(mv);
+                        g_script.mat_river.push_back(mv);
                     else if (mt == 0x16)
-                        ((std::vector<int>&)g_script.mat_sea).push_back(mv);
+                        g_script.mat_sea.push_back(mv);
                     else if (mt == 0x17)
-                        ((std::vector<int>&)g_script.mat_sea2).push_back(mv);
+                        g_script.mat_sea2.push_back(mv);
                 } else {
-                    delete ((rgl::mesh*)mv);
+                    delete mv;
                 }
             }
 

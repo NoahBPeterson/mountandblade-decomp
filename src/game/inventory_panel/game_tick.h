@@ -1,12 +1,12 @@
 // game_tick.h: the campaign map's frame tick and its helpers (code 0x516ac0..0x5191e0): the game data object (GameData,
 // src/include/game_data.h; the slices called it Game and GameData) with the methods of this region, the paged pool of
-// 0x98-byte map records, the global marker lists and the small records the tick walks. The methods are members of GameG,
+// 0x98-byte map records, the small records the tick walks. The methods are members of GameG,
 // a view of GameData that adds them (the canonical header has no room for them: it is being edited by other modules); the
 // fields they read are reached by offset (the .cpp names them with macros). Names provisional.
 #ifndef GAME_INVENTORY_PANEL_GAME_TICK_H
 #define GAME_INVENTORY_PANEL_GAME_TICK_H
 #include "./inv_common.h"
-#include "../int_vec.h"                   // RawVec (the marker lists are g_mat_vec)
+#include "../int_vec.h"                   // IntVec / RawVec (the marker lists are std::vector<rgl::mesh*> members of g_script)
 
 // the paged pool of 0x98-byte map records at game+0xcc (0x517960, 0x5179b0, 0x516ac0)
 struct MapRec {                         // 0x98 bytes
@@ -64,12 +64,6 @@ struct Vec5c {                          // vector of Rec5c at game+0x13a60
     __declspec(noinline) Rec5c** shift_over(Rec5c** out, Rec5c* dst, Rec5c* src);   // 0x518990 (ret 0xc)
 };
 
-// global marker lists (pairs of begin / end pointers; the elements are scene objects with the floats at +0x1f4..+0x208)
-struct Marker {
-    char pad0[0x1f4];
-    float f1f4, f1f8, f1fc, f200, f204, f208;   // +0x1f4
-};
-#include "../int_vec.h"            // RawVec g_mat_vec[4] (0xa732c0..): the marker lists are g_mat_vec[0] (a), [1] (d), [2] (b), [3] (c)
 
 // the objects at game+0x139e8 (snd_bank::update_all 0x462760, ui/item_ref.h) and game+0x139f4 (TimerList::update 0x48add0,
 // ui/timer_list.h) are called through those classes

@@ -466,15 +466,6 @@ void graph_obj::remove_face(int i)
     clean();
 }
 
-static inline void tidy_list(RawVec& v)
-{
-    if (v.first)
-        operator delete(v.first);
-    v.first = 0;
-    v.last = 0;
-    v.end = 0;
-}
-
 // @ 0x4cb9e0
 ScriptState::~ScriptState()
 {
@@ -491,10 +482,7 @@ ScriptState::~ScriptState()
             }
         }
     }
-    tidy_list(mat_sea2);
-    tidy_list(mat_sea);
-    tidy_list(mat_river);
-    tidy_list(mat_type0);
+    // the material lists (std::vector<rgl::mesh*>) are destroyed by their own destructors: mat_sea2 first, in reverse declaration order
 }
 
 // @ 0x4cbb90

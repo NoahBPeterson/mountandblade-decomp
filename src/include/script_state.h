@@ -13,10 +13,10 @@
 #include <stddef.h>
 #include "../game/tstring.h"
 #include "../game/list8.h"                  // List8 : I64Vec (std::vector<__int64> with the allocator word)
-#include "./raw_vec.h"                      // RawVec (std::vector<T*> triple with the allocator word)
+#include <vector>                           // std::vector<rgl::mesh*> (the map scene's material lists)
 #include "../rgl/rgl_math.h"                // rgl::matrix (the position registers)
 
-namespace rgl { struct world; struct entity; }
+namespace rgl { struct world; struct entity; struct mesh; }
 struct NavGraph;
 
 // The script engine's trigger result: set_trigger_result (0x4ac3f2) stores one 64-bit value, the event dispatch
@@ -66,10 +66,10 @@ struct ScriptState {
     float sizex, sizey;                                    // +0x2e6c
     rgl::world* level;                                     // +0x2e74 the current level / scene (built by Game::build_level 0x51d2b0)
     NavGraph* nav;                                         // +0x2e78 the map object (also +0x44/+0x54 are handed to the scene constructor)
-    RawVec mat_type0;                                      // +0x2e7c the map scene's per-material mesh lists, filled by Game::build_map (material type 0, 8, 0x16, 0x17)
-    RawVec mat_river;                                      // +0x2e8c type 8: the river markers (Game::update_markers drifts them by the river speed)
-    RawVec mat_sea;                                        // +0x2e9c type 0x16: the sea markers (sea speed * 3)
-    RawVec mat_sea2;                                       // +0x2eac type 0x17: the second sea markers (sea speed * 2, opposite direction)
+    std::vector<rgl::mesh*> mat_type0;                     // +0x2e7c the map scene's per-material mesh lists, filled by Game::build_map (material type 0, 8, 0x16, 0x17)
+    std::vector<rgl::mesh*> mat_river;                     // +0x2e8c type 8: the river markers (Game::update_markers drifts them by the river speed)
+    std::vector<rgl::mesh*> mat_sea;                       // +0x2e9c type 0x16: the sea markers (sea speed * 3)
+    std::vector<rgl::mesh*> mat_sea2;                      // +0x2eac type 0x17: the second sea markers (sea speed * 2, opposite direction)
 
     ScriptState();                                         // 0x4d3580
     ~ScriptState();                                        // 0x4cb9e0

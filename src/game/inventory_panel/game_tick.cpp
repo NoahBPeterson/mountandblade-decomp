@@ -258,35 +258,34 @@ void GameG::resume_strings(tstring* a, tstring* b)
     f13ac8 = 1;
 }
 
-// The map scene's marker lists are std::vector<Marker*> (size() and operator[] through the real vector: the counter in ecx,
-// the list base in edx/eax and the element pointer copied before the f208 store, as the original); script_state.h still
-// declares them as RawVec, so they are viewed as the vector they are.
-static inline std::vector<Marker*>& marker_list(RawVec& r) { return *(std::vector<Marker*>*)&r; }
+// The map scene's material lists are std::vector<rgl::mesh*>; the drift goes into each mesh's matrix m1d4 (u.x / u.y at
+// +0x1f4, o.x / o.y at +0x204). size() and operator[] through the real vector: the counter in ecx, the list base in
+// edx/eax and the element pointer copied before the o.y store, as the original.
 
 // @ 0x517140
 void GameG::update_markers()
 {
-    for (unsigned i = 0; i < marker_list(g_script.mat_type0).size(); i++) {
-        marker_list(g_script.mat_type0)[i]->f1f8 -= g_step_tbl[0] * 0.02f;
-        marker_list(g_script.mat_type0)[i]->f208 = marker_list(g_script.mat_type0)[i]->f1f8;
+    for (unsigned i = 0; i < g_script.mat_type0.size(); i++) {
+        g_script.mat_type0[i]->m1d4.u.y -= g_step_tbl[0] * 0.02f;
+        g_script.mat_type0[i]->m1d4.o.y = g_script.mat_type0[i]->m1d4.u.y;
     }
-    for (unsigned i = 0; i < marker_list(g_script.mat_sea).size(); i++) {
-        marker_list(g_script.mat_sea)[i]->f1f4 += g_step_tbl[0] * g_module_settings.map_sea_speed_x * 3.0f;
-        marker_list(g_script.mat_sea)[i]->f1f8 += g_step_tbl[0] * g_module_settings.map_sea_speed_y * 3.0f;
-        marker_list(g_script.mat_sea)[i]->f204 = marker_list(g_script.mat_sea)[i]->f1f4;
-        marker_list(g_script.mat_sea)[i]->f208 = marker_list(g_script.mat_sea)[i]->f1f8;
+    for (unsigned i = 0; i < g_script.mat_sea.size(); i++) {
+        g_script.mat_sea[i]->m1d4.u.x += g_step_tbl[0] * g_module_settings.map_sea_speed_x * 3.0f;
+        g_script.mat_sea[i]->m1d4.u.y += g_step_tbl[0] * g_module_settings.map_sea_speed_y * 3.0f;
+        g_script.mat_sea[i]->m1d4.o.x = g_script.mat_sea[i]->m1d4.u.x;
+        g_script.mat_sea[i]->m1d4.o.y = g_script.mat_sea[i]->m1d4.u.y;
     }
-    for (unsigned i = 0; i < marker_list(g_script.mat_sea2).size(); i++) {
-        marker_list(g_script.mat_sea2)[i]->f1f4 -= g_step_tbl[0] * g_module_settings.map_sea_speed_x * 2.0f;
-        marker_list(g_script.mat_sea2)[i]->f1f8 -= g_step_tbl[0] * g_module_settings.map_sea_speed_y * 2.0f;
-        marker_list(g_script.mat_sea2)[i]->f204 = marker_list(g_script.mat_sea2)[i]->f1f4;
-        marker_list(g_script.mat_sea2)[i]->f208 = marker_list(g_script.mat_sea2)[i]->f1f8;
+    for (unsigned i = 0; i < g_script.mat_sea2.size(); i++) {
+        g_script.mat_sea2[i]->m1d4.u.x -= g_step_tbl[0] * g_module_settings.map_sea_speed_x * 2.0f;
+        g_script.mat_sea2[i]->m1d4.u.y -= g_step_tbl[0] * g_module_settings.map_sea_speed_y * 2.0f;
+        g_script.mat_sea2[i]->m1d4.o.x = g_script.mat_sea2[i]->m1d4.u.x;
+        g_script.mat_sea2[i]->m1d4.o.y = g_script.mat_sea2[i]->m1d4.u.y;
     }
-    for (unsigned i = 0; i < marker_list(g_script.mat_river).size(); i++) {
-        marker_list(g_script.mat_river)[i]->f1f4 += g_step_tbl[0] * g_module_settings.map_river_speed_x;
-        marker_list(g_script.mat_river)[i]->f1f8 += g_step_tbl[0] * g_module_settings.map_river_speed_y;
-        marker_list(g_script.mat_river)[i]->f204 = marker_list(g_script.mat_river)[i]->f1f4;
-        marker_list(g_script.mat_river)[i]->f208 = marker_list(g_script.mat_river)[i]->f1f8;
+    for (unsigned i = 0; i < g_script.mat_river.size(); i++) {
+        g_script.mat_river[i]->m1d4.u.x += g_step_tbl[0] * g_module_settings.map_river_speed_x;
+        g_script.mat_river[i]->m1d4.u.y += g_step_tbl[0] * g_module_settings.map_river_speed_y;
+        g_script.mat_river[i]->m1d4.o.x = g_script.mat_river[i]->m1d4.u.x;
+        g_script.mat_river[i]->m1d4.o.y = g_script.mat_river[i]->m1d4.u.y;
     }
 }
 
