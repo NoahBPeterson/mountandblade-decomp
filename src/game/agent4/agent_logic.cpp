@@ -6604,12 +6604,8 @@ void rgl::mesh::translate(const vector4* d)
     }
     char* dirty = &slots[0].f28;
     *dirty = 1;
-    bounds.min.x = bounds.min.x + d->x;
-    bounds.min.y = bounds.min.y + d->y;
-    bounds.min.z = d->z + bounds.min.z;
-    bounds.max.x = bounds.max.x + d->x;
-    bounds.max.y = bounds.max.y + d->y;
-    bounds.max.z = bounds.max.z + d->z;
+    bounds.min += *d;                   // through vector4::operator+= (o.x + x order and its expansion's keys: min.z, max.x orientation)
+    bounds.max += *d;
     bounds.center.x = bounds.center.x + d->x;
     bounds.center.y = bounds.center.y + d->y;
     bounds.center.z = bounds.center.z + d->z;
