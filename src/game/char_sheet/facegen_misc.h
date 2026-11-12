@@ -47,7 +47,7 @@ typedef MapWidget face_body;
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 
 // ---- skin record table (0x8ed4f7c, 0x1f8-byte records) -------------------------------------------------
-#include "../../include/skin.h"                  // Skin, g_anim.skin_vec.first (shared with src/rgl/mesh2/gui_edit.h)
+#include "../../include/skin.h"                  // Skin, g_anim.skin_vec._Myfirst (shared with src/rgl/mesh2/gui_edit.h)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 // ---- face-gen window: game/face_gen.h ----------------------------------------------------------------

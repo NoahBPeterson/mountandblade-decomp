@@ -80,7 +80,7 @@ void FaceGen::init_screen()
     int id = w14;
     if (id >= 0)
         skin = (int)g_game->troops[id].flags30 & 0xf;
-    int keys = g_anim.skin_vec.first[skin].n_face_keys - 1;
+    int keys = g_anim.skin_vec._Myfirst[skin].n_face_keys - 1;
     g_gui.reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->f1a090 = 0;
     ui = new NodeA(0);
@@ -158,7 +158,7 @@ void FaceGen::init_screen()
     { tstring t("face_t_age"); tstring v("ui_age"); t_age = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
     { tstring n("face_sl_hair_color"); sl_hair_color = (ContainerBase*)make_slider(buttons, &n); }
     { tstring t("face_t_hair_color"); tstring v("ui_change_hair_color"); t_hair_color = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
-    if (g_anim.skin_vec.first[skin].n_beard == 0) {
+    if (g_anim.skin_vec._Myfirst[skin].n_beard == 0) {
         b_next_beard->hide();
         b_prev_beard->hide();
         t_change_beard->hide();

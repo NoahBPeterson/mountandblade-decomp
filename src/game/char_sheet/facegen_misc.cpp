@@ -11,7 +11,7 @@
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 text_stream g_debug_log;   // 0x5a9f30 the debug text log (constructed by the compiler: the original's static initializer 0x547aa0; destroyed by 0x548170)
 int g_5e28c8;   // 0x5e28c8
-Animator g_anim;   // 0x8ed4f60 the skin table / character builder (0x130 bytes: set, item, cur, variant, material, the skin vector at +0x18, count at +0x28, 63 weights, scale, time); the one object behind g_anim.skin_vec.first 0x8ed4f7c, g_anim.char_count 0x8ed4f88
+Animator g_anim;   // 0x8ed4f60 the skin table / character builder (0x130 bytes: set, item, cur, variant, material, the skin vector at +0x18, count at +0x28, 63 weights, scale, time); the one object behind g_anim.skin_vec._Myfirst 0x8ed4f7c, g_anim.char_count 0x8ed4f88
 
 
 // @ 0x4eb270
@@ -46,15 +46,15 @@ void Animator::randomise()
     } while (n != 0);
     int r = rand() % 0x3dc9;
     time = (float)r * 6.322312e-05f;
-    // skin_vec is a std::vector<Skin> (skin.h's SkinVec mirrors its layout): operator[] goes through the iterator
+    // skin_vec is a std::vector<Skin>: operator[] goes through the iterator
     // class, whose temporary holds `first` as a value of its own (callee-saved esi, `add ecx,esi` before the pushes)
-    (*(std::vector<Skin>*)&skin_vec)[cur].relax(-1, weights);
+    skin_vec[cur].relax(-1, weights);
 }
 
 // @ 0x4eb3c0
 void FaceGen::refresh()
 {
-    int n = g_anim.skin_vec.first[skin].n_face_keys - 1;
+    int n = g_anim.skin_vec._Myfirst[skin].n_face_keys - 1;
     for (int i = 0; i < n; i++)
         g_anim.weights[i] = deform_rows[i]->get168();
     f360 = sl_age->get168();
@@ -68,7 +68,7 @@ void FaceGen::refresh()
     g_anim.material = f35c;
     g_anim.set = f350 - 1;
     g_anim.item = f354 - 1;
-    int r = f358 % g_anim.skin_vec.first[g_anim.cur].n_hair_tex;
+    int r = f358 % g_anim.skin_vec._Myfirst[g_anim.cur].n_hair_tex;
     g_anim.variant = r;
     g_anim.f10 = r;
     void *a, *b, *c;
@@ -114,22 +114,7 @@ struct BigArray {
 };
 // (array_copy_range 0x4da880 is copy_configs_forward, cs_common.h)
 
-// @ 0x4eb810
-SkinVec::~SkinVec()
-{
-    if (first) {
-        Skin* p = first;
-        Skin* stop = last;
-        while (p != stop) {
-            p->~Skin();
-            ++p;
-        }
-        operator delete(first);
-    }
-    first = 0;
-    last = 0;
-    end = 0;
-}
+// (0x4eb810 is std::vector<Skin>::~vector, instantiated here by g_anim)
 
 // @ 0x4eb860
 void BigArray::erase(Skin** out, Skin* first, Skin* last)
@@ -249,7 +234,7 @@ void Animator::pack_state(PackedState* out)
     out->a |= (unsigned __int64)(int)(time * 63.0f) << 24;
     out->a |= (unsigned __int64)(int)(scale * 63.0f) << 30;
     int i = 0;
-    if (i < skin_vec.first[cur].n_face_keys) {
+    if (i < skin_vec._Myfirst[cur].n_face_keys) {
         do {
             int wi = 1;
             int sh = i * 3;
@@ -260,7 +245,7 @@ void Animator::pack_state(PackedState* out)
             float fv = weights[i] * 7.0f;
             int fi = grid_count(fv);
             ((unsigned __int64*)out)[wi] |= (unsigned __int64)fi << sh;
-        } while (++i < skin_vec.first[cur].n_face_keys);
+        } while (++i < skin_vec._Myfirst[cur].n_face_keys);
     }
 }
 // @ 0x4ebb80

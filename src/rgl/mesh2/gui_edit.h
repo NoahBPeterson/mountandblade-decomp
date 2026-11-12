@@ -236,7 +236,7 @@ struct ItemPage {
 
 #include "../../include/game_recs.h"       // PartyTemplate (translated 0x4c6080), QuestRec, FactionRec: the shared record classes
 #include "../../include/dialog_rec.h"      // DialogRec (translated 0x4c6080): the shared dialog record
-#include "../../include/skin.h"                  // Skin, FaceKey, g_anim.skin_vec.first (shared with src/game/char_sheet)
+#include "../../include/skin.h"                  // Skin, FaceKey, g_anim.skin_vec._Myfirst (shared with src/game/char_sheet)
 struct ModRec {
     tstring name;                                                       // +0x00
     tstring key;                                                        // +0x10

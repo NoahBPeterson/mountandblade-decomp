@@ -502,7 +502,7 @@ void Terrain::tessellate()
 #define g_anim_view g_anim                              // 0x8ed4f60 (animator.h)
 
 // @ 0x481c40 -- append a character mesh to the world: select the character, set up the animator, collect the lod meshes
-// and return &g_anim.skin_vec.first[g_anim.cur] with the mesh count written to *out
+// and return &g_anim.skin_vec._Myfirst[g_anim.cur] with the mesh count written to *out
 // the third argument receives the three lod meshes and the fourth / fifth are the face codes (0x481c75: unpack [esp+0x10],
 // 0x481cad: collect into [esp+0xc] +0/+4/+8); the old a/b/c order decoded the caller's output array and collected the
 // meshes over the troop's face code, leaving the head mesh null (crash in build_appearance when agents spawn)
@@ -523,7 +523,7 @@ Skin* append_mesh(int colour, int kind, void** c, void** a, void** b, char carri
         g_anim.item = -1;
     g_anim_view.collect(g_module_settings.limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
-    Skin& ec = g_anim.skin_vec.first[g_anim.cur];
+    Skin& ec = g_anim.skin_vec._Myfirst[g_anim.cur];
     *out = *(int*)((char*)&ec.face_textures[g_anim.material] + 0x18);
     return &ec;
 }

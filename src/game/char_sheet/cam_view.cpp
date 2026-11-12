@@ -61,7 +61,7 @@ check_follow:
 // @ 0x4ea8e0
 void FaceGen::frame_update(float dt)
 {
-    int n = g_anim.skin_vec.first[skin].n_face_keys - 1;
+    int n = g_anim.skin_vec._Myfirst[skin].n_face_keys - 1;
 
     if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x12] && !g_keyboard.prev[0x12]) {
         if (*(int*)((char*)g_game + 0x1a090) == 0) {
@@ -114,7 +114,7 @@ void FaceGen::frame_update(float dt)
         ContainerBase* row = deform_rows[i];
         if (row->clear_mask(0x10000)) {
             g_dummy_mat_arr[i] = row->get168();
-            Skin* set = &g_anim.skin_vec.first[g_anim.cur];
+            Skin* set = &g_anim.skin_vec._Myfirst[g_anim.cur];
             set->relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 deform_rows[j]->set168(g_dummy_mat_arr[j]);
@@ -169,7 +169,7 @@ void FaceGen::frame_update(float dt)
         float* p = g_dummy_mat_arr;
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
-        Skin* set = &g_anim.skin_vec.first[g_anim.cur];
+        Skin* set = &g_anim.skin_vec._Myfirst[g_anim.cur];
         flag = 1;
         set->relax(-1, g_dummy_mat_arr);
         for (int i = 0; i < n; i++)

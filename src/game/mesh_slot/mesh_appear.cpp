@@ -113,7 +113,7 @@ static __forceinline lod_mesh2* clone_char_mesh(int colour, lod_group* Skin::* m
 {
     lod2_a* src;
     if ((unsigned)colour < (unsigned)g_anim.char_count)          // 0x482852/0x48297f: cmp + jae (unsigned)
-        src = (lod2_a*)(g_anim.skin_vec.first[colour].*mesh);
+        src = (lod2_a*)(g_anim.skin_vec._Myfirst[colour].*mesh);
     else
         src = 0;
     return src->clone();
@@ -190,7 +190,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             lod_mesh2* wl = make_item_lod(w, w->m4 >> 24);
             unsigned wflags = g_items[w->item].type_flags;
             if ((wflags & 0x80000000) == 0)
-                g_anim.skin_vec.first[g_anim.cur].use_carry((lod_mesh*)wl, g_anim.weights);      // 0x47de60
+                g_anim.skin_vec._Myfirst[g_anim.cur].use_carry((lod_mesh*)wl, g_anim.weights);      // 0x47de60
             ((lod2_a*)wl)->apply((matrix*)mtx);
             if ((wflags & 0xf00) == 0xf00)
                 ((IdHolder*)a->fx)->add((int)wl);           // 0x478fb0 (IdHolder::add: pushes onto the int list at +0x30)
@@ -240,7 +240,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     legs_covered = 1;
                 lod_mesh2* hl = make_item_lod(h, h->m4 >> 24);
                 if ((unsigned)colour < (unsigned)g_anim.char_count) {
-                    int cv = (int)((g_anim.skin_vec.first[colour].flags & 7) * 10);
+                    int cv = (int)((g_anim.skin_vec._Myfirst[colour].flags & 7) * 10);
                     if (cv != 0) {
                         float cf = (float)cv;
                         ((lod2_a*)hl)->apply_anim_all(&cf);

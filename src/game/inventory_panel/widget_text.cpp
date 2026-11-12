@@ -411,7 +411,7 @@ struct mesh_scene {
 // @ 0x50d520 mesh_scene::read
 void mesh_scene::read(AccessStream* s)
 {
-    ((SkinVec*)&models)->~SkinVec();   // 0x4eb810 (the vector's destructor: the same skin vector as g_anim's)
+    ((SkinVec*)&models)->~vector();   // 0x4eb810 (the vector's destructor: the same skin vector as g_anim's)
     s->read_int(&count);
     unsigned n = count;
     models.resize(n);
