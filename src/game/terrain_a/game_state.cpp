@@ -216,9 +216,8 @@ void ShadowMap::pick_size()
 vector4 ShadowMap::to_unit(const vector4& p)
 {
     vector4 l = cam->world.transform_point_to_local(p);
-    vector4 d(l.x - cam->vmin.x, l.y - cam->vmin.y, l.z - cam->vmin.z);
-    LightCam* c = cam;
-    vector4 r(d.x / c->size.x, d.y / c->size.y, d.z / c->size.z);
+    vector4 d = l - cam->vmin;
+    vector4 r(d.x / cam->size.x, d.y / cam->size.y, d.z / cam->size.z);
     return r;
 }
 
