@@ -920,8 +920,8 @@ static inline int max_hit_points(Troop* t)
 // @ 0x4b2c00
 void Party::tick_stats()
 {
-    GameData* g = g_game;
     float speed = (float)skill_level(0xb) * 0.2f + 1.0f;
+    GameData* g = g_game;                            // read after skill_level: the original loads g_game after the call
     if (id == g->f78 && g->f13ad0f > 0.0f && g->f13ad4 != 0) {
         speed = speed + speed;
     } else if (f88 > 0) {
@@ -1023,10 +1023,10 @@ void Party::tick_stats()
         } else if (f7c > 1.0f) {
             f7c = 1.0f;
         }
+        g = g_game;                                  // only on this path: with the food slot disabled the original keeps edi
     }
 
     // the player's item grid decay
-    g = g_game;
     Troop* pc = &g->troops[g->player];
     PartyMgr* m = &g->parties;
     float grid_chance = (float)m->at(m->lookup(g->f78))->skill_level(0xb) * 0.001f;
@@ -2668,7 +2668,6 @@ void Party::update_flags()
                 model->add_emitter(e);
         }
     }
-    float arg;
     unsigned def = flags_lo & 0xff;
     int rider = f94;
     rgl::mesh* m2 = 0;
@@ -2687,10 +2686,10 @@ void Party::update_flags()
         } else {
             Rot3 dm;
             identity3(&dm);
-            arg = 1.5707964f;
-            dm.rotate_about_u(&arg);
-            arg = -angle;
-            dm.rotate_about_u(&arg);
+            // one block-scoped float per call (all four share the slot at 0x1c, above idx; a function-scope float
+            // with 9 uses sorts first and takes 0x10)
+            { float arg = 1.5707964f; dm.rotate_about_u(&arg); }
+            { float arg = -angle; dm.rotate_about_u(&arg); }
             Rot3& rc = *(Rot3*)&m2->m_cc;
             rc = dm;
             rows_scale(rc, vector4(ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f));
@@ -2736,8 +2735,7 @@ void Party::update_flags()
         model->set_mode(0);
     } else {
         model->set_mode(2);
-        arg = 1.0f;
-        model->set_fade(&arg);
+        { float arg = 1.0f; model->set_fade(&arg); }
         model->f_c0 = ICON_DEF(def)->scale * 3.0f;
         model->f294 = 0.5f;
     }
@@ -2748,8 +2746,7 @@ void Party::update_flags()
     // The original assigns a (0, 0, 0.5) temporary (3-argument vector4 constructor: w left unset); the w lane it copies
     // (0x4b7e11 [esp+0x2c] -> 0x4b7e24) is never read: the entity's +0xc4 is the box centre, whose consumers use x, y, z.
     model->color = vector4(0.0f, 0.0f, 0.5f);
-    arg = 0.95f;
-    model->set_color(&arg);
+    { float arg = 0.95f; model->set_color(&arg); }
 }
 
 // @ 0x4b7e50
