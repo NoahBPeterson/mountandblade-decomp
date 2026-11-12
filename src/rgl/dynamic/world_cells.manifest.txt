@@ -1,0 +1,8 @@
+../src/rgl/dynamic/world_cells.cpp  ?add_item@world@rgl@@QAEXPAUshape_base@@@Z  00423c00  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_cells.cpp  ?min2@@YAPAUint2@@PAU1@PBU1@1@Z  00423e70  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_cells.cpp  ?max2@@YAPAUint2@@PAU1@PBU1@1@Z  00423ea0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_cells.cpp  ?in_rect@world@rgl@@QAEHPBUint2@@00@Z  00423ed0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_cells.cpp  ?add@grid_cell@@QAEXPAUshape_base@@@Z  00423f10  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_cells.cpp  ?push_back@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXABQAUObj@rgl@@@Z  00423fc0  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_cells.cpp  ?remove@shape_vec@@QAEXPAUshape_base@@@Z  00424060  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_cells.cpp  ?find@shape_vec@@QBEHPAUshape_base@@@Z  004240d0  /O2 /MT /Gy /TP
