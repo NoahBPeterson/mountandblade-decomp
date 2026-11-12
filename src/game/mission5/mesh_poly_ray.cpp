@@ -371,19 +371,20 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
     int voff, eoff;
     {
     rgl::matrix basis = m;
+    unsigned i;
     basis.u = rgl::vector4(0.0f, 0.0f, 1.0f);
     basis.s = rgl::vcross_s2e960(basis.f, basis.u);
     basis.s.normalize();
     basis.f = rgl::vcross_s2e960(basis.u, basis.s);
 
     selected = -1;
-    for (unsigned i = 0; i < verts.size(); i++)
+    for (i = 0; i < verts.size(); i++)
         verts[i].flag = 0;
     selected = -1;
-    for (unsigned i = 0; i < edges.size(); i++)
+    for (i = 0; i < edges.size(); i++)
         edges[i].flag = 0;
     selected = -1;
-    for (unsigned i = 0; i < polys.size(); i++)
+    for (i = 0; i < polys.size(); i++)
         polys[i].flag = 0;
 
     if (polys2.size() == 0)
@@ -392,7 +393,7 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
     voff = verts.size();
     eoff = edges.size();
 
-    for (unsigned i = 0; i < verts2.size(); i++) {
+    for (i = 0; i < verts2.size(); i++) {
         mface_s2e960 v;
         v.pos = rgl::to_world_s2e960(basis, verts2[i].pos);
         v.flag = 1;
@@ -400,7 +401,8 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
     }
     }
 
-    for (unsigned i = 0; i < edges2.size(); i++) {
+    unsigned i;
+    for (i = 0; i < edges2.size(); i++) {
         medge_s2e960 e;
         e.unk08 = -10000;
         e.unk0c = -10000;
@@ -413,7 +415,7 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
         edges.push_back(e);
     }
 
-    for (unsigned i = 0; i < polys2.size(); i++) {      // polys2[i] through operator[] at every use, as make_copy
+    for (i = 0; i < polys2.size(); i++) {      // polys2[i] through operator[] at every use, as make_copy
         mpoly_s2e960 t;
         t.unk00 = 0;
         t.unk5c = 0;
