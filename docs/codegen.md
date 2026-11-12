@@ -2013,3 +2013,27 @@ More shapes (second batch, same night)
   no body in the unit becomes a split web (load to scratch, copy to callee-saved). With the body visible the reload
   piece itself lives across the call. Callees the original evidently saw: c_str, vector<int>::size, clamped_team,
   is_hero, count_troops; opaque there: Party::max_stacks, AgentTable::next_used (Operation::execute 555 -> 562).
+
+Key numbering (third batch, same night)
+- Frame symbols come in key blocks of 32. `T it; for (it = c.begin(); ...)` has one frame symbol fewer than
+  `for (T it = c.begin(); ...)`; one symbol can move every later hash-class block and flip distant SIB or commutative
+  orders (FxDef::clear_defs 1721d1e5, nearest_face, Party::prepare 033e908d).
+- A reversed integer compare (`count > i` for `i < count`) adds two value-numbering temps and flips the cmp. Several
+  earlier rows carry one as a stand-in; the real cause is usually the symbol count above.
+- Only `lea` shows SIB order; `add r,r` hides the same operand sort, so one arm can constrain keys and its twin not.
+- The real VC7.1 `std::vector::operator[]` and iterators go through the iterator class, whose temporaries are frame
+  symbols; raw `first[i]` is not equivalent (Animator::randomise e282bedc, push_heap_elem 6311f342: the real
+  `std::_Push_heap` body over a vector iterator).
+- A two-int struct returned by value from an inline helper and called once per `||` arm leaves one temporary per call
+  with dead stores of the unread field (ShadowMap::pick_size 1ee867cb).
+- Reading an expression twice and a named copy give the same instructions but opposite `[j+buf]` order
+  (rgl::skin::save e31baa42).
+- A same-unit callee body can hide a translation-unit boundary: a reload of an address-taken local after a call, or a
+  load not hoisted above a store through a global pointer, where ours does the opposite. Delete the callee's body in a
+  scratch copy; if that matches, the original caller was in another unit (reg_shape 0x424170: boundary near 0x424100;
+  Rec58::frame_update 0x5337a0: boundary at 0x533a60; neither applied yet).
+- Key wrap: a multi-definition temp hashes as 64*key mod 65536, so keys 1024..1139 hash below a frame `$T`. A SIB order
+  no spelling moves can be tested with ~600 dead initialised locals: if it flips, the original function simply
+  allocated that many more symbols (fn_529d80 0x529d80, build_ribbons: evidence of missing inline layers, not a fix).
+- A `je`/`jne` displacement is invisible to insn_align: N/N identical with chk.py still differing means a store that
+  belongs inside the guarded arm (`if (p) { delete p; p = 0; }`).
