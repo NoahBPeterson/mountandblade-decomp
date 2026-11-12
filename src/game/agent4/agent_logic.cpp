@@ -1772,8 +1772,8 @@ void Agent::start_shoot(int slot)
     snd_a = -1;
     snd_b = -1;
     snd_c = -1;
+    unsigned __int64 flags;
     ItemRef sp = slot_pair(slot);
-    unsigned __int64& flags = *(unsigned __int64*)&sp;
     if (sp.item == -1)
         flags = 0;
     else
@@ -1790,10 +1790,58 @@ void Agent::start_shoot(int slot)
             alt = 3 - dir;
     }
     int tgt = pick_front();
-    if (g_mission->player_id == id && (g_options.ctl_mode != 0 || tgt != -1))
+    if (id == g_mission->player_id && (g_options.ctl_mode != 0 || tgt != -1))
         dir = pick_attack_dir(tgt);
     unsigned __int64 kind = flags & itcf_shoot_mask;
-    if (0 == kind) {
+    if (kind != 0) {
+        if (kind == itcf_shoot_bow) {
+            snd_b = 0x76;
+            mode1 = 0;
+            snd_a = 0x75;
+            return;
+        }
+        if (kind == itcf_shoot_crossbow) {
+            snd_b = 0x7a;
+            mode1 = 0;
+            snd_a = 0x79;
+            return;
+        }
+        if (kind == itcf_shoot_pistol) {
+            snd_b = 0x86;
+            mode1 = 0;
+            snd_a = 0x85;
+            return;
+        }
+        if (kind == itcf_shoot_musket) {
+            snd_b = 0x89;
+            mode1 = 0;
+            snd_a = 0x88;
+            return;
+        }
+        if (kind == itcf_throw_stone) {
+            snd_b = 0x84;
+            mode1 = 0;
+            snd_a = 0x83;
+            return;
+        }
+        if (kind == itcf_throw_knife) {
+            snd_b = 0x80;
+            mode1 = 0;
+            snd_a = 0x7f;
+            return;
+        }
+        if (kind == itcf_throw_axe) {
+            snd_b = 0x82;
+            mode1 = 0;
+            snd_a = 0x81;
+            return;
+        }
+        if (kind == itcf_throw_javelin) {
+            snd_a = 0x7d;
+            snd_b = 0x7e;
+        }
+        mode1 = 0;
+    } else {
         if (slot == 0) {
             mode1 = dir;
             pick_sounds(0, dir, &snd_a, &snd_b, &snd_c, &variant);
@@ -1802,62 +1850,14 @@ void Agent::start_shoot(int slot)
                 pick_sounds(0, alt, &snd_a, &snd_b, &snd_c, &variant);
             }
         } else {
-            pick_sounds(slot, mode1, &snd2_a, &snd2_b, &snd2_c, &variant);
             mode2 = dir;
+            pick_sounds(slot, mode1, &snd2_a, &snd2_b, &snd2_c, &variant);
             if (snd2_a == -1) {
-                pick_sounds(slot, mode1, &snd2_a, &snd2_b, &snd2_c, &variant);
                 mode2 = alt;
+                pick_sounds(slot, mode1, &snd2_a, &snd2_b, &snd2_c, &variant);
             }
         }
-        return;
     }
-    if (kind == itcf_shoot_bow) {
-        snd_b = 0x76;
-        mode1 = 0;
-        snd_a = 0x75;
-        return;
-    }
-    if (kind == itcf_shoot_crossbow) {
-        snd_b = 0x7a;
-        mode1 = 0;
-        snd_a = 0x79;
-        return;
-    }
-    if (kind == itcf_shoot_pistol) {
-        snd_b = 0x86;
-        mode1 = 0;
-        snd_a = 0x85;
-        return;
-    }
-    if (kind == itcf_shoot_musket) {
-        snd_b = 0x89;
-        mode1 = 0;
-        snd_a = 0x88;
-        return;
-    }
-    if (kind == itcf_throw_stone) {
-        snd_b = 0x84;
-        mode1 = 0;
-        snd_a = 0x83;
-        return;
-    }
-    if (kind == itcf_throw_knife) {
-        snd_b = 0x80;
-        mode1 = 0;
-        snd_a = 0x7f;
-        return;
-    }
-    if (kind == itcf_throw_axe) {
-        snd_b = 0x82;
-        mode1 = 0;
-        snd_a = 0x81;
-        return;
-    }
-    if (kind == itcf_throw_javelin) {
-        snd_a = 0x7d;
-        snd_b = 0x7e;
-    }
-    mode1 = 0;
 }
 
 // @ 0x440070
