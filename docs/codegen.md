@@ -2080,3 +2080,12 @@ Key numbering (third batch, same night)
   read its scope structure from that (layout_row dcc63764).
 - Rows regress silently after shared refactors: compare a row note's recorded best state with chk.py now and try the
   old spelling (PartyWindow::build_page 65f4a454).
+- Frame overlay depends on callee escape summaries: an address-taken local passed to a callee that is only declared
+  stays live and cannot share a slot. Bodies of the callee (and of what it calls) remove the conflict; `c2trace slots`
+  shows it as `conf X` refusals (Agent::reduce_blow 46a0c0dd: 553 -> 272).
+- `(t == A && X) || (t == B && Y) ...` with `t` a named local lets cl jump-thread and merge identical terms; the
+  original re-evaluates the expression per term, a literal compare chain with a reload each (Agent::best_ammo 5bb39716).
+- A dead parameter's home reused for a modified copy (`mov [esp+home],reg` in both arms): the source wrote
+  `int k = idx; if (k == -1) k = ...;`, not `idx = ...`.
+- Literal-first float compares (`1.0f < x`) give `fld k; fcomp x`; `fld x; fcomp k` needs `x > k`
+  (Agent::pick_attack_dir ed845bba).
