@@ -4,9 +4,11 @@
 #include "../window_mgr.h"      // g_windows slot 3 (0xa7398c): the save dialog
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
+// the loop bound reads the vector's pointers at +0x11c / +0x120 directly (the real size() materialises the vector's
+// address first: add eax,0x118, which the original does not have); the elements go through the real operator[]
 static bool more_skins(skin_data* s, int i)
 {
-    return s->begin && (unsigned)i < (unsigned)(s->end - s->begin);
+    return s->recs._Myfirst && (unsigned)i < (unsigned)(s->recs._Mylast - s->recs._Myfirst);
 }
 
 // @ 0x4ea0c0
@@ -32,8 +34,8 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
         id.s.x *= o->f158; id.s.y *= o->f158; id.s.z *= o->f158;
         id.f.x *= o->f15c; id.f.y *= o->f15c; id.f.z *= o->f15c;
         id.u.x *= o->f160; id.u.y *= o->f160; id.u.z *= o->f160;
-        mat4 M = id * ((mesh*)o->skins->begin[i])->m_cc;
-        m->append_skinned((mesh*)o->skins->begin[i], &M, -1, color, flip);
+        mat4 M = id * ((mesh*)o->skins->recs[i])->m_cc;
+        m->append_skinned((mesh*)o->skins->recs[i], &M, -1, color, flip);
     }
 }
 

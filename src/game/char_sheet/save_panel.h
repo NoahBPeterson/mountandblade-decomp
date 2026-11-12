@@ -21,6 +21,7 @@ using rgl::mat3;
 using rgl::mat4;
 
 
+#include <vector>
 struct vertex60;
 #include "../../rgl/mesh.h"
 using rgl::mesh;
@@ -30,9 +31,8 @@ struct skin_rec {
     mat4 mat;                                           // +0xcc
 };
 struct skin_data {
-    char pad0[0x11c];
-    skin_rec** begin;                                   // +0x11c
-    skin_rec** end;                                     // +0x120
+    char pad0[0x118];
+    std::vector<skin_rec*> recs;                        // +0x118 (first +0x11c, last +0x120)
 };
 struct skin_owner {
     char pad0[0x158];
