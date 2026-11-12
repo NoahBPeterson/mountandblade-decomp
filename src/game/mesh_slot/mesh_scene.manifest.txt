@@ -6,3 +6,4 @@
 ../src/game/mesh_slot/mesh_scene.cpp  ?apply_anim@mesh_anim_x@@QAEXPBM@Z  0047dcd0  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_scene.cpp  ?use_carry@Skin@@QAEXPAUlod_mesh@rgl@@PBM@Z  0047de60  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_scene.cpp  ?build_entity@Terrain@@QAEXXZ  0047cae0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_scene.cpp  ?blend_all@Skin@@QAEXPAUlod_mesh@rgl@@PAXPBM@Z  0047ddf0  /O2 /MT /Gy /TP

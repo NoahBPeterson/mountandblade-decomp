@@ -526,6 +526,39 @@ void lod_mesh_a::apply_anim_all(const float* t)
 
 // ---- 0x47ddf0 / 0x47de60 -------------------------------------------------------------------------------------------
 
+// Body the original's object saw (row owner mesh_ops.cpp 0x47c810): with it visible, cl knows blend_indexed only reads through its
+// index parameter and keeps blend_all's loop counter in a register across the call (docs/codegen.md section 16).
+inline __declspec(noinline) void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
+{
+    m->ensure_local();
+    ArrSet* s = (ArrSet*)set;
+    if ((int)m->v70.size() != s->cnt[*index])
+        return;
+    for (unsigned i = 0, off = 0; i < m->v70.size(); i++, off += 0x20) {
+        for (int j = 0; j < n_face_keys; j++) {
+            int bi = s->arr[*index][i];
+            FaceKey* b = &face_keys[j];
+            vector4* t = (vector4*)b->delta + bi;
+            if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
+                float w = (b->f28 - b->f24) * weights[j] + b->f24;
+                vector4 d;
+                point20* p = (point20*)((char*)m->v70._Myfirst + off);
+                d.x = w * t->x;
+                d.y = w * t->y;
+                d.z = w * t->z;
+                if (p->a.x < 0.0f)
+                    d.x = -d.x;
+                vector4 v;
+                v.x = p->a.x + d.x;
+                v.y = p->a.y + d.y;
+                v.z = p->a.z + d.z;
+                p->a = v;
+                p->b = v;
+            }
+        }
+    }
+}
+
 // @ 0x47ddf0
 void Skin::blend_all(lod_mesh* m, void* set, const float* w)
 {
