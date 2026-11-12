@@ -698,7 +698,7 @@ void PhysSet::update(float dt)
 // @ 0x472ed0
 void rgl::world::update_probes(unsigned flags)
 {
-    for (NavVert* pr = ground->verts.first; pr < ground->verts.last; pr++) {
+    for (NavVert* pr = ground->verts._Myfirst; pr < ground->verts._Mylast; pr++) {
         if (pr->level < -0.1f) {
             vector4 dir, col;
             light_at(pr->p, pr->n, &dir, &col, flags, 1.0f);

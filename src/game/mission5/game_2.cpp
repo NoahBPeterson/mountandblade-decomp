@@ -487,7 +487,7 @@ void Game::build_map_trees()
             int a = g2->edges[i].a;
             int b = g2->edges[i].b;
             // the edge endpoints are read from g_nav's vertex vector (map.txt's store), not the ground's
-            NavVert* nv = ((NavData*)g_script.nav)->verts.first;
+            NavVert* nv = ((NavData*)g_script.nav)->verts._Myfirst;
             float len = map_len(nv[a].p - nv[b].p);
             float& da = fr.dist[a];
             float& db = fr.dist[b];

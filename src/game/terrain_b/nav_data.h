@@ -4,7 +4,8 @@
 #ifndef TERRAIN_B_NAV_DATA_H
 #define TERRAIN_B_NAV_DATA_H
 #include "../../rgl/rgl_math.h"
-#include "../../rgl/mesh.h"          // rgl::vec: the game's growable array (VC7.1 vector layout)
+#include <vector>
+#include "../../rgl/mesh.h"          // (kept for the includers that reach rgl::mesh / rgl::vec through it)
 
 struct face;
 struct NavVert {                // 0x24 bytes (0x479980, 0x472ed0: the scene's light probes are these vertices)
@@ -22,17 +23,17 @@ struct NavCell {                // 0x88 bytes (0x479980, 0x472650: the cell's gr
     face* obj;            // +0x84
 };
 struct NavData {                // 0x68 bytes
-    rgl::vec<NavVert> verts;         // +0x00
-    rgl::vec<NavCell> cells;         // +0x10
-    rgl::vec<int> v20;               // +0x20
-    rgl::vec<int> v30;               // +0x30
+    std::vector<NavVert> verts;      // +0x00
+    std::vector<NavCell> cells;      // +0x10
+    std::vector<int> v20;            // +0x20
+    std::vector<int> v30;            // +0x30
     int m40;                    // +0x40
     rgl::vector4 e44;           // +0x44
     rgl::vector4 f54;           // +0x54
     int m64;                    // +0x64
     NavData();                  // 0x478150 (same constructor as NavCore's, ICF-folded)
     void compute_bounds();      // 0x4704b0 (the bounding box e44 / f54 of the vertices)
-    ~NavData();                 // 0x41f5d0 (game/entity.cpp)
+    ~NavData();                 // 0x41f5d0 (game/entity.cpp: the member destructors, v30 first)
     // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----
     bool shares(const int& a, const int& b) const;   // 0x48efa0 (game/mission_ui2/mission_4.cpp, ret 8: do the cells a and b name a common rider; cells[i].ids[0x11..0x13] are its id / pair, the arguments are cell indices)
     bool can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max);   // 0x4b3420 (ret 0x1c)

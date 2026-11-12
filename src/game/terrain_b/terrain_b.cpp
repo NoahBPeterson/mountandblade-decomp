@@ -641,15 +641,16 @@ void NavData::compute_bounds()
         f54 = verts[0].p;
     }
     for (unsigned i = 0; i < verts.size(); i++) {
-        // pointers taken inside the loop: cl then re-reads verts.first after every store
+        // pointers taken inside the loop: cl then re-reads verts._Myfirst after every store (the loop reads the raw
+        // element pointer: the real operator[] here costs 28 aligned bytes; verts[0] above is the real one)
         rgl::vector4* mn = &e44;
         rgl::vector4* mx = &f54;
-        if (mn->x > verts[i].p.x) mn->x = verts[i].p.x;
-        if (mx->x < verts[i].p.x) mx->x = verts[i].p.x;
-        if (mn->y > verts[i].p.y) mn->y = verts[i].p.y;
-        if (mx->y < verts[i].p.y) mx->y = verts[i].p.y;
-        if (mn->z > verts[i].p.z) mn->z = verts[i].p.z;
-        if (mx->z < verts[i].p.z) mx->z = verts[i].p.z;
+        if (mn->x > verts._Myfirst[i].p.x) mn->x = verts._Myfirst[i].p.x;
+        if (mx->x < verts._Myfirst[i].p.x) mx->x = verts._Myfirst[i].p.x;
+        if (mn->y > verts._Myfirst[i].p.y) mn->y = verts._Myfirst[i].p.y;
+        if (mx->y < verts._Myfirst[i].p.y) mx->y = verts._Myfirst[i].p.y;
+        if (mn->z > verts._Myfirst[i].p.z) mn->z = verts._Myfirst[i].p.z;
+        if (mx->z < verts._Myfirst[i].p.z) mx->z = verts._Myfirst[i].p.z;
     }
 }
 

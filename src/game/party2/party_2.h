@@ -171,7 +171,7 @@ struct NavRec : NavCell {
     rgl::vector4& pos4() { return *(rgl::vector4*)((char*)this + 0x74); }
     float& limit() { return *(float*)((char*)this + 0x80); }// +0x80 keep distance of the node       0x4b6b40
 };
-inline NavRec* nav_recs() { return (NavRec*)((rgl::world*)g_script.level)->ground->cells.first; }       // the record array (+0x14 of the nav data)
+inline NavRec* nav_recs() { return (NavRec*)((rgl::world*)g_script.level)->ground->cells._Myfirst; }       // the record array (+0x14 of the nav data)
 
 #include "../battle_rec.h"            // BattleObj, BattleRec, BattleTable: the one definition (party2 and script)
 inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }

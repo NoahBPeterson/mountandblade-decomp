@@ -132,10 +132,6 @@ rgl::scene::~scene()
 // @ 0x41f5d0
 NavData::~NavData()
 {
-    v30.clear();
-    v20.clear();
-    cells.clear();
-    verts.clear();
 }
 
 // 0x41f640 list::_Insert

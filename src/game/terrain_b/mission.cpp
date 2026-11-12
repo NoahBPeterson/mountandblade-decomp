@@ -429,10 +429,7 @@ static __forceinline float bf_normalize(vector4& v)
     }
     return len;
 }
-// NavData's cells and verts are std::vectors in the original (the real operator[] keeps the element address of every
-// cells[k] read; rgl::vec's raw first[i] folds it): viewed as such here until nav_data.h declares them so
-#define BF_CELLS (*(std::vector<NavCell>*)&map->cells)
-#define BF_VERTS (*(std::vector<NavVert>*)&map->verts)
+// NavData's cells and verts are std::vectors (the real operator[] keeps the element address of every cells[k] read)
 
 // @ 0x479980
 void rgl::world::build_faces(NavData* map)
@@ -441,31 +438,31 @@ void rgl::world::build_faces(NavData* map)
         delete ground;
     ground = map;
 
-    for (unsigned k = 0; k < BF_CELLS.size(); k++) {
+    for (unsigned k = 0; k < map->cells.size(); k++) {
         face* f = new face;
-        f->count = BF_CELLS[k].npts;
-        for (int i = 0; i < BF_CELLS[k].npts; i++)
-            f->v[i] = BF_VERTS[BF_CELLS[k].ids[i]].p;
+        f->count = map->cells[k].npts;
+        for (int i = 0; i < map->cells[k].npts; i++)
+            f->v[i] = map->verts[map->cells[k].ids[i]].p;
         f->m4 = k;
-        f->m8 = BF_CELLS[k].f68;
+        f->m8 = map->cells[k].f68;
         matrix m;
         bf_identity_pos(&m);
         f->transform((const pos*)&m);
         objs.push_back((rgl::Obj*)f);
         add_tree((shape_base*)f);
-        BF_CELLS[k].obj = f;
+        map->cells[k].obj = f;
     }
 
-    for (unsigned i = 0; i < BF_VERTS.size(); i++)
-        BF_VERTS[i].n = vector4(0.0f, 0.0f, 0.0f);
+    for (unsigned i = 0; i < map->verts.size(); i++)
+        map->verts[i].n = vector4(0.0f, 0.0f, 0.0f);
 
-    for (unsigned i = 0; i < BF_CELLS.size(); i++) {
-        for (int j = 0; j < BF_CELLS[i].npts; j++)
-            BF_VERTS[BF_CELLS[i].ids[j]].n += BF_CELLS[i].trans * BF_CELLS[i].scale;
+    for (unsigned i = 0; i < map->cells.size(); i++) {
+        for (int j = 0; j < map->cells[i].npts; j++)
+            map->verts[map->cells[i].ids[j]].n += map->cells[i].trans * map->cells[i].scale;
     }
 
-    for (unsigned i = 0; i < BF_VERTS.size(); i++)
-        bf_normalize(BF_VERTS[i].n);
+    for (unsigned i = 0; i < map->verts.size(); i++)
+        bf_normalize(map->verts[i].n);
 }
 
 // @ 0x479d20
