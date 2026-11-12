@@ -412,7 +412,8 @@ void Terrain::init_layers()
     }
     rand();
     int a = -1, b = 2, c = 5;
-    switch (flags >> 28 & ((unsigned*)g_bit)[8] - 1U) {
+    const unsigned& m = ((unsigned*)g_bit)[8] - 1U;    // the mask as a const reference temporary (as in ground_color): loaded first
+    switch (flags >> 28 & m) {
     case 3:
         a = b = 2;
         break;
@@ -480,7 +481,8 @@ void Terrain::scatter(particle_list* set, int mode, int n)
     ptype* specs = g_ptypes;
     float total = 0.0f;
     int fits = 0;
-    unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
+    const unsigned& m = ((unsigned*)g_bit)[8] - 1U;    // as in ground_color: the mask is loaded first
+    unsigned t = flags >> 28 & m;
     for (int i = 0; i < cnt; i++) {
         if ((specs[i].flags & 0x1000000) != 0) {
             int tt = t;
