@@ -283,6 +283,105 @@ void Agent::release_body()
     body = 0;
 }
 
+// Bodies the original's object saw for the box query chain (0x42aa50 strat_entity, 0x426500 / 0x426690 / 0x426700
+// world_collide): the shape array and the count passed to query_box do not escape
+// Body the original's object saw (row owner rgl/core/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
+// so hi[1] is not reloaded after each cell walk and, with no callee-saved register left, stays in memory
+inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
+{
+    for (int i = 0; i < 2; i++) {
+        float f = (p[i] - lo[i]) / cell_size[i];
+        if (f <= 0.0f)
+            out[i] = 0;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
+        else
+            out[i] = (int)f + 1;
+    }
+}
+
+inline __declspec(noinline) int box_overlap3(const vector4* a, const vector4* b, const vector4* c, const vector4* d)
+{
+    if (a->x <= d->x && c->x <= b->x && a->y <= d->y && c->y <= b->y && a->z <= d->z && c->z <= b->z)
+        return 1;
+    return 0;
+}
+
+inline __declspec(noinline) int box_overlap2(const vector4* a, const vector4* b, const vector4* c, const vector4* d)
+{
+    if (a->x <= d->x && c->x <= b->x && a->y <= d->y && c->y <= b->y)
+        return 1;
+    return 0;
+}
+
+inline __declspec(noinline) void rgl::cell::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigned mask, shape_base** out, int* count)
+{
+    shape_base* buf[0x2000];
+    int n = 0;
+    unsigned i = 0;                 // lives in memory in the original (reloaded every iteration)
+    int k = 0;
+    while (i < a.size()) {
+        shape_base* sh = a[i];
+        if (sh->m8 & mask) {
+            i++;
+            continue;
+        }
+        vector4 tv[2];                  // both query temporaries live in one block (min below max)
+        const vector4* smax = sh->get_max(&tv[1]);
+        const vector4* smin = sh->get_min(&tv[0]);
+        char hit;
+        if (*use3d == 0)
+            hit = box_overlap2(bmin, bmax, smin, smax);
+        else
+            hit = box_overlap3(bmin, bmax, smin, smax);
+        if (!hit) {
+            i++;
+            continue;
+        }
+        if (k < *count) {
+            shape_base* o = out[k];
+            shape_base* cur = a[i];
+            if (cur >= o) {
+                k++;
+                if (cur == o) {
+                    i++;
+                    buf[n++] = cur;
+                } else {
+                    buf[n++] = o;
+                }
+                continue;
+            }
+        }
+        shape_base* cur2 = a[i];
+        i++;
+        buf[n++] = cur2;
+    }
+    if (k < *count) {
+        int m = *count - k;
+        memcpy(&buf[n], &out[k], m * sizeof(shape_base*));
+        n += m;
+    }
+    *count = n;
+    for (int j = 0; j < *count; j++)
+        out[j] = buf[j];
+}
+
+inline __declspec(noinline) void rgl::world::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
+{
+    int lo[2], hi[2];
+    to_cell(bmin, lo);
+    to_cell(bmax, hi);
+    *count = 0;
+    int2 p;
+    for (p.x = lo[0]; p.x <= hi[0]; p.x++) {
+        if (lo[1] <= hi[1]) {
+            int flat = 1;
+            for (p.y = lo[1]; p.y <= hi[1]; p.y++)
+                cells[p.x][p.y].collect((const vector4*)bmin, (const vector4*)bmax, &flat, mask, out, count);
+        }
+    }
+}
+
 // first shape in the box of s (mask 0x8116, or 0x811e when *flag) that touches it; its contact point goes to *out_point
 // @ 0x43a720
 int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag)
@@ -2439,21 +2538,6 @@ static __forceinline bool box3_inl(const vector4* a, const vector4* b, const vec
     if (a->x <= d->x && c->x <= b->x && a->y <= d->y && c->y <= b->y && a->z <= d->z && c->z <= b->z)
         return true;
     return false;
-}
-
-// Body the original's object saw (row owner rgl/core/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
-// so hi[1] is not reloaded after each cell walk and, with no callee-saved register left, stays in memory
-inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
-{
-    for (int i = 0; i < 2; i++) {
-        float f = (p[i] - lo[i]) / cell_size[i];
-        if (f <= 0.0f)
-            out[i] = 0;
-        else if ((float)(n[i] - 1) <= f)
-            out[i] = n[i] - 1;
-        else
-            out[i] = (int)f + 1;
-    }
 }
 
 // @ 0x442180
