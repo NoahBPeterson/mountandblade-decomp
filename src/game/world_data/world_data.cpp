@@ -755,32 +755,35 @@ int GameW::token_lookup(int a, int b, int c, int d) {
 }
 
 // ==== 0x491f50: mission helpers (agent pool walks, ratings) =============================================================
+// round to nearest (floor, then +1 above one half), as count_agents inlines it
+static __forceinline int wd_rnd(const float* p)
+{
+    float fl = (float)floor(*p);
+    int i = (int)fl;
+    if (*p - fl <= 0.5f)
+        return i;
+    return i + 1;
+}
 // @ 0x491f50
 int MissionW::count_agents(int idx)
 {
     int total = 0;
     int r = idx * 0x5b;
     int* rel = rel_flat();
-    if (rel[r + 0] > 0) total = counts[0][1];
-    if (rel[r + 1] > 0) total += counts[1][1];
-    if (rel[r + 2] > 0) total += counts[2][1];
-    if (rel[r + 3] > 0) total += counts[3][1];
-    if (rel[r + 4] > 0) total += counts[4][1];
-    if (rel[r + 5] > 0) total += counts[5][1];
-    if (rel[r + 6] > 0) total += counts[6][1];
-    if (teams[idx].relation[7] > 0) total += counts[7][1];
-    if (total == 0) return 0;
-    int cu = f5c;
-    if (cu < 0) return 0;
-    if (rec((unsigned)cu)->team < 0) return 0;
-    int n = rel[r + rec((unsigned)cu)->team];
-    int s = f6520();
-    if (n < 0) s = -s;
-    float v = total * (1.0f / speed_factor((float)s));
-    double fl = floor(v);
-    int res = (int)fl;
-    if (v - (float)fl > 0.5f) res++;
-    if (res <= 0) res = 1;
+    for (int k = 0; k < 8; k++)          // fully unrolled by cl (the last term as (idx+0x3b)*0x16c)
+        if (teams[idx].relation[k] > 0)
+            total += counts[k][1];
+    int res = 0;
+    if (total != 0) {
+        int cu = f5c;
+        if (cu >= 0 && rec((unsigned)cu)->team >= 0) {
+            int s = f6520();
+            if (rel[r + rec((unsigned)f5c)->team] < 0) s = -s;
+            float v = total * (1.0f / speed_factor((float)s));
+            res = wd_rnd(&v);
+            if (res <= 0) res = 1;
+        }
+    }
     return res;
 }
 
