@@ -107,7 +107,10 @@ void PartyWindow::frame_update(float unused)
         ((UiD*)view[page]->follow[1])->set_key_flags(0x10000);
     }
 
-    if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x2c] != 0 && g_keyboard.prev[0x2d] == 0 &&
+    // the cheat keys are read through a reference: direct g_keyboard field reads add global symbols, which push g_items
+    // out of c2's first 32-key global block and flip the food test's SIB order (0x51027d, [edi+eax+0x1c8])
+    Slot& kb = g_keyboard;
+    if ((kb.down[0x1d] != 0 || kb.down[0x9d] != 0) && kb.down[0x2c] != 0 && kb.prev[0x2d] == 0 &&
         g_cfg.cheat_mode != 0) {
         WL_MARKER(12)
         if (g_trial_mode != 0) {
