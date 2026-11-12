@@ -538,13 +538,12 @@ void skin::save(stream_base* s)
             s->w_cstr("none");
         } else {
             rgl::string t("");
-            texture* r = tex[i];
-            for (int j = 0; j < r->name.len; j++) {
-                int c = r->name.buf[j];
-                if ((char)c == '.')
+            // the character is read twice in the source (test, then push): one value-numbered read, and the
+            // original's [j + buf] order; a named `int c` read once gives [buf + j]
+            for (int j = 0; j < tex[i]->name.len; j++) {
+                if (tex[i]->name.buf[j] == '.')
                     break;
-                TS(t).push_back(c);
-                r = tex[i];
+                TS(t).push_back(tex[i]->name.buf[j]);
             }
             s->w_tstr(&t);
         }
