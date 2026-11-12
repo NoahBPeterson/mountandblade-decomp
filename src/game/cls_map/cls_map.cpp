@@ -593,7 +593,8 @@ inline void del_glyphs(GlyphMap& m)
     m.buckets._Myend = 0;
     del_list(*(list_int*)&m.pad0[1]);
 }
-inline void del_font(Font* p) { del_glyphs(p->map); operator delete(p); }
+// the null test is inside (the shape of `delete p`): the argument copy then sits before the test, as in the original
+inline void del_font(Font* p) { if (p) { del_glyphs(p->map); operator delete(p); } }
 // @ 0x4da5b0
 HRESULT GameApp::FinalCleanup()
 {
@@ -630,11 +631,12 @@ HRESULT GameApp::FinalCleanup()
         ((convv*)g_party_templates)->vector_deleting_delete(3);            // 0x4c8980
     }
     for (int i = 0; i < 30; i++) {
-        delete g_windows.arr[i];
-        g_windows.arr[i] = 0;
+        if (g_windows.arr[i]) {                 // the store is inside the test (the original's je skips it)
+            delete g_windows.arr[i];
+            g_windows.arr[i] = 0;
+        }
     }
-    if (g_font)
-        del_font(g_font);
+    del_font(g_font);
     ExitSkinMagicLib();
     ((log_stream*)&g_log)->shut();
     return 0;
