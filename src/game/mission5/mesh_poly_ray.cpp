@@ -90,12 +90,12 @@ void Mesh_s2da20::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
 void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
                     float* dist)
 {
-    const mpoly_s2dfd0& poly = polys.first[index];
+    const mpoly_s2dfd0& poly = polys[index];
     int n = poly.count;
     rgl::vector4 pts[4];
     rgl::vector4 mean(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < n; i++) {
-        pts[i] = verts.first[poly.idx[i]].pos;
+        pts[i] = verts[poly.idx[i]].pos;
         mean.x += pts[i].x;
         mean.y += pts[i].y;
         mean.z += pts[i].z;
@@ -156,18 +156,18 @@ void Mesh_s2dfd0::poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
 void Mesh_s2dfd0::toggle_flag(int type, int index)
 {
     if (type == 0) {
-        bool flag = (*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))[index].flag;
-        (*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))[index].flag = !flag;
-        if ((*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))[index].flag)
+        bool flag = verts[index].flag;
+        verts[index].flag = !flag;
+        if (verts[index].flag)
             selected = index;
         else
             selected = -1;
     } else if (type == 1) {
-        bool flag = (*(std::vector<medge_s2dfd0>*)((char*)this + 0x38))[index].flag;
-        (*(std::vector<medge_s2dfd0>*)((char*)this + 0x38))[index].flag = !flag;
+        bool flag = edges[index].flag;
+        edges[index].flag = !flag;
     } else {
-        bool flag = (*(std::vector<mpoly_s2dfd0>*)((char*)this + 0x28))[index].flag;
-        (*(std::vector<mpoly_s2dfd0>*)((char*)this + 0x28))[index].flag = !flag;
+        bool flag = polys[index].flag;
+        polys[index].flag = !flag;
     }
 }
 
@@ -179,8 +179,8 @@ void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
     float sx = 0, sy = 0, sz = 0;
     int n = 0;
     calc_vertex_mode(dummy);
-    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
-        mface_s2dfd0* v = &verts.first[i];
+    for (unsigned i = 0; i < verts.size(); i++) {
+        mface_s2dfd0* v = &verts[i];
         if (v->index) {
             sx += v->pos.x;
             sy += v->pos.y;
@@ -192,8 +192,8 @@ void Mesh_s2dfd0::scale_selected(int dummy, const rgl::vector4* scale)
     float mx = sx * inv;
     float my = sy * inv;
     float mz = sz * inv;
-    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
-        mface_s2dfd0& v = verts.first[i];
+    for (unsigned i = 0; i < verts.size(); i++) {
+        mface_s2dfd0& v = verts[i];
         if (!v.index)
             continue;
         v.pos.x = (v.pos.x - mx) * scale->x + mx;
@@ -209,8 +209,8 @@ void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
     float sx = 0, sy = 0, sz = 0;
     int n = 0;
     calc_vertex_mode(dummy);
-    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
-        mface_s2dfd0* v = &verts.first[i];
+    for (unsigned i = 0; i < verts.size(); i++) {
+        mface_s2dfd0* v = &verts[i];
         if (v->index) {
             sx += v->pos.x;
             sy += v->pos.y;
@@ -222,8 +222,8 @@ void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
     float mx = sx * inv;
     float my = sy * inv;
     float mz = sz * inv;
-    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
-        mface_s2dfd0& v = verts.first[i];
+    for (unsigned i = 0; i < verts.size(); i++) {
+        mface_s2dfd0& v = verts[i];
         if (!v.index)
             continue;
         float dx = v.pos.x - mx;
@@ -237,34 +237,27 @@ void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
 
 // Delete every flagged element of the current mode, then rebuild the derived data.  The
 // index is held still after a deletion, since the array shrinks under it.
-static std::vector<medge_s2dfd0>& edges_v(Mesh_s2dfd0* m) { return *(std::vector<medge_s2dfd0>*)((char*)m + 0x38); }
-// The three lists are real std::vectors in the original: size() and operator[] both go through the vector, each
-// spelled out per use (reference locals for the three views change the allocation). The class header still declares
-// its own vec type, so they are viewed in place here.
-#define MESH_VERTS (*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))
-#define MESH_EDGES (*(std::vector<medge_s2dfd0>*)((char*)this + 0x38))
-#define MESH_POLYS (*(std::vector<mpoly_s2dfd0>*)((char*)this + 0x28))
 // @ 0x52e870
 void Mesh_s2dfd0::remove_selected()
 {
     if (mode == 0) {
-        for (unsigned i = 0; i < MESH_VERTS.size(); i++) {
-            if (MESH_VERTS[i].flag) {
+        for (unsigned i = 0; i < verts.size(); i++) {
+            if (verts[i].flag) {
                 remove_node(i);
                 i--;
             }
         }
     }
     if (mode == 1) {
-        for (unsigned i = 0; i < MESH_EDGES.size(); i++) {
-            if (MESH_EDGES[i].flag) {
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (edges[i].flag) {
                 remove_edge(i);
                 i--;
             }
         }
     } else {
-        for (unsigned i = 0; i < MESH_POLYS.size(); i++) {
-            if (MESH_POLYS[i].flag) {
+        for (unsigned i = 0; i < polys.size(); i++) {
+            if (polys[i].flag) {
                 remove_face(i);
                 i--;
             }
@@ -284,12 +277,14 @@ void Mesh_s2e960::make_copy(const rgl::matrix& m)
     basis.f = rgl::vcross_s2e960(basis.u, basis.s);
 
     if (mode == 2) {
-        edges2.clear();
-        polys2.clear();
-        verts2.clear();
-        for (int i = 0; i < polys.size(); i++) {
-            mpoly_s2e960& p = polys.first[i];
-            if (!p.flag)
+        // std::vector::clear() is _Tidy() in this library, and the original calls it out of line (0x41f4b0, one body
+        // for every vector of trivially destructible elements; defined in entity.cpp under vec<mface>::clear). Called
+        // through that name: the real clear() would be expanded inline here.
+        ((vec<mface>*)&edges2)->clear();
+        ((vec<mface>*)&polys2)->clear();
+        ((vec<mface>*)&verts2)->clear();
+        for (unsigned i = 0; i < polys.size(); i++) {      // polys[i] through operator[] at every use
+            if (!polys[i].flag)
                 continue;
             mpoly_s2e960 t;
             t.idx[0] = -100000;
@@ -301,12 +296,12 @@ void Mesh_s2e960::make_copy(const rgl::matrix& m)
             t.idx2[2] = -100000;
             t.idx2[3] = -100000;
             t.unk00 = 0;
-            t.count = p.count;
             t.unk5c = 0;
             t.flag = 0;
-            for (int j = 0; j < p.count; j++) {
-                t.idx[j] = vertex_index(p.idx[j], basis);
-                t.idx2[j] = edge_index(p.idx2[j], basis);
+            t.count = polys[i].count;
+            for (int j = 0; j < polys[i].count; j++) {
+                t.idx[j] = vertex_index(polys[i].idx[j], basis);
+                t.idx2[j] = edge_index(polys[i].idx2[j], basis);
             }
             polys2.push_back(t);
         }
@@ -318,19 +313,19 @@ static __forceinline int mface_src_index(const mface_s2e960& v) { return v.index
 // @ 0x52ebc0
 int Mesh_s2e960::vertex_index(int index, const rgl::matrix& m)
 {
-    for (int i = 0; (unsigned)i < (*(std::vector<mface_s2e960>*)((char*)this + 0x48)).size(); i++) {   // real std::vector size() and operator[] throughout
-        if ((*(std::vector<mface_s2e960>*)((char*)this + 0x48))[i].index == index) {
+    for (int i = 0; (unsigned)i < verts2.size(); i++) {   // real std::vector size() and operator[] throughout
+        if (verts2[i].index == index) {
             if (i >= 0)
                 return i;
             break;
         }
     }
-    int n = (*(std::vector<mface_s2e960>*)((char*)this + 0x48)).size();
+    int n = verts2.size();
     mface_s2e960 f;
     f.flag = 0;
-    f.pos = m.transform_point_to_local((*(std::vector<mface_s2e960>*)((char*)this + 0x18))[index].pos);
+    f.pos = m.transform_point_to_local(verts[index].pos);
     f.index = index;
-    (*(std::vector<mface_s2e960>*)((char*)this + 0x48)).push_back(f);
+    verts2.push_back(f);
     return n;
 }
 
@@ -341,14 +336,14 @@ int Mesh_s2e960::edge_index(int index, const rgl::matrix& m)
 {
     // same shape as vertex_index: real std::vector size()/operator[], the dead `i >= 0` test, and the fresh
     // edge's constants set before its endpoints are looked up (a constructor in the original, presumably)
-    for (int i = 0; (unsigned)i < (*(std::vector<medge_s2e960>*)((char*)this + 0x68)).size(); i++) {
-        if ((*(std::vector<medge_s2e960>*)((char*)this + 0x68))[i].index == index) {
+    for (int i = 0; (unsigned)i < edges2.size(); i++) {
+        if (edges2[i].index == index) {
             if (i >= 0)
                 return i;
             break;
         }
     }
-    int n = (*(std::vector<medge_s2e960>*)((char*)this + 0x68)).size();
+    int n = edges2.size();
     medge_s2e960 e;
     e.unk08 = -10000;
     e.unk0c = -10000;
@@ -356,10 +351,10 @@ int Mesh_s2e960::edge_index(int index, const rgl::matrix& m)
     e.flag = 0;
     e.t0 = 1.0f;
     e.t1 = 1.0f;
-    e.v0 = vertex_index((*(std::vector<medge_s2e960>*)((char*)this + 0x38))[index].v0, m);
-    e.v1 = vertex_index((*(std::vector<medge_s2e960>*)((char*)this + 0x38))[index].v1, m);
+    e.v0 = vertex_index(edges[index].v0, m);
+    e.v1 = vertex_index(edges[index].v1, m);
     e.index = index;
-    (*(std::vector<medge_s2e960>*)((char*)this + 0x68)).push_back(e);
+    edges2.push_back(e);
     return n;
 }
 
@@ -381,14 +376,14 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
     basis.f = rgl::vcross_s2e960(basis.u, basis.s);
 
     selected = -1;
-    for (unsigned i = 0; i < (unsigned)verts.size(); i++)
-        verts.first[i].flag = 0;
+    for (unsigned i = 0; i < verts.size(); i++)
+        verts[i].flag = 0;
     selected = -1;
-    for (unsigned i = 0; i < (unsigned)edges.size(); i++)
-        edges.first[i].flag = 0;
+    for (unsigned i = 0; i < edges.size(); i++)
+        edges[i].flag = 0;
     selected = -1;
-    for (unsigned i = 0; i < (unsigned)polys.size(); i++)
-        polys.first[i].flag = 0;
+    for (unsigned i = 0; i < polys.size(); i++)
+        polys[i].flag = 0;
 
     if (polys2.size() == 0)
         return;
@@ -396,17 +391,17 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
     int voff = verts.size();
     int eoff = edges.size();
 
-    for (unsigned i = 0; i < (unsigned)verts2.size(); i++) {
+    for (unsigned i = 0; i < verts2.size(); i++) {
         mface_s2e960 v;
-        v.pos = rgl::to_world_s2e960(basis, verts2.first[i].pos);
+        v.pos = rgl::to_world_s2e960(basis, verts2[i].pos);
         v.flag = 1;
         verts.push_back(v);
     }
 
-    for (unsigned i = 0; i < (unsigned)edges2.size(); i++) {
+    for (unsigned i = 0; i < edges2.size(); i++) {
         medge_s2e960& e = *(medge_s2e960*)scratch;
-        e.v0 = edges2.first[i].v0 + voff;
-        e.v1 = edges2.first[i].v1 + voff;
+        e.v0 = edges2[i].v0 + voff;
+        e.v1 = edges2[i].v1 + voff;
         e.unk08 = -10000;
         e.unk0c = -10000;
         e.unk10 = 0;
@@ -416,8 +411,8 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
         edges.push_back(e);
     }
 
-    for (unsigned i = 0; i < (unsigned)polys2.size(); i++) {
-        mpoly_s2e960& p = polys2.first[i];
+    for (unsigned i = 0; i < polys2.size(); i++) {
+        mpoly_s2e960& p = polys2[i];
         mpoly_s2e960& t = *(mpoly_s2e960*)scratch;
         t.idx[0] = -100000;
         t.idx[1] = -100000;

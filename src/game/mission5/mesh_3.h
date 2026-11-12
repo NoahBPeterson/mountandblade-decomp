@@ -311,18 +311,8 @@ struct Mesh_s2da20 : MeshData_s2da20 {    unsigned pick_vert(const rgl::vector4&
 // Mesh_s2dfd0 editing operations: ray/polygon picking and the selection transforms.
 // Class layout recovered from this run of functions (see symbols/slices/s0052dfd0.txt).
 
-// A tiny dynamic array.  Layout verified here: the data pointers live at +4/+8 of the
-// object, i.e. one dword precedes the first element pointer.
-template<class T> struct vec_s2dfd0 {
-    int  unk0;      // +0x0
-    T*   first;     // +0x4
-    T*   last;      // +0x8   (end of used range)
-    T*   end;       // +0xc
-    int size() const { return first ? (int)(last - first) : 0; }
-    void clear();                       // 0x41f4b0
-    void push_back(const T& v);         // 0x477c10 / 0x477d20 / 0x477e10
-};
-
+// The six lists are real std::vectors (allocator word, _Myfirst, _Mylast, _Myend): the original reads them through
+// size() and operator[] at every use (remove_selected 0x52e870, vertex_index 0x52ebc0).
 struct mface_s2dfd0 {                          // 0x18
     rgl::vector4 pos;                   // 0x00
     unsigned char flag;                 // 0x10   (selection / visibility flag)
@@ -352,12 +342,12 @@ struct mpoly_s2dfd0 {                          // 0x64
 
 struct Mesh_s2dfd0 {
     char pad0[0x18];
-    vec_s2dfd0<mface_s2dfd0> verts;                   // 0x18
-    vec_s2dfd0<mpoly_s2dfd0> polys;                   // 0x28
-    vec_s2dfd0<medge_s2dfd0> edges;                   // 0x38
-    vec_s2dfd0<mface_s2dfd0> verts2;                  // 0x48
-    vec_s2dfd0<mpoly_s2dfd0> polys2;                  // 0x58
-    vec_s2dfd0<medge_s2dfd0> edges2;                  // 0x68
+    std::vector<mface_s2dfd0> verts;                   // 0x18
+    std::vector<mpoly_s2dfd0> polys;                   // 0x28
+    std::vector<medge_s2dfd0> edges;                   // 0x38
+    std::vector<mface_s2dfd0> verts2;                  // 0x48
+    std::vector<mpoly_s2dfd0> polys2;                  // 0x58
+    std::vector<medge_s2dfd0> edges2;                  // 0x68
     int mode;                           // 0x78   0 = vertex, 1 = edge, 2 = polygon
     int selected;                       // 0x7c
 
@@ -382,18 +372,6 @@ struct Mesh_s2dfd0 {
 
 // Mesh_s2e960 editing: duplicate the selected polygons into the secondary buffers, projecting every
 // copied vertex through a basis built from the caller's matrix.
-
-// A tiny dynamic array.  Layout verified here: the data pointers live at +4/+8 of the
-// object, i.e. one dword precedes the first element pointer.
-template<class T> struct vec_s2e960 {
-    int  unk0;      // +0x0
-    T*   first;     // +0x4
-    T*   last;      // +0x8   (end of used range)
-    T*   end;       // +0xc
-    int size() const { return first ? (int)(last - first) : 0; }
-    __forceinline void clear() { ((vec<mface>*)this)->clear(); }                       // 0x41f4b0 (vec<mface>::clear, shared by every 4-byte-element vector)
-    __forceinline void push_back(const T& v);         // 0x477c10 / 0x477d20 / 0x477e10 (std::vector<MVert / MPoly / MEdge>::push_back)
-};
 
 struct mface_s2e960 {                          // 0x18
     rgl::vector4 pos;                   // 0x00
@@ -451,12 +429,12 @@ inline vector4 to_world_s2e960(const matrix& m, const vector4& p)
 }
 
 struct Mesh_s2e960 {
-    char pad0[0x18];    vec_s2e960<mface_s2e960> verts;                   // 0x18
-    vec_s2e960<mpoly_s2e960> polys;                   // 0x28
-    vec_s2e960<medge_s2e960> edges;                   // 0x38
-    vec_s2e960<mface_s2e960> verts2;                  // 0x48   copy buffers
-    vec_s2e960<mpoly_s2e960> polys2;                  // 0x58
-    vec_s2e960<medge_s2e960> edges2;                  // 0x68
+    char pad0[0x18];    std::vector<mface_s2e960> verts;                   // 0x18
+    std::vector<mpoly_s2e960> polys;                   // 0x28
+    std::vector<medge_s2e960> edges;                   // 0x38
+    std::vector<mface_s2e960> verts2;                  // 0x48   copy buffers
+    std::vector<mpoly_s2e960> polys2;                  // 0x58
+    std::vector<medge_s2e960> edges2;                  // 0x68
     int mode;                           // 0x78   0 = vertex, 1 = edge, 2 = polygon
     int selected;                       // 0x7c
 
@@ -802,8 +780,5 @@ __forceinline void EditorPanel_s2cf60::update_checks() { ((CreateGameOptionsPage
 __forceinline void mat3_s2cf60::rotate_fu(const float& angle) { ((matrix*)this)->rotate_about_s(&angle); }
 __forceinline void mat3_s2cf60::rotate_su(const float& angle) { ((matrix*)this)->rotate_about_f(&angle); }
 __forceinline void mat3_s2cf60::rotate_sf(const float& angle) { ((matrix*)this)->rotate_about_u(&angle); }
-template<> __forceinline void vec_s2e960<mface_s2e960>::push_back(const mface_s2e960& v) { ((std::vector<MVert>*)this)->push_back(*(const MVert*)&v); }
-template<> __forceinline void vec_s2e960<mpoly_s2e960>::push_back(const mpoly_s2e960& v) { ((std::vector<MPoly>*)this)->push_back(*(const MPoly*)&v); }
-template<> __forceinline void vec_s2e960<medge_s2e960>::push_back(const medge_s2e960& v) { ((std::vector<MEdge>*)this)->push_back(*(const MEdge*)&v); }
 
 #endif // MISSION5_MESH_3_H
