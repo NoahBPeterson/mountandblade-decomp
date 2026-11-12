@@ -314,8 +314,7 @@ void Agent::update_quiver()
     for (int i = 0; i < 4; i++) {
         if (pairs[i].item >= 0) {
             ItemKind* ik = &g_items[pairs[i].item];
-            unsigned t = ik->type_flags & 0xff;
-            if ((t == 5 || t == 6 || t == 10) && disp[i] != 0) {
+            if (((ik->type_flags & 0xff) == 5 || (ik->type_flags & 0xff) == 6 || (ik->type_flags & 0xff) == 10) && disp[i] != 0) {
                 int used = pairs[i].m4 & 0xff;
                 int n = pairs[i].max_amount() - used;
                 if (links[i] != 0 && links[i]->vis != 0) n--;
