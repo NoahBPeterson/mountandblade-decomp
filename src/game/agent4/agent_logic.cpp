@@ -6175,7 +6175,7 @@ void Agent::choose_action(int unused)
                             l = 0.15f;
                         else if (l >= 4.0f)
                             l = 4.0f;
-                        s[9] = l + 1.0f;
+                        s[9] = (l + 1.0f);
                         pv[1] = AG(leader).pos;
                         pv[9] = AG(leader).pos;
                     } else if (k == 1) {
@@ -6186,14 +6186,14 @@ void Agent::choose_action(int unused)
                             l = 0.15f;
                         else if (l >= 4.0f)
                             l = 4.0f;
-                        s[1] = l + 1.0f;
+                        s[1] = (l + 1.0f);
                         pv[1] = hp;
                     }
                     ids[9] = cand;
                     ids[1] = cand;
                 } else if (cr->kind == 3) {
-                    pv[1] = pos;
                     s[1] = 1.5f;
+                    pv[1] = pos;
                     ids[1] = cand;
                 }
                 if (cr->k4 == 1 && f2c == -1) {
@@ -6228,7 +6228,7 @@ void Agent::choose_action(int unused)
                         goto randomise;
                     }
                 }
-                if (cr->k4 == 2 && f2c != -1 && 5.0f < dist) s[3] = 50.0f;
+                if (cr->k4 == 2 && f2c != -1 && dist > 5.0f) s[3] = 50.0f;
             }
         }
     }
