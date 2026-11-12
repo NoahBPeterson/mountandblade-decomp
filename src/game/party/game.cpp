@@ -456,15 +456,15 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
     std::vector<NavNode>& nv = vec();
     int zone = -1;
     unsigned i;
-    for (i = 0; i < vec().size(); i++) {
+    for (i = 0; i < nv.size(); i++) {
         nv[i].cost = -1;
         nv[i].prev = -1;
         nv[i].next = -1;
     }
-    int* stack = new int[vec().size()];
-    int* path = new int[vec().size()];
+    int* stack = new int[nv.size()];
+    int* path = new int[nv.size()];
     int top = -1;
-    for (int ctr = 0; (unsigned)ctr < vec().size(); ctr++) {
+    for (int ctr = 0; (unsigned)ctr < nv.size(); ctr++) {
         int cur = ctr;
         if (top >= 0) {
             ctr--;
@@ -510,7 +510,7 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
                     comp = res;
                 else
                     hi = res;
-                for (i = 0; i < vec().size(); i++) {
+                for (i = 0; i < nv.size(); i++) {
                     int c = nv[i].cost;
                     if (c > hi) {
                         if (c != 0x5f5e0ff)
@@ -525,7 +525,7 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
             nv[cur].cost = comp;
         }
     }
-    for (i = 0; i < vec().size(); i++) {
+    for (i = 0; i < nv.size(); i++) {
         if (nv[i].cost == 0x5f5e0ff) {
             *path = (int)i;
             int cnt = 0;
