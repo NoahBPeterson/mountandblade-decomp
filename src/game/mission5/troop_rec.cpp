@@ -606,6 +606,10 @@ void TroopRec::raise_stats()
     }
 }
 
+// round_float (0x432540) on a value: the argument is a temporary bound to the reference, not a named local (the
+// lerp temporaries share the frame slots exactly as the original's do only in this form)
+static __forceinline int round_float(const float& x) { return round_float((float*)&x); }
+
 // @ 0x520520
 void Animator::reset(void* a, void* b)
 {
@@ -618,44 +622,35 @@ void Animator::reset(void* a, void* b)
     int s5 = material;
 
     float save[63];
-    float* pf = weights;
-    for (int i = 0; i < 0x3f; i += 9) {
-        for (int k = 0; k < 9; k++)
-            save[i + k] = pf[k];
-        pf += 9;
-    }
+    for (int i = 0; i < 0x3f; i++)
+        save[i] = weights[i];
 
     unpack((const unsigned __int64*)b);
 
     int r = rand();
     float f = (float)(r % 15817) * 6.322311674011871e-05f;
-    float t = (float)(item - s1) * f;
-    item = s1 + round_float(&t);
+    item = s1 + round_float((float)(item - s1) * f);
 
     r = rand();
     f = (float)(r % 15817) * 6.322311674011871e-05f;
-    t = (float)(set - s0) * f;
-    set = s0 + round_float(&t);
+    set = s0 + round_float((float)(set - s0) * f);
 
     r = rand();
     f = (float)(r % 15817) * 6.322311674011871e-05f;
-    t = (float)(material - s5) * f;
-    int v = round_float(&t) + s5;
+    int v = round_float((float)(material - s5) * f) + s5;
     material = v;
 
     variant = -1;
 
-    E176* tex = skin_vec.first[cur].face_textures._Myfirst;
-    std::vector<int>& q = tex[v].v;
-    int* cnt = q._Myfirst;
-    int m = (q._Mylast - cnt);
-    if (cnt == 0 || m < 1) {
-        r = rand();
-        t = (float)(variant - s3) * ((float)(r % 15817) * 6.322311674011871e-05f);
-        variant = s3 + round_float(&t);
+    std::vector<int>& q = skin_vec.first[cur].face_textures._Myfirst[v].v;
+    int m = q.size();
+    if (m > 0) {
+        int k = (m <= 1) ? 0 : rand() % m;
+        variant = skin_vec.first[cur].face_textures._Myfirst[material].v._Myfirst[k];
     } else {
-        int k = (m < 2) ? 0 : rand() % m;
-        variant = tex[material].v._Myfirst[k];
+        r = rand();
+        f = (float)(r % 15817) * 6.322311674011871e-05f;
+        variant = s3 + round_float((float)(variant - s3) * f);
     }
 
     r = rand();
@@ -665,13 +660,10 @@ void Animator::reset(void* a, void* b)
     f = (float)(r % 15817) * 6.322311674011871e-05f;
     time = (time - s12c) * f + s12c;
 
-    pf = weights;
-    for (int i = 0; i < 0x3f; i += 9) {
-        for (int k = 0; k < 9; k++) {
-            g_rand_seed = ((g_rand_seed * 0x1c13 + 0xf2f67aaa) * 0x1ddcf5f + 0xf2f67aaa) * 0x1105;
-            pf[k] = ((pf[k] - save[i + k]) * ((float)(g_rand_seed % 15817) * 1.2644623348023742e-04f)) * 0.5f + save[i + k];
-        }
-        pf += 9;
+    for (int i = 0; i < 0x3f; i++) {
+        float s = save[i];
+        g_rand_seed = ((g_rand_seed * 0x1c13 + 0xf2f67aaa) * 0x1ddcf5f + 0xf2f67aaa) * 0x1105;
+        weights[i] = ((weights[i] - s) * ((float)(g_rand_seed % 15817) * 1.2644623348023742e-04f)) * 0.5f + s;
     }
 
     pack_state((PackedState*)a);
