@@ -842,7 +842,7 @@ void CampaignScreen::frame_update(float dt)
     } else {
         PSO(f58)->clear();
     }
-    if (!(GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) != 0))
+    if (!(GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) == 0))   // skipped only while paused with 13ad8 clear (0x515ad3: je past it)
         camera_move(dt);
     camera_update(dt);
     if (GD_F(0x13ad0) <= 0.0f) {
