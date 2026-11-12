@@ -1183,8 +1183,10 @@ void Terrain::load_layer(int* set, int idx)
             if (set[idx * 6 + 8] == 0) {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++) {
+                        // the zero is stored through at() and read back through c: cl then keeps the reload
+                        // (mov [f88],0; fld [f88]; fadd [h2]) instead of folding 0.0f + h2
+                        at(x, y).f88 = 0.0f;
                         terrain_cell* c = &at(x, y);
-                        c->f88 = 0.0f;
                         c->pz = c->f88 + c->h2;
                     }
             } else {
@@ -1217,13 +1219,17 @@ void Terrain::load_layer(int* set, int idx)
             }
             int t = set[idx * 6 + 7];
             tlayer* l = &layers[idx];
-            l->type = t;
+            // the type store is written in both arms, after tt in the first (cl merges it back above the jl after
+            // allocation): t is live past tt's definition, so tt gets its own register (mov ecx,ebx; shl ecx,5)
             if (t >= 0) {
                 GroundType* tt = &g_ground_types[t];
+                l->type = t;
                 l->f1c = (int)tt->mat;
                 l->f24 = tt->f18;
                 l->f14 = tt->f1c;
                 l->f18 = -1;
+            } else {
+                l->type = t;
             }
         }
     }
