@@ -473,56 +473,46 @@ void autosave_notice()
     save_game(-1, 0);
 }
 
+// The hero table is level record 1's spawn pairs (+0x114, id and value) and the int list at +0x314, reached through
+// g_game for every store (the stores alias g_game, so it is reloaded after each).
+struct HeroTable { char pad[0x494 + 0x114]; struct { int id, v; } pairs[0x40]; int flags[0x40]; };
+#define HT ((HeroTable*)g_game->levels)
+
 // @ 0x514890
 void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
 {
     GD_I(0x13a08) = a1;
-    char* t = (char*)GD_I(0x13a50);
-    int off = 0x5a8;
-    do {
-        *(int*)(t + off) = -1;
-        off += 8;
-    } while (off < 0x7a8);
-    *(int*)(t + 0x5a8) = g_game->player;
-    *(int*)(t + 0x7a8) = 1;
-    *(int*)(t + 0x5b0) = a1;
-    *(int*)(t + 0x5b4) = a2;
-    *(int*)(t + 0x7ac) = 1;
+    for (int i = 0; i < 0x40; i++)
+        HT->pairs[i].id = -1;
+    HT->pairs[0].id = g_game->player;
+    HT->flags[0] = 1;
+    HT->pairs[1].id = a1;
+    HT->pairs[1].v = a2;
+    HT->flags[1] = 1;
 
     PartyMgr* m = &g_game->parties;
     Party* p = party_at(m, m->lookup(g_game->f78));
-    if (1 < p->nstacks) {
-        int n = 1;
-        int oi = 0x5b8;
-        int of = 0x7b0;
-        Stack* s = &p->stacks[1];
-        do {
-            int item = s->troop;
-            if ((g_game->troops[item].flags30 & 0x10) != 0 && item != a1) {
-                *(int*)(t + oi) = item;
-                oi += 8;
-                *(int*)(t + of) = 1;
-                of += 4;
-            }
-            n++;
-            s++;
-        } while (n < p->nstacks);
+    int k = 2;
+    for (int n = 1; n < p->nstacks; n++) {
+        int item = p->stacks[n].troop;
+        if ((g_game->troops[item].flags30 & 0x10) != 0 && item != a1) {
+            HT->pairs[k].id = item;
+            HT->flags[k] = 1;
+            k++;
+        }
     }
 
     if (a3 > 0 && a3 != g_game->f78) {
+        m = &g_game->parties;
         if (1 < party_at(m, m->lookup(a3))->nstacks) {
-            int oi = 0x630;
-            int of = 0x7ec;
+            int k = 17;
             int n = 1;
-            // do-while (0x514b4b jl 0x514a68): the party is looked up again for the flag test, for the stored troop and
-            // for the loop condition, but not before the first iteration
             do {
                 int item = party_at(m, m->lookup(a3))->stacks[n].troop;
                 if ((g_game->troops[item].flags30 & 0x10) != 0) {
-                    *(int*)(t + oi) = party_at(m, m->lookup(a3))->stacks[n].troop;
-                    *(int*)(t + of) = 1;
-                    of += 4;
-                    oi += 8;
+                    HT->pairs[k].id = party_at(m, m->lookup(a3))->stacks[n].troop;
+                    HT->flags[k] = 1;
+                    k++;
                 }
                 n++;
             } while (n < party_at(m, m->lookup(a3))->nstacks);
