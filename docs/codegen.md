@@ -2147,3 +2147,13 @@ Key numbering (third batch, same night)
   `[base+i*4]`. The original's `lea; mov eax,[eax]` or dead `lea` beside a folded load means no loop in its function
   classified: rewrite the classifying `for` loops as do-while (with a guard) — hook `LurClassifyDo`/`LurClassifyWhile`
   to find them (Operation::execute, MissionBlocker::frame_update 88af2cbc).
+- One value-numbering temp too few: when an SIB/commutative order resists frame, temp and global edits, run
+  `symkeys levers --site ... --classes hash`; if an `add:hash@X:1` satisfies the sites, the original had one more CSE
+  temp. Redundant parentheses on a float subexpression add one (Rec454::init_screen 3b95f21a).
+- A ternary operand written as two arms (each with its own `fadd [K]`/`fmul [K]` and call, behind a shared hoisted
+  fld): the source was if/else with the statement in each arm; `cond ? 10.0f : 3.0f` gives `fld K; fadd st(1);
+  fstp st(0)` instead (GameW::share_experience f0492dd9).
+- `mov ecx,eax; mov esi,ecx; ... lea esi,[ecx+1]` after `_ftol`: an inline rounding helper with a local int and two
+  returns; in place `n = fl + 1` gives `inc`. `fcomp dword` against `amount - fl`: the floor result was a float.
+- Hand-expanded matrix products cannot reproduce x87 operand order; an inline row helper with parameters in member
+  order (p, then the matrix) gets most of it (rot3x::mul_t d8d1f6d5).
