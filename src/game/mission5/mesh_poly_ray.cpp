@@ -238,27 +238,33 @@ void Mesh_s2dfd0::transform_selected(int dummy, const float* m)
 // Delete every flagged element of the current mode, then rebuild the derived data.  The
 // index is held still after a deletion, since the array shrinks under it.
 static std::vector<medge_s2dfd0>& edges_v(Mesh_s2dfd0* m) { return *(std::vector<medge_s2dfd0>*)((char*)m + 0x38); }
+// The three lists are real std::vectors in the original: size() and operator[] both go through the vector, each
+// spelled out per use (reference locals for the three views change the allocation). The class header still declares
+// its own vec type, so they are viewed in place here.
+#define MESH_VERTS (*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))
+#define MESH_EDGES (*(std::vector<medge_s2dfd0>*)((char*)this + 0x38))
+#define MESH_POLYS (*(std::vector<mpoly_s2dfd0>*)((char*)this + 0x28))
 // @ 0x52e870
 void Mesh_s2dfd0::remove_selected()
 {
     if (mode == 0) {
-        for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
-            if ((*(std::vector<mface_s2dfd0>*)((char*)this + 0x18))[i].flag) {
+        for (unsigned i = 0; i < MESH_VERTS.size(); i++) {
+            if (MESH_VERTS[i].flag) {
                 remove_node(i);
                 i--;
             }
         }
     }
     if (mode == 1) {
-        for (unsigned i = 0; i < (unsigned)edges.size(); i++) {
-            if ((*(std::vector<medge_s2dfd0>*)((char*)this + 0x38))[i].flag) {
+        for (unsigned i = 0; i < MESH_EDGES.size(); i++) {
+            if (MESH_EDGES[i].flag) {
                 remove_edge(i);
                 i--;
             }
         }
     } else {
-        for (unsigned i = 0; i < (unsigned)polys.size(); i++) {
-            if ((*(std::vector<mpoly_s2dfd0>*)((char*)this + 0x28))[i].flag) {
+        for (unsigned i = 0; i < MESH_POLYS.size(); i++) {
+            if (MESH_POLYS[i].flag) {
                 remove_face(i);
                 i--;
             }
