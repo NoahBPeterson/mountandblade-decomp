@@ -5714,10 +5714,10 @@ void Agent::cycle_slot(int which)
 static __forceinline Agent& mag(Mission* m, unsigned id) { return m->agents.pages[id >> 4][id & 0xf]; }
 static __forceinline Missile& mrec(Pool* p, unsigned id)
 {
-    PoolRec** pp = &p->pages[id >> 4];
-    return *(Missile*)(*pp + (id & 0xf));
+    return ((Missile*)p->pages[id >> 4])[id & 0xf];   // the real operator[] per use (its dead add reg,edi stays)
 }
 #define MS(id) mrec((Pool*)poolJ, id)
+static __forceinline void set_fbc_ref(SceneEnt* e, const float& v) { e->set_fbc(&v); }
 // @ 0x44be50
 int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* launcher, ItemRef* ammo,
                            unsigned shooter_id)
@@ -5755,9 +5755,8 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     e->local.f = *dir;
     e->local.u = vector4(0.0f, 0.0f, 1.0f);
     e->local.orthonormalize();
-    float half = 0.5f;
     e->local.o = *pos;
-    e->set_fbc(&half);
+    set_fbc_ref(e, 0.5f);                              // a const float& temporary, stored after the push
     e->vc4 = vector4(0.0f, e->get_fbc(), 0.0f);
     e->f140 = 0;
     MS(id).ent = e;
@@ -5770,7 +5769,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
         MS(id).f64 += (float)ammo->stat_21x(1);
     MS(id).f60 = shooter->attack_speed();
     MS(id).f5c = MS(id).f60;
-    MS(id).f5c = mount_f + MS(id).f5c;
+    MS(id).f5c += mount_f;
     MS(id).shooter = shooter_id;
     MS(id).launcher = *launcher;
     MS(id).ammo = *ammo;
