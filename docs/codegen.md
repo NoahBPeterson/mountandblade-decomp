@@ -2099,3 +2099,10 @@ Key numbering (third batch, same night)
   indexed with the full expression in the innermost loop, not through a pointer local (fill_mission_grid 3647d494).
 - An early `return v` in one arm before a switch gets its own `ret` after the jump table; if the original's arm
   reaches the shared return, write `goto done` (ItemRef::stat_1e8 10c13356).
+- `f(tstring("x"))` reuses the constructor's returned this (eax) as the argument; `f("x")` through a
+  `const tstring&` parameter reloads the address with `lea`. Temporaries built one after another between calls are
+  named locals of a shared block (label_refresh 025e95aa, SaveWindow::slot_button e83cf93a).
+- Per-component accumulation loops are not unrolled; `c += p[i]` through the inline vector4 `operator+=` is, by 4.
+  A 4x-unrolled loop in the original points at the operator form (draw_polygon 0cb43623, build_faces f8d201fd).
+- A store of a call's result between the destructors of that call's string arguments: the call assigns a local in an
+  inner block and the store follows the block (slot_button).
