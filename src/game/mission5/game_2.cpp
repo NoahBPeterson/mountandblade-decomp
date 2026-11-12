@@ -337,7 +337,6 @@ static inline int map_add_vertex(rgl::mesh* m, int index, const vec2& uv, const 
     return m->add_vertex(index, &uv, &color, &n, &f5c);
 }
 static inline void map_add(rgl::vector4& a, const rgl::vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
-static inline void map_scale(rgl::vector4& v, float k) { v.x *= k; v.y *= k; v.z *= k; }
 static inline void map_mul(rgl::vector4& a, const rgl::vector4& b) { a.x *= b.x; a.y *= b.y; a.z *= b.z; }   // per-channel product: lit.z stays on the x87 stack
 // vector4::normalize (0x407d60) as the original inlines it here: returns the old length, (0,1,0) if <= 1e-10. As a member
 // (x *= inv through this) it gives the original's fld inv; fmul d.y; with d's fields scaled in the caller cl loads d.y first.
@@ -781,14 +780,22 @@ void Game::build_map_trees()
                         c.w = 1.0f;
 
                         if (mi == 0) {
+                            // sqrt and clamp at the head of both arms (cl merges the heads and leaves the original's dead lea of
+                            // &dist[id]); the scale written out per channel: its common subexpression stays on the x87 stack
+                            // past the third product (fld c.z; fmul st(1); fstp; fstp st(0)), a by-value helper's k is consumed
                             float& dd = fr.dist[id];
-                            float sd = (float)sqrt(dd);
                             if (g_use_shaders != 0) {
+                                float sd = (float)sqrt(dd);
                                 if (!(sd < 5.0f)) sd = 5.0f;
-                                map_scale(c, (6.0f - sd) * 0.16666667f);
+                                c.x = c.x * ((6.0f - sd) * 0.16666667f);
+                                c.y = c.y * ((6.0f - sd) * 0.16666667f);
+                                c.z = c.z * ((6.0f - sd) * 0.16666667f);
                             } else {
+                                float sd = (float)sqrt(dd);
                                 if (!(sd < 5.0f)) sd = 5.0f;
-                                map_scale(c, (8.0f - sd) * 0.125f);
+                                c.x = c.x * ((8.0f - sd) * 0.125f);
+                                c.y = c.y * ((8.0f - sd) * 0.125f);
+                                c.z = c.z * ((8.0f - sd) * 0.125f);
                             }
                         } else if (mt == 8) {
                             if ((nf[k] & water) == 0)
