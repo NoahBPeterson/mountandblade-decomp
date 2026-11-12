@@ -758,7 +758,7 @@ done:
         u.y = t.z * frame.u.y + t.y * frame.f.y + t.x * frame.s.y + frame.o.y;
         u.z = t.z * frame.u.z + t.y * frame.f.z + t.x * frame.s.z + frame.o.z;
         p_c0->out = u;
-        vpush((std::vector<void*>&)sc->list, (void*)p_c0);
+        vpush((std::vector<void*>&)sc->list, *(void**)&p_c0);   // the member itself binds to vpush's const T& (lea of &p_c0, no temporary)
     }
     return 0;
 }
