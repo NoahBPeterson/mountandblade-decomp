@@ -539,19 +539,19 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "game_tick 00518680": {
+  "party_tracks 00518680": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "game_tick 005189e0": {
+  "party_tracks 005189e0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "game_tick 00518d70": {
+  "party_tracks 00518d70": {
     "args": [
       "--party-table"
     ],

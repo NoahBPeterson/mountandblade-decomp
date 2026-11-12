@@ -1,0 +1,2 @@
+../src/game/inventory_panel/party_tracks.cpp  ?skill_plus_8@GameG@@QAEMXZ  00518940  /O2 /MT /Gy /TP
+../src/game/inventory_panel/party_tracks.cpp  ?shift_over@Vec5c@@QAEPAPAURec5c@@PAPAU2@PAU2@1@Z  00518990  /O2 /MT /Gy /TP
