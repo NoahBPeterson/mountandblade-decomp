@@ -2205,3 +2205,12 @@ Key numbering (third batch, same night)
   extra inline layer that changes argument scheduling (setup: call the real member).
 - Open: a callee that kills globals (the original reloads g_game after it) while the page-load fold stays on
   (MissionCtx::frame after data_ready 0x5166a0, CampaignScreen::frame_update after PartyMgr::get).
+- Search-loop exits: `for (...) if (eq) break; if (i == n) i = 0;` against `i >= n` changes the jump-threading of the
+  exits and with it the colouring (build_mesh_name 418e5300).
+- `It u; u = f(...); g(u, end())` re-reads `end()` after the call and reads the result through the returned pointer;
+  `g(f(...), end())` and `It u = f(...)` do neither (world::query_entities 6e277e5f).
+- `&unpack_color(..)` reads the by-value result through eax; a named copy or `const&` binding reads the stack
+  temporary (Party::update_hud_text d36faf73).
+- A raw `pages[...]` member that is really `std::vector<T*>` at that offset: a file-local view returning the real
+  vector and its `operator[]`, until the header member is converted (Party::reissue_order 7e9aaef1,
+  Terrain::conv_build_scene ee62b4e8).
