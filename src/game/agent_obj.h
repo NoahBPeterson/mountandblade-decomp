@@ -13,6 +13,7 @@
 #define GAME_AGENT_OBJ_H
 #include <stddef.h>
 #include <vector>
+#include <deque>
 #include "../include/rgl_base.h"
 #include "../include/mat4.h"
 #include "../include/vec.h"
@@ -244,9 +245,7 @@ struct Agent {                                          // 0x5928 bytes
     int f53a0;                    // +0x53a0 0x448eb0, 0x44d000
     InputState in_prev;                                 // +0x53a4
     unsigned f53bc;                    // +0x53bc 0x4461e0 (|= 0x200), 0x448eb0, 0x44df30
-    char pad53c0[0x53c4 - 0x53c0];
-    InputRec** q_buf;                                   // +0x53c4
-    unsigned q_cap, q_head, q_count;                    // +0x53c8
+    std::deque<InputRec> input_q;                       // +0x53c0 queued input (map +0x53c4, map size, offset, size; one 0x20-byte record per block; 0x43c9c0)
     InputState in_last;                                 // +0x53d4
     Threat threats[16];                                 // +0x53ec (sorted by distance, nearest first; 0x443430)
     int nthreat;                                        // +0x556c

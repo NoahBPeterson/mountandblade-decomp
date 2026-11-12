@@ -961,23 +961,19 @@ void Agent::update_aim_error()
 }
 
 // ---- input queue, nav face tracking and the movement animation chooser -------------------------------------------------------------------------------------------------------
-// the input queue at +0x53c0 is a std::deque<InputRec> (map +0x53c4, map size, offset, size; one 0x20-byte record per block)
-typedef std::deque<InputRec> InputQueue;
-static __forceinline InputQueue& input_queue(Agent* a) { return *(InputQueue*)((char*)a + 0x53c0); }
 // @ 0x43c9c0
 void Agent::poll_input(float unused, InputState* out)
 {
     InputState orig = *out;
     *out = in_prev;
-    InputQueue& q = input_queue(this);
-    if (!q.empty()) {
+    if (!input_q.empty()) {
         __int64 now = g_ticks[2];
-        while (!q.empty()) {
-            if (*(__int64*)&q.front().lo >= now)
+        while (!input_q.empty()) {
+            if (*(__int64*)&input_q.front().lo >= now)
                 break;
-            out->v[0] |= q.front().bits;
+            out->v[0] |= input_q.front().bits;
             in_last = *out;
-            q.pop_front();
+            input_q.pop_front();
         }
     }
     out->v[0] |= in_last.v[0];
