@@ -268,18 +268,16 @@ PartyPanel* PartyWindow::build_page(int page)
     { Vec2 v(0.0f, 0.0f); p->move_a(&v.x); }
     { Vec2 v(0.264f, h); p->set_xy(&v.x); }
     int col = 0, row;
-    MissionUi** wp;
     int i = 0;
-    if (i < n) {            // the original tests n before it sets row and the slot pointer (0x502402)
+    if (i < n) {            // the original tests n before it sets row (0x502402)
         row = 1;
-        wp = widgets[page];
-        for (; i < n; i++, wp++) {
+        for (; i < n; i++) {
             MissionUi* w = make_slot(&INV(t, i));
             Vec2 v((float)col * 0.088f, h - (float)row * 0.088f);
-            *wp = w;
+            widgets[page][i] = w;
             w->move_a(&v.x);
             col++; if (col >= 3) { col = 0; row++; }
-            p->add_child(*wp);
+            p->add_child(widgets[page][i]);
             flags[page][i] = 2; aux[page][i] = 0x12fd1;
         }
     }
