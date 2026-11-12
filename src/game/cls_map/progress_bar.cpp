@@ -326,99 +326,100 @@ void C4c31c0::init_screen()
 // ---- 0x4e4c70: the label's ini-driven setup ---------------------------------------------------------------------------------------------
 // "<key>_text_color" and the other settings of the save screen's controls, read out of the ini table and pushed into the widget.
 // (the key is passed by value; the setters are the vtable slots +0x98 / +0x9c / +0x58 / +0x64 / +0x6c / +0x70 / +0x74)
+// a two-float pair (the widgets take these by pointer)
+struct PairF {
+    float x, y;
+    __forceinline PairF(float a, float b) { x = a; y = b; }
+};
+
 // @ 0x4e4c70
 void label_refresh(MissionUi* self, tstring key)
 {
-    float v[2];
-    tstring name = key + tstring("_text_color");
+    tstring name = key + "_text_color";
     int idx = g_game_vars.find(name);
     if (idx >= 0) {
         int c = g_game_vars.get_hex(&idx);
         vt(self)->d38(&c);
     }
-    { name = key + tstring("_highlight_text_color"); }
+    name = key + "_highlight_text_color";
     idx = g_game_vars.find(name);
     if (idx >= 0) {
         int c = g_game_vars.get_hex(&idx);
         vt(self)->d39(&c);
     }
+    bool any = false;
+    PairF v(0.0f, 0.0f);
     {
-        bool any = false;
-        v[0] = 0.0f;
-        v[1] = 0.0f;
-        { name = key + tstring("_position_x"); }
+        name = key + "_position_x";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
-            v[0] = g_game_vars.get_float(&idx);
+            v.x = g_game_vars.get_float(&idx);
             any = true;
         }
-        { name = key + tstring("_position_y"); }
+        name = key + "_position_y";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
-            v[1] = g_game_vars.get_float(&idx);
-            any = true;                                     // 0x4e4e38: a found y also triggers the call
-        }
-        if (any)
-            vt(self)->d22(v);
-    }
-    {
-        bool any = false;
-        v[0] = 0.0f;
-        v[1] = 0.0f;
-        { name = key + tstring("_size_x"); }
-        idx = g_game_vars.find(name);
-        if (idx >= 0) {
-            v[0] = g_game_vars.get_float(&idx);
+            v.y = g_game_vars.get_float(&idx);
             any = true;
         }
-        { name = key + tstring("_size_y"); }
-        idx = g_game_vars.find(name);
-        if (idx >= 0) {
-            v[1] = g_game_vars.get_float(&idx);
-            any = true;                                     // 0x4e4e38: a found y also triggers the call
-        }
         if (any)
-            vt(self)->d25(v);
+            vt(self)->d22(&v);
     }
     {
-        bool any = false;
-        v[0] = 0.0f;
-        v[1] = 0.0f;
-        { name = key + tstring("_text_size_x"); }
+        any = false;
+        v = PairF(0.0f, 0.0f);
+        name = key + "_size_x";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
-            v[0] = g_game_vars.get_float(&idx);
+            v.x = g_game_vars.get_float(&idx);
             any = true;
         }
-        { name = key + tstring("_text_size_y"); }
+        name = key + "_size_y";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
-            v[1] = g_game_vars.get_float(&idx);
-            any = true;                                     // 0x4e4e38: a found y also triggers the call
+            v.y = g_game_vars.get_float(&idx);
+            any = true;
         }
         if (any)
-            vt(self)->d27(v);
+            vt(self)->d25(&v);
     }
     {
-        bool any = false;
-        v[0] = 0.0f;
-        v[1] = 0.0f;
-        { name = key + tstring("_text_position_x"); }
+        any = false;
+        v = PairF(0.0f, 0.0f);
+        name = key + "_text_size_x";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
-            v[0] = g_game_vars.get_float(&idx);
+            v.x = g_game_vars.get_float(&idx);
             any = true;
         }
-        { name = key + tstring("_text_position_y"); }
+        name = key + "_text_size_y";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
-            v[1] = g_game_vars.get_float(&idx);
-            any = true;                                     // 0x4e4e38: a found y also triggers the call
+            v.y = g_game_vars.get_float(&idx);
+            any = true;
         }
         if (any)
-            vt(self)->d28(v);
+            vt(self)->d27(&v);
     }
-    { name = key + tstring("_text_flags"); }
+    {
+        any = false;
+        v = PairF(0.0f, 0.0f);
+        name = key + "_text_position_x";
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v.x = g_game_vars.get_float(&idx);
+            any = true;
+        }
+        name = key + "_text_position_y";
+        idx = g_game_vars.find(name);
+        if (idx >= 0) {
+            v.y = g_game_vars.get_float(&idx);
+            any = true;
+        }
+        if (any)
+            vt(self)->d28(&v);
+    }
+    name = key + "_text_flags";
     idx = g_game_vars.find(name);
     if (idx >= 0) {
         int c = g_game_vars.get_hex(&idx);
@@ -549,11 +550,6 @@ UiA* make_short_button(MissionUi* parent, const tstring* text, float a, float b,
 }
 
 // ---- 0x4e55f0: one slot button of the save / load screen --------------------------------------------------------------------------------
-// a two-float pair (the widgets take these by pointer)
-struct PairF {
-    float x, y;
-    __forceinline PairF(float a, float b) { x = a; y = b; }
-};
 
 // a temporary's address for a by-pointer widget call (the temporary lives to the end of the caller's full expression)
 static __forceinline PairF* pair_ref(const PairF& p) { return (PairF*)&p; }
