@@ -26,6 +26,14 @@ static inline mh_float2 mh_fade_mix(float s, const mh_float2& a, float t, const 
     return mh_float2(l.x + r.x, l.y + r.y);
 }
 
+// Seconds since track i was (re)started: MissionUi::elapsed(i) with the original's parentheses. Both pairs are needed:
+// each parenthesised float subexpression is an OPPAREN tuple, and with them the first fild's fmul is scheduled after the
+// next timer's int64 stores, as in the original (0x4966e9..0x496717).
+static inline float mh_elapsed(const MissionUi* w, int i)
+{
+    return (((float)(g_ticks[w->tm[i].clock] - w->tm[i].start)) * 1e-5f);
+}
+
 // ==== 0x4958f0: clone a mesh with the same owner, material, flags and name =====================================
 // @ 0x4958f0
 rgl::mesh* rgl::mesh::copy_of()
@@ -294,10 +302,10 @@ void MeshWidget::animate(int)
 // @ 0x4966b0
 void XyzButton::animate(int)
 {
-    float e0 = elapsed(0);
-    float e1 = elapsed(1);
-    float e2 = elapsed(4);
-    float e3 = elapsed(5);
+    float e0 = mh_elapsed(this, 0);
+    float e1 = mh_elapsed(this, 1);
+    float e2 = mh_elapsed(this, 4);
+    float e3 = mh_elapsed(this, 5);
 
     if (e2 < dur(4)) {
         float inv = 1.0f / dur(4);
@@ -320,41 +328,42 @@ void XyzButton::animate(int)
     if (e0 < dur(0)) {
         unsigned col = 0;
         float v = ((cb().dword & 0xff) * (dur(0) - e0) + (ca().dword & 0xff) * e0) * (1.0f / dur(0));
-        col = round_float(&v);
-        v = (cb().g * (dur(0) - e0) + ca().g * e0) * (1.0f / dur(0));
-        col += round_float(&v) << 8;
-        v = (cb().b * (dur(0) - e0) + ca().b * e0) * (1.0f / dur(0));
-        col += round_float(&v) << 16;
+        int r = round_float(&v);
+        col = r;
+        float v1 = (cb().g * (dur(0) - e0) + ca().g * e0) * (1.0f / dur(0));
+        int g = round_float(&v1);
+        col += g << 8;
+        float v2 = (cb().b * (dur(0) - e0) + ca().b * e0) * (1.0f / dur(0));
+        int b = round_float(&v2);
+        col += b << 16;
         col |= color14c & 0xff000000;
         tracks[2]->color = col;
         tracks[1]->color = col;
         set_color(&col);
     } else if (c0) {
-        unsigned col = (color14c ^ ca().dword) & 0xffffff ^ color14c;
+        unsigned col = (color14c & 0xff000000) | (ca().dword & 0xffffff);
         c0 = 0;
         tracks[2]->color = col;
         tracks[1]->color = col;
         set_color(&col);
     }
 
-    {
-        unsigned col;
-        if (e1 < dur(1)) {
-            float v = (ab().a * (dur(1) - e1) + aa().a * e1) * (1.0f / dur(1));
-            col = round_float(&v) << 24;
-            tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
-        } else if (c1) {
-            c1 = 0;
-            col = aa().dword;
-            tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
-        } else {
-            goto alpha_done;
-        }
+    if (e1 < dur(1)) {
+        unsigned col = 0;
+        float v = (ab().a * (dur(1) - e1) + aa().a * e1) * (1.0f / dur(1));
+        col = round_float(&v) << 24;
+        tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
+        tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
+        col |= color14c & 0xffffff;
+        set_color(&col);
+    } else if (c1) {
+        c1 = 0;
+        unsigned col = aa().dword;
+        tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
         set_color(&col);
     }
-alpha_done:
 
     if (e3 < dur(5)) {
         float inv = 1.0f / dur(5);
