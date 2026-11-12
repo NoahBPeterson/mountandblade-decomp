@@ -3,7 +3,7 @@
 
 usage: case_sweep.py <src.cpp> <va-hex> --selector 'this+OFF&MASK' [--jobs 8] [--inputs 100] [--min-valid 50]
                      [--time-limit 150] [--only OPCODES] [--redo VERDICT,...] [--names opcodes.json] [--out f.json]
-                     [--status] [--plan-only] [--nice 10]
+                     [--shards N] [--status] [--plan-only] [--nice 10]
 
 equiv.py on a whole switch function never gets past the dispatch: the selector is soup, and a jump table entry is not a
 comparison steering can solve. This driver runs equiv.py once per case with `--pin <selector>=<the case's selector
@@ -340,13 +340,67 @@ def current(r, c, accept_older_harness):
     return bool(accept_older_harness and r.get("code_key") and r.get("code_key") == c["code_key"])
 
 
+def merge_rows(rows):
+    """One equiv.py row from the rows of the N `--shard K/N` runs of a case, with the fields judge() reads. As in
+    merge_shards.py: every valid input is a real comparison of both builds (the counts add, any mismatch counts),
+    an edge one shard covered was executed (union), and an edge is unreachable only if every shard says so."""
+    r = dict(rows[0])
+    for k in ("valid", "inputs", "mismatches"):
+        r[k] = sum(x.get(k) or 0 for x in rows)
+    disc = {}
+    for x in rows:
+        for k, v in (x.get("discarded") or {}).items():
+            disc[k] = disc.get(k, 0) + v
+    r["discarded"] = disc
+    edges = {}
+    for side in ("orig", "ours"):
+        es = [(x.get("edges") or {}).get(side) or {} for x in rows]
+        cov = set().union(*[set(e.get("covered_edges", [])) for e in es])
+        unr = None
+        for e in es:
+            u = {u_["edge"]: u_ for u_ in e.get("unreachable", [])}
+            unr = u if unr is None else {k: v for k, v in unr.items() if k in u}
+        edges[side] = dict(es[0], covered_edges=sorted(cov), covered=len(cov), unreachable=list((unr or {}).values()))
+    r["edges"] = edges
+    bad = [x for x in rows if x.get("mismatches")]
+    r["first_mismatch"] = bad[0].get("first_mismatch") if bad else None
+    r["verdict"] = "FAIL" if bad else rows[0].get("verdict")
+    r["reason"] = "[%d shards] " % len(rows) + " || ".join((x.get("reason") or "")[:200] for x in (bad or rows))
+    return r
+
+
 def run_case(a, case, key, transparent, slice_id):
+    """One case: one equiv.py run, or (--shards N) N runs `--shard K/N` one after the other, judged together."""
+    t0 = time.time()
+    pin = "%s=%s" % (a.selector, ",".join("%x" % v for v in case["values"]))
+    n = max(1, a.shards)
+    rows, res = [], None
+    for k in range(n):
+        row, err = run_equiv(a, case, pin, transparent, slice_id, (k, n) if n > 1 else None)
+        if row is None:
+            res = {"verdict": "ERROR", "reason": err}
+            break
+        rows.append(row)
+    if res is None:
+        res = judge(case, rows[0] if n == 1 else merge_rows(rows), a.min_valid)
+        if n > 1:
+            res["shards"] = [{"valid": x.get("valid"), "inputs": x.get("inputs"), "mismatches": x.get("mismatches"),
+                              "seconds": x.get("seconds")} for x in rows]
+    res.update(key=key, seconds=round(time.time() - t0, 1), pin=pin,
+               when=datetime.datetime.now().astimezone().isoformat(timespec="seconds"))
+    return res
+
+
+def run_equiv(a, case, pin, transparent, slice_id, shard):
+    """-> (equiv.py's JSON row, None) or (None, why)."""
     fd, js = tempfile.mkstemp(suffix=".json", prefix="case_sweep_")
     os.close(fd)
-    pin = "%s=%s" % (a.selector, ",".join("%x" % v for v in case["values"]))
+    inputs = a.inputs if not shard else -(-a.inputs // shard[1])
     cmd = [sys.executable, EQUIV, slice_id, "%x" % a.va, "--src", a.src, "--flags", " ".join(a.flag_list),
-           "--pin", pin, "--full-edges", "--inputs", str(a.inputs), "--min-valid", str(a.min_valid),
+           "--pin", pin, "--full-edges", "--inputs", str(inputs), "--min-valid", str(a.min_valid),
            "--time-limit", str(a.time_limit), "--json", js]
+    if shard:
+        cmd += ["--shard", "%d/%d" % shard]
     if transparent:
         cmd += ["--transparent", ",".join("%x" % v for v in transparent)]
     for x in a.pin or ():
@@ -358,7 +412,6 @@ def run_case(a, case, key, transparent, slice_id):
     with os.fdopen(sfd, "w") as fh:
         json.dump([fmt_edge(tuple(e)) for e in case["required"]], fh)
     cmd += ["--edge-scope", scope]
-    t0 = time.time()
 
     def child_setup():
         os.setsid()                 # its own process group: stop() kills equiv.py and anything it started
@@ -387,20 +440,16 @@ def run_case(a, case, key, transparent, slice_id):
         row = rows[0] if isinstance(rows, list) and rows else (rows if isinstance(rows, dict) else None)
         if not row:
             tail = p.stdout_text.strip().splitlines()[-3:]
-            res = {"verdict": "ERROR", "reason": " | ".join(tail)[:600]}
-        else:
-            res = judge(case, row, a.min_valid)
+            return None, " | ".join(tail)[:600]
+        return row, None
     except subprocess.TimeoutExpired:
-        res = {"verdict": "ERROR", "reason": "driver timeout"}
+        return None, "driver timeout"
     finally:
         for f_ in (js, scope):
             try:
                 os.remove(f_)
             except OSError:
                 pass
-    res.update(key=key, seconds=round(time.time() - t0, 1), pin=pin,
-               when=datetime.datetime.now().astimezone().isoformat(timespec="seconds"))
-    return res
 
 
 def summary(results, total=None):
@@ -435,6 +484,10 @@ def main():
     ap.add_argument("--inputs", type=int, default=100)
     ap.add_argument("--min-valid", type=int, default=50)
     ap.add_argument("--time-limit", type=int, default=150, help="seconds per case (equiv.py --time-limit)")
+    ap.add_argument("--shards", type=int, default=1,
+                    help="run each case as N equiv.py shards (--shard K/N: the saved inputs split between them, fresh "
+                         "inputs from N seeds, --inputs divided by N, --time-limit each) and judge their union: for "
+                         "cases one run cannot give --min-valid valid inputs within the time limit")
     ap.add_argument("--only", help="comma-separated selector values (decimal) or case names: run just these cases")
     ap.add_argument("--redo", default="ERROR", help="re-run stored cases with these verdicts even if the key matches")
     ap.add_argument("--names", default=os.path.join(ROOT, "work", "match", "scratch_si_tools", "jt_names.json"),
@@ -499,10 +552,11 @@ def main():
     print("planning (compile, both jump tables, case regions) ...", flush=True)
     plan = Plan(a.src, a.va, flags)
     text = open(a.src, encoding="utf-8", errors="replace").read()
+    src_sha1 = hashlib.sha1(open(a.src, "rb").read().replace(b"\r\n", b"\n")).hexdigest()
     transparent = sorted({int(x, 16) for x in re.findall(r"^// @ 0x([0-9a-fA-F]+)", text, re.M)} - {a.va})
     hh = harness_hash()
     opt_key = json.dumps([a.selector, flags, a.inputs, a.min_valid, a.time_limit, transparent, a.pin or []]
-                         + ([a.hint] if a.hint else []))
+                         + ([a.hint] if a.hint else []) + (["shards", a.shards] if a.shards > 1 else []))
     cases = {}
     for c in plan.cases:
         c["dispatch"] = plan.dispatch_o
@@ -537,6 +591,7 @@ def main():
 
     def save():
         doc = {"src": a.src, "va": "%08x" % a.va, "selector": a.selector, "total": len(cases), "exit": "%08x" % plan.exit_o,
+               "src_sha1": src_sha1,    # the source as planned: verdicts.py says when it has changed since
                "tail_total": len({e for c in cases.values() for e in c["tail"]}) or None, "when": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
                "summary": summary(results), "cases": dict(sorted(results.items(), key=lambda kv: int(kv[0].split()[0])))}
         tmp = out + ".part"

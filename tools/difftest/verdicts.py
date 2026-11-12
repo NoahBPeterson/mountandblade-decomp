@@ -118,7 +118,20 @@ def case_sweep(module, va):
         os.path.relpath(path, ROOT), ", ".join("%s %d" % kv for kv in sorted(n.items())), total,
         "; %d measured by an older harness on the same code" % older if older else "",
         "; %d taken from alternate runs" % alts if alts else "")
-    return {"verdict": v, "reason": reason, "cases": n, "when": doc.get("when")}
+    out = {"verdict": v, "reason": reason, "cases": n, "when": doc.get("when")}
+    # The cases' `stale` marks are only as fresh as the last case_sweep.py run: an edit to the source since then may
+    # have changed cases whose stored verdicts are still counted here (on 2026-11-11 all 590 stored cases of
+    # Operation::execute had been measured on the code of 2026-10-29). Say so; `case_sweep.py --plan-only` re-marks.
+    if doc.get("src_sha1") and doc.get("src"):
+        import hashlib
+        try:
+            now = hashlib.sha1(open(os.path.join(ROOT, doc["src"]), "rb").read().replace(b"\r\n", b"\n")).hexdigest()
+        except OSError:
+            now = None
+        if now != doc["src_sha1"]:
+            out["source_changed"] = True
+            out["reason"] += "; the source has changed since this sweep (case_sweep.py --plan-only marks the cases it affects)"
+    return out
 
 
 _SIZES = None
@@ -294,6 +307,8 @@ def main():
                 d = dict(d or {}, verdict=cs["verdict"], reason=cs["reason"])
                 res[r["va"]] = {"module": r["id"], "file": r["file"], "verdict": cs["verdict"],
                                 "category": category(d), "size": sz, "cases": cs["cases"], "source": "case-sweep"}
+                if cs.get("source_changed"):
+                    res[r["va"]]["source_changed"] = True
                 continue
             res[r["va"]] = {"module": r["id"], "file": r["file"], "verdict": (d or {}).get("verdict"),
                             "category": category(d), "size": size_of(d, r["va"])}

@@ -1281,3 +1281,25 @@ def test_dword_fast_path_equals_slot_pages():
     assert INV._dword(gen, inp, base + 0x10) == slow(base + 0x10)      # before the soup is cached, and after
     for a in list(inp.pool_over) + [base + rng.randrange(0, 0x3004) for _ in range(3000)] + [base + 0xFFD, base + 0xFFC]:
         assert INV._dword(gen, inp, a) == slow(a), hex(a)
+
+
+def test_case_sweep_merges_shards_soundly():
+    """case_sweep.py --shards: valid inputs add, covered edges are the union, an edge is unreachable only when every
+    shard says so, and one shard's mismatch makes the case FAIL."""
+    import case_sweep as CS
+    f = lambda a, b: "%08x->%08x" % (a, b)                                              # noqa: E731
+    r1 = {"valid": 30, "inputs": 34, "mismatches": 0, "discarded": {"x": 1}, "verdict": "UNSUPPORTED", "reason": "a",
+          "edges": {"orig": {"covered_edges": [f(1, 2)], "unreachable": [{"edge": f(5, 6)}, {"edge": f(7, 8)}]},
+                    "ours": {"covered_edges": ["a"], "covered": 1}}}
+    r2 = {"valid": 25, "inputs": 30, "mismatches": 0, "discarded": {"x": 2, "y": 1}, "verdict": "WEAK", "reason": "b",
+          "edges": {"orig": {"covered_edges": [f(3, 4)], "unreachable": [{"edge": f(5, 6)}]},
+                    "ours": {"covered_edges": ["b"], "covered": 1}}}
+    case = {"required": [(1, 2), (3, 4), (5, 6)], "dispatch": 1, "orig_target": 2, "tail": []}
+    j = CS.judge(case, CS.merge_rows([r1, r2]), 50)
+    assert (j["verdict"], j["valid"], j["edges_required"], j["edges_covered"], j["edges_unreachable"]) == ("PASS", 55, 2, 2, 1), j
+    assert j["discarded"] == {"x": 3, "y": 1} and j["ours_edges_covered"] == 2
+    j = CS.judge(dict(case, required=case["required"] + [(7, 8)]), CS.merge_rows([r1, r2]), 50)
+    assert j["verdict"] == "WEAK" and j["missed"] == [f(7, 8)], j              # unreachable in one shard only: still required
+    bad = dict(r2, mismatches=1, first_mismatch={"observable": "eax"}, verdict="FAIL")
+    j = CS.judge(case, CS.merge_rows([r1, bad]), 50)
+    assert j["verdict"] == "FAIL" and j["first_mismatch"] == {"observable": "eax"}, j
