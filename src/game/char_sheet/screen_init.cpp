@@ -23,8 +23,7 @@
 void __cdecl uninit_fill_ptrs(MissionUi** dst, unsigned n, MissionUi* const* v, void* al);   // 0x40f8a0
 static inline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
 {
-    unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
-    if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
+    if (c.size() < c.capacity()) {                   // the real accessors: the size is then no scratch pick
         MissionUi** p = c._Mylast;
         uninit_fill_ptrs(p, 1, &v, &c);
         c._Mylast = p + 1;
@@ -33,18 +32,11 @@ static inline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
     }
 }
 
-// push_back as the original inlines it at 0x4ec9b9: size first (0 when empty), then the room check, then a direct store
-static inline void push_back_direct(std::vector<MissionUi*>& c, MissionUi* const& v)
-{
-    unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
-    if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
-        MissionUi** p = c._Mylast;
-        *p = v;
-        c._Mylast = p + 1;
-    } else {
-        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
-    }
-}
+// (the push_back at 0x4ec9b9 is the real std::vector<MissionUi*>::push_back, inlined)
+
+// the widget a member names, as an inline accessor: the object is then evaluated once, between the key string's
+// constructor and the lookup (0x4eca9b: mov edi,[esi]; mov ebx,[edi] before the call, mov ecx,edi after it)
+static inline MissionUi* label_of(MissionUi* w) { return w; }
 
 // std::vector<MissionUi*>::push_back out of line, as the original calls it at 0x4ecada / 0x4ecbad: the linker folded
 // every pointer vector's push_back onto one body (0x4936b0, defined as vector<Party*>'s in world_data/world_data.cpp)
@@ -132,8 +124,10 @@ void CampaignScreen::init_screen()
             tstring empty("");
             f5c = (MissionUi*)make_hint((ContainerBase*)f34, empty, 0.8f, -0.006f, 0.2f, 0.027f);
         }
-        int flag = 0x11;
-        f5c->set148(&flag);
+        {
+            int flag = 0x11;
+            f5c->set148(&flag);
+        }
         f5c->b122 = 1;                               // 0x4ec8dd: +0x122
     }
     {
@@ -141,8 +135,10 @@ void CampaignScreen::init_screen()
             tstring empty("");
             f60 = (MissionUi*)make_hint((ContainerBase*)f34, empty, 0.8f, 0.015f, 0.2f, 0.027f);
         }
-        int flag = 0x11;
-        f60->set148(&flag);
+        {
+            int flag = 0x11;
+            f60->set148(&flag);
+        }
         f60->b122 = 1;                               // 0x4ec93c: +0x122
     }
 
@@ -151,8 +147,8 @@ void CampaignScreen::init_screen()
     memcpy(&f30->scene3d.fr, &cam, 0x120);
     f30->move_a((float*)&vector2(0.0f, 0.04f));
     f30->set_xy((float*)&vector2(1.0f, 0.71f));
-    push_back_direct(overlay->kids, (MissionUi*)f30);   // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
-    f54 = new_widget(0x178);
+    overlay->kids.push_back((MissionUi*)f30);            // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
+    f54 = new MissionUi;
     f54->move_a((float*)&vector2(0.445f, 0.06f));        // 0x4eca31
     f54->set_xy((float*)&vector2(0.09f, 0.04f));         // 0x4eca4f
     {
@@ -160,10 +156,10 @@ void CampaignScreen::init_screen()
         f54->set_color(&white);
     }
     f54->set_size((float*)&vector2(0.03f, 0.03f));
-    f54->set_text((float*)&vector2(), g_strtab.lookup(tstring("ui_paused")));
+    label_of(f54)->set_text((float*)&vector2(), g_strtab.lookup("ui_paused"));
     push_back_shared(overlay->kids, f54);   // 0x4936b0 (out of line in the original)
 
-    f58 = new_widget(0x178);
+    f58 = new MissionUi;
     f58->move_a((float*)&vector2(0.73f, 0.045f));
     f58->set_xy((float*)&vector2(0.27f, 0.03f));
     {
@@ -171,7 +167,7 @@ void CampaignScreen::init_screen()
         f58->set_color(&white);
     }
     f58->set_size((float*)&vector2(0.018f, 0.018f));
-    f58->set_text((float*)&vector2(), g_strtab.lookup(tstring("ui_click_left_button_to_cancel_wait")));
+    label_of(f58)->set_text((float*)&vector2(), g_strtab.lookup("ui_click_left_button_to_cancel_wait"));
     push_back_shared(overlay->kids, f58);   // 0x4936b0 (out of line in the original)
 
     {
