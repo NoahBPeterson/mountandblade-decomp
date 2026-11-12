@@ -1013,36 +1013,18 @@ tstring GameData::get_name()
     return *(tstring*)((char*)this + 0xe028);
 }
 
-static __forceinline int count_inv2(Troop* base, int idx, int id)
-{
-    int c = 0;
-    int n = base[idx].inv_count();
-    if (n > 0) {
-        ItemRef* e = base[idx].inv;
-        do {
-            if (e->item == id)
-                c++;
-            e++;
-        } while (--n);
-    }
-    return c;
-}
-
 // @ 0x489c50
 int GameData::count_in(int id, int idx, char flag)
 {
-    int c = count_inv2(troops, idx, id);
+    Troop* tr = troops;
+    int c = 0;
+    int n = tr[idx].inv_count();
+    for (int i = 0; i < n; i++)
+        if (tr[idx].inv[i].item == id)
+            c++;
     if (flag) {
-        if (troops[idx].equip[0].item == id) c++;
-        if (troops[idx].equip[1].item == id) c++;
-        if (troops[idx].equip[2].item == id) c++;
-        if (troops[idx].equip[3].item == id) c++;
-        if (troops[idx].equip[4].item == id) c++;
-        if (troops[idx].equip[5].item == id) c++;
-        if (troops[idx].equip[6].item == id) c++;
-        if (troops[idx].equip[7].item == id) c++;
-        if (troops[idx].equip[8].item == id) c++;
-        if (troops[idx].equip[9].item == id) c++;
+        for (int k = 0; k < 10; k++)
+            if (tr[idx].equip[k].item == id) c++;
     }
     return c;
 }
