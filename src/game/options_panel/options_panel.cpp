@@ -22,8 +22,15 @@
 #include "../game_globals.h"                   // g_level_xp (0x5937c8)
 #include "../../rgl/text_stream.h"
 #include "../game_keys.h"   // GameKeys: key_name 0x4d7370, key_binding_name 0x4d7d10
-// 0x432510: clamp *v into [*lo, *hi) and return it.
-int __cdecl clamp_index(const int* v, const int* lo, const int* hi);
+// 0x432510: clamp *v into [*lo, *hi) and return it. The canonical definition is in rgl/xmlcfg/game_util.cpp; this unit saw
+// the body too (GameIo::import_apply packs the two loops' v / lo / hi into three shared slots, which cl only does when it
+// knows the callee does not keep the addresses), as script_interpreter.cpp does.
+inline int __cdecl clamp_index(const int* v, const int* lo, const int* hi)
+{
+    if (*v < *lo) return *lo;
+    if (*v >= *hi) return *hi - 1;
+    return *v;
+}
 
 // @ 0x4d7370
 void GameKeys::key_name(int which, tstring* out)
@@ -497,14 +504,16 @@ void GameIo::import_apply(ini_file* imp)
     tstring value;
     for (int i = 0; i < count; i++) {
         if (i >= 0 && i < imp->count) {
-            ini_entry& e = imp->entries[i];
-            key = e.key;
-            value = e.value;
+            key = imp->entries[i].key;
+            value = imp->entries[i].value;
         }
 
         if (key.equals("name")) {
             value.underscores_to_spaces();
-            troop->name = tstring(value);       // 0x4d8cc7: a copy of value (0x42c110) is built, assigned, destroyed
+            {
+                tstring s(value);               // 0x4d8cc7: a named copy of value (0x42c110) is built, assigned, destroyed
+                troop->name = s;
+            }
             continue;
         }
         if (key.equals("xp")) {
@@ -519,15 +528,11 @@ void GameIo::import_apply(ini_file* imp)
             }
             troop->exp = v;
             troop->level = 1;
-            int j = 1;
-            while (j < 0x40) {
-                if (v <= g_level_xp[j]) break;
+            // cl unrolls this by 3 itself (63 trips); it only does so because the loop reads the member, which makes
+            // its loads outnumber its stores (with the local `v` in the compare it is a 1 load / 1 store loop, left alone)
+            for (int j = 1; j < 0x40; j++) {
+                if (troop->exp <= g_level_xp[j]) break;
                 troop->level = j;
-                if (v <= g_level_xp[j + 1]) break;
-                troop->level = j + 1;
-                if (v <= g_level_xp[j + 2]) break;
-                j += 3;
-                troop->level = j - 1;
             }
             continue;
         }
@@ -582,7 +587,7 @@ void GameIo::import_apply(ini_file* imp)
             tmp.spaces_to_underscores();
             tmp.to_lower();
             if (tmp.equals(key)) {
-                int lo = 0, hi = 0xb;
+                int hi = 0xb, lo = 0;
                 int v = atoi(value.c_str());
                 int rr = clamp_index(&v, &lo, &hi);
                 troop->set_skill(j, rr);
@@ -606,7 +611,7 @@ void GameIo::import_apply(ini_file* imp)
             wname.assign(weapon_text);
             wname.spaces_to_underscores();
             if (wname.equals(key)) {
-                int lo = 0, hi = 0x2bc;
+                int hi = 0x2bc, lo = 0;
                 int v = atoi(value.c_str());
                 int rr = clamp_index(&v, &lo, &hi);
                 troop->f80[w] = (float)rr;
