@@ -10204,7 +10204,161 @@ void Agent::update_attack(float dt)
     if (ci < 0) ci = 0;
     ItemKind* ik = &g_items[ci];
     unsigned t0 = TYPE;
-    if (!(t0 == itp_type_one_handed_wpn || t0 == itp_type_two_handed_wpn || t0 == itp_type_polearm || cur.item < 0)) { if (ik->is_ranged()) {
+    if (t0 == itp_type_one_handed_wpn || t0 == itp_type_two_handed_wpn || t0 == itp_type_polearm || cur.item < 0) {
+        // ------------------------------------------------------------------ melee / bare hands
+        if (ACT == -1)
+            active = 0;
+        int S;
+        if (active == 0 && f5610 == 0) {
+            float t = dt + f57b4;
+            f57b4 = t;
+            if (t > 1.0f)
+                f57b4 = 1.0f;
+            if (in_flags & 0x100) {
+                bool found = false;
+                int i = 0;
+                do {
+                    if (i >= 10) break;
+                    start_shoot(0);
+                    if (snd_a != -1) {
+                        found = true;
+                        active = 1;
+                        set_order(1, snd_a, 0x0240000a, damage_factor(0));
+                        this->cur = 0.0f;
+                        f5610 = 0;
+                        classify(0);
+                        f57c0 = f57b4;
+                    }
+                    i++;
+                } while (!found);
+            }
+        } else if (active == 1) {
+            if (PROG > 0.99f) {
+                float u = dt * 0.8f + f57c0;
+                f57c0 = u;
+                if (u < 1.0f)
+                    f57c0 = dt * 0.6f + u;
+                if (f57c0 > 1.3f)
+                    f57c0 = 1.3f;
+            }
+            if (ACT == snd_a && !(in_flags & 0x200)) {
+                if (id == g_mission->player_id) {
+                    if (in_flags & 0x100) {
+                        if (PROG < 0.3f && g_options.ctl_mode > 0) {
+                            if (pick_attack_dir(0) != mode1) {
+                                start_shoot(0);
+                                if (snd_a != -1) {
+                                    set_order(1, snd_a, 0x0240000a, damage_factor(0));
+                                    classify(0);
+                                }
+                            }
+                            goto melee_tail;
+                        }
+                        goto melee_hold;
+                    }
+                } else {
+                melee_hold:
+                    if (in_flags & 0x100)
+                        goto melee_tail;
+                }
+                if (PROG > 0.99f) {
+                    if (snd_b == -1) {
+                        active = 0;
+                    } else {
+                        set_order(1, snd_b, 0x0140000a, damage_factor(0));
+                        active = 2;
+                        { int kind = 3; play_hit_sound(&kind); }
+                        if (f2c == -1 && frand() < (f57c0 - 1.0f) * 3.5f) {
+                            if (id == g_mission->player_id || frand() < 0.3f) {
+                                int kind = 2;
+                                play_class_sound(&kind);
+                            } else {
+                                int kind = 3;
+                                play_class_sound(&kind);
+                            }
+                        }
+                        fr1.o.x = fr2.o.x = -20000000.0f;      // 0xcb989680 (0x45d14d)
+                        hit_once = 0;
+                        prop_done = 0;
+                        classify(0);
+                    }
+                }
+            } else {
+                f57b4 = 0.8f;
+                active = 6;
+                unsigned tt = TYPE;
+                int aid = 0x72;
+                if (tt == 4) aid = 0x74;
+                else if (tt == 3) aid = 0x73;
+                set_order(1, aid, 0x0140000c, damage_factor(0));
+            }
+        }
+    melee_tail:
+        S = active;
+        if ((S == 2 && ACT == NEXTACT && ACT == snd_b && (mode1 == 0 || PROG > 0.1f)) || f100_is_0x48_and_charged()) {
+            if (f100_is_0x48_and_charged()) {
+                mode1 = 0;
+                snd_c = 0x44;
+                if (frand() < 0.05f) {
+                    hit_once = 0;
+                    prop_done = 0;
+                }
+            }
+            if (in_flags & 0x200) {
+                active = 6;
+                f57b4 = 0.8f;
+                unsigned tt = TYPE;
+                int aid = 0x72;
+                if (tt == 4) aid = 0x74;
+                else if (tt == 3) aid = 0x73;
+                set_order(1, aid, 0x0140000c, damage_factor(0));
+            }
+            if (!f100_is_0x48_and_charged() && (!(PROG < 0.85f) || (mode1 != 0 && !(PROG > 0.2f))))
+                goto chk99;
+            if (f100_is_0x48_and_charged())
+                f57c0 = 1.0f;
+            int r = swing_trace(0, 0, &hit, &f57c0);
+            if (r != 0 && f100_is_0x48_and_charged())
+                order1(this, 0x44, 0x0100007d);
+            if (r >= 2) {
+                set_order(1, snd_c, 0x1400023, damage_factor(0));
+                active = 5;
+            }
+            if ((in_flags & 0x100) && id != g_mission->player_id) {
+                active = 6;
+                f57b4 = 0.8f;
+                unsigned tt = TYPE;
+                int aid = 0x72;
+                if (tt == 4) aid = 0x74;
+                else if (tt == 3) aid = 0x73;
+                set_order(1, aid, 0x0140000c, damage_factor(0));
+            }
+            if (r == 1) {
+                if (hit.dmg_out < 5.0f && cur.item >= 0) {
+                    set_order(r, snd_c, 0x1400023, damage_factor(0));
+                    active = 5;
+                } else {
+                    active = 3;
+                }
+                goto tail;
+            }
+            if (r == 2)
+                goto clear_state;
+            goto chk99;
+        } else {
+            if (S == 3)
+                goto chk99;
+            if (S != 5 && S != 6)
+                goto tail;
+            if (ACT == -1)
+                goto clear_state;
+        chk99:
+            if (!(PROG > 0.99f))
+                goto tail;
+        clear_state:
+            active = 0;
+        }
+    } else if (ik->is_ranged()) {
         // ------------------------------------------------------------------ bow / crossbow / thrown / guns
         int missing, total;
         slot = 0;
@@ -10256,10 +10410,12 @@ void Agent::update_attack(float dt)
                         active = 2;
                     }
                 } else if (id == g_mission->player_id) {
-                    if (total > 0)
+                    if (total > 0) {
                         LOG_TIMED("ui_no_more_bolts")
-                    else
+                    } else {
                         LOG_TIMED("ui_you_are_not_carrying_any_bolts")
+                        goto no_ammo;
+                    }
                 }
             } else if (missing <= 0 && TYPE != itp_type_crossbow && TYPE != itp_type_pistol && TYPE != itp_type_musket) {
                 if (id == g_mission->player_id) {
@@ -10273,6 +10429,7 @@ void Agent::update_attack(float dt)
                             LOG_TIMED("ui_you_are_not_carrying_any_bolts")
                     }
                 }
+            no_ammo:
                 goto tail;
             } else {
                 hit_once = 0;
@@ -10431,160 +10588,6 @@ void Agent::update_attack(float dt)
                 update_quiver();
             }
             goto clear_state;
-        }
-    } } else {
-        // ------------------------------------------------------------------ melee / bare hands
-        if (ACT == -1)
-            active = 0;
-        int S = active;
-        if (S == 0 && f5610 == 0) {
-            float t = dt + f57b4;
-            f57b4 = t;
-            if (t > 1.0f)
-                f57b4 = 1.0f;
-            if (in_flags & 0x100) {
-                bool found = false;
-                int i = 0;
-                do {
-                    if (i >= 10) break;
-                    start_shoot(0);
-                    if (snd_a != -1) {
-                        found = true;
-                        active = 1;
-                        set_order(1, snd_a, 0x0240000a, damage_factor(0));
-                        this->cur = 0.0f;
-                        f5610 = 0;
-                        classify(0);
-                        f57c0 = f57b4;
-                    }
-                    i++;
-                } while (!found);
-            }
-        } else if (S == 1) {
-            if (PROG > 0.99f) {
-                float u = dt * 0.8f + f57c0;
-                f57c0 = u;
-                if (u < 1.0f)
-                    f57c0 = dt * 0.6f + u;
-                if (f57c0 > 1.3f)
-                    f57c0 = 1.3f;
-            }
-            if (ACT == snd_a && !(in_flags & 0x200)) {
-                if (id == g_mission->player_id) {
-                    if (in_flags & 0x100) {
-                        if (PROG < 0.3f && g_options.ctl_mode > 0) {
-                            if (pick_attack_dir(0) != mode1) {
-                                start_shoot(0);
-                                if (snd_a != -1) {
-                                    set_order(1, snd_a, 0x0240000a, damage_factor(0));
-                                    classify(0);
-                                }
-                            }
-                            goto melee_tail;
-                        }
-                        goto melee_hold;
-                    }
-                } else {
-                melee_hold:
-                    if (in_flags & 0x100)
-                        goto melee_tail;
-                }
-                if (PROG > 0.99f) {
-                    if (snd_b == -1) {
-                        active = 0;
-                    } else {
-                        set_order(1, snd_b, 0x0140000a, damage_factor(0));
-                        active = 2;
-                        { int kind = 3; play_hit_sound(&kind); }
-                        if (f2c == -1 && frand() < (f57c0 - 1.0f) * 3.5f) {
-                            if (id == g_mission->player_id || frand() < 0.3f) {
-                                int kind = 2;
-                                play_class_sound(&kind);
-                            } else {
-                                int kind = 3;
-                                play_class_sound(&kind);
-                            }
-                        }
-                        fr1.o.x = fr2.o.x = -20000000.0f;      // 0xcb989680 (0x45d14d)
-                        hit_once = 0;
-                        prop_done = 0;
-                        classify(0);
-                    }
-                }
-            } else {
-                f57b4 = 0.8f;
-                active = 6;
-                unsigned tt = TYPE;
-                int aid = 0x72;
-                if (tt == 4) aid = 0x74;
-                else if (tt == 3) aid = 0x73;
-                set_order(1, aid, 0x0140000c, damage_factor(0));
-            }
-        }
-    melee_tail:
-        S = active;
-        if ((S == 2 && ACT == NEXTACT && ACT == snd_b && (mode1 == 0 || PROG > 0.1f)) || f100_is_0x48_and_charged()) {
-            if (f100_is_0x48_and_charged()) {
-                mode1 = 0;
-                snd_c = 0x44;
-                if (frand() < 0.05f) {
-                    hit_once = 0;
-                    prop_done = 0;
-                }
-            }
-            if (in_flags & 0x200) {
-                active = 6;
-                f57b4 = 0.8f;
-                unsigned tt = TYPE;
-                int aid = 0x72;
-                if (tt == 4) aid = 0x74;
-                else if (tt == 3) aid = 0x73;
-                set_order(1, aid, 0x0140000c, damage_factor(0));
-            }
-            if (!f100_is_0x48_and_charged() && (!(PROG < 0.85f) || (mode1 != 0 && !(PROG > 0.2f))))
-                goto chk99;
-            if (f100_is_0x48_and_charged())
-                f57c0 = 1.0f;
-            int r = swing_trace(0, 0, &hit, &f57c0);
-            if (r != 0 && f100_is_0x48_and_charged())
-                order1(this, 0x44, 0x0100007d);
-            if (r >= 2) {
-                set_order(1, snd_c, 0x1400023, damage_factor(0));
-                active = 5;
-            }
-            if ((in_flags & 0x100) && id != g_mission->player_id) {
-                active = 6;
-                f57b4 = 0.8f;
-                unsigned tt = TYPE;
-                int aid = 0x72;
-                if (tt == 4) aid = 0x74;
-                else if (tt == 3) aid = 0x73;
-                set_order(1, aid, 0x0140000c, damage_factor(0));
-            }
-            if (r == 1) {
-                if (hit.dmg_out < 5.0f && cur.item >= 0) {
-                    set_order(r, snd_c, 0x1400023, damage_factor(0));
-                    active = 5;
-                } else {
-                    active = 3;
-                }
-                goto tail;
-            }
-            if (r == 2)
-                goto clear_state;
-            goto chk99;
-        } else {
-            if (S == 3)
-                goto chk99;
-            if (S != 5 && S != 6)
-                goto tail;
-            if (ACT == -1)
-                goto clear_state;
-        chk99:
-            if (!(PROG > 0.99f))
-                goto tail;
-        clear_state:
-            active = 0;
         }
     }
     }
