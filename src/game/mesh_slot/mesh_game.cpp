@@ -261,9 +261,11 @@ NOINL void Mission::spawn(AgentS* a)
     // any other kind skips the shape (0x4835fc, the jne at 0x483566) and falls through to the common tail
     if (a->kind == 0) {
         unsigned skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
-        int obj = 0;
+        int obj;
         if (skin_i < (unsigned)g_anim.char_count)
             obj = (int)g_anim.skin_vec._Myfirst[skin_i].skeleton;
+        else
+            obj = 0;
         e->skel->init((FxRes*)obj);
         skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
         float h;
@@ -273,8 +275,8 @@ NOINL void Mission::spawn(AgentS* a)
             h = 1.0f;
         a->scale = h;
         if ((mem = operator new(0x64)) != 0) {
-            vector4 b(a->scale * 0.0f, a->scale * 0.0f, a->scale * 1.3f);
-            vector4 c(a->scale * 0.0f, a->scale * 0.01f, a->scale * 2.3f);
+            vector4 b = vector4(0.0f, 0.0f, 1.3f) * a->scale;
+            vector4 c = vector4(0.0f, 0.01f, 2.3f) * a->scale;
             shp = new (mem) capsule(a->scale * 0.3f, &c, &b);
         } else
             shp = 0;
