@@ -948,7 +948,6 @@ void GameW::transfer_stack(int a, int b, char flag)
     PartyMgr* mgr = &pm();
     Party* pa = mgr->at(mgr->lookup(a));
     Party* pb = mgr->at(mgr->lookup(b));
-    int* wstacks = &tbl[0][0];
     for (int k = 0; k < pa->nstacks; k++) {
         Stack* s = &pa->stacks[k];
         int f = s->flags;
@@ -962,18 +961,17 @@ void GameW::transfer_stack(int a, int b, char flag)
         if (b == f78 && r >= 0) {
             int shift = s->count;
             if (shift < 0x20) {
-                int* d = wstacks + r * 0x20 + shift;
-                int* p = wstacks + r * 0x20;
-                for (int j = 0x20 - shift; j; j--)
-                    *d++ = *p++;
+                int* d = &tbl[r][shift];
+                int* p = tbl[r];
+                for (int j = 0; j < 0x20 - shift; j++)
+                    d[j] = p[j];
             } else {
                 shift = 0x20;
             }
-            int* out = wstacks + r * 0x20;
             for (int j = 0; j < shift; j++) {
                 int v;
                 if (a == f78) {
-                    v = wstacks[k * 0x20 + j];
+                    v = tbl[k][j];
                 } else {
                     v = -1;
                     if (a >= 0) {
@@ -982,7 +980,7 @@ void GameW::transfer_stack(int a, int b, char flag)
                     }
                     v = v * 0x1bf + 0x45db + a * 0x7bb7 + j;
                 }
-                out[j] = v;
+                tbl[r][j] = v;
             }
         }
     }
