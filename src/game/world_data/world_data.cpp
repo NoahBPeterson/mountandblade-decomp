@@ -1845,52 +1845,61 @@ void GameW::switch_objective(int party, int mode)
 }
 
 // ==== 0x494b60: share an experience amount over a party ==================================================================
+// round to nearest through the CRT floor (0x536b10): an inline helper, its i and the result are separate values (mov ecx,eax; mov esi,ecx; lea esi,[ecx+1])
+static inline int round_half_up(float x)
+{
+    float f = (float)floor(x);
+    int i = (int)f;
+    if (x - f <= 0.5f)
+        return i;
+    return i + 1;
+}
 // @ 0x494b60
 void GameW::share_experience(int party, float amount)
 {
-    if (party >= parties.n_parties)
-        return;
     PartyMgr* pm_ = &pm();
+    if (party >= pm_->n_parties)
+        return;
     int idx = pm_->lookup(party);
     if (idx < 0)
         return;
-    if (pm_->pages[idx >> 4][idx & 15].type != 1)
+    if (pm_->atu(idx)->type != 1)
         return;
     Party* p = pm_->at(pm_->lookup(party));
     int total = 0;
     int i = 0;
     for (; i < p->nstacks; i++) {
-        Stack& s = p->stacks[i];
-        if (s.flags & 1)
+        if (p->stacks[i].flags & 1)
             break;
-        int troop = s.troop;
+        int troop = p->stacks[i].troop;
         char hero = (troops[troop].flags30 & 0x10) != 0;
-        if (hero)
-            total = (int)((float)total + (i == 0 ? 10.0f : 3.0f));
-        else
-            total += s.count;
+        if (hero) {
+            if (i == 0)
+                total = (int)((float)total + 10.0f);
+            else
+                total = (int)((float)total + 3.0f);
+        } else
+            total += p->stacks[i].count;
     }
     if (total <= 0)
         return;                                 // 0x494c69: the whole function ends here, no message either
     {
         float per = amount / (float)total;
         for (int j = 0; j < p->nstacks; j++) {
-            int idx2 = j;
-            Stack& s = p->stacks[idx2];
-            if (s.flags & 1)
+            if (p->stacks[j].flags & 1)
                 break;
-            int troop = s.troop;
+            int troop = p->stacks[j].troop;
             char hero = (troops[troop].flags30 & 0x10) != 0;
-            if (hero)
-                GameData::add_experience(troop, (int)(per * (idx2 == 0 ? 10.0f : 3.0f)));
-            else
-                p->add_xp_to_stack(idx2, (int)((float)s.count * per));
+            if (hero) {
+                if (j == 0)
+                    GameData::add_experience(troop, (int)(per * 10.0f));
+                else
+                    GameData::add_experience(troop, (int)(per * 3.0f));
+            } else
+                p->add_xp_to_stack(j, (int)((float)p->stacks[j].count * per));
         }
     }
-    double fl = floor(amount);                  // the CRT floor 0x536b10; the result stays a double (0x494d39..0x494d4a)
-    int n = (int)fl;
-    if (!(amount - fl <= 0.5f))
-        n = (int)fl + 1;
+    int n = round_half_up(amount);
     if (n != 0 && party == f78) {
         char buf[512];
         {
