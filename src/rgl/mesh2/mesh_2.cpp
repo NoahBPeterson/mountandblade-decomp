@@ -149,8 +149,8 @@ bool graph_obj::combine()
     bool twice;
     int p[2];
     unsigned i;
-    // the three scratch objects share one frame block (the original keeps them apart: 0x2c / 0x3c / 0x54)
-    struct { rgl::vector4 avg; node t; edge te; } L;
+    node t;
+    edge te;
     count = 0;
     ek = false;
     eo = false;
@@ -205,21 +205,18 @@ bool graph_obj::combine()
         swap_face_vertices(o, nodev().size() - 1);
         swap_poly_colors(o, nodev().size() - 1);
         swap_poly_normals(sel, edgev().size() - 1);
-        L.t = nodev()[o];
+        t = nodev()[o];
         nodev()[o] = nodev()[nodev().size() - 1];
-        nodev()[nodev().size() - 1] = L.t;
-        L.te = edgev()[sel];
+        nodev()[nodev().size() - 1] = t;
+        te = edgev()[sel];
         edgev()[sel] = edgev()[edgev().size() - 1];
-        edgev()[edgev().size() - 1] = L.te;
+        edgev()[edgev().size() - 1] = te;
         o = nodev().size() - 1;
         sel = edgev().size() - 1;
         if (po) {
             *(rgl::vector4*)&nodev()[p[0]] = *(rgl::vector4*)&nodev()[o];
         } else if (!pk) {
-            L.avg.x = (nodev()[p[0]].x + nodev()[o].x) * HALF;
-            L.avg.y = (nodev()[p[0]].y + nodev()[o].y) * HALF;
-            L.avg.z = (nodev()[p[0]].z + nodev()[o].z) * HALF;
-            *(rgl::vector4*)&nodev()[p[0]] = L.avg;
+            *(rgl::vector4*)&nodev()[p[0]] = (*(rgl::vector4*)&nodev()[p[0]] + *(rgl::vector4*)&nodev()[o]) * HALF;
         }
         for (i = 0; i < edgev().size(); i++) {
             if (edgev()[i].a == o) {
@@ -255,17 +252,14 @@ bool graph_obj::combine()
             return false;
         swap_face_vertices(o, nodev().size() - 1);
         swap_poly_colors(o, nodev().size() - 1);
-        L.t = nodev()[o];
+        t = nodev()[o];
         nodev()[o] = nodev()[nodev().size() - 1];
-        nodev()[nodev().size() - 1] = L.t;
+        nodev()[nodev().size() - 1] = t;
         o = nodev().size() - 1;
         if (po) {
             *(rgl::vector4*)&nodev()[p[0]] = *(rgl::vector4*)&nodev()[o];
         } else if (!pk) {
-            L.avg.x = (nodev()[o].x + nodev()[p[0]].x) * HALF;
-            L.avg.y = (nodev()[p[0]].y + nodev()[o].y) * HALF;
-            L.avg.z = (nodev()[p[0]].z + nodev()[o].z) * HALF;
-            *(rgl::vector4*)&nodev()[p[0]] = L.avg;
+            *(rgl::vector4*)&nodev()[p[0]] = (*(rgl::vector4*)&nodev()[o] + *(rgl::vector4*)&nodev()[p[0]]) * HALF;
         }
         for (i = 0; i < edgev().size(); i++) {
             if (edgev()[i].a == o)
