@@ -441,21 +441,26 @@ void Terrain::init_layers()
         c = 7;
         break;
     }
-    layer[1].type = c;
+    // the type store in both arms, as in load_layer (merged back above the jl; c stays live past gt: mov eax,ebx)
     if (c >= 0) {
         GroundType* gt = &g_ground_types[c];
+        layer[1].type = c;
         layer[1].fc = (int)gt->mat;
         layer[1].f14 = gt->f18;
         layer[1].f4 = gt->f1c;
         layer[1].f8 = -1;
+    } else {
+        layer[1].type = c;
     }
-    layer[2].type = b;
     if (b >= 0) {
         GroundType* gt = &g_ground_types[b];
+        layer[2].type = b;
         layer[2].fc = (int)gt->mat;
         layer[2].f14 = gt->f18;
         layer[2].f4 = gt->f1c;
         layer[2].f8 = -1;
+    } else {
+        layer[2].type = b;
     }
     layer[3].type = 8;
     layer[3].fc = (int)g_ground_types[8].mat;
