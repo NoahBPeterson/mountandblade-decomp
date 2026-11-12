@@ -23,6 +23,9 @@
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
+// The item type is read through an accessor at every comparison (not cached in a local): the record pointer is then a shared
+// value of its own and cl materialises it (add eax,esi; mov eax,[eax+0x1c8]) instead of folding it into the load.
+inline unsigned item_type(const ItemKind* k) { return k->type_flags & 0xff; }
 // register convention in the original: item in eax, outputs in ecx / edx / stack
 // @ 0x462ac0
 static MB_NOINLINE void item_slot_source(int item, int* f58_idx, int* nib_idx, int* stat_idx)
@@ -32,13 +35,12 @@ static MB_NOINLINE void item_slot_source(int item, int* f58_idx, int* nib_idx, i
     *stat_idx = -1;
     if (item >= 0) {
         ItemKind* it = &g_items[item];
-        unsigned t = (unsigned)it->type_flags & 0xff;     // (the original materialises the record pointer: add eax,esi; mov eax,[eax+0x1c8]; cl folds the add: parked, troop_inv.nonmatching.txt)
-        if (t != itp_type_one_handed_wpn && t != itp_type_two_handed_wpn && t != itp_type_polearm && t != itp_type_crossbow) {
-            if (t == itp_type_horse) { *nib_idx = 0x18; return; }
-            if (t == itp_type_bow) { *nib_idx = 0x21; return; }
-            if (t == itp_type_thrown) { *nib_idx = 0x22; return; }
-            if (t == itp_type_shield) { *nib_idx = 0x1a; return; }
-            if (t != itp_type_head_armor && t != itp_type_body_armor && t != itp_type_foot_armor && t != itp_type_hand_armor)
+        if (item_type(it) != itp_type_one_handed_wpn && item_type(it) != itp_type_two_handed_wpn && item_type(it) != itp_type_polearm && item_type(it) != itp_type_crossbow) {
+            if (item_type(it) == itp_type_horse) { *nib_idx = 0x18; return; }
+            if (item_type(it) == itp_type_bow) { *nib_idx = 0x21; return; }
+            if (item_type(it) == itp_type_thrown) { *nib_idx = 0x22; return; }
+            if (item_type(it) == itp_type_shield) { *nib_idx = 0x1a; return; }
+            if (item_type(it) != itp_type_head_armor && item_type(it) != itp_type_body_armor && item_type(it) != itp_type_foot_armor && item_type(it) != itp_type_hand_armor)
                 return;
         }
         *f58_idx = 0;
