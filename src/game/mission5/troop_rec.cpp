@@ -109,6 +109,10 @@ Party* PartyMgr::get(int id)
     return (Party*)((k & 0xf) * 0x5ac8 + (int)pages[k >> 4]);
 }
 
+// the coordinate pairs / triple are read through a reference parameter (the pointer is kept in ebx and stepped by add)
+static inline void read_xy(stream_base* s, PartyV4& v) { s->r_float(&v.x).r_float(&v.y); }
+static inline void read_xyz(stream_base* s, PartyV4& v) { s->r_float(&v.x).r_float(&v.y).r_float(&v.z); }
+
 // @ 0x51ee80
 void Party::read(stream_base* s, int flag)
 {
@@ -124,13 +128,9 @@ void Party::read(stream_base* s, int flag)
     s->r_int(&action);
     s->r_int(&state_target);
     s->r_int(&target);
-    stream_base* rs = &s->r_float(&ai_target_x);
-    rs->r_float(&ai_target_y);
-    rs = &s->r_float(&order_pos.x);
-    rs->r_float(&order_pos.y);
-    rs = &s->r_float(&pos.x);
-    rs = &rs->r_float(&pos.y);
-    rs->r_float(&pos.z);
+    read_xy(s, *(PartyV4*)&ai_target_x);
+    read_xy(s, order_pos);
+    read_xyz(s, pos);
     s->r_int(&nstacks);
     for (int i = 0; i < nstacks; i++) {
         s->r_int(&stacks[i].troop);
@@ -142,7 +142,7 @@ void Party::read(stream_base* s, int flag)
     if (flag > 0) {
         s->r_bool((char*)&this->flag);
         s->r_tstr((rgl::string*)&extra_text);
-        rs = &s->r_float(&f7c);
+        stream_base* rs = &s->r_float(&f7c);
         rs = &rs->r_float(&zoom);
         rs->r_float(&f84);
         s->r_float(&f8f4);
@@ -157,19 +157,20 @@ void Party::read(stream_base* s, int flag)
         s->r_int(&n1);
         attached.resize(n1, 0);
         for (int i = 0; i < n1; i++)
-            s->r_int(attached._Myfirst + i);
+            s->r_int(&attached[i]);
         int n2;
         s->r_int(&n2);
         deferred.resize(n2, 0);
         for (int i = 0; i < n2; i++)
-            s->r_int(deferred._Myfirst + i);
+            s->r_int(&deferred[i]);
         f5a04 = 1;
         read_soa(s, (SoaBlock*)note_times);
+        std::vector<__int64>& sl = slots;
         int n3;
         s->r_int(&n3);
-        slots.resize(n3, 0);
+        sl.resize(n3, 0);
         for (int i = 0; i < n3; i++)
-            s->r_i64(slots._Myfirst + i);
+            s->r_i64(&sl[i]);
     } else {
         f78 = (float)(unsigned char)flags_lo7[6] * 0.033333335f;
     }
