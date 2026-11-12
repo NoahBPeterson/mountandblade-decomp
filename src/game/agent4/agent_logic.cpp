@@ -6490,6 +6490,41 @@ void rgl::mesh::add_quad(const vector4* p0, const vector4* p1, const vec2* uv0, 
     slots[0].f28 = 1;
     slots[1].f28 = 1;
 }
+// rgl::aabb::extend_box (0x4201b0, src/rgl/scene/entity_render.cpp) with its body visible here (inline noinline
+// duplicate, as transform_point_to_local above): the matrix append_skinned / append_plain receive does not escape
+inline __declspec(noinline) void rgl::aabb::extend_box(const aabb* b, const rgl::matrix* m)
+{
+    if (b->min.x > b->max.x)
+        return;
+    {
+        float c[8][4];
+        c[0][0] = b->min.x; c[0][1] = b->min.y; c[0][2] = b->min.z;
+        c[1][0] = b->max.x; c[1][1] = b->min.y; c[1][2] = b->min.z;
+        c[2][0] = b->min.x; c[2][1] = b->max.y; c[2][2] = b->min.z;
+        c[3][0] = b->max.x; c[3][1] = b->max.y; c[3][2] = b->min.z;
+        c[4][0] = b->min.x; c[4][1] = b->min.y; c[4][2] = b->max.z;
+        c[5][0] = b->max.x; c[5][1] = b->min.y; c[5][2] = b->max.z;
+        c[6][0] = b->min.x; c[6][1] = b->max.y; c[6][2] = b->max.z;
+        c[7][0] = b->max.x; c[7][1] = b->max.y; c[7][2] = b->max.z;
+        for (int i = 0; 8 > i; i++) {
+            float x = c[i][1] * m->f.x;
+            vector4 p;
+            x = x + c[i][2] * m->u.x;
+            x = x + c[i][0] * m->s.x;
+            p.x = x + m->o.x;
+            float y = c[i][2] * m->u.y;
+            y = y + c[i][0] * m->s.y;
+            y = y + c[i][1] * m->f.y;
+            p.y = y + m->o.y;
+            float z = m->s.z * c[i][0];
+            z = z + c[i][1] * m->f.z;
+            z = z + c[i][2] * m->u.z;
+            p.z = z + m->o.z;
+            extend(&p);
+        }
+    }
+}
+
 // @ 0x44eb00
 void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned col, char flip)
 {
@@ -7418,6 +7453,19 @@ void Mission::blood_burst(float x, float y, float z, int unused, float amount)
             } while (i < (unsigned)agents.count);
         }
     }
+}
+// rgl::matrix::relative (0x4329d0, src/rgl/xmlcfg/game_util.cpp) visible here too (inline noinline duplicate; rot3x as
+// game_util.h declares it): with both bodies refresh_carried's rel does not escape, so the target-mesh load is hoisted
+// above the rel.o.y store as in the original
+struct rot3x : rgl::rot3 {
+    __declspec(noinline) rot3x mul_t(const rot3x& b) const;          // 0x432860 (game_util.h)
+};
+inline __declspec(noinline) rgl::matrix rgl::matrix::relative(const rgl::matrix& b) const
+{
+    rgl::matrix m;
+    m.o = transform_point_to_local(b.o);
+    *(rot3x*)&m = ((const rot3x*)this)->mul_t(*(const rot3x*)&b);
+    return m;
 }
 #define LODS(s) (*(rgl::lod_mesh**)&B[s])        // the display lod meshes of the agent (+0x15c)
 // @ 0x452650
