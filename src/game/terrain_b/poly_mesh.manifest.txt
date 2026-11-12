@@ -86,3 +86,4 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?apply_group@Skin@@QAEXPAUArrSet@@HPAUmesh@rgl@@@Z  00470db0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?update_team_stats@Mission@@QAEXXZ  00474e60  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?build_geometry@PolyMesh@@QAEXXZ  00470a00  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?update_prop_flags@Mission@@QAEXXZ  00472050  /O2 /MT /Gy /TP

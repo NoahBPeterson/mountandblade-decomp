@@ -24,3 +24,4 @@
 ../src/rgl/xmlcfg/game_util.cpp  ?begin@ActiveTimer@@QAEXM@Z  00432da0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?expired@ActiveTimer@@QAE_NXZ  00432de0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?fill_weights@Agent@@QAEXPAMHH@Z  00432f60  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/game_util.cpp  ?bounce@@YAXPAUVec3@@0PBU1@@Z  00432e30  /O2 /MT /Gy /TP

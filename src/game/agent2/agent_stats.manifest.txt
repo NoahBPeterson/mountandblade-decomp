@@ -42,3 +42,4 @@
 ../src/game/agent2/agent_stats.cpp  ?all_shapes@Skeleton@@QAEXPAPAUshape_base@@PAH@Z  0043a130  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?lookup@StrTable@@QAEPAUtstring@@ABU2@@Z  0043a1e0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?nearest_face@world@rgl@@QAEHPBM@Z  00439a50  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?hit_chance@@YAMPAHPAUAgent@@@Z  00438cb0  /O2 /MT /Gy /TP

@@ -117,3 +117,4 @@
 ../src/game/agent4/agent_logic.cpp  ?add@gui_manager@@QAEXUtstring@@H@Z  00452c00  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?plan_path@Agent@@QAE_NXZ  00445910  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?update_attack@Agent@@QAEXM@Z  0045c220  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?setup@EmitTable@@QAEXPAUpsys@rgl@@HPBUvector4@3@@Z  004424c0  /O2 /MT /Gy /TP

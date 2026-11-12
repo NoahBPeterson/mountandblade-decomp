@@ -5,3 +5,4 @@
 ../src/game/terrain_a/wind.cpp  ?pack_signed_color@@YAIPBM@Z  00461370  /O2 /MT /Gy /TP
 ../src/game/terrain_a/wind.cpp  ?set_clock_step@@YAXPAHM@Z  00461420  /O2 /MT /Gy /TP
 ../src/game/terrain_a/wind.cpp  ?sample@Light@@QAE?AUvector4@rgl@@XZ  00461570  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ??0Light@@QAE@XZ  00461480  /O2 /MT /Gy /TP

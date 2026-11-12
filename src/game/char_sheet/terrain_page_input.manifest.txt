@@ -5,3 +5,4 @@
 ../src/game/char_sheet/terrain_page_input.cpp  ?rotate_2x2@rot2@@QAEXM@Z  004f3b40  /O2 /MT /Gy /TP
 ../src/game/char_sheet/terrain_page_input.cpp  ?read_fields@TerrainPage@@QAEXXZ  004f3570  /O2 /MT /Gy /TP
 ../src/game/char_sheet/terrain_page_input.cpp  ?path@TerrainPage@@QAEXM@Z  004f3cf0  /O2 /MT /Gy /TP
+../src/game/char_sheet/terrain_page_input.cpp  ?simulate@TerrainPage@@QAEXM@Z  004f37f0  /O2 /MT /Gy /TP
