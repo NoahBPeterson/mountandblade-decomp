@@ -567,12 +567,11 @@ void Agent::reset_if_enemy_charged()
 void Agent::camera_params(CamParams* p)
 {
     if (f10 == 0) {
-        vector4 a(f80 * 0.0f, f80 * 0.0f, f2c == -1 ? f80 * 0.95f : f80 * 1.5f);
-        float dx = a.x - v98.x;
-        float dy = a.y - v98.y;
-        float dz = a.z - v98.z;
-        p->v40 = vector4(f80 * 0.0f + dx, f80 * 0.0f + dy, f80 * -0.2f + dz);
-        p->v50 = vector4(f80 * 0.0f + dx, f80 * 0.0f + dy, f80 * 0.5f + dz);
+        vector4 a;
+        a = f80 * vector4(0.0f, 0.0f, f2c == -1 ? 0.95f : 1.5f);
+        a = a - v98;
+        p->v40 = vector4(f80 * 0.0f, f80 * 0.0f, f80 * -0.2f) + a;
+        p->v50 = vector4(f80 * 0.0f, f80 * 0.0f, f80 * 0.5f) + a;
         p->f60 = 0.37f;
         if (body && (anim[0].events & 0x800000)) {
             p->v50 = body->skel->bones->v1170;
