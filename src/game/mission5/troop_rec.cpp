@@ -641,11 +641,11 @@ void Animator::reset(void* a, void* b)
 
     variant = -1;
 
-    std::vector<int>& q = skin_vec._Myfirst[cur].face_textures._Myfirst[v].v;
+    std::vector<int>& q = skin_vec[cur].face_textures._Myfirst[v].v;
     int m = q.size();
     if (m > 0) {
         int k = (m <= 1) ? 0 : rand() % m;
-        variant = skin_vec._Myfirst[cur].face_textures._Myfirst[material].v._Myfirst[k];
+        variant = skin_vec[cur].face_textures._Myfirst[material].v._Myfirst[k];
     } else {
         r = rand();
         f = (float)(r % 15817) * 6.322311674011871e-05f;

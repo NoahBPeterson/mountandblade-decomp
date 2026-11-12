@@ -1943,14 +1943,14 @@ void GameData::save_language_files(bool translated)
 
     {
         FILE* f = fopen("new_language\\skins.csv", "wt+");              // 0x595f2c
-        for (unsigned i = 0; i < (unsigned)(g_anim.skin_vec._Myfirst ? g_anim.skin_vec._Mylast - g_anim.skin_vec._Myfirst : 0); i++) {
-            for (int j = 0; j < g_anim.skin_vec._Myfirst[i].n_face_keys; j++) {
+        for (unsigned i = 0; i < g_anim.skin_vec.size(); i++) {
+            for (int j = 0; j < g_anim.skin_vec[i].n_face_keys; j++) {
                 if (translated) {
                     Skin& s = skin_at(g_anim.skin_vec, i);
                     write_row(f, skin_at(g_anim.skin_vec, i).face_keys[j].key, ((PartyTemplate*)&s.face_keys[j])->translated());
                 } else {
-                    write_row(f, g_anim.skin_vec._Myfirst[i].face_keys[j].key,
-                              *rec_name(&g_anim.skin_vec._Myfirst[i].face_keys[j]));
+                    write_row(f, g_anim.skin_vec[i].face_keys[j].key,
+                              *rec_name(&g_anim.skin_vec[i].face_keys[j]));
                 }
             }
         }

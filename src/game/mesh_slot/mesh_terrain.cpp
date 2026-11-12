@@ -523,7 +523,7 @@ Skin* append_mesh(int colour, int kind, void** c, void** a, void** b, char carri
         g_anim.item = -1;
     g_anim_view.collect(g_module_settings.limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
 
-    Skin& ec = g_anim.skin_vec._Myfirst[g_anim.cur];
+    Skin& ec = g_anim.skin_vec[g_anim.cur];
     *out = *(int*)((char*)&ec.face_textures[g_anim.material] + 0x18);
     return &ec;
 }

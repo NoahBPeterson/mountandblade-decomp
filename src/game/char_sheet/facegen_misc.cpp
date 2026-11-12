@@ -234,7 +234,7 @@ void Animator::pack_state(PackedState* out)
     out->a |= (unsigned __int64)(int)(time * 63.0f) << 24;
     out->a |= (unsigned __int64)(int)(scale * 63.0f) << 30;
     int i = 0;
-    if (i < skin_vec._Myfirst[cur].n_face_keys) {
+    if (i < skin_vec[cur].n_face_keys) {
         do {
             int wi = 1;
             int sh = i * 3;
@@ -245,7 +245,7 @@ void Animator::pack_state(PackedState* out)
             float fv = weights[i] * 7.0f;
             int fi = grid_count(fv);
             ((unsigned __int64*)out)[wi] |= (unsigned __int64)fi << sh;
-        } while (++i < skin_vec._Myfirst[cur].n_face_keys);
+        } while (++i < skin_vec[cur].n_face_keys);
     }
 }
 // @ 0x4ebb80

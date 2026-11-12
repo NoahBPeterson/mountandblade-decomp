@@ -893,7 +893,7 @@ Skin* Animator::unpack(const unsigned __int64* key)
     set = ((unsigned)(key[0] >> 6) & ((unsigned)g_bit[6] - 1)) - 1;
     material = (unsigned)(key[0] >> 12) & ((unsigned)g_bit[6] - 1);
     variant = (unsigned)(key[0] >> 18) & ((unsigned)g_bit[6] - 1);
-    Skin* r = &skin_vec._Myfirst[cur];
+    Skin* r = &skin_vec[cur];
     if (item >= r->n_hair)
         item = -1;
     if (set >= r->n_beard)
@@ -905,7 +905,7 @@ Skin* Animator::unpack(const unsigned __int64* key)
     time = (float)(int)((unsigned)(key[0] >> 24) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
     scale = (float)(int)((unsigned)(key[0] >> 30) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
     int i = 0;
-    for (r = &skin_vec._Myfirst[cur]; i < r->n_face_keys; r = &skin_vec._Myfirst[cur]) {
+    for (r = &skin_vec[cur]; i < r->n_face_keys; r = &skin_vec[cur]) {
         int w = 1;
         int sh = i * 3;
         if (sh >= 63) {
@@ -1176,21 +1176,21 @@ void Animator::breed(const unsigned __int64* a, const unsigned __int64* b, int s
     set = lerp_int(s0, set);
     material = lerp_int(s5, material);
     variant = -1;
-    E176* r = &skin_vec._Myfirst[cur].face_textures[material];
+    E176* r = &skin_vec[cur].face_textures[material];
     std::vector<int>* v = &r->v;
     int n;
     if (v->size() == 0 || (n = (int)v->size()) <= 0) {
         variant = lerp_int(s3, variant);
     } else {
         RAND();
-        variant = skin_vec._Myfirst[cur].face_textures[material].v[g_rand_seed % (unsigned)n];
+        variant = skin_vec[cur].face_textures[material].v[g_rand_seed % (unsigned)n];
     }
     scale = (float)(RAND() % 0x3dc9) * (scale - a0) * 6.322312e-05f + a0;
     time = (float)(RAND() % 0x3dc9) * (time - a1) * 6.322312e-05f + a1;
     for (i = 0; i < 63; i += 9) {
         MIX(0) MIX(1) MIX(2) MIX(3) MIX(4) MIX(5) MIX(6) MIX(7) MIX(8)
     }
-    skin_vec._Myfirst[cur].relax(-1, weights);
+    skin_vec[cur].relax(-1, weights);
 }
 
 // inline vector4 arithmetic as the game's header implements it: 3-component results, leaving the fourth lane
