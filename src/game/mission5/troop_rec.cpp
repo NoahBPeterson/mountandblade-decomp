@@ -578,6 +578,20 @@ static __forceinline int get_skill(TroopRec* t, T i)
     return v;
 }
 
+// level_up's copy of the clamp reads the cap into a local before the test (the original loads it after the v < 0 arm,
+// but only this form gives the six unrolled v's edx and the group index eax as there; get_skill's form gives the reverse)
+template <class T>
+static __forceinline int get_skill_m(TroopRec* t, T i)
+{
+    int v = (t->nib[i / 8] >> ((i % 8) * 4)) & 0xf;
+    int m = g_skill_tbl[i].max_rank;
+    if (v < 0)
+        v = 0;
+    else if (v > m)
+        v = m;
+    return v;
+}
+
 // @ 0x520270
 void TroopRec::level_up()
 {
@@ -593,7 +607,7 @@ void TroopRec::level_up()
     fa4 = level + 3;
     for (int i = 0; i < 0x2a; i += 6)
         for (unsigned j = 0; j < 6; j++)
-            fa4 -= get_skill(this, i + j);
+            fa4 -= get_skill_m(this, i + j);
     if (fa4 < 0)
         fa4 = 0;
 
