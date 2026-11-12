@@ -339,9 +339,9 @@ void PartyWindow::refresh_armor(MissionUi** labels, int t)
         }
         enc += v;
     }
-    char buf[0x210];
+    char buf[0x200];
     {
-        sprintf(buf, lookup(tstring("ui_head_armor"))->c_str(), head);
+        sprintf(buf, lookup("ui_head_armor")->c_str(), head);
     }
     {
         tstring s(buf);
@@ -349,7 +349,7 @@ void PartyWindow::refresh_armor(MissionUi** labels, int t)
         labels[0]->set_text(out, &s);
     }
     {
-        sprintf(buf, lookup(tstring("ui_body_armor"))->c_str(), body);
+        sprintf(buf, lookup("ui_body_armor")->c_str(), body);
     }
     {
         tstring s(buf);
@@ -357,7 +357,7 @@ void PartyWindow::refresh_armor(MissionUi** labels, int t)
         labels[1]->set_text(out, &s);
     }
     {
-        sprintf(buf, lookup(tstring("ui_leg_armor"))->c_str(), legs);
+        sprintf(buf, lookup("ui_leg_armor")->c_str(), legs);
     }
     {
         tstring s(buf);
@@ -365,7 +365,7 @@ void PartyWindow::refresh_armor(MissionUi** labels, int t)
         labels[2]->set_text(out, &s);
     }
     {
-        sprintf(buf, lookup(tstring("ui_encumbrance"))->c_str(), enc);
+        sprintf(buf, lookup("ui_encumbrance")->c_str(), enc);
     }
     {
         tstring s(buf);
