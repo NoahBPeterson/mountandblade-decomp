@@ -6,3 +6,4 @@
 ../src/game/mission5/troop_rec.cpp  ?raise_skills@TroopRec@@QAEXXZ  00520420  /O2 /MT /Gy /TP
 ../src/game/mission5/troop_rec.cpp  ?get@PartyMgr@@QAEPAUParty@@H@Z  0051ee50  /O2 /MT /Gy /TP
 ../src/game/mission5/troop_rec.cpp  ?reset@Animator@@QAEXPAX0@Z  00520520  /O2 /MT /Gy /TP
+../src/game/mission5/troop_rec.cpp  ?read@PartyMgr@@QAEXPAUstream_base@@H@Z  0051eb90  /O2 /MT /Gy /TP

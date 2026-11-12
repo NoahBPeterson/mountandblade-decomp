@@ -6,3 +6,7 @@
 ../src/game/world_data/mesh_hud.cpp  ?animate@XyzButton@@UAEXH@Z  004966b0  /O2 /MT /Gy /TP
 ../src/game/world_data/mesh_hud.cpp  ?set_alpha@mesh@rgl@@QAEXM@Z  00495f00  /O2 /MT /Gy /TP
 ../src/game/world_data/mesh_hud.cpp  ?animate@MeshWidget@@UAEXH@Z  00496100  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?animate@UiB@@UAEXH@Z  00497880  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?animate@UiC@@UAEXH@Z  00497e30  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?animate@UiE@@UAEXH@Z  004985f0  /O2 /MT /Gy /TP
+../src/game/world_data/mesh_hud.cpp  ?animate@DropDown@@UAEXH@Z  00496d30  /O2 /MT /Gy /TP

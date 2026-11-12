@@ -45,3 +45,4 @@
 ../src/game/terrain_a/terrain_render.cpp  ?draw@render_batch@@QAEXPAUview_t@@@Z  0046d8c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?reset@EnvRec@@QAEXXZ  004686a0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?seed_brushes@Terrain@@QAEXMMM@Z  0046baf0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?compute_normals@Terrain@@QAEXXZ  0046ad50  /O2 /MT /Gy /TP
