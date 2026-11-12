@@ -2181,3 +2181,13 @@ Key numbering (third batch, same night)
   member directly; a local copy keeps it in a callee-saved register instead.
 - A vtable load before the argument's evaluation: the argument is a call expression inside the call
   (`w->set_mesh(0, get()->clone())`), not a named temporary.
+- `scratch --phase` proposing `ins:N` (one more pick before pick N) is a direct recipe: name a single-use member read
+  as a local before the call (MapEditorDialog::update_object_type d24ff2ac).
+- A per-iteration index that only feeds the loop exit can outrank an inner-loop field view for the last callee-saved
+  register; drop it (`end -= 8` in the body) (Terrain::parse a0bc793c).
+- `while (!flag) { if (limit) break; ... }` leaves a counted test unrotated at the loop head with every back edge
+  jumping to it (GameW::position_around 7ed7cefe).
+- Vector constructor arguments built as stack temporaries and read back: the constructor takes `const float&`
+  (Event::slot1 8a775845).
+- A zero candidate coloured by Color (ebx=k0) yet emitted as immediates: dop2_CodegenUpdate between RegSimpleAssign
+  and MdmSaveAndRestoreCallees drops low-benefit callee-saved assignments (gui_manager::clear_selection, untraced).
