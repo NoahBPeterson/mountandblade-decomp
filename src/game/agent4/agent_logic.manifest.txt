@@ -122,3 +122,4 @@
 ../src/game/agent4/agent_logic.cpp  ?pick_target@Agent@@QAEIXZ  0043b4d0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?collect_boxed@world@rgl@@QAEXPBUvector4@2@0PAV?$vector@IV?$allocator@I@std@@@std@@@Z  00442180  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?draw_glyph@Font@@QAEXHPBUvector4@rgl@@PBMPAUmesh@3@H@Z  0044f5d0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?update_quiver@Agent@@QAEXXZ  0043a800  /O2 /MT /Gy /TP
