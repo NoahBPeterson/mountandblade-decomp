@@ -8218,6 +8218,262 @@ void Agent::ragdoll_update()
         fxp->visible = 1;
 }
 
+#define itcf_carry_slot1 0x100000000i64
+#define itcf_carry_slot2 0x200000000i64
+#define itcf_carry_quiver_back_right 0x60000000i64
+#define itcf_carry_quiver_back 0x80000000i64
+// get_carry_pos (0x433e40, src/game/agent/item_kind.cpp) and the two shape constructors (0x4332a0 / 0x433310,
+// src/rgl/xmlcfg/agent_pick.cpp) with their bodies visible here (inline noinline duplicates): reduce_blow's carry frame,
+// bone / aux, lo and hi then do not escape, so the packer shares their slots with the later locals as the original does
+inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
+{
+    vector4 v;
+    float a;
+    *bone = 0;
+    pos2 ident;
+    *out = *(pos2*)identity_pos((pos*)&ident);
+    __int64 carry = flags & itcf_carry_mask;
+    *bone_flags = 0;
+    if (carry == itcf_carry_sword_left_hip) {
+        *bone = 1;
+        *bone_flags = 0;
+        v.x = 0.24f; v.y = 0.1f; v.z = 0.1f;
+        out->o = v;
+        a = 1.5393804f; out->rotate_su(&a);
+        a = -2.2f; out->rotate_sf(&a);
+        a = 0.12f; out->rotate_fu(&a);
+        a = -0.2f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_axe_left_hip) {
+        vector4& o = out->o;
+        *bone = 1;
+        *bone_flags = 0;
+        v.x = 0.21f; v.y = 0.12f; v.z = 0.14f;
+        o = v;
+        a = 1.4451327f; out->rotate_su(&a);
+        a = 1.0f; out->rotate_sf(&a);
+        a = 3.3415928f; out->rotate_su(&a);
+        float s = (float)weight * 0.01f - 0.3f;
+        vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == itcf_carry_mace_left_hip) {
+        vector4& o = out->o;
+        *bone = 1;
+        *bone_flags = 0;
+        v.x = 0.21f; v.y = 0.12f; v.z = 0.14f;
+        o = v;
+        a = 1.4451327f; out->rotate_su(&a);
+        a = 1.0f; out->rotate_sf(&a);
+        a = 3.3415928f; out->rotate_su(&a);
+        float s = (float)weight * 0.01f - 0.1f;
+        vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == itcf_carry_dagger_front_left) {
+        *bone = 7;
+        *bone_flags = 0;
+        v.x = 0.04f; v.y = 0.25f; v.z = 0.15f;
+        out->o = v;
+        a = 0.15707964f; out->rotate_su(&a);
+        a = -2.5f; out->rotate_sf(&a);
+        a = -0.05f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_dagger_front_right) {
+        *bone = 8;
+        *bone_flags = 0;
+        v.x = -0.04f; v.y = 0.25f; v.z = 0.15f;
+        out->o = v;
+        a = -3.2986722f; out->rotate_su(&a);
+        a = -2.5f; out->rotate_sf(&a);
+        a = 0.05f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_slot1) {
+        vector4& o = out->o;
+        *bone = 5;
+        *bone_flags = 8;
+        v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
+        o = v;
+        a = 0.5654867f; out->rotate_sf(&a);
+        a = 3.1415927f; out->rotate_su(&a);
+        float s = (float)weight * 0.01f - 0.3f;
+        vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == (itcf_carry_sword_left_hip | itcf_carry_slot1)) {
+        *bone = 5;
+        *bone_flags = 8;
+        v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
+        out->o = v;
+        a = -2.576106f; out->rotate_sf(&a);
+    }
+    else if (carry == (itcf_carry_quiver_right_vertical | itcf_carry_slot1)) {
+        vector4& o = out->o;
+        *bone = 5;
+        *bone_flags = 8;
+        v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
+        o = v;
+        a = 0.5654867f; out->rotate_sf(&a);
+        vector4 t(out->f.x * 0.67f, out->f.y * 0.67f, out->f.z * 0.67f);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == (itcf_carry_axe_left_hip | itcf_carry_slot1)) {
+        *bone = 0;
+        *bone_flags = 8;
+        v.x = -0.19f; v.y = 0.04f; v.z = -0.18f;
+        out->o = v;
+        a = 3.2986722f; out->rotate_su(&a);
+        a = 1.0995574f; out->rotate_sf(&a);
+    }
+    else if (carry == (itcf_carry_quiver_back | itcf_carry_slot1)) {
+        *bone = 0;
+        *bone_flags = 8;
+        v.x = -0.06f; v.y = 0.18f; v.z = -0.2f;
+        out->o = v;
+        a = -3.2986722f; out->rotate_su(&a);
+        a = 1.5707964f; out->rotate_sf(&a);
+    }
+    else if (carry == (itcf_carry_dagger_front_left | itcf_carry_slot1)) {
+        *bone = 0;
+        *bone_flags = 8;
+        v.x = -0.22f; v.y = -0.06f; v.z = -0.2f;
+        out->o = v;
+        a = 3.138451f; out->rotate_su(&a);
+        a = 1.0995574f; out->rotate_sf(&a);
+    }
+    else if (carry == (itcf_carry_quiver_front_right | itcf_carry_slot1)) {
+        vector4& o = out->o;
+        *bone = 6;
+        *bone_flags = 8;
+        v.x = 0.19f; v.y = 0.34f; v.z = -0.155f;
+        o = v;
+        a = -0.5654867f; out->rotate_sf(&a);
+        a = 1.4137167f; out->rotate_su(&a);
+        a = 0.1f; out->rotate_sf(&a);
+        float s = (float)weight * 0.01f + 0.5f;
+        vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == (itcf_carry_quiver_back_right | itcf_carry_slot1)) {
+        *bone = 6;
+        *bone_flags = 8;
+        v.x = -0.05f; v.y = 0.0f; v.z = -0.19f;
+        out->o = v;
+        a = -0.5654867f; out->rotate_sf(&a);
+        a = -1.5707964f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_quiver_front_right) {
+        *bone = 4;
+        *bone_flags = 0;
+        v.x = -0.21f; v.y = 0.15f; v.z = 0.0f;
+        out->o = v;
+        a = 1.4451327f; out->rotate_su(&a);
+        a = -2.5f; out->rotate_sf(&a);
+        a = -0.2f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_quiver_back_right) {
+        *bone = 4;
+        *bone_flags = 0;
+        v.x = -0.05f; v.y = 0.03f; v.z = -0.19f;
+        out->o = v;
+        a = 0.15707964f; out->rotate_su(&a);
+        a = 1.1f; out->rotate_sf(&a);
+        a = 3.1415927f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_quiver_right_vertical) {
+        *bone = 4;
+        *bone_flags = 0;
+        v.x = -0.23f; v.y = 0.05f; v.z = 0.0f;
+        out->o = v;
+        a = 1.4451327f; out->rotate_su(&a);
+        a = 0.5f; out->rotate_sf(&a);
+        a = -0.05f; out->rotate_su(&a);
+        a = 0.2f; out->rotate_fu(&a);
+    }
+    else if (carry == itcf_carry_quiver_back) {
+        *bone = 5;
+        *bone_flags = 8;
+        v.x = -0.05f; v.y = 0.02f; v.z = -0.17f;
+        out->o = v;
+        a = 0.37699112f; out->rotate_sf(&a);
+    }
+    else if (carry == (itcf_carry_dagger_front_right | itcf_carry_slot1)) {
+        *bone = 3;
+        *bone_flags = 0;
+        v.x = 0.18f; v.y = -0.1f; v.z = -0.1f;
+        out->o = v;
+        a = 2.1991148f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_revolver_right) {
+        *bone = 9;
+        *bone_flags = 4;
+        v.x = -0.1f; v.y = 0.0f; v.z = 0.05f;
+        out->o = v;
+        a = -1.5707964f; out->rotate_su(&a);
+        a = 0.9424779f; out->rotate_sf(&a);
+        a = -0.1f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_pistol_front_left) {
+        *bone = 7;
+        *bone_flags = 0;
+        v.x = -0.07f; v.y = 0.25f; v.z = 0.15f;
+        out->o = v;
+        a = 0.15707964f; out->rotate_su(&a);
+        a = -1.5f; out->rotate_sf(&a);
+        a = -0.05f; out->rotate_su(&a);
+    }
+    else if (carry == itcf_carry_bowcase_left) {
+        *bone = 10;
+        *bone_flags = 0;
+        v.x = 0.26f; v.y = 0.03f; v.z = -0.1f;
+        out->o = v;
+        a = -4.3982296f; out->rotate_su(&a);
+        a = -0.25f; out->rotate_fu(&a);
+        a = -0.84823006f; out->rotate_sf(&a);
+    }
+    else if (carry == (itcf_carry_sword_left_hip | itcf_carry_slot2)) {
+        *bone = 1;
+        *bone_flags = 0;
+        v.x = 0.23f; v.y = 0.15f; v.z = 0.23f;
+        out->o = v;
+        a = -1.4451327f; out->rotate_su(&a);
+        a = 1.5f; out->rotate_sf(&a);
+        a = -0.2f; out->rotate_su(&a);
+    }
+    else if (carry == (itcf_carry_axe_left_hip | itcf_carry_slot2)) {
+        *bone = 2;
+        *bone_flags = 0;
+        v.x = 0.05f; v.y = 0.19f; v.z = 0.24f;
+        out->o = v;
+        a = -2.1991148f; out->rotate_su(&a);
+        a = 1.8f; out->rotate_sf(&a);
+        a = -0.2f; out->rotate_su(&a);
+    }
+}
+inline __declspec(noinline) sphere::sphere(vector4 c, const float* r) : shape_base(inline_init())
+{
+    local_center = c;
+    center = c;
+    radius = *r;
+}
+inline __declspec(noinline) capsule::capsule(float r, const vector4* a, const vector4* b) : shape_base(inline_init())
+{
+    radius = r;
+    l0 = *a;
+    l1 = *b;
+    p0 = l0;
+    p1 = l1;
+}
 // ---- Agent::reduce_blow, draw_name, spawn_corpse --------------------------------------------------------------------------------------
 // @ 0x454e30
 void Agent::reduce_blow(Blow* b)
@@ -8247,14 +8503,9 @@ void Agent::reduce_blow(Blow* b)
             rgl::mat4 u = (rgl::mat4&)body->m * (r * *(rgl::mat4*)&carry);
             HitInfo* h = b->hit;
             if (u.u.y * h->dy + u.u.z * h->dz + u.u.x * h->dx < -0.5f) {
-                float hi[3], lo[3];
-                hi[0] = h->dx * 4.0f + h->px;
-                hi[1] = h->dy * 4.0f + h->py;
-                hi[2] = h->dz * 4.0f + h->pz;
-                lo[0] = h->px - h->dx * 4.0f;
-                lo[1] = h->py - h->dy * 4.0f;
-                lo[2] = h->pz - h->dz * 4.0f;
-                capsule cap(0.0f, (vector4*)lo, (vector4*)hi);
+                vector4 hi = *(vector4*)&h->dx * 4.0f + *(vector4*)&h->px;
+                vector4 lo = *(vector4*)&h->px - *(vector4*)&h->dx * 4.0f;
+                capsule cap(0.0f, &lo, &hi);
                 float zero = 0.0f;
                 sphere sph(*(vector4*)&u.o, &zero);
                 float gap = capsule_sphere_gap(&cap, &sph);
@@ -8281,20 +8532,19 @@ void Agent::reduce_blow(Blow* b)
         armor_v = g_module_settings.armor_reduction_factor[2] * armor_v;
     }
     y = ((float)(rand() % 0x3dc9) * 3.4772715e-05f + 0.45f) * x;
-    x = dmg - y;
-    if (!(0.0f > x)) {
-    } else
+    float d = dmg - y;
+    if (0.0f > d)
         x = 0.0f;
+    else
+        x = d;
     int iv = rand() % 0x3dc9;
-    float part = (1.0f - 1.0f / (float)exp((double)(armor_v * 0.014f * ((float)iv * 3.4772715e-05f + 0.45f)))) * x;
+    float part = (1.0f - 1.0f / (float)exp((double)(((float)iv * 3.4772715e-05f + 0.45f) * (armor_v * 0.014f)))) * x;
     if (armor_v < 0.0001f)
         part = 0.0f;
     y = part + y;
     double fl = ::floor((double)y);
     int n = (int)fl;
-    if (!(y - fl <= 0.5))
-        n++;
-    b->absorbed = n;
+    b->absorbed = (y - fl <= 0.5f) ? n : n + 1;
     x = ((float)(rand() % 0x3dc9) * 2.5289246e-05f + 0.6f) * dmg - b->absorbed;
     b->dmg_out = x;
     if (f10 != 1) {
