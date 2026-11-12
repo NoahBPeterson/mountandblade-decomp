@@ -857,29 +857,41 @@ struct t_vector4 : vector4 {
     void cross(const vector4& a, const vector4& b) { x = a.y * b.z - a.z * b.y; y = a.z * b.x - a.x * b.z; z = a.x * b.y - a.y * b.x; }
 };
 
+// smooth_heights' neighbour step: the original expands an inline helper per neighbour, with the coordinates as by-value
+// parameters (the y+-1 tests reuse the parameter copy, so those cells are addressed flat, not through the row pointer).
+static inline bool cell_in_grid(Terrain* t, int x, int y) { return x >= 0 && x <= t->w && y >= 0 && y <= t->h; }
+static inline void add_neighbour(Terrain* t, int x, int y, float& sum, float& cnt)
+{
+    if (cell_in_grid(t, x, y)) {
+        sum += t->at(x, y).pz;
+        cnt += 1.0f;
+    }
+}
+
 // @ 0x4661e0
 void Terrain::smooth_heights()
 {
     for (int y = 0; y <= this->h; y++) {
-        for (int x = 0; this->w >= x; x++) {
+        for (int x = 0; x <= this->w; x++) {
             float sum = this->at(x, y).pz;
             float cnt = 1.0f;
-            #define INR(a, b) ((a) >= 0 && (a) <= this->w && (b) >= 0 && (b) <= this->h)
-            if (INR(x, y + 1))     { sum += this->at(x, y + 1).pz;     cnt += 1.0f; }
-            if (INR(x + 1, y + 1)) { sum += this->at(x + 1, y + 1).pz; cnt += 1.0f; }
-            if (INR(x + 1, y))     { sum += this->at(x + 1, y).pz;     cnt += 1.0f; }
-            if (INR(x + 1, y - 1)) { sum += this->at(x + 1, y - 1).pz; cnt += 1.0f; }
-            if (INR(x, y - 1))     { sum += this->at(x, y - 1).pz;     cnt += 1.0f; }
-            if (INR(x - 1, y - 1)) { sum += this->at(x - 1, y - 1).pz; cnt += 1.0f; }
-            if (INR(x - 1, y))     { sum += this->at(x - 1, y).pz;     cnt += 1.0f; }
-            if (INR(x - 1, y + 1)) { sum += this->at(x - 1, y + 1).pz; cnt += 1.0f; }
-            #undef INR
+            add_neighbour(this, x, y + 1, sum, cnt);
+            add_neighbour(this, x + 1, y + 1, sum, cnt);
+            add_neighbour(this, x + 1, y, sum, cnt);
+            add_neighbour(this, x + 1, y - 1, sum, cnt);
+            add_neighbour(this, x, y - 1, sum, cnt);
+            add_neighbour(this, x - 1, y - 1, sum, cnt);
+            add_neighbour(this, x - 1, y, sum, cnt);
+            add_neighbour(this, x - 1, y + 1, sum, cnt);
             float d = sum / cnt - this->at(x, y).pz;
             if (d < -10.0f) d = -10.0f;
             else if (d > 2.0f) d = 2.0f;
             float nh = ((float)(rand() % 0x3dc9) * 2.5289246e-05f + 0.2f) * d + this->at(x, y).pz;
-            this->at(x, y).pz = nh;
-            this->at(x, y).h2 = nh;
+            {
+                terrain_cell& c = this->at(x, y);   // a block-local reference: the row pointer anchors at at(x-1, y)
+                c.pz = nh;
+                c.h2 = nh;
+            }
         }
     }
 }
