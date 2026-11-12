@@ -367,6 +367,21 @@ static __forceinline void vsub_to_s257f0(vector4& r, const vector4& a, const vec
 #define AG_S257F0(id) ((*(std::vector<Agent_s257f0*>*)((char*)g_mission_s257f0 + 0x18))[(unsigned)(id) >> 4] + ((id) & 0xf))
 static __forceinline void vadd_s257f0(vector4& a, const vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
 static __forceinline float vdot_neg_s257f0(const vector4& a, const vector4& b) { return -a.x * b.x + -a.z * b.z + -a.y * b.y; }
+// 0x407d60 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+namespace rgl {
+inline __declspec(noinline) float vector4::normalize()      // 0x407d60
+{
+    float len = length();
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+}
+}
+
 // @ 0x5257f0 -------------------------------------------------------------------------------------------
 void ViewObj_s257f0::update()
 {
