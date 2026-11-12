@@ -42,6 +42,10 @@ __declspec(noinline) WidgetVec::iterator WidgetVec::insert(iterator where, Missi
     return begin() + off;
 }
 
+// the two-float arguments of the d22/d25/d27/d28 calls are 8-byte temporaries; the box position is the widget's
+// (fE0, fE4) pair minus a temporary through an inline operator (both lanes stay on the x87 stack)
+struct wn_float2 { float x, y; wn_float2(float a, float b) { x = a; y = b; } };
+static inline wn_float2 operator-(const wn_float2& a, const wn_float2& b) { return wn_float2(a.x - b.x, a.y - b.y); }
 // @ 0x49ad20
 NodeA* DropDown::create()
 {
@@ -51,17 +55,9 @@ NodeA* DropDown::create()
     wh[0] = f1b0 * fD8;
     wh[1] = f1b4 * fDC;
 
-    float pos[2];
-    float nx = -(f1b8 * fD8);
-    float h = (float)rows.size() * wh[1];
-    pos[0] = fE0 - nx;
-    pos[1] = fE4 - h;
-    vt(b)->d22(pos);
+    vt(b)->d22((float*)&(*(const wn_float2*)&fE0 - wn_float2(-(f1b8 * fD8), (float)rows.size() * wh[1])));
 
-    float sz[2];
-    sz[0] = wh[0];
-    sz[1] = (float)rows.size() * wh[1];
-    vt(b)->d25(sz);
+    vt(b)->d25((float*)&wn_float2(wh[0], (float)rows.size() * wh[1]));
 
     MissionUi* tmp = b;
     g_gui.dirty = 1;
@@ -72,22 +68,12 @@ NodeA* DropDown::create()
     for (unsigned u = 0; u < rows.size(); u++) {
         UiA* c = new UiA;
 
-        float d[2];
-        d[0] = 0.0f;
-        d[1] = (float)(int)u * wh[1];
-        vt(c)->d22(d);
+        vt(c)->d22((float*)&wn_float2(0.0f, (float)(int)u * wh[1]));
 
         vt(c)->d25(wh);
 
-        float m1[2];
-        m1[0] = f1bc * fD8;
-        m1[1] = f1c0 * fDC;
-        vt(c)->d27(m1);
-
-        float m2[2];
-        m2[0] = f1c4 * fD8;
-        m2[1] = f1c8 * fDC;
-        vt(c)->d28(m2);
+        vt(c)->d27((float*)&wn_float2(f1bc * fD8, f1c0 * fDC));
+        vt(c)->d28((float*)&wn_float2(f1c4 * fD8, f1c8 * fDC));
 
         vt(c)->d32(2, ((rgl::mesh*)(m1a4))->clone());
         ((rgl::mesh*)c->tracks[2])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
