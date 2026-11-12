@@ -436,17 +436,21 @@ void Mission::update_prop_flags()
         if (special)
             special->flag = (g_game->f1a20c == 0 && g_game->f1a090 != 0) ? 1 : 0;
         for (unsigned i = 0; i < props.size(); i++) {
+            // the flag statement is written once per arm: cl merges the two copies after allocation, but the two
+            // zero stores are what makes the constant 0 worth a register (ebx), and the copies' scratch picks line up
             if (props[i].kind == 0) {
-                if ((g_propkinds[props[i].id].flags11 & 0x40) == 0)
-                    continue;
-            } else {
-                if (props[i].kind != 1 && props[i].kind != 5)
-                    continue;
+                if ((g_propkinds[props[i].id].flags11 & 0x40) != 0) {
+                    if (g_game->f1a090 != 0 && g_game->f1a20c == 0)
+                        props[i].ent->flag = 1;
+                    else
+                        props[i].ent->flag = 0;
+                }
+            } else if (props[i].kind == 1 || props[i].kind == 5) {
+                if (g_game->f1a090 != 0 && g_game->f1a20c == 0)
+                    props[i].ent->flag = 1;
+                else
+                    props[i].ent->flag = 0;
             }
-            if (g_game->f1a090 != 0 && g_game->f1a20c == 0)
-                props[i].ent->flag = 1;
-            else
-                props[i].ent->flag = 0;
         }
     }
 }
