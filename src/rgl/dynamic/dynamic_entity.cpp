@@ -103,8 +103,8 @@ void dynamic_entity::apply_forces(float t)
     dt = t;
     force = mass * vector4(0.0f, 0.0f, -9.8f);
     torque = vector4(0.0f, 0.0f, 0.0f);
-    scale3(vel, 1.0f - t * lin_damp);
-    scale3(angvel, 1.0f - t * ang_damp);
+    scale3(vel, (1.0f - t * lin_damp));          // the parentheses are load-bearing (OPPAREN tuple: the first fld st(0) then
+    scale3(angvel, (1.0f - t * ang_damp));       // schedules after the torque copy, as in the original)
 }
 
 // @ 0x4258e0
