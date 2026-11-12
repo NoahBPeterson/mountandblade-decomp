@@ -142,6 +142,8 @@ void ItemRef::set_item(int item_)
     reduce(0);
 }
 
+// the item kind's modifier-usage bits (+0x1e0 / +0x1e4) as one 64-bit mask, tested against g_bit[imod]
+static __forceinline unsigned __int64 item_mods(int it) { return *(unsigned __int64*)&g_items[it].f1e0; }
 // @ 0x48c5c0
 void ItemRef::randomize_modifier(float quality)
 {
@@ -153,10 +155,9 @@ void ItemRef::randomize_modifier(float quality)
     float base_in = 1.0f, base_out = 1.0f;
     float total = speed_scale(&base_out, &base_in, quality);
     float ref = total;
-    unsigned lo = g_items[item].f1e0;
-    unsigned hi = g_items[item].f1e4;
+    unsigned __int64 mods = item_mods(item);
     for (int i = 0; i < 0x2b; i++) {
-        if ((lo & (unsigned)g_bit[i]) != 0 || (hi & (unsigned)(g_bit[i] >> 32)) != 0)
+        if ((mods & g_bit[i]) != 0)
             total = speed_scale(&g_sort_val[i * 5].pad, &g_sort_val[i * 5].v, quality) + total;
     }
     float target = (float)(rand() % 15817) * total * 6.322312e-05f;
@@ -165,8 +166,7 @@ void ItemRef::randomize_modifier(float quality)
         for (int i = 0; 0x2b > i; i++) {
             if (found != -1)
                 break;
-            if ((g_items[item].f1e0 & (unsigned)g_bit[i]) != 0 ||
-                (g_items[item].f1e4 & (unsigned)(g_bit[i] >> 32)) != 0) {
+            if ((item_mods(item) & g_bit[i]) != 0) {
                 total = speed_scale(&g_sort_val[i * 5].pad, &g_sort_val[i * 5].v, quality) + total;
                 if (target < total)
                     found = i;
@@ -175,9 +175,11 @@ void ItemRef::randomize_modifier(float quality)
     }
     if (found < 0)
         return;
-    b.mod = 0;
-    m4 |= (unsigned)found << 24;
-    reduce(0);
+    if (found < 0x2b) {
+        b.mod = 0;
+        m4 |= (unsigned)found << 24;
+        reduce(0);
+    }
     if (item > 0) {
         unsigned t = g_items[item].type_flags & 0xff;
         if (t == itp_type_thrown || t == itp_type_arrows || t == itp_type_bolts ||
