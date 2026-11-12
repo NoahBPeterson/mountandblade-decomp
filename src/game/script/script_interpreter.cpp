@@ -4329,9 +4329,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::remove_member_from_party:
         // (remove_member_from_party, <troop_id>, [party_id]): prisoners first, then the companions
         if (check_troop((int)params[0]) && check_party((int)params[1])) {
-            int p = (int)params[1];
-            if (!params[1])
-                p = game()->main_party;
+            int p = params[1] ? (int)params[1] : game()->main_party;
             if (!((GameData*)g_game)->remove_troops(p, (int)params[0], 1, 1, 0))
                 ((GameData*)g_game)->remove_troops(p, (int)params[0], 1, 0, 0);
             if (!params[1]) {
