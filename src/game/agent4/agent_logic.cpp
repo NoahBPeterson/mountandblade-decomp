@@ -10247,11 +10247,12 @@ void Agent::update_attack(float dt)
                             LOG_TIMED("ui_you_are_not_carrying_any_bolts")
                     }
                 }
+                goto tail;
             } else {
                 hit_once = 0;
                 prop_done = 0;
                 active = 1;
-                timer.start = g_ticks[timer.clock];
+                timer.restamp();
                 start_shoot(0);
                 if (snd_a != -1) {
                     set_order(1, snd_a, 0x02400002, damage_factor(0));
@@ -10259,11 +10260,10 @@ void Agent::update_attack(float dt)
                     if (sm == itcf_throw_axe || sm == itcf_throw_knife || sm == itcf_throw_stone ||
                         sm == itcf_shoot_musket || TYPE == itp_type_thrown || TYPE == itp_type_crossbow) {
                         variant = 4;
-                        this->cur = 0.0f;
                     } else {
-                        this->cur = 0.0f;
                         variant = ((TYPE != itp_type_pistol) - 1) & 5;
                     }
+                    this->cur = 0.0f;
                 }
             }
         } else if (S == 1) {
@@ -10285,11 +10285,8 @@ void Agent::update_attack(float dt)
                     update_quiver();
                 }
                 goto clear_state;
-            }
-            if (in_flags & 0x100)
-                goto tail;
-            if (!(PROG > 0.99f) && ((TYPE != itp_type_crossbow && TYPE != itp_type_musket) || !(PROG > 0.2f)))
-                goto tail;
+            } else if (!(in_flags & 0x100) &&
+                       (PROG > 0.99f || ((TYPE == itp_type_crossbow || TYPE == itp_type_musket) && PROG > 0.2f))) {
             {
                 unsigned rel = 0;
                 if (TYPE != itp_type_bow) {
@@ -10314,12 +10311,15 @@ void Agent::update_attack(float dt)
                 active = 3;
             }
             if (TYPE == itp_type_bow) {
-                float var = 0.1f;
-                int kind = 0x25;
-                if (id != g_mission->player_id)
+                if (id == g_mission->player_id) {
+                    float var = 0.1f;
+                    int kind = 0x25;
                     play_sound_var(&kind, &var);
-                else
+                } else {
+                    float var = 0.1f;
+                    int kind = 0x25;
                     play_sound_var(&kind, &var);
+                }
             } else if (TYPE == itp_type_crossbow) {
                 float var = 0.1f;
                 int kind = 0x26;
@@ -10353,6 +10353,7 @@ void Agent::update_attack(float dt)
             }
             g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
             ((TimerList*)((char*)ik + 0x228))->update(-0x33);
+            }
         } else if (S == 2) {
             if (ACT != f5620) {
                 active = 0;
@@ -10370,7 +10371,7 @@ void Agent::update_attack(float dt)
                     rq->m4 |= u - n;
                 }
                 update_quiver();
-                goto clear_state;
+                active = 0;
             } else if (links[wield[0]]) {
                 float lo2 = 0.4f, hi2 = 0.66f;
                 if (f2c != -1) {
