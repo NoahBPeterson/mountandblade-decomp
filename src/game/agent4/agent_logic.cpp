@@ -6582,21 +6582,12 @@ void rgl::mesh::translate(const vector4* d)
 {
     ensure_local();
     for (unsigned i = 0; i < v70.size(); i++) {
-        point20* p = &(&*v70.begin())[i];
-        p->a.x = p->a.x + d->x;
-        p->a.y = d->y + p->a.y;
-        p->a.z = d->z + p->a.z;
-        p = &(&*v70.begin())[i];
-        p->b.x = p->b.x + d->x;
-        p->b.y = p->b.y + d->y;
-        p->b.z = p->b.z + d->z;
+        v70[i].a += *d;
+        v70[i].b += *d;
     }
     for (int j = 0; j < kf.count; j++) {
         for (unsigned k = 0; k < kf.frames[j].verts.size(); k++) {
-            vector4* q = &(&*kf.frames[j].verts.begin())[k];
-            q->x = d->x + q->x;
-            q->y = d->y + q->y;
-            q->z = d->z + q->z;
+            kf.frames[j].verts[k] += *d;
         }
     }
     char* dirty = &slots[0].f28;
