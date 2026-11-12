@@ -14,3 +14,4 @@
 ../src/rgl/dynamic/world_grid.cpp  ?add_tree@world@rgl@@QAEXPAUshape_base@@@Z  00425240  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?resize@vec136@@QAEXIUground_g136@@@Z  00424cc0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_grid.cpp  ?reg_shape@world@rgl@@QAEXPAUshape_base@@@Z  00424170  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_grid.cpp  ?add_shape@world@rgl@@QAEXPAUshape_base@@@Z  004252c0  /O2 /MT /Gy /TP
