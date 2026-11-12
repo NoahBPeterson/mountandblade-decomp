@@ -2596,13 +2596,17 @@ bool Party::start_path(int from, float tx, float ty)
 // the party can already move through.
 void Party::update_nav()
 {
+    // every target-party lookup keeps &g_game->parties and tgt_id in locals across is_live() and get() (ebx / edi)
     if (moving) {
         if (kind == 2) {
+            PartyMgr* m = &g_game->parties;
             int d = tgt_id;
-            if (!(!g_game->parties.is_live(d))) { if (g_game->parties.get(d)->mesh != tgt) {
-                moving = 0;
-                f5988 = 1;
-            } } else {
+            if (m->is_live(d)) {
+                if (m->get(d)->mesh != tgt) {
+                    moving = 0;
+                    f5988 = 1;
+                }
+            } else {
                 kind = 0;
             }
         }
@@ -2620,9 +2624,10 @@ void Party::update_nav()
         dest_x = lx;
         dest_y = ly;
     } else if (kind == 2) {
+        PartyMgr* m = &g_game->parties;
         int d = tgt_id;
-        if (!(!g_game->parties.is_live(d))) {
-            float* p = &g_game->parties.get(d)->pos.x;
+        if (m->is_live(d)) {
+            float* p = &m->get(d)->pos.x;
             dest_x = p[0];
             dest_y = p[1];
             lx = p[0];
@@ -2631,16 +2636,15 @@ void Party::update_nav()
             kind = 0;
         }
     } else if (kind == 3) {
-        if (!(frand() < 0.35f)) {
-            // keep the destination of the previous frame
-        } else {
+        if (frand() < 0.35f) {
+            PartyMgr* m = &g_game->parties;
             int d = tgt_id;
-            if (g_game->parties.is_live(d)) {
-                float* p = &g_game->parties.get(d)->pos.x;
+            if (m->is_live(d)) {
+                float* p = &m->get(d)->pos.x;
                 float dx = p[0] - pos.x;
                 float dy = p[1] - pos.y;
                 if (vx * vx + vy * vy < dx * dx + dy * dy) {
-                    float* q = &g_game->parties.get(d)->pos.x;
+                    float* q = &m->get(d)->pos.x;
                     dest_x = q[0];
                     dest_y = q[1];
                     dest_x = vx + dest_x;
@@ -2652,21 +2656,32 @@ void Party::update_nav()
         }
     }
 
+    int k = kind;
     face* tf;
-    if (!(kind == 1)) {
-        int d = tgt_id;
-        if (kind == 2 && g_game->parties.is_live(d)) {
-            tgt = g_game->parties.get(d)->mesh;
-            tf = tgt;
-        } else if (kind == 3 && g_game->parties.is_live(d)) {
-            tgt = g_game->parties.get(d)->mesh;
-            tf = tgt;
-        } else {
-            tf = mesh;
-        }
-    } else {
+    if (k == 1) {
         tf = tgt;
+    } else {
+        if (k == 2) {
+            PartyMgr* m = &g_game->parties;
+            int d = tgt_id;
+            if (m->is_live(d)) {
+                tf = m->get(d)->mesh;
+                tgt = tf;
+                goto have_face;
+            }
+        }
+        if (k == 3) {
+            PartyMgr* m = &g_game->parties;
+            int d = tgt_id;
+            if (m->is_live(d)) {
+                tf = m->get(d)->mesh;
+                tgt = tf;
+                goto have_face;
+            }
+        }
+        tf = mesh;
     }
+have_face:
 
     if (f5988 && tf && mesh->m4 != tf->m4) {
         if (!(!start_path(tf->m4, dest_x, dest_y))) {
