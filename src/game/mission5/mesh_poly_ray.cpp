@@ -17,6 +17,9 @@
 
 #include "../key_names.h"
 
+// 0x432830 (rgl/xmlcfg/game_util.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) void __cdecl vec3_sub(Vec3* out, const Vec3* a, const Vec3* b) { out->x = a->x - b->x; out->y = a->y - b->y; out->z = a->z - b->z; }      // 0x432830
+
 // Ray / convex-polygon intersection.  The polygon's vertices (at most four) are gathered once,
 // their mean gives the plane point, the first three give the normal, and the hit point is then
 // tested against every edge (a hit outside the polygon reports 1e6, i.e. "no hit").
@@ -447,6 +450,22 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
 #undef slot_as<EditorView_s2f250>(14)
 #undef g_editor_dialog_s2f250
 #define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
+namespace rgl {
+static __forceinline vector4 rot_vmul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
+static __forceinline vector4 rot_vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 rot_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+}
+// 0x40e770 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) void matrix::rotate_about_u(const float* angle)      // 0x40e770
+{
+    double sn = sin((double)*angle);
+    vector4 ns, nf;
+    ns = rot_vadd(rot_vmul(s, cos((double)*angle)), rot_vmul(f, sn));
+    nf = rot_vsub(rot_vmul(f, cos((double)*angle)), rot_vmul(s, sn));
+    s = ns;
+    f = nf;
+}
+
 // @ 0x52f250
 void MapEditor_s2f250::update()
 {
