@@ -178,11 +178,13 @@ void Mission::light_props()
 
 // ---- item mesh setup (0x47cfe0) ---------------------------------------------------------------------------------
 
-static inline tstring item_mesh_name(ItemKind* kind, int item, unsigned m4)
+// ItemRef::mesh_name (0x434b20) as the original inlines it in the ranged arm: in-range test first, the kind read
+// through g_items[r.item] (the original also keeps the inline's item >= 0 test; ours folds it into the caller's)
+static inline tstring ir_mesh_name(const ItemRef& r)
 {
-    if (item < 0 || item >= g_item_kind_count)
-        return tstring("Error: Invalid item");
-    return kind->mesh_name_for((int)m4 >> 24);
+    if (r.item >= 0 && r.item < g_item_kind_count)
+        return g_items[r.item].mesh_name_for((int)r.m4 >> 24);
+    return tstring("Error: Invalid item");
 }
 
 // the lod mesh as this TU sees it: the frame at +0x8c and the visibility word at +0xcc (lod_mesh::m8c, mask)
@@ -206,7 +208,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
             if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11 ||
                 t == 2 || t == 3 || t == 4 || t == 7) {
                 // the name is a temporary of the full expression: the original destroys it (0x47d180) before add_group
-                *p = (int)g_resmgr.make_lod_mesh(item_mesh_name(kind, ir.item, ir.m4), false);
+                *p = (int)g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
                 ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
                 TimerList* snd = (TimerList*)((char*)kind + 0x228);      // the item's sound holder (ItemKind+0x228)
