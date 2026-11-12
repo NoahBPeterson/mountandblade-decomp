@@ -48,5 +48,9 @@ struct music_player {                               // the music player, global 
     void build(Src* src);                    // 0x50f7e0 (inventory_panel/loading_screen.cpp: reads track_count and the track records)
 };
 extern music_player g_music;                        // 0xa73a10 (defined in triggers/trigger_vec.cpp; the compiler constructs it and registers the destructor)
+// a free inline helper taking the object by reference: Operation::execute 0x49fa10 first-references fewer global
+// field views than direct member stores would make (the global symbol-key count fixes g_visitor_scene's sort order)
+inline void set_situation(music_player& m, int s) { m.situation = s; }     // script op music_set_situation
+inline void set_culture(music_player& m, int c) { m.mask = c; }           // script op music_set_culture 0x4a1755
 typedef char music_player_layout_check[(offsetof(music_player, start) == 0x2008 && offsetof(music_player, active) == 0x2408 && offsetof(music_player, t2460) == 0x2460 && offsetof(music_player, root) == 0x247c && sizeof(music_player) == 0x2490) ? 1 : -1];
 #endif // GAME_MUSIC_PLAYER_H

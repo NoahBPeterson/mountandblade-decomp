@@ -97,6 +97,7 @@ struct gui_manager {
     int f170c;                      // +0x170c  g_loaded_sound_count (module_files.cpp) / the UI click sample (play_sound 0x48b2d0)
     int wheel;              // +0x1710  g_mission_clock (0x5d8790): the mouse wheel steps read this frame (process zeroes then sums them; the sliders scale by it)
     char enabled;                   // +0x1714  the message log's enabled byte (reset sets it)
+    void set_enabled(bool v) { enabled = v; }      // inline (script op set_show_messages 0x4a30a0)
     char pad1715[3];
     int f1718;                      // +0x1718  g_5d8798: the last keyboard character (-1 when consumed)
     float total_h;                  // +0x171c  summed height of the visible log lines (add 0x452c00)

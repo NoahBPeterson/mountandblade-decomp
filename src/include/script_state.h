@@ -52,6 +52,7 @@ struct ScriptState {
         __int64 reg[128];
         struct { unsigned lo; int hi; } reg_half[128];     //       the same registers as the halves the camera script ops store
     };
+    void set_reg0(__int64 v) { reg[0] = v; }               // inline (spawn_around_party's result)
     rgl::matrix pos[128];                                  // +0x450 position registers (pos[0].o is the party event position emit_event 0x14 reads, pos[1] the last melee hit frame)
     tstring str[128];                                      // +0x2450 string registers      0x460160
 

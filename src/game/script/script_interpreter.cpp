@@ -3754,10 +3754,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_script.cue_track = (int)params[0];
         break;
     case op::music_set_situation:
-        g_music.situation = (int)params[0];
+        set_situation(g_music, (int)params[0]);
         break;
     case op::music_set_culture:
-        g_music.mask = (int)params[0];
+        set_culture(g_music, (int)params[0]);
         break;
     case op::stop_all_sounds:
         g_sound_mgr.stop_all();
@@ -4099,7 +4099,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         result = mission()->hero_down();
         break;
     case op::set_party_battle_mode:
-        g_mission_ctx.f2c8 = 1;   // set_party_battle_mode 0x4a2ad0
+        set_party_battle_mode(g_mission_ctx);   // set_party_battle_mode 0x4a2ad0
         break;
     case op::set_camera_follow_party:
         if (check_party((int)params[0])) {
@@ -4178,7 +4178,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (spawn_around_party, <party_id>, <party_template_id>): the new party's id goes to reg0
         if (check_party((int)params[0]) && check_party_template((int)params[1])) {
             rgl::vector4& p = party_pos(party((int)params[0]));
-            g_script.reg[0] = ((GameData*)g_game)->spawn_around(p.x, p.y, (int)params[1], g_spawn_radius);
+            g_script.set_reg0(((GameData*)g_game)->spawn_around(p.x, p.y, (int)params[1], g_spawn_radius));
         }
         break;
     case op::set_spawn_radius:
@@ -4201,9 +4201,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             { tstring s(num); game()->message_log.append(s); }
             game()->message_log.push_back('|');
             game()->message_log.append(text);
-            if (g_cfg.enable_edit_mode) {
+            if (edit_mode(g_cfg)) {
                 text.push_back('\n');
-                ((stream_base&)g_log).w_tstr(&text);
+                stream_base& lg = g_log; lg.w_tstr(&text);
             }
         }
         break;
@@ -4214,14 +4214,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 color = (int)params[1];
             tstring text = g_script.expand(g_strings.get_string((int)params[0], types[0]));
             g_gui.add(text, color);
-            if (g_cfg.enable_edit_mode) {
+            if (edit_mode(g_cfg)) {
                 text.push_back('\n');
-                ((stream_base&)g_log).w_tstr(&text);
+                stream_base& lg = g_log; lg.w_tstr(&text);
             }
         }
         break;
     case op::set_show_messages:
-        {bool v = params[0] != 0; g_gui.enabled = v;}      // 0x4a30a0
+        g_gui.set_enabled(params[0] != 0);      // 0x4a30a0
         break;
     case op::add_troop_note_tableau_mesh:
         if (check_troop((int)params[0]) && warn_tableau((int)params[1]))

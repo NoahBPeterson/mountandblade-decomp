@@ -49,5 +49,8 @@ struct Config {
 };
 extern Config g_cfg;                                // 0x5a9f98
 extern Config g_launcher_cfg;                       // 0x5aa0a8 the launcher dialog's own option block (config_dialog.cpp)
+// a free inline helper taking the object by reference: Operation::execute 0x49fa10 first-references fewer global
+// field views than direct member stores would make (the global symbol-key count fixes g_visitor_scene's sort order)
+inline int edit_mode(const Config& c) { return c.enable_edit_mode; }
 
 #endif

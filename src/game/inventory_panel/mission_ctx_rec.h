@@ -80,5 +80,8 @@ struct MissionCtx {
     void select_side(int side);                         // 0x492750 (ret 4; world_data.cpp)
 };
 extern MissionCtx g_mission_ctx;                        // 0xa73300 (defined in triggers/trigger_vec.cpp)
+// a free inline helper taking the object by reference: Operation::execute 0x49fa10 first-references fewer global
+// field views than direct member stores would make (the global symbol-key count fixes g_visitor_scene's sort order)
+inline void set_party_battle_mode(MissionCtx& c) { c.f2c8 = 1; }   // script op set_party_battle_mode 0x4a2ad0
 
 #endif
