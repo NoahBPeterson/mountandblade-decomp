@@ -421,31 +421,28 @@ void face::draw()
 void renderer::draw_polygon(const vector4* pts, int n)
 {
     vector4 shrunk[4];
-    float lines[8][3];
-    vector4 c;
-    c.x = 0.0f; c.y = 0.0f; c.z = 0.0f;
+    float lines[24];
+    vector4 c(0.0f, 0.0f, 0.0f);
     int i;
-    for (i = 0; i < n; i++) {
-        c.x += pts[i].x;
-        c.y += pts[i].y;
-        c.z += pts[i].z;
-    }
+    for (i = 0; i < n; i++)
+        c += pts[i];
     float inv = 1.0f / (float)n;
+    int k = 0;
     c.x = c.x * inv;
     c.y = c.y * inv;
     c.z = c.z * inv;
-    for (i = 0; n > i; i++) {
-        vector4 t((pts[i].x - c.x) * 0.99f + c.x, (pts[i].y - c.y) * 0.99f + c.y, (pts[i].z - c.z) * 0.99f + c.z);
-        shrunk[i] = t;
-    }
+    for (i = 0; i < n; i++)
+        shrunk[i] = (pts[i] - c) * 0.99f + c;
     for (i = 0; i < n; i++) {
+        lines[k] = shrunk[i].x;
+        lines[k + 1] = shrunk[i].y;
+        lines[k + 2] = shrunk[i].z;
+        k += 3;
         int j = (i + 1) % n;
-        lines[2 * i][0] = shrunk[i].x;
-        lines[2 * i][1] = shrunk[i].y;
-        lines[2 * i][2] = shrunk[i].z;
-        lines[2 * i + 1][0] = shrunk[j].x;
-        lines[2 * i + 1][1] = shrunk[j].y;
-        lines[2 * i + 1][2] = shrunk[j].z;
+        lines[k] = shrunk[j].x;
+        lines[k + 1] = shrunk[j].y;
+        lines[k + 2] = shrunk[j].z;
+        k += 3;
     }
     dev->SetRenderState(D3DRS_ZWRITEENABLE, 1);
     dev->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
