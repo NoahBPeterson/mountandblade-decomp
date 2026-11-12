@@ -2558,6 +2558,14 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
 
 // ---- the FMOD sound player ---------------------------------------------------------------------------------------------------
 static __forceinline int round_i(float v) { return round_float(&v); }
+// 0x432510 (rgl/xmlcfg/game_util.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) int __cdecl clamp_index(const int* v, const int* lo, const int* hi)      // 0x432510
+{
+    if (*v < *lo) return *lo;
+    if (*v >= *hi) return *hi - 1;
+    return *v;
+}
+
 // @ 0x442650
 int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id)
 {
@@ -3216,6 +3224,16 @@ static __forceinline void set_order_1(Agent* a, int id, unsigned prio, float rat
         }
     }
 }
+// 0x433b20 (game/agent/curve.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) void Curve::set_rec_phase(int i, float p)      // 0x433b20
+{
+    if (p < 0.0f) p = 0.0f;
+    else if (p > 1.0f) p = 1.0f;
+    Curve* r = &recs[i];
+    int ticks = (int)(r->unshape(p) * r->period * 100000.0f);
+    r->tm.start = g_ticks[r->tm.clock] - ticks;
+}
+
 // @ 0x444370
 void Agent::on_wield_changed()
 {
@@ -4785,6 +4803,15 @@ static inline const vector4& a_pos(const Agent* a) { return a->pos; }
 static inline void a_sub2(vec2& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; }
 static inline void a_clamp(float& v, float lo, float hi) { if (v < lo) v = lo; else if (v > hi) v = hi; }
 
+// 0x4354d0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) bool Agent::flag_0x400_or_0x114() const      // 0x4354d0
+{
+    bool r = false;
+    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && ((*f12c)[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
+        r = true;
+    return r;
+}
+
 // @ 0x448eb0
 void Agent::ai_update_control()
 {
@@ -5790,6 +5817,24 @@ static inline rgl::mesh* item_mesh(int item, int packed)
 }
 int find_item(const tstring* name);                     // 0x434ad0 (cdecl)
 
+// 0x4285e0 (rgl/scene/shape_load.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) shape_base* body_part::clone_shape()      // 0x4285e0
+{
+    shape_base* r;
+    if (shape->shape_type() == 0) {
+        r = new sphere(*(sphere*)shape);
+    } else if (shape->shape_type() == 1) {
+        r = new capsule(*(capsule*)shape);
+    } else if (shape->shape_type() == 2) {
+        r = new face(*(face*)shape);
+    } else if (shape->shape_type() == 3) {
+        r = new composite(*(composite*)shape);
+    } else if (shape->shape_type() == 4) {
+        return ((manifold*)shape)->build_composite();
+    }
+    return r;
+}
+
 // @ 0x44c210
 void Mission::spawn_prop(int* idx, int* id)
 {
@@ -6510,6 +6555,19 @@ inline __declspec(noinline) void rgl::aabb::extend_box(const aabb* b, const rgl:
     }
 }
 
+namespace rgl { static inline unsigned min255(unsigned v) { return v < 255 ? v : 255; } }
+// 0x40e440 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+namespace rgl {
+inline __declspec(noinline) unsigned pack_color(const vector4* c)      // 0x40e440
+{
+    unsigned a = (unsigned)(c->w * 256.0f);
+    unsigned r = (unsigned)(c->x * 256.0f);
+    unsigned g = (unsigned)(c->y * 256.0f);
+    unsigned b = (unsigned)(c->z * 256.0f);
+    return (((min255(a) << 8 | min255(r)) << 8) | min255(g)) << 8 | min255(b);
+}
+}
+
 // @ 0x44eb00
 void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned col, char flip)
 {
@@ -6752,6 +6810,20 @@ static __forceinline mesh* build_ranged(int i, ItemRef r)
         }
     }
     return result;
+}
+
+// 0x4351f0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) ItemRef Wielder::ranged_ref()      // 0x4351f0
+{
+    ItemRef r;
+    r.item = -1;
+    if (a.item >= 0) {
+        if ((char)g_items[a.item].type_flags == itp_type_thrown)
+            r = a;
+        else
+            r = b;
+    }
+    return r;
 }
 
 // @ 0x44f6a0
@@ -7734,6 +7806,31 @@ void Agent::get_label_box(void* out_)
 // the stored copy of troop t's slot i: the 0x508-byte troop records are indexed as a flat array of ItemRef
 #define STORED(t, i) (g_game->chars->equip[(t) * 0xa1 + (i)])
 #define B220(i) (((char*)this)[0x220 + (i)])            // the byte array at +0x220 (b220 of the slices: overlaps pairs[10])
+
+// 0x434eb0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) int ItemRef::stat_200()      // 0x434eb0
+{
+    if (item < 0) return 0;
+    int v = g_items[item].f200;
+    if (v != 0) {
+        switch (b.mod) {
+        case 2:
+        case 0x15: v -= 3; break;
+        case 7: v -= 1; break;
+        case 0x18: v += 1; break;
+        case 0x19: v += 2; break;
+        case 0x12:
+        case 0x1a: v += 3; break;
+        case 1: v -= 4; break;
+        case 5:
+        case 0x16: v -= 2; break;
+        case 0x1b: v += 4; break;
+        case 0x1d: v += 6; break;
+        }
+        if (v < 0) v = 0;
+    }
+    return v;
+}
 
 // @ 0x4532f0
 void Agent::shield_hit(int damage)
@@ -9391,6 +9488,18 @@ struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };  
             impulse.z = impulse.z + 1.0f; \
         } \
     }
+// 0x407c80 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+namespace rgl {
+inline __declspec(noinline) float vector4::out_length_squared() const { return length_squared(); }      // 0x407c80
+}
+
+// 0x435130 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) bool Troop::is_hero()      // 0x435130
+{
+    if (flags30 & 0x10) return true;
+    return false;
+}
+
 // @ 0x457b40
 void Agent::process_blow(float unused)
 {
@@ -10097,6 +10206,9 @@ static __forceinline vector4 sw_smul(const float& k, const vector4& v) { return 
 static __forceinline vector4 sw_vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 sw_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 static __forceinline unsigned prop_flags(const char* k) { return *(const unsigned*)(k + 0x10); }
+// 0x4359e0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) int Vec1c8::size() const { if (!first) return 0; return (last - first) / 0x1c8; }      // 0x4359e0
+
 // @ 0x45a170
 int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
 {
@@ -11009,6 +11121,24 @@ static __forceinline vector4 mv_unit_up(const vector4& v)
     return vector4(0.0f, 1.0f, 0.0f);
 }
 static __forceinline vector4 mv_vscale(const float& s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
+// 0x4353a0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0
+{
+    flags = 0;
+    attacker = -1;
+    pos = vector4(0.0f, 0.0f, 0.0f);
+    dir = vector4(1.0f, 0.0f, 0.0f);
+    dir2 = dir;
+    bone = 0;
+    dmg_in = 0;
+    kind = 0;
+    item = -1;
+    missile = 0;
+    dmg_out = 0;
+    absorbed = 0;
+    return this;
+}
+
 // @ 0x45d820
 void Agent::move_step(float dt)
 {
