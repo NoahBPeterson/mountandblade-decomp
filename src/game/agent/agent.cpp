@@ -568,17 +568,18 @@ void Agent::camera_params(CamParams* p)
 {
     if (f10 == 0) {
         vector4 a;
-        a = f80 * vector4(0.0f, 0.0f, f2c == -1 ? 0.95f : 1.5f);
-        a = a - v98;
-        p->v40 = vector4(f80 * 0.0f, f80 * 0.0f, f80 * -0.2f) + a;
-        p->v50 = vector4(f80 * 0.0f, f80 * 0.0f, f80 * 0.5f) + a;
+        if (f2c == -1)
+            a = f80 * vector4(0.0f, 0.0f, 0.95f);
+        else
+            a = f80 * vector4(0.0f, 0.0f, 1.5f);
+        vector4 d = a - v98;
+        p->v40 = vector4(f80 * 0.0f, f80 * 0.0f, f80 * -0.2f) + d;
+        p->v50 = vector4(f80 * 0.0f, f80 * 0.0f, f80 * 0.5f) + d;
         p->f60 = 0.37f;
         if (body && (anim[0].events & 0x800000)) {
             p->v50 = body->skel->bones->v1170;
             BoneRec* z = body->skel->bones;
-            p->v40.x = (z->f46c + z->fa00) * 0.5f;
-            p->v40.y = (z->fa04 + z->f470) * 0.5f;
-            p->v40.z = (z->fa08 + z->f474) * 0.5f;
+            p->v40 = (*(const vector4*)&z->f46c + *(const vector4*)&z->fa00) * 0.5f;
         }
     } else {
         p->v40 = vector4(0.0f, -0.3f, 1.05f);
