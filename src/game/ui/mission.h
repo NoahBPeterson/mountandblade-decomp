@@ -28,7 +28,7 @@ struct ViewObj {                            // interface at +0x1b4 (virtual 23 =
 
 struct Blob16 { int a, b, c, d; };
 struct Prop {
-    void update(int x);   // 0x467c50 (game/terrain_a: the prop record's per-frame update)
+    void update(float dt);   // 0x467c50 (game/terrain_a: the prop record's per-frame update)
 };
 struct EmptySlot {
     virtual void slot();   // 0x477b70 (game/terrain_b: the empty slot of the IfaceB-style records)
@@ -52,7 +52,7 @@ struct MissionView {
     char pad184[0x1b4 - 0x184];
     ViewObj* obj1b4;                        // +0x1b4
 
-    __forceinline void ext_467c50(int x) { ((Prop*)this)->update(x); }              // 0x467c50 (thiscall, one stack argument: Prop::update, terrain_a)
+    __forceinline void ext_467c50(float dt) { ((Prop*)this)->update(dt); }              // 0x467c50 (thiscall, one stack argument: Prop::update, terrain_a)
     __forceinline void ext_477b70() { ((EmptySlot*)this)->EmptySlot::slot(); }       // 0x477b70 (EmptySlot::slot, terrain_b: called directly, not through the vtable)
     void setup(void* src, int* b, int* c);  // 0x4897a0
     void set(void* src);                    // 0x489820

@@ -64,7 +64,7 @@ struct Prop {
     float last_t;                               // +0x180
     char pad184[0x1b4 - 0x184];
     PropEnt* ent;                               // +0x1b4
-    void update(int unused);                    // 0x467c50
+    void update(float dt);                      // 0x467c50 (dt unused)
 };
 
 // ---- missile (pool record; 0x467f80, 0x467fb0) --------------------------------------------------------------------

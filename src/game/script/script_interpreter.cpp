@@ -1905,7 +1905,7 @@ __declspec(noinline) void TableauTbl::set_camera_parameters(const char* perspect
     c->fr.build_planes();
 }
 extern const int g_value_max;   // 0x590a9c (agent/agent.cpp)
-struct Prop { void update(int x); };   // 0x467c50 (ui/mission.h)
+struct Prop { void update(float dt); };   // 0x467c50 (ui/mission.h)
 // Bodies this object sees so that execute's temporaries pack as in the original: a local whose address reaches a callee cl cannot see
 // keeps a private frame slot (cl assumes the callee may keep the pointer), and that holds through a chain, so the whole chain has to be
 // visible. unpack_color: cur_tableau_add_mesh*'s colour. MissionView::setup: prop_instance_animate_to_position's duration and zero.

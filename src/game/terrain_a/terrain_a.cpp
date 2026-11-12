@@ -1393,7 +1393,7 @@ elem52* __cdecl copy_backward52(elem52* f, elem52* l, elem52* d) { while (f != l
 
 static inline vector4 p_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 // @ 0x467c50
-void Prop::update(int unused)
+void Prop::update(float)
 {
     if (state >= 0) {
         __int64 dt = g_ticks[clock] - start;

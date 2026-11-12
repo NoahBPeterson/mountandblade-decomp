@@ -32,7 +32,7 @@
 ../src/game/terrain_a/terrain_a.cpp  ?fill24@@YAXPAUelem24@@0PBU1@@Z  00467ba0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?fill52@@YAXPAUelem52@@0ABU1@@Z  00467bf0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?copy_backward52@@YAPAUelem52@@PAU1@00@Z  00467c20  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?update@Prop@@QAEXH@Z  00467c50  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?update@Prop@@QAEXM@Z  00467c50  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?copy_arrset@@YAPAUelem56@@PAU1@00@Z  00468050  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?copy_backward56@@YAPAUelem56@@PAU1@00@Z  004680c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?construct@alloc24@@QAEXPAUelem24@@ABU2@@Z  00468130  /O2 /MT /Gy /TP

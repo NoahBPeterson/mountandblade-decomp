@@ -515,7 +515,7 @@ struct MissileU {
     void update(float dt);   // 0x47d3e0
 };
 struct Prop {
-    void update(int unused);   // 0x467c50
+    void update(float dt);   // 0x467c50
 };
 struct PropRecF {
     char pad0[4];
@@ -558,7 +558,7 @@ struct PtrTableF {                      // the paged pointer table (count; the p
 typedef char assert_ptrtable[(sizeof(PtrTableF) == 0x20) ? 1 : -1];
 struct PropAnim {                       // the 0x1c8-byte prop tween record (PlacedObj)
     char pad0[0x1c8];
-    void update(float dt) { union { float f; int i; } u; u.f = dt; ((Prop*)this)->update(u.i); }       // 0x467c50 (thiscall, ret 4): the original pushes dt's bits unconverted
+    void update(float dt) { ((Prop*)this)->update(dt); }       // 0x467c50 (thiscall, ret 4)
 };
 struct CarryRec {                       // the carried-item records copied by the frame&0xf sweep (0x130 bytes, 0x40 of them at +0x6b0)
     matrix m0;                          // +0x00
