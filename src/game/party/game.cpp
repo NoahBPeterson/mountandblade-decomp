@@ -540,52 +540,37 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 // @ 0x51d7c0
 MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 {
-    int* base = (int*)nodes;
-    int* node = (int*)(*idx * 0x88 + (int)base);
-    int local_4 = 0;
-    if (*node < 1)
-        return node;
-    int local_8 = 0x28;
-    for (;;) {
-        int child = *(int*)(local_8 + (int)node);
+    NavNode* node = &vec()[*idx];
+    for (int j = 0; j < node->count; j++, node = &vec()[*idx]) {
+        int child = node->nb[j];
         int num = *n;
-        int k = 0;
-        bool skip = false;
-        if (num >= 0) {
-            do {
-                if (child == *(int*)((char*)seen + k * 4)) {
-                    skip = true;
-                    break;
+        for (int k = 0; k <= *n; k++)
+            if (child == seen[k])
+                goto next;
+        if (child < 0)
+            continue;
+        {
+            NavNode* c = &vec()[child];
+            if (c->cost != 0x5f5e0ff) {
+                NavNode* t = &vec()[*a];
+                if (t->prev == -1)
+                    t->prev = c->cost;
+                else if (t->prev != c->cost) {
+                    vec()[*a].next = vec()[child].cost;
+                    return (int*)&vec()[child];
                 }
-                k++;
-            } while (k <= *n);
-        }
-        if (!skip && child >= 0) {
-            int* c = (int*)(child * 0x88 + (int)base);
-            if (c[0x48 / 4] == 0x5f5e0ff) {
+            } else {
                 *n = num + 1;
-                *(int*)((char*)seen + (num + 1) * 4) = *idx;
+                seen[num + 1] = *idx;
                 walk(a, &child, seen, n);
                 *n = num;
-                if (*(int*)(*a * 0x88 + 0x50 + (int)nodes) != -1)
-                    return (int*)(*a * 0x88 + (int)nodes);
-            } else {
-                int* s = (int*)((int)nodes + *a * 0x88);
-                if (!(s[0x4c / 4] == -1)) { if (s[0x4c / 4] != c[0x48 / 4]) {
-                    s[0x50 / 4] = c[0x48 / 4];
-                    return (int*)(child * 0x88 + (int)nodes);
-                } } else {
-                    s[0x4c / 4] = c[0x48 / 4];
-                }
+                if (vec()[*a].next != -1)
+                    return (int*)&vec()[*a];
             }
         }
-        base = (int*)nodes;
-        local_8 += 4;
-        local_4++;
-        node = (int*)(*idx * 0x88 + (int)base);
-        if (*(int*)(*idx * 0x88 + (int)base) <= local_4)
-            return node;
+    next:;
     }
+    return (int*)node;
 }
 
 // @ 0x51d920    MB_NOINLINE int NavGraph::find_trigger(...)   (thiscall, ret 0x1c)
