@@ -1062,12 +1062,20 @@ void Mission::start_setup()
         if (RAWAT(int, p, 0x188) == 0 && (g_propkinds[RAWAT(int, p, 0x18c)].flags & 0x1000)) {
             float outY;
             void* sink;
-            v = at<vector4>(0x6598);
+            // STAND-IN (q): the original keeps the w lane of this copy in edi across rand() and floor_at and stores the prop position from
+            // [v.x], [v.y], [v.z], edi; that moves the counter to ebx and the byte offset to a frame slot (0x487371..0x4874c3). The real
+            // cause is that the original unit saw rgl::world::floor_at's body (callee summary: reads through p, keeps nothing), so v does
+            // not escape: with a visible floor_at and plain `v = origin; ...; pos = v` this loop is instruction-exact, but v not escaping
+            // also changes the frame packing and the candidate count of the prop-frame loop, which the rest of this file is not yet fitted
+            // to. Until then q (a non-escaping copy, split into lanes by cl) carries w; it costs seven extra copy instructions here.
+            vector4 q = at<vector4>(0x6598);
+            v = q;
             v.x = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.x;
             v.y = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.y;
             ((rgl::world*)at<rgl::world*>(0))->floor_at(&v.x, &outY, (face**)&sink);
             v.z = outY;
-            RAWAT(vector4, p, 0x48) = v;
+            q.x = v.x; q.y = v.y; q.z = v.z;
+            RAWAT(vector4, p, 0x48) = q;
             if (RAWAT(PropObj*, p, 0x1b4) != 0)
                 RAWAT(PropObj*, p, 0x1b4)->v22(&RAWAT(rgl::matrix, p, 0x18), &RAWAT(vector4, p, 0x158));
         }
