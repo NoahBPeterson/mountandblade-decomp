@@ -4168,11 +4168,14 @@ void Agent::update_ai()
             }
             if (!close_) {
                 if (f2e4 == 0) {
-                    float diff = wsum[1] - wsum[0];
-                    if (diff < 0.05f)
+                    float d0 = wsum[1] - wsum[0];      // stays on the x87 stack across both tests
+                    float diff;
+                    if (d0 < 0.05f)
                         diff = 0.05f;
-                    else if (diff >= 0.3f)
+                    else if (d0 >= 0.3f)
                         diff = 0.3f;
+                    else
+                        diff = d0;
                     int r = rand() % 0x3dc9;
                     int hf = always_attack_in_melee;
                     float push = (((float)r * (1.0f / 15817.0f)) * diff * g_dt_scale) * 20.0f;
