@@ -578,39 +578,30 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 // *flag the flag that decides whether to recurse.
 MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, unsigned* m1, unsigned* m2, int* flag)
 {
-    char* f14 = (char*)nodes;
-    if (*(int*)(f14 + *idp * 0x88) < 1)
-        return -1;
-    int off = 0x28;
-    for (int i = 0; i < *(int*)(f14 + *idp * 0x88); i++, off += 4) {
-        int v = *(int*)(f14 + *idp * 0x88 + off);
+    for (int i = 0; i < vec()[*idp].count; i++) {
+        int v = vec()[*idp].nb[i];
         int n = *cnt;
-        if (n >= 0) {
-            for (int k = 0; k <= *cnt; k++)
-                if (v == arr[k])
-                    goto next;
-        }
-        if (v >= 0) {
-            char* r2 = f14 + v * 0x88;
-            if (*(int*)(r2 + 0x48) >= 0 || *(int*)(r2 + 0x24) == *flag) {
-                if (*(int*)(r2 + 0x24) == *flag) {
-                    *cnt = n + 1;
-                    arr[n + 1] = *idp;
-                    int res = find_trigger(&v, a2, arr, cnt, m1, m2, flag);
-                    *cnt = n;
-                    if (res >= 0)
-                        return res;
-                } else {
-                    unsigned x = *m1;
-                    unsigned y = *m2;
-                    char* r3 = f14 + *a2 * 0x88;
-                    if (((*(unsigned*)(r3 + 0x24) & x) == y && (*(unsigned*)(r2 + 0x24) & (x == y)))
-                        || ((*(unsigned*)(r3 + 0x24) & x) != y
-                            && (*(unsigned*)(r2 + 0x24) & (x != y)))) {
-                        if (*(int*)(r2 + 0x48) >= 0)
-                            return *(int*)(f14 + v * 0x88 + 0x48);
-                    }
-                }
+        for (int k = 0; k <= *cnt; k++)
+            if (v == arr[k])
+                goto next;
+        if (v < 0)
+            continue;
+        if (vec()[v].cost < 0 && vec()[v].mask != (unsigned)*flag)
+            continue;
+        if (vec()[v].mask == (unsigned)*flag) {
+            *cnt = n + 1;
+            arr[n + 1] = *idp;
+            int res = find_trigger(&v, a2, arr, cnt, m1, m2, flag);
+            *cnt = n;
+            if (res >= 0)
+                return res;
+        } else {
+            unsigned x = *m1;
+            unsigned y = *m2;
+            if (((vec()[*a2].mask & x) == y && (vec()[v].mask & (x == y)))
+                || ((vec()[*a2].mask & x) != y && (vec()[v].mask & (x != y)))) {
+                if (vec()[v].cost >= 0)
+                    return vec()[v].cost;
             }
         }
 next:
