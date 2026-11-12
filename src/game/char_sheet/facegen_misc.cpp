@@ -46,8 +46,9 @@ void Animator::randomise()
     } while (n != 0);
     int r = rand() % 0x3dc9;
     time = (float)r * 6.322312e-05f;
-    Skin* base = &skin_vec.first[cur];
-    base->relax(-1, weights);
+    // skin_vec is a std::vector<Skin> (skin.h's SkinVec mirrors its layout): operator[] goes through the iterator
+    // class, whose temporary holds `first` as a value of its own (callee-saved esi, `add ecx,esi` before the pushes)
+    (*(std::vector<Skin>*)&skin_vec)[cur].relax(-1, weights);
 }
 
 // @ 0x4eb3c0
