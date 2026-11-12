@@ -118,6 +118,7 @@ try:
     ev = json.load(open(W("docs", "equiv_verdicts.json")))
 except (OSError, ValueError):
     ev = None
+icat = {}
 if ev:
     s = ev["summary"]
     # instruction weight per category: the summary has row counts and bytes only, so group the file's own rows
@@ -246,6 +247,7 @@ def record_verdicts():
         print("verdicts: the treemap uses the sweep at %s" % when)
         return
     hist[when] = dict(summ, when=when)
+    hist[when].update({c + "_in": icat.get(c, 0) for c, _ in EV_CATS})     # instructions per category (--plot's unit)
     with open(W("docs", "equiv_history.json"), "w") as f:
         json.dump(dict(sorted(hist.items())), f, indent=1)
         f.write("\n")
@@ -293,7 +295,12 @@ def plot_history(path):
     now = datetime.datetime.now().astimezone()
     live = {"exact": 100.0 * len(exact) / G, "comp": 100.0 * len(done) / G, "mig": 100.0 * len(migrated) / G,
             "exact_sz": 100.0 * nbytes(exact) / B, "comp_sz": 100.0 * nbytes(done) / B,
-            "mig_sz": 100.0 * nbytes(migrated) / B}
+            "mig_sz": 100.0 * nbytes(migrated) / B,
+            # by instructions (Ghidra's count, the unit --treemap's areas use). Points saved before 2026-11-11 had only
+            # the byte shares; theirs were backfilled (in_est): exact_in from the manifests at the commit of the time,
+            # comp_in / mig_in from the byte shares scaled by the tier's instructions-per-byte.
+            "exact_in": 100.0 * ninsn(exact) / TI, "comp_in": 100.0 * ninsn(done) / TI,
+            "mig_in": 100.0 * ninsn(migrated) / TI}
     # One saved point per --plot run, keyed by its timestamp (older files were keyed by date, one entry per day;
     # re-keying them by their 'when' keeps those points).
     hist_path = W("docs", "progress_history.json")
@@ -315,7 +322,7 @@ def plot_history(path):
 
     BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
     SURFACE, INK, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e6e5e0"
-    top = max([p[k] for _, p in pts for k in ("comp", "comp_sz") if p.get(k) is not None] + [0])
+    top = max([p[k] for _, p in pts for k in ("comp", "comp_in") if p.get(k) is not None] + [0])
     ymax = 100 if top > 40 else max(5, round(top * 1.4 + 0.5))
     record_verdicts()
     # one point per recorded sweep (record_verdicts returns nothing: evh was always None, so the bands never drew)
@@ -343,11 +350,11 @@ def plot_history(path):
         ax.margins(x=0.08)
 
     nrows = 1 + bool(evh)
-    fig, grid = plt.subplots(nrows, 2, figsize=(12, 4.4 * nrows + 1.6), dpi=150, squeeze=False)
+    fig, grid = plt.subplots(nrows, 2, figsize=(12, 4.4 * nrows + 2.0), dpi=150, squeeze=False)
     axes = grid[0]
     fig.patch.set_facecolor(SURFACE)
     for ax, (title, ke, kc, km) in zip(axes, (("Share of functions", "exact", "comp", "mig"),
-                                              ("Share of code size", "exact_sz", "comp_sz", "mig_sz"))):
+                                              ("Share of instructions", "exact_in", "comp_in", "mig_in"))):
         ax.set_facecolor(SURFACE)
         # `mig` is migrated AND counted in `comp` (migrated = S["migrated"] & done), so once the migration finished it
         # only repeats `comp` and hid it: draw it just where the two differ, and don't call it the migrated share today.
@@ -393,8 +400,15 @@ def plot_history(path):
             lim = t + datetime.timedelta(minutes=5)
             prior = [p for w, p in saved if w <= lim and p.get(key) is not None]
             return prior[-1][key] if prior else (saved[0][1].get(key, 0.0) if saved else 0.0)
+        # instructions per category for a sweep: its own _in figures, or (sweeps recorded before 2026-11-11 have
+        # only counts and bytes) its bytes times the category's instructions-per-byte in the current verdicts
+        ipb = {c: (icat.get(c, 0) / ev["summary"][c + "_sz"]) if ev and ev["summary"].get(c + "_sz") else TI / B
+               for c, _ in EV_CATS}
+        for p in evh:
+            for c, _ in EV_CATS:
+                p.setdefault(c + "_in", p.get(c + "_sz", 0) * ipb[c])
         for ax, suffix, total, title in ((grid[1][0], "", G, "All game functions, by evidence"),
-                                         (grid[1][1], "_sz", B, "... by code size")):
+                                         (grid[1][1], "_in", TI, "... by instructions")):
             ys = {k: [] for k, _l, _c in LAYERS}
             for p, t in zip(evh, xs):
                 e = exact_at(t, "exact" + suffix)
@@ -427,14 +441,17 @@ def plot_history(path):
              "Equivalent = complete compilable source whose equivalence sweep PASSed (no mismatch on the same random\n"
              "inputs); weak / untestable / FAIL rows are failures here. The orange line starts on Oct 27: before that it\n"
              "counted any row with compilable source, a different measure. Moved into src/ = moved from match/slices "
-             "into one .cpp per original translation unit.%s" %
+             "into one .cpp per original translation unit.\nRight-hand panels count instructions (Ghidra's count, the "
+             "unit of --treemap's areas), not bytes: instructions differ in length, and switch tables are bytes but not "
+             "instructions.\nPoints before Nov 11 2026 were saved as byte shares; their instruction shares are backfilled "
+             "(byte-exact from the manifests of the time, the rest scaled).%s" %
              ("" if ymax == 100 else "\nThe y-axis is zoomed to %d%% while progress is low." % ymax) +
              ("\nVerdicts: one point per full equivalence sweep (tools/difftest/verdicts.py); a sweep tests the original and "
               "our function\non the same random inputs under emulation. The first point also counted pre-migration slice rows."
               if evh else "") + "\nPer-module detail (area = instructions, colour = verdict): tools/progress.py --treemap",
              fontsize=8, color=MUTED)
     h_in = fig.get_figheight()
-    fig.subplots_adjust(left=0.06, right=0.93, top=1 - 0.75 / h_in, bottom=(1.15 + 0.35 * nrows) / h_in,
+    fig.subplots_adjust(left=0.06, right=0.93, top=1 - 0.75 / h_in, bottom=(1.55 + 0.35 * nrows) / h_in,
                         wspace=0.14, hspace=0.42)
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d snapshots)" % (os.path.relpath(path, ROOT), len(pts)))
