@@ -255,3 +255,12 @@ def test_mutants_outside_covered_code_left_out():
         assert all("+0x7" not in d for d, _ in mutate.mutants(ob, 6, seed=1, covered=r["covered"]))
     finally:
         AL.scan_callee = orig
+
+
+def test_own_arguments_not_aliased_by_entry_pointers():
+    # void A::f(int a) { x = 0; y = a; }: the original reloads a after the store through this, ours keeps it in a
+    # register. Equivalent because `this` cannot point at f's own parameter (W = 4 from the decorated name).
+    a = H("c70100000000" "8b442404" "894104" "c20400")
+    b = H("8b442404" "c70100000000" "894104" "c20400")
+    assert prove(R(a), O(b, symbol="?f@A@@QAEXH@Z"))["status"] == "proved"
+    assert prove(R(a), O(b, symbol=""))["status"] != "proved"      # no W: this may alias the argument slot

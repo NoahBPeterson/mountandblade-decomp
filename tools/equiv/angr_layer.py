@@ -708,6 +708,7 @@ def prepare(retail, ours, level, hints):
     sa, sb = x87_signature(retail.code, retail.va), x87_signature(pcode, retail.va)
     job = {
         "level": level, "facts": facts, "ret64": ret64, "clean": clean, "void_eax_dead": void_eax_dead,
+        "argw": own_argw(own, retail),
         "frame_same": frame_alloc(retail.code, retail.va) == frame_alloc(pcode, retail.va),
         "x87": bool(sa or sb), "x87_same": sa == sb,
         "x87_norm_same": sa == sb or x87_signature_norm(retail.code, retail.va) == x87_signature_norm(pcode, retail.va),
@@ -716,6 +717,16 @@ def prepare(retail, ours, level, hints):
         "hints": hints or {}, "bij": [list(p) for p in pairs], "notes": notes,
     }
     return job
+
+
+def own_argw(own, retail):
+    """(M&B) the function's own stack argument bytes: from its decorated name, else (callee-pops conventions) from
+    the original's `ret N` when every return pops the same N; 0 when unknown"""
+    w = own.get("W") if own else None
+    if not isinstance(w, int) and own and own.get("conv") in ("thiscall", "stdcall"):
+        ns = {int(i.op_str, 16) if i.op_str else 0 for i in decode(retail.code, retail.va) if i.mnemonic == "ret"}
+        w = ns.pop() if len(ns) == 1 else None
+    return w if isinstance(w, int) and 0 <= w <= 0x400 else 0
 
 
 def frame_alloc(code, base):
@@ -1030,7 +1041,12 @@ class Worker:
         if "in_esp" in vs or not all(v.startswith(("in_", "m0_")) for v in vs):
             return False
         C, e = self.C, self.IN["esp"]
-        c = C.UGE(e - addr - 1, 0x100000)            # not in [esp - 1 MB, esp), modulo 2^32
+        # not in [esp - 1 MB, esp + 4 + W), modulo 2^32; (M&B) W = the function's own stack argument bytes when
+        # its decorated name gives them: its parameters (and return address) are its own objects, which no pointer
+        # that existed before the call can point to (C++ object lifetime; the compiler relies on it when it keeps a
+        # by-value argument in a register across stores through `this`, 0x43dcb0)
+        W = self.job.get("argw") or 0
+        c = C.UGE(e + (3 + W) - addr, 0x100000 + 4 + W)
         st.globals["dz"] = st.globals.get("dz", ()) + (c,)
         return True
 
