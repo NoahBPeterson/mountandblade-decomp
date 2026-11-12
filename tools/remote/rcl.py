@@ -16,7 +16,7 @@ status was (a trace can end the compile on purpose).
 Pure standard library. Off unless ~/.config/mb-compile-token and ~/.config/mb-compile-server (host:port) exist, or
 MB_RC_TOKEN / MB_RC_ENDPOINT are set; MB_RC=0 turns it off. Nothing is read from or written to the laptop outside D:\\mb\\rc.
 """
-import hashlib, hmac, json, os, posixpath, re, socket, struct, sys, time
+import hashlib, hmac, json, os, posixpath, re, socket, struct, sys, time, random
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -201,6 +201,17 @@ def unmap_log(log, stage, repo):
 
 
 def main(argv):
+    """A traced compile queues for the laptop instead of spilling onto this machine: on busy it asks again (MB_RC_RETRY
+    times, default 20, 5-20 s apart) before giving up with 75. Plain compiles ask once (cl.sh has local slots)."""
+    n = int(os.environ.get("MB_RC_RETRY", "20")) if os.environ.get("MB_RC_TC") else 0
+    for i in range(n + 1):
+        rc = _once(argv)
+        if rc != BUSY or i == n:
+            return rc
+        time.sleep(5 + 15 * random.random())
+
+
+def _once(argv):
     if os.environ.get("MB_RC") == "0":
         return LOCAL
     token_path = os.environ.get("MB_RC_TOKEN") or os.path.expanduser("~/.config/mb-compile-token")
@@ -262,7 +273,7 @@ def main(argv):
             files[cfg_key] = os.path.abspath(tcfg)
         shas = {k: sha1_of(p) for k, p in files.items()}
         send(sock, dict({"op": "compile", "args": args, "files": shas, "outs": {k: v[0] for k, v in outs.items()}}, **extra))
-        sock.settimeout(300)                            # a stalled job falls back to a local slot (cl.sh) instead of waiting 20 min
+        sock.settimeout(900 if traced else 300)                            # a stalled job falls back to a local slot (cl.sh) instead of waiting 20 min
         need = recv(sock)["need"]
         by_sha = {}
         for k, h in shas.items():
