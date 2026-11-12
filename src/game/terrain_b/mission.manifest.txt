@@ -10,3 +10,4 @@
 ../src/game/terrain_b/mission.cpp  ?clone@tmesh@@QAEPAU1@XZ  0047a370  /O2 /MT /Gy /TP
 ../src/game/terrain_b/mission.cpp  ?resize@?$vector@UMRow56@@V?$allocator@UMRow56@@@std@@@std@@QAEXIUMRow56@@@Z  0047a980  /O2 /MT /Gy /TP
 ../src/game/terrain_b/mission.cpp  ?insert@world@rgl@@QAEXHPBM0@Z  00478a10  /O2 /MT /Gy /TP
+../src/game/terrain_b/mission.cpp  ?build@world@rgl@@QAEXPAUPolyMesh@@@Z  00478c50  /O2 /MT /Gy /TP
