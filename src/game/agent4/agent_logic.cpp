@@ -4245,9 +4245,7 @@ void Agent::update_ai()
                     float val = wsum[0] * 1.3f - wsum[1];
                     float hi = 0.3f;
                     float lo = 0.01f;
-                    float c = clamp(&val, &lo, &hi);
-                    float fr = frand();
-                    float nv = f314 - ((fr * c) * g_dt_scale) * 20.0f;
+                    float nv = f314 - ((clamp(&val, &lo, &hi) * frand()) * g_dt_scale) * 20.0f;   // clamp before frand: a named c would be sunk below frand (clamp is pure here)
                     f314 = nv;
                     if (nv < 0.0f)
                         f314 = 0.0f;
