@@ -144,6 +144,15 @@ void ItemRef::set_item(int item_)
 
 // the item kind's modifier-usage bits (+0x1e0 / +0x1e4) as one 64-bit mask, tested against g_bit[imod]
 static __forceinline unsigned __int64 item_mods(int it) { return *(unsigned __int64*)&g_items[it].f1e0; }
+// 0x488ff0 (game/ui/mission_ui.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) float ItemRef::speed_scale(const float* base, const float* ref, float r)      // 0x488ff0
+{
+    float d = fabsf(r - *ref);
+    if ((r > 1.001f && *ref < 1.001f) || (r < 0.999f && *ref > 0.999f))
+        d = d * 5.0f + 3.0f;
+    return *base / (d + 1.0f);
+}
+
 // @ 0x48c5c0
 void ItemRef::randomize_modifier(float quality)
 {
