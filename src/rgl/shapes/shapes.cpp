@@ -541,33 +541,31 @@ void segment_closest_points(const vector4* a0, const vector4* a1, const vector4*
 
 // @ 0x409ac0
 // capsule a (segment p0-p1, radius at +0x60) against sphere b (centre +0x30, radius +0x40).
-// The original reuses two vector4 slots: A holds the segment direction, then the closest point, then the contact
-// normal; B holds the unit direction, then the closest-point-to-centre vector.
+// A holds the segment direction, then the closest point, then the contact normal; the closest point and the contact
+// point go through the inline vector operators (one product lane spilled, the sum temporary's w copied), and the
+// closest-point-to-centre vector e is its own variable sharing B's slot. Left: the B * t product temporary takes its
+// own slot where the original shares A's (2 bytes).
 void capsule_sphere_contact(capsule* a, sphere* b, int max, contact* out, int* count)
 {
     vector4 A(a->p1.x - a->p0.x, a->p1.y - a->p0.y, a->p1.z - a->p0.z);
     vector4 B;
     normalize(B, A);
     vector4 v(b->center.x - a->p0.x, b->center.y - a->p0.y, b->center.z - a->p0.z);
-    float t = v.x * B.x + (v.y * B.y + v.z * B.z);
+    float t = B.x * v.x + (v.y * B.y + v.z * B.z);
     if (t < 0.0f) A = a->p0;
-    else if ((float)sqrt(A.x * A.x + (A.y * A.y + A.z * A.z)) < t) A = a->p1;
+    else if ((float)sqrt(A.x * A.x + (A.z * A.z + A.y * A.y)) < t) A = a->p1;
     else {
-        vector4 tmp(B.x * t, B.y * t, B.z * t);
-        A = vector4(tmp.x + a->p0.x, tmp.y + a->p0.y, tmp.z + a->p0.z);
-        A.w = B.w;
+        A = B * t + a->p0;
     }
-    B = vector4(A.x - b->center.x, A.y - b->center.y, A.z - b->center.z);
-    float depth = (a->radius + b->radius) - (float)sqrt(B.x * B.x + (B.y * B.y + B.z * B.z));
+    vector4 e(A.x - b->center.x, A.y - b->center.y, A.z - b->center.z);
+    float depth = (a->radius + b->radius) - (float)sqrt(e.x * e.x + (e.y * e.y + e.z * e.z));
     if (depth >= 0.0f) {
         int n = ++*count;
         if (n <= max) {
-            normalize(A, B);
+            normalize(A, e);
             contact c;
             c.normal = A;
-            vector4 pr(A.x * b->radius, A.y * b->radius, A.z * b->radius);
-            c.point = vector4(pr.x + b->center.x, pr.y + b->center.y, pr.z + b->center.z);
-            c.point.w = B.w;
+            c.point = A * b->radius + b->center;
             c.depth = depth;
             out[n - 1] = c;
         }
