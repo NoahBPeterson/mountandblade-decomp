@@ -656,6 +656,8 @@ unsigned Agent::pick_target()
     return tid;
 }
 
+// the ranged weapon classes (bow, crossbow, thrown, pistol, musket); a by-value helper parameter, not a named local
+static __forceinline bool ranged_type(unsigned t) { return t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11; }
 // @ 0x43b5d0
 unsigned Agent::pick_random()
 {
@@ -667,23 +669,18 @@ unsigned Agent::pick_random()
         Threat* r = threats;
         do {
             tid = r->id;
-            Agent* o = &g_mission->agents.pages[tid >> 4][tid & 0xf];
-            if (o->f14 == 1) {
-                float dx = o->pos.x - pos.x;
-                float dy = o->pos.y - pos.y;
-                float dz = o->pos.z - pos.z;
+            if (agent_by_id(tid)->f14 == 1) {
+                const vector4& p = agent_by_id(tid)->pos;
+                float dx = p.x - pos.x;
+                float dy = p.y - pos.y;
+                float dz = p.z - pos.z;
                 float v = 3.0f / (float)sqrt(dx * dx + (dy * dy + dz * dz));
                 if (!(v < 4.0f)) v = 4.0f;
-                Agent* o2 = &g_mission->agents.pages[tid >> 4][tid & 0xf];
-                ItemRef cur = o2->cur_pair();       // a by-value copy: its stack stores keep cl from reusing the page lookups below
-                int item = cur.item;
-                if (item >= 0) {
-                    unsigned t = g_items[item].type_flags & 0xff;
-                    if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11) v = v * 1.5f;
-                }
-                if (g_mission->agents.pages[tid >> 4][tid & 0xf].f2c != -1) v = v * 0.85f;
-                int w = g_mission->agents.pages[tid >> 4][tid & 0xf].f55e8;
-                v = v / ((float)w + 4.0f);
+                ItemRef cur = agent_by_id(r->id)->cur_pair();
+                if (cur.item >= 0 && ranged_type(g_items[cur.item].type_flags & 0xff))
+                    v = v * 1.5f;
+                if (agent_by_id(r->id)->f2c != -1) v = v * 0.85f;
+                v = v / ((float)agent_by_id(r->id)->f55e8 + 4.0f);
                 v = ((float)(rand() % 0x3dc9) * 1.2644623e-05f + 1.0f) * v;
                 if (v > bestv) { bestv = v; best = r->id; }
             }
