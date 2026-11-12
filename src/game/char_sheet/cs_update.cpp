@@ -17,9 +17,13 @@
 // a click on the right button of a row spends the corresponding points.
 void CharSheet::frame_update(float dt)
 {
-    int zero = 0;
     bool selected = false;
     bool released = false;
+    // The original's dead `mov [esp+0x18],ebp` at entry (0x4eeb23; it is also what makes zero a register constant from
+    // the first instruction) is the entry init of a c1xx conditional-destruction flag: a class temporary in the arm of
+    // a &&/||/?: that c2 later proves unreachable (docs/codegen.md 14A). Which statement it was is not recoverable from
+    // the bytes; this one is a stand-in, as in PartyScreen::init_screen 0x502cc0.
+    if (released && tstring("x").c_str()) {}
 
     if (scene != 0)
         ((rgl::world*)scene)->step(dt);
@@ -122,7 +126,10 @@ void CharSheet::frame_update(float dt)
         update_detail();
     }
     if (w14 == 0 && f_4c4->clear_mask(0x10000)) {
-        g_game->chars[0].name = tstring(((HeroEntry*)f_4c4)->name);
+        {
+            tstring s(((HeroEntry*)f_4c4)->name);
+            g_game->chars[0].name = s;
+        }
         g_game->emit_event(0x18, 0, 0);
     }
 
@@ -194,14 +201,11 @@ void CharSheet::frame_update(float dt)
             update_weapons();
             return;
         }
-        if (f_42c->clear_mask(0x10000)) {
-            menu_choose(w18);
-            return;
-        }
-        // game keys: rest / export / learning
-        if (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0) {
+        // "Back", or the escape key released (one statement: the original has a single copy of the call)
+        if (f_42c->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
             menu_choose(w18);
         } else {
+            // game keys: rest / export / learning
             if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0)
                 return;
             if (g_keyboard.down[0x2d] != 0 && g_keyboard.prev[0x2d] == 0 && g_cfg.cheat_mode != 0) {
