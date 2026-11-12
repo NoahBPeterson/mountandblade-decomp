@@ -47,7 +47,7 @@ int mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vec
 
 // the original reads the pool through an inline helper here; inhabititing the call through one keeps
 // cl's register map on this=esi, list=edi like the image's (probe: plain vpush puts the list in esi)
-static __forceinline void mesh_pool_push(mesh_pool* p, mesh* m) { vpush(p->meshes, m); }
+static __forceinline void mesh_pool_push(mesh_pool* p, mesh* const& m) { vpush(p->meshes, m); }
 
 // @ 0x413d30
 mesh* mesh_pool::get_mesh(skin* r)
@@ -64,11 +64,12 @@ mesh* mesh_pool::get_mesh(skin* r)
         if (found) return found;
     }
     mesh* m = new mesh;
+    mesh* nm = m;                   // the pushed element: its home is stored before ensure_local, between the two flag stores
     m->res = r;
     m->slots[1].f4 = 1;
-    m->slots[0].f4 = 1;
+    nm->slots[0].f4 = 1;
     m->ensure_local();
-    mesh_pool_push(this, m);
+    mesh_pool_push(this, nm);
     return m;
 }
 
