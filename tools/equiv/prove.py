@@ -121,7 +121,7 @@ def run(src, va, symbol=None, flags=None, level=None, k_mutants=6, frame_slots=T
             reasons.append("%s: %s" % (name, r["detail"]))
             continue
         bad, tried = [], []
-        for desc, m in mutate.mutants(ours, k_mutants, seed=va):
+        for desc, m in mutate.mutants(ours, k_mutants, seed=va, covered=r.get("covered")):
             mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots)
             tried.append([desc, mr["status"]])
             if mr["status"] == "proved":

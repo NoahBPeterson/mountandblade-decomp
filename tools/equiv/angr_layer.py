@@ -188,6 +188,37 @@ def x87_signature(code, base):
     return out
 
 
+_X87_SHUFFLE = ("fxch", "ffree", "fincstp", "fdecstp", "fnop", "fwait", "wait")
+_X87_FAMILY = (("fiadd", "add"), ("fadd", "add"), ("fisubr", "sub"), ("fisub", "sub"), ("fsub", "sub"),
+               ("fimul", "mul"), ("fmul", "mul"), ("fidivr", "div"), ("fidiv", "div"), ("fdiv", "div"),
+               ("fucom", "cmp"), ("fcom", "cmp"), ("ficom", "cmp"), ("ftst", "cmp"))
+
+
+def x87_signature_norm(code, base):
+    """(M&B) The x87 work up to stack shuffling and operand order: a sorted multiset of arithmetic families
+    (add/sub/mul/div/cmp, register or memory operand with its size), loads and stores to memory with their sizes,
+    and every other operation by name; fxch, fld/fst/fstp st(i) are dropped. Only used to decide whether running
+    the solver can be worth it: when even this differs, the strict rule (x87_signature) cannot pass either."""
+    out = []
+    for i in decode(code, base):
+        m = i.mnemonic
+        if not m.startswith("f") or m in _X87_SHUFFLE:
+            continue
+        mem = re.search(r"(byte|word|dword|qword|tbyte|xword) ptr", i.op_str)
+        if m in ("fld", "fst", "fstp") and not mem:
+            continue
+        fam = next((f for p, f in _X87_FAMILY if m.startswith(p)), None)
+        if fam:
+            out.append(fam + (":" + mem.group(1) if mem else ""))
+        elif m in ("fld", "fild", "fbld"):
+            out.append("load:" + mem.group(1) + (":int" if m == "fild" else ""))
+        elif m in ("fst", "fstp", "fist", "fistp", "fisttp"):
+            out.append("store:" + mem.group(1) + (":int" if m.startswith("fi") else ""))
+        else:
+            out.append(m.rstrip("p") + (":" + mem.group(1) if mem else ""))
+    return sorted(out)
+
+
 # ---------------------------------------------------------------------- decorated names (MSVC)
 _SIMPLE = {c: 4 for c in "CDEFGHIJK"}
 _SIMPLE.update({"M": 4, "N": 8, "O": 8})
@@ -427,6 +458,42 @@ def build_mapping(retail, ours, pairs):
     return m, problems
 
 
+def pair_constants_by_content(retail, ours, pairs):
+    """(M&B) The alignment of relocation-bearing instructions can pair a literal constant of ours with a retail
+    field holding another constant (when the two compilers order the loads differently). For each DIR32 of ours to
+    a known literal (func.const_ok knows its bytes): drop a pair whose retail target holds other bytes, and pair it
+    with a retail field whose target holds the same bytes (the check chk.py makes). The result is still checked by
+    build_mapping (one-to-one) and const_problems."""
+    try:
+        if HERE not in sys.path:
+            sys.path.insert(0, HERE)
+        import func as FN
+    except BaseException:
+        return pairs
+    if not hasattr(FN, "const_ok"):
+        return pairs
+    FN.set_consts(ours)
+    consts = (ours.meta or {}).get("consts") or {}
+    is_const = {o for o, t in ours.relocs.items() if t[0] == "sym" and t[2] == 0x06 and t[1] in consts}
+    if not is_const:
+        return pairs
+    out, done = [], set()
+    for ro, oo in pairs:
+        if oo in is_const and ro in retail.relocs and not FN.const_ok(retail.relocs[ro], ours.relocs[oo]):
+            continue
+        out.append((ro, oo))
+        done.add(oo)
+    used = {ro for ro, _ in out}
+    for oo in sorted(is_const - done):
+        tok = ours.relocs[oo]
+        cands = [ro for ro, t in sorted(retail.relocs.items()) if t[0] == "abs" and FN.const_ok(t, tok)]
+        free = [ro for ro in cands if ro not in used] or cands
+        if free:
+            out.append((free[0], oo))
+            used.add(free[0])
+    return out
+
+
 def const_problems(ours, mapping):
     """Every DIR32 of ours to a literal constant must map to a retail address holding the same bytes
     (func.const_ok). A constant of ours left unpaired gets a fresh address and is caught there (clean = False)."""
@@ -575,6 +642,7 @@ def prepare(retail, ours, level, hints):
         pairs, clean = [tuple(p) for p in hints["bij"]], True
     else:
         pairs, clean = propose_bijection(retail, ours)
+        pairs = pair_constants_by_content(retail, ours, pairs)
     mapping, problems = build_mapping(retail, ours, pairs)
     cp = const_problems(ours, mapping)
     if cp:      # never a mere note: a proof over a wrongly paired constant would be a false proof
@@ -642,6 +710,7 @@ def prepare(retail, ours, level, hints):
         "level": level, "facts": facts, "ret64": ret64, "clean": clean, "void_eax_dead": void_eax_dead,
         "frame_same": frame_alloc(retail.code, retail.va) == frame_alloc(pcode, retail.va),
         "x87": bool(sa or sb), "x87_same": sa == sb,
+        "x87_norm_same": sa == sb or x87_signature_norm(retail.code, retail.va) == x87_signature_norm(pcode, retail.va),
         "sides": {"retail": {"code": retail.code.hex(), "base": retail.va},
                   "ours": {"code": pcode.hex(), "base": retail.va}},
         "hints": hints or {}, "bij": [list(p) for p in pairs], "notes": notes,
@@ -686,6 +755,10 @@ def prove(retail, ours, level, hints, timeout):
         return res("unknown", str(e))
     except Exception as e:
         return res("unknown", "prepare failed: %s: %s" % (type(e).__name__, e))
+    if job["x87"] and not job["x87_norm_same"]:
+        # (M&B) no proof can pass the x87 rule, and a counterexample would not be trusted: do not run the solver
+        return res("unknown", "x87 instruction sequences differ (not even the same arithmetic up to stack "
+                   "shuffling): the 64-bit x87 model cannot prove it")
     job["timeout"] = max(1.0, timeout - (time.time() - t0) - 1.0)
     kw = {}
     if os.name == "nt":
@@ -868,6 +941,7 @@ class Worker:
         self.stats = {}
         self._proj = {}
         self.guessed = set()        # observables that exist only because a callee's convention is unknown
+        self.covered = set()        # (M&B) offsets of ours' instructions executed on some explored path
 
     # ------------------------------------------------------------------ memory
     def base_byte(self, epoch, addr):
@@ -1144,7 +1218,9 @@ class Worker:
         if op == "FPS":
             return z3.FP(n[0], self._zsort(n[1]))
         if op == "FPV":
-            return z3.FPVal(n[0], self._zsort(n[1]))
+            # angr 10: FPV(value,) with the sort only in the size (args[1] in older claripy)
+            srt = self._zsort(n[1]) if len(n) > 1 else (z3.Float32() if x.size() == 32 else z3.Float64())
+            return z3.FPVal(n[0], srt)
         if op in ("fpAdd", "fpSub", "fpMul", "fpDiv"):
             a, b, rm = (n[0], n[1], n[2]) if isrm(n[2]) else (n[1], n[2], n[0])
             return {"fpAdd": z3.fpAdd, "fpSub": z3.fpSub, "fpMul": z3.fpMul, "fpDiv": z3.fpDiv}[op](
@@ -1510,6 +1586,8 @@ class Worker:
                     dropped.append(s)
                     continue
             i = info["by"][a]
+            if side == "ours" and kind:
+                self.covered.add(a - info["base"])
             if kind == "call":
                 t = _imm_target(i)
                 if t is not None and info["base"] <= t < info["end"]:
@@ -1537,6 +1615,14 @@ class Worker:
                 done.append(s)
                 continue
             k = self.stop_len(info, a)
+            if side == "ours":
+                x = a
+                for _ in range(k):
+                    ii = info["by"].get(x)
+                    if ii is None:
+                        break
+                    self.covered.add(x - info["base"])
+                    x = ii.address + ii.size
             try:
                 succ = proj.factory.successors(s, num_inst=k)
             except Exception as e:
@@ -1945,7 +2031,7 @@ class Worker:
         if self.job["x87"] and not self.job["x87_same"]:
             return {"status": "unknown", "detail": "equal in the 64-bit x87 model, but the x87 instruction "
                     "sequences differ | " + summary, "hints": hints_out}
-        return {"status": "proved", "detail": summary, "hints": hints_out}
+        return {"status": "proved", "detail": summary, "hints": hints_out, "covered": sorted(self.covered)}
 
 
 def z3_xor(z3, a, b):

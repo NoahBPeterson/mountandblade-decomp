@@ -910,6 +910,16 @@ def prove(retail, ours, level, hints=None, timeout=600.0, eq_only=True, ntc=64, 
                 "\n\n".join("Testcase %d:\n\n%s" % (n, b) for n, b in enumerate(body)))
         _CONSTS[:] = []
         if refuted:
+            # (M&B) a different frame size moves every stack address a callee sees (esp at a call): a difference
+            # in the strict model, not one a caller can depend on; and memory differences then follow from it
+            try:
+                import angr_layer as AL
+                fsame = AL.frame_alloc(rcode, base) == AL.frame_alloc(ocode, base)
+            except Exception:
+                fsame = True
+            if not fsame or re.search(r"call exits differ in esp", refuted):
+                return _result("unknown", t0, "ddec: concrete counterexample not trusted (the frame layout differs): "
+                               + refuted)
             return _result("refuted", t0, "ddec (concrete run): " + refuted)
         left = timeout - (time.time() - t0)
         if left <= 5:

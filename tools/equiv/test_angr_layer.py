@@ -173,8 +173,12 @@ def test_literal_constant_same_bytes_proved(fake_image):
 
 def test_literal_constant_other_bytes_rejected(fake_image):
     # memory is uninterpreted: without the constant check both would read the retail address and "prove" it
+    # (the pairing by content drops the wrong pair: our 1.0 is left unpaired, so it cannot be proved)
     r = prove(*_const_pair(fake_image, 2.0))
-    assert r["status"] == "unknown" and "constant" in r["detail"]
+    assert r["status"] == "unknown"
+    retail, ours = _const_pair(fake_image, 2.0)
+    with pytest.raises(AL.HintError):           # a pairing that hints force onto it is rejected outright
+        AL.prepare(retail, ours, "L1", {"bij": [[2, 2]]})
 
 
 # loops and hints ---------------------------------------------------------------------------------------------------
@@ -221,3 +225,33 @@ def test_void_return_eax_not_compared():
     b = H("8b4c2404" "c70101000000" "c3")
     assert prove(R(a), O(b, symbol="?f@@YAXPAH@Z"))["status"] == "proved"
     assert prove(R(a), O(b, symbol="?f@@YAHPAH@Z"))["status"] == "refuted"      # int f(int *): eax differs
+
+
+def test_constants_paired_by_content(fake_image):
+    # retail: fld [1.0]; fadd [2.0]   ours: fld [__real 2.0]; fadd [__real 1.0]: the shape alignment pairs the two
+    # loads with each other's constant; pairing by content (the bytes chk.py compares) repairs it
+    fake_image.data[0x405000] = struct.pack("<f", 1.0)
+    fake_image.data[0x405010] = struct.pack("<f", 2.0)
+    a = H("d905") + struct.pack("<I", 0x405000) + H("d805") + struct.pack("<I", 0x405010) + H("c3")
+    b = H("d90500000000" "d80500000000" "c3")
+    consts = {"__real@3f800000": struct.pack("<f", 1.0), "__real@40000000": struct.pack("<f", 2.0)}
+    r = prove(R(a, {2: ("abs", 0x405000), 8: ("abs", 0x405010)}),
+              O(b, {2: ("sym", "__real@40000000", 6, 0), 8: ("sym", "__real@3f800000", 6, 0)}, consts=consts))
+    assert r["status"] == "proved"
+
+
+def test_mutants_outside_covered_code_left_out():
+    # retail calls a noreturn function: what follows in ours is never executed, and mutating it gives an
+    # equivalent mutant; the proof reports the instructions it covered and the self-test keeps to them
+    a = H("6a01" "e8") + struct.pack("<i", 0x2000 - (RVA + 7)) + H("c3")
+    b = H("6a01" "e800000000" "b805000000" "c3")
+    ra, ob = R(a, {3: ("abs", 0x2000)}), O(b, {3: ("sym", "_exit", 0x14, 0)})
+    orig = AL.scan_callee
+    AL.scan_callee = lambda va, budget=4000: {"noreturn": True}
+    try:
+        r = prove(ra, ob)
+        assert r["status"] == "proved"
+        assert 7 not in r["covered"] and 0 in r["covered"]
+        assert all("+0x7" not in d for d, _ in mutate.mutants(ob, 6, seed=1, covered=r["covered"]))
+    finally:
+        AL.scan_callee = orig

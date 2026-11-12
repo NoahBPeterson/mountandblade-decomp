@@ -77,9 +77,20 @@ def candidates(f):
     return out
 
 
-def mutants(f, k=5, seed=1):
-    """[(description, Func)] up to k mutants, deterministic for a seed; at least one of each kind available."""
+def mutants(f, k=5, seed=1, covered=None):
+    """[(description, Func)] up to k mutants, deterministic for a seed; at least one of each kind available.
+    covered (M&B): offsets of the instructions the proving layer executed (angr: on some explored path); a mutant
+    elsewhere is left out, since code the model never runs (after a call to a noreturn function such as mb_error)
+    cannot make a mutant differ, and its equivalent mutant would fail the self-test for nothing."""
     c = candidates(f)
+    if covered is not None:
+        cov = set(covered)
+        starts = sorted(i.address - f.va for i in MD.disasm(f.code, f.va))
+        import bisect
+
+        def ins_of(pos):
+            return starts[bisect.bisect_right(starts, pos) - 1]
+        c = [(d, p) for d, p in c if ins_of(min(q for q, _ in p)) in cov]
     rng = random.Random(seed)
     rng.shuffle(c)
     kinds = {}
