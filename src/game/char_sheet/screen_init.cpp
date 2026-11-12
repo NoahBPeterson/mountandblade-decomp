@@ -198,6 +198,19 @@ void CampaignScreen::init_screen()
     }
 }
 
+// PartyMgr::next_party_id (0x460ca0; the row is owned elsewhere): a visible duplicate, as in world_data.cpp. With the body in
+// this unit cl knows the callee does not keep &id, so the loop counter lives in a register and its home store is independent of
+// the bound's load (the store schedules after the compare, as in the original).
+__declspec(noinline) void PartyMgr::next_party_id(int* id)
+{
+    unsigned i = lookup(*id) + 1;
+    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        *id = deflt;
+    else
+        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+}
 // @ 0x4ecce0
 void CampaignScreen::camera_mark_entities()
 {
@@ -205,10 +218,7 @@ void CampaignScreen::camera_mark_entities()
     g_game->f13acc = (f2b8 * 0.07f + g_one) * 0.8f;
     GameData* game = g_game;
     PartyMgr* mgr = &game->parties;
-    unsigned cur = (unsigned)mgr->first_party_id();
-    unsigned id = cur;
-    if (cur < game->parties.n_parties) {
-        do {
+    for (unsigned cur = (unsigned)mgr->first_party_id(); cur < game->parties.n_parties; mgr->next_party_id((int*)&cur)) {
             int idx = mgr->lookup(cur);
             if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
                 idx = mgr->lookup(cur);
@@ -222,8 +232,5 @@ void CampaignScreen::camera_mark_entities()
                 }
             }
             mgr = &game->parties;
-            mgr->next_party_id((int*)&id);
-            cur = id;
-        } while (cur < game->parties.n_parties);
     }
 }
