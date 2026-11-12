@@ -57,7 +57,9 @@ static __forceinline int rnd(const float* p)
 {
     float fl = floorf(*p);
     int i = (int)fl;
-    return (*p - fl <= 0.5f) ? i : i + 1;
+    if (*p - fl <= 0.5f)
+        return i;
+    return i + 1;
 }
 
 struct Blob80 { int v[32]; };               // the party's 0x80-byte companion records (0x489540)
@@ -500,7 +502,7 @@ void TimerChild::tick(int idx)
 }
 
 // @ 0x488f80
-int __fastcall sort_value(ItemRef* e)
+inline int __fastcall sort_value(ItemRef* e)        // inline: sl_take expands it in its equipment loop and calls it in the inventory loop
 {
     int idx = e->item;
     if (idx >= 0) {
@@ -1043,31 +1045,26 @@ int GameData::count_in(int id, int idx, char flag)
 int GameData::sl_take(int group, int item, int want, char extras)
 {
     int total = 0;
-    Troop* t = &troops[group];
-    int n = t->inv_count();
+    int left = want;
+    int n = troops[group].inv_count();
     for (int i = 0; i < n; i++) {
-        if (want <= 0)
+        if (left <= 0)
             break;
-        ItemRef* p = (ItemRef*)((char*)troops + 0xb4) + group * 0xa1 + i;
-        if (p->item == item) {
-            total += sort_value(p);
-            p->item = -1;
-            want--;
+        if (((ItemRef*)((char*)troops + 0xb4))[group * 0xa1 + i].item == item) {
+            total += sort_value(&((ItemRef*)((char*)troops + 0xb4))[group * 0xa1 + i]);
+            ((ItemRef*)((char*)troops + 0xb4))[group * 0xa1 + i].item = -1;
+            left--;
         }
     }
     if (extras) {
-        int i = 0;
-        ItemRef* base = (ItemRef*)((char*)troops + 0x4a4);
-        while (i < 10) {
-            if (want <= 0)
+        for (int i = 0; i < 10; i++) {
+            if (left <= 0)
                 break;
-            ItemRef* p = base + group * 0xa1 + i;
-            if (p->item == item) {
-                total += sort_value(p);
-                p->item = -1;
-                want--;
+            if (((ItemRef*)((char*)troops + 0x4a4))[group * 0xa1 + i].item == item) {
+                total += sort_value(&((ItemRef*)((char*)troops + 0x4a4))[group * 0xa1 + i]);
+                left--;
+                ((ItemRef*)((char*)troops + 0x4a4))[group * 0xa1 + i].item = -1;
             }
-            i++;
         }
     }
     return total;
