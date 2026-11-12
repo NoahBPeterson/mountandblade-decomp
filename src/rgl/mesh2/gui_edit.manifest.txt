@@ -92,3 +92,4 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?format@ItemPage@@QAEXPAD@Z  004c6620  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?update_object_type@MapEditorDialog@@QAEXXZ  004c7bf0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_build_scene@Terrain@@QAEXXZ  004c8630  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?place@Skin@@QAEXH@Z  004c6b30  /O2 /MT /Gy /TP

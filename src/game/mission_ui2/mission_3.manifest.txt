@@ -34,3 +34,5 @@
 ../src/game/mission_ui2/mission_3.cpp  ?get@SlotArray@@QAE_JABH@Z  0048d650  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?update_bounds@MissionUi@@UAEXXZ  0048d020  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?get_var@ScriptState@@QAEHI@Z  0048d690  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?spawn_items@GameData@@QAEXHHH@Z  0048cc40  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?update@FieldPanel@@QAEXXZ  0048d470  /O2 /MT /Gy /TP

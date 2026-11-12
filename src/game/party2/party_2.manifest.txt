@@ -55,3 +55,6 @@
 ../src/game/party2/party_2.cpp  ?push_party_event@GameData@@QAEXHPBHPBM@Z  004b6070  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?set_order_party@Party@@QAEXPAH@Z  004b29d0  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  ?reissue_order@Party@@QAEXXZ  004b3bc0  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?skill_level@Party@@QAEHH@Z  004b2370  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?find_worth@Party@@QBEHHI@Z  004b1d30  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?add_xp_to_stack@Party@@QAEXHH@Z  004b1d80  /O2 /MT /Gy /TP

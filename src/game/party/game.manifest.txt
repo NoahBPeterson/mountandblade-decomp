@@ -30,3 +30,4 @@
 ../src/game/party/game.cpp  ?read@SpriteTable@@QAEXPAUstream_base@@H@Z  0051e840  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?sub@C4c2fb0@@QAE_NPAH0PAUtstring@@@Z  0051c720  /O2 /MT /Gy /TP
 ../src/game/party/game.cpp  ?load_tracks@Game@@QAEXPAUstream_base@@@Z  0051e6c0  /O2 /MT /Gy /TP
+../src/game/party/game.cpp  ?score_triggers@NavGraph@@QAEXPAH00@Z  0051dac0  /O2 /MT /Gy /TP

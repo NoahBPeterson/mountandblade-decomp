@@ -14,3 +14,4 @@
 ../src/game/terrain_a/game_state.cpp  _$E1  00547de0  /O2  /MT  /Gy  /TP
 ../src/game/terrain_a/game_state.cpp  _$E2  00548490  /O2  /MT  /Gy  /TP
 ../src/game/terrain_a/game_state.cpp  ?pick_size@ShadowMap@@QAEXXZ  00463bc0  /O2 /MT /Gy /TP
+../src/game/terrain_a/game_state.cpp  ?eval@Ramp@@QAEIPAM@Z  00463790  /O2 /MT /Gy /TP

@@ -11,3 +11,4 @@
 ../src/game/mission_ui2/slot_api.cpp  ?count_props@Mission@@QAEHH@Z  0048ee20  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/slot_api.cpp  ?find_prop@Mission@@QAEHHH@Z  0048ee90  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/slot_api.cpp  ?retag_props@Mission@@QAEXHH@Z  0048ed60  /O2 /MT /Gy /TP
+../src/game/mission_ui2/slot_api.cpp  ?find_at@GameData@@QAEPAUface@@PBM@Z  0048ea80  /O2 /MT /Gy /TP
