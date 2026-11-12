@@ -443,7 +443,15 @@ inline __declspec(noinline) matrix rgl::matrix::operator*(const matrix& m) const
     t.r = rot3(m);
     return *(matrix*)&t;
 }
-inline vector4 rgl::cross(const vector4& a, const vector4& b) { return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+// lanes through three float locals: same instructions as the one-expression body, but the optimiser's address
+// temporaries take other keys and one more product of camera_to's first sun cross comes out in the original's order
+inline vector4 rgl::cross(const vector4& a, const vector4& b)
+{
+    float x = a.y * b.z - a.z * b.y;
+    float y = a.z * b.x - a.x * b.z;
+    float z = a.x * b.y - a.y * b.x;
+    return vector4(x, y, z);
+}
 inline __declspec(noinline) capsule::capsule(float r, const vector4* a, const vector4* b) : shape_base(inline_init())
 {
     radius = r;
