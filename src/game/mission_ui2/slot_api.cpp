@@ -160,11 +160,12 @@ void GameData::add_inventory(int item, int amount)
     Troop* agent = &troops[player];
     int n = agent->inv_count();
     int free_slot = -1;
+    bool found = false;
     int i;
-    for (i = 0; i < n; i++) {
+    for (i = 0; !found && i < n; i++) {
         if (agent->inv[i].item == -1) {
             free_slot = i;
-            break;
+            found = true;
         }
     }
 
@@ -175,8 +176,9 @@ void GameData::add_inventory(int item, int amount)
 
         {
             tstring key("ui_got_item_value");
-            tstring* nm = g_strtable.find(&g_items[item].key);
-            const char* name = (nm ? nm : (tstring*)&g_items[item])->c_str();
+            ItemKind* k = &g_items[item];
+            tstring* nm = g_strtable.find(&k->key);
+            const char* name = (nm ? nm : (tstring*)k)->c_str();
             tstring* fmt = g_strtable.lookup(key);
             sprintf(buf, fmt->c_str(), name);
         }
@@ -188,8 +190,8 @@ void GameData::add_inventory(int item, int amount)
     }
 
     // No free slot: only a unique item may displace a non-unique one.
-    unsigned flags = g_items[item].type_flags;
-    if (!((flags >> 12) & 1))
+    bool unique = (g_items[item].type_flags >> 12) & 1;
+    if (!unique)
         return;
 
     int m = agent->inv_count();
@@ -197,8 +199,8 @@ void GameData::add_inventory(int item, int amount)
     for (i = 0; i < m; i++) {
         if (replace != -1)
             break;
-        unsigned f = g_items[agent->inv[i].item].type_flags;
-        if (!((f >> 12) & 1))
+        bool u = (g_items[agent->inv[i].item].type_flags >> 12) & 1;
+        if (!u)
             replace = i;
     }
     if (replace == -1) {
