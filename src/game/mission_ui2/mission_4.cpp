@@ -94,7 +94,9 @@ void WItem::terrain_refresh(const float* off)
     FieldPanel* p = (FieldPanel*)(void*)this;
     float v[2];
     float a = off[0] * 0.02f;
-    FieldVisual* w = p->scene()->view[0];
+    // the view slot is element 0 of a std::vector<FieldVisual*> at +0x178 (f178 + view are its header): operator[]
+    // gives the original's eax, eax, ecx load chain; FieldHost in field_panel.h should declare it that way
+    FieldVisual* w = (*(std::vector<FieldVisual*>*)&p->scene()->f178)[0];
     v[0] = a;
     v[1] = off[1] * 0.02f;
     w->set_size(v);
