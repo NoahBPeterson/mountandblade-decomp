@@ -482,8 +482,7 @@ void MissionUi::update_bounds()
     }
     if (sqrt(mx.x * mx.x + mx.y * mx.y) > 0.0f) {
         set_xy(&mx.x);
-        screen[2] = mn.x;
-        screen[3] = mn.y;
+        *(FieldV2*)&screen[2] = mn;     // one pair copy: mn's lanes stay in edi / ebx across the call
     }
 }
 
