@@ -492,10 +492,15 @@ int ViewObj_s257f0::find_listener_agent()
 #undef g_clamp_max
 #define g_clamp_max g_skill_tbl[36].max_rank             // 0x8ee3ac4
 
+// MapFlags::commit 0x513710 and MissionSource::pick 0x4d5410 ignore their argument (commit overwrites the slot for its tail
+// call), and the callers pass the address of an unnamed temporary: here a byte that shares flag13's slot and a dword, in
+// Rec1208::frame_update a byte in the parameter's home. So the parameters are `const T&` of an empty class (commit) and of a
+// 4-byte class with an empty constructor (pick); these are the temporaries, passed through the headers' pointer types.
+struct CommitArg_s261e0 { CommitArg_s261e0() {} };
+struct PickArg_s261e0 { int v; PickArg_s261e0() {} };
 // @ 0x5261e0
 void MissionBlocker::frame_update(float dt)
 {
-    float v[2];
     if (g_mt_inited)
         EnterCriticalSection(&g_mt_cs);
 
@@ -766,6 +771,7 @@ void MissionBlocker::frame_update(float dt)
             }
             if (f2c8 == -1) {
                 g_gui.set_overlay(0, 1);
+                float v[2];
                 v[0] = 0.5f;
                 v[1] = 0.5f;
                 g_gui.set_view(v);
@@ -914,7 +920,7 @@ void MissionBlocker::frame_update(float dt)
         }
     }
     if (g_presentation != 0) {
-        ((MissionSource*)((char*)this + 0x30))->pick((int*)&val14);
+        ((MissionSource*)((char*)this + 0x30))->pick((int*)&PickArg_s261e0());
         __int64 d = g_ticks[bh.tick.clock] - bh.tick.start;
         if ((float)d * 1e-5f > bh.f58) {
             g_presentation = 0;
@@ -1058,7 +1064,7 @@ void MissionBlocker::frame_update(float dt)
         g_mission_ctx.tick();
         g_mission_ctx.f3c |= 8;
     }
-    g_map_flags.commit((char*)&flag13);
+    g_map_flags.commit((char*)&CommitArg_s261e0());
 
     }
 after:
