@@ -2106,3 +2106,17 @@ Key numbering (third batch, same night)
   A 4x-unrolled loop in the original points at the operator form (draw_polygon 0cb43623, build_faces f8d201fd).
 - A store of a call's result between the destructors of that call's string arguments: the call assigns a local in an
   inner block and the store follows the block (slot_button).
+- `const unsigned& m = ((unsigned*)g_bit)[8] - 1U; ... flags >> 28 & m` loads the mask before `flags`; the plain
+  expression loads flags first. Every Terrain type-test site uses this shape (Terrain::init_layers 92a3757b).
+- A float factor used after a call is computed after the call: before it, it goes through a stack slot; after, it
+  stays in st(0) (`fld st(0); fmul`) (update_ground_cache 6457e9fc).
+- A pair of float members used as a position: `*(const T2*)&fx - T2(a, b)` through an inline `operator-` keeps both
+  lanes on the x87 stack; a named temporary copies one lane through memory (DropDown::create 6c45a719).
+- Counts zeroed on both sides of a validity test in different store orders: a flag, then
+  `if (ok) { a = 0; b = 0; ... } else { a = b = c = d = 0; }` (GameW::gate_rating 0e6ee98d).
+- A library call's iterator result kept as a local (`T it = f();`), not copied through an inline helper's hidden
+  return pointer (`mov eax,[eax]`) (Font::draw_glyph e71fdf74).
+- Two floats kept on the x87 stack and popped late (`fstp st(0)`): lanes of a small struct (field views), not plain
+  floats that cl folds into the expression (draw_glyph).
+- A repeated table lookup the original recomputes: its index is a fresh by-value value (an inline helper parameter
+  from a reloaded field), not a cached local (Agent::pick_target cdcb518b).
