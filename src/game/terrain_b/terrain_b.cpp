@@ -658,11 +658,18 @@ void PolyMesh::compute_face_normals()
 {
     vector4 t;                              // the normal before it is stored (its w lane is never written)
     vector4 b;
+    // a dead mention of b.x: its float view gets a symbol key here, before ay / az, and the key order is what orders
+    // az * b.x and ay * b.x (the a component stays in st and is consumed, b.x is the memory operand). Some reference
+    // to b.x sat before the loop in the original.
+    (void)b.x;
     for (unsigned i = 0; i < faces.size(); i++) {
         MPoly& f = faces.begin()[i];
-        float ax = verts.begin()[f.vid[2]].pos.x - verts.begin()[f.vid[0]].pos.x;
-        float ay = verts.begin()[f.vid[2]].pos.y - verts.begin()[f.vid[0]].pos.y;
-        float az = verts.begin()[f.vid[2]].pos.z - verts.begin()[f.vid[0]].pos.z;
+        // the corner indices are named locals: the vid[2] load then precedes the verts load in the schedule
+        int i2 = f.vid[2];
+        int i0 = f.vid[0];
+        float ax = verts.begin()[i2].pos.x - verts.begin()[i0].pos.x;
+        float ay = verts.begin()[i2].pos.y - verts.begin()[i0].pos.y;
+        float az = verts.begin()[i2].pos.z - verts.begin()[i0].pos.z;
         // the second edge through corners re-derived from the face list (the original reloads vid[0] here)
         const vector4& p0 = verts.begin()[faces.begin()[i].vid[0]].pos;
         const vector4& p1 = verts.begin()[faces.begin()[i].vid[1]].pos;
