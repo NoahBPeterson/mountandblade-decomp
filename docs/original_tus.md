@@ -33,6 +33,7 @@ Boundaries that I can support from address plus call or register evidence (confi
 | 0x437770 (agent.cpp / troop_adjust), 0x4320b0, 0x433040, 0x4681b0, 0x470a00, 0x52dae0/0x52dcc0/0x52dfd0, 0x422db0 | visibility twins (callee body hidden from the caller in the original) | medium-high; the twin test is a byte-diff observation |
 | 0x460160 (end of agent_logic) | `PlacedObj::update_1c0` 0x461200 is called forward from 0x44c210; `ScriptState::expand_token` starts at the next 16-aligned address | medium |
 | 0x4ca600 (gui_edit / mesh_2) | forward call 0x4ca550 -> 0x4ca600 (src/rgl/mesh2/MIGRATION.md) | medium |
+| 0x466cd0 (terrain_a / terrain_emit; was cell_of.cpp 0x464b40..0x464bf0 as its own unit) | visibility twin, measured 2026-11-12 (scratchpad tsplit): `Terrain::cell_of` 0x464b40 has two callers, `Terrain::sample` 0x465af0 (byte-exact only with the body visible: c no longer escapes, frame 0x60) and `Terrain::emit_particle` 0x466cd0 (byte-exact only with it opaque: three loads after the call reorder). So cell_of shares sample's object and emit_particle is in a later one. Cut points tested on 0x465e70..0x466cd0: `pick_diagonals` 0x4666b0, `pick_triangle_types` 0x466930 and `accumulate_kinds` 0x466aa0 each lose their match when cut off from `terrain_cell::kind` 0x4646b0's body, so the boundary is 0x466c10 or 0x466cd0. `erode` 0x466c10 matches either way; it goes with the earlier object because it is one of the pass sequence 0x481d10 calls (smooth_heights, compute_weights, pick_diagonals, pick_triangle_types, erode, accumulate_kinds). | medium-high (window 0x466c10..0x466cd0) |
 | every other module boundary of ours in the T regime (about 95 of 216) | no usable evidence: class names only (about 50% precision on the ground truth). These are the least reliable of our cuts. | none |
 
 The full per-boundary table (all 216 consecutive module runs, with forward and backward call counts) is in the appendix.
@@ -92,7 +93,7 @@ Ranking by (unmatched bytes x confidence): A1, A2, A3 (with progress_bar), A4, A
 | gui_manager.cpp / widget_slots.cpp | interleaved at 0x42cb70..0x42d820 (three alternations) | the module cut among 0x42cb70, 0x42cd60, 0x42cd80, 0x42ce50, 0x42d1b0 is not supported; one object, probably with tstring | low-medium |
 | rec_tables.cpp / trigger_records.cpp / ragdoll_models.cpp / gui_edit.cpp / mesh_2.cpp / config.cpp | interleaved rows between 0x4c2c50 and 0x4d3720 (e.g. trigger_records at 0x4c3120 and 0x4d0620) | same COMDAT-placement effect | low |
 | shapes.cpp / agent_combat.cpp | `std::logic_error` COMDATs of agent_combat at 0x40c2c0..0x40c670 inside shapes | first-defining object | low (no bytes) |
-| terrain_a.cpp | main 0x464bf0..0x467f80 plus 0x464200..0x464b40 and 0x467fb0..0x4681b0 | the strays are the Terrain/Missile code that mesh_terrain calls; classes differ (`Missile` vs `Terrain`) | low |
+| terrain_a.cpp | split at 0x466cd0 (2026-11-12): terrain_a.cpp 0x464200..0x466cd0 (cell_of folded back in), terrain_emit.cpp 0x466cd0..0x467f80 plus 0x467fb0..0x4681b0 | visibility twin on cell_of (section 2); the strays are the Terrain/Missile code that mesh_terrain calls | medium-high |
 
 I did not find a module that contains two obviously separate original files with evidence strong enough to state it
 (the twin-split work already removed those).
@@ -186,8 +187,8 @@ I did not find a module that contains two obviously separate original files with
 | game/ui/item_ref.cpp | 4625d0-462ac0 | 7 | 0 | 1 |  |
 | game/ui/troop_inv.cpp | 462ac0-4636d0 | 14 | 436 | 1 |  |
 | game/terrain_a/game_state.cpp | 4636d0-464200 | 17 | 891 | 1 |  |
-| game/terrain_a/terrain_a.cpp | 464bf0-467f80 (+2) | 61 | 5106 | 3 | 464200-464b40, 467fb0-4681b0 |
-| game/terrain_a/cell_of.cpp | 464b40-464bf0 | 1 | 0 | 1 |  |
+| game/terrain_a/terrain_a.cpp | 464200-466cd0 | 36 | 918 | 1 |  |
+| game/terrain_a/terrain_emit.cpp | 466cd0-467f80 (+1) | 28 | 570 | 2 | 467fb0-4681b0 |
 | game/terrain_a/terrain_render.cpp | 4681b0-46e590 | 68 | 7124 | 1 |  |
 | game/terrain_b/terrain_b.cpp | 46e590-470a00 | 5 | 7251 | 1 |  |
 | game/terrain_b/mission.cpp | 478830-47aa40 | 19 | 4653 | 1 |  |
@@ -387,11 +388,10 @@ Regime: B = callee-first emission (a forward call is evidence of a boundary), T 
 | 462ac0 | B | game/ui/item_ref | game/ui/troop_inv | 0  | 0 |  |
 | 4636d0 | B | game/ui/troop_inv | game/terrain_a/game_state | 0  | 0 |  |
 | 464200 | B | game/terrain_a/game_state | game/terrain_a/terrain_a | 0  | 0 |  |
-| 464b40 | B | game/terrain_a/terrain_a | game/terrain_a/cell_of | 0  | 0 |  |
-| 464bf0 | B | game/terrain_a/cell_of | game/terrain_a/terrain_a | 0  | 2 |  |
-| 467f80 | B | game/terrain_a/terrain_a | game/terrain_b/poly_mesh | 0  | 0 |  |
-| 467fb0 | B | game/terrain_b/poly_mesh | game/terrain_a/terrain_a | 0  | 0 |  |
-| 4681b0 | B | game/terrain_a/terrain_a | game/terrain_a/terrain_render | 0  | 3 | visibility twin |
+| 466cd0 | B | game/terrain_a/terrain_a | game/terrain_a/terrain_emit | 0  | 0 | visibility twin (cell_of) |
+| 467f80 | B | game/terrain_a/terrain_emit | game/terrain_b/poly_mesh | 0  | 0 |  |
+| 467fb0 | B | game/terrain_b/poly_mesh | game/terrain_a/terrain_emit | 0  | 0 |  |
+| 4681b0 | B | game/terrain_a/terrain_emit | game/terrain_a/terrain_render | 0  | 3 | visibility twin |
 | 46e590 | B | game/terrain_a/terrain_render | game/terrain_b/terrain_b | 0  | 0 |  |
 | 470a00 | B | game/terrain_b/terrain_b | game/terrain_b/poly_mesh | 0  | 3 | visibility twin |
 | 478830 | B | game/terrain_b/poly_mesh | game/terrain_b/mission | 0  | 2 |  |
