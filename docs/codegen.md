@@ -2046,3 +2046,18 @@ Key numbering (third batch, same night)
 - The kept copy of a merged tail is the earliest jump in the tail label's reference list; a `goto` to a forwarding
   label reverses a group and reorders the merge (`c2trace merges --pairs`; Agent::update_attack 2ce34021). Lexical order
   of two outer arms changes the extent of a shared constant's web even though the emitted layout stays the same.
+- Tail-merge survivor on 13.10: among jumps to one label the lexically last copy is kept; a copy that falls through
+  into the label beats any jump. "Shared tail sits behind an early arm, later arms jump back" means the tail is written
+  twice: once inside the else chain and once lexically last. An early `return` in one arm changes which arm keeps the
+  tail: write the arm if/else like its siblings (widget_mgr::set_alpha 0cb02201, ItemPage::format 5f6a1e52).
+- A block-local whose scope contains references to a parameter conflicts with that parameter's home; in its own
+  `{ }` it shares it. Slot symbols must be at the same offset for two tails to merge.
+- One lane of a sum `fstp`'d to a slot and reloaded while the others stay on the x87 stack, with a frame 8 or 16 bytes
+  larger: `(a + b) * k` through the inline vector operators (MissionObj::read 93276eda, TerrainPage::simulate
+  32db6f83, capsule::draw 2b20ad35).
+- Member loads hoisted above pointer stores in ours but not in the original: the original reaches the member through
+  a sub-object's inline method; offset casts on `this` are disambiguated and hoisted (ViewBody::init 8176f9d9).
+- Displaced dead stores of a `vector4(...)` temporary mark the statement's lexical position: move the statement.
+- `mov [tmp],imm; mov reg,[tmp]; mov [dst],reg` per lane: a constructor taking `const float&` assigned from a
+  temporary. Three floats with one in a parameter home are scalars, not a struct. 16-byte gaps are 4-float vectors
+  even when only x, y, z are used (bounce 77730b0a, GlyphMap::at 3d4bf5b4).
