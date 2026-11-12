@@ -1246,45 +1246,39 @@ void gui_manager::render_log(rgl::scene* pass, const float* depth)
 }
 
 // ---- screen ray ---------------------------------------------------------------------------------------------------------------
+// a camera-space point through the view frame (u * z + f * y + s * x + o); w is left unset
+static __forceinline vector4 cam_xf(const rgl::matrix& m, const vector4& p)
+{
+    vector4 r;
+    r.x = p.z * m.u.x + p.y * m.f.x + p.x * m.s.x + m.o.x;
+    r.y = p.z * m.u.y + p.y * m.f.y + p.x * m.s.y + m.o.y;
+    r.z = p.z * m.u.z + p.y * m.f.z + p.x * m.s.z + m.o.z;
+    return r;
+}
 // @ 0x4bd2f0
-// The original reads stack slots it never writes: the far point's ox/oy when the camera is not in the ortho mode
-// and the w of the position vector (both points copy it).  The locals are gathered in one 0x28-byte record so the
-// uninitialised reads hit the same frame offsets as the original (frame 0x30: w at +0x1c, ox at +0x20, oy at +0x24);
-// the equivalence harness then sees the same stack garbage on both sides.
+// The near and far camera-space points a / b go through the view frame; the original reads stack slots it never writes
+// (b.x / b.y when the camera is not in the ortho mode, and the transformed w of both points), as this source does
+// (frame 0x30: a at +0, the transformed point at +0x10, b at +0x20). The normalised screen position is stored through a
+// pointer to a, and the ortho x reads it back through it: the stores are not forwarded (a.x is reloaded from memory)
+// and k * zc8 is computed twice, as in the original.
 void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
 {
-    struct Frame {
-        float v[4];
-        float px, hp, z, hz;
-        float ox;
-    } f;
-    float oy;
     struct V2 { float x, y; } d = { g_gui.mouse[0] - vx, g_gui.mouse[1] - vy };
-    f.px = d.x / vw;
-    float sy = d.y / vh;
-    f.px = (zb8 - zb4) * f.px + zb4;
-    float py = (zbc - zc0) * sy + zc0;
-    f.z = -zc4;
+    vector4 a, b;
+    vector4* pa = &a;
+    pa->x = d.x / vw;
+    pa->y = d.y / vh;
+    a.x = (zb8 - zb4) * a.x + zb4;
+    a.y = (zbc - zc0) * a.y + zc0;
+    a.z = -zc4;
     if (ortho) {
         float k = 1.0f / zc4;
-        f.ox = k * zc8 * f.px;
-        oy = k * zc8 * py;
+        b.x = k * zc8 * pa->x;
+        b.y = k * zc8 * a.y;
     }
-    f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;
-    float z2 = -zc8;
-    f.v[1] = f.z * view.u.y + py * view.f.y + f.px * view.s.y + view.o.y;
-    f.v[2] = f.z * view.u.z + py * view.f.z + f.px * view.s.z + view.o.z;
-    near_pt->x = f.v[0];
-    near_pt->y = f.v[1];
-    near_pt->z = f.v[2];
-    near_pt->w = f.v[3];
-    f.v[0] = z2 * view.u.x + oy * view.f.x + f.ox * view.s.x + view.o.x;
-    f.v[1] = z2 * view.u.y + oy * view.f.y + f.ox * view.s.y + view.o.y;
-    f.v[2] = z2 * view.u.z + oy * view.f.z + f.ox * view.s.z + view.o.z;
-    far_pt->x = f.v[0];
-    far_pt->y = f.v[1];
-    far_pt->z = f.v[2];
-    far_pt->w = f.v[3];
+    b.z = -zc8;
+    *near_pt = cam_xf(view, a);
+    *far_pt = cam_xf(view, b);
 }
 
 // ---- ini file -------------------------------------------------------------------------------------------------------------------
