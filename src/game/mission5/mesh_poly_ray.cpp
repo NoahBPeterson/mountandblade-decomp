@@ -364,12 +364,11 @@ int Mesh_s2e960::edge_index(int index, const rgl::matrix& m)
 // @ 0x52edb0
 void Mesh_s2e960::apply_copy(const rgl::matrix& m)
 {
-    // The original keeps the basis matrix, the edge temporary and the polygon temporary in one
-    // stack area (their lifetimes are disjoint), so the unwritten tail of each pushed element
-    // holds leftover basis words; one shared buffer keeps that.
-    char scratch[sizeof(mpoly_s2e960)];
-    rgl::matrix& basis = *(rgl::matrix*)scratch;
-    basis = m;
+    // The basis lives in an inner block that ends after the vertex loop: the edge and polygon temporaries then share
+    // its frame area (frame 0x9c), as in the original.
+    int voff, eoff;
+    {
+    rgl::matrix basis = m;
     basis.u = rgl::vector4(0.0f, 0.0f, 1.0f);
     basis.s = rgl::vcross_s2e960(basis.f, basis.u);
     basis.s.normalize();
@@ -388,8 +387,8 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
     if (polys2.size() == 0)
         return;
 
-    int voff = verts.size();
-    int eoff = edges.size();
+    voff = verts.size();
+    eoff = edges.size();
 
     for (unsigned i = 0; i < verts2.size(); i++) {
         mface_s2e960 v;
@@ -397,23 +396,25 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
         v.flag = 1;
         verts.push_back(v);
     }
+    }
 
     for (unsigned i = 0; i < edges2.size(); i++) {
-        medge_s2e960& e = *(medge_s2e960*)scratch;
-        e.v0 = edges2[i].v0 + voff;
-        e.v1 = edges2[i].v1 + voff;
+        medge_s2e960 e;
         e.unk08 = -10000;
         e.unk0c = -10000;
         e.unk10 = 0;
-        e.flag = 1;
         e.t0 = 1.0f;
         e.t1 = 1.0f;
+        e.flag = 1;
+        e.v0 = edges2[i].v0 + voff;
+        e.v1 = edges2[i].v1 + voff;
         edges.push_back(e);
     }
 
-    for (unsigned i = 0; i < polys2.size(); i++) {
-        mpoly_s2e960& p = polys2[i];
-        mpoly_s2e960& t = *(mpoly_s2e960*)scratch;
+    for (unsigned i = 0; i < polys2.size(); i++) {      // polys2[i] through operator[] at every use, as make_copy
+        mpoly_s2e960 t;
+        t.unk00 = 0;
+        t.unk5c = 0;
         t.idx[0] = -100000;
         t.idx[1] = -100000;
         t.idx[2] = -100000;
@@ -422,13 +423,11 @@ void Mesh_s2e960::apply_copy(const rgl::matrix& m)
         t.idx2[1] = -100000;
         t.idx2[2] = -100000;
         t.idx2[3] = -100000;
-        t.unk00 = 0;
-        t.count = p.count;
-        t.unk5c = 0;
         t.flag = 1;
-        for (int j = 0; p.count > j; j++) {
-            t.idx[j] = p.idx[j] + voff;
-            t.idx2[j] = p.idx2[j] + eoff;
+        t.count = polys2[i].count;
+        for (int j = 0; j < polys2[i].count; j++) {
+            t.idx[j] = polys2[i].idx[j] + voff;
+            t.idx2[j] = polys2[i].idx2[j] + eoff;
         }
         polys.push_back(t);
     }
