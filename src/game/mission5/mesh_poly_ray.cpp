@@ -318,7 +318,7 @@ static __forceinline int mface_src_index(const mface_s2e960& v) { return v.index
 // @ 0x52ebc0
 int Mesh_s2e960::vertex_index(int index, const rgl::matrix& m)
 {
-    for (int i = 0; (unsigned)i < (unsigned)verts2.size(); i++) {
+    for (int i = 0; (unsigned)i < (*(std::vector<mface_s2e960>*)((char*)this + 0x48)).size(); i++) {   // real std::vector size() and operator[] throughout
         if ((*(std::vector<mface_s2e960>*)((char*)this + 0x48))[i].index == index) {
             if (i >= 0)
                 return i;
@@ -328,7 +328,7 @@ int Mesh_s2e960::vertex_index(int index, const rgl::matrix& m)
     int n = (*(std::vector<mface_s2e960>*)((char*)this + 0x48)).size();
     mface_s2e960 f;
     f.flag = 0;
-    f.pos = m.transform_point_to_local(verts.first[index].pos);
+    f.pos = m.transform_point_to_local((*(std::vector<mface_s2e960>*)((char*)this + 0x18))[index].pos);
     f.index = index;
     (*(std::vector<mface_s2e960>*)((char*)this + 0x48)).push_back(f);
     return n;
