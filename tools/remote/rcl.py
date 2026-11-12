@@ -9,6 +9,10 @@ mapped back to the Mac's) on stdout, like cl.sh. Exit status:
   75       the laptop is busy or unreachable right now: wait for a local slot, ask again later
   76       this command cannot / should not run remotely (not configured, unsupported flags, a header was missing):
            compile locally
+Traced compiles (../vs2005-cpp tools/c2trace.py): MB_RC_TC names a compiler directory installed on the laptop
+(D:\\mb\\rc\\tc\\<name>: cl.exe with the patched c2.dll and c2trace.dll), MB_RC_TRACE_CFG is the hook list to ship and
+MB_RC_TRACE_LOG where the trace log is written here. The log and the other outputs are then written whatever cl's exit
+status was (a trace can end the compile on purpose).
 Pure standard library. Off unless ~/.config/mb-compile-token and ~/.config/mb-compile-server (host:port) exist, or
 MB_RC_TOKEN / MB_RC_ENDPOINT are set; MB_RC=0 turns it off. Nothing is read from or written to the laptop outside D:\\mb\\rc.
 """
@@ -204,8 +208,9 @@ def main(argv):
     if not ep or not os.path.isfile(token_path):
         return LOCAL
     down = os.path.join(ROOT, "work", "locks", "rcl.down")
-    try:
-        if time.time() - os.path.getmtime(down) < 30:
+    traced = bool(os.environ.get("MB_RC_TC"))          # a traced compile waits for the laptop: its caller retries on 75,
+    try:                                                # so it neither trusts nor writes the 30 s "down" marker
+        if not traced and time.time() - os.path.getmtime(down) < 30:
             return BUSY
     except OSError:
         pass
@@ -213,10 +218,18 @@ def main(argv):
         args, srcs, idirs, outs, fis = parse(argv)
     except Unsupported:
         return LOCAL
+    tc, tcfg, tlog = (os.environ.get(k) for k in ("MB_RC_TC", "MB_RC_TRACE_CFG", "MB_RC_TRACE_LOG"))
+    extra = {}
+    if tc:
+        if not (tcfg and tlog and os.path.isfile(tcfg)):
+            return LOCAL
+        outs["oT"] = ("oT/c2trace.log", tlog)
+        cfg_ph, cfg_key = place(os.path.abspath(tcfg))
+        extra = {"tc": tc, "env": {"C2TRACE_CFG": cfg_ph, "C2TRACE_LOG": "{S}/out/oT/c2trace.log"}}
     token = open(token_path, "rb").read().strip()
     host, port = ep.rsplit(":", 1)
     try:
-        sock = socket.create_connection((host, int(port)), timeout=CONNECT_TIMEOUT)
+        sock = socket.create_connection((host, int(port)), timeout=5.0 if traced else CONNECT_TIMEOUT)
         sock.settimeout(10)
         nonce = json.loads(recv_exact(sock, struct.unpack(">I", recv_exact(sock, 4))[0]))["nonce"]
         send(sock, {"mac": mac(token, nonce, "C")})
@@ -225,6 +238,8 @@ def main(argv):
         send(sock, {"op": "reserve"})
         ok = recv(sock)["ok"]
     except (OSError, ConnectionError, ValueError, KeyError):
+        if traced:
+            return BUSY
         try:
             os.makedirs(os.path.dirname(down), exist_ok=True)
             open(down, "w").close()
@@ -239,8 +254,10 @@ def main(argv):
             files = scan(srcs, idirs, fis)
         except Unsupported:
             return LOCAL
+        if tc:
+            files[cfg_key] = os.path.abspath(tcfg)
         shas = {k: sha1_of(p) for k, p in files.items()}
-        send(sock, {"op": "compile", "args": args, "files": shas, "outs": {k: v[0] for k, v in outs.items()}})
+        send(sock, dict({"op": "compile", "args": args, "files": shas, "outs": {k: v[0] for k, v in outs.items()}}, **extra))
         sock.settimeout(300)                            # a stalled job falls back to a local slot (cl.sh) instead of waiting 20 min
         need = recv(sock)["need"]
         by_sha = {}
@@ -258,12 +275,18 @@ def main(argv):
         sock.close()
     log = unmap_log(res["log"], res["stage"], res["repo"])
     if "C1083" in log or res["log"] == "refused":      # a header we did not ship (or a refused job): the local compiler decides
+        if os.environ.get("MB_RC_DEBUG"):
+            sys.stderr.write("rcl: falling back to a local compile: %s\n" % log[-600:])
         return LOCAL
-    return _finish(res, log, outs, got)
+    return _finish(res, log, outs, got, always=bool(tc))
 
 
-def _finish(res, log, outs, got):
-    if res["rc"] == 0:
+def _finish(res, log, outs, got, always=False):
+    if always:                                          # a traced compile: keep what came back, even after a failure
+        if "oT" not in got:
+            return LOCAL
+        outs = {k: v for k, v in outs.items() if k in got}
+    if res["rc"] == 0 or always:
         for k, (_rel, dest) in outs.items():
             if k not in got:
                 return LOCAL

@@ -370,14 +370,17 @@ struct HF : HeightField {
 // rebuild the world mesh, install a fresh HeightField and relight the scene
 void Terrain::tessellate()
 {
+    // x and y shared by both loop nests and initialised before g: the initialisers are the first mention, so x gets the
+    // register-candidate number below g, cr and y; that numbering is what puts the reloads after the corner loop in the
+    // original's order (edi, ebx [0x44], esi [0x14]: regalloc.md 3.6.9, split pieces take free-list numbers by parent)
+    int x = 0, y = 0;
     Geom_t* g = (Geom_t*)new NavCore;       // the mesh being rebuilt: a local, as in the original ([esp+0x28])
 
     HeightField* cr = new HF(scale, *(vector4*)((char*)this + 0x843bcfc), &w);
     HeightField* rows = cr;
 
-    int y;
     for (y = 0; y <= h; y++) {
-        for (int x = 0; x <= w; x++) {
+        for (x = 0; x <= w; x++) {
             terrain_cell* c = &at(x, y);
             int id = *(int*)&c->pz;                 // the height's bits (0x481630 reads cell+8)
             c->f14 = -1;
@@ -390,7 +393,7 @@ void Terrain::tessellate()
     g->pts().reserve(npts);
 
     for (y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
+        for (x = 0; x < w; x++) {
             terrain_quad* qp = &quads[x * 250 + y];     // 0x4816d6: row stride 0x38, column stride 0x36b0 (index x * 250 + y)
             int tri[2][4][2];
             vector4 nrm[2];

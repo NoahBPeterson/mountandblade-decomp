@@ -108,6 +108,16 @@ the session):
     #         from the Mac: python3 tools/remote/rcl.py with MB_RC_ENDPOINT set, or any compile with cl.sh while the Mac is saturated
     # stop:   taskkill /pid <PID in D:\mb\jobs\rcserver.pid> /t /f
 
+**Traced compiles (the c2 tracer of `../vs2005-cpp`) run there too.** `D:\mb\rc\tc\c2-13.10.3077-trace` holds a copy of the tracer's
+compiler directory (`../vs2005-cpp/work/toolchain/c2-13.10.3077-trace/VC/Bin`: cl.exe, the patched c2.dll, c2trace.dll; copy it again
+after `c2build.py setup --c2 13.10` rebuilds them). With `C2TRACE_REMOTE=<this repo>/tools/remote/rcl.py` in the environment,
+`c2trace.py`, `tsweep.py`, `regmap` and the rest send each traced compile through `rcl.py` (`MB_RC_TC` names the compiler directory,
+the hook list is shipped, the trace log comes back as an output) and fall back to wine when the laptop declines (`/Zi`, an anonymous
+namespace, a compiler it lacks). A traced compile waits for a slot instead of falling back. Measured 2026-11-11: one compile is no
+faster than on an idle Mac (about 4 s against 6 s), but 12 in parallel finish in 14 s, and a 36-variant `tsweep` (72 traced compiles)
+at `--jobs 16` takes 1 minute where `--jobs 3` under wine took over 10. `C2TRACE_REMOTE_DEBUG=1` and `MB_RC_DEBUG=1` say why a
+compile was declined.
+
 It must be restarted after a laptop reboot. Compile jobs run at Idle priority (the laptop's game wins).
 
 Objects from the laptop vs the Mac: code, data, relocations, symbol names/values and the SEH table are identical; only the COFF

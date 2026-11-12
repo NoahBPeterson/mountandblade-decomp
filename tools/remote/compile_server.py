@@ -13,6 +13,11 @@ Inputs are content-addressed in D:\\mb\\rc\\store/<sha1[:2]>/<sha1>; each job ge
 shipped files, so a header the client forgot to ship is a C1083, never a stale copy from D:\\mb\\repo. Args carry {S}/... (the stage
 directory) and {R}/... (the repo checkout: toolchain and DX SDK only) placeholders. The token (a file outside the repo) is
 never sent, only HMACs of a fresh nonce. cl.exe is the only program that is run; args starting with @ are refused.
+
+Traced compiles (../vs2005-cpp tools/c2trace.py, via rcl.py's MB_RC_TC): a compile message may name "tc", an alternative
+compiler directory D:\\mb\\rc\\tc\\<name> (installed by hand; it holds cl.exe with a patched c2.dll and c2trace.dll), and
+"env", whose keys must start with C2TRACE_ and whose values take the same {S}/{R} placeholders (the hook list is a
+shipped file, the trace log an out). An unknown tc or any other env key is refused.
 """
 import argparse, hashlib, hmac, json, os, re, secrets, shutil, socket, socketserver, struct, subprocess, sys, threading, time
 
@@ -111,8 +116,15 @@ class Server:
             env["PATH"] = os.path.join(self.a.repo, *tc, "vc71tk", "bin") + os.pathsep + env.get("PATH", "")
         return env
 
-    def cl_cmd(self):
-        cl = os.path.join(self.a.repo, "work", "toolchain", "vc71tk", "bin", "cl.exe")
+    def tc_dir(self, tc):
+        """The compiler directory for a job: the repo's vc71tk, or D:\\mb\\rc\\tc\\<tc> (None if it is not installed)."""
+        if not tc:
+            return os.path.join(self.a.repo, "work", "toolchain", "vc71tk", "bin")
+        d = os.path.join(self.a.root, "tc", tc)
+        return d if re.fullmatch(r"[A-Za-z0-9._-]+", tc) and os.path.isfile(os.path.join(d, "cl.exe")) else None
+
+    def cl_cmd(self, tcdir=None):
+        cl = os.path.join(tcdir or self.tc_dir(None), "cl.exe")
         return ["wine", cl] if self.a.wine else [cl]
 
     def handle(self, sock):
@@ -153,7 +165,9 @@ class Server:
 
     def compile(self, sock, m):
         files, args, outs = m["files"], m["args"], m.get("outs", {})
-        if any(a.startswith("@") for a in args) or any(".." in k.split("/") or k.startswith("/") or ":" in k for k in files):
+        tcdir, xenv = self.tc_dir(m.get("tc")), m.get("env") or {}
+        if tcdir is None or not isinstance(xenv, dict) or any(not str(k).startswith("C2TRACE_") for k in xenv) or \
+                any(a.startswith("@") for a in args) or any(".." in k.split("/") or k.startswith("/") or ":" in k for k in files):
             send(sock, {"rc": 2, "log": "refused", "stage": "", "repo": "", "outs": {}})
             return
         need = [h for h in sorted(set(files.values())) if not os.path.exists(self.blob_path(h))]
@@ -185,11 +199,19 @@ class Server:
             for rel in outs.values():
                 os.makedirs(os.path.dirname(os.path.join(stage, "out", *rel.split("/"))), exist_ok=True)
             os.makedirs(os.path.join(stage, "out"), exist_ok=True)
-            cmd = self.cl_cmd() + [self.expand(a, stage) for a in args]
+            cmd = self.cl_cmd(tcdir) + [self.expand(a, stage) for a in args]
+            env = self.env(stage)
+            if m.get("tc"):                                  # the traced cl.exe finds its own DLLs first
+                if self.a.wine:
+                    env["WINEPATH"] = self.cpath(tcdir)
+                else:
+                    env["PATH"] = tcdir + os.pathsep + env.get("PATH", "")
+            for k, v in xenv.items():
+                env[str(k)] = self.expand(str(v), stage)
             kw = {}
             if IS_WIN:
                 kw["creationflags"] = 0x00000040 | 0x08000000      # IDLE_PRIORITY_CLASS | CREATE_NO_WINDOW
-            r = subprocess.run(cmd, cwd=stage, env=self.env(stage), capture_output=True, stdin=subprocess.DEVNULL, **kw)
+            r = subprocess.run(cmd, cwd=stage, env=env, capture_output=True, stdin=subprocess.DEVNULL, **kw)
             log = (r.stdout + r.stderr).decode("latin-1")
             got = {}
             for k, rel in outs.items():

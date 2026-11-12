@@ -4,3 +4,4 @@
 ../src/game/mesh_slot/mesh_terrain.cpp  ?generate@Terrain@@QAEXHPAHD@Z  00481d10  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_terrain.cpp  ?create_water@Terrain@@QAEXPAPAX@Z  00480db0  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_terrain.cpp  ?emit_particle@Terrain@@QAEXHHHHM@Z  0047ff60  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_terrain.cpp  ?tessellate@Terrain@@QAEXXZ  00481570  /O2 /MT /Gy /TP

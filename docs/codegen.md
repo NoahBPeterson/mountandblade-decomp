@@ -1797,6 +1797,14 @@ function as complete when you have honestly run out of them.
     declaration order of the named locals. Struct members, walkers, loop forms,
     scope changes and forceinline helpers didn't move it either. It moved only
     together with other code: adding `qn == 0 &&` to a test, or dropping a store.
+    **Solved 2026-11-11 (c2 tracer, `../vs2005-cpp` regalloc.md 3.6.9): it is source-controllable, through first
+    mention.** The reloads are loads of a late split round, inserted in ascending number of the new pieces; new pieces
+    take record numbers off a last-in-first-out free list and their parents are handled in ascending number, so the
+    order follows the values' register-candidate numbers, and those start in order of first mention in the function
+    (not declaration order, not priority, not next use). The original needs `x` numbered before `g`, `cr` and `y`:
+    one `x` and one `y` for both loop nests, declared with initialisers before `g` (`int x = 0, y = 0;`), and the
+    function matches. `int x; (void)x;` before `g` works too; the same mention after `g`'s line does not.
+    `rasim check --predict` reproduces the record numbers and the reload groups (93 of 93, 18 of 18 here).
 - Several values kept unrounded on the x87 stack across a branch while others
   live in memory (M&B `screen_to_world`: `sy`, `py`, `oy` in registers, `px`, `z`,
   `ox` in memory). Twelve source shapes and four `volatile`/pointer variants moved
