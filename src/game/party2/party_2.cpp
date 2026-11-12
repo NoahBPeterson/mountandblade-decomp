@@ -844,11 +844,14 @@ void Party::set_order_party(int* t)
     kind = 2;
     tgt_id = t[0];
     PartyMgr* mgr = &g_game->parties;
-    if (f5984 != party_of(mgr, t[0])->mesh->m4) {
-        const PartyV4* pp = &party_of(mgr, tgt_id)->pos;
-        float dx = pp->x - pos.x;
-        float dy = pp->y - pos.y;
-        float dz = pp->z - pos.z;
+    // the lookup is called here, not through party_of: its by-value id parameter is a variable (a register candidate),
+    // the bare argument a temporary that takes the next scratch register (edx, then ecx); the parentheses hold the
+    // last fsub above the moving store (codegen.md 16)
+    if (f5984 != party_at(mgr, mgr->lookup(t[0]))->mesh->m4) {
+        const PartyV4* pp = &party_at(mgr, mgr->lookup(tgt_id))->pos;
+        float dx = (pp->x - pos.x);
+        float dy = (pp->y - pos.y);
+        float dz = (pp->z - pos.z);
         moving = 0;
         float s = dx * dx;
         s += dy * dy;
