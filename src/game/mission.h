@@ -54,11 +54,12 @@ struct ClassInfo {                              // 0x6c bytes, per team per troo
     int mode;                                   // +0x58 (0x43a510)
     rgl::vector4 sum;                           // +0x5c
 };
-struct TeamRec {                                // 0x16c bytes
-    int leader;                                 // +0x00 agent id, -1 = none (0x435b60, agent_set_team 0x4a99af)
-    ClassInfo cls[3];                           // +0x04
-    int relation[8];                            // +0x148 relation to team b: -1 hostile, 1 friend (0x43b300, 0x435b90, 0x4a9d5d)
-    int pad168;
+struct TeamRec {                                // 0x16c bytes, from mission +0x527c: the class selector code (0x489890, 0x4898e0) and
+                                                // agent_set_team (0x4a99af: lea edi,[..+0x527c], leader at [edi+4]) address it from there
+    int f0;                                     // +0x00
+    int leader;                                 // +0x04 agent id, -1 = none (0x435b60, agent_set_team 0x4a99af)
+    ClassInfo cls[3];                           // +0x08
+    int relation[8];                            // +0x14c relation to team b: -1 hostile, 1 friend (0x43b300, 0x435b90, 0x4a9d5d)
     void set_vec(const rgl::vector4* p, const int* face, const rgl::vector4& offset);   // 0x4898e0 (ret 0xc)
 };
 typedef char TeamRec_size_check[sizeof(TeamRec) == 0x16c ? 1 : -1];
@@ -99,8 +100,9 @@ struct Mission {
     rgl::psys* layer2;                               // +0x01b8
     char pad1bc[0x6b0 - 0x1bc];
     MarkRec recs[1];                            // +0x06b0 (0x472160; more than one record)
-    char pad7e0[0x5280 - 0x6b0 - sizeof(MarkRec)];
-    TeamRec teams[8];                           // +0x5280 (0x474e60, 0x435b90, 0x43b300, 0x48a9e0)
+    char pad7e0[0x527c - 0x6b0 - sizeof(MarkRec)];
+    TeamRec teams[8];                           // +0x527c (0x474e60, 0x435b90, 0x43b300, 0x48a9e0); leaders from +0x5280
+    char pad5ddc[4];
     Timer tm;                                   // +0x5de0
     int mode;                                   // +0x5df0 index into g_mission_templates (0x473a60, 0x435840)
     int f5df4;                                  // +0x5df4 index of the active level slot (0x4435c0)

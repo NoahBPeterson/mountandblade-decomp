@@ -3147,9 +3147,8 @@ __forceinline void MissionX::check_slot(int entry, int count) { ((c49bea0::Missi
 
 // 64-bit operand range test as the original spells it: lo <= v < hi on the full 64-bit value
 #define IN_RANGE(v, lo, hi) ((v) >= (lo) && (v) < (hi))
-// team t's class selector (Sel 0x489890 / 0x4898e0): the original addresses it at the team record - 4
-// (mission +0x527c + t*0x16c), so that its rec[k] fields land on cls[k] (present +0x4c = cls.use, the vector +0x18 = cls.pos)
-#define TEAM_SEL(m, t) ((Sel*)((char*)&(m)->teams[t] - 4))
+// team t's class selector (Sel 0x489890 / 0x4898e0): the team record seen as the class that defines those two
+#define TEAM_SEL(m, t) ((Sel*)&(m)->teams[t])
 // identity3 (0x40cd60) seen through its hidden return pointer, as IDENTITY_VALUE does for identity_pos (the copy reads the returned pointer)
 struct mat3_value : rgl::mat3 {};
 typedef mat3_value (__cdecl* identity3_value_fn)();
@@ -3232,10 +3231,6 @@ int Agent::clamped_team() const
     if (t < 0 || t >= 8) t = 7;
     return t;
 }
-// the head of a team record as the original addresses it: 4 bytes before mission.h's TeamRec (the record TEAM_SEL names),
-// leader at +4. agent_set_team keeps this pointer (lea edi,[..+0x527c]) and reads [edi+4] into a register for the test.
-struct TeamHead { int f0; int leader; };
-#define TEAM_HEAD(m, t) ((TeamHead*)((char*)&(m)->teams[t] - 4))
 // Troop::is_hero 0x435130 (agent/agent.cpp): store_num_regular_prisoners keeps params[1] in ebx through its loop (push ebx
 // after the call), which leaves no register for its counters: they live in the frame as in the original
 bool Troop::is_hero()
@@ -5752,7 +5747,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             ((NamedSelRec*)agent((int)params[0]))->set_sel(&si_0);
             MissionX* m = mission();
             int a = (int)params[0];
-            TeamHead* tr = TEAM_HEAD(m, m->agents.get(a)->clamped_team());
+            TeamRec* tr = &m->teams[m->agents.get(a)->clamped_team()];
             if (tr->leader < 0)
                 tr->leader = m->agents.get(a)->id;
         }

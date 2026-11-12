@@ -41,7 +41,7 @@ inline Pool<RecJ>& pool_j(Mission* m) { return *(Pool<RecJ>*)m->poolJ; }
 MISSION_OFFSET_CHECK(agents, 0x4);
 MISSION_OFFSET_CHECK(poolJ, 0x30);
 MISSION_OFFSET_CHECK(recs, 0x6b0);
-MISSION_OFFSET_CHECK(teams, 0x5280);
+MISSION_OFFSET_CHECK(teams, 0x527c);
 MISSION_OFFSET_CHECK(tm, 0x5de0);
 MISSION_OFFSET_CHECK(mode, 0x5df0);
 MISSION_OFFSET_CHECK(v5dfc, 0x5dfc);

@@ -574,7 +574,7 @@ namespace std { template<> PlacedObj& vector<PlacedObj, allocator<PlacedObj> >::
 #define prop_at(v, id) ((PropInst*)&(v)[id])   // the script's view of the record; operator[] stays out of line (thiscall, ret 4)
 // the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)
 struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
-// TeamRec (0x16c bytes at mission +0x5280): src/game/mission.h
+// TeamRec (0x16c bytes at mission +0x527c): src/game/mission.h
 // a point light added by add_point_light (0x7c bytes)
 #include "../light.h"                   // Light (shared with agent2 / strat)
 // the trigger's scene entity (prop instance or agent body, trigger_entity 0x490430): virtual slots 25 / 27
@@ -617,9 +617,9 @@ struct MissionX {
     int player_agent;                   // +0x5c (heal_party 0x4a488d)
     char pad60[0x670 - 0x60];
     EntryPoint entries[64];             // +0x670
-    char pad5270[0x5280 - 0x5270];
-    TeamRec teams[8];                   // +0x5280
-    char pad5de0[0x5df4 - 0x5de0];
+    char pad5270[0x527c - 0x5270];
+    TeamRec teams[8];                   // +0x527c
+    char pad5ddc[0x5df4 - 0x5ddc];
     int current_scene;                  // +0x5df4 (store_current_scene 0x4ad2c8)
     char pad5df8[0x6214 - 0x5df8];
     int mode;                           // +0x6214 (agent_is_defender 0x4a8b80)
@@ -691,7 +691,7 @@ struct MissionX {
     __forceinline int enter_trigger(int item, int modifier) { return ((Mission*)this)->enter_trigger(item, modifier); }   // 0x49f980 (ret 8)
 };
 SI_ASSERT(mission_props, offsetof(MissionX, props) == 0x6688);
-SI_ASSERT(mission_teams, offsetof(MissionX, teams) == 0x5280);
+SI_ASSERT(mission_teams, offsetof(MissionX, teams) == 0x527c);
 SI_ASSERT(mission_mode, offsetof(MissionX, mode) == 0x6214);
 SI_ASSERT(mission_fog, offsetof(MissionX, fog_distance) == 0x6610);
 SI_ASSERT(mission_cam, offsetof(MissionX, cam_frame) == 0x674c);
