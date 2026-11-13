@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compile one source once and score it against MANY original functions (no global lock).
 
-usage: chk.py <file.cpp> <slice-id | va[,va...]> [more vas...] [--flags "/O2 /MT /Gy /TP"] [-a]
+usage: chk.py <file.cpp> <slice-id | va[,va...]> [more vas...] [--flags "/O2 /MT /Gy /TP"] [-a] [--quick]
 For every target VA it scores the symbol its manifest.txt row names (column "manif"), else the symbol
 defined after the VA's `// @ 0x<va>` marker in the source ("marker"); only a VA with neither falls back to
 the best symbol of similar size ("~size", fewest differing bytes). A symbol of another name that is
@@ -9,6 +9,8 @@ byte-identical still counts as MATCH ("other"; the manifest row must then name t
 slice is checked with a single wine compile.
 A slice id (sXXXXXXXX) is looked up in work/batches/*.json. -a also lists every symbol's best VA.
 Exit 0 iff every target VA has a MATCH. Final verification is still run_all.py --manifest.
+--quick: for each target that does not MATCH, tools/equiv/quick.py (5-30 s each, advice only, records nothing): is the
+source wrong (angr's counterexample in words, replayed concretely), or does it only compile differently?
 
 Two counts per row: "diff" is positional (byte i against byte i, plus the size difference; 0 means MATCH), so one shifted
 instruction makes everything after it count. "aligned" first aligns the two instruction lists (difflib, as insn_align.py)
@@ -114,10 +116,36 @@ def marker_syms(src, va, names):
     return out
 
 
+def run_quick(src, obj, flags, vas, best, how_of, no_emu):
+    """tools/equiv/quick.py on each target that does not MATCH, with this compile's object (advice only: it never
+    changes chk's exit status, and a failure of the check is printed, not raised)"""
+    sys.path.insert(0, os.path.join(ROOT, "tools", "equiv"))
+    for va in vas:
+        b = best.get(va)
+        if not b or b[0] == 0:
+            continue
+        print("\n---- quick check %08x (%s)" % (va, b[2]))
+        sys.stdout.flush()
+        if how_of.get(va) == "~size":
+            print("quick check: skipped (no manifest row or // @ marker names the symbol; ~size is a guess)")
+            continue
+        try:
+            import quick
+            quick.run(va, src, b[2], flags, obj=obj, emu=not no_emu)
+        except BaseException as e:      # advice only: never break chk.py
+            if isinstance(e, KeyboardInterrupt):
+                raise
+            print("quick check: failed (%s: %s)" % (type(e).__name__, str(e)[:200]))
+        sys.stdout.flush()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("src"); ap.add_argument("targets", nargs="+")
     ap.add_argument("--flags", default=" ".join(DEFAULT_FLAGS)); ap.add_argument("-a", action="store_true")
+    ap.add_argument("--quick", action="store_true", help="for each target that does not MATCH, the quick equivalence "
+                    "check (tools/equiv/quick.py: renaming, angr ~15 s, emulator ~10 s): wrong logic or only codegen?")
+    ap.add_argument("--quick-no-emu", action="store_true", help="--quick without its emulator step")
     a = ap.parse_args()
     vas = []
     for t in a.targets:
@@ -162,7 +190,7 @@ def main():
         if _p:
             _em.add(int(_p[0], 16))
     fstarts = [a for a in fstarts if a not in _em]
-    best, sym_best = {}, {}
+    best, sym_best, how_of = {}, {}, {}
     names = [f[0] for f in funcs]
     consts = coff_constants(obj)
     manifest = manifest_syms(src)
@@ -192,6 +220,7 @@ def main():
             # an identical function under another name (an implicit dtor, a ??_G deleting dtor the marked
             # function inlines): it is a real MATCH, but the manifest row must name this symbol
             best[va], how = size_best, "other"
+        how_of[va] = how
         b = best.get(va)
         if b:
             al = ""
@@ -215,6 +244,8 @@ def main():
             print("%s  %s  %08x  %s" % (rel, best[va][2], va, a.flags.strip()))
     m = sum(1 for va in vas if best.get(va, (1,))[0] == 0)
     print("%d / %d target functions MATCH" % (m, len(vas)))
+    if a.quick or a.quick_no_emu:
+        run_quick(src, obj, flags, vas, best, how_of, a.quick_no_emu)
     return 0 if m == len(vas) else 1
 
 
