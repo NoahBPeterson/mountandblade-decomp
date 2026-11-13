@@ -268,8 +268,13 @@ def main():
     ap.add_argument("--record", action="store_true", help="on EQUIVALENT, write docs/equiv_proofs.json + bundle")
     ap.add_argument("--recheck", action="store_true", help="re-verify the recorded proof of va")
     ap.add_argument("--recheck-all", action="store_true", help="re-verify every row of docs/equiv_proofs.json")
+    ap.add_argument("--remote", action="store_true", help="run the angr solver on the Windows laptop "
+                    "(tools/equiv/remote.py; EQUIV_REMOTE=1 does the same), locally when it declines")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
+    if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
+        import remote                   # the angr solver on the laptop (tools/equiv/remote.py), local when declined
+        remote.enable()
     if a.recheck_all or a.recheck:
         doc = load_proofs()
         rows = doc.get("rows", {})

@@ -163,3 +163,39 @@ How it works:
 * `smoke.py` polls `D:\mb\smoke\out\status.txt` / `done`, copies the two PNGs back and scores them with the same function
   (320x200 greyscale, threshold 12, better of two) against `work/smoke/ref_menu_win.png`. The Windows render differs from the Mac's
   (resolution, window frame), so it has its own reference, made from a known-good build.
+
+## angr solver server (laptop as extra slots for the equivalence prover)
+
+`tools/equiv/prove.py`, `sweep.py` and `quick.py` take `--remote` (or `EQUIV_REMOTE=1`): the angr layer's solver
+processes (whole-function `angr_layer.py --worker`, the region mode's `--serve` workers, `cexmodel.py --worker`) then
+run on the laptop, and locally whenever the laptop declines (all slots busy, unreachable, not configured). Only the
+solver moves: the job (the original's code from `work/mb.analysis.bin`, our object's code patched with the relocation
+pairing, callee facts from the image and `symbols/`) is prepared on the Mac exactly as before and is self-contained,
+so the laptop needs no image, objects or symbols, only the Python files, which the client ships with every run
+(content-addressed, so the laptop always runs the caller's own `angr_layer.py`).
+
+* `tools/equiv/remote.py` (client, stdlib only) becomes `$EQUIV_ANGR_PYTHON`: it reserves a slot, ships the script and
+  `angr_layer.py`, relays stdin/stdout, and `exec`s the local angr venv when declined. A failed connection marks the
+  laptop down for 30 s (`work/locks/eq.down`). Each solver's placement is logged in `work/equiv/remote.log`
+  (`EQUIV_REMOTE_DEBUG=1` also prints it). Endpoint: `~/.config/mb-angr-server` or `MB_EQ_ENDPOINT`, else the compile
+  server's host at port 47814; token: the compile server's.
+* `tools/remote/angr_server.py` (copy at `D:\mb\eq\angr_server.py`; store and stage dirs under `D:\mb\eq`) runs
+  `D:\mb\angr-venv\Scripts\python.exe -I <stage>\<script> --worker|--serve` at Idle priority with `PYTHONHASHSEED=0`,
+  at most `--slots 6` at once (12 logical CPUs shared with the compile server and the other project's game). A child is
+  killed (by its own PID) when its connection drops (the Mac caller hit its timeout), and after `--max-seconds 3600`.
+  `--idle-exit S` makes the server exit after S seconds without a connection.
+* `D:\mb\angr-venv` is the pinned venv (`tools/equiv/angr-requirements.txt`, Python 3.12.15 installed by uv into
+  `D:\mb\uvpy` with `--no-bin --no-registry`; pip's cache in `D:\mb\uvcache\pip`). Rebuild / check:
+  `D:\mb\eq\eqsetup.bat`, or `<py312> D:\mb\eq\setup_angr_venv.py --dest D:\mb\angr-venv --check`.
+
+Start / stop (`tools/remote/angr_server.py`, `eqstart.ps1`, `eqsetup.bat`, `tools/equiv/setup_angr_venv.py` and
+`angr-requirements.txt` are copied to `D:\mb\eq`; copy again when they change):
+
+    # start (WMI, detached from the ssh session; PID in D:\mb\eq\server.pid, not D:\mb\jobs):
+    powershell -NoProfile -ExecutionPolicy Bypass -File D:\mb\eq\eqstart.ps1
+    #   which runs: D:\mb\repo\.venv\Scripts\python D:\mb\eq\angr_server.py --bind 100.84.111.92 --slots 6 --idle-exit 7200
+    # check:  netstat -ano | findstr 47814   and   type D:\mb\eq\server.log
+    # stop:   taskkill /pid <PID in D:\mb\eq\server.pid> /t /f
+
+Verified (2026-11-13): `prove.run` of 0x41d6f0 (region), 0x435c10 (rename) and 0x43dcb0 (angr) with layers
+rename,angr,region gives the same verdict, layer, build hash and proof bundle (hints) on the laptop as on the Mac.
