@@ -25,8 +25,8 @@
 ],
 "summary": {
 "pass": 92,
-"proven": 20,
-"weak": 219,
+"proven": 21,
+"weak": 218,
 "fail": 1,
 "inputs": 7,
 "harness": 4,
@@ -36,8 +36,8 @@
 "notcode": 1,
 "not_run": 10,
 "pass_sz": 57176,
-"proven_sz": 10385,
-"weak_sz": 425645,
+"proven_sz": 11448,
+"weak_sz": 424582,
 "fail_sz": 10436,
 "inputs_sz": 23423,
 "harness_sz": 490,
@@ -514,9 +514,11 @@
 "0041d6f0": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1063
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1063,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "0041ef19": {
 "module": "frustum_grid",
@@ -3489,5 +3491,6 @@
 "category": "weak",
 "size": 1719
 }
-}
+},
+"when_proofs": "2026-11-12T21:53:10-06:00"
 }
