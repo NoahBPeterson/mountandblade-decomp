@@ -39,12 +39,30 @@ remote=1
 [ -r "$HOME/.config/mb-compile-server" ] || [ -n "$MB_RC_ENDPOINT" ] || remote=0
 [ "$MB_RC" = 0 ] && remote=0
 command -v python3 >/dev/null 2>&1 || remote=0
+# No silent spill onto this machine (2026-11-13: the laptop's server had been down for hours and every compile ran here
+# under wine, unnoticed): busy (75) waits for a laptop slot; unreachable (77) fails loudly unless MB_RC_ALLOW_LOCAL=1.
+# 76 (this command can only run here by design) still compiles locally. Every local compile while remote is configured
+# is logged to work/locks/local_compiles.log.
+waited=0
 while :; do
     if [ "$remote" = 1 ]; then
         python3 "$root/tools/remote/rcl.py" "$@" </dev/null >"$tmp" 2>&1
         rc=$?
-        [ "$rc" -eq 76 ] && remote=0
-        [ "$rc" -ne 75 ] && [ "$rc" -ne 76 ] && break
+        if [ "$rc" -eq 77 ] && [ "$MB_RC_ALLOW_LOCAL" != 1 ]; then
+            echo "cl.sh: ERROR: the laptop compile server is unreachable; not compiling on this Mac." >&2
+            printf '%s\n' 'cl.sh: start it on the laptop: powershell -File D:\mb\rc\rcstart.ps1' >&2
+            echo "cl.sh: (docs/remote_worker.md), or set MB_RC_ALLOW_LOCAL=1 to compile here deliberately." >&2
+            rm -f "$tmp"; exit 77
+        fi
+        if [ "$rc" -eq 75 ] && [ "$MB_RC_ALLOW_LOCAL" != 1 ]; then
+            waited=$((waited + 1)); sleep 0.5; continue            # busy: wait for a laptop slot
+        fi
+        if [ "$rc" -eq 76 ] || [ "$rc" -eq 75 ] || [ "$rc" -eq 77 ]; then
+            echo "$(date '+%F %T') rc=$rc $*" >> "$locks/local_compiles.log"
+            remote=0
+        else
+            break
+        fi
     fi
     i=1
     while [ "$i" -le "$slots" ]; do

@@ -20,7 +20,7 @@ import hashlib, hmac, json, os, posixpath, re, socket, struct, sys, time, random
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-LOCAL, BUSY = 76, 75
+LOCAL, BUSY, DOWN = 76, 75, 77     # DOWN: the laptop is unreachable (plain compiles only; traced ones keep BUSY)
 INC = re.compile(rb'^[ \t]*#[ \t]*(?:include|import)[ \t]*([<"])([^>"\r\n]+)[>"]', re.M)
 ANON = re.compile(rb"namespace\s*\{")
 TOOLDIRS = tuple(os.path.join(ROOT, "work", d) + os.sep for d in ("toolchain", "ext"))
@@ -222,7 +222,7 @@ def _once(argv):
     traced = bool(os.environ.get("MB_RC_TC"))          # a traced compile waits for the laptop: its caller retries on 75,
     try:                                                # so it neither trusts nor writes the 30 s "down" marker
         if not traced and time.time() - os.path.getmtime(down) < 30:
-            return BUSY
+            return DOWN
     except OSError:
         pass
     try:
@@ -259,7 +259,7 @@ def _once(argv):
             os.utime(down)
         except OSError:
             pass
-        return BUSY
+        return DOWN
     if not ok:
         if os.environ.get("MB_RC_DEBUG"):
             sys.stderr.write("rcl: busy (no free slot)\n")
