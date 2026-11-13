@@ -153,3 +153,63 @@ def test_fold_only_for_calls():
     assert not bij.check(("sym", "_g", 0x06, 0), 0x2000, [])[0]     # data is never folded
     assert not RG.Bijection().check(("sym", "_b", 0x14, 0), 0x2000,
                                     [(("sym", "_a", 0), 0x2000, False, 1, 1)])[0]
+
+
+# a chain of independent if/else diamonds; ours uses ecx where the original uses edx and lays out each diamond the
+# other way round (jne to the then-arm, the else-arm first). 2^13 paths through the stretch: one angr region over it
+# explodes; cut at the joins, each region has two paths.
+def _diamond_r(k, d_delta=0):
+    bit, c, d = (1 << k), k + 1, 2 * k + 3
+    return (H("8b542404" "f7c2") + bit.to_bytes(4, "little") + H("7407" "05") + c.to_bytes(4, "little") +
+            H("eb05" "2d") + d.to_bytes(4, "little"))
+
+
+def _diamond_o(k, d_delta=0):
+    bit, c, d = (1 << k), k + 1, 2 * k + 3 + d_delta
+    return (H("8b4c2404" "f7c1") + bit.to_bytes(4, "little") + H("7507" "2d") + d.to_bytes(4, "little") +
+            H("eb05" "05") + c.to_bytes(4, "little"))
+
+
+CHAIN_N = 13
+
+
+def chain_pair(bad=None):
+    r = H("31c0") + b"".join(_diamond_r(k) for k in range(CHAIN_N)) + H("c3")
+    o = H("31c0") + b"".join(_diamond_o(k, 1 if k == bad else 0) for k in range(CHAIN_N)) + H("c3")
+    return R(r), O(o, symbol="?f@@YAHH@Z")
+
+
+def test_diamond_chain_fine_cuts():
+    import time
+    a, b = chain_pair()
+    t0 = time.time()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    assert r["info"]["regions"] and len(r["info"]["regions"]) >= CHAIN_N
+    assert all(v[0] == "proved" for v in r["info"]["regions"].values())
+    assert time.time() - t0 < 120
+    # every region a diamond: two paths each (none over the whole stretch)
+    assert all("retail 2 paths" in v[1] for v in r["info"]["regions"].values()), r["info"]["regions"]
+
+
+def test_diamond_chain_wrong_value_not_proved():
+    a, b = chain_pair(bad=7)
+    assert prove(a, b)["status"] == "unknown"
+
+
+def test_diamond_chain_mutants_rejected():
+    a, b = chain_pair()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    ms = list(mutate.mutants(b, 6, seed=3, covered=r["covered"]))
+    assert ms
+    for desc, m in ms:
+        assert prove(a, m)["status"] != "proved", desc
+
+
+def test_diamond_chain_hints_recheck():
+    a, b = chain_pair()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    RG._CACHE.clear()
+    assert prove(a, b, hints=r["hints"])["status"] == "proved"

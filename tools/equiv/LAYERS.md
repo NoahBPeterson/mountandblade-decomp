@@ -166,6 +166,30 @@ reads, memory at and above esp). Two ways to discharge one:
    pair is compared with R(x', y', pi'), and (x', y', pi', d') joins S. The region also requires both versions
    to run the same x87 instruction sequence on each path pair (the 64-bit model's rule).
 
+**Fine cuts** (where a region stops). When the versions diverge early (update_ai 0x4465e0 diverges at +0x90 and
+never lines up again), S's leaders leave one region over most of the function and its paths multiply at every
+branch (more than 3000 paths). A region may stop earlier, at the JOINS of its stretch: on each side, the
+instructions reachable from the region's start before a stop that have two or more predecessors there (paths from
+the start re-converge). Three variants, tried finest first per region: `joins` (every join is a stop), `pdom` (only
+the first join every path passes: the nearest post-dominator of the start that is a join), `none` (S's stops
+only, the region as before); a variant whose stop sets equal an earlier one's is skipped, and a region that fails
+under one variant is rerun under the next (its failure under the finest is what the report names first). The two
+sides' joins are not paired statically: the angr region pairs them itself, as it pairs any stops, by running both
+versions to their first stop and comparing the path pairs whose conditions overlap; the stop pair a path pair
+reaches gets pi' from the registers with equal values (match_exit) and joins S like any region exit. A chain of n
+diamonds whose register allocation and block order differ becomes n regions of two paths each (test_regions.py
+`test_diamond_chain_*`); the region from a join starts with lock-step from there, so stretches that line up again
+cost no solver at all. Regions are found one per round along such a chain; the workers stay alive across rounds
+(angr_layer.py `--serve`, regions._Pool).
+Why it stays sound: the stops of a region are a choice of where its obligation ends, never something assumed. The
+obligation of a cut (x, y, pi, d) is unchanged: from R(x, y, pi) both versions return with equal observables or
+reach cuts with R of those cuts and equal events in between; the stop pairs a region actually reaches are added to
+S with exactly the R the region established there (pi' only from proved equal values, memory at and above esp, d'),
+and S's own obligations then cover them (the induction below does not depend on which addresses are cuts). A
+coarser variant tried after a failed finer one is a separate, complete obligation of the same cut; the walk is
+rebuilt from the entry each round from the regions that proved, so a failed variant's exits are never in S.
+Region proofs keep naming their variant in the hints (`"cut"`), so a recheck rebuilds the same S.
+
 **Soundness.** By induction over the number of steps: if both executions start related by R at a cut of S, each
 obligation says they reach the next cuts of S (or return) related by R with equal events, so the whole event
 sequences and the return observables are equal; an execution that never returns passes infinitely many cuts
@@ -186,9 +210,17 @@ only, never data). At a cut the region symbols carry no provenance, so the whole
 "entry pointers do not point into the frame" assumption is applied only where a static forward PROVENANCE pass
 over each version's CFG proves it (regions.Side.provenance): the registers that cannot hold a frame address
 (not computed from esp, not loaded from memory or returned by a callee after a frame address escaped: was stored
-to memory or held in a register at a call), memory read at the cut when no frame address escaped before it on
-any path, and the stack depth of the cut (known only when every callee's `ret N` before it is known and the
-joins agree; the frame zone then ends at the return address and the function's own parameters). Either
+to memory or held in a register at a call; a frame address stored into the frame itself, `push ebp` after `mov ebp,
+esp` in an aligned frame, escapes only at the next call, where it may be a stack argument, and until then loads
+through esp or a frame pointer count as frame addresses), memory read at the cut when no frame address escaped
+before it on any path, and the stack depth of the cut (known only when every callee's `ret N` before it is known
+and the joins agree, a lower bound after `and esp, -2^k`; the frame zone then ends at or below the return address
+and the function's own parameters: a smaller zone assumes less). With that zone, a read through such an address
+skips the region's writes anywhere in [esp - 1 MB + 16, esp + 4 + W) (the whole frame above the cut's esp, not
+only below it), and a read of a constant address inside the module image skips writes at esp-relative addresses
+within 1 MB of esp (the stack-not-in-image assumption). Path conditions are compared first with float terms
+abstracted (unsatisfiable there is unsatisfiable); with float terms the full query is skipped and the pair is
+treated as possibly overlapping (more pairs compared, never fewer). Either
 version's proof suffices (the related values are equal and the frame zones are the same addresses). The private
 frame is not protected at calls (a frame address may have escaped): every callee may write all memory except the
 callee-saved registers the region itself saved (the whole-function model's trust). That makes it weaker, never
@@ -201,8 +233,9 @@ from them (with no angr region, from the whole function). A mutant changes ours'
 lock-stepped code becomes a divergence and gets its own angr region) and the regions whose executed bytes changed
 rerun (the others are reused from a per-process cache keyed by cut, bijection and executed bytes).
 
-**Hints** (bundle): `{"mode": "region", "bij": [...], "folds": [...], "regions": {"<x>,<y>,<pi>": {}}}`; a
-recheck re-walks (deterministic) and requires every angr region it needs to be named in the hints.
+**Hints** (bundle): `{"mode": "region", "bij": [...], "folds": [...], "regions": {"<x>,<y>,<pi>": {"cut":
+"joins"}}}` (`cut` absent: `none`, the bundles before fine cuts); a recheck re-walks (deterministic), requires every
+angr region it needs to be named in the hints and runs each under its recorded variant only.
 
 ## Bundle and record (M&B)
 

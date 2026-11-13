@@ -347,18 +347,21 @@ class Side:
         """Forward pass from the entry: per instruction (pf, esc, depth) where pf = the registers that may hold a
         frame address (computed from esp) or a value of unknown provenance (loaded from memory or returned by a
         callee after a frame address escaped), esc = a frame address may have escaped (stored to memory, or in a
-        register at a call), depth = bytes between esp and the entry esp, None when unknown (a callee whose `ret N`
+        register at a call), depth = bytes between esp and the entry esp (a lower bound after `and esp, -2^k`, an
+        aligned frame), None when unknown (a callee whose `ret N`
         is unknown, an esp write the pass does not follow, or two depths at a join). pops(i) -> the bytes the
-        callee of the call i removes, or None. -> {addr: (frozenset pf, esc, depth)}"""
+        callee of the call i removes, or None. A frame address stored into the frame itself (push ebp after mov ebp,
+        esp) is not an escape until the next call (fst: it may be a stack argument there); meanwhile loads through
+        esp or a frame pointer may return it. -> {addr: (frozenset pf, esc, depth, fst)}"""
         from capstone import x86_const as X
-        out = {self.base: (frozenset(), False, 0)}
+        out = {self.base: (frozenset(), False, 0, False)}
         work = [self.base]
         while work:
             a = work.pop()
             i = self.by.get(a)
             if i is None:
                 continue
-            pf, esc, dep = out[a]
+            pf, esc, dep, fst = out[a]
             pf = set(pf)
             m, k = i.mnemonic, self.kind[a]
             rw = reg_rw(i)
@@ -375,10 +378,21 @@ class Side:
             stores = any(o.type == X.X86_OP_MEM and o.access & 2 for o in ops) or m == "push" or \
                 m.startswith(("rep stos", "stos", "rep movs", "movs"))
             src_pf = bool((reads - {"flags"}) & pf) or esp_val or esp_lea
+
+            def framed(o):
+                return any(r and FAM.get(i.reg_name(r)) in pf | {"esp"} for r in (o.mem.base, o.mem.index))
+            # a frame address stored into the frame itself (push ebp after mov ebp, esp; mov [esp+k], r): not an
+            # escape (no callee and no other pointer can reach the frame through it), but loads through the stack
+            # pointer or a frame pointer may return it from now on (fst)
+            to_frame = (m == "push" and not (ops and ops[0].type == X.X86_OP_MEM)) or (
+                m == "mov" and len(ops) == 2 and ops[0].type == X.X86_OP_MEM and ops[0].mem.base and
+                i.reg_name(ops[0].mem.base) == "esp" and not ops[0].mem.index and ops[1].type == X.X86_OP_REG)
+            load_frame = m in ("pop", "popal", "popfd") or any(
+                o.type == X.X86_OP_MEM and o.access & 1 and framed(o) for o in ops)
             nd = dep
             if k == "call":
-                if pf & set(GPR7):
-                    esc = True
+                if pf & set(GPR7) or fst:
+                    esc = True               # (fst: a frame address in the frame may be a stack argument)
                 n = pops(i)
                 nd = None if (dep is None or n is None) else dep - n
                 pf -= {"eax", "ecx", "edx"}
@@ -386,12 +400,15 @@ class Side:
                     pf |= {"eax", "ecx", "edx"}
             else:
                 if stores and src_pf:
-                    esc = True               # a frame address (or a value that may be one) stored to memory
+                    if to_frame:
+                        fst = True
+                    else:
+                        esc = True           # a frame address (or a value that may be one) stored to memory
                 if m == "push" and ops and ops[0].type == X.X86_OP_REG and i.reg_name(ops[0].reg) == "esp":
                     esc = True
                 for r in writes - {"flags"}:
                     pf.discard(r)
-                    if src_pf or (loads and esc):
+                    if src_pf or (loads and (esc or (fst and load_frame))):
                         pf.add(r)
                 if dep is not None:
                     if m == "push" or m.startswith("pushf"):
@@ -402,10 +419,16 @@ class Side:
                             i.reg_name(ops[0].reg) == "esp":
                         nd = dep + (ops[1].imm if m == "sub" else -ops[1].imm) if ops[1].type == X.X86_OP_IMM \
                             else None
+                    elif m == "and" and len(ops) == 2 and ops[0].type == X.X86_OP_REG and \
+                            i.reg_name(ops[0].reg) == "esp" and ops[1].type == X.X86_OP_IMM and \
+                            ((-ops[1].imm) & 0xffffffff) in (4, 8, 16, 32, 64):
+                        # an aligned frame (and esp, -8): esp moves down by 0 .. 7 bytes; depth stays a LOWER
+                        # bound (the frame zone ends at or below the return address: a smaller zone assumes less)
+                        nd = dep
                     elif rw is None or "esp" in {FAM.get(i.reg_name(x)) for x in i.regs_access()[1]} and \
                             m not in ("push", "pop", "call", "ret") and not m.startswith(("push", "pop")):
                         nd = None
-            st = (frozenset(pf), esc, nd)
+            st = (frozenset(pf), esc, nd, fst)
             for b in self.succ.get(a, []):
                 old = out.get(b)
                 if old is None:
@@ -413,7 +436,7 @@ class Side:
                     work.append(b)
                     continue
                 d2 = old[2] if old[2] == nd else None
-                new = (old[0] | st[0], old[1] or esc, d2)
+                new = (old[0] | st[0], old[1] or esc, d2, old[3] or fst)
                 if new != old:
                     out[b] = new
                     work.append(b)
@@ -1002,14 +1025,25 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     own_w = job.get("argw") or 0
     bij_sig = hashlib.sha256(json.dumps([job["bij"], job["folds"]]).encode()).hexdigest()[:16]
     done, forced, rounds = {}, set(), 0
+    vidx, tried = {}, {}         # key -> index into CUT_VARIANTS; key -> [(variant, stop sets, result)]
+    pool = _Pool(jobs)
+    try:
+        return _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep_going, t0, res, R, O, D,
+                           job, LR, LO, PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool)
+    finally:
+        pool.close()
+
+
+def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep_going, t0, res, R, O, D, job, LR, LO,
+                PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool):
     entry = (retail.va, retail.va, PI0, 0)
     # the registers the calling contract compares at a return (the angr model's rule): edx only for a 64-bit
     # return (or an unknown return type)
     ret_regs = {"eax", "ebx", "esi", "edi", "ebp"} | ({"edx"} if job.get("ret64", True) else set())
     while True:
         rounds += 1
-        if rounds > 300:
-            return res("unknown", "region: more than 300 rounds")
+        if rounds > MAX_ROUNDS:
+            return res("unknown", "region: more than %d rounds" % MAX_ROUNDS)
         # S: the walk from the entry, closed under the stop pairs of the proved regions it needs
         D = Decomp(R, O, D.bij, level, ret_regs)
         D.forced = forced
@@ -1021,7 +1055,7 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
                 if r and r["status"] == "proved":
                     for x2, y2, d2, pi2 in r.get("exits", []):
                         if (x2, y2, tuple(pi2)) not in D.S:
-                            new.append((x2, y2, tuple(pi2), d2, "region %x/%x" % (k[0], k[1])))
+                            new.append((x2, y2, tuple(pi2), d2, ("region", k)))
             if not new:
                 break
             D.walk(new)
@@ -1053,47 +1087,97 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
                 done[key] = dict(hit[0], cached=True)
                 continue
             hk = _hint_key(retail, x, y, pi)
-            batch.append({"key": key, "x": x, "y": y, "pi": list(pi), "d": d, "jk": jk,
-                          "hint": (hinted or {}).get(hk), "dz": _cut_dz(PR, PO, x, y, pi, own_w)})
-        if hinted is not None and any(b["hint"] is None for b in batch):
-            b = next(b for b in batch if b["hint"] is None)
-            return res("unknown", "region: the hints name no region at %s" % _hint_key(retail, b["x"], b["y"],
-                                                                                       b["pi"]))
+            hint = (hinted or {}).get(hk)
+            if hinted is not None and hint is None:
+                return res("unknown", "region: the hints name no region at %s" % hk)
+            # the cut variant: the hinted one, else the finest not tried yet whose stops differ from the tried ones
+            if hint is not None:
+                variant = hint.get("cut", "none")
+                if variant not in CUT_VARIANTS:
+                    return res("unknown", "region: the hints name an unknown cut variant at %s" % hk)
+                sets = (region_sets(R, x, stops_r, variant), region_sets(O, y, stops_o, variant))
+            else:
+                seen = [t[1] for t in tried.get(key, [])]
+                while True:
+                    variant = CUT_VARIANTS[vidx.get(key, 0)]
+                    sets = (region_sets(R, x, stops_r, variant), region_sets(O, y, stops_o, variant))
+                    if sets not in seen or variant == CUT_VARIANTS[-1]:
+                        break
+                    vidx[key] = vidx.get(key, 0) + 1
+                if sets in seen:                  # the coarser variants stop at the same places: nothing new
+                    done[key] = _failed(tried[key])
+                    continue
+            batch.append({"key": key, "x": x, "y": y, "pi": list(pi), "d": d, "jk": jk, "cut": variant,
+                          "sets": sets, "hint": {k: v for k, v in (hint or {}).items() if k != "cut"},
+                          "dz": _cut_dz(PR, PO, x, y, pi, own_w)})
         rem = timeout - (time.time() - t0)
         if rem < 5 and batch:
             return res("unknown", "region: timeout after %.0fs (%d regions done, %d left)" % (
                 timeout, len(done), len(batch)))
-        out = _run_regions(job, batch, stops_r, stops_o, LR, LO, R, O, per_region, rem, jobs)
+        out = _run_regions(job, batch, LR, LO, per_region, rem, pool)
         for b in batch:
+            key = b["key"]
             r = out.get((b["x"], b["y"], tuple(b["pi"])),
                         {"status": "unknown", "detail": "no result (worker failed)"})
-            done[b["key"]] = r
+            r["cut"] = b["cut"]
+            log("  region %s (d%d, %s): %s %.1fs %s" % (_hint_key(retail, b["x"], b["y"], b["pi"]), b["d"],
+                                                        b["cut"], r["status"], r.get("seconds", 0),
+                                                        r["detail"][:300]))
             if r["status"] == "proved":
+                done[key] = r
                 cov = sorted(set(r.get("covered") or []))
                 _CACHE[b["jk"]] = (r, cov, _cov_sig(O, cov))
-            log("  region %s (d%d): %s %.1fs %s" % (_hint_key(retail, b["x"], b["y"], b["pi"]), b["d"],
-                                                    r["status"], r.get("seconds", 0), r["detail"][:300]))
+                continue
+            tried.setdefault(key, []).append((b["cut"], b["sets"], r))
+            if hinted is None and b["cut"] != CUT_VARIANTS[-1]:
+                vidx[key] = CUT_VARIANTS.index(b["cut"]) + 1          # a coarser variant next round
+                continue
+            done[key] = _failed(tried[key])
     done = {k: done[k] for k in D.diverge if k in done}
     LAST.clear()
     LAST.update(R=R, O=O, D=D, done=done)
     bad = sorted((k for k, v in done.items() if v["status"] != "proved"), key=str)
     nreg = len(done)
     nfold = len(job["folds"])
-    summary = ("regions: %d cuts (%d lock-step), %d angr regions (%d proved), %d switch tables, %d relocation "
-               "pairs%s, %.0fs" % (len(D.S), len(D.edges), nreg, nreg - len(bad), len(R.tables), len(job["bij"]),
-                                   " (%d folded callees)" % nfold if nfold else "", time.time() - t0))
-    info = {"regions": {_hint_key(retail, *k): [v["status"], v["detail"][:240], v.get("seconds", 0)]
+    nfine = sum(1 for v in done.values() if v.get("cut", "none") != "none")
+    summary = ("regions: %d cuts (%d lock-step), %d angr regions (%d proved, %d with fine cuts), %d switch tables, "
+               "%d relocation pairs%s, %.0fs" % (
+                   len(D.S), len(D.edges), nreg, nreg - len(bad), nfine, len(R.tables), len(job["bij"]),
+                   " (%d folded callees)" % nfold if nfold else "", time.time() - t0))
+    info = {"regions": {_hint_key(retail, *k): [v["status"], v["detail"][:600], v.get("seconds", 0),
+                                                v.get("cut", "none")]
                         for k, v in sorted(done.items(), key=lambda kv: str(kv[0]))},
-            "cuts": len(D.S), "lockstep": len(D.edges), "tables": {"%x" % a: len(v) for a, v in R.tables.items()}}
+            "cuts": len(D.S), "lockstep": len(D.edges), "tables": {"%x" % a: len(v) for a, v in R.tables.items()},
+            "rounds": rounds}
     if bad:
         k = bad[0]
         return res("unknown", "%d of %d regions not proved, first %s: %s | %s" % (
-            len(bad), nreg, _hint_key(retail, *k), done[k]["detail"][:300], summary), info=info)
+            len(bad), nreg, _hint_key(retail, *k), done[k]["detail"][:600], summary), info=info)
     covered = sorted({c for v in done.values() for c in (v.get("covered") or [])})
     hints_out = {"v": 1, "mode": "region", "bij": job["bij"], "folds": job["folds"],
-                 "regions": {_hint_key(retail, *k): v.get("hints") or {}
+                 "regions": {_hint_key(retail, *k): _region_hint(v)
                              for k, v in sorted(done.items(), key=lambda kv: str(kv[0]))}}
     return res("proved", summary, hints_out, covered=covered or None, info=info)
+
+
+MAX_ROUNDS = 2000
+
+
+def _failed(ts):
+    """every cut variant of a region failed: the finest one's reason first (the coarser ones mostly run out of
+    paths)"""
+    r = ts[-1][2]
+    return dict(r, detail=" || ".join("[%s] %s" % (c, t["detail"][:400]) for c, _s, t in ts),
+                seconds=sum(t.get("seconds", 0) for _c, _s, t in ts))
+
+
+def _region_hint(v):
+    """a region's bundle entry: the worker's hints and the cut variant (absent: "none", the bundles before fine
+    cuts)"""
+    h = dict(v.get("hints") or {})
+    if v.get("cut", "none") != "none":
+        h["cut"] = v["cut"]
+    return h
 
 
 def _hint_key(retail, x, y, pi):
@@ -1212,70 +1296,194 @@ def _base_job(retail, ours, level, bij, hints):
     return job
 
 
-def _run_regions(job, batch, stops_r, stops_o, LR, LO, R, O, per_region, total, jobs):
-    """run the angr worker on each region of the batch (jobs processes) -> {(x, y, pi): result}"""
+def _run_regions(job, batch, LR, LO, per_region, total, pool):
+    """run the angr worker on each region of the batch (the pool's processes) -> {(x, y, pi): result}"""
     if not batch:
         return {}
-    py = AL._angr_python()
     regions = []
     for b in batch:
-        sr, cr = _reach_sets(R, b["x"], stops_r)
-        so, co = _reach_sets(O, b["y"], stops_o)
+        (sr, cr), (so, co) = b["sets"]
         regions.append({"x": b["x"], "y": b["y"], "d": b["d"], "pi": b["pi"], "dz": b.get("dz"),
                         "stops_r": sorted(sr), "stops_o": sorted(so),
                         "cands_r": sorted(cr), "cands_o": sorted(co),
                         "live_r": {"%x" % a: sorted(LR[a]) for a in sr | cr},
                         "live_o": {"%x" % a: sorted(LO[a]) for a in so | co},
                         "hints": b["hint"] or {}, "timeout": per_region})
-    chunks = [regions[k::max(1, jobs)] for k in range(max(1, jobs))]
-    chunks = [c for c in chunks if c]
-    procs = []
-    kw = {"start_new_session": True} if os.name != "nt" else {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
-    env = dict(os.environ, PYTHONHASHSEED="0")
-    out = {}
-    try:
-        for c in chunks:
-            j = dict(job, regions=c)
-            p = subprocess.Popen([py, "-I", os.path.join(HERE, "angr_layer.py"), "--worker"], stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, **kw)
-            procs.append((p, c, json.dumps(j).encode()))
-        res = {}
-        import threading
+    return pool.run(job, regions, total)
 
-        def talk(p, data, c):
+
+class _Pool:
+    """persistent angr workers (angr_layer.py --serve): a chain of fine cuts is discovered one region per round,
+    and starting a worker (angr, the two projects) costs seconds. Each process takes one job line and answers one
+    result line per region, then a {"done": 1} line; a process past its deadline is killed (its regions are
+    unknown) and replaced on the next batch. close() kills every process."""
+
+    def __init__(self, n):
+        self.n = max(1, n or 1)
+        self.procs = [None] * self.n
+        self.errs = [None] * self.n
+        self.sent = [None] * self.n
+
+    def _proc(self, k):
+        import tempfile
+        p = self.procs[k]
+        if p is None or p.poll() is not None:
+            kw = {"start_new_session": True} if os.name != "nt" else \
+                {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+            env = dict(os.environ, PYTHONHASHSEED="0")
+            self.errs[k] = tempfile.TemporaryFile()
+            p = subprocess.Popen([AL._angr_python(), "-I", os.path.join(HERE, "angr_layer.py"), "--serve"],
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.errs[k], env=env, **kw)
+            self.procs[k] = p
+            self.sent[k] = None
+        return p
+
+    def _err(self, k):
+        f = self.errs[k]
+        if f is None:
+            return ""
+        try:
+            f.seek(0)
+            return f.read().decode(errors="replace").strip()[-300:]
+        except Exception:
+            return ""
+
+    def run(self, job, regions, total):
+        import threading
+        chunks = [regions[k::self.n] for k in range(self.n)]
+        out, res = {}, {}
+
+        def talk(k, c):
+            p = self._proc(k)
+            got = []
+            res[k] = got
             try:
-                res[p.pid] = p.communicate(data, timeout=max(1.0, min(total, sum(r["timeout"] + 20 for r in c))))
-            except subprocess.TimeoutExpired:
-                AL._kill(p)
-                res[p.pid] = (b"", b"timeout")
-            except Exception as e:
-                AL._kill(p)
-                res[p.pid] = (b"", str(e).encode())
-        ths = [threading.Thread(target=talk, args=(p, d, c)) for p, c, d in procs]
-        for t in ths:
-            t.start()
-        for t in ths:
-            t.join()
-        for p, c, _d in procs:
-            data, err = res.get(p.pid, (b"", b""))
-            for ln in data.decode(errors="replace").splitlines():
-                if ln.startswith("{"):
+                # the base job once per process (it is the same for every batch of one proof), the regions per batch
+                base = json.dumps(job, sort_keys=True)
+                msg = {"regions": c} if self.sent[k] == base else dict(job, regions=c)
+                p.stdin.write((json.dumps(msg) + "\n").encode())
+                p.stdin.flush()
+                self.sent[k] = base
+                for ln in p.stdout:
+                    ln = ln.decode(errors="replace")
+                    if not ln.startswith("{"):
+                        continue
                     try:
                         r = json.loads(ln)
                     except ValueError:
                         continue
-                    if "x" in r:
-                        out[(r["x"], r["y"], tuple(r["pi"]))] = r
+                    if r.get("done"):
+                        return
+                    got.append(r)
+            except Exception:
+                pass
+        ths = []
+        t0 = time.time()
+        for k, c in enumerate(chunks):
+            if c:
+                t = threading.Thread(target=talk, args=(k, c), daemon=True)
+                t.start()
+                ths.append((t, k, c, max(1.0, min(total, sum(r["timeout"] + 20 for r in c)))))
+        for t, k, c, lim in ths:
+            t.join(max(0.0, lim - (time.time() - t0)))
+            if t.is_alive():
+                AL._kill(self.procs[k])
+                t.join(10)
+            for r in res.get(k, []):
+                if "x" in r:
+                    out[(r["x"], r["y"], tuple(r["pi"]))] = r
             for r in c:
                 if (r["x"], r["y"], tuple(r["pi"])) not in out:
+                    p = self.procs[k]
+                    if p is not None and p.poll() is None and not t.is_alive():
+                        AL._kill(p)                          # out of step with us: start a new one next time
                     out[(r["x"], r["y"], tuple(r["pi"]))] = {
-                        "status": "unknown", "detail": "worker ended without a result: %s" %
-                        err.decode(errors="replace").strip()[-300:]}
-    finally:
-        for p, _c, _d in procs:
-            if p.poll() is None:
+                        "status": "unknown", "detail": "worker ended without a result: %s" % self._err(k)}
+        return out
+
+    def close(self):
+        for p in self.procs:
+            if p is not None and p.poll() is None:
                 AL._kill(p)
-    return out
+        for f in self.errs:
+            try:
+                f and f.close()
+            except Exception:
+                pass
+
+
+# ====================================================================== fine cuts inside a diverging stretch
+# Where the two versions diverge early, the stops of S alone leave one angr region over most of the function, and
+# its paths multiply at every branch. A region may stop earlier: at the JOINS of its stretch (instructions where
+# paths from its start re-converge). Which stops a region uses changes only where obligations are placed: every stop
+# pair a compared path pair reaches is added to S with the interface R the region proved there (LAYERS.md, "Fine
+# cuts"). The variants are tried finest first; one that does not prove is replaced by the next, coarser one.
+CUT_VARIANTS = ("joins", "pdom", "none")
+
+
+def _region_graph(side, a, stops):
+    """the instructions a region from a can execute before a stop (a included), and their predecessors there"""
+    G, todo, pred = {a}, [a], {}
+    while todo:
+        b = todo.pop()
+        for c in side.succ.get(b, []):
+            if c not in side.by or c in stops:
+                continue
+            pred.setdefault(c, set()).add(b)
+            if c not in G:
+                G.add(c)
+                todo.append(c)
+    return G, pred
+
+
+def fine_stops(side, a, stops, variant):
+    """the extra stops of a region from a under a cut variant: "joins": every instruction of the stretch with two
+    or more predecessors in it (paths from a re-converge there); "pdom": only the first such join that every path
+    from a passes (a post-dominator of a in the stretch); "none": no extra stops. Stopping earlier is always
+    allowed (the stop pairs reached become cuts of S with their own obligations), so this is a choice of
+    granularity, not an assumption."""
+    if variant == "none":
+        return set()
+    G, pred = _region_graph(side, a, stops)
+    joins = {c for c in G if c != a and len(pred.get(c, ())) >= 2}
+    if variant == "joins" or not joins:
+        return joins
+    # post-dominators over the (acyclic: every loop head is a stop) stretch, a virtual exit after the stops, the
+    # returns and the edges leaving it
+    order, seen = [], set()
+    for r in [a]:
+        stack = [(r, iter(sorted(side.succ.get(r, []))))]
+        seen.add(r)
+        while stack:
+            n, it = stack[-1]
+            c = next(it, None)
+            if c is None:
+                order.append(n)
+                stack.pop()
+                continue
+            if c in G and c not in seen:
+                seen.add(c)
+                stack.append((c, iter(sorted(side.succ.get(c, [])))))
+    EXIT = -1
+    pdom = {}
+    for n in order:                                    # successors before predecessors (post-order)
+        ss = side.succ.get(n, [])
+        sets = [pdom[c] if c in G and c in pdom else frozenset([EXIT]) for c in ss] or [frozenset([EXIT])]
+        if any(c in G and c not in pdom for c in ss):
+            return set()                               # a cycle inside the stretch: not expected, no extra stop
+        pdom[n] = frozenset([n]) | frozenset.intersection(*sets)
+    chain = [p for p in pdom.get(a, ()) if p != a and p != EXIT and p in joins]
+    if not chain:
+        return set()
+    # the nearest: the one the others post-dominate
+    first = max(chain, key=lambda p: len(pdom[p]))
+    return {first}
+
+
+def region_sets(side, a, stops, variant):
+    """(stops reached, candidate leaders) of a region from a with the cut variant's extra stops"""
+    extra = fine_stops(side, a, stops, variant)
+    return _reach_sets(side, a, stops | extra if extra else stops)
 
 
 def _reach_sets(side, a, stops):

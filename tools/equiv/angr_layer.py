@@ -978,6 +978,25 @@ def worker_main():
     sys.stdout.flush()
 
 
+def serve_main():
+    """(region mode) a persistent worker (regions._Pool): one job per input line, {"regions": [...]} alone reuses
+    the previous line's job; one result line per region, then {"done": 1}"""
+    import logging
+    logging.disable(logging.CRITICAL)
+    install_x87_ops()
+    base = None
+    for ln in sys.stdin:
+        if not ln.strip():
+            continue
+        msg = json.loads(ln)
+        if set(msg) != {"regions"}:
+            base = {k: v for k, v in msg.items() if k != "regions"}
+        if base is not None:
+            region_worker_main(dict(base, regions=msg["regions"]))
+        sys.stdout.write('{"done": 1}\n')
+        sys.stdout.flush()
+
+
 def region_worker_main(job):
     """(region mode, tools/equiv/regions.py) one result line per region of job["regions"], each with its own
     deadline; the projects are loaded once"""
@@ -1237,6 +1256,7 @@ class Worker:
         dx = const_diff(x, inesp)
         W = self.job.get("argw") or 0
         x_own = dx is not None and (dx >= (1 << 32) - (0x10000 - 16) or dx <= 3 + W)
+        x_img = self.in_image(x)
         for ent in log:
             if ent[0] == "w":
                 a, bs = ent[1], ent[2]
@@ -1247,10 +1267,20 @@ class Worker:
                     continue
                 if x_own and len(bs) <= 16 and len(ent) > 3 and ent[3]:
                     continue
+                if x_img and len(bs) <= 16 and self.near_esp(a):
+                    continue
                 if dz:
                     de = const_diff(a, inesp)                 # a = in_esp + de (mod 2^32)
                     if de is not None and de >= (1 << 32) - (0x10000 - 16) and de + len(bs) <= (1 << 32):
                         continue
+                    if de is not None and self.region:
+                        # region mode: the zone note_addr assumes for the read is [esp - 1 MB, esp + 4 + W) with W
+                        # = the cut's depth + the own parameters, i.e. the whole frame above the cut's esp too; a
+                        # write inside [esp - 1 MB + 16, esp + 4 + W) cannot cover base + j (j < 16): base would be
+                        # in the zone (modulo 2^32, the same interval argument)
+                        sd = de - (1 << 32) if de >= 0x80000000 else de
+                        if -(0x100000 - 16) <= sd and sd + len(bs) <= 4 + W:
+                            continue
                 off = x - a
                 sel = cur
                 for k in reversed(range(len(bs))):
@@ -1269,6 +1299,8 @@ class Worker:
                         continue
                     if dz and self.own_range(lo, hi):
                         continue           # (M&B) x is noted not to point into the function's own stack
+                    if x_img and self.near_esp(lo) and self.near_esp(hi):
+                        continue           # region mode: a global is not in the stack (in_image)
                     inside.append(C.ULT(x - lo, hi - lo))
                 if decided_in:
                     continue
@@ -1281,6 +1313,25 @@ class Worker:
             if dx is not None and dx >= (1 << 32) - 0x100000:
                 raise Unsupported("a region reads the stack below the cut's esp (esp%+d)" % (dx - (1 << 32)))
         return cur
+
+    def in_image(self, x):
+        """region mode: x is a constant address inside the module image. The region model assumes the stack is
+        not within 1 MB of the image (Worker.__init__: esp + 1 MB <= image lo or esp >= image hi + 1 MB, with
+        0x10000 <= esp <= 0x7fff0000), so no address in_esp + d with |d| < 1 MB - 16 (near_esp) reaches it: a write
+        of at most 16 bytes there cannot cover x (a wrapped one lies above 2^32 - 1 MB, above the image). Skipping
+        such writes keeps reads of globals free of If chains over the frame stores, which made the path conditions
+        of the two versions (frame slots at different offsets) differ structurally and Z3 time out on them."""
+        if not self.region or not x.concrete:
+            return False
+        lo, hi = self.job.get("image") or (0, 0)
+        return lo < hi <= (1 << 32) - 0x200000 and lo <= x.concrete_value < hi
+
+    def near_esp(self, a):
+        d = const_diff(a, self.IN["esp"])
+        if d is None:
+            return False
+        sd = d - (1 << 32) if d >= 0x80000000 else d
+        return -(0x100000 - 16) < sd < 0x100000 - 16
 
     def own_range(self, lo, hi):
         """[lo, hi) inside [in_esp - (64 KB - 16), in_esp + 4 + W): the zone note_addr's assumption excludes"""
@@ -1571,7 +1622,9 @@ class Worker:
         info["by"] = {i.address: i for i in info["ins"]}
         self._proj[side] = (proj, info)
         if self.region:
-            _PROJ.clear()
+            # (a persistent region worker serves one proof and its mutants: keep the latest few projects)
+            while len(_PROJ) >= 4:
+                _PROJ.pop(next(iter(_PROJ)))
             _PROJ[key] = (proj, info)
         return proj, info
 
@@ -2507,6 +2560,34 @@ def _region_compare(self, sa, sb, pcs, known):
     return first or self.compare_pair(sa, sb, pcs, known)
 
 
+def _region_unsat(self, terms, xor=False):
+    """region mode: True only when the conjunction of the claripy terms (with xor: their exclusive or, i.e. the two
+    path conditions differ) is proved unsatisfiable: first with
+    float terms abstracted to free variables (an over-approximation: unsatisfiable there is unsatisfiable), then,
+    without float terms, the full query. With float terms the full query is skipped (Z3 does not honour its timeout
+    while bit-blasting them; on update_ai 0x4465e0 one path-condition comparison took the whole minute): the answer
+    is then "maybe satisfiable", which only adds path pairs to compare (sound)."""
+    z3 = self.z3
+
+    def q():
+        zs = [self.z(t) for t in terms]
+        return [z3.Xor(zs[0], zs[1])] if xor else zs
+    self.abs_mode = True
+    try:
+        if not self.check(self.solver(), *q()):
+            return True
+    except GiveUp:
+        pass
+    finally:
+        self.abs_mode = False
+    if any(self.has_fp(t) for t in terms):
+        return False
+    try:
+        return not self.check(self.solver(), *q())
+    except GiveUp:
+        return False
+
+
 def _run_region(self):
     t0 = time.time()
     A, Ad = self.explore("retail", MAX_BOUND)
@@ -2526,7 +2607,7 @@ def _run_region(self):
         for sb in bysig.get(sa.globals["br"], []):
             if id(sb) in used:
                 continue
-            if cpc[id(sa)] == cpc[id(sb)] or not self.check(self.solver(), z3_xor(z3, zpc[id(sa)], zpc[id(sb)])):
+            if cpc[id(sa)] == cpc[id(sb)] or self.region_unsat([self.pc(sa), self.pc(sb)], xor=True):
                 ok = sb
                 break
         if ok is None:
@@ -2541,14 +2622,10 @@ def _run_region(self):
     unB = [sb for sb in B if id(sb) not in used]
     if not cexs:
         for sa in unA:
-            q = self.solver()
-            q.add(zpc[id(sa)])
-            if not self.check(q):
+            if self.region_unsat([self.pc(sa)]):
                 continue
             for sb in unB:
-                q2 = self.solver()
-                q2.add(zpc[id(sa)], zpc[id(sb)])
-                if not self.check(q2):
+                if self.region_unsat([self.pc(sa), self.pc(sb)]):
                     continue
                 overlap += 1
                 c = self.region_compare(sa, sb, (zpc[id(sa)], zpc[id(sb)]), False)
@@ -2575,6 +2652,7 @@ Worker.note_pair = _note_pair
 Worker.match_exit = _match_exit
 Worker.region_compare = _region_compare
 Worker.run_region = _run_region
+Worker.region_unsat = _region_unsat
 
 
 def z3_xor(z3, a, b):
@@ -2585,6 +2663,8 @@ def z3_xor(z3, a, b):
 def main():
     if "--worker" in sys.argv:
         return worker_main()
+    if "--serve" in sys.argv:
+        return serve_main()
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("src")
