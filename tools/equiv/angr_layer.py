@@ -1521,8 +1521,13 @@ class Worker:
                     saved.append((a, a + 4))
                     break
         saved.append((inesp, inesp + 4))
+        # (M&B) the function's own stack parameters [in_esp + 4, in_esp + 4 + argw) are its own objects too: cl
+        # spills into a dead parameter slot (0x42c350 keeps a char in its tstring* parameter's slot across a call)
+        own = self.job.get("argw") or 0
         if W is not None and not s.globals["escaped"]:
-            return [(esp_ev + 4 + W, inesp + 4)] + saved, saved
+            return [(esp_ev + 4 + W, inesp + 4 + own)] + saved, saved
+        if own and not s.globals["escaped"]:
+            return saved + [(inesp + 4, inesp + 4 + own)], saved
         return saved, saved
 
     def escapes(self, s, regs_visible, esp_ev, W):
@@ -2028,7 +2033,7 @@ class Worker:
                 addr = ev(self.PROBE)
                 out["addr"] = hex(addr)
                 reg = [r for r in regions if r[0] == mem[0]][0]
-                lo, top = ev(reg[1]), ev(self.IN["esp"]) + 4
+                lo, top = ev(reg[1]), ev(self.IN["esp"]) + 4 + (self.job.get("argw") or 0)
                 argtop = lo + 4 + reg[5] if isinstance(reg[5], int) else lo
                 out["frame"] = lo <= addr < top and addr >= argtop
         for r in GPR:

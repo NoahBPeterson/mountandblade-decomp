@@ -430,6 +430,7 @@ def translate(fn, entry, sites, level, ret64, xmm, label):
 # 4. testcases (unicorn) and concrete refutation
 
 _CONSTS = []     # immediates of the two functions being tested (set by prove): compared-against values
+_OWN_ARGW = [0]  # (M&B) the function's own stack parameter bytes (set by prove): its own objects, like its frame
 
 
 def _consts(*fns):
@@ -594,6 +595,10 @@ def testcases(rf, of, rent, oent, rexits, oexits, n, seed0, refute, level, ret64
                 diff = sorted(k for k in fa if fa[k] != fb[k])
                 refuted = "from the same entry state the memory at %d byte(s) differs at the %s exit" % (
                     len(diff), sa[0])
+                if all(esp <= k < STACK + 4 + _OWN_ARGW[0] for k in diff):
+                    # (M&B) only the function's own frame (locals laid out differently): not observable at L1
+                    # unless a frame address escaped, which a concrete run does not tell
+                    refuted += " (in the function's own frame)"
     return out, refuted
 
 
@@ -888,6 +893,11 @@ def prove(retail, ours, level, hints=None, timeout=600.0, eq_only=True, ntc=64, 
         refuted = None
         names = []
         _CONSTS[:] = _consts(rf, of)
+        try:
+            import angr_layer as AL
+            _OWN_ARGW[0] = AL.own_argw(AL.name_facts(ours.meta.get("symbol") or ""), retail)
+        except Exception:
+            _OWN_ARGW[0] = 0
         for idx, (k, re_, oe, ts, rs) in enumerate(segs):
             name = "seg%d" % k
             names.append(name)
@@ -917,9 +927,10 @@ def prove(retail, ours, level, hints=None, timeout=600.0, eq_only=True, ntc=64, 
                 fsame = AL.frame_alloc(rcode, base) == AL.frame_alloc(ocode, base)
             except Exception:
                 fsame = True
-            if not fsame or re.search(r"call exits differ in esp", refuted):
-                return _result("unknown", t0, "ddec: concrete counterexample not trusted (the frame layout differs): "
-                               + refuted)
+            if not fsame or re.search(r"call exits differ in esp", refuted) or \
+                    (level == "L1" and "in the function's own frame" in refuted):
+                return _result("unknown", t0, "ddec: concrete counterexample not trusted (the frame layout differs "
+                               "or the difference is in the function's own frame): " + refuted)
             return _result("refuted", t0, "ddec (concrete run): " + refuted)
         left = timeout - (time.time() - t0)
         if left <= 5:
