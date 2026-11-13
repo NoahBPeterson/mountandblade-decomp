@@ -1635,8 +1635,18 @@ class Worker:
                                       remove_options={angr.options.UNICORN} | angr.options.simplification)
         st.register_plugin("memory", self.make_mem_plugin()())
         if rg and side == "ours":
-            inv = {v: r for r, v in self.pi.items() if v}
-            own = lambda r: self.IN[r] if r == "esp" else (self.IN[inv[r]] if r in inv else self.IN2[r])
+            # pi[r] = "v" (ours' v holds the original's r) or "v:8" / "v:16" (only the low bits are related)
+            inv = {v.split(":")[0]: (r, int(v.split(":")[1]) if ":" in v else 32) for r, v in self.pi.items() if v}
+
+            def own(r):
+                if r == "esp":
+                    return self.IN[r]
+                if r not in inv:
+                    return self.IN2[r]
+                o, w = inv[r]
+                if w == 32 or r == "flags":
+                    return self.IN[o]
+                return C.Concat(self.IN2[r][31:w], self.IN[o][w - 1:0])
         else:
             own = lambda r: self.IN[r]
         for r in GPR:
@@ -2181,8 +2191,9 @@ class Worker:
                 # chosen by match_exit (proved pairs of live registers)
                 pi = self._exit_pi or {}
                 obs += [("%s %s" % (tag, r), x["regs"][r], y["regs"][r]) for r in ["esp", "d", "ftop", "fptag"] + XMM]
-                obs += [("%s %s/%s" % (tag, r, v), x["regs"]["eflags" if r == "flags" else r],
-                         y["regs"]["eflags" if v == "flags" else v]) for r, v in sorted(pi.items()) if v]
+                obs += [("%s %s/%s" % (tag, r, v), _low(x["regs"]["eflags" if r == "flags" else r], v),
+                         _low(y["regs"]["eflags" if v == "flags" else v.split(":")[0]], v))
+                        for r, v in sorted(pi.items()) if v]
                 obs += self.x87_valid(tag, x["regs"], y["regs"])
                 regions.append((tag + " memory", x["esp"], [], x["log"], y["log"], None))
         return obs, regions
@@ -2521,9 +2532,28 @@ def _match_exit(self, xa, xb, q):
         if (r in lr or r in lo) and r not in pi and r not in used and proved_eq(ra[r], rb[r]):
             pi[r] = r
             used.add(r)
+    # a live register with no full partner: its low 16 or 8 bits may still be related ("v:16" / "v:8", the
+    # interface relates only those; cl's bools in al over a garbage upper part)
+    for r in g7:
+        if r not in lr or r in pi:
+            continue
+        for w in (16, 8):
+            c = [v for v in g7 if v not in used and same(ra[r][w - 1:0], rb[v][w - 1:0])]
+            v = (r if r in c else c[0]) if c else (r if r not in used and proved_eq(ra[r][w - 1:0],
+                                                                                    rb[r][w - 1:0]) else None)
+            if v:
+                pi[r] = "%s:%d" % (v, w)
+                used.add(v)
+                break
     if ("flags" in lr or "flags" in lo) and proved_eq(xa["regs"]["eflags"], xb["regs"]["eflags"]):
         pi["flags"] = "flags"
     return pi
+
+
+def _low(x, v):
+    """the bits of x a pi entry v relates"""
+    w = int(v.split(":")[1]) if v and ":" in v else 32
+    return x if w >= x.size() else x[w - 1:0]
 
 
 class _View:

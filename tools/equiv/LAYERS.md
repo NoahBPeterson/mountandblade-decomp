@@ -126,8 +126,10 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
 
 **Cuts.** A cut is (x, y, pi, d): an address x of the original, an address y of ours (placed at the original's
 VA), a register correspondence pi (for each of the original's eax, ecx, edx, ebx, ebp, esi, edi and the flags: the
-register of ours holding the same value, or nothing) and the x87 stack depth d. Its interface R(x, y, pi) relates
-a state of the original to a state of ours when: for every pair (r, pi(r)) the values are equal; esp, DF and the
+register of ours holding the same value, or nothing; or the same low 8 or 16 bits only, written `ecx:8`, `ecx:16`)
+and the x87 stack depth d. Its interface R(x, y, pi) relates
+a state of the original to a state of ours when: for every pair (r, pi(r)) the values (the low bits a partial pair
+names) are equal; esp, DF and the
 d values on the x87 stack are equal; memory at and above esp is equal (all of it, the frame too, at the same
 addresses). Nothing else: registers outside pi are independent.
 
@@ -141,8 +143,12 @@ reads, memory at and above esp). Two ways to discharge one:
    same mnemonic, prefixes and operands, with the original's register r written as pi(r) in ours (esp only as
    esp), immediates and displacements equal or relocated fields paired by one bijection (the angr layer's trust,
    with func.const_ok and the symbols-file check), implicit registers identical, branch targets paired instead
-   of compared (short or near). Every register the instruction reads must be related by pi; its full writes
-   create pairs, partial writes keep a pair only when it was already related. So from R(x, y, pi) it reads equal
+   of compared (short or near). Every register the instruction reads must be related by pi, as wide as it reads
+   it (al: 8 bits, ah or ax: 16, otherwise and as an address 32); its full writes create pairs; a partial write
+   (equal values: its inputs are related) relates the low bits that were related before or that it writes when
+   they form a prefix: `mov al, m` makes an unrelated eax `eax:8`, `ah` extends `:8` to `:16` and leaves an
+   unrelated register unrelated (cl keeps bools in al over a garbage upper part; without this a join between the
+   load and the `test al, al` lost the relation, 0x44bc30). So from R(x, y, pi) it reads equal
    values, writes equal values, takes the same branch: R(x2, y2, pi') holds at the successor pair. A call needs
    pi(r) = r for eax, ecx, edx (any convention may read them, also cl's same-TU custom ones) and for what the
    original callee reads before writing (facts.retail_entry), every register at L2; afterwards eax, ecx, edx
@@ -162,8 +168,10 @@ reads, memory at and above esp). Two ways to discharge one:
    leader (a candidate cut: the two compilers laid out blocks differently). At each pair of stops the new
    correspondence pi' pairs every register live at the stop on either side (a sound backward liveness over the
    CFG: a call reads eax/ecx/edx and the callee's entry registers, a return its contract) with a register of
-   the other side holding the same value (the same term, else one solver query for the same register); the
-   pair is compared with R(x', y', pi'), and (x', y', pi', d') joins S. The region also requires both versions
+   the other side holding the same value (the same term, else one solver query for the same register; failing
+   that the same low 16 or 8 bits, a partial pair); the
+   pair is compared with R(x', y', pi'), and (x', y', pi', d') joins S. A partial pair at a region start gives
+   ours' register the original's symbol in its low bits and a symbol of its own above them. The region also requires both versions
    to run the same x87 instruction sequence on each path pair (the 64-bit model's rule).
 
 **Fine cuts** (where a region stops). When the versions diverge early (update_ai 0x4465e0 diverges at +0x90 and

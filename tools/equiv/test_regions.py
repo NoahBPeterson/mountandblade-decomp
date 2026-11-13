@@ -213,3 +213,33 @@ def test_diamond_chain_hints_recheck():
     assert r["status"] == "proved"
     RG._CACHE.clear()
     assert prove(a, b, hints=r["hints"])["status"] == "proved"
+
+
+# a bool in al over an upper part that differs (cl loads al into a register whose upper bytes hold garbage), live
+# across a join: the region before the join can relate only the low byte of eax ("eax:8"), which is all the code
+# after it reads (test al, al); then eax is written in full again
+AL_R = H("8b442408" "8a442404" "8b54240c" "f7c201000000" "7405" "83c203" "eb03" "83ea07"
+         "84c0" "7403" "89d0" "c3" "31c0" "c3")
+AL_O = H("8b44240c" "8a442404" "8b4c240c" "f7c101000000" "7505" "83e907" "eb03" "83c103"
+         "84c0" "7403" "89c8" "c3" "31c0" "c3")
+AL_BAD = H("8b44240c" "8a442408" "8b4c240c" "f7c101000000" "7505" "83e907" "eb03" "83c103"
+           "84c0" "7403" "89c8" "c3" "31c0" "c3")                # mov al, [esp+8]
+
+
+def test_partial_register_relation_across_join():
+    r = prove(R(AL_R), O(AL_O, symbol="?f@@YAHHHH@Z"))
+    assert r["status"] == "proved"
+    assert RG.LAST["D"].S and any("eax:8" in (v or "") for k in RG.LAST["D"].S for v in k[2])
+
+
+def test_partial_register_relation_wrong_byte_not_proved():
+    assert prove(R(AL_R), O(AL_BAD, symbol="?f@@YAHHHH@Z"))["status"] == "unknown"
+
+
+def test_partial_writes():
+    pi = RG.pi_drop(RG.PI0, "eax", "eax")
+    assert RG.pi_get(RG._apply_writes(pi, {}, set(), {"eax"}, {"eax": [(0, 8)]}), "eax") == "eax:8"
+    assert RG.pi_get(RG._apply_writes(pi, {}, set(), {"eax"}, {"eax": [(8, 16)]}), "eax") is None
+    p8 = RG.pi_set(pi, "eax", "eax:8")
+    assert RG.pi_get(RG._apply_writes(p8, {}, set(), {"eax"}, {"eax": [(8, 16)]}), "eax") == "eax:16"
+    assert RG.pi_get(RG._apply_writes(RG.PI0, {}, set(), {"eax"}, {"eax": [(0, 8)]}), "eax") == "eax"

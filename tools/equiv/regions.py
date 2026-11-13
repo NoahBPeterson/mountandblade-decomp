@@ -482,16 +482,27 @@ def pi_get(pi, r):
     return pi[PI_REGS.index(r)]
 
 
+def pfam(v):
+    """the register of ours a pi entry names ("ecx" or "ecx:8" -> "ecx")"""
+    return v.split(":")[0] if v else None
+
+
+def pwidth(v):
+    """the low bits a pi entry relates: "ecx" all 32, "ecx:16" the low 16, "ecx:8" the low 8 (al after mov al, m
+    when the upper bytes of eax were unrelated: cl's bools)"""
+    return int(v.split(":")[1]) if v and ":" in v else 32
+
+
 def pi_set(pi, r, s):
-    """pi with r -> s, every other register that mapped to s unrelated"""
-    out = [None if (v == s and PI_REGS[k] != r) else v for k, v in enumerate(pi)]
+    """pi with r -> s, every other register that mapped to s (any width) unrelated"""
+    out = [None if (pfam(v) == pfam(s) and PI_REGS[k] != r) else v for k, v in enumerate(pi)]
     out[PI_REGS.index(r)] = s
     return tuple(out)
 
 
 def pi_drop(pi, r, s):
     """r (original) and s (ours) both unrelated"""
-    return tuple(None if (PI_REGS[k] == r or v == s) else v for k, v in enumerate(pi))
+    return tuple(None if (PI_REGS[k] == r or pfam(v) == pfam(s)) else v for k, v in enumerate(pi))
 
 
 def pi_text(pi):
@@ -625,14 +636,66 @@ def _explicit(i):
     return out - {None}
 
 
-def _apply_writes(pi, ren, full, part):
-    """pi after an instruction whose write r (original) is ren[r] in ours"""
+def _apply_writes(pi, ren, full, part, parts=None):
+    """pi after an instruction whose write r (original) is ren[r] in ours. A partial write (al, ah, ax) of equal
+    values keeps the low bits related that were related before or that it writes, when they form a prefix: al
+    written makes "s:8" of an unrelated register, ax "s:16", ah extends "s:8" to "s:16" (bits 0-7 were already
+    equal) and leaves an unrelated register unrelated. parts: {family: [(lo, hi) bit ranges written]}; without it
+    (flags, unknown parts) a partial write keeps only a full relation."""
     for r in sorted(full):
         pi = pi_set(pi, r, ren.get(r, r))
     for r in sorted(part - full):
-        if pi_get(pi, r) != ren.get(r, r):
-            pi = pi_drop(pi, r, ren.get(r, r))
+        s = ren.get(r, r)
+        cur = pi_get(pi, r)
+        w = pwidth(cur) if pfam(cur) == s else 0
+        if w == 32:
+            continue
+        for lo, hi in sorted((parts or {}).get(r, [])):
+            if lo <= w:
+                w = max(w, hi)
+            else:
+                w = 0
+                break
+        if r == "flags" or not (parts or {}).get(r):
+            w = 0
+        pi = pi_set(pi, r, "%s:%d" % (s, w)) if w else pi_drop(pi, r, s)
     return pi
+
+
+_PART_BITS = {"l8": (0, 8), "h8": (8, 16), "16": (0, 16), "32": (0, 32)}
+
+
+def reg_widths(i):
+    """({family: bits read}, {family: [(lo, hi) written]}) of the explicit and implicit register operands: a read of
+    al needs the low 8 bits related, ah or ax the low 16, anything else (and every address register) all 32"""
+    from capstone import x86_const as X
+    import capstone
+    from rename_core import op_access
+    rd, wr = {}, {}
+    try:
+        ra, wa = i.regs_access()
+    except capstone.CsError:
+        return None, None
+
+    def need(n):
+        f = FAM.get(n)
+        if f:
+            rd[f] = max(rd.get(f, 0), _PART_BITS[_part(n)][1])
+    for x in ra:
+        need(i.reg_name(x))
+    for k, o in enumerate(i.operands):
+        if o.type == X.X86_OP_REG and op_access(i, o, k) & 1:
+            need(i.reg_name(o.reg))
+        elif o.type == X.X86_OP_MEM:
+            for b in (o.mem.base, o.mem.index):
+                if b and FAM.get(i.reg_name(b)):
+                    rd[FAM[i.reg_name(b)]] = 32
+    for x in wa:
+        n = i.reg_name(x)
+        f = FAM.get(n)
+        if f:
+            wr.setdefault(f, []).append(_PART_BITS[_part(n)])
+    return rd, wr
 
 
 NONDET = ("rdtsc", "rdtscp", "cpuid", "rdrand", "rdseed", "in", "out", "ins", "outs", "int", "into", "syscall",
@@ -770,10 +833,12 @@ def ins_equal(R, O, x, y, bij, pi, level="L1", ret_regs=RET_REGS):
     ren["flags"] = "flags"
     if {ren.get(r, r) for r in ra[0]} != rb[0] or {ren.get(r, r) for r in ra[1]} != rb[1]:
         return None, None, "register reads/writes"
+    rwid, wparts = reg_widths(ir)
     for r in ra[0]:
-        if pi_get(pi, r) != ren.get(r, r):
+        v = pi_get(pi, r)
+        if pfam(v) != ren.get(r, r) or pwidth(v) < ((rwid or {}).get(r, 32) if r != "flags" else 32):
             return None, None, "reads %s, not related to ours' %s" % (r, ren.get(r, r))
-    npi = _apply_writes(pi, ren, ra[1], ra[2])
+    npi = _apply_writes(pi, ren, ra[1], ra[2], wparts)
     if kr == "table":
         ta, tb = R.tables.get(x), O.tables.get(y)
         if ta is None or tb is None or len(ta) != len(tb):
@@ -1225,7 +1290,8 @@ def _cut_dz(PR, PO, x, y, pi, own_w):
     dep = a[2] if a[2] is not None else b[2]
     if dep is None or (b[2] is not None and b[2] != a[2]) or dep < 0:
         return None
-    nf = [r for r, v in zip(PI_REGS[:7], pi[:7]) if r not in a[0] or (v is not None and v not in b[0])]
+    nf = [r for r, v in zip(PI_REGS[:7], pi[:7]) if r not in a[0] or (v is not None and pwidth(v) == 32 and
+                                                                       v not in b[0])]
     return {"nf": nf, "noesc": not a[1] or not b[1], "depth": dep, "w": own_w}
 
 
