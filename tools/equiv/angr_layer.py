@@ -925,6 +925,10 @@ def const_diff(x, a):
     return (c1 - c2) % (1 << 32)
 
 
+FP_BOUNDARY = ("fpToIEEEBV", "fpToSBV", "fpToUBV", "fpEQ", "fpLT", "fpLEQ", "fpGT", "fpGEQ", "fpNE", "fpIsNaN",
+               "fpIsInf")
+
+
 class Worker:
     def __init__(self, job):
         import angr
@@ -948,6 +952,8 @@ class Worker:
         self.assume += [C.UGE(esp, 0x10000), C.ULE(esp, 0x7fff0000), (esp & 3) == 0]
         self.PROBE = C.BVS("x_probe", 32, explicit_name=True)
         self.zmemo = {}
+        self.zmemo_abs = {}
+        self.abs_mode = False
         self.zarr = {}
         self.stats = {}
         self._proj = {}
@@ -1119,13 +1125,22 @@ class Worker:
     def z(self, e, subst=None):
         """claripy AST -> z3 (base memory bytes become Select on per-epoch arrays)."""
         z3 = self.z3
-        memo = self.zmemo if subst is None else {}
+        absm = getattr(self, "abs_mode", False)
+        memo = (self.zmemo_abs if absm else self.zmemo) if subst is None else {}
         stack = [e]
         while stack:
             x = stack[-1]
             h = x.hash()
             if h in memo:
                 stack.pop()
+                continue
+            if absm and x.op in FP_BOUNDARY:
+                # (M&B) abstraction: a float term seen from the integer world is a free variable per structure
+                stack.pop()
+                tag = ("%x" % h).replace("-", "n")         # the whole structural hash: no two terms share a name
+                memo[h] = z3.Bool("fpb_" + tag) if x.op.startswith(("fpEQ", "fpLT", "fpLEQ", "fpGT", "fpGEQ",
+                                                                    "fpNE", "fpIs")) \
+                    else z3.BitVec("fpa_%s_%d" % (tag, x.size()), x.size())
                 continue
             kids = [a for a in x.args if hasattr(a, "op") and hasattr(a, "hash")]
             if x.op == "BVS" and x.args[0] in self.base_syms:
@@ -1587,7 +1602,7 @@ class Worker:
             # the callee returned to our caller: its esp already includes the return
             ev = dict(kind="ret", regs=self.snapshot(s), esp_after=esp, target=None, log=s.memory.log)
         else:
-            ev = dict(kind="ret", regs=self.snapshot(s), esp_after=esp + 4 + n,
+            ev = dict(kind="ret", regs=self.snapshot(s), esp_after=esp + 4 + n, esp_at=esp,
                       target=s.memory.load(esp, 4, endness="Iend_LE"), log=s.memory.log)
         s.globals["events"] = s.globals["events"] + (ev,)
         return None
@@ -1882,12 +1897,26 @@ class Worker:
         q.add(pcs[0])
         if not known_equal_pc:
             q.add(pcs[1])
+        # (M&B) the original returns to its caller: at its ret, esp is the entry esp. This only matters when an
+        # unknown callee's `ret N` (an indirect call: the shared symbol rnK) left esp symbolic; it fixes rnK to the
+        # value the original's own code was compiled for, instead of asking Z3 for all 17 values (with every later
+        # stack read an If on the symbolic offset, this made float-heavy functions time out)
+        for e in ea:
+            if e["kind"] == "ret" and e.get("esp_at") is not None and e["target"] is not None \
+                    and any(v.startswith("rn") for v in e["esp_at"].variables):
+                q.add(self.z(e["esp_at"] == self.IN["esp"]))
         r = self.observables(ea, eb)
         if isinstance(r, str):
             if not self.check(q):
                 return None
             return self.cex(q, r, [], None)
         obs, regions = r
+        for a_, b_ in ((a, b) for _n, a, b in obs):
+            if a_.size() != b_.size():
+                return {"what": _n + " (size)"}
+        if self.abstract_equal(sa, sb, obs, regions, known_equal_pc):
+            self.stats["abstract_proofs"] = self.stats.get("abstract_proofs", 0) + 1
+            return None
         diffs = []
         guessed = self.guessed
         for name, a, b in obs:
@@ -1919,6 +1948,46 @@ class Worker:
         c = self.cex(q, None, [(n, d) for n, d in diffs if n in guessed], regions)
         c["assumed_reads"] = True
         return c
+
+    def abstract_equal(self, sa, sb, obs, regions, known_equal_pc):
+        """(M&B) The same comparison with every float term seen from the integer world (fpToIEEEBV, float
+        compares, ...) replaced by a free variable per structural hash. A model of the real query is a model of
+        this one (give each variable its term's value), so 'no difference' here is 'no difference' there. Only
+        when float semantics is needed (or there is a real difference) does the full query run, which with float
+        stores in the write log is where float-heavy functions spent their time."""
+        if not any(self.has_fp(a) or self.has_fp(b) for _n, a, b in obs) and not regions:
+            return False
+        z3 = self.z3
+        self.abs_mode = True
+        try:
+            q = self.solver()
+            q.add(self.z(self.pc(sa)))
+            if not known_equal_pc:
+                q.add(self.z(self.pc(sb)))
+            for e in sa.globals["events"]:
+                if e["kind"] == "ret" and e.get("esp_at") is not None and e["target"] is not None \
+                        and any(v.startswith("rn") for v in e["esp_at"].variables):
+                    q.add(self.z(e["esp_at"] == self.IN["esp"]))
+            diffs = [self.z(a) != self.z(b) for _n, a, b in obs if not same(a, b)]
+            x = self.PROBE
+            zx = self.z(x)
+            for name, lo, excl, la, lb, _ in regions:
+                if la is lb:
+                    continue
+                ma, mb = self.read_byte(x, la), self.read_byte(x, lb)
+                if same(ma, mb):
+                    continue
+                cond = [z3.UGE(zx, self.z(lo))]
+                for elo, ehi in excl:
+                    cond.append(z3.Not(z3.ULT(zx - self.z(elo), self.z(ehi) - self.z(elo))))
+                diffs.append(z3.And(*cond + [self.z(ma) != self.z(mb)]))
+            if not diffs:
+                return True
+            rem = self.deadline - time.time()
+            q.set("timeout", int(max(0.5, min(rem / 3, 30)) * 1000))
+            return q.check(z3.Or(*diffs)) == z3.unsat
+        finally:
+            self.abs_mode = False
 
     def cex(self, q, what, diffs, regions):
         z3 = self.z3
