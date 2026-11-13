@@ -3,8 +3,9 @@
 Ported in spirit from spore-decomp tools/equiv/test_ddec_layer.py (commit 82de4ab6c), whose cases are spore
 functions (Raster::Initialize and its mutants); these are hand-assembled pairs with the same expectations: a loop
 proved with learned invariants, rechecked from its hints, a wrong hint and mutants not proved, L1 vs L2 at the
-return, and x87 refused. Needs Docker with the image mb-stoke-ddec:98d8a0f-1 (tools/equiv/ddec/Dockerfile) and
-unicorn; skipped otherwise. Slow (STOKE runs under amd64 emulation on an arm64 Mac): about a minute per case.
+return, and x87 refused (M&B: only what tools/equiv/x87lift.py rejects; lifted x87 code is test_x87lift.py's), plus
+(M&B) rep movsd with a constant count and the SEH link through fs:[0]. Needs Docker with the image
+mb-stoke-ddec:98d8a0f-2 (tools/equiv/ddec/Dockerfile) and unicorn; skipped otherwise. Slow (STOKE runs under amd64 emulation on an arm64 Mac): about a minute per case.
 
   uv run pytest tools/equiv/test_ddec_layer.py -q
 """
@@ -91,6 +92,29 @@ def test_return_L1_proved_L2_not():
 
 
 def test_x87_unsupported():
-    a = H("d9442404" "d84c2408" "c3")
-    r = prove(R(a), O(H("8bcc" "d94104" "d84908" "c3")))
-    assert r["status"] == "unknown" and "unsupported" in r["detail"]
+    # (M&B) x87 code goes through tools/equiv/x87lift.py (test_x87lift.py); what it rejects (fsin) stays unknown
+    a = H("d9442404" "d9fe" "c3")
+    r = prove(R(a), O(H("8bcc" "d94104" "d9fe" "c3")))
+    assert r["status"] == "unknown" and "x87 lifter" in r["detail"]
+
+
+# (M&B) rep movsd with a constant count is unrolled: one rep movsd of 4 = two of 2 (esi/edi advance)
+REP4 = H("56" "57" "8b742410" "8b7c240c" "b904000000" "f3a5" "5f" "5e" "c3")
+REP22 = H("56" "57" "8b742410" "8b7c240c" "b902000000" "f3a5" "b902000000" "f3a5" "5f" "5e" "c3")
+REP3 = H("56" "57" "8b742410" "8b7c240c" "b903000000" "f3a5" "5f" "5e" "c3")
+
+
+def test_rep_movsd_constant_count():
+    assert prove(R(REP4), O(REP22))["status"] == "proved"
+    assert prove(R(REP4), O(REP3))["status"] != "proved"
+
+
+# (M&B) the SEH frame link through fs:[0] (moved to ddec_layer.TIB); ours restores it through edx
+SEH = H("64a100000000" "50" "64892500000000" "8b0c24" "64890d00000000" "58" "c3")
+SEH_EDX = H("64a100000000" "50" "64892500000000" "8b1424" "64891500000000" "58" "c3")
+SEH_BAD = H("64a100000000" "50" "64892500000000" "8b1424" "64890d00000000" "58" "c3")   # restores ecx, not edx
+
+
+def test_fs_seh_link():
+    assert prove(R(SEH), O(SEH_EDX))["status"] == "proved"
+    assert prove(R(SEH), O(SEH_BAD))["status"] != "proved"

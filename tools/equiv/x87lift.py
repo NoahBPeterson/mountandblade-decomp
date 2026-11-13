@@ -59,6 +59,13 @@ Semantic model, stated exactly. A proof over the lifted code is a proof for the 
       read it.
 This is the model angr's VEX x87 lifting already makes for (a) (64-bit doubles), minus its fixed rounding.
 
+Using it from another layer (angr, not wired): lift(code, base) is pure; Lifted.ops/pre/post are keyed by the
+original instruction offsets and Lifted.depth/roots give the stack depth there. A symbolic executor hooks every x87
+instruction (length = its size) and runs its ops on eight 64-bit virtual registers (plus the scratch 8/9), with
+the post/pre moves at block ends; arithmetic, conversions and comparisons go to uninterpreted functions (the angr
+layer's float abstraction per structural hash), commutative ones with their arguments sorted by that hash, and
+the comparison's result into EFLAGS (fcomi) or into AH at fnstsw. ddec_layer.render_x87 is the STOKE renderer.
+
 Rejected (Reject, the layer says unknown): fsin fcos fsincos fptan fpatan fyl2x fyl2xp1 f2xm1 fscale fprem fprem1
 fxtract frndint fxam, 80-bit loads/stores (fld/fstp tbyte), fbld/fbstp, fldcw/fnstcw/fldenv/fnstenv/fsave/frstor/
 fninit/fnclex, ffree/fincstp/fdecstp, fcmov*, fisttp, fistp m16/m64, fldpi/fldl2e/fldl2t/fldlg2/fldln2 (not

@@ -52,8 +52,12 @@ invariants (linear equalities and memory equality). Sound either way: every cand
 makes learning faster and keeps hints in the form the recheck parser accepts.
 
 Assumptions beyond LAYERS.md: callees do not hand arithmetic flags back to their caller; the relocation pairing in
-field order is the bijection (a reordering of relocated instructions gives `unknown`, never a wrong proof).
-Unsupported (-> unknown): string instructions, segment overrides, indirect jumps with an index register
+field order is the bijection (a reordering of relocated instructions gives `unknown`, never a wrong proof); (M&B)
+literal constants are paired by content (_pairs), and when the field counts differ each of our fields is resolved
+on its own (resolve_symbols: the symbols file, the import table, constants by content, else one consistent
+alignment-derived value per name); fs:[abs] lives at TIB, which no pointer of the function reaches.
+Unsupported (-> unknown): string instructions other than rep movs/stos with a constant count (unrolled), segment
+overrides other than fs:[abs] (the SEH frame link, moved to TIB: fs_absolute), indirect jumps with an index register
 (switch tables), instructions x64asm cannot encode in 64-bit mode, and the x87 code tools/equiv/x87lift.py rejects.
 
 x87 (M&B): both functions go through tools/equiv/x87lift.py, which lowers the x87 stack to scalar doubles in
@@ -227,6 +231,140 @@ def resolve(retail, ours):
             if (abs(o1 - o2) < 0x10000 or abs(r1 - r2) < 0x10000) and (o1 - o2) != (r1 - r2):
                 raise Unsupported("data relocations do not keep their offsets")
     return bytes(rcode), bytes(code), base
+
+
+def _import_va(img, name):
+    """IAT address of an import our object names __imp__Name@N / __imp_Name."""
+    want = name[6:]
+    cands = {want, want.lstrip("_"), re.sub(r"@\d+$", "", want.lstrip("_"))}
+    hits = [va for va, nm in img.imports.items() if nm.split("!", 1)[-1] in cands]
+    return hits[0] if len(hits) == 1 else None
+
+
+def _aligned_fields(retail, ours):
+    """(M&B) {our field offset: retail field offset} from an alignment of the two instruction sequences (difflib on
+    mnemonic + operand shape, relocated values masked): fields at the same place in matched instructions."""
+    import difflib
+
+    def shape(f):
+        out = []
+        for i in _MDI.disasm(f.code, f.va):
+            fields = [i.address - f.va + k for k in range(i.size) if (i.address - f.va + k) in f.relocs]
+            s = re.sub(r"0x[0-9a-f]+|\b\d+\b", "N", i.op_str) if fields else i.op_str
+            out.append((i.mnemonic + " " + s, fields))
+        return out
+    a, b = shape(retail), shape(ours)
+    sm = difflib.SequenceMatcher(None, [x[0] for x in a], [x[0] for x in b], autojunk=False)
+    out = {}
+    for blk in sm.get_matching_blocks():
+        for k in range(blk.size):
+            fa, fb = a[blk.a + k][1], b[blk.b + k][1]
+            if len(fa) == len(fb):
+                for x, y in zip(fa, fb):
+                    out[y] = x
+    return out
+
+
+def resolve_symbols(retail, ours):
+    """(M&B) The pairing when the field-order one cannot be made (other relocation counts: cl loads an address once
+    where the original loads it twice, or the other way): each of our relocated fields is resolved on its own,
+    a function or global through the symbols file's unique address for it (tools/difftest/resolve.SymbolDB, the
+    trust the angr layer's pairing check places in it), an import through the image's import table, a literal
+    constant through a retail field (else the .rdata copy) with the same bytes. Retail's fields stay as they are.
+    A name none of these knows takes the retail value its fields have in an alignment of the two instruction
+    sequences (_aligned_fields), when that is one value, not given to another name (one consistent bijection, the
+    trust the field-order pairing places in relocations). Any field that does not resolve: Unsupported."""
+    import func as FN
+    import angr_layer as AL
+    db, img = AL._symdb(), FN.image()
+    FN.set_consts(ours)
+    consts = (ours.meta or {}).get("consts") or {}
+    base = retail.va
+    rrel = _rel32_fields(retail.code, base)
+    orel = _rel32_fields(ours.code, ours.va)
+    code, rcode = bytearray(ours.code), bytearray(retail.code)
+    rvals = [retail.relocs[a][1] for a in sorted(retail.relocs) if a not in rrel]
+    rd = img.section(".rdata")
+    align = None
+    by_name, taken = {}, {}
+    for b, ot in sorted(ours.relocs.items()):
+        if ot[0] != "sym":
+            raise Unsupported("relocation token %s" % (ot,))
+        _, name, typ, addend = ot
+        if typ not in (0x06, 0x14):
+            raise Unsupported("relocation type %#x" % typ)
+        if (typ == 0x14) != (b in orel):
+            raise Unsupported("REL32 relocation outside a call/jump field")
+        va = None
+        if name in consts:
+            va = next((v for v in rvals if FN.const_ok(("abs", v), ot)), None)
+            if va is None and rd is not None:
+                blob = bytes(img.read(rd[0], rd[1]))
+                k = blob.find(consts[name])
+                va = rd[0] + k + (addend if 0 <= addend < len(consts[name]) else 0) if k >= 0 else None
+            if va is not None:
+                addend = 0                            # va already names the byte the field reads
+        else:
+            vas = set(db.mangled.get(name, ()))
+            if len(vas) == 1:
+                va = next(iter(vas))
+            elif name.startswith("__imp_"):
+                va = _import_va(img, name)
+            elif name in db.lib_full:
+                va = db.lib_full[name]
+            if va is not None:
+                if taken.get(va, name) != name:
+                    raise Unsupported("relocations: %s and %s at one address" % (name[:40], taken[va][:40]))
+                taken[va] = name
+        if va is None and name not in consts:
+            if name not in by_name:
+                if align is None:
+                    align = _aligned_fields(retail, ours)
+                cands = {retail.relocs[align[o]][1] - (0 if typ == 0x14 else
+                                                      (t[3] - (1 << 32) if t[3] >= 0x80000000 else t[3]))
+                         for o, t in ours.relocs.items() if t[1] == name and o in align}
+                by_name[name] = next(iter(cands)) if len(cands) == 1 else None
+                if by_name[name] is not None:
+                    if taken.get(by_name[name], name) != name:
+                        raise Unsupported("aligned relocations: %s and %s at one address" % (
+                            name[:40], taken[by_name[name]][:40]))
+                    taken[by_name[name]] = name
+            va = by_name[name]
+        if va is None:
+            raise Unsupported("relocation to %s: no unique address (symbols file, imports, constants)" % name[:50])
+        if typ == 0x14:
+            if addend not in (0, 0xFFFFFFFC):
+                raise Unsupported("REL32 relocation with addend %#x" % addend)
+            struct.pack_into("<I", code, b, (va - (base + b + 4)) & 0xFFFFFFFF)
+        else:
+            add = addend - (1 << 32) if addend >= 0x80000000 else addend
+            struct.pack_into("<I", code, b, (va + add + DATA_SHIFT) & 0xFFFFFFFF)
+    for a, rt in retail.relocs.items():
+        if a not in rrel:
+            struct.pack_into("<I", rcode, a, (rt[1] + DATA_SHIFT) & 0xFFFFFFFF)
+    return bytes(rcode), bytes(code), base
+
+
+TIB = 0xEFFF0000    # (M&B) fs:[x] is moved here: above 2 GB, where no user-mode pointer of the (not large-address-
+                    # aware) game points, inside the testcase range
+
+
+def fs_absolute(code, base):
+    """(M&B) The SEH frame link (mov eax, fs:[0] / mov fs:[0], esp / mov fs:[0], ecx): an fs-prefixed instruction
+    with an absolute operand becomes nop + the same instruction on TIB + offset (same length, both functions
+    alike). Model: the thread information block is memory that no pointer of the function points into."""
+    b = bytearray(code)
+    for i in _MDI.disasm(bytes(code), base):
+        if i.prefix[1] != 0x64:                     # the segment prefix slot: fs
+            continue
+        if i.bytes[0] != 0x64 or i.disp_size != 4 or any(
+                o.type == X.X86_OP_MEM and (o.mem.base or o.mem.index) for o in i.operands):
+            raise Unsupported("segment override (fs with a register operand)")
+        off = i.address - base
+        v = struct.unpack_from("<I", b, off + i.disp_offset)[0]
+        b[off] = 0x90
+        struct.pack_into("<I", b, off + i.disp_offset, (TIB + v) & 0xFFFFFFFF)
+    return bytes(b)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -462,6 +600,53 @@ def render_x87(ops):
     return out
 
 
+def _const_ecx(fn, a, targets):
+    """(M&B) ecx before the instruction at a, when a mov ecx, imm earlier in its basic block sets it (and nothing
+    between writes ecx); else None."""
+    order = sorted(fn.ins)
+    k = order.index(a)
+    while k > 0:
+        if order[k] in targets:
+            return None
+        k -= 1
+        i = fn.ins[order[k]]
+        if fn.kind(i) != "seq":
+            return None
+        try:
+            _, w = i.regs_access()
+        except capstone.CsError:
+            return None
+        if X.X86_REG_ECX in w or X.X86_REG_CX in w or X.X86_REG_CL in w or X.X86_REG_CH in w:
+            if i.mnemonic == "mov" and i.operands[0].type == X.X86_OP_REG and i.operands[0].reg == X.X86_REG_ECX \
+                    and i.operands[1].type == X.X86_OP_IMM:
+                return i.operands[1].imm & 0xFFFFFFFF
+            return None
+    return None
+
+
+def _rep_string(fn, i, targets):
+    """(M&B) rep movsd/movsb/stosd/stosb with a constant count (struct copies and clears), unrolled: the same
+    forward element-by-element copy, esi/edi advanced, ecx 0 (DF = 0: the ABI's, never set by cl)."""
+    b = i.bytes
+    if len(b) != 2 or b[0] != 0xF3 or b[1] not in (0xA4, 0xA5, 0xAA, 0xAB):
+        raise Unsupported("%s: %s is not supported" % (fn.side, i.mnemonic))
+    n = _const_ecx(fn, i.address, targets)
+    if n is None or n > 256:
+        raise Unsupported("%s: %s with a count that is not a constant <= 256" % (fn.side, i.mnemonic))
+    w = 4 if b[1] in (0xA5, 0xAB) else 1
+    s, r = ("l", "%r9d") if w == 4 else ("b", "%r9b")
+    T = []
+    for k in range(n):
+        if b[1] in (0xA4, 0xA5):
+            T += ["  mov%s %s(%%esi), %s" % (s, hex(k * w), r), "  mov%s %s, %s(%%edi)" % (s, r, hex(k * w))]
+        else:
+            T.append("  mov%s %s, %s(%%edi)" % (s, "%eax" if w == 4 else "%al", hex(k * w)))
+    if b[1] in (0xA4, 0xA5):
+        T.append("  leal %s(%%esi), %%esi" % hex(n * w))
+    T += ["  leal %s(%%edi), %%edi" % hex(n * w), "  movl $0x0, %ecx"]
+    return T
+
+
 def translate(fn, entry, sites, level, ret64, xmm, label, lifted=None):
     """One segment: the code reachable from `entry` (calls/rets/tail jumps are exits), as STOKE assembly.
     lifted: x87lift.Lifted of this function (its x87 instructions are lowered to xmm code), or None."""
@@ -495,6 +680,9 @@ def translate(fn, entry, sites, level, ret64, xmm, label, lifted=None):
         xpost = render_x87(lifted.post.get(off, [])) if x87 else []
         if x87 and (XL.is_x87(i) or i.mnemonic in ("wait", "fwait")):
             out += xpre + render_x87(lifted.ops.get(off, [])) + xpost
+            continue
+        if i.mnemonic.startswith("rep "):
+            out += xpre + _rep_string(fn, i, targets) + xpost
             continue
         m, ops_s = _att(i)
         ops = _hex_imms(m, _fix_mem(ops_s)) if ops_s and k not in ("call", "jmp", "jcc", "tail") else []
@@ -1034,7 +1222,16 @@ def prove(retail, ours, level, hints=None, timeout=600.0, eq_only=True, ntc=64, 
         raise ValueError(level)
     ret64 = bool(ours.meta.get("ret64") or retail.meta.get("ret64"))
     try:
-        rcode, ocode, base = resolve(retail, ours)
+        try:
+            rcode, ocode, base = resolve(retail, ours)
+        except Unsupported as e:
+            if not re.search(r"relocated fields|pair one-to-one|literal constant|call/jump target", str(e)):
+                raise
+            try:
+                rcode, ocode, base = resolve_symbols(retail, ours)
+            except Unsupported as e2:
+                raise Unsupported("%s; by symbols: %s" % (e, e2))
+        rcode, ocode = fs_absolute(rcode, base), fs_absolute(ocode, base)
         rf, of = Fn(rcode, base, "retail"), Fn(ocode, base, "ours")
         rents, rsites = rf.segments()
         oents, osites = of.segments()
