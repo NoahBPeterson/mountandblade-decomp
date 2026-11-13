@@ -1008,7 +1008,7 @@ class Worker:
 
             def store(self, addr, data, size=None, endness=None, condition=None, **kw):
                 addr = self._bv(addr)
-                W.note_addr(self.state, addr)
+                noal = W.note_addr(self.state, addr)
                 if isinstance(size, int) and isinstance(data, int):
                     data = C.BVV(data, size * 8)
                 data = self._bv(data)
@@ -1023,7 +1023,7 @@ class Worker:
                 bs = [data.get_byte(n - 1 - k) for k in range(n)]
                 if endness == "Iend_BE":
                     bs = bs[::-1]
-                self.log = self.log + (("w", addr, tuple(bs)),)
+                self.log = self.log + (("w", addr, tuple(bs), noal),)
 
             def load(self, addr, size=None, endness=None, condition=None, fallback=None, **kw):
                 addr = self._bv(addr)
@@ -1044,8 +1044,15 @@ class Worker:
         if st is None:
             return False
         vs = addr.variables
-        if "in_esp" in vs or not all(v.startswith(("in_", "m0_")) for v in vs):
+        if "in_esp" in vs:
             return False
+        if not all(v.startswith(("in_", "m0_")) for v in vs):
+            # (M&B) also an address computed from callee results or memory read after calls, while no address
+            # of the frame has escaped on this path: no callee was given one, so none can hand one back (a
+            # callee's own dead frame or parameters are not valid objects after it returns)
+            if st.globals.get("escaped", True) or not all(v.startswith(("in_", "m", "c")) and
+                                                          not v.startswith(("mg", "ra", "rn")) for v in vs):
+                return False
         C, e = self.C, self.IN["esp"]
         # not in [esp - 1 MB, esp + 4 + W), modulo 2^32; (M&B) W = the function's own stack argument bytes when
         # its decorated name gives them: its parameters (and return address) are its own objects, which no pointer
@@ -1073,13 +1080,13 @@ class Worker:
         x_own = dx is not None and (dx >= (1 << 32) - (0x10000 - 16) or dx <= 3 + W)
         for ent in log:
             if ent[0] == "w":
-                _, a, bs = ent
+                a, bs = ent[1], ent[2]
                 d = const_diff(x, a)
                 if d is not None:
                     if d < len(bs):
                         cur = bs[d]
                     continue
-                if x_own and len(bs) <= 16 and self.entry_only(a):
+                if x_own and len(bs) <= 16 and len(ent) > 3 and ent[3]:
                     continue
                 if dz:
                     de = const_diff(a, inesp)                 # a = in_esp + de (mod 2^32)
@@ -1101,12 +1108,25 @@ class Worker:
                             decided_in = True
                             break
                         continue
+                    if dz and self.own_range(lo, hi):
+                        continue           # (M&B) x is noted not to point into the function's own stack
                     inside.append(C.ULT(x - lo, hi - lo))
                 if decided_in:
                     continue
                 fresh = self.base_byte(ep, x)
                 cur = C.If(C.Or(*inside), cur, fresh) if inside else fresh
         return cur
+
+    def own_range(self, lo, hi):
+        """[lo, hi) inside [in_esp - (64 KB - 16), in_esp + 4 + W): the zone note_addr's assumption excludes"""
+        inesp = self.IN["esp"]
+        W = self.job.get("argw") or 0
+        dl, dh = const_diff(lo, inesp), const_diff(hi, inesp)
+        if dl is None or dh is None:
+            return False
+        sl = dl - (1 << 32) if dl >= 0x80000000 else dl
+        sh = dh - (1 << 32) if dh >= 0x80000000 else dh
+        return -(0x10000 - 16) <= sl <= sh <= 4 + W
 
     def entry_only(self, a):
         """is the address computed from the entry state alone (note_addr's condition for the assumption)?"""
