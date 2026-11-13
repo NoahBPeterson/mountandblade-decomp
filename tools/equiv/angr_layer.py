@@ -209,7 +209,11 @@ def x87_signature_norm(code, base):
             continue
         fam = next((f for p, f in _X87_FAMILY if m.startswith(p)), None)
         if fam:
-            out.append(fam + (":" + mem.group(1) if mem else ""))
+            # an operation with a memory operand is a load of it plus the operation (the conversion to the
+            # register format is exact): fmul dword [m] ~ fld dword [m]; fmul st(1)
+            if mem:
+                out.append("load:" + mem.group(1) + (":int" if m.startswith("fi") else ""))
+            out.append(fam)
         elif m in ("fld", "fild", "fbld"):
             out.append("load:" + mem.group(1) + (":int" if m == "fild" else ""))
         elif m in ("fst", "fstp", "fist", "fistp", "fisttp"):
