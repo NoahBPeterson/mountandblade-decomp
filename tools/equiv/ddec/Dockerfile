@@ -15,6 +15,17 @@
 #   3-ddec-hints.patch       DDEC_HINTS=<file> rechecks a proof: cutpoints and invariants are read back from the
 #                            text STOKE printed in its SUMMARY; nothing is learned, nothing is dropped, no other
 #                            cutpoints are tried, so wrong hints make the check fail.
+#   x87/4-x87-lifter.patch   (M&B, image tag -2) for tools/equiv/x87lift.py, which lowers x87 code to SSE2 scalar
+#                            doubles that STOKE models as uninterpreted functions (add_double, comisd, ...).
+#                            STOKE_ACKERMANN=1 replaces them by Ackermann's reduction with x87's algebra: equal
+#                            arguments give equal results; fadd/fmul are commutative; fcom of swapped arguments
+#                            exchanges less/greater, of equal arguments gives equal or unordered (Z3 4.4 hangs on
+#                            f(x[63:0]) = f(y[63:0]) when only the bits say x = y). Register equalities are stated per
+#                            64-bit lane (the same Z3 weakness), and the constant-propagation rules x + 0 = x and
+#                            x - 0 = x are dropped (not IEEE: -0 + 0 = +0; not x87 under a narrower precision
+#                            control). It sits in its own directory and is applied after the build of patches 1-3,
+#                            so the earlier layers stay cached (and shared with spore).
+#   Build:  docker build --platform linux/amd64 -t mb-stoke-ddec:98d8a0f-2 tools/equiv/ddec
 FROM --platform=linux/amd64 stanfordpl/stoke@sha256:c50f06b36602b4282c0730da58c119d809edd69732923dd137860aaa931a599d
 
 USER stoke
@@ -33,6 +44,14 @@ RUN printf 'STOKE_PLATFORM="nehalem"\nBUILD_TYPE=release\nMISC_OPTIONS= -DSTOKE_
 # it exists (a race). Build x64asm alone first, then the rest of the external libraries, then the one tool we use.
 RUN make x64asm EXT_OPT=release \
  && make external EXT_OPT=release \
+ && make -j"$(nproc)" bin/stoke_debug_verify \
+ && test -x bin/stoke_debug_verify
+
+COPY --chown=stoke:stoke x87/*.patch /home/stoke/patches/x87/
+# STOKE's Makefile does not track header dependencies: every file that includes a patched header is touched so
+# that it is compiled again.
+RUN for p in /home/stoke/patches/x87/*.patch; do git apply -v "$p" || exit 1; done \
+ && touch $(grep -rlE '(packed_handler|simple_handler|handlers|z3solver)\.h' src tools --include=*.cc) \
  && make -j"$(nproc)" bin/stoke_debug_verify \
  && test -x bin/stoke_debug_verify
 

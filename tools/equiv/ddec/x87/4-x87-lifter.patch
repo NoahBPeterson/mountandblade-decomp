@@ -1,0 +1,152 @@
+--- a/src/symstate/simplify.cc
++++ b/src/symstate/simplify.cc
+@@ -164,15 +164,8 @@
+     if (f.args.size() == 2) {
+       auto a = (*this)(bv->args_[0]);
+       auto b = (*this)(bv->args_[1]);
+-      if ((f.name == "sub_single" || f.name == "sub_double") && is_zero(b)) {
+-        return cache(bv, (SymBitVectorAbstract*) a);
+-      }
+-      if ((f.name == "add_single" || f.name == "add_double") && is_zero(b)) {
+-        return cache(bv, (SymBitVectorAbstract*) a);
+-      }
+-      if ((f.name == "add_single" || f.name == "add_double") && is_zero(a)) {
+-        return cache(bv, (SymBitVectorAbstract*) b);
+-      }
++      // (x87 lifter) x + 0 = x and x - 0 = x are not IEEE identities (-0 + +0 = +0) and not x87 identities under
++      // a precision control narrower than the operand (the sum is rounded): not simplified
+       if ((f.name == "mul_single" || f.name == "mul_double") && (is_zero(a) && is_zero(b))) {
+         return cache(bv, make_constant(bv->width_, 0));
+       }
+--- a/src/symstate/state.cc
++++ b/src/symstate/state.cc
+@@ -357,7 +357,12 @@
+     constraints.push_back(lookup(*gp_it) == other.lookup(*gp_it));
+   }
+   for (auto sse_it = rs.sse_begin(); sse_it != rs.sse_end(); ++sse_it) {
+-    constraints.push_back(lookup(*sse_it) == other.lookup(*sse_it));
++    // (x87 lifter) one equality per 64-bit lane: Z3 4.4 does not derive the equality of two lanes from that of the
++    // whole registers, so an uninterpreted function of a lane (add_double(xmm0[63:0], ..)) never met its twin
++    auto a = lookup(*sse_it);
++    auto b = other.lookup(*sse_it);
++    for (size_t lo = 0; lo < (*sse_it).size(); lo += 64)
++      constraints.push_back(a[lo + 63][lo] == b[lo + 63][lo]);
+   }
+   for (auto flag_it = rs.flags_begin(); flag_it != rs.flags_end(); ++flag_it) {
+     constraints.push_back((*this)[*flag_it] == other[*flag_it]);
+--- a/src/solver/z3solver.h
++++ b/src/solver/z3solver.h
+@@ -95,6 +95,14 @@
+   }
+ 
+ 
++  /** (x87 lifter) STOKE_ACKERMANN: an application of an uninterpreted function, replaced by a fresh constant. */
++  struct AckApp {
++    std::string name;
++    z3::expr_vector args;
++    z3::expr res;
++    AckApp(z3::context& c, const std::string& n, const z3::expr& r) : name(n), args(c), res(r) {}
++  };
++
+   /** This class converts symbolic bit-vectors into Z3's format. */
+   class ExprConverter : public SymMemoVisitor<z3::expr, z3::expr, z3::expr> {
+ 
+@@ -260,6 +268,11 @@
+     /** Constraints that we can add to */
+     std::vector<SymBool>& constraints_;
+ 
++  public:
++    /** (x87 lifter) when set, uninterpreted functions are Ackermannized into this list */
++    std::vector<AckApp>* apps_ = nullptr;
++  private:
++
+     z3::context& context_;
+ 
+     std::string error_;
+--- a/src/solver/z3solver.cc
++++ b/src/solver/z3solver.cc
+@@ -1,3 +1,4 @@
++#include <sstream>
+ // Copyright 2013-2016 Stanford University
+ //
+ // Licensed under the Apache License, Version 2.0 (the License);
+@@ -65,12 +66,22 @@
+   const vector<SymBool>* current = &constraints;
+   vector<SymBool>* new_constraints = 0;
+   bool free_it = false;
++  // (x87 lifter) STOKE_ACKERMANN=1: uninterpreted functions by Ackermann's reduction. Z3 4.4 does not find that the
++  // arguments of two applications are equal when only their bits say so (it hangs on f(x[63:0]) = f(y[63:0]) with
++  // x = y). Each pair of applications of one function gets "equal arguments -> equal results"; add/mul also
++  // "swapped arguments -> equal results" (x87 fadd/fmul are commutative bit for bit), comisd "swapped arguments ->
++  // less and greater exchanged" and "equal arguments -> equal or unordered". Every such lemma holds for the x87
++  // operations the functions stand for; leaving one out only weakens the formula.
++  const bool ack = getenv("STOKE_ACKERMANN") != nullptr;
++  vector<AckApp> apps;
+ 
+   while (current->size() != 0) {
+ 
+     new_constraints = new vector<SymBool>();
+ 
+     ExprConverter ec(context_, *new_constraints);
++    if (ack)
++      ec.apps_ = &apps;
+ 
+     for (auto it : *current) {
+ #ifdef DEBUG_Z3_INTERFACE_PERFORMANCE
+@@ -113,6 +124,37 @@
+   }
+   delete current;
+ 
++  if (ack) {
++    auto commutative = [](const std::string& n) {
++      return n == "add_double" || n == "mul_double" || n == "add_single" || n == "mul_single";
++    };
++    auto c2 = [this](int v) { return context_.bv_val(v, 2); };
++    auto imp = [this](const z3::expr& a, const z3::expr& b) {
++      return z3::expr(context_, Z3_mk_implies(context_, a, b));
++    };
++    for (size_t i = 0; i < apps.size(); ++i) {
++      auto& p = apps[i];
++      if (p.name == "comisd" && p.args.size() == 2)
++        solver_.add(imp(p.args[0] == p.args[1], p.res == c2(0) || p.res == c2(3)));
++      for (size_t j = i + 1; j < apps.size(); ++j) {
++        auto& q = apps[j];
++        if (p.name != q.name || p.args.size() != q.args.size())
++          continue;
++        z3::expr same = context_.bool_val(true);
++        for (unsigned k = 0; k < p.args.size(); ++k)
++          same = same && (p.args[k] == q.args[k]);
++        solver_.add(imp(same, p.res == q.res));
++        if (p.args.size() == 2 && (commutative(p.name) || p.name == "comisd")) {
++          z3::expr swapped = (p.args[0] == q.args[1]) && (p.args[1] == q.args[0]);
++          z3::expr qr = q.res;
++          if (p.name == "comisd")
++            qr = z3::ite(q.res == c2(1), c2(2), z3::ite(q.res == c2(2), c2(1), q.res));
++          solver_.add(imp(swapped, p.res == qr));
++        }
++      }
++    }
++  }
++
+   /* Run the solver and see */
+   try {
+ #ifdef DEBUG_Z3_INTERFACE_PERFORMANCE
+@@ -345,6 +387,18 @@
+   auto ret = f.return_type;
+   char const * name = f.name.c_str();
+ 
++  if (apps_) {
++    // (x87 lifter) Ackermann's reduction: a fresh constant per application, congruence added by is_sat()
++    std::stringstream ss;
++    ss << "ACK_" << f.name << "_" << apps_->size();
++    z3::expr res = context_.bv_const(ss.str().c_str(), ret);
++    AckApp app(context_, f.name, res);
++    for (auto a : bv->args_)
++      app.args.push_back((*this)(a));
++    apps_->push_back(app);
++    return res;
++  }
++
+   // get z3 representation of the argument/return types
+   vector<z3::sort> sorts;
+   for (uint16_t it : args) {

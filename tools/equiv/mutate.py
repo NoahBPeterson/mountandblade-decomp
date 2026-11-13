@@ -4,7 +4,10 @@ its proof of the real build is not accepted.
 Ported from spore-decomp tools/equiv/mutate.py (commit aaaf5c79f). Kinds: an immediate changed by +1, a store
 turned into nops, a register operand renamed (one occurrence, so the data flow changes), two adjacent dependent
 instructions swapped, and (new, for the frame-slot model) a frame-slot displacement moved by 4 in one instruction.
-Relocated fields are never touched."""
+Relocated fields are never touched.
+(M&B) x87 kinds (x87_candidates, for tools/equiv/x87lift.py): fsub <-> fsubr and fdiv <-> fdivr (the operands of a
+non-commutative operation swapped), a dropped fxch, fld1 <-> fldz, a float <-> double load or store, and a literal
+constant (__real@) of ours replaced by one with other bytes."""
 import random
 from dataclasses import replace
 
@@ -74,6 +77,42 @@ def candidates(f):
                 swapped = bytes(f.code[jo:jo + j.size]) + bytes(f.code[off:off + i.size])
                 out.append(("swapped dependent +%#x %s %s / %s %s" % (off, i.mnemonic, i.op_str, j.mnemonic, j.op_str),
                             [(off + n, v) for n, v in enumerate(swapped)]))
+    return out + x87_candidates(f, ins, rb)
+
+
+def x87_candidates(f, ins=None, rb=None):
+    """(M&B) x87 mutants: opcode/modrm bytes only (never a relocated field), plus one changed literal."""
+    ins = list(MD.disasm(f.code, f.va)) if ins is None else ins
+    rb = _reloc_bytes(f) if rb is None else rb
+    out = []
+    for i in ins:
+        off = i.address - f.va
+        b = i.bytes
+        if len(b) < 2 or not 0xD8 <= b[0] <= 0xDF or off in rb or off + 1 in rb:
+            continue
+        op, modrm = b[0], b[1]
+        mod, reg = modrm >> 6, (modrm >> 3) & 7
+        what = "%s %s" % (i.mnemonic, i.op_str)
+        arith = (op in (0xD8, 0xDC, 0xDA, 0xDE) and mod != 3) or (op in (0xD8, 0xDC, 0xDE) and mod == 3)
+        if arith and reg in (4, 5):
+            out.append(("x87 swapped sub/subr at +%#x %s" % (off, what), [(off + 1, modrm ^ 0x08)]))
+        if arith and reg in (6, 7):
+            out.append(("x87 swapped div/divr at +%#x %s" % (off, what), [(off + 1, modrm ^ 0x08)]))
+        if op == 0xD9 and 0xC9 <= modrm <= 0xCF:
+            out.append(("x87 dropped fxch at +%#x %s" % (off, what), [(off, 0x90), (off + 1, 0x90)]))
+        if op == 0xD9 and modrm in (0xE8, 0xEE):
+            out.append(("x87 changed constant at +%#x %s" % (off, what), [(off + 1, modrm ^ 0x06)]))
+        if op in (0xD9, 0xDD) and mod != 3 and reg in (0, 2, 3):
+            out.append(("x87 float/double %s at +%#x %s" % ("load" if reg == 0 else "store", off, what),
+                        [(off, op ^ 0x04)]))
+    consts = (f.meta or {}).get("consts") or {}
+    for o, t in sorted(f.relocs.items()):
+        if t[0] == "sym" and t[2] == 0x06 and t[1].startswith("__real@") and t[1] in consts:
+            old = consts[t[1]]
+            new = bytes([old[0] ^ 1]) + old[1:]
+            out.append(("x87 changed literal at +%#x %s" % (o, t[1]),
+                        [(o, ("sym", "__real@" + new[::-1].hex(), t[2], t[3], new))]))
+            break
     return out
 
 
@@ -105,7 +144,13 @@ def mutants(f, k=5, seed=1, covered=None):
     out = []
     for desc, patch in pick[:max(k, len(kinds))]:
         b = bytearray(f.code)
+        relocs, meta = f.relocs, dict(f.meta, mutant=desc)
         for pos, v in patch:
+            if isinstance(v, tuple):              # (M&B) a relocation token replaced (a changed literal)
+                relocs = dict(relocs)
+                relocs[pos] = v[:4]
+                meta["consts"] = dict(meta.get("consts") or {}, **{v[1]: v[4]})
+                continue
             b[pos] = v
-        out.append((desc, replace(f, code=bytes(b), meta=dict(f.meta, mutant=desc))))
+        out.append((desc, replace(f, code=bytes(b), relocs=relocs, meta=meta)))
     return out

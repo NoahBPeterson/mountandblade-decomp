@@ -53,10 +53,19 @@ makes learning faster and keeps hints in the form the recheck parser accepts.
 
 Assumptions beyond LAYERS.md: callees do not hand arithmetic flags back to their caller; the relocation pairing in
 field order is the bijection (a reordering of relocated instructions gives `unknown`, never a wrong proof).
-Unsupported (-> unknown): x87, string instructions, segment overrides, indirect jumps with an index register
-(switch tables), instructions x64asm cannot encode in 64-bit mode.
+Unsupported (-> unknown): string instructions, segment overrides, indirect jumps with an index register
+(switch tables), instructions x64asm cannot encode in 64-bit mode, and the x87 code tools/equiv/x87lift.py rejects.
 
-Build the image once:  docker build --platform linux/amd64 -t mb-stoke-ddec:98d8a0f-1 tools/equiv/ddec
+x87 (M&B): both functions go through tools/equiv/x87lift.py, which lowers the x87 stack to scalar doubles in
+xmm0-7 (stack position p = xmm p; xmm8-10, r9, r10, r12, r13 are scratch), with the semantic model stated in its
+docstring (every x87 value representable as a double; arithmetic, conversions and comparisons are STOKE's
+uninterpreted functions, so 24- vs 53-bit precision does not matter; fadd/fmul/fcom commutative through
+ddec/x87/4-x87-lifter.patch, image tag -2). The two sides must agree on the x87 depth at every segment entry, at
+every call and at the return; xmm0-7 are then part of every compared state (empty stack slots zeroed at exits,
+the returned st(0) kept at L1). A concrete counterexample on x87 code whose x87 operation sequences differ is not
+trusted (unicorn runs the 80-bit unit at its default 64-bit precision; the angr layer's rule).
+
+Build the image once:  docker build --platform linux/amd64 -t mb-stoke-ddec:98d8a0f-2 tools/equiv/ddec
 Requires: docker, and unicorn in the Python environment (pip install unicorn).
 """
 import json
@@ -74,13 +83,13 @@ import capstone
 from capstone import x86_const as X
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DOCKER_IMAGE = os.environ.get("DDEC_IMAGE", "mb-stoke-ddec:98d8a0f-1")
+DOCKER_IMAGE = os.environ.get("DDEC_IMAGE", "mb-stoke-ddec:98d8a0f-2")    # -2: patch x87/4 (x87lift.py)
 DOCKER = shutil.which("docker") or ("/usr/local/bin/docker" if os.path.exists("/usr/local/bin/docker") else None)
 if DOCKER is None:
     # optional layer (LAYERS.md): prove.py skips it with this message when Docker is not installed
     raise ImportError("Docker not found; DDEC is optional (build: docker build --platform linux/amd64 -t %s "
                       "tools/equiv/ddec)" % DOCKER_IMAGE)
-STOKE_VERSION = "98d8a0f+ddec-hints-1"
+STOKE_VERSION = "98d8a0f+ddec-hints-1+x87-1"
 BUILD_CMD = "docker build --platform linux/amd64 -t %s tools/equiv/ddec" % DOCKER_IMAGE
 
 STACK = 0x20000800          # esp at a segment's entry in the testcases
@@ -100,6 +109,11 @@ class Unsupported(Exception):
     pass
 
 
+import sys as _sys                                    # noqa: E402
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import x87lift as XL                                  # noqa: E402
+
+
 # ----------------------------------------------------------------------------------------------------------------
 # 1. relocations: one bijection, both functions placed at the retail address
 
@@ -110,6 +124,45 @@ def _rel32_fields(code, base):
         if (b[0] in (0xE8, 0xE9) and i.size == 5) or (b[0] == 0x0F and 0x80 <= b[1] <= 0x8F and i.size == 6):
             out.add(i.address - base + i.size - 4)
     return out
+
+
+def _pairs(retail, ours, ra, oa, rrel, const_ok):
+    """(M&B) Field pairs: our literal constants (__real@ & co., DIR32 to a symbol with known bytes) by content, with
+    a retail field that reads the same bytes in .rdata (preferring the one at the same position), when the
+    position does not already fit; every other field in field order. cl orders x87 operands differently between
+    builds (fld [c1]; fmul [c2] / fld [c2]; fmul [c1]); a read-only literal is the same value wherever it sits."""
+    consts = (ours.meta or {}).get("consts") or {}
+    if const_ok is None or not consts:
+        return list(zip(ra, oa))
+    try:
+        import func as FN
+        rd = FN.image().section(".rdata")
+    except Exception:
+        rd = None
+    if rd is None:
+        return list(zip(ra, oa))
+    lo, hi = rd[0], rd[0] + rd[1]
+    lit = [k for k, b in enumerate(oa) if ours.relocs[b][0] == "sym" and ours.relocs[b][2] == 0x06
+           and ours.relocs[b][1] in consts]
+    if not lit:
+        return list(zip(ra, oa))
+    used, chosen = set(), {}
+    for k in lit:
+        ot = ours.relocs[oa[k]]
+
+        def fits(j):
+            a = ra[j]
+            v = retail.relocs[a][1]
+            return j not in used and a not in rrel and lo <= v < hi and const_ok(("abs", v), ot)
+        order = ([k] if k < len(ra) else []) + [j for j in range(len(ra)) if j != k]
+        j = next((j for j in order if fits(j)), None)
+        if j is None:
+            return list(zip(ra, oa))            # no such constant: the field-order pairing reports it
+        used.add(j)
+        chosen[k] = j
+    rest_r = [a for j, a in enumerate(ra) if j not in used]
+    rest_o = [b for k, b in enumerate(oa) if k not in chosen]
+    return [(ra[j], oa[k]) for k, j in chosen.items()] + list(zip(rest_r, rest_o))
 
 
 def resolve(retail, ours):
@@ -131,7 +184,7 @@ def resolve(retail, ours):
         const_ok = None
     code = bytearray(ours.code)
     rcode = bytearray(retail.code)
-    for a, b in zip(ra, oa):
+    for a, b in _pairs(retail, ours, ra, oa, rrel, const_ok):
         rt, ot = retail.relocs[a], ours.relocs[b]
         v = rt[1]
         r_is_rel = a in rrel
@@ -335,8 +388,83 @@ def _uses_xmm(fn):
     return any("xmm" in i.op_str for i in fn.ins.values())
 
 
-def translate(fn, entry, sites, level, ret64, xmm, label):
-    """One segment: the code reachable from `entry` (calls/rets/tail jumps are exits), as STOKE assembly."""
+_SCRATCH_INIT = ["  movl $0x0, %r9d", "  movq %r9, %xmm8", "  movq %r9, %xmm9", "  movq %r9, %xmm10"]
+
+
+def _att_mem(m):
+    """x87lift.Mem -> (AT&T operand, needs %r11d = 0)."""
+    if m.seg:
+        raise Unsupported("segment override")
+    disp = hex(m.disp & 0xFFFFFFFF) if (m.disp & 0xFFFFFFFF) else ""
+    if not m.base and not m.index:
+        return "%s(%%r11d)" % (disp or "0x0"), True
+    if m.index:
+        return "%s(%s,%%%s,%d)" % (disp, ("%" + m.base) if m.base else "", m.index, m.scale), False
+    return "%s(%%%s)" % (disp, m.base), False
+
+
+def render_x87(ops):
+    """x87lift ops -> STOKE AT&T lines (xmm<n> for register n; r9/r10/r12/r13 and xmm10 scratch)."""
+    out = []
+    xr = lambda n: "%%xmm%d" % n                        # noqa: E731
+    for op in ops:
+        w = op[0]
+        if w in ("load", "store"):
+            _, x, m, kind = op
+            ms, absol = _att_mem(m)
+            if absol:
+                out.append("  movl $0x0, %r11d")
+            if w == "load":
+                out += {"f32": ["  cvtss2sd %s, %s" % (ms, xr(x))],
+                        "f64": ["  movsd %s, %s" % (ms, xr(x))],
+                        "i32": ["  cvtsi2sdl %s, %s" % (ms, xr(x))],
+                        "i16": ["  movswl %s, %%r9d" % ms, "  cvtsi2sdl %%r9d, %s" % xr(x)],
+                        "i64": ["  cvtsi2sdq %s, %s" % (ms, xr(x))]}[kind]
+            else:
+                out += {"f32": ["  cvtsd2ss %s, %%xmm10" % xr(x), "  movss %%xmm10, %s" % ms],
+                        "f64": ["  movsd %s, %s" % (xr(x), ms)],
+                        "i32": ["  cvtsd2si %s, %%r9d" % xr(x), "  movl %%r9d, %s" % ms]}[kind]
+        elif w == "copy":
+            if op[1] != op[2]:
+                out.append("  movsd %s, %s" % (xr(op[2]), xr(op[1])))
+        elif w == "move":
+            out.append("  movapd %s, %s" % (xr(op[2]), xr(op[1])))
+        elif w == "const":
+            if op[2] == 0:
+                out.append("  xorpd %s, %s" % (xr(op[1]), xr(op[1])))
+            else:
+                out += ["  movq $%s, %%r9" % hex(op[2]), "  movq %%r9, %s" % xr(op[1])]
+        elif w == "arith":
+            out.append("  %ssd %s, %s" % (op[1], xr(op[3]), xr(op[2])))
+        elif w in ("neg", "abs"):
+            mask = 0x8000000000000000 if w == "neg" else 0x7FFFFFFFFFFFFFFF
+            out += ["  movq $%s, %%r9" % hex(mask), "  movq %r9, %xmm10",
+                    "  %s %%xmm10, %s" % ("xorpd" if w == "neg" else "andpd", xr(op[1]))]
+        elif w == "sqrt":
+            out.append("  sqrtsd %s, %s" % (xr(op[1]), xr(op[1])))
+        elif w == "cmp":
+            out.append("  ucomisd %s, %s" % (xr(op[2]), xr(op[1])))
+            if op[3] == "sw":           # C0 = CF, C2 = PF, C3 = ZF -> r10d = C3<<6 | C2<<2 | C0
+                out += ["  setb %r12b", "  setp %r13b", "  sete %r10b", "  movzbl %r12b, %r12d",
+                        "  movzbl %r13b, %r13d", "  movzbl %r10b, %r10d", "  shll $0x6, %r10d",
+                        "  shll $0x2, %r13d", "  orl %r12d, %r10d", "  orl %r13d, %r10d"]
+        elif w == "fnstsw":             # ax = (C3 C2 C0 | TOP << 3) << 8, AL = 0 (x87lift model (d)); like
+            # fnstsw it leaves EFLAGS alone (lea/not/movzx only): eax & 0xffff0000 = eax + ~(eax & 0xffff) + 1
+            out += ["  movzwl %ax, %r12d", "  notl %r12d", "  leal 0x1(%eax,%r12d), %r12d",
+                    "  leal %s(%%r10d), %%r13d" % hex(op[1] << 3), "  leal (,%r13d,8), %r13d",
+                    "  leal (,%r13d,8), %r13d", "  leal (,%r13d,4), %r13d", "  leal (%r12d,%r13d), %eax"]
+        elif w == "zero":
+            out.append("  xorpd %s, %s" % (xr(op[1]), xr(op[1])))
+        elif w == "clearhi":
+            out.append("  movq %s, %s" % (xr(op[1]), xr(op[1])))
+        else:
+            raise Unsupported("x87 op %s" % w)
+    return out
+
+
+def translate(fn, entry, sites, level, ret64, xmm, label, lifted=None):
+    """One segment: the code reachable from `entry` (calls/rets/tail jumps are exits), as STOKE assembly.
+    lifted: x87lift.Lifted of this function (its x87 instructions are lowered to xmm code), or None."""
     reach = sorted(fn.reach(entry))
     targets = set()
     for a in reach:
@@ -344,7 +472,8 @@ def translate(fn, entry, sites, level, ret64, xmm, label):
         if fn.kind(i) in ("jmp", "jcc"):
             targets.add(i.operands[0].imm)
     L = lambda a: ".L%s_%x" % (label, a - fn.base)
-    out = [".%s:" % label]
+    x87 = lifted is not None and lifted.any
+    out = [".%s:" % label] + (_SCRATCH_INIT if x87 else [])
     if reach[0] != entry:
         out.append("  jmpq %s" % L(entry))
     def clobber():
@@ -353,7 +482,7 @@ def translate(fn, entry, sites, level, ret64, xmm, label):
             c.append("  movl $0x0, %ecx")
             if not ret64:
                 c.append("  movl $0x0, %edx")
-            if xmm:
+            if xmm and not x87:     # with x87 code the lifter's exit ops zero the empty slots, keep st(0) returned
                 c += ["  xorps %%xmm%d, %%xmm%d" % (k, k) for k in range(8)]
         return c
     for a in reach:
@@ -361,6 +490,12 @@ def translate(fn, entry, sites, level, ret64, xmm, label):
         if a in targets or (a == entry and reach[0] != entry):
             out.append("%s:" % L(a))
         k = fn.kind(i)
+        off = a - fn.base
+        xpre = render_x87(lifted.pre.get(off, [])) if x87 else []
+        xpost = render_x87(lifted.post.get(off, [])) if x87 else []
+        if x87 and (XL.is_x87(i) or i.mnemonic in ("wait", "fwait")):
+            out += xpre + render_x87(lifted.ops.get(off, [])) + xpost
+            continue
         m, ops_s = _att(i)
         ops = _hex_imms(m, _fix_mem(ops_s)) if ops_s and k not in ("call", "jmp", "jcc", "tail") else []
         T = []
@@ -431,8 +566,43 @@ def translate(fn, entry, sites, level, ret64, xmm, label):
             raise Unsupported("x87")
         else:
             T = pre + ["  %s %s" % (m, ", ".join(ops))] if ops else ["  %s" % m]
-        out += T
+        out += xpre + T + xpost
     return "\n".join(out) + "\n"
+
+
+def _ret_depth(ours):
+    """1 when our decorated name returns float/double (st(0)), 0 when it returns anything else, None unknown."""
+    try:
+        import angr_layer as AL
+        nf = AL.name_facts(ours.meta.get("symbol") or "")
+    except Exception:
+        return None
+    if "fret" not in nf:
+        return None
+    return 1 if nf["fret"] else 0
+
+
+def lift_pair(rcode, ocode, base, ours, rents, oents, rsites, osites):
+    """-> (retail Lifted, our Lifted), or (None, None) when neither function has x87 code. Raises XL.Reject
+    (or Unsupported) when the lifter cannot lower one, or the two disagree on the x87 depth at a segment entry,
+    a call or the return."""
+    rl = XL.lift(rcode, base, _ret_depth(ours))
+    ol = XL.lift(ocode, base, _ret_depth(ours))
+    if not rl.any and not ol.any:
+        return None, None
+    if rl.ret_depth != ol.ret_depth:
+        raise XL.Reject("x87 return depth %d in retail, %d in ours" % (rl.ret_depth, ol.ret_depth))
+    for k, (re_, oe) in enumerate(zip(rents, oents)):
+        if re_ is None or oe is None:
+            continue
+        a, b = rl.depth.get(re_ - base), ol.depth.get(oe - base)
+        if a != b:
+            raise XL.Reject("x87 depth at segment %d: %s in retail, %s in ours" % (k, a, b))
+    for k, (rs, os_) in enumerate(zip(rsites, osites)):
+        a, b = rl.depth.get(rs - base), ol.depth.get(os_ - base)
+        if a != b:
+            raise XL.Reject("x87 depth at call %d: %s in retail, %s in ours" % (k, a, b))
+    return rl, ol
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -694,8 +864,10 @@ def _image_ok():
         return False
 
 
-def _run_stoke(job, segs, timeout, eq_only, xmm):
-    """segs: list of (name, hints_file_or_None). Runs all in one container, in parallel. -> {name: (rc, log)}"""
+def _run_stoke(job, segs, timeout, eq_only, xmm, ack=False):
+    """segs: list of (name, hints_file_or_None). Runs all in one container, in parallel. -> {name: (rc, log)}
+    ack: lifted x87 code (STOKE_ACKERMANN=1, ddec/x87/4-x87-lifter.patch: its floating-point functions by
+    Ackermann's reduction with the x87 algebra)."""
     di = "{ %rax %rcx %rdx %rbx %rsp %rbp %rsi %rdi %r8" + (" %xmm0 %xmm1 %xmm2 %xmm3 %xmm4 %xmm5 %xmm6 %xmm7"
                                                                 if xmm else "") + " }"
     lo = "{ %eax %ecx %edx %ebx %esp %ebp %esi %edi %r8d" + (" %xmm0 %xmm1 %xmm2 %xmm3 %xmm4 %xmm5 %xmm6 %xmm7"
@@ -703,7 +875,8 @@ def _run_stoke(job, segs, timeout, eq_only, xmm):
     lines = ["#!/bin/bash", "cd /job"]
     per = max(5, int(timeout))
     for name, hint in segs:
-        env = ("DDEC_EQ_ONLY=1 " if eq_only else "") + ("DDEC_HINTS=/job/%s " % hint if hint else "")
+        env = ("DDEC_EQ_ONLY=1 " if eq_only else "") + ("DDEC_HINTS=/job/%s " % hint if hint else "") + \
+            ("STOKE_ACKERMANN=1 " if ack else "")
         ntc = sum(1 for ln in open(os.path.join(job, name + ".tc")) if ln.startswith("Testcase "))
         lines.append(
             "( %s timeout -s KILL %d stoke_debug_verify --target %s_t.s --rewrite %s_r.s --strategy ddec "
@@ -868,20 +1041,25 @@ def prove(retail, ours, level, hints=None, timeout=600.0, eq_only=True, ntc=64, 
         if len(rsites) != len(osites):
             raise Unsupported("retail makes %d calls, ours %d" % (len(rsites), len(osites)))
         xmm = _uses_xmm(rf) or _uses_xmm(of)
+        rl, ol = lift_pair(rcode, ocode, base, ours, rents, oents, rsites, osites)
+        if rl is not None:
+            xmm = True
         segs = []
         for k, (re_, oe) in enumerate(zip(rents, oents)):
             if (re_ is None) != (oe is None):
                 raise Unsupported("call %d returns on one side only" % k)
             if re_ is None:
                 continue
-            segs.append((k, re_, oe, translate(rf, re_, rsites, level, ret64, xmm, "t%d" % k),
-                         translate(of, oe, osites, level, ret64, xmm, "r%d" % k)))
+            segs.append((k, re_, oe, translate(rf, re_, rsites, level, ret64, xmm, "t%d" % k, rl),
+                         translate(of, oe, osites, level, ret64, xmm, "r%d" % k, ol)))
         for t in (rcode, ocode):
             for k in range(len(rsites)):
                 if struct.pack("<I", TOKEN + k) in t:
                     raise Unsupported("return token constant appears in the code")
     except Unsupported as e:
         return _result("unknown", t0, "ddec: unsupported: %s" % e)
+    except XL.Reject as e:
+        return _result("unknown", t0, "ddec: x87 lifter: %s" % e)
     except capstone.CsError as e:
         return _result("unknown", t0, "ddec: decode error %s" % e)
     if not _image_ok():
@@ -940,12 +1118,15 @@ def prove(retail, ours, level, hints=None, timeout=600.0, eq_only=True, ntc=64, 
                     (level == "L1" and "in the function's own frame" in refuted):
                 return _result("unknown", t0, "ddec: concrete counterexample not trusted (the frame layout differs "
                                "or the difference is in the function's own frame): " + refuted)
+            if rl is not None and rl.signature != ol.signature:
+                return _result("unknown", t0, "ddec: concrete counterexample not trusted (the x87 operation "
+                               "sequences differ; unicorn runs the x87 at 64-bit precision): " + refuted)
             return _result("refuted", t0, "ddec (concrete run): " + refuted)
         left = timeout - (time.time() - t0)
         if left <= 5:
             return _result("unknown", t0, "ddec: timeout before running STOKE")
         res = _run_stoke(job, [(n, (n + ".hints") if hints is not None else None) for n in names], left,
-                         eq_only, xmm)
+                         eq_only, xmm, ack=rl is not None)
         fails = []
         out_segs = []
         for name, (k, re_, oe, _, _) in zip(names, segs):
@@ -960,10 +1141,10 @@ def prove(retail, ours, level, hints=None, timeout=600.0, eq_only=True, ntc=64, 
             return _result("unknown", t0, "ddec: %s; %s" % (what, "; ".join(fails)))
         ncut = sum(len(s["cuts"]) for s in out_segs)
         if hints is not None:
-            return _result("proved", t0, "ddec: %d segment(s) rechecked from hints (%d loop cutpoint(s)), %s" % (
-                len(segs), ncut, level), hints)
-        detail = "ddec: %d segment(s) proved, %d loop cutpoint(s), %s, %.1f s" % (len(segs), ncut, level,
-                                                                                 time.time() - t0)
+            return _result("proved", t0, "ddec: %d segment(s) rechecked from hints (%d loop cutpoint(s)), %s%s" % (
+                len(segs), ncut, level, ", x87 lifted" if rl is not None else ""), hints)
+        detail = "ddec: %d segment(s) proved, %d loop cutpoint(s), %s, %.1f s%s" % (
+            len(segs), ncut, level, time.time() - t0, ", x87 lifted (x87lift.py)" if rl is not None else "")
         learn_s = time.time() - t0
 
         def hints_at(red):
@@ -972,7 +1153,10 @@ def prove(retail, ours, level, hints=None, timeout=600.0, eq_only=True, ntc=64, 
                 cuts = _summary(res[name][1]) or []
                 segs_h.append({"at": sh["at"], "cuts": [{"at": c["at"], "inv": compact(c["lines"], red)}
                                                         for c in cuts]})
-            return {"v": 1, "level": level, "eq_only": eq_only, "segs": segs_h}
+            h = {"v": 1, "level": level, "eq_only": eq_only, "segs": segs_h}
+            if rl is not None:
+                h["x87"] = 1                    # lifted by x87lift.py (the recheck lifts again, deterministically)
+            return h
 
         budget = 2048 + len(retail.code) - 400        # the bundle's other fields take about 400 bytes
         newh = hints_at(1)
