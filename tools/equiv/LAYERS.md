@@ -94,7 +94,11 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
   UnsupportedIROpError); the layer installs fpSqrt for the first and uninterpreted functions for the rest. angr's own
   satisfiability check at every fork is skipped (LAZY_SOLVES; on x87 code it cost 26 s per fork and Z3 does not
   honour its timeout while bit-blasting floats); forks are pruned by a 0.5 s Z3 check on paths without float terms.
-  Literal constants are paired by content and checked (func.const_ok) before solving. The proof reports the
+  Literal constants are paired by content and checked (func.const_ok) before solving, and (M&B) a pairing that
+  puts one of our functions or globals at another address than the symbols file's unique entry for it
+  (tools/difftest/resolve.SymbolDB) is rejected (ddec applies both checks too). The function's own stack
+  parameters are private like its frame (protected from callees, not compared at L1 calls while nothing escaped):
+  cl spills into dead parameter slots. The proof reports the
   instructions of ours it executed, and the self-test mutates only those (code after a call to a noreturn
   function such as mb_error is dead in the model, and mutating it gives an equivalent mutant). Loops whose trip count depends on the inputs are
   given up at bound 4 instead of 64. Unsupported (unknown): switch tables, nested loops, loops that call or write
