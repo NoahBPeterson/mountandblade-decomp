@@ -177,10 +177,18 @@ below its start esp at a known offset is refused); the stack is not inside the m
 inside its table; the original's linker may have folded identical functions (identical COMDAT folding), so two
 callees of ours may be paired with one original function when ours' object defines the function with the
 original's bytes, or the symbols file names the original with the same member and signature (a call relocation
-only, never data). At a cut nothing is known about pointers, so the region mode drops two whole-function
-assumptions (entry pointers do not point into the frame; the private frame is protected at calls): every callee
-may read and write all memory. That makes it weaker, never stronger: frame temporaries that the two compilers put
-in different slots fail a region when a frame address escaped (a callee might read them). A region never
+only, never data). At a cut the region symbols carry no provenance, so the whole-function
+"entry pointers do not point into the frame" assumption is applied only where a static forward PROVENANCE pass
+over each version's CFG proves it (regions.Side.provenance): the registers that cannot hold a frame address
+(not computed from esp, not loaded from memory or returned by a callee after a frame address escaped: was stored
+to memory or held in a register at a call), memory read at the cut when no frame address escaped before it on
+any path, and the stack depth of the cut (known only when every callee's `ret N` before it is known and the
+joins agree; the frame zone then ends at the return address and the function's own parameters). Either
+version's proof suffices (the related values are equal and the frame zones are the same addresses). The private
+frame is not protected at calls (a frame address may have escaped): every callee may write all memory except the
+callee-saved registers the region itself saved (the whole-function model's trust). That makes it weaker, never
+stronger: frame temporaries that the two compilers put in different slots fail a region when a frame address
+escaped (a callee might read them), and so do different frame sizes (esp differs at the cut). A region never
 refutes (its interface is stronger than equivalence); a failure is `unknown` naming the region.
 
 **Self-test.** The proof reports the instructions of ours its angr regions executed; prove.py's mutants are drawn
