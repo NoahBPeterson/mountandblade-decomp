@@ -76,7 +76,13 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
   assumption: an address computed only from the entry state never points into the 1 MB below the entry esp, nor
   (M&B) at the return address and the function's own stack parameters ([esp, esp + 4 + W), W from the decorated
   name or the original's `ret N`): they are the function's own objects (C++ lifetime), and cl keeps by-value
-  arguments in registers across stores through `this` on that basis.
+  arguments in registers across stores through `this` on that basis. (M&B) The same holds for addresses computed
+  from callee results or memory read after calls as long as no frame address has escaped on the path, and both
+  directions are used when reading memory: a read through such an address skips the function's own pushes and
+  locals, and a read of its own stack skips stores through such addresses (else every saved register reloaded
+  after a float store becomes an If on a symbolic offset). Further (M&B): an unknown callee's `ret N` (indirect
+  calls) is fixed by "the original returns with esp = entry esp", and each comparison is first tried with float
+  terms abstracted to free variables per structural hash (an over-approximation), before the full float query.
   Counterexamples that rest on a guessed relocation pairing, assumed callee register reads, differences inside the
   function's own frame at L1, differing x87 sequences or supplied hints are reported as unknown, never refuted;
   (M&B) also a different frame size (esp at a call differs) and x87 operations modelled as uninterpreted functions.
