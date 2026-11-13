@@ -136,7 +136,7 @@ def run(src, va, symbol=None, flags=None, level=None, k_mutants=6, frame_slots=T
             reasons.append("%s: %s" % (name, r["detail"]))
             continue
         bad, tried = [], []
-        for desc, m in mutate.mutants(ours, k_mutants, seed=va, covered=r.get("covered")):
+        for desc, m in (mutate.mutants(ours, k_mutants, seed=va, covered=r.get("covered")) if k_mutants else ()):
             mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots)
             tried.append([desc, mr["status"]])
             if mr["status"] == "proved":
@@ -272,6 +272,8 @@ def main():
                     "(tools/equiv/remote.py; EQUIV_REMOTE=1 does the same), locally when it declines")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
+    if a.mutants <= 0 and a.record:
+        ap.error("--record needs the mutant self-test (--mutants > 0)")
     if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
         import remote                   # the angr solver on the laptop (tools/equiv/remote.py), local when declined
         remote.enable()

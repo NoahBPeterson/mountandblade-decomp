@@ -6,6 +6,10 @@
                                      [--resume] [--summary-only]
 
 EQUIVALENT rows carry the proof bundle (with the build hash); tools/equiv/record_sweep.py records them.
+Economics: --no-mutants proves without the self-test (its proofs are PROVED-UNTESTED, never recorded) and then re-runs
+only the rows that proved WITH the self-test (the proving layer checking its own hints), so no row pays for mutants
+before it has a proof; --two-pass T1 runs every row with T1 seconds per layer first and a second pass with --timeout
+only for rows that timed out (a decided unknown is not retried). --remote: the angr solver on the laptop.
 
 Ported in spirit from spore-decomp tools/equiv/sweep.py (commit aaaf5c79f). Candidates: the DIFF rows of
 docs/insn_exact.json (source file and symbol from there), --same-count only those whose instruction count equals
@@ -45,7 +49,9 @@ def candidates(same_count, vas=None, skip_proven=False):
     return out
 
 
-def one(va, src, symbol, layers=("rename",), timeout=None):
+def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=None, passno=1):
+    """k_mutants=0 (--no-mutants): a proof without the self-test is not EQUIVALENT but PROVED-UNTESTED (never
+    recorded; selftest_rows re-runs it with mutants). hints: {layer: hints} (that re-run: the layer only checks)."""
     import io
     import contextlib
     import prove
@@ -56,7 +62,9 @@ def one(va, src, symbol, layers=("rename",), timeout=None):
     try:
         with contextlib.redirect_stdout(buf):
             res = prove.run(os.path.join(ROOT, src), va, symbol, log=lambda s: buf.write(s + "\n"),
-                            layers=list(layers), timeout=timeout)
+                            layers=list(layers), timeout=timeout, k_mutants=k_mutants, hints=hints)
+            if res["verdict"] == "EQUIVALENT" and not k_mutants:
+                res["verdict"] = UNTESTED
             if res["verdict"] == "EQUIVALENT" and res.get("layer") == "rename":
                 base = prove.run(os.path.join(ROOT, src), va, symbol, level=res["level"], frame_slots=False,
                                  log=lambda s: None)
@@ -68,12 +76,24 @@ def one(va, src, symbol, layers=("rename",), timeout=None):
     keep = ("verdict", "level", "layer", "detail", "symbol", "facts_same", "facts_why", "insns", "info",
             "needs_slots", "mutants", "build_s", "check_s", "layers", "build", "bundle")
     out = {"va": "%08x" % va, "src": src}
+    if passno != 1:
+        out["pass"] = passno
     out.update({k: res[k] for k in keep if k in res})
     out["detail"] = (out.get("detail") or "")[:600]
     if rename_core.CONV_MISMATCH:
         out["conv_mismatch"] = sorted(set(rename_core.CONV_MISMATCH))[:10]
     out["seconds"] = round(time.time() - t, 3)
     return out
+
+
+UNTESTED = "PROVED-UNTESTED"     # proved with --no-mutants: not EQUIVALENT until the self-test passes
+
+
+def timed_out(r):
+    """did the row end in a timeout of some layer rather than in a decided unknown (two-pass mode)?"""
+    if r.get("verdict") != "UNKNOWN":
+        return False
+    return any(st == "unknown" and re.search(r"timeout", d or "") for st, d, *_ in (r.get("layers") or {}).values())
 
 
 REASONS = [
@@ -203,8 +223,19 @@ def main():
     ap.add_argument("--vas-file", help="only the VAs listed in this file (one hex VA per line, or a sweep .jsonl)")
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--resume", action="store_true")
+    ap.add_argument("--remote", action="store_true", help="run the angr solver on the Windows laptop "
+                    "(tools/equiv/remote.py; EQUIV_REMOTE=1 does the same), locally when it declines")
+    ap.add_argument("--no-mutants", action="store_true", help="prove without the mutant self-test; rows that prove "
+                    "are then re-run WITH mutants (the proving layer, checking its own hints) before they count as "
+                    "EQUIVALENT (record_sweep.py records only those)")
+    ap.add_argument("--two-pass", type=float, metavar="T1", help="a first pass with T1 seconds per layer, then a "
+                    "second pass with --timeout (or prove.py's defaults) only for rows whose first pass ended in a "
+                    "timeout (not a decided unknown)")
     ap.add_argument("--summary-only", action="store_true")
     a = ap.parse_args()
+    if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
+        import remote                   # the angr solver on the laptop (tools/equiv/remote.py), local when declined
+        remote.enable()
     if a.jobs > 6:
         sys.exit("--jobs at most 6 on this machine")
     if a.summary_only:
@@ -231,15 +262,46 @@ def main():
     warm(todo, a.jobs)
     t1 = time.time()
     rows = []
+    km = 0 if a.no_mutants else 6
+    t_first = a.two_pass if a.two_pass else a.timeout
     with open(a.out, "a" if a.resume else "w") as out, ProcessPoolExecutor(a.jobs) as ex:
-        futs = [ex.submit(one, *c, layers=layers, timeout=a.timeout) for c in todo]
-        for k, f in enumerate(as_completed(futs), 1):
-            r = f.result()
-            rows.append(r)
-            out.write(json.dumps(r) + "\n")
-            out.flush()
-            if k % 50 == 0 or k == len(futs):
-                print("%d/%d" % (k, len(futs)), flush=True)
+        def batch(items, label, **kw):
+            futs = [ex.submit(one, *c, **dict(kw, **extra)) for c, extra in items]
+            done = []
+            for k, f in enumerate(as_completed(futs), 1):
+                r = f.result()
+                done.append(r)
+                out.write(json.dumps(r) + "\n")
+                out.flush()
+                if k % 50 == 0 or k == len(futs):
+                    print("%s%d/%d" % (label, k, len(futs)), flush=True)
+            return done
+        rows = batch([(c, {}) for c in todo], "", layers=layers, timeout=t_first, k_mutants=km)
+        final = {r["va"]: r for r in rows}
+        by_va = {"%08x" % c[0]: c for c in todo}
+        if a.two_pass:
+            again = [by_va[r["va"]] for r in rows if timed_out(r)]
+            print("two-pass: %d of %d rows timed out at %.0f s; second pass with %s" % (
+                len(again), len(rows), a.two_pass, "%.0f s" % a.timeout if a.timeout else "prove.py's defaults"))
+            for r in batch([(c, {}) for c in again], "pass 2: ", layers=layers, timeout=a.timeout, k_mutants=km,
+                           passno=2):
+                final[r["va"]] = r
+        if a.no_mutants:
+            unt = [r for r in final.values() if r["verdict"] == UNTESTED]
+            print("no-mutants: %d rows proved; re-running them with the mutant self-test" % len(unt))
+            items = [(by_va[r["va"]], {"layers": (r["layer"],), "hints": {r["layer"]: (r.get("bundle") or {}).get(
+                "hints")}}) for r in unt]
+            for r in batch(items, "self-test: ", timeout=a.timeout, k_mutants=6, passno="selftest"):
+                final[r["va"]] = r
+        rows = list(final.values())
+    if a.two_pass or a.no_mutants:
+        # the out file ends with one line per row, the last pass's (a resumed sweep keeps the earlier lines)
+        keep = [json.loads(l) for l in open(a.out) if l.strip()] if a.resume else []
+        fin = {r["va"]: r for r in keep}
+        fin.update(final)
+        with open(a.out, "w") as out:
+            for r in fin.values():
+                out.write(json.dumps(r) + "\n")
     print("compile/warm %.1f s, checks %.1f s wall" % (t1 - t0, time.time() - t1))
     if a.resume and os.path.exists(a.out):
         rows = [json.loads(l) for l in open(a.out) if l.strip()]
