@@ -1409,8 +1409,8 @@ def _run_regions(job, batch, LR, LO, per_region, total, pool):
         regions.append({"x": b["x"], "y": b["y"], "d": b["d"], "pi": b["pi"], "dz": b.get("dz"),
                         "stops_r": sorted(sr), "stops_o": sorted(so),
                         "cands_r": sorted(cr), "cands_o": sorted(co),
-                        "live_r": {"%x" % a: sorted(LR[a]) for a in sr | cr},
-                        "live_o": {"%x" % a: sorted(LO[a]) for a in so | co},
+                        "live_r": {"%x" % a: sorted(LR.get(a, ALLREGS)) for a in sr | cr},
+                        "live_o": {"%x" % a: sorted(LO.get(a, ALLREGS)) for a in so | co},
                         "hints": b["hint"] or {}, "timeout": per_region})
     return pool.run(job, regions, total)
 
