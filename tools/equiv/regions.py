@@ -1195,6 +1195,11 @@ def _base_job(retail, ours, level, bij, hints):
             pairs.append((r, o))
             have_o.add(o)
             have_r.add(r)
+        # the positional proposal pairs literal constants by load order, which differs where the two compilers
+        # scheduled the loads differently (update_ai 0x4465e0: ours multiplies by -20 before 13): re-pair literals
+        # by content and named symbols by the symbols file, as the angr layer's own prepare does; prepare still
+        # checks the result (one-to-one, const_problems, symbol_problems)
+        pairs = AL.pair_by_symbols(retail, ours, AL.pair_constants_by_content(retail, ours, pairs))
     job = AL.prepare(retail, ours, level, {"bij": [list(p) for p in pairs]}, folds=folds)
     job["hints"] = {}
     job["folds"] = [list(f) for f in folds]
