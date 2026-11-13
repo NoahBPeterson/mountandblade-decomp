@@ -2217,7 +2217,8 @@ class Worker:
                 st, why = "unknown", why + ["relocation pairing is heuristic"]
             if self.job["x87"] and not self.job["x87_same"]:
                 st, why = "unknown", why + ["x87 sequences differ (64-bit model)"]
-            if st == "refuted" and (not self.job.get("frame_same", True) or re.search(r"call#\d+ esp", c["what"])):
+            if st == "refuted" and (re.search(r"call#\d+ esp", c["what"]) or (
+                    not self.job.get("frame_same", True) and re.search(r"esp|memory", c["what"]))):
                 # M&B: a different frame size moves every stack address a callee can see; the strict model calls
                 # that a difference, but it is not one a caller can depend on
                 st, why = "unknown", why + ["the frame layout differs (esp at a call)"]
