@@ -1059,6 +1059,12 @@ class Worker:
         C = self.C
         cur = self.base_byte(epoch, x)
         inesp = self.IN["esp"]
+        # (M&B) the mirror image: x is in the function's own stack (in_esp + dx, dx in [-(64 KB - 16), 3 + W]) and
+        # the write address is computed from the entry state alone; the store noted the no-alias assumption for it
+        # (note_addr: not in [esp - 1 MB, esp + 4 + W)), so a write of n <= 16 bytes there cannot cover x
+        dx = const_diff(x, inesp)
+        W = self.job.get("argw") or 0
+        x_own = dx is not None and (dx >= (1 << 32) - (0x10000 - 16) or dx <= 3 + W)
         for ent in log:
             if ent[0] == "w":
                 _, a, bs = ent
@@ -1066,6 +1072,8 @@ class Worker:
                 if d is not None:
                     if d < len(bs):
                         cur = bs[d]
+                    continue
+                if x_own and len(bs) <= 16 and self.entry_only(a):
                     continue
                 if dz:
                     de = const_diff(a, inesp)                 # a = in_esp + de (mod 2^32)
@@ -1093,6 +1101,15 @@ class Worker:
                 fresh = self.base_byte(ep, x)
                 cur = C.If(C.Or(*inside), cur, fresh) if inside else fresh
         return cur
+
+    def entry_only(self, a):
+        """is the address computed from the entry state alone (note_addr's condition for the assumption)?"""
+        memo = self.__dict__.setdefault("_eo", {})
+        h = a.hash()
+        if h not in memo:
+            vs = a.variables
+            memo[h] = "in_esp" not in vs and all(v.startswith(("in_", "m0_")) for v in vs)
+        return memo[h]
 
     def read_word(self, x, log, n=4):
         bs = [self.read_byte(x + k, log) for k in range(n)]
