@@ -1550,7 +1550,7 @@ class Worker:
         rem = self.deadline - time.time()
         if rem < 0.5:
             raise GiveUp("timeout (solver)")
-        s.set("timeout", int(min(rem, 600) * 1000))
+        s.set("timeout", int(min(rem, 600, getattr(self, "qcap", None) or 600) * 1000))
         r = s.check(*extra)
         self.stats["queries"] = self.stats.get("queries", 0) + 1
         if r == self.z3.unknown:
@@ -2267,7 +2267,20 @@ class Worker:
         if not diffs:
             return None
         strict = [d for n, d in diffs if n not in guessed]
-        if strict and self.check(q, z3.Or(*strict)):
+        if self.region:
+            # region mode: a region never refutes, so an undecided query only costs time; the float abstraction
+            # already failed to prove these observables equal, and Z3 at the full float semantics took the whole
+            # region budget on frame-slot differences (0x4952f0): cap it at REGION_QCAP seconds
+            self.qcap = REGION_QCAP
+            try:
+                if strict and self.check(q, z3.Or(*strict)):
+                    return self.cex(q, None, [(n, d) for n, d in diffs if n not in guessed], regions)
+            except GiveUp as e:
+                return {"what": ", ".join(n for n, _d in diffs if n not in guessed)[:300],
+                        "undecided": "not equal in the float abstraction; the full query: %s" % e}
+            finally:
+                self.qcap = None
+        elif strict and self.check(q, z3.Or(*strict)):
             return self.cex(q, None, [(n, d) for n, d in diffs if n not in guessed], regions)
         weak = [d for n, d in diffs if n in guessed]
         if not weak or not self.check(q, z3.Or(*weak)):
@@ -2473,6 +2486,7 @@ class Worker:
 
 
 PI_REGS = ["eax", "ecx", "edx", "ebx", "ebp", "esi", "edi", "flags"]     # regions.PI_REGS
+REGION_QCAP = 20.0
 
 
 def _note_pair(self, sa, sb):
