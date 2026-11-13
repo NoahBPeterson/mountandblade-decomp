@@ -160,6 +160,15 @@ def resolve(retail, ours):
         else:   # data addresses move by DATA_SHIFT on both sides (distances kept), away from STOKE's own memory
             struct.pack_into("<I", code, b, (v + DATA_SHIFT) & 0xFFFFFFFF)
             struct.pack_into("<I", rcode, a, (v + DATA_SHIFT) & 0xFFFFFFFF)
+    try:                                         # (M&B) the pairing must not contradict the symbols file
+        import angr_layer as AL
+        probs = AL.symbol_problems(ours, {("sym", k[1], 0): v for k, v in fwd.items() if k[0] == "sym"
+                                          and any(t[0] == "sym" and t[1] == k[1] and t[3] == 0
+                                                  for t in ours.relocs.values())})
+    except Exception:
+        probs = []
+    if probs:
+        raise Unsupported("relocation pairing contradicts the symbols file: " + "; ".join(probs[:2]))
     for i, (o1, r1) in enumerate(data):          # DLL data addresses: nearby fields must keep their distance
         for o2, r2 in data[i + 1:]:
             if (abs(o1 - o2) < 0x10000 or abs(r1 - r2) < 0x10000) and (o1 - o2) != (r1 - r2):

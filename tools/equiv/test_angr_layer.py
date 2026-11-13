@@ -245,7 +245,7 @@ def test_mutants_outside_covered_code_left_out():
     # equivalent mutant; the proof reports the instructions it covered and the self-test keeps to them
     a = H("6a01" "e8") + struct.pack("<i", 0x2000 - (RVA + 7)) + H("c3")
     b = H("6a01" "e800000000" "b805000000" "c3")
-    ra, ob = R(a, {3: ("abs", 0x2000)}), O(b, {3: ("sym", "_exit", 0x14, 0)})
+    ra, ob = R(a, {3: ("abs", 0x2000)}), O(b, {3: ("sym", "_noret_f", 0x14, 0)})
     orig = AL.scan_callee
     AL.scan_callee = lambda va, budget=4000: {"noreturn": True}
     try:
@@ -264,3 +264,20 @@ def test_own_arguments_not_aliased_by_entry_pointers():
     b = H("8b442404" "c70100000000" "894104" "c20400")
     assert prove(R(a), O(b, symbol="?f@A@@QAEXH@Z"))["status"] == "proved"
     assert prove(R(a), O(b, symbol=""))["status"] != "proved"      # no W: this may alias the argument slot
+
+
+def test_pairing_checked_against_symbols_file(fake_image):
+    # the call pairs our _f with retail 0x2000; a symbols file that puts _f at 0x3000 rejects the pairing
+    class DB:
+        mangled = {"_f": {0x3000}}
+    a = H("8b442404" "50" "e8") + struct.pack("<i", 0x2000 - (RVA + 10)) + H("83c404" "c3")
+    b = H("ff742404" "e800000000" "59" "c3")
+    saved = list(AL._SYMDB)
+    AL._SYMDB[:] = [DB()]
+    try:
+        r = prove(R(a, {6: ("abs", 0x2000)}), O(b, {5: ("sym", "_f", 0x14, 0)}))
+        assert r["status"] == "unknown" and "symbols file" in r["detail"]
+        DB.mangled = {"_f": {0x2000}}
+        assert prove(R(a, {6: ("abs", 0x2000)}), O(b, {5: ("sym", "_f", 0x14, 0)}))["status"] == "proved"
+    finally:
+        AL._SYMDB[:] = saved

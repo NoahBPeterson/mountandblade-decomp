@@ -115,7 +115,7 @@ LAYER_REASONS = [
     ("x87 uninterpreted", r"uninterpreted"),
     ("event sequence differs", r"event sequence"),
     ("counterexample untrusted", r"counterexample in the model, not trusted"),
-    ("literal constant", r"literal constant"),
+    ("pairing check (constant/symbols file)", r"pairing check failed"),
     ("unsupported IR op", r"UnsupportedIROp|cannot step"),
     ("too many paths", r"more than \d+ paths"),
     ("ddec unsupported", r"ddec: unsupported"),

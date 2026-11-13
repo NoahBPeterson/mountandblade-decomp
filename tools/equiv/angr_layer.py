@@ -411,7 +411,9 @@ def _reloc_shapes(code, base, relocs):
         for o in sorted(relocs):
             if o0 <= o < o1:
                 ops = re.sub(r"\b(e?[abcd]x|[abcd][lh]|e?[sd]i|e?bp|e?sp|xmm\d)\b", "R", i.op_str)
-                ops = re.sub(r"0x[0-9a-f]+", "K", ops)
+                # (M&B) every number, decimal too: ours' relocated fields hold 0, which capstone prints as "0"
+                # (spore's DLL builds had real addresses); st(i) keeps its index
+                ops = re.sub(r"(?<![\w(])(0x[0-9a-f]+|\d+)\b", "K", ops)
                 out.append((o, "%s %s @%d" % (i.mnemonic, ops, o - o0)))
     return out
 
@@ -495,6 +497,37 @@ def pair_constants_by_content(retail, ours, pairs):
         if free:
             out.append((free[0], oo))
             used.add(free[0])
+    return out
+
+
+_SYMDB = []
+
+
+def symbol_problems(ours, mapping):
+    """(M&B) The pairing must not contradict the project's symbols file: when a symbol of ours (a function or a
+    named global, addend 0) has exactly one plausible address in tools/difftest/resolve.SymbolDB (symbols/*), the
+    retail address paired with it must be that one. Unknown names are not checked (the bijection stays the
+    trusted pairing, as in the byte-match check)."""
+    try:
+        if HERE not in sys.path:
+            sys.path.insert(0, HERE)
+        import func as FN
+        import resolve as R
+        img = FN.image()
+        if not _SYMDB:
+            _SYMDB.append(R.SymbolDB(img))
+        db = _SYMDB[0]
+    except BaseException:
+        return []
+    out = []
+    for k, x in mapping.items():
+        if k[0] != "sym" or k[2] != 0:
+            continue
+        vas = set(db.mangled.get(k[1], ()))
+        if len(vas) == 1:
+            want = next(iter(vas))
+            if want != x:
+                out.append("%s is 0x%x in the symbols file, paired with 0x%x" % (k[1][:50], want, x))
     return out
 
 
@@ -648,9 +681,9 @@ def prepare(retail, ours, level, hints):
         pairs, clean = propose_bijection(retail, ours)
         pairs = pair_constants_by_content(retail, ours, pairs)
     mapping, problems = build_mapping(retail, ours, pairs)
-    cp = const_problems(ours, mapping)
+    cp = const_problems(ours, mapping) + symbol_problems(ours, mapping)
     if cp:      # never a mere note: a proof over a wrongly paired constant would be a false proof
-        raise HintError("literal constant check failed: " + "; ".join(cp[:3]))
+        raise HintError("relocation pairing check failed (literal constant / symbols file): " + "; ".join(cp[:3]))
     if problems:
         if hints and "bij" in hints:
             raise HintError("hint bijection rejected: " + "; ".join(problems[:3]))
