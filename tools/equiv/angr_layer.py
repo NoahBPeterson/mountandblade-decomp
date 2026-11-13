@@ -509,14 +509,7 @@ def symbol_problems(ours, mapping):
     retail address paired with it must be that one. Unknown names are not checked (the bijection stays the
     trusted pairing, as in the byte-match check)."""
     try:
-        if HERE not in sys.path:
-            sys.path.insert(0, HERE)
-        import func as FN
-        import resolve as R
-        img = FN.image()
-        if not _SYMDB:
-            _SYMDB.append(R.SymbolDB(img))
-        db = _SYMDB[0]
+        db = _symdb()
     except BaseException:
         return []
     out = []
@@ -528,6 +521,52 @@ def symbol_problems(ours, mapping):
             want = next(iter(vas))
             if want != x:
                 out.append("%s is 0x%x in the symbols file, paired with 0x%x" % (k[1][:50], want, x))
+    return out
+
+
+def _symdb():
+    if not _SYMDB:
+        if HERE not in sys.path:
+            sys.path.insert(0, HERE)
+        import func as FN
+        import resolve as R
+        _SYMDB.append(R.SymbolDB(FN.image()))
+    return _SYMDB[0]
+
+
+def pair_by_symbols(retail, ours, pairs):
+    """(M&B) Where the symbols file knows the address of one of our symbols (exactly one entry), pair each field
+    of ours naming it with a retail field holding that address (+ addend), instead of the shape alignment, which
+    swaps pairs when the two compilers order the instructions differently (g_game/g_items in 0x46b190). The result
+    is checked like any pairing (build_mapping, symbol_problems)."""
+    try:
+        db = _symdb()
+    except BaseException:
+        return pairs
+    by_val = {}
+    for ro, t in sorted(retail.relocs.items()):
+        if t[0] == "abs":
+            by_val.setdefault(t[1], []).append(ro)
+    fixed = {}
+    for oo, t in sorted(ours.relocs.items()):
+        if t[0] != "sym":
+            continue
+        vas = set(db.mangled.get(t[1], ()))
+        if len(vas) != 1:
+            continue
+        add = t[3] if t[3] < 0x80000000 else t[3] - (1 << 32)
+        want = next(iter(vas)) if t[2] == 0x14 else (next(iter(vas)) + add) & 0xffffffff
+        cands = by_val.get(want)
+        if cands:
+            fixed[oo] = cands
+    if not fixed:
+        return pairs
+    out = [(ro, oo) for ro, oo in pairs if oo not in fixed]
+    used = {ro for ro, _ in out}
+    for oo, cands in sorted(fixed.items()):
+        free = [ro for ro in cands if ro not in used] or cands
+        out.append((free[0], oo))
+        used.add(free[0])
     return out
 
 
@@ -680,6 +719,7 @@ def prepare(retail, ours, level, hints):
     else:
         pairs, clean = propose_bijection(retail, ours)
         pairs = pair_constants_by_content(retail, ours, pairs)
+        pairs = pair_by_symbols(retail, ours, pairs)
     mapping, problems = build_mapping(retail, ours, pairs)
     cp = const_problems(ours, mapping) + symbol_problems(ours, mapping)
     if cp:      # never a mere note: a proof over a wrongly paired constant would be a false proof
