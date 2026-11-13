@@ -1955,6 +1955,7 @@ class Worker:
         """None when equivalent on the overlap, else a counterexample dict"""
         C, z3 = self.C, self.z3
         ea, eb = sa.globals["events"], sb.globals["events"]
+        self._pair_escaped = bool(sa.globals.get("escaped") or sb.globals.get("escaped"))
         q = self.solver()
         q.add(pcs[0])
         if not known_equal_pc:
@@ -2055,6 +2056,8 @@ class Worker:
         z3 = self.z3
         m = q.model()
         out = {}
+        if getattr(self, "_pair_escaped", False):
+            out["escaped"] = True
         if what:
             out["what"] = what
         else:
@@ -2178,6 +2181,10 @@ class Worker:
                 # M&B: a different frame size moves every stack address a callee can see; the strict model calls
                 # that a difference, but it is not one a caller can depend on
                 st, why = "unknown", why + ["the frame layout differs (esp at a call)"]
+            if st == "refuted" and c.get("escaped"):
+                # (M&B) a frame address was handed to a callee: the model then lets any pointer from memory alias
+                # the whole frame, also locals whose address was never taken (0x43df60), which C++ rules out
+                st, why = "unknown", why + ["a frame address escaped (the model's aliasing is coarser than C++)"]
             if st == "refuted" and X87_UF_USED:
                 st, why = "unknown", why + ["x87 %s modelled as uninterpreted functions" % ",".join(
                     sorted(n[4:] for n in X87_UF_USED))]
