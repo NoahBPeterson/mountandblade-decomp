@@ -22,23 +22,23 @@
 "work/equiv_n_eq"
 ],
 "summary": {
-"pass": 144,
-"proven": 10,
-"weak": 270,
+"pass": 138,
+"proven": 20,
+"weak": 267,
 "fail": 1,
 "inputs": 9,
-"harness": 9,
+"harness": 8,
 "comdat": 121,
 "comdatdiff": 9,
 "funclet": 0,
 "notcode": 1,
 "not_run": 11,
-"pass_sz": 74653,
-"proven_sz": 7913,
-"weak_sz": 459026,
+"pass_sz": 73237,
+"proven_sz": 10385,
+"weak_sz": 458154,
 "fail_sz": 701,
 "inputs_sz": 25418,
-"harness_sz": 3423,
+"harness_sz": 3239,
 "comdat_sz": 2871,
 "comdatdiff_sz": 2846,
 "funclet_sz": 0,
@@ -884,9 +884,11 @@
 "00435520": {
 "module": "agent",
 "file": "src/game/agent/agent.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 194
+"verdict": "PROVEN",
+"category": "proven",
+"size": 194,
+"tested": "WEAK",
+"proof": "angr L1"
 },
 "00435c10": {
 "module": "agent",
@@ -1082,9 +1084,11 @@
 "0043b7b0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 228
+"verdict": "PROVEN",
+"category": "proven",
+"size": 228,
+"tested": "PASS",
+"proof": "angr L1"
 },
 "0043b8a0": {
 "module": "agent_logic",
@@ -1131,16 +1135,20 @@
 "0043db90": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 282
+"verdict": "PROVEN",
+"category": "proven",
+"size": 282,
+"tested": "PASS",
+"proof": "angr L1"
 },
 "0043dcb0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 191
+"verdict": "PROVEN",
+"category": "proven",
+"size": 191,
+"tested": "PASS",
+"proof": "angr L1"
 },
 "0043dd70": {
 "module": "agent_logic",
@@ -1626,9 +1634,11 @@
 "00465540": {
 "module": "terrain_a",
 "file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 372
+"verdict": "PROVEN",
+"category": "proven",
+"size": 372,
+"tested": "WEAK",
+"proof": "angr L1"
 },
 "004658c0": {
 "module": "terrain_a",
@@ -2415,9 +2425,11 @@
 "00493ab0": {
 "module": "world_data",
 "file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 396
+"verdict": "PROVEN",
+"category": "proven",
+"size": 396,
+"tested": "PASS",
+"proof": "angr L1"
 },
 "00494b60": {
 "module": "world_data",
@@ -2478,9 +2490,11 @@
 "0049b4f0": {
 "module": "widget_mgr",
 "file": "src/game/config/widget_mgr.nonmatching.txt",
-"verdict": "WEAK-FP",
-"category": "weak",
-"size": 306
+"verdict": "PROVEN",
+"category": "proven",
+"size": 306,
+"tested": "WEAK-FP",
+"proof": "angr L1"
 },
 "0049b630": {
 "module": "script_interpreter",
@@ -2665,9 +2679,11 @@
 "004b2880": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 225
+"verdict": "PROVEN",
+"category": "proven",
+"size": 225,
+"tested": "PASS",
+"proof": "angr L1"
 },
 "004b29d0": {
 "module": "party_2",
@@ -3584,10 +3600,11 @@
 "005024e0": {
 "module": "party_window",
 "file": "src/game/party/party_window.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
+"verdict": "PROVEN",
+"category": "proven",
 "size": 184,
-"reason": "our code reached unresolved symbol(s) ?on_track_set@MissionUi@@UAEXPAX@Z"
+"tested": "UNSUPPORTED",
+"proof": "angr L1"
 },
 "00502620": {
 "module": "party_window",
@@ -3875,9 +3892,11 @@
 "0051db70": {
 "module": "game",
 "file": "src/game/party/game.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 94
+"verdict": "PROVEN",
+"category": "proven",
+"size": 94,
+"tested": "PASS",
+"proof": "angr L1"
 },
 "0051ee80": {
 "module": "troop_rec",
@@ -4203,5 +4222,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-12T16:17:52-06:00"
+"when_proofs": "2026-11-12T20:21:08-06:00"
 }

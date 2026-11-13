@@ -3037,5 +3037,32 @@
   "when": "2026-11-12T16:17:52-06:00",
   "source": "proofs",
   "rows": 585
+ },
+ "2026-11-12T20:21:08-06:00": {
+  "pass": 138,
+  "proven": 20,
+  "weak": 267,
+  "fail": 1,
+  "inputs": 9,
+  "harness": 8,
+  "comdat": 121,
+  "comdatdiff": 9,
+  "funclet": 0,
+  "notcode": 1,
+  "not_run": 11,
+  "pass_sz": 73237,
+  "proven_sz": 10385,
+  "weak_sz": 458154,
+  "fail_sz": 701,
+  "inputs_sz": 25418,
+  "harness_sz": 3239,
+  "comdat_sz": 2871,
+  "comdatdiff_sz": 2846,
+  "funclet_sz": 0,
+  "notcode_sz": 1,
+  "not_run_sz": 28388,
+  "when": "2026-11-12T20:21:08-06:00",
+  "source": "proofs",
+  "rows": 585
  }
 }
