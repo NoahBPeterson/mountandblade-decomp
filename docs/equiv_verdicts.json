@@ -1,6 +1,6 @@
 {
-"when": "2026-11-12T21:22:13-06:00",
-"commit": "ae71bbc5",
+"when": "2026-11-13T08:42:14-06:00",
+"commit": "13a4e177",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -21,13 +21,14 @@
 "work/sweep_1111",
 "work/equiv_n_eq",
 "work/sweep_1112",
-"work/sweep_1112b"
+"work/sweep_1112b",
+"work/sweep_1113"
 ],
 "summary": {
 "pass": 92,
 "proven": 21,
-"weak": 218,
-"fail": 1,
+"weak": 219,
+"fail": 0,
 "inputs": 7,
 "harness": 4,
 "comdat": 118,
@@ -37,8 +38,8 @@
 "not_run": 10,
 "pass_sz": 57176,
 "proven_sz": 11448,
-"weak_sz": 424582,
-"fail_sz": 10436,
+"weak_sz": 435018,
+"fail_sz": 0,
 "inputs_sz": 23423,
 "harness_sz": 490,
 "comdat_sz": 2832,
@@ -1182,32 +1183,9 @@
 "004465e0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 10436,
-"reason": "38/498 valid inputs mismatched; first: execution",
-"first_mismatch": {
-"input": 38,
-"profile": "smallint",
-"origin": "cover",
-"observable": "execution",
-"kind": "value",
-"orig": "returned normally",
-"ours": "fake-arity: no call site before 7dffdfd8",
-"detail": "ours failed where the original succeeded",
-"args": [],
-"regs": {
-"eax": "ff7fffff",
-"ecx": "40010000",
-"edx": "00000008"
-},
-"fake_calls": 0,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work/difftest/fail_inputs/agent_logic_004465e0.pkl"
-}
+"verdict": "WEAK",
+"category": "weak",
+"size": 10436
 },
 "00448eb0": {
 "module": "agent_logic",
@@ -3491,6 +3469,5 @@
 "category": "weak",
 "size": 1719
 }
-},
-"when_proofs": "2026-11-12T21:53:10-06:00"
+}
 }
